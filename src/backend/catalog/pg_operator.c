@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_operator.c,v 1.91 2005/04/14 20:03:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_operator.c,v 1.92 2005/06/28 05:08:52 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -235,7 +235,7 @@ OperatorShellMake(const char *operatorName,
 	namestrcpy(&oname, operatorName);
 	values[i++] = NameGetDatum(&oname); /* oprname */
 	values[i++] = ObjectIdGetDatum(operatorNamespace);	/* oprnamespace */
-	values[i++] = Int32GetDatum(GetUserId());	/* oprowner */
+	values[i++] = ObjectIdGetDatum(GetUserId());	/* oprowner */
 	values[i++] = CharGetDatum(leftTypeId ? (rightTypeId ? 'b' : 'r') : 'l');	/* oprkind */
 	values[i++] = BoolGetDatum(false);	/* oprcanhash */
 	values[i++] = ObjectIdGetDatum(leftTypeId); /* oprleft */
@@ -519,7 +519,7 @@ OperatorCreate(const char *operatorName,
 	namestrcpy(&oname, operatorName);
 	values[i++] = NameGetDatum(&oname); /* oprname */
 	values[i++] = ObjectIdGetDatum(operatorNamespace);	/* oprnamespace */
-	values[i++] = Int32GetDatum(GetUserId());	/* oprowner */
+	values[i++] = ObjectIdGetDatum(GetUserId());	/* oprowner */
 	values[i++] = CharGetDatum(leftTypeId ? (rightTypeId ? 'b' : 'r') : 'l');	/* oprkind */
 	values[i++] = BoolGetDatum(canHash);		/* oprcanhash */
 	values[i++] = ObjectIdGetDatum(leftTypeId); /* oprleft */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.371 2005/06/26 03:04:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.372 2005/06/28 05:09:09 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -41,7 +41,7 @@ CATALOG(pg_proc,1255) BKI_BOOTSTRAP
 {
 	NameData	proname;		/* procedure name */
 	Oid			pronamespace;	/* OID of namespace containing this proc */
-	int4		proowner;		/* proc owner */
+	Oid			proowner;		/* procedure owner */
 	Oid			prolang;		/* OID of pg_language entry */
 	bool		proisagg;		/* is it an aggregate? */
 	bool		prosecdef;		/* security definer */
@@ -1355,7 +1355,7 @@ DATA(insert OID = 1037 (  aclcontains	   PGNSP PGUID 12 f f t f i 2 16 "1034 103
 DESCR("does ACL contain item?");
 DATA(insert OID = 1062 (  aclitemeq		   PGNSP PGUID 12 f f t f i 2 16 "1033 1033" _null_ _null_ _null_ aclitem_eq - _null_ ));
 DESCR("equality operator for ACL items");
-DATA(insert OID = 1365 (  makeaclitem	   PGNSP PGUID 12 f f t f i 5 1033 "23 23 23 25 16" _null_ _null_ _null_ makeaclitem - _null_ ));
+DATA(insert OID = 1365 (  makeaclitem	   PGNSP PGUID 12 f f t f i 4 1033 "26 26 25 16" _null_ _null_ _null_ makeaclitem - _null_ ));
 DESCR("make ACL item");
 DATA(insert OID = 1044 (  bpcharin		   PGNSP PGUID 12 f f t f i 3 1042 "2275 26 23" _null_ _null_ _null_ bpcharin - _null_ ));
 DESCR("I/O");
@@ -2251,8 +2251,8 @@ DATA(insert OID = 1640 (  pg_get_viewdef	   PGNSP PGUID 12 f f t f s 1 25 "25" _
 DESCR("select statement of a view");
 DATA(insert OID = 1641 (  pg_get_viewdef	   PGNSP PGUID 12 f f t f s 1 25 "26" _null_ _null_ _null_  pg_get_viewdef - _null_ ));
 DESCR("select statement of a view");
-DATA(insert OID = 1642 (  pg_get_userbyid	   PGNSP PGUID 12 f f t f s 1 19 "23" _null_ _null_ _null_  pg_get_userbyid - _null_ ));
-DESCR("user name by UID (with fallback)");
+DATA(insert OID = 1642 (  pg_get_userbyid	   PGNSP PGUID 12 f f t f s 1 19 "26" _null_ _null_ _null_  pg_get_userbyid - _null_ ));
+DESCR("role name by OID (with fallback)");
 DATA(insert OID = 1643 (  pg_get_indexdef	   PGNSP PGUID 12 f f t f s 1 25 "26" _null_ _null_ _null_  pg_get_indexdef - _null_ ));
 DESCR("index description");
 DATA(insert OID = 1662 (  pg_get_triggerdef    PGNSP PGUID 12 f f t f s 1 25 "26" _null_ _null_ _null_  pg_get_triggerdef - _null_ ));
@@ -2785,10 +2785,10 @@ DATA(insert OID = 1922 (  has_table_privilege		   PGNSP PGUID 12 f f t f s 3 16 
 DESCR("user privilege on relation by username, rel name");
 DATA(insert OID = 1923 (  has_table_privilege		   PGNSP PGUID 12 f f t f s 3 16 "19 26 25" _null_ _null_ _null_	has_table_privilege_name_id - _null_ ));
 DESCR("user privilege on relation by username, rel oid");
-DATA(insert OID = 1924 (  has_table_privilege		   PGNSP PGUID 12 f f t f s 3 16 "23 25 25" _null_ _null_ _null_	has_table_privilege_id_name - _null_ ));
-DESCR("user privilege on relation by usesysid, rel name");
-DATA(insert OID = 1925 (  has_table_privilege		   PGNSP PGUID 12 f f t f s 3 16 "23 26 25" _null_ _null_ _null_	has_table_privilege_id_id - _null_ ));
-DESCR("user privilege on relation by usesysid, rel oid");
+DATA(insert OID = 1924 (  has_table_privilege		   PGNSP PGUID 12 f f t f s 3 16 "26 25 25" _null_ _null_ _null_	has_table_privilege_id_name - _null_ ));
+DESCR("user privilege on relation by user oid, rel name");
+DATA(insert OID = 1925 (  has_table_privilege		   PGNSP PGUID 12 f f t f s 3 16 "26 26 25" _null_ _null_ _null_	has_table_privilege_id_id - _null_ ));
+DESCR("user privilege on relation by user oid, rel oid");
 DATA(insert OID = 1926 (  has_table_privilege		   PGNSP PGUID 12 f f t f s 2 16 "25 25" _null_ _null_ _null_ has_table_privilege_name - _null_ ));
 DESCR("current user privilege on relation by rel name");
 DATA(insert OID = 1927 (  has_table_privilege		   PGNSP PGUID 12 f f t f s 2 16 "26 25" _null_ _null_ _null_ has_table_privilege_id - _null_ ));
@@ -2821,7 +2821,7 @@ DATA(insert OID = 1937 (  pg_stat_get_backend_pid		PGNSP PGUID 12 f f t f s 1 23
 DESCR("Statistics: PID of backend");
 DATA(insert OID = 1938 (  pg_stat_get_backend_dbid		PGNSP PGUID 12 f f t f s 1 26 "23" _null_ _null_ _null_	pg_stat_get_backend_dbid - _null_ ));
 DESCR("Statistics: Database ID of backend");
-DATA(insert OID = 1939 (  pg_stat_get_backend_userid	PGNSP PGUID 12 f f t f s 1 23 "23" _null_ _null_ _null_	pg_stat_get_backend_userid - _null_ ));
+DATA(insert OID = 1939 (  pg_stat_get_backend_userid	PGNSP PGUID 12 f f t f s 1 26 "23" _null_ _null_ _null_	pg_stat_get_backend_userid - _null_ ));
 DESCR("Statistics: User ID of backend");
 DATA(insert OID = 1940 (  pg_stat_get_backend_activity	PGNSP PGUID 12 f f t f s 1 25 "23" _null_ _null_ _null_	pg_stat_get_backend_activity - _null_ ));
 DESCR("Statistics: Current query of backend");
@@ -3171,10 +3171,10 @@ DATA(insert OID = 2250 (  has_database_privilege		   PGNSP PGUID 12 f f t f s 3 
 DESCR("user privilege on database by username, database name");
 DATA(insert OID = 2251 (  has_database_privilege		   PGNSP PGUID 12 f f t f s 3 16 "19 26 25" _null_ _null_ _null_	has_database_privilege_name_id - _null_ ));
 DESCR("user privilege on database by username, database oid");
-DATA(insert OID = 2252 (  has_database_privilege		   PGNSP PGUID 12 f f t f s 3 16 "23 25 25" _null_ _null_ _null_	has_database_privilege_id_name - _null_ ));
-DESCR("user privilege on database by usesysid, database name");
-DATA(insert OID = 2253 (  has_database_privilege		   PGNSP PGUID 12 f f t f s 3 16 "23 26 25" _null_ _null_ _null_	has_database_privilege_id_id - _null_ ));
-DESCR("user privilege on database by usesysid, database oid");
+DATA(insert OID = 2252 (  has_database_privilege		   PGNSP PGUID 12 f f t f s 3 16 "26 25 25" _null_ _null_ _null_	has_database_privilege_id_name - _null_ ));
+DESCR("user privilege on database by user oid, database name");
+DATA(insert OID = 2253 (  has_database_privilege		   PGNSP PGUID 12 f f t f s 3 16 "26 26 25" _null_ _null_ _null_	has_database_privilege_id_id - _null_ ));
+DESCR("user privilege on database by user oid, database oid");
 DATA(insert OID = 2254 (  has_database_privilege		   PGNSP PGUID 12 f f t f s 2 16 "25 25" _null_ _null_ _null_ has_database_privilege_name - _null_ ));
 DESCR("current user privilege on database by database name");
 DATA(insert OID = 2255 (  has_database_privilege		   PGNSP PGUID 12 f f t f s 2 16 "26 25" _null_ _null_ _null_ has_database_privilege_id - _null_ ));
@@ -3184,10 +3184,10 @@ DATA(insert OID = 2256 (  has_function_privilege		   PGNSP PGUID 12 f f t f s 3 
 DESCR("user privilege on function by username, function name");
 DATA(insert OID = 2257 (  has_function_privilege		   PGNSP PGUID 12 f f t f s 3 16 "19 26 25" _null_ _null_ _null_	has_function_privilege_name_id - _null_ ));
 DESCR("user privilege on function by username, function oid");
-DATA(insert OID = 2258 (  has_function_privilege		   PGNSP PGUID 12 f f t f s 3 16 "23 25 25" _null_ _null_ _null_	has_function_privilege_id_name - _null_ ));
-DESCR("user privilege on function by usesysid, function name");
-DATA(insert OID = 2259 (  has_function_privilege		   PGNSP PGUID 12 f f t f s 3 16 "23 26 25" _null_ _null_ _null_	has_function_privilege_id_id - _null_ ));
-DESCR("user privilege on function by usesysid, function oid");
+DATA(insert OID = 2258 (  has_function_privilege		   PGNSP PGUID 12 f f t f s 3 16 "26 25 25" _null_ _null_ _null_	has_function_privilege_id_name - _null_ ));
+DESCR("user privilege on function by user oid, function name");
+DATA(insert OID = 2259 (  has_function_privilege		   PGNSP PGUID 12 f f t f s 3 16 "26 26 25" _null_ _null_ _null_	has_function_privilege_id_id - _null_ ));
+DESCR("user privilege on function by user oid, function oid");
 DATA(insert OID = 2260 (  has_function_privilege		   PGNSP PGUID 12 f f t f s 2 16 "25 25" _null_ _null_ _null_ has_function_privilege_name - _null_ ));
 DESCR("current user privilege on function by function name");
 DATA(insert OID = 2261 (  has_function_privilege		   PGNSP PGUID 12 f f t f s 2 16 "26 25" _null_ _null_ _null_ has_function_privilege_id - _null_ ));
@@ -3197,10 +3197,10 @@ DATA(insert OID = 2262 (  has_language_privilege		   PGNSP PGUID 12 f f t f s 3 
 DESCR("user privilege on language by username, language name");
 DATA(insert OID = 2263 (  has_language_privilege		   PGNSP PGUID 12 f f t f s 3 16 "19 26 25" _null_ _null_ _null_	has_language_privilege_name_id - _null_ ));
 DESCR("user privilege on language by username, language oid");
-DATA(insert OID = 2264 (  has_language_privilege		   PGNSP PGUID 12 f f t f s 3 16 "23 25 25" _null_ _null_ _null_	has_language_privilege_id_name - _null_ ));
-DESCR("user privilege on language by usesysid, language name");
-DATA(insert OID = 2265 (  has_language_privilege		   PGNSP PGUID 12 f f t f s 3 16 "23 26 25" _null_ _null_ _null_	has_language_privilege_id_id - _null_ ));
-DESCR("user privilege on language by usesysid, language oid");
+DATA(insert OID = 2264 (  has_language_privilege		   PGNSP PGUID 12 f f t f s 3 16 "26 25 25" _null_ _null_ _null_	has_language_privilege_id_name - _null_ ));
+DESCR("user privilege on language by user oid, language name");
+DATA(insert OID = 2265 (  has_language_privilege		   PGNSP PGUID 12 f f t f s 3 16 "26 26 25" _null_ _null_ _null_	has_language_privilege_id_id - _null_ ));
+DESCR("user privilege on language by user oid, language oid");
 DATA(insert OID = 2266 (  has_language_privilege		   PGNSP PGUID 12 f f t f s 2 16 "25 25" _null_ _null_ _null_ has_language_privilege_name - _null_ ));
 DESCR("current user privilege on language by language name");
 DATA(insert OID = 2267 (  has_language_privilege		   PGNSP PGUID 12 f f t f s 2 16 "26 25" _null_ _null_ _null_ has_language_privilege_id - _null_ ));
@@ -3210,10 +3210,10 @@ DATA(insert OID = 2268 (  has_schema_privilege		   PGNSP PGUID 12 f f t f s 3 16
 DESCR("user privilege on schema by username, schema name");
 DATA(insert OID = 2269 (  has_schema_privilege		   PGNSP PGUID 12 f f t f s 3 16 "19 26 25" _null_ _null_ _null_	has_schema_privilege_name_id - _null_ ));
 DESCR("user privilege on schema by username, schema oid");
-DATA(insert OID = 2270 (  has_schema_privilege		   PGNSP PGUID 12 f f t f s 3 16 "23 25 25" _null_ _null_ _null_	has_schema_privilege_id_name - _null_ ));
-DESCR("user privilege on schema by usesysid, schema name");
-DATA(insert OID = 2271 (  has_schema_privilege		   PGNSP PGUID 12 f f t f s 3 16 "23 26 25" _null_ _null_ _null_	has_schema_privilege_id_id - _null_ ));
-DESCR("user privilege on schema by usesysid, schema oid");
+DATA(insert OID = 2270 (  has_schema_privilege		   PGNSP PGUID 12 f f t f s 3 16 "26 25 25" _null_ _null_ _null_	has_schema_privilege_id_name - _null_ ));
+DESCR("user privilege on schema by user oid, schema name");
+DATA(insert OID = 2271 (  has_schema_privilege		   PGNSP PGUID 12 f f t f s 3 16 "26 26 25" _null_ _null_ _null_	has_schema_privilege_id_id - _null_ ));
+DESCR("user privilege on schema by user oid, schema oid");
 DATA(insert OID = 2272 (  has_schema_privilege		   PGNSP PGUID 12 f f t f s 2 16 "25 25" _null_ _null_ _null_ has_schema_privilege_name - _null_ ));
 DESCR("current user privilege on schema by schema name");
 DATA(insert OID = 2273 (  has_schema_privilege		   PGNSP PGUID 12 f f t f s 2 16 "26 25" _null_ _null_ _null_ has_schema_privilege_id - _null_ ));
@@ -3223,10 +3223,10 @@ DATA(insert OID = 2390 (  has_tablespace_privilege		   PGNSP PGUID 12 f f t f s 
 DESCR("user privilege on tablespace by username, tablespace name");
 DATA(insert OID = 2391 (  has_tablespace_privilege		   PGNSP PGUID 12 f f t f s 3 16 "19 26 25" _null_ _null_ _null_	has_tablespace_privilege_name_id - _null_ ));
 DESCR("user privilege on tablespace by username, tablespace oid");
-DATA(insert OID = 2392 (  has_tablespace_privilege		   PGNSP PGUID 12 f f t f s 3 16 "23 25 25" _null_ _null_ _null_	has_tablespace_privilege_id_name - _null_ ));
-DESCR("user privilege on tablespace by usesysid, tablespace name");
-DATA(insert OID = 2393 (  has_tablespace_privilege		   PGNSP PGUID 12 f f t f s 3 16 "23 26 25" _null_ _null_ _null_	has_tablespace_privilege_id_id - _null_ ));
-DESCR("user privilege on tablespace by usesysid, tablespace oid");
+DATA(insert OID = 2392 (  has_tablespace_privilege		   PGNSP PGUID 12 f f t f s 3 16 "26 25 25" _null_ _null_ _null_	has_tablespace_privilege_id_name - _null_ ));
+DESCR("user privilege on tablespace by user oid, tablespace name");
+DATA(insert OID = 2393 (  has_tablespace_privilege		   PGNSP PGUID 12 f f t f s 3 16 "26 26 25" _null_ _null_ _null_	has_tablespace_privilege_id_id - _null_ ));
+DESCR("user privilege on tablespace by user oid, tablespace oid");
 DATA(insert OID = 2394 (  has_tablespace_privilege		   PGNSP PGUID 12 f f t f s 2 16 "25 25" _null_ _null_ _null_ has_tablespace_privilege_name - _null_ ));
 DESCR("current user privilege on tablespace by tablespace name");
 DATA(insert OID = 2395 (  has_tablespace_privilege		   PGNSP PGUID 12 f f t f s 2 16 "26 25" _null_ _null_ _null_ has_tablespace_privilege_id - _null_ ));

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.111 2005/06/05 00:38:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.112 2005/06/28 05:08:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -567,7 +567,7 @@ addRangeTableEntry(ParseState *pstate,
 	rte->inFromCl = inFromCl;
 
 	rte->requiredPerms = ACL_SELECT;
-	rte->checkAsUser = 0;		/* not set-uid by default, either */
+	rte->checkAsUser = InvalidOid;		/* not set-uid by default, either */
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join
@@ -620,7 +620,7 @@ addRangeTableEntryForRelation(ParseState *pstate,
 	rte->inFromCl = inFromCl;
 
 	rte->requiredPerms = ACL_SELECT;
-	rte->checkAsUser = 0;		/* not set-uid by default, either */
+	rte->checkAsUser = InvalidOid;		/* not set-uid by default, either */
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join
@@ -698,7 +698,7 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 	rte->inFromCl = inFromCl;
 
 	rte->requiredPerms = 0;
-	rte->checkAsUser = 0;
+	rte->checkAsUser = InvalidOid;
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join
@@ -823,7 +823,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	rte->inFromCl = inFromCl;
 
 	rte->requiredPerms = 0;
-	rte->checkAsUser = 0;
+	rte->checkAsUser = InvalidOid;
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join
@@ -882,7 +882,7 @@ addRangeTableEntryForJoin(ParseState *pstate,
 	rte->inFromCl = inFromCl;
 
 	rte->requiredPerms = 0;
-	rte->checkAsUser = 0;
+	rte->checkAsUser = InvalidOid;
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join

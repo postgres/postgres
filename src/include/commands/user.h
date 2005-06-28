@@ -1,10 +1,10 @@
 /*-------------------------------------------------------------------------
  *
  * user.h
- *	  Commands for manipulating users and groups.
+ *	  Commands for manipulating roles (formerly called users).
  *
  *
- * $PostgreSQL: pgsql/src/include/commands/user.h,v 1.26 2005/02/20 02:22:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/user.h,v 1.27 2005/06/28 05:09:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,15 +14,11 @@
 #include "nodes/parsenodes.h"
 
 
-extern void CreateUser(CreateUserStmt *stmt);
-extern void AlterUser(AlterUserStmt *stmt);
-extern void AlterUserSet(AlterUserSetStmt *stmt);
-extern void DropUser(DropUserStmt *stmt);
-extern void RenameUser(const char *oldname, const char *newname);
-
-extern void CreateGroup(CreateGroupStmt *stmt);
-extern void AlterGroup(AlterGroupStmt *stmt, const char *tag);
-extern void DropGroup(DropGroupStmt *stmt);
-extern void RenameGroup(const char *oldname, const char *newname);
+extern void CreateRole(CreateRoleStmt *stmt);
+extern void AlterRole(AlterRoleStmt *stmt);
+extern void AlterRoleSet(AlterRoleSetStmt *stmt);
+extern void DropRole(DropRoleStmt *stmt);
+extern void GrantRole(GrantRoleStmt *stmt);
+extern void RenameRole(const char *oldname, const char *newname);
 
 #endif   /* USER_H */

@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.96 2005/06/25 23:58:57 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.97 2005/06/28 05:08:59 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -34,7 +34,6 @@
 #include "access/heapam.h"
 #include "access/xact.h"
 #include "catalog/pg_database.h"
-#include "catalog/pg_shadow.h"
 #include "libpq/libpq.h"
 #include "libpq/pqsignal.h"
 #include "mb/pg_wchar.h"

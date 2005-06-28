@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.142 2005/06/27 02:04:25 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.143 2005/06/28 05:08:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,8 @@
 
 /*
  * These variables hold the pre-parsed contents of the hba and ident
- * configuration files.  Each is a list of sublists, one sublist for
+ * configuration files, as well as the flat auth file.
+ * Each is a list of sublists, one sublist for
  * each (non-empty, non-comment) line of the file.	Each sublist's
  * first item is an integer line number (so we can give somewhat-useful
  * location info in error messages).  Remaining items are palloc'd strings,
@@ -69,20 +70,13 @@ static List *hba_line_nums = NIL;
 static List *ident_lines = NIL;
 static List *ident_line_nums = NIL;
 
-/* pre-parsed content of group file and corresponding line #s */
-static List *group_lines = NIL;
-static List *group_line_nums = NIL;
-
-/* pre-parsed content of user passwd file and corresponding line #s */
-static List *user_lines = NIL;
-static List *user_line_nums = NIL;
+/* pre-parsed content of flat auth file and corresponding line #s */
+static List *role_lines = NIL;
+static List *role_line_nums = NIL;
 
 /* sorted entries so we can do binary search lookups */
-static List **user_sorted = NULL;		/* sorted user list, for bsearch() */
-static List **group_sorted = NULL;		/* sorted group list, for
-										 * bsearch() */
-static int	user_length;
-static int	group_length;
+static List **role_sorted = NULL;		/* sorted role list, for bsearch() */
+static int	role_length;
 
 static void tokenize_file(const char *filename, FILE *file,
 						  List **lines, List **line_nums);
@@ -109,7 +103,7 @@ pg_isblank(const char c)
  * return empty string as *buf and position the file to the beginning
  * of the next line or EOF, whichever comes first. Allow spaces in
  * quoted strings. Terminate on unquoted commas. Handle
- * comments. Treat unquoted keywords that might be user names or
+ * comments. Treat unquoted keywords that might be role names or
  * database names specially, by appending a newline to them.
  */
 static void
@@ -199,7 +193,8 @@ next_token(FILE *fp, char *buf, int bufsz)
 	if (!saw_quote &&
 		(strcmp(start_buf, "all") == 0 ||
 		 strcmp(start_buf, "sameuser") == 0 ||
-		 strcmp(start_buf, "samegroup") == 0))
+		 strcmp(start_buf, "samegroup") == 0 ||
+		 strcmp(start_buf, "samerole") == 0))
 	{
 		/* append newline to a magical keyword */
 		*buf++ = '\n';
@@ -434,94 +429,58 @@ tokenize_file(const char *filename, FILE *file,
 	}
 }
 
-
 /*
- * Compare two lines based on their user/group names.
- *
- * Used for qsort() sorting.
- */
-static int
-user_group_qsort_cmp(const void *list1, const void *list2)
-{
-	char	   *user1 = linitial(*(List **) list1);
-	char	   *user2 = linitial(*(List **) list2);
-
-	return strcmp(user1, user2);
-}
-
-
-/*
- * Compare two lines based on their user/group names.
+ * Compare two lines based on their role/member names.
  *
  * Used for bsearch() lookup.
  */
 static int
-user_group_bsearch_cmp(const void *user, const void *list)
+role_bsearch_cmp(const void *role, const void *list)
 {
-	char	   *user2 = linitial(*(List **) list);
+	char	   *role2 = linitial(*(List **) list);
 
-	return strcmp(user, user2);
+	return strcmp(role, role2);
 }
 
 
 /*
- * Lookup a group name in the pg_group file
+ * Lookup a role name in the pg_auth file
  */
-static List **
-get_group_line(const char *group)
+List **
+get_role_line(const char *role)
 {
 	/* On some versions of Solaris, bsearch of zero items dumps core */
-	if (group_length == 0)
+	if (role_length == 0)
 		return NULL;
 
-	return (List **) bsearch((void *) group,
-							 (void *) group_sorted,
-							 group_length,
+	return (List **) bsearch((void *) role,
+							 (void *) role_sorted,
+							 role_length,
 							 sizeof(List *),
-							 user_group_bsearch_cmp);
+							 role_bsearch_cmp);
 }
 
 
 /*
- * Lookup a user name in the pg_shadow file
- */
-List	  **
-get_user_line(const char *user)
-{
-	/* On some versions of Solaris, bsearch of zero items dumps core */
-	if (user_length == 0)
-		return NULL;
-
-	return (List **) bsearch((void *) user,
-							 (void *) user_sorted,
-							 user_length,
-							 sizeof(List *),
-							 user_group_bsearch_cmp);
-}
-
-
-/*
- * Does user belong to group?
+ * Does member belong to role?
  */
 static bool
-check_group(char *group, char *user)
+check_member(const char *role, const char *member)
 {
 	List	  **line;
+	List    **line2;
 	ListCell   *line_item;
-	char	   *usesysid;
 
-	if ((line = get_user_line(user)) == NULL)
-		return false;			/* if user not exist, say "no" */
-	/* Skip over username to get usesysid */
-	usesysid = (char *) lsecond(*line);
+	if ((line = get_role_line(member)) == NULL)
+		return false;			/* if member not exist, say "no" */
 
-	if ((line = get_group_line(group)) == NULL)
-		return false;			/* if group not exist, say "no" */
+	if ((line2 = get_role_line(role)) == NULL)
+		return false;			/* if role not exist, say "no" */
 
-	/* skip over the group name, examine all the member usesysid's */
-	for_each_cell(line_item, lnext(list_head(*line)))
+	/* skip over the role name, password, valuntil, examine all the members */
+	for_each_cell(line_item, lfourth(*line2))
 	{
-		if (strcmp((char *) lfirst(line_item), usesysid) == 0)
+		if (strcmp((char *) lfirst(line_item), member) == 0)
 			return true;
 	}
 
@@ -529,10 +488,10 @@ check_group(char *group, char *user)
 }
 
 /*
- * Check comma user list for a specific user, handle group names.
+ * Check comma member list for a specific role, handle role names.
  */
 static bool
-check_user(char *user, char *param_str)
+check_role(char *role, char *param_str)
 {
 	char	   *tok;
 
@@ -540,10 +499,10 @@ check_user(char *user, char *param_str)
 	{
 		if (tok[0] == '+')
 		{
-			if (check_group(tok + 1, user))
+			if (check_member(tok + 1, role))
 				return true;
 		}
-		else if (strcmp(tok, user) == 0 ||
+		else if (strcmp(tok, role) == 0 ||
 				 strcmp(tok, "all\n") == 0)
 			return true;
 	}
@@ -552,10 +511,10 @@ check_user(char *user, char *param_str)
 }
 
 /*
- * Check to see if db/user combination matches param string.
+ * Check to see if db/role combination matches param string.
  */
 static bool
-check_db(char *dbname, char *user, char *param_str)
+check_db(char *dbname, char *role, char *param_str)
 {
 	char	   *tok;
 
@@ -565,12 +524,13 @@ check_db(char *dbname, char *user, char *param_str)
 			return true;
 		else if (strcmp(tok, "sameuser\n") == 0)
 		{
-			if (strcmp(dbname, user) == 0)
+			if (strcmp(dbname, role) == 0)
 				return true;
 		}
-		else if (strcmp(tok, "samegroup\n") == 0)
+		else if (strcmp(tok, "samegroup\n") == 0 ||
+				 strcmp(tok, "samerole\n") == 0)
 		{
-			if (check_group(dbname, user))
+			if (check_member(dbname, role))
 				return true;
 		}
 		else if (strcmp(tok, dbname) == 0)
@@ -655,7 +615,7 @@ parse_hba(List *line, int line_num, hbaPort *port,
 {
 	char	   *token;
 	char	   *db;
-	char	   *user;
+	char	   *role;
 	struct addrinfo *gai_result;
 	struct addrinfo hints;
 	int			ret;
@@ -675,11 +635,11 @@ parse_hba(List *line, int line_num, hbaPort *port,
 			goto hba_syntax;
 		db = lfirst(line_item);
 
-		/* Get the user. */
+		/* Get the role. */
 		line_item = lnext(line_item);
 		if (!line_item)
 			goto hba_syntax;
-		user = lfirst(line_item);
+		role = lfirst(line_item);
 
 		line_item = lnext(line_item);
 		if (!line_item)
@@ -735,11 +695,11 @@ parse_hba(List *line, int line_num, hbaPort *port,
 			goto hba_syntax;
 		db = lfirst(line_item);
 
-		/* Get the user. */
+		/* Get the role. */
 		line_item = lnext(line_item);
 		if (!line_item)
 			goto hba_syntax;
-		user = lfirst(line_item);
+		role = lfirst(line_item);
 
 		/* Read the IP address field. (with or without CIDR netmask) */
 		line_item = lnext(line_item);
@@ -861,10 +821,10 @@ parse_hba(List *line, int line_num, hbaPort *port,
 	else
 		goto hba_syntax;
 
-	/* Does the entry match database and user? */
+	/* Does the entry match database and role? */
 	if (!check_db(port->database_name, port->user_name, db))
 		return;
-	if (!check_user(port->user_name, user))
+	if (!check_role(port->user_name, role))
 		return;
 
 	/* Success */
@@ -923,27 +883,27 @@ check_hba(hbaPort *port)
 
 
 /*
- *	 Load group/user name mapping file
+ *	 Load role/password mapping file
  */
 void
-load_group(void)
+load_role(void)
 {
 	char	   *filename;
-	FILE	   *group_file;
+	FILE	   *role_file;
 
 	/* Discard any old data */
-	if (group_lines || group_line_nums)
-		free_lines(&group_lines, &group_line_nums);
-	if (group_sorted)
-		pfree(group_sorted);
-	group_sorted = NULL;
-	group_length = 0;
+	if (role_lines || role_line_nums)
+		free_lines(&role_lines, &role_line_nums);
+	if (role_sorted) 
+		pfree(role_sorted);
+	role_sorted = NULL;
+	role_length = 0;
 
 	/* Read in the file contents */
-	filename = group_getflatfilename();
-	group_file = AllocateFile(filename, "r");
+	filename = auth_getflatfilename();
+	role_file = AllocateFile(filename, "r");
 
-	if (group_file == NULL)
+	if (role_file == NULL)
 	{
 		/* no complaint if not there */
 		if (errno != ENOENT)
@@ -954,84 +914,25 @@ load_group(void)
 		return;
 	}
 
-	tokenize_file(filename, group_file, &group_lines, &group_line_nums);
+	tokenize_file(filename, role_file, &role_lines, &role_line_nums);
 
-	FreeFile(group_file);
+	FreeFile(role_file);
 	pfree(filename);
 
-	/* create sorted lines for binary searching */
-	group_length = list_length(group_lines);
-	if (group_length)
+	/* create array for binary searching */
+	role_length = list_length(role_lines);
+	if (role_length)
 	{
-		int			i = 0;
-		ListCell   *line;
+		int		i = 0;
+		ListCell	*line;
 
-		group_sorted = palloc(group_length * sizeof(List *));
+		role_sorted = palloc(role_length * sizeof(List *));
+		foreach(line, role_lines)
+		{
+			role_sorted[i++] = lfirst(line);
+		}
 
-		foreach(line, group_lines)
-			group_sorted[i++] = lfirst(line);
-
-		qsort((void *) group_sorted,
-			  group_length,
-			  sizeof(List *),
-			  user_group_qsort_cmp);
-	}
-}
-
-
-/*
- *	 Load user/password mapping file
- */
-void
-load_user(void)
-{
-	char	   *filename;
-	FILE	   *user_file;
-
-	/* Discard any old data */
-	if (user_lines || user_line_nums)
-		free_lines(&user_lines, &user_line_nums);
-	if (user_sorted)
-		pfree(user_sorted);
-	user_sorted = NULL;
-	user_length = 0;
-
-	/* Read in the file contents */
-	filename = user_getflatfilename();
-	user_file = AllocateFile(filename, "r");
-
-	if (user_file == NULL)
-	{
-		/* no complaint if not there */
-		if (errno != ENOENT)
-			ereport(LOG,
-					(errcode_for_file_access(),
-					 errmsg("could not open file \"%s\": %m", filename)));
-		pfree(filename);
-		return;
-	}
-
-	tokenize_file(filename, user_file, &user_lines, &user_line_nums);
-
-	FreeFile(user_file);
-	pfree(filename);
-
-	/* create sorted lines for binary searching */
-	user_length = list_length(user_lines);
-	if (user_length)
-	{
-		int			i = 0;
-		ListCell   *line;
-
-		user_sorted = palloc(user_length * sizeof(List *));
-
-		foreach(line, user_lines)
-			user_sorted[i++] = lfirst(line);
-
-		qsort((void *) user_sorted,
-			  user_length,
-			  sizeof(List *),
-			  user_group_qsort_cmp);
+		/* We assume the flat file was written already-sorted */
 	}
 }
 
@@ -1108,18 +1009,18 @@ read_pg_database_line(FILE *fp, char *dbname,
 /*
  *	Process one line from the ident config file.
  *
- *	Take the line and compare it to the needed map, pg_user and ident_user.
+ *	Take the line and compare it to the needed map, pg_role and ident_user.
  *	*found_p and *error_p are set according to our results.
  */
 static void
 parse_ident_usermap(List *line, int line_number, const char *usermap_name,
-					const char *pg_user, const char *ident_user,
+					const char *pg_role, const char *ident_user,
 					bool *found_p, bool *error_p)
 {
 	ListCell   *line_item;
 	char	   *token;
 	char	   *file_map;
-	char	   *file_pguser;
+	char	   *file_pgrole;
 	char	   *file_ident_user;
 
 	*found_p = false;
@@ -1139,16 +1040,16 @@ parse_ident_usermap(List *line, int line_number, const char *usermap_name,
 	token = lfirst(line_item);
 	file_ident_user = token;
 
-	/* Get the PG username token */
+	/* Get the PG rolename token */
 	line_item = lnext(line_item);
 	if (!line_item)
 		goto ident_syntax;
 	token = lfirst(line_item);
-	file_pguser = token;
+	file_pgrole = token;
 
 	/* Match? */
 	if (strcmp(file_map, usermap_name) == 0 &&
-		strcmp(file_pguser, pg_user) == 0 &&
+		strcmp(file_pgrole, pg_role) == 0 &&
 		strcmp(file_ident_user, ident_user) == 0)
 		*found_p = true;
 
@@ -1167,17 +1068,17 @@ ident_syntax:
  *	Scan the (pre-parsed) ident usermap file line by line, looking for a match
  *
  *	See if the user with ident username "ident_user" is allowed to act
- *	as Postgres user "pguser" according to usermap "usermap_name".
+ *	as Postgres user "pgrole" according to usermap "usermap_name".
  *
- *	Special case: For usermap "sameuser", don't look in the usermap
- *	file.  That's an implied map where "pguser" must be identical to
+ *	Special case: For usermap "samerole", don't look in the usermap
+ *	file.  That's an implied map where "pgrole" must be identical to
  *	"ident_user" in order to be authorized.
  *
  *	Iff authorized, return true.
  */
 static bool
 check_ident_usermap(const char *usermap_name,
-					const char *pg_user,
+					const char *pg_role,
 					const char *ident_user)
 {
 	bool		found_entry = false,
@@ -1190,9 +1091,10 @@ check_ident_usermap(const char *usermap_name,
 		errmsg("cannot use Ident authentication without usermap field")));
 		found_entry = false;
 	}
-	else if (strcmp(usermap_name, "sameuser\n") == 0)
+	else if (strcmp(usermap_name, "sameuser\n") == 0 ||
+			 strcmp(usermap_name, "samerole\n") == 0)
 	{
-		if (strcmp(pg_user, ident_user) == 0)
+		if (strcmp(pg_role, ident_user) == 0)
 			found_entry = true;
 		else
 			found_entry = false;
@@ -1205,7 +1107,7 @@ check_ident_usermap(const char *usermap_name,
 		forboth(line_cell, ident_lines, num_cell, ident_line_nums)
 		{
 			parse_ident_usermap(lfirst(line_cell), lfirst_int(num_cell),
-								usermap_name, pg_user, ident_user,
+								usermap_name, pg_role, ident_user,
 								&found_entry, &error);
 			if (found_entry || error)
 				break;

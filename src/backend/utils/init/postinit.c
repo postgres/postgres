@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.149 2005/06/24 01:06:26 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.150 2005/06/28 05:09:02 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -20,11 +20,11 @@
 #include <math.h>
 #include <unistd.h>
 
-#include "catalog/catalog.h"
 #include "access/heapam.h"
+#include "catalog/catalog.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_authid.h"
 #include "catalog/pg_database.h"
-#include "catalog/pg_shadow.h"
 #include "catalog/pg_tablespace.h"
 #include "libpq/hba.h"
 #include "mb/pg_wchar.h"
@@ -37,6 +37,7 @@
 #include "storage/procarray.h"
 #include "storage/sinval.h"
 #include "storage/smgr.h"
+#include "utils/acl.h"
 #include "utils/flatfiles.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
@@ -49,7 +50,7 @@ static bool FindMyDatabase(const char *name, Oid *db_id, Oid *db_tablespace);
 static void ReverifyMyDatabase(const char *name);
 static void InitCommunication(void);
 static void ShutdownPostgres(int code, Datum arg);
-static bool ThereIsAtLeastOneUser(void);
+static bool ThereIsAtLeastOneRole(void);
 
 
 /*** InitPostgres support ***/
@@ -415,12 +416,12 @@ InitPostgres(const char *dbname, const char *username)
 	else if (!IsUnderPostmaster)
 	{
 		InitializeSessionUserIdStandalone();
-		if (!ThereIsAtLeastOneUser())
+		if (!ThereIsAtLeastOneRole())
 			ereport(WARNING,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-				  errmsg("no users are defined in this database system"),
-					 errhint("You should immediately run CREATE USER \"%s\" WITH SYSID %d CREATEUSER;.",
-							 username, BOOTSTRAP_USESYSID)));
+					 errmsg("no roles are defined in this database system"),
+					 errhint("You should immediately run CREATE USER \"%s\" CREATEUSER;.",
+							 username)));
 	}
 	else
 	{
@@ -468,6 +469,9 @@ InitPostgres(const char *dbname, const char *username)
 
 	/* set default namespace search path */
 	InitializeSearchPath();
+
+	/* set up ACL framework (currently just sets RolMemCache callback) */
+	InitializeAcl();
 
 	/* initialize client encoding */
 	InitializeClientEncoding();
@@ -530,22 +534,22 @@ ShutdownPostgres(int code, Datum arg)
 
 
 /*
- * Returns true if at least one user is defined in this database cluster.
+ * Returns true if at least one role is defined in this database cluster.
  */
 static bool
-ThereIsAtLeastOneUser(void)
+ThereIsAtLeastOneRole(void)
 {
-	Relation	pg_shadow_rel;
+	Relation	pg_authid_rel;
 	HeapScanDesc scan;
 	bool		result;
 
-	pg_shadow_rel = heap_open(ShadowRelationId, AccessExclusiveLock);
+	pg_authid_rel = heap_open(AuthIdRelationId, AccessExclusiveLock);
 
-	scan = heap_beginscan(pg_shadow_rel, SnapshotNow, 0, NULL);
+	scan = heap_beginscan(pg_authid_rel, SnapshotNow, 0, NULL);
 	result = (heap_getnext(scan, ForwardScanDirection) != NULL);
 
 	heap_endscan(scan);
-	heap_close(pg_shadow_rel, AccessExclusiveLock);
+	heap_close(pg_authid_rel, AccessExclusiveLock);
 
 	return result;
 }

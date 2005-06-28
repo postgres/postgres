@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.72 2005/05/06 17:24:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.73 2005/06/28 05:08:54 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -2016,7 +2016,7 @@ GetDomainConstraints(Oid typeOid)
  * Change the owner of a type.
  */
 void
-AlterTypeOwner(List *names, AclId newOwnerSysId)
+AlterTypeOwner(List *names, Oid newOwnerId)
 {
 	TypeName   *typename;
 	Oid			typeOid;
@@ -2063,7 +2063,7 @@ AlterTypeOwner(List *names, AclId newOwnerSysId)
 	 * If the new owner is the same as the existing owner, consider the
 	 * command to have succeeded.  This is for dump restoration purposes.
 	 */
-	if (typTup->typowner != newOwnerSysId)
+	if (typTup->typowner != newOwnerId)
 	{
 		/* Otherwise, must be superuser to change object ownership */
 		if (!superuser())
@@ -2075,7 +2075,7 @@ AlterTypeOwner(List *names, AclId newOwnerSysId)
 		 * Modify the owner --- okay to scribble on typTup because it's a
 		 * copy
 		 */
-		typTup->typowner = newOwnerSysId;
+		typTup->typowner = newOwnerId;
 
 		simple_heap_update(rel, &tup->t_self, tup);
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/tablespace.h,v 1.9 2005/06/06 17:01:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/tablespace.h,v 1.10 2005/06/28 05:09:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@ typedef struct xl_tblspc_drop_rec
 extern void CreateTableSpace(CreateTableSpaceStmt *stmt);
 extern void DropTableSpace(DropTableSpaceStmt *stmt);
 extern void RenameTableSpace(const char *oldname, const char *newname);
-extern void AlterTableSpaceOwner(const char *name, AclId newOwnerSysId);
+extern void AlterTableSpaceOwner(const char *name, Oid newOwnerId);
 
 extern void TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo);
 

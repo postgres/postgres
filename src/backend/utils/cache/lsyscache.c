@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.125 2005/05/01 18:56:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.126 2005/06/28 05:09:01 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -24,8 +24,6 @@
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
-#include "catalog/pg_shadow.h"
-#include "catalog/pg_group.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
@@ -2010,66 +2008,35 @@ get_namespace_name(Oid nspid)
 		return NULL;
 }
 
-/*				---------- PG_SHADOW CACHE ----------					 */
+/*				---------- PG_AUTHID CACHE ----------					 */
 
 /*
- * get_usesysid
- *
- *	  Given a user name, look up the user's sysid.
- *	  Raises an error if no such user (rather than returning zero,
- *	  which might possibly be a valid usesysid).
- *
- * Note: the type of usesysid is currently int4, but may change to Oid
- * someday.  It'd be reasonable to return zero on failure if we were
- * using Oid ...
+ * get_roleid
+ *	  Given a role name, look up the role's OID.
+ *	  Returns InvalidOid if no such role.
  */
-AclId
-get_usesysid(const char *username)
+Oid
+get_roleid(const char *rolname)
 {
-	AclId		userId;
-	HeapTuple	userTup;
-
-	userTup = SearchSysCache(SHADOWNAME,
-							 PointerGetDatum(username),
-							 0, 0, 0);
-	if (!HeapTupleIsValid(userTup))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("user \"%s\" does not exist", username)));
-
-	userId = ((Form_pg_shadow) GETSTRUCT(userTup))->usesysid;
-
-	ReleaseSysCache(userTup);
-
-	return userId;
+	return GetSysCacheOid(AUTHNAME,
+						  PointerGetDatum(rolname),
+						  0, 0, 0);
 }
 
 /*
- * get_grosysid
- *
- *	  Given a group name, look up the group's sysid.
- *	  Raises an error if no such group (rather than returning zero,
- *	  which might possibly be a valid grosysid).
- *
+ * get_roleid_checked
+ *	  Given a role name, look up the role's OID.
+ *	  ereports if no such role.
  */
-AclId
-get_grosysid(char *groname)
+Oid
+get_roleid_checked(const char *rolname)
 {
-	AclId		groupId;
-	HeapTuple	groupTup;
+	Oid		roleid;
 
-	groupTup = SearchSysCache(GRONAME,
-						   PointerGetDatum(groname),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(groupTup))
+	roleid = get_roleid(rolname);
+	if (!OidIsValid(roleid))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("group \"%s\" does not exist", groname)));
-
-	groupId = ((Form_pg_group) GETSTRUCT(groupTup))->grosysid;
-
-	ReleaseSysCache(groupTup);
-
-	return groupId;
+				 errmsg("role \"%s\" does not exist", rolname)));
+	return roleid;
 }
-

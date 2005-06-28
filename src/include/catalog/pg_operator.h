@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.134 2005/06/24 20:53:31 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.135 2005/06/28 05:09:07 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -42,7 +42,7 @@ CATALOG(pg_operator,2617)
 {
 	NameData	oprname;		/* name of operator */
 	Oid			oprnamespace;	/* OID of namespace containing this oper */
-	int4		oprowner;		/* oper owner */
+	Oid			oprowner;		/* operator owner */
 	char		oprkind;		/* 'l', 'r', or 'b' */
 	bool		oprcanhash;		/* can be used in hash join? */
 	Oid			oprleft;		/* left arg type, or 0 if 'l' oprkind */

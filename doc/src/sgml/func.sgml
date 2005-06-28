@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.260 2005/06/26 22:05:35 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.261 2005/06/28 05:08:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -8443,8 +8443,8 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
    <para>
     <function>has_table_privilege</function> checks whether a user
     can access a table in a particular way.  The user can be
-    specified by name or by ID
-    (<literal>pg_user.usesysid</literal>), or if the argument is
+    specified by name or by OID
+    (<literal>pg_authid.oid</literal>), or if the argument is
     omitted
     <function>current_user</function> is assumed.  The table can be specified
     by name or by OID.  (Thus, there are actually six variants of
@@ -8756,9 +8756,9 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        in it refer to the relation indicated by the second parameter</entry>
       </row>
       <row>
-       <entry><literal><function>pg_get_userbyid</function>(<parameter>userid</parameter>)</literal></entry>
+       <entry><literal><function>pg_get_userbyid</function>(<parameter>roleid</parameter>)</literal></entry>
        <entry><type>name</type></entry>
-       <entry>get user name with given ID</entry>
+       <entry>get role name with given ID</entry>
       </row>
       <row>
        <entry><literal><function>pg_get_serial_sequence</function>(<parameter>table_name</parameter>, <parameter>column_name</parameter>)</literal></entry>
@@ -8805,7 +8805,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
 
   <para>
    <function>pg_get_userbyid</function>
-   extracts a user's name given a user ID number.
+   extracts a role's name given its OID.
    <function>pg_get_serial_sequence</function>
    fetches the name of the sequence associated with a serial or
    bigserial column.  The name is suitably formatted

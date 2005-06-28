@@ -61,7 +61,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.133 2005/05/06 17:24:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.134 2005/06/28 05:08:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1270,7 +1270,7 @@ ExecInitAgg(Agg *node, EState *estate)
 		/* Check that aggregate owner has permission to call component fns */
 		{
 			HeapTuple	procTuple;
-			AclId		aggOwner;
+			Oid		aggOwner;
 
 			procTuple = SearchSysCache(PROCOID,
 									   ObjectIdGetDatum(aggref->aggfnoid),

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.238 2005/06/22 21:14:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.239 2005/06/28 05:09:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,6 @@
 #include "access/twophase.h"
 #include "catalog/catalog.h"
 #include "catalog/namespace.h"
-#include "catalog/pg_shadow.h"
 #include "commands/alter.h"
 #include "commands/async.h"
 #include "commands/cluster.h"
@@ -279,12 +278,11 @@ check_xact_readonly(Node *parsetree)
 		case T_AlterDatabaseSetStmt:
 		case T_AlterDomainStmt:
 		case T_AlterFunctionStmt:
-		case T_AlterGroupStmt:
+		case T_AlterRoleStmt:
+		case T_AlterRoleSetStmt:
 		case T_AlterOwnerStmt:
 		case T_AlterSeqStmt:
 		case T_AlterTableStmt:
-		case T_AlterUserStmt:
-		case T_AlterUserSetStmt:
 		case T_RenameStmt:
 		case T_CommentStmt:
 		case T_DefineStmt:
@@ -293,7 +291,7 @@ check_xact_readonly(Node *parsetree)
 		case T_CreatedbStmt:
 		case T_CreateDomainStmt:
 		case T_CreateFunctionStmt:
-		case T_CreateGroupStmt:
+		case T_CreateRoleStmt:
 		case T_IndexStmt:
 		case T_CreatePLangStmt:
 		case T_CreateOpClassStmt:
@@ -304,7 +302,6 @@ check_xact_readonly(Node *parsetree)
 		case T_CreateTableSpaceStmt:
 		case T_CreateTrigStmt:
 		case T_CompositeTypeStmt:
-		case T_CreateUserStmt:
 		case T_ViewStmt:
 		case T_RemoveAggrStmt:
 		case T_DropCastStmt:
@@ -312,13 +309,13 @@ check_xact_readonly(Node *parsetree)
 		case T_DropdbStmt:
 		case T_DropTableSpaceStmt:
 		case T_RemoveFuncStmt:
-		case T_DropGroupStmt:
+		case T_DropRoleStmt:
 		case T_DropPLangStmt:
 		case T_RemoveOperStmt:
 		case T_RemoveOpClassStmt:
 		case T_DropPropertyStmt:
-		case T_DropUserStmt:
 		case T_GrantStmt:
+		case T_GrantRoleStmt:
 		case T_TruncateStmt:
 			ereport(ERROR,
 					(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
@@ -679,9 +676,12 @@ ProcessUtility(Node *parsetree,
 			}
 			break;
 
-
 		case T_GrantStmt:
 			ExecuteGrantStmt((GrantStmt *) parsetree);
+			break;
+
+		case T_GrantRoleStmt:
+			GrantRole((GrantRoleStmt *) parsetree);
 			break;
 
 			/*
@@ -958,22 +958,22 @@ ProcessUtility(Node *parsetree,
 			break;
 
 			/*
-			 * ******************************** USER statements ****
+			 * ******************************** ROLE statements ****
 			 */
-		case T_CreateUserStmt:
-			CreateUser((CreateUserStmt *) parsetree);
+		case T_CreateRoleStmt:
+			CreateRole((CreateRoleStmt *) parsetree);
 			break;
 
-		case T_AlterUserStmt:
-			AlterUser((AlterUserStmt *) parsetree);
+		case T_AlterRoleStmt:
+			AlterRole((AlterRoleStmt *) parsetree);
 			break;
 
-		case T_AlterUserSetStmt:
-			AlterUserSet((AlterUserSetStmt *) parsetree);
+		case T_AlterRoleSetStmt:
+			AlterRoleSet((AlterRoleSetStmt *) parsetree);
 			break;
 
-		case T_DropUserStmt:
-			DropUser((DropUserStmt *) parsetree);
+		case T_DropRoleStmt:
+			DropRole((DropRoleStmt *) parsetree);
 			break;
 
 		case T_LockStmt:
@@ -982,18 +982,6 @@ ProcessUtility(Node *parsetree,
 
 		case T_ConstraintsSetStmt:
 			AfterTriggerSetState((ConstraintsSetStmt *) parsetree);
-			break;
-
-		case T_CreateGroupStmt:
-			CreateGroup((CreateGroupStmt *) parsetree);
-			break;
-
-		case T_AlterGroupStmt:
-			AlterGroup((AlterGroupStmt *) parsetree, "ALTER GROUP");
-			break;
-
-		case T_DropGroupStmt:
-			DropGroup((DropGroupStmt *) parsetree);
 			break;
 
 		case T_CheckPointStmt:
@@ -1350,9 +1338,6 @@ CreateCommandTag(Node *parsetree)
 				case OBJECT_FUNCTION:
 					tag = "ALTER FUNCTION";
 					break;
-				case OBJECT_GROUP:
-					tag = "ALTER GROUP";
-					break;
 				case OBJECT_INDEX:
 					tag = "ALTER INDEX";
 					break;
@@ -1362,6 +1347,9 @@ CreateCommandTag(Node *parsetree)
 				case OBJECT_OPCLASS:
 					tag = "ALTER OPERATOR CLASS";
 					break;
+				case OBJECT_ROLE:
+					tag = "ALTER ROLE";
+					break;
 				case OBJECT_SCHEMA:
 					tag = "ALTER SCHEMA";
 					break;
@@ -1370,9 +1358,6 @@ CreateCommandTag(Node *parsetree)
 					break;
 				case OBJECT_TRIGGER:
 					tag = "ALTER TRIGGER";
-					break;
-				case OBJECT_USER:
-					tag = "ALTER USER";
 					break;
 				default:
 					tag = "ALTER TABLE";
@@ -1447,6 +1432,14 @@ CreateCommandTag(Node *parsetree)
 				GrantStmt  *stmt = (GrantStmt *) parsetree;
 
 				tag = (stmt->is_grant) ? "GRANT" : "REVOKE";
+			}
+			break;
+
+		case T_GrantRoleStmt:
+			{
+				GrantRoleStmt  *stmt = (GrantRoleStmt *) parsetree;
+
+				tag = (stmt->is_grant) ? "GRANT ROLE" : "REVOKE ROLE";
 			}
 			break;
 
@@ -1588,20 +1581,20 @@ CreateCommandTag(Node *parsetree)
 			tag = "DROP LANGUAGE";
 			break;
 
-		case T_CreateUserStmt:
-			tag = "CREATE USER";
+		case T_CreateRoleStmt:
+			tag = "CREATE ROLE";
 			break;
 
-		case T_AlterUserStmt:
-			tag = "ALTER USER";
+		case T_AlterRoleStmt:
+			tag = "ALTER ROLE";
 			break;
 
-		case T_AlterUserSetStmt:
-			tag = "ALTER USER";
+		case T_AlterRoleSetStmt:
+			tag = "ALTER ROLE";
 			break;
 
-		case T_DropUserStmt:
-			tag = "DROP USER";
+		case T_DropRoleStmt:
+			tag = "DROP ROLE";
 			break;
 
 		case T_LockStmt:
@@ -1610,18 +1603,6 @@ CreateCommandTag(Node *parsetree)
 
 		case T_ConstraintsSetStmt:
 			tag = "SET CONSTRAINTS";
-			break;
-
-		case T_CreateGroupStmt:
-			tag = "CREATE GROUP";
-			break;
-
-		case T_AlterGroupStmt:
-			tag = "ALTER GROUP";
-			break;
-
-		case T_DropGroupStmt:
-			tag = "DROP GROUP";
 			break;
 
 		case T_CheckPointStmt:

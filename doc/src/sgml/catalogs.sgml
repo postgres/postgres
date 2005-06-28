@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.105 2005/06/18 19:33:41 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.106 2005/06/28 05:08:50 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -79,6 +79,16 @@
      </row>
 
      <row>
+      <entry><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link></entry>
+      <entry>authorization identifiers (roles)</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="catalog-pg-auth-members"><structname>pg_auth_members</structname></link></entry>
+      <entry>authorization identifier membership relationships</entry>
+     </row>
+
+     <row>
       <entry><link linkend="catalog-pg-cast"><structname>pg_cast</structname></link></entry>
       <entry>casts (data type conversions)</entry>
      </row>
@@ -111,11 +121,6 @@
      <row>
       <entry><link linkend="catalog-pg-description"><structname>pg_description</structname></link></entry>
       <entry>descriptions or comments on database objects</entry>
-     </row>
-
-     <row>
-      <entry><link linkend="catalog-pg-group"><structname>pg_group</structname></link></entry>
-      <entry>groups of database users</entry>
      </row>
 
      <row>
@@ -166,11 +171,6 @@
      <row>
       <entry><link linkend="catalog-pg-rewrite"><structname>pg_rewrite</structname></link></entry>
       <entry>query rewrite rules</entry>
-     </row>
-
-     <row>
-      <entry><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link></entry>
-      <entry>database users</entry>
      </row>
 
      <row>
@@ -902,6 +902,201 @@
  </sect1>
 
 
+ <sect1 id="catalog-pg-authid">
+  <title><structname>pg_authid</structname></title>
+
+  <indexterm zone="catalog-pg-authid">
+   <primary>pg_authid</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_authid</structname> contains information about
+   database authorization identifiers (roles).  A role subsumes the concepts
+   of <quote>users</> and <quote>groups</>.  A user is essentially just a
+   role with the <structfield>rolcanlogin</> flag set.  Any role (with or
+   without <structfield>rolcanlogin</>) may have other roles as members; see
+   <link linkend="catalog-pg-auth-members"><structname>pg_auth_members</structname></link>.
+  </para>
+
+  <para>
+   Since this catalog contains passwords, it must not be publicly readable.
+   <link linkend="view-pg-roles"><structname>pg_roles</structname></link>
+   is a publicly readable view on
+   <structname>pg_authid</structname> that blanks out the password field.
+  </para>
+
+  <para>
+   <xref linkend="user-manag"> contains detailed information about user and
+   privilege management.
+  </para>
+
+  <para>
+   Because user identities are cluster-wide,
+   <structname>pg_authid</structname>
+   is shared across all databases of a cluster: there is only one
+   copy of <structname>pg_authid</structname> per cluster, not
+   one per database.
+  </para>
+
+  <table>
+   <title><structname>pg_authid</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>rolname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Role name</entry>
+     </row>
+
+     <row>
+      <entry><structfield>rolsuper</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>Role has superuser privileges</entry>
+     </row>
+
+     <row>
+      <entry><structfield>rolcreaterole</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>Role may create more roles</entry>
+     </row>
+
+     <row>
+      <entry><structfield>rolcreatedb</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>Role may create databases</entry>
+     </row>
+
+     <row>
+      <entry><structfield>rolcatupdate</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       Role may update system catalogs directly.  (Even a superuser may not do
+       this unless this column is true.)
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>rolcanlogin</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       Role may log in, that is, this role can be given as the initial
+       session authorization identifier.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>rolpassword</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>Password (possibly encrypted); NULL if none</entry>
+     </row>
+
+     <row>
+      <entry><structfield>rolvaliduntil</structfield></entry>
+      <entry><type>timestamptz</type></entry>
+      <entry></entry>
+      <entry>Password expiry time (only used for password authentication);
+       NULL if no expiration</entry>
+     </row>
+
+     <row>
+      <entry><structfield>rolconfig</structfield></entry>
+      <entry><type>text[]</type></entry>
+      <entry></entry>
+      <entry>Session defaults for run-time configuration variables</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </sect1>
+
+
+ <sect1 id="catalog-pg-auth-members">
+  <title><structname>pg_auth_members</structname></title>
+
+  <indexterm zone="catalog-pg-auth-members">
+   <primary>pg_auth_members</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_auth_members</structname> shows the membership
+   relations between roles.  Any non-circular set of relationships is allowed.
+  </para>
+
+  <para>
+   Because user identities are cluster-wide,
+   <structname>pg_auth_members</structname>
+   is shared across all databases of a cluster: there is only one
+   copy of <structname>pg_auth_members</structname> per cluster, not
+   one per database.
+  </para>
+
+  <table>
+   <title><structname>pg_auth_members</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>roleid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>ID of a role that has a member</entry>
+     </row>
+
+     <row>
+      <entry><structfield>member</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>ID of a role that is a member of <structfield>roleid</></entry>
+     </row>
+
+     <row>
+      <entry><structfield>grantor</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>ID of the role that granted this membership</entry>
+     </row>
+
+     <row>
+      <entry><structfield>admin_option</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>True if <structfield>member</> may grant membership in
+       <structfield>roleid</> to others</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </sect1>
+
+
  <sect1 id="catalog-pg-cast">
   <title><structname>pg_cast</structname></title>
 
@@ -1065,8 +1260,8 @@
 
      <row>
       <entry><structfield>relowner</structfield></entry>
-      <entry><type>int4</type></entry>
-      <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usesysid</literal></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
       <entry>Owner of the relation</entry>
      </row>
 
@@ -1492,8 +1687,8 @@
 
      <row>
       <entry><structfield>conowner</structfield></entry>
-      <entry><type>int4</type></entry>
-      <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usesysid</literal></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
       <entry>Owner of the conversion</entry>
      </row>
 
@@ -1576,8 +1771,8 @@
 
      <row>
       <entry><structfield>datdba</structfield></entry>
-      <entry><type>int4</type></entry>
-      <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usesysid</literal></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
       <entry>Owner of the database, usually the user who created it</entry>
      </row>
 
@@ -1909,69 +2104,6 @@
       <entry><type>text</type></entry>
       <entry></entry>
       <entry>Arbitrary text that serves as the description of this object.</entry>
-     </row>
-    </tbody>
-   </tgroup>
-  </table>
-
- </sect1>
-
-
- <sect1 id="catalog-pg-group">
-  <title><structname>pg_group</structname></title>
-
-  <indexterm zone="catalog-pg-group">
-   <primary>pg_group</primary>
-  </indexterm>
-
-  <para>
-   The catalog <structname>pg_group</structname> defines groups and stores what users belong to what
-   groups.  Groups are created with the <command>CREATE
-   GROUP</command> command.  Consult <xref linkend="user-manag"> for information
-   about user privilege management.
-  </para>
-
-  <para>
-   Because user and group identities are cluster-wide,
-   <structname>pg_group</structname>
-   is shared across all databases of a cluster: there is only one
-   copy of <structname>pg_group</structname> per cluster, not
-   one per database.
-  </para>
-
-  <table>
-   <title><structname>pg_group</> Columns</title>
-
-   <tgroup cols=4>
-    <thead>
-     <row>
-      <entry>Name</entry>
-      <entry>Type</entry>
-      <entry>References</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-
-    <tbody>
-     <row>
-      <entry><structfield>groname</structfield></entry>
-      <entry><type>name</type></entry>
-      <entry></entry>
-      <entry>Name of the group</entry>
-     </row>
-
-     <row>
-      <entry><structfield>grosysid</structfield></entry>
-      <entry><type>int4</type></entry>
-      <entry></entry>
-      <entry>An arbitrary number to identify this group</entry>
-     </row>
-
-     <row>
-      <entry><structfield>grolist</structfield></entry>
-      <entry><type>int4[]</type></entry>
-      <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usesysid</literal></entry>
-      <entry>An array containing the IDs of the users in this group</entry>
      </row>
     </tbody>
    </tgroup>
@@ -2437,8 +2569,8 @@
 
      <row>
       <entry><structfield>nspowner</structfield></entry>
-      <entry><type>int4</type></entry>
-      <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usesysid</literal></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
       <entry>Owner of the namespace</entry>
      </row>
 
@@ -2517,9 +2649,9 @@
 
      <row>
       <entry><structfield>opcowner</structfield></entry>
-      <entry><type>int4</type></entry>
-      <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usesysid</literal></entry>
-      <entry>Operator class owner</entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>Owner of the operator class</entry>
      </row>
 
      <row>
@@ -2606,8 +2738,8 @@
 
      <row>
       <entry><structfield>oprowner</structfield></entry>
-      <entry><type>int4</type></entry>
-      <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usesysid</literal></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
       <entry>Owner of the operator</entry>
      </row>
 
@@ -2786,8 +2918,8 @@
 
      <row>
       <entry><structfield>proowner</structfield></entry>
-      <entry><type>int4</type></entry>
-      <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usesysid</literal></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
       <entry>Owner of the function</entry>
      </row>
 
@@ -3066,114 +3198,6 @@
  </sect1>
 
 
- <sect1 id="catalog-pg-shadow">
-  <title><structname>pg_shadow</structname></title>
-
-  <indexterm zone="catalog-pg-shadow">
-   <primary>pg_shadow</primary>
-  </indexterm>
-
-  <para>
-   The catalog <structname>pg_shadow</structname> contains information about
-   database users.  The name stems from the fact that this table
-   should not be readable by the public since it contains passwords.
-   <link linkend="view-pg-user"><structname>pg_user</structname></link>
-   is a publicly readable view on
-   <structname>pg_shadow</structname> that blanks out the password field.
-  </para>
-
-  <para>
-   <xref linkend="user-manag"> contains detailed information about user and
-   privilege management.
-  </para>
-
-  <para>
-   Because user identities are cluster-wide,
-   <structname>pg_shadow</structname>
-   is shared across all databases of a cluster: there is only one
-   copy of <structname>pg_shadow</structname> per cluster, not
-   one per database.
-  </para>
-
-  <table>
-   <title><structname>pg_shadow</> Columns</title>
-
-   <tgroup cols=4>
-    <thead>
-     <row>
-      <entry>Name</entry>
-      <entry>Type</entry>
-      <entry>References</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-
-    <tbody>
-     <row>
-      <entry><structfield>usename</structfield></entry>
-      <entry><type>name</type></entry>
-      <entry></entry>
-      <entry>User name</entry>
-     </row>
-
-     <row>
-      <entry><structfield>usesysid</structfield></entry>
-      <entry><type>int4</type></entry>
-      <entry></entry>
-      <entry>User ID (arbitrary number used to reference this user)</entry>
-     </row>
-
-     <row>
-      <entry><structfield>usecreatedb</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>User may create databases</entry>
-     </row>
-
-     <row>
-      <entry><structfield>usesuper</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>User is a superuser</entry>
-     </row>
-
-     <row>
-      <entry><structfield>usecatupd</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>
-       User may update system catalogs.  (Even a superuser may not do
-       this unless this column is true.)
-      </entry>
-     </row>
-
-     <row>
-      <entry><structfield>passwd</structfield></entry>
-      <entry><type>text</type></entry>
-      <entry></entry>
-      <entry>Password (possibly encrypted)</entry>
-     </row>
-
-     <row>
-      <entry><structfield>valuntil</structfield></entry>
-      <entry><type>abstime</type></entry>
-      <entry></entry>
-      <entry>Password expiry time (only used for password authentication)</entry>
-     </row>
-
-     <row>
-      <entry><structfield>useconfig</structfield></entry>
-      <entry><type>text[]</type></entry>
-      <entry></entry>
-      <entry>Session defaults for run-time configuration variables</entry>
-     </row>
-    </tbody>
-   </tgroup>
-  </table>
-
- </sect1>
-
-
  <sect1 id="catalog-pg-statistic">
   <title><structname>pg_statistic</structname></title>
 
@@ -3374,8 +3398,8 @@
 
      <row>
       <entry><structfield>spcowner</structfield></entry>
-      <entry><type>int4</type></entry>
-      <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usesysid</literal></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
       <entry>Owner of the tablespace, usually the user who created it</entry>
      </row>
 
@@ -3586,8 +3610,8 @@
 
      <row>
       <entry><structfield>typowner</structfield></entry>
-      <entry><type>int4</type></entry>
-      <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usesysid</literal></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
       <entry>Owner of the type</entry>
      </row>
 
@@ -3923,6 +3947,11 @@
 
     <tbody>
      <row>
+      <entry><link linkend="view-pg-group"><structname>pg_group</structname></link></entry>
+      <entry>groups of database users</entry>
+     </row>
+
+     <row>
       <entry><link linkend="view-pg-indexes"><structname>pg_indexes</structname></link></entry>
       <entry>indexes</entry>
      </row>
@@ -3938,6 +3967,11 @@
      </row>
 
      <row>
+      <entry><link linkend="view-pg-roles"><structname>pg_roles</structname></link></entry>
+      <entry>database roles</entry>
+     </row>
+
+     <row>
       <entry><link linkend="view-pg-rules"><structname>pg_rules</structname></link></entry>
       <entry>rules</entry>
      </row>
@@ -3945,6 +3979,11 @@
      <row>
       <entry><link linkend="view-pg-settings"><structname>pg_settings</structname></link></entry>
       <entry>parameter settings</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-shadow"><structname>pg_shadow</structname></link></entry>
+      <entry>database users</entry>
      </row>
 
      <row>
@@ -3970,6 +4009,62 @@
     </tbody>
    </tgroup>
   </table>
+ </sect1>
+
+ <sect1 id="view-pg-group">
+  <title><structname>pg_group</structname></title>
+
+  <indexterm zone="view-pg-group">
+   <primary>pg_group</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_group</structname> exists for backwards
+   compatibility: it emulates a catalog that existed in
+   <productname>PostgreSQL</productname> before version 8.1.
+   It shows the names and members of all roles that are marked as not
+   <structfield>rolcanlogin</>, which is an approximation to the set
+   of roles that are being used as groups.
+  </para>
+
+  <table>
+   <title><structname>pg_group</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>groname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.rolname</literal></entry>
+      <entry>Name of the group</entry>
+     </row>
+
+     <row>
+      <entry><structfield>grosysid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>ID of this group</entry>
+     </row>
+
+     <row>
+      <entry><structfield>grolist</structfield></entry>
+      <entry><type>oid[]</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>An array containing the IDs of the roles in this group</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
  </sect1>
 
  <sect1 id="view-pg-indexes">
@@ -4332,7 +4427,7 @@
      <row>
       <entry><structfield>owner</structfield></entry>
       <entry><type>name</type></entry>
-      <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usename</literal></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.rolname</literal></entry>
       <entry>
        Name of the user that executed the transaction
       </entry>
@@ -4358,6 +4453,110 @@
    there could be some impact on database performance if this view is
    read often.
   </para>
+
+ </sect1>
+
+ <sect1 id="view-pg-roles">
+  <title><structname>pg_roles</structname></title>
+
+  <indexterm zone="view-pg-roles">
+   <primary>pg_roles</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_roles</structname> provides access to
+   information about database roles.  This is simply a publicly
+   readable view of 
+   <link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>
+   that blanks out the password field.
+  </para>
+
+  <table>
+   <title><structname>pg_roles</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>rolname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Role name</entry>
+     </row>
+
+     <row>
+      <entry><structfield>rolsuper</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>Role has superuser privileges</entry>
+     </row>
+
+     <row>
+      <entry><structfield>rolcreaterole</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>Role may create more roles</entry>
+     </row>
+
+     <row>
+      <entry><structfield>rolcreatedb</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>Role may create databases</entry>
+     </row>
+
+     <row>
+      <entry><structfield>rolcatupdate</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       Role may update system catalogs directly.  (Even a superuser may not do
+       this unless this column is true.)
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>rolcanlogin</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       Role may log in, that is, this role can be given as the initial
+       session authorization identifier.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>rolpassword</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>Not the password (always reads as <literal>********</>)</entry>
+     </row>
+
+     <row>
+      <entry><structfield>rolvaliduntil</structfield></entry>
+      <entry><type>timestamptz</type></entry>
+      <entry></entry>
+      <entry>Password expiry time (only used for password authentication);
+       NULL if no expiration</entry>
+     </row>
+
+     <row>
+      <entry><structfield>rolconfig</structfield></entry>
+      <entry><type>text[]</type></entry>
+      <entry></entry>
+      <entry>Session defaults for run-time configuration variables</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
 
  </sect1>
 
@@ -4531,6 +4730,107 @@
    session, unless overridden by another <command>UPDATE</command> or
    <command>SET</command>.
   </para>
+
+ </sect1>
+
+ <sect1 id="view-pg-shadow">
+  <title><structname>pg_shadow</structname></title>
+
+  <indexterm zone="view-pg-shadow">
+   <primary>pg_shadow</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_shadow</structname> exists for backwards
+   compatibility: it emulates a catalog that existed in
+   <productname>PostgreSQL</productname> before version 8.1.
+   It shows properties of all roles that are marked as
+   <structfield>rolcanlogin</>.
+  </para>
+
+  <para>
+   The name stems from the fact that this table
+   should not be readable by the public since it contains passwords.
+   <link linkend="view-pg-user"><structname>pg_user</structname></link>
+   is a publicly readable view on
+   <structname>pg_shadow</structname> that blanks out the password field.
+  </para>
+
+  <table>
+   <title><structname>pg_shadow</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>usename</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.rolname</literal></entry>
+      <entry>User name</entry>
+     </row>
+
+     <row>
+      <entry><structfield>usesysid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>ID of this user</entry>
+     </row>
+
+     <row>
+      <entry><structfield>usecreatedb</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>User may create databases</entry>
+     </row>
+
+     <row>
+      <entry><structfield>usesuper</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>User is a superuser</entry>
+     </row>
+
+     <row>
+      <entry><structfield>usecatupd</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       User may update system catalogs.  (Even a superuser may not do
+       this unless this column is true.)
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>passwd</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>Password (possibly encrypted)</entry>
+     </row>
+
+     <row>
+      <entry><structfield>valuntil</structfield></entry>
+      <entry><type>abstime</type></entry>
+      <entry></entry>
+      <entry>Password expiry time (only used for password authentication)</entry>
+     </row>
+
+     <row>
+      <entry><structfield>useconfig</structfield></entry>
+      <entry><type>text[]</type></entry>
+      <entry></entry>
+      <entry>Session defaults for run-time configuration variables</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
 
  </sect1>
 
@@ -4720,7 +5020,7 @@
      <row>
       <entry><structfield>tableowner</structfield></entry>
       <entry><type>name</type></entry>
-      <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usename</literal></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.rolname</literal></entry>
       <entry>name of table's owner</entry>
      </row>
      <row>
@@ -4764,7 +5064,7 @@
    The view <structname>pg_user</structname> provides access to
    information about database users.  This is simply a publicly
    readable view of 
-   <link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>
+   <link linkend="view-pg-shadow"><structname>pg_shadow</structname></link>
    that blanks out the password field.
   </para>
 
@@ -4885,7 +5185,7 @@
      <row>
       <entry><structfield>viewowner</structfield></entry>
       <entry><type>name</type></entry>
-      <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usename</literal></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.rolname</literal></entry>
       <entry>name of view's owner</entry>
      </row>
      <row>

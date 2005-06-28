@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/catalog/genbki.sh,v 1.36 2005/04/14 20:03:23 tgl Exp $
+#    $PostgreSQL: pgsql/src/backend/catalog/genbki.sh,v 1.37 2005/06/28 05:08:52 tgl Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -114,6 +114,14 @@ for dir in $INCLUDE_DIRS; do
     fi
 done
 
+# Get BOOTSTRAP_SUPERUSERID from catalog/pg_authid.h
+for dir in $INCLUDE_DIRS; do
+    if [ -f "$dir/catalog/pg_authid.h" ]; then
+        BOOTSTRAP_SUPERUSERID=`grep '^#define[ 	]*BOOTSTRAP_SUPERUSERID' $dir/catalog/pg_authid.h | $AWK '{ print $3 }'`
+        break
+    fi
+done
+
 # Get PG_CATALOG_NAMESPACE from catalog/pg_namespace.h
 for dir in $INCLUDE_DIRS; do
     if [ -f "$dir/catalog/pg_namespace.h" ]; then
@@ -153,7 +161,7 @@ sed -e "s/;[ 	]*$//g" \
     -e "s/[ 	]TransactionId/ xid/g" \
     -e "s/^TransactionId/xid/g" \
     -e "s/(TransactionId/(xid/g" \
-    -e "s/PGUID/1/g" \
+    -e "s/PGUID/$BOOTSTRAP_SUPERUSERID/g" \
     -e "s/NAMEDATALEN/$NAMEDATALEN/g" \
     -e "s/PGNSP/$PG_CATALOG_NAMESPACE/g" \
 | $AWK '

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.18 2005/05/03 19:17:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.19 2005/06/28 05:08:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,7 +175,7 @@ RenameConversion(List *name, const char *newname)
  * Change conversion owner
  */
 void
-AlterConversionOwner(List *name, AclId newOwnerSysId)
+AlterConversionOwner(List *name, Oid newOwnerId)
 {
 	Oid			conversionOid;
 	HeapTuple	tup;
@@ -203,7 +203,7 @@ AlterConversionOwner(List *name, AclId newOwnerSysId)
 	 * If the new owner is the same as the existing owner, consider the
 	 * command to have succeeded.  This is for dump restoration purposes.
 	 */
-	if (convForm->conowner != newOwnerSysId)
+	if (convForm->conowner != newOwnerId)
 	{
 		/* Otherwise, must be superuser to change object ownership */
 		if (!superuser())
@@ -215,7 +215,7 @@ AlterConversionOwner(List *name, AclId newOwnerSysId)
 		 * Modify the owner --- okay to scribble on tup because it's a
 		 * copy
 		 */
-		convForm->conowner = newOwnerSysId;
+		convForm->conowner = newOwnerId;
 
 		simple_heap_update(rel, &tup->t_self, tup);
 

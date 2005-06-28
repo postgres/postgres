@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.30 2005/06/25 23:58:58 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.31 2005/06/28 05:09:04 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -101,7 +101,7 @@ typedef struct PgStat_MsgBestart
 {
 	PgStat_MsgHdr	m_hdr;
 	Oid				m_databaseid;
-	AclId			m_userid;
+	Oid 			m_userid;
 	SockAddr		m_clientaddr;
 } PgStat_MsgBestart;
 

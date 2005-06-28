@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.26 2005/04/14 20:03:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.27 2005/06/28 05:08:53 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -295,7 +295,7 @@ RenameAggregate(List *name, TypeName *basetype, const char *newname)
  * Change aggregate owner
  */
 void
-AlterAggregateOwner(List *name, TypeName *basetype, AclId newOwnerSysId)
+AlterAggregateOwner(List *name, TypeName *basetype, Oid newOwnerId)
 {
 	Oid			basetypeOid;
 	Oid			procOid;
@@ -329,7 +329,7 @@ AlterAggregateOwner(List *name, TypeName *basetype, AclId newOwnerSysId)
 	 * If the new owner is the same as the existing owner, consider the
 	 * command to have succeeded.  This is for dump restoration purposes.
 	 */
-	if (procForm->proowner != newOwnerSysId)
+	if (procForm->proowner != newOwnerId)
 	{
 		/* Otherwise, must be superuser to change object ownership */
 		if (!superuser())
@@ -341,7 +341,7 @@ AlterAggregateOwner(List *name, TypeName *basetype, AclId newOwnerSysId)
 		 * Modify the owner --- okay to scribble on tup because it's a
 		 * copy
 		 */
-		procForm->proowner = newOwnerSysId;
+		procForm->proowner = newOwnerId;
 
 		simple_heap_update(rel, &tup->t_self, tup);
 		CatalogUpdateIndexes(rel, tup);

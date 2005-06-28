@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.161 2005/06/06 20:22:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.162 2005/06/28 05:08:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -231,9 +231,9 @@ static void ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 					  const char *colName, TypeName *typename);
 static void ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab);
 static void ATPostAlterTypeParse(char *cmd, List **wqueue);
-static void ATExecChangeOwner(Oid relationOid, int32 newOwnerSysId);
+static void ATExecChangeOwner(Oid relationOid, Oid newOwnerId);
 static void change_owner_recurse_to_sequences(Oid relationOid,
-											  int32 newOwnerSysId);
+											  Oid newOwnerId);
 static void ATExecClusterOn(Relation rel, const char *indexName);
 static void ATExecDropCluster(Relation rel);
 static void ATPrepSetTableSpace(AlteredTableInfo *tab, Relation rel,
@@ -2133,8 +2133,8 @@ ATExecCmd(AlteredTableInfo *tab, Relation rel, AlterTableCmd *cmd)
 			AlterTableCreateToastTable(RelationGetRelid(rel), false);
 			break;
 		case AT_ChangeOwner:	/* ALTER OWNER */
-			/* get_usesysid raises an error if no such user */
-			ATExecChangeOwner(RelationGetRelid(rel), get_usesysid(cmd->name));
+			ATExecChangeOwner(RelationGetRelid(rel),
+							  get_roleid_checked(cmd->name));
 			break;
 		case AT_ClusterOn:		/* CLUSTER ON */
 			ATExecClusterOn(rel, cmd->name);
@@ -5233,7 +5233,7 @@ ATPostAlterTypeParse(char *cmd, List **wqueue)
  * ALTER TABLE OWNER
  */
 static void
-ATExecChangeOwner(Oid relationOid, int32 newOwnerSysId)
+ATExecChangeOwner(Oid relationOid, Oid newOwnerId)
 {
 	Relation	target_rel;
 	Relation	class_rel;
@@ -5277,7 +5277,7 @@ ATExecChangeOwner(Oid relationOid, int32 newOwnerSysId)
 	 * If the new owner is the same as the existing owner, consider the
 	 * command to have succeeded.  This is for dump restoration purposes.
 	 */
-	if (tuple_class->relowner != newOwnerSysId)
+	if (tuple_class->relowner != newOwnerId)
 	{
 		Datum		repl_val[Natts_pg_class];
 		char		repl_null[Natts_pg_class];
@@ -5297,7 +5297,7 @@ ATExecChangeOwner(Oid relationOid, int32 newOwnerSysId)
 		memset(repl_repl, ' ', sizeof(repl_repl));
 
 		repl_repl[Anum_pg_class_relowner - 1] = 'r';
-		repl_val[Anum_pg_class_relowner - 1] = Int32GetDatum(newOwnerSysId);
+		repl_val[Anum_pg_class_relowner - 1] = ObjectIdGetDatum(newOwnerId);
 
 		/*
 		 * Determine the modified ACL for the new owner.  This is only
@@ -5309,7 +5309,7 @@ ATExecChangeOwner(Oid relationOid, int32 newOwnerSysId)
 		if (!isNull)
 		{
 			newAcl = aclnewowner(DatumGetAclP(aclDatum),
-								 tuple_class->relowner, newOwnerSysId);
+								 tuple_class->relowner, newOwnerId);
 			repl_repl[Anum_pg_class_relacl - 1] = 'r';
 			repl_val[Anum_pg_class_relacl - 1] = PointerGetDatum(newAcl);
 		}
@@ -5337,7 +5337,7 @@ ATExecChangeOwner(Oid relationOid, int32 newOwnerSysId)
 
 			/* For each index, recursively change its ownership */
 			foreach(i, index_oid_list)
-				ATExecChangeOwner(lfirst_oid(i), newOwnerSysId);
+				ATExecChangeOwner(lfirst_oid(i), newOwnerId);
 
 			list_free(index_oid_list);
 		}
@@ -5346,10 +5346,10 @@ ATExecChangeOwner(Oid relationOid, int32 newOwnerSysId)
 		{
 			/* If it has a toast table, recurse to change its ownership */
 			if (tuple_class->reltoastrelid != InvalidOid)
-				ATExecChangeOwner(tuple_class->reltoastrelid, newOwnerSysId);
+				ATExecChangeOwner(tuple_class->reltoastrelid, newOwnerId);
 
 			/* If it has dependent sequences, recurse to change them too */
-			change_owner_recurse_to_sequences(relationOid, newOwnerSysId);
+			change_owner_recurse_to_sequences(relationOid, newOwnerId);
 		}
 	}
 
@@ -5366,7 +5366,7 @@ ATExecChangeOwner(Oid relationOid, int32 newOwnerSysId)
  * ownership.
  */
 static void
-change_owner_recurse_to_sequences(Oid relationOid, int32 newOwnerSysId)
+change_owner_recurse_to_sequences(Oid relationOid, Oid newOwnerId)
 {
 	Relation	depRel;
 	SysScanDesc scan;
@@ -5416,7 +5416,7 @@ change_owner_recurse_to_sequences(Oid relationOid, int32 newOwnerSysId)
 		}
 
 		/* We don't need to close the sequence while we alter it. */
-		ATExecChangeOwner(depForm->objid, newOwnerSysId);
+		ATExecChangeOwner(depForm->objid, newOwnerId);
 
 		/* Now we can close it.  Keep the lock till end of transaction. */
 		relation_close(seqRel, NoLock);

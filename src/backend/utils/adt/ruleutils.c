@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.201 2005/06/26 22:05:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.202 2005/06/28 05:09:01 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -46,13 +46,13 @@
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_authid.h"
 #include "catalog/pg_cast.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_depend.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
-#include "catalog/pg_shadow.h"
 #include "catalog/pg_trigger.h"
 #include "executor/spi.h"
 #include "funcapi.h"
@@ -1194,17 +1194,17 @@ pg_get_expr_worker(text *expr, Oid relid, char *relname, int prettyFlags)
 
 
 /* ----------
- * get_userbyid			- Get a user name by usesysid and
- *				  fallback to 'unknown (UID=n)'
+ * get_userbyid			- Get a user name by roleid and
+ *				  fallback to 'unknown (OID=n)'
  * ----------
  */
 Datum
 pg_get_userbyid(PG_FUNCTION_ARGS)
 {
-	int32		uid = PG_GETARG_INT32(0);
+	Oid			roleid = PG_GETARG_OID(0);
 	Name		result;
-	HeapTuple	usertup;
-	Form_pg_shadow user_rec;
+	HeapTuple	roletup;
+	Form_pg_authid role_rec;
 
 	/*
 	 * Allocate space for the result
@@ -1213,19 +1213,19 @@ pg_get_userbyid(PG_FUNCTION_ARGS)
 	memset(NameStr(*result), 0, NAMEDATALEN);
 
 	/*
-	 * Get the pg_shadow entry and print the result
+	 * Get the pg_authid entry and print the result
 	 */
-	usertup = SearchSysCache(SHADOWSYSID,
-							 ObjectIdGetDatum(uid),
+	roletup = SearchSysCache(AUTHOID,
+							 ObjectIdGetDatum(roleid),
 							 0, 0, 0);
-	if (HeapTupleIsValid(usertup))
+	if (HeapTupleIsValid(roletup))
 	{
-		user_rec = (Form_pg_shadow) GETSTRUCT(usertup);
-		StrNCpy(NameStr(*result), NameStr(user_rec->usename), NAMEDATALEN);
-		ReleaseSysCache(usertup);
+		role_rec = (Form_pg_authid) GETSTRUCT(roletup);
+		StrNCpy(NameStr(*result), NameStr(role_rec->rolname), NAMEDATALEN);
+		ReleaseSysCache(roletup);
 	}
 	else
-		sprintf(NameStr(*result), "unknown (UID=%d)", uid);
+		sprintf(NameStr(*result), "unknown (OID=%u)", roleid);
 
 	PG_RETURN_NAME(result);
 }

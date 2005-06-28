@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.161 2005/05/30 01:20:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.162 2005/06/28 05:09:12 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -44,7 +44,7 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP
 {
 	NameData	typname;		/* type name */
 	Oid			typnamespace;	/* OID of namespace containing this type */
-	int4		typowner;		/* type owner */
+	Oid			typowner;		/* type owner */
 
 	/*
 	 * For a fixed-size type, typlen is the number of bytes we use to

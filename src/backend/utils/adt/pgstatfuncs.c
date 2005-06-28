@@ -8,14 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.22 2005/05/11 01:41:41 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.23 2005/06/28 05:09:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/xact.h"
-#include "catalog/pg_shadow.h"
 #include "fmgr.h"
 #include "funcapi.h"
 #include "miscadmin.h"
@@ -306,7 +305,7 @@ pg_stat_get_backend_userid(PG_FUNCTION_ARGS)
 	if (!OidIsValid(beentry->userid))
 		PG_RETURN_NULL();
 
-	PG_RETURN_INT32(beentry->userid);
+	PG_RETURN_OID(beentry->userid);
 }
 
 

@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.246 2005/06/26 22:05:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.247 2005/06/28 05:08:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -778,8 +778,7 @@ _equalGrantStmt(GrantStmt *a, GrantStmt *b)
 static bool
 _equalPrivGrantee(PrivGrantee *a, PrivGrantee *b)
 {
-	COMPARE_STRING_FIELD(username);
-	COMPARE_STRING_FIELD(groupname);
+	COMPARE_STRING_FIELD(rolname);
 
 	return true;
 }
@@ -789,6 +788,19 @@ _equalFuncWithArgs(FuncWithArgs *a, FuncWithArgs *b)
 {
 	COMPARE_NODE_FIELD(funcname);
 	COMPARE_NODE_FIELD(funcargs);
+
+	return true;
+}
+
+static bool
+_equalGrantRoleStmt(GrantRoleStmt *a, GrantRoleStmt *b)
+{
+	COMPARE_NODE_FIELD(granted_roles);
+	COMPARE_NODE_FIELD(grantee_roles);
+	COMPARE_SCALAR_FIELD(is_grant);
+	COMPARE_SCALAR_FIELD(admin_opt);
+	COMPARE_STRING_FIELD(grantor);
+	COMPARE_SCALAR_FIELD(behavior);
 
 	return true;
 }
@@ -1295,27 +1307,28 @@ _equalDropPLangStmt(DropPLangStmt *a, DropPLangStmt *b)
 }
 
 static bool
-_equalCreateUserStmt(CreateUserStmt *a, CreateUserStmt *b)
+_equalCreateRoleStmt(CreateRoleStmt *a, CreateRoleStmt *b)
 {
-	COMPARE_STRING_FIELD(user);
+	COMPARE_STRING_FIELD(role);
 	COMPARE_NODE_FIELD(options);
 
 	return true;
 }
 
 static bool
-_equalAlterUserStmt(AlterUserStmt *a, AlterUserStmt *b)
+_equalAlterRoleStmt(AlterRoleStmt *a, AlterRoleStmt *b)
 {
-	COMPARE_STRING_FIELD(user);
+	COMPARE_STRING_FIELD(role);
 	COMPARE_NODE_FIELD(options);
+	COMPARE_SCALAR_FIELD(action);
 
 	return true;
 }
 
 static bool
-_equalAlterUserSetStmt(AlterUserSetStmt *a, AlterUserSetStmt *b)
+_equalAlterRoleSetStmt(AlterRoleSetStmt *a, AlterRoleSetStmt *b)
 {
-	COMPARE_STRING_FIELD(user);
+	COMPARE_STRING_FIELD(role);
 	COMPARE_STRING_FIELD(variable);
 	COMPARE_NODE_FIELD(value);
 
@@ -1323,9 +1336,9 @@ _equalAlterUserSetStmt(AlterUserSetStmt *a, AlterUserSetStmt *b)
 }
 
 static bool
-_equalDropUserStmt(DropUserStmt *a, DropUserStmt *b)
+_equalDropRoleStmt(DropRoleStmt *a, DropRoleStmt *b)
 {
-	COMPARE_NODE_FIELD(users);
+	COMPARE_NODE_FIELD(roles);
 
 	return true;
 }
@@ -1345,33 +1358,6 @@ _equalConstraintsSetStmt(ConstraintsSetStmt *a, ConstraintsSetStmt *b)
 {
 	COMPARE_NODE_FIELD(constraints);
 	COMPARE_SCALAR_FIELD(deferred);
-
-	return true;
-}
-
-static bool
-_equalCreateGroupStmt(CreateGroupStmt *a, CreateGroupStmt *b)
-{
-	COMPARE_STRING_FIELD(name);
-	COMPARE_NODE_FIELD(options);
-
-	return true;
-}
-
-static bool
-_equalAlterGroupStmt(AlterGroupStmt *a, AlterGroupStmt *b)
-{
-	COMPARE_STRING_FIELD(name);
-	COMPARE_SCALAR_FIELD(action);
-	COMPARE_NODE_FIELD(listUsers);
-
-	return true;
-}
-
-static bool
-_equalDropGroupStmt(DropGroupStmt *a, DropGroupStmt *b)
-{
-	COMPARE_STRING_FIELD(name);
 
 	return true;
 }
@@ -1971,6 +1957,9 @@ equal(void *a, void *b)
 		case T_GrantStmt:
 			retval = _equalGrantStmt(a, b);
 			break;
+		case T_GrantRoleStmt:
+			retval = _equalGrantRoleStmt(a, b);
+			break;
 		case T_DeclareCursorStmt:
 			retval = _equalDeclareCursorStmt(a, b);
 			break;
@@ -2115,32 +2104,23 @@ equal(void *a, void *b)
 		case T_DropPLangStmt:
 			retval = _equalDropPLangStmt(a, b);
 			break;
-		case T_CreateUserStmt:
-			retval = _equalCreateUserStmt(a, b);
+		case T_CreateRoleStmt:
+			retval = _equalCreateRoleStmt(a, b);
 			break;
-		case T_AlterUserStmt:
-			retval = _equalAlterUserStmt(a, b);
+		case T_AlterRoleStmt:
+			retval = _equalAlterRoleStmt(a, b);
 			break;
-		case T_AlterUserSetStmt:
-			retval = _equalAlterUserSetStmt(a, b);
+		case T_AlterRoleSetStmt:
+			retval = _equalAlterRoleSetStmt(a, b);
 			break;
-		case T_DropUserStmt:
-			retval = _equalDropUserStmt(a, b);
+		case T_DropRoleStmt:
+			retval = _equalDropRoleStmt(a, b);
 			break;
 		case T_LockStmt:
 			retval = _equalLockStmt(a, b);
 			break;
 		case T_ConstraintsSetStmt:
 			retval = _equalConstraintsSetStmt(a, b);
-			break;
-		case T_CreateGroupStmt:
-			retval = _equalCreateGroupStmt(a, b);
-			break;
-		case T_AlterGroupStmt:
-			retval = _equalAlterGroupStmt(a, b);
-			break;
-		case T_DropGroupStmt:
-			retval = _equalDropGroupStmt(a, b);
 			break;
 		case T_ReindexStmt:
 			retval = _equalReindexStmt(a, b);

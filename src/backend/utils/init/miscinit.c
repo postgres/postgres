@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.142 2005/06/20 02:17:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.143 2005/06/28 05:09:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@
 #include <utime.h>
 #endif
 
-#include "catalog/pg_shadow.h"
+#include "catalog/pg_authid.h"
 #include "libpq/libpq-be.h"
 #include "miscadmin.h"
 #include "storage/fd.h"
@@ -251,7 +251,7 @@ make_absolute_path(const char *path)
 
 
 /* ----------------------------------------------------------------
- *	User ID things
+ *	Role ID things
  *
  * The authenticated user is determined at connection start and never
  * changes.  The session user can be changed only by SET SESSION
@@ -261,60 +261,60 @@ make_absolute_path(const char *path)
  * restore the current user id if you need to change it.
  * ----------------------------------------------------------------
  */
-static AclId AuthenticatedUserId = 0;
-static AclId SessionUserId = 0;
-static AclId CurrentUserId = 0;
+static Oid AuthenticatedUserId = InvalidOid;
+static Oid SessionUserId = InvalidOid;
+static Oid CurrentUserId = InvalidOid;
 
 static bool AuthenticatedUserIsSuperuser = false;
 
 /*
  * This function is relevant for all privilege checks.
  */
-AclId
+Oid
 GetUserId(void)
 {
-	AssertState(AclIdIsValid(CurrentUserId));
+	AssertState(OidIsValid(CurrentUserId));
 	return CurrentUserId;
 }
 
 
 void
-SetUserId(AclId newid)
+SetUserId(Oid roleid)
 {
-	AssertArg(AclIdIsValid(newid));
-	CurrentUserId = newid;
+	AssertArg(OidIsValid(roleid));
+	CurrentUserId = roleid;
 }
 
 
 /*
  * This value is only relevant for informational purposes.
  */
-AclId
+Oid
 GetSessionUserId(void)
 {
-	AssertState(AclIdIsValid(SessionUserId));
+	AssertState(OidIsValid(SessionUserId));
 	return SessionUserId;
 }
 
 
 void
-SetSessionUserId(AclId newid)
+SetSessionUserId(Oid roleid)
 {
-	AssertArg(AclIdIsValid(newid));
-	SessionUserId = newid;
+	AssertArg(OidIsValid(roleid));
+	SessionUserId = roleid;
 	/* Current user defaults to session user. */
-	if (!AclIdIsValid(CurrentUserId))
-		CurrentUserId = newid;
+	if (!OidIsValid(CurrentUserId))
+		CurrentUserId = roleid;
 }
 
 
 void
-InitializeSessionUserId(const char *username)
+InitializeSessionUserId(const char *rolename)
 {
-	HeapTuple	userTup;
+	HeapTuple	roleTup;
 	Datum		datum;
 	bool		isnull;
-	AclId		usesysid;
+	Oid			roleid;
 
 	/*
 	 * Don't do scans if we're bootstrapping, none of the system catalogs
@@ -325,23 +325,23 @@ InitializeSessionUserId(const char *username)
 	/* call only once */
 	AssertState(!OidIsValid(AuthenticatedUserId));
 
-	userTup = SearchSysCache(SHADOWNAME,
-							 PointerGetDatum(username),
+	roleTup = SearchSysCache(AUTHNAME,
+							 PointerGetDatum(rolename),
 							 0, 0, 0);
-	if (!HeapTupleIsValid(userTup))
+	if (!HeapTupleIsValid(roleTup))
 		ereport(FATAL,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("user \"%s\" does not exist", username)));
+				 errmsg("role \"%s\" does not exist", rolename)));
 
-	usesysid = ((Form_pg_shadow) GETSTRUCT(userTup))->usesysid;
+	roleid = HeapTupleGetOid(roleTup);
 
-	AuthenticatedUserId = usesysid;
-	AuthenticatedUserIsSuperuser = ((Form_pg_shadow) GETSTRUCT(userTup))->usesuper;
+	AuthenticatedUserId = roleid;
+	AuthenticatedUserIsSuperuser = ((Form_pg_authid) GETSTRUCT(roleTup))->rolsuper;
 
-	SetSessionUserId(usesysid); /* sets CurrentUserId too */
+	SetSessionUserId(roleid);	/* sets CurrentUserId too */
 
 	/* Record username and superuser status as GUC settings too */
-	SetConfigOption("session_authorization", username,
+	SetConfigOption("session_authorization", rolename,
 					PGC_BACKEND, PGC_S_OVERRIDE);
 	SetConfigOption("is_superuser",
 					AuthenticatedUserIsSuperuser ? "on" : "off",
@@ -349,11 +349,11 @@ InitializeSessionUserId(const char *username)
 
 	/*
 	 * Set up user-specific configuration variables.  This is a good place
-	 * to do it so we don't have to read pg_shadow twice during session
+	 * to do it so we don't have to read pg_authid twice during session
 	 * startup.
 	 */
-	datum = SysCacheGetAttr(SHADOWNAME, userTup,
-							Anum_pg_shadow_useconfig, &isnull);
+	datum = SysCacheGetAttr(AUTHNAME, roleTup,
+							Anum_pg_authid_rolconfig, &isnull);
 	if (!isnull)
 	{
 		ArrayType  *a = DatumGetArrayTypeP(datum);
@@ -361,7 +361,7 @@ InitializeSessionUserId(const char *username)
 		ProcessGUCArray(a, PGC_S_USER);
 	}
 
-	ReleaseSysCache(userTup);
+	ReleaseSysCache(roleTup);
 }
 
 
@@ -374,10 +374,10 @@ InitializeSessionUserIdStandalone(void)
 	/* call only once */
 	AssertState(!OidIsValid(AuthenticatedUserId));
 
-	AuthenticatedUserId = BOOTSTRAP_USESYSID;
+	AuthenticatedUserId = BOOTSTRAP_SUPERUSERID;
 	AuthenticatedUserIsSuperuser = true;
 
-	SetSessionUserId(BOOTSTRAP_USESYSID);
+	SetSessionUserId(BOOTSTRAP_SUPERUSERID);
 }
 
 
@@ -390,19 +390,19 @@ InitializeSessionUserIdStandalone(void)
  * to indicate whether the *current* session userid is a superuser.
  */
 void
-SetSessionAuthorization(AclId userid, bool is_superuser)
+SetSessionAuthorization(Oid roleid, bool is_superuser)
 {
 	/* Must have authenticated already, else can't make permission check */
-	AssertState(AclIdIsValid(AuthenticatedUserId));
+	AssertState(OidIsValid(AuthenticatedUserId));
 
-	if (userid != AuthenticatedUserId &&
+	if (roleid != AuthenticatedUserId &&
 		!AuthenticatedUserIsSuperuser)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 			  errmsg("permission denied to set session authorization")));
 
-	SetSessionUserId(userid);
-	SetUserId(userid);
+	SetSessionUserId(roleid);
+	SetUserId(roleid);
 
 	SetConfigOption("is_superuser",
 					is_superuser ? "on" : "off",
@@ -411,28 +411,27 @@ SetSessionAuthorization(AclId userid, bool is_superuser)
 
 
 /*
- * Get user name from user id
+ * Get user name from user oid
  */
 char *
-GetUserNameFromId(AclId userid)
+GetUserNameFromId(Oid roleid)
 {
 	HeapTuple	tuple;
 	char	   *result;
 
-	tuple = SearchSysCache(SHADOWSYSID,
-						   ObjectIdGetDatum(userid),
+	tuple = SearchSysCache(AUTHOID,
+						   ObjectIdGetDatum(roleid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("invalid user ID: %d", userid)));
+				 errmsg("invalid role OID: %u", roleid)));
 
-	result = pstrdup(NameStr(((Form_pg_shadow) GETSTRUCT(tuple))->usename));
+	result = pstrdup(NameStr(((Form_pg_authid) GETSTRUCT(tuple))->rolname));
 
 	ReleaseSysCache(tuple);
 	return result;
 }
-
 
 
 /*-------------------------------------------------------------------------

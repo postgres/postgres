@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.104 2005/04/14 20:03:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.105 2005/06/28 05:08:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,9 +33,9 @@
 #include "utils/syscache.h"
 
 
-static void setRuleCheckAsUser_Query(Query *qry, AclId userid);
-static void setRuleCheckAsUser_Expr(Node *node, AclId userid);
-static bool setRuleCheckAsUser_walker(Node *node, AclId *context);
+static void setRuleCheckAsUser_Query(Query *qry, Oid userid);
+static void setRuleCheckAsUser_Expr(Node *node, Oid userid);
+static bool setRuleCheckAsUser_walker(Node *node, Oid *context);
 
 
 /*
@@ -505,7 +505,7 @@ DefineQueryRewrite(RuleStmt *stmt)
  * them always.
  */
 static void
-setRuleCheckAsUser_Query(Query *qry, AclId userid)
+setRuleCheckAsUser_Query(Query *qry, Oid userid)
 {
 	ListCell   *l;
 
@@ -534,13 +534,13 @@ setRuleCheckAsUser_Query(Query *qry, AclId userid)
  * Expression-tree walker to find sublink queries
  */
 static void
-setRuleCheckAsUser_Expr(Node *node, AclId userid)
+setRuleCheckAsUser_Expr(Node *node, Oid userid)
 {
 	(void) setRuleCheckAsUser_walker(node, &userid);
 }
 
 static bool
-setRuleCheckAsUser_walker(Node *node, AclId *context)
+setRuleCheckAsUser_walker(Node *node, Oid *context)
 {
 	if (node == NULL)
 		return false;

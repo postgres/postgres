@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.154 2005/06/04 19:19:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.155 2005/06/28 05:08:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -945,7 +945,7 @@ ApplyRetrieveRule(Query *parsetree,
 	subrte->checkAsUser = rte->checkAsUser;
 
 	rte->requiredPerms = 0;		/* no permission check on subquery itself */
-	rte->checkAsUser = 0;
+	rte->checkAsUser = InvalidOid;
 
 	/*
 	 * FOR UPDATE/SHARE of view?

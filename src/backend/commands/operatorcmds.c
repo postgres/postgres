@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.21 2005/04/14 20:03:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.22 2005/06/28 05:08:54 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -269,7 +269,7 @@ RemoveOperatorById(Oid operOid)
  */
 void
 AlterOperatorOwner(List *name, TypeName *typeName1, TypeName *typeName2,
-				   AclId newOwnerSysId)
+				   Oid newOwnerId)
 {
 	Oid			operOid;
 	HeapTuple	tup;
@@ -293,7 +293,7 @@ AlterOperatorOwner(List *name, TypeName *typeName1, TypeName *typeName2,
 	 * If the new owner is the same as the existing owner, consider the
 	 * command to have succeeded.  This is for dump restoration purposes.
 	 */
-	if (oprForm->oprowner != newOwnerSysId)
+	if (oprForm->oprowner != newOwnerId)
 	{
 		/* Otherwise, must be superuser to change object ownership */
 		if (!superuser())
@@ -305,7 +305,7 @@ AlterOperatorOwner(List *name, TypeName *typeName1, TypeName *typeName2,
 		 * Modify the owner --- okay to scribble on tup because it's a
 		 * copy
 		 */
-		oprForm->oprowner = newOwnerSysId;
+		oprForm->oprowner = newOwnerId;
 
 		simple_heap_update(rel, &tup->t_self, tup);
 

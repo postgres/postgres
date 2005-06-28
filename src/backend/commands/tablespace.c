@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.22 2005/06/19 21:34:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.23 2005/06/28 05:08:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -208,7 +208,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	Oid			tablespaceoid;
 	char	   *location;
 	char	   *linkloc;
-	AclId		ownerid;
+	Oid		ownerId;
 
 	/* validate */
 
@@ -225,12 +225,9 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 
 	/* However, the eventual owner of the tablespace need not be */
 	if (stmt->owner)
-	{
-		/* No need to check result, get_usesysid() does that */
-		ownerid = get_usesysid(stmt->owner);
-	}
+		ownerId = get_roleid_checked(stmt->owner);
 	else
-		ownerid = GetUserId();
+		ownerId = GetUserId();
 
 	/* Unix-ify the offered path, and strip any trailing slashes */
 	location = pstrdup(stmt->location);
@@ -297,7 +294,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	values[Anum_pg_tablespace_spcname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(stmt->tablespacename));
 	values[Anum_pg_tablespace_spcowner - 1] =
-		Int32GetDatum(ownerid);
+		ObjectIdGetDatum(ownerId);
 	values[Anum_pg_tablespace_spclocation - 1] =
 		DirectFunctionCall1(textin, CStringGetDatum(location));
 	nulls[Anum_pg_tablespace_spcacl - 1] = 'n';
@@ -426,9 +423,8 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 
 	tablespaceoid = HeapTupleGetOid(tuple);
 
-	/* Must be superuser or owner */
-	if (GetUserId() != ((Form_pg_tablespace) GETSTRUCT(tuple))->spcowner &&
-		!superuser())
+	/* Must be tablespace owner */
+	if (!pg_tablespace_ownercheck(tablespaceoid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TABLESPACE,
 					   tablespacename);
 
@@ -711,8 +707,8 @@ RenameTableSpace(const char *oldname, const char *newname)
 
 	heap_endscan(scan);
 
-	/* Must be owner or superuser */
-	if (newform->spcowner != GetUserId() && !superuser())
+	/* Must be owner */
+	if (!pg_tablespace_ownercheck(HeapTupleGetOid(newtuple), GetUserId()))
 		aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_TABLESPACE, oldname);
 
 	/* Validate new name */
@@ -750,7 +746,7 @@ RenameTableSpace(const char *oldname, const char *newname)
  * Change tablespace owner
  */
 void
-AlterTableSpaceOwner(const char *name, AclId newOwnerSysId)
+AlterTableSpaceOwner(const char *name, Oid newOwnerId)
 {
 	Relation	rel;
 	ScanKeyData entry[1];
@@ -778,7 +774,7 @@ AlterTableSpaceOwner(const char *name, AclId newOwnerSysId)
 	 * If the new owner is the same as the existing owner, consider the
 	 * command to have succeeded.  This is for dump restoration purposes.
 	 */
-	if (spcForm->spcowner != newOwnerSysId)
+	if (spcForm->spcowner != newOwnerId)
 	{
 		Datum		repl_val[Natts_pg_tablespace];
 		char		repl_null[Natts_pg_tablespace];
@@ -798,7 +794,7 @@ AlterTableSpaceOwner(const char *name, AclId newOwnerSysId)
 		memset(repl_repl, ' ', sizeof(repl_repl));
 
 		repl_repl[Anum_pg_tablespace_spcowner - 1] = 'r';
-		repl_val[Anum_pg_tablespace_spcowner - 1] = Int32GetDatum(newOwnerSysId);
+		repl_val[Anum_pg_tablespace_spcowner - 1] = ObjectIdGetDatum(newOwnerId);
 
 		/*
 		 * Determine the modified ACL for the new owner.  This is only
@@ -811,7 +807,7 @@ AlterTableSpaceOwner(const char *name, AclId newOwnerSysId)
 		if (!isNull)
 		{
 			newAcl = aclnewowner(DatumGetAclP(aclDatum),
-								 spcForm->spcowner, newOwnerSysId);
+								 spcForm->spcowner, newOwnerId);
 			repl_repl[Anum_pg_tablespace_spcacl - 1] = 'r';
 			repl_val[Anum_pg_tablespace_spcacl - 1] = PointerGetDatum(newAcl);
 		}

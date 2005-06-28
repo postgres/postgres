@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_conversion.c,v 1.23 2005/05/27 00:57:49 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_conversion.c,v 1.24 2005/06/28 05:08:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@
  */
 Oid
 ConversionCreate(const char *conname, Oid connamespace,
-				 AclId conowner,
+				 Oid conowner,
 				 int32 conforencoding, int32 contoencoding,
 				 Oid conproc, bool def)
 {
@@ -95,7 +95,7 @@ ConversionCreate(const char *conname, Oid connamespace,
 	namestrcpy(&cname, conname);
 	values[Anum_pg_conversion_conname - 1] = NameGetDatum(&cname);
 	values[Anum_pg_conversion_connamespace - 1] = ObjectIdGetDatum(connamespace);
-	values[Anum_pg_conversion_conowner - 1] = Int32GetDatum(conowner);
+	values[Anum_pg_conversion_conowner - 1] = ObjectIdGetDatum(conowner);
 	values[Anum_pg_conversion_conforencoding - 1] = Int32GetDatum(conforencoding);
 	values[Anum_pg_conversion_contoencoding - 1] = Int32GetDatum(contoencoding);
 	values[Anum_pg_conversion_conproc - 1] = ObjectIdGetDatum(conproc);

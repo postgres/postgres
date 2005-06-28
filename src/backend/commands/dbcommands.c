@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.161 2005/06/25 22:47:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.162 2005/06/28 05:08:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,10 +28,10 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "catalog/catalog.h"
-#include "catalog/pg_database.h"
-#include "catalog/pg_shadow.h"
-#include "catalog/pg_tablespace.h"
 #include "catalog/indexing.h"
+#include "catalog/pg_authid.h"
+#include "catalog/pg_database.h"
+#include "catalog/pg_tablespace.h"
 #include "commands/comment.h"
 #include "commands/dbcommands.h"
 #include "commands/tablespace.h"
@@ -52,7 +52,7 @@
 
 
 /* non-export function prototypes */
-static bool get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
+static bool get_db_info(const char *name, Oid *dbIdP, Oid *ownerIdP,
 			int *encodingP, bool *dbIsTemplateP, bool *dbAllowConnP,
 			Oid *dbLastSysOidP,
 			TransactionId *dbVacuumXidP, TransactionId *dbFrozenXidP,
@@ -70,7 +70,7 @@ createdb(const CreatedbStmt *stmt)
 	HeapScanDesc scan;
 	Relation	rel;
 	Oid			src_dboid;
-	AclId		src_owner;
+	Oid			src_owner;
 	int			src_encoding;
 	bool		src_istemplate;
 	bool		src_allowconn;
@@ -85,7 +85,7 @@ createdb(const CreatedbStmt *stmt)
 	Datum		new_record[Natts_pg_database];
 	char		new_record_nulls[Natts_pg_database];
 	Oid			dboid;
-	AclId		datdba;
+	Oid			datdba;
 	ListCell   *option;
 	DefElem    *dtablespacename = NULL;
 	DefElem    *downer = NULL;
@@ -186,13 +186,13 @@ createdb(const CreatedbStmt *stmt)
 				 nodeTag(dencoding->arg));
 	}
 
-	/* obtain sysid of proposed owner */
+	/* obtain OID of proposed owner */
 	if (dbowner)
-		datdba = get_usesysid(dbowner); /* will ereport if no such user */
+		datdba = get_roleid_checked(dbowner);
 	else
 		datdba = GetUserId();
 
-	if (datdba == GetUserId())
+	if (is_member_of_role(GetUserId(), datdba))
 	{
 		/* creating database for self: can be superuser or createdb */
 		if (!superuser() && !have_createdb_privilege())
@@ -243,7 +243,7 @@ createdb(const CreatedbStmt *stmt)
 	 */
 	if (!src_istemplate)
 	{
-		if (!superuser() && GetUserId() != src_owner)
+		if (!pg_database_ownercheck(src_dboid, GetUserId()))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("permission denied to copy database \"%s\"",
@@ -483,7 +483,7 @@ createdb(const CreatedbStmt *stmt)
 
 	new_record[Anum_pg_database_datname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(dbname));
-	new_record[Anum_pg_database_datdba - 1] = Int32GetDatum(datdba);
+	new_record[Anum_pg_database_datdba - 1] = ObjectIdGetDatum(datdba);
 	new_record[Anum_pg_database_encoding - 1] = Int32GetDatum(encoding);
 	new_record[Anum_pg_database_datistemplate - 1] = BoolGetDatum(false);
 	new_record[Anum_pg_database_datallowconn - 1] = BoolGetDatum(true);
@@ -557,9 +557,8 @@ createdb(const CreatedbStmt *stmt)
 void
 dropdb(const char *dbname)
 {
-	int4		db_owner;
-	bool		db_istemplate;
 	Oid			db_id;
+	bool		db_istemplate;
 	Relation	pgdbrel;
 	SysScanDesc pgdbscan;
 	ScanKeyData key;
@@ -588,13 +587,13 @@ dropdb(const char *dbname)
 	 */
 	pgdbrel = heap_open(DatabaseRelationId, ExclusiveLock);
 
-	if (!get_db_info(dbname, &db_id, &db_owner, NULL,
+	if (!get_db_info(dbname, &db_id, NULL, NULL,
 					 &db_istemplate, NULL, NULL, NULL, NULL, NULL))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", dbname)));
 
-	if (GetUserId() != db_owner && !superuser())
+	if (!pg_database_ownercheck(db_id, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
 					   dbname);
 
@@ -818,8 +817,7 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", stmt->dbname)));
 
-	if (!(superuser()
-		|| ((Form_pg_database) GETSTRUCT(tuple))->datdba == GetUserId()))
+	if (!pg_database_ownercheck(HeapTupleGetOid(tuple), GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
 					   stmt->dbname);
 
@@ -878,7 +876,7 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
  * ALTER DATABASE name OWNER TO newowner
  */
 void
-AlterDatabaseOwner(const char *dbname, AclId newOwnerSysId)
+AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 {
 	HeapTuple	tuple;
 	Relation	rel;
@@ -910,7 +908,7 @@ AlterDatabaseOwner(const char *dbname, AclId newOwnerSysId)
 	 * command to have succeeded.  This is to be consistent with other
 	 * objects.
 	 */
-	if (datForm->datdba != newOwnerSysId)
+	if (datForm->datdba != newOwnerId)
 	{
 		Datum		repl_val[Natts_pg_database];
 		char		repl_null[Natts_pg_database];
@@ -930,7 +928,7 @@ AlterDatabaseOwner(const char *dbname, AclId newOwnerSysId)
 		memset(repl_repl, ' ', sizeof(repl_repl));
 
 		repl_repl[Anum_pg_database_datdba - 1] = 'r';
-		repl_val[Anum_pg_database_datdba - 1] = Int32GetDatum(newOwnerSysId);
+		repl_val[Anum_pg_database_datdba - 1] = ObjectIdGetDatum(newOwnerId);
 
 		/*
 		 * Determine the modified ACL for the new owner.  This is only
@@ -943,7 +941,7 @@ AlterDatabaseOwner(const char *dbname, AclId newOwnerSysId)
 		if (!isNull)
 		{
 			newAcl = aclnewowner(DatumGetAclP(aclDatum),
-								 datForm->datdba, newOwnerSysId);
+								 datForm->datdba, newOwnerId);
 			repl_repl[Anum_pg_database_datacl - 1] = 'r';
 			repl_val[Anum_pg_database_datacl - 1] = PointerGetDatum(newAcl);
 		}
@@ -972,7 +970,7 @@ AlterDatabaseOwner(const char *dbname, AclId newOwnerSysId)
  */
 
 static bool
-get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
+get_db_info(const char *name, Oid *dbIdP, Oid *ownerIdP,
 			int *encodingP, bool *dbIsTemplateP, bool *dbAllowConnP,
 			Oid *dbLastSysOidP,
 			TransactionId *dbVacuumXidP, TransactionId *dbFrozenXidP,
@@ -1007,7 +1005,7 @@ get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
 		/* oid of the database */
 		if (dbIdP)
 			*dbIdP = HeapTupleGetOid(tuple);
-		/* sysid of the owner */
+		/* oid of the owner */
 		if (ownerIdP)
 			*ownerIdP = dbform->datdba;
 		/* character encoding */
@@ -1046,12 +1044,12 @@ have_createdb_privilege(void)
 	bool		result = false;
 	HeapTuple	utup;
 
-	utup = SearchSysCache(SHADOWSYSID,
-						  Int32GetDatum(GetUserId()),
+	utup = SearchSysCache(AUTHOID,
+						  ObjectIdGetDatum(GetUserId()),
 						  0, 0, 0);
 	if (HeapTupleIsValid(utup))
 	{
-		result = ((Form_pg_shadow) GETSTRUCT(utup))->usecreatedb;
+		result = ((Form_pg_authid) GETSTRUCT(utup))->rolcreatedb;
 		ReleaseSysCache(utup);
 	}
 	return result;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.159 2005/06/26 22:05:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.160 2005/06/28 05:08:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,6 +269,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"returns", RETURNS},
 	{"revoke", REVOKE},
 	{"right", RIGHT},
+	{"role", ROLE},
 	{"rollback", ROLLBACK},
 	{"row", ROW},
 	{"rows", ROWS},

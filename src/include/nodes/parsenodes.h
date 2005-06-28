@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.283 2005/06/22 21:14:31 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.284 2005/06/28 05:09:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -544,7 +544,7 @@ typedef struct RangeTblEntry
 	bool		inh;			/* inheritance requested? */
 	bool		inFromCl;		/* present in FROM clause? */
 	AclMode		requiredPerms;	/* bitmask of required access permissions */
-	AclId		checkAsUser;	/* if not zero, check access as this user */
+	Oid			checkAsUser;	/* if valid, check access as this role */
 } RangeTblEntry;
 
 /*
@@ -749,12 +749,12 @@ typedef enum ObjectType
 	OBJECT_DATABASE,
 	OBJECT_DOMAIN,
 	OBJECT_FUNCTION,
-	OBJECT_GROUP,
 	OBJECT_INDEX,
 	OBJECT_LANGUAGE,
 	OBJECT_LARGEOBJECT,
 	OBJECT_OPCLASS,
 	OBJECT_OPERATOR,
+	OBJECT_ROLE,
 	OBJECT_RULE,
 	OBJECT_SCHEMA,
 	OBJECT_SEQUENCE,
@@ -762,7 +762,6 @@ typedef enum ObjectType
 	OBJECT_TABLESPACE,
 	OBJECT_TRIGGER,
 	OBJECT_TYPE,
-	OBJECT_USER,
 	OBJECT_VIEW
 } ObjectType;
 
@@ -896,8 +895,7 @@ typedef struct GrantStmt
 typedef struct PrivGrantee
 {
 	NodeTag		type;
-	char	   *username;		/* if both are NULL then PUBLIC */
-	char	   *groupname;
+	char	   *rolname;		/* if NULL then PUBLIC */
 } PrivGrantee;
 
 /*
@@ -919,6 +917,23 @@ typedef struct PrivTarget
 	GrantObjectType objtype;
 	List	   *objs;
 } PrivTarget;
+
+/* ----------------------
+ *		Grant/Revoke Role Statement
+ *
+ * Note: the lists of roles are lists of names, as Value strings
+ * ----------------------
+ */
+typedef struct GrantRoleStmt
+{
+	NodeTag		type;
+	List	   *granted_roles;	/* list of roles to be granted/revoked */
+	List	   *grantee_roles;	/* list of member roles to add/delete */
+	bool		is_grant;		/* true = GRANT, false = REVOKE */
+	bool		admin_opt;		/* with admin option */
+	char	   *grantor;		/* set grantor to other than current role */
+	DropBehavior behavior;		/* drop behavior (for REVOKE) */
+} GrantRoleStmt;
 
 /* ----------------------
  *		Copy Statement
@@ -1123,61 +1138,37 @@ typedef struct DropPLangStmt
 } DropPLangStmt;
 
 /* ----------------------
- *	Create/Alter/Drop User Statements
+ *	Create/Alter/Drop Role Statements
  * ----------------------
  */
-typedef struct CreateUserStmt
+typedef struct CreateRoleStmt
 {
 	NodeTag		type;
-	char	   *user;			/* PostgreSQL user login name */
+	char	   *role;			/* role name */
 	List	   *options;		/* List of DefElem nodes */
-} CreateUserStmt;
+} CreateRoleStmt;
 
-typedef struct AlterUserStmt
+typedef struct AlterRoleStmt
 {
 	NodeTag		type;
-	char	   *user;			/* PostgreSQL user login name */
+	char	   *role;			/* role name */
 	List	   *options;		/* List of DefElem nodes */
-} AlterUserStmt;
+	int			action;			/* +1 = add members, -1 = drop members */
+} AlterRoleStmt;
 
-typedef struct AlterUserSetStmt
+typedef struct AlterRoleSetStmt
 {
 	NodeTag		type;
-	char	   *user;
-	char	   *variable;
-	List	   *value;
-} AlterUserSetStmt;
+	char	   *role;			/* role name */
+	char	   *variable;		/* GUC variable name */
+	List	   *value;			/* value for variable, or NIL for Reset */
+} AlterRoleSetStmt;
 
-typedef struct DropUserStmt
+typedef struct DropRoleStmt
 {
 	NodeTag		type;
-	List	   *users;			/* List of users to remove */
-} DropUserStmt;
-
-/* ----------------------
- *		Create/Alter/Drop Group Statements
- * ----------------------
- */
-typedef struct CreateGroupStmt
-{
-	NodeTag		type;
-	char	   *name;			/* name of the new group */
-	List	   *options;		/* List of DefElem nodes */
-} CreateGroupStmt;
-
-typedef struct AlterGroupStmt
-{
-	NodeTag		type;
-	char	   *name;			/* name of group to alter */
-	int			action;			/* +1 = add, -1 = drop user */
-	List	   *listUsers;		/* list of users to add/drop */
-} AlterGroupStmt;
-
-typedef struct DropGroupStmt
-{
-	NodeTag		type;
-	char	   *name;
-} DropGroupStmt;
+	List	   *roles;			/* List of roles to remove */
+} DropRoleStmt;
 
 /* ----------------------
  *		{Create|Alter} SEQUENCE Statement

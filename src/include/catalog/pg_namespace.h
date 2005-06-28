@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_namespace.h,v 1.17 2005/04/14 01:38:20 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_namespace.h,v 1.18 2005/06/28 05:09:06 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -41,7 +41,7 @@
 CATALOG(pg_namespace,2615)
 {
 	NameData	nspname;
-	int4		nspowner;
+	Oid			nspowner;
 	aclitem		nspacl[1];		/* VARIABLE LENGTH FIELD */
 } FormData_pg_namespace;
 
@@ -82,6 +82,6 @@ DESCR("Standard public schema");
 /*
  * prototypes for functions in pg_namespace.c
  */
-extern Oid NamespaceCreate(const char *nspName, int32 ownerSysId);
+extern Oid NamespaceCreate(const char *nspName, Oid ownerId);
 
 #endif   /* PG_NAMESPACE_H */

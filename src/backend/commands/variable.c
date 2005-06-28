@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.108 2005/06/09 21:52:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.109 2005/06/28 05:08:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 #include <ctype.h>
 
 #include "access/xact.h"
-#include "catalog/pg_shadow.h"
+#include "catalog/pg_authid.h"
 #include "commands/variable.h"
 #include "miscadmin.h"
 #include "parser/scansup.h"
@@ -567,46 +567,46 @@ assign_client_encoding(const char *value, bool doit, GucSource source)
  * SET SESSION AUTHORIZATION
  *
  * When resetting session auth after an error, we can't expect to do catalog
- * lookups.  Hence, the stored form of the value must provide a numeric userid
+ * lookups.  Hence, the stored form of the value must provide a numeric oid
  * that can be re-used directly.  We store the string in the form of
  * NAMEDATALEN 'x's, followed by T or F to indicate superuserness, followed
- * by the numeric userid, followed by a comma, followed by the user name.
- * This cannot be confused with a plain user name because of the NAMEDATALEN
+ * by the numeric oid, followed by a comma, followed by the role name.
+ * This cannot be confused with a plain role name because of the NAMEDATALEN
  * limit on names, so we can tell whether we're being passed an initial
- * username or a saved/restored value.
+ * role name or a saved/restored value.
  */
 extern char *session_authorization_string;		/* in guc.c */
 
 const char *
 assign_session_authorization(const char *value, bool doit, GucSource source)
 {
-	AclId		usesysid = 0;
+	Oid		roleid = InvalidOid;
 	bool		is_superuser = false;
-	const char *actual_username = NULL;
+	const char *actual_rolename = NULL;
 	char	   *result;
 
 	if (strspn(value, "x") == NAMEDATALEN &&
 		(value[NAMEDATALEN] == 'T' || value[NAMEDATALEN] == 'F'))
 	{
 		/* might be a saved userid string */
-		AclId		savedsysid;
+		Oid		savedoid;
 		char	   *endptr;
 
-		savedsysid = (AclId) strtoul(value + NAMEDATALEN + 1, &endptr, 10);
+		savedoid = (Oid) strtoul(value + NAMEDATALEN + 1, &endptr, 10);
 
 		if (endptr != value + NAMEDATALEN + 1 && *endptr == ',')
 		{
 			/* syntactically valid, so break out the data */
-			usesysid = savedsysid;
+			roleid = savedoid;
 			is_superuser = (value[NAMEDATALEN] == 'T');
-			actual_username = endptr + 1;
+			actual_rolename = endptr + 1;
 		}
 	}
 
-	if (usesysid == 0)
+	if (roleid == InvalidOid)
 	{
 		/* not a saved ID, so look it up */
-		HeapTuple	userTup;
+		HeapTuple	roleTup;
 
 		if (!IsTransactionState())
 		{
@@ -618,38 +618,38 @@ assign_session_authorization(const char *value, bool doit, GucSource source)
 			return NULL;
 		}
 
-		userTup = SearchSysCache(SHADOWNAME,
+		roleTup = SearchSysCache(AUTHNAME,
 								 PointerGetDatum(value),
 								 0, 0, 0);
-		if (!HeapTupleIsValid(userTup))
+		if (!HeapTupleIsValid(roleTup))
 		{
 			if (source >= PGC_S_INTERACTIVE)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
-						 errmsg("user \"%s\" does not exist", value)));
+						 errmsg("role \"%s\" does not exist", value)));
 			return NULL;
 		}
 
-		usesysid = ((Form_pg_shadow) GETSTRUCT(userTup))->usesysid;
-		is_superuser = ((Form_pg_shadow) GETSTRUCT(userTup))->usesuper;
-		actual_username = value;
+		roleid = HeapTupleGetOid(roleTup);
+		is_superuser = ((Form_pg_authid) GETSTRUCT(roleTup))->rolsuper;
+		actual_rolename = value;
 
-		ReleaseSysCache(userTup);
+		ReleaseSysCache(roleTup);
 	}
 
 	if (doit)
-		SetSessionAuthorization(usesysid, is_superuser);
+		SetSessionAuthorization(roleid, is_superuser);
 
-	result = (char *) malloc(NAMEDATALEN + 32 + strlen(actual_username));
+	result = (char *) malloc(NAMEDATALEN + 32 + strlen(actual_rolename));
 	if (!result)
 		return NULL;
 
 	memset(result, 'x', NAMEDATALEN);
 
-	sprintf(result + NAMEDATALEN, "%c%lu,%s",
+	sprintf(result + NAMEDATALEN, "%c%u,%s",
 			is_superuser ? 'T' : 'F',
-			(unsigned long) usesysid,
-			actual_username);
+			roleid,
+			actual_rolename);
 
 	return result;
 }
@@ -662,13 +662,13 @@ show_session_authorization(void)
 	 * assign_session_authorization
 	 */
 	const char *value = session_authorization_string;
-	AclId		savedsysid;
+	Oid		savedoid;
 	char	   *endptr;
 
 	Assert(strspn(value, "x") == NAMEDATALEN &&
 		   (value[NAMEDATALEN] == 'T' || value[NAMEDATALEN] == 'F'));
 
-	savedsysid = (AclId) strtoul(value + NAMEDATALEN + 1, &endptr, 10);
+	savedoid = (Oid) strtoul(value + NAMEDATALEN + 1, &endptr, 10);
 
 	Assert(endptr != value + NAMEDATALEN + 1 && *endptr == ',');
 

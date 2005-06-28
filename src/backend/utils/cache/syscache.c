@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.99 2005/05/11 01:26:02 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.100 2005/06/28 05:09:01 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -27,9 +27,10 @@
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
+#include "catalog/pg_authid.h"
+#include "catalog/pg_auth_members.h"
 #include "catalog/pg_cast.h"
 #include "catalog/pg_conversion.h"
-#include "catalog/pg_group.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_language.h"
@@ -38,7 +39,6 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_rewrite.h"
-#include "catalog/pg_shadow.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
 #include "utils/catcache.h"
@@ -172,6 +172,46 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
+	{AuthMemRelationId,				/* AUTHMEMMEMROLE */
+		AuthMemMemRoleIndexId,
+		0,
+		2,
+		{
+			Anum_pg_auth_members_member,
+			Anum_pg_auth_members_roleid,
+			0,
+			0
+	}},
+	{AuthMemRelationId,				/* AUTHMEMROLEMEM */
+		AuthMemRoleMemIndexId,
+		0,
+		2,
+		{
+			Anum_pg_auth_members_roleid,
+			Anum_pg_auth_members_member,
+			0,
+			0
+	}},
+	{AuthIdRelationId,				/* AUTHNAME */
+		AuthIdRolnameIndexId,
+		0,
+		1,
+		{
+			Anum_pg_authid_rolname,
+			0,
+			0,
+			0
+	}},
+	{AuthIdRelationId,				/* AUTHOID */
+		AuthIdOidIndexId,
+		0,
+		1,
+		{
+			ObjectIdAttributeNumber,
+			0,
+			0,
+			0
+	}},
 	{
 		CastRelationId,					/* CASTSOURCETARGET */
 		CastSourceTargetIndexId,
@@ -229,26 +269,6 @@ static const struct cachedesc cacheinfo[] = {
 		1,
 		{
 			ObjectIdAttributeNumber,
-			0,
-			0,
-			0
-	}},
-	{GroupRelationId,					/* GRONAME */
-		GroupNameIndexId,
-		0,
-		1,
-		{
-			Anum_pg_group_groname,
-			0,
-			0,
-			0
-	}},
-	{GroupRelationId,					/* GROSYSID */
-		GroupSysidIndexId,
-		0,
-		1,
-		{
-			Anum_pg_group_grosysid,
 			0,
 			0,
 			0
@@ -380,26 +400,6 @@ static const struct cachedesc cacheinfo[] = {
 		{
 			Anum_pg_rewrite_ev_class,
 			Anum_pg_rewrite_rulename,
-			0,
-			0
-	}},
-	{ShadowRelationId,					/* SHADOWNAME */
-		ShadowNameIndexId,
-		0,
-		1,
-		{
-			Anum_pg_shadow_usename,
-			0,
-			0,
-			0
-	}},
-	{ShadowRelationId,					/* SHADOWSYSID */
-		ShadowSysidIndexId,
-		0,
-		1,
-		{
-			Anum_pg_shadow_usesysid,
-			0,
 			0,
 			0
 	}},

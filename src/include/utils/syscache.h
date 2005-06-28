@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/syscache.h,v 1.59 2005/03/29 00:17:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/syscache.h,v 1.60 2005/06/28 05:09:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,29 +36,29 @@
 #define AMPROCNUM		5
 #define ATTNAME			6
 #define ATTNUM			7
-#define CASTSOURCETARGET 8
-#define CLAAMNAMENSP	9
-#define CLAOID			10
-#define CONDEFAULT		11
-#define CONNAMENSP		12
-#define CONOID			13
-#define GRONAME			14
-#define GROSYSID		15
-#define INDEXRELID		16
-#define INHRELID		17
-#define LANGNAME		18
-#define LANGOID			19
-#define NAMESPACENAME	20
-#define NAMESPACEOID	21
-#define OPERNAMENSP		22
-#define OPEROID			23
-#define PROCNAMEARGSNSP	24
-#define PROCOID			25
-#define RELNAMENSP		26
-#define RELOID			27
-#define RULERELNAME		28
-#define SHADOWNAME		29
-#define SHADOWSYSID		30
+#define AUTHMEMMEMROLE	8
+#define AUTHMEMROLEMEM	9
+#define AUTHNAME		10
+#define AUTHOID			11
+#define CASTSOURCETARGET 12
+#define CLAAMNAMENSP	13
+#define CLAOID			14
+#define CONDEFAULT		15
+#define CONNAMENSP		16
+#define CONOID			17
+#define INDEXRELID		18
+#define INHRELID		19
+#define LANGNAME		20
+#define LANGOID			21
+#define NAMESPACENAME	22
+#define NAMESPACEOID	23
+#define OPERNAMENSP		24
+#define OPEROID			25
+#define PROCNAMEARGSNSP	26
+#define PROCOID			27
+#define RELNAMENSP		28
+#define RELOID			29
+#define RULERELNAME		30
 #define STATRELATT		31
 #define TYPENAMENSP		32
 #define TYPEOID			33

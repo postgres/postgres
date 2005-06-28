@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.270 2005/06/26 19:16:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.271 2005/06/28 05:09:02 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -5108,7 +5108,7 @@ ParseLongOption(const char *string, char **name, char **value)
 
 
 /*
- * Handle options fetched from pg_database.datconfig or pg_shadow.useconfig.
+ * Handle options fetched from pg_database.datconfig or pg_authid.rolconfig.
  * The array parameter must be an array of TEXT (it must not be NULL).
  */
 void
@@ -5154,7 +5154,7 @@ ProcessGUCArray(ArrayType *array, GucSource source)
 
 		/*
 		 * We process all these options at SUSET level.  We assume that
-		 * the right to insert an option into pg_database or pg_shadow was
+		 * the right to insert an option into pg_database or pg_authid was
 		 * checked when it was inserted.
 		 */
 		SetConfigOption(name, value, PGC_SUSET, source);

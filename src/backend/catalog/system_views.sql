@@ -3,8 +3,44 @@
  *
  * Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.15 2005/06/18 19:33:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.16 2005/06/28 05:08:52 tgl Exp $
  */
+
+CREATE VIEW pg_roles AS 
+    SELECT 
+        rolname,
+        rolsuper,
+        rolcreaterole,
+        rolcreatedb,
+        rolcatupdate,
+        rolcanlogin,
+        '********'::text as rolpassword,
+        rolvaliduntil,
+        rolconfig
+    FROM pg_authid;
+
+CREATE VIEW pg_shadow AS
+    SELECT
+        rolname AS usename,
+        oid AS usesysid,
+        rolcreatedb AS usecreatedb,
+        rolsuper AS usesuper,
+        rolcatupdate AS usecatupd,
+        rolpassword AS passwd,
+        rolvaliduntil::abstime AS valuntil,
+        rolconfig AS useconfig
+    FROM pg_authid
+    WHERE rolcanlogin;
+
+REVOKE ALL on pg_shadow FROM public;
+
+CREATE VIEW pg_group AS
+    SELECT
+        rolname AS groname,
+        oid AS grosysid,
+        ARRAY(SELECT member FROM pg_auth_members WHERE roleid = oid) AS grolist
+    FROM pg_authid
+    WHERE NOT rolcanlogin;
 
 CREATE VIEW pg_user AS 
     SELECT 
@@ -111,10 +147,10 @@ CREATE VIEW pg_locks AS
 
 CREATE VIEW pg_prepared_xacts AS
     SELECT P.transaction, P.gid, P.prepared,
-           U.usename AS owner, D.datname AS database
+           U.rolname AS owner, D.datname AS database
     FROM pg_prepared_xact() AS P
-    (transaction xid, gid text, prepared timestamptz, ownerid int4, dbid oid)
-         LEFT JOIN pg_shadow U ON P.ownerid = U.usesysid
+    (transaction xid, gid text, prepared timestamptz, ownerid oid, dbid oid)
+         LEFT JOIN pg_authid U ON P.ownerid = U.oid
          LEFT JOIN pg_database D ON P.dbid = D.oid;
 
 CREATE VIEW pg_settings AS 
@@ -269,7 +305,7 @@ CREATE VIEW pg_stat_activity AS
             D.datname AS datname, 
             pg_stat_get_backend_pid(S.backendid) AS procpid, 
             pg_stat_get_backend_userid(S.backendid) AS usesysid, 
-            U.usename AS usename, 
+            U.rolname AS usename, 
             pg_stat_get_backend_activity(S.backendid) AS current_query, 
             pg_stat_get_backend_activity_start(S.backendid) AS query_start,
             pg_stat_get_backend_start(S.backendid) AS backend_start,
@@ -277,9 +313,9 @@ CREATE VIEW pg_stat_activity AS
             pg_stat_get_backend_client_port(S.backendid) AS client_port
     FROM pg_database D, 
             (SELECT pg_stat_get_backend_idset() AS backendid) AS S, 
-            pg_shadow U 
+            pg_authid U 
     WHERE pg_stat_get_backend_dbid(S.backendid) = D.oid AND 
-            pg_stat_get_backend_userid(S.backendid) = U.usesysid;
+            pg_stat_get_backend_userid(S.backendid) = U.oid;
 
 CREATE VIEW pg_stat_database AS 
     SELECT 

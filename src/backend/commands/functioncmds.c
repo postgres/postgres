@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.61 2005/04/14 20:03:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.62 2005/06/28 05:08:53 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -853,7 +853,7 @@ RenameFunction(List *name, List *argtypes, const char *newname)
  * Change function owner
  */
 void
-AlterFunctionOwner(List *name, List *argtypes, AclId newOwnerSysId)
+AlterFunctionOwner(List *name, List *argtypes, Oid newOwnerId)
 {
 	Oid			procOid;
 	HeapTuple	tup;
@@ -882,7 +882,7 @@ AlterFunctionOwner(List *name, List *argtypes, AclId newOwnerSysId)
 	 * If the new owner is the same as the existing owner, consider the
 	 * command to have succeeded.  This is for dump restoration purposes.
 	 */
-	if (procForm->proowner != newOwnerSysId)
+	if (procForm->proowner != newOwnerId)
 	{
 		Datum		repl_val[Natts_pg_proc];
 		char		repl_null[Natts_pg_proc];
@@ -902,7 +902,7 @@ AlterFunctionOwner(List *name, List *argtypes, AclId newOwnerSysId)
 		memset(repl_repl, ' ', sizeof(repl_repl));
 
 		repl_repl[Anum_pg_proc_proowner - 1] = 'r';
-		repl_val[Anum_pg_proc_proowner - 1] = Int32GetDatum(newOwnerSysId);
+		repl_val[Anum_pg_proc_proowner - 1] = ObjectIdGetDatum(newOwnerId);
 
 		/*
 		 * Determine the modified ACL for the new owner.  This is only
@@ -914,7 +914,7 @@ AlterFunctionOwner(List *name, List *argtypes, AclId newOwnerSysId)
 		if (!isNull)
 		{
 			newAcl = aclnewowner(DatumGetAclP(aclDatum),
-								 procForm->proowner, newOwnerSysId);
+								 procForm->proowner, newOwnerId);
 			repl_repl[Anum_pg_proc_proacl - 1] = 'r';
 			repl_val[Anum_pg_proc_proacl - 1] = PointerGetDatum(newAcl);
 		}

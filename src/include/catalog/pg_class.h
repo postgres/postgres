@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_class.h,v 1.88 2005/04/29 22:28:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_class.h,v 1.89 2005/06/28 05:09:05 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -47,7 +47,7 @@ CATALOG(pg_class,1259) BKI_BOOTSTRAP
 	NameData	relname;		/* class name */
 	Oid			relnamespace;	/* OID of namespace containing this class */
 	Oid			reltype;		/* OID of associated entry in pg_type */
-	int4		relowner;		/* class owner */
+	Oid			relowner;		/* class owner */
 	Oid			relam;			/* index access method; 0 if not an index */
 	Oid			relfilenode;	/* identifier of physical storage file */
 	Oid			reltablespace;	/* identifier of table space for relation */

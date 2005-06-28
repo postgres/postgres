@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.75 2005/04/14 20:03:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.76 2005/06/28 05:08:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,12 +22,12 @@
 #include "access/xact.h"
 #include "catalog/dependency.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_authid.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
-#include "catalog/pg_shadow.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
 #include "lib/stringinfo.h"
@@ -1499,7 +1499,7 @@ FindDefaultConversionProc(int4 for_encoding, int4 to_encoding)
 static void
 recomputeNamespacePath(void)
 {
-	AclId		userId = GetUserId();
+	Oid		roleid = GetUserId();
 	char	   *rawname;
 	List	   *namelist;
 	List	   *oidlist;
@@ -1511,7 +1511,7 @@ recomputeNamespacePath(void)
 	/*
 	 * Do nothing if path is already valid.
 	 */
-	if (namespaceSearchPathValid && namespaceUser == userId)
+	if (namespaceSearchPathValid && namespaceUser == roleid)
 		return;
 
 	/* Need a modifiable copy of namespace_search_path string */
@@ -1542,21 +1542,21 @@ recomputeNamespacePath(void)
 			/* $user --- substitute namespace matching user name, if any */
 			HeapTuple	tuple;
 
-			tuple = SearchSysCache(SHADOWSYSID,
-								   ObjectIdGetDatum(userId),
+			tuple = SearchSysCache(AUTHOID,
+								   ObjectIdGetDatum(roleid),
 								   0, 0, 0);
 			if (HeapTupleIsValid(tuple))
 			{
-				char	   *uname;
+				char	   *rname;
 
-				uname = NameStr(((Form_pg_shadow) GETSTRUCT(tuple))->usename);
+				rname = NameStr(((Form_pg_authid) GETSTRUCT(tuple))->rolname);
 				namespaceId = GetSysCacheOid(NAMESPACENAME,
-											 CStringGetDatum(uname),
+											 CStringGetDatum(rname),
 											 0, 0, 0);
 				ReleaseSysCache(tuple);
 				if (OidIsValid(namespaceId) &&
 					!list_member_oid(oidlist, namespaceId) &&
-					pg_namespace_aclcheck(namespaceId, userId,
+					pg_namespace_aclcheck(namespaceId, roleid,
 										  ACL_USAGE) == ACLCHECK_OK)
 					oidlist = lappend_oid(oidlist, namespaceId);
 			}
@@ -1569,7 +1569,7 @@ recomputeNamespacePath(void)
 										 0, 0, 0);
 			if (OidIsValid(namespaceId) &&
 				!list_member_oid(oidlist, namespaceId) &&
-				pg_namespace_aclcheck(namespaceId, userId,
+				pg_namespace_aclcheck(namespaceId, roleid,
 									  ACL_USAGE) == ACLCHECK_OK)
 				oidlist = lappend_oid(oidlist, namespaceId);
 		}
@@ -1622,7 +1622,7 @@ recomputeNamespacePath(void)
 
 	/* Mark the path valid. */
 	namespaceSearchPathValid = true;
-	namespaceUser = userId;
+	namespaceUser = roleid;
 
 	/* Clean up. */
 	pfree(rawname);
@@ -1674,7 +1674,7 @@ InitTempTableNamespace(void)
 		 * that access the temp namespace for my own backend skip
 		 * permissions checks on it.
 		 */
-		namespaceId = NamespaceCreate(namespaceName, BOOTSTRAP_USESYSID);
+		namespaceId = NamespaceCreate(namespaceName, BOOTSTRAP_SUPERUSERID);
 		/* Advance command counter to make namespace visible */
 		CommandCounterIncrement();
 	}

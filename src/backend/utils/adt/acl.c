@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.114 2005/05/27 00:57:49 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.115 2005/06/28 05:09:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,20 +17,33 @@
 #include <ctype.h>
 
 #include "catalog/namespace.h"
-#include "catalog/pg_group.h"
-#include "catalog/pg_shadow.h"
+#include "catalog/pg_authid.h"
+#include "catalog/pg_auth_members.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
 #include "commands/tablespace.h"
 #include "miscadmin.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/catcache.h"
+#include "utils/inval.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 #include "utils/syscache.h"
 
 
-#define ACL_IDTYPE_GID_KEYWORD	"group"
-#define ACL_IDTYPE_UID_KEYWORD	"user"
+#define ACL_IDTYPE_ROLE_KEYWORD	"role"
+
+/* The rolmemcache is a possibly-empty list of role OIDs.
+ * rolmemRole is the Role for which the cache was generated.
+ * In the event of a Role change the cache will be regenerated.
+ */
+static List	*rolmemcache = NIL;
+static Oid	rolmemRole = InvalidOid;
+
+/* rolmemcache and rolmemRole only valid when 
+ * rolmemcacheValid is true */
+static bool rolmemcacheValid = false;
 
 static const char *getid(const char *s, char *n);
 static void putid(char *p, const char *s);
@@ -38,10 +51,9 @@ static Acl *allocacl(int n);
 static const char *aclparse(const char *s, AclItem *aip);
 static bool aclitem_match(const AclItem *a1, const AclItem *a2);
 static void check_circularity(const Acl *old_acl, const AclItem *mod_aip,
-				  AclId ownerid);
-static Acl *recursive_revoke(Acl *acl, AclId grantee, AclMode revoke_privs,
-				 AclId ownerid, DropBehavior behavior);
-static bool in_group(AclId uid, AclId gid);
+				  Oid ownerId);
+static Acl *recursive_revoke(Acl *acl, Oid grantee, AclMode revoke_privs,
+				 Oid ownerId, DropBehavior behavior);
 
 static AclMode convert_priv_string(text *priv_type_text);
 
@@ -57,6 +69,9 @@ static Oid	convert_schema_name(text *schemaname);
 static AclMode convert_schema_priv_string(text *priv_type_text);
 static Oid	convert_tablespace_name(text *tablespacename);
 static AclMode convert_tablespace_priv_string(text *priv_type_text);
+
+static void RolMemCacheCallback(Datum arg, Oid relid);
+static void recomputeRolMemCache(Oid roleid);
 
 
 /*
@@ -175,7 +190,6 @@ aclparse(const char *s, AclItem *aip)
 	AclMode		privs,
 				goption,
 				read;
-	uint32		idtype;
 	char		name[NAMEDATALEN];
 	char		name2[NAMEDATALEN];
 
@@ -184,27 +198,22 @@ aclparse(const char *s, AclItem *aip)
 #ifdef ACLDEBUG
 	elog(LOG, "aclparse: input = \"%s\"", s);
 #endif
-	idtype = ACL_IDTYPE_UID;
 	s = getid(s, name);
 	if (*s != '=')
 	{
 		/* we just read a keyword, not a name */
-		if (strcmp(name, ACL_IDTYPE_GID_KEYWORD) == 0)
-			idtype = ACL_IDTYPE_GID;
-		else if (strcmp(name, ACL_IDTYPE_UID_KEYWORD) != 0)
+		if (strcmp(name, ACL_IDTYPE_ROLE_KEYWORD) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("unrecognized key word: \"%s\"", name),
-				errhint("ACL key word must be \"group\" or \"user\".")));
+				errhint("ACL key word must be \"role\".")));
 		s = getid(s, name);		/* move s to the name beyond the keyword */
 		if (name[0] == '\0')
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("missing name"),
-					 errhint("A name must follow the \"group\" or \"user\" key word.")));
+					 errhint("A name must follow the \"role\" key word.")));
 	}
-	if (name[0] == '\0')
-		idtype = ACL_IDTYPE_WORLD;
 
 	if (*s != '=')
 		ereport(ERROR,
@@ -263,18 +272,10 @@ aclparse(const char *s, AclItem *aip)
 		privs |= read;
 	}
 
-	switch (idtype)
-	{
-		case ACL_IDTYPE_UID:
-			aip->ai_grantee = get_usesysid(name);
-			break;
-		case ACL_IDTYPE_GID:
-			aip->ai_grantee = get_grosysid(name);
-			break;
-		case ACL_IDTYPE_WORLD:
-			aip->ai_grantee = ACL_ID_WORLD;
-			break;
-	}
+	if (name[0] == '\0')
+		aip->ai_grantee = ACL_ID_PUBLIC;
+	else
+		aip->ai_grantee = get_roleid_checked(name);
 
 	/*
 	 * XXX Allow a degree of backward compatibility by defaulting the
@@ -287,23 +288,24 @@ aclparse(const char *s, AclItem *aip)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("a name must follow the \"/\" sign")));
-
-		aip->ai_grantor = get_usesysid(name2);
+		aip->ai_grantor = get_roleid_checked(name2);
 	}
 	else
 	{
-		aip->ai_grantor = BOOTSTRAP_USESYSID;
+		aip->ai_grantor = BOOTSTRAP_SUPERUSERID;
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_GRANTOR),
-		errmsg("defaulting grantor to user ID %u", BOOTSTRAP_USESYSID)));
+				 errmsg("defaulting grantor to user ID %u",
+						BOOTSTRAP_SUPERUSERID)));
 	}
 
-	ACLITEM_SET_PRIVS_IDTYPE(*aip, privs, goption, idtype);
+	ACLITEM_SET_PRIVS_GOPTIONS(*aip, privs, goption);
 
 #ifdef ACLDEBUG
-	elog(LOG, "aclparse: correctly read [%x %d %x]",
-		 idtype, aip->ai_grantee, privs);
+	elog(LOG, "aclparse: correctly read [%u %x %x]",
+		 aip->ai_grantee, privs, goption);
 #endif
+
 	return s;
 }
 
@@ -375,7 +377,6 @@ aclitemout(PG_FUNCTION_ARGS)
 	char	   *out;
 	HeapTuple	htup;
 	unsigned	i;
-	char	   *tmpname;
 
 	out = palloc(strlen("group =/") +
 				 2 * N_ACL_RIGHTS +
@@ -385,41 +386,21 @@ aclitemout(PG_FUNCTION_ARGS)
 	p = out;
 	*p = '\0';
 
-	switch (ACLITEM_GET_IDTYPE(*aip))
+	if (aip->ai_grantee != ACL_ID_PUBLIC)
 	{
-		case ACL_IDTYPE_UID:
-			htup = SearchSysCache(SHADOWSYSID,
-								  ObjectIdGetDatum(aip->ai_grantee),
-								  0, 0, 0);
-			if (HeapTupleIsValid(htup))
-			{
-				putid(p, NameStr(((Form_pg_shadow) GETSTRUCT(htup))->usename));
-				ReleaseSysCache(htup);
-			}
-			else
-			{
-				/* Generate numeric UID if we don't find an entry */
-				sprintf(p, "%d", aip->ai_grantee);
-			}
-			break;
-		case ACL_IDTYPE_GID:
-			strcpy(p, "group ");
-			p += strlen(p);
-			tmpname = get_groname(aip->ai_grantee);
-			if (tmpname != NULL)
-				putid(p, tmpname);
-			else
-			{
-				/* Generate numeric GID if we don't find an entry */
-				sprintf(p, "%d", aip->ai_grantee);
-			}
-			break;
-		case ACL_IDTYPE_WORLD:
-			break;
-		default:
-			elog(ERROR, "unrecognized idtype: %d",
-				 (int) ACLITEM_GET_IDTYPE(*aip));
-			break;
+		htup = SearchSysCache(AUTHOID,
+							  ObjectIdGetDatum(aip->ai_grantee),
+							  0, 0, 0);
+		if (HeapTupleIsValid(htup))
+		{
+			putid(p, NameStr(((Form_pg_authid) GETSTRUCT(htup))->rolname));
+			ReleaseSysCache(htup);
+		}
+		else
+		{
+			/* Generate numeric OID if we don't find an entry */
+			sprintf(p, "%u", aip->ai_grantee);
+		}
 	}
 	while (*p)
 		++p;
@@ -437,18 +418,18 @@ aclitemout(PG_FUNCTION_ARGS)
 	*p++ = '/';
 	*p = '\0';
 
-	htup = SearchSysCache(SHADOWSYSID,
+	htup = SearchSysCache(AUTHOID,
 						  ObjectIdGetDatum(aip->ai_grantor),
 						  0, 0, 0);
 	if (HeapTupleIsValid(htup))
 	{
-		putid(p, NameStr(((Form_pg_shadow) GETSTRUCT(htup))->usename));
+		putid(p, NameStr(((Form_pg_authid) GETSTRUCT(htup))->rolname));
 		ReleaseSysCache(htup);
 	}
 	else
 	{
-		/* Generate numeric UID if we don't find an entry */
-		sprintf(p, "%d", aip->ai_grantor);
+		/* Generate numeric OID if we don't find an entry */
+		sprintf(p, "%u", aip->ai_grantor);
 	}
 
 	while (*p)
@@ -466,8 +447,7 @@ aclitemout(PG_FUNCTION_ARGS)
 static bool
 aclitem_match(const AclItem *a1, const AclItem *a2)
 {
-	return ACLITEM_GET_IDTYPE(*a1) == ACLITEM_GET_IDTYPE(*a2) &&
-		a1->ai_grantee == a2->ai_grantee &&
+	return a1->ai_grantee == a2->ai_grantee &&
 		a1->ai_grantor == a2->ai_grantor;
 }
 
@@ -511,7 +491,7 @@ hash_aclitem(PG_FUNCTION_ARGS)
  * newly-created objects (or any object with a NULL acl entry).
  */
 Acl *
-acldefault(GrantObjectType objtype, AclId ownerid)
+acldefault(GrantObjectType objtype, Oid ownerId)
 {
 	AclMode		world_default;
 	AclMode		owner_default;
@@ -558,10 +538,9 @@ acldefault(GrantObjectType objtype, AclId ownerid)
 
 	if (world_default != ACL_NO_RIGHTS)
 	{
-		aip->ai_grantee = ACL_ID_WORLD;
-		aip->ai_grantor = ownerid;
-		ACLITEM_SET_PRIVS_IDTYPE(*aip, world_default, ACL_NO_RIGHTS,
-								 ACL_IDTYPE_WORLD);
+		aip->ai_grantee = ACL_ID_PUBLIC;
+		aip->ai_grantor = ownerId;
+		ACLITEM_SET_PRIVS_GOPTIONS(*aip, world_default, ACL_NO_RIGHTS);
 		aip++;
 	}
 
@@ -575,10 +554,9 @@ acldefault(GrantObjectType objtype, AclId ownerid)
 	 * without any explicit "_SYSTEM"-like ACL entry, by internally
 	 * special-casing the owner whereever we are testing grant options.
 	 */
-	aip->ai_grantee = ownerid;
-	aip->ai_grantor = ownerid;
-	ACLITEM_SET_PRIVS_IDTYPE(*aip, owner_default, ACL_NO_RIGHTS,
-							 ACL_IDTYPE_UID);
+	aip->ai_grantee = ownerId;
+	aip->ai_grantor = ownerId;
+	ACLITEM_SET_PRIVS_GOPTIONS(*aip, owner_default, ACL_NO_RIGHTS);
 
 	return acl;
 }
@@ -590,7 +568,7 @@ acldefault(GrantObjectType objtype, AclId ownerid)
  *	old_acl: the input ACL array
  *	mod_aip: defines the privileges to be added, removed, or substituted
  *	modechg: ACL_MODECHG_ADD, ACL_MODECHG_DEL, or ACL_MODECHG_EQL
- *	ownerid: AclId of object owner
+ *	ownerId: Oid of object owner
  *	behavior: RESTRICT or CASCADE behavior for recursive removal
  *
  * ownerid and behavior are only relevant when the update operation specifies
@@ -602,7 +580,7 @@ acldefault(GrantObjectType objtype, AclId ownerid)
  */
 Acl *
 aclupdate(const Acl *old_acl, const AclItem *mod_aip,
-		  int modechg, AclId ownerid, DropBehavior behavior)
+		  int modechg, Oid ownerId, DropBehavior behavior)
 {
 	Acl		   *new_acl = NULL;
 	AclItem    *old_aip,
@@ -627,7 +605,7 @@ aclupdate(const Acl *old_acl, const AclItem *mod_aip,
 	/* If granting grant options, check for circularity */
 	if (modechg != ACL_MODECHG_DEL &&
 		ACLITEM_GET_GOPTIONS(*mod_aip) != ACL_NO_RIGHTS)
-		check_circularity(old_acl, mod_aip, ownerid);
+		check_circularity(old_acl, mod_aip, ownerId);
 
 	num = ACL_NUM(old_acl);
 	old_aip = ACL_DAT(old_acl);
@@ -661,9 +639,8 @@ aclupdate(const Acl *old_acl, const AclItem *mod_aip,
 		/* initialize the new entry with no permissions */
 		new_aip[dst].ai_grantee = mod_aip->ai_grantee;
 		new_aip[dst].ai_grantor = mod_aip->ai_grantor;
-		ACLITEM_SET_PRIVS_IDTYPE(new_aip[dst],
-								 ACL_NO_RIGHTS, ACL_NO_RIGHTS,
-								 ACLITEM_GET_IDTYPE(*mod_aip));
+		ACLITEM_SET_PRIVS_GOPTIONS(new_aip[dst],
+								   ACL_NO_RIGHTS, ACL_NO_RIGHTS);
 		num++;					/* set num to the size of new_acl */
 	}
 
@@ -704,14 +681,14 @@ aclupdate(const Acl *old_acl, const AclItem *mod_aip,
 
 	/*
 	 * Remove abandoned privileges (cascading revoke).	Currently we can
-	 * only handle this when the grantee is a user.
+	 * only handle this when the grantee is not PUBLIC.
 	 */
 	if ((old_goptions & ~new_goptions) != 0)
 	{
-		Assert(ACLITEM_GET_IDTYPE(*mod_aip) == ACL_IDTYPE_UID);
+		Assert(mod_aip->ai_grantee != ACL_ID_PUBLIC);
 		new_acl = recursive_revoke(new_acl, mod_aip->ai_grantee,
 								   (old_goptions & ~new_goptions),
-								   ownerid, behavior);
+								   ownerId, behavior);
 	}
 
 	return new_acl;
@@ -721,15 +698,15 @@ aclupdate(const Acl *old_acl, const AclItem *mod_aip,
  * Update an ACL array to reflect a change of owner to the parent object
  *
  *	old_acl: the input ACL array (must not be NULL)
- *	oldownerid: AclId of the old object owner
- *	newownerid: AclId of the new object owner
+ *	oldOwnerId: Oid of the old object owner
+ *	newOwnerId: Oid of the new object owner
  *
  * The result is a modified copy; the input object is not changed.
  *
  * NB: caller is responsible for having detoasted the input ACL, if needed.
  */
 Acl *
-aclnewowner(const Acl *old_acl, AclId oldownerid, AclId newownerid)
+aclnewowner(const Acl *old_acl, Oid oldOwnerId, Oid newOwnerId)
 {
 	Acl		   *new_acl;
 	AclItem    *new_aip;
@@ -755,18 +732,14 @@ aclnewowner(const Acl *old_acl, AclId oldownerid, AclId newownerid)
 	memcpy(new_aip, old_aip, num * sizeof(AclItem));
 	for (dst = 0, dst_aip = new_aip; dst < num; dst++, dst_aip++)
 	{
-		/* grantor is always a UID, but grantee might not be */
-		if (dst_aip->ai_grantor == oldownerid)
-			dst_aip->ai_grantor = newownerid;
-		else if (dst_aip->ai_grantor == newownerid)
+		if (dst_aip->ai_grantor == oldOwnerId)
+			dst_aip->ai_grantor = newOwnerId;
+		else if (dst_aip->ai_grantor == newOwnerId)
 			newpresent = true;
-		if (ACLITEM_GET_IDTYPE(*dst_aip) == ACL_IDTYPE_UID)
-		{
-			if (dst_aip->ai_grantee == oldownerid)
-				dst_aip->ai_grantee = newownerid;
-			else if (dst_aip->ai_grantee == newownerid)
-				newpresent = true;
-		}
+		if (dst_aip->ai_grantee == oldOwnerId)
+			dst_aip->ai_grantee = newOwnerId;
+		else if (dst_aip->ai_grantee == newOwnerId)
+			newpresent = true;
 	}
 
 	/*
@@ -836,7 +809,7 @@ aclnewowner(const Acl *old_acl, AclId oldownerid, AclId newownerid)
  */
 static void
 check_circularity(const Acl *old_acl, const AclItem *mod_aip,
-				  AclId ownerid)
+				  Oid ownerId)
 {
 	Acl		   *acl;
 	AclItem    *aip;
@@ -845,13 +818,13 @@ check_circularity(const Acl *old_acl, const AclItem *mod_aip,
 	AclMode		own_privs;
 
 	/*
-	 * For now, grant options can only be granted to users, not groups or
-	 * PUBLIC.	Otherwise we'd have to work a bit harder here.
+	 * For now, grant options can only be granted to roles, not PUBLIC.
+	 * Otherwise we'd have to work a bit harder here.
 	 */
-	Assert(ACLITEM_GET_IDTYPE(*mod_aip) == ACL_IDTYPE_UID);
+	Assert(mod_aip->ai_grantee != ACL_ID_PUBLIC);
 
 	/* The owner always has grant options, no need to check */
-	if (mod_aip->ai_grantor == ownerid)
+	if (mod_aip->ai_grantor == ownerId)
 		return;
 
 	/* Make a working copy */
@@ -864,15 +837,14 @@ cc_restart:
 	aip = ACL_DAT(acl);
 	for (i = 0; i < num; i++)
 	{
-		if (ACLITEM_GET_IDTYPE(aip[i]) == ACL_IDTYPE_UID &&
-			aip[i].ai_grantee == mod_aip->ai_grantee &&
+		if (aip[i].ai_grantee == mod_aip->ai_grantee &&
 			ACLITEM_GET_GOPTIONS(aip[i]) != ACL_NO_RIGHTS)
 		{
 			Acl		   *new_acl;
 
 			/* We'll actually zap ordinary privs too, but no matter */
 			new_acl = aclupdate(acl, &aip[i], ACL_MODECHG_DEL,
-								ownerid, DROP_CASCADE);
+								ownerId, DROP_CASCADE);
 
 			pfree(acl);
 			acl = new_acl;
@@ -884,7 +856,7 @@ cc_restart:
 	/* Now we can compute grantor's independently-derived privileges */
 	own_privs = aclmask(acl,
 						mod_aip->ai_grantor,
-						ownerid,
+						ownerId,
 					ACL_GRANT_OPTION_FOR(ACLITEM_GET_GOPTIONS(*mod_aip)),
 						ACLMASK_ALL);
 	own_privs = ACL_OPTION_TO_PRIVS(own_privs);
@@ -908,16 +880,16 @@ cc_restart:
  *	acl: the input ACL list
  *	grantee: the user from whom some grant options have been revoked
  *	revoke_privs: the grant options being revoked
- *	ownerid: AclId of object owner
+ *	ownerId: Oid of object owner
  *	behavior: RESTRICT or CASCADE behavior for recursive removal
  *
  * The input Acl object is pfree'd if replaced.
  */
 static Acl *
 recursive_revoke(Acl *acl,
-				 AclId grantee,
+				 Oid grantee,
 				 AclMode revoke_privs,
-				 AclId ownerid,
+				 Oid ownerId,
 				 DropBehavior behavior)
 {
 	AclMode		still_has;
@@ -926,11 +898,11 @@ recursive_revoke(Acl *acl,
 				num;
 
 	/* The owner can never truly lose grant options, so short-circuit */
-	if (grantee == ownerid)
+	if (grantee == ownerId)
 		return acl;
 
 	/* The grantee might still have the privileges via another grantor */
-	still_has = aclmask(acl, grantee, ownerid,
+	still_has = aclmask(acl, grantee, ownerId,
 						ACL_GRANT_OPTION_FOR(revoke_privs),
 						ACLMASK_ALL);
 	revoke_privs &= ~still_has;
@@ -956,13 +928,12 @@ restart:
 
 			mod_acl.ai_grantor = grantee;
 			mod_acl.ai_grantee = aip[i].ai_grantee;
-			ACLITEM_SET_PRIVS_IDTYPE(mod_acl,
-									 revoke_privs,
-									 revoke_privs,
-									 ACLITEM_GET_IDTYPE(aip[i]));
+			ACLITEM_SET_PRIVS_GOPTIONS(mod_acl,
+									   revoke_privs,
+									   revoke_privs);
 
 			new_acl = aclupdate(acl, &mod_acl, ACL_MODECHG_DEL,
-								ownerid, behavior);
+								ownerId, behavior);
 
 			pfree(acl);
 			acl = new_acl;
@@ -976,10 +947,10 @@ restart:
 
 
 /*
- * aclmask --- compute bitmask of all privileges held by userid.
+ * aclmask --- compute bitmask of all privileges held by roleid.
  *
  * When 'how' = ACLMASK_ALL, this simply returns the privilege bits
- * held by the given userid according to the given ACL list, ANDed
+ * held by the given roleid according to the given ACL list, ANDed
  * with 'mask'.  (The point of passing 'mask' is to let the routine
  * exit early if all privileges of interest have been found.)
  *
@@ -990,20 +961,20 @@ restart:
  * Usage patterns:
  *
  * To see if any of a set of privileges are held:
- *		if (aclmask(acl, userid, ownerid, privs, ACLMASK_ANY) != 0)
+ *		if (aclmask(acl, roleid, ownerId, privs, ACLMASK_ANY) != 0)
  *
  * To see if all of a set of privileges are held:
- *		if (aclmask(acl, userid, ownerid, privs, ACLMASK_ALL) == privs)
+ *		if (aclmask(acl, roleid, ownerId, privs, ACLMASK_ALL) == privs)
  *
  * To determine exactly which of a set of privileges are held:
- *		heldprivs = aclmask(acl, userid, ownerid, privs, ACLMASK_ALL);
+ *		heldprivs = aclmask(acl, roleid, ownerId, privs, ACLMASK_ALL);
+ *
  */
 AclMode
-aclmask(const Acl *acl, AclId userid, AclId ownerid,
+aclmask(const Acl *acl, Oid roleid, Oid ownerId,
 		AclMode mask, AclMaskHow how)
 {
 	AclMode		result;
-	AclMode		remaining;
 	AclItem    *aidat;
 	int			i,
 				num;
@@ -1022,7 +993,7 @@ aclmask(const Acl *acl, AclId userid, AclId ownerid,
 	result = 0;
 
 	/* Owner always implicitly has all grant options */
-	if (userid == ownerid)
+	if (is_member_of_role(roleid,ownerId))
 	{
 		result = mask & ACLITEM_ALL_GOPTION_BITS;
 		if (result == mask)
@@ -1033,39 +1004,19 @@ aclmask(const Acl *acl, AclId userid, AclId ownerid,
 	aidat = ACL_DAT(acl);
 
 	/*
-	 * Check privileges granted directly to user or to public
+	 * Check privileges granted directly to role, indirectly
+	 * via role membership or to public
 	 */
 	for (i = 0; i < num; i++)
 	{
 		AclItem    *aidata = &aidat[i];
 
-		if (ACLITEM_GET_IDTYPE(*aidata) == ACL_IDTYPE_WORLD
-			|| (ACLITEM_GET_IDTYPE(*aidata) == ACL_IDTYPE_UID
-				&& aidata->ai_grantee == userid))
+		if (aidata->ai_grantee == ACL_ID_PUBLIC ||
+			is_member_of_role(roleid, aidata->ai_grantee))
 		{
 			result |= (aidata->ai_privs & mask);
 			if ((how == ACLMASK_ALL) ? (result == mask) : (result != 0))
 				return result;
-		}
-	}
-
-	/*
-	 * Check privileges granted via groups.  We do this in a separate pass
-	 * to minimize expensive lookups in pg_group.
-	 */
-	remaining = (mask & ~result);
-	for (i = 0; i < num; i++)
-	{
-		AclItem    *aidata = &aidat[i];
-
-		if (ACLITEM_GET_IDTYPE(*aidata) == ACL_IDTYPE_GID
-			&& (aidata->ai_privs & remaining)
-			&& in_group(userid, aidata->ai_grantee))
-		{
-			result |= (aidata->ai_privs & mask);
-			if ((how == ACLMASK_ALL) ? (result == mask) : (result != 0))
-				return result;
-			remaining = (mask & ~result);
 		}
 	}
 
@@ -1074,55 +1025,19 @@ aclmask(const Acl *acl, AclId userid, AclId ownerid,
 
 
 /*
- * Is user a member of group?
+ * Is member a member of role?
+ * relmemcache includes the role itself too
  */
-static bool
-in_group(AclId uid, AclId gid)
+bool
+is_member_of_role(Oid member, Oid role)
 {
-	bool		result = false;
-	HeapTuple	tuple;
-	Datum		att;
-	bool		isNull;
-	IdList	   *glist;
-	AclId	   *aidp;
-	int			i,
-				num;
+	/* Fast path for simple case */
+	if (member == role)
+		return true;
 
-	tuple = SearchSysCache(GROSYSID,
-						   ObjectIdGetDatum(gid),
-						   0, 0, 0);
-	if (HeapTupleIsValid(tuple))
-	{
-		att = SysCacheGetAttr(GROSYSID,
-							  tuple,
-							  Anum_pg_group_grolist,
-							  &isNull);
-		if (!isNull)
-		{
-			/* be sure the IdList is not toasted */
-			glist = DatumGetIdListP(att);
-			/* scan it */
-			num = IDLIST_NUM(glist);
-			aidp = IDLIST_DAT(glist);
-			for (i = 0; i < num; ++i)
-			{
-				if (aidp[i] == uid)
-				{
-					result = true;
-					break;
-				}
-			}
-			/* if IdList was toasted, free detoasted copy */
-			if ((Pointer) glist != DatumGetPointer(att))
-				pfree(glist);
-		}
-		ReleaseSysCache(tuple);
-	}
-	else
-		ereport(WARNING,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("group with ID %u does not exist", gid)));
-	return result;
+	recomputeRolMemCache(member);
+
+	return list_member_oid(rolmemcache, role);
 }
 
 
@@ -1162,10 +1077,9 @@ aclcontains(PG_FUNCTION_ARGS)
 	aidat = ACL_DAT(acl);
 	for (i = 0; i < num; ++i)
 	{
-		if (aip->ai_grantee == aidat[i].ai_grantee
-			&& ACLITEM_GET_IDTYPE(*aip) == ACLITEM_GET_IDTYPE(aidat[i])
-			&& aip->ai_grantor == aidat[i].ai_grantor
-			&& (ACLITEM_GET_RIGHTS(*aip) & ACLITEM_GET_RIGHTS(aidat[i])) == ACLITEM_GET_RIGHTS(*aip))
+		if (aip->ai_grantee == aidat[i].ai_grantee &&
+			aip->ai_grantor == aidat[i].ai_grantor &&
+			(ACLITEM_GET_RIGHTS(*aip) & ACLITEM_GET_RIGHTS(aidat[i])) == ACLITEM_GET_RIGHTS(*aip))
 			PG_RETURN_BOOL(true);
 	}
 	PG_RETURN_BOOL(false);
@@ -1174,51 +1088,22 @@ aclcontains(PG_FUNCTION_ARGS)
 Datum
 makeaclitem(PG_FUNCTION_ARGS)
 {
-	int32		u_grantee = PG_GETARG_INT32(0);
-	int32		g_grantee = PG_GETARG_INT32(1);
-	int32		grantor = PG_GETARG_INT32(2);
-	text	   *privtext = PG_GETARG_TEXT_P(3);
-	bool		goption = PG_GETARG_BOOL(4);
+	Oid			grantee = PG_GETARG_OID(0);
+	Oid 		grantor = PG_GETARG_OID(1);
+	text	   *privtext = PG_GETARG_TEXT_P(2);
+	bool		goption = PG_GETARG_BOOL(3);
 	AclItem    *aclitem;
 	AclMode		priv;
 
 	priv = convert_priv_string(privtext);
 
-	aclitem = (AclItem *) palloc(sizeof(*aclitem));
+	aclitem = (AclItem *) palloc(sizeof(AclItem));
 
-	if (u_grantee == 0 && g_grantee == 0)
-	{
-		aclitem   ->ai_grantee = ACL_ID_WORLD;
+	aclitem->ai_grantee = grantee;
+	aclitem->ai_grantor = grantor;
 
-		ACLITEM_SET_IDTYPE(*aclitem, ACL_IDTYPE_WORLD);
-	}
-	else if (u_grantee != 0 && g_grantee != 0)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_DATA_EXCEPTION),
-				 errmsg("cannot specify both user and group")));
-	}
-	else if (u_grantee != 0)
-	{
-		aclitem   ->ai_grantee = u_grantee;
-
-		ACLITEM_SET_IDTYPE(*aclitem, ACL_IDTYPE_UID);
-	}
-	else
-	/* (g_grantee != 0) */
-	{
-		aclitem   ->ai_grantee = g_grantee;
-
-		ACLITEM_SET_IDTYPE(*aclitem, ACL_IDTYPE_GID);
-	}
-
-	aclitem   ->ai_grantor = grantor;
-
-	ACLITEM_SET_PRIVS(*aclitem, priv);
-	if (goption)
-		ACLITEM_SET_GOPTIONS(*aclitem, priv);
-	else
-		ACLITEM_SET_GOPTIONS(*aclitem, ACL_NO_RIGHTS);
+	ACLITEM_SET_PRIVS_GOPTIONS(*aclitem, priv,
+							   (goption ? priv : ACL_NO_RIGHTS));
 
 	PG_RETURN_ACLITEM_P(aclitem);
 }
@@ -1267,7 +1152,7 @@ convert_priv_string(text *priv_type_text)
  * has_table_privilege variants
  *		These are all named "has_table_privilege" at the SQL level.
  *		They take various combinations of relation name, relation OID,
- *		user name, user sysid, or implicit user = current_user.
+ *		user name, user OID, or implicit user = current_user.
  *
  *		The result is a boolean value: true if user has the indicated
  *		privilege, false if not.
@@ -1281,19 +1166,20 @@ convert_priv_string(text *priv_type_text)
 Datum
 has_table_privilege_name_name(PG_FUNCTION_ARGS)
 {
-	Name		username = PG_GETARG_NAME(0);
+	Name		rolename = PG_GETARG_NAME(0);
 	text	   *tablename = PG_GETARG_TEXT_P(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
-	int32		usesysid;
+	Oid			roleid;
 	Oid			tableoid;
 	AclMode		mode;
 	AclResult	aclresult;
 
-	usesysid = get_usesysid(NameStr(*username));
+	roleid = get_roleid_checked(NameStr(*rolename));
+
 	tableoid = convert_table_name(tablename);
 	mode = convert_table_priv_string(priv_type_text);
 
-	aclresult = pg_class_aclcheck(tableoid, usesysid, mode);
+	aclresult = pg_class_aclcheck(tableoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -1309,16 +1195,16 @@ has_table_privilege_name(PG_FUNCTION_ARGS)
 {
 	text	   *tablename = PG_GETARG_TEXT_P(0);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
-	AclId		usesysid;
+	Oid			roleid;
 	Oid			tableoid;
 	AclMode		mode;
 	AclResult	aclresult;
 
-	usesysid = GetUserId();
+	roleid = GetUserId();
 	tableoid = convert_table_name(tablename);
 	mode = convert_table_priv_string(priv_type_text);
 
-	aclresult = pg_class_aclcheck(tableoid, usesysid, mode);
+	aclresult = pg_class_aclcheck(tableoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -1334,14 +1220,15 @@ has_table_privilege_name_id(PG_FUNCTION_ARGS)
 	Name		username = PG_GETARG_NAME(0);
 	Oid			tableoid = PG_GETARG_OID(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
-	int32		usesysid;
+	Oid			roleid;
 	AclMode		mode;
 	AclResult	aclresult;
 
-	usesysid = get_usesysid(NameStr(*username));
+	roleid = get_roleid_checked(NameStr(*username));
+
 	mode = convert_table_priv_string(priv_type_text);
 
-	aclresult = pg_class_aclcheck(tableoid, usesysid, mode);
+	aclresult = pg_class_aclcheck(tableoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -1357,14 +1244,14 @@ has_table_privilege_id(PG_FUNCTION_ARGS)
 {
 	Oid			tableoid = PG_GETARG_OID(0);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
-	AclId		usesysid;
+	Oid		roleid;
 	AclMode		mode;
 	AclResult	aclresult;
 
-	usesysid = GetUserId();
+	roleid = GetUserId();
 	mode = convert_table_priv_string(priv_type_text);
 
-	aclresult = pg_class_aclcheck(tableoid, usesysid, mode);
+	aclresult = pg_class_aclcheck(tableoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -1372,12 +1259,12 @@ has_table_privilege_id(PG_FUNCTION_ARGS)
 /*
  * has_table_privilege_id_name
  *		Check user privileges on a table given
- *		usesysid, text tablename, and text priv name.
+ *		roleid, text tablename, and text priv name.
  */
 Datum
 has_table_privilege_id_name(PG_FUNCTION_ARGS)
 {
-	int32		usesysid = PG_GETARG_INT32(0);
+	Oid			roleid = PG_GETARG_OID(0);
 	text	   *tablename = PG_GETARG_TEXT_P(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
 	Oid			tableoid;
@@ -1387,7 +1274,7 @@ has_table_privilege_id_name(PG_FUNCTION_ARGS)
 	tableoid = convert_table_name(tablename);
 	mode = convert_table_priv_string(priv_type_text);
 
-	aclresult = pg_class_aclcheck(tableoid, usesysid, mode);
+	aclresult = pg_class_aclcheck(tableoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -1395,12 +1282,12 @@ has_table_privilege_id_name(PG_FUNCTION_ARGS)
 /*
  * has_table_privilege_id_id
  *		Check user privileges on a table given
- *		usesysid, table oid, and text priv name.
+ *		roleid, table oid, and text priv name.
  */
 Datum
 has_table_privilege_id_id(PG_FUNCTION_ARGS)
 {
-	int32		usesysid = PG_GETARG_INT32(0);
+	Oid			roleid = PG_GETARG_OID(0);
 	Oid			tableoid = PG_GETARG_OID(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
 	AclMode		mode;
@@ -1408,7 +1295,7 @@ has_table_privilege_id_id(PG_FUNCTION_ARGS)
 
 	mode = convert_table_priv_string(priv_type_text);
 
-	aclresult = pg_class_aclcheck(tableoid, usesysid, mode);
+	aclresult = pg_class_aclcheck(tableoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -1491,7 +1378,7 @@ convert_table_priv_string(text *priv_type_text)
  * has_database_privilege variants
  *		These are all named "has_database_privilege" at the SQL level.
  *		They take various combinations of database name, database OID,
- *		user name, user sysid, or implicit user = current_user.
+ *		user name, user OID, or implicit user = current_user.
  *
  *		The result is a boolean value: true if user has the indicated
  *		privilege, false if not.
@@ -1508,16 +1395,17 @@ has_database_privilege_name_name(PG_FUNCTION_ARGS)
 	Name		username = PG_GETARG_NAME(0);
 	text	   *databasename = PG_GETARG_TEXT_P(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
-	int32		usesysid;
+	Oid			roleid;
 	Oid			databaseoid;
 	AclMode		mode;
 	AclResult	aclresult;
 
-	usesysid = get_usesysid(NameStr(*username));
+	roleid = get_roleid_checked(NameStr(*username));
+
 	databaseoid = convert_database_name(databasename);
 	mode = convert_database_priv_string(priv_type_text);
 
-	aclresult = pg_database_aclcheck(databaseoid, usesysid, mode);
+	aclresult = pg_database_aclcheck(databaseoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -1533,16 +1421,16 @@ has_database_privilege_name(PG_FUNCTION_ARGS)
 {
 	text	   *databasename = PG_GETARG_TEXT_P(0);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
-	AclId		usesysid;
+	Oid			roleid;
 	Oid			databaseoid;
 	AclMode		mode;
 	AclResult	aclresult;
 
-	usesysid = GetUserId();
+	roleid = GetUserId();
 	databaseoid = convert_database_name(databasename);
 	mode = convert_database_priv_string(priv_type_text);
 
-	aclresult = pg_database_aclcheck(databaseoid, usesysid, mode);
+	aclresult = pg_database_aclcheck(databaseoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -1558,14 +1446,15 @@ has_database_privilege_name_id(PG_FUNCTION_ARGS)
 	Name		username = PG_GETARG_NAME(0);
 	Oid			databaseoid = PG_GETARG_OID(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
-	int32		usesysid;
+	Oid			roleid;
 	AclMode		mode;
 	AclResult	aclresult;
 
-	usesysid = get_usesysid(NameStr(*username));
+	roleid = get_roleid_checked(NameStr(*username));
+
 	mode = convert_database_priv_string(priv_type_text);
 
-	aclresult = pg_database_aclcheck(databaseoid, usesysid, mode);
+	aclresult = pg_database_aclcheck(databaseoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -1581,14 +1470,14 @@ has_database_privilege_id(PG_FUNCTION_ARGS)
 {
 	Oid			databaseoid = PG_GETARG_OID(0);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
-	AclId		usesysid;
+	Oid			roleid;
 	AclMode		mode;
 	AclResult	aclresult;
 
-	usesysid = GetUserId();
+	roleid = GetUserId();
 	mode = convert_database_priv_string(priv_type_text);
 
-	aclresult = pg_database_aclcheck(databaseoid, usesysid, mode);
+	aclresult = pg_database_aclcheck(databaseoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -1596,12 +1485,12 @@ has_database_privilege_id(PG_FUNCTION_ARGS)
 /*
  * has_database_privilege_id_name
  *		Check user privileges on a database given
- *		usesysid, text databasename, and text priv name.
+ *		roleid, text databasename, and text priv name.
  */
 Datum
 has_database_privilege_id_name(PG_FUNCTION_ARGS)
 {
-	int32		usesysid = PG_GETARG_INT32(0);
+	Oid			roleid = PG_GETARG_OID(0);
 	text	   *databasename = PG_GETARG_TEXT_P(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
 	Oid			databaseoid;
@@ -1611,7 +1500,7 @@ has_database_privilege_id_name(PG_FUNCTION_ARGS)
 	databaseoid = convert_database_name(databasename);
 	mode = convert_database_priv_string(priv_type_text);
 
-	aclresult = pg_database_aclcheck(databaseoid, usesysid, mode);
+	aclresult = pg_database_aclcheck(databaseoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -1619,12 +1508,12 @@ has_database_privilege_id_name(PG_FUNCTION_ARGS)
 /*
  * has_database_privilege_id_id
  *		Check user privileges on a database given
- *		usesysid, database oid, and text priv name.
+ *		roleid, database oid, and text priv name.
  */
 Datum
 has_database_privilege_id_id(PG_FUNCTION_ARGS)
 {
-	int32		usesysid = PG_GETARG_INT32(0);
+	Oid			roleid = PG_GETARG_OID(0);
 	Oid			databaseoid = PG_GETARG_OID(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
 	AclMode		mode;
@@ -1632,7 +1521,7 @@ has_database_privilege_id_id(PG_FUNCTION_ARGS)
 
 	mode = convert_database_priv_string(priv_type_text);
 
-	aclresult = pg_database_aclcheck(databaseoid, usesysid, mode);
+	aclresult = pg_database_aclcheck(databaseoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -1703,7 +1592,7 @@ convert_database_priv_string(text *priv_type_text)
  * has_function_privilege variants
  *		These are all named "has_function_privilege" at the SQL level.
  *		They take various combinations of function name, function OID,
- *		user name, user sysid, or implicit user = current_user.
+ *		user name, user OID, or implicit user = current_user.
  *
  *		The result is a boolean value: true if user has the indicated
  *		privilege, false if not.
@@ -1720,16 +1609,17 @@ has_function_privilege_name_name(PG_FUNCTION_ARGS)
 	Name		username = PG_GETARG_NAME(0);
 	text	   *functionname = PG_GETARG_TEXT_P(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
-	int32		usesysid;
+	Oid			roleid;
 	Oid			functionoid;
 	AclMode		mode;
 	AclResult	aclresult;
 
-	usesysid = get_usesysid(NameStr(*username));
+	roleid = get_roleid_checked(NameStr(*username));
+
 	functionoid = convert_function_name(functionname);
 	mode = convert_function_priv_string(priv_type_text);
 
-	aclresult = pg_proc_aclcheck(functionoid, usesysid, mode);
+	aclresult = pg_proc_aclcheck(functionoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -1745,16 +1635,16 @@ has_function_privilege_name(PG_FUNCTION_ARGS)
 {
 	text	   *functionname = PG_GETARG_TEXT_P(0);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
-	AclId		usesysid;
+	Oid			roleid;
 	Oid			functionoid;
 	AclMode		mode;
 	AclResult	aclresult;
 
-	usesysid = GetUserId();
+	roleid = GetUserId();
 	functionoid = convert_function_name(functionname);
 	mode = convert_function_priv_string(priv_type_text);
 
-	aclresult = pg_proc_aclcheck(functionoid, usesysid, mode);
+	aclresult = pg_proc_aclcheck(functionoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -1770,14 +1660,15 @@ has_function_privilege_name_id(PG_FUNCTION_ARGS)
 	Name		username = PG_GETARG_NAME(0);
 	Oid			functionoid = PG_GETARG_OID(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
-	int32		usesysid;
+	Oid			roleid;
 	AclMode		mode;
 	AclResult	aclresult;
 
-	usesysid = get_usesysid(NameStr(*username));
+	roleid = get_roleid_checked(NameStr(*username));
+
 	mode = convert_function_priv_string(priv_type_text);
 
-	aclresult = pg_proc_aclcheck(functionoid, usesysid, mode);
+	aclresult = pg_proc_aclcheck(functionoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -1793,14 +1684,14 @@ has_function_privilege_id(PG_FUNCTION_ARGS)
 {
 	Oid			functionoid = PG_GETARG_OID(0);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
-	AclId		usesysid;
+	Oid			roleid;
 	AclMode		mode;
 	AclResult	aclresult;
 
-	usesysid = GetUserId();
+	roleid = GetUserId();
 	mode = convert_function_priv_string(priv_type_text);
 
-	aclresult = pg_proc_aclcheck(functionoid, usesysid, mode);
+	aclresult = pg_proc_aclcheck(functionoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -1808,12 +1699,12 @@ has_function_privilege_id(PG_FUNCTION_ARGS)
 /*
  * has_function_privilege_id_name
  *		Check user privileges on a function given
- *		usesysid, text functionname, and text priv name.
+ *		roleid, text functionname, and text priv name.
  */
 Datum
 has_function_privilege_id_name(PG_FUNCTION_ARGS)
 {
-	int32		usesysid = PG_GETARG_INT32(0);
+	Oid			roleid = PG_GETARG_OID(0);
 	text	   *functionname = PG_GETARG_TEXT_P(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
 	Oid			functionoid;
@@ -1823,7 +1714,7 @@ has_function_privilege_id_name(PG_FUNCTION_ARGS)
 	functionoid = convert_function_name(functionname);
 	mode = convert_function_priv_string(priv_type_text);
 
-	aclresult = pg_proc_aclcheck(functionoid, usesysid, mode);
+	aclresult = pg_proc_aclcheck(functionoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -1831,12 +1722,12 @@ has_function_privilege_id_name(PG_FUNCTION_ARGS)
 /*
  * has_function_privilege_id_id
  *		Check user privileges on a function given
- *		usesysid, function oid, and text priv name.
+ *		roleid, function oid, and text priv name.
  */
 Datum
 has_function_privilege_id_id(PG_FUNCTION_ARGS)
 {
-	int32		usesysid = PG_GETARG_INT32(0);
+	Oid			roleid = PG_GETARG_OID(0);
 	Oid			functionoid = PG_GETARG_OID(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
 	AclMode		mode;
@@ -1844,7 +1735,7 @@ has_function_privilege_id_id(PG_FUNCTION_ARGS)
 
 	mode = convert_function_priv_string(priv_type_text);
 
-	aclresult = pg_proc_aclcheck(functionoid, usesysid, mode);
+	aclresult = pg_proc_aclcheck(functionoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -1907,7 +1798,7 @@ convert_function_priv_string(text *priv_type_text)
  * has_language_privilege variants
  *		These are all named "has_language_privilege" at the SQL level.
  *		They take various combinations of language name, language OID,
- *		user name, user sysid, or implicit user = current_user.
+ *		user name, user OID, or implicit user = current_user.
  *
  *		The result is a boolean value: true if user has the indicated
  *		privilege, false if not.
@@ -1924,16 +1815,17 @@ has_language_privilege_name_name(PG_FUNCTION_ARGS)
 	Name		username = PG_GETARG_NAME(0);
 	text	   *languagename = PG_GETARG_TEXT_P(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
-	int32		usesysid;
+	Oid			roleid;
 	Oid			languageoid;
 	AclMode		mode;
 	AclResult	aclresult;
 
-	usesysid = get_usesysid(NameStr(*username));
+	roleid = get_roleid_checked(NameStr(*username));
+
 	languageoid = convert_language_name(languagename);
 	mode = convert_language_priv_string(priv_type_text);
 
-	aclresult = pg_language_aclcheck(languageoid, usesysid, mode);
+	aclresult = pg_language_aclcheck(languageoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -1949,16 +1841,16 @@ has_language_privilege_name(PG_FUNCTION_ARGS)
 {
 	text	   *languagename = PG_GETARG_TEXT_P(0);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
-	AclId		usesysid;
+	Oid			roleid;
 	Oid			languageoid;
 	AclMode		mode;
 	AclResult	aclresult;
 
-	usesysid = GetUserId();
+	roleid = GetUserId();
 	languageoid = convert_language_name(languagename);
 	mode = convert_language_priv_string(priv_type_text);
 
-	aclresult = pg_language_aclcheck(languageoid, usesysid, mode);
+	aclresult = pg_language_aclcheck(languageoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -1974,14 +1866,15 @@ has_language_privilege_name_id(PG_FUNCTION_ARGS)
 	Name		username = PG_GETARG_NAME(0);
 	Oid			languageoid = PG_GETARG_OID(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
-	int32		usesysid;
+	Oid			roleid;
 	AclMode		mode;
 	AclResult	aclresult;
 
-	usesysid = get_usesysid(NameStr(*username));
+	roleid = get_roleid_checked(NameStr(*username));
+
 	mode = convert_language_priv_string(priv_type_text);
 
-	aclresult = pg_language_aclcheck(languageoid, usesysid, mode);
+	aclresult = pg_language_aclcheck(languageoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -1997,14 +1890,14 @@ has_language_privilege_id(PG_FUNCTION_ARGS)
 {
 	Oid			languageoid = PG_GETARG_OID(0);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
-	AclId		usesysid;
+	Oid			roleid;
 	AclMode		mode;
 	AclResult	aclresult;
 
-	usesysid = GetUserId();
+	roleid = GetUserId();
 	mode = convert_language_priv_string(priv_type_text);
 
-	aclresult = pg_language_aclcheck(languageoid, usesysid, mode);
+	aclresult = pg_language_aclcheck(languageoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -2012,12 +1905,12 @@ has_language_privilege_id(PG_FUNCTION_ARGS)
 /*
  * has_language_privilege_id_name
  *		Check user privileges on a language given
- *		usesysid, text languagename, and text priv name.
+ *		roleid, text languagename, and text priv name.
  */
 Datum
 has_language_privilege_id_name(PG_FUNCTION_ARGS)
 {
-	int32		usesysid = PG_GETARG_INT32(0);
+	Oid			roleid = PG_GETARG_OID(0);
 	text	   *languagename = PG_GETARG_TEXT_P(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
 	Oid			languageoid;
@@ -2027,7 +1920,7 @@ has_language_privilege_id_name(PG_FUNCTION_ARGS)
 	languageoid = convert_language_name(languagename);
 	mode = convert_language_priv_string(priv_type_text);
 
-	aclresult = pg_language_aclcheck(languageoid, usesysid, mode);
+	aclresult = pg_language_aclcheck(languageoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -2035,12 +1928,12 @@ has_language_privilege_id_name(PG_FUNCTION_ARGS)
 /*
  * has_language_privilege_id_id
  *		Check user privileges on a language given
- *		usesysid, language oid, and text priv name.
+ *		roleid, language oid, and text priv name.
  */
 Datum
 has_language_privilege_id_id(PG_FUNCTION_ARGS)
 {
-	int32		usesysid = PG_GETARG_INT32(0);
+	Oid			roleid = PG_GETARG_OID(0);
 	Oid			languageoid = PG_GETARG_OID(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
 	AclMode		mode;
@@ -2048,7 +1941,7 @@ has_language_privilege_id_id(PG_FUNCTION_ARGS)
 
 	mode = convert_language_priv_string(priv_type_text);
 
-	aclresult = pg_language_aclcheck(languageoid, usesysid, mode);
+	aclresult = pg_language_aclcheck(languageoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -2111,7 +2004,7 @@ convert_language_priv_string(text *priv_type_text)
  * has_schema_privilege variants
  *		These are all named "has_schema_privilege" at the SQL level.
  *		They take various combinations of schema name, schema OID,
- *		user name, user sysid, or implicit user = current_user.
+ *		user name, user OID, or implicit user = current_user.
  *
  *		The result is a boolean value: true if user has the indicated
  *		privilege, false if not.
@@ -2128,16 +2021,17 @@ has_schema_privilege_name_name(PG_FUNCTION_ARGS)
 	Name		username = PG_GETARG_NAME(0);
 	text	   *schemaname = PG_GETARG_TEXT_P(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
-	int32		usesysid;
+	Oid			roleid;
 	Oid			schemaoid;
 	AclMode		mode;
 	AclResult	aclresult;
 
-	usesysid = get_usesysid(NameStr(*username));
+	roleid = get_roleid_checked(NameStr(*username));
+
 	schemaoid = convert_schema_name(schemaname);
 	mode = convert_schema_priv_string(priv_type_text);
 
-	aclresult = pg_namespace_aclcheck(schemaoid, usesysid, mode);
+	aclresult = pg_namespace_aclcheck(schemaoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -2153,16 +2047,16 @@ has_schema_privilege_name(PG_FUNCTION_ARGS)
 {
 	text	   *schemaname = PG_GETARG_TEXT_P(0);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
-	AclId		usesysid;
+	Oid			roleid;
 	Oid			schemaoid;
 	AclMode		mode;
 	AclResult	aclresult;
 
-	usesysid = GetUserId();
+	roleid = GetUserId();
 	schemaoid = convert_schema_name(schemaname);
 	mode = convert_schema_priv_string(priv_type_text);
 
-	aclresult = pg_namespace_aclcheck(schemaoid, usesysid, mode);
+	aclresult = pg_namespace_aclcheck(schemaoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -2178,14 +2072,15 @@ has_schema_privilege_name_id(PG_FUNCTION_ARGS)
 	Name		username = PG_GETARG_NAME(0);
 	Oid			schemaoid = PG_GETARG_OID(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
-	int32		usesysid;
+	Oid			roleid;
 	AclMode		mode;
 	AclResult	aclresult;
 
-	usesysid = get_usesysid(NameStr(*username));
+	roleid = get_roleid_checked(NameStr(*username));
+
 	mode = convert_schema_priv_string(priv_type_text);
 
-	aclresult = pg_namespace_aclcheck(schemaoid, usesysid, mode);
+	aclresult = pg_namespace_aclcheck(schemaoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -2201,14 +2096,14 @@ has_schema_privilege_id(PG_FUNCTION_ARGS)
 {
 	Oid			schemaoid = PG_GETARG_OID(0);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
-	AclId		usesysid;
+	Oid			roleid;
 	AclMode		mode;
 	AclResult	aclresult;
 
-	usesysid = GetUserId();
+	roleid = GetUserId();
 	mode = convert_schema_priv_string(priv_type_text);
 
-	aclresult = pg_namespace_aclcheck(schemaoid, usesysid, mode);
+	aclresult = pg_namespace_aclcheck(schemaoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -2216,12 +2111,12 @@ has_schema_privilege_id(PG_FUNCTION_ARGS)
 /*
  * has_schema_privilege_id_name
  *		Check user privileges on a schema given
- *		usesysid, text schemaname, and text priv name.
+ *		roleid, text schemaname, and text priv name.
  */
 Datum
 has_schema_privilege_id_name(PG_FUNCTION_ARGS)
 {
-	int32		usesysid = PG_GETARG_INT32(0);
+	Oid			roleid = PG_GETARG_OID(0);
 	text	   *schemaname = PG_GETARG_TEXT_P(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
 	Oid			schemaoid;
@@ -2231,7 +2126,7 @@ has_schema_privilege_id_name(PG_FUNCTION_ARGS)
 	schemaoid = convert_schema_name(schemaname);
 	mode = convert_schema_priv_string(priv_type_text);
 
-	aclresult = pg_namespace_aclcheck(schemaoid, usesysid, mode);
+	aclresult = pg_namespace_aclcheck(schemaoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -2239,12 +2134,12 @@ has_schema_privilege_id_name(PG_FUNCTION_ARGS)
 /*
  * has_schema_privilege_id_id
  *		Check user privileges on a schema given
- *		usesysid, schema oid, and text priv name.
+ *		roleid, schema oid, and text priv name.
  */
 Datum
 has_schema_privilege_id_id(PG_FUNCTION_ARGS)
 {
-	int32		usesysid = PG_GETARG_INT32(0);
+	Oid			roleid = PG_GETARG_OID(0);
 	Oid			schemaoid = PG_GETARG_OID(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
 	AclMode		mode;
@@ -2252,7 +2147,7 @@ has_schema_privilege_id_id(PG_FUNCTION_ARGS)
 
 	mode = convert_schema_priv_string(priv_type_text);
 
-	aclresult = pg_namespace_aclcheck(schemaoid, usesysid, mode);
+	aclresult = pg_namespace_aclcheck(schemaoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -2319,7 +2214,7 @@ convert_schema_priv_string(text *priv_type_text)
  * has_tablespace_privilege variants
  *		These are all named "has_tablespace_privilege" at the SQL level.
  *		They take various combinations of tablespace name, tablespace OID,
- *		user name, user sysid, or implicit user = current_user.
+ *		user name, user OID, or implicit user = current_user.
  *
  *		The result is a boolean value: true if user has the indicated
  *		privilege, false if not.
@@ -2336,16 +2231,17 @@ has_tablespace_privilege_name_name(PG_FUNCTION_ARGS)
 	Name		username = PG_GETARG_NAME(0);
 	text	   *tablespacename = PG_GETARG_TEXT_P(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
-	int32		usesysid;
+	Oid			roleid;
 	Oid			tablespaceoid;
 	AclMode		mode;
 	AclResult	aclresult;
 
-	usesysid = get_usesysid(NameStr(*username));
+	roleid = get_roleid_checked(NameStr(*username));
+
 	tablespaceoid = convert_tablespace_name(tablespacename);
 	mode = convert_tablespace_priv_string(priv_type_text);
 
-	aclresult = pg_tablespace_aclcheck(tablespaceoid, usesysid, mode);
+	aclresult = pg_tablespace_aclcheck(tablespaceoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -2361,16 +2257,16 @@ has_tablespace_privilege_name(PG_FUNCTION_ARGS)
 {
 	text	   *tablespacename = PG_GETARG_TEXT_P(0);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
-	AclId		usesysid;
+	Oid			roleid;
 	Oid			tablespaceoid;
 	AclMode		mode;
 	AclResult	aclresult;
 
-	usesysid = GetUserId();
+	roleid = GetUserId();
 	tablespaceoid = convert_tablespace_name(tablespacename);
 	mode = convert_tablespace_priv_string(priv_type_text);
 
-	aclresult = pg_tablespace_aclcheck(tablespaceoid, usesysid, mode);
+	aclresult = pg_tablespace_aclcheck(tablespaceoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -2386,14 +2282,15 @@ has_tablespace_privilege_name_id(PG_FUNCTION_ARGS)
 	Name		username = PG_GETARG_NAME(0);
 	Oid			tablespaceoid = PG_GETARG_OID(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
-	int32		usesysid;
+	Oid			roleid;
 	AclMode		mode;
 	AclResult	aclresult;
 
-	usesysid = get_usesysid(NameStr(*username));
+	roleid = get_roleid_checked(NameStr(*username));
+
 	mode = convert_tablespace_priv_string(priv_type_text);
 
-	aclresult = pg_tablespace_aclcheck(tablespaceoid, usesysid, mode);
+	aclresult = pg_tablespace_aclcheck(tablespaceoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -2409,14 +2306,14 @@ has_tablespace_privilege_id(PG_FUNCTION_ARGS)
 {
 	Oid			tablespaceoid = PG_GETARG_OID(0);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
-	AclId		usesysid;
+	Oid				roleid;
 	AclMode		mode;
 	AclResult	aclresult;
 
-	usesysid = GetUserId();
+	roleid = GetUserId();
 	mode = convert_tablespace_priv_string(priv_type_text);
 
-	aclresult = pg_tablespace_aclcheck(tablespaceoid, usesysid, mode);
+	aclresult = pg_tablespace_aclcheck(tablespaceoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -2424,12 +2321,12 @@ has_tablespace_privilege_id(PG_FUNCTION_ARGS)
 /*
  * has_tablespace_privilege_id_name
  *		Check user privileges on a tablespace given
- *		usesysid, text tablespacename, and text priv name.
+ *		roleid, text tablespacename, and text priv name.
  */
 Datum
 has_tablespace_privilege_id_name(PG_FUNCTION_ARGS)
 {
-	int32		usesysid = PG_GETARG_INT32(0);
+	Oid			roleid = PG_GETARG_OID(0);
 	text	   *tablespacename = PG_GETARG_TEXT_P(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
 	Oid			tablespaceoid;
@@ -2439,7 +2336,7 @@ has_tablespace_privilege_id_name(PG_FUNCTION_ARGS)
 	tablespaceoid = convert_tablespace_name(tablespacename);
 	mode = convert_tablespace_priv_string(priv_type_text);
 
-	aclresult = pg_tablespace_aclcheck(tablespaceoid, usesysid, mode);
+	aclresult = pg_tablespace_aclcheck(tablespaceoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -2447,12 +2344,12 @@ has_tablespace_privilege_id_name(PG_FUNCTION_ARGS)
 /*
  * has_tablespace_privilege_id_id
  *		Check user privileges on a tablespace given
- *		usesysid, tablespace oid, and text priv name.
+ *		roleid, tablespace oid, and text priv name.
  */
 Datum
 has_tablespace_privilege_id_id(PG_FUNCTION_ARGS)
 {
-	int32		usesysid = PG_GETARG_INT32(0);
+	Oid			roleid = PG_GETARG_OID(0);
 	Oid			tablespaceoid = PG_GETARG_OID(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
 	AclMode		mode;
@@ -2460,7 +2357,7 @@ has_tablespace_privilege_id_id(PG_FUNCTION_ARGS)
 
 	mode = convert_tablespace_priv_string(priv_type_text);
 
-	aclresult = pg_tablespace_aclcheck(tablespaceoid, usesysid, mode);
+	aclresult = pg_tablespace_aclcheck(tablespaceoid, roleid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
@@ -2514,4 +2411,111 @@ convert_tablespace_priv_string(text *priv_type_text)
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 			 errmsg("unrecognized privilege type: \"%s\"", priv_type)));
 	return ACL_NO_RIGHTS;		/* keep compiler quiet */
+}
+
+void
+InitializeAcl(void)
+{
+	if (!IsBootstrapProcessingMode())
+	{
+		/*
+		 * In normal mode, set a callback on any syscache
+		 * invalidation of pg_auth_members rows
+		 */
+		CacheRegisterSyscacheCallback(AUTHMEMROLEMEM,
+									  RolMemCacheCallback,
+									  (Datum) 0);
+
+	    /* Force role/member cache to be recomputed on next use */
+	    rolmemcacheValid = false;
+	}
+}
+
+/*
+ * RolMemCacheCallback
+ * 		Syscache inval callback function
+ */
+static void
+RolMemCacheCallback(Datum arg, Oid relid)
+{
+	    /* Force role/member cache to be recomputed on next use */
+	    rolmemcacheValid = false;
+}
+
+
+/* 
+ * recomputeRolMemCache - recompute the role/member cache if needed 
+ */
+static void
+recomputeRolMemCache(Oid roleid)
+{
+	int 		i;
+	Oid			memberOid;
+	List 		*roles_list_hunt = NIL;
+	List		*roles_list = NIL;
+	List		*newrolmemcache;
+	CatCList	*memlist;
+	MemoryContext	oldctx;
+
+	/* Do nothing if rolmemcache is already valid */
+	if (rolmemcacheValid && rolmemRole == roleid)
+		return;
+
+	if (rolmemRole != roleid)
+		rolmemcacheValid = false;
+
+	/* 
+	 * Find all the roles which this role is a member of,
+	 * including multi-level recursion
+	 */
+
+	/*
+	 * Include the current role itself to simplify checks
+	 * later on, also should be at the head so lookup should
+	 * be fast.
+	 */
+	roles_list = lappend_oid(roles_list, roleid);
+	roles_list_hunt = lappend_oid(roles_list_hunt, roleid);
+	
+	while (roles_list_hunt)
+	{
+		memberOid = linitial_oid(roles_list_hunt);
+		memlist = SearchSysCacheList(AUTHMEMMEMROLE, 1,
+									 ObjectIdGetDatum(memberOid),
+									 0, 0, 0);
+		for (i = 0; i < memlist->n_members; i++) {
+			HeapTuple roletup = &memlist->members[i]->tuple;
+			Form_pg_auth_members rolemem = (Form_pg_auth_members) GETSTRUCT(roletup);
+
+			if (!list_member_oid(roles_list,rolemem->roleid)) {
+				roles_list = lappend_oid(roles_list,rolemem->roleid);
+				roles_list_hunt = lappend_oid(roles_list_hunt,rolemem->roleid);
+			}
+		}
+		roles_list_hunt = list_delete_oid(roles_list_hunt, memberOid);
+		ReleaseSysCacheList(memlist);
+	}
+
+	/*
+	 * Now that we've built the list of role Oids this
+	 * role is a member of, save it in permanent storage
+	 */
+	oldctx = MemoryContextSwitchTo(TopMemoryContext);
+	newrolmemcache = list_copy(roles_list);
+	MemoryContextSwitchTo(oldctx);
+
+	/*
+	 * Now safe to assign to state variable
+	 */
+	list_free(rolmemcache);
+	rolmemcache = newrolmemcache;
+
+	/*
+	 * Mark as valid
+	 */
+	rolmemRole = roleid;
+	rolmemcacheValid = true;
+
+	/* Clean up */
+	list_free(roles_list);
 }

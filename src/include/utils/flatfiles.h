@@ -4,7 +4,7 @@
  *	  Routines for maintaining "flat file" images of the shared catalogs.
  *
  *
- * $PostgreSQL: pgsql/src/include/utils/flatfiles.h,v 1.4 2005/06/17 22:32:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/flatfiles.h,v 1.5 2005/06/28 05:09:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,12 +14,10 @@
 #include "fmgr.h"
 
 extern void database_file_update_needed(void);
-extern void group_file_update_needed(void);
-extern void user_file_update_needed(void);
+extern void auth_file_update_needed(void);
 
 extern char *database_getflatfilename(void);
-extern char *group_getflatfilename(void);
-extern char *user_getflatfilename(void);
+extern char *auth_getflatfilename(void);
 
 extern void BuildFlatFiles(bool database_only);
 

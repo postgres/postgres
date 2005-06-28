@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.30 2005/06/21 00:58:15 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.31 2005/06/28 05:08:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,11 +42,11 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 	Oid			namespaceId;
 	List	   *parsetree_list;
 	ListCell   *parsetree_item;
-	AclId		owner_userid;
-	AclId		saved_userid;
+	Oid		owner_uid;
+	Oid		saved_uid;
 	AclResult	aclresult;
 
-	saved_userid = GetUserId();
+	saved_uid = GetUserId();
 
 	/*
 	 * Figure out user identities.
@@ -54,12 +54,11 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 
 	if (!authId)
 	{
-		owner_userid = saved_userid;
+		owner_uid = saved_uid;
 	}
 	else if (superuser())
 	{
-		/* The following will error out if user does not exist */
-		owner_userid = get_usesysid(authId);
+		owner_uid = get_roleid_checked(authId);
 
 		/*
 		 * Set the current user to the requested authorization so that
@@ -67,15 +66,15 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 		 * (This will revert to session user on error or at the end of
 		 * this routine.)
 		 */
-		SetUserId(owner_userid);
+		SetUserId(owner_uid);
 	}
 	else
 	{
 		const char *owner_name;
 
 		/* not superuser */
-		owner_userid = saved_userid;
-		owner_name = GetUserNameFromId(owner_userid);
+		owner_uid = saved_uid;
+		owner_name = GetUserNameFromId(owner_uid);
 		if (strcmp(authId, owner_name) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
@@ -87,7 +86,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 	/*
 	 * Permissions checks.
 	 */
-	aclresult = pg_database_aclcheck(MyDatabaseId, saved_userid, ACL_CREATE);
+	aclresult = pg_database_aclcheck(MyDatabaseId, saved_uid, ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, ACL_KIND_DATABASE,
 					   get_database_name(MyDatabaseId));
@@ -99,7 +98,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 		errdetail("The prefix \"pg_\" is reserved for system schemas.")));
 
 	/* Create the schema's namespace */
-	namespaceId = NamespaceCreate(schemaName, owner_userid);
+	namespaceId = NamespaceCreate(schemaName, owner_uid);
 
 	/* Advance cmd counter to make the namespace visible */
 	CommandCounterIncrement();
@@ -149,7 +148,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 	PopSpecialNamespace(namespaceId);
 
 	/* Reset current user */
-	SetUserId(saved_userid);
+	SetUserId(saved_uid);
 }
 
 
@@ -279,7 +278,7 @@ RenameSchema(const char *oldname, const char *newname)
  * Change schema owner
  */
 void
-AlterSchemaOwner(const char *name, AclId newOwnerSysId)
+AlterSchemaOwner(const char *name, Oid newOwnerId)
 {
 	HeapTuple	tup;
 	Relation	rel;
@@ -300,7 +299,7 @@ AlterSchemaOwner(const char *name, AclId newOwnerSysId)
 	 * If the new owner is the same as the existing owner, consider the
 	 * command to have succeeded.  This is for dump restoration purposes.
 	 */
-	if (nspForm->nspowner != newOwnerSysId)
+	if (nspForm->nspowner != newOwnerId)
 	{
 		Datum		repl_val[Natts_pg_namespace];
 		char		repl_null[Natts_pg_namespace];
@@ -320,7 +319,7 @@ AlterSchemaOwner(const char *name, AclId newOwnerSysId)
 		memset(repl_repl, ' ', sizeof(repl_repl));
 
 		repl_repl[Anum_pg_namespace_nspowner - 1] = 'r';
-		repl_val[Anum_pg_namespace_nspowner - 1] = Int32GetDatum(newOwnerSysId);
+		repl_val[Anum_pg_namespace_nspowner - 1] = ObjectIdGetDatum(newOwnerId);
 
 		/*
 		 * Determine the modified ACL for the new owner.  This is only
@@ -332,7 +331,7 @@ AlterSchemaOwner(const char *name, AclId newOwnerSysId)
 		if (!isNull)
 		{
 			newAcl = aclnewowner(DatumGetAclP(aclDatum),
-								 nspForm->nspowner, newOwnerSysId);
+								 nspForm->nspowner, newOwnerId);
 			repl_repl[Anum_pg_namespace_nspacl - 1] = 'r';
 			repl_val[Anum_pg_namespace_nspacl - 1] = PointerGetDatum(newAcl);
 		}

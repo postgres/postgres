@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.6 2005/06/19 22:34:56 tgl Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.7 2005/06/28 05:08:51 tgl Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -107,7 +107,7 @@ typedef struct GlobalTransactionData
 	PGPROC		proc;			/* dummy proc */
 	TimestampTz	prepared_at;	/* time of preparation */
 	XLogRecPtr	prepare_lsn;	/* XLOG offset of prepare record */
-	AclId		owner;			/* ID of user that executed the xact */
+	Oid			owner;			/* ID of user that executed the xact */
 	TransactionId locking_xid;	/* top-level XID of backend working on xact */
 	bool		valid;			/* TRUE if fully prepared */
 	char gid[GIDSIZE];			/* The GID assigned to the prepared xact */
@@ -206,7 +206,7 @@ TwoPhaseShmemInit(void)
  */
 GlobalTransaction
 MarkAsPreparing(TransactionId xid, const char *gid,
-				TimestampTz prepared_at, AclId owner, Oid databaseid)
+				TimestampTz prepared_at, Oid owner, Oid databaseid)
 {
 	GlobalTransaction	gxact;
 	int i;
@@ -350,7 +350,7 @@ MarkAsPrepared(GlobalTransaction gxact)
  *		Locate the prepared transaction and mark it busy for COMMIT or PREPARE.
  */
 static GlobalTransaction
-LockGXact(const char *gid, AclId user)
+LockGXact(const char *gid, Oid user)
 {
 	int i;
 
@@ -559,7 +559,7 @@ pg_prepared_xact(PG_FUNCTION_ARGS)
 		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "prepared",
 						   TIMESTAMPTZOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "ownerid",
-						   INT4OID, -1, 0);
+						   OIDOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "dbid",
 						   OIDOID, -1, 0);
 
@@ -601,7 +601,7 @@ pg_prepared_xact(PG_FUNCTION_ARGS)
 		values[0] = TransactionIdGetDatum(gxact->proc.xid);
 		values[1] = DirectFunctionCall1(textin, CStringGetDatum(gxact->gid));
 		values[2] = TimestampTzGetDatum(gxact->prepared_at);
-		values[3] = Int32GetDatum(gxact->owner);
+		values[3] = ObjectIdGetDatum(gxact->owner);
 		values[4] = ObjectIdGetDatum(gxact->proc.databaseId);
 
 		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
@@ -690,7 +690,7 @@ typedef struct TwoPhaseFileHeader
 	TransactionId	xid;				/* original transaction XID */
 	Oid				database;			/* OID of database it was in */
 	TimestampTz		prepared_at;		/* time of preparation */
-	AclId			owner;				/* user running the transaction */
+	Oid				owner;				/* user running the transaction */
 	int32			nsubxacts;			/* number of following subxact XIDs */
 	int32			ncommitrels;		/* number of delete-on-commit rels */
 	int32			nabortrels;			/* number of delete-on-abort rels */

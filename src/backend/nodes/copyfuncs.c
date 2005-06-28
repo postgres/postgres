@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.309 2005/06/26 22:05:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.310 2005/06/28 05:08:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1761,8 +1761,7 @@ _copyPrivGrantee(PrivGrantee *from)
 {
 	PrivGrantee *newnode = makeNode(PrivGrantee);
 
-	COPY_STRING_FIELD(username);
-	COPY_STRING_FIELD(groupname);
+	COPY_STRING_FIELD(rolname);
 
 	return newnode;
 }
@@ -1774,6 +1773,21 @@ _copyFuncWithArgs(FuncWithArgs *from)
 
 	COPY_NODE_FIELD(funcname);
 	COPY_NODE_FIELD(funcargs);
+
+	return newnode;
+}
+
+static GrantRoleStmt *
+_copyGrantRoleStmt(GrantRoleStmt *from)
+{
+	GrantRoleStmt  *newnode = makeNode(GrantRoleStmt);
+
+	COPY_NODE_FIELD(granted_roles);
+	COPY_NODE_FIELD(grantee_roles);
+	COPY_SCALAR_FIELD(is_grant);
+	COPY_SCALAR_FIELD(admin_opt);
+	COPY_STRING_FIELD(grantor);
+	COPY_SCALAR_FIELD(behavior);
 
 	return newnode;
 }
@@ -2374,46 +2388,47 @@ _copyDropPLangStmt(DropPLangStmt *from)
 	return newnode;
 }
 
-static CreateUserStmt *
-_copyCreateUserStmt(CreateUserStmt *from)
+static CreateRoleStmt *
+_copyCreateRoleStmt(CreateRoleStmt *from)
 {
-	CreateUserStmt *newnode = makeNode(CreateUserStmt);
+	CreateRoleStmt *newnode = makeNode(CreateRoleStmt);
 
-	COPY_STRING_FIELD(user);
+	COPY_STRING_FIELD(role);
 	COPY_NODE_FIELD(options);
 
 	return newnode;
 }
 
-static AlterUserStmt *
-_copyAlterUserStmt(AlterUserStmt *from)
+static AlterRoleStmt *
+_copyAlterRoleStmt(AlterRoleStmt *from)
 {
-	AlterUserStmt *newnode = makeNode(AlterUserStmt);
+	AlterRoleStmt *newnode = makeNode(AlterRoleStmt);
 
-	COPY_STRING_FIELD(user);
+	COPY_STRING_FIELD(role);
 	COPY_NODE_FIELD(options);
+	COPY_SCALAR_FIELD(action);
 
 	return newnode;
 }
 
-static AlterUserSetStmt *
-_copyAlterUserSetStmt(AlterUserSetStmt *from)
+static AlterRoleSetStmt *
+_copyAlterRoleSetStmt(AlterRoleSetStmt *from)
 {
-	AlterUserSetStmt *newnode = makeNode(AlterUserSetStmt);
+	AlterRoleSetStmt *newnode = makeNode(AlterRoleSetStmt);
 
-	COPY_STRING_FIELD(user);
+	COPY_STRING_FIELD(role);
 	COPY_STRING_FIELD(variable);
 	COPY_NODE_FIELD(value);
 
 	return newnode;
 }
 
-static DropUserStmt *
-_copyDropUserStmt(DropUserStmt *from)
+static DropRoleStmt *
+_copyDropRoleStmt(DropRoleStmt *from)
 {
-	DropUserStmt *newnode = makeNode(DropUserStmt);
+	DropRoleStmt *newnode = makeNode(DropRoleStmt);
 
-	COPY_NODE_FIELD(users);
+	COPY_NODE_FIELD(roles);
 
 	return newnode;
 }
@@ -2437,39 +2452,6 @@ _copyConstraintsSetStmt(ConstraintsSetStmt *from)
 
 	COPY_NODE_FIELD(constraints);
 	COPY_SCALAR_FIELD(deferred);
-
-	return newnode;
-}
-
-static CreateGroupStmt *
-_copyCreateGroupStmt(CreateGroupStmt *from)
-{
-	CreateGroupStmt *newnode = makeNode(CreateGroupStmt);
-
-	COPY_STRING_FIELD(name);
-	COPY_NODE_FIELD(options);
-
-	return newnode;
-}
-
-static AlterGroupStmt *
-_copyAlterGroupStmt(AlterGroupStmt *from)
-{
-	AlterGroupStmt *newnode = makeNode(AlterGroupStmt);
-
-	COPY_STRING_FIELD(name);
-	COPY_SCALAR_FIELD(action);
-	COPY_NODE_FIELD(listUsers);
-
-	return newnode;
-}
-
-static DropGroupStmt *
-_copyDropGroupStmt(DropGroupStmt *from)
-{
-	DropGroupStmt *newnode = makeNode(DropGroupStmt);
-
-	COPY_STRING_FIELD(name);
 
 	return newnode;
 }
@@ -2927,6 +2909,9 @@ copyObject(void *from)
 		case T_GrantStmt:
 			retval = _copyGrantStmt(from);
 			break;
+		case T_GrantRoleStmt:
+			retval = _copyGrantRoleStmt(from);
+			break;
 		case T_DeclareCursorStmt:
 			retval = _copyDeclareCursorStmt(from);
 			break;
@@ -3071,32 +3056,23 @@ copyObject(void *from)
 		case T_DropPLangStmt:
 			retval = _copyDropPLangStmt(from);
 			break;
-		case T_CreateUserStmt:
-			retval = _copyCreateUserStmt(from);
+		case T_CreateRoleStmt:
+			retval = _copyCreateRoleStmt(from);
 			break;
-		case T_AlterUserStmt:
-			retval = _copyAlterUserStmt(from);
+		case T_AlterRoleStmt:
+			retval = _copyAlterRoleStmt(from);
 			break;
-		case T_AlterUserSetStmt:
-			retval = _copyAlterUserSetStmt(from);
+		case T_AlterRoleSetStmt:
+			retval = _copyAlterRoleSetStmt(from);
 			break;
-		case T_DropUserStmt:
-			retval = _copyDropUserStmt(from);
+		case T_DropRoleStmt:
+			retval = _copyDropRoleStmt(from);
 			break;
 		case T_LockStmt:
 			retval = _copyLockStmt(from);
 			break;
 		case T_ConstraintsSetStmt:
 			retval = _copyConstraintsSetStmt(from);
-			break;
-		case T_CreateGroupStmt:
-			retval = _copyCreateGroupStmt(from);
-			break;
-		case T_AlterGroupStmt:
-			retval = _copyAlterGroupStmt(from);
-			break;
-		case T_DropGroupStmt:
-			retval = _copyDropGroupStmt(from);
 			break;
 		case T_ReindexStmt:
 			retval = _copyReindexStmt(from);

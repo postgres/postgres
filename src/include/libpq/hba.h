@@ -4,7 +4,7 @@
  *	  Interface to hba.c
  *
  *
- * $PostgreSQL: pgsql/src/include/libpq/hba.h,v 1.37 2005/06/27 02:04:25 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/hba.h,v 1.38 2005/06/28 05:09:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,11 +30,10 @@ typedef enum UserAuth
 
 typedef struct Port hbaPort;
 
-extern List **get_user_line(const char *user);
+extern List **get_role_line(const char *role);
 extern void load_hba(void);
 extern void load_ident(void);
-extern void load_user(void);
-extern void load_group(void);
+extern void load_role(void);
 extern int	hba_getauthmethod(hbaPort *port);
 extern int	authident(hbaPort *port);
 extern bool	read_pg_database_line(FILE *fp, char *dbname,

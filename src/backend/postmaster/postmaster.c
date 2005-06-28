@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.454 2005/06/17 22:32:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.455 2005/06/28 05:08:59 tgl Exp $
  *
  * NOTES
  *
@@ -2032,12 +2032,11 @@ reaper(SIGNAL_ARGS)
 			FatalError = false;
 
 			/*
-			 * Load the flat user/group files into postmaster's caches.
-			 * The startup process has recomputed these from the database
-			 * contents, so we wait till it finishes before loading them.
+			 * Load the flat authorization file into postmaster's cache.
+			 * The startup process has recomputed this from the database
+			 * contents, so we wait till it finishes before loading it.
 			 */
-			load_user();
-			load_group();
+			load_role();
 
 			/*
 			 * Crank up the background writer.	It doesn't matter if this
@@ -2664,8 +2663,7 @@ BackendRun(Port *port)
 
 	load_hba();
 	load_ident();
-	load_user();
-	load_group();
+	load_role();
 #endif
 
 	/*
@@ -3290,10 +3288,9 @@ sigusr1_handler(SIGNAL_ARGS)
 	if (CheckPostmasterSignal(PMSIGNAL_PASSWORD_CHANGE))
 	{
 		/*
-		 * Password or group file has changed.
+		 * Authorization file has changed.
 		 */
-		load_user();
-		load_group();
+		load_role();
 	}
 
 	if (CheckPostmasterSignal(PMSIGNAL_WAKEN_CHILDREN))

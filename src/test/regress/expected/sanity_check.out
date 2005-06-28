@@ -37,6 +37,8 @@ SELECT relname, relhasindex
  pg_amproc           | t
  pg_attrdef          | t
  pg_attribute        | t
+ pg_auth_members     | t
+ pg_authid           | t
  pg_cast             | t
  pg_class            | t
  pg_constraint       | t
@@ -44,7 +46,6 @@ SELECT relname, relhasindex
  pg_database         | t
  pg_depend           | t
  pg_description      | t
- pg_group            | t
  pg_index            | t
  pg_inherits         | t
  pg_language         | t
@@ -54,7 +55,6 @@ SELECT relname, relhasindex
  pg_operator         | t
  pg_proc             | t
  pg_rewrite          | t
- pg_shadow           | t
  pg_statistic        | t
  pg_tablespace       | t
  pg_trigger          | t

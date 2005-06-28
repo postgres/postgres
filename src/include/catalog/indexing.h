@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.87 2005/04/14 20:03:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.88 2005/06/28 05:09:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,6 +83,16 @@ DECLARE_UNIQUE_INDEX(pg_attribute_relid_attnam_index,2658, on pg_attribute using
 DECLARE_UNIQUE_INDEX(pg_attribute_relid_attnum_index,2659, on pg_attribute using btree(attrelid oid_ops, attnum int2_ops));
 #define AttributeRelidNumIndexId  2659
 
+DECLARE_UNIQUE_INDEX(pg_authid_rolname_index,2676, on pg_authid using btree(rolname name_ops));
+#define AuthIdRolnameIndexId	2676
+DECLARE_UNIQUE_INDEX(pg_authid_oid_index,2677, on pg_authid using btree(oid oid_ops));
+#define AuthIdOidIndexId	2677
+
+DECLARE_UNIQUE_INDEX(pg_auth_members_role_member_index,2694, on pg_auth_members using btree(roleid oid_ops, member oid_ops));
+#define AuthMemRoleMemIndexId	2694
+DECLARE_UNIQUE_INDEX(pg_auth_members_member_role_index,2695, on pg_auth_members using btree(member oid_ops, roleid oid_ops));
+#define AuthMemMemRoleIndexId	2695
+
 DECLARE_UNIQUE_INDEX(pg_cast_oid_index,2660, on pg_cast using btree(oid oid_ops));
 #define CastOidIndexId  2660
 DECLARE_UNIQUE_INDEX(pg_cast_source_target_index,2661, on pg_cast using btree(castsource oid_ops, casttarget oid_ops));
@@ -127,11 +137,6 @@ DECLARE_INDEX(pg_depend_reference_index,2674, on pg_depend using btree(refclassi
 DECLARE_UNIQUE_INDEX(pg_description_o_c_o_index,2675, on pg_description using btree(objoid oid_ops, classoid oid_ops, objsubid int4_ops));
 #define DescriptionObjIndexId  2675
 
-DECLARE_UNIQUE_INDEX(pg_group_name_index,2676, on pg_group using btree(groname name_ops));
-#define GroupNameIndexId  2676
-DECLARE_UNIQUE_INDEX(pg_group_sysid_index,2677, on pg_group using btree(grosysid int4_ops));
-#define GroupSysidIndexId  2677
-
 /* This following index is not used for a cache and is not unique */
 DECLARE_INDEX(pg_index_indrelid_index,2678, on pg_index using btree(indrelid oid_ops));
 #define IndexIndrelidIndexId  2678
@@ -173,11 +178,6 @@ DECLARE_UNIQUE_INDEX(pg_rewrite_oid_index,2692, on pg_rewrite using btree(oid oi
 #define RewriteOidIndexId  2692
 DECLARE_UNIQUE_INDEX(pg_rewrite_rel_rulename_index,2693, on pg_rewrite using btree(ev_class oid_ops, rulename name_ops));
 #define RewriteRelRulenameIndexId  2693
-
-DECLARE_UNIQUE_INDEX(pg_shadow_usename_index,2694, on pg_shadow using btree(usename name_ops));
-#define ShadowNameIndexId  2694
-DECLARE_UNIQUE_INDEX(pg_shadow_usesysid_index,2695, on pg_shadow using btree(usesysid int4_ops));
-#define ShadowSysidIndexId  2695
 
 DECLARE_UNIQUE_INDEX(pg_statistic_relid_att_index,2696, on pg_statistic using btree(starelid oid_ops, staattnum int2_ops));
 #define StatisticRelidAttnumIndexId  2696

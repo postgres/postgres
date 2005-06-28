@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.32 2005/04/14 20:03:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.33 2005/06/28 05:08:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -321,7 +321,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	namestrcpy(&opcName, opcname);
 	values[i++] = NameGetDatum(&opcName);		/* opcname */
 	values[i++] = ObjectIdGetDatum(namespaceoid);		/* opcnamespace */
-	values[i++] = Int32GetDatum(GetUserId());	/* opcowner */
+	values[i++] = ObjectIdGetDatum(GetUserId());	/* opcowner */
 	values[i++] = ObjectIdGetDatum(typeoid);	/* opcintype */
 	values[i++] = BoolGetDatum(stmt->isDefault);		/* opcdefault */
 	values[i++] = ObjectIdGetDatum(storageoid); /* opckeytype */
@@ -880,7 +880,7 @@ RenameOpClass(List *name, const char *access_method, const char *newname)
  * Change opclass owner
  */
 void
-AlterOpClassOwner(List *name, const char *access_method, AclId newOwnerSysId)
+AlterOpClassOwner(List *name, const char *access_method, Oid newOwnerId)
 {
 	Oid			opcOid;
 	Oid			amOid;
@@ -945,7 +945,7 @@ AlterOpClassOwner(List *name, const char *access_method, AclId newOwnerSysId)
 	 * If the new owner is the same as the existing owner, consider the
 	 * command to have succeeded.  This is for dump restoration purposes.
 	 */
-	if (opcForm->opcowner != newOwnerSysId)
+	if (opcForm->opcowner != newOwnerId)
 	{
 		/* Otherwise, must be superuser to change object ownership */
 		if (!superuser())
@@ -957,7 +957,7 @@ AlterOpClassOwner(List *name, const char *access_method, AclId newOwnerSysId)
 		 * Modify the owner --- okay to scribble on tup because it's a
 		 * copy
 		 */
-		opcForm->opcowner = newOwnerSysId;
+		opcForm->opcowner = newOwnerId;
 
 		simple_heap_update(rel, &tup->t_self, tup);
 

@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.86 2005/06/26 03:03:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.87 2005/06/28 05:09:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -169,7 +169,7 @@ static void test_connections(void);
 static void test_buffers(void);
 static void setup_config(void);
 static void bootstrap_template1(char *short_version);
-static void setup_shadow(void);
+static void setup_auth(void);
 static void get_set_pwd(void);
 static void unlimit_systables(void);
 static void setup_depend(void);
@@ -1316,11 +1316,11 @@ bootstrap_template1(char *short_version)
  * set up the shadow password table
  */
 static void
-setup_shadow(void)
+setup_auth(void)
 {
 	PG_CMD_DECL;
 	char	  **line;
-	static char *pg_shadow_setup[] = {
+	static char *pg_authid_setup[] = {
 		/*
 		 * Create triggers to ensure manual updates to shared catalogs
 		 * will be reflected into their "flat file" copies.
@@ -1328,22 +1328,22 @@ setup_shadow(void)
 		"CREATE TRIGGER pg_sync_pg_database "
 		"  AFTER INSERT OR UPDATE OR DELETE ON pg_database "
 		"  FOR EACH STATEMENT EXECUTE PROCEDURE flatfile_update_trigger();\n",
-		"CREATE TRIGGER pg_sync_pg_group "
-		"  AFTER INSERT OR UPDATE OR DELETE ON pg_group "
+		"CREATE TRIGGER pg_sync_pg_authid "
+		"  AFTER INSERT OR UPDATE OR DELETE ON pg_authid "
 		"  FOR EACH STATEMENT EXECUTE PROCEDURE flatfile_update_trigger();\n",
-		"CREATE TRIGGER pg_sync_pg_pwd "
-		"  AFTER INSERT OR UPDATE OR DELETE ON pg_shadow "
+		"CREATE TRIGGER pg_sync_pg_auth_members "
+		"  AFTER INSERT OR UPDATE OR DELETE ON pg_auth_members "
 		"  FOR EACH STATEMENT EXECUTE PROCEDURE flatfile_update_trigger();\n",
 
 		/*
-		 * needs to be done before alter user, because alter user checks
-		 * that pg_shadow is secure ...
+		 * The authid table shouldn't be readable except through views,
+		 * to ensure passwords are not publicly visible.
 		 */
-		"REVOKE ALL on pg_shadow FROM public;\n",
+		"REVOKE ALL on pg_authid FROM public;\n",
 		NULL
 	};
 
-	fputs(_("initializing pg_shadow ... "), stdout);
+	fputs(_("initializing pg_authid ... "), stdout);
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
@@ -1353,7 +1353,7 @@ setup_shadow(void)
 
 	PG_CMD_OPEN;
 
-	for (line = pg_shadow_setup; *line != NULL; line++)
+	for (line = pg_authid_setup; *line != NULL; line++)
 		PG_CMD_PUTS(*line);
 
 	PG_CMD_CLOSE;
@@ -1461,13 +1461,12 @@ unlimit_systables(void)
 	char	  **line;
 	static char *systables_setup[] = {
 		"ALTER TABLE pg_attrdef CREATE TOAST TABLE;\n",
+		"ALTER TABLE pg_authid CREATE TOAST TABLE;\n",
 		"ALTER TABLE pg_constraint CREATE TOAST TABLE;\n",
 		"ALTER TABLE pg_database CREATE TOAST TABLE;\n",
 		"ALTER TABLE pg_description CREATE TOAST TABLE;\n",
-		"ALTER TABLE pg_group CREATE TOAST TABLE;\n",
 		"ALTER TABLE pg_proc CREATE TOAST TABLE;\n",
 		"ALTER TABLE pg_rewrite CREATE TOAST TABLE;\n",
-		"ALTER TABLE pg_shadow CREATE TOAST TABLE;\n",
 		"ALTER TABLE pg_statistic CREATE TOAST TABLE;\n",
 		NULL
 	};
@@ -2624,7 +2623,7 @@ main(int argc, char *argv[])
 
 	/* Create the stuff we don't need to use bootstrap mode for */
 
-	setup_shadow();
+	setup_auth();
 	if (pwprompt || pwfilename)
 		get_set_pwd();
 

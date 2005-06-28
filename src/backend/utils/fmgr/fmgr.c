@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.95 2005/05/29 04:23:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.96 2005/06/28 05:09:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -769,7 +769,7 @@ fmgr_oldstyle(PG_FUNCTION_ARGS)
 struct fmgr_security_definer_cache
 {
 	FmgrInfo	flinfo;
-	AclId		userid;
+	Oid		userid;
 };
 
 /*
@@ -786,7 +786,7 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 	Datum		result;
 	FmgrInfo   *save_flinfo;
 	struct fmgr_security_definer_cache * volatile fcache;
-	AclId		save_userid;
+	Oid		save_userid;
 	HeapTuple	tuple;
 
 	if (!fcinfo->flinfo->fn_extra)

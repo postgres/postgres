@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.250 2005/06/20 18:37:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.251 2005/06/28 05:08:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -352,7 +352,7 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 {
 	AclMode		requiredPerms;
 	Oid			relOid;
-	AclId		userid;
+	Oid		userid;
 
 	/*
 	 * Only plain-relation RTEs need to be checked here.  Subquery RTEs

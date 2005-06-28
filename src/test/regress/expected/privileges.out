@@ -6,11 +6,12 @@ CREATE USER regressuser2;
 CREATE USER regressuser3;
 CREATE USER regressuser4;
 CREATE USER regressuser4;	-- duplicate
-ERROR:  user "regressuser4" already exists
+ERROR:  role "regressuser4" already exists
 CREATE GROUP regressgroup1;
 CREATE GROUP regressgroup2 WITH USER regressuser1, regressuser2;
 ALTER GROUP regressgroup1 ADD USER regressuser4;
 ALTER GROUP regressgroup2 ADD USER regressuser2;	-- duplicate
+NOTICE:  role "regressuser2" is already a member of role "regressgroup2"
 ALTER GROUP regressgroup2 DROP USER regressuser2;
 ALTER GROUP regressgroup2 ADD USER regressuser4;
 -- test owner privileges
@@ -275,7 +276,7 @@ DROP FUNCTION testfunc1(int); -- ok
 GRANT ALL PRIVILEGES ON LANGUAGE sql TO PUBLIC;
 -- has_table_privilege function
 -- bad-input checks
-select has_table_privilege(NULL,'pg_shadow','select');
+select has_table_privilege(NULL,'pg_authid','select');
  has_table_privilege 
 ---------------------
  
@@ -283,36 +284,36 @@ select has_table_privilege(NULL,'pg_shadow','select');
 
 select has_table_privilege('pg_shad','select');
 ERROR:  relation "pg_shad" does not exist
-select has_table_privilege('nosuchuser','pg_shadow','select');
-ERROR:  user "nosuchuser" does not exist
-select has_table_privilege('pg_shadow','sel');
+select has_table_privilege('nosuchuser','pg_authid','select');
+ERROR:  role "nosuchuser" does not exist
+select has_table_privilege('pg_authid','sel');
 ERROR:  unrecognized privilege type: "sel"
-select has_table_privilege(-999999,'pg_shadow','update');
-ERROR:  user with ID 4293967297 does not exist
+select has_table_privilege(-999999,'pg_authid','update');
+ERROR:  role with OID 4293967297 does not exist
 select has_table_privilege(1,'rule');
 ERROR:  relation with OID 1 does not exist
 -- superuser
 \c -
-select has_table_privilege(current_user,'pg_shadow','select');
+select has_table_privilege(current_user,'pg_authid','select');
  has_table_privilege 
 ---------------------
  t
 (1 row)
 
-select has_table_privilege(current_user,'pg_shadow','insert');
+select has_table_privilege(current_user,'pg_authid','insert');
  has_table_privilege 
 ---------------------
  t
 (1 row)
 
-select has_table_privilege(t2.usesysid,'pg_shadow','update')
+select has_table_privilege(t2.usesysid,'pg_authid','update')
 from (select usesysid from pg_user where usename = current_user) as t2;
  has_table_privilege 
 ---------------------
  t
 (1 row)
 
-select has_table_privilege(t2.usesysid,'pg_shadow','delete')
+select has_table_privilege(t2.usesysid,'pg_authid','delete')
 from (select usesysid from pg_user where usename = current_user) as t2;
  has_table_privilege 
 ---------------------
@@ -320,21 +321,21 @@ from (select usesysid from pg_user where usename = current_user) as t2;
 (1 row)
 
 select has_table_privilege(current_user,t1.oid,'rule')
-from (select oid from pg_class where relname = 'pg_shadow') as t1;
+from (select oid from pg_class where relname = 'pg_authid') as t1;
  has_table_privilege 
 ---------------------
  t
 (1 row)
 
 select has_table_privilege(current_user,t1.oid,'references')
-from (select oid from pg_class where relname = 'pg_shadow') as t1;
+from (select oid from pg_class where relname = 'pg_authid') as t1;
  has_table_privilege 
 ---------------------
  t
 (1 row)
 
 select has_table_privilege(t2.usesysid,t1.oid,'select')
-from (select oid from pg_class where relname = 'pg_shadow') as t1,
+from (select oid from pg_class where relname = 'pg_authid') as t1,
   (select usesysid from pg_user where usename = current_user) as t2;
  has_table_privilege 
 ---------------------
@@ -342,34 +343,34 @@ from (select oid from pg_class where relname = 'pg_shadow') as t1,
 (1 row)
 
 select has_table_privilege(t2.usesysid,t1.oid,'insert')
-from (select oid from pg_class where relname = 'pg_shadow') as t1,
+from (select oid from pg_class where relname = 'pg_authid') as t1,
   (select usesysid from pg_user where usename = current_user) as t2;
  has_table_privilege 
 ---------------------
  t
 (1 row)
 
-select has_table_privilege('pg_shadow','update');
+select has_table_privilege('pg_authid','update');
  has_table_privilege 
 ---------------------
  t
 (1 row)
 
-select has_table_privilege('pg_shadow','delete');
+select has_table_privilege('pg_authid','delete');
  has_table_privilege 
 ---------------------
  t
 (1 row)
 
 select has_table_privilege(t1.oid,'select')
-from (select oid from pg_class where relname = 'pg_shadow') as t1;
+from (select oid from pg_class where relname = 'pg_authid') as t1;
  has_table_privilege 
 ---------------------
  t
 (1 row)
 
 select has_table_privilege(t1.oid,'trigger')
-from (select oid from pg_class where relname = 'pg_shadow') as t1;
+from (select oid from pg_class where relname = 'pg_authid') as t1;
  has_table_privilege 
 ---------------------
  t
@@ -546,8 +547,7 @@ SET SESSION AUTHORIZATION regressuser1;
 CREATE TABLE atest4 (a int);
 GRANT SELECT ON atest4 TO regressuser2 WITH GRANT OPTION;
 GRANT UPDATE ON atest4 TO regressuser2;
-GRANT SELECT ON atest4 TO GROUP regressgroup1 WITH GRANT OPTION; -- fail
-ERROR:  grant options can only be granted to individual users
+GRANT SELECT ON atest4 TO GROUP regressgroup1 WITH GRANT OPTION;
 SET SESSION AUTHORIZATION regressuser2;
 GRANT SELECT ON atest4 TO regressuser3;
 GRANT UPDATE ON atest4 TO regressuser3; -- fail

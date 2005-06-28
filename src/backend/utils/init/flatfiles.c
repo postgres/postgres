@@ -4,9 +4,10 @@
  *	  Routines for maintaining "flat file" images of the shared catalogs.
  *
  * We use flat files so that the postmaster and not-yet-fully-started
- * backends can look at the contents of pg_database, pg_shadow, and pg_group
- * for authentication purposes.  This module is responsible for keeping the
- * flat-file images as nearly in sync with database reality as possible.
+ * backends can look at the contents of pg_database, pg_authid, and 
+ * pg_auth_members for authentication purposes.  This module is 
+ * responsible for keeping the flat-file images as nearly in sync with 
+ * database reality as possible.
  *
  * The tricky part of the write_xxx_file() routines in this module is that
  * they need to be able to operate in the context of the database startup
@@ -22,7 +23,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.8 2005/06/17 22:32:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.9 2005/06/28 05:09:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,12 +32,14 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "access/genam.h"
 #include "access/heapam.h"
 #include "access/twophase_rmgr.h"
+#include "catalog/indexing.h"
+#include "catalog/pg_auth_members.h"
+#include "catalog/pg_authid.h"
 #include "catalog/pg_database.h"
-#include "catalog/pg_group.h"
 #include "catalog/pg_namespace.h"
-#include "catalog/pg_shadow.h"
 #include "catalog/pg_tablespace.h"
 #include "commands/trigger.h"
 #include "miscadmin.h"
@@ -45,19 +48,18 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/flatfiles.h"
+#include "utils/fmgroids.h"
 #include "utils/resowner.h"
 #include "utils/syscache.h"
 
 
 /* Actual names of the flat files (within $PGDATA/global/) */
 #define DATABASE_FLAT_FILE	"pg_database"
-#define GROUP_FLAT_FILE		"pg_group"
-#define USER_FLAT_FILE		"pg_pwd"
+#define AUTH_FLAT_FILE		"pg_auth"
 
 /* Info bits in a flatfiles 2PC record */
 #define FF_BIT_DATABASE	1
-#define FF_BIT_GROUP	2
-#define FF_BIT_USER		4
+#define FF_BIT_AUTH		2
 
 
 /*
@@ -73,8 +75,7 @@
  * SubTransactionId is seen at top-level commit.
  */
 static SubTransactionId database_file_update_subid = InvalidSubTransactionId;
-static SubTransactionId group_file_update_subid = InvalidSubTransactionId;
-static SubTransactionId user_file_update_subid = InvalidSubTransactionId;
+static SubTransactionId auth_file_update_subid = InvalidSubTransactionId;
 
 
 /*
@@ -88,23 +89,13 @@ database_file_update_needed(void)
 }
 
 /*
- * Mark flat group file as needing an update (because pg_group changed)
+ * Mark flat auth file as needing an update (because pg_auth changed)
  */
 void
-group_file_update_needed(void)
+auth_file_update_needed(void)
 {
-	if (group_file_update_subid == InvalidSubTransactionId)
-		group_file_update_subid = GetCurrentSubTransactionId();
-}
-
-/*
- * Mark flat user file as needing an update (because pg_shadow changed)
- */
-void
-user_file_update_needed(void)
-{
-	if (user_file_update_subid == InvalidSubTransactionId)
-		user_file_update_subid = GetCurrentSubTransactionId();
+	if (auth_file_update_subid == InvalidSubTransactionId)
+		auth_file_update_subid = GetCurrentSubTransactionId();
 }
 
 
@@ -128,39 +119,20 @@ database_getflatfilename(void)
 }
 
 /*
- * group_getflatfilename --- get full pathname of group file
+ * Get full pathname of auth file.
  *
  * Note that result string is palloc'd, and should be freed by the caller.
  */
 char *
-group_getflatfilename(void)
+auth_getflatfilename(void)
 {
 	int			bufsize;
 	char	   *pfnam;
 
 	bufsize = strlen(DataDir) + strlen("/global/") +
-		strlen(GROUP_FLAT_FILE) + 1;
+		strlen(AUTH_FLAT_FILE) + 1;
 	pfnam = (char *) palloc(bufsize);
-	snprintf(pfnam, bufsize, "%s/global/%s", DataDir, GROUP_FLAT_FILE);
-
-	return pfnam;
-}
-
-/*
- * Get full pathname of password file.
- *
- * Note that result string is palloc'd, and should be freed by the caller.
- */
-char *
-user_getflatfilename(void)
-{
-	int			bufsize;
-	char	   *pfnam;
-
-	bufsize = strlen(DataDir) + strlen("/global/") +
-		strlen(USER_FLAT_FILE) + 1;
-	pfnam = (char *) palloc(bufsize);
-	snprintf(pfnam, bufsize, "%s/global/%s", DataDir, USER_FLAT_FILE);
+	snprintf(pfnam, bufsize, "%s/global/%s", DataDir, AUTH_FLAT_FILE);
 
 	return pfnam;
 }
@@ -189,7 +161,7 @@ fputs_quote(const char *str, FILE *fp)
 /*
  * name_okay
  *
- * We must disallow newlines in user and group names because
+ * We must disallow newlines in role names because
  * hba.c's parser won't handle fields split across lines, even if quoted.
  */
 static bool
@@ -322,165 +294,81 @@ write_database_file(Relation drel)
 
 
 /*
- * write_group_file: update the flat group file
+ * Support for write_auth_file
  */
-static void
-write_group_file(Relation grel)
+
+typedef struct {
+	Oid			roleid;
+	char*		rolname;
+	char*		rolpassword;
+	char*		rolvaliduntil;
+	List*		roles_names;
+} auth_entry;
+
+typedef struct {
+	Oid			roleid;
+	Oid			memberid;
+} authmem_entry;
+
+static int
+oid_compar(const void *a, const void *b)
 {
-	char	   *filename,
-			   *tempname;
-	int			bufsize;
-	FILE	   *fp;
-	mode_t		oumask;
-	HeapScanDesc scan;
-	HeapTuple	tuple;
+	const auth_entry *a_auth = (const auth_entry*) a;
+	const auth_entry *b_auth = (const auth_entry*) b;
 
-	/*
-	 * Create a temporary filename to be renamed later.  This prevents the
-	 * backend from clobbering the flat file while the postmaster
-	 * might be reading from it.
-	 */
-	filename = group_getflatfilename();
-	bufsize = strlen(filename) + 12;
-	tempname = (char *) palloc(bufsize);
-	snprintf(tempname, bufsize, "%s.%d", filename, MyProcPid);
-
-	oumask = umask((mode_t) 077);
-	fp = AllocateFile(tempname, "w");
-	umask(oumask);
-	if (fp == NULL)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not write to temporary file \"%s\": %m",
-						tempname)));
-
-	/*
-	 * Read pg_group and write the file.
-	 */
-	scan = heap_beginscan(grel, SnapshotNow, 0, NULL);
-	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
-	{
-		Form_pg_group grpform = (Form_pg_group) GETSTRUCT(tuple);
-		HeapTupleHeader tup = tuple->t_data;
-		char	   *tp;				/* ptr to tuple data */
-		long		off;			/* offset in tuple data */
-		bits8	   *bp = tup->t_bits;	/* ptr to null bitmask in tuple */
-		Datum		datum;
-		char	   *groname;
-		IdList	   *grolist_p;
-		AclId	   *aidp;
-		int			i,
-					num;
-
-		groname = NameStr(grpform->groname);
-
-		/*
-		 * Check for illegal characters in the group name.
-		 */
-		if (!name_okay(groname))
-		{
-			ereport(LOG,
-					(errmsg("invalid group name \"%s\"", groname)));
-			continue;
-		}
-
-		/*
-		 * We can't use heap_getattr() here because during startup we will
-		 * not have any tupdesc for pg_group.  Fortunately it's not too
-		 * hard to work around this.  grolist is the first possibly-null
-		 * field so we can compute its offset directly.
-		 */
-		tp = (char *) tup + tup->t_hoff;
-		off = offsetof(FormData_pg_group, grolist);
-
-		if (HeapTupleHasNulls(tuple) &&
-			att_isnull(Anum_pg_group_grolist - 1, bp))
-		{
-			/* grolist is null, so we can ignore this group */
-			continue;
-		}
-
-		/* assume grolist is pass-by-ref */
-		datum = PointerGetDatum(tp + off);
-
-		/*
-		 * We can't currently support out-of-line toasted group lists in
-		 * startup mode (the tuptoaster won't work).  This sucks, but it
-		 * should be something of a corner case.  Live with it until we
-		 * can redesign pg_group.
-		 *
-		 * Detect startup mode by noting whether we got a tupdesc.
-		 */
-		if (VARATT_IS_EXTERNAL(DatumGetPointer(datum)) &&
-			RelationGetDescr(grel) == NULL)
-			continue;
-
-		/* be sure the IdList is not toasted */
-		grolist_p = DatumGetIdListP(datum);
-
-		/*
-		 * The file format is: "groupname"    usesysid1 usesysid2 ...
-		 *
-		 * We ignore groups that have no members.
-		 */
-		aidp = IDLIST_DAT(grolist_p);
-		num = IDLIST_NUM(grolist_p);
-		if (num > 0)
-		{
-			fputs_quote(groname, fp);
-			fprintf(fp, "\t%u", aidp[0]);
-			for (i = 1; i < num; ++i)
-				fprintf(fp, " %u", aidp[i]);
-			fputs("\n", fp);
-		}
-
-		/* if IdList was toasted, free detoasted copy */
-		if ((Pointer) grolist_p != DatumGetPointer(datum))
-			pfree(grolist_p);
-	}
-	heap_endscan(scan);
-
-	if (FreeFile(fp))
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not write to temporary file \"%s\": %m",
-						tempname)));
-
-	/*
-	 * Rename the temp file to its final name, deleting the old flat file.
-	 * We expect that rename(2) is an atomic action.
-	 */
-	if (rename(tempname, filename))
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not rename file \"%s\" to \"%s\": %m",
-						tempname, filename)));
-
-	pfree(tempname);
-	pfree(filename);
+	if (a_auth->roleid < b_auth->roleid) return -1;
+	if (a_auth->roleid > b_auth->roleid) return 1;
+	return 0;
 }
 
+static int
+name_compar(const void *a, const void *b)
+{
+	const auth_entry *a_auth = (const auth_entry*) a;
+	const auth_entry *b_auth = (const auth_entry*) b;
+
+	return strcmp(a_auth->rolname,b_auth->rolname);
+}
+
+static int
+mem_compar(const void *a, const void *b)
+{
+	const authmem_entry *a_auth = (const authmem_entry*) a;
+	const authmem_entry *b_auth = (const authmem_entry*) b;
+
+	if (a_auth->memberid < b_auth->memberid) return -1;
+	if (a_auth->memberid > b_auth->memberid) return 1;
+	return 0;
+}
 
 /*
- * write_user_file: update the flat password file
+ * write_auth_file: update the flat auth file
  */
 static void
-write_user_file(Relation urel)
+write_auth_file(Relation rel_auth, Relation rel_authmem, bool startup)
 {
 	char	   *filename,
 			   *tempname;
 	int			bufsize;
+	BlockNumber	totalblocks;
 	FILE	   *fp;
 	mode_t		oumask;
 	HeapScanDesc scan;
 	HeapTuple	tuple;
+	int			curr_role = 0;
+	int			total_roles = 0;
+	int			curr_mem = 0;
+	int			total_mem = 0;
+	int			est_rows;
+	auth_entry  *auth_info;
+	authmem_entry  *authmem_info = NULL;
 
 	/*
 	 * Create a temporary filename to be renamed later.  This prevents the
-	 * backend from clobbering the flat file while the postmaster might
+	 * backend from clobbering the pg_auth file while the postmaster might
 	 * be reading from it.
 	 */
-	filename = user_getflatfilename();
+	filename = auth_getflatfilename();
 	bufsize = strlen(filename) + 12;
 	tempname = (char *) palloc(bufsize);
 	snprintf(tempname, bufsize, "%s.%d", filename, MyProcPid);
@@ -495,39 +383,41 @@ write_user_file(Relation urel)
 						tempname)));
 
 	/*
-	 * Read pg_shadow and write the file.
+	 * Read pg_authid and fill temporary data structures.
 	 */
-	scan = heap_beginscan(urel, SnapshotNow, 0, NULL);
+	totalblocks = RelationGetNumberOfBlocks(rel_auth);
+	totalblocks = totalblocks ? totalblocks : 1;
+	est_rows = totalblocks * (BLCKSZ / (sizeof(HeapTupleHeaderData)+sizeof(FormData_pg_authid)));
+	auth_info = (auth_entry*) palloc(est_rows*sizeof(auth_entry));
+
+	scan = heap_beginscan(rel_auth, SnapshotNow, 0, NULL);
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
-		Form_pg_shadow pwform = (Form_pg_shadow) GETSTRUCT(tuple);
+		Form_pg_authid pwform = (Form_pg_authid) GETSTRUCT(tuple);
 		HeapTupleHeader tup = tuple->t_data;
 		char	   *tp;				/* ptr to tuple data */
 		long		off;			/* offset in tuple data */
 		bits8	   *bp = tup->t_bits;	/* ptr to null bitmask in tuple */
 		Datum		datum;
-		char	   *usename,
-				   *passwd,
-				   *valuntil;
-		AclId		usesysid;
 
-		usename = NameStr(pwform->usename);
-		usesysid = pwform->usesysid;
+		auth_info[curr_role].roleid = HeapTupleGetOid(tuple);
+		auth_info[curr_role].rolname = pstrdup(NameStr(pwform->rolname));
+		auth_info[curr_role].roles_names = NIL;
 
 		/*
 		 * We can't use heap_getattr() here because during startup we will
-		 * not have any tupdesc for pg_shadow.  Fortunately it's not too
-		 * hard to work around this.  passwd is the first possibly-null
+		 * not have any tupdesc for pg_authid.  Fortunately it's not too
+		 * hard to work around this.  rolpassword is the first possibly-null
 		 * field so we can compute its offset directly.
 		 */
 		tp = (char *) tup + tup->t_hoff;
-		off = offsetof(FormData_pg_shadow, passwd);
+		off = offsetof(FormData_pg_authid, rolpassword);
 
 		if (HeapTupleHasNulls(tuple) &&
-			att_isnull(Anum_pg_shadow_passwd - 1, bp))
+			att_isnull(Anum_pg_authid_rolpassword - 1, bp))
 		{
 			/* passwd is null, emit as an empty string */
-			passwd = pstrdup("");
+			auth_info[curr_role].rolpassword = pstrdup("");
 		}
 		else
 		{
@@ -539,59 +429,175 @@ write_user_file(Relation urel)
 			 * if it is, ignore it, since we can't handle that in startup mode.
 			 */
 			if (VARATT_IS_EXTERNAL(DatumGetPointer(datum)))
-				passwd = pstrdup("");
+				auth_info[curr_role].rolpassword = pstrdup("");
 			else
-				passwd = DatumGetCString(DirectFunctionCall1(textout, datum));
+				auth_info[curr_role].rolpassword = DatumGetCString(DirectFunctionCall1(textout, datum));
 
 			/* assume passwd has attlen -1 */
 			off = att_addlength(off, -1, tp + off);
 		}
 
 		if (HeapTupleHasNulls(tuple) &&
-			att_isnull(Anum_pg_shadow_valuntil - 1, bp))
+			att_isnull(Anum_pg_authid_rolvaliduntil - 1, bp))
 		{
-			/* valuntil is null, emit as an empty string */
-			valuntil = pstrdup("");
+			/* rolvaliduntil is null, emit as an empty string */
+			auth_info[curr_role].rolvaliduntil = pstrdup("");
 		}
 		else
 		{
-			/* assume valuntil has attalign 'i' */
-			off = att_align(off, 'i');
-			/* assume valuntil is pass-by-value, integer size */
-			datum = Int32GetDatum(*((int32 *) (tp + off)));
-			valuntil = DatumGetCString(DirectFunctionCall1(abstimeout, datum));
+			/*
+			 * rolvaliduntil is timestamptz, which we assume is double
+			 * alignment and pass-by-reference.
+			 */
+			off = att_align(off, 'd');
+			datum = PointerGetDatum(tp + off);
+			auth_info[curr_role].rolvaliduntil = DatumGetCString(DirectFunctionCall1(timestamptz_out, datum));
 		}
 
 		/*
 		 * Check for illegal characters in the user name and password.
 		 */
-		if (!name_okay(usename))
+		if (!name_okay(auth_info[curr_role].rolname))
 		{
 			ereport(LOG,
-					(errmsg("invalid user name \"%s\"", usename)));
+					(errmsg("invalid role name \"%s\"",
+							auth_info[curr_role].rolname)));
+			pfree(auth_info[curr_role].rolname);
+			pfree(auth_info[curr_role].rolpassword);
+			pfree(auth_info[curr_role].rolvaliduntil);
 			continue;
 		}
-		if (!name_okay(passwd))
+		if (!name_okay(auth_info[curr_role].rolpassword))
 		{
 			ereport(LOG,
-					(errmsg("invalid user password \"%s\"", passwd)));
+					(errmsg("invalid role password \"%s\"",
+							auth_info[curr_role].rolpassword)));
+			pfree(auth_info[curr_role].rolname);
+			pfree(auth_info[curr_role].rolpassword);
+			pfree(auth_info[curr_role].rolvaliduntil);
 			continue;
 		}
 
-		/*
-		 * The file format is: "usename" usesysid "passwd" "valuntil"
-		 */
-		fputs_quote(usename, fp);
-		fprintf(fp, " %u ", usesysid);
-		fputs_quote(passwd, fp);
-		fputs(" ", fp);
-		fputs_quote(valuntil, fp);
-		fputs("\n", fp);
-
-		pfree(passwd);
-		pfree(valuntil);
+		curr_role++;
+		total_roles++;
 	}
 	heap_endscan(scan);
+
+	Assert(total_roles <= est_rows);
+
+	qsort(auth_info, total_roles, sizeof(auth_entry), oid_compar);
+
+	/*
+	 * Read pg_auth_members into temporary data structure, too
+	 */
+	totalblocks = RelationGetNumberOfBlocks(rel_authmem);
+	totalblocks = totalblocks ? totalblocks : 1;
+	est_rows = totalblocks * (BLCKSZ / (sizeof(HeapTupleHeaderData)+sizeof(FormData_pg_auth_members)));
+	authmem_info = (authmem_entry*) palloc(est_rows*sizeof(authmem_entry));
+
+	scan = heap_beginscan(rel_authmem, SnapshotNow, 0, NULL);
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	{
+		Form_pg_auth_members memform = (Form_pg_auth_members) GETSTRUCT(tuple);
+
+		authmem_info[curr_mem].roleid = memform->roleid;
+		authmem_info[curr_mem].memberid = memform->member;
+		curr_mem++;
+		total_mem++;
+	}
+	heap_endscan(scan);
+
+	Assert(total_mem <= est_rows);
+
+	qsort(authmem_info, total_mem, sizeof(authmem_entry), mem_compar);
+
+	for (curr_role = 0; curr_role < total_roles; curr_role++)
+	{
+		int		first_found, last_found, curr_mem;
+		List	*roles_list_hunt = NIL;
+		List	*roles_list = NIL;
+		ListCell *mem = NULL;
+		auth_entry *found_role = NULL, key_auth;
+		authmem_entry key;
+		authmem_entry *found_mem = NULL;
+
+		roles_list_hunt = lappend_oid(roles_list_hunt,
+									  auth_info[curr_role].roleid);
+
+		while (roles_list_hunt)
+		{
+			key.memberid = linitial_oid(roles_list_hunt);
+			roles_list_hunt = list_delete_first(roles_list_hunt);
+			if (total_mem)
+				found_mem = bsearch(&key, authmem_info, total_mem,
+									sizeof(authmem_entry), mem_compar);
+			if (found_mem)
+			{
+				/*
+				 * bsearch found a match for us; but if there were multiple
+				 * matches it could have found any one of them.
+				 */
+				first_found = last_found = (found_mem - authmem_info);
+				while (first_found > 0 &&
+					   mem_compar(&key, &authmem_info[first_found - 1]) == 0)
+					first_found--;
+				while (last_found + 1 < total_mem &&
+					   mem_compar(&key, &authmem_info[last_found + 1]) == 0)
+					last_found++;
+
+				for (curr_mem = first_found; curr_mem <= last_found; curr_mem++)
+				{
+					Oid	otherrole = authmem_info[curr_mem].roleid;
+
+					if (!list_member_oid(roles_list, otherrole))
+					{
+						roles_list = lappend_oid(roles_list,
+												 otherrole);
+						roles_list_hunt = lappend_oid(roles_list_hunt,
+													  otherrole);
+					}
+				}
+			}
+		}
+
+		foreach(mem, roles_list)
+		{
+			key_auth.roleid = lfirst_oid(mem);
+			found_role = bsearch(&key_auth, auth_info, total_roles, sizeof(auth_entry), oid_compar);
+			auth_info[curr_role].roles_names = lappend(auth_info[curr_role].roles_names,found_role->rolname);
+		}
+	}
+
+	qsort(auth_info, total_roles, sizeof(auth_entry), name_compar);
+
+	for (curr_role = 0; curr_role < total_roles; curr_role++)
+	{
+		ListCell *mem = NULL;
+
+		/*----------
+		 * The file format is:
+		 *	"rolename" "password" "validuntil" "member" "member" ...
+		 * where lines are expected to be in order by rolename
+		 *----------
+		 */
+		fputs_quote(auth_info[curr_role].rolname, fp);
+		fputs(" ", fp);
+		fputs_quote(auth_info[curr_role].rolpassword, fp);
+		fputs(" ", fp);
+		fputs_quote(auth_info[curr_role].rolvaliduntil, fp);
+
+		foreach(mem, auth_info[curr_role].roles_names)
+		{
+			fputs(" ", fp);
+			fputs_quote(lfirst(mem), fp);
+		}
+
+		fputs("\n", fp);
+
+		pfree(auth_info[curr_role].rolname);
+		pfree(auth_info[curr_role].rolpassword);
+		pfree(auth_info[curr_role].rolvaliduntil);
+	}
 
 	if (FreeFile(fp))
 		ereport(ERROR,
@@ -609,6 +615,8 @@ write_user_file(Relation urel)
 				 errmsg("could not rename file \"%s\" to \"%s\": %m",
 						tempname, filename)));
 
+	pfree(auth_info);
+	pfree(authmem_info);
 	pfree(tempname);
 	pfree(filename);
 }
@@ -634,7 +642,7 @@ BuildFlatFiles(bool database_only)
 {
 	ResourceOwner owner;
 	RelFileNode rnode;
-	Relation	rel;
+	Relation	rel, rel_auth, rel_authmem;
 
 	/*
 	 * We don't have any hope of running a real relcache, but we can use
@@ -657,21 +665,16 @@ BuildFlatFiles(bool database_only)
 
 	if (!database_only)
 	{
-		/* hard-wired path to pg_group */
+		/* hard-wired path to pg_auth */
 		rnode.spcNode = GLOBALTABLESPACE_OID;
 		rnode.dbNode = 0;
-		rnode.relNode = GroupRelationId;
+		rnode.relNode = AuthIdRelationId;
+		rel_auth = XLogOpenRelation(rnode);
 
-		rel = XLogOpenRelation(rnode);
-		write_group_file(rel);
-
-		/* hard-wired path to pg_shadow */
 		rnode.spcNode = GLOBALTABLESPACE_OID;
 		rnode.dbNode = 0;
-		rnode.relNode = ShadowRelationId;
-
-		rel = XLogOpenRelation(rnode);
-		write_user_file(rel);
+		rnode.relNode = AuthMemRelationId;
+		rel_authmem = XLogOpenRelation(rnode);
 	}
 
 	CurrentResourceOwner = NULL;
@@ -699,19 +702,17 @@ void
 AtEOXact_UpdateFlatFiles(bool isCommit)
 {
 	Relation	drel = NULL;
-	Relation	grel = NULL;
-	Relation	urel = NULL;
+	Relation	arel = NULL;
+	Relation	mrel = NULL;
 
 	if (database_file_update_subid == InvalidSubTransactionId &&
-		group_file_update_subid == InvalidSubTransactionId &&
-		user_file_update_subid == InvalidSubTransactionId)
+		auth_file_update_subid == InvalidSubTransactionId)
 		return;					/* nothing to do */
 
 	if (!isCommit)
 	{
 		database_file_update_subid = InvalidSubTransactionId;
-		group_file_update_subid = InvalidSubTransactionId;
-		user_file_update_subid = InvalidSubTransactionId;
+		auth_file_update_subid = InvalidSubTransactionId;
 		return;
 	}
 
@@ -731,10 +732,10 @@ AtEOXact_UpdateFlatFiles(bool isCommit)
 	 */
 	if (database_file_update_subid != InvalidSubTransactionId)
 		drel = heap_open(DatabaseRelationId, ExclusiveLock);
-	if (group_file_update_subid != InvalidSubTransactionId)
-		grel = heap_open(GroupRelationId, ExclusiveLock);
-	if (user_file_update_subid != InvalidSubTransactionId)
-		urel = heap_open(ShadowRelationId, ExclusiveLock);
+	if (auth_file_update_subid != InvalidSubTransactionId) {
+		arel = heap_open(AuthIdRelationId, ExclusiveLock);
+		mrel = heap_open(AuthMemRelationId, ExclusiveLock);
+	}
 
 	/* Okay to write the files */
 	if (database_file_update_subid != InvalidSubTransactionId)
@@ -744,18 +745,12 @@ AtEOXact_UpdateFlatFiles(bool isCommit)
 		heap_close(drel, NoLock);
 	}
 
-	if (group_file_update_subid != InvalidSubTransactionId)
+	if (auth_file_update_subid != InvalidSubTransactionId)
 	{
-		group_file_update_subid = InvalidSubTransactionId;
-		write_group_file(grel);
-		heap_close(grel, NoLock);
-	}
-
-	if (user_file_update_subid != InvalidSubTransactionId)
-	{
-		user_file_update_subid = InvalidSubTransactionId;
-		write_user_file(urel);
-		heap_close(urel, NoLock);
+		auth_file_update_subid = InvalidSubTransactionId;
+		write_auth_file(arel, mrel, false);
+		heap_close(arel, NoLock);
+		heap_close(mrel, NoLock);
 	}
 
 	/*
@@ -785,15 +780,10 @@ AtPrepare_UpdateFlatFiles(void)
 		database_file_update_subid = InvalidSubTransactionId;
 		info |= FF_BIT_DATABASE;
 	}
-	if (group_file_update_subid != InvalidSubTransactionId)
+	if (auth_file_update_subid != InvalidSubTransactionId)
 	{
-		group_file_update_subid = InvalidSubTransactionId;
-		info |= FF_BIT_GROUP;
-	}
-	if (user_file_update_subid != InvalidSubTransactionId)
-	{
-		user_file_update_subid = InvalidSubTransactionId;
-		info |= FF_BIT_USER;
+		auth_file_update_subid = InvalidSubTransactionId;
+		info |= FF_BIT_AUTH;
 	}
 	if (info != 0)
 		RegisterTwoPhaseRecord(TWOPHASE_RM_FLATFILES_ID, info,
@@ -817,29 +807,23 @@ AtEOSubXact_UpdateFlatFiles(bool isCommit,
 		if (database_file_update_subid == mySubid)
 			database_file_update_subid = parentSubid;
 
-		if (group_file_update_subid == mySubid)
-			group_file_update_subid = parentSubid;
-
-		if (user_file_update_subid == mySubid)
-			user_file_update_subid = parentSubid;
+		if (auth_file_update_subid == mySubid)
+			auth_file_update_subid = parentSubid;
 	}
 	else
 	{
 		if (database_file_update_subid == mySubid)
 			database_file_update_subid = InvalidSubTransactionId;
 
-		if (group_file_update_subid == mySubid)
-			group_file_update_subid = InvalidSubTransactionId;
-
-		if (user_file_update_subid == mySubid)
-			user_file_update_subid = InvalidSubTransactionId;
+		if (auth_file_update_subid == mySubid)
+			auth_file_update_subid = InvalidSubTransactionId;
 	}
 }
 
 
 /*
- * This trigger is fired whenever someone modifies pg_database, pg_shadow
- * or pg_group via general-purpose INSERT/UPDATE/DELETE commands.
+ * This trigger is fired whenever someone modifies pg_database, pg_authid
+ * or pg_auth_members via general-purpose INSERT/UPDATE/DELETE commands.
  *
  * It is sufficient for this to be a STATEMENT trigger since we don't
  * care which individual rows changed.  It doesn't much matter whether
@@ -862,11 +846,11 @@ flatfile_update_trigger(PG_FUNCTION_ARGS)
 		case DatabaseRelationId:
 			database_file_update_needed();
 			break;
-		case GroupRelationId:
-			group_file_update_needed();
+		case AuthIdRelationId:
+			auth_file_update_needed();
 			break;
-		case ShadowRelationId:
-			user_file_update_needed();
+		case AuthMemRelationId:
+			auth_file_update_needed();
 			break;
 		default:
 			elog(ERROR, "flatfile_update_trigger was called for wrong table");
@@ -895,8 +879,6 @@ flatfile_twophase_postcommit(TransactionId xid, uint16 info,
 	 */
 	if (info & FF_BIT_DATABASE)
 		database_file_update_needed();
-	if (info & FF_BIT_GROUP)
-		group_file_update_needed();
-	if (info & FF_BIT_USER)
-		user_file_update_needed();
+	if (info & FF_BIT_AUTH)
+		auth_file_update_needed();
 }

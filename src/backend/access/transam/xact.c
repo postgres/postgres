@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.207 2005/06/19 20:00:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.208 2005/06/28 05:08:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,7 +121,7 @@ typedef struct TransactionStateData
 												 * context */
 	ResourceOwner curTransactionOwner;	/* my query resources */
 	List	   *childXids;		/* subcommitted child XIDs */
-	AclId		currentUser;	/* subxact start current_user */
+	Oid			currentUser;	/* subxact start current_user */
 	bool		prevXactReadOnly;		/* entry-time xact r/o state */
 	struct TransactionStateData *parent;		/* back link to parent */
 } TransactionStateData;
@@ -1488,8 +1488,10 @@ CommitTransaction(void)
 	/* NOTIFY commit must come before lower-level cleanup */
 	AtCommit_Notify();
 
-	/* Update flat files if we changed pg_database, pg_shadow or pg_group */
-	/* This should be the last step before commit */
+	/*
+	 * Update flat files if we changed pg_database, pg_authid or
+	 * pg_auth_members.  This should be the last step before commit.
+	 */
 	AtEOXact_UpdateFlatFiles(true);
 
 	/* Prevent cancel/die interrupt while cleaning up */
@@ -3847,7 +3849,7 @@ PushTransaction(void)
 {
 	TransactionState p = CurrentTransactionState;
 	TransactionState s;
-	AclId	currentUser;
+	Oid	currentUser;
 
 	/*
 	 * At present, GetUserId cannot fail, but let's not assume that.  Get

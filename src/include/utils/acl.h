@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.77 2005/01/27 23:36:14 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.78 2005/06/28 05:09:13 tgl Exp $
  *
  * NOTES
  *	  An ACL array is simply an array of AclItems, representing the union
@@ -29,84 +29,64 @@
 
 
 /*
- * typedef AclId is declared in c.h
- *
  * typedef AclMode is declared in parsenodes.h, also the individual privilege
  * bit meanings are defined there
  */
 
-#define ACL_ID_WORLD	0		/* placeholder for id in a WORLD acl item */
-
-/*
- * AclIdType	tag that describes if the AclId is a user, group, etc.
- */
-#define ACL_IDTYPE_WORLD		0x00	/* PUBLIC */
-#define ACL_IDTYPE_UID			0x01	/* user id - from pg_shadow */
-#define ACL_IDTYPE_GID			0x02	/* group id - from pg_group */
+#define ACL_ID_PUBLIC	0		/* placeholder for id in a PUBLIC acl item */
 
 /*
  * AclItem
- *
- * The IDTYPE included in ai_privs identifies the type of the grantee ID.
- * The grantor ID currently must always be a user, never a group.  (FIXME)
  *
  * Note: must be same size on all platforms, because the size is hardcoded
  * in the pg_type.h entry for aclitem.
  */
 typedef struct AclItem
 {
-	AclId		ai_grantee;		/* ID that this item grants privs to */
-	AclId		ai_grantor;		/* grantor of privs (always a user id) */
-	AclMode		ai_privs;		/* AclIdType plus privilege bits */
+	Oid			ai_grantee;		/* ID that this item grants privs to */
+	Oid			ai_grantor;		/* grantor of privs */
+	AclMode		ai_privs;		/* privilege bits */
 } AclItem;
 
 /*
- * The AclIdType is stored in the top two bits of the ai_privs field
- * of an AclItem.  The middle 15 bits are the grant option markers,
- * and the lower 15 bits are the actual privileges.  We use "rights"
+ * The upper 16 bits of the ai_privs field of an AclItem are the grant option
+ * bits, and the lower 16 bits are the actual privileges.  We use "rights"
  * to mean the combined grant option and privilege bits fields.
  */
-#define ACLITEM_GET_PRIVS(item)    ((item).ai_privs & 0x7FFF)
-#define ACLITEM_GET_GOPTIONS(item) (((item).ai_privs >> 15) & 0x7FFF)
-#define ACLITEM_GET_RIGHTS(item)   ((item).ai_privs & 0x3FFFFFFF)
-#define ACLITEM_GET_IDTYPE(item)   ((item).ai_privs >> 30)
+#define ACLITEM_GET_PRIVS(item)    ((item).ai_privs & 0xFFFF)
+#define ACLITEM_GET_GOPTIONS(item) (((item).ai_privs >> 16) & 0xFFFF)
+#define ACLITEM_GET_RIGHTS(item)   ((item).ai_privs)
 
-#define ACL_GRANT_OPTION_FOR(privs) (((AclMode) (privs) & 0x7FFF) << 15)
-#define ACL_OPTION_TO_PRIVS(privs)	(((AclMode) (privs) >> 15) & 0x7FFF)
+#define ACL_GRANT_OPTION_FOR(privs) (((AclMode) (privs) & 0xFFFF) << 16)
+#define ACL_OPTION_TO_PRIVS(privs)	(((AclMode) (privs) >> 16) & 0xFFFF)
 
 #define ACLITEM_SET_PRIVS(item,privs) \
-  ((item).ai_privs = ((item).ai_privs & ~((AclMode) 0x7FFF)) | \
-					 ((AclMode) (privs) & 0x7FFF))
+  ((item).ai_privs = ((item).ai_privs & ~((AclMode) 0xFFFF)) | \
+					 ((AclMode) (privs) & 0xFFFF))
 #define ACLITEM_SET_GOPTIONS(item,goptions) \
-  ((item).ai_privs = ((item).ai_privs & ~(((AclMode) 0x7FFF) << 15)) | \
-					 (((AclMode) (goptions) & 0x7FFF) << 15))
+  ((item).ai_privs = ((item).ai_privs & ~(((AclMode) 0xFFFF) << 16)) | \
+					 (((AclMode) (goptions) & 0xFFFF) << 16))
 #define ACLITEM_SET_RIGHTS(item,rights) \
-  ((item).ai_privs = ((item).ai_privs & ~((AclMode) 0x3FFFFFFF)) | \
-					 ((AclMode) (rights) & 0x3FFFFFFF))
-#define ACLITEM_SET_IDTYPE(item,idtype) \
-  ((item).ai_privs = ((item).ai_privs & ~(((AclMode) 0x03) << 30)) | \
-					 (((AclMode) (idtype) & 0x03) << 30))
+  ((item).ai_privs = (AclMode) (rights))
 
-#define ACLITEM_SET_PRIVS_IDTYPE(item,privs,goption,idtype) \
-  ((item).ai_privs = ((AclMode) (privs) & 0x7FFF) | \
-					 (((AclMode) (goption) & 0x7FFF) << 15) | \
-					 ((AclMode) (idtype) << 30))
+#define ACLITEM_SET_PRIVS_GOPTIONS(item,privs,goptions) \
+  ((item).ai_privs = ((AclMode) (privs) & 0xFFFF) | \
+					 (((AclMode) (goptions) & 0xFFFF) << 16))
 
-#define ACLITEM_ALL_PRIV_BITS		((AclMode) 0x7FFF)
-#define ACLITEM_ALL_GOPTION_BITS	((AclMode) 0x7FFF << 15)
+
+#define ACLITEM_ALL_PRIV_BITS		((AclMode) 0xFFFF)
+#define ACLITEM_ALL_GOPTION_BITS	((AclMode) 0xFFFF << 16)
 
 /*
  * Definitions for convenient access to Acl (array of AclItem) and IdList
- * (array of AclId).  These are standard PostgreSQL arrays, but are restricted
+ * (array of Oid).  These are standard PostgreSQL arrays, but are restricted
  * to have one dimension.  We also ignore the lower bound when reading,
  * and set it to one when writing.
  *
  * CAUTION: as of PostgreSQL 7.1, these arrays are toastable (just like all
  * other array types).	Therefore, be careful to detoast them with the
  * macros provided, unless you know for certain that a particular array
- * can't have been toasted.  Presently, we do not provide toast tables for
- * pg_class or pg_group, so the entries in those tables won't have been
- * stored externally --- but they could have been compressed!
+ * can't have been toasted.
  */
 
 
@@ -121,13 +101,13 @@ typedef ArrayType Acl;
 #define ACL_SIZE(ACL)			ARR_SIZE(ACL)
 
 /*
- * IdList		a one-dimensional array of AclId
+ * IdList		a one-dimensional array of Oid
  */
 typedef ArrayType IdList;
 
 #define IDLIST_NUM(IDL)			(ARR_DIMS(IDL)[0])
-#define IDLIST_DAT(IDL)			((AclId *) ARR_DATA_PTR(IDL))
-#define IDLIST_N_SIZE(N)		(ARR_OVERHEAD(1) + ((N) * sizeof(AclId)))
+#define IDLIST_DAT(IDL)			((Oid *) ARR_DATA_PTR(IDL))
+#define IDLIST_N_SIZE(N)		(ARR_OVERHEAD(1) + ((N) * sizeof(Oid)))
 #define IDLIST_SIZE(IDL)		ARR_SIZE(IDL)
 
 /*
@@ -221,13 +201,17 @@ typedef enum AclObjectKind
 /*
  * routines used internally
  */
-extern Acl *acldefault(GrantObjectType objtype, AclId ownerid);
+extern Acl *acldefault(GrantObjectType objtype, Oid ownerId);
 extern Acl *aclupdate(const Acl *old_acl, const AclItem *mod_aip,
-		  int modechg, AclId ownerid, DropBehavior behavior);
-extern Acl *aclnewowner(const Acl *old_acl, AclId oldownerid, AclId newownerid);
+		  int modechg, Oid ownerId, DropBehavior behavior);
+extern Acl *aclnewowner(const Acl *old_acl, Oid oldOwnerId, Oid newOwnerId);
 
-extern AclMode aclmask(const Acl *acl, AclId userid, AclId ownerid,
+extern AclMode aclmask(const Acl *acl, Oid roleid, Oid ownerId,
 		AclMode mask, AclMaskHow how);
+
+extern bool is_member_of_role(Oid member, Oid role);
+
+extern void InitializeAcl(void);
 
 /*
  * SQL functions (from acl.c)
@@ -245,40 +229,39 @@ extern Datum hash_aclitem(PG_FUNCTION_ARGS);
  * prototypes for functions in aclchk.c
  */
 extern void ExecuteGrantStmt(GrantStmt *stmt);
-extern char *get_groname(AclId grosysid);
 
-extern AclMode pg_class_aclmask(Oid table_oid, AclId userid,
+extern AclMode pg_class_aclmask(Oid table_oid, Oid roleid,
 				 AclMode mask, AclMaskHow how);
-extern AclMode pg_database_aclmask(Oid db_oid, AclId userid,
+extern AclMode pg_database_aclmask(Oid db_oid, Oid roleid,
 					AclMode mask, AclMaskHow how);
-extern AclMode pg_proc_aclmask(Oid proc_oid, AclId userid,
+extern AclMode pg_proc_aclmask(Oid proc_oid, Oid roleid,
 				AclMode mask, AclMaskHow how);
-extern AclMode pg_language_aclmask(Oid lang_oid, AclId userid,
+extern AclMode pg_language_aclmask(Oid lang_oid, Oid roleid,
 					AclMode mask, AclMaskHow how);
-extern AclMode pg_namespace_aclmask(Oid nsp_oid, AclId userid,
+extern AclMode pg_namespace_aclmask(Oid nsp_oid, Oid roleid,
 					 AclMode mask, AclMaskHow how);
-extern AclMode pg_tablespace_aclmask(Oid spc_oid, AclId userid,
+extern AclMode pg_tablespace_aclmask(Oid spc_oid, Oid roleid,
 					  AclMode mask, AclMaskHow how);
 
-extern AclResult pg_class_aclcheck(Oid table_oid, AclId userid, AclMode mode);
-extern AclResult pg_database_aclcheck(Oid db_oid, AclId userid, AclMode mode);
-extern AclResult pg_proc_aclcheck(Oid proc_oid, AclId userid, AclMode mode);
-extern AclResult pg_language_aclcheck(Oid lang_oid, AclId userid, AclMode mode);
-extern AclResult pg_namespace_aclcheck(Oid nsp_oid, AclId userid, AclMode mode);
-extern AclResult pg_tablespace_aclcheck(Oid spc_oid, AclId userid, AclMode mode);
+extern AclResult pg_class_aclcheck(Oid table_oid, Oid roleid, AclMode mode);
+extern AclResult pg_database_aclcheck(Oid db_oid, Oid roleid, AclMode mode);
+extern AclResult pg_proc_aclcheck(Oid proc_oid, Oid roleid, AclMode mode);
+extern AclResult pg_language_aclcheck(Oid lang_oid, Oid roleid, AclMode mode);
+extern AclResult pg_namespace_aclcheck(Oid nsp_oid, Oid roleid, AclMode mode);
+extern AclResult pg_tablespace_aclcheck(Oid spc_oid, Oid roleid, AclMode mode);
 
 extern void aclcheck_error(AclResult aclerr, AclObjectKind objectkind,
 			   const char *objectname);
 
 /* ownercheck routines just return true (owner) or false (not) */
-extern bool pg_class_ownercheck(Oid class_oid, AclId userid);
-extern bool pg_type_ownercheck(Oid type_oid, AclId userid);
-extern bool pg_oper_ownercheck(Oid oper_oid, AclId userid);
-extern bool pg_proc_ownercheck(Oid proc_oid, AclId userid);
-extern bool pg_namespace_ownercheck(Oid nsp_oid, AclId userid);
-extern bool pg_tablespace_ownercheck(Oid spc_oid, AclId userid);
-extern bool pg_opclass_ownercheck(Oid opc_oid, AclId userid);
-extern bool pg_database_ownercheck(Oid db_oid, AclId userid);
-extern bool pg_conversion_ownercheck(Oid conv_oid, AclId userid);
+extern bool pg_class_ownercheck(Oid class_oid, Oid roleid);
+extern bool pg_type_ownercheck(Oid type_oid, Oid roleid);
+extern bool pg_oper_ownercheck(Oid oper_oid, Oid roleid);
+extern bool pg_proc_ownercheck(Oid proc_oid, Oid roleid);
+extern bool pg_namespace_ownercheck(Oid nsp_oid, Oid roleid);
+extern bool pg_tablespace_ownercheck(Oid spc_oid, Oid roleid);
+extern bool pg_opclass_ownercheck(Oid opc_oid, Oid roleid);
+extern bool pg_database_ownercheck(Oid db_oid, Oid roleid);
+extern bool pg_conversion_ownercheck(Oid conv_oid, Oid roleid);
 
 #endif   /* ACL_H */

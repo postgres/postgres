@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.12 2004/12/31 21:59:41 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.13 2005/06/28 05:08:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,10 +64,6 @@ ExecRenameStmt(RenameStmt *stmt)
 			RenameFunction(stmt->object, stmt->objarg, stmt->newname);
 			break;
 
-		case OBJECT_GROUP:
-			RenameGroup(stmt->subname, stmt->newname);
-			break;
-
 		case OBJECT_LANGUAGE:
 			RenameLanguage(stmt->subname, stmt->newname);
 			break;
@@ -76,16 +72,16 @@ ExecRenameStmt(RenameStmt *stmt)
 			RenameOpClass(stmt->object, stmt->subname, stmt->newname);
 			break;
 
+		case OBJECT_ROLE:
+			RenameRole(stmt->subname, stmt->newname);
+			break;
+
 		case OBJECT_SCHEMA:
 			RenameSchema(stmt->subname, stmt->newname);
 			break;
 
 		case OBJECT_TABLESPACE:
 			RenameTableSpace(stmt->subname, stmt->newname);
-			break;
-
-		case OBJECT_USER:
-			RenameUser(stmt->subname, stmt->newname);
 			break;
 
 		case OBJECT_TABLE:
@@ -153,7 +149,7 @@ ExecRenameStmt(RenameStmt *stmt)
 void
 ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 {
-	AclId		newowner = get_usesysid(stmt->newowner);
+	Oid		newowner = get_roleid_checked(stmt->newowner);
 
 	switch (stmt->objectType)
 	{
