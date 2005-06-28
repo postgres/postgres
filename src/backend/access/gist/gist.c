@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.122 2005/06/27 12:45:21 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.123 2005/06/28 15:51:00 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -421,13 +421,10 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate) {
 	else
 	{
 		/* enough space */
-		OffsetNumber l, off;
 		XLogRecPtr	oldlsn;
 
-		off = ( PageIsEmpty(state->stack->page) ) ? 
-			FirstOffsetNumber : OffsetNumberNext(PageGetMaxOffsetNumber(state->stack->page));
-		
-		l = gistfillbuffer(state->r, state->stack->page, state->itup, state->ituplen, off);
+		gistfillbuffer(state->r, state->stack->page, state->itup, state->ituplen, InvalidOffsetNumber);
+
 		oldlsn = PageGetLSN(state->stack->page);
 		if ( !state->r->rd_istemp ) {
 			OffsetNumber	noffs=0, offs[ MAXALIGN( sizeof(OffsetNumber) ) / sizeof(OffsetNumber) ];
@@ -999,10 +996,9 @@ gistSplit(Relation r,
 	}
 	else
 	{
-		OffsetNumber l;
 		char *ptr;
 
-		l = gistfillbuffer(r, right, rvectup, v.spl_nright, FirstOffsetNumber);
+		gistfillbuffer(r, right, rvectup, v.spl_nright, FirstOffsetNumber);
 		/* XLOG stuff */
 		ROTATEDIST(*dist);
 		(*dist)->block.blkno = BufferGetBlockNumber(rightbuf);
@@ -1035,10 +1031,9 @@ gistSplit(Relation r,
 	}
 	else
 	{
-		OffsetNumber l;
 		char *ptr;
 
-		l = gistfillbuffer(r, left, lvectup, v.spl_nleft, FirstOffsetNumber);
+		gistfillbuffer(r, left, lvectup, v.spl_nleft, FirstOffsetNumber);
 		/* XLOG stuff */
 		ROTATEDIST(*dist);
 		(*dist)->block.blkno = BufferGetBlockNumber(leftbuf);

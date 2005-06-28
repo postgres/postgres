@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *          $PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.3 2005/06/27 12:45:22 teodor Exp $
+ *          $PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.4 2005/06/28 15:51:00 teodor Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -61,6 +61,10 @@ gistfillbuffer(Relation r, Page page, IndexTuple *itup,
 {
 	OffsetNumber l = InvalidOffsetNumber;
 	int			i;
+
+	if ( off == InvalidOffsetNumber ) 
+		off = ( PageIsEmpty(page) ) ?  FirstOffsetNumber : 
+			OffsetNumberNext(PageGetMaxOffsetNumber(page));
 
 	for (i = 0; i < len; i++)
 	{

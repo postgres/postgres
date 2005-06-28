@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *           $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.4 2005/06/27 12:45:22 teodor Exp $
+ *           $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.5 2005/06/28 15:51:00 teodor Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -198,14 +198,8 @@ gistRedoEntryUpdateRecord(XLogRecPtr lsn, XLogRecord *record, bool isnewroot) {
 		}
 
 		/* add tuples */
-		if ( xlrec.len > 0 ) {
-        	        OffsetNumber off = (PageIsEmpty(page)) ?  
-        	                FirstOffsetNumber
-        	                :
-        	                OffsetNumberNext(PageGetMaxOffsetNumber(page));
-
-			gistfillbuffer(reln, page, xlrec.itup, xlrec.len, off);
-		}
+		if ( xlrec.len > 0 ) 
+			gistfillbuffer(reln, page, xlrec.itup, xlrec.len, InvalidOffsetNumber);
 
 		/* special case: leafpage, nothing to insert, nothing to delete, then
 		   vacuum marks page */
@@ -623,9 +617,7 @@ gistContinueInsert(gistIncompleteInsert *insert) {
 						}
 				}
 			} else 
-				gistfillbuffer( index, pages[numbuffer-1], itup, lenitup, 
-					(PageIsEmpty(pages[numbuffer-1])) ? 
-						FirstOffsetNumber : OffsetNumberNext(PageGetMaxOffsetNumber(pages[numbuffer-1])) );
+				gistfillbuffer( index, pages[numbuffer-1], itup, lenitup, InvalidOffsetNumber); 
 
 			lenitup=numbuffer;
 			for(j=0;j<numbuffer;j++) {
