@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.143 2005/06/28 05:08:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.144 2005/06/28 22:16:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,17 +96,23 @@ pg_isblank(const char c)
 
 /*
  * Grab one token out of fp. Tokens are strings of non-blank
- * characters bounded by blank characters, beginning of line, and
- * end of line. Blank means space or tab. Return the token as
- * *buf. Leave file positioned at the character immediately after the
- * token or EOF, whichever comes first. If no more tokens on line,
- * return empty string as *buf and position the file to the beginning
- * of the next line or EOF, whichever comes first. Allow spaces in
- * quoted strings. Terminate on unquoted commas. Handle
- * comments. Treat unquoted keywords that might be role names or
+ * characters bounded by blank characters, commas, beginning of line, and
+ * end of line. Blank means space or tab. Tokens can be delimited by
+ * double quotes (and usually are, in current usage).
+ *
+ * The token, if any, is returned at *buf (a buffer of size bufsz).
+ *
+ * If successful: store null-terminated token at *buf and return TRUE.
+ * If no more tokens on line: set *buf = '\0' and return FALSE.
+ *
+ * Leave file positioned at the character immediately after the token or EOF,
+ * whichever comes first. If no more tokens on line, position the file to the
+ * beginning of the next line or EOF, whichever comes first.
+ *
+ * Handle comments. Treat unquoted keywords that might be role names or
  * database names specially, by appending a newline to them.
  */
-static void
+static bool
 next_token(FILE *fp, char *buf, int bufsz)
 {
 	int			c;
@@ -125,7 +131,7 @@ next_token(FILE *fp, char *buf, int bufsz)
 	if (c == EOF || c == '\n')
 	{
 		*buf = '\0';
-		return;
+		return false;
 	}
 
 	/*
@@ -200,6 +206,8 @@ next_token(FILE *fp, char *buf, int bufsz)
 		*buf++ = '\n';
 		*buf = '\0';
 	}
+
+	return (saw_quote || buf > start_buf);
 }
 
 /*
@@ -207,25 +215,26 @@ next_token(FILE *fp, char *buf, int bufsz)
  *	 to  break	apart  the	commas	to	expand	any  file names then
  *	 reconstruct with commas.
  *
- * The result is always a palloc'd string.  If it's zero-length then
- * we have reached EOL.
+ * The result is a palloc'd string, or NULL if we have reached EOL.
  */
 static char *
 next_token_expand(const char *filename, FILE *file)
 {
 	char		buf[MAX_TOKEN];
 	char	   *comma_str = pstrdup("");
+	bool		got_something = false;
 	bool		trailing_comma;
 	char	   *incbuf;
 	int			needed;
 
 	do
 	{
-		next_token(file, buf, sizeof(buf));
-		if (!buf[0])
+		if (!next_token(file, buf, sizeof(buf)))
 			break;
 
-		if (buf[strlen(buf) - 1] == ',')
+		got_something = true;
+
+		if (strlen(buf) > 0 && buf[strlen(buf) - 1] == ',')
 		{
 			trailing_comma = true;
 			buf[strlen(buf) - 1] = '\0';
@@ -248,6 +257,12 @@ next_token_expand(const char *filename, FILE *file)
 			strcat(comma_str, MULTI_VALUE_SEP);
 		pfree(incbuf);
 	} while (trailing_comma);
+
+	if (!got_something)
+	{
+		pfree(comma_str);
+		return NULL;
+	}
 
 	return comma_str;
 }
@@ -402,7 +417,7 @@ tokenize_file(const char *filename, FILE *file,
 		buf = next_token_expand(filename, file);
 
 		/* add token to list, unless we are at EOL or comment start */
-		if (buf[0])
+		if (buf)
 		{
 			if (current_line == NIL)
 			{
@@ -423,8 +438,6 @@ tokenize_file(const char *filename, FILE *file,
 			current_line = NIL;
 			/* Advance line number whenever we reach EOL */
 			line_number++;
-			/* Don't forget to pfree the next_token_expand result */
-			pfree(buf);
 		}
 	}
 }
@@ -462,25 +475,33 @@ get_role_line(const char *role)
 
 
 /*
- * Does member belong to role?
+ * Does user belong to role?
+ *
+ * user is always the name given as the attempted login identifier.
+ * We check to see if it is a member of the specified role name.
  */
 static bool
-check_member(const char *role, const char *member)
+is_member(const char *user, const char *role)
 {
 	List	  **line;
-	List    **line2;
 	ListCell   *line_item;
 
-	if ((line = get_role_line(member)) == NULL)
-		return false;			/* if member not exist, say "no" */
+	if ((line = get_role_line(user)) == NULL)
+		return false;			/* if user not exist, say "no" */
 
-	if ((line2 = get_role_line(role)) == NULL)
-		return false;			/* if role not exist, say "no" */
+	/* A user always belongs to its own role */
+	if (strcmp(user, role) == 0)
+		return true;
 
-	/* skip over the role name, password, valuntil, examine all the members */
-	for_each_cell(line_item, lfourth(*line2))
+	/*
+	 * skip over the role name, password, valuntil, examine all the
+	 * membership entries
+	 */
+	if (list_length(*line) < 4)
+		return false;
+	for_each_cell(line_item, lnext(lnext(lnext(list_head(*line)))))
 	{
-		if (strcmp((char *) lfirst(line_item), member) == 0)
+		if (strcmp((char *) lfirst(line_item), role) == 0)
 			return true;
 	}
 
@@ -488,18 +509,24 @@ check_member(const char *role, const char *member)
 }
 
 /*
- * Check comma member list for a specific role, handle role names.
+ * Check comma-separated list for a match to role, allowing group names.
+ *
+ * NB: param_str is destructively modified!  In current usage, this is
+ * okay only because this code is run after forking off from the postmaster,
+ * and so it doesn't matter that we clobber the stored hba info.
  */
 static bool
-check_role(char *role, char *param_str)
+check_role(const char *role, char *param_str)
 {
 	char	   *tok;
 
-	for (tok = strtok(param_str, MULTI_VALUE_SEP); tok != NULL; tok = strtok(NULL, MULTI_VALUE_SEP))
+	for (tok = strtok(param_str, MULTI_VALUE_SEP);
+		 tok != NULL;
+		 tok = strtok(NULL, MULTI_VALUE_SEP))
 	{
 		if (tok[0] == '+')
 		{
-			if (check_member(tok + 1, role))
+			if (is_member(role, tok + 1))
 				return true;
 		}
 		else if (strcmp(tok, role) == 0 ||
@@ -512,13 +539,19 @@ check_role(char *role, char *param_str)
 
 /*
  * Check to see if db/role combination matches param string.
+ *
+ * NB: param_str is destructively modified!  In current usage, this is
+ * okay only because this code is run after forking off from the postmaster,
+ * and so it doesn't matter that we clobber the stored hba info.
  */
 static bool
-check_db(char *dbname, char *role, char *param_str)
+check_db(const char *dbname, const char *role, char *param_str)
 {
 	char	   *tok;
 
-	for (tok = strtok(param_str, MULTI_VALUE_SEP); tok != NULL; tok = strtok(NULL, MULTI_VALUE_SEP))
+	for (tok = strtok(param_str, MULTI_VALUE_SEP);
+		 tok != NULL;
+		 tok = strtok(NULL, MULTI_VALUE_SEP))
 	{
 		if (strcmp(tok, "all\n") == 0)
 			return true;
@@ -530,7 +563,7 @@ check_db(char *dbname, char *role, char *param_str)
 		else if (strcmp(tok, "samegroup\n") == 0 ||
 				 strcmp(tok, "samerole\n") == 0)
 		{
-			if (check_member(dbname, role))
+			if (is_member(role, dbname))
 				return true;
 		}
 		else if (strcmp(tok, dbname) == 0)
@@ -981,8 +1014,7 @@ read_pg_database_line(FILE *fp, char *dbname,
 
 	if (feof(fp))
 		return false;
-	next_token(fp, buf, sizeof(buf));
-	if (!buf[0])
+	if (!next_token(fp, buf, sizeof(buf)))
 		return false;
 	if (strlen(buf) >= NAMEDATALEN)
 		elog(FATAL, "bad data in flat pg_database file");
@@ -1000,8 +1032,7 @@ read_pg_database_line(FILE *fp, char *dbname,
 	if (!isdigit((unsigned char) buf[0]))
 		elog(FATAL, "bad data in flat pg_database file");
 	/* expect EOL next */
-	next_token(fp, buf, sizeof(buf));
-	if (buf[0])
+	if (next_token(fp, buf, sizeof(buf)))
 		elog(FATAL, "bad data in flat pg_database file");
 	return true;
 }

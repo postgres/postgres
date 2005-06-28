@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.9 2005/06/28 05:09:02 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.10 2005/06/28 22:16:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,10 +32,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "access/genam.h"
 #include "access/heapam.h"
 #include "access/twophase_rmgr.h"
-#include "catalog/indexing.h"
 #include "catalog/pg_auth_members.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_database.h"
@@ -48,7 +46,6 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/flatfiles.h"
-#include "utils/fmgroids.h"
 #include "utils/resowner.h"
 #include "utils/syscache.h"
 
@@ -89,7 +86,8 @@ database_file_update_needed(void)
 }
 
 /*
- * Mark flat auth file as needing an update (because pg_auth changed)
+ * Mark flat auth file as needing an update (because pg_authid or
+ * pg_auth_members changed)
  */
 void
 auth_file_update_needed(void)
@@ -119,7 +117,7 @@ database_getflatfilename(void)
 }
 
 /*
- * Get full pathname of auth file.
+ * auth_getflatfilename --- get full pathname of auth file
  *
  * Note that result string is palloc'd, and should be freed by the caller.
  */
@@ -282,9 +280,6 @@ write_database_file(Relation drel)
 				 errmsg("could not rename file \"%s\" to \"%s\": %m",
 						tempname, filename)));
 
-	pfree(tempname);
-	pfree(filename);
-
 	/*
 	 * Set the transaction ID wrap limit using the oldest datfrozenxid
 	 */
@@ -295,14 +290,27 @@ write_database_file(Relation drel)
 
 /*
  * Support for write_auth_file
+ *
+ * The format for the flat auth file is
+ *		"rolename" "password" "validuntil" "memberof" "memberof" ...
+ * Only roles that are marked rolcanlogin are entered into the auth file.
+ * Each role's line lists all the roles (groups) of which it is directly
+ * or indirectly a member.
+ *
+ * The postmaster expects the file to be sorted by rolename.  There is not
+ * any special ordering of the membership lists.
+ *
+ * To construct this information, we scan pg_authid and pg_auth_members,
+ * and build data structures in-memory before writing the file.
  */
 
 typedef struct {
 	Oid			roleid;
+	bool		rolcanlogin;
 	char*		rolname;
 	char*		rolpassword;
 	char*		rolvaliduntil;
-	List*		roles_names;
+	List*		member_of;
 } auth_entry;
 
 typedef struct {
@@ -310,6 +318,8 @@ typedef struct {
 	Oid			memberid;
 } authmem_entry;
 
+
+/* qsort comparator for sorting auth_entry array by roleid */
 static int
 oid_compar(const void *a, const void *b)
 {
@@ -321,6 +331,7 @@ oid_compar(const void *a, const void *b)
 	return 0;
 }
 
+/* qsort comparator for sorting auth_entry array by rolname */
 static int
 name_compar(const void *a, const void *b)
 {
@@ -330,6 +341,7 @@ name_compar(const void *a, const void *b)
 	return strcmp(a_auth->rolname,b_auth->rolname);
 }
 
+/* qsort comparator for sorting authmem_entry array by memberid */
 static int
 mem_compar(const void *a, const void *b)
 {
@@ -341,11 +353,12 @@ mem_compar(const void *a, const void *b)
 	return 0;
 }
 
+
 /*
  * write_auth_file: update the flat auth file
  */
 static void
-write_auth_file(Relation rel_auth, Relation rel_authmem, bool startup)
+write_auth_file(Relation rel_authid, Relation rel_authmem)
 {
 	char	   *filename,
 			   *tempname;
@@ -361,11 +374,11 @@ write_auth_file(Relation rel_auth, Relation rel_authmem, bool startup)
 	int			total_mem = 0;
 	int			est_rows;
 	auth_entry  *auth_info;
-	authmem_entry  *authmem_info = NULL;
+	authmem_entry *authmem_info;
 
 	/*
 	 * Create a temporary filename to be renamed later.  This prevents the
-	 * backend from clobbering the pg_auth file while the postmaster might
+	 * backend from clobbering the flat file while the postmaster might
 	 * be reading from it.
 	 */
 	filename = auth_getflatfilename();
@@ -383,26 +396,35 @@ write_auth_file(Relation rel_auth, Relation rel_authmem, bool startup)
 						tempname)));
 
 	/*
-	 * Read pg_authid and fill temporary data structures.
+	 * Read pg_authid and fill temporary data structures.  Note we must
+	 * read all roles, even those without rolcanlogin.
 	 */
-	totalblocks = RelationGetNumberOfBlocks(rel_auth);
+	totalblocks = RelationGetNumberOfBlocks(rel_authid);
 	totalblocks = totalblocks ? totalblocks : 1;
 	est_rows = totalblocks * (BLCKSZ / (sizeof(HeapTupleHeaderData)+sizeof(FormData_pg_authid)));
 	auth_info = (auth_entry*) palloc(est_rows*sizeof(auth_entry));
 
-	scan = heap_beginscan(rel_auth, SnapshotNow, 0, NULL);
+	scan = heap_beginscan(rel_authid, SnapshotNow, 0, NULL);
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
-		Form_pg_authid pwform = (Form_pg_authid) GETSTRUCT(tuple);
+		Form_pg_authid aform = (Form_pg_authid) GETSTRUCT(tuple);
 		HeapTupleHeader tup = tuple->t_data;
 		char	   *tp;				/* ptr to tuple data */
 		long		off;			/* offset in tuple data */
 		bits8	   *bp = tup->t_bits;	/* ptr to null bitmask in tuple */
 		Datum		datum;
 
+		if (curr_role >= est_rows)
+		{
+			est_rows *= 2;
+			auth_info = (auth_entry*)
+				repalloc(auth_info, est_rows*sizeof(auth_entry));
+		}
+
 		auth_info[curr_role].roleid = HeapTupleGetOid(tuple);
-		auth_info[curr_role].rolname = pstrdup(NameStr(pwform->rolname));
-		auth_info[curr_role].roles_names = NIL;
+		auth_info[curr_role].rolcanlogin = aform->rolcanlogin;
+		auth_info[curr_role].rolname = pstrdup(NameStr(aform->rolname));
+		auth_info[curr_role].member_of = NIL;
 
 		/*
 		 * We can't use heap_getattr() here because during startup we will
@@ -462,9 +484,6 @@ write_auth_file(Relation rel_auth, Relation rel_authmem, bool startup)
 			ereport(LOG,
 					(errmsg("invalid role name \"%s\"",
 							auth_info[curr_role].rolname)));
-			pfree(auth_info[curr_role].rolname);
-			pfree(auth_info[curr_role].rolpassword);
-			pfree(auth_info[curr_role].rolvaliduntil);
 			continue;
 		}
 		if (!name_okay(auth_info[curr_role].rolpassword))
@@ -472,9 +491,6 @@ write_auth_file(Relation rel_auth, Relation rel_authmem, bool startup)
 			ereport(LOG,
 					(errmsg("invalid role password \"%s\"",
 							auth_info[curr_role].rolpassword)));
-			pfree(auth_info[curr_role].rolname);
-			pfree(auth_info[curr_role].rolpassword);
-			pfree(auth_info[curr_role].rolvaliduntil);
 			continue;
 		}
 
@@ -482,10 +498,6 @@ write_auth_file(Relation rel_auth, Relation rel_authmem, bool startup)
 		total_roles++;
 	}
 	heap_endscan(scan);
-
-	Assert(total_roles <= est_rows);
-
-	qsort(auth_info, total_roles, sizeof(auth_entry), oid_compar);
 
 	/*
 	 * Read pg_auth_members into temporary data structure, too
@@ -500,6 +512,13 @@ write_auth_file(Relation rel_auth, Relation rel_authmem, bool startup)
 	{
 		Form_pg_auth_members memform = (Form_pg_auth_members) GETSTRUCT(tuple);
 
+		if (curr_mem >= est_rows)
+		{
+			est_rows *= 2;
+			authmem_info = (authmem_entry*)
+				repalloc(authmem_info, est_rows*sizeof(authmem_entry));
+		}
+
 		authmem_info[curr_mem].roleid = memform->roleid;
 		authmem_info[curr_mem].memberid = memform->member;
 		curr_mem++;
@@ -507,35 +526,48 @@ write_auth_file(Relation rel_auth, Relation rel_authmem, bool startup)
 	}
 	heap_endscan(scan);
 
-	Assert(total_mem <= est_rows);
-
-	qsort(authmem_info, total_mem, sizeof(authmem_entry), mem_compar);
-
-	for (curr_role = 0; curr_role < total_roles; curr_role++)
+	/*
+	 * Search for memberships.  We can skip all this if pg_auth_members
+	 * is empty.
+	 */
+	if (total_mem > 0)
 	{
-		int		first_found, last_found, curr_mem;
-		List	*roles_list_hunt = NIL;
-		List	*roles_list = NIL;
-		ListCell *mem = NULL;
-		auth_entry *found_role = NULL, key_auth;
-		authmem_entry key;
-		authmem_entry *found_mem = NULL;
-
-		roles_list_hunt = lappend_oid(roles_list_hunt,
-									  auth_info[curr_role].roleid);
-
-		while (roles_list_hunt)
+		/*
+		 * Sort auth_info by roleid and authmem_info by memberid.
+		 */
+		qsort(auth_info, total_roles, sizeof(auth_entry), oid_compar);
+		qsort(authmem_info, total_mem, sizeof(authmem_entry), mem_compar);
+		/*
+		 * For each role, find what it belongs to.  We can skip this for
+		 * non-login roles.
+		 */
+		for (curr_role = 0; curr_role < total_roles; curr_role++)
 		{
-			key.memberid = linitial_oid(roles_list_hunt);
-			roles_list_hunt = list_delete_first(roles_list_hunt);
-			if (total_mem)
+			List	*roles_list = NIL;
+			List	*roles_names_list = NIL;
+			List	*roles_list_hunt;
+			ListCell *mem;
+
+			if (!auth_info[curr_role].rolcanlogin)
+				continue;
+
+			roles_list_hunt = list_make1_oid(auth_info[curr_role].roleid);
+			while (roles_list_hunt)
+			{
+				authmem_entry key;
+				authmem_entry *found_mem;
+				int		first_found, last_found, curr_mem;
+
+				key.memberid = linitial_oid(roles_list_hunt);
+				roles_list_hunt = list_delete_first(roles_list_hunt);
 				found_mem = bsearch(&key, authmem_info, total_mem,
 									sizeof(authmem_entry), mem_compar);
-			if (found_mem)
-			{
+				if (!found_mem)
+					continue;
 				/*
-				 * bsearch found a match for us; but if there were multiple
-				 * matches it could have found any one of them.
+				 * bsearch found a match for us; but if there were
+				 * multiple matches it could have found any one of them.
+				 * Locate first and last match.
 				 */
 				first_found = last_found = (found_mem - authmem_info);
 				while (first_found > 0 &&
@@ -544,59 +576,68 @@ write_auth_file(Relation rel_auth, Relation rel_authmem, bool startup)
 				while (last_found + 1 < total_mem &&
 					   mem_compar(&key, &authmem_info[last_found + 1]) == 0)
 					last_found++;
-
+				/*
+				 * Now add all the new roles to roles_list, as well
+				 * as to our list of what remains to be searched.
+				 */
 				for (curr_mem = first_found; curr_mem <= last_found; curr_mem++)
 				{
-					Oid	otherrole = authmem_info[curr_mem].roleid;
+					Oid	rolid = authmem_info[curr_mem].roleid;
 
-					if (!list_member_oid(roles_list, otherrole))
+					if (!list_member_oid(roles_list, rolid))
 					{
-						roles_list = lappend_oid(roles_list,
-												 otherrole);
-						roles_list_hunt = lappend_oid(roles_list_hunt,
-													  otherrole);
+						roles_list = lappend_oid(roles_list, rolid);
+						roles_list_hunt = lappend_oid(roles_list_hunt, rolid);
 					}
 				}
 			}
-		}
 
-		foreach(mem, roles_list)
-		{
-			key_auth.roleid = lfirst_oid(mem);
-			found_role = bsearch(&key_auth, auth_info, total_roles, sizeof(auth_entry), oid_compar);
-			auth_info[curr_role].roles_names = lappend(auth_info[curr_role].roles_names,found_role->rolname);
+			/*
+			 * Convert list of role Oids to list of role names.
+			 * We must do this before re-sorting auth_info.
+			 */
+			foreach(mem, roles_list)
+			{
+				auth_entry key_auth;
+				auth_entry *found_role;
+
+				key_auth.roleid = lfirst_oid(mem);
+				found_role = bsearch(&key_auth, auth_info, total_roles,
+									 sizeof(auth_entry), oid_compar);
+				roles_names_list = lappend(roles_names_list,
+										   found_role->rolname);
+			}
+			auth_info[curr_role].member_of = roles_names_list;
 		}
 	}
 
+	/*
+	 * Now sort auth_info into rolname order for output, and write the file.
+	 */
 	qsort(auth_info, total_roles, sizeof(auth_entry), name_compar);
 
 	for (curr_role = 0; curr_role < total_roles; curr_role++)
 	{
-		ListCell *mem = NULL;
+		auth_entry *arole = &auth_info[curr_role];
 
-		/*----------
-		 * The file format is:
-		 *	"rolename" "password" "validuntil" "member" "member" ...
-		 * where lines are expected to be in order by rolename
-		 *----------
-		 */
-		fputs_quote(auth_info[curr_role].rolname, fp);
-		fputs(" ", fp);
-		fputs_quote(auth_info[curr_role].rolpassword, fp);
-		fputs(" ", fp);
-		fputs_quote(auth_info[curr_role].rolvaliduntil, fp);
-
-		foreach(mem, auth_info[curr_role].roles_names)
+		if (arole->rolcanlogin)
 		{
+			ListCell *mem;
+
+			fputs_quote(arole->rolname, fp);
 			fputs(" ", fp);
-			fputs_quote(lfirst(mem), fp);
+			fputs_quote(arole->rolpassword, fp);
+			fputs(" ", fp);
+			fputs_quote(arole->rolvaliduntil, fp);
+
+			foreach(mem, arole->member_of)
+			{
+				fputs(" ", fp);
+				fputs_quote((char *) lfirst(mem), fp);
+			}
+
+			fputs("\n", fp);
 		}
-
-		fputs("\n", fp);
-
-		pfree(auth_info[curr_role].rolname);
-		pfree(auth_info[curr_role].rolpassword);
-		pfree(auth_info[curr_role].rolvaliduntil);
 	}
 
 	if (FreeFile(fp))
@@ -614,11 +655,6 @@ write_auth_file(Relation rel_auth, Relation rel_authmem, bool startup)
 				(errcode_for_file_access(),
 				 errmsg("could not rename file \"%s\" to \"%s\": %m",
 						tempname, filename)));
-
-	pfree(auth_info);
-	pfree(authmem_info);
-	pfree(tempname);
-	pfree(filename);
 }
 
 
@@ -634,15 +670,15 @@ write_auth_file(Relation rel_auth, Relation rel_authmem, bool startup)
  * scan pg_database to compute the XID wrap limit anyway.
  *
  * In a standalone backend we pass database_only = true to skip processing
- * the user and group files.  We won't need them, and building them could
- * fail if there's something corrupt in those catalogs.
+ * the auth file.  We won't need it, and building it could fail if there's
+ * something corrupt in the authid/authmem catalogs.
  */
 void
 BuildFlatFiles(bool database_only)
 {
 	ResourceOwner owner;
 	RelFileNode rnode;
-	Relation	rel, rel_auth, rel_authmem;
+	Relation	rel_db, rel_authid, rel_authmem;
 
 	/*
 	 * We don't have any hope of running a real relcache, but we can use
@@ -660,21 +696,24 @@ BuildFlatFiles(bool database_only)
 	rnode.relNode = DatabaseRelationId;
 
 	/* No locking is needed because no one else is alive yet */
-	rel = XLogOpenRelation(rnode);
-	write_database_file(rel);
+	rel_db = XLogOpenRelation(rnode);
+	write_database_file(rel_db);
 
 	if (!database_only)
 	{
-		/* hard-wired path to pg_auth */
+		/* hard-wired path to pg_authid */
 		rnode.spcNode = GLOBALTABLESPACE_OID;
 		rnode.dbNode = 0;
 		rnode.relNode = AuthIdRelationId;
-		rel_auth = XLogOpenRelation(rnode);
+		rel_authid = XLogOpenRelation(rnode);
 
+		/* hard-wired path to pg_auth_members */
 		rnode.spcNode = GLOBALTABLESPACE_OID;
 		rnode.dbNode = 0;
 		rnode.relNode = AuthMemRelationId;
 		rel_authmem = XLogOpenRelation(rnode);
+
+		write_auth_file(rel_authid, rel_authmem);
 	}
 
 	CurrentResourceOwner = NULL;
@@ -729,12 +768,17 @@ AtEOXact_UpdateFlatFiles(bool isCommit)
 	 * of a deadlock here (if we were triggered by a user update of one
 	 * of the tables, which likely won't have gotten a strong enough lock),
 	 * so get the locks we need before writing anything.
+	 *
+	 * For writing the auth file, it's sufficient to ExclusiveLock pg_authid;
+	 * we take just regular AccessShareLock on pg_auth_members.
 	 */
 	if (database_file_update_subid != InvalidSubTransactionId)
 		drel = heap_open(DatabaseRelationId, ExclusiveLock);
-	if (auth_file_update_subid != InvalidSubTransactionId) {
+
+	if (auth_file_update_subid != InvalidSubTransactionId)
+	{
 		arel = heap_open(AuthIdRelationId, ExclusiveLock);
-		mrel = heap_open(AuthMemRelationId, ExclusiveLock);
+		mrel = heap_open(AuthMemRelationId, AccessShareLock);
 	}
 
 	/* Okay to write the files */
@@ -748,7 +792,7 @@ AtEOXact_UpdateFlatFiles(bool isCommit)
 	if (auth_file_update_subid != InvalidSubTransactionId)
 	{
 		auth_file_update_subid = InvalidSubTransactionId;
-		write_auth_file(arel, mrel, false);
+		write_auth_file(arel, mrel);
 		heap_close(arel, NoLock);
 		heap_close(mrel, NoLock);
 	}
@@ -847,8 +891,6 @@ flatfile_update_trigger(PG_FUNCTION_ARGS)
 			database_file_update_needed();
 			break;
 		case AuthIdRelationId:
-			auth_file_update_needed();
-			break;
 		case AuthMemRelationId:
 			auth_file_update_needed();
 			break;

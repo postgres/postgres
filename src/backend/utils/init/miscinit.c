@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.143 2005/06/28 05:09:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.144 2005/06/28 22:16:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -312,6 +312,7 @@ void
 InitializeSessionUserId(const char *rolename)
 {
 	HeapTuple	roleTup;
+	Form_pg_authid rform;
 	Datum		datum;
 	bool		isnull;
 	Oid			roleid;
@@ -330,13 +331,19 @@ InitializeSessionUserId(const char *rolename)
 							 0, 0, 0);
 	if (!HeapTupleIsValid(roleTup))
 		ereport(FATAL,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
 				 errmsg("role \"%s\" does not exist", rolename)));
 
+	rform = (Form_pg_authid) GETSTRUCT(roleTup);
 	roleid = HeapTupleGetOid(roleTup);
 
+	if (!rform->rolcanlogin)
+		ereport(FATAL,
+				(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+				 errmsg("role \"%s\" is not permitted to log in", rolename)));
+
 	AuthenticatedUserId = roleid;
-	AuthenticatedUserIsSuperuser = ((Form_pg_authid) GETSTRUCT(roleTup))->rolsuper;
+	AuthenticatedUserIsSuperuser = rform->rolsuper;
 
 	SetSessionUserId(roleid);	/* sets CurrentUserId too */
 
