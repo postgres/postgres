@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.160 2005/06/28 05:08:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.161 2005/06/28 19:51:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"access", ACCESS},
 	{"action", ACTION},
 	{"add", ADD},
+	{"admin", ADMIN},
 	{"after", AFTER},
 	{"aggregate", AGGREGATE},
 	{"all", ALL},
@@ -89,10 +90,12 @@ static const ScanKeyword ScanKeywords[] = {
 	{"copy", COPY},
 	{"create", CREATE},
 	{"createdb", CREATEDB},
+	{"createrole", CREATEROLE},
 	{"createuser", CREATEUSER},
 	{"cross", CROSS},
 	{"csv", CSV},
 	{"current_date", CURRENT_DATE},
+	{"current_role", CURRENT_ROLE},
 	{"current_time", CURRENT_TIME},
 	{"current_timestamp", CURRENT_TIMESTAMP},
 	{"current_user", CURRENT_USER},
@@ -146,6 +149,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"function", FUNCTION},
 	{"global", GLOBAL},
 	{"grant", GRANT},
+	{"granted", GRANTED},
 	{"greatest", GREATEST},
 	{"group", GROUP_P},
 	{"handler", HANDLER},
@@ -197,6 +201,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"localtimestamp", LOCALTIMESTAMP},
 	{"location", LOCATION},
 	{"lock", LOCK_P},
+	{"login", LOGIN_P},
 	{"match", MATCH},
 	{"maxvalue", MAXVALUE},
 	{"minute", MINUTE_P},
@@ -212,7 +217,9 @@ static const ScanKeyword ScanKeywords[] = {
 	{"next", NEXT},
 	{"no", NO},
 	{"nocreatedb", NOCREATEDB},
+	{"nocreaterole", NOCREATEROLE},
 	{"nocreateuser", NOCREATEUSER},
+	{"nologin", NOLOGIN_P},
 	{"none", NONE},
 	{"not", NOT},
 	{"nothing", NOTHING},
@@ -331,7 +338,6 @@ static const ScanKeyword ScanKeywords[] = {
 	{"unlisten", UNLISTEN},
 	{"until", UNTIL},
 	{"update", UPDATE},
-	{"usage", USAGE},
 	{"user", USER},
 	{"using", USING},
 	{"vacuum", VACUUM},

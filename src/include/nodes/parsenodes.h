@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.284 2005/06/28 05:09:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.285 2005/06/28 19:51:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@ typedef enum QuerySource
 
 /*
  * Grantable rights are encoded so that we can OR them together in a bitmask.
- * The present representation of AclItem limits us to 15 distinct rights,
+ * The present representation of AclItem limits us to 16 distinct rights,
  * even though AclMode is defined as uint32.  See utils/acl.h.
  *
  * Caution: changing these codes breaks stored ACLs, hence forces initdb.
@@ -48,7 +48,6 @@ typedef uint32 AclMode;			/* a bitmask of privilege bits */
 #define ACL_CREATE		(1<<9)	/* for namespaces and databases */
 #define ACL_CREATE_TEMP (1<<10) /* for databases */
 #define N_ACL_RIGHTS	11		/* 1 plus the last 1<<x */
-#define ACL_ALL_RIGHTS	(-1)	/* all-privileges marker in GRANT list */
 #define ACL_NO_RIGHTS	0
 /* Currently, SELECT ... FOR UPDATE/FOR SHARE requires UPDATE privileges */
 #define ACL_SELECT_FOR_UPDATE	ACL_UPDATE
@@ -886,7 +885,8 @@ typedef struct GrantStmt
 	List	   *objects;		/* list of RangeVar nodes, FuncWithArgs
 								 * nodes, or plain names (as Value
 								 * strings) */
-	List	   *privileges;		/* integer list of privilege codes */
+	List	   *privileges;		/* list of privilege names (as Strings) */
+	/* privileges == NIL denotes "all privileges" */
 	List	   *grantees;		/* list of PrivGrantee nodes */
 	bool		grant_option;	/* grant or revoke grant option */
 	DropBehavior behavior;		/* drop behavior (for REVOKE) */

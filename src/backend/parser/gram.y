@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.499 2005/06/28 05:08:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.500 2005/06/28 19:51:22 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -143,10 +143,10 @@ static void doNegateFloat(Value *v);
 		DropGroupStmt DropOpClassStmt DropPLangStmt DropStmt
 		DropAssertStmt DropTrigStmt DropRuleStmt DropCastStmt DropRoleStmt
 		DropUserStmt DropdbStmt DropTableSpaceStmt ExplainStmt FetchStmt
-		GrantRoleStmt GrantStmt IndexStmt InsertStmt ListenStmt LoadStmt
+		GrantStmt GrantRoleStmt IndexStmt InsertStmt ListenStmt LoadStmt
 		LockStmt NotifyStmt ExplainableStmt PreparableStmt
 		CreateFunctionStmt AlterFunctionStmt ReindexStmt RemoveAggrStmt
-		RemoveFuncStmt RemoveOperStmt RenameStmt RevokeRoleStmt RevokeStmt
+		RemoveFuncStmt RemoveOperStmt RenameStmt RevokeStmt RevokeRoleStmt
 		RuleActionStmt RuleActionStmtOrEmpty RuleStmt
 		SelectStmt TransactionStmt TruncateStmt
 		UnlistenStmt UpdateStmt VacuumStmt
@@ -170,14 +170,10 @@ static void doNegateFloat(Value *v);
 
 %type <ival>	opt_lock lock_type cast_context
 %type <boolean>	opt_force opt_or_replace
-				opt_grant_grant_option opt_revoke_grant_option
-				opt_alter_admin_option 
-				opt_grant_admin_option opt_revoke_admin_option
+				opt_grant_grant_option opt_grant_admin_option
 				opt_nowait
 
 %type <boolean>	like_including_defaults
-
-%type <list>	role_list
 
 %type <list>	OptRoleList
 %type <defelt>	OptRoleElem
@@ -205,7 +201,7 @@ static void doNegateFloat(Value *v);
 %type <str>		iso_level opt_encoding
 %type <node>	grantee
 %type <list>	grantee_list
-%type <ival>	privilege
+%type <str>		privilege
 %type <list>	privileges privilege_list
 %type <privtarget> privilege_target
 %type <funwithargs> function_with_argtypes
@@ -347,8 +343,8 @@ static void doNegateFloat(Value *v);
 	CHARACTER CHARACTERISTICS CHECK CHECKPOINT CLASS CLOSE
 	CLUSTER COALESCE COLLATE COLUMN COMMENT COMMIT
 	COMMITTED CONSTRAINT CONSTRAINTS CONVERSION_P CONVERT COPY CREATE CREATEDB
-	CREATEROLE CREATEUSER CROSS CSV CURRENT_DATE CURRENT_TIME
-	CURRENT_TIMESTAMP CURRENT_ROLE CURRENT_USER CURSOR CYCLE
+	CREATEROLE CREATEUSER CROSS CSV CURRENT_DATE CURRENT_ROLE CURRENT_TIME
+	CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
 	DATABASE DAY_P DEALLOCATE DEC DECIMAL_P DECLARE DEFAULT DEFAULTS
 	DEFERRABLE DEFERRED DEFINER DELETE_P DELIMITER DELIMITERS
@@ -375,13 +371,13 @@ static void doNegateFloat(Value *v);
 
 	LANCOMPILER LANGUAGE LARGE_P  LAST_P LEADING LEAST LEFT LEVEL
 	LIKE LIMIT LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP LOCATION
-	LOCK_P LOGIN
+	LOCK_P LOGIN_P
 
 	MATCH MAXVALUE MINUTE_P MINVALUE MODE MONTH_P MOVE
 
 	NAMES NATIONAL NATURAL NCHAR NEW NEXT NO NOCREATEDB
-	NOCREATEROLE NOCREATEUSER NONE NOT NOTHING NOTIFY NOTNULL NOWAIT NULL_P
-	NULLIF NUMERIC NOLOGIN
+	NOCREATEROLE NOCREATEUSER NOLOGIN_P NONE NOT NOTHING NOTIFY
+	NOTNULL NOWAIT NULL_P NULLIF NUMERIC
 
 	OBJECT_P OF OFF OFFSET OIDS OLD ON ONLY OPERATOR OPTION OR
 	ORDER OUT_P OUTER_P OVERLAPS OVERLAY OWNER
@@ -397,7 +393,7 @@ static void doNegateFloat(Value *v);
 	ROLE ROLLBACK ROW ROWS RULE
 
 	SAVEPOINT SCHEMA SCROLL SECOND_P SECURITY SELECT SEQUENCE
-	SERIALIZABLE SESSION SESSION_ROLE SESSION_USER SET SETOF SHARE
+	SERIALIZABLE SESSION SESSION_USER SET SETOF SHARE
 	SHOW SIMILAR SIMPLE SMALLINT SOME STABLE START STATEMENT
 	STATISTICS STDIN STDOUT STORAGE STRICT_P SUBSTRING SYMMETRIC
 	SYSID SYSTEM_P
@@ -407,7 +403,7 @@ static void doNegateFloat(Value *v);
 	TRUNCATE TRUSTED TYPE_P
 
 	UNCOMMITTED UNENCRYPTED UNION UNIQUE UNKNOWN UNLISTEN UNTIL
-	UPDATE USAGE USER USING
+	UPDATE USER USING
 
 	VACUUM VALID VALIDATOR VALUES VARCHAR VARYING
 	VERBOSE VIEW VOLATILE
@@ -544,8 +540,8 @@ stmt :
 			| ExecuteStmt
 			| ExplainStmt
 			| FetchStmt
-			| GrantRoleStmt
 			| GrantStmt
+			| GrantRoleStmt
 			| IndexStmt
 			| InsertStmt
 			| ListenStmt
@@ -558,8 +554,8 @@ stmt :
 			| RemoveFuncStmt
 			| RemoveOperStmt
 			| RenameStmt
-			| RevokeRoleStmt
 			| RevokeStmt
+			| RevokeRoleStmt
 			| RuleStmt
 			| SelectStmt
 			| TransactionStmt
@@ -579,7 +575,6 @@ stmt :
  *
  * Create a new Postgres DBMS role
  *
- *
  *****************************************************************************/
 
 CreateRoleStmt:
@@ -597,10 +592,98 @@ opt_with:	WITH									{}
 			| /*EMPTY*/								{}
 		;
 
+/*
+ * Options for CREATE ROLE and ALTER ROLE (also used by CREATE/ALTER USER
+ * for backwards compatibility).  Note: the only option required by SQL99
+ * is "WITH ADMIN name".
+ */
+OptRoleList:
+			OptRoleList OptRoleElem					{ $$ = lappend($1, $2); }
+			| /* EMPTY */							{ $$ = NIL; }
+		;
+
+OptRoleElem:
+			PASSWORD Sconst
+				{
+					$$ = makeDefElem("password",
+									 (Node *)makeString($2));
+				}
+			| ENCRYPTED PASSWORD Sconst
+				{
+					$$ = makeDefElem("encryptedPassword",
+									 (Node *)makeString($3));
+				}
+			| UNENCRYPTED PASSWORD Sconst
+				{
+					$$ = makeDefElem("unencryptedPassword",
+									 (Node *)makeString($3));
+				}
+			| SYSID Iconst
+				{
+					$$ = makeDefElem("sysid", (Node *)makeInteger($2));
+				}
+			| CREATEDB
+				{
+					$$ = makeDefElem("createdb", (Node *)makeInteger(TRUE));
+				}
+			| NOCREATEDB
+				{
+					$$ = makeDefElem("createdb", (Node *)makeInteger(FALSE));
+				}
+			| CREATEROLE
+				{
+					$$ = makeDefElem("createrole", (Node *)makeInteger(TRUE));
+				}
+			| CREATEUSER
+				{
+					$$ = makeDefElem("createrole", (Node *)makeInteger(TRUE));
+				}
+			| LOGIN_P
+				{
+					$$ = makeDefElem("canlogin", (Node *)makeInteger(TRUE));
+				}
+			| NOCREATEROLE
+				{
+					$$ = makeDefElem("createrole", (Node *)makeInteger(FALSE));
+				}
+			| NOCREATEUSER
+				{
+					$$ = makeDefElem("createrole", (Node *)makeInteger(FALSE));
+				}
+			| NOLOGIN_P
+				{
+					$$ = makeDefElem("canlogin", (Node *)makeInteger(FALSE));
+				}
+			| IN_P ROLE name_list
+				{
+					$$ = makeDefElem("addroleto", (Node *)$3);
+				}
+			| IN_P GROUP_P name_list
+				{
+					$$ = makeDefElem("addroleto", (Node *)$3);
+				}
+			| VALID UNTIL Sconst
+				{
+					$$ = makeDefElem("validUntil", (Node *)makeString($3));
+				}
+			| ADMIN name_list
+				{
+					$$ = makeDefElem("adminmembers", (Node *)$2);
+				}
+			| ROLE name_list
+				{
+					$$ = makeDefElem("rolemembers", (Node *)$2);
+				}
+			| USER name_list
+				{
+					$$ = makeDefElem("rolemembers", (Node *)$2);
+				}
+		;
+
+
 /*****************************************************************************
  *
  * Create a new Postgres DBMS user (role with implied login ability)
- *
  *
  *****************************************************************************/
 
@@ -609,8 +692,9 @@ CreateUserStmt:
 				{
 					CreateRoleStmt *n = makeNode(CreateRoleStmt);
 					n->role = $3;
-					n->options = $5;
-					n->options = lappend(n->options,makeDefElem("canlogin", (Node *)makeInteger(TRUE)));
+					n->options = lappend($5,
+										 makeDefElem("canlogin",
+													 (Node *)makeInteger(TRUE)));
 					$$ = (Node *)n;
 				}
 		;
@@ -619,7 +703,6 @@ CreateUserStmt:
 /*****************************************************************************
  *
  * Alter a postgresql DBMS role
- *
  *
  *****************************************************************************/
 
@@ -631,24 +714,6 @@ AlterRoleStmt:
 					n->options = $5;
 					$$ = (Node *)n;
 				 }
-			| ALTER ROLE RoleId add_drop ROLE role_list opt_alter_admin_option
-				{
-					AlterRoleStmt *n = makeNode(AlterRoleStmt);
-					n->role = $3;
-					n->action = $4;
-					n->options = lappend(n->options,makeDefElem("rolememElts", (Node *)$6));
-					n->options = lappend(n->options,makeDefElem("adminopt", (Node *)makeInteger($7)));
-					$$ = (Node *)n;
-				}
-		;
-
-add_drop:	ADD										{ $$ = +1; }
-			| DROP									{ $$ = -1; }
-		;
-
-opt_alter_admin_option:
-			ADMIN OPTION { $$ = TRUE; }
-			| /*EMPTY*/ { $$ = FALSE; }
 		;
 
 AlterRoleSetStmt:
@@ -668,13 +733,12 @@ AlterRoleSetStmt:
 					n->value = NIL;
 					$$ = (Node *)n;
 				}
-			;
+		;
 
 
 /*****************************************************************************
  *
  * Alter a postgresql DBMS user
- *
  *
  *****************************************************************************/
 
@@ -719,7 +783,7 @@ AlterUserSetStmt:
  *****************************************************************************/
 
 DropRoleStmt:
-			DROP ROLE role_list
+			DROP ROLE name_list
 				{
 					DropRoleStmt *n = makeNode(DropRoleStmt);
 					n->roles = $3;
@@ -737,7 +801,7 @@ DropRoleStmt:
  *****************************************************************************/
 
 DropUserStmt:
-			DROP USER role_list
+			DROP USER name_list
 				{
 					DropRoleStmt *n = makeNode(DropRoleStmt);
 					n->roles = $3;
@@ -745,95 +809,10 @@ DropUserStmt:
 				}
 			;
 
-/*
- * Options for CREATE ROLE and ALTER ROLE (also used by CREATE/ALTER USER for backwards compat)
- */
-OptRoleList:
-			OptRoleList OptRoleElem					{ $$ = lappend($1, $2); }
-			| /* EMPTY */							{ $$ = NIL; }
-		;
-
-OptRoleElem:
-			PASSWORD Sconst
-				{
-					$$ = makeDefElem("password", (Node *)makeString($2));
-				}
-			| ENCRYPTED PASSWORD Sconst
-				{
-					$$ = makeDefElem("encryptedPassword", (Node *)makeString($3));
-				}
-			| UNENCRYPTED PASSWORD Sconst
-				{
-					$$ = makeDefElem("unencryptedPassword", (Node *)makeString($3));
-				}
-			| SYSID Iconst
-				{
-					$$ = makeDefElem("sysid", (Node *)makeInteger($2));
-				}
-			| CREATEDB
-				{
-					$$ = makeDefElem("createdb", (Node *)makeInteger(TRUE));
-				}
-			| NOCREATEDB
-				{
-					$$ = makeDefElem("createdb", (Node *)makeInteger(FALSE));
-				}
-			| CREATEROLE
-				{
-					$$ = makeDefElem("createrole", (Node *)makeInteger(TRUE));
-				}
-			| CREATEUSER
-				{
-					$$ = makeDefElem("createrole", (Node *)makeInteger(TRUE));
-				}
-			| LOGIN
-				{
-					$$ = makeDefElem("canlogin", (Node *)makeInteger(TRUE));
-				}
-			| NOCREATEROLE
-				{
-					$$ = makeDefElem("createrole", (Node *)makeInteger(FALSE));
-				}
-			| NOCREATEUSER
-				{
-					$$ = makeDefElem("createrole", (Node *)makeInteger(FALSE));
-				}
-			| NOLOGIN
-				{
-					$$ = makeDefElem("canlogin", (Node *)makeInteger(FALSE));
-				}
-			| IN_P ROLE role_list
-				{
-					$$ = makeDefElem("roleElts", (Node *)$3);
-				}
-			| IN_P GROUP_P role_list
-				{
-					$$ = makeDefElem("roleElts", (Node *)$3);
-				}
-			| VALID UNTIL Sconst
-				{
-					$$ = makeDefElem("validUntil", (Node *)makeString($3));
-				}
-			| ROLE role_list
-				{
-					$$ = makeDefElem("rolememElts", (Node *)$2);
-				}
-			| USER role_list
-				{
-					$$ = makeDefElem("rolememElts", (Node *)$2);
-				}
-		;
-
-role_list:	role_list ',' RoleId		{ $$ = lappend($1, makeString($3)); }
-			| RoleId					{ $$ = list_make1(makeString($1)); }
-		;
-
-
 
 /*****************************************************************************
  *
  * Create a postgresql group (role without login ability)
- *
  *
  *****************************************************************************/
 
@@ -852,18 +831,22 @@ CreateGroupStmt:
  *
  * Alter a postgresql group
  *
- *
  *****************************************************************************/
 
 AlterGroupStmt:
-			ALTER GROUP_P RoleId add_drop USER role_list
+			ALTER GROUP_P RoleId add_drop USER name_list
 				{
 					AlterRoleStmt *n = makeNode(AlterRoleStmt);
 					n->role = $3;
 					n->action = $4;
-					n->options = lappend(n->options,makeDefElem("rolememElts", (Node *)$6));
+					n->options = list_make1(makeDefElem("rolemembers",
+														(Node *)$6));
 					$$ = (Node *)n;
 				}
+		;
+
+add_drop:	ADD										{ $$ = +1; }
+			| DROP									{ $$ = -1; }
 		;
 
 
@@ -875,7 +858,7 @@ AlterGroupStmt:
  *****************************************************************************/
 
 DropGroupStmt:
-			DROP GROUP_P role_list
+			DROP GROUP_P name_list
 				{
 					DropRoleStmt *n = makeNode(DropRoleStmt);
 					n->roles = $3;
@@ -3118,36 +3101,6 @@ from_in:	FROM									{}
 
 /*****************************************************************************
  *
- * GRANT and REVOKE ROLE statements
- *
- *****************************************************************************/
-
-GrantRoleStmt:	GRANT ROLE role_list TO role_list opt_grant_admin_option
-			opt_granted_by
-				{
-					GrantRoleStmt *n = makeNode(GrantRoleStmt);
-					n->granted_roles = $3;
-					n->grantee_roles = $5;
-					n->is_grant = true;
-					n->admin_opt = $6;
-					n->grantor = $7;
-					$$ = (Node*)n;
-				}
-
-RevokeRoleStmt:	REVOKE ROLE opt_revoke_admin_option role_list FROM role_list
-			opt_drop_behavior
-				{
-					GrantRoleStmt *n = makeNode(GrantRoleStmt);
-					n->granted_roles = $4;
-					n->grantee_roles = $6;
-					n->is_grant = false;
-					n->admin_opt = $3;
-					n->behavior = $7;
-					$$ = (Node*)n;
-				}
-
-/*****************************************************************************
- *
  * GRANT and REVOKE statements
  *
  *****************************************************************************/
@@ -3166,54 +3119,70 @@ GrantStmt:	GRANT privileges ON privilege_target TO grantee_list
 				}
 		;
 
-RevokeStmt: REVOKE opt_revoke_grant_option privileges ON privilege_target
+RevokeStmt:
+			REVOKE privileges ON privilege_target
 			FROM grantee_list opt_drop_behavior
 				{
 					GrantStmt *n = makeNode(GrantStmt);
 					n->is_grant = false;
-					n->privileges = $3;
-					n->objtype = ($5)->objtype;
-					n->objects = ($5)->objs;
-					n->grantees = $7;
-					n->grant_option = $2;
-					n->behavior = $8;
-
+					n->grant_option = false;
+					n->privileges = $2;
+					n->objtype = ($4)->objtype;
+					n->objects = ($4)->objs;
+					n->grantees = $6;
+					n->behavior = $7;
+					$$ = (Node *)n;
+				}
+			| REVOKE GRANT OPTION FOR privileges ON privilege_target
+			FROM grantee_list opt_drop_behavior
+				{
+					GrantStmt *n = makeNode(GrantStmt);
+					n->is_grant = false;
+					n->grant_option = true;
+					n->privileges = $5;
+					n->objtype = ($7)->objtype;
+					n->objects = ($7)->objs;
+					n->grantees = $9;
+					n->behavior = $10;
 					$$ = (Node *)n;
 				}
 		;
 
 
-/* either ALL [PRIVILEGES] or a list of individual privileges */
-privileges: privilege_list				{ $$ = $1; }
-			| ALL						{ $$ = list_make1_int(ACL_ALL_RIGHTS); }
-			| ALL PRIVILEGES			{ $$ = list_make1_int(ACL_ALL_RIGHTS); }
-		;
-
-privilege_list:
-			privilege								{ $$ = list_make1_int($1); }
-			| privilege_list ',' privilege			{ $$ = lappend_int($1, $3); }
-		;
-
-/* Not all of these privilege types apply to all objects, but that
- * gets sorted out later.
+/*
+ * A privilege list is represented as a list of strings; the validity of
+ * the privilege names gets checked at execution.  This is a bit annoying
+ * but we have little choice because of the syntactic conflict with lists
+ * of role names in GRANT/REVOKE.  What's more, we have to call out in
+ * the "privilege" production any reserved keywords that need to be usable
+ * as privilege names.
  */
-privilege:	SELECT									{ $$ = ACL_SELECT; }
-			| INSERT								{ $$ = ACL_INSERT; }
-			| UPDATE								{ $$ = ACL_UPDATE; }
-			| DELETE_P								{ $$ = ACL_DELETE; }
-			| RULE									{ $$ = ACL_RULE; }
-			| REFERENCES							{ $$ = ACL_REFERENCES; }
-			| TRIGGER								{ $$ = ACL_TRIGGER; }
-			| EXECUTE								{ $$ = ACL_EXECUTE; }
-			| USAGE									{ $$ = ACL_USAGE; }
-			| CREATE								{ $$ = ACL_CREATE; }
-			| TEMPORARY								{ $$ = ACL_CREATE_TEMP; }
-			| TEMP									{ $$ = ACL_CREATE_TEMP; }
+
+/* either ALL [PRIVILEGES] or a list of individual privileges */
+privileges: privilege_list
+				{ $$ = $1; }
+			| ALL
+				{ $$ = NIL; }
+			| ALL PRIVILEGES
+				{ $$ = NIL; }
+		;
+
+privilege_list:	privilege
+					{ $$ = list_make1(makeString($1)); }
+			| privilege_list ',' privilege
+					{ $$ = lappend($1, makeString($3)); }
+		;
+
+privilege:	SELECT									{ $$ = pstrdup($1); }
+			| REFERENCES							{ $$ = pstrdup($1); }
+			| CREATE								{ $$ = pstrdup($1); }
+			| ColId									{ $$ = $1; }
 		;
 
 
 /* Don't bother trying to fold the first two rules into one using
-   opt_table.  You're going to get conflicts. */
+ * opt_table.  You're going to get conflicts.
+ */
 privilege_target:
 			qualified_name_list
 				{
@@ -3300,27 +3269,6 @@ opt_grant_grant_option:
 			| /*EMPTY*/ { $$ = FALSE; }
 		;
 
-opt_grant_admin_option:
-			WITH ADMIN OPTION { $$ = TRUE; }
-			| /*EMPTY*/ { $$ = FALSE; }
-		;
-
-opt_granted_by:
-			GRANTED BY RoleId { $$ = $3; }
-			| /*EMPTY*/ { $$ = NULL; }
-		;
-
-opt_revoke_grant_option:
-			GRANT OPTION FOR { $$ = TRUE; }
-			| /*EMPTY*/ { $$ = FALSE; }
-		;
-
-opt_revoke_admin_option:
-			ADMIN OPTION FOR { $$ = TRUE; }
-			| /*EMPTY*/ { $$ = FALSE; }
-		;
-
-
 function_with_argtypes_list:
 			function_with_argtypes					{ $$ = list_make1($1); }
 			| function_with_argtypes_list ',' function_with_argtypes
@@ -3335,6 +3283,56 @@ function_with_argtypes:
 					n->funcargs = extractArgTypes($2);
 					$$ = n;
 				}
+		;
+
+/*****************************************************************************
+ *
+ * GRANT and REVOKE ROLE statements
+ *
+ *****************************************************************************/
+
+GrantRoleStmt:
+			GRANT privilege_list TO name_list opt_grant_admin_option opt_granted_by
+				{
+					GrantRoleStmt *n = makeNode(GrantRoleStmt);
+					n->is_grant = true;
+					n->granted_roles = $2;
+					n->grantee_roles = $4;
+					n->admin_opt = $5;
+					n->grantor = $6;
+					$$ = (Node*)n;
+				}
+		;
+
+RevokeRoleStmt:
+			REVOKE privilege_list FROM name_list opt_granted_by opt_drop_behavior
+				{
+					GrantRoleStmt *n = makeNode(GrantRoleStmt);
+					n->is_grant = false;
+					n->admin_opt = false;
+					n->granted_roles = $2;
+					n->grantee_roles = $4;
+					n->behavior = $6;
+					$$ = (Node*)n;
+				}
+			| REVOKE ADMIN OPTION FOR privilege_list FROM name_list opt_granted_by opt_drop_behavior
+				{
+					GrantRoleStmt *n = makeNode(GrantRoleStmt);
+					n->is_grant = false;
+					n->admin_opt = true;
+					n->granted_roles = $5;
+					n->grantee_roles = $7;
+					n->behavior = $9;
+					$$ = (Node*)n;
+				}
+		;
+
+opt_grant_admin_option: WITH ADMIN OPTION				{ $$ = TRUE; }
+			| /*EMPTY*/									{ $$ = FALSE; }
+		;
+
+opt_granted_by: GRANTED BY RoleId						{ $$ = $3; }
+			| /*EMPTY*/									{ $$ = NULL; }
 		;
 
 
@@ -7066,24 +7064,6 @@ func_expr:	func_name '(' ')'
 					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
-			| SESSION_ROLE
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = SystemFuncName("session_user");
-					n->args = NIL;
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
-					$$ = (Node *)n;
-				}
-			| ROLE
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = SystemFuncName("current_user");
-					n->args = NIL;
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
-					$$ = (Node *)n;
-				}
 			| CURRENT_USER
 				{
 					FuncCall *n = makeNode(FuncCall);
@@ -7928,6 +7908,7 @@ unreserved_keyword:
 			| ACCESS
 			| ACTION
 			| ADD
+			| ADMIN
 			| AFTER
 			| AGGREGATE
 			| ALSO
@@ -7988,6 +7969,7 @@ unreserved_keyword:
 			| FORWARD
 			| FUNCTION
 			| GLOBAL
+			| GRANTED
 			| HANDLER
 			| HEADER
 			| HOLD
@@ -8016,7 +7998,7 @@ unreserved_keyword:
 			| LOCAL
 			| LOCATION
 			| LOCK_P
-			| LOGIN
+			| LOGIN_P
 			| MATCH
 			| MAXVALUE
 			| MINUTE_P
@@ -8030,7 +8012,7 @@ unreserved_keyword:
 			| NOCREATEDB
 			| NOCREATEROLE
 			| NOCREATEUSER
-			| NOLOGIN
+			| NOLOGIN_P
 			| NOTHING
 			| NOTIFY
 			| NOWAIT
@@ -8063,6 +8045,7 @@ unreserved_keyword:
 			| RESTRICT
 			| RETURNS
 			| REVOKE
+			| ROLE
 			| ROLLBACK
 			| ROWS
 			| RULE
@@ -8104,7 +8087,6 @@ unreserved_keyword:
 			| UNLISTEN
 			| UNTIL
 			| UPDATE
-			| USAGE
 			| VACUUM
 			| VALID
 			| VALIDATOR
@@ -8228,9 +8210,9 @@ reserved_keyword:
 			| CONSTRAINT
 			| CREATE
 			| CURRENT_DATE
+			| CURRENT_ROLE
 			| CURRENT_TIME
 			| CURRENT_TIMESTAMP
-			| CURRENT_ROLE
 			| CURRENT_USER
 			| DEFAULT
 			| DEFERRABLE
@@ -8269,7 +8251,6 @@ reserved_keyword:
 			| PRIMARY
 			| REFERENCES
 			| SELECT
-			| SESSION_ROLE
 			| SESSION_USER
 			| SOME
 			| SYMMETRIC
@@ -8280,7 +8261,6 @@ reserved_keyword:
 			| TRUE_P
 			| UNION
 			| UNIQUE
-			| ROLE
 			| USER
 			| USING
 			| WHEN

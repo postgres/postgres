@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.113 2005/06/28 05:08:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.114 2005/06/28 19:51:21 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -47,6 +47,7 @@ static void ExecuteGrantStmt_Language(GrantStmt *stmt);
 static void ExecuteGrantStmt_Namespace(GrantStmt *stmt);
 static void ExecuteGrantStmt_Tablespace(GrantStmt *stmt);
 
+static AclMode string_to_privilege(const char *privname);
 static const char *privilege_to_string(AclMode privilege);
 
 
@@ -209,7 +210,7 @@ ExecuteGrantStmt_Relation(GrantStmt *stmt)
 	bool		all_privs;
 	ListCell   *i;
 
-	if (linitial_int(stmt->privileges) == ACL_ALL_RIGHTS)
+	if (stmt->privileges == NIL)
 	{
 		all_privs = true;
 		privileges = ACL_ALL_RIGHTS_RELATION;
@@ -220,7 +221,8 @@ ExecuteGrantStmt_Relation(GrantStmt *stmt)
 		privileges = ACL_NO_RIGHTS;
 		foreach(i, stmt->privileges)
 		{
-			AclMode		priv = lfirst_int(i);
+			char	   *privname = strVal(lfirst(i));
+			AclMode		priv = string_to_privilege(privname);
 
 			if (priv & ~((AclMode) ACL_ALL_RIGHTS_RELATION))
 				ereport(ERROR,
@@ -377,7 +379,7 @@ ExecuteGrantStmt_Database(GrantStmt *stmt)
 	bool		all_privs;
 	ListCell   *i;
 
-	if (linitial_int(stmt->privileges) == ACL_ALL_RIGHTS)
+	if (stmt->privileges == NIL)
 	{
 		all_privs = true;
 		privileges = ACL_ALL_RIGHTS_DATABASE;
@@ -388,7 +390,8 @@ ExecuteGrantStmt_Database(GrantStmt *stmt)
 		privileges = ACL_NO_RIGHTS;
 		foreach(i, stmt->privileges)
 		{
-			AclMode		priv = lfirst_int(i);
+			char	   *privname = strVal(lfirst(i));
+			AclMode		priv = string_to_privilege(privname);
 
 			if (priv & ~((AclMode) ACL_ALL_RIGHTS_DATABASE))
 				ereport(ERROR,
@@ -535,7 +538,7 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 	bool		all_privs;
 	ListCell   *i;
 
-	if (linitial_int(stmt->privileges) == ACL_ALL_RIGHTS)
+	if (stmt->privileges == NIL)
 	{
 		all_privs = true;
 		privileges = ACL_ALL_RIGHTS_FUNCTION;
@@ -546,7 +549,8 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 		privileges = ACL_NO_RIGHTS;
 		foreach(i, stmt->privileges)
 		{
-			AclMode		priv = lfirst_int(i);
+			char	   *privname = strVal(lfirst(i));
+			AclMode		priv = string_to_privilege(privname);
 
 			if (priv & ~((AclMode) ACL_ALL_RIGHTS_FUNCTION))
 				ereport(ERROR,
@@ -689,7 +693,7 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 	bool		all_privs;
 	ListCell   *i;
 
-	if (linitial_int(stmt->privileges) == ACL_ALL_RIGHTS)
+	if (stmt->privileges == NIL)
 	{
 		all_privs = true;
 		privileges = ACL_ALL_RIGHTS_LANGUAGE;
@@ -700,7 +704,8 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 		privileges = ACL_NO_RIGHTS;
 		foreach(i, stmt->privileges)
 		{
-			AclMode		priv = lfirst_int(i);
+			char	   *privname = strVal(lfirst(i));
+			AclMode		priv = string_to_privilege(privname);
 
 			if (priv & ~((AclMode) ACL_ALL_RIGHTS_LANGUAGE))
 				ereport(ERROR,
@@ -852,7 +857,7 @@ ExecuteGrantStmt_Namespace(GrantStmt *stmt)
 	bool		all_privs;
 	ListCell   *i;
 
-	if (linitial_int(stmt->privileges) == ACL_ALL_RIGHTS)
+	if (stmt->privileges == NIL)
 	{
 		all_privs = true;
 		privileges = ACL_ALL_RIGHTS_NAMESPACE;
@@ -863,7 +868,8 @@ ExecuteGrantStmt_Namespace(GrantStmt *stmt)
 		privileges = ACL_NO_RIGHTS;
 		foreach(i, stmt->privileges)
 		{
-			AclMode		priv = lfirst_int(i);
+			char	   *privname = strVal(lfirst(i));
+			AclMode		priv = string_to_privilege(privname);
 
 			if (priv & ~((AclMode) ACL_ALL_RIGHTS_NAMESPACE))
 				ereport(ERROR,
@@ -1006,7 +1012,7 @@ ExecuteGrantStmt_Tablespace(GrantStmt *stmt)
 	bool		all_privs;
 	ListCell   *i;
 
-	if (linitial_int(stmt->privileges) == ACL_ALL_RIGHTS)
+	if (stmt->privileges == NIL)
 	{
 		all_privs = true;
 		privileges = ACL_ALL_RIGHTS_TABLESPACE;
@@ -1017,7 +1023,8 @@ ExecuteGrantStmt_Tablespace(GrantStmt *stmt)
 		privileges = ACL_NO_RIGHTS;
 		foreach(i, stmt->privileges)
 		{
-			AclMode		priv = lfirst_int(i);
+			char	   *privname = strVal(lfirst(i));
+			AclMode		priv = string_to_privilege(privname);
 
 			if (priv & ~((AclMode) ACL_ALL_RIGHTS_TABLESPACE))
 				ereport(ERROR,
@@ -1156,6 +1163,39 @@ ExecuteGrantStmt_Tablespace(GrantStmt *stmt)
 	}
 }
 
+
+static AclMode
+string_to_privilege(const char *privname)
+{
+	if (strcmp(privname, "insert") == 0)
+		return ACL_INSERT;
+	if (strcmp(privname, "select") == 0)
+		return ACL_SELECT;
+	if (strcmp(privname, "update") == 0)
+		return ACL_UPDATE;
+	if (strcmp(privname, "delete") == 0)
+		return ACL_DELETE;
+	if (strcmp(privname, "rule") == 0)
+		return ACL_RULE;
+	if (strcmp(privname, "references") == 0)
+		return ACL_REFERENCES;
+	if (strcmp(privname, "trigger") == 0)
+		return ACL_TRIGGER;
+	if (strcmp(privname, "execute") == 0)
+		return ACL_EXECUTE;
+	if (strcmp(privname, "usage") == 0)
+		return ACL_USAGE;
+	if (strcmp(privname, "create") == 0)
+		return ACL_CREATE;
+	if (strcmp(privname, "temporary") == 0)
+		return ACL_CREATE_TEMP;
+	if (strcmp(privname, "temp") == 0)
+		return ACL_CREATE_TEMP;
+	ereport(ERROR,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+			 errmsg("unrecognized privilege type \"%s\"", privname)));
+	return 0;					/* appease compiler */
+}
 
 static const char *
 privilege_to_string(AclMode privilege)

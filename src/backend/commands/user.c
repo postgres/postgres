@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.152 2005/06/28 05:08:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.153 2005/06/28 19:51:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,16 +61,17 @@ CreateRole(CreateRoleStmt *stmt)
 	bool		createrole = false;		/* Can this user create roles? */
 	bool		createdb = false;		/* Can the user create databases? */
 	bool		canlogin = false;		/* Can this user login? */
-	List	   *roleElts = NIL;			/* roles the user is a member of */
-	List	   *rolememElts = NIL;	/* roles which will be members of this role */
-	char	   *validUntil = NULL;		/* The time the login is valid
-										 * until */
+	List	   *addroleto = NIL;		/* roles to make this a member of */
+	List	   *rolemembers = NIL;		/* roles to be members of this role */
+	List	   *adminmembers = NIL;		/* roles to be admins of this role */
+	char	   *validUntil = NULL;		/* time the login is valid until */
 	DefElem    *dpassword = NULL;
 	DefElem    *dcreatedb = NULL;
 	DefElem    *dcreaterole = NULL;
 	DefElem    *dcanlogin = NULL;
-	DefElem    *droleElts = NULL;
-	DefElem    *drolememElts = NULL;
+	DefElem    *daddroleto = NULL;
+	DefElem    *drolemembers = NULL;
+	DefElem    *dadminmembers = NULL;
 	DefElem    *dvalidUntil = NULL;
 
 	/* Extract options from the statement node tree */
@@ -121,21 +122,29 @@ CreateRole(CreateRoleStmt *stmt)
 						 errmsg("conflicting or redundant options")));
 			dcanlogin = defel;
 		}
-		else if (strcmp(defel->defname, "roleElts") == 0)
+		else if (strcmp(defel->defname, "addroleto") == 0)
 		{
-			if (droleElts)
+			if (daddroleto)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
-			droleElts = defel;
+			daddroleto = defel;
 		}
-		else if (strcmp(defel->defname, "rolememElts") == 0)
+		else if (strcmp(defel->defname, "rolemembers") == 0)
 		{
-			if (drolememElts)
+			if (drolemembers)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
-			drolememElts = defel;
+			drolemembers = defel;
+		}
+		else if (strcmp(defel->defname, "adminmembers") == 0)
+		{
+			if (dadminmembers)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			dadminmembers = defel;
 		}
 		else if (strcmp(defel->defname, "validUntil") == 0)
 		{
@@ -164,10 +173,12 @@ CreateRole(CreateRoleStmt *stmt)
 		validUntil = strVal(dvalidUntil->arg);
 	if (dpassword)
 		password = strVal(dpassword->arg);
-	if (droleElts)
-		roleElts = (List *) droleElts->arg;
-	if (drolememElts)
-		rolememElts = (List *) drolememElts->arg;
+	if (daddroleto)
+		addroleto = (List *) daddroleto->arg;
+	if (drolemembers)
+		rolemembers = (List *) drolemembers->arg;
+	if (dadminmembers)
+		adminmembers = (List *) dadminmembers->arg;
 
 	/* Check some permissions first */
 	if (!superuser())
@@ -257,7 +268,7 @@ CreateRole(CreateRoleStmt *stmt)
 	/*
 	 * Add the new role to the specified existing roles.
 	 */
-	foreach(item, roleElts)
+	foreach(item, addroleto)
 	{
 		char   *oldrolename = strVal(lfirst(item));
 		Oid		oldroleid = get_roleid_checked(oldrolename);
@@ -269,10 +280,14 @@ CreateRole(CreateRoleStmt *stmt)
 	}
 
 	/*
-	 * Add the specified members to this new role.
+	 * Add the specified members to this new role. adminmembers get the
+	 * admin option, rolemembers don't.
 	 */
 	AddRoleMems(stmt->role, roleid,
-				rolememElts, roleNamesToIds(rolememElts),
+				adminmembers, roleNamesToIds(adminmembers),
+				GetUserId(), true);
+	AddRoleMems(stmt->role, roleid,
+				rolemembers, roleNamesToIds(rolemembers),
 				GetUserId(), false);
 
 	/*
@@ -309,17 +324,14 @@ AlterRole(AlterRoleStmt *stmt)
 	int			createrole = -1;		/* Can this user create roles? */
 	int			createdb = -1;			/* Can the user create databases? */
 	int			canlogin = -1;			/* Can this user login? */
-	int			adminopt = 0;	/* Can this user grant this role to others? */
-	List	   *rolememElts = NIL;	/* The roles which will be added/removed to this role */
-	char	   *validUntil = NULL;		/* The time the login is valid
-										 * until */
+	List	   *rolemembers = NIL;		/* roles to be added/removed */
+	char	   *validUntil = NULL;		/* time the login is valid until */
 	DefElem    *dpassword = NULL;
 	DefElem    *dcreatedb = NULL;
 	DefElem    *dcreaterole = NULL;
 	DefElem    *dcanlogin = NULL;
-	DefElem    *dadminopt = NULL;
 	DefElem    *dvalidUntil = NULL;
-	DefElem    *drolememElts = NULL;
+	DefElem    *drolemembers = NULL;
 	Oid			roleid;
 
 	/* Extract options from the statement node tree */
@@ -365,14 +377,6 @@ AlterRole(AlterRoleStmt *stmt)
 						 errmsg("conflicting or redundant options")));
 			dcanlogin = defel;
 		}
-		else if (strcmp(defel->defname, "adminopt") == 0)
-		{
-			if (dadminopt)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options")));
-			dadminopt = defel;
-		}
 		else if (strcmp(defel->defname, "validUntil") == 0)
 		{
 			if (dvalidUntil)
@@ -381,13 +385,14 @@ AlterRole(AlterRoleStmt *stmt)
 						 errmsg("conflicting or redundant options")));
 			dvalidUntil = defel;
 		}
-		else if (strcmp(defel->defname, "rolememElts") == 0 && stmt->action != 0)
+		else if (strcmp(defel->defname, "rolemembers") == 0 &&
+				 stmt->action != 0)
 		{
-			if (drolememElts)
+			if (drolemembers)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
-			drolememElts = defel;
+			drolemembers = defel;
 		}
 		else
 			elog(ERROR, "option \"%s\" not recognized",
@@ -404,14 +409,12 @@ AlterRole(AlterRoleStmt *stmt)
 	}
 	if (dcanlogin)
 		canlogin = intVal(dcanlogin->arg);
-	if (dadminopt)
-		adminopt = intVal(dadminopt->arg);
 	if (dvalidUntil)
 		validUntil = strVal(dvalidUntil->arg);
 	if (dpassword)
 		password = strVal(dpassword->arg);
-	if (drolememElts)
-		rolememElts = (List *) drolememElts->arg;
+	if (drolemembers)
+		rolemembers = (List *) drolemembers->arg;
 
 	/* must be superuser or just want to change your own password */
 	if (!superuser() &&
@@ -420,8 +423,7 @@ AlterRole(AlterRoleStmt *stmt)
 		  createdb < 0 &&
 		  canlogin < 0 &&
 		  !validUntil &&
-		  !rolememElts &&
-		  !adminopt &&
+		  !rolemembers &&
 		  password &&
 		  strcmp(GetUserNameFromId(GetUserId()), stmt->role) == 0))
 		ereport(ERROR,
@@ -537,12 +539,12 @@ AlterRole(AlterRoleStmt *stmt)
 
 	if (stmt->action == +1)		/* add members to role */
 		AddRoleMems(stmt->role, roleid,
-					rolememElts, roleNamesToIds(rolememElts),
-					GetUserId(), adminopt);
+					rolemembers, roleNamesToIds(rolemembers),
+					GetUserId(), false);
 	else if (stmt->action == -1)	/* drop members from role */
 		DelRoleMems(stmt->role, roleid,
-					rolememElts, roleNamesToIds(rolememElts),
-					adminopt);
+					rolemembers, roleNamesToIds(rolemembers),
+					false);
 
 	/*
 	 * Set flag to update flat auth file at commit.

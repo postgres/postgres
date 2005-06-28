@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.130 2005/06/28 05:08:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.131 2005/06/28 19:51:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -266,7 +266,7 @@ ProcedureCreate(const char *procedureName,
 					(errcode(ERRCODE_DUPLICATE_FUNCTION),
 					 errmsg("function \"%s\" already exists with same argument types",
 							procedureName)));
-		if (GetUserId() != oldproc->proowner && !superuser())
+		if (!pg_proc_ownercheck(HeapTupleGetOid(oldtup), GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
 						   procedureName);
 
