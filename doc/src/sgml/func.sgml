@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.261 2005/06/28 05:08:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.262 2005/06/29 01:52:56 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -5787,15 +5787,6 @@ SELECT LOCALTIMESTAMP;
    </para>
 
    <para>
-    There is also the function <function>timeofday()</function>, which for historical
-    reasons returns a <type>text</type> string rather than a <type>timestamp</type> value:
-<screen>
-SELECT timeofday();
-<lineannotation>Result: </lineannotation><computeroutput>Sat Feb 17 19:07:32.000126 2001 EST</computeroutput>
-</screen>
-   </para>
-
-   <para>
     It is important to know that
     <function>CURRENT_TIMESTAMP</function> and related functions return
     the start time of the current transaction; their values do not
@@ -5803,8 +5794,7 @@ SELECT timeofday();
     the intent is to allow a single transaction to have a consistent
     notion of the <quote>current</quote> time, so that multiple
     modifications within the same transaction bear the same
-    time stamp. <function>timeofday()</function>
-    returns the wall-clock time and does advance during transactions.
+    time stamp.
    </para>
 
    <note>
@@ -5813,6 +5803,18 @@ SELECT timeofday();
      frequently.
     </para>
    </note>
+
+   <para>
+    There is also the function <function>timeofday()</function> which
+    returns the wall-clock time and advances during transactions.  For
+    historical reasons <function>timeofday()</function> returns a
+    <type>text</type> string rather than a <type>timestamp</type>
+    value:
+<screen>
+SELECT timeofday();
+<lineannotation>Result: </lineannotation><computeroutput>Sat Feb 17 19:07:32.000126 2001 EST</computeroutput>
+</screen>
+   </para>
 
    <para>
     All the date/time data types also accept the special literal value
