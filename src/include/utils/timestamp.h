@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.45 2005/06/15 00:34:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.46 2005/06/29 22:51:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,6 +156,10 @@ typedef double fsec_t;
 #define INTERVAL_RANGE(t) (((t) >> 16) & INTERVAL_RANGE_MASK)
 
 
+/* Set at postmaster start */
+extern TimestampTz PgStartTime;
+
+
 /*
  * timestamp.c prototypes
  */
@@ -258,9 +262,9 @@ extern Datum now(PG_FUNCTION_ARGS);
 
 extern Datum pgsql_postmaster_start_time(PG_FUNCTION_ARGS);
 
-extern TimestampTz StartTime;
-
 /* Internal routines (not fmgr-callable) */
+
+extern TimestampTz GetCurrentTimestamp(void);
 
 extern int	tm2timestamp(struct pg_tm * tm, fsec_t fsec, int *tzp, Timestamp *dt);
 extern int timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm,

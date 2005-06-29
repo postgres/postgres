@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.150 2005/05/27 21:31:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.151 2005/06/29 22:51:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include <limits.h>
 #include <math.h>
 
+#include "access/xact.h"
 #include "miscadmin.h"
 #include "utils/datetime.h"
 #include "utils/guc.h"
@@ -672,6 +673,41 @@ j2day(int date)
 
 	return (int) day;
 }	/* j2day() */
+
+
+/*
+ * GetCurrentDateTime()
+ *
+ * Get the transaction start time ("now()") broken down as a struct pg_tm.
+ */
+void
+GetCurrentDateTime(struct pg_tm * tm)
+{
+	int			tz;
+	fsec_t		fsec;
+
+	timestamp2tm(GetCurrentTransactionStartTimestamp(), &tz, tm, &fsec,
+				 NULL, NULL);
+	/* Note: don't pass NULL tzp to timestamp2tm; affects behavior */
+}
+
+/*
+ * GetCurrentTimeUsec()
+ *
+ * Get the transaction start time ("now()") broken down as a struct pg_tm,
+ * including fractional seconds and timezone offset.
+ */
+void
+GetCurrentTimeUsec(struct pg_tm * tm, fsec_t *fsec, int *tzp)
+{
+	int			tz;
+
+	timestamp2tm(GetCurrentTransactionStartTimestamp(), &tz, tm, fsec,
+				 NULL, NULL);
+	/* Note: don't pass NULL tzp to timestamp2tm; affects behavior */
+	if (tzp != NULL)
+		*tzp = tz;
+}
 
 
 /* TrimTrailingZeros()

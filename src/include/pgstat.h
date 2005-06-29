@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.31 2005/06/28 05:09:04 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.32 2005/06/29 22:51:57 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -13,8 +13,8 @@
 
 #include "libpq/pqcomm.h"
 #include "utils/hsearch.h"
-#include "utils/nabstime.h"
 #include "utils/rel.h"
+#include "utils/timestamp.h"
 
 /* ----------
  * The types of backend/postmaster -> collector messages
@@ -233,10 +233,8 @@ typedef struct PgStat_StatBeEntry
 {
 	/* An entry is non-empty iff procpid > 0 */
 	int			procpid;
-	AbsoluteTime start_sec;
-	int         start_usec;
-	AbsoluteTime activity_start_sec;
-	int			activity_start_usec;
+	TimestampTz	start_timestamp;
+	TimestampTz	activity_start_timestamp;
 	char		activity[PGSTAT_ACTIVITY_SIZE];
 
 	/*

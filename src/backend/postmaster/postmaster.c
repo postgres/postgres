@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.455 2005/06/28 05:08:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.456 2005/06/29 22:51:55 tgl Exp $
  *
  * NOTES
  *
@@ -118,6 +118,7 @@
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
+#include "utils/datetime.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
@@ -221,9 +222,6 @@ static bool FatalError = false; /* T if recovering from backend crash */
 
 bool		ClientAuthInProgress = false;		/* T during new-client
 												 * authentication */
-
-/* Backend startup time */
-TimestampTz	StartTime;
 
 /*
  * State for assigning random salts and cancel keys.
@@ -333,7 +331,7 @@ typedef struct
 	InheritableSocket pgStatPipe0;
 	InheritableSocket pgStatPipe1;
 	pid_t PostmasterPid;
-	TimestampTz StartTime;
+	TimestampTz PgStartTime;
 #ifdef WIN32
 	HANDLE PostmasterHandle;
 	HANDLE initial_signal_pipe;
@@ -375,9 +373,6 @@ PostmasterMain(int argc, char *argv[])
 	int			status;
 	char	   *userDoption = NULL;
 	int			i;
-
-	AbsoluteTime		StartTimeSec;	/* integer part */
-	int			StartTimeUSec;	/* microsecond part */
 
 	/* This will call exit() if strdup() fails. */
 	progname = get_progname(argv[0]);	
@@ -922,10 +917,9 @@ PostmasterMain(int argc, char *argv[])
 	StartupPID = StartupDataBase();
 
 	/*
-	 * Get start up time
+	 * Remember postmaster startup time
 	 */
-	StartTimeSec = GetCurrentAbsoluteTimeUsec(&StartTimeUSec);
-	StartTime = AbsoluteTimeUsecToTimestampTz(StartTimeSec, StartTimeUSec);
+	PgStartTime = GetCurrentTimestamp();
 
 	status = ServerLoop();
 
@@ -3613,7 +3607,7 @@ save_backend_variables(BackendParameters *param, Port *port,
 	write_inheritable_socket(&param->pgStatPipe1, pgStatPipe[1], childPid);
 
 	param->PostmasterPid = PostmasterPid;
-	param->StartTime = StartTime;
+	param->PgStartTime = PgStartTime;
 
 #ifdef WIN32
 	param->PostmasterHandle = PostmasterHandle;
@@ -3816,7 +3810,7 @@ restore_backend_variables(BackendParameters *param, Port *port)
 	read_inheritable_socket(&pgStatPipe[1], &param->pgStatPipe1);
 
 	PostmasterPid = param->PostmasterPid;
-	StartTime = param->StartTime;
+	PgStartTime = param->PgStartTime;
 
 #ifdef WIN32
 	PostmasterHandle = param->PostmasterHandle;

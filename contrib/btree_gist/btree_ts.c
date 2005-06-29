@@ -1,6 +1,9 @@
 #include "btree_gist.h"
 #include "btree_utils_num.h"
 
+#include "utils/datetime.h"
+
+
 typedef struct
 {
 	Timestamp	lower;

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.208 2005/06/28 05:08:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.209 2005/06/29 22:51:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,12 +168,11 @@ static SubTransactionId currentSubTransactionId;
 static CommandId currentCommandId;
 
 /*
- * These vars hold the value of now(), ie, the transaction start time.
+ * This is the value of now(), ie, the transaction start time.
  * This does not change as we enter and exit subtransactions, so we don't
  * keep it inside the TransactionState stack.
  */
-static AbsoluteTime xactStartTime;		/* integer part */
-static int	xactStartTimeUsec;	/* microsecond part */
+static TimestampTz xactStartTimestamp;
 
 /*
  * GID to be used for preparing the current transaction.  This is also
@@ -420,27 +419,14 @@ GetCurrentCommandId(void)
 	return currentCommandId;
 }
 
-
 /*
- *	GetCurrentTransactionStartTime
+ *	GetCurrentTransactionStartTimestamp
  */
-AbsoluteTime
-GetCurrentTransactionStartTime(void)
+TimestampTz
+GetCurrentTransactionStartTimestamp(void)
 {
-	return xactStartTime;
+	return xactStartTimestamp;
 }
-
-
-/*
- *	GetCurrentTransactionStartTimeUsec
- */
-AbsoluteTime
-GetCurrentTransactionStartTimeUsec(int *msec)
-{
-	*msec = xactStartTimeUsec;
-	return xactStartTime;
-}
-
 
 /*
  *	GetCurrentTransactionNestLevel
@@ -1391,7 +1377,7 @@ StartTransaction(void)
 	/*
 	 * set now()
 	 */
-	xactStartTime = GetCurrentAbsoluteTimeUsec(&(xactStartTimeUsec));
+	xactStartTimestamp = GetCurrentTimestamp();
 
 	/*
 	 * initialize current transaction state fields
@@ -1633,8 +1619,6 @@ PrepareTransaction(void)
 	TransactionId		xid = GetCurrentTransactionId();
 	GlobalTransaction	gxact;
 	TimestampTz			prepared_at;
-	AbsoluteTime		PreparedSec;	/* integer part */
-	int			PreparedUSec;	/* microsecond part */
 
 	ShowTransactionState("PrepareTransaction");
 
@@ -1697,8 +1681,7 @@ PrepareTransaction(void)
 	 */
 	s->state = TRANS_PREPARE;
 
-	PreparedSec = GetCurrentAbsoluteTimeUsec(&PreparedUSec);
-	prepared_at = AbsoluteTimeUsecToTimestampTz(PreparedSec, PreparedUSec);
+	prepared_at = GetCurrentTimestamp();
 
 	/* Tell bufmgr and smgr to prepare for commit */
 	BufmgrCommit();

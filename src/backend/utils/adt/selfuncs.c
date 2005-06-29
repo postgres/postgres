@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.182 2005/06/13 23:14:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.183 2005/06/29 22:51:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,6 +105,7 @@
 #include "utils/datum.h"
 #include "utils/int8.h"
 #include "utils/lsyscache.h"
+#include "utils/nabstime.h"
 #include "utils/pg_locale.h"
 #include "utils/selfuncs.h"
 #include "utils/syscache.h"

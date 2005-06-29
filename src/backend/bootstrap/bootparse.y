@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.76 2005/04/14 01:38:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.77 2005/06/29 22:51:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,6 @@
 #include "storage/off.h"
 #include "storage/smgr.h"
 #include "tcop/dest.h"
-#include "utils/nabstime.h"
 #include "utils/rel.h"
 
 #define atooid(x)	((Oid) strtoul((x), NULL, 10))

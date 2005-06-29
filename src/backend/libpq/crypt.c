@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/libpq/crypt.c,v 1.63 2005/06/28 05:08:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/libpq/crypt.c,v 1.64 2005/06/29 22:51:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@
 #include "miscadmin.h"
 #include "storage/fd.h"
 #include "nodes/pg_list.h"
-#include "utils/nabstime.h"
+#include "utils/timestamp.h"
 
 
 int
@@ -149,19 +149,13 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass)
 		else
 		{
 			TimestampTz vuntil;
-			AbsoluteTime sec;
-			int			usec;
-			TimestampTz curtime;
 
 			vuntil = DatumGetTimestampTz(DirectFunctionCall3(timestamptz_in,
 								CStringGetDatum(valuntil),
 								ObjectIdGetDatum(InvalidOid),
 								Int32GetDatum(-1)));
 
-			sec = GetCurrentAbsoluteTimeUsec(&usec);
-			curtime = AbsoluteTimeUsecToTimestampTz(sec, usec);
-
-			if (vuntil < curtime)
+			if (vuntil < GetCurrentTimestamp())
 				retval = STATUS_ERROR;
 			else
 				retval = STATUS_OK;

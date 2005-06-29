@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.133 2005/06/15 00:34:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.134 2005/06/29 22:51:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
 #include "miscadmin.h"
 #include "pgtime.h"
 #include "utils/builtins.h"
-#include "utils/timestamp.h"
+#include "utils/nabstime.h"
 
 #define MIN_DAYNUM -24856		/* December 13, 1901 */
 #define MAX_DAYNUM 24854		/* January 18, 2038 */
@@ -96,84 +96,6 @@ GetCurrentAbsoluteTime(void)
 
 	now = time(NULL);
 	return (AbsoluteTime) now;
-}
-
-
-/*
- * GetCurrentAbsoluteTimeUsec()
- *
- * Get the current system time (relative to Unix epoch), including fractional
- * seconds expressed as microseconds.
- */
-AbsoluteTime
-GetCurrentAbsoluteTimeUsec(int *usec)
-{
-	time_t		now;
-	struct timeval tp;
-
-	gettimeofday(&tp, NULL);
-	now = tp.tv_sec;
-	*usec = tp.tv_usec;
-	return (AbsoluteTime) now;
-}
-
-
-/*
- * AbsoluteTimeUsecToTimestampTz()
- *
- * Convert system time including microseconds to TimestampTz representation.
- */
-TimestampTz
-AbsoluteTimeUsecToTimestampTz(AbsoluteTime sec, int usec)
-{
-	TimestampTz result;
-
-#ifdef HAVE_INT64_TIMESTAMP
-	result = ((sec - ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY))
-			  * USECS_PER_SEC) + usec;
-#else
-	result = sec - ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY)
-		+ (usec / 1000000.0);
-#endif
-
-	return result;
-}
-
-
-/*
- * GetCurrentDateTime()
- *
- * Get the transaction start time ("now()") broken down as a struct pg_tm.
- */
-void
-GetCurrentDateTime(struct pg_tm * tm)
-{
-	int			tz;
-
-	abstime2tm(GetCurrentTransactionStartTime(), &tz, tm, NULL);
-}
-
-/*
- * GetCurrentTimeUsec()
- *
- * Get the transaction start time ("now()") broken down as a struct pg_tm,
- * including fractional seconds and timezone offset.
- */
-void
-GetCurrentTimeUsec(struct pg_tm * tm, fsec_t *fsec, int *tzp)
-{
-	int			tz;
-	int			usec;
-
-	abstime2tm(GetCurrentTransactionStartTimeUsec(&usec), &tz, tm, NULL);
-	/* Note: don't pass NULL tzp to abstime2tm; affects behavior */
-	if (tzp != NULL)
-		*tzp = tz;
-#ifdef HAVE_INT64_TIMESTAMP
-	*fsec = usec;
-#else
-	*fsec = usec / 1000000.0;
-#endif
 }
 
 
@@ -457,15 +379,6 @@ abstime_cmp_internal(AbsoluteTime a, AbsoluteTime b)
 
 	if (b == INVALID_ABSTIME)
 		return -1;				/* non-INVALID < INVALID */
-
-#if 0
-	/* CURRENT is no longer stored internally... */
-	/* XXX this is broken, should go away: */
-	if (a == CURRENT_ABSTIME)
-		a = GetCurrentTransactionStartTime();
-	if (b == CURRENT_ABSTIME)
-		b = GetCurrentTransactionStartTime();
-#endif
 
 	if (a > b)
 		return 1;

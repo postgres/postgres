@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.23 2005/06/28 05:09:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.24 2005/06/29 22:51:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -341,13 +341,9 @@ pg_stat_get_backend_activity(PG_FUNCTION_ARGS)
 Datum
 pg_stat_get_backend_activity_start(PG_FUNCTION_ARGS)
 {
-	PgStat_StatBeEntry *beentry;
-	int32		beid;
-	AbsoluteTime sec;
-	int			usec;
+	int32		beid = PG_GETARG_INT32(0);
 	TimestampTz result;
-
-	beid = PG_GETARG_INT32(0);
+	PgStat_StatBeEntry *beentry;
 
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
 		PG_RETURN_NULL();
@@ -355,17 +351,14 @@ pg_stat_get_backend_activity_start(PG_FUNCTION_ARGS)
 	if (!superuser() && beentry->userid != GetUserId())
 		PG_RETURN_NULL();
 
-	sec = beentry->activity_start_sec;
-	usec = beentry->activity_start_usec;
+	result = beentry->activity_start_timestamp;
 
 	/*
 	 * No time recorded for start of current query -- this is the case if
 	 * the user hasn't enabled query-level stats collection.
 	 */
-	if (sec == 0 && usec == 0)
+	if (result == 0)
 		PG_RETURN_NULL();
-
-	result = AbsoluteTimeUsecToTimestampTz(sec, usec);
 
 	PG_RETURN_TIMESTAMPTZ(result);
 }
@@ -373,13 +366,9 @@ pg_stat_get_backend_activity_start(PG_FUNCTION_ARGS)
 Datum
 pg_stat_get_backend_start(PG_FUNCTION_ARGS)
 {
-	PgStat_StatBeEntry *beentry;
-	int32       beid;
-	AbsoluteTime sec;
-	int         usec;
+	int32       beid = PG_GETARG_INT32(0);
 	TimestampTz result;
-
-	beid = PG_GETARG_INT32(0);
+	PgStat_StatBeEntry *beentry;
 
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
 		PG_RETURN_NULL();
@@ -387,13 +376,10 @@ pg_stat_get_backend_start(PG_FUNCTION_ARGS)
 	if (!superuser() && beentry->userid != GetUserId())
 		PG_RETURN_NULL();
 
-	sec = beentry->start_sec;
-	usec = beentry->start_usec;
+	result = beentry->start_timestamp;
 
-	if (sec == 0 && usec == 0)
+	if (result == 0)			/* probably can't happen? */
 		PG_RETURN_NULL();
-
-	result = AbsoluteTimeUsecToTimestampTz(sec, usec);
 
 	PG_RETURN_TIMESTAMPTZ(result);
 }

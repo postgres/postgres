@@ -8,6 +8,8 @@
 #include "executor/spi.h"		/* this is what you need to work with SPI */
 #include "commands/trigger.h"	/* -"- and triggers */
 #include "miscadmin.h"			/* for GetPgUserName() */
+#include "utils/nabstime.h"
+
 #include <ctype.h>				/* tolower () */
 
 #define ABSTIMEOID	702			/* it should be in pg_type.h */

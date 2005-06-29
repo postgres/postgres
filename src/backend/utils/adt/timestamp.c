@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.126 2005/06/15 00:34:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.127 2005/06/29 22:51:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,8 @@
 #include "parser/scansup.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/datetime.h"
+
 
 /*
  * gcc's -ffast-math switch breaks routines that expect exact results from
@@ -36,6 +38,10 @@
 #ifdef __FAST_MATH__
 #error -ffast-math is known to break this code
 #endif
+
+
+/* Set at postmaster start */
+TimestampTz PgStartTime;
 
 
 #ifdef HAVE_INT64_TIMESTAMP
@@ -927,21 +933,39 @@ EncodeSpecialTimestamp(Timestamp dt, char *str)
 Datum
 now(PG_FUNCTION_ARGS)
 {
-	TimestampTz result;
-	AbsoluteTime sec;
-	int			usec;
-
-	sec = GetCurrentTransactionStartTimeUsec(&usec);
-
-	result = AbsoluteTimeUsecToTimestampTz(sec, usec);
-
-	PG_RETURN_TIMESTAMPTZ(result);
+	PG_RETURN_TIMESTAMPTZ(GetCurrentTransactionStartTimestamp());
 }
 
 Datum
 pgsql_postmaster_start_time(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_TIMESTAMPTZ(StartTime);
+	PG_RETURN_TIMESTAMPTZ(PgStartTime);
+}
+
+/*
+ * GetCurrentTimestamp -- get the current operating system time
+ *
+ * Result is in the form of a TimestampTz value, and is expressed to the
+ * full precision of the gettimeofday() syscall
+ */
+TimestampTz
+GetCurrentTimestamp(void)
+{
+	TimestampTz result;
+	struct timeval tp;
+
+	gettimeofday(&tp, NULL);
+
+	result = tp.tv_sec -
+		((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
+
+#ifdef HAVE_INT64_TIMESTAMP
+	result = (result * USECS_PER_SEC) + tp.tv_usec;
+#else
+	result = result + (tp.tv_usec / 1000000.0);
+#endif
+
+	return result;
 }
 
 void
