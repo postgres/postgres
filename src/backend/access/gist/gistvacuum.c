@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.4 2005/06/28 15:51:00 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.5 2005/06/29 14:06:14 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ gistVacuumUpdate( GistVacuum *gv, BlockNumber blkno, bool needunion ) {
 	int 		lenaddon=4, curlenaddon=0, ntodelete=0;
 	IndexTuple	idxtuple, *addon=NULL;
 	bool		needwrite=false;
-	OffsetNumber    *todelete=NULL;
+	OffsetNumber    todelete[ BLCKSZ/SizeOfIptrData ];
 	ItemPointerData	*completed=NULL;
 	int 		ncompleted=0, lencompleted=16;
 
@@ -67,7 +67,6 @@ gistVacuumUpdate( GistVacuum *gv, BlockNumber blkno, bool needunion ) {
 			GistClearTuplesDeleted(page);
 		}
 	} else {
-		todelete = (OffsetNumber*)palloc( MAXALIGN(sizeof(OffsetNumber)*(maxoff+1)) );
 		completed = (ItemPointerData*)palloc( sizeof(ItemPointerData)*lencompleted );
 		addon=(IndexTuple*)palloc(sizeof(IndexTuple)*lenaddon);
 
@@ -143,16 +142,14 @@ gistVacuumUpdate( GistVacuum *gv, BlockNumber blkno, bool needunion ) {
 					XLogRecPtr              recptr;
 					XLogRecData             *rdata;
 					ItemPointerData		key; /* set key for incomplete insert */
+					char 			*xlinfo;
 
 					ItemPointerSet(&key, blkno, TUPLE_IS_VALID);
 	
-					oldCtx = MemoryContextSwitchTo(gv->opCtx);
-
 					rdata = formSplitRdata(gv->index->rd_node, blkno,
 						&key, dist);
+					xlinfo = rdata->data;
 
-					MemoryContextSwitchTo(oldCtx);
-					
 					START_CRIT_SECTION();
 			
 					recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_PAGE_SPLIT, rdata);
@@ -164,6 +161,8 @@ gistVacuumUpdate( GistVacuum *gv, BlockNumber blkno, bool needunion ) {
 					}
 
 					END_CRIT_SECTION();
+					pfree( xlinfo );
+					pfree( rdata );
 				} else {
 					ptr = dist;
 					while(ptr) {
@@ -267,7 +266,6 @@ gistVacuumUpdate( GistVacuum *gv, BlockNumber blkno, bool needunion ) {
 	for(i=0;i<curlenaddon;i++)
 		pfree( addon[i] );
 	if (addon) pfree(addon);
-	if (todelete) pfree(todelete); 
 	if (completed) pfree(completed); 
 	return res;
 }
@@ -442,7 +440,7 @@ gistbulkdelete(PG_FUNCTION_ARGS) {
 		page   = (Page) BufferGetPage(buffer);
 
 		if ( GistPageIsLeaf(page) ) {
-			OffsetNumber *todelete = NULL;
+			OffsetNumber todelete[BLCKSZ/SizeOfIptrData];
 			int ntodelete = 0;
 
 			LockBuffer(buffer, GIST_UNLOCK);
@@ -462,7 +460,6 @@ gistbulkdelete(PG_FUNCTION_ARGS) {
 			pushStackIfSplited(page, stack);
 
 			maxoff = PageGetMaxOffsetNumber(page);
-			todelete = (OffsetNumber*)palloc( MAXALIGN(sizeof(OffsetNumber)*(maxoff+1)) );
 
 			for(i=FirstOffsetNumber;i<=maxoff;i=OffsetNumberNext(i)) {
 				iid = PageGetItemId(page, i);	
@@ -502,8 +499,6 @@ gistbulkdelete(PG_FUNCTION_ARGS) {
 					PageSetLSN(page, XLogRecPtrForTemp);
 				WriteNoReleaseBuffer( buffer );
 			}
-
-			pfree( todelete );
 		} else {
 			/* check for split proceeded after look at parent */
 			pushStackIfSplited(page, stack);

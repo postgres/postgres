@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.123 2005/06/28 15:51:00 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.124 2005/06/29 14:06:14 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -362,6 +362,7 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate) {
 				Page page = (Page)BufferGetPage(ptr->buffer);
 				GistPageGetOpaque(page)->rightlink = ( ptr->next ) ?
 					ptr->next->block.blkno : InvalidBlockNumber;
+				GistPageGetOpaque(page)->nsn = PageGetLSN(page);
 				LockBuffer( ptr->buffer, GIST_UNLOCK  );
 				WriteBuffer(ptr->buffer);
 				ptr=ptr->next;
