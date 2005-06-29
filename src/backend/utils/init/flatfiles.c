@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.10 2005/06/28 22:16:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.11 2005/06/29 20:34:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -295,7 +295,7 @@ write_database_file(Relation drel)
  *		"rolename" "password" "validuntil" "memberof" "memberof" ...
  * Only roles that are marked rolcanlogin are entered into the auth file.
  * Each role's line lists all the roles (groups) of which it is directly
- * or indirectly a member.
+ * or indirectly a member, except for itself.
  *
  * The postmaster expects the file to be sorted by rolename.  There is not
  * any special ordering of the membership lists.
@@ -538,28 +538,31 @@ write_auth_file(Relation rel_authid, Relation rel_authmem)
 		qsort(auth_info, total_roles, sizeof(auth_entry), oid_compar);
 		qsort(authmem_info, total_mem, sizeof(authmem_entry), mem_compar);
 		/*
-		 * For each role, find what it belongs to.  We can skip this for
-		 * non-login roles.
+		 * For each role, find what it belongs to.
 		 */
 		for (curr_role = 0; curr_role < total_roles; curr_role++)
 		{
-			List	*roles_list = NIL;
+			List	*roles_list;
 			List	*roles_names_list = NIL;
-			List	*roles_list_hunt;
 			ListCell *mem;
 
+			/* We can skip this for non-login roles */
 			if (!auth_info[curr_role].rolcanlogin)
 				continue;
 
-			roles_list_hunt = list_make1_oid(auth_info[curr_role].roleid);
-			while (roles_list_hunt)
+			/*
+			 * This search algorithm is the same as in is_member_of_role;
+			 * we are just working with a different input data structure.
+			 */
+			roles_list = list_make1_oid(auth_info[curr_role].roleid);
+
+			foreach(mem, roles_list)
 			{
 				authmem_entry key;
 				authmem_entry *found_mem;
-				int		first_found, last_found, curr_mem;
+				int		first_found, last_found, i;
 
-				key.memberid = linitial_oid(roles_list_hunt);
-				roles_list_hunt = list_delete_first(roles_list_hunt);
+				key.memberid = lfirst_oid(mem);
 				found_mem = bsearch(&key, authmem_info, total_mem,
 									sizeof(authmem_entry), mem_compar);
 				if (!found_mem)
@@ -577,26 +580,25 @@ write_auth_file(Relation rel_authid, Relation rel_authmem)
 					   mem_compar(&key, &authmem_info[last_found + 1]) == 0)
 					last_found++;
 				/*
-				 * Now add all the new roles to roles_list, as well
-				 * as to our list of what remains to be searched.
+				 * Now add all the new roles to roles_list.
 				 */
-				for (curr_mem = first_found; curr_mem <= last_found; curr_mem++)
+				for (i = first_found; i <= last_found; i++)
 				{
-					Oid	rolid = authmem_info[curr_mem].roleid;
+					Oid	rolid = authmem_info[i].roleid;
 
 					if (!list_member_oid(roles_list, rolid))
-					{
 						roles_list = lappend_oid(roles_list, rolid);
-						roles_list_hunt = lappend_oid(roles_list_hunt, rolid);
-					}
 				}
 			}
 
 			/*
 			 * Convert list of role Oids to list of role names.
 			 * We must do this before re-sorting auth_info.
+			 *
+			 * We skip the first list element (curr_role itself) since there
+			 * is no point in writing that a role is a member of itself.
 			 */
-			foreach(mem, roles_list)
+			for_each_cell(mem, lnext(list_head(roles_list)))
 			{
 				auth_entry key_auth;
 				auth_entry *found_role;
@@ -604,10 +606,12 @@ write_auth_file(Relation rel_authid, Relation rel_authmem)
 				key_auth.roleid = lfirst_oid(mem);
 				found_role = bsearch(&key_auth, auth_info, total_roles,
 									 sizeof(auth_entry), oid_compar);
-				roles_names_list = lappend(roles_names_list,
-										   found_role->rolname);
+				if (found_role)			/* paranoia */
+					roles_names_list = lappend(roles_names_list,
+											   found_role->rolname);
 			}
 			auth_info[curr_role].member_of = roles_names_list;
+			list_free(roles_list);
 		}
 	}
 

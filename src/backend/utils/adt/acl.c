@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.116 2005/06/28 19:51:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.117 2005/06/29 20:34:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,18 +32,23 @@
 #include "utils/syscache.h"
 
 
-#define ACL_IDTYPE_ROLE_KEYWORD	"role"
-
-/* The rolmemcache is a possibly-empty list of role OIDs.
- * rolmemRole is the Role for which the cache was generated.
- * In the event of a Role change the cache will be regenerated.
+/*
+ * We frequently need to test whether a given role is a member of some other
+ * role.  In most of these tests the "given role" is the same, namely the
+ * active current user.  So we can optimize it by keeping a cached list of
+ * all the roles the "given role" is a member of, directly or indirectly.
+ * The cache is flushed whenever we detect a change in pg_auth_members.
+ *
+ * Possibly this mechanism should be generalized to allow caching membership
+ * info for more than one role?
+ *
+ * cached_role is the role OID the cache is for.
+ * cached_memberships is an OID list of roles that cached_role is a member of.
+ * The cache is valid if cached_role is not InvalidOid.
  */
-static List	*rolmemcache = NIL;
-static Oid	rolmemRole = InvalidOid;
+static Oid	cached_role = InvalidOid;
+static List	*cached_memberships = NIL;
 
-/* rolmemcache and rolmemRole only valid when 
- * rolmemcacheValid is true */
-static bool rolmemcacheValid = false;
 
 static const char *getid(const char *s, char *n);
 static void putid(char *p, const char *s);
@@ -70,8 +75,7 @@ static AclMode convert_schema_priv_string(text *priv_type_text);
 static Oid	convert_tablespace_name(text *tablespacename);
 static AclMode convert_tablespace_priv_string(text *priv_type_text);
 
-static void RolMemCacheCallback(Datum arg, Oid relid);
-static void recomputeRolMemCache(Oid roleid);
+static void RoleMembershipCacheCallback(Datum arg, Oid relid);
 
 
 /*
@@ -134,7 +138,7 @@ getid(const char *s, char *n)
 }
 
 /*
- * Write a user or group Name at *p, adding double quotes if needed.
+ * Write a role name at *p, adding double quotes if needed.
  * There must be at least (2*NAMEDATALEN)+2 bytes available at *p.
  * This needs to be kept in sync with copyAclUserName in pg_dump/dumputils.c
  */
@@ -175,6 +179,9 @@ putid(char *p, const char *s)
  *		between the optional id type keyword (group|user) and the actual
  *		ACL specification.
  *
+ *		The group|user decoration is unnecessary in the roles world,
+ *		but we still accept it for backward compatibility.
+ *
  *		This routine is called by the parser as well as aclitemin(), hence
  *		the added generality.
  *
@@ -202,17 +209,17 @@ aclparse(const char *s, AclItem *aip)
 	if (*s != '=')
 	{
 		/* we just read a keyword, not a name */
-		if (strcmp(name, ACL_IDTYPE_ROLE_KEYWORD) != 0)
+		if (strcmp(name, "group") != 0 && strcmp(name, "user") != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("unrecognized key word: \"%s\"", name),
-				errhint("ACL key word must be \"role\".")));
+				errhint("ACL key word must be \"group\" or \"user\".")));
 		s = getid(s, name);		/* move s to the name beyond the keyword */
 		if (name[0] == '\0')
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("missing name"),
-					 errhint("A name must follow the \"role\" key word.")));
+					 errhint("A name must follow the \"group\" or \"user\" key word.")));
 	}
 
 	if (*s != '=')
@@ -378,7 +385,7 @@ aclitemout(PG_FUNCTION_ARGS)
 	HeapTuple	htup;
 	unsigned	i;
 
-	out = palloc(strlen("group =/") +
+	out = palloc(strlen("=/") +
 				 2 * N_ACL_RIGHTS +
 				 2 * (2 * NAMEDATALEN + 2) +
 				 1);
@@ -431,10 +438,6 @@ aclitemout(PG_FUNCTION_ARGS)
 		/* Generate numeric OID if we don't find an entry */
 		sprintf(p, "%u", aip->ai_grantor);
 	}
-
-	while (*p)
-		++p;
-	*p = '\0';
 
 	PG_RETURN_CSTRING(out);
 }
@@ -968,13 +971,13 @@ restart:
  *
  * To determine exactly which of a set of privileges are held:
  *		heldprivs = aclmask(acl, roleid, ownerId, privs, ACLMASK_ALL);
- *
  */
 AclMode
 aclmask(const Acl *acl, Oid roleid, Oid ownerId,
 		AclMode mask, AclMaskHow how)
 {
 	AclMode		result;
+	AclMode		remaining;
 	AclItem    *aidat;
 	int			i,
 				num;
@@ -993,7 +996,7 @@ aclmask(const Acl *acl, Oid roleid, Oid ownerId,
 	result = 0;
 
 	/* Owner always implicitly has all grant options */
-	if (is_member_of_role(roleid,ownerId))
+	if (is_member_of_role(roleid, ownerId))
 	{
 		result = mask & ACLITEM_ALL_GOPTION_BITS;
 		if (result == mask)
@@ -1004,15 +1007,14 @@ aclmask(const Acl *acl, Oid roleid, Oid ownerId,
 	aidat = ACL_DAT(acl);
 
 	/*
-	 * Check privileges granted directly to role, indirectly
-	 * via role membership or to public
+	 * Check privileges granted directly to user or to public
 	 */
 	for (i = 0; i < num; i++)
 	{
 		AclItem    *aidata = &aidat[i];
 
 		if (aidata->ai_grantee == ACL_ID_PUBLIC ||
-			is_member_of_role(roleid, aidata->ai_grantee))
+			aidata->ai_grantee == roleid)
 		{
 			result |= (aidata->ai_privs & mask);
 			if ((how == ACLMASK_ALL) ? (result == mask) : (result != 0))
@@ -1020,24 +1022,33 @@ aclmask(const Acl *acl, Oid roleid, Oid ownerId,
 		}
 	}
 
+	/*
+	 * Check privileges granted indirectly via roles.
+	 * We do this in a separate pass to minimize expensive indirect
+	 * membership tests.  In particular, it's worth testing whether
+	 * a given ACL entry grants any privileges still of interest before
+	 * we perform the is_member test.
+	 */
+	remaining = (mask & ~result);
+	for (i = 0; i < num; i++)
+	{
+		AclItem    *aidata = &aidat[i];
+
+		if (aidata->ai_grantee == ACL_ID_PUBLIC ||
+			aidata->ai_grantee == roleid)
+			continue;			/* already checked it */
+
+		if ((aidata->ai_privs & remaining) &&
+			is_member_of_role(roleid, aidata->ai_grantee))
+		{
+			result |= (aidata->ai_privs & mask);
+			if ((how == ACLMASK_ALL) ? (result == mask) : (result != 0))
+				return result;
+			remaining = (mask & ~result);
+		}
+	}
+
 	return result;
-}
-
-
-/*
- * Is member a member of role?
- * relmemcache includes the role itself too
- */
-bool
-is_member_of_role(Oid member, Oid role)
-{
-	/* Fast path for simple case */
-	if (member == role)
-		return true;
-
-	recomputeRolMemCache(member);
-
-	return list_member_oid(rolmemcache, role);
 }
 
 
@@ -1092,20 +1103,20 @@ makeaclitem(PG_FUNCTION_ARGS)
 	Oid 		grantor = PG_GETARG_OID(1);
 	text	   *privtext = PG_GETARG_TEXT_P(2);
 	bool		goption = PG_GETARG_BOOL(3);
-	AclItem    *aclitem;
+	AclItem    *result;
 	AclMode		priv;
 
 	priv = convert_priv_string(privtext);
 
-	aclitem = (AclItem *) palloc(sizeof(AclItem));
+	result = (AclItem *) palloc(sizeof(AclItem));
 
-	aclitem->ai_grantee = grantee;
-	aclitem->ai_grantor = grantor;
+	result->ai_grantee = grantee;
+	result->ai_grantor = grantor;
 
-	ACLITEM_SET_PRIVS_GOPTIONS(*aclitem, priv,
+	ACLITEM_SET_PRIVS_GOPTIONS(*result, priv,
 							   (goption ? priv : ACL_NO_RIGHTS));
 
-	PG_RETURN_ACLITEM_P(aclitem);
+	PG_RETURN_ACLITEM_P(result);
 }
 
 static AclMode
@@ -1175,7 +1186,6 @@ has_table_privilege_name_name(PG_FUNCTION_ARGS)
 	AclResult	aclresult;
 
 	roleid = get_roleid_checked(NameStr(*rolename));
-
 	tableoid = convert_table_name(tablename);
 	mode = convert_table_priv_string(priv_type_text);
 
@@ -1225,7 +1235,6 @@ has_table_privilege_name_id(PG_FUNCTION_ARGS)
 	AclResult	aclresult;
 
 	roleid = get_roleid_checked(NameStr(*username));
-
 	mode = convert_table_priv_string(priv_type_text);
 
 	aclresult = pg_class_aclcheck(tableoid, roleid, mode);
@@ -1401,7 +1410,6 @@ has_database_privilege_name_name(PG_FUNCTION_ARGS)
 	AclResult	aclresult;
 
 	roleid = get_roleid_checked(NameStr(*username));
-
 	databaseoid = convert_database_name(databasename);
 	mode = convert_database_priv_string(priv_type_text);
 
@@ -1451,7 +1459,6 @@ has_database_privilege_name_id(PG_FUNCTION_ARGS)
 	AclResult	aclresult;
 
 	roleid = get_roleid_checked(NameStr(*username));
-
 	mode = convert_database_priv_string(priv_type_text);
 
 	aclresult = pg_database_aclcheck(databaseoid, roleid, mode);
@@ -1615,7 +1622,6 @@ has_function_privilege_name_name(PG_FUNCTION_ARGS)
 	AclResult	aclresult;
 
 	roleid = get_roleid_checked(NameStr(*username));
-
 	functionoid = convert_function_name(functionname);
 	mode = convert_function_priv_string(priv_type_text);
 
@@ -1665,7 +1671,6 @@ has_function_privilege_name_id(PG_FUNCTION_ARGS)
 	AclResult	aclresult;
 
 	roleid = get_roleid_checked(NameStr(*username));
-
 	mode = convert_function_priv_string(priv_type_text);
 
 	aclresult = pg_proc_aclcheck(functionoid, roleid, mode);
@@ -1821,7 +1826,6 @@ has_language_privilege_name_name(PG_FUNCTION_ARGS)
 	AclResult	aclresult;
 
 	roleid = get_roleid_checked(NameStr(*username));
-
 	languageoid = convert_language_name(languagename);
 	mode = convert_language_priv_string(priv_type_text);
 
@@ -1871,7 +1875,6 @@ has_language_privilege_name_id(PG_FUNCTION_ARGS)
 	AclResult	aclresult;
 
 	roleid = get_roleid_checked(NameStr(*username));
-
 	mode = convert_language_priv_string(priv_type_text);
 
 	aclresult = pg_language_aclcheck(languageoid, roleid, mode);
@@ -2027,7 +2030,6 @@ has_schema_privilege_name_name(PG_FUNCTION_ARGS)
 	AclResult	aclresult;
 
 	roleid = get_roleid_checked(NameStr(*username));
-
 	schemaoid = convert_schema_name(schemaname);
 	mode = convert_schema_priv_string(priv_type_text);
 
@@ -2077,7 +2079,6 @@ has_schema_privilege_name_id(PG_FUNCTION_ARGS)
 	AclResult	aclresult;
 
 	roleid = get_roleid_checked(NameStr(*username));
-
 	mode = convert_schema_priv_string(priv_type_text);
 
 	aclresult = pg_namespace_aclcheck(schemaoid, roleid, mode);
@@ -2237,7 +2238,6 @@ has_tablespace_privilege_name_name(PG_FUNCTION_ARGS)
 	AclResult	aclresult;
 
 	roleid = get_roleid_checked(NameStr(*username));
-
 	tablespaceoid = convert_tablespace_name(tablespacename);
 	mode = convert_tablespace_priv_string(priv_type_text);
 
@@ -2287,7 +2287,6 @@ has_tablespace_privilege_name_id(PG_FUNCTION_ARGS)
 	AclResult	aclresult;
 
 	roleid = get_roleid_checked(NameStr(*username));
-
 	mode = convert_tablespace_priv_string(priv_type_text);
 
 	aclresult = pg_tablespace_aclcheck(tablespaceoid, roleid, mode);
@@ -2413,6 +2412,9 @@ convert_tablespace_priv_string(text *priv_type_text)
 	return ACL_NO_RIGHTS;		/* keep compiler quiet */
 }
 
+/*
+ * initialization function (called by InitPostgres)
+ */
 void
 initialize_acl(void)
 {
@@ -2423,99 +2425,158 @@ initialize_acl(void)
 		 * invalidation of pg_auth_members rows
 		 */
 		CacheRegisterSyscacheCallback(AUTHMEMROLEMEM,
-									  RolMemCacheCallback,
+									  RoleMembershipCacheCallback,
 									  (Datum) 0);
-
-	    /* Force role/member cache to be recomputed on next use */
-	    rolmemcacheValid = false;
 	}
 }
 
 /*
- * RolMemCacheCallback
+ * RoleMembershipCacheCallback
  * 		Syscache inval callback function
  */
 static void
-RolMemCacheCallback(Datum arg, Oid relid)
+RoleMembershipCacheCallback(Datum arg, Oid relid)
 {
-	    /* Force role/member cache to be recomputed on next use */
-	    rolmemcacheValid = false;
+	/* Force membership cache to be recomputed on next use */
+	cached_role = InvalidOid;
 }
 
 
-/* 
- * recomputeRolMemCache - recompute the role/member cache if needed 
+/*
+ * Is member a member of role (directly or indirectly)?
+ *
+ * Since indirect membership testing is relatively expensive, we cache
+ * a list of memberships.
  */
-static void
-recomputeRolMemCache(Oid roleid)
+bool
+is_member_of_role(Oid member, Oid role)
 {
-	int 		i;
-	Oid			memberOid;
-	List 		*roles_list_hunt = NIL;
-	List		*roles_list = NIL;
-	List		*newrolmemcache;
-	CatCList	*memlist;
+	List		*roles_list;
+	ListCell	*l;
+	List		*new_cached_memberships;
 	MemoryContext	oldctx;
 
-	/* Do nothing if rolmemcache is already valid */
-	if (rolmemcacheValid && rolmemRole == roleid)
-		return;
+	/* Fast path for simple case */
+	if (member == role)
+		return true;
 
-	if (rolmemRole != roleid)
-		rolmemcacheValid = false;
+	/* If cache is already valid, just use the list */
+	if (OidIsValid(cached_role) && cached_role == member)
+		return list_member_oid(cached_memberships, role);
 
 	/* 
-	 * Find all the roles which this role is a member of,
-	 * including multi-level recursion
+	 * Find all the roles that member is a member of,
+	 * including multi-level recursion.  The role itself will always
+	 * be the first element of the resulting list.
+	 *
+	 * Each element of the list is scanned to see if it adds any indirect
+	 * memberships.  We can use a single list as both the record of
+	 * already-found memberships and the agenda of roles yet to be scanned.
+	 * This is a bit tricky but works because the foreach() macro doesn't
+	 * fetch the next list element until the bottom of the loop.
 	 */
+	roles_list = list_make1_oid(member);
 
-	/*
-	 * Include the current role itself to simplify checks
-	 * later on, also should be at the head so lookup should
-	 * be fast.
-	 */
-	roles_list = lappend_oid(roles_list, roleid);
-	roles_list_hunt = lappend_oid(roles_list_hunt, roleid);
-	
-	while (roles_list_hunt)
+	foreach(l, roles_list)
 	{
-		memberOid = linitial_oid(roles_list_hunt);
-		memlist = SearchSysCacheList(AUTHMEMMEMROLE, 1,
-									 ObjectIdGetDatum(memberOid),
-									 0, 0, 0);
-		for (i = 0; i < memlist->n_members; i++) {
-			HeapTuple roletup = &memlist->members[i]->tuple;
-			Form_pg_auth_members rolemem = (Form_pg_auth_members) GETSTRUCT(roletup);
+		Oid		memberid = lfirst_oid(l);
+		CatCList	*memlist;
+		int 		i;
 
-			if (!list_member_oid(roles_list,rolemem->roleid)) {
-				roles_list = lappend_oid(roles_list,rolemem->roleid);
-				roles_list_hunt = lappend_oid(roles_list_hunt,rolemem->roleid);
-			}
+		/* Find roles that memberid is directly a member of */
+		memlist = SearchSysCacheList(AUTHMEMMEMROLE, 1,
+									 ObjectIdGetDatum(memberid),
+									 0, 0, 0);
+		for (i = 0; i < memlist->n_members; i++)
+		{
+			HeapTuple	tup = &memlist->members[i]->tuple;
+			Oid		otherid = ((Form_pg_auth_members) GETSTRUCT(tup))->roleid;
+
+			/*
+			 * Even though there shouldn't be any loops in the membership
+			 * graph, we must test for having already seen this role.
+			 * It is legal for instance to have both A->B and A->C->B.
+			 */
+			if (!list_member_oid(roles_list, otherid))
+				roles_list = lappend_oid(roles_list, otherid);
 		}
-		roles_list_hunt = list_delete_oid(roles_list_hunt, memberOid);
 		ReleaseSysCacheList(memlist);
 	}
 
 	/*
-	 * Now that we've built the list of role Oids this
-	 * role is a member of, save it in permanent storage
+	 * Copy the completed list into TopMemoryContext so it will persist.
 	 */
 	oldctx = MemoryContextSwitchTo(TopMemoryContext);
-	newrolmemcache = list_copy(roles_list);
+	new_cached_memberships = list_copy(roles_list);
 	MemoryContextSwitchTo(oldctx);
+	list_free(roles_list);
 
 	/*
 	 * Now safe to assign to state variable
 	 */
-	list_free(rolmemcache);
-	rolmemcache = newrolmemcache;
+	cached_role = InvalidOid;	/* just paranoia */
+	list_free(cached_memberships);
+	cached_memberships = new_cached_memberships;
+	cached_role = member;
 
-	/*
-	 * Mark as valid
+	/* And now we can return the answer */
+	return list_member_oid(cached_memberships, role);
+}
+
+
+/*
+ * Is member an admin of role (directly or indirectly)?  That is, is it
+ * a member WITH ADMIN OPTION?
+ *
+ * We could cache the result as for is_member_of_role, but currently this
+ * is not used in any performance-critical paths, so we don't.
+ */
+bool
+is_admin_of_role(Oid member, Oid role)
+{
+	bool		result = false;
+	List		*roles_list;
+	ListCell	*l;
+
+	/* 
+	 * Find all the roles that member is a member of,
+	 * including multi-level recursion.  We build a list in the same way
+	 * that is_member_of_role does to track visited and unvisited roles.
 	 */
-	rolmemRole = roleid;
-	rolmemcacheValid = true;
+	roles_list = list_make1_oid(member);
 
-	/* Clean up */
+	foreach(l, roles_list)
+	{
+		Oid		memberid = lfirst_oid(l);
+		CatCList	*memlist;
+		int 		i;
+
+		/* Find roles that memberid is directly a member of */
+		memlist = SearchSysCacheList(AUTHMEMMEMROLE, 1,
+									 ObjectIdGetDatum(memberid),
+									 0, 0, 0);
+		for (i = 0; i < memlist->n_members; i++)
+		{
+			HeapTuple	tup = &memlist->members[i]->tuple;
+			Oid		otherid = ((Form_pg_auth_members) GETSTRUCT(tup))->roleid;
+
+			if (otherid == role &&
+				((Form_pg_auth_members) GETSTRUCT(tup))->admin_option)
+			{
+				/* Found what we came for, so can stop searching */
+				result = true;
+				break;
+			}
+
+			if (!list_member_oid(roles_list, otherid))
+				roles_list = lappend_oid(roles_list, otherid);
+		}
+		ReleaseSysCacheList(memlist);
+		if (result)
+			break;
+	}
+
 	list_free(roles_list);
+
+	return result;
 }

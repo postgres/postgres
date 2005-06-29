@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.500 2005/06/28 19:51:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.501 2005/06/29 20:34:13 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -376,7 +376,7 @@ static void doNegateFloat(Value *v);
 	MATCH MAXVALUE MINUTE_P MINVALUE MODE MONTH_P MOVE
 
 	NAMES NATIONAL NATURAL NCHAR NEW NEXT NO NOCREATEDB
-	NOCREATEROLE NOCREATEUSER NOLOGIN_P NONE NOT NOTHING NOTIFY
+	NOCREATEROLE NOCREATEUSER NOLOGIN_P NONE NOSUPERUSER NOT NOTHING NOTIFY
 	NOTNULL NOWAIT NULL_P NULLIF NUMERIC
 
 	OBJECT_P OF OFF OFFSET OIDS OLD ON ONLY OPERATOR OPTION OR
@@ -395,7 +395,7 @@ static void doNegateFloat(Value *v);
 	SAVEPOINT SCHEMA SCROLL SECOND_P SECURITY SELECT SEQUENCE
 	SERIALIZABLE SESSION SESSION_USER SET SETOF SHARE
 	SHOW SIMILAR SIMPLE SMALLINT SOME STABLE START STATEMENT
-	STATISTICS STDIN STDOUT STORAGE STRICT_P SUBSTRING SYMMETRIC
+	STATISTICS STDIN STDOUT STORAGE STRICT_P SUBSTRING SUPERUSER_P SYMMETRIC
 	SYSID SYSTEM_P
 
 	TABLE TABLESPACE TEMP TEMPLATE TEMPORARY THEN TIME TIMESTAMP
@@ -622,6 +622,14 @@ OptRoleElem:
 				{
 					$$ = makeDefElem("sysid", (Node *)makeInteger($2));
 				}
+			| SUPERUSER_P
+				{
+					$$ = makeDefElem("superuser", (Node *)makeInteger(TRUE));
+				}
+			| NOSUPERUSER
+				{
+					$$ = makeDefElem("superuser", (Node *)makeInteger(FALSE));
+				}
 			| CREATEDB
 				{
 					$$ = makeDefElem("createdb", (Node *)makeInteger(TRUE));
@@ -634,21 +642,22 @@ OptRoleElem:
 				{
 					$$ = makeDefElem("createrole", (Node *)makeInteger(TRUE));
 				}
-			| CREATEUSER
-				{
-					$$ = makeDefElem("createrole", (Node *)makeInteger(TRUE));
-				}
-			| LOGIN_P
-				{
-					$$ = makeDefElem("canlogin", (Node *)makeInteger(TRUE));
-				}
 			| NOCREATEROLE
 				{
 					$$ = makeDefElem("createrole", (Node *)makeInteger(FALSE));
 				}
+			| CREATEUSER
+				{
+					/* For backwards compatibility, synonym for SUPERUSER */
+					$$ = makeDefElem("superuser", (Node *)makeInteger(TRUE));
+				}
 			| NOCREATEUSER
 				{
-					$$ = makeDefElem("createrole", (Node *)makeInteger(FALSE));
+					$$ = makeDefElem("superuser", (Node *)makeInteger(FALSE));
+				}
+			| LOGIN_P
+				{
+					$$ = makeDefElem("canlogin", (Node *)makeInteger(TRUE));
 				}
 			| NOLOGIN_P
 				{
@@ -8013,6 +8022,7 @@ unreserved_keyword:
 			| NOCREATEROLE
 			| NOCREATEUSER
 			| NOLOGIN_P
+			| NOSUPERUSER
 			| NOTHING
 			| NOTIFY
 			| NOWAIT
@@ -8068,6 +8078,7 @@ unreserved_keyword:
 			| STDIN
 			| STDOUT
 			| STORAGE
+			| SUPERUSER_P
 			| SYSID
 			| SYSTEM_P
 			| STRICT_P

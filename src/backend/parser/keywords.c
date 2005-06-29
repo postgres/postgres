@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.161 2005/06/28 19:51:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.162 2005/06/29 20:34:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -221,6 +221,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"nocreateuser", NOCREATEUSER},
 	{"nologin", NOLOGIN_P},
 	{"none", NONE},
+	{"nosuperuser", NOSUPERUSER},
 	{"not", NOT},
 	{"nothing", NOTHING},
 	{"notify", NOTIFY},
@@ -308,6 +309,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"storage", STORAGE},
 	{"strict", STRICT_P},
 	{"substring", SUBSTRING},
+	{"superuser", SUPERUSER_P},
 	{"symmetric", SYMMETRIC},
 	{"sysid", SYSID},
 	{"system", SYSTEM_P},

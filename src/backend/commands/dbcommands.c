@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.162 2005/06/28 05:08:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.163 2005/06/29 20:34:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -194,8 +194,8 @@ createdb(const CreatedbStmt *stmt)
 
 	if (is_member_of_role(GetUserId(), datdba))
 	{
-		/* creating database for self: can be superuser or createdb */
-		if (!superuser() && !have_createdb_privilege())
+		/* creating database for self: createdb is required */
+		if (!have_createdb_privilege())
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("permission denied to create database")));
@@ -759,7 +759,7 @@ RenameDatabase(const char *oldname, const char *newname)
 					   oldname);
 
 	/* must have createdb rights */
-	if (!superuser() && !have_createdb_privilege())
+	if (!have_createdb_privilege())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied to rename database")));
@@ -1043,6 +1043,10 @@ have_createdb_privilege(void)
 {
 	bool		result = false;
 	HeapTuple	utup;
+
+	/* Superusers can always do everything */
+	if (superuser())
+		return true;
 
 	utup = SearchSysCache(AUTHOID,
 						  ObjectIdGetDatum(GetUserId()),
