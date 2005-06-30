@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.456 2005/06/29 22:51:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.457 2005/06/30 10:02:22 petere Exp $
  *
  * NOTES
  *
@@ -711,6 +711,7 @@ PostmasterMain(int argc, char *argv[])
 		char	   *rawstring;
 		List	   *elemlist;
 		ListCell   *l;
+		int			success = 0;
 
 		/* Need a modifiable copy of ListenAddresses */
 		rawstring = pstrdup(ListenAddresses);
@@ -738,11 +739,17 @@ PostmasterMain(int argc, char *argv[])
 										  (unsigned short) PostPortNumber,
 										  UnixSocketDir,
 										  ListenSocket, MAXLISTEN);
-			if (status != STATUS_OK)
+			if (status == STATUS_OK)
+				success++;
+			else
 				ereport(WARNING,
 					 (errmsg("could not create listen socket for \"%s\"",
 							 curhost)));
 		}
+
+		if (!success && list_length(elemlist))
+			ereport(FATAL,
+					(errmsg("could not create any TCP/IP sockets")));
 
 		list_free(elemlist);
 		pfree(rawstring);
