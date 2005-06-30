@@ -1,8 +1,8 @@
 #include "sqltypes.h"
 
-void openit(void);
+static void openit(void);
 
-int main()
+int main(void)
 {
 	$int i = 14; 
 	$decimal j, m, n;
@@ -73,7 +73,7 @@ int main()
 	return 0;
 }
 
-void openit(void)
+static void openit(void)
 {
 	$open c;
 }

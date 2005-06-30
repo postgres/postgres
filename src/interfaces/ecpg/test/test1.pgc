@@ -27,7 +27,7 @@ exec sql type intarray is int[AMOUNT];
 typedef int intarray[AMOUNT];
 
 int
-main ()
+main(void)
 {
 exec sql begin declare section;
 exec sql ifdef NAMELEN;

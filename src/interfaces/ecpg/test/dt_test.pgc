@@ -6,7 +6,7 @@
 #include <pgtypes_interval.h>
 
 int
-main()
+main(void)
 {
 	exec sql begin declare section;
 		date date1;

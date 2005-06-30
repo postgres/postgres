@@ -7,7 +7,7 @@ exec sql whenever sqlerror sqlprint;
 exec sql include sqlca;
 
 int
-main ()
+main (void)
 {
 EXEC SQL BEGIN DECLARE SECTION;
 	int i = 1;

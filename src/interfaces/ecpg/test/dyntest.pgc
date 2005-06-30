@@ -2,7 +2,7 @@
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/test/dyntest.pgc,v 1.10 2003/11/29 19:52:09 pgsql Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/test/dyntest.pgc,v 1.11 2005/06/30 07:08:59 neilc Exp $
  */
 
 #include <stdio.h>
@@ -12,7 +12,7 @@
 exec sql include sql3types;
 exec sql include sqlca;
 
-static void error()
+static void error(void)
 {  printf("#%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
    exit(1);
 }

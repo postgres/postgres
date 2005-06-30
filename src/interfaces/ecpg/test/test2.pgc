@@ -16,7 +16,7 @@ exec sql declare cur cursor for
        select name, born, age, married, children from meskes;
 
 int
-main ()
+main (void)
 {
 	exec sql struct birthinfo { long born; short age; };
 exec sql begin declare section;

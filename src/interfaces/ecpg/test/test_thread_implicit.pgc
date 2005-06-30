@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
     }
   for( n = 0; n < nthreads; n++ )
     {
-      pthread_create(&threads[n], NULL, test_thread, (void *)n + 1);
+      pthread_create(&threads[n], NULL, test_thread, (void *) (n + 1));
     }
 
   /* wait for thread completion */

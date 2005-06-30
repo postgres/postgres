@@ -14,7 +14,7 @@ struct TBempl
    };
 EXEC SQL END DECLARE SECTION;
 
-int main()
+int main(void)
 {
 EXEC SQL BEGIN DECLARE SECTION;
 struct TBempl empl;

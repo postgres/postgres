@@ -1,7 +1,7 @@
 EXEC SQL WHENEVER SQLERROR SQLPRINT;
 
 int
-main()
+main(void)
 {
 	EXEC SQL BEGIN DECLARE SECTION;
 	char *stmt1 = "INSERT INTO test1 VALUES (?, ?)";

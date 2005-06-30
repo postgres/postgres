@@ -21,7 +21,7 @@ print_result(long sec, long usec, char *text)
 }
 
 int
-main ()
+main (void)
 {
 exec sql begin declare section;
 	long i;

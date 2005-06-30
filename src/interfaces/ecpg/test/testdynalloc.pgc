@@ -2,7 +2,7 @@
 exec sql include sqlca;
 #include <stdlib.h>
 
-int main()
+int main(void)
 {  
    exec sql begin declare section;
    char **cpp=0;

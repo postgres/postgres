@@ -3,7 +3,7 @@
 #include <decimal.h>
 
 int
-main()
+main(void)
 {
 	char *text="error\n";
 	numeric *value1, *value2, *res;

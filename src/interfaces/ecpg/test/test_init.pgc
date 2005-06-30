@@ -1,6 +1,6 @@
 exec sql include sqlca;
 
-int fa() { return 2; }
+int fa(void) { return 2; }
 int fb(int x) { return x; }
 int fc(const char *x) { return *x; }
 int fd(const char *x,int i) { return (*x)*i; }
@@ -22,7 +22,7 @@ namespace N
 };
 #endif
 
-int main()
+int main(void)
 { struct sa x,*y;
 exec sql begin declare section;
 int a=(int)2;

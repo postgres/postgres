@@ -9,7 +9,7 @@ exec sql type str is varchar[10];
 #include <string.h>
 
 int
-main ()
+main (void)
 {
 exec sql begin declare section;
 	typedef struct { long born; short age; } birthinfo;
