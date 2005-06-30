@@ -2,18 +2,14 @@
 
 #include "extern.h"
 
+/* Return value is zero-filled. */
 char *
 pgtypes_alloc(long size)
 {
 	char	   *new = (char *) calloc(1L, size);
 
 	if (!new)
-	{
 		errno = ENOMEM;
-		return NULL;
-	}
-
-	memset(new, '\0', size);
 	return (new);
 }
 
