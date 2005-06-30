@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.127 2005/06/29 22:51:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.128 2005/06/30 03:48:58 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include <math.h>
 #include <float.h>
 #include <limits.h>
+#include <sys/time.h>
 
 #include "access/hash.h"
 #include "access/xact.h"
