@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.9 2005/02/03 23:38:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.10 2005/06/30 03:03:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,16 +36,17 @@ static const int oldObjectTypePriority[] =
 	5,							/* DO_CONVERSION */
 	6,							/* DO_TABLE */
 	8,							/* DO_ATTRDEF */
-	12,							/* DO_INDEX */
-	13,							/* DO_RULE */
-	14,							/* DO_TRIGGER */
-	11,							/* DO_CONSTRAINT */
-	15,							/* DO_FK_CONSTRAINT */
+	13,							/* DO_INDEX */
+	14,							/* DO_RULE */
+	15,							/* DO_TRIGGER */
+	12,							/* DO_CONSTRAINT */
+	16,							/* DO_FK_CONSTRAINT */
 	2,							/* DO_PROCLANG */
 	2,							/* DO_CAST */
 	9,							/* DO_TABLE_DATA */
 	7,							/* DO_TABLE_TYPE */
-	10							/* DO_BLOBS */
+	10,							/* DO_BLOBS */
+	11							/* DO_BLOB_COMMENTS */
 };
 
 /*
@@ -63,16 +64,17 @@ static const int newObjectTypePriority[] =
 	9,							/* DO_CONVERSION */
 	10,							/* DO_TABLE */
 	12,							/* DO_ATTRDEF */
-	16,							/* DO_INDEX */
-	17,							/* DO_RULE */
-	18,							/* DO_TRIGGER */
-	15,							/* DO_CONSTRAINT */
-	19,							/* DO_FK_CONSTRAINT */
+	17,							/* DO_INDEX */
+	18,							/* DO_RULE */
+	19,							/* DO_TRIGGER */
+	16,							/* DO_CONSTRAINT */
+	20,							/* DO_FK_CONSTRAINT */
 	2,							/* DO_PROCLANG */
 	8,							/* DO_CAST */
 	13,							/* DO_TABLE_DATA */
 	11,							/* DO_TABLE_TYPE */
-	14							/* DO_BLOBS */
+	14,							/* DO_BLOBS */
+	15							/* DO_BLOB_COMMENTS */
 };
 
 
@@ -1070,6 +1072,11 @@ describeDumpableObject(DumpableObject *obj, char *buf, int bufsize)
 		case DO_BLOBS:
 			snprintf(buf, bufsize,
 					 "BLOBS  (ID %d)",
+					 obj->dumpId);
+			return;
+		case DO_BLOB_COMMENTS:
+			snprintf(buf, bufsize,
+					 "BLOB COMMENTS  (ID %d)",
 					 obj->dumpId);
 			return;
 	}

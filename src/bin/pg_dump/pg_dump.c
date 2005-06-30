@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.410 2005/06/21 20:45:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.411 2005/06/30 03:02:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,7 +163,9 @@ static void selectSourceSchema(const char *schemaName);
 static char *getFormattedTypeName(Oid oid, OidOptions opts);
 static char *myFormatType(const char *typname, int32 typmod);
 static const char *fmtQualifiedId(const char *schema, const char *id);
+static bool hasBlobs(Archive *AH);
 static int	dumpBlobs(Archive *AH, void *arg);
+static int	dumpBlobComments(Archive *AH, void *arg);
 static void dumpDatabase(Archive *AH);
 static void dumpEncoding(Archive *AH);
 static const char *getAttrName(int attrnum, TableInfo *tblInfo);
@@ -344,6 +346,7 @@ main(int argc, char **argv)
 
 			case 's':			/* dump schema only */
 				schemaOnly = true;
+				outputBlobs = false;
 				break;
 
 			case 'S':			/* Username for superuser in plain text
@@ -539,9 +542,9 @@ main(int argc, char **argv)
 	if (!schemaOnly)
 		getTableData(tblinfo, numTables, oids);
 
-	if (outputBlobs)
+	if (outputBlobs && hasBlobs(g_fout))
 	{
-		/* This is just a placeholder to allow correct sorting of blobs */
+		/* Add placeholders to allow correct sorting of blobs */
 		DumpableObject *blobobj;
 
 		blobobj = (DumpableObject *) malloc(sizeof(DumpableObject));
@@ -549,6 +552,12 @@ main(int argc, char **argv)
 		blobobj->catId = nilCatalogId;
 		AssignDumpId(blobobj);
 		blobobj->name = strdup("BLOBS");
+
+		blobobj = (DumpableObject *) malloc(sizeof(DumpableObject));
+		blobobj->objType = DO_BLOB_COMMENTS;
+		blobobj->catId = nilCatalogId;
+		AssignDumpId(blobobj);
+		blobobj->name = strdup("BLOB COMMENTS");
 	}
 
 	/*
@@ -1314,21 +1323,48 @@ dumpEncoding(Archive *AH)
 
 
 /*
+ * hasBlobs:
+ *	Test whether database contains any large objects
+ */
+static bool
+hasBlobs(Archive *AH)
+{
+	bool		result;
+	const char *blobQry;
+	PGresult   *res;
+
+	/* Make sure we are in proper schema */
+	selectSourceSchema("pg_catalog");
+
+	/* Check for BLOB OIDs */
+	if (AH->remoteVersion >= 70100)
+		blobQry = "SELECT loid FROM pg_largeobject LIMIT 1";
+	else
+		blobQry = "SELECT oid FROM pg_class WHERE relkind = 'l' LIMIT 1";
+
+	res = PQexec(g_conn, blobQry);
+	check_sql_result(res, g_conn, blobQry, PGRES_TUPLES_OK);
+
+	result = PQntuples(res) > 0;
+
+	PQclear(res);
+
+	return result;
+}
+
+/*
  * dumpBlobs:
  *	dump all blobs
- *
  */
 static int
 dumpBlobs(Archive *AH, void *arg)
 {
-	PQExpBuffer oidQry = createPQExpBuffer();
-	PQExpBuffer oidFetchQry = createPQExpBuffer();
+	const char *blobQry;
+	const char *blobFetchQry;
 	PGresult   *res;
-	int			i;
-	int			loFd;
 	char		buf[LOBBUFSIZE];
+	int			i;
 	int			cnt;
-	Oid			blobOid;
 
 	if (g_verbose)
 		write_msg(NULL, "saving large objects\n");
@@ -1336,29 +1372,32 @@ dumpBlobs(Archive *AH, void *arg)
 	/* Make sure we are in proper schema */
 	selectSourceSchema("pg_catalog");
 
-	/* Cursor to get all BLOB tables */
+	/* Cursor to get all BLOB OIDs */
 	if (AH->remoteVersion >= 70100)
-		appendPQExpBuffer(oidQry, "DECLARE bloboid CURSOR FOR SELECT DISTINCT loid FROM pg_largeobject");
+		blobQry = "DECLARE bloboid CURSOR FOR SELECT DISTINCT loid FROM pg_largeobject";
 	else
-		appendPQExpBuffer(oidQry, "DECLARE bloboid CURSOR FOR SELECT oid FROM pg_class WHERE relkind = 'l'");
+		blobQry = "DECLARE bloboid CURSOR FOR SELECT oid FROM pg_class WHERE relkind = 'l'";
 
-	res = PQexec(g_conn, oidQry->data);
-	check_sql_result(res, g_conn, oidQry->data, PGRES_COMMAND_OK);
+	res = PQexec(g_conn, blobQry);
+	check_sql_result(res, g_conn, blobQry, PGRES_COMMAND_OK);
 
-	/* Fetch for cursor */
-	appendPQExpBuffer(oidFetchQry, "FETCH 1000 IN bloboid");
+	/* Command to fetch from cursor */
+	blobFetchQry = "FETCH 1000 IN bloboid";
 
 	do
 	{
 		PQclear(res);
 
 		/* Do a fetch */
-		res = PQexec(g_conn, oidFetchQry->data);
-		check_sql_result(res, g_conn, oidFetchQry->data, PGRES_TUPLES_OK);
+		res = PQexec(g_conn, blobFetchQry);
+		check_sql_result(res, g_conn, blobFetchQry, PGRES_TUPLES_OK);
 
 		/* Process the tuples, if any */
 		for (i = 0; i < PQntuples(res); i++)
 		{
+			Oid			blobOid;
+			int			loFd;
+
 			blobOid = atooid(PQgetvalue(res, i, 0));
 			/* Open the BLOB */
 			loFd = lo_open(g_conn, blobOid, INV_READ);
@@ -1393,8 +1432,81 @@ dumpBlobs(Archive *AH, void *arg)
 
 	PQclear(res);
 
-	destroyPQExpBuffer(oidQry);
-	destroyPQExpBuffer(oidFetchQry);
+	return 1;
+}
+
+/*
+ * dumpBlobComments
+ *	dump all blob comments
+ *
+ * Since we don't provide any way to be selective about dumping blobs,
+ * there's no need to be selective about their comments either.  We put
+ * all the comments into one big TOC entry.
+ */
+static int
+dumpBlobComments(Archive *AH, void *arg)
+{
+	const char *blobQry;
+	const char *blobFetchQry;
+	PQExpBuffer commentcmd = createPQExpBuffer();
+	PGresult   *res;
+	int			i;
+
+	if (g_verbose)
+		write_msg(NULL, "saving large object comments\n");
+
+	/* Make sure we are in proper schema */
+	selectSourceSchema("pg_catalog");
+
+	/* Cursor to get all BLOB comments */
+	if (AH->remoteVersion >= 70200)
+		blobQry = "DECLARE blobcmt CURSOR FOR SELECT DISTINCT loid, obj_description(loid, 'pg_largeobject') FROM pg_largeobject";
+	else if (AH->remoteVersion >= 70100)
+		blobQry = "DECLARE blobcmt CURSOR FOR SELECT DISTINCT loid, obj_description(loid) FROM pg_largeobject";
+	else
+		blobQry = "DECLARE blobcmt CURSOR FOR SELECT oid, (SELECT description FROM pg_description pd WHERE pd.objoid=pc.oid) FROM pg_class pc WHERE relkind = 'l'";
+
+	res = PQexec(g_conn, blobQry);
+	check_sql_result(res, g_conn, blobQry, PGRES_COMMAND_OK);
+
+	/* Command to fetch from cursor */
+	blobFetchQry = "FETCH 100 IN blobcmt";
+
+	do
+	{
+		PQclear(res);
+
+		/* Do a fetch */
+		res = PQexec(g_conn, blobFetchQry);
+		check_sql_result(res, g_conn, blobFetchQry, PGRES_TUPLES_OK);
+
+		/* Process the tuples, if any */
+		for (i = 0; i < PQntuples(res); i++)
+		{
+			Oid		blobOid;
+			char	*comment;
+
+			/* ignore blobs without comments */
+			if (PQgetisnull(res, i, 1))
+				continue;
+
+			blobOid = atooid(PQgetvalue(res, i, 0));
+			comment = PQgetvalue(res, i, 1);
+
+			printfPQExpBuffer(commentcmd, "COMMENT ON LARGE OBJECT %u IS ",
+							  blobOid);
+			appendStringLiteral(commentcmd, comment, false);
+			appendPQExpBuffer(commentcmd, ";\n");
+
+			archputs(commentcmd->data, AH);
+		}
+	} while (PQntuples(res) > 0);
+
+	PQclear(res);
+
+	archputs("\n", AH);
+
+	destroyPQExpBuffer(commentcmd);
 
 	return 1;
 }
@@ -4355,6 +4467,13 @@ dumpDumpableObject(Archive *fout, DumpableObject *dobj)
 						 false, "BLOBS", "", "", NULL,
 						 NULL, 0,
 						 dumpBlobs, NULL);
+			break;
+		case DO_BLOB_COMMENTS:
+			ArchiveEntry(fout, dobj->catId, dobj->dumpId,
+						 dobj->name, NULL, NULL, "",
+						 false, "BLOB COMMENTS", "", "", NULL,
+						 NULL, 0,
+						 dumpBlobComments, NULL);
 			break;
 	}
 }

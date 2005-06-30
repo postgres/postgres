@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.115 2004/12/31 22:03:08 pgsql Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.116 2005/06/30 03:03:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,8 @@ typedef enum
 	DO_CAST,
 	DO_TABLE_DATA,
 	DO_TABLE_TYPE,
-	DO_BLOBS
+	DO_BLOBS,
+	DO_BLOB_COMMENTS
 } DumpableObjectType;
 
 typedef struct _dumpableObject
