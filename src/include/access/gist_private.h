@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.6 2005/06/27 12:45:22 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.7 2005/06/30 17:52:14 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -234,7 +234,7 @@ extern IndexTuple * gistSplit(Relation r, Buffer buffer, IndexTuple *itup,
                   int *len, SplitedPageLayout    **dist, GISTSTATE *giststate);
 
 extern GISTInsertStack* gistFindPath( Relation r, BlockNumber child, 
-	Buffer  (*myReadBuffer)(bool, Relation, BlockNumber) );
+	Buffer  (*myReadBuffer)(Relation, BlockNumber) );
 /* gistxlog.c */
 extern void gist_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void gist_desc(char *buf, uint8 xl_info, char *rec);

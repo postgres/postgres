@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *          $PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.4 2005/06/28 15:51:00 teodor Exp $
+ *          $PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.5 2005/06/30 17:52:14 teodor Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -809,8 +809,6 @@ GISTInitBuffer(Buffer b, uint32 f)
 
 	opaque = GistPageGetOpaque(page);
 	opaque->flags = f;
-	opaque->nsplited = 0;
-	opaque->level = 0;
 	opaque->rightlink = InvalidBlockNumber;
 	memset( &(opaque->nsn), 0, sizeof(GistNSN) );
 }

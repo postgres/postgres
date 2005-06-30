@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.124 2005/06/29 14:06:14 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.125 2005/06/30 17:52:13 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -587,7 +587,7 @@ gistfindleaf(GISTInsertState *state, GISTSTATE *giststate)
  * Should have the same interface as XLogReadBuffer
  */
 static Buffer
-gistReadAndLockBuffer( bool unused, Relation r, BlockNumber blkno ) {
+gistReadAndLockBuffer( Relation r, BlockNumber blkno ) {
 	Buffer	buffer = ReadBuffer( r, blkno );
 	LockBuffer( buffer, GIST_SHARE );
 	return buffer;	
@@ -601,7 +601,7 @@ gistReadAndLockBuffer( bool unused, Relation r, BlockNumber blkno ) {
  * returns from the begining of closest parent; 
  */
 GISTInsertStack*
-gistFindPath( Relation r, BlockNumber child, Buffer  (*myReadBuffer)(bool, Relation, BlockNumber) ) {
+gistFindPath( Relation r, BlockNumber child, Buffer  (*myReadBuffer)(Relation, BlockNumber) ) {
 	Page	page;
 	Buffer	buffer;
 	OffsetNumber i, maxoff;
@@ -614,9 +614,15 @@ gistFindPath( Relation r, BlockNumber child, Buffer  (*myReadBuffer)(bool, Relat
 	top->blkno = GIST_ROOT_BLKNO;
 
 	while( top && top->blkno != child ) {
-		buffer = myReadBuffer(false, r, top->blkno); /* buffer locked */
+		buffer = myReadBuffer(r, top->blkno); /* buffer locked */
 		page = (Page)BufferGetPage( buffer );
-		Assert( !GistPageIsLeaf(page) );	
+
+		if ( GistPageIsLeaf(page) ) {
+			/* we can safety go away, follows only leaf pages */
+			LockBuffer( buffer, GIST_UNLOCK );
+			ReleaseBuffer( buffer );
+			return NULL;
+		}
 
 		top->lsn = PageGetLSN(page);	
 
@@ -662,7 +668,7 @@ gistFindPath( Relation r, BlockNumber child, Buffer  (*myReadBuffer)(bool, Relat
 				LockBuffer( buffer, GIST_UNLOCK );
 				ReleaseBuffer( buffer );
 				return top;
-			} else if ( GistPageGetOpaque(page)->level> 0 ) {
+			} else  {
 				/* Install next inner page to the end of stack */
 				ptr = (GISTInsertStack*)palloc0( sizeof(GISTInsertStack) );	
 				ptr->blkno = blkno;
@@ -855,11 +861,9 @@ gistSplit(Relation r,
 	OffsetNumber	*realoffset;
 	IndexTuple	*cleaneditup = itup;
 	int	lencleaneditup = *len;
-	int level;
 
 	p = (Page) BufferGetPage(buffer);
 	opaque = GistPageGetOpaque(p);
-	level = opaque->level;
 
 	/*
 	 * The root of the tree is the first block in the relation.  If we're
@@ -872,7 +876,6 @@ gistSplit(Relation r,
 		GISTInitBuffer(leftbuf, opaque->flags&F_LEAF);
 		lbknum = BufferGetBlockNumber(leftbuf);
 		left = (Page) BufferGetPage(leftbuf);
-		GistPageGetOpaque(left)->level = level;
 	}
 	else
 	{
@@ -886,7 +889,6 @@ gistSplit(Relation r,
 	GISTInitBuffer(rightbuf, opaque->flags&F_LEAF);
 	rbknum = BufferGetBlockNumber(rightbuf);
 	right = (Page) BufferGetPage(rightbuf);
-	GistPageGetOpaque(right)->level = level;
 
 	/* generate the item array */
 	realoffset = palloc((*len + 1) * sizeof(OffsetNumber));
@@ -1068,13 +1070,10 @@ void
 gistnewroot(Relation r, Buffer buffer, IndexTuple *itup, int len, ItemPointer key)
 {
 	Page		page;
-	int		level;
 
 	Assert( BufferGetBlockNumber(buffer) == GIST_ROOT_BLKNO );
 	page = BufferGetPage(buffer);
-	level = GistPageGetOpaque(page)->level;
 	GISTInitBuffer(buffer, 0);
-	GistPageGetOpaque(page)->level = level+1;
 
 	gistfillbuffer(r, page, itup, len, FirstOffsetNumber);
 	if ( !r->rd_istemp ) {

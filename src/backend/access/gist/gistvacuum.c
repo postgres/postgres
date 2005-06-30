@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.5 2005/06/29 14:06:14 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.6 2005/06/30 17:52:14 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,6 @@ gistVacuumUpdate( GistVacuum *gv, BlockNumber blkno, bool needunion ) {
 	buffer = ReadBuffer(gv->index, blkno);
 	page = (Page) BufferGetPage(buffer);
 	maxoff = PageGetMaxOffsetNumber(page);
-
 
 	if ( GistPageIsLeaf(page) ) {
 		if ( GistTuplesDeleted(page) ) {
