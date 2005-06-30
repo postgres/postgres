@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.163 2005/06/29 20:34:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.164 2005/06/30 00:00:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -542,7 +542,7 @@ createdb(const CreatedbStmt *stmt)
 	 * Perhaps if we ever implement CREATE DATABASE in a less cheesy
 	 * way, we can avoid this.
 	 */
-	RequestCheckpoint(true);
+	RequestCheckpoint(true, false);
 
 	/*
 	 * Set flag to update flat database file at commit.
@@ -668,7 +668,7 @@ dropdb(const char *dbname)
 	 * open files, which would cause rmdir() to fail.
 	 */
 #ifdef WIN32
-	RequestCheckpoint(true);
+	RequestCheckpoint(true, false);
 #endif
 
 	/*

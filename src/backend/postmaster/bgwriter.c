@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.16 2005/05/28 17:21:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.17 2005/06/30 00:00:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,8 +86,14 @@
  *	6. If ckpt_failed is different from the originally saved value,
  *	   assume request failed; otherwise it was definitely successful.
  *
+ * An additional field is ckpt_time_warn; this is also sig_atomic_t for
+ * simplicity, but is only used as a boolean.  If a backend is requesting
+ * a checkpoint for which a checkpoints-too-close-together warning is
+ * reasonable, it should set this field TRUE just before sending the signal.
+ *
  * The requests array holds fsync requests sent by backends and not yet
- * absorbed by the bgwriter.
+ * absorbed by the bgwriter.  Unlike the checkpoint fields, the requests
+ * fields are protected by BgWriterCommLock.
  *----------
  */
 typedef struct
@@ -104,6 +110,8 @@ typedef struct
 	sig_atomic_t ckpt_started;	/* advances when checkpoint starts */
 	sig_atomic_t ckpt_done;		/* advances when checkpoint done */
 	sig_atomic_t ckpt_failed;	/* advances when checkpoint fails */
+
+	sig_atomic_t ckpt_time_warn;	/* warn if too soon since last ckpt? */
 
 	int			num_requests;	/* current # of requests */
 	int			max_requests;	/* allocated array size */
@@ -319,20 +327,20 @@ BackgroundWriterMain(void)
 		 */
 		if (do_checkpoint)
 		{
-			if (CheckPointWarning != 0)
-			{
-				/*
-				 * Ideally we should only warn if this checkpoint was
-				 * requested due to running out of segment files, and not
-				 * if it was manually requested.  However we can't tell
-				 * the difference with the current signalling mechanism.
-				 */
-				if (elapsed_secs < CheckPointWarning)
-					ereport(LOG,
-							(errmsg("checkpoints are occurring too frequently (%d seconds apart)",
-									elapsed_secs),
-							 errhint("Consider increasing the configuration parameter \"checkpoint_segments\".")));
-			}
+			/*
+			 * We will warn if (a) too soon since last checkpoint (whatever
+			 * caused it) and (b) somebody has set the ckpt_time_warn flag
+			 * since the last checkpoint start.  Note in particular that
+			 * this implementation will not generate warnings caused by
+			 * CheckPointTimeout < CheckPointWarning.
+			 */
+			if (BgWriterShmem->ckpt_time_warn &&
+				elapsed_secs < CheckPointWarning)
+				ereport(LOG,
+						(errmsg("checkpoints are occurring too frequently (%d seconds apart)",
+								elapsed_secs),
+						 errhint("Consider increasing the configuration parameter \"checkpoint_segments\".")));
+			BgWriterShmem->ckpt_time_warn = false;
 
 			/*
 			 * Indicate checkpoint start to any waiting backends.
@@ -497,9 +505,13 @@ BgWriterShmemInit(void)
  * If waitforit is true, wait until the checkpoint is completed
  * before returning; otherwise, just signal the request and return
  * immediately.
+ *
+ * If warnontime is true, and it's "too soon" since the last checkpoint,
+ * the bgwriter will log a warning.  This should be true only for checkpoints
+ * caused due to xlog filling, else the warning will be misleading.
  */
 void
-RequestCheckpoint(bool waitforit)
+RequestCheckpoint(bool waitforit, bool warnontime)
 {
 	/* use volatile pointer to prevent code rearrangement */
 	volatile BgWriterShmemStruct *bgs = BgWriterShmem;
@@ -522,6 +534,10 @@ RequestCheckpoint(bool waitforit)
 
 		return;
 	}
+
+	/* Set warning request flag if appropriate */
+	if (warnontime)
+		bgs->ckpt_time_warn = true;
 
 	/*
 	 * Send signal to request checkpoint.  When waitforit is false, we

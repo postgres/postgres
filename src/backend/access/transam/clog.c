@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.30 2005/06/06 20:22:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.31 2005/06/30 00:00:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -336,7 +336,7 @@ TruncateCLOG(TransactionId oldestXact)
 		return;					/* nothing to remove */
 
 	/* Perform a CHECKPOINT */
-	RequestCheckpoint(true);
+	RequestCheckpoint(true, false);
 
 	/* Now we can remove the old CLOG segment(s) */
 	SimpleLruTruncate(ClogCtl, cutoffPage);

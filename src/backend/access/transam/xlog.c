@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.204 2005/06/29 22:51:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.205 2005/06/30 00:00:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1337,7 +1337,7 @@ XLogWrite(XLogwrtRqst WriteRqst)
 						if (XLOG_DEBUG)
 							elog(LOG, "time for a checkpoint, signaling bgwriter");
 #endif
-						RequestCheckpoint(false);
+						RequestCheckpoint(false, true);
 					}
 				}
 			}
@@ -5496,7 +5496,7 @@ pg_start_backup(PG_FUNCTION_ARGS)
 	 * will have different checkpoint positions and hence different
 	 * history file names, even if nothing happened in between.
 	 */
-	RequestCheckpoint(true);
+	RequestCheckpoint(true, false);
 
 	/*
 	 * Now we need to fetch the checkpoint record location, and also its
