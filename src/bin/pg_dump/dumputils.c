@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.17 2005/04/30 08:08:51 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.18 2005/07/01 21:03:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,6 +111,27 @@ fmtId(const char *rawid)
 void
 appendStringLiteral(PQExpBuffer buf, const char *str, bool escapeAll)
 {
+	bool has_escapes = false;
+	const char *str2 = str;
+
+	while (*str2)
+	{
+		char		ch = *str2++;
+
+		if (ch == '\\' ||
+		    ((unsigned char) ch < (unsigned char) ' ' &&
+			 (escapeAll ||
+			  (ch != '\t' && ch != '\n' && ch != '\v' &&
+			   ch != '\f' && ch != '\r'))))
+		{
+			has_escapes = true;
+			break;
+		}
+	}
+	
+	if (has_escapes)
+		appendPQExpBufferChar(buf, 'E');
+	
 	appendPQExpBufferChar(buf, '\'');
 	while (*str)
 	{
@@ -122,9 +143,9 @@ appendStringLiteral(PQExpBuffer buf, const char *str, bool escapeAll)
 			appendPQExpBufferChar(buf, ch);
 		}
 		else if ((unsigned char) ch < (unsigned char) ' ' &&
-				 (escapeAll
-				  || (ch != '\t' && ch != '\n' && ch != '\v' && ch != '\f' && ch != '\r')
-				  ))
+				 (escapeAll ||
+				  (ch != '\t' && ch != '\n' && ch != '\v' &&
+				   ch != '\f' && ch != '\r')))
 		{
 			/*
 			 * generate octal escape for control chars other than

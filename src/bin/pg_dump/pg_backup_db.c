@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.62 2005/06/21 20:45:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.63 2005/07/01 21:03:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -597,7 +597,6 @@ _sendSQLLine(ArchiveHandle *AH, char *qry, char *eos)
 					}
 					else
 					{
-
 						if (qry[pos] == '\\')
 						{
 							if (AH->sqlparse.lastChar == '\\')

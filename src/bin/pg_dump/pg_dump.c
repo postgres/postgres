@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.411 2005/06/30 03:02:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.412 2005/07/01 21:03:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -7767,8 +7767,9 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 	p = tginfo->tgargs;
 	for (findx = 0; findx < tginfo->tgnargs; findx++)
 	{
-		const char *s = p;
+		const char *s = p, *s2 = p;
 
+		/* Set 'p' to end of arg string. marked by '\000' */
 		for (;;)
 		{
 			p = strchr(p, '\\');
@@ -7781,20 +7782,29 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 				exit_nicely();
 			}
 			p++;
-			if (*p == '\\')
+			if (*p == '\\')		/* is it '\\'? */
 			{
 				p++;
 				continue;
 			}
-			if (p[0] == '0' && p[1] == '0' && p[2] == '0')
+			if (p[0] == '0' && p[1] == '0' && p[2] == '0')  /* is it '\000'? */
 				break;
 		}
 		p--;
+
+		/* do we need E''? */
+		while (s2 < p)
+			if (*s2++ == '\\')
+			{
+				appendPQExpBufferChar(query, 'E');
+				break;
+			}
+
 		appendPQExpBufferChar(query, '\'');
 		while (s < p)
 		{
 			if (*s == '\'')
-				appendPQExpBufferChar(query, '\\');
+				appendPQExpBufferChar(query, '\'');
 			appendPQExpBufferChar(query, *s++);
 		}
 		appendPQExpBufferChar(query, '\'');
