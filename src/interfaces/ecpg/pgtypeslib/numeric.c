@@ -1096,6 +1096,8 @@ PGTYPESnumeric_div(numeric *var1, numeric *var2, numeric *result)
 	int			stat = 0;
 	int			rscale;
 	int			res_dscale = select_div_scale(var1, var2, &rscale);
+	int			err = -1;
+	NumericDigit *tmp_buf;
 
 	/*
 	 * First of all division by zero check
@@ -1143,6 +1145,8 @@ PGTYPESnumeric_div(numeric *var1, numeric *var2, numeric *result)
 	divisor[1].rscale = var2->ndigits;
 	divisor[1].sign = NUMERIC_POS;
 	divisor[1].buf = digitbuf_alloc(ndigits_tmp);
+	if (divisor[1].buf == NULL)
+		goto done;
 	divisor[1].digits = divisor[1].buf;
 	divisor[1].digits[0] = 0;
 	memcpy(&(divisor[1].digits[1]), var2->digits, ndigits_tmp - 1);
@@ -1155,14 +1159,21 @@ PGTYPESnumeric_div(numeric *var1, numeric *var2, numeric *result)
 	dividend.rscale = var1->ndigits;
 	dividend.sign = NUMERIC_POS;
 	dividend.buf = digitbuf_alloc(var1->ndigits);
+	if (dividend.buf == NULL)
+		goto done;
 	dividend.digits = dividend.buf;
 	memcpy(dividend.digits, var1->digits, var1->ndigits);
 
 	/*
-	 * Setup the result
+	 * Setup the result. Do the allocation in a temporary buffer
+	 * first, so we don't free result->buf unless we have successfully
+	 * allocated a buffer to replace it with.
 	 */
+	tmp_buf = digitbuf_alloc(res_ndigits + 2);
+	if (tmp_buf == NULL)
+		goto done;
 	digitbuf_free(result->buf);
-	result->buf = digitbuf_alloc(res_ndigits + 2);
+	result->buf = tmp_buf;
 	res_digits = result->buf;
 	result->digits = res_digits;
 	result->ndigits = res_ndigits;
@@ -1201,6 +1212,8 @@ PGTYPESnumeric_div(numeric *var1, numeric *var2, numeric *result)
 
 				memcpy(&divisor[guess], &divisor[1], sizeof(numeric));
 				divisor[guess].buf = digitbuf_alloc(divisor[guess].ndigits);
+				if (divisor[guess].buf == NULL)
+					goto done;
 				divisor[guess].digits = divisor[guess].buf;
 				for (i = divisor[1].ndigits - 1; i >= 0; i--)
 				{
@@ -1233,7 +1246,8 @@ PGTYPESnumeric_div(numeric *var1, numeric *var2, numeric *result)
 		if (guess == 0)
 			continue;
 
-		sub_abs(&dividend, &divisor[guess], &dividend);
+		if (sub_abs(&dividend, &divisor[guess], &dividend) != 0)
+			goto done;
 
 		first_nextdigit = dividend.weight - weight_tmp;
 		first_have = 0;
@@ -1269,15 +1283,23 @@ PGTYPESnumeric_div(numeric *var1, numeric *var2, numeric *result)
 	if (result->ndigits == 0)
 		result->sign = NUMERIC_POS;
 
+	result->dscale = res_dscale;
+	err = 0;	/* if we've made it this far, return success */
+
+done:
 	/*
 	 * Tidy up
 	 */
-	digitbuf_free(dividend.buf);
-	for (i = 1; i < 10; i++)
-		digitbuf_free(divisor[i].buf);
+	if (dividend.buf != NULL)
+		digitbuf_free(dividend.buf);
 
-	result->dscale = res_dscale;
-	return 0;
+	for (i = 1; i < 10; i++)
+	{
+		if (divisor[i].buf != NULL)
+			digitbuf_free(divisor[i].buf);
+	}
+
+	return err;
 }
 
 
