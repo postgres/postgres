@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_ops.c,v 1.89 2005/06/24 20:53:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_ops.c,v 1.90 2005/07/01 19:19:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4605,8 +4605,7 @@ circle_contain(PG_FUNCTION_ARGS)
 }
 
 
-/*		circle_positionop		-
- *				is circle1 entirely {above,below} circle2?
+/*		circle_below		-		is circle1 strictly below circle2?
  */
 Datum
 circle_below(PG_FUNCTION_ARGS)
@@ -4614,18 +4613,46 @@ circle_below(PG_FUNCTION_ARGS)
 	CIRCLE	   *circle1 = PG_GETARG_CIRCLE_P(0);
 	CIRCLE	   *circle2 = PG_GETARG_CIRCLE_P(1);
 
-	PG_RETURN_BOOL(FPle(circle1->center.y + circle1->radius,
-						circle2->center.y - circle2->radius));
+	PG_RETURN_BOOL(FPlt((circle1->center.y + circle1->radius),
+						(circle2->center.y - circle2->radius)));
 }
 
+/*		circle_above	-		is circle1 strictly above circle2?
+ */
 Datum
 circle_above(PG_FUNCTION_ARGS)
 {
 	CIRCLE	   *circle1 = PG_GETARG_CIRCLE_P(0);
 	CIRCLE	   *circle2 = PG_GETARG_CIRCLE_P(1);
 
-	PG_RETURN_BOOL(FPge(circle1->center.y - circle1->radius,
-						circle2->center.y + circle2->radius));
+	PG_RETURN_BOOL(FPgt((circle1->center.y - circle1->radius),
+						(circle2->center.y + circle2->radius)));
+}
+
+/*		circle_overbelow -		is the upper edge of circle1 at or below
+ *								the upper edge of circle2?
+ */
+Datum
+circle_overbelow(PG_FUNCTION_ARGS)
+{
+	CIRCLE	   *circle1 = PG_GETARG_CIRCLE_P(0);
+	CIRCLE	   *circle2 = PG_GETARG_CIRCLE_P(1);
+
+	PG_RETURN_BOOL(FPle((circle1->center.y + circle1->radius),
+						(circle2->center.y + circle2->radius)));
+}
+
+/*		circle_overabove	-	is the lower edge of circle1 at or above
+ *								the lower edge of circle2?
+ */
+Datum
+circle_overabove(PG_FUNCTION_ARGS)
+{
+	CIRCLE	   *circle1 = PG_GETARG_CIRCLE_P(0);
+	CIRCLE	   *circle2 = PG_GETARG_CIRCLE_P(1);
+
+	PG_RETURN_BOOL(FPge((circle1->center.y - circle1->radius),
+						(circle2->center.y - circle2->radius)));
 }
 
 

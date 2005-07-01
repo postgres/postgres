@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/geo_decls.h,v 1.47 2005/06/24 20:53:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/geo_decls.h,v 1.48 2005/07/01 19:19:04 tgl Exp $
  *
  * NOTE
  *	  These routines do *not* use the float types from adt/.
@@ -379,6 +379,8 @@ extern Datum circle_contained(PG_FUNCTION_ARGS);
 extern Datum circle_contain(PG_FUNCTION_ARGS);
 extern Datum circle_below(PG_FUNCTION_ARGS);
 extern Datum circle_above(PG_FUNCTION_ARGS);
+extern Datum circle_overbelow(PG_FUNCTION_ARGS);
+extern Datum circle_overabove(PG_FUNCTION_ARGS);
 extern Datum circle_eq(PG_FUNCTION_ARGS);
 extern Datum circle_ne(PG_FUNCTION_ARGS);
 extern Datum circle_lt(PG_FUNCTION_ARGS);
@@ -404,13 +406,26 @@ extern Datum poly_circle(PG_FUNCTION_ARGS);
 extern Datum circle_poly(PG_FUNCTION_ARGS);
 extern Datum circle_area(PG_FUNCTION_ARGS);
 
-/* support routines for the rtree access method (rtproc.c) */
+/* support routines for the rtree access method (access/rtree/rtproc.c) */
 extern Datum rt_box_union(PG_FUNCTION_ARGS);
 extern Datum rt_box_inter(PG_FUNCTION_ARGS);
 extern Datum rt_box_size(PG_FUNCTION_ARGS);
 extern Datum rt_poly_size(PG_FUNCTION_ARGS);
 extern Datum rt_poly_union(PG_FUNCTION_ARGS);
 extern Datum rt_poly_inter(PG_FUNCTION_ARGS);
+
+/* support routines for the GiST access method (access/gist/gistproc.c) */
+extern Datum gist_box_compress(PG_FUNCTION_ARGS);
+extern Datum gist_box_decompress(PG_FUNCTION_ARGS);
+extern Datum gist_box_union(PG_FUNCTION_ARGS);
+extern Datum gist_box_picksplit(PG_FUNCTION_ARGS);
+extern Datum gist_box_consistent(PG_FUNCTION_ARGS);
+extern Datum gist_box_penalty(PG_FUNCTION_ARGS);
+extern Datum gist_box_same(PG_FUNCTION_ARGS);
+extern Datum gist_poly_compress(PG_FUNCTION_ARGS);
+extern Datum gist_poly_consistent(PG_FUNCTION_ARGS);
+extern Datum gist_circle_compress(PG_FUNCTION_ARGS);
+extern Datum gist_circle_consistent(PG_FUNCTION_ARGS);
 
 /* geo_selfuncs.c */
 extern Datum areasel(PG_FUNCTION_ARGS);

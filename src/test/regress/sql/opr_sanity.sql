@@ -631,10 +631,13 @@ WHERE p1.amopclaid = p3.oid AND p3.opcamid = p2.oid AND
 -- Detect missing pg_amop entries: should have as many strategy operators
 -- as AM expects for each opclass for the AM.  When nondefault subtypes are
 -- present, enforce condition separately for each subtype.
+-- We have to exclude GiST, unfortunately, since it hasn't got any fixed
+-- requirements about strategy operators.
 
 SELECT p1.oid, p1.amname, p2.oid, p2.opcname, p3.amopsubtype
 FROM pg_am AS p1, pg_opclass AS p2, pg_amop AS p3
 WHERE p2.opcamid = p1.oid AND p3.amopclaid = p2.oid AND
+    p1.amname != 'gist' AND
     p1.amstrategies != (SELECT count(*) FROM pg_amop AS p4
                         WHERE p4.amopclaid = p2.oid AND
                               p4.amopsubtype = p3.amopsubtype);

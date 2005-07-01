@@ -27,7 +27,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_opclass.h,v 1.65 2005/06/28 05:09:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_opclass.h,v 1.66 2005/07/01 19:19:03 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -175,5 +175,8 @@ DATA(insert OID = 2232 (	405		name_pattern_ops	PGNSP PGUID   19 f 0 ));
 DATA(insert OID = 2233 (	403		reltime_ops		PGNSP PGUID  703 t 0 ));
 DATA(insert OID = 2234 (	403		tinterval_ops	PGNSP PGUID  704 t 0 ));
 DATA(insert OID = 2235 (	405		aclitem_ops		PGNSP PGUID 1033 t 0 ));
+DATA(insert OID = 2593 (	783		box_ops			PGNSP PGUID  603 t 0 ));
+DATA(insert OID = 2594 (	783		poly_ops		PGNSP PGUID  604 t 603 ));
+DATA(insert OID = 2595 (	783		circle_ops		PGNSP PGUID  718 t 603 ));
 
 #endif   /* PG_OPCLASS_H */

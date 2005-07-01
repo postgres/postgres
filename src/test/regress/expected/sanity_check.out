@@ -14,6 +14,7 @@ SELECT relname, relhasindex
  bt_i4_heap          | t
  bt_name_heap        | t
  bt_txt_heap         | t
+ circle_tbl          | t
  fast_emp4000        | t
  func_index_heap     | t
  hash_f8_heap        | t
@@ -59,11 +60,12 @@ SELECT relname, relhasindex
  pg_tablespace       | t
  pg_trigger          | t
  pg_type             | t
+ polygon_tbl         | t
  road                | t
  shighway            | t
  tenk1               | t
  tenk2               | t
-(53 rows)
+(55 rows)
 
 --
 -- another sanity check: every system catalog that has OIDs should have

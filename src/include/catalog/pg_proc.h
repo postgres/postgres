@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.372 2005/06/28 05:09:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.373 2005/07/01 19:19:03 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3675,6 +3675,34 @@ DATA(insert OID = 2568 (  poly_overabove   PGNSP PGUID 12 f f t f i 2 16 "604 60
 DESCR("overlaps or is above");
 DATA(insert OID = 2569 (  poly_above	   PGNSP PGUID 12 f f t f i 2 16 "604 604" _null_ _null_ _null_	poly_above - _null_ ));
 DESCR("is above");
+DATA(insert OID = 2587 (  circle_overbelow		PGNSP PGUID 12 f f t f i 2	16 "718 718" _null_ _null_ _null_  circle_overbelow - _null_ ));
+DESCR("overlaps or is below");
+DATA(insert OID = 2588 (  circle_overabove		PGNSP PGUID 12 f f t f i 2	16 "718 718" _null_ _null_ _null_  circle_overabove - _null_ ));
+DESCR("overlaps or is above");
+
+/* support functions for GiST r-tree emulation */
+DATA(insert OID = 2578 (  gist_box_consistent	PGNSP PGUID 12 f f t f i 3 16 "2281 603 23" _null_ _null_ _null_	gist_box_consistent - _null_ ));
+DESCR("GiST support");
+DATA(insert OID = 2579 (  gist_box_compress		PGNSP PGUID 12 f f t f i 1 2281 "2281" _null_ _null_ _null_	gist_box_compress - _null_ ));
+DESCR("GiST support");
+DATA(insert OID = 2580 (  gist_box_decompress	PGNSP PGUID 12 f f t f i 1 2281 "2281" _null_ _null_ _null_	gist_box_decompress - _null_ ));
+DESCR("GiST support");
+DATA(insert OID = 2581 (  gist_box_penalty		PGNSP PGUID 12 f f t f i 3 2281 "2281 2281 2281" _null_ _null_ _null_	gist_box_penalty - _null_ ));
+DESCR("GiST support");
+DATA(insert OID = 2582 (  gist_box_picksplit	PGNSP PGUID 12 f f t f i 2 2281 "2281 2281" _null_ _null_ _null_	gist_box_picksplit - _null_ ));
+DESCR("GiST support");
+DATA(insert OID = 2583 (  gist_box_union		PGNSP PGUID 12 f f t f i 2 603 "2281 2281" _null_ _null_ _null_	gist_box_union - _null_ ));
+DESCR("GiST support");
+DATA(insert OID = 2584 (  gist_box_same			PGNSP PGUID 12 f f t f i 3 2281 "603 603 2281" _null_ _null_ _null_	gist_box_same - _null_ ));
+DESCR("GiST support");
+DATA(insert OID = 2585 (  gist_poly_consistent	PGNSP PGUID 12 f f t f i 3 16 "2281 604 23" _null_ _null_ _null_	gist_poly_consistent - _null_ ));
+DESCR("GiST support");
+DATA(insert OID = 2586 (  gist_poly_compress	PGNSP PGUID 12 f f t f i 1 2281 "2281" _null_ _null_ _null_	gist_poly_compress - _null_ ));
+DESCR("GiST support");
+DATA(insert OID = 2591 (  gist_circle_consistent PGNSP PGUID 12 f f t f i 3 16 "2281 718 23" _null_ _null_ _null_	gist_circle_consistent - _null_ ));
+DESCR("GiST support");
+DATA(insert OID = 2592 (  gist_circle_compress	PGNSP PGUID 12 f f t f i 1 2281 "2281" _null_ _null_ _null_	gist_circle_compress - _null_ ));
+DESCR("GiST support");
 
 
 /*

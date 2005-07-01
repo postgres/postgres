@@ -77,12 +77,97 @@ CREATE INDEX onek2_stu1_prtl ON onek2 USING btree(stringu1 name_ops)
 --
 CREATE INDEX rect2ind ON fast_emp4000 USING rtree (home_base);
 
--- there's no easy way to check that this command actually is using
+SET enable_seqscan = ON;
+SET enable_indexscan = OFF;
+SET enable_bitmapscan = OFF;
+
+SELECT * FROM fast_emp4000
+    WHERE home_base @ '(200,200),(2000,1000)'::box
+    ORDER BY home_base USING <<;
+
+SELECT count(*) FROM fast_emp4000 WHERE home_base && '(1000,1000,0,0)'::box;
+
+SET enable_seqscan = OFF;
+SET enable_indexscan = ON;
+SET enable_bitmapscan = ON;
+
+-- there's no easy way to check that these commands actually use
 -- the index, unfortunately.  (EXPLAIN would work, but its output
 -- changes too often for me to want to put an EXPLAIN in the test...)
 SELECT * FROM fast_emp4000
     WHERE home_base @ '(200,200),(2000,1000)'::box
     ORDER BY home_base USING <<;
+
+SELECT count(*) FROM fast_emp4000 WHERE home_base && '(1000,1000,0,0)'::box;
+
+DROP INDEX rect2ind;
+
+
+--
+-- GiST (rtree-equivalent opclasses only)
+--
+CREATE INDEX grect2ind ON fast_emp4000 USING gist (home_base);
+
+CREATE INDEX gpolygonind ON polygon_tbl USING gist (f1);
+
+CREATE INDEX gcircleind ON circle_tbl USING gist (f1);
+
+CREATE TEMP TABLE gpolygon_tbl AS
+    SELECT polygon(home_base) AS f1 FROM slow_emp4000;
+
+CREATE TEMP TABLE gcircle_tbl AS
+    SELECT circle(home_base) AS f1 FROM slow_emp4000;
+
+CREATE INDEX ggpolygonind ON gpolygon_tbl USING gist (f1);
+
+CREATE INDEX ggcircleind ON gcircle_tbl USING gist (f1);
+
+SET enable_seqscan = ON;
+SET enable_indexscan = OFF;
+SET enable_bitmapscan = OFF;
+
+SELECT * FROM fast_emp4000
+    WHERE home_base @ '(200,200),(2000,1000)'::box
+    ORDER BY home_base USING <<;
+
+SELECT count(*) FROM fast_emp4000 WHERE home_base && '(1000,1000,0,0)'::box;
+
+SELECT * FROM polygon_tbl WHERE f1 ~ '((1,1),(2,2),(2,1))'::polygon
+    ORDER BY f1 USING <<;
+
+SELECT * FROM circle_tbl WHERE f1 && circle(point(1,-2), 1)
+    ORDER BY f1 USING <<;
+
+SELECT count(*) FROM gpolygon_tbl WHERE f1 && '(1000,1000,0,0)'::polygon;
+
+SELECT count(*) FROM gcircle_tbl WHERE f1 && '<(500,500),500>'::circle;
+
+SET enable_seqscan = OFF;
+SET enable_indexscan = ON;
+SET enable_bitmapscan = ON;
+
+-- there's no easy way to check that these commands actually use
+-- the index, unfortunately.  (EXPLAIN would work, but its output
+-- changes too often for me to want to put an EXPLAIN in the test...)
+SELECT * FROM fast_emp4000
+    WHERE home_base @ '(200,200),(2000,1000)'::box
+    ORDER BY home_base USING <<;
+
+SELECT count(*) FROM fast_emp4000 WHERE home_base && '(1000,1000,0,0)'::box;
+
+SELECT * FROM polygon_tbl WHERE f1 ~ '((1,1),(2,2),(2,1))'::polygon
+    ORDER BY f1 USING <<;
+
+SELECT * FROM circle_tbl WHERE f1 && circle(point(1,-2), 1)
+    ORDER BY f1 USING <<;
+
+SELECT count(*) FROM gpolygon_tbl WHERE f1 && '(1000,1000,0,0)'::polygon;
+
+SELECT count(*) FROM gcircle_tbl WHERE f1 && '<(500,500),500>'::circle;
+
+RESET enable_seqscan;
+RESET enable_indexscan;
+RESET enable_bitmapscan;
 
 --
 -- HASH
