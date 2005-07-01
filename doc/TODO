@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Jul  1 11:08:12 EDT 2005
+Last updated:		Fri Jul  1 13:05:46 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -27,7 +27,7 @@ Administration
   This would allow server log information to be easily loaded into
   a database for analysis.
 
-* Prevent default re-use of sysids for dropped users and groups
+* Prevent default re-use of sysids for dropped users and roles
 
   Currently, if a user is removed while he still owns objects, a new
   user given might be given their user id and inherit the
@@ -447,7 +447,7 @@ Commands
 * Add ON COMMIT capability to CREATE TABLE AS SELECT
 * Add NOVICE output level for helpful messages like automatic sequence/index
   creation
-* Add COMMENT ON for all cluster global objects (users, groups, databases
+* Add COMMENT ON for all cluster global objects (users, roles, databases
   and tablespaces)
 * Add an option to automatically use savepoints for each statement in a
   multi-statement transaction.
@@ -606,7 +606,7 @@ Clients
 	o Add dumping of comments on composite type columns
 	o Add dumping of comments on index columns
 	o Replace crude DELETE FROM method of pg_dumpall for cleaning of
-	  users and groups with separate DROP commands
+	  users and roles with separate DROP commands
 	o -Add dumping and restoring of LOB comments
 	o Stop dumping CASCADE on DROP TYPE commands in clean mode
 	o Add full object name to the tag field.  eg. for operators we need
