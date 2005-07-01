@@ -83,7 +83,7 @@ SET enable_bitmapscan = OFF;
 
 SELECT * FROM fast_emp4000
     WHERE home_base @ '(200,200),(2000,1000)'::box
-    ORDER BY home_base USING <<;
+    ORDER BY home_base USING <;
 
 SELECT count(*) FROM fast_emp4000 WHERE home_base && '(1000,1000,0,0)'::box;
 
@@ -96,7 +96,7 @@ SET enable_bitmapscan = ON;
 -- changes too often for me to want to put an EXPLAIN in the test...)
 SELECT * FROM fast_emp4000
     WHERE home_base @ '(200,200),(2000,1000)'::box
-    ORDER BY home_base USING <<;
+    ORDER BY home_base USING <;
 
 SELECT count(*) FROM fast_emp4000 WHERE home_base && '(1000,1000,0,0)'::box;
 
@@ -128,7 +128,7 @@ SET enable_bitmapscan = OFF;
 
 SELECT * FROM fast_emp4000
     WHERE home_base @ '(200,200),(2000,1000)'::box
-    ORDER BY home_base USING <<;
+    ORDER BY home_base USING <;
 
 SELECT count(*) FROM fast_emp4000 WHERE home_base && '(1000,1000,0,0)'::box;
 
@@ -136,7 +136,7 @@ SELECT * FROM polygon_tbl WHERE f1 ~ '((1,1),(2,2),(2,1))'::polygon
     ORDER BY f1 USING <<;
 
 SELECT * FROM circle_tbl WHERE f1 && circle(point(1,-2), 1)
-    ORDER BY f1 USING <<;
+    ORDER BY f1 USING <;
 
 SELECT count(*) FROM gpolygon_tbl WHERE f1 && '(1000,1000,0,0)'::polygon;
 
@@ -151,7 +151,7 @@ SET enable_bitmapscan = ON;
 -- changes too often for me to want to put an EXPLAIN in the test...)
 SELECT * FROM fast_emp4000
     WHERE home_base @ '(200,200),(2000,1000)'::box
-    ORDER BY home_base USING <<;
+    ORDER BY home_base USING <;
 
 SELECT count(*) FROM fast_emp4000 WHERE home_base && '(1000,1000,0,0)'::box;
 
@@ -159,7 +159,7 @@ SELECT * FROM polygon_tbl WHERE f1 ~ '((1,1),(2,2),(2,1))'::polygon
     ORDER BY f1 USING <<;
 
 SELECT * FROM circle_tbl WHERE f1 && circle(point(1,-2), 1)
-    ORDER BY f1 USING <<;
+    ORDER BY f1 USING <;
 
 SELECT count(*) FROM gpolygon_tbl WHERE f1 && '(1000,1000,0,0)'::polygon;
 
