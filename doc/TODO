@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Jul  1 13:32:12 EDT 2005
+Last updated:		Fri Jul  1 13:35:13 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -599,8 +599,8 @@ Clients
 	o Allow pg_dump to use multiple -t and -n switches [pg_dump]
 	o Add dumping of comments on composite type columns
 	o Add dumping of comments on index columns
-	o Replace crude DELETE FROM method of pg_dumpall for cleaning of
-	  roles with separate DROP commands
+	o Replace crude DELETE FROM method of pg_dumpall --clean for 
+          cleaning of roles with separate DROP commands
 	o -Add dumping and restoring of LOB comments
 	o Stop dumping CASCADE on DROP TYPE commands in clean mode
 	o Add full object name to the tag field.  eg. for operators we need
