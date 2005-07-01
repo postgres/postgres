@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *           $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.6 2005/06/30 17:52:14 teodor Exp $
+ *           $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.7 2005/07/01 13:18:17 teodor Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -162,7 +162,7 @@ gistRedoEntryUpdateRecord(XLogRecPtr lsn, XLogRecord *record, bool isnewroot) {
 		return;
 	buffer = XLogReadBuffer(false, reln, xlrec.data->blkno);
 	if (!BufferIsValid(buffer))
-		elog(PANIC, "gistRedoEntryUpdateRecord: block unfound");
+		elog(PANIC, "gistRedoEntryUpdateRecord: block %u unfound", xlrec.data->blkno);
 	page = (Page) BufferGetPage(buffer);
 
 	if ( isnewroot ) {
@@ -173,7 +173,7 @@ gistRedoEntryUpdateRecord(XLogRecPtr lsn, XLogRecord *record, bool isnewroot) {
 		}
 	} else { 
 		if ( PageIsNew((PageHeader) page) )
-			elog(PANIC, "gistRedoEntryUpdateRecord: uninitialized page");
+			elog(PANIC, "gistRedoEntryUpdateRecord: uninitialized page blkno %u", xlrec.data->blkno);
 		if (XLByteLE(lsn, PageGetLSN(page))) {
 			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 			ReleaseBuffer(buffer);
@@ -476,7 +476,7 @@ gistXLogReadAndLockBuffer( Relation r, BlockNumber blkno ) {
 	if (!BufferIsValid(buffer))
 		elog(PANIC, "gistXLogReadAndLockBuffer: block %u unfound", blkno);
 	if ( PageIsNew( (PageHeader)(BufferGetPage(buffer)) ) )
-		elog(PANIC, "gistXLogReadAndLockBuffer: uninitialized page %u", blkno);
+		elog(PANIC, "gistXLogReadAndLockBuffer: uninitialized page blkno %u", blkno);
 	
 	return buffer;
 }
@@ -510,6 +510,15 @@ gixtxlogFindPath( Relation index, gistIncompleteInsert *insert ) {
 		elog(LOG, "gixtxlogFindPath: lost parent for block %u", insert->origblkno);
 }
 
+/*
+ * Continue insert after crash. In normal situation, there isn't any incomplete 
+ * inserts, but if it might be after crash, WAL may has not a record of completetion.
+ * 
+ * Although stored LSN in gistIncompleteInsert is a LSN of child page, 
+ * we can compare it with LSN of parent, because parent is always locked 
+ * while we change child page (look at gistmakedeal). So if parent's LSN is 
+ * lesser than stored lsn then changes in parent doesn't do yet.
+ */   
 static void
 gistContinueInsert(gistIncompleteInsert *insert) {
 	IndexTuple   *itup;
@@ -574,7 +583,7 @@ gistContinueInsert(gistIncompleteInsert *insert) {
 				elog(PANIC, "gistContinueInsert: block %u unfound", insert->path[i]);
 			pages[numbuffer-1] = BufferGetPage( buffers[numbuffer-1] );
 			if ( PageIsNew((PageHeader)(pages[numbuffer-1])) )
-				elog(PANIC, "gistContinueInsert: uninitialized page");
+				elog(PANIC, "gistContinueInsert: uninitialized page blkno %u", insert->path[i]);
 
 			if (XLByteLE(insert->lsn, PageGetLSN(pages[numbuffer-1]))) {
 				LockBuffer(buffers[numbuffer-1], BUFFER_LOCK_UNLOCK);
