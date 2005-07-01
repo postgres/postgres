@@ -1836,25 +1836,25 @@ select * from f1(42);
 (2 rows)
 
 drop function f1(int);
-create function dup(in i anyelement, out j anyelement, out k anyarray) as $$
+create function duplic(in i anyelement, out j anyelement, out k anyarray) as $$
 begin
   j := i;
   k := array[j,j];
   return;
 end$$ language plpgsql;
-select * from dup(42);
+select * from duplic(42);
  j  |    k    
 ----+---------
  42 | {42,42}
 (1 row)
 
-select * from dup('foo'::text);
+select * from duplic('foo'::text);
   j  |     k     
 -----+-----------
  foo | {foo,foo}
 (1 row)
 
-drop function dup(anyelement);
+drop function duplic(anyelement);
 --
 -- test PERFORM
 --

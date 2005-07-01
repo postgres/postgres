@@ -1629,17 +1629,17 @@ select * from f1(42);
 
 drop function f1(int);
 
-create function dup(in i anyelement, out j anyelement, out k anyarray) as $$
+create function duplic(in i anyelement, out j anyelement, out k anyarray) as $$
 begin
   j := i;
   k := array[j,j];
   return;
 end$$ language plpgsql;
 
-select * from dup(42);
-select * from dup('foo'::text);
+select * from duplic(42);
+select * from duplic('foo'::text);
 
-drop function dup(anyelement);
+drop function duplic(anyelement);
 
 --
 -- test PERFORM
