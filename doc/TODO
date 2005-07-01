@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Jul  1 10:51:41 EDT 2005
+Last updated:		Fri Jul  1 11:08:12 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -22,8 +22,6 @@ Administration
 * Remove behavior of postmaster -o after making postmaster/postgres
   flags unique
 * Allow limits on per-db/user connections
-* Add group object ownership, so groups can rename/drop/grant on objects,
-  so we can implement roles
 * Allow server log information to be output as INSERT statements
 
   This would allow server log information to be easily loaded into
