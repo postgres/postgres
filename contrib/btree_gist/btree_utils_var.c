@@ -1,6 +1,7 @@
 #include "btree_gist.h"
 #include "utils/pg_locale.h"
 #include "btree_utils_var.h"
+#include "utils/builtins.h"
 
 PG_FUNCTION_INFO_V1(gbt_var_decompress);
 Datum           gbt_var_decompress(PG_FUNCTION_ARGS);
@@ -90,67 +91,89 @@ gbt_var_leaf2node(GBT_VARKEY * leaf, const gbtree_vinfo * tinfo)
 static int32
 gbt_var_node_cp_len(const GBT_VARKEY * node, const gbtree_vinfo * tinfo)
 {
-	int32		i;
-	int32		s = (tinfo->str) ? (1) : (0);
-	GBT_VARKEY_R r = gbt_var_key_readable(node);
-	int32		t1len = VARSIZE(r.lower) - VARHDRSZ - s;
-	int32		t2len = VARSIZE(r.upper) - VARHDRSZ - s;
-	int32		ml = Min(t1len, t2len);
 
-	char	   *p1 = VARDATA(r.lower),
-			   *p2 = VARDATA(r.upper);
+	GBT_VARKEY_R        r = gbt_var_key_readable(node);
+	int32               i = 0;
+	int32               l = 0;
+	int32           t1len = VARSIZE(r.lower) - VARHDRSZ ;
+	int32           t2len = VARSIZE(r.upper) - VARHDRSZ ;
+	int32              ml = Min(t1len, t2len);
 
-	for (i = 0; i < ml; i++)
+	char     *p1 = VARDATA(r.lower);
+	char     *p2 = VARDATA(r.upper);
+
+	if ( ml == 0 )
+	  return 0;
+
+	while ( i < ml )
 	{
-		if (*p1 != *p2)
-			return i;
-		p1++;
-		p2++;
+	  if ( tinfo->eml > 1 && l == 0 )
+	  {
+
+	    if ( ( l = pg_mblen(p1) ) != pg_mblen(p2) )
+	    {
+	      return i;
+	    }
+	  }
+	  if (*p1 != *p2)
+	  {
+	    if( tinfo->eml > 1 )
+	    {
+	      return (i-l+1);
+	    } else {
+	      return i;
+	    }
+	  }
+
+	  p1++;
+	  p2++;
+	  l--;
+	  i++;
 	}
-	return (ml);
+	return (ml); /* lower == upper */
 }
 
 
-
 /*
- * returns true, if query matches prefix using common prefix
+ * returns true, if query matches prefix ( common prefix )
 */
-
 static bool
 gbt_bytea_pf_match(const bytea *pf, const bytea *query, const gbtree_vinfo * tinfo)
 {
 
-	int			k;
-	int32		s = (tinfo->str) ? (1) : (0);
-	bool		out = FALSE;
-	int32		qlen = VARSIZE(query) - VARHDRSZ - s;
-	int32		nlen = VARSIZE(pf) - VARHDRSZ - s;
+	bool    out  = FALSE;
+	int32              k = 0;
+	int32   qlen = VARSIZE(query) - VARHDRSZ ;
+	int32   nlen = VARSIZE(pf) - VARHDRSZ ;
 
 	if (nlen <= qlen)
 	{
-		char	   *q = VARDATA(query);
-		char	   *n = VARDATA(pf);
+	  char     *q = VARDATA(query);
+	  char     *n = VARDATA(pf);
 
-		out = TRUE;
-		for (k = 0; k < nlen; k++)
-		{
-			if (*n != *q)
-			{
-				out = FALSE;
-				break;
-			}
-			if (k < (nlen - 1))
-			{
-				q++;
-				n++;
-			}
-		}
+	  if ( tinfo->eml > 1 )
+	  {
+	    out = ( varstr_cmp(q, nlen, n, nlen) == 0 );
+	  } else {
+	    out = TRUE;
+	    for (k = 0; k < nlen; k++)
+	    {
+	      if (*n != *q)
+	      {
+	        out = FALSE;
+	        break;
+	      }
+	      if (k < (nlen - 1))
+	      {
+	        q++;
+	        n++;
+	      }
+	    }
+	  }
 	}
 
 	return out;
 }
-
-
 
 
 /*
@@ -161,44 +184,36 @@ static bool
 gbt_var_node_pf_match(const GBT_VARKEY_R * node, const bytea *query, const gbtree_vinfo * tinfo)
 {
 
-	return (
+	return ( tinfo->trnc && (
 			gbt_bytea_pf_match(node->lower, query, tinfo) ||
 			gbt_bytea_pf_match(node->upper, query, tinfo)
-		);
+		) );
 
 }
 
 
 /*
 *  truncates / compresses the node key
+*  cpf_length .. common prefix length
 */
 static GBT_VARKEY *
-gbt_var_node_truncate(const GBT_VARKEY * node, int32 length, const gbtree_vinfo * tinfo)
+gbt_var_node_truncate(const GBT_VARKEY * node, int32 cpf_length, const gbtree_vinfo * tinfo)
 {
-
-	int32		s = (tinfo->str) ? (1) : (0);
 	GBT_VARKEY *out = NULL;
 	GBT_VARKEY_R r = gbt_var_key_readable(node);
-	int32		len1 = VARSIZE(r.lower) - VARHDRSZ;
-	int32		len2 = VARSIZE(r.upper) - VARHDRSZ;
-	int32		si = 0;
+	int32   len1 = VARSIZE(r.lower) - VARHDRSZ;
+	int32   len2 = VARSIZE(r.upper) - VARHDRSZ;
+	int32     si = 0;
 
-	if (tinfo->str)
-		length++;				/* because of tailing '\0' */
+	len1 = Min(len1,(cpf_length + 1));
+	len2 = Min(len2,(cpf_length + 1));
 
-	len1 = Min(len1, length);
-	len2 = Min(len2, length);
 	si = 2 * VARHDRSZ + INTALIGN(VARHDRSZ + len1) + len2;
 	out = (GBT_VARKEY *) palloc(si);
 	out->vl_len = si;
-	memcpy((void *) &(((char *) out)[VARHDRSZ]), (void *) r.lower, len1 + VARHDRSZ - s);
-	memcpy((void *) &(((char *) out)[VARHDRSZ + INTALIGN(VARHDRSZ + len1)]), (void *) r.upper, len2 + VARHDRSZ - s);
+	memcpy((void *) &(((char *) out)[VARHDRSZ]), (void *) r.lower, len1 + VARHDRSZ );
+	memcpy((void *) &(((char *) out)[VARHDRSZ + INTALIGN(VARHDRSZ + len1)]), (void *) r.upper, len2 + VARHDRSZ );
 
-	if (tinfo->str)
-	{
-		((char *) out)[VARHDRSZ + INTALIGN(VARHDRSZ + len1) - 1] = '\0';
-		((char *) out)[2 * VARHDRSZ + INTALIGN(VARHDRSZ + len1) + len2 - 1] = '\0';
-	}
 	*((int32 *) &(((char *) out)[VARHDRSZ])) = len1 + VARHDRSZ;
 	*((int32 *) &(((char *) out)[VARHDRSZ + INTALIGN(VARHDRSZ + len1)])) = len2 + VARHDRSZ;
 
@@ -356,7 +371,6 @@ gbt_var_penalty(float *res, const GISTENTRY *o, const GISTENTRY *n, const gbtree
 	GBT_VARKEY_R ok,
 				nk;
 	GBT_VARKEY *tmp = NULL;
-	int32		s = (tinfo->str) ? (1) : (0);
 
 	*res = 0.0;
 
@@ -369,7 +383,7 @@ gbt_var_penalty(float *res, const GISTENTRY *o, const GISTENTRY *n, const gbtree
 	}
 	ok = gbt_var_key_readable(orge);
 
-	if ((VARSIZE(ok.lower) - VARHDRSZ) == s && (VARSIZE(ok.upper) - VARHDRSZ) == s)
+	if ((VARSIZE(ok.lower) - VARHDRSZ) == 0 && (VARSIZE(ok.upper) - VARHDRSZ) == 0)
 		*res = 0.0;
 	else if (!(
 			   (
@@ -396,22 +410,14 @@ gbt_var_penalty(float *res, const GISTENTRY *o, const GISTENTRY *n, const gbtree
 		{
 			GBT_VARKEY_R uk = gbt_var_key_readable((GBT_VARKEY *) DatumGetPointer(d));
 
-			if (tinfo->str)
-			{
-				dres = (VARDATA(ok.lower)[ul] - VARDATA(uk.lower)[ul]) +
-					(VARDATA(uk.upper)[ul] - VARDATA(ok.upper)[ul]);
-			}
-			else
-			{
-				char		tmp[4];
+			char		tmp[4];
 
-				tmp[0] = ((VARSIZE(ok.lower) - VARHDRSZ) == ul) ? (CHAR_MIN) : (VARDATA(ok.lower)[ul]);
-				tmp[1] = ((VARSIZE(uk.lower) - VARHDRSZ) == ul) ? (CHAR_MIN) : (VARDATA(uk.lower)[ul]);
-				tmp[2] = ((VARSIZE(ok.upper) - VARHDRSZ) == ul) ? (CHAR_MIN) : (VARDATA(ok.upper)[ul]);
-				tmp[3] = ((VARSIZE(uk.upper) - VARHDRSZ) == ul) ? (CHAR_MIN) : (VARDATA(uk.upper)[ul]);
-				dres = (tmp[0] - tmp[1]) +
-					(tmp[3] - tmp[2]);
-			}
+			tmp[0] = ((VARSIZE(ok.lower) - VARHDRSZ) == ul) ? (CHAR_MIN) : (VARDATA(ok.lower)[ul]);
+			tmp[1] = ((VARSIZE(uk.lower) - VARHDRSZ) == ul) ? (CHAR_MIN) : (VARDATA(uk.lower)[ul]);
+			tmp[2] = ((VARSIZE(ok.upper) - VARHDRSZ) == ul) ? (CHAR_MIN) : (VARDATA(ok.upper)[ul]);
+			tmp[3] = ((VARSIZE(uk.upper) - VARHDRSZ) == ul) ? (CHAR_MIN) : (VARDATA(uk.upper)[ul]);
+			dres = (tmp[0] - tmp[1]) +
+				(tmp[3] - tmp[2]);
 			dres /= 256.0;
 		}
 

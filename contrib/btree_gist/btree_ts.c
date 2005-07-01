@@ -114,7 +114,7 @@ tstz_to_ts_gmt(Timestamp *gmt, TimestampTz *ts)
 	*gmt = *ts;
 	DecodeSpecial(0, "gmt", &val);
 
-	if (!TIMESTAMP_NOT_FINITE(*ts))
+	if ( *ts < DT_NOEND  && *ts > DT_NOBEGIN )
 	{
 		tz = val * 60;
 
@@ -218,6 +218,14 @@ gbt_ts_union(PG_FUNCTION_ARGS)
 }
 
 
+#define penalty_check_max_float(val) do { \
+        if ( val > FLT_MAX ) \
+                val = FLT_MAX; \
+        if ( val < -FLT_MAX ) \
+                val = -FLT_MAX; \
+} while(false);
+
+
 Datum
 gbt_ts_penalty(PG_FUNCTION_ARGS)
 {
@@ -225,48 +233,28 @@ gbt_ts_penalty(PG_FUNCTION_ARGS)
 	tsKEY	   *origentry = (tsKEY *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(0))->key);
 	tsKEY	   *newentry = (tsKEY *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(1))->key);
 	float	   *result = (float *) PG_GETARG_POINTER(2);
-	Interval   *intr;
 
-#ifdef HAVE_INT64_TIMESTAMP
-	int64		res;
-#else
-	double		res;
-#endif
+	double orgdbl[2],
+				 newdbl[2];
 
-	intr = DatumGetIntervalP(DirectFunctionCall2(
-												 timestamp_mi,
-									  P_TimestampGetDatum(newentry->upper),
-									  P_TimestampGetDatum(origentry->upper)
-												 ));
+	/*
+		We are allways using "double" timestamps here.
+		Precision should be good enough.
+	*/
+	orgdbl[0] = ( (double) origentry->lower ) ;
+	orgdbl[1] = ( (double) origentry->upper ) ;
+	newdbl[0] = ( (double) newentry->lower  ) ;
+	newdbl[1] = ( (double) newentry->upper  ) ;
 
-	/* see interval_larger */
+	penalty_check_max_float( orgdbl[0] );
+	penalty_check_max_float( orgdbl[1] );
+	penalty_check_max_float( newdbl[0] );
+	penalty_check_max_float( newdbl[1] );
 
-	res = Max(intr->time + intr->month * (30 * 86400), 0);
-
-	intr = DatumGetIntervalP(DirectFunctionCall2(
-												 timestamp_mi,
-									 P_TimestampGetDatum(origentry->lower),
-									   P_TimestampGetDatum(newentry->lower)
-												 ));
-
-	/* see interval_larger */
-	res += Max(intr->time + intr->month * (30 * 86400), 0);
-
-	*result = 0.0;
-
-	if (res > 0)
-	{
-		intr = DatumGetIntervalP(DirectFunctionCall2(
-													 timestamp_mi,
-									 P_TimestampGetDatum(origentry->upper),
-									  P_TimestampGetDatum(origentry->lower)
-													 ));
-		*result += FLT_MIN;
-		*result += (float) (res / ((double) (res + intr->time + intr->month * (30 * 86400))));
-		*result *= (FLT_MAX / (((GISTENTRY *) PG_GETARG_POINTER(0))->rel->rd_att->natts + 1));
-	}
+	penalty_num(result,orgdbl[0],orgdbl[1],newdbl[0],newdbl[1]);
 
 	PG_RETURN_POINTER(result);
+
 }
 
 

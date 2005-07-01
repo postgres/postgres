@@ -5,13 +5,13 @@ SET enable_seqscan=on;
 SELECT count(*) FROM chartmp WHERE a <   '31b0'::char(32);
  count 
 -------
-   121
+   587
 (1 row)
 
 SELECT count(*) FROM chartmp WHERE a <=  '31b0'::char(32);
  count 
 -------
-   122
+   588
 (1 row)
 
 SELECT count(*) FROM chartmp WHERE a  =  '31b0'::char(32);
@@ -37,13 +37,13 @@ SET enable_seqscan=off;
 SELECT count(*) FROM chartmp WHERE a <   '31b0'::char(32);
  count 
 -------
-   121
+   587
 (1 row)
 
 SELECT count(*) FROM chartmp WHERE a <=  '31b0'::char(32);
  count 
 -------
-   122
+   588
 (1 row)
 
 SELECT count(*) FROM chartmp WHERE a  =  '31b0'::char(32);

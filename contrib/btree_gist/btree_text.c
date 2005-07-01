@@ -62,11 +62,11 @@ gbt_textcmp(const bytea *a, const bytea *b)
 	return DatumGetInt32(DirectFunctionCall2(bttextcmp, PointerGetDatum(a), PointerGetDatum(b)));
 }
 
-static const gbtree_vinfo tinfo =
+static gbtree_vinfo tinfo =
 {
 	gbt_t_text,
-	TRUE,
-	TRUE,
+	0,
+	FALSE,
 	gbt_textgt,
 	gbt_textge,
 	gbt_texteq,
@@ -75,7 +75,6 @@ static const gbtree_vinfo tinfo =
 	gbt_textcmp,
 	NULL
 };
-
 
 
 /**************************************************
@@ -88,6 +87,11 @@ gbt_text_compress(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 
+	if ( tinfo.eml == 0 )
+	{
+		tinfo.eml = pg_database_encoding_max_length();
+	}
+
 	PG_RETURN_POINTER(gbt_var_compress(entry, &tinfo));
 }
 
@@ -97,6 +101,11 @@ gbt_bpchar_compress(PG_FUNCTION_ARGS)
 
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	GISTENTRY  *retval;
+
+	if ( tinfo.eml == 0 )
+	{
+		tinfo.eml = pg_database_encoding_max_length();
+	}
 
 	if (entry->leafkey)
 	{
@@ -127,6 +136,11 @@ gbt_text_consistent(PG_FUNCTION_ARGS)
 	bool		retval = FALSE;
 	GBT_VARKEY_R r = gbt_var_key_readable(key);
 
+	if ( tinfo.eml == 0 )
+	{
+		tinfo.eml = pg_database_encoding_max_length();
+	}
+
 	retval = gbt_var_consistent(&r, query, &strategy, GIST_LEAF(entry), &tinfo);
 
 	PG_RETURN_BOOL(retval);
@@ -143,6 +157,11 @@ gbt_bpchar_consistent(PG_FUNCTION_ARGS)
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 	bool		retval;
 	GBT_VARKEY_R r = gbt_var_key_readable(key);
+
+	if ( tinfo.eml == 0 )
+	{
+		tinfo.eml = pg_database_encoding_max_length();
+	}
 
 	retval = gbt_var_consistent(&r, trim, &strategy, GIST_LEAF(entry), &tinfo);
 	PG_RETURN_BOOL(retval);

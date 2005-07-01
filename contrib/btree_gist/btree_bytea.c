@@ -65,7 +65,7 @@ gbt_byteacmp(const bytea *a, const bytea *b)
 static const gbtree_vinfo tinfo =
 {
 	gbt_t_bytea,
-	FALSE,
+	0,
 	TRUE,
 	gbt_byteagt,
 	gbt_byteage,

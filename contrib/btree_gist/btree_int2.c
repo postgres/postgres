@@ -128,20 +128,10 @@ Datum
 gbt_int2_penalty(PG_FUNCTION_ARGS)
 {
 	int16KEY   *origentry = (int16KEY *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(0))->key);
-	int16KEY   *newentry = (int16KEY *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(1))->key);
-	float	   *result = (float *) PG_GETARG_POINTER(2);
-	int2		res;
+	int16KEY    *newentry = (int16KEY *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(1))->key);
+	float	      *result = (float *) PG_GETARG_POINTER(2);
 
-	*result = 0.0;
-
-	penalty_range_enlarge(origentry->lower, origentry->upper, newentry->lower, newentry->upper);
-
-	if (res > 0)
-	{
-		*result += FLT_MIN;
-		*result += (float) (res / ((double) (res + origentry->upper - origentry->lower)));
-		*result *= (FLT_MAX / (((GISTENTRY *) PG_GETARG_POINTER(0))->rel->rd_att->natts + 1));
-	}
+	penalty_num(result,origentry->lower,origentry->upper,newentry->lower,newentry->upper);
 
 	PG_RETURN_POINTER(result);
 }

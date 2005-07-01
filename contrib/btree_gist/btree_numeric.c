@@ -65,7 +65,7 @@ gbt_numeric_cmp(const bytea *a, const bytea *b)
 static const gbtree_vinfo tinfo =
 {
 	gbt_t_numeric,
-	FALSE,
+	0,
 	FALSE,
 	gbt_numeric_gt,
 	gbt_numeric_ge,

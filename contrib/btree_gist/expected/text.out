@@ -6,13 +6,13 @@ SET enable_seqscan=on;
 SELECT count(*) FROM texttmp WHERE a <   '31b0';
  count 
 -------
-   122
+   588
 (1 row)
 
 SELECT count(*) FROM texttmp WHERE a <=  '31b0';
  count 
 -------
-   123
+   589
 (1 row)
 
 SELECT count(*) FROM texttmp WHERE a  =  '31b0';
@@ -38,13 +38,13 @@ SET enable_seqscan=off;
 SELECT count(*) FROM texttmp WHERE a <   '31b0'::text;
  count 
 -------
-   122
+   588
 (1 row)
 
 SELECT count(*) FROM texttmp WHERE a <=  '31b0'::text;
  count 
 -------
-   123
+   589
 (1 row)
 
 SELECT count(*) FROM texttmp WHERE a  =  '31b0'::text;

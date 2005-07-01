@@ -5,13 +5,13 @@ SET enable_seqscan=on;
 SELECT count(*) FROM timestamptmp WHERE a <  '2004-10-26 08:55:08';
  count 
 -------
-   270
+   278
 (1 row)
 
 SELECT count(*) FROM timestamptmp WHERE a <= '2004-10-26 08:55:08';
  count 
 -------
-   271
+   279
 (1 row)
 
 SELECT count(*) FROM timestamptmp WHERE a  = '2004-10-26 08:55:08';
@@ -23,13 +23,13 @@ SELECT count(*) FROM timestamptmp WHERE a  = '2004-10-26 08:55:08';
 SELECT count(*) FROM timestamptmp WHERE a >= '2004-10-26 08:55:08';
  count 
 -------
-   274
+   290
 (1 row)
 
 SELECT count(*) FROM timestamptmp WHERE a >  '2004-10-26 08:55:08';
  count 
 -------
-   273
+   289
 (1 row)
 
 CREATE INDEX timestampidx ON timestamptmp USING gist ( a );
@@ -37,13 +37,13 @@ SET enable_seqscan=off;
 SELECT count(*) FROM timestamptmp WHERE a <  '2004-10-26 08:55:08'::timestamp;
  count 
 -------
-   270
+   278
 (1 row)
 
 SELECT count(*) FROM timestamptmp WHERE a <= '2004-10-26 08:55:08'::timestamp;
  count 
 -------
-   271
+   279
 (1 row)
 
 SELECT count(*) FROM timestamptmp WHERE a  = '2004-10-26 08:55:08'::timestamp;
@@ -55,12 +55,12 @@ SELECT count(*) FROM timestamptmp WHERE a  = '2004-10-26 08:55:08'::timestamp;
 SELECT count(*) FROM timestamptmp WHERE a >= '2004-10-26 08:55:08'::timestamp;
  count 
 -------
-   274
+   290
 (1 row)
 
 SELECT count(*) FROM timestamptmp WHERE a >  '2004-10-26 08:55:08'::timestamp;
  count 
 -------
-   273
+   289
 (1 row)
 

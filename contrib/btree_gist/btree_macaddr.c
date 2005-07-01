@@ -151,23 +151,13 @@ gbt_macad_penalty(PG_FUNCTION_ARGS)
 	float	   *result = (float *) PG_GETARG_POINTER(2);
 	uint64		iorg[2],
 				inew[2];
-	uint64		res;
 
 	iorg[0] = mac_2_uint64(&origentry->lower);
 	iorg[1] = mac_2_uint64(&origentry->upper);
 	inew[0] = mac_2_uint64(&newentry->lower);
 	inew[1] = mac_2_uint64(&newentry->upper);
 
-	penalty_range_enlarge(iorg[0], iorg[1], inew[0], inew[1]);
-
-	*result = 0.0;
-
-	if (res > 0)
-	{
-		*result += FLT_MIN;
-		*result += (float) (((double) res) / ((double) res + (double) iorg[1] - (double) iorg[0]));
-		*result *= (FLT_MAX / (((GISTENTRY *) PG_GETARG_POINTER(0))->rel->rd_att->natts + 1));
-	}
+	penalty_num(result,iorg[0],iorg[1],inew[0],inew[1]);
 
 	PG_RETURN_POINTER(result);
 

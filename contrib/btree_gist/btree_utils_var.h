@@ -1,3 +1,4 @@
+#include "mb/pg_wchar.h"
 
 /* Variable length key */
 typedef bytea GBT_VARKEY;
@@ -27,7 +28,7 @@ typedef struct
 	/* Attribs */
 
 	enum gbtree_type t;			/* data type */
-	bool		str;			/* true, if string ( else binary ) */
+	int32		eml;			/* cached pg_database_encoding_max_length (0: undefined) */
 	bool		trnc;			/* truncate (=compress) key */
 
 	/* Methods */

@@ -98,7 +98,7 @@ gbt_bit_l2n(GBT_VARKEY * leaf)
 static const gbtree_vinfo tinfo =
 {
 	gbt_t_bit,
-	FALSE,
+	0,
 	TRUE,
 	gbt_bitgt,
 	gbt_bitge,

@@ -125,21 +125,10 @@ Datum
 gbt_cash_penalty(PG_FUNCTION_ARGS)
 {
 	cashKEY    *origentry = (cashKEY *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(0))->key);
-	cashKEY    *newentry = (cashKEY *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(1))->key);
-	float	   *result = (float *) PG_GETARG_POINTER(2);
+	cashKEY    *newentry  = (cashKEY *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(1))->key);
+	float	      *result = (float *) PG_GETARG_POINTER(2);
 
-	Cash		res;
-
-	*result = 0.0;
-
-	penalty_range_enlarge(origentry->lower, origentry->upper, newentry->lower, newentry->upper);
-
-	if (res > 0)
-	{
-		*result += FLT_MIN;
-		*result += (float) (res / ((double) (res + origentry->upper - origentry->lower)));
-		*result *= (FLT_MAX / (((GISTENTRY *) PG_GETARG_POINTER(0))->rel->rd_att->natts + 1));
-	}
+	penalty_num(result,origentry->lower,origentry->upper,newentry->lower,newentry->upper);
 
 	PG_RETURN_POINTER(result);
 
