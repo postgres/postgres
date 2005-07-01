@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Jun 27 19:21:55 EDT 2005
+Last updated:		Fri Jul  1 10:51:41 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -420,7 +420,6 @@ Commands
   Currently LISTEN/NOTIFY information is stored in pg_listener. Storing
   such information in memory would improve performance.
 
-* Dump large object comments in custom dump format
 * Add optional textual message to NOTIFY
 
   This would allow an informational message to be added to the notify
@@ -610,7 +609,7 @@ Clients
 	o Add dumping of comments on index columns
 	o Replace crude DELETE FROM method of pg_dumpall for cleaning of
 	  users and groups with separate DROP commands
-	o Add dumping and restoring of LOB comments
+	o -Add dumping and restoring of LOB comments
 	o Stop dumping CASCADE on DROP TYPE commands in clean mode
 	o Add full object name to the tag field.  eg. for operators we need
 	  '=(integer, integer)', instead of just '='.

@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Mon Jun 27 19:21:55 EDT 2005
+Last updated:           Fri Jul  1 10:51:41 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -389,7 +389,6 @@ first.
 <p>  Currently LISTEN/NOTIFY information is stored in pg_listener. Storing
   such information in memory would improve performance.
 </p>
-  </li><li>Dump large object comments in custom dump format
   </li><li>Add optional textual message to NOTIFY
 <p>  This would allow an informational message to be added to the notify
   message, perhaps indicating the row modified or other custom
@@ -566,7 +565,7 @@ first.
     </li><li>Add dumping of comments on index columns
     </li><li>Replace crude DELETE FROM method of pg_dumpall for cleaning of
           users and groups with separate DROP commands
-    </li><li>Add dumping and restoring of LOB comments
+    </li><li>-<em>Add dumping and restoring of LOB comments</em>
     </li><li>Stop dumping CASCADE on DROP TYPE commands in clean mode
     </li><li>Add full object name to the tag field.  eg. for operators we need
           '=(integer, integer)', instead of just '='.
