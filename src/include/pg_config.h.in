@@ -131,9 +131,6 @@
 /* Define to 1 if you have the `gethostbyname_r' function. */
 #undef HAVE_GETHOSTBYNAME_R
 
-/* Define to 1 if you have the `gethostname' function. */
-#undef HAVE_GETHOSTNAME
-
 /* Define to 1 if you have the `getopt' function. */
 #undef HAVE_GETOPT
 
@@ -218,9 +215,6 @@
 /* Define to 1 if you have the `cygipc' library (-lcygipc). */
 #undef HAVE_LIBCYGIPC
 
-/* Define to 1 if you have the `des' library (-ldes). */
-#undef HAVE_LIBDES
-
 /* Define to 1 if you have the `dl' library (-ldl). */
 #undef HAVE_LIBDL
 
@@ -235,9 +229,6 @@
 
 /* Define to 1 if you have the `IPC' library (-lIPC). */
 #undef HAVE_LIBIPC
-
-/* Define to 1 if you have the `krb' library (-lkrb). */
-#undef HAVE_LIBKRB
 
 /* Define to 1 if you have the `lc' library (-llc). */
 #undef HAVE_LIBLC

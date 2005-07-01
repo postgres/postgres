@@ -1,7 +1,7 @@
 #! /bin/sh
 # mkinstalldirs --- make directory hierarchy
 
-scriptversion=2004-02-15.20
+scriptversion=2005-02-02.21
 
 # Original author: Noah Friedman <friedman@prep.ai.mit.edu>
 # Created: 1993-05-16
@@ -27,7 +27,7 @@ while test $# -gt 0 ; do
   case $1 in
     -h | --help | --h*)         # -h for help
       echo "$usage"
-      exit 0
+      exit $?
       ;;
     -m)                         # -m PERM arg
       shift
@@ -37,7 +37,7 @@ while test $# -gt 0 ; do
       ;;
     --version)
       echo "$0 $scriptversion"
-      exit 0
+      exit $?
       ;;
     --)                         # stop option processing
       shift
