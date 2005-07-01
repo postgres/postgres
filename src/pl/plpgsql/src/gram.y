@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.77 2005/06/22 01:35:02 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.78 2005/07/01 17:40:29 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -387,7 +387,7 @@ decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
 						while (*cp1 != '\0')
 						{
 							if (*cp1 == '\\' || *cp1 == '\'')
-								*cp2++ = '\\';
+								*cp2++ = *cp1;	/* double these */
 							*cp2++ = *cp1++;
 						}
 						strcpy(cp2, "'::refcursor");
