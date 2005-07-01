@@ -227,7 +227,8 @@
 				 #   debug5, debug4, debug3, debug2, debug1,
 				 #   info, notice, warning, error, panic(off)
 				 
-#log_min_duration_statement = -1 # -1 is disabled, in milliseconds.
+#log_min_duration_statement = -1 # -1 is disabled, 0 logs all statements
+				 # and their durations, in milliseconds.
 
 #silent_mode = false		 # DO NOT USE without syslog or redirect_stderr
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.332 2005/06/26 19:16:04 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.333 2005/07/01 13:29:23 momjian Exp $
 -->
 
 <chapter Id="runtime">
@@ -2628,16 +2628,17 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       </indexterm>
        <listitem>
         <para>
-         Sets a minimum statement execution time (in milliseconds)
-         that causes a statement to be logged.  All SQL statements
-         that run for the time specified or longer will be logged with
-         their duration.  Setting this to zero will print
-         all queries and their durations.  Minus-one (the default)
-         disables the feature.  For example, if you set it to 
-         <literal>250</literal> then all SQL statements that run 250ms 
-         or longer will be logged.  Enabling this option can be
-         useful in tracking down unoptimized queries in your applications.
-         Only superusers can change this setting.
+         Logs the statement and its duration on a single log line if its
+         duration is greater than or equal to the specified number of
+         milliseconds. Setting this to zero will print all statements
+         and their durations. Minus-one (the default) disables the
+         feature. For example, if you set it to <literal>250</literal>
+         then all SQL statements that run 250ms or longer will be
+         logged. Enabling this option can be useful in tracking down
+         unoptimized queries in your applications. This setting is
+         independent of <varname>log_statement</varname> and
+         <varname>log_duration</varname>. Only superusers can change
+         this setting.
         </para>
        </listitem>
       </varlistentry>
