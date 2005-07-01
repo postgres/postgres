@@ -136,10 +136,6 @@ reindexdb -
 	Reindexes a database
 	by Shaun Thomas <sthomas@townnews.com>
 
-rtree_gist -
-	Support for emulating RTREE indexing in GiST
-	by Oleg Bartunov <oleg@sai.msu.su> and Teodor Sigaev <teodor@sigaev.ru>
-
 seg -
 	Confidence-interval datatype (GiST indexing example)
 	by Gene Selkov, Jr. <selkovjr@mcs.anl.gov>
