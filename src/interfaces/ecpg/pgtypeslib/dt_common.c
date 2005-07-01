@@ -2669,8 +2669,7 @@ pgtypes_defmt_scan(union un_fmt_comb * scan_val, int scan_type, char **pstr, cha
 	if (!pstr_end)
 	{
 		/* there was an error, no match */
-		err = 1;
-		return err;
+		return 1;
 	}
 	last_char = *pstr_end;
 	*pstr_end = '\0';
@@ -2699,8 +2698,10 @@ pgtypes_defmt_scan(union un_fmt_comb * scan_val, int scan_type, char **pstr, cha
 				err = 1;
 			break;
 		case PGTYPES_TYPE_STRING_MALLOCED:
-			if (pstr)
-				scan_val->str_val = pgtypes_strdup(*pstr);
+			scan_val->str_val = pgtypes_strdup(*pstr);
+			if (scan_val->str_val == NULL)
+				err = 1;
+			break;
 	}
 	if (strtol_end && *strtol_end)
 		*pstr = strtol_end;
