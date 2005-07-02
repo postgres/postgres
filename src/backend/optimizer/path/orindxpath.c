@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.72 2005/06/09 04:18:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.73 2005/07/02 23:00:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,16 +90,13 @@ create_or_index_quals(PlannerInfo *root, RelOptInfo *rel)
 	ListCell   *i;
 
 	/*
-	 * Find potentially interesting OR joinclauses.  We must ignore any
-	 * joinclauses that are not marked valid_everywhere, because they
-	 * cannot be pushed down due to outer-join rules.
+	 * Find potentially interesting OR joinclauses.
 	 */
 	foreach(i, rel->joininfo)
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(i);
 
-		if (restriction_is_or_clause(rinfo) &&
-			rinfo->valid_everywhere)
+		if (restriction_is_or_clause(rinfo))
 		{
 			/*
 			 * Use the generate_bitmap_or_paths() machinery to estimate
@@ -140,8 +137,7 @@ create_or_index_quals(PlannerInfo *root, RelOptInfo *rel)
 	 * Convert the path's indexclauses structure to a RestrictInfo tree,
 	 * and add it to the rel's restriction list.
 	 */
-	newrinfos = make_restrictinfo_from_bitmapqual((Path *) bestpath,
-												  true, true);
+	newrinfos = make_restrictinfo_from_bitmapqual((Path *) bestpath, true);
 	Assert(list_length(newrinfos) == 1);
 	or_rinfo = (RestrictInfo *) linitial(newrinfos);
 	Assert(IsA(or_rinfo, RestrictInfo));

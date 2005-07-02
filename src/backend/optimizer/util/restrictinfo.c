@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.37 2005/06/09 04:19:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.38 2005/07/02 23:00:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,11 +24,9 @@
 static RestrictInfo *make_restrictinfo_internal(Expr *clause,
 						   Expr *orclause,
 						   bool is_pushed_down,
-						   bool valid_everywhere,
 						   Relids required_relids);
 static Expr *make_sub_restrictinfos(Expr *clause,
-					   bool is_pushed_down,
-					   bool valid_everywhere);
+					   bool is_pushed_down);
 static RestrictInfo *join_clause_is_redundant(PlannerInfo *root,
 						 RestrictInfo *rinfo,
 						 List *reference_list,
@@ -40,8 +38,8 @@ static RestrictInfo *join_clause_is_redundant(PlannerInfo *root,
  *
  * Build a RestrictInfo node containing the given subexpression.
  *
- * The is_pushed_down and valid_everywhere flags must be supplied by the
- * caller.  required_relids can be NULL, in which case it defaults to the
+ * The is_pushed_down flag must be supplied by the caller.
+ * required_relids can be NULL, in which case it defaults to the
  * actual clause contents (i.e., clause_relids).
  *
  * We initialize fields that depend only on the given subexpression, leaving
@@ -49,23 +47,19 @@ static RestrictInfo *join_clause_is_redundant(PlannerInfo *root,
  * later.
  */
 RestrictInfo *
-make_restrictinfo(Expr *clause, bool is_pushed_down, bool valid_everywhere,
-				  Relids required_relids)
+make_restrictinfo(Expr *clause, bool is_pushed_down, Relids required_relids)
 {
 	/*
 	 * If it's an OR clause, build a modified copy with RestrictInfos
 	 * inserted above each subclause of the top-level AND/OR structure.
 	 */
 	if (or_clause((Node *) clause))
-		return (RestrictInfo *) make_sub_restrictinfos(clause,
-													   is_pushed_down,
-													   valid_everywhere);
+		return (RestrictInfo *) make_sub_restrictinfos(clause, is_pushed_down);
 
 	/* Shouldn't be an AND clause, else AND/OR flattening messed up */
 	Assert(!and_clause((Node *) clause));
 
-	return make_restrictinfo_internal(clause, NULL,
-									  is_pushed_down, valid_everywhere,
+	return make_restrictinfo_internal(clause, NULL, is_pushed_down,
 									  required_relids);
 }
 
@@ -84,9 +78,7 @@ make_restrictinfo(Expr *clause, bool is_pushed_down, bool valid_everywhere,
  * a specialized routine to allow sharing of RestrictInfos.
  */
 List *
-make_restrictinfo_from_bitmapqual(Path *bitmapqual,
-								  bool is_pushed_down,
-								  bool valid_everywhere)
+make_restrictinfo_from_bitmapqual(Path *bitmapqual, bool is_pushed_down)
 {
 	List	   *result;
 
@@ -101,8 +93,7 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 			List	   *sublist;
 
 			sublist = make_restrictinfo_from_bitmapqual((Path *) lfirst(l),
-														is_pushed_down,
-														valid_everywhere);
+														is_pushed_down);
 			result = list_concat(result, sublist);
 		}
 	}
@@ -118,8 +109,7 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 			List	   *sublist;
 
 			sublist = make_restrictinfo_from_bitmapqual((Path *) lfirst(l),
-														is_pushed_down,
-														valid_everywhere);
+														is_pushed_down);
 			if (sublist == NIL)
 			{
 				/* constant TRUE input yields constant TRUE OR result */
@@ -137,7 +127,6 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 			list_make1(make_restrictinfo_internal(make_orclause(withoutris),
 												  make_orclause(withris),
 												  is_pushed_down,
-												  valid_everywhere,
 												  NULL));
 	}
 	else if (IsA(bitmapqual, IndexPath))
@@ -162,15 +151,13 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
  */
 static RestrictInfo *
 make_restrictinfo_internal(Expr *clause, Expr *orclause,
-						   bool is_pushed_down, bool valid_everywhere,
-						   Relids required_relids)
+						   bool is_pushed_down, Relids required_relids)
 {
 	RestrictInfo *restrictinfo = makeNode(RestrictInfo);
 
 	restrictinfo->clause = clause;
 	restrictinfo->orclause = orclause;
 	restrictinfo->is_pushed_down = is_pushed_down;
-	restrictinfo->valid_everywhere = valid_everywhere;
 	restrictinfo->can_join = false;		/* may get set below */
 
 	/*
@@ -250,8 +237,7 @@ make_restrictinfo_internal(Expr *clause, Expr *orclause,
  * simple clauses are valid RestrictInfos.
  */
 static Expr *
-make_sub_restrictinfos(Expr *clause, bool is_pushed_down,
-					   bool valid_everywhere)
+make_sub_restrictinfos(Expr *clause, bool is_pushed_down)
 {
 	if (or_clause((Node *) clause))
 	{
@@ -261,12 +247,10 @@ make_sub_restrictinfos(Expr *clause, bool is_pushed_down,
 		foreach(temp, ((BoolExpr *) clause)->args)
 			orlist = lappend(orlist,
 							 make_sub_restrictinfos(lfirst(temp),
-													is_pushed_down,
-													valid_everywhere));
+													is_pushed_down));
 		return (Expr *) make_restrictinfo_internal(clause,
 												   make_orclause(orlist),
 												   is_pushed_down,
-												   valid_everywhere,
 												   NULL);
 	}
 	else if (and_clause((Node *) clause))
@@ -277,15 +261,13 @@ make_sub_restrictinfos(Expr *clause, bool is_pushed_down,
 		foreach(temp, ((BoolExpr *) clause)->args)
 			andlist = lappend(andlist,
 							  make_sub_restrictinfos(lfirst(temp),
-													 is_pushed_down,
-													 valid_everywhere));
+													 is_pushed_down));
 		return make_andclause(andlist);
 	}
 	else
 		return (Expr *) make_restrictinfo_internal(clause,
 												   NULL,
 												   is_pushed_down,
-												   valid_everywhere,
 												   NULL);
 }
 

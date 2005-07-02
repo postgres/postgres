@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.107 2005/06/09 04:18:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.108 2005/07/02 23:00:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -374,8 +374,8 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 						Relids qualscope)
 {
 	Relids		relids;
-	bool		valid_everywhere;
-	bool		can_be_equijoin;
+	bool		maybe_equijoin;
+	bool		maybe_outer_join;
 	RestrictInfo *restrictinfo;
 	RelOptInfo *rel;
 	List	   *vars;
@@ -409,14 +409,15 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	if (isdeduced)
 	{
 		/*
-		 * If the qual came from implied-equality deduction, we can
-		 * evaluate the qual at its natural semantic level.  It is not
-		 * affected by any outer-join rules (else we'd not have decided
-		 * the vars were equal).
+		 * If the qual came from implied-equality deduction, we always
+		 * evaluate the qual at its natural semantic level.  It is the
+		 * responsibility of the deducer not to create any quals that
+		 * should be delayed by outer-join rules.
 		 */
 		Assert(bms_equal(relids, qualscope));
-		valid_everywhere = true;
-		can_be_equijoin = true;
+		/* Needn't feed it back for more deductions */
+		maybe_equijoin = false;
+		maybe_outer_join = false;
 	}
 	else if (bms_overlap(relids, outerjoin_nonnullable))
 	{
@@ -434,8 +435,14 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		 * result, so we treat it the same as an ordinary inner-join qual.
 		 */
 		relids = qualscope;
-		valid_everywhere = false;
-		can_be_equijoin = false;
+		/*
+		 * We can't use such a clause to deduce equijoin (the left and
+		 * right sides might be unequal above the join because one of
+		 * them has gone to NULL) ... but we might be able to use it
+		 * for more limited purposes.
+		 */
+		maybe_equijoin = false;
+		maybe_outer_join = true;
 	}
 	else
 	{
@@ -449,34 +456,25 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		 * time we are called, the outerjoinset of each baserel will show
 		 * exactly those outer joins that are below the qual in the join
 		 * tree.
-		 *
-		 * We also need to determine whether the qual is "valid everywhere",
-		 * which is true if the qual mentions no variables that are
-		 * involved in lower-level outer joins (this may be an overly
-		 * strong test).
 		 */
 		Relids		addrelids = NULL;
 		Relids		tmprelids;
 		int			relno;
 
-		valid_everywhere = true;
 		tmprelids = bms_copy(relids);
 		while ((relno = bms_first_member(tmprelids)) >= 0)
 		{
 			RelOptInfo *rel = find_base_rel(root, relno);
 
 			if (rel->outerjoinset != NULL)
-			{
 				addrelids = bms_add_members(addrelids, rel->outerjoinset);
-				valid_everywhere = false;
-			}
 		}
 		bms_free(tmprelids);
 
 		if (bms_is_subset(addrelids, relids))
 		{
 			/* Qual is not affected by any outer-join restriction */
-			can_be_equijoin = true;
+			maybe_equijoin = true;
 		}
 		else
 		{
@@ -488,9 +486,10 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 			 * Because application of the qual will be delayed by outer
 			 * join, we mustn't assume its vars are equal everywhere.
 			 */
-			can_be_equijoin = false;
+			maybe_equijoin = false;
 		}
 		bms_free(addrelids);
+		maybe_outer_join = false;
 	}
 
 	/*
@@ -508,7 +507,6 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	 */
 	restrictinfo = make_restrictinfo((Expr *) clause,
 									 is_pushed_down,
-									 valid_everywhere,
 									 relids);
 
 	/*
@@ -533,8 +531,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 			 * allows us to consider z and q equal after their rels are
 			 * joined.
 			 */
-			if (can_be_equijoin)
-				check_mergejoinable(restrictinfo);
+			check_mergejoinable(restrictinfo);
 
 			/*
 			 * If the clause was deduced from implied equality, check to
@@ -601,18 +598,60 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	}
 
 	/*
-	 * If the clause has a mergejoinable operator, and is not an
-	 * outer-join qualification nor bubbled up due to an outer join, then
-	 * the two sides represent equivalent PathKeyItems for path keys: any
-	 * path that is sorted by one side will also be sorted by the other
-	 * (as soon as the two rels are joined, that is).  Record the key
-	 * equivalence for future use.	(We can skip this for a deduced
-	 * clause, since the keys are already known equivalent in that case.)
+	 * If the clause has a mergejoinable operator, we may be able to
+	 * deduce more things from it under the principle of transitivity.
+	 *
+	 * If it is not an outer-join qualification nor bubbled up due to an outer
+	 * join, then the two sides represent equivalent PathKeyItems for path
+	 * keys: any path that is sorted by one side will also be sorted by the
+	 * other (as soon as the two rels are joined, that is).  Pass such clauses
+	 * to add_equijoined_keys.
+	 *
+	 * If it is a left or right outer-join qualification that relates the two
+	 * sides of the outer join (no funny business like leftvar1 = leftvar2 +
+	 * rightvar), we add it to root->left_join_clauses or
+	 * root->right_join_clauses according to which side the nonnullable
+	 * variable appears on.
+	 *
+	 * If it is a full outer-join qualification, we add it to
+	 * root->full_join_clauses.  (Ideally we'd discard cases that aren't
+	 * leftvar = rightvar, as we do for left/right joins, but this routine
+	 * doesn't have the info needed to do that; and the current usage of the
+	 * full_join_clauses list doesn't require that, so it's not currently
+	 * worth complicating this routine's API to make it possible.)
 	 */
-	if (can_be_equijoin &&
-		restrictinfo->mergejoinoperator != InvalidOid &&
-		!isdeduced)
-		add_equijoined_keys(root, restrictinfo);
+	if (restrictinfo->mergejoinoperator != InvalidOid)
+	{
+		if (maybe_equijoin)
+			add_equijoined_keys(root, restrictinfo);
+		else if (maybe_outer_join && restrictinfo->can_join)
+		{
+			if (bms_is_subset(restrictinfo->left_relids,
+							  outerjoin_nonnullable) &&
+				!bms_overlap(restrictinfo->right_relids,
+							 outerjoin_nonnullable))
+			{
+				/* we have outervar = innervar */
+				root->left_join_clauses = lappend(root->left_join_clauses,
+												  restrictinfo);
+			}
+			else if (bms_is_subset(restrictinfo->right_relids,
+								   outerjoin_nonnullable) &&
+					 !bms_overlap(restrictinfo->left_relids,
+								  outerjoin_nonnullable))
+			{
+				/* we have innervar = outervar */
+				root->right_join_clauses = lappend(root->right_join_clauses,
+												   restrictinfo);
+			}
+			else if (bms_equal(outerjoin_nonnullable, qualscope))
+			{
+				/* FULL JOIN (above tests cannot match in this case) */
+				root->full_join_clauses = lappend(root->full_join_clauses,
+												  restrictinfo);
+			}
+		}
+	}
 }
 
 /*
