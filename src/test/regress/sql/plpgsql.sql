@@ -2113,7 +2113,7 @@ end;$$ language plpgsql;
 select raise_exprs();
 drop function raise_exprs();
 
--- continue statement 
+-- continue statement
 create table conttesttbl(idx serial, v integer);
 insert into conttesttbl(v) values(10);
 insert into conttesttbl(v) values(20);
@@ -2154,7 +2154,7 @@ begin
   for _i in 1..10 loop
     begin
       -- applies to outer loop, not the nested begin block
-      continue when _i < 5; 
+      continue when _i < 5;
       raise notice '%', _i;
     end;
   end loop;
@@ -2232,3 +2232,51 @@ drop function continue_test1();
 drop function continue_test2();
 drop function continue_test3();
 drop table conttesttbl;
+
+-- verbose end block and end loop
+create function end_label1() returns void as $$
+<<blbl>>
+begin
+  <<flbl1>>
+  for _i in 1 .. 10 loop
+    exit flbl1;
+  end loop flbl1;
+  <<flbl2>>
+  for _i in 1 .. 10 loop
+    exit flbl2;
+  end loop;
+end blbl;
+$$ language plpgsql;
+
+select end_label1();
+drop function end_label1();
+
+-- should fail: undefined end label
+create function end_label2() returns void as $$
+begin
+  for _i in 1 .. 10 loop
+    exit;
+  end loop flbl1;
+end;
+$$ language plpgsql;
+
+-- should fail: end label does not match start label
+create function end_label3() returns void as $$
+<<outer_label>>
+begin
+  <<inner_label>>
+  for _i in 1 .. 10 loop
+    exit;
+  end loop outer_label;
+end;
+$$ language plpgsql;
+
+-- should fail: end label on a block without a start label
+create function end_label4() returns void as $$
+<<outer_label>>
+begin
+  for _i in 1 .. 10 loop
+    exit;
+  end loop outer_label;
+end;
+$$ language plpgsql;

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.74 2005/06/22 01:35:02 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.75 2005/07/02 08:59:47 neilc Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -456,7 +456,7 @@ a_output := a_output || $$ if v_$$ || referrer_keys.kind || $$ like '$$
     <replaceable>declarations</replaceable> </optional>
 BEGIN
     <replaceable>statements</replaceable>
-END;
+END <optional> <replaceable>label</replaceable> </optional>;
 </synopsis>
     </para>
 
@@ -1789,18 +1789,19 @@ END IF;
      <title><literal>LOOP</></title>
 
 <synopsis>
-<optional>&lt;&lt;<replaceable>label</replaceable>&gt;&gt;</optional>
+<optional> &lt;&lt;<replaceable>label</replaceable>&gt;&gt; </optional>
 LOOP
     <replaceable>statements</replaceable>
-END LOOP;
+END LOOP <optional> <replaceable>label</replaceable> </optional>;
 </synopsis>
 
      <para>
-      <literal>LOOP</> defines an unconditional loop that is repeated indefinitely
-      until terminated by an <literal>EXIT</> or <command>RETURN</command>
-      statement.  The optional label can be used by <literal>EXIT</> statements in
-      nested loops to specify which level of nesting should be
-      terminated.
+      <literal>LOOP</> defines an unconditional loop that is repeated
+      indefinitely until terminated by an <literal>EXIT</> or
+      <command>RETURN</command> statement.  The optional
+      <replaceable>label</replaceable> can be used by <literal>EXIT</>
+      and <literal>CONTINUE</literal> statements in nested loops to
+      specify which loop the statement should be applied to.
      </para>
     </sect3>
 
@@ -1920,10 +1921,10 @@ END LOOP;
      </indexterm>
 
 <synopsis>
-<optional>&lt;&lt;<replaceable>label</replaceable>&gt;&gt;</optional>
+<optional> &lt;&lt;<replaceable>label</replaceable>&gt;&gt; </optional>
 WHILE <replaceable>expression</replaceable> LOOP
     <replaceable>statements</replaceable>
-END LOOP;
+END LOOP <optional> <replaceable>label</replaceable> </optional>;
 </synopsis>
 
        <para>
@@ -1951,10 +1952,10 @@ END LOOP;
       <title><literal>FOR</> (integer variant)</title>
 
 <synopsis>
-<optional>&lt;&lt;<replaceable>label</replaceable>&gt;&gt;</optional>
+<optional> &lt;&lt;<replaceable>label</replaceable>&gt;&gt; </optional>
 FOR <replaceable>name</replaceable> IN <optional> REVERSE </optional> <replaceable>expression</replaceable> .. <replaceable>expression</replaceable> LOOP
     <replaceable>statements</replaceable>
-END LOOP;
+END LOOP <optional> <replaceable>labal</replaceable> </optional>;
 </synopsis>
 
        <para>
@@ -1997,10 +1998,10 @@ END LOOP;
      the results of a query and manipulate that data
      accordingly. The syntax is:
 <synopsis>
-<optional>&lt;&lt;<replaceable>label</replaceable>&gt;&gt;</optional>
+<optional> &lt;&lt;<replaceable>label</replaceable>&gt;&gt; </optional>
 FOR <replaceable>record_or_row</replaceable> IN <replaceable>query</replaceable> LOOP
     <replaceable>statements</replaceable>
-END LOOP;
+END LOOP <optional> <replaceable>label</replaceable> </optional>;
 </synopsis>
      The record or row variable is successively assigned each row
      resulting from the <replaceable>query</replaceable> (which must be a
@@ -2036,10 +2037,10 @@ $$ LANGUAGE plpgsql;
      The <literal>FOR-IN-EXECUTE</> statement is another way to iterate over
      rows:
 <synopsis>
-<optional>&lt;&lt;<replaceable>label</replaceable>&gt;&gt;</optional>
+<optional> &lt;&lt;<replaceable>label</replaceable>&gt;&gt; </optional>
 FOR <replaceable>record_or_row</replaceable> IN EXECUTE <replaceable>text_expression</replaceable> LOOP 
     <replaceable>statements</replaceable>
-END LOOP;
+END LOOP <optional> <replaceable>label</replaceable> </optional>;
 </synopsis>
      This is like the previous form, except that the source
      <command>SELECT</command> statement is specified as a string

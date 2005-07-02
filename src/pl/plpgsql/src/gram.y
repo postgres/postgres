@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.78 2005/07/01 17:40:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.79 2005/07/02 08:59:47 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -56,6 +56,8 @@ static	PLpgSQL_row		*read_into_scalar_list(const char *initial_name,
 											   PLpgSQL_datum *initial_datum);
 static	void			 check_sql_expr(const char *stmt);
 static	void			 plpgsql_sql_error_callback(void *arg);
+static	void			 check_labels(const char *start_label,
+									  const char *end_label);
 
 %}
 
@@ -69,7 +71,7 @@ static	void			 plpgsql_sql_error_callback(void *arg);
 			int  lineno;
 		}						varname;
 		struct
-		{    
+		{
 			char *name;
 			int  lineno;
 			PLpgSQL_rec     *rec;
@@ -81,6 +83,11 @@ static	void			 plpgsql_sql_error_callback(void *arg);
 			int  n_initvars;
 			int  *initvarnos;
 		}						declhdr;
+		struct
+		{
+			char *end_label;
+			List *stmts;
+		}						loop_body;
 		List					*list;
 		PLpgSQL_type			*dtype;
 		PLpgSQL_datum			*scalar;	/* a VAR, RECFIELD, or TRIGARG */
@@ -119,11 +126,11 @@ static	void			 plpgsql_sql_error_callback(void *arg);
 %type <forvariable>	for_variable
 %type <stmt>	for_control
 
-%type <str>		opt_lblname opt_label
-%type <str>		opt_exitlabel
+%type <str>		opt_lblname opt_block_label opt_label
 %type <str>		execsql_start
 
-%type <list>	proc_sect proc_stmts stmt_else loop_body
+%type <list>	proc_sect proc_stmts stmt_else
+%type <loop_body>	loop_body
 %type <stmt>	proc_stmt pl_block
 %type <stmt>	stmt_assign stmt_if stmt_loop stmt_while stmt_exit
 %type <stmt>	stmt_return stmt_return_next stmt_raise stmt_execsql
@@ -248,7 +255,7 @@ opt_semi		:
 				| ';'
 				;
 
-pl_block		: decl_sect K_BEGIN lno proc_sect exception_sect K_END
+pl_block		: decl_sect K_BEGIN lno proc_sect exception_sect K_END opt_label
 					{
 						PLpgSQL_stmt_block *new;
 
@@ -262,6 +269,7 @@ pl_block		: decl_sect K_BEGIN lno proc_sect exception_sect K_END
 						new->body		= $4;
 						new->exceptions	= $5;
 
+						check_labels($1.label, $7);
 						plpgsql_ns_pop();
 
 						$$ = (PLpgSQL_stmt *)new;
@@ -269,7 +277,7 @@ pl_block		: decl_sect K_BEGIN lno proc_sect exception_sect K_END
 				;
 
 
-decl_sect		: opt_label
+decl_sect		: opt_block_label
 					{
 						plpgsql_ns_setlocal(false);
 						$$.label	  = $1;
@@ -277,7 +285,7 @@ decl_sect		: opt_label
 						$$.initvarnos = NULL;
 						plpgsql_add_initdatums(NULL);
 					}
-				| opt_label decl_start
+				| opt_block_label decl_start
 					{
 						plpgsql_ns_setlocal(false);
 						$$.label	  = $1;
@@ -285,7 +293,7 @@ decl_sect		: opt_label
 						$$.initvarnos = NULL;
 						plpgsql_add_initdatums(NULL);
 					}
-				| opt_label decl_start decl_stmts
+				| opt_block_label decl_start decl_stmts
 					{
 						plpgsql_ns_setlocal(false);
 						if ($3 != NULL)
@@ -409,7 +417,7 @@ decl_cursor_query :
 						plpgsql_ns_setlocal(false);
 						query = read_sql_stmt("");
 						plpgsql_ns_setlocal(true);
-						
+
 						$$ = query;
 					}
 				;
@@ -757,7 +765,7 @@ stmt_else		:
 						 *	 ...							   ...
 						 * ELSE							   ELSE
 						 *	 ...							   ...
-						 * END IF						   END IF			 
+						 * END IF						   END IF
 						 *							   END IF
 						 */
 						PLpgSQL_stmt_if *new_if;
@@ -776,11 +784,11 @@ stmt_else		:
 
 				| K_ELSE proc_sect
 					{
-						$$ = $2;				
+						$$ = $2;
 					}
 				;
 
-stmt_loop		: opt_label K_LOOP lno loop_body
+stmt_loop		: opt_block_label K_LOOP lno loop_body
 					{
 						PLpgSQL_stmt_loop *new;
 
@@ -788,15 +796,16 @@ stmt_loop		: opt_label K_LOOP lno loop_body
 						new->cmd_type = PLPGSQL_STMT_LOOP;
 						new->lineno   = $3;
 						new->label	  = $1;
-						new->body	  = $4;
+						new->body	  = $4.stmts;
 
+						check_labels($1, $4.end_label);
 						plpgsql_ns_pop();
 
 						$$ = (PLpgSQL_stmt *)new;
 					}
 				;
 
-stmt_while		: opt_label K_WHILE lno expr_until_loop loop_body
+stmt_while		: opt_block_label K_WHILE lno expr_until_loop loop_body
 					{
 						PLpgSQL_stmt_while *new;
 
@@ -805,15 +814,16 @@ stmt_while		: opt_label K_WHILE lno expr_until_loop loop_body
 						new->lineno   = $3;
 						new->label	  = $1;
 						new->cond	  = $4;
-						new->body	  = $5;
+						new->body	  = $5.stmts;
 
+						check_labels($1, $5.end_label);
 						plpgsql_ns_pop();
 
 						$$ = (PLpgSQL_stmt *)new;
 					}
 				;
 
-stmt_for		: opt_label K_FOR for_control loop_body
+stmt_for		: opt_block_label K_FOR for_control loop_body
 					{
 						/* This runs after we've scanned the loop body */
 						if ($3->cmd_type == PLPGSQL_STMT_FORI)
@@ -822,7 +832,7 @@ stmt_for		: opt_label K_FOR for_control loop_body
 
 							new = (PLpgSQL_stmt_fori *) $3;
 							new->label	  = $1;
-							new->body	  = $4;
+							new->body	  = $4.stmts;
 							$$ = (PLpgSQL_stmt *) new;
 						}
 						else if ($3->cmd_type == PLPGSQL_STMT_FORS)
@@ -831,7 +841,7 @@ stmt_for		: opt_label K_FOR for_control loop_body
 
 							new = (PLpgSQL_stmt_fors *) $3;
 							new->label	  = $1;
-							new->body	  = $4;
+							new->body	  = $4.stmts;
 							$$ = (PLpgSQL_stmt *) new;
 						}
 						else
@@ -841,10 +851,11 @@ stmt_for		: opt_label K_FOR for_control loop_body
 							Assert($3->cmd_type == PLPGSQL_STMT_DYNFORS);
 							new = (PLpgSQL_stmt_dynfors *) $3;
 							new->label	  = $1;
-							new->body	  = $4;
+							new->body	  = $4.stmts;
 							$$ = (PLpgSQL_stmt *) new;
 						}
 
+						check_labels($1, $4.end_label);
 						/* close namespace started in opt_label */
 						plpgsql_ns_pop();
 					}
@@ -1037,7 +1048,7 @@ stmt_select		: K_SELECT lno
 					}
 				;
 
-stmt_exit		: exit_type lno opt_exitlabel opt_exitcond
+stmt_exit		: exit_type lno opt_label opt_exitcond
 					{
 						PLpgSQL_stmt_exit *new;
 
@@ -1245,8 +1256,11 @@ raise_level		: K_EXCEPTION
 					}
 				;
 
-loop_body		: proc_sect K_END K_LOOP ';'
-					{ $$ = $1; }
+loop_body		: proc_sect K_END K_LOOP opt_label ';'
+					{
+						$$.stmts = $1;
+						$$.end_label = $4;
+					}
 				;
 
 stmt_execsql	: execsql_start lno
@@ -1262,7 +1276,7 @@ stmt_execsql	: execsql_start lno
 					}
 				;
 
-stmt_dynexecute : K_EXECUTE lno 
+stmt_dynexecute : K_EXECUTE lno
 					{
 						PLpgSQL_stmt_dynexecute *new;
 						PLpgSQL_expr *expr;
@@ -1418,7 +1432,7 @@ stmt_open		: K_OPEN lno cursor_varptr
 											 errmsg("cursor \"%s\" has no arguments",
 													$3->refname)));
 								}
-								
+
 								if (tok != ';')
 								{
 									plpgsql_error_lineno = plpgsql_scanner_lineno();
@@ -1596,7 +1610,7 @@ expr_until_loop :
 					{ $$ = plpgsql_read_expression(K_LOOP, "LOOP"); }
 				;
 
-opt_label		:
+opt_block_label	:
 					{
 						plpgsql_ns_push(NULL);
 						$$ = NULL;
@@ -1608,14 +1622,15 @@ opt_label		:
 					}
 				;
 
-opt_exitlabel	:
-					{ $$ = NULL; }
+opt_label	:
+					{
+						$$ = NULL;
+					}
 				| T_LABEL
 					{
-						char	*name;
-
-						plpgsql_convert_ident(yytext, &name, 1);
-						$$ = name;
+						char *label_name;
+						plpgsql_convert_ident(yytext, &label_name, 1);
+						$$ = label_name;
 					}
 				| T_WORD
 					{
@@ -2208,6 +2223,31 @@ plpgsql_sql_error_callback(void *arg)
 	internalerrquery(sql_stmt);
 	internalerrposition(geterrposition());
 	errposition(0);
+}
+
+static void
+check_labels(const char *start_label, const char *end_label)
+{
+	if (end_label)
+	{
+		if (!start_label)
+		{
+			plpgsql_error_lineno = plpgsql_scanner_lineno();
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("end label \"%s\" specified for unlabelled block",
+							end_label)));
+		}
+
+		if (strcmp(start_label, end_label) != 0)
+		{
+			plpgsql_error_lineno = plpgsql_scanner_lineno();
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("end label \"%s\" differs from block's label \"%s\"",
+							end_label, start_label)));
+		}
+	}
 }
 
 #include "pl_scan.c"
