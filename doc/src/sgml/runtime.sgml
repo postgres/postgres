@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.334 2005/07/02 18:29:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.335 2005/07/02 19:16:36 momjian Exp $
 -->
 
 <chapter Id="runtime">
@@ -929,7 +929,8 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Enables <acronym>SSL</> connections. Please read
         <xref linkend="ssl-tcp"> before using this. The default
-        is off.  This parameter can only be set at server start.
+        is <literal>off</>. This parameter can only be set at server
+        start.
        </para>
       </listitem>
      </varlistentry>
@@ -946,8 +947,8 @@ SET ENABLE_SEQSCAN TO OFF;
         <xref linkend="sql-alteruser" endterm="sql-alteruser-title">
         without writing either <literal>ENCRYPTED</> or
         <literal>UNENCRYPTED</>, this option determines whether the
-        password is to be encrypted. The default is on (encrypt the
-        password).
+        password is to be encrypted. The default is <literal>on</>
+        (encrypt the password).
        </para>
       </listitem>
      </varlistentry>
@@ -987,8 +988,8 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Sets if Kerberos usernames should be treated case-insensitive.
-        The default is off (case sensitive). This parameter can only be
-        set at server start.
+        The default is <literal>off</> (case sensitive). This parameter
+        can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -1867,7 +1868,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       <listitem>
        <para>
         Enables or disables the query planner's use of bitmap-scan plan
-        types. The default is on.
+        types. The default is <literal>on</>.
        </para>
       </listitem>
      </varlistentry>
@@ -1880,7 +1881,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       <listitem>
        <para>
         Enables or disables the query planner's use of hashed
-        aggregation plan types. The default is on.
+        aggregation plan types. The default is <literal>on</>.
        </para>
       </listitem>
      </varlistentry>
@@ -1893,7 +1894,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       <listitem>
        <para>
         Enables or disables the query planner's use of hash-join plan
-        types. The default is on.
+        types. The default is <literal>on</>.
        </para>
       </listitem>
      </varlistentry>
@@ -1909,7 +1910,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       <listitem>
        <para>
         Enables or disables the query planner's use of index-scan plan
-        types. The default is on.
+        types. The default is <literal>on</>.
        </para>
       </listitem>
      </varlistentry>
@@ -1922,7 +1923,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       <listitem>
        <para>
         Enables or disables the query planner's use of merge-join plan
-        types. The default is on.
+        types. The default is <literal>on</>.
        </para>
       </listitem>
      </varlistentry>
@@ -1938,7 +1939,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
         plans. It's not possible to suppress nested-loop joins entirely,
         but turning this variable off discourages the planner from using
         one if there are other methods available. The default is
-        on.
+        <literal>on</>.
        </para>
       </listitem>
      </varlistentry>
@@ -1957,7 +1958,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
         plan types. It's not possible to suppress sequential scans
         entirely, but turning this variable off discourages the planner
         from using one if there are other methods available. The
-        default is on.
+        default is <literal>on</>.
        </para>
       </listitem>
      </varlistentry>
@@ -1973,7 +1974,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
         steps. It's not possible to suppress explicit sorts entirely,
         but turning this variable off discourages the planner from
         using one if there are other methods available. The default
-        is on.
+        is <literal>on</>.
        </para>
       </listitem>
      </varlistentry>
@@ -1986,7 +1987,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       <listitem>
        <para>
         Enables or disables the query planner's use of <acronym>TID</>
-        scan plan types. The default is on.
+        scan plan types. The default is <literal>on</>.
        </para>
       </listitem>
      </varlistentry>
@@ -2831,8 +2832,8 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
         if you are not using <application>syslog</>, it is recommended 
         that you log the PID or session ID using <varname>log_line_prefix</> 
         so that you can link the statement to the 
-        duration using the process ID or session ID. The default is off.  
-        Only superusers can change this setting.
+        duration using the process ID or session ID. The default is
+        <literal>off</>. Only superusers can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -3137,8 +3138,8 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
        <para>
         If on, collected statistics are zeroed out whenever the server
         is restarted. If off, statistics are accumulated across server
-        restarts. The default is on. This option can only be set at
-        server start.
+        restarts. The default is <literal>on</>. This option can only 
+	be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -3258,12 +3259,12 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       </indexterm>
       <listitem>
        <para>
-        This parameter is normally on.  When set to off, it disables
-        validation of the function body string during <xref
+        This parameter is normally on. When set to <literal>off</>, it
+        disables validation of the function body string during <xref
         linkend="sql-createfunction"
-        endterm="sql-createfunction-title">.  Disabling validation is
-        occasionally useful to avoid problems such as forward
-        references when restoring function definitions from a dump.
+        endterm="sql-createfunction-title">. Disabling validation is
+        occasionally useful to avoid problems such as forward references
+        when restoring function definitions from a dump.
        </para>
       </listitem>
      </varlistentry>
@@ -3307,7 +3308,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
        <para>
         A read-only SQL transaction cannot alter non-temporary tables.
         This parameter controls the default read-only status of each new
-        transaction. The default is off (read/write).
+        transaction. The default is <literal>off</> (read/write).
        </para>
 
        <para>
@@ -3389,7 +3390,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
         <literal>CST</literal>, <literal>EST</literal>, and
         <literal>SAT</literal> are interpreted as Australian time
         zones rather than as North/South American time zones and
-        Saturday. The default is off.
+        Saturday. The default is <literal>off</>.
        </para>
       </listitem>
      </varlistentry>
@@ -3530,7 +3531,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
        <para>
         Determines whether <command>EXPLAIN VERBOSE</> uses the
         indented or non-indented format for displaying detailed
-        query-tree dumps. The default is on.
+        query-tree dumps. The default is <literal>on</>.
        </para>
       </listitem>
      </varlistentry>
@@ -3670,15 +3671,15 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </indexterm>
       <listitem>
        <para>
-        When <literal>on</>, tables that are referenced by a query
-        will be automatically added to the <literal>FROM</> clause if
-        not already present. This behavior does not comply with the
-        SQL standard and many people dislike it because it can mask
-        mistakes (such as referencing a table where you should have
-        referenced its alias). The default is <literal>off</>. This
-        variable can be enabled for compatibility with releases of
-        <productname>PostgreSQL</> prior to 8.1, where this behavior
-        was allowed by default.
+        When on, tables that are referenced by a query will be
+        automatically added to the <literal>FROM</> clause if not
+        already present. This behavior does not comply with the SQL
+        standard and many people dislike it because it can mask mistakes
+        (such as referencing a table where you should have referenced
+        its alias). The default is <literal>off</>. This variable can be
+        enabled for compatibility with releases of
+        <productname>PostgreSQL</> prior to 8.1, where this behavior was
+        allowed by default.
        </para>
 
        <para>
@@ -3722,10 +3723,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         This controls the inheritance semantics, in particular whether
         subtables are included by various commands by default. They were
         not included in versions prior to 7.1. If you need the old
-        behavior you can set this variable to off, but in the long run
-        you are encouraged to change your applications to use the
-        <literal>ONLY</literal> key word to exclude subtables. See
-        <xref linkend="ddl-inherit"> for more information about inheritance.
+        behavior you can set this variable to <literal>off</>, but in
+        the long run you are encouraged to change your applications to
+        use the <literal>ONLY</literal> key word to exclude subtables.
+        See <xref linkend="ddl-inherit"> for more information about
+        inheritance.
        </para>
       </listitem>
      </varlistentry>
@@ -3766,9 +3768,9 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </indexterm>
       <listitem>
        <para>
-        When <literal>on</>, a warning is issued if a backslash
-        (<literal>\</>) appears in an ordinary string literal
-        (<literal>'...'</> syntax).  The default is <literal>off</>.
+        When on, a warning is issued if a backslash (<literal>\</>)
+        appears in an ordinary string literal (<literal>'...'</>
+        syntax). The default is <literal>off</>.
        </para>
        <para>
         Escape string syntax (<literal>E'...'</>) should be used for
@@ -3794,14 +3796,15 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </indexterm>
       <listitem>
        <para>
-        When turned on, expressions of the form
-        <literal><replaceable>expr</> = NULL</literal> (or <literal>NULL
-        = <replaceable>expr</></literal>) are treated as
+        When on, expressions of the form <literal><replaceable>expr</> =
+        NULL</literal> (or <literal>NULL =
+        <replaceable>expr</></literal>) are treated as
         <literal><replaceable>expr</> IS NULL</literal>, that is, they
         return true if <replaceable>expr</> evaluates to the null value,
         and false otherwise. The correct SQL-spec-compliant behavior of
         <literal><replaceable>expr</> = NULL</literal> is to always
-        return null (unknown). Therefore this option defaults to off.
+        return null (unknown). Therefore this option defaults to
+        <literal>off</>.
        </para>
 
        <para>
@@ -4102,8 +4105,8 @@ plruby.bar = true        # generates error, unknown class name
         must be defined when <productname>PostgreSQL</productname> is
         built (accomplished by the <command>configure</command> option
         <option>--enable-cassert</option>). Note that
-        <varname>debug_assertions</varname> defaults to on if
-        <productname>PostgreSQL</productname> has been built with
+        <varname>debug_assertions</varname> defaults to <literal>on</>
+        if <productname>PostgreSQL</productname> has been built with
         assertions enabled.
        </para>
       </listitem>
@@ -4190,7 +4193,8 @@ plruby.bar = true        # generates error, unknown class name
         corruption has occurred due to hardware or software error.  You should
         generally not set this on until you have given up hope of recovering
         data from the damaged page(s) of a table.  The
-        default setting is off, and it can only be changed by a superuser.
+        default setting is <literal>off</>, and it can only be changed
+        by a superuser.
        </para>
       </listitem>
      </varlistentry>
