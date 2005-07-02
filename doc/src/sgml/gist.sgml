@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.20 2005/06/29 01:23:49 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.21 2005/07/02 20:08:27 momjian Exp $
 -->
 
 <chapter id="GiST">
@@ -177,25 +177,6 @@ $PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.20 2005/06/29 01:23:49 momjian Exp
     </varlistentry>
 
   </variablelist>
-
-</sect1>
-
-<sect1 id="limitations">
- <title>Limitations</title>
-
- <para>
-  The current implementation of <acronym>GiST</acronym> within
-  <productname>PostgreSQL</productname> has some major limitations:
-  <acronym>GiST</acronym> index access is not concurrent, and the
-  <acronym>GiST</acronym> interface doesn't allow the development of certain
-  data types, such as digital trees (see papers by Aoki et al).
- </para>
-
- <para>
-  Solutions to the concurrency problems appear in Marcel Kornacker's
-  thesis; however these ideas have not yet been put into practice in the
-  <productname>PostgreSQL</productname> implementation.
- </para>
 
 </sect1>
 
