@@ -62,12 +62,12 @@
 # - Security & Authentication -
 
 #authentication_timeout = 60	# 1-600, in seconds
-#ssl = false
-#password_encryption = true
-#db_user_namespace = false
+#ssl = off
+#password_encryption = on
+#db_user_namespace = off
 # Kerberos
 #krb_server_keyfile = ''
-#krb_caseins_users = false
+#krb_caseins_users = off
 #krb_srvname = 'postgres'
 
 
@@ -117,7 +117,7 @@
 
 # - Settings -
 
-#fsync = true			# turns forced synchronization on or off
+#fsync = on			# turns forced synchronization on or off
 #wal_sync_method = fsync	# the default varies across platforms:
 				# fsync, fdatasync, fsync_writethrough,
 				# open_sync, open_datasync
@@ -142,15 +142,15 @@
 
 # - Planner Method Configuration -
 
-#enable_bitmapscan = true
-#enable_hashagg = true
-#enable_hashjoin = true
-#enable_indexscan = true
-#enable_mergejoin = true
-#enable_nestloop = true
-#enable_seqscan = true
-#enable_sort = true
-#enable_tidscan = true
+#enable_bitmapscan = on
+#enable_hashagg = on
+#enable_hashjoin = on
+#enable_indexscan = on
+#enable_mergejoin = on
+#enable_nestloop = on
+#enable_seqscan = on
+#enable_sort = on
+#enable_tidscan = on
 
 # - Planner Cost Constants -
 
@@ -162,7 +162,7 @@
 
 # - Genetic Query Optimizer -
 
-#geqo = true
+#geqo = on
 #geqo_threshold = 12
 #geqo_effort = 5		# range 1-10
 #geqo_pool_size = 0		# selects default based on effort
@@ -186,24 +186,25 @@
                                 # syslog and eventlog, depending on
                                 # platform.
 
-# This is relevant when logging to stderr:
-#redirect_stderr = false    # Enable capturing of stderr into log files.
-# These are only relevant if redirect_stderr is true:
-#log_directory = 'pg_log'   # Directory where log files are written.
-                            # May be specified absolute or relative to PGDATA
+# This is used when logging to stderr:
+#redirect_stderr = off		# Enable capturing of stderr into log files.
+
+# These are only used if redirect_stderr is on:
+#log_directory = 'pg_log'	# Directory where log files are written.
+				# Can be absolute or relative to PGDATA
 #log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log' # Log file name pattern.
-                            # May include strftime() escapes
-#log_truncate_on_rotation = false  # If true, any existing log file of the 
-                            # same name as the new log file will be truncated
-                            # rather than appended to.  But such truncation
-                            # only occurs on time-driven rotation,
-                            # not on restarts or size-driven rotation.
-                            # Default is false, meaning append to existing 
-                            # files in all cases.
-#log_rotation_age = 1440    # Automatic rotation of logfiles will happen after
-                            # so many minutes.  0 to disable.
-#log_rotation_size = 10240  # Automatic rotation of logfiles will happen after
-                            # so many kilobytes of log output.  0 to disable.
+				# Can include strftime() escapes
+#log_truncate_on_rotation = off # If on, any existing log file of the same 
+				# name as the new log file will be truncated
+				# rather than appended to.  But such truncation
+				# only occurs on time-driven rotation,
+				# not on restarts or size-driven rotation.
+				# Default is off, meaning append to existing 
+				# files in all cases.
+#log_rotation_age = 1440	# Automatic rotation of logfiles will happen after
+				# so many minutes.	0 to disable.
+#log_rotation_size = 10240	# Automatic rotation of logfiles will happen after
+				# so many kilobytes of log output.  0 to disable.
 
 # These are relevant when logging to syslog:
 #syslog_facility = 'LOCAL0'
@@ -230,17 +231,17 @@
 #log_min_duration_statement = -1 # -1 is disabled, 0 logs all statements
 				 # and their durations, in milliseconds.
 
-#silent_mode = false		 # DO NOT USE without syslog or redirect_stderr
+#silent_mode = off		 # DO NOT USE without syslog or redirect_stderr
 
 # - What to Log -
 
-#debug_print_parse = false
-#debug_print_rewritten = false
-#debug_print_plan = false
-#debug_pretty_print = false
-#log_connections = false
-#log_disconnections = false
-#log_duration = false
+#debug_print_parse = off
+#debug_print_rewritten = off
+#debug_print_plan = off
+#debug_pretty_print = off
+#log_connections = off
+#log_disconnections = off
+#log_duration = off
 #log_line_prefix = ''		# %u = user name
 				# %d = database name
 				# %r = remote host and port
@@ -257,7 +258,7 @@
 				# %% = '%'
 				# e.g. '<%u%%%d> '
 #log_statement = 'none'		# none, mod, ddl, all
-#log_hostname = false
+#log_hostname = off
 
 
 #---------------------------------------------------------------------------
@@ -266,18 +267,18 @@
 
 # - Statistics Monitoring -
 
-#log_parser_stats = false
-#log_planner_stats = false
-#log_executor_stats = false
-#log_statement_stats = false
+#log_parser_stats = off
+#log_planner_stats = off
+#log_executor_stats = off
+#log_statement_stats = off
 
 # - Query/Index Statistics Collector -
 
-#stats_start_collector = true
-#stats_command_string = false
-#stats_block_level = false
-#stats_row_level = false
-#stats_reset_on_server_start = true
+#stats_start_collector = on
+#stats_command_string = off
+#stats_block_level = off
+#stats_row_level = off
+#stats_reset_on_server_start = on
 
 
 #---------------------------------------------------------------------------
@@ -288,16 +289,16 @@
 
 #search_path = '$user,public'	# schema names
 #default_tablespace = ''	# a tablespace name, or '' for default
-#check_function_bodies = true
+#check_function_bodies = on
 #default_transaction_isolation = 'read committed'
-#default_transaction_read_only = false
+#default_transaction_read_only = off
 #statement_timeout = 0		# 0 is disabled, in milliseconds
 
 # - Locale and Formatting -
 
 #datestyle = 'iso, mdy'
 #timezone = unknown		# actually, defaults to TZ environment setting
-#australian_timezones = false
+#australian_timezones = off
 #extra_float_digits = 0		# min -15, max 2
 #client_encoding = sql_ascii	# actually, defaults to database encoding
 
@@ -309,7 +310,7 @@
 
 # - Other Defaults -
 
-#explain_pretty_print = true
+#explain_pretty_print = on
 #dynamic_library_path = '$libdir'
 
 
@@ -327,12 +328,12 @@
 
 # - Previous Postgres Versions -
 
-#add_missing_from = false
+#add_missing_from = off
 #regex_flavor = advanced	# advanced, extended, or basic
-#sql_inheritance = true
-#default_with_oids = false
-#escape_string_warning = false
+#sql_inheritance = on
+#default_with_oids = off
+#escape_string_warning = off
 
 # - Other Platforms & Clients -
 
-#transform_null_equals = false
+#transform_null_equals = off

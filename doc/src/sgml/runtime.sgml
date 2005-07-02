@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.333 2005/07/01 13:29:23 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.334 2005/07/02 18:29:03 momjian Exp $
 -->
 
 <chapter Id="runtime">
@@ -2461,7 +2461,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
         rather than append to, any existing log file of the same name.
         However, truncation will occur only when a new file is being opened
         due to time-based rotation, not during server startup or size-based
-        rotation.  When false, pre-existing files will be appended to in
+        rotation.  When off, pre-existing files will be appended to in
         all cases.  For example, using this option in combination with
         a <varname>log_filename</varname> like <literal>postgresql-%H.log</literal>
         would result in generating twenty-four hourly log files and then
@@ -2474,14 +2474,14 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
         <literal>server_log.Mon</literal>, <literal>server_log.Tue</literal>, 
         etc, and automatically overwrite last week's log with this week's log,
         set <varname>log_filename</varname> to <literal>server_log.%a</literal>, 
-        <varname>log_truncate_on_rotation</varname> to <literal>true</literal>, and 
+        <varname>log_truncate_on_rotation</varname> to <literal>on</literal>, and 
         <varname>log_rotation_age</varname> to <literal>1440</literal>.
        </para>
        <para>
         Example: To keep 24 hours of logs, one log file per hour, but 
         also rotate sooner if the log file size exceeds 1GB, set 
         <varname>log_filename</varname> to <literal>server_log.%H%M</literal>, 
-        <varname>log_truncate_on_rotation</varname> to <literal>true</literal>, 
+        <varname>log_truncate_on_rotation</varname> to <literal>on</literal>, 
         <varname>log_rotation_age</varname> to <literal>60</literal>, and 
         <varname>log_rotation_size</varname> to <literal>1000000</literal>.
         Including <literal>%M</> in <varname>log_filename</varname> allows
@@ -3258,7 +3258,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       </indexterm>
       <listitem>
        <para>
-        This parameter is normally true.  When set to false, it disables
+        This parameter is normally on.  When set to off, it disables
         validation of the function body string during <xref
         linkend="sql-createfunction"
         endterm="sql-createfunction-title">.  Disabling validation is
@@ -3307,7 +3307,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
        <para>
         A read-only SQL transaction cannot alter non-temporary tables.
         This parameter controls the default read-only status of each new
-        transaction. The default is false (read/write).
+        transaction. The default is off (read/write).
        </para>
 
        <para>
@@ -3385,11 +3385,11 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       <indexterm><primary>time zone</><secondary>Australian</></>
       <listitem>
        <para>
-        If set to true, <literal>ACST</literal>,
+        If set to on, <literal>ACST</literal>,
         <literal>CST</literal>, <literal>EST</literal>, and
         <literal>SAT</literal> are interpreted as Australian time
         zones rather than as North/South American time zones and
-        Saturday. The default is false.
+        Saturday. The default is off.
        </para>
       </listitem>
      </varlistentry>
@@ -3670,12 +3670,12 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </indexterm>
       <listitem>
        <para>
-        When <literal>true</>, tables that are referenced by a query
+        When <literal>on</>, tables that are referenced by a query
         will be automatically added to the <literal>FROM</> clause if
         not already present. This behavior does not comply with the
         SQL standard and many people dislike it because it can mask
         mistakes (such as referencing a table where you should have
-        referenced its alias). The default is <literal>false</>. This
+        referenced its alias). The default is <literal>off</>. This
         variable can be enabled for compatibility with releases of
         <productname>PostgreSQL</> prior to 8.1, where this behavior
         was allowed by default.
@@ -3744,7 +3744,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         determines whether OIDs will be included in tables created by
         <command>SELECT INTO</command>. In <productname>PostgreSQL</>
         8.1 <varname>default_with_oids</> is disabled by default; in
-        prior versions of PostgreSQL, it was true by default.
+        prior versions of PostgreSQL, it was on by default.
        </para>
 
        <para>
@@ -3997,9 +3997,9 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        <para>
         Reports whether ordinary string literals
         (<literal>'...'</>) treat backslashes literally, as specified in
-        the SQL standard.  The value is currently always <literal>false</>,
+        the SQL standard.  The value is currently always <literal>off</>,
         indicating that backslashes are treated as escapes.  It is planned
-        that this will change to <literal>true</> in a future
+        that this will change to <literal>on</> in a future
         <productname>PostgreSQL</productname> release when string literal
         syntax changes to meet the standard.  Applications may check this
         parameter to determine how string literals will be processed.
@@ -4164,7 +4164,7 @@ plruby.bar = true        # generates error, unknown class name
       </indexterm>
       <listitem>
        <para>
-        If true, emit WAL-related debugging output. This option is
+        If on, emit WAL-related debugging output. This option is
         only available if the <symbol>WAL_DEBUG</symbol> macro was
         defined when <productname>PostgreSQL</productname> was
         compiled.
@@ -4181,14 +4181,14 @@ plruby.bar = true        # generates error, unknown class name
        <para>
         Detection of a damaged page header normally causes
         <productname>PostgreSQL</> to report an error, aborting the current
-        command.  Setting <varname>zero_damaged_pages</> to true causes
+        command.  Setting <varname>zero_damaged_pages</> to on causes
         the system to instead report a warning, zero out the damaged page,
         and continue processing.  This behavior <emphasis>will destroy data</>,
         namely all the rows on the damaged page.  But it allows you to get
         past the error and retrieve rows from any undamaged pages that may
         be present in the table.  So it is useful for recovering data if
         corruption has occurred due to hardware or software error.  You should
-        generally not set this true until you have given up hope of recovering
+        generally not set this on until you have given up hope of recovering
         data from the damaged page(s) of a table.  The
         default setting is off, and it can only be changed by a superuser.
        </para>
