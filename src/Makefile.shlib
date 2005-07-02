@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.90 2004/11/20 21:13:04 tgl Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.91 2005/07/02 23:28:22 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -240,7 +240,7 @@ ifeq ($(PORTNAME), beos)
   SHLIB_LINK		+= -ltermcap -lstdc++.r4 -lbind -lsocket -L/boot/develop/lib/x86
 endif
 
-SHLIB_LINK := $(filter -L%, $(LDFLAGS)) $(SHLIB_LINK)
+SHLIB_LINK := $(SHLIB_LINK) $(filter -L%, $(LDFLAGS))
 ifeq ($(enable_rpath), yes)
 SHLIB_LINK += $(rpath)
 endif
