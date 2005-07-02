@@ -49,10 +49,10 @@
 #listen_addresses = 'localhost'	# what IP interface(s) to listen on; 
 				# defaults to localhost, '*' = any
 #port = 5432
-#max_connections = 100
-	# note: increasing max_connections costs about 500 bytes of shared
-	# memory per connection slot, in addition to costs from shared_buffers
-	# and max_locks_per_transaction.
+#max_connections = 100	# note: increasing max_connections costs about 500
+			# bytes of shared memory per connection slot, in
+			# addition to costs from shared_buffers and
+			# max_locks_per_transaction.
 #superuser_reserved_connections = 2
 #unix_socket_directory = ''
 #unix_socket_group = ''
@@ -77,7 +77,7 @@
 
 # - Memory -
 
-#shared_buffers = 1000		# min 16, at least max_connections*2, 8KB each
+#shared_buffers = 1000		# min 16, minimum max_connections*2, 8KB each
 #temp_buffers = 1000		# min 100, 8KB each
 #max_prepared_transactions = 50 # 0-10000
 #work_mem = 1024		# min 64, size in KB
@@ -195,16 +195,18 @@
 #log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log' # Log file name pattern.
 				# Can include strftime() escapes
 #log_truncate_on_rotation = off # If on, any existing log file of the same 
-				# name as the new log file will be truncated
-				# rather than appended to.  But such truncation
-				# only occurs on time-driven rotation,
-				# not on restarts or size-driven rotation.
-				# Default is off, meaning append to existing 
-				# files in all cases.
-#log_rotation_age = 1440	# Automatic rotation of logfiles will happen after
-				# so many minutes.	0 to disable.
-#log_rotation_size = 10240	# Automatic rotation of logfiles will happen after
-				# so many kilobytes of log output.  0 to disable.
+				# name as the new log file will be
+				# truncated rather than appended to. But
+				# such truncation only occurs on
+				# time-driven rotation, not on restarts
+				# or size-driven rotation. Default is
+				# off, meaning append to existing files
+				# in all cases.
+#log_rotation_age = 1440	# Automatic rotation of logfiles will happen 
+				# after so many minutes.  0 to disable.
+#log_rotation_size = 10240	# Automatic rotation of logfiles will happen
+				# afterso many kilobytes of log output.  
+				# 0 to disable.
 
 # These are relevant when logging to syslog:
 #syslog_facility = 'LOCAL0'
