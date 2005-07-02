@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Jul  1 13:35:13 EDT 2005
+Last updated:		Sat Jul  2 10:30:35 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -300,7 +300,7 @@ Indexes
   that can span more than one table.
 
 * Add UNIQUE capability to non-btree indexes
-* Add rtree index support for line, lseg, path, point
+* Add more gist index support for geometric data types
 * -Use indexes for MIN() and MAX()
 
   MIN/MAX queries can already be rewritten as SELECT col FROM tab ORDER
