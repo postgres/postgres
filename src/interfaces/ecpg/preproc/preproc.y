@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.307 2005/02/10 08:06:35 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.308 2005/07/02 17:01:53 momjian Exp $ */
 
 /* Copyright comment */
 %{
@@ -4216,11 +4216,16 @@ Bconst:  BCONST				{ $$ = make_name();};
 Xconst:  XCONST				{ $$ = make_name();};
 Sconst:  SCONST
 		{
-			$$ = (char *)mm_alloc(strlen($1) + 3);
-			$$[0]='\'';
-					strcpy($$+1, $1);
-			$$[strlen($1)+2]='\0';
-			$$[strlen($1)+1]='\'';
+			char *ret;
+			
+			$$ = ret = (char *)mm_alloc(strlen($1) + 4);
+			if (strchr($1, '\\') != NULL)
+				*ret++ = ESCAPE_STRING_SYNTAX;
+			*ret++ = '\'';
+			strcpy(ret, $1);
+			ret += strlen($1);
+			*ret++ = '\'';
+			*ret++ = '\0';
 			free($1);
 		}
 		;

@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.202 2005/06/28 05:09:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.203 2005/07/02 17:01:50 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -564,12 +564,14 @@ pg_get_triggerdef(PG_FUNCTION_ARGS)
 		{
 			if (i > 0)
 				appendStringInfo(&buf, ", ");
+			if (strchr(p, '\\') != NULL)
+				appendStringInfoChar(&buf, ESCAPE_STRING_SYNTAX);
 			appendStringInfoChar(&buf, '\'');
+
 			while (*p)
 			{
-				/* escape quotes and backslashes */
-				if (*p == '\'' || *p == '\\')
-					appendStringInfoChar(&buf, '\\');
+				if (SQL_STR_DOUBLE(*p))
+					appendStringInfoChar(&buf, *p);
 				appendStringInfoChar(&buf, *p++);
 			}
 			p++;
@@ -3869,22 +3871,29 @@ get_const_expr(Const *constval, deparse_context *context)
 			break;
 
 		default:
-
 			/*
 			 * We must quote any funny characters in the constant's
 			 * representation. XXX Any MULTIBYTE considerations here?
 			 */
+			for (valptr = extval; *valptr; valptr++)
+				if (*valptr == '\\' ||
+					(unsigned char)*valptr < (unsigned char)' ')
+				{
+					appendStringInfoChar(buf, ESCAPE_STRING_SYNTAX);
+					break;
+				}
+
 			appendStringInfoChar(buf, '\'');
 			for (valptr = extval; *valptr; valptr++)
 			{
 				char		ch = *valptr;
 
-				if (ch == '\'' || ch == '\\')
+				if (SQL_STR_DOUBLE(ch))
 				{
-					appendStringInfoChar(buf, '\\');
+					appendStringInfoChar(buf, ch);
 					appendStringInfoChar(buf, ch);
 				}
-				else if (((unsigned char) ch) < ((unsigned char) ' '))
+				else if ((unsigned char)ch < (unsigned char)' ')
 					appendStringInfo(buf, "\\%03o", (int) ch);
 				else
 					appendStringInfoChar(buf, ch);

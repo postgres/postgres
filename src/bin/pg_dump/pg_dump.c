@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.412 2005/07/01 21:03:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.413 2005/07/02 17:01:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -7792,18 +7792,17 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 		}
 		p--;
 
-		/* do we need E''? */
 		while (s2 < p)
 			if (*s2++ == '\\')
 			{
-				appendPQExpBufferChar(query, 'E');
+				appendPQExpBufferChar(query, ESCAPE_STRING_SYNTAX);
 				break;
 			}
 
 		appendPQExpBufferChar(query, '\'');
 		while (s < p)
 		{
-			if (*s == '\'')
+			if (*s == '\'')		/* bytea already doubles backslashes */
 				appendPQExpBufferChar(query, '\'');
 			appendPQExpBufferChar(query, *s++);
 		}

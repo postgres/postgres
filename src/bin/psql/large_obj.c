@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/large_obj.c,v 1.38 2005/07/01 17:40:28 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/large_obj.c,v 1.39 2005/07/02 17:01:52 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "large_obj.h"
@@ -172,13 +172,17 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 		if (!cmdbuf)
 			return fail_lo_xact("\\lo_import", own_transaction);
 		sprintf(cmdbuf,
-				"COMMENT ON LARGE OBJECT %u IS '",
+				"COMMENT ON LARGE OBJECT %u IS ",
 				loid);
 		bufptr = cmdbuf + strlen(cmdbuf);
+
+		if (strchr(comment_arg, '\\') != NULL)
+			*bufptr++ = ESCAPE_STRING_SYNTAX;
+		*bufptr++ = '\'';
 		for (i = 0; i < slen; i++)
 		{
-			if (comment_arg[i] == '\'' || comment_arg[i] == '\\')
-				*bufptr++ = comment_arg[i];	/* double these */
+			if (SQL_STR_DOUBLE(comment_arg[i]))
+				*bufptr++ = comment_arg[i];
 			*bufptr++ = comment_arg[i];
 		}
 		strcpy(bufptr, "'");

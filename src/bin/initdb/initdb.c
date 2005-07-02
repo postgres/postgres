@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.89 2005/07/01 17:40:28 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.90 2005/07/02 17:01:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1986,8 +1986,8 @@ escape_quotes(const char *src)
 	
 	for (i = 0, j = 0; i < len; i++)
 	{
-		if (src[i] == '\\' || src[i] == '\'')
-			result[j++] = src[i];	/* double these */
+		if (SQL_STR_DOUBLE(src[i]))
+			result[j++] = src[i];
 		result[j++] = src[i];
 	}
 	result[j] = '\0';

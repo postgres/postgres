@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.18 2005/07/01 21:03:25 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.19 2005/07/02 17:01:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,38 +111,33 @@ fmtId(const char *rawid)
 void
 appendStringLiteral(PQExpBuffer buf, const char *str, bool escapeAll)
 {
-	bool has_escapes = false;
-	const char *str2 = str;
+	char ch;
+	const char *p;
 
-	while (*str2)
+	for (p = str; *p; p++)
 	{
-		char		ch = *str2++;
-
+		ch = *p;
 		if (ch == '\\' ||
-		    ((unsigned char) ch < (unsigned char) ' ' &&
+		    ((unsigned char)ch < (unsigned char)' ' &&
 			 (escapeAll ||
 			  (ch != '\t' && ch != '\n' && ch != '\v' &&
 			   ch != '\f' && ch != '\r'))))
 		{
-			has_escapes = true;
+			appendPQExpBufferChar(buf, ESCAPE_STRING_SYNTAX);
 			break;
 		}
 	}
 	
-	if (has_escapes)
-		appendPQExpBufferChar(buf, 'E');
-	
 	appendPQExpBufferChar(buf, '\'');
-	while (*str)
+	for (p = str; *p; p++)
 	{
-		char		ch = *str++;
-
-		if (ch == '\\' || ch == '\'')
+		ch = *p;
+		if (SQL_STR_DOUBLE(ch))
 		{
-			appendPQExpBufferChar(buf, ch);		/* double these */
+			appendPQExpBufferChar(buf, ch);
 			appendPQExpBufferChar(buf, ch);
 		}
-		else if ((unsigned char) ch < (unsigned char) ' ' &&
+		else if ((unsigned char)ch < (unsigned char)' ' &&
 				 (escapeAll ||
 				  (ch != '\t' && ch != '\n' && ch != '\v' &&
 				   ch != '\f' && ch != '\r')))
