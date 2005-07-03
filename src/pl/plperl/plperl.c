@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.67.4.1 2005/05/23 02:02:52 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.67.4.2 2005/07/03 21:56:27 tgl Exp $
  *
  **********************************************************************/
 
@@ -1419,6 +1419,8 @@ plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc)
 						   Int32GetDatum(tupdesc->attrs[i]->atttypmod)));
 
 		hv_store(hv, attname, namelen, newSVpv(outputstr, 0), 0);
+
+		pfree(outputstr);
 	}
 
 	return newRV_noinc((SV *) hv);
