@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.238 2005/06/27 02:04:23 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.239 2005/07/03 18:54:27 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -992,6 +992,23 @@ su - postgres
 <screen>
 <userinput>./configure CC=/opt/bin/gcc CFLAGS='-O2 -pipe'</>
 </screen>
+    </para>
+
+    <para>
+     If you are cross-compiling<indexterm><primary>cross
+     compilation</primary></indexterm> (compiling on one architecture
+     with the intent to run on a different architecture), special care
+     needs to be taken.  First of all, specify the host architecture
+     (the architecture PostgreSQL will run on) using the option
+     <option>--host</option>.  The variables <envar>CC</>,
+     <envar>CFLAGS</>, etc. should refer to the build tools for the
+     host architecture.  During the build process, the time-zone
+     database for PostgreSQL is created and a special tool to do that
+     is compiled and run during the build process.  This tool needs to
+     be compiled using a native compiler.  Specify this compiler using
+     the variable <envar>CC_FOR_BUILD</envar>.  Cross compilation
+     requires expert knowledge and the support for this process in the
+     PostgreSQL tree should be considered somewhat experimental.
     </para>
    </step>
 
