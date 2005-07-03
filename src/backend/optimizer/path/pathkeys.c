@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.69 2005/07/02 23:00:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.70 2005/07/03 18:26:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,10 @@ static PathKeyItem *makePathKeyItem(Node *key, Oid sortop, bool checkType);
 static void generate_outer_join_implications(PlannerInfo *root,
 											 List *equi_key_set,
 											 Relids *relids);
+static void sub_generate_join_implications(PlannerInfo *root,
+										   List *equi_key_set, Relids *relids,
+										   Node *item1, Oid sortop1,
+										   Relids item1_relids);
 static void process_implied_const_eq(PlannerInfo *root,
 									 List *equi_key_set, Relids *relids,
 									 Node *item1, Oid sortop1,
@@ -251,64 +255,64 @@ generate_implied_equalities(PlannerInfo *root)
 		}
 
 		/*
+		 * Match each item in the set with all that appear after it (it's
+		 * sufficient to generate A=B, need not process B=A too).
+		 *
+		 * A set containing only two items cannot imply any equalities
+		 * beyond the one that created the set, so we can skip this
+		 * processing in that case.
+		 */
+		if (nitems >= 3)
+		{
+			i1 = 0;
+			foreach(ptr1, curset)
+			{
+				PathKeyItem *item1 = (PathKeyItem *) lfirst(ptr1);
+				bool		i1_is_variable = !bms_is_empty(relids[i1]);
+				ListCell   *ptr2;
+				int			i2 = i1 + 1;
+
+				for_each_cell(ptr2, lnext(ptr1))
+				{
+					PathKeyItem *item2 = (PathKeyItem *) lfirst(ptr2);
+					bool		i2_is_variable = !bms_is_empty(relids[i2]);
+
+					/*
+					 * If it's "const = const" then just ignore it altogether.
+					 * There is no place in the restrictinfo structure to
+					 * store it.  (If the two consts are in fact unequal, then
+					 * propagating the comparison to Vars will cause us to
+					 * produce zero rows out, as expected.)
+					 */
+					if (i1_is_variable || i2_is_variable)
+					{
+						/*
+						 * Tell process_implied_equality to delete the clause,
+						 * not add it, if it's "var = var" and we have
+						 * constants present in the list.
+						 */
+						bool		delete_it = (have_consts &&
+												 i1_is_variable &&
+												 i2_is_variable);
+
+						process_implied_equality(root,
+												 item1->key, item2->key,
+												 item1->sortop, item2->sortop,
+												 relids[i1], relids[i2],
+												 delete_it);
+					}
+					i2++;
+				}
+				i1++;
+			}
+		}
+
+		/*
 		 * If we have constant(s) and outer joins, try to propagate the
 		 * constants through outer-join quals.
 		 */
 		if (have_consts && root->hasOuterJoins)
 			generate_outer_join_implications(root, curset, relids);
-
-		/*
-		 * A set containing only two items cannot imply any equalities
-		 * beyond the one that created the set, so we can skip it.
-		 */
-		if (nitems < 3)
-			continue;
-
-		/*
-		 * Match each item in the set with all that appear after it (it's
-		 * sufficient to generate A=B, need not process B=A too).
-		 */
-		i1 = 0;
-		foreach(ptr1, curset)
-		{
-			PathKeyItem *item1 = (PathKeyItem *) lfirst(ptr1);
-			bool		i1_is_variable = !bms_is_empty(relids[i1]);
-			ListCell   *ptr2;
-			int			i2 = i1 + 1;
-
-			for_each_cell(ptr2, lnext(ptr1))
-			{
-				PathKeyItem *item2 = (PathKeyItem *) lfirst(ptr2);
-				bool		i2_is_variable = !bms_is_empty(relids[i2]);
-
-				/*
-				 * If it's "const = const" then just ignore it altogether.
-				 * There is no place in the restrictinfo structure to
-				 * store it.  (If the two consts are in fact unequal, then
-				 * propagating the comparison to Vars will cause us to
-				 * produce zero rows out, as expected.)
-				 */
-				if (i1_is_variable || i2_is_variable)
-				{
-					/*
-					 * Tell process_implied_equality to delete the clause,
-					 * not add it, if it's "var = var" and we have
-					 * constants present in the list.
-					 */
-					bool		delete_it = (have_consts &&
-											 i1_is_variable &&
-											 i2_is_variable);
-
-					process_implied_equality(root,
-											 item1->key, item2->key,
-											 item1->sortop, item2->sortop,
-											 relids[i1], relids[i2],
-											 delete_it);
-				}
-				i2++;
-			}
-			i1++;
-		}
 	}
 }
 
@@ -362,118 +366,154 @@ generate_outer_join_implications(PlannerInfo *root,
 								 List *equi_key_set,
 								 Relids *relids)
 {
-	ListCell   *l1;
+	ListCell   *l;
+	int			i = 0;
 
-	/* Examine each mergejoinable outer-join clause with OUTERVAR on left */
-	foreach(l1, root->left_join_clauses)
+	/* Process each non-constant element of equi_key_set */
+	foreach(l, equi_key_set)
 	{
-		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l1);
-		Node   *leftop = get_leftop(rinfo->clause);
-		Node   *rightop = get_rightop(rinfo->clause);
-		ListCell   *l2;
+		PathKeyItem *item1 = (PathKeyItem *) lfirst(l);
 
-		/* Scan to see if it matches any element of equi_key_set */
-		foreach(l2, equi_key_set)
+		if (!bms_is_empty(relids[i]))
 		{
-			PathKeyItem *item1 = (PathKeyItem *) lfirst(l2);
+			sub_generate_join_implications(root, equi_key_set, relids,
+										   item1->key,
+										   item1->sortop,
+										   relids[i]);
+		}
+		i++;
+	}
+}
 
-			if (equal(leftop, item1->key) &&
-				rinfo->left_sortop == item1->sortop)
-			{
-				/*
-				 * Yes, so find constant member(s) of set and generate
-				 * implied INNERVAR = CONSTANT
-				 */
-				process_implied_const_eq(root, equi_key_set, relids,
-										 rightop,
-										 rinfo->right_sortop,
-										 rinfo->right_relids,
-										 false);
-				/*
-				 * We can remove the explicit outer join qual, too,
-				 * since we now have tests forcing each of its sides
-				 * to the same value.
-				 */
-				process_implied_equality(root,
-										 leftop,
-										 rightop,
-										 rinfo->left_sortop,
-										 rinfo->right_sortop,
-										 rinfo->left_relids,
-										 rinfo->right_relids,
-										 true);
+/*
+ * sub_generate_join_implications
+ *	  Propagate a constant equality through outer join clauses.
+ *
+ * The item described by item1/sortop1/item1_relids has been determined
+ * to be equal to the constant(s) listed in equi_key_set.  Recursively
+ * trace out the implications of this.
+ *
+ * equi_key_set and relids are as for generate_outer_join_implications.
+ */
+static void
+sub_generate_join_implications(PlannerInfo *root,
+								List *equi_key_set, Relids *relids,
+								Node *item1, Oid sortop1, Relids item1_relids)
 
-				/* No need to match against remaining set members */
-				break;
-			}
+{
+	ListCell   *l;
+
+	/*
+	 * Examine each mergejoinable outer-join clause with OUTERVAR on left,
+	 * looking for an OUTERVAR identical to item1
+	 */
+	foreach(l, root->left_join_clauses)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
+		Node   *leftop = get_leftop(rinfo->clause);
+
+		if (equal(leftop, item1) && rinfo->left_sortop == sortop1)
+		{
+			/*
+			 * Match, so find constant member(s) of set and generate
+			 * implied INNERVAR = CONSTANT
+			 */
+			Node   *rightop = get_rightop(rinfo->clause);
+
+			process_implied_const_eq(root, equi_key_set, relids,
+									 rightop,
+									 rinfo->right_sortop,
+									 rinfo->right_relids,
+									 false);
+			/*
+			 * We can remove explicit tests of this outer-join qual, too,
+			 * since we now have tests forcing each of its sides
+			 * to the same value.
+			 */
+			process_implied_equality(root,
+									 leftop, rightop,
+									 rinfo->left_sortop, rinfo->right_sortop,
+									 rinfo->left_relids, rinfo->right_relids,
+									 true);
+			/*
+			 * And recurse to see if we can deduce anything from
+			 * INNERVAR = CONSTANT
+			 */
+			sub_generate_join_implications(root, equi_key_set, relids,
+										   rightop,
+										   rinfo->right_sortop,
+										   rinfo->right_relids);
 		}
 	}
 
-	/* Examine each mergejoinable outer-join clause with OUTERVAR on right */
-	foreach(l1, root->right_join_clauses)
+	/* The same, looking at clauses with OUTERVAR on right */
+	foreach(l, root->right_join_clauses)
 	{
-		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l1);
-		Node   *leftop = get_leftop(rinfo->clause);
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 		Node   *rightop = get_rightop(rinfo->clause);
-		ListCell   *l2;
 
-		/* Scan to see if it matches any element of equi_key_set */
-		foreach(l2, equi_key_set)
+		if (equal(rightop, item1) && rinfo->right_sortop == sortop1)
 		{
-			PathKeyItem *item1 = (PathKeyItem *) lfirst(l2);
+			/*
+			 * Match, so find constant member(s) of set and generate
+			 * implied INNERVAR = CONSTANT
+			 */
+			Node   *leftop = get_leftop(rinfo->clause);
 
-			if (equal(rightop, item1->key) &&
-				rinfo->right_sortop == item1->sortop)
-			{
-				/*
-				 * Yes, so find constant member(s) of set and generate
-				 * implied INNERVAR = CONSTANT
-				 */
-				process_implied_const_eq(root, equi_key_set, relids,
-										 leftop,
-										 rinfo->left_sortop,
-										 rinfo->left_relids,
-										 false);
-				/*
-				 * We can remove the explicit outer join qual, too,
-				 * since we now have tests forcing each of its sides
-				 * to the same value.
-				 */
-				process_implied_equality(root,
-										 leftop,
-										 rightop,
-										 rinfo->left_sortop,
-										 rinfo->right_sortop,
-										 rinfo->left_relids,
-										 rinfo->right_relids,
-										 true);
-
-				/* No need to match against remaining set members */
-				break;
-			}
+			process_implied_const_eq(root, equi_key_set, relids,
+									 leftop,
+									 rinfo->left_sortop,
+									 rinfo->left_relids,
+									 false);
+			/*
+			 * We can remove explicit tests of this outer-join qual, too,
+			 * since we now have tests forcing each of its sides
+			 * to the same value.
+			 */
+			process_implied_equality(root,
+									 leftop, rightop,
+									 rinfo->left_sortop, rinfo->right_sortop,
+									 rinfo->left_relids, rinfo->right_relids,
+									 true);
+			/*
+			 * And recurse to see if we can deduce anything from
+			 * INNERVAR = CONSTANT
+			 */
+			sub_generate_join_implications(root, equi_key_set, relids,
+										   leftop,
+										   rinfo->left_sortop,
+										   rinfo->left_relids);
 		}
 	}
 
-	/* Examine each mergejoinable full-join clause */
-	foreach(l1, root->full_join_clauses)
+	/*
+	 * Only COALESCE(x,y) items can possibly match full joins
+	 */
+	if (IsA(item1, CoalesceExpr))
 	{
-		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l1);
-		Node   *leftop = get_leftop(rinfo->clause);
-		Node   *rightop = get_rightop(rinfo->clause);
-		int i1 = 0;
-		ListCell   *l2;
+		CoalesceExpr *cexpr = (CoalesceExpr *) item1;
+		Node   *cfirst;
+		Node   *csecond;
 
-		/* Scan to see if it matches any element of equi_key_set */
-		foreach(l2, equi_key_set)
+		if (list_length(cexpr->args) != 2)
+			return;
+		cfirst = (Node *) linitial(cexpr->args);
+		csecond = (Node *) lsecond(cexpr->args);
+
+		/*
+		 * Examine each mergejoinable full-join clause, looking for a
+		 * clause of the form "x = y" matching the COALESCE(x,y) expression
+		 */
+		foreach(l, root->full_join_clauses)
 		{
-			PathKeyItem *item1 = (PathKeyItem *) lfirst(l2);
-			CoalesceExpr *cexpr = (CoalesceExpr *) item1->key;
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
+			Node   *leftop = get_leftop(rinfo->clause);
+			Node   *rightop = get_rightop(rinfo->clause);
 
 			/*
-			 * Try to match a pathkey containing a COALESCE() expression
-			 * to the join clause.  We can assume the COALESCE() inputs
-			 * are in the same order as the join clause, since both were
-			 * automatically generated in the cases we care about.
+			 * We can assume the COALESCE() inputs are in the same order
+			 * as the join clause, since both were automatically generated
+			 * in the cases we care about.
 			 *
 			 * XXX currently this may fail to match in cross-type cases
 			 * because the COALESCE will contain typecast operations while
@@ -482,15 +522,13 @@ generate_outer_join_implications(PlannerInfo *root,
 			 * Is it OK to strip implicit coercions from the COALESCE
 			 * arguments?  What of the sortops in such cases?
 			 */
-			if (IsA(cexpr, CoalesceExpr) &&
-				list_length(cexpr->args) == 2 &&
-				equal(leftop, (Node *) linitial(cexpr->args)) &&
-				equal(rightop, (Node *) lsecond(cexpr->args)) &&
-				rinfo->left_sortop == item1->sortop &&
-				rinfo->right_sortop == item1->sortop)
+			if (equal(leftop, cfirst) &&
+				equal(rightop, csecond) &&
+				rinfo->left_sortop == sortop1 &&
+				rinfo->right_sortop == sortop1)
 			{
 				/*
-				 * Yes, so find constant member(s) of set and generate
+				 * Match, so find constant member(s) of set and generate
 				 * implied LEFTVAR = CONSTANT
 				 */
 				process_implied_const_eq(root, equi_key_set, relids,
@@ -506,28 +544,37 @@ generate_outer_join_implications(PlannerInfo *root,
 										 false);
 				/* ... and remove COALESCE() = CONSTANT */
 				process_implied_const_eq(root, equi_key_set, relids,
-										 item1->key,
-										 item1->sortop,
-										 relids[i1],
+										 item1,
+										 sortop1,
+										 item1_relids,
 										 true);
 				/*
-				 * We can remove the explicit outer join qual, too,
+				 * We can remove explicit tests of this outer-join qual, too,
 				 * since we now have tests forcing each of its sides
 				 * to the same value.
 				 */
 				process_implied_equality(root,
-										 leftop,
-										 rightop,
+										 leftop, rightop,
 										 rinfo->left_sortop,
 										 rinfo->right_sortop,
 										 rinfo->left_relids,
 										 rinfo->right_relids,
 										 true);
+				/*
+				 * And recurse to see if we can deduce anything from
+				 * LEFTVAR = CONSTANT
+				 */
+				sub_generate_join_implications(root, equi_key_set, relids,
+											   leftop,
+											   rinfo->left_sortop,
+											   rinfo->left_relids);
+				/* ... and RIGHTVAR = CONSTANT */
+				sub_generate_join_implications(root, equi_key_set, relids,
+											   rightop,
+											   rinfo->right_sortop,
+											   rinfo->right_relids);
 
-				/* No need to match against remaining set members */
-				break;
 			}
-			i1++;
 		}
 	}
 }
@@ -537,10 +584,8 @@ generate_outer_join_implications(PlannerInfo *root,
  *	  Apply process_implied_equality with the given item and each
  *	  pseudoconstant member of equi_key_set.
  *
- * This is just a subroutine to save some cruft in
- * generate_outer_join_implications.  equi_key_set and relids are as in
- * generate_outer_join_implications, the other parameters as for
- * process_implied_equality.
+ * equi_key_set and relids are as for generate_outer_join_implications,
+ * the other parameters as for process_implied_equality.
  */
 static void
 process_implied_const_eq(PlannerInfo *root, List *equi_key_set, Relids *relids,
