@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Jul  4 08:32:37 EDT 2005
+Last updated:		Mon Jul  4 13:00:23 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -22,12 +22,6 @@ Administration
 * Remove behavior of postmaster -o after making postmaster/postgres
   flags unique
 * Allow limits on per-db/role connections
-* Allow server log information to be output as INSERT statements
-
-  This would allow server log information to be easily loaded into
-  a database for analysis.
-
-* Prevent dropping user that still owns objects, or auto-drop the objects
 * Allow pooled connections to list all prepared queries
 
   This would allow an application inheriting a pooled connection to know
@@ -35,94 +29,25 @@ Administration
 
 * Allow major upgrades without dump/reload, perhaps using pg_upgrade 
   [pg_upgrade]
-* Allow GRANT/REVOKE permissions to be applied to all schema objects with one
-  command
-
-  The proposed syntax is:
-	GRANT SELECT ON ALL TABLES IN public TO phpuser;
-	GRANT SELECT ON NEW TABLES IN public TO phpuser;
-
-* Allow GRANT/REVOKE permissions to be inherited by objects based on
-  schema permissions
 * Check for unreferenced table files created by transactions that were
   in-progress when the server terminated abruptly
-* Allow reporting of which objects are in which tablespaces
-
-  This item is difficult because a tablespace can contain objects from
-  multiple databases. There is a server-side function that returns the
-  databases which use a specific tablespace, so this requires a tool
-  that will call that function and connect to each database to find the
-  objects in each database for that tablespace.
-
-* Allow a database in tablespace t1 with tables created in tablespace t2
-  to be used as a template for a new database created with default
-  tablespace t2
-
-  All objects in the default database tablespace must have default tablespace
-  specifications.  This is because new databases are created by copying
-  directories.  If you mix default tablespace tables and tablespace-specified
-  tables in the same directory, creating a new database from such a mixed
-  directory would create a new database with tables that had incorrect
-  explicit tablespaces.  To fix this would require modifying pg_class in the
-  newly copied database, which we don't currently do.
-
-* Add a GUC variable to control the tablespace for temporary objects and
-  sort files
-
-  It could start with a random tablespace from a supplied list and cycle
-  through the list.
-
-* Add ability to monitor the use of temporary sort files
-* Allow WAL replay of CREATE TABLESPACE to work when the directory
-  structure on the recovery computer is different from the original
-* Add "include file" functionality in postgresql.conf
-* -Add session start time and last statement time to pg_stat_activity
-* Allow server logs to be remotely read using SQL commands
-* Allow pg_hba.conf settings to be controlled via SQL
-
-  This would require a new global table that is dumped to flat file for
-  use by the postmaster.  We do a similar thing for pg_shadow currently.
-
 * Allow administrators to safely terminate individual sessions either
   via an SQL function or SIGTERM 
 
   Currently SIGTERM of a backend can lead to lock table corruption.
 
-* Un-comment all variables in postgresql.conf
-
-  By not showing commented-out variables, we discourage people from
-  thinking that re-commenting a variable returns it to its default.
-  This has to address environment variables that are then overridden
-  by config file values.  Another option is to allow commented values
-  to return to their default values.
-
-* Allow point-in-time recovery to archive partially filled write-ahead
-  logs [pitr]
-
-  Currently only full WAL files are archived. This means that the most
-  recent transactions aren't available for recovery in case of a disk
-  failure.  This could be triggered by a user command or a timer.
-
-* Automatically force archiving of partially-filled WAL files when 
-  pg_stop_backup() is called or the server is stopped
-
-  Doing this will allow administrators to know more easily when the
-  archive contins all the files needed for point-in-time recovery.
-
-* Create dump tool for write-ahead logs for use in determining
-  transaction id for point-in-time recovery
+* Prevent dropping user that still owns objects, or auto-drop the objects
 * Set proper permissions on non-system schemas during db creation
 
   Currently all schemas are owned by the super-user because they are
   copied from the template1 database.
 
-* Add a function that returns the 'uptime' of the postmaster
-* Allow a warm standby system to also allow read-only queries [pitr]
-
-  This is useful for checking PITR recovery.
-
-* Allow the PITR process to be debugged and data examined
 * -Add the client IP address and port to pg_stat_activity
+* Support table partitioning that allows a single table to be stored
+  in subtables that are partitioned based on the primary key or a WHERE
+  clause
+
+
 * Improve replication solutions
 	o Load balancing
 
@@ -132,12 +57,91 @@ Administration
 
 	o Allow replication over unreliable or non-persistent links
 
-* Support table partitioning that allows a single table to be stored
-  in subtables that are partitioned based on the primary key or a WHERE
-  clause
-* Allow postgresql.conf values to be set so they can not be changed by
-  the user
-* Allow per-tablespace quotas
+
+* Configuration files
+	o Add "include file" functionality in postgresql.conf
+	o Allow postgresql.conf values to be set so they can not be changed
+	  by the user
+	o Allow commenting of variables in postgresql.conf to restore them
+	  to defaults
+	o Allow pg_hba.conf settings to be controlled via SQL
+
+	  This would require a new global table that is dumped to flat file for
+	  use by the postmaster.  We do a similar thing for pg_shadow currently.
+
+
+* Tablespaces
+	* Allow a database in tablespace t1 with tables created in
+	  tablespace t2 to be used as a template for a new database created
+	  with default tablespace t2
+
+	  All objects in the default database tablespace must have default
+	  tablespace specifications. This is because new databases are
+	  created by copying directories. If you mix default tablespace
+	  tables and tablespace-specified tables in the same directory,
+	  creating a new database from such a mixed directory would create a
+	  new database with tables that had incorrect explicit tablespaces.
+	  To fix this would require modifying pg_class in the newly copied
+	  database, which we don't currently do.
+
+	* Allow reporting of which objects are in which tablespaces
+
+	  This item is difficult because a tablespace can contain objects
+	  from multiple databases. There is a server-side function that
+	  returns the databases which use a specific tablespace, so this
+	  requires a tool that will call that function and connect to each
+	  database to find the objects in each database for that tablespace.
+
+	o Add a GUC variable to control the tablespace for temporary objects
+	  and sort files
+
+	  It could start with a random tablespace from a supplied list and
+	  cycle through the list.
+
+	o Allow WAL replay of CREATE TABLESPACE to work when the directory
+	  structure on the recovery computer is different from the original
+
+	o Allow per-tablespace quotas
+
+
+* Point-in-time Recovery (PITR)
+	  o Allow point-in-time recovery to archive partially filled
+	    write-ahead logs [pitr]
+
+	    Currently only full WAL files are archived. This means that the
+	    most recent transactions aren't available for recovery in case
+	    of a disk failure. This could be triggered by a user command or
+	    a timer.
+
+	  o Automatically force archiving of partially-filled WAL files when
+	    pg_stop_backup() is called or the server is stopped
+
+	    Doing this will allow administrators to know more easily when
+	    the archive contins all the files needed for point-in-time
+	    recovery.
+
+	  o Create dump tool for write-ahead logs for use in determining
+	    transaction id for point-in-time recovery
+	  o Allow a warm standby system to also allow read-only queries
+	    [pitr]
+
+	    This is useful for checking PITR recovery.
+
+	  o Allow the PITR process to be debugged and data examined
+
+
+Monitoring
+==========
+
+* Allow server log information to be output as INSERT statements
+
+  This would allow server log information to be easily loaded into
+  a database for analysis.
+
+* Add ability to monitor the use of temporary sort files
+* -Add session start time and last statement time to pg_stat_activity
+* Allow server logs to be remotely read using SQL commands
+* -Add a function that returns the start time of the postmaster
 
 
 Data Types
@@ -156,25 +160,10 @@ Data Types
   The positive modulus result returned by NUMERICs might be considered
   inaccurate, in one sense.
 
-* Add function to return compressed length of TOAST data values
-* Allow INET subnet tests using non-constants to be indexed
-* Add transaction_timestamp(), statement_timestamp(), clock_timestamp()
-  functionality
-
-  Current CURRENT_TIMESTAMP returns the start time of the current
-  transaction, and gettimeofday() returns the wallclock time. This will
-  make time reporting more consistent and will allow reporting of
-  the statement start time.
-
 * Have sequence dependency track use of DEFAULT sequences,
-  seqname.nextval (?)
-* Disallow changing default expression of a SERIAL column (?)
+  seqname.nextval?
+* Disallow changing default expression of a SERIAL column?
 * Allow infinite dates just like infinite timestamps
-* Have initdb set DateStyle based on locale?
-* Add pg_get_acldef(), pg_get_typedefault(), and pg_get_attrdef()
-* Allow to_char() to print localized month names
-* Allow functions to have a schema search path specified at creation time
-* Allow substring/replace() to get/set bit values
 * Add a GUC variable to allow output of interval values in ISO8601 format
 * Fix data types where equality comparison isn't intuitive, e.g. box
 * Merge hardwired timezone names with the TZ database; allow either kind
@@ -195,24 +184,7 @@ Data Types
 * Allow INET + INT4 to increment the host part of the address, or
   throw an error on overflow
 * Add 'tid != tid ' operator for use in corruption recovery
-* Prevent to_char() on interval from returning meaningless values
 
-  For example, to_char('1 month', 'mon') is meaningless.  Basically,
-  most date-related parameters to to_char() are meaningless for
-  intervals because interval is not anchored to a date.
-
-* Allow to_char() on interval values to accumulate the highest unit
-  requested
-
-  Some special format flag would be required to request such
-  accumulation.  Such functionality could also be added to EXTRACT. 
-  Prevent accumulation that crosses the month/day boundary because of
-  the uneven number of days in a month.
-
-	o to_char(INTERVAL '1 hour 5 minutes', 'MI') => 65
-	o to_char(INTERVAL '43 hours 20 minutes', 'MI' ) => 2600 
-	o to_char(INTERVAL '43 hours 20 minutes', 'WK:DD:HR:MI') => 0:1:19:20
-	o to_char(INTERVAL '3 years 5 months','MM') => 41
 
 * Add ISO INTERVAL handling
 	o Add support for day-time syntax, INTERVAL '1 2:03:04' DAY TO SECOND
@@ -228,6 +200,7 @@ Data Types
 	  INTERVAL '11 months' AS YEAR should return one or zero
 	o Support precision, CREATE TABLE foo (a INTERVAL MONTH(3))
 
+
 * ARRAYS
 	o Allow NULLs in arrays
 	o Allow MIN()/MAX() on arrays
@@ -238,7 +211,7 @@ Data Types
 
 
 * BINARY DATA
-	o Improve vacuum of large objects, like /contrib/vacuumlo (?)
+	o Improve vacuum of large objects, like /contrib/vacuumlo?
 	o Add security checking for large objects
 
 	  Currently large objects entries do not have owners. Permissions can
@@ -249,6 +222,43 @@ Data Types
 	o Allow read/write into TOAST values like large objects
 
 	  This requires the TOAST column to be stored EXTERNAL.
+
+
+Functions
+=========
+
+* Add function to return compressed length of TOAST data values
+* Allow INET subnet tests using non-constants to be indexed
+* Add transaction_timestamp(), statement_timestamp(), clock_timestamp()
+  functionality
+
+  Current CURRENT_TIMESTAMP returns the start time of the current
+  transaction, and gettimeofday() returns the wallclock time. This will
+  make time reporting more consistent and will allow reporting of
+  the statement start time.
+
+* Add pg_get_acldef(), pg_get_typedefault(), and pg_get_attrdef()
+* Allow to_char() to print localized month names
+* Allow functions to have a schema search path specified at creation time
+* Allow substring/replace() to get/set bit values
+* Allow to_char() on interval values to accumulate the highest unit
+  requested
+
+  Some special format flag would be required to request such
+  accumulation.  Such functionality could also be added to EXTRACT. 
+  Prevent accumulation that crosses the month/day boundary because of
+  the uneven number of days in a month.
+
+	o to_char(INTERVAL '1 hour 5 minutes', 'MI') => 65
+	o to_char(INTERVAL '43 hours 20 minutes', 'MI' ) => 2600 
+	o to_char(INTERVAL '43 hours 20 minutes', 'WK:DD:HR:MI') => 0:1:19:20
+	o to_char(INTERVAL '3 years 5 months','MM') => 41
+
+* Prevent to_char() on interval from returning meaningless values
+
+  For example, to_char('1 month', 'mon') is meaningless.  Basically,
+  most date-related parameters to to_char() are meaningless for
+  intervals because interval is not anchored to a date.
 
 
 Multi-Language Support
@@ -267,7 +277,7 @@ Multi-Language Support
   Right now only one encoding is allowed per database.
 
 * Support multiple simultaneous character sets, per SQL92
-* Improve UTF8 combined character handling (?)
+* Improve UTF8 combined character handling?
 * Add octet_length_server() and octet_length_client()
 * Make octet_length_client() the same as octet_length()?
 
@@ -287,87 +297,6 @@ Views / Rules
 * Allow RULE recompilation
 
 
-Indexes
-=======
-
-* Allow inherited tables to inherit index, UNIQUE constraint, and primary
-  key, foreign key
-* UNIQUE INDEX on base column not honored on INSERTs/UPDATEs from
-  inherited table:  INSERT INTO inherit_table (unique_index_col) VALUES
-  (dup) should fail
-
-  The main difficulty with this item is the problem of creating an index
-  that can span more than one table.
-
-* Add UNIQUE capability to non-btree indexes
-* Add more gist index support for geometric data types
-* -Use indexes for MIN() and MAX()
-
-  MIN/MAX queries can already be rewritten as SELECT col FROM tab ORDER
-  BY col {DESC} LIMIT 1. Completing this item involves doing this
-  transformation automatically.
-
-* -Use index to restrict rows returned by multi-key index when used with
-  non-consecutive keys to reduce heap accesses
-
-  For an index on col1,col2,col3, and a WHERE clause of col1 = 5 and
-  col3 = 9, spin though the index checking for col1 and col3 matches,
-  rather than just col1; also called skip-scanning.
-
-* Prevent index uniqueness checks when UPDATE does not modify the column
-
-  Uniqueness (index) checks are done when updating a column even if the
-  column is not modified by the UPDATE.
-
-* Fetch heap pages matching index entries in sequential order
-
-  Rather than randomly accessing heap pages based on index entries, mark
-  heap pages needing access in a bitmap and do the lookups in sequential
-  order. Another method would be to sort heap ctids matching the index
-  before accessing the heap rows.
-
-* -Allow non-bitmap indexes to be combined by creating bitmaps in memory
-
-  This feature allows separate indexes to be ANDed or ORed together.  This
-  is particularly useful for data warehousing applications that need to
-  query the database in an many permutations.  This feature scans an index
-  and creates an in-memory bitmap, and allows that bitmap to be combined
-  with other bitmap created in a similar way.  The bitmap can either index
-  all TIDs, or be lossy, meaning it records just page numbers and each
-  page tuple has to be checked for validity in a separate pass.
-
-* Allow the creation of on-disk bitmap indexes which can be quickly
-  combined with other bitmap indexes
-
-  Such indexes could be more compact if there are only a few distinct values.
-  Such indexes can also be compressed.  Keeping such indexes updated can be
-  costly.
-
-* Allow use of indexes to search for NULLs
-
-  One solution is to create a partial index on an IS NULL expression.
-
-* -Add concurrency to GIST
-* Pack hash index buckets onto disk pages more efficiently
-
-  Currently no only one hash bucket can be stored on a page. Ideally
-  several hash buckets could be stored on a single page and greater
-  granularity used for the hash algorithm.
-
-* Consider sorting hash buckets so entries can be found using a binary
-  search, rather than a linear scan
-* In hash indexes, consider storing the hash value with or instead
-  of the key itself
-* Allow accurate statistics to be collected on indexes with more than
-  one column or expression indexes, perhaps using per-index statistics
-* Add fillfactor to control reserved free space during index creation
-* Allow the creation of indexes with mixed ascending/descending specifiers
-* -Fix incorrect rtree results due to wrong assumptions about "over"
-  operator semantics
-* Allow GIST indexes to create certain complex index types, like digital
-  trees (see Aoki)
-
-
 Commands
 ========
 
@@ -375,12 +304,9 @@ Commands
 * Change LIMIT/OFFSET and FETCH/MOVE to use int8
 * Allow CREATE TABLE AS to determine column lengths for complex
   expressions like SELECT col1 || col2
-* Allow UPDATE to handle complex aggregates [update] (?)
-* Allow backslash handling in quoted strings to be disabled for portability
-
-  The use of C-style backslashes (.e.g. \n, \r) in quoted strings is not
-  SQL-spec compliant, so allow such handling to be disabled.  However,
-  disabling backslashes could break many third-party applications and tools.
+* Allow UPDATE to handle complex aggregates [update]?
+* -Add E'' escape string marker so eventually ordinary strings can treat
+  backslashes literally, for portability
 
 * Allow an alias to be provided for the target table in UPDATE/DELETE
 
@@ -392,6 +318,7 @@ Commands
   functionality in DELETE.  It's been agreed that the keyword should
   be USING, to avoid anything as confusing as DELETE FROM a FROM b.
 
+* Have initdb set DateStyle based on locale?
 * Add CORRESPONDING BY to UNION/INTERSECT/EXCEPT
 * -Allow REINDEX to rebuild all database indexes
 * Add ROLLUP, CUBE, GROUPING SETS options to GROUP BY
@@ -427,7 +354,7 @@ Commands
   Currently the system uses the operating system COPY command to create
   a new database.
 
-* Add C code to copy directories for use in creating new databases
+* Add C code on Unix to copy directories for use in creating new databases
 * Have pg_ctl look at PGHOST in case it is a socket directory?
 * Allow pg_ctl to work properly with configuration files located outside
   the PGDATA directory
@@ -437,7 +364,6 @@ Commands
   allow pg_ctl to read and understand postgresql.conf to find the
   data_directory value.
 
-* Allow column-level GRANT/REVOKE privileges
 * Add a GUC variable to warn about non-standard SQL usage in queries
 * Add MERGE command that does UPDATE/DELETE, or on failure, INSERT (rules,
   triggers?)
@@ -446,7 +372,7 @@ Commands
   creation
 * Add COMMENT ON for all cluster global objects (roles, databases
   and tablespaces)
-* Add an option to automatically use savepoints for each statement in a
+* -Add an option to automatically use savepoints for each statement in a
   multi-statement transaction.
 
   When enabled, this would allow errors in multi-statement transactions
@@ -466,6 +392,7 @@ Commands
 
 * Allow FOR UPDATE queries to do NOWAIT locks
 * Add GUC to issue notice about queries that use unjoined tables
+
 
 * ALTER
 	o Have ALTER TABLE RENAME rename SERIAL sequence names
@@ -509,10 +436,23 @@ Commands
 	  processed, with ROLLBACK on COPY failure.
 
 	o -Allow COPY to understand \x as a hex byte
-	o Have COPY return the number of rows loaded/unloaded (?)
+	o Have COPY return the number of rows loaded/unloaded?
 	o -Allow COPY to optionally include column headings in the first line
 	o -Allow COPY FROM ... CSV to interpret newlines and carriage
 	  returns in data
+
+
+* GRANT/REVOKE
+	o Allow column-level privileges
+	* Allow GRANT/REVOKE permissions to be applied to all schema objects with one
+	  command
+
+	  The proposed syntax is:
+		GRANT SELECT ON ALL TABLES IN public TO phpuser;
+		GRANT SELECT ON NEW TABLES IN public TO phpuser;
+
+	* Allow GRANT/REVOKE permissions to be inherited by objects based on
+	  schema permissions
 
 
 * CURSOR
@@ -524,7 +464,7 @@ Commands
 	  and no FOR UPDATE lock.
 
 	o Prevent DROP TABLE from dropping a row referenced by its own open
-	  cursor (?)
+	  cursor?
 
 	o Allow pooled connections to list all open WITH HOLD cursors
 
@@ -546,7 +486,7 @@ Commands
 	o -Have SHOW ALL show descriptions for server-side variables
 	o Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
 	  ANALYZE, and CLUSTER
-	o Add SET PATH for schemas (?)
+	o Add SET PATH for schemas?
 
 	  This is basically the same as SET search_path.
 
@@ -567,7 +507,7 @@ Commands
 	o Allow function parameters to be passed by name,
 	  get_employee_salary(emp_id => 12345, tax_year => 2001)
 	o Add Oracle-style packages
-	o Add table function support to pltcl, plperl, plpython (?)
+	o Add table function support to pltcl, plperl, plpython?
 	o Allow PL/pgSQL to name columns by ordinal position, e.g. rec.(3)
 	o -Allow PL/pgSQL EXECUTE query_var INTO record_var;
 	o Add capability to create and call PROCEDURES
@@ -581,7 +521,7 @@ Clients
 =======
 
 * Add a libpq function to support Parse/DescribeStatement capability
-* Prevent libpq's PQfnumber() from lowercasing the column name (?)
+* Prevent libpq's PQfnumber() from lowercasing the column name?
 * Allow libpq to access SQLSTATE so pg_ctl can test for connection failure
 
   This would be used for checking if the server is up.
@@ -597,6 +537,8 @@ Clients
 * Allow psql \pset boolean variables to set to fixed values, rather than toggle
 * Consistently display privilege information for all objects in psql
 * Improve psql's handling of multi-line queries
+
+
 * pg_dump
 	o Have pg_dump use multi-statement transactions for INSERT dumps
 	o Allow pg_dump to use multiple -t and -n switches [pg_dump]
@@ -616,13 +558,14 @@ Clients
 	o Add CSV output format
 	o Update pg_dump and psql to use the new COPY libpq API (Christopher)
 
+
 * ECPG
 	o Docs
 
 	  Document differences between ecpg and the SQL standard and
 	  information about the Informix-compatibility module.
 
-	o Solve cardinality > 1 for input descriptors / variables (?)
+	o Solve cardinality > 1 for input descriptors / variables?
 	o Add a semantic check level, e.g. check if a table really exists
 	o fix handling of DB attributes that are arrays
 	o Use backend PREPARE/EXECUTE facility for ecpg where possible
@@ -647,8 +590,8 @@ Referential Integrity
 * -Implement shared row locks and use them in RI triggers
 * Enforce referential integrity for system tables
 * Change foreign key constraint for array -> element to mean element
-  in array (?)
-* Allow DEFERRABLE UNIQUE constraints (?)
+  in array?
+* Allow DEFERRABLE UNIQUE constraints?
 * Allow triggers to be disabled [trigger]
 
   Currently the only way to disable triggers is to modify the system
@@ -710,8 +653,89 @@ Exotic Features
 	o  Allow nested schemas
 
 
-PERFORMANCE
-===========
+Indexes
+=======
+
+* Allow inherited tables to inherit index, UNIQUE constraint, and primary
+  key, foreign key
+* UNIQUE INDEX on base column not honored on INSERTs/UPDATEs from
+  inherited table:  INSERT INTO inherit_table (unique_index_col) VALUES
+  (dup) should fail
+
+  The main difficulty with this item is the problem of creating an index
+  that can span more than one table.
+
+* Add UNIQUE capability to non-btree indexes
+* Add more GIST index support for geometric data types
+* -Use indexes for MIN() and MAX()
+
+  MIN/MAX queries can already be rewritten as SELECT col FROM tab ORDER
+  BY col {DESC} LIMIT 1. Completing this item involves doing this
+  transformation automatically.
+
+* -Use index to restrict rows returned by multi-key index when used with
+  non-consecutive keys to reduce heap accesses
+
+  For an index on col1,col2,col3, and a WHERE clause of col1 = 5 and
+  col3 = 9, spin though the index checking for col1 and col3 matches,
+  rather than just col1; also called skip-scanning.
+
+* Prevent index uniqueness checks when UPDATE does not modify the column
+
+  Uniqueness (index) checks are done when updating a column even if the
+  column is not modified by the UPDATE.
+
+* Fetch heap pages matching index entries in sequential order
+
+  Rather than randomly accessing heap pages based on index entries, mark
+  heap pages needing access in a bitmap and do the lookups in sequential
+  order. Another method would be to sort heap ctids matching the index
+  before accessing the heap rows.
+
+* -Allow non-bitmap indexes to be combined by creating bitmaps in memory
+
+  This feature allows separate indexes to be ANDed or ORed together.  This
+  is particularly useful for data warehousing applications that need to
+  query the database in an many permutations.  This feature scans an index
+  and creates an in-memory bitmap, and allows that bitmap to be combined
+  with other bitmap created in a similar way.  The bitmap can either index
+  all TIDs, or be lossy, meaning it records just page numbers and each
+  page tuple has to be checked for validity in a separate pass.
+
+* Allow the creation of on-disk bitmap indexes which can be quickly
+  combined with other bitmap indexes
+
+  Such indexes could be more compact if there are only a few distinct values.
+  Such indexes can also be compressed.  Keeping such indexes updated can be
+  costly.
+
+* Allow use of indexes to search for NULLs
+
+  One solution is to create a partial index on an IS NULL expression.
+
+* -Add concurrency to GIST
+* Allow accurate statistics to be collected on indexes with more than
+  one column or expression indexes, perhaps using per-index statistics
+* Add fillfactor to control reserved free space during index creation
+* Allow the creation of indexes with mixed ascending/descending specifiers
+* -Fix incorrect rtree results due to wrong assumptions about "over"
+  operator semantics
+* Allow GIST indexes to create certain complex index types, like digital
+  trees (see Aoki)
+
+
+* Hash
+	o Pack hash index buckets onto disk pages more efficiently
+
+	  Currently no only one hash bucket can be stored on a page. Ideally
+	  several hash buckets could be stored on a single page and greater
+	  granularity used for the hash algorithm.
+
+	o Consider sorting hash buckets so entries can be found using a
+	  binary search, rather than a linear scan
+
+	o In hash indexes, consider storing the hash value with or instead
+	  of the key itself
 
 
 Fsync
@@ -724,8 +748,8 @@ Fsync
 * Add program to test if fsync has a delay compared to non-fsync
 
 
-Cache
-=====
+Cache Usage
+===========
 
 * Allow free-behind capability for large sequential scans, perhaps using
   posix_fadvise()
@@ -848,8 +872,8 @@ Locking
 * Fix priority ordering of read and write light-weight locks (Neil)
 
 
-Startup Time
-============
+Startup Time Improvements
+=========================
 
 * Experiment with multi-threaded backend [thread]
 
@@ -877,7 +901,7 @@ Write-Ahead Log
   eliminated from point-in-time archive files.
 
 * Reduce WAL traffic so only modified values are written rather than
-  entire rows (?)
+  entire rows?
 * Turn off full page writes if fsync is disabled
 
   If fsync is off, there is no purpose in writing full pages to WAL
@@ -934,18 +958,18 @@ Optimizer / Executor
 
 * ANALYZE should record a pg_statistic entry for an all-NULL column
 * Log queries where the optimizer row estimates were dramatically
-  different from the number of rows actually found (?)
+  different from the number of rows actually found?
 
 
-Miscellaneous
-=============
+Miscellaneous Performance
+=========================
 
 * Do async I/O for faster random read-ahead of data
 
   Async I/O allows multiple I/O requests to be sent to the disk with
   results coming back asynchronously.
 
-* Use mmap() rather than SYSV shared memory or to write WAL files (?)
+* Use mmap() rather than SYSV shared memory or to write WAL files?
 
   This would remove the requirement for SYSV SHM but would introduce
   portability issues. Anonymous mmap (or mmap to /dev/zero) is required
