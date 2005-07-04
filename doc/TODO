@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Jul  2 10:30:35 EDT 2005
+Last updated:		Mon Jul  4 00:06:35 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -867,14 +867,14 @@ Write-Ahead Log
 
 * Eliminate need to write full pages to WAL before page modification [wal]
 
-  Currently, to protect against partial disk page writes, we write the
+  Currently, to protect against partial disk page writes, we write
   full page images to WAL before they are modified so we can correct any
   partial page writes during recovery.  These pages can also be
   eliminated from point-in-time archive files.
 
 * Reduce WAL traffic so only modified values are written rather than
   entire rows (?)
-* Turn off after-change writes if fsync is disabled
+* Turn off full page writes if fsync is disabled
 
   If fsync is off, there is no purpose in writing full pages to WAL
 

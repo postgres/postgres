@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Sat Jul  2 10:30:35 EDT 2005
+Last updated:           Mon Jul  4 00:06:35 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -798,14 +798,14 @@ first.
 
 <ul>
   <li>Eliminate need to write full pages to WAL before page modification [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?wal">wal</a>]
-<p>  Currently, to protect against partial disk page writes, we write the
+<p>  Currently, to protect against partial disk page writes, we write
   full page images to WAL before they are modified so we can correct any
   partial page writes during recovery.  These pages can also be
   eliminated from point-in-time archive files.
 </p>
   </li><li>Reduce WAL traffic so only modified values are written rather than
   entire rows (?)
-  </li><li>Turn off after-change writes if fsync is disabled
+  </li><li>Turn off full page writes if fsync is disabled
 <p>  If fsync is off, there is no purpose in writing full pages to WAL
 </p>
   </li><li>Add WAL index reliability improvement to non-btree indexes
