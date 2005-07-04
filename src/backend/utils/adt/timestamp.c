@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.117.4.2 2005/05/26 02:10:02 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.117.4.3 2005/07/04 14:12:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2755,9 +2755,12 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 				/*
 				 *	If it is week 52/53 and the month is January,
 				 *	then the week must belong to the previous year.
+				 *	Also, some December dates belong to the next year.
 				 */
 				if (woy >= 52 && tm->tm_mon == 1)
 					--tm->tm_year;
+				if (woy <= 1 && tm->tm_mon == 12)
+					++tm->tm_year;
 				isoweek2date(woy, &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
 				tm->tm_hour = 0;
 				tm->tm_min = 0;
@@ -2886,9 +2889,12 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 				/*
 				 *	If it is week 52/53 and the month is January,
 				 *	then the week must belong to the previous year.
+				 *	Also, some December dates belong to the next year.
 				 */
 				if (woy >= 52 && tm->tm_mon == 1)
 					--tm->tm_year;
+				if (woy <= 1 && tm->tm_mon == 12)
+					++tm->tm_year;
 				isoweek2date(woy, &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
 				tm->tm_hour = 0;
 				tm->tm_min = 0;
