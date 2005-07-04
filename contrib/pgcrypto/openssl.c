@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.13.4.1 2005/03/12 06:54:31 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.13.4.2 2005/07/04 14:42:39 momjian Exp $
  */
 
 #include <postgres.h>
@@ -34,7 +34,19 @@
 #include "px.h"
 
 #include <openssl/evp.h>
+#include <openssl/blowfish.h>
+#include <openssl/cast.h>
+#include <openssl/des.h>
 
+/*
+ * Does OpenSSL support AES? 
+ */
+#undef GOT_AES
+#if OPENSSL_VERSION_NUMBER >= 0x00907000L
+#define GOT_AES
+#include <openssl/aes.h>
+#endif
+  
 /*
  * Hashes
  */
