@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.123 2005/05/30 01:20:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.124 2005/07/04 18:56:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,16 +48,10 @@ typedef struct varlena unknown;
 	text_length(PointerGetDatum(textp))
 #define TEXTPOS(buf_text, from_sub_text) \
 	text_position(buf_text, from_sub_text, 1)
-#define TEXTDUP(textp) \
-	DatumGetTextPCopy(PointerGetDatum(textp))
 #define LEFT(buf_text, from_sub_text) \
 	text_substring(PointerGetDatum(buf_text), \
 					1, \
 					TEXTPOS(buf_text, from_sub_text) - 1, false)
-#define RIGHT(buf_text, from_sub_text, from_sub_text_len) \
-	text_substring(PointerGetDatum(buf_text), \
-					TEXTPOS(buf_text, from_sub_text) + (from_sub_text_len), \
-					-1, true)
 
 static int	text_cmp(text *arg1, text *arg2);
 static int32 text_length(Datum str);
@@ -66,6 +60,8 @@ static text *text_substring(Datum str,
 			   int32 start,
 			   int32 length,
 			   bool length_not_specified);
+
+static void appendStringInfoText(StringInfo str, const text *t);
 
 
 /*****************************************************************************
@@ -1923,6 +1919,18 @@ byteacmp(PG_FUNCTION_ARGS)
 }
 
 /*
+ * appendStringInfoText
+ *
+ * Append a text to str.
+ * Like appendStringInfoString(str, PG_TEXT_GET_STR(s)) but faster.
+ */
+static void
+appendStringInfoText(StringInfo str, const text *t)
+{
+	appendBinaryStringInfo(str, VARDATA(t), VARSIZE(t) - VARHDRSZ);
+}
+
+/*
  * replace_text
  * replace all occurrences of 'old_sub_str' in 'orig_str'
  * with 'new_sub_str' to form 'new_str'
@@ -1938,36 +1946,45 @@ replace_text(PG_FUNCTION_ARGS)
 	text	   *to_sub_text = PG_GETARG_TEXT_P(2);
 	int			src_text_len = TEXTLEN(src_text);
 	int			from_sub_text_len = TEXTLEN(from_sub_text);
-	char	   *to_sub_str = PG_TEXT_GET_STR(to_sub_text);
 	text	   *left_text;
 	text	   *right_text;
 	text	   *buf_text;
 	text	   *ret_text;
 	int			curr_posn;
-	StringInfo	str = makeStringInfo();
+	StringInfo	str;
 
 	if (src_text_len == 0 || from_sub_text_len == 0)
 		PG_RETURN_TEXT_P(src_text);
 
-	buf_text = TEXTDUP(src_text);
-	curr_posn = TEXTPOS(buf_text, from_sub_text);
+	curr_posn = TEXTPOS(src_text, from_sub_text);
+
+	/* When the from_sub_text is not found, there is nothing to do. */
+	if (curr_posn == 0)
+		PG_RETURN_TEXT_P(src_text);
+
+	str = makeStringInfo();
+	buf_text = src_text;
 
 	while (curr_posn > 0)
 	{
-		left_text = LEFT(buf_text, from_sub_text);
-		right_text = RIGHT(buf_text, from_sub_text, from_sub_text_len);
+		left_text = text_substring(PointerGetDatum(buf_text),
+								   1, curr_posn - 1, false);
+		right_text = text_substring(PointerGetDatum(buf_text),
+									curr_posn + from_sub_text_len, -1, true);
 
-		appendStringInfoString(str, PG_TEXT_GET_STR(left_text));
-		appendStringInfoString(str, to_sub_str);
+		appendStringInfoText(str, left_text);
+		appendStringInfoText(str, to_sub_text);
 
-		pfree(buf_text);
+		if (buf_text != src_text)
+			pfree(buf_text);
 		pfree(left_text);
 		buf_text = right_text;
 		curr_posn = TEXTPOS(buf_text, from_sub_text);
 	}
 
-	appendStringInfoString(str, PG_TEXT_GET_STR(buf_text));
-	pfree(buf_text);
+	appendStringInfoText(str, buf_text);
+	if (buf_text != src_text)
+		pfree(buf_text);
 
 	ret_text = PG_STR_GET_TEXT(str->data);
 	pfree(str->data);
