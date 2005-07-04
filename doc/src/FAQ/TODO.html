@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Mon Jul  4 13:00:23 EDT 2005
+Last updated:           Mon Jul  4 13:43:32 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -101,7 +101,7 @@ first.
       </li><li>Allow per-tablespace quotas
     </li></ul>
   </li></ul>
-  </li><li>Point-in-time Recovery (PITR)
+  </li><li>Point-In-Time Recovery (PITR)
   <ul>
     <li>Allow point-in-time recovery to archive partially filled
             write-ahead logs [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?pitr">pitr</a>]
@@ -157,42 +157,47 @@ first.
   <li>Have sequence dependency track use of DEFAULT sequences,
   seqname.nextval?
   </li><li>Disallow changing default expression of a SERIAL column?
-  </li><li>Allow infinite dates just like infinite timestamps
-  </li><li>Add a GUC variable to allow output of interval values in ISO8601 format
   </li><li>Fix data types where equality comparison isn't intuitive, e.g. box
-  </li><li>Merge hardwired timezone names with the TZ database; allow either kind
-  everywhere a TZ name is currently taken
-  </li><li>Allow customization of the known set of TZ names (generalize the
-  present australian_timezones hack)
-  </li><li>Allow TIMESTAMP WITH TIME ZONE to store the original timezone
-  information, either zone name or offset from UTC [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?timezone">timezone</a>]
-<p>  If the TIMESTAMP value is stored with a time zone name, interval 
-  computations should adjust based on the time zone rules, e.g. adding
-  24 hours to a timestamp would yield a different result from adding one
-  day.
-</p>
   </li><li>Prevent INET cast to CIDR if the unmasked bits are not zero, or
   zero the bits
   </li><li>Prevent INET cast to CIDR from droping netmask, SELECT '<a href="telnet://1.1.1.1">1.1.1.1</a>'::inet::cidr
   </li><li>Allow INET + INT4 to increment the host part of the address, or
   throw an error on overflow
   </li><li>Add 'tid != tid ' operator for use in corruption recovery
-  </li><li>Add ISO INTERVAL handling
+  </li><li>Dates and Times
   <ul>
-    <li>Add support for day-time syntax, INTERVAL '1 2:03:04' DAY TO SECOND
-    </li><li>Add support for year-month syntax, INTERVAL '50-6' YEAR TO MONTH
-    </li><li>For syntax that isn't uniquely ISO or PG syntax, like '1:30' or
-          '1', treat as ISO if there is a range specification clause,
-          and as PG if there no clause is present, e.g. interpret '1:30' 
-          MINUTE TO SECOND as '1 minute 30 seconds', and interpret '1:30'
-          as '1 hour, 30 minutes'
-    </li><li>Interpret INTERVAL '1 year' MONTH as CAST (INTERVAL '1 year' AS
-          INTERVAL MONTH), and this should return '12 months'
-    </li><li>Round or truncate values to the requested precision, e.g.
-          INTERVAL '11 months' AS YEAR should return one or zero
-    </li><li>Support precision, CREATE TABLE foo (a INTERVAL MONTH(3))
-  </li></ul>
-  </li><li>ARRAYS
+    <li>Allow infinite dates just like infinite timestamps
+    </li><li>Add a GUC variable to allow output of interval values in ISO8601 
+          format
+    </li><li>Merge hardwired timezone names with the TZ database; allow either 
+          kind everywhere a TZ name is currently taken
+    </li><li>Allow customization of the known set of TZ names (generalize the
+          present australian_timezones hack)
+    </li><li>Allow TIMESTAMP WITH TIME ZONE to store the original timezone
+          information, either zone name or offset from UTC [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?timezone">timezone</a>]
+<p>          If the TIMESTAMP value is stored with a time zone name, interval 
+          computations should adjust based on the time zone rules, e.g. 
+          adding 24 hours to a timestamp would yield a different result from 
+          adding one day.
+</p>
+    </li><li>Add ISO INTERVAL handling
+    <ul>
+      <li>Add support for day-time syntax, INTERVAL '1 2:03:04' DAY TO 
+                  SECOND
+      </li><li>Add support for year-month syntax, INTERVAL '50-6' YEAR TO MONTH
+      </li><li>For syntax that isn't uniquely ISO or PG syntax, like '1:30' or
+                  '1', treat as ISO if there is a range specification clause,
+                  and as PG if there no clause is present, e.g. interpret 
+<p>                          '1:30' MINUTE TO SECOND as '1 minute 30 seconds', and 
+                          interpret '1:30' as '1 hour, 30 minutes'
+      <li>Interpret INTERVAL '1 year' MONTH as CAST (INTERVAL '1 year' AS
+                  INTERVAL MONTH), and this should return '12 months'
+      </li><li>Round or truncate values to the requested precision, e.g.
+                  INTERVAL '11 months' AS YEAR should return one or zero
+      </li><li>Support precision, CREATE TABLE foo (a INTERVAL MONTH(3))
+    </li></ul>
+  </p></ul>
+  </li><li>Arrays
   <ul>
     <li>Allow NULLs in arrays
     </li><li>Allow MIN()/MAX() on arrays
@@ -201,7 +206,7 @@ first.
     </li><li>Modify array literal representation to handle array index lower bound
           of other than one
   </li></ul>
-  </li><li>BINARY DATA
+  </li><li>Binary Data
   <ul>
     <li>Improve vacuum of large objects, like /contrib/vacuumlo?
     </li><li>Add security checking for large objects
@@ -280,30 +285,21 @@ first.
   </li><li>Allow temporary views on non-temporary tables
   </li><li>Allow RULE recompilation
 </li></ul>
-<h1><a name="section_8">Commands</a></h1>
+<h1><a name="section_8">SQL Commands</a></h1>
 
 <ul>
   <li>-<em>Add BETWEEN SYMMETRIC/ASYMMETRIC</em>
   </li><li>Change LIMIT/OFFSET and FETCH/MOVE to use int8
-  </li><li>Allow CREATE TABLE AS to determine column lengths for complex
-  expressions like SELECT col1 || col2
-  </li><li>Allow UPDATE to handle complex aggregates [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?update">update</a>]?
   </li><li>-<em>Add E'' escape string marker so eventually ordinary strings can treat</em>
   backslashes literally, for portability
-  </li><li>Allow an alias to be provided for the target table in UPDATE/DELETE
-<p>  This is not SQL-spec but many DBMSs allow it.
-</p>
   </li><li>-<em>Allow additional tables to be specified in DELETE for joins</em>
 <p>  UPDATE already allows this (UPDATE...FROM) but we need similar
   functionality in DELETE.  It's been agreed that the keyword should
   be USING, to avoid anything as confusing as DELETE FROM a FROM b.
 </p>
-  </li><li>Have initdb set DateStyle based on locale?
   </li><li>Add CORRESPONDING BY to UNION/INTERSECT/EXCEPT
   </li><li>-<em>Allow REINDEX to rebuild all database indexes</em>
   </li><li>Add ROLLUP, CUBE, GROUPING SETS options to GROUP BY
-  </li><li>Add a schema option to createlang
-  </li><li>Allow UPDATE tab SET ROW (col, ...) = (...) for updating multiple columns
   </li><li>Allow SET CONSTRAINTS to be qualified by schema/table name
   </li><li>Allow TRUNCATE ... CASCADE/RESTRICT
   </li><li>Allow PREPARE of cursors
@@ -325,24 +321,9 @@ first.
   message, perhaps indicating the row modified or other custom
   information.
 </p>
-  </li><li>Use more reliable method for CREATE DATABASE to get a consistent copy
-  of db?
-<p>  Currently the system uses the operating system COPY command to create
-  a new database.
-</p>
-  </li><li>Add C code on Unix to copy directories for use in creating new databases
-  </li><li>Have pg_ctl look at PGHOST in case it is a socket directory?
-  </li><li>Allow pg_ctl to work properly with configuration files located outside
-  the PGDATA directory
-<p>  pg_ctl can not read the pid file because it isn't located in the
-  config directory but in the PGDATA directory.  The solution is to
-  allow pg_ctl to read and understand postgresql.conf to find the
-  data_directory value.
-</p>
   </li><li>Add a GUC variable to warn about non-standard SQL usage in queries
   </li><li>Add MERGE command that does UPDATE/DELETE, or on failure, INSERT (rules,
   triggers?)
-  </li><li>Add ON COMMIT capability to CREATE TABLE AS SELECT
   </li><li>Add NOVICE output level for helpful messages like automatic sequence/index
   creation
   </li><li>Add COMMENT ON for all cluster global objects (roles, databases
@@ -363,8 +344,28 @@ first.
   is for this to be a protocol-only feature.  Another approach is to 
   notify the protocol when a RESET CONNECTION command is used.
 </p>
-  </li><li>Allow FOR UPDATE queries to do NOWAIT locks
   </li><li>Add GUC to issue notice about queries that use unjoined tables
+  </li><li>CREATE
+  <ul>
+    <li>Allow CREATE TABLE AS to determine column lengths for complex
+          expressions like SELECT col1 || col2
+    </li><li>Use more reliable method for CREATE DATABASE to get a consistent
+          copy of db?
+    </li><li>Currently the system uses the operating system COPY command to
+          create a new database. Add ON COMMIT capability to CREATE TABLE AS
+          SELECT
+  </li></ul>
+  </li><li>UPDATE
+  <ul>
+    <li>Allow UPDATE to handle complex aggregates [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?update">update</a>]?
+    </li><li>Allow an alias to be provided for the target table in
+          UPDATE/DELETE
+<p>          This is not SQL-spec but many DBMSs allow it.
+</p>
+    </li><li>Allow UPDATE tab SET ROW (col, ...) = (...) for updating multiple
+          columns
+    </li><li>Allow FOR UPDATE queries to do NOWAIT locks
+  </li></ul>
   </li><li>ALTER
   <ul>
     <li>Have ALTER TABLE RENAME rename SERIAL sequence names
@@ -458,7 +459,7 @@ first.
 <p>          This is basically the same as SET search_path.
 </p>
   </li></ul>
-  </li><li>SERVER-SIDE LANGUAGES
+  </li><li>Server-Side Languages
   <ul>
     <li>-<em>Allow PL/PgSQL's RAISE function to take expressions</em>
 <p>          Currently only constants are supported.
@@ -491,16 +492,30 @@ first.
   </li><li>Allow libpq to access SQLSTATE so pg_ctl can test for connection failure
 <p>  This would be used for checking if the server is up.
 </p>
-  </li><li>Have psql show current values for a sequence
-  </li><li>Move psql backslash database information into the backend, use mnemonic
-  commands? [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?psql">psql</a>]
-<p>  This would allow non-psql clients to pull the same information out of
-  the database as psql.
+  </li><li>Have initdb set DateStyle based on locale?
+  </li><li>Have pg_ctl look at PGHOST in case it is a socket directory?
+  </li><li>Add a schema option to createlang
+  </li><li>Allow pg_ctl to work properly with configuration files located outside
+  the PGDATA directory
+<p>  pg_ctl can not read the pid file because it isn't located in the
+  config directory but in the PGDATA directory.  The solution is to
+  allow pg_ctl to read and understand postgresql.conf to find the
+  data_directory value.
 </p>
-  </li><li>Fix psql's display of schema information (Neil)
-  </li><li>Allow psql \pset boolean variables to set to fixed values, rather than toggle
-  </li><li>Consistently display privilege information for all objects in psql
-  </li><li>Improve psql's handling of multi-line queries
+  </li><li>psql
+  <ul>
+    <li>Have psql show current values for a sequence
+    </li><li>Move psql backslash database information into the backend, use
+          mnemonic commands? [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?psql">psql</a>]
+<p>          This would allow non-psql clients to pull the same information out
+          of the database as psql.
+</p>
+    </li><li>Fix psql's display of schema information (Neil)
+    </li><li>Allow psql \pset boolean variables to set to fixed values, rather
+          than toggle
+    </li><li>Consistently display privilege information for all objects in psql
+    </li><li>Improve psql's handling of multi-line queries
+  </li></ul>
   </li><li>pg_dump
   <ul>
     <li>Have pg_dump use multi-statement transactions for INSERT dumps
@@ -520,7 +535,7 @@ first.
     </li><li>Add CSV output format
     </li><li>Update pg_dump and psql to use the new COPY libpq API (Christopher)
   </li></ul>
-  </li><li>ECPG
+  </li><li>ecpg
   <ul>
     <li>Docs
 <p>          Document differences between ecpg and the SQL standard and
@@ -548,7 +563,6 @@ first.
   This item involves dumping large queues into files.
 </p>
   </li><li>-<em>Implement shared row locks and use them in RI triggers</em>
-  </li><li>Enforce referential integrity for system tables
   </li><li>Change foreign key constraint for array -&gt; element to mean element
   in array?
   </li><li>Allow DEFERRABLE UNIQUE constraints?
@@ -566,6 +580,7 @@ first.
 <p>  This was used in older releases to dump referential integrity
   constraints.
 </p>
+  </li><li>Enforce referential integrity for system tables
   </li><li>Allow AFTER triggers on system tables
 <p>  System tables are modified in many places in the backend without going
   through the executor and therefore not causing triggers to fire. To
@@ -594,9 +609,7 @@ first.
   to clients
   </li><li>Allow queries across databases or servers with transaction
   semantics
-<p>  Right now contrib/dblink can be used to issue such queries except it
-  does not have locking or transaction semantics. Two-phase commit is
-  needed to enable transaction semantics.
+<p>  This can be done using dblink and two-phase commit.
 </p>
   </li><li>-<em>Add two-phase commit</em>
   </li><li>Add the features of packages
@@ -619,7 +632,6 @@ first.
   that can span more than one table.
 </p>
   </li><li>Add UNIQUE capability to non-btree indexes
-  </li><li>Add more GIST index support for geometric data types
   </li><li>-<em>Use indexes for MIN() and MAX()</em>
 <p>  MIN/MAX queries can already be rewritten as SELECT col FROM tab ORDER
   BY col {DESC} LIMIT 1. Completing this item involves doing this
@@ -659,15 +671,19 @@ first.
   </li><li>Allow use of indexes to search for NULLs
 <p>  One solution is to create a partial index on an IS NULL expression.
 </p>
-  </li><li>-<em>Add concurrency to GIST</em>
   </li><li>Allow accurate statistics to be collected on indexes with more than
   one column or expression indexes, perhaps using per-index statistics
   </li><li>Add fillfactor to control reserved free space during index creation
   </li><li>Allow the creation of indexes with mixed ascending/descending specifiers
   </li><li>-<em>Fix incorrect rtree results due to wrong assumptions about "over"</em>
   operator semantics
-  </li><li>Allow GIST indexes to create certain complex index types, like digital
-  trees (see Aoki)
+  </li><li>GIST
+  <ul>
+    <li>Add more GIST index support for geometric data types
+    </li><li>-<em>Add concurrency to GIST</em>
+    </li><li>Allow GIST indexes to create certain complex index types, like
+          digital trees (see Aoki)
+  </li></ul>
   </li><li>Hash
   <ul>
     <li>Pack hash index buckets onto disk pages more efficiently
@@ -782,7 +798,7 @@ first.
 <h1><a name="section_17">Locking</a></h1>
 
 <ul>
-  <li>Make locking of shared data structures more fine-grained
+  <li>-<em>Make locking of shared data structures more fine-grained</em>
 <p>  This requires that more locks be acquired but this would reduce lock
   contention, improving concurrency.
 </p>
@@ -849,7 +865,7 @@ first.
   remove the 'fsync' parameter (which results in an an inconsistent
   database) in favor of this capability.
 </p>
-  </li><li>Eliminate WAL logging for CREATE TABLE AS when not doing WAL archiving
+  </li><li>-<em>Eliminate WAL logging for CREATE TABLE AS when not doing WAL archiving</em>
   </li><li>-<em>Change WAL to use 32-bit CRC, for performance reasons</em>
 </li></ul>
 <h1><a name="section_20">Optimizer / Executor</a></h1>
@@ -867,7 +883,7 @@ first.
   </li><li>Create utility to compute accurate random_page_cost value
   </li><li>Improve ability to display optimizer analysis using OPTIMIZER_DEBUG
   </li><li>Have EXPLAIN ANALYZE highlight poor optimizer estimates
-  </li><li>Use CHECK constraints to influence optimizer decisions
+  </li><li>-<em>Use CHECK constraints to influence optimizer decisions</em>
 <p>  CHECK constraints contain information about the distribution of values
   within the table. This is also useful for implementing subtables where
   a tables content is distributed across several subtables.
@@ -938,6 +954,7 @@ first.
 </p>
   </li><li>Fix cross-compiling of time zone database via 'zic'
   </li><li>Fix sgmltools so PDFs can be generated with bookmarks
+  </li><li>Add C code on Unix to copy directories for use in creating new databases
   </li><li>Win32
   <ul>
     <li>Remove configure.in check for link failure when cause is found
@@ -999,6 +1016,6 @@ first.
   </li><li>Tatsuo is Tatsuo Ishii &lt;<a href="mailto:t-ishii@sra.co.jp">t-ishii@sra.co.jp</a>&gt; of Software Research Assoc.
   </li><li>Tom is Tom Lane &lt;<a href="mailto:tgl@sss.pgh.pa.us">tgl@sss.pgh.pa.us</a>&gt; of Red Hat
 </li></ul>
-
+</li></ul></li></ul>
 </body>
 </html>
