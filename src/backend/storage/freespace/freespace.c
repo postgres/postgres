@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.45 2005/05/29 04:23:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.46 2005/07/04 04:51:48 tgl Exp $
  *
  *
  * NOTES:
@@ -752,20 +752,16 @@ void
 DumpFreeSpaceMap(int code, Datum arg)
 {
 	FILE	   *fp;
-	char		cachefilename[MAXPGPATH];
 	FsmCacheFileHeader header;
 	FSMRelation *fsmrel;
 
 	/* Try to create file */
-	snprintf(cachefilename, sizeof(cachefilename), "%s/%s",
-			 DataDir, FSM_CACHE_FILENAME);
+	unlink(FSM_CACHE_FILENAME);		/* in case it exists w/wrong permissions */
 
-	unlink(cachefilename);		/* in case it exists w/wrong permissions */
-
-	fp = AllocateFile(cachefilename, PG_BINARY_W);
+	fp = AllocateFile(FSM_CACHE_FILENAME, PG_BINARY_W);
 	if (fp == NULL)
 	{
-		elog(LOG, "could not write \"%s\": %m", cachefilename);
+		elog(LOG, "could not write \"%s\": %m", FSM_CACHE_FILENAME);
 		return;
 	}
 
@@ -821,15 +817,15 @@ DumpFreeSpaceMap(int code, Datum arg)
 
 	if (FreeFile(fp))
 	{
-		elog(LOG, "could not write \"%s\": %m", cachefilename);
+		elog(LOG, "could not write \"%s\": %m", FSM_CACHE_FILENAME);
 		/* Remove busted cache file */
-		unlink(cachefilename);
+		unlink(FSM_CACHE_FILENAME);
 	}
 
 	return;
 
 write_failed:
-	elog(LOG, "could not write \"%s\": %m", cachefilename);
+	elog(LOG, "could not write \"%s\": %m", FSM_CACHE_FILENAME);
 
 	/* Clean up */
 	LWLockRelease(FreeSpaceLock);
@@ -837,7 +833,7 @@ write_failed:
 	FreeFile(fp);
 
 	/* Remove busted cache file */
-	unlink(cachefilename);
+	unlink(FSM_CACHE_FILENAME);
 }
 
 /*
@@ -858,19 +854,15 @@ void
 LoadFreeSpaceMap(void)
 {
 	FILE	   *fp;
-	char		cachefilename[MAXPGPATH];
 	FsmCacheFileHeader header;
 	int			relno;
 
 	/* Try to open file */
-	snprintf(cachefilename, sizeof(cachefilename), "%s/%s",
-			 DataDir, FSM_CACHE_FILENAME);
-
-	fp = AllocateFile(cachefilename, PG_BINARY_R);
+	fp = AllocateFile(FSM_CACHE_FILENAME, PG_BINARY_R);
 	if (fp == NULL)
 	{
 		if (errno != ENOENT)
-			elog(LOG, "could not read \"%s\": %m", cachefilename);
+			elog(LOG, "could not read \"%s\": %m", FSM_CACHE_FILENAME);
 		return;
 	}
 
@@ -883,7 +875,7 @@ LoadFreeSpaceMap(void)
 		header.version != FSM_CACHE_VERSION ||
 		header.numRels < 0)
 	{
-		elog(LOG, "bogus file header in \"%s\"", cachefilename);
+		elog(LOG, "bogus file header in \"%s\"", FSM_CACHE_FILENAME);
 		goto read_failed;
 	}
 
@@ -905,7 +897,7 @@ LoadFreeSpaceMap(void)
 			relheader.lastPageCount < 0 ||
 			relheader.storedPages < 0)
 		{
-			elog(LOG, "bogus rel header in \"%s\"", cachefilename);
+			elog(LOG, "bogus rel header in \"%s\"", FSM_CACHE_FILENAME);
 			goto read_failed;
 		}
 
@@ -922,7 +914,7 @@ LoadFreeSpaceMap(void)
 		data = (char *) palloc(len);
 		if (fread(data, 1, len, fp) != len)
 		{
-			elog(LOG, "premature EOF in \"%s\"", cachefilename);
+			elog(LOG, "premature EOF in \"%s\"", FSM_CACHE_FILENAME);
 			pfree(data);
 			goto read_failed;
 		}
@@ -993,7 +985,7 @@ read_failed:
 	FreeFile(fp);
 
 	/* Remove cache file before it can become stale; see notes above */
-	unlink(cachefilename);
+	unlink(FSM_CACHE_FILENAME);
 }
 
 

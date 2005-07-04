@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.176 2005/06/28 05:09:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.177 2005/07/04 04:51:52 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to other files.
@@ -238,6 +238,7 @@ extern void InitializeSessionUserIdStandalone(void);
 extern void SetSessionAuthorization(Oid roleid, bool is_superuser);
 
 extern void SetDataDir(const char *dir);
+extern void ChangeToDataDir(void);
 extern char *make_absolute_path(const char *path);
 
 /* in utils/misc/superuser.c */
@@ -309,7 +310,7 @@ extern void SetReindexProcessing(Oid heapOid, Oid indexOid);
 extern void ResetReindexProcessing(void);
 extern bool ReindexIsProcessingHeap(Oid heapOid);
 extern bool ReindexIsProcessingIndex(Oid indexOid);
-extern void CreateDataDirLockFile(const char *datadir, bool amPostmaster);
+extern void CreateDataDirLockFile(bool amPostmaster);
 extern void CreateSocketLockFile(const char *socketfile, bool amPostmaster);
 extern void TouchSocketLockFile(void);
 extern void RecordSharedMemoryInLockFile(unsigned long id1,

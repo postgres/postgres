@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.7 2005/06/28 05:08:51 tgl Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.8 2005/07/04 04:51:44 tgl Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -661,7 +661,7 @@ TwoPhaseGetDummyProc(TransactionId xid)
 /************************************************************************/
 
 #define TwoPhaseFilePath(path, xid) \
-	snprintf(path, MAXPGPATH, "%s/%s/%08X", DataDir, TWOPHASE_DIR, xid)
+	snprintf(path, MAXPGPATH, TWOPHASE_DIR "/%08X", xid)
 
 /*
  * 2PC state file format:
@@ -1434,14 +1434,11 @@ PrescanPreparedTransactions(void)
 {
 	TransactionId origNextXid = ShmemVariableCache->nextXid;
 	TransactionId result = origNextXid;
-	char	dir[MAXPGPATH];
 	DIR		*cldir;
 	struct dirent *clde;
 
-	snprintf(dir, MAXPGPATH, "%s/%s", DataDir, TWOPHASE_DIR);
-
-	cldir = AllocateDir(dir);
-	while ((clde = ReadDir(cldir, dir)) != NULL)
+	cldir = AllocateDir(TWOPHASE_DIR);
+	while ((clde = ReadDir(cldir, TWOPHASE_DIR)) != NULL)
 	{
 		if (strlen(clde->d_name) == 8 &&
 			strspn(clde->d_name, "0123456789ABCDEF") == 8)
@@ -1540,7 +1537,7 @@ RecoverPreparedTransactions(void)
 	DIR		*cldir;
 	struct dirent *clde;
 
-	snprintf(dir, MAXPGPATH, "%s/%s", DataDir, TWOPHASE_DIR);
+	snprintf(dir, MAXPGPATH, "%s", TWOPHASE_DIR);
 
 	cldir = AllocateDir(dir);
 	while ((clde = ReadDir(cldir, dir)) != NULL)

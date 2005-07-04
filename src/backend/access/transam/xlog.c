@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.205 2005/06/30 00:00:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.206 2005/07/04 04:51:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,6 +89,12 @@
 #define DEFAULT_SYNC_METHOD		  SYNC_METHOD_FSYNC_WRITETHROUGH
 #define DEFAULT_SYNC_FLAGBIT	  0
 #endif
+
+
+/* File path names (all relative to $PGDATA) */
+#define BACKUP_LABEL_FILE		"backup_label"
+#define RECOVERY_COMMAND_FILE	"recovery.conf"
+#define RECOVERY_COMMAND_DONE	"recovery.done"
 
 
 /* User-settable parameters */
@@ -377,11 +383,6 @@ static ControlFileData *ControlFile = NULL;
 
 #define NextBufIdx(idx)		\
 		(((idx) == XLogCtl->XLogCacheBlck) ? 0 : ((idx) + 1))
-
-
-/* File path names */
-char		XLogDir[MAXPGPATH];
-static char ControlFilePath[MAXPGPATH];
 
 /*
  * Private, possibly out-of-date copy of shared LogwrtResult.
@@ -991,7 +992,7 @@ XLogCheckBuffer(XLogRecData *rdata,
  *
  * The name of the notification file is the message that will be picked up
  * by the archiver, e.g. we write 0000000100000001000000C6.ready
- * and the archiver then knows to archive XLogDir/0000000100000001000000C6,
+ * and the archiver then knows to archive XLOGDIR/0000000100000001000000C6,
  * then when complete, rename it to 0000000100000001000000C6.done
  */
 static void
@@ -1645,7 +1646,7 @@ XLogFileInit(uint32 log, uint32 seg,
 	 * up pre-creating an extra log segment.  That seems OK, and better
 	 * than holding the lock throughout this lengthy process.
 	 */
-	snprintf(tmppath, MAXPGPATH, "%s/xlogtemp.%d", XLogDir, (int)getpid());
+	snprintf(tmppath, MAXPGPATH, XLOGDIR "/xlogtemp.%d", (int) getpid());
 
 	unlink(tmppath);
 
@@ -1768,7 +1769,7 @@ XLogFileCopy(uint32 log, uint32 seg,
 	/*
 	 * Copy into a temp file name.
 	 */
-	snprintf(tmppath, MAXPGPATH, "%s/xlogtemp.%d", XLogDir, (int)getpid());
+	snprintf(tmppath, MAXPGPATH, XLOGDIR "/xlogtemp.%d", (int) getpid());
 
 	unlink(tmppath);
 
@@ -2039,8 +2040,8 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 
 	/*
 	 * When doing archive recovery, we always prefer an archived log file
-	 * even if a file of the same name exists in XLogDir.  The reason is
-	 * that the file in XLogDir could be an old, un-filled or
+	 * even if a file of the same name exists in XLOGDIR.  The reason is
+	 * that the file in XLOGDIR could be an old, un-filled or
 	 * partly-filled version that was copied and restored as part of
 	 * backing up $PGDATA.
 	 *
@@ -2051,18 +2052,18 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	 * robustness, so we elect not to do this.
 	 *
 	 * If we cannot obtain the log file from the archive, however, we will
-	 * try to use the XLogDir file if it exists.  This is so that we can
+	 * try to use the XLOGDIR file if it exists.  This is so that we can
 	 * make use of log segments that weren't yet transferred to the
 	 * archive.
 	 *
 	 * Notice that we don't actually overwrite any files when we copy back
 	 * from archive because the recoveryRestoreCommand may inadvertently
 	 * restore inappropriate xlogs, or they may be corrupt, so we may wish
-	 * to fallback to the segments remaining in current XLogDir later. The
+	 * to fallback to the segments remaining in current XLOGDIR later. The
 	 * copy-from-archive filename is always the same, ensuring that we
 	 * don't run out of disk space on long recoveries.
 	 */
-	snprintf(xlogpath, MAXPGPATH, "%s/%s", XLogDir, recovername);
+	snprintf(xlogpath, MAXPGPATH, XLOGDIR "/%s", recovername);
 
 	/*
 	 * Make sure there is no existing file named recovername.
@@ -2136,7 +2137,7 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 							 xlogRestoreCmd)));
 
 	/*
-	 * Copy xlog from archival storage to XLogDir
+	 * Copy xlog from archival storage to XLOGDIR
 	 */
 	rc = system(xlogRestoreCmd);
 	if (rc == 0)
@@ -2192,13 +2193,13 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 
 	/*
 	 * if an archived file is not available, there might still be a
-	 * version of this file in XLogDir, so return that as the filename to
+	 * version of this file in XLOGDIR, so return that as the filename to
 	 * open.
 	 *
 	 * In many recovery scenarios we expect this to fail also, but if so that
 	 * just means we've reached the end of WAL.
 	 */
-	snprintf(path, MAXPGPATH, "%s/%s", XLogDir, xlogfname);
+	snprintf(path, MAXPGPATH, XLOGDIR "/%s", xlogfname);
 	return false;
 }
 
@@ -2257,16 +2258,16 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr,
 	XLByteToPrevSeg(endptr, endlogId, endlogSeg);
 	max_advance = XLOGfileslop;
 
-	xldir = AllocateDir(XLogDir);
+	xldir = AllocateDir(XLOGDIR);
 	if (xldir == NULL)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 			errmsg("could not open transaction log directory \"%s\": %m",
-				   XLogDir)));
+				   XLOGDIR)));
 
 	XLogFileName(lastoff, ThisTimeLineID, log, seg);
 
-	while ((xlde = ReadDir(xldir, XLogDir)) != NULL)
+	while ((xlde = ReadDir(xldir, XLOGDIR)) != NULL)
 	{
 		/*
 		 * We ignore the timeline part of the XLOG segment identifiers in
@@ -2292,7 +2293,7 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr,
 
 			if (recycle)
 			{
-				snprintf(path, MAXPGPATH, "%s/%s", XLogDir, xlde->d_name);
+				snprintf(path, MAXPGPATH, XLOGDIR "/%s", xlde->d_name);
 
 				/*
 				 * Before deleting the file, see if it can be recycled as
@@ -2341,14 +2342,14 @@ RemoveOldBackupHistory(void)
 	struct dirent *xlde;
 	char		path[MAXPGPATH];
 
-	xldir = AllocateDir(XLogDir);
+	xldir = AllocateDir(XLOGDIR);
 	if (xldir == NULL)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 			errmsg("could not open transaction log directory \"%s\": %m",
-				   XLogDir)));
+				   XLOGDIR)));
 
-	while ((xlde = ReadDir(xldir, XLogDir)) != NULL)
+	while ((xlde = ReadDir(xldir, XLOGDIR)) != NULL)
 	{
 		if (strlen(xlde->d_name) > 24 &&
 			strspn(xlde->d_name, "0123456789ABCDEF") == 24 &&
@@ -2361,7 +2362,7 @@ RemoveOldBackupHistory(void)
 				ereport(DEBUG2,
 					  (errmsg("removing transaction log backup history file \"%s\"",
 							  xlde->d_name)));
-				snprintf(path, MAXPGPATH, "%s/%s", XLogDir, xlde->d_name);
+				snprintf(path, MAXPGPATH, XLOGDIR "/%s", xlde->d_name);
 				unlink(path);
 				XLogArchiveCleanup(xlde->d_name);
 			}
@@ -3132,7 +3133,7 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 	/*
 	 * Write into a temp file name.
 	 */
-	snprintf(tmppath, MAXPGPATH, "%s/xlogtemp.%d", XLogDir, (int)getpid());
+	snprintf(tmppath, MAXPGPATH, XLOGDIR "/xlogtemp.%d", (int) getpid());
 
 	unlink(tmppath);
 
@@ -3291,15 +3292,6 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
  * ReadControlFile() verifies they are correct.  We could split out the
  * I/O and compatibility-check functions, but there seems no need currently.
  */
-
-void
-XLOGPathInit(void)
-{
-	/* Init XLOG file paths */
-	snprintf(XLogDir, MAXPGPATH, "%s/pg_xlog", DataDir);
-	snprintf(ControlFilePath, MAXPGPATH, "%s/global/pg_control", DataDir);
-}
-
 static void
 WriteControlFile(void)
 {
@@ -3358,13 +3350,14 @@ WriteControlFile(void)
 	memset(buffer, 0, BLCKSZ);
 	memcpy(buffer, ControlFile, sizeof(ControlFileData));
 
-	fd = BasicOpenFile(ControlFilePath, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
+	fd = BasicOpenFile(XLOG_CONTROL_FILE,
+					   O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
 					   S_IRUSR | S_IWUSR);
 	if (fd < 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
 				 errmsg("could not create control file \"%s\": %m",
-						ControlFilePath)));
+						XLOG_CONTROL_FILE)));
 
 	errno = 0;
 	if (write(fd, buffer, BLCKSZ) != BLCKSZ)
@@ -3397,12 +3390,14 @@ ReadControlFile(void)
 	/*
 	 * Read data...
 	 */
-	fd = BasicOpenFile(ControlFilePath, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
+	fd = BasicOpenFile(XLOG_CONTROL_FILE,
+					   O_RDWR | PG_BINARY,
+					   S_IRUSR | S_IWUSR);
 	if (fd < 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
 				 errmsg("could not open control file \"%s\": %m",
-						ControlFilePath)));
+						XLOG_CONTROL_FILE)));
 
 	if (read(fd, ControlFile, sizeof(ControlFileData)) != sizeof(ControlFileData))
 		ereport(PANIC,
@@ -3546,12 +3541,14 @@ UpdateControlFile(void)
 			   offsetof(ControlFileData, crc));
 	FIN_CRC32(ControlFile->crc);
 
-	fd = BasicOpenFile(ControlFilePath, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
+	fd = BasicOpenFile(XLOG_CONTROL_FILE,
+					   O_RDWR | PG_BINARY,
+					   S_IRUSR | S_IWUSR);
 	if (fd < 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
 				 errmsg("could not open control file \"%s\": %m",
-						ControlFilePath)));
+						XLOG_CONTROL_FILE)));
 
 	errno = 0;
 	if (write(fd, ControlFile, sizeof(ControlFileData)) != sizeof(ControlFileData))
@@ -3814,15 +3811,13 @@ str_time(time_t tnow)
 static void
 readRecoveryCommandFile(void)
 {
-	char		recoveryCommandFile[MAXPGPATH];
 	FILE	   *fd;
 	char		cmdline[MAXPGPATH];
 	TimeLineID	rtli = 0;
 	bool		rtliGiven = false;
 	bool		syntaxError = false;
 
-	snprintf(recoveryCommandFile, MAXPGPATH, "%s/recovery.conf", DataDir);
-	fd = AllocateFile(recoveryCommandFile, "r");
+	fd = AllocateFile(RECOVERY_COMMAND_FILE, "r");
 	if (fd == NULL)
 	{
 		if (errno == ENOENT)
@@ -3830,7 +3825,7 @@ readRecoveryCommandFile(void)
 		ereport(FATAL,
 				(errcode_for_file_access(),
 				 errmsg("could not open recovery command file \"%s\": %m",
-						recoveryCommandFile)));
+						RECOVERY_COMMAND_FILE)));
 	}
 
 	ereport(LOG,
@@ -3974,7 +3969,7 @@ readRecoveryCommandFile(void)
 	if (recoveryRestoreCommand == NULL)
 		ereport(FATAL,
 				(errmsg("recovery command file \"%s\" did not specify restore_command",
-						recoveryCommandFile)));
+						RECOVERY_COMMAND_FILE)));
 
 	/* Enable fetching from archive recovery area */
 	InArchiveRecovery = true;
@@ -4012,8 +4007,6 @@ exitArchiveRecovery(TimeLineID endTLI, uint32 endLogId, uint32 endLogSeg)
 {
 	char		recoveryPath[MAXPGPATH];
 	char		xlogpath[MAXPGPATH];
-	char		recoveryCommandFile[MAXPGPATH];
-	char		recoveryCommandDone[MAXPGPATH];
 
 	/*
 	 * We are no longer in archive recovery state.
@@ -4035,7 +4028,7 @@ exitArchiveRecovery(TimeLineID endTLI, uint32 endLogId, uint32 endLogSeg)
 	/*
 	 * If the segment was fetched from archival storage, we want to
 	 * replace the existing xlog segment (if any) with the archival
-	 * version.  This is because whatever is in XLogDir is very possibly
+	 * version.  This is because whatever is in XLOGDIR is very possibly
 	 * older than what we have from the archives, since it could have come
 	 * from restoring a PGDATA backup.	In any case, the archival version
 	 * certainly is more descriptive of what our current database state
@@ -4045,7 +4038,7 @@ exitArchiveRecovery(TimeLineID endTLI, uint32 endLogId, uint32 endLogSeg)
 	 * already set to the new value, and so we will create a new file
 	 * instead of overwriting any existing file.
 	 */
-	snprintf(recoveryPath, MAXPGPATH, "%s/RECOVERYXLOG", XLogDir);
+	snprintf(recoveryPath, MAXPGPATH, XLOGDIR "/RECOVERYXLOG");
 	XLogFilePath(xlogpath, ThisTimeLineID, endLogId, endLogSeg);
 
 	if (restoredFromArchive)
@@ -4087,21 +4080,19 @@ exitArchiveRecovery(TimeLineID endTLI, uint32 endLogId, uint32 endLogSeg)
 	XLogArchiveCleanup(xlogpath);
 
 	/* Get rid of any remaining recovered timeline-history file, too */
-	snprintf(recoveryPath, MAXPGPATH, "%s/RECOVERYHISTORY", XLogDir);
+	snprintf(recoveryPath, MAXPGPATH, XLOGDIR "/RECOVERYHISTORY");
 	unlink(recoveryPath);		/* ignore any error */
 
 	/*
 	 * Rename the config file out of the way, so that we don't
 	 * accidentally re-enter archive recovery mode in a subsequent crash.
 	 */
-	snprintf(recoveryCommandFile, MAXPGPATH, "%s/recovery.conf", DataDir);
-	snprintf(recoveryCommandDone, MAXPGPATH, "%s/recovery.done", DataDir);
-	unlink(recoveryCommandDone);
-	if (rename(recoveryCommandFile, recoveryCommandDone) != 0)
+	unlink(RECOVERY_COMMAND_DONE);
+	if (rename(RECOVERY_COMMAND_FILE, RECOVERY_COMMAND_DONE) != 0)
 		ereport(FATAL,
 				(errcode_for_file_access(),
 				 errmsg("could not rename file \"%s\" to \"%s\": %m",
-						recoveryCommandFile, recoveryCommandDone)));
+						RECOVERY_COMMAND_FILE, RECOVERY_COMMAND_DONE)));
 
 	ereport(LOG,
 			(errmsg("archive recovery complete")));
@@ -5467,7 +5458,6 @@ pg_start_backup(PG_FUNCTION_ARGS)
 	XLogRecPtr	startpoint;
 	time_t		stamp_time;
 	char		strfbuf[128];
-	char		labelfilepath[MAXPGPATH];
 	char		xlogfilename[MAXFNAMELEN];
 	uint32		_logId;
 	uint32		_logSeg;
@@ -5526,31 +5516,30 @@ pg_start_backup(PG_FUNCTION_ARGS)
 	 * Check for existing backup label --- implies a backup is already
 	 * running
 	 */
-	snprintf(labelfilepath, MAXPGPATH, "%s/backup_label", DataDir);
-	if (stat(labelfilepath, &stat_buf) != 0)
+	if (stat(BACKUP_LABEL_FILE, &stat_buf) != 0)
 	{
 		if (errno != ENOENT)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not stat file \"%s\": %m",
-							labelfilepath)));
+							BACKUP_LABEL_FILE)));
 	}
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("a backup is already in progress"),
 				 errhint("If you're sure there is no backup in progress, remove file \"%s\" and try again.",
-						 labelfilepath)));
+						 BACKUP_LABEL_FILE)));
 
 	/*
 	 * Okay, write the file
 	 */
-	fp = AllocateFile(labelfilepath, "w");
+	fp = AllocateFile(BACKUP_LABEL_FILE, "w");
 	if (!fp)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not create file \"%s\": %m",
-						labelfilepath)));
+						BACKUP_LABEL_FILE)));
 	fprintf(fp, "START WAL LOCATION: %X/%X (file %s)\n",
 			startpoint.xlogid, startpoint.xrecoff, xlogfilename);
 	fprintf(fp, "CHECKPOINT LOCATION: %X/%X\n",
@@ -5561,7 +5550,7 @@ pg_start_backup(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write file \"%s\": %m",
-						labelfilepath)));
+						BACKUP_LABEL_FILE)));
 
 	/*
 	 * We're done.  As a convenience, return the starting WAL offset.
@@ -5590,7 +5579,6 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	XLogRecPtr	stoppoint;
 	time_t		stamp_time;
 	char		strfbuf[128];
-	char		labelfilepath[MAXPGPATH];
 	char		histfilepath[MAXPGPATH];
 	char		startxlogfilename[MAXFNAMELEN];
 	char		stopxlogfilename[MAXFNAMELEN];
@@ -5631,15 +5619,14 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	/*
 	 * Open the existing label file
 	 */
-	snprintf(labelfilepath, MAXPGPATH, "%s/backup_label", DataDir);
-	lfp = AllocateFile(labelfilepath, "r");
+	lfp = AllocateFile(BACKUP_LABEL_FILE, "r");
 	if (!lfp)
 	{
 		if (errno != ENOENT)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not read file \"%s\": %m",
-							labelfilepath)));
+							BACKUP_LABEL_FILE)));
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("a backup is not in progress")));
@@ -5655,7 +5642,7 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 			   &ch) != 4 || ch != '\n')
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("invalid data in file \"%s\"", labelfilepath)));
+				 errmsg("invalid data in file \"%s\"", BACKUP_LABEL_FILE)));
 
 	/*
 	 * Write the backup history file
@@ -5690,12 +5677,12 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not read file \"%s\": %m",
-						labelfilepath)));
-	if (unlink(labelfilepath) != 0)
+						BACKUP_LABEL_FILE)));
+	if (unlink(BACKUP_LABEL_FILE) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not remove file \"%s\": %m",
-						labelfilepath)));
+						BACKUP_LABEL_FILE)));
 
 	RemoveOldBackupHistory();
 	
@@ -5741,7 +5728,6 @@ read_backup_label(XLogRecPtr *checkPointLoc)
 {
 	XLogRecPtr	startpoint;
 	XLogRecPtr	stoppoint;
-	char		labelfilepath[MAXPGPATH];
 	char		histfilename[MAXFNAMELEN];
 	char		histfilepath[MAXPGPATH];
 	char		startxlogfilename[MAXFNAMELEN];
@@ -5756,15 +5742,14 @@ read_backup_label(XLogRecPtr *checkPointLoc)
 	/*
 	 * See if label file is present
 	 */
-	snprintf(labelfilepath, MAXPGPATH, "%s/backup_label", DataDir);
-	lfp = AllocateFile(labelfilepath, "r");
+	lfp = AllocateFile(BACKUP_LABEL_FILE, "r");
 	if (!lfp)
 	{
 		if (errno != ENOENT)
 			ereport(FATAL,
 					(errcode_for_file_access(),
 					 errmsg("could not read file \"%s\": %m",
-							labelfilepath)));
+							BACKUP_LABEL_FILE)));
 		return false;			/* it's not there, all is fine */
 	}
 
@@ -5778,18 +5763,18 @@ read_backup_label(XLogRecPtr *checkPointLoc)
 			   startxlogfilename, &ch) != 5 || ch != '\n')
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("invalid data in file \"%s\"", labelfilepath)));
+				 errmsg("invalid data in file \"%s\"", BACKUP_LABEL_FILE)));
 	if (fscanf(lfp, "CHECKPOINT LOCATION: %X/%X%c",
 			   &checkPointLoc->xlogid, &checkPointLoc->xrecoff,
 			   &ch) != 3 || ch != '\n')
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("invalid data in file \"%s\"", labelfilepath)));
+				 errmsg("invalid data in file \"%s\"", BACKUP_LABEL_FILE)));
 	if (ferror(lfp) || FreeFile(lfp))
 		ereport(FATAL,
 				(errcode_for_file_access(),
 				 errmsg("could not read file \"%s\": %m",
-						labelfilepath)));
+						BACKUP_LABEL_FILE)));
 
 	/*
 	 * Try to retrieve the backup history file (no error if we can't)
@@ -5843,13 +5828,10 @@ read_backup_label(XLogRecPtr *checkPointLoc)
 static void
 remove_backup_label(void)
 {
-	char		labelfilepath[MAXPGPATH];
-
-	snprintf(labelfilepath, MAXPGPATH, "%s/backup_label", DataDir);
-	if (unlink(labelfilepath) != 0)
+	if (unlink(BACKUP_LABEL_FILE) != 0)
 		if (errno != ENOENT)
 			ereport(FATAL,
 					(errcode_for_file_access(),
 					 errmsg("could not remove file \"%s\": %m",
-							labelfilepath)));
+							BACKUP_LABEL_FILE)));
 }

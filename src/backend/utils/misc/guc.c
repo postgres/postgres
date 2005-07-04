@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.271 2005/06/28 05:09:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.272 2005/07/04 04:51:51 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -74,6 +74,7 @@
 
 #ifdef EXEC_BACKEND
 #define CONFIG_EXEC_PARAMS "global/config_exec_params"
+#define CONFIG_EXEC_PARAMS_NEW "global/config_exec_params.new"
 #endif
 
 /* XXX these should appear in other modules' header files */
@@ -2619,7 +2620,9 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	 * Reflect the final DataDir value back into the data_directory GUC var.
 	 * (If you are wondering why we don't just make them a single variable,
 	 * it's because the EXEC_BACKEND case needs DataDir to be transmitted to
-	 * child backends specially.)
+	 * child backends specially.  XXX is that still true?  Given that we
+	 * now chdir to DataDir, EXEC_BACKEND can read the config file without
+	 * knowing DataDir in advance.)
 	 */
 	SetConfigOption("data_directory", DataDir, PGC_POSTMASTER, PGC_S_OVERRIDE);
 
@@ -4849,6 +4852,7 @@ _ShowOption(struct config_generic * record)
 
 
 #ifdef EXEC_BACKEND
+
 /*
  *	This routine dumps out all non-default GUC options into a binary
  *	file that is read by all exec'ed backends.  The format is:
@@ -4861,42 +4865,23 @@ void
 write_nondefault_variables(GucContext context)
 {
 	int			i;
-	char	   *new_filename,
-			   *filename;
 	int			elevel;
 	FILE	   *fp;
 
 	Assert(context == PGC_POSTMASTER || context == PGC_SIGHUP);
-	Assert(DataDir);
 
 	elevel = (context == PGC_SIGHUP) ? LOG : ERROR;
 
 	/*
 	 * Open file
 	 */
-	new_filename = guc_malloc(elevel, strlen(DataDir) + strlen(CONFIG_EXEC_PARAMS) +
-							  strlen(".new") + 2);
-	if (new_filename == NULL)
-		return;
-
-	filename = guc_malloc(elevel, strlen(DataDir) + strlen(CONFIG_EXEC_PARAMS) + 2);
-	if (filename == NULL)
-	{
-		free(new_filename);
-		return;
-	}
-
-	sprintf(new_filename, "%s/" CONFIG_EXEC_PARAMS ".new", DataDir);
-	sprintf(filename, "%s/" CONFIG_EXEC_PARAMS, DataDir);
-
-	fp = AllocateFile(new_filename, "w");
+	fp = AllocateFile(CONFIG_EXEC_PARAMS_NEW, "w");
 	if (!fp)
 	{
-		free(new_filename);
-		free(filename);
 		ereport(elevel,
 				(errcode_for_file_access(),
-				 errmsg("could not write to file \"%s\": %m", CONFIG_EXEC_PARAMS)));
+				 errmsg("could not write to file \"%s\": %m",
+						CONFIG_EXEC_PARAMS_NEW)));
 		return;
 	}
 
@@ -4956,11 +4941,10 @@ write_nondefault_variables(GucContext context)
 
 	if (FreeFile(fp))
 	{
-		free(new_filename);
-		free(filename);
 		ereport(elevel,
 				(errcode_for_file_access(),
-				 errmsg("could not write to file \"%s\": %m", CONFIG_EXEC_PARAMS)));
+				 errmsg("could not write to file \"%s\": %m",
+						CONFIG_EXEC_PARAMS_NEW)));
 		return;
 	}
 
@@ -4968,9 +4952,7 @@ write_nondefault_variables(GucContext context)
 	 * Put new file in place.  This could delay on Win32, but we don't
 	 * hold any exclusive locks.
 	 */
-	rename(new_filename, filename);
-	free(new_filename);
-	free(filename);
+	rename(CONFIG_EXEC_PARAMS_NEW, CONFIG_EXEC_PARAMS);
 }
 
 
@@ -5014,29 +4996,23 @@ read_string_with_null(FILE *fp)
 void
 read_nondefault_variables(void)
 {
-	char	   *filename;
 	FILE	   *fp;
 	char	   *varname,
 			   *varvalue;
 	int			varsource;
 
-	Assert(DataDir);
-
 	/*
 	 * Open file
 	 */
-	filename = guc_malloc(FATAL, strlen(DataDir) + strlen(CONFIG_EXEC_PARAMS) + 2);
-	sprintf(filename, "%s/" CONFIG_EXEC_PARAMS, DataDir);
-
-	fp = AllocateFile(filename, "r");
+	fp = AllocateFile(CONFIG_EXEC_PARAMS, "r");
 	if (!fp)
 	{
-		free(filename);
 		/* File not found is fine */
 		if (errno != ENOENT)
 			ereport(FATAL,
 					(errcode_for_file_access(),
-					 errmsg("could not read from file \"%s\": %m", CONFIG_EXEC_PARAMS)));
+					 errmsg("could not read from file \"%s\": %m",
+							CONFIG_EXEC_PARAMS)));
 		return;
 	}
 
@@ -5061,10 +5037,9 @@ read_nondefault_variables(void)
 	}
 
 	FreeFile(fp);
-	free(filename);
-	return;
 }
-#endif
+
+#endif /* EXEC_BACKEND */
 
 
 /*

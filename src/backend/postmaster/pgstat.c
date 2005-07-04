@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.98 2005/06/29 22:51:55 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.99 2005/07/04 04:51:47 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -54,12 +54,11 @@
 
 
 /* ----------
- * Paths for the statistics files. The %s is replaced with the
- * installation's $PGDATA.
+ * Paths for the statistics files (relative to installation's $PGDATA).
  * ----------
  */
-#define PGSTAT_STAT_FILENAME	"%s/global/pgstat.stat"
-#define PGSTAT_STAT_TMPFILE		"%s/global/pgstat.tmp.%d"
+#define PGSTAT_STAT_FILENAME	"global/pgstat.stat"
+#define PGSTAT_STAT_TMPFILE		"global/pgstat.tmp"
 
 /* ----------
  * Timer definitions.
@@ -133,9 +132,6 @@ static HTAB *pgStatDBHash = NULL;
 static HTAB *pgStatBeDead = NULL;
 static PgStat_StatBeEntry *pgStatBeTable = NULL;
 static int	pgStatNumBackends = 0;
-
-static char pgStat_fname[MAXPGPATH];
-static char pgStat_tmpfname[MAXPGPATH];
 
 
 /* ----------
@@ -221,20 +217,11 @@ pgstat_init(void)
 		pgstat_collect_startcollector = true;
 
 	/*
-	 * Initialize the filename for the status reports.	(In the
-	 * EXEC_BACKEND case, this only sets the value in the postmaster.  The
-	 * collector subprocess will recompute the value for itself, and
-	 * individual backends must do so also if they want to access the
-	 * file.)
-	 */
-	snprintf(pgStat_fname, MAXPGPATH, PGSTAT_STAT_FILENAME, DataDir);
-
-	/*
 	 * If we don't have to start a collector or should reset the collected
-	 * statistics on postmaster start, simply remove the file.
+	 * statistics on postmaster start, simply remove the stats file.
 	 */
 	if (!pgstat_collect_startcollector || pgstat_collect_resetonpmstart)
-		unlink(pgStat_fname);
+		unlink(PGSTAT_STAT_FILENAME);
 
 	/*
 	 * Nothing else required if collector will not get started
@@ -1471,14 +1458,6 @@ PgstatCollectorMain(int argc, char *argv[])
 	set_ps_display("");
 
 	/*
-	 * Initialize filenames needed for status reports.
-	 */
-	snprintf(pgStat_fname, MAXPGPATH, PGSTAT_STAT_FILENAME, DataDir);
-	/* tmpfname need only be set correctly in this process */
-	snprintf(pgStat_tmpfname, MAXPGPATH, PGSTAT_STAT_TMPFILE,
-			 DataDir, (int)getpid());
-
-	/*
 	 * Arrange to write the initial status file right away
 	 */
 	gettimeofday(&next_statwrite, NULL);
@@ -2161,13 +2140,13 @@ pgstat_write_statsfile(void)
 	/*
 	 * Open the statistics temp file to write out the current values.
 	 */
-	fpout = fopen(pgStat_tmpfname, PG_BINARY_W);
+	fpout = fopen(PGSTAT_STAT_TMPFILE, PG_BINARY_W);
 	if (fpout == NULL)
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
 			errmsg("could not open temporary statistics file \"%s\": %m",
-				   pgStat_tmpfname)));
+				   PGSTAT_STAT_TMPFILE)));
 		return;
 	}
 
@@ -2276,16 +2255,16 @@ pgstat_write_statsfile(void)
 		ereport(LOG,
 				(errcode_for_file_access(),
 		   errmsg("could not close temporary statistics file \"%s\": %m",
-				  pgStat_tmpfname)));
+				  PGSTAT_STAT_TMPFILE)));
 	}
 	else
 	{
-		if (rename(pgStat_tmpfname, pgStat_fname) < 0)
+		if (rename(PGSTAT_STAT_TMPFILE, PGSTAT_STAT_FILENAME) < 0)
 		{
 			ereport(LOG,
 					(errcode_for_file_access(),
 					 errmsg("could not rename temporary statistics file \"%s\" to \"%s\": %m",
-							pgStat_tmpfname, pgStat_fname)));
+							PGSTAT_STAT_TMPFILE, PGSTAT_STAT_FILENAME)));
 		}
 	}
 
@@ -2377,23 +2356,11 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 		*betab = NULL;
 
 	/*
-	 * In EXEC_BACKEND case, we won't have inherited pgStat_fname from
-	 * postmaster, so compute it first time through.
-	 */
-#ifdef EXEC_BACKEND
-	if (pgStat_fname[0] == '\0')
-	{
-		Assert(DataDir != NULL);
-		snprintf(pgStat_fname, MAXPGPATH, PGSTAT_STAT_FILENAME, DataDir);
-	}
-#endif
-
-	/*
 	 * Try to open the status file. If it doesn't exist, the backends
 	 * simply return zero for anything and the collector simply starts
 	 * from scratch with empty counters.
 	 */
-	if ((fpin = AllocateFile(pgStat_fname, PG_BINARY_R)) == NULL)
+	if ((fpin = AllocateFile(PGSTAT_STAT_FILENAME, PG_BINARY_R)) == NULL)
 		return;
 
 	/*

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.117 2005/06/19 21:34:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.118 2005/07/04 04:51:48 tgl Exp $
  *
  * NOTES:
  *
@@ -224,8 +224,7 @@ static File AllocateVfd(void);
 static void FreeVfd(File file);
 
 static int	FileAccess(File file);
-static File fileNameOpenFile(FileName fileName, int fileFlags, int fileMode);
-static char *filepath(const char *filename);
+static char *make_database_relative(const char *filename);
 static void AtProcExit_Files(int code, Datum arg);
 static void CleanupTempFiles(bool isProcExit);
 static void RemovePgTempFilesInDir(const char *tmpdirname);
@@ -699,34 +698,20 @@ FreeVfd(File file)
 	VfdCache[0].nextFree = file;
 }
 
-/* filepath()
- * Convert given pathname to absolute.
+/*
+ * make_database_relative()
+ *		Prepend DatabasePath to the given file name.
  *
  * Result is a palloc'd string.
- *
- * (Generally, this isn't actually necessary, considering that we
- * should be cd'd into the database directory.  Presently it is only
- * necessary to do it in "bootstrap" mode.	Maybe we should change
- * bootstrap mode to do the cd, and save a few cycles/bytes here.)
  */
 static char *
-filepath(const char *filename)
+make_database_relative(const char *filename)
 {
 	char	   *buf;
 
-	/* Not an absolute path name? Then fill in with database path... */
-	if (!is_absolute_path(filename))
-	{
-		buf = (char *) palloc(strlen(DatabasePath) + strlen(filename) + 2);
-		sprintf(buf, "%s/%s", DatabasePath, filename);
-	}
-	else
-		buf = pstrdup(filename);
-
-#ifdef FILEDEBUG
-	printf("filepath: path is %s\n", buf);
-#endif
-
+	Assert(!is_absolute_path(filename));
+	buf = (char *) palloc(strlen(DatabasePath) + strlen(filename) + 2);
+	sprintf(buf, "%s/%s", DatabasePath, filename);
 	return buf;
 }
 
@@ -779,16 +764,21 @@ FileInvalidate(File file)
 }
 #endif
 
-static File
-fileNameOpenFile(FileName fileName,
-				 int fileFlags,
-				 int fileMode)
+/*
+ * open a file in an arbitrary directory
+ *
+ * NB: if the passed pathname is relative (which it usually is),
+ * it will be interpreted relative to the process' working directory
+ * (which should always be $PGDATA when this code is running).
+ */
+File
+PathNameOpenFile(FileName fileName, int fileFlags, int fileMode)
 {
 	char	   *fnamecopy;
 	File		file;
 	Vfd		   *vfdP;
 
-	DO_DB(elog(LOG, "fileNameOpenFile: %s %x %o",
+	DO_DB(elog(LOG, "PathNameOpenFile: %s %x %o",
 			   fileName, fileFlags, fileMode));
 
 	/*
@@ -818,7 +808,7 @@ fileNameOpenFile(FileName fileName,
 		return -1;
 	}
 	++nfile;
-	DO_DB(elog(LOG, "fileNameOpenFile: success %d",
+	DO_DB(elog(LOG, "PathNameOpenFile: success %d",
 			   vfdP->fd));
 
 	Insert(file);
@@ -834,7 +824,10 @@ fileNameOpenFile(FileName fileName,
 }
 
 /*
- * open a file in the database directory ($PGDATA/base/...)
+ * open a file in the database directory ($PGDATA/base/DIROID/)
+ *
+ * The passed name MUST be a relative path.  Effectively, this
+ * prepends DatabasePath to it and then acts like PathNameOpenFile.
  */
 File
 FileNameOpenFile(FileName fileName, int fileFlags, int fileMode)
@@ -842,19 +835,10 @@ FileNameOpenFile(FileName fileName, int fileFlags, int fileMode)
 	File		fd;
 	char	   *fname;
 
-	fname = filepath(fileName);
-	fd = fileNameOpenFile(fname, fileFlags, fileMode);
+	fname = make_database_relative(fileName);
+	fd = PathNameOpenFile(fname, fileFlags, fileMode);
 	pfree(fname);
 	return fd;
-}
-
-/*
- * open a file in an arbitrary directory
- */
-File
-PathNameOpenFile(FileName fileName, int fileFlags, int fileMode)
-{
-	return fileNameOpenFile(fileName, fileFlags, fileMode);
 }
 
 /*
@@ -903,7 +887,7 @@ OpenTemporaryFile(bool interXact)
 		 * just did the same thing.  If it doesn't work then we'll bomb
 		 * out on the second create attempt, instead.
 		 */
-		dirpath = filepath(PG_TEMP_FILES_DIR);
+		dirpath = make_database_relative(PG_TEMP_FILES_DIR);
 		mkdir(dirpath, S_IRWXU);
 		pfree(dirpath);
 
@@ -1568,7 +1552,6 @@ CleanupTempFiles(bool isProcExit)
 void
 RemovePgTempFiles(void)
 {
-	char		db_path[MAXPGPATH];
 	char		temp_path[MAXPGPATH];
 	DIR		   *db_dir;
 	struct dirent *db_de;
@@ -1577,17 +1560,16 @@ RemovePgTempFiles(void)
 	 * Cycle through pgsql_tmp directories for all databases and remove old
 	 * temp files.
 	 */
-	snprintf(db_path, sizeof(db_path), "%s/base", DataDir);
-	db_dir = AllocateDir(db_path);
+	db_dir = AllocateDir("base");
 
-	while ((db_de = ReadDir(db_dir, db_path)) != NULL)
+	while ((db_de = ReadDir(db_dir, "base")) != NULL)
 	{
 		if (strcmp(db_de->d_name, ".") == 0 ||
 			strcmp(db_de->d_name, "..") == 0)
 			continue;
 
-		snprintf(temp_path, sizeof(temp_path), "%s/%s/%s",
-				 db_path, db_de->d_name, PG_TEMP_FILES_DIR);
+		snprintf(temp_path, sizeof(temp_path), "base/%s/%s",
+				 db_de->d_name, PG_TEMP_FILES_DIR);
 		RemovePgTempFilesInDir(temp_path);
 	}
 
@@ -1598,9 +1580,7 @@ RemovePgTempFiles(void)
 	 * level of DataDir as well.
 	 */
 #ifdef EXEC_BACKEND
-	snprintf(temp_path, sizeof(temp_path), "%s/%s",
-			 DataDir, PG_TEMP_FILES_DIR);
-	RemovePgTempFilesInDir(temp_path);
+	RemovePgTempFilesInDir(PG_TEMP_FILES_DIR);
 #endif
 }
 

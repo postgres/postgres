@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.204 2005/05/06 17:24:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.205 2005/07/04 04:51:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -365,14 +365,16 @@ BootstrapMain(int argc, char *argv[])
 	Assert(DataDir);
 	ValidatePgVersion(DataDir);
 
+	/* Change into DataDir (if under postmaster, should be done already) */
+	if (!IsUnderPostmaster)
+		ChangeToDataDir();
+
 	/* If standalone, create lockfile for data directory */
 	if (!IsUnderPostmaster)
-		CreateDataDirLockFile(DataDir, false);
+		CreateDataDirLockFile(false);
 
 	SetProcessingMode(BootstrapProcessing);
 	IgnoreSystemIndexes(true);
-
-	XLOGPathInit();
 
 	BaseInit();
 

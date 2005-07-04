@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.451 2005/06/29 22:51:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.452 2005/07/04 04:51:49 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2809,8 +2809,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 			errhint("Try \"%s --help\" for more information.", argv[0])));
 		}
 
-		XLOGPathInit();
-
 		BaseInit();
 	}
 	else
@@ -2841,12 +2839,14 @@ PostgresMain(int argc, char *argv[], const char *username)
 		Assert(DataDir);
 		ValidatePgVersion(DataDir);
 
+		/* Change into DataDir (if under postmaster, was done already) */
+		ChangeToDataDir();
+
 		/*
 		 * Create lockfile for data directory.
 		 */
-		CreateDataDirLockFile(DataDir, false);
+		CreateDataDirLockFile(false);
 
-		XLOGPathInit();
 		BaseInit();
 
 		/*

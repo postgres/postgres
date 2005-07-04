@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.61 2005/05/10 22:27:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.62 2005/07/04 04:51:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,26 +41,26 @@ relpath(RelFileNode rnode)
 	{
 		/* Shared system relations live in {datadir}/global */
 		Assert(rnode.dbNode == 0);
-		pathlen = strlen(DataDir) + 8 + OIDCHARS + 1;
+		pathlen = 7 + OIDCHARS + 1;
 		path = (char *) palloc(pathlen);
-		snprintf(path, pathlen, "%s/global/%u",
-				 DataDir, rnode.relNode);
+		snprintf(path, pathlen, "global/%u",
+				 rnode.relNode);
 	}
 	else if (rnode.spcNode == DEFAULTTABLESPACE_OID)
 	{
 		/* The default tablespace is {datadir}/base */
-		pathlen = strlen(DataDir) + 6 + OIDCHARS + 1 + OIDCHARS + 1;
+		pathlen = 5 + OIDCHARS + 1 + OIDCHARS + 1;
 		path = (char *) palloc(pathlen);
-		snprintf(path, pathlen, "%s/base/%u/%u",
-				 DataDir, rnode.dbNode, rnode.relNode);
+		snprintf(path, pathlen, "base/%u/%u",
+				 rnode.dbNode, rnode.relNode);
 	}
 	else
 	{
 		/* All other tablespaces are accessed via symlinks */
-		pathlen = strlen(DataDir) + 11 + OIDCHARS + 1 + OIDCHARS + 1 + OIDCHARS + 1;
+		pathlen = 10 + OIDCHARS + 1 + OIDCHARS + 1 + OIDCHARS + 1;
 		path = (char *) palloc(pathlen);
-		snprintf(path, pathlen, "%s/pg_tblspc/%u/%u/%u",
-				 DataDir, rnode.spcNode, rnode.dbNode, rnode.relNode);
+		snprintf(path, pathlen, "pg_tblspc/%u/%u/%u",
+				 rnode.spcNode, rnode.dbNode, rnode.relNode);
 	}
 	return path;
 }
@@ -82,26 +82,25 @@ GetDatabasePath(Oid dbNode, Oid spcNode)
 	{
 		/* Shared system relations live in {datadir}/global */
 		Assert(dbNode == 0);
-		pathlen = strlen(DataDir) + 7 + 1;
+		pathlen = 6 + 1;
 		path = (char *) palloc(pathlen);
-		snprintf(path, pathlen, "%s/global",
-				 DataDir);
+		snprintf(path, pathlen, "global");
 	}
 	else if (spcNode == DEFAULTTABLESPACE_OID)
 	{
 		/* The default tablespace is {datadir}/base */
-		pathlen = strlen(DataDir) + 6 + OIDCHARS + 1;
+		pathlen = 5 + OIDCHARS + 1;
 		path = (char *) palloc(pathlen);
-		snprintf(path, pathlen, "%s/base/%u",
-				 DataDir, dbNode);
+		snprintf(path, pathlen, "base/%u",
+				 dbNode);
 	}
 	else
 	{
 		/* All other tablespaces are accessed via symlinks */
-		pathlen = strlen(DataDir) + 11 + OIDCHARS + 1 + OIDCHARS + 1;
+		pathlen = 10 + OIDCHARS + 1 + OIDCHARS + 1;
 		path = (char *) palloc(pathlen);
-		snprintf(path, pathlen, "%s/pg_tblspc/%u/%u",
-				 DataDir, spcNode, dbNode);
+		snprintf(path, pathlen, "pg_tblspc/%u/%u",
+				 spcNode, dbNode);
 	}
 	return path;
 }

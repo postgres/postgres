@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.151 2005/06/28 19:51:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.152 2005/07/04 04:51:50 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -337,12 +337,6 @@ InitPostgres(const char *dbname, const char *username)
 		}
 
 		ValidatePgVersion(fullpath);
-
-		if (chdir(fullpath) == -1)
-			ereport(FATAL,
-					(errcode_for_file_access(),
-					 errmsg("could not change directory to \"%s\": %m",
-							fullpath)));
 
 		SetDatabasePath(fullpath);
 	}

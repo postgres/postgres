@@ -48,7 +48,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.25 2005/06/19 21:34:01 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.26 2005/07/04 04:51:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,7 +190,7 @@ SimpleLruInit(SlruCtl ctl, const char *name,
 	 */
 	ctl->shared = shared;
 	ctl->do_fsync = true;		/* default behavior */
-	snprintf(ctl->Dir, MAXPGPATH, "%s/%s", DataDir, subdir);
+	StrNCpy(ctl->Dir, subdir, sizeof(ctl->Dir));
 }
 
 /*

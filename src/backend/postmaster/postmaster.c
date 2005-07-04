@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.457 2005/06/30 10:02:22 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.458 2005/07/04 04:51:47 tgl Exp $
  *
  * NOTES
  *
@@ -585,6 +585,15 @@ PostmasterMain(int argc, char *argv[])
 		ExitPostmaster(1);
 	}
 
+#ifdef EXEC_BACKEND
+	/* Locate executable backend before we change working directory */
+	if (find_other_exec(argv[0], "postgres", PG_VERSIONSTR,
+						postgres_exec_path) < 0)
+		ereport(FATAL,
+			 (errmsg("%s: could not locate matching postgres executable",
+					 progname)));
+#endif
+
 	/*
 	 * Locate the proper configuration files and data directory, and
 	 * read postgresql.conf for the first time.
@@ -594,6 +603,9 @@ PostmasterMain(int argc, char *argv[])
 
 	/* Verify that DataDir looks reasonable */
 	checkDataDir();
+
+	/* And switch working directory into it */
+	ChangeToDataDir();
 
 	/*
 	 * Check for invalid combinations of GUC settings.
@@ -650,14 +662,6 @@ PostmasterMain(int argc, char *argv[])
 		 (errmsg_internal("-----------------------------------------")));
 	}
 
-#ifdef EXEC_BACKEND
-	if (find_other_exec(argv[0], "postgres", PG_VERSIONSTR,
-						postgres_exec_path) < 0)
-		ereport(FATAL,
-			 (errmsg("%s: could not locate matching postgres executable",
-					 progname)));
-#endif
-
 	/*
 	 * Initialize SSL library, if specified.
 	 */
@@ -691,7 +695,7 @@ PostmasterMain(int argc, char *argv[])
 	 * :-(). For the same reason, it's best to grab the TCP socket(s)
 	 * before the Unix socket.
 	 */
-	CreateDataDirLockFile(DataDir, true);
+	CreateDataDirLockFile(true);
 
 	/*
 	 * Remove old temporary files.	At this point there can be no other
@@ -785,8 +789,6 @@ PostmasterMain(int argc, char *argv[])
 	if (ListenSocket[0] == -1)
 		ereport(FATAL,
 				(errmsg("no socket created for listening")));
-
-	XLOGPathInit();
 
 	/*
 	 * Set up shared memory and semaphores.
@@ -2866,20 +2868,16 @@ internal_forkexec(int argc, char *argv[], Port *port)
 		return -1;				/* log made by save_backend_variables */
 
 	/* Calculate name for temp file */
-	Assert(DataDir);
-	snprintf(tmpfilename, MAXPGPATH, "%s/%s/%s.backend_var.%d.%lu",
-			 DataDir, PG_TEMP_FILES_DIR, PG_TEMP_FILE_PREFIX,
+	snprintf(tmpfilename, MAXPGPATH, "%s/%s.backend_var.%d.%lu",
+			 PG_TEMP_FILES_DIR, PG_TEMP_FILE_PREFIX,
 			 MyProcPid, ++tmpBackendFileNum);
 
 	/* Open file */
 	fp = AllocateFile(tmpfilename, PG_BINARY_W);
 	if (!fp)
 	{
-		/* As per OpenTemporaryFile... */
-		char		dirname[MAXPGPATH];
-
-		snprintf(dirname, MAXPGPATH, "%s/%s", DataDir, PG_TEMP_FILES_DIR);
-		mkdir(dirname, S_IRWXU);
+		/* As in OpenTemporaryFile, try to make the temp-file directory */
+		mkdir(PG_TEMP_FILES_DIR, S_IRWXU);
 
 		fp = AllocateFile(tmpfilename, PG_BINARY_W);
 		if (!fp)
@@ -3527,15 +3525,14 @@ StartChildProcess(int xlop)
 static bool
 CreateOptsFile(int argc, char *argv[], char *fullprogname)
 {
-	char		filename[MAXPGPATH];
 	FILE	   *fp;
 	int			i;
 
-	snprintf(filename, sizeof(filename), "%s/postmaster.opts", DataDir);
+#define OPTS_FILE	"postmaster.opts"
 
-	if ((fp = fopen(filename, "w")) == NULL)
+	if ((fp = fopen(OPTS_FILE, "w")) == NULL)
 	{
-		elog(LOG, "could not create file \"%s\": %m", filename);
+		elog(LOG, "could not create file \"%s\": %m", OPTS_FILE);
 		return false;
 	}
 
@@ -3546,7 +3543,7 @@ CreateOptsFile(int argc, char *argv[], char *fullprogname)
 
 	if (fclose(fp))
 	{
-		elog(LOG, "could not write file \"%s\": %m", filename);
+		elog(LOG, "could not write file \"%s\": %m", OPTS_FILE);
 		return false;
 	}
 

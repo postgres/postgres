@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.15 2005/04/19 03:13:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.16 2005/07/04 04:51:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -422,17 +422,9 @@ SysLogger_Start(void)
 #endif
 
 	/*
-	 * create log directory if not present; ignore errors
+	 * Create log directory if not present; ignore errors
 	 */
-	if (is_absolute_path(Log_directory))
-		mkdir(Log_directory, 0700);
-	else
-	{
-		filename = palloc(MAXPGPATH);
-		snprintf(filename, MAXPGPATH, "%s/%s", DataDir, Log_directory);
-		mkdir(filename, 0700);
-		pfree(filename);
-	}
+	mkdir(Log_directory, 0700);
 
 	/*
 	 * The initial logfile is created right in the postmaster, to verify
@@ -823,10 +815,7 @@ logfile_getname(pg_time_t timestamp)
 
 	filename = palloc(MAXPGPATH);
 
-	if (is_absolute_path(Log_directory))
-		snprintf(filename, MAXPGPATH, "%s/", Log_directory);
-	else
-		snprintf(filename, MAXPGPATH, "%s/%s/", DataDir, Log_directory);
+	snprintf(filename, MAXPGPATH, "%s/", Log_directory);
 
 	len = strlen(filename);
 

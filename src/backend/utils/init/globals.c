@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/globals.c,v 1.95 2004/12/31 22:01:40 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/globals.c,v 1.96 2005/07/04 04:51:50 tgl Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -36,12 +36,13 @@ int			MyProcPid;
 struct Port *MyProcPort;
 long		MyCancelKey;
 
+/*
+ * DataDir is the absolute path to the top level of the PGDATA directory tree.
+ * Except during early startup, this is also the server's working directory;
+ * most code therefore can simply use relative paths and not reference DataDir
+ * explicitly.
+ */
 char	   *DataDir = NULL;
-
- /*
-  * The PGDATA directory user says to use, or defaults to via environment
-  * variable.  NULL if no option given and no environment variable set
-  */
 
 char		OutputFileName[MAXPGPATH];	/* debugging output file */
 
@@ -56,10 +57,15 @@ char		postgres_exec_path[MAXPGPATH];		/* full path to backend */
 
 BackendId	MyBackendId = InvalidBackendId;
 
-char	   *DatabasePath = NULL;
 Oid			MyDatabaseId = InvalidOid;
 
 Oid			MyDatabaseTableSpace = InvalidOid;
+
+/*
+ * DatabasePath is the path (relative to DataDir) of my database's
+ * primary directory, ie, its directory in the default tablespace.
+ */
+char	   *DatabasePath = NULL;
 
 pid_t		PostmasterPid = 0;
 

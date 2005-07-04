@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.144 2005/06/28 22:16:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.145 2005/07/04 04:51:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,10 +41,11 @@
 #include "utils/syscache.h"
 
 
+#define DIRECTORY_LOCK_FILE		"postmaster.pid"
+
 ProcessingMode Mode = InitProcessing;
 
-/* Note: we rely on these to initialize as zeroes */
-static char directoryLockFile[MAXPGPATH];
+/* Note: we rely on this to initialize as zeroes */
 static char socketLockFile[MAXPGPATH];
 
 
@@ -178,15 +179,32 @@ SetDataDir(const char *dir)
 }
 
 /*
+ * Change working directory to DataDir.  Most of the postmaster and backend
+ * code assumes that we are in DataDir so it can use relative paths to access
+ * stuff in and under the data directory.  For convenience during path
+ * setup, however, we don't force the chdir to occur during SetDataDir.
+ */
+void
+ChangeToDataDir(void)
+{
+	AssertState(DataDir);
+
+	if (chdir(DataDir) < 0)
+		ereport(FATAL,
+				(errcode_for_file_access(),
+				 errmsg("could not change directory to \"%s\": %m",
+						DataDir)));
+}
+
+/*
  * If the given pathname isn't already absolute, make it so, interpreting
  * it relative to the current working directory.
  *
  * Also canonicalizes the path.  The result is always a malloc'd copy.
  *
- * Note: it is probably unwise to use this in running backends, since they
- * have chdir'd to a database-specific subdirectory; the results would not be
- * consistent across backends.  Currently this is used only during postmaster
- * or standalone-backend startup.
+ * Note: interpretation of relative-path arguments during postmaster startup
+ * should happen before doing ChangeToDataDir(), else the user will probably
+ * not like the results.
  */
 char *
 make_absolute_path(const char *path)
@@ -713,17 +731,22 @@ CreateLockFile(const char *filename, bool amPostmaster,
 	on_proc_exit(UnlinkLockFile, PointerGetDatum(strdup(filename)));
 }
 
+/*
+ * Create the data directory lockfile.
+ *
+ * When this is called, we must have already switched the working
+ * directory to DataDir, so we can just use a relative path.  This
+ * helps ensure that we are locking the directory we should be.
+ */
 void
-CreateDataDirLockFile(const char *datadir, bool amPostmaster)
+CreateDataDirLockFile(bool amPostmaster)
 {
-	char		lockfile[MAXPGPATH];
-
-	snprintf(lockfile, sizeof(lockfile), "%s/postmaster.pid", datadir);
-	CreateLockFile(lockfile, amPostmaster, true, datadir);
-	/* Save name of lockfile for RecordSharedMemoryInLockFile */
-	strcpy(directoryLockFile, lockfile);
+	CreateLockFile(DIRECTORY_LOCK_FILE, amPostmaster, true, DataDir);
 }
 
+/*
+ * Create a lockfile for the specified Unix socket file.
+ */
 void
 CreateSocketLockFile(const char *socketfile, bool amPostmaster)
 {
@@ -777,7 +800,7 @@ TouchSocketLockFile(void)
 
 /*
  * Append information about a shared memory segment to the data directory
- * lock file (if we have created one).
+ * lock file.
  *
  * This may be called multiple times in the life of a postmaster, if we
  * delete and recreate shmem due to backend crash.	Therefore, be prepared
@@ -793,20 +816,13 @@ RecordSharedMemoryInLockFile(unsigned long id1, unsigned long id2)
 	char	   *ptr;
 	char		buffer[BLCKSZ];
 
-	/*
-	 * Do nothing if we did not create a lockfile (probably because we are
-	 * running standalone).
-	 */
-	if (directoryLockFile[0] == '\0')
-		return;
-
-	fd = open(directoryLockFile, O_RDWR | PG_BINARY, 0);
+	fd = open(DIRECTORY_LOCK_FILE, O_RDWR | PG_BINARY, 0);
 	if (fd < 0)
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
 				 errmsg("could not open file \"%s\": %m",
-						directoryLockFile)));
+						DIRECTORY_LOCK_FILE)));
 		return;
 	}
 	len = read(fd, buffer, sizeof(buffer) - 100);
@@ -815,7 +831,7 @@ RecordSharedMemoryInLockFile(unsigned long id1, unsigned long id2)
 		ereport(LOG,
 				(errcode_for_file_access(),
 				 errmsg("could not read from file \"%s\": %m",
-						directoryLockFile)));
+						DIRECTORY_LOCK_FILE)));
 		close(fd);
 		return;
 	}
@@ -828,7 +844,7 @@ RecordSharedMemoryInLockFile(unsigned long id1, unsigned long id2)
 	if (ptr == NULL ||
 		(ptr = strchr(ptr + 1, '\n')) == NULL)
 	{
-		elog(LOG, "bogus data in \"%s\"", directoryLockFile);
+		elog(LOG, "bogus data in \"%s\"", DIRECTORY_LOCK_FILE);
 		close(fd);
 		return;
 	}
@@ -855,7 +871,7 @@ RecordSharedMemoryInLockFile(unsigned long id1, unsigned long id2)
 		ereport(LOG,
 				(errcode_for_file_access(),
 				 errmsg("could not write to file \"%s\": %m",
-						directoryLockFile)));
+						DIRECTORY_LOCK_FILE)));
 		close(fd);
 		return;
 	}
@@ -864,7 +880,7 @@ RecordSharedMemoryInLockFile(unsigned long id1, unsigned long id2)
 		ereport(LOG,
 				(errcode_for_file_access(),
 				 errmsg("could not write to file \"%s\": %m",
-						directoryLockFile)));
+						DIRECTORY_LOCK_FILE)));
 	}
 }
 

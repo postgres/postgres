@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.34 2005/06/08 15:50:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.35 2005/07/04 04:51:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,9 +49,6 @@
 extern int	optind;
 extern char *optarg;
 
-
-char		XLogDir[MAXPGPATH]; /* not static, see xlog_internal.h */
-static char ControlFilePath[MAXPGPATH];
 
 static ControlFileData ControlFile;		/* pg_control values */
 static uint32 newXlogId,
@@ -236,8 +233,13 @@ main(int argc, char *argv[])
 #endif
 
 	DataDir = argv[optind];
-	snprintf(XLogDir, MAXPGPATH, "%s/pg_xlog", DataDir);
-	snprintf(ControlFilePath, MAXPGPATH, "%s/global/pg_control", DataDir);
+
+	if (chdir(DataDir) < 0)
+	{
+		fprintf(stderr, _("%s: could not change directory to \"%s\": %s\n"),
+				progname, DataDir, strerror(errno));
+		exit(1);
+	}
 
 	/*
 	 * Check for a postmaster lock file --- if there is one, refuse to
@@ -348,7 +350,7 @@ ReadControlFile(void)
 	char	   *buffer;
 	pg_crc32	crc;
 
-	if ((fd = open(ControlFilePath, O_RDONLY)) < 0)
+	if ((fd = open(XLOG_CONTROL_FILE, O_RDONLY)) < 0)
 	{
 		/*
 		 * If pg_control is not there at all, or we can't read it, the
@@ -356,12 +358,12 @@ ReadControlFile(void)
 		 * can do "touch pg_control" to force us to proceed.
 		 */
 		fprintf(stderr, _("%s: could not open file \"%s\" for reading: %s\n"),
-				progname, ControlFilePath, strerror(errno));
+				progname, XLOG_CONTROL_FILE, strerror(errno));
 		if (errno == ENOENT)
 			fprintf(stderr, _("If you are sure the data directory path is correct, execute\n"
 							  "  touch %s\n"
 							  "and try again.\n"),
-					ControlFilePath);
+					XLOG_CONTROL_FILE);
 		exit(1);
 	}
 
@@ -372,7 +374,7 @@ ReadControlFile(void)
 	if (len < 0)
 	{
 		fprintf(stderr, _("%s: could not read file \"%s\": %s\n"),
-				progname, ControlFilePath, strerror(errno));
+				progname, XLOG_CONTROL_FILE, strerror(errno));
 		exit(1);
 	}
 	close(fd);
@@ -598,9 +600,11 @@ RewriteControlFile(void)
 	memset(buffer, 0, BLCKSZ);
 	memcpy(buffer, &ControlFile, sizeof(ControlFileData));
 
-	unlink(ControlFilePath);
+	unlink(XLOG_CONTROL_FILE);
 
-	fd = open(ControlFilePath, O_RDWR | O_CREAT | O_EXCL | PG_BINARY, S_IRUSR | S_IWUSR);
+	fd = open(XLOG_CONTROL_FILE,
+			  O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
+			  S_IRUSR | S_IWUSR);
 	if (fd < 0)
 	{
 		fprintf(stderr, _("%s: could not create pg_control file: %s\n"),
@@ -639,11 +643,11 @@ KillExistingXLOG(void)
 	struct dirent *xlde;
 	char		path[MAXPGPATH];
 
-	xldir = opendir(XLogDir);
+	xldir = opendir(XLOGDIR);
 	if (xldir == NULL)
 	{
 		fprintf(stderr, _("%s: could not open directory \"%s\": %s\n"),
-				progname, XLogDir, strerror(errno));
+				progname, XLOGDIR, strerror(errno));
 		exit(1);
 	}
 
@@ -653,7 +657,7 @@ KillExistingXLOG(void)
 		if (strlen(xlde->d_name) == 24 &&
 			strspn(xlde->d_name, "0123456789ABCDEF") == 24)
 		{
-			snprintf(path, MAXPGPATH, "%s/%s", XLogDir, xlde->d_name);
+			snprintf(path, MAXPGPATH, "%s/%s", XLOGDIR, xlde->d_name);
 			if (unlink(path) < 0)
 			{
 				fprintf(stderr, _("%s: could not delete file \"%s\": %s\n"),
@@ -676,7 +680,7 @@ KillExistingXLOG(void)
 	if (errno)
 	{
 		fprintf(stderr, _("%s: could not read from directory \"%s\": %s\n"),
-				progname, XLogDir, strerror(errno));
+				progname, XLOGDIR, strerror(errno));
 		exit(1);
 	}
 	closedir(xldir);

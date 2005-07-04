@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.65 2005/06/08 15:50:28 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.66 2005/07/04 04:51:52 tgl Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -158,7 +158,6 @@ extern void xlog_desc(char *buf, uint8 xl_info, char *rec);
 extern void UpdateControlFile(void);
 extern int	XLOGShmemSize(void);
 extern void XLOGShmemInit(void);
-extern void XLOGPathInit(void);
 extern void BootStrapXLOG(void);
 extern void StartupXLOG(void);
 extern void ShutdownXLOG(int code, Datum arg);

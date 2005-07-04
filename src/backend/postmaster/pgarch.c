@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.16 2005/06/19 21:34:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.17 2005/07/04 04:51:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,9 +248,6 @@ PgArchiverMain(int argc, char *argv[])
 	init_ps_display("archiver process", "", "");
 	set_ps_display("");
 
-	/* Init XLOG file paths --- needed in EXEC_BACKEND case */
-	XLOGPathInit();
-
 	pgarch_MainLoop();
 
 	exit(0);
@@ -400,7 +397,7 @@ pgarch_archiveXlog(char *xlog)
 	const char *sp;
 	int			rc;
 
-	snprintf(pathname, MAXPGPATH, "%s/%s", XLogDir, xlog);
+	snprintf(pathname, MAXPGPATH, XLOGDIR "/%s", xlog);
 
 	/*
 	 * construct the command to be executed
@@ -502,7 +499,7 @@ pgarch_readyXlog(char *xlog)
 	struct dirent *rlde;
 	bool		found = false;
 
-	snprintf(XLogArchiveStatusDir, MAXPGPATH, "%s/archive_status", XLogDir);
+	snprintf(XLogArchiveStatusDir, MAXPGPATH, XLOGDIR "/archive_status");
 	rldir = AllocateDir(XLogArchiveStatusDir);
 	if (rldir == NULL)
 		ereport(ERROR,

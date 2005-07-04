@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog_internal.h,v 1.8 2005/06/06 17:01:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog_internal.h,v 1.9 2005/07/04 04:51:52 tgl Exp $
  */
 #ifndef XLOG_INTERNAL_H
 #define XLOG_INTERNAL_H
@@ -186,6 +186,12 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 		(BLCKSZ - (xrecoff) % BLCKSZ) >= SizeOfXLogRecord)
 
 /*
+ * The XLog directory and control file (relative to $PGDATA)
+ */
+#define XLOGDIR				"pg_xlog"
+#define XLOG_CONTROL_FILE	"global/pg_control"
+
+/*
  * These macros encapsulate knowledge about the exact layout of XLog file
  * names, timeline history file names, and archive-status file names.
  */
@@ -195,24 +201,22 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 	snprintf(fname, MAXFNAMELEN, "%08X%08X%08X", tli, log, seg)
 
 #define XLogFilePath(path, tli, log, seg)	\
-	snprintf(path, MAXPGPATH, "%s/%08X%08X%08X", XLogDir, tli, log, seg)
+	snprintf(path, MAXPGPATH, XLOGDIR "/%08X%08X%08X", tli, log, seg)
 
 #define TLHistoryFileName(fname, tli)	\
 	snprintf(fname, MAXFNAMELEN, "%08X.history", tli)
 
 #define TLHistoryFilePath(path, tli)	\
-	snprintf(path, MAXPGPATH, "%s/%08X.history", XLogDir, tli)
+	snprintf(path, MAXPGPATH, XLOGDIR "/%08X.history", tli)
 
 #define StatusFilePath(path, xlog, suffix)	\
-	snprintf(path, MAXPGPATH, "%s/archive_status/%s%s", XLogDir, xlog, suffix)
+	snprintf(path, MAXPGPATH, XLOGDIR "/archive_status/%s%s", xlog, suffix)
 
 #define BackupHistoryFileName(fname, tli, log, seg, offset) \
 	snprintf(fname, MAXFNAMELEN, "%08X%08X%08X.%08X.backup", tli, log, seg, offset)
 
 #define BackupHistoryFilePath(path, tli, log, seg, offset)	\
-	snprintf(path, MAXPGPATH, "%s/%08X%08X%08X.%08X.backup", XLogDir, tli, log, seg, offset)
-
-extern char XLogDir[MAXPGPATH];
+	snprintf(path, MAXPGPATH, XLOGDIR "/%08X%08X%08X.%08X.backup", tli, log, seg, offset)
 
 
 /*

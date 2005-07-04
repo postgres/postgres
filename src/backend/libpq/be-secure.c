@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.57 2005/06/02 21:03:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.58 2005/07/04 04:51:46 tgl Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -100,6 +100,11 @@
 
 
 #ifdef USE_SSL
+
+#define ROOT_CERT_FILE			"root.crt"
+#define SERVER_CERT_FILE		"server.crt"
+#define SERVER_PRIVATE_KEY_FILE	"server.key"
+
 static DH  *load_dh_file(int keylength);
 static DH  *load_dh_buffer(const char *, size_t);
 static DH  *tmp_dh_cb(SSL *s, int is_export, int keylength);
@@ -500,7 +505,7 @@ load_dh_file(int keylength)
 	int			codes;
 
 	/* attempt to open file.  It's not an error if it doesn't exist. */
-	snprintf(fnbuf, sizeof(fnbuf), "%s/dh%d.pem", DataDir, keylength);
+	snprintf(fnbuf, sizeof(fnbuf), "dh%d.pem", keylength);
 	if ((fp = fopen(fnbuf, "r")) == NULL)
 		return NULL;
 
@@ -710,7 +715,6 @@ info_cb(const SSL *ssl, int type, int args)
 static int
 initialize_SSL(void)
 {
-	char		fnbuf[MAXPGPATH];
 	struct stat buf;
 
 	if (!SSL_context)
@@ -726,19 +730,19 @@ initialize_SSL(void)
 		/*
 		 * Load and verify certificate and private key
 		 */
-		snprintf(fnbuf, sizeof(fnbuf), "%s/server.crt", DataDir);
-		if (!SSL_CTX_use_certificate_file(SSL_context, fnbuf, SSL_FILETYPE_PEM))
+		if (!SSL_CTX_use_certificate_file(SSL_context,
+										  SERVER_CERT_FILE,
+										  SSL_FILETYPE_PEM))
 			ereport(FATAL,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 			  errmsg("could not load server certificate file \"%s\": %s",
-					 fnbuf, SSLerrmessage())));
+					 SERVER_CERT_FILE, SSLerrmessage())));
 
-		snprintf(fnbuf, sizeof(fnbuf), "%s/server.key", DataDir);
-		if (stat(fnbuf, &buf) == -1)
+		if (stat(SERVER_PRIVATE_KEY_FILE, &buf) == -1)
 			ereport(FATAL,
 					(errcode_for_file_access(),
 				   errmsg("could not access private key file \"%s\": %m",
-						  fnbuf)));
+						  SERVER_PRIVATE_KEY_FILE)));
 
 		/*
 		 * Require no public access to key file.
@@ -754,14 +758,16 @@ initialize_SSL(void)
 			ereport(FATAL,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				  errmsg("unsafe permissions on private key file \"%s\"",
-						 fnbuf),
+						 SERVER_PRIVATE_KEY_FILE),
 					 errdetail("File must be owned by the database user and must have no permissions for \"group\" or \"other\".")));
 #endif
 
-		if (!SSL_CTX_use_PrivateKey_file(SSL_context, fnbuf, SSL_FILETYPE_PEM))
+		if (!SSL_CTX_use_PrivateKey_file(SSL_context,
+										 SERVER_PRIVATE_KEY_FILE,
+										 SSL_FILETYPE_PEM))
 			ereport(FATAL,
 					(errmsg("could not load private key file \"%s\": %s",
-							fnbuf, SSLerrmessage())));
+							SERVER_PRIVATE_KEY_FILE, SSLerrmessage())));
 
 		if (!SSL_CTX_check_private_key(SSL_context))
 			ereport(FATAL,
@@ -780,13 +786,12 @@ initialize_SSL(void)
 	/*
 	 * Require and check client certificates only if we have a root.crt file.
 	 */
-	snprintf(fnbuf, sizeof(fnbuf), "%s/root.crt", DataDir);
-	if (!SSL_CTX_load_verify_locations(SSL_context, fnbuf, NULL))
+	if (!SSL_CTX_load_verify_locations(SSL_context, ROOT_CERT_FILE, NULL))
 	{
 		/* Not fatal - we do not require client certificates */
 		ereport(LOG,
 				(errmsg("could not load root certificate file \"%s\": %s",
-						fnbuf, SSLerrmessage()),
+						ROOT_CERT_FILE, SSLerrmessage()),
 				 errdetail("Will not verify client certificates.")));
 	}
 	else

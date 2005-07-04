@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.11 2005/06/29 20:34:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.12 2005/07/04 04:51:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,9 +50,9 @@
 #include "utils/syscache.h"
 
 
-/* Actual names of the flat files (within $PGDATA/global/) */
-#define DATABASE_FLAT_FILE	"pg_database"
-#define AUTH_FLAT_FILE		"pg_auth"
+/* Actual names of the flat files (within $PGDATA) */
+#define DATABASE_FLAT_FILE	"global/pg_database"
+#define AUTH_FLAT_FILE		"global/pg_auth"
 
 /* Info bits in a flatfiles 2PC record */
 #define FF_BIT_DATABASE	1
@@ -98,41 +98,29 @@ auth_file_update_needed(void)
 
 
 /*
- * database_getflatfilename --- get full pathname of database file
+ * database_getflatfilename --- get pathname of database file
  *
  * Note that result string is palloc'd, and should be freed by the caller.
+ * (This convention is not really needed anymore, since the relative path
+ * is fixed.)
  */
 char *
 database_getflatfilename(void)
 {
-	int			bufsize;
-	char	   *pfnam;
-
-	bufsize = strlen(DataDir) + strlen("/global/") +
-		strlen(DATABASE_FLAT_FILE) + 1;
-	pfnam = (char *) palloc(bufsize);
-	snprintf(pfnam, bufsize, "%s/global/%s", DataDir, DATABASE_FLAT_FILE);
-
-	return pfnam;
+	return pstrdup(DATABASE_FLAT_FILE);
 }
 
 /*
- * auth_getflatfilename --- get full pathname of auth file
+ * auth_getflatfilename --- get pathname of auth file
  *
  * Note that result string is palloc'd, and should be freed by the caller.
+ * (This convention is not really needed anymore, since the relative path
+ * is fixed.)
  */
 char *
 auth_getflatfilename(void)
 {
-	int			bufsize;
-	char	   *pfnam;
-
-	bufsize = strlen(DataDir) + strlen("/global/") +
-		strlen(AUTH_FLAT_FILE) + 1;
-	pfnam = (char *) palloc(bufsize);
-	snprintf(pfnam, bufsize, "%s/global/%s", DataDir, AUTH_FLAT_FILE);
-
-	return pfnam;
+	return pstrdup(AUTH_FLAT_FILE);
 }
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.44 2005/06/19 21:34:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.45 2005/07/04 04:51:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,10 +145,10 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 		fctx = palloc(sizeof(ts_db_fctx));
 
 		/*
-		 * size = path length + tablespace dirname length + 2 dir sep
-		 * chars + oid + terminator
+		 * size = tablespace dirname length + dir sep
+		 * char + oid + terminator
 		 */
-		fctx->location = (char *) palloc(strlen(DataDir) + 11 + 10 + 1);
+		fctx->location = (char *) palloc(10 + 10 + 1);
 		if (tablespaceOid == GLOBALTABLESPACE_OID)
 		{
 			fctx->dirdesc = NULL;
@@ -158,10 +158,9 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 		else
 		{
 			if (tablespaceOid == DEFAULTTABLESPACE_OID)
-				sprintf(fctx->location, "%s/base", DataDir);
+				sprintf(fctx->location, "base");
 			else
-				sprintf(fctx->location, "%s/pg_tblspc/%u", DataDir,
-						tablespaceOid);
+				sprintf(fctx->location, "pg_tblspc/%u", tablespaceOid);
 
 			fctx->dirdesc = AllocateDir(fctx->location);
 

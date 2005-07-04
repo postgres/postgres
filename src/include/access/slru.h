@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/slru.h,v 1.11 2004/12/31 22:03:21 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/access/slru.h,v 1.12 2005/07/04 04:51:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,7 +87,7 @@ typedef struct SlruCtlData
 	 * Dir is set during SimpleLruInit and does not change thereafter.
 	 * Since it's always the same, it doesn't need to be in shared memory.
 	 */
-	char		Dir[MAXPGPATH];
+	char		Dir[64];
 } SlruCtlData;
 
 typedef SlruCtlData *SlruCtl;
