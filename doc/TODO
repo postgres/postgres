@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Jul  4 00:06:35 EDT 2005
+Last updated:		Mon Jul  4 08:32:37 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -364,6 +364,9 @@ Indexes
 * Allow the creation of indexes with mixed ascending/descending specifiers
 * -Fix incorrect rtree results due to wrong assumptions about "over"
   operator semantics
+* Allow GIST indexes to create certain complex index types, like digital
+  trees (see Aoki)
+
 
 Commands
 ========
@@ -781,6 +784,7 @@ Cache
   numbered buffer in the shared cache, and when reaching the end wrap
   around to the beginning, rather than always starting sequential scans
   at the start of the table.
+
 
 Vacuum
 ======
