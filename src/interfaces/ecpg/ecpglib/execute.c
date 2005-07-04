@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.41 2005/07/02 17:01:53 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.42 2005/07/04 19:05:45 momjian Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -63,7 +63,7 @@ quote_postgres(char *arg, int lineno)
 	return res;
 }
 
-#if defined(__GNUC__) && (defined (__powerpc__) || defined(__AMD64__) || defined(__x86_64__))
+#if defined(__GNUC__) && (defined (__powerpc__) || defined(__amd64__) || defined(__x86_64__))
 #define APREF ap
 #else
 #define APREF *ap
@@ -171,7 +171,7 @@ create_statement(int lineno, int compat, int force_indicator, struct connection 
 			if (!(var = (struct variable *) ECPGalloc(sizeof(struct variable), lineno)))
 				return false;
 
-#if defined(__GNUC__) && (defined (__powerpc__) || defined(__AMD64__) || defined(__x86_64__))
+#if defined(__GNUC__) && (defined (__powerpc__) || defined(__amd64__) || defined(__x86_64__))
 			ECPGget_variable(ap, type, var, true);
 #else
 			ECPGget_variable(&ap, type, var, true);
