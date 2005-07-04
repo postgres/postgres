@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.h,v 1.12 2005/06/15 00:34:11 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.h,v 1.13 2005/07/04 18:21:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,16 @@
 #define _PGTZ_H
 
 #include "tzfile.h"
+
+/*
+ *	Prevent the use of /port functions because
+ *	the are not included in this binary.
+ */
+#undef vsnprintf
+#undef snprintf
+#undef sprintf
+#undef fprintf
+#undef printf
 
 extern char *pg_TZDIR(void);
 
