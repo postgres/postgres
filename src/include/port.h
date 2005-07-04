@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.76 2005/06/27 02:04:25 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.77 2005/07/04 19:54:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,7 +108,7 @@ extern int	pg_strncasecmp(const char *s1, const char *s2, size_t n);
 extern unsigned char pg_toupper(unsigned char ch);
 extern unsigned char pg_tolower(unsigned char ch);
 
-#ifdef USE_SNPRINTF
+#if defined(USE_SNPRINTF) && !defined(NO_PGPORT)
 extern int pg_vsnprintf(char *str, size_t count, const char *fmt, va_list args);
 extern int pg_snprintf(char *str, size_t count, const char *fmt,...)
 /* This extension allows gcc to check the format string */
