@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.63 2005/07/04 18:59:42 momjian Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.64 2005/07/05 18:15:51 momjian Exp $
  *
  *********************************************************************
  */
@@ -285,9 +285,6 @@ static PyObject *PLy_procedure_cache = NULL;
 static PyObject *PLy_exc_error = NULL;
 static PyObject *PLy_exc_fatal = NULL;
 static PyObject *PLy_exc_spi_error = NULL;
-
-/* End-of-set Indication */
-static PyObject *PLy_endofset = NULL;
 
 /* some globals for the python module
  */
@@ -772,16 +769,6 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 		{
 			fcinfo->isnull = true;
 			rv = (Datum) NULL;
-		}
-		/* test for end-of-set condition */
-		else if (fcinfo->flinfo->fn_retset && plrv == PLy_endofset)
-		{
-		   ReturnSetInfo *rsi;
-
-		   fcinfo->isnull = true;
-		   rv = (Datum)NULL;
-		   rsi = (ReturnSetInfo *)fcinfo->resultinfo;
-		   rsi->isDone = ExprEndResult;
 		}
 		else
 		{
@@ -2330,11 +2317,9 @@ PLy_init_plpy(void)
 	PLy_exc_error = PyErr_NewException("plpy.Error", NULL, NULL);
 	PLy_exc_fatal = PyErr_NewException("plpy.Fatal", NULL, NULL);
 	PLy_exc_spi_error = PyErr_NewException("plpy.SPIError", NULL, NULL);
-	PLy_endofset = PyErr_NewException("plpy.EndOfSet",NULL,NULL);
 	PyDict_SetItemString(plpy_dict, "Error", PLy_exc_error);
 	PyDict_SetItemString(plpy_dict, "Fatal", PLy_exc_fatal);
 	PyDict_SetItemString(plpy_dict, "SPIError", PLy_exc_spi_error);
-	PyDict_SetItemString(plpy_dict, "EndOfSet", PLy_endofset);
 
 	/*
 	 * initialize main module, and add plpy
