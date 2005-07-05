@@ -22,5 +22,5 @@ select decrypt(encrypt('foo', '0123456', '3des'), '0123456', '3des');
 
 -- iv
 select encode(encrypt_iv('foo', '0123456', 'abcd', '3des'), 'hex');
-select decrypt_iv(decode('df27c264fb24ed7a', 'hex'), '0123456', 'abcd', '3des');
+select decrypt_iv(decode('50735067b073bb93', 'hex'), '0123456', 'abcd', '3des');
 

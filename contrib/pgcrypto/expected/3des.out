@@ -17,14 +17,14 @@ decode('01 01 01 01 01 01 01 01
 select encode(	encrypt('', 'foo', '3des'), 'hex');
       encode      
 ------------------
- 9b641a6936249eb4
+ 752111e37a2d7ac3
 (1 row)
 
 -- 10 bytes key
 select encode(	encrypt('foo', '0123456789', '3des'), 'hex');
       encode      
 ------------------
- 6f02b7076a366504
+ d2fb8baa1717cb02
 (1 row)
 
 -- 22 bytes key
@@ -45,10 +45,10 @@ select decrypt(encrypt('foo', '0123456', '3des'), '0123456', '3des');
 select encode(encrypt_iv('foo', '0123456', 'abcd', '3des'), 'hex');
       encode      
 ------------------
- df27c264fb24ed7a
+ 50735067b073bb93
 (1 row)
 
-select decrypt_iv(decode('df27c264fb24ed7a', 'hex'), '0123456', 'abcd', '3des');
+select decrypt_iv(decode('50735067b073bb93', 'hex'), '0123456', 'abcd', '3des');
  decrypt_iv 
 ------------
  foo
