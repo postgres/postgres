@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Jul  4 13:43:32 EDT 2005
+Last updated:		Tue Jul  5 15:37:49 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -228,7 +228,6 @@ Data Types
 	  only be set at the pg_largeobject table level.
 
 	o Auto-delete large objects when referencing row is deleted
-
 	o Allow read/write into TOAST values like large objects
 
 	  This requires the TOAST column to be stored EXTERNAL.
@@ -879,6 +878,8 @@ Vacuum
 	o Move into the backend code
 	o Use free-space map information to guide refilling
 	o Do VACUUM FULL if table is nearly empty?
+	o Improve xid wraparound detection by recording per-table rather
+	  than per-database
 
 
 Locking
