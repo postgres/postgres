@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Tue Jul  5 15:37:49 EDT 2005
+Last updated:           Tue Jul  5 18:59:32 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -846,9 +846,6 @@ first.
 </p>
   </li><li>Reduce WAL traffic so only modified values are written rather than
   entire rows?
-  </li><li>Turn off full page writes if fsync is disabled
-<p>  If fsync is off, there is no purpose in writing full pages to WAL
-</p>
   </li><li>Add WAL index reliability improvement to non-btree indexes
   </li><li>Allow the pg_xlog directory location to be specified during initdb
   with a symlink back to the /data location
