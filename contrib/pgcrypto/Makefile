@@ -1,5 +1,5 @@
 #
-# $PostgreSQL: pgsql/contrib/pgcrypto/Makefile,v 1.15 2005/07/05 23:13:57 tgl Exp $
+# $PostgreSQL: pgsql/contrib/pgcrypto/Makefile,v 1.16 2005/07/05 23:18:44 tgl Exp $
 #
 
 # if you don't have OpenSSL, you can use libc random() or /dev/urandom
@@ -59,6 +59,6 @@ endif
 
 rijndael.o: rijndael.tbl
 
-rijndael.tbl: rijndael.c
+rijndael.tbl:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -DPRINT_TABS rijndael.c -o gen-rtab
 	./gen-rtab > rijndael.tbl
