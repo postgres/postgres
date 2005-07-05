@@ -1,59 +1,26 @@
 #
-# $PostgreSQL: pgsql/contrib/pgcrypto/Makefile,v 1.14 2005/03/21 05:24:51 neilc Exp $
+# $PostgreSQL: pgsql/contrib/pgcrypto/Makefile,v 1.15 2005/07/05 23:13:57 tgl Exp $
 #
 
-# either 'builtin', 'openssl'
-cryptolib = builtin
+# if you don't have OpenSSL, you can use libc random() or /dev/urandom
+INT_CFLAGS = -DRAND_SILLY
+#INT_CFLAGS = -DRAND_DEV=\"/dev/urandom\"
 
-# either 'builtin', 'system'
-cryptsrc = builtin
+INT_SRCS = md5.c sha1.c internal.c blf.c rijndael.c
 
-# Random source, preferred order:
-# 'dev'      - read from random device
-#
-# 'openssl'  - use openssl PRNG.
-#              Note that currently pgcrypto does not do any
-#              entropy feeding to it
-#              This works ofcouse only with cryptolib = openssl
-#
-# 'silly'    - use libc random() - very weak
-random = silly
-random_dev = \"/dev/urandom\"
+OSSL_CFLAGS = -DRAND_OPENSSL
+OSSL_SRCS = openssl.c
+OSSL_TESTS = des 3des cast5
 
-##########################
+CF_SRCS = $(if $(subst no,,$(with_openssl)), $(OSSL_SRCS), $(INT_SRCS))
+CF_TESTS = $(if $(subst no,,$(with_openssl)), $(OSSL_TESTS))
+CF_CFLAGS = $(if $(subst no,,$(with_openssl)), $(OSSL_CFLAGS), $(INT_CFLAGS))
 
-ifeq ($(cryptolib), builtin)
-CRYPTO_CFLAGS =
-CRYPTO_LDFLAGS =
-SRCS = md5.c sha1.c internal.c blf.c rijndael.c
-EXTRA_TESTS = 
-endif
+PG_CPPFLAGS	:= $(CF_CFLAGS) -I$(srcdir) $(PG_CPPFLAGS)
 
-ifeq ($(cryptolib), openssl)
-CRYPTO_CFLAGS = -I/usr/include/openssl
-CRYPTO_LDFLAGS = -lcrypto
-SRCS = openssl.c
-EXTRA_TESTS = des 3des cast5
-endif
-
-ifeq ($(cryptsrc), builtin)
-SRCS += crypt-blowfish.c crypt-des.c crypt-md5.c 
-else
-CRYPTO_CFLAGS += -DPX_SYSTEM_CRYPT
-endif
-
-ifeq ($(random), dev)
-CRYPTO_CFLAGS += -DRAND_DEV=$(random_dev)
-endif
-ifeq ($(random), openssl)
-CRYPTO_CFLAGS += -DRAND_OPENSSL
-endif
-ifeq ($(random), silly)
-CRYPTO_CFLAGS += -DRAND_SILLY
-endif
-
-SRCS		+= pgcrypto.c px.c px-hmac.c px-crypt.c misc.c \
-			crypt-gensalt.c random.c
+SRCS		= pgcrypto.c px.c px-hmac.c px-crypt.c misc.c random.c \
+		crypt-gensalt.c crypt-blowfish.c crypt-des.c \
+		crypt-md5.c $(CF_SRCS)
 
 MODULE_big	= pgcrypto
 OBJS		= $(SRCS:.c=.o)
@@ -61,12 +28,9 @@ DOCS		= README.pgcrypto
 DATA_built	= pgcrypto.sql
 EXTRA_CLEAN	= gen-rtab
 
-PG_CPPFLAGS	= $(CRYPTO_CFLAGS) -I$(srcdir) 
-SHLIB_LINK 	= $(CRYPTO_LDFLAGS)
-
 REGRESS = init md5 sha1 hmac-md5 hmac-sha1 blowfish rijndael \
-		$(EXTRA_TESTS) \
-		crypt-des crypt-md5 crypt-blowfish crypt-xdes 
+	$(CF_TESTS) \
+	crypt-des crypt-md5 crypt-blowfish crypt-xdes
 
 
 ifdef USE_PGXS
@@ -79,6 +43,14 @@ include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
+# Add libraries that pgcrypto depends (or might depend) on into the
+# shared library link.  (The order in which you list them here doesn't
+# matter.)
+SHLIB_LINK += $(filter -lcrypt -ldes -lcrypto -lssl, $(LIBS))
+ifeq ($(PORTNAME), win32)
+SHLIB_LINK += $(filter -leay32 -lssleay32, $(LIBS))
+endif
+
 # to make ws2_32.lib the last library (must occur after definition of PORTNAME)
 ifeq ($(PORTNAME),win32)
 SHLIB_LINK += -lwsock32 -lws2_32
@@ -87,6 +59,6 @@ endif
 
 rijndael.o: rijndael.tbl
 
-rijndael.tbl:
+rijndael.tbl: rijndael.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -DPRINT_TABS rijndael.c -o gen-rtab
 	./gen-rtab > rijndael.tbl
