@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.335 2005/07/02 19:16:36 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.336 2005/07/05 23:18:09 momjian Exp $
 -->
 
 <chapter Id="runtime">
@@ -1660,7 +1660,9 @@ SET ENABLE_SEQSCAN TO OFF;
 
        <para>
         This option can only be set at server start or in the
-        <filename>postgresql.conf</filename> file.
+        <filename>postgresql.conf</filename> file.  If this option
+        is <literal>off</>, consider also turning off 
+        <varname>guc-full-page-writes</>.
        </para>
       </listitem>
      </varlistentry>
@@ -1683,6 +1685,37 @@ SET ENABLE_SEQSCAN TO OFF;
         If <varname>fsync</varname> is off then this setting is irrelevant.
         This option can only be set at server start or in the
         <filename>postgresql.conf</filename> file.
+       </para>
+      </listitem>
+     </varlistentry>
+     
+     <varlistentry id="guc-full-page-writes" xreflabel="full_page_writes">
+      <indexterm>
+       <primary><varname>full_page_writes</> configuration parameter</primary>
+      </indexterm>
+      <term><varname>full_page_writes</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        A page write in process during an operating system crash might
+        be only partially written to disk, leading to an on-disk page
+        that contains a mix of old and new data. During recovery, the
+        row changes stored in WAL are not enough to completely restore
+        the page.
+       </para>
+
+       <para>
+        When this option is on, the <productname>PostgreSQL</> server
+        writes full pages to WAL when they first modified after a checkpoint
+        so full recovery is possible. Turning this option off might lead
+        to a corrupt system after an operating system crash because
+        uncorrected partial pages might contain inconsistent or corrupt
+        data. The risks are less but similar to <varname>fsync</>.
+       </para>
+
+       <para>
+        This option can only be set at server start or in the
+        <filename>postgresql.conf</filename> file.  The default is
+        <literal>on</>.
        </para>
       </listitem>
      </varlistentry>

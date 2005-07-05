@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.206 2005/07/04 04:51:44 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.207 2005/07/05 23:18:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,6 +103,7 @@ int			XLOGbuffers = 8;
 char	   *XLogArchiveCommand = NULL;
 char	   *XLOG_sync_method = NULL;
 const char	XLOG_sync_method_default[] = DEFAULT_SYNC_METHOD_STR;
+bool		fullPageWrites = true;
 
 #ifdef WAL_DEBUG
 bool		XLOG_DEBUG = false;
@@ -594,7 +595,9 @@ begin:;
 				{
 					/* OK, put it in this slot */
 					dtbuf[i] = rdt->buffer;
-					if (XLogCheckBuffer(rdt, &(dtbuf_lsn[i]), &(dtbuf_xlg[i])))
+					/* If fsync is off, no need to backup pages. */
+					if (fullPageWrites &&
+						XLogCheckBuffer(rdt, &(dtbuf_lsn[i]), &(dtbuf_xlg[i])))
 					{
 						dtbuf_bkp[i] = true;
 						rdt->data = NULL;

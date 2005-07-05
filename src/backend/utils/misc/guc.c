@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.272 2005/07/04 04:51:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.273 2005/07/05 23:18:10 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -83,6 +83,7 @@ extern DLLIMPORT bool check_function_bodies;
 extern int	CommitDelay;
 extern int	CommitSiblings;
 extern char *default_tablespace;
+extern bool	fullPageWrites;
 
 static const char *assign_log_destination(const char *value,
 					   bool doit, GucSource source);
@@ -481,6 +482,18 @@ static struct config_bool ConfigureNamesBool[] =
 		},
 		&zero_damaged_pages,
 		false, NULL, NULL
+	},
+	{
+		{"full_page_writes", PGC_SIGHUP, WAL_SETTINGS,
+			gettext_noop("Writes full pages to WAL when first modified after a checkpoint."),
+			gettext_noop("A page write in process during an operating system crash might be "
+						 "only partially written to disk.  During recovery, the row changes"
+						 "stored in WAL are not enough to recover.  This option writes "
+						 "pages when first modified after a checkpoint to WAL so full recovery "
+						 "is possible.")
+		},
+		&fullPageWrites,
+		true, NULL, NULL
 	},
 	{
 		{"silent_mode", PGC_POSTMASTER, LOGGING_WHEN,
