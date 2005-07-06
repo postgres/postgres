@@ -1,4 +1,4 @@
-/*-
+/*
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -37,11 +37,12 @@ static char sccsid[] = "@(#)dl.c	5.4 (Berkeley) 2/23/91";
 #endif   /* LIBC_SCCS and not lint */
 
 #include "postgres.h"
-#include "dynloader.h"
 
 #include <nlist.h>
 #include <link.h>
 #include <dlfcn.h>
+
+#include "dynloader.h"
 
 static char error_message[BUFSIZ];
 
@@ -67,7 +68,7 @@ BSD44_derived_dlopen(const char *file, int num)
 
 	if ((vp = dlopen((char *) file, num)) == NULL)
 		snprintf(error_message, sizeof(error_message),
-				 "dlopen '%s' failed. (%s)", file, dlerror());
+				 "dlopen (%s) failed: %s", file, dlerror());
 	return vp;
 #endif
 }

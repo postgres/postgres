@@ -68,7 +68,7 @@ BSD44_derived_dlopen(const char *file, int num)
 
 	if ((vp = dlopen((char *) file, num)) == NULL)
 		snprintf(error_message, sizeof(error_message),
-				 "dlopen (%s) failed", file);
+				 "dlopen (%s) failed: %s", file, dlerror());
 	return vp;
 #endif
 }
