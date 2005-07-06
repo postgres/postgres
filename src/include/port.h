@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.78 2005/07/05 17:24:30 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.79 2005/07/06 21:40:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,7 +108,7 @@ extern int	pg_strncasecmp(const char *s1, const char *s2, size_t n);
 extern unsigned char pg_toupper(unsigned char ch);
 extern unsigned char pg_tolower(unsigned char ch);
 
-#if defined(USE_SNPRINTF) && !defined(NO_PGPORT)
+#ifdef USE_SNPRINTF
 extern int pg_vsnprintf(char *str, size_t count, const char *fmt, va_list args);
 extern int pg_snprintf(char *str, size_t count, const char *fmt,...)
 /* This extension allows gcc to check the format string */
@@ -178,7 +178,7 @@ extern int	pclose_check(FILE *stream);
 #define TZNAME_GLOBAL _tzname
 #endif
 
-#if (defined(WIN32) || defined(__CYGWIN__)) && !defined(NO_PGPORT)
+#if defined(WIN32) || defined(__CYGWIN__)
 /*
  *	Win32 doesn't have reliable rename/unlink during concurrent access,
  *	and we need special code to do symlinks.
@@ -204,11 +204,11 @@ extern int	pgsymlink(const char *oldpath, const char *newpath);
 #define symlink(oldpath, newpath)	pgsymlink(oldpath, newpath)
 #endif
 
-#endif /* defined(WIN32) || defined(__CYGWIN__) && !defined(NO_PGPORT) */
+#endif /* defined(WIN32) || defined(__CYGWIN__) */
 
 extern bool rmtree(char *path, bool rmtopdir);
 
-#if defined(WIN32) && !defined(__CYGWIN__) && !defined(NO_PGPORT)
+#if defined(WIN32) && !defined(__CYGWIN__)
 
 /* open() replacement to allow delete of held files and passing
  * of special options. */

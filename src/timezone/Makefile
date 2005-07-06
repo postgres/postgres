@@ -4,7 +4,7 @@
 #    Makefile for the timezone library
 
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/timezone/Makefile,v 1.21 2005/07/06 21:04:14 momjian Exp $
+#    $PostgreSQL: pgsql/src/timezone/Makefile,v 1.22 2005/07/06 21:40:09 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ subdir = src/timezone
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
-override CPPFLAGS := $(CPPFLAGS) -I$(srcdir) -DNO_PGPORT
+override CPPFLAGS := $(CPPFLAGS)
 
 # files to build into backend
 OBJS= localtime.o strftime.o pgtz.o
