@@ -1,5 +1,5 @@
 #
-# $PostgreSQL: pgsql/contrib/pgcrypto/Makefile,v 1.16 2005/07/05 23:18:44 tgl Exp $
+# $PostgreSQL: pgsql/contrib/pgcrypto/Makefile,v 1.17 2005/07/06 16:14:42 tgl Exp $
 #
 
 # if you don't have OpenSSL, you can use libc random() or /dev/urandom
@@ -16,7 +16,7 @@ CF_SRCS = $(if $(subst no,,$(with_openssl)), $(OSSL_SRCS), $(INT_SRCS))
 CF_TESTS = $(if $(subst no,,$(with_openssl)), $(OSSL_TESTS))
 CF_CFLAGS = $(if $(subst no,,$(with_openssl)), $(OSSL_CFLAGS), $(INT_CFLAGS))
 
-PG_CPPFLAGS	:= $(CF_CFLAGS) -I$(srcdir) $(PG_CPPFLAGS)
+PG_CPPFLAGS	= $(CF_CFLAGS)
 
 SRCS		= pgcrypto.c px.c px-hmac.c px-crypt.c misc.c random.c \
 		crypt-gensalt.c crypt-blowfish.c crypt-des.c \
