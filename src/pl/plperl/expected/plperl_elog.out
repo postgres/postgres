@@ -1,0 +1,29 @@
+-- test warnings and errors from plperl
+create or replace function perl_elog(text) returns void language plperl as $$
+
+  my $msg = shift;
+  elog(NOTICE,$msg);
+
+$$;
+select perl_elog('explicit elog');
+NOTICE:  explicit elog
+ perl_elog 
+-----------
+ 
+(1 row)
+
+create or replace function perl_warn(text) returns void language plperl as $$
+
+  my $msg = shift;
+  warn($msg);
+
+$$;
+select perl_warn('implicit elog via warn');
+NOTICE:  implicit elog via warn at (eval 7) line 4.
+
+ perl_warn 
+-----------
+ 
+(1 row)
+
+
