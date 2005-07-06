@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.102 2005/06/14 02:57:41 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.103 2005/07/06 03:14:48 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -305,52 +305,78 @@ helpSQL(const char *topic, unsigned short int pager)
 	}
 	else
 	{
-		int			i;
+			int			i,j,x=0;
 		bool		help_found = false;
 		FILE	   *output;
-		size_t		len;
+		size_t		len, wordlen;
 		int			nl_count = 0;
 		char	   *ch;
 
-		/* don't care about trailing spaces or semicolons */
+		/* User gets two chances: exact match, then the first word */
+		
+		/* First pass : strip trailing spaces and semicolons */
 		len = strlen(topic);
 		while (topic[len - 1] == ' ' || topic[len - 1] == ';')
-			len--;
+				len--;
 
-		/* Count newlines for pager */
-		for (i = 0; QL_HELP[i].cmd; i++)
+		for (x=1; x<=3; x++) /* Three chances to guess that word... */
 		{
-			if (pg_strncasecmp(topic, QL_HELP[i].cmd, len) == 0 ||
-				strcmp(topic, "*") == 0)
-			{
-				nl_count += 5;
-				for (ch = QL_HELP[i].syntax; *ch != '\0'; ch++)
-					if (*ch == '\n')
-						nl_count++;
-				/* If we have an exact match, exit.  Fixes \h SELECT */
-				if (pg_strcasecmp(topic, QL_HELP[i].cmd) == 0)
-					break;
-			}
-		}
+				if (x>1) /* Nothing on first pass - try the opening words */
+				{
+						wordlen=j=1;
+						while (topic[j] != ' ' && j++<len)
+								wordlen++;
+						if (x==2)
+						{
+								j++;
+								while (topic[j] != ' ' && j++<=len)
+										wordlen++;
+						}
+						if (wordlen >= len) /* Don't try again if the same word */
+						{
+								output = PageOutput(nl_count, pager);
+								break;
+						}
+						len = wordlen;
+				}
 
-		output = PageOutput(nl_count, pager);
-
-		for (i = 0; QL_HELP[i].cmd; i++)
-		{
-			if (pg_strncasecmp(topic, QL_HELP[i].cmd, len) == 0 ||
-				strcmp(topic, "*") == 0)
-			{
-				help_found = true;
-				fprintf(output, _("Command:     %s\n"
-								  "Description: %s\n"
-								  "Syntax:\n%s\n\n"),
-						QL_HELP[i].cmd,
-						_(QL_HELP[i].help),
-						_(QL_HELP[i].syntax));
-				/* If we have an exact match, exit.  Fixes \h SELECT */
-				if (pg_strcasecmp(topic, QL_HELP[i].cmd) == 0)
-					break;
-			}
+				/* Count newlines for pager */
+				for (i = 0; QL_HELP[i].cmd; i++)
+				{
+						if (pg_strncasecmp(topic, QL_HELP[i].cmd, len) == 0 ||
+								strcmp(topic, "*") == 0)
+						{
+								nl_count += 5;
+								for (ch = QL_HELP[i].syntax; *ch != '\0'; ch++)
+										if (*ch == '\n')
+												nl_count++;
+								/* If we have an exact match, exit.  Fixes \h SELECT */
+								if (pg_strcasecmp(topic, QL_HELP[i].cmd) == 0)
+										break;
+						}
+				}
+				
+				output = PageOutput(nl_count, pager);
+				
+				for (i = 0; QL_HELP[i].cmd; i++)
+				{
+						if (pg_strncasecmp(topic, QL_HELP[i].cmd, len) == 0 ||
+								strcmp(topic, "*") == 0)
+						{
+								help_found = true;
+								fprintf(output, _("Command:     %s\n"
+																	"Description: %s\n"
+																	"Syntax:\n%s\n\n"),
+												QL_HELP[i].cmd,
+												_(QL_HELP[i].help),
+												_(QL_HELP[i].syntax));
+								/* If we have an exact match, exit.  Fixes \h SELECT */
+								if (pg_strcasecmp(topic, QL_HELP[i].cmd) == 0)
+										break;
+						}
+				}
+				if (help_found) /* Don't keep trying if we got a match */
+						break;
 		}
 
 		if (!help_found)
