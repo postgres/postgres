@@ -314,7 +314,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS configure_args build build_cpu build_vendor build_os host host_cpu host_vendor host_os PORTNAME docdir enable_nls WANTED_LANGUAGES default_port enable_shared enable_rpath enable_debug CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP GCC CC_FOR_BUILD TAS autodepend INCLUDES enable_thread_safety with_tcl with_perl with_python with_krb5 krb_srvtab with_pam with_bonjour with_openssl with_zlib EGREP ELF_SYS LDFLAGS_SL AWK FLEX FLEXFLAGS LN_S LD with_gnu_ld ld_R_works RANLIB ac_ct_RANLIB LORDER TAR STRIP ac_ct_STRIP STRIP_STATIC_LIB STRIP_SHARED_LIB YACC YFLAGS PERL perl_archlibexp perl_privlibexp perl_useshrplib perl_embed_ldflags PYTHON python_version python_configdir python_includespec python_libdir python_libspec python_additional_libs HAVE_IPV6 LIBOBJS acx_pthread_config PTHREAD_CC PTHREAD_LIBS PTHREAD_CFLAGS HAVE_POSIX_SIGNALS MSGFMT MSGMERGE XGETTEXT localedir TCLSH TCL_CONFIG_SH TCL_INCLUDE_SPEC TCL_LIB_FILE TCL_LIBS TCL_LIB_SPEC TCL_SHARED_BUILD TCL_SHLIB_LD_LIBS NSGMLS JADE have_docbook DOCBOOKSTYLE COLLATEINDEX SGMLSPL vpath_build LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS configure_args build build_cpu build_vendor build_os host host_cpu host_vendor host_os PORTNAME docdir enable_nls WANTED_LANGUAGES default_port enable_shared enable_rpath enable_debug CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP GCC TAS autodepend INCLUDES enable_thread_safety with_tcl with_perl with_python with_krb5 krb_srvtab with_pam with_bonjour with_openssl with_zlib EGREP ELF_SYS LDFLAGS_SL AWK FLEX FLEXFLAGS LN_S LD with_gnu_ld ld_R_works RANLIB ac_ct_RANLIB LORDER TAR STRIP ac_ct_STRIP STRIP_STATIC_LIB STRIP_SHARED_LIB YACC YFLAGS PERL perl_archlibexp perl_privlibexp perl_useshrplib perl_embed_ldflags PYTHON python_version python_configdir python_includespec python_libdir python_libspec python_additional_libs HAVE_IPV6 LIBOBJS acx_pthread_config PTHREAD_CC PTHREAD_LIBS PTHREAD_CFLAGS HAVE_POSIX_SIGNALS MSGFMT MSGMERGE XGETTEXT localedir TCLSH TCL_CONFIG_SH TCL_INCLUDE_SPEC TCL_LIB_FILE TCL_LIBS TCL_LIB_SPEC TCL_SHARED_BUILD TCL_SHLIB_LD_LIBS NSGMLS JADE have_docbook DOCBOOKSTYLE COLLATEINDEX SGMLSPL vpath_build LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -3302,17 +3302,6 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define PG_VERSION_STR "PostgreSQL $PACKAGE_VERSION on $host, compiled by $cc_string"
 _ACEOF
-
-
-
-#
-# Native compiler
-#
-
-if test -z "$CC_FOR_BUILD"; then
-  CC_FOR_BUILD=$CC
-fi
-
 
 
 
@@ -22904,7 +22893,6 @@ s,@EXEEXT@,$EXEEXT,;t t
 s,@OBJEXT@,$OBJEXT,;t t
 s,@CPP@,$CPP,;t t
 s,@GCC@,$GCC,;t t
-s,@CC_FOR_BUILD@,$CC_FOR_BUILD,;t t
 s,@TAS@,$TAS,;t t
 s,@autodepend@,$autodepend,;t t
 s,@INCLUDES@,$INCLUDES,;t t

@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.416 2005/07/05 23:13:57 tgl Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.417 2005/07/06 21:04:13 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -301,17 +301,6 @@ fi
 AC_DEFINE_UNQUOTED(PG_VERSION_STR,
                    ["PostgreSQL $PACKAGE_VERSION on $host, compiled by $cc_string"],
                    [A string containing the version number, platform, and C compiler])
-
-
-#
-# Native compiler
-#
-
-if test -z "$CC_FOR_BUILD"; then
-  CC_FOR_BUILD=$CC
-fi
-
-AC_SUBST(CC_FOR_BUILD)
 
 
 #
