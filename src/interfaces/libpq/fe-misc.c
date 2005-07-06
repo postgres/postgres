@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.114 2005/06/12 00:00:21 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.115 2005/07/06 16:25:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1128,13 +1128,21 @@ PQenv2encoding(void)
 char *
 libpq_gettext(const char *msgid)
 {
-	static int	already_bound = 0;
+	static bool already_bound = false;
 
 	if (!already_bound)
 	{
-		already_bound = 1;
+		/* dgettext() preserves errno, but bindtextdomain() doesn't */
+		int		save_errno = errno;
+		const char *ldir;
+
+		already_bound = true;
 		/* No relocatable lookup here because the binary could be anywhere */
-		bindtextdomain("libpq", getenv("PGLOCALEDIR") ? getenv("PGLOCALEDIR") : LOCALEDIR);
+		ldir = getenv("PGLOCALEDIR");
+		if (!ldir)
+			ldir = LOCALEDIR;
+		bindtextdomain("libpq", ldir);
+		errno = save_errno;
 	}
 
 	return dgettext("libpq", msgid);
