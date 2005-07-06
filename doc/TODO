@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Jul  5 18:59:32 EDT 2005
+Last updated:		Tue Jul  5 23:40:06 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -236,7 +236,7 @@ Data Types
 Functions
 =========
 
-* Add function to return compressed length of TOAST data values
+* -Add function to return compressed length of TOAST data values
 * Allow INET subnet tests using non-constants to be indexed
 * Add transaction_timestamp(), statement_timestamp(), clock_timestamp()
   functionality
