@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.262 2005/06/29 01:52:56 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.263 2005/07/06 19:02:52 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -2183,6 +2183,14 @@ PostgreSQL documentation
        <entry><type>integer</type></entry>
        <entry>Number of bytes in binary string</entry>
        <entry><literal>octet_length( 'jo\\000se'::bytea)</literal></entry>
+       <entry><literal>5</literal></entry>
+      </row>
+
+      <row>
+       <entry><literal><function>pg_column_size</function>(<parameter>string</parameter>)</literal></entry>
+       <entry><type>integer</type></entry>
+       <entry>Number of bytes required to store the value, which might be compressed</entry>
+       <entry><literal>pg_column_size('jo\\000se'::bytea)</literal></entry>
        <entry><literal>5</literal></entry>
       </row>
 

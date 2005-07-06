@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.22 2005/03/21 01:24:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.23 2005/07/06 19:02:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,5 +137,13 @@ extern Datum toast_compress_datum(Datum value);
  * ----------
  */
 extern Size toast_raw_datum_size(Datum value);
+
+/* ----------
+ * toast_datum_size -
+ *
+ *	Return the storage size of a varlena datum
+ * ----------
+ */
+extern Size toast_datum_size(Datum value);
 
 #endif   /* TUPTOASTER_H */

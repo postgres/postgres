@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.124 2005/07/04 18:56:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.125 2005/07/06 19:02:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/pg_locale.h"
+#include "utils/syscache.h"
 
 
 typedef struct varlena unknown;
@@ -2347,4 +2348,48 @@ md5_bytea(PG_FUNCTION_ARGS)
 
 	result_text = PG_STR_GET_TEXT(hexsum);
 	PG_RETURN_TEXT_P(result_text);
+}
+
+/* 
+ * Return the length of a datum, possibly compressed
+ */
+Datum
+pg_column_size(PG_FUNCTION_ARGS)
+{
+	Datum			value = PG_GETARG_DATUM(0);
+	int				result;
+
+	/*	fn_extra stores the fixed column length, or -1 for varlena. */
+	if (fcinfo->flinfo->fn_extra == NULL)	/* first call? */
+	{
+		/* On the first call lookup the datatype of the supplied argument */
+		Oid				argtypeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
+		HeapTuple		tp;
+		int				typlen;
+
+		tp = SearchSysCache(TYPEOID,
+							ObjectIdGetDatum(argtypeid),
+							0, 0, 0);
+		if (!HeapTupleIsValid(tp))
+		{
+			/* Oid not in pg_type, should never happen. */
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("invalid typid: %u", argtypeid)));
+		}
+		
+		typlen = ((Form_pg_type)GETSTRUCT(tp))->typlen;
+		ReleaseSysCache(tp);
+		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+													  sizeof(int));
+		*(int *)fcinfo->flinfo->fn_extra = typlen;
+	}
+
+	if (*(int *)fcinfo->flinfo->fn_extra != -1)
+		PG_RETURN_INT32(*(int *)fcinfo->flinfo->fn_extra);
+	else
+	{
+		result = toast_datum_size(value) - VARHDRSZ;
+		PG_RETURN_INT32(result);
+	}
 }
