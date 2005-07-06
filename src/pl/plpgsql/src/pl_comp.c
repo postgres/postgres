@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.91 2005/06/10 16:23:11 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.92 2005/07/06 16:42:10 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -546,6 +546,13 @@ do_compile(FunctionCallInfo fcinfo,
 			function->fn_retbyval = false;
 			function->fn_retistuple = true;
 			function->fn_retset = false;
+
+			/* shouldn't be any declared arguments */
+			if (procStruct->pronargs != 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+						 errmsg("trigger functions cannot have declared arguments"),
+						 errhint("You probably want to use TG_NARGS and TG_ARGV instead.")));
 
 			/* Add the record for referencing NEW */
 			rec = palloc0(sizeof(PLpgSQL_rec));
