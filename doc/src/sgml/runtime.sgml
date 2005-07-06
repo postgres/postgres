@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.336 2005/07/05 23:18:09 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.337 2005/07/06 14:45:12 momjian Exp $
 -->
 
 <chapter Id="runtime">
@@ -1705,11 +1705,12 @@ SET ENABLE_SEQSCAN TO OFF;
 
        <para>
         When this option is on, the <productname>PostgreSQL</> server
-        writes full pages to WAL when they first modified after a checkpoint
-        so full recovery is possible. Turning this option off might lead
-        to a corrupt system after an operating system crash because
-        uncorrected partial pages might contain inconsistent or corrupt
-        data. The risks are less but similar to <varname>fsync</>.
+        writes full pages to WAL when they are first modified after a
+        checkpoint so full recovery is possible. Turning this option off
+        might lead to a corrupt system after an operating system crash
+        or power failure because uncorrected partial pages might contain
+        inconsistent or corrupt data. The risks are less but similar to
+        <varname>fsync</>.
        </para>
 
        <para>
