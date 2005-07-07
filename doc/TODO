@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Jul  5 23:40:06 EDT 2005
+Last updated:		Thu Jul  7 11:18:18 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -935,6 +935,15 @@ Write-Ahead Log
   full page images to WAL before they are modified so we can correct any
   partial page writes during recovery.  These pages can also be
   eliminated from point-in-time archive files.
+
+	o  -Add ability to turn off full page writes
+	o  When off, write CRC to WAL and check file system blocks
+	   on recovery
+	o  Write full pages during file system write and not when
+	   the page is modified in the buffer cache
+
+	   This allows most full page writes to happen in the background
+	   writer.
 
 * Reduce WAL traffic so only modified values are written rather than
   entire rows?
