@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.125 2005/07/06 19:02:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.126 2005/07/07 04:36:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,6 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/pg_locale.h"
-#include "utils/syscache.h"
 
 
 typedef struct varlena unknown;
@@ -2364,22 +2363,15 @@ pg_column_size(PG_FUNCTION_ARGS)
 	{
 		/* On the first call lookup the datatype of the supplied argument */
 		Oid				argtypeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
-		HeapTuple		tp;
-		int				typlen;
+		int				typlen    = get_typlen(argtypeid);
 
-		tp = SearchSysCache(TYPEOID,
-							ObjectIdGetDatum(argtypeid),
-							0, 0, 0);
-		if (!HeapTupleIsValid(tp))
+		
+		if (typlen == 0)
 		{
 			/* Oid not in pg_type, should never happen. */
-			ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("invalid typid: %u", argtypeid)));
+			elog(ERROR, "cache lookup failed for type %u", argtypeid);
 		}
-		
-		typlen = ((Form_pg_type)GETSTRUCT(tp))->typlen;
-		ReleaseSysCache(tp);
+
 		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
 													  sizeof(int));
 		*(int *)fcinfo->flinfo->fn_extra = typlen;
