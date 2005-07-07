@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.162 2005/06/28 05:08:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.163 2005/07/07 20:39:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5320,6 +5320,9 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId)
 		CatalogUpdateIndexes(class_rel, newtuple);
 
 		heap_freetuple(newtuple);
+
+		/* Update owner dependency reference */
+		changeDependencyOnOwner(RelationRelationId, relationOid, newOwnerId);
 
 		/*
 		 * If we are operating on a table, also change the ownership of

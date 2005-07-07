@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.101 2005/06/28 05:08:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.102 2005/07/07 20:39:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace)
 	namestrcpy(&name, typeName);
 	values[i++] = NameGetDatum(&name);	/* typname */
 	values[i++] = ObjectIdGetDatum(typeNamespace);		/* typnamespace */
-	values[i++] = ObjectIdGetDatum(InvalidOid); /* typowner */
+	values[i++] = ObjectIdGetDatum(GetUserId());	/* typowner */
 	values[i++] = Int16GetDatum(0);		/* typlen */
 	values[i++] = BoolGetDatum(false);	/* typbyval */
 	values[i++] = CharGetDatum(0);		/* typtype */
@@ -117,6 +117,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace)
 								 typoid,
 								 InvalidOid,
 								 0,
+								 GetUserId(),
 								 InvalidOid,
 								 InvalidOid,
 								 InvalidOid,
@@ -330,6 +331,7 @@ TypeCreate(const char *typeName,
 								 typeObjectId,
 								 relationOid,
 								 relationKind,
+								 GetUserId(),
 								 inputProcedure,
 								 outputProcedure,
 								 receiveProcedure,
@@ -365,6 +367,7 @@ GenerateTypeDependencies(Oid typeNamespace,
 						 Oid relationOid,		/* only for 'c'atalog
 												 * types */
 						 char relationKind,		/* ditto */
+						 Oid owner,
 						 Oid inputProcedure,
 						 Oid outputProcedure,
 						 Oid receiveProcedure,
@@ -379,7 +382,10 @@ GenerateTypeDependencies(Oid typeNamespace,
 				referenced;
 
 	if (rebuild)
+	{
 		deleteDependencyRecordsFor(TypeRelationId, typeObjectId);
+		deleteSharedDependencyRecordsFor(TypeRelationId, typeObjectId);
+	}
 
 	myself.classId = TypeRelationId;
 	myself.objectId = typeObjectId;
@@ -485,6 +491,9 @@ GenerateTypeDependencies(Oid typeNamespace,
 	/* Normal dependency on the default expression. */
 	if (defaultExpr)
 		recordDependencyOnExpr(&myself, defaultExpr, NIL, DEPENDENCY_NORMAL);
+
+	/* Shared dependency on owner. */
+	recordDependencyOnOwner(TypeRelationId, typeObjectId, owner);
 }
 
 /*

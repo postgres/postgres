@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.22 2005/06/28 05:08:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.23 2005/07/07 20:39:58 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -310,6 +310,9 @@ AlterOperatorOwner(List *name, TypeName *typeName1, TypeName *typeName2,
 		simple_heap_update(rel, &tup->t_self, tup);
 
 		CatalogUpdateIndexes(rel, tup);
+
+		/* Update owner dependency reference */
+		changeDependencyOnOwner(OperatorRelationId, operOid, newOwnerId);
 	}
 
 	heap_close(rel, NoLock);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.285 2005/06/05 00:38:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.286 2005/07/07 20:39:57 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -755,6 +755,8 @@ heap_create_with_catalog(const char *relname,
 	 * make a dependency link to force the relation to be deleted if its
 	 * namespace is.  Skip this in bootstrap mode, since we don't make
 	 * dependencies while bootstrapping.
+	 *
+	 * Also make a dependency link to its owner.
 	 */
 	if (!IsBootstrapProcessingMode())
 	{
@@ -768,6 +770,8 @@ heap_create_with_catalog(const char *relname,
 		referenced.objectId = relnamespace;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+
+		recordDependencyOnOwner(RelationRelationId, new_rel_oid, GetUserId());
 	}
 
 	/*

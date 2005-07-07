@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.131 2005/06/28 19:51:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.132 2005/07/07 20:39:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -349,7 +349,10 @@ ProcedureCreate(const char *procedureName,
 	 * existing function, first delete any existing pg_depend entries.
 	 */
 	if (is_update)
+	{
 		deleteDependencyRecordsFor(ProcedureRelationId, retval);
+		deleteSharedDependencyRecordsFor(ProcedureRelationId, retval);
+	}
 
 	myself.classId = ProcedureRelationId;
 	myself.objectId = retval;
@@ -381,6 +384,9 @@ ProcedureCreate(const char *procedureName,
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
+
+	/* dependency on owner */
+	recordDependencyOnOwner(ProcedureRelationId, retval, GetUserId());
 
 	heap_freetuple(tup);
 

@@ -2,7 +2,7 @@
 #
 # Makefile for backend/catalog
 #
-# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.54 2005/06/28 05:08:52 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.55 2005/07/07 20:39:57 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,8 @@ include $(top_builddir)/src/Makefile.global
 
 OBJS = catalog.o dependency.o heap.o index.o indexing.o namespace.o aclchk.o \
        pg_aggregate.o pg_constraint.o pg_conversion.o pg_depend.o \
-       pg_largeobject.o pg_namespace.o pg_operator.o pg_proc.o pg_type.o
+       pg_largeobject.o pg_namespace.o pg_operator.o pg_proc.o pg_shdepend.o \
+       pg_type.o
 
 BKIFILES = postgres.bki postgres.description
 
@@ -31,7 +32,7 @@ POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/,\
 	pg_operator.h pg_opclass.h pg_am.h pg_amop.h pg_amproc.h \
 	pg_language.h pg_largeobject.h pg_aggregate.h pg_statistic.h \
 	pg_rewrite.h pg_trigger.h pg_listener.h pg_description.h pg_cast.h \
-	pg_namespace.h pg_conversion.h pg_database.h \
+	pg_namespace.h pg_conversion.h pg_database.h pg_shdepend.h \
 	pg_authid.h pg_auth_members.h pg_tablespace.h pg_depend.h \
 	indexing.h \
     )

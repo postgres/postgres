@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.162 2005/06/28 05:09:12 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.163 2005/07/07 20:39:59 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -582,6 +582,7 @@ extern void GenerateTypeDependencies(Oid typeNamespace,
 						 Oid typeObjectId,
 						 Oid relationOid,
 						 char relationKind,
+						 Oid owner,
 						 Oid inputProcedure,
 						 Oid outputProcedure,
 						 Oid receiveProcedure,

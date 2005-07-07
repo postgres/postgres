@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.164 2005/06/30 00:00:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.165 2005/07/07 20:39:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "catalog/catalog.h"
+#include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_database.h"
@@ -511,6 +512,12 @@ createdb(const CreatedbStmt *stmt)
 	/* Update indexes */
 	CatalogUpdateIndexes(pg_database_rel, tuple);
 
+	/* Register owner dependency */
+	recordDependencyOnOwner(DatabaseRelationId, dboid, datdba);
+
+	/* Create pg_shdepend entries for objects within database */
+	copyTemplateDependencies(src_dboid, dboid);
+
 	/* Close pg_database, but keep exclusive lock till commit */
 	heap_close(pg_database_rel, NoLock);
 
@@ -678,6 +685,11 @@ dropdb(const char *dbname)
 
 	/* Close pg_database, but keep exclusive lock till commit */
 	heap_close(pgdbrel, NoLock);
+
+	/*
+	 * Remove shared dependency references for the database.
+	 */
+	dropDatabaseDependencies(db_id);
 
 	/*
 	 * Set flag to update flat database file at commit.
@@ -951,6 +963,10 @@ AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 		CatalogUpdateIndexes(rel, newtuple);
 
 		heap_freetuple(newtuple);
+
+		/* Update owner dependency reference */
+		changeDependencyOnOwner(DatabaseRelationId, HeapTupleGetOid(tuple),
+								newOwnerId);
 	}
 
 	systable_endscan(scan);

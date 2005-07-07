@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.44 2005/04/14 20:03:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.45 2005/07/07 20:39:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,9 +22,11 @@
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_attrdef.h"
+#include "catalog/pg_authid.h"
 #include "catalog/pg_cast.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_conversion.h"
+#include "catalog/pg_database.h"
 #include "catalog/pg_depend.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
@@ -32,12 +34,15 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_rewrite.h"
+#include "catalog/pg_tablespace.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
 #include "commands/comment.h"
+#include "commands/dbcommands.h"
 #include "commands/defrem.h"
 #include "commands/proclang.h"
 #include "commands/schemacmds.h"
+#include "commands/tablespace.h"
 #include "commands/trigger.h"
 #include "commands/typecmds.h"
 #include "lib/stringinfo.h"
@@ -509,6 +514,7 @@ recursiveDeletion(const ObjectAddress *object,
 				break;
 		}
 
+		/* delete the pg_depend tuple */
 		simple_heap_delete(depRel, &tup->t_self);
 	}
 
@@ -583,6 +589,14 @@ recursiveDeletion(const ObjectAddress *object,
 	 * to do it.)
 	 */
 	DeleteComments(object->objectId, object->classId, object->objectSubId);
+
+	/*
+	 * Delete shared dependency references related to this object.
+	 * Sub-objects (columns) don't have dependencies on global objects,
+	 * so skip them.
+	 */
+	if (object->objectSubId == 0)
+		deleteSharedDependencyRecordsFor(object->classId, object->objectId);
 
 	/*
 	 * CommandCounterIncrement here to ensure that preceding changes are
@@ -1365,6 +1379,18 @@ getObjectClass(const ObjectAddress *object)
 		case NamespaceRelationId:
 			Assert(object->objectSubId == 0);
 			return OCLASS_SCHEMA;
+
+		case AuthIdRelationId:
+			Assert(object->objectSubId == 0);
+			return OCLASS_ROLE;
+
+		case DatabaseRelationId:
+			Assert(object->objectSubId == 0);
+			return OCLASS_DATABASE;
+
+		case TableSpaceRelationId:
+			Assert(object->objectSubId == 0);
+			return OCLASS_TBLSPACE;
 	}
 
 	/* shouldn't get here */
@@ -1677,6 +1703,37 @@ getObjectDescription(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for namespace %u",
 						 object->objectId);
 				appendStringInfo(&buffer, _("schema %s"), nspname);
+				break;
+			}
+
+		case OCLASS_ROLE:
+			{
+				appendStringInfo(&buffer, _("role %s"),
+								 GetUserNameFromId(object->objectId));
+				break;
+			}
+
+		case OCLASS_DATABASE:
+			{
+				char	   *datname;
+
+				datname = get_database_name(object->objectId);
+				if (!datname)
+					elog(ERROR, "cache lookup failed for database %u",
+						 object->objectId);
+				appendStringInfo(&buffer, _("database %s"), datname);
+				break;
+			}
+
+		case OCLASS_TBLSPACE:
+			{
+				char	   *tblspace;
+
+				tblspace = get_tablespace_name(object->objectId);
+				if (!tblspace)
+					elog(ERROR, "cache lookup failed for tablespace %u",
+						 object->objectId);
+				appendStringInfo(&buffer, _("tablespace %s"), tblspace);
 				break;
 			}
 

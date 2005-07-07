@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.117 2005/06/29 20:34:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.118 2005/07/07 20:39:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,7 @@ static void check_circularity(const Acl *old_acl, const AclItem *mod_aip,
 				  Oid ownerId);
 static Acl *recursive_revoke(Acl *acl, Oid grantee, AclMode revoke_privs,
 				 Oid ownerId, DropBehavior behavior);
+static int oidComparator(const void *arg1, const void *arg2);
 
 static AclMode convert_priv_string(text *priv_type_text);
 
@@ -1049,6 +1050,86 @@ aclmask(const Acl *acl, Oid roleid, Oid ownerId,
 	}
 
 	return result;
+}
+
+
+/*
+ * aclmembers
+ *		Find out all the roleids mentioned in an Acl.
+ *		Note that we do not distinguish grantors from grantees.
+ *
+ * *roleids is set to point to a palloc'd array containing distinct OIDs
+ * in sorted order.  The length of the array is the function result.
+ */
+int
+aclmembers(const Acl *acl, Oid **roleids)
+{
+	Oid	   *list;
+	const AclItem *acldat;
+	int		i,
+			j,
+			k;
+
+	if (acl == NULL || ACL_NUM(acl) == 0)
+	{
+		*roleids = NULL;
+		return 0;
+	}
+
+	/* Allocate the worst-case space requirement */
+	list = palloc(ACL_NUM(acl) * 2 * sizeof(Oid));
+	acldat = ACL_DAT(acl);
+
+	/*
+	 * Walk the ACL collecting mentioned RoleIds.
+	 */
+	j = 0;
+	for (i = 0; i < ACL_NUM(acl); i++)
+	{
+		const AclItem *ai = &acldat[i];
+
+		if (ai->ai_grantee != ACL_ID_PUBLIC)
+			list[j++] = ai->ai_grantee;
+		/* grantor is currently never PUBLIC, but let's check anyway */
+		if (ai->ai_grantor != ACL_ID_PUBLIC)
+			list[j++] = ai->ai_grantor;
+	}
+
+	/* Sort the array */
+	qsort(list, j, sizeof(Oid), oidComparator);
+
+	/* Remove duplicates from the array */
+	k = 0;
+	for (i = 1; i < j; i++)
+	{
+		if (list[k] != list[i])
+			list[++k] = list[i];
+	}
+
+	/*
+	 * We could repalloc the array down to minimum size, but it's hardly
+	 * worth it since it's only transient memory.
+	 */
+	*roleids = list;
+
+	return k + 1;
+}
+
+/*
+ * oidComparator
+ *		qsort comparison function for Oids
+ */
+static int
+oidComparator(const void *arg1, const void *arg2)
+{
+	Oid oid1 = * (const Oid *) arg1;
+	Oid oid2 = * (const Oid *) arg2;
+
+	if (oid1 > oid2)
+		return 1;
+	if (oid1 < oid2)
+		return -1;
+	return 0;
 }
 
 

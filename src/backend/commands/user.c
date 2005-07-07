@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.155 2005/06/29 20:34:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.156 2005/07/07 20:39:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,10 +14,10 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_auth_members.h"
 #include "catalog/pg_authid.h"
-#include "catalog/pg_database.h"
 #include "commands/user.h"
 #include "libpq/crypt.h"
 #include "miscadmin.h"
@@ -742,10 +742,8 @@ DropRole(DropRoleStmt *stmt)
 		const char *role = strVal(lfirst(item));
 		HeapTuple	tuple,
 					tmp_tuple;
-		Relation	pg_rel;
-		TupleDesc	pg_dsc;
-		ScanKeyData scankey;
-		HeapScanDesc scan;
+		ScanKeyData	scankey;
+		char	   *detail;
 		SysScanDesc sscan;
 		Oid			roleid;
 
@@ -780,42 +778,18 @@ DropRole(DropRoleStmt *stmt)
 					 errmsg("must be superuser to drop superusers")));
 
 		/*
-		 * Check if role still owns a database. If so, error out.
-		 *
-		 * (It used to be that this function would drop the database
-		 * automatically. This is not only very dangerous for people that
-		 * don't read the manual, it doesn't seem to be the behaviour one
-		 * would expect either.) -- petere 2000/01/14)
-		 */
-		pg_rel = heap_open(DatabaseRelationId, AccessShareLock);
-		pg_dsc = RelationGetDescr(pg_rel);
+		 * Lock the role, so nobody can add dependencies to her while we drop
+		 * her.  We keep the lock until the end of transaction.
+ 		 */
+		LockSharedObject(AuthIdRelationId, roleid, 0, AccessExclusiveLock);
 
-		ScanKeyInit(&scankey,
-					Anum_pg_database_datdba,
-					BTEqualStrategyNumber, F_OIDEQ,
-					roleid);
-
-		scan = heap_beginscan(pg_rel, SnapshotNow, 1, &scankey);
-
-		if ((tmp_tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
-		{
-			char	   *dbname;
-
-			dbname = NameStr(((Form_pg_database) GETSTRUCT(tmp_tuple))->datname);
+		/* Check for pg_shdepend entries depending on this role */
+		if ((detail = checkSharedDependencies(AuthIdRelationId, roleid)) != NULL)
 			ereport(ERROR,
-					(errcode(ERRCODE_OBJECT_IN_USE),
-					 errmsg("role \"%s\" cannot be dropped", role),
-				   errdetail("The role owns database \"%s\".", dbname)));
-		}
-
-		heap_endscan(scan);
-		heap_close(pg_rel, AccessShareLock);
-
-		/*
-		 * Somehow we'd have to check for tables, views, etc. owned by the
-		 * role as well, but those could be spread out over all sorts of
-		 * databases which we don't have access to (easily).
-		 */
+					(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+					 errmsg("role \"%s\" cannot be dropped because some objects depend on it",
+						 	role),
+					 errdetail("%s", detail)));
 
 		/*
 		 * Remove the role from the pg_authid table

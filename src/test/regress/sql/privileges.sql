@@ -339,6 +339,7 @@ DROP TABLE atest4;
 DROP GROUP regressgroup1;
 DROP GROUP regressgroup2;
 
+REVOKE USAGE ON LANGUAGE sql FROM regressuser1;
 DROP USER regressuser1;
 DROP USER regressuser2;
 DROP USER regressuser3;

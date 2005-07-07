@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_conversion.c,v 1.24 2005/06/28 05:08:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_conversion.c,v 1.25 2005/07/07 20:39:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,6 +119,10 @@ ConversionCreate(const char *conname, Oid connamespace,
 	referenced.objectId = conproc;
 	referenced.objectSubId = 0;
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+
+	/* create dependency on owner */
+	recordDependencyOnOwner(ConversionRelationId, HeapTupleGetOid(tup),
+							conowner);
 
 	heap_freetuple(tup);
 	heap_close(rel, RowExclusiveLock);

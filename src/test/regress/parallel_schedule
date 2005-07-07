@@ -68,7 +68,7 @@ test: misc
 # ----------
 # The fifth group of parallel test
 # ----------
-test: select_views portals_p2 rules foreign_key cluster
+test: select_views portals_p2 rules foreign_key cluster dependency
 
 # ----------
 # The sixth group of parallel test

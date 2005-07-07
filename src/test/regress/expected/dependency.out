@@ -1,0 +1,39 @@
+--
+-- DEPENDENCIES
+--
+CREATE USER regression_user;
+CREATE USER regression_user2;
+CREATE USER regression_user3;
+CREATE GROUP regression_group;
+CREATE TABLE deptest ();
+GRANT SELECT ON TABLE deptest TO GROUP regression_group;
+GRANT ALL ON TABLE deptest TO regression_user, regression_user2;
+-- can't drop neither because they have privileges somewhere
+DROP USER regression_user;
+ERROR:  role "regression_user" cannot be dropped because some objects depend on it
+DETAIL:  access to table deptest
+DROP GROUP regression_group;
+ERROR:  role "regression_group" cannot be dropped because some objects depend on it
+DETAIL:  access to table deptest
+-- if we revoke the privileges we can drop the group
+REVOKE SELECT ON deptest FROM GROUP regression_group;
+DROP GROUP regression_group;
+-- can't drop the user if we revoke the privileges partially
+REVOKE SELECT, INSERT, UPDATE, DELETE, RULE, REFERENCES ON deptest FROM regression_user;
+DROP USER regression_user;
+ERROR:  role "regression_user" cannot be dropped because some objects depend on it
+DETAIL:  access to table deptest
+-- now we are OK to drop him
+REVOKE TRIGGER ON deptest FROM regression_user;
+DROP USER regression_user;
+-- we are OK too if we drop the privileges all at once
+REVOKE ALL ON deptest FROM regression_user2;
+DROP USER regression_user2;
+-- can't drop the owner of an object
+ALTER TABLE deptest OWNER TO regression_user3;
+DROP USER regression_user3;
+ERROR:  role "regression_user3" cannot be dropped because some objects depend on it
+DETAIL:  owner of table deptest
+-- if we drop the object, we can drop the user too
+DROP TABLE deptest;
+DROP USER regression_user3;

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.24 2005/07/04 04:51:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.25 2005/07/07 20:39:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,7 @@
 
 #include "access/heapam.h"
 #include "catalog/catalog.h"
+#include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_tablespace.h"
@@ -306,6 +307,9 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	CatalogUpdateIndexes(rel, tuple);
 
 	heap_freetuple(tuple);
+
+	/* Record dependency on owner */
+	recordDependencyOnOwner(TableSpaceRelationId, tablespaceoid, ownerId);
 
 	/*
 	 * Attempt to coerce target directory to safe permissions.	If this
@@ -818,6 +822,10 @@ AlterTableSpaceOwner(const char *name, Oid newOwnerId)
 		CatalogUpdateIndexes(rel, newtuple);
 
 		heap_freetuple(newtuple);
+
+		/* Update owner dependency reference */
+		changeDependencyOnOwner(TableSpaceRelationId, HeapTupleGetOid(tup),
+								newOwnerId);
 	}
 
 	heap_endscan(scandesc);

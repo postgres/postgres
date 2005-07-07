@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_namespace.c,v 1.14 2005/06/28 05:08:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_namespace.c,v 1.15 2005/07/07 20:39:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_namespace.h"
 #include "utils/builtins.h"
@@ -71,6 +72,9 @@ NamespaceCreate(const char *nspName, Oid ownerId)
 	CatalogUpdateIndexes(nspdesc, tup);
 
 	heap_close(nspdesc, RowExclusiveLock);
+
+	/* Record dependency on owner */
+	recordDependencyOnOwner(NamespaceRelationId, nspoid, ownerId);
 
 	return nspoid;
 }

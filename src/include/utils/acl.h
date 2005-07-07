@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.80 2005/06/29 20:34:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.81 2005/07/07 20:40:00 tgl Exp $
  *
  * NOTES
  *	  An ACL array is simply an array of AclItems, representing the union
@@ -208,6 +208,7 @@ extern Acl *aclnewowner(const Acl *old_acl, Oid oldOwnerId, Oid newOwnerId);
 
 extern AclMode aclmask(const Acl *acl, Oid roleid, Oid ownerId,
 		AclMode mask, AclMaskHow how);
+extern int aclmembers(const Acl *acl, Oid **roleids);
 
 extern bool is_member_of_role(Oid member, Oid role);
 extern bool is_admin_of_role(Oid member, Oid role);

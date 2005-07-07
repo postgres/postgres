@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.14 2004/12/31 22:03:24 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.15 2005/07/07 20:39:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +67,40 @@ typedef enum DependencyType
 	DEPENDENCY_PIN = 'p'
 } DependencyType;
 
+/*
+ * There is also a SharedDependencyType enum type that determines the exact
+ * semantics of an entry in pg_shdepend.  Just like regular dependency entries,
+ * any pg_shdepend entry means that the referenced object cannot be dropped
+ * unless the dependent object is dropped at the same time.  There are some
+ * additional rules however:
+ *
+ * (a) For a SHARED_DEPENDENCY_PIN entry, there is no dependent object --
+ * rather, the referenced object is an essential part of the system.  This
+ * applies to the initdb-created superuser.  Entries of this type are only
+ * created by initdb; objects in this category don't need further pg_shdepend
+ * entries if more objects come to depend on them.
+ *
+ * (b) a SHARED_DEPENDENCY_OWNER entry means that the referenced object is
+ * the role owning the dependent object.  The referenced object must be
+ * a pg_authid entry.
+ *
+ * (c) a SHARED_DEPENDENCY_ACL entry means that the referenced object is
+ * a role mentioned in the ACL field of the dependent object.  The referenced
+ * object must be a pg_authid entry.  (SHARED_DEPENDENCY_ACL entries are not
+ * created for the owner of an object; hence two objects may be linked by
+ * one or the other, but not both, of these dependency types.)
+ *
+ * SHARED_DEPENDENCY_INVALID is a value used as a parameter in internal
+ * routines, and is not valid in the catalog itself.
+ */
+typedef enum SharedDependencyType
+{
+	SHARED_DEPENDENCY_PIN = 'p',
+	SHARED_DEPENDENCY_OWNER = 'o',
+	SHARED_DEPENDENCY_ACL = 'a',
+	SHARED_DEPENDENCY_INVALID = 0
+} SharedDependencyType;
+
 
 /*
  * The two objects related by a dependency are identified by ObjectAddresses.
@@ -81,7 +115,8 @@ typedef struct ObjectAddress
 
 
 /*
- * This enum covers all system catalogs whose OIDs can appear in classId.
+ * This enum covers all system catalogs whose OIDs can appear in 
+ * pg_depend.classId or pg_shdepend.classId.
  */
 typedef enum ObjectClass
 {
@@ -98,6 +133,9 @@ typedef enum ObjectClass
 	OCLASS_REWRITE,				/* pg_rewrite */
 	OCLASS_TRIGGER,				/* pg_trigger */
 	OCLASS_SCHEMA,				/* pg_namespace */
+	OCLASS_ROLE,				/* pg_authid */
+	OCLASS_DATABASE,			/* pg_database */
+	OCLASS_TBLSPACE,			/* pg_tablespace */
 	MAX_OCLASS					/* MUST BE LAST */
 } ObjectClass;
 
@@ -135,5 +173,29 @@ extern void recordMultipleDependencies(const ObjectAddress *depender,
 						   DependencyType behavior);
 
 extern long deleteDependencyRecordsFor(Oid classId, Oid objectId);
+
+/* in pg_shdepend.c */
+
+extern void recordSharedDependencyOn(ObjectAddress *depender,
+									 ObjectAddress *referenced,
+									 SharedDependencyType deptype);
+
+extern void deleteSharedDependencyRecordsFor(Oid classId, Oid objectId);
+
+extern void recordDependencyOnOwner(Oid classId, Oid objectId, Oid owner);
+
+extern void changeDependencyOnOwner(Oid classId, Oid objectId,
+									Oid newOwnerId);
+
+extern void updateAclDependencies(Oid classId, Oid objectId,
+								  Oid ownerId, bool isGrant, 
+								  int noldmembers, Oid *oldmembers,
+								  int nnewmembers, Oid *newmembers);
+
+extern char *checkSharedDependencies(Oid classId, Oid objectId);
+
+extern void copyTemplateDependencies(Oid templateDbId, Oid newDbId);
+
+extern void dropDatabaseDependencies(Oid databaseId);
 
 #endif   /* DEPENDENCY_H */

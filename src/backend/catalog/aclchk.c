@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.114 2005/06/28 19:51:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.115 2005/07/07 20:39:57 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -19,6 +19,7 @@
 
 #include "access/heapam.h"
 #include "catalog/catalog.h"
+#include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_auth_members.h"
@@ -252,6 +253,10 @@ ExecuteGrantStmt_Relation(GrantStmt *stmt)
 		Datum		values[Natts_pg_class];
 		char		nulls[Natts_pg_class];
 		char		replaces[Natts_pg_class];
+		int			noldmembers;
+		int			nnewmembers;
+		Oid		   *oldmembers;
+		Oid		   *newmembers;
 
 		/* open pg_class */
 		relation = heap_open(RelationRelationId, RowExclusiveLock);
@@ -344,10 +349,18 @@ ExecuteGrantStmt_Relation(GrantStmt *stmt)
 			/* get a detoasted copy of the ACL */
 			old_acl = DatumGetAclPCopy(aclDatum);
 
+		/*
+		 * We need the members of both old and new ACLs so we can correct
+		 * the shared dependency information.
+		 */
+		noldmembers = aclmembers(old_acl, &oldmembers);
+
 		new_acl = merge_acl_with_grant(old_acl, stmt->is_grant,
 									   stmt->grant_option, stmt->behavior,
 									   stmt->grantees, this_privileges,
 									   grantorId, ownerId);
+
+		nnewmembers = aclmembers(new_acl, &newmembers);
 
 		/* finished building new ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
@@ -359,12 +372,18 @@ ExecuteGrantStmt_Relation(GrantStmt *stmt)
 
 		newtuple = heap_modifytuple(tuple, RelationGetDescr(relation), values, nulls, replaces);
 
-		ReleaseSysCache(tuple);
-
 		simple_heap_update(relation, &newtuple->t_self, newtuple);
 
 		/* keep the catalog indexes up to date */
 		CatalogUpdateIndexes(relation, newtuple);
+
+		/* Update the shared dependency ACL info */
+		updateAclDependencies(RelationRelationId, relOid,
+							  ownerId, stmt->is_grant,
+							  noldmembers, oldmembers,
+							  nnewmembers, newmembers);
+
+		ReleaseSysCache(tuple);
 
 		pfree(new_acl);
 
@@ -422,6 +441,10 @@ ExecuteGrantStmt_Database(GrantStmt *stmt)
 		Datum		values[Natts_pg_database];
 		char		nulls[Natts_pg_database];
 		char		replaces[Natts_pg_database];
+		int			noldmembers;
+		int			nnewmembers;
+		Oid		   *oldmembers;
+		Oid		   *newmembers;
 
 		relation = heap_open(DatabaseRelationId, RowExclusiveLock);
 		ScanKeyInit(&entry[0],
@@ -503,10 +526,18 @@ ExecuteGrantStmt_Database(GrantStmt *stmt)
 			/* get a detoasted copy of the ACL */
 			old_acl = DatumGetAclPCopy(aclDatum);
 
+		/*
+		 * We need the members of both old and new ACLs so we can correct
+		 * the shared dependency information.
+		 */
+		noldmembers = aclmembers(old_acl, &oldmembers);
+
 		new_acl = merge_acl_with_grant(old_acl, stmt->is_grant,
 									   stmt->grant_option, stmt->behavior,
 									   stmt->grantees, this_privileges,
 									   grantorId, ownerId);
+
+		nnewmembers = aclmembers(new_acl, &newmembers);
 
 		/* finished building new ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
@@ -522,6 +553,12 @@ ExecuteGrantStmt_Database(GrantStmt *stmt)
 
 		/* keep the catalog indexes up to date */
 		CatalogUpdateIndexes(relation, newtuple);
+
+		/* Update the shared dependency ACL info */
+		updateAclDependencies(DatabaseRelationId, HeapTupleGetOid(tuple),
+							  ownerId, stmt->is_grant,
+							  noldmembers, oldmembers,
+							  nnewmembers, newmembers);
 
 		pfree(new_acl);
 
@@ -580,6 +617,10 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 		Datum		values[Natts_pg_proc];
 		char		nulls[Natts_pg_proc];
 		char		replaces[Natts_pg_proc];
+		int			noldmembers;
+		int			nnewmembers;
+		Oid		   *oldmembers;
+		Oid		   *newmembers;
 
 		oid = LookupFuncNameTypeNames(func->funcname, func->funcargs, false);
 
@@ -658,10 +699,18 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 			/* get a detoasted copy of the ACL */
 			old_acl = DatumGetAclPCopy(aclDatum);
 
+		/*
+		 * We need the members of both old and new ACLs so we can correct
+		 * the shared dependency information.
+		 */
+		noldmembers = aclmembers(old_acl, &oldmembers);
+
 		new_acl = merge_acl_with_grant(old_acl, stmt->is_grant,
 									   stmt->grant_option, stmt->behavior,
 									   stmt->grantees, this_privileges,
 									   grantorId, ownerId);
+
+		nnewmembers = aclmembers(new_acl, &newmembers);
 
 		/* finished building new ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
@@ -673,12 +722,18 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 
 		newtuple = heap_modifytuple(tuple, RelationGetDescr(relation), values, nulls, replaces);
 
-		ReleaseSysCache(tuple);
-
 		simple_heap_update(relation, &newtuple->t_self, newtuple);
 
 		/* keep the catalog indexes up to date */
 		CatalogUpdateIndexes(relation, newtuple);
+
+		/* Update the shared dependency ACL info */
+		updateAclDependencies(ProcedureRelationId, oid,
+							  ownerId, stmt->is_grant,
+							  noldmembers, oldmembers,
+							  nnewmembers, newmembers);
+
+		ReleaseSysCache(tuple);
 
 		pfree(new_acl);
 
@@ -734,6 +789,10 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 		Datum		values[Natts_pg_language];
 		char		nulls[Natts_pg_language];
 		char		replaces[Natts_pg_language];
+		int			noldmembers;
+		int			nnewmembers;
+		Oid		   *oldmembers;
+		Oid		   *newmembers;
 
 		relation = heap_open(LanguageRelationId, RowExclusiveLock);
 		tuple = SearchSysCache(LANGNAME,
@@ -822,10 +881,18 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 			/* get a detoasted copy of the ACL */
 			old_acl = DatumGetAclPCopy(aclDatum);
 
+		/*
+		 * We need the members of both old and new ACLs so we can correct
+		 * the shared dependency information.
+		 */
+		noldmembers = aclmembers(old_acl, &oldmembers);
+
 		new_acl = merge_acl_with_grant(old_acl, stmt->is_grant,
 									   stmt->grant_option, stmt->behavior,
 									   stmt->grantees, this_privileges,
 									   grantorId, ownerId);
+
+		nnewmembers = aclmembers(new_acl, &newmembers);
 
 		/* finished building new ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
@@ -837,12 +904,18 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 
 		newtuple = heap_modifytuple(tuple, RelationGetDescr(relation), values, nulls, replaces);
 
-		ReleaseSysCache(tuple);
-
 		simple_heap_update(relation, &newtuple->t_self, newtuple);
 
 		/* keep the catalog indexes up to date */
 		CatalogUpdateIndexes(relation, newtuple);
+
+		/* Update the shared dependency ACL info */
+		updateAclDependencies(LanguageRelationId, HeapTupleGetOid(tuple),
+							  ownerId, stmt->is_grant,
+							  noldmembers, oldmembers,
+							  nnewmembers, newmembers);
+
+		ReleaseSysCache(tuple);
 
 		pfree(new_acl);
 
@@ -898,6 +971,10 @@ ExecuteGrantStmt_Namespace(GrantStmt *stmt)
 		Datum		values[Natts_pg_namespace];
 		char		nulls[Natts_pg_namespace];
 		char		replaces[Natts_pg_namespace];
+		int			noldmembers;
+		int			nnewmembers;
+		Oid		   *oldmembers;
+		Oid		   *newmembers;
 
 		relation = heap_open(NamespaceRelationId, RowExclusiveLock);
 		tuple = SearchSysCache(NAMESPACENAME,
@@ -977,10 +1054,18 @@ ExecuteGrantStmt_Namespace(GrantStmt *stmt)
 			/* get a detoasted copy of the ACL */
 			old_acl = DatumGetAclPCopy(aclDatum);
 
+		/*
+		 * We need the members of both old and new ACLs so we can correct
+		 * the shared dependency information.
+		 */
+		noldmembers = aclmembers(old_acl, &oldmembers);
+
 		new_acl = merge_acl_with_grant(old_acl, stmt->is_grant,
 									   stmt->grant_option, stmt->behavior,
 									   stmt->grantees, this_privileges,
 									   grantorId, ownerId);
+
+		nnewmembers = aclmembers(new_acl, &newmembers);
 
 		/* finished building new ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
@@ -992,12 +1077,18 @@ ExecuteGrantStmt_Namespace(GrantStmt *stmt)
 
 		newtuple = heap_modifytuple(tuple, RelationGetDescr(relation), values, nulls, replaces);
 
-		ReleaseSysCache(tuple);
-
 		simple_heap_update(relation, &newtuple->t_self, newtuple);
 
 		/* keep the catalog indexes up to date */
 		CatalogUpdateIndexes(relation, newtuple);
+
+		/* Update the shared dependency ACL info */
+		updateAclDependencies(NamespaceRelationId, HeapTupleGetOid(tuple),
+							  ownerId, stmt->is_grant,
+							  noldmembers, oldmembers,
+							  nnewmembers, newmembers);
+
+		ReleaseSysCache(tuple);
 
 		pfree(new_acl);
 
@@ -1055,6 +1146,10 @@ ExecuteGrantStmt_Tablespace(GrantStmt *stmt)
 		Datum		values[Natts_pg_tablespace];
 		char		nulls[Natts_pg_tablespace];
 		char		replaces[Natts_pg_tablespace];
+		int			noldmembers;
+		int			nnewmembers;
+		Oid		   *oldmembers;
+		Oid		   *newmembers;
 
 		relation = heap_open(TableSpaceRelationId, RowExclusiveLock);
 		ScanKeyInit(&entry[0],
@@ -1136,10 +1231,18 @@ ExecuteGrantStmt_Tablespace(GrantStmt *stmt)
 			/* get a detoasted copy of the ACL */
 			old_acl = DatumGetAclPCopy(aclDatum);
 
+		/*
+		 * We need the members of both old and new ACLs so we can correct
+		 * the shared dependency information.
+		 */
+		noldmembers = aclmembers(old_acl, &oldmembers);
+
 		new_acl = merge_acl_with_grant(old_acl, stmt->is_grant,
 									   stmt->grant_option, stmt->behavior,
 									   stmt->grantees, this_privileges,
 									   grantorId, ownerId);
+
+		nnewmembers = aclmembers(new_acl, &newmembers);
 
 		/* finished building new ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
@@ -1155,6 +1258,12 @@ ExecuteGrantStmt_Tablespace(GrantStmt *stmt)
 
 		/* keep the catalog indexes up to date */
 		CatalogUpdateIndexes(relation, newtuple);
+
+		/* Update the shared dependency ACL info */
+		updateAclDependencies(TableSpaceRelationId, HeapTupleGetOid(tuple),
+							  ownerId, stmt->is_grant,
+							  noldmembers, oldmembers,
+							  nnewmembers, newmembers);
 
 		pfree(new_acl);
 

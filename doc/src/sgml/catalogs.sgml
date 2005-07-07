@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.106 2005/06/28 05:08:50 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.107 2005/07/07 20:39:56 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -171,6 +171,11 @@
      <row>
       <entry><link linkend="catalog-pg-rewrite"><structname>pg_rewrite</structname></link></entry>
       <entry>query rewrite rules</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="catalog-pg-shdepend"><structname>pg_shdepend</structname></link></entry>
+      <entry>dependencies on shared objects</entry>
      </row>
 
      <row>
@@ -1890,6 +1895,12 @@
    RESTRICT</> case.
   </para>
 
+  <para>
+   See also <link linkend="catalog-pg-shdepend"><structname>pg_shdepend</structname></link>,
+   which performs a similar function for dependencies involving objects
+   that are shared across a database cluster.
+  </para>
+
   <table>
    <title><structname>pg_depend</> Columns</title>
 
@@ -3024,7 +3035,7 @@
 
      <row>
       <entry><structfield>proargmodes</structfield></entry>
-      <entry><type>"char"[]</type></entry>
+      <entry><type>char[]</type></entry>
       <entry></entry>
       <entry>
         An array with the modes of the function arguments, encoded as
@@ -3194,6 +3205,149 @@
     must be true if a table has any rules in this catalog.
    </para>
   </note>
+
+ </sect1>
+
+
+ <sect1 id="catalog-pg-shdepend">
+  <title><structname>pg_shdepend</structname></title>
+
+  <indexterm zone="catalog-pg-shdepend">
+   <primary>pg_shdepend</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_shdepend</structname> records the
+   dependency relationships between database objects and shared objects,
+   such as roles.  This information allows
+   <productname>PostgreSQL</productname> to ensure that those objects are
+   unreferenced before attempting to delete them.
+  </para>
+
+  <para>
+   See also <link linkend="catalog-pg-depend"><structname>pg_depend</structname></link>,
+   which performs a similar function for dependencies involving objects
+   within a single database.
+  </para>
+
+  <para>
+   Unlike most system catalogs, <structname>pg_shdepend</structname>
+   is shared across all databases of a cluster: there is only one
+   copy of <structname>pg_shdepend</structname> per cluster, not
+   one per database.
+  </para>
+
+  <table>
+   <title><structname>pg_shdepend</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>dbid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-database"><structname>pg_database</structname></link>.oid</literal></entry>
+      <entry>The OID of the database the dependent object is in,
+       or zero for a shared object</entry>
+     </row>
+
+     <row>
+      <entry><structfield>classid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
+      <entry>The OID of the system catalog the dependent object is in</entry>
+     </row>
+
+     <row>
+      <entry><structfield>objid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry>any OID column</entry>
+      <entry>The OID of the specific dependent object</entry>
+     </row>
+
+     <row>
+      <entry><structfield>refclassid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
+      <entry>The OID of the system catalog the referenced object is in
+       (must be a shared catalog)</entry>
+     </row>
+
+     <row>
+      <entry><structfield>refobjid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry>any OID column</entry>
+      <entry>The OID of the specific referenced object</entry>
+     </row>
+
+     <row>
+      <entry><structfield>deptype</structfield></entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>
+       A code defining the specific semantics of this dependency relationship; see text.
+      </entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   In all cases, a <structname>pg_shdepend</structname> entry indicates that
+   the referenced object may not be dropped without also dropping the dependent
+   object.  However, there are several subflavors identified by
+   <structfield>deptype</>:
+
+   <variablelist>
+    <varlistentry>
+     <term><symbol>SHARED_DEPENDENCY_OWNER</> (<literal>o</>)</term>
+     <listitem>
+      <para>
+       The referenced object (which must be a role) is the owner of the
+       dependent object.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><symbol>SHARED_DEPENDENCY_ACL</> (<literal>a</>)</term>
+     <listitem>
+      <para>
+       The referenced object (which must be a role) is mentioned in the
+       ACL (access control list, i.e., privileges list) of the
+       dependent object.  (A <symbol>SHARED_DEPENDENCY_ACL</> entry is
+       not made for the owner of the object, since the owner will have
+       a <symbol>SHARED_DEPENDENCY_OWNER</> entry anyway.)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><symbol>SHARED_DEPENDENCY_PIN</> (<literal>p</>)</term>
+     <listitem>
+      <para>
+       There is no dependent object; this type of entry is a signal
+       that the system itself depends on the referenced object, and so
+       that object must never be deleted.  Entries of this type are
+       created only by <command>initdb</command>.  The columns for the
+       dependent object contain zeroes.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+
+   Other dependency flavors may be needed in future.  Note in particular
+   that the current definition only supports roles as referenced objects.
+  </para>
 
  </sect1>
 
@@ -4196,7 +4350,7 @@
       <entry><literal><link linkend="catalog-pg-database"><structname>pg_database</structname></link>.oid</literal></entry>
       <entry>
        OID of the database in which the object exists, or
-       zero if the object is a globally-shared object, or
+       zero if the object is a shared object, or
        NULL if the object is a transaction ID
       </entry>
      </row>

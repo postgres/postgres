@@ -385,5 +385,6 @@ SELECT * FROM clstr_1;
 -- clean up
 \c -
 DROP TABLE clstr_1;
+DROP TABLE clstr_2;
 DROP TABLE clstr_3;
 DROP USER clstr_user;

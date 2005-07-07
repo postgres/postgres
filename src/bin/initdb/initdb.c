@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.90 2005/07/02 17:01:50 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.91 2005/07/07 20:39:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1512,6 +1512,10 @@ setup_depend(void)
 		 * must be the only entries for their objects.
 		 */
 		"DELETE FROM pg_depend;\n",
+		"VACUUM pg_depend;\n",
+		"DELETE FROM pg_shdepend;\n",
+		"VACUUM pg_shdepend;\n",
+
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
 		" FROM pg_class;\n",
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
@@ -1541,10 +1545,13 @@ setup_depend(void)
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
 		" FROM pg_namespace "
 		"    WHERE nspname LIKE 'pg%';\n",
+
+		"INSERT INTO pg_shdepend SELECT 0, 0, 0, tableoid, oid, 'p' "
+		" FROM pg_authid;\n",
 		NULL
 	};
 
-	fputs(_("initializing pg_depend ... "), stdout);
+	fputs(_("initializing dependencies ... "), stdout);
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),

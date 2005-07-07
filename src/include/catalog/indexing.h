@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.88 2005/06/28 05:09:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.89 2005/07/07 20:39:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,6 +178,13 @@ DECLARE_UNIQUE_INDEX(pg_rewrite_oid_index,2692, on pg_rewrite using btree(oid oi
 #define RewriteOidIndexId  2692
 DECLARE_UNIQUE_INDEX(pg_rewrite_rel_rulename_index,2693, on pg_rewrite using btree(ev_class oid_ops, rulename name_ops));
 #define RewriteRelRulenameIndexId  2693
+
+/* This following index is not used for a cache and is not unique */
+DECLARE_INDEX(pg_shdepend_depender_index,1232, on pg_shdepend using btree(dbid oid_ops, classid oid_ops, objid oid_ops));
+#define SharedDependDependerIndexId		1232
+/* This following index is not used for a cache and is not unique */
+DECLARE_INDEX(pg_shdepend_reference_index,1233, on pg_shdepend using btree(refclassid oid_ops, refobjid oid_ops));
+#define SharedDependReferenceIndexId	1233
 
 DECLARE_UNIQUE_INDEX(pg_statistic_relid_att_index,2696, on pg_statistic using btree(starelid oid_ops, staattnum int2_ops));
 #define StatisticRelidAttnumIndexId  2696

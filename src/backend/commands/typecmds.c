@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.73 2005/06/28 05:08:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.74 2005/07/07 20:39:58 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -1208,6 +1208,7 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 							 domainoid,
 							 typTup->typrelid,
 							 0, /* relation kind is n/a */
+							 typTup->typowner,
 							 typTup->typinput,
 							 typTup->typoutput,
 							 typTup->typreceive,
@@ -2080,6 +2081,9 @@ AlterTypeOwner(List *names, Oid newOwnerId)
 		simple_heap_update(rel, &tup->t_self, tup);
 
 		CatalogUpdateIndexes(rel, tup);
+
+		/* Update owner dependency reference */
+		changeDependencyOnOwner(TypeRelationId, typeOid, newOwnerId);
 	}
 
 	/* Clean up */
