@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Jul  7 11:18:18 EDT 2005
+Last updated:		Thu Jul  7 12:01:59 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -943,7 +943,9 @@ Write-Ahead Log
 	   the page is modified in the buffer cache
 
 	   This allows most full page writes to happen in the background
-	   writer.
+	   writer.  It might cause problems for applying WAL on recovery
+	   into a partially-written page, but later the full page will be
+	   replaced from WAL.
 
 * Reduce WAL traffic so only modified values are written rather than
   entire rows?
