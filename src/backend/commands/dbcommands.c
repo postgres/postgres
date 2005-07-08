@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.165 2005/07/07 20:39:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.166 2005/07/08 04:12:24 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1305,79 +1305,6 @@ dbase_redo(XLogRecPtr lsn, XLogRecord *record)
 					(errmsg("could not remove database directory \"%s\"",
 							dst_path)));
 	}
-	else if (info == XLOG_DBASE_CREATE_OLD)
-	{
-		xl_dbase_create_rec_old *xlrec = (xl_dbase_create_rec_old *) XLogRecGetData(record);
-		char	   *dst_path = xlrec->src_path + strlen(xlrec->src_path) + 1;
-		struct stat st;
-
-#ifndef WIN32
-		char		buf[2 * MAXPGPATH + 100];
-#endif
-
-		/*
-		 * Our theory for replaying a CREATE is to forcibly drop the
-		 * target subdirectory if present, then re-copy the source data.
-		 * This may be more work than needed, but it is simple to
-		 * implement.
-		 */
-		if (stat(dst_path, &st) == 0 && S_ISDIR(st.st_mode))
-		{
-			if (!rmtree(dst_path, true))
-				ereport(WARNING,
-					(errmsg("could not remove database directory \"%s\"",
-							dst_path)));
-		}
-
-		/*
-		 * Force dirty buffers out to disk, to ensure source database is
-		 * up-to-date for the copy.  (We really only need to flush buffers for
-		 * the source database, but bufmgr.c provides no API for that.)
-		 */
-		BufferSync();
-
-#ifndef WIN32
-
-		/*
-		 * Copy this subdirectory to the new location
-		 *
-		 * XXX use of cp really makes this code pretty grotty, particularly
-		 * with respect to lack of ability to report errors well.  Someday
-		 * rewrite to do it for ourselves.
-		 */
-
-		/* We might need to use cp -R one day for portability */
-		snprintf(buf, sizeof(buf), "cp -r '%s' '%s'",
-				 xlrec->src_path, dst_path);
-		if (system(buf) != 0)
-			ereport(ERROR,
-					(errmsg("could not initialize database directory"),
-					 errdetail("Failing system command was: %s", buf),
-					 errhint("Look in the postmaster's stderr log for more information.")));
-#else							/* WIN32 */
-		if (copydir(xlrec->src_path, dst_path) != 0)
-		{
-			/* copydir should already have given details of its troubles */
-			ereport(ERROR,
-					(errmsg("could not initialize database directory")));
-		}
-#endif   /* WIN32 */
-	}
-	else if (info == XLOG_DBASE_DROP_OLD)
-	{
-		xl_dbase_drop_rec_old *xlrec = (xl_dbase_drop_rec_old *) XLogRecGetData(record);
-
-		/*
-		 * Drop pages for this database that are in the shared buffer
-		 * cache
-		 */
-		DropBuffers(xlrec->db_id);
-
-		if (!rmtree(xlrec->dir_path, true))
-			ereport(WARNING,
-					(errmsg("could not remove database directory \"%s\"",
-							xlrec->dir_path)));
-	}
 	else
 		elog(PANIC, "dbase_redo: unknown op code %u", info);
 }
@@ -1401,21 +1328,6 @@ dbase_desc(char *buf, uint8 xl_info, char *rec)
 
 		sprintf(buf + strlen(buf), "drop db: dir %u/%u",
 				xlrec->db_id, xlrec->tablespace_id);
-	}
-	else if (info == XLOG_DBASE_CREATE_OLD)
-	{
-		xl_dbase_create_rec_old *xlrec = (xl_dbase_create_rec_old *) rec;
-		char	   *dst_path = xlrec->src_path + strlen(xlrec->src_path) + 1;
-
-		sprintf(buf + strlen(buf), "create db: %u copy \"%s\" to \"%s\"",
-				xlrec->db_id, xlrec->src_path, dst_path);
-	}
-	else if (info == XLOG_DBASE_DROP_OLD)
-	{
-		xl_dbase_drop_rec_old *xlrec = (xl_dbase_drop_rec_old *) rec;
-
-		sprintf(buf + strlen(buf), "drop db: %u directory: \"%s\"",
-				xlrec->db_id, xlrec->dir_path);
 	}
 	else
 		strcat(buf, "UNKNOWN");
