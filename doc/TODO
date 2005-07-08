@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Jul  7 12:01:59 EDT 2005
+Last updated:		Thu Jul  7 22:44:34 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -36,7 +36,7 @@ Administration
 
   Currently SIGTERM of a backend can lead to lock table corruption.
 
-* Prevent dropping user that still owns objects, or auto-drop the objects
+* -Prevent dropping user that still owns objects, or auto-drop the objects
 * Set proper permissions on non-system schemas during db creation
 
   Currently all schemas are owned by the super-user because they are
