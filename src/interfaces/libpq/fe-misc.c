@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.103 2003/10/19 21:36:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.103.2.1 2005/07/08 15:25:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1120,8 +1120,16 @@ libpq_gettext(const char *msgid)
 
 	if (!already_bound)
 	{
+		/* dgettext() preserves errno, but bindtextdomain() doesn't */
+		int		save_errno = errno;
+
 		already_bound = 1;
 		bindtextdomain("libpq", LOCALEDIR);
+#ifdef WIN32
+		SetLastError(save_errno);
+#else
+		errno = save_errno;
+#endif
 	}
 
 	return dgettext("libpq", msgid);
