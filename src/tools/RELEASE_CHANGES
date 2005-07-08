@@ -1,4 +1,4 @@
-
+ 
 * Beta and Release Candidate (RC) changes
 	o configure.in and configure
 	o src/include/pg_config.h.win32
