@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.29 2005/01/01 05:43:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.29.4.1 2005/07/08 18:41:55 tgl Exp $
  */
 
 %{
@@ -69,7 +69,7 @@ STRING          \'([^'\n]|\\.)*\'
 
 \n              ConfigFileLineno++; return GUC_EOL;
 [ \t\r]+        /* eat whitespace */
-#.*$            /* eat comment */
+#.*             /* eat comment (.* matches anything until newline) */
 
 {ID}            return GUC_ID;
 {QUALIFIED_ID}  return GUC_QUALIFIED_ID;
