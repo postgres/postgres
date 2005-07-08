@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.115 2005/07/06 16:25:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.116 2005/07/08 15:24:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1142,7 +1142,11 @@ libpq_gettext(const char *msgid)
 		if (!ldir)
 			ldir = LOCALEDIR;
 		bindtextdomain("libpq", ldir);
+#ifdef WIN32
+		SetLastError(save_errno);
+#else
 		errno = save_errno;
+#endif
 	}
 
 	return dgettext("libpq", msgid);
