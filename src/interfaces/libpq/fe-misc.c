@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.85.2.1 2003/08/04 17:25:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.85.2.2 2005/07/08 15:25:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -920,8 +920,16 @@ libpq_gettext(const char *msgid)
 
 	if (!already_bound)
 	{
+		/* dgettext() preserves errno, but bindtextdomain() doesn't */
+		int		save_errno = errno;
+
 		already_bound = 1;
 		bindtextdomain("libpq", LOCALEDIR);
+#ifdef WIN32
+		SetLastError(save_errno);
+#else
+		errno = save_errno;
+#endif
 	}
 
 	return dgettext("libpq", msgid);
