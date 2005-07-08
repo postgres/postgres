@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.62 2005/06/26 03:03:48 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.63 2005/07/08 16:51:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ static void dumpTimestamp(char *msg);
 
 static int	runPgDump(const char *dbname);
 static PGconn *connectDatabase(const char *dbname, const char *pghost, const char *pgport,
-				const char *pguser, bool require_password);
+				const char *pguser, bool require_password, bool fail_on_error);
 static PGresult *executeQuery(PGconn *conn, const char *query);
 
 char		pg_dump_bin[MAXPGPATH];
@@ -296,8 +296,16 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-
-	conn = connectDatabase("postgres", pghost, pgport, pguser, force_password);
+	/*
+	 * First try to connect to database "postgres", and failing that
+	 * "template1".  "postgres" is the preferred choice for 8.1 and later
+	 * servers, but it usually will not exist on older ones.
+	 */
+	conn = connectDatabase("postgres", pghost, pgport, pguser,
+						   force_password, false);
+	if (!conn)
+		conn = connectDatabase("template1", pghost, pgport, pguser,
+							   force_password, true);
 
 	printf("--\n-- PostgreSQL database cluster dump\n--\n\n");
 	if (verbose)
@@ -382,6 +390,7 @@ help(void)
 static void
 dumpUsers(PGconn *conn, bool initdbonly)
 {
+	PQExpBuffer buf = createPQExpBuffer();
 	PGresult   *res;
 	int			i;
 
@@ -407,7 +416,6 @@ dumpUsers(PGconn *conn, bool initdbonly)
 	{
 		const char *username;
 		bool		clusterowner;
-		PQExpBuffer buf = createPQExpBuffer();
 
 		username = PQgetvalue(res, i, 0);
 		clusterowner = (strcmp(PQgetvalue(res, i, 6), "t") == 0);
@@ -421,12 +429,9 @@ dumpUsers(PGconn *conn, bool initdbonly)
 		 * other users
 		 */
 		if (!clusterowner)
-			appendPQExpBuffer(buf, "CREATE USER %s WITH SYSID %s",
-							  fmtId(username),
-							  PQgetvalue(res, i, 1));
+			printfPQExpBuffer(buf, "CREATE USER %s WITH", fmtId(username));
 		else
-			appendPQExpBuffer(buf, "ALTER USER %s WITH",
-							  fmtId(username));
+			printfPQExpBuffer(buf, "ALTER USER %s WITH", fmtId(username));
 
 		if (!PQgetisnull(res, i, 2))
 		{
@@ -451,14 +456,16 @@ dumpUsers(PGconn *conn, bool initdbonly)
 		appendPQExpBuffer(buf, ";\n");
 
 		printf("%s", buf->data);
-		destroyPQExpBuffer(buf);
 
 		if (server_version >= 70300)
 			dumpUserConfig(conn, username);
 	}
 
 	PQclear(res);
+
 	printf("\n\n");
+
+	destroyPQExpBuffer(buf);
 }
 
 
@@ -472,7 +479,7 @@ dumpGroups(PGconn *conn)
 	PGresult   *res;
 	int			i;
 
-	res = executeQuery(conn, "SELECT groname, grosysid, grolist FROM pg_group");
+	res = executeQuery(conn, "SELECT groname, grolist FROM pg_group");
 
 	if (PQntuples(res) > 0 || output_clean)
 		printf("--\n-- Groups\n--\n\n");
@@ -485,11 +492,10 @@ dumpGroups(PGconn *conn)
 		char	   *val;
 		char	   *tok;
 
-		appendPQExpBuffer(buf, "CREATE GROUP %s WITH SYSID %s;\n",
-						  fmtId(PQgetvalue(res, i, 0)),
-						  PQgetvalue(res, i, 1));
+		appendPQExpBuffer(buf, "CREATE GROUP %s;\n",
+						  fmtId(PQgetvalue(res, i, 0)));
 
-		val = strdup(PQgetvalue(res, i, 2));
+		val = strdup(PQgetvalue(res, i, 1));
 		tok = strtok(val, ",{}");
 		while (tok)
 		{
@@ -503,8 +509,10 @@ dumpGroups(PGconn *conn)
 
 			for (j = 0; j < PQntuples(res2); j++)
 			{
-				appendPQExpBuffer(buf, "ALTER GROUP %s ", fmtId(PQgetvalue(res, i, 0)));
-				appendPQExpBuffer(buf, "ADD USER %s;\n", fmtId(PQgetvalue(res2, j, 0)));
+				appendPQExpBuffer(buf, "ALTER GROUP %s ",
+								  fmtId(PQgetvalue(res, i, 0)));
+				appendPQExpBuffer(buf, "ADD USER %s;\n",
+								  fmtId(PQgetvalue(res2, j, 0)));
 			}
 
 			PQclear(res2);
@@ -933,18 +941,21 @@ runPgDump(const char *dbname)
 /*
  * Make a database connection with the given parameters.  An
  * interactive password prompt is automatically issued if required.
+ *
+ * If fail_on_error is false, we return NULL without printing any message
+ * on failure, but preserve any prompted password for the next try.
  */
 static PGconn *
 connectDatabase(const char *dbname, const char *pghost, const char *pgport,
-				const char *pguser, bool require_password)
+				const char *pguser, bool require_password, bool fail_on_error)
 {
 	PGconn	   *conn;
-	char	   *password = NULL;
 	bool		need_pass = false;
 	const char *remoteversion_str;
 	int			my_version;
+	static char *password = NULL;
 
-	if (require_password)
+	if (require_password && !password)
 		password = simple_prompt("Password: ", 100, false);
 
 	/*
@@ -969,21 +980,28 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 		{
 			PQfinish(conn);
 			need_pass = true;
-			free(password);
+			if (password)
+				free(password);
 			password = NULL;
 			password = simple_prompt("Password: ", 100, false);
 		}
 	} while (need_pass);
 
-	if (password)
-		free(password);
-
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(conn) == CONNECTION_BAD)
 	{
-		fprintf(stderr, _("%s: could not connect to database \"%s\": %s\n"),
-				progname, dbname, PQerrorMessage(conn));
-		exit(1);
+		if (fail_on_error)
+		{
+			fprintf(stderr,
+					_("%s: could not connect to database \"%s\": %s\n"),
+					progname, dbname, PQerrorMessage(conn));
+			exit(1);
+		}
+		else
+		{
+			PQfinish(conn);
+			return NULL;
+		}
 	}
 
 	remoteversion_str = PQparameterStatus(conn, "server_version");
