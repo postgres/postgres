@@ -669,23 +669,36 @@ xpath_table(PG_FUNCTION_ARGS)
 
 	StringInfo	querysql;
 
-/* We only have a valid tuple description in table function mode */
+	/* We only have a valid tuple description in table function mode */
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
 	if (rsinfo->expectedDesc == NULL)
-	{
-		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
-			  errmsg("xpath_table must be called as a table function")));
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("xpath_table must be called as a table function")));
 
-/* The tuplestore must exist in a higher context than
- * this function call (per_query_ctx is used) */
+	/*
+	 * We want to materialise because it means that we don't have to carry
+	 * libxml2 parser state between invocations of this function
+	 */
+	if (!(rsinfo->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("xpath_table requires Materialize mode, but it is not "
+						"allowed in this context")));
+
+	/* The tuplestore must exist in a higher context than
+	 * this function call (per_query_ctx is used)
+	 */
 
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
-/* Create the tuplestore - work_mem is the max in-memory size before a
- * file is created on disk to hold it.
- */
-
+	/* Create the tuplestore - work_mem is the max in-memory size before a
+	 * file is created on disk to hold it.
+	 */
 	tupstore = tuplestore_begin_heap(true, false, work_mem);
 
 	MemoryContextSwitchTo(oldcontext);
@@ -702,17 +715,6 @@ xpath_table(PG_FUNCTION_ARGS)
 	 */
 
 	attinmeta = TupleDescGetAttInMetadata(ret_tupdesc);
-
-	/*
-	 * We want to materialise because it means that we don't have to carry
-	 * libxml2 parser state between invocations of this function
-	 */
-
-	/* check to see if caller supports us returning a tuplestore */
-	if (!rsinfo || !(rsinfo->allowedModes & SFRM_Materialize))
-		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
-		   errmsg("xpath_table requires Materialize mode, but it is not "
-				  "allowed in this context")));
 
 	/* Set return mode and allocate value space. */
 	rsinfo->returnMode = SFRM_Materialize;

@@ -687,9 +687,13 @@ crosstab_hash(PG_FUNCTION_ARGS)
 	int			num_categories;
 
 	/* check to see if caller supports us returning a tuplestore */
-	if (!rsinfo || !(rsinfo->allowedModes & SFRM_Materialize))
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+	if (!(rsinfo->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("materialize mode required, but it is not " \
 						"allowed in this context")));
 
@@ -1049,9 +1053,13 @@ connectby_text(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext;
 
 	/* check to see if caller supports us returning a tuplestore */
-	if (!rsinfo || !(rsinfo->allowedModes & SFRM_Materialize))
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+	if (!(rsinfo->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("materialize mode required, but it is not " \
 						"allowed in this context")));
 
@@ -1075,13 +1083,6 @@ connectby_text(PG_FUNCTION_ARGS)
 
 	/* OK, use it then */
 	attinmeta = TupleDescGetAttInMetadata(tupdesc);
-
-	/* check to see if caller supports us returning a tuplestore */
-	if (!rsinfo || !(rsinfo->allowedModes & SFRM_Materialize))
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("materialize mode required, but it is not " \
-						"allowed in this context")));
 
 	/* OK, go to work */
 	rsinfo->returnMode = SFRM_Materialize;
@@ -1131,9 +1132,15 @@ connectby_text_serial(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext;
 
 	/* check to see if caller supports us returning a tuplestore */
-	if (!rsinfo || !(rsinfo->allowedModes & SFRM_Materialize))
-		elog(ERROR, "connectby: materialize mode required, but it is not "
-			 "allowed in this context");
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+	if (!(rsinfo->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("materialize mode required, but it is not " \
+						"allowed in this context")));
 
 	if (fcinfo->nargs == 7)
 	{
@@ -1155,11 +1162,6 @@ connectby_text_serial(PG_FUNCTION_ARGS)
 
 	/* OK, use it then */
 	attinmeta = TupleDescGetAttInMetadata(tupdesc);
-
-	/* check to see if caller supports us returning a tuplestore */
-	if (!rsinfo->allowedModes & SFRM_Materialize)
-		elog(ERROR, "connectby requires Materialize mode, but it is not "
-			 "allowed in this context");
 
 	/* OK, go to work */
 	rsinfo->returnMode = SFRM_Materialize;
