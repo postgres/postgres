@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.83 2005/07/10 15:32:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.84 2005/07/10 16:13:13 momjian Exp $
  *
  **********************************************************************/
 
@@ -61,6 +61,7 @@
 #include "perl.h"
 #include "XSUB.h"
 #include "ppport.h"
+#include "spi_internal.h"
 
 /* just in case these symbols aren't provided */
 #ifndef pTHX_

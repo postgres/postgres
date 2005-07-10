@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.91 2005/07/07 20:39:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.92 2005/07/10 16:13:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,7 @@ static const char *backend_options = "-F -O -c search_path=pg_catalog -c exit_on
 static char	bin_path[MAXPGPATH];
 static char	backend_exec[MAXPGPATH];
 
-static void *xmalloc(size_t size);
+static void *pg_malloc(size_t size);
 static char *xstrdup(const char *s);
 static char **replace_token(char **lines,
 							const char *token, const char *replacement);
@@ -241,7 +241,7 @@ do { \
  * rmtree() which needs memory allocation. So we just exit with a bang.
  */
 static void *
-xmalloc(size_t size)
+pg_malloc(size_t size)
 {
 	void	   *result;
 
@@ -288,7 +288,7 @@ replace_token(char **lines, const char *token, const char *replacement)
 	for (i = 0; lines[i]; i++)
 		numlines++;
 
-	result = (char **) xmalloc(numlines * sizeof(char *));
+	result = (char **) pg_malloc(numlines * sizeof(char *));
 
 	toklen = strlen(token);
 	replen = strlen(replacement);
@@ -309,7 +309,7 @@ replace_token(char **lines, const char *token, const char *replacement)
 
 		/* if we get here a change is needed - set up new line */
 
-		newline = (char *) xmalloc(strlen(lines[i]) + diff + 1);
+		newline = (char *) pg_malloc(strlen(lines[i]) + diff + 1);
 
 		pre = where - lines[i];
 
@@ -341,7 +341,7 @@ filter_lines_with_token(char **lines, const char *token)
 	for (i = 0; lines[i]; i++)
 		numlines++;
 
-	result = (char **) xmalloc(numlines * sizeof(char *));
+	result = (char **) pg_malloc(numlines * sizeof(char *));
 
 	for (src = 0, dst = 0; src < numlines; src++)
 	{
@@ -397,8 +397,8 @@ readfile(char *path)
 
 	/* set up the result and the line buffer */
 
-	result = (char **) xmalloc((nlines + 2) * sizeof(char *));
-	buffer = (char *) xmalloc(maxlength + 2);
+	result = (char **) pg_malloc((nlines + 2) * sizeof(char *));
+	buffer = (char *) pg_malloc(maxlength + 2);
 
 	/* now reprocess the file and store the lines */
 
@@ -958,7 +958,7 @@ mkdatadir(const char *subdir)
 {
 	char	   *path;
 
-	path = xmalloc(strlen(pg_data) + 2 +
+	path = pg_malloc(strlen(pg_data) + 2 +
 				   (subdir == NULL ? 0 : strlen(subdir)));
 
 	if (subdir != NULL)
@@ -982,7 +982,7 @@ mkdatadir(const char *subdir)
 static void
 set_input(char **dest, char *filename)
 {
-	*dest = xmalloc(strlen(share_path) + strlen(filename) + 2);
+	*dest = pg_malloc(strlen(share_path) + strlen(filename) + 2);
 	sprintf(*dest, "%s/%s", share_path, filename);
 }
 
@@ -1017,12 +1017,12 @@ set_short_version(char *short_version, char *extrapath)
 
 	if (extrapath == NULL)
 	{
-		path = xmalloc(strlen(pg_data) + 12);
+		path = pg_malloc(strlen(pg_data) + 12);
 		sprintf(path, "%s/PG_VERSION", pg_data);
 	}
 	else
 	{
-		path = xmalloc(strlen(pg_data) + strlen(extrapath) + 13);
+		path = pg_malloc(strlen(pg_data) + strlen(extrapath) + 13);
 		sprintf(path, "%s/%s/PG_VERSION", pg_data, extrapath);
 	}
 	version_file = fopen(path, PG_BINARY_W);
@@ -1050,7 +1050,7 @@ set_null_conf(void)
 	FILE	   *conf_file;
 	char	   *path;
 
-	path = xmalloc(strlen(pg_data) + 17);
+	path = pg_malloc(strlen(pg_data) + 17);
 	sprintf(path, "%s/postgresql.conf", pg_data);
 	conf_file = fopen(path, PG_BINARY_W);
 	if (conf_file == NULL)
@@ -1989,7 +1989,7 @@ escape_quotes(const char *src)
 {
 	int			len = strlen(src),
 				i, j;
-	char		*result = xmalloc(len * 2 + 1);
+	char		*result = pg_malloc(len * 2 + 1);
 	
 	for (i = 0, j = 0; i < len; i++)
 	{
@@ -2350,7 +2350,7 @@ main(int argc, char *argv[])
 	 * would especially need quotes otherwise on Windows because paths
 	 * there are most likely to have embedded spaces.
 	 */
-	pgdenv = xmalloc(8 + strlen(pg_data));
+	pgdenv = pg_malloc(8 + strlen(pg_data));
 	sprintf(pgdenv, "PGDATA=%s", pg_data);
 	putenv(pgdenv);
 
@@ -2385,7 +2385,7 @@ main(int argc, char *argv[])
 
 	if (!share_path)
 	{
-		share_path = xmalloc(MAXPGPATH);
+		share_path = pg_malloc(MAXPGPATH);
 		get_share_path(backend_exec, share_path);
 	}
 	else if (!is_absolute_path(share_path))

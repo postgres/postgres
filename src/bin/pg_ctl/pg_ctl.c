@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.58 2005/06/21 04:02:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.59 2005/07/10 16:13:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,7 @@ write_stderr(const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
 __attribute__((format(printf, 1, 2)));
-static void *xmalloc(size_t size);
+static void *pg_malloc(size_t size);
 static char *xstrdup(const char *s);
 static void do_advice(void);
 static void do_help(void);
@@ -191,7 +191,7 @@ write_stderr(const char *fmt,...)
  */
 
 static void *
-xmalloc(size_t size)
+pg_malloc(size_t size)
 {
 	void	   *result;
 
@@ -301,8 +301,8 @@ readfile(const char *path)
 		maxlength = linelen;
 
 	/* set up the result and the line buffer */
-	result = (char **) xmalloc((nlines + 1) * sizeof(char *));
-	buffer = (char *) xmalloc(maxlength + 1);
+	result = (char **) pg_malloc((nlines + 1) * sizeof(char *));
+	buffer = (char *) pg_malloc(maxlength + 1);
 
 	/* now reprocess the file and store the lines */
 	rewind(infile);
@@ -539,7 +539,7 @@ do_start(void)
 		char	   *postmaster_path;
 		int			ret;
 
-		postmaster_path = xmalloc(MAXPGPATH);
+		postmaster_path = pg_malloc(MAXPGPATH);
 
 		if ((ret = find_other_exec(argv0, "postmaster", PM_VERSIONSTR,
 								   postmaster_path)) < 0)
@@ -1353,7 +1353,7 @@ main(int argc, char **argv)
 				case 'D':
 					{
 						char	   *pgdata_D;
-						char	   *env_var = xmalloc(strlen(optarg) + 8);
+						char	   *env_var = pg_malloc(strlen(optarg) + 8);
 
 						pgdata_D = xstrdup(optarg);
 						canonicalize_path(pgdata_D);
@@ -1366,7 +1366,7 @@ main(int argc, char **argv)
 						 *	variable but we do -D too for clearer
 						 *	postmaster 'ps' display
 						 */
-						pgdata_opt = xmalloc(strlen(pgdata_D) + 7);
+						pgdata_opt = pg_malloc(strlen(pgdata_D) + 7);
 						snprintf(pgdata_opt, strlen(pgdata_D) + 7,
 								 "-D \"%s\" ",
 								 pgdata_D);
