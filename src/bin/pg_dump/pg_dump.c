@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.414 2005/07/10 14:26:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.415 2005/07/10 15:08:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -185,6 +185,7 @@ main(int argc, char **argv)
 	const char *pghost = NULL;
 	const char *pgport = NULL;
 	const char *username = NULL;
+	const char *dumpencoding = NULL;
 	bool		oids = false;
 	TableInfo  *tblinfo;
 	int			numTables;
@@ -231,6 +232,7 @@ main(int argc, char **argv)
 		{"no-privileges", no_argument, NULL, 'x'},
 		{"no-acl", no_argument, NULL, 'x'},
 		{"compress", required_argument, NULL, 'Z'},
+		{"encoding", required_argument, NULL, 'E'},
 		{"help", no_argument, NULL, '?'},
 		{"version", no_argument, NULL, 'V'},
 
@@ -276,7 +278,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "abcCdDf:F:h:in:oOp:RsS:t:uU:vWxX:Z:",
+	while ((c = getopt_long(argc, argv, "abcCdDE:f:F:h:in:oOp:RsS:t:uU:vWxX:Z:",
 							long_options, &optindex)) != -1)
 	{
 		switch (c)
@@ -306,6 +308,10 @@ main(int argc, char **argv)
 								 * attr names */
 				dumpInserts = true;
 				attrNames = true;
+				break;
+
+			case 'E':			/* Dump encoding */
+				dumpencoding = optarg;
 				break;
 
 			case 'f':
@@ -515,6 +521,15 @@ main(int argc, char **argv)
 	/* Set the datestyle to ISO to ensure the dump's portability */
 	do_sql_command(g_conn, "SET DATESTYLE = ISO");
 
+	/* Set the client encoding */
+	if (dumpencoding)
+	{
+		char *cmd = malloc(strlen(dumpencoding) + 32);
+		sprintf(cmd,"SET client_encoding='%s'", dumpencoding);
+		do_sql_command(g_conn, cmd);
+		free(cmd);
+	}
+
 	/*
 	 * If supported, set extra_float_digits so that we can dump float data
 	 * exactly (given correctly implemented float I/O code, anyway)
@@ -662,6 +677,7 @@ help(const char *progname)
 	printf(_("  -C, --create             include commands to create database in dump\n"));
 	printf(_("  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"));
 	printf(_("  -D, --column-inserts     dump data as INSERT commands with column names\n"));
+	printf(_("  -E, --encoding=ENCODING  dump the data in encoding ENCODING\n"));
 	printf(_("  -n, --schema=SCHEMA      dump the named schema only\n"));
 	printf(_("  -o, --oids               include OIDs in dump\n"));
 	printf(_("  -O, --no-owner           skip restoration of object ownership\n"
