@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createlang.c,v 1.17 2005/06/22 16:45:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createlang.c,v 1.18 2005/07/10 14:26:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,7 +140,10 @@ main(int argc, char *argv[])
 
 		conn = connectDatabase(dbname, host, port, username, password, progname);
 
-		printfPQExpBuffer(&sql, "SELECT lanname as \"%s\", (CASE WHEN lanpltrusted THEN '%s' ELSE '%s' END) as \"%s\" FROM pg_language WHERE lanispl IS TRUE;", _("Name"), _("yes"), _("no"), _("Trusted?"));
+		printfPQExpBuffer(&sql, "SELECT lanname as \"%s\", (CASE WHEN lanpltrusted "
+						  "THEN '%s' ELSE '%s' END) as \"%s\" FROM pg_language "
+						  "WHERE lanispl IS TRUE;", 
+						  _("Name"), _("yes"), _("no"), _("Trusted?"));
 		result = executeQuery(conn, sql.data, progname, echo);
 
 		memset(&popt, 0, sizeof(popt));
@@ -209,8 +212,10 @@ main(int argc, char *argv[])
 	}
 	else
 	{
-		fprintf(stderr, _("%s: unsupported language \"%s\"\n"), progname, langname);
-		fprintf(stderr, _("Supported languages are plpgsql, pltcl, pltclu, plperl, plperlu, and plpythonu.\n"));
+		fprintf(stderr, _("%s: unsupported language \"%s\"\n"), 
+				progname, langname);
+		fprintf(stderr, _("Supported languages are plpgsql, pltcl, pltclu, "
+						  "plperl, plperlu, and plpythonu.\n"));
 		exit(1);
 	}
 
@@ -219,13 +224,16 @@ main(int argc, char *argv[])
 	/*
 	 * Make sure the language isn't already installed
 	 */
-	printfPQExpBuffer(&sql, "SELECT oid FROM pg_language WHERE lanname = '%s';", langname);
+	printfPQExpBuffer(&sql, 
+					  "SELECT oid FROM pg_language WHERE lanname = '%s';", 
+					  langname);
 	result = executeQuery(conn, sql.data, progname, echo);
 	if (PQntuples(result) > 0)
 	{
 		PQfinish(conn);
 		fprintf(stderr,
-				_("%s: language \"%s\" is already installed in database \"%s\"\n"),
+				_("%s: language \"%s\" is already installed in "
+				  "database \"%s\"\n"),
 				progname, langname, dbname);
 		/* separate exit status for "already installed" */
 		exit(2);
@@ -235,7 +243,9 @@ main(int argc, char *argv[])
 	/*
 	 * Check whether the call handler exists
 	 */
-	printfPQExpBuffer(&sql, "SELECT oid FROM pg_proc WHERE proname = '%s' AND prorettype = 'pg_catalog.language_handler'::regtype AND pronargs = 0;", handler);
+	printfPQExpBuffer(&sql, "SELECT oid FROM pg_proc WHERE proname = '%s' "
+					  "AND prorettype = 'pg_catalog.language_handler'::regtype "
+					  "AND pronargs = 0;", handler);
 	result = executeQuery(conn, sql.data, progname, echo);
 	handlerexists = (PQntuples(result) > 0);
 	PQclear(result);
@@ -245,7 +255,9 @@ main(int argc, char *argv[])
 	 */
 	if (validator)
 	{
-		printfPQExpBuffer(&sql, "SELECT oid FROM pg_proc WHERE proname = '%s' AND proargtypes[0] = 'pg_catalog.oid'::regtype AND pronargs = 1;", validator);
+		printfPQExpBuffer(&sql, "SELECT oid FROM pg_proc WHERE proname = '%s'"
+						  " AND proargtypes[0] = 'pg_catalog.oid'::regtype "
+						  " AND pronargs = 1;", validator);
 		result = executeQuery(conn, sql.data, progname, echo);
 		validatorexists = (PQntuples(result) > 0);
 		PQclear(result);
@@ -260,20 +272,22 @@ main(int argc, char *argv[])
 
 	if (!handlerexists)
 		appendPQExpBuffer(&sql,
-						  "CREATE FUNCTION \"%s\" () RETURNS language_handler AS '%s/%s' LANGUAGE C;\n",
+						  "CREATE FUNCTION pg_catalog.\"%s\" () RETURNS "
+						  "language_handler AS '%s/%s' LANGUAGE C;\n",
 						  handler, pglib, object);
 
 	if (!validatorexists)
 		appendPQExpBuffer(&sql,
-						  "CREATE FUNCTION \"%s\" (oid) RETURNS void AS '%s/%s' LANGUAGE C;\n",
+						  "CREATE FUNCTION pg_catalog.\"%s\" (oid) RETURNS "
+						  "void AS '%s/%s' LANGUAGE C;\n",
 						  validator, pglib, object);
 
 	appendPQExpBuffer(&sql,
-					  "CREATE %sLANGUAGE \"%s\" HANDLER \"%s\"",
+					  "CREATE %sLANGUAGE \"%s\" HANDLER pg_catalog.\"%s\"",
 					  (trusted ? "TRUSTED " : ""), langname, handler);
 
 	if (validator)
-		appendPQExpBuffer(&sql, " VALIDATOR \"%s\"", validator);
+		appendPQExpBuffer(&sql, " VALIDATOR pg_catalog.\"%s\"", validator);
 
 	appendPQExpBuffer(&sql, ";\n");
 

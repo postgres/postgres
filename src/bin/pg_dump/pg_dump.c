@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.413 2005/07/02 17:01:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.414 2005/07/10 14:26:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2258,6 +2258,7 @@ getFuncs(int *numFuncs)
 	int			i_proargtypes;
 	int			i_prorettype;
 	int			i_proacl;
+	int         i_is_pl_handler;
 
 	/* Make sure we are in proper schema */
 	selectSourceSchema("pg_catalog");
@@ -2266,15 +2267,36 @@ getFuncs(int *numFuncs)
 
 	if (g_fout->remoteVersion >= 70300)
 	{
+		/*
+		 * We now collect info on pg_catalog resident functions, but
+		 * only if they are language call handlers or validators, and
+		 * only for non-default languages (i.e. not internal/C/SQL).
+		 */
 		appendPQExpBuffer(query,
 						  "SELECT tableoid, oid, proname, prolang, "
 						  "pronargs, proargtypes, prorettype, proacl, "
 						  "pronamespace, "
-						  "(select usename from pg_user where proowner = usesysid) as usename "
+						  "(select usename from pg_user "
+						  " where proowner = usesysid) as usename, "
+						  "CASE WHEN oid IN "
+						  "  (select lanplcallfoid from pg_language "
+						  "   where lanplcallfoid != 0) THEN true "
+						  " WHEN oid IN "
+						  "  (select lanvalidator from pg_language "
+						  "   where lanplcallfoid != 0) THEN true "
+						  " ELSE false END AS is_pl_handler "
 						  "FROM pg_proc "
 						  "WHERE NOT proisagg "
-						  "AND pronamespace != "
-		  "(select oid from pg_namespace where nspname = 'pg_catalog')");
+						  "AND (pronamespace != "
+						  "    (select oid from pg_namespace "
+						  "     where nspname = 'pg_catalog')"
+						  "  OR oid IN "
+						  "    (select lanplcallfoid from pg_language "
+						  "     where lanplcallfoid != 0) "
+						  "  OR oid IN "
+						  "    (select lanvalidator from pg_language "
+						  "     where lanplcallfoid != 0))"
+			);
 	}
 	else if (g_fout->remoteVersion >= 70100)
 	{
@@ -2283,7 +2305,9 @@ getFuncs(int *numFuncs)
 						  "pronargs, proargtypes, prorettype, "
 						  "'{=X}' as proacl, "
 						  "0::oid as pronamespace, "
-						  "(select usename from pg_user where proowner = usesysid) as usename "
+						  "(select usename from pg_user "
+						  " where proowner = usesysid) as usename, "
+						  "false AS is_pl_handler "
 						  "FROM pg_proc "
 						  "where pg_proc.oid > '%u'::oid",
 						  g_last_builtin_oid);
@@ -2292,12 +2316,15 @@ getFuncs(int *numFuncs)
 	{
 		appendPQExpBuffer(query,
 						  "SELECT "
-						  "(SELECT oid FROM pg_class WHERE relname = 'pg_proc') AS tableoid, "
+						  "(SELECT oid FROM pg_class "
+						  " WHERE relname = 'pg_proc') AS tableoid, "
 						  "oid, proname, prolang, "
 						  "pronargs, proargtypes, prorettype, "
 						  "'{=X}' as proacl, "
 						  "0::oid as pronamespace, "
-						  "(select usename from pg_user where proowner = usesysid) as usename "
+						  "(select usename from pg_user "
+						  " where proowner = usesysid) as usename, "
+						  "false AS is_pl_handler "
 						  "FROM pg_proc "
 						  "where pg_proc.oid > '%u'::oid",
 						  g_last_builtin_oid);
@@ -2322,6 +2349,7 @@ getFuncs(int *numFuncs)
 	i_proargtypes = PQfnumber(res, "proargtypes");
 	i_prorettype = PQfnumber(res, "prorettype");
 	i_proacl = PQfnumber(res, "proacl");
+	i_is_pl_handler = PQfnumber(res,"is_pl_handler");
 
 	for (i = 0; i < ntups; i++)
 	{
@@ -2330,13 +2358,16 @@ getFuncs(int *numFuncs)
 		finfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
 		AssignDumpId(&finfo[i].dobj);
 		finfo[i].dobj.name = strdup(PQgetvalue(res, i, i_proname));
-		finfo[i].dobj.namespace = findNamespace(atooid(PQgetvalue(res, i, i_pronamespace)),
+		finfo[i].dobj.namespace = 
+			findNamespace(atooid(PQgetvalue(res, i, i_pronamespace)),
 												finfo[i].dobj.catId.oid);
 		finfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
 		finfo[i].lang = atooid(PQgetvalue(res, i, i_prolang));
 		finfo[i].prorettype = atooid(PQgetvalue(res, i, i_prorettype));
 		finfo[i].proacl = strdup(PQgetvalue(res, i, i_proacl));
 		finfo[i].nargs = atoi(PQgetvalue(res, i, i_pronargs));
+		finfo[i].isProlangFunc = 
+			strcmp(PQgetvalue(res, i, i_is_pl_handler), "t") == 0;
 		if (finfo[i].nargs == 0)
 			finfo[i].argtypes = NULL;
 		else
@@ -2347,7 +2378,8 @@ getFuncs(int *numFuncs)
 		}
 
 		if (strlen(finfo[i].usename) == 0)
-			write_msg(NULL, "WARNING: owner of function \"%s\" appears to be invalid\n",
+			write_msg(NULL, 
+					  "WARNING: owner of function \"%s\" appears to be invalid\n",
 					  finfo[i].dobj.name);
 	}
 
@@ -5040,23 +5072,19 @@ dumpProcLang(Archive *fout, ProcLangInfo *plang)
 		return;
 
 	/*
-	 * Current theory is to dump PLs iff their underlying functions will
-	 * be dumped (are in a dumpable namespace, or have a non-system OID in
-	 * pre-7.3 databases).	Actually, we treat the PL itself as being in
+	 * We dump PLs iff their underlying call handler functions have been
+	 * marked as language functions (or have a non-system OID in
+	 * pre-7.3 databases).	We treat the PL itself as being in
 	 * the underlying function's namespace, though it isn't really.  This
 	 * avoids searchpath problems for the HANDLER clause.
 	 *
-	 * If the underlying function is in the pg_catalog namespace, we won't
-	 * have loaded it into finfo[] at all; therefore, treat failure to
-	 * find it in finfo[] as indicating we shouldn't dump it, not as an
-	 * error condition.  Ditto for the validator.
 	 */
 
 	funcInfo = findFuncByOid(plang->lanplcallfoid);
 	if (funcInfo == NULL)
 		return;
 
-	if (!funcInfo->dobj.namespace->dump)
+	if (!funcInfo->isProlangFunc && !funcInfo->dobj.namespace->dump)
 		return;
 
 	if (OidIsValid(plang->lanvalidator))
@@ -5254,9 +5282,10 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	char	  **argmodes = NULL;
 	char	  **argnames = NULL;
 
-	/* Dump only funcs in dumpable namespaces */
-	if (!finfo->dobj.namespace->dump || dataOnly)
+	/* Dump only funcs in dumpable namespaces, or needed language handlers */
+	if ((!finfo->isProlangFunc && !finfo->dobj.namespace->dump) || dataOnly)
 		return;
+
 
 	query = createPQExpBuffer();
 	q = createPQExpBuffer();

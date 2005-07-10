@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.116 2005/06/30 03:03:02 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.117 2005/07/10 14:26:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,6 +132,7 @@ typedef struct _funcInfo
 	Oid		   *argtypes;
 	Oid			prorettype;
 	char	   *proacl;
+	bool	isProlangFunc;
 } FuncInfo;
 
 /* AggInfo is a superset of FuncInfo */
