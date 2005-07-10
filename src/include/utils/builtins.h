@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.259 2005/07/06 19:02:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.260 2005/07/10 04:54:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -429,6 +429,8 @@ extern Datum nameicregexne(PG_FUNCTION_ARGS);
 extern Datum texticregexeq(PG_FUNCTION_ARGS);
 extern Datum texticregexne(PG_FUNCTION_ARGS);
 extern Datum textregexsubstr(PG_FUNCTION_ARGS);
+extern Datum textregexreplace_noopt(PG_FUNCTION_ARGS);
+extern Datum textregexreplace(PG_FUNCTION_ARGS);
 extern Datum similar_escape(PG_FUNCTION_ARGS);
 
 /* regproc.c */
@@ -566,6 +568,7 @@ extern List *textToQualifiedNameList(text *textval);
 extern bool SplitIdentifierString(char *rawstring, char separator,
 					  List **namelist);
 extern Datum replace_text(PG_FUNCTION_ARGS);
+extern Datum replace_text_regexp(PG_FUNCTION_ARGS);
 extern Datum split_text(PG_FUNCTION_ARGS);
 extern Datum text_to_array(PG_FUNCTION_ARGS);
 extern Datum array_to_text(PG_FUNCTION_ARGS);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.126 2005/07/07 04:36:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.127 2005/07/10 04:54:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/pg_locale.h"
+#include "regex/regex.h"
 
 
 typedef struct varlena unknown;
@@ -1989,6 +1990,225 @@ replace_text(PG_FUNCTION_ARGS)
 	ret_text = PG_STR_GET_TEXT(str->data);
 	pfree(str->data);
 	pfree(str);
+
+	PG_RETURN_TEXT_P(ret_text);
+}
+
+/*
+ * check_replace_text_has_escape_char
+ * check whether replace_text has escape char. 
+ */
+static bool
+check_replace_text_has_escape_char(const text *replace_text)
+{
+	const char *p = VARDATA(replace_text);
+	const char *p_end = p + (VARSIZE(replace_text) - VARHDRSZ);
+
+	if (pg_database_encoding_max_length() == 1)
+	{
+		for (; p < p_end; p++)
+			if (*p == '\\') return true;
+	}
+	else
+	{
+		for (; p < p_end; p += pg_mblen(p))
+			if (*p == '\\') return true;
+	}
+
+	return false;
+}
+
+/*
+ * appendStringInfoRegexpSubstr
+ * append string by using back references of regexp.
+ */
+static void
+appendStringInfoRegexpSubstr(StringInfo str, text *replace_text,
+    regmatch_t *pmatch, text *src_text)
+{
+	const char *p = VARDATA(replace_text);
+	const char *p_end = p + (VARSIZE(replace_text) - VARHDRSZ);
+
+	int			eml = pg_database_encoding_max_length();
+
+	int			substr_start = 1;
+	int			ch_cnt;
+
+	int			so;
+	int			eo;
+
+	while (1)
+	{
+		/* Find escape char. */
+		ch_cnt = 0;
+		if (eml == 1)
+		{
+			for (; p < p_end && *p != '\\'; p++)
+				ch_cnt++;
+		}
+		else
+		{
+			for (; p < p_end && *p != '\\'; p += pg_mblen(p))
+				ch_cnt++;
+		}
+
+		/*
+		 * Copy the text when there is a text in the left of escape char
+		 * or escape char is not found.
+		 */
+		if (ch_cnt)
+		{
+			text *append_text = text_substring(PointerGetDatum(replace_text),
+									  substr_start, ch_cnt, false);
+			appendStringInfoString(str, PG_TEXT_GET_STR(append_text));
+			pfree(append_text);
+		}
+		substr_start += ch_cnt + 1;
+
+		if (p >= p_end) /* When escape char is not found. */
+			break;
+
+		/* See the next character of escape char. */
+		p++;
+		so = eo = -1;
+
+		if (*p >= '1' && *p <= '9')
+		{
+			/* Use the back reference of regexp. */
+			int		idx = *p - '0';
+			so = pmatch[idx].rm_so;
+			eo = pmatch[idx].rm_eo;
+			p++;
+			substr_start++;
+		}
+		else if (*p == '&')
+		{
+			/* Use the entire matched string. */
+			so = pmatch[0].rm_so;
+			eo = pmatch[0].rm_eo;
+			p++;
+			substr_start++;
+		}
+
+		if (so != -1 && eo != -1)
+		{
+			/* Copy the text that is back reference of regexp. */
+			text *append_text = text_substring(PointerGetDatum(src_text),
+									  so + 1, (eo - so), false);
+			appendStringInfoString(str, PG_TEXT_GET_STR(append_text));
+			pfree(append_text);
+		}
+	}
+}
+
+#define REGEXP_REPLACE_BACKREF_CNT		10
+
+/*
+ * replace_text_regexp
+ * replace text that matches to regexp in src_text to replace_text.
+ */
+Datum
+replace_text_regexp(PG_FUNCTION_ARGS)
+{
+	text	   *ret_text;
+	text	   *src_text = PG_GETARG_TEXT_P(0);
+	int			src_text_len = VARSIZE(src_text) - VARHDRSZ;
+	regex_t	   *re = (regex_t *)PG_GETARG_POINTER(1);
+	text	   *replace_text = PG_GETARG_TEXT_P(2);
+	bool		global = PG_GETARG_BOOL(3);
+	StringInfo	str = makeStringInfo();
+	int			regexec_result;
+	regmatch_t	pmatch[REGEXP_REPLACE_BACKREF_CNT];
+	pg_wchar   *data;
+	size_t		data_len;
+	int			search_start;
+	int			data_pos;
+	bool		have_escape;
+
+	/* Convert data string to wide characters. */
+	data = (pg_wchar *) palloc((src_text_len + 1) * sizeof(pg_wchar));
+	data_len = pg_mb2wchar_with_len(VARDATA(src_text), data, src_text_len);
+
+	/* Check whether replace_text has escape char. */
+	have_escape = check_replace_text_has_escape_char(replace_text);
+
+	for (search_start = data_pos = 0; search_start <= data_len;)
+	{
+		regexec_result = pg_regexec(re,
+									data,
+									data_len,
+									search_start,
+									NULL,   /* no details */
+									REGEXP_REPLACE_BACKREF_CNT,
+									pmatch,
+									0);
+
+		if (regexec_result != REG_OKAY && regexec_result != REG_NOMATCH)
+		{
+			char	errMsg[100];
+
+			/* re failed??? */
+			pg_regerror(regexec_result, re, errMsg, sizeof(errMsg));
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
+				 errmsg("regular expression failed: %s", errMsg)));
+		}
+
+		if (regexec_result == REG_NOMATCH)
+			break;
+
+        /*
+         * Copy the text when there is a text in the left of matched position.
+         */
+		if (pmatch[0].rm_so - data_pos > 0)
+		{
+			text *left_text = text_substring(PointerGetDatum(src_text),
+									   data_pos + 1,
+									   pmatch[0].rm_so - data_pos, false);
+			appendStringInfoString(str, PG_TEXT_GET_STR(left_text));
+			pfree(left_text);
+		}
+
+		/*
+		 * Copy the replace_text. Process back references when the
+		 * replace_text has escape characters. 
+		 */
+		if (have_escape)
+			appendStringInfoRegexpSubstr(str, replace_text, pmatch, src_text);
+		else
+			appendStringInfoString(str, PG_TEXT_GET_STR(replace_text));
+
+		search_start = data_pos = pmatch[0].rm_eo;
+
+		/*
+		 * When global option is off, replace the first instance only.
+		 */
+		if (!global)
+			break;
+
+		/*
+		 * Search from next character when the matching text is zero width.
+		 */
+		if (pmatch[0].rm_so == pmatch[0].rm_eo)
+			search_start++;
+	}
+
+	/*
+     * Copy the text when there is a text at the right of last matched
+	 * or regexp is not matched.
+	 */
+	if (data_pos < data_len)
+	{
+		text *right_text = text_substring(PointerGetDatum(src_text),
+								   data_pos + 1, -1, true);
+		appendStringInfoString(str, PG_TEXT_GET_STR(right_text));
+		pfree(right_text);
+	}
+
+	ret_text = PG_STR_GET_TEXT(str->data);
+	pfree(str->data);
+	pfree(str);
+	pfree(data);
 
 	PG_RETURN_TEXT_P(ret_text);
 }

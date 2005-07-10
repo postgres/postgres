@@ -80,6 +80,13 @@ SELECT SUBSTRING('abcdefg' FROM 'c.e') AS "cde";
 -- With a parenthesized subexpression, return only what matches the subexpr
 SELECT SUBSTRING('abcdefg' FROM 'b(.*)f') AS "cde";
 
+-- PostgreSQL extension to allow using back reference in replace string;
+SELECT regexp_replace('1112223333', '(\\d{3})(\\d{3})(\\d{4})', '(\\1) \\2-\\3');
+SELECT regexp_replace('AAA   BBB   CCC   ', '\\s+', ' ', 'g');
+SELECT regexp_replace('AAA', '^|$', 'Z', 'g');
+SELECT regexp_replace('AAA aaa', 'A+', 'Z', 'gi');
+-- invalid option of REGEXP_REPLACE
+SELECT regexp_replace('AAA aaa', 'A+', 'Z', 'z');
 
 -- E021-11 position expression
 SELECT POSITION('4' IN '1234567890') = '4' AS "4";

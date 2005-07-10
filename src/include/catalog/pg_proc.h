@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.374 2005/07/06 19:02:53 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.375 2005/07/10 04:54:31 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2207,6 +2207,10 @@ DATA(insert OID =  937 (  substring    PGNSP PGUID 12 f f t f i 2 25 "25 23" _nu
 DESCR("return portion of string");
 DATA(insert OID =  2087 ( replace	   PGNSP PGUID 12 f f t f i 3 25 "25 25 25" _null_ _null_ _null_	replace_text - _null_ ));
 DESCR("replace all occurrences of old_substr with new_substr in string");
+DATA(insert OID =  2284 ( regexp_replace	   PGNSP PGUID 12 f f t f i 3 25 "25 25 25" _null_ _null_ _null_	textregexreplace_noopt - _null_ ));
+DESCR("replace text using regexp");
+DATA(insert OID =  2285 ( regexp_replace	   PGNSP PGUID 12 f f t f i 4 25 "25 25 25 25" _null_ _null_ _null_	textregexreplace - _null_ ));
+DESCR("replace text using regexp");
 DATA(insert OID =  2088 ( split_part   PGNSP PGUID 12 f f t f i 3 25 "25 25 23" _null_ _null_ _null_	split_text - _null_ ));
 DESCR("split string by field_sep and return field_num");
 DATA(insert OID =  2089 ( to_hex	   PGNSP PGUID 12 f f t f i 1 25 "23" _null_ _null_ _null_  to_hex32 - _null_ ));

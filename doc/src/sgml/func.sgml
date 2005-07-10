@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.263 2005/07/06 19:02:52 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.264 2005/07/10 04:54:30 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1254,6 +1254,26 @@ PostgreSQL documentation
        </entry>
        <entry><literal>quote_literal( 'O\'Reilly')</literal></entry>
        <entry><literal>'O''Reilly'</literal></entry>
+      </row>
+
+      <row>
+       <entry><literal><function>regexp_replace</function>(<parameter>source</parameter> <type>text</type>,
+       <parameter>pattern</parameter> <type>text</type>,
+       <parameter>replacement</parameter> <type>text</type>
+       <optional>, <parameter>flags</parameter> <type>text</type></optional>)</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>Replace string that matches the regular expression
+        <parameter>pattern</parameter> in <parameter>source</parameter> to
+        <parameter>replacement</parameter>.
+        <parameter>replacement</parameter> can use <literal>\1</>-<literal>\9</> and <literal>\&amp;</>.
+        <literal>\1</>-<literal>\9</> is a back reference to the n'th subexpression, and
+        <literal>\&amp;</> is the entire matched string.
+        <parameter>flags</parameter> can use <literal>g</>(global) and <literal>i</>(ignore case).
+        When flags is not specified, case sensitive matching is used, and it replaces
+        only the instance.
+       </entry>
+       <entry><literal>regexp_replace('1112223333', '(\\d{3})(\\d{3})(\\d{4})', '(\\1) \\2-\\3')</literal></entry>
+       <entry><literal>(111) 222-3333</literal></entry>
       </row>
 
       <row>
