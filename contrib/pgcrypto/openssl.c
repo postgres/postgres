@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.21 2005/07/10 03:55:28 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.22 2005/07/10 13:54:34 momjian Exp $
  */
 
 #include <postgres.h>
@@ -48,6 +48,26 @@
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L
 #define GOT_AES
 #include <openssl/aes.h>
+#endif
+
+/*
+ * Compatibility with older OpenSSL API for DES.
+ */
+#if OPENSSL_VERSION_NUMBER < 0x00907000L
+#define DES_key_schedule des_key_schedule
+#define DES_cblock des_cblock
+#define DES_set_key(k, ks) \
+		des_set_key((k), *(ks))
+#define DES_ecb_encrypt(i, o, k, e) \
+		des_ecb_encrypt((i), (o), *(k), (e))
+#define DES_ncbc_encrypt(i, o, l, k, iv, e) \
+		des_ncbc_encrypt((i), (o), (l), *(k), (iv), (e))
+#define DES_ecb3_encrypt(i, o, k1, k2, k3, e) \
+		des_ecb3_encrypt((des_cblock *)(i), (des_cblock *)(o), \
+				*(k1), *(k2), *(k3), (e))
+#define DES_ede3_cbc_encrypt(i, o, l, k1, k2, k3, iv, e) \
+		des_ede3_cbc_encrypt((i), (o), \
+				(l), *(k1), *(k2), *(k3), (iv), (e))
 #endif
 
 /*
@@ -178,11 +198,11 @@ typedef struct
 		}			bf;
 		struct
 		{
-			des_key_schedule key_schedule;
+			DES_key_schedule key_schedule;
 		}			des;
 		struct
 		{
-			des_key_schedule k1, k2, k3;
+			DES_key_schedule k1, k2, k3;
 		}			des3;
 		CAST_KEY	cast_key;
 #ifdef GOT_AES
@@ -318,11 +338,11 @@ static int
 ossl_des_init(PX_Cipher * c, const uint8 *key, unsigned klen, const uint8 *iv)
 {
 	ossldata   *od = c->ptr;
-	des_cblock	xkey;
+	DES_cblock	xkey;
 
 	memset(&xkey, 0, sizeof(xkey));
 	memcpy(&xkey, key, klen > 8 ? 8 : klen);
-	des_set_key(&xkey, od->u.des.key_schedule);
+	DES_set_key(&xkey, &od->u.des.key_schedule);
 	memset(&xkey, 0, sizeof(xkey));
 
 	if (iv)
@@ -341,9 +361,9 @@ ossl_des_ecb_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
 	ossldata   *od = c->ptr;
 
 	for (i = 0; i < dlen / bs; i++)
-		des_ecb_encrypt((des_cblock *) (data + i * bs),
-						(des_cblock *) (res + i * bs),
-						od->u.des.key_schedule, 1);
+		DES_ecb_encrypt((DES_cblock *) (data + i * bs),
+						(DES_cblock *) (res + i * bs),
+						&od->u.des.key_schedule, 1);
 	return 0;
 }
 
@@ -356,9 +376,9 @@ ossl_des_ecb_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
 	ossldata   *od = c->ptr;
 
 	for (i = 0; i < dlen / bs; i++)
-		des_ecb_encrypt((des_cblock *) (data + i * bs),
-						(des_cblock *) (res + i * bs),
-						od->u.des.key_schedule, 0);
+		DES_ecb_encrypt((DES_cblock *) (data + i * bs),
+						(DES_cblock *) (res + i * bs),
+						&od->u.des.key_schedule, 0);
 	return 0;
 }
 
@@ -368,8 +388,8 @@ ossl_des_cbc_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
 {
 	ossldata   *od = c->ptr;
 
-	des_ncbc_encrypt(data, res, dlen, od->u.des.key_schedule,
-					 (des_cblock *) od->iv, 1);
+	DES_ncbc_encrypt(data, res, dlen, &od->u.des.key_schedule,
+					 (DES_cblock *) od->iv, 1);
 	return 0;
 }
 
@@ -379,8 +399,8 @@ ossl_des_cbc_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
 {
 	ossldata   *od = c->ptr;
 
-	des_ncbc_encrypt(data, res, dlen, od->u.des.key_schedule,
-					 (des_cblock *) od->iv, 0);
+	DES_ncbc_encrypt(data, res, dlen, &od->u.des.key_schedule,
+					 (DES_cblock *) od->iv, 0);
 	return 0;
 }
 
@@ -390,7 +410,7 @@ static int
 ossl_des3_init(PX_Cipher * c, const uint8 *key, unsigned klen, const uint8 *iv)
 {
 	ossldata   *od = c->ptr;
-	des_cblock	xkey1,
+	DES_cblock	xkey1,
 				xkey2,
 				xkey3;
 
@@ -453,7 +473,7 @@ ossl_des3_cbc_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
 
 	DES_ede3_cbc_encrypt(data, res, dlen,
 						 &od->u.des3.k1, &od->u.des3.k2, &od->u.des3.k3,
-						 (des_cblock *) od->iv, 1);
+						 (DES_cblock *) od->iv, 1);
 	return 0;
 }
 
@@ -465,7 +485,7 @@ ossl_des3_cbc_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
 
 	DES_ede3_cbc_encrypt(data, res, dlen,
 						 &od->u.des3.k1, &od->u.des3.k2, &od->u.des3.k3,
-						 (des_cblock *) od->iv, 0);
+						 (DES_cblock *) od->iv, 0);
 	return 0;
 }
 
