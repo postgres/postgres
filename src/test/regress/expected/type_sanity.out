@@ -69,11 +69,10 @@ WHERE p1.typtype in ('b') AND p1.typname NOT LIKE E'\\_%' AND NOT EXISTS
  705 | unknown
 (2 rows)
 
--- Conversion routines must be provided except in 'c' entries.
+-- Text conversion routines must be provided.
 SELECT p1.oid, p1.typname
 FROM pg_type as p1
-WHERE p1.typtype != 'c' AND
-    (p1.typinput = 0 OR p1.typoutput = 0);
+WHERE (p1.typinput = 0 OR p1.typoutput = 0);
  oid | typname 
 -----+---------
 (0 rows)
@@ -83,8 +82,6 @@ SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
 WHERE p1.typinput = p2.oid AND p1.typtype in ('b', 'p') AND NOT
     ((p2.pronargs = 1 AND p2.proargtypes[0] = 'cstring'::regtype) OR
-     (p2.pronargs = 2 AND p2.proargtypes[0] = 'cstring'::regtype AND
-      p2.proargtypes[1] = 'oid'::regtype) OR
      (p2.pronargs = 3 AND p2.proargtypes[0] = 'cstring'::regtype AND
       p2.proargtypes[1] = 'oid'::regtype AND
       p2.proargtypes[2] = 'int4'::regtype));
@@ -148,8 +145,9 @@ SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
 WHERE p1.typreceive = p2.oid AND p1.typtype in ('b', 'p') AND NOT
     ((p2.pronargs = 1 AND p2.proargtypes[0] = 'internal'::regtype) OR
-     (p2.pronargs = 2 AND p2.proargtypes[0] = 'internal'::regtype AND
-      p2.proargtypes[1] = 'oid'::regtype));
+     (p2.pronargs = 3 AND p2.proargtypes[0] = 'internal'::regtype AND
+      p2.proargtypes[1] = 'oid'::regtype AND
+      p2.proargtypes[2] = 'int4'::regtype));
  oid | typname | oid | proname 
 -----+---------+-----+---------
 (0 rows)
@@ -180,6 +178,15 @@ ORDER BY 1;
   22 | int2vector | 2410 | int2vectorrecv
   30 | oidvector  | 2420 | oidvectorrecv
 (2 rows)
+
+-- Suspicious if typreceive doesn't take same number of args as typinput
+SELECT p1.oid, p1.typname, p2.oid, p2.proname, p3.oid, p3.proname
+FROM pg_type AS p1, pg_proc AS p2, pg_proc AS p3
+WHERE p1.typinput = p2.oid AND p1.typreceive = p3.oid AND
+    p2.pronargs != p3.pronargs;
+ oid | typname | oid | proname | oid | proname 
+-----+---------+-----+---------+-----+---------
+(0 rows)
 
 -- Check for bogus typsend routines
 -- As of 7.4, this check finds refcursor, which is borrowing

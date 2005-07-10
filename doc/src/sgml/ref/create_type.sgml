@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.55 2005/05/01 18:56:17 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.56 2005/07/10 21:13:57 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -125,12 +125,13 @@ CREATE TYPE <replaceable class="parameter">name</replaceable> (
    function should perform adequate checking to ensure that the value is
    valid.
    The receive function may be declared as taking one argument of type
-   <type>internal</type>, or two arguments of types <type>internal</type>
-   and <type>oid</type>.  It must return a value of the data type itself.
-   (The first argument is a pointer to a <type>StringInfo</type> buffer
-   holding the received byte string; the optional second argument is the
-   element type OID in case this is an array type, or the type's own OID for a
-   composite type.)  Similarly, the optional
+   <type>internal</type>, or as taking three arguments of types
+   <type>internal</type>, <type>oid</type>, <type>integer</type>.
+   The first argument is a pointer to a <type>StringInfo</type> buffer
+   holding the received byte string; the optional arguments are the
+   same as for the text input function.
+   The receive function must return a value of the data type itself.
+   Similarly, the optional
    <replaceable class="parameter">send_function</replaceable> converts
    from the internal representation to the external binary representation.
    If this function is not supplied, the type cannot participate in binary

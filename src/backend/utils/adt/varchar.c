@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.110 2005/05/29 20:15:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.111 2005/07/10 21:13:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,8 @@
 
 #include "access/hash.h"
 #include "catalog/pg_type.h"
+#include "lib/stringinfo.h"
+#include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
@@ -53,28 +55,25 @@
  *****************************************************************************/
 
 /*
- * Convert a C string to CHARACTER internal representation.  atttypmod
- * is the declared length of the type plus VARHDRSZ.
+ * bpchar_input -- common guts of bpcharin and bpcharrecv
  *
- * If the C string is too long, raise an error, unless the extra
+ * s is the input text of length len (may not be null-terminated)
+ * atttypmod is the typmod value to apply
+ *
+ * Note that atttypmod is measured in characters, which
+ * is not necessarily the same as the number of bytes.
+ *
+ * If the input string is too long, raise an error, unless the extra
  * characters are spaces, in which case they're truncated.  (per SQL)
  */
-Datum
-bpcharin(PG_FUNCTION_ARGS)
+static BpChar *
+bpchar_input(const char *s, size_t len, int32 atttypmod)
 {
-	char	   *s = PG_GETARG_CSTRING(0);
-
-#ifdef NOT_USED
-	Oid			typelem = PG_GETARG_OID(1);
-#endif
-	int32		atttypmod = PG_GETARG_INT32(2);
 	BpChar	   *result;
 	char	   *r;
-	size_t		len,
-				maxlen;
+	size_t		maxlen;
 
 	/* verify encoding */
-	len = strlen(s);
 	pg_verifymbstr(s, len, false);
 
 	/* If typmod is -1 (or invalid), use the actual string length */
@@ -85,30 +84,32 @@ bpcharin(PG_FUNCTION_ARGS)
 		size_t		charlen;		/* number of CHARACTERS in the input */
 
 		maxlen = atttypmod - VARHDRSZ;
-		charlen = pg_mbstrlen(s);
+		charlen = pg_mbstrlen_with_len(s, len);
 		if (charlen > maxlen)
 		{
 			/* Verify that extra characters are spaces, and clip them off */
 			size_t		mbmaxlen = pg_mbcharcliplen(s, len, maxlen);
+			size_t		j;
 
 			/*
 			 * at this point, len is the actual BYTE length of the input
 			 * string, maxlen is the max number of CHARACTERS allowed for this
-			 * bpchar type.
+			 * bpchar type, mbmaxlen is the length in BYTES of those chars.
 			 */
-			if (strspn(s + mbmaxlen, " ") == len - mbmaxlen)
-				len = mbmaxlen;
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
-						 errmsg("value too long for type character(%d)",
-								(int) maxlen)));
+			for (j = mbmaxlen; j < len; j++)
+			{
+				if (s[j] != ' ')
+					ereport(ERROR,
+							(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+							 errmsg("value too long for type character(%d)",
+									(int) maxlen)));
+			}
 
 			/*
 			 * Now we set maxlen to the necessary byte length, not
 			 * the number of CHARACTERS!
 			 */
-			maxlen = len;
+			maxlen = len = mbmaxlen;
 		}
 		else
 		{
@@ -120,7 +121,7 @@ bpcharin(PG_FUNCTION_ARGS)
 		}
 	}
 
-	result = palloc(maxlen + VARHDRSZ);
+	result = (BpChar *) palloc(maxlen + VARHDRSZ);
 	VARATT_SIZEP(result) = maxlen + VARHDRSZ;
 	r = VARDATA(result);
 	memcpy(r, s, len);
@@ -129,6 +130,24 @@ bpcharin(PG_FUNCTION_ARGS)
 	if (maxlen > len)
 		memset(r + len, ' ', maxlen - len);
 
+	return result;
+}
+
+/*
+ * Convert a C string to CHARACTER internal representation.  atttypmod
+ * is the declared length of the type plus VARHDRSZ.
+ */
+Datum
+bpcharin(PG_FUNCTION_ARGS)
+{
+	char	   *s = PG_GETARG_CSTRING(0);
+#ifdef NOT_USED
+	Oid			typelem = PG_GETARG_OID(1);
+#endif
+	int32		atttypmod = PG_GETARG_INT32(2);
+	BpChar	   *result;
+
+	result = bpchar_input(s, strlen(s), atttypmod);
 	PG_RETURN_BPCHAR_P(result);
 }
 
@@ -158,8 +177,19 @@ bpcharout(PG_FUNCTION_ARGS)
 Datum
 bpcharrecv(PG_FUNCTION_ARGS)
 {
-	/* Exactly the same as textrecv, so share code */
-	return textrecv(fcinfo);
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+#ifdef NOT_USED
+	Oid			typelem = PG_GETARG_OID(1);
+#endif
+	int32		atttypmod = PG_GETARG_INT32(2);
+	BpChar	   *result;
+	char	   *str;
+	int			nbytes;
+
+	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
+	result = bpchar_input(str, nbytes, atttypmod);
+	pfree(str);
+	PG_RETURN_BPCHAR_P(result);
 }
 
 /*
@@ -344,30 +374,24 @@ name_bpchar(PG_FUNCTION_ARGS)
  *****************************************************************************/
 
 /*
- * Convert a C string to VARCHAR internal representation.  atttypmod
- * is the declared length of the type plus VARHDRSZ.
+ * varchar_input -- common guts of varcharin and varcharrecv
  *
- * Note that atttypmod is regarded as the number of characters, which
+ * s is the input text of length len (may not be null-terminated)
+ * atttypmod is the typmod value to apply
+ *
+ * Note that atttypmod is measured in characters, which
  * is not necessarily the same as the number of bytes.
  *
- * If the C string is too long, raise an error, unless the extra characters
- * are spaces, in which case they're truncated.  (per SQL)
+ * If the input string is too long, raise an error, unless the extra
+ * characters are spaces, in which case they're truncated.  (per SQL)
  */
-Datum
-varcharin(PG_FUNCTION_ARGS)
+static VarChar *
+varchar_input(const char *s, size_t len, int32 atttypmod)
 {
-	char	   *s = PG_GETARG_CSTRING(0);
-
-#ifdef NOT_USED
-	Oid			typelem = PG_GETARG_OID(1);
-#endif
-	int32		atttypmod = PG_GETARG_INT32(2);
 	VarChar    *result;
-	size_t		len,
-				maxlen;
+	size_t		maxlen;
 
 	/* verify encoding */
-	len = strlen(s);
 	pg_verifymbstr(s, len, false);
 
 	maxlen = atttypmod - VARHDRSZ;
@@ -376,20 +400,42 @@ varcharin(PG_FUNCTION_ARGS)
 	{
 		/* Verify that extra characters are spaces, and clip them off */
 		size_t		mbmaxlen = pg_mbcharcliplen(s, len, maxlen);
+		size_t		j;
 
-		if (strspn(s + mbmaxlen, " ") == len - mbmaxlen)
-			len = mbmaxlen;
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
-				  errmsg("value too long for type character varying(%d)",
-						 (int) maxlen)));
+		for (j = mbmaxlen; j < len; j++)
+		{
+			if (s[j] != ' ')
+				ereport(ERROR,
+						(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+						 errmsg("value too long for type character varying(%d)",
+								(int) maxlen)));
+		}
+
+		len = mbmaxlen;
 	}
 
-	result = palloc(len + VARHDRSZ);
+	result = (VarChar *) palloc(len + VARHDRSZ);
 	VARATT_SIZEP(result) = len + VARHDRSZ;
 	memcpy(VARDATA(result), s, len);
 
+	return result;
+}
+
+/*
+ * Convert a C string to VARCHAR internal representation.  atttypmod
+ * is the declared length of the type plus VARHDRSZ.
+ */
+Datum
+varcharin(PG_FUNCTION_ARGS)
+{
+	char	   *s = PG_GETARG_CSTRING(0);
+#ifdef NOT_USED
+	Oid			typelem = PG_GETARG_OID(1);
+#endif
+	int32		atttypmod = PG_GETARG_INT32(2);
+	VarChar    *result;
+
+	result = varchar_input(s, strlen(s), atttypmod);
 	PG_RETURN_VARCHAR_P(result);
 }
 
@@ -419,8 +465,19 @@ varcharout(PG_FUNCTION_ARGS)
 Datum
 varcharrecv(PG_FUNCTION_ARGS)
 {
-	/* Exactly the same as textrecv, so share code */
-	return textrecv(fcinfo);
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+#ifdef NOT_USED
+	Oid			typelem = PG_GETARG_OID(1);
+#endif
+	int32		atttypmod = PG_GETARG_INT32(2);
+	VarChar	   *result;
+	char	   *str;
+	int			nbytes;
+
+	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
+	result = varchar_input(str, nbytes, atttypmod);
+	pfree(str);
+	PG_RETURN_VARCHAR_P(result);
 }
 
 /*

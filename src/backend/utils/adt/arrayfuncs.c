@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.120 2005/05/01 18:56:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.121 2005/07/10 21:13:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,7 @@ static Datum *ReadArrayStr(char *arrayStr, const char *origStr,
 			 int typlen, bool typbyval, char typalign,
 			 int *nbytes);
 static Datum *ReadArrayBinary(StringInfo buf, int nitems,
-				FmgrInfo *receiveproc, Oid typioparam,
+				FmgrInfo *receiveproc, Oid typioparam, int32 typmod,
 				int typlen, bool typbyval, char typalign,
 				int *nbytes);
 static void CopyArrayEls(char *p, Datum *values, int nitems,
@@ -1121,6 +1121,8 @@ array_recv(PG_FUNCTION_ARGS)
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 	Oid			spec_element_type = PG_GETARG_OID(1);	/* type of an array
 														 * element */
+	int32		typmod = PG_GETARG_INT32(2);	/* typmod for array
+												 * elements */
 	Oid			element_type;
 	int			typlen;
 	bool		typbyval;
@@ -1215,7 +1217,8 @@ array_recv(PG_FUNCTION_ARGS)
 	typalign = my_extra->typalign;
 	typioparam = my_extra->typioparam;
 
-	dataPtr = ReadArrayBinary(buf, nitems, &my_extra->proc, typioparam,
+	dataPtr = ReadArrayBinary(buf, nitems, &my_extra->proc,
+							  typioparam, typmod,
 							  typlen, typbyval, typalign,
 							  &nbytes);
 	nbytes += ARR_OVERHEAD(ndim);
@@ -1249,6 +1252,7 @@ ReadArrayBinary(StringInfo buf,
 				int nitems,
 				FmgrInfo *receiveproc,
 				Oid typioparam,
+				int32 typmod,
 				int typlen,
 				bool typbyval,
 				char typalign,
@@ -1289,9 +1293,10 @@ ReadArrayBinary(StringInfo buf,
 		buf->data[buf->cursor] = '\0';
 
 		/* Now call the element's receiveproc */
-		values[i] = FunctionCall2(receiveproc,
+		values[i] = FunctionCall3(receiveproc,
 								  PointerGetDatum(&elem_buf),
-								  ObjectIdGetDatum(typioparam));
+								  ObjectIdGetDatum(typioparam),
+								  Int32GetDatum(typmod));
 
 		/* Trouble if it didn't eat the whole buffer */
 		if (elem_buf.cursor != itemlen)

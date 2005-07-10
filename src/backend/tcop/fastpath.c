@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.80 2005/05/01 18:56:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.81 2005/07/10 21:13:58 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -493,9 +493,10 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info * fip,
 			/* Call the argument type's binary input converter */
 			getTypeBinaryInputInfo(fip->argtypes[i], &typreceive, &typioparam);
 
-			fcinfo->arg[i] = OidFunctionCall2(typreceive,
+			fcinfo->arg[i] = OidFunctionCall3(typreceive,
 											  PointerGetDatum(&abuf),
-										   ObjectIdGetDatum(typioparam));
+											  ObjectIdGetDatum(typioparam),
+											  Int32GetDatum(-1));
 
 			/* Trouble if it didn't eat the whole buffer */
 			if (abuf.cursor != abuf.len)
@@ -579,9 +580,10 @@ parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info * fip,
 		/* Call the argument type's binary input converter */
 		getTypeBinaryInputInfo(fip->argtypes[i], &typreceive, &typioparam);
 
-		fcinfo->arg[i] = OidFunctionCall2(typreceive,
+		fcinfo->arg[i] = OidFunctionCall3(typreceive,
 										  PointerGetDatum(&abuf),
-										  ObjectIdGetDatum(typioparam));
+										  ObjectIdGetDatum(typioparam),
+										  Int32GetDatum(-1));
 
 		/* Trouble if it didn't eat the whole buffer */
 		if (abuf.cursor != abuf.len)

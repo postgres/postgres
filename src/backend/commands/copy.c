@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.246 2005/06/28 05:08:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.247 2005/07/10 21:13:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,7 @@ static char *CopyReadAttributeCSV(const char *delim, const char *null_print,
 					 char *quote, char *escape,
 					 CopyReadResult *result, bool *isnull);
 static Datum CopyReadBinaryAttribute(int column_no, FmgrInfo *flinfo,
-						Oid typioparam, bool *isnull);
+						Oid typioparam, int32 typmod, bool *isnull);
 static void CopyAttributeOut(char *string, char *delim);
 static void CopyAttributeOutCSV(char *string, char *delim, char *quote,
 					char *escape, bool force_quote);
@@ -1843,8 +1843,9 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 				copy_attname = "oid";
 				loaded_oid =
 					DatumGetObjectId(CopyReadBinaryAttribute(0,
-														&oid_in_function,
-														  oid_typioparam,
+															 &oid_in_function,
+															 oid_typioparam,
+															 -1,
 															 &isnull));
 				if (isnull || loaded_oid == InvalidOid)
 					ereport(ERROR,
@@ -1864,6 +1865,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 				values[m] = CopyReadBinaryAttribute(i,
 													&in_functions[m],
 													typioparams[m],
+													attr[m]->atttypmod,
 													&isnull);
 				nulls[m] = isnull ? 'n' : ' ';
 				copy_attname = NULL;
@@ -2556,7 +2558,8 @@ CopyReadAttributeCSV(const char *delim, const char *null_print, char *quote,
  * Read a binary attribute
  */
 static Datum
-CopyReadBinaryAttribute(int column_no, FmgrInfo *flinfo, Oid typioparam,
+CopyReadBinaryAttribute(int column_no, FmgrInfo *flinfo,
+						Oid typioparam, int32 typmod,
 						bool *isnull)
 {
 	int32		fld_size;
@@ -2594,9 +2597,10 @@ CopyReadBinaryAttribute(int column_no, FmgrInfo *flinfo, Oid typioparam,
 	attribute_buf.data[fld_size] = '\0';
 
 	/* Call the column type's binary input converter */
-	result = FunctionCall2(flinfo,
+	result = FunctionCall3(flinfo,
 						   PointerGetDatum(&attribute_buf),
-						   ObjectIdGetDatum(typioparam));
+						   ObjectIdGetDatum(typioparam),
+						   Int32GetDatum(typmod));
 
 	/* Trouble if it didn't eat the whole buffer */
 	if (attribute_buf.cursor != attribute_buf.len)

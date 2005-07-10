@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.74 2005/07/07 20:39:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.75 2005/07/10 21:13:58 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -859,7 +859,7 @@ findTypeInputFunction(List *procname, Oid typeOid)
 
 	/*
 	 * Input functions can take a single argument of type CSTRING, or
-	 * three arguments (string, element OID, typmod).
+	 * three arguments (string, typioparam OID, typmod).
 	 *
 	 * For backwards compatibility we allow OPAQUE in place of CSTRING; if we
 	 * see this, we issue a warning and fix up the pg_proc entry.
@@ -973,12 +973,12 @@ findTypeOutputFunction(List *procname, Oid typeOid)
 static Oid
 findTypeReceiveFunction(List *procname, Oid typeOid)
 {
-	Oid			argList[2];
+	Oid			argList[3];
 	Oid			procOid;
 
 	/*
 	 * Receive functions can take a single argument of type INTERNAL, or
-	 * two arguments (internal, oid).
+	 * three arguments (internal, typioparam OID, typmod).
 	 */
 	argList[0] = INTERNALOID;
 
@@ -987,8 +987,9 @@ findTypeReceiveFunction(List *procname, Oid typeOid)
 		return procOid;
 
 	argList[1] = OIDOID;
+	argList[2] = INT4OID;
 
-	procOid = LookupFuncName(procname, 2, argList, true);
+	procOid = LookupFuncName(procname, 3, argList, true);
 	if (OidIsValid(procOid))
 		return procOid;
 

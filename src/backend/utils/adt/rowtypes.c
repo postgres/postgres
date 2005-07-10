@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/rowtypes.c,v 1.11 2005/05/01 18:56:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/rowtypes.c,v 1.12 2005/07/10 21:13:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,6 +54,9 @@ record_in(PG_FUNCTION_ARGS)
 {
 	char	   *string = PG_GETARG_CSTRING(0);
 	Oid			tupType = PG_GETARG_OID(1);
+#ifdef NOT_USED
+	int32		typmod = PG_GETARG_INT32(2);
+#endif
 	HeapTupleHeader result;
 	int32		tupTypmod;
 	TupleDesc	tupdesc;
@@ -417,6 +420,9 @@ record_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 	Oid			tupType = PG_GETARG_OID(1);
+#ifdef NOT_USED
+	int32		typmod = PG_GETARG_INT32(2);
+#endif
 	HeapTupleHeader result;
 	int32		tupTypmod;
 	TupleDesc	tupdesc;
@@ -560,10 +566,10 @@ record_recv(PG_FUNCTION_ARGS)
 				column_info->column_type = column_type;
 			}
 
-			values[i] = FunctionCall2(&column_info->proc,
+			values[i] = FunctionCall3(&column_info->proc,
 									  PointerGetDatum(&item_buf),
-							  ObjectIdGetDatum(column_info->typioparam));
-
+									  ObjectIdGetDatum(column_info->typioparam),
+									  Int32GetDatum(tupdesc->attrs[i]->atttypmod));
 			nulls[i] = ' ';
 
 			/* Trouble if it didn't eat the whole buffer */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.129 2005/07/04 14:38:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.130 2005/07/10 21:13:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,6 +170,10 @@ Datum
 timestamp_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+#ifdef NOT_USED
+	Oid			typelem = PG_GETARG_OID(1);
+#endif
+	int32		typmod = PG_GETARG_INT32(2);
 	Timestamp timestamp;
 	struct pg_tm tt,
 			   *tm = &tt;
@@ -177,7 +181,6 @@ timestamp_recv(PG_FUNCTION_ARGS)
 
 #ifdef HAVE_INT64_TIMESTAMP
 	timestamp = (Timestamp) pq_getmsgint64(buf);
-
 #else
 	timestamp = (Timestamp) pq_getmsgfloat8(buf);
 #endif
@@ -185,10 +188,12 @@ timestamp_recv(PG_FUNCTION_ARGS)
 	/* rangecheck: see if timestamp_out would like it */
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		 /* ok */ ;
-	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) !=0)
+	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
+
+	AdjustTimestampForTypmod(&timestamp, typmod);
 
 	PG_RETURN_TIMESTAMP(timestamp);
 }
@@ -409,6 +414,10 @@ Datum
 timestamptz_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+#ifdef NOT_USED
+	Oid			typelem = PG_GETARG_OID(1);
+#endif
+	int32		typmod = PG_GETARG_INT32(2);
 	TimestampTz timestamp;
 	int			tz;
 	struct pg_tm tt,
@@ -418,7 +427,6 @@ timestamptz_recv(PG_FUNCTION_ARGS)
 
 #ifdef HAVE_INT64_TIMESTAMP
 	timestamp = (TimestampTz) pq_getmsgint64(buf);
-
 #else
 	timestamp = (TimestampTz) pq_getmsgfloat8(buf);
 #endif
@@ -430,6 +438,8 @@ timestamptz_recv(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
+
+	AdjustTimestampForTypmod(&timestamp, typmod);
 
 	PG_RETURN_TIMESTAMPTZ(timestamp);
 }
@@ -526,7 +536,6 @@ interval_in(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("interval out of range")));
-			AdjustIntervalForTypmod(result, typmod);
 			break;
 
 		case DTK_INVALID:
@@ -539,6 +548,8 @@ interval_in(PG_FUNCTION_ARGS)
 			elog(ERROR, "unexpected dtype %d while parsing interval \"%s\"",
 				 dtype, str);
 	}
+
+	AdjustIntervalForTypmod(result, typmod);
 
 	PG_RETURN_INTERVAL_P(result);
 }
@@ -573,17 +584,22 @@ Datum
 interval_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+#ifdef NOT_USED
+	Oid			typelem = PG_GETARG_OID(1);
+#endif
+	int32		typmod = PG_GETARG_INT32(2);
 	Interval   *interval;
 
 	interval = (Interval *) palloc(sizeof(Interval));
 
 #ifdef HAVE_INT64_TIMESTAMP
 	interval->time = pq_getmsgint64(buf);
-
 #else
 	interval->time = pq_getmsgfloat8(buf);
 #endif
 	interval->month = pq_getmsgint(buf, sizeof(interval->month));
+
+	AdjustIntervalForTypmod(interval, typmod);
 
 	PG_RETURN_INTERVAL_P(interval);
 }

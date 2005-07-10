@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.84 2005/06/04 14:12:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.85 2005/07/10 21:13:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -383,6 +383,10 @@ Datum
 numeric_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+#ifdef NOT_USED
+	Oid			typelem = PG_GETARG_OID(1);
+#endif
+	int32		typmod = PG_GETARG_INT32(2);
 	NumericVar	value;
 	Numeric		res;
 	int			len,
@@ -418,6 +422,8 @@ numeric_recv(PG_FUNCTION_ARGS)
 				 errmsg("invalid digit in external \"numeric\" value")));
 		value.digits[i] = d;
 	}
+
+	apply_typmod(&value, typmod);
 
 	res = make_result(&value);
 	free_var(&value);

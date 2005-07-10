@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.452 2005/07/04 04:51:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.453 2005/07/10 21:13:58 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1571,9 +1571,10 @@ exec_bind_message(StringInfo input_message)
 						getTypeBinaryInputInfo(ptype, &typreceive, &typioparam);
 
 						params[i].value =
-							OidFunctionCall2(typreceive,
+							OidFunctionCall3(typreceive,
 											 PointerGetDatum(&pbuf),
-										   ObjectIdGetDatum(typioparam));
+											 ObjectIdGetDatum(typioparam),
+											 Int32GetDatum(-1));
 
 						/* Trouble if it didn't eat the whole buffer */
 						if (pbuf.cursor != pbuf.len)
