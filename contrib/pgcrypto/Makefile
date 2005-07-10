@@ -1,19 +1,20 @@
 #
-# $PostgreSQL: pgsql/contrib/pgcrypto/Makefile,v 1.17 2005/07/06 16:14:42 tgl Exp $
+# $PostgreSQL: pgsql/contrib/pgcrypto/Makefile,v 1.18 2005/07/10 03:52:56 momjian Exp $
 #
 
 # if you don't have OpenSSL, you can use libc random() or /dev/urandom
 INT_CFLAGS = -DRAND_SILLY
 #INT_CFLAGS = -DRAND_DEV=\"/dev/urandom\"
 
-INT_SRCS = md5.c sha1.c internal.c blf.c rijndael.c
+INT_SRCS = md5.c sha1.c sha2.c internal.c blf.c rijndael.c
+INT_TESTS = sha2
 
 OSSL_CFLAGS = -DRAND_OPENSSL
 OSSL_SRCS = openssl.c
 OSSL_TESTS = des 3des cast5
 
 CF_SRCS = $(if $(subst no,,$(with_openssl)), $(OSSL_SRCS), $(INT_SRCS))
-CF_TESTS = $(if $(subst no,,$(with_openssl)), $(OSSL_TESTS))
+CF_TESTS = $(if $(subst no,,$(with_openssl)), $(OSSL_TESTS), $(INT_TESTS))
 CF_CFLAGS = $(if $(subst no,,$(with_openssl)), $(OSSL_CFLAGS), $(INT_CFLAGS))
 
 PG_CPPFLAGS	= $(CF_CFLAGS)
