@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.82 2005/07/10 15:19:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.83 2005/07/10 15:32:47 momjian Exp $
  *
  **********************************************************************/
 
@@ -81,6 +81,7 @@ typedef struct plperl_proc_desc
 	bool		lanpltrusted;
 	bool		fn_retistuple;	/* true, if function returns tuple */
 	bool		fn_retisset;	/* true, if function returns set */
+	bool        fn_retisarray;  /* true if function returns array */
 	Oid			result_oid;		/* Oid of result type */
 	FmgrInfo	result_in_func;	/* I/O function and arg for result type */
 	Oid			result_typioparam;
@@ -194,7 +195,28 @@ plperl_init_interp(void)
 		"sub ::plperl_warn { my $msg = shift; &elog(&NOTICE, $msg); } "
 		"$SIG{__WARN__} = \\&::plperl_warn; "
 		"sub ::mkunsafefunc {return eval(qq[ sub { $_[0] $_[1] } ]); }"
+		"sub ::_plperl_to_pg_array"
+		"{"
+		"  my $arg = shift; ref $arg eq 'ARRAY' || return $arg; "
+		"  my $res = ''; my $first = 1; "
+		"  foreach my $elem (@$arg) "
+		"  { "
+		"    $res .= ', ' unless $first; $first = undef; "
+		"    if (ref $elem) "
+		"    { "
+		"      $res .= _plperl_to_pg_array($elem); "
+		"    } "
+		"    else "
+		"    { "
+		"      my $str = qq($elem); "
+		"      $str =~ s/([\"\\\\])/\\\\$1/g; "
+		"      $res .= qq(\"$str\"); "
+		"    } "
+		"  } "
+		"  return qq({$res}); "
+		"} "
 	};
+
 
 	static char	   *strict_embedding[3] = {
 		"", "-e",
@@ -231,6 +253,7 @@ plperl_safe_init(void)
 	"$PLContainer->permit(qw[:base_math !:base_io sort time]);"
 	"$PLContainer->share(qw[&elog &spi_exec_query &return_next "
 	"&spi_query &spi_fetchrow "
+	"&_plperl_to_pg_array "
 	"&DEBUG &LOG &INFO &NOTICE &WARNING &ERROR %_SHARED ]);"
 			   ;
 
@@ -329,6 +352,34 @@ plperl_build_tuple_result(HV *perlhash, AttInMetadata *attinmeta)
 	tup = BuildTupleFromCStrings(attinmeta, values);
 	pfree(values);
 	return tup;
+}
+
+/*
+ * convert perl array to postgres string representation
+ */
+static SV*
+plperl_convert_to_pg_array(SV *src)
+{
+    SV* rv;
+	int count;
+	dSP ;
+
+	PUSHMARK(SP) ;
+	XPUSHs(src);
+	PUTBACK ;
+
+	count = call_pv("_plperl_to_pg_array", G_SCALAR);
+
+	SPAGAIN ;
+
+	if (count != 1)
+		croak("Big trouble\n") ;
+
+	rv = POPs;
+			   
+	PUTBACK ;
+
+    return rv;
 }
 
 
@@ -869,7 +920,8 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 
 	rsi = (ReturnSetInfo *)fcinfo->resultinfo;
 
-	if (prodesc->fn_retisset) {
+	if (prodesc->fn_retisset) 
+	{
 		if (!rsi || !IsA(rsi, ReturnSetInfo) ||
 			(rsi->allowedModes & SFRM_Materialize) == 0 ||
 			rsi->expectedDesc == NULL)
@@ -890,7 +942,8 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 			int i = 0;
 			SV **svp = 0;
 			AV *rav = (AV *)SvRV(perlret);
-			while ((svp = av_fetch(rav, i, FALSE)) != NULL) {
+			while ((svp = av_fetch(rav, i, FALSE)) != NULL) 
+			{
 				plperl_return_next(*svp);
 				i++;
 			}
@@ -904,7 +957,8 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		}
 
 		rsi->returnMode = SFRM_Materialize;
-		if (prodesc->tuple_store) {
+		if (prodesc->tuple_store) 
+		{
 			rsi->setResult = prodesc->tuple_store;
 			rsi->setDesc = prodesc->tuple_desc;
 		}
@@ -949,8 +1003,20 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		/* Return a perl string converted to a Datum */
-		char *val = SvPV(perlret, PL_na);
+        /* Return a perl string converted to a Datum */
+        char *val;
+        SV* array_ret;
+ 
+
+        if (prodesc->fn_retisarray && SvTYPE(SvRV(perlret)) == SVt_PVAV)
+        {
+            array_ret = plperl_convert_to_pg_array(perlret);
+            SvREFCNT_dec(perlret);
+            perlret = array_ret;
+        }
+
+		val = SvPV(perlret, PL_na);
+
 		retval = FunctionCall3(&prodesc->result_in_func,
 							   CStringGetDatum(val),
 							   ObjectIdGetDatum(prodesc->result_typioparam),
@@ -1207,6 +1273,9 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 			prodesc->fn_retisset = procStruct->proretset;
 			prodesc->fn_retistuple = (typeStruct->typtype == 'c' ||
 									  procStruct->prorettype == RECORDOID);
+
+			prodesc->fn_retisarray = 
+				(typeStruct->typlen == -1 && typeStruct->typelem) ;
 
 			perm_fmgr_info(typeStruct->typinput, &(prodesc->result_in_func));
 			prodesc->result_typioparam = getTypeIOParam(typeTup);
