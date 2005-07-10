@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.81 2005/07/06 22:44:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.82 2005/07/10 15:19:43 momjian Exp $
  *
  **********************************************************************/
 
@@ -118,6 +118,7 @@ Datum		plperl_validator(PG_FUNCTION_ARGS);
 void		plperl_init(void);
 
 HV		   *plperl_spi_exec(char *query, int limit);
+SV		   *plperl_spi_query(char *);
 
 static Datum plperl_func_handler(PG_FUNCTION_ARGS);
 
@@ -229,6 +230,7 @@ plperl_safe_init(void)
 	"$PLContainer->permit_only(':default');"
 	"$PLContainer->permit(qw[:base_math !:base_io sort time]);"
 	"$PLContainer->share(qw[&elog &spi_exec_query &return_next "
+	"&spi_query &spi_fetchrow "
 	"&DEBUG &LOG &INFO &NOTICE &WARNING &ERROR %_SHARED ]);"
 			   ;
 
@@ -1524,4 +1526,78 @@ plperl_return_next(SV *sv)
 	tuplestore_puttuple(prodesc->tuple_store, tuple);
 	heap_freetuple(tuple);
 	MemoryContextSwitchTo(cxt);
+}
+
+
+SV *
+plperl_spi_query(char *query)
+{
+	SV *cursor;
+
+	MemoryContext oldcontext = CurrentMemoryContext;
+	ResourceOwner oldowner = CurrentResourceOwner;
+
+	BeginInternalSubTransaction(NULL);
+	MemoryContextSwitchTo(oldcontext);
+
+	PG_TRY();
+	{
+		void *plan;
+		Portal portal = NULL;
+
+		plan = SPI_prepare(query, 0, NULL);
+		if (plan)
+			portal = SPI_cursor_open(NULL, plan, NULL, NULL, false);
+		if (portal)
+			cursor = newSVpv(portal->name, 0);
+		else
+			cursor = newSV(0);
+
+		ReleaseCurrentSubTransaction();
+		MemoryContextSwitchTo(oldcontext);
+		CurrentResourceOwner = oldowner;
+		SPI_restore_connection();
+	}
+	PG_CATCH();
+	{
+		ErrorData  *edata;
+
+		MemoryContextSwitchTo(oldcontext);
+		edata = CopyErrorData();
+		FlushErrorState();
+
+		RollbackAndReleaseCurrentSubTransaction();
+		MemoryContextSwitchTo(oldcontext);
+		CurrentResourceOwner = oldowner;
+
+		SPI_restore_connection();
+		croak("%s", edata->message);
+		return NULL;
+	}
+	PG_END_TRY();
+
+	return cursor;
+}
+
+
+SV *
+plperl_spi_fetchrow(char *cursor)
+{
+	SV *row = newSV(0);
+	Portal p = SPI_cursor_find(cursor);
+
+	if (!p)
+		return row;
+
+	SPI_cursor_fetch(p, true, 1);
+	if (SPI_processed == 0) {
+		SPI_cursor_close(p);
+		return row;
+	}
+
+	row = plperl_hash_from_tuple(SPI_tuptable->vals[0],
+								 SPI_tuptable->tupdesc);
+	SPI_freetuptable(SPI_tuptable);
+
+	return row;
 }

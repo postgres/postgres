@@ -247,3 +247,16 @@ for ("World", "PostgreSQL", "PL/Perl") {
 return;
 $$ language plperl;
 SELECT * from perl_srf_rn() AS (f1 INTEGER, f2 TEXT, f3 TEXT);
+
+--
+-- Test spi_query/spi_fetchrow
+--
+
+CREATE OR REPLACE FUNCTION perl_spi_func() RETURNS SETOF INTEGER AS $$
+$x = spi_query("select 1 as a union select 2 as a");
+while (defined ($y = spi_fetchrow($x))) {
+    return_next($y->{a});
+}
+return;
+$$ LANGUAGE plperl;
+SELECT * from perl_spi_func();

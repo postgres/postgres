@@ -350,3 +350,20 @@ SELECT * from perl_srf_rn() AS (f1 INTEGER, f2 TEXT, f3 TEXT);
   3 | Hello | PL/Perl
 (3 rows)
 
+--
+-- Test spi_query/spi_fetchrow
+--
+CREATE OR REPLACE FUNCTION perl_spi_func() RETURNS SETOF INTEGER AS $$
+$x = spi_query("select 1 as a union select 2 as a");
+while (defined ($y = spi_fetchrow($x))) {
+    return_next($y->{a});
+}
+return;
+$$ LANGUAGE plperl;
+SELECT * from perl_spi_func();
+ perl_spi_func 
+---------------
+             1
+             2
+(2 rows)
+

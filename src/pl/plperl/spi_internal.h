@@ -18,3 +18,5 @@ int			spi_ERROR(void);
 /* this is actually in plperl.c */
 HV		   *plperl_spi_exec(char *, int);
 void plperl_return_next(SV *);
+SV *plperl_spi_query(char *);
+SV *plperl_spi_fetchrow(char *);

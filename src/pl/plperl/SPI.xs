@@ -103,5 +103,21 @@ spi_return_next(rv)
 	CODE:
 		plperl_return_next(rv);
 
+SV *
+spi_spi_query(query)
+	char *query;
+	CODE:
+		RETVAL = plperl_spi_query(query);
+	OUTPUT:
+		RETVAL
+
+SV *
+spi_spi_fetchrow(cursor)
+	char *cursor;
+	CODE:
+		RETVAL = plperl_spi_fetchrow(cursor);
+	OUTPUT:
+		RETVAL
+
 BOOT:
     items = 0;  /* avoid 'unused variable' warning */
