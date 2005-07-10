@@ -1,5 +1,5 @@
 #
-# $PostgreSQL: pgsql/contrib/pgcrypto/Makefile,v 1.20 2005/07/10 03:57:55 momjian Exp $
+# $PostgreSQL: pgsql/contrib/pgcrypto/Makefile,v 1.21 2005/07/10 18:32:55 momjian Exp $
 #
 
 INT_SRCS = md5.c sha1.c sha2.c internal.c blf.c rijndael.c \
@@ -56,9 +56,9 @@ endif
 # Add libraries that pgcrypto depends (or might depend) on into the
 # shared library link.  (The order in which you list them here doesn't
 # matter.)
-SHLIB_LINK += $(filter -lcrypt -ldes -lcrypto -lssl, $(LIBS))
+SHLIB_LINK += $(filter -lcrypt -ldes -lcrypto -lssl -lz, $(LIBS))
 ifeq ($(PORTNAME), win32)
-SHLIB_LINK += $(filter -leay32 -lssleay32, $(LIBS))
+SHLIB_LINK += $(filter -leay32 -lssleay32 -lz, $(LIBS))
 endif
 
 # to make ws2_32.lib the last library (must occur after definition of PORTNAME)
