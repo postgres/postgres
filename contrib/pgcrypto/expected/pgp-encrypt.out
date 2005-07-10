@@ -1,0 +1,189 @@
+--
+-- PGP encrypt
+--
+select pgp_sym_decrypt(pgp_sym_encrypt('Secret.', 'key'), 'key');
+ pgp_sym_decrypt 
+-----------------
+ Secret.
+(1 row)
+
+-- check whether the defaults are ok
+select pgp_sym_decrypt(pgp_sym_encrypt('Secret.', 'key'),
+ 	'key', 'expect-cipher-algo=aes128,
+		expect-disable-mdc=0,
+		expect-sess-key=0,
+		expect-s2k-mode=3,
+		expect-s2k-digest-algo=sha1,
+		expect-compress-algo=0
+		');
+ pgp_sym_decrypt 
+-----------------
+ Secret.
+(1 row)
+
+-- maybe the expect- stuff simply does not work
+select pgp_sym_decrypt(pgp_sym_encrypt('Secret.', 'key'),
+ 	'key', 'expect-cipher-algo=bf,
+		expect-disable-mdc=1,
+		expect-sess-key=1,
+		expect-s2k-mode=0,
+		expect-s2k-digest-algo=md5,
+		expect-compress-algo=1
+		');
+NOTICE:  pgp_decrypt: unexpected cipher_algo: expected 4 got 7
+NOTICE:  pgp_decrypt: unexpected s2k_mode: expected 0 got 3
+NOTICE:  pgp_decrypt: unexpected s2k_digest_algo: expected 1 got 2
+NOTICE:  pgp_decrypt: unexpected use_sess_key: expected 1 got 0
+NOTICE:  pgp_decrypt: unexpected disable_mdc: expected 1 got 0
+NOTICE:  pgp_decrypt: unexpected compress_algo: expected 1 got 0
+ pgp_sym_decrypt 
+-----------------
+ Secret.
+(1 row)
+
+-- bytea as text
+select pgp_sym_decrypt(pgp_sym_encrypt_bytea('Binary', 'baz'), 'baz');
+ERROR:  pgp_decrypt error: Not text data
+-- text as bytea
+select pgp_sym_decrypt_bytea(pgp_sym_encrypt('Text', 'baz'), 'baz');
+ pgp_sym_decrypt_bytea 
+-----------------------
+ Text
+(1 row)
+
+-- algorithm change
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 'cipher-algo=bf'),
+ 	'key', 'expect-cipher-algo=bf');
+ pgp_sym_decrypt 
+-----------------
+ Secret.
+(1 row)
+
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 'cipher-algo=aes'),
+ 	'key', 'expect-cipher-algo=aes128');
+ pgp_sym_decrypt 
+-----------------
+ Secret.
+(1 row)
+
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 'cipher-algo=aes192'),
+ 	'key', 'expect-cipher-algo=aes192');
+ pgp_sym_decrypt 
+-----------------
+ Secret.
+(1 row)
+
+-- s2k change
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 's2k-mode=0'),
+ 	'key', 'expect-s2k-mode=0');
+ pgp_sym_decrypt 
+-----------------
+ Secret.
+(1 row)
+
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 's2k-mode=1'),
+ 	'key', 'expect-s2k-mode=1');
+ pgp_sym_decrypt 
+-----------------
+ Secret.
+(1 row)
+
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 's2k-mode=3'),
+ 	'key', 'expect-s2k-mode=3');
+ pgp_sym_decrypt 
+-----------------
+ Secret.
+(1 row)
+
+-- s2k digest change
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 's2k-digest-algo=md5'),
+ 	'key', 'expect-s2k-digest-algo=md5');
+ pgp_sym_decrypt 
+-----------------
+ Secret.
+(1 row)
+
+select pgp_sym_decrypt(
+		pgp_sym_encrypt('Secret.', 'key', 's2k-digest-algo=sha1'),
+ 	'key', 'expect-s2k-digest-algo=sha1');
+ pgp_sym_decrypt 
+-----------------
+ Secret.
+(1 row)
+
+-- sess key
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 'sess-key=0'),
+ 	'key', 'expect-sess-key=0');
+ pgp_sym_decrypt 
+-----------------
+ Secret.
+(1 row)
+
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 'sess-key=1'),
+ 	'key', 'expect-sess-key=1');
+ pgp_sym_decrypt 
+-----------------
+ Secret.
+(1 row)
+
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 'sess-key=1, cipher-algo=bf'),
+ 	'key', 'expect-sess-key=1, expect-cipher-algo=bf');
+ pgp_sym_decrypt 
+-----------------
+ Secret.
+(1 row)
+
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 'sess-key=1, cipher-algo=aes192'),
+ 	'key', 'expect-sess-key=1, expect-cipher-algo=aes192');
+ pgp_sym_decrypt 
+-----------------
+ Secret.
+(1 row)
+
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 'sess-key=1, cipher-algo=aes256'),
+ 	'key', 'expect-sess-key=1, expect-cipher-algo=aes256');
+ pgp_sym_decrypt 
+-----------------
+ Secret.
+(1 row)
+
+-- no mdc
+select pgp_sym_decrypt(
+		pgp_sym_encrypt('Secret.', 'key', 'disable-mdc=1'),
+ 	'key', 'expect-disable-mdc=1');
+ pgp_sym_decrypt 
+-----------------
+ Secret.
+(1 row)
+
+-- crlf
+select encode(pgp_sym_decrypt_bytea(
+	pgp_sym_encrypt('1\n2\n3\r\n', 'key', 'convert-crlf=1'),
+ 	'key'), 'hex');
+        encode        
+----------------------
+ 310d0a320d0a330d0d0a
+(1 row)
+
+-- conversion should be lossless
+select encode(digest(pgp_sym_decrypt(
+  pgp_sym_encrypt('\r\n0\n1\r\r\n\n2\r', 'key', 'convert-crlf=1'),
+ 	'key', 'convert-crlf=1'), 'sha1'), 'hex') as result,
+  encode(digest('\r\n0\n1\r\r\n\n2\r', 'sha1'), 'hex') as expect;
+                  result                  |                  expect                  
+------------------------------------------+------------------------------------------
+ 47bde5d88d6ef8770572b9cbb4278b402aa69966 | 47bde5d88d6ef8770572b9cbb4278b402aa69966
+(1 row)
+
