@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/internal.c,v 1.18 2005/07/10 03:55:28 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/internal.c,v 1.19 2005/07/10 17:22:54 tgl Exp $
  */
 
 
@@ -814,7 +814,8 @@ px_get_pseudo_random_bytes(uint8 *dst, unsigned count)
 }
 
 static time_t seed_time = 0;
-static void system_reseed()
+
+static void system_reseed(void)
 {
 	uint8 buf[1024];
 	int n;
