@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.62 2005/03/29 00:17:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.63 2005/07/10 21:36:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -257,9 +257,10 @@ oidvectorrecv(PG_FUNCTION_ARGS)
 	oidvector  *result;
 
 	result = (oidvector *)
-		DatumGetPointer(DirectFunctionCall2(array_recv,
+		DatumGetPointer(DirectFunctionCall3(array_recv,
 											PointerGetDatum(buf),
-											ObjectIdGetDatum(OIDOID)));
+											ObjectIdGetDatum(OIDOID),
+											Int32GetDatum(-1)));
 	/* sanity checks: oidvector must be 1-D, no nulls */
 	if (result->ndim != 1 ||
 		result->flags != 0 ||
