@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Thu Jul  7 22:44:34 EDT 2005
+Last updated:           Sun Jul 10 01:06:40 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -176,9 +176,7 @@ first.
     </li><li>Allow TIMESTAMP WITH TIME ZONE to store the original timezone
           information, either zone name or offset from UTC [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?timezone">timezone</a>]
 <p>          If the TIMESTAMP value is stored with a time zone name, interval 
-          computations should adjust based on the time zone rules, e.g. 
-          adding 24 hours to a timestamp would yield a different result from 
-          adding one day.
+          computations should adjust based on the time zone rules.
 </p>
     </li><li>Add ISO INTERVAL handling
     <ul>
