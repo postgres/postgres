@@ -11,10 +11,10 @@ Edit makefile, if you want to use any external library.
 
 NB!  Default randomness source is libc random() function.  This
 is so only to get pgcrypto build everywhere.  Randomness is
-needed for gen_salt() function.  So if you plan using it, you
-should definitely change that by editing Makefile.  You should
-be using urandom device if your OS supports it, otherwise link
-pgcrypto against OpenSSL library and use its PRNG.
+needed for gen_salt() and pgp_encrypt() functions.  So if you plan
+using those, you should definitely change that by editing Makefile.
+You can should use urandom device if your OS supports it, otherwise
+link pgcrypto against OpenSSL library and use its PRNG.
 
 After editing Makefile:
 
@@ -107,6 +107,161 @@ gen_salt(type::text, rounds::int4)::text
 
 	For maximum security, you should choose the 'bf' crypt
 	and use maximum number of rounds you can still tolerate.
+
+armor(bytea)::text
+dearmor(text)::bytea
+
+	Those wrap/unwrap data into PGP Ascii Armor which
+	is basically Base64 with CRC and additional formatting.
+
+pgp_sym_encrypt(data::text, key::text)::bytea
+pgp_sym_encrypt(data::text, key::text, arg::text)::bytea
+pgp_sym_encrypt_bytea(data::bytea, key::text)::bytea
+pgp_sym_encrypt_bytea(data::bytea, key::text, arg::text)::bytea
+
+pgp_sym_decrypt(data::bytea, key::text)::text
+pgp_sym_decrypt(data::bytea, key::text, arg::text)::text
+pgp_sym_decrypt_bytea(data::text, key::text)::bytea
+pgp_sym_decrypt_bytea(data::text, key::text, arg::text)::bytea
+
+	Encrypt data into OpenPGP Symmetrically Encrypted Data
+	message.  And decrypt it from it.
+
+	Note that the pgp_sym_encrypt_bytea functions tag the data
+	as binary, as the pgp_sym_encrypt will tag the data as text.
+	You can not decrypt the binary data as text.  But you can
+	decrypt text data as binary.  This rule avoids having
+	broken textual data in PostgreSQL.
+
+	Both encrypt and decrypt accept also third argument, which
+	is parameters to the function in following format:
+	
+	  parm=val[,parm=val]...
+	
+	Example:
+
+	  select pgp_sym_encrypt('data', 'psw',
+			'compress-algo=2, unicode-mode=1');
+
+	Accepted parameters are:
+
+	cipher-algo: bf, aes, aes128, aes192, aes256
+	  Cipher algorithm to use.  OpenSSL gives additional algorithms:
+	  3des, cast5
+	  Default: aes128
+	
+	compress-algo: 0, 1, 2
+	  Which compression algorithm to use.
+	    0 - no compression
+	    1 - ZIP compression
+	    2 - ZLIB compression [=ZIP plus meta-data and block-CRC's]
+	  Default: 0
+
+	compress-level: 0, 1-9
+	  How much to compress.  Bigger level compresses smaller
+	  but also slower.  0 disables compression.
+	  Default: 6
+
+	convert-crlf: 0, 1
+	  Whether to convert \n into \r\n when encrypting and
+	  \r\n to \n when decrypting.  RFC2440 specifies that
+	  text packets should use "\r\n" line-feeds.
+	  Use this to get fully RFC-compliant behaviour.
+	  Default: 0
+
+	disable-mdc: 0, 1
+	  Do not protect data with SHA-1.  Note that SHA-1 protected
+	  packet is from upcoming update to RFC2440.  (Currently at
+	  version RFC2440bis-13.)  You need to disable it if you need
+	  compatibility with ancient PGP products.  Recent gnupg.org
+	  and pgp.com software supports it fine.
+	  Default: 0
+	
+	enable-session-key: 0, 1
+	  Use separate session key.
+	  Default: 0
+	
+	s2k-mode: 0, 1, 3
+	  Which S2K algorithm to use.  0 is dangerous - without salt.
+	  Default: 3
+	
+	s2k-digest-algo: md5, sha1
+	  Which digest algorithm to use in S2K calculation.
+	  Default: SHA-1
+
+	s2k-cipher-algo: bf, aes, aes128, aes192, aes256
+	  Which cipher to use for encrypting separate session key.
+	  Default: same as cipher-algo.
+
+	unicode-mode: 0, 1
+	  Whether to convert textual data from database internal
+	  encoding to UTF-8 and back.
+	  Default: 0
+
+	Only 'convert-crlf' applies to both encrypt and decrypt,
+	all others apply only to encrypt - decrypt gets the
+	settings from PGP data.
+	
+	
+pgp_pub_encrypt(data::text, key::bytea)::bytea
+pgp_pub_encrypt(data::text, key::bytea, arg::text)::bytea
+pgp_pub_encrypt_bytea(data::bytea, bytea::text)::bytea
+pgp_pub_encrypt_bytea(data::bytea, bytea::text, arg::text)::bytea
+
+pgp_pub_decrypt(data::bytea, key::bytea)::text
+pgp_pub_decrypt(data::bytea, key::bytea, psw::text)::text
+pgp_pub_decrypt(data::bytea, key::bytea, psw::text, arg::text)::text
+pgp_pub_decrypt_bytea(data::text, key::bytea)::bytea
+pgp_pub_decrypt_bytea(data::text, key::bytea, psw::text)::bytea
+pgp_pub_decrypt_bytea(data::text, key::bytea, psw::text, arg::bytea)::bytea
+
+	Encrypt data into OpenPGP Public-Key Encrypted Data
+	message.  And decrypt it from it.  The arg parameter is
+	described in pgp_sym_* section.
+
+	The key must be a public-key packet for pgp_pub_encrypt
+	functions and a secret key packet for pgp_pub_decrypt
+	functions.  Trying to encrypt with secret key gives a error.
+	While being technically possible, it is probably a sign of
+	user error and leaking secret keys.
+
+	Here is a example how to generate them:
+	
+	Generate a new key:
+	
+	  gpg --gen-key
+	
+	You need to pick "DSA and Elgamal" key type, others
+	are sign-only.
+
+	List keys:
+	
+	  gpg --list-secret-keys
+
+	Export ascii-armored public key:
+
+	  gpg -a --export KEYID > public.key
+	
+	Export ascii-armored secret key:
+
+	  gpg -a --export-secret-keys KEYID > secret.key
+
+	You need to use dearmor() on them before giving giving
+	them to pgp_pub_* functions.  Ofcourse, if you can handle
+	binary data, you can drop "-a" from gpg.
+
+
+pgp_key_id(key / data)
+
+	It shows you either key ID if given PGP public or secret
+	key.  Or it gives the key ID what was used for encrypting
+	the data, if given encrypted data.
+
+	It can return 2 special key ID's:
+
+	  SYMKEY - it got symmetrically encrypted data.
+	  ANYKEY - the data packet key ID is clear.  That means
+		   you should try all you secret keys on it.
 
 encrypt(data::bytea, key::bytea, type::text)::bytea
 decrypt(data::bytea, key::bytea, type::text)::bytea

@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/px.c,v 1.11 2005/03/21 05:22:14 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/px.c,v 1.12 2005/07/10 03:57:55 momjian Exp $
  */
 
 #include <postgres.h>
@@ -57,6 +57,37 @@ static const struct error_desc px_err_list[] = {
 	{PXE_BAD_SALT_ROUNDS, "Incorrect number of rounds"},
 	{PXE_MCRYPT_INTERNAL, "mcrypt internal error"},
 	{PXE_NO_RANDOM, "No strong random source"},
+	{PXE_PGP_CORRUPT_DATA, "Wrong key or corrupt data"},
+	{PXE_PGP_CORRUPT_ARMOR, "Corrupt ascii-armor"},
+	{PXE_PGP_UNSUPPORTED_COMPR, "Unsupported compression algorithm"},
+	{PXE_PGP_UNSUPPORTED_CIPHER, "Unsupported cipher algorithm"},
+	{PXE_PGP_UNSUPPORTED_HASH, "Unsupported digest algorithm"},
+	{PXE_PGP_COMPRESSION_ERROR, "Compression error"},
+	{PXE_PGP_NOT_TEXT, "Not text data"},
+	{PXE_PGP_UNEXPECTED_PKT, "Unexpected packet in key data"},
+	{PXE_PGP_NO_BIGNUM,
+		"public-key functions disabled - "
+		"pgcrypto needs OpenSSL for bignums"},
+	{PXE_PGP_MATH_FAILED, "Math operation failed"},
+	{PXE_PGP_SHORT_ELGAMAL_KEY, "Elgamal keys must be at least 1024 bits long"},
+	{PXE_PGP_RSA_UNSUPPORTED, "pgcrypto does not support RSA keys"},
+	{PXE_PGP_UNKNOWN_PUBALGO, "Unknown public-key encryption algorithm"},
+	{PXE_PGP_WRONG_KEYID, "Data is not encrypted with this key"},
+	{PXE_PGP_MULTIPLE_KEYS,
+		"Several keys given - pgcrypto does not handle keyring"},
+	{PXE_PGP_EXPECT_PUBLIC_KEY, "Refusing to encrypt with secret key"},
+	{PXE_PGP_EXPECT_SECRET_KEY, "Cannot decrypt with public key"},
+	{PXE_PGP_NOT_V4_KEYPKT, "Only V4 key packets are supported"},
+	{PXE_PGP_KEYPKT_CORRUPT, "Corrupt key packet"},
+	{PXE_PGP_NO_USABLE_KEY, "No usable key found (expecting Elgamal key)"},
+	{PXE_PGP_NEED_SECRET_PSW, "Need password for secret key"},
+	{PXE_PGP_BAD_S2K_MODE, "Bad S2K mode"},
+	{PXE_PGP_UNSUPPORTED_PUBALGO, "Unsupported public key algorithm"},
+	{PXE_PGP_MULTIPLE_SUBKEYS, "Several subkeys not supported"},
+
+	/* fake this as PXE_PGP_CORRUPT_DATA */
+	{PXE_MBUF_SHORT_READ, "Corrupt data"},
+	
 	{0, NULL},
 };
 
@@ -80,6 +111,25 @@ px_resolve_alias(const PX_Alias * list, const char *name)
 		list++;
 	}
 	return name;
+}
+
+static void (*debug_handler)(const char *) = NULL;
+
+void px_set_debug_handler(void (*handler)(const char *))
+{
+	debug_handler = handler;
+}
+
+void px_debug(const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	if (debug_handler) {
+		char buf[512];
+		vsnprintf(buf, sizeof(buf), fmt, ap);
+		debug_handler(buf);
+	}
+	va_end(ap);
 }
 
 /*

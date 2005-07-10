@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/px.h,v 1.13 2005/07/10 03:55:28 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/px.h,v 1.14 2005/07/10 03:57:55 momjian Exp $
  */
 
 #ifndef __PX_H
@@ -42,19 +42,20 @@
 #error BYTE_ORDER must be defined as LITTLE_ENDIAN or BIG_ENDIAN
 #endif
 
+/* keep debug messages? */
+#define PX_DEBUG
 
+/* a way to disable palloc
+ * - useful if compiled into standalone
+ */
 #ifndef PX_OWN_ALLOC
-
 #define px_alloc(s) palloc(s)
 #define px_realloc(p, s) repalloc(p, s)
 #define px_free(p)	pfree(p)
-
 #else
-
 void	   *px_alloc(size_t s);
 void	   *px_realloc(void *p, size_t s);
 void		px_free(void *p);
-
 #endif
 
 /* max len of 'type' parms */
@@ -85,6 +86,34 @@ void		px_free(void *p);
 #define PXE_MCRYPT_INTERNAL			-16
 #define PXE_NO_RANDOM				-17
 
+#define PXE_MBUF_SHORT_READ			-50
+
+#define PXE_PGP_CORRUPT_DATA		-100
+#define PXE_PGP_CORRUPT_ARMOR		-101
+#define PXE_PGP_UNSUPPORTED_COMPR   -102
+#define PXE_PGP_UNSUPPORTED_CIPHER  -103
+#define PXE_PGP_UNSUPPORTED_HASH    -104
+#define PXE_PGP_COMPRESSION_ERROR   -105
+#define PXE_PGP_NOT_TEXT            -106
+#define PXE_PGP_UNEXPECTED_PKT      -107
+#define PXE_PGP_NO_BIGNUM			-108
+#define PXE_PGP_MATH_FAILED			-109
+#define PXE_PGP_SHORT_ELGAMAL_KEY	-110
+#define PXE_PGP_RSA_UNSUPPORTED		-111
+#define PXE_PGP_UNKNOWN_PUBALGO		-112
+#define PXE_PGP_WRONG_KEYID			-113
+#define PXE_PGP_MULTIPLE_KEYS		-114
+#define PXE_PGP_EXPECT_PUBLIC_KEY	-115
+#define PXE_PGP_EXPECT_SECRET_KEY	-116
+#define PXE_PGP_NOT_V4_KEYPKT		-117
+#define PXE_PGP_KEYPKT_CORRUPT		-118
+#define PXE_PGP_NO_USABLE_KEY		-119
+#define PXE_PGP_NEED_SECRET_PSW		-120
+#define PXE_PGP_BAD_S2K_MODE		-121
+#define PXE_PGP_UNSUPPORTED_PUBALGO	-122
+#define PXE_PGP_MULTIPLE_SUBKEYS	-123
+
+
 typedef struct px_digest PX_MD;
 typedef struct px_alias PX_Alias;
 typedef struct px_hmac PX_HMAC;
@@ -103,7 +132,7 @@ struct px_digest
 	union
 	{
 		unsigned	code;
-		const void *ptr;
+		void *ptr;
 	}			p;
 };
 
@@ -177,6 +206,13 @@ unsigned	px_acquire_system_randomness(uint8 *dst);
 const char *px_strerror(int err);
 
 const char *px_resolve_alias(const PX_Alias * aliases, const char *name);
+
+void          px_set_debug_handler(void (*handler)(const char *));
+#ifdef PX_DEBUG
+void          px_debug(const char *fmt, ...);
+#else
+#define px_debug(...)
+#endif
 
 #define px_md_result_size(md)		(md)->result_size(md)
 #define px_md_block_size(md)		(md)->block_size(md)
