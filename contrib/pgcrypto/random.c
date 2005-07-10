@@ -1,6 +1,6 @@
 /*
  * random.c
- *		Random functions.
+ *		Acquire randomness from system.  For seeding RNG.
  *
  * Copyright (c) 2001 Marko Kreen
  * All rights reserved.
@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/random.c,v 1.10 2005/03/21 05:22:14 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/random.c,v 1.11 2005/07/10 03:55:28 momjian Exp $
  */
 
 
@@ -34,8 +34,20 @@
 
 #include "px.h"
 
+/* how many bytes to ask from system random provider */
+#define RND_BYTES  32
 
-#if defined(RAND_DEV)
+/*
+ * Try to read from /dev/urandom or /dev/random on these OS'es.
+ *
+ * The list can be pretty liberal, as the device not existing
+ * is expected event.
+ */
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) \
+	|| defined(__NetBSD__) || defined(__DragonFly__) \
+	|| defined(__darwin__) || defined(__SOLARIS__)
+
+#define TRY_DEV_RANDOM
 
 #include <errno.h>
 #include <fcntl.h>
@@ -64,94 +76,169 @@ safe_read(int fd, void *buf, size_t count)
 	return done;
 }
 
-int
-px_get_random_bytes(uint8 *dst, unsigned count)
+static uint8 *
+try_dev_random(uint8 *dst)
 {
 	int			fd;
 	int			res;
 
-	fd = open(RAND_DEV, O_RDONLY);
+	fd = open("/dev/urandom", O_RDONLY);
 	if (fd == -1)
-		return PXE_DEV_READ_ERROR;
-	res = safe_read(fd, dst, count);
+	{
+		fd = open("/dev/random", O_RDONLY);
+		if (fd == -1)
+			return dst;
+	}
+	res = safe_read(fd, dst, RND_BYTES);
 	close(fd);
-	return res;
+	if (res > 0)
+		dst += res;
+	return dst;
 }
 
-int
-px_get_pseudo_random_bytes(uint8 *dst, unsigned count)
-{
-	return px_get_random_bytes(dst, count);
-}
-
-#elif defined(RAND_SILLY)
-
-int
-px_get_pseudo_random_bytes(uint8 *dst, unsigned count)
-{
-	int			i;
-
-	for (i = 0; i < count; i++)
-		*dst++ = random();
-	return i;
-}
-
-int
-px_get_random_bytes(uint8 *dst, unsigned count)
-{
-	return PXE_NO_RANDOM;
-}
-
-#elif defined(RAND_OPENSSL)
-
-#include <openssl/evp.h>
-#include <openssl/blowfish.h>
-#include <openssl/rand.h>
-#include <openssl/err.h>
-
-static int	openssl_random_init = 0;
+#endif
 
 /*
- * OpenSSL random should re-feeded occasionally. From /dev/urandom
- * preferably.
+ * Try to find randomness on Windows
  */
-static void init_openssl()
+#ifdef WIN32
+
+#define TRY_WIN32_GENRAND
+#define TRY_WIN32_PERFC
+
+#define _WIN32_WINNT 0x0400
+#include <windows.h>
+#include <wincrypt.h>
+
+/*
+ * this function is from libtomcrypt
+ * 
+ * try to use Microsoft crypto API
+ */
+static uint8 * try_win32_genrand(uint8 *dst)
 {
-	if (RAND_get_rand_method() == NULL)
-		RAND_set_rand_method(RAND_SSLeay());
-	openssl_random_init = 1;
+	int res;
+	HCRYPTPROV h = 0;
+
+	res = CryptAcquireContext(&h, NULL, MS_DEF_PROV, PROV_RSA_FULL,
+				(CRYPT_VERIFYCONTEXT | CRYPT_MACHINE_KEYSET));
+	if (!res)
+		res = CryptAcquireContext(&h, NULL, MS_DEF_PROV, PROV_RSA_FULL,
+				CRYPT_VERIFYCONTEXT | CRYPT_MACHINE_KEYSET | CRYPT_NEWKEYSET);
+	if (!res)
+		return dst;
+	
+	res = CryptGenRandom(h, NUM_BYTES, dst);
+	if (res == TRUE)
+		dst += len;
+
+	CryptReleaseContext(h, 0);
+	return dst;
 }
 
-int
-px_get_random_bytes(uint8 *dst, unsigned count)
+static uint8 * try_win32_perfc(uint8 *dst)
 {
-	int			res;
+	int res;
+	LARGE_INTEGER time;
 
-	if (!openssl_random_init)
-		init_openssl();
+	res = QueryPerformanceCounter(&time);
+	if (!res)
+		return dst;
 
-	res = RAND_bytes(dst, count);
-	if (res == 1)
-		return count;
-
-	return PXE_OSSL_RAND_ERROR;
+	memcpy(dst, &time, sizeof(time));
+	return dst + sizeof(time);
 }
 
-int
-px_get_pseudo_random_bytes(uint8 *dst, unsigned count)
+#endif /* WIN32 */
+
+
+/*
+ * If we are not on Windows, then hopefully we are
+ * on a unix-like system.  Use the usual suspects
+ * for randomness.
+ */
+#ifndef WIN32
+
+#define TRY_UNIXSTD
+
+#include <sys/types.h>
+#include <sys/time.h>
+#include <time.h>
+#include <unistd.h>
+
+/*
+ * Everything here is predictible, only needs some patience.
+ *
+ * But there is a chance that the system-specific functions
+ * did not work.  So keep faith and try to slow the attacker down.
+ */
+static uint8 *
+try_unix_std(uint8 *dst)
 {
-	int			res;
+	pid_t pid;
+	int x;
+	PX_MD *md;
+	struct timeval tv;
+	int res;
 
-	if (!openssl_random_init)
-		init_openssl();
+	/* process id */
+	pid = getpid();
+	memcpy(dst, (uint8*)&pid, sizeof(pid));
+	dst += sizeof(pid);
 
-	res = RAND_pseudo_bytes(dst, count);
-	if (res == 0 || res == 1)
-		return count;
+	/* time */
+	gettimeofday(&tv, NULL);
+	memcpy(dst, (uint8*)&tv, sizeof(tv));
+	dst += sizeof(tv);
 
-	return PXE_OSSL_RAND_ERROR;
+	/* pointless, but should not hurt */
+	x = random();
+	memcpy(dst, (uint8*)&x, sizeof(x));
+	dst += sizeof(x);
+
+	/* let's be desperate */
+	res = px_find_digest("sha1", &md);
+	if (res >= 0) {
+		uint8 *ptr;
+		uint8 stack[8192];
+		int alloc = 32*1024;
+
+		px_md_update(md, stack, sizeof(stack));
+		ptr = px_alloc(alloc);
+		px_md_update(md, ptr, alloc);
+		px_free(ptr);
+
+		px_md_finish(md, dst);
+		px_md_free(md);
+
+		dst += 20;
+	}
+
+	return dst;
 }
 
-#else
-#error "Invalid random source"
 #endif
+
+/*
+ * try to extract some randomness for initial seeding
+ *
+ * dst should have room for 1024 bytes.
+ */
+unsigned px_acquire_system_randomness(uint8 *dst)
+{
+	uint8 *p = dst;
+#ifdef TRY_DEV_RANDOM
+	p = try_dev_random(p);
+#endif
+#ifdef TRY_WIN32_GENRAND
+	p = try_win32_genrand(p);
+#endif
+#ifdef TRY_WIN32_PERFC
+	p = try_win32_perfc(p);
+#endif
+#ifdef TRY_UNIXSTD
+	p = try_unix_std(p);
+#endif
+	return p - dst;
+}
+

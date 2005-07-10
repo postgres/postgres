@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/px.h,v 1.12 2005/03/21 05:22:14 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/px.h,v 1.13 2005/07/10 03:55:28 momjian Exp $
  */
 
 #ifndef __PX_H
@@ -170,6 +170,9 @@ int			px_find_combo(const char *name, PX_Combo ** res);
 
 int			px_get_random_bytes(uint8 *dst, unsigned count);
 int			px_get_pseudo_random_bytes(uint8 *dst, unsigned count);
+int			px_add_entropy(const uint8 *data, unsigned count);
+
+unsigned	px_acquire_system_randomness(uint8 *dst);
 
 const char *px_strerror(int err);
 

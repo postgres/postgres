@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.20 2005/07/05 18:15:36 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.21 2005/07/10 03:55:28 momjian Exp $
  */
 
 #include <postgres.h>
@@ -37,6 +37,9 @@
 #include <openssl/blowfish.h>
 #include <openssl/cast.h>
 #include <openssl/des.h>
+#include <openssl/rand.h>
+#include <openssl/err.h>
+
 
 /*
  * Does OpenSSL support AES? 
@@ -759,3 +762,58 @@ px_find_cipher(const char *name, PX_Cipher ** res)
 	*res = c;
 	return 0;
 }
+
+
+static int	openssl_random_init = 0;
+
+/*
+ * OpenSSL random should re-feeded occasionally. From /dev/urandom
+ * preferably.
+ */
+static void init_openssl_rand()
+{
+	if (RAND_get_rand_method() == NULL)
+		RAND_set_rand_method(RAND_SSLeay());
+	openssl_random_init = 1;
+}
+
+int
+px_get_random_bytes(uint8 *dst, unsigned count)
+{
+	int			res;
+
+	if (!openssl_random_init)
+		init_openssl_rand();
+
+	res = RAND_bytes(dst, count);
+	if (res == 1)
+		return count;
+
+	return PXE_OSSL_RAND_ERROR;
+}
+
+int
+px_get_pseudo_random_bytes(uint8 *dst, unsigned count)
+{
+	int			res;
+
+	if (!openssl_random_init)
+		init_openssl_rand();
+
+	res = RAND_pseudo_bytes(dst, count);
+	if (res == 0 || res == 1)
+		return count;
+
+	return PXE_OSSL_RAND_ERROR;
+}
+
+int
+px_add_entropy(const uint8 *data, unsigned count)
+{
+	/*
+	 * estimate 0 bits
+	 */
+	RAND_add(data, count, 0);
+	return 0;
+}
+

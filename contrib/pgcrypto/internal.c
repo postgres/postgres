@@ -26,11 +26,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/internal.c,v 1.17 2005/07/10 03:52:56 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/internal.c,v 1.18 2005/07/10 03:55:28 momjian Exp $
  */
 
 
 #include <postgres.h>
+#include <time.h>
 
 #include "px.h"
 
@@ -39,6 +40,13 @@
 #include "sha2.h"
 #include "blf.h"
 #include "rijndael.h"
+#include "fortuna.h"
+
+/*
+ * How often to try to acquire system entropy.  (In seconds)
+ */
+#define SYSTEM_RESEED_FREQ	(3*60*60)
+
 
 #ifndef MD5_DIGEST_LENGTH
 #define MD5_DIGEST_LENGTH 16
@@ -784,3 +792,58 @@ px_find_cipher(const char *name, PX_Cipher ** res)
 	*res = c;
 	return 0;
 }
+
+/*
+ * Randomness provider
+ */
+
+/*
+ * Use libc for all 'public' bytes.
+ *
+ * That way we don't expose bytes from Fortuna
+ * to the public, in case it has some bugs.
+ */
+int
+px_get_pseudo_random_bytes(uint8 *dst, unsigned count)
+{
+	int         i;
+
+	for (i = 0; i < count; i++)
+		*dst++ = random();
+	return i;
+}
+
+static time_t seed_time = 0;
+static void system_reseed()
+{
+	uint8 buf[1024];
+	int n;
+	time_t t;
+
+	t = time(NULL);
+	if (seed_time && (t - seed_time) < SYSTEM_RESEED_FREQ)
+		return;
+
+	n = px_acquire_system_randomness(buf);
+	if (n > 0)
+		fortuna_add_entropy(SYSTEM_ENTROPY, buf, n);
+
+	seed_time = t;
+}
+
+int
+px_get_random_bytes(uint8 *dst, unsigned count)
+{
+	system_reseed();
+	fortuna_get_bytes(count, dst);
+	return 0;
+}
+
+int
+px_add_entropy(const uint8 *data, unsigned count)
+{
+	system_reseed();
+	fortuna_add_entropy(USER_ENTROPY, data, count);
+	return 0;
+}
+
