@@ -26,11 +26,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pubdec.c,v 1.1 2005/07/10 13:46:29 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pubdec.c,v 1.2 2005/07/10 15:37:03 momjian Exp $
  */
 #include <postgres.h>
-
-#include <openssl/bn.h>
 
 #include "px.h"
 #include "mbuf.h"
