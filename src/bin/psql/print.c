@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.62 2005/07/10 15:48:14 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.63 2005/07/10 15:53:42 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -77,7 +77,12 @@ format_numericsep(char *my_str, char *numericsep)
 	if (digits_before_sep == 0)
 		new_len--;	/* no leading separator */
 
-	new_str = pg_malloc(new_len);
+	new_str = malloc(new_len);
+	if (!new_str)
+	{
+		fprintf(stderr, _("out of memory\n"));
+		exit(EXIT_FAILURE);
+	}
 
 	for (i=0, j=0; ; i++, j++)
 	{
@@ -162,8 +167,13 @@ print_unaligned_text(const char *title, const char *const *headers,
 		if ((opt_align[i % col_count] == 'r') && strlen(*ptr) > 0 &&
 			opt_numericsep != NULL && strlen(opt_numericsep) > 0)
 		{
-			char *my_cell = pg_malloc(len_with_numericsep(*ptr));
+			char *my_cell = malloc(len_with_numericsep(*ptr));
 		
+			if (!my_cell)
+			{
+				fprintf(stderr, _("out of memory\n"));
+				exit(EXIT_FAILURE);
+			}
 			strcpy(my_cell, *ptr);
 			format_numericsep(my_cell, opt_numericsep);
 			fputs(my_cell, fout);
@@ -239,8 +249,13 @@ print_unaligned_vertical(const char *title, const char *const *headers,
 		if ((opt_align[i % col_count] == 'r') && strlen(*ptr) != 0 &&
 			opt_numericsep != NULL && strlen(opt_numericsep) > 0)
 		{
-			char *my_cell = pg_malloc(len_with_numericsep(*ptr));
+			char *my_cell = malloc(len_with_numericsep(*ptr));
 		
+			if (!my_cell)
+			{
+				fprintf(stderr, _("out of memory\n"));
+				exit(EXIT_FAILURE);
+			}
 			strcpy(my_cell, *ptr);
 			format_numericsep(my_cell, opt_numericsep);
 			fputs(my_cell, fout);
@@ -467,8 +482,13 @@ print_aligned_text(const char *title, const char *const *headers,
 		{
 		    if (strlen(*ptr) > 0 && opt_numericsep != NULL && strlen(opt_numericsep) > 0)
 		    {
-				char *my_cell = pg_malloc(cell_w[i]);
+				char *my_cell = malloc(cell_w[i]);
 
+				if (!my_cell)
+				{
+					fprintf(stderr, _("out of memory\n"));
+					exit(EXIT_FAILURE);
+				}
 				strcpy(my_cell, *ptr);
 				format_numericsep(my_cell, opt_numericsep);
 				fprintf(fout, "%*s%s", widths[i % col_count] - cell_w[i], "", my_cell);
@@ -614,7 +634,12 @@ print_aligned_vertical(const char *title, const char *const *headers,
 		fprintf(fout, "%s\n", title);
 
 	/* make horizontal border */
-	divider = pg_malloc(hwidth + dwidth + 10);
+	divider = malloc(hwidth + dwidth + 10);
+	if (!divider)
+	{
+		fprintf(stderr, _("out of memory\n"));
+		exit(EXIT_FAILURE);
+	}
 	divider[0] = '\0';
 	if (opt_border == 2)
 		strcat(divider, "+-");
@@ -636,8 +661,14 @@ print_aligned_vertical(const char *title, const char *const *headers,
 		{
 			if (!opt_barebones)
 			{
-				char	   *record_str = pg_malloc(32);
+				char	   *record_str = malloc(32);
 				size_t		record_str_len;
+
+				if (!record_str)
+				{
+					fprintf(stderr, _("out of memory\n"));
+					exit(EXIT_FAILURE);
+				}
 
 				if (opt_border == 0)
 					snprintf(record_str, 32, "* Record %d", record++);
@@ -678,8 +709,13 @@ print_aligned_vertical(const char *title, const char *const *headers,
 			fputs(" ", fout);
 
 		{
-			char *my_cell = pg_malloc(cell_w[i]);
+			char *my_cell = malloc(cell_w[i]);
 
+			if (!my_cell)
+			{
+				fprintf(stderr, _("out of memory\n"));
+				exit(EXIT_FAILURE);
+			}
 			strcpy(my_cell, *ptr);
 			if ((opt_align[i % col_count] == 'r') && strlen(*ptr) != 0 &&
 				opt_numericsep != NULL && strlen(opt_numericsep) > 0)
@@ -819,8 +855,13 @@ print_html_text(const char *title, const char *const *headers,
 		else if ((opt_align[i % col_count] == 'r') && strlen(*ptr) != 0 &&
 				 opt_numericsep != NULL && strlen(opt_numericsep) > 0)
 		{
-			char *my_cell = pg_malloc(len_with_numericsep(*ptr));
+			char *my_cell = malloc(len_with_numericsep(*ptr));
 
+			if (!my_cell)
+			{
+				fprintf(stderr, _("out of memory\n"));
+				exit(EXIT_FAILURE);
+			}
 		    strcpy(my_cell, *ptr);
 		    format_numericsep(my_cell, opt_numericsep);
 		    html_escaped_print(my_cell, fout);
@@ -905,8 +946,13 @@ print_html_vertical(const char *title, const char *const *headers,
 		else if ((opt_align[i % col_count] == 'r') && strlen(*ptr) != 0 &&
 			opt_numericsep != NULL && strlen(opt_numericsep) > 0)
 		{
-			char *my_cell = pg_malloc(len_with_numericsep(*ptr));
+			char *my_cell = malloc(len_with_numericsep(*ptr));
 		    
+			if (!my_cell)
+			{
+				fprintf(stderr, _("out of memory\n"));
+				exit(EXIT_FAILURE);
+			}
 		    strcpy(my_cell, *ptr);
 		    format_numericsep(my_cell, opt_numericsep);
 		    html_escaped_print(my_cell, fout);
@@ -1600,7 +1646,12 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *f
 			exit(EXIT_FAILURE);
 		}
 
-		footers[0] = pg_malloc(100);
+		footers[0] = malloc(100);
+		if (!footers[0])
+		{
+			fprintf(stderr, _("out of memory\n"));
+			exit(EXIT_FAILURE);
+		}
 		if (PQntuples(result) == 1)
 			snprintf(footers[0], 100, _("(1 row)"));
 		else
