@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.60 2005/06/14 22:15:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.61 2005/07/10 03:46:13 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -29,20 +29,107 @@
 
 #include "mbprint.h"
 
+static int
+num_numericseps(const char *my_str)
+{
+	int old_len, dec_len, int_len;
+
+	if (my_str[0] == '-')
+		my_str++;
+    
+	old_len = strlen(my_str);
+	dec_len = strchr(my_str, '.') ? strlen(strchr(my_str, '.')) : 0;
+
+	int_len = old_len - dec_len;
+	if (int_len % 3 != 0)
+		return int_len / 3;
+	else
+		return int_len / 3 - 1;	/* no leading separator */
+}
+static int
+len_with_numericsep(const char *my_str)
+{
+	return strlen(my_str) + num_numericseps(my_str);
+}
+
+static void 
+format_numericsep(char *my_str, char *numericsep)
+{
+	int i, j, digits_before_sep, old_len, new_len, dec_len, int_len;
+	char *dec_point;
+	char *new_str;
+	char *dec_value;
+    
+	if (strcmp(numericsep, ".") != 0)
+		dec_point = ".";
+	else
+		dec_point = ",";
+    
+	if (my_str[0] == '-')
+		my_str++;
+    
+	old_len = strlen(my_str);
+	dec_len = strchr(my_str, '.') ? strlen(strchr(my_str, '.')) : 0;
+	int_len = old_len - dec_len;
+	digits_before_sep = int_len % 3;
+
+	new_len = int_len + int_len / 3 + dec_len;
+	if (digits_before_sep == 0)
+		new_len--;	/* no leading separator */
+
+	new_str = malloc(new_len);
+	if (!new_str)
+	{
+		fprintf(stderr, _("out of memory\n"));
+		exit(EXIT_FAILURE);
+	}
+
+	for (i=0, j=0; ; i++, j++)
+	{
+		/* hit decimal point */
+		if (my_str[i] == '.')
+		{
+			new_str[j] = *dec_point;
+			new_str[j+1] = '\0';
+			dec_value = strchr(my_str, '.');
+			strcat(new_str, ++dec_value);
+			break;
+		}
+
+		/* end of string */
+		if (my_str[i] == '\0')
+		{
+			new_str[j] = '\0';
+			break;
+		}
+    
+		/* add separator? */
+		if (i != 0 &&
+			(i - (digits_before_sep ? digits_before_sep : 3)) % 3 == 0)
+			new_str[j++] = *numericsep;
+
+		new_str[j] = my_str[i];
+	}
+	    
+	strcpy(my_str, new_str);
+	free(new_str);
+}
+
 /*************************/
 /* Unaligned text		 */
 /*************************/
 
 
 static void
-print_unaligned_text(const char *title, const char *const * headers,
-				  const char *const * cells, const char *const * footers,
- const char *opt_fieldsep, const char *opt_recordsep, bool opt_barebones,
-					 FILE *fout)
+print_unaligned_text(const char *title, const char *const *headers,
+					 const char *const *cells, const char *const *footers,
+					 const char *opt_align, const char *opt_fieldsep,
+					 const char *opt_recordsep, bool opt_barebones,
+					 char *opt_numericsep, FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
-	const char *const * ptr;
+	const char *const *ptr;
 	bool		need_recordsep = false;
 
 	if (!opt_fieldsep)
@@ -77,7 +164,24 @@ print_unaligned_text(const char *title, const char *const * headers,
 			fputs(opt_recordsep, fout);
 			need_recordsep = false;
 		}
-		fputs(*ptr, fout);
+		if ((opt_align[i % col_count] == 'r') && strlen(*ptr) > 0 &&
+			opt_numericsep != NULL && strlen(opt_numericsep) > 0)
+		{
+			char *my_cell = malloc(len_with_numericsep(*ptr));
+		
+			if (!my_cell)
+			{
+				fprintf(stderr, _("out of memory\n"));
+				exit(EXIT_FAILURE);
+			}
+			strcpy(my_cell, *ptr);
+			format_numericsep(my_cell, opt_numericsep);
+			fputs(my_cell, fout);
+			free(my_cell);
+		}
+		else
+			fputs(*ptr, fout);
+		
 		if ((i + 1) % col_count)
 			fputs(opt_fieldsep, fout);
 		else
@@ -107,14 +211,15 @@ print_unaligned_text(const char *title, const char *const * headers,
 
 
 static void
-print_unaligned_vertical(const char *title, const char *const * headers,
-				  const char *const * cells, const char *const * footers,
- const char *opt_fieldsep, const char *opt_recordsep, bool opt_barebones,
-						 FILE *fout)
+print_unaligned_vertical(const char *title, const char *const *headers,
+						 const char *const *cells,
+						 const char *const *footers, const char *opt_align,
+						 const char *opt_fieldsep, const char *opt_recordsep,
+						 bool opt_barebones, char *opt_numericsep, FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
-	const char *const * ptr;
+	const char *const *ptr;
 
 	if (!opt_fieldsep)
 		opt_fieldsep = "";
@@ -141,7 +246,23 @@ print_unaligned_vertical(const char *title, const char *const * headers,
 
 		fputs(headers[i % col_count], fout);
 		fputs(opt_fieldsep, fout);
-		fputs(*ptr, fout);
+		if ((opt_align[i % col_count] == 'r') && strlen(*ptr) != 0 &&
+			opt_numericsep != NULL && strlen(opt_numericsep) > 0)
+		{
+			char *my_cell = malloc(len_with_numericsep(*ptr));
+		
+			if (!my_cell)
+			{
+				fprintf(stderr, _("out of memory\n"));
+				exit(EXIT_FAILURE);
+			}
+			strcpy(my_cell, *ptr);
+			format_numericsep(my_cell, opt_numericsep);
+			fputs(my_cell, fout);
+			free(my_cell);
+		}
+		else
+			fputs(*ptr, fout);
 	}
 
 	/* print footers */
@@ -202,9 +323,9 @@ _print_horizontal_line(const unsigned int col_count, const unsigned int *widths,
 
 
 static void
-print_aligned_text(const char *title, const char *const * headers,
-				   const char *const * cells, const char *const * footers,
-				   const char *opt_align, bool opt_barebones,
+print_aligned_text(const char *title, const char *const *headers,
+				   const char *const *cells, const char *const *footers,
+				   const char *opt_align, bool opt_barebones, char *opt_numericsep,
 				   unsigned short int opt_border, int encoding,
 				   FILE *fout)
 {
@@ -216,7 +337,7 @@ print_aligned_text(const char *title, const char *const * headers,
 				tmp;
 	unsigned int *widths,
 				total_w;
-	const char *const * ptr;
+	const char *const *ptr;
 
 	/* count columns */
 	for (ptr = headers; *ptr; ptr++)
@@ -271,7 +392,15 @@ print_aligned_text(const char *title, const char *const * headers,
 
 	for (i = 0, ptr = cells; *ptr; ptr++, i++)
 	{
-		tmp = pg_wcswidth((unsigned char *) *ptr, strlen(*ptr), encoding);
+		int numericseps;
+
+		if ((opt_align[i % col_count] == 'r') && strlen(*ptr) != 0 &&
+			opt_numericsep != NULL && strlen(opt_numericsep) > 0)
+		    numericseps = num_numericseps(*ptr);
+		else 
+		    numericseps = 0;
+		
+		tmp = pg_wcswidth((unsigned char *) *ptr, strlen(*ptr), encoding) + numericseps;
 		if (tmp > widths[i % col_count])
 			widths[i % col_count] = tmp;
 		cell_w[i] = tmp;
@@ -351,8 +480,22 @@ print_aligned_text(const char *title, const char *const * headers,
 		/* content */
 		if (opt_align[i % col_count] == 'r')
 		{
-			fprintf(fout, "%*s%s",
-					widths[i % col_count] - cell_w[i], "", cells[i]);
+		    if (strlen(*ptr) > 0 && opt_numericsep != NULL && strlen(opt_numericsep) > 0)
+		    {
+				char *my_cell = malloc(cell_w[i]);
+
+				if (!my_cell)
+				{
+					fprintf(stderr, _("out of memory\n"));
+					exit(EXIT_FAILURE);
+				}
+				strcpy(my_cell, *ptr);
+				format_numericsep(my_cell, opt_numericsep);
+				fprintf(fout, "%*s%s", widths[i % col_count] - cell_w[i], "", my_cell);
+				free(my_cell);
+		    }
+			else
+				fprintf(fout, "%*s%s", widths[i % col_count] - cell_w[i], "", *ptr);
 		}
 		else
 		{
@@ -406,14 +549,15 @@ print_aligned_text(const char *title, const char *const * headers,
 
 
 static void
-print_aligned_vertical(const char *title, const char *const * headers,
-				  const char *const * cells, const char *const * footers,
-					   bool opt_barebones, unsigned short int opt_border,
+print_aligned_vertical(const char *title, const char *const *headers,
+					   const char *const *cells, const char *const *footers,
+					   const char *opt_align, bool opt_barebones,
+					   char *opt_numericsep, unsigned short int opt_border,
 					   int encoding, FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int record = 1;
-	const char *const * ptr;
+	const char *const *ptr;
 	unsigned int i,
 				tmp = 0,
 				hwidth = 0,
@@ -471,7 +615,15 @@ print_aligned_vertical(const char *title, const char *const * headers,
 	/* find longest data cell */
 	for (i = 0, ptr = cells; *ptr; ptr++, i++)
 	{
-		tmp = pg_wcswidth((unsigned char *) *ptr, strlen(*ptr), encoding);
+		int numericseps;
+
+		if ((opt_align[i % col_count] == 'r') && strlen(*ptr) != 0 &&
+			opt_numericsep != NULL && strlen(opt_numericsep) > 0)
+		    numericseps = num_numericseps(*ptr);
+		else 
+		    numericseps = 0;
+
+		tmp = pg_wcswidth((unsigned char *) *ptr, strlen(*ptr), encoding) + numericseps;
 		if (tmp > dwidth)
 			dwidth = tmp;
 		cell_w[i] = tmp;
@@ -556,10 +708,24 @@ print_aligned_vertical(const char *title, const char *const * headers,
 		else
 			fputs(" ", fout);
 
-		if (opt_border < 2)
-			fprintf(fout, "%s\n", *ptr);
-		else
-			fprintf(fout, "%-s%*s |\n", *ptr, dwidth - cell_w[i], "");
+		{
+			char *my_cell = malloc(cell_w[i]);
+
+			if (!my_cell)
+			{
+				fprintf(stderr, _("out of memory\n"));
+				exit(EXIT_FAILURE);
+			}
+			strcpy(my_cell, *ptr);
+			if ((opt_align[i % col_count] == 'r') && strlen(*ptr) != 0 &&
+				opt_numericsep != NULL && strlen(opt_numericsep) > 0)
+			    format_numericsep(my_cell, opt_numericsep);
+			if (opt_border < 2)
+				puts(my_cell);
+			else
+				fprintf(fout, "%-s%*s |\n", my_cell, dwidth - cell_w[i], "");
+			free(my_cell);
+		}
 	}
 
 	if (opt_border == 2)
@@ -637,15 +803,15 @@ html_escaped_print(const char *in, FILE *fout)
 
 
 static void
-print_html_text(const char *title, const char *const * headers,
-				const char *const * cells, const char *const * footers,
-const char *opt_align, bool opt_barebones, unsigned short int opt_border,
-				const char *opt_table_attr,
-				FILE *fout)
+print_html_text(const char *title, const char *const *headers,
+				const char *const *cells, const char *const *footers,
+				const char *opt_align, bool opt_barebones,
+				char *opt_numericsep, unsigned short int opt_border,
+				const char *opt_table_attr, FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
-	const char *const * ptr;
+	const char *const *ptr;
 
 	fprintf(fout, "<table border=\"%d\"", opt_border);
 	if (opt_table_attr)
@@ -683,11 +849,27 @@ const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 			fputs("  <tr valign=\"top\">\n", fout);
 
 		fprintf(fout, "    <td align=\"%s\">", opt_align[(i) % col_count] == 'r' ? "right" : "left");
-		if ((*ptr)[strspn(*ptr, " \t")] == '\0')		/* is string only
-														 * whitespace? */
+		/* is string only whitespace? */
+		if ((*ptr)[strspn(*ptr, " \t")] == '\0')		
 			fputs("&nbsp; ", fout);
+		else if ((opt_align[i % col_count] == 'r') && strlen(*ptr) != 0 &&
+				 opt_numericsep != NULL && strlen(opt_numericsep) > 0)
+		{
+			char *my_cell = malloc(len_with_numericsep(*ptr));
+
+			if (!my_cell)
+			{
+				fprintf(stderr, _("out of memory\n"));
+				exit(EXIT_FAILURE);
+			}
+		    strcpy(my_cell, *ptr);
+		    format_numericsep(my_cell, opt_numericsep);
+		    html_escaped_print(my_cell, fout);
+		    free(my_cell);
+		}
 		else
 			html_escaped_print(*ptr, fout);
+
 		fputs("</td>\n", fout);
 
 		if ((i + 1) % col_count == 0)
@@ -714,16 +896,16 @@ const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 
 
 static void
-print_html_vertical(const char *title, const char *const * headers,
-				  const char *const * cells, const char *const * footers,
-const char *opt_align, bool opt_barebones, unsigned short int opt_border,
-					const char *opt_table_attr,
-					FILE *fout)
+print_html_vertical(const char *title, const char *const *headers,
+				  const char *const *cells, const char *const *footers,
+				  const char *opt_align, bool opt_barebones,
+				  char *opt_numericsep, unsigned short int opt_border,
+				  const char *opt_table_attr, FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
 	unsigned int record = 1;
-	const char *const * ptr;
+	const char *const *ptr;
 
 	fprintf(fout, "<table border=\"%d\"", opt_border);
 	if (opt_table_attr)
@@ -758,11 +940,27 @@ const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 		fputs("</th>\n", fout);
 
 		fprintf(fout, "    <td align=\"%s\">", opt_align[i % col_count] == 'r' ? "right" : "left");
-		if ((*ptr)[strspn(*ptr, " \t")] == '\0')		/* is string only
-														 * whitespace? */
+		/* is string only whitespace? */
+		if ((*ptr)[strspn(*ptr, " \t")] == '\0')		
 			fputs("&nbsp; ", fout);
+		else if ((opt_align[i % col_count] == 'r') && strlen(*ptr) != 0 &&
+			opt_numericsep != NULL && strlen(opt_numericsep) > 0)
+		{
+			char *my_cell = malloc(len_with_numericsep(*ptr));
+		    
+			if (!my_cell)
+			{
+				fprintf(stderr, _("out of memory\n"));
+				exit(EXIT_FAILURE);
+			}
+		    strcpy(my_cell, *ptr);
+		    format_numericsep(my_cell, opt_numericsep);
+		    html_escaped_print(my_cell, fout);
+		    free(my_cell);
+		}
 		else
 			html_escaped_print(*ptr, fout);
+
 		fputs("</td>\n  </tr>\n", fout);
 	}
 
@@ -829,14 +1027,14 @@ latex_escaped_print(const char *in, FILE *fout)
 
 
 static void
-print_latex_text(const char *title, const char *const * headers,
-				 const char *const * cells, const char *const * footers,
-const char *opt_align, bool opt_barebones, unsigned short int opt_border,
-				 FILE *fout)
+print_latex_text(const char *title, const char *const *headers,
+				 const char *const *cells, const char *const *footers,
+				 const char *opt_align, bool opt_barebones,
+				 unsigned short int opt_border, FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
-	const char *const * ptr;
+	const char *const *ptr;
 
 
 	/* print title */
@@ -921,14 +1119,14 @@ const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 
 
 static void
-print_latex_vertical(const char *title, const char *const * headers,
-				  const char *const * cells, const char *const * footers,
-const char *opt_align, bool opt_barebones, unsigned short int opt_border,
-					 FILE *fout)
+print_latex_vertical(const char *title, const char *const *headers,
+				  const char *const *cells, const char *const *footers,
+				  const char *opt_align, bool opt_barebones,
+				  unsigned short int opt_border, FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
-	const char *const * ptr;
+	const char *const *ptr;
 	unsigned int record = 1;
 
 	(void) opt_align;			/* currently unused parameter */
@@ -1027,14 +1225,14 @@ troff_ms_escaped_print(const char *in, FILE *fout)
 
 
 static void
-print_troff_ms_text(const char *title, const char *const * headers,
-				 const char *const * cells, const char *const * footers,
-const char *opt_align, bool opt_barebones, unsigned short int opt_border,
-				 FILE *fout)
+print_troff_ms_text(const char *title, const char *const *headers,
+				 const char *const *cells, const char *const *footers,
+				 const char *opt_align, bool opt_barebones,
+				 unsigned short int opt_border, FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
-	const char *const * ptr;
+	const char *const *ptr;
 
 
 	/* print title */
@@ -1111,14 +1309,14 @@ const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 
 
 static void
-print_troff_ms_vertical(const char *title, const char *const * headers,
-				  const char *const * cells, const char *const * footers,
-const char *opt_align, bool opt_barebones, unsigned short int opt_border,
-					 FILE *fout)
+print_troff_ms_vertical(const char *title, const char *const *headers,
+				  const char *const *cells, const char *const *footers,
+				  const char *opt_align, bool opt_barebones,
+				  unsigned short int opt_border, FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
-	const char *const * ptr;
+	const char *const *ptr;
 	unsigned int record = 1;
         unsigned short current_format = 0; /* 0=none, 1=header, 2=body */
 
@@ -1263,9 +1461,9 @@ PageOutput(int lines, unsigned short int pager)
 
 void
 printTable(const char *title,
-		   const char *const * headers,
-		   const char *const * cells,
-		   const char *const * footers,
+		   const char *const *headers,
+		   const char *const *cells,
+		   const char *const *footers,
 		   const char *align,
 		   const printTableOpt *opt, FILE *fout, FILE *flog)
 {
@@ -1298,7 +1496,7 @@ printTable(const char *title,
 		int			col_count = 0,
 					row_count = 0,
 					lines;
-		const char *const * ptr;
+		const char *const *ptr;
 
 		/* rough estimate of columns and rows */
 		if (headers)
@@ -1325,38 +1523,38 @@ printTable(const char *title,
 	/* print the stuff */
 
 	if (flog)
-		print_aligned_text(title, headers, cells, footers, align, opt->tuples_only, border, opt->encoding, flog);
+		print_aligned_text(title, headers, cells, footers, align, opt->tuples_only, opt->numericSep, border, opt->encoding, flog);
 
 	switch (opt->format)
 	{
 		case PRINT_UNALIGNED:
 			if (use_expanded)
-				print_unaligned_vertical(title, headers, cells, footers,
+				print_unaligned_vertical(title, headers, cells, footers, align,
 										 opt->fieldSep, opt->recordSep,
-										 opt->tuples_only, output);
+										 opt->tuples_only, opt->numericSep, output);
 			else
-				print_unaligned_text(title, headers, cells, footers,
+				print_unaligned_text(title, headers, cells, footers, align,
 									 opt->fieldSep, opt->recordSep,
-									 opt->tuples_only, output);
+									 opt->tuples_only, opt->numericSep, output);
 			break;
 		case PRINT_ALIGNED:
 			if (use_expanded)
-				print_aligned_vertical(title, headers, cells, footers,
-									   opt->tuples_only, border,
+				print_aligned_vertical(title, headers, cells, footers, align,
+									   opt->tuples_only, opt->numericSep, border,
 									   opt->encoding, output);
 			else
-				print_aligned_text(title, headers, cells, footers,
-								   align, opt->tuples_only,
+				print_aligned_text(title, headers, cells, footers, align,
+								   opt->tuples_only, opt->numericSep,
 								   border, opt->encoding, output);
 			break;
 		case PRINT_HTML:
 			if (use_expanded)
-				print_html_vertical(title, headers, cells, footers,
-									align, opt->tuples_only,
+				print_html_vertical(title, headers, cells, footers, align,
+									opt->tuples_only, opt->numericSep,
 									border, opt->tableAttr, output);
 			else
 				print_html_text(title, headers, cells, footers,
-								align, opt->tuples_only, border,
+								align, opt->tuples_only, opt->numericSep, border,
 								opt->tableAttr, output);
 			break;
 		case PRINT_LATEX:

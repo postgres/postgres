@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.103 2005/07/06 03:14:48 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.104 2005/07/10 03:46:13 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -239,7 +239,7 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\pset NAME [VALUE]\n"
 					  "                 set table output option\n"
 					  "                 (NAME := {format|border|expanded|fieldsep|footer|null|\n"
-	"                 recordsep|tuples_only|title|tableattr|pager})\n"));
+	"                 numericsep|recordsep|tuples_only|title|tableattr|pager})\n"));
 	fprintf(output, _("  \\t             show only rows (currently %s)\n"),
 			ON(pset.popt.topt.tuples_only));
 	fprintf(output, _("  \\T [STRING]    set HTML <table> tag attributes, or unset if none\n"));

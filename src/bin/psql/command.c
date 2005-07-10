@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.146 2005/06/13 06:36:22 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.147 2005/07/10 03:46:13 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -838,7 +838,6 @@ exec_command(const char *cmd,
 	else if (strcmp(cmd, "x") == 0)
 		success = do_pset("expanded", NULL, &pset.popt, quiet);
 
-
 	/* \z -- list table rights (equivalent to \dp) */
 	else if (strcmp(cmd, "z") == 0)
 	{
@@ -1419,6 +1418,17 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 			printf(popt->topt.expanded
 				   ? _("Expanded display is on.\n")
 				   : _("Expanded display is off.\n"));
+	}
+
+	else if (strcmp(param, "numericsep") == 0)
+	{
+		if (value)
+		{
+			free(popt->topt.numericSep);
+			popt->topt.numericSep = pg_strdup(value);
+		}
+		if (!quiet)
+			printf(_("Numeric separator is \"%s\".\n"), popt->topt.numericSep);
 	}
 
 	/* null display */

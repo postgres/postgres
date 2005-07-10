@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.h,v 1.25 2005/06/14 02:57:41 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.h,v 1.26 2005/07/10 03:46:13 momjian Exp $
  */
 #ifndef PRINT_H
 #define PRINT_H
@@ -40,6 +40,7 @@ typedef struct _printTableOpt
 	char	   *fieldSep;		/* field separator for unaligned text mode */
 	char	   *recordSep;		/* record separator for unaligned text
 								 * mode */
+	char	   *numericSep;		/* numeric units separator */
 	char	   *tableAttr;		/* attributes for HTML <table ...> */
 	int			encoding;		/* character encoding */
 	bool		normal_query;	/* are we presenting the results of a
