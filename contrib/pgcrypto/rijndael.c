@@ -1,5 +1,7 @@
 /*	$OpenBSD: rijndael.c,v 1.6 2000/12/09 18:51:34 markus Exp $ */
 
+/* $PostgreSQL: pgsql/contrib/pgcrypto/rijndael.c,v 1.11 2005/07/11 15:07:59 tgl Exp $ */
+
 /* This is an independent implementation of the encryption algorithm:	*/
 /*																		*/
 /*		   RIJNDAEL by Joan Daemen and Vincent Rijmen					*/
@@ -38,10 +40,18 @@ Mean:		   500 cycles =    51.2 mbits/sec
 
 */
 
-#include <postgres.h>
-#include "px.h"
+#include "postgres.h"
 
+#include <sys/param.h>
+
+#include "px.h"
 #include "rijndael.h"
+
+/* sanity check */
+#if !defined(BYTE_ORDER) || (BYTE_ORDER != LITTLE_ENDIAN && BYTE_ORDER != BIG_ENDIAN)
+#error Define BYTE_ORDER to be equal to either LITTLE_ENDIAN or BIG_ENDIAN
+#endif
+
 
 #define PRE_CALC_TABLES
 #define LARGE_TABLES

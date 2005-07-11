@@ -26,13 +26,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pgsql.c,v 1.1 2005/07/10 13:46:29 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pgsql.c,v 1.2 2005/07/11 15:07:59 tgl Exp $
  */
 
-#include <postgres.h>
-#include <fmgr.h>
-#include <parser/scansup.h>
-#include <mb/pg_wchar.h>
+#include "postgres.h"
+
+#include "fmgr.h"
+#include "parser/scansup.h"
+#include "mb/pg_wchar.h"
 
 #include "mbuf.h"
 #include "px.h"

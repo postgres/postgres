@@ -31,6 +31,8 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * $PostgreSQL: pgsql/contrib/pgcrypto/blf.c,v 1.7 2005/07/11 15:07:59 tgl Exp $
  */
 
 /*
@@ -40,9 +42,9 @@
  * Bruce Schneier.
  */
 
-#include <postgres.h>
-#include "px.h"
+#include "postgres.h"
 
+#include "px.h"
 #include "blf.h"
 
 /* Function for Feistel Networks */

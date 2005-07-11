@@ -26,10 +26,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.23 2005/07/11 14:38:05 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.24 2005/07/11 15:07:59 tgl Exp $
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
 #include "px.h"
 

@@ -1,4 +1,3 @@
-/*	$PostgreSQL: pgsql/contrib/pgcrypto/md5.c,v 1.12 2004/08/29 16:43:05 tgl Exp $	*/
 /*	   $KAME: md5.c,v 1.3 2000/02/22 14:01:17 itojun Exp $	   */
 
 /*
@@ -28,12 +27,21 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * $PostgreSQL: pgsql/contrib/pgcrypto/md5.c,v 1.13 2005/07/11 15:07:59 tgl Exp $
  */
 
 #include "postgres.h"
-#include "px.h"
 
+#include <sys/param.h>
+
+#include "px.h"
 #include "md5.h"
+
+/* sanity check */
+#if !defined(BYTE_ORDER) || (BYTE_ORDER != LITTLE_ENDIAN && BYTE_ORDER != BIG_ENDIAN)
+#error Define BYTE_ORDER to be equal to either LITTLE_ENDIAN or BIG_ENDIAN
+#endif
 
 #define SHIFT(X, s) (((X) << (s)) | ((X) >> (32 - (s))))
 

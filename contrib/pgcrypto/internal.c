@@ -26,15 +26,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/internal.c,v 1.19 2005/07/10 17:22:54 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/internal.c,v 1.20 2005/07/11 15:07:59 tgl Exp $
  */
 
+#include "postgres.h"
 
-#include <postgres.h>
 #include <time.h>
 
 #include "px.h"
-
 #include "md5.h"
 #include "sha1.h"
 #include "sha2.h"

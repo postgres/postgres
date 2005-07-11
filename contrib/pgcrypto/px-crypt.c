@@ -26,10 +26,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/px-crypt.c,v 1.11 2005/03/21 05:22:14 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/px-crypt.c,v 1.12 2005/07/11 15:07:59 tgl Exp $
  */
 
-#include <postgres.h>
+#include "postgres.h"
+
 #include "px.h"
 #include "px-crypt.h"
 

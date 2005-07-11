@@ -1,4 +1,3 @@
-/*	$PostgreSQL: pgsql/contrib/pgcrypto/sha2.c,v 1.1 2005/07/10 13:46:29 momjian Exp $ */
 /*	$OpenBSD: sha2.c,v 1.6 2004/05/03 02:57:36 millert Exp $	*/
 
 /*
@@ -33,9 +32,13 @@
  * SUCH DAMAGE.
  *
  * $From: sha2.c,v 1.1 2001/11/08 00:01:51 adg Exp adg $
+ *
+ * $PostgreSQL: pgsql/contrib/pgcrypto/sha2.c,v 1.2 2005/07/11 15:07:59 tgl Exp $
  */
 
-#include <postgres.h>
+#include "postgres.h"
+
+#include <sys/param.h>
 
 #include "sha2.h"
 
@@ -496,7 +499,6 @@ SHA256_Update(SHA256_CTX *context, const uint8 *data, size_t len)
 void
 SHA256_Final(uint8 digest[], SHA256_CTX *context)
 {
-	uint32	*d = (uint32 *)digest;
 	unsigned int	usedspace;
 
 	/* If no digest buffer is passed, we don't bother doing this: */
@@ -542,12 +544,10 @@ SHA256_Final(uint8 digest[], SHA256_CTX *context)
 			int	j;
 			for (j = 0; j < 8; j++) {
 				REVERSE32(context->state[j],context->state[j]);
-				*d++ = context->state[j];
 			}
 		}
-#else
-		bcopy(context->state, d, SHA256_DIGEST_LENGTH);
 #endif
+		bcopy(context->state, digest, SHA256_DIGEST_LENGTH);
 	}
 
 	/* Clean up state data: */
@@ -823,8 +823,6 @@ SHA512_Last(SHA512_CTX *context)
 void
 SHA512_Final(uint8 digest[], SHA512_CTX *context)
 {
-	uint64	*d = (uint64 *)digest;
-
 	/* If no digest buffer is passed, we don't bother doing this: */
 	if (digest != NULL) {
 		SHA512_Last(context);
@@ -836,12 +834,10 @@ SHA512_Final(uint8 digest[], SHA512_CTX *context)
 			int	j;
 			for (j = 0; j < 8; j++) {
 				REVERSE64(context->state[j],context->state[j]);
-				*d++ = context->state[j];
 			}
 		}
-#else
-		bcopy(context->state, d, SHA512_DIGEST_LENGTH);
 #endif
+		bcopy(context->state, digest, SHA512_DIGEST_LENGTH);
 	}
 
 	/* Zero out state data */
@@ -869,8 +865,6 @@ SHA384_Update(SHA384_CTX *context, const uint8 *data, size_t len)
 void
 SHA384_Final(uint8 digest[], SHA384_CTX *context)
 {
-	uint64	*d = (uint64 *)digest;
-
 	/* If no digest buffer is passed, we don't bother doing this: */
 	if (digest != NULL) {
 		SHA512_Last((SHA512_CTX *)context);
@@ -882,12 +876,10 @@ SHA384_Final(uint8 digest[], SHA384_CTX *context)
 			int	j;
 			for (j = 0; j < 6; j++) {
 				REVERSE64(context->state[j],context->state[j]);
-				*d++ = context->state[j];
 			}
 		}
-#else
-		bcopy(context->state, d, SHA384_DIGEST_LENGTH);
 #endif
+		bcopy(context->state, digest, SHA384_DIGEST_LENGTH);
 	}
 
 	/* Zero out state data */
