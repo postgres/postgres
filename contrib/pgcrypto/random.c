@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/random.c,v 1.12 2005/07/11 15:07:59 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/random.c,v 1.13 2005/07/11 17:00:03 tgl Exp $
  */
 
 #include "postgres.h"
@@ -126,7 +126,7 @@ static uint8 * try_win32_genrand(uint8 *dst)
 	if (!res)
 		return dst;
 	
-	res = CryptGenRandom(h, NUM_BYTES, dst);
+	res = CryptGenRandom(h, RND_BYTES, dst);
 	if (res == TRUE)
 		dst += len;
 
