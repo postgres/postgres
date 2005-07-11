@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.22 2005/07/10 13:54:34 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.23 2005/07/11 14:38:05 tgl Exp $
  */
 
 #include <postgres.h>
@@ -44,11 +44,47 @@
 /*
  * Does OpenSSL support AES? 
  */
-#undef GOT_AES
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L
-#define GOT_AES
+
+/* Yes, it does. */
 #include <openssl/aes.h>
-#endif
+
+#else	/* old OPENSSL */
+
+/*
+ * No, it does not.  So use included rijndael code to emulate it.
+ */
+#include "rijndael.c"
+
+#define AES_ENCRYPT 1
+#define AES_DECRYPT 0
+#define AES_KEY		rijndael_ctx
+
+#define AES_set_encrypt_key(key, kbits, ctx) \
+		aes_set_key((ctx), (key), (kbits), 1)
+
+#define AES_set_decrypt_key(key, kbits, ctx) \
+		aes_set_key((ctx), (key), (kbits), 0)
+
+#define AES_ecb_encrypt(src, dst, ctx, enc) \
+	do { \
+		memcpy((dst), (src), 16); \
+		if (enc) \
+			aes_ecb_encrypt((ctx), (dst), 16); \
+		else \
+			aes_ecb_decrypt((ctx), (dst), 16); \
+	} while (0)
+
+#define AES_cbc_encrypt(src, dst, len, ctx, iv, enc) \
+	do { \
+		memcpy((dst), (src), (len)); \
+		if (enc) \
+			aes_cbc_encrypt((ctx), (iv), (dst), (len)); \
+		else \
+			aes_cbc_decrypt((ctx), (iv), (dst), (len)); \
+	} while (0)
+
+#endif	/* old OPENSSL */
 
 /*
  * Compatibility with older OpenSSL API for DES.
@@ -205,9 +241,7 @@ typedef struct
 			DES_key_schedule k1, k2, k3;
 		}			des3;
 		CAST_KEY	cast_key;
-#ifdef GOT_AES
 		AES_KEY		aes_key;
-#endif
 	}			u;
 	uint8		key[EVP_MAX_KEY_LENGTH];
 	uint8		iv[EVP_MAX_IV_LENGTH];
@@ -549,8 +583,6 @@ ossl_cast_cbc_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *re
 
 /* AES */
 
-#ifdef GOT_AES
-
 static int
 ossl_aes_init(PX_Cipher * c, const uint8 *key, unsigned klen, const uint8 *iv)
 {
@@ -642,7 +674,6 @@ ossl_aes_cbc_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
 	AES_cbc_encrypt(data, res, dlen, &od->u.aes_key, od->iv, AES_DECRYPT);
 	return 0;
 }
-#endif
 
 /*
  * aliases
@@ -711,7 +742,6 @@ static const struct ossl_cipher ossl_cast_cbc = {
 	64 / 8, 128 / 8, 0
 };
 
-#ifdef GOT_AES
 static const struct ossl_cipher ossl_aes_ecb = {
 	ossl_aes_init, ossl_aes_ecb_encrypt, ossl_aes_ecb_decrypt,
 	128 / 8, 256 / 8, 0
@@ -721,7 +751,6 @@ static const struct ossl_cipher ossl_aes_cbc = {
 	ossl_aes_init, ossl_aes_cbc_encrypt, ossl_aes_cbc_decrypt,
 	128 / 8, 256 / 8, 0
 };
-#endif
 
 /*
  * Special handlers
@@ -742,10 +771,8 @@ static const struct ossl_cipher_lookup ossl_cipher_types[] = {
 	{"des3-cbc", &ossl_des3_cbc},
 	{"cast5-ecb", &ossl_cast_ecb},
 	{"cast5-cbc", &ossl_cast_cbc},
-#ifdef GOT_AES
 	{"aes-ecb", &ossl_aes_ecb},
 	{"aes-cbc", &ossl_aes_cbc},
-#endif
 	{NULL}
 };
 
@@ -790,7 +817,7 @@ static int	openssl_random_init = 0;
  * OpenSSL random should re-feeded occasionally. From /dev/urandom
  * preferably.
  */
-static void init_openssl_rand()
+static void init_openssl_rand(void)
 {
 	if (RAND_get_rand_method() == NULL)
 		RAND_set_rand_method(RAND_SSLeay());
