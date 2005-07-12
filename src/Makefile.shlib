@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.92 2005/07/04 04:17:00 momjian Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.93 2005/07/12 23:06:48 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -162,6 +162,13 @@ ifeq ($(PORTNAME), hpux)
       LINK.shared	= $(LD) +h $(soname) -b +b $(rpathdir)
     else
       LINK.shared	= $(LD) +h $(soname) -b
+    endif
+    # On HPUX platforms, gcc is usually configured to search for libraries
+    # in /usr/local/lib, but ld won't do so.  Add an explicit -L switch so
+    # ld can find the same libraries gcc does.  Make sure it goes after any
+    # -L switches provided explicitly.
+    ifeq ($(GCC), yes)
+      SHLIB_LINK += -L/usr/local/lib
     endif
   endif
 endif
