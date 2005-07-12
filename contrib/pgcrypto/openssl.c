@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.24 2005/07/11 15:07:59 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.25 2005/07/12 20:27:42 tgl Exp $
  */
 
 #include "postgres.h"
@@ -40,6 +40,11 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 
+/*
+ * Max lengths we might want to handle.
+ */
+#define MAX_KEY		(512/8)
+#define MAX_IV		(128/8)
 
 /*
  * Does OpenSSL support AES? 
@@ -78,10 +83,13 @@
 #define AES_cbc_encrypt(src, dst, len, ctx, iv, enc) \
 	do { \
 		memcpy((dst), (src), (len)); \
-		if (enc) \
+		if (enc) { \
 			aes_cbc_encrypt((ctx), (iv), (dst), (len)); \
-		else \
+			memcpy((iv), (dst) + (len) - 16, 16); \
+		} else { \
 			aes_cbc_decrypt((ctx), (iv), (dst), (len)); \
+			memcpy(iv, (src) + (len) - 16, 16); \
+		} \
 	} while (0)
 
 #endif	/* old OPENSSL */
@@ -243,8 +251,8 @@ typedef struct
 		CAST_KEY	cast_key;
 		AES_KEY		aes_key;
 	}			u;
-	uint8		key[EVP_MAX_KEY_LENGTH];
-	uint8		iv[EVP_MAX_IV_LENGTH];
+	uint8		key[MAX_KEY];
+	uint8		iv[MAX_IV];
 	unsigned	klen;
 	unsigned	init;
 	const struct ossl_cipher *ciph;

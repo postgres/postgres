@@ -40,3 +40,7 @@ select encode(encrypt_iv('foo', '0123456', 'abcd', 'cast5'), 'hex');
 select decrypt_iv(decode('384a970695ce016a', 'hex'),
                 '0123456', 'abcd', 'cast5');
 
+-- long message
+select encode(encrypt('Lets try a longer message.', '0123456789', 'cast5'), 'hex');
+select decrypt(encrypt('Lets try a longer message.', '0123456789', 'cast5'), '0123456789', 'cast5');
+

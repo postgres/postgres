@@ -46,3 +46,16 @@ select decrypt_iv(decode('50735067b073bb93', 'hex'), '0123456', 'abcd', 'des');
  foo
 (1 row)
 
+-- long message
+select encode(encrypt('Lets try a longer message.', '01234567', 'des'), 'hex');
+                              encode                              
+------------------------------------------------------------------
+ 5ad146043e5f30967e06a0fcbae602daf4ff2a5fd0ed12d6c5913cf85f1e36ca
+(1 row)
+
+select decrypt(encrypt('Lets try a longer message.', '01234567', 'des'), '01234567', 'des');
+          decrypt           
+----------------------------
+ Lets try a longer message.
+(1 row)
+

@@ -85,3 +85,7 @@ select decrypt(encrypt('foo', '0123456', 'bf'), '0123456', 'bf');
 select encode(encrypt_iv('foo', '0123456', 'abcd', 'bf'), 'hex');
 select decrypt_iv(decode('95c7e89322525d59', 'hex'), '0123456', 'abcd', 'bf');
 
+-- long message
+select encode(encrypt('Lets try a longer message.', '0123456789', 'bf'), 'hex');
+select decrypt(encrypt('Lets try a longer message.', '0123456789', 'bf'), '0123456789', 'bf');
+

@@ -71,3 +71,16 @@ select decrypt_iv(decode('384a970695ce016a', 'hex'),
  foo
 (1 row)
 
+-- long message
+select encode(encrypt('Lets try a longer message.', '0123456789', 'cast5'), 'hex');
+                              encode                              
+------------------------------------------------------------------
+ 04fcffc91533e1505dadcb10766d9fed0937818e663e402384e049942ba60fff
+(1 row)
+
+select decrypt(encrypt('Lets try a longer message.', '0123456789', 'cast5'), '0123456789', 'cast5');
+          decrypt           
+----------------------------
+ Lets try a longer message.
+(1 row)
+
