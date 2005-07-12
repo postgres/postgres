@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.151 2005/06/29 22:51:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.152 2005/07/12 15:17:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3278,7 +3278,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 		sec = (*fsec / USECS_PER_SEC);
 		*fsec -= (sec * USECS_PER_SEC);
 #else
-		TMODULO(*fsec, sec, 1e0);
+		TMODULO(*fsec, sec, 1.0);
 #endif
 		tm->tm_sec += sec;
 	}

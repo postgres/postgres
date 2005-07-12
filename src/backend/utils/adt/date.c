@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.111 2005/07/10 21:13:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.112 2005/07/12 15:17:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -946,9 +946,9 @@ time2tm(TimeADT time, struct pg_tm * tm, fsec_t *fsec)
 	double		trem;
 
 	trem = time;
-	TMODULO(trem, tm->tm_hour, 3600e0);
-	TMODULO(trem, tm->tm_min, 60e0);
-	TMODULO(trem, tm->tm_sec, 1e0);
+	TMODULO(trem, tm->tm_hour, 3600.0);
+	TMODULO(trem, tm->tm_min, 60.0);
+	TMODULO(trem, tm->tm_sec, 1.0);
 	*fsec = trem;
 #endif
 
@@ -1683,7 +1683,7 @@ time_part(PG_FUNCTION_ARGS)
 	else if (type == RESERV && val == DTK_EPOCH)
 	{
 #ifdef HAVE_INT64_TIMESTAMP
-		result = (time / 1000000e0);
+		result = (time / 1000000.0);
 #else
 		result = time;
 #endif
@@ -1841,9 +1841,9 @@ timetz2tm(TimeTzADT *time, struct pg_tm * tm, fsec_t *fsec, int *tzp)
 #else
 	double		trem = time->time;
 
-	TMODULO(trem, tm->tm_hour, 3600e0);
-	TMODULO(trem, tm->tm_min, 60e0);
-	TMODULO(trem, tm->tm_sec, 1e0);
+	TMODULO(trem, tm->tm_hour, 3600.0);
+	TMODULO(trem, tm->tm_min, 60.0);
+	TMODULO(trem, tm->tm_sec, 1.0);
 	*fsec = trem;
 #endif
 
@@ -2398,12 +2398,12 @@ timetz_part(PG_FUNCTION_ARGS)
 			case DTK_TZ_MINUTE:
 				result = -tz;
 				result /= 60;
-				FMODULO(result, dummy, 60e0);
+				FMODULO(result, dummy, 60.0);
 				break;
 
 			case DTK_TZ_HOUR:
 				dummy = -tz;
-				FMODULO(dummy, result, 3600e0);
+				FMODULO(dummy, result, 3600.0);
 				break;
 
 			case DTK_MICROSEC:
@@ -2458,7 +2458,7 @@ timetz_part(PG_FUNCTION_ARGS)
 	else if (type == RESERV && val == DTK_EPOCH)
 	{
 #ifdef HAVE_INT64_TIMESTAMP
-		result = time->time / 1000000e0 + time->zone;
+		result = time->time / 1000000.0 + time->zone;
 #else
 		result = time->time + time->zone;
 #endif

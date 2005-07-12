@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.130 2005/07/10 21:13:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.131 2005/07/12 15:17:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1241,9 +1241,9 @@ interval2tm(Interval span, struct pg_tm * tm, fsec_t *fsec)
 	*fsec = (time - (tm->tm_sec * USECS_PER_SEC));
 #else
 	TMODULO(time, tm->tm_mday, (double)SECS_PER_DAY);
-	TMODULO(time, tm->tm_hour, 3600e0);
-	TMODULO(time, tm->tm_min, 60e0);
-	TMODULO(time, tm->tm_sec, 1e0);
+	TMODULO(time, tm->tm_hour, 3600.0);
+	TMODULO(time, tm->tm_min, 60.0);
+	TMODULO(time, tm->tm_sec, 1.0);
 	*fsec = time;
 #endif
 
@@ -3330,7 +3330,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 		{
 			case DTK_MICROSEC:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = tm->tm_sec * 1000000e0 + fsec;
+				result = tm->tm_sec * 1000000.0 + fsec;
 #else
 				result = (tm->tm_sec + fsec) * 1000000;
 #endif
@@ -3338,7 +3338,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 
 			case DTK_MILLISEC:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = tm->tm_sec * 1000e0 + fsec / 1000e0;
+				result = tm->tm_sec * 1000.0 + fsec / 1000.0;
 #else
 				result = (tm->tm_sec + fsec) * 1000;
 #endif
@@ -3346,7 +3346,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 
 			case DTK_SECOND:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = tm->tm_sec + fsec / 1000000e0;
+				result = tm->tm_sec + fsec / 1000000.0;
 #else
 				result = tm->tm_sec + fsec;
 #endif
@@ -3424,7 +3424,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 				result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
 #ifdef HAVE_INT64_TIMESTAMP
 				result += ((((tm->tm_hour * 60) + tm->tm_min) * 60) +
-							tm->tm_sec + (fsec / 1000000e0)) / (double)SECS_PER_DAY;
+							tm->tm_sec + (fsec / 1000000.0)) / (double)SECS_PER_DAY;
 #else
 				result += ((((tm->tm_hour * 60) + tm->tm_min) * 60) +
 							tm->tm_sec + fsec) / (double)SECS_PER_DAY;
@@ -3468,7 +3468,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 							errmsg("timestamp out of range")));
 
 #ifdef HAVE_INT64_TIMESTAMP
-					result = (timestamptz - SetEpochTimestamp()) / 1000000e0;
+					result = (timestamptz - SetEpochTimestamp()) / 1000000.0;
 #else
 					result = timestamptz - SetEpochTimestamp();
 #endif
@@ -3560,17 +3560,17 @@ timestamptz_part(PG_FUNCTION_ARGS)
 			case DTK_TZ_MINUTE:
 				result = -tz;
 				result /= 60;
-				FMODULO(result, dummy, 60e0);
+				FMODULO(result, dummy, 60.0);
 				break;
 
 			case DTK_TZ_HOUR:
 				dummy = -tz;
-				FMODULO(dummy, result, 3600e0);
+				FMODULO(dummy, result, 3600.0);
 				break;
 
 			case DTK_MICROSEC:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = tm->tm_sec * 1000000e0 + fsec;
+				result = tm->tm_sec * 1000000.0 + fsec;
 #else
 				result = (tm->tm_sec + fsec) * 1000000;
 #endif
@@ -3578,7 +3578,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 
 			case DTK_MILLISEC:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = tm->tm_sec * 1000e0 + fsec / 1000e0;
+				result = tm->tm_sec * 1000.0 + fsec / 1000.0;
 #else
 				result = (tm->tm_sec + fsec) * 1000;
 #endif
@@ -3586,7 +3586,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 
 			case DTK_SECOND:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = tm->tm_sec + fsec / 1000000e0;
+				result = tm->tm_sec + fsec / 1000000.0;
 #else
 				result = tm->tm_sec + fsec;
 #endif
@@ -3652,7 +3652,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 				result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
 #ifdef HAVE_INT64_TIMESTAMP
 				result += ((((tm->tm_hour * 60) + tm->tm_min) * 60) +
-							tm->tm_sec + (fsec / 1000000e0)) / (double)SECS_PER_DAY;
+							tm->tm_sec + (fsec / 1000000.0)) / (double)SECS_PER_DAY;
 #else
 				result += ((((tm->tm_hour * 60) + tm->tm_min) * 60) +
 							tm->tm_sec + fsec) / (double)SECS_PER_DAY;
@@ -3674,7 +3674,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 		{
 			case DTK_EPOCH:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = (timestamp - SetEpochTimestamp()) /1000000e0;
+				result = (timestamp - SetEpochTimestamp()) /1000000.0;
 #else
 				result = timestamp - SetEpochTimestamp();
 #endif
@@ -3751,7 +3751,7 @@ interval_part(PG_FUNCTION_ARGS)
 			{
 				case DTK_MICROSEC:
 #ifdef HAVE_INT64_TIMESTAMP
-					result = tm->tm_sec * 1000000e0 + fsec;
+					result = tm->tm_sec * 1000000.0 + fsec;
 #else
 					result = (tm->tm_sec + fsec) * 1000000;
 #endif
@@ -3759,7 +3759,7 @@ interval_part(PG_FUNCTION_ARGS)
 
 				case DTK_MILLISEC:
 #ifdef HAVE_INT64_TIMESTAMP
-					result = tm->tm_sec * 1000e0 + fsec / 1000e0;
+					result = tm->tm_sec * 1000.0 + fsec / 1000.0;
 #else
 					result = (tm->tm_sec + fsec) * 1000;
 #endif
@@ -3767,7 +3767,7 @@ interval_part(PG_FUNCTION_ARGS)
 
 				case DTK_SECOND:
 #ifdef HAVE_INT64_TIMESTAMP
-					result = tm->tm_sec + fsec / 1000000e0;
+					result = tm->tm_sec + fsec / 1000000.0;
 #else
 					result = tm->tm_sec + fsec;
 #endif
@@ -3831,7 +3831,7 @@ interval_part(PG_FUNCTION_ARGS)
 	else if (type == RESERV && val == DTK_EPOCH)
 	{
 #ifdef HAVE_INT64_TIMESTAMP
-		result = interval->time / 1000000e0;
+		result = interval->time / 1000000.0;
 #else
 		result = interval->time;
 #endif
