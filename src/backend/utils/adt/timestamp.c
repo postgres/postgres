@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.131 2005/07/12 15:17:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.132 2005/07/12 16:04:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,6 @@ TimestampTz PgStartTime;
 
 #ifdef HAVE_INT64_TIMESTAMP
 static int64 time2t(const int hour, const int min, const int sec, const fsec_t fsec);
-
 #else
 static double time2t(const int hour, const int min, const int sec, const fsec_t fsec);
 #endif
@@ -642,7 +641,10 @@ interval_scale(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INTERVAL_P(result);
 }
-
+/*
+ *	Adjust interval for specified precision, in both YEAR to SECOND
+ *	range and sub-second precision.
+ */
 static void
 AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 {
@@ -722,7 +724,6 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		{
 #ifdef HAVE_INT64_TIMESTAMP
 			int64		day;
-
 #else
 			double		day;
 #endif
@@ -744,7 +745,6 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		{
 #ifdef HAVE_INT64_TIMESTAMP
 			int64		hour;
-
 #else
 			double		hour;
 #endif
@@ -887,7 +887,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		else
 			elog(ERROR, "unrecognized interval typmod: %d", typmod);
 
-		/* Need to adjust precision? If not, don't even try! */
+		/* Need to adjust subsecond precision? */
 		if (precision != INTERVAL_FULL_PRECISION)
 		{
 			if (precision < 0 || precision > MAX_INTERVAL_PRECISION)
@@ -990,7 +990,6 @@ dt2time(Timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		time;
-
 #else
 	double		time;
 #endif
@@ -1171,7 +1170,6 @@ tm2timestamp(struct pg_tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
 #ifdef HAVE_INT64_TIMESTAMP
 	int date;
 	int64		time;
-
 #else
 	double date,
 				time;
@@ -1211,7 +1209,6 @@ interval2tm(Interval span, struct pg_tm * tm, fsec_t *fsec)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		time;
-
 #else
 	double		time;
 #endif
@@ -1648,7 +1645,6 @@ interval_cmp_internal(Interval *interval1, Interval *interval2)
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		span1,
 				span2;
-
 #else
 	double		span1,
 				span2;
@@ -2192,7 +2188,6 @@ interval_mul(PG_FUNCTION_ARGS)
 
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		months;
-
 #else
 	double		months;
 #endif

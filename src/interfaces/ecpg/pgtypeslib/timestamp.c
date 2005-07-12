@@ -103,7 +103,6 @@ dt2time(timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		time;
-
 #else
 	double		time;
 #endif
@@ -148,7 +147,6 @@ timestamp2tm(timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
 	int			dDate,
 				date0;
 	int64		time;
-
 #else
 	double		dDate,
 				date0;
@@ -280,7 +278,6 @@ PGTYPEStimestamp_from_asc(char *str, char **endptr)
 
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		noresult = 0;
-
 #else
 	double		noresult = 0.0;
 #endif
@@ -572,7 +569,7 @@ dttofmtasc_replace(timestamp *ts, date dDate, int dow, struct tm * tm,
 					break;
 				case 's':
 #ifdef HAVE_INT64_TIMESTAMP
-					replace_val.int64_val = (*ts - SetEpochTimestamp()) / 1000000e0;
+					replace_val.int64_val = (*ts - SetEpochTimestamp()) / 1000000.0;
 					replace_type = PGTYPES_TYPE_INT64;
 #else
 					replace_val.double_val = *ts - SetEpochTimestamp();

@@ -416,7 +416,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 		sec = (*fsec / USECS_PER_SEC);
 		*fsec -= (sec * USECS_PER_SEC);
 #else
-		TMODULO(*fsec, sec, 1e0);
+		TMODULO(*fsec, sec, 1.0);
 #endif
 		tm->tm_sec += sec;
 	}
@@ -674,7 +674,6 @@ interval2tm(interval span, struct tm * tm, fsec_t *fsec)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		time;
-
 #else
 	double		time;
 #endif
@@ -704,9 +703,9 @@ interval2tm(interval span, struct tm * tm, fsec_t *fsec)
 	*fsec = (time - (tm->tm_sec * USECS_PER_SEC));
 #else
 	TMODULO(time, tm->tm_mday, (double)SECS_PER_DAY);
-	TMODULO(time, tm->tm_hour, 3600e0);
-	TMODULO(time, tm->tm_min, 60e0);
-	TMODULO(time, tm->tm_sec, 1e0);
+	TMODULO(time, tm->tm_hour, 3600.0);
+	TMODULO(time, tm->tm_min, 60.0);
+	TMODULO(time, tm->tm_sec, 1.0);
 	*fsec = time;
 #endif
 

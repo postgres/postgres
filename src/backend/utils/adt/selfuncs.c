@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.183 2005/06/29 22:51:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.184 2005/07/12 16:04:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2802,7 +2802,7 @@ convert_timevalue_to_scalar(Datum value, Oid typid)
 
 #ifdef HAVE_INT64_TIMESTAMP
 				if (interval->status != 0)
-					return ((interval->data[1] - interval->data[0]) *1000000.0);
+					return ((interval->data[1] - interval->data[0]) * 1000000.0);
 #else
 				if (interval->status != 0)
 					return interval->data[1] - interval->data[0];

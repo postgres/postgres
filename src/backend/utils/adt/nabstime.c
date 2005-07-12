@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.134 2005/06/29 22:51:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.135 2005/07/12 16:04:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -833,7 +833,6 @@ interval_reltime(PG_FUNCTION_ARGS)
 
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		span;
-
 #else
 	double		span;
 #endif
