@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.84 2005/07/10 16:13:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.85 2005/07/12 01:16:21 tgl Exp $
  *
  **********************************************************************/
 
@@ -90,9 +90,6 @@ typedef struct plperl_proc_desc
 	FmgrInfo	arg_out_func[FUNC_MAX_ARGS];
 	bool		arg_is_rowtype[FUNC_MAX_ARGS];
 	SV		   *reference;
-	FunctionCallInfo caller_info;
-	Tuplestorestate *tuple_store;
-	TupleDesc tuple_desc;
 } plperl_proc_desc;
 
 
@@ -106,8 +103,11 @@ static HV  *plperl_proc_hash = NULL;
 
 static bool plperl_use_strict = false;
 
-/* this is saved and restored by plperl_call_handler */
+/* these are saved and restored by plperl_call_handler */
 static plperl_proc_desc *plperl_current_prodesc = NULL;
+static FunctionCallInfo plperl_current_caller_info;
+static Tuplestorestate *plperl_current_tuple_store;
+static TupleDesc plperl_current_tuple_desc;
 
 /**********************************************************************
  * Forward declarations
@@ -577,10 +577,16 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 {
 	Datum retval;
 	plperl_proc_desc *save_prodesc;
+	FunctionCallInfo save_caller_info;
+	Tuplestorestate *save_tuple_store;
+	TupleDesc save_tuple_desc;
 
 	plperl_init_all();
 
 	save_prodesc = plperl_current_prodesc;
+	save_caller_info = plperl_current_caller_info;
+	save_tuple_store = plperl_current_tuple_store;
+	save_tuple_desc = plperl_current_tuple_desc;
 
 	PG_TRY();
 	{
@@ -592,11 +598,17 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 	PG_CATCH();
 	{
 		plperl_current_prodesc = save_prodesc;
+		plperl_current_caller_info = save_caller_info;
+		plperl_current_tuple_store = save_tuple_store;
+		plperl_current_tuple_desc = save_tuple_desc;
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
 	plperl_current_prodesc = save_prodesc;
+	plperl_current_caller_info = save_caller_info;
+	plperl_current_tuple_store = save_tuple_store;
+	plperl_current_tuple_desc = save_tuple_desc;
 
 	return retval;
 }
@@ -897,6 +909,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	SV		   *perlret;
 	Datum		retval;
 	ReturnSetInfo *rsi;
+        SV* array_ret = NULL;
 
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "could not connect to SPI manager");
@@ -904,9 +917,9 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	prodesc = compile_plperl_function(fcinfo->flinfo->fn_oid, false);
 
 	plperl_current_prodesc = prodesc;
-	prodesc->caller_info = fcinfo;
-	prodesc->tuple_store = 0;
-	prodesc->tuple_desc = 0;
+	plperl_current_caller_info = fcinfo;
+	plperl_current_tuple_store = 0;
+	plperl_current_tuple_desc = 0;
 
 	perlret = plperl_call_perl_func(prodesc, fcinfo);
 
@@ -958,10 +971,10 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		}
 
 		rsi->returnMode = SFRM_Materialize;
-		if (prodesc->tuple_store) 
+		if (plperl_current_tuple_store) 
 		{
-			rsi->setResult = prodesc->tuple_store;
-			rsi->setDesc = prodesc->tuple_desc;
+			rsi->setResult = plperl_current_tuple_store;
+			rsi->setDesc = plperl_current_tuple_desc;
 		}
 		retval = (Datum)0;
 	}
@@ -1006,7 +1019,6 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	{
         /* Return a perl string converted to a Datum */
         char *val;
-        SV* array_ret;
  
 
         if (prodesc->fn_retisarray && SvTYPE(SvRV(perlret)) == SVt_PVAV)
@@ -1024,7 +1036,9 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 							   Int32GetDatum(-1));
 	}
 
-	SvREFCNT_dec(perlret);
+	if (array_ret == NULL)
+	  SvREFCNT_dec(perlret);
+
 	return retval;
 }
 
@@ -1526,7 +1540,7 @@ void
 plperl_return_next(SV *sv)
 {
 	plperl_proc_desc *prodesc = plperl_current_prodesc;
-	FunctionCallInfo fcinfo = prodesc->caller_info;
+	FunctionCallInfo fcinfo = plperl_current_caller_info;
 	ReturnSetInfo *rsi = (ReturnSetInfo *)fcinfo->resultinfo;
 	MemoryContext cxt;
 	HeapTuple tuple;
@@ -1553,8 +1567,9 @@ plperl_return_next(SV *sv)
 
 	cxt = MemoryContextSwitchTo(rsi->econtext->ecxt_per_query_memory);
 
-	if (!prodesc->tuple_store)
-		prodesc->tuple_store = tuplestore_begin_heap(true, false, work_mem);
+	if (!plperl_current_tuple_store)
+		plperl_current_tuple_store = 
+			tuplestore_begin_heap(true, false, work_mem);
 
 	if (prodesc->fn_retistuple)
 	{
@@ -1590,10 +1605,10 @@ plperl_return_next(SV *sv)
 		tuple = heap_form_tuple(tupdesc, &ret, &isNull);
 	}
 
-	if (!prodesc->tuple_desc)
-		prodesc->tuple_desc = tupdesc;
+	if (!plperl_current_tuple_desc)
+		plperl_current_tuple_desc = tupdesc;
 
-	tuplestore_puttuple(prodesc->tuple_store, tuple);
+	tuplestore_puttuple(plperl_current_tuple_store, tuple);
 	heap_freetuple(tuple);
 	MemoryContextSwitchTo(cxt);
 }

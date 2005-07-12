@@ -260,3 +260,44 @@ while (defined ($y = spi_fetchrow($x))) {
 return;
 $$ LANGUAGE plperl;
 SELECT * from perl_spi_func();
+
+
+---
+--- Test recursion via SPI
+---
+
+
+CREATE OR REPLACE FUNCTION recurse(i int) RETURNS SETOF TEXT LANGUAGE plperl
+AS $$
+
+  my $i = shift;
+  foreach my $x (1..$i)
+  {
+    return_next "hello $x";
+  }
+  if ($i > 2)
+  {
+    my $z = $i-1;
+    my $cursor = spi_query("select * from recurse($z)");
+    while (defined(my $row = spi_fetchrow($cursor)))
+    {
+      return_next "recurse $i: $row->{recurse}";
+    }
+  }
+  return undef;
+
+$$;
+
+SELECT * FROM recurse(2);
+SELECT * FROM recurse(3);
+
+
+---
+--- Test arrary return
+---
+CREATE OR REPLACE FUNCTION  array_of_text() RETURNS TEXT[][] 
+LANGUAGE plperl as $$ 
+    return [['a"b','c,d'],['e\\f','g']]; 
+$$;
+
+SELECT array_of_text(); 
