@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.209 2005/06/29 22:51:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.210 2005/07/13 22:46:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1485,7 +1485,7 @@ CommitTransaction(void)
 
 	/*
 	 * set the current transaction state information appropriately during
-	 * the abort processing
+	 * commit processing
 	 */
 	s->state = TRANS_COMMIT;
 
@@ -1677,7 +1677,7 @@ PrepareTransaction(void)
 
 	/*
 	 * set the current transaction state information appropriately during
-	 * the processing
+	 * prepare processing
 	 */
 	s->state = TRANS_PREPARE;
 

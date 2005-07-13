@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.286 2005/07/07 20:39:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.287 2005/07/13 22:46:09 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -296,7 +296,7 @@ heap_create(const char *relname,
 /* ----------------------------------------------------------------
  *		heap_create_with_catalog		- Create a cataloged relation
  *
- *		this is done in 6 steps:
+ *		this is done in multiple steps:
  *
  *		1) CheckAttributeNamesTypes() is used to make certain the tuple
  *		   descriptor contains a valid set of attribute names and types
