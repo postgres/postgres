@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.94 2005/07/13 02:11:57 momjian Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.95 2005/07/13 17:00:44 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -72,6 +72,9 @@ LINK.static = $(AR) $(AROPT)
 
 
 ifeq ($(enable_shared), yes)
+
+# Insert -L from LDFLAGS after any -L already present in SHLIB_LINK
+SHLIB_LINK := $(filter -L%, $(SHLIB_LINK)) $(filter -L%, $(LDFLAGS)) $(filter-out -L%, $(SHLIB_LINK))
 
 # Default shlib naming convention used by the majority of platforms
 shlib		= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
@@ -150,9 +153,6 @@ endif
 
 ifeq ($(PORTNAME), hpux)
   shlib			= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
-  ifeq ($(GCC), yes)
-    SHLIB_LINK		+= `$(CC) $(LDFLAGS) -print-libgcc-file-name`
-  endif
   ifeq ($(with_gnu_ld), yes)
     LINK.shared		= $(CC) $(LDFLAGS) -shared -Wl,-h -Wl,$(soname)
   else
@@ -168,8 +168,12 @@ ifeq ($(PORTNAME), hpux)
     # ld can find the same libraries gcc does.  Make sure it goes after any
     # -L switches provided explicitly.
     ifeq ($(GCC), yes)
-      SHLIB_LINK += -L/usr/local/lib
+      SHLIB_LINK := $(filter -L%, $(SHLIB_LINK)) -L/usr/local/lib $(filter-out -L%, $(SHLIB_LINK))
     endif
+  endif
+  # do this last so above filtering doesn't pull out -L switches in LDFLAGS
+  ifeq ($(GCC), yes)
+    SHLIB_LINK		+= `$(CC) $(LDFLAGS) -print-libgcc-file-name`
   endif
 endif
 
@@ -247,7 +251,6 @@ ifeq ($(PORTNAME), beos)
   SHLIB_LINK		+= -ltermcap -lstdc++.r4 -lbind -lsocket -L/boot/develop/lib/x86
 endif
 
-SHLIB_LINK := $(filter -L%, $(SHLIB_LINK)) $(filter -L%, $(LDFLAGS)) $(filter-out -L%, $(SHLIB_LINK))
 ifeq ($(enable_rpath), yes)
 SHLIB_LINK += $(rpath)
 endif
