@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.301.4.3 2005/05/05 16:36:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.301.4.4 2005/07/13 15:26:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2027,6 +2027,8 @@ makeEmptyPGconn(void)
 /*
  * freePGconn
  *	 - free the PGconn data structure
+ *
+ * When changing/adding to this function, see also closePGconn!
  */
 static void
 freePGconn(PGconn *conn)
@@ -2070,6 +2072,7 @@ freePGconn(PGconn *conn)
 	if (conn->sslmode)
 		free(conn->sslmode);
 	/* Note that conn->Pfdebug is not ours to close or free */
+	freeaddrinfo_all(conn->addrlist_family, conn->addrlist);
 	notify = conn->notifyHead;
 	while (notify != NULL)
 	{
@@ -2078,7 +2081,6 @@ freePGconn(PGconn *conn)
 		notify = notify->next;
 		free(prev);
 	}
-	freeaddrinfo_all(conn->addrlist_family, conn->addrlist);
 	pstatus = conn->pstatus;
 	while (pstatus != NULL)
 	{
@@ -2101,10 +2103,15 @@ freePGconn(PGconn *conn)
 /*
  * closePGconn
  *	 - properly close a connection to the backend
+ *
+ * Release all transient state, but NOT the connection parameters.
  */
 static void
 closePGconn(PGconn *conn)
 {
+	PGnotify   *notify;
+	pgParameterStatus *pstatus;
+
 	/*
 	 * Note that the protocol doesn't allow us to send Terminate messages
 	 * during the startup phase.
@@ -2140,6 +2147,27 @@ closePGconn(PGconn *conn)
 										 * absent */
 	conn->asyncStatus = PGASYNC_IDLE;
 	pqClearAsyncResult(conn);	/* deallocate result and curTuple */
+	freeaddrinfo_all(conn->addrlist_family, conn->addrlist);
+	conn->addrlist = NULL;
+	conn->addr_cur = NULL;
+	notify = conn->notifyHead;
+	while (notify != NULL)
+	{
+		PGnotify *prev = notify;
+
+		notify = notify->next;
+		free(prev);
+	}
+	conn->notifyHead = NULL;
+	pstatus = conn->pstatus;
+	while (pstatus != NULL)
+	{
+		pgParameterStatus *prev = pstatus;
+
+		pstatus = pstatus->next;
+		free(prev);
+	}
+	conn->pstatus = NULL;
 	if (conn->lobjfuncs)
 		free(conn->lobjfuncs);
 	conn->lobjfuncs = NULL;
