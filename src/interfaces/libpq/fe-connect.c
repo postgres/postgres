@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.263.2.2 2005/05/05 16:37:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.263.2.3 2005/07/13 15:26:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1999,6 +1999,8 @@ makeEmptyPGconn(void)
 /*
  * freePGconn
  *	 - free the PGconn data structure
+ *
+ * When changing/adding to this function, see also closePGconn!
  */
 static void
 freePGconn(PGconn *conn)
@@ -2041,9 +2043,9 @@ freePGconn(PGconn *conn)
 	if (conn->sslmode)
 		free(conn->sslmode);
 	/* Note that conn->Pfdebug is not ours to close or free */
+	freeaddrinfo_all(conn->addrlist_family, conn->addrlist);
 	if (conn->notifyList)
 		DLFreeList(conn->notifyList);
-	freeaddrinfo_all(conn->addrlist_family, conn->addrlist);
 	pstatus = conn->pstatus;
 	while (pstatus != NULL)
 	{
@@ -2066,10 +2068,14 @@ freePGconn(PGconn *conn)
 /*
  * closePGconn
  *	 - properly close a connection to the backend
+ *
+ * Release all transient state, but NOT the connection parameters.
  */
 static void
 closePGconn(PGconn *conn)
 {
+	pgParameterStatus *pstatus;
+
 	/*
 	 * Note that the protocol doesn't allow us to send Terminate messages
 	 * during the startup phase.
@@ -2105,6 +2111,21 @@ closePGconn(PGconn *conn)
 										 * absent */
 	conn->asyncStatus = PGASYNC_IDLE;
 	pqClearAsyncResult(conn);	/* deallocate result and curTuple */
+	freeaddrinfo_all(conn->addrlist_family, conn->addrlist);
+	conn->addrlist = NULL;
+	conn->addr_cur = NULL;
+	if (conn->notifyList)
+		DLFreeList(conn->notifyList);
+	conn->notifyList = NULL;
+	pstatus = conn->pstatus;
+	while (pstatus != NULL)
+	{
+		pgParameterStatus *prev = pstatus;
+
+		pstatus = pstatus->next;
+		free(prev);
+	}
+	conn->pstatus = NULL;
 	if (conn->lobjfuncs)
 		free(conn->lobjfuncs);
 	conn->lobjfuncs = NULL;
