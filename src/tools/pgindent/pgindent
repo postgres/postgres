@@ -1648,14 +1648,15 @@ do
 				print line1;
 			}
 		}' |
-# remove blank line before #endif
+# remove blank line before #else and #endif
 	awk '	BEGIN	{line1 = ""; line2 = ""; skips = 0}
 		{
 			line2 = $0;
 			if (skips > 0)
 				skips--;
 			if (line1 ~ /^$/ &&
-			    line2 ~ /^#endif/)
+			    (line2 ~ /^#else/ ||
+			     line2 ~ /^#endif/))
 			{
 				print line2;
 				line2 = "";
