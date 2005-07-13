@@ -1648,7 +1648,7 @@ do
 				print line1;
 			}
 		}' |
-# remove blank line before #else and #endif
+# remove blank line before #else, #elif, and #endif
 	awk '	BEGIN	{line1 = ""; line2 = ""; skips = 0}
 		{
 			line2 = $0;
@@ -1656,6 +1656,7 @@ do
 				skips--;
 			if (line1 ~ /^$/ &&
 			    (line2 ~ /^#else/ ||
+			     line2 ~ /^#elif/ ||
 			     line2 ~ /^#endif/))
 			{
 				print line2;
