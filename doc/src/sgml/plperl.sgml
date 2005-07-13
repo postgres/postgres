@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.41 2005/06/05 03:16:29 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.42 2005/07/13 02:10:42 neilc Exp $
 -->
 
  <chapter id="plperl">
@@ -54,6 +54,33 @@ $$ LANGUAGE plperl;
 </programlisting>
    The body of the function is ordinary Perl code.
   </para>
+    <para>
+    As with ordinary Perl code, you should use the strict pragma,
+    which you can do in one of two ways:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       Globally, by adding <quote>plperl</quote> to the list of <xref
+        linkend="guc-custom-variable-classes"> and setting
+       <literal>plperl.use_strict</literal> to true in
+       <filename>postgresql.conf</filename>
+      </para>
+    </listitem>
+     <listitem>
+      <para>
+       One function at a time, by using PL/PerlU (you must be database
+       superuser to do this) and including
+
+<programlisting>
+use strict;
+</programlisting>
+
+        in the function body.
+        </para>
+    </listitem>
+    </itemizedlist>
+    </para>
 
    <para>
     The syntax of the <command>CREATE FUNCTION</command> command requires
@@ -118,6 +145,20 @@ $$ LANGUAGE plperl;
   </para>
 
   <para>
+   Perl can return <productname>PostgreSQL</productname> arrays as
+   references to Perl arrays.  Here is an example:
+
+<programlisting>
+CREATE OR REPLACE function returns_array()
+RETURNS text[][] AS $$
+    return [['a"b','c,d'],['e\\f','g']];
+$$ LANGUAGE plperl;
+
+select returns_array();
+</programlisting>
+  </para>
+
+  <para>
    Composite-type arguments are passed to the function as references
    to hashes.  The keys of the hash are the attribute names of the
    composite type.  Here is an example:
@@ -158,18 +199,47 @@ SELECT * FROM perl_row();
   </para>
 
   <para>
-   PL/Perl functions can also return sets of either scalar or composite
-   types.  To do this, return a reference to an array that contains
-   either scalars or references to hashes, respectively.  Here are
-   some simple examples:
+    PL/Perl functions can also return sets of either scalar or
+    composite types.  In general, you'll want to return rows one at a
+    time both to speed up startup time and to keep from queueing up
+    the entire result set in memory.  You can do this with
+    <function>return_next</function> as illustrated below.  Note that
+    after the last <function>return_next</function>, you must put
+    either <literal>return;</literal> or (better) <literal>return
+    undef;</literal>
 
 <programlisting>
-CREATE OR REPLACE FUNCTION perl_set_int(int) RETURNS SETOF INTEGER AS $$
-return [0..$_[0]];
+CREATE OR REPLACE FUNCTION perl_set_int(int)
+RETURNS SETOF INTEGER AS $$
+    foreach (0..$_[0]) {
+        return_next($_);
+    }
+    return undef;
 $$ LANGUAGE plperl;
 
 SELECT * FROM perl_set_int(5);
 
+CREATE OR REPLACE FUNCTION perl_set()
+RETURNS SETOF testrowperl AS $$
+    return_next({ f1 =&gt; 1, f2 =&gt; 'Hello', f3 =&gt; 'World' });
+    return_next({ f1 =&gt; 2, f2 =&gt; 'Hello', f3 =&gt; 'PostgreSQL' });
+    return_next({ f1 =&gt; 3, f2 =&gt; 'Hello', f3 =&gt; 'PL/Perl' });
+    return undef;
+$$ LANGUAGE plperl;
+</programlisting>
+
+    For small result sets, you can return a reference to an array that
+    contains either scalars, references to arrays, or references to
+    hashes for simple types, array types, and composite types,
+    respectively.  Here are some simple examples of returning the entire
+    result set as a reference:
+
+<programlisting>
+CREATE OR REPLACE FUNCTION perl_set_int(int) RETURNS SETOF INTEGER AS $$
+    return [0..$_[0]];
+$$ LANGUAGE plperl;
+
+SELECT * FROM perl_set_int(5);
 
 CREATE OR REPLACE FUNCTION perl_set() RETURNS SETOF testrowperl AS $$
     return [
@@ -177,16 +247,11 @@ CREATE OR REPLACE FUNCTION perl_set() RETURNS SETOF testrowperl AS $$
         { f1 =&gt; 2, f2 =&gt; 'Hello', f3 =&gt; 'PostgreSQL' },
         { f1 =&gt; 3, f2 =&gt; 'Hello', f3 =&gt; 'PL/Perl' }
     ];
-$$  LANGUAGE plperl;
+$$ LANGUAGE plperl;
 
 SELECT * FROM perl_set();
 </programlisting>
 
-   When you do this, Perl will have to build the entire array in memory;
-   therefore the technique does not scale to very large result sets. You
-   can instead call <function>return_next</function> for each element of
-   the result set, passing it either a scalar or a reference to a hash,
-   as appropriate to your function's return type.
   </para>
 
     <para>
@@ -217,7 +282,7 @@ SELECT * FROM perl_set();
   </para>
 
   <para>
-   PL/Perl itself presently provides two additional Perl commands:
+   PL/Perl provides two additional Perl commands:
 
    <variablelist>
     <varlistentry>
@@ -281,7 +346,6 @@ INSERT INTO test (i, v) VALUES (3, 'third line');
 INSERT INTO test (i, v) VALUES (4, 'immortal');
 
 CREATE FUNCTION test_munge() RETURNS SETOF test AS $$
-    my $res = [];
     my $rv = spi_exec_query('select i, v from test;');
     my $status = $rv-&gt;{status};
     my $nrows = $rv-&gt;{processed};
@@ -289,9 +353,9 @@ CREATE FUNCTION test_munge() RETURNS SETOF test AS $$
         my $row = $rv-&gt;{rows}[$rn];
         $row-&gt;{i} += 200 if defined($row-&gt;{i});
         $row-&gt;{v} =~ tr/A-Za-z/a-zA-Z/ if (defined($row-&gt;{v}));
-        push @$res, $row;
+        return_next($row);
     }
-    return $res;
+    return undef;
 $$ LANGUAGE plperl;
 
 SELECT * FROM test_munge();
