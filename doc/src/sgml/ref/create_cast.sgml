@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.20 2004/12/13 18:05:10 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.21 2005/07/14 06:17:36 neilc Exp $ -->
 
 <refentry id="SQL-CREATECAST">
  <refmeta>
@@ -298,8 +298,8 @@ CREATE CAST (text AS int4) WITH FUNCTION int4(text);
   <title>Compatibility</title>
 
   <para>
-   The <command>CREATE CAST</command> command conforms to SQL:1999,
-   except that SQL:1999 does not make provisions for binary-compatible
+   The <command>CREATE CAST</command> command conforms to SQL:2003,
+   except that SQL:2003 does not make provisions for binary-compatible
    types or extra arguments to implementation functions.
    <literal>AS IMPLICIT</> is a <productname>PostgreSQL</productname> 
    extension, too.

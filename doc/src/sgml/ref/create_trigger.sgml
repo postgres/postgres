@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.40 2004/11/27 21:27:07 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.41 2005/07/14 06:17:36 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -208,20 +208,19 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
   <para>
    The <command>CREATE TRIGGER</command> statement in
    <productname>PostgreSQL</productname> implements a subset of the
-   SQL:1999 standard.  (There are no provisions for triggers in SQL-92.)
-   The following functionality is missing:
+   SQL:2003 standard. The following functionality is currently missing:
 
    <itemizedlist>
     <listitem>
      <para>
-      SQL:1999 allows triggers to fire on updates to specific columns
+      SQL:2003 allows triggers to fire on updates to specific columns
       (e.g., <literal>AFTER UPDATE OF col1, col2</literal>).
      </para>
     </listitem>
 
     <listitem>
      <para>
-      SQL:1999 allows you to define aliases for the <quote>old</quote>
+      SQL:2003 allows you to define aliases for the <quote>old</quote>
       and <quote>new</quote> rows or tables for use in the definition
       of the triggered action (e.g., <literal>CREATE TRIGGER ... ON
       tablename REFERENCING OLD ROW AS somename NEW ROW AS othername
@@ -235,7 +234,7 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
     <listitem>
      <para>
       <productname>PostgreSQL</productname> only allows the execution
-      of a user-defined function for the triggered action.  SQL:1999
+      of a user-defined function for the triggered action.  SQL:2003
       allows the execution of a number of other SQL commands, such as
       <command>CREATE TABLE</command> as triggered action.  This
       limitation is not hard to work around by creating a user-defined
@@ -246,7 +245,7 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
   </para>
 
   <para>
-   SQL:1999 specifies that multiple triggers should be fired in
+   SQL:2003 specifies that multiple triggers should be fired in
    time-of-creation order.  <productname>PostgreSQL</productname> uses
    name order, which was judged more convenient to work with.
   </para>

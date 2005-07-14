@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.41 2005/06/13 02:40:01 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.42 2005/07/14 06:17:35 neilc Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -1122,7 +1122,7 @@ SELECT name, altitude
    <para>
      In previous versions of <productname>PostgreSQL</productname>, the
      default behavior was not to include child tables in queries. This was
-     found to be error prone and is also in violation of the SQL:1999
+     found to be error prone and is also in violation of the SQL:2003
      standard. Under the old syntax, to get the sub-tables you append
      <literal>*</literal> to the table name.
      For example

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.64 2005/05/20 12:36:48 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.65 2005/07/14 06:17:35 neilc Exp $
 -->
 
 <chapter id="ecpg">
@@ -1146,8 +1146,8 @@ struct
     The fields <literal>sqlca.sqlstate</literal> and
     <literal>sqlca.sqlcode</literal> are two different schemes that
     provide error codes.  Both are specified in the SQL standard, but
-    <literal>SQLCODE</literal> has been marked deprecated in the 1992
-    edition of the standard and has been dropped in the 1999 edition.
+    <literal>SQLCODE</literal> has been marked deprecated in SQL-92
+    edition of the standard and has been dropped in later editions.
     Therefore, new applications are strongly encouraged to use
     <literal>SQLSTATE</literal>.
    </para>

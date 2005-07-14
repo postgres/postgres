@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.15 2005/05/31 14:48:47 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.16 2005/07/14 06:17:36 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -203,7 +203,7 @@ ALTER DOMAIN zipcode DROP CONSTRAINT zipchk;
   <title>Compatibility</title>
     
   <para>
-   The <command>ALTER DOMAIN</command> statement is compatible with SQL:1999,
+   The <command>ALTER DOMAIN</command> statement is compatible with SQL:2003,
    except for the <literal>OWNER</> variant, which is a
    <productname>PostgreSQL</productname> extension.
   </para>

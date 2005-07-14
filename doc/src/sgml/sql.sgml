@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/sql.sgml,v 1.36 2005/04/28 21:47:09 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/sql.sgml,v 1.37 2005/07/14 06:17:35 neilc Exp $
 -->
 
  <chapter id="sql-intro">
@@ -98,8 +98,7 @@ $PostgreSQL: pgsql/doc/src/sgml/sql.sgml,v 1.36 2005/04/28 21:47:09 tgl Exp $
    is under development. It is planned to make <acronym>SQL</acronym>
    a Turing-complete
    language, i.e. all computable queries (e.g. recursive queries) will be
-   possible. This is a very complex task and therefore the completion of
-   the new standard can not be expected before 1999.
+   possible. This has now been completed as SQL:2003.
   </para>
 
   <sect1 id="rel-model">

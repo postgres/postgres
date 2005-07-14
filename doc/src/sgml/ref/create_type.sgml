@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.56 2005/07/10 21:13:57 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.57 2005/07/14 06:17:36 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -533,7 +533,7 @@ CREATE TABLE big_objs (
   <para>
    This <command>CREATE TYPE</command> command is a
    <productname>PostgreSQL</productname> extension.  There is a
-   <command>CREATE TYPE</command> statement in SQL:1999 and later that is rather
+   <command>CREATE TYPE</command> statement in SQL:2003 that is rather
    different in detail.
   </para>
  </refsect1>

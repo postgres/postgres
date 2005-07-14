@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.65 2005/03/31 22:45:59 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.66 2005/07/14 06:17:36 neilc Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -478,7 +478,7 @@ SELECT * FROM dup(42);
   <title>Compatibility</title>
 
   <para>
-   A <command>CREATE FUNCTION</command> command is defined in SQL:1999 and later.
+   A <command>CREATE FUNCTION</command> command is defined in SQL:2003.
    The <productname>PostgreSQL</productname> version is similar but
    not fully compatible.  The attributes are not portable, neither are the
    different available languages.

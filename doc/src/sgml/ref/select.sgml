@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.87 2005/05/08 03:08:05 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.88 2005/07/14 06:17:36 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -1082,7 +1082,7 @@ SELECT distributors.* WHERE distributors.name = 'Westward';
    <title>Namespace Available to <literal>GROUP BY</literal> and <literal>ORDER BY</literal></title>
 
    <para>
-    In the SQL-92 standard, an <literal>ORDER BY</literal> clause may
+    In the SQL:2003 standard, an <literal>ORDER BY</literal> clause may
     only use result column names or numbers, while a <literal>GROUP
     BY</literal> clause may only use expressions based on input column
     names.  <productname>PostgreSQL</productname> extends each of
@@ -1095,11 +1095,11 @@ SELECT distributors.* WHERE distributors.name = 'Westward';
    </para>
 
    <para>
-    SQL:1999 uses a slightly different definition which is not entirely upward
-    compatible 
-    with SQL-92.  In most cases, however, <productname>PostgreSQL</productname>
+    SQL:2003 uses a slightly different definition which is not entirely upward
+    compatible with SQL-92.  
+    In most cases, however, <productname>PostgreSQL</productname>
     will interpret an <literal>ORDER BY</literal> or <literal>GROUP
-    BY</literal> expression the same way SQL:1999 does.
+    BY</literal> expression the same way SQL:2003 does.
    </para>
   </refsect2>
 

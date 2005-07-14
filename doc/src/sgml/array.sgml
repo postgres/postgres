@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.43 2005/02/06 20:59:30 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.44 2005/07/14 06:17:35 neilc Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -63,7 +63,7 @@ CREATE TABLE tictactoe (
  </para>
 
  <para>
-  An alternative syntax, which conforms to the SQL:1999 standard, may
+  An alternative syntax, which conforms to the SQL:2003 standard, may
   be used for one-dimensional arrays.
   <structfield>pay_by_quarter</structfield> could have been defined
   as:
