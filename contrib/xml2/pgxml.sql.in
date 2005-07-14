@@ -1,32 +1,32 @@
 --SQL for XML parser
 
 CREATE OR REPLACE FUNCTION xml_valid(text) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' WITH (isStrict);
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' STRICT IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION xml_encode_special_chars(text) RETURNS text
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' WITH (isStrict);
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' STRICT IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION xpath_string(text,text) RETURNS text
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' WITH (isStrict);
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' STRICT IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION xpath_nodeset(text,text,text,text) RETURNS text
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' WITH (isStrict);
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' STRICT IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION xpath_number(text,text) RETURNS float4
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' WITH (isStrict);
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' STRICT IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION xpath_bool(text,text) RETURNS boolean
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' WITH (isStrict);
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' STRICT IMMUTABLE;
 
 -- List function
 
 CREATE OR REPLACE FUNCTION xpath_list(text,text,text) RETURNS text
 	AS 'MODULE_PATHNAME'
-	LANGUAGE 'c' WITH (isStrict);
+	LANGUAGE 'c' STRICT IMMUTABLE;
 
 
 CREATE OR REPLACE FUNCTION xpath_list(text,text) RETURNS text 
-AS 'SELECT xpath_list($1,$2,'','')' language 'SQL' WITH (isStrict);
+AS 'SELECT xpath_list($1,$2,'','')' language 'SQL' STRICT IMMUTABLE;
 
 
 
@@ -34,17 +34,17 @@ AS 'SELECT xpath_list($1,$2,'','')' language 'SQL' WITH (isStrict);
 
 
 CREATE OR REPLACE FUNCTION xpath_nodeset(text,text) RETURNS text AS
-'SELECT xpath_nodeset($1,$2,'''','''')' language 'SQL' WITH (isStrict);
+'SELECT xpath_nodeset($1,$2,'''','''')' language 'SQL' STRICT IMMUTABLE;
 
 
 CREATE OR REPLACE FUNCTION xpath_nodeset(text,text,text) RETURNS text AS
-'SELECT xpath_nodeset($1,$2,'''',$3)' language 'SQL' WITH (isStrict);
+'SELECT xpath_nodeset($1,$2,'''',$3)' language 'SQL' STRICT IMMUTABLE;
 
 -- Table function
 
 CREATE OR REPLACE FUNCTION xpath_table(text,text,text,text,text) RETURNS setof record
 	AS 'MODULE_PATHNAME'
-	LANGUAGE 'c' WITH (isStrict);
+	LANGUAGE 'c' STRICT IMMUTABLE;
 
 -- XSLT functions
 -- Delete from here to the end of the file if you are not compiling with
@@ -52,9 +52,9 @@ CREATE OR REPLACE FUNCTION xpath_table(text,text,text,text,text) RETURNS setof r
 
 
 CREATE OR REPLACE FUNCTION xslt_process(text,text,text) RETURNS text 
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' WITH (isStrict);
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' STRICT IMMUTABLE;
 
 -- the function checks for the correct argument count
 
 CREATE OR REPLACE FUNCTION xslt_process(text,text) RETURNS text 
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' WITH (isStrict);
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' STRICT IMMUTABLE;
