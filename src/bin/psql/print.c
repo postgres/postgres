@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.67 2005/07/14 08:42:37 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.68 2005/07/14 15:54:21 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -1722,8 +1722,10 @@ setDecimalLocale(void)
 		grouping = "3";		/* most common */
 	if (*extlconv->thousands_sep)
 		thousands_sep = strdup(extlconv->thousands_sep);
+	else if (*decimal_point != ',')
+		thousands_sep = ",";
 	else
-		thousands_sep = ",";	/* matches SQL standard decimal marker */
+		thousands_sep = ".";
 }
 	
 
