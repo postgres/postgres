@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.68 2005/07/14 15:54:21 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.69 2005/07/14 21:12:41 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -50,76 +50,79 @@ pg_local_malloc(size_t size)
 }
 
 static int
-num_numericseps(const char *my_str)
+integer_digits(const char *my_str)
 {
-	int old_len, dec_len, int_len;
-	int	groupdigits = atoi(grouping);
+	int frac_len;
 
 	if (my_str[0] == '-')
 		my_str++;
     
-	old_len = strlen(my_str);
-	dec_len = strchr(my_str, '.') ? strlen(strchr(my_str, '.')) : 0;
+	frac_len = strchr(my_str, '.') ? strlen(strchr(my_str, '.')) : 0;
 
-	int_len = old_len - dec_len;
+	return strlen(my_str) - frac_len;
+}
+
+static int
+len_numericseps(const char *my_str)
+{
+	int int_len = integer_digits(my_str), sep_len;
+	int	groupdigits = atoi(grouping);
+
 	if (int_len % groupdigits != 0)
-		return int_len / groupdigits;
+		sep_len = int_len / groupdigits;
 	else
-		return int_len / groupdigits - 1;	/* no leading separator */
+		sep_len = int_len / groupdigits - 1;	/* no leading separator */
+
+	return sep_len * strlen(thousands_sep) -
+		   strlen(".") + strlen(decimal_point);
 }
 
 static int
 len_with_numericsep(const char *my_str)
 {
-	return strlen(my_str) + num_numericseps(my_str);
+	return strlen(my_str) + len_numericseps(my_str);
 }
 
 static void 
 format_numericsep(char *my_str)
 {
-	int i, j, digits_before_sep, old_len, new_len, dec_len, int_len;
-	char *new_str;
-	char *dec_value;
+	int i, j, int_len = integer_digits(my_str), leading_digits;
 	int	groupdigits = atoi(grouping);
+	char *new_str;
     
 	if (my_str[0] == '-')
 		my_str++;
-    
-	old_len = strlen(my_str);
-	dec_len = strchr(my_str, '.') ? strlen(strchr(my_str, '.')) : 0;
-	int_len = old_len - dec_len;
-	digits_before_sep = int_len % groupdigits;
+	
+	new_str = pg_local_malloc(len_numericseps(my_str) + 1);
 
-	new_len = int_len + int_len / groupdigits + dec_len;
-	if (digits_before_sep == 0)
-		new_len--;	/* no leading separator */
-
-	new_str = pg_local_malloc(new_len + 1);
+	leading_digits = (int_len % groupdigits != 0) ?
+					 int_len % groupdigits : groupdigits;
 
 	for (i=0, j=0; ; i++, j++)
 	{
-		/* hit decimal point */
+		/* Hit decimal point? */
 		if (my_str[i] == '.')
 		{
-			new_str[j] = *decimal_point;
-			new_str[j+1] = '\0';
-			dec_value = strchr(my_str, '.');
-			strcat(new_str, ++dec_value);
+			strcpy(&new_str[j], decimal_point);
+			j += strlen(decimal_point);
+			/* add fractional part */
+			strcpy(&new_str[j], &my_str[i] + 1);
 			break;
 		}
 
-		/* end of string */
+		/* End of string? */
 		if (my_str[i] == '\0')
 		{
 			new_str[j] = '\0';
 			break;
 		}
     
-		/* add separator? */
-		if (i != 0 &&
-			(i - (digits_before_sep ? digits_before_sep : groupdigits))
-				% groupdigits == 0)
-			new_str[j++] = *thousands_sep;
+		/* Add separator? */
+		if (i != 0 && (i - leading_digits) % groupdigits == 0)
+		{
+			strcpy(&new_str[j], thousands_sep);
+			j += strlen(thousands_sep);
+		}
 
 		new_str[j] = my_str[i];
 	}
@@ -396,7 +399,7 @@ print_aligned_text(const char *title, const char *const *headers,
 		int numericseps;
 
 		if (opt_align[i % col_count] == 'r' && opt_numericsep)
-		    numericseps = num_numericseps(*ptr);
+		    numericseps = len_numericseps(*ptr);
 		else 
 		    numericseps = 0;
 		
@@ -613,7 +616,7 @@ print_aligned_vertical(const char *title, const char *const *headers,
 		int numericseps;
 
 		if (opt_align[i % col_count] == 'r' && opt_numericsep)
-		    numericseps = num_numericseps(*ptr);
+		    numericseps = len_numericseps(*ptr);
 		else 
 		    numericseps = 0;
 
@@ -1711,7 +1714,6 @@ setDecimalLocale(void)
 
 	extlconv = localeconv();
 
-	/* These are treated as single-byte strings in the code */
 	if (*extlconv->decimal_point)
 		decimal_point = strdup(extlconv->decimal_point);
 	else
