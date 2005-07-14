@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.64 2005/07/14 06:46:17 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.65 2005/07/14 06:49:58 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -134,7 +134,7 @@ static void
 print_unaligned_text(const char *title, const char *const *headers,
 					 const char *const *cells, const char *const *footers,
 					 const char *opt_align, const char *opt_fieldsep,
-					 const char *opt_recordsep, bool opt_barebones,
+					 const char *opt_recordsep, bool opt_tuples_only,
 					 char *opt_numericsep, FILE *fout)
 {
 	unsigned int col_count = 0;
@@ -148,21 +148,21 @@ print_unaligned_text(const char *title, const char *const *headers,
 		opt_recordsep = "";
 
 	/* print title */
-	if (!opt_barebones && title)
+	if (!opt_tuples_only && title)
 		fprintf(fout, "%s%s", title, opt_recordsep);
 
 	/* print headers and count columns */
 	for (ptr = headers; *ptr; ptr++)
 	{
 		col_count++;
-		if (!opt_barebones)
+		if (!opt_tuples_only)
 		{
 			if (col_count > 1)
 				fputs(opt_fieldsep, fout);
 			fputs(*ptr, fout);
 		}
 	}
-	if (!opt_barebones)
+	if (!opt_tuples_only)
 		need_recordsep = true;
 
 	/* print cells */
@@ -196,7 +196,7 @@ print_unaligned_text(const char *title, const char *const *headers,
 
 	/* print footers */
 
-	if (!opt_barebones && footers)
+	if (!opt_tuples_only && footers)
 		for (ptr = footers; *ptr; ptr++)
 		{
 			if (need_recordsep)
@@ -220,7 +220,7 @@ print_unaligned_vertical(const char *title, const char *const *headers,
 						 const char *const *cells,
 						 const char *const *footers, const char *opt_align,
 						 const char *opt_fieldsep, const char *opt_recordsep,
-						 bool opt_barebones, char *opt_numericsep, FILE *fout)
+						 bool opt_tuples_only, char *opt_numericsep, FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
@@ -232,7 +232,7 @@ print_unaligned_vertical(const char *title, const char *const *headers,
 		opt_recordsep = "";
 
 	/* print title */
-	if (!opt_barebones && title)
+	if (!opt_tuples_only && title)
 		fputs(title, fout);
 
 	/* count columns */
@@ -242,7 +242,7 @@ print_unaligned_vertical(const char *title, const char *const *headers,
 	/* print records */
 	for (i = 0, ptr = cells; *ptr; i++, ptr++)
 	{
-		if (i != 0 || (!opt_barebones && title))
+		if (i != 0 || (!opt_tuples_only && title))
 		{
 			fputs(opt_recordsep, fout);
 			if (i % col_count == 0)
@@ -266,7 +266,7 @@ print_unaligned_vertical(const char *title, const char *const *headers,
 	}
 
 	/* print footers */
-	if (!opt_barebones && footers && *footers)
+	if (!opt_tuples_only && footers && *footers)
 	{
 		fputs(opt_recordsep, fout);
 		for (ptr = footers; *ptr; ptr++)
@@ -325,7 +325,7 @@ _print_horizontal_line(const unsigned int col_count, const unsigned int *widths,
 static void
 print_aligned_text(const char *title, const char *const *headers,
 				   const char *const *cells, const char *const *footers,
-				   const char *opt_align, bool opt_barebones, char *opt_numericsep,
+				   const char *opt_align, bool opt_tuples_only, char *opt_numericsep,
 				   unsigned short int opt_border, int encoding,
 				   FILE *fout)
 {
@@ -417,7 +417,7 @@ print_aligned_text(const char *title, const char *const *headers,
 		total_w += widths[i];
 
 	/* print title */
-	if (title && !opt_barebones)
+	if (title && !opt_tuples_only)
 	{
 		tmp = pg_wcswidth((unsigned char *) title, strlen(title), encoding);
 		if (tmp >= total_w)
@@ -427,7 +427,7 @@ print_aligned_text(const char *title, const char *const *headers,
 	}
 
 	/* print headers */
-	if (!opt_barebones)
+	if (!opt_tuples_only)
 	{
 		if (opt_border == 2)
 			_print_horizontal_line(col_count, widths, opt_border, fout);
@@ -522,7 +522,7 @@ print_aligned_text(const char *title, const char *const *headers,
 		_print_horizontal_line(col_count, widths, opt_border, fout);
 
 	/* print footers */
-	if (footers && !opt_barebones)
+	if (footers && !opt_tuples_only)
 		for (ptr = footers; *ptr; ptr++)
 			fprintf(fout, "%s\n", *ptr);
 
@@ -546,7 +546,7 @@ print_aligned_text(const char *title, const char *const *headers,
 static void
 print_aligned_vertical(const char *title, const char *const *headers,
 					   const char *const *cells, const char *const *footers,
-					   const char *opt_align, bool opt_barebones,
+					   const char *opt_align, bool opt_tuples_only,
 					   char *opt_numericsep, unsigned short int opt_border,
 					   int encoding, FILE *fout)
 {
@@ -625,7 +625,7 @@ print_aligned_vertical(const char *title, const char *const *headers,
 	}
 
 	/* print title */
-	if (!opt_barebones && title)
+	if (!opt_tuples_only && title)
 		fprintf(fout, "%s\n", title);
 
 	/* make horizontal border */
@@ -649,7 +649,7 @@ print_aligned_vertical(const char *title, const char *const *headers,
 	{
 		if (i % col_count == 0)
 		{
-			if (!opt_barebones)
+			if (!opt_tuples_only)
 			{
 				char	   *record_str = pg_local_malloc(32);
 				size_t		record_str_len;
@@ -712,7 +712,7 @@ print_aligned_vertical(const char *title, const char *const *headers,
 
 	/* print footers */
 
-	if (!opt_barebones && footers && *footers)
+	if (!opt_tuples_only && footers && *footers)
 	{
 		if (opt_border < 2)
 			fputc('\n', fout);
@@ -784,7 +784,7 @@ html_escaped_print(const char *in, FILE *fout)
 static void
 print_html_text(const char *title, const char *const *headers,
 				const char *const *cells, const char *const *footers,
-				const char *opt_align, bool opt_barebones,
+				const char *opt_align, bool opt_tuples_only,
 				char *opt_numericsep, unsigned short int opt_border,
 				const char *opt_table_attr, FILE *fout)
 {
@@ -798,7 +798,7 @@ print_html_text(const char *title, const char *const *headers,
 	fputs(">\n", fout);
 
 	/* print title */
-	if (!opt_barebones && title)
+	if (!opt_tuples_only && title)
 	{
 		fputs("  <caption>", fout);
 		html_escaped_print(title, fout);
@@ -806,19 +806,19 @@ print_html_text(const char *title, const char *const *headers,
 	}
 
 	/* print headers and count columns */
-	if (!opt_barebones)
+	if (!opt_tuples_only)
 		fputs("  <tr>\n", fout);
 	for (i = 0, ptr = headers; *ptr; i++, ptr++)
 	{
 		col_count++;
-		if (!opt_barebones)
+		if (!opt_tuples_only)
 		{
 			fputs("    <th align=\"center\">", fout);
 			html_escaped_print(*ptr, fout);
 			fputs("</th>\n", fout);
 		}
 	}
-	if (!opt_barebones)
+	if (!opt_tuples_only)
 		fputs("  </tr>\n", fout);
 
 	/* print cells */
@@ -854,7 +854,7 @@ print_html_text(const char *title, const char *const *headers,
 
 	/* print footers */
 
-	if (!opt_barebones && footers && *footers)
+	if (!opt_tuples_only && footers && *footers)
 	{
 		fputs("<p>", fout);
 		for (ptr = footers; *ptr; ptr++)
@@ -872,7 +872,7 @@ print_html_text(const char *title, const char *const *headers,
 static void
 print_html_vertical(const char *title, const char *const *headers,
 				  const char *const *cells, const char *const *footers,
-				  const char *opt_align, bool opt_barebones,
+				  const char *opt_align, bool opt_tuples_only,
 				  char *opt_numericsep, unsigned short int opt_border,
 				  const char *opt_table_attr, FILE *fout)
 {
@@ -887,7 +887,7 @@ print_html_vertical(const char *title, const char *const *headers,
 	fputs(">\n", fout);
 
 	/* print title */
-	if (!opt_barebones && title)
+	if (!opt_tuples_only && title)
 	{
 		fputs("  <caption>", fout);
 		html_escaped_print(title, fout);
@@ -903,7 +903,7 @@ print_html_vertical(const char *title, const char *const *headers,
 	{
 		if (i % col_count == 0)
 		{
-			if (!opt_barebones)
+			if (!opt_tuples_only)
 				fprintf(fout, "\n  <tr><td colspan=\"2\" align=\"center\">Record %d</td></tr>\n", record++);
 			else
 				fputs("\n  <tr><td colspan=\"2\">&nbsp;</td></tr>\n", fout);
@@ -936,7 +936,7 @@ print_html_vertical(const char *title, const char *const *headers,
 	fputs("</table>\n", fout);
 
 	/* print footers */
-	if (!opt_barebones && footers && *footers)
+	if (!opt_tuples_only && footers && *footers)
 	{
 		fputs("<p>", fout);
 		for (ptr = footers; *ptr; ptr++)
@@ -998,7 +998,7 @@ latex_escaped_print(const char *in, FILE *fout)
 static void
 print_latex_text(const char *title, const char *const *headers,
 				 const char *const *cells, const char *const *footers,
-				 const char *opt_align, bool opt_barebones,
+				 const char *opt_align, bool opt_tuples_only,
 				 unsigned short int opt_border, FILE *fout)
 {
 	unsigned int col_count = 0;
@@ -1007,7 +1007,7 @@ print_latex_text(const char *title, const char *const *headers,
 
 
 	/* print title */
-	if (!opt_barebones && title)
+	if (!opt_tuples_only && title)
 	{
 		fputs("\\begin{center}\n", fout);
 		latex_escaped_print(title, fout);
@@ -1034,13 +1034,13 @@ print_latex_text(const char *title, const char *const *headers,
 
 	fputs("}\n", fout);
 
-	if (!opt_barebones && opt_border == 2)
+	if (!opt_tuples_only && opt_border == 2)
 		fputs("\\hline\n", fout);
 
 	/* print headers and count columns */
 	for (i = 0, ptr = headers; i < col_count; i++, ptr++)
 	{
-		if (!opt_barebones)
+		if (!opt_tuples_only)
 		{
 			if (i != 0)
 				fputs(" & ", fout);
@@ -1050,7 +1050,7 @@ print_latex_text(const char *title, const char *const *headers,
 		}
 	}
 
-	if (!opt_barebones)
+	if (!opt_tuples_only)
 	{
 		fputs(" \\\\\n", fout);
 		fputs("\\hline\n", fout);
@@ -1075,7 +1075,7 @@ print_latex_text(const char *title, const char *const *headers,
 
 	/* print footers */
 
-	if (footers && !opt_barebones)
+	if (footers && !opt_tuples_only)
 		for (ptr = footers; *ptr; ptr++)
 		{
 			latex_escaped_print(*ptr, fout);
@@ -1090,7 +1090,7 @@ print_latex_text(const char *title, const char *const *headers,
 static void
 print_latex_vertical(const char *title, const char *const *headers,
 				  const char *const *cells, const char *const *footers,
-				  const char *opt_align, bool opt_barebones,
+				  const char *opt_align, bool opt_tuples_only,
 				  unsigned short int opt_border, FILE *fout)
 {
 	unsigned int col_count = 0;
@@ -1101,7 +1101,7 @@ print_latex_vertical(const char *title, const char *const *headers,
 	(void) opt_align;			/* currently unused parameter */
 
 	/* print title */
-	if (!opt_barebones && title)
+	if (!opt_tuples_only && title)
 	{
 		fputs("\\begin{center}\n", fout);
 		latex_escaped_print(title, fout);
@@ -1130,7 +1130,7 @@ print_latex_vertical(const char *title, const char *const *headers,
 		/* new record */
 		if (i % col_count == 0)
 		{
-			if (!opt_barebones)
+			if (!opt_tuples_only)
 			{
 				if (opt_border == 2)
 				{
@@ -1158,7 +1158,7 @@ print_latex_vertical(const char *title, const char *const *headers,
 
 	/* print footers */
 
-	if (footers && !opt_barebones)
+	if (footers && !opt_tuples_only)
 		for (ptr = footers; *ptr; ptr++)
 		{
 			latex_escaped_print(*ptr, fout);
@@ -1196,7 +1196,7 @@ troff_ms_escaped_print(const char *in, FILE *fout)
 static void
 print_troff_ms_text(const char *title, const char *const *headers,
 				 const char *const *cells, const char *const *footers,
-				 const char *opt_align, bool opt_barebones,
+				 const char *opt_align, bool opt_tuples_only,
 				 unsigned short int opt_border, FILE *fout)
 {
 	unsigned int col_count = 0;
@@ -1205,7 +1205,7 @@ print_troff_ms_text(const char *title, const char *const *headers,
 
 
 	/* print title */
-	if (!opt_barebones && title)
+	if (!opt_tuples_only && title)
 	{
 		fputs(".LP\n.DS C\n", fout);
 		troff_ms_escaped_print(title, fout);
@@ -1234,7 +1234,7 @@ print_troff_ms_text(const char *title, const char *const *headers,
 	/* print headers and count columns */
 	for (i = 0, ptr = headers; i < col_count; i++, ptr++)
 	{
-		if (!opt_barebones)
+		if (!opt_tuples_only)
 		{
 			if (i != 0)
 				fputc('\t', fout);
@@ -1244,7 +1244,7 @@ print_troff_ms_text(const char *title, const char *const *headers,
 		}
 	}
 
-	if (!opt_barebones)
+	if (!opt_tuples_only)
 	{
 		fputs("\n_\n", fout);
 	}
@@ -1265,7 +1265,7 @@ print_troff_ms_text(const char *title, const char *const *headers,
 
 	/* print footers */
 
-	if (footers && !opt_barebones)
+	if (footers && !opt_tuples_only)
 		for (ptr = footers; *ptr; ptr++)
 		{
 			troff_ms_escaped_print(*ptr, fout);
@@ -1280,7 +1280,7 @@ print_troff_ms_text(const char *title, const char *const *headers,
 static void
 print_troff_ms_vertical(const char *title, const char *const *headers,
 				  const char *const *cells, const char *const *footers,
-				  const char *opt_align, bool opt_barebones,
+				  const char *opt_align, bool opt_tuples_only,
 				  unsigned short int opt_border, FILE *fout)
 {
 	unsigned int col_count = 0;
@@ -1292,7 +1292,7 @@ print_troff_ms_vertical(const char *title, const char *const *headers,
 	(void) opt_align;			/* currently unused parameter */
 
 	/* print title */
-	if (!opt_barebones && title)
+	if (!opt_tuples_only && title)
 	{
 		fputs(".LP\n.DS C\n", fout);
 		troff_ms_escaped_print(title, fout);
@@ -1307,7 +1307,7 @@ print_troff_ms_vertical(const char *title, const char *const *headers,
 		fputs("center;\n", fout);
 
 	/* basic format */
-        if (opt_barebones)
+        if (opt_tuples_only)
  		fputs("c l;\n", fout);
 
 
@@ -1322,7 +1322,7 @@ print_troff_ms_vertical(const char *title, const char *const *headers,
 		/* new record */
 		if (i % col_count == 0)
 		{
-			if (!opt_barebones)
+			if (!opt_tuples_only)
 			{
 
 				if (current_format != 1)
@@ -1340,7 +1340,7 @@ print_troff_ms_vertical(const char *title, const char *const *headers,
 				fputs("_\n", fout);
 		}
 
-		if (!opt_barebones)
+		if (!opt_tuples_only)
 		{
 			if (current_format != 2)
 			{
@@ -1365,7 +1365,7 @@ print_troff_ms_vertical(const char *title, const char *const *headers,
 
 	/* print footers */
 
-	if (footers && !opt_barebones)
+	if (footers && !opt_tuples_only)
 		for (ptr = footers; *ptr; ptr++)
 		{
 			troff_ms_escaped_print(*ptr, fout);

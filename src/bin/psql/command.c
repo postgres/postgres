@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.147 2005/07/10 03:46:13 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.148 2005/07/14 06:49:58 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1472,7 +1472,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		}
 	}
 
-	/* toggle between full and barebones format */
+	/* toggle between full and tuples-only format */
 	else if (strcmp(param, "t") == 0 || strcmp(param, "tuples_only") == 0)
 	{
 		popt->topt.tuples_only = !popt->topt.tuples_only;
