@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.118 2005/06/21 04:02:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.119 2005/07/14 08:42:37 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -130,6 +130,7 @@ main(int argc, char *argv[])
 	setvbuf(stderr, NULL, _IONBF, 0);
 	setup_win32_locks();
 #endif
+	setDecimalLocale();
 	pset.cur_cmd_source = stdin;
 	pset.cur_cmd_interactive = false;
 	pset.encoding = PQenv2encoding();

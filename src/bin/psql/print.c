@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.66 2005/07/14 07:32:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.67 2005/07/14 08:42:37 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -24,10 +24,16 @@
 #include <termios.h>
 #endif
 
+#include <locale.h>
+
 #include "pqsignal.h"
 #include "libpq-fe.h"
 
 #include "mbprint.h"
+
+static char *decimal_point;
+static char *grouping;
+static char *thousands_sep;
 
 static void *
 pg_local_malloc(size_t size)
@@ -47,6 +53,7 @@ static int
 num_numericseps(const char *my_str)
 {
 	int old_len, dec_len, int_len;
+	int	groupdigits = atoi(grouping);
 
 	if (my_str[0] == '-')
 		my_str++;
@@ -55,10 +62,10 @@ num_numericseps(const char *my_str)
 	dec_len = strchr(my_str, '.') ? strlen(strchr(my_str, '.')) : 0;
 
 	int_len = old_len - dec_len;
-	if (int_len % 3 != 0)
-		return int_len / 3;
+	if (int_len % groupdigits != 0)
+		return int_len / groupdigits;
 	else
-		return int_len / 3 - 1;	/* no leading separator */
+		return int_len / groupdigits - 1;	/* no leading separator */
 }
 
 static int
@@ -68,17 +75,12 @@ len_with_numericsep(const char *my_str)
 }
 
 static void 
-format_numericsep(char *my_str, char *numericsep)
+format_numericsep(char *my_str)
 {
 	int i, j, digits_before_sep, old_len, new_len, dec_len, int_len;
-	char *dec_point;
 	char *new_str;
 	char *dec_value;
-    
-	if (strcmp(numericsep, ".") != 0)
-		dec_point = ".";
-	else
-		dec_point = ",";
+	int	groupdigits = atoi(grouping);
     
 	if (my_str[0] == '-')
 		my_str++;
@@ -86,9 +88,9 @@ format_numericsep(char *my_str, char *numericsep)
 	old_len = strlen(my_str);
 	dec_len = strchr(my_str, '.') ? strlen(strchr(my_str, '.')) : 0;
 	int_len = old_len - dec_len;
-	digits_before_sep = int_len % 3;
+	digits_before_sep = int_len % groupdigits;
 
-	new_len = int_len + int_len / 3 + dec_len;
+	new_len = int_len + int_len / groupdigits + dec_len;
 	if (digits_before_sep == 0)
 		new_len--;	/* no leading separator */
 
@@ -99,7 +101,7 @@ format_numericsep(char *my_str, char *numericsep)
 		/* hit decimal point */
 		if (my_str[i] == '.')
 		{
-			new_str[j] = *dec_point;
+			new_str[j] = *decimal_point;
 			new_str[j+1] = '\0';
 			dec_value = strchr(my_str, '.');
 			strcat(new_str, ++dec_value);
@@ -115,8 +117,9 @@ format_numericsep(char *my_str, char *numericsep)
     
 		/* add separator? */
 		if (i != 0 &&
-			(i - (digits_before_sep ? digits_before_sep : 3)) % 3 == 0)
-			new_str[j++] = *numericsep;
+			(i - (digits_before_sep ? digits_before_sep : groupdigits))
+				% groupdigits == 0)
+			new_str[j++] = *thousands_sep;
 
 		new_str[j] = my_str[i];
 	}
@@ -135,7 +138,7 @@ print_unaligned_text(const char *title, const char *const *headers,
 					 const char *const *cells, const char *const *footers,
 					 const char *opt_align, const char *opt_fieldsep,
 					 const char *opt_recordsep, bool opt_tuples_only,
-					 char *opt_numericsep, FILE *fout)
+					 bool opt_numericsep, FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
@@ -174,13 +177,12 @@ print_unaligned_text(const char *title, const char *const *headers,
 			fputs(opt_recordsep, fout);
 			need_recordsep = false;
 		}
-		if ((opt_align[i % col_count] == 'r') && strlen(*ptr) > 0 &&
-			opt_numericsep != NULL && strlen(opt_numericsep) > 0)
+		if (opt_align[i % col_count] == 'r' && opt_numericsep)
 		{
 			char *my_cell = pg_local_malloc(len_with_numericsep(*ptr) + 1);
 		
 			strcpy(my_cell, *ptr);
-			format_numericsep(my_cell, opt_numericsep);
+			format_numericsep(my_cell);
 			fputs(my_cell, fout);
 			free(my_cell);
 		}
@@ -220,7 +222,7 @@ print_unaligned_vertical(const char *title, const char *const *headers,
 						 const char *const *cells,
 						 const char *const *footers, const char *opt_align,
 						 const char *opt_fieldsep, const char *opt_recordsep,
-						 bool opt_tuples_only, char *opt_numericsep, FILE *fout)
+						 bool opt_tuples_only, bool opt_numericsep, FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
@@ -251,13 +253,12 @@ print_unaligned_vertical(const char *title, const char *const *headers,
 
 		fputs(headers[i % col_count], fout);
 		fputs(opt_fieldsep, fout);
-		if ((opt_align[i % col_count] == 'r') && strlen(*ptr) != 0 &&
-			opt_numericsep != NULL && strlen(opt_numericsep) > 0)
+		if (opt_align[i % col_count] == 'r' && opt_numericsep)
 		{
 			char *my_cell = pg_local_malloc(len_with_numericsep(*ptr) + 1);
 		
 			strcpy(my_cell, *ptr);
-			format_numericsep(my_cell, opt_numericsep);
+			format_numericsep(my_cell);
 			fputs(my_cell, fout);
 			free(my_cell);
 		}
@@ -325,7 +326,7 @@ _print_horizontal_line(const unsigned int col_count, const unsigned int *widths,
 static void
 print_aligned_text(const char *title, const char *const *headers,
 				   const char *const *cells, const char *const *footers,
-				   const char *opt_align, bool opt_tuples_only, char *opt_numericsep,
+				   const char *opt_align, bool opt_tuples_only, bool opt_numericsep,
 				   unsigned short int opt_border, int encoding,
 				   FILE *fout)
 {
@@ -394,8 +395,7 @@ print_aligned_text(const char *title, const char *const *headers,
 	{
 		int numericseps;
 
-		if ((opt_align[i % col_count] == 'r') && strlen(*ptr) != 0 &&
-			opt_numericsep != NULL && strlen(opt_numericsep) > 0)
+		if (opt_align[i % col_count] == 'r' && opt_numericsep)
 		    numericseps = num_numericseps(*ptr);
 		else 
 		    numericseps = 0;
@@ -480,12 +480,12 @@ print_aligned_text(const char *title, const char *const *headers,
 		/* content */
 		if (opt_align[i % col_count] == 'r')
 		{
-		    if (strlen(*ptr) > 0 && opt_numericsep != NULL && strlen(opt_numericsep) > 0)
+		    if (opt_numericsep)
 		    {
 				char *my_cell = pg_local_malloc(cell_w[i] + 1);
 
 				strcpy(my_cell, *ptr);
-				format_numericsep(my_cell, opt_numericsep);
+				format_numericsep(my_cell);
 				fprintf(fout, "%*s%s", widths[i % col_count] - cell_w[i], "", my_cell);
 				free(my_cell);
 		    }
@@ -547,7 +547,7 @@ static void
 print_aligned_vertical(const char *title, const char *const *headers,
 					   const char *const *cells, const char *const *footers,
 					   const char *opt_align, bool opt_tuples_only,
-					   char *opt_numericsep, unsigned short int opt_border,
+					   bool opt_numericsep, unsigned short int opt_border,
 					   int encoding, FILE *fout)
 {
 	unsigned int col_count = 0;
@@ -612,8 +612,7 @@ print_aligned_vertical(const char *title, const char *const *headers,
 	{
 		int numericseps;
 
-		if ((opt_align[i % col_count] == 'r') && strlen(*ptr) != 0 &&
-			opt_numericsep != NULL && strlen(opt_numericsep) > 0)
+		if (opt_align[i % col_count] == 'r' && opt_numericsep)
 		    numericseps = num_numericseps(*ptr);
 		else 
 		    numericseps = 0;
@@ -696,9 +695,8 @@ print_aligned_vertical(const char *title, const char *const *headers,
 			char *my_cell = pg_local_malloc(cell_w[i] + 1);
 
 			strcpy(my_cell, *ptr);
-			if ((opt_align[i % col_count] == 'r') && strlen(*ptr) != 0 &&
-				opt_numericsep != NULL && strlen(opt_numericsep) > 0)
-			    format_numericsep(my_cell, opt_numericsep);
+			if (opt_align[i % col_count] == 'r' && opt_numericsep)
+			    format_numericsep(my_cell);
 			if (opt_border < 2)
 				puts(my_cell);
 			else
@@ -785,7 +783,7 @@ static void
 print_html_text(const char *title, const char *const *headers,
 				const char *const *cells, const char *const *footers,
 				const char *opt_align, bool opt_tuples_only,
-				char *opt_numericsep, unsigned short int opt_border,
+				bool opt_numericsep, unsigned short int opt_border,
 				const char *opt_table_attr, FILE *fout)
 {
 	unsigned int col_count = 0;
@@ -831,13 +829,12 @@ print_html_text(const char *title, const char *const *headers,
 		/* is string only whitespace? */
 		if ((*ptr)[strspn(*ptr, " \t")] == '\0')		
 			fputs("&nbsp; ", fout);
-		else if ((opt_align[i % col_count] == 'r') && strlen(*ptr) != 0 &&
-				 opt_numericsep != NULL && strlen(opt_numericsep) > 0)
+		else if (opt_align[i % col_count] == 'r' && opt_numericsep)
 		{
 			char *my_cell = pg_local_malloc(len_with_numericsep(*ptr) + 1);
 
 		    strcpy(my_cell, *ptr);
-		    format_numericsep(my_cell, opt_numericsep);
+		    format_numericsep(my_cell);
 		    html_escaped_print(my_cell, fout);
 		    free(my_cell);
 		}
@@ -873,7 +870,7 @@ static void
 print_html_vertical(const char *title, const char *const *headers,
 				  const char *const *cells, const char *const *footers,
 				  const char *opt_align, bool opt_tuples_only,
-				  char *opt_numericsep, unsigned short int opt_border,
+				  bool opt_numericsep, unsigned short int opt_border,
 				  const char *opt_table_attr, FILE *fout)
 {
 	unsigned int col_count = 0;
@@ -917,13 +914,12 @@ print_html_vertical(const char *title, const char *const *headers,
 		/* is string only whitespace? */
 		if ((*ptr)[strspn(*ptr, " \t")] == '\0')		
 			fputs("&nbsp; ", fout);
-		else if ((opt_align[i % col_count] == 'r') && strlen(*ptr) != 0 &&
-			opt_numericsep != NULL && strlen(opt_numericsep) > 0)
+		else if (opt_align[i % col_count] == 'r' && opt_numericsep)
 		{
 			char *my_cell = pg_local_malloc(len_with_numericsep(*ptr) + 1);
 		    
 		    strcpy(my_cell, *ptr);
-		    format_numericsep(my_cell, opt_numericsep);
+		    format_numericsep(my_cell);
 		    html_escaped_print(my_cell, fout);
 		    free(my_cell);
 		}
@@ -999,7 +995,7 @@ static void
 print_latex_text(const char *title, const char *const *headers,
 				 const char *const *cells, const char *const *footers,
 				 const char *opt_align, bool opt_tuples_only,
-				 char *opt_numericsep, unsigned short int opt_border,
+				 bool opt_numericsep, unsigned short int opt_border,
 				 FILE *fout)
 {
 	unsigned int col_count = 0;
@@ -1060,13 +1056,12 @@ print_latex_text(const char *title, const char *const *headers,
 	/* print cells */
 	for (i = 0, ptr = cells; *ptr; i++, ptr++)
 	{
-		if (strlen(*ptr) != 0 &&
-			opt_numericsep != NULL && strlen(opt_numericsep) > 0)
+		if (opt_numericsep)
 		{
 			char *my_cell = pg_local_malloc(len_with_numericsep(*ptr) + 1);
 		    
 			strcpy(my_cell, *ptr);
-			format_numericsep(my_cell, opt_numericsep);
+			format_numericsep(my_cell);
 			latex_escaped_print(my_cell, fout);
 			free(my_cell);
 		}
@@ -1103,7 +1098,7 @@ static void
 print_latex_vertical(const char *title, const char *const *headers,
 				  const char *const *cells, const char *const *footers,
 				  const char *opt_align, bool opt_tuples_only,
-				  char *opt_numericsep, unsigned short int opt_border,
+				  bool opt_numericsep, unsigned short int opt_border,
 				  FILE *fout)
 {
 	unsigned int col_count = 0;
@@ -1174,13 +1169,12 @@ print_latex_vertical(const char *title, const char *const *headers,
 	if (footers && !opt_tuples_only)
 		for (ptr = footers; *ptr; ptr++)
 		{
-			if (strlen(*ptr) != 0 &&
-				opt_numericsep != NULL && strlen(opt_numericsep) > 0)
+			if (opt_numericsep)
 			{
 				char *my_cell = pg_local_malloc(len_with_numericsep(*ptr) + 1);
 
 				strcpy(my_cell, *ptr);
-				format_numericsep(my_cell, opt_numericsep);
+				format_numericsep(my_cell);
 				latex_escaped_print(my_cell, fout);
 				free(my_cell);
 			}
@@ -1221,7 +1215,7 @@ static void
 print_troff_ms_text(const char *title, const char *const *headers,
 				 const char *const *cells, const char *const *footers,
 				 const char *opt_align, bool opt_tuples_only,
-				 char *opt_numericsep, unsigned short int opt_border,
+				 bool opt_numericsep, unsigned short int opt_border,
 				 FILE *fout)
 {
 	unsigned int col_count = 0;
@@ -1275,13 +1269,12 @@ print_troff_ms_text(const char *title, const char *const *headers,
 	/* print cells */
 	for (i = 0, ptr = cells; *ptr; i++, ptr++)
 	{
-		if (strlen(*ptr) != 0 &&
-			opt_numericsep != NULL && strlen(opt_numericsep) > 0)
+		if (opt_numericsep)
 		{
 			char *my_cell = pg_local_malloc(len_with_numericsep(*ptr) + 1);
 		    
 			strcpy(my_cell, *ptr);
-			format_numericsep(my_cell, opt_numericsep);
+			format_numericsep(my_cell);
 			troff_ms_escaped_print(my_cell, fout);
 			free(my_cell);
 		}
@@ -1315,7 +1308,7 @@ static void
 print_troff_ms_vertical(const char *title, const char *const *headers,
 				  const char *const *cells, const char *const *footers,
 				  const char *opt_align, bool opt_tuples_only,
-				  char *opt_numericsep, unsigned short int opt_border,
+				  bool opt_numericsep, unsigned short int opt_border,
 				  FILE *fout)
 {
 	unsigned int col_count = 0;
@@ -1345,11 +1338,9 @@ print_troff_ms_vertical(const char *title, const char *const *headers,
         if (opt_tuples_only)
  		fputs("c l;\n", fout);
 
-
 	/* count columns */
 	for (ptr = headers; *ptr; ptr++)
 		col_count++;
-
 
 	/* print records */
 	for (i = 0, ptr = cells; *ptr; i++, ptr++)
@@ -1390,13 +1381,12 @@ print_troff_ms_vertical(const char *title, const char *const *headers,
 
 		troff_ms_escaped_print(headers[i % col_count], fout);
 		fputc('\t', fout);
-		if (strlen(*ptr) != 0 &&
-			opt_numericsep != NULL && strlen(opt_numericsep) > 0)
+		if (opt_numericsep)
 		{
 			char *my_cell = pg_local_malloc(len_with_numericsep(*ptr) + 1);
 		    
 			strcpy(my_cell, *ptr);
-			format_numericsep(my_cell, opt_numericsep);
+			format_numericsep(my_cell);
 			troff_ms_escaped_print(my_cell, fout);
 			free(my_cell);
 		}
@@ -1714,4 +1704,26 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *f
 }
 
 
-/* the end */
+void
+setDecimalLocale(void)
+{
+	struct lconv *extlconv;
+
+	extlconv = localeconv();
+
+	/* These are treated as single-byte strings in the code */
+	if (*extlconv->decimal_point)
+		decimal_point = strdup(extlconv->decimal_point);
+	else
+		decimal_point = ".";	/* SQL output standard */
+	if (*extlconv->grouping && atoi(extlconv->grouping) > 0)
+		grouping = strdup(extlconv->grouping);
+	else
+		grouping = "3";		/* most common */
+	if (*extlconv->thousands_sep)
+		thousands_sep = strdup(extlconv->thousands_sep);
+	else
+		thousands_sep = ",";	/* matches SQL standard decimal marker */
+}
+	
+

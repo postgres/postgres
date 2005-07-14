@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.148 2005/07/14 06:49:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.149 2005/07/14 08:42:37 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1420,15 +1420,17 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 				   : _("Expanded display is off.\n"));
 	}
 
+	/* numeric separators */
 	else if (strcmp(param, "numericsep") == 0)
 	{
-		if (value)
-		{
-			free(popt->topt.numericSep);
-			popt->topt.numericSep = pg_strdup(value);
-		}
+		popt->topt.numericSep = !popt->topt.numericSep;
 		if (!quiet)
-			printf(_("Numeric separator is \"%s\".\n"), popt->topt.numericSep);
+		{
+			if (popt->topt.numericSep)
+				puts(_("Showing numeric separators."));
+			else
+				puts(_("Numeric separators are off."));
+		}
 	}
 
 	/* null display */

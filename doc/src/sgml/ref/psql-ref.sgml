@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.146 2005/07/10 03:46:12 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.147 2005/07/14 08:42:36 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1496,10 +1496,9 @@ lo_import 152801
           <term><literal>numericsep</literal></term>
           <listitem>
           <para>
-          Specifies the character separator between groups of three digits
-          to the left of the decimal marker.  The default is <literal>''</>
-          (none).  Setting this to a period also changes the decimal marker 
-          to a comma.
+          Toggles the display of a locale-aware character to separate groups
+          of digits to the left of the decimal marker.  It also enables
+          a locale-aware decimal marker.
           </para>
           </listitem>
           </varlistentry>

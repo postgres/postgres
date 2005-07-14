@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.h,v 1.26 2005/07/10 03:46:13 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.h,v 1.27 2005/07/14 08:42:37 momjian Exp $
  */
 #ifndef PRINT_H
 #define PRINT_H
@@ -40,7 +40,8 @@ typedef struct _printTableOpt
 	char	   *fieldSep;		/* field separator for unaligned text mode */
 	char	   *recordSep;		/* record separator for unaligned text
 								 * mode */
-	char	   *numericSep;		/* numeric units separator */
+	bool		numericSep;		/* locale-aware numeric units separator and
+								 *  decimal marker */
 	char	   *tableAttr;		/* attributes for HTML <table ...> */
 	int			encoding;		/* character encoding */
 	bool		normal_query;	/* are we presenting the results of a
@@ -85,6 +86,8 @@ typedef struct _printQueryOpt
  */
 void		printQuery(const PGresult *result, const printQueryOpt *opt,
 					   FILE *fout, FILE *flog);
+
+void	setDecimalLocale(void);
 
 #ifndef __CYGWIN__
 #define DEFAULT_PAGER "more"
