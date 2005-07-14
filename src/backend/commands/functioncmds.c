@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.63 2005/07/07 20:39:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.64 2005/07/14 21:46:29 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -859,6 +859,7 @@ AlterFunctionOwner(List *name, List *argtypes, Oid newOwnerId)
 	HeapTuple	tup;
 	Form_pg_proc procForm;
 	Relation	rel;
+	AclResult	aclresult;
 
 	rel = heap_open(ProcedureRelationId, RowExclusiveLock);
 
@@ -892,11 +893,20 @@ AlterFunctionOwner(List *name, List *argtypes, Oid newOwnerId)
 		bool		isNull;
 		HeapTuple	newtuple;
 
-		/* Otherwise, must be superuser to change object ownership */
-		if (!superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to change owner")));
+		/* Otherwise, must be owner of the existing object */
+		if (!pg_proc_ownercheck(procOid,GetUserId()))
+			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
+						   NameListToString(name));
+
+		/* Must be able to become new owner */
+		check_is_member_of_role(GetUserId(), newOwnerId);
+
+		/* New owner must have CREATE privilege on namespace */
+		aclresult = pg_namespace_aclcheck(procForm->pronamespace, newOwnerId,
+										  ACL_CREATE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+					get_namespace_name(procForm->pronamespace));
 
 		memset(repl_null, ' ', sizeof(repl_null));
 		memset(repl_repl, ' ', sizeof(repl_repl));

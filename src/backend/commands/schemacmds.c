@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.32 2005/07/07 20:39:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.33 2005/07/14 21:46:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,53 +49,44 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 	saved_uid = GetUserId();
 
 	/*
-	 * Figure out user identities.
+	 * Who is supposed to own the new schema?
 	 */
-
-	if (!authId)
-	{
-		owner_uid = saved_uid;
-	}
-	else if (superuser())
-	{
+	if (authId)
 		owner_uid = get_roleid_checked(authId);
-
-		/*
-		 * Set the current user to the requested authorization so that
-		 * objects created in the statement have the requested owner.
-		 * (This will revert to session user on error or at the end of
-		 * this routine.)
-		 */
-		SetUserId(owner_uid);
-	}
 	else
-	{
-		const char *owner_name;
-
-		/* not superuser */
 		owner_uid = saved_uid;
-		owner_name = GetUserNameFromId(owner_uid);
-		if (strcmp(authId, owner_name) != 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("permission denied"),
-					 errdetail("\"%s\" is not a superuser, so cannot create a schema for \"%s\"",
-							   owner_name, authId)));
-	}
 
 	/*
-	 * Permissions checks.
+	 * To create a schema, must have schema-create privilege on the current
+	 * database and must be able to become the target role (this does not
+	 * imply that the target role itself must have create-schema privilege).
+	 * The latter provision guards against "giveaway" attacks.  Note that
+	 * a superuser will always have both of these privileges a fortiori.
 	 */
 	aclresult = pg_database_aclcheck(MyDatabaseId, saved_uid, ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, ACL_KIND_DATABASE,
 					   get_database_name(MyDatabaseId));
 
+	check_is_member_of_role(saved_uid, owner_uid);
+
+	/* Additional check to protect reserved schema names */
 	if (!allowSystemTableMods && IsReservedName(schemaName))
 		ereport(ERROR,
 				(errcode(ERRCODE_RESERVED_NAME),
 				 errmsg("unacceptable schema name \"%s\"", schemaName),
 		errdetail("The prefix \"pg_\" is reserved for system schemas.")));
+
+	/*
+	 * If the requested authorization is different from the current user,
+	 * temporarily set the current user so that the object(s) will be
+	 * created with the correct ownership.
+	 *
+	 * (The setting will revert to session user on error or at the end of
+	 * this routine.)
+	 */
+	if (saved_uid != owner_uid)
+		SetUserId(owner_uid);
 
 	/* Create the schema's namespace */
 	namespaceId = NamespaceCreate(schemaName, owner_uid);
@@ -308,12 +299,29 @@ AlterSchemaOwner(const char *name, Oid newOwnerId)
 		Datum		aclDatum;
 		bool		isNull;
 		HeapTuple	newtuple;
+		AclResult	aclresult;
 
-		/* Otherwise, must be superuser to change object ownership */
-		if (!superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to change owner")));
+		/* Otherwise, must be owner of the existing object */
+		if (!pg_namespace_ownercheck(HeapTupleGetOid(tup),GetUserId()))
+			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_NAMESPACE,
+						   name);
+
+		/* Must be able to become new owner */
+		check_is_member_of_role(GetUserId(),newOwnerId);
+
+		/*
+		 * must have create-schema rights
+		 *
+		 * NOTE: This is different from other alter-owner checks in 
+		 * that the current user is checked for create privileges 
+		 * instead of the destination owner.  This is consistent
+		 * with the CREATE case for schemas.
+		 */
+		aclresult = pg_database_aclcheck(MyDatabaseId, GetUserId(),
+										 ACL_CREATE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, ACL_KIND_DATABASE,
+						   get_database_name(MyDatabaseId));
 
 		memset(repl_null, ' ', sizeof(repl_null));
 		memset(repl_repl, ' ', sizeof(repl_repl));

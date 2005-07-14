@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.166 2005/07/08 04:12:24 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.167 2005/07/14 21:46:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,23 +193,19 @@ createdb(const CreatedbStmt *stmt)
 	else
 		datdba = GetUserId();
 
-	if (is_member_of_role(GetUserId(), datdba))
-	{
-		/* creating database for self: createdb is required */
-		if (!have_createdb_privilege())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("permission denied to create database")));
-	}
-	else
-	{
-		/* creating database for someone else: must be superuser */
-		/* note that the someone else need not have any permissions */
-		if (!superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to create database for another user")));
-	}
+	/*
+	 * To create a database, must have createdb privilege and must be able
+	 * to become the target role (this does not imply that the target role
+	 * itself must have createdb privilege).  The latter provision guards
+	 * against "giveaway" attacks.  Note that a superuser will always have
+	 * both of these privileges a fortiori.
+	 */
+	if (!have_createdb_privilege())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied to create database")));
+
+	check_is_member_of_role(GetUserId(), datdba);
 
 	/*
 	 * Check for db name conflict.	There is a race condition here, since
@@ -930,11 +926,26 @@ AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 		bool		isNull;
 		HeapTuple	newtuple;
 
-		/* must be superuser to change ownership */
-		if (!superuser())
+		/* Otherwise, must be owner of the existing object */
+		if (!pg_database_ownercheck(HeapTupleGetOid(tuple),GetUserId()))
+			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
+						   dbname);
+
+		/* Must be able to become new owner */
+		check_is_member_of_role(GetUserId(), newOwnerId);
+
+		/*
+		 * must have createdb rights 
+		 *
+		 * NOTE: This is different from other alter-owner checks in 
+		 * that the current user is checked for createdb privileges 
+		 * instead of the destination owner.  This is consistent
+		 * with the CREATE case for databases.
+		 */
+		if (!have_createdb_privilege())
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to change owner")));
+					 errmsg("permission denied to change owner of database")));
 
 		memset(repl_null, ' ', sizeof(repl_null));
 		memset(repl_repl, ' ', sizeof(repl_repl));

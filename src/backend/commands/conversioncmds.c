@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.20 2005/07/07 20:39:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.21 2005/07/14 21:46:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,8 +152,7 @@ RenameConversion(List *name, const char *newname)
 					 newname, get_namespace_name(namespaceOid))));
 
 	/* must be owner */
-	if (!superuser() &&
-		((Form_pg_conversion) GETSTRUCT(tup))->conowner != GetUserId())
+	if (!pg_conversion_ownercheck(conversionOid,GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CONVERSION,
 					   NameListToString(name));
 
@@ -182,6 +181,7 @@ AlterConversionOwner(List *name, Oid newOwnerId)
 	HeapTuple	tup;
 	Relation	rel;
 	Form_pg_conversion convForm;
+	AclResult	aclresult;
 
 	rel = heap_open(ConversionRelationId, RowExclusiveLock);
 
@@ -206,11 +206,20 @@ AlterConversionOwner(List *name, Oid newOwnerId)
 	 */
 	if (convForm->conowner != newOwnerId)
 	{
-		/* Otherwise, must be superuser to change object ownership */
-		if (!superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to change owner")));
+		/* Otherwise, must be owner of the existing object */
+		if (!pg_conversion_ownercheck(HeapTupleGetOid(tup),GetUserId()))
+			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CONVERSION,
+						   NameListToString(name));
+
+		/* Must be able to become new owner */
+		check_is_member_of_role(GetUserId(), newOwnerId);
+
+		/* New owner must have CREATE privilege on namespace */
+		aclresult = pg_namespace_aclcheck(convForm->connamespace, newOwnerId,
+										  ACL_CREATE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+						   get_namespace_name(convForm->connamespace));
 
 		/*
 		 * Modify the owner --- okay to scribble on tup because it's a

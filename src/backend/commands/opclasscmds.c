@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.34 2005/07/07 20:39:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.35 2005/07/14 21:46:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -892,6 +892,7 @@ AlterOpClassOwner(List *name, const char *access_method, Oid newOwnerId)
 	char	   *opcname;
 	HeapTuple	tup;
 	Relation	rel;
+	AclResult	aclresult;
 	Form_pg_opclass opcForm;
 
 	amOid = GetSysCacheOid(AMNAME,
@@ -950,11 +951,20 @@ AlterOpClassOwner(List *name, const char *access_method, Oid newOwnerId)
 	 */
 	if (opcForm->opcowner != newOwnerId)
 	{
-		/* Otherwise, must be superuser to change object ownership */
-		if (!superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to change owner")));
+		/* Otherwise, must be owner of the existing object */
+		if (!pg_opclass_ownercheck(HeapTupleGetOid(tup),GetUserId()))
+			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPCLASS,
+						   NameListToString(name));
+
+		/* Must be able to become new owner */
+		check_is_member_of_role(GetUserId(), newOwnerId);
+
+		/* New owner must have CREATE privilege on namespace */
+		aclresult = pg_namespace_aclcheck(namespaceOid, newOwnerId,
+										  ACL_CREATE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+					get_namespace_name(namespaceOid));
 
 		/*
 		 * Modify the owner --- okay to scribble on tup because it's a

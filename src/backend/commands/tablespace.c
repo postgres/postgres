@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.25 2005/07/07 20:39:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.26 2005/07/14 21:46:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -788,11 +788,23 @@ AlterTableSpaceOwner(const char *name, Oid newOwnerId)
 		bool		isNull;
 		HeapTuple	newtuple;
 
-		/* Otherwise, must be superuser to change object ownership */
-		if (!superuser())
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to change owner")));
+		/* Otherwise, must be owner of the existing object */
+		if (!pg_tablespace_ownercheck(HeapTupleGetOid(tup), GetUserId()))
+			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TABLESPACE,
+						   name);
+
+		/* Must be able to become new owner */
+		check_is_member_of_role(GetUserId(), newOwnerId);
+
+		/*
+		 * Normally we would also check for create permissions here,
+		 * but there are none for tablespaces so we follow what rename
+		 * tablespace does and omit the create permissions check.
+		 *
+		 * NOTE: Only superusers may create tablespaces to begin with and
+		 * so initially only a superuser would be able to change its
+		 * ownership anyway.
+		 */
 
 		memset(repl_null, ' ', sizeof(repl_null));
 		memset(repl_repl, ' ', sizeof(repl_repl));

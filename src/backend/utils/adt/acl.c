@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.118 2005/07/07 20:39:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.119 2005/07/14 21:46:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2541,6 +2541,10 @@ is_member_of_role(Oid member, Oid role)
 	if (member == role)
 		return true;
 
+	/* Superusers have every privilege, so are part of every role */
+	if (superuser_arg(member))
+		return true;
+
 	/* If cache is already valid, just use the list */
 	if (OidIsValid(cached_role) && cached_role == member)
 		return list_member_oid(cached_memberships, role);
@@ -2602,6 +2606,20 @@ is_member_of_role(Oid member, Oid role)
 
 	/* And now we can return the answer */
 	return list_member_oid(cached_memberships, role);
+}
+
+/*
+ * check_is_member_of_role
+ *		is_member_of_role with a standard permission-violation error if not
+ */
+void
+check_is_member_of_role(Oid member, Oid role)
+{
+	if (!is_member_of_role(member, role))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be member of role \"%s\"",
+						GetUserNameFromId(role))));
 }
 
 
