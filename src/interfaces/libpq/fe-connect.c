@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.263.2.3 2005/07/13 15:26:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.263.2.4 2005/07/14 14:07:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2116,7 +2116,7 @@ closePGconn(PGconn *conn)
 	conn->addr_cur = NULL;
 	if (conn->notifyList)
 		DLFreeList(conn->notifyList);
-	conn->notifyList = NULL;
+	conn->notifyList = DLNewList();
 	pstatus = conn->pstatus;
 	while (pstatus != NULL)
 	{
