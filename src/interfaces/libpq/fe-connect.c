@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.213.2.4 2005/07/13 15:26:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.213.2.5 2005/07/14 14:07:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1996,7 +1996,7 @@ closePGconn(PGconn *conn)
 	pqClearAsyncResult(conn);	/* deallocate result and curTuple */
 	if (conn->notifyList)
 		DLFreeList(conn->notifyList);
-	conn->notifyList = NULL;
+	conn->notifyList = DLNewList();
 	if (conn->lobjfuncs)
 		free(conn->lobjfuncs);
 	conn->lobjfuncs = NULL;
