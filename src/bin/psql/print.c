@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.65 2005/07/14 06:49:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.66 2005/07/14 07:32:01 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -37,7 +37,7 @@ pg_local_malloc(size_t size)
 	tmp = malloc(size);
 	if (!tmp)
 	{
-		psql_error("out of memory\n");
+		fprintf(stderr, _("out of memory\n"));
 		exit(EXIT_FAILURE);
 	}
 	return tmp;
@@ -999,7 +999,8 @@ static void
 print_latex_text(const char *title, const char *const *headers,
 				 const char *const *cells, const char *const *footers,
 				 const char *opt_align, bool opt_tuples_only,
-				 unsigned short int opt_border, FILE *fout)
+				 char *opt_numericsep, unsigned short int opt_border,
+				 FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
@@ -1059,7 +1060,18 @@ print_latex_text(const char *title, const char *const *headers,
 	/* print cells */
 	for (i = 0, ptr = cells; *ptr; i++, ptr++)
 	{
-		latex_escaped_print(*ptr, fout);
+		if (strlen(*ptr) != 0 &&
+			opt_numericsep != NULL && strlen(opt_numericsep) > 0)
+		{
+			char *my_cell = pg_local_malloc(len_with_numericsep(*ptr) + 1);
+		    
+			strcpy(my_cell, *ptr);
+			format_numericsep(my_cell, opt_numericsep);
+			latex_escaped_print(my_cell, fout);
+			free(my_cell);
+		}
+		else
+			latex_escaped_print(*ptr, fout);
 
 		if ((i + 1) % col_count == 0)
 			fputs(" \\\\\n", fout);
@@ -1091,7 +1103,8 @@ static void
 print_latex_vertical(const char *title, const char *const *headers,
 				  const char *const *cells, const char *const *footers,
 				  const char *opt_align, bool opt_tuples_only,
-				  unsigned short int opt_border, FILE *fout)
+				  char *opt_numericsep, unsigned short int opt_border,
+				  FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
@@ -1161,7 +1174,18 @@ print_latex_vertical(const char *title, const char *const *headers,
 	if (footers && !opt_tuples_only)
 		for (ptr = footers; *ptr; ptr++)
 		{
-			latex_escaped_print(*ptr, fout);
+			if (strlen(*ptr) != 0 &&
+				opt_numericsep != NULL && strlen(opt_numericsep) > 0)
+			{
+				char *my_cell = pg_local_malloc(len_with_numericsep(*ptr) + 1);
+
+				strcpy(my_cell, *ptr);
+				format_numericsep(my_cell, opt_numericsep);
+				latex_escaped_print(my_cell, fout);
+				free(my_cell);
+			}
+			else
+				latex_escaped_print(*ptr, fout);
 			fputs(" \\\\\n", fout);
 		}
 
@@ -1197,7 +1221,8 @@ static void
 print_troff_ms_text(const char *title, const char *const *headers,
 				 const char *const *cells, const char *const *footers,
 				 const char *opt_align, bool opt_tuples_only,
-				 unsigned short int opt_border, FILE *fout)
+				 char *opt_numericsep, unsigned short int opt_border,
+				 FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
@@ -1245,14 +1270,23 @@ print_troff_ms_text(const char *title, const char *const *headers,
 	}
 
 	if (!opt_tuples_only)
-	{
 		fputs("\n_\n", fout);
-	}
 
 	/* print cells */
 	for (i = 0, ptr = cells; *ptr; i++, ptr++)
 	{
-		troff_ms_escaped_print(*ptr, fout);
+		if (strlen(*ptr) != 0 &&
+			opt_numericsep != NULL && strlen(opt_numericsep) > 0)
+		{
+			char *my_cell = pg_local_malloc(len_with_numericsep(*ptr) + 1);
+		    
+			strcpy(my_cell, *ptr);
+			format_numericsep(my_cell, opt_numericsep);
+			troff_ms_escaped_print(my_cell, fout);
+			free(my_cell);
+		}
+		else
+			troff_ms_escaped_print(*ptr, fout);
 
 		if ((i + 1) % col_count == 0)
 			fputc('\n', fout);
@@ -1281,7 +1315,8 @@ static void
 print_troff_ms_vertical(const char *title, const char *const *headers,
 				  const char *const *cells, const char *const *footers,
 				  const char *opt_align, bool opt_tuples_only,
-				  unsigned short int opt_border, FILE *fout)
+				  char *opt_numericsep, unsigned short int opt_border,
+				  FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
@@ -1324,7 +1359,6 @@ print_troff_ms_vertical(const char *title, const char *const *headers,
 		{
 			if (!opt_tuples_only)
 			{
-
 				if (current_format != 1)
 				{
 					if (opt_border == 2 && i > 0)
@@ -1356,7 +1390,19 @@ print_troff_ms_vertical(const char *title, const char *const *headers,
 
 		troff_ms_escaped_print(headers[i % col_count], fout);
 		fputc('\t', fout);
-		troff_ms_escaped_print(*ptr, fout);
+		if (strlen(*ptr) != 0 &&
+			opt_numericsep != NULL && strlen(opt_numericsep) > 0)
+		{
+			char *my_cell = pg_local_malloc(len_with_numericsep(*ptr) + 1);
+		    
+			strcpy(my_cell, *ptr);
+			format_numericsep(my_cell, opt_numericsep);
+			troff_ms_escaped_print(my_cell, fout);
+			free(my_cell);
+		}
+		else
+			troff_ms_escaped_print(*ptr, fout);
+
 		fputc('\n', fout);
 	}
 
@@ -1529,19 +1575,21 @@ printTable(const char *title,
 		case PRINT_LATEX:
 			if (use_expanded)
 				print_latex_vertical(title, headers, cells, footers, align,
-									 opt->tuples_only, border, output);
+									 opt->tuples_only, opt->numericSep,
+									 border, output);
 			else
 				print_latex_text(title, headers, cells, footers, align,
-								 opt->tuples_only, border, output);
+								 opt->tuples_only, opt->numericSep,
+								 border, output);
 			break;
 		case PRINT_TROFF_MS:
 			if (use_expanded)
-				print_troff_ms_vertical(title, headers, cells, footers,
-										align, opt->tuples_only,
+				print_troff_ms_vertical(title, headers, cells, footers, align,
+										opt->tuples_only, opt->numericSep,
 										border, output);
 			else
-				print_troff_ms_text(title, headers, cells, footers,
-									align, opt->tuples_only,
+				print_troff_ms_text(title, headers, cells, footers, align,
+									opt->tuples_only, opt->numericSep,
 									border, output);
 			break;
 		default:
