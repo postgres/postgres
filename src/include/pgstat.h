@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.32 2005/06/29 22:51:57 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.33 2005/07/14 05:13:43 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -20,14 +20,20 @@
  * The types of backend/postmaster -> collector messages
  * ----------
  */
-#define PGSTAT_MTYPE_DUMMY			0
-#define PGSTAT_MTYPE_BESTART		1
-#define PGSTAT_MTYPE_BETERM			2
-#define PGSTAT_MTYPE_ACTIVITY		3
-#define PGSTAT_MTYPE_TABSTAT		4
-#define PGSTAT_MTYPE_TABPURGE		5
-#define PGSTAT_MTYPE_DROPDB			6
-#define PGSTAT_MTYPE_RESETCOUNTER	7
+typedef enum StatMsgType
+{
+	PGSTAT_MTYPE_DUMMY,
+	PGSTAT_MTYPE_BESTART,
+	PGSTAT_MTYPE_BETERM,
+	PGSTAT_MTYPE_ACTIVITY,
+	PGSTAT_MTYPE_TABSTAT,
+	PGSTAT_MTYPE_TABPURGE,
+	PGSTAT_MTYPE_DROPDB,
+	PGSTAT_MTYPE_RESETCOUNTER,
+	PGSTAT_MTYPE_AUTOVAC_START,
+	PGSTAT_MTYPE_VACUUM,
+	PGSTAT_MTYPE_ANALYZE
+} StatMsgType;
 
 /* ----------
  * The data type used for counters.
@@ -48,7 +54,7 @@ typedef int64 PgStat_Counter;
  */
 typedef struct PgStat_MsgHdr
 {
-	int			m_type;
+	StatMsgType	m_type;
 	int			m_size;
 	int			m_backendid;
 	int			m_procpid;
@@ -113,6 +119,47 @@ typedef struct PgStat_MsgBeterm
 {
 	PgStat_MsgHdr m_hdr;
 } PgStat_MsgBeterm;
+
+/* ----------
+ * PgStat_MsgAutovacStart		Sent by the autovacuum daemon to signal
+ * 								that a database is going to be processed
+ * ----------
+ */
+typedef struct PgStat_MsgAutovacStart
+{
+	PgStat_MsgHdr m_hdr;
+	Oid			m_databaseid;
+	TimestampTz	m_start_time;
+} PgStat_MsgAutovacStart;
+
+/* ----------
+ * PgStat_MsgVacuum				Sent by the backend or autovacuum daemon
+ * 								after VACUUM or VACUUM ANALYZE
+ * ----------
+ */
+typedef struct PgStat_MsgVacuum
+{
+	PgStat_MsgHdr m_hdr;
+	Oid			m_databaseid;
+	Oid			m_tableoid;
+	bool		m_analyze;
+	PgStat_Counter m_tuples;
+} PgStat_MsgVacuum;
+
+/* ----------
+ * PgStat_MsgAnalyze			Sent by the backend or autovacuum daemon
+ * 								after ANALYZE
+ * ----------
+ */
+typedef struct PgStat_MsgAnalyze
+{
+	PgStat_MsgHdr m_hdr;
+	Oid			m_databaseid;
+	Oid			m_tableoid;
+	PgStat_Counter	m_live_tuples;
+	PgStat_Counter	m_dead_tuples;
+} PgStat_MsgAnalyze;
+
 
 /* ----------
  * PgStat_MsgActivity			Sent by the backends when they start
@@ -200,13 +247,21 @@ typedef union PgStat_Msg
 	PgStat_MsgTabpurge msg_tabpurge;
 	PgStat_MsgDropdb msg_dropdb;
 	PgStat_MsgResetcounter msg_resetcounter;
+	PgStat_MsgAutovacStart msg_autovacuum;
+	PgStat_MsgVacuum msg_vacuum;
+	PgStat_MsgAnalyze msg_analyze;
 } PgStat_Msg;
 
 
 /* ------------------------------------------------------------
  * Statistic collector data structures follow
+ *
+ * PGSTAT_FILE_FORMAT_ID should be changed whenever any of these
+ * data structures change.
  * ------------------------------------------------------------
  */
+
+#define PGSTAT_FILE_FORMAT_ID	0x01A5BC93
 
 /* ----------
  * PgStat_StatDBEntry			The collectors data per database
@@ -222,6 +277,7 @@ typedef struct PgStat_StatDBEntry
 	PgStat_Counter n_blocks_fetched;
 	PgStat_Counter n_blocks_hit;
 	int			destroy;
+	TimestampTz	last_autovac_time;
 } PgStat_StatDBEntry;
 
 
@@ -282,6 +338,10 @@ typedef struct PgStat_StatTabEntry
 	PgStat_Counter tuples_updated;
 	PgStat_Counter tuples_deleted;
 
+	PgStat_Counter n_live_tuples;
+	PgStat_Counter n_dead_tuples;
+	PgStat_Counter last_anl_tuples;
+
 	PgStat_Counter blocks_fetched;
 	PgStat_Counter blocks_hit;
 
@@ -323,6 +383,11 @@ extern void pgstat_bestart(void);
 extern void pgstat_ping(void);
 extern void pgstat_report_activity(const char *what);
 extern void pgstat_report_tabstat(void);
+extern void pgstat_report_autovac(void);
+extern void pgstat_report_vacuum(Oid tableoid, bool analyze,
+					PgStat_Counter tuples);
+extern void pgstat_report_analyze(Oid tableoid, PgStat_Counter livetuples,
+					PgStat_Counter deadtuples);
 extern int	pgstat_vacuum_tabstat(void);
 
 extern void pgstat_reset_counters(void);

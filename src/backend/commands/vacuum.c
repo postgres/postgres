@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.310 2005/06/14 22:15:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.311 2005/07/14 05:13:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,7 +166,8 @@ static TransactionId FreezeLimit;
 
 
 /* non-export function prototypes */
-static List *get_rel_oids(const RangeVar *vacrel, const char *stmttype);
+static List *get_rel_oids(List *relids, const RangeVar *vacrel,
+						  const char *stmttype);
 static void vac_update_dbstats(Oid dbid,
 				   TransactionId vacuumXID,
 				   TransactionId frozenXID);
@@ -221,9 +222,18 @@ static bool enough_space(VacPage vacpage, Size len);
 
 /*
  * Primary entry point for VACUUM and ANALYZE commands.
+ *
+ * relids is normally NIL; if it is not, then it provides the list of
+ * relation OIDs to be processed, and vacstmt->relation is ignored.
+ * (The non-NIL case is currently only used by autovacuum.)
+ *
+ * It is the caller's responsibility that both vacstmt and relids
+ * (if given) be allocated in a memory context that won't disappear
+ * at transaction commit.  In fact this context must be QueryContext
+ * to avoid complaints from PreventTransactionChain.
  */
 void
-vacuum(VacuumStmt *vacstmt)
+vacuum(VacuumStmt *vacstmt, List *relids)
 {
 	const char *stmttype = vacstmt->vacuum ? "VACUUM" : "ANALYZE";
 	TransactionId initialOldestXmin = InvalidTransactionId;
@@ -302,11 +312,14 @@ vacuum(VacuumStmt *vacstmt)
 										ALLOCSET_DEFAULT_INITSIZE,
 										ALLOCSET_DEFAULT_MAXSIZE);
 
-	/* Assume we are processing everything unless one table is mentioned */
-	all_rels = (vacstmt->relation == NULL);
+	/* Remember whether we are processing everything in the DB */
+	all_rels = (relids == NIL && vacstmt->relation == NULL);
 
-	/* Build list of relations to process (note this lives in vac_context) */
-	relations = get_rel_oids(vacstmt->relation, stmttype);
+	/*
+	 * Build list of relations to process, unless caller gave us one.
+	 * (If we build one, we put it in vac_context for safekeeping.)
+	 */
+	relations = get_rel_oids(relids, vacstmt->relation, stmttype);
 
 	if (vacstmt->vacuum && all_rels)
 	{
@@ -512,10 +525,14 @@ vacuum(VacuumStmt *vacstmt)
  * per-relation transactions.
  */
 static List *
-get_rel_oids(const RangeVar *vacrel, const char *stmttype)
+get_rel_oids(List *relids, const RangeVar *vacrel, const char *stmttype)
 {
 	List	   *oid_list = NIL;
 	MemoryContext oldcontext;
+
+	/* List supplied by VACUUM's caller? */
+	if (relids)
+		return relids;
 
 	if (vacrel)
 	{
@@ -1146,6 +1163,10 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	/* update statistics in pg_class */
 	vac_update_relstats(RelationGetRelid(onerel), vacrelstats->rel_pages,
 						vacrelstats->rel_tuples, vacrelstats->hasindex);
+
+	/* report results to the stats collector, too */
+	pgstat_report_vacuum(RelationGetRelid(onerel), vacstmt->analyze,
+						 vacrelstats->rel_tuples);
 }
 
 

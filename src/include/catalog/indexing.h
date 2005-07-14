@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.89 2005/07/07 20:39:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.90 2005/07/14 05:13:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -210,6 +210,8 @@ DECLARE_UNIQUE_INDEX(pg_type_oid_index,2703, on pg_type using btree(oid oid_ops)
 DECLARE_UNIQUE_INDEX(pg_type_typname_nsp_index,2704, on pg_type using btree(typname name_ops, typnamespace oid_ops));
 #define TypeNameNspIndexId  2704
 
+DECLARE_UNIQUE_INDEX(pg_autovacuum_vacrelid_index,1250, on pg_autovacuum using btree(vacrelid oid_ops));
+#define AutovacuumRelidIndexId	1250
 
 /* last step of initialization script: build the indexes declared above */
 BUILD_INDICES

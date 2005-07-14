@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.273 2005/07/05 23:18:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.274 2005/07/14 05:13:42 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -45,6 +45,7 @@
 #include "optimizer/prep.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
+#include "postmaster/autovacuum.h"
 #include "postmaster/bgwriter.h"
 #include "postmaster/syslogger.h"
 #include "postmaster/postmaster.h"
@@ -286,6 +287,8 @@ const char *const config_group_names[] =
 	gettext_noop("Statistics / Monitoring"),
 	/* STATS_COLLECTOR */
 	gettext_noop("Statistics / Query and Index Statistics Collector"),
+	/* AUTOVACUUM */
+	gettext_noop("Auto Vacuum"),
 	/* CLIENT_CONN */
 	gettext_noop("Client Connection Defaults"),
 	/* CLIENT_CONN_STATEMENT */
@@ -676,6 +679,15 @@ static struct config_bool ConfigureNamesBool[] =
 		},
 		&pgstat_collect_blocklevel,
 		false, NULL, NULL
+	},
+
+	{
+		{"autovacuum", PGC_SIGHUP, AUTOVACUUM,
+			gettext_noop("Starts the auto vacuum subprocess."),
+			NULL
+		},
+		&autovacuum_start_daemon,
+		false, NULL, NULL	 
 	},
 
 	{
@@ -1389,6 +1401,31 @@ static struct config_int ConfigureNamesInt[] =
 		BLCKSZ, BLCKSZ, BLCKSZ, NULL, NULL
 	},
 
+	{
+		{"autovacuum_naptime", PGC_SIGHUP, AUTOVACUUM,
+			gettext_noop("Time to sleep between autovacuum runs, in seconds."),
+			NULL
+		},
+		&autovacuum_naptime,
+		60, 0, INT_MAX, NULL, NULL
+	},
+	{
+		{"autovacuum_vacuum_threshold", PGC_SIGHUP, AUTOVACUUM,
+			gettext_noop("Minimum number of tuple updates or deletes prior to vacuum."),
+			NULL
+		},
+		&autovacuum_vac_thresh,
+		1000, 0, INT_MAX, NULL, NULL
+	},
+	{
+		{"autovacuum_analyze_threshold", PGC_SIGHUP, AUTOVACUUM,
+			gettext_noop("Minimum number of tuple inserts, updates or deletes prior to analyze."),
+			NULL
+		},
+		&autovacuum_anl_thresh,
+		500, 0, INT_MAX, NULL, NULL
+	},
+
 	/* End-of-list marker */
 	{
 		{NULL, 0, 0, NULL, NULL}, NULL, 0, 0, 0, NULL, NULL
@@ -1485,6 +1522,23 @@ static struct config_real ConfigureNamesReal[] =
 		},
 		&phony_random_seed,
 		0.5, 0.0, 1.0, assign_random_seed, show_random_seed
+	},
+
+	{
+		{"autovacuum_vacuum_scale_factor", PGC_SIGHUP, AUTOVACUUM,
+			gettext_noop("Number of tuple updates or deletes prior to vacuum as a fraction of reltuples."),
+			NULL
+		},
+		&autovacuum_vac_scale,
+		0.4, 0.0, 100.0, NULL, NULL
+	},
+	{
+		{"autovacuum_analyze_scale_factor", PGC_SIGHUP, AUTOVACUUM,
+			gettext_noop("Number of tuple inserts, updates or deletes prior to analyze as a fraction of reltuples."),
+			NULL
+		},
+		&autovacuum_anl_scale,
+		0.2, 0.0, 100.0, NULL, NULL
 	},
 
 	/* End-of-list marker */

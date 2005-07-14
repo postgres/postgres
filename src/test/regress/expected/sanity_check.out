@@ -40,6 +40,7 @@ SELECT relname, relhasindex
  pg_attribute        | t
  pg_auth_members     | t
  pg_authid           | t
+ pg_autovacuum       | t
  pg_cast             | t
  pg_class            | t
  pg_constraint       | t
@@ -66,7 +67,7 @@ SELECT relname, relhasindex
  shighway            | t
  tenk1               | t
  tenk2               | t
-(56 rows)
+(57 rows)
 
 --
 -- another sanity check: every system catalog that has OIDs should have

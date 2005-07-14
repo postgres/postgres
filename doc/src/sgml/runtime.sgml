@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.337 2005/07/06 14:45:12 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.338 2005/07/14 05:13:38 tgl Exp $
 -->
 
 <chapter Id="runtime">
@@ -3173,13 +3173,134 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
         If on, collected statistics are zeroed out whenever the server
         is restarted. If off, statistics are accumulated across server
         restarts. The default is <literal>on</>. This option can only 
-	be set at server start.
+        be set at server start.
        </para>
       </listitem>
      </varlistentry>
 
      </variablelist>
     </sect3>
+   </sect2>
+
+   <sect2 id="runtime-config-autovacuum">
+    <title>Automatic Vacuuming</title>
+
+     <para>
+      Beginning in <productname>PostgreSQL</> 8.1, there is an optional server
+      process called the <firstterm>autovacuum daemon</>, whose purpose is
+      to automate the issuance of periodic <command>VACUUM</> and
+      <command>ANALYZE</> commands.  When enabled, the autovacuum daemon
+      runs periodically and checks for tables that have had a large number
+      of updated or deleted tuples.  This check uses the row-level statistics
+      collection facility; therefore, the autovacuum daemon cannot be used
+      unless <xref linkend="guc-stats-start-collector"> and
+      <xref linkend="guc-stats-row-level"> are set TRUE.  Also, it's
+      important to allow a slot for the autovacuum process when choosing
+      the value of <xref linkend="guc-superuser-reserved-connections">.
+     </para>
+
+    <variablelist>
+
+     <varlistentry id="guc-autovacuum" xreflabel="autovacuum">
+      <term><varname>autovacuum</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>autovacuum</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Controls whether the server should start the
+        autovacuum subprocess.  This is off by default.
+        This option can only be set at server start or in the
+        <filename>postgresql.conf</filename> file.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-autovacuum-naptime" xreflabel="autovacuum_naptime">
+      <term><varname>autovacuum_naptime</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>autovacuum_naptime</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Specifies the delay between activity rounds for the autovacuum
+        subprocess.  In each round the subprocess examines one database
+        and issues <command>VACUUM</> and <command>ANALYZE</> commands
+        as needed for tables in that database.  The delay is measured
+        in seconds, and the default is 60.
+        This option can only be set at server start or in the
+        <filename>postgresql.conf</filename> file.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-autovacuum-vacuum-threshold" xreflabel="autovacuum_vacuum_threshold">
+      <term><varname>autovacuum_vacuum_threshold</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>autovacuum_vacuum_threshold</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Specifies the minimum number of updated or deleted tuples needed
+        to trigger a <command>VACUUM</> in any one table.
+        The default is 1000.
+        This option can only be set at server start or in the
+        <filename>postgresql.conf</filename> file.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-autovacuum-analyze-threshold" xreflabel="autovacuum_analyze_threshold">
+      <term><varname>autovacuum_analyze_threshold</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>autovacuum_analyze_threshold</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Specifies the minimum number of inserted, updated or deleted tuples
+        needed to trigger an <command>ANALYZE</> in any one table.
+        The default is 500.
+        This option can only be set at server start or in the
+        <filename>postgresql.conf</filename> file.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-autovacuum-vacuum-scale-factor" xreflabel="autovacuum_vacuum_scale_factor">
+      <term><varname>autovacuum_vacuum_scale_factor</varname> (<type>floating point</type>)</term>
+      <indexterm>
+       <primary><varname>autovacuum_vacuum_scale_factor</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Specifies a fraction of the table size to add to
+        <varname>autovacuum_vacuum_threshold</varname>
+        when deciding whether to trigger a <command>VACUUM</>.
+        The default is 0.4.
+        This option can only be set at server start or in the
+        <filename>postgresql.conf</filename> file.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-autovacuum-analyze-scale-factor" xreflabel="autovacuum_analyze_scale_factor">
+      <term><varname>autovacuum_analyze_scale_factor</varname> (<type>floating point</type>)</term>
+      <indexterm>
+       <primary><varname>autovacuum_analyze_scale_factor</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Specifies a fraction of the table size to add to
+        <varname>autovacuum_analyze_threshold</varname>
+        when deciding whether to trigger an <command>ANALYZE</>.
+        The default is 0.2.
+        This option can only be set at server start or in the
+        <filename>postgresql.conf</filename> file.
+       </para>
+      </listitem>
+     </varlistentry>
+
+    </variablelist>
    </sect2>
 
    <sect2 id="runtime-config-client">

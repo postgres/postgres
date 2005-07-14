@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.99 2005/07/04 04:51:47 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.100 2005/07/14 05:13:40 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -38,6 +38,7 @@
 #include "libpq/pqsignal.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
+#include "postmaster/autovacuum.h"
 #include "postmaster/fork_process.h"
 #include "postmaster/postmaster.h"
 #include "storage/backendid.h"
@@ -167,7 +168,7 @@ static void pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 					  int *numbackends);
 static void backend_read_statsfile(void);
 
-static void pgstat_setheader(PgStat_MsgHdr *hdr, int mtype);
+static void pgstat_setheader(PgStat_MsgHdr *hdr, StatMsgType mtype);
 static void pgstat_send(void *msg, int len);
 
 static void pgstat_recv_bestart(PgStat_MsgBestart *msg, int len);
@@ -177,6 +178,9 @@ static void pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len);
 static void pgstat_recv_tabpurge(PgStat_MsgTabpurge *msg, int len);
 static void pgstat_recv_dropdb(PgStat_MsgDropdb *msg, int len);
 static void pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len);
+static void pgstat_recv_autovac(PgStat_MsgAutovacStart *msg, int len);
+static void pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len);
+static void pgstat_recv_analyze(PgStat_MsgAnalyze *msg, int len);
 
 
 /* ------------------------------------------------------------
@@ -618,6 +622,27 @@ pgstat_beterm(int pid)
 }
 
 
+/* ----------
+ * pgstat_report_autovac() -
+ *
+ * 	Called from autovacuum.c to report startup of an autovacuum process.
+ * ----------
+ */
+void
+pgstat_report_autovac(void)
+{
+	PgStat_MsgAutovacStart msg;
+
+	if (pgStatSock < 0)
+		return;
+
+	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_AUTOVAC_START);
+	msg.m_databaseid = MyDatabaseId;
+	msg.m_start_time = GetCurrentTimestamp();
+
+	pgstat_send(&msg, sizeof(msg));
+}
+
 /* ------------------------------------------------------------
  * Public functions used by backends follow
  *------------------------------------------------------------
@@ -650,6 +675,51 @@ pgstat_bestart(void)
 	 * statistics to the collector.
 	 */
 	on_proc_exit(pgstat_beshutdown_hook, 0);
+}
+
+/* ---------
+ * pgstat_report_vacuum() -
+ *
+ *	Tell the collector about the table we just vacuumed.
+ * ---------
+ */
+void
+pgstat_report_vacuum(Oid tableoid, bool analyze, PgStat_Counter tuples)
+{
+	PgStat_MsgVacuum msg;
+
+	if (pgStatSock < 0)
+		return;
+
+	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_VACUUM);
+	msg.m_databaseid = MyDatabaseId;
+	msg.m_tableoid = tableoid;
+	msg.m_analyze = analyze;
+	msg.m_tuples = tuples;
+	pgstat_send(&msg, sizeof(msg));
+}
+
+/* --------
+ * pgstat_report_analyze() -
+ *
+ * 	Tell the collector about the table we just analyzed.
+ * --------
+ */
+void
+pgstat_report_analyze(Oid tableoid, PgStat_Counter livetuples,
+					  PgStat_Counter deadtuples)
+{
+	PgStat_MsgAnalyze msg;
+
+	if (pgStatSock < 0)
+		return;
+
+	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_ANALYZE);
+	msg.m_databaseid = MyDatabaseId;
+	msg.m_tableoid = tableoid;
+	msg.m_live_tuples = livetuples;
+	msg.m_dead_tuples = deadtuples;
+	pgstat_send(&msg, sizeof(msg));
 }
 
 /*
@@ -1279,7 +1349,7 @@ pgstat_fetch_stat_numbackends(void)
  * ----------
  */
 static void
-pgstat_setheader(PgStat_MsgHdr *hdr, int mtype)
+pgstat_setheader(PgStat_MsgHdr *hdr, StatMsgType mtype)
 {
 	hdr->m_type = mtype;
 	hdr->m_backendid = MyBackendId;
@@ -1651,6 +1721,18 @@ PgstatCollectorMain(int argc, char *argv[])
 				case PGSTAT_MTYPE_RESETCOUNTER:
 					pgstat_recv_resetcounter((PgStat_MsgResetcounter *) &msg,
 											 nread);
+					break;
+
+				case PGSTAT_MTYPE_AUTOVAC_START:
+					pgstat_recv_autovac((PgStat_MsgAutovacStart *) &msg, nread);
+					break;
+
+				case PGSTAT_MTYPE_VACUUM:
+					pgstat_recv_vacuum((PgStat_MsgVacuum *) &msg, nread);
+					break;
+
+				case PGSTAT_MTYPE_ANALYZE:
+					pgstat_recv_analyze((PgStat_MsgAnalyze *) &msg, nread);
 					break;
 
 				default:
@@ -2049,6 +2131,7 @@ pgstat_get_db_entry(Oid databaseid)
 		result->n_blocks_fetched = 0;
 		result->n_blocks_hit = 0;
 		result->destroy = 0;
+		result->last_autovac_time = 0;
 
 		memset(&hash_ctl, 0, sizeof(hash_ctl));
 		hash_ctl.keysize = sizeof(Oid);
@@ -2136,6 +2219,7 @@ pgstat_write_statsfile(void)
 	PgStat_StatBeDead *deadbe;
 	FILE	   *fpout;
 	int			i;
+	int32		format_id;
 
 	/*
 	 * Open the statistics temp file to write out the current values.
@@ -2149,6 +2233,12 @@ pgstat_write_statsfile(void)
 				   PGSTAT_STAT_TMPFILE)));
 		return;
 	}
+
+	/*
+	 * Write the file header --- currently just a format ID.
+	 */
+	format_id = PGSTAT_FILE_FORMAT_ID;
+	fwrite(&format_id, sizeof(format_id), 1, fpout);
 
 	/*
 	 * Walk through the database table.
@@ -2182,7 +2272,7 @@ pgstat_write_statsfile(void)
 		}
 
 		/*
-		 * Write out the DB line including the number of life backends.
+		 * Write out the DB line including the number of live backends.
 		 */
 		fputc('D', fpout);
 		fwrite(dbentry, sizeof(PgStat_StatDBEntry), 1, fpout);
@@ -2216,7 +2306,7 @@ pgstat_write_statsfile(void)
 			}
 
 			/*
-			 * At least we think this is still a life table. Print it's
+			 * At least we think this is still a live table. Print its
 			 * access stats.
 			 */
 			fputc('T', fpout);
@@ -2312,6 +2402,7 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 	HASHCTL		hash_ctl;
 	HTAB	   *tabhash = NULL;
 	FILE	   *fpin;
+	int32		format_id;
 	int			maxbackends = 0;
 	int			havebackends = 0;
 	bool		found;
@@ -2319,12 +2410,13 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 	int			mcxt_flags;
 
 	/*
-	 * If running in the collector we use the DynaHashCxt memory context.
-	 * If running in a backend, we use the TopTransactionContext instead,
-	 * so the caller must only know the last XactId when this call
-	 * happened to know if his tables are still valid or already gone!
+	 * If running in the collector or the autovacuum process, we use the
+	 * DynaHashCxt memory context.  If running in a backend, we use the
+	 * TopTransactionContext instead, so the caller must only know the last
+	 * XactId when this call happened to know if his tables are still valid or
+	 * already gone!
 	 */
-	if (pgStatRunningInCollector)
+	if (pgStatRunningInCollector || IsAutoVacuumProcess())
 	{
 		use_mcxt = NULL;
 		mcxt_flags = 0;
@@ -2362,6 +2454,17 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 	 */
 	if ((fpin = AllocateFile(PGSTAT_STAT_FILENAME, PG_BINARY_R)) == NULL)
 		return;
+
+	/*
+	 * Verify it's of the expected format.
+	 */
+	if (fread(&format_id, 1, sizeof(format_id), fpin) != sizeof(format_id)
+		|| format_id != PGSTAT_FILE_FORMAT_ID)
+	{
+		ereport(pgStatRunningInCollector ? LOG : WARNING,
+				(errmsg("corrupted pgstat.stat file")));
+		goto done;
+	}
 
 	/*
 	 * We found an existing collector stats file. Read it and put all the
@@ -2552,18 +2655,35 @@ done:
  *
  * Because we store the hash tables in TopTransactionContext, the result
  * is good for the entire current main transaction.
+ *
+ * Inside the autovacuum process, the statfile is assumed to be valid
+ * "forever", that is one iteration, within one database.  This means
+ * we only consider the statistics as they were when the autovacuum
+ * iteration started.
  */
 static void
 backend_read_statsfile(void)
 {
-	TransactionId topXid = GetTopTransactionId();
-
-	if (!TransactionIdEquals(pgStatDBHashXact, topXid))
+	if (IsAutoVacuumProcess())
 	{
 		Assert(!pgStatRunningInCollector);
-		pgstat_read_statsfile(&pgStatDBHash, MyDatabaseId,
+		/* already read it? */
+		if (pgStatDBHash)
+			return;
+		pgstat_read_statsfile(&pgStatDBHash, InvalidOid,
 							  &pgStatBeTable, &pgStatNumBackends);
-		pgStatDBHashXact = topXid;
+	}
+	else
+	{
+		TransactionId topXid = GetTopTransactionId();
+
+		if (!TransactionIdEquals(pgStatDBHashXact, topXid))
+		{
+			Assert(!pgStatRunningInCollector);
+			pgstat_read_statsfile(&pgStatDBHash, MyDatabaseId,
+								  &pgStatBeTable, &pgStatNumBackends);
+			pgStatDBHashXact = topXid;
+		}
 	}
 }
 
@@ -2606,6 +2726,129 @@ pgstat_recv_beterm(PgStat_MsgBeterm *msg, int len)
 	pgstat_sub_backend(msg->m_hdr.m_procpid);
 }
 
+/* ----------
+ * pgstat_recv_autovac() -
+ *
+ * 	Process an autovacuum signalling message.
+ * ----------
+ */
+static void
+pgstat_recv_autovac(PgStat_MsgAutovacStart *msg, int len)
+{
+	PgStat_StatDBEntry *dbentry;
+
+	/*
+	 * Lookup the database in the hashtable.
+	 *
+	 * XXX this creates the entry if it doesn't exist.  Is this a problem?  (We
+	 * could leak an entry if we send an autovac message and the database is
+	 * later destroyed, _and_ the messages are rearranged.  Doesn't seem very
+	 * likely though.)  Not sure what to do about it.
+	 */
+	dbentry = pgstat_get_db_entry(msg->m_databaseid);
+
+	/*
+	 * Store the last autovacuum time in the database entry.
+	 */
+	dbentry->last_autovac_time = msg->m_start_time;
+}
+
+/* ----------
+ * pgstat_recv_vacuum() -
+ *
+ * 	Process a VACUUM message.
+ * ----------
+ */
+static void
+pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len)
+{
+	PgStat_StatDBEntry *dbentry;
+	PgStat_StatTabEntry *tabentry;
+	bool		found;
+
+	dbentry = pgstat_get_db_entry(msg->m_databaseid);
+
+	tabentry = hash_search(dbentry->tables, &(msg->m_tableoid),
+						   HASH_ENTER, &found);
+
+	/*
+	 * If we are creating the entry, initialize it.
+	 */
+	if (!found)
+	{
+		tabentry->tableid = msg->m_tableoid;
+
+		tabentry->tuples_returned = 0;
+		tabentry->tuples_fetched = 0;
+		tabentry->tuples_inserted = msg->m_tuples;
+		tabentry->tuples_deleted = 0;
+		tabentry->tuples_updated = 0;
+
+		tabentry->n_live_tuples = msg->m_tuples;
+		tabentry->n_dead_tuples = 0;
+
+		if (msg->m_analyze)
+			tabentry->last_anl_tuples = msg->m_tuples;
+		else
+			tabentry->last_anl_tuples = 0;
+
+		tabentry->blocks_fetched = 0;
+		tabentry->blocks_hit = 0;
+	}
+	else
+	{
+		tabentry->n_dead_tuples = 0;
+		tabentry->n_live_tuples = msg->m_tuples;
+		if (msg->m_analyze)
+			tabentry->last_anl_tuples = msg->m_tuples;
+	}
+}
+
+/* ----------
+ * pgstat_recv_analyze() -
+ *
+ * 	Process an ANALYZE message.
+ * ----------
+ */
+static void
+pgstat_recv_analyze(PgStat_MsgAnalyze *msg, int len)
+{
+	PgStat_StatDBEntry *dbentry;
+	PgStat_StatTabEntry *tabentry;
+	bool		found;
+
+	dbentry = pgstat_get_db_entry(msg->m_databaseid);
+
+	tabentry = hash_search(dbentry->tables, &(msg->m_tableoid),
+						   HASH_ENTER, &found);
+
+	/*
+	 * If we are creating the entry, initialize it.
+	 */
+	if (!found)
+	{
+		tabentry->tableid = msg->m_tableoid;
+
+		tabentry->tuples_returned = 0;
+		tabentry->tuples_fetched = 0;
+		tabentry->tuples_inserted = 0;
+		tabentry->tuples_deleted = 0;
+		tabentry->tuples_updated = 0;
+
+		tabentry->n_live_tuples = msg->m_live_tuples;
+		tabentry->n_dead_tuples = msg->m_dead_tuples;
+		tabentry->last_anl_tuples = msg->m_live_tuples + msg->m_dead_tuples;
+
+		tabentry->blocks_fetched = 0;
+		tabentry->blocks_hit = 0;
+	}
+	else
+	{
+		tabentry->n_live_tuples = msg->m_live_tuples;
+		tabentry->n_dead_tuples = msg->m_dead_tuples;
+		tabentry->last_anl_tuples = msg->m_live_tuples + msg->m_dead_tuples;
+	}
+}
 
 /* ----------
  * pgstat_recv_activity() -
@@ -2690,6 +2933,10 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 			tabentry->tuples_deleted = tabmsg[i].t_tuples_deleted;
 			tabentry->blocks_fetched = tabmsg[i].t_blocks_fetched;
 			tabentry->blocks_hit = tabmsg[i].t_blocks_hit;
+			
+			tabentry->n_live_tuples = tabmsg[i].t_tuples_inserted;
+			tabentry->n_dead_tuples = tabmsg[i].t_tuples_updated +
+				tabmsg[i].t_tuples_deleted;
 
 			tabentry->destroy = 0;
 		}
@@ -2706,6 +2953,10 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 			tabentry->tuples_deleted += tabmsg[i].t_tuples_deleted;
 			tabentry->blocks_fetched += tabmsg[i].t_blocks_fetched;
 			tabentry->blocks_hit += tabmsg[i].t_blocks_hit;
+
+			tabentry->n_live_tuples += tabmsg[i].t_tuples_inserted;
+			tabentry->n_dead_tuples += tabmsg[i].t_tuples_updated +
+				tabmsg[i].t_tuples_deleted;
 		}
 
 		/*

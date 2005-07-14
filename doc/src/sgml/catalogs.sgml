@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.107 2005/07/07 20:39:56 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.108 2005/07/14 05:13:38 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -86,6 +86,11 @@
      <row>
       <entry><link linkend="catalog-pg-auth-members"><structname>pg_auth_members</structname></link></entry>
       <entry>authorization identifier membership relationships</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="catalog-pg-autovacuum"><structname>pg_autovacuum</structname></link></entry>
+      <entry>per-relation autovacuum configuration parameters</entry>
      </row>
 
      <row>
@@ -1098,6 +1103,104 @@
     </tbody>
    </tgroup>
   </table>
+
+ </sect1>
+
+
+ <sect1 id="catalog-pg-autovacuum">
+  <title><structname>pg_autovacuum</structname></title>
+
+  <indexterm zone="catalog-pg-autovacuum">
+   <primary>pg_autovacuum</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_autovacuum</structname> stores optional
+   per-relation configuration parameters for <quote>autovacuum</>.
+   If there is an entry here for a particular relation, the given
+   parameters will be used for autovacuuming that table.  If no entry
+   is present, the system-wide defaults will be used.
+  </para>
+
+  <table>
+   <title><structname>pg_autovacuum</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>vacrelid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
+      <entry>The table this entry is for</entry>
+     </row>
+
+     <row>
+      <entry><structfield>enabled</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>If false, this table is never autovacuumed</entry>
+     </row>
+
+     <row>
+      <entry><structfield>vac_base_thresh</structfield></entry>
+      <entry><type>integer</type></entry>
+      <entry></entry>
+      <entry>Minimum number of modified tuples before vacuum</entry>
+     </row>
+
+     <row>
+      <entry><structfield>vac_scale_factor</structfield></entry>
+      <entry><type>float4</type></entry>
+      <entry></entry>
+      <entry>Multiplier for reltuples to add to
+       <structfield>vac_base_thresh</></entry>
+     </row>
+
+     <row>
+      <entry><structfield>anl_base_thresh</structfield></entry>
+      <entry><type>integer</type></entry>
+      <entry></entry>
+      <entry>Minimum number of modified tuples before analyze</entry>
+     </row>
+
+     <row>
+      <entry><structfield>anl_scale_factor</structfield></entry>
+      <entry><type>float4</type></entry>
+      <entry></entry>
+      <entry>Multiplier for reltuples to add to
+       <structfield>anl_base_thresh</></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The autovacuum daemon will initiate a <command>VACUUM</> operation
+   on a particular table when the number of updated or deleted tuples
+   exceeds <structfield>vac_base_thresh</structfield> plus
+   <structfield>vac_scale_factor</structfield> times the number of
+   live tuples currently estimated to be in the relation.
+   Similarly, it will initiate an <command>ANALYZE</> operation
+   when the number of inserted, updated or deleted tuples
+   exceeds <structfield>anl_base_thresh</structfield> plus
+   <structfield>anl_scale_factor</structfield> times the number of
+   live tuples currently estimated to be in the relation.
+  </para>
+
+  <para>
+   Any of the numerical fields can contain <literal>-1</> (or indeed
+   any negative value) to indicate that the system-wide default should
+   be used for this particular value.
+  </para>
 
  </sect1>
 

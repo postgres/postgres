@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.152 2005/07/04 04:51:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.153 2005/07/14 05:13:41 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -29,6 +29,7 @@
 #include "libpq/hba.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
+#include "postmaster/autovacuum.h"
 #include "postmaster/postmaster.h"
 #include "storage/backendid.h"
 #include "storage/fd.h"
@@ -268,7 +269,8 @@ BaseInit(void)
  * InitPostgres
  *		Initialize POSTGRES.
  *
- * In bootstrap mode neither of the parameters are used.
+ * In bootstrap mode neither of the parameters are used.  In autovacuum
+ * mode, the username parameter is not used.
  *
  * The return value indicates whether the userID is a superuser.  (That
  * can only be tested inside a transaction, so we want to do it during
@@ -282,6 +284,7 @@ bool
 InitPostgres(const char *dbname, const char *username)
 {
 	bool		bootstrap = IsBootstrapProcessingMode();
+	bool		autovacuum = IsAutoVacuumProcess();
 	bool		am_superuser;
 
 	/*
@@ -402,10 +405,11 @@ InitPostgres(const char *dbname, const char *username)
 	RelationCacheInitializePhase2();
 
 	/*
-	 * Figure out our postgres user id.  In standalone mode we use a fixed
-	 * id, otherwise we figure it out from the authenticated user name.
+	 * Figure out our postgres user id.  In standalone mode and in the
+	 * autovacuum process, we use a fixed id, otherwise we figure it out from
+	 * the authenticated user name.
 	 */
-	if (bootstrap)
+	if (bootstrap || autovacuum)
 		InitializeSessionUserIdStandalone();
 	else if (!IsUnderPostmaster)
 	{
@@ -441,7 +445,7 @@ InitPostgres(const char *dbname, const char *username)
 	/*
 	 * Check if user is a superuser.
 	 */
-	if (bootstrap)
+	if (bootstrap || autovacuum)
 		am_superuser = true;
 	else
 		am_superuser = superuser();

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.453 2005/07/10 21:13:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.454 2005/07/14 05:13:41 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2111,7 +2111,7 @@ authdie(SIGNAL_ARGS)
  * Query-cancel signal from postmaster: abort current transaction
  * at soonest convenient time
  */
-static void
+void
 StatementCancelHandler(SIGNAL_ARGS)
 {
 	int			save_errno = errno;

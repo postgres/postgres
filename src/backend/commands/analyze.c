@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.86 2005/05/06 17:24:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.87 2005/07/14 05:13:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
+#include "pgstat.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/datum.h"
@@ -77,7 +78,7 @@ static void compute_index_stats(Relation onerel, double totalrows,
 					MemoryContext col_context);
 static VacAttrStats *examine_attribute(Relation onerel, int attnum);
 static int acquire_sample_rows(Relation onerel, HeapTuple *rows,
-					int targrows, double *totalrows);
+					int targrows, double *totalrows, double *totaldeadrows);
 static double random_fract(void);
 static double init_selection_state(int n);
 static double get_next_S(double t, int n, double *stateptr);
@@ -108,7 +109,8 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	AnlIndexData *indexdata;
 	int			targrows,
 				numrows;
-	double		totalrows;
+	double		totalrows,
+				totaldeadrows;
 	HeapTuple  *rows;
 
 	if (vacstmt->verbose)
@@ -309,6 +311,14 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	 */
 	if (attr_cnt <= 0 && !analyzableindex)
 	{
+		/*
+		 * We report that the table is empty; this is just so that the
+		 * autovacuum code doesn't go nuts trying to get stats about
+		 * a zero-column table.
+		 */
+		if (!vacstmt->vacuum)
+			pgstat_report_analyze(RelationGetRelid(onerel), 0, 0);
+
 		vac_close_indexes(nindexes, Irel, AccessShareLock);
 		relation_close(onerel, AccessShareLock);
 		return;
@@ -340,7 +350,8 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	 * Acquire the sample rows
 	 */
 	rows = (HeapTuple *) palloc(targrows * sizeof(HeapTuple));
-	numrows = acquire_sample_rows(onerel, rows, targrows, &totalrows);
+	numrows = acquire_sample_rows(onerel, rows, targrows,
+								  &totalrows, &totaldeadrows);
 
 	/*
 	 * Compute the statistics.	Temporary results during the calculations
@@ -423,6 +434,10 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 								totalindexrows,
 								false);
 		}
+
+		/* report results to the stats collector, too */
+		pgstat_report_analyze(RelationGetRelid(onerel), totalrows,
+							  totaldeadrows);
 	}
 
 	/* Done with indexes */
@@ -752,23 +767,25 @@ BlockSampler_Next(BlockSampler bs)
  * the number of different blocks represented by the sample tends to be
  * too small.  We can live with that for now.  Improvements are welcome.
  *
- * We also estimate the total number of rows in the table, and return that
- * into *totalrows.  An important property of this sampling method is that
- * because we do look at a statistically unbiased set of blocks, we should
- * get an unbiased estimate of the average number of live rows per block.
- * The previous sampling method put too much credence in the row density near
- * the start of the table.
+ * We also estimate the total numbers of live and dead rows in the table,
+ * and return them into *totalrows and *totaldeadrows, respectively.
+ *
+ * An important property of this sampling method is that because we do
+ * look at a statistically unbiased set of blocks, we should get
+ * unbiased estimates of the average numbers of live and dead rows per
+ * block.  The previous sampling method put too much credence in the row
+ * density near the start of the table.
  *
  * The returned list of tuples is in order by physical position in the table.
  * (We will rely on this later to derive correlation estimates.)
  */
 static int
 acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
-					double *totalrows)
+					double *totalrows, double *totaldeadrows)
 {
 	int			numrows = 0;	/* # rows collected */
 	double		liverows = 0;	/* # rows seen */
-	double		deadrows = 0;
+	double		deadrows = 0;	/* # dead rows seen */
 	double		rowstoskip = -1;	/* -1 means not set yet */
 	BlockNumber totalblocks;
 	BlockSamplerData bs;
@@ -864,11 +881,7 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 			}
 			else
 			{
-				/*
-				 * Count dead rows, but not empty slots.  This information
-				 * is currently not used, but it seems likely we'll want
-				 * it someday.
-				 */
+				/* Count dead rows, but not empty slots */
 				if (targtuple.t_data != NULL)
 					deadrows += 1;
 			}
@@ -890,12 +903,18 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 		qsort((void *) rows, numrows, sizeof(HeapTuple), compare_rows);
 
 	/*
-	 * Estimate total number of live rows in relation.
+	 * Estimate total numbers of rows in relation.
 	 */
 	if (bs.m > 0)
+	{
 		*totalrows = floor((liverows * totalblocks) / bs.m + 0.5);
+		*totaldeadrows = floor((deadrows * totalblocks) / bs.m + 0.5);
+	}
 	else
+	{
 		*totalrows = 0.0;
+		*totaldeadrows = 0.0;
+	}
 
 	/*
 	 * Emit some interesting relation info

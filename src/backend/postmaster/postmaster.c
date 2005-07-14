@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.458 2005/07/04 04:51:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.459 2005/07/14 05:13:40 tgl Exp $
  *
  * NOTES
  *
@@ -106,6 +106,7 @@
 #include "miscadmin.h"
 #include "nodes/nodes.h"
 #include "pgstat.h"
+#include "postmaster/autovacuum.h"
 #include "postmaster/fork_process.h"
 #include "postmaster/pgarch.h"
 #include "postmaster/postmaster.h"
@@ -207,6 +208,7 @@ char	   *preload_libraries_string = NULL;
 /* PIDs of special child processes; 0 when not running */
 static pid_t StartupPID = 0,
 			BgWriterPID = 0,
+			AutoVacPID = 0,
 			PgArchPID = 0,
 			PgStatPID = 0,
 			SysLoggerPID = 0;
@@ -872,8 +874,8 @@ PostmasterMain(int argc, char *argv[])
 	 *
 	 * CAUTION: when changing this list, check for side-effects on the signal
 	 * handling setup of child processes.  See tcop/postgres.c,
-	 * bootstrap/bootstrap.c, postmaster/bgwriter.c, postmaster/pgarch.c,
-	 * postmaster/pgstat.c, and postmaster/syslogger.c.
+	 * bootstrap/bootstrap.c, postmaster/bgwriter.c, postmaster/autovacuum.c,
+	 * postmaster/pgarch.c, postmaster/pgstat.c, and postmaster/syslogger.c.
 	 */
 	pqinitmask();
 	PG_SETMASK(&BlockSig);
@@ -929,6 +931,11 @@ PostmasterMain(int argc, char *argv[])
 	 * Remember postmaster startup time
 	 */
 	PgStartTime = GetCurrentTimestamp();
+
+	/*
+	 * Initialize the autovacuum daemon
+	 */
+	autovac_init();
 
 	status = ServerLoop();
 
@@ -1250,6 +1257,15 @@ ServerLoop(void)
 			if (Shutdown > NoShutdown && BgWriterPID != 0)
 				kill(BgWriterPID, SIGUSR2);
 		}
+
+		/*
+		 * Start a new autovacuum process, if there isn't one running already.
+		 * (It'll die relatively quickly.)  We check that it's not started
+		 * too frequently in autovac_start.
+		 */
+		if (AutoVacuumingActive() && AutoVacPID == 0 &&
+			StartupPID == 0 && !FatalError && Shutdown == NoShutdown)
+			AutoVacPID = autovac_start();
 
 		/* If we have lost the archiver, try to start a new one */
 		if (XLogArchivingActive() && PgArchPID == 0 &&
@@ -1818,6 +1834,8 @@ SIGHUP_handler(SIGNAL_ARGS)
 		SignalChildren(SIGHUP);
 		if (BgWriterPID != 0)
 			kill(BgWriterPID, SIGHUP);
+		if (AutoVacPID != 0)
+			kill(AutoVacPID, SIGHUP);
 		if (PgArchPID != 0)
 			kill(PgArchPID, SIGHUP);
 		if (SysLoggerPID != 0)
@@ -1869,6 +1887,16 @@ pmdie(SIGNAL_ARGS)
 			ereport(LOG,
 					(errmsg("received smart shutdown request")));
 
+			/*
+			 * We won't wait out an autovacuum iteration ...
+			 */
+			if (AutoVacPID != 0)
+			{
+				/* Use statement cancel to shut it down */
+				kill(AutoVacPID, SIGINT);
+				break;			/* let reaper() handle this */
+			}
+
 			if (DLGetHead(BackendList))
 				break;			/* let reaper() handle this */
 
@@ -1905,13 +1933,15 @@ pmdie(SIGNAL_ARGS)
 			ereport(LOG,
 					(errmsg("received fast shutdown request")));
 
-			if (DLGetHead(BackendList))
+			if (DLGetHead(BackendList) || AutoVacPID != 0)
 			{
 				if (!FatalError)
 				{
 					ereport(LOG,
 							(errmsg("aborting any active transactions")));
 					SignalChildren(SIGTERM);
+					if (AutoVacPID != 0)
+						kill(AutoVacPID, SIGTERM);
 					/* reaper() does the rest */
 				}
 				break;
@@ -1953,6 +1983,8 @@ pmdie(SIGNAL_ARGS)
 				kill(StartupPID, SIGQUIT);
 			if (BgWriterPID != 0)
 				kill(BgWriterPID, SIGQUIT);
+			if (AutoVacPID != 0)
+				kill(AutoVacPID, SIGQUIT);
 			if (PgArchPID != 0)
 				kill(PgArchPID, SIGQUIT);
 			if (PgStatPID != 0)
@@ -2051,7 +2083,7 @@ reaper(SIGNAL_ARGS)
 			/*
 			 * Go to shutdown mode if a shutdown request was pending.
 			 * Otherwise, try to start the archiver and stats collector
-			 * too.
+			 * too.  (We could, but don't, try to start autovacuum here.)
 			 */
 			if (Shutdown > NoShutdown && BgWriterPID != 0)
 				kill(BgWriterPID, SIGUSR2);
@@ -2072,8 +2104,8 @@ reaper(SIGNAL_ARGS)
 		if (BgWriterPID != 0 && pid == BgWriterPID)
 		{
 			BgWriterPID = 0;
-			if (exitstatus == 0 && Shutdown > NoShutdown &&
-				!FatalError && !DLGetHead(BackendList))
+			if (exitstatus == 0 && Shutdown > NoShutdown && !FatalError &&
+				!DLGetHead(BackendList) && AutoVacPID == 0)
 			{
 				/*
 				 * Normal postmaster exit is here: we've seen normal exit
@@ -2095,6 +2127,23 @@ reaper(SIGNAL_ARGS)
 			 */
 			HandleChildCrash(pid, exitstatus,
 							 _("background writer process"));
+			continue;
+		}
+
+		/*
+		 * Was it the autovacuum process?  Normal exit can be ignored;
+		 * we'll start a new one at the next iteration of the postmaster's
+		 * main loop, if necessary.
+		 *
+		 * An unexpected exit must crash the system.
+		 */
+		if (AutoVacPID != 0 && pid == AutoVacPID)
+		{
+			AutoVacPID = 0;
+			autovac_stopped();
+			if (exitstatus != 0)
+				HandleChildCrash(pid, exitstatus,
+								 _("autovacuum process"));
 			continue;
 		}
 
@@ -2156,7 +2205,8 @@ reaper(SIGNAL_ARGS)
 		 * StartupDataBase.  (We can ignore the archiver and stats
 		 * processes here since they are not connected to shmem.)
 		 */
-		if (DLGetHead(BackendList) || StartupPID != 0 || BgWriterPID != 0)
+		if (DLGetHead(BackendList) || StartupPID != 0 || BgWriterPID != 0 ||
+			AutoVacPID != 0)
 			goto reaper_done;
 		ereport(LOG,
 			(errmsg("all server processes terminated; reinitializing")));
@@ -2171,7 +2221,7 @@ reaper(SIGNAL_ARGS)
 
 	if (Shutdown > NoShutdown)
 	{
-		if (DLGetHead(BackendList) || StartupPID != 0)
+		if (DLGetHead(BackendList) || StartupPID != 0 || AutoVacPID != 0)
 			goto reaper_done;
 		/* Start the bgwriter if not running */
 		if (BgWriterPID == 0)
@@ -2239,7 +2289,7 @@ CleanupBackend(int pid,
 }
 
 /*
- * HandleChildCrash -- cleanup after failed backend or bgwriter.
+ * HandleChildCrash -- cleanup after failed backend, bgwriter, or autovacuum.
  *
  * The objectives here are to clean up our local state about the child
  * process, and to signal all other remaining children to quickdie.
@@ -2315,6 +2365,18 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 								 (SendStop ? "SIGSTOP" : "SIGQUIT"),
 								 (int) BgWriterPID)));
 		kill(BgWriterPID, (SendStop ? SIGSTOP : SIGQUIT));
+	}
+
+	/* Take care of the autovacuum daemon too */
+	if (pid == AutoVacPID)
+		AutoVacPID = 0;
+	else if (AutoVacPID != 0 && !FatalError)
+	{
+		ereport(DEBUG2,
+				(errmsg_internal("sending %s to process %d",
+								 (SendStop ? "SIGSTOP" : "SIGQUIT"),
+								 (int) AutoVacPID)));
+		kill(AutoVacPID, (SendStop ? SIGSTOP : SIGQUIT));
 	}
 
 	/* Force a power-cycle of the pgarch process too */
@@ -3154,6 +3216,7 @@ SubPostmasterMain(int argc, char *argv[])
 	 * can attach at the same address the postmaster used.
 	 */
 	if (strcmp(argv[1], "-forkbackend") == 0 ||
+		strcmp(argv[1], "-forkautovac") == 0 ||
 		strcmp(argv[1], "-forkboot") == 0)
 		PGSharedMemoryReAttach();
 
@@ -3203,6 +3266,17 @@ SubPostmasterMain(int argc, char *argv[])
 		CreateSharedMemoryAndSemaphores(false, 0);
 
 		BootstrapMain(argc - 2, argv + 2);
+		proc_exit(0);
+	}
+	if (strcmp(argv[1], "-forkautovac") == 0)
+	{
+		/* Close the postmaster's sockets */
+		ClosePostmasterPorts(false);
+
+		/* Attached process to shared data structures */
+		CreateSharedMemoryAndSemaphores(false, 0);
+
+		AutoVacMain(argc - 2, argv + 2);
 		proc_exit(0);
 	}
 	if (strcmp(argv[1], "-forkarch") == 0)
@@ -3300,7 +3374,11 @@ sigusr1_handler(SIGNAL_ARGS)
 		 * use of this.
 		 */
 		if (Shutdown <= SmartShutdown)
+		{
 			SignalChildren(SIGUSR1);
+			if (AutoVacPID != 0)
+				kill(AutoVacPID, SIGUSR1);
+		}
 	}
 
 	if (PgArchPID != 0 && Shutdown == NoShutdown)

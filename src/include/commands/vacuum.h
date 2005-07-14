@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.59 2004/12/31 22:03:28 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.60 2005/07/14 05:13:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,7 +125,7 @@ extern DLLIMPORT int default_statistics_target; /* DLLIMPORT for PostGIS */
 
 
 /* in commands/vacuum.c */
-extern void vacuum(VacuumStmt *vacstmt);
+extern void vacuum(VacuumStmt *vacstmt, List *relids);
 extern void vac_open_indexes(Relation relation, LOCKMODE lockmode,
 							 int *nindexes, Relation **Irel);
 extern void vac_close_indexes(int nindexes, Relation *Irel, LOCKMODE lockmode);

@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.54 2005/05/19 21:35:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.55 2005/07/14 05:13:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@
 #include "access/xlog.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "storage/freespace.h"
 #include "storage/smgr.h"
 #include "utils/lsyscache.h"
@@ -179,6 +180,10 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 						vacrelstats->rel_pages,
 						vacrelstats->rel_tuples,
 						hasindex);
+
+	/* report results to the stats collector, too */
+	pgstat_report_vacuum(RelationGetRelid(onerel), vacstmt->analyze,
+						 vacrelstats->rel_tuples);
 }
 
 

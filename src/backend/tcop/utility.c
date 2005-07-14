@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.240 2005/06/30 00:00:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.241 2005/07/14 05:13:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -843,7 +843,7 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_VacuumStmt:
-			vacuum((VacuumStmt *) parsetree);
+			vacuum((VacuumStmt *) parsetree, NIL);
 			break;
 
 		case T_ExplainStmt:
