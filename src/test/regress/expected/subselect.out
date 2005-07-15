@@ -203,6 +203,63 @@ select count(distinct ss.ten) from
 (1 row)
 
 --
+-- Test cases to check for overenthusiastic optimization of
+-- "IN (SELECT DISTINCT ...)" and related cases.  Per example from
+-- Luca Pireddu and Michael Fuhr.
+--
+CREATE TEMP TABLE foo (id integer);
+CREATE TEMP TABLE bar (id1 integer, id2 integer);
+INSERT INTO foo VALUES (1);
+INSERT INTO bar VALUES (1, 1);
+INSERT INTO bar VALUES (2, 2);
+INSERT INTO bar VALUES (3, 1);
+-- These cases require an extra level of distinct-ing above subquery s
+SELECT * FROM foo WHERE id IN
+    (SELECT id2 FROM (SELECT DISTINCT id1, id2 FROM bar) AS s);
+ id 
+----
+  1
+(1 row)
+
+SELECT * FROM foo WHERE id IN
+    (SELECT id2 FROM (SELECT id1,id2 FROM bar GROUP BY id1,id2) AS s);
+ id 
+----
+  1
+(1 row)
+
+SELECT * FROM foo WHERE id IN
+    (SELECT id2 FROM (SELECT id1, id2 FROM bar UNION
+                      SELECT id1, id2 FROM bar) AS s);
+ id 
+----
+  1
+(1 row)
+
+-- These cases do not
+SELECT * FROM foo WHERE id IN
+    (SELECT id2 FROM (SELECT DISTINCT ON (id2) id1, id2 FROM bar) AS s);
+ id 
+----
+  1
+(1 row)
+
+SELECT * FROM foo WHERE id IN
+    (SELECT id2 FROM (SELECT id2 FROM bar GROUP BY id2) AS s);
+ id 
+----
+  1
+(1 row)
+
+SELECT * FROM foo WHERE id IN
+    (SELECT id2 FROM (SELECT id2 FROM bar UNION
+                      SELECT id2 FROM bar) AS s);
+ id 
+----
+  1
+(1 row)
+
+--
 -- Test case to catch problems with multiply nested sub-SELECTs not getting
 -- recalculated properly.  Per bug report from Didier Moens.
 --

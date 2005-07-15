@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.122 2005/06/05 22:32:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.123 2005/07/15 17:09:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,8 @@
 #include "utils/syscache.h"
 
 
-static bool is_distinct_query(Query *query);
+static List *translate_sub_tlist(List *tlist, int relid);
+static bool query_is_distinct_for(Query *query, List *colnos);
 static bool hash_safe_tlist(List *tlist);
 
 
@@ -800,28 +801,6 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath)
 	pathnode->subpath = subpath;
 
 	/*
-	 * If the input is a subquery whose output must be unique already, we
-	 * don't need to do anything.
-	 */
-	if (rel->rtekind == RTE_SUBQUERY)
-	{
-		RangeTblEntry *rte = rt_fetch(rel->relid, root->parse->rtable);
-
-		if (is_distinct_query(rte->subquery))
-		{
-			pathnode->umethod = UNIQUE_PATH_NOOP;
-			pathnode->rows = rel->rows;
-			pathnode->path.startup_cost = subpath->startup_cost;
-			pathnode->path.total_cost = subpath->total_cost;
-			pathnode->path.pathkeys = subpath->pathkeys;
-
-			rel->cheapest_unique_path = (Path *) pathnode;
-
-			return pathnode;
-		}
-	}
-
-	/*
 	 * Try to identify the targetlist that will actually be unique-ified.
 	 * In current usage, this routine is only used for sub-selects of IN
 	 * clauses, so we should be able to find the tlist in in_info_list.
@@ -835,6 +814,38 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath)
 		{
 			sub_targetlist = ininfo->sub_targetlist;
 			break;
+		}
+	}
+
+	/*
+	 * If the input is a subquery whose output must be unique already,
+	 * then we don't need to do anything.  The test for uniqueness has
+	 * to consider exactly which columns we are extracting; for example
+	 * "SELECT DISTINCT x,y" doesn't guarantee that x alone is distinct.
+	 * So we cannot check for this optimization unless we found our own
+	 * targetlist above, and it consists only of simple Vars referencing
+	 * subquery outputs.  (Possibly we could do something with expressions
+	 * in the subquery outputs, too, but for now keep it simple.)
+	 */
+	if (sub_targetlist && rel->rtekind == RTE_SUBQUERY)
+	{
+		RangeTblEntry *rte = rt_fetch(rel->relid, root->parse->rtable);
+		List   *sub_tlist_colnos;
+
+		sub_tlist_colnos = translate_sub_tlist(sub_targetlist, rel->relid);
+
+		if (sub_tlist_colnos &&
+			query_is_distinct_for(rte->subquery, sub_tlist_colnos))
+		{
+			pathnode->umethod = UNIQUE_PATH_NOOP;
+			pathnode->rows = rel->rows;
+			pathnode->path.startup_cost = subpath->startup_cost;
+			pathnode->path.total_cost = subpath->total_cost;
+			pathnode->path.pathkeys = subpath->pathkeys;
+
+			rel->cheapest_unique_path = (Path *) pathnode;
+
+			return pathnode;
 		}
 	}
 
@@ -913,46 +924,83 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath)
 }
 
 /*
- * is_distinct_query - does query never return duplicate rows?
+ * translate_sub_tlist - get subquery column numbers represented by tlist
+ *
+ * The given targetlist should contain only Vars referencing the given relid.
+ * Extract their varattnos (ie, the column numbers of the subquery) and return
+ * as an integer List.
+ *
+ * If any of the tlist items is not a simple Var, we cannot determine whether
+ * the subquery's uniqueness condition (if any) matches ours, so punt and
+ * return NIL.
+ */
+static List *
+translate_sub_tlist(List *tlist, int relid)
+{
+	List	   *result = NIL;
+	ListCell   *l;
+
+	foreach(l, tlist)
+	{
+		Var	   *var = (Var *) lfirst(l);
+
+		if (!var || !IsA(var, Var) ||
+			var->varno != relid)
+			return NIL;			/* punt */
+
+		result = lappend_int(result, var->varattno);
+	}
+	return result;
+}
+
+/*
+ * query_is_distinct_for - does query never return duplicates of the
+ *		specified columns?
+ *
+ * colnos is an integer list of output column numbers (resno's).  We are
+ * interested in whether rows consisting of just these columns are certain
+ * to be distinct.
  */
 static bool
-is_distinct_query(Query *query)
+query_is_distinct_for(Query *query, List *colnos)
 {
-	/* DISTINCT (but not DISTINCT ON) guarantees uniqueness */
-	if (has_distinct_clause(query))
-		return true;
+	ListCell   *l;
 
-	/* UNION, INTERSECT, EXCEPT guarantee uniqueness, except with ALL */
-	if (query->setOperations)
+	/*
+	 * DISTINCT (including DISTINCT ON) guarantees uniqueness if all the
+	 * columns in the DISTINCT clause appear in colnos.
+	 */
+	if (query->distinctClause)
 	{
-		SetOperationStmt *topop = (SetOperationStmt *) query->setOperations;
+		foreach(l, query->distinctClause)
+		{
+			SortClause *scl = (SortClause *) lfirst(l);
+			TargetEntry *tle = get_sortgroupclause_tle(scl,
+													   query->targetList);
 
-		Assert(IsA(topop, SetOperationStmt));
-		Assert(topop->op != SETOP_NONE);
-
-		if (!topop->all)
+			if (!list_member_int(colnos, tle->resno))
+				break;			/* exit early if no match */
+		}
+		if (l == NULL)			/* had matches for all? */
 			return true;
 	}
 
 	/*
-	 * GROUP BY guarantees uniqueness if all the grouped columns appear in
-	 * the output.	In our implementation this means checking they are non
-	 * resjunk columns.
+	 * Similarly, GROUP BY guarantees uniqueness if all the grouped columns
+	 * appear in colnos.
 	 */
 	if (query->groupClause)
 	{
-		ListCell   *gl;
-
-		foreach(gl, query->groupClause)
+		foreach(l, query->groupClause)
 		{
-			GroupClause *grpcl = (GroupClause *) lfirst(gl);
+			GroupClause *grpcl = (GroupClause *) lfirst(l);
 			TargetEntry *tle = get_sortgroupclause_tle(grpcl,
 													   query->targetList);
 
-			if (tle->resjunk)
-				break;
+			if (!list_member_int(colnos, tle->resno))
+				break;			/* exit early if no match */
 		}
-		if (!gl)				/* got to the end? */
+		if (l == NULL)			/* had matches for all? */
 			return true;
 	}
 	else
@@ -963,6 +1011,33 @@ is_distinct_query(Query *query)
 		 */
 		if (query->hasAggs || query->havingQual)
 			return true;
+	}
+
+	/*
+	 * UNION, INTERSECT, EXCEPT guarantee uniqueness of the whole output row,
+	 * except with ALL
+	 */
+	if (query->setOperations)
+	{
+		SetOperationStmt *topop = (SetOperationStmt *) query->setOperations;
+
+		Assert(IsA(topop, SetOperationStmt));
+		Assert(topop->op != SETOP_NONE);
+
+		if (!topop->all)
+		{
+			/* We're good if all the nonjunk output columns are in colnos */
+			foreach(l, query->targetList)
+			{
+				TargetEntry *tle = (TargetEntry *) lfirst(l);
+
+				if (!tle->resjunk &&
+					!list_member_int(colnos, tle->resno))
+					break;		/* exit early if no match */
+			}
+			if (l == NULL)		/* had matches for all? */
+				return true;
+		}
 	}
 
 	/*
