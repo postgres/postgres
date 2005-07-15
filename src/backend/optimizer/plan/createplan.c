@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.193 2005/07/02 23:00:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.194 2005/07/15 22:02:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -525,34 +525,33 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 	Plan	   *plan;
 	Plan	   *subplan;
 	List	   *uniq_exprs;
-	int			numGroupCols;
-	AttrNumber *groupColIdx;
-	int			groupColPos;
 	List	   *newtlist;
 	int			nextresno;
 	bool		newitems;
+	int			numGroupCols;
+	AttrNumber *groupColIdx;
+	int			groupColPos;
 	ListCell   *l;
 
 	subplan = create_plan(root, best_path->subpath);
+
+	/* Done if we don't need to do any actual unique-ifying */
+	if (best_path->umethod == UNIQUE_PATH_NOOP)
+		return subplan;
 
 	/*----------
 	 * As constructed, the subplan has a "flat" tlist containing just the
 	 * Vars needed here and at upper levels.  The values we are supposed
 	 * to unique-ify may be expressions in these variables.  We have to
-	 * add any such expressions to the subplan's tlist.  We then build
-	 * control information showing which subplan output columns are to be
-	 * examined by the grouping step.  (Since we do not remove any
-	 * existing subplan outputs, not all the output columns may be used
-	 * for grouping.)
+	 * add any such expressions to the subplan's tlist.
 	 *
-	 * Note: the reason we don't remove any subplan outputs is that there
-	 * are scenarios where a Var is needed at higher levels even though
-	 * it is not one of the nominal outputs of an IN clause.	Consider
-	 *		WHERE x IN (SELECT y FROM t1,t2 WHERE y = z)
-	 * Implied equality deduction will generate an "x = z" clause, which may
-	 * get used instead of "x = y" in the upper join step.  Therefore the
-	 * sub-select had better deliver both y and z in its targetlist.
-	 * It is sufficient to unique-ify on y, however.
+	 * The subplan may have a "physical" tlist if it is a simple scan plan.
+	 * This should be left as-is if we don't need to add any expressions;
+	 * but if we do have to add expressions, then a projection step will be
+	 * needed at runtime anyway, and so we may as well remove unneeded items.
+	 * Therefore newtlist starts from build_relation_tlist() not just a
+	 * copy of the subplan's tlist; and we don't install it into the subplan
+	 * unless stuff has to be added.
 	 *
 	 * To find the correct list of values to unique-ify, we look in the
 	 * information saved for IN expressions.  If this code is ever used in
@@ -574,12 +573,8 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 	if (l == NULL)				/* fell out of loop? */
 		elog(ERROR, "could not find UniquePath in in_info_list");
 
-	/* set up to record positions of unique columns */
-	numGroupCols = list_length(uniq_exprs);
-	groupColIdx = (AttrNumber *) palloc(numGroupCols * sizeof(AttrNumber));
-	groupColPos = 0;
-	/* not sure if tlist might be shared with other nodes, so copy */
-	newtlist = copyObject(subplan->targetlist);
+	/* initialize modified subplan tlist as just the "required" vars */
+	newtlist = build_relation_tlist(best_path->path.parent);
 	nextresno = list_length(newtlist) + 1;
 	newitems = false;
 
@@ -599,7 +594,6 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 			nextresno++;
 			newitems = true;
 		}
-		groupColIdx[groupColPos++] = tle->resno;
 	}
 
 	if (newitems)
@@ -614,9 +608,27 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 			subplan->targetlist = newtlist;
 	}
 
-	/* Done if we don't need to do any actual unique-ifying */
-	if (best_path->umethod == UNIQUE_PATH_NOOP)
-		return subplan;
+	/*
+	 * Build control information showing which subplan output columns are
+	 * to be examined by the grouping step.  Unfortunately we can't merge this
+	 * with the previous loop, since we didn't then know which version of the
+	 * subplan tlist we'd end up using.
+	 */
+	newtlist = subplan->targetlist;
+	numGroupCols = list_length(uniq_exprs);
+	groupColIdx = (AttrNumber *) palloc(numGroupCols * sizeof(AttrNumber));
+	groupColPos = 0;
+
+	foreach(l, uniq_exprs)
+	{
+		Node	   *uniqexpr = lfirst(l);
+		TargetEntry *tle;
+
+		tle = tlist_member(uniqexpr, newtlist);
+		if (!tle)				/* shouldn't happen */
+			elog(ERROR, "failed to find unique expression in subplan tlist");
+		groupColIdx[groupColPos++] = tle->resno;
+	}
 
 	if (best_path->umethod == UNIQUE_PATH_HASH)
 	{
@@ -624,8 +636,13 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 
 		numGroups = (long) Min(best_path->rows, (double) LONG_MAX);
 
+		/*
+		 * Since the Agg node is going to project anyway, we can give it
+		 * the minimum output tlist, without any stuff we might have added
+		 * to the subplan tlist.
+		 */
 		plan = (Plan *) make_agg(root,
-								 copyObject(subplan->targetlist),
+								 build_relation_tlist(best_path->path.parent),
 								 NIL,
 								 AGG_HASHED,
 								 numGroupCols,
