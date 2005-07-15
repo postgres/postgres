@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.188.4.1 2005/04/30 08:19:44 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.188.4.2 2005/07/15 18:40:20 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1500,11 +1500,17 @@ deparse_context_for_subplan(const char *name, List *tlist,
 			if (var->varnoold > 0 && var->varnoold <= rtablelength)
 			{
 				RangeTblEntry *varrte = rt_fetch(var->varnoold, rtable);
-				char	   *varname;
+				AttrNumber varattnum = var->varoattno;
 
-				varname = get_rte_attribute_name(varrte, var->varoattno);
-				attrs = lappend(attrs, makeString(varname));
-				continue;
+				/* need this test in case it's referencing a resjunk col */
+				if (varattnum <= list_length(varrte->eref->colnames))
+				{
+					char	   *varname;
+
+					varname = get_rte_attribute_name(varrte, varattnum);
+					attrs = lappend(attrs, makeString(varname));
+					continue;
+				}
 			}
 		}
 		/* Fallback if can't get name */
