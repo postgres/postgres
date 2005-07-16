@@ -14,6 +14,7 @@ test: numerology
 test: point lseg box path polygon circle date time timetz timestamp timestamptz interval abstime reltime tinterval inet comments oidjoins type_sanity opr_sanity
 
 # Depends on point, lseg, box, path, polygon and circle
+ignore: geometry
 test: geometry
 # Depends on interval, timetz, timestamp, timestamptz, reltime and abstime
 test: horology	
