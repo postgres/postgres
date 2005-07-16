@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/cube/Makefile,v 1.6 2001/11/16 16:32:33 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/cube/Makefile,v 1.6.2.1 2005/07/16 19:27:20 tgl Exp $
 
 subdir = contrib/cube
 top_builddir = ../..
@@ -14,11 +14,17 @@ REGRESS = cube
 
 cubeparse.c: cubeparse.h ;
 
+# The sed hack is so that we can get the same error messages with
+# bison 1.875 and later as we did with earlier bisons.  Eventually,
+# I suppose, we should re-standardize on "syntax error" --- in which
+# case flip the sed translation, but don't remove it.
+
 cubeparse.h: cubeparse.y
 ifdef YACC
 	$(YACC) -d $(YFLAGS) -p cube_yy $<
-	mv -f y.tab.c cubeparse.c
+	sed -e 's/"syntax error/"parse error/' < y.tab.c > cubeparse.c
 	mv -f y.tab.h cubeparse.h
+	rm -f y.tab.c
 else
 	@$(missing) bison $< $@
 endif

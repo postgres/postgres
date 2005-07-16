@@ -2,16 +2,15 @@
 /* NdBox = [(lowerleft),(upperright)] */
 /* [(xLL(1)...xLL(N)),(xUR(1)...xUR(n))] */
 
-#define YYERROR_VERBOSE   
 #define YYPARSE_PARAM result  /* need this to pass a pointer (void *) to yyparse */
 #define YYSTYPE char *
 #define YYDEBUG 1
 
-#include <string.h>
+#include "postgres.h"
+
 #include "cubedata.h"
 #include "buffer.h"
 
-#include "postgres.h"
 #include "utils/palloc.h"
 #include "utils/elog.h"
 
@@ -164,8 +163,9 @@ int cube_yyerror ( char *msg ) {
 
   position = parse_buffer_pos() > parse_buffer_size() ? parse_buffer_pos() - 1 : parse_buffer_pos();
 
-  sprintf(
+  snprintf(
 	  buf, 
+	  256,
 	  "%s at or before position %d, character ('%c', \\%03o), input: '%s'\n", 
 	  msg,
 	  position,
@@ -175,7 +175,7 @@ int cube_yyerror ( char *msg ) {
 	  );
 
   reset_parse_buffer();     
-  elog(ERROR, buf);
+  elog(ERROR, "%s", buf);
   return 0;
 }
 
