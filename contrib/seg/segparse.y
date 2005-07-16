@@ -4,6 +4,7 @@
   
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <math.h>
 #include "segdata.h"
 #include "buffer.h"
@@ -18,7 +19,6 @@
 #undef yylex                  /* falure to redefine yylex will result in calling the */
 #define yylex seg_yylex       /* wrong scanner when running inside postgres backend  */
 
-  extern int errno;
   extern int yylex();           /* defined as seg_yylex in segscan.c */
   extern int significant_digits( char *str );    /* defined in seg.c */
   
