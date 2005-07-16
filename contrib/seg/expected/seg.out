@@ -393,25 +393,25 @@ SELECT '100(+-)1'::seg AS seg;
 SELECT ''::seg AS seg;
 ERROR:  seg_in: can't parse an empty string
 SELECT 'ABC'::seg AS seg;
-ERROR:  parse error, expecting `FLOAT' or `RANGE' or `EXTENSION' at or near position 1, character ('A', \101), input: 'ABC'
+ERROR:  parse error at or near position 1, character ('A', \101), input: 'ABC'
 
 SELECT '1ABC'::seg AS seg;
-ERROR:  expecting end of input at or near position 2, character ('A', \101), input: '1ABC'
+ERROR:  parse error at or near position 2, character ('A', \101), input: '1ABC'
 
 SELECT '1.'::seg AS seg;
-ERROR:  expecting end of input at or near position 2, character ('.', \056), input: '1.'
+ERROR:  parse error at or near position 2, character ('.', \056), input: '1.'
 
 SELECT '1.....'::seg AS seg;
-ERROR:  expecting end of input at or near position 6, character ('.', \056), input: '1.....'
+ERROR:  parse error at or near position 6, character ('.', \056), input: '1.....'
 
 SELECT '.1'::seg AS seg;
-ERROR:  parse error, expecting `FLOAT' or `RANGE' or `EXTENSION' at or near position 2, character ('1', \061), input: '.1'
+ERROR:  parse error at or near position 2, character ('1', \061), input: '.1'
 
 SELECT '1..2.'::seg AS seg;
-ERROR:  expecting end of input at or near position 5, character ('.', \056), input: '1..2.'
+ERROR:  parse error at or near position 5, character ('.', \056), input: '1..2.'
 
 SELECT '1 e7'::seg AS seg;
-ERROR:  expecting end of input at or near position 3, character ('e', \145), input: '1 e7'
+ERROR:  parse error at or near position 3, character ('e', \145), input: '1 e7'
 
 SELECT '1e700'::seg AS seg;
 ERROR:  numeric value 1e700 unrepresentable

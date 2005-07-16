@@ -1,16 +1,15 @@
 %{
-#define YYERROR_VERBOSE   
 #define YYPARSE_PARAM result  /* need this to pass a pointer (void *) to yyparse */
   
-#include <string.h>
-#include <stdlib.h>
+#include "postgres.h"
+
 #include <errno.h>
 #include <math.h>
+
+#include "utils/elog.h"
+
 #include "segdata.h"
 #include "buffer.h"
-  
-#include "postgres.h"
-#include "utils/elog.h"
   
 #ifdef __CYGWIN__
 #define HUGE HUGE_VAL
@@ -147,9 +146,9 @@ float seg_atof ( char *value ) {
   sscanf(value, "%f", &result);
 
   if ( errno ) {
-    sprintf(buf, "numeric value %s unrepresentable", value);
+    snprintf(buf, 256, "numeric value %s unrepresentable", value);
     reset_parse_buffer();     
-    elog(ERROR, buf);
+    elog(ERROR, "%s", buf);
   }
 
   return result;
@@ -168,8 +167,9 @@ int seg_yyerror ( char *msg ) {
 
   position = parse_buffer_pos() > parse_buffer_size() ? parse_buffer_pos() - 1 : parse_buffer_pos();
 
-  sprintf(
+  snprintf(
 	  buf, 
+	  256,
 	  "%s at or near position %d, character ('%c', \\%03o), input: '%s'\n", 
 	  msg,
 	  position,
@@ -179,7 +179,7 @@ int seg_yyerror ( char *msg ) {
 	  );
 
   reset_parse_buffer();     
-  elog(ERROR, buf);
+  elog(ERROR, "%s", buf);
   return 0;
 }
 
