@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.58 2005/06/25 23:04:06 tgl Exp $
+# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.59 2005/07/17 18:28:45 tgl Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -27,6 +27,7 @@ Options:
 
 Options for \`temp-install' mode:
   --top-builddir=DIR        (relative) path to top level build directory
+  --temp-port=PORT          port number to start temp postmaster on
 
 Options for using an existing installation:
   --host=HOST               use postmaster running on HOST
@@ -106,6 +107,7 @@ unset multibyte
 dbname=regression
 hostname=localhost
 maxconnections=0
+temp_port=65432
 load_langs=""
 
 : ${GMAKE='@GMAKE@'}
@@ -159,6 +161,9 @@ do
                 shift;;
         --top-builddir=*)
                 top_builddir=`expr "x$1" : "x--top-builddir=\(.*\)"`
+                shift;;
+        --temp-port=*)
+                temp_port=`expr "x$1" : "x--temp-port=\(.*\)"`
                 shift;;
         --host=*)
                 PGHOST=`expr "x$1" : "x--host=\(.*\)"`
@@ -342,7 +347,13 @@ then
         unset PGHOST
         unset PGHOSTADDR
     fi
-    PGPORT=65432
+
+    # since Makefile isn't very bright, check for out-of-range temp_port
+    if [ "$temp_port" -ge 1024 -a "$temp_port" -le 65535 ] ; then
+	PGPORT=$temp_port
+    else
+	PGPORT=65432
+    fi
     export PGPORT
 
     # Get rid of environment stuff that might cause psql to misbehave
