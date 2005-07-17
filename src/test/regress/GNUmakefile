@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.48 2004/11/17 18:05:06 tgl Exp $
+#    $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.48.4.1 2005/07/17 18:29:13 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,6 +21,9 @@ override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 override CFLAGS += $(CFLAGS_SL)
 
 SHLIB_LINK = $(BE_DLLLIBS)
+
+# port number for temp-installation test postmaster
+TEMP_PORT = 5$(DEF_PGPORT)
 
 # default encoding
 MULTIBYTE = SQL_ASCII
@@ -130,7 +133,7 @@ all-spi:
 check: all
 	-rm -rf ./testtablespace
 	mkdir ./testtablespace
-	$(SHELL) ./pg_regress --temp-install --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) $(MAXCONNOPT)
+	$(SHELL) ./pg_regress --temp-install --top-builddir=$(top_builddir) --temp-port=$(TEMP_PORT) --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) $(MAXCONNOPT)
 
 installcheck: all
 	-rm -rf ./testtablespace
@@ -153,7 +156,7 @@ bigtest:
 	$(SHELL) ./pg_regress --schedule=$(srcdir)/serial_schedule --multibyte=$(MULTIBYTE) numeric_big
 
 bigcheck:
-	$(SHELL) ./pg_regress --temp-install --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) $(MAXCONNOPT) numeric_big
+	$(SHELL) ./pg_regress --temp-install --top-builddir=$(top_builddir) --temp-port=$(TEMP_PORT) --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) $(MAXCONNOPT) numeric_big
 
 
 ##
