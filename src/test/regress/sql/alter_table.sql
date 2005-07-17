@@ -140,28 +140,25 @@ DROP TABLE tmp;
 
 
 --
--- rename -
---   should preserve indices, which we can check by seeing if a SELECT
---   chooses an indexscan; however, in the absence of vacuum statistics
---   it might not.  Therefore, vacuum first.
+-- rename - check on both non-temp and temp tables
 --
-VACUUM ANALYZE tenk1;
+CREATE TABLE tmp (regtable int);
+CREATE TEMP TABLE tmp (tmptable int);
 
-ALTER TABLE tenk1 RENAME TO ten_k;
+ALTER TABLE tmp RENAME TO tmp_new;
 
--- 20 values, sorted 
-SELECT unique1 FROM ten_k WHERE unique1 < 20;
+SELECT * FROM tmp;
+SELECT * FROM tmp_new;
 
--- 20 values, sorted 
-SELECT unique2 FROM ten_k WHERE unique2 < 20;
+ALTER TABLE tmp RENAME TO tmp_new2;
 
--- 100 values, sorted 
-SELECT hundred FROM ten_k WHERE hundred = 50;
+SELECT * FROM tmp;		-- should fail
+SELECT * FROM tmp_new;
+SELECT * FROM tmp_new2;
 
-ALTER TABLE ten_k RENAME TO tenk1;
+DROP TABLE tmp_new;
+DROP TABLE tmp_new2;
 
--- 5 values, sorted 
-SELECT unique1 FROM tenk1 WHERE unique1 < 5;
 
 -- ALTER TABLE ... RENAME on non-table relations
 -- renaming indexes (FIXME: this should probably test the index's functionality)
@@ -170,6 +167,8 @@ ALTER TABLE tmp_onek_unique1 RENAME TO onek_unique1;
 -- renaming views
 CREATE VIEW tmp_view (unique1) AS SELECT unique1 FROM tenk1;
 ALTER TABLE tmp_view RENAME TO tmp_view_new;
+-- analyze to ensure we get an indexscan here
+ANALYZE tenk1;
 -- 5 values, sorted 
 SELECT unique1 FROM tenk1 WHERE unique1 < 5;
 DROP VIEW tmp_view_new;
@@ -577,7 +576,7 @@ drop table def_test;
 alter table pg_class drop column relname;
 
 -- try altering non-existent table, should fail
-alter table foo drop column bar;
+alter table nosuchtable drop column bar;
 
 -- test dropping columns
 create table atacc1 (a int4 not null, b int4, c int4 not null, d int4);
