@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/random.c,v 1.14 2005/07/11 19:06:46 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/random.c,v 1.15 2005/07/18 17:09:01 tgl Exp $
  */
 
 #include "postgres.h"
@@ -44,7 +44,9 @@
  */
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) \
 	|| defined(__NetBSD__) || defined(__DragonFly__) \
-	|| defined(__darwin__) || defined(__SOLARIS__)
+	|| defined(__darwin__) || defined(__SOLARIS__) \
+	|| defined(__hpux) || defined(__HPUX__) \
+	|| defined(__CYGWIN__) || defined(_AIX)
 
 #define TRY_DEV_RANDOM
 

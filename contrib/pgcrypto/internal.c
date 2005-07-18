@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/internal.c,v 1.20 2005/07/11 15:07:59 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/internal.c,v 1.21 2005/07/18 17:09:01 tgl Exp $
  */
 
 #include "postgres.h"
@@ -127,6 +127,7 @@ int_md5_free(PX_MD * h)
 {
 	MD5_CTX    *ctx = (MD5_CTX *) h->p.ptr;
 
+	memset(ctx, 0, sizeof(*ctx));
 	px_free(ctx);
 	px_free(h);
 }
@@ -174,6 +175,7 @@ int_sha1_free(PX_MD * h)
 {
 	SHA1_CTX   *ctx = (SHA1_CTX *) h->p.ptr;
 
+	memset(ctx, 0, sizeof(*ctx));
 	px_free(ctx);
 	px_free(h);
 }
@@ -221,6 +223,7 @@ int_sha256_free(PX_MD * h)
 {
 	SHA256_CTX   *ctx = (SHA256_CTX *) h->p.ptr;
 
+	memset(ctx, 0, sizeof(*ctx));
 	px_free(ctx);
 	px_free(h);
 }
@@ -267,6 +270,7 @@ int_sha384_free(PX_MD * h)
 {
 	SHA384_CTX   *ctx = (SHA384_CTX *) h->p.ptr;
 
+	memset(ctx, 0, sizeof(*ctx));
 	px_free(ctx);
 	px_free(h);
 }
@@ -314,6 +318,7 @@ int_sha512_free(PX_MD * h)
 {
 	SHA512_CTX   *ctx = (SHA512_CTX *) h->p.ptr;
 
+	memset(ctx, 0, sizeof(*ctx));
 	px_free(ctx);
 	px_free(h);
 }
@@ -326,6 +331,7 @@ init_md5(PX_MD * md)
 	MD5_CTX    *ctx;
 
 	ctx = px_alloc(sizeof(*ctx));
+	memset(ctx, 0, sizeof(*ctx));
 
 	md->p.ptr = ctx;
 
@@ -345,6 +351,7 @@ init_sha1(PX_MD * md)
 	SHA1_CTX   *ctx;
 
 	ctx = px_alloc(sizeof(*ctx));
+	memset(ctx, 0, sizeof(*ctx));
 
 	md->p.ptr = ctx;
 
@@ -364,6 +371,7 @@ init_sha256(PX_MD * md)
 	SHA256_CTX   *ctx;
 
 	ctx = px_alloc(sizeof(*ctx));
+	memset(ctx, 0, sizeof(*ctx));
 
 	md->p.ptr = ctx;
 
@@ -383,6 +391,7 @@ init_sha384(PX_MD * md)
 	SHA384_CTX   *ctx;
 
 	ctx = px_alloc(sizeof(*ctx));
+	memset(ctx, 0, sizeof(*ctx));
 
 	md->p.ptr = ctx;
 
@@ -402,6 +411,7 @@ init_sha512(PX_MD * md)
 	SHA512_CTX   *ctx;
 
 	ctx = px_alloc(sizeof(*ctx));
+	memset(ctx, 0, sizeof(*ctx));
 
 	md->p.ptr = ctx;
 
@@ -829,6 +839,7 @@ static void system_reseed(void)
 		fortuna_add_entropy(SYSTEM_ENTROPY, buf, n);
 
 	seed_time = t;
+	memset(buf, 0, sizeof(buf));
 }
 
 int

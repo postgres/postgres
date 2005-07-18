@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-compress.c,v 1.3 2005/07/18 16:35:06 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-compress.c,v 1.4 2005/07/18 17:09:01 tgl Exp $
  */
 
 #include "postgres.h"
@@ -270,7 +270,11 @@ restart:
 	dec->stream.avail_out = dec->buf_len;
 	dec->pos = dec->buf;
 
-	/* Z_NO_FLUSH, Z_SYNC_FLUSH */
+	/*
+	 * Z_SYNC_FLUSH is tell zlib to output as much as possible.
+	 * It should do it anyway (Z_NO_FLUSH), but seems to reserve
+	 * the right not to.  So lets follow the API.
+	 */
 	flush = dec->stream.avail_in ? Z_SYNC_FLUSH : Z_FINISH;
 	res = inflate(&dec->stream, flush);
 	if (res != Z_OK && res != Z_STREAM_END)

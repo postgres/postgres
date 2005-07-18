@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/fortuna.c,v 1.2 2005/07/11 15:07:59 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/fortuna.c,v 1.3 2005/07/18 17:09:01 tgl Exp $
  */
 
 #include "postgres.h"
@@ -174,8 +174,8 @@ static void init_state(FState *st)
 }
 
 /*
- * Must not reseed more ofter than RESEED_PER_SEC
- * times per second.
+ * The time between reseed must be at least RESEED_INTERVAL
+ * microseconds.
  */
 static int too_often(FState *st)
 {
@@ -241,7 +241,6 @@ static void reseed(FState *st)
 
 	memset(&key_md, 0, sizeof(key_md));
 	memset(buf, 0, BLOCK);
-	n = k = 0;
 }
 
 /*

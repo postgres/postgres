@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp.h,v 1.1 2005/07/10 13:46:29 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp.h,v 1.2 2005/07/18 17:09:01 tgl Exp $
  */
 
 enum
@@ -237,8 +237,6 @@ unsigned	pgp_armor_dec_len(unsigned len);
 
 int pgp_compress_filter(PushFilter **res, PGP_Context *ctx, PushFilter *dst);
 int pgp_decompress_filter(PullFilter **res, PGP_Context *ctx, PullFilter *src);
-
-extern void (*pgp_packet_debug) (int tag, uint8 *buf, int len);
 
 int pgp_key_alloc(PGP_PubKey **pk_p);
 void pgp_key_free(PGP_PubKey *pk);
