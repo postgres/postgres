@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.120 2005/07/02 17:01:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.121 2005/07/18 17:40:14 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -421,7 +421,7 @@ permissionsList(const char *pattern)
 	 */
 	processNamePattern(&buf, pattern, true, false,
 					   "n.nspname", "c.relname", NULL,
-		"pg_catalog.pg_table_is_visible(c.oid) AND n.nspname !~ '^pg_'");
+		"n.nspname !~ '^pg_' AND pg_catalog.pg_table_is_visible(c.oid)");
 
 	appendPQExpBuffer(&buf, "ORDER BY 1, 2;");
 
@@ -1913,6 +1913,32 @@ processNamePattern(PQExpBuffer buf, const char *pattern,
 	/*
 	 * Now decide what we need to emit.
 	 */
+	if (namebuf.len > 0)
+	{
+		/* We have a name pattern, so constrain the namevar(s) */
+
+		appendPQExpBufferChar(&namebuf, '$');
+		/* Optimize away ".*$", and possibly the whole pattern */
+		if (namebuf.len >= 3 &&
+			strcmp(namebuf.data + (namebuf.len - 3), ".*$") == 0)
+			namebuf.data[namebuf.len - 3] = '\0';
+
+		if (namebuf.data[0])
+		{
+			WHEREAND();
+			if (altnamevar)
+				appendPQExpBuffer(buf,
+								  "(%s ~ '^%s'\n"
+								  "        OR %s ~ '^%s')\n",
+								  namevar, namebuf.data,
+								  altnamevar, namebuf.data);
+			else
+				appendPQExpBuffer(buf,
+								  "%s ~ '^%s'\n",
+								  namevar, namebuf.data);
+		}
+	}
+
 	if (schemabuf.len > 0)
 	{
 		/* We have a schema pattern, so constrain the schemavar */
@@ -1937,32 +1963,6 @@ processNamePattern(PQExpBuffer buf, const char *pattern,
 		{
 			WHEREAND();
 			appendPQExpBuffer(buf, "%s\n", visibilityrule);
-		}
-	}
-
-	if (namebuf.len > 0)
-	{
-		/* We have a name pattern, so constrain the namevar(s) */
-
-		appendPQExpBufferChar(&namebuf, '$');
-		/* Optimize away ".*$", and possibly the whole pattern */
-		if (namebuf.len >= 3 &&
-			strcmp(namebuf.data + (namebuf.len - 3), ".*$") == 0)
-			namebuf.data[namebuf.len - 3] = '\0';
-
-		if (namebuf.data[0])
-		{
-			WHEREAND();
-			if (altnamevar)
-				appendPQExpBuffer(buf,
-								  "(%s ~ '^%s'\n"
-								  "        OR %s ~ '^%s')\n",
-								  namevar, namebuf.data,
-								  altnamevar, namebuf.data);
-			else
-				appendPQExpBuffer(buf,
-								  "%s ~ '^%s'\n",
-								  namevar, namebuf.data);
 		}
 	}
 
