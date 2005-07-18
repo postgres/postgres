@@ -33,8 +33,8 @@ Datum		txtidx_out(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(txt2txtidx);
 Datum		txt2txtidx(PG_FUNCTION_ARGS);
 
-PG_FUNCTION_INFO_V1(tsearch);
-Datum		tsearch(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(tsearch_trigger);
+Datum		tsearch_trigger(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(txtidxsize);
 Datum		txtidxsize(PG_FUNCTION_ARGS);
@@ -519,7 +519,7 @@ txt2txtidx(PG_FUNCTION_ARGS)
  * Trigger
  */
 Datum
-tsearch(PG_FUNCTION_ARGS)
+tsearch_trigger(PG_FUNCTION_ARGS)
 {
 	TriggerData *trigdata;
 	Trigger    *trigger;

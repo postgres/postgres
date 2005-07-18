@@ -145,7 +145,7 @@ CREATE OPERATOR ~# (
 --Trigger
 CREATE FUNCTION tsearch()
 RETURNS trigger
-AS 'MODULE_PATHNAME'
+AS 'MODULE_PATHNAME', 'tsearch_trigger'
 LANGUAGE 'C';
 
 --GiST
