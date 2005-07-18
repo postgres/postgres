@@ -1,7 +1,7 @@
 # Translation to Portuguese (Brazilian) language
 # Roberto Mello <rmello@fslc.usu.edu>, 2002
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/po/pt_BR.po,v 1.1.2.1 2002/12/10 20:00:27 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/po/pt_BR.po,v 1.1.2.2 2005/07/18 17:48:30 tgl Exp $
 #
 msgid ""
 msgstr ""
@@ -189,8 +189,8 @@ msgid "  -Z 0-9                   compression level for compressed formats\n"
 msgstr "  -Z 0-9                   nível de compressão para formatos comprimidos\n"
 
 #: pg_dump.c:675 pg_dumpall.c:238 pg_restore.c:396
-msgid "  --help                   show this help, then exit\vn"
-msgstr "  --help                   mostra essa ajuda, e termina\vn"
+msgid "  --help                   show this help, then exit\n"
+msgstr "  --help                   mostra essa ajuda, e termina\n"
 
 #: pg_dump.c:676 pg_dumpall.c:239 pg_restore.c:397
 msgid "  --version                output version information, then exit\n"
