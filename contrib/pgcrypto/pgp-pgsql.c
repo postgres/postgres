@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pgsql.c,v 1.2 2005/07/11 15:07:59 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pgsql.c,v 1.3 2005/07/18 17:12:54 tgl Exp $
  */
 
 #include "postgres.h"
@@ -87,37 +87,60 @@ PG_FUNCTION_INFO_V1(pg_dearmor);
 	} while (0)
 
 /*
+ * Mix a block of data into RNG.
+ */
+static void add_block_entropy(PX_MD *md, text *data)
+{
+	uint8 sha1[20];
+
+	px_md_reset(md);
+	px_md_update(md, VARDATA(data), VARSIZE(data) - VARHDRSZ);
+	px_md_finish(md, sha1);
+
+	px_add_entropy(sha1, 20);
+
+	memset(sha1, 0, 20);
+}
+
+/*
  * Mix user data into RNG.  It is for user own interests to have
  * RNG state shuffled.
  */
 static void add_entropy(text *data1,  text *data2, text *data3)
 {
 	PX_MD *md;
-	uint8 sha1[20];
-	int res;
+	uint8 rnd[3];
 
 	if (!data1 && !data2 && !data3)
 		return;
 
-	res = px_find_digest("sha1", &md);
-	if (res < 0)
+	if (px_get_random_bytes(rnd, 3) < 0)
 		return;
 
-	if (data1)
-		px_md_update(md, VARDATA(data1), VARSIZE(data1) - VARHDRSZ);
-	if (data2)
-		px_md_update(md, VARDATA(data2), VARSIZE(data2) - VARHDRSZ);
-	if (data3)
-		px_md_update(md, VARDATA(data3), VARSIZE(data3) - VARHDRSZ);
+	if (px_find_digest("sha1", &md) < 0)
+		return;
 
-	px_md_finish(md, sha1);
+	/*
+	 * Try to make the feeding unpredictable.
+	 * 
+	 * Prefer data over keys, as it's rather likely
+	 * that key is same in several calls.
+	 */
+
+	/* chance: 7/8 */
+	if (data1 && rnd[0] >= 32)
+		add_block_entropy(md, data1);
+
+	/* chance: 5/8 */
+	if (data2 && rnd[1] >= 160)
+		add_block_entropy(md, data2);
+
+	/* chance: 5/8 */
+	if (data3 && rnd[2] >= 160)
+		add_block_entropy(md, data3);
+
 	px_md_free(md);
-
-	res = px_add_entropy(sha1, 20);
-	memset(sha1, 0, 20);
-
-	if (res < 0)
-		ereport(NOTICE, (errmsg("add_entropy: %s", px_strerror(res))));
+	memset(rnd, 0, sizeof(rnd));
 }
 
 /*

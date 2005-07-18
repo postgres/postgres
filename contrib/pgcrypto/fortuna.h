@@ -26,20 +26,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/fortuna.h,v 1.1 2005/07/10 13:46:28 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/fortuna.h,v 1.2 2005/07/18 17:12:54 tgl Exp $
  */
 
 #ifndef __FORTUNA_H
 #define __FORTUNA_H
 
-/*
- * Event source ID's
- */
-#define SYSTEM_ENTROPY	0
-#define USER_ENTROPY	1
-
 void fortuna_get_bytes(unsigned len, uint8 *dst);
-void fortuna_add_entropy(unsigned src_id, const uint8 *data, unsigned len);
+void fortuna_add_entropy(const uint8 *data, unsigned len);
 
 #endif
 

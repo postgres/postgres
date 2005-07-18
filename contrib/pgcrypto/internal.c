@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/internal.c,v 1.21 2005/07/18 17:09:01 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/internal.c,v 1.22 2005/07/18 17:12:54 tgl Exp $
  */
 
 #include "postgres.h"
@@ -42,9 +42,22 @@
 #include "fortuna.h"
 
 /*
- * How often to try to acquire system entropy.  (In seconds)
+ * System reseeds should be separated at least this much.
  */
-#define SYSTEM_RESEED_FREQ	(3*60*60)
+#define SYSTEM_RESEED_MIN			(20*60)		/* 20 min */
+/*
+ * How often to roll dice.
+ */
+#define SYSTEM_RESEED_CHECK_TIME	(10*60)		/* 10 min */
+/*
+ * The chance is x/256 that the reseed happens.
+ */
+#define SYSTEM_RESEED_CHANCE		(4)	/* 256/4 * 10min ~ 10h */
+
+/*
+ * If this much time has passed, force reseed.
+ */
+#define SYSTEM_RESEED_MAX			(12*60*60)	/* 12h */
 
 
 #ifndef MD5_DIGEST_LENGTH
@@ -823,20 +836,40 @@ px_get_pseudo_random_bytes(uint8 *dst, unsigned count)
 }
 
 static time_t seed_time = 0;
+static time_t check_time = 0;
 
 static void system_reseed(void)
 {
 	uint8 buf[1024];
 	int n;
 	time_t t;
+	int skip = 1;
 
 	t = time(NULL);
-	if (seed_time && (t - seed_time) < SYSTEM_RESEED_FREQ)
+
+	if (seed_time == 0)
+		skip = 0;
+	else if ((t - seed_time) < SYSTEM_RESEED_MIN)
+		skip = 1;
+	else if ((t - seed_time) > SYSTEM_RESEED_MAX)
+		skip = 0;
+	else if (!check_time || (t - check_time) > SYSTEM_RESEED_CHECK_TIME)
+	{
+		check_time = t;
+
+		/* roll dice */
+		px_get_random_bytes(buf, 1);
+		skip = buf[0] >= SYSTEM_RESEED_CHANCE;
+	}
+	/* clear 1 byte */
+	memset(buf, 0, sizeof(buf));
+
+	if (skip)
 		return;
 
 	n = px_acquire_system_randomness(buf);
 	if (n > 0)
-		fortuna_add_entropy(SYSTEM_ENTROPY, buf, n);
+		fortuna_add_entropy(buf, n);
 
 	seed_time = t;
 	memset(buf, 0, sizeof(buf));
@@ -854,7 +887,7 @@ int
 px_add_entropy(const uint8 *data, unsigned count)
 {
 	system_reseed();
-	fortuna_add_entropy(USER_ENTROPY, data, count);
+	fortuna_add_entropy(data, count);
 	return 0;
 }
 

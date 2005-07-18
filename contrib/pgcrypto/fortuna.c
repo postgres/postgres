@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/fortuna.c,v 1.3 2005/07/18 17:09:01 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/fortuna.c,v 1.4 2005/07/18 17:12:54 tgl Exp $
  */
 
 #include "postgres.h"
@@ -94,13 +94,15 @@
 /* for one big request, reseed after this many bytes */
 #define RESEED_BYTES	(1024*1024)
 
+/* 
+ * Skip reseed if pool 0 has less than this many
+ * bytes added since last reseed.
+ */
+#define POOL0_FILL		(256/8)
 
 /*
  * Algorithm constants
  */
-
-/* max sources */
-#define MAX_SOURCES		8
 
 /* Both cipher key size and hash result size */
 #define BLOCK			32
@@ -118,9 +120,11 @@ struct fortuna_state {
 	uint8			key[BLOCK];
 	MD_CTX			pool[NUM_POOLS];
 	CIPH_CTX		ciph;
-	unsigned		source_pos[MAX_SOURCES];
 	unsigned		reseed_count;
 	struct timeval	last_reseed_time;
+	unsigned		pool0_bytes;
+	unsigned		rnd_pos;
+	int				counter_init;
 };
 typedef struct fortuna_state FState;
 
@@ -161,7 +165,6 @@ static void md_result(MD_CTX *ctx, uint8 *dst)
 	memset(&tmp, 0, sizeof(tmp));
 }
 
-
 /*
  * initialize state
  */
@@ -172,6 +175,32 @@ static void init_state(FState *st)
 	for (i = 0; i < NUM_POOLS; i++)
 		md_init(&st->pool[i]);
 }
+
+/*
+ * Endianess does not matter.
+ * It just needs to change without repeating.
+ */
+static void inc_counter(FState *st)
+{
+	uint32 *val = (uint32*)st->counter;
+	if (++val[0])
+		return;
+	if (++val[1])
+		return;
+	if (++val[2])
+		return;
+	++val[3];
+}
+
+/*
+ * This is called 'cipher in counter mode'.
+ */
+static void encrypt_counter(FState *st, uint8 *dst)
+{
+	ciph_encrypt(&st->ciph, st->counter, dst);
+	inc_counter(st);
+}
+
 
 /*
  * The time between reseed must be at least RESEED_INTERVAL
@@ -207,9 +236,8 @@ static void reseed(FState *st)
 	MD_CTX key_md;
 	uint8 buf[BLOCK];
 
-	/* check frequency */
-	if (too_often(st))
-		return;
+	/* set pool as empty */
+	st->pool0_bytes = 0;
 
 	/*
 	 * Both #0 and #1 reseed would use only pool 0.
@@ -244,49 +272,80 @@ static void reseed(FState *st)
 }
 
 /*
+ * Pick a random pool.  This uses key bytes as random source.
+ */
+static unsigned get_rand_pool(FState *st)
+{
+	unsigned rnd;
+
+	/*
+	 * This slightly prefers lower pools - thats OK.
+	 */
+	rnd = st->key[st->rnd_pos] % NUM_POOLS;
+
+	st->rnd_pos++;
+	if (st->rnd_pos >= BLOCK)
+		st->rnd_pos = 0;
+
+	return rnd;
+}
+
+/*
  * update pools
  */
-static void add_entropy(FState *st, unsigned src_id, const uint8 *data, unsigned len)
+static void add_entropy(FState *st, const uint8 *data, unsigned len)
 {
 	unsigned pos;
 	uint8 hash[BLOCK];
 	MD_CTX md;
-
-	/* just in case there's a bug somewhere */
-	if (src_id >= MAX_SOURCES)
-		src_id = USER_ENTROPY;
 
 	/* hash given data */
 	md_init(&md);
 	md_update(&md, data, len);
 	md_result(&md, hash);
 
-	/* update pools round-robin manner */
-	pos = st->source_pos[src_id];
+	/*
+	 * Make sure the pool 0 is initialized,
+	 * then update randomly.
+	 */
+	if (st->reseed_count == 0 && st->pool0_bytes < POOL0_FILL)
+		pos = 0;
+	else
+		pos = get_rand_pool(st);
 	md_update( &st->pool[pos], hash, BLOCK);
 
-	if (++pos >= NUM_POOLS)
-		pos = 0;
-	st->source_pos[src_id] = pos;
+	if (pos == 0)
+		st->pool0_bytes += len;
 
 	memset(hash, 0, BLOCK);
 	memset(&md, 0, sizeof(md));
 }
 
 /*
- * Endianess does not matter.
- * It just needs to change without repeating.
+ * Just take 2 next blocks as new key
  */
-static void inc_counter(FState *st)
+static void rekey(FState *st)
 {
-	uint32 *val = (uint32*)st->counter;
-	if (++val[0])
-		return;
-	if (++val[1])
-		return;
-	if (++val[2])
-		return;
-	++val[3];
+	encrypt_counter(st, st->key);
+	encrypt_counter(st, st->key + CIPH_BLOCK);
+	ciph_init(&st->ciph, st->key, BLOCK);
+}
+
+/*
+ * Fortuna relies on AES standing known-plaintext attack.
+ * In case it does not, slow down the attacker by initialising
+ * the couter to random value.
+ */
+static void init_counter(FState *st)
+{
+	/* Use next block as counter. */
+	encrypt_counter(st, st->counter);
+
+	/* Hide the key. */
+	rekey(st);
+
+	/* The counter can be shuffled only once. */
+	st->counter_init = 1;
 }
 
 static void extract_data(FState *st, unsigned count, uint8 *dst)
@@ -294,31 +353,17 @@ static void extract_data(FState *st, unsigned count, uint8 *dst)
 	unsigned n;
 	unsigned block_nr = 0;
 
-	/*
-	 * Every request should be with different key,
-	 * if possible.
-	 */
-	reseed(st);
+	/* Can we reseed? */
+	if (st->pool0_bytes >= POOL0_FILL && !too_often(st))
+		reseed(st);
 
-	/*
-	 * If the reseed didn't happen, don't use the old data
-	 * rather encrypt again.
-	 */
+	/* Is counter initialized? */
+	if (!st->counter_init)
+		init_counter(st);
 
 	while (count > 0) {
-		/* must not give out too many bytes with one key */
-		if (block_nr > (RESEED_BYTES / CIPH_BLOCK))
-		{
-			reseed(st);
-			block_nr = 0;
-		}
-
 		/* produce bytes */
-		ciph_encrypt(&st->ciph, st->counter, st->result);
-		block_nr++;
-
-		/* prepare for next time */
-		inc_counter(st);
+		encrypt_counter(st, st->result);
 
 		/* copy result */
 		if (count > CIPH_BLOCK)
@@ -328,7 +373,17 @@ static void extract_data(FState *st, unsigned count, uint8 *dst)
 		memcpy(dst, st->result, n);
 		dst += n;
 		count -= n;
+
+		/* must not give out too many bytes with one key */
+		block_nr++;
+		if (block_nr > (RESEED_BYTES / CIPH_BLOCK))
+		{
+			rekey(st);
+			block_nr = 0;
+		}
 	}
+	/* Set new key for next request. */
+	rekey(st);
 }
 
 /*
@@ -338,7 +393,7 @@ static void extract_data(FState *st, unsigned count, uint8 *dst)
 static FState main_state;
 static int init_done = 0;
 
-void fortuna_add_entropy(unsigned src_id, const uint8 *data, unsigned len)
+void fortuna_add_entropy(const uint8 *data, unsigned len)
 {
 	if (!init_done)
 	{
@@ -347,7 +402,7 @@ void fortuna_add_entropy(unsigned src_id, const uint8 *data, unsigned len)
 	}
 	if (!data || !len)
 		return;
-	add_entropy(&main_state, src_id, data, len);
+	add_entropy(&main_state, data, len);
 }
 
 void fortuna_get_bytes(unsigned len, uint8 *dst)
