@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.266 2005/07/15 19:02:12 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.267 2005/07/18 22:34:14 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -5886,7 +5886,8 @@ SELECT TIMESTAMP 'now';  -- incorrect for use with DEFAULT
      Note that the <quote>same as</> operator, <literal>~=</>, represents
      the usual notion of equality for the <type>point</type>,
      <type>box</type>, <type>polygon</type>, and <type>circle</type> types.
-     Some of these types also have an <literal>=</> operator, but it compares
+     Some of these types also have an <literal>=</> operator, but
+     <literal>=</> compares
      for equal <emphasis>areas</> only.  The other scalar comparison operators
      (<literal>&lt;=</> and so on) likewise compare areas for these types.
     </para>
@@ -6082,12 +6083,6 @@ SELECT TIMESTAMP 'now';  -- incorrect for use with DEFAULT
         <entry><literal>area(box '((0,0),(1,1))')</literal></entry>
        </row>
        <row>
-        <entry><literal><function>box_intersect</function>(<type>box</>, <type>box</>)</literal></entry>
-        <entry><type>box</type></entry>
-        <entry>intersection box</entry>
-        <entry><literal>box_intersect(box '((0,0),(1,1))',box '((0.5,0.5),(2,2))')</literal></entry>
-       </row>
-       <row>
         <entry><literal><function>center</function>(<replaceable>object</>)</literal></entry>
         <entry><type>point</type></entry>
         <entry>center</entry>
@@ -6216,6 +6211,12 @@ SELECT TIMESTAMP 'now';  -- incorrect for use with DEFAULT
         <entry><literal>circle(point '(0,0)', 2.0)</literal></entry>
        </row>
        <row>
+        <entry><literal><function>circle</function>(<type>polygon</type>)</literal></entry>
+        <entry><type>circle</type></entry>
+        <entry>polygon to circle</entry>
+        <entry><literal>circle(polygon '((0,0),(1,1),(2,0))')</literal></entry>
+       </row>
+       <row>
         <entry><literal><function>lseg</function>(<type>box</type>)</literal></entry>
         <entry><type>lseg</type></entry>
         <entry>box diagonal to line segment</entry>
@@ -6257,12 +6258,6 @@ SELECT TIMESTAMP 'now';  -- incorrect for use with DEFAULT
         <entry><type>point</type></entry>
         <entry>center of lseg</entry>
         <entry><literal>point(lseg '((-1,0),(1,0))')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>point</function>(<type>lseg</type>, <type>lseg</type>)</literal></entry>
-        <entry><type>point</type></entry>
-        <entry>intersection</entry>
-        <entry><literal>point(lseg '((-1,0),(1,0))', lseg '((-2,-2),(2,2))')</literal></entry>
        </row>
        <row>
         <entry><literal><function>point</function>(<type>polygon</type>)</literal></entry>
