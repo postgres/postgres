@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.121 2005/07/18 17:40:14 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.122 2005/07/18 19:09:09 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -1766,7 +1766,7 @@ listSchemas(const char *pattern, bool verbose)
 	appendPQExpBuffer(&buf,
 	  "\nFROM pg_catalog.pg_namespace n LEFT JOIN pg_catalog.pg_user u\n"
 					  "       ON n.nspowner=u.usesysid\n"
-				 "WHERE	(n.nspname NOT LIKE E'pg\\\\_temp\\\\_%%' OR\n"
+					  "WHERE	(n.nspname !~ '^pg_temp_' OR\n"
 	   "		 n.nspname = (pg_catalog.current_schemas(true))[1])\n");		/* temp schema is first */
 
 	processNamePattern(&buf, pattern, true, false,
