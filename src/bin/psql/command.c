@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.149 2005/07/14 08:42:37 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.150 2005/07/18 20:57:53 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1420,16 +1420,16 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 				   : _("Expanded display is off.\n"));
 	}
 
-	/* numeric separators */
-	else if (strcmp(param, "numericsep") == 0)
+	/* locale-aware numeric output */
+	else if (strcmp(param, "numericlocale") == 0)
 	{
-		popt->topt.numericSep = !popt->topt.numericSep;
+		popt->topt.numericLocale = !popt->topt.numericLocale;
 		if (!quiet)
 		{
-			if (popt->topt.numericSep)
-				puts(_("Showing numeric separators."));
+			if (popt->topt.numericLocale)
+				puts(_("Showing locale-adjusted numeric output."));
 			else
-				puts(_("Numeric separators are off."));
+				puts(_("Locale-adjusted numeric output is off."));
 		}
 	}
 

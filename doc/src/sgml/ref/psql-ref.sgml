@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.147 2005/07/14 08:42:36 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.148 2005/07/18 20:57:52 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1493,7 +1493,7 @@ lo_import 152801
           </varlistentry>
 
           <varlistentry>
-          <term><literal>numericsep</literal></term>
+          <term><literal>numericlocale</literal></term>
           <listitem>
           <para>
           Toggles the display of a locale-aware character to separate groups
