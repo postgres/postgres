@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-decrypt.c,v 1.2 2005/07/11 15:07:59 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-decrypt.c,v 1.3 2005/07/18 16:35:06 tgl Exp $
  */
 
 #include "postgres.h"
@@ -339,7 +339,7 @@ static void mdc_free(void *priv)
 	ctx->mdc_ctx = NULL;
 }
 
-// fixme: clarify
+/* fixme: clarify */
 static int mdc_finish(PGP_Context *ctx, PullFilter *src,
 		int len, uint8 **data_p)
 {
