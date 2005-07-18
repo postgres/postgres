@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.57.4.1 2005/04/18 23:48:01 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.57.4.2 2005/07/18 19:18:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -539,7 +539,7 @@ dumpTablespaces(PGconn *conn)
 					 "pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
 					   "spclocation, spcacl "
 					   "FROM pg_catalog.pg_tablespace "
-					   "WHERE spcname NOT LIKE 'pg\\_%'");
+					   "WHERE spcname NOT LIKE 'pg!_%' ESCAPE '!'");
 
 	if (PQntuples(res) > 0)
 		printf("--\n-- Tablespaces\n--\n\n");
