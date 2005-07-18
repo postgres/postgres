@@ -1,362 +1,675 @@
+$PostgreSQL: pgsql/contrib/pgcrypto/README.pgcrypto,v 1.12 2005/07/18 17:17:12 tgl Exp $
 
-pgcrypto 0.4 - cryptographic functions for PostgreSQL.
-======================================================
-by Marko Kreen <marko@l-t.ee>
+pgcrypto - cryptographic functions for PostgreSQL
+=================================================
+Marko Kreen <marko@l-t.ee>
 
 
-INSTALLATION
-============
+1.  Installation
+-----------------
 
-Edit makefile, if you want to use any external library.
+Run following commands:
 
-NB!  Default randomness source is libc random() function.  This
-is so only to get pgcrypto build everywhere.  Randomness is
-needed for gen_salt() and pgp_encrypt() functions.  So if you plan
-using those, you should definitely change that by editing Makefile.
-You can should use urandom device if your OS supports it, otherwise
-link pgcrypto against OpenSSL library and use its PRNG.
+    make
+    make install
+    make installcheck
 
-After editing Makefile:
+The `make installcheck` command is important.  It runs regression tests
+for the module.  They make sure the functions here produce correct
+results.
 
-make
-make install
 
-To run regression tests, install both PostgreSQL and pgcrypto
-and then run
+2.  Notes
+----------
 
-make installcheck
+2.1.  Configuration
+~~~~~~~~~~~~~~~~~~~~
 
-SQL FUNCTIONS
-=============
+pgcrypto configures itself according to the findings of main PostgreSQL
+`configure` script.  The options that affect it are `--with-zlib` and
+`--with-openssl`.
 
-	If any of arguments are NULL they return NULL.
+Without zlib, the PGP functions will not support compressed data inside
+PGP encrypted packets.
 
-digest(data::bytea, type::text)::bytea
+Without OpenSSL, public-key encryption does not work, as pgcrypto does
+not yet contain math functions for large integers.
 
-	Type is here the algorithm to use. E.g. 'md5', 'sha1', ...
-	Returns binary hash.
+There are some other differences with and without OpenSSL:
 
-digest_exists(type::text)::bool
+`----------------------------`---------`------------
+ Functionality                built-in   OpenSSL
+----------------------------------------------------
+ MD5                          yes       yes
+ SHA1                         yes       yes
+ SHA256/384/512               yes       since 0.9.8
+ Any other digest algo        no        yes (1)
+ Blowfish                     yes       yes
+ AES                          yes       yes (2)
+ DES/3DES/CAST5               no        yes
+ Raw encryption               yes       yes
+ PGP Symmetric encryption     yes       yes
+ PGP Public-Key encryption    no        yes
+----------------------------------------------------
 
-	Returns BOOL whether given hash exists.
+1. Any digest algorithm OpenSSL supports is automatically picked up.
+   This is not possible with ciphers, which need to be supported
+   explicitly.
 
-hmac(data::bytea, key::bytea, type::text)::bytea
+2. AES is included in OpenSSL since version 0.9.7.  If pgcrypto is
+   compiled against older version, it will use built-in AES code,
+   so it has AES always available.
 
-	Calculates Hashed MAC over data.  type is the same as
-	in digest().  Returns binary hash.  Similar to digest()
-	but noone can alter data and re-calculate hash without
-	knowing key.  If the key is larger than hash blocksize
-	it will first hashed and the hash will be used as key.
-	
-	[ HMAC is described in RFC2104. ]
 
-hmac_exists(type::text)::bool
-	Returns BOOL.  It is separate function because all hashes
-	cannot be used in HMAC.
+2.2.  NULL handling
+~~~~~~~~~~~~~~~~~~~~
 
-crypt(password::text, salt::text)::text
+As standard in SQL, all functions return NULL, if any of the arguments
+are NULL.  This may create security risks on careless usage.
 
-	Calculates UN*X crypt(3) style hash.  Useful for storing
-	passwords.  For generating salt you should use the
-	gen_salt() function.  Usage:
 
-	New password:
-	
-	  UPDATE .. SET pswhash = crypt(new_psw, gen_salt('md5'));
-	
-	Authentication:
+2.3.  Deprecated functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-	  SELECT pswhash = crypt(given_psw, pswhash) WHERE .. ;
-	
-	returns BOOL whether the given_psw is correct.  DES crypt
-	has max key of 8 bytes, MD5 has max key at least 2^32-1
-	bytes but may be larger on some platforms...
+The `digest_exists()`, `hmac_exists()` and `cipher_exists()` functions
+are deprecated.  The plan is to remove those in PostgreSQL 8.2.
 
-	Builtin crypt() supports DES, Extended DES, MD5 and Blowfish
-	(variant 2a) algorithms.
 
-gen_salt(type::text)::text
+2.4.  Security
+~~~~~~~~~~~~~~~
 
-	Generates a new random salt for usage in crypt().  Type
-	
-	'des'	- Old UNIX, not recommended
-	'md5'	- md5-based crypt()
-	'xdes'	- 'Extended DES'
-	'bf'	- Blowfish-based, variant 2a
-
-	When you use --enable-system-crypt then note that system
-	libcrypt may not support them all.
-
-gen_salt(type::text, rounds::int4)::text
-
-	same as above, but lets user specify iteration count
-	for algorithm.  Number is algorithm specific:
-
-	type	default	min	max
-	---------------------------------
-	xdes	725	1	16777215
-	bf	6	4	31
-
-	In case of xdes there is a additional limitation that the
-	count must be a odd number.
-
-	The higher the count, the more time it takes to calculate
-	crypt and therefore the more time to break it.  But beware!
-	With too high count it takes a _very_long_ time to
-	calculate it.
-
-	For maximum security, you should choose the 'bf' crypt
-	and use maximum number of rounds you can still tolerate.
-
-armor(bytea)::text
-dearmor(text)::bytea
-
-	Those wrap/unwrap data into PGP Ascii Armor which
-	is basically Base64 with CRC and additional formatting.
-
-pgp_sym_encrypt(data::text, key::text)::bytea
-pgp_sym_encrypt(data::text, key::text, arg::text)::bytea
-pgp_sym_encrypt_bytea(data::bytea, key::text)::bytea
-pgp_sym_encrypt_bytea(data::bytea, key::text, arg::text)::bytea
-
-pgp_sym_decrypt(data::bytea, key::text)::text
-pgp_sym_decrypt(data::bytea, key::text, arg::text)::text
-pgp_sym_decrypt_bytea(data::text, key::text)::bytea
-pgp_sym_decrypt_bytea(data::text, key::text, arg::text)::bytea
-
-	Encrypt data into OpenPGP Symmetrically Encrypted Data
-	message.  And decrypt it from it.
-
-	Note that the pgp_sym_encrypt_bytea functions tag the data
-	as binary, as the pgp_sym_encrypt will tag the data as text.
-	You can not decrypt the binary data as text.  But you can
-	decrypt text data as binary.  This rule avoids having
-	broken textual data in PostgreSQL.
-
-	Both encrypt and decrypt accept also third argument, which
-	is parameters to the function in following format:
-	
-	  parm=val[,parm=val]...
-	
-	Example:
-
-	  select pgp_sym_encrypt('data', 'psw',
-			'compress-algo=2, unicode-mode=1');
-
-	Accepted parameters are:
-
-	cipher-algo: bf, aes, aes128, aes192, aes256
-	  Cipher algorithm to use.  OpenSSL gives additional algorithms:
-	  3des, cast5
-	  Default: aes128
-	
-	compress-algo: 0, 1, 2
-	  Which compression algorithm to use.
-	    0 - no compression
-	    1 - ZIP compression
-	    2 - ZLIB compression [=ZIP plus meta-data and block-CRC's]
-	  Default: 0
-
-	compress-level: 0, 1-9
-	  How much to compress.  Bigger level compresses smaller
-	  but also slower.  0 disables compression.
-	  Default: 6
-
-	convert-crlf: 0, 1
-	  Whether to convert \n into \r\n when encrypting and
-	  \r\n to \n when decrypting.  RFC2440 specifies that
-	  text packets should use "\r\n" line-feeds.
-	  Use this to get fully RFC-compliant behaviour.
-	  Default: 0
-
-	disable-mdc: 0, 1
-	  Do not protect data with SHA-1.  Note that SHA-1 protected
-	  packet is from upcoming update to RFC2440.  (Currently at
-	  version RFC2440bis-13.)  You need to disable it if you need
-	  compatibility with ancient PGP products.  Recent gnupg.org
-	  and pgp.com software supports it fine.
-	  Default: 0
-	
-	enable-session-key: 0, 1
-	  Use separate session key.
-	  Default: 0
-	
-	s2k-mode: 0, 1, 3
-	  Which S2K algorithm to use.  0 is dangerous - without salt.
-	  Default: 3
-	
-	s2k-digest-algo: md5, sha1
-	  Which digest algorithm to use in S2K calculation.
-	  Default: SHA-1
-
-	s2k-cipher-algo: bf, aes, aes128, aes192, aes256
-	  Which cipher to use for encrypting separate session key.
-	  Default: same as cipher-algo.
-
-	unicode-mode: 0, 1
-	  Whether to convert textual data from database internal
-	  encoding to UTF-8 and back.
-	  Default: 0
-
-	Only 'convert-crlf' applies to both encrypt and decrypt,
-	all others apply only to encrypt - decrypt gets the
-	settings from PGP data.
-	
-	
-pgp_pub_encrypt(data::text, key::bytea)::bytea
-pgp_pub_encrypt(data::text, key::bytea, arg::text)::bytea
-pgp_pub_encrypt_bytea(data::bytea, bytea::text)::bytea
-pgp_pub_encrypt_bytea(data::bytea, bytea::text, arg::text)::bytea
-
-pgp_pub_decrypt(data::bytea, key::bytea)::text
-pgp_pub_decrypt(data::bytea, key::bytea, psw::text)::text
-pgp_pub_decrypt(data::bytea, key::bytea, psw::text, arg::text)::text
-pgp_pub_decrypt_bytea(data::text, key::bytea)::bytea
-pgp_pub_decrypt_bytea(data::text, key::bytea, psw::text)::bytea
-pgp_pub_decrypt_bytea(data::text, key::bytea, psw::text, arg::bytea)::bytea
-
-	Encrypt data into OpenPGP Public-Key Encrypted Data
-	message.  And decrypt it from it.  The arg parameter is
-	described in pgp_sym_* section.
-
-	The key must be a public-key packet for pgp_pub_encrypt
-	functions and a secret key packet for pgp_pub_decrypt
-	functions.  Trying to encrypt with secret key gives a error.
-	While being technically possible, it is probably a sign of
-	user error and leaking secret keys.
-
-	Here is a example how to generate them:
-	
-	Generate a new key:
-	
-	  gpg --gen-key
-	
-	You need to pick "DSA and Elgamal" key type, others
-	are sign-only.
-
-	List keys:
-	
-	  gpg --list-secret-keys
-
-	Export ascii-armored public key:
-
-	  gpg -a --export KEYID > public.key
-	
-	Export ascii-armored secret key:
-
-	  gpg -a --export-secret-keys KEYID > secret.key
-
-	You need to use dearmor() on them before giving giving
-	them to pgp_pub_* functions.  Ofcourse, if you can handle
-	binary data, you can drop "-a" from gpg.
-
-
-pgp_key_id(key / data)
-
-	It shows you either key ID if given PGP public or secret
-	key.  Or it gives the key ID what was used for encrypting
-	the data, if given encrypted data.
-
-	It can return 2 special key ID's:
-
-	  SYMKEY - it got symmetrically encrypted data.
-	  ANYKEY - the data packet key ID is clear.  That means
-		   you should try all you secret keys on it.
-
-encrypt(data::bytea, key::bytea, type::text)::bytea
-decrypt(data::bytea, key::bytea, type::text)::bytea
-encrypt_iv(data::bytea, key::bytea, iv::bytea, type::text)::bytea
-decrypt_iv(data::bytea, key::bytea, iv::bytea, type::text)::bytea
-
-	Encrypt/decrypt data with cipher, padding data if needed.
-
-	Pseudo-noteup:
-
-	algo ['-' mode] ['/pad:' padding]
-
-	Supported algorithms:
-	
-		bf		- Blowfish
-		aes, rijndael	- Rijndael-128
-
-	Others depend on library and are not tested enough, so
-	play on your own risk.
-
-	Modes: 'cbc' (default), 'ecb'.  Again, library may support
-	more.
-
-	Padding is 'pkcs' (default), 'none'.  'none' is mostly for
-	testing ciphers, you should not need it.
-
-	So, example:
-
-		encrypt(data, 'fooz', 'bf')
-	
-	is equal to
-
-		encrypt(data, 'fooz', 'bf-cbc/pad:pkcs')
-
-	IV is initial value for mode, defaults to all zeroes.
-	It is ignored for ECB.  It is clipped or padded with zeroes
-	if not exactly block size.
-
-
-ALGORITHMS
-==========
-
-The standard functionality at the moment consists of
-
-Hashes: md5, sha1
-Ciphers: bf, aes
-Modes: cbc, ecb
-
-TODO: write standard names for optional ciphers too.
-
-LIBRARIES
-=========
-
-* crypt()
-
-    internal: des, xdes, md5, bf
-
-    -lcrypt: ??? (whatever you have)
-
-* other:
-
-[ This only lists stuff that the libraries claim to support.  So
-  pgcrypto may work with all of them.  But ATM tested are only the
-  standard ciphers.  On others pgcrypto and library may mess something
-  up. You have been warned.  ]
-
-internal (default):
-    Hashes: MD5, SHA1
-    Ciphers: Blowfish, Rijndael-128
-
-
-OpenSSL (0.9.7):
-    Hashes:	MD5, SHA1, RIPEMD160, MD2   
-    Ciphers:	Blowfish, AES, CAST5, DES, 3DES
-    License:	BSD-like with strong advertisement
-    Url:	http://www.openssl.org/
-
-
-CREDITS
-=======
+All the functions here run inside database server.  That means that all
+the data and passwords move between pgcrypto and client application in
+clear-text.  Thus you must:
+
+1.  Connect locally or use SSL connections.
+2.  Trust both system and database administrator.
+
+If you cannot, then better do crypto inside client application.
+
+
+3.  General hashing
+--------------------
+
+3.1.  digest(data, type)
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  digest(data text, type text) RETURNS bytea
+  digest(data bytea, type text) RETURNS bytea
+
+Type is here the algorithm to use.  Standard algorithms are `md5` and
+`sha1`, although there may be more supported, depending on build
+options.
+
+Returns binary hash.
+
+If you want hexadecimal string, use `encode()` on result.  Example:
+
+    CREATE OR REPLACE FUNCTION sha1(bytea) RETURNS text AS $$
+      SELECT encode(digest($1, 'sha1'), 'hex')
+    $$ LANGUAGE SQL STRICT IMMUTABLE;
+
+
+3.2.  hmac(data, key, type)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  hmac(data text, key text, type text) RETURNS bytea
+  hmac(data bytea, key text, type text) RETURNS bytea
+
+Calculates Hashed MAC over data.  `type` is the same as in `digest()`.
+If the key is larger than hash block size it will first hashed and the
+hash will be used as key.
+
+It is similar to digest() but the hash can be recalculated only knowing
+the key.  This avoids the scenario of someone altering data and also
+changing the hash.
+
+Returns binary hash.
+
+
+
+4.  Password hashing
+---------------------
+
+The functions `crypt()` and `gen_salt()` are specifically designed
+for hashing passwords.  `crypt()` does the hashing and `gen_salt()`
+prepares algorithm parameters for it.
+
+The algorithms in `crypt()` differ from usual hashing algorithms like
+MD5 or SHA1 in following respects:
+
+1. They are slow.  As the amount of data is so small, this is only
+   way to make brute-forcing passwords hard.
+2. Include random 'salt' with result, so that users having same
+   password would have different crypted passwords.  This also
+   additional defense against reversing the algorithm.
+3. Include algorithm type in the result, so passwords hashed with
+   different algorithms can co-exist.
+4. Some of them are adaptive - that means after computers get
+   faster, you can tune the algorithm to be slower, without
+   introducing incompatibility with existing passwords.
+
+Supported algorithms:
+`------`-------------`---------`----------`---------------------------
+ Type   Max password  Adaptive  Salt bits  Description
+----------------------------------------------------------------------
+`bf`     72           yes         128      Blowfish-based, variant 2a
+`md5`    unlimited    no           48      md5-based crypt()
+`xdes`   8            yes          24      Extended DES
+`des`    8            no           12      Original UNIX crypt
+----------------------------------------------------------------------
+
+
+4.1.  crypt(password, salt)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  crypt(password text, salt text) RETURNS text
+
+Calculates UN*X crypt(3) style hash of password.  When storing new
+password, you need to use function `gen_salt()` to generate new salt.
+When checking password you should use existing hash as salt.
+
+Example - setting new password:
+
+    UPDATE .. SET pswhash = crypt('new password', gen_salt('md5'));
+
+Example - authentication:
+
+    SELECT pswhash = crypt('entered password', pswhash) WHERE .. ;
+
+returns true or false whether the entered password is correct.
+It also can return NULL if `pswhash` field is NULL.
+
+
+4.2.  gen_salt(type)
+~~~~~~~~~~~~~~~~~~~~~
+
+  gen_salt(type text) RETURNS text
+
+Generates a new random salt for usage in `crypt()`.  For adaptible
+algorithms, it uses the default iteration count.
+
+Accepted types are: `des`, `xdes`, `md5` and `bf`.
+
+
+4.3.  gen_salt(type, rounds)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  gen_salt(type text, rounds integer) RETURNS text
+
+Same as above, but lets user specify iteration count for some
+algorithms.  The higher the count, the more time it takes to hash
+ti password and therefore the more time to break it.  Although with
+too high count the time to calculate a hash may be several years
+- which is somewhat impractical.
+
+Number is algorithm specific:
+
+`-----'---------'-----'----------
+ type   default   min   max
+---------------------------------
+ `xdes`     725     1   16777215
+ `bf`         6     4         31
+---------------------------------
+
+In case of xdes there is a additional limitation that the count must be
+a odd number.
+
+Notes:
+
+- Original DES crypt was designed to have the speed of 4 hashes per
+  second on the hardware that time.
+- Slower that 4 hashes per second would probably damper usability.
+- Faster that 100 hashes per second is probably too fast.
+- See next section about possible values for `crypt-bf`.
+
+
+4.4.  Comparison of crypt and regular hashes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Here is a table that should give overview of relative slowness
+of different hashing algorithms.
+
+* The goal is to crack a 8-character password, which consists:
+  1.  Only from lowercase letters
+  2.  Numbers, lower- and uppercase letters.
+* The table below shows how much time it would take to try all
+  combinations of characters.
+* The `crypt-bf` is featured in several settings - the number
+  after slash is the `rounds` parameter of `gen_salt()`.
+
+`------------'----------'--------------'--------------------
+Algorithm     Hashes/sec  Chars: [a-z]   Chars: [A-Za-z0-9]
+------------------------------------------------------------
+crypt-bf/8            28     246 years         251322 years
+crypt-bf/7            57     121 years         123457 years
+crypt-bf/6           112      62 years          62831 years
+crypt-bf/5           211      33 years          33351 years
+crypt-md5           2681     2.6 years           2625 years
+crypt-des         362837        7 days             19 years
+sha1              590223        4 days             12 years
+md5              2345086         1 day              3 years
+password       143781000       25 mins              18 days
+------------------------------------------------------------
+
+* The machine used is 1.5GHz Pentium 4.
+* crypt-des and crypt-md5 algorithm numbers are taken from
+  John the Ripper v1.6.38 `-test` output.
+* MD5 numbers are from mdcrack 1.2.
+* SHA1 numbers are from lcrack-20031130-beta.
+* MySQL password() numbers are from my own tests.
+  (http://grue.l-t.ee/~marko/src/mypass/)
+* `crypt-bf` numbers are taken using simple program that loops
+  over 1000 8-character passwords.  That way I can show the speed with
+  different number of rounds.  For reference: `john -test` shows 213
+  loops/sec for crypt-bf/5.  (The small difference in results is in
+  accordance to the fact that the `crypt-bf` implementation in pgcrypto
+  is same one that is used in John the Ripper.)
+
+Note that the "try all combinations" is not a realistic exercise.
+Usually password cracking is done with the help of dictionaries, which
+contain both regular words and various mutations of them.  So, even
+somewhat word-like passwords will be cracked much faster than the above
+numbers suggest, and a 6-character non-word like password may escape
+cracking.  Or may not.
+
+
+5.  PGP encryption
+-------------------
+
+The functions here implement the encryption part of OpenPGP (RFC2440)
+standard.
+
+
+5.1.  Overview
+~~~~~~~~~~~~~~~
+
+Encrypted PGP message consists of 2 packets:
+
+- Packet for session key - either symmetric- or public-key encrypted.
+- Packet for session-key encrypted data.
+
+When encrypting with password:
+
+1. Given password is hashed using String2Key (S2K) algorithm.  This
+   is rather similar to `crypt()` algorithm - purposefully slow
+   and with random salt - but is produces a full-length binary key.
+2. If separate session key is requested, new random key will be
+   generated.  Otherwise S2K key will be used directly as session key.
+3. If S2K key is to be used directly, then only S2K settings will be put
+   into session key packet.  Otherwise session key will be encrypted with
+   S2K key and put into session key packet.
+
+When encrypting with public key:
+
+1. New random session key is generated.
+2. It is encrypted using public key and put into session key packet.
+
+Now common part, the session-key encrypted data packet:
+
+1. Optional data-manipulation: compression, conversion to UTF-8,
+   conversion of line-endings.
+2. Data is prefixed with block of random bytes.  This is equal
+   to using random IV.
+3. A SHA1 hash of random prefix and data is appended.
+4. All this is encrypted with session key.
+
+
+5.2.  pgp_sym_encrypt(data, psw)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  pgp_sym_encrypt(data text, psw text [, options text] ) RETURNS bytea
+  pgp_sym_encrypt_bytea(data bytea, psw text [, options text] ) RETURNS bytea
+
+Return a symmetric-key encrypted PGP message.
+
+Options are described in section 5.7.
+
+
+5.3. pgp_sym_decrypt(msg, psw)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  pgp_sym_decrypt(msg bytea, psw text [, options text] ) RETURNS text
+  pgp_sym_decrypt_bytea(msg bytea, psw text [, options text] ) RETURNS bytea
+
+Decrypt a symmetric-key encrypted PGP message.
+
+Options are described in section 5.7.
+
+
+5.4.  pgp_pub_encrypt(data, pub_key)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  pgp_pub_encrypt(data text, key bytea [, options text] ) RETURNS bytea
+  pgp_pub_encrypt_bytea(data bytea, key bytea [, options text] ) RETURNS bytea
+
+Encrypt data with a public key.  Giving this function a secret key will
+produce a error.
+
+Options are described in section 5.7.
+
+
+5.5.  pgp_pub_decrypt(msg, sec_key [, psw])
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  pgp_pub_decrypt(msg bytea, key bytea [, psw text [, options text]] ) \
+  RETURNS text
+  pgp_pub_decrypt_bytea(msg bytea, key bytea [,psw text [, options text]] ) \
+  RETURNS bytea
+
+Decrypt a public-key encrypted message with secret key.  If the secret
+key is password-protected, you must give the password in `psw`.  If
+there is no password, but you want to specify option for function, you
+need to give empty password.
+
+Options are described in section 5.7.
+
+
+5.6.  pgp_key_id(key / msg)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  pgp_key_id(key or msg bytea) RETURNS text
+
+It shows you either key ID if given PGP public or secret key.  Or it
+gives the key ID what was used for encrypting the data, if given
+encrypted message.
+
+It can return 2 special key ID's:
+
+SYMKEY::
+   The data is encrypted with symmetric key.
+
+ANYKEY::
+   The data is public-key encrypted, but the key ID is cleared.
+   That means you need to try all your secret keys on it to see
+   which one decrypts it.  pgcrypto itself does not produce such
+   messages.
+
+Note that different keys may have same ID.   This is rare but normal
+event.  Client application should then try to decrypt with each one,
+to see which fits - like handling ANYKEY.
+
+
+5.7.  armor / dearmor
+~~~~~~~~~~~~~~~~~~~~~~
+
+  armor(data bytea) RETURNS text
+  dearmor(data text) RETURNS bytea
+
+Those wrap/unwrap data into PGP Ascii Armor which is basically Base64
+with CRC and additional formatting.
+
+
+5.8.  Options for PGP functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Option are named to be similar to GnuPG.  Values should be given after
+equal sign, different options from each other with commas.  Example:
+
+  pgp_sym_encrypt(data, psw, 'compress-also=1, cipher-algo=aes256')
+
+All of the options except `convert-crlf` apply only to encrypt
+functions.  Decrypt functions get the parameters from PGP data.
+
+Most interesting options are probably `compression-algo` and
+`unicode-mode`.  The rest should have reasonable defaults.
+
+
+cipher-algo::
+  What cipher algorithm to use.
+
+  Values: bf, aes128, aes192, aes256 (OpenSSL-only: `3des`, `cast5`)
+  Default: aes128
+  Applies: pgp_sym_encrypt, pgp_pub_encrypt
+
+
+compress-algo::
+  Which compression algorithm to use.  Needs building with zlib.
+
+  Values:
+    0 - no compression
+    1 - ZIP compression
+    2 - ZLIB compression [=ZIP plus meta-data and block-CRC's]
+  Default: 0
+  Applies: pgp_sym_encrypt, pgp_pub_encrypt
+
+compress-level::
+  How much to compress.  Bigger level compresses smaller but is slower.
+  0 disables compression.
+
+  Values: 0, 1-9
+  Default: 6
+  Applies: pgp_sym_encrypt, pgp_pub_encrypt
+
+convert-crlf::
+  Whether to convert `\n` into `\r\n` when encrypting and `\r\n` to `\n`
+  when decrypting.  RFC2440 specifies that text data should be stored
+  using `\r\n` line-feeds.  Use this to get fully RFC-compliant
+  behavior.
+
+  Values: 0, 1
+  Default: 0
+  Applies: pgp_sym_encrypt, pgp_pub_encrypt, pgp_sym_decrypt, pgp_pub_decrypt
+
+disable-mdc::
+  Do not protect data with SHA-1.  Only good reason to use is this
+  option is to achieve compatibility with ancient PGP products, as the
+  SHA-1 protected packet is from upcoming update to RFC2440.  (Currently
+  at version RFC2440bis-14.) Recent gnupg.org and pgp.com software
+  supports it fine.
+
+  Values: 0, 1
+  Default: 0
+  Applies: pgp_sym_encrypt, pgp_pub_encrypt
+
+enable-session-key::
+  Use separate session key.  Public-key encryption always uses separate
+  session key, this is for symmetric-key encryption, which by default
+  uses S2K directly.
+
+  Values: 0, 1
+  Default: 0
+  Applies: pgp_sym_encrypt
+
+s2k-mode::
+  Which S2K algorithm to use.
+
+  Values:
+    0 - Dangerous!  Without salt.
+    1 - With salt but with fixed iteration count.
+    3 - Variable iteration count.
+  Default: 3
+  Applies: pgp_sym_encrypt
+
+s2k-digest-algo::
+  Which digest algorithm to use in S2K calculation.
+
+  Values: md5, sha1
+  Default: sha1
+  Applies: pgp_sym_encrypt
+
+s2k-cipher-algo::
+  Which cipher to use for encrypting separate session key.
+
+  Values: bf, aes, aes128, aes192, aes256
+  Default: same as cipher-algo.
+  Applies: pgp_sym_encrypt
+
+unicode-mode::
+  Whether to convert textual data from database internal encoding to
+  UTF-8 and back.  If your database already is UTF-8, no conversion will
+  be done, only the data will be tagged as UTF-8.  Without this option
+  it will not be.
+
+  Values: 0, 1
+  Default: 0
+  Applies: pgp_sym_encrypt, pgp_pub_encrypt
+
+
+5.9.  Generating keys with GnuPG
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Generate a new key:
+
+    gpg --gen-key
+
+You need to pick "DSA and Elgamal" key type, others are sign-only.
+
+List keys:
+
+    gpg --list-secret-keys
+
+Export ascii-armored public key:
+
+    gpg -a --export KEYID > public.key
+
+Export ascii-armored secret key:
+
+    gpg -a --export-secret-keys KEYID > secret.key
+
+You need to use `dearmor()` on them before giving giving them to
+pgp_pub_* functions.  Or if you can handle binary data, you can drop
+"-a" from gpg.
+
+
+5.10.  Limitations of PGP code
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- No support for signing.  That also means that it is not checked
+  whether the encryption subkey belongs to master key.
+
+- No support for RSA keys.  Only Elgamal encryption keys are supported
+
+- No support for several encryption subkeys.
+
+
+6.  Raw encryption
+-------------------
+
+Those functions only run a cipher over data, they don't have any advanced
+features of PGP encryption.  In addition, they have some major problems:
+
+1. They use user key directly as cipher key.
+2. They don't provide any integrity checking, to see
+   if the encrypted data was modified.
+3. They expect that users manage all encryption parameters
+   themselves, even IV.
+4. They don't handle text.
+
+So, with the introduction of PGP encryption, usage of raw
+encryption functions is discouraged.
+
+
+    encrypt(data bytea, key bytea, type text) RETURNS bytea
+    decrypt(data bytea, key bytea, type text) RETURNS bytea
+
+    encrypt_iv(data bytea, key bytea, iv bytea, type text) RETURNS bytea
+    decrypt_iv(data bytea, key bytea, iv bytea, type text) RETURNS bytea
+
+Encrypt/decrypt data with cipher, padding data if needed.
+
+`type` parameter description in pseudo-noteup:
+
+    algo ['-' mode] ['/pad:' padding]
+
+Supported algorithms:
+
+* `bf`		- Blowfish
+* `aes`		- AES (Rijndael-128)
+
+Modes:
+
+* `cbc` - next block depends on previous. (default)
+* `ecb` - each block in encrypted separately.
+          (for testing only)
+
+Padding:
+
+* `pkcs` - data may be any length (default)
+* `none` - data must be multiple of cipher block size.
+
+IV is initial value for mode, defaults to all zeroes.  It is ignored for
+ECB.  It is clipped or padded with zeroes if not exactly block size.
+
+So, example:
+
+	encrypt(data, 'fooz', 'bf')
+
+is equal to
+
+	encrypt(data, 'fooz', 'bf-cbc/pad:pkcs')
+
+
+7.  Credits
+------------
 
 I have used code from following sources:
 
-DES crypt() by David Burren and others	FreeBSD libcrypt
-MD5 crypt() by Poul-Henning Kamp	FreeBSD libcrypt
-Blowfish crypt() by Solar Designer	www.openwall.com
-Blowfish cipher by Niels Provos		OpenBSD sys/crypto
-Rijndael cipher by Brian Gladman	OpenBSD sys/crypto
-MD5 and SHA1 by WIDE Project		KAME kame/sys/crypto
+`--------------------`-------------------------`----------------------
+  Algorithm            Author                    Source origin
+----------------------------------------------------------------------
+  DES crypt()          David Burren and others   FreeBSD libcrypt
+  MD5 crypt()          Poul-Henning Kamp         FreeBSD libcrypt
+  Blowfish crypt()     Solar Designer            www.openwall.com
+  Blowfish cipher      Niels Provos              OpenBSD sys/crypto
+  Rijndael cipher      Brian Gladman             OpenBSD sys/crypto
+  MD5 and SHA1         WIDE Project              KAME kame/sys/crypto
+  SHA256/384/512       Aaron D. Gifford          OpenBSD sys/crypto
+----------------------------------------------------------------------
 
-LEGALESE
-========
+
+8.  Legalese
+-------------
 
 * I owe a beer to Poul-Henning.
-
 * This product includes software developed by Niels Provos.
 
 
+9.  References/Links
+---------------------
+
+9.1.  Useful reading
+~~~~~~~~~~~~~~~~~~~~~
+
+http://www.openwall.com/crypt/[]::
+	Describes the crypt-blowfish algorithm.
+
+http://www.stack.nl/~galactus/remailers/passphrase-faq.html[]::
+	How to choose good password.
+
+http://world.std.com/~reinhold/diceware.html[]::
+	Interesting idea for picking passwords.
+
+http://www.interhack.net/people/cmcurtin/snake-oil-faq.html[]::
+	Describes good and bad cryptography.
+
+
+9.2.  Technical references
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+http://www.ietf.org/rfc/rfc2440.txt[]::
+	OpenPGP message format
+
+http://www.imc.org/draft-ietf-openpgp-rfc2440bis[]::
+	New version of RFC2440.
+
+http://www.ietf.org/rfc/rfc1321.txt[]::
+	The MD5 Message-Digest Algorithm
+
+http://www.ietf.org/rfc/rfc2104.txt[]::
+	HMAC: Keyed-Hashing for Message Authentication
+
+http://www.usenix.org/events/usenix99/provos.html[]::
+	Comparison of crypt-des, crypt-md5 and bcrypt algorithms.
+
+http://csrc.nist.gov/cryptval/des.htm[]::
+	Standards for DES, 3DES and AES.
+
+http://en.wikipedia.org/wiki/Fortuna_(PRNG)[]::
+	Description of Fortuna CSPRNG.
+
+http://jlcooke.ca/random/[]::
+	Jean-Luc Cooke Fortuna-based /dev/random driver for Linux.
+
+http://www.cs.ut.ee/~helger/crypto/[]::
+	Collection of cryptology pointers.
