@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.130 2002/10/24 03:11:05 momjian Exp $
+ * $Id: c.h,v 1.130.2.1 2005/07/18 15:54:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -582,21 +582,22 @@ typedef NameData *Name;
 #define MemSet(start, val, len) \
 	do \
 	{ \
-		int32 * _start = (int32 *) (start); \
+		void   *_vstart = (void *) (start); \
 		int		_val = (val); \
 		Size	_len = (len); \
 \
-		if ((((long) _start) & INT_ALIGN_MASK) == 0 && \
+		if ((((long) _vstart) & INT_ALIGN_MASK) == 0 && \
 			(_len & INT_ALIGN_MASK) == 0 && \
 			_val == 0 && \
 			_len <= MEMSET_LOOP_LIMIT) \
 		{ \
-			int32 * _stop = (int32 *) ((char *) _start + _len); \
+			int32 *_start = (int32 *) _vstart; \
+			int32 *_stop = (int32 *) ((char *) _start + _len); \
 			while (_start < _stop) \
 				*_start++ = 0; \
 		} \
 		else \
-			memset((char *) _start, _val, _len); \
+			memset(_vstart, _val, _len); \
 	} while (0)
 
 #define MEMSET_LOOP_LIMIT  1024
