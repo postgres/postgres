@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.40 2005/06/24 20:53:30 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.41 2005/07/19 01:27:59 neilc Exp $
 -->
 
 <sect1 id="xindex">
@@ -26,9 +26,10 @@ $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.40 2005/06/24 20:53:30 tgl Exp $
     necessary to make manual additions to the system catalogs
     <classname>pg_amop</>, <classname>pg_amproc</>, and
     <classname>pg_opclass</> in order to create a user-defined
-    operator class.  That approach is now deprecated in favor of
-    using <command>CREATE OPERATOR CLASS</>, which is a much simpler
-    and less error-prone way of creating the necessary catalog entries.
+    operator class.  That approach is now deprecated in favor of using
+    <xref linkend="sql-createopclass" endterm="sql-createopclass-title">,
+    which is a much simpler and less error-prone way of creating the
+    necessary catalog entries.
    </para>
   </note>
 
