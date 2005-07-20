@@ -28,21 +28,21 @@ SELECT INTERVAL '-05' AS "Five hours";
 (1 row)
 
 SELECT INTERVAL '-1 +02:03' AS "22 hours ago...";
- 22 hours ago... 
------------------
- -21:57:00
+  22 hours ago...  
+-------------------
+ -1 days +02:03:00
 (1 row)
 
 SELECT INTERVAL '-1 days +02:03' AS "22 hours ago...";
- 22 hours ago... 
------------------
- -21:57:00
+  22 hours ago...  
+-------------------
+ -1 days +02:03:00
 (1 row)
 
 SELECT INTERVAL '10 years -11 month -12 days +13:14' AS "9 years...";
             9 years...            
 ----------------------------------
- 9 years 1 mon -11 days -10:46:00
+ 9 years 1 mon -12 days +13:14:00
 (1 row)
 
 CREATE TABLE INTERVAL_TBL (f1 interval);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.133 2005/07/20 03:50:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.134 2005/07/20 16:42:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -596,6 +596,7 @@ interval_recv(PG_FUNCTION_ARGS)
 #else
 	interval->time = pq_getmsgfloat8(buf);
 #endif
+	interval->day = pq_getmsgint(buf, sizeof(interval->day));
 	interval->month = pq_getmsgint(buf, sizeof(interval->month));
 
 	AdjustIntervalForTypmod(interval, typmod);
@@ -618,6 +619,7 @@ interval_send(PG_FUNCTION_ARGS)
 #else
 	pq_sendfloat8(&buf, interval->time);
 #endif
+	pq_sendint(&buf, interval->day, sizeof(interval->day));
 	pq_sendint(&buf, interval->month, sizeof(interval->month));
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
@@ -697,48 +699,37 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		else if (range == INTERVAL_MASK(YEAR))
 		{
 			interval->month = (interval->month / 12) * 12;
+			interval->day = 0;
 			interval->time = 0;
 		}
 		else if (range == INTERVAL_MASK(MONTH))
 		{
 			interval->month %= 12;
+			interval->day = 0;
 			interval->time = 0;
 		}
 		/* YEAR TO MONTH */
 		else if (range == (INTERVAL_MASK(YEAR) | INTERVAL_MASK(MONTH)))
+		{
+			/* month is already year to month */
+			interval->day = 0;
 			interval->time = 0;
-
+		}
 		else if (range == INTERVAL_MASK(DAY))
 		{
 			interval->month = 0;
-
-#ifdef HAVE_INT64_TIMESTAMP
-			interval->time = ((int) (interval->time / USECS_PER_DAY)) *
-								USECS_PER_DAY;
-
-#else
-			interval->time = ((int) (interval->time / SECS_PER_DAY)) * SECS_PER_DAY;
-#endif
+			interval->time = 0;
 		}
 		else if (range == INTERVAL_MASK(HOUR))
 		{
-#ifdef HAVE_INT64_TIMESTAMP
-			int64		day;
-#else
-			double		day;
-#endif
-
 			interval->month = 0;
+			interval->day = 0;
 
 #ifdef HAVE_INT64_TIMESTAMP
-			day = interval->time / USECS_PER_DAY;
-			interval->time -= day * USECS_PER_DAY;
 			interval->time = (interval->time / USECS_PER_HOUR) *
 								USECS_PER_HOUR;
-
 #else
-			TMODULO(interval->time, day, (double)SECS_PER_DAY);
-			interval->time = ((int) (interval->time / 3600)) * 3600.0;
+			interval->time = ((int)(interval->time / 3600)) * 3600.0;
 #endif
 		}
 		else if (range == INTERVAL_MASK(MINUTE))
@@ -750,6 +741,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 #endif
 
 			interval->month = 0;
+			interval->day = 0;
 
 #ifdef HAVE_INT64_TIMESTAMP
 			hour = interval->time / USECS_PER_HOUR;
@@ -759,27 +751,26 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 
 #else
 			TMODULO(interval->time, hour, 3600.0);
-			interval->time = ((int) (interval->time / 60)) * 60;
+			interval->time = ((int)(interval->time / 60)) * 60.0;
 #endif
 		}
 		else if (range == INTERVAL_MASK(SECOND))
 		{
 #ifdef HAVE_INT64_TIMESTAMP
 			int64		minute;
-
 #else
 			double		minute;
 #endif
 
 			interval->month = 0;
+			interval->day = 0;
 
 #ifdef HAVE_INT64_TIMESTAMP
 			minute = interval->time / USECS_PER_MINUTE;
 			interval->time -= minute * USECS_PER_MINUTE;
-
 #else
 			TMODULO(interval->time, minute, 60.0);
-/*			interval->time = (int)(interval->time); */
+			/* return subseconds too */
 #endif
 		}
 		/* DAY TO HOUR */
@@ -791,9 +782,8 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 #ifdef HAVE_INT64_TIMESTAMP
 			interval->time = (interval->time / USECS_PER_HOUR) *
 								USECS_PER_HOUR;
-
 #else
-			interval->time = ((int) (interval->time / 3600)) * 3600;
+			interval->time = ((int) (interval->time / 3600)) * 3600.0;
 #endif
 		}
 		/* DAY TO MINUTE */
@@ -806,9 +796,8 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 #ifdef HAVE_INT64_TIMESTAMP
 			interval->time = (interval->time / USECS_PER_MINUTE) *
 								USECS_PER_MINUTE;
-
 #else
-			interval->time = ((int) (interval->time / 60)) * 60;
+			interval->time = ((int)(interval->time / 60)) * 60.0;
 #endif
 		}
 		/* DAY TO SECOND */
@@ -822,24 +811,14 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		else if (range == (INTERVAL_MASK(HOUR) |
 						   INTERVAL_MASK(MINUTE)))
 		{
-#ifdef HAVE_INT64_TIMESTAMP
-			int64		day;
-
-#else
-			double		day;
-#endif
-
 			interval->month = 0;
+			interval->day = 0;
 
 #ifdef HAVE_INT64_TIMESTAMP
-			day = (interval->time / USECS_PER_DAY);
-			interval->time -= day * USECS_PER_DAY;
 			interval->time = (interval->time / USECS_PER_MINUTE) *
 								USECS_PER_MINUTE;
-
 #else
-			TMODULO(interval->time, day, (double)SECS_PER_DAY);
-			interval->time = ((int) (interval->time / 60)) * 60;
+			interval->time = ((int)(interval->time / 60)) * 60.0;
 #endif
 		}
 		/* HOUR TO SECOND */
@@ -847,22 +826,9 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 						   INTERVAL_MASK(MINUTE) |
 						   INTERVAL_MASK(SECOND)))
 		{
-#ifdef HAVE_INT64_TIMESTAMP
-			int64		day;
-
-#else
-			double		day;
-#endif
-
 			interval->month = 0;
-
-#ifdef HAVE_INT64_TIMESTAMP
-			day = interval->time / USECS_PER_DAY;
-			interval->time -= day * USECS_PER_DAY;
-
-#else
-			TMODULO(interval->time, day, (double)SECS_PER_DAY);
-#endif
+			interval->day = 0;
+			/* return subseconds too */
 		}
 		/* MINUTE TO SECOND */
 		else if (range == (INTERVAL_MASK(MINUTE) |
@@ -876,6 +842,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 #endif
 
 			interval->month = 0;
+			interval->day = 0;
 
 #ifdef HAVE_INT64_TIMESTAMP
 			hour = interval->time / USECS_PER_HOUR;
@@ -1029,7 +996,7 @@ dt2time(Timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
  * timezone) will be used.
  */
 int
-timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm, fsec_t *fsec, char **tzn, pg_tz *attimezone)
+timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm, fsec_t *fsec, char **tzn, pg_tz *attimezone)
 {
 	Timestamp date;
 	Timestamp	time;
@@ -1165,7 +1132,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm, fsec_t *fsec, char **tzn
  * Returns -1 on failure (value out of range).
  */
 int
-tm2timestamp(struct pg_tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
+tm2timestamp(struct pg_tm *tm, fsec_t fsec, int *tzp, Timestamp *result)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	int date;
@@ -1205,7 +1172,7 @@ tm2timestamp(struct pg_tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
  * Convert a interval data type to a tm structure.
  */
 int
-interval2tm(Interval span, struct pg_tm * tm, fsec_t *fsec)
+interval2tm(Interval span, struct pg_tm *tm, fsec_t *fsec)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		time;
@@ -1213,23 +1180,12 @@ interval2tm(Interval span, struct pg_tm * tm, fsec_t *fsec)
 	double		time;
 #endif
 
-	if (span.month != 0)
-	{
-		tm->tm_year = span.month / 12;
-		tm->tm_mon = span.month % 12;
-
-	}
-	else
-	{
-		tm->tm_year = 0;
-		tm->tm_mon = 0;
-	}
-
+	tm->tm_year = span.month / 12;
+	tm->tm_mon = span.month % 12;
+	tm->tm_mday = span.day;
 	time = span.time;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	tm->tm_mday = (time / USECS_PER_DAY);
-	time -= (tm->tm_mday * USECS_PER_DAY);
 	tm->tm_hour = (time / USECS_PER_HOUR);
 	time -= (tm->tm_hour * USECS_PER_HOUR);
 	tm->tm_min = (time / USECS_PER_MINUTE);
@@ -1237,7 +1193,6 @@ interval2tm(Interval span, struct pg_tm * tm, fsec_t *fsec)
 	tm->tm_sec = (time / USECS_PER_SEC);
 	*fsec = (time - (tm->tm_sec * USECS_PER_SEC));
 #else
-	TMODULO(time, tm->tm_mday, (double)SECS_PER_DAY);
 	TMODULO(time, tm->tm_hour, 3600.0);
 	TMODULO(time, tm->tm_min, 60.0);
 	TMODULO(time, tm->tm_sec, 1.0);
@@ -1248,17 +1203,16 @@ interval2tm(Interval span, struct pg_tm * tm, fsec_t *fsec)
 }
 
 int
-tm2interval(struct pg_tm * tm, fsec_t fsec, Interval *span)
+tm2interval(struct pg_tm *tm, fsec_t fsec, Interval *span)
 {
 	span->month = tm->tm_year * 12 + tm->tm_mon;
+	span->day   = tm->tm_mday;
 #ifdef HAVE_INT64_TIMESTAMP
-	span->time = (((((((tm->tm_mday * INT64CONST(24)) +
-						tm->tm_hour) * INT64CONST(60)) +
+	span->time = (((((tm->tm_hour * INT64CONST(60)) +
 						tm->tm_min) * INT64CONST(60)) +
 						tm->tm_sec) * USECS_PER_SEC) + fsec;
 #else
-	span->time = (((((tm->tm_mday * 24.0) +
-						tm->tm_hour) * 60.0) +
+	span->time = (((tm->tm_hour * 60.0) +
 						tm->tm_min) * 60.0) +
 						tm->tm_sec;
 	span->time = JROUND(span->time + fsec);
@@ -1320,7 +1274,7 @@ interval_finite(PG_FUNCTION_ARGS)
  *---------------------------------------------------------*/
 
 void
-GetEpochTime(struct pg_tm * tm)
+GetEpochTime(struct pg_tm *tm)
 {
 	struct pg_tm *t0;
 	pg_time_t	epoch = 0;
@@ -1654,15 +1608,15 @@ interval_cmp_internal(Interval *interval1, Interval *interval2)
 	span2 = interval2->time;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	if (interval1->month != 0)
-		span1 += interval1->month * INT64CONST(30) * USECS_PER_DAY;
-	if (interval2->month != 0)
-		span2 += interval2->month * INT64CONST(30) * USECS_PER_DAY;
+	span1 += interval1->month * INT64CONST(30) * USECS_PER_DAY;
+	span1 += interval1->day * INT64CONST(24) * USECS_PER_HOUR;
+	span2 += interval2->month * INT64CONST(30) * USECS_PER_DAY;
+	span2 += interval2->day * INT64CONST(24) * USECS_PER_HOUR;
 #else
-	if (interval1->month != 0)
-		span1 += interval1->month * (30.0 * SECS_PER_DAY);
-	if (interval2->month != 0)
-		span2 += interval2->month * (30.0 * SECS_PER_DAY);
+	span1 += interval1->month * (30.0 * SECS_PER_DAY);
+	span1 += interval1->day * (24.0 * SECS_PER_HOUR);
+	span2 += interval2->month * (30.0 * SECS_PER_DAY);
+	span2 += interval2->day * (24.0 * SECS_PER_HOUR);
 #endif
 
 	return ((span1 < span2) ? -1 : (span1 > span2) ? 1 : 0);
@@ -1744,7 +1698,8 @@ interval_hash(PG_FUNCTION_ARGS)
 	 * sizeof(Interval), so that any garbage pad bytes in the structure
 	 * won't be included in the hash!
 	 */
-	return hash_any((unsigned char *) key, sizeof(key->time) + sizeof(key->month));
+	return hash_any((unsigned char *) key, 
+			sizeof(key->time) + sizeof(key->day) + sizeof(key->month));
 }
 
 /* overlaps_timestamp() --- implements the SQL92 OVERLAPS operator.
@@ -1934,18 +1889,76 @@ timestamp_mi(PG_FUNCTION_ARGS)
 #endif
 
 	result->month = 0;
+	result->day = 0;
+
+	result = DatumGetIntervalP(DirectFunctionCall1(interval_justify_hours,
+												IntervalPGetDatum(result)));
+	PG_RETURN_INTERVAL_P(result);
+}
+
+/*	interval_justify_hours()
+ *	Adjust interval so 'time' contains less than a whole day, and
+ *	'day' contains an integral number of days.  This is useful for
+ *	situations (such as non-TZ) where '1 day' = '24 hours' is valid,
+ *	e.g. interval subtraction and division.  The SQL standard requires
+ *	such conversion in these cases, but not the conversion of days to months.
+ */
+Datum
+interval_justify_hours(PG_FUNCTION_ARGS)
+{
+	Interval  *span = PG_GETARG_INTERVAL_P(0);
+	Interval  *result;
+
+	result = (Interval *) palloc(sizeof(Interval));
+	result->month = span->month;
+	result->time = span->time;
+
+#ifdef HAVE_INT64_TIMESTAMP
+	result->time += span->day * USECS_PER_DAY;
+	result->day = result->time / USECS_PER_DAY;
+	result->time -= result->day * USECS_PER_DAY;
+#else
+	result->time += span->day * (double)SECS_PER_DAY;
+	TMODULO(result->time, result->day, (double)SECS_PER_DAY);
+#endif
 
 	PG_RETURN_INTERVAL_P(result);
 }
 
+/*	interval_justify_days()
+ *	Adjust interval so 'time' contains less than 30 days, and
+ *	adds as months.
+ */
+Datum
+interval_justify_days(PG_FUNCTION_ARGS)
+{
+	Interval  *span = PG_GETARG_INTERVAL_P(0);
+	Interval  *result;
+
+	result = (Interval *) palloc(sizeof(Interval));
+	result->day = span->day;
+	result->time = span->time;
+
+#ifdef HAVE_INT64_TIMESTAMP
+	result->day += span->month * 30.0;
+	result->month = span->day / 30;
+	result->day -= result->month * 30;
+#else
+	result->day += span->month * 30.0;
+	TMODULO(result->day, result->month, 30.0);
+#endif
+
+	PG_RETURN_INTERVAL_P(result);
+}
 
 /* timestamp_pl_interval()
  * Add a interval to a timestamp data type.
- * Note that interval has provisions for qualitative year/month
+ * Note that interval has provisions for qualitative year/month and day
  *	units, so try to do the right thing with them.
  * To add a month, increment the month, and use the same day of month.
  * Then, if the next month has fewer days, set the day of month
  *	to the last day of month.
+ * To add a day, increment the mday, and use the same time of day.
  * Lastly, add in the "quantitative time".
  */
 Datum
@@ -1957,7 +1970,6 @@ timestamp_pl_interval(PG_FUNCTION_ARGS)
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		result = timestamp;
-
 	else
 	{
 		if (span->month != 0)
@@ -1993,7 +2005,29 @@ timestamp_pl_interval(PG_FUNCTION_ARGS)
 						 errmsg("timestamp out of range")));
 		}
 
-		timestamp +=span->time;
+		if (span->day != 0)
+		{
+			struct pg_tm tt,
+					   *tm = &tt;
+			fsec_t		fsec;
+			int			julian;
+			
+			if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) !=0)
+				ereport(ERROR,
+						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+						 errmsg("timestamp out of range")));
+
+			/* Add days by converting to and from julian */
+			julian = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + span->day;
+			j2date(julian, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+
+			if (tm2timestamp(tm, fsec, NULL, &timestamp) !=0)
+				ereport(ERROR,
+						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+						 errmsg("timestamp out of range")));
+		}
+
+		timestamp += span->time;
 		result = timestamp;
 	}
 
@@ -2008,6 +2042,7 @@ timestamp_mi_interval(PG_FUNCTION_ARGS)
 	Interval	tspan;
 
 	tspan.month = -span->month;
+	tspan.day = -span->day;
 	tspan.time = -span->time;
 
 	return DirectFunctionCall2(timestamp_pl_interval,
@@ -2036,7 +2071,6 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		result = timestamp;
-
 	else
 	{
 		if (span->month != 0)
@@ -2074,7 +2108,31 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 						 errmsg("timestamp out of range")));
 		}
 
-		timestamp +=span->time;
+		if (span->day != 0)
+		{
+			struct pg_tm tt,
+					   *tm = &tt;
+			fsec_t		fsec;
+			int			julian;
+
+			if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) !=0)
+				ereport(ERROR,
+						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+						 errmsg("timestamp out of range")));
+
+			/* Add days by converting to and from julian */
+			julian = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + span->day;
+			j2date(julian, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+
+			tz = DetermineLocalTimeZone(tm);
+
+			if (tm2timestamp(tm, fsec, &tz, &timestamp) !=0)
+				ereport(ERROR,
+						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+						 errmsg("timestamp out of range")));
+		}
+
+		timestamp += span->time;
 		result = timestamp;
 	}
 
@@ -2089,6 +2147,7 @@ timestamptz_mi_interval(PG_FUNCTION_ARGS)
 	Interval	tspan;
 
 	tspan.month = -span->month;
+	tspan.day = -span->day;
 	tspan.time = -span->time;
 
 	return DirectFunctionCall2(timestamptz_pl_interval,
@@ -2106,6 +2165,7 @@ interval_um(PG_FUNCTION_ARGS)
 	result = (Interval *) palloc(sizeof(Interval));
 
 	result->time = -(interval->time);
+	result->day = -(interval->day);
 	result->month = -(interval->month);
 
 	PG_RETURN_INTERVAL_P(result);
@@ -2151,6 +2211,7 @@ interval_pl(PG_FUNCTION_ARGS)
 	result = (Interval *) palloc(sizeof(Interval));
 
 	result->month = (span1->month + span2->month);
+	result->day = (span1->day + span2->day);
 #ifdef HAVE_INT64_TIMESTAMP
 	result->time = (span1->time + span2->time);
 #else
@@ -2170,6 +2231,7 @@ interval_mi(PG_FUNCTION_ARGS)
 	result = (Interval *) palloc(sizeof(Interval));
 
 	result->month = (span1->month - span2->month);
+	result->day = (span1->day - span2->day);
 #ifdef HAVE_INT64_TIMESTAMP
 	result->time = (span1->time - span2->time);
 #else
@@ -2188,23 +2250,30 @@ interval_mul(PG_FUNCTION_ARGS)
 
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		months;
+	int64       days;
 #else
 	double		months;
+	double      days;
 #endif
 
 	result = (Interval *) palloc(sizeof(Interval));
 
 	months = (span1->month * factor);
+	days = (span1->day * factor);
 #ifdef HAVE_INT64_TIMESTAMP
 	result->month = months;
+	result->day = days;
 	result->time = (span1->time * factor);
-	result->time += (months - result->month) * INT64CONST(30) *
-					USECS_PER_DAY;
+	result->time += (months - result->month) * INT64CONST(30) * USECS_PER_DAY;
+	result->time += (days - result->day) * INT64CONST(24) * USECS_PER_HOUR;
 #else
 	result->month = (int)months;
+	result->day = (int)days;
 	result->time = JROUND(span1->time * factor);
 	/* evaluate fractional months as 30 days */
 	result->time += JROUND((months - result->month) * 30 * SECS_PER_DAY);
+	/* evaluate fractional days as 24 hours */
+	result->time += JROUND((days - result->day) * 24 * SECS_PER_HOUR);
 #endif
 
 	PG_RETURN_INTERVAL_P(result);
@@ -2225,11 +2294,8 @@ interval_div(PG_FUNCTION_ARGS)
 {
 	Interval   *span = PG_GETARG_INTERVAL_P(0);
 	float8		factor = PG_GETARG_FLOAT8(1);
+	double		month_remainder, day_remainder;
 	Interval   *result;
-
-#ifndef HAVE_INT64_TIMESTAMP
-	double		months;
-#endif
 
 	result = (Interval *) palloc(sizeof(Interval));
 
@@ -2238,20 +2304,29 @@ interval_div(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
 
+	result->month = span->month / factor;
+	result->day = span->day / factor;
+	result->time = span->time / factor;
+
+	/* Computer remainders */
+	month_remainder = (span->month - result->month * factor) / factor;
+	day_remainder = (span->day - result->day * factor) / factor;
+
+	/* Cascade fractions to lower units */
+	/* fractional months full days into days */
+	result->day += month_remainder * 30;
+	/* fractional months partial days into time */
+	day_remainder += (month_remainder * 30) - (int)(month_remainder * 30);
+
 #ifdef HAVE_INT64_TIMESTAMP
-	result->month = (span->month / factor);
-	result->time = (span->time / factor);
-	/* evaluate fractional months as 30 days */
-	result->time += ((span->month - (result->month * factor)) *
-					INT64CONST(30) * USECS_PER_DAY) / factor;
+	result->time += day_remainder * USECS_PER_DAY;
 #else
-	months = span->month / factor;
-	result->month = (int)months;
-	result->time = JROUND(span->time / factor);
-	/* evaluate fractional months as 30 days */
-	result->time += JROUND((months - result->month) * 30 * SECS_PER_DAY);
+	result->time += day_remainder * SECS_PER_DAY;
+	result->time = JROUND(result->time);
 #endif
 
+	result = DatumGetIntervalP(DirectFunctionCall1(interval_justify_hours,
+												IntervalPGetDatum(result)));
 	PG_RETURN_INTERVAL_P(result);
 }
 
@@ -2276,9 +2351,8 @@ interval_accum(PG_FUNCTION_ARGS)
 	Interval   *newsum;
 	ArrayType  *result;
 
-	/* We assume the input is array of interval */
 	deconstruct_array(transarray,
-					  INTERVALOID, 12, false, 'd',
+					  INTERVALOID, sizeof(Interval), false, 'd',
 					  &transdatums, &ndatums);
 	if (ndatums != 2)
 		elog(ERROR, "expected 2-element interval array");
@@ -2304,7 +2378,7 @@ interval_accum(PG_FUNCTION_ARGS)
 	transdatums[1] = IntervalPGetDatum(&N);
 
 	result = construct_array(transdatums, 2,
-							 INTERVALOID, 12, false, 'd');
+							 INTERVALOID, sizeof(Interval), false, 'd');
 
 	PG_RETURN_ARRAYTYPE_P(result);
 }
@@ -2318,9 +2392,8 @@ interval_avg(PG_FUNCTION_ARGS)
 	Interval	sumX,
 				N;
 
-	/* We assume the input is array of interval */
 	deconstruct_array(transarray,
-					  INTERVALOID, 12, false, 'd',
+					  INTERVALOID, sizeof(Interval), false, 'd',
 					  &transdatums, &ndatums);
 	if (ndatums != 2)
 		elog(ERROR, "expected 2-element interval array");
@@ -2721,7 +2794,7 @@ interval_text(PG_FUNCTION_ARGS)
 	result = palloc(len);
 
 	VARATT_SIZEP(result) = len;
-	memmove(VARDATA(result), str, (len - VARHDRSZ));
+	memmove(VARDATA(result), str, len - VARHDRSZ);
 
 	pfree(str);
 
@@ -3080,6 +3153,7 @@ interval_trunc(PG_FUNCTION_ARGS)
 		{
 			switch (val)
 			{
+				/* fall through */
 				case DTK_MILLENNIUM:
 					/* caution: C division may have negative remainder */
 					tm->tm_year = (tm->tm_year / 1000) * 1000;
@@ -3830,11 +3904,9 @@ interval_part(PG_FUNCTION_ARGS)
 #else
 		result = interval->time;
 #endif
-		if (interval->month != 0)
-		{
-			result += (365.25 * SECS_PER_DAY) * (interval->month / 12);
-			result += (30.0 * SECS_PER_DAY) * (interval->month % 12);
-		}
+		result += (365.25 * SECS_PER_DAY) * (interval->month / 12);
+		result += (30.0 * SECS_PER_DAY) * (interval->month % 12);
+		result += interval->day * SECS_PER_DAY;
 	}
 	else
 	{

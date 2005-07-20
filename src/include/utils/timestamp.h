@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.46 2005/06/29 22:51:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.47 2005/07/20 16:42:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,9 +25,9 @@
 
 /*
  * Timestamp represents absolute time.
- * Interval represents delta time. Keep track of months (and years)
- *	separately since the elapsed time spanned is unknown until instantiated
- *	relative to an absolute time.
+ * Interval represents delta time. Keep track of months (and years), days,
+ *	and time separately since the elapsed time spanned is unknown until
+ *	instantiated relative to an absolute time.
  *
  * Note that Postgres uses "time interval" to mean a bounded interval,
  * consisting of a beginning and ending time, not a time span - thomas 97/03/20
@@ -45,12 +45,13 @@ typedef double TimestampTz;
 typedef struct
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	int64		time;			/* all time units other than months and
-								 * years */
+	int64		time;			/* all time units other than days, 
+								 * months and years */
 #else
-	double		time;			/* all time units other than months and
-								 * years */
+	double		time;			/* all time units other than days,
+								 * months and years */
 #endif
+	int32		day;		    /* days, after time for alignment */
 	int32		month;			/* months and years, after time for
 								 * alignment */
 } Interval;
@@ -60,6 +61,7 @@ typedef struct
 #define MAX_INTERVAL_PRECISION 6
 
 #define SECS_PER_DAY	86400
+#define SECS_PER_HOUR   3600
 #ifdef HAVE_INT64_TIMESTAMP
 #define USECS_PER_DAY	INT64CONST(86400000000)
 #define USECS_PER_HOUR	INT64CONST(3600000000)
@@ -212,6 +214,8 @@ extern Datum interval_cmp(PG_FUNCTION_ARGS);
 extern Datum interval_hash(PG_FUNCTION_ARGS);
 extern Datum interval_smaller(PG_FUNCTION_ARGS);
 extern Datum interval_larger(PG_FUNCTION_ARGS);
+extern Datum interval_justify_hours(PG_FUNCTION_ARGS);
+extern Datum interval_justify_days(PG_FUNCTION_ARGS);
 
 extern Datum timestamp_text(PG_FUNCTION_ARGS);
 extern Datum text_timestamp(PG_FUNCTION_ARGS);
@@ -266,16 +270,16 @@ extern Datum pgsql_postmaster_start_time(PG_FUNCTION_ARGS);
 
 extern TimestampTz GetCurrentTimestamp(void);
 
-extern int	tm2timestamp(struct pg_tm * tm, fsec_t fsec, int *tzp, Timestamp *dt);
-extern int timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm,
+extern int	tm2timestamp(struct pg_tm *tm, fsec_t fsec, int *tzp, Timestamp *dt);
+extern int timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm,
 			 fsec_t *fsec, char **tzn, pg_tz *attimezone);
 extern void dt2time(Timestamp dt, int *hour, int *min, int *sec, fsec_t *fsec);
 
-extern int	interval2tm(Interval span, struct pg_tm * tm, fsec_t *fsec);
-extern int	tm2interval(struct pg_tm * tm, fsec_t fsec, Interval *span);
+extern int	interval2tm(Interval span, struct pg_tm *tm, fsec_t *fsec);
+extern int	tm2interval(struct pg_tm *tm, fsec_t fsec, Interval *span);
 
 extern Timestamp SetEpochTimestamp(void);
-extern void GetEpochTime(struct pg_tm * tm);
+extern void GetEpochTime(struct pg_tm *tm);
 
 extern int	timestamp_cmp_internal(Timestamp dt1, Timestamp dt2);
 

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.90 2005/06/24 01:10:11 neilc Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.91 2005/07/20 16:42:30 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2005, PostgreSQL Global Development Group
@@ -899,7 +899,7 @@ static char *str_tolower(char *buff);
 /* static int is_acdc(char *str, int *len); */
 static int	seq_search(char *name, char **array, int type, int max, int *len);
 static void do_to_timestamp(text *date_txt, text *fmt,
-				struct pg_tm * tm, fsec_t *fsec);
+				struct pg_tm *tm, fsec_t *fsec);
 static char *fill_str(char *str, int c, int max);
 static FormatNode *NUM_cache(int len, NUMDesc *Num, char *pars_str, bool *shouldFree);
 static char *int_to_roman(int number);
@@ -3028,7 +3028,7 @@ to_date(PG_FUNCTION_ARGS)
  */
 static void
 do_to_timestamp(text *date_txt, text *fmt,
-				struct pg_tm * tm, fsec_t *fsec)
+				struct pg_tm *tm, fsec_t *fsec)
 {
 	FormatNode *format;
 	TmFromChar	tmfc;

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.163 2005/07/07 20:39:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.164 2005/07/20 16:42:32 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -457,7 +457,7 @@ DATA(insert OID = 1184 ( timestamptz PGNSP PGUID	8 f b t \054 0	0 timestamptz_in
 DESCR("date and time with time zone");
 #define TIMESTAMPTZOID	1184
 DATA(insert OID = 1185 ( _timestamptz PGNSP PGUID -1 f b t \054 0	1184 array_in array_out array_recv array_send - d x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 1186 ( interval	 PGNSP PGUID 12 f b t \054 0	0 interval_in interval_out interval_recv interval_send - d p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 1186 ( interval	 PGNSP PGUID 16 f b t \054 0	0 interval_in interval_out interval_recv interval_send - d p f 0 -1 0 _null_ _null_ ));
 DESCR("@ <number> <units>, time interval");
 #define INTERVALOID		1186
 DATA(insert OID = 1187 ( _interval	 PGNSP PGUID	-1 f b t \054 0 1186 array_in array_out array_recv array_send - d x f 0 -1 0 _null_ _null_ ));

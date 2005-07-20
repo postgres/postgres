@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.135 2005/07/12 16:04:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.136 2005/07/20 16:42:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -829,7 +829,8 @@ interval_reltime(PG_FUNCTION_ARGS)
 	Interval   *interval = PG_GETARG_INTERVAL_P(0);
 	RelativeTime time;
 	int			year,
-				month;
+				month,
+				day;
 
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		span;
@@ -837,28 +838,17 @@ interval_reltime(PG_FUNCTION_ARGS)
 	double		span;
 #endif
 
-	if (interval->month == 0)
-	{
-		year = 0;
-		month = 0;
-	}
-	else if (abs(interval->month) >=12)
-	{
-		year = (interval->month / 12);
-		month = (interval->month % 12);
-	}
-	else
-	{
-		year = 0;
-		month = interval->month;
-	}
+	year = interval->month / 12;
+	month = interval->month % 12;
+	day = interval->day;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	span = ((INT64CONST(365250000) * year + INT64CONST(30000000) * month) *
-			INT64CONST(86400)) + interval->time;
+	span = ((INT64CONST(365250000) * year + INT64CONST(30000000) * month +
+			INT64CONST(1000000) * day) * INT64CONST(86400)) +
+			interval->time;
 	span /= USECS_PER_SEC;
 #else
-	span = (365.25 * year + 30.0 * month) * SECS_PER_DAY + interval->time;
+	span = (365.25 * year + 30.0 * month + day) * SECS_PER_DAY + interval->time;
 #endif
 
 	if (span < INT_MIN || span > INT_MAX)
@@ -876,7 +866,8 @@ reltime_interval(PG_FUNCTION_ARGS)
 	RelativeTime reltime = PG_GETARG_RELATIVETIME(0);
 	Interval   *result;
 	int			year,
-				month;
+				month,
+				day;
 
 	result = (Interval *) palloc(sizeof(Interval));
 
@@ -887,6 +878,7 @@ reltime_interval(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			  errmsg("cannot convert reltime \"invalid\" to interval")));
 			result->time = 0;
+			result->day = 0;
 			result->month = 0;
 			break;
 
@@ -896,15 +888,19 @@ reltime_interval(PG_FUNCTION_ARGS)
 			reltime -= (year * (36525 * 864));
 			month = (reltime / (30 * SECS_PER_DAY));
 			reltime -= (month * (30 * SECS_PER_DAY));
+			day = reltime / SECS_PER_DAY;
+			reltime -= day * SECS_PER_DAY;
 
 			result->time = (reltime * USECS_PER_SEC);
 #else
 			TMODULO(reltime, year, 36525 * 864);
 			TMODULO(reltime, month, 30 * SECS_PER_DAY);
+			TMODULO(reltime, day, SECS_PER_DAY);
 
 			result->time = reltime;
 #endif
 			result->month = 12 * year + month;
+			result->day = day;
 			break;
 	}
 

@@ -33,7 +33,7 @@ TrimTrailingZeros(char *str)
  *	can be used to represent time spans.
  */
 static int
-DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, fsec_t *fsec)
+DecodeTime(char *str, int fmask, int *tmask, struct tm *tm, fsec_t *fsec)
 {
 	char	   *cp;
 
@@ -107,7 +107,7 @@ DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, fsec_t *fsec)
  *	preceding an hh:mm:ss field. - thomas 1998-04-30
  */
 int
-DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fsec_t *fsec)
+DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm *tm, fsec_t *fsec)
 {
 	int			is_before = FALSE;
 
@@ -445,7 +445,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
  * - thomas 1998-04-30
  */
 int
-EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str)
+EncodeInterval(struct tm *tm, fsec_t fsec, int style, char *str)
 {
 	int			is_before = FALSE;
 	int			is_nonzero = FALSE;
@@ -670,7 +670,7 @@ EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str)
  * Convert a interval data type to a tm structure.
  */
 static int
-interval2tm(interval span, struct tm * tm, fsec_t *fsec)
+interval2tm(interval span, struct tm *tm, fsec_t *fsec)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		time;
@@ -713,7 +713,7 @@ interval2tm(interval span, struct tm * tm, fsec_t *fsec)
 }	/* interval2tm() */
 
 static int
-tm2interval(struct tm * tm, fsec_t fsec, interval *span)
+tm2interval(struct tm *tm, fsec_t fsec, interval *span)
 {
 	span->month = tm->tm_year * 12 + tm->tm_mon;
 #ifdef HAVE_INT64_TIMESTAMP
