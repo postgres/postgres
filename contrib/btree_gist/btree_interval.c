@@ -89,7 +89,7 @@ intr2num(const Interval *i)
 	return (ret);
 }
 
-#define INTERVALSIZE 12
+#define INTERVALSIZE 16
 
 static const gbtree_ninfo tinfo =
 {
