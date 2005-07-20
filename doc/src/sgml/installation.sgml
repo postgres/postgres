@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.240 2005/07/06 21:04:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.241 2005/07/20 23:57:46 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -870,10 +870,12 @@ su - postgres
          Use 64-bit integer storage for datetimes and intervals, rather
          than the default floating-point storage.  This reduces the range
          of representable values but guarantees microsecond precision across
-         the full range (see <xref linkend="datatype-datetime"> for more
-         information).  Note also that the integer datetimes code is newer
-         than the floating-point code, and we still find bugs in it from time
-         to time.
+         the full range (see
+         <![%standalone-include[the documentation about datetime datatypes]]>
+         <![%standalone-ignore[<xref linkend="datatype-datetime">]]>
+         for more information).  Note also that the integer datetimes code is
+         newer than the floating-point code, and we still find bugs in it from
+         time to time.
         </para>
        </listitem>
       </varlistentry>
