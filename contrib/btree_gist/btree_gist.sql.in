@@ -49,20 +49,20 @@ INPUT  = gbtreekey16_in,
 OUTPUT = gbtreekey16_out
 );
 
-CREATE FUNCTION gbtreekey24_in(cstring)
-RETURNS gbtreekey24
+CREATE FUNCTION gbtreekey32_in(cstring)
+RETURNS gbtreekey32
 AS 'MODULE_PATHNAME', 'gbtreekey_in'
 LANGUAGE 'c' WITH (isstrict);
 
-CREATE FUNCTION gbtreekey24_out(gbtreekey24)
+CREATE FUNCTION gbtreekey32_out(gbtreekey32)
 RETURNS cstring
 AS 'MODULE_PATHNAME', 'gbtreekey_out'
 LANGUAGE 'c' WITH (isstrict);
 
-CREATE TYPE gbtreekey24 (
-INTERNALLENGTH = 24,
-INPUT  = gbtreekey24_in,
-OUTPUT = gbtreekey24_out
+CREATE TYPE gbtreekey32 (
+INTERNALLENGTH = 32,
+INPUT  = gbtreekey32_in,
+OUTPUT = gbtreekey32_out
 );
 
 CREATE FUNCTION gbtreekey_var_in(cstring)
@@ -697,7 +697,7 @@ AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
       
 CREATE FUNCTION gbt_intv_union(bytea, internal)
-RETURNS gbtreekey24
+RETURNS gbtreekey32
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
 
@@ -722,7 +722,7 @@ AS
 	FUNCTION	5	gbt_intv_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_intv_picksplit (internal, internal),
 	FUNCTION	7	gbt_intv_same (internal, internal, internal),
-	STORAGE		gbtreekey24;
+	STORAGE		gbtreekey32;
 
 --
 --

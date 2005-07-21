@@ -73,22 +73,14 @@ gbt_intvkey_cmp(const void *a, const void *b)
 static double
 intr2num(const Interval *i)
 {
-	double		ret = 0.0;
-	struct pg_tm tm;
-	fsec_t		fsec;
-
-	interval2tm(*i, &tm, &fsec);
-	ret += (tm.tm_year * 360.0 * 86400.0);
-	ret += (tm.tm_mon * 12.0 * 86400.0);
-	ret += (tm.tm_mday * 86400.0);
-	ret += (tm.tm_hour * 3600.0);
-	ret += (tm.tm_min * 60.0);
-	ret += (tm.tm_sec);
-	ret += (fsec / 1000000.0);
-
-	return (ret);
+	return INTERVAL_TO_SEC(i);
 }
 
+/*
+ * INTERVALSIZE should be the actual size-on-disk of an Interval, as shown
+ * in pg_type.  This might be less than sizeof(Interval) if the compiler
+ * insists on adding alignment padding at the end of the struct.
+ */
 #define INTERVALSIZE 16
 
 static const gbtree_ninfo tinfo =

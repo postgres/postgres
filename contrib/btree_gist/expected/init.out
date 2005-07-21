@@ -12,9 +12,9 @@ psql:btree_gist.sql:28: NOTICE:  argument type gbtreekey8 is only a shell
 psql:btree_gist.sql:39: NOTICE:  type "gbtreekey16" is not yet defined
 DETAIL:  Creating a shell type definition.
 psql:btree_gist.sql:44: NOTICE:  argument type gbtreekey16 is only a shell
-psql:btree_gist.sql:55: NOTICE:  type "gbtreekey24" is not yet defined
+psql:btree_gist.sql:55: NOTICE:  type "gbtreekey32" is not yet defined
 DETAIL:  Creating a shell type definition.
-psql:btree_gist.sql:60: NOTICE:  argument type gbtreekey24 is only a shell
+psql:btree_gist.sql:60: NOTICE:  argument type gbtreekey32 is only a shell
 psql:btree_gist.sql:71: NOTICE:  type "gbtreekey_var" is not yet defined
 DETAIL:  Creating a shell type definition.
 psql:btree_gist.sql:76: NOTICE:  argument type gbtreekey_var is only a shell

@@ -207,29 +207,24 @@ gbt_time_penalty(PG_FUNCTION_ARGS)
 	timeKEY    *newentry = (timeKEY *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(1))->key);
 	float	   *result = (float *) PG_GETARG_POINTER(2);
 	Interval   *intr;
-
-#ifdef HAVE_INT64_TIMESTAMP
-	int64		res;
-
-#else
 	double		res;
-#endif
+	double		res2;
 
 	intr = DatumGetIntervalP(DirectFunctionCall2(
 												 time_mi_time,
 										P_TimeADTGetDatum(newentry->upper),
 									 P_TimeADTGetDatum(origentry->upper)));
-
-	/* see interval_larger */
-	res = Max(intr->time + intr->day * 86400 + intr->month * (30 * 86400), 0);
+	res = INTERVAL_TO_SEC(intr);
+	res = Max(res, 0);
 
 	intr = DatumGetIntervalP(DirectFunctionCall2(
 												 time_mi_time,
 									   P_TimeADTGetDatum(origentry->lower),
 									  P_TimeADTGetDatum(newentry->lower)));
+	res2 = INTERVAL_TO_SEC(intr);
+	res2 = Max(res2, 0);
 
-	/* see interval_larger */
-	res += Max(intr->time + intr->day * 86400 + intr->month * (30 * 86400), 0);
+	res += res2;
 
 	*result = 0.0;
 
@@ -240,7 +235,7 @@ gbt_time_penalty(PG_FUNCTION_ARGS)
 									   P_TimeADTGetDatum(origentry->upper),
 									 P_TimeADTGetDatum(origentry->lower)));
 		*result += FLT_MIN;
-		*result += (float) (res / ((double) (res + intr->time + intr->day * 86400 + intr->month * (30 * 86400))));
+		*result += (float) (res / (res + INTERVAL_TO_SEC(intr)));
 		*result *= (FLT_MAX / (((GISTENTRY *) PG_GETARG_POINTER(0))->rel->rd_att->natts + 1));
 	}
 
