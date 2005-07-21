@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.135 2005/07/21 03:56:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.136 2005/07/21 04:41:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -433,7 +433,7 @@ timestamptz_recv(PG_FUNCTION_ARGS)
 	/* rangecheck: see if timestamptz_out would like it */
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		 /* ok */ ;
-	else if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) !=0)
+	else if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
@@ -1186,12 +1186,12 @@ interval2tm(Interval span, struct pg_tm *tm, fsec_t *fsec)
 	time = span.time;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	tm->tm_hour = (time / USECS_PER_HOUR);
-	time -= (tm->tm_hour * USECS_PER_HOUR);
-	tm->tm_min = (time / USECS_PER_MINUTE);
-	time -= (tm->tm_min * USECS_PER_MINUTE);
-	tm->tm_sec = (time / USECS_PER_SEC);
-	*fsec = (time - (tm->tm_sec * USECS_PER_SEC));
+	tm->tm_hour = time / USECS_PER_HOUR;
+	time -= tm->tm_hour * USECS_PER_HOUR;
+	tm->tm_min = time / USECS_PER_MINUTE;
+	time -= tm->tm_min * USECS_PER_MINUTE;
+	tm->tm_sec = time / USECS_PER_SEC;
+	*fsec = time - (tm->tm_sec * USECS_PER_SEC);
 #else
 	TMODULO(time, tm->tm_hour, (double)SECS_PER_HOUR);
 	TMODULO(time, tm->tm_min, (double)SECS_PER_MINUTE);
@@ -1883,7 +1883,7 @@ timestamp_mi(PG_FUNCTION_ARGS)
 	}
 	else
 #ifdef HAVE_INT64_TIMESTAMP
-		result->time = (dt1 - dt2);
+		result->time = dt1 - dt2;
 #else
 		result->time = JROUND(dt1 - dt2);
 #endif
@@ -1978,7 +1978,7 @@ timestamp_pl_interval(PG_FUNCTION_ARGS)
 					   *tm = &tt;
 			fsec_t		fsec;
 
-			if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) !=0)
+			if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("timestamp out of range")));
@@ -1999,7 +1999,7 @@ timestamp_pl_interval(PG_FUNCTION_ARGS)
 			if (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
 				tm->tm_mday = (day_tab[isleap(tm->tm_year)][tm->tm_mon - 1]);
 
-			if (tm2timestamp(tm, fsec, NULL, &timestamp) !=0)
+			if (tm2timestamp(tm, fsec, NULL, &timestamp) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("timestamp out of range")));
@@ -2012,7 +2012,7 @@ timestamp_pl_interval(PG_FUNCTION_ARGS)
 			fsec_t		fsec;
 			int			julian;
 			
-			if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) !=0)
+			if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("timestamp out of range")));
@@ -2021,7 +2021,7 @@ timestamp_pl_interval(PG_FUNCTION_ARGS)
 			julian = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + span->day;
 			j2date(julian, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 
-			if (tm2timestamp(tm, fsec, NULL, &timestamp) !=0)
+			if (tm2timestamp(tm, fsec, NULL, &timestamp) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("timestamp out of range")));
@@ -2079,7 +2079,7 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 					   *tm = &tt;
 			fsec_t		fsec;
 
-			if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) !=0)
+			if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("timestamp out of range")));
@@ -2102,7 +2102,7 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 
 			tz = DetermineLocalTimeZone(tm);
 
-			if (tm2timestamp(tm, fsec, &tz, &timestamp) !=0)
+			if (tm2timestamp(tm, fsec, &tz, &timestamp) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("timestamp out of range")));
@@ -2115,7 +2115,7 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 			fsec_t		fsec;
 			int			julian;
 
-			if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) !=0)
+			if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("timestamp out of range")));
@@ -2126,7 +2126,7 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 
 			tz = DetermineLocalTimeZone(tm);
 
-			if (tm2timestamp(tm, fsec, &tz, &timestamp) !=0)
+			if (tm2timestamp(tm, fsec, &tz, &timestamp) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("timestamp out of range")));
@@ -2164,9 +2164,9 @@ interval_um(PG_FUNCTION_ARGS)
 
 	result = (Interval *) palloc(sizeof(Interval));
 
-	result->time = -(interval->time);
-	result->day = -(interval->day);
-	result->month = -(interval->month);
+	result->time = -interval->time;
+	result->day = -interval->day;
+	result->month = -interval->month;
 
 	PG_RETURN_INTERVAL_P(result);
 }
@@ -2210,10 +2210,10 @@ interval_pl(PG_FUNCTION_ARGS)
 
 	result = (Interval *) palloc(sizeof(Interval));
 
-	result->month = (span1->month + span2->month);
-	result->day = (span1->day + span2->day);
+	result->month = span1->month + span2->month;
+	result->day = span1->day + span2->day;
 #ifdef HAVE_INT64_TIMESTAMP
-	result->time = (span1->time + span2->time);
+	result->time = span1->time + span2->time;
 #else
 	result->time = JROUND(span1->time + span2->time);
 #endif
@@ -2230,10 +2230,10 @@ interval_mi(PG_FUNCTION_ARGS)
 
 	result = (Interval *) palloc(sizeof(Interval));
 
-	result->month = (span1->month - span2->month);
-	result->day = (span1->day - span2->day);
+	result->month = span1->month - span2->month;
+	result->day = span1->day - span2->day;
 #ifdef HAVE_INT64_TIMESTAMP
-	result->time = (span1->time - span2->time);
+	result->time = span1->time - span2->time;
 #else
 	result->time = JROUND(span1->time - span2->time);
 #endif
@@ -2258,12 +2258,12 @@ interval_mul(PG_FUNCTION_ARGS)
 
 	result = (Interval *) palloc(sizeof(Interval));
 
-	months = (span1->month * factor);
-	days = (span1->day * factor);
+	months = span1->month * factor;
+	days = span1->day * factor;
 #ifdef HAVE_INT64_TIMESTAMP
 	result->month = months;
 	result->day = days;
-	result->time = (span1->time * factor);
+	result->time = span1->time * factor;
 	result->time += (months - result->month) * INT64CONST(DAYS_PER_MONTH) * USECS_PER_DAY;
 	result->time += (days - result->day) * INT64CONST(HOURS_PER_DAY) * USECS_PER_HOUR;
 #else
@@ -2862,7 +2862,7 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 
 	if (type == UNITS)
 	{
-		if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) !=0)
+		if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("timestamp out of range")));
@@ -2996,7 +2996,7 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 
 	if (type == UNITS)
 	{
-		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) !=0)
+		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("timestamp out of range")));
@@ -3390,7 +3390,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 
 	if (type == UNITS)
 	{
-		if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) !=0)
+		if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("timestamp out of range")));
@@ -3461,7 +3461,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 				 * and -1 is 11 BC thru 2 BC...
 				 */
 				if (tm->tm_year >= 0)
-					result = (tm->tm_year / 10);
+					result = tm->tm_year / 10;
 				else
 					result = -((8 - (tm->tm_year - 1)) / 10);
 				break;
@@ -3484,7 +3484,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 			case DTK_MILLENNIUM:
 				/* see comments above. */
 				if (tm->tm_year > 0)
-					result = ((tm->tm_year + 999) / 1000);
+					result = (tm->tm_year + 999) / 1000;
 				else
 					result = -((999 - (tm->tm_year - 1)) / 1000);
 				break;
@@ -3524,7 +3524,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 					 * convert to timestamptz to produce consistent
 					 * results
 					 */
-					if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) !=0)
+					if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0)
 						ereport(ERROR,
 						   (errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 							errmsg("timestamp out of range")));
@@ -3544,7 +3544,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 					break;
 				}
 			case DTK_DOW:
-				if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) !=0)
+				if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 							 errmsg("timestamp out of range")));
@@ -3552,7 +3552,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 				break;
 
 			case DTK_DOY:
-				if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) !=0)
+				if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 							 errmsg("timestamp out of range")));
@@ -3615,7 +3615,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 
 	if (type == UNITS)
 	{
-		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) !=0)
+		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("timestamp out of range")));
@@ -3696,7 +3696,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 			case DTK_DECADE:
 				/* see comments in timestamp_part */
 				if (tm->tm_year > 0)
-					result = (tm->tm_year / 10);
+					result = tm->tm_year / 10;
 				else
 					result = -((8 - (tm->tm_year - 1)) / 10);
 				break;
@@ -3750,7 +3750,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 				break;
 
 			case DTK_DOW:
-				if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) !=0)
+				if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) != 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 							 errmsg("timestamp out of range")));
@@ -3758,7 +3758,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 				break;
 
 			case DTK_DOY:
-				if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) !=0)
+				if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) != 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 							 errmsg("timestamp out of range")));
@@ -3868,17 +3868,17 @@ interval_part(PG_FUNCTION_ARGS)
 
 				case DTK_DECADE:
 					/* caution: C division may have negative remainder */
-					result = (tm->tm_year / 10);
+					result = tm->tm_year / 10;
 					break;
 
 				case DTK_CENTURY:
 					/* caution: C division may have negative remainder */
-					result = (tm->tm_year / 100);
+					result = tm->tm_year / 100;
 					break;
 
 				case DTK_MILLENNIUM:
 					/* caution: C division may have negative remainder */
-					result = (tm->tm_year / 1000);
+					result = tm->tm_year / 1000;
 					break;
 
 				default:
@@ -4025,7 +4025,7 @@ timestamp2timestamptz(Timestamp timestamp)
 
 	else
 	{
-		if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) !=0)
+		if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("timestamp out of range")));
@@ -4060,7 +4060,7 @@ timestamptz_timestamp(PG_FUNCTION_ARGS)
 
 	else
 	{
-		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) !=0)
+		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("timestamp out of range")));

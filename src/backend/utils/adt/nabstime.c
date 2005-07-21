@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.137 2005/07/21 03:56:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.138 2005/07/21 04:41:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,8 +49,8 @@
 
 #define IsSpace(C)				((C) == ' ')
 
-#define T_INTERVAL_INVAL   0	/* data represents no valid interval */
-#define T_INTERVAL_VALID   1	/* data represents a valid interval */
+#define T_INTERVAL_INVAL   0	/* data represents no valid tinterval */
+#define T_INTERVAL_VALID   1	/* data represents a valid tinterval */
 /*
  * ['Mon May 10 23:59:12 1943 PST' 'Sun Jan 14 03:14:21 1973 PST']
  * 0		1		  2			3		  4			5		  6
@@ -712,64 +712,64 @@ reltime2tm(RelativeTime time, struct pg_tm * tm)
 
 
 /*
- *		tintervalin		- converts an interval string to internal format
+ *		tintervalin		- converts an tinterval string to internal format
  */
 Datum
 tintervalin(PG_FUNCTION_ARGS)
 {
-	char	   *intervalstr = PG_GETARG_CSTRING(0);
-	TimeInterval interval;
+	char	   *tintervalstr = PG_GETARG_CSTRING(0);
+	TimeInterval tinterval;
 	AbsoluteTime i_start,
 				i_end,
 				t1,
 				t2;
 
-	interval = (TimeInterval) palloc(sizeof(TimeIntervalData));
+	tinterval = (TimeInterval) palloc(sizeof(TimeIntervalData));
 
-	if (istinterval(intervalstr, &t1, &t2) == 0)
+	if (istinterval(tintervalstr, &t1, &t2) == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 				 errmsg("invalid input syntax for type tinterval: \"%s\"",
-						intervalstr)));
+						tintervalstr)));
 
 	if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
-		interval  ->status = T_INTERVAL_INVAL;	/* undefined  */
+		tinterval  ->status = T_INTERVAL_INVAL;	/* undefined  */
 
 	else
-		interval  ->status = T_INTERVAL_VALID;
+		tinterval  ->status = T_INTERVAL_VALID;
 
 	i_start = ABSTIMEMIN(t1, t2);
 	i_end = ABSTIMEMAX(t1, t2);
-	interval  ->data[0] = i_start;
-	interval  ->data[1] = i_end;
+	tinterval  ->data[0] = i_start;
+	tinterval  ->data[1] = i_end;
 
-	PG_RETURN_TIMEINTERVAL(interval);
+	PG_RETURN_TIMEINTERVAL(tinterval);
 }
 
 
 /*
- *		tintervalout	- converts an internal interval format to a string
+ *		tintervalout	- converts an internal tinterval format to a string
  */
 Datum
 tintervalout(PG_FUNCTION_ARGS)
 {
-	TimeInterval interval = PG_GETARG_TIMEINTERVAL(0);
+	TimeInterval tinterval = PG_GETARG_TIMEINTERVAL(0);
 	char	   *i_str,
 			   *p;
 
 	i_str = (char *) palloc(T_INTERVAL_LEN);	/* ["..." "..."] */
 	strcpy(i_str, "[\"");
-	if (interval->status == T_INTERVAL_INVAL)
+	if (tinterval->status == T_INTERVAL_INVAL)
 		strcat(i_str, INVALID_INTERVAL_STR);
 	else
 	{
 		p = DatumGetCString(DirectFunctionCall1(abstimeout,
-							   AbsoluteTimeGetDatum(interval->data[0])));
+							   AbsoluteTimeGetDatum(tinterval->data[0])));
 		strcat(i_str, p);
 		pfree(p);
 		strcat(i_str, "\" \"");
 		p = DatumGetCString(DirectFunctionCall1(abstimeout,
-							   AbsoluteTimeGetDatum(interval->data[1])));
+							   AbsoluteTimeGetDatum(tinterval->data[1])));
 		strcat(i_str, p);
 		pfree(p);
 	}
@@ -784,22 +784,22 @@ Datum
 tintervalrecv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	TimeInterval interval;
+	TimeInterval tinterval;
 
-	interval = (TimeInterval) palloc(sizeof(TimeIntervalData));
+	tinterval = (TimeInterval) palloc(sizeof(TimeIntervalData));
 
-	interval  ->status = pq_getmsgint(buf, sizeof(interval->status));
+	tinterval  ->status = pq_getmsgint(buf, sizeof(tinterval->status));
 
-	if (!(interval->status == T_INTERVAL_INVAL ||
-		  interval->status == T_INTERVAL_VALID))
+	if (!(tinterval->status == T_INTERVAL_INVAL ||
+		  tinterval->status == T_INTERVAL_VALID))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 			  errmsg("invalid status in external \"tinterval\" value")));
 
-	interval  ->data[0] = pq_getmsgint(buf, sizeof(interval->data[0]));
-	interval  ->data[1] = pq_getmsgint(buf, sizeof(interval->data[1]));
+	tinterval  ->data[0] = pq_getmsgint(buf, sizeof(tinterval->data[0]));
+	tinterval  ->data[1] = pq_getmsgint(buf, sizeof(tinterval->data[1]));
 
-	PG_RETURN_TIMEINTERVAL(interval);
+	PG_RETURN_TIMEINTERVAL(tinterval);
 }
 
 /*
@@ -808,13 +808,13 @@ tintervalrecv(PG_FUNCTION_ARGS)
 Datum
 tintervalsend(PG_FUNCTION_ARGS)
 {
-	TimeInterval interval = PG_GETARG_TIMEINTERVAL(0);
+	TimeInterval tinterval = PG_GETARG_TIMEINTERVAL(0);
 	StringInfoData buf;
 
 	pq_begintypsend(&buf);
-	pq_sendint(&buf, interval->status, sizeof(interval->status));
-	pq_sendint(&buf, interval->data[0], sizeof(interval->data[0]));
-	pq_sendint(&buf, interval->data[1], sizeof(interval->data[1]));
+	pq_sendint(&buf, tinterval->status, sizeof(tinterval->status));
+	pq_sendint(&buf, tinterval->data[0], sizeof(tinterval->data[0]));
+	pq_sendint(&buf, tinterval->data[1], sizeof(tinterval->data[1]));
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
@@ -884,10 +884,10 @@ reltime_interval(PG_FUNCTION_ARGS)
 
 		default:
 #ifdef HAVE_INT64_TIMESTAMP
-			year = (reltime / (36525 * 864));
-			reltime -= (year * (36525 * 864));
-			month = (reltime / (DAYS_PER_MONTH * SECS_PER_DAY));
-			reltime -= (month * (DAYS_PER_MONTH * SECS_PER_DAY));
+			year = reltime / (36525 * 864);
+			reltime -= year * (36525 * 864);
+			month = reltime / (DAYS_PER_MONTH * SECS_PER_DAY);
+			reltime -= month * (DAYS_PER_MONTH * SECS_PER_DAY);
 			day = reltime / SECS_PER_DAY;
 			reltime -= day * SECS_PER_DAY;
 
@@ -918,21 +918,21 @@ mktinterval(PG_FUNCTION_ARGS)
 	AbsoluteTime t2 = PG_GETARG_ABSOLUTETIME(1);
 	AbsoluteTime tstart = ABSTIMEMIN(t1, t2);
 	AbsoluteTime tend = ABSTIMEMAX(t1, t2);
-	TimeInterval interval;
+	TimeInterval tinterval;
 
-	interval = (TimeInterval) palloc(sizeof(TimeIntervalData));
+	tinterval = (TimeInterval) palloc(sizeof(TimeIntervalData));
 
 	if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
-		interval  ->status = T_INTERVAL_INVAL;
+		tinterval->status = T_INTERVAL_INVAL;
 
 	else
 	{
-		interval  ->status = T_INTERVAL_VALID;
-		interval  ->data[0] = tstart;
-		interval  ->data[1] = tend;
+		tinterval->status = T_INTERVAL_VALID;
+		tinterval->data[0] = tstart;
+		tinterval->data[1] = tend;
 	}
 
-	PG_RETURN_TIMEINTERVAL(interval);
+	PG_RETURN_TIMEINTERVAL(tinterval);
 }
 
 /*
@@ -981,38 +981,38 @@ timemi(PG_FUNCTION_ARGS)
 
 
 /*
- *		intinterval		- returns true iff absolute date is in the interval
+ *		intinterval		- returns true iff absolute date is in the tinterval
  */
 Datum
 intinterval(PG_FUNCTION_ARGS)
 {
 	AbsoluteTime t = PG_GETARG_ABSOLUTETIME(0);
-	TimeInterval interval = PG_GETARG_TIMEINTERVAL(1);
+	TimeInterval tinterval = PG_GETARG_TIMEINTERVAL(1);
 
-	if (interval->status == T_INTERVAL_VALID && t != INVALID_ABSTIME)
+	if (tinterval->status == T_INTERVAL_VALID && t != INVALID_ABSTIME)
 	{
 		if (DatumGetBool(DirectFunctionCall2(abstimege,
 											 AbsoluteTimeGetDatum(t),
-							 AbsoluteTimeGetDatum(interval->data[0]))) &&
+							 AbsoluteTimeGetDatum(tinterval->data[0]))) &&
 			DatumGetBool(DirectFunctionCall2(abstimele,
 											 AbsoluteTimeGetDatum(t),
-							   AbsoluteTimeGetDatum(interval->data[1]))))
+							   AbsoluteTimeGetDatum(tinterval->data[1]))))
 			PG_RETURN_BOOL(true);
 	}
 	PG_RETURN_BOOL(false);
 }
 
 /*
- *		tintervalrel		- returns  relative time corresponding to interval
+ *		tintervalrel		- returns  relative time corresponding to tinterval
  */
 Datum
 tintervalrel(PG_FUNCTION_ARGS)
 {
-	TimeInterval interval = PG_GETARG_TIMEINTERVAL(0);
-	AbsoluteTime t1 = interval->data[0];
-	AbsoluteTime t2 = interval->data[1];
+	TimeInterval tinterval = PG_GETARG_TIMEINTERVAL(0);
+	AbsoluteTime t1 = tinterval->data[0];
+	AbsoluteTime t2 = tinterval->data[1];
 
-	if (interval->status != T_INTERVAL_VALID)
+	if (tinterval->status != T_INTERVAL_VALID)
 		PG_RETURN_RELATIVETIME(INVALID_RELTIME);
 
 	if (AbsoluteTimeIsReal(t1) &&
@@ -1134,7 +1134,7 @@ btreltimecmp(PG_FUNCTION_ARGS)
 
 
 /*
- *		tintervalsame	- returns true iff interval i1 is same as interval i2
+ *		tintervalsame	- returns true iff tinterval i1 is same as tinterval i2
  *		Check begin and end time.
  */
 Datum
@@ -1159,7 +1159,7 @@ tintervalsame(PG_FUNCTION_ARGS)
 /*
  * tinterval comparison routines
  *
- * Note: comparison is based on the lengths of the intervals, not on
+ * Note: comparison is based on the lengths of the tintervals, not on
  * endpoint value.	This is pretty bogus, but since it's only a legacy
  * datatype I'm not going to propose changing it.
  */
@@ -1270,17 +1270,17 @@ bttintervalcmp(PG_FUNCTION_ARGS)
 
 
 /*
- *		tintervalleneq	- returns true iff length of interval i is equal to
+ *		tintervalleneq	- returns true iff length of tinterval i is equal to
  *								reltime t
- *		tintervallenne	- returns true iff length of interval i is not equal
+ *		tintervallenne	- returns true iff length of tinterval i is not equal
  *								to reltime t
- *		tintervallenlt	- returns true iff length of interval i is less than
+ *		tintervallenlt	- returns true iff length of tinterval i is less than
  *								reltime t
- *		tintervallengt	- returns true iff length of interval i is greater
+ *		tintervallengt	- returns true iff length of tinterval i is greater
  *								than reltime t
- *		tintervallenle	- returns true iff length of interval i is less or
+ *		tintervallenle	- returns true iff length of tinterval i is less or
  *								equal than reltime t
- *		tintervallenge	- returns true iff length of interval i is greater or
+ *		tintervallenge	- returns true iff length of tinterval i is greater or
  *								equal than reltime t
  */
 Datum
@@ -1368,7 +1368,7 @@ tintervallenge(PG_FUNCTION_ARGS)
 }
 
 /*
- *		tintervalct		- returns true iff interval i1 contains interval i2
+ *		tintervalct		- returns true iff tinterval i1 contains tinterval i2
  */
 Datum
 tintervalct(PG_FUNCTION_ARGS)
@@ -1389,7 +1389,7 @@ tintervalct(PG_FUNCTION_ARGS)
 }
 
 /*
- *		tintervalov		- returns true iff interval i1 (partially) overlaps i2
+ *		tintervalov		- returns true iff tinterval i1 (partially) overlaps i2
  */
 Datum
 tintervalov(PG_FUNCTION_ARGS)
@@ -1410,7 +1410,7 @@ tintervalov(PG_FUNCTION_ARGS)
 }
 
 /*
- *		tintervalstart	- returns  the start of interval i
+ *		tintervalstart	- returns  the start of tinterval i
  */
 Datum
 tintervalstart(PG_FUNCTION_ARGS)
@@ -1423,7 +1423,7 @@ tintervalstart(PG_FUNCTION_ARGS)
 }
 
 /*
- *		tintervalend		- returns  the end of interval i
+ *		tintervalend		- returns  the end of tinterval i
  */
 Datum
 tintervalend(PG_FUNCTION_ARGS)
@@ -1441,12 +1441,12 @@ tintervalend(PG_FUNCTION_ARGS)
  *****************************************************************************/
 
 /*
- *		istinterval		- returns 1, iff i_string is a valid interval descr.
- *								  0, iff i_string is NOT a valid interval desc.
+ *		istinterval		- returns 1, iff i_string is a valid tinterval descr.
+ *								  0, iff i_string is NOT a valid tinterval desc.
  *								  2, iff any time is INVALID_ABSTIME
  *
  *		output parameter:
- *				i_start, i_end: interval margins
+ *				i_start, i_end: tinterval margins
  *
  *		Time interval:
  *		`[' {` '} `'' <AbsTime> `'' {` '} `'' <AbsTime> `'' {` '} `]'
@@ -1551,7 +1551,7 @@ istinterval(char *i_string,
 	c = *p;
 	if (c != '\0')
 		return 0;				/* syntax error */
-	/* it seems to be a valid interval */
+	/* it seems to be a valid tinterval */
 	return 1;
 }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.128 2005/07/10 21:13:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.129 2005/07/21 04:41:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -455,11 +455,11 @@ textcat(PG_FUNCTION_ARGS)
 	text	   *result;
 	char	   *ptr;
 
-	len1 = (VARSIZE(t1) - VARHDRSZ);
+	len1 = VARSIZE(t1) - VARHDRSZ;
 	if (len1 < 0)
 		len1 = 0;
 
-	len2 = (VARSIZE(t2) - VARHDRSZ);
+	len2 = VARSIZE(t2) - VARHDRSZ;
 	if (len2 < 0)
 		len2 = 0;
 
@@ -756,8 +756,8 @@ text_position(text *t1, text *t2, int matchnum)
 	if (VARSIZE(t2) <= VARHDRSZ)
 		return 1;				/* result for empty pattern */
 
-	len1 = (VARSIZE(t1) - VARHDRSZ);
-	len2 = (VARSIZE(t2) - VARHDRSZ);
+	len1 = VARSIZE(t1) - VARHDRSZ;
+	len2 = VARSIZE(t2) - VARHDRSZ;
 
 	if (pg_database_encoding_max_length() == 1)
 	{
@@ -1224,11 +1224,11 @@ byteacat(PG_FUNCTION_ARGS)
 	bytea	   *result;
 	char	   *ptr;
 
-	len1 = (VARSIZE(t1) - VARHDRSZ);
+	len1 = VARSIZE(t1) - VARHDRSZ;
 	if (len1 < 0)
 		len1 = 0;
 
-	len2 = (VARSIZE(t2) - VARHDRSZ);
+	len2 = VARSIZE(t2) - VARHDRSZ;
 	if (len2 < 0)
 		len2 = 0;
 
@@ -1349,8 +1349,8 @@ byteapos(PG_FUNCTION_ARGS)
 	if (VARSIZE(t2) <= VARHDRSZ)
 		PG_RETURN_INT32(1);		/* result for empty pattern */
 
-	len1 = (VARSIZE(t1) - VARHDRSZ);
-	len2 = (VARSIZE(t2) - VARHDRSZ);
+	len1 = VARSIZE(t1) - VARHDRSZ;
+	len2 = VARSIZE(t2) - VARHDRSZ;
 
 	p1 = VARDATA(t1);
 	p2 = VARDATA(t2);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.153 2005/07/21 03:56:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.154 2005/07/21 04:41:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3275,8 +3275,8 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 		int			sec;
 
 #ifdef HAVE_INT64_TIMESTAMP
-		sec = (*fsec / USECS_PER_SEC);
-		*fsec -= (sec * USECS_PER_SEC);
+		sec = *fsec / USECS_PER_SEC;
+		*fsec -= sec * USECS_PER_SEC;
 #else
 		TMODULO(*fsec, sec, 1.0);
 #endif

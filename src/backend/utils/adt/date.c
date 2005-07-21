@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.114 2005/07/21 03:56:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.115 2005/07/21 04:41:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -304,8 +304,7 @@ date2timestamptz(DateADT dateVal)
 	tz = DetermineLocalTimeZone(tm);
 
 #ifdef HAVE_INT64_TIMESTAMP
-	result = (dateVal * USECS_PER_DAY)
-		+ (tz * USECS_PER_SEC);
+	result = dateVal * USECS_PER_DAY + tz * USECS_PER_SEC;
 #else
 	result = dateVal * (double)SECS_PER_DAY + tz;
 #endif
@@ -725,7 +724,7 @@ timestamp_date(PG_FUNCTION_ARGS)
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_NULL();
 
-	if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) !=0)
+	if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
@@ -768,7 +767,7 @@ timestamptz_date(PG_FUNCTION_ARGS)
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_NULL();
 
-	if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) !=0)
+	if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
@@ -829,7 +828,7 @@ date_text(PG_FUNCTION_ARGS)
 
 	str = DatumGetCString(DirectFunctionCall1(date_out, date));
 
-	len = (strlen(str) + VARHDRSZ);
+	len = strlen(str) + VARHDRSZ;
 
 	result = palloc(len);
 
@@ -1337,7 +1336,7 @@ timestamp_time(PG_FUNCTION_ARGS)
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_NULL();
 
-	if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) !=0)
+	if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
@@ -1374,7 +1373,7 @@ timestamptz_time(PG_FUNCTION_ARGS)
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_NULL();
 
-	if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) !=0)
+	if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
@@ -1496,14 +1495,14 @@ time_pl_interval(PG_FUNCTION_ARGS)
 	TimeADT		result;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	result = (time + span->time);
-	result -= (result / USECS_PER_DAY * USECS_PER_DAY);
+	result = time + span->time;
+	result -= result / USECS_PER_DAY * USECS_PER_DAY;
 	if (result < INT64CONST(0))
 		result += USECS_PER_DAY;
 #else
 	TimeADT		time1;
 
-	result = (time + span->time);
+	result = time + span->time;
 	TMODULO(result, time1, (double)SECS_PER_DAY);
 	if (result < 0)
 		result += SECS_PER_DAY;
@@ -1523,14 +1522,14 @@ time_mi_interval(PG_FUNCTION_ARGS)
 	TimeADT		result;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	result = (time - span->time);
-	result -= (result / USECS_PER_DAY * USECS_PER_DAY);
+	result = time - span->time;
+	result -= result / USECS_PER_DAY * USECS_PER_DAY;
 	if (result < INT64CONST(0))
 		result += USECS_PER_DAY;
 #else
 	TimeADT		time1;
 
-	result = (time - span->time);
+	result = time - span->time;
 	TMODULO(result, time1, (double)SECS_PER_DAY);
 	if (result < 0)
 		result += SECS_PER_DAY;
@@ -1554,7 +1553,7 @@ time_text(PG_FUNCTION_ARGS)
 
 	str = DatumGetCString(DirectFunctionCall1(time_out, time));
 
-	len = (strlen(str) + VARHDRSZ);
+	len = strlen(str) + VARHDRSZ;
 
 	result = palloc(len);
 
@@ -1685,7 +1684,7 @@ time_part(PG_FUNCTION_ARGS)
 	else if (type == RESERV && val == DTK_EPOCH)
 	{
 #ifdef HAVE_INT64_TIMESTAMP
-		result = (time / 1000000.0);
+		result = time / 1000000.0;
 #else
 		result = time;
 #endif
@@ -2036,12 +2035,12 @@ timetz_pl_interval(PG_FUNCTION_ARGS)
 	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
 
 #ifdef HAVE_INT64_TIMESTAMP
-	result->time = (time->time + span->time);
-	result->time -= (result->time / USECS_PER_DAY * USECS_PER_DAY);
+	result->time = time->time + span->time;
+	result->time -= result->time / USECS_PER_DAY * USECS_PER_DAY;
 	if (result->time < INT64CONST(0))
 		result->time += USECS_PER_DAY;
 #else
-	result->time = (time->time + span->time);
+	result->time = time->time + span->time;
 	TMODULO(result->time, time1.time, (double)SECS_PER_DAY);
 	if (result->time < 0)
 		result->time += SECS_PER_DAY;
@@ -2069,12 +2068,12 @@ timetz_mi_interval(PG_FUNCTION_ARGS)
 	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
 
 #ifdef HAVE_INT64_TIMESTAMP
-	result->time = (time->time - span->time);
-	result->time -= (result->time / USECS_PER_DAY * USECS_PER_DAY);
+	result->time = time->time - span->time;
+	result->time -= result->time / USECS_PER_DAY * USECS_PER_DAY;
 	if (result->time < INT64CONST(0))
 		result->time += USECS_PER_DAY;
 #else
-	result->time = (time->time - span->time);
+	result->time = time->time - span->time;
 	TMODULO(result->time, time1.time, (double)SECS_PER_DAY);
 	if (result->time < 0)
 		result->time += SECS_PER_DAY;
@@ -2265,7 +2264,7 @@ timestamptz_timetz(PG_FUNCTION_ARGS)
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_NULL();
 
-	if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) !=0)
+	if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
@@ -2315,7 +2314,7 @@ timetz_text(PG_FUNCTION_ARGS)
 
 	str = DatumGetCString(DirectFunctionCall1(timetz_out, timetz));
 
-	len = (strlen(str) + VARHDRSZ);
+	len = strlen(str) + VARHDRSZ;
 
 	result = palloc(len);
 
@@ -2497,7 +2496,8 @@ timetz_zone(PG_FUNCTION_ARGS)
 	pg_time_t   now;
 
 	/* Find the specified timezone */ 
-	len = (VARSIZE(zone)-VARHDRSZ>TZ_STRLEN_MAX)?TZ_STRLEN_MAX:(VARSIZE(zone)-VARHDRSZ);
+	len = (VARSIZE(zone)-VARHDRSZ>TZ_STRLEN_MAX) ?
+					TZ_STRLEN_MAX : VARSIZE(zone) - VARHDRSZ;
 	memcpy(tzname,VARDATA(zone),len);
 	tzname[len]=0;
 	tzp = pg_tzset(tzname);
