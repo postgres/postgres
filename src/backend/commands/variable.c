@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.110 2005/07/20 16:42:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.111 2005/07/21 03:56:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -325,7 +325,7 @@ assign_timezone(const char *value, bool doit, GucSource source)
 			if (doit)
 			{
 				/* Here we change from SQL to Unix sign convention */
-				CTimeZone = -hours * 3600;
+				CTimeZone = -hours * SECS_PER_HOUR;
 				HasCTZSet = true;
 			}
 		}
@@ -402,7 +402,7 @@ assign_timezone(const char *value, bool doit, GucSource source)
 		if (!result)
 			return NULL;
 		snprintf(result, 64, "%.5f",
-				 (double) (-CTimeZone) / 3600.0);
+				 (double) (-CTimeZone) / (double)SECS_PER_HOUR);
 	}
 	else
 		result = strdup(value);

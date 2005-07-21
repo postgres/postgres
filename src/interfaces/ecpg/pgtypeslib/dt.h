@@ -216,7 +216,17 @@ do { \
 } while(0)
 #endif
 
+/* in both timestamp.h and ecpg/dt.h */
+#define DAYS_PER_YEAR	365.25
+#define MONTHS_PER_YEAR	12
+/* average days per month */
+#define DAYS_PER_MONTH	30
+#define HOURS_PER_DAY	24
+
 #define SECS_PER_DAY	86400
+#define SECS_PER_HOUR   3600
+#define SECS_PER_MINUTE 60
+
 #ifdef HAVE_INT64_TIMESTAMP
 #define USECS_PER_DAY	INT64CONST(86400000000)
 #define USECS_PER_HOUR	INT64CONST(3600000000)

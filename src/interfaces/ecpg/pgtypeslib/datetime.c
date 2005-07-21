@@ -678,7 +678,7 @@ PGTYPESdate_defmt_asc(date *d, char *fmt, char *str)
 		return -1;
 	}
 
-	if (tm.tm_mon < 1 || tm.tm_mon > 12)
+	if (tm.tm_mon < 1 || tm.tm_mon > MONTHS_PER_YEAR)
 	{
 		errno = PGTYPES_DATE_BAD_MONTH;
 		return -1;

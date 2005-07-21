@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.113 2005/07/20 16:42:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.114 2005/07/21 03:56:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
 
 /*
  * gcc's -ffast-math switch breaks routines that expect exact results from
- * expressions like timeval / 3600, where timeval is double.
+ * expressions like timeval / SECS_PER_HOUR, where timeval is double.
  */
 #ifdef __FAST_MATH__
 #error -ffast-math is known to break this code
@@ -918,10 +918,10 @@ static int
 tm2time(struct pg_tm * tm, fsec_t fsec, TimeADT *result)
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	*result = ((((tm->tm_hour * 60 + tm->tm_min) * 60) + tm->tm_sec)
+	*result = ((((tm->tm_hour * SECS_PER_MINUTE + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec)
 				* USECS_PER_SEC) + fsec;
 #else
-	*result = ((tm->tm_hour * 60 + tm->tm_min) * 60) + tm->tm_sec + fsec;
+	*result = ((tm->tm_hour * SECS_PER_MINUTE + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec + fsec;
 #endif
 	return 0;
 }
@@ -946,8 +946,8 @@ time2tm(TimeADT time, struct pg_tm * tm, fsec_t *fsec)
 	double		trem;
 
 	trem = time;
-	TMODULO(trem, tm->tm_hour, 3600.0);
-	TMODULO(trem, tm->tm_min, 60.0);
+	TMODULO(trem, tm->tm_hour, (double)SECS_PER_HOUR);
+	TMODULO(trem, tm->tm_min, (double)SECS_PER_MINUTE);
 	TMODULO(trem, tm->tm_sec, 1.0);
 	*fsec = trem;
 #endif
@@ -1348,10 +1348,10 @@ timestamp_time(PG_FUNCTION_ARGS)
 	 * Could also do this with time = (timestamp / USECS_PER_DAY *
 	 * USECS_PER_DAY) - timestamp;
 	 */
-	result = ((((tm->tm_hour * 60 + tm->tm_min) * 60) + tm->tm_sec) *
+	result = ((((tm->tm_hour * SECS_PER_MINUTE + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec) *
 				USECS_PER_SEC) + fsec;
 #else
-	result = ((tm->tm_hour * 60 + tm->tm_min) * 60) + tm->tm_sec + fsec;
+	result = ((tm->tm_hour * SECS_PER_MINUTE + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec + fsec;
 #endif
 
 	PG_RETURN_TIMEADT(result);
@@ -1385,10 +1385,10 @@ timestamptz_time(PG_FUNCTION_ARGS)
 	 * Could also do this with time = (timestamp / USECS_PER_DAY *
 	 * USECS_PER_DAY) - timestamp;
 	 */
-	result = ((((tm->tm_hour * 60 + tm->tm_min) * 60) + tm->tm_sec) *
+	result = ((((tm->tm_hour * SECS_PER_MINUTE + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec) *
 				USECS_PER_SEC) + fsec;
 #else
-	result = ((tm->tm_hour * 60 + tm->tm_min) * 60) + tm->tm_sec + fsec;
+	result = ((tm->tm_hour * SECS_PER_MINUTE + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec + fsec;
 #endif
 
 	PG_RETURN_TIMEADT(result);
@@ -1715,10 +1715,10 @@ static int
 tm2timetz(struct pg_tm * tm, fsec_t fsec, int tz, TimeTzADT *result)
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	result->time = ((((tm->tm_hour * 60 + tm->tm_min) * 60) + tm->tm_sec) *
+	result->time = ((((tm->tm_hour * SECS_PER_MINUTE + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec) *
 					USECS_PER_SEC) + fsec;
 #else
-	result->time = ((tm->tm_hour * 60 + tm->tm_min) * 60) + tm->tm_sec + fsec;
+	result->time = ((tm->tm_hour * SECS_PER_MINUTE + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec + fsec;
 #endif
 	result->zone = tz;
 
@@ -1843,8 +1843,8 @@ timetz2tm(TimeTzADT *time, struct pg_tm * tm, fsec_t *fsec, int *tzp)
 #else
 	double		trem = time->time;
 
-	TMODULO(trem, tm->tm_hour, 3600.0);
-	TMODULO(trem, tm->tm_min, 60.0);
+	TMODULO(trem, tm->tm_hour, (double)SECS_PER_HOUR);
+	TMODULO(trem, tm->tm_min, (double)SECS_PER_MINUTE);
 	TMODULO(trem, tm->tm_sec, 1.0);
 	*fsec = trem;
 #endif
@@ -2399,13 +2399,13 @@ timetz_part(PG_FUNCTION_ARGS)
 
 			case DTK_TZ_MINUTE:
 				result = -tz;
-				result /= 60;
-				FMODULO(result, dummy, 60.0);
+				result /= SECS_PER_MINUTE;
+				FMODULO(result, dummy, (double)SECS_PER_MINUTE);
 				break;
 
 			case DTK_TZ_HOUR:
 				dummy = -tz;
-				FMODULO(dummy, result, 3600.0);
+				FMODULO(dummy, result, (double)SECS_PER_HOUR);
 				break;
 
 			case DTK_MICROSEC:

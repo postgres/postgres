@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.152 2005/07/12 15:17:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.153 2005/07/21 03:56:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1447,7 +1447,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						tm->tm_isdst = 1;
 						if (tzp == NULL)
 							return DTERR_BAD_FORMAT;
-						*tzp += val * 60;
+						*tzp += val * SECS_PER_MINUTE;
 						break;
 
 					case DTZ:
@@ -1460,7 +1460,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						tm->tm_isdst = 1;
 						if (tzp == NULL)
 							return DTERR_BAD_FORMAT;
-						*tzp = val * 60;
+						*tzp = val * SECS_PER_MINUTE;
 						ftype[i] = DTK_TZ;
 						break;
 
@@ -1468,7 +1468,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						tm->tm_isdst = 0;
 						if (tzp == NULL)
 							return DTERR_BAD_FORMAT;
-						*tzp = val * 60;
+						*tzp = val * SECS_PER_MINUTE;
 						ftype[i] = DTK_TZ;
 						break;
 
@@ -1566,7 +1566,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 	/* check for valid month */
 	if (fmask & DTK_M(MONTH))
 	{
-		if (tm->tm_mon < 1 || tm->tm_mon > 12)
+		if (tm->tm_mon < 1 || tm->tm_mon > MONTHS_PER_YEAR)
 			return DTERR_MD_FIELD_OVERFLOW;
 	}
 
@@ -1667,7 +1667,7 @@ DetermineLocalTimeZone(struct pg_tm * tm)
 	day = ((pg_time_t) date) *SECS_PER_DAY;
 	if (day / SECS_PER_DAY != date)
 		goto overflow;
-	sec = tm->tm_sec + (tm->tm_min + tm->tm_hour * 60) * 60;
+	sec = tm->tm_sec + (tm->tm_min + tm->tm_hour * SECS_PER_MINUTE) * SECS_PER_MINUTE;
 	mytime = day + sec;
 	/* since sec >= 0, overflow could only be from +day to -mytime */
 	if (mytime < 0 && day > 0)
@@ -1679,7 +1679,7 @@ DetermineLocalTimeZone(struct pg_tm * tm)
 	 * that DST boundaries can't be closer together than 48 hours, so
 	 * backing up 24 hours and finding the "next" boundary will work.
 	 */
-	prevtime = mytime - (24 * 60 * 60);
+	prevtime = mytime - (HOURS_PER_DAY * SECS_PER_MINUTE * SECS_PER_MINUTE);
 	if (mytime < 0 && prevtime > 0)
 		goto overflow;
 
@@ -2167,7 +2167,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						tm->tm_isdst = 1;
 						if (tzp == NULL)
 							return DTERR_BAD_FORMAT;
-						*tzp += val * 60;
+						*tzp += val * SECS_PER_MINUTE;
 						break;
 
 					case DTZ:
@@ -2180,7 +2180,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						tm->tm_isdst = 1;
 						if (tzp == NULL)
 							return DTERR_BAD_FORMAT;
-						*tzp = val * 60;
+						*tzp = val * SECS_PER_MINUTE;
 						ftype[i] = DTK_TZ;
 						break;
 
@@ -2188,7 +2188,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						tm->tm_isdst = 0;
 						if (tzp == NULL)
 							return DTERR_BAD_FORMAT;
-						*tzp = val * 60;
+						*tzp = val * SECS_PER_MINUTE;
 						ftype[i] = DTK_TZ;
 						break;
 
@@ -2431,7 +2431,7 @@ DecodeDate(char *str, int fmask, int *tmask, struct pg_tm * tm)
 	}
 
 	/* check for valid month */
-	if (tm->tm_mon < 1 || tm->tm_mon > 12)
+	if (tm->tm_mon < 1 || tm->tm_mon > MONTHS_PER_YEAR)
 		return DTERR_MD_FIELD_OVERFLOW;
 
 	/* check for valid day */
@@ -2833,7 +2833,7 @@ DecodeTimezone(char *str, int *tzp)
 	if (min < 0 || min >= 60)
 		return DTERR_TZDISP_OVERFLOW;
 
-	tz = (hr * 60 + min) * 60;
+	tz = (hr * SECS_PER_MINUTE + min) * SECS_PER_MINUTE;
 	if (*str == '-')
 		tz = -tz;
 
@@ -2890,7 +2890,7 @@ DecodePosixTimezone(char *str, int *tzp)
 	{
 		case DTZ:
 		case TZ:
-			*tzp = (val * 60) - tz;
+			*tzp = (val * SECS_PER_MINUTE) - tz;
 			break;
 
 		default:
@@ -3116,7 +3116,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 						{
 							int			sec;
 
-							fval *= 60;
+							fval *= SECS_PER_MINUTE;
 							sec = fval;
 							tm->tm_sec += sec;
 #ifdef HAVE_INT64_TIMESTAMP
@@ -3134,7 +3134,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 						{
 							int			sec;
 
-							fval *= 3600;
+							fval *= SECS_PER_HOUR;
 							sec = fval;
 							tm->tm_sec += sec;
 #ifdef HAVE_INT64_TIMESTAMP
@@ -3188,7 +3188,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 						{
 							int			sec;
 
-							fval *= 30 * SECS_PER_DAY;
+							fval *= DAYS_PER_MONTH * SECS_PER_DAY;
 							sec = fval;
 							tm->tm_sec += sec;
 #ifdef HAVE_INT64_TIMESTAMP
@@ -3203,28 +3203,28 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 					case DTK_YEAR:
 						tm->tm_year += val;
 						if (fval != 0)
-							tm->tm_mon += fval * 12;
+							tm->tm_mon += fval * MONTHS_PER_YEAR;
 						tmask = (fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR);
 						break;
 
 					case DTK_DECADE:
 						tm->tm_year += val * 10;
 						if (fval != 0)
-							tm->tm_mon += fval * 120;
+							tm->tm_mon += fval * MONTHS_PER_YEAR * 10;
 						tmask = (fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR);
 						break;
 
 					case DTK_CENTURY:
 						tm->tm_year += val * 100;
 						if (fval != 0)
-							tm->tm_mon += fval * 1200;
+							tm->tm_mon += fval * MONTHS_PER_YEAR * 100;
 						tmask = (fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR);
 						break;
 
 					case DTK_MILLENNIUM:
 						tm->tm_year += val * 1000;
 						if (fval != 0)
-							tm->tm_mon += fval * 12000;
+							tm->tm_mon += fval * MONTHS_PER_YEAR * 1000;
 						tmask = (fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR);
 						break;
 
@@ -3422,7 +3422,7 @@ datebsearch(char *key, datetkn *base, unsigned int nel)
 int
 EncodeDateOnly(struct pg_tm * tm, int style, char *str)
 {
-	if (tm->tm_mon < 1 || tm->tm_mon > 12)
+	if (tm->tm_mon < 1 || tm->tm_mon > MONTHS_PER_YEAR)
 		return -1;
 
 	switch (style)
@@ -3482,7 +3482,7 @@ EncodeDateOnly(struct pg_tm * tm, int style, char *str)
 int
 EncodeTimeOnly(struct pg_tm * tm, fsec_t fsec, int *tzp, int style, char *str)
 {
-	if (tm->tm_hour < 0 || tm->tm_hour > 24)
+	if (tm->tm_hour < 0 || tm->tm_hour > HOURS_PER_DAY)
 		return -1;
 
 	sprintf(str, "%02d:%02d", tm->tm_hour, tm->tm_min);
@@ -3509,8 +3509,8 @@ EncodeTimeOnly(struct pg_tm * tm, fsec_t fsec, int *tzp, int style, char *str)
 		int			hour,
 					min;
 
-		hour = -(*tzp / 3600);
-		min = (abs(*tzp) / 60) % 60;
+		hour = -(*tzp / SECS_PER_HOUR);
+		min = (abs(*tzp) / SECS_PER_MINUTE) % SECS_PER_MINUTE;
 		sprintf(str + strlen(str), (min != 0) ? "%+03d:%02d" : "%+03d", hour, min);
 	}
 
@@ -3538,9 +3538,9 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 
 	/*
 	 * Why are we checking only the month field? Change this to an
-	 * assert... if (tm->tm_mon < 1 || tm->tm_mon > 12) return -1;
+	 * assert... if (tm->tm_mon < 1 || tm->tm_mon > MONTHS_PER_YEAR) return -1;
 	 */
-	Assert(tm->tm_mon >= 1 && tm->tm_mon <= 12);
+	Assert(tm->tm_mon >= 1 && tm->tm_mon <= MONTHS_PER_YEAR);
 
 	switch (style)
 	{
@@ -3582,8 +3582,8 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 			 */
 			if (tzp != NULL && tm->tm_isdst >= 0)
 			{
-				hour = -(*tzp / 3600);
-				min = (abs(*tzp) / 60) % 60;
+				hour = -(*tzp / SECS_PER_HOUR);
+				min = (abs(*tzp) / SECS_PER_MINUTE) % SECS_PER_MINUTE;
 				sprintf(str + strlen(str), (min != 0) ? "%+03d:%02d" : "%+03d", hour, min);
 			}
 
@@ -3632,8 +3632,8 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 					sprintf(str + strlen(str), " %.*s", MAXTZLEN, *tzn);
 				else
 				{
-					hour = -(*tzp / 3600);
-					min = (abs(*tzp) / 60) % 60;
+					hour = -(*tzp / SECS_PER_HOUR);
+					min = (abs(*tzp) / SECS_PER_MINUTE) % SECS_PER_MINUTE;
 					sprintf(str + strlen(str), (min != 0) ? "%+03d:%02d" : "%+03d", hour, min);
 				}
 			}
@@ -3680,8 +3680,8 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 					sprintf(str + strlen(str), " %.*s", MAXTZLEN, *tzn);
 				else
 				{
-					hour = -(*tzp / 3600);
-					min = (abs(*tzp) / 60) % 60;
+					hour = -(*tzp / SECS_PER_HOUR);
+					min = (abs(*tzp) / SECS_PER_MINUTE) % SECS_PER_MINUTE;
 					sprintf(str + strlen(str), (min != 0) ? "%+03d:%02d" : "%+03d", hour, min);
 				}
 			}
@@ -3746,8 +3746,8 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 					 * rejected by the date/time parser later. - thomas
 					 * 2001-10-19
 					 */
-					hour = -(*tzp / 3600);
-					min = (abs(*tzp) / 60) % 60;
+					hour = -(*tzp / SECS_PER_HOUR);
+					min = (abs(*tzp) / SECS_PER_MINUTE) % SECS_PER_MINUTE;
 					sprintf(str + strlen(str), (min != 0) ? " %+03d:%02d" : " %+03d", hour, min);
 				}
 			}

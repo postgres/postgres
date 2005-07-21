@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.454 2005/07/14 05:13:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.455 2005/07/21 03:56:11 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -3536,10 +3536,10 @@ log_disconnections(int code, Datum arg)
 	end.tv_sec -= port->session_start.tv_sec;
 	end.tv_usec -= port->session_start.tv_usec;
 
-	hours = end.tv_sec / 3600;
-	end.tv_sec %= 3600;
-	minutes = end.tv_sec / 60;
-	seconds = end.tv_sec % 60;
+	hours = end.tv_sec / SECS_PER_HOUR;
+	end.tv_sec %= SECS_PER_HOUR;
+	minutes = end.tv_sec / SECS_PER_MINUTE;
+	seconds = end.tv_sec % SECS_PER_MINUTE;
 
 	/* if time has gone backwards for some reason say so, or print time */
 

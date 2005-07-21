@@ -20,14 +20,14 @@ int PGTYPEStimestamp_defmt_scan(char **, char *, timestamp *, int *, int *, int 
 static int64
 time2t(const int hour, const int min, const int sec, const fsec_t fsec)
 {
-	return (((((hour * 60) + min) * 60) + sec) * USECS_PER_SEC) + fsec;
+	return (((((hour * SECS_PER_MINUTE) + min) * SECS_PER_MINUTE) + sec) * USECS_PER_SEC) + fsec;
 }	/* time2t() */
 
 #else
 static double
 time2t(const int hour, const int min, const int sec, const fsec_t fsec)
 {
-	return (((hour * 60) + min) * 60) + sec + fsec;
+	return (((hour * SECS_PER_MINUTE) + min) * SECS_PER_MINUTE) + sec + fsec;
 }	/* time2t() */
 #endif
 
@@ -119,10 +119,10 @@ dt2time(timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
 	*sec = time / USECS_PER_SEC;
 	*fsec = time - *sec * USECS_PER_SEC;
 #else
-	*hour = time / 3600;
-	time -= (*hour) * 3600;
-	*min = time / 60;
-	time -= (*min) * 60;
+	*hour = time / SECS_PER_HOUR;
+	time -= (*hour) * SECS_PER_HOUR;
+	*min = time / SECS_PER_MINUTE;
+	time -= (*min) * SECS_PER_MINUTE;
 	*sec = time;
 	*fsec = JROUND(time - *sec);
 #endif
@@ -221,7 +221,7 @@ timestamp2tm(timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
 			if (tzn != NULL)
 				*tzn = (char *) tm->tm_zone;
 #elif defined(HAVE_INT_TIMEZONE)
-			*tzp = (tm->tm_isdst > 0) ? TIMEZONE_GLOBAL - 3600 : TIMEZONE_GLOBAL;
+			*tzp = (tm->tm_isdst > 0) ? TIMEZONE_GLOBAL - SECS_PER_HOUR : TIMEZONE_GLOBAL;
 			if (tzn != NULL)
 				*tzn = TZNAME_GLOBAL[(tm->tm_isdst > 0)];
 #endif
@@ -875,15 +875,15 @@ PGTYPEStimestamp_add_interval(timestamp *tin, interval *span, timestamp *tout)
             if (timestamp2tm(*tin, NULL, tm, &fsec, NULL) !=0)
                 return -1;
             tm->tm_mon += span->month;
-            if (tm->tm_mon > 12)
+            if (tm->tm_mon > MONTHS_PER_YEAR)
             {
-                tm->tm_year += (tm->tm_mon - 1) / 12;
-                tm->tm_mon = (tm->tm_mon - 1) % 12 + 1;
+                tm->tm_year += (tm->tm_mon - 1) / MONTHS_PER_YEAR;
+                tm->tm_mon = (tm->tm_mon - 1) % MONTHS_PER_YEAR + 1;
             }
             else if (tm->tm_mon < 1)
             {
-                tm->tm_year += tm->tm_mon / 12 - 1;
-                tm->tm_mon = tm->tm_mon % 12 + 12;
+                tm->tm_year += tm->tm_mon / MONTHS_PER_YEAR - 1;
+                tm->tm_mon = tm->tm_mon % MONTHS_PER_YEAR + MONTHS_PER_YEAR;
             }
                                                                                                                
                                                                                                                

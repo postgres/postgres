@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.91 2005/07/20 16:42:30 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.92 2005/07/21 03:56:16 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2005, PostgreSQL Global Development Group
@@ -1718,7 +1718,7 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			if (flag == TO_CHAR)
 			{
 				strcpy(inout, ((tm->tm_hour > 11
-							  && tm->tm_hour < 24) ? P_M_STR : A_M_STR));
+							  && tm->tm_hour < HOURS_PER_DAY) ? P_M_STR : A_M_STR));
 				return 3;
 			}
 			else if (flag == FROM_CHAR)
@@ -1737,7 +1737,7 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			if (flag == TO_CHAR)
 			{
 				strcpy(inout, ((tm->tm_hour > 11
-								&& tm->tm_hour < 24) ? PM_STR : AM_STR));
+								&& tm->tm_hour < HOURS_PER_DAY) ? PM_STR : AM_STR));
 				return 1;
 			}
 			else if (flag == FROM_CHAR)
@@ -1756,7 +1756,7 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			if (flag == TO_CHAR)
 			{
 				strcpy(inout, ((tm->tm_hour > 11
-							  && tm->tm_hour < 24) ? p_m_STR : a_m_STR));
+							  && tm->tm_hour < HOURS_PER_DAY) ? p_m_STR : a_m_STR));
 				return 3;
 			}
 			else if (flag == FROM_CHAR)
@@ -1775,7 +1775,7 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			if (flag == TO_CHAR)
 			{
 				strcpy(inout, ((tm->tm_hour > 11
-								&& tm->tm_hour < 24) ? pm_STR : am_STR));
+								&& tm->tm_hour < HOURS_PER_DAY) ? pm_STR : am_STR));
 				return 1;
 			}
 			else if (flag == FROM_CHAR)
@@ -1991,8 +1991,8 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 		case DCH_SSSS:
 			if (flag == TO_CHAR)
 			{
-				sprintf(inout, "%d", tm->tm_hour * 3600 +
-						tm->tm_min * 60 +
+				sprintf(inout, "%d", tm->tm_hour * SECS_PER_HOUR +
+						tm->tm_min * SECS_PER_MINUTE +
 						tm->tm_sec);
 				if (S_THth(suf))
 					str_numth(p_inout, inout, S_TH_TYPE(suf));
@@ -3129,10 +3129,10 @@ do_to_timestamp(text *date_txt, text *fmt,
 	{
 		int			x = tmfc.ssss;
 
-		tm->tm_hour = x / 3600;
-		x %= 3600;
-		tm->tm_min = x / 60;
-		x %= 60;
+		tm->tm_hour = x / SECS_PER_HOUR;
+		x %= SECS_PER_HOUR;
+		tm->tm_min = x / SECS_PER_MINUTE;
+		x %= SECS_PER_MINUTE;
 		tm->tm_sec = x;
 	}
 

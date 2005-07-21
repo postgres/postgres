@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.47 2005/07/20 16:42:32 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.48 2005/07/21 03:56:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,8 +60,17 @@ typedef struct
 #define MAX_TIMESTAMP_PRECISION 6
 #define MAX_INTERVAL_PRECISION 6
 
+/* in both timestamp.h and ecpg/dt.h */
+#define DAYS_PER_YEAR	365.25
+#define MONTHS_PER_YEAR	12
+/* average days per month */
+#define DAYS_PER_MONTH	30
+#define HOURS_PER_DAY	24
+
 #define SECS_PER_DAY	86400
 #define SECS_PER_HOUR   3600
+#define SECS_PER_MINUTE 60
+
 #ifdef HAVE_INT64_TIMESTAMP
 #define USECS_PER_DAY	INT64CONST(86400000000)
 #define USECS_PER_HOUR	INT64CONST(3600000000)

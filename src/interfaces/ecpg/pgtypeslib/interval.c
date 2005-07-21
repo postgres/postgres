@@ -254,7 +254,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm *tm, fsec
 						{
 							int			sec;
 
-							fval *= 60;
+							fval *= SECS_PER_MINUTE;
 							sec = fval;
 							tm->tm_sec += sec;
 #ifdef HAVE_INT64_TIMESTAMP
@@ -272,7 +272,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm *tm, fsec
 						{
 							int			sec;
 
-							fval *= 3600;
+							fval *= SECS_PER_HOUR;
 							sec = fval;
 							tm->tm_sec += sec;
 #ifdef HAVE_INT64_TIMESTAMP
@@ -326,7 +326,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm *tm, fsec
 						{
 							int			sec;
 
-							fval *= 30 * SECS_PER_DAY;
+							fval *= DAYS_PER_MONTH * SECS_PER_DAY;
 							sec = fval;
 							tm->tm_sec += sec;
 #ifdef HAVE_INT64_TIMESTAMP
@@ -341,28 +341,28 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm *tm, fsec
 					case DTK_YEAR:
 						tm->tm_year += val;
 						if (fval != 0)
-							tm->tm_mon += fval * 12;
+							tm->tm_mon += fval * MONTHS_PER_YEAR;
 						tmask = (fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR);
 						break;
 
 					case DTK_DECADE:
 						tm->tm_year += val * 10;
 						if (fval != 0)
-							tm->tm_mon += fval * 120;
+							tm->tm_mon += fval * MONTHS_PER_YEAR * 10;
 						tmask = (fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR);
 						break;
 
 					case DTK_CENTURY:
 						tm->tm_year += val * 100;
 						if (fval != 0)
-							tm->tm_mon += fval * 1200;
+							tm->tm_mon += fval * MONTHS_PER_YEAR * 100;
 						tmask = (fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR);
 						break;
 
 					case DTK_MILLENNIUM:
 						tm->tm_year += val * 1000;
 						if (fval != 0)
-							tm->tm_mon += fval * 12000;
+							tm->tm_mon += fval * MONTHS_PER_YEAR * 1000;
 						tmask = (fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR);
 						break;
 
@@ -680,8 +680,8 @@ interval2tm(interval span, struct tm *tm, fsec_t *fsec)
 
 	if (span.month != 0)
 	{
-		tm->tm_year = span.month / 12;
-		tm->tm_mon = span.month % 12;
+		tm->tm_year = span.month / MONTHS_PER_YEAR;
+		tm->tm_mon = span.month % MONTHS_PER_YEAR;
 
 	}
 	else
@@ -703,8 +703,8 @@ interval2tm(interval span, struct tm *tm, fsec_t *fsec)
 	*fsec = (time - (tm->tm_sec * USECS_PER_SEC));
 #else
 	TMODULO(time, tm->tm_mday, (double)SECS_PER_DAY);
-	TMODULO(time, tm->tm_hour, 3600.0);
-	TMODULO(time, tm->tm_min, 60.0);
+	TMODULO(time, tm->tm_hour, (double)SECS_PER_HOUR);
+	TMODULO(time, tm->tm_min, (double)SECS_PER_MINUTE);
 	TMODULO(time, tm->tm_sec, 1.0);
 	*fsec = time;
 #endif
@@ -715,16 +715,16 @@ interval2tm(interval span, struct tm *tm, fsec_t *fsec)
 static int
 tm2interval(struct tm *tm, fsec_t fsec, interval *span)
 {
-	span->month = tm->tm_year * 12 + tm->tm_mon;
+	span->month = tm->tm_year * MONTHS_PER_YEAR + tm->tm_mon;
 #ifdef HAVE_INT64_TIMESTAMP
-	span->time = (((((((tm->tm_mday * INT64CONST(24)) +
-						tm->tm_hour) * INT64CONST(60)) +
-					  	tm->tm_min) * INT64CONST(60)) +
+	span->time = (((((((tm->tm_mday * INT64CONST(HOURS_PER_DAY)) +
+						tm->tm_hour) * INT64CONST(SECS_PER_MINUTE)) +
+					  	tm->tm_min) * INT64CONST(SECS_PER_MINUTE)) +
 						tm->tm_sec) * USECS_PER_SEC) + fsec;
 #else
-	span->time = (((((tm->tm_mday * 24.0) +
-						tm->tm_hour) * 60.0) +
-						tm->tm_min) * 60.0) +
+	span->time = (((((tm->tm_mday * (double)HOURS_PER_DAY) +
+						tm->tm_hour) * (double)SECS_PER_MINUTE) +
+						tm->tm_min) * (double)SECS_PER_MINUTE) +
 						tm->tm_sec;
 	span->time = JROUND(span->time + fsec);
 #endif

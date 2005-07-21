@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.459 2005/07/14 05:13:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.460 2005/07/21 03:56:11 momjian Exp $
  *
  * NOTES
  *
@@ -1284,7 +1284,7 @@ ServerLoop(void)
 		 * less than an hour ...
 		 */
 		now = time(NULL);
-		if (now - last_touch_time >= 58 * 60)
+		if (now - last_touch_time >= 58 * SECS_PER_MINUTE)
 		{
 			TouchSocketFile();
 			TouchSocketLockFile();

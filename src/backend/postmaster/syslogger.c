@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.16 2005/07/04 04:51:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.17 2005/07/21 03:56:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@
 #include "storage/pg_shmem.h"
 #include "utils/guc.h"
 #include "utils/ps_status.h"
-
+#include "utils/timestamp.h"
 
 /*
  * We really want line-buffered mode for logfile output, but Windows does
@@ -60,7 +60,7 @@
  * start, but the rest can change at SIGHUP.
  */
 bool		Redirect_stderr = false;
-int			Log_RotationAge = 24 * 60;
+int			Log_RotationAge = HOURS_PER_DAY * SECS_PER_MINUTE;
 int			Log_RotationSize = 10 * 1024;
 char	   *Log_directory = NULL;
 char	   *Log_filename = NULL;
@@ -855,7 +855,7 @@ set_next_rotation_time(void)
 	 * fairly loosely.  In this version we align to local time rather than
 	 * GMT.
 	 */
-	rotinterval = Log_RotationAge * 60; /* convert to seconds */
+	rotinterval = Log_RotationAge * SECS_PER_MINUTE; /* convert to seconds */
 	now = time(NULL);
 	tm = pg_localtime(&now, global_timezone);
 	now += tm->tm_gmtoff;

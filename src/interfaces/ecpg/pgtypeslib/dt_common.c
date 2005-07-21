@@ -688,7 +688,7 @@ DecodeSpecial(int field, char *lowtoken, int *val)
 int
 EncodeDateOnly(struct tm * tm, int style, char *str, bool EuroDates)
 {
-	if (tm->tm_mon < 1 || tm->tm_mon > 12)
+	if (tm->tm_mon < 1 || tm->tm_mon > MONTHS_PER_YEAR)
 		return -1;
 
 	switch (style)
@@ -813,8 +813,8 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 			 */
 			if (tzp != NULL && tm->tm_isdst >= 0)
 			{
-				hour = -(*tzp / 3600);
-				min = (abs(*tzp) / 60) % 60;
+				hour = -(*tzp / SECS_PER_HOUR);
+				min = (abs(*tzp) / SECS_PER_MINUTE) % SECS_PER_MINUTE;
 				sprintf(str + strlen(str), (min != 0) ? "%+03d:%02d" : "%+03d", hour, min);
 			}
 			break;
@@ -861,8 +861,8 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 					sprintf(str + strlen(str), " %.*s", MAXTZLEN, *tzn);
 				else
 				{
-					hour = -(*tzp / 3600);
-					min = (abs(*tzp) / 60) % 60;
+					hour = -(*tzp / SECS_PER_HOUR);
+					min = (abs(*tzp) / SECS_PER_MINUTE) % SECS_PER_MINUTE;
 					sprintf(str + strlen(str), (min != 0) ? "%+03d:%02d" : "%+03d", hour, min);
 				}
 			}
@@ -907,8 +907,8 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 					sprintf(str + strlen(str), " %.*s", MAXTZLEN, *tzn);
 				else
 				{
-					hour = -(*tzp / 3600);
-					min = (abs(*tzp) / 60) % 60;
+					hour = -(*tzp / SECS_PER_HOUR);
+					min = (abs(*tzp) / SECS_PER_MINUTE) % SECS_PER_MINUTE;
 					sprintf(str + strlen(str), (min != 0) ? "%+03d:%02d" : "%+03d", hour, min);
 				}
 			}
@@ -970,8 +970,8 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 					 * rejected by the date/time parser later. - thomas
 					 * 2001-10-19
 					 */
-					hour = -(*tzp / 3600);
-					min = (abs(*tzp) / 60) % 60;
+					hour = -(*tzp / SECS_PER_HOUR);
+					min = (abs(*tzp) / SECS_PER_MINUTE) % SECS_PER_MINUTE;
 					sprintf(str + strlen(str), (min != 0) ? " %+03d:%02d" : " %+03d", hour, min);
 				}
 			}
@@ -1055,7 +1055,7 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 #elif defined(HAVE_INT_TIMEZONE)
 	if (tzp != NULL)
 	{
-		*tzp = (tm->tm_isdst > 0) ? TIMEZONE_GLOBAL - 3600 : TIMEZONE_GLOBAL;
+		*tzp = (tm->tm_isdst > 0) ? TIMEZONE_GLOBAL - SECS_PER_HOUR : TIMEZONE_GLOBAL;
 
 		if (tzn != NULL)
 		{
@@ -1138,7 +1138,7 @@ DetermineLocalTimeZone(struct tm * tm)
 			/* tm_gmtoff is Sun/DEC-ism */
 			tz = -(tmp->tm_gmtoff);
 #elif defined(HAVE_INT_TIMEZONE)
-			tz = (tmp->tm_isdst > 0) ? TIMEZONE_GLOBAL - 3600 : TIMEZONE_GLOBAL;
+			tz = (tmp->tm_isdst > 0) ? TIMEZONE_GLOBAL - SECS_PER_HOUR : TIMEZONE_GLOBAL;
 #endif   /* HAVE_INT_TIMEZONE */
 		}
 		else
@@ -1161,7 +1161,7 @@ DetermineLocalTimeZone(struct tm * tm)
 
 			day = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) -
 				   date2j(1970, 1, 1));
-			mysec = tm->tm_sec + (tm->tm_min + (day * 24 + tm->tm_hour) * 60) * 60;
+			mysec = tm->tm_sec + (tm->tm_min + (day * HOURS_PER_DAY + tm->tm_hour) * SECS_PER_MINUTE) * SECS_PER_MINUTE;
 			mytime = (time_t) mysec;
 
 			/*
@@ -1171,7 +1171,7 @@ DetermineLocalTimeZone(struct tm * tm)
 			tmp = localtime(&mytime);
 			day = (date2j(tmp->tm_year + 1900, tmp->tm_mon + 1, tmp->tm_mday) -
 				   date2j(1970, 1, 1));
-			locsec = tmp->tm_sec + (tmp->tm_min + (day * 24 + tmp->tm_hour) * 60) * 60;
+			locsec = tmp->tm_sec + (tmp->tm_min + (day * HOURS_PER_DAY + tmp->tm_hour) * SECS_PER_MINUTE) * SECS_PER_MINUTE;
 
 			/*
 			 * The local time offset corresponding to that GMT time is now
@@ -1201,7 +1201,7 @@ DetermineLocalTimeZone(struct tm * tm)
 			tmp = localtime(&mytime);
 			day = (date2j(tmp->tm_year + 1900, tmp->tm_mon + 1, tmp->tm_mday) -
 				   date2j(1970, 1, 1));
-			locsec = tmp->tm_sec + (tmp->tm_min + (day * 24 + tmp->tm_hour) * 60) * 60;
+			locsec = tmp->tm_sec + (tmp->tm_min + (day * HOURS_PER_DAY + tmp->tm_hour) * SECS_PER_MINUTE) * SECS_PER_MINUTE;
 			delta2 = mysec - locsec;
 			if (delta2 != delta1)
 			{
@@ -1210,7 +1210,7 @@ DetermineLocalTimeZone(struct tm * tm)
 				tmp = localtime(&mytime);
 				day = (date2j(tmp->tm_year + 1900, tmp->tm_mon + 1, tmp->tm_mday) -
 					   date2j(1970, 1, 1));
-				locsec = tmp->tm_sec + (tmp->tm_min + (day * 24 + tmp->tm_hour) * 60) * 60;
+				locsec = tmp->tm_sec + (tmp->tm_min + (day * HOURS_PER_DAY + tmp->tm_hour) * SECS_PER_MINUTE) * SECS_PER_MINUTE;
 				delta2 = mysec - locsec;
 			}
 			tm->tm_isdst = tmp->tm_isdst;
@@ -1250,10 +1250,10 @@ dt2time(double jd, int *hour, int *min, int *sec, fsec_t *fsec)
 	*sec = time / USECS_PER_SEC;
 	*fsec = time - (*sec * USECS_PER_SEC);
 #else
-	*hour = time / 3600;
-	time -= (*hour) * 3600;
-	*min = time / 60;
-	time -= (*min) * 60;
+	*hour = time / SECS_PER_HOUR;
+	time -= (*hour) * SECS_PER_HOUR;
+	*min = time / SECS_PER_MINUTE;
+	time -= (*min) * SECS_PER_MINUTE;
 	*sec = time;
 	*fsec = JROUND(time - *sec);
 #endif
@@ -1437,7 +1437,7 @@ int *tmask, struct tm * tm, fsec_t *fsec, int *is2digits, bool EuroDates)
 	}
 
 	/* already have year? then could be month */
-	else if ((fmask & DTK_M(YEAR)) && !(fmask & DTK_M(MONTH)) && val >= 1 && val <= 12)
+	else if ((fmask & DTK_M(YEAR)) && !(fmask & DTK_M(MONTH)) && val >= 1 && val <= MONTHS_PER_YEAR)
 	{
 		*tmask = DTK_M(MONTH);
 		tm->tm_mon = val;
@@ -1450,7 +1450,7 @@ int *tmask, struct tm * tm, fsec_t *fsec, int *is2digits, bool EuroDates)
 		*tmask = DTK_M(DAY);
 		tm->tm_mday = val;
 	}
-	else if (!(fmask & DTK_M(MONTH)) && val >= 1 && val <= 12)
+	else if (!(fmask & DTK_M(MONTH)) && val >= 1 && val <= MONTHS_PER_YEAR)
 	{
 		*tmask = DTK_M(MONTH);
 		tm->tm_mon = val;
@@ -1712,7 +1712,7 @@ DecodeTimezone(char *str, int *tzp)
 	else
 		min = 0;
 
-	tz = (hr * 60 + min) * 60;
+	tz = (hr * SECS_PER_MINUTE + min) * SECS_PER_MINUTE;
 	if (*str == '-')
 		tz = -tz;
 
@@ -1752,7 +1752,7 @@ DecodePosixTimezone(char *str, int *tzp)
 	{
 		case DTZ:
 		case TZ:
-			*tzp = (val * 60) - tz;
+			*tzp = (val * SECS_PER_MINUTE) - tz;
 			break;
 
 		default:
@@ -2398,7 +2398,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						tm->tm_isdst = 1;
 						if (tzp == NULL)
 							return -1;
-						*tzp += val * 60;
+						*tzp += val * SECS_PER_MINUTE;
 						break;
 
 					case DTZ:
@@ -2411,7 +2411,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						tm->tm_isdst = 1;
 						if (tzp == NULL)
 							return -1;
-						*tzp = val * 60;
+						*tzp = val * SECS_PER_MINUTE;
 						ftype[i] = DTK_TZ;
 						break;
 
@@ -2419,7 +2419,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						tm->tm_isdst = 0;
 						if (tzp == NULL)
 							return -1;
-						*tzp = val * 60;
+						*tzp = val * SECS_PER_MINUTE;
 						ftype[i] = DTK_TZ;
 						break;
 
@@ -3108,7 +3108,7 @@ PGTYPEStimestamp_defmt_scan(char **str, char *fmt, timestamp *d,
 						 * timezone value of the datetktbl table is in
 						 * quarter hours
 						 */
-						*tz = -15 * 60 * datetktbl[j].value;
+						*tz = -15 * SECS_PER_MINUTE * datetktbl[j].value;
 						break;
 					}
 				}
@@ -3167,7 +3167,7 @@ PGTYPEStimestamp_defmt_scan(char **str, char *fmt, timestamp *d,
 			err = 1;
 			*hour = 0;
 		}
-		if (*month > 12)
+		if (*month > MONTHS_PER_YEAR)
 		{
 			err = 1;
 			*month = 1;

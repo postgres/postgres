@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.274 2005/07/14 05:13:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.275 2005/07/21 03:56:21 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1349,7 +1349,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&Log_RotationAge,
-		24 * 60, 0, INT_MAX / 60, NULL, NULL
+		HOURS_PER_DAY * SECS_PER_MINUTE, 0, INT_MAX / SECS_PER_MINUTE, NULL, NULL
 	},
 
 	{
