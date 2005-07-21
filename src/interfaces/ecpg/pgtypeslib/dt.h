@@ -217,13 +217,12 @@ do { \
 #endif
 
 /* in both timestamp.h and ecpg/dt.h */
-#define DAYS_PER_YEAR	365.25
+#define DAYS_PER_YEAR	365.25	/* assumes leap year every four years */
 #define MONTHS_PER_YEAR	12
-/* average days per month */
-#define DAYS_PER_MONTH	30
-#define HOURS_PER_DAY	24
+#define DAYS_PER_MONTH	30		/* assumes exactly 30 days per month */
+#define HOURS_PER_DAY	24		/* assume no daylight savings time changes */
 
-#define SECS_PER_DAY	86400
+#define SECS_PER_DAY	86400	/* assumes no leap second */
 #define SECS_PER_HOUR   3600
 #define SECS_PER_MINUTE 60
 
