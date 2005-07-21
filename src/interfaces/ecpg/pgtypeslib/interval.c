@@ -717,9 +717,9 @@ tm2interval(struct tm *tm, fsec_t fsec, interval *span)
 {
 	span->month = tm->tm_year * MONTHS_PER_YEAR + tm->tm_mon;
 #ifdef HAVE_INT64_TIMESTAMP
-	span->time = (((((((tm->tm_mday * INT64CONST(HOURS_PER_DAY)) +
-						tm->tm_hour) * INT64CONST(SECS_PER_MINUTE)) +
-					  	tm->tm_min) * INT64CONST(SECS_PER_MINUTE)) +
+	span->time = (((((((tm->tm_mday * INT64CONST(24)) +
+						tm->tm_hour) * INT64CONST(60)) +
+					  	tm->tm_min) * INT64CONST(60)) +
 						tm->tm_sec) * USECS_PER_SEC) + fsec;
 #else
 	span->time = (((((tm->tm_mday * (double)HOURS_PER_DAY) +

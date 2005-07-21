@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.136 2005/07/21 04:41:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.137 2005/07/21 05:18:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1208,8 +1208,8 @@ tm2interval(struct pg_tm *tm, fsec_t fsec, Interval *span)
 	span->month = tm->tm_year * MONTHS_PER_YEAR + tm->tm_mon;
 	span->day   = tm->tm_mday;
 #ifdef HAVE_INT64_TIMESTAMP
-	span->time = (((((tm->tm_hour * INT64CONST(SECS_PER_MINUTE)) +
-						tm->tm_min) * INT64CONST(SECS_PER_MINUTE)) +
+	span->time = (((((tm->tm_hour * INT64CONST(60)) +
+						tm->tm_min) * INT64CONST(60)) +
 						tm->tm_sec) * USECS_PER_SEC) + fsec;
 #else
 	span->time = (((tm->tm_hour * (double)SECS_PER_MINUTE) +
@@ -1608,10 +1608,10 @@ interval_cmp_internal(Interval *interval1, Interval *interval2)
 	span2 = interval2->time;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	span1 += interval1->month * INT64CONST(DAYS_PER_MONTH) * USECS_PER_DAY;
-	span1 += interval1->day * INT64CONST(HOURS_PER_DAY) * USECS_PER_HOUR;
-	span2 += interval2->month * INT64CONST(DAYS_PER_MONTH) * USECS_PER_DAY;
-	span2 += interval2->day * INT64CONST(HOURS_PER_DAY) * USECS_PER_HOUR;
+	span1 += interval1->month * INT64CONST(30) * USECS_PER_DAY;
+	span1 += interval1->day * INT64CONST(24) * USECS_PER_HOUR;
+	span2 += interval2->month * INT64CONST(30) * USECS_PER_DAY;
+	span2 += interval2->day * INT64CONST(24) * USECS_PER_HOUR;
 #else
 	span1 += interval1->month * ((double)DAYS_PER_MONTH * SECS_PER_DAY);
 	span1 += interval1->day * ((double)HOURS_PER_DAY * SECS_PER_HOUR);
@@ -2264,8 +2264,8 @@ interval_mul(PG_FUNCTION_ARGS)
 	result->month = months;
 	result->day = days;
 	result->time = span1->time * factor;
-	result->time += (months - result->month) * INT64CONST(DAYS_PER_MONTH) * USECS_PER_DAY;
-	result->time += (days - result->day) * INT64CONST(HOURS_PER_DAY) * USECS_PER_HOUR;
+	result->time += (months - result->month) * INT64CONST(30) * USECS_PER_DAY;
+	result->time += (days - result->day) * INT64CONST(24) * USECS_PER_HOUR;
 #else
 	result->month = (int)months;
 	result->day = (int)days;
