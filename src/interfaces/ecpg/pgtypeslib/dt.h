@@ -219,6 +219,12 @@ do { \
 /* in both timestamp.h and ecpg/dt.h */
 #define DAYS_PER_YEAR	365.25	/* assumes leap year every four years */
 #define MONTHS_PER_YEAR	12
+/*
+ *	DAYS_PER_MONTH is very imprecise.  The more accurate value is
+ *	365.25/12 = 30.4375, or '30 days 10:30:00'.  Right now we only
+ *	return an integral number of days, but someday perhaps we should
+ *	also return a 'time' value to be used as well.
+ */
 #define DAYS_PER_MONTH	30		/* assumes exactly 30 days per month */
 #define HOURS_PER_DAY	24		/* assume no daylight savings time changes */
 

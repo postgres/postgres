@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.188 2005/07/18 15:53:28 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.189 2005/07/21 15:16:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -630,6 +630,7 @@ typedef NameData *Name;
 #define MemSet(start, val, len) \
 	do \
 	{ \
+		/* must be void* because we don't know if it is integer aligned yet */ \
 		void   *_vstart = (void *) (start); \
 		int		_val = (val); \
 		Size	_len = (len); \
