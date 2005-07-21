@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.51 2005/07/21 18:06:13 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.52 2005/07/21 20:37:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,8 +73,8 @@ typedef struct
 #define HOURS_PER_DAY	24		/* assume no daylight savings time changes */
 
 /*
- *	This doesn't adjust for uneven daylight savings time intervals, nor
- *	leap seconds.
+ *	This doesn't adjust for uneven daylight savings time intervals or leap
+ *	seconds, and it crudely estimates leap years.
  */
 #define SECS_PER_YEAR	(36525 * 864)	/* avoid floating-point computation */
 #define SECS_PER_DAY	86400

@@ -229,8 +229,8 @@ do { \
 #define HOURS_PER_DAY	24		/* assume no daylight savings time changes */
 
 /*
- *	This doesn't adjust for uneven daylight savings time intervals, nor
- *	leap seconds.
+ *	This doesn't adjust for uneven daylight savings time intervals or leap
+ *	seconds, and it crudely estimates leap years.
  */
 #define SECS_PER_YEAR	(36525 * 864)	/* avoid floating-point computation */
 #define SECS_PER_DAY	86400
