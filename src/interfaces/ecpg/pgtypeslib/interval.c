@@ -723,7 +723,7 @@ tm2interval(struct tm *tm, fsec_t fsec, interval *span)
 						tm->tm_sec) * USECS_PER_SEC) + fsec;
 #else
 	span->time = (((((tm->tm_mday * (double)HOURS_PER_DAY) +
-						tm->tm_hour) * (double)SECS_PER_MINUTE) +
+						tm->tm_hour) * (double)MINS_PER_HOUR) +
 						tm->tm_min) * (double)SECS_PER_MINUTE) +
 						tm->tm_sec;
 	span->time = JROUND(span->time + fsec);

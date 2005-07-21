@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.154 2005/07/21 04:41:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.155 2005/07/21 18:06:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1447,7 +1447,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						tm->tm_isdst = 1;
 						if (tzp == NULL)
 							return DTERR_BAD_FORMAT;
-						*tzp += val * SECS_PER_MINUTE;
+						*tzp += val * MINS_PER_HOUR;
 						break;
 
 					case DTZ:
@@ -1460,7 +1460,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						tm->tm_isdst = 1;
 						if (tzp == NULL)
 							return DTERR_BAD_FORMAT;
-						*tzp = val * SECS_PER_MINUTE;
+						*tzp = val * MINS_PER_HOUR;
 						ftype[i] = DTK_TZ;
 						break;
 
@@ -1468,7 +1468,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						tm->tm_isdst = 0;
 						if (tzp == NULL)
 							return DTERR_BAD_FORMAT;
-						*tzp = val * SECS_PER_MINUTE;
+						*tzp = val * MINS_PER_HOUR;
 						ftype[i] = DTK_TZ;
 						break;
 
@@ -1667,7 +1667,7 @@ DetermineLocalTimeZone(struct pg_tm * tm)
 	day = ((pg_time_t) date) *SECS_PER_DAY;
 	if (day / SECS_PER_DAY != date)
 		goto overflow;
-	sec = tm->tm_sec + (tm->tm_min + tm->tm_hour * SECS_PER_MINUTE) * SECS_PER_MINUTE;
+	sec = tm->tm_sec + (tm->tm_min + tm->tm_hour * MINS_PER_HOUR) * SECS_PER_MINUTE;
 	mytime = day + sec;
 	/* since sec >= 0, overflow could only be from +day to -mytime */
 	if (mytime < 0 && day > 0)
@@ -1679,7 +1679,7 @@ DetermineLocalTimeZone(struct pg_tm * tm)
 	 * that DST boundaries can't be closer together than 48 hours, so
 	 * backing up 24 hours and finding the "next" boundary will work.
 	 */
-	prevtime = mytime - (HOURS_PER_DAY * SECS_PER_MINUTE * SECS_PER_MINUTE);
+	prevtime = mytime - SECS_PER_DAY;
 	if (mytime < 0 && prevtime > 0)
 		goto overflow;
 
@@ -2167,7 +2167,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						tm->tm_isdst = 1;
 						if (tzp == NULL)
 							return DTERR_BAD_FORMAT;
-						*tzp += val * SECS_PER_MINUTE;
+						*tzp += val * MINS_PER_HOUR;
 						break;
 
 					case DTZ:
@@ -2180,7 +2180,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						tm->tm_isdst = 1;
 						if (tzp == NULL)
 							return DTERR_BAD_FORMAT;
-						*tzp = val * SECS_PER_MINUTE;
+						*tzp = val * MINS_PER_HOUR;
 						ftype[i] = DTK_TZ;
 						break;
 
@@ -2188,7 +2188,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						tm->tm_isdst = 0;
 						if (tzp == NULL)
 							return DTERR_BAD_FORMAT;
-						*tzp = val * SECS_PER_MINUTE;
+						*tzp = val * MINS_PER_HOUR;
 						ftype[i] = DTK_TZ;
 						break;
 
@@ -2833,7 +2833,7 @@ DecodeTimezone(char *str, int *tzp)
 	if (min < 0 || min >= 60)
 		return DTERR_TZDISP_OVERFLOW;
 
-	tz = (hr * SECS_PER_MINUTE + min) * SECS_PER_MINUTE;
+	tz = (hr * MINS_PER_HOUR + min) * SECS_PER_MINUTE;
 	if (*str == '-')
 		tz = -tz;
 
@@ -2890,7 +2890,7 @@ DecodePosixTimezone(char *str, int *tzp)
 	{
 		case DTZ:
 		case TZ:
-			*tzp = (val * SECS_PER_MINUTE) - tz;
+			*tzp = (val * MINS_PER_HOUR) - tz;
 			break;
 
 		default:
@@ -3510,7 +3510,7 @@ EncodeTimeOnly(struct pg_tm * tm, fsec_t fsec, int *tzp, int style, char *str)
 					min;
 
 		hour = -(*tzp / SECS_PER_HOUR);
-		min = (abs(*tzp) / SECS_PER_MINUTE) % SECS_PER_MINUTE;
+		min = (abs(*tzp) / MINS_PER_HOUR) % MINS_PER_HOUR;
 		sprintf(str + strlen(str), (min != 0) ? "%+03d:%02d" : "%+03d", hour, min);
 	}
 
@@ -3583,7 +3583,7 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 			if (tzp != NULL && tm->tm_isdst >= 0)
 			{
 				hour = -(*tzp / SECS_PER_HOUR);
-				min = (abs(*tzp) / SECS_PER_MINUTE) % SECS_PER_MINUTE;
+				min = (abs(*tzp) / MINS_PER_HOUR) % MINS_PER_HOUR;
 				sprintf(str + strlen(str), (min != 0) ? "%+03d:%02d" : "%+03d", hour, min);
 			}
 
@@ -3633,7 +3633,7 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 				else
 				{
 					hour = -(*tzp / SECS_PER_HOUR);
-					min = (abs(*tzp) / SECS_PER_MINUTE) % SECS_PER_MINUTE;
+					min = (abs(*tzp) / MINS_PER_HOUR) % MINS_PER_HOUR;
 					sprintf(str + strlen(str), (min != 0) ? "%+03d:%02d" : "%+03d", hour, min);
 				}
 			}
@@ -3681,7 +3681,7 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 				else
 				{
 					hour = -(*tzp / SECS_PER_HOUR);
-					min = (abs(*tzp) / SECS_PER_MINUTE) % SECS_PER_MINUTE;
+					min = (abs(*tzp) / MINS_PER_HOUR) % MINS_PER_HOUR;
 					sprintf(str + strlen(str), (min != 0) ? "%+03d:%02d" : "%+03d", hour, min);
 				}
 			}
@@ -3747,7 +3747,7 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 					 * 2001-10-19
 					 */
 					hour = -(*tzp / SECS_PER_HOUR);
-					min = (abs(*tzp) / SECS_PER_MINUTE) % SECS_PER_MINUTE;
+					min = (abs(*tzp) / MINS_PER_HOUR) % MINS_PER_HOUR;
 					sprintf(str + strlen(str), (min != 0) ? " %+03d:%02d" : " %+03d", hour, min);
 				}
 			}

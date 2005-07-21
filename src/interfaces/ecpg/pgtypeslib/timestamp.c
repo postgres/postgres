@@ -20,14 +20,14 @@ int PGTYPEStimestamp_defmt_scan(char **, char *, timestamp *, int *, int *, int 
 static int64
 time2t(const int hour, const int min, const int sec, const fsec_t fsec)
 {
-	return (((((hour * SECS_PER_MINUTE) + min) * SECS_PER_MINUTE) + sec) * USECS_PER_SEC) + fsec;
+	return (((((hour * MINS_PER_HOUR) + min) * SECS_PER_MINUTE) + sec) * USECS_PER_SEC) + fsec;
 }	/* time2t() */
 
 #else
 static double
 time2t(const int hour, const int min, const int sec, const fsec_t fsec)
 {
-	return (((hour * SECS_PER_MINUTE) + min) * SECS_PER_MINUTE) + sec + fsec;
+	return (((hour * MINS_PER_HOUR) + min) * SECS_PER_MINUTE) + sec + fsec;
 }	/* time2t() */
 #endif
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.137 2005/07/21 05:18:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.138 2005/07/21 18:06:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -748,7 +748,6 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			interval->time -= hour * USECS_PER_HOUR;
 			interval->time = (interval->time / USECS_PER_MINUTE) *
 								USECS_PER_MINUTE;
-
 #else
 			TMODULO(interval->time, hour, (double)SECS_PER_HOUR);
 			interval->time = ((int)(interval->time / SECS_PER_MINUTE)) * (double)SECS_PER_MINUTE;
@@ -1212,7 +1211,7 @@ tm2interval(struct pg_tm *tm, fsec_t fsec, Interval *span)
 						tm->tm_min) * INT64CONST(60)) +
 						tm->tm_sec) * USECS_PER_SEC) + fsec;
 #else
-	span->time = (((tm->tm_hour * (double)SECS_PER_MINUTE) +
+	span->time = (((tm->tm_hour * (double)MINS_PER_HOUR) +
 						tm->tm_min) * (double)SECS_PER_MINUTE) +
 						tm->tm_sec;
 	span->time = JROUND(span->time + fsec);
@@ -1225,14 +1224,14 @@ tm2interval(struct pg_tm *tm, fsec_t fsec, Interval *span)
 static int64
 time2t(const int hour, const int min, const int sec, const fsec_t fsec)
 {
-	return (((((hour * SECS_PER_MINUTE) + min) * SECS_PER_MINUTE) + sec) * USECS_PER_SEC) + fsec;
+	return (((((hour * MINS_PER_HOUR) + min) * SECS_PER_MINUTE) + sec) * USECS_PER_SEC) + fsec;
 }	/* time2t() */
 
 #else
 static double
 time2t(const int hour, const int min, const int sec, const fsec_t fsec)
 {
-	return (((hour * SECS_PER_MINUTE) + min) * SECS_PER_MINUTE) + sec + fsec;
+	return (((hour * MINS_PER_HOUR) + min) * SECS_PER_MINUTE) + sec + fsec;
 }	/* time2t() */
 #endif
 
@@ -2475,7 +2474,7 @@ timestamp_age(PG_FUNCTION_ARGS)
 
 		while (tm->tm_min < 0)
 		{
-			tm->tm_min += SECS_PER_MINUTE;
+			tm->tm_min += MINS_PER_HOUR;
 			tm->tm_hour--;
 		}
 
@@ -2589,7 +2588,7 @@ timestamptz_age(PG_FUNCTION_ARGS)
 
 		while (tm->tm_min < 0)
 		{
-			tm->tm_min += SECS_PER_MINUTE;
+			tm->tm_min += MINS_PER_HOUR;
 			tm->tm_hour--;
 		}
 
@@ -3492,10 +3491,10 @@ timestamp_part(PG_FUNCTION_ARGS)
 			case DTK_JULIAN:
 				result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
 #ifdef HAVE_INT64_TIMESTAMP
-				result += ((((tm->tm_hour * SECS_PER_MINUTE) + tm->tm_min) * SECS_PER_MINUTE) +
+				result += ((((tm->tm_hour * MINS_PER_HOUR) + tm->tm_min) * SECS_PER_MINUTE) +
 							tm->tm_sec + (fsec / 1000000.0)) / (double)SECS_PER_DAY;
 #else
-				result += ((((tm->tm_hour * SECS_PER_MINUTE) + tm->tm_min) * SECS_PER_MINUTE) +
+				result += ((((tm->tm_hour * MINS_PER_HOUR) + tm->tm_min) * SECS_PER_MINUTE) +
 							tm->tm_sec + fsec) / (double)SECS_PER_DAY;
 #endif
 				break;
@@ -3628,8 +3627,8 @@ timestamptz_part(PG_FUNCTION_ARGS)
 
 			case DTK_TZ_MINUTE:
 				result = -tz;
-				result /= SECS_PER_MINUTE;
-				FMODULO(result, dummy, (double)SECS_PER_MINUTE);
+				result /= MINS_PER_HOUR;
+				FMODULO(result, dummy, (double)MINS_PER_HOUR);
 				break;
 
 			case DTK_TZ_HOUR:
@@ -3720,10 +3719,10 @@ timestamptz_part(PG_FUNCTION_ARGS)
 			case DTK_JULIAN:
 				result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
 #ifdef HAVE_INT64_TIMESTAMP
-				result += ((((tm->tm_hour * SECS_PER_MINUTE) + tm->tm_min) * SECS_PER_MINUTE) +
+				result += ((((tm->tm_hour * MINS_PER_HOUR) + tm->tm_min) * SECS_PER_MINUTE) +
 							tm->tm_sec + (fsec / 1000000.0)) / (double)SECS_PER_DAY;
 #else
-				result += ((((tm->tm_hour * SECS_PER_MINUTE) + tm->tm_min) * SECS_PER_MINUTE) +
+				result += ((((tm->tm_hour * MINS_PER_HOUR) + tm->tm_min) * SECS_PER_MINUTE) +
 							tm->tm_sec + fsec) / (double)SECS_PER_DAY;
 #endif
 				break;

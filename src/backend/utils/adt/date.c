@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.115 2005/07/21 04:41:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.116 2005/07/21 18:06:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -917,10 +917,10 @@ static int
 tm2time(struct pg_tm * tm, fsec_t fsec, TimeADT *result)
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	*result = ((((tm->tm_hour * SECS_PER_MINUTE + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec)
+	*result = ((((tm->tm_hour * MINS_PER_HOUR + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec)
 				* USECS_PER_SEC) + fsec;
 #else
-	*result = ((tm->tm_hour * SECS_PER_MINUTE + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec + fsec;
+	*result = ((tm->tm_hour * MINS_PER_HOUR + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec + fsec;
 #endif
 	return 0;
 }
@@ -1347,10 +1347,10 @@ timestamp_time(PG_FUNCTION_ARGS)
 	 * Could also do this with time = (timestamp / USECS_PER_DAY *
 	 * USECS_PER_DAY) - timestamp;
 	 */
-	result = ((((tm->tm_hour * SECS_PER_MINUTE + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec) *
+	result = ((((tm->tm_hour * MINS_PER_HOUR + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec) *
 				USECS_PER_SEC) + fsec;
 #else
-	result = ((tm->tm_hour * SECS_PER_MINUTE + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec + fsec;
+	result = ((tm->tm_hour * MINS_PER_HOUR + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec + fsec;
 #endif
 
 	PG_RETURN_TIMEADT(result);
@@ -1384,10 +1384,10 @@ timestamptz_time(PG_FUNCTION_ARGS)
 	 * Could also do this with time = (timestamp / USECS_PER_DAY *
 	 * USECS_PER_DAY) - timestamp;
 	 */
-	result = ((((tm->tm_hour * SECS_PER_MINUTE + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec) *
+	result = ((((tm->tm_hour * MINS_PER_HOUR + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec) *
 				USECS_PER_SEC) + fsec;
 #else
-	result = ((tm->tm_hour * SECS_PER_MINUTE + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec + fsec;
+	result = ((tm->tm_hour * MINS_PER_HOUR + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec + fsec;
 #endif
 
 	PG_RETURN_TIMEADT(result);
@@ -1714,10 +1714,10 @@ static int
 tm2timetz(struct pg_tm * tm, fsec_t fsec, int tz, TimeTzADT *result)
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	result->time = ((((tm->tm_hour * SECS_PER_MINUTE + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec) *
+	result->time = ((((tm->tm_hour * MINS_PER_HOUR + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec) *
 					USECS_PER_SEC) + fsec;
 #else
-	result->time = ((tm->tm_hour * SECS_PER_MINUTE + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec + fsec;
+	result->time = ((tm->tm_hour * MINS_PER_HOUR + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec + fsec;
 #endif
 	result->zone = tz;
 

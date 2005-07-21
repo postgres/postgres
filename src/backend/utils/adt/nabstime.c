@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.138 2005/07/21 04:41:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.139 2005/07/21 18:06:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -199,7 +199,7 @@ tm2abstime(struct pg_tm * tm, int tz)
 		return INVALID_ABSTIME;
 
 	/* convert to seconds */
-	sec = tm->tm_sec + tz + (tm->tm_min + (day * HOURS_PER_DAY + tm->tm_hour) * SECS_PER_MINUTE) * SECS_PER_MINUTE;
+	sec = tm->tm_sec + tz + (tm->tm_min + (day * HOURS_PER_DAY + tm->tm_hour) * MINS_PER_HOUR) * SECS_PER_MINUTE;
 
 	/* check for overflow */
 	if ((day == MAX_DAYNUM && sec < 0) ||
@@ -638,8 +638,8 @@ reltimein(PG_FUNCTION_ARGS)
 	switch (dtype)
 	{
 		case DTK_DELTA:
-			result = ((tm->tm_hour * SECS_PER_MINUTE + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec;
-			result += tm->tm_year * 36525 * 864 + ((tm->tm_mon * DAYS_PER_MONTH) + tm->tm_mday) * SECS_PER_DAY;
+			result = ((tm->tm_hour * MINS_PER_HOUR + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec;
+			result += tm->tm_year * SECS_PER_YEAR + ((tm->tm_mon * DAYS_PER_MONTH) + tm->tm_mday) * SECS_PER_DAY;
 			break;
 
 		default:
@@ -884,8 +884,8 @@ reltime_interval(PG_FUNCTION_ARGS)
 
 		default:
 #ifdef HAVE_INT64_TIMESTAMP
-			year = reltime / (36525 * 864);
-			reltime -= year * (36525 * 864);
+			year = reltime / SECS_PER_YEAR;
+			reltime -= year * SECS_PER_YEAR;
 			month = reltime / (DAYS_PER_MONTH * SECS_PER_DAY);
 			reltime -= month * (DAYS_PER_MONTH * SECS_PER_DAY);
 			day = reltime / SECS_PER_DAY;
@@ -893,7 +893,7 @@ reltime_interval(PG_FUNCTION_ARGS)
 
 			result->time = (reltime * USECS_PER_SEC);
 #else
-			TMODULO(reltime, year, 36525 * 864);
+			TMODULO(reltime, year, SECS_PER_YEAR);
 			TMODULO(reltime, month, DAYS_PER_MONTH * SECS_PER_DAY);
 			TMODULO(reltime, day, SECS_PER_DAY);
 
