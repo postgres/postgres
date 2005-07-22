@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.117 2005/07/22 03:46:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.118 2005/07/22 05:03:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1093,18 +1093,13 @@ AdjustTimeForTypmod(TimeADT *time, int32 typmod)
 		 */
 #ifdef HAVE_INT64_TIMESTAMP
 		if (*time >= INT64CONST(0))
-		{
 			*time = ((*time + TimeOffsets[typmod]) / TimeScales[typmod]) *
 					TimeScales[typmod];
-		}
 		else
-		{
 			*time = -((((-*time) + TimeOffsets[typmod]) / TimeScales[typmod]) *
 					TimeScales[typmod]);
-		}
 #else
-		*time = rint((double)*time * TimeScales[typmod])
-				 / TimeScales[typmod];
+		*time = rint((double) * time * TimeScales[typmod]) / TimeScales[typmod];
 #endif
 	}
 }
@@ -2496,9 +2491,9 @@ timetz_zone(PG_FUNCTION_ARGS)
 	pg_time_t   now;
 
 	/* Find the specified timezone */ 
-	len = (VARSIZE(zone)-VARHDRSZ>TZ_STRLEN_MAX) ?
+	len = (VARSIZE(zone) - VARHDRSZ > TZ_STRLEN_MAX) ?
 					TZ_STRLEN_MAX : VARSIZE(zone) - VARHDRSZ;
-	memcpy(tzname,VARDATA(zone),len);
+	memcpy(tzname, VARDATA(zone), len);
 	tzname[len]=0;
 	tzp = pg_tzset(tzname);
 	if (!tzp) {
@@ -2537,7 +2532,7 @@ timetz_zone(PG_FUNCTION_ARGS)
 	result->zone = tz;
 
 	PG_RETURN_TIMETZADT_P(result);
-}	/* timetz_zone() */
+}
 
 /* timetz_izone()
  * Encode time with time zone type with specified time interval as time zone.
@@ -2582,4 +2577,4 @@ timetz_izone(PG_FUNCTION_ARGS)
 	result->zone = tz;
 
 	PG_RETURN_TIMETZADT_P(result);
-}	/* timetz_izone() */
+}
