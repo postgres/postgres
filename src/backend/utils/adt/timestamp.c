@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.139 2005/07/22 03:46:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.140 2005/07/22 15:15:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3944,11 +3944,13 @@ timestamp_zone(PG_FUNCTION_ARGS)
 		PG_RETURN_TIMESTAMPTZ(timestamp);
 
 	/* Find the specified timezone? */
-	len = (VARSIZE(zone)-VARHDRSZ>TZ_STRLEN_MAX)?TZ_STRLEN_MAX:(VARSIZE(zone)-VARHDRSZ);
-	memcpy(tzname,VARDATA(zone),len);
+	len = (VARSIZE(zone) - VARHDRSZ>TZ_STRLEN_MAX) ?
+			TZ_STRLEN_MAX : VARSIZE(zone) - VARHDRSZ;
+	memcpy(tzname, VARDATA(zone), len);
 	tzname[len] = 0;
 	tzp = pg_tzset(tzname);
-	if (!tzp) {
+	if (!tzp)
+	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("time zone \"%s\" not recognised",
@@ -3958,7 +3960,8 @@ timestamp_zone(PG_FUNCTION_ARGS)
 
 	/* Apply the timezone change */
 	if (timestamp2tm(timestamp, &tz, &tm, &fsec, NULL, tzp) != 0 ||
-	    tm2timestamp(&tm, fsec, NULL, &result) != 0) {
+	    tm2timestamp(&tm, fsec, NULL, &result) != 0)
+	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("could not convert to time zone \"%s\"",
@@ -3966,7 +3969,7 @@ timestamp_zone(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 	PG_RETURN_TIMESTAMPTZ(timestamp2timestamptz(result));
-}	/* timestamp_zone() */
+}
 
 /* timestamp_izone()
  * Encode timestamp type with specified time interval as time zone.
@@ -4022,7 +4025,6 @@ timestamp2timestamptz(Timestamp timestamp)
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		result = timestamp;
-
 	else
 	{
 		if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0)
@@ -4057,7 +4059,6 @@ timestamptz_timestamp(PG_FUNCTION_ARGS)
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		result = timestamp;
-
 	else
 	{
 		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) != 0)
@@ -4082,7 +4083,6 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 	text	   *zone = PG_GETARG_TEXT_P(0);
 	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(1);
 	Timestamp	result;
-
 	int			tz;
 	pg_tz	   *tzp;
 	char        tzname[TZ_STRLEN_MAX];
@@ -4094,12 +4094,14 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	/* Find the specified zone */
-	len = (VARSIZE(zone)-VARHDRSZ>TZ_STRLEN_MAX)?TZ_STRLEN_MAX:(VARSIZE(zone)-VARHDRSZ);
-	memcpy(tzname,VARDATA(zone),len);
+	len = (VARSIZE(zone) - VARHDRSZ > TZ_STRLEN_MAX) ?
+			TZ_STRLEN_MAX : VARSIZE(zone) - VARHDRSZ;
+	memcpy(tzname, VARDATA(zone), len);
 	tzname[len] = 0;
 	tzp = pg_tzset(tzname);
 
-	if (!tzp) {
+	if (!tzp)
+	{
 		ereport(ERROR,
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 			 errmsg("time zone \"%s\" not recognized", tzname)));
@@ -4108,7 +4110,8 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 	}
 
 	if (timestamp2tm(timestamp, &tz, &tm, &fsec, NULL, tzp) != 0 ||
-	    tm2timestamp(&tm, fsec, NULL, &result)) { 
+	    tm2timestamp(&tm, fsec, NULL, &result))
+	{ 
 		ereport(ERROR,
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 			errmsg("could not to convert to time zone \"%s\"", tzname)));
@@ -4116,7 +4119,7 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_TIMESTAMP(result);
-}	/* timestamptz_zone() */
+}
 
 /* timestamptz_izone()
  * Encode timestamp with time zone type with specified time interval as time zone.
@@ -4149,4 +4152,4 @@ timestamptz_izone(PG_FUNCTION_ARGS)
 	result = dt2local(timestamp, tz);
 
 	PG_RETURN_TIMESTAMP(result);
-}	/* timestamptz_izone() */
+}
