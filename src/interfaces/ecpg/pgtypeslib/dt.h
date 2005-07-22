@@ -223,14 +223,16 @@ do { \
  *	DAYS_PER_MONTH is very imprecise.  The more accurate value is
  *	365.2425/12 = 30.436875, or '30 days 10:29:06'.  Right now we only
  *	return an integral number of days, but someday perhaps we should
- *	also return a 'time' value to be used as well.
+ *	also return a 'time' value to be used as well.  ISO 8601 suggests
+ *	30 days.
  */
 #define DAYS_PER_MONTH	30		/* assumes exactly 30 days per month */
 #define HOURS_PER_DAY	24		/* assume no daylight savings time changes */
 
 /*
  *	This doesn't adjust for uneven daylight savings time intervals or leap
- *	seconds, and it crudely estimates leap years.
+ *	seconds, and it crudely estimates leap years.  A more accurate value
+ *	for days per years is 365.2422.
  */
 #define SECS_PER_YEAR	(36525 * 864)	/* avoid floating-point computation */
 #define SECS_PER_DAY	86400
