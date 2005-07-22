@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.138 2005/07/21 18:06:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.139 2005/07/22 03:46:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1059,7 +1059,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm, fsec_t *fsec, char **tzn,
 	 * We have a brute force time zone per SQL99? Then use it without
 	 * change since we have already rotated to the time zone.
 	 */
-	if ((attimezone==NULL) && HasCTZSet)
+	if ((attimezone == NULL) && HasCTZSet)
 	{
 		*tzp = CTimeZone;
 		tm->tm_isdst = 0;
@@ -1090,7 +1090,8 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm, fsec_t *fsec, char **tzn,
 	utime = (pg_time_t) dt;
 	if ((Timestamp) utime == dt)
 	{
-		struct pg_tm *tx = pg_localtime(&utime, (attimezone!=NULL)?attimezone:global_timezone);
+		struct pg_tm *tx = pg_localtime(&utime, (attimezone != NULL) ?
+										attimezone : global_timezone);
 
 		tm->tm_year = tx->tm_year + 1900;
 		tm->tm_mon = tx->tm_mon + 1;

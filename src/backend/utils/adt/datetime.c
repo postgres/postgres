@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.155 2005/07/21 18:06:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.156 2005/07/22 03:46:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,16 +28,16 @@
 
 static int DecodeNumber(int flen, char *field, bool haveTextMonth,
 			 int fmask, int *tmask,
-			 struct pg_tm * tm, fsec_t *fsec, int *is2digits);
+			 struct pg_tm *tm, fsec_t *fsec, int *is2digits);
 static int DecodeNumberField(int len, char *str,
 				  int fmask, int *tmask,
-				  struct pg_tm * tm, fsec_t *fsec, int *is2digits);
+				  struct pg_tm *tm, fsec_t *fsec, int *is2digits);
 static int DecodeTime(char *str, int fmask, int *tmask,
-		   struct pg_tm * tm, fsec_t *fsec);
+		   struct pg_tm *tm, fsec_t *fsec);
 static int	DecodeTimezone(char *str, int *tzp);
 static int	DecodePosixTimezone(char *str, int *tzp);
 static datetkn *datebsearch(char *key, datetkn *base, unsigned int nel);
-static int	DecodeDate(char *str, int fmask, int *tmask, struct pg_tm * tm);
+static int	DecodeDate(char *str, int fmask, int *tmask, struct pg_tm *tm);
 static void TrimTrailingZeros(char *str);
 
 
@@ -681,7 +681,7 @@ j2day(int date)
  * Get the transaction start time ("now()") broken down as a struct pg_tm.
  */
 void
-GetCurrentDateTime(struct pg_tm * tm)
+GetCurrentDateTime(struct pg_tm *tm)
 {
 	int			tz;
 	fsec_t		fsec;
@@ -698,7 +698,7 @@ GetCurrentDateTime(struct pg_tm * tm)
  * including fractional seconds and timezone offset.
  */
 void
-GetCurrentTimeUsec(struct pg_tm * tm, fsec_t *fsec, int *tzp)
+GetCurrentTimeUsec(struct pg_tm *tm, fsec_t *fsec, int *tzp)
 {
 	int			tz;
 
@@ -969,7 +969,7 @@ ParseDateTime(const char *timestr, char *workbuf, size_t buflen,
  */
 int
 DecodeDateTime(char **field, int *ftype, int nf,
-			   int *dtype, struct pg_tm * tm, fsec_t *fsec, int *tzp)
+			   int *dtype, struct pg_tm *tm, fsec_t *fsec, int *tzp)
 {
 	int			fmask = 0,
 				tmask,
@@ -1632,7 +1632,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
  * of mktime(), anyway.
  */
 int
-DetermineLocalTimeZone(struct pg_tm * tm)
+DetermineLocalTimeZone(struct pg_tm *tm)
 {
 	int			date,
 				sec;
@@ -1760,7 +1760,7 @@ overflow:
  */
 int
 DecodeTimeOnly(char **field, int *ftype, int nf,
-			   int *dtype, struct pg_tm * tm, fsec_t *fsec, int *tzp)
+			   int *dtype, struct pg_tm *tm, fsec_t *fsec, int *tzp)
 {
 	int			fmask = 0,
 				tmask,
@@ -2296,7 +2296,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
  * Insist on a complete set of fields.
  */
 static int
-DecodeDate(char *str, int fmask, int *tmask, struct pg_tm * tm)
+DecodeDate(char *str, int fmask, int *tmask, struct pg_tm *tm)
 {
 	fsec_t		fsec;
 	int			nf = 0;
@@ -2454,7 +2454,7 @@ DecodeDate(char *str, int fmask, int *tmask, struct pg_tm * tm)
  *	can be used to represent time spans.
  */
 static int
-DecodeTime(char *str, int fmask, int *tmask, struct pg_tm * tm, fsec_t *fsec)
+DecodeTime(char *str, int fmask, int *tmask, struct pg_tm *tm, fsec_t *fsec)
 {
 	char	   *cp;
 
@@ -2518,7 +2518,7 @@ DecodeTime(char *str, int fmask, int *tmask, struct pg_tm * tm, fsec_t *fsec)
  */
 static int
 DecodeNumber(int flen, char *str, bool haveTextMonth, int fmask,
-			 int *tmask, struct pg_tm * tm, fsec_t *fsec, int *is2digits)
+			 int *tmask, struct pg_tm *tm, fsec_t *fsec, int *is2digits)
 {
 	int			val;
 	char	   *cp;
@@ -2708,7 +2708,7 @@ DecodeNumber(int flen, char *str, bool haveTextMonth, int fmask,
  */
 static int
 DecodeNumberField(int len, char *str, int fmask,
-			 int *tmask, struct pg_tm * tm, fsec_t *fsec, int *is2digits)
+			 int *tmask, struct pg_tm *tm, fsec_t *fsec, int *is2digits)
 {
 	char	   *cp;
 
@@ -2966,7 +2966,7 @@ DecodeSpecial(int field, char *lowtoken, int *val)
  *	preceding an hh:mm:ss field. - thomas 1998-04-30
  */
 int
-DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, fsec_t *fsec)
+DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm *tm, fsec_t *fsec)
 {
 	int			is_before = FALSE;
 	char	   *cp;
@@ -3420,7 +3420,7 @@ datebsearch(char *key, datetkn *base, unsigned int nel)
  * Encode date as local time.
  */
 int
-EncodeDateOnly(struct pg_tm * tm, int style, char *str)
+EncodeDateOnly(struct pg_tm *tm, int style, char *str)
 {
 	if (tm->tm_mon < 1 || tm->tm_mon > MONTHS_PER_YEAR)
 		return -1;
@@ -3480,7 +3480,7 @@ EncodeDateOnly(struct pg_tm * tm, int style, char *str)
  * Encode time fields only.
  */
 int
-EncodeTimeOnly(struct pg_tm * tm, fsec_t fsec, int *tzp, int style, char *str)
+EncodeTimeOnly(struct pg_tm *tm, fsec_t fsec, int *tzp, int style, char *str)
 {
 	if (tm->tm_hour < 0 || tm->tm_hour > HOURS_PER_DAY)
 		return -1;
@@ -3530,7 +3530,7 @@ EncodeTimeOnly(struct pg_tm * tm, fsec_t fsec, int *tzp, int style, char *str)
  *	European - dd/mm/yyyy
  */
 int
-EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, char *str)
+EncodeDateTime(struct pg_tm *tm, fsec_t fsec, int *tzp, char **tzn, int style, char *str)
 {
 	int			day,
 				hour,
@@ -3770,7 +3770,7 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
  * - thomas 1998-04-30
  */
 int
-EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
+EncodeInterval(struct pg_tm *tm, fsec_t fsec, int style, char *str)
 {
 	int			is_before = FALSE;
 	int			is_nonzero = FALSE;

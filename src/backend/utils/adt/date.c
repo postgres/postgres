@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.116 2005/07/21 18:06:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.117 2005/07/22 03:46:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,10 +38,10 @@
 #endif
 
 
-static int	time2tm(TimeADT time, struct pg_tm * tm, fsec_t *fsec);
-static int	timetz2tm(TimeTzADT *time, struct pg_tm * tm, fsec_t *fsec, int *tzp);
-static int	tm2time(struct pg_tm * tm, fsec_t fsec, TimeADT *result);
-static int	tm2timetz(struct pg_tm * tm, fsec_t fsec, int tz, TimeTzADT *result);
+static int	time2tm(TimeADT time, struct pg_tm *tm, fsec_t *fsec);
+static int	timetz2tm(TimeTzADT *time, struct pg_tm *tm, fsec_t *fsec, int *tzp);
+static int	tm2time(struct pg_tm *tm, fsec_t fsec, TimeADT *result);
+static int	tm2timetz(struct pg_tm *tm, fsec_t fsec, int tz, TimeTzADT *result);
 static void AdjustTimeForTypmod(TimeADT *time, int32 typmod);
 
 /*****************************************************************************
@@ -914,7 +914,7 @@ time_in(PG_FUNCTION_ARGS)
  * Convert a tm structure to a time data type.
  */
 static int
-tm2time(struct pg_tm * tm, fsec_t fsec, TimeADT *result)
+tm2time(struct pg_tm *tm, fsec_t fsec, TimeADT *result)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	*result = ((((tm->tm_hour * MINS_PER_HOUR + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec)
@@ -931,7 +931,7 @@ tm2time(struct pg_tm * tm, fsec_t fsec, TimeADT *result)
  *	local time zone. If out of this range, leave as GMT. - tgl 97/05/27
  */
 static int
-time2tm(TimeADT time, struct pg_tm * tm, fsec_t *fsec)
+time2tm(TimeADT time, struct pg_tm *tm, fsec_t *fsec)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	tm->tm_hour = time / USECS_PER_HOUR;
@@ -1711,7 +1711,7 @@ time_part(PG_FUNCTION_ARGS)
  * Convert a tm structure to a time data type.
  */
 static int
-tm2timetz(struct pg_tm * tm, fsec_t fsec, int tz, TimeTzADT *result)
+tm2timetz(struct pg_tm *tm, fsec_t fsec, int tz, TimeTzADT *result)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	result->time = ((((tm->tm_hour * MINS_PER_HOUR + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec) *
@@ -1828,7 +1828,7 @@ timetz_send(PG_FUNCTION_ARGS)
  * Convert TIME WITH TIME ZONE data type to POSIX time structure.
  */
 static int
-timetz2tm(TimeTzADT *time, struct pg_tm * tm, fsec_t *fsec, int *tzp)
+timetz2tm(TimeTzADT *time, struct pg_tm *tm, fsec_t *fsec, int *tzp)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		trem = time->time;
@@ -2291,7 +2291,7 @@ datetimetz_timestamptz(PG_FUNCTION_ARGS)
 	TimestampTz result;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	result = (date * USECS_PER_DAY + time->time) + time->zone * USECS_PER_SEC;
+	result = date * USECS_PER_DAY + time->time + time->zone * USECS_PER_SEC;
 #else
 	result = date * (double)SECS_PER_DAY + time->time + time->zone;
 #endif

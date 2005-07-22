@@ -686,7 +686,7 @@ DecodeSpecial(int field, char *lowtoken, int *val)
  * Encode date as local time.
  */
 int
-EncodeDateOnly(struct tm * tm, int style, char *str, bool EuroDates)
+EncodeDateOnly(struct tm *tm, int style, char *str, bool EuroDates)
 {
 	if (tm->tm_mon < 1 || tm->tm_mon > MONTHS_PER_YEAR)
 		return -1;
@@ -766,7 +766,7 @@ TrimTrailingZeros(char *str)
  *	European - dd/mm/yyyy
  */
 int
-EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, char *str, bool EuroDates)
+EncodeDateTime(struct tm *tm, fsec_t fsec, int *tzp, char **tzn, int style, char *str, bool EuroDates)
 {
 	int			day,
 				hour,
@@ -982,7 +982,7 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 }	/* EncodeDateTime() */
 
 void
-GetEpochTime(struct tm * tm)
+GetEpochTime(struct tm *tm)
 {
 	struct tm  *t0;
 	time_t		epoch = 0;
@@ -1004,7 +1004,7 @@ GetEpochTime(struct tm * tm)
 }	/* GetEpochTime() */
 
 static void
-abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
+abstime2tm(AbsoluteTime _time, int *tzp, struct tm *tm, char **tzn)
 {
 	time_t		time = (time_t) _time;
 	struct tm  *tx;
@@ -1085,7 +1085,7 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 }
 
 void
-GetCurrentDateTime(struct tm * tm)
+GetCurrentDateTime(struct tm *tm)
 {
 	int			tz;
 
@@ -1104,7 +1104,7 @@ GetCurrentDateTime(struct tm * tm)
  * the *only* call of mktime() in the backend.
  */
 static int
-DetermineLocalTimeZone(struct tm * tm)
+DetermineLocalTimeZone(struct tm *tm)
 {
 	int			tz;
 
@@ -1269,7 +1269,7 @@ dt2time(double jd, int *hour, int *min, int *sec, fsec_t *fsec)
  */
 static int
 DecodeNumberField(int len, char *str, int fmask,
-int *tmask, struct tm * tm, fsec_t *fsec, int *is2digits, bool EuroDates)
+int *tmask, struct tm *tm, fsec_t *fsec, int *is2digits, bool EuroDates)
 {
 	char	   *cp;
 
@@ -1376,7 +1376,7 @@ int *tmask, struct tm * tm, fsec_t *fsec, int *is2digits, bool EuroDates)
  */
 static int
 DecodeNumber(int flen, char *str, int fmask,
-int *tmask, struct tm * tm, fsec_t *fsec, int *is2digits, bool EuroDates)
+int *tmask, struct tm *tm, fsec_t *fsec, int *is2digits, bool EuroDates)
 {
 	int			val;
 	char	   *cp;
@@ -1484,7 +1484,7 @@ int *tmask, struct tm * tm, fsec_t *fsec, int *is2digits, bool EuroDates)
  * Insist on a complete set of fields.
  */
 static int
-DecodeDate(char *str, int fmask, int *tmask, struct tm * tm, bool EuroDates)
+DecodeDate(char *str, int fmask, int *tmask, struct tm *tm, bool EuroDates)
 {
 	fsec_t		fsec;
 
@@ -1613,7 +1613,7 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm, bool EuroDates)
  *	can be used to represent time spans.
  */
 static int
-DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, fsec_t *fsec)
+DecodeTime(char *str, int fmask, int *tmask, struct tm *tm, fsec_t *fsec)
 {
 	char	   *cp;
 
@@ -1961,7 +1961,7 @@ ParseDateTime(char *timestr, char *lowstr,
  */
 int
 DecodeDateTime(char **field, int *ftype, int nf,
-	  int *dtype, struct tm * tm, fsec_t *fsec, int *tzp, bool EuroDates)
+	  int *dtype, struct tm *tm, fsec_t *fsec, int *tzp, bool EuroDates)
 {
 	int			fmask = 0,
 				tmask,

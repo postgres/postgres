@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/include/pgtime.h,v 1.8 2005/06/15 00:34:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/include/pgtime.h,v 1.9 2005/07/22 03:46:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ extern int	pg_next_dst_boundary(const pg_time_t *timep,
 								 int *after_isdst,
 	                             const pg_tz *tz);
 extern size_t pg_strftime(char *s, size_t max, const char *format,
-			const struct pg_tm * tm);
+			const struct pg_tm *tm);
 
 extern void pg_timezone_initialize(void);
 extern pg_tz *pg_tzset(const char *tzname);

@@ -51,7 +51,7 @@ dt2local(timestamp dt, int tz)
  * Returns -1 on failure (overflow).
  */
 int
-tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, timestamp *result)
+tm2timestamp(struct tm *tm, fsec_t fsec, int *tzp, timestamp *result)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	int			dDate;
@@ -141,7 +141,7 @@ dt2time(timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
  *	local time zone. If out of this range, leave as GMT. - tgl 97/05/27
  */
 static int
-timestamp2tm(timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
+timestamp2tm(timestamp dt, int *tzp, struct tm *tm, fsec_t *fsec, char **tzn)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	int			dDate,
@@ -381,7 +381,7 @@ PGTYPEStimestamp_current(timestamp *ts)
 }
 
 static int
-dttofmtasc_replace(timestamp *ts, date dDate, int dow, struct tm * tm,
+dttofmtasc_replace(timestamp *ts, date dDate, int dow, struct tm *tm,
 				   char *output, int *pstr_len, char *fmtstr)
 {
 	union un_fmt_comb replace_val;

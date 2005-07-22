@@ -306,15 +306,15 @@ do { \
 
 int DecodeTimeOnly(char **field, int *ftype,
 			   int nf, int *dtype,
-			   struct tm * tm, fsec_t *fsec, int *tzp);
+			   struct tm *tm, fsec_t *fsec, int *tzp);
 
 int DecodeInterval(char **field, int *ftype,
 			   int nf, int *dtype,
-			   struct tm * tm, fsec_t *fsec);
+			   struct tm *tm, fsec_t *fsec);
 
-int			EncodeTimeOnly(struct tm * tm, fsec_t fsec, int *tzp, int style, char *str);
-int			EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, char *str, bool);
-int			EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str);
+int			EncodeTimeOnly(struct tm *tm, fsec_t fsec, int *tzp, int style, char *str);
+int			EncodeDateTime(struct tm *tm, fsec_t fsec, int *tzp, char **tzn, int style, char *str, bool);
+int			EncodeInterval(struct tm *tm, fsec_t fsec, int style, char *str);
 
 int			tm2timestamp(struct tm *, fsec_t, int *, timestamp *);
 
