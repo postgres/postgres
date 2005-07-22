@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.140 2005/07/22 15:15:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.141 2005/07/22 19:00:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1006,7 +1006,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm, fsec_t *fsec, char **tzn,
 	 * specified. Go ahead and rotate to the local time zone since we will
 	 * later bypass any calls which adjust the tm fields.
 	 */
-	if ((attimezone==NULL) && HasCTZSet && (tzp != NULL))
+	if (attimezone == NULL && HasCTZSet && tzp != NULL)
 	{
 #ifdef HAVE_INT64_TIMESTAMP
 		dt -= CTimeZone * USECS_PER_SEC;
@@ -1059,7 +1059,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm, fsec_t *fsec, char **tzn,
 	 * We have a brute force time zone per SQL99? Then use it without
 	 * change since we have already rotated to the time zone.
 	 */
-	if ((attimezone == NULL) && HasCTZSet)
+	if (attimezone == NULL && HasCTZSet)
 	{
 		*tzp = CTimeZone;
 		tm->tm_isdst = 0;
@@ -1102,7 +1102,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm, fsec_t *fsec, char **tzn,
 		tm->tm_isdst = tx->tm_isdst;
 		tm->tm_gmtoff = tx->tm_gmtoff;
 		tm->tm_zone = tx->tm_zone;
-		*tzp = -(tm->tm_gmtoff);
+		*tzp = -tm->tm_gmtoff;
 		if (tzn != NULL)
 			*tzn = (char *) tm->tm_zone;
 	}
@@ -4146,7 +4146,7 @@ timestamptz_izone(PG_FUNCTION_ARGS)
 #ifdef HAVE_INT64_TIMESTAMP
 	tz = -(zone->time / USECS_PER_SEC);
 #else
-	tz = -(zone->time);
+	tz = -zone->time;
 #endif
 
 	result = dt2local(timestamp, tz);

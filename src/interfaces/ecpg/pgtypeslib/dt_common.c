@@ -1136,7 +1136,7 @@ DetermineLocalTimeZone(struct tm *tm)
 
 #if defined(HAVE_TM_ZONE)
 			/* tm_gmtoff is Sun/DEC-ism */
-			tz = -(tmp->tm_gmtoff);
+			tz = -tmp->tm_gmtoff;
 #elif defined(HAVE_INT_TIMEZONE)
 			tz = (tmp->tm_isdst > 0) ? TIMEZONE_GLOBAL - SECS_PER_HOUR : TIMEZONE_GLOBAL;
 #endif   /* HAVE_INT_TIMEZONE */

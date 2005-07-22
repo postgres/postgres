@@ -217,7 +217,7 @@ timestamp2tm(timestamp dt, int *tzp, struct tm *tm, fsec_t *fsec, char **tzn)
 			tm->tm_gmtoff = tx->tm_gmtoff;
 			tm->tm_zone = tx->tm_zone;
 
-			*tzp = -(tm->tm_gmtoff);	/* tm_gmtoff is Sun/DEC-ism */
+			*tzp = -tm->tm_gmtoff;	/* tm_gmtoff is Sun/DEC-ism */
 			if (tzn != NULL)
 				*tzn = (char *) tm->tm_zone;
 #elif defined(HAVE_INT_TIMEZONE)
