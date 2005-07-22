@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.140 2005/07/22 03:46:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.141 2005/07/22 19:55:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@
 #include "utils/builtins.h"
 #include "utils/nabstime.h"
 
-#define MIN_DAYNUM -24856		/* December 13, 1901 */
+#define MIN_DAYNUM (-24856)		/* December 13, 1901 */
 #define MAX_DAYNUM 24854		/* January 18, 2038 */
 
 #define INVALID_RELTIME_STR		"Undefined RelTime"
@@ -201,9 +201,12 @@ tm2abstime(struct pg_tm *tm, int tz)
 	/* convert to seconds */
 	sec = tm->tm_sec + tz + (tm->tm_min + (day * HOURS_PER_DAY + tm->tm_hour) * MINS_PER_HOUR) * SECS_PER_MINUTE;
 
-	/* check for overflow */
-	if ((day == MAX_DAYNUM && sec < 0) ||
-		(day == MIN_DAYNUM && sec > 0))
+	/*
+	 * check for overflow.  We need a little slop here because the H/M/S plus
+	 * TZ offset could add up to more than 1 day.
+	 */
+	if ((day >= MAX_DAYNUM-10 && sec < 0) ||
+		(day <= MIN_DAYNUM+10 && sec > 0))
 		return INVALID_ABSTIME;
 
 	/* check for reserved values (e.g. "current" on edge of usual range */
