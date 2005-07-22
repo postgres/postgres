@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.268 2005/07/20 16:42:29 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.269 2005/07/22 21:16:14 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -5693,7 +5693,7 @@ SELECT date_trunc('year', TIMESTAMP '2001-02-16 20:38:40');
          <literal><type>timestamp without time zone</type> AT TIME ZONE <replaceable>zone</></literal>
         </entry>
         <entry><type>timestamp with time zone</type></entry>
-        <entry>Convert local time in given time zone to UTC</entry>
+        <entry>Treat given timestamp <emphasis>without time zone</> as located in the specified time zone</entry>
        </row>
 
        <row>
@@ -5701,7 +5701,7 @@ SELECT date_trunc('year', TIMESTAMP '2001-02-16 20:38:40');
          <literal><type>timestamp with time zone</type> AT TIME ZONE <replaceable>zone</></literal>
         </entry>
         <entry><type>timestamp without time zone</type></entry>
-        <entry>Convert UTC to local time in given time zone</entry>
+        <entry>Convert given timestamp <emphasis>with time zone</> to the new time zone</entry>
        </row>
 
        <row>
@@ -5709,7 +5709,7 @@ SELECT date_trunc('year', TIMESTAMP '2001-02-16 20:38:40');
          <literal><type>time with time zone</type> AT TIME ZONE <replaceable>zone</></literal>
         </entry>
         <entry><type>time with time zone</type></entry>
-        <entry>Convert local time across time zones</entry>
+        <entry>Convert given time <emphasis>with time zone</> to the new time zone</entry>
        </row>
       </tbody>
      </tgroup>
@@ -5720,7 +5720,8 @@ SELECT date_trunc('year', TIMESTAMP '2001-02-16 20:38:40');
     specified either as a text string (e.g., <literal>'PST'</literal>)
     or as an interval (e.g., <literal>INTERVAL '-08:00'</literal>).
     In the text case, the available zone names are those shown in
-    <xref linkend="datetime-timezone-set-table">.
+    <xref linkend="datetime-timezone-set-table">.  The time zone can
+    also be implied using the default time zone for that session.
    </para>
 
    <para>
@@ -5732,10 +5733,9 @@ SELECT TIMESTAMP '2001-02-16 20:38:40' AT TIME ZONE 'MST';
 SELECT TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40-05' AT TIME ZONE 'MST';
 <lineannotation>Result: </lineannotation><computeroutput>2001-02-16 18:38:40</computeroutput>
 </screen>
-    The first example takes a zone-less time stamp and interprets it as MST time
-    (UTC-7) to produce a UTC time stamp, which is then rotated to PST (UTC-8)
-    for display.  The second example takes a time stamp specified in EST
-    (UTC-5) and converts it to local time in MST (UTC-7).
+    The first example takes a time stamp without time zone and interprets it as MST time
+    (UTC-7), which is then converted to PST (UTC-8) for display.  The second example takes 
+    a time stamp specified in EST (UTC-5) and converts it to local time in MST (UTC-7).
    </para>
 
    <para>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.141 2005/07/22 19:00:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.142 2005/07/22 21:16:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1035,7 +1035,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm, fsec_t *fsec, char **tzn,
 #endif
 
 	/* add offset to go from J2000 back to standard Julian date */
-	date	  +=POSTGRES_EPOCH_JDATE;
+	date += POSTGRES_EPOCH_JDATE;
 
 	/* Julian day routine does not work for negative Julian days */
 	if (date <0 || date >(Timestamp) INT_MAX)
@@ -1147,8 +1147,8 @@ tm2timestamp(struct pg_tm *tm, fsec_t fsec, int *tzp, Timestamp *result)
 		return -1;
 
 	date = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
-
 	time = time2t(tm->tm_hour, tm->tm_min, tm->tm_sec, fsec);
+
 #ifdef HAVE_INT64_TIMESTAMP
 	*result = date * USECS_PER_DAY + time;
 	/* check for major overflow */
@@ -2673,7 +2673,7 @@ timestamp_text(PG_FUNCTION_ARGS)
 	result = palloc(len);
 
 	VARATT_SIZEP(result) = len;
-	memmove(VARDATA(result), str, (len - VARHDRSZ));
+	memmove(VARDATA(result), str, len - VARHDRSZ);
 
 	pfree(str);
 
@@ -2704,7 +2704,7 @@ text_timestamp(PG_FUNCTION_ARGS)
 
 	sp = VARDATA(str);
 	dp = dstr;
-	for (i = 0; i < (VARSIZE(str) - VARHDRSZ); i++)
+	for (i = 0; i < VARSIZE(str) - VARHDRSZ; i++)
 		*dp++ = *sp++;
 	*dp = '\0';
 
@@ -2729,12 +2729,12 @@ timestamptz_text(PG_FUNCTION_ARGS)
 
 	str = DatumGetCString(DirectFunctionCall1(timestamptz_out, timestamp));
 
-	len = (strlen(str) + VARHDRSZ);
+	len = strlen(str) + VARHDRSZ;
 
 	result = palloc(len);
 
 	VARATT_SIZEP(result) = len;
-	memmove(VARDATA(result), str, (len - VARHDRSZ));
+	memmove(VARDATA(result), str, len - VARHDRSZ);
 
 	pfree(str);
 
@@ -2764,7 +2764,7 @@ text_timestamptz(PG_FUNCTION_ARGS)
 
 	sp = VARDATA(str);
 	dp = dstr;
-	for (i = 0; i < (VARSIZE(str) - VARHDRSZ); i++)
+	for (i = 0; i < VARSIZE(str) - VARHDRSZ; i++)
 		*dp++ = *sp++;
 	*dp = '\0';
 
@@ -2789,7 +2789,7 @@ interval_text(PG_FUNCTION_ARGS)
 	str = DatumGetCString(DirectFunctionCall1(interval_out,
 										   IntervalPGetDatum(interval)));
 
-	len = (strlen(str) + VARHDRSZ);
+	len = strlen(str) + VARHDRSZ;
 
 	result = palloc(len);
 
@@ -3084,7 +3084,7 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 
 			case DTK_MILLISEC:
 #ifdef HAVE_INT64_TIMESTAMP
-				fsec = ((fsec / 1000) * 1000);
+				fsec = (fsec / 1000) * 1000;
 #else
 				fsec = rint(fsec * 1000) / 1000;
 #endif
@@ -3181,7 +3181,7 @@ interval_trunc(PG_FUNCTION_ARGS)
 
 				case DTK_MILLISEC:
 #ifdef HAVE_INT64_TIMESTAMP
-					fsec = ((fsec / 1000) * 1000);
+					fsec = (fsec / 1000) * 1000;
 #else
 					fsec = rint(fsec * 1000) / 1000;
 #endif
@@ -3932,7 +3932,7 @@ timestamp_zone(PG_FUNCTION_ARGS)
 {
 	text	   *zone = PG_GETARG_TEXT_P(0);
 	Timestamp timestamp = PG_GETARG_TIMESTAMP(1);
-	Timestamp result;
+	TimestampTz	result;
 	int			tz;
 	pg_tz      *tzp;
 	char        tzname[TZ_STRLEN_MAX+1];
@@ -3968,7 +3968,7 @@ timestamp_zone(PG_FUNCTION_ARGS)
 				        tzname)));
 		PG_RETURN_NULL();
 	}
-	PG_RETURN_TIMESTAMPTZ(timestamp2timestamptz(result));
+	PG_RETURN_TIMESTAMPTZ(result);
 }
 
 /* timestamp_izone()
