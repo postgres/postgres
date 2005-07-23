@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.142 2005/07/22 21:16:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.143 2005/07/23 02:02:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3922,10 +3922,14 @@ interval_part(PG_FUNCTION_ARGS)
 }
 
 
-/* timestamp_zone()
- * Encode timestamp type with specified time zone.
- * Returns timestamp with time zone, with the input
+/* 	timestamp_zone()
+ * 	Encode timestamp type with specified time zone.
+ * 	Returns timestamp with time zone, with the input
  *	rotated from local time to the specified zone.
+ *	This function is tricky because instead of shifting
+ *	the time _to_ a new time zone, it sets the time to _be_
+ *	the specified timezone.  This requires trickery
+ *	of double-subtracting the requested timezone offset.
  */
 Datum
 timestamp_zone(PG_FUNCTION_ARGS)
@@ -3960,7 +3964,7 @@ timestamp_zone(PG_FUNCTION_ARGS)
 
 	/* Apply the timezone change */
 	if (timestamp2tm(timestamp, &tz, &tm, &fsec, NULL, tzp) != 0 ||
-	    tm2timestamp(&tm, fsec, NULL, &result) != 0)
+	    tm2timestamp(&tm, fsec, &tz, &result) != 0)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -3968,6 +3972,9 @@ timestamp_zone(PG_FUNCTION_ARGS)
 				        tzname)));
 		PG_RETURN_NULL();
 	}
+	/* Must double-adjust for timezone */
+	result = dt2local(result, -tz);
+
 	PG_RETURN_TIMESTAMPTZ(result);
 }
 
