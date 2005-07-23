@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.209 2005/07/23 15:29:47 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.210 2005/07/23 15:31:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,15 +46,6 @@
 #include "utils/nabstime.h"
 #include "utils/relcache.h"
 
-
-/*
- *	Becauase O_DIRECT bypasses the kernel buffers, and because we never
- *	read those buffers except during crash recovery, it seems like
- *	a win to use it in all cases.
- */
-#ifdef O_DIRECT
-#define PG_O_DIRECT	O_DIR(enableFsync ? (open_sync_bit | O_DIRECT) : 0)
-#else
 
 /*
  * This chunk of hackery attempts to determine which file sync methods
