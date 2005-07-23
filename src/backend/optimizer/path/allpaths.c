@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.134 2005/06/10 03:32:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.135 2005/07/23 21:05:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "nodes/makefuncs.h"
 #ifdef OPTIMIZER_DEBUG
 #include "nodes/print.h"
 #endif
@@ -25,6 +26,7 @@
 #include "optimizer/paths.h"
 #include "optimizer/plancat.h"
 #include "optimizer/planner.h"
+#include "optimizer/predtest.h"
 #include "optimizer/prep.h"
 #include "optimizer/var.h"
 #include "parser/parsetree.h"
@@ -34,6 +36,7 @@
 
 
 /* These parameters are set by GUC */
+bool		enable_constraint_exclusion = false;
 bool		enable_geqo = false;	/* just in case GUC doesn't set it */
 int			geqo_threshold;
 
@@ -311,7 +314,37 @@ set_inherited_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 								   childOID);
 
 		/*
-		 * Now compute child access paths, and save the cheapest.
+		 * If we can prove we don't need to scan this child via constraint
+		 * exclusion, just ignore it.  (We have to have converted the
+		 * baserestrictinfo Vars before we can make the test.)
+		 */
+		if (enable_constraint_exclusion)
+		{
+			List   *constraint_pred;
+
+			constraint_pred = get_relation_constraints(childOID, childrel);
+			/*
+			 * We do not currently enforce that CHECK constraints contain
+			 * only immutable functions, so it's necessary to check here.
+			 * We daren't draw conclusions from plan-time evaluation of
+			 * non-immutable functions.
+			 */
+			if (!contain_mutable_functions((Node *) constraint_pred))
+			{
+				/*
+				 * The constraints are effectively ANDed together, so we can
+				 * just try to refute the entire collection at once.  This may
+				 * allow us to make proofs that would fail if we took them
+				 * individually.
+				 */
+				if (predicate_refuted_by(constraint_pred,
+										 childrel->baserestrictinfo))
+					continue;
+			}
+		}
+
+		/*
+		 * Compute the child's access paths, and save the cheapest.
 		 */
 		set_plain_rel_pathlist(root, childrel, childrte);
 
@@ -345,7 +378,8 @@ set_inherited_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 
 	/*
 	 * Finally, build Append path and install it as the only access path
-	 * for the parent rel.
+	 * for the parent rel.  (Note: this is correct even if we have zero
+	 * or one live subpath due to constraint exclusion.)
 	 */
 	add_path(rel, (Path *) create_append_path(rel, subpaths));
 

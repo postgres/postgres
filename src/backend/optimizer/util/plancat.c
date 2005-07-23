@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.112 2005/06/13 23:14:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.113 2005/07/23 21:05:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/plancat.h"
+#include "optimizer/prep.h"
 #include "optimizer/tlist.h"
 #include "parser/parsetree.h"
 #include "parser/parse_expr.h"
@@ -358,6 +359,85 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 			break;
 	}
 }
+
+
+/*
+ * get_relation_constraints
+ *
+ * Retrieve the CHECK constraint expressions of the given relation.
+ *
+ * Returns a List (possibly empty) of constraint expressions.  Each one
+ * has been canonicalized, and its Vars are changed to have the varno
+ * indicated by rel->relid.  This allows the expressions to be easily
+ * compared to expressions taken from WHERE.
+ *
+ * Note: at present this is invoked at most once per relation per planner
+ * run, and in many cases it won't be invoked at all, so there seems no
+ * point in caching the data in RelOptInfo.
+ */
+List *
+get_relation_constraints(Oid relationObjectId, RelOptInfo *rel)
+{
+	List	   *result = NIL;
+	Index		varno = rel->relid;
+	Relation	relation;
+	TupleConstr *constr;
+
+	/*
+	 * We assume the relation has already been safely locked.
+	 */
+	relation = heap_open(relationObjectId, NoLock);
+
+	constr = relation->rd_att->constr;
+	if (constr != NULL)
+	{
+		int		num_check = constr->num_check;
+		int		i;
+
+		for (i = 0; i < num_check; i++)
+		{
+			Node	*cexpr;
+
+			cexpr = stringToNode(constr->check[i].ccbin);
+
+			/*
+			 * Run each expression through const-simplification and
+			 * canonicalization.  This is not just an optimization, but is
+			 * necessary, because we will be comparing it to
+			 * similarly-processed qual clauses, and may fail to detect valid
+			 * matches without this.  This must match the processing done to
+			 * qual clauses in preprocess_expression()!  (We can skip the
+			 * stuff involving subqueries, however, since we don't allow any
+			 * in check constraints.)
+			 */
+			cexpr = eval_const_expressions(cexpr);
+
+			cexpr = (Node *) canonicalize_qual((Expr *) cexpr);
+
+			/*
+			 * Also mark any coercion format fields as "don't care", so that
+			 * we can match to both explicit and implicit coercions.
+			 */
+			set_coercionform_dontcare(cexpr);
+
+			/* Fix Vars to have the desired varno */
+			if (varno != 1)
+				ChangeVarNodes(cexpr, 1, varno, 0);
+
+			/*
+			 * Finally, convert to implicit-AND format (that is, a List)
+			 * and append the resulting item(s) to our output list.
+			 */
+			result = list_concat(result,
+								 make_ands_implicit((Expr *) cexpr));
+		}
+	}
+
+	heap_close(relation, NoLock);
+
+	return result;
+}
+
 
 /*
  * build_physical_tlist

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.338 2005/07/14 05:13:38 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.339 2005/07/23 21:05:45 tgl Exp $
 -->
 
 <chapter Id="runtime">
@@ -2274,6 +2274,56 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
         planner's estimates. The default is 10. For more information
         on the use of statistics by the <productname>PostgreSQL</>
         query planner, refer to <xref linkend="planner-stats">.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-enable-constraint-exclusion" xreflabel="enable_constraint_exclusion">
+      <term><varname>enable_constraint_exclusion</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary>constraint exclusion</primary>
+      </indexterm>
+      <indexterm>
+       <primary><varname>enable_constraint_exclusion</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Enables or disables the query planner's use of table constraints.
+        The default is <literal>off</>.
+       </para>
+
+       <para>
+        When this parameter is <literal>on</>, the planner compares query
+        conditions to table CHECK constraints, and omits scanning tables
+        for which the conditions contradict the constraints.  (Presently
+        this is done only for child tables of inheritance scans.)  For
+        example:
+
+<programlisting>
+CREATE TABLE parent(key integer, ...);
+CREATE TABLE child1000(check (key between 1000 and 1999)) INHERITS(parent);
+CREATE TABLE child2000(check (key between 2000 and 2999)) INHERITS(parent);
+...
+SELECT * FROM parent WHERE key = 2400;
+</programlisting>
+
+        With constraint exclusion enabled, this SELECT will not scan
+        <structname>child1000</> at all.  This can improve performance when
+        inheritance is used to build partitioned tables.
+       </para>
+
+       <para>
+        Currently, <varname>enable_constraint_exclusion</> defaults to
+        <literal>off</>, because it creates a risk of wrong answers when
+        query plans are cached: if a table constraint is changed or dropped,
+        the previously generated plan may now be wrong, and there is no
+        built-in mechanism to force re-planning.  (This deficiency will
+        probably be addressed in a future
+        <productname>PostgreSQL</productname> release.)  Another reason
+        for keeping it off is that the constraint checks are relatively
+        expensive to make, and in many circumstances will yield no savings.
+        It is recommended to turn this on only if you are actually using
+        partitioned tables designed to take advantage of the feature.
        </para>
       </listitem>
      </varlistentry>

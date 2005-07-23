@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.116 2005/07/02 23:00:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.117 2005/07/23 21:05:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -516,6 +516,9 @@ typedef struct TidPath
  * AppendPath represents an Append plan, ie, successive execution of
  * several member plans.  Currently it is only used to handle expansion
  * of inheritance trees.
+ *
+ * Note: it is possible for "subpaths" to contain only one, or even no,
+ * elements.  These cases are optimized during create_append_plan.
  */
 typedef struct AppendPath
 {
@@ -524,10 +527,17 @@ typedef struct AppendPath
 } AppendPath;
 
 /*
- * ResultPath represents use of a Result plan node, either to compute a
- * variable-free targetlist or to gate execution of a subplan with a
- * one-time (variable-free) qual condition.  Note that in the former case
- * path.parent will be NULL; in the latter case it is copied from the subpath.
+ * ResultPath represents use of a Result plan node.  There are several
+ * applications for this:
+ *	* To compute a variable-free targetlist (a "SELECT expressions" query).
+ *	  In this case subpath and path.parent will both be NULL.  constantqual
+ *	  might or might not be empty ("SELECT expressions WHERE something").
+ *	* To gate execution of a subplan with a one-time (variable-free) qual
+ *	  condition.  path.parent is copied from the subpath.
+ *	* To substitute for a scan plan when we have proven that no rows in
+ *	  a table will satisfy the query.  subpath is NULL but path.parent
+ *	  references the not-to-be-scanned relation, and constantqual is
+ *	  a constant FALSE.
  *
  * Note that constantqual is a list of bare clauses, not RestrictInfos.
  */

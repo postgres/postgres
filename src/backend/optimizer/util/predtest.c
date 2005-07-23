@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.1 2005/06/10 22:25:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.2 2005/07/23 21:05:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,11 @@
 
 
 static bool predicate_implied_by_recurse(Node *clause, Node *predicate);
+static bool predicate_refuted_by_recurse(Node *clause, Node *predicate);
 static bool predicate_implied_by_simple_clause(Expr *predicate, Node *clause);
+static bool predicate_refuted_by_simple_clause(Expr *predicate, Node *clause);
+static bool btree_predicate_proof(Expr *predicate, Node *clause,
+								  bool refute_it);
 
 
 /*
@@ -35,12 +39,19 @@ static bool predicate_implied_by_simple_clause(Expr *predicate, Node *clause);
  *	  Recursively checks whether the clauses in restrictinfo_list imply
  *	  that the given predicate is true.
  *
- *	  The top-level List structure of each list corresponds to an AND list.
- *	  We assume that eval_const_expressions() has been applied and so there
- *	  are no un-flattened ANDs or ORs (e.g., no AND immediately within an AND,
- *	  including AND just below the top-level List structure).
- *	  If this is not true we might fail to prove an implication that is
- *	  valid, but no worse consequences will ensue.
+ * The top-level List structure of each list corresponds to an AND list.
+ * We assume that eval_const_expressions() has been applied and so there
+ * are no un-flattened ANDs or ORs (e.g., no AND immediately within an AND,
+ * including AND just below the top-level List structure).
+ * If this is not true we might fail to prove an implication that is
+ * valid, but no worse consequences will ensue.
+ *
+ * We assume the predicate has already been checked to contain only
+ * immutable functions and operators.  (In current use this is true
+ * because the predicate is part of an index predicate that has passed
+ * CheckPredicate().)  We dare not make deductions based on non-immutable
+ * functions, because they might change answers between the time we make
+ * the plan and the time we execute the plan.
  */
 bool
 predicate_implied_by(List *predicate_list, List *restrictinfo_list)
@@ -70,6 +81,44 @@ predicate_implied_by(List *predicate_list, List *restrictinfo_list)
 	return true;
 }
 
+/*
+ * predicate_refuted_by
+ *	  Recursively checks whether the clauses in restrictinfo_list refute
+ *	  the given predicate (that is, prove it false).
+ *
+ * This is NOT the same as !(predicate_implied_by), though it is similar
+ * in the technique and structure of the code.
+ *
+ * The top-level List structure of each list corresponds to an AND list.
+ * We assume that eval_const_expressions() has been applied and so there
+ * are no un-flattened ANDs or ORs (e.g., no AND immediately within an AND,
+ * including AND just below the top-level List structure).
+ * If this is not true we might fail to prove an implication that is
+ * valid, but no worse consequences will ensue.
+ *
+ * We assume the predicate has already been checked to contain only
+ * immutable functions and operators.  We dare not make deductions based on
+ * non-immutable functions, because they might change answers between the
+ * time we make the plan and the time we execute the plan.
+ */
+bool
+predicate_refuted_by(List *predicate_list, List *restrictinfo_list)
+{
+	if (predicate_list == NIL)
+		return false;			/* no predicate: no refutation is possible */
+	if (restrictinfo_list == NIL)
+		return false;			/* no restriction: refutation must fail */
+
+	/*
+	 * Unlike the implication case, predicate_refuted_by_recurse needs to
+	 * be able to see the top-level AND structure on both sides --- otherwise
+	 * it will fail to handle the case where one restriction clause is an OR
+	 * that can refute the predicate AND as a whole, but not each predicate
+	 * clause separately.
+	 */
+	return predicate_refuted_by_recurse((Node *) restrictinfo_list,
+										(Node *) predicate_list);
+}
 
 /*----------
  * predicate_implied_by_recurse
@@ -240,9 +289,271 @@ predicate_implied_by_recurse(Node *clause, Node *predicate)
 	}
 }
 
+/*----------
+ * predicate_refuted_by_recurse
+ *	  Does the predicate refutation test for non-NULL restriction and
+ *	  predicate clauses.
+ *
+ * The logic followed here is ("R=>" means "refutes"):
+ *	atom A R=> atom B iff:			predicate_refuted_by_simple_clause says so
+ *	atom A R=> AND-expr B iff:		A R=> any of B's components
+ *	atom A R=> OR-expr B iff:		A R=> each of B's components
+ *	AND-expr A R=> atom B iff:		any of A's components R=> B
+ *	AND-expr A R=> AND-expr B iff:	A R=> any of B's components,
+ *									*or* any of A's components R=> B
+ *	AND-expr A R=> OR-expr B iff:	A R=> each of B's components
+ *	OR-expr A R=> atom B iff:		each of A's components R=> B
+ *	OR-expr A R=> AND-expr B iff:	each of A's components R=> any of B's
+ *	OR-expr A R=> OR-expr B iff:	A R=> each of B's components
+ *
+ * Other comments are as for predicate_implied_by_recurse(), except that
+ * we have to handle a top-level AND list on both sides.
+ *----------
+ */
+static bool
+predicate_refuted_by_recurse(Node *clause, Node *predicate)
+{
+	ListCell   *item;
+
+	Assert(clause != NULL);
+	/* skip through RestrictInfo */
+	if (IsA(clause, RestrictInfo))
+	{
+		clause = (Node *) ((RestrictInfo *) clause)->clause;
+		Assert(clause != NULL);
+		Assert(!IsA(clause, RestrictInfo));
+	}
+	Assert(predicate != NULL);
+
+	/*
+	 * Since a restriction List clause is handled the same as an AND clause,
+	 * we can avoid duplicate code like this:
+	 */
+	if (and_clause(clause))
+		clause = (Node *) ((BoolExpr *) clause)->args;
+
+	/* Ditto for predicate AND-clause and List */
+	if (and_clause(predicate))
+		predicate = (Node *) ((BoolExpr *) predicate)->args;
+
+	if (IsA(clause, List))
+	{
+		if (IsA(predicate, List))
+		{
+			/* AND-clause R=> AND-clause if A refutes any of B's items */
+			/* Needed to handle (x AND y) R=> ((!x OR !y) AND z) */
+			foreach(item, (List *) predicate)
+			{
+				if (predicate_refuted_by_recurse(clause, lfirst(item)))
+					return true;
+			}
+			/* Also check if any of A's items refutes B */
+			/* Needed to handle ((x OR y) AND z) R=> (!x AND !y) */
+			foreach(item, (List *) clause)
+			{
+				if (predicate_refuted_by_recurse(lfirst(item), predicate))
+					return true;
+			}
+			return false;
+		}
+		else if (or_clause(predicate))
+		{
+			/* AND-clause R=> OR-clause if A refutes each of B's items */
+			foreach(item, ((BoolExpr *) predicate)->args)
+			{
+				if (!predicate_refuted_by_recurse(clause, lfirst(item)))
+					return false;
+			}
+			return true;
+		}
+		else
+		{
+			/* AND-clause R=> atom if any of A's items refutes B */
+			foreach(item, (List *) clause)
+			{
+				if (predicate_refuted_by_recurse(lfirst(item), predicate))
+					return true;
+			}
+			return false;
+		}
+	}
+	else if (or_clause(clause))
+	{
+		if (or_clause(predicate))
+		{
+			/* OR-clause R=> OR-clause if A refutes each of B's items */
+			foreach(item, ((BoolExpr *) predicate)->args)
+			{
+				if (!predicate_refuted_by_recurse(clause, lfirst(item)))
+					return false;
+			}
+			return true;
+		}
+		else if (IsA(predicate, List))
+		{
+			/*
+			 * OR-clause R=> AND-clause if each of A's items refutes any of
+			 * B's items.
+			 */
+			foreach(item, ((BoolExpr *) clause)->args)
+			{
+				Node	   *citem = lfirst(item);
+				ListCell   *item2;
+
+				foreach(item2, (List *) predicate)
+				{
+					if (predicate_refuted_by_recurse(citem, lfirst(item2)))
+						break;
+				}
+				if (item2 == NULL)
+					return false;		/* citem refutes nothing */
+			}
+			return true;
+		}
+		else
+		{
+			/* OR-clause R=> atom if each of A's items refutes B */
+			foreach(item, ((BoolExpr *) clause)->args)
+			{
+				if (!predicate_refuted_by_recurse(lfirst(item), predicate))
+					return false;
+			}
+			return true;
+		}
+	}
+	else
+	{
+		if (IsA(predicate, List))
+		{
+			/* atom R=> AND-clause if A refutes any of B's items */
+			foreach(item, (List *) predicate)
+			{
+				if (predicate_refuted_by_recurse(clause, lfirst(item)))
+					return true;
+			}
+			return false;
+		}
+		else if (or_clause(predicate))
+		{
+			/* atom R=> OR-clause if A refutes each of B's items */
+			foreach(item, ((BoolExpr *) predicate)->args)
+			{
+				if (!predicate_refuted_by_recurse(clause, lfirst(item)))
+					return false;
+			}
+			return true;
+		}
+		else
+		{
+			/* atom R=> atom is the base case */
+			return predicate_refuted_by_simple_clause((Expr *) predicate,
+													  clause);
+		}
+	}
+}
+
+
+/*----------
+ * predicate_implied_by_simple_clause
+ *	  Does the predicate implication test for a "simple clause" predicate
+ *	  and a "simple clause" restriction.
+ *
+ * We return TRUE if able to prove the implication, FALSE if not.
+ *
+ * We have three strategies for determining whether one simple clause
+ * implies another:
+ *
+ * A simple and general way is to see if they are equal(); this works for any
+ * kind of expression.	(Actually, there is an implied assumption that the
+ * functions in the expression are immutable, ie dependent only on their input
+ * arguments --- but this was checked for the predicate by the caller.)
+ *
+ * When the predicate is of the form "foo IS NOT NULL", we can conclude that
+ * the predicate is implied if the clause is a strict operator or function
+ * that has "foo" as an input.	In this case the clause must yield NULL when
+ * "foo" is NULL, which we can take as equivalent to FALSE because we know
+ * we are within an AND/OR subtree of a WHERE clause.  (Again, "foo" is
+ * already known immutable, so the clause will certainly always fail.)
+ *
+ * Finally, we may be able to deduce something using knowledge about btree
+ * operator classes; this is encapsulated in btree_predicate_proof().
+ *----------
+ */
+static bool
+predicate_implied_by_simple_clause(Expr *predicate, Node *clause)
+{
+	/* First try the equal() test */
+	if (equal((Node *) predicate, clause))
+		return true;
+
+	/* Next try the IS NOT NULL case */
+	if (predicate && IsA(predicate, NullTest) &&
+		((NullTest *) predicate)->nulltesttype == IS_NOT_NULL)
+	{
+		Expr	   *nonnullarg = ((NullTest *) predicate)->arg;
+
+		if (is_opclause(clause) &&
+			list_member(((OpExpr *) clause)->args, nonnullarg) &&
+			op_strict(((OpExpr *) clause)->opno))
+			return true;
+		if (is_funcclause(clause) &&
+			list_member(((FuncExpr *) clause)->args, nonnullarg) &&
+			func_strict(((FuncExpr *) clause)->funcid))
+			return true;
+		return false;			/* we can't succeed below... */
+	}
+
+	/* Else try btree operator knowledge */
+	return btree_predicate_proof(predicate, clause, false);
+}
+
+/*----------
+ * predicate_refuted_by_simple_clause
+ *	  Does the predicate refutation test for a "simple clause" predicate
+ *	  and a "simple clause" restriction.
+ *
+ * We return TRUE if able to prove the refutation, FALSE if not.
+ *
+ * Unlike the implication case, checking for equal() clauses isn't
+ * helpful.  (XXX is it worth looking at "x vs NOT x" cases?  Probably
+ * not seeing that canonicalization tries to get rid of NOTs.)
+ *
+ * When the predicate is of the form "foo IS NULL", we can conclude that
+ * the predicate is refuted if the clause is a strict operator or function
+ * that has "foo" as an input.  See notes for implication case.
+ *
+ * Finally, we may be able to deduce something using knowledge about btree
+ * operator classes; this is encapsulated in btree_predicate_proof().
+ *----------
+ */
+static bool
+predicate_refuted_by_simple_clause(Expr *predicate, Node *clause)
+{
+	/* First try the IS NULL case */
+	if (predicate && IsA(predicate, NullTest) &&
+		((NullTest *) predicate)->nulltesttype == IS_NULL)
+	{
+		Expr	   *isnullarg = ((NullTest *) predicate)->arg;
+
+		if (is_opclause(clause) &&
+			list_member(((OpExpr *) clause)->args, isnullarg) &&
+			op_strict(((OpExpr *) clause)->opno))
+			return true;
+		if (is_funcclause(clause) &&
+			list_member(((FuncExpr *) clause)->args, isnullarg) &&
+			func_strict(((FuncExpr *) clause)->funcid))
+			return true;
+		return false;			/* we can't succeed below... */
+	}
+
+	/* Else try btree operator knowledge */
+	return btree_predicate_proof(predicate, clause, true);
+}
+
 
 /*
- * Define an "operator implication table" for btree operators ("strategies").
+ * Define an "operator implication table" for btree operators ("strategies"),
+ * and a similar table for refutation.
  *
  * The strategy numbers defined by btree indexes (see access/skey.h) are:
  *		(1) <	(2) <=	 (3) =	 (4) >=   (5) >
@@ -263,8 +574,21 @@ predicate_implied_by_recurse(Node *clause, Node *predicate)
  *	 then the target expression must be true; if the test returns false, then
  *	 the target expression may be false.
  *
- * An entry where test_op == 0 means the implication cannot be determined,
- * i.e., this test should always be considered false.
+ * For example, if clause is "Quantity > 10" and pred is "Quantity > 5"
+ * then we test "5 <= 10" which evals to true, so clause implies pred.
+ *
+ * Similarly, the interpretation of a BT_refute_table entry is:
+ *
+ *	 If you know, for some ATTR, that "ATTR given_op CONST1" is true, and you
+ *	 want to determine whether "ATTR target_op CONST2" must be false, then
+ *	 you can use "CONST2 test_op CONST1" as a test.  If this test returns true,
+ *	 then the target expression must be false; if the test returns false, then
+ *	 the target expression may be true.
+ *
+ * For example, if clause is "Quantity > 10" and pred is "Quantity < 5"
+ * then we test "5 <= 10" which evals to true, so clause refutes pred.
+ *
+ * An entry where test_op == 0 means the implication cannot be determined.
  */
 
 #define BTLT BTLessStrategyNumber
@@ -274,58 +598,60 @@ predicate_implied_by_recurse(Node *clause, Node *predicate)
 #define BTGT BTGreaterStrategyNumber
 #define BTNE 6
 
-static const StrategyNumber
-			BT_implic_table[6][6] = {
+static const StrategyNumber BT_implic_table[6][6] = {
 /*
  *			The target operator:
  *
- *	 LT    LE    EQ GE GT NE
+ *	 LT    LE    EQ    GE    GT    NE
  */
-	{BTGE, BTGE, 0, 0, 0, BTGE},			/* LT */
-	{BTGT, BTGE, 0, 0, 0, BTGT},			/* LE */
+	{BTGE, BTGE, 0   , 0   , 0   , BTGE},	/* LT */
+	{BTGT, BTGE, 0   , 0   , 0   , BTGT},	/* LE */
 	{BTGT, BTGE, BTEQ, BTLE, BTLT, BTNE},	/* EQ */
-	{0, 0, 0, BTLE, BTLT, BTLT},			/* GE */
-	{0, 0, 0, BTLE, BTLE, BTLE},			/* GT */
-	{0, 0, 0, 0, 0, BTEQ}					/* NE */
+	{0   , 0   , 0   , BTLE, BTLT, BTLT},	/* GE */
+	{0   , 0   , 0   , BTLE, BTLE, BTLE},	/* GT */
+	{0   , 0   , 0   , 0   , 0   , BTEQ}	/* NE */
+};
+
+static const StrategyNumber BT_refute_table[6][6] = {
+/*
+ *			The target operator:
+ *
+ *	 LT    LE    EQ    GE    GT    NE
+ */
+	{0   , 0   , BTGE, BTGE, BTGE, 0   },	/* LT */
+	{0   , 0   , BTGT, BTGT, BTGE, 0   },	/* LE */
+	{BTLE, BTLT, BTNE, BTGT, BTGE, BTEQ},	/* EQ */
+	{BTLE, BTLT, BTLT, 0   , 0   , 0   },	/* GE */
+	{BTLE, BTLE, BTLE, 0   , 0   , 0   },	/* GT */
+	{0   , 0   , BTEQ, 0   , 0   , 0   }	/* NE */
 };
 
 
 /*----------
- * predicate_implied_by_simple_clause
- *	  Does the predicate implication test for a "simple clause" predicate
- *	  and a "simple clause" restriction.
+ * btree_predicate_proof
+ *	  Does the predicate implication or refutation test for a "simple clause"
+ *	  predicate and a "simple clause" restriction, when both are simple
+ *	  operator clauses using related btree operators.
  *
- * We have three strategies for determining whether one simple clause
- * implies another:
+ * When refute_it == false, we want to prove the predicate true;
+ * when refute_it == true, we want to prove the predicate false.
+ * (There is enough common code to justify handling these two cases
+ * in one routine.)  We return TRUE if able to make the proof, FALSE
+ * if not able to prove it.
  *
- * A simple and general way is to see if they are equal(); this works for any
- * kind of expression.	(Actually, there is an implied assumption that the
- * functions in the expression are immutable, ie dependent only on their input
- * arguments --- but this was checked for the predicate by CheckPredicate().)
- *
- * When the predicate is of the form "foo IS NOT NULL", we can conclude that
- * the predicate is implied if the clause is a strict operator or function
- * that has "foo" as an input.	In this case the clause must yield NULL when
- * "foo" is NULL, which we can take as equivalent to FALSE because we know
- * we are within an AND/OR subtree of a WHERE clause.  (Again, "foo" is
- * already known immutable, so the clause will certainly always fail.)
- *
- * Our other way works only for binary boolean opclauses of the form
+ * What we look for here is binary boolean opclauses of the form
  * "foo op constant", where "foo" is the same in both clauses.	The operators
  * and constants can be different but the operators must be in the same btree
- * operator class.	We use the above operator implication table to be able to
+ * operator class.	We use the above operator implication tables to
  * derive implications between nonidentical clauses.  (Note: "foo" is known
  * immutable, and constants are surely immutable, but we have to check that
  * the operators are too.  As of 8.0 it's possible for opclasses to contain
  * operators that are merely stable, and we dare not make deductions with
  * these.)
- *
- * Eventually, rtree operators could also be handled by defining an
- * appropriate "RT_implic_table" array.
  *----------
  */
 static bool
-predicate_implied_by_simple_clause(Expr *predicate, Node *clause)
+btree_predicate_proof(Expr *predicate, Node *clause, bool refute_it)
 {
 	Node	   *leftop,
 			   *rightop;
@@ -356,29 +682,8 @@ predicate_implied_by_simple_clause(Expr *predicate, Node *clause)
 	EState	   *estate;
 	MemoryContext oldcontext;
 
-	/* First try the equal() test */
-	if (equal((Node *) predicate, clause))
-		return true;
-
-	/* Next try the IS NOT NULL case */
-	if (predicate && IsA(predicate, NullTest) &&
-		((NullTest *) predicate)->nulltesttype == IS_NOT_NULL)
-	{
-		Expr	   *nonnullarg = ((NullTest *) predicate)->arg;
-
-		if (is_opclause(clause) &&
-			list_member(((OpExpr *) clause)->args, nonnullarg) &&
-			op_strict(((OpExpr *) clause)->opno))
-			return true;
-		if (is_funcclause(clause) &&
-			list_member(((FuncExpr *) clause)->args, nonnullarg) &&
-			func_strict(((FuncExpr *) clause)->funcid))
-			return true;
-		return false;			/* we can't succeed below... */
-	}
-
 	/*
-	 * Can't do anything more unless they are both binary opclauses with a
+	 * Both expressions must be binary opclauses with a
 	 * Const on one side, and identical subexpressions on the other sides.
 	 * Note we don't have to think about binary relabeling of the Const
 	 * node, since that would have been folded right into the Const.
@@ -579,7 +884,11 @@ predicate_implied_by_simple_clause(Expr *predicate, Node *clause)
 		/*
 		 * Look up the "test" strategy number in the implication table
 		 */
-		test_strategy = BT_implic_table[clause_strategy - 1][pred_strategy - 1];
+		if (refute_it)
+			test_strategy = BT_refute_table[clause_strategy - 1][pred_strategy - 1];
+		else
+			test_strategy = BT_implic_table[clause_strategy - 1][pred_strategy - 1];
+
 		if (test_strategy == 0)
 		{
 			/* Can't determine implication using this interpretation */
@@ -608,13 +917,10 @@ predicate_implied_by_simple_clause(Expr *predicate, Node *clause)
 			 * Last check: test_op must be immutable.
 			 *
 			 * Note that we require only the test_op to be immutable, not the
-			 * original clause_op.	(pred_op must be immutable, else it
-			 * would not be allowed in an index predicate.)  Essentially
-			 * we are assuming that the opclass is consistent even if it
-			 * contains operators that are merely stable.
-			 *
-			 * XXX the above reasoning doesn't hold anymore if this routine
-			 * is used to prove things that are not index predicates ...
+			 * original clause_op.	(pred_op is assumed to have been checked
+			 * immutable by the caller.)  Essentially we are assuming that
+			 * the opclass is consistent even if it contains operators that
+			 * are merely stable.
 			 */
 			if (op_volatile(test_op) == PROVOLATILE_IMMUTABLE)
 			{
@@ -663,7 +969,7 @@ predicate_implied_by_simple_clause(Expr *predicate, Node *clause)
 
 	if (isNull)
 	{
-		/* Treat a null result as false ... but it's a tad fishy ... */
+		/* Treat a null result as non-proof ... but it's a tad fishy ... */
 		elog(DEBUG2, "null predicate test result");
 		return false;
 	}

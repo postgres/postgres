@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.194 2005/07/15 22:02:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.195 2005/07/23 21:05:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ static List *build_relation_tlist(RelOptInfo *rel);
 static bool use_physical_tlist(RelOptInfo *rel);
 static void disuse_physical_tlist(Plan *plan, Path *path);
 static Join *create_join_plan(PlannerInfo *root, JoinPath *best_path);
-static Append *create_append_plan(PlannerInfo *root, AppendPath *best_path);
+static Plan *create_append_plan(PlannerInfo *root, AppendPath *best_path);
 static Result *create_result_plan(PlannerInfo *root, ResultPath *best_path);
 static Material *create_material_plan(PlannerInfo *root, MaterialPath *best_path);
 static Plan *create_unique_plan(PlannerInfo *root, UniquePath *best_path);
@@ -435,7 +435,7 @@ create_join_plan(PlannerInfo *root, JoinPath *best_path)
  *
  *	  Returns a Plan node.
  */
-static Append *
+static Plan *
 create_append_plan(PlannerInfo *root, AppendPath *best_path)
 {
 	Append	   *plan;
@@ -443,6 +443,25 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 	List	   *subplans = NIL;
 	ListCell   *subpaths;
 
+	/*
+	 * It is possible for the subplans list to contain only one entry,
+	 * or even no entries.  Handle these cases specially.
+	 *
+	 * XXX ideally, if there's just one entry, we'd not bother to generate
+	 * an Append node but just return the single child.  At the moment this
+	 * does not work because the varno of the child scan plan won't match
+	 * the parent-rel Vars it'll be asked to emit.
+	 */
+	if (best_path->subpaths == NIL)
+	{
+		/* Generate a Result plan with constant-FALSE gating qual */
+		return (Plan *) make_result(tlist,
+									(Node *) list_make1(makeBoolConst(false,
+																	  false)),
+									NULL);
+	}
+
+	/* Normal case with multiple subpaths */
 	foreach(subpaths, best_path->subpaths)
 	{
 		Path	   *subpath = (Path *) lfirst(subpaths);
@@ -452,7 +471,7 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 
 	plan = make_append(subplans, false, tlist);
 
-	return plan;
+	return (Plan *) plan;
 }
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.5 2005/06/05 22:32:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.6 2005/07/23 21:05:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,7 +184,6 @@ optimize_minmax_aggregates(PlannerInfo *root, List *tlist, Path *best_path)
 	 */
 	if (IsA(best_path, ResultPath))
 	{
-		Assert(((ResultPath *) best_path)->subpath != NULL);
 		constant_quals = ((ResultPath *) best_path)->constantqual;
 		/* no need to do this more than once: */
 		constant_quals = order_qual_clauses(root, constant_quals);

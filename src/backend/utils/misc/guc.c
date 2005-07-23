@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.276 2005/07/21 18:06:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.277 2005/07/23 21:05:47 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -434,6 +434,16 @@ static struct config_bool ConfigureNamesBool[] =
 		},
 		&enable_hashjoin,
 		true, NULL, NULL
+	},
+	{
+		{"enable_constraint_exclusion", PGC_USERSET, QUERY_TUNING_OTHER,
+			gettext_noop("Enables the planner's use of constraints in queries."),
+			gettext_noop("Constraints will be examined to exclude tables "
+						 "that can be proven not to be required to produce "
+						 "a correct result for the query.")
+		},
+		&enable_constraint_exclusion,
+		false, NULL, NULL
 	},
 	{
 		{"geqo", PGC_USERSET, QUERY_TUNING_GEQO,
