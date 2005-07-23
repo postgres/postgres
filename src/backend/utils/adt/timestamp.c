@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.143 2005/07/23 02:02:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.144 2005/07/23 14:25:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2100,7 +2100,7 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 			if (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
 				tm->tm_mday = (day_tab[isleap(tm->tm_year)][tm->tm_mon - 1]);
 
-			tz = DetermineLocalTimeZone(tm);
+			tz = DetermineTimeZoneOffset(tm, global_timezone);
 
 			if (tm2timestamp(tm, fsec, &tz, &timestamp) != 0)
 				ereport(ERROR,
@@ -2124,7 +2124,7 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 			julian = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + span->day;
 			j2date(julian, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 
-			tz = DetermineLocalTimeZone(tm);
+			tz = DetermineTimeZoneOffset(tm, global_timezone);
 
 			if (tm2timestamp(tm, fsec, &tz, &timestamp) != 0)
 				ereport(ERROR,
@@ -3104,7 +3104,7 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 		}
 
 		if (redotz)
-			tz = DetermineLocalTimeZone(tm);
+			tz = DetermineTimeZoneOffset(tm, global_timezone);
 
 		if (tm2timestamp(tm, fsec, &tz, &result) != 0)
 			ereport(ERROR,
@@ -3529,7 +3529,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 						   (errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 							errmsg("timestamp out of range")));
 
-					tz = DetermineLocalTimeZone(tm);
+					tz = DetermineTimeZoneOffset(tm, global_timezone);
 
 					if (tm2timestamp(tm, fsec, &tz, &timestamptz) != 0)
 						ereport(ERROR,
@@ -3924,12 +3924,11 @@ interval_part(PG_FUNCTION_ARGS)
 
 /* 	timestamp_zone()
  * 	Encode timestamp type with specified time zone.
- * 	Returns timestamp with time zone, with the input
- *	rotated from local time to the specified zone.
- *	This function is tricky because instead of shifting
- *	the time _to_ a new time zone, it sets the time to _be_
- *	the specified timezone.  This requires trickery
- *	of double-subtracting the requested timezone offset.
+ * 	This function is just timestamp2timestamptz() except instead of
+ *	shifting to the global timezone, we shift to the specified timezone.
+ *	This is different from the other AT TIME ZONE cases because instead
+ *	of shifting to a _to_ a new time zone, it sets the time to _be_ the
+ *	specified timezone.
  */
 Datum
 timestamp_zone(PG_FUNCTION_ARGS)
@@ -3943,11 +3942,12 @@ timestamp_zone(PG_FUNCTION_ARGS)
 	int         len;
 	struct pg_tm tm;
 	fsec_t      fsec;
-
+	bool		fail;
+	
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_TIMESTAMPTZ(timestamp);
 
-	/* Find the specified timezone? */
+	/* Find the specified timezone */
 	len = (VARSIZE(zone) - VARHDRSZ>TZ_STRLEN_MAX) ?
 			TZ_STRLEN_MAX : VARSIZE(zone) - VARHDRSZ;
 	memcpy(tzname, VARDATA(zone), len);
@@ -3963,8 +3963,13 @@ timestamp_zone(PG_FUNCTION_ARGS)
 	}
 
 	/* Apply the timezone change */
-	if (timestamp2tm(timestamp, &tz, &tm, &fsec, NULL, tzp) != 0 ||
-	    tm2timestamp(&tm, fsec, &tz, &result) != 0)
+	fail = (timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, tzp) != 0);
+	if (!fail)
+	{
+		tz = DetermineTimeZoneOffset(&tm, tzp);
+		fail = (tm2timestamp(&tm, fsec, &tz, &result) != 0);
+	}
+	if (fail)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -3972,8 +3977,6 @@ timestamp_zone(PG_FUNCTION_ARGS)
 				        tzname)));
 		PG_RETURN_NULL();
 	}
-	/* Must double-adjust for timezone */
-	result = dt2local(result, -tz);
 
 	PG_RETURN_TIMESTAMPTZ(result);
 }
@@ -4039,7 +4042,7 @@ timestamp2timestamptz(Timestamp timestamp)
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("timestamp out of range")));
 
-		tz = DetermineLocalTimeZone(tm);
+		tz = DetermineTimeZoneOffset(tm, global_timezone);
 
 		if (tm2timestamp(tm, fsec, &tz, &result) != 0)
 			ereport(ERROR,

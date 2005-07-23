@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.92 2005/07/21 03:56:16 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.93 2005/07/23 14:25:33 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2005, PostgreSQL Global Development Group
@@ -2989,7 +2989,7 @@ to_timestamp(PG_FUNCTION_ARGS)
 
 	do_to_timestamp(date_txt, fmt, &tm, &fsec);
 
-	tz = DetermineLocalTimeZone(&tm);
+	tz = DetermineTimeZoneOffset(&tm, global_timezone);
 
 	if (tm2timestamp(&tm, fsec, &tz, &result) != 0)
 		ereport(ERROR,

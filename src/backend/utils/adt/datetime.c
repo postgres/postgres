@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.156 2005/07/22 03:46:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.157 2005/07/23 14:25:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1612,7 +1612,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 			if (fmask & DTK_M(DTZMOD))
 				return DTERR_BAD_FORMAT;
 
-			*tzp = DetermineLocalTimeZone(tm);
+			*tzp = DetermineTimeZoneOffset(tm, global_timezone);
 		}
 	}
 
@@ -1620,10 +1620,10 @@ DecodeDateTime(char **field, int *ftype, int nf,
 }
 
 
-/* DetermineLocalTimeZone()
+/* DetermineTimeZoneOffset()
  *
  * Given a struct pg_tm in which tm_year, tm_mon, tm_mday, tm_hour, tm_min, and
- * tm_sec fields are set, attempt to determine the applicable local zone
+ * tm_sec fields are set, attempt to determine the applicable time zone
  * (ie, regular or daylight-savings time) at that time.  Set the struct pg_tm's
  * tm_isdst field accordingly, and return the actual timezone offset.
  *
@@ -1632,7 +1632,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
  * of mktime(), anyway.
  */
 int
-DetermineLocalTimeZone(struct pg_tm *tm)
+DetermineTimeZoneOffset(struct pg_tm *tm, pg_tz *tzp)
 {
 	int			date,
 				sec;
@@ -1648,7 +1648,7 @@ DetermineLocalTimeZone(struct pg_tm *tm)
 				after_isdst;
 	int			res;
 
-	if (HasCTZSet)
+	if (tzp == global_timezone && HasCTZSet)
 	{
 		tm->tm_isdst = 0;		/* for lack of a better idea */
 		return CTimeZone;
@@ -1687,7 +1687,7 @@ DetermineLocalTimeZone(struct pg_tm *tm)
 							   &before_gmtoff, &before_isdst,
 							   &boundary,
 							   &after_gmtoff, &after_isdst,
-		                       global_timezone);
+		                       tzp);
 	if (res < 0)
 		goto overflow;			/* failure? */
 
@@ -2282,7 +2282,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 		tmp->tm_hour = tm->tm_hour;
 		tmp->tm_min = tm->tm_min;
 		tmp->tm_sec = tm->tm_sec;
-		*tzp = DetermineLocalTimeZone(tmp);
+		*tzp = DetermineTimeZoneOffset(tmp, global_timezone);
 		tm->tm_isdst = tmp->tm_isdst;
 	}
 
