@@ -24,24 +24,12 @@ SELECT t.seq_scan, t.seq_tup_read, t.idx_scan, t.idx_tup_fetch,
 SET stats_block_level = on;
 SET stats_row_level = on;
 
--- helper function
-CREATE FUNCTION sleep(interval) RETURNS integer AS '
-DECLARE
-  endtime timestamp;
-BEGIN
-  endtime := timeofday()::timestamp + $1;
-  WHILE timeofday()::timestamp < endtime LOOP
-  END LOOP;
-  RETURN 0;
-END;
-' LANGUAGE 'plpgsql';
-
 -- do something
 SELECT count(*) FROM tenk2;
 SELECT count(*) FROM tenk2 WHERE unique1 = 1;
 
 -- let stats collector catch up
-SELECT sleep('0:0:2'::interval);
+SELECT do_sleep(2);
 
 -- check effects
 SELECT st.seq_scan >= pr.seq_scan + 1,
@@ -54,8 +42,5 @@ SELECT st.heap_blks_read + st.heap_blks_hit >= pr.heap_blks + cl.relpages,
        st.idx_blks_read + st.idx_blks_hit >= pr.idx_blks + 1
   FROM pg_statio_user_tables AS st, pg_class AS cl, prevstats AS pr
  WHERE st.relname='tenk2' AND cl.relname='tenk2';
-
--- clean up
-DROP FUNCTION sleep(interval);
 
 -- End of Stats Test

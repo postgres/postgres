@@ -4,24 +4,24 @@
 CREATE FUNCTION widget_in(cstring)
    RETURNS widget
    AS '@abs_builddir@/regress@DLSUFFIX@'
-   LANGUAGE 'c';
+   LANGUAGE 'C' STRICT;
 NOTICE:  type "widget" is not yet defined
 DETAIL:  Creating a shell type definition.
 CREATE FUNCTION widget_out(widget)
    RETURNS cstring
    AS '@abs_builddir@/regress@DLSUFFIX@'
-   LANGUAGE 'c';
+   LANGUAGE 'C' STRICT;
 NOTICE:  argument type widget is only a shell
 CREATE FUNCTION int44in(cstring)
    RETURNS city_budget
    AS '@abs_builddir@/regress@DLSUFFIX@'
-   LANGUAGE 'c';
+   LANGUAGE 'C' STRICT;
 NOTICE:  type "city_budget" is not yet defined
 DETAIL:  Creating a shell type definition.
 CREATE FUNCTION int44out(city_budget)
    RETURNS cstring
    AS '@abs_builddir@/regress@DLSUFFIX@'
-   LANGUAGE 'c';
+   LANGUAGE 'C' STRICT;
 NOTICE:  argument type city_budget is only a shell
 CREATE FUNCTION check_primary_key ()
 	RETURNS trigger
@@ -46,7 +46,11 @@ CREATE FUNCTION ttdummy ()
 CREATE FUNCTION set_ttdummy (int4)
         RETURNS int4
         AS '@abs_builddir@/regress@DLSUFFIX@'
-        LANGUAGE 'C';
+        LANGUAGE 'C' STRICT;
+CREATE FUNCTION do_sleep (int4)
+        RETURNS void
+        AS '@abs_builddir@/regress@DLSUFFIX@'
+        LANGUAGE 'C' STRICT;
 -- Things that shouldn't work:
 CREATE FUNCTION test1 (int) RETURNS int LANGUAGE sql
     AS 'SELECT ''not an integer'';';
