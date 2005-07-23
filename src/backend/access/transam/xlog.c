@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.208 2005/07/08 04:07:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.209 2005/07/23 15:29:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,46 +48,55 @@
 
 
 /*
+ *	Becauase O_DIRECT bypasses the kernel buffers, and because we never
+ *	read those buffers except during crash recovery, it seems like
+ *	a win to use it in all cases.
+ */
+#ifdef O_DIRECT
+#define PG_O_DIRECT	O_DIR(enableFsync ? (open_sync_bit | O_DIRECT) : 0)
+#else
+
+/*
  * This chunk of hackery attempts to determine which file sync methods
  * are available on the current platform, and to choose an appropriate
  * default method.	We assume that fsync() is always available, and that
  * configure determined whether fdatasync() is.
  */
 #if defined(O_SYNC)
-#define OPEN_SYNC_FLAG	   O_SYNC
+#define OPEN_SYNC_FLAG			O_SYNC
 #else
 #if defined(O_FSYNC)
-#define OPEN_SYNC_FLAG	  O_FSYNC
+#define OPEN_SYNC_FLAG			O_FSYNC
 #endif
 #endif
 
 #if defined(O_DSYNC)
 #if defined(OPEN_SYNC_FLAG)
 #if O_DSYNC != OPEN_SYNC_FLAG
-#define OPEN_DATASYNC_FLAG	  O_DSYNC
+#define OPEN_DATASYNC_FLAG		O_DSYNC
 #endif
 #else /* !defined(OPEN_SYNC_FLAG) */
 /* Win32 only has O_DSYNC */
-#define OPEN_DATASYNC_FLAG	  O_DSYNC
+#define OPEN_DATASYNC_FLAG		O_DSYNC
 #endif
 #endif
 
 #if defined(OPEN_DATASYNC_FLAG)
-#define DEFAULT_SYNC_METHOD_STR    "open_datasync"
-#define DEFAULT_SYNC_METHOD		   SYNC_METHOD_OPEN
-#define DEFAULT_SYNC_FLAGBIT	   OPEN_DATASYNC_FLAG
+#define DEFAULT_SYNC_METHOD_STR	"open_datasync"
+#define DEFAULT_SYNC_METHOD		SYNC_METHOD_OPEN
+#define DEFAULT_SYNC_FLAGBIT	OPEN_DATASYNC_FLAG
 #elif defined(HAVE_FDATASYNC)
-#define DEFAULT_SYNC_METHOD_STR   "fdatasync"
-#define DEFAULT_SYNC_METHOD		  SYNC_METHOD_FDATASYNC
-#define DEFAULT_SYNC_FLAGBIT	  0
+#define DEFAULT_SYNC_METHOD_STR "fdatasync"
+#define DEFAULT_SYNC_METHOD		SYNC_METHOD_FDATASYNC
+#define DEFAULT_SYNC_FLAGBIT	0
 #elif !defined(HAVE_FSYNC_WRITETHROUGH_ONLY)
-#define DEFAULT_SYNC_METHOD_STR   "fsync"
-#define DEFAULT_SYNC_METHOD		  SYNC_METHOD_FSYNC
-#define DEFAULT_SYNC_FLAGBIT	  0
+#define DEFAULT_SYNC_METHOD_STR "fsync"
+#define DEFAULT_SYNC_METHOD		SYNC_METHOD_FSYNC
+#define DEFAULT_SYNC_FLAGBIT	0
 #else
-#define DEFAULT_SYNC_METHOD_STR   "fsync_writethrough"
-#define DEFAULT_SYNC_METHOD		  SYNC_METHOD_FSYNC_WRITETHROUGH
-#define DEFAULT_SYNC_FLAGBIT	  0
+#define DEFAULT_SYNC_METHOD_STR "fsync_writethrough"
+#define DEFAULT_SYNC_METHOD		SYNC_METHOD_FSYNC_WRITETHROUGH
+#define DEFAULT_SYNC_FLAGBIT	0
 #endif
 
 
