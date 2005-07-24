@@ -3,6 +3,8 @@ DATA_built = tablefunc.sql
 DOCS = README.tablefunc
 REGRESS = tablefunc
 
+SHLIB_LINK += $(filter -lm, $(LIBS))
+
 ifdef USE_PGXS
 PGXS = $(shell pg_config --pgxs)
 include $(PGXS)

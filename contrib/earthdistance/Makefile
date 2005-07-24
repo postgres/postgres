@@ -1,9 +1,11 @@
-# $PostgreSQL: pgsql/contrib/earthdistance/Makefile,v 1.14 2004/08/20 20:13:03 momjian Exp $
+# $PostgreSQL: pgsql/contrib/earthdistance/Makefile,v 1.15 2005/07/24 23:30:09 tgl Exp $
 
 MODULES = earthdistance
 DATA_built = earthdistance.sql
 DOCS = README.earthdistance
 REGRESS = earthdistance
+
+SHLIB_LINK += $(filter -lm, $(LIBS))
 
 ifdef USE_PGXS
 PGXS = $(shell pg_config --pgxs)
