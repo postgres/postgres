@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.145 2005/07/23 14:53:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.146 2005/07/24 04:37:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2244,38 +2244,37 @@ interval_mi(PG_FUNCTION_ARGS)
 Datum
 interval_mul(PG_FUNCTION_ARGS)
 {
-	Interval   *span1 = PG_GETARG_INTERVAL_P(0);
+	Interval   *span = PG_GETARG_INTERVAL_P(0);
 	float8		factor = PG_GETARG_FLOAT8(1);
+	double		month_remainder, day_remainder;
 	Interval   *result;
-
-#ifdef HAVE_INT64_TIMESTAMP
-	int64		months;
-	int64       days;
-#else
-	double		months;
-	double      days;
-#endif
 
 	result = (Interval *) palloc(sizeof(Interval));
 
-	months = span1->month * factor;
-	days = span1->day * factor;
+	result->month = span->month * factor;
+	result->day = span->day * factor;
+
+	/* Compute remainders */
+	month_remainder = span->month * factor - result->month;
+	day_remainder = span->day * factor - result->day;
+
+	/* Cascade fractions to lower units */
+	/* fractional months full days into days */
+	result->day += month_remainder * DAYS_PER_MONTH;
+	/* fractional months partial days into time */
+	day_remainder += (month_remainder * DAYS_PER_MONTH) -
+					 (int)(month_remainder * DAYS_PER_MONTH);
+
 #ifdef HAVE_INT64_TIMESTAMP
-	result->month = months;
-	result->day = days;
-	result->time = span1->time * factor;
-	result->time += (months - result->month) * INT64CONST(30) * USECS_PER_DAY;
-	result->time += (days - result->day) * INT64CONST(24) * USECS_PER_HOUR;
+	result->time = rint(span->time * factor +
+					day_remainder * USECS_PER_DAY);
 #else
-	result->month = (int)months;
-	result->day = (int)days;
-	result->time = JROUND(span1->time * factor);
-	/* evaluate fractional months as 30 days */
-	result->time += JROUND((months - result->month) * DAYS_PER_MONTH * SECS_PER_DAY);
-	/* evaluate fractional days as 24 hours */
-	result->time += JROUND((days - result->day) * HOURS_PER_DAY * SECS_PER_HOUR);
+	result->time = JROUND(span->time * factor +
+					day_remainder * SECS_PER_DAY);
 #endif
 
+	result = DatumGetIntervalP(DirectFunctionCall1(interval_justify_hours,
+												IntervalPGetDatum(result)));
 	PG_RETURN_INTERVAL_P(result);
 }
 
@@ -2284,9 +2283,9 @@ mul_d_interval(PG_FUNCTION_ARGS)
 {
 	/* Args are float8 and Interval *, but leave them as generic Datum */
 	Datum		factor = PG_GETARG_DATUM(0);
-	Datum		span1 = PG_GETARG_DATUM(1);
+	Datum		span = PG_GETARG_DATUM(1);
 
-	return DirectFunctionCall2(interval_mul, span1, factor);
+	return DirectFunctionCall2(interval_mul, span, factor);
 }
 
 Datum
@@ -2316,10 +2315,11 @@ interval_div(PG_FUNCTION_ARGS)
 	/* fractional months full days into days */
 	result->day += month_remainder * DAYS_PER_MONTH;
 	/* fractional months partial days into time */
-	day_remainder += (month_remainder * DAYS_PER_MONTH) - (int)(month_remainder * DAYS_PER_MONTH);
+	day_remainder += (month_remainder * DAYS_PER_MONTH) -
+					 (int)(month_remainder * DAYS_PER_MONTH);
 
 #ifdef HAVE_INT64_TIMESTAMP
-	result->time += day_remainder * USECS_PER_DAY;
+	result->time += rint(day_remainder * USECS_PER_DAY);
 #else
 	result->time += day_remainder * SECS_PER_DAY;
 	result->time = JROUND(result->time);
