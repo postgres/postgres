@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.100 2005/07/14 05:13:40 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.101 2005/07/24 00:33:28 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -2776,13 +2776,13 @@ pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len)
 	 */
 	if (!found)
 	{
-		tabentry->tableid = msg->m_tableoid;
+		tabentry->numscans = 0;
 
 		tabentry->tuples_returned = 0;
 		tabentry->tuples_fetched = 0;
-		tabentry->tuples_inserted = msg->m_tuples;
-		tabentry->tuples_deleted = 0;
+		tabentry->tuples_inserted = 0;
 		tabentry->tuples_updated = 0;
+		tabentry->tuples_deleted = 0;
 
 		tabentry->n_live_tuples = msg->m_tuples;
 		tabentry->n_dead_tuples = 0;
@@ -2794,11 +2794,13 @@ pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len)
 
 		tabentry->blocks_fetched = 0;
 		tabentry->blocks_hit = 0;
+
+		tabentry->destroy = 0;
 	}
 	else
 	{
-		tabentry->n_dead_tuples = 0;
 		tabentry->n_live_tuples = msg->m_tuples;
+		tabentry->n_dead_tuples = 0;
 		if (msg->m_analyze)
 			tabentry->last_anl_tuples = msg->m_tuples;
 	}
@@ -2827,13 +2829,13 @@ pgstat_recv_analyze(PgStat_MsgAnalyze *msg, int len)
 	 */
 	if (!found)
 	{
-		tabentry->tableid = msg->m_tableoid;
+		tabentry->numscans = 0;
 
 		tabentry->tuples_returned = 0;
 		tabentry->tuples_fetched = 0;
 		tabentry->tuples_inserted = 0;
-		tabentry->tuples_deleted = 0;
 		tabentry->tuples_updated = 0;
+		tabentry->tuples_deleted = 0;
 
 		tabentry->n_live_tuples = msg->m_live_tuples;
 		tabentry->n_dead_tuples = msg->m_dead_tuples;
@@ -2841,6 +2843,8 @@ pgstat_recv_analyze(PgStat_MsgAnalyze *msg, int len)
 
 		tabentry->blocks_fetched = 0;
 		tabentry->blocks_hit = 0;
+
+		tabentry->destroy = 0;
 	}
 	else
 	{
@@ -2931,12 +2935,14 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 			tabentry->tuples_inserted = tabmsg[i].t_tuples_inserted;
 			tabentry->tuples_updated = tabmsg[i].t_tuples_updated;
 			tabentry->tuples_deleted = tabmsg[i].t_tuples_deleted;
-			tabentry->blocks_fetched = tabmsg[i].t_blocks_fetched;
-			tabentry->blocks_hit = tabmsg[i].t_blocks_hit;
 			
 			tabentry->n_live_tuples = tabmsg[i].t_tuples_inserted;
 			tabentry->n_dead_tuples = tabmsg[i].t_tuples_updated +
 				tabmsg[i].t_tuples_deleted;
+			tabentry->last_anl_tuples = 0;
+
+			tabentry->blocks_fetched = tabmsg[i].t_blocks_fetched;
+			tabentry->blocks_hit = tabmsg[i].t_blocks_hit;
 
 			tabentry->destroy = 0;
 		}
@@ -2951,12 +2957,13 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 			tabentry->tuples_inserted += tabmsg[i].t_tuples_inserted;
 			tabentry->tuples_updated += tabmsg[i].t_tuples_updated;
 			tabentry->tuples_deleted += tabmsg[i].t_tuples_deleted;
-			tabentry->blocks_fetched += tabmsg[i].t_blocks_fetched;
-			tabentry->blocks_hit += tabmsg[i].t_blocks_hit;
 
 			tabentry->n_live_tuples += tabmsg[i].t_tuples_inserted;
 			tabentry->n_dead_tuples += tabmsg[i].t_tuples_updated +
 				tabmsg[i].t_tuples_deleted;
+
+			tabentry->blocks_fetched += tabmsg[i].t_blocks_fetched;
+			tabentry->blocks_hit += tabmsg[i].t_blocks_hit;
 		}
 
 		/*
