@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.46 2005/03/07 02:00:28 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.47 2005/07/24 17:07:18 tgl Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -49,7 +49,7 @@ gmake check
 <screen>
 <computeroutput>
 ======================
- All 96 tests passed.
+ All 98 tests passed.
 ======================
 </computeroutput>
 </screen>
@@ -148,7 +148,7 @@ gmake installcheck-parallel
     <productname>PostgreSQL</productname> installations can
     <quote>fail</quote> some of these regression tests due to
     platform-specific artifacts such as varying floating-point representation
-    and time zone support. The tests are currently evaluated using a simple
+    and message wording. The tests are currently evaluated using a simple
     <command>diff</command> comparison against the outputs
     generated on a reference system, so the results are sensitive to
     small system differences.  When a test is reported as
@@ -168,6 +168,14 @@ gmake installcheck-parallel
     differences are saved for your inspection in
     <filename>src/test/regress/regression.diffs</filename>.  (Or you
     can run <command>diff</command> yourself, if you prefer.)
+   </para>
+
+   <para>
+    If for some reason a particular platform generates a <quote>failure</>
+    for a given test, but inspection of the output convinces you that
+    the result is valid, you can add a new comparison file to silence
+    the failure report in future test runs.  See
+    <xref linkend="regress-variant"> for details.
    </para>
 
    <sect2>
@@ -194,53 +202,12 @@ gmake installcheck-parallel
      there may be differences due to sort order and follow-up
      failures.  The regression test suite is set up to handle this
      problem by providing alternative result files that together are
-     known to handle a large number of locales.  For example, for the
-     <literal>char</literal> test, the expected file
-     <filename>char.out</filename> handles the <literal>C</> and <literal>POSIX</> locales,
-     and the file <filename>char_1.out</filename> handles many other
-     locales.  The regression test driver will automatically pick the
-     best file to match against when checking for success and for
-     computing failure differences.  (This means that the regression
-     tests cannot detect whether the results are appropriate for the
-     configured locale.  The tests will simply pick the one result
-     file that works best.)
-    </para>
-
-    <para>
-     If for some reason the existing expected files do not cover some
-     locale, you can add a new file.  The naming scheme is
-     <literal><replaceable>testname</>_<replaceable>digit</>.out</>.
-     The actual digit is not significant.  Remember that the
-     regression test driver will consider all such files to be equally
-     valid test results.  If the test results are platform-specific,
-     the technique described in <xref linkend="regress-platform">
-     should be used instead.
+     known to handle a large number of locales.
     </para>
    </sect2>
     
    <sect2>
     <title>Date and time differences</title>
-
-    <para>
-     A few of the queries in the <filename>horology</filename> test will
-     fail if you run the test on the day of a daylight-saving time
-     changeover, or the day after one.  These queries expect that
-     the intervals between midnight yesterday, midnight today and
-     midnight tomorrow are exactly twenty-four hours &mdash; which is wrong
-     if daylight-saving time went into or out of effect meanwhile.
-    </para>
-
-    <note>
-     <para>
-      Because USA daylight-saving time rules are used, this problem always
-      occurs on the first Sunday of April, the last Sunday of October,
-      and their following Mondays, regardless of when daylight-saving time
-      is in effect where you live.  Also note that the problem appears or
-      disappears at midnight Pacific time (UTC-7 or UTC-8), not midnight
-      your local time.  Thus the failure may appear late on Saturday or
-      persist through much of Tuesday, depending on where you live.
-     </para>
-    </note>
 
     <para>
      Most of the date and time results are dependent on the time zone
@@ -334,19 +301,26 @@ diff results/random.out expected/random.out
   </sect1>
 
 <!-- We might want to move the following section into the developer's guide. -->
-  <sect1 id="regress-platform">
-   <title>Platform-specific comparison files</title>
+  <sect1 id="regress-variant">
+   <title>Variant Comparison Files</title>
 
    <para>
-    Since some of the tests inherently produce platform-specific
-    results, we have provided a way to supply platform-specific result
-    comparison files.  Frequently, the same variation applies to
-    multiple platforms; rather than supplying a separate comparison
-    file for every platform, there is a mapping file that defines
-    which comparison file to use.  So, to eliminate bogus test
-    <quote>failures</quote> for a particular platform, you must choose
-    or make a variant result file, and then add a line to the mapping
-    file, which is <filename>src/test/regress/resultmap</filename>.
+    Since some of the tests inherently produce environment-dependent
+    results, we have provided ways to specify alternative <quote>expected</>
+    result files.  Each regression test can have several comparison files
+    showing possible results on different platforms.  There are two
+    independent mechanisms for determining which comparison file is used
+    for each test.
+   </para>
+
+   <para>
+    The first mechanism allows comparison files to be selected for
+    specific platforms.  There is a mapping file,
+    <filename>src/test/regress/resultmap</filename>, that defines
+    which comparison file to use for each platform.
+    To eliminate bogus test <quote>failures</quote> for a particular platform,
+    you first choose or make a variant result file, and then add a line to the
+    <filename>resultmap</filename> file.
    </para>
 
    <para>
@@ -363,7 +337,7 @@ testname/platformpattern=comparisonfilename
     <literal>:gcc</literal> or <literal>:cc</literal>, depending on
     whether you use the GNU compiler or the system's native compiler
     (on systems where there is a difference).  The comparison file
-    name is the name of the substitute result comparison file.
+    name is the base name of the substitute result comparison file.
    </para>
 
    <para>
@@ -383,6 +357,41 @@ float8/i.86-.*-openbsd=float8-small-is-zero
     Other lines
     in <filename>resultmap</> select the variant comparison file for other
     platforms where it's appropriate.
+   </para>
+
+   <para>
+    The second selection mechanism for variant comparison files is
+    much more automatic: it simply uses the <quote>best match</> among
+    several supplied comparison files.  The regression test driver
+    script considers both the standard comparison file for a test,
+    <literal><replaceable>testname</>.out</>, and variant files named
+    <literal><replaceable>testname</>_<replaceable>digit</>.out</>
+    (where the <replaceable>digit</> is any single digit
+    <literal>0</>-<literal>9</>).  If any such file is an exact match,
+    the test is considered to pass; otherwise, the one that generates
+    the shortest diff is used to create the failure report.  (If
+    <filename>resultmap</filename> includes an entry for the particular
+    test, then the base <replaceable>testname</> is the substitute
+    name given in <filename>resultmap</filename>.)
+   </para>
+
+   <para>
+    For example, for the <literal>char</literal> test, the comparison file
+    <filename>char.out</filename> contains results that are expected
+    in the <literal>C</> and <literal>POSIX</> locales, while
+    the file <filename>char_1.out</filename> contains results sorted as
+    they appear in many other locales.
+   </para>
+
+   <para>
+    The best-match mechanism was devised to cope with locale-dependent
+    results, but it can be used in any situation where the test results
+    cannot be predicted easily from the platform name alone.  A limitation of
+    this mechanism is that the test driver cannot tell which variant is
+    actually <quote>correct</> for the current environment; it will just pick
+    the variant that seems to work best.  Therefore it is safest to use this
+    mechanism only for variant results that you are willing to consider
+    equally valid in all contexts.
    </para>
     
   </sect1>
