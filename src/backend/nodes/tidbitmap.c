@@ -23,7 +23,7 @@
  * Copyright (c) 2003-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/tidbitmap.c,v 1.4 2005/05/29 04:23:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/tidbitmap.c,v 1.5 2005/07/24 02:25:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,7 +135,8 @@ struct TIDBitmap
 
 /* Local function prototypes */
 static void tbm_union_page(TIDBitmap *a, const PagetableEntry *bpage);
-static bool tbm_intersect_page(PagetableEntry *apage, const TIDBitmap *b);
+static bool tbm_intersect_page(TIDBitmap *a, PagetableEntry *apage,
+							   const TIDBitmap *b);
 static const PagetableEntry *tbm_find_pageentry(const TIDBitmap *tbm,
 												BlockNumber pageno);
 static PagetableEntry *tbm_get_pageentry(TIDBitmap *tbm, BlockNumber pageno);
@@ -382,7 +383,7 @@ tbm_intersect(TIDBitmap *a, const TIDBitmap *b)
 	/* Scan through chunks and pages in a, try to match to b */
 	if (a->status == TBM_ONE_PAGE)
 	{
-		if (tbm_intersect_page(&a->entry1, b))
+		if (tbm_intersect_page(a, &a->entry1, b))
 		{
 			/* Page is now empty, remove it from a */
 			Assert(!a->entry1.ischunk);
@@ -401,7 +402,7 @@ tbm_intersect(TIDBitmap *a, const TIDBitmap *b)
 		hash_seq_init(&status, a->pagetable);
 		while ((apage = (PagetableEntry *) hash_seq_search(&status)) != NULL)
 		{
-			if (tbm_intersect_page(apage, b))
+			if (tbm_intersect_page(a, apage, b))
 			{
 				/* Page or chunk is now empty, remove it from a */
 				if (apage->ischunk)
@@ -424,7 +425,7 @@ tbm_intersect(TIDBitmap *a, const TIDBitmap *b)
  * Returns TRUE if apage is now empty and should be deleted from a
  */
 static bool
-tbm_intersect_page(PagetableEntry *apage, const TIDBitmap *b)
+tbm_intersect_page(TIDBitmap *a, PagetableEntry *apage, const TIDBitmap *b)
 {
 	const PagetableEntry *bpage;
 	int		wordnum;
@@ -470,7 +471,23 @@ tbm_intersect_page(PagetableEntry *apage, const TIDBitmap *b)
 	}
 	else if (tbm_page_is_lossy(b, apage->blockno))
 	{
-		/* page is lossy in b, cannot clear any bits */
+		/*
+		 * When the page is lossy in b, we have to mark it lossy in a too.
+		 * We know that no bits need be set in bitmap a, but we do not know
+		 * which ones should be cleared, and we have no API for "at most
+		 * these tuples need be checked".  (Perhaps it's worth adding that?)
+		 */
+		tbm_mark_page_lossy(a, apage->blockno);
+
+		/*
+		 * Note: tbm_mark_page_lossy will have removed apage from a, and
+		 * may have inserted a new lossy chunk instead.  We can continue the
+		 * same seq_search scan at the caller level, because it does not
+		 * matter whether we visit such a new chunk or not: it will have
+		 * only the bit for apage->blockno set, which is correct.
+		 *
+		 * We must return false here since apage was already deleted.
+		 */
 		return false;
 	}
 	else
