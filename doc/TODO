@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Jul 21 09:43:13 EDT 2005
+Last updated:		Mon Jul 25 11:26:58 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -71,6 +71,8 @@ Administration
 	  This would require a new global table that is dumped to flat file for
 	  use by the postmaster.  We do a similar thing for pg_shadow currently.
 
+	o Allow postgresql.conf file values to be changed via an SQL API
+	o Allow the server to be stopped/restarted via an SQL API
 
 * Tablespaces
 
