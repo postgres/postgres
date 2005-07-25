@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.210 2005/07/13 22:46:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.211 2005/07/25 22:12:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1865,7 +1865,7 @@ AbortTransaction(void)
 
 	/*
 	 * Reset user id which might have been changed transiently.  We cannot
-	 * use s->currentUser, but must get the session userid from
+	 * use s->currentUser, but must get the session outer-level userid from
 	 * miscinit.c.
 	 *
 	 * (Note: it is not necessary to restore session authorization here
@@ -1874,7 +1874,7 @@ AbortTransaction(void)
 	 * DEFINER function could send control here with the wrong current
 	 * userid.)
 	 */
-	SetUserId(GetSessionUserId());
+	SetUserId(GetOuterUserId());
 
 	/*
 	 * do abort processing

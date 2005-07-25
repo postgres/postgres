@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.111 2005/07/21 03:56:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.112 2005/07/25 22:12:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "miscadmin.h"
 #include "parser/scansup.h"
 #include "pgtime.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/syscache.h"
@@ -681,6 +682,145 @@ show_session_authorization(void)
 	savedoid = (Oid) strtoul(value + NAMEDATALEN + 1, &endptr, 10);
 
 	Assert(endptr != value + NAMEDATALEN + 1 && *endptr == ',');
+
+	return endptr + 1;
+}
+
+
+/*
+ * SET ROLE
+ *
+ * When resetting session auth after an error, we can't expect to do catalog
+ * lookups.  Hence, the stored form of the value must provide a numeric oid
+ * that can be re-used directly.  We implement this exactly like SET
+ * SESSION AUTHORIZATION.
+ *
+ * The SQL spec requires "SET ROLE NONE" to unset the role, so we hardwire
+ * a translation of "none" to InvalidOid.
+ */
+extern char *role_string;		/* in guc.c */
+
+const char *
+assign_role(const char *value, bool doit, GucSource source)
+{
+	Oid		roleid = InvalidOid;
+	bool		is_superuser = false;
+	const char *actual_rolename = value;
+	char	   *result;
+
+	if (strspn(value, "x") == NAMEDATALEN &&
+		(value[NAMEDATALEN] == 'T' || value[NAMEDATALEN] == 'F'))
+	{
+		/* might be a saved userid string */
+		Oid		savedoid;
+		char	   *endptr;
+
+		savedoid = (Oid) strtoul(value + NAMEDATALEN + 1, &endptr, 10);
+
+		if (endptr != value + NAMEDATALEN + 1 && *endptr == ',')
+		{
+			/* syntactically valid, so break out the data */
+			roleid = savedoid;
+			is_superuser = (value[NAMEDATALEN] == 'T');
+			actual_rolename = endptr + 1;
+		}
+	}
+
+	if (roleid == InvalidOid &&
+		strcmp(actual_rolename, "none") != 0)
+	{
+		/* not a saved ID, so look it up */
+		HeapTuple	roleTup;
+
+		if (!IsTransactionState())
+		{
+			/*
+			 * Can't do catalog lookups, so fail.  The upshot of this is
+			 * that role cannot be set in postgresql.conf, which seems 
+			 * like a good thing anyway.
+			 */
+			return NULL;
+		}
+
+		roleTup = SearchSysCache(AUTHNAME,
+								 PointerGetDatum(value),
+								 0, 0, 0);
+		if (!HeapTupleIsValid(roleTup))
+		{
+			if (source >= PGC_S_INTERACTIVE)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("role \"%s\" does not exist", value)));
+			return NULL;
+		}
+
+		roleid = HeapTupleGetOid(roleTup);
+		is_superuser = ((Form_pg_authid) GETSTRUCT(roleTup))->rolsuper;
+
+		ReleaseSysCache(roleTup);
+
+		/*
+		 * Verify that session user is allowed to become this role
+		 */
+		if (!is_member_of_role(GetSessionUserId(), roleid))
+		{
+			if (source >= PGC_S_INTERACTIVE)
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("permission denied to set role \"%s\"",
+								value)));
+			return NULL;
+		}
+	}
+
+	if (doit)
+		SetCurrentRoleId(roleid, is_superuser);
+
+	result = (char *) malloc(NAMEDATALEN + 32 + strlen(actual_rolename));
+	if (!result)
+		return NULL;
+
+	memset(result, 'x', NAMEDATALEN);
+
+	sprintf(result + NAMEDATALEN, "%c%u,%s",
+			is_superuser ? 'T' : 'F',
+			roleid,
+			actual_rolename);
+
+	return result;
+}
+
+const char *
+show_role(void)
+{
+	/*
+	 * Extract the role name from the stored string; see
+	 * assign_role
+	 */
+	const char *value = role_string;
+	Oid		savedoid;
+	char	   *endptr;
+
+	/* This special case only applies if no SET ROLE has been done */
+	if (value == NULL || strcmp(value, "none") == 0)
+		return "none";
+
+	Assert(strspn(value, "x") == NAMEDATALEN &&
+		   (value[NAMEDATALEN] == 'T' || value[NAMEDATALEN] == 'F'));
+
+	savedoid = (Oid) strtoul(value + NAMEDATALEN + 1, &endptr, 10);
+
+	Assert(endptr != value + NAMEDATALEN + 1 && *endptr == ',');
+
+	/*
+	 * Check that the stored string still matches the effective setting,
+	 * else return "none".  This is a kluge to deal with the fact that
+	 * SET SESSION AUTHORIZATION logically resets SET ROLE to NONE, but
+	 * we cannot set the GUC role variable from assign_session_authorization
+	 * (because we haven't got enough info to call set_config_option).
+	 */
+	if (savedoid != GetCurrentRoleId())
+		return "none";
 
 	return endptr + 1;
 }

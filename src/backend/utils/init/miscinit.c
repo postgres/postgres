@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.146 2005/07/14 05:13:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.147 2005/07/25 22:12:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -270,24 +270,44 @@ make_absolute_path(const char *path)
 
 
 /* ----------------------------------------------------------------
- *	Role ID things
+ *	User ID state
  *
- * The authenticated user is determined at connection start and never
- * changes.  The session user can be changed only by SET SESSION
- * AUTHORIZATION.  The current user may change when "setuid" functions
- * are implemented.  Conceptually there is a stack, whose bottom
- * is the session user.  You are yourself responsible to save and
- * restore the current user id if you need to change it.
+ * We have to track several different values associated with the concept
+ * of "user ID".
+ *
+ * AuthenticatedUserId is determined at connection start and never changes.
+ *
+ * SessionUserId is initially the same as AuthenticatedUserId, but can be
+ * changed by SET SESSION AUTHORIZATION (if AuthenticatedUserIsSuperuser).
+ * This is the ID reported by the SESSION_USER SQL function.
+ *
+ * OuterUserId is the current user ID in effect at the "outer level" (outside
+ * any transaction or function).  This is initially the same as SessionUserId,
+ * but can be changed by SET ROLE to any role that SessionUserId is a
+ * member of.  We store this mainly so that AbortTransaction knows what to
+ * reset CurrentUserId to.
+ *
+ * CurrentUserId is the current effective user ID; this is the one to use
+ * for all normal permissions-checking purposes.  At outer level this will
+ * be the same as OuterUserId, but it changes during calls to SECURITY
+ * DEFINER functions, as well as locally in some specialized commands.
  * ----------------------------------------------------------------
  */
 static Oid AuthenticatedUserId = InvalidOid;
 static Oid SessionUserId = InvalidOid;
+static Oid OuterUserId = InvalidOid;
 static Oid CurrentUserId = InvalidOid;
 
+/* We also have to remember the superuser state of some of these levels */
 static bool AuthenticatedUserIsSuperuser = false;
+static bool SessionUserIsSuperuser = false;
+
+/* We also remember if a SET ROLE is currently active */
+static bool SetRoleIsActive = false;
+
 
 /*
- * This function is relevant for all privilege checks.
+ * GetUserId/SetUserId - get/set the current effective user ID.
  */
 Oid
 GetUserId(void)
@@ -298,15 +318,37 @@ GetUserId(void)
 
 
 void
-SetUserId(Oid roleid)
+SetUserId(Oid userid)
 {
-	AssertArg(OidIsValid(roleid));
-	CurrentUserId = roleid;
+	AssertArg(OidIsValid(userid));
+	CurrentUserId = userid;
 }
 
 
 /*
- * This value is only relevant for informational purposes.
+ * GetOuterUserId/SetOuterUserId - get/set the outer-level user ID.
+ */
+Oid
+GetOuterUserId(void)
+{
+	AssertState(OidIsValid(OuterUserId));
+	return OuterUserId;
+}
+
+
+static void
+SetOuterUserId(Oid userid)
+{
+	AssertArg(OidIsValid(userid));
+	OuterUserId = userid;
+
+	/* We force the effective user ID to match, too */
+	CurrentUserId = userid;
+}
+
+
+/*
+ * GetSessionUserId/SetSessionUserId - get/set the session user ID.
  */
 Oid
 GetSessionUserId(void)
@@ -316,17 +358,23 @@ GetSessionUserId(void)
 }
 
 
-void
-SetSessionUserId(Oid roleid)
+static void
+SetSessionUserId(Oid userid, bool is_superuser)
 {
-	AssertArg(OidIsValid(roleid));
-	SessionUserId = roleid;
-	/* Current user defaults to session user. */
-	if (!OidIsValid(CurrentUserId))
-		CurrentUserId = roleid;
+	AssertArg(OidIsValid(userid));
+	SessionUserId = userid;
+	SessionUserIsSuperuser = is_superuser;
+	SetRoleIsActive = false;
+
+	/* We force the effective user IDs to match, too */
+	OuterUserId = userid;
+	CurrentUserId = userid;
 }
 
 
+/*
+ * Initialize user identity during normal backend startup
+ */
 void
 InitializeSessionUserId(const char *rolename)
 {
@@ -364,7 +412,8 @@ InitializeSessionUserId(const char *rolename)
 	AuthenticatedUserId = roleid;
 	AuthenticatedUserIsSuperuser = rform->rolsuper;
 
-	SetSessionUserId(roleid);	/* sets CurrentUserId too */
+	/* This sets OuterUserId/CurrentUserId too */
+	SetSessionUserId(roleid, AuthenticatedUserIsSuperuser);
 
 	/* Record username and superuser status as GUC settings too */
 	SetConfigOption("session_authorization", rolename,
@@ -391,6 +440,9 @@ InitializeSessionUserId(const char *rolename)
 }
 
 
+/*
+ * Initialize user identity during special backend startup
+ */
 void
 InitializeSessionUserIdStandalone(void)
 {
@@ -403,7 +455,7 @@ InitializeSessionUserIdStandalone(void)
 	AuthenticatedUserId = BOOTSTRAP_SUPERUSERID;
 	AuthenticatedUserIsSuperuser = true;
 
-	SetSessionUserId(BOOTSTRAP_SUPERUSERID);
+	SetSessionUserId(BOOTSTRAP_SUPERUSERID, true);
 }
 
 
@@ -414,21 +466,82 @@ InitializeSessionUserIdStandalone(void)
  * that in case of multiple SETs in a single session, the original userid's
  * superuserness is what matters.  But we set the GUC variable is_superuser
  * to indicate whether the *current* session userid is a superuser.
+ *
+ * Note: this is not an especially clean place to do the permission check.
+ * It's OK because the check does not require catalog access and can't
+ * fail during an end-of-transaction GUC reversion, but we may someday
+ * have to push it up into assign_session_authorization.
  */
 void
-SetSessionAuthorization(Oid roleid, bool is_superuser)
+SetSessionAuthorization(Oid userid, bool is_superuser)
 {
 	/* Must have authenticated already, else can't make permission check */
 	AssertState(OidIsValid(AuthenticatedUserId));
 
-	if (roleid != AuthenticatedUserId &&
+	if (userid != AuthenticatedUserId &&
 		!AuthenticatedUserIsSuperuser)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 			  errmsg("permission denied to set session authorization")));
 
-	SetSessionUserId(roleid);
-	SetUserId(roleid);
+	SetSessionUserId(userid, is_superuser);
+
+	SetConfigOption("is_superuser",
+					is_superuser ? "on" : "off",
+					PGC_INTERNAL, PGC_S_OVERRIDE);
+}
+
+/*
+ * Report current role id
+ *		This follows the semantics of SET ROLE, ie return the outer-level ID
+ *		not the current effective ID, and return InvalidOid when the setting
+ *		is logically SET ROLE NONE.
+ */
+Oid
+GetCurrentRoleId(void)
+{
+	if (SetRoleIsActive)
+		return OuterUserId;
+	else
+		return InvalidOid;
+}
+
+/*
+ * Change Role ID while running (SET ROLE)
+ *
+ * If roleid is InvalidOid, we are doing SET ROLE NONE: revert to the
+ * session user authorization.  In this case the is_superuser argument
+ * is ignored.
+ *
+ * When roleid is not InvalidOid, the caller must have checked whether
+ * the session user has permission to become that role.  (We cannot check
+ * here because this routine must be able to execute in a failed transaction
+ * to restore a prior value of the ROLE GUC variable.)
+ */
+void
+SetCurrentRoleId(Oid roleid, bool is_superuser)
+{
+	/*
+	 * Get correct info if it's SET ROLE NONE
+	 *
+	 * If SessionUserId hasn't been set yet, just do nothing --- the eventual
+	 * SetSessionUserId call will fix everything.  This is needed since we
+	 * will get called during GUC initialization.
+	 */
+	if (!OidIsValid(roleid))
+	{
+		if (!OidIsValid(SessionUserId))
+			return;
+
+		roleid = SessionUserId;
+		is_superuser = SessionUserIsSuperuser;
+
+		SetRoleIsActive = false;
+	}
+	else
+		SetRoleIsActive = true;
+
+	SetOuterUserId(roleid);
 
 	SetConfigOption("is_superuser",
 					is_superuser ? "on" : "off",

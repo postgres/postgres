@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.501 2005/06/29 20:34:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.502 2005/07/25 22:12:32 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1002,6 +1002,13 @@ set_rest:  var_name TO var_list_or_default
 					n->name = "client_encoding";
 					if ($2 != NULL)
 						n->args = list_make1(makeStringConst($2, NULL));
+					$$ = n;
+				}
+			| ROLE ColId_or_Sconst
+				{
+					VariableSetStmt *n = makeNode(VariableSetStmt);
+					n->name = "role";
+					n->args = list_make1(makeStringConst($2, NULL));
 					$$ = n;
 				}
 			| SESSION AUTHORIZATION ColId_or_Sconst

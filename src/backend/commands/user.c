@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.156 2005/07/07 20:39:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.157 2005/07/25 22:12:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,7 +227,8 @@ CreateRole(CreateRoleStmt *stmt)
 					 errmsg("permission denied to create role")));
 	}
 
-	if (strcmp(stmt->role, "public") == 0)
+	if (strcmp(stmt->role, "public") == 0 ||
+		strcmp(stmt->role, "none") == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_RESERVED_NAME),
 				 errmsg("role name \"%s\" is reserved",
@@ -760,11 +761,15 @@ DropRole(DropRoleStmt *stmt)
 		if (roleid == GetUserId())
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_IN_USE),
-					 errmsg("current role cannot be dropped")));
+					 errmsg("current user cannot be dropped")));
+		if (roleid == GetOuterUserId())
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_IN_USE),
+					 errmsg("current user cannot be dropped")));
 		if (roleid == GetSessionUserId())
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_IN_USE),
-					 errmsg("session role cannot be dropped")));
+					 errmsg("session user cannot be dropped")));
 
 		/*
 		 * For safety's sake, we allow createrole holders to drop ordinary
@@ -893,7 +898,8 @@ RenameRole(const char *oldname, const char *newname)
 	 * XXX Client applications probably store the session user somewhere,
 	 * so renaming it could cause confusion.  On the other hand, there may
 	 * not be an actual problem besides a little confusion, so think about
-	 * this and decide.
+	 * this and decide.  Same for SET ROLE ... we don't restrict renaming
+	 * the current effective userid, though.
 	 */
 
 	roleid = HeapTupleGetOid(oldtuple);
@@ -901,7 +907,11 @@ RenameRole(const char *oldname, const char *newname)
 	if (roleid == GetSessionUserId())
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("session role may not be renamed")));
+				 errmsg("session user may not be renamed")));
+	if (roleid == GetOuterUserId())
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("current user may not be renamed")));
 
 	/* make sure the new name doesn't exist */
 	if (SearchSysCacheExists(AUTHNAME,
@@ -910,6 +920,13 @@ RenameRole(const char *oldname, const char *newname)
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("role \"%s\" already exists", newname)));
+
+	if (strcmp(newname, "public") == 0 ||
+		strcmp(newname, "none") == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_RESERVED_NAME),
+				 errmsg("role name \"%s\" is reserved",
+						newname)));
 
 	/*
 	 * createrole is enough privilege unless you want to mess with a superuser

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.277 2005/07/23 21:05:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.278 2005/07/25 22:12:33 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -195,7 +195,8 @@ static int	block_size;
 static bool	integer_datetimes;
 static bool	standard_compliant_strings;
 
-/* should be static, but commands/variable.c needs to get at it */
+/* should be static, but commands/variable.c needs to get at these */
+char	   *role_string;
 char	   *session_authorization_string;
 
 
@@ -1829,6 +1830,17 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
+		/* Not for general use --- used by SET ROLE */
+		{"role", PGC_USERSET, UNGROUPED,
+			gettext_noop("Sets the current role."),
+			NULL,
+			GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+		},
+		&role_string,
+		"none", assign_role, show_role
+	},
+
+	{
 		/* Not for general use --- used by SET SESSION AUTHORIZATION */
 		{"session_authorization", PGC_USERSET, UNGROUPED,
 			gettext_noop("Sets the session user name."),
@@ -2047,8 +2059,6 @@ static int	size_guc_variables;
 static bool guc_dirty;			/* TRUE if need to do commit/abort work */
 
 static bool reporting_enabled;	/* TRUE to enable GUC_REPORT */
-
-static char *guc_string_workspace;		/* for avoiding memory leaks */
 
 
 static int	guc_var_compare(const void *a, const void *b);
@@ -2576,8 +2586,6 @@ InitializeGUCOptions(void)
 
 	reporting_enabled = false;
 
-	guc_string_workspace = NULL;
-
 	/*
 	 * Prevent any attempt to override the transaction modes from
 	 * non-interactive sources.
@@ -2975,13 +2983,6 @@ AtEOXact_GUC(bool isCommit, bool isSubXact)
 	/* Quick exit if nothing's changed in this transaction */
 	if (!guc_dirty)
 		return;
-
-	/* Prevent memory leak if ereport during an assign_hook */
-	if (guc_string_workspace)
-	{
-		free(guc_string_workspace);
-		guc_string_workspace = NULL;
-	}
 
 	my_level = GetCurrentTransactionNestLevel();
 	Assert(isSubXact ? (my_level > 1) : (my_level == 1));
@@ -3388,6 +3389,33 @@ parse_real(const char *value, double *result)
 	return true;
 }
 
+
+/*
+ * Call a GucStringAssignHook function, being careful to free the
+ * "newval" string if the hook ereports.
+ *
+ * This is split out of set_config_option just to avoid the "volatile"
+ * qualifiers that would otherwise have to be plastered all over.
+ */
+static const char *
+call_string_assign_hook(GucStringAssignHook assign_hook,
+						char *newval, bool doit, GucSource source)
+{
+	const char *result;
+
+	PG_TRY();
+	{
+		result = (*assign_hook) (newval, doit, source);
+	}
+	PG_CATCH();
+	{
+		free(newval);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	return result;
+}
 
 
 /*
@@ -3833,21 +3861,18 @@ set_config_option(const char *name, const char *value,
 					break;
 				}
 
-				/*
-				 * Remember string in workspace, so that we can free it
-				 * and avoid a permanent memory leak if hook ereports.
-				 */
-				if (guc_string_workspace)
-					free(guc_string_workspace);
-				guc_string_workspace = newval;
-
 				if (conf->assign_hook)
 				{
 					const char *hookresult;
 
-					hookresult = (*conf->assign_hook) (newval,
-													   changeVal, source);
-					guc_string_workspace = NULL;
+					/*
+					 * If the hook ereports, we have to make sure we free
+					 * newval, else it will be a permanent memory leak.
+					 */
+					hookresult = call_string_assign_hook(conf->assign_hook,
+														 newval,
+														 changeVal,
+														 source);
 					if (hookresult == NULL)
 					{
 						free(newval);
@@ -3873,8 +3898,6 @@ set_config_option(const char *name, const char *value,
 						newval = (char *) hookresult;
 					}
 				}
-
-				guc_string_workspace = NULL;
 
 				if (changeVal || makeDefault)
 				{
@@ -4305,8 +4328,7 @@ init_custom_variable(struct config_generic * gen,
 }
 
 void
-DefineCustomBoolVariable(
-						 const char *name,
+DefineCustomBoolVariable(const char *name,
 						 const char *short_desc,
 						 const char *long_desc,
 						 bool *valueAddr,
@@ -4328,8 +4350,7 @@ DefineCustomBoolVariable(
 }
 
 void
-DefineCustomIntVariable(
-						const char *name,
+DefineCustomIntVariable(const char *name,
 						const char *short_desc,
 						const char *long_desc,
 						int *valueAddr,
@@ -4355,8 +4376,7 @@ DefineCustomIntVariable(
 }
 
 void
-DefineCustomRealVariable(
-						 const char *name,
+DefineCustomRealVariable(const char *name,
 						 const char *short_desc,
 						 const char *long_desc,
 						 double *valueAddr,
@@ -4382,8 +4402,7 @@ DefineCustomRealVariable(
 }
 
 void
-DefineCustomStringVariable(
-						   const char *name,
+DefineCustomStringVariable(const char *name,
 						   const char *short_desc,
 						   const char *long_desc,
 						   char **valueAddr,

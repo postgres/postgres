@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.63 2005/06/17 22:32:42 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.64 2005/07/25 22:12:31 tgl Exp $
 PostgreSQL documentation
 Complete list of usable sgml source files in this directory.
 -->
@@ -102,6 +102,7 @@ Complete list of usable sgml source files in this directory.
 <!entity selectInto         system "select_into.sgml">
 <!entity set                system "set.sgml">
 <!entity setConstraints     system "set_constraints.sgml">
+<!entity setRole            system "set_role.sgml">
 <!entity setSessionAuth     system "set_session_auth.sgml">
 <!entity setTransaction     system "set_transaction.sgml">
 <!entity show               system "show.sgml">

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_session_auth.sgml,v 1.12 2003/11/29 19:51:39 pgsql Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_session_auth.sgml,v 1.13 2005/07/25 22:12:31 tgl Exp $ -->
 <refentry id="SQL-SET-SESSION-AUTHORIZATION">
  <refmeta>
   <refentrytitle id="sql-set-session-authorization-title">SET SESSION AUTHORIZATION</refentrytitle>
@@ -31,7 +31,7 @@ RESET SESSION AUTHORIZATION
    class="parameter">username</replaceable>.  The user name may be
    written as either an identifier or a string literal.  Using this
    command, it is possible, for example, to temporarily become an
-   unprivileged user and later switch back to become a superuser.
+   unprivileged user and later switch back to being a superuser.
   </para>
 
   <para>
@@ -39,8 +39,9 @@ RESET SESSION AUTHORIZATION
    authenticated) user name provided by the client.  The current user
    identifier is normally equal to the session user identifier, but
    may change temporarily in the context of <quote>setuid</quote>
-   functions and similar mechanisms.  The current user identifier is
-   relevant for permission checking.
+   functions and similar mechanisms; it can also be changed by
+   <xref linkend="sql-set-role" endterm="sql-set-role-title">.
+   The current user identifier is relevant for permission checking.
   </para>
 
   <para>
@@ -93,10 +94,24 @@ SELECT SESSION_USER, CURRENT_USER;
    allows identifier syntax (<literal>"username"</literal>), which SQL
    does not.  SQL does not allow this command during a transaction;
    <productname>PostgreSQL</productname> does not make this
-   restriction because there is no reason to.  The privileges
-   necessary to execute this command are left implementation-defined
-   by the standard.
+   restriction because there is no reason to.
+   The <literal>SESSION</> and <literal>LOCAL</> modifiers are a
+   <productname>PostgreSQL</productname> extension, as is the
+   <literal>RESET</> syntax.
   </para>
+
+  <para>
+   The privileges necessary to execute this command are left
+   implementation-defined by the standard.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-set-role" endterm="sql-set-role-title"></member>
+  </simplelist>
  </refsect1>
 </refentry>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.269 2005/07/22 21:16:14 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.270 2005/07/25 22:12:30 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -8266,7 +8266,9 @@ select current_date + s.a as dates from generate_series(0,14,7) as s(a);
     with <xref linkend="sql-set-session-authorization" endterm="sql-set-session-authorization-title">.
     The <function>current_user</function> is the user identifier
     that is applicable for permission checking. Normally, it is equal
-    to the session user, but it changes during the execution of
+    to the session user, but it can be changed with
+    <xref linkend="sql-set-role" endterm="sql-set-role-title">.
+    It also changes during the execution of
     functions with the attribute <literal>SECURITY DEFINER</literal>.
     In Unix parlance, the session user is the <quote>real user</quote> and
     the current user is the <quote>effective user</quote>.

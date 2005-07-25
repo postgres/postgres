@@ -1,5 +1,5 @@
 <!-- reference.sgml
-$PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.53 2005/06/17 22:32:42 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.54 2005/07/25 22:12:30 tgl Exp $
 
 PostgreSQL Reference Manual
 -->
@@ -134,6 +134,7 @@ PostgreSQL Reference Manual
    &selectInto;
    &set;
    &setConstraints;
+   &setRole;
    &setSessionAuth;
    &setTransaction;
    &show;
