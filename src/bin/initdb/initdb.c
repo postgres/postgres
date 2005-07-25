@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.92 2005/07/10 16:13:12 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.93 2005/07/25 04:52:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -829,7 +829,7 @@ check_encodings_match(int pg_enc, const char *ctype)
 	for (i = 0; encoding_match_list[i].system_enc_name; i++)
 	{
 		if (pg_enc == encoding_match_list[i].pg_enc_code
-		 && strcasecmp(sys, encoding_match_list[i].system_enc_name) == 0)
+		 && pg_strcasecmp(sys, encoding_match_list[i].system_enc_name) == 0)
 		{
 			free(sys);
 			return;
@@ -860,7 +860,7 @@ find_matching_encoding(const char *ctype)
 
 	for (i = 0; encoding_match_list[i].system_enc_name; i++)
 	{
-		if (strcasecmp(sys, encoding_match_list[i].system_enc_name) == 0)
+		if (pg_strcasecmp(sys, encoding_match_list[i].system_enc_name) == 0)
 		{
 			free(sys);
 			return encoding_match_list[i].pg_enc_code;

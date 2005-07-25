@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.59 2005/07/10 16:13:13 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.60 2005/07/25 04:52:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -911,7 +911,7 @@ pgwin32_CommandLine(bool registration)
 
 	if (registration)
 	{
-		if (strcasecmp(cmdLine + strlen(cmdLine) - 4, ".exe"))
+		if (pg_strcasecmp(cmdLine + strlen(cmdLine) - 4, ".exe"))
 		{
 			/* If commandline does not end in .exe, append it */
 			strcat(cmdLine, ".exe");

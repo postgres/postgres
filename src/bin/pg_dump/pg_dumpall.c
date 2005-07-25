@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.64 2005/07/18 19:12:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.65 2005/07/25 04:52:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -828,8 +828,8 @@ makeAlterConfigCommand(const char *arrayitem, const char *type, const char *name
 	 * Some GUC variable names are 'LIST' type and hence must not be
 	 * quoted.
 	 */
-	if (strcasecmp(mine, "DateStyle") == 0
-		|| strcasecmp(mine, "search_path") == 0)
+	if (pg_strcasecmp(mine, "DateStyle") == 0
+		|| pg_strcasecmp(mine, "search_path") == 0)
 		appendPQExpBuffer(buf, "%s", pos + 1);
 	else
 		appendStringLiteral(buf, pos + 1, false);
