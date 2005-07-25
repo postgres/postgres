@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.150 2005/07/18 20:57:53 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.151 2005/07/25 17:17:41 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -911,6 +911,7 @@ do_connect(const char *new_dbname, const char *new_user)
 	const char *dbparam = NULL;
 	const char *userparam = NULL;
 	const char *pwparam = NULL;
+	char       *password_prompt = NULL;
 	char	   *prompted_password = NULL;
 	bool		need_pass;
 	bool		success = false;
@@ -930,9 +931,18 @@ do_connect(const char *new_dbname, const char *new_user)
 	else
 		userparam = new_user;
 
+	if (userparam == NULL) 
+		password_prompt = strdup("Password: ");
+	else
+	{
+		password_prompt = malloc(strlen("Password for user %s: ") - 2 +
+								 strlen(userparam) + 1);
+		sprintf(password_prompt,"Password for user %s: ", userparam);
+	}
+
 	/* need to prompt for password? */
 	if (pset.getPassword)
-		pwparam = prompted_password = simple_prompt("Password: ", 100, false);
+		pwparam = prompted_password = simple_prompt(password_prompt, 100, false);
 
 	/*
 	 * Use old password (if any) if no new one given and we are
@@ -956,11 +966,12 @@ do_connect(const char *new_dbname, const char *new_user)
 			need_pass = true;
 			free(prompted_password);
 			prompted_password = NULL;
-			pwparam = prompted_password = simple_prompt("Password: ", 100, false);
+			pwparam = prompted_password = simple_prompt(password_prompt, 100, false);
 		}
 	} while (need_pass);
 
 	free(prompted_password);
+	free(password_prompt);
 
 	/*
 	 * If connection failed, try at least keep the old one. That's

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.119 2005/07/14 08:42:37 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.120 2005/07/25 17:17:41 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -106,6 +106,7 @@ main(int argc, char *argv[])
 
 	char	   *username = NULL;
 	char	   *password = NULL;
+	char       *password_prompt = NULL;
 	bool		need_pass;
 
 	set_pglocale_pgservice(argv[0], "psql");
@@ -188,8 +189,17 @@ main(int argc, char *argv[])
 			username = pg_strdup(options.username);
 	}
 
+	if (options.username == NULL)
+		password_prompt = strdup("Password: ");
+	else
+	{
+		password_prompt = malloc(strlen("Password for user %s: ") - 2 +
+								 strlen(options.username) + 1);
+		sprintf(password_prompt,"Password for user %s: ", options.username);
+	}
+	
 	if (pset.getPassword)
-		password = simple_prompt("Password: ", 100, false);
+		password = simple_prompt(password_prompt, 100, false);
 
 	/* loop until we have a password if requested by backend */
 	do
@@ -207,12 +217,13 @@ main(int argc, char *argv[])
 			need_pass = true;
 			free(password);
 			password = NULL;
-			password = simple_prompt("Password: ", 100, false);
+			password = simple_prompt(password_prompt, 100, false);
 		}
 	} while (need_pass);
 
 	free(username);
 	free(password);
+	free(password_prompt);
 
 	if (PQstatus(pset.db) == CONNECTION_BAD)
 	{
