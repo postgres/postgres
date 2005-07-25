@@ -1,13 +1,12 @@
 #-------------------------------------------------------------------------
 #
 # GNUmakefile--
-#    Makefile for regress (the regression tests)
+#    Makefile for src/test/regress (the regression tests)
 #
-# Copyright (c) 1994, Regents of the University of California
+# Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+# Portions Copyright (c) 1994, Regents of the University of California
 #
-#
-# IDENTIFICATION
-#    $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.50 2005/07/17 18:28:45 tgl Exp $
+# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.51 2005/07/25 00:58:27 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,11 +15,6 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 contribdir := $(top_builddir)/contrib
-
-override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
-override CFLAGS += $(CFLAGS_SL)
-
-SHLIB_LINK = $(BE_DLLLIBS)
 
 # port number for temp-installation test postmaster
 TEMP_PORT = 5$(DEF_PGPORT)
@@ -59,13 +53,28 @@ pg_regress: pg_regress.sh GNUmakefile $(top_builddir)/src/Makefile.global
 
 # Build dynamically-loaded object file for CREATE FUNCTION ... LANGUAGE 'C'.
 
-DLOBJS := regress$(DLSUFFIX)
-# This is for some platforms
-ifdef EXPSUFF
-DLOBJS += regress$(EXPSUFF)
-endif
+NAME = regress
+SO_MAJOR_VERSION= 0
+SO_MINOR_VERSION= 0
+OBJS = regress.o pgsleep.o
+SHLIB_LINK = $(BE_DLLLIBS)
 
-all: $(DLOBJS)
+include $(top_srcdir)/src/Makefile.shlib
+
+all: $(NAME)$(DLSUFFIX)
+
+$(NAME)$(DLSUFFIX): $(shlib)
+	rm -f $(NAME)$(DLSUFFIX)
+	$(LN_S) $(shlib) $(NAME)$(DLSUFFIX)
+
+# regress.so needs pg_usleep, which on some platforms can't be linked
+# from the main backend (though I'd sure like to know why not).
+# We can't incorporate libpgport directly either, since it's not built
+# with appropriate options to build a shared lib.  Instead,
+# symlink the source file in here and build our own object file.
+
+pgsleep.c: % : $(top_srcdir)/src/port/%
+	rm -f $@ && $(LN_S) $< .
 
 
 # Build test input and expected files
@@ -163,10 +172,11 @@ bigcheck:
 ## Clean up
 ##
 
-clean distclean maintainer-clean:
+clean distclean maintainer-clean: clean-lib
 # things built by `all' target
+	rm -f $(NAME)$(DLSUFFIX) $(OBJS) pgsleep.c
 	$(MAKE) -C $(contribdir)/spi clean
-	rm -f $(output_files) $(input_files) $(DLOBJS) regress.o pg_regress
+	rm -f $(output_files) $(input_files) pg_regress
 # things created by various check targets
 	rm -rf testtablespace
 	rm -rf results tmp_check log
