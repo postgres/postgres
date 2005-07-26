@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.503 2005/07/26 16:38:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.504 2005/07/26 22:37:50 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -728,6 +728,7 @@ AlterRoleStmt:
 				 {
 					AlterRoleStmt *n = makeNode(AlterRoleStmt);
 					n->role = $3;
+					n->action = +1;	/* add, if there are members */
 					n->options = $5;
 					$$ = (Node *)n;
 				 }
@@ -764,6 +765,7 @@ AlterUserStmt:
 				 {
 					AlterRoleStmt *n = makeNode(AlterRoleStmt);
 					n->role = $3;
+					n->action = +1;	/* add, if there are members */
 					n->options = $5;
 					$$ = (Node *)n;
 				 }

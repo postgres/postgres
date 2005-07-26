@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.158 2005/07/26 16:38:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.159 2005/07/26 22:37:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -377,6 +377,10 @@ CreateRole(CreateRoleStmt *stmt)
 
 /*
  * ALTER ROLE
+ *
+ * Note: the rolemembers option accepted here is intended to support the
+ * backwards-compatible ALTER GROUP syntax.  Although it will work to say
+ * "ALTER ROLE role ROLE rolenames", we don't document it.
  */
 void
 AlterRole(AlterRoleStmt *stmt)
