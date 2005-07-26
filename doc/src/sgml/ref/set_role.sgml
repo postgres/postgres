@@ -1,4 +1,8 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_role.sgml,v 1.1 2005/07/25 22:12:31 tgl Exp $ -->
+<!--
+$PostgreSQL: pgsql/doc/src/sgml/ref/set_role.sgml,v 1.2 2005/07/26 23:24:02 tgl Exp $
+PostgreSQL documentation
+-->
+
 <refentry id="SQL-SET-ROLE">
  <refmeta>
   <refentrytitle id="sql-set-role-title">SET ROLE</refentrytitle>
@@ -29,9 +33,10 @@ RESET ROLE
    This command sets the current user
    identifier of the current SQL-session context to be <replaceable
    class="parameter">rolename</replaceable>.  The role name may be
-   written as either an identifier or a string literal.  Using this
-   command, it is possible to either add privileges or restrict one's
-   privileges.
+   written as either an identifier or a string literal.
+   After <command>SET ROLE</>, permissions checking for SQL commands
+   is carried out as though the named role were the one that had logged
+   in originally.
   </para>
 
   <para>
@@ -50,6 +55,39 @@ RESET ROLE
    The <literal>NONE</> and <literal>RESET</> forms reset the current
    user identifier to be the current session user identifier.
    These forms may be executed by any user.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   Using this command, it is possible to either add privileges or restrict
+   one's privileges.  If the session user role has the <literal>INHERITS</>
+   attribute, then it automatically has all the privileges of every role that
+   it could <command>SET ROLE</> to; in this case <command>SET ROLE</>
+   effectively drops all the privileges assigned directly to the session user
+   and to the other roles it is a member of, leaving only the privileges
+   available to the named role.  On the other hand, if the session user role
+   has the <literal>NOINHERITS</> attribute, <command>SET ROLE</> drops the
+   privileges assigned directly to the session user and instead acquires the
+   privileges available to the named role.
+  </para>
+
+  <para>
+   In particular, when a superuser chooses to <command>SET ROLE</> to a
+   non-superuser role, she loses her superuser privileges.
+  </para>
+
+  <para>
+   <command>SET ROLE</> has effects comparable to
+   <xref linkend="sql-set-session-authorization"
+   endterm="sql-set-session-authorization-title">, but the privilege
+   checks involved are quite different.  Also,
+   <command>SET SESSION AUTHORIZATION</> determines which roles are
+   allowable for later <command>SET ROLE</> commands, whereas changing
+   roles with <command>SET ROLE</> does not change the set of roles
+   allowed to a later <command>SET ROLE</>.
   </para>
  </refsect1>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.33 2005/05/26 20:05:03 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.34 2005/07/26 23:24:02 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -56,6 +56,11 @@ REVOKE [ GRANT OPTION FOR ]
     ON TABLESPACE <replaceable>tablespacename</replaceable> [, ...]
     FROM { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
     [ CASCADE | RESTRICT ]
+
+REVOKE [ ADMIN OPTION FOR ]
+    <replaceable class="PARAMETER">role</replaceable> [, ...]
+    FROM { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
+    [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -64,9 +69,9 @@ REVOKE [ GRANT OPTION FOR ]
 
   <para>
    The <command>REVOKE</command> command revokes previously granted
-   privileges from one or more users or groups of users.  The key word
+   privileges from one or more roles.  The key word
    <literal>PUBLIC</literal> refers to the implicitly defined group of
-   all users.
+   all roles.
   </para>
 
   <para>
@@ -75,13 +80,13 @@ REVOKE [ GRANT OPTION FOR ]
   </para>
 
   <para>
-   Note that any particular user will have the sum
-   of privileges granted directly to him, privileges granted to any group he
+   Note that any particular role will have the sum
+   of privileges granted directly to it, privileges granted to any role it
    is presently a member of, and privileges granted to
    <literal>PUBLIC</literal>.  Thus, for example, revoking <literal>SELECT</> privilege
-   from <literal>PUBLIC</literal> does not necessarily mean that all users
+   from <literal>PUBLIC</literal> does not necessarily mean that all roles
    have lost <literal>SELECT</> privilege on the object: those who have it granted
-   directly or via a group will still have it.
+   directly or via another role will still have it.
   </para>
 
   <para>
@@ -102,6 +107,11 @@ REVOKE [ GRANT OPTION FOR ]
    that is the subject of this <literal>REVOKE</literal> command.
    Thus, the affected users may effectively keep the privilege if it
    was also granted through other users.
+  </para>
+
+  <para>
+   When revoking membership in a role, <literal>GRANT OPTION</> is instead
+   called <literal>ADMIN OPTION</>, but the behavior is similar.
   </para>
  </refsect1>
 
@@ -172,6 +182,14 @@ REVOKE ALL PRIVILEGES ON kinds FROM manuel;
 
    Note that this actually means <quote>revoke all privileges that I
    granted</>.
+  </para>
+
+  <para>
+   Revoke membership in role <literal>admins</> from user <literal>joe</>:
+
+<programlisting>
+REVOKE admins FROM joe;
+</programlisting>
   </para>
  </refsect1>
 

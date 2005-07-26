@@ -1,5 +1,5 @@
 <!-- reference.sgml
-$PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.54 2005/07/25 22:12:30 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.55 2005/07/26 23:24:01 tgl Exp $
 
 PostgreSQL Reference Manual
 -->
@@ -48,6 +48,7 @@ PostgreSQL Reference Manual
    &alterLanguage;
    &alterOperator;
    &alterOperatorClass;
+   &alterRole;
    &alterSchema;
    &alterSequence;
    &alterTable;
@@ -76,6 +77,7 @@ PostgreSQL Reference Manual
    &createLanguage;
    &createOperator;
    &createOperatorClass;
+   &createRole;
    &createRule;
    &createSchema;
    &createSequence;
@@ -100,6 +102,7 @@ PostgreSQL Reference Manual
    &dropLanguage;
    &dropOperator;
    &dropOperatorClass;
+   &dropRole;
    &dropRule;
    &dropSchema;
    &dropSequence;

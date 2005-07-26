@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_user.sgml,v 1.36 2005/01/06 00:11:14 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_user.sgml,v 1.37 2005/07/26 23:24:02 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -11,7 +11,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>CREATE USER</refname>
-  <refpurpose>define a new database user account</refpurpose>
+  <refpurpose>define a new database role</refpurpose>
  </refnamediv>
 
  <indexterm zone="sql-createuser">
@@ -24,12 +24,20 @@ CREATE USER <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
 
 where <replaceable class="PARAMETER">option</replaceable> can be:
     
-      SYSID <replaceable class="PARAMETER">uid</replaceable> 
+      SUPERUSER | NOSUPERUSER
     | CREATEDB | NOCREATEDB
+    | CREATEROLE | NOCREATEROLE
     | CREATEUSER | NOCREATEUSER
-    | IN GROUP <replaceable class="PARAMETER">groupname</replaceable> [, ...]
+    | INHERIT | NOINHERIT
+    | LOGIN | NOLOGIN
     | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
-    | VALID UNTIL '<replaceable class="PARAMETER">abstime</replaceable>' 
+    | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>' 
+    | IN ROLE <replaceable class="PARAMETER">rolename</replaceable> [, ...]
+    | IN GROUP <replaceable class="PARAMETER">rolename</replaceable> [, ...]
+    | ROLE <replaceable class="PARAMETER">rolename</replaceable> [, ...]
+    | ADMIN <replaceable class="PARAMETER">rolename</replaceable> [, ...]
+    | USER <replaceable class="PARAMETER">rolename</replaceable> [, ...]
+    | SYSID <replaceable class="PARAMETER">uid</replaceable> 
 </synopsis>
  </refsynopsisdiv>
 
@@ -37,194 +45,14 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
   <title>Description</title>
 
   <para>
-   <command>CREATE USER</command> adds a new user to a
-   <productname>PostgreSQL</productname> database cluster.  Refer to
-   <xref linkend="user-manag"> and <xref
-   linkend="client-authentication"> for information about managing
-   users and authentication.  You must be a database superuser to use
-   this command.
-  </para>
- </refsect1>
-
- <refsect1>
-  <title>Parameters</title>
-
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="parameter">name</replaceable></term>
-      <listitem>
-       <para>
-        The name of the new user.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">uid</replaceable></term>
-      <listitem>
-       <para>
-        The <literal>SYSID</literal> clause can be used to choose the
-        <productname>PostgreSQL</productname> user ID of the new user.
-        This is normally not necessary, but may
-        be useful if you need to recreate the owner of an orphaned
-        object.
-       </para>
-       <para>
-        If this is not specified, the highest assigned user ID plus one
-        (with a minimum of 100) will be used as default.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><literal>CREATEDB</></term>
-      <term><literal>NOCREATEDB</></term>
-      <listitem>
-       <para>
-        These clauses define a user's ability to create databases.  If
-        <literal>CREATEDB</literal> is specified, the user being
-        defined will be allowed to create his own databases. Using
-        <literal>NOCREATEDB</literal> will deny a user the ability to
-        create databases. If not specified,
-        <literal>NOCREATEDB</literal> is the default.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><literal>CREATEUSER</literal></term>
-      <term><literal>NOCREATEUSER</literal></term>
-      <listitem>
-       <para>
-        These clauses determine whether a user will be permitted to
-        create new users himself. <literal>CREATEUSER</literal> will also make
-        the user a superuser, who can override all access restrictions.
-        If not specified,
-        <literal>NOCREATEUSER</literal> is the default.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">groupname</replaceable></term>
-      <listitem>
-       <para>
-        A name of an existing group into which to insert the user as a new
-        member. Multiple group names may be listed.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">password</replaceable></term>
-      <listitem>
-       <para>
-        Sets the user's password. If you do not plan to use password
-        authentication you can omit this option, but then the user
-        won't be able to connect if you decide to switch to password
-        authentication.  The password can be set or changed later,
-        using <xref linkend="SQL-ALTERUSER"
-        endterm="SQL-ALTERUSER-title">.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><literal>ENCRYPTED</></term>
-      <term><literal>UNENCRYPTED</></term>
-      <listitem>
-       <para>
-        These key words control whether the password is stored
-        encrypted in the system catalogs.  (If neither is specified,
-        the default behavior is determined by the configuration
-        parameter <xref linkend="guc-password-encryption">.)  If the
-        presented password string is already in MD5-encrypted format,
-        then it is stored encrypted as-is, regardless of whether
-        <literal>ENCRYPTED</> or <literal>UNENCRYPTED</> is specified
-        (since the system cannot decrypt the specified encrypted
-        password string).  This allows reloading of encrypted
-        passwords during dump/restore.
-       </para>
-
-       <para>
-        Note that older clients may lack support for the MD5
-        authentication mechanism that is needed to work with passwords
-        that are stored encrypted.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">abstime</replaceable></term>
-      <listitem>
-       <para>
-        The <literal>VALID UNTIL</literal> clause sets an absolute
-        time after which the user's password is no longer valid.  If
-        this clause is omitted the password will be valid for all time.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
- </refsect1> 
-
- <refsect1>
-  <title>Notes</title>
-
-  <para>
-   Use <xref linkend="SQL-ALTERUSER" endterm="SQL-ALTERUSER-title"> to
-   change the attributes of a user, and <xref linkend="SQL-DROPUSER"
-   endterm="SQL-DROPUSER-title"> to remove a user.  Use <xref
-   linkend="SQL-ALTERGROUP" endterm="SQL-ALTERGROUP-title"> to add the
-   user to groups or remove the user from groups.
-  </para>
-
-  <para>
-   <productname>PostgreSQL</productname> includes a program <xref
-   linkend="APP-CREATEUSER" endterm="APP-CREATEUSER-title"> that has
-   the same functionality as <command>CREATE USER</command> (in fact, it calls this
-   command) but can be run from the command shell.
-  </para>
-
-  <para>
-   The <literal>VALID UNTIL</> clause defines an expiration time for a
-   password only, not for the user account <foreignphrase>per se</>.  In
-   particular, the expiration time is not enforced when logging in using
-   a non-password-based authentication method.
-  </para>
- </refsect1>
-
- <refsect1>
-  <title>Examples</title>
-
-  <para>
-   Create a user with no password:
-<programlisting>
-CREATE USER jonathan;
-</programlisting>
-  </para>
-
-  <para>
-   Create a user with a password:
-<programlisting>
-CREATE USER davide WITH PASSWORD 'jw8s0F4';
-</programlisting>
-  </para>
-
-  <para>
-   Create a user with a password that is valid until the end of 2004.
-   After one second has ticked in 2005, the password is no longer
-   valid.
-
-<programlisting>
-CREATE USER miriam WITH PASSWORD 'jw8s0F4' VALID UNTIL '2005-01-01';
-</programlisting>
-  </para>
-
-  <para> 
-   Create an account where the user can create databases:
-<programlisting>
-CREATE USER manuel WITH PASSWORD 'jw8s0F4' CREATEDB;
-</programlisting>
+   <command>CREATE USER</command> is now an alias for
+   <xref linkend="sql-createrole" endterm="sql-createrole-title">,
+   which see for more information.
+   The only difference is that when the command is spelled
+   <command>CREATE USER</command>, <literal>LOGIN</> is assumed
+   by default, whereas <literal>NOLOGIN</> is assumed when
+   the command is spelled
+   <command>CREATE ROLE</command>.
   </para>
  </refsect1>
  
@@ -242,9 +70,7 @@ CREATE USER manuel WITH PASSWORD 'jw8s0F4' CREATEDB;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alteruser" endterm="sql-alteruser-title"></member>
-   <member><xref linkend="sql-dropuser" endterm="sql-dropuser-title"></member>
-   <member><xref linkend="app-createuser"></member>
+   <member><xref linkend="sql-createrole" endterm="sql-createrole-title"></member>
   </simplelist>
  </refsect1>
 </refentry>

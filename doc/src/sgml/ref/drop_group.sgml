@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_group.sgml,v 1.10 2005/01/09 05:57:45 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_group.sgml,v 1.11 2005/07/26 23:24:02 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -11,7 +11,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>DROP GROUP</refname>
-  <refpurpose>remove a user group</refpurpose>
+  <refpurpose>remove a database role</refpurpose>
  </refnamediv>
 
  <indexterm zone="sql-dropgroup">
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP GROUP <replaceable class="PARAMETER">name</replaceable>
+DROP GROUP <replaceable class="PARAMETER">name</replaceable> [, ...]
 </synopsis>
  </refsynopsisdiv>
 
@@ -28,48 +28,12 @@ DROP GROUP <replaceable class="PARAMETER">name</replaceable>
   <title>Description</title>
 
   <para>
-   <command>DROP GROUP</command> removes the specified group.  The
-   users in the group are not removed.
-  </para>
- </refsect1>
-  
- <refsect1>
-  <title>Parameters</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
-    <listitem>
-     <para>
-      The name of an existing group.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Notes</title>
-
-  <para>
-   It is unwise to drop a group that has any
-   granted permissions on objects.  Currently, this is not enforced,
-   but it is likely that future versions of
-   <productname>PostgreSQL</productname> will check for the error.
+   <command>DROP GROUP</command> is now an alias for
+   <xref linkend="sql-droprole" endterm="sql-droprole-title">,
+   which see for more information.
   </para>
  </refsect1>
 
- <refsect1>
-  <title>Examples</title>
-
-  <para>
-   To drop a group:
-<programlisting>
-DROP GROUP staff;
-</programlisting>
-  </para>
- </refsect1>
- 
  <refsect1>
   <title>Compatibility</title>
 
@@ -82,8 +46,7 @@ DROP GROUP staff;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altergroup" endterm="sql-altergroup-title"></member>
-   <member><xref linkend="sql-creategroup" endterm="sql-creategroup-title"></member>
+   <member><xref linkend="sql-droprole" endterm="sql-droprole-title"></member>
   </simplelist>
  </refsect1>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_group.sgml,v 1.15 2005/01/04 00:39:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_group.sgml,v 1.16 2005/07/26 23:24:02 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -11,7 +11,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>ALTER GROUP</refname>
-  <refpurpose>change a user group</refpurpose>
+  <refpurpose>change role name or membership</refpurpose>
  </refnamediv>
 
  <indexterm zone="sql-altergroup">
@@ -32,16 +32,25 @@ ALTER GROUP <replaceable class="PARAMETER">groupname</replaceable> RENAME TO <re
 
   <para>
    <command>ALTER GROUP</command> changes the attributes of a user group.
+   This is an obsolete command, though still accepted for backwards
+   compatibility, because groups (and users too) have been superseded by the
+   more general concept of roles.
   </para>
 
   <para>
    The first two variants add users to a group or remove them from a group.
-   Only database superusers can use this command.
+   (Any role can play the part of either a <quote>user</> or a
+   <quote>group</> for this purpose.)  These variants are effectively
+   equivalent to granting or revoking membership in the role named as the
+   <quote>group</>; so the preferred way to do this is to use
+   <xref linkend="SQL-GRANT" endterm="SQL-GRANT-title"> or
+   <xref linkend="SQL-REVOKE" endterm="SQL-REVOKE-title">.
   </para>
 
   <para>
-   The third variant changes the name of the group.  Only a database
-   superuser can rename groups.
+   The third variant changes the name of the group.  This is exactly
+   equivalent to renaming the role with 
+   <xref linkend="sql-alterrole" endterm="sql-alterrole-title">.
   </para>
  </refsect1>
 
@@ -53,7 +62,7 @@ ALTER GROUP <replaceable class="PARAMETER">groupname</replaceable> RENAME TO <re
     <term><replaceable class="PARAMETER">groupname</replaceable></term>
     <listitem>
      <para>
-      The name of the group to modify.
+      The name of the group (role) to modify.
      </para>
     </listitem>
    </varlistentry>
@@ -62,9 +71,9 @@ ALTER GROUP <replaceable class="PARAMETER">groupname</replaceable> RENAME TO <re
     <term><replaceable class="PARAMETER">username</replaceable></term>
     <listitem>
      <para>
-      Users that are to be added to or removed from the group. The users
-      must already exist; <command>ALTER GROUP</> does not create or
-      drop users.
+      Users (roles) that are to be added to or removed from the group.
+      The users must already exist; <command>ALTER GROUP</> does not
+      create or drop users.
      </para>
     </listitem>
    </varlistentry>
@@ -103,7 +112,7 @@ ALTER GROUP workers DROP USER beth;
     
   <para>
    There is no <command>ALTER GROUP</command> statement in the SQL
-   standard. The concept of roles is similar.
+   standard.
   </para>
  </refsect1>
 
@@ -111,8 +120,9 @@ ALTER GROUP workers DROP USER beth;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-creategroup" endterm="sql-creategroup-title"></member>
-   <member><xref linkend="sql-dropgroup" endterm="sql-dropgroup-title"></member>
+   <member><xref linkend="sql-grant" endterm="sql-grant-title"></member>
+   <member><xref linkend="sql-revoke" endterm="sql-revoke-title"></member>
+   <member><xref linkend="sql-alterrole" endterm="sql-alterrole-title"></member>
   </simplelist>
  </refsect1>
 

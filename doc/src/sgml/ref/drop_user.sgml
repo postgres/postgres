@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_user.sgml,v 1.20 2005/01/04 00:39:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_user.sgml,v 1.21 2005/07/26 23:24:02 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -11,7 +11,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>DROP USER</refname>
-  <refpurpose>remove a database user account</refpurpose>
+  <refpurpose>remove a database role</refpurpose>
  </refnamediv>
 
  <indexterm zone="sql-dropuser">
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP USER <replaceable class="PARAMETER">name</replaceable>
+DROP USER <replaceable class="PARAMETER">name</replaceable> [, ...]
 </synopsis>
  </refsynopsisdiv>
 
@@ -28,64 +28,15 @@ DROP USER <replaceable class="PARAMETER">name</replaceable>
   <title>Description</title>
 
   <para>
-   <command>DROP USER</command> removes the specified user.
-   It does not remove tables, views, or other objects owned by the user. If the
-   user owns any database, an error is raised.
+   <command>DROP USER</command> is now an alias for
+   <xref linkend="sql-droprole" endterm="sql-droprole-title">,
+   which see for more information.
   </para>
  </refsect1>
 
- <refsect1>
-  <title>Parameters</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
-    <listitem>
-     <para>
-      The name of the user to remove.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Notes</title>
-
-  <para>
-   <productname>PostgreSQL</productname> includes a program <xref
-   linkend="APP-DROPUSER" endterm="APP-DROPUSER-title"> that has the
-   same functionality as this command (in fact, it calls this command)
-   but can be run from the command shell.
-  </para>
-
-  <para>
-   To drop a user who owns a database, first drop the database or change
-   its ownership.
-  </para>
-
-  <para>
-   It is unwise to drop a user who either owns any database objects or has any
-   granted permissions on objects.  Currently, this is only enforced for
-   the case of owners of databases, but it is likely that future versions of
-   <productname>PostgreSQL</productname> will check other cases.
-  </para>
- </refsect1>
-
- <refsect1>
-  <title>Examples</title>
-
-  <para>
-   To drop a user account:
-<programlisting>
-DROP USER jonathan;
-</programlisting>
-  </para>
- </refsect1>
- 
  <refsect1>
   <title>Compatibility</title>
-  
+
   <para>
    The <command>DROP USER</command> statement is a
    <productname>PostgreSQL</productname> extension.  The SQL standard
@@ -97,8 +48,7 @@ DROP USER jonathan;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alteruser" endterm="sql-alteruser-title"></member>
-   <member><xref linkend="sql-createuser" endterm="sql-createuser-title"></member>
+   <member><xref linkend="sql-droprole" endterm="sql-droprole-title"></member>
   </simplelist>
  </refsect1>
 

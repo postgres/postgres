@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.64 2005/07/25 22:12:31 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.65 2005/07/26 23:24:02 tgl Exp $
 PostgreSQL documentation
 Complete list of usable sgml source files in this directory.
 -->
@@ -16,6 +16,7 @@ Complete list of usable sgml source files in this directory.
 <!entity alterLanguage      system "alter_language.sgml">
 <!entity alterOperator      system "alter_operator.sgml">
 <!entity alterOperatorClass system "alter_opclass.sgml">
+<!entity alterRole          system "alter_role.sgml">
 <!entity alterSchema        system "alter_schema.sgml">
 <!entity alterSequence      system "alter_sequence.sgml">
 <!entity alterTable         system "alter_table.sgml">
@@ -44,6 +45,7 @@ Complete list of usable sgml source files in this directory.
 <!entity createLanguage     system "create_language.sgml">
 <!entity createOperator     system "create_operator.sgml">
 <!entity createOperatorClass system "create_opclass.sgml">
+<!entity createRole         system "create_role.sgml">
 <!entity createRule         system "create_rule.sgml">
 <!entity createSchema       system "create_schema.sgml">
 <!entity createSequence     system "create_sequence.sgml">
@@ -68,6 +70,7 @@ Complete list of usable sgml source files in this directory.
 <!entity dropLanguage       system "drop_language.sgml">
 <!entity dropOperator       system "drop_operator.sgml">
 <!entity dropOperatorClass  system "drop_opclass.sgml">
+<!entity dropRole           system "drop_role.sgml">
 <!entity dropRule           system "drop_rule.sgml">
 <!entity dropSchema         system "drop_schema.sgml">
 <!entity dropSequence       system "drop_sequence.sgml">

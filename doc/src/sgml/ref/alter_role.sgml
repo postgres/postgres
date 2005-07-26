@@ -1,0 +1,272 @@
+<!--
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_role.sgml,v 1.1 2005/07/26 23:24:02 tgl Exp $
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-ALTERROLE">
+ <refmeta>
+  <refentrytitle id="sql-alterrole-title">ALTER ROLE</refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>ALTER ROLE</refname>
+  <refpurpose>change a database role</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-alterrole">
+  <primary>ALTER ROLE</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+ALTER ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replaceable class="PARAMETER">option</replaceable> [ ... ] ]
+
+where <replaceable class="PARAMETER">option</replaceable> can be:
+    
+      SUPERUSER | NOSUPERUSER
+    | CREATEDB | NOCREATEDB
+    | CREATEROLE | NOCREATEROLE
+    | CREATEUSER | NOCREATEUSER
+    | INHERIT | NOINHERIT
+    | LOGIN | NOLOGIN
+    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
+    | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>' 
+
+ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>newname</replaceable>
+
+ALTER ROLE <replaceable class="PARAMETER">name</replaceable> SET <replaceable>parameter</replaceable> { TO | = } { <replaceable>value</replaceable> | DEFAULT }
+ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>parameter</replaceable>
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>ALTER ROLE</command> changes the attributes of a
+   <productname>PostgreSQL</productname> role.
+  </para>
+
+  <para>
+   The first variant of this command listed in the synopsis can change
+   many of the role attributes that can be specified in 
+   <xref linkend="sql-createrole" endterm="sql-createrole-title">,
+   which see for details.  (All the possible attributes are covered,
+   except that there are no options for adding or removing memberships; use
+   <xref linkend="SQL-GRANT" endterm="SQL-GRANT-title"> and
+   <xref linkend="SQL-REVOKE" endterm="SQL-REVOKE-title"> for that.)
+   Attributes not mentioned in the command retain their previous settings.
+   Database superusers can change any of these settings for any role.
+   Roles having <literal>CREATEROLE</> privilege can change any of these
+   settings, but only for non-superuser roles.
+   Ordinary roles can only change their own password.
+  </para>
+
+  <para>
+   The second variant changes the name of the role.
+   Database superusers can rename any role.
+   Roles having <literal>CREATEROLE</> privilege can rename non-superuser
+   roles.
+   The current session user cannot be renamed.
+   (Connect as a different user if you need to do that.)
+   Because <literal>MD5</>-encrypted passwords use the role name as
+   cryptographic salt, renaming a role clears its password if the
+   password is <literal>MD5</>-encrypted.
+  </para>
+
+  <para>
+   The third and the fourth variant change a role's session default for
+   a specified configuration variable.  Whenever the role subsequently
+   starts a new session, the specified value becomes the session default,
+   overriding whatever setting is present in <filename>postgresql.conf</>
+   or has been received from the <command>postmaster</command> command line.
+   (For a role without <literal>LOGIN</> privilege, session defaults have
+   no effect.)
+   Ordinary roles can change their own session defaults.
+   Superusers can change anyone's session defaults.
+   Roles having <literal>CREATEROLE</> privilege can change defaults for
+   non-superuser roles.
+   Certain variables cannot be set this way, or can only be
+   set if a superuser issues the command.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="PARAMETER">name</replaceable></term>
+      <listitem>
+       <para>
+        The name of the role whose attributes are to be altered.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>SUPERUSER</literal></term>
+      <term><literal>NOSUPERUSER</literal></term>
+      <term><literal>CREATEDB</></term>
+      <term><literal>NOCREATEDB</></term>
+      <term><literal>CREATEROLE</literal></term>
+      <term><literal>NOCREATEROLE</literal></term>
+      <term><literal>CREATEUSER</literal></term>
+      <term><literal>NOCREATEUSER</literal></term>
+      <term><literal>INHERIT</literal></term>
+      <term><literal>NOINHERIT</literal></term>
+      <term><literal>LOGIN</literal></term>
+      <term><literal>NOLOGIN</literal></term>
+      <term><literal>PASSWORD</> <replaceable class="parameter">password</replaceable></term>
+      <term><literal>ENCRYPTED</></term>
+      <term><literal>UNENCRYPTED</></term>
+      <term><literal>VALID UNTIL</literal> '<replaceable class="parameter">timestamp</replaceable>'</term>
+      <listitem>
+       <para>
+        These clauses alter attributes originally set by
+        <xref linkend="SQL-CREATEROLE" endterm="SQL-CREATEROLE-title">,
+        which see for more information.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable>newname</replaceable></term>
+      <listitem>
+       <para>
+        The new name of the role.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable>parameter</replaceable></term>
+      <term><replaceable>value</replaceable></term>
+      <listitem>
+       <para>
+        Set this role's session default for the specified configuration
+        parameter to the given value.  If
+        <replaceable>value</replaceable> is <literal>DEFAULT</literal>
+        or, equivalently, <literal>RESET</literal> is used, the
+        role-specific variable setting is removed, so the role will
+        inherit the system-wide default setting in new sessions.  Use
+        <literal>RESET ALL</literal> to clear all role-specific settings.
+       </para>
+
+       <para>
+        See <xref linkend="sql-set" endterm="sql-set-title"> and <xref
+        linkend="runtime-config"> for more information about allowed
+        parameter names and values.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   Use <xref linkend="SQL-CREATEROLE" endterm="SQL-CREATEROLE-title">
+   to add new roles, and <xref linkend="SQL-DROPROLE"
+   endterm="SQL-DROPROLE-title"> to remove a role.
+  </para>
+
+  <para>
+   <command>ALTER ROLE</command> cannot change a role's memberships.
+   Use <xref linkend="SQL-GRANT" endterm="SQL-GRANT-title"> and
+   <xref linkend="SQL-REVOKE" endterm="SQL-REVOKE-title">
+   to do that.
+  </para>
+
+  <para>
+   It is also possible to tie a
+   session default to a specific database rather than to a role; see
+   <xref linkend="sql-alterdatabase" endterm="sql-alterdatabase-title">.
+   Role-specific settings override database-specific
+   ones if there is a conflict.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   Change a role's password:
+
+<programlisting>
+ALTER ROLE davide WITH PASSWORD 'hu8jmn3';
+</programlisting>
+  </para>
+
+  <para>
+   Change a password expiration date, specifying that the password
+   should expire at midday on 4th May 2015 using
+   the time zone which is one hour ahead of <acronym>UTC</>:
+<programlisting>
+ALTER ROLE chris VALID UNTIL 'May 4 12:00:00 2015 +1';
+</programlisting>
+  </para>
+
+  <para>
+   Make a password valid forever:
+<programlisting>
+ALTER ROLE fred VALID UNTIL 'infinity';
+</programlisting>
+  </para>
+
+  <para>
+   Give a role the ability to create other roles and new databases:
+
+<programlisting>
+ALTER ROLE miriam CREATEROLE CREATEDB;
+</programlisting>
+  </para>
+
+  <para>
+   Give a role a non-default setting of the
+   <xref linkend="guc-maintenance-work-mem"> parameter:
+
+<programlisting>
+ALTER ROLE worker_bee SET maintenance_work_mem = 100000;
+</programlisting>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+    
+  <para>
+   The <command>ALTER ROLE</command> statement is a
+   <productname>PostgreSQL</productname> extension.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createrole" endterm="sql-createrole-title"></member>
+   <member><xref linkend="sql-droprole" endterm="sql-droprole-title"></member>
+   <member><xref linkend="sql-set" endterm="sql-set-title"></member>
+  </simplelist>
+ </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"../reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->

@@ -1,0 +1,428 @@
+<!--
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_role.sgml,v 1.1 2005/07/26 23:24:02 tgl Exp $
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-CREATEROLE">
+ <refmeta>
+  <refentrytitle id="sql-createrole-title">CREATE ROLE</refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>CREATE ROLE</refname>
+  <refpurpose>define a new database role</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-createrole">
+  <primary>CREATE ROLE</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replaceable class="PARAMETER">option</replaceable> [ ... ] ]
+
+where <replaceable class="PARAMETER">option</replaceable> can be:
+    
+      SUPERUSER | NOSUPERUSER
+    | CREATEDB | NOCREATEDB
+    | CREATEROLE | NOCREATEROLE
+    | CREATEUSER | NOCREATEUSER
+    | INHERIT | NOINHERIT
+    | LOGIN | NOLOGIN
+    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
+    | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>' 
+    | IN ROLE <replaceable class="PARAMETER">rolename</replaceable> [, ...]
+    | IN GROUP <replaceable class="PARAMETER">rolename</replaceable> [, ...]
+    | ROLE <replaceable class="PARAMETER">rolename</replaceable> [, ...]
+    | ADMIN <replaceable class="PARAMETER">rolename</replaceable> [, ...]
+    | USER <replaceable class="PARAMETER">rolename</replaceable> [, ...]
+    | SYSID <replaceable class="PARAMETER">uid</replaceable> 
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>CREATE ROLE</command> adds a new role to a
+   <productname>PostgreSQL</productname> database cluster.  A role is
+   an entity that can own database objects and have database privileges;
+   a role can be considered a <quote>user</>, a <quote>group</>, or both
+   depending on how it is used.  Refer to
+   <xref linkend="user-manag"> and <xref
+   linkend="client-authentication"> for information about managing
+   users and authentication.  You must have <literal>CREATEROLE</>
+   privilege or be a database superuser to use this command.
+  </para>
+
+  <para>
+   Note that roles are defined at the database cluster
+   level, and so are valid in all databases in the cluster.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="parameter">name</replaceable></term>
+      <listitem>
+       <para>
+        The name of the new role.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>SUPERUSER</literal></term>
+      <term><literal>NOSUPERUSER</literal></term>
+      <listitem>
+       <para>
+        These clauses determine whether the new role is a <quote>superuser</>,
+        who can override all access restrictions within the database.
+        Superuser status is dangerous and should be used only when really
+        needed.  You must yourself be a superuser to create a new superuser.
+        If not specified,
+        <literal>NOSUPERUSER</literal> is the default.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>CREATEDB</></term>
+      <term><literal>NOCREATEDB</></term>
+      <listitem>
+       <para>
+        These clauses define a role's ability to create databases.  If
+        <literal>CREATEDB</literal> is specified, the role being
+        defined will be allowed to create new databases. Specifying
+        <literal>NOCREATEDB</literal> will deny a role the ability to
+        create databases. If not specified,
+        <literal>NOCREATEDB</literal> is the default.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>CREATEROLE</literal></term>
+      <term><literal>NOCREATEROLE</literal></term>
+      <listitem>
+       <para>
+        These clauses determine whether a role will be permitted to
+        create new roles (that is, execute <literal>CREATE ROLE</literal>).
+        A role with <literal>CREATEROLE</literal> privilege can also alter
+        and drop other roles.
+        If not specified,
+        <literal>NOCREATEROLE</literal> is the default.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>CREATEUSER</literal></term>
+      <term><literal>NOCREATEUSER</literal></term>
+      <listitem>
+       <para>
+        These clauses are an obsolete, but still accepted, spelling of
+        <literal>SUPERUSER</literal> and <literal>NOSUPERUSER</literal>.
+        Note that they are <emphasis>not</> equivalent to
+        <literal>CREATEROLE</literal> as one might naively expect!
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>INHERIT</literal></term>
+      <term><literal>NOINHERIT</literal></term>
+      <listitem>
+       <para>
+        These clauses determine whether a role <quote>inherits</> the
+        privileges of roles it is a member of.
+        A role with <literal>INHERIT</literal> privilege can automatically
+        use whatever database privileges have been granted to all roles
+        it is directly or indirectly a member of.
+        Without <literal>INHERIT</literal>, membership in another role
+        only grants the ability to <command>SET ROLE</> to that other role;
+        the privileges of the other role are only available after having
+        done so.
+        If not specified,
+        <literal>INHERIT</literal> is the default.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>LOGIN</literal></term>
+      <term><literal>NOLOGIN</literal></term>
+      <listitem>
+       <para>
+        These clauses determine whether a role is allowed to log in;
+        that is, whether the role can be given as the initial session
+        authorization name during client connection.  A role having
+        <literal>LOGIN</literal> privilege can be thought of as a user.
+        Roles without this attribute are useful for managing database
+        privileges, but are not users in the usual sense of the word.
+        If not specified,
+        <literal>NOLOGIN</literal> is the default, except when
+        <command>CREATE ROLE</> is invoked through its alternate spelling
+        <command>CREATE USER</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>PASSWORD</> <replaceable class="parameter">password</replaceable></term>
+      <listitem>
+       <para>
+        Sets the role's password.  (A password is only of use for
+        roles having <literal>LOGIN</literal> privilege, but you can
+        nonetheless define one for roles without it.)
+        If you do not plan to use password
+        authentication you can omit this option.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>ENCRYPTED</></term>
+      <term><literal>UNENCRYPTED</></term>
+      <listitem>
+       <para>
+        These key words control whether the password is stored
+        encrypted in the system catalogs.  (If neither is specified,
+        the default behavior is determined by the configuration
+        parameter <xref linkend="guc-password-encryption">.)  If the
+        presented password string is already in MD5-encrypted format,
+        then it is stored encrypted as-is, regardless of whether
+        <literal>ENCRYPTED</> or <literal>UNENCRYPTED</> is specified
+        (since the system cannot decrypt the specified encrypted
+        password string).  This allows reloading of encrypted
+        passwords during dump/restore.
+       </para>
+
+       <para>
+        Note that older clients may lack support for the MD5
+        authentication mechanism that is needed to work with passwords
+        that are stored encrypted.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>VALID UNTIL</literal> '<replaceable class="parameter">timestamp</replaceable>'</term>
+      <listitem>
+       <para>
+        The <literal>VALID UNTIL</literal> clause sets a date and
+        time after which the role's password is no longer valid.  If
+        this clause is omitted the password will be valid for all time.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>IN ROLE</> <replaceable class="parameter">rolename</replaceable></term>
+      <listitem>
+       <para>
+        The <literal>IN ROLE</literal> clause lists one or more existing
+        roles to which the new role will be immediately added as a new
+        member.  (Note that there is no option to add the new role as an
+        administrator; use a separate <command>GRANT</> command to do that.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>IN GROUP</> <replaceable class="parameter">rolename</replaceable></term>
+      <listitem>
+       <para>
+        <literal>IN GROUP</literal> is an obsolete spelling of
+        <literal>IN ROLE</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>ROLE</> <replaceable class="parameter">rolename</replaceable></term>
+      <listitem>
+       <para>
+        The <literal>ROLE</literal> clause lists one or more existing
+        roles which are automatically added as members of the new role.
+        (This in effect makes the new role a <quote>group</>.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>ADMIN</> <replaceable class="parameter">rolename</replaceable></term>
+      <listitem>
+       <para>
+        The <literal>ADMIN</literal> clause is like <literal>ROLE</literal>,
+        but the named roles are added to the new role <literal>WITH ADMIN
+        OPTION</>, giving them the right to grant membership in this role
+        to others.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>USER</> <replaceable class="parameter">rolename</replaceable></term>
+      <listitem>
+       <para>
+        The <literal>USER</literal> clause is an obsolete spelling of
+        the <literal>ROLE</> clause.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>SYSID</> <replaceable class="parameter">uid</replaceable></term>
+      <listitem>
+       <para>
+        The <literal>SYSID</literal> clause is ignored, but is accepted
+        for backwards compatibility.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+ </refsect1> 
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   Use <xref linkend="SQL-ALTERROLE" endterm="SQL-ALTERROLE-title"> to
+   change the attributes of a role, and <xref linkend="SQL-DROPROLE"
+   endterm="SQL-DROPROLE-title"> to remove a role.  All the attributes
+   specified by <command>CREATE ROLE</> can be modified by later
+   <command>ALTER ROLE</> commands.
+  </para>
+
+  <para>
+   The preferred way to add and remove members of roles that are being
+   used as groups is to use
+   <xref linkend="SQL-GRANT" endterm="SQL-GRANT-title"> and
+   <xref linkend="SQL-REVOKE" endterm="SQL-REVOKE-title">.
+  </para>
+
+  <para>
+   The <literal>VALID UNTIL</> clause defines an expiration time for a
+   password only, not for the role <foreignphrase>per se</>.  In
+   particular, the expiration time is not enforced when logging in using
+   a non-password-based authentication method.
+  </para>
+
+  <para>
+   <literal>INHERIT</> privilege is the default for reasons of backwards
+   compatibility: in prior releases of <productname>PostgreSQL</productname>,
+   users always had access to all privileges of groups they were members of.
+   However, <literal>NOINHERIT</> provides a closer match to the semantics
+   specified in the SQL standard.
+  </para>
+
+  <para>
+   <productname>PostgreSQL</productname> includes a program <xref
+   linkend="APP-CREATEUSER" endterm="APP-CREATEUSER-title"> that has
+   the same functionality as <command>CREATE ROLE</command> (in fact,
+   it calls this command) but can be run from the command shell.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   Create a role that can log in, but don't give it a password:
+<programlisting>
+CREATE ROLE jonathan LOGIN;
+</programlisting>
+  </para>
+
+  <para>
+   Create a role with a password:
+<programlisting>
+CREATE USER davide WITH PASSWORD 'jw8s0F4';
+</programlisting>
+   (<literal>CREATE USER</> is the same as <literal>CREATE ROLE</> except
+   that it implies <literal>LOGIN</>.)
+  </para>
+
+  <para>
+   Create a role with a password that is valid until the end of 2004.
+   After one second has ticked in 2005, the password is no longer
+   valid.
+
+<programlisting>
+CREATE ROLE miriam WITH LOGIN PASSWORD 'jw8s0F4' VALID UNTIL '2005-01-01';
+</programlisting>
+  </para>
+
+  <para> 
+   Create a role that can create databases and manage roles:
+<programlisting>
+CREATE ROLE admin WITH CREATEDB CREATEROLE;
+</programlisting>
+  </para>
+ </refsect1>
+ 
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   The <command>CREATE ROLE</command> statement is in the SQL standard,
+   but the standard only requires the syntax
+<synopsis>
+CREATE ROLE <replaceable class="PARAMETER">name</> [ WITH ADMIN <replaceable class="PARAMETER">rolename</> ]
+</synopsis>
+   Multiple initial administrators, and all the other options of
+   <command>CREATE ROLE</command>, are
+   <productname>PostgreSQL</productname> extensions.
+  </para>
+  
+  <para>
+   The SQL standard defines the concepts of users and roles, but it
+   regards them as distinct concepts and leaves all commands defining
+   users to be specified by each database implementation.  In
+   <productname>PostgreSQL</productname> we have chosen to unify
+   users and roles into a single kind of entity.  Roles therefore
+   have many more optional attributes than they do in the standard.
+  </para>
+
+  <para>
+   The behavior specified by the SQL standard is most closely approximated
+   by giving users the <literal>NOINHERIT</> attribute, while roles are
+   given the <literal>INHERIT</> attribute.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-set-role" endterm="sql-set-role-title"></member>
+   <member><xref linkend="sql-alterrole" endterm="sql-alterrole-title"></member>
+   <member><xref linkend="sql-droprole" endterm="sql-droprole-title"></member>
+   <member><xref linkend="sql-grant" endterm="sql-grant-title"></member>
+   <member><xref linkend="sql-revoke" endterm="sql-revoke-title"></member>
+   <member><xref linkend="app-createuser"></member>
+  </simplelist>
+ </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"../reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->

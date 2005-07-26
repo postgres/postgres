@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_group.sgml,v 1.15 2005/01/04 00:39:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_group.sgml,v 1.16 2005/07/26 23:24:02 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -11,7 +11,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>CREATE GROUP</refname>
-  <refpurpose>define a new user group</refpurpose>
+  <refpurpose>define a new database role</refpurpose>
  </refnamediv>
 
  <indexterm zone="sql-creategroup">
@@ -23,9 +23,21 @@ PostgreSQL documentation
 CREATE GROUP <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replaceable class="PARAMETER">option</replaceable> [ ... ] ]
 
 where <replaceable class="PARAMETER">option</replaceable> can be:
-
-     SYSID <replaceable class="PARAMETER">gid</replaceable>
-   | USER  <replaceable class="PARAMETER">username</replaceable> [, ...]
+    
+      SUPERUSER | NOSUPERUSER
+    | CREATEDB | NOCREATEDB
+    | CREATEROLE | NOCREATEROLE
+    | CREATEUSER | NOCREATEUSER
+    | INHERIT | NOINHERIT
+    | LOGIN | NOLOGIN
+    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
+    | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>' 
+    | IN ROLE <replaceable class="PARAMETER">rolename</replaceable> [, ...]
+    | IN GROUP <replaceable class="PARAMETER">rolename</replaceable> [, ...]
+    | ROLE <replaceable class="PARAMETER">rolename</replaceable> [, ...]
+    | ADMIN <replaceable class="PARAMETER">rolename</replaceable> [, ...]
+    | USER <replaceable class="PARAMETER">rolename</replaceable> [, ...]
+    | SYSID <replaceable class="PARAMETER">uid</replaceable> 
 </synopsis>
  </refsynopsisdiv>
 
@@ -33,89 +45,18 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
   <title>Description</title>
 
   <para>
-   <command>CREATE GROUP</command> will create a new group of users.
-   You must be a database superuser to use this command.
+   <command>CREATE GROUP</command> is now an alias for
+   <xref linkend="sql-createrole" endterm="sql-createrole-title">,
+   which see for more information.
   </para>
-
-  <para>
-   Note that both users and groups are defined at the database cluster
-   level, and so are valid in all databases in the cluster.
-  </para>
-
-  <para>
-   Use <xref linkend="SQL-ALTERGROUP" endterm="SQL-ALTERGROUP-title">
-   to change a group's membership, and <xref linkend="SQL-DROPGROUP"
-   endterm="SQL-DROPGROUP-title"> to remove a group.
-  </para>  
  </refsect1> 
-  
- <refsect1>
-  <title>Parameters</title>
-
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="parameter">name</replaceable></term>
-      <listitem>
-       <para>
-        The name of the group.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">gid</replaceable></term>
-      <listitem>
-       <para>
-        The <literal>SYSID</literal> clause can be used to choose
-        the <productname>PostgreSQL</productname> group ID of the new
-        group.
-        This is normally not necessary, but may
-        be useful if you need to recreate a group referenced in the
-        permissions of some object.
-       </para>
-       <para>
-        If this is not specified, the highest assigned group ID plus one
-        (with a minimum of 100) will be used as default.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">username</replaceable></term>
-      <listitem>
-       <para>
-        A list of users to include in the group. The users must already exist.
-       </para>
-      </listitem>
-     </varlistentry>
-
-    </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Examples</title>
-
-  <para>
-   Create an empty group:
-<programlisting>
-CREATE GROUP staff;
-</programlisting>
-  </para>
-
-  <para>
-   Create a group with members:
-<programlisting>
-CREATE GROUP marketing WITH USER jonathan, david;
-</programlisting>
-  </para>
- </refsect1>
  
  <refsect1>
   <title>Compatibility</title>
   
   <para>
    There is no <command>CREATE GROUP</command> statement in the SQL
-   standard.  Roles are similar in concept to groups.
+   standard.
   </para>
  </refsect1>
 
@@ -123,8 +64,7 @@ CREATE GROUP marketing WITH USER jonathan, david;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altergroup" endterm="sql-altergroup-title"></member>
-   <member><xref linkend="sql-dropgroup" endterm="sql-dropgroup-title"></member>
+   <member><xref linkend="sql-createrole" endterm="sql-createrole-title"></member>
   </simplelist>
  </refsect1>
 </refentry>
