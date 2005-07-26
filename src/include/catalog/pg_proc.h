@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.377 2005/07/20 16:42:31 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.378 2005/07/26 00:04:19 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3239,6 +3239,19 @@ DATA(insert OID = 2394 (  has_tablespace_privilege		   PGNSP PGUID 12 f f t f s 
 DESCR("current user privilege on tablespace by tablespace name");
 DATA(insert OID = 2395 (  has_tablespace_privilege		   PGNSP PGUID 12 f f t f s 2 16 "26 25" _null_ _null_ _null_ has_tablespace_privilege_id - _null_ ));
 DESCR("current user privilege on tablespace by tablespace oid");
+
+DATA(insert OID = 2705 (  pg_has_role		PGNSP PGUID 12 f f t f s 3 16 "19 19 25" _null_ _null_ _null_	pg_has_role_name_name - _null_ ));
+DESCR("user privilege on role by username, role name");
+DATA(insert OID = 2706 (  pg_has_role		PGNSP PGUID 12 f f t f s 3 16 "19 26 25" _null_ _null_ _null_	pg_has_role_name_id - _null_ ));
+DESCR("user privilege on role by username, role oid");
+DATA(insert OID = 2707 (  pg_has_role		PGNSP PGUID 12 f f t f s 3 16 "26 19 25" _null_ _null_ _null_	pg_has_role_id_name - _null_ ));
+DESCR("user privilege on role by user oid, role name");
+DATA(insert OID = 2708 (  pg_has_role		PGNSP PGUID 12 f f t f s 3 16 "26 26 25" _null_ _null_ _null_	pg_has_role_id_id - _null_ ));
+DESCR("user privilege on role by user oid, role oid");
+DATA(insert OID = 2709 (  pg_has_role		PGNSP PGUID 12 f f t f s 2 16 "19 25" _null_ _null_ _null_ pg_has_role_name - _null_ ));
+DESCR("current user privilege on role by role name");
+DATA(insert OID = 2710 (  pg_has_role		PGNSP PGUID 12 f f t f s 2 16 "26 25" _null_ _null_ _null_ pg_has_role_id - _null_ ));
+DESCR("current user privilege on role by role oid");
 
 DATA(insert OID = 2290 (  record_in			PGNSP PGUID 12 f f t f v 3 2249 "2275 26 23" _null_ _null_ _null_	record_in - _null_ ));
 DESCR("I/O");

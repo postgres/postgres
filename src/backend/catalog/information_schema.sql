@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2003-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.29 2005/06/28 05:08:52 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.30 2005/07/26 00:04:18 tgl Exp $
  */
 
 /*
@@ -209,14 +209,13 @@ CREATE DOMAIN time_stamp AS timestamp(2)
  */
 
 CREATE VIEW applicable_roles AS
-    SELECT CAST(current_user AS sql_identifier) AS grantee,
-           CAST(a.rolname AS sql_identifier) AS role_name,
-           CAST(CASE WHEN m.admin_option = 'true' THEN 'YES' ELSE 'NO' END AS character_data) AS is_grantable
-
-    FROM ((pg_auth_members m join pg_authid a ON (m.roleid = a.oid))
-    			     join pg_authid b ON (m.member = b.oid))
-
-    WHERE b.rolname = current_user;
+    SELECT CAST(a.rolname AS sql_identifier) AS grantee,
+           CAST(b.rolname AS sql_identifier) AS role_name,
+           CAST(CASE WHEN m.admin_option THEN 'YES' ELSE 'NO' END AS character_data) AS is_grantable
+    FROM pg_auth_members m
+         JOIN pg_authid a ON (m.member = a.oid)
+         JOIN pg_authid b ON (m.roleid = b.oid)
+    WHERE pg_has_role(a.oid, 'MEMBER');
 
 GRANT SELECT ON applicable_roles TO PUBLIC;
 
@@ -232,14 +231,11 @@ CREATE VIEW check_constraints AS
            CAST(con.conname AS sql_identifier) AS constraint_name,
            CAST(substring(pg_get_constraintdef(con.oid) from 7) AS character_data)
              AS check_clause
-    FROM pg_namespace rs,
-         pg_constraint con
+    FROM pg_constraint con
+           LEFT OUTER JOIN pg_namespace rs ON (rs.oid = con.connamespace)
            LEFT OUTER JOIN pg_class c ON (c.oid = con.conrelid)
-           LEFT OUTER JOIN pg_type t ON (t.oid = con.contypid),
-         pg_user u
-    WHERE rs.oid = con.connamespace
-          AND u.usesysid = coalesce(c.relowner, t.typowner)
-          AND u.usename = current_user
+           LEFT OUTER JOIN pg_type t ON (t.oid = con.contypid)
+    WHERE pg_has_role(coalesce(c.relowner, t.typowner), 'MEMBER')
           AND con.contype = 'c';
 
 GRANT SELECT ON check_constraints TO PUBLIC;
@@ -260,18 +256,17 @@ CREATE VIEW column_domain_usage AS
            CAST(a.attname AS sql_identifier) AS column_name
 
     FROM pg_type t, pg_namespace nt, pg_class c, pg_namespace nc,
-         pg_attribute a, pg_user u
+         pg_attribute a
 
     WHERE t.typnamespace = nt.oid
           AND c.relnamespace = nc.oid
           AND a.attrelid = c.oid
           AND a.atttypid = t.oid
-          AND t.typowner = u.usesysid
           AND t.typtype = 'd'
           AND c.relkind IN ('r', 'v')
           AND a.attnum > 0
           AND NOT a.attisdropped
-          AND u.usename = current_user;
+          AND pg_has_role(t.typowner, 'MEMBER');
 
 GRANT SELECT ON column_domain_usage TO PUBLIC;
 
@@ -283,7 +278,7 @@ GRANT SELECT ON column_domain_usage TO PUBLIC;
 
 CREATE VIEW column_privileges AS
     SELECT CAST(u_grantor.rolname AS sql_identifier) AS grantor,
-           CAST(grantee.name AS sql_identifier) AS grantee,
+           CAST(grantee.rolname AS sql_identifier) AS grantee,
            CAST(current_database() AS sql_identifier) AS table_catalog,
            CAST(nc.nspname AS sql_identifier) AS table_schema,
            CAST(c.relname AS sql_identifier) AS table_name,
@@ -301,8 +296,8 @@ CREATE VIEW column_privileges AS
          (
            SELECT oid, rolname FROM pg_authid
            UNION ALL
-           SELECT 0, 'PUBLIC'
-         ) AS grantee (oid, name),
+           SELECT 0::oid, 'PUBLIC'
+         ) AS grantee (oid, rolname),
          (SELECT 'SELECT' UNION ALL
           SELECT 'INSERT' UNION ALL
           SELECT 'UPDATE' UNION ALL
@@ -315,9 +310,9 @@ CREATE VIEW column_privileges AS
           AND c.relkind IN ('r', 'v')
           AND aclcontains(c.relacl,
                           makeaclitem(grantee.oid, u_grantor.oid, pr.type, false))
-          AND (u_grantor.rolname = current_user
-               OR grantee.name = current_user
-               OR grantee.name = 'PUBLIC');
+          AND (pg_has_role(u_grantor.oid, 'MEMBER')
+               OR pg_has_role(grantee.oid, 'MEMBER')
+               OR grantee.rolname = 'PUBLIC');
 
 GRANT SELECT ON column_privileges TO PUBLIC;
 
@@ -336,17 +331,16 @@ CREATE VIEW column_udt_usage AS
            CAST(c.relname AS sql_identifier) AS table_name,
            CAST(a.attname AS sql_identifier) AS column_name
 
-    FROM pg_attribute a, pg_class c, pg_namespace nc, pg_user u,
+    FROM pg_attribute a, pg_class c, pg_namespace nc,
          (pg_type t JOIN pg_namespace nt ON (t.typnamespace = nt.oid))
            LEFT JOIN (pg_type bt JOIN pg_namespace nbt ON (bt.typnamespace = nbt.oid))
            ON (t.typtype = 'd' AND t.typbasetype = bt.oid)
 
     WHERE a.attrelid = c.oid
           AND a.atttypid = t.oid
-          AND u.usesysid = coalesce(bt.typowner, t.typowner)
           AND nc.oid = c.relnamespace
           AND a.attnum > 0 AND NOT a.attisdropped AND c.relkind in ('r', 'v')
-          AND u.usename = current_user;
+          AND pg_has_role(coalesce(bt.typowner, t.typowner), 'MEMBER');
 
 GRANT SELECT ON column_udt_usage TO PUBLIC;
 
@@ -363,7 +357,7 @@ CREATE VIEW columns AS
            CAST(a.attname AS sql_identifier) AS column_name,
            CAST(a.attnum AS cardinal_number) AS ordinal_position,
            CAST(
-             CASE WHEN u.usename = current_user THEN ad.adsrc ELSE null END
+             CASE WHEN pg_has_role(c.relowner, 'MEMBER') THEN ad.adsrc ELSE null END
              AS character_data)
              AS column_default,
            CAST(CASE WHEN a.attnotnull OR (t.typtype = 'd' AND t.typnotnull) THEN 'NO' ELSE 'YES' END
@@ -444,19 +438,18 @@ CREATE VIEW columns AS
            CAST('NO' AS character_data) AS is_self_referencing
 
     FROM (pg_attribute a LEFT JOIN pg_attrdef ad ON attrelid = adrelid AND attnum = adnum),
-         pg_class c, pg_namespace nc, pg_user u,
+         pg_class c, pg_namespace nc,
          (pg_type t JOIN pg_namespace nt ON (t.typnamespace = nt.oid))
            LEFT JOIN (pg_type bt JOIN pg_namespace nbt ON (bt.typnamespace = nbt.oid))
            ON (t.typtype = 'd' AND t.typbasetype = bt.oid)
 
     WHERE a.attrelid = c.oid
           AND a.atttypid = t.oid
-          AND u.usesysid = c.relowner
           AND nc.oid = c.relnamespace
 
           AND a.attnum > 0 AND NOT a.attisdropped AND c.relkind in ('r', 'v')
 
-          AND (u.usename = current_user
+          AND (pg_has_role(c.relowner, 'MEMBER')
                OR has_table_privilege(c.oid, 'SELECT')
                OR has_table_privilege(c.oid, 'INSERT')
                OR has_table_privilege(c.oid, 'UPDATE')
@@ -510,10 +503,9 @@ CREATE VIEW constraint_column_usage AS
             AND c.contype IN ('p', 'u', 'f')
             AND r.relkind = 'r'
 
-      ) AS x (tblschema, tblname, tblowner, colname, cstrschema, cstrname),
-      pg_user u
+      ) AS x (tblschema, tblname, tblowner, colname, cstrschema, cstrname)
 
-    WHERE x.tblowner = u.usesysid AND u.usename = current_user;
+    WHERE pg_has_role(x.tblowner, 'MEMBER');
 
 GRANT SELECT ON constraint_column_usage TO PUBLIC;
 
@@ -532,14 +524,13 @@ CREATE VIEW constraint_table_usage AS
            CAST(c.conname AS sql_identifier) AS constraint_name
 
     FROM pg_constraint c, pg_namespace nc,
-         pg_class r, pg_namespace nr,
-         pg_user u
+         pg_class r, pg_namespace nr
 
     WHERE c.connamespace = nc.oid AND r.relnamespace = nr.oid
           AND ( (c.contype = 'f' AND c.confrelid = r.oid)
              OR (c.contype IN ('p', 'u') AND c.conrelid = r.oid) )
           AND r.relkind = 'r'
-          AND r.relowner = u.usesysid AND u.usename = current_user;
+          AND pg_has_role(r.relowner, 'MEMBER');
 
 GRANT SELECT ON constraint_table_usage TO PUBLIC;
 
@@ -563,12 +554,11 @@ CREATE VIEW domain_constraints AS
              AS character_data) AS is_deferrable,
            CAST(CASE WHEN condeferred THEN 'YES' ELSE 'NO' END
              AS character_data) AS initially_deferred
-    FROM pg_namespace rs, pg_namespace n, pg_constraint con, pg_type t, pg_user u
+    FROM pg_namespace rs, pg_namespace n, pg_constraint con, pg_type t
     WHERE rs.oid = con.connamespace
           AND n.oid = t.typnamespace
-          AND u.usesysid = t.typowner
-          AND u.usename = current_user
-          AND t.oid = con.contypid;
+          AND t.oid = con.contypid
+          AND pg_has_role(t.typowner, 'MEMBER');
 
 GRANT SELECT ON domain_constraints TO PUBLIC;
 
@@ -587,15 +577,13 @@ CREATE VIEW domain_udt_usage AS
            CAST(t.typname AS sql_identifier) AS domain_name
 
     FROM pg_type t, pg_namespace nt,
-         pg_type bt, pg_namespace nbt,
-         pg_user u
+         pg_type bt, pg_namespace nbt
 
     WHERE t.typnamespace = nt.oid
           AND t.typbasetype = bt.oid
           AND bt.typnamespace = nbt.oid
           AND t.typtype = 'd'
-          AND bt.typowner = u.usesysid
-          AND u.usename = current_user;
+          AND pg_has_role(bt.typowner, 'MEMBER');
 
 GRANT SELECT ON domain_udt_usage TO PUBLIC;
 
@@ -692,9 +680,8 @@ GRANT SELECT ON domains TO PUBLIC;
 
 CREATE VIEW enabled_roles AS
     SELECT CAST(a.rolname AS sql_identifier) AS role_name
-    FROM ((pg_auth_members m join pg_authid a ON (m.roleid = a.oid))
-    			     join pg_authid b ON (m.member = b.oid))
-    WHERE b.rolname = current_user;
+    FROM pg_authid a
+    WHERE pg_has_role(a.oid, 'MEMBER');
 
 GRANT SELECT ON enabled_roles TO PUBLIC;
 
@@ -719,14 +706,13 @@ CREATE VIEW key_column_usage AS
                  nr.nspname AS nr_nspname, r.relname,
                 _pg_expandarray(c.conkey) AS x
           FROM pg_namespace nr, pg_class r, pg_namespace nc,
-               pg_constraint c, pg_user u
+               pg_constraint c
           WHERE nr.oid = r.relnamespace
                 AND r.oid = c.conrelid
                 AND nc.oid = c.connamespace
                 AND c.contype IN ('p', 'u', 'f')
                 AND r.relkind = 'r'
-                AND r.relowner = u.usesysid
-                AND u.usename = current_user) AS ss
+                AND pg_has_role(r.relowner, 'MEMBER')) AS ss
     WHERE ss.oid = a.attrelid
           AND a.attnum = (ss.x).x
           AND NOT a.attisdropped;
@@ -785,10 +771,9 @@ CREATE VIEW parameters AS
          (SELECT n.nspname AS n_nspname, p.proname, p.oid AS p_oid,
                  p.proargnames, p.proargmodes,
                  _pg_expandarray(coalesce(p.proallargtypes, p.proargtypes::oid[])) AS x
-          FROM pg_namespace n, pg_proc p, pg_user u
+          FROM pg_namespace n, pg_proc p
           WHERE n.oid = p.pronamespace
-                AND p.proowner = u.usesysid
-                AND (u.usename = current_user OR
+                AND (pg_has_role(p.proowner, 'MEMBER') OR
                      has_function_privilege(p.oid, 'EXECUTE'))) AS ss
     WHERE t.oid = (ss.x).x AND t.typnamespace = nt.oid;
 
@@ -833,17 +818,19 @@ CREATE VIEW referential_constraints AS
                                   WHEN 'a' THEN 'NO ACTION' END
              AS character_data) AS delete_rule
 
-    FROM (pg_namespace ncon INNER JOIN pg_constraint con ON ncon.oid = con.connamespace
-         INNER JOIN pg_class c ON con.conrelid = c.oid
-         INNER JOIN pg_user u ON c.relowner = u.usesysid)
+    FROM (pg_namespace ncon
+          INNER JOIN pg_constraint con ON ncon.oid = con.connamespace
+          INNER JOIN pg_class c ON con.conrelid = c.oid)
          LEFT JOIN
-         (pg_constraint pkc INNER JOIN pg_namespace npkc ON pkc.connamespace = npkc.oid)
-         ON con.confrelid = pkc.conrelid AND _pg_keysequal(con.confkey, pkc.conkey)
+         (pg_constraint pkc
+          INNER JOIN pg_namespace npkc ON pkc.connamespace = npkc.oid)
+         ON con.confrelid = pkc.conrelid
+            AND _pg_keysequal(con.confkey, pkc.conkey)
 
     WHERE c.relkind = 'r'
           AND con.contype = 'f'
           AND (pkc.contype IN ('p', 'u') OR pkc.contype IS NULL)
-          AND u.usename = current_user;
+          AND pg_has_role(c.relowner, 'MEMBER');
 
 GRANT SELECT ON referential_constraints TO PUBLIC;
 
@@ -854,8 +841,8 @@ GRANT SELECT ON referential_constraints TO PUBLIC;
  */
 
 CREATE VIEW role_column_grants AS
-    SELECT CAST(u_grantor.usename AS sql_identifier) AS grantor,
-           CAST(g_grantee.groname AS sql_identifier) AS grantee,
+    SELECT CAST(u_grantor.rolname AS sql_identifier) AS grantor,
+           CAST(g_grantee.rolname AS sql_identifier) AS grantee,
            CAST(current_database() AS sql_identifier) AS table_catalog,
            CAST(nc.nspname AS sql_identifier) AS table_schema,
            CAST(c.relname AS sql_identifier) AS table_name,
@@ -863,14 +850,14 @@ CREATE VIEW role_column_grants AS
            CAST(pr.type AS character_data) AS privilege_type,
            CAST(
              CASE WHEN aclcontains(c.relacl,
-                                   makeaclitem(g_grantee.grosysid, u_grantor.usesysid, pr.type, true))
+                                   makeaclitem(g_grantee.oid, u_grantor.oid, pr.type, true))
                   THEN 'YES' ELSE 'NO' END AS character_data) AS is_grantable
 
     FROM pg_attribute a,
          pg_class c,
          pg_namespace nc,
-         pg_user u_grantor,
-         pg_group g_grantee,
+         pg_authid u_grantor,
+         pg_authid g_grantee,
          (SELECT 'SELECT' UNION ALL
           SELECT 'INSERT' UNION ALL
           SELECT 'UPDATE' UNION ALL
@@ -882,8 +869,8 @@ CREATE VIEW role_column_grants AS
           AND NOT a.attisdropped
           AND c.relkind IN ('r', 'v')
           AND aclcontains(c.relacl,
-                          makeaclitem(g_grantee.grosysid, u_grantor.usesysid, pr.type, false))
-          AND g_grantee.groname IN (SELECT role_name FROM enabled_roles);
+                          makeaclitem(g_grantee.oid, u_grantor.oid, pr.type, false))
+          AND g_grantee.rolname IN (SELECT role_name FROM enabled_roles);
 
 GRANT SELECT ON role_column_grants TO PUBLIC;
 
@@ -894,8 +881,8 @@ GRANT SELECT ON role_column_grants TO PUBLIC;
  */
 
 CREATE VIEW role_routine_grants AS
-    SELECT CAST(u_grantor.usename AS sql_identifier) AS grantor,
-           CAST(g_grantee.groname AS sql_identifier) AS grantee,
+    SELECT CAST(u_grantor.rolname AS sql_identifier) AS grantor,
+           CAST(g_grantee.rolname AS sql_identifier) AS grantee,
            CAST(current_database() AS sql_identifier) AS specific_catalog,
            CAST(n.nspname AS sql_identifier) AS specific_schema,
            CAST(p.proname || '_' || CAST(p.oid AS text) AS sql_identifier) AS specific_name,
@@ -905,18 +892,18 @@ CREATE VIEW role_routine_grants AS
            CAST('EXECUTE' AS character_data) AS privilege_type,
            CAST(
              CASE WHEN aclcontains(p.proacl,
-                                   makeaclitem(g_grantee.grosysid, u_grantor.usesysid, 'EXECUTE', true))
+                                   makeaclitem(g_grantee.oid, u_grantor.oid, 'EXECUTE', true))
                   THEN 'YES' ELSE 'NO' END AS character_data) AS is_grantable
 
     FROM pg_proc p,
          pg_namespace n,
-         pg_user u_grantor,
-         pg_group g_grantee
+         pg_authid u_grantor,
+         pg_authid g_grantee
 
     WHERE p.pronamespace = n.oid
           AND aclcontains(p.proacl,
-                          makeaclitem(g_grantee.grosysid, u_grantor.usesysid, 'EXECUTE', false))
-          AND g_grantee.groname IN (SELECT role_name FROM enabled_roles);
+                          makeaclitem(g_grantee.oid, u_grantor.oid, 'EXECUTE', false))
+          AND g_grantee.rolname IN (SELECT role_name FROM enabled_roles);
 
 GRANT SELECT ON role_routine_grants TO PUBLIC;
 
@@ -927,22 +914,22 @@ GRANT SELECT ON role_routine_grants TO PUBLIC;
  */
 
 CREATE VIEW role_table_grants AS
-    SELECT CAST(u_grantor.usename AS sql_identifier) AS grantor,
-           CAST(g_grantee.groname AS sql_identifier) AS grantee,
+    SELECT CAST(u_grantor.rolname AS sql_identifier) AS grantor,
+           CAST(g_grantee.rolname AS sql_identifier) AS grantee,
            CAST(current_database() AS sql_identifier) AS table_catalog,
            CAST(nc.nspname AS sql_identifier) AS table_schema,
            CAST(c.relname AS sql_identifier) AS table_name,
            CAST(pr.type AS character_data) AS privilege_type,
            CAST(
              CASE WHEN aclcontains(c.relacl,
-                                   makeaclitem(g_grantee.grosysid, u_grantor.usesysid, pr.type, true))
+                                   makeaclitem(g_grantee.oid, u_grantor.oid, pr.type, true))
                   THEN 'YES' ELSE 'NO' END AS character_data) AS is_grantable,
            CAST('NO' AS character_data) AS with_hierarchy
 
     FROM pg_class c,
          pg_namespace nc,
-         pg_user u_grantor,
-         pg_group g_grantee,
+         pg_authid u_grantor,
+         pg_authid g_grantee,
          (SELECT 'SELECT' UNION ALL
           SELECT 'DELETE' UNION ALL
           SELECT 'INSERT' UNION ALL
@@ -954,8 +941,8 @@ CREATE VIEW role_table_grants AS
     WHERE c.relnamespace = nc.oid
           AND c.relkind IN ('r', 'v')
           AND aclcontains(c.relacl,
-                          makeaclitem(g_grantee.grosysid, u_grantor.usesysid, pr.type, false))
-          AND g_grantee.groname IN (SELECT role_name FROM enabled_roles);
+                          makeaclitem(g_grantee.oid, u_grantor.oid, pr.type, false))
+          AND g_grantee.rolname IN (SELECT role_name FROM enabled_roles);
 
 GRANT SELECT ON role_table_grants TO PUBLIC;
 
@@ -989,7 +976,7 @@ GRANT SELECT ON role_usage_grants TO PUBLIC;
 
 CREATE VIEW routine_privileges AS
     SELECT CAST(u_grantor.rolname AS sql_identifier) AS grantor,
-           CAST(grantee.name AS sql_identifier) AS grantee,
+           CAST(grantee.rolname AS sql_identifier) AS grantee,
            CAST(current_database() AS sql_identifier) AS specific_catalog,
            CAST(n.nspname AS sql_identifier) AS specific_schema,
            CAST(p.proname || '_' || CAST(p.oid AS text) AS sql_identifier) AS specific_name,
@@ -1008,15 +995,15 @@ CREATE VIEW routine_privileges AS
          (
            SELECT oid, rolname FROM pg_authid
            UNION ALL
-           SELECT 0, 'PUBLIC'
-         ) AS grantee (oid, name)
+           SELECT 0::oid, 'PUBLIC'
+         ) AS grantee (oid, rolname)
 
     WHERE p.pronamespace = n.oid
           AND aclcontains(p.proacl,
                           makeaclitem(grantee.oid, u_grantor.oid, 'EXECUTE', false))
-          AND (u_grantor.rolname = current_user
-               OR grantee.name = current_user
-               OR grantee.name = 'PUBLIC');
+          AND (pg_has_role(u_grantor.oid, 'MEMBER')
+               OR pg_has_role(grantee.oid, 'MEMBER')
+               OR grantee.rolname = 'PUBLIC');
 
 GRANT SELECT ON routine_privileges TO PUBLIC;
 
@@ -1072,7 +1059,7 @@ CREATE VIEW routines AS
            CAST(CASE WHEN l.lanname = 'sql' THEN 'SQL' ELSE 'EXTERNAL' END AS character_data)
              AS routine_body,
            CAST(
-             CASE WHEN u.usename = current_user THEN p.prosrc ELSE null END
+             CASE WHEN pg_has_role(p.proowner, 'MEMBER') THEN p.prosrc ELSE null END
              AS character_data) AS routine_definition,
            CAST(
              CASE WHEN l.lanname = 'c' THEN p.prosrc ELSE null END
@@ -1094,12 +1081,13 @@ CREATE VIEW routines AS
            CAST(null AS sql_identifier) AS to_sql_specific_name,
            CAST('NO' AS character_data) AS as_locator
 
-    FROM pg_namespace n, pg_proc p, pg_language l, pg_user u,
+    FROM pg_namespace n, pg_proc p, pg_language l,
          pg_type t, pg_namespace nt
 
-    WHERE n.oid = p.pronamespace AND p.prolang = l.oid AND p.proowner = u.usesysid
+    WHERE n.oid = p.pronamespace AND p.prolang = l.oid
           AND p.prorettype = t.oid AND t.typnamespace = nt.oid
-          AND (u.usename = current_user OR has_function_privilege(p.oid, 'EXECUTE'));
+          AND (pg_has_role(p.proowner, 'MEMBER')
+               OR has_function_privilege(p.oid, 'EXECUTE'));
 
 GRANT SELECT ON routines TO PUBLIC;
 
@@ -1112,13 +1100,13 @@ GRANT SELECT ON routines TO PUBLIC;
 CREATE VIEW schemata AS
     SELECT CAST(current_database() AS sql_identifier) AS catalog_name,
            CAST(n.nspname AS sql_identifier) AS schema_name,
-           CAST(u.usename AS sql_identifier) AS schema_owner,
+           CAST(u.rolname AS sql_identifier) AS schema_owner,
            CAST(null AS sql_identifier) AS default_character_set_catalog,
            CAST(null AS sql_identifier) AS default_character_set_schema,
            CAST(null AS sql_identifier) AS default_character_set_name,
            CAST(null AS character_data) AS sql_path
-    FROM pg_namespace n, pg_user u
-    WHERE n.nspowner = u.usesysid AND u.usename = current_user;
+    FROM pg_namespace n, pg_authid u
+    WHERE n.nspowner = u.oid AND pg_has_role(n.nspowner, 'MEMBER');
 
 GRANT SELECT ON schemata TO PUBLIC;
 
@@ -1315,15 +1303,14 @@ CREATE VIEW table_constraints AS
     FROM pg_namespace nc,
          pg_namespace nr,
          pg_constraint c,
-         pg_class r,
-         pg_user u
+         pg_class r
 
     WHERE nc.oid = c.connamespace AND nr.oid = r.relnamespace
-          AND c.conrelid = r.oid AND r.relowner = u.usesysid
+          AND c.conrelid = r.oid
           AND r.relkind = 'r'
-          AND u.usename = current_user;
+          AND pg_has_role(r.relowner, 'MEMBER');
 
--- FIMXE: Not-null constraints are missing here.
+-- FIXME: Not-null constraints are missing here.
 
 GRANT SELECT ON table_constraints TO PUBLIC;
 
@@ -1335,7 +1322,7 @@ GRANT SELECT ON table_constraints TO PUBLIC;
 
 CREATE VIEW table_privileges AS
     SELECT CAST(u_grantor.rolname AS sql_identifier) AS grantor,
-           CAST(grantee.name AS sql_identifier) AS grantee,
+           CAST(grantee.rolname AS sql_identifier) AS grantee,
            CAST(current_database() AS sql_identifier) AS table_catalog,
            CAST(nc.nspname AS sql_identifier) AS table_schema,
            CAST(c.relname AS sql_identifier) AS table_name,
@@ -1352,8 +1339,8 @@ CREATE VIEW table_privileges AS
          (
            SELECT oid, rolname FROM pg_authid
            UNION ALL
-           SELECT 0, 'PUBLIC'
-         ) AS grantee (oid, name),
+           SELECT 0::oid, 'PUBLIC'
+         ) AS grantee (oid, rolname),
          (SELECT 'SELECT' UNION ALL
           SELECT 'DELETE' UNION ALL
           SELECT 'INSERT' UNION ALL
@@ -1366,9 +1353,9 @@ CREATE VIEW table_privileges AS
           AND c.relkind IN ('r', 'v')
           AND aclcontains(c.relacl,
                           makeaclitem(grantee.oid, u_grantor.oid, pr.type, false))
-          AND (u_grantor.rolname = current_user
-               OR grantee.name = current_user
-               OR grantee.name = 'PUBLIC');
+          AND (pg_has_role(u_grantor.oid, 'MEMBER')
+               OR pg_has_role(grantee.oid, 'MEMBER')
+               OR grantee.rolname = 'PUBLIC');
 
 GRANT SELECT ON table_privileges TO PUBLIC;
 
@@ -1397,11 +1384,11 @@ CREATE VIEW tables AS
            CAST(null AS sql_identifier) AS user_defined_type_schema,
            CAST(null AS sql_identifier) AS user_defined_name
 
-    FROM pg_namespace nc, pg_class c, pg_user u
+    FROM pg_namespace nc, pg_class c
 
-    WHERE c.relnamespace = nc.oid AND u.usesysid = c.relowner
+    WHERE c.relnamespace = nc.oid
           AND c.relkind IN ('r', 'v')
-          AND (u.usename = current_user
+          AND (pg_has_role(c.relowner, 'MEMBER')
                OR has_table_privilege(c.oid, 'SELECT')
                OR has_table_privilege(c.oid, 'INSERT')
                OR has_table_privilege(c.oid, 'UPDATE')
@@ -1462,17 +1449,16 @@ CREATE VIEW triggers AS
            CAST(null AS sql_identifier) AS condition_reference_old_table,
            CAST(null AS sql_identifier) AS condition_reference_new_table
 
-    FROM pg_namespace n, pg_class c, pg_trigger t, pg_user u,
+    FROM pg_namespace n, pg_class c, pg_trigger t,
          (SELECT 4, 'INSERT' UNION ALL
           SELECT 8, 'DELETE' UNION ALL
           SELECT 16, 'UPDATE') AS em (num, text)
 
     WHERE n.oid = c.relnamespace
           AND c.oid = t.tgrelid
-          AND c.relowner = u.usesysid
           AND t.tgtype & em.num <> 0
           AND NOT t.tgisconstraint
-          AND u.usename = current_user;
+          AND pg_has_role(c.relowner, 'MEMBER');
 
 GRANT SELECT ON triggers TO PUBLIC;
 
@@ -1487,7 +1473,7 @@ GRANT SELECT ON triggers TO PUBLIC;
 -- represent all domains with implicit usage privilege here.
 
 CREATE VIEW usage_privileges AS
-    SELECT CAST(u.usename AS sql_identifier) AS grantor,
+    SELECT CAST(u.rolname AS sql_identifier) AS grantor,
            CAST('PUBLIC' AS sql_identifier) AS grantee,
            CAST(current_database() AS sql_identifier) AS object_catalog,
            CAST(n.nspname AS sql_identifier) AS object_schema,
@@ -1496,11 +1482,11 @@ CREATE VIEW usage_privileges AS
            CAST('USAGE' AS character_data) AS privilege_type,
            CAST('NO' AS character_data) AS is_grantable
 
-    FROM pg_user u,
+    FROM pg_authid u,
          pg_namespace n,
          pg_type t
 
-    WHERE u.usesysid = t.typowner
+    WHERE u.oid = t.typowner
           AND t.typnamespace = n.oid
           AND t.typtype = 'd';
 
@@ -1522,9 +1508,9 @@ CREATE VIEW view_column_usage AS
            CAST(t.relname AS sql_identifier) AS table_name,
            CAST(a.attname AS sql_identifier) AS column_name
 
-    FROM pg_user, pg_namespace nv, pg_class v, pg_depend dv,
+    FROM pg_namespace nv, pg_class v, pg_depend dv,
          pg_depend dt, pg_class t, pg_namespace nt,
-         pg_attribute a, pg_user u
+         pg_attribute a
 
     WHERE nv.oid = v.relnamespace
           AND v.relkind = 'v'
@@ -1541,7 +1527,7 @@ CREATE VIEW view_column_usage AS
           AND t.relkind IN ('r', 'v')
           AND t.oid = a.attrelid
           AND dt.refobjsubid = a.attnum
-          AND t.relowner = u.usesysid AND u.usename = current_user;
+          AND pg_has_role(t.relowner, 'MEMBER');
 
 GRANT SELECT ON view_column_usage TO PUBLIC;
 
@@ -1560,9 +1546,8 @@ CREATE VIEW view_table_usage AS
            CAST(nt.nspname AS sql_identifier) AS table_schema,
            CAST(t.relname AS sql_identifier) AS table_name
 
-    FROM pg_user, pg_namespace nv, pg_class v, pg_depend dv,
-         pg_depend dt, pg_class t, pg_namespace nt,
-         pg_user u
+    FROM pg_namespace nv, pg_class v, pg_depend dv,
+         pg_depend dt, pg_class t, pg_namespace nt
 
     WHERE nv.oid = v.relnamespace
           AND v.relkind = 'v'
@@ -1577,7 +1562,7 @@ CREATE VIEW view_table_usage AS
           AND dt.refobjid = t.oid
           AND t.relnamespace = nt.oid
           AND t.relkind IN ('r', 'v')
-          AND t.relowner = u.usesysid AND u.usename = current_user;
+          AND pg_has_role(t.relowner, 'MEMBER');
 
 GRANT SELECT ON view_table_usage TO PUBLIC;
 
@@ -1593,7 +1578,8 @@ CREATE VIEW views AS
            CAST(c.relname AS sql_identifier) AS table_name,
 
            CAST(
-             CASE WHEN u.usename = current_user THEN pg_get_viewdef(c.oid)
+             CASE WHEN pg_has_role(c.relowner, 'MEMBER')
+                  THEN pg_get_viewdef(c.oid)
                   ELSE null END
              AS character_data) AS view_definition,
 
@@ -1601,11 +1587,11 @@ CREATE VIEW views AS
            CAST(null AS character_data) AS is_updatable, -- FIXME
            CAST(null AS character_data) AS is_insertable_into  -- FIXME
 
-    FROM pg_namespace nc, pg_class c, pg_user u
+    FROM pg_namespace nc, pg_class c
 
-    WHERE c.relnamespace = nc.oid AND u.usesysid = c.relowner
+    WHERE c.relnamespace = nc.oid
           AND c.relkind = 'v'
-          AND (u.usename = current_user
+          AND (pg_has_role(c.relowner, 'MEMBER')
                OR has_table_privilege(c.oid, 'SELECT')
                OR has_table_privilege(c.oid, 'INSERT')
                OR has_table_privilege(c.oid, 'UPDATE')

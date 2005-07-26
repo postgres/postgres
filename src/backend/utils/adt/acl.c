@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.120 2005/07/21 04:41:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.121 2005/07/26 00:04:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,6 +75,8 @@ static Oid	convert_schema_name(text *schemaname);
 static AclMode convert_schema_priv_string(text *priv_type_text);
 static Oid	convert_tablespace_name(text *tablespacename);
 static AclMode convert_tablespace_priv_string(text *priv_type_text);
+static AclMode convert_role_priv_string(text *priv_type_text);
+static AclResult pg_role_aclcheck(Oid role_oid, Oid roleid, AclMode mode);
 
 static void RoleMembershipCacheCallback(Datum arg, Oid relid);
 
@@ -2494,6 +2496,216 @@ convert_tablespace_priv_string(text *priv_type_text)
 }
 
 /*
+ * pg_has_role variants
+ *		These are all named "pg_has_role" at the SQL level.
+ *		They take various combinations of role name, role OID,
+ *		user name, user OID, or implicit user = current_user.
+ *
+ *		The result is a boolean value: true if user has the indicated
+ *		privilege, false if not.
+ */
+
+/*
+ * pg_has_role_name_name
+ *		Check user privileges on a role given
+ *		name username, name rolename, and text priv name.
+ */
+Datum
+pg_has_role_name_name(PG_FUNCTION_ARGS)
+{
+	Name		username = PG_GETARG_NAME(0);
+	Name		rolename = PG_GETARG_NAME(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	Oid			roleid;
+	Oid			roleoid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	roleid = get_roleid_checked(NameStr(*username));
+	roleoid = get_roleid_checked(NameStr(*rolename));
+	mode = convert_role_priv_string(priv_type_text);
+
+	aclresult = pg_role_aclcheck(roleoid, roleid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * pg_has_role_name
+ *		Check user privileges on a role given
+ *		name rolename and text priv name.
+ *		current_user is assumed
+ */
+Datum
+pg_has_role_name(PG_FUNCTION_ARGS)
+{
+	Name		rolename = PG_GETARG_NAME(0);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
+	Oid			roleid;
+	Oid			roleoid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	roleid = GetUserId();
+	roleoid = get_roleid_checked(NameStr(*rolename));
+	mode = convert_role_priv_string(priv_type_text);
+
+	aclresult = pg_role_aclcheck(roleoid, roleid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * pg_has_role_name_id
+ *		Check user privileges on a role given
+ *		name usename, role oid, and text priv name.
+ */
+Datum
+pg_has_role_name_id(PG_FUNCTION_ARGS)
+{
+	Name		username = PG_GETARG_NAME(0);
+	Oid			roleoid = PG_GETARG_OID(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	Oid			roleid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	roleid = get_roleid_checked(NameStr(*username));
+	mode = convert_role_priv_string(priv_type_text);
+
+	aclresult = pg_role_aclcheck(roleoid, roleid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * pg_has_role_id
+ *		Check user privileges on a role given
+ *		role oid, and text priv name.
+ *		current_user is assumed
+ */
+Datum
+pg_has_role_id(PG_FUNCTION_ARGS)
+{
+	Oid			roleoid = PG_GETARG_OID(0);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
+	Oid				roleid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	roleid = GetUserId();
+	mode = convert_role_priv_string(priv_type_text);
+
+	aclresult = pg_role_aclcheck(roleoid, roleid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * pg_has_role_id_name
+ *		Check user privileges on a role given
+ *		roleid, name rolename, and text priv name.
+ */
+Datum
+pg_has_role_id_name(PG_FUNCTION_ARGS)
+{
+	Oid			roleid = PG_GETARG_OID(0);
+	Name		rolename = PG_GETARG_NAME(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	Oid			roleoid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	roleoid = get_roleid_checked(NameStr(*rolename));
+	mode = convert_role_priv_string(priv_type_text);
+
+	aclresult = pg_role_aclcheck(roleoid, roleid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * pg_has_role_id_id
+ *		Check user privileges on a role given
+ *		roleid, role oid, and text priv name.
+ */
+Datum
+pg_has_role_id_id(PG_FUNCTION_ARGS)
+{
+	Oid			roleid = PG_GETARG_OID(0);
+	Oid			roleoid = PG_GETARG_OID(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	AclMode		mode;
+	AclResult	aclresult;
+
+	mode = convert_role_priv_string(priv_type_text);
+
+	aclresult = pg_role_aclcheck(roleoid, roleid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ *		Support routines for pg_has_role family.
+ */
+
+/*
+ * convert_role_priv_string
+ *		Convert text string to AclMode value.
+ *
+ * There is only one interesting option, MEMBER, which we represent by
+ * ACL_USAGE since no formal ACL bit is defined for it.  This convention
+ * is shared only with pg_role_aclcheck, below.
+ */
+static AclMode
+convert_role_priv_string(text *priv_type_text)
+{
+	char	   *priv_type;
+
+	priv_type = DatumGetCString(DirectFunctionCall1(textout,
+									   PointerGetDatum(priv_type_text)));
+
+	/*
+	 * Return mode from priv_type string
+	 */
+	if (pg_strcasecmp(priv_type, "MEMBER") == 0)
+		return ACL_USAGE;
+	if (pg_strcasecmp(priv_type, "MEMBER WITH GRANT OPTION") == 0)
+		return ACL_GRANT_OPTION_FOR(ACL_USAGE);
+	if (pg_strcasecmp(priv_type, "MEMBER WITH ADMIN OPTION") == 0)
+		return ACL_GRANT_OPTION_FOR(ACL_USAGE);
+
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("unrecognized privilege type: \"%s\"", priv_type)));
+	return ACL_NO_RIGHTS;		/* keep compiler quiet */
+}
+
+/*
+ * pg_role_aclcheck
+ *		Quick-and-dirty support for pg_has_role
+ */
+static AclResult
+pg_role_aclcheck(Oid role_oid, Oid roleid, AclMode mode)
+{
+	if (mode & ACL_GRANT_OPTION_FOR(ACL_USAGE))
+	{
+		if (is_admin_of_role(roleid, role_oid))
+			return ACLCHECK_OK;
+		else
+			return ACLCHECK_NO_PRIV;
+	}
+	else
+	{
+		if (is_member_of_role(roleid, role_oid))
+			return ACLCHECK_OK;
+		else
+			return ACLCHECK_NO_PRIV;
+	}
+}
+
+
+/*
  * initialization function (called by InitPostgres)
  */
 void
@@ -2636,6 +2848,14 @@ is_admin_of_role(Oid member, Oid role)
 	bool		result = false;
 	List		*roles_list;
 	ListCell	*l;
+
+	/* Fast path for simple case */
+	if (member == role)
+		return true;
+
+	/* Superusers have every privilege, so are part of every role */
+	if (superuser_arg(member))
+		return true;
 
 	/* 
 	 * Find all the roles that member is a member of,
