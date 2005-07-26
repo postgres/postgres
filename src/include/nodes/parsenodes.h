@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.285 2005/06/28 19:51:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.286 2005/07/26 16:38:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1139,11 +1139,24 @@ typedef struct DropPLangStmt
 
 /* ----------------------
  *	Create/Alter/Drop Role Statements
+ *
+ * Note: these node types are also used for the backwards-compatible
+ * Create/Alter/Drop User/Group statements.  In the ALTER and DROP cases
+ * there's really no need to distinguish what the original spelling was,
+ * but for CREATE we mark the type because the defaults vary.
  * ----------------------
  */
+typedef enum RoleStmtType
+{
+	ROLESTMT_ROLE,
+	ROLESTMT_USER,
+	ROLESTMT_GROUP
+} RoleStmtType;
+
 typedef struct CreateRoleStmt
 {
 	NodeTag		type;
+	RoleStmtType stmt_type;		/* ROLE/USER/GROUP */
 	char	   *role;			/* role name */
 	List	   *options;		/* List of DefElem nodes */
 } CreateRoleStmt;

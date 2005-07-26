@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.248 2005/07/02 23:00:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.249 2005/07/26 16:38:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1308,6 +1308,7 @@ _equalDropPLangStmt(DropPLangStmt *a, DropPLangStmt *b)
 static bool
 _equalCreateRoleStmt(CreateRoleStmt *a, CreateRoleStmt *b)
 {
+	COMPARE_SCALAR_FIELD(stmt_type);
 	COMPARE_STRING_FIELD(role);
 	COMPARE_NODE_FIELD(options);
 

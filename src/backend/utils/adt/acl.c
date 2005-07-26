@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.121 2005/07/26 00:04:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.122 2005/07/26 16:38:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,15 +39,29 @@
  * all the roles the "given role" is a member of, directly or indirectly.
  * The cache is flushed whenever we detect a change in pg_auth_members.
  *
- * Possibly this mechanism should be generalized to allow caching membership
- * info for more than one role?
+ * There are actually two caches, one computed under "has_privs" rules
+ * (do not recurse where rolinherit isn't true) and one computed under
+ * "is_member" rules (recurse regardless of rolinherit).
  *
- * cached_role is the role OID the cache is for.
- * cached_memberships is an OID list of roles that cached_role is a member of.
- * The cache is valid if cached_role is not InvalidOid.
+ * Possibly this mechanism should be generalized to allow caching membership
+ * info for multiple roles?
+ *
+ * The has_privs cache is:
+ * cached_privs_role is the role OID the cache is for.
+ * cached_privs_roles is an OID list of roles that cached_privs_role
+ *		has the privileges of (always including itself).
+ * The cache is valid if cached_privs_role is not InvalidOid.
+ *
+ * The is_member cache is similarly:
+ * cached_member_role is the role OID the cache is for.
+ * cached_membership_roles is an OID list of roles that cached_member_role
+ *		is a member of (always including itself).
+ * The cache is valid if cached_member_role is not InvalidOid.
  */
-static Oid	cached_role = InvalidOid;
-static List	*cached_memberships = NIL;
+static Oid	cached_privs_role = InvalidOid;
+static List	*cached_privs_roles = NIL;
+static Oid	cached_member_role = InvalidOid;
+static List	*cached_membership_roles = NIL;
 
 
 static const char *getid(const char *s, char *n);
@@ -999,7 +1013,7 @@ aclmask(const Acl *acl, Oid roleid, Oid ownerId,
 	result = 0;
 
 	/* Owner always implicitly has all grant options */
-	if (is_member_of_role(roleid, ownerId))
+	if (has_privs_of_role(roleid, ownerId))
 	{
 		result = mask & ACLITEM_ALL_GOPTION_BITS;
 		if (result == mask)
@@ -1042,7 +1056,7 @@ aclmask(const Acl *acl, Oid roleid, Oid ownerId,
 			continue;			/* already checked it */
 
 		if ((aidata->ai_privs & remaining) &&
-			is_member_of_role(roleid, aidata->ai_grantee))
+			has_privs_of_role(roleid, aidata->ai_grantee))
 		{
 			result |= aidata->ai_privs & mask;
 			if ((how == ACLMASK_ALL) ? (result == mask) : (result != 0))
@@ -2653,8 +2667,10 @@ pg_has_role_id_id(PG_FUNCTION_ARGS)
  * convert_role_priv_string
  *		Convert text string to AclMode value.
  *
- * There is only one interesting option, MEMBER, which we represent by
- * ACL_USAGE since no formal ACL bit is defined for it.  This convention
+ * We use USAGE to denote whether the privileges of the role are accessible
+ * (has_privs), MEMBER to denote is_member, and MEMBER WITH GRANT OPTION
+ * (or ADMIN OPTION) to denote is_admin.  There is no ACL bit corresponding
+ * to MEMBER so we cheat and use ACL_CREATE for that.  This convention
  * is shared only with pg_role_aclcheck, below.
  */
 static AclMode
@@ -2668,12 +2684,15 @@ convert_role_priv_string(text *priv_type_text)
 	/*
 	 * Return mode from priv_type string
 	 */
-	if (pg_strcasecmp(priv_type, "MEMBER") == 0)
+	if (pg_strcasecmp(priv_type, "USAGE") == 0)
 		return ACL_USAGE;
-	if (pg_strcasecmp(priv_type, "MEMBER WITH GRANT OPTION") == 0)
-		return ACL_GRANT_OPTION_FOR(ACL_USAGE);
-	if (pg_strcasecmp(priv_type, "MEMBER WITH ADMIN OPTION") == 0)
-		return ACL_GRANT_OPTION_FOR(ACL_USAGE);
+	if (pg_strcasecmp(priv_type, "MEMBER") == 0)
+		return ACL_CREATE;
+	if (pg_strcasecmp(priv_type, "USAGE WITH GRANT OPTION") == 0 ||
+		pg_strcasecmp(priv_type, "USAGE WITH ADMIN OPTION") == 0 ||
+		pg_strcasecmp(priv_type, "MEMBER WITH GRANT OPTION") == 0 ||
+		pg_strcasecmp(priv_type, "MEMBER WITH ADMIN OPTION") == 0)
+		return ACL_GRANT_OPTION_FOR(ACL_CREATE);
 
 	ereport(ERROR,
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -2688,20 +2707,22 @@ convert_role_priv_string(text *priv_type_text)
 static AclResult
 pg_role_aclcheck(Oid role_oid, Oid roleid, AclMode mode)
 {
-	if (mode & ACL_GRANT_OPTION_FOR(ACL_USAGE))
+	if (mode & ACL_GRANT_OPTION_FOR(ACL_CREATE))
 	{
 		if (is_admin_of_role(roleid, role_oid))
 			return ACLCHECK_OK;
-		else
-			return ACLCHECK_NO_PRIV;
 	}
-	else
+	if (mode & ACL_CREATE)
 	{
 		if (is_member_of_role(roleid, role_oid))
 			return ACLCHECK_OK;
-		else
-			return ACLCHECK_NO_PRIV;
 	}
+	if (mode & ACL_USAGE)
+	{
+		if (has_privs_of_role(roleid, role_oid))
+			return ACLCHECK_OK;
+	}
+	return ACLCHECK_NO_PRIV;
 }
 
 
@@ -2730,23 +2751,47 @@ initialize_acl(void)
 static void
 RoleMembershipCacheCallback(Datum arg, Oid relid)
 {
-	/* Force membership cache to be recomputed on next use */
-	cached_role = InvalidOid;
+	/* Force membership caches to be recomputed on next use */
+	cached_privs_role = InvalidOid;
+	cached_member_role = InvalidOid;
+}
+
+
+/* Check if specified role has rolinherit set */
+static bool
+has_rolinherit(Oid roleid)
+{
+	bool		result = false;
+	HeapTuple	utup;
+
+	utup = SearchSysCache(AUTHOID,
+						  ObjectIdGetDatum(roleid),
+						  0, 0, 0);
+	if (HeapTupleIsValid(utup))
+	{
+		result = ((Form_pg_authid) GETSTRUCT(utup))->rolinherit;
+		ReleaseSysCache(utup);
+	}
+	return result;
 }
 
 
 /*
- * Is member a member of role (directly or indirectly)?
+ * Does member have the privileges of role (directly or indirectly)?
+ *
+ * This is defined not to recurse through roles that don't have rolinherit
+ * set; for such roles, membership implies the ability to do SET ROLE, but
+ * the privileges are not available until you've done so.
  *
  * Since indirect membership testing is relatively expensive, we cache
  * a list of memberships.
  */
 bool
-is_member_of_role(Oid member, Oid role)
+has_privs_of_role(Oid member, Oid role)
 {
 	List		*roles_list;
 	ListCell	*l;
-	List		*new_cached_memberships;
+	List		*new_cached_privs_roles;
 	MemoryContext	oldctx;
 
 	/* Fast path for simple case */
@@ -2758,8 +2803,100 @@ is_member_of_role(Oid member, Oid role)
 		return true;
 
 	/* If cache is already valid, just use the list */
-	if (OidIsValid(cached_role) && cached_role == member)
-		return list_member_oid(cached_memberships, role);
+	if (OidIsValid(cached_privs_role) && cached_privs_role == member)
+		return list_member_oid(cached_privs_roles, role);
+
+	/* 
+	 * Find all the roles that member is a member of,
+	 * including multi-level recursion.  The role itself will always
+	 * be the first element of the resulting list.
+	 *
+	 * Each element of the list is scanned to see if it adds any indirect
+	 * memberships.  We can use a single list as both the record of
+	 * already-found memberships and the agenda of roles yet to be scanned.
+	 * This is a bit tricky but works because the foreach() macro doesn't
+	 * fetch the next list element until the bottom of the loop.
+	 */
+	roles_list = list_make1_oid(member);
+
+	foreach(l, roles_list)
+	{
+		Oid		memberid = lfirst_oid(l);
+		CatCList	*memlist;
+		int 		i;
+
+		/* Ignore non-inheriting roles */
+		if (!has_rolinherit(memberid))
+			continue;
+
+		/* Find roles that memberid is directly a member of */
+		memlist = SearchSysCacheList(AUTHMEMMEMROLE, 1,
+									 ObjectIdGetDatum(memberid),
+									 0, 0, 0);
+		for (i = 0; i < memlist->n_members; i++)
+		{
+			HeapTuple	tup = &memlist->members[i]->tuple;
+			Oid		otherid = ((Form_pg_auth_members) GETSTRUCT(tup))->roleid;
+
+			/*
+			 * Even though there shouldn't be any loops in the membership
+			 * graph, we must test for having already seen this role.
+			 * It is legal for instance to have both A->B and A->C->B.
+			 */
+			if (!list_member_oid(roles_list, otherid))
+				roles_list = lappend_oid(roles_list, otherid);
+		}
+		ReleaseSysCacheList(memlist);
+	}
+
+	/*
+	 * Copy the completed list into TopMemoryContext so it will persist.
+	 */
+	oldctx = MemoryContextSwitchTo(TopMemoryContext);
+	new_cached_privs_roles = list_copy(roles_list);
+	MemoryContextSwitchTo(oldctx);
+	list_free(roles_list);
+
+	/*
+	 * Now safe to assign to state variable
+	 */
+	cached_privs_role = InvalidOid;	/* just paranoia */
+	list_free(cached_privs_roles);
+	cached_privs_roles = new_cached_privs_roles;
+	cached_privs_role = member;
+
+	/* And now we can return the answer */
+	return list_member_oid(cached_privs_roles, role);
+}
+
+
+/*
+ * Is member a member of role (directly or indirectly)?
+ *
+ * This is defined to recurse through roles regardless of rolinherit.
+ *
+ * Since indirect membership testing is relatively expensive, we cache
+ * a list of memberships.
+ */
+bool
+is_member_of_role(Oid member, Oid role)
+{
+	List		*roles_list;
+	ListCell	*l;
+	List		*new_cached_membership_roles;
+	MemoryContext	oldctx;
+
+	/* Fast path for simple case */
+	if (member == role)
+		return true;
+
+	/* Superusers have every privilege, so are part of every role */
+	if (superuser_arg(member))
+		return true;
+
+	/* If cache is already valid, just use the list */
+	if (OidIsValid(cached_member_role) && cached_member_role == member)
+		return list_member_oid(cached_membership_roles, role);
 
 	/* 
 	 * Find all the roles that member is a member of,
@@ -2804,20 +2941,20 @@ is_member_of_role(Oid member, Oid role)
 	 * Copy the completed list into TopMemoryContext so it will persist.
 	 */
 	oldctx = MemoryContextSwitchTo(TopMemoryContext);
-	new_cached_memberships = list_copy(roles_list);
+	new_cached_membership_roles = list_copy(roles_list);
 	MemoryContextSwitchTo(oldctx);
 	list_free(roles_list);
 
 	/*
 	 * Now safe to assign to state variable
 	 */
-	cached_role = InvalidOid;	/* just paranoia */
-	list_free(cached_memberships);
-	cached_memberships = new_cached_memberships;
-	cached_role = member;
+	cached_member_role = InvalidOid;	/* just paranoia */
+	list_free(cached_membership_roles);
+	cached_membership_roles = new_cached_membership_roles;
+	cached_member_role = member;
 
 	/* And now we can return the answer */
-	return list_member_oid(cached_memberships, role);
+	return list_member_oid(cached_membership_roles, role);
 }
 
 /*

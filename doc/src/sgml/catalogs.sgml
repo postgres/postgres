@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.108 2005/07/14 05:13:38 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.109 2005/07/26 16:38:25 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -974,6 +974,14 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>Role has superuser privileges</entry>
+     </row>
+
+     <row>
+      <entry><structfield>rolinherit</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>Role automatically inherits privileges of roles it is a
+       member of</entry>
      </row>
 
      <row>
@@ -4728,6 +4736,11 @@
    that blanks out the password field.
   </para>
 
+  <para>
+   This view explicitly exposes the OID column of the underlying table,
+   since that is needed to do joins to other catalogs.
+  </para>
+
   <table>
    <title><structname>pg_roles</> Columns</title>
 
@@ -4754,6 +4767,14 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>Role has superuser privileges</entry>
+     </row>
+
+     <row>
+      <entry><structfield>rolinherit</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>Role automatically inherits privileges of roles it is a
+       member of</entry>
      </row>
 
      <row>
@@ -4810,6 +4831,13 @@
       <entry><type>text[]</type></entry>
       <entry></entry>
       <entry>Session defaults for run-time configuration variables</entry>
+     </row>
+
+     <row>
+      <entry><structfield>oid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>ID of role</entry>
      </row>
     </tbody>
    </tgroup>

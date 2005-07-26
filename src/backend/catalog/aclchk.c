@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.115 2005/07/07 20:39:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.116 2005/07/26 16:38:26 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -1984,7 +1984,7 @@ pg_class_ownercheck(Oid class_oid, Oid roleid)
 
 	ReleaseSysCache(tuple);
 
-	return is_member_of_role(roleid, ownerId);
+	return has_privs_of_role(roleid, ownerId);
 }
 
 /*
@@ -2012,7 +2012,7 @@ pg_type_ownercheck(Oid type_oid, Oid roleid)
 
 	ReleaseSysCache(tuple);
 
-	return is_member_of_role(roleid, ownerId);
+	return has_privs_of_role(roleid, ownerId);
 }
 
 /*
@@ -2040,7 +2040,7 @@ pg_oper_ownercheck(Oid oper_oid, Oid roleid)
 
 	ReleaseSysCache(tuple);
 
-	return is_member_of_role(roleid, ownerId);
+	return has_privs_of_role(roleid, ownerId);
 }
 
 /*
@@ -2068,7 +2068,7 @@ pg_proc_ownercheck(Oid proc_oid, Oid roleid)
 
 	ReleaseSysCache(tuple);
 
-	return is_member_of_role(roleid, ownerId);
+	return has_privs_of_role(roleid, ownerId);
 }
 
 /*
@@ -2096,7 +2096,7 @@ pg_namespace_ownercheck(Oid nsp_oid, Oid roleid)
 
 	ReleaseSysCache(tuple);
 
-	return is_member_of_role(roleid, ownerId);
+	return has_privs_of_role(roleid, ownerId);
 }
 
 /*
@@ -2135,7 +2135,7 @@ pg_tablespace_ownercheck(Oid spc_oid, Oid roleid)
 	heap_endscan(scan);
 	heap_close(pg_tablespace, AccessShareLock);
 
-	return is_member_of_role(roleid, spcowner);
+	return has_privs_of_role(roleid, spcowner);
 }
 
 /*
@@ -2164,7 +2164,7 @@ pg_opclass_ownercheck(Oid opc_oid, Oid roleid)
 
 	ReleaseSysCache(tuple);
 
-	return is_member_of_role(roleid, ownerId);
+	return has_privs_of_role(roleid, ownerId);
 }
 
 /*
@@ -2203,7 +2203,7 @@ pg_database_ownercheck(Oid db_oid, Oid roleid)
 	heap_endscan(scan);
 	heap_close(pg_database, AccessShareLock);
 
-	return is_member_of_role(roleid, dba);
+	return has_privs_of_role(roleid, dba);
 }
 
 /*
@@ -2231,5 +2231,5 @@ pg_conversion_ownercheck(Oid conv_oid, Oid roleid)
 
 	ReleaseSysCache(tuple);
 
-	return is_member_of_role(roleid, ownerId);
+	return has_privs_of_role(roleid, ownerId);
 }

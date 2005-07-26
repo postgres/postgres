@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.157 2005/07/25 22:12:31 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.158 2005/07/26 16:38:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,6 +82,7 @@ CreateRole(CreateRoleStmt *stmt)
 	bool		encrypt_password = Password_encryption; /* encrypt password? */
 	char		encrypted_password[MD5_PASSWD_LEN + 1];
 	bool		issuper = false;		/* Make the user a superuser? */
+	bool		inherit = true;			/* Auto inherit privileges? */
 	bool		createrole = false;		/* Can this user create roles? */
 	bool		createdb = false;		/* Can the user create databases? */
 	bool		canlogin = false;		/* Can this user login? */
@@ -91,6 +92,7 @@ CreateRole(CreateRoleStmt *stmt)
 	char	   *validUntil = NULL;		/* time the login is valid until */
 	DefElem    *dpassword = NULL;
 	DefElem    *dissuper = NULL;
+	DefElem    *dinherit = NULL;
 	DefElem    *dcreaterole = NULL;
 	DefElem    *dcreatedb = NULL;
 	DefElem    *dcanlogin = NULL;
@@ -98,6 +100,19 @@ CreateRole(CreateRoleStmt *stmt)
 	DefElem    *drolemembers = NULL;
 	DefElem    *dadminmembers = NULL;
 	DefElem    *dvalidUntil = NULL;
+
+	/* The defaults can vary depending on the original statement type */
+	switch (stmt->stmt_type)
+	{
+		case ROLESTMT_ROLE:
+			break;
+		case ROLESTMT_USER:
+			canlogin = true;
+			/* may eventually want inherit to default to false here */
+			break;
+		case ROLESTMT_GROUP:
+			break;
+	}
 
 	/* Extract options from the statement node tree */
 	foreach(option, stmt->options)
@@ -120,7 +135,7 @@ CreateRole(CreateRoleStmt *stmt)
 		}
 		else if (strcmp(defel->defname, "sysid") == 0)
 		{
-			ereport(WARNING,
+			ereport(NOTICE,
 					(errmsg("SYSID can no longer be specified")));
 		}
 		else if (strcmp(defel->defname, "superuser") == 0)
@@ -130,6 +145,14 @@ CreateRole(CreateRoleStmt *stmt)
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
 			dissuper = defel;
+		}
+		else if (strcmp(defel->defname, "inherit") == 0)
+		{
+			if (dinherit)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			dinherit = defel;
 		}
 		else if (strcmp(defel->defname, "createrole") == 0)
 		{
@@ -196,6 +219,8 @@ CreateRole(CreateRoleStmt *stmt)
 		password = strVal(dpassword->arg);
 	if (dissuper)
 		issuper = intVal(dissuper->arg) != 0;
+	if (dinherit)
+		inherit = intVal(dinherit->arg) != 0;
 	if (dcreaterole)
 		createrole = intVal(dcreaterole->arg) != 0;
 	if (dcreatedb)
@@ -261,6 +286,7 @@ CreateRole(CreateRoleStmt *stmt)
 		DirectFunctionCall1(namein, CStringGetDatum(stmt->role));
 
 	new_record[Anum_pg_authid_rolsuper - 1] = BoolGetDatum(issuper);
+	new_record[Anum_pg_authid_rolinherit - 1] = BoolGetDatum(inherit);
 	new_record[Anum_pg_authid_rolcreaterole - 1] = BoolGetDatum(createrole);
 	new_record[Anum_pg_authid_rolcreatedb - 1] = BoolGetDatum(createdb);
 	/* superuser gets catupdate right by default */
@@ -367,6 +393,7 @@ AlterRole(AlterRoleStmt *stmt)
 	bool		encrypt_password = Password_encryption; /* encrypt password? */
 	char		encrypted_password[MD5_PASSWD_LEN + 1];
 	int			issuper = -1;			/* Make the user a superuser? */
+	int			inherit = -1;			/* Auto inherit privileges? */
 	int			createrole = -1;		/* Can this user create roles? */
 	int			createdb = -1;			/* Can the user create databases? */
 	int			canlogin = -1;			/* Can this user login? */
@@ -374,6 +401,7 @@ AlterRole(AlterRoleStmt *stmt)
 	char	   *validUntil = NULL;		/* time the login is valid until */
 	DefElem    *dpassword = NULL;
 	DefElem    *dissuper = NULL;
+	DefElem    *dinherit = NULL;
 	DefElem    *dcreaterole = NULL;
 	DefElem    *dcreatedb = NULL;
 	DefElem    *dcanlogin = NULL;
@@ -407,6 +435,14 @@ AlterRole(AlterRoleStmt *stmt)
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
 			dissuper = defel;
+		}
+		else if (strcmp(defel->defname, "inherit") == 0)
+		{
+			if (dinherit)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			dinherit = defel;
 		}
 		else if (strcmp(defel->defname, "createrole") == 0)
 		{
@@ -458,6 +494,8 @@ AlterRole(AlterRoleStmt *stmt)
 		password = strVal(dpassword->arg);
 	if (dissuper)
 		issuper = intVal(dissuper->arg);
+	if (dinherit)
+		inherit = intVal(dinherit->arg);
 	if (dcreaterole)
 		createrole = intVal(dcreaterole->arg);
 	if (dcreatedb)
@@ -497,10 +535,10 @@ AlterRole(AlterRoleStmt *stmt)
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must be superuser to alter superusers")));
 	}
-	else
+	else if (!have_createrole_privilege())
 	{
-		if (!have_createrole_privilege() &&
-			!(createrole < 0 &&
+		if (!(inherit < 0 &&
+			  createrole < 0 &&
 			  createdb < 0 &&
 			  canlogin < 0 &&
 			  !rolemembers &&
@@ -534,6 +572,12 @@ AlterRole(AlterRoleStmt *stmt)
 
 		new_record[Anum_pg_authid_rolcatupdate - 1] = BoolGetDatum(issuper > 0);
 		new_record_repl[Anum_pg_authid_rolcatupdate - 1] = 'r';
+	}
+
+	if (inherit >= 0)
+	{
+		new_record[Anum_pg_authid_rolinherit - 1] = BoolGetDatum(inherit > 0);
+		new_record_repl[Anum_pg_authid_rolinherit - 1] = 'r';
 	}
 
 	if (createrole >= 0)

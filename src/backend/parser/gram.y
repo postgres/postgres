@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.502 2005/07/25 22:12:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.503 2005/07/26 16:38:27 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -361,7 +361,7 @@ static void doNegateFloat(Value *v);
 	HANDLER HAVING HEADER HOLD HOUR_P
 
 	ILIKE IMMEDIATE IMMUTABLE IMPLICIT_P IN_P INCLUDING INCREMENT
-	INDEX INHERITS INITIALLY INNER_P INOUT INPUT_P
+	INDEX INHERIT INHERITS INITIALLY INNER_P INOUT INPUT_P
 	INSENSITIVE INSERT INSTEAD INT_P INTEGER INTERSECT
 	INTERVAL INTO INVOKER IS ISNULL ISOLATION
 
@@ -376,8 +376,8 @@ static void doNegateFloat(Value *v);
 	MATCH MAXVALUE MINUTE_P MINVALUE MODE MONTH_P MOVE
 
 	NAMES NATIONAL NATURAL NCHAR NEW NEXT NO NOCREATEDB
-	NOCREATEROLE NOCREATEUSER NOLOGIN_P NONE NOSUPERUSER NOT NOTHING NOTIFY
-	NOTNULL NOWAIT NULL_P NULLIF NUMERIC
+	NOCREATEROLE NOCREATEUSER NOINHERIT NOLOGIN_P NONE NOSUPERUSER
+	NOT NOTHING NOTIFY NOTNULL NOWAIT NULL_P NULLIF NUMERIC
 
 	OBJECT_P OF OFF OFFSET OIDS OLD ON ONLY OPERATOR OPTION OR
 	ORDER OUT_P OUTER_P OVERLAPS OVERLAY OWNER
@@ -581,6 +581,7 @@ CreateRoleStmt:
 			CREATE ROLE RoleId opt_with OptRoleList
 				{
 					CreateRoleStmt *n = makeNode(CreateRoleStmt);
+					n->stmt_type = ROLESTMT_ROLE;
 					n->role = $3;
 					n->options = $5;
 					$$ = (Node *)n;
@@ -629,6 +630,14 @@ OptRoleElem:
 			| NOSUPERUSER
 				{
 					$$ = makeDefElem("superuser", (Node *)makeInteger(FALSE));
+				}
+			| INHERIT
+				{
+					$$ = makeDefElem("inherit", (Node *)makeInteger(TRUE));
+				}
+			| NOINHERIT
+				{
+					$$ = makeDefElem("inherit", (Node *)makeInteger(FALSE));
 				}
 			| CREATEDB
 				{
@@ -700,10 +709,9 @@ CreateUserStmt:
 			CREATE USER RoleId opt_with OptRoleList
 				{
 					CreateRoleStmt *n = makeNode(CreateRoleStmt);
+					n->stmt_type = ROLESTMT_USER;
 					n->role = $3;
-					n->options = lappend($5,
-										 makeDefElem("canlogin",
-													 (Node *)makeInteger(TRUE)));
+					n->options = $5;
 					$$ = (Node *)n;
 				}
 		;
@@ -829,6 +837,7 @@ CreateGroupStmt:
 			CREATE GROUP_P RoleId opt_with OptRoleList
 				{
 					CreateRoleStmt *n = makeNode(CreateRoleStmt);
+					n->stmt_type = ROLESTMT_GROUP;
 					n->role = $3;
 					n->options = $5;
 					$$ = (Node *)n;
@@ -7996,6 +8005,7 @@ unreserved_keyword:
 			| INCLUDING
 			| INCREMENT
 			| INDEX
+			| INHERIT
 			| INHERITS
 			| INPUT_P
 			| INSENSITIVE
@@ -8028,6 +8038,7 @@ unreserved_keyword:
 			| NOCREATEDB
 			| NOCREATEROLE
 			| NOCREATEUSER
+			| NOINHERIT
 			| NOLOGIN_P
 			| NOSUPERUSER
 			| NOTHING

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.162 2005/06/29 20:34:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.163 2005/07/26 16:38:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,6 +165,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"including", INCLUDING},
 	{"increment", INCREMENT},
 	{"index", INDEX},
+	{"inherit", INHERIT},
 	{"inherits", INHERITS},
 	{"initially", INITIALLY},
 	{"inner", INNER_P},
@@ -219,6 +220,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"nocreatedb", NOCREATEDB},
 	{"nocreaterole", NOCREATEROLE},
 	{"nocreateuser", NOCREATEUSER},
+	{"noinherit", NOINHERIT},
 	{"nologin", NOLOGIN_P},
 	{"none", NONE},
 	{"nosuperuser", NOSUPERUSER},
