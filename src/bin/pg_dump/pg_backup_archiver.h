@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.65 2005/06/21 20:45:44 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.66 2005/07/27 12:44:10 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@
 #define GZCLOSE(fh) fclose(fh)
 #define GZWRITE(p, s, n, fh) (fwrite(p, s, n, fh) * (s))
 #define GZREAD(p, s, n, fh) fread(p, s, n, fh)
-#define Z_DEFAULT_COMPRESSION -1
+#define Z_DEFAULT_COMPRESSION (-1)
 
 typedef struct _z_stream
 {

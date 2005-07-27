@@ -15,7 +15,7 @@
  *
  * Copyright (c) 2003-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/getaddrinfo.h,v 1.14 2005/01/01 20:44:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/getaddrinfo.h,v 1.15 2005/07/27 12:44:10 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,15 +31,15 @@
 /* Various macros that ought to be in <netdb.h>, but might not be */
 
 #ifndef EAI_FAIL
-#define EAI_BADFLAGS	-1
-#define EAI_NONAME		-2
-#define EAI_AGAIN		-3
-#define EAI_FAIL		-4
-#define EAI_FAMILY		-6
-#define EAI_SOCKTYPE	-7
-#define EAI_SERVICE		-8
-#define EAI_MEMORY		-10
-#define EAI_SYSTEM		-11
+#define EAI_BADFLAGS	(-1)
+#define EAI_NONAME		(-2)
+#define EAI_AGAIN		(-3)
+#define EAI_FAIL		(-4)
+#define EAI_FAMILY		(-6)
+#define EAI_SOCKTYPE	(-7)
+#define EAI_SERVICE		(-8)
+#define EAI_MEMORY		(-10)
+#define EAI_SYSTEM		(-11)
 #endif
 
 #ifndef AI_PASSIVE

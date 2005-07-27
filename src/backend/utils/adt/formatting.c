@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.93 2005/07/23 14:25:33 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.94 2005/07/27 12:44:09 neilc Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2005, PostgreSQL Global Development Group
@@ -292,7 +292,7 @@ typedef struct
 #define NUM_F_PLUS_POST		(1 << 12)
 #define NUM_F_MINUS_POST	(1 << 13)
 
-#define NUM_LSIGN_PRE	-1
+#define NUM_LSIGN_PRE	(-1)
 #define NUM_LSIGN_POST	1
 #define NUM_LSIGN_NONE	0
 
@@ -384,27 +384,27 @@ typedef struct
 				yysz;		/* is it YY or YYYY ? */
 } TmFromChar;
 
-#define ZERO_tmfc( _X ) memset(_X, 0, sizeof(TmFromChar))
+#define ZERO_tmfc(_X) memset(_X, 0, sizeof(TmFromChar))
 
 /* ----------
  * Debug
  * ----------
  */
 #ifdef DEBUG_TO_FROM_CHAR
-#define DEBUG_TMFC( _X ) \
+#define DEBUG_TMFC(_X) \
 		elog(DEBUG_elog_output, "TMFC:\nhh %d\nam %d\npm %d\nmi %d\nss %d\nssss %d\nd %d\ndd %d\nddd %d\nmm %d\nms: %d\nyear %d\nbc %d\niw %d\nww %d\nw %d\ncc %d\nq %d\nj %d\nus: %d\nyysz: %d", \
 			(_X)->hh, (_X)->am, (_X)->pm, (_X)->mi, (_X)->ss, \
 			(_X)->ssss, (_X)->d, (_X)->dd, (_X)->ddd, (_X)->mm, (_X)->ms, \
 			(_X)->year, (_X)->bc, (_X)->iw, (_X)->ww, (_X)->w, \
 			(_X)->cc, (_X)->q, (_X)->j, (_X)->us, (_X)->yysz);
-#define DEBUG_TM( _X ) \
+#define DEBUG_TM(_X) \
 		elog(DEBUG_elog_output, "TM:\nsec %d\nyear %d\nmin %d\nwday %d\nhour %d\nyday %d\nmday %d\nnisdst %d\nmon %d\n",\
 			(_X)->tm_sec, (_X)->tm_year,\
 			(_X)->tm_min, (_X)->tm_wday, (_X)->tm_hour, (_X)->tm_yday,\
 			(_X)->tm_mday, (_X)->tm_isdst, (_X)->tm_mon)
 #else
-#define DEBUG_TMFC( _X )
-#define DEBUG_TM( _X )
+#define DEBUG_TMFC(_X)
+#define DEBUG_TM(_X)
 #endif
 
 /* ----------
@@ -422,14 +422,14 @@ typedef struct TmToChar
 #define tmtcTzn(_X) ((_X)->tzn)
 #define tmtcFsec(_X)	((_X)->fsec)
 
-#define ZERO_tm( _X ) \
+#define ZERO_tm(_X) \
 	do {	\
 		(_X)->tm_sec  = (_X)->tm_year = (_X)->tm_min = (_X)->tm_wday = \
 		(_X)->tm_hour = (_X)->tm_yday = (_X)->tm_isdst = 0; \
 		(_X)->tm_mday = (_X)->tm_mon  = 1; \
 	} while(0)
 
-#define ZERO_tmtc( _X ) \
+#define ZERO_tmtc(_X) \
 	do { \
 		ZERO_tm( tmtcTm(_X) ); \
 		tmtcFsec(_X) = 0; \
