@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.217 2005/07/06 21:04:14 momjian Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.218 2005/07/28 03:15:52 tgl Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -152,10 +152,6 @@ TCL_LIB_SPEC		= @TCL_LIB_SPEC@
 TCL_INCLUDE_SPEC	= @TCL_INCLUDE_SPEC@
 TCL_SHARED_BUILD	= @TCL_SHARED_BUILD@
 TCL_SHLIB_LD_LIBS	= @TCL_SHLIB_LD_LIBS@
-
-TK_LIBS			= @TK_LIBS@
-TK_LIB_SPEC		= @TK_LIB_SPEC@
-TK_XINCLUDES		= @TK_XINCLUDES@
 
 PTHREAD_CFLAGS		= @PTHREAD_CFLAGS@
 PTHREAD_LIBS		= @PTHREAD_LIBS@
@@ -392,14 +388,14 @@ endif
 
 ##########################################################################
 #
-# substitute implementations of the C library
+# substitute implementations of C library routines
 
 LIBOBJS = @LIBOBJS@ dirmod.o exec.o noblock.o path.o pipe.o pgsleep.o pgstrcasecmp.o sprompt.o thread.o
 
 ifneq (,$(LIBOBJS))
 LIBS := -lpgport $(LIBS)
+# add location of libpgport.a to LDFLAGS
 ifdef PGXS
-# where libpgport.a is installed
 override LDFLAGS := -L$(libdir) $(LDFLAGS)
 else
 override LDFLAGS := -L$(top_builddir)/src/port $(LDFLAGS)
