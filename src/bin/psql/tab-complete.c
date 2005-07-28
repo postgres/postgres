@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.134 2005/07/23 21:05:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.135 2005/07/28 22:14:30 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -927,16 +927,23 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev_wd, "USER") == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_users);
 
-/* BEGIN, END, COMMIT, ABORT */
+/* BEGIN, END, ABORT */
 	else if (pg_strcasecmp(prev_wd, "BEGIN") == 0 ||
 			 pg_strcasecmp(prev_wd, "END") == 0 ||
-			 pg_strcasecmp(prev_wd, "COMMIT") == 0 ||
 			 pg_strcasecmp(prev_wd, "ABORT") == 0)
 	{
 		static const char *const list_TRANS[] =
 		{"WORK", "TRANSACTION", NULL};
 
 		COMPLETE_WITH_LIST(list_TRANS);
+	} 
+/* COMMIT */
+	else if(pg_strcasecmp(prev_wd, "COMMIT") == 0)
+	{
+		static const char *const list_COMMIT[] =
+		{"WORK", "TRANSACTION", "PREPARED", NULL};
+
+		COMPLETE_WITH_LIST(list_COMMIT);
 	}
 /* RELEASE SAVEPOINT */
 	else if (pg_strcasecmp(prev_wd, "RELEASE") == 0)
@@ -945,7 +952,7 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev_wd, "ROLLBACK") == 0)
 	{
 		static const char *const list_TRANS[] =
-		{"WORK", "TRANSACTION", "TO SAVEPOINT", NULL};
+		{"WORK", "TRANSACTION", "TO SAVEPOINT", "PREPARED", NULL};
 
 		COMPLETE_WITH_LIST(list_TRANS);
 	}
