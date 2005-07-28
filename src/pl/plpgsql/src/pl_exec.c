@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.150 2005/07/28 00:26:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.151 2005/07/28 07:51:13 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -173,10 +173,10 @@ static Datum exec_cast_value(Datum value, Oid valtype,
 				FmgrInfo *reqinput,
 				Oid reqtypioparam,
 				int32 reqtypmod,
-				bool *isnull);
+				bool isnull);
 static Datum exec_simple_cast_value(Datum value, Oid valtype,
 					   Oid reqtype, int32 reqtypmod,
-					   bool *isnull);
+					   bool isnull);
 static void exec_init_tuple_store(PLpgSQL_execstate *estate);
 static bool compatible_tupdesc(TupleDesc td1, TupleDesc td2);
 static void exec_set_found(PLpgSQL_execstate *estate, bool state);
@@ -356,7 +356,7 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 											&(func->fn_retinput),
 											func->fn_rettypioparam,
 											-1,
-											&fcinfo->isnull);
+											fcinfo->isnull);
 
 			/*
 			 * If the function's return type isn't by value, copy the value
@@ -1348,7 +1348,7 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 	value = exec_cast_value(value, valtype, var->datatype->typoid,
 							&(var->datatype->typinput),
 							var->datatype->typioparam,
-							var->datatype->atttypmod, &isnull);
+							var->datatype->atttypmod, isnull);
 	if (isnull)
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
@@ -1364,7 +1364,7 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 	value = exec_cast_value(value, valtype, var->datatype->typoid,
 							&(var->datatype->typinput),
 							var->datatype->typioparam,
-							var->datatype->atttypmod, &isnull);
+							var->datatype->atttypmod, isnull);
 	if (isnull)
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
@@ -1868,7 +1868,7 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 												var->datatype->typoid,
 												tupdesc->attrs[0]->atttypid,
 												tupdesc->attrs[0]->atttypmod,
-												&isNull);
+												isNull);
 
 				tuple = heap_form_tuple(tupdesc, &retval, &isNull);
 
@@ -1934,7 +1934,7 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 										rettype,
 										tupdesc->attrs[0]->atttypid,
 										tupdesc->attrs[0]->atttypmod,
-										&isNull);
+										isNull);
 
 		tuple = heap_form_tuple(tupdesc, &retval, &isNull);
 
@@ -2995,7 +2995,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 										   &(var->datatype->typinput),
 										   var->datatype->typioparam,
 										   var->datatype->atttypmod,
-										   isNull);
+										   *isNull);
 
 				if (*isNull && var->notnull)
 					ereport(ERROR,
@@ -3194,7 +3194,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 													 valtype,
 													 atttype,
 													 atttypmod,
-													 &attisnull);
+													 attisnull);
 				if (attisnull)
 					nulls[fno] = 'n';
 				else
@@ -3340,7 +3340,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 													   valtype,
 													   arrayelemtypeid,
 													   -1,
-													   isNull);
+													   *isNull);
 
 				/*
 				 * Build the modified array value.
@@ -3564,7 +3564,7 @@ exec_eval_integer(PLpgSQL_execstate *estate,
 	exprdatum = exec_eval_expr(estate, expr, isNull, &exprtypeid);
 	exprdatum = exec_simple_cast_value(exprdatum, exprtypeid,
 									   INT4OID, -1,
-									   isNull);
+									   *isNull);
 	return DatumGetInt32(exprdatum);
 }
 
@@ -3586,7 +3586,7 @@ exec_eval_boolean(PLpgSQL_execstate *estate,
 	exprdatum = exec_eval_expr(estate, expr, isNull, &exprtypeid);
 	exprdatum = exec_simple_cast_value(exprdatum, exprtypeid,
 									   BOOLOID, -1,
-									   isNull);
+									   *isNull);
 	return DatumGetBool(exprdatum);
 }
 
@@ -4060,9 +4060,9 @@ exec_cast_value(Datum value, Oid valtype,
 				FmgrInfo *reqinput,
 				Oid reqtypioparam,
 				int32 reqtypmod,
-				bool *isnull)
+				bool isnull)
 {
-	if (!*isnull)
+	if (!isnull)
 	{
 		/*
 		 * If the type of the queries return value isn't that of the
@@ -4095,9 +4095,9 @@ exec_cast_value(Datum value, Oid valtype,
 static Datum
 exec_simple_cast_value(Datum value, Oid valtype,
 					   Oid reqtype, int32 reqtypmod,
-					   bool *isnull)
+					   bool isnull)
 {
-	if (!*isnull)
+	if (!isnull)
 	{
 		if (valtype != reqtype || reqtypmod != -1)
 		{
