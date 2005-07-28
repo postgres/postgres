@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.155 2005/06/28 05:08:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.156 2005/07/28 22:27:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1001,8 +1001,7 @@ markQueryForLocking(Query *qry, bool forUpdate, bool skipOldNew)
 
 		if (rte->rtekind == RTE_RELATION)
 		{
-			if (!list_member_int(qry->rowMarks, rti))
-				qry->rowMarks = lappend_int(qry->rowMarks, rti);
+			qry->rowMarks = list_append_unique_int(qry->rowMarks, rti);
 			rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
 		}
 		else if (rte->rtekind == RTE_SUBQUERY)

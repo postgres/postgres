@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.70 2005/06/09 04:19:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.71 2005/07/28 22:27:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -619,8 +619,8 @@ subbuild_joinrel_joinlist(RelOptInfo *joinrel,
 			 * in, no great harm is done --- they'll be detected by
 			 * redundant-clause testing when they reach a restriction list.)
 			 */
-			if (!list_member_ptr(joinrel->joininfo, rinfo))
-				joinrel->joininfo = lappend(joinrel->joininfo, rinfo);
+			joinrel->joininfo = list_append_unique_ptr(joinrel->joininfo,
+													   rinfo);
 		}
 	}
 }

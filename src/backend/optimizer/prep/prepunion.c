@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.124 2005/06/10 02:21:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.125 2005/07/28 22:27:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -706,21 +706,24 @@ tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK)
 List *
 find_all_inheritors(Oid parentrel)
 {
-	List	   *examined_relids = NIL;
-	List	   *unexamined_relids = list_make1_oid(parentrel);
+	List	   *rels_list;
+	ListCell   *l;
 
-	/*
-	 * While the queue of unexamined relids is nonempty, remove the first
-	 * element, mark it examined, and find its direct descendants. NB:
-	 * cannot use foreach(), since we modify the queue inside loop.
+	/* 
+	 * We build a list starting with the given rel and adding all direct and
+	 * indirect children.  We can use a single list as both the record of
+	 * already-found rels and the agenda of rels yet to be scanned for more
+	 * children.  This is a bit tricky but works because the foreach() macro
+	 * doesn't fetch the next list element until the bottom of the loop.
 	 */
-	while (unexamined_relids != NIL)
+	rels_list = list_make1_oid(parentrel);
+
+	foreach(l, rels_list)
 	{
-		Oid			currentrel = linitial_oid(unexamined_relids);
+		Oid			currentrel = lfirst_oid(l);
 		List	   *currentchildren;
 
-		unexamined_relids = list_delete_first(unexamined_relids);
-		examined_relids = lappend_oid(examined_relids, currentrel);
+		/* Get the direct children of this rel */
 		currentchildren = find_inheritance_children(currentrel);
 
 		/*
@@ -730,11 +733,10 @@ find_all_inheritors(Oid parentrel)
 		 * into an infinite loop, though theoretically there can't be any
 		 * cycles in the inheritance graph anyway.)
 		 */
-		currentchildren = list_difference_oid(currentchildren, examined_relids);
-		unexamined_relids = list_union_oid(unexamined_relids, currentchildren);
+		rels_list = list_concat_unique_oid(rels_list, currentchildren);
 	}
 
-	return examined_relids;
+	return rels_list;
 }
 
 /*

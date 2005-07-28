@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.322 2005/06/05 00:38:09 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.323 2005/07/28 22:27:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2789,8 +2789,8 @@ transformLocking(Query *qry, List *lockedRels, bool forUpdate)
 			switch (rte->rtekind)
 			{
 				case RTE_RELATION:
-					if (!list_member_int(rowMarks, i))	/* avoid duplicates */
-						rowMarks = lappend_int(rowMarks, i);
+					/* use list_append_unique to avoid duplicates */
+					rowMarks = list_append_unique_int(rowMarks, i);
 					rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
 					break;
 				case RTE_SUBQUERY:
@@ -2826,8 +2826,8 @@ transformLocking(Query *qry, List *lockedRels, bool forUpdate)
 					switch (rte->rtekind)
 					{
 						case RTE_RELATION:
-							if (!list_member_int(rowMarks, i))	/* avoid duplicates */
-								rowMarks = lappend_int(rowMarks, i);
+							/* use list_append_unique to avoid duplicates */
+							rowMarks = list_append_unique_int(rowMarks, i);
 							rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
 							break;
 						case RTE_SUBQUERY:

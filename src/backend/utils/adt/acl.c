@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.122 2005/07/26 16:38:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.123 2005/07/28 22:27:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2843,8 +2843,7 @@ has_privs_of_role(Oid member, Oid role)
 			 * graph, we must test for having already seen this role.
 			 * It is legal for instance to have both A->B and A->C->B.
 			 */
-			if (!list_member_oid(roles_list, otherid))
-				roles_list = lappend_oid(roles_list, otherid);
+			roles_list = list_append_unique_oid(roles_list, otherid);
 		}
 		ReleaseSysCacheList(memlist);
 	}
@@ -2931,8 +2930,7 @@ is_member_of_role(Oid member, Oid role)
 			 * graph, we must test for having already seen this role.
 			 * It is legal for instance to have both A->B and A->C->B.
 			 */
-			if (!list_member_oid(roles_list, otherid))
-				roles_list = lappend_oid(roles_list, otherid);
+			roles_list = list_append_unique_oid(roles_list, otherid);
 		}
 		ReleaseSysCacheList(memlist);
 	}
@@ -3024,8 +3022,7 @@ is_admin_of_role(Oid member, Oid role)
 				break;
 			}
 
-			if (!list_member_oid(roles_list, otherid))
-				roles_list = lappend_oid(roles_list, otherid);
+			roles_list = list_append_unique_oid(roles_list, otherid);
 		}
 		ReleaseSysCacheList(memlist);
 		if (result)
