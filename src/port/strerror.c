@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/port/strerror.c,v 1.4 2005/02/22 04:43:16 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/port/strerror.c,v 1.5 2005/07/28 04:03:14 tgl Exp $ */
 
 /*
  * strerror - map error number to descriptive string
@@ -9,9 +9,8 @@
  * modified for ANSI by D'Arcy J.M. Cain
  */
 
-#include <string.h>
-#include <stdio.h>
-#include <errno.h>
+#include "c.h"
+
 
 extern const char *const sys_errlist[];
 extern int	sys_nerr;

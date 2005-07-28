@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  */
 
-#include "postgres.h"
+#include "c.h"
 
 #ifndef WIN32
 #include <sys/ioctl.h>
@@ -62,7 +62,7 @@
  * causing nasty effects.
  **************************************************************/
 
-/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.27 2005/04/14 20:53:09 tgl Exp $";*/
+/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.28 2005/07/28 04:03:14 tgl Exp $";*/
 
 static void dopr(char *buffer, const char *format, va_list args, char *end);
 

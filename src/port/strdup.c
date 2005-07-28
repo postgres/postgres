@@ -8,14 +8,15 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/strdup.c,v 1.6 2004/12/31 22:03:53 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/port/strdup.c,v 1.7 2005/07/28 04:03:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <string.h>
-#include <stdlib.h>
+#include "c.h"
+
 #include "strdup.h"
+
 
 char *
 strdup(char const * string)

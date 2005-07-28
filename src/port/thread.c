@@ -7,15 +7,13 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/port/thread.c,v 1.29 2004/12/31 22:03:53 pgsql Exp $
+ * $PostgreSQL: pgsql/src/port/thread.c,v 1.30 2005/07/28 04:03:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "c.h"
 
-#include <sys/types.h>
-#include <errno.h>
 #ifdef WIN32_CLIENT_ONLY
 #undef ERROR
 #else
@@ -24,6 +22,7 @@
 #if defined(ENABLE_THREAD_SAFETY)
 #include <pthread.h>
 #endif
+
 
 /*
  *	Threading sometimes requires specially-named versions of functions

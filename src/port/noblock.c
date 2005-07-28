@@ -7,15 +7,15 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/noblock.c,v 1.6 2005/03/25 00:34:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/noblock.c,v 1.7 2005/07/28 04:03:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "c.h"
 
-#include <sys/types.h>
 #include <fcntl.h>
+
 
 bool
 pg_set_noblock(int sock)

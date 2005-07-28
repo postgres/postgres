@@ -8,16 +8,15 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/random.c,v 1.5 2004/12/31 22:03:53 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/port/random.c,v 1.6 2005/07/28 04:03:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "c.h"
 
-#include <stdlib.h>
 #include <math.h>
-#include <errno.h>
+
 
 long
 random()

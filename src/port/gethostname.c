@@ -7,14 +7,12 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/gethostname.c,v 1.6 2004/12/31 22:03:53 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/port/gethostname.c,v 1.7 2005/07/28 04:03:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "c.h"
-
-#include <string.h>
 
 #include <sys/utsname.h>
 

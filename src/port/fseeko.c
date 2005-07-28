@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/fseeko.c,v 1.17 2004/12/31 22:03:53 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/port/fseeko.c,v 1.18 2005/07/28 04:03:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,10 +24,8 @@
 #ifdef bsdi
 #include <pthread.h>
 #endif
-#include <stdio.h>
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <errno.h>
+
 
 /*
  *	On BSD/OS and NetBSD, off_t and fpos_t are the same.  Standards

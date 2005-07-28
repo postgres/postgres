@@ -12,7 +12,7 @@
  * Copyright (c) 2003-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/getaddrinfo.c,v 1.16 2005/01/01 20:44:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/getaddrinfo.c,v 1.17 2005/07/28 04:03:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,6 @@
 #include "c.h"
 
 #ifndef WIN32_CLIENT_ONLY
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>

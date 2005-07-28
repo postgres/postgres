@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/memcmp.c,v 1.7 2004/12/31 22:03:53 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/port/memcmp.c,v 1.8 2005/07/28 04:03:14 tgl Exp $
  *
  * This file was taken from NetBSD and is used by SunOS because memcmp
  * on that platform does not properly compare negative bytes. The
@@ -46,7 +46,8 @@
  * SUCH DAMAGE.
  */
 
-#include <string.h>
+#include "c.h"
+
 
 /*
  * Compare memory regions.

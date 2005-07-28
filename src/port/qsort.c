@@ -3,7 +3,7 @@
  *	  Add do ... while() macro fix
  *	  Remove __inline, _DIAGASSERTs, __P
  *
- *	$PostgreSQL: pgsql/src/port/qsort.c,v 1.6 2005/05/25 21:40:43 momjian Exp $
+ *	$PostgreSQL: pgsql/src/port/qsort.c,v 1.7 2005/07/28 04:03:14 tgl Exp $
  */
 
 /*	$NetBSD: qsort.c,v 1.13 2003/08/07 16:43:42 agc Exp $	*/
@@ -37,9 +37,7 @@
  * SUCH DAMAGE.
  */
 
-#include <stdlib.h>
-#include <errno.h>
-#include <sys/types.h>
+#include "c.h"
 
 
 static char *med3(char *, char *, char *,

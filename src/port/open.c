@@ -6,17 +6,17 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/port/open.c,v 1.9 2005/03/24 04:36:20 momjian Exp $
+ * $PostgreSQL: pgsql/src/port/open.c,v 1.10 2005/07/28 04:03:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #ifdef WIN32
 
-#include <postgres.h>
+#include "c.h"
+
 #include <windows.h>
 #include <fcntl.h>
-#include <errno.h>
 #include <assert.h>
 
 int win32_open(const char *fileName, int fileFlags, ...);
