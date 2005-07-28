@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.108 2005/01/26 21:55:26 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.109 2005/07/28 04:31:30 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,18 +17,20 @@ DIRS := access bootstrap catalog parser commands executor lib libpq \
 	main nodes optimizer port postmaster regex rewrite \
 	storage tcop utils $(top_builddir)/src/timezone
 
-OBJS := $(DIRS:%=%/SUBSYS.o)
+SUBSYSOBJS := $(DIRS:%=%/SUBSYS.o)
+
+OBJS := $(SUBSYSOBJS) $(top_builddir)/src/port/libpgport_srv.a
+
+# We put libpgport into OBJS, so remove it from LIBS
+LIBS := $(patsubst -lpgport, , $(LIBS))
 
 ifeq ($(PORTNAME), qnx4)
 # This file crashes qnx4's wlink and is therefore not in
 # bootstrap/SUBSYS.o on that platform. (Wotta hack ... is it still
 # necessary?) [ Yes, until the Watcom compiler goes open source it's
 # effectively unsupported ]
-OBJS+= bootstrap/bootstrap.o
+OBJS += bootstrap/bootstrap.o
 endif
-
-# Use server version of port library
-LIBS := $(patsubst -lpgport,-lpgport_srv, $(LIBS))
 
 ##########################################################################
 
@@ -69,7 +71,7 @@ postgres: $(OBJS) $(DLLINIT) postgres.def libpostgres.a $(WIN32RES)
 	rm -f $@.exp $@.base
 
 postgres.def: $(OBJS)
-	$(DLLTOOL) --export-all --output-def $@ $^ $(top_builddir)/src/port/libpgport.a
+	$(DLLTOOL) --export-all --output-def $@ $^
 
 libpostgres.a: postgres.def
 	$(DLLTOOL) --dllname postgres.exe --def postgres.def --output-lib $@
@@ -98,7 +100,7 @@ endif
 endif # aix
 
 # Parallel make trickery
-$(OBJS): $(DIRS:%=%-recursive) ;
+$(SUBSYSOBJS): $(DIRS:%=%-recursive) ;
 
 .PHONY: $(DIRS:%=%-recursive)
 # Update the commonly used headers before building the subdirectories
