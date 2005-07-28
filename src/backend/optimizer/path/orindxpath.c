@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.73 2005/07/02 23:00:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.74 2005/07/28 20:26:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,14 +134,24 @@ create_or_index_quals(PlannerInfo *root, RelOptInfo *rel)
 		return false;
 
 	/*
-	 * Convert the path's indexclauses structure to a RestrictInfo tree,
-	 * and add it to the rel's restriction list.
+	 * Convert the path's indexclauses structure to a RestrictInfo tree.
+	 * We include any partial-index predicates so as to get a reasonable
+	 * representation of what the path is actually scanning.
 	 */
-	newrinfos = make_restrictinfo_from_bitmapqual((Path *) bestpath, true);
-	Assert(list_length(newrinfos) == 1);
+	newrinfos = make_restrictinfo_from_bitmapqual((Path *) bestpath,
+												  true, true);
+
+	/* It's possible we get back something other than a single OR clause */
+	if (list_length(newrinfos) != 1)
+		return false;
 	or_rinfo = (RestrictInfo *) linitial(newrinfos);
 	Assert(IsA(or_rinfo, RestrictInfo));
+	if (!restriction_is_or_clause(or_rinfo))
+		return false;
 
+	/*
+	 * OK, add it to the rel's restriction list.
+	 */
 	rel->baserestrictinfo = list_concat(rel->baserestrictinfo, newrinfos);
 
 	/*

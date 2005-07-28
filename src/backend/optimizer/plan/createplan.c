@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.195 2005/07/23 21:05:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.196 2005/07/28 20:26:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -900,7 +900,7 @@ create_bitmap_scan_plan(PlannerInfo *root,
 	 */
 	if (best_path->isjoininner)
 	{
-		scan_clauses = list_union(scan_clauses, bitmapqualorig);
+		scan_clauses = list_concat_unique(scan_clauses, bitmapqualorig);
 	}
 
 	/*
@@ -962,6 +962,9 @@ create_bitmap_scan_plan(PlannerInfo *root,
  * (in implicit-AND form, without RestrictInfos) describing the original index
  * conditions and the generated indexqual conditions.  The latter is made to
  * exclude lossy index operators.
+ *
+ * Note: if you find yourself changing this, you probably need to change
+ * make_restrictinfo_from_bitmapqual too.
  */
 static Plan *
 create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
@@ -977,6 +980,13 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 		List	   *subindexquals = NIL;
 		ListCell   *l;
 
+		/*
+		 * There may well be redundant quals among the subplans, since a
+		 * top-level WHERE qual might have gotten used to form several
+		 * different index quals.  We don't try exceedingly hard to
+		 * eliminate redundancies, but we do eliminate obvious duplicates
+		 * by using list_concat_unique.
+		 */
 		foreach(l, apath->bitmapquals)
 		{
 			Plan   *subplan;
@@ -986,8 +996,8 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 			subplan = create_bitmap_subplan(root, (Path *) lfirst(l),
 											&subqual, &subindexqual);
 			subplans = lappend(subplans, subplan);
-			subquals = list_concat(subquals, subqual);
-			subindexquals = list_concat(subindexquals, subindexqual);
+			subquals = list_concat_unique(subquals, subqual);
+			subindexquals = list_concat_unique(subindexquals, subindexqual);
 		}
 		plan = (Plan *) make_bitmap_and(subplans);
 		plan->startup_cost = apath->path.startup_cost;
@@ -1004,8 +1014,15 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 		List	   *subplans = NIL;
 		List	   *subquals = NIL;
 		List	   *subindexquals = NIL;
+		bool		const_true_subqual = false;
+		bool		const_true_subindexqual = false;
 		ListCell   *l;
 
+		/*
+		 * Here, we detect both obvious redundancies and qual-free subplans.
+		 * A qual-free subplan would cause us to generate "... OR true ..."
+		 * which we may as well reduce to just "true".
+		 */
 		foreach(l, opath->bitmapquals)
 		{
 			Plan   *subplan;
@@ -1015,10 +1032,16 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 			subplan = create_bitmap_subplan(root, (Path *) lfirst(l),
 											&subqual, &subindexqual);
 			subplans = lappend(subplans, subplan);
-			subquals = lappend(subquals,
-							   make_ands_explicit(subqual));
-			subindexquals = lappend(subindexquals,
-									make_ands_explicit(subindexqual));
+			if (subqual == NIL)
+				const_true_subqual = true;
+			else if (!const_true_subqual)
+				subquals = list_append_unique(subquals,
+											  make_ands_explicit(subqual));
+			if (subindexqual == NIL)
+				const_true_subindexqual = true;
+			else if (!const_true_subindexqual)
+				subindexquals = list_append_unique(subindexquals,
+												   make_ands_explicit(subindexqual));
 		}
 		plan = (Plan *) make_bitmap_or(subplans);
 		plan->startup_cost = opath->path.startup_cost;
@@ -1026,8 +1049,23 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 		plan->plan_rows =
 			clamp_row_est(opath->bitmapselectivity * opath->path.parent->tuples);
 		plan->plan_width = 0;	/* meaningless */
-		*qual = list_make1(make_orclause(subquals));
-		*indexqual = list_make1(make_orclause(subindexquals));
+		/*
+		 * If there were constant-TRUE subquals, the OR reduces to constant
+		 * TRUE.  Also, avoid generating one-element ORs, which could happen
+		 * due to redundancy elimination.
+		 */
+		if (const_true_subqual)
+			*qual = NIL;
+		else if (list_length(subquals) <= 1)
+			*qual = subquals;
+		else
+			*qual = list_make1(make_orclause(subquals));
+		if (const_true_subindexqual)
+			*indexqual = NIL;
+		else if (list_length(subindexquals) <= 1)
+			*indexqual = subindexquals;
+		else
+			*indexqual = list_make1(make_orclause(subindexquals));
 	}
 	else if (IsA(bitmapqual, IndexPath))
 	{
@@ -1204,6 +1242,14 @@ create_nestloop_plan(PlannerInfo *root,
 	{
 		/*
 		 * Same deal for bitmapped index scans.
+		 *
+		 * Note: both here and above, we ignore any implicit index restrictions
+		 * associated with the use of partial indexes.  This is OK because
+		 * we're only trying to prove we can dispense with some join quals;
+		 * failing to prove that doesn't result in an incorrect plan.  It is
+		 * the right way to proceed because adding more quals to the stuff
+		 * we got from the original query would just make it harder to detect
+		 * duplication.
 		 */
 		BitmapHeapPath *innerpath = (BitmapHeapPath *) best_path->innerjoinpath;
 
@@ -1212,7 +1258,9 @@ create_nestloop_plan(PlannerInfo *root,
 			List	   *bitmapclauses;
 
 			bitmapclauses =
-				make_restrictinfo_from_bitmapqual(innerpath->bitmapqual, true);
+				make_restrictinfo_from_bitmapqual(innerpath->bitmapqual,
+												  true,
+												  false);
 			joinrestrictclauses =
 				select_nonredundant_join_clauses(root,
 												 joinrestrictclauses,

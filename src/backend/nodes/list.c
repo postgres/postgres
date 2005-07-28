@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/list.c,v 1.64 2005/03/17 05:47:01 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/list.c,v 1.65 2005/07/28 20:26:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -686,9 +686,13 @@ list_delete_first(List *list)
  * The returned list is newly-allocated, although the content of the
  * cells is the same (i.e. any pointed-to objects are not copied).
  *
- * NB: Bizarrely, this function will NOT remove any duplicates that
- * are present in list1 (so it is not really a union at all!). Also,
- * this function could probably be implemented a lot faster if it is a
+ * NB: this function will NOT remove any duplicates that are present
+ * in list1 (so it only performs a "union" if list1 is known unique to
+ * start with).  Also, if you are about to write "x = list_union(x, y)"
+ * you probably want to use list_concat_unique() instead to avoid wasting
+ * the list cells of the old x list.
+ *
+ * This function could probably be implemented a lot faster if it is a
  * performance bottleneck.
  */
 List *
@@ -888,7 +892,153 @@ list_difference_oid(List *list1, List *list2)
 	return result;
 }
 
-/* Free all storage in a list, and optionally the pointed-to elements */
+/*
+ * Append datum to list, but only if it isn't already in the list.
+ *
+ * Whether an element is already a member of the list is determined
+ * via equal().
+ */
+List *
+list_append_unique(List *list, void *datum)
+{
+	if (list_member(list, datum))
+		return list;
+	else
+		return lappend(list, datum);
+}
+
+/*
+ * This variant of list_append_unique() determines list membership via
+ * simple pointer equality.
+ */
+List *
+list_append_unique_ptr(List *list, void *datum)
+{
+	if (list_member_ptr(list, datum))
+		return list;
+	else
+		return lappend(list, datum);
+}
+
+/*
+ * This variant of list_append_unique() operates upon lists of integers.
+ */
+List *
+list_append_unique_int(List *list, int datum)
+{
+	if (list_member_int(list, datum))
+		return list;
+	else
+		return lappend_int(list, datum);
+}
+
+/*
+ * This variant of list_append_unique() operates upon lists of OIDs.
+ */
+List *
+list_append_unique_oid(List *list, Oid datum)
+{
+	if (list_member_oid(list, datum))
+		return list;
+	else
+		return lappend_oid(list, datum);
+}
+
+/*
+ * Append to list1 each member of list2 that isn't already in list1.
+ *
+ * Whether an element is already a member of the list is determined
+ * via equal().
+ *
+ * This is almost the same functionality as list_union(), but list1 is
+ * modified in-place rather than being copied.  Note also that list2's cells
+ * are not inserted in list1, so the analogy to list_concat() isn't perfect.
+ */
+List *
+list_concat_unique(List *list1, List *list2)
+{
+	ListCell   *cell;
+
+	Assert(IsPointerList(list1));
+	Assert(IsPointerList(list2));
+
+	foreach(cell, list2)
+	{
+		if (!list_member(list1, lfirst(cell)))
+			list1 = lappend(list1, lfirst(cell));
+	}
+
+	check_list_invariants(list1);
+	return list1;
+}
+
+/*
+ * This variant of list_concat_unique() determines list membership via
+ * simple pointer equality.
+ */
+List *
+list_concat_unique_ptr(List *list1, List *list2)
+{
+	ListCell   *cell;
+
+	Assert(IsPointerList(list1));
+	Assert(IsPointerList(list2));
+
+	foreach(cell, list2)
+	{
+		if (!list_member_ptr(list1, lfirst(cell)))
+			list1 = lappend(list1, lfirst(cell));
+	}
+
+	check_list_invariants(list1);
+	return list1;
+}
+
+/*
+ * This variant of list_concat_unique() operates upon lists of integers.
+ */
+List *
+list_concat_unique_int(List *list1, List *list2)
+{
+	ListCell   *cell;
+
+	Assert(IsIntegerList(list1));
+	Assert(IsIntegerList(list2));
+
+	foreach(cell, list2)
+	{
+		if (!list_member_int(list1, lfirst_int(cell)))
+			list1 = lappend_int(list1, lfirst_int(cell));
+	}
+
+	check_list_invariants(list1);
+	return list1;
+}
+
+/*
+ * This variant of list_concat_unique() operates upon lists of OIDs.
+ */
+List *
+list_concat_unique_oid(List *list1, List *list2)
+{
+	ListCell   *cell;
+
+	Assert(IsOidList(list1));
+	Assert(IsOidList(list2));
+
+	foreach(cell, list2)
+	{
+		if (!list_member_oid(list1, lfirst_oid(cell)))
+			list1 = lappend_oid(list1, lfirst_oid(cell));
+	}
+
+	check_list_invariants(list1);
+	return list1;
+}
+
+/*
+ * Free all storage in a list, and optionally the pointed-to elements
+ */
 static void
 list_free_private(List *list, bool deep)
 {

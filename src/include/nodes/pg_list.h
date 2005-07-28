@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/pg_list.h,v 1.51 2004/12/31 22:03:34 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/pg_list.h,v 1.52 2005/07/28 20:26:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,6 +223,16 @@ extern List *list_difference(List *list1, List *list2);
 extern List *list_difference_ptr(List *list1, List *list2);
 extern List *list_difference_int(List *list1, List *list2);
 extern List *list_difference_oid(List *list1, List *list2);
+
+extern List *list_append_unique(List *list, void *datum);
+extern List *list_append_unique_ptr(List *list, void *datum);
+extern List *list_append_unique_int(List *list, int datum);
+extern List *list_append_unique_oid(List *list, Oid datum);
+
+extern List *list_concat_unique(List *list1, List *list2);
+extern List *list_concat_unique_ptr(List *list1, List *list2);
+extern List *list_concat_unique_int(List *list1, List *list2);
+extern List *list_concat_unique_oid(List *list1, List *list2);
 
 extern void list_free(List *list);
 extern void list_free_deep(List *list);

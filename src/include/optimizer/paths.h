@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/paths.h,v 1.85 2005/06/10 22:25:37 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/paths.h,v 1.86 2005/07/28 20:26:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,8 @@ extern Path *best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 					 Relids outer_relids, JoinType jointype);
 extern List *group_clauses_by_indexkey(IndexOptInfo *index,
 									   List *clauses, List *outer_clauses,
-									   Relids outer_relids);
+									   Relids outer_relids,
+									   bool *found_clause);
 extern bool match_index_to_operand(Node *operand, int indexcol,
 					   IndexOptInfo *index);
 extern List *expand_indexqual_conditions(IndexOptInfo *index,

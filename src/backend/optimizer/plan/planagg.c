@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.6 2005/07/23 21:05:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.7 2005/07/28 20:26:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -313,6 +313,7 @@ build_minmax_path(PlannerInfo *root, RelOptInfo *rel, MinMaxAggInfo *info)
 		List	   *restrictclauses;
 		IndexPath  *new_path;
 		Cost		new_cost;
+		bool		found_clause;
 
 		/* Ignore non-btree indexes */
 		if (index->relam != BTREE_AM_OID)
@@ -346,7 +347,8 @@ build_minmax_path(PlannerInfo *root, RelOptInfo *rel, MinMaxAggInfo *info)
 		restrictclauses = group_clauses_by_indexkey(index,
 													index->rel->baserestrictinfo,
 													NIL,
-													NULL);
+													NULL,
+													&found_clause);
 
 		if (list_length(restrictclauses) < indexcol)
 			continue;			/* definitely haven't got enough */

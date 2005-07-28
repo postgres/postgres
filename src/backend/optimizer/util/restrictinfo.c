@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.38 2005/07/02 23:00:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.39 2005/07/28 20:26:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/paths.h"
+#include "optimizer/predtest.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/var.h"
 
@@ -70,31 +71,49 @@ make_restrictinfo(Expr *clause, bool is_pushed_down, Relids required_relids)
  * RestrictInfo node(s) equivalent to the condition represented by the
  * indexclauses of the Path structure.
  *
- * The result is a List since we might need to return multiple RestrictInfos.
+ * The result is a List (effectively, implicit-AND representation) of
+ * RestrictInfos.
+ *
+ * If include_predicates is true, we add any partial index predicates to
+ * the explicit index quals.  When this is not true, we return a condition
+ * that might be weaker than the actual scan represents.
  *
  * To do this through the normal make_restrictinfo() API, callers would have
  * to strip off the RestrictInfo nodes present in the indexclauses lists, and
  * then make_restrictinfo() would have to build new ones.  It's better to have
  * a specialized routine to allow sharing of RestrictInfos.
+ *
+ * The qual manipulations here are much the same as in create_bitmap_subplan;
+ * keep the two routines in sync!
  */
 List *
-make_restrictinfo_from_bitmapqual(Path *bitmapqual, bool is_pushed_down)
+make_restrictinfo_from_bitmapqual(Path *bitmapqual,
+								  bool is_pushed_down,
+								  bool include_predicates)
 {
 	List	   *result;
+	ListCell   *l;
 
 	if (IsA(bitmapqual, BitmapAndPath))
 	{
 		BitmapAndPath *apath = (BitmapAndPath *) bitmapqual;
-		ListCell   *l;
 
+		/*
+		 * There may well be redundant quals among the subplans, since a
+		 * top-level WHERE qual might have gotten used to form several
+		 * different index quals.  We don't try exceedingly hard to
+		 * eliminate redundancies, but we do eliminate obvious duplicates
+		 * by using list_concat_unique.
+		 */
 		result = NIL;
 		foreach(l, apath->bitmapquals)
 		{
 			List	   *sublist;
 
 			sublist = make_restrictinfo_from_bitmapqual((Path *) lfirst(l),
-														is_pushed_down);
-			result = list_concat(result, sublist);
+														is_pushed_down,
+														include_predicates);
+			result = list_concat_unique(result, sublist);
 		}
 	}
 	else if (IsA(bitmapqual, BitmapOrPath))
@@ -102,38 +121,77 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual, bool is_pushed_down)
 		BitmapOrPath *opath = (BitmapOrPath *) bitmapqual;
 		List	   *withris = NIL;
 		List	   *withoutris = NIL;
-		ListCell   *l;
 
+		/*
+		 * Here, we detect both obvious redundancies and qual-free subplans.
+		 * A qual-free subplan would cause us to generate "... OR true ..."
+		 * which we may as well reduce to just "true".
+		 */
 		foreach(l, opath->bitmapquals)
 		{
 			List	   *sublist;
 
 			sublist = make_restrictinfo_from_bitmapqual((Path *) lfirst(l),
-														is_pushed_down);
+														is_pushed_down,
+														include_predicates);
 			if (sublist == NIL)
 			{
-				/* constant TRUE input yields constant TRUE OR result */
-				/* (though this probably cannot happen) */
+				/*
+				 * If we find a qual-less subscan, it represents a constant
+				 * TRUE, and hence the OR result is also constant TRUE, so
+				 * we can stop here.
+				 */
 				return NIL;
 			}
 			/* Create AND subclause with RestrictInfos */
-			withris = lappend(withris, make_ands_explicit(sublist));
+			withris = list_append_unique(withris,
+										 make_ands_explicit(sublist));
 			/* And one without */
 			sublist = get_actual_clauses(sublist);
-			withoutris = lappend(withoutris, make_ands_explicit(sublist));
+			withoutris = list_append_unique(withoutris,
+											make_ands_explicit(sublist));
 		}
-		/* Here's the magic part not available to outside callers */
-		result =
-			list_make1(make_restrictinfo_internal(make_orclause(withoutris),
-												  make_orclause(withris),
-												  is_pushed_down,
-												  NULL));
+
+		/*
+		 * Avoid generating one-element ORs, which could happen
+		 * due to redundancy elimination.
+		 */
+		if (list_length(withris) <= 1)
+			result = withris;
+		else
+		{
+			/* Here's the magic part not available to outside callers */
+			result =
+				list_make1(make_restrictinfo_internal(make_orclause(withoutris),
+													  make_orclause(withris),
+													  is_pushed_down,
+													  NULL));
+		}
 	}
 	else if (IsA(bitmapqual, IndexPath))
 	{
 		IndexPath *ipath = (IndexPath *) bitmapqual;
 
 		result = list_copy(ipath->indexclauses);
+		if (include_predicates && ipath->indexinfo->indpred != NIL)
+		{
+			foreach(l, ipath->indexinfo->indpred)
+			{
+				Expr   *pred = (Expr *) lfirst(l);
+
+				/*
+				 * We know that the index predicate must have been implied
+				 * by the query condition as a whole, but it may or may not
+				 * be implied by the conditions that got pushed into the
+				 * bitmapqual.  Avoid generating redundant conditions.
+				 */
+				if (!predicate_implied_by(list_make1(pred), result))
+					result = lappend(result,
+									 make_restrictinfo(pred,
+													   is_pushed_down,
+													   NULL));
+			}
+		}
 	}
 	else
 	{
