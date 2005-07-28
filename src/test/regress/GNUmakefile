@@ -6,7 +6,7 @@
 # Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.51 2005/07/25 00:58:27 tgl Exp $
+# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.52 2005/07/28 04:32:32 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -56,7 +56,7 @@ pg_regress: pg_regress.sh GNUmakefile $(top_builddir)/src/Makefile.global
 NAME = regress
 SO_MAJOR_VERSION= 0
 SO_MINOR_VERSION= 0
-OBJS = regress.o pgsleep.o
+OBJS = regress.o
 SHLIB_LINK = $(BE_DLLLIBS)
 
 include $(top_srcdir)/src/Makefile.shlib
@@ -66,16 +66,6 @@ all: $(NAME)$(DLSUFFIX)
 $(NAME)$(DLSUFFIX): $(shlib)
 	rm -f $(NAME)$(DLSUFFIX)
 	$(LN_S) $(shlib) $(NAME)$(DLSUFFIX)
-
-# regress.so needs pg_usleep, which on some platforms can't be linked
-# from the main backend (though I'd sure like to know why not).
-# We can't incorporate libpgport directly either, since it's not built
-# with appropriate options to build a shared lib.  Instead,
-# symlink the source file in here and build our own object file.
-
-pgsleep.c: % : $(top_srcdir)/src/port/%
-	rm -f $@ && $(LN_S) $< .
-
 
 # Build test input and expected files
 
@@ -174,7 +164,7 @@ bigcheck:
 
 clean distclean maintainer-clean: clean-lib
 # things built by `all' target
-	rm -f $(NAME)$(DLSUFFIX) $(OBJS) pgsleep.c
+	rm -f $(NAME)$(DLSUFFIX) $(OBJS)
 	$(MAKE) -C $(contribdir)/spi clean
 	rm -f $(output_files) $(input_files) pg_regress
 # things created by various check targets
