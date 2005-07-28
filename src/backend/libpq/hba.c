@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.144 2005/06/28 22:16:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.145 2005/07/28 15:30:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -959,13 +959,10 @@ load_role(void)
 		int		i = 0;
 		ListCell	*line;
 
+		/* We assume the flat file was written already-sorted */
 		role_sorted = palloc(role_length * sizeof(List *));
 		foreach(line, role_lines)
-		{
 			role_sorted[i++] = lfirst(line);
-		}
-
-		/* We assume the flat file was written already-sorted */
 	}
 }
 
