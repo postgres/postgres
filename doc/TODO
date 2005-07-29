@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Jul 25 11:26:58 EDT 2005
+Last updated:		Thu Jul 28 23:22:50 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -791,8 +791,8 @@ Cache Usage
   backends that also have the file open, and the feature is not supported
   on all operating systems.
 
-* Consider use of open/fcntl(O_DIRECT) to minimize OS caching,
-  especially for WAL writes
+* -Consider use of open/fcntl(O_DIRECT) to minimize OS caching,
+  for WAL writes
 
   O_DIRECT doesn't have the same media write guarantees as fsync, so it
   is in addition to the fsync method, not in place of it.
