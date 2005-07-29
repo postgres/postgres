@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.153 2005/07/14 05:13:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.154 2005/07/29 19:30:05 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -78,6 +78,7 @@ FindMyDatabase(const char *name, Oid *db_id, Oid *db_tablespace)
 	char	   *filename;
 	FILE	   *db_file;
 	char		thisname[NAMEDATALEN];
+	TransactionId frozenxid;
 
 	filename = database_getflatfilename();
 	db_file = AllocateFile(filename, "r");
@@ -86,7 +87,8 @@ FindMyDatabase(const char *name, Oid *db_id, Oid *db_tablespace)
 				(errcode_for_file_access(),
 				 errmsg("could not open file \"%s\": %m", filename)));
 
-	while (read_pg_database_line(db_file, thisname, db_id, db_tablespace))
+	while (read_pg_database_line(db_file, thisname, db_id,
+								 db_tablespace, &frozenxid))
 	{
 		if (strcmp(thisname, name) == 0)
 		{
@@ -170,10 +172,11 @@ ReverifyMyDatabase(const char *name)
 	/*
 	 * Also check that the database is currently allowing connections.
 	 * (We do not enforce this in standalone mode, however, so that there is
-	 * a way to recover from "UPDATE pg_database SET datallowconn = false;")
+	 * a way to recover from "UPDATE pg_database SET datallowconn = false;".
+	 * We do not enforce it for the autovacuum process either.)
 	 */
 	dbform = (Form_pg_database) GETSTRUCT(tup);
-	if (IsUnderPostmaster && !dbform->datallowconn)
+	if (IsUnderPostmaster && !IsAutoVacuumProcess() && !dbform->datallowconn)
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 		 errmsg("database \"%s\" is not currently accepting connections",

@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.101 2005/07/24 00:33:28 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.102 2005/07/29 19:30:04 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -119,11 +119,22 @@ static long pgStatNumMessages = 0;
 
 static bool pgStatRunningInCollector = FALSE;
 
-static int	pgStatTabstatAlloc = 0;
-static int	pgStatTabstatUsed = 0;
-static PgStat_MsgTabstat **pgStatTabstatMessages = NULL;
+/*
+ * Place where backends store per-table info to be sent to the collector.
+ * We store shared relations separately from non-shared ones, to be able to
+ * send them in separate messages.
+ */
+typedef struct TabStatArray
+{
+	int		tsa_alloc;					/* num allocated */
+	int		tsa_used;					/* num actually used */
+	PgStat_MsgTabstat **tsa_messages;	/* the array itself */
+} TabStatArray;
 
 #define TABSTAT_QUANTUM		4	/* we alloc this many at a time */
+
+static TabStatArray RegularTabStat = { 0, 0, NULL };
+static TabStatArray SharedTabStat = { 0, 0, NULL }; 
 
 static int	pgStatXactCommit = 0;
 static int	pgStatXactRollback = 0;
@@ -158,7 +169,7 @@ static void pgstat_exit(SIGNAL_ARGS);
 static void pgstat_die(SIGNAL_ARGS);
 static void pgstat_beshutdown_hook(int code, Datum arg);
 
-static PgStat_StatDBEntry *pgstat_get_db_entry(Oid databaseid);
+static PgStat_StatDBEntry *pgstat_get_db_entry(Oid databaseid, bool create);
 static int	pgstat_add_backend(PgStat_MsgHdr *msg);
 static void pgstat_sub_backend(int procpid);
 static void pgstat_drop_database(Oid databaseid);
@@ -614,6 +625,7 @@ pgstat_beterm(int pid)
 	if (pgStatSock < 0)
 		return;
 
+	/* can't use pgstat_setheader() because it's not called in a backend */
 	MemSet(&(msg.m_hdr), 0, sizeof(msg.m_hdr));
 	msg.m_hdr.m_type = PGSTAT_MTYPE_BETERM;
 	msg.m_hdr.m_procpid = pid;
@@ -684,7 +696,8 @@ pgstat_bestart(void)
  * ---------
  */
 void
-pgstat_report_vacuum(Oid tableoid, bool analyze, PgStat_Counter tuples)
+pgstat_report_vacuum(Oid tableoid, bool shared,
+					 bool analyze, PgStat_Counter tuples)
 {
 	PgStat_MsgVacuum msg;
 
@@ -692,7 +705,7 @@ pgstat_report_vacuum(Oid tableoid, bool analyze, PgStat_Counter tuples)
 		return;
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_VACUUM);
-	msg.m_databaseid = MyDatabaseId;
+	msg.m_databaseid = shared ? InvalidOid : MyDatabaseId;
 	msg.m_tableoid = tableoid;
 	msg.m_analyze = analyze;
 	msg.m_tuples = tuples;
@@ -706,7 +719,7 @@ pgstat_report_vacuum(Oid tableoid, bool analyze, PgStat_Counter tuples)
  * --------
  */
 void
-pgstat_report_analyze(Oid tableoid, PgStat_Counter livetuples,
+pgstat_report_analyze(Oid tableoid, bool shared, PgStat_Counter livetuples,
 					  PgStat_Counter deadtuples)
 {
 	PgStat_MsgAnalyze msg;
@@ -715,7 +728,7 @@ pgstat_report_analyze(Oid tableoid, PgStat_Counter livetuples,
 		return;
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_ANALYZE);
-	msg.m_databaseid = MyDatabaseId;
+	msg.m_databaseid = shared ? InvalidOid : MyDatabaseId;
 	msg.m_tableoid = tableoid;
 	msg.m_live_tuples = livetuples;
 	msg.m_dead_tuples = deadtuples;
@@ -784,7 +797,8 @@ pgstat_report_tabstat(void)
 		  pgstat_collect_blocklevel))
 	{
 		/* Not reporting stats, so just flush whatever we have */
-		pgStatTabstatUsed = 0;
+		RegularTabStat.tsa_used = 0;
+		SharedTabStat.tsa_used = 0;
 		return;
 	}
 
@@ -792,9 +806,9 @@ pgstat_report_tabstat(void)
 	 * For each message buffer used during the last query set the header
 	 * fields and send it out.
 	 */
-	for (i = 0; i < pgStatTabstatUsed; i++)
+	for (i = 0; i < RegularTabStat.tsa_used; i++)
 	{
-		PgStat_MsgTabstat *tsmsg = pgStatTabstatMessages[i];
+		PgStat_MsgTabstat *tsmsg = RegularTabStat.tsa_messages[i];
 		int			n;
 		int			len;
 
@@ -811,8 +825,28 @@ pgstat_report_tabstat(void)
 		tsmsg->m_databaseid = MyDatabaseId;
 		pgstat_send(tsmsg, len);
 	}
+	RegularTabStat.tsa_used = 0;
 
-	pgStatTabstatUsed = 0;
+	/* Ditto, for shared relations */
+	for (i = 0; i < SharedTabStat.tsa_used; i++)
+	{
+		PgStat_MsgTabstat *tsmsg = SharedTabStat.tsa_messages[i];
+		int			n;
+		int			len;
+
+		n = tsmsg->m_nentries;
+		len = offsetof(PgStat_MsgTabstat, m_entry[0]) +
+			n * sizeof(PgStat_TableEntry);
+
+		/* We don't report transaction commit/abort here */
+		tsmsg->m_xact_commit = 0;
+		tsmsg->m_xact_rollback = 0;
+
+		pgstat_setheader(&tsmsg->m_hdr, PGSTAT_MTYPE_TABSTAT);
+		tsmsg->m_databaseid = InvalidOid;
+		pgstat_send(tsmsg, len);
+	}
+	SharedTabStat.tsa_used = 0;
 }
 
 
@@ -850,14 +884,13 @@ pgstat_vacuum_tabstat(void)
 	backend_read_statsfile();
 
 	/*
-	 * Lookup our own database entry
+	 * Lookup our own database entry; if not found, nothing to do.
 	 */
 	dbentry = (PgStat_StatDBEntry *) hash_search(pgStatDBHash,
 												 (void *) &MyDatabaseId,
 												 HASH_FIND, NULL);
 	if (dbentry == NULL)
 		return -1;
-
 	if (dbentry->tables == NULL)
 		return 0;
 
@@ -867,7 +900,7 @@ pgstat_vacuum_tabstat(void)
 	msg.m_nentries = 0;
 
 	/*
-	 * Check for all tables if they still exist.
+	 * Check for all tables listed in stats hashtable if they still exist.
 	 */
 	hash_seq_init(&hstat, dbentry->tables);
 	while ((tabentry = (PgStat_StatTabEntry *) hash_seq_search(&hstat)) != NULL)
@@ -892,7 +925,7 @@ pgstat_vacuum_tabstat(void)
 		nobjects++;
 
 		/*
-		 * If the message is full, send it out and reinitialize ot zero
+		 * If the message is full, send it out and reinitialize to zero
 		 */
 		if (msg.m_nentries >= PGSTAT_NUM_TABPURGE)
 		{
@@ -900,6 +933,7 @@ pgstat_vacuum_tabstat(void)
 				+msg.m_nentries * sizeof(Oid);
 
 			pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_TABPURGE);
+			msg.m_databaseid = MyDatabaseId;
 			pgstat_send(&msg, len);
 
 			msg.m_nentries = 0;
@@ -961,8 +995,8 @@ pgstat_vacuum_tabstat(void)
 
 		if (dbid != InvalidOid)
 		{
-			nobjects++;
 			pgstat_drop_database(dbid);
+			nobjects++;
 		}
 	}
 
@@ -1045,15 +1079,19 @@ pgstat_ping(void)
 }
 
 /*
- * Create or enlarge the pgStatTabstatMessages array
+ * Enlarge a TabStatArray
  */
 static void
-more_tabstat_space(void)
+more_tabstat_space(TabStatArray *tsarr)
 {
 	PgStat_MsgTabstat *newMessages;
 	PgStat_MsgTabstat **msgArray;
-	int			newAlloc = pgStatTabstatAlloc + TABSTAT_QUANTUM;
+	int			newAlloc;
 	int			i;
+
+	AssertArg(PointerIsValid(tsarr));
+
+	newAlloc = tsarr->tsa_alloc + TABSTAT_QUANTUM;
 
 	/* Create (another) quantum of message buffers */
 	newMessages = (PgStat_MsgTabstat *)
@@ -1061,21 +1099,21 @@ more_tabstat_space(void)
 							   sizeof(PgStat_MsgTabstat) * TABSTAT_QUANTUM);
 
 	/* Create or enlarge the pointer array */
-	if (pgStatTabstatMessages == NULL)
+	if (tsarr->tsa_messages == NULL)
 		msgArray = (PgStat_MsgTabstat **)
 			MemoryContextAlloc(TopMemoryContext,
 							   sizeof(PgStat_MsgTabstat *) * newAlloc);
 	else
 		msgArray = (PgStat_MsgTabstat **)
-			repalloc(pgStatTabstatMessages,
+			repalloc(tsarr->tsa_messages,
 					 sizeof(PgStat_MsgTabstat *) * newAlloc);
 
 	for (i = 0; i < TABSTAT_QUANTUM; i++)
-		msgArray[pgStatTabstatAlloc + i] = newMessages++;
-	pgStatTabstatMessages = msgArray;
-	pgStatTabstatAlloc = newAlloc;
+		msgArray[tsarr->tsa_alloc + i] = newMessages++;
+	tsarr->tsa_messages = msgArray;
+	tsarr->tsa_alloc = newAlloc;
 
-	Assert(pgStatTabstatUsed < pgStatTabstatAlloc);
+	Assert(tsarr->tsa_used < tsarr->tsa_alloc);
 }
 
 /* ----------
@@ -1092,6 +1130,7 @@ pgstat_initstats(PgStat_Info *stats, Relation rel)
 {
 	Oid			rel_id = rel->rd_id;
 	PgStat_TableEntry *useent;
+	TabStatArray	*tsarr;
 	PgStat_MsgTabstat *tsmsg;
 	int			mb;
 	int			i;
@@ -1112,12 +1151,14 @@ pgstat_initstats(PgStat_Info *stats, Relation rel)
 		return;
 	}
 
+	tsarr = rel->rd_rel->relisshared ? &SharedTabStat : &RegularTabStat;
+
 	/*
 	 * Search the already-used message slots for this relation.
 	 */
-	for (mb = 0; mb < pgStatTabstatUsed; mb++)
+	for (mb = 0; mb < tsarr->tsa_used; mb++)
 	{
-		tsmsg = pgStatTabstatMessages[mb];
+		tsmsg = tsarr->tsa_messages[mb];
 
 		for (i = tsmsg->m_nentries; --i >= 0;)
 		{
@@ -1146,14 +1187,14 @@ pgstat_initstats(PgStat_Info *stats, Relation rel)
 	/*
 	 * If we ran out of message buffers, we just allocate more.
 	 */
-	if (pgStatTabstatUsed >= pgStatTabstatAlloc)
-		more_tabstat_space();
+	if (tsarr->tsa_used >= tsarr->tsa_alloc)
+		more_tabstat_space(tsarr);
 
 	/*
 	 * Use the first entry of the next message buffer.
 	 */
-	mb = pgStatTabstatUsed++;
-	tsmsg = pgStatTabstatMessages[mb];
+	mb = tsarr->tsa_used++;
+	tsmsg = tsarr->tsa_messages[mb];
 	tsmsg->m_nentries = 1;
 	useent = &tsmsg->m_entry[0];
 	MemSet(useent, 0, sizeof(PgStat_TableEntry));
@@ -1183,13 +1224,13 @@ pgstat_count_xact_commit(void)
 	 * message buffer used without slots, causing the next report to tell
 	 * new xact-counters.
 	 */
-	if (pgStatTabstatAlloc == 0)
-		more_tabstat_space();
+	if (RegularTabStat.tsa_alloc == 0)
+		more_tabstat_space(&RegularTabStat);
 
-	if (pgStatTabstatUsed == 0)
+	if (RegularTabStat.tsa_used == 0)
 	{
-		pgStatTabstatUsed++;
-		pgStatTabstatMessages[0]->m_nentries = 0;
+		RegularTabStat.tsa_used++;
+		RegularTabStat.tsa_messages[0]->m_nentries = 0;
 	}
 }
 
@@ -1215,13 +1256,13 @@ pgstat_count_xact_rollback(void)
 	 * message buffer used without slots, causing the next report to tell
 	 * new xact-counters.
 	 */
-	if (pgStatTabstatAlloc == 0)
-		more_tabstat_space();
+	if (RegularTabStat.tsa_alloc == 0)
+		more_tabstat_space(&RegularTabStat);
 
-	if (pgStatTabstatUsed == 0)
+	if (RegularTabStat.tsa_used == 0)
 	{
-		pgStatTabstatUsed++;
-		pgStatTabstatMessages[0]->m_nentries = 0;
+		RegularTabStat.tsa_used++;
+		RegularTabStat.tsa_messages[0]->m_nentries = 0;
 	}
 }
 
@@ -1265,6 +1306,7 @@ pgstat_fetch_stat_dbentry(Oid dbid)
 PgStat_StatTabEntry *
 pgstat_fetch_stat_tabentry(Oid relid)
 {
+	Oid			dbid;
 	PgStat_StatDBEntry *dbentry;
 	PgStat_StatTabEntry *tabentry;
 
@@ -1275,26 +1317,38 @@ pgstat_fetch_stat_tabentry(Oid relid)
 	backend_read_statsfile();
 
 	/*
-	 * Lookup our database.
+	 * Lookup our database, then look in its table hash table.
 	 */
+	dbid = MyDatabaseId;
 	dbentry = (PgStat_StatDBEntry *) hash_search(pgStatDBHash,
-												 (void *) &MyDatabaseId,
+												 (void *) &dbid,
 												 HASH_FIND, NULL);
-	if (dbentry == NULL)
-		return NULL;
+	if (dbentry != NULL && dbentry->tables != NULL)
+	{
+		tabentry = (PgStat_StatTabEntry *) hash_search(dbentry->tables,
+													   (void *) &relid,
+													   HASH_FIND, NULL);
+		if (tabentry)
+			return tabentry;
+	}
 
 	/*
-	 * Now inside the DB's table hash table lookup the requested one.
+	 * If we didn't find it, maybe it's a shared table.
 	 */
-	if (dbentry->tables == NULL)
-		return NULL;
-	tabentry = (PgStat_StatTabEntry *) hash_search(dbentry->tables,
-												   (void *) &relid,
-												   HASH_FIND, NULL);
-	if (tabentry == NULL)
-		return NULL;
+	dbid = InvalidOid;
+	dbentry = (PgStat_StatDBEntry *) hash_search(pgStatDBHash,
+												 (void *) &dbid,
+												 HASH_FIND, NULL);
+	if (dbentry != NULL && dbentry->tables != NULL)
+	{
+		tabentry = (PgStat_StatTabEntry *) hash_search(dbentry->tables,
+													   (void *) &relid,
+													   HASH_FIND, NULL);
+		if (tabentry)
+			return tabentry;
+	}
 
-	return tabentry;
+	return NULL;
 }
 
 
@@ -2107,18 +2161,23 @@ pgstat_add_backend(PgStat_MsgHdr *msg)
 
 /*
  * Lookup the hash table entry for the specified database. If no hash
- * table entry exists, initialize it.
+ * table entry exists, initialize it, if the create parameter is true.
+ * Else, return NULL.
  */
 static PgStat_StatDBEntry *
-pgstat_get_db_entry(Oid databaseid)
+pgstat_get_db_entry(Oid databaseid, bool create)
 {
 	PgStat_StatDBEntry *result;
 	bool found;
+	HASHACTION action = (create ? HASH_ENTER : HASH_FIND);
 
 	/* Lookup or create the hash table entry for this database */
 	result = (PgStat_StatDBEntry *) hash_search(pgStatDBHash,
 												&databaseid,
-												HASH_ENTER, &found);
+												action, &found);
+
+	if (!create && !found)
+		return NULL;
 
 	/* If not found, initialize the new one. */
 	if (!found)
@@ -2387,7 +2446,7 @@ pgstat_write_statsfile(void)
  * pgstat_read_statsfile() -
  *
  *	Reads in an existing statistics collector and initializes the
- *	databases hash table (who's entries point to the tables hash tables)
+ *	databases' hash table (whose entries point to the tables' hash tables)
  *	and the current backend table.
  * ----------
  */
@@ -2507,10 +2566,15 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 				dbentry->n_backends = 0;
 
 				/*
-				 * Don't collect tables if not the requested DB
+				 * Don't collect tables if not the requested DB (or the
+				 * shared-table info)
 				 */
-				if (onlydb != InvalidOid && onlydb != dbbuf.databaseid)
+				if (onlydb != InvalidOid)
+				{
+					if (dbbuf.databaseid != onlydb &&
+						dbbuf.databaseid != InvalidOid)
 					break;
+				}
 
 				memset(&hash_ctl, 0, sizeof(hash_ctl));
 				hash_ctl.keysize = sizeof(Oid);
@@ -2588,12 +2652,12 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 				 * backend table.
 				 */
 				if (use_mcxt == NULL)
-					*betab = (PgStat_StatBeEntry *) palloc(
-							   sizeof(PgStat_StatBeEntry) * maxbackends);
+					*betab = (PgStat_StatBeEntry *)
+						palloc(sizeof(PgStat_StatBeEntry) * maxbackends);
 				else
-					*betab = (PgStat_StatBeEntry *) MemoryContextAlloc(
-																use_mcxt,
-							   sizeof(PgStat_StatBeEntry) * maxbackends);
+					*betab = (PgStat_StatBeEntry *)
+						MemoryContextAlloc(use_mcxt,
+										   sizeof(PgStat_StatBeEntry) * maxbackends);
 				break;
 
 				/*
@@ -2738,14 +2802,16 @@ pgstat_recv_autovac(PgStat_MsgAutovacStart *msg, int len)
 	PgStat_StatDBEntry *dbentry;
 
 	/*
-	 * Lookup the database in the hashtable.
-	 *
-	 * XXX this creates the entry if it doesn't exist.  Is this a problem?  (We
-	 * could leak an entry if we send an autovac message and the database is
-	 * later destroyed, _and_ the messages are rearranged.  Doesn't seem very
-	 * likely though.)  Not sure what to do about it.
+	 * Lookup the database in the hashtable.  Don't create the entry if it
+	 * doesn't exist, because autovacuum may be processing a template
+	 * database.  If this isn't the case, the database is most likely to
+	 * have an entry already.  (If it doesn't, not much harm is done
+	 * anyway -- it'll get created as soon as somebody actually uses
+	 * the database.)
 	 */
-	dbentry = pgstat_get_db_entry(msg->m_databaseid);
+	dbentry = pgstat_get_db_entry(msg->m_databaseid, false);
+	if (dbentry == NULL)
+		return;
 
 	/*
 	 * Store the last autovacuum time in the database entry.
@@ -2765,8 +2831,19 @@ pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len)
 	PgStat_StatDBEntry *dbentry;
 	PgStat_StatTabEntry *tabentry;
 	bool		found;
+	bool		create;
 
-	dbentry = pgstat_get_db_entry(msg->m_databaseid);
+	/*
+	 * If we don't know about the database, ignore the message, because it
+	 * may be autovacuum processing a template database.  But if the message
+	 * is for database InvalidOid, don't ignore it, because we are getting
+	 * a message from vacuuming a shared relation.
+	 */
+	create = (msg->m_databaseid == InvalidOid);
+
+	dbentry = pgstat_get_db_entry(msg->m_databaseid, create);
+	if (dbentry == NULL)
+		return;
 
 	tabentry = hash_search(dbentry->tables, &(msg->m_tableoid),
 						   HASH_ENTER, &found);
@@ -2819,7 +2896,12 @@ pgstat_recv_analyze(PgStat_MsgAnalyze *msg, int len)
 	PgStat_StatTabEntry *tabentry;
 	bool		found;
 
-	dbentry = pgstat_get_db_entry(msg->m_databaseid);
+	/*
+	 * Note that we do create the database entry here, as opposed to what
+	 * we do on AutovacStart and Vacuum messages.  This is because
+	 * autovacuum never executes ANALYZE on template databases.
+	 */
+	dbentry = pgstat_get_db_entry(msg->m_databaseid, true);
 
 	tabentry = hash_search(dbentry->tables, &(msg->m_tableoid),
 						   HASH_ENTER, &found);
@@ -2902,7 +2984,7 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 	if (pgstat_add_backend(&msg->m_hdr) < 0)
 		return;
 
-	dbentry = pgstat_get_db_entry(msg->m_databaseid);
+	dbentry = pgstat_get_db_entry(msg->m_databaseid, true);
 
 	/*
 	 * If the database is marked for destroy, this is a delayed UDP packet
@@ -2994,7 +3076,13 @@ pgstat_recv_tabpurge(PgStat_MsgTabpurge *msg, int len)
 	if (pgstat_add_backend(&msg->m_hdr) < 0)
 		return;
 
-	dbentry = pgstat_get_db_entry(msg->m_databaseid);
+	dbentry = pgstat_get_db_entry(msg->m_databaseid, false);
+
+	/*
+	 * No need to purge if we don't even know the database.
+	 */
+	if (!dbentry || !dbentry->tables)
+		return;
 
 	/*
 	 * If the database is marked for destroy, this is a delayed UDP packet
@@ -3037,12 +3125,13 @@ pgstat_recv_dropdb(PgStat_MsgDropdb *msg, int len)
 	/*
 	 * Lookup the database in the hashtable.
 	 */
-	dbentry = pgstat_get_db_entry(msg->m_databaseid);
+	dbentry = pgstat_get_db_entry(msg->m_databaseid, false);
 
 	/*
 	 * Mark the database for destruction.
 	 */
-	dbentry->destroy = PGSTAT_DESTROY_COUNT;
+	if (dbentry)
+		dbentry->destroy = PGSTAT_DESTROY_COUNT;
 }
 
 
@@ -3065,9 +3154,12 @@ pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len)
 		return;
 
 	/*
-	 * Lookup the database in the hashtable.
+	 * Lookup the database in the hashtable.  Nothing to do if not there.
 	 */
-	dbentry = pgstat_get_db_entry(msg->m_databaseid);
+	dbentry = pgstat_get_db_entry(msg->m_databaseid, false);
+
+	if (!dbentry)
+		return;
 
 	/*
 	 * We simply throw away all the database's table entries by

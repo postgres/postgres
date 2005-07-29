@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.311 2005/07/14 05:13:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.312 2005/07/29 19:30:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,7 @@
 #include "tcop/pquery.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/flatfiles.h"
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
@@ -490,7 +491,7 @@ vacuum(VacuumStmt *vacstmt, List *relids)
 		 * If it was a database-wide VACUUM, print FSM usage statistics
 		 * (we don't make you be superuser to see these).
 		 */
-		if (vacstmt->relation == NULL)
+		if (all_rels)
 			PrintFreeSpaceMapStatistics(elevel);
 
 		/*
@@ -712,7 +713,7 @@ vac_update_relstats(Oid relid, BlockNumber num_pages, double num_tuples,
  *	vac_update_dbstats() -- update statistics for one database
  *
  *		Update the whole-database statistics that are kept in its pg_database
- *		row.
+ *		row, and the flat-file copy of pg_database.
  *
  *		We violate no-overwrite semantics here by storing new values for the
  *		statistics columns directly into the tuple that's already on the page.
@@ -721,8 +722,6 @@ vac_update_relstats(Oid relid, BlockNumber num_pages, double num_tuples,
  *
  *		This routine is shared by full and lazy VACUUM.  Note that it is only
  *		applied after a database-wide VACUUM operation.
- *
- *		Note that we don't bother to update the flat-file copy of pg_database.
  */
 static void
 vac_update_dbstats(Oid dbid,
@@ -768,6 +767,9 @@ vac_update_dbstats(Oid dbid,
 	heap_endscan(scan);
 
 	heap_close(relation, RowExclusiveLock);
+
+	/* Mark the flat-file copy of pg_database for update at commit */
+	database_file_update_needed();
 }
 
 
@@ -1165,8 +1167,8 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 						vacrelstats->rel_tuples, vacrelstats->hasindex);
 
 	/* report results to the stats collector, too */
-	pgstat_report_vacuum(RelationGetRelid(onerel), vacstmt->analyze,
-						 vacrelstats->rel_tuples);
+	pgstat_report_vacuum(RelationGetRelid(onerel), onerel->rd_rel->relisshared,
+		   				 vacstmt->analyze, vacrelstats->rel_tuples);
 }
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.87 2005/07/14 05:13:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.88 2005/07/29 19:30:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -317,7 +317,9 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 		 * a zero-column table.
 		 */
 		if (!vacstmt->vacuum)
-			pgstat_report_analyze(RelationGetRelid(onerel), 0, 0);
+			pgstat_report_analyze(RelationGetRelid(onerel),
+								  onerel->rd_rel->relisshared,
+				   				  0, 0);
 
 		vac_close_indexes(nindexes, Irel, AccessShareLock);
 		relation_close(onerel, AccessShareLock);
@@ -436,8 +438,9 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 		}
 
 		/* report results to the stats collector, too */
-		pgstat_report_analyze(RelationGetRelid(onerel), totalrows,
-							  totaldeadrows);
+		pgstat_report_analyze(RelationGetRelid(onerel),
+							  onerel->rd_rel->relisshared,
+			   				  totalrows, totaldeadrows);
 	}
 
 	/* Done with indexes */

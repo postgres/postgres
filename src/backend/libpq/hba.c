@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.145 2005/07/28 15:30:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.146 2005/07/29 19:30:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@
 
 
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
+#define atoxid(x)  ((TransactionId) strtoul((x), NULL, 10))
 
 /* Max size of username ident server can return */
 #define IDENT_USERNAME_MAX 512
@@ -999,13 +1000,14 @@ load_hba(void)
  *	dbname: gets database name (must be of size NAMEDATALEN bytes)
  *	dboid: gets database OID
  *	dbtablespace: gets database's default tablespace's OID
+ *	dbfrozenxid: gets database's frozen XID
  *
  * This is not much related to the other functions in hba.c, but we put it
  * here because it uses the next_token() infrastructure.
  */
 bool
-read_pg_database_line(FILE *fp, char *dbname,
-					  Oid *dboid, Oid *dbtablespace)
+read_pg_database_line(FILE *fp, char *dbname, Oid *dboid,
+					  Oid *dbtablespace, TransactionId *dbfrozenxid)
 {
 	char		buf[MAX_TOKEN];
 
@@ -1024,10 +1026,10 @@ read_pg_database_line(FILE *fp, char *dbname,
 	if (!isdigit((unsigned char) buf[0]))
 		elog(FATAL, "bad data in flat pg_database file");
 	*dbtablespace = atooid(buf);
-	/* discard datfrozenxid */
 	next_token(fp, buf, sizeof(buf));
 	if (!isdigit((unsigned char) buf[0]))
 		elog(FATAL, "bad data in flat pg_database file");
+	*dbfrozenxid = atoxid(buf);
 	/* expect EOL next */
 	if (next_token(fp, buf, sizeof(buf)))
 		elog(FATAL, "bad data in flat pg_database file");

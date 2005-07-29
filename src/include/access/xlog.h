@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.66 2005/07/04 04:51:52 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.67 2005/07/29 19:30:08 tgl Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -165,5 +165,6 @@ extern void InitXLOGAccess(void);
 extern void CreateCheckPoint(bool shutdown, bool force);
 extern void XLogPutNextOid(Oid nextOid);
 extern XLogRecPtr GetRedoRecPtr(void);
+extern TransactionId GetRecentNextXid(void);
 
 #endif   /* XLOG_H */

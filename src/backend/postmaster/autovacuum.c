@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.1 2005/07/14 05:13:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.2 2005/07/29 19:30:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,9 +23,10 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/xlog.h"
 #include "catalog/indexing.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_autovacuum.h"
-#include "catalog/pg_database.h"
 #include "commands/vacuum.h"
 #include "libpq/hba.h"
 #include "libpq/pqsignal.h"
@@ -68,7 +69,9 @@ typedef struct autovac_dbase
 {
 	Oid				oid;
 	char		   *name;
+	TransactionId	frozenxid;
 	PgStat_StatDBEntry *entry;
+	int32			age;
 } autovac_dbase;
 
 
@@ -76,8 +79,7 @@ typedef struct autovac_dbase
 static pid_t autovac_forkexec(void);
 #endif
 NON_EXEC_STATIC void AutoVacMain(int argc, char *argv[]);
-static void autovac_check_wraparound(void);
-static void do_autovacuum(PgStat_StatDBEntry *dbentry);
+static void do_autovacuum(bool whole_db, PgStat_StatDBEntry *dbentry);
 static List *autovac_get_database_list(void);
 static void test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 			 Form_pg_class classForm, Form_pg_autovacuum avForm,
@@ -193,7 +195,9 @@ AutoVacMain(int argc, char *argv[])
 {
 	ListCell	   *cell;
 	List		   *dblist;
+	TransactionId	nextXid;
 	autovac_dbase  *db;
+	bool			whole_db;
 	sigjmp_buf		local_sigjmp_buf;
 
 	/* we are a postmaster subprocess now */
@@ -268,22 +272,62 @@ AutoVacMain(int argc, char *argv[])
 	dblist = autovac_get_database_list();
 
 	/*
+	 * Get the next Xid that was current as of the last checkpoint.
+	 * We need it to determine whether databases are about to need
+	 * database-wide vacuums.
+	 */
+	nextXid = GetRecentNextXid();
+
+	/*
 	 * Choose a database to connect to.  We pick the database that was least
-	 * recently auto-vacuumed.
+	 * recently auto-vacuumed, or one that needs database-wide vacuum (to
+	 * prevent Xid wraparound-related data loss).
+	 *
+	 * Note that a database with no stats entry is not considered, except
+	 * for Xid wraparound purposes.  The theory is that if no one has ever
+	 * connected to it since the stats were last initialized, it doesn't
+	 * need vacuuming.
 	 *
 	 * XXX This could be improved if we had more info about whether it needs
 	 * vacuuming before connecting to it.  Perhaps look through the pgstats
-	 * data for the database's tables?
-	 *
-	 * XXX it is NOT good that we totally ignore databases that have no
-	 * pgstats entry ...
+	 * data for the database's tables?  One idea is to keep track of the
+	 * number of new and dead tuples per database in pgstats.  However it
+	 * isn't clear how to construct a metric that measures that and not
+	 * cause starvation for less busy databases.
 	 */
 	db = NULL;
+	whole_db = false;
 
 	foreach(cell, dblist)
 	{
-		autovac_dbase	*tmp = lfirst(cell);
+		autovac_dbase  *tmp = lfirst(cell);
+		bool			this_whole_db;
 
+		/*
+		 * We look for the database that most urgently needs a database-wide
+		 * vacuum.  We decide that a database-wide vacuum is needed 100000
+		 * transactions sooner than vacuum.c's vac_truncate_clog() would
+		 * decide to start giving warnings.  If any such db is found, we
+		 * ignore all other dbs.
+		 */
+		tmp->age = (int32) (nextXid - tmp->frozenxid);
+		this_whole_db = (tmp->age > (int32) ((MaxTransactionId >> 3) * 3 - 100000));
+		if (whole_db || this_whole_db)
+		{
+			if (!this_whole_db)
+				continue;
+			if (db == NULL || tmp->age > db->age)
+			{
+				db = tmp;
+				whole_db = true;
+			}
+			continue;
+		}
+
+		/*
+		 * Otherwise, skip a database with no pgstat entry; it means it hasn't
+		 * seen any activity.
+		 */
 		tmp->entry = pgstat_fetch_stat_dbentry(tmp->oid);
 		if (!tmp->entry)
 			continue;
@@ -292,12 +336,18 @@ AutoVacMain(int argc, char *argv[])
 		 * Don't try to access a database that was dropped.  This could only
 		 * happen if we read the pg_database flat file right before it was
 		 * modified, after the database was dropped from the pg_database
-		 * table.
+		 * table.  (This is of course a not-very-bulletproof test, but it's
+		 * cheap to make.  If we do mistakenly choose a recently dropped
+		 * database, InitPostgres will fail and we'll drop out until the
+		 * next autovac run.)
 		 */
 		if (tmp->entry->destroy != 0)
 			continue;
 
-		if (!db ||
+		/*
+		 * Else remember the db with oldest autovac time.
+		 */
+		if (db == NULL ||
 			tmp->entry->last_autovac_time < db->entry->last_autovac_time)
 			db = tmp;
 	}
@@ -316,7 +366,7 @@ AutoVacMain(int argc, char *argv[])
 		/*
 		 * And do an appropriate amount of work on it
 		 */
-		do_autovacuum(db->entry);
+		do_autovacuum(whole_db, db->entry);
 	}
 
 	/* One iteration done, go away */
@@ -338,6 +388,7 @@ autovac_get_database_list(void)
 	FILE   *db_file;
 	Oid		db_id;
 	Oid		db_tablespace;
+	TransactionId db_frozenxid;
 
 	filename = database_getflatfilename();
 	db_file = AllocateFile(filename, "r");
@@ -346,7 +397,8 @@ autovac_get_database_list(void)
 				(errcode_for_file_access(),
 				 errmsg("could not open file \"%s\": %m", filename)));
 
-	while (read_pg_database_line(db_file, thisname, &db_id, &db_tablespace))
+	while (read_pg_database_line(db_file, thisname, &db_id,
+								 &db_tablespace, &db_frozenxid))
 	{
 		autovac_dbase	*db;
 
@@ -354,8 +406,10 @@ autovac_get_database_list(void)
 
 		db->oid = db_id;
 		db->name = pstrdup(thisname);
-		/* this gets set later */
+		db->frozenxid = db_frozenxid;
+		/* these get set later: */
 		db->entry = NULL;
+		db->age = 0;
 
 		dblist = lappend(dblist, db);
 	}
@@ -369,6 +423,12 @@ autovac_get_database_list(void)
 /*
  * Process a database.
  *
+ * If whole_db is true, the database is processed as a whole, and the
+ * dbentry parameter is ignored.  If it's false, dbentry must be a valid
+ * pointer to the database entry in the stats databases' hash table, and
+ * it will be used to determine whether vacuum or analyze is needed on a
+ * per-table basis.
+ *
  * Note that test_rel_for_autovac generates two separate lists, one for
  * vacuum and other for analyze.  This is to facilitate processing all
  * analyzes first, and then all vacuums.
@@ -377,7 +437,7 @@ autovac_get_database_list(void)
  * order not to ignore shutdown commands for too long.
  */
 static void
-do_autovacuum(PgStat_StatDBEntry *dbentry)
+do_autovacuum(bool whole_db, PgStat_StatDBEntry *dbentry)
 {
 	Relation		classRel,
 					avRel;
@@ -386,6 +446,8 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
 	List		   *vacuum_tables = NIL,
 				   *analyze_tables = NIL;
 	MemoryContext	AutovacMemCxt;
+
+	Assert(whole_db || PointerIsValid(dbentry));
 
 	/* Memory context where cross-transaction state is stored */
 	AutovacMemCxt = AllocSetContextCreate(TopMemoryContext,
@@ -405,81 +467,94 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
 	 */
 	MemoryContextSwitchTo(AutovacMemCxt);
 
-	/*
-	 * If this database is old enough to need a whole-database VACUUM,
-	 * don't bother checking each table.  If that happens, this function
-	 * will issue the VACUUM command and won't return.
-	 */
-	autovac_check_wraparound();
-
-	CHECK_FOR_INTERRUPTS();
-
-	classRel = heap_open(RelationRelationId, AccessShareLock);
-	avRel = heap_open(AutovacuumRelationId, AccessShareLock);
-
-	relScan = heap_beginscan(classRel, SnapshotNow, 0, NULL);
-
-	/* Scan pg_class looking for tables to vacuum */
-	while ((tuple = heap_getnext(relScan, ForwardScanDirection)) != NULL)
+	if (whole_db)
 	{
-		Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tuple);
-		Form_pg_autovacuum avForm = NULL;
-		PgStat_StatTabEntry *tabentry;
-		SysScanDesc	avScan;
-		HeapTuple	avTup;
-		ScanKeyData	entry[1];
-		Oid			relid;
-
-		/* Skip non-table entries. */
-		/* XXX possibly allow RELKIND_TOASTVALUE entries here too? */
-		if (classForm->relkind != RELKIND_RELATION)
-			continue;
-		
-		relid = HeapTupleGetOid(tuple);
-
-		/* See if we have a pg_autovacuum entry for this relation. */
-		ScanKeyInit(&entry[0],
-					Anum_pg_autovacuum_vacrelid,
-					BTEqualStrategyNumber, F_OIDEQ,
-					ObjectIdGetDatum(relid));
-
-		avScan = systable_beginscan(avRel, AutovacuumRelidIndexId, true,
- 									SnapshotNow, 1, entry);
-
-		avTup = systable_getnext(avScan);
-
-		if (HeapTupleIsValid(avTup))
-			avForm = (Form_pg_autovacuum) GETSTRUCT(avTup);
-
-		tabentry = hash_search(dbentry->tables, &relid,
-							   HASH_FIND, NULL);
-
-		test_rel_for_autovac(relid, tabentry, classForm, avForm,
-							 &vacuum_tables, &analyze_tables);
-
-		systable_endscan(avScan);
+		elog(DEBUG2, "autovacuum: VACUUM ANALYZE whole database");
+		autovacuum_do_vac_analyze(NIL, true);
 	}
+	else
+	{
+		/* the hash entry where pgstat stores shared relations */
+		PgStat_StatDBEntry *shared = pgstat_fetch_stat_dbentry(InvalidOid);
 
-	heap_endscan(relScan);
-	heap_close(avRel, AccessShareLock);
-	heap_close(classRel, AccessShareLock);
+		classRel = heap_open(RelationRelationId, AccessShareLock);
+		avRel = heap_open(AutovacuumRelationId, AccessShareLock);
 
-	CHECK_FOR_INTERRUPTS();
+		relScan = heap_beginscan(classRel, SnapshotNow, 0, NULL);
 
-	/*
-	 * Perform operations on collected tables.
-	 */  
+		/* Scan pg_class looking for tables to vacuum */
+		while ((tuple = heap_getnext(relScan, ForwardScanDirection)) != NULL)
+		{
+			Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tuple);
+			Form_pg_autovacuum avForm = NULL;
+			PgStat_StatTabEntry *tabentry;
+			SysScanDesc	avScan;
+			HeapTuple	avTup;
+			ScanKeyData	entry[1];
+			Oid			relid;
 
-	if (analyze_tables)
-		autovacuum_do_vac_analyze(analyze_tables, false);
+			/* Skip non-table entries. */
+			/* XXX possibly allow RELKIND_TOASTVALUE entries here too? */
+			if (classForm->relkind != RELKIND_RELATION)
+				continue;
 
-	CHECK_FOR_INTERRUPTS();
+			/*
+			 * Skip temp tables (i.e. those in temp namespaces).  We cannot
+			 * safely process other backends' temp tables.
+			 */
+			if (isTempNamespace(classForm->relnamespace))
+				continue;
 
-	/* get back to proper context */
-	MemoryContextSwitchTo(AutovacMemCxt);
+			relid = HeapTupleGetOid(tuple);
 
-	if (vacuum_tables)
-		autovacuum_do_vac_analyze(vacuum_tables, true);
+			/* See if we have a pg_autovacuum entry for this relation. */
+			ScanKeyInit(&entry[0],
+						Anum_pg_autovacuum_vacrelid,
+						BTEqualStrategyNumber, F_OIDEQ,
+						ObjectIdGetDatum(relid));
+
+			avScan = systable_beginscan(avRel, AutovacuumRelidIndexId, true,
+										SnapshotNow, 1, entry);
+
+			avTup = systable_getnext(avScan);
+
+			if (HeapTupleIsValid(avTup))
+				avForm = (Form_pg_autovacuum) GETSTRUCT(avTup);
+
+			if (classForm->relisshared && PointerIsValid(shared))
+				tabentry = hash_search(shared->tables, &relid,
+									   HASH_FIND, NULL);
+			else
+				tabentry = hash_search(dbentry->tables, &relid,
+									   HASH_FIND, NULL);
+
+			test_rel_for_autovac(relid, tabentry, classForm, avForm,
+								 &vacuum_tables, &analyze_tables);
+
+			systable_endscan(avScan);
+		}
+
+		heap_endscan(relScan);
+		heap_close(avRel, AccessShareLock);
+		heap_close(classRel, AccessShareLock);
+
+		CHECK_FOR_INTERRUPTS();
+
+		/*
+		 * Perform operations on collected tables.
+		 */
+
+		if (analyze_tables)
+			autovacuum_do_vac_analyze(analyze_tables, false);
+
+		CHECK_FOR_INTERRUPTS();
+
+		/* get back to proper context */
+		MemoryContextSwitchTo(AutovacMemCxt);
+
+		if (vacuum_tables)
+			autovacuum_do_vac_analyze(vacuum_tables, true);
+	}
 
 	/* Finally close out the last transaction. */
 	CommitTransactionCommand();
@@ -503,7 +578,9 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
  * analyze.  This is asymmetric to the VACUUM case.
  *
  * A table whose pg_autovacuum.enabled value is false, is automatically
- * skipped.  Thus autovacuum can be disabled for specific tables.
+ * skipped.  Thus autovacuum can be disabled for specific tables.  Also,
+ * when the stats collector does not have data about a table, it will be
+ * skipped.
  *
  * A table whose vac_base_thresh value is <0 takes the base value from the
  * autovacuum_vacuum_threshold GUC variable.  Similarly, a vac_scale_factor
@@ -534,25 +611,18 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 	if (avForm && !avForm->enabled)
 		return;
 
-	rel = RelationIdGetRelation(relid);
-	/* The table was recently dropped? */
-	if (rel == NULL)
+	/*
+	 * Skip a table not found in stat hash.  If it's not acted upon,
+	 * there's no need to vacuum it.  (Note that database-level check
+	 * will take care of Xid wraparound.)
+	 */
+	if (!PointerIsValid(tabentry))
 		return;
 
-	/* Not found in stat hash? */
-	if (tabentry == NULL)
-	{
-		/*
-		 * Analyze this table.  It will emit a stat message for the
-		 * collector that will initialize the entry for the next time
-		 * around, so we won't have to guess again.
-		 */
-		elog(DEBUG2, "table %s not known to stat system, will ANALYZE",
-			 RelationGetRelationName(rel));
-		*analyze_tables = lappend_oid(*analyze_tables, relid);
-		RelationClose(rel);
+	rel = RelationIdGetRelation(relid);
+	/* The table was recently dropped? */
+	if (!PointerIsValid(rel))
 		return;
-	}
 
 	reltuples = rel->rd_rel->reltuples;
 	vactuples = tabentry->n_dead_tuples;
@@ -607,9 +677,13 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 	}
 	else if (anltuples > anlthresh)
 	{
-		elog(DEBUG2, "will ANALYZE %s",
-			 RelationGetRelationName(rel));
-		*analyze_tables = lappend_oid(*analyze_tables, relid);
+		/* ANALYZE refuses to work with pg_statistics */
+		if (relid != StatisticRelationId)
+		{
+			elog(DEBUG2, "will ANALYZE %s",
+					RelationGetRelationName(rel));
+			*analyze_tables = lappend_oid(*analyze_tables, relid);
+		}
 	}
 
 	RelationClose(rel);
@@ -643,61 +717,6 @@ autovacuum_do_vac_analyze(List *relids, bool dovacuum)
 	vacstmt->va_cols = NIL;
 
 	vacuum(vacstmt, relids);
-}
-
-/*
- * autovac_check_wraparound
- *		Check database Xid wraparound
- * 
- * Check pg_database to see if the last database-wide VACUUM was too long ago,
- * and issue one now if so.  If this comes to pass, we do not return, as there
- * is no point in checking individual tables -- they will all get vacuumed
- * anyway.
- */
-static void
-autovac_check_wraparound(void)
-{
-	Relation	relation;
-	ScanKeyData	entry[1];
-	HeapScanDesc scan;
-	HeapTuple	tuple;
-	Form_pg_database dbform;
-	int32		age;
-	bool		whole_db;
-
-	relation = heap_open(DatabaseRelationId, AccessShareLock);
-
-	/* Must use a heap scan, since there's no syscache for pg_database */
-	ScanKeyInit(&entry[0],
-				ObjectIdAttributeNumber,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(MyDatabaseId));
-
-	scan = heap_beginscan(relation, SnapshotNow, 1, entry);
-
-	tuple = heap_getnext(scan, ForwardScanDirection);
-
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "could not find tuple for database %u", MyDatabaseId);
-
-	dbform = (Form_pg_database) GETSTRUCT(tuple);
-
-	/*
-	 * We decide to vacuum at the same point where vacuum.c's
-	 * vac_truncate_clog() would decide to start giving warnings.
-	 */
-	age = (int32) (GetTopTransactionId() - dbform->datfrozenxid);
-	whole_db = (age > (int32) ((MaxTransactionId >> 3) * 3));
-
-	heap_endscan(scan);
-	heap_close(relation, AccessShareLock);
-	
-	if (whole_db)
-	{
-		elog(LOG, "autovacuum: VACUUM ANALYZE whole database");
-		autovacuum_do_vac_analyze(NIL, true);
-		proc_exit(0);
-	}
 }
 
 /*
