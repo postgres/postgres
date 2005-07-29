@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepqual.c,v 1.49 2005/03/28 00:58:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepqual.c,v 1.50 2005/07/29 21:40:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,9 +167,6 @@ pull_ors(List *orlist)
 static Expr *
 find_nots(Expr *qual)
 {
-	if (qual == NULL)
-		return NULL;
-
 	if (and_clause((Node *) qual))
 	{
 		List	   *t_list = NIL;
@@ -204,17 +201,13 @@ find_nots(Expr *qual)
 static Expr *
 push_nots(Expr *qual)
 {
-	if (qual == NULL)
-		return make_notclause(qual);	/* XXX is this right?  Or
-										 * possible? */
-
-	/*
-	 * Negate an operator clause if possible: (NOT (< A B)) => (>= A B)
-	 * Otherwise, retain the clause as it is (the NOT can't be pushed down
-	 * any farther).
-	 */
 	if (is_opclause(qual))
 	{
+		/*
+		 * Negate an operator clause if possible: (NOT (< A B)) => (>= A B)
+		 * Otherwise, retain the clause as it is (the NOT can't be pushed down
+		 * any farther).
+		 */
 		OpExpr	   *opexpr = (OpExpr *) qual;
 		Oid			negator = get_negator(opexpr->opno);
 
@@ -256,15 +249,16 @@ push_nots(Expr *qual)
 	{
 		/*
 		 * Another NOT cancels this NOT, so eliminate the NOT and stop
-		 * negating this branch.
+		 * negating this branch.  But search the subexpression for more
+		 * NOTs to simplify.
 		 */
-		return get_notclausearg(qual);
+		return find_nots(get_notclausearg(qual));
 	}
 	else
 	{
 		/*
 		 * We don't know how to negate anything else, place a NOT at this
-		 * level.
+		 * level.  No point in recursing deeper, either.
 		 */
 		return make_notclause(qual);
 	}
@@ -303,9 +297,6 @@ push_nots(Expr *qual)
 static Expr *
 find_duplicate_ors(Expr *qual)
 {
-	if (qual == NULL)
-		return NULL;
-
 	if (or_clause((Node *) qual))
 	{
 		List	   *orlist = NIL;
