@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.211 2005/07/29 03:22:33 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.212 2005/07/29 03:25:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,6 +54,8 @@
  *	with fsync(), but because skipping the kernel buffer forces writes out
  *	quickly, it seems best just to use it for O_SYNC.  It is hard to imagine
  *	how fsync() could be a win for O_DIRECT compared to O_SYNC and O_DIRECT.
+ *	Also, O_DIRECT is never enough to force data to the drives, it merely
+ *	tries to bypass the kernel cache, so we still need O_SYNC or fsync().
  */
 #ifdef O_DIRECT
 #define PG_O_DIRECT				O_DIRECT
