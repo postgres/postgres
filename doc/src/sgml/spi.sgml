@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.41 2005/05/02 00:37:06 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.42 2005/07/29 13:00:03 momjian Exp $
 -->
 
 <chapter id="spi">
@@ -537,8 +537,15 @@ typedef struct
      <term><symbol>SPI_ERROR_TRANSACTION</symbol></term>
      <listitem>
       <para>
-       if <command>BEGIN</>, <command>COMMIT</>, or
-       <command>ROLLBACK</> was attempted
+	   if any command involving transaction manipulation was attempted
+	   (<command>BEGIN</>,
+	   <command>COMMIT</>,
+	   <command>ROLLBACK</>,
+	   <command>SAVEPOINT</>,
+	   <command>PREPARE TRANSACTION</>,
+	   <command>COMMIT PREPARED</>,
+	   <command>ROLLBACK PREPARED</>,
+	   or any variant thereof)
       </para>
      </listitem>
     </varlistentry>
