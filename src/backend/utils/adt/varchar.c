@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.111 2005/07/10 21:13:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.112 2005/07/29 12:59:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -226,7 +226,7 @@ bpchar(PG_FUNCTION_ARGS)
 	char	   *r;
 	char	   *s;
 	int			i;
-	int			charlen;		/* number of charcters in the input string
+	int			charlen;		/* number of characters in the input string
 								 * + VARHDRSZ */
 
 	/* No work if typmod is invalid */
