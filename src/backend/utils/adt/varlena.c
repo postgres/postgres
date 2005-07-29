@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.129 2005/07/21 04:41:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.130 2005/07/29 03:17:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2064,7 +2064,7 @@ appendStringInfoRegexpSubstr(StringInfo str, text *replace_text,
 		{
 			text *append_text = text_substring(PointerGetDatum(replace_text),
 									  substr_start, ch_cnt, false);
-			appendStringInfoString(str, PG_TEXT_GET_STR(append_text));
+			appendStringInfoText(str, append_text);
 			pfree(append_text);
 		}
 		substr_start += ch_cnt + 1;
@@ -2099,7 +2099,7 @@ appendStringInfoRegexpSubstr(StringInfo str, text *replace_text,
 			/* Copy the text that is back reference of regexp. */
 			text *append_text = text_substring(PointerGetDatum(src_text),
 									  so + 1, (eo - so), false);
-			appendStringInfoString(str, PG_TEXT_GET_STR(append_text));
+			appendStringInfoText(str, append_text);
 			pfree(append_text);
 		}
 	}
@@ -2169,7 +2169,7 @@ replace_text_regexp(PG_FUNCTION_ARGS)
 			text *left_text = text_substring(PointerGetDatum(src_text),
 									   data_pos + 1,
 									   pmatch[0].rm_so - data_pos, false);
-			appendStringInfoString(str, PG_TEXT_GET_STR(left_text));
+			appendStringInfoText(str, left_text);
 			pfree(left_text);
 		}
 
@@ -2180,7 +2180,7 @@ replace_text_regexp(PG_FUNCTION_ARGS)
 		if (have_escape)
 			appendStringInfoRegexpSubstr(str, replace_text, pmatch, src_text);
 		else
-			appendStringInfoString(str, PG_TEXT_GET_STR(replace_text));
+			appendStringInfoText(str, replace_text);
 
 		search_start = data_pos = pmatch[0].rm_eo;
 
@@ -2205,7 +2205,7 @@ replace_text_regexp(PG_FUNCTION_ARGS)
 	{
 		text *right_text = text_substring(PointerGetDatum(src_text),
 								   data_pos + 1, -1, true);
-		appendStringInfoString(str, PG_TEXT_GET_STR(right_text));
+		appendStringInfoText(str, right_text);
 		pfree(right_text);
 	}
 
