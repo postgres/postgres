@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepqual.c,v 1.48 2004/12/31 22:00:20 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepqual.c,v 1.48.4.1 2005/07/29 21:40:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -335,9 +335,10 @@ push_nots(Expr *qual)
 	{
 		/*
 		 * Another NOT cancels this NOT, so eliminate the NOT and stop
-		 * negating this branch.
+		 * negating this branch.  But search the subexpression for more
+		 * NOTs to simplify.
 		 */
-		return get_notclausearg(qual);
+		return find_nots(get_notclausearg(qual));
 	}
 	else
 	{
