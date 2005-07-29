@@ -54,10 +54,6 @@ dbmirror -
 	Replication server
 	by Steven Singer <ssinger@navtechinc.com>
 
-dbsize -
-	Reports database and table disk space
-	by Peter Eisentraut <peter_e@gmx.net>
-
 earthdistance -
 	Operator for computing earth distance for two points
 	by Hal Snyder <hal@vailsys.com>
