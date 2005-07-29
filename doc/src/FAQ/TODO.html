@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Thu Jul 28 23:22:50 EDT 2005
+Last updated:           Fri Jul 29 12:05:22 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -848,6 +848,9 @@ first.
     <li>-Add ability to turn off full page writes
     </li><li>When off, write CRC to WAL and check file system blocks
            on recovery
+<p>           If CRC check fails during recovery, remember the page in case
+           a later CRC for that page properly matches.
+</p>
     </li><li>Write full pages during file system write and not when
            the page is modified in the buffer cache
 <p>           This allows most full page writes to happen in the background

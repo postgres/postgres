@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Jul 28 23:22:50 EDT 2005
+Last updated:		Fri Jul 29 12:05:22 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -938,6 +938,10 @@ Write-Ahead Log
 	o  -Add ability to turn off full page writes
 	o  When off, write CRC to WAL and check file system blocks
 	   on recovery
+
+	   If CRC check fails during recovery, remember the page in case
+	   a later CRC for that page properly matches.
+
 	o  Write full pages during file system write and not when
 	   the page is modified in the buffer cache
 
