@@ -102,10 +102,6 @@ oracle -
 	Converts Oracle database schema to PostgreSQL
 	by Gilles Darold <gilles@darold.net>
 
-pg_autovacuum -
-	Automatically performs vacuum
-	by Matthew T. O'Connor <matthew@zeut.net>
-
 pg_buffercache -
 	Real time queries on the shared buffer cache
 	by Mark Kirkwood <markir@paradise.net.nz>
@@ -142,7 +138,7 @@ tablefunc -
 	Examples of functions returning tables
 	by Joe Conway <mail@joeconway.com>
 
-tips/apache_logging -
+tips -
 	Getting Apache to log to PostgreSQL
 	by Terry Mackintosh <terry@terrym.com>
 
