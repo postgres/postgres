@@ -1,9 +1,0 @@
-
-                                  reindexdb
-
-Indexes are known to grow over time.  Being as vacuum doesn't slow or
-clean up after this growth, and there is no command to reindex all tables
-in a database, it made sense to construct this utility to do it.
-
-Shaun Thomas <sthomas@townnews.com>
-

@@ -128,10 +128,6 @@ pgstattuple -
 	space within a table
 	by Tatsuo Ishii <t-ishii@sra.co.jp>
 
-reindexdb - 
-	Reindexes a database
-	by Shaun Thomas <sthomas@townnews.com>
-
 seg -
 	Confidence-interval datatype (GiST indexing example)
 	by Gene Selkov, Jr. <selkovjr@mcs.anl.gov>

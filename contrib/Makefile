@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/Makefile,v 1.58 2005/07/29 14:46:55 momjian Exp $
+# $PostgreSQL: pgsql/contrib/Makefile,v 1.59 2005/07/29 15:13:10 momjian Exp $
 
 subdir = contrib
 top_builddir = ..
@@ -39,7 +39,6 @@ WANTED_DIRS = \
 #		mSQL-interface	\ (requires msql installed)
 #		mac		\ (does not have a makefile)
 #		oracle		\ (does not have a makefile)
-#		reindexdb	\ (does not have a makefile)
 #		start-scripts	\ (does not have a makefile)
 #		xml2		\ (non-standard makefile)
 

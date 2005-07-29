@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.65 2005/07/26 23:24:02 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.66 2005/07/29 15:13:11 momjian Exp $
 PostgreSQL documentation
 Complete list of usable sgml source files in this directory.
 -->
@@ -136,4 +136,5 @@ Complete list of usable sgml source files in this directory.
 <!entity postgres           system "postgres-ref.sgml">
 <!entity postmaster         system "postmaster.sgml">
 <!entity psqlRef            system "psql-ref.sgml">
+<!entity reindexdb          system "reindexdb.sgml">
 <!entity vacuumdb           system "vacuumdb.sgml">

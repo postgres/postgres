@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/bin/scripts/Makefile,v 1.33 2005/03/25 18:17:14 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/scripts/Makefile,v 1.34 2005/07/29 15:13:11 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,7 +14,7 @@ subdir = src/bin/scripts
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-PROGRAMS = createdb createlang createuser dropdb droplang dropuser clusterdb vacuumdb
+PROGRAMS = createdb createlang createuser dropdb droplang dropuser clusterdb vacuumdb reindexdb
 
 override CPPFLAGS := -DFRONTEND -I$(top_srcdir)/src/bin/pg_dump -I$(top_srcdir)/src/bin/psql -I$(libpq_srcdir) $(CPPFLAGS)
 
@@ -31,6 +31,7 @@ droplang: droplang.o common.o print.o mbprint.o
 dropuser: dropuser.o common.o dumputils.o $(top_builddir)/src/backend/parser/keywords.o
 clusterdb: clusterdb.o common.o dumputils.o $(top_builddir)/src/backend/parser/keywords.o
 vacuumdb: vacuumdb.o common.o
+reindexdb: reindexdb.o common.o dumputils.o $(top_builddir)/src/backend/parser/keywords.o
 
 dumputils.c: % : $(top_srcdir)/src/bin/pg_dump/%
 	rm -f $@ && $(LN_S) $< .
@@ -52,6 +53,7 @@ install: all installdirs
 	$(INSTALL_PROGRAM) dropuser$(X)   $(DESTDIR)$(bindir)/dropuser$(X)
 	$(INSTALL_PROGRAM) clusterdb$(X)  $(DESTDIR)$(bindir)/clusterdb$(X)
 	$(INSTALL_PROGRAM) vacuumdb$(X)   $(DESTDIR)$(bindir)/vacuumdb$(X)
+	$(INSTALL_PROGRAM) reindexdb$(X)  $(DESTDIR)$(bindir)/reindexdb$(X)
 
 installdirs:
 	$(mkinstalldirs) $(DESTDIR)$(bindir)

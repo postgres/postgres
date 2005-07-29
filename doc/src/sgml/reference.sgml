@@ -1,5 +1,5 @@
 <!-- reference.sgml
-$PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.55 2005/07/26 23:24:01 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.56 2005/07/29 15:13:11 momjian Exp $
 
 PostgreSQL Reference Manual
 -->
@@ -176,6 +176,7 @@ PostgreSQL Reference Manual
    &pgDumpall;
    &pgRestore;
    &psqlRef;
+   &reindexdb;
    &vacuumdb;
 
  </reference>
