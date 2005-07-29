@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.272 2005/07/26 16:38:25 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.273 2005/07/29 14:46:56 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -9161,6 +9161,115 @@ SELECT set_config('log_statement_stats', 'off', false);
     For details about proper usage of these functions, see
     <xref linkend="backup-online">.
    </para>
+
+   <para>
+    The functions shown in <xref
+    linkend="functions-admin-dbsize"> calculate the actual disk space
+    usage of database objects.
+   </para>
+
+   <table id="functions-admin-dbsize">
+    <title>Database Object Size Functions</title>
+    <tgroup cols="3">
+     <thead>
+      <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry>
+        <literal><function>pg_tablespace_size</function>(<parameter>oid</parameter>)</literal>
+        </entry>
+       <entry><type>int8</type></entry>
+       <entry>Calculates the total disk space used by the tablespace with the specified OID</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_tablespace_size</function>(<parameter>name</parameter>)</literal>
+        </entry>
+       <entry><type>int8</type></entry>
+       <entry>Calculates the total disk space used by the tablespace with the specified name</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_database_size</function>(<parameter>oid</parameter>)</literal>
+        </entry>
+       <entry><type>int8</type></entry>
+       <entry>Calculates the total disk space used by the database with the specified OID</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_database_size</function>(<parameter>name</parameter>)</literal>
+        </entry>
+       <entry><type>int8</type></entry>
+       <entry>Calculates the total disk space used by the database with the specified name</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_relation_size</function>(<parameter>oid</parameter>)</literal>
+        </entry>
+       <entry><type>int8</type></entry>
+       <entry>Calculates the disk space used by the table or index with the specified OID</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_relation_size</function>(<parameter>text</parameter>)</literal>
+        </entry>
+       <entry><type>int8</type></entry>
+       <entry>Calculates the disk space used by the index or table with the specified name. 
+       The name may be prefixed with a schema name if required</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_complete_relation_size</function>(<parameter>oid</parameter>)</literal>
+        </entry>
+       <entry><type>int8</type></entry>
+       <entry>Calculates the total disk space used by the table with the specified OID, 
+       including indexes and toasted data</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_complete_relation_size</function>(<parameter>text</parameter>)</literal>
+        </entry>
+       <entry><type>int8</type></entry>
+       <entry>Calculates the total disk space used by the table with the specified name, 
+       including indexes and toasted data. The name may be prefixed with a schema name if 
+       required</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_size_pretty</function>(<parameter>int8</parameter>)</literal>
+        </entry>
+       <entry><type>text</type></entry>
+       <entry>Formats the size value (in bytes) into a human readable format with size units </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    <function>pg_tablespace_size</> and <function>pg_database_size</> accept an 
+    oid or name of a tablespace or database, and return the disk space usage of the specified object. 
+   </para>
+
+   <indexterm zone="functions-admin">
+    <primary>pg_relation_size</primary>
+   </indexterm>
+   <para>
+	<function>pg_relation_size</> accepts the oid or name of a table, index or
+	toast table, and returns the size in bytes.
+   </para>
+   <para>
+	<function>pg_complete_relation_size</> accepts the oid or name of a table or
+	toast table, and returns the size in bytes of the data and all associated
+    indexes and toast tables.
+   </para>
+   <para>
+	<function>pg_size_pretty</> can be used to format the size of the
+	database objects in a human readable way, using kB, MB, GB or TB as appropriate.
+   </para>
+
   </sect1>
 </chapter>
 

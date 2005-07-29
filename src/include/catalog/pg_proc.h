@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.378 2005/07/26 00:04:19 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.379 2005/07/29 14:47:01 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1573,6 +1573,11 @@ DESCR("matches regex., case-insensitive");
 DATA(insert OID = 1241 (  nameicregexne    PGNSP PGUID 12 f f t f i 2 16 "19 25" _null_ _null_ _null_ nameicregexne - _null_ ));
 DESCR("does not match regex., case-insensitive");
 
+DATA(insert OID = 2322 ( pg_tablespace_size		PGNSP PGUID 12 f f t f v 1 20 "26" _null_ _null_ _null_ pg_tablespace_size_oid - _null_ ));
+DESCR("Calculate total disk space usage for the specified tablespace");
+DATA(insert OID = 2323 ( pg_tablespace_size		PGNSP PGUID 12 f f t f v 1 20 "19" _null_ _null_ _null_ pg_tablespace_size_name - _null_ ));
+DESCR("Calculate total disk space usage for the specified tablespace");
+
 DATA(insert OID = 1251 (  int4abs		   PGNSP PGUID 12 f f t f i 1 23 "23" _null_ _null_ _null_  int4abs - _null_ ));
 DESCR("absolute value");
 DATA(insert OID = 1253 (  int2abs		   PGNSP PGUID 12 f f t f i 1 21 "21" _null_ _null_ _null_  int2abs - _null_ ));
@@ -1580,6 +1585,9 @@ DESCR("absolute value");
 
 DATA(insert OID = 1263 (  interval		   PGNSP PGUID 12 f f t f s 1 1186 "25" _null_ _null_ _null_	text_interval - _null_ ));
 DESCR("convert text to interval");
+
+DATA(insert OID = 2324 ( pg_database_size		PGNSP PGUID 12 f f t f v 1 20 "26" _null_ _null_ _null_ pg_database_size_oid - _null_ ));
+DESCR("Calculate total disk space usage for the specified database");
 
 DATA(insert OID = 1271 (  overlaps		   PGNSP PGUID 12 f f f f i 4 16 "1266 1266 1266 1266" _null_ _null_ _null_	overlaps_timetz - _null_ ));
 DESCR("SQL92 interval comparison");
@@ -1623,6 +1631,9 @@ DATA(insert OID = 1293 ( currtid		   PGNSP PGUID 12 f f t f v 2 27 "26 27" _null
 DESCR("latest tid of a tuple");
 DATA(insert OID = 1294 ( currtid2		   PGNSP PGUID 12 f f t f v 2 27 "25 27" _null_ _null_ _null_ currtid_byrelname - _null_ ));
 DESCR("latest tid of a tuple");
+
+DATA(insert OID = 2168 ( pg_database_size		PGNSP PGUID 12 f f t f v 1 20 "19" _null_ _null_ _null_ pg_database_size_name - _null_ ));
+DESCR("Calculate total disk space usage for the specified database");
 
 DATA(insert OID = 1296 (  timedate_pl	   PGNSP PGUID 14 f f t f i 2 1114 "1083 1082" _null_ _null_ _null_	"select ($2 + $1)" - _null_ ));
 DESCR("convert time and date to timestamp");
@@ -3038,7 +3049,6 @@ DESCR("Prepare for taking an online backup");
 DATA(insert OID = 2173 ( pg_stop_backup			PGNSP PGUID 12 f f t f v 0 25 "" _null_ _null_ _null_ pg_stop_backup - _null_ ));
 DESCR("Finish taking an online backup");
 
-
 /* Aggregates (moved here from pg_aggregate for 7.3) */
 
 DATA(insert OID = 2100 (  avg				PGNSP PGUID 12 t f f f i 1 1700 "20" _null_ _null_ _null_  aggregate_dummy - _null_ ));
@@ -3226,6 +3236,17 @@ DATA(insert OID = 2272 (  has_schema_privilege		   PGNSP PGUID 12 f f t f s 2 16
 DESCR("current user privilege on schema by schema name");
 DATA(insert OID = 2273 (  has_schema_privilege		   PGNSP PGUID 12 f f t f s 2 16 "26 25" _null_ _null_ _null_ has_schema_privilege_id - _null_ ));
 DESCR("current user privilege on schema by schema oid");
+
+DATA(insert OID = 2325 ( pg_relation_size		PGNSP PGUID 12 f f t f v 1 20 "26" _null_ _null_ _null_ pg_relation_size_oid - _null_ ));
+DESCR("Calculate disk space usage for the specified table or index");
+DATA(insert OID = 2289 ( pg_relation_size		PGNSP PGUID 12 f f t f v 1 20 "25" _null_ _null_ _null_ pg_relation_size_name - _null_ ));
+DESCR("Calculate disk space usage for the specified table or index");
+DATA(insert OID = 2286 ( pg_complete_relation_size		PGNSP PGUID 12 f f t f v 1 20 "26" _null_ _null_ _null_ pg_complete_relation_size_oid - _null_ ));
+DESCR("Calculate total disk space usage for the specified table and associated indexes and toast tables");
+DATA(insert OID = 2287 ( pg_complete_relation_size		PGNSP PGUID 12 f f t f v 1 20 "25" _null_ _null_ _null_ pg_complete_relation_size_name - _null_ ));
+DESCR("Calculate total disk space usage for the specified table and associated indexes and toast tables");
+DATA(insert OID = 2288 ( pg_size_pretty  		PGNSP PGUID 12 f f t f v 1 25 "20" _null_ _null_ _null_ pg_size_pretty - _null_ ));
+DESCR("Convert a long int to a human readable text using size units");
 
 DATA(insert OID = 2390 (  has_tablespace_privilege		   PGNSP PGUID 12 f f t f s 3 16 "19 25 25" _null_ _null_ _null_	has_tablespace_privilege_name_name - _null_ ));
 DESCR("user privilege on tablespace by username, tablespace name");

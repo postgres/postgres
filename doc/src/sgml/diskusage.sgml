@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/diskusage.sgml,v 1.14 2005/01/10 00:04:38 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/diskusage.sgml,v 1.15 2005/07/29 14:46:56 momjian Exp $
 -->
 
 <chapter id="diskusage">
@@ -31,11 +31,16 @@ $PostgreSQL: pgsql/doc/src/sgml/diskusage.sgml,v 1.14 2005/01/10 00:04:38 tgl Ex
   </para>
 
   <para>
-   You can monitor disk space from three places: from
-   <application>psql</> using <command>VACUUM</> information, from
-   <application>psql</> using the tools in <filename>contrib/dbsize</>, and from
-   the command line using the tools in <filename>contrib/oid2name</>. Using
-   <application>psql</> on a recently vacuumed or analyzed database,
+   You can monitor disk space from three ways:  using
+   SQL functions listed in <xref linkend="functions-admin-dbsize">,
+   using <command>VACUUM</> information, and from the command line 
+   using the tools in <filename>contrib/oid2name</>.  The SQL functions
+   are the easiest to use and report information about tables, tables with
+   indexes and long value storage (TOAST), databases, and tablespaces.
+  </para>
+
+  <para>
+   Using <application>psql</> on a recently vacuumed or analyzed database,
    you can issue queries to see the disk usage of any table:
 <programlisting>
 SELECT relfilenode, relpages FROM pg_class WHERE relname = 'customer';
@@ -99,12 +104,6 @@ SELECT relname, relpages FROM pg_class ORDER BY relpages DESC;
  bigtable             |     3290
  customer             |     3144
 </programlisting>
-  </para>
-
-  <para>
-   <filename>contrib/dbsize</> loads functions into your database that allow
-   you to find the size of a table or database from inside
-   <application>psql</> without the need for <command>VACUUM</> or <command>ANALYZE</>.
   </para>
 
   <para>
