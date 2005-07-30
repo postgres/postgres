@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.49 2004/12/31 22:03:32 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.50 2005/07/30 15:17:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,9 @@
 #ifdef USE_SSL
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#endif
+#ifdef HAVE_NETINET_TCP_H
+#include <netinet/tcp.h>
 #endif
 
 #include "libpq/hba.h"
@@ -92,9 +95,37 @@ typedef struct Port
 	char		peer_cn[SM_USER + 1];
 	unsigned long count;
 #endif
+
+	/*
+	 * TCP keepalive settings;
+	 *  default values are 0 if AF_UNIX or not yet known;
+	 *  current values are 0 if AF_UNIX or using the default.
+	 */
+#ifdef TCP_KEEPIDLE
+	int         default_keepalives_idle;
+	int         keepalives_idle;
+#endif
+#ifdef TCP_KEEPINTVL
+	int         default_keepalives_interval;
+	int         keepalives_interval;
+#endif
+#ifdef TCP_KEEPCNT
+	int         default_keepalives_count;
+	int         keepalives_count;
+#endif
 } Port;
 
 
 extern ProtocolVersion FrontendProtocol;
+
+/* TCP keepalives configuration. These are no-ops on an AF_UNIX socket. */
+
+extern int pq_getkeepalivesidle(Port *port);
+extern int pq_getkeepalivesinterval(Port *port);
+extern int pq_getkeepalivescount(Port *port);
+
+extern int pq_setkeepalivesidle(int idle, Port *port);
+extern int pq_setkeepalivesinterval(int interval, Port *port);
+extern int pq_setkeepalivescount(int count, Port *port);
 
 #endif   /* LIBPQ_BE_H */

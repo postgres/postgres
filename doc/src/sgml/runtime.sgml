@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.339 2005/07/23 21:05:45 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.340 2005/07/30 15:17:18 momjian Exp $
 -->
 
 <chapter Id="runtime">
@@ -890,6 +890,53 @@ SET ENABLE_SEQSCAN TO OFF;
         empty string ''.  This option is ignored if the server was not
         compiled with <productname>Bonjour</productname> support.  This
         option can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+     
+     <varlistentry id="guc-tcp-keepalives-idle" xreflabel="tcp_keepalives_idle">
+      <term><varname>tcp_keepalives_idle</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>tcp_keepalives_idle</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        On systems that support the TCP_KEEPIDLE socket option, specifies the
+        number of seconds between sending keepalives on an otherwise idle
+        connection. A value of 0 uses the system default. If TCP_KEEPIDLE is
+        not supported, this parameter must be 0. This option is ignored for
+        connections made via a Unix-domain socket.
+       </para>
+      </listitem>
+     </varlistentry>
+     
+     <varlistentry id="guc-tcp-keepalives-interval" xreflabel="tcp_keepalives_interval">
+      <term><varname>tcp_keepalives_interval</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>tcp_keepalives_interval</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        On systems that support the TCP_KEEPINTVL socket option, specifies how
+        long, in seconds, to wait for a response to a keepalive before
+        retransmitting. A value of 0 uses the system default. If TCP_KEEPINTVL
+        is not supported, this parameter must be 0. This option is ignored
+        for connections made via a Unix-domain socket.
+       </para>
+      </listitem>
+     </varlistentry>
+     
+     <varlistentry id="guc-tcp-keepalives-count" xreflabel="tcp_keepalives_count">
+      <term><varname>tcp_keepalives_count</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>tcp_keepalives_count</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        On systems that support the TCP_KEEPCNT socket option, specifies how
+        many keepalives may be lost before the connection is considered dead. 
+        A value of 0 uses the system default. If TCP_KEEPINTVL is not
+        supported, this parameter must be 0.
        </para>
       </listitem>
      </varlistentry>

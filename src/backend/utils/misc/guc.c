@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.279 2005/07/29 19:30:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.280 2005/07/30 15:17:20 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -120,6 +120,12 @@ static bool assign_log_stats(bool newval, bool doit, GucSource source);
 static bool assign_transaction_read_only(bool newval, bool doit, GucSource source);
 static const char *assign_canonical_path(const char *newval, bool doit, GucSource source);
 
+static bool assign_tcp_keepalives_idle(int newval, bool doit, GucSource source);
+static bool assign_tcp_keepalives_interval(int newval, bool doit, GucSource source);
+static bool assign_tcp_keepalives_count(int newval, bool doit, GucSource source);
+static const char *show_tcp_keepalives_idle(void);
+static const char *show_tcp_keepalives_interval(void);
+static const char *show_tcp_keepalives_count(void);
 
 /*
  * GUC option variables that are exported from this module
@@ -161,6 +167,9 @@ char	   *HbaFileName;
 char	   *IdentFileName;
 char	   *external_pid_file;
 
+int         tcp_keepalives_idle;
+int         tcp_keepalives_interval;
+int         tcp_keepalives_count;
 
 /*
  * These variables are all dummies that don't do anything, except in some
@@ -1435,6 +1444,35 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&autovacuum_anl_thresh,
 		500, 0, INT_MAX, NULL, NULL
+	},
+
+	{
+		{"tcp_keepalives_idle", PGC_USERSET, CLIENT_CONN_OTHER,
+		     gettext_noop("Seconds between issuing TCP keepalives."),
+		     gettext_noop("A value of 0 uses the system default."),
+		},		
+		&tcp_keepalives_idle,
+		0, 0, INT_MAX, assign_tcp_keepalives_idle, show_tcp_keepalives_idle
+	},
+
+	{
+		{"tcp_keepalives_interval", PGC_USERSET, CLIENT_CONN_OTHER,
+		     gettext_noop("Seconds between TCP keepalive retransmits."),
+		     gettext_noop("A value of 0 uses the system default."),
+		},		
+		&tcp_keepalives_interval,
+		0, 0, INT_MAX, assign_tcp_keepalives_interval, show_tcp_keepalives_interval
+	},
+
+	{
+		{"tcp_keepalives_count", PGC_USERSET, CLIENT_CONN_OTHER,
+		     gettext_noop("Maximum number of TCP keepalive retransmits."),
+		     gettext_noop("This controls the number of consecutive keepalive retransmits that can be "
+						  "lost before a connection is considered dead. A value of 0 uses the "
+						  "system default."),
+		},		
+		&tcp_keepalives_count,
+		0, 0, INT_MAX, assign_tcp_keepalives_count, show_tcp_keepalives_count
 	},
 
 	/* End-of-list marker */
@@ -5815,5 +5853,61 @@ assign_canonical_path(const char *newval, bool doit, GucSource source)
 		return newval;
 }
 
+static bool
+assign_tcp_keepalives_idle(int newval, bool doit, GucSource source)
+{
+	if (doit && MyProcPort != NULL)
+	{
+		return (pq_setkeepalivesidle(newval, MyProcPort) == STATUS_OK);
+	}
+
+	return true;
+}
+
+static const char *
+show_tcp_keepalives_idle(void)
+{
+	static char nbuf[32];
+	snprintf(nbuf, sizeof(nbuf), "%d", MyProcPort == NULL ? 0 : pq_getkeepalivesidle(MyProcPort));
+	return nbuf;
+}
+
+static bool
+assign_tcp_keepalives_interval(int newval, bool doit, GucSource source)
+{
+	if (doit && MyProcPort != NULL)
+	{
+		return (pq_setkeepalivesinterval(newval, MyProcPort) == STATUS_OK);
+	}
+
+	return true;
+}
+
+static const char *
+show_tcp_keepalives_interval(void)
+{
+	static char nbuf[32];
+	snprintf(nbuf, sizeof(nbuf), "%d", MyProcPort == NULL ? 0 : pq_getkeepalivesinterval(MyProcPort));
+	return nbuf;
+}
+
+static bool
+assign_tcp_keepalives_count(int newval, bool doit, GucSource source)
+{
+	if (doit && MyProcPort != NULL)
+	{
+		return (pq_setkeepalivescount(newval, MyProcPort) == STATUS_OK);
+	}
+
+	return true;
+}
+
+static const char *
+show_tcp_keepalives_count(void)
+{
+	static char nbuf[32];
+	snprintf(nbuf, sizeof(nbuf), "%d", MyProcPort == NULL ? 0 : pq_getkeepalivescount(MyProcPort));
+	return nbuf;
+}
 
 #include "guc-file.c"
