@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Jul 29 23:18:30 EDT 2005
+Last updated:		Fri Jul 29 23:21:22 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -879,9 +879,10 @@ Vacuum
   VACUUM can look at just those pages rather than the entire table.  In
   the event of a system crash, the bitmap would probably be invalidated.
 
+* Add system view to show free space map contents
 * Auto-vacuum
 
-	o Move into the backend code
+	o -Move into the backend code
 	o Use free-space map information to guide refilling
 	o Do VACUUM FULL if table is nearly empty?
 	o Improve xid wraparound detection by recording per-table rather
