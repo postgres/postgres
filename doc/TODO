@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Jul 29 12:05:22 EDT 2005
+Last updated:		Fri Jul 29 22:52:27 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -539,6 +539,7 @@ Clients
 
   This would be used for checking if the server is up.
 
+* Add PQescapeIdentifier() to libpq
 * Have initdb set DateStyle based on locale?
 * Have pg_ctl look at PGHOST in case it is a socket directory?
 * Add a schema option to createlang

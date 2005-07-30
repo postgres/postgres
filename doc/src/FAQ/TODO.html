@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Fri Jul 29 12:05:22 EDT 2005
+Last updated:           Fri Jul 29 22:52:27 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -492,6 +492,7 @@ first.
   </li><li>Allow libpq to access SQLSTATE so pg_ctl can test for connection failure
 <p>  This would be used for checking if the server is up.
 </p>
+  </li><li>Add PQescapeIdentifier() to libpq
   </li><li>Have initdb set DateStyle based on locale?
   </li><li>Have pg_ctl look at PGHOST in case it is a socket directory?
   </li><li>Add a schema option to createlang
