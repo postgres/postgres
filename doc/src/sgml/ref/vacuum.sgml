@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.36 2004/12/02 19:28:48 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.37 2005/07/30 15:45:49 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -174,6 +174,15 @@ VACUUM [ FULL | FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">ta
     to occupy less disk space.  <command>VACUUM FULL</command> will usually
     shrink the table more than a plain <command>VACUUM</command> would.
    </para>
+
+   <para>
+    During <command>VACUUM</command> execution, there can be a substantial
+    increase in I/O traffic, which cause poor performance for other active
+    sessions.  Therefore, it is sometimes advisable to use
+    the cost-based vacuum delay feature.  See <xref
+    linkend="runtime" endterm="runtime-config-resource-vacuum-cost"> for more
+    details.
+   </para>
  </refsect1>
 
  <refsect1>
@@ -229,6 +238,7 @@ VACUUM
 
   <simplelist type="inline">
    <member><xref linkend="app-vacuumdb" endterm="app-vacuumdb-title"></member>
+   <member><xref linkend="runtime" endterm="runtime-config-resource-vacuum-cost"></member>
   </simplelist>
  </refsect1>
 </refentry>
