@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Jul 29 23:15:09 EDT 2005
+Last updated:		Fri Jul 29 23:15:58 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -324,7 +324,7 @@ SQL Commands
 * Add ROLLUP, CUBE, GROUPING SETS options to GROUP BY
 * Allow SET CONSTRAINTS to be qualified by schema/table name
 * Allow TRUNCATE ... CASCADE/RESTRICT
-* Add TRUNCATE permission
+* Add a separate TRUNCATE permission
 
   Currently only the owner can TRUNCATE a table because triggers are not
   called, and the table is locked in exclusive mode.
