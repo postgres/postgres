@@ -1,5 +1,5 @@
 From: Zeugswetter Andreas <ZeugswetterA@spardat.at>
-$Date: 2002/11/12 20:02:32 $
+$Date: 2005/07/30 03:39:27 $
 
 On AIX 4.3.2 PostgreSQL compiled with the native IBM compiler xlc
 (vac.C 5.0.1) passes all regression tests.  Other versions of OS and
@@ -18,3 +18,79 @@ Compiling PostgreSQL with gcc (2.95.3) on AIX also works.
 You need libm.a that is in the fileset bos.adt.libm.  (Try the
 following command.)
 $ lslpp -l bos.adt.libm
+
+
+---
+From: Christopher Browne <cbbrowne@ca.afilias.info>
+Date: 2005-07-15
+
+On AIX 5.3, there have been some problems getting PostgreSQL to
+compile and run using GCC.
+
+1.  You will want to use a version of GCC subsequent to 3.3.2,
+    particularly if you use a prepackaged version.  We had good
+    success with 4.0.1.
+
+    Problems with earlier versions seem to have more to do with the
+    way IBM packaged GCC than with actual issues with GCC, so that if
+    you compile GCC yourself, you might well have success with an
+    earlier version of GCC.
+
+2.  AIX 5.3 has a problem where sockadr_storage is not defined to be
+    large enough.  In version 5.3, IBM increased the size of
+    sockaddr_un, the address structure for UNIX Domain Sockets, but
+    did not correspondingly increase the size of sockadr_storage.
+
+    The result of this is that attempts to use UDS with PostgreSQL
+    lead to libpq overflowing the data structure.  TCP/IP connections
+    work OK, but not UDS, which prevents the regression tests from
+    working.
+
+   The nonconformance may be readily demonstrated by compiling and
+   running the following C program which calculates and compares the
+   sizes of the various structures:
+
+test_size.c
+------------
+
+---------- snip here - test_size.c ----------------------------
+#include <stdio.h>
+#include <sys/un.h>
+#include <sys/socket.h>
+int main (int argc, char *argv[]) {
+        struct sockaddr_storage a;
+        struct sockaddr_un b;
+        printf("Size of sockadr_storage: %d\n", sizeof(a));
+        printf ("Size of sockaddr_un:%d\n", sizeof(b));
+
+        if (sizeof(a) >= sizeof(b)) 
+                printf ("Conformant to RFC 3493\n");
+        else
+                printf ("Non-conformant to RFC 3493\n");
+} 
+---------- snip here - test_size.c ----------------------------
+
+
+The problem was reported to IBM, and is recorded as bug report
+PMR29657.
+
+An immediate resolution is to alter _SS_MAXSIZE to = 1025 in
+/usr/include/sys/socket.h, which will resolve the immediate problem.
+
+It appears that the "final" resolution will be to alter _SS_MAXSIZE to
+1280, making the size nicely align with page boundaries.
+
+IBM will be providing a fix in the next maintenance release (expected
+in October 2005) with an updated socket.h.
+---
+From: Christopher Browne <cbbrowne@ca.afilias.info>
+Date: 2005-07-15
+
+Some of the AIX tools may be "a little different" from what you may be
+accustomed to on other platforms.  If you are looking for a version of
+ldd, useful for determining what object code depends on what
+libraries, the following URLs may help you...
+
+http://www.faqs.org/faqs/aix-faq/part4/section-22.html
+
+http://www.han.de/~jum/aix/ldd.c
