@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.273 2005/07/29 14:46:56 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.274 2005/07/30 14:52:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -4901,6 +4901,24 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
    <literal>+</> and <literal>*</> operators come in commutative pairs (for
    example both date + integer and integer + date); we show only one of each
    such pair.
+  </para>
+
+  <para>
+   When adding an <type>interval</type> value to (or subtracting an 
+   <type>interval</type> value from) a <type>timestamp with time zone</type> 
+   value, the days component advances (or decrements) the date of the 
+   <type>timestamp with time zone<type> by the indicated number of days. 
+   Across daylight saving time changes (with the session tiem zone set to a 
+   time zone that recognizes DST), this means <literal>interval '1 day'</literal> 
+   does not necessarily equal <literal>interval '24 hours'</literal>. 
+   For example, with the session time zone set to <literal>CST7CDT</literal>
+   <literal>timestamp with time zone '2005-04-02 12:00-07' + interval '1 day' </literal>
+   will produce <literal>timestamp with time zone '2005-04-03 12:00-06'</literal>, 
+   while adding <literal>interval '24 hours'</literal> to the same initial 
+   <type>timestamp with time zone</type> produces
+   <literal>timestamp with time zone '2005-04-03 13:00-06'</literal>, as there is
+   a change in daylight saving time at <literal>2005-04-03 02:00</literal> in time zone 
+   <literal>CST7CDT</literal>.
   </para>
 
     <table id="operators-datetime-table">

@@ -114,6 +114,15 @@ SELECT (timestamp with time zone 'today' = (timestamp with time zone 'tomorrow' 
 SELECT (timestamp with time zone 'tomorrow' = (timestamp with time zone 'yesterday' + interval '2 days')) as "True";
 SELECT (timestamp with time zone 'tomorrow' > 'now') as "True";
 
+-- timestamp with time zone, interval arithmetic around DST change
+SET TIME ZONE 'CST7CDT';
+SELECT timestamp with time zone '2005-04-02 12:00-07' + interval '1 day' as "Apr 3, 12:00";
+SELECT timestamp with time zone '2005-04-02 12:00-07' + interval '24 hours' as "Apr 3, 13:00";
+SELECT timestamp with time zone '2005-04-03 12:00-06' - interval '1 day' as "Apr 2, 12:00";
+SELECT timestamp with time zone '2005-04-03 12:00-06' - interval '24 hours' as "Apr 2, 11:00";
+RESET TIME ZONE;
+
+
 SELECT timestamptz(date '1994-01-01', time '11:00') AS "Jan_01_1994_10am";
 SELECT timestamptz(date '1994-01-01', time '10:00') AS "Jan_01_1994_9am";
 SELECT timestamptz(date '1994-01-01', time with time zone '11:00-8') AS "Jan_01_1994_11am";
