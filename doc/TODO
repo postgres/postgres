@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Jul 29 23:15:58 EDT 2005
+Last updated:		Fri Jul 29 23:18:30 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -700,6 +700,7 @@ Indexes
   The main difficulty with this item is the problem of creating an index
   that can span more than one table.
 
+* Allow SELECT ... FOR UPDATE on inherited tables
 * Add UNIQUE capability to non-btree indexes
 * -Use indexes for MIN() and MAX()
 
