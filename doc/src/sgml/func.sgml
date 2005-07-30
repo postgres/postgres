@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.274 2005/07/30 14:52:04 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.275 2005/07/30 22:53:15 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -4903,24 +4903,6 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
    such pair.
   </para>
 
-  <para>
-   When adding an <type>interval</type> value to (or subtracting an 
-   <type>interval</type> value from) a <type>timestamp with time zone</type> 
-   value, the days component advances (or decrements) the date of the 
-   <type>timestamp with time zone<type> by the indicated number of days. 
-   Across daylight saving time changes (with the session tiem zone set to a 
-   time zone that recognizes DST), this means <literal>interval '1 day'</literal> 
-   does not necessarily equal <literal>interval '24 hours'</literal>. 
-   For example, with the session time zone set to <literal>CST7CDT</literal>
-   <literal>timestamp with time zone '2005-04-02 12:00-07' + interval '1 day' </literal>
-   will produce <literal>timestamp with time zone '2005-04-03 12:00-06'</literal>, 
-   while adding <literal>interval '24 hours'</literal> to the same initial 
-   <type>timestamp with time zone</type> produces
-   <literal>timestamp with time zone '2005-04-03 13:00-06'</literal>, as there is
-   a change in daylight saving time at <literal>2005-04-03 02:00</literal> in time zone 
-   <literal>CST7CDT</literal>.
-  </para>
-
     <table id="operators-datetime-table">
      <title>Date/Time Operators</title>
 
@@ -5240,6 +5222,24 @@ SELECT (DATE '2001-02-16', INTERVAL '100 days') OVERLAPS
        (DATE '2001-10-30', DATE '2002-10-30');
 <lineannotation>Result: </lineannotation><computeroutput>false</computeroutput>
 </screen>
+
+  <para>
+   When adding an <type>interval</type> value to (or subtracting an 
+   <type>interval</type> value from) a <type>timestamp with time zone</type> 
+   value, the days component advances (or decrements) the date of the 
+   <type>timestamp with time zone</type> by the indicated number of days. 
+   Across daylight saving time changes (with the session time zone set to a 
+   time zone that recognizes DST), this means <literal>interval '1 day'</literal> 
+   does not necessarily equal <literal>interval '24 hours'</literal>. 
+   For example, with the session time zone set to <literal>CST7CDT</literal>,
+   <literal>timestamp with time zone '2005-04-02 12:00-07' + interval '1 day' </literal>
+   will produce <literal>timestamp with time zone '2005-04-03 12:00-06'</literal>, 
+   while adding <literal>interval '24 hours'</literal> to the same initial 
+   <type>timestamp with time zone</type> produces
+   <literal>timestamp with time zone '2005-04-03 13:00-06'</literal>, as there is
+   a change in daylight saving time at <literal>2005-04-03 02:00</literal> in time zone 
+   <literal>CST7CDT</literal>.
+  </para>
 
   <sect2 id="functions-datetime-extract">
    <title><function>EXTRACT</function>, <function>date_part</function></title>
@@ -9275,17 +9275,17 @@ SELECT set_config('log_statement_stats', 'off', false);
     <primary>pg_relation_size</primary>
    </indexterm>
    <para>
-	<function>pg_relation_size</> accepts the oid or name of a table, index or
-	toast table, and returns the size in bytes.
+    <function>pg_relation_size</> accepts the oid or name of a table, index or
+    toast table, and returns the size in bytes.
    </para>
    <para>
-	<function>pg_complete_relation_size</> accepts the oid or name of a table or
-	toast table, and returns the size in bytes of the data and all associated
+    <function>pg_complete_relation_size</> accepts the oid or name of a table or
+    toast table, and returns the size in bytes of the data and all associated
     indexes and toast tables.
    </para>
    <para>
-	<function>pg_size_pretty</> can be used to format the size of the
-	database objects in a human readable way, using kB, MB, GB or TB as appropriate.
+    <function>pg_size_pretty</> can be used to format the size of the
+    database objects in a human readable way, using kB, MB, GB or TB as appropriate.
    </para>
 
   </sect1>
