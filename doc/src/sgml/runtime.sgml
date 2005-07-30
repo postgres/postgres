@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.340 2005/07/30 15:17:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.341 2005/07/30 17:15:35 momjian Exp $
 -->
 
 <chapter Id="runtime">
@@ -1380,7 +1380,9 @@ SET ENABLE_SEQSCAN TO OFF;
     </sect3>
 
     <sect3 id="runtime-config-resource-vacuum-cost">
-     <title>Cost-Based Vacuum Delay</title>
+     <title id="runtime-config-resource-vacuum-cost-title">
+       Cost-Based Vacuum Delay
+     </title>
 
      <para>
       During the execution of <xref linkend="sql-vacuum"
