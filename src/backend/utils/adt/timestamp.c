@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.146 2005/07/24 04:37:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.147 2005/07/30 18:20:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1915,8 +1915,7 @@ interval_justify_hours(PG_FUNCTION_ARGS)
 
 #ifdef HAVE_INT64_TIMESTAMP
 	result->time += span->day * USECS_PER_DAY;
-	result->day = result->time / USECS_PER_DAY;
-	result->time -= result->day * USECS_PER_DAY;
+	TMODULO(result->time, result->day, USECS_PER_DAY);
 #else
 	result->time += span->day * (double)SECS_PER_DAY;
 	TMODULO(result->time, result->day, (double)SECS_PER_DAY);
@@ -1939,14 +1938,8 @@ interval_justify_days(PG_FUNCTION_ARGS)
 	result->day = span->day;
 	result->time = span->time;
 
-#ifdef HAVE_INT64_TIMESTAMP
-	result->day += span->month * (double)DAYS_PER_MONTH;
-	result->month = span->day / DAYS_PER_MONTH;
-	result->day -= result->month * DAYS_PER_MONTH;
-#else
-	result->day += span->month * (double)DAYS_PER_MONTH;
-	TMODULO(result->day, result->month, (double)DAYS_PER_MONTH);
-#endif
+	result->day += span->month * DAYS_PER_MONTH;
+	TMODULO(result->day, result->month, DAYS_PER_MONTH);
 
 	PG_RETURN_INTERVAL_P(result);
 }
