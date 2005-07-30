@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Jul 29 23:21:22 EDT 2005
+Last updated:		Fri Jul 29 23:49:15 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -701,6 +701,8 @@ Indexes
   that can span more than one table.
 
 * Allow SELECT ... FOR UPDATE on inherited tables
+* Prevent inherited tables from expanding temporary subtables of other
+  sessions
 * Add UNIQUE capability to non-btree indexes
 * -Use indexes for MIN() and MAX()
 
