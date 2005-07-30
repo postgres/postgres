@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.177 2005/07/30 15:17:20 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.178 2005/07/30 20:28:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1185,7 +1185,7 @@ pq_getkeepalivesidle(Port *port)
 	if (port->default_keepalives_idle == 0)
 	{
 		socklen_t size = sizeof(port->default_keepalives_idle);
-		if (getsockopt(port->sock, SOL_TCP, TCP_KEEPIDLE,
+		if (getsockopt(port->sock, IPPROTO_TCP, TCP_KEEPIDLE,
 					   (char *) &port->default_keepalives_idle, 
 					   &size) < 0)
 		{
@@ -1219,7 +1219,7 @@ pq_setkeepalivesidle(int idle, Port *port)
 	if (idle == 0)
 		idle = port->default_keepalives_idle;
 
-	if (setsockopt(port->sock, SOL_TCP, TCP_KEEPIDLE,
+	if (setsockopt(port->sock, IPPROTO_TCP, TCP_KEEPIDLE,
 				   (char *) &idle, sizeof(idle)) < 0)
 	{
 		elog(LOG, "setsockopt(TCP_KEEPIDLE) failed: %m");
@@ -1251,7 +1251,7 @@ pq_getkeepalivesinterval(Port *port)
 	if (port->default_keepalives_interval == 0)
 	{
 		socklen_t size = sizeof(port->default_keepalives_interval);
-		if (getsockopt(port->sock, SOL_TCP, TCP_KEEPINTVL,
+		if (getsockopt(port->sock, IPPROTO_TCP, TCP_KEEPINTVL,
 					   (char *) &port->default_keepalives_interval, 
 					   &size) < 0)
 		{
@@ -1284,7 +1284,7 @@ pq_setkeepalivesinterval(int interval, Port *port)
 	if (interval == 0)
 		interval = port->default_keepalives_interval;
 
-	if (setsockopt(port->sock, SOL_TCP, TCP_KEEPINTVL,
+	if (setsockopt(port->sock, IPPROTO_TCP, TCP_KEEPINTVL,
 				   (char *) &interval, sizeof(interval)) < 0)
 	{
 		elog(LOG, "setsockopt(TCP_KEEPINTVL) failed: %m");
@@ -1316,7 +1316,7 @@ pq_getkeepalivescount(Port *port)
 	if (port->default_keepalives_count == 0)
 	{
 		socklen_t size = sizeof(port->default_keepalives_count);
-		if (getsockopt(port->sock, SOL_TCP, TCP_KEEPCNT,
+		if (getsockopt(port->sock, IPPROTO_TCP, TCP_KEEPCNT,
 					   (char *) &port->default_keepalives_count, 
 					   &size) < 0)
 		{
@@ -1349,7 +1349,7 @@ pq_setkeepalivescount(int count, Port *port)
 	if (count == 0)
 		count = port->default_keepalives_count;
 
-	if (setsockopt(port->sock, SOL_TCP, TCP_KEEPCNT,
+	if (setsockopt(port->sock, IPPROTO_TCP, TCP_KEEPCNT,
 				   (char *) &count, sizeof(count)) < 0)
 	{
 		elog(LOG, "setsockopt(TCP_KEEPCNT) failed: %m");
