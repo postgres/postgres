@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Jul 30 00:05:03 EDT 2005
+Last updated:		Sat Jul 30 23:08:20 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -73,6 +73,8 @@ Administration
 
 	o Allow postgresql.conf file values to be changed via an SQL API
 	o Allow the server to be stopped/restarted via an SQL API
+	* Allow server logs to be remotely read using SQL commands
+
 
 * Tablespaces
 
@@ -146,7 +148,6 @@ Monitoring
 
 * Add ability to monitor the use of temporary sort files
 * -Add session start time and last statement time to pg_stat_activity
-* Allow server logs to be remotely read using SQL commands
 * -Add a function that returns the start time of the postmaster
 
 
@@ -176,6 +177,7 @@ Data Types
 * Allow INET + INT4 to increment the host part of the address, or
   throw an error on overflow
 * Add 'tid != tid ' operator for use in corruption recovery
+
 
 * Dates and Times
 
@@ -381,6 +383,7 @@ SQL Commands
   enable_constraint_exclusion
 * Allow EXPLAIN output to be more easily processed by scripts
 
+
 * CREATE
 
 	o Allow CREATE TABLE AS to determine column lengths for complex
@@ -560,6 +563,7 @@ Clients
 
 
 * psql
+
 	o Have psql show current values for a sequence
 	o Move psql backslash database information into the backend, use
 	  mnemonic commands? [psql]
@@ -682,6 +686,7 @@ Exotic Features
 
 * -Add two-phase commit
 
+
 * Add the features of packages
 
 	o  Make private objects accessable only to objects in the same schema
@@ -761,6 +766,8 @@ Indexes
 * Allow enable_constraint_exclusion to work for UNIONs like it does for
   inheritance
 * Allow enable_constraint_exclusion to work for UPDATE and DELETE queries
+
+
 * GIST
 
 	o Add more GIST index support for geometric data types
@@ -829,7 +836,9 @@ Cache Usage
   when the first valid heap lookup happens.  This bit would have to 
   be cleared when a heap tuple is expired.
 
+
 * Consider automatic caching of queries at various levels:
+
 	o Parsed query tree
 	o Query execute plan
 	o Query results
@@ -886,6 +895,8 @@ Vacuum
   the event of a system crash, the bitmap would probably be invalidated.
 
 * Add system view to show free space map contents
+
+
 * Auto-vacuum
 
 	o -Move into the backend code
@@ -1088,6 +1099,7 @@ Source Code
 * Fix sgmltools so PDFs can be generated with bookmarks
 * Add C code on Unix to copy directories for use in creating new databases
 
+
 * Win32
 
 	o Remove configure.in check for link failure when cause is found
@@ -1107,6 +1119,7 @@ Source Code
           so the Win32 wcscoll() can be used, and perhaps other functions
 	  like towupper().  However, UTF8 already works with normal
 	  locales but provides no ordering or character set classes.
+
 
 * Wire Protocol Changes
 
