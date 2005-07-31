@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.154 2005/07/29 19:30:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.155 2005/07/31 17:19:19 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -169,18 +169,43 @@ ReverifyMyDatabase(const char *name)
 						name, MyDatabaseId)));
 	}
 
-	/*
-	 * Also check that the database is currently allowing connections.
-	 * (We do not enforce this in standalone mode, however, so that there is
-	 * a way to recover from "UPDATE pg_database SET datallowconn = false;".
-	 * We do not enforce it for the autovacuum process either.)
-	 */
 	dbform = (Form_pg_database) GETSTRUCT(tup);
-	if (IsUnderPostmaster && !IsAutoVacuumProcess() && !dbform->datallowconn)
-		ereport(FATAL,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-		 errmsg("database \"%s\" is not currently accepting connections",
-				name)));
+
+	/*
+	 * These next checks are not enforced when in standalone mode, so that
+	 * there is a way to recover from disabling all access to all databases,
+	 * for example "UPDATE pg_database SET datallowconn = false;".
+	 *
+	 * We do not enforce them for the autovacuum process either.
+	 */
+	if (IsUnderPostmaster && !IsAutoVacuumProcess())
+	{
+		/*
+		 * Check that the database is currently allowing connections.
+		 */
+		if (!dbform->datallowconn)
+			ereport(FATAL,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("database \"%s\" is not currently accepting connections",
+							name)));
+		/*
+		 * Check connection limit for this database.
+		 *
+		 * There is a race condition here --- we create our PGPROC before
+		 * checking for other PGPROCs.  If two backends did this at about the
+		 * same time, they might both think they were over the limit, while
+		 * ideally one should succeed and one fail.  Getting that to work
+		 * exactly seems more trouble than it is worth, however; instead
+		 * we just document that the connection limit is approximate.
+		 */
+		if (dbform->datconnlimit >= 0 &&
+			!superuser() &&
+			CountDBBackends(MyDatabaseId) > dbform->datconnlimit)
+			ereport(FATAL,
+					(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
+					 errmsg("too many connections for database \"%s\"",
+							name)));
+	}
 
 	/*
 	 * OK, we're golden.  Next to-do item is to save the encoding

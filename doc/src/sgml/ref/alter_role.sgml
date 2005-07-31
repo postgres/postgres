@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_role.sgml,v 1.1 2005/07/26 23:24:02 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_role.sgml,v 1.2 2005/07/31 17:19:17 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -30,6 +30,7 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
     | CREATEUSER | NOCREATEUSER
     | INHERIT | NOINHERIT
     | LOGIN | NOLOGIN
+    | CONNECTION LIMIT <replaceable class="PARAMETER">connlimit</replaceable>
     | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
     | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>' 
 
@@ -118,6 +119,7 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>
       <term><literal>NOINHERIT</literal></term>
       <term><literal>LOGIN</literal></term>
       <term><literal>NOLOGIN</literal></term>
+      <term><literal>CONNECTION LIMIT</literal> <replaceable class="parameter">connlimit</replaceable></term>
       <term><literal>PASSWORD</> <replaceable class="parameter">password</replaceable></term>
       <term><literal>ENCRYPTED</></term>
       <term><literal>UNENCRYPTED</></term>

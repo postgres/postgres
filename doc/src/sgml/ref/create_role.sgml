@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_role.sgml,v 1.1 2005/07/26 23:24:02 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_role.sgml,v 1.2 2005/07/31 17:19:17 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -30,6 +30,7 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
     | CREATEUSER | NOCREATEUSER
     | INHERIT | NOINHERIT
     | LOGIN | NOLOGIN
+    | CONNECTION LIMIT <replaceable class="PARAMETER">connlimit</replaceable>
     | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
     | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>' 
     | IN ROLE <replaceable class="PARAMETER">rolename</replaceable> [, ...]
@@ -168,6 +169,16 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
         <literal>NOLOGIN</literal> is the default, except when
         <command>CREATE ROLE</> is invoked through its alternate spelling
         <command>CREATE USER</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>CONNECTION LIMIT</literal> <replaceable class="parameter">connlimit</replaceable></term>
+      <listitem>
+       <para>
+        If role can log in, this specifies how many concurrent connections
+        the role can make.  -1 (the default) means no limit.
        </para>
       </listitem>
      </varlistentry>
@@ -326,6 +337,13 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
    linkend="APP-CREATEUSER" endterm="APP-CREATEUSER-title"> that has
    the same functionality as <command>CREATE ROLE</command> (in fact,
    it calls this command) but can be run from the command shell.
+  </para>
+
+  <para>
+   The <literal>CONNECTION LIMIT</> option is only enforced approximately;
+   if two new sessions start at about the same time when just one
+   connection <quote>slot</> remains for the role, it is possible that
+   both will fail.  Also, the limit is never enforced for superusers.
   </para>
  </refsect1>
 

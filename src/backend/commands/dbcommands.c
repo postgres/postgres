@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.167 2005/07/14 21:46:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.168 2005/07/31 17:19:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,10 +92,12 @@ createdb(const CreatedbStmt *stmt)
 	DefElem    *downer = NULL;
 	DefElem    *dtemplate = NULL;
 	DefElem    *dencoding = NULL;
+	DefElem    *dconnlimit = NULL;
 	char	   *dbname = stmt->dbname;
 	char	   *dbowner = NULL;
 	const char *dbtemplate = NULL;
 	int			encoding = -1;
+	int			dbconnlimit = -1;
 
 #ifndef WIN32
 	char		buf[2 * MAXPGPATH + 100];
@@ -140,6 +142,14 @@ createdb(const CreatedbStmt *stmt)
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
 			dencoding = defel;
+		}
+		else if (strcmp(defel->defname, "connectionlimit") == 0)
+		{
+			if (dconnlimit)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			dconnlimit = defel;
 		}
 		else if (strcmp(defel->defname, "location") == 0)
 		{
@@ -186,6 +196,8 @@ createdb(const CreatedbStmt *stmt)
 			elog(ERROR, "unrecognized node type: %d",
 				 nodeTag(dencoding->arg));
 	}
+	if (dconnlimit && dconnlimit->arg)
+		dbconnlimit = intVal(dconnlimit->arg);
 
 	/* obtain OID of proposed owner */
 	if (dbowner)
@@ -484,6 +496,7 @@ createdb(const CreatedbStmt *stmt)
 	new_record[Anum_pg_database_encoding - 1] = Int32GetDatum(encoding);
 	new_record[Anum_pg_database_datistemplate - 1] = BoolGetDatum(false);
 	new_record[Anum_pg_database_datallowconn - 1] = BoolGetDatum(true);
+	new_record[Anum_pg_database_datconnlimit - 1] = Int32GetDatum(dbconnlimit);
 	new_record[Anum_pg_database_datlastsysoid - 1] = ObjectIdGetDatum(src_lastsysoid);
 	new_record[Anum_pg_database_datvacuumxid - 1] = TransactionIdGetDatum(src_vacuumxid);
 	new_record[Anum_pg_database_datfrozenxid - 1] = TransactionIdGetDatum(src_frozenxid);
@@ -787,6 +800,98 @@ RenameDatabase(const char *oldname, const char *newname)
 	 * Set flag to update flat database file at commit.
 	 */
 	database_file_update_needed();
+}
+
+
+/*
+ * ALTER DATABASE name ...
+ */
+void
+AlterDatabase(AlterDatabaseStmt *stmt)
+{
+	Relation	rel;
+	HeapTuple	tuple,
+				newtuple;
+	ScanKeyData scankey;
+	SysScanDesc scan;
+	ListCell   *option;
+	int			connlimit = -1;
+	DefElem    *dconnlimit = NULL;
+	Datum		new_record[Natts_pg_database];
+	char		new_record_nulls[Natts_pg_database];
+	char		new_record_repl[Natts_pg_database];
+
+	/* Extract options from the statement node tree */
+	foreach(option, stmt->options)
+	{
+		DefElem    *defel = (DefElem *) lfirst(option);
+
+		if (strcmp(defel->defname, "connectionlimit") == 0)
+		{
+			if (dconnlimit)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			dconnlimit = defel;
+		}
+		else
+			elog(ERROR, "option \"%s\" not recognized",
+				 defel->defname);
+	}
+
+	if (dconnlimit)
+		connlimit = intVal(dconnlimit->arg);
+
+	/*
+	 * We don't need ExclusiveLock since we aren't updating the
+	 * flat file.
+	 */
+	rel = heap_open(DatabaseRelationId, RowExclusiveLock);
+	ScanKeyInit(&scankey,
+				Anum_pg_database_datname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(stmt->dbname));
+	scan = systable_beginscan(rel, DatabaseNameIndexId, true,
+							  SnapshotNow, 1, &scankey);
+	tuple = systable_getnext(scan);
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("database \"%s\" does not exist", stmt->dbname)));
+
+	if (!pg_database_ownercheck(HeapTupleGetOid(tuple), GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
+					   stmt->dbname);
+
+	/*
+	 * Build an updated tuple, perusing the information just obtained
+	 */
+	MemSet(new_record, 0, sizeof(new_record));
+	MemSet(new_record_nulls, ' ', sizeof(new_record_nulls));
+	MemSet(new_record_repl, ' ', sizeof(new_record_repl));
+
+	if (dconnlimit)
+	{
+		new_record[Anum_pg_database_datconnlimit - 1] = Int32GetDatum(connlimit);
+		new_record_repl[Anum_pg_database_datconnlimit - 1] = 'r';
+	}
+
+	newtuple = heap_modifytuple(tuple, RelationGetDescr(rel), new_record,
+								new_record_nulls, new_record_repl);
+	simple_heap_update(rel, &tuple->t_self, newtuple);
+
+	/* Update indexes */
+	CatalogUpdateIndexes(rel, newtuple);
+
+	systable_endscan(scan);
+
+	/* Close pg_database, but keep lock till commit */
+	heap_close(rel, NoLock);
+
+	/*
+	 * We don't bother updating the flat file since the existing options
+	 * for ALTER DATABASE don't affect it.
+	 */
 }
 
 

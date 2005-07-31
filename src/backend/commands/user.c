@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.159 2005/07/26 22:37:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.160 2005/07/31 17:19:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,6 +86,7 @@ CreateRole(CreateRoleStmt *stmt)
 	bool		createrole = false;		/* Can this user create roles? */
 	bool		createdb = false;		/* Can the user create databases? */
 	bool		canlogin = false;		/* Can this user login? */
+	int			connlimit = -1;			/* maximum connections allowed */
 	List	   *addroleto = NIL;		/* roles to make this a member of */
 	List	   *rolemembers = NIL;		/* roles to be members of this role */
 	List	   *adminmembers = NIL;		/* roles to be admins of this role */
@@ -96,6 +97,7 @@ CreateRole(CreateRoleStmt *stmt)
 	DefElem    *dcreaterole = NULL;
 	DefElem    *dcreatedb = NULL;
 	DefElem    *dcanlogin = NULL;
+	DefElem    *dconnlimit = NULL;
 	DefElem    *daddroleto = NULL;
 	DefElem    *drolemembers = NULL;
 	DefElem    *dadminmembers = NULL;
@@ -178,6 +180,14 @@ CreateRole(CreateRoleStmt *stmt)
 						 errmsg("conflicting or redundant options")));
 			dcanlogin = defel;
 		}
+		else if (strcmp(defel->defname, "connectionlimit") == 0)
+		{
+			if (dconnlimit)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			dconnlimit = defel;
+		}
 		else if (strcmp(defel->defname, "addroleto") == 0)
 		{
 			if (daddroleto)
@@ -227,6 +237,8 @@ CreateRole(CreateRoleStmt *stmt)
 		createdb = intVal(dcreatedb->arg) != 0;
 	if (dcanlogin)
 		canlogin = intVal(dcanlogin->arg) != 0;
+	if (dconnlimit)
+		connlimit = intVal(dconnlimit->arg);
 	if (daddroleto)
 		addroleto = (List *) daddroleto->arg;
 	if (drolemembers)
@@ -292,6 +304,7 @@ CreateRole(CreateRoleStmt *stmt)
 	/* superuser gets catupdate right by default */
 	new_record[Anum_pg_authid_rolcatupdate - 1] = BoolGetDatum(issuper);
 	new_record[Anum_pg_authid_rolcanlogin - 1] = BoolGetDatum(canlogin);
+	new_record[Anum_pg_authid_rolconnlimit - 1] = Int32GetDatum(connlimit);
 
 	if (password)
 	{
@@ -401,6 +414,7 @@ AlterRole(AlterRoleStmt *stmt)
 	int			createrole = -1;		/* Can this user create roles? */
 	int			createdb = -1;			/* Can the user create databases? */
 	int			canlogin = -1;			/* Can this user login? */
+	int			connlimit = -1;			/* maximum connections allowed */
 	List	   *rolemembers = NIL;		/* roles to be added/removed */
 	char	   *validUntil = NULL;		/* time the login is valid until */
 	DefElem    *dpassword = NULL;
@@ -409,6 +423,7 @@ AlterRole(AlterRoleStmt *stmt)
 	DefElem    *dcreaterole = NULL;
 	DefElem    *dcreatedb = NULL;
 	DefElem    *dcanlogin = NULL;
+	DefElem    *dconnlimit = NULL;
 	DefElem    *drolemembers = NULL;
 	DefElem    *dvalidUntil = NULL;
 	Oid			roleid;
@@ -472,6 +487,14 @@ AlterRole(AlterRoleStmt *stmt)
 						 errmsg("conflicting or redundant options")));
 			dcanlogin = defel;
 		}
+		else if (strcmp(defel->defname, "connectionlimit") == 0)
+		{
+			if (dconnlimit)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			dconnlimit = defel;
+		}
 		else if (strcmp(defel->defname, "rolemembers") == 0 &&
 				 stmt->action != 0)
 		{
@@ -506,6 +529,8 @@ AlterRole(AlterRoleStmt *stmt)
 		createdb = intVal(dcreatedb->arg);
 	if (dcanlogin)
 		canlogin = intVal(dcanlogin->arg);
+	if (dconnlimit)
+		connlimit = intVal(dconnlimit->arg);
 	if (drolemembers)
 		rolemembers = (List *) drolemembers->arg;
 	if (dvalidUntil)
@@ -545,6 +570,7 @@ AlterRole(AlterRoleStmt *stmt)
 			  createrole < 0 &&
 			  createdb < 0 &&
 			  canlogin < 0 &&
+			  !dconnlimit &&
 			  !rolemembers &&
 			  !validUntil &&
 			  password &&
@@ -600,6 +626,12 @@ AlterRole(AlterRoleStmt *stmt)
 	{
 		new_record[Anum_pg_authid_rolcanlogin - 1] = BoolGetDatum(canlogin > 0);
 		new_record_repl[Anum_pg_authid_rolcanlogin - 1] = 'r';
+	}
+
+	if (dconnlimit)
+	{
+		new_record[Anum_pg_authid_rolconnlimit - 1] = Int32GetDatum(connlimit);
+		new_record_repl[Anum_pg_authid_rolconnlimit - 1] = 'r';
 	}
 
 	/* password */

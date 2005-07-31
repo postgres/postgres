@@ -1,18 +1,19 @@
 /*-------------------------------------------------------------------------
  *
- * pg_dumpall
+ * pg_dumpall.c
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.65 2005/07/25 04:52:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.66 2005/07/31 17:19:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres_fe.h"
 
+#include <time.h>
 #include <unistd.h>
 #ifdef ENABLE_NLS
 #include <locale.h>
@@ -20,8 +21,6 @@
 #ifndef HAVE_STRDUP
 #include "strdup.h"
 #endif
-#include <errno.h>
-#include <time.h>
 
 #include "getopt_long.h"
 
@@ -43,7 +42,8 @@ static const char *progname;
 
 static void help(void);
 
-static void dumpUsers(PGconn *conn, bool initdbonly);
+static void dumpRoles(PGconn *conn, bool initdbonly);
+static void dumpRoleMembership(PGconn *conn);
 static void dumpGroups(PGconn *conn);
 static void dumpTablespaces(PGconn *conn);
 static void dumpCreateDB(PGconn *conn);
@@ -57,19 +57,20 @@ static int	runPgDump(const char *dbname);
 static PGconn *connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 				const char *pguser, bool require_password, bool fail_on_error);
 static PGresult *executeQuery(PGconn *conn, const char *query);
+static void executeCommand(PGconn *conn, const char *query);
 
-char		pg_dump_bin[MAXPGPATH];
-PQExpBuffer pgdumpopts;
-bool		output_clean = false;
-bool		skip_acls = false;
-bool		verbose = false;
-static bool ignoreVersion = false;
-int			server_version;
-
+static char		pg_dump_bin[MAXPGPATH];
+static PQExpBuffer pgdumpopts;
+static bool		output_clean = false;
+static bool		skip_acls = false;
+static bool		verbose = false;
+static bool		ignoreVersion = false;
 /* flags for -X long options */
-int			disable_dollar_quoting = 0;
-int			disable_triggers = 0;
-int			use_setsessauth = 0;
+static int		disable_dollar_quoting = 0;
+static int		disable_triggers = 0;
+static int		use_setsessauth = 0;
+static int		server_version;
+
 
 int
 main(int argc, char *argv[])
@@ -316,14 +317,22 @@ main(int argc, char *argv[])
 	if (!data_only)
 	{
 		/* Dump all users excluding the initdb user */
-		dumpUsers(conn, false);
-		dumpGroups(conn);
+		dumpRoles(conn, false);
+
+		/* Dump role memberships --- need different method for pre-8.1 */
+		if (server_version >= 80100)
+			dumpRoleMembership(conn);
+		else
+			dumpGroups(conn);
+
 		if (server_version >= 80000)
 			dumpTablespaces(conn);
+
 		if (!globals_only)
 			dumpCreateDB(conn);
+
 		/* Dump alter command for initdb user */
-		dumpUsers(conn, true);
+		dumpRoles(conn, true);
 	}
 
 	if (!globals_only)
@@ -384,81 +393,151 @@ help(void)
 
 
 /*
- * Dump users
+ * Dump roles
+ *
  * Is able to dump all non initdb users or just the initdb user.
  */
 static void
-dumpUsers(PGconn *conn, bool initdbonly)
+dumpRoles(PGconn *conn, bool initdbonly)
 {
 	PQExpBuffer buf = createPQExpBuffer();
 	PGresult   *res;
+	int			i_rolname,
+				i_rolsuper,
+				i_rolinherit,
+				i_rolcreaterole,
+				i_rolcreatedb,
+				i_rolcatupdate,
+				i_rolcanlogin,
+				i_rolconnlimit,
+				i_rolpassword,
+				i_rolvaliduntil,
+				i_clusterowner;
 	int			i;
 
-	if (server_version >= 70100)
-		res = executeQuery(conn,
-						"SELECT usename, usesysid, passwd, usecreatedb, "
-						   "usesuper, valuntil, "
-						   "(usesysid = (SELECT datdba FROM pg_database WHERE datname = 'template0')) AS clusterowner "
-						   "FROM pg_shadow");
+	/* note: rolconfig is dumped later */
+	if (server_version >= 80100)
+		printfPQExpBuffer(buf,
+						  "SELECT rolname, rolsuper, rolinherit, "
+						  "rolcreaterole, rolcreatedb, rolcatupdate, "
+						  "rolcanlogin, rolconnlimit, rolpassword, "
+						  "rolvaliduntil, "
+						  "(oid = (SELECT datdba FROM pg_database WHERE datname = 'template0')) AS clusterowner "
+						  "FROM pg_authid");
 	else
-		res = executeQuery(conn,
-						"SELECT usename, usesysid, passwd, usecreatedb, "
-						   "usesuper, valuntil, "
-						   "(usesysid = (SELECT datdba FROM pg_database WHERE datname = 'template1')) AS clusterowner "
-						   "FROM pg_shadow");
+		printfPQExpBuffer(buf,
+						  "SELECT usename as rolname, "
+						  "usesuper as rolsuper, "
+						  "true as rolinherit, "
+						  "usesuper as rolcreaterole, "
+						  "usecreatedb as rolcreatedb, "
+						  "usecatupd as rolcatupdate, "
+						  "true as rolcanlogin, "
+						  "-1 as rolconnlimit, "
+						  "passwd as rolpassword, "
+						  "valuntil as rolvaliduntil, "
+						  "(usesysid = (SELECT datdba FROM pg_database WHERE datname = '%s')) AS clusterowner "
+						  "FROM pg_shadow "
+						  "UNION ALL "
+						  "SELECT groname as rolname, "
+						  "false as rolsuper, "
+						  "true as rolinherit, "
+						  "false as rolcreaterole, "
+						  "false as rolcreatedb, "
+						  "false as rolcatupdate, "
+						  "false as rolcanlogin, "
+						  "-1 as rolconnlimit, "
+						  "null::text as rolpassword, "
+						  "null::abstime as rolvaliduntil, "
+						  "false AS clusterowner "
+						  "FROM pg_group",
+						  (server_version >= 70100) ? "template0" : "template1");
+
+	res = executeQuery(conn, buf->data);
+
+	i_rolname = PQfnumber(res, "rolname");
+	i_rolsuper = PQfnumber(res, "rolsuper");
+	i_rolinherit = PQfnumber(res, "rolinherit");
+	i_rolcreaterole = PQfnumber(res, "rolcreaterole");
+	i_rolcreatedb = PQfnumber(res, "rolcreatedb");
+	i_rolcatupdate = PQfnumber(res, "rolcatupdate");
+	i_rolcanlogin = PQfnumber(res, "rolcanlogin");
+	i_rolconnlimit = PQfnumber(res, "rolconnlimit");
+	i_rolpassword = PQfnumber(res, "rolpassword");
+	i_rolvaliduntil = PQfnumber(res, "rolvaliduntil");
+	i_clusterowner = PQfnumber(res, "clusterowner");
 
 	if (PQntuples(res) > 0 || (!initdbonly && output_clean))
-		printf("--\n-- Users\n--\n\n");
+		printf("--\n-- Roles\n--\n\n");
 	if (!initdbonly && output_clean)
 		printf("DELETE FROM pg_shadow WHERE usesysid <> (SELECT datdba FROM pg_database WHERE datname = 'template0');\n\n");
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
-		const char *username;
+		const char *rolename;
 		bool		clusterowner;
 
-		username = PQgetvalue(res, i, 0);
-		clusterowner = (strcmp(PQgetvalue(res, i, 6), "t") == 0);
+		rolename = PQgetvalue(res, i, i_rolname);
+		clusterowner = (strcmp(PQgetvalue(res, i, i_clusterowner), "t") == 0);
 
 		/* Check which pass we're on */
 		if ((initdbonly && !clusterowner) || (!initdbonly && clusterowner))
 			continue;
 
 		/*
-		 * Dump ALTER USER for the cluster owner and CREATE USER for all
-		 * other users
+		 * Dump ALTER ROLE for the cluster owner and CREATE ROLE for all
+		 * other roles
 		 */
 		if (!clusterowner)
-			printfPQExpBuffer(buf, "CREATE USER %s WITH", fmtId(username));
+			printfPQExpBuffer(buf, "CREATE ROLE %s WITH", fmtId(rolename));
 		else
-			printfPQExpBuffer(buf, "ALTER USER %s WITH", fmtId(username));
+			printfPQExpBuffer(buf, "ALTER ROLE %s WITH", fmtId(rolename));
 
-		if (!PQgetisnull(res, i, 2))
-		{
-			appendPQExpBuffer(buf, " PASSWORD ");
-			appendStringLiteral(buf, PQgetvalue(res, i, 2), true);
-		}
+		if (strcmp(PQgetvalue(res, i, i_rolsuper), "t") == 0)
+			appendPQExpBuffer(buf, " SUPERUSER");
+		else
+			appendPQExpBuffer(buf, " NOSUPERUSER");
 
-		if (strcmp(PQgetvalue(res, i, 3), "t") == 0)
+		if (strcmp(PQgetvalue(res, i, i_rolinherit), "t") == 0)
+			appendPQExpBuffer(buf, " INHERIT");
+		else
+			appendPQExpBuffer(buf, " NOINHERIT");
+
+		if (strcmp(PQgetvalue(res, i, i_rolcreaterole), "t") == 0)
+			appendPQExpBuffer(buf, " CREATEROLE");
+		else
+			appendPQExpBuffer(buf, " NOCREATEROLE");
+
+		if (strcmp(PQgetvalue(res, i, i_rolcreatedb), "t") == 0)
 			appendPQExpBuffer(buf, " CREATEDB");
 		else
 			appendPQExpBuffer(buf, " NOCREATEDB");
 
-		if (strcmp(PQgetvalue(res, i, 4), "t") == 0)
-			appendPQExpBuffer(buf, " CREATEUSER");
+		if (strcmp(PQgetvalue(res, i, i_rolcanlogin), "t") == 0)
+			appendPQExpBuffer(buf, " LOGIN");
 		else
-			appendPQExpBuffer(buf, " NOCREATEUSER");
+			appendPQExpBuffer(buf, " NOLOGIN");
 
-		if (!PQgetisnull(res, i, 5))
+		if (strcmp(PQgetvalue(res, i, i_rolconnlimit), "-1") != 0)
+			appendPQExpBuffer(buf, " CONNECTION LIMIT %s",
+							  PQgetvalue(res, i, i_rolconnlimit));
+
+		if (!PQgetisnull(res, i, i_rolpassword))
+		{
+			appendPQExpBuffer(buf, " PASSWORD ");
+			appendStringLiteral(buf, PQgetvalue(res, i, i_rolpassword), true);
+		}
+
+		if (!PQgetisnull(res, i, i_rolvaliduntil))
 			appendPQExpBuffer(buf, " VALID UNTIL '%s'",
-							  PQgetvalue(res, i, 5));
+							  PQgetvalue(res, i, i_rolvaliduntil));
 
 		appendPQExpBuffer(buf, ";\n");
 
 		printf("%s", buf->data);
 
 		if (server_version >= 70300)
-			dumpUserConfig(conn, username);
+			dumpUserConfig(conn, rolename);
 	}
 
 	PQclear(res);
@@ -469,63 +548,109 @@ dumpUsers(PGconn *conn, bool initdbonly)
 }
 
 
+/*
+ * Dump role memberships.  This code is used for 8.1 and later servers.
+ *
+ * Note: we expect dumpRoles already created all the roles, but there is
+ * no membership yet.
+ */
+static void
+dumpRoleMembership(PGconn *conn)
+{
+	PGresult   *res;
+	int			i;
+
+	res = executeQuery(conn, "SELECT ur.rolname AS roleid, "
+					   "um.rolname AS member, "
+					   "ug.rolname AS grantor, "
+					   "a.admin_option "
+					   "FROM pg_auth_members a "
+					   "LEFT JOIN pg_authid ur on ur.oid = a.roleid "
+					   "LEFT JOIN pg_authid um on um.oid = a.member "
+					   "LEFT JOIN pg_authid ug on ug.oid = a.grantor");
+
+	if (PQntuples(res) > 0 || output_clean)
+		printf("--\n-- Role memberships\n--\n\n");
+	if (output_clean)
+		printf("DELETE FROM pg_auth_members;\n\n");
+
+	for (i = 0; i < PQntuples(res); i++)
+	{
+		char	   *roleid = PQgetvalue(res, i, 0);
+		char	   *member = PQgetvalue(res, i, 1);
+		char	   *grantor = PQgetvalue(res, i, 2);
+		char	   *option = PQgetvalue(res, i, 3);
+
+		printf("GRANT %s", fmtId(roleid));
+		printf(" TO %s", fmtId(member));
+		if (*option == 't')
+			printf(" WITH ADMIN OPTION");
+		printf(" GRANTED BY %s;\n", fmtId(grantor));
+	}
+
+	PQclear(res);
+
+	printf("\n\n");
+}
 
 /*
- * Dump groups.
+ * Dump group memberships from a pre-8.1 server.  It's annoying that we
+ * can't share any useful amount of code with the post-8.1 case, but
+ * the catalog representations are too different.
+ *
+ * Note: we expect dumpRoles already created all the roles, but there is
+ * no membership yet.
  */
 static void
 dumpGroups(PGconn *conn)
 {
+	PQExpBuffer buf = createPQExpBuffer();
 	PGresult   *res;
 	int			i;
 
 	res = executeQuery(conn, "SELECT groname, grolist FROM pg_group");
 
 	if (PQntuples(res) > 0 || output_clean)
-		printf("--\n-- Groups\n--\n\n");
+		printf("--\n-- Role memberships\n--\n\n");
 	if (output_clean)
-		printf("DELETE FROM pg_group;\n\n");
+		printf("DELETE FROM pg_auth_members;\n\n");
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
-		PQExpBuffer buf = createPQExpBuffer();
+		char	   *groname = PQgetvalue(res, i, 0);
 		char	   *val;
 		char	   *tok;
 
-		appendPQExpBuffer(buf, "CREATE GROUP %s;\n",
-						  fmtId(PQgetvalue(res, i, 0)));
-
 		val = strdup(PQgetvalue(res, i, 1));
+
 		tok = strtok(val, ",{}");
 		while (tok)
 		{
 			PGresult   *res2;
-			PQExpBuffer buf2 = createPQExpBuffer();
 			int			j;
 
-			appendPQExpBuffer(buf2, "SELECT usename FROM pg_shadow WHERE usesysid = %s;", tok);
-			res2 = executeQuery(conn, buf2->data);
-			destroyPQExpBuffer(buf2);
+			printfPQExpBuffer(buf,
+							  "SELECT usename FROM pg_shadow WHERE usesysid = %s",
+							  tok);
+
+			res2 = executeQuery(conn, buf->data);
 
 			for (j = 0; j < PQntuples(res2); j++)
 			{
-				appendPQExpBuffer(buf, "ALTER GROUP %s ",
-								  fmtId(PQgetvalue(res, i, 0)));
-				appendPQExpBuffer(buf, "ADD USER %s;\n",
-								  fmtId(PQgetvalue(res2, j, 0)));
+				printf("GRANT %s", fmtId(groname));
+				printf(" TO %s;\n", fmtId(PQgetvalue(res2, j, 0)));
 			}
 
 			PQclear(res2);
 
-			tok = strtok(NULL, "{},");
+			tok = strtok(NULL, ",{}");
 		}
 		free(val);
-
-		printf("%s", buf->data);
-		destroyPQExpBuffer(buf);
 	}
 
 	PQclear(res);
+	destroyPQExpBuffer(buf);
+
 	printf("\n\n");
 }
 
@@ -607,17 +732,27 @@ dumpTablespaces(PGconn *conn)
 static void
 dumpCreateDB(PGconn *conn)
 {
+	PQExpBuffer buf = createPQExpBuffer();
 	PGresult   *res;
 	int			i;
 
 	printf("--\n-- Database creation\n--\n\n");
 
-	if (server_version >= 80000)
+	if (server_version >= 80100)
+		res = executeQuery(conn,
+						   "SELECT datname, "
+						   "coalesce(rolname, (select rolname from pg_authid where oid=(select datdba from pg_database where datname='template0'))), "
+						   "pg_encoding_to_char(d.encoding), "
+						   "datistemplate, datacl, datconnlimit, "
+						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
+		"FROM pg_database d LEFT JOIN pg_authid u ON (datdba = u.oid) "
+						   "WHERE datallowconn ORDER BY 1");
+	else if (server_version >= 80000)
 		res = executeQuery(conn,
 						   "SELECT datname, "
 						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
-						   "datistemplate, datacl, "
+						   "datistemplate, datacl, -1 as datconnlimit, "
 						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
 		"FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
 						   "WHERE datallowconn ORDER BY 1");
@@ -626,7 +761,7 @@ dumpCreateDB(PGconn *conn)
 						   "SELECT datname, "
 						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
-						   "datistemplate, datacl, "
+						   "datistemplate, datacl, -1 as datconnlimit, "
 						   "'pg_default' AS dattablespace "
 		"FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
 						   "WHERE datallowconn ORDER BY 1");
@@ -637,7 +772,7 @@ dumpCreateDB(PGconn *conn)
 				"(select usename from pg_shadow where usesysid=datdba), "
 						   "(select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
-						   "datistemplate, '' as datacl, "
+						   "datistemplate, '' as datacl, -1 as datconnlimit, "
 						   "'pg_default' AS dattablespace "
 						   "FROM pg_database d "
 						   "WHERE datallowconn ORDER BY 1");
@@ -652,7 +787,7 @@ dumpCreateDB(PGconn *conn)
 				"(select usename from pg_shadow where usesysid=datdba), "
 						   "pg_encoding_to_char(d.encoding), "
 						   "'f' as datistemplate, "
-						   "'' as datacl, "
+						   "'' as datacl, -1 as datconnlimit, "
 						   "'pg_default' AS dattablespace "
 						   "FROM pg_database d "
 						   "ORDER BY 1");
@@ -660,17 +795,18 @@ dumpCreateDB(PGconn *conn)
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
-		PQExpBuffer buf;
 		char	   *dbname = PQgetvalue(res, i, 0);
 		char	   *dbowner = PQgetvalue(res, i, 1);
 		char	   *dbencoding = PQgetvalue(res, i, 2);
 		char	   *dbistemplate = PQgetvalue(res, i, 3);
 		char	   *dbacl = PQgetvalue(res, i, 4);
-		char	   *dbtablespace = PQgetvalue(res, i, 5);
+		char	   *dbconnlimit = PQgetvalue(res, i, 5);
+		char	   *dbtablespace = PQgetvalue(res, i, 6);
 		char	   *fdbname;
 
-		buf = createPQExpBuffer();
 		fdbname = strdup(fmtId(dbname));
+
+		resetPQExpBuffer(buf);
 
 		/*
 		 * Skip the CREATE DATABASE commands for "template1" and "postgres",
@@ -698,6 +834,10 @@ dumpCreateDB(PGconn *conn)
 				appendPQExpBuffer(buf, " TABLESPACE = %s",
 								  fmtId(dbtablespace));
 
+			if (strcmp(dbconnlimit, "-1") != 0)
+				appendPQExpBuffer(buf, " CONNECTION LIMIT = %s",
+								  dbconnlimit);
+
 			appendPQExpBuffer(buf, ";\n");
 
 			if (strcmp(dbistemplate, "t") == 0)
@@ -723,11 +863,12 @@ dumpCreateDB(PGconn *conn)
 		if (server_version >= 70300)
 			dumpDatabaseConfig(conn, dbname);
 
-		destroyPQExpBuffer(buf);
 		free(fdbname);
 	}
 
 	PQclear(res);
+	destroyPQExpBuffer(buf);
+
 	printf("\n\n");
 }
 
@@ -782,14 +923,17 @@ dumpUserConfig(PGconn *conn, const char *username)
 	{
 		PGresult   *res;
 
-		printfPQExpBuffer(buf, "SELECT useconfig[%d] FROM pg_shadow WHERE usename = ", count);
+		if (server_version >= 80100)
+			printfPQExpBuffer(buf, "SELECT rolconfig[%d] FROM pg_authid WHERE rolname = ", count);
+		else
+			printfPQExpBuffer(buf, "SELECT useconfig[%d] FROM pg_shadow WHERE usename = ", count);
 		appendStringLiteral(buf, username, true);
 		appendPQExpBuffer(buf, ";");
 
 		res = executeQuery(conn, buf->data);
 		if (!PQgetisnull(res, 0, 0))
 		{
-			makeAlterConfigCommand(PQgetvalue(res, 0, 0), "USER", username);
+			makeAlterConfigCommand(PQgetvalue(res, 0, 0), "ROLE", username);
 			PQclear(res);
 			count++;
 		}
@@ -1041,9 +1185,15 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 		}
 	}
 
+	/*
+	 * On 7.3 and later, make sure we are not fooled by non-system schemas
+	 * in the search path.
+	 */
+	if (server_version >= 70300)
+		executeCommand(conn, "SET search_path = pg_catalog");
+
 	return conn;
 }
-
 
 
 /*
@@ -1061,13 +1211,41 @@ executeQuery(PGconn *conn, const char *query)
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, _("%s: query failed: %s"), progname, PQerrorMessage(conn));
-		fprintf(stderr, _("%s: query was: %s\n"), progname, query);
+		fprintf(stderr, _("%s: query failed: %s"),
+				progname, PQerrorMessage(conn));
+		fprintf(stderr, _("%s: query was: %s\n"),
+				progname, query);
 		PQfinish(conn);
 		exit(1);
 	}
 
 	return res;
+}
+
+/*
+ * As above for a SQL command (which returns nothing).
+ */
+static void
+executeCommand(PGconn *conn, const char *query)
+{
+	PGresult   *res;
+
+	if (verbose)
+		fprintf(stderr, _("%s: executing %s\n"), progname, query);
+
+	res = PQexec(conn, query);
+	if (!res ||
+		PQresultStatus(res) != PGRES_COMMAND_OK)
+	{
+		fprintf(stderr, _("%s: query failed: %s"),
+				progname, PQerrorMessage(conn));
+		fprintf(stderr, _("%s: query was: %s\n"),
+				progname, query);
+		PQfinish(conn);
+		exit(1);
+	}
+
+	PQclear(res);
 }
 
 

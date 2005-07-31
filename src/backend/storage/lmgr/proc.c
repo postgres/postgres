@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.160 2005/06/17 22:32:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.161 2005/07/31 17:19:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -254,6 +254,8 @@ InitProcess(void)
 	MyProc->xmin = InvalidTransactionId;
 	MyProc->pid = MyProcPid;
 	MyProc->databaseId = MyDatabaseId;
+	/* Will be set properly after the session role id is determined */
+	MyProc->roleId = InvalidOid;
 	MyProc->lwWaiting = false;
 	MyProc->lwExclusive = false;
 	MyProc->lwWaitLink = NULL;
@@ -331,6 +333,7 @@ InitDummyProcess(int proctype)
 	MyProc->xid = InvalidTransactionId;
 	MyProc->xmin = InvalidTransactionId;
 	MyProc->databaseId = MyDatabaseId;
+	MyProc->roleId = InvalidOid;
 	MyProc->lwWaiting = false;
 	MyProc->lwExclusive = false;
 	MyProc->lwWaitLink = NULL;

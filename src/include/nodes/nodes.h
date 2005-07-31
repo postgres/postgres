@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.172 2005/06/28 05:09:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.173 2005/07/31 17:19:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -270,6 +270,7 @@ typedef enum NodeTag
 	T_ReindexStmt,
 	T_CheckPointStmt,
 	T_CreateSchemaStmt,
+	T_AlterDatabaseStmt,
 	T_AlterDatabaseSetStmt,
 	T_AlterRoleSetStmt,
 	T_CreateConversionStmt,

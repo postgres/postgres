@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_database.sgml,v 1.43 2004/10/29 03:17:22 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_database.sgml,v 1.44 2005/07/31 17:19:17 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -24,7 +24,8 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
     [ [ WITH ] [ OWNER [=] <replaceable class="parameter">dbowner</replaceable> ]
            [ TEMPLATE [=] <replaceable class="parameter">template</replaceable> ]
            [ ENCODING [=] <replaceable class="parameter">encoding</replaceable> ]
-           [ TABLESPACE [=] <replaceable class="parameter">tablespace</replaceable> ] ]
+           [ TABLESPACE [=] <replaceable class="parameter">tablespace</replaceable> ]
+           [ CONNECTION LIMIT [=] <replaceable class="parameter">connlimit</replaceable> ] ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -123,6 +124,16 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">connlimit</replaceable></term>
+      <listitem>
+       <para>
+        How many concurrent connections can be made
+        to this database.  -1 (the default) means no limit.
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
 
   <para>
@@ -160,6 +171,13 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
    a general-purpose <quote><command>COPY DATABASE</command></quote> facility.
    We recommend that databases used as templates be treated as read-only.
    See <xref linkend="manage-ag-templatedbs"> for more information.
+  </para>
+
+  <para>
+   The <literal>CONNECTION LIMIT</> option is only enforced approximately;
+   if two new sessions start at about the same time when just one
+   connection <quote>slot</> remains for the database, it is possible that
+   both will fail.  Also, the limit is not enforced against superusers.
   </para>
  </refsect1>
 

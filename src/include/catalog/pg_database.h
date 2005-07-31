@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_database.h,v 1.36 2005/06/28 05:09:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_database.h,v 1.37 2005/07/31 17:19:21 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -40,6 +40,7 @@ CATALOG(pg_database,1262) BKI_SHARED_RELATION
 	int4		encoding;		/* character encoding */
 	bool		datistemplate;	/* allowed as CREATE DATABASE template? */
 	bool		datallowconn;	/* new connections allowed? */
+	int4		datconnlimit;	/* max connections allowed (-1=no limit) */
 	Oid			datlastsysoid;	/* highest OID to consider a system OID */
 	TransactionId datvacuumxid; /* all XIDs before this are vacuumed */
 	TransactionId datfrozenxid; /* all XIDs before this are frozen */
@@ -59,20 +60,21 @@ typedef FormData_pg_database *Form_pg_database;
  *		compiler constants for pg_database
  * ----------------
  */
-#define Natts_pg_database				11
+#define Natts_pg_database				12
 #define Anum_pg_database_datname		1
 #define Anum_pg_database_datdba			2
 #define Anum_pg_database_encoding		3
 #define Anum_pg_database_datistemplate	4
 #define Anum_pg_database_datallowconn	5
-#define Anum_pg_database_datlastsysoid	6
-#define Anum_pg_database_datvacuumxid	7
-#define Anum_pg_database_datfrozenxid	8
-#define Anum_pg_database_dattablespace	9
-#define Anum_pg_database_datconfig		10
-#define Anum_pg_database_datacl			11
+#define Anum_pg_database_datconnlimit	6
+#define Anum_pg_database_datlastsysoid	7
+#define Anum_pg_database_datvacuumxid	8
+#define Anum_pg_database_datfrozenxid	9
+#define Anum_pg_database_dattablespace	10
+#define Anum_pg_database_datconfig		11
+#define Anum_pg_database_datacl			12
 
-DATA(insert OID = 1 (  template1 PGUID ENCODING t t 0 0 0 1663 _null_ _null_ ));
+DATA(insert OID = 1 (  template1 PGUID ENCODING t t -1 0 0 0 1663 _null_ _null_ ));
 DESCR("Default template database");
 #define TemplateDbOid			1
 

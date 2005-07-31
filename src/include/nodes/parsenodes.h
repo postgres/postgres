@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.286 2005/07/26 16:38:28 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.287 2005/07/31 17:19:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1624,6 +1624,13 @@ typedef struct CreatedbStmt
  *	Alter Database
  * ----------------------
  */
+typedef struct AlterDatabaseStmt
+{
+	NodeTag		type;
+	char	   *dbname;			/* name of database to alter */
+	List	   *options;		/* List of DefElem nodes */
+} AlterDatabaseStmt;
+
 typedef struct AlterDatabaseSetStmt
 {
 	NodeTag		type;

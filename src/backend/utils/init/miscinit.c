@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.147 2005/07/25 22:12:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.148 2005/07/31 17:19:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,8 @@
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
+#include "storage/proc.h"
+#include "storage/procarray.h" 
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
@@ -404,17 +406,52 @@ InitializeSessionUserId(const char *rolename)
 	rform = (Form_pg_authid) GETSTRUCT(roleTup);
 	roleid = HeapTupleGetOid(roleTup);
 
-	if (!rform->rolcanlogin)
-		ereport(FATAL,
-				(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-				 errmsg("role \"%s\" is not permitted to log in", rolename)));
-
 	AuthenticatedUserId = roleid;
 	AuthenticatedUserIsSuperuser = rform->rolsuper;
 
 	/* This sets OuterUserId/CurrentUserId too */
 	SetSessionUserId(roleid, AuthenticatedUserIsSuperuser);
 
+	/* Also mark our PGPROC entry with the authenticated user id */
+	/* (We assume this is an atomic store so no lock is needed) */
+	MyProc->roleId = roleid;
+
+	/*
+	 * These next checks are not enforced when in standalone mode, so that
+	 * there is a way to recover from sillinesses like
+	 * "UPDATE pg_authid SET rolcanlogin = false;".
+	 *
+	 * We do not enforce them for the autovacuum process either.
+	 */
+	if (IsUnderPostmaster && !IsAutoVacuumProcess())
+	{
+		/*
+		 * Is role allowed to login at all?
+		 */
+		if (!rform->rolcanlogin)
+			ereport(FATAL,
+					(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+					 errmsg("role \"%s\" is not permitted to log in",
+							rolename)));
+		/*
+		 * Check connection limit for this role.
+		 *
+		 * There is a race condition here --- we create our PGPROC before
+		 * checking for other PGPROCs.  If two backends did this at about the
+		 * same time, they might both think they were over the limit, while
+		 * ideally one should succeed and one fail.  Getting that to work
+		 * exactly seems more trouble than it is worth, however; instead
+		 * we just document that the connection limit is approximate.
+		 */
+		if (rform->rolconnlimit >= 0 &&
+			!AuthenticatedUserIsSuperuser &&
+			CountUserBackends(roleid) > rform->rolconnlimit)
+			ereport(FATAL,
+					(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
+					 errmsg("too many connections for role \"%s\"",
+							rolename)));
+	}
+	
 	/* Record username and superuser status as GUC settings too */
 	SetConfigOption("session_authorization", rolename,
 					PGC_BACKEND, PGC_S_OVERRIDE);

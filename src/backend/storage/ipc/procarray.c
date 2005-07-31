@@ -23,7 +23,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.3 2005/06/17 22:32:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.4 2005/07/31 17:19:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -729,6 +729,60 @@ CountActiveBackends(void)
 			continue;			/* do not count if blocked on a lock */
 		count++;
 	}
+
+	return count;
+}
+
+/*
+ * CountDBBackends --- count backends that are using specified database
+ */
+int
+CountDBBackends(Oid databaseid)
+{
+	ProcArrayStruct *arrayP = procArray;
+	int			count = 0;
+	int			index;
+
+	LWLockAcquire(ProcArrayLock, LW_SHARED);
+
+	for (index = 0; index < arrayP->numProcs; index++)
+	{
+		PGPROC	   *proc = arrayP->procs[index];
+
+		if (proc->pid == 0)
+			continue;			/* do not count prepared xacts */
+		if (proc->databaseId == databaseid)
+			count++;
+	}
+
+	LWLockRelease(ProcArrayLock);
+
+	return count;
+}
+
+/*
+ * CountUserBackends --- count backends that are used by specified user
+ */
+int
+CountUserBackends(Oid roleid)
+{
+	ProcArrayStruct *arrayP = procArray;
+	int			count = 0;
+	int			index;
+
+	LWLockAcquire(ProcArrayLock, LW_SHARED);
+
+	for (index = 0; index < arrayP->numProcs; index++)
+	{
+		PGPROC	   *proc = arrayP->procs[index];
+
+		if (proc->pid == 0)
+			continue;			/* do not count prepared xacts */
+		if (proc->roleId == roleid)
+			count++;
+	}
+
+	LWLockRelease(ProcArrayLock);
 
 	return count;
 }

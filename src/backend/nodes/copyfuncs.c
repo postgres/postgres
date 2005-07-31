@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.312 2005/07/26 16:38:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.313 2005/07/31 17:19:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2204,6 +2204,17 @@ _copyCreatedbStmt(CreatedbStmt *from)
 	return newnode;
 }
 
+static AlterDatabaseStmt *
+_copyAlterDatabaseStmt(AlterDatabaseStmt *from)
+{
+	AlterDatabaseStmt *newnode = makeNode(AlterDatabaseStmt);
+
+	COPY_STRING_FIELD(dbname);
+	COPY_NODE_FIELD(options);
+
+	return newnode;
+}
+
 static AlterDatabaseSetStmt *
 _copyAlterDatabaseSetStmt(AlterDatabaseSetStmt *from)
 {
@@ -3010,6 +3021,9 @@ copyObject(void *from)
 			break;
 		case T_CreatedbStmt:
 			retval = _copyCreatedbStmt(from);
+			break;
+		case T_AlterDatabaseStmt:
+			retval = _copyAlterDatabaseStmt(from);
 			break;
 		case T_AlterDatabaseSetStmt:
 			retval = _copyAlterDatabaseSetStmt(from);

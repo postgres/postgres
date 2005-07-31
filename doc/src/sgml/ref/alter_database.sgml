@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.15 2005/01/05 14:22:39 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.16 2005/07/31 17:19:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -20,6 +20,12 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
+ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replaceable class="PARAMETER">option</replaceable> [ ... ] ]
+
+where <replaceable class="PARAMETER">option</replaceable> can be:
+
+    CONNECTION LIMIT <replaceable class="PARAMETER">connlimit</replaceable>
+
 ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> SET <replaceable>parameter</replaceable> { TO | = } { <replaceable>value</replaceable> | DEFAULT }
 ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>parameter</replaceable>
 
@@ -38,7 +44,12 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> OWNER TO <repla
   </para>
 
   <para>
-   The first two forms change the session default for a run-time
+   The first form changes certain per-database settings.  (See below for
+   details.)  Only the database owner or a superuser can change these settings.
+  </para> 
+
+  <para>
+   The second and third forms change the session default for a run-time
    configuration variable for a <productname>PostgreSQL</productname>
    database. Whenever a new session is subsequently started in that
    database, the specified value becomes the session default value.
@@ -51,7 +62,7 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> OWNER TO <repla
   </para>
 
   <para>
-   The third form changes the name of the database.  Only the database
+   The fourth form changes the name of the database.  Only the database
    owner or a superuser can rename a database; non-superuser owners must
    also have the
    <literal>CREATEDB</literal> privilege.  The current database cannot
@@ -60,7 +71,7 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> OWNER TO <repla
   </para>
 
   <para>
-   The fourth form changes the owner of the database.  Only a superuser
+   The fifth form changes the owner of the database.  Only a superuser
    can change the database's owner.
   </para>
  </refsect1>
@@ -77,6 +88,16 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> OWNER TO <repla
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">connlimit</replaceable></term>
+      <listitem>
+       <para>
+        How many concurrent connections can be made
+        to this database.  -1 means no limit.
+       </para>
+      </listitem>
+     </varlistentry> 
 
      <varlistentry>
       <term><replaceable>parameter</replaceable></term>

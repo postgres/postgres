@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.249 2005/07/26 16:38:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.250 2005/07/31 17:19:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1152,6 +1152,15 @@ _equalCreatedbStmt(CreatedbStmt *a, CreatedbStmt *b)
 }
 
 static bool
+_equalAlterDatabaseStmt(AlterDatabaseStmt *a, AlterDatabaseStmt *b)
+{
+	COMPARE_STRING_FIELD(dbname);
+	COMPARE_NODE_FIELD(options);
+
+	return true;
+}
+
+static bool
 _equalAlterDatabaseSetStmt(AlterDatabaseSetStmt *a, AlterDatabaseSetStmt *b)
 {
 	COMPARE_STRING_FIELD(dbname);
@@ -2058,6 +2067,9 @@ equal(void *a, void *b)
 			break;
 		case T_CreatedbStmt:
 			retval = _equalCreatedbStmt(a, b);
+			break;
+		case T_AlterDatabaseStmt:
+			retval = _equalAlterDatabaseStmt(a, b);
 			break;
 		case T_AlterDatabaseSetStmt:
 			retval = _equalAlterDatabaseSetStmt(a, b);

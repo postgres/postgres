@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_authid.h,v 1.2 2005/07/26 16:38:28 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_authid.h,v 1.3 2005/07/31 17:19:21 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -49,6 +49,7 @@ CATALOG(pg_authid,1260) BKI_SHARED_RELATION
 	bool		rolcreatedb;	/* allowed to create databases? */
 	bool		rolcatupdate;	/* allowed to alter catalogs manually? */
 	bool		rolcanlogin;	/* allowed to log in as session user? */
+	int4		rolconnlimit;	/* max connections allowed (-1=no limit) */
 
 	/* remaining fields may be null; use heap_getattr to read them! */
 	text		rolpassword;	/* password, if any */
@@ -70,7 +71,7 @@ typedef FormData_pg_authid *Form_pg_authid;
  *		compiler constants for pg_authid
  * ----------------
  */
-#define Natts_pg_authid					10
+#define Natts_pg_authid					11
 #define Anum_pg_authid_rolname			1
 #define Anum_pg_authid_rolsuper			2
 #define Anum_pg_authid_rolinherit		3
@@ -78,9 +79,10 @@ typedef FormData_pg_authid *Form_pg_authid;
 #define Anum_pg_authid_rolcreatedb		5
 #define Anum_pg_authid_rolcatupdate		6
 #define Anum_pg_authid_rolcanlogin		7
-#define Anum_pg_authid_rolpassword		8
-#define Anum_pg_authid_rolvaliduntil	9
-#define Anum_pg_authid_rolconfig		10
+#define Anum_pg_authid_rolconnlimit		8
+#define Anum_pg_authid_rolpassword		9
+#define Anum_pg_authid_rolvaliduntil	10
+#define Anum_pg_authid_rolconfig		11
 
 /* ----------------
  *		initial contents of pg_authid
@@ -89,7 +91,7 @@ typedef FormData_pg_authid *Form_pg_authid;
  * user choices.
  * ----------------
  */
-DATA(insert OID = 10 ( "POSTGRES" t t t t t t _null_ _null_ _null_ ));
+DATA(insert OID = 10 ( "POSTGRES" t t t t t t -1 _null_ _null_ _null_ ));
 
 #define BOOTSTRAP_SUPERUSERID 10
 

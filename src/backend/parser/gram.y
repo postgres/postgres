@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.504 2005/07/26 22:37:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.505 2005/07/31 17:19:18 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -131,9 +131,9 @@ static void doNegateFloat(Value *v);
 }
 
 %type <node>	stmt schema_stmt
-		AlterDatabaseSetStmt AlterDomainStmt AlterGroupStmt AlterOwnerStmt
-		AlterSeqStmt AlterTableStmt AlterUserStmt AlterUserSetStmt
-		AlterRoleStmt AlterRoleSetStmt
+		AlterDatabaseStmt AlterDatabaseSetStmt AlterDomainStmt AlterGroupStmt
+		AlterOwnerStmt AlterSeqStmt AlterTableStmt 
+		AlterUserStmt AlterUserSetStmt AlterRoleStmt AlterRoleSetStmt
 		AnalyzeStmt ClosePortalStmt ClusterStmt CommentStmt
 		ConstraintsSetStmt CopyStmt CreateAsStmt CreateCastStmt
 		CreateDomainStmt CreateGroupStmt CreateOpClassStmt CreatePLangStmt
@@ -165,8 +165,10 @@ static void doNegateFloat(Value *v);
 
 %type <dbehavior>	opt_drop_behavior
 
-%type <list>	createdb_opt_list copy_opt_list transaction_mode_list
-%type <defelt>	createdb_opt_item copy_opt_item transaction_mode_item
+%type <list>	createdb_opt_list alterdb_opt_list copy_opt_list 
+				transaction_mode_list
+%type <defelt>	createdb_opt_item alterdb_opt_item copy_opt_item
+				transaction_mode_item
 
 %type <ival>	opt_lock lock_type cast_context
 %type <boolean>	opt_force opt_or_replace
@@ -257,7 +259,7 @@ static void doNegateFloat(Value *v);
 
 %type <boolean> copy_from opt_hold
 
-%type <ival>	fetch_count	opt_column event cursor_options
+%type <ival>	opt_column event cursor_options
 %type <objtype>	reindex_type drop_type comment_type
 
 %type <node>	fetch_direction select_limit_value select_offset_value
@@ -302,7 +304,7 @@ static void doNegateFloat(Value *v);
 %type <ival>	opt_numeric opt_decimal
 %type <boolean> opt_varying opt_timezone
 
-%type <ival>	Iconst
+%type <ival>	Iconst SignedIconst
 %type <str>		Sconst comment_text
 %type <str>		RoleId opt_granted_by opt_boolean ColId_or_Sconst
 %type <list>	var_list var_list_or_default
@@ -342,7 +344,7 @@ static void doNegateFloat(Value *v);
 	CACHE CALLED CASCADE CASE CAST CHAIN CHAR_P
 	CHARACTER CHARACTERISTICS CHECK CHECKPOINT CLASS CLOSE
 	CLUSTER COALESCE COLLATE COLUMN COMMENT COMMIT
-	COMMITTED CONSTRAINT CONSTRAINTS CONVERSION_P CONVERT COPY CREATE CREATEDB
+	COMMITTED CONNECTION CONSTRAINT CONSTRAINTS CONVERSION_P CONVERT COPY CREATE CREATEDB
 	CREATEROLE CREATEUSER CROSS CSV CURRENT_DATE CURRENT_ROLE CURRENT_TIME
 	CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
@@ -486,7 +488,8 @@ stmtmulti:	stmtmulti ';' stmt
 		;
 
 stmt :
-			AlterDatabaseSetStmt
+			AlterDatabaseStmt
+			| AlterDatabaseSetStmt
 			| AlterDomainStmt
 			| AlterFunctionStmt
 			| AlterGroupStmt
@@ -671,6 +674,10 @@ OptRoleElem:
 			| NOLOGIN_P
 				{
 					$$ = makeDefElem("canlogin", (Node *)makeInteger(FALSE));
+				}
+			| CONNECTION LIMIT SignedIconst
+				{
+					$$ = makeDefElem("connectionlimit", (Node *)makeInteger($3));
 				}
 			| IN_P ROLE name_list
 				{
@@ -2238,17 +2245,8 @@ FloatOnly:	FCONST									{ $$ = makeFloat($1); }
 				}
 		;
 
-IntegerOnly:
-			Iconst
-				{
-					$$ = makeInteger($1);
-				}
-			| '-' Iconst
-				{
-					$$ = makeInteger($2);
-					$$->val.ival = - $$->val.ival;
-				}
-		;
+IntegerOnly: SignedIconst							{ $$ = makeInteger($1); };
+
 
 /*****************************************************************************
  *
@@ -3044,21 +3042,21 @@ fetch_direction:
 					n->howMany = -1;
 					$$ = (Node *)n;
 				}
-			| ABSOLUTE_P fetch_count
+			| ABSOLUTE_P SignedIconst
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					n->direction = FETCH_ABSOLUTE;
 					n->howMany = $2;
 					$$ = (Node *)n;
 				}
-			| RELATIVE_P fetch_count
+			| RELATIVE_P SignedIconst
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					n->direction = FETCH_RELATIVE;
 					n->howMany = $2;
 					$$ = (Node *)n;
 				}
-			| fetch_count
+			| SignedIconst
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					n->direction = FETCH_FORWARD;
@@ -3079,7 +3077,7 @@ fetch_direction:
 					n->howMany = 1;
 					$$ = (Node *)n;
 				}
-			| FORWARD fetch_count
+			| FORWARD SignedIconst
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					n->direction = FETCH_FORWARD;
@@ -3100,7 +3098,7 @@ fetch_direction:
 					n->howMany = 1;
 					$$ = (Node *)n;
 				}
-			| BACKWARD fetch_count
+			| BACKWARD SignedIconst
 				{
 					FetchStmt *n = makeNode(FetchStmt);
 					n->direction = FETCH_BACKWARD;
@@ -3114,11 +3112,6 @@ fetch_direction:
 					n->howMany = FETCH_ALL;
 					$$ = (Node *)n;
 				}
-		;
-
-fetch_count:
-			Iconst									{ $$ = $1; }
-			| '-' Iconst							{ $$ = - $2; }
 		;
 
 from_in:	FROM									{}
@@ -4473,6 +4466,10 @@ createdb_opt_item:
 				{
 					$$ = makeDefElem("encoding", NULL);
 				}
+			| CONNECTION LIMIT opt_equal SignedIconst
+				{
+					$$ = makeDefElem("connectionlimit", (Node *)makeInteger($4));
+				}
 			| OWNER opt_equal name
 				{
 					$$ = makeDefElem("owner", (Node *)makeString($3));
@@ -4485,8 +4482,7 @@ createdb_opt_item:
 
 /*
  *	Though the equals sign doesn't match other WITH options, pg_dump uses
- *	equals for backward compability, and it doesn't seem worth removing it.
- *	2002-02-25
+ *	equals for backward compatibility, and it doesn't seem worth removing it.
  */
 opt_equal:	'='										{}
 			| /*EMPTY*/								{}
@@ -4498,6 +4494,16 @@ opt_equal:	'='										{}
  *		ALTER DATABASE
  *
  *****************************************************************************/
+
+AlterDatabaseStmt:
+ 			ALTER DATABASE database_name opt_with alterdb_opt_list
+				 {
+					AlterDatabaseStmt *n = makeNode(AlterDatabaseStmt);
+					n->dbname = $3;
+					n->options = $5;
+					$$ = (Node *)n;
+				 }
+		;
 
 AlterDatabaseSetStmt:
 			ALTER DATABASE database_name SET set_rest
@@ -4515,6 +4521,19 @@ AlterDatabaseSetStmt:
 					n->variable = ((VariableResetStmt *)$4)->name;
 					n->value = NIL;
 					$$ = (Node *)n;
+				}
+		;
+
+
+alterdb_opt_list:
+			alterdb_opt_list alterdb_opt_item		{ $$ = lappend($1, $2); }
+			| /* EMPTY */							{ $$ = NIL; }
+		;
+
+alterdb_opt_item:
+			CONNECTION LIMIT opt_equal SignedIconst
+				{
+					$$ = makeDefElem("connectionlimit", (Node *)makeInteger($4));
 				}
 		;
 
@@ -7875,6 +7894,10 @@ Iconst:		ICONST									{ $$ = $1; };
 Sconst:		SCONST									{ $$ = $1; };
 RoleId:		ColId									{ $$ = $1; };
 
+SignedIconst: ICONST								{ $$ = $1; }
+			| '-' ICONST							{ $$ = - $2; }
+		;
+
 /*
  * Name classification hierarchy.
  *
@@ -7959,6 +7982,7 @@ unreserved_keyword:
 			| COMMENT
 			| COMMIT
 			| COMMITTED
+			| CONNECTION
 			| CONSTRAINTS
 			| CONVERSION_P
 			| COPY

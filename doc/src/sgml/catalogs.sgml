@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.109 2005/07/26 16:38:25 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.110 2005/07/31 17:19:16 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -1019,6 +1019,16 @@
      </row>
 
      <row>
+      <entry><structfield>rolconnlimit</structfield></entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>
+       For roles that can log in, this sets maximum number of concurrent 
+       connections this role can make.  -1 means no limit.
+      </entry>
+     </row>
+
+     <row>
       <entry><structfield>rolpassword</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
@@ -1918,6 +1928,16 @@
       <entry>
        If false then no one can connect to this database.  This is
        used to protect the <literal>template0</> database from being altered.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>datconnlimit</structfield></entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>
+       Sets maximum number of concurrent connections that can be made 
+       to this database.  -1 means no limit.
       </entry>
      </row>
 
@@ -4808,6 +4828,16 @@
       <entry>
        Role may log in, that is, this role can be given as the initial
        session authorization identifier.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>rolconnlimit</structfield></entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>
+       For roles that can log in, this sets maximum number of concurrent 
+       connections this role can make.  -1 means no limit.
       </entry>
      </row>
 
