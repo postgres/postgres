@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.156 2005/07/28 22:27:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.157 2005/08/01 20:31:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,8 @@ static TargetEntry *process_matched_tle(TargetEntry *src_tle,
 					TargetEntry *prior_tle,
 					const char *attrName);
 static Node *get_assignment_input(Node *node);
-static void markQueryForLocking(Query *qry, bool forUpdate, bool skipOldNew);
+static void markQueryForLocking(Query *qry, bool forUpdate, bool noWait,
+								bool skipOldNew);
 static List *matchLocks(CmdType event, RuleLock *rulelocks,
 		   int varno, Query *parsetree);
 static Query *fireRIRrules(Query *parsetree, List *activeRIRs);
@@ -962,7 +963,8 @@ ApplyRetrieveRule(Query *parsetree,
 		/*
 		 * Set up the view's referenced tables as if FOR UPDATE/SHARE.
 		 */
-		markQueryForLocking(rule_action, parsetree->forUpdate, true);
+		markQueryForLocking(rule_action, parsetree->forUpdate,
+							parsetree->rowNoWait, true);
 	}
 
 	return parsetree;
@@ -977,16 +979,24 @@ ApplyRetrieveRule(Query *parsetree,
  * NB: this must agree with the parser's transformLocking() routine.
  */
 static void
-markQueryForLocking(Query *qry, bool forUpdate, bool skipOldNew)
+markQueryForLocking(Query *qry, bool forUpdate, bool noWait, bool skipOldNew)
 {
 	Index		rti = 0;
 	ListCell   *l;
 
-	if (qry->rowMarks && forUpdate != qry->forUpdate)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot use both FOR UPDATE and FOR SHARE in one query")));
+	if (qry->rowMarks)
+	{
+		if (forUpdate != qry->forUpdate)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot use both FOR UPDATE and FOR SHARE in one query")));
+		if (noWait != qry->rowNoWait)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot use both wait and NOWAIT in one query")));
+	}
 	qry->forUpdate = forUpdate;
+	qry->rowNoWait = noWait;
 
 	foreach(l, qry->rtable)
 	{
@@ -1007,7 +1017,7 @@ markQueryForLocking(Query *qry, bool forUpdate, bool skipOldNew)
 		else if (rte->rtekind == RTE_SUBQUERY)
 		{
 			/* FOR UPDATE/SHARE of subquery is propagated to subquery's rels */
-			markQueryForLocking(rte->subquery, forUpdate, false);
+			markQueryForLocking(rte->subquery, forUpdate, noWait, false);
 		}
 	}
 }

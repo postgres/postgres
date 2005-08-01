@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/sql.sgml,v 1.37 2005/07/14 06:17:35 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/sql.sgml,v 1.38 2005/08/01 20:31:05 tgl Exp $
 -->
 
  <chapter id="sql-intro">
@@ -865,7 +865,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
     [ ORDER BY <replaceable class="PARAMETER">expression</replaceable> [ ASC | DESC | USING <replaceable class="PARAMETER">operator</replaceable> ] [, ...] ]
     [ LIMIT { <replaceable class="PARAMETER">count</replaceable> | ALL } ]
     [ OFFSET <replaceable class="PARAMETER">start</replaceable> ]
-    [ FOR { UPDATE | SHARE } [ OF <replaceable class="PARAMETER">class_name</replaceable> [, ...] ] ]
+    [ FOR { UPDATE | SHARE } [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ] [ NOWAIT ] ]
      </synopsis>
     </para>
 

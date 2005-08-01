@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lmgr.h,v 1.50 2005/06/17 22:32:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lmgr.h,v 1.51 2005/08/01 20:31:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,12 +64,15 @@ extern void UnlockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode);
 
 /* Lock a tuple (see heap_lock_tuple before assuming you understand this) */
 extern void LockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode);
+extern bool ConditionalLockTuple(Relation relation, ItemPointer tid,
+								 LOCKMODE lockmode);
 extern void UnlockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode);
 
 /* Lock an XID (used to wait for a transaction to finish) */
 extern void XactLockTableInsert(TransactionId xid);
 extern void XactLockTableDelete(TransactionId xid);
 extern void XactLockTableWait(TransactionId xid);
+extern bool ConditionalXactLockTableWait(TransactionId xid);
 
 /* Lock a general object (other than a relation) of the current database */
 extern void LockDatabaseObject(Oid classid, Oid objid, uint16 objsubid,

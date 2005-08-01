@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.314 2005/08/01 04:03:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.315 2005/08/01 20:31:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1589,6 +1589,18 @@ _copyDefElem(DefElem *from)
 	return newnode;
 }
 
+static LockingClause *
+_copyLockingClause(LockingClause *from)
+{
+	LockingClause *newnode = makeNode(LockingClause);
+
+	COPY_NODE_FIELD(lockedRels);
+	COPY_SCALAR_FIELD(forUpdate);
+	COPY_SCALAR_FIELD(nowait);
+
+	return newnode;
+}
+
 static Query *
 _copyQuery(Query *from)
 {
@@ -1607,6 +1619,7 @@ _copyQuery(Query *from)
 	COPY_NODE_FIELD(jointree);
 	COPY_NODE_FIELD(rowMarks);
 	COPY_SCALAR_FIELD(forUpdate);
+	COPY_SCALAR_FIELD(rowNoWait);
 	COPY_NODE_FIELD(targetList);
 	COPY_NODE_FIELD(groupClause);
 	COPY_NODE_FIELD(havingQual);
@@ -1675,8 +1688,7 @@ _copySelectStmt(SelectStmt *from)
 	COPY_NODE_FIELD(sortClause);
 	COPY_NODE_FIELD(limitOffset);
 	COPY_NODE_FIELD(limitCount);
-	COPY_NODE_FIELD(lockedRels);
-	COPY_SCALAR_FIELD(forUpdate);
+	COPY_NODE_FIELD(lockingClause);
 	COPY_SCALAR_FIELD(op);
 	COPY_SCALAR_FIELD(all);
 	COPY_NODE_FIELD(larg);
@@ -3184,6 +3196,9 @@ copyObject(void *from)
 			break;
 		case T_DefElem:
 			retval = _copyDefElem(from);
+			break;
+		case T_LockingClause:
+			retval = _copyLockingClause(from);
 			break;
 		case T_RangeTblEntry:
 			retval = _copyRangeTblEntry(from);

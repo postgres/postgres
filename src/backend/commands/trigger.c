@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.189 2005/05/30 07:20:58 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.190 2005/08/01 20:31:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1598,7 +1598,8 @@ GetTupleForTrigger(EState *estate, ResultRelInfo *relinfo,
 		*newSlot = NULL;
 		tuple.t_self = *tid;
 ltrmark:;
-		test = heap_lock_tuple(relation, &tuple, &buffer, cid, LockTupleExclusive);
+		test = heap_lock_tuple(relation, &tuple, &buffer, cid,
+							   LockTupleExclusive, false);
 		switch (test)
 		{
 			case HeapTupleSelfUpdated:

@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.251 2005/08/01 04:03:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.252 2005/08/01 20:31:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -644,6 +644,7 @@ _equalQuery(Query *a, Query *b)
 	COMPARE_NODE_FIELD(jointree);
 	COMPARE_NODE_FIELD(rowMarks);
 	COMPARE_SCALAR_FIELD(forUpdate);
+	COMPARE_SCALAR_FIELD(rowNoWait);
 	COMPARE_NODE_FIELD(targetList);
 	COMPARE_NODE_FIELD(groupClause);
 	COMPARE_NODE_FIELD(havingQual);
@@ -704,8 +705,7 @@ _equalSelectStmt(SelectStmt *a, SelectStmt *b)
 	COMPARE_NODE_FIELD(sortClause);
 	COMPARE_NODE_FIELD(limitOffset);
 	COMPARE_NODE_FIELD(limitCount);
-	COMPARE_NODE_FIELD(lockedRels);
-	COMPARE_SCALAR_FIELD(forUpdate);
+	COMPARE_NODE_FIELD(lockingClause);
 	COMPARE_SCALAR_FIELD(op);
 	COMPARE_SCALAR_FIELD(all);
 	COMPARE_NODE_FIELD(larg);
@@ -1650,6 +1650,16 @@ _equalDefElem(DefElem *a, DefElem *b)
 }
 
 static bool
+_equalLockingClause(LockingClause *a, LockingClause *b)
+{
+	COMPARE_NODE_FIELD(lockedRels);
+	COMPARE_SCALAR_FIELD(forUpdate);
+	COMPARE_SCALAR_FIELD(nowait);
+
+	return true;
+}
+
+static bool
 _equalRangeTblEntry(RangeTblEntry *a, RangeTblEntry *b)
 {
 	COMPARE_SCALAR_FIELD(rtekind);
@@ -2228,6 +2238,9 @@ equal(void *a, void *b)
 			break;
 		case T_DefElem:
 			retval = _equalDefElem(a, b);
+			break;
+		case T_LockingClause:
+			retval = _equalLockingClause(a, b);
 			break;
 		case T_RangeTblEntry:
 			retval = _equalRangeTblEntry(a, b);

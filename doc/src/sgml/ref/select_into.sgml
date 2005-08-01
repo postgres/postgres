@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select_into.sgml,v 1.35 2005/04/28 21:47:10 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select_into.sgml,v 1.36 2005/08/01 20:31:04 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -31,7 +31,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
     [ ORDER BY <replaceable class="PARAMETER">expression</replaceable> [ ASC | DESC | USING <replaceable class="PARAMETER">operator</replaceable> ] [, ...] ]
     [ LIMIT { <replaceable class="PARAMETER">count</replaceable> | ALL } ]
     [ OFFSET <replaceable class="PARAMETER">start</replaceable> ]
-    [ FOR { UPDATE | SHARE } [ OF <replaceable class="PARAMETER">tablename</replaceable> [, ...] ] ]
+    [ FOR { UPDATE | SHARE } [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ] [ NOWAIT ] ]
 </synopsis>
  </refsynopsisdiv>
 

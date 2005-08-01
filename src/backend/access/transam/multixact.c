@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.5 2005/06/08 15:50:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.6 2005/08/01 20:31:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -559,6 +559,43 @@ MultiXactIdWait(MultiXactId multi)
 }
 
 /*
+ * ConditionalMultiXactIdWait
+ *		As above, but only lock if we can get the lock without blocking.
+ */
+bool
+ConditionalMultiXactIdWait(MultiXactId multi)
+{
+	bool	result = true;
+	TransactionId *members;
+	int		nmembers;
+
+	nmembers = GetMultiXactIdMembers(multi, &members);
+
+	if (nmembers >= 0)
+	{
+		int		i;
+
+		for (i = 0; i < nmembers; i++)
+		{
+			TransactionId	member = members[i];
+
+			debug_elog4(DEBUG2, "ConditionalMultiXactIdWait: trying %d (%u)",
+						i, member);
+			if (!TransactionIdIsCurrentTransactionId(member))
+			{
+				result = ConditionalXactLockTableWait(member);
+				if (!result)
+					break;
+			}
+		}
+
+		pfree(members);
+	}
+
+	return result;
+}
+
+/*
  * CreateMultiXactId
  * 		Make a new MultiXactId
  *
@@ -590,7 +627,7 @@ CreateMultiXactId(int nxids, TransactionId *xids)
 	 */
 	multi = mXactCacheGetBySet(nxids, xids);
 	if (MultiXactIdIsValid(multi))
-	{	
+	{
 		debug_elog2(DEBUG2, "Create: in cache!");
 		return multi;
 	}

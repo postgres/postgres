@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.258 2005/07/02 23:00:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.259 2005/08/01 20:31:08 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1343,8 +1343,7 @@ _outSelectStmt(StringInfo str, SelectStmt *node)
 	WRITE_NODE_FIELD(sortClause);
 	WRITE_NODE_FIELD(limitOffset);
 	WRITE_NODE_FIELD(limitCount);
-	WRITE_NODE_FIELD(lockedRels);
-	WRITE_BOOL_FIELD(forUpdate);
+	WRITE_NODE_FIELD(lockingClause);
 	WRITE_ENUM_FIELD(op, SetOperation);
 	WRITE_BOOL_FIELD(all);
 	WRITE_NODE_FIELD(larg);
@@ -1369,6 +1368,16 @@ _outDefElem(StringInfo str, DefElem *node)
 
 	WRITE_STRING_FIELD(defname);
 	WRITE_NODE_FIELD(arg);
+}
+
+static void
+_outLockingClause(StringInfo str, LockingClause *node)
+{
+	WRITE_NODE_TYPE("LOCKINGCLAUSE");
+
+	WRITE_NODE_FIELD(lockedRels);
+	WRITE_BOOL_FIELD(forUpdate);
+	WRITE_BOOL_FIELD(nowait);
 }
 
 static void
@@ -1462,6 +1471,7 @@ _outQuery(StringInfo str, Query *node)
 	WRITE_NODE_FIELD(jointree);
 	WRITE_NODE_FIELD(rowMarks);
 	WRITE_BOOL_FIELD(forUpdate);
+	WRITE_BOOL_FIELD(rowNoWait);
 	WRITE_NODE_FIELD(targetList);
 	WRITE_NODE_FIELD(groupClause);
 	WRITE_NODE_FIELD(havingQual);
@@ -2078,6 +2088,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_DefElem:
 				_outDefElem(str, obj);
+				break;
+			case T_LockingClause:
+				_outLockingClause(str, obj);
 				break;
 
 			default:

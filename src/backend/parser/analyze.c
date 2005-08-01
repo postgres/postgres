@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.323 2005/07/28 22:27:00 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.324 2005/08/01 20:31:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,7 +134,7 @@ static void transformFKConstraints(ParseState *pstate,
 					   bool isAddConstraint);
 static void applyColumnNames(List *dst, List *src);
 static List *getSetColTypes(ParseState *pstate, Node *node);
-static void transformLocking(Query *qry, List *lockedRels, bool forUpdate);
+static void transformLockingClause(Query *qry, LockingClause *lc);
 static void transformConstraintAttrs(List *constraintList);
 static void transformColumnType(ParseState *pstate, ColumnDef *column);
 static void release_pstate_resources(ParseState *pstate);
@@ -1812,8 +1812,8 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 
 	qry->commandType = CMD_SELECT;
 
-	/* make FOR UPDATE/FOR SHARE list available to addRangeTableEntry */
-	pstate->p_lockedRels = stmt->lockedRels;
+	/* make FOR UPDATE/FOR SHARE info available to addRangeTableEntry */
+	pstate->p_locking_clause = stmt->lockingClause;
 
 	/* process the FROM clause */
 	transformFromClause(pstate, stmt->fromClause);
@@ -1872,8 +1872,8 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	if (pstate->p_hasAggs || qry->groupClause || qry->havingQual)
 		parseCheckAggregates(pstate, qry);
 
-	if (stmt->lockedRels != NIL)
-		transformLocking(qry, stmt->lockedRels, stmt->forUpdate);
+	if (stmt->lockingClause)
+		transformLockingClause(qry, stmt->lockingClause);
 
 	return qry;
 }
@@ -1901,8 +1901,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	List	   *sortClause;
 	Node	   *limitOffset;
 	Node	   *limitCount;
-	List	   *lockedRels;
-	bool		forUpdate;
+	LockingClause *lockingClause;
 	Node	   *node;
 	ListCell   *left_tlist,
 			   *dtlist;
@@ -1940,16 +1939,15 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	sortClause = stmt->sortClause;
 	limitOffset = stmt->limitOffset;
 	limitCount = stmt->limitCount;
-	lockedRels = stmt->lockedRels;
-	forUpdate = stmt->forUpdate;
+	lockingClause = stmt->lockingClause;
 
 	stmt->sortClause = NIL;
 	stmt->limitOffset = NULL;
 	stmt->limitCount = NULL;
-	stmt->lockedRels = NIL;
+	stmt->lockingClause = NULL;
 
 	/* We don't support FOR UPDATE/SHARE with set ops at the moment. */
-	if (lockedRels)
+	if (lockingClause)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("SELECT FOR UPDATE/SHARE is not allowed with UNION/INTERSECT/EXCEPT")));
@@ -2089,8 +2087,8 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	if (pstate->p_hasAggs || qry->groupClause || qry->havingQual)
 		parseCheckAggregates(pstate, qry);
 
-	if (lockedRels != NIL)
-		transformLocking(qry, lockedRels, forUpdate);
+	if (lockingClause)
+		transformLockingClause(qry, lockingClause);
 
 	return qry;
 }
@@ -2114,7 +2112,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("INTO is only allowed on first SELECT of UNION/INTERSECT/EXCEPT")));
 	/* We don't support FOR UPDATE/SHARE with set ops at the moment. */
-	if (stmt->lockedRels)
+	if (stmt->lockingClause)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("SELECT FOR UPDATE/SHARE is not allowed with UNION/INTERSECT/EXCEPT")));
@@ -2134,7 +2132,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 	{
 		Assert(stmt->larg != NULL && stmt->rarg != NULL);
 		if (stmt->sortClause || stmt->limitOffset || stmt->limitCount ||
-			stmt->lockedRels)
+			stmt->lockingClause)
 			isLeaf = true;
 		else
 			isLeaf = false;
@@ -2760,24 +2758,40 @@ CheckSelectLocking(Query *qry, bool forUpdate)
  * in rewriteHandler.c.
  */
 static void
-transformLocking(Query *qry, List *lockedRels, bool forUpdate)
+transformLockingClause(Query *qry, LockingClause *lc)
 {
+	List	   *lockedRels = lc->lockedRels;
 	List	   *rowMarks;
 	ListCell   *l;
 	ListCell   *rt;
 	Index		i;
+	LockingClause *allrels;
 
-	if (qry->rowMarks && forUpdate != qry->forUpdate)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot use both FOR UPDATE and FOR SHARE in one query")));
-	qry->forUpdate = forUpdate;
+	if (qry->rowMarks)
+	{
+		if (lc->forUpdate != qry->forUpdate)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot use both FOR UPDATE and FOR SHARE in one query")));
+		if (lc->nowait != qry->rowNoWait)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot use both wait and NOWAIT in one query")));
+	}
+	qry->forUpdate = lc->forUpdate;
+	qry->rowNoWait = lc->nowait;
 
-	CheckSelectLocking(qry, forUpdate);
-	
+	CheckSelectLocking(qry, lc->forUpdate);
+
+	/* make a clause we can pass down to subqueries to select all rels */
+	allrels = makeNode(LockingClause);
+	allrels->lockedRels = NIL;				/* indicates all rels */
+	allrels->forUpdate = lc->forUpdate;
+	allrels->nowait = lc->nowait;
+
 	rowMarks = qry->rowMarks;
 
-	if (linitial(lockedRels) == NULL)
+	if (lockedRels == NIL)
 	{
 		/* all regular tables used in query */
 		i = 0;
@@ -2799,8 +2813,7 @@ transformLocking(Query *qry, List *lockedRels, bool forUpdate)
 					 * FOR UPDATE/SHARE of subquery is propagated to all
 					 * of subquery's rels
 					 */
-					transformLocking(rte->subquery, list_make1(NULL),
-									 forUpdate);
+					transformLockingClause(rte->subquery, allrels);
 					break;
 				default:
 					/* ignore JOIN, SPECIAL, FUNCTION RTEs */
@@ -2836,8 +2849,7 @@ transformLocking(Query *qry, List *lockedRels, bool forUpdate)
 							 * FOR UPDATE/SHARE of subquery is propagated to
 							 * all of subquery's rels
 							 */
-							transformLocking(rte->subquery, list_make1(NULL),
-											 forUpdate);
+							transformLockingClause(rte->subquery, allrels);
 							break;
 						case RTE_JOIN:
 							ereport(ERROR,

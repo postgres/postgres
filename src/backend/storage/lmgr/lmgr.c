@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.77 2005/06/17 22:32:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.78 2005/08/01 20:31:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -369,6 +369,27 @@ LockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode)
 }
 
 /*
+ *		ConditionalLockTuple
+ *
+ * As above, but only lock if we can get the lock without blocking.
+ * Returns TRUE iff the lock was acquired.
+ */
+bool
+ConditionalLockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode)
+{
+	LOCKTAG		tag;
+
+	SET_LOCKTAG_TUPLE(tag,
+					  relation->rd_lockInfo.lockRelId.dbId,
+					  relation->rd_lockInfo.lockRelId.relId,
+					  ItemPointerGetBlockNumber(tid),
+					  ItemPointerGetOffsetNumber(tid));
+
+	return (LockAcquire(LockTableId, &tag, relation->rd_istemp,
+						lockmode, false, true) != LOCKACQUIRE_NOT_AVAIL);
+}
+
+/*
  *		UnlockTuple
  */
 void
@@ -463,6 +484,44 @@ XactLockTableWait(TransactionId xid)
 		TransactionIdAbort(xid);
 }
 
+/*
+ *		ConditionalXactLockTableWait
+ *
+ * As above, but only lock if we can get the lock without blocking.
+ * Returns TRUE if the lock was acquired.
+ */
+bool
+ConditionalXactLockTableWait(TransactionId xid)
+{
+	LOCKTAG		tag;
+
+	for (;;)
+	{
+		Assert(TransactionIdIsValid(xid));
+		Assert(!TransactionIdEquals(xid, GetTopTransactionId()));
+
+		SET_LOCKTAG_TRANSACTION(tag, xid);
+
+		if (LockAcquire(LockTableId, &tag, false,
+						ShareLock, false, true) == LOCKACQUIRE_NOT_AVAIL)
+			return false;
+
+		LockRelease(LockTableId, &tag, ShareLock, false);
+
+		if (!TransactionIdIsInProgress(xid))
+			break;
+		xid = SubTransGetParent(xid);
+	}
+
+	/*
+	 * Transaction was committed/aborted/crashed - we have to update
+	 * pg_clog if transaction is still marked as running.
+	 */
+	if (!TransactionIdDidCommit(xid) && !TransactionIdDidAbort(xid))
+		TransactionIdAbort(xid);
+
+	return true;
+}
 
 /*
  *		LockDatabaseObject

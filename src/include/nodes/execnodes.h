@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.136 2005/06/26 22:05:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.137 2005/08/01 20:31:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -319,8 +319,9 @@ typedef struct EState
 
 	uint32		es_processed;	/* # of tuples processed */
 	Oid			es_lastoid;		/* last oid processed (by INSERT) */
-	List	   *es_rowMark;		/* not good place, but there is no other */
-	bool		es_forUpdate;	/* was it FOR UPDATE or FOR SHARE */
+	List	   *es_rowMarks;	/* not good place, but there is no other */
+	bool		es_forUpdate;	/* true = FOR UPDATE, false = FOR SHARE */
+	bool		es_rowNoWait;	/* FOR UPDATE/SHARE NOWAIT option */
 
 	bool		es_instrument;	/* true requests runtime instrumentation */
 	bool		es_select_into; /* true if doing SELECT INTO */

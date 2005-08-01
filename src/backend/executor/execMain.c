@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.251 2005/06/28 05:08:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.252 2005/08/01 20:31:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -559,8 +559,9 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 	/*
 	 * Have to lock relations selected FOR UPDATE/FOR SHARE
 	 */
-	estate->es_rowMark = NIL;
+	estate->es_rowMarks = NIL;
 	estate->es_forUpdate = parseTree->forUpdate;
+	estate->es_rowNoWait = parseTree->rowNoWait;
 	if (parseTree->rowMarks != NIL)
 	{
 		ListCell   *l;
@@ -577,7 +578,7 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 			erm->relation = relation;
 			erm->rti = rti;
 			snprintf(erm->resname, sizeof(erm->resname), "ctid%u", rti);
-			estate->es_rowMark = lappend(estate->es_rowMark, erm);
+			estate->es_rowMarks = lappend(estate->es_rowMarks, erm);
 		}
 	}
 
@@ -1010,12 +1011,12 @@ ExecEndPlan(PlanState *planstate, EState *estate)
 		}
 
 		heap_close(estate->es_into_relation_descriptor, NoLock);
-   }
+	}
 
 	/*
 	 * close any relations selected FOR UPDATE/FOR SHARE, again keeping locks
 	 */
-	foreach(l, estate->es_rowMark)
+	foreach(l, estate->es_rowMarks)
 	{
 		execRowMark *erm = lfirst(l);
 
@@ -1156,12 +1157,12 @@ lnext:	;
 			/*
 			 * Process any FOR UPDATE or FOR SHARE locking requested.
 			 */
-			else if (estate->es_rowMark != NIL)
+			else if (estate->es_rowMarks != NIL)
 			{
 				ListCell   *l;
 
 		lmark:	;
-				foreach(l, estate->es_rowMark)
+				foreach(l, estate->es_rowMarks)
 				{
 					execRowMark *erm = lfirst(l);
 					Buffer		buffer;
@@ -1190,7 +1191,7 @@ lnext:	;
 					tuple.t_self = *((ItemPointer) DatumGetPointer(datum));
 					test = heap_lock_tuple(erm->relation, &tuple, &buffer,
 										  estate->es_snapshot->curcid,
-										  lockmode);
+										  lockmode, estate->es_rowNoWait);
 					ReleaseBuffer(buffer);
 					switch (test)
 					{
@@ -1823,7 +1824,7 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 		ListCell   *l;
 
 		relation = NULL;
-		foreach(l, estate->es_rowMark)
+		foreach(l, estate->es_rowMarks)
 		{
 			if (((execRowMark *) lfirst(l))->rti == rti)
 			{
@@ -2128,8 +2129,9 @@ EvalPlanQualStart(evalPlanQual *epq, EState *estate, evalPlanQual *priorepq)
 	if (estate->es_topPlan->nParamExec > 0)
 		epqstate->es_param_exec_vals = (ParamExecData *)
 			palloc0(estate->es_topPlan->nParamExec * sizeof(ParamExecData));
-	epqstate->es_rowMark = estate->es_rowMark;
+	epqstate->es_rowMarks = estate->es_rowMarks;
 	epqstate->es_forUpdate = estate->es_forUpdate;
+	epqstate->es_rowNoWait = estate->es_rowNoWait;
 	epqstate->es_instrument = estate->es_instrument;
 	epqstate->es_select_into = estate->es_select_into;
 	epqstate->es_into_oids = estate->es_into_oids;

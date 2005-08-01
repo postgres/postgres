@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.112 2005/06/28 05:08:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.113 2005/08/01 20:31:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -903,9 +903,9 @@ isLockedRel(ParseState *pstate, char *refname)
 	/* Outer loop to check parent query levels as well as this one */
 	while (pstate != NULL)
 	{
-		if (pstate->p_lockedRels != NIL)
+		if (pstate->p_locking_clause)
 		{
-			if (linitial(pstate->p_lockedRels) == NULL)
+			if (pstate->p_locking_clause->lockedRels == NIL)
 			{
 				/* all tables used in query */
 				return true;
@@ -915,7 +915,7 @@ isLockedRel(ParseState *pstate, char *refname)
 				/* just the named tables */
 				ListCell   *l;
 
-				foreach(l, pstate->p_lockedRels)
+				foreach(l, pstate->p_locking_clause->lockedRels)
 				{
 					char	   *rname = strVal(lfirst(l));
 

@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.29 2005/06/05 22:32:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.30 2005/08/01 20:31:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -295,18 +295,26 @@ pull_up_subqueries(PlannerInfo *root, Node *jtnode, bool below_outer_join)
 			 * already adjusted the marker values, so just list_concat the
 			 * list.)
 			 *
-			 * Executor can't handle multiple FOR UPDATE/SHARE flags, so
-			 * complain if they are valid but different
+			 * Executor can't handle multiple FOR UPDATE/SHARE/NOWAIT flags,
+			 * so complain if they are valid but different
 			 */
-			if (parse->rowMarks && subquery->rowMarks &&
-				parse->forUpdate != subquery->forUpdate)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot use both FOR UPDATE and FOR SHARE in one query")));
-
+			if (parse->rowMarks && subquery->rowMarks)
+			{
+				if (parse->forUpdate != subquery->forUpdate)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot use both FOR UPDATE and FOR SHARE in one query")));
+				if (parse->rowNoWait != subquery->rowNoWait)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot use both wait and NOWAIT in one query")));
+			}
 			parse->rowMarks = list_concat(parse->rowMarks, subquery->rowMarks);
 			if (subquery->rowMarks)
+			{
 				parse->forUpdate = subquery->forUpdate;
+				parse->rowNoWait = subquery->rowNoWait;
+			}
 
 			/*
 			 * We also have to fix the relid sets of any parent

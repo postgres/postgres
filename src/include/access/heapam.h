@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.102 2005/06/20 18:37:01 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.103 2005/08/01 20:31:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,7 +163,8 @@ extern HTSU_Result heap_delete(Relation relation, ItemPointer tid, ItemPointer c
 extern HTSU_Result heap_update(Relation relation, ItemPointer otid, HeapTuple tup,
 		ItemPointer ctid, CommandId cid, Snapshot crosscheck, bool wait);
 extern HTSU_Result heap_lock_tuple(Relation relation, HeapTuple tup,
-				 Buffer *userbuf, CommandId cid, LockTupleMode mode);
+				 Buffer *userbuf, CommandId cid,
+				 LockTupleMode mode, bool nowait);
 
 extern Oid	simple_heap_insert(Relation relation, HeapTuple tup);
 extern void simple_heap_delete(Relation relation, ItemPointer tid);

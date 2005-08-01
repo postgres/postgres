@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.506 2005/08/01 04:03:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.507 2005/08/01 20:31:09 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -87,7 +87,7 @@ static List *check_func_name(List *names);
 static List *extractArgTypes(List *parameters);
 static SelectStmt *findLeftmostSelect(SelectStmt *node);
 static void insertSelectOptions(SelectStmt *stmt,
-								List *sortClause, List *lockingClause,
+								List *sortClause, Node *lockingClause,
 								Node *limitOffset, Node *limitCount);
 static Node *makeSetOp(SetOperation op, bool all, Node *larg, Node *rarg);
 static Node *doNegate(Node *n);
@@ -132,7 +132,7 @@ static void doNegateFloat(Value *v);
 
 %type <node>	stmt schema_stmt
 		AlterDatabaseStmt AlterDatabaseSetStmt AlterDomainStmt AlterGroupStmt
-		AlterObjectSchemaStmt AlterOwnerStmt AlterSeqStmt AlterTableStmt 
+		AlterObjectSchemaStmt AlterOwnerStmt AlterSeqStmt AlterTableStmt
 		AlterUserStmt AlterUserSetStmt AlterRoleStmt AlterRoleSetStmt
 		AnalyzeStmt ClosePortalStmt ClusterStmt CommentStmt
 		ConstraintsSetStmt CopyStmt CreateAsStmt CreateCastStmt
@@ -165,7 +165,7 @@ static void doNegateFloat(Value *v);
 
 %type <dbehavior>	opt_drop_behavior
 
-%type <list>	createdb_opt_list alterdb_opt_list copy_opt_list 
+%type <list>	createdb_opt_list alterdb_opt_list copy_opt_list
 				transaction_mode_list
 %type <defelt>	createdb_opt_item alterdb_opt_item copy_opt_item
 				transaction_mode_item
@@ -240,8 +240,8 @@ static void doNegateFloat(Value *v);
 %type <oncommit> OnCommitOption
 %type <withoids> OptWithOids WithOidsAs
 
-%type <list>	for_locking_clause opt_for_locking_clause
-				update_list
+%type <node>	for_locking_clause opt_for_locking_clause
+%type <list>	locked_rels_list
 %type <boolean>	opt_all
 
 %type <node>	join_outer join_qual
@@ -4555,7 +4555,7 @@ opt_equal:	'='										{}
  *****************************************************************************/
 
 AlterDatabaseStmt:
- 			ALTER DATABASE database_name opt_with alterdb_opt_list
+			ALTER DATABASE database_name opt_with alterdb_opt_list
 				 {
 					AlterDatabaseStmt *n = makeNode(AlterDatabaseStmt);
 					n->dbname = $3;
@@ -5070,7 +5070,7 @@ lock_type:	ACCESS SHARE					{ $$ = AccessShareLock; }
 			| ACCESS EXCLUSIVE				{ $$ = AccessExclusiveLock; }
 		;
 
-opt_nowait:	NOWAIT 			{ $$ = TRUE; }
+opt_nowait:	NOWAIT							{ $$ = TRUE; }
 			| /*EMPTY*/						{ $$ = FALSE; }
 		;
 
@@ -5191,7 +5191,7 @@ select_no_parens:
 			simple_select						{ $$ = $1; }
 			| select_clause sort_clause
 				{
-					insertSelectOptions((SelectStmt *) $1, $2, NIL,
+					insertSelectOptions((SelectStmt *) $1, $2, NULL,
 										NULL, NULL);
 					$$ = $1;
 				}
@@ -5424,14 +5424,6 @@ select_offset_value:
 			a_expr									{ $$ = $1; }
 		;
 
-/*
- *	jimmy bell-style recursive queries aren't supported in the
- *	current system.
- *
- *	...however, recursive addattr and rename supported.  make special
- *	cases for these.
- */
-
 group_clause:
 			GROUP_P BY expr_list					{ $$ = $3; }
 			| /*EMPTY*/								{ $$ = NIL; }
@@ -5443,8 +5435,22 @@ having_clause:
 		;
 
 for_locking_clause:
-			FOR UPDATE update_list					{ $$ = lcons(makeString("for_update"), $3); }
-			| FOR SHARE update_list					{ $$ = lcons(makeString("for_share"), $3); }
+			FOR UPDATE locked_rels_list opt_nowait
+				{
+					LockingClause *n = makeNode(LockingClause);
+					n->lockedRels = $3;
+					n->forUpdate = TRUE;
+					n->nowait = $4;
+					$$ = (Node *) n;
+				}
+			| FOR SHARE locked_rels_list opt_nowait
+				{
+					LockingClause *n = makeNode(LockingClause);
+					n->lockedRels = $3;
+					n->forUpdate = FALSE;
+					n->nowait = $4;
+					$$ = (Node *) n;
+				}
 			| FOR READ ONLY							{ $$ = NULL; }
 		;
 
@@ -5453,9 +5459,9 @@ opt_for_locking_clause:
 			| /* EMPTY */							{ $$ = NULL; }
 		;
 
-update_list:
+locked_rels_list:
 			OF name_list							{ $$ = $2; }
-			| /* EMPTY */							{ $$ = list_make1(NULL); }
+			| /* EMPTY */							{ $$ = NIL; }
 		;
 
 /*****************************************************************************
@@ -8691,7 +8697,7 @@ findLeftmostSelect(SelectStmt *node)
  */
 static void
 insertSelectOptions(SelectStmt *stmt,
-					List *sortClause, List *lockingClause,
+					List *sortClause, Node *lockingClause,
 					Node *limitOffset, Node *limitCount)
 {
 	/*
@@ -8708,25 +8714,11 @@ insertSelectOptions(SelectStmt *stmt,
 	}
 	if (lockingClause)
 	{
-		Value	   *type;
-
-		if (stmt->lockedRels)
+		if (stmt->lockingClause)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("multiple FOR UPDATE/FOR SHARE clauses not allowed")));
-
-		Assert(list_length(lockingClause) > 1);
-		/* 1st is Value node containing "for_update" or "for_share" */
-		type = (Value *) linitial(lockingClause);
-		Assert(IsA(type, String));
-		if (strcmp(strVal(type), "for_update") == 0)
-			stmt->forUpdate = true;
-		else if (strcmp(strVal(type), "for_share") == 0)
-			stmt->forUpdate = false;
-		else
-			elog(ERROR, "invalid first node in locking clause");
-
-		stmt->lockedRels = list_delete_first(lockingClause);
+		stmt->lockingClause = (LockingClause *) lockingClause;
 	}
 	if (limitOffset)
 	{

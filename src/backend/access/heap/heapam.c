@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.195 2005/06/20 18:37:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.196 2005/08/01 20:31:05 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1945,7 +1945,7 @@ simple_heap_update(Relation relation, ItemPointer otid, HeapTuple tup)
  */
 HTSU_Result
 heap_lock_tuple(Relation relation, HeapTuple tuple, Buffer *buffer,
-				 CommandId cid, LockTupleMode mode)
+				 CommandId cid, LockTupleMode mode, bool nowait)
 {
 	HTSU_Result	result;
 	ItemPointer tid = &(tuple->t_self);
@@ -1998,7 +1998,16 @@ l3:
 		 */
 		if (!have_tuple_lock)
 		{
-			LockTuple(relation, tid, tuple_lock_type);
+			if (nowait)
+			{
+				if (!ConditionalLockTuple(relation, tid, tuple_lock_type))
+					ereport(ERROR,
+							(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
+							 errmsg("could not obtain lock on row in relation \"%s\"",
+									RelationGetRelationName(relation))));
+			}
+			else
+				LockTuple(relation, tid, tuple_lock_type);
 			have_tuple_lock = true;
 		}
 
@@ -2020,7 +2029,17 @@ l3:
 		else if (infomask & HEAP_XMAX_IS_MULTI)
 		{
 			/* wait for multixact to end */
-			MultiXactIdWait((MultiXactId) xwait);
+			if (nowait)
+			{
+				if (!ConditionalMultiXactIdWait((MultiXactId) xwait))
+					ereport(ERROR,
+							(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
+							 errmsg("could not obtain lock on row in relation \"%s\"",
+									RelationGetRelationName(relation))));
+			}
+			else
+				MultiXactIdWait((MultiXactId) xwait);
+
 			LockBuffer(*buffer, BUFFER_LOCK_EXCLUSIVE);
 
 			/*
@@ -2045,7 +2064,17 @@ l3:
 		else
 		{
 			/* wait for regular transaction to end */
-			XactLockTableWait(xwait);
+			if (nowait)
+			{
+				if (!ConditionalXactLockTableWait(xwait))
+					ereport(ERROR,
+							(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
+							 errmsg("could not obtain lock on row in relation \"%s\"",
+									RelationGetRelationName(relation))));
+			}
+			else
+				XactLockTableWait(xwait);
+
 			LockBuffer(*buffer, BUFFER_LOCK_EXCLUSIVE);
 
 			/*
