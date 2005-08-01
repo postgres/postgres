@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_depend.c,v 1.13 2005/04/14 20:03:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_depend.c,v 1.14 2005/08/01 04:03:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,6 +153,105 @@ deleteDependencyRecordsFor(Oid classId, Oid objectId)
 	{
 		simple_heap_delete(depRel, &tup->t_self);
 		count++;
+	}
+
+	systable_endscan(scan);
+
+	heap_close(depRel, RowExclusiveLock);
+
+	return count;
+}
+
+/*
+ * Adjust dependency record(s) to point to a different object of the same type
+ *
+ * classId/objectId specify the referencing object.
+ * refClassId/oldRefObjectId specify the old referenced object.
+ * newRefObjectId is the new referenced object (must be of class refClassId).
+ *
+ * Note the lack of objsubid parameters.  If there are subobject references
+ * they will all be readjusted.
+ *
+ * Returns the number of records updated.
+ */
+long
+changeDependencyFor(Oid classId, Oid objectId,
+					Oid refClassId, Oid oldRefObjectId,
+					Oid newRefObjectId)
+{
+	long		count = 0;
+	Relation	depRel;
+	ScanKeyData key[2];
+	SysScanDesc scan;
+	HeapTuple	tup;
+	ObjectAddress objAddr;
+	bool		newIsPinned;
+
+	depRel = heap_open(DependRelationId, RowExclusiveLock);
+
+	/*
+	 * If oldRefObjectId is pinned, there won't be any dependency entries
+	 * on it --- we can't cope in that case.  (This isn't really worth
+	 * expending code to fix, in current usage; it just means you can't
+	 * rename stuff out of pg_catalog, which would likely be a bad move
+	 * anyway.)
+	 */
+	objAddr.classId = refClassId;
+	objAddr.objectId = oldRefObjectId;
+	objAddr.objectSubId = 0;
+
+	if (isObjectPinned(&objAddr, depRel))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot remove dependency on %s because it is a system object",
+						getObjectDescription(&objAddr))));
+
+	/*
+	 * We can handle adding a dependency on something pinned, though,
+	 * since that just means deleting the dependency entry.
+	 */
+	objAddr.objectId = newRefObjectId;
+
+	newIsPinned = isObjectPinned(&objAddr, depRel);
+
+	/* Now search for dependency records */
+	ScanKeyInit(&key[0],
+				Anum_pg_depend_classid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(classId));
+	ScanKeyInit(&key[1],
+				Anum_pg_depend_objid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(objectId));
+
+	scan = systable_beginscan(depRel, DependDependerIndexId, true,
+							  SnapshotNow, 2, key);
+
+	while (HeapTupleIsValid((tup = systable_getnext(scan))))
+	{
+		Form_pg_depend depform = (Form_pg_depend) GETSTRUCT(tup);
+
+		if (depform->refclassid == refClassId &&
+			depform->refobjid == oldRefObjectId)
+		{
+			if (newIsPinned)
+				simple_heap_delete(depRel, &tup->t_self);
+			else
+			{
+				/* make a modifiable copy */
+				tup = heap_copytuple(tup);
+				depform = (Form_pg_depend) GETSTRUCT(tup);
+
+				depform->refobjid = newRefObjectId;
+
+				simple_heap_update(depRel, &tup->t_self, tup);
+				CatalogUpdateIndexes(depRel, tup);
+
+				heap_freetuple(tup);
+			}
+
+			count++;
+		}
 	}
 
 	systable_endscan(scan);

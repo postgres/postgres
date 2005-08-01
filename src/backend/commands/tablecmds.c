@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.164 2005/07/14 21:46:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.165 2005/08/01 04:03:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,6 +163,13 @@ static void StoreCatalogInheritance(Oid relationId, List *supers);
 static int	findAttrByName(const char *attributeName, List *schema);
 static void setRelhassubclassInRelation(Oid relationId, bool relhassubclass);
 static bool needs_toast_table(Relation rel);
+static void AlterIndexNamespaces(Relation classRel, Relation rel,
+								 Oid oldNspOid, Oid newNspOid);
+static void AlterSeqNamespaces(Relation classRel, Relation rel,
+							   Oid oldNspOid, Oid newNspOid,
+							   const char *newNspName);
+static void RebuildSerialDefaultExpr(Relation rel, AttrNumber attnum,
+									 const char *seqname, const char *nspname);
 static int transformColumnNameList(Oid relId, List *colList,
 						int16 *attnums, Oid *atttypids);
 static int transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
@@ -5995,6 +6002,293 @@ needs_toast_table(Relation rel)
 							BITMAPLEN(tupdesc->natts)) +
 		MAXALIGN(data_length);
 	return (tuple_length > TOAST_TUPLE_THRESHOLD);
+}
+
+
+/*
+ * Execute ALTER TABLE SET SCHEMA
+ *
+ * Note: caller must have checked ownership of the relation already
+ */
+void
+AlterTableNamespace(RangeVar *relation, const char *newschema)
+{
+	Relation	rel;
+	Oid			relid;
+	Oid			oldNspOid;
+	Oid			nspOid;
+	Relation	classRel;
+
+	rel = heap_openrv(relation, AccessExclusiveLock);
+
+	/* heap_openrv allows TOAST, but we don't want to */
+	if (rel->rd_rel->relkind == RELKIND_TOASTVALUE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is a TOAST relation",
+						RelationGetRelationName(rel))));
+
+	relid = RelationGetRelid(rel);
+	oldNspOid = RelationGetNamespace(rel);
+
+	/* get schema OID and check its permissions */
+	nspOid = LookupCreationNamespace(newschema);
+
+	if (oldNspOid == nspOid)
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_TABLE),
+				 errmsg("relation \"%s\" is already in schema \"%s\"",
+						RelationGetRelationName(rel),
+						newschema)));
+
+	/* disallow renaming into or out of temp schemas */
+	if (isAnyTempNamespace(nspOid) || isAnyTempNamespace(oldNspOid))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot move objects into or out of temporary schemas")));
+
+	/* same for TOAST schema */
+	if (nspOid == PG_TOAST_NAMESPACE || oldNspOid == PG_TOAST_NAMESPACE)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot move objects into or out of TOAST schema")));
+
+	/* OK, modify the pg_class row and pg_depend entry */
+	classRel = heap_open(RelationRelationId, RowExclusiveLock);
+
+	AlterRelationNamespaceInternal(classRel, relid, oldNspOid, nspOid, true);
+
+	/* Fix the table's rowtype too */
+	AlterTypeNamespaceInternal(rel->rd_rel->reltype, nspOid, false);
+
+	/* Fix other dependent stuff */
+	if (rel->rd_rel->relkind == RELKIND_RELATION)
+	{
+		AlterIndexNamespaces(classRel, rel, oldNspOid, nspOid);
+		AlterSeqNamespaces(classRel, rel, oldNspOid, nspOid, newschema);
+		AlterConstraintNamespaces(relid, oldNspOid, nspOid, false);
+	}
+
+	heap_close(classRel, RowExclusiveLock);
+
+	/* close rel, but keep lock until commit */
+	relation_close(rel, NoLock);
+}
+
+/*
+ * The guts of relocating a relation to another namespace: fix the pg_class
+ * entry, and the pg_depend entry if any.  Caller must already have
+ * opened and write-locked pg_class.
+ */
+void
+AlterRelationNamespaceInternal(Relation classRel, Oid relOid,
+							   Oid oldNspOid, Oid newNspOid,
+							   bool hasDependEntry)
+{
+	HeapTuple classTup;
+	Form_pg_class classForm;
+
+	classTup = SearchSysCacheCopy(RELOID,
+								  ObjectIdGetDatum(relOid),
+								  0, 0, 0);
+	if (!HeapTupleIsValid(classTup))
+		elog(ERROR, "cache lookup failed for relation %u", relOid);
+	classForm = (Form_pg_class) GETSTRUCT(classTup);
+
+	Assert(classForm->relnamespace == oldNspOid);
+
+	/* check for duplicate name (more friendly than unique-index failure) */
+	if (get_relname_relid(NameStr(classForm->relname),
+						  newNspOid) != InvalidOid)
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_TABLE),
+				 errmsg("relation \"%s\" already exists in schema \"%s\"",
+						NameStr(classForm->relname),
+						get_namespace_name(newNspOid))));
+
+	/* classTup is a copy, so OK to scribble on */
+	classForm->relnamespace = newNspOid;
+
+	simple_heap_update(classRel, &classTup->t_self, classTup);
+	CatalogUpdateIndexes(classRel, classTup);
+
+	/* Update dependency on schema if caller said so */
+	if (hasDependEntry &&
+		changeDependencyFor(RelationRelationId, relOid,
+							NamespaceRelationId, oldNspOid, newNspOid) != 1)
+		elog(ERROR, "failed to change schema dependency for relation \"%s\"",
+			 NameStr(classForm->relname));
+
+	heap_freetuple(classTup);
+}
+
+/*
+ * Move all indexes for the specified relation to another namespace.
+ *
+ * Note: we assume adequate permission checking was done by the caller,
+ * and that the caller has a suitable lock on the owning relation.
+ */
+static void
+AlterIndexNamespaces(Relation classRel, Relation rel,
+					 Oid oldNspOid, Oid newNspOid)
+{
+	List	   *indexList;
+	ListCell   *l;
+
+	indexList = RelationGetIndexList(rel);
+
+	foreach(l, indexList)
+	{
+		Oid		indexOid = lfirst_oid(l);
+
+		/*
+		 * Note: currently, the index will not have its own dependency
+		 * on the namespace, so we don't need to do changeDependencyFor().
+		 * There's no rowtype in pg_type, either.
+		 */
+		AlterRelationNamespaceInternal(classRel, indexOid,
+									   oldNspOid, newNspOid,
+									   false);
+	}
+
+	list_free(indexList);
+}
+
+/*
+ * Move all SERIAL-column sequences of the specified relation to another
+ * namespace.
+ *
+ * Note: we assume adequate permission checking was done by the caller,
+ * and that the caller has a suitable lock on the owning relation.
+ */
+static void
+AlterSeqNamespaces(Relation classRel, Relation rel,
+				   Oid oldNspOid, Oid newNspOid, const char *newNspName)
+{
+	Relation	depRel;
+	SysScanDesc scan;
+	ScanKeyData	key[2];
+	HeapTuple	tup;
+
+	/*
+	 * SERIAL sequences are those having an internal dependency on one
+	 * of the table's columns (we don't care *which* column, exactly).
+	 */
+	depRel = heap_open(DependRelationId, AccessShareLock);
+
+	ScanKeyInit(&key[0],
+				Anum_pg_depend_refclassid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(RelationRelationId));
+	ScanKeyInit(&key[1],
+				Anum_pg_depend_refobjid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(RelationGetRelid(rel)));
+	/* we leave refobjsubid unspecified */
+
+	scan = systable_beginscan(depRel, DependReferenceIndexId, true,
+							  SnapshotNow, 2, key);
+
+	while (HeapTupleIsValid(tup = systable_getnext(scan)))
+	{
+		Form_pg_depend depForm = (Form_pg_depend) GETSTRUCT(tup);
+		Relation	seqRel;
+
+		/* skip dependencies other than internal dependencies on columns */
+		if (depForm->refobjsubid == 0 ||
+			depForm->classid != RelationRelationId ||
+			depForm->objsubid != 0 ||
+			depForm->deptype != DEPENDENCY_INTERNAL)
+			continue;
+
+		/* Use relation_open just in case it's an index */
+		seqRel = relation_open(depForm->objid, AccessExclusiveLock);
+
+		/* skip non-sequence relations */
+		if (RelationGetForm(seqRel)->relkind != RELKIND_SEQUENCE)
+		{
+			/* No need to keep the lock */
+			relation_close(seqRel, AccessExclusiveLock);
+			continue;
+		}
+
+		/* Fix the pg_class and pg_depend entries */
+		AlterRelationNamespaceInternal(classRel, depForm->objid,
+									   oldNspOid, newNspOid,
+									   true);
+		/*
+		 * Sequences have entries in pg_type. We need to be careful
+		 * to move them to the new namespace, too.
+		 */
+		AlterTypeNamespaceInternal(RelationGetForm(seqRel)->reltype,
+								   newNspOid, false);
+		/*
+		 * And we need to rebuild the column default expression that
+		 * relies on this sequence.
+		 */
+		if (depForm->refobjsubid > 0)
+			RebuildSerialDefaultExpr(rel,
+									 depForm->refobjsubid,
+									 RelationGetRelationName(seqRel),
+									 newNspName);
+
+		/* Now we can close it.  Keep the lock till end of transaction. */
+		relation_close(seqRel, NoLock);
+	}
+
+	systable_endscan(scan);
+
+	relation_close(depRel, AccessShareLock);
+}
+
+/*
+ * Rebuild the default expression for a SERIAL column identified by rel
+ * and attnum.  This is annoying, but we have to do it because the
+ * stored expression has the schema name as a text constant.
+ *
+ * The caller must be sure the specified column is really a SERIAL column,
+ * because no further checks are done here.
+ */
+static void
+RebuildSerialDefaultExpr(Relation rel, AttrNumber attnum,
+						 const char *seqname, const char *nspname)
+{
+	char	   *qstring;
+	A_Const    *snamenode;
+	FuncCall   *funccallnode;
+	RawColumnDefault *rawEnt;
+
+	/*
+	 * Create raw parse tree for the updated column default expression.
+	 * This should match transformColumnDefinition() in parser/analyze.c.
+	 */
+	qstring = quote_qualified_identifier(nspname, seqname);
+	snamenode = makeNode(A_Const);
+	snamenode->val.type = T_String;
+	snamenode->val.val.str = qstring;
+	funccallnode = makeNode(FuncCall);
+	funccallnode->funcname = SystemFuncName("nextval");
+	funccallnode->args = list_make1(snamenode);
+	funccallnode->agg_star = false;
+	funccallnode->agg_distinct = false;
+
+	/*
+	 * Remove any old default for the column.  We use RESTRICT here for
+	 * safety, but at present we do not expect anything to depend on the
+	 * default.
+	 */
+	RemoveAttrDefault(RelationGetRelid(rel), attnum, DROP_RESTRICT, false);
+
+	/* Do the equivalent of ALTER TABLE ... SET DEFAULT */
+	rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
+	rawEnt->attnum = attnum;
+	rawEnt->raw_default = (Node *) funccallnode;
+
+	/*
+	 * This function is intended for CREATE TABLE, so it processes a
+	 * _list_ of defaults, but we just do one.
+	 */
+	AddRelationRawConstraints(rel, list_make1(rawEnt), NIL);
 }
 
 

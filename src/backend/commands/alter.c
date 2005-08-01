@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.13 2005/06/28 05:08:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.14 2005/08/01 04:03:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,6 +139,38 @@ ExecRenameStmt(RenameStmt *stmt)
 		default:
 			elog(ERROR, "unrecognized rename stmt type: %d",
 				 (int) stmt->renameType);
+	}
+}
+
+/*
+ * Executes an ALTER OBJECT / SET SCHEMA statement.  Based on the object
+ * type, the function appropriate to that type is executed.
+ */
+void
+ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
+{
+	switch (stmt->objectType)
+	{
+		case OBJECT_AGGREGATE:
+		case OBJECT_FUNCTION:
+			AlterFunctionNamespace(stmt->object, stmt->objarg,
+								   stmt->newschema);
+			break;
+		    
+		case OBJECT_SEQUENCE:
+		case OBJECT_TABLE:
+			CheckRelationOwnership(stmt->relation, true);
+			AlterTableNamespace(stmt->relation, stmt->newschema);
+			break;
+		    
+		case OBJECT_TYPE:
+		case OBJECT_DOMAIN:
+			AlterTypeNamespace(stmt->object, stmt->newschema);
+			break;
+		    
+		default:
+			elog(ERROR, "unrecognized AlterObjectSchemaStmt type: %d",
+				 (int) stmt->objectType);
 	}
 }
 

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.313 2005/07/31 17:19:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.314 2005/08/01 04:03:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2035,12 +2035,27 @@ _copyRenameStmt(RenameStmt *from)
 {
 	RenameStmt *newnode = makeNode(RenameStmt);
 
+	COPY_SCALAR_FIELD(renameType);
 	COPY_NODE_FIELD(relation);
 	COPY_NODE_FIELD(object);
 	COPY_NODE_FIELD(objarg);
 	COPY_STRING_FIELD(subname);
 	COPY_STRING_FIELD(newname);
-	COPY_SCALAR_FIELD(renameType);
+
+	return newnode;
+}
+
+static AlterObjectSchemaStmt *
+_copyAlterObjectSchemaStmt(AlterObjectSchemaStmt *from)
+{
+	AlterObjectSchemaStmt *newnode = makeNode(AlterObjectSchemaStmt);
+
+	COPY_SCALAR_FIELD(objectType);
+	COPY_NODE_FIELD(relation);
+	COPY_NODE_FIELD(object);
+	COPY_NODE_FIELD(objarg);
+	COPY_STRING_FIELD(addname);
+	COPY_STRING_FIELD(newschema);
 
 	return newnode;
 }
@@ -2050,12 +2065,12 @@ _copyAlterOwnerStmt(AlterOwnerStmt *from)
 {
 	AlterOwnerStmt *newnode = makeNode(AlterOwnerStmt);
 
+	COPY_SCALAR_FIELD(objectType);
 	COPY_NODE_FIELD(relation);
 	COPY_NODE_FIELD(object);
 	COPY_NODE_FIELD(objarg);
 	COPY_STRING_FIELD(addname);
 	COPY_STRING_FIELD(newowner);
-	COPY_SCALAR_FIELD(objectType);
 
 	return newnode;
 }
@@ -2982,6 +2997,9 @@ copyObject(void *from)
 			break;
 		case T_RenameStmt:
 			retval = _copyRenameStmt(from);
+			break;
+		case T_AlterObjectSchemaStmt:
+			retval = _copyAlterObjectSchemaStmt(from);
 			break;
 		case T_AlterOwnerStmt:
 			retval = _copyAlterOwnerStmt(from);

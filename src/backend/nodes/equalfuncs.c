@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.250 2005/07/31 17:19:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.251 2005/08/01 04:03:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1008,12 +1008,25 @@ _equalRemoveOpClassStmt(RemoveOpClassStmt *a, RemoveOpClassStmt *b)
 static bool
 _equalRenameStmt(RenameStmt *a, RenameStmt *b)
 {
+	COMPARE_SCALAR_FIELD(renameType);
 	COMPARE_NODE_FIELD(relation);
 	COMPARE_NODE_FIELD(object);
 	COMPARE_NODE_FIELD(objarg);
 	COMPARE_STRING_FIELD(subname);
 	COMPARE_STRING_FIELD(newname);
-	COMPARE_SCALAR_FIELD(renameType);
+
+	return true;
+}
+
+static bool
+_equalAlterObjectSchemaStmt(AlterObjectSchemaStmt *a, AlterObjectSchemaStmt *b)
+{
+	COMPARE_SCALAR_FIELD(objectType);
+	COMPARE_NODE_FIELD(relation);
+	COMPARE_NODE_FIELD(object);
+	COMPARE_NODE_FIELD(objarg);
+	COMPARE_STRING_FIELD(addname);
+	COMPARE_STRING_FIELD(newschema);
 
 	return true;
 }
@@ -1021,12 +1034,12 @@ _equalRenameStmt(RenameStmt *a, RenameStmt *b)
 static bool
 _equalAlterOwnerStmt(AlterOwnerStmt *a, AlterOwnerStmt *b)
 {
+	COMPARE_SCALAR_FIELD(objectType);
 	COMPARE_NODE_FIELD(relation);
 	COMPARE_NODE_FIELD(object);
 	COMPARE_NODE_FIELD(objarg);
 	COMPARE_STRING_FIELD(addname);
 	COMPARE_STRING_FIELD(newowner);
-	COMPARE_SCALAR_FIELD(objectType);
 
 	return true;
 }
@@ -2028,6 +2041,9 @@ equal(void *a, void *b)
 			break;
 		case T_RenameStmt:
 			retval = _equalRenameStmt(a, b);
+			break;
+		case T_AlterObjectSchemaStmt:
+			retval = _equalAlterObjectSchemaStmt(a, b);
 			break;
 		case T_AlterOwnerStmt:
 			retval = _equalAlterOwnerStmt(a, b);

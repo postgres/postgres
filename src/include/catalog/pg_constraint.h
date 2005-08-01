@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_constraint.h,v 1.16 2005/04/14 01:38:20 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_constraint.h,v 1.17 2005/08/01 04:03:57 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -184,5 +184,8 @@ extern char *ChooseConstraintName(const char *name1, const char *name2,
 					 List *others);
 
 extern char *GetConstraintNameForTrigger(Oid triggerId);
+
+extern void AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
+									  Oid newNspId, bool isType);
 
 #endif   /* PG_CONSTRAINT_H */

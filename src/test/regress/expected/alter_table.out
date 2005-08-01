@@ -1274,3 +1274,62 @@ select non_strict(NULL);
  
 (1 row)
 
+--
+-- alter object set schema
+--
+create schema alter1;
+create schema alter2;
+create table alter1.t1(f1 serial primary key, f2 int check (f2 > 0));
+NOTICE:  CREATE TABLE will create implicit sequence "t1_f1_seq" for serial column "t1.f1"
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "t1_pkey" for table "t1"
+create view alter1.v1 as select * from alter1.t1;
+create function alter1.plus1(int) returns int as 'select $1+1' language sql;
+create domain alter1.posint integer check (value > 0);
+create type alter1.ctype as (f1 int, f2 text);
+insert into alter1.t1(f2) values(11);
+insert into alter1.t1(f2) values(12);
+alter table alter1.t1 set schema alter2;
+alter table alter1.v1 set schema alter2;
+alter function alter1.plus1(int) set schema alter2;
+alter domain alter1.posint set schema alter2;
+alter type alter1.ctype set schema alter2;
+-- this should succeed because nothing is left in alter1
+drop schema alter1;
+insert into alter2.t1(f2) values(13);
+insert into alter2.t1(f2) values(14);
+select * from alter2.t1;
+ f1 | f2 
+----+----
+  1 | 11
+  2 | 12
+  3 | 13
+  4 | 14
+(4 rows)
+
+select * from alter2.v1;
+ f1 | f2 
+----+----
+  1 | 11
+  2 | 12
+  3 | 13
+  4 | 14
+(4 rows)
+
+select alter2.plus1(41);
+ plus1 
+-------
+    42
+(1 row)
+
+-- clean up
+drop schema alter2 cascade;
+NOTICE:  drop cascades to composite type alter2.ctype
+NOTICE:  drop cascades to type alter2.ctype
+NOTICE:  drop cascades to type alter2.posint
+NOTICE:  drop cascades to function alter2.plus1(integer)
+NOTICE:  drop cascades to view alter2.v1
+NOTICE:  drop cascades to rule _RETURN on view alter2.v1
+NOTICE:  drop cascades to sequence alter2.t1_f1_seq
+NOTICE:  drop cascades to table alter2.t1 column f1
+NOTICE:  drop cascades to table alter2.t1
+NOTICE:  drop cascades to constraint t1_f2_check on table alter2.t1

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.66 2005/06/28 05:09:12 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.67 2005/08/01 04:03:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,6 +55,8 @@ extern void AlterFunction(AlterFunctionStmt *stmt);
 extern void CreateCast(CreateCastStmt *stmt);
 extern void DropCast(DropCastStmt *stmt);
 extern void DropCastById(Oid castOid);
+extern void AlterFunctionNamespace(List *name, List *argtypes, 
+								   const char *newschema);
 
 /* commands/operatorcmds.c */
 extern void DefineOperator(List *names, List *parameters);

@@ -998,3 +998,44 @@ create function non_strict(text) returns text as
 select non_strict(NULL);
 alter function non_strict(text) returns null on null input;
 select non_strict(NULL);
+
+--
+-- alter object set schema
+--
+
+create schema alter1;
+create schema alter2;
+
+create table alter1.t1(f1 serial primary key, f2 int check (f2 > 0));
+
+create view alter1.v1 as select * from alter1.t1;
+
+create function alter1.plus1(int) returns int as 'select $1+1' language sql;
+
+create domain alter1.posint integer check (value > 0);
+
+create type alter1.ctype as (f1 int, f2 text);
+
+insert into alter1.t1(f2) values(11);
+insert into alter1.t1(f2) values(12);
+
+alter table alter1.t1 set schema alter2;
+alter table alter1.v1 set schema alter2;
+alter function alter1.plus1(int) set schema alter2;
+alter domain alter1.posint set schema alter2;
+alter type alter1.ctype set schema alter2;
+
+-- this should succeed because nothing is left in alter1
+drop schema alter1;
+
+insert into alter2.t1(f2) values(13);
+insert into alter2.t1(f2) values(14);
+
+select * from alter2.t1;
+
+select * from alter2.v1;
+
+select alter2.plus1(41);
+
+-- clean up
+drop schema alter2 cascade;

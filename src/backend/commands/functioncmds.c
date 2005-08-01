@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.64 2005/07/14 21:46:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.65 2005/08/01 04:03:55 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -40,6 +40,7 @@
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_cast.h"
 #include "catalog/pg_language.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
@@ -1426,4 +1427,89 @@ DropCastById(Oid castOid)
 
 	systable_endscan(scan);
 	heap_close(relation, RowExclusiveLock);
+}
+
+/*
+ * Execute ALTER FUNCTION SET SCHEMA
+ */
+void
+AlterFunctionNamespace(List *name, List *argtypes, const char *newschema)
+{
+	Oid 			procOid;
+	Oid 			oldNspOid;
+	Oid 			nspOid;
+	HeapTuple		tup;
+	Relation		procRel;
+	Form_pg_proc	proc;
+
+	procRel = heap_open(ProcedureRelationId, RowExclusiveLock);
+
+	/* get function OID */
+	procOid = LookupFuncNameTypeNames(name, argtypes, false);
+
+	/* check permissions on function */
+	if (!pg_proc_ownercheck(procOid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
+					   NameListToString(name));
+
+	tup = SearchSysCacheCopy(PROCOID,
+							 ObjectIdGetDatum(procOid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "cache lookup failed for function %u", procOid);
+	proc = (Form_pg_proc) GETSTRUCT(tup);
+
+	oldNspOid = proc->pronamespace;
+
+	/* get schema OID and check its permissions */
+	nspOid = LookupCreationNamespace(newschema);
+
+	if (oldNspOid == nspOid)
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_FUNCTION),
+				 errmsg("function \"%s\" is already in schema \"%s\"",
+						NameListToString(name),
+						newschema)));
+
+	/* disallow renaming into or out of temp schemas */
+	if (isAnyTempNamespace(nspOid) || isAnyTempNamespace(oldNspOid))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot move objects into or out of temporary schemas")));
+
+	/* same for TOAST schema */
+	if (nspOid == PG_TOAST_NAMESPACE || oldNspOid == PG_TOAST_NAMESPACE)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot move objects into or out of TOAST schema")));
+
+	/* check for duplicate name (more friendly than unique-index failure) */
+	if (SearchSysCacheExists(PROCNAMEARGSNSP,
+							 CStringGetDatum(NameStr(proc->proname)),
+							 PointerGetDatum(&proc->proargtypes),
+							 ObjectIdGetDatum(nspOid),
+							 0))
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_FUNCTION),
+				 errmsg("function \"%s\" already exists in schema \"%s\"",
+						NameStr(proc->proname),
+						newschema)));
+
+	/* OK, modify the pg_proc row */
+
+	/* tup is a copy, so we can scribble directly on it */
+	proc->pronamespace = nspOid;
+
+	simple_heap_update(procRel, &tup->t_self, tup);
+	CatalogUpdateIndexes(procRel, tup);
+
+	/* Update dependency on schema */
+	if (changeDependencyFor(ProcedureRelationId, procOid,
+							NamespaceRelationId, oldNspOid, nspOid) != 1)
+		elog(ERROR, "failed to change schema dependency for function \"%s\"",
+			 NameListToString(name));
+
+	heap_freetuple(tup);
+
+	heap_close(procRel, RowExclusiveLock);
 }

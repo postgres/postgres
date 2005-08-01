@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.76 2005/06/28 05:08:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.77 2005/08/01 04:03:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1236,10 +1236,41 @@ LookupExplicitNamespace(const char *nspname)
 }
 
 /*
+ * LookupCreationNamespace
+ *		Look up the schema and verify we have CREATE rights on it.
+ *
+ * This is just like LookupExplicitNamespace except for the permission check.
+ */
+Oid
+LookupCreationNamespace(const char *nspname)
+{
+	Oid			namespaceId;
+	AclResult	aclresult;
+
+	namespaceId = GetSysCacheOid(NAMESPACENAME,
+								 CStringGetDatum(nspname),
+								 0, 0, 0);
+	if (!OidIsValid(namespaceId))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_SCHEMA),
+				 errmsg("schema \"%s\" does not exist", nspname)));
+
+	aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_CREATE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+					   nspname);
+
+	return namespaceId;
+}
+
+/*
  * QualifiedNameGetCreationNamespace
  *		Given a possibly-qualified name for an object (in List-of-Values
  *		format), determine what namespace the object should be created in.
  *		Also extract and return the object name (last component of list).
+ *
+ * Note: this does not apply any permissions check.  Callers must check
+ * for CREATE rights on the selected namespace when appropriate.
  *
  * This is *not* used for tables.  Hence, the TEMP table namespace is
  * never selected as the creation target.
@@ -1276,8 +1307,6 @@ QualifiedNameGetCreationNamespace(List *names, char **objname_p)
 					(errcode(ERRCODE_UNDEFINED_SCHEMA),
 					 errmsg("no schema has been selected to create in")));
 	}
-
-	/* Note: callers will check for CREATE rights when appropriate */
 
 	*objname_p = objname;
 	return namespaceId;
@@ -1379,25 +1408,36 @@ isTempNamespace(Oid namespaceId)
 }
 
 /*
- * isOtherTempNamespace - is the given namespace some other backend's
- * temporary-table namespace?
+ * isAnyTempNamespace - is the given namespace a temporary-table namespace
+ * (either my own, or another backend's)?
  */
 bool
-isOtherTempNamespace(Oid namespaceId)
+isAnyTempNamespace(Oid namespaceId)
 {
 	bool		result;
 	char	   *nspname;
 
-	/* If it's my own temp namespace, say "false" */
-	if (isTempNamespace(namespaceId))
-		return false;
-	/* Else, if the namespace name starts with "pg_temp_", say "true" */
+	/* If the namespace name starts with "pg_temp_", say "true" */
 	nspname = get_namespace_name(namespaceId);
 	if (!nspname)
 		return false;			/* no such namespace? */
 	result = (strncmp(nspname, "pg_temp_", 8) == 0);
 	pfree(nspname);
 	return result;
+}
+
+/*
+ * isOtherTempNamespace - is the given namespace some other backend's
+ * temporary-table namespace?
+ */
+bool
+isOtherTempNamespace(Oid namespaceId)
+{
+	/* If it's my own temp namespace, say "false" */
+	if (isTempNamespace(namespaceId))
+		return false;
+	/* Else, if the namespace name starts with "pg_temp_", say "true" */
+	return isAnyTempNamespace(namespaceId);
 }
 
 /*

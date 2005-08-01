@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.505 2005/07/31 17:19:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.506 2005/08/01 04:03:56 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -132,7 +132,7 @@ static void doNegateFloat(Value *v);
 
 %type <node>	stmt schema_stmt
 		AlterDatabaseStmt AlterDatabaseSetStmt AlterDomainStmt AlterGroupStmt
-		AlterOwnerStmt AlterSeqStmt AlterTableStmt 
+		AlterObjectSchemaStmt AlterOwnerStmt AlterSeqStmt AlterTableStmt 
 		AlterUserStmt AlterUserSetStmt AlterRoleStmt AlterRoleSetStmt
 		AnalyzeStmt ClosePortalStmt ClusterStmt CommentStmt
 		ConstraintsSetStmt CopyStmt CreateAsStmt CreateCastStmt
@@ -493,6 +493,7 @@ stmt :
 			| AlterDomainStmt
 			| AlterFunctionStmt
 			| AlterGroupStmt
+			| AlterObjectSchemaStmt
 			| AlterOwnerStmt
 			| AlterSeqStmt
 			| AlterTableStmt
@@ -3954,10 +3955,10 @@ RenameStmt: ALTER AGGREGATE func_name '(' aggr_argtype ')' RENAME TO name
 			| ALTER TRIGGER name ON relation_expr RENAME TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);
+					n->renameType = OBJECT_TRIGGER;
 					n->relation = $5;
 					n->subname = $3;
 					n->newname = $8;
-					n->renameType = OBJECT_TRIGGER;
 					$$ = (Node *)n;
 				}
 			| ALTER ROLE RoleId RENAME TO RoleId
@@ -3990,10 +3991,68 @@ opt_column: COLUMN									{ $$ = COLUMN; }
 			| /*EMPTY*/								{ $$ = 0; }
 		;
 
+/*****************************************************************************
+ *
+ * ALTER THING name SET SCHEMA name
+ *
+ *****************************************************************************/
+
+AlterObjectSchemaStmt:
+			ALTER AGGREGATE func_name '(' aggr_argtype ')' SET SCHEMA name
+				{
+					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
+					n->objectType = OBJECT_AGGREGATE;
+					n->object = $3;
+					n->objarg = list_make1($5);
+					n->newschema = $9;
+					$$ = (Node *)n;
+				}
+			| ALTER DOMAIN_P any_name SET SCHEMA name
+				{
+					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
+					n->objectType = OBJECT_DOMAIN;
+					n->object = $3;
+					n->newschema = $6;
+					$$ = (Node *)n;
+				}
+			| ALTER FUNCTION func_name func_args SET SCHEMA name
+				{
+					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
+					n->objectType = OBJECT_FUNCTION;
+					n->object = $3;
+					n->objarg = extractArgTypes($4);
+					n->newschema = $7;
+					$$ = (Node *)n;
+				}
+			| ALTER SEQUENCE relation_expr SET SCHEMA name
+				{
+					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
+					n->objectType = OBJECT_SEQUENCE;
+					n->relation = $3;
+					n->newschema = $6;
+					$$ = (Node *)n;
+				}
+			| ALTER TABLE relation_expr SET SCHEMA name
+				{
+					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
+					n->objectType = OBJECT_TABLE;
+					n->relation = $3;
+					n->newschema = $6;
+					$$ = (Node *)n;
+				}
+			| ALTER TYPE_P any_name SET SCHEMA name
+				{
+					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
+					n->objectType = OBJECT_TYPE;
+					n->object = $3;
+					n->newschema = $6;
+					$$ = (Node *)n;
+				}
+		;
 
 /*****************************************************************************
  *
- * ALTER THING name OWNER TO newname.
+ * ALTER THING name OWNER TO newname
  *
  *****************************************************************************/
 

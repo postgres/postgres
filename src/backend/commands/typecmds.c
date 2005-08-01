@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.76 2005/07/14 21:46:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.77 2005/08/01 04:03:55 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -39,6 +39,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_depend.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "commands/tablecmds.h"
@@ -2098,5 +2099,173 @@ AlterTypeOwner(List *names, Oid newOwnerId)
 	}
 
 	/* Clean up */
+	heap_close(rel, RowExclusiveLock);
+}
+
+/*
+ * Execute ALTER TYPE SET SCHEMA
+ */
+void
+AlterTypeNamespace(List *names, const char *newschema)
+{
+	TypeName			*typename;
+	Oid					typeOid;
+	Oid					nspOid;
+
+	/* get type OID */
+	typename = makeNode(TypeName);
+	typename->names = names;
+	typename->typmod = -1;
+	typename->arrayBounds = NIL;
+
+	typeOid = LookupTypeName(typename);
+
+	if (!OidIsValid(typeOid))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("type \"%s\" does not exist",
+						TypeNameToString(typename))));
+
+	/* check permissions on type */
+	if (!pg_type_ownercheck(typeOid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
+					   format_type_be(typeOid));
+
+	/* get schema OID and check its permissions */
+	nspOid = LookupCreationNamespace(newschema);
+
+	/* and do the work */
+	AlterTypeNamespaceInternal(typeOid, nspOid, true);
+}
+
+/*
+ * Move specified type to new namespace.
+ *
+ * Caller must have already checked privileges.
+ *
+ * If errorOnTableType is TRUE, the function errors out if the type is
+ * a table type.  ALTER TABLE has to be used to move a table to a new
+ * namespace.
+ */
+void
+AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
+						   bool errorOnTableType)
+{
+	Relation	rel;
+	HeapTuple	tup;
+	Form_pg_type typform;
+	Oid			oldNspOid;
+	bool		isCompositeType;
+
+	rel = heap_open(TypeRelationId, RowExclusiveLock);
+
+	tup = SearchSysCacheCopy(TYPEOID,
+							 ObjectIdGetDatum(typeOid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "cache lookup failed for type %u", typeOid);
+	typform = (Form_pg_type) GETSTRUCT(tup);
+
+	oldNspOid = typform->typnamespace;
+
+	if (oldNspOid == nspOid)
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("type %s is already in schema \"%s\"",
+						format_type_be(typeOid),
+						get_namespace_name(nspOid))));
+
+	/* disallow renaming into or out of temp schemas */
+	if (isAnyTempNamespace(nspOid) || isAnyTempNamespace(oldNspOid))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot move objects into or out of temporary schemas")));
+
+	/* same for TOAST schema */
+	if (nspOid == PG_TOAST_NAMESPACE || oldNspOid == PG_TOAST_NAMESPACE)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot move objects into or out of TOAST schema")));
+
+	/* check for duplicate name (more friendly than unique-index failure) */
+	if (SearchSysCacheExists(TYPENAMENSP,
+							 CStringGetDatum(NameStr(typform->typname)),
+							 ObjectIdGetDatum(nspOid),
+							 0, 0))
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("type \"%s\" already exists in schema \"%s\"",
+						NameStr(typform->typname),
+						get_namespace_name(nspOid))));
+
+	/* Detect whether type is a composite type (but not a table rowtype) */
+	isCompositeType =
+		(typform->typtype == 'c' &&
+		 get_rel_relkind(typform->typrelid) == RELKIND_COMPOSITE_TYPE);
+
+	/* Enforce not-table-type if requested */
+	if (typform->typtype == 'c' && !isCompositeType && errorOnTableType)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("%s is a table's row type",
+						format_type_be(typeOid)),
+				 errhint("Use ALTER TABLE SET SCHEMA instead.")));
+
+	/* OK, modify the pg_type row */
+
+	/* tup is a copy, so we can scribble directly on it */
+	typform->typnamespace = nspOid;
+
+	simple_heap_update(rel, &tup->t_self, tup);
+	CatalogUpdateIndexes(rel, tup);
+
+	/*
+	 * Composite types have pg_class entries.
+	 *
+	 * We need to modify the pg_class tuple as well to
+	 * reflect the change of schema.
+	 */
+	if (isCompositeType)
+	{
+		Relation classRel;
+
+		classRel = heap_open(RelationRelationId, RowExclusiveLock);
+
+		/*
+		 * The dependency on the schema is listed under the pg_class entry,
+		 * so tell AlterRelationNamespaceInternal to fix it.
+		 */
+		AlterRelationNamespaceInternal(classRel, typform->typrelid,
+									   oldNspOid, nspOid,
+									   true);
+
+		heap_close(classRel, RowExclusiveLock);
+
+		/*
+		 * Check for constraints associated with the composite type
+		 * (we don't currently support this, but probably will someday).
+		 */
+		AlterConstraintNamespaces(typform->typrelid, oldNspOid,
+								  nspOid, false);
+	}
+	else
+	{
+		/* If it's a domain, it might have constraints */
+		if (typform->typtype == 'd')
+			AlterConstraintNamespaces(typeOid, oldNspOid, nspOid, true);
+
+		/*
+		 * Update dependency on schema, if any --- a table rowtype has not
+		 * got one.
+		 */
+		if (typform->typtype != 'c')
+			if (changeDependencyFor(TypeRelationId, typeOid,
+									NamespaceRelationId, oldNspOid, nspOid) != 1)
+				elog(ERROR, "failed to change schema dependency for type %s",
+					 format_type_be(typeOid));
+	}
+
+	heap_freetuple(tup);
+
 	heap_close(rel, RowExclusiveLock);
 }

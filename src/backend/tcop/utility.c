@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.242 2005/07/31 17:19:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.243 2005/08/01 04:03:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -281,6 +281,7 @@ check_xact_readonly(Node *parsetree)
 		case T_AlterFunctionStmt:
 		case T_AlterRoleStmt:
 		case T_AlterRoleSetStmt:
+		case T_AlterObjectSchemaStmt:
 		case T_AlterOwnerStmt:
 		case T_AlterSeqStmt:
 		case T_AlterTableStmt:
@@ -623,6 +624,10 @@ ProcessUtility(Node *parsetree,
 			 */
 		case T_RenameStmt:
 			ExecRenameStmt((RenameStmt *) parsetree);
+			break;
+
+		case T_AlterObjectSchemaStmt:
+			ExecAlterObjectSchemaStmt((AlterObjectSchemaStmt *) parsetree);
 			break;
 
 		case T_AlterOwnerStmt:
@@ -1358,6 +1363,10 @@ CreateCommandTag(Node *parsetree)
 				case OBJECT_SCHEMA:
 					tag = "ALTER SCHEMA";
 					break;
+				case OBJECT_COLUMN:
+				case OBJECT_TABLE:
+					tag = "ALTER TABLE";
+					break;
 				case OBJECT_TABLESPACE:
 					tag = "ALTER TABLESPACE";
 					break;
@@ -1365,8 +1374,36 @@ CreateCommandTag(Node *parsetree)
 					tag = "ALTER TRIGGER";
 					break;
 				default:
-					tag = "ALTER TABLE";
+					tag = "???";
+					break;
 			}
+			break;
+
+		case T_AlterObjectSchemaStmt:
+		    switch (((AlterObjectSchemaStmt *) parsetree)->objectType)
+		    {
+				case OBJECT_AGGREGATE:
+				    tag = "ALTER AGGREGATE";
+				    break;
+				case OBJECT_DOMAIN:
+				    tag = "ALTER DOMAIN";
+				    break;
+				case OBJECT_FUNCTION:
+				    tag = "ALTER FUNCTION";
+				    break;
+				case OBJECT_SEQUENCE:
+				    tag = "ALTER SEQUENCE";
+				    break;
+				case OBJECT_TABLE:
+				    tag = "ALTER TABLE";
+				    break;
+				case OBJECT_TYPE:
+				    tag = "ALTER TYPE";
+				    break;
+				default:
+					tag = "???";
+					break;
+		    }
 			break;
 
 		case T_AlterOwnerStmt:
@@ -1403,7 +1440,8 @@ CreateCommandTag(Node *parsetree)
 					tag = "ALTER TYPE";
 					break;
 				default:
-					tag = "ALTER TABLE";
+					tag = "???";
+					break;
 			}
 			break;
 
