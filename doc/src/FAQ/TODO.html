@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Sun Jul 31 20:52:25 EDT 2005
+Last updated:           Mon Aug  1 10:04:49 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -384,7 +384,7 @@ first.
     </li><li>Allow ALTER TABLE ... ALTER CONSTRAINT ... RENAME
     </li><li>Allow ALTER TABLE to change constraint deferrability and actions
     </li><li>Disallow dropping of an inherited constraint
-    </li><li>Allow objects to be moved to different schemas
+    </li><li>-<em>Allow objects to be moved to different schemas</em>
     </li><li>Allow ALTER TABLESPACE to move to different directories
     </li><li>Allow databases to be moved to different tablespaces
     </li><li>Allow moving system tables to other tablespaces, where possible
@@ -425,14 +425,14 @@ first.
   </li><li>GRANT/REVOKE
   <ul>
     <li>Allow column-level privileges
-    <ul>
-      <li>Allow GRANT/REVOKE permissions to be applied to all schema objects with one
-          command
+    </li><li>Allow GRANT/REVOKE permissions to be applied to all schema objects
+          with one command
 <p>          The proposed syntax is:
 </p><p>                GRANT SELECT ON ALL TABLES IN public TO phpuser;
                 GRANT SELECT ON NEW TABLES IN public TO phpuser;
 </p>
-      </li><li>Allow GRANT/REVOKE permissions to be inherited by objects based on
+    <ul>
+      <li>Allow GRANT/REVOKE permissions to be inherited by objects based on
           schema permissions
     </li></ul>
   </li></ul>

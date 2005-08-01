@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sun Jul 31 20:52:25 EDT 2005
+Last updated:		Mon Aug  1 10:04:49 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -420,7 +420,7 @@ SQL Commands
 	o Allow ALTER TABLE ... ALTER CONSTRAINT ... RENAME
 	o Allow ALTER TABLE to change constraint deferrability and actions
 	o Disallow dropping of an inherited constraint
-	o Allow objects to be moved to different schemas
+	o -Allow objects to be moved to different schemas
 	o Allow ALTER TABLESPACE to move to different directories
 	o Allow databases to be moved to different tablespaces
 	o Allow moving system tables to other tablespaces, where possible
@@ -467,8 +467,8 @@ SQL Commands
 * GRANT/REVOKE
 
 	o Allow column-level privileges
-	* Allow GRANT/REVOKE permissions to be applied to all schema objects with one
-	  command
+	o Allow GRANT/REVOKE permissions to be applied to all schema objects
+	  with one command
 
 	  The proposed syntax is:
 		GRANT SELECT ON ALL TABLES IN public TO phpuser;
