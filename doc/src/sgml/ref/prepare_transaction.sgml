@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/prepare_transaction.sgml,v 1.1 2005/06/17 22:32:42 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/prepare_transaction.sgml,v 1.2 2005/08/01 19:38:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -88,7 +88,7 @@ PREPARE TRANSACTION <replaceable class="PARAMETER">transaction_id</replaceable>
 
   <para>
    It is not currently allowed to <command>PREPARE</> a transaction that
-   has executed any operations involving temporary tables nor
+   has executed any operations involving temporary tables or
    created any cursors <literal>WITH HOLD</>.  Those features are too tightly
    tied to the current session to be useful in a transaction to be prepared.
   </para>
