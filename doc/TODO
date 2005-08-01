@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sun Jul 31 09:54:46 EDT 2005
+Last updated:		Sun Jul 31 20:52:25 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -68,8 +68,11 @@ Administration
 	  to defaults
 	o Allow pg_hba.conf settings to be controlled via SQL
 
-	  This would require a new global table that is dumped to flat file for
-	  use by the postmaster.  We do a similar thing for pg_shadow currently.
+	  This would add a function to load the SQL table from
+          pg_hba.conf, and one to writes its contents to the flat file.
+	  The table should have a line number that is a float so rows
+	  can be inserted between existing rows, e.g. row 2.5 goes
+	  between row 2 and row 3.
 
 	o Allow postgresql.conf file values to be changed via an SQL
 	  API, perhaps using SET GLOBAL
