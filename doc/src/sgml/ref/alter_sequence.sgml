@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.9 2004/11/27 21:27:07 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.10 2005/08/01 16:11:14 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -27,6 +27,7 @@ PostgreSQL documentation
 ALTER SEQUENCE <replaceable class="parameter">name</replaceable> [ INCREMENT [ BY ] <replaceable class="parameter">increment</replaceable> ]
     [ MINVALUE <replaceable class="parameter">minvalue</replaceable> | NO MINVALUE ] [ MAXVALUE <replaceable class="parameter">maxvalue</replaceable> | NO MAXVALUE ]
     [ RESTART [ WITH ] <replaceable class="parameter">start</replaceable> ] [ CACHE <replaceable class="parameter">cache</replaceable> ] [ [ NO ] CYCLE ]
+ALTER SEQUENCE <replaceable class="parameter">name</replaceable> SET SCHEMA <replaceable class="parameter">new_schema</replaceable>
   </synopsis>
  </refsynopsisdiv>
 
@@ -35,8 +36,14 @@ ALTER SEQUENCE <replaceable class="parameter">name</replaceable> [ INCREMENT [ B
 
   <para>
    <command>ALTER SEQUENCE</command> changes the parameters of an existing
-   sequence generator.  Any parameter not specifically set in the
-   <command>ALTER SEQUENCE</command> command retains its prior setting.
+   sequence generator.  Any parameters not specifically set in the
+   <command>ALTER SEQUENCE</command> command retain their prior settings.
+  </para>
+
+  <para>
+   You must own the sequence to use <command>ALTER SEQUENCE</>.
+   To change a sequence's schema, you must also have <literal>CREATE</>
+   privilege on the new schema.
   </para>
  </refsect1>
 
@@ -155,6 +162,15 @@ ALTER SEQUENCE <replaceable class="parameter">name</replaceable> [ INCREMENT [ B
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">new_schema</replaceable></term>
+      <listitem>
+       <para>
+        The new schema for the sequence.
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
    </para>
   </refsect1>
@@ -186,6 +202,12 @@ ALTER SEQUENCE serial RESTART WITH 105;
    values. They will use up all cached values prior to noticing the changed
    sequence parameters.  The current backend will be affected immediately.
   </para>
+
+  <para>
+   Some variants of <command>ALTER TABLE</command> can be used with
+   sequences as well; for example, to rename a sequence use <command>ALTER
+   TABLE RENAME</command>.
+  </para>
  </refsect1>
 
 
@@ -193,7 +215,9 @@ ALTER SEQUENCE serial RESTART WITH 105;
   <title>Compatibility</title>
 
   <para>
-   <command>ALTER SEQUENCE</command> conforms with <acronym>SQL:2003</acronym>.
+   <command>ALTER SEQUENCE</command> conforms with <acronym>SQL:2003</acronym>,
+   except for the <literal>SET SCHEMA</literal> variant, which is a
+   <productname>PostgreSQL</productname> extension.
   </para>
  </refsect1>
 </refentry>

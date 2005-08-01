@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_type.sgml,v 1.1 2004/06/25 21:55:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_type.sgml,v 1.2 2005/08/01 16:11:14 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -25,6 +25,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <synopsis>
 ALTER TYPE <replaceable class="PARAMETER">name</replaceable> OWNER TO <replaceable class="PARAMETER">new_owner</replaceable> 
+ALTER TYPE <replaceable class="PARAMETER">name</replaceable> SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable>
   </synopsis>
  </refsynopsisdiv>
 
@@ -33,7 +34,8 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> OWNER TO <replaceab
 
   <para>
    <command>ALTER TYPE</command> changes the definition of an existing type.
-   The only currently available capability is changing the owner of a type.
+   The only currently available capabilities are changing the owner and schema
+   of a type.
   </para>
  </refsect1>
 
@@ -62,6 +64,17 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> OWNER TO <replaceab
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term><replaceable class="PARAMETER">new_schema</replaceable></term>
+      <listitem>
+       <para>
+        The new schema for the type.  To move a
+        type to a new schema, you must be the owner of the
+        type and have <literal>CREATE</> privilege on the new schema.
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
    </para>
   </refsect1>
@@ -74,6 +87,14 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> OWNER TO <replaceab
    to <literal>joe</literal>:
    <programlisting>
 ALTER TYPE email OWNER TO joe;
+   </programlisting>
+  </para>
+
+  <para>
+   To change the schema of the user-defined type <literal>email</literal>
+   to <literal>customers</literal>:
+   <programlisting>
+ALTER TYPE email SET SCHEMA customers;
    </programlisting>
   </para>
  </refsect1>

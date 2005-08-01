@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.77 2005/01/14 01:16:52 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.78 2005/08/01 16:11:14 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -26,6 +26,8 @@ ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
     RENAME [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> TO <replaceable class="PARAMETER">new_column</replaceable>
 ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
     RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
+ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
+    SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable>
 
 where <replaceable class="PARAMETER">action</replaceable> is one of:
 
@@ -43,7 +45,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
     SET WITHOUT CLUSTER
     SET WITHOUT OIDS
     OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
-    SET TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable>
+    SET TABLESPACE <replaceable class="PARAMETER">new_tablespace</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -59,7 +61,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
     <term><literal>ADD COLUMN</literal></term>
     <listitem>
      <para>
-      This form adds a new column to the table using the same syntax as
+      This form adds a new column to the table, using the same syntax as
       <xref linkend="SQL-CREATETABLE" endterm="SQL-CREATETABLE-TITLE">.
      </para>
     </listitem>
@@ -264,11 +266,22 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
     </listitem>
    </varlistentry>
 
+   <varlistentry>
+    <term><literal>SET SCHEMA</literal></term>
+    <listitem>
+     <para>
+      This form moves the table into another schema.  Associated indexes,
+      constraints, and SERIAL-column sequences are moved as well.
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
   </para>
 
   <para>
-   All the actions except <literal>RENAME</literal> can be combined into
+   All the actions except <literal>RENAME</literal> and <literal>SET SCHEMA</>
+   can be combined into
    a list of multiple alterations to apply in parallel.  For example, it
    is possible to add several columns and/or alter the type of several
    columns in a single command.  This is particularly useful with large
@@ -278,6 +291,8 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
   <para>
    You must own the table to use <command>ALTER TABLE</>; except for
    <command>ALTER TABLE OWNER</>, which may only be executed by a superuser.
+   To change the schema of a table, you must also have
+   <literal>CREATE</literal> privilege on the new schema.
   </para>
  </refsect1>
 
@@ -397,10 +412,19 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">tablespace_name</replaceable></term>
+      <term><replaceable class="PARAMETER">new_tablespace</replaceable></term>
       <listitem>
        <para>
-        The tablespace name to which the table will be moved.
+        The name of the tablespace to which the table will be moved.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">new_schema</replaceable></term>
+      <listitem>
+       <para>
+        The name of the schema to which the table will be moved.
        </para>
       </listitem>
      </varlistentry>
@@ -610,9 +634,16 @@ ALTER TABLE distributors ADD PRIMARY KEY (dist_id);
   </para>
 
   <para> 
-        To move a table to a different tablespace:
+   To move a table to a different tablespace:
 <programlisting>
 ALTER TABLE distributors SET TABLESPACE fasttablespace;
+</programlisting>
+  </para>
+
+  <para> 
+   To move a table to a different schema:
+<programlisting>
+ALTER TABLE myschema.distributors SET SCHEMA yourschema;
 </programlisting>
   </para>
 

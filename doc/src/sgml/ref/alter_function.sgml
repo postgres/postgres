@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_function.sgml,v 1.7 2005/05/26 20:05:03 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_function.sgml,v 1.8 2005/08/01 16:11:14 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -23,9 +23,11 @@ PostgreSQL documentation
 ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] )
     <replaceable class="PARAMETER">action</replaceable> [, ... ] [ RESTRICT ]
 ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] )
-    RENAME TO <replaceable>newname</replaceable>
+    RENAME TO <replaceable>new_name</replaceable>
 ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] )
-    OWNER TO <replaceable>newowner</replaceable>
+    OWNER TO <replaceable>new_owner</replaceable>
+ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] )
+    SET SCHEMA <replaceable>new_schema</replaceable>
 
 where <replaceable class="PARAMETER">action</replaceable> is one of:
 
@@ -41,6 +43,13 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
   <para>
    <command>ALTER FUNCTION</command> changes the definition of a
    function.
+  </para>
+
+  <para>
+   You must own the function to use <command>ALTER FUNCTION</>; except for
+   <command>ALTER FUNCTION OWNER</>, which may only be executed by a superuser.
+   To change a function's schema, you must also have <literal>CREATE</>
+   privilege on the new schema.
   </para>
  </refsect1>
   
@@ -98,7 +107,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">newname</replaceable></term>
+    <term><replaceable class="parameter">new_name</replaceable></term>
     <listitem>
      <para>
       The new name of the function.
@@ -107,13 +116,21 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">newowner</replaceable></term>
+    <term><replaceable class="parameter">new_owner</replaceable></term>
     <listitem>
      <para>
-      The new owner of the function.  To change the owner of a
-      function, you must be a superuser.  Note that if the function is
+      The new owner of the function.  Note that if the function is
       marked <literal>SECURITY DEFINER</literal>, it will subsequently
       execute as the new owner.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">new_schema</replaceable></term>
+    <listitem>
+     <para>
+      The new schema for the function.
      </para>
     </listitem>
    </varlistentry>
@@ -193,6 +210,14 @@ ALTER FUNCTION sqrt(integer) RENAME TO square_root;
 ALTER FUNCTION sqrt(integer) OWNER TO joe;
 </programlisting>
   </para>
+
+  <para>
+   To change the schema of the function <literal>sqrt</literal> for type
+   <type>integer</type> to <literal>maths</literal>:
+<programlisting>
+ALTER FUNCTION sqrt(integer) SET SCHEMA maths;
+</programlisting>
+  </para>
  </refsect1>
 
  <refsect1>
@@ -203,7 +228,7 @@ ALTER FUNCTION sqrt(integer) OWNER TO joe;
    FUNCTION</> statement in the SQL standard. The standard allows more
    properties of a function to be modified, but does not provide the
    ability to rename a function, make a function a security definer,
-   or change the owner or volatility of a function. The standard also
+   or change the owner, schema, or volatility of a function. The standard also
    requires the <literal>RESTRICT</> key word; it is optional in
    <productname>PostgreSQL</>.
   </para>

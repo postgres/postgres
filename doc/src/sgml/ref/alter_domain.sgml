@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.16 2005/07/14 06:17:36 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.17 2005/08/01 16:11:14 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -34,6 +34,8 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
     DROP CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
 ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
     OWNER TO <replaceable class="PARAMETER">new_owner</replaceable> 
+ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
+    SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable> 
   </synopsis>
  </refsynopsisdiv>
 
@@ -97,11 +99,23 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term>SET SCHEMA</term>
+    <listitem>
+     <para>
+      This form changes the schema of the domain.  Any constraints
+      associated with the domain are moved into the new schema as well.
+     </para>
+    </listitem>
+   </varlistentry>
   </variablelist>
 
   <para>
    You must own the domain to use <command>ALTER DOMAIN</>; except for
    <command>ALTER DOMAIN OWNER</>, which may only be executed by a superuser.
+   To change a domain's schema, you must also have <literal>CREATE</>
+   privilege on the new schema.
   </para>
  </refsect1>
 
@@ -114,8 +128,8 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
       <term><replaceable class="PARAMETER">name</replaceable></term>
       <listitem>
        <para>
-	The name (possibly schema-qualified) of an existing domain to
-	alter.
+        The name (possibly schema-qualified) of an existing domain to
+        alter.
        </para>
       </listitem>
      </varlistentry>
@@ -124,7 +138,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
       <term><replaceable class="PARAMETER">domain_constraint</replaceable></term>
       <listitem>
        <para>
-	New domain constraint for the domain.
+        New domain constraint for the domain.
        </para>
       </listitem>
      </varlistentry>
@@ -133,7 +147,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
       <term><replaceable class="PARAMETER">constraint_name</replaceable></term>
       <listitem>
        <para>
-	Name of an existing constraint to drop.
+        Name of an existing constraint to drop.
        </para>
       </listitem>
      </varlistentry>
@@ -152,7 +166,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
       <listitem>
        <para>
         Refuse to drop the constraint if there are any dependent
-	objects. This is the default behavior.
+        objects. This is the default behavior.
        </para>
       </listitem>
      </varlistentry>
@@ -161,7 +175,16 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
       <term><replaceable class="PARAMETER">new_owner</replaceable></term>
       <listitem>
        <para>
-	The user name of the new owner of the domain.
+        The user name of the new owner of the domain.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">new_schema</replaceable></term>
+      <listitem>
+       <para>
+        The new schema for the domain.
        </para>
       </listitem>
      </varlistentry>
@@ -197,15 +220,22 @@ ALTER DOMAIN zipcode ADD CONSTRAINT zipchk CHECK (char_length(VALUE) = 5);
 ALTER DOMAIN zipcode DROP CONSTRAINT zipchk;
    </programlisting>
   </para>
+
+  <para>
+   To move the domain into a different schema:
+   <programlisting>
+ALTER DOMAIN zipcode SET SCHEMA customers;
+   </programlisting>
+  </para>
  </refsect1>
 
  <refsect1 id="SQL-ALTERDOMAIN-compatibility">
   <title>Compatibility</title>
     
   <para>
-   The <command>ALTER DOMAIN</command> statement is compatible with SQL:2003,
-   except for the <literal>OWNER</> variant, which is a
-   <productname>PostgreSQL</productname> extension.
+   <command>ALTER DOMAIN</command> conforms with <acronym>SQL:2003</acronym>,
+   except for the <literal>OWNER</> and <literal>SET SCHEMA</> variants,
+   which are <productname>PostgreSQL</productname> extensions.
   </para>
  </refsect1>
 

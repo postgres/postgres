@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_aggregate.sgml,v 1.5 2004/06/25 21:55:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_aggregate.sgml,v 1.6 2005/08/01 16:11:14 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -20,8 +20,9 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable> ) RENAME TO <replaceable>newname</replaceable>
-ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable> ) OWNER TO <replaceable>newowner</replaceable>
+ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable> ) RENAME TO <replaceable>new_name</replaceable>
+ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable> ) OWNER TO <replaceable>new_owner</replaceable>
+ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable> ) SET SCHEMA <replaceable>new_schema</replaceable>
 </synopsis>
  </refsynopsisdiv>
   
@@ -31,6 +32,14 @@ ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable
   <para>
    <command>ALTER AGGREGATE</command> changes the definition of an
    aggregate function.
+  </para>
+
+  <para>
+   You must own the aggregate function to use <command>ALTER AGGREGATE</>;
+   except for <command>ALTER AGGREGATE OWNER</>, which may only be executed by
+   a superuser.
+   To change the schema of an aggregate function, you must also have
+   <literal>CREATE</literal> privilege on the new schema.
   </para>
  </refsect1>
   
@@ -58,7 +67,7 @@ ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">newname</replaceable></term>
+    <term><replaceable class="parameter">new_name</replaceable></term>
     <listitem>
      <para>
       The new name of the aggregate function.
@@ -67,11 +76,19 @@ ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">newowner</replaceable></term>
+    <term><replaceable class="parameter">new_owner</replaceable></term>
     <listitem>
      <para>
       The new owner of the aggregate function.
-      You must be a superuser to change an aggregate's owner.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">new_schema</replaceable></term>
+    <listitem>
+     <para>
+      The new schema for the aggregate function.
      </para>
     </listitem>
    </varlistentry>
@@ -94,6 +111,14 @@ ALTER AGGREGATE myavg(integer) RENAME TO my_average;
    <type>integer</type> to <literal>joe</literal>:
 <programlisting>
 ALTER AGGREGATE myavg(integer) OWNER TO joe;
+</programlisting>
+  </para>
+
+  <para>
+   To move the aggregate function <literal>myavg</literal> for type
+   <type>integer</type> into schema <literal>myschema</literal>:
+<programlisting>
+ALTER AGGREGATE myavg(integer) SET SCHEMA myschema;
 </programlisting>
   </para>
  </refsect1>
