@@ -3,9 +3,6 @@
  * http://snowball.tartarus.org/
  * Teodor Sigaev <teodor@sigaev.ru>
  */
-#include <stdlib.h>
-#include <string.h>
-
 #include "postgres.h"
 
 #include "dict.h"

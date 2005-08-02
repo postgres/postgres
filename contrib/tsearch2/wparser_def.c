@@ -2,11 +2,8 @@
  * default word parser
  * Teodor Sigaev <teodor@sigaev.ru>
  */
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "postgres.h"
+
 #include "utils/builtins.h"
 
 #include "dict.h"

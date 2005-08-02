@@ -2,11 +2,8 @@
  * simple but fast map from str to Oid
  * Teodor Sigaev <teodor@sigaev.ru>
  */
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "postgres.h"
+
 #include "snmap.h"
 #include "common.h"
 

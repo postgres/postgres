@@ -35,18 +35,21 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/port/getopt_long.c,v 1.3 2003/11/29 19:52:13 pgsql Exp $
+ * $PostgreSQL: pgsql/src/port/getopt_long.c,v 1.3.4.1 2005/08/02 01:35:23 tgl Exp $
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "c.h"
 
 #include "getopt_long.h"
+
+#ifndef HAVE_INT_OPTRESET
+int			optreset;
+#endif
 
 #define BADCH	'?'
 #define BADARG	':'
 #define EMSG	""
+
 
 int
 getopt_long(int argc, char *const argv[],

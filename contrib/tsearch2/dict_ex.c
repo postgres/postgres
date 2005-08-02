@@ -2,10 +2,6 @@
  * example of dictionary
  * Teodor Sigaev <teodor@sigaev.ru>
  */
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "postgres.h"
 
 #include "dict.h"

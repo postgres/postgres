@@ -2,12 +2,9 @@
  * ISpell interface
  * Teodor Sigaev <teodor@sigaev.ru>
  */
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <errno.h>
-
 #include "postgres.h"
+
+#include <ctype.h>
 
 #include "dict.h"
 #include "common.h"
