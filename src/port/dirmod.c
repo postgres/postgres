@@ -10,7 +10,7 @@
  *	Win32 (NT, Win2k, XP).	replace() doesn't work on Win95/98/Me.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.37 2005/03/24 02:11:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.38 2005/08/02 15:14:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -281,10 +281,10 @@ pgsymlink(const char *oldpath, const char *newpath)
 #ifndef FRONTEND
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("Error setting junction for %s: %s",
+				 errmsg("could not set junction for \"%s\": %s",
 						nativeTarget, msg)));
 #else
-		fprintf(stderr, _("Error setting junction for %s: %s\n"),
+		fprintf(stderr, _("could not set junction for \"%s\": %s\n"),
 				nativeTarget, msg);
 #endif
 		LocalFree(msg);
@@ -408,7 +408,8 @@ fnames_cleanup(char **filenames)
 bool
 rmtree(char *path, bool rmtopdir)
 {
-	char		filepath[MAXPGPATH];
+	char		pathbuf[MAXPGPATH];
+	char	   *filepath;
 	char	  **filenames;
 	char	  **filename;
 	struct stat statbuf;
@@ -423,6 +424,7 @@ rmtree(char *path, bool rmtopdir)
 		return false;
 
 	/* now we have the names we can start removing things */
+	filepath = pathbuf;
 
 	for (filename = filenames; *filename; filename++)
 	{
@@ -450,7 +452,8 @@ rmtree(char *path, bool rmtopdir)
 
 	if (rmtopdir)
 	{
-		if (rmdir(path) != 0)
+		filepath = path;
+		if (rmdir(filepath) != 0)
 			goto report_and_fail;
 	}
 
