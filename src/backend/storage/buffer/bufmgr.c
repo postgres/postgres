@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.189 2005/05/19 21:35:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.190 2005/08/02 20:52:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -903,6 +903,11 @@ BgBufferSync(void)
 	/*
 	 * This loop runs over all buffers, including pinned ones.  The
 	 * starting point advances through the buffer pool on successive calls.
+	 *
+	 * Note that we advance the static counter *before* trying to write.
+	 * This ensures that, if we have a persistent write failure on a dirty
+	 * buffer, we'll still be able to make progress writing other buffers.
+	 * (The bgwriter will catch the error and just call us again later.)
 	 */
 	if (bgwriter_all_percent > 0.0 && bgwriter_all_maxpages > 0)
 	{
@@ -911,12 +916,13 @@ BgBufferSync(void)
 
 		while (num_to_scan-- > 0)
 		{
-			if (SyncOneBuffer(buf_id1, false))
-				num_written++;
 			if (++buf_id1 >= NBuffers)
 				buf_id1 = 0;
-			if (num_written >= bgwriter_all_maxpages)
-				break;
+			if (SyncOneBuffer(buf_id1, false))
+			{
+				if (++num_written >= bgwriter_all_maxpages)
+					break;
+			}
 		}
 	}
 
@@ -934,11 +940,12 @@ BgBufferSync(void)
 		while (num_to_scan-- > 0)
 		{
 			if (SyncOneBuffer(buf_id2, true))
-				num_written++;
+			{
+				if (++num_written >= bgwriter_lru_maxpages)
+					break;
+			}
 			if (++buf_id2 >= NBuffers)
 				buf_id2 = 0;
-			if (num_written >= bgwriter_lru_maxpages)
-				break;
 		}
 	}
 }

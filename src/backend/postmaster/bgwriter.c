@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.17 2005/06/30 00:00:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.18 2005/08/02 20:52:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -256,8 +256,7 @@ BackgroundWriterMain(void)
 		/*
 		 * Sleep at least 1 second after any error.  A write error is
 		 * likely to be repeated, and we don't want to be filling the
-		 * error logs as fast as we can.  (XXX think about ways to make
-		 * progress when the LRU dirty buffer cannot be written...)
+		 * error logs as fast as we can.
 		 */
 		pg_usleep(1000000L);
 	}
