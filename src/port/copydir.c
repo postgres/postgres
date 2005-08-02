@@ -11,84 +11,140 @@
  *	as a service.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.11 2005/03/24 02:11:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.12 2005/08/02 19:02:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+
 #include "storage/fd.h"
 
-#undef mkdir					/* no reason to use that macro because we
-								 * ignore the 2nd arg */
+
+static void copy_file(char *fromfile, char *tofile);
 
 
 /*
- * copydir: copy a directory (we only need to go one level deep)
+ * copydir: copy a directory
  *
- * Return 0 on success, nonzero on failure.
- *
- * NB: do not elog(ERROR) on failure.  Return to caller so it can try to
- * clean up.
+ * If recurse is false, subdirectories are ignored.  Anything that's not
+ * a directory or a regular file is ignored.
  */
-int
-copydir(char *fromdir, char *todir)
+void
+copydir(char *fromdir, char *todir, bool recurse)
 {
 	DIR		   *xldir;
 	struct dirent *xlde;
-	char		fromfl[MAXPGPATH];
-	char		tofl[MAXPGPATH];
+	char		fromfile[MAXPGPATH];
+	char		tofile[MAXPGPATH];
 
-	if (mkdir(todir) != 0)
-	{
-		ereport(WARNING,
+	if (mkdir(todir, S_IRUSR | S_IWUSR | S_IXUSR) != 0)
+		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not create directory \"%s\": %m", todir)));
-		return -1;
-	}
+
 	xldir = AllocateDir(fromdir);
 	if (xldir == NULL)
-	{
-		ereport(WARNING,
+		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not open directory \"%s\": %m", fromdir)));
-		return -1;
-	}
 
-	errno = 0;
-	while ((xlde = readdir(xldir)) != NULL)
+	while ((xlde = ReadDir(xldir, fromdir)) != NULL)
 	{
-		snprintf(fromfl, MAXPGPATH, "%s/%s", fromdir, xlde->d_name);
-		snprintf(tofl, MAXPGPATH, "%s/%s", todir, xlde->d_name);
-		if (CopyFile(fromfl, tofl, TRUE) < 0)
-		{
-			ereport(WARNING,
+	    struct stat fst;
+
+	    if (strcmp(xlde->d_name, ".") == 0 ||
+			strcmp(xlde->d_name, "..") == 0)
+		    continue;
+
+		snprintf(fromfile, MAXPGPATH, "%s/%s", fromdir, xlde->d_name);
+		snprintf(tofile, MAXPGPATH, "%s/%s", todir, xlde->d_name);
+
+		if (stat(fromfile, &fst) < 0)
+			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not copy file \"%s\": %m", fromfl)));
-			FreeDir(xldir);
-			return -1;
-		}
-		errno = 0;
-	}
-#ifdef WIN32
+					 errmsg("could not stat \"%s\": %m", fromfile)));
 
-	/*
-	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but
-	 * not in released version
-	 */
-	if (GetLastError() == ERROR_NO_MORE_FILES)
-		errno = 0;
-#endif
-	if (errno)
-	{
-		ereport(WARNING,
-				(errcode_for_file_access(),
-				 errmsg("could not read directory \"%s\": %m", fromdir)));
-		FreeDir(xldir);
-		return -1;
+		if (fst.st_mode & S_IFDIR)
+		{
+			/* recurse to handle subdirectories */
+			if (recurse)
+				copydir(fromfile, tofile, true);
+		}
+		else if (fst.st_mode & S_IFREG)
+			copy_file(fromfile, tofile);
 	}
 
 	FreeDir(xldir);
-	return 0;
+}
+
+/*
+ * copy one file
+ */
+static void
+copy_file(char *fromfile, char *tofile)
+{
+	char		buffer[8 * BLCKSZ];
+	int			srcfd;
+	int			dstfd;
+	int			nbytes;
+
+	/*
+	 * Open the files
+	 */
+	srcfd = BasicOpenFile(fromfile, O_RDONLY | PG_BINARY, 0);
+	if (srcfd < 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not open file \"%s\": %m", fromfile)));
+
+	dstfd = BasicOpenFile(tofile, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
+						  S_IRUSR | S_IWUSR);
+	if (dstfd < 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not create file \"%s\": %m", tofile)));
+
+	/*
+	 * Do the data copying.
+	 */
+	for (;;)
+	{
+		nbytes = read(srcfd, buffer, sizeof(buffer));
+		if (nbytes < 0)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not read file \"%s\": %m", fromfile)));
+		if (nbytes == 0)
+			break;
+		errno = 0;
+		if ((int) write(dstfd, buffer, nbytes) != nbytes)
+		{
+			/* if write didn't set errno, assume problem is no disk space */
+			if (errno == 0)
+				errno = ENOSPC;
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not write to file \"%s\": %m", tofile)));
+		}
+	}
+
+	/*
+	 * Be paranoid here to ensure we catch problems.
+	 */
+	if (pg_fsync(dstfd) != 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not fsync file \"%s\": %m", tofile)));
+
+	if (close(dstfd))
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not close file \"%s\": %m", tofile)));
+
+	close(srcfd);
 }

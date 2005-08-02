@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.417 2005/07/06 21:04:13 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.418 2005/08/02 19:02:30 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -913,7 +913,6 @@ fi
 
 # Win32 support
 if test "$PORTNAME" = "win32"; then
-AC_LIBOBJ(copydir)
 AC_LIBOBJ(gettimeofday)
 AC_LIBOBJ(kill)
 AC_LIBOBJ(open)

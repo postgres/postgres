@@ -14916,14 +14916,6 @@ fi
 # Win32 support
 if test "$PORTNAME" = "win32"; then
 case $LIBOBJS in
-    "copydir.$ac_objext"   | \
-  *" copydir.$ac_objext"   | \
-    "copydir.$ac_objext "* | \
-  *" copydir.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS copydir.$ac_objext" ;;
-esac
-
-case $LIBOBJS in
     "gettimeofday.$ac_objext"   | \
   *" gettimeofday.$ac_objext"   | \
     "gettimeofday.$ac_objext "* | \
