@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.93 2005/07/25 04:52:31 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.94 2005/08/02 15:16:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -930,7 +930,8 @@ check_data_dir(void)
 
 	while ((file = readdir(chkdir)) != NULL)
 	{
-		if (strcmp(".", file->d_name) == 0 || strcmp("..", file->d_name) == 0)
+		if (strcmp(".", file->d_name) == 0 ||
+			strcmp("..", file->d_name) == 0)
 		{
 			/* skip this and parent directory */
 			continue;
@@ -941,6 +942,15 @@ check_data_dir(void)
 			break;
 		}
 	}
+
+#ifdef WIN32
+	/*
+	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but
+	 * not in released version
+	 */
+	if (GetLastError() == ERROR_NO_MORE_FILES)
+		errno = 0;
+#endif
 
 	closedir(chkdir);
 
