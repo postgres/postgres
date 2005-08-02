@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.50 2005/07/06 19:02:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.51 2005/08/02 16:11:57 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -263,6 +263,38 @@ toast_raw_datum_size(Datum value)
 	else
 	{
 		/* plain untoasted datum */
+		result = VARSIZE(attr);
+	}
+	return result;
+}
+
+/* ----------
+ * toast_datum_size
+ *
+ *	Return the physical storage size (possibly compressed) of a varlena datum
+ * ----------
+ */
+Size 
+toast_datum_size(Datum value)
+{
+	varattrib	*attr = (varattrib *) DatumGetPointer(value);
+	Size		result;
+
+	if (VARATT_IS_EXTERNAL(attr))
+	{
+		/*
+		 * Attribute is stored externally - return the extsize whether
+		 * compressed or not.  We do not count the size of the toast
+		 * pointer ... should we?
+		 */
+		result = attr->va_content.va_external.va_extsize;
+	}
+	else
+	{
+		/*
+		 * Attribute is stored inline either compressed or not, just
+		 * calculate the size of the datum in either case.
+		 */
 		result = VARSIZE(attr);
 	}
 	return result;
@@ -1435,46 +1467,4 @@ toast_fetch_datum_slice(varattrib *attr, int32 sliceoffset, int32 length)
 	heap_close(toastrel, AccessShareLock);
 
 	return result;
-}
-
-/* ----------
- * toast_datum_size
- *
- *	Show the (possibly compressed) size of a datum
- * ----------
- */
-Size 
-toast_datum_size(Datum value)
-{
-
-	varattrib	*attr = (varattrib *) DatumGetPointer(value);
-	Size		result;
-
-	if (VARATT_IS_EXTERNAL(attr))
-	{
-		/*
-		 * Attribute is stored externally - If it is compressed too, 
-		 * then we need to get the external datum and calculate its size,
-		 * otherwise we just use the external rawsize.
-		 */
-		if (VARATT_IS_COMPRESSED(attr))
-		{
-			varattrib		*attrext = toast_fetch_datum(attr);
-			result = VARSIZE(attrext);
-			pfree(attrext);
-		}
-		else
-			result = attr->va_content.va_external.va_rawsize;
-	}
-	else
-	{
-		/*
-		 * Attribute is stored inline either compressed or not, just
-		 * calculate the size of the datum in either case.
-		 */
-		result = VARSIZE(attr);
-	}
-
-	return result;
-	
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.379 2005/07/29 14:47:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.380 2005/08/02 16:11:57 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3701,7 +3701,7 @@ DATA(insert OID = 2560 (  pg_postmaster_start_time PGNSP PGUID 12 f f t f s 0 11
 DESCR("postmaster start time");
 
 /* Column storage size */
-DATA(insert OID = 1269 (  pg_column_size	   PGNSP PGUID 12 f f t f i 1 23 "2276" _null_ _null_ _null_  pg_column_size - _null_ ));
+DATA(insert OID = 1269 (  pg_column_size	   PGNSP PGUID 12 f f t f s 1 23 "2276" _null_ _null_ _null_  pg_column_size - _null_ ));
 DESCR("bytes required to store the value, perhaps with compression");
 
 /* new functions for Y-direction rtree opclasses */

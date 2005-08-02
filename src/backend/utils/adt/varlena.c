@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.130 2005/07/29 03:17:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.131 2005/08/02 16:11:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2574,38 +2574,49 @@ md5_bytea(PG_FUNCTION_ARGS)
 }
 
 /* 
- * Return the length of a datum, possibly compressed
+ * Return the size of a datum, possibly compressed
+ *
+ * Works on any data type
  */
 Datum
 pg_column_size(PG_FUNCTION_ARGS)
 {
-	Datum			value = PG_GETARG_DATUM(0);
-	int				result;
+	Datum		value = PG_GETARG_DATUM(0);
+	int32		result;
+	int			typlen;
 
-	/*	fn_extra stores the fixed column length, or -1 for varlena. */
-	if (fcinfo->flinfo->fn_extra == NULL)	/* first call? */
+	/* On first call, get the input type's typlen, and save at *fn_extra */
+	if (fcinfo->flinfo->fn_extra == NULL)
 	{
-		/* On the first call lookup the datatype of the supplied argument */
-		Oid				argtypeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
-		int				typlen    = get_typlen(argtypeid);
+		/* Lookup the datatype of the supplied argument */
+		Oid		argtypeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
 
-		
-		if (typlen == 0)
-		{
-			/* Oid not in pg_type, should never happen. */
+		typlen = get_typlen(argtypeid);
+		if (typlen == 0)		/* should not happen */
 			elog(ERROR, "cache lookup failed for type %u", argtypeid);
-		}
 
 		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
 													  sizeof(int));
-		*(int *)fcinfo->flinfo->fn_extra = typlen;
+		*((int *) fcinfo->flinfo->fn_extra) = typlen;
 	}
+	else
+		typlen = *((int *) fcinfo->flinfo->fn_extra);
 
-	if (*(int *)fcinfo->flinfo->fn_extra != -1)
-		PG_RETURN_INT32(*(int *)fcinfo->flinfo->fn_extra);
+	if (typlen == -1)
+	{
+		/* varlena type, possibly toasted */
+		result = toast_datum_size(value);
+	}
+	else if (typlen == -2)
+	{
+		/* cstring */
+		result = strlen(DatumGetCString(value)) + 1;
+	}
 	else
 	{
-		result = toast_datum_size(value) - VARHDRSZ;
-		PG_RETURN_INT32(result);
+		/* ordinary fixed-width type */
+		result = typlen;
 	}
+
+	PG_RETURN_INT32(result);
 }
