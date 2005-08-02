@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.125 2005/07/28 22:27:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.126 2005/08/02 20:27:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 
 
 #include "access/heapam.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
@@ -808,6 +809,16 @@ expand_inherited_rtentry(PlannerInfo *root, Index rti)
 		Index		childRTindex;
 
 		/*
+		 * It is possible that the parent table has children that are
+		 * temp tables of other backends.  We cannot safely access such
+		 * tables (because of buffering issues), and the best thing to do
+		 * seems to be to silently ignore them.
+		 */
+		if (childOID != parentOID &&
+			isOtherTempNamespace(get_rel_namespace(childOID)))
+			continue;
+
+		/*
 		 * Build an RTE for the child, and attach to query's rangetable
 		 * list. We copy most fields of the parent's RTE, but replace
 		 * relation OID, and set inh = false.
@@ -818,6 +829,17 @@ expand_inherited_rtentry(PlannerInfo *root, Index rti)
 		parse->rtable = lappend(parse->rtable, childrte);
 		childRTindex = list_length(parse->rtable);
 		inhRTIs = lappend_int(inhRTIs, childRTindex);
+	}
+
+	/*
+	 * If all the children were temp tables, pretend it's a non-inheritance
+	 * situation.  The duplicate RTE we added for the parent table is harmless.
+	 */
+	if (list_length(inhRTIs) < 2)
+	{
+		/* Clear flag to save repeated tests if called again */
+		rte->inh = false;
+		return NIL;
 	}
 
 	/*
