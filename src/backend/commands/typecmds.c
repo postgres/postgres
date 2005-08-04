@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.77 2005/08/01 04:03:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.78 2005/08/04 01:09:28 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -2057,7 +2057,8 @@ AlterTypeOwner(List *names, Oid newOwnerId)
 	 * free-standing composite type, and not a table's underlying type. We
 	 * want people to use ALTER TABLE not ALTER TYPE for that case.
 	 */
-	if (typTup->typtype == 'c' && get_rel_relkind(typTup->typrelid) != 'c')
+	if (typTup->typtype == 'c' &&
+		get_rel_relkind(typTup->typrelid) != RELKIND_COMPOSITE_TYPE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is a table's row type",
@@ -2097,6 +2098,45 @@ AlterTypeOwner(List *names, Oid newOwnerId)
 		/* Update owner dependency reference */
 		changeDependencyOnOwner(TypeRelationId, typeOid, newOwnerId);
 	}
+
+	/* Clean up */
+	heap_close(rel, RowExclusiveLock);
+}
+
+/*
+ * AlterTypeOwnerInternal - change type owner unconditionally
+ *
+ * This is currently only used to propagate ALTER TABLE OWNER to the
+ * table's rowtype.  It assumes the caller has done all needed checks.
+ */
+void
+AlterTypeOwnerInternal(Oid typeOid, Oid newOwnerId)
+{
+	Relation	rel;
+	HeapTuple	tup;
+	Form_pg_type typTup;
+
+	rel = heap_open(TypeRelationId, RowExclusiveLock);
+
+	tup = SearchSysCacheCopy(TYPEOID,
+							 ObjectIdGetDatum(typeOid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "cache lookup failed for type %u", typeOid);
+	typTup = (Form_pg_type) GETSTRUCT(tup);
+
+	/*
+	 * Modify the owner --- okay to scribble on typTup because it's a
+	 * copy
+	 */
+	typTup->typowner = newOwnerId;
+
+	simple_heap_update(rel, &tup->t_self, tup);
+
+	CatalogUpdateIndexes(rel, tup);
+
+	/* Update owner dependency reference */
+	changeDependencyOnOwner(TypeRelationId, typeOid, newOwnerId);
 
 	/* Clean up */
 	heap_close(rel, RowExclusiveLock);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.165 2005/08/01 04:03:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.166 2005/08/04 01:09:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -238,7 +238,7 @@ static void ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 					  const char *colName, TypeName *typename);
 static void ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab);
 static void ATPostAlterTypeParse(char *cmd, List **wqueue);
-static void ATExecChangeOwner(Oid relationOid, Oid newOwnerId);
+static void ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing);
 static void change_owner_recurse_to_sequences(Oid relationOid,
 											  Oid newOwnerId);
 static void ATExecClusterOn(Relation rel, const char *indexName);
@@ -2141,7 +2141,8 @@ ATExecCmd(AlteredTableInfo *tab, Relation rel, AlterTableCmd *cmd)
 			break;
 		case AT_ChangeOwner:	/* ALTER OWNER */
 			ATExecChangeOwner(RelationGetRelid(rel),
-							  get_roleid_checked(cmd->name));
+							  get_roleid_checked(cmd->name),
+							  false);
 			break;
 		case AT_ClusterOn:		/* CLUSTER ON */
 			ATExecClusterOn(rel, cmd->name);
@@ -5238,9 +5239,15 @@ ATPostAlterTypeParse(char *cmd, List **wqueue)
 
 /*
  * ALTER TABLE OWNER
+ *
+ * recursing is true if we are recursing from a table to its indexes or
+ * toast table.  We don't allow the ownership of those things to be
+ * changed separately from the parent table.  Also, we can skip permission
+ * checks (this is necessary not just an optimization, else we'd fail to
+ * handle toast tables properly).
  */
 static void
-ATExecChangeOwner(Oid relationOid, Oid newOwnerId)
+ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing)
 {
 	Relation	target_rel;
 	Relation	class_rel;
@@ -5267,16 +5274,19 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId)
 	switch (tuple_class->relkind)
 	{
 		case RELKIND_RELATION:
-		case RELKIND_INDEX:
 		case RELKIND_VIEW:
 		case RELKIND_SEQUENCE:
-		case RELKIND_TOASTVALUE:
 			/* ok to change owner */
 			break;
+		case RELKIND_INDEX:
+		case RELKIND_TOASTVALUE:
+			if (recursing)
+				break;
+			/* FALL THRU */
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("\"%s\" is not a table, TOAST table, index, view, or sequence",
+					 errmsg("\"%s\" is not a table, view, or sequence",
 							NameStr(tuple_class->relname))));
 	}
 
@@ -5293,23 +5303,28 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId)
 		Datum		aclDatum;
 		bool		isNull;
 		HeapTuple	newtuple;
-		Oid		    namespaceOid = tuple_class->relnamespace;
-		AclResult	aclresult;
 
-		/* Otherwise, must be owner of the existing object */
-		if (!pg_class_ownercheck(relationOid,GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
-						   RelationGetRelationName(target_rel));
+		/* skip permission checks when recursing to index or toast table */
+		if (!recursing)
+		{
+			Oid		    namespaceOid = tuple_class->relnamespace;
+			AclResult	aclresult;
 
-		/* Must be able to become new owner */
-		check_is_member_of_role(GetUserId(), newOwnerId);
+			/* Otherwise, must be owner of the existing object */
+			if (!pg_class_ownercheck(relationOid,GetUserId()))
+				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+							   RelationGetRelationName(target_rel));
 
-		/* New owner must have CREATE privilege on namespace */
-		aclresult = pg_namespace_aclcheck(namespaceOid, newOwnerId,
-										  ACL_CREATE);
-		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
-						   get_namespace_name(namespaceOid));
+			/* Must be able to become new owner */
+			check_is_member_of_role(GetUserId(), newOwnerId);
+
+			/* New owner must have CREATE privilege on namespace */
+			aclresult = pg_namespace_aclcheck(namespaceOid, newOwnerId,
+											  ACL_CREATE);
+			if (aclresult != ACLCHECK_OK)
+				aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+							   get_namespace_name(namespaceOid));
+		}
 
 		memset(repl_null, ' ', sizeof(repl_null));
 		memset(repl_repl, ' ', sizeof(repl_repl));
@@ -5343,6 +5358,12 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId)
 		changeDependencyOnOwner(RelationRelationId, relationOid, newOwnerId);
 
 		/*
+		 * Also change the ownership of the table's rowtype, if it has one
+		 */
+		if (tuple_class->relkind != RELKIND_INDEX)
+			AlterTypeOwnerInternal(tuple_class->reltype, newOwnerId);
+
+		/*
 		 * If we are operating on a table, also change the ownership of
 		 * any indexes and sequences that belong to the table, as well as
 		 * the table's toast table (if it has one)
@@ -5358,7 +5379,7 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId)
 
 			/* For each index, recursively change its ownership */
 			foreach(i, index_oid_list)
-				ATExecChangeOwner(lfirst_oid(i), newOwnerId);
+				ATExecChangeOwner(lfirst_oid(i), newOwnerId, true);
 
 			list_free(index_oid_list);
 		}
@@ -5367,7 +5388,8 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId)
 		{
 			/* If it has a toast table, recurse to change its ownership */
 			if (tuple_class->reltoastrelid != InvalidOid)
-				ATExecChangeOwner(tuple_class->reltoastrelid, newOwnerId);
+				ATExecChangeOwner(tuple_class->reltoastrelid, newOwnerId,
+								  true);
 
 			/* If it has dependent sequences, recurse to change them too */
 			change_owner_recurse_to_sequences(relationOid, newOwnerId);
@@ -5437,7 +5459,7 @@ change_owner_recurse_to_sequences(Oid relationOid, Oid newOwnerId)
 		}
 
 		/* We don't need to close the sequence while we alter it. */
-		ATExecChangeOwner(depForm->objid, newOwnerId);
+		ATExecChangeOwner(depForm->objid, newOwnerId, false);
 
 		/* Now we can close it.  Keep the lock till end of transaction. */
 		relation_close(seqRel, NoLock);

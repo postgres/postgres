@@ -7,7 +7,7 @@ CREATE USER regression_user2;
 CREATE USER regression_user3;
 CREATE GROUP regression_group;
 
-CREATE TABLE deptest ();
+CREATE TABLE deptest (f1 serial primary key, f2 text);
 
 GRANT SELECT ON TABLE deptest TO GROUP regression_group;
 GRANT ALL ON TABLE deptest TO regression_user, regression_user2;
@@ -33,6 +33,9 @@ REVOKE ALL ON deptest FROM regression_user2;
 DROP USER regression_user2;
 
 -- can't drop the owner of an object
+-- the error message detail here would include a pg_toast_nnn name that
+-- is not constant, so suppress it
+\set VERBOSITY terse
 ALTER TABLE deptest OWNER TO regression_user3;
 DROP USER regression_user3;
 

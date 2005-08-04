@@ -5,7 +5,9 @@ CREATE USER regression_user;
 CREATE USER regression_user2;
 CREATE USER regression_user3;
 CREATE GROUP regression_group;
-CREATE TABLE deptest ();
+CREATE TABLE deptest (f1 serial primary key, f2 text);
+NOTICE:  CREATE TABLE will create implicit sequence "deptest_f1_seq" for serial column "deptest.f1"
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "deptest_pkey" for table "deptest"
 GRANT SELECT ON TABLE deptest TO GROUP regression_group;
 GRANT ALL ON TABLE deptest TO regression_user, regression_user2;
 -- can't drop neither because they have privileges somewhere
@@ -30,10 +32,12 @@ DROP USER regression_user;
 REVOKE ALL ON deptest FROM regression_user2;
 DROP USER regression_user2;
 -- can't drop the owner of an object
+-- the error message detail here would include a pg_toast_nnn name that
+-- is not constant, so suppress it
+\set VERBOSITY terse
 ALTER TABLE deptest OWNER TO regression_user3;
 DROP USER regression_user3;
 ERROR:  role "regression_user3" cannot be dropped because some objects depend on it
-DETAIL:  owner of table deptest
 -- if we drop the object, we can drop the user too
 DROP TABLE deptest;
 DROP USER regression_user3;

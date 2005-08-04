@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.78 2005/08/01 16:11:14 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.79 2005/08/04 01:09:27 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -235,7 +235,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
     <term><literal>OWNER</literal></term>
     <listitem>
      <para>
-      This form changes the owner of the table, index, sequence, or view to the
+      This form changes the owner of the table, sequence, or view to the
       specified user.
      </para>
     </listitem>
