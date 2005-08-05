@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.59 2005/06/15 00:15:08 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.60 2005/08/05 14:36:43 tgl Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -200,7 +200,7 @@ typedef enum pg_enc
 #define PG_VALID_BE_ENCODING(_enc) \
 		((_enc) >= 0 && (_enc) <= PG_ENCODING_BE_LAST)
 
-#define PG_ENCODING_IS_CLIEN_ONLY(_enc) \
+#define PG_ENCODING_IS_CLIENT_ONLY(_enc) \
 		(((_enc) > PG_ENCODING_BE_LAST && (_enc) <= PG_ENCODING_FE_LAST)
 
 #define PG_VALID_ENCODING(_enc) \
