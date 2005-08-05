@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.60 2005/08/05 14:36:43 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.61 2005/08/05 15:01:48 tgl Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -191,7 +191,6 @@ typedef enum pg_enc
 } pg_enc;
 
 #define PG_ENCODING_BE_LAST PG_WIN1250
-#define PG_ENCODING_FE_LAST PG_GB18030
 
 /*
  * Please use these tests before access to pg_encconv_tbl[]
@@ -201,7 +200,7 @@ typedef enum pg_enc
 		((_enc) >= 0 && (_enc) <= PG_ENCODING_BE_LAST)
 
 #define PG_ENCODING_IS_CLIENT_ONLY(_enc) \
-		(((_enc) > PG_ENCODING_BE_LAST && (_enc) <= PG_ENCODING_FE_LAST)
+		((_enc) > PG_ENCODING_BE_LAST && (_enc) < _PG_LAST_ENCODING_)
 
 #define PG_VALID_ENCODING(_enc) \
 		((_enc) >= 0 && (_enc) < _PG_LAST_ENCODING_)
