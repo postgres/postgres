@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.102.2.2 2004/02/23 23:03:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.102.2.3 2005/08/07 18:48:00 tgl Exp $
  *
  * NOTES:
  *
@@ -262,10 +262,16 @@ pg_fdatasync(int fd)
  * count_usable_fds --- count how many FDs the system will let us open,
  *		and estimate how many are already open.
  *
+ * We stop counting if usable_fds reaches max_to_probe.  Note: a small
+ * value of max_to_probe might result in an underestimate of already_open;
+ * we must fill in any "gaps" in the set of used FDs before the calculation
+ * of already_open will give the right answer.  In practice, max_to_probe
+ * of a couple of dozen should be enough to ensure good results.
+ *
  * We assume stdin (FD 0) is available for dup'ing
  */
 static void
-count_usable_fds(int *usable_fds, int *already_open)
+count_usable_fds(int max_to_probe, int *usable_fds, int *already_open)
 {
 	int		   *fd;
 	int			size;
@@ -276,7 +282,7 @@ count_usable_fds(int *usable_fds, int *already_open)
 	size = 1024;
 	fd = (int *) palloc(size * sizeof(int));
 
-	/* dup until failure ... */
+	/* dup until failure or probe limit reached */
 	for (;;)
 	{
 		int		thisfd;
@@ -299,6 +305,9 @@ count_usable_fds(int *usable_fds, int *already_open)
 
 		if (highestfd < thisfd)
 			highestfd = thisfd;
+
+		if (used >= max_to_probe)
+			break;
 	}
 
 	/* release the files we opened */
@@ -333,7 +342,8 @@ set_max_safe_fds(void)
 	 * fd.c.  This ensures that we won't exceed either max_files_per_process
 	 * or the experimentally-determined EMFILE limit.
 	 */
-	count_usable_fds(&usable_fds, &already_open);
+	count_usable_fds(max_files_per_process,
+					 &usable_fds, &already_open);
 
 	max_safe_fds = Min(usable_fds, max_files_per_process - already_open);
 
