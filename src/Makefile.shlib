@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.95 2005/07/13 17:00:44 tgl Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.96 2005/08/07 19:02:08 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -234,7 +234,7 @@ ifeq ($(PORTNAME), unixware)
 endif
 
 ifeq ($(PORTNAME), cygwin)
-  shlib			= $(NAME)$(DLSUFFIX)
+  shlib			= cyg$(NAME)$(DLSUFFIX)
   # needed for /contrib modules, not sure why
   SHLIB_LINK		+= $(LIBS)
   haslibarule   = yes
