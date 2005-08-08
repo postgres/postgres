@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.67 2005/05/29 04:23:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.68 2005/08/08 19:44:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -308,11 +308,14 @@ void
 AtEOXact_LocalBuffers(bool isCommit)
 {
 #ifdef USE_ASSERT_CHECKING
-	int			i;
-
-	for (i = 0; i < NLocBuffer; i++)
+	if (assert_enabled)
 	{
-		Assert(LocalRefCount[i] == 0);
+		int			i;
+
+		for (i = 0; i < NLocBuffer; i++)
+		{
+			Assert(LocalRefCount[i] == 0);
+		}
 	}
 #endif
 }
