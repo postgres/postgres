@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.225 2005/05/29 04:23:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.226 2005/08/08 19:17:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,9 +122,9 @@ static long relcacheInvalsReceived = 0L;
 static List *initFileRelationIds = NIL;
 
 /*
- * This flag lets us optimize away work in AtEOSubXact_RelationCache().
+ * This flag lets us optimize away work in AtEO(Sub)Xact_RelationCache().
  */
-static bool need_eosubxact_work = false;
+static bool need_eoxact_work = false;
 
 
 /*
@@ -1816,6 +1816,12 @@ RelationCacheInvalidate(void)
  * In the case of abort, we don't want to try to rebuild any invalidated
  * cache entries (since we can't safely do database accesses).  Therefore
  * we must reset refcnts before handling pending invalidations.
+ *
+ * As of PostgreSQL 8.1, relcache refcnts should get released by the
+ * ResourceOwner mechanism.  This routine just does a debugging
+ * cross-check that no pins remain.  However, we also need to do special
+ * cleanup when the current transaction created any relations or made use
+ * of forced index lists.
  */
 void
 AtEOXact_RelationCache(bool isCommit)
@@ -1823,12 +1829,47 @@ AtEOXact_RelationCache(bool isCommit)
 	HASH_SEQ_STATUS status;
 	RelIdCacheEnt *idhentry;
 
+	/*
+	 * To speed up transaction exit, we want to avoid scanning the relcache
+	 * unless there is actually something for this routine to do.  Other
+	 * than the debug-only Assert checks, most transactions don't create
+	 * any work for us to do here, so we keep a static flag that gets set
+	 * if there is anything to do.  (Currently, this means either a relation
+	 * is created in the current xact, or an index list is forced.)  For
+	 * simplicity, the flag remains set till end of top-level transaction,
+	 * even though we could clear it at subtransaction end in some cases.
+	 */
+	if (!need_eoxact_work
+#ifdef USE_ASSERT_CHECKING
+		&& !assert_enabled
+#endif
+		)
+		return;
+
 	hash_seq_init(&status, RelationIdCache);
 
 	while ((idhentry = (RelIdCacheEnt *) hash_seq_search(&status)) != NULL)
 	{
 		Relation	relation = idhentry->reldesc;
-		int			expected_refcnt;
+
+		/*
+		 * The relcache entry's ref count should be back to its normal
+		 * not-in-a-transaction state: 0 unless it's nailed in cache.
+		 *
+		 * In bootstrap mode, this is NOT true, so don't check it ---
+		 * the bootstrap code expects relations to stay open across
+		 * start/commit transaction calls.  (That seems bogus, but it's
+		 * not worth fixing.)
+		 */
+#ifdef USE_ASSERT_CHECKING
+		if (!IsBootstrapProcessingMode())
+		{
+			int			expected_refcnt;
+
+			expected_refcnt = relation->rd_isnailed ? 1 : 0;
+			Assert(relation->rd_refcnt == expected_refcnt);
+		}
+#endif
 
 		/*
 		 * Is it a relation created in the current transaction?
@@ -1852,40 +1893,6 @@ AtEOXact_RelationCache(bool isCommit)
 		}
 
 		/*
-		 * During transaction abort, we must also reset relcache entry ref
-		 * counts to their normal not-in-a-transaction state.  A ref count
-		 * may be too high because some routine was exited by ereport()
-		 * between incrementing and decrementing the count.
-		 *
-		 * During commit, we should not have to do this, but it's still
-		 * useful to check that the counts are correct to catch missed
-		 * relcache closes.
-		 *
-		 * In bootstrap mode, do NOT reset the refcnt nor complain that it's
-		 * nonzero --- the bootstrap code expects relations to stay open
-		 * across start/commit transaction calls.  (That seems bogus, but
-		 * it's not worth fixing.)
-		 */
-		expected_refcnt = relation->rd_isnailed ? 1 : 0;
-
-		if (isCommit)
-		{
-			if (relation->rd_refcnt != expected_refcnt &&
-				!IsBootstrapProcessingMode())
-			{
-				elog(WARNING, "relcache reference leak: relation \"%s\" has refcnt %d instead of %d",
-					 RelationGetRelationName(relation),
-					 relation->rd_refcnt, expected_refcnt);
-				relation->rd_refcnt = expected_refcnt;
-			}
-		}
-		else
-		{
-			/* abort case, just reset it quietly */
-			relation->rd_refcnt = expected_refcnt;
-		}
-
-		/*
 		 * Flush any temporary index list.
 		 */
 		if (relation->rd_indexvalid == 2)
@@ -1896,8 +1903,8 @@ AtEOXact_RelationCache(bool isCommit)
 		}
 	}
 
-	/* Once done with the transaction, we can reset need_eosubxact_work */
-	need_eosubxact_work = false;
+	/* Once done with the transaction, we can reset need_eoxact_work */
+	need_eoxact_work = false;
 }
 
 /*
@@ -1915,18 +1922,10 @@ AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
 	RelIdCacheEnt *idhentry;
 
 	/*
-	 * In the majority of subtransactions there is not anything for this
-	 * routine to do, and since there are usually many entries in the
-	 * relcache, uselessly scanning the cache represents a surprisingly
-	 * large fraction of the subtransaction entry/exit overhead.  To avoid
-	 * this, we keep a static flag that must be set whenever a condition
-	 * is created that requires subtransaction-end work.  (Currently, this
-	 * means either a relation is created in the current xact, or an index
-	 * list is forced.)  For simplicity, the flag remains set till end of
-	 * top-level transaction, even though we could clear it earlier in some
-	 * cases.
+	 * Skip the relcache scan if nothing to do --- see notes for
+	 * AtEOXact_RelationCache.
 	 */
-	if (!need_eosubxact_work)
+	if (!need_eoxact_work)
 		return;
 
 	hash_seq_init(&status, RelationIdCache);
@@ -2032,7 +2031,7 @@ RelationBuildLocalRelation(const char *relname,
 	rel->rd_createSubid = GetCurrentSubTransactionId();
 
 	/* must flag that we have rels created in this transaction */
-	need_eosubxact_work = true;
+	need_eoxact_work = true;
 
 	/* is it a temporary relation? */
 	rel->rd_istemp = isTempNamespace(relnamespace);
@@ -2626,7 +2625,7 @@ RelationSetIndexList(Relation relation, List *indexIds)
 	relation->rd_indexlist = indexIds;
 	relation->rd_indexvalid = 2;	/* mark list as forced */
 	/* must flag that we have a forced index list */
-	need_eosubxact_work = true;
+	need_eoxact_work = true;
 }
 
 /*

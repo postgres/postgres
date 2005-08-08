@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.121 2005/05/06 17:24:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.122 2005/08/08 19:17:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -530,62 +530,43 @@ CreateCacheMemoryContext(void)
  *
  * Clean up catcaches at end of main transaction (either commit or abort)
  *
- * We scan the caches to reset refcounts to zero.  This is of course
- * necessary in the abort case, since elog() may have interrupted routines.
- * In the commit case, any nonzero counts indicate failure to call
- * ReleaseSysCache, so we put out a notice for debugging purposes.
+ * As of PostgreSQL 8.1, catcache pins should get released by the
+ * ResourceOwner mechanism.  This routine is just a debugging
+ * cross-check that no pins remain.
  */
 void
 AtEOXact_CatCache(bool isCommit)
 {
-	CatCache   *ccp;
-	Dlelem	   *elt,
-			   *nextelt;
-
-	/*
-	 * First clean up CatCLists
-	 */
-	for (ccp = CacheHdr->ch_caches; ccp; ccp = ccp->cc_next)
+#ifdef USE_ASSERT_CHECKING
+	if (assert_enabled)
 	{
-		for (elt = DLGetHead(&ccp->cc_lists); elt; elt = nextelt)
+		CatCache   *ccp;
+		Dlelem	   *elt;
+
+		/* Check CatCLists */
+		for (ccp = CacheHdr->ch_caches; ccp; ccp = ccp->cc_next)
 		{
-			CatCList   *cl = (CatCList *) DLE_VAL(elt);
-
-			nextelt = DLGetSucc(elt);
-
-			if (cl->refcount != 0)
+			for (elt = DLGetHead(&ccp->cc_lists); elt; elt = DLGetSucc(elt))
 			{
-				if (isCommit)
-					PrintCatCacheListLeakWarning(cl);
-				cl->refcount = 0;
+				CatCList   *cl = (CatCList *) DLE_VAL(elt);
+
+				Assert(cl->cl_magic == CL_MAGIC);
+				Assert(cl->refcount == 0);
+				Assert(!cl->dead);
 			}
-
-			/* Clean up any now-deletable dead entries */
-			if (cl->dead)
-				CatCacheRemoveCList(ccp, cl);
 		}
-	}
 
-	/*
-	 * Now clean up tuples; we can scan them all using the global LRU list
-	 */
-	for (elt = DLGetHead(&CacheHdr->ch_lrulist); elt; elt = nextelt)
-	{
-		CatCTup    *ct = (CatCTup *) DLE_VAL(elt);
-
-		nextelt = DLGetSucc(elt);
-
-		if (ct->refcount != 0)
+		/* Check individual tuples */
+		for (elt = DLGetHead(&CacheHdr->ch_lrulist); elt; elt = DLGetSucc(elt))
 		{
-			if (isCommit)
-				PrintCatCacheLeakWarning(&ct->tuple);
-			ct->refcount = 0;
-		}
+			CatCTup    *ct = (CatCTup *) DLE_VAL(elt);
 
-		/* Clean up any now-deletable dead entries */
-		if (ct->dead)
-			CatCacheRemoveCTup(ct->my_cache, ct);
+			Assert(ct->ct_magic == CT_MAGIC);
+			Assert(ct->refcount == 0);
+			Assert(!ct->dead);
+		}
 	}
+#endif
 }
 
 /*
@@ -1329,11 +1310,9 @@ SearchCatCacheList(CatCache *cache,
 	Dlelem	   *elt;
 	CatCList   *cl;
 	CatCTup    *ct;
-	List	   *ctlist;
+	List	   * volatile ctlist;
 	ListCell   *ctlist_item;
 	int			nmembers;
-	Relation	relation;
-	SysScanDesc scandesc;
 	bool		ordered;
 	HeapTuple	ntp;
 	MemoryContext oldcxt;
@@ -1433,98 +1412,131 @@ SearchCatCacheList(CatCache *cache,
 	 * List was not found in cache, so we have to build it by reading the
 	 * relation.  For each matching tuple found in the relation, use an
 	 * existing cache entry if possible, else build a new one.
+	 *
+	 * We have to bump the member refcounts immediately to ensure they
+	 * won't get dropped from the cache while loading other members.
+	 * We use a PG_TRY block to ensure we can undo those refcounts if
+	 * we get an error before we finish constructing the CatCList.
 	 */
-	relation = heap_open(cache->cc_reloid, AccessShareLock);
-
-	scandesc = systable_beginscan(relation,
-								  cache->cc_indexoid,
-								  true,
-								  SnapshotNow,
-								  nkeys,
-								  cur_skey);
-
-	/* The list will be ordered iff we are doing an index scan */
-	ordered = (scandesc->irel != NULL);
+	ResourceOwnerEnlargeCatCacheListRefs(CurrentResourceOwner);
 
 	ctlist = NIL;
-	nmembers = 0;
 
-	while (HeapTupleIsValid(ntp = systable_getnext(scandesc)))
+	PG_TRY();
 	{
-		uint32		hashValue;
-		Index		hashIndex;
+		Relation	relation;
+		SysScanDesc scandesc;
 
-		/*
-		 * See if there's an entry for this tuple already.
-		 */
-		ct = NULL;
-		hashValue = CatalogCacheComputeTupleHashValue(cache, ntp);
-		hashIndex = HASH_INDEX(hashValue, cache->cc_nbuckets);
+		relation = heap_open(cache->cc_reloid, AccessShareLock);
 
-		for (elt = DLGetHead(&cache->cc_bucket[hashIndex]);
-			 elt;
-			 elt = DLGetSucc(elt))
+		scandesc = systable_beginscan(relation,
+									  cache->cc_indexoid,
+									  true,
+									  SnapshotNow,
+									  nkeys,
+									  cur_skey);
+
+		/* The list will be ordered iff we are doing an index scan */
+		ordered = (scandesc->irel != NULL);
+
+		while (HeapTupleIsValid(ntp = systable_getnext(scandesc)))
 		{
-			ct = (CatCTup *) DLE_VAL(elt);
-
-			if (ct->dead || ct->negative)
-				continue;		/* ignore dead and negative entries */
-
-			if (ct->hash_value != hashValue)
-				continue;		/* quickly skip entry if wrong hash val */
-
-			if (!ItemPointerEquals(&(ct->tuple.t_self), &(ntp->t_self)))
-				continue;		/* not same tuple */
+			uint32		hashValue;
+			Index		hashIndex;
 
 			/*
-			 * Found a match, but can't use it if it belongs to another
-			 * list already
+			 * See if there's an entry for this tuple already.
 			 */
-			if (ct->c_list)
-				continue;
+			ct = NULL;
+			hashValue = CatalogCacheComputeTupleHashValue(cache, ntp);
+			hashIndex = HASH_INDEX(hashValue, cache->cc_nbuckets);
 
-			/* Found a match, so move it to front */
-			DLMoveToFront(&ct->lrulist_elem);
+			for (elt = DLGetHead(&cache->cc_bucket[hashIndex]);
+				 elt;
+				 elt = DLGetSucc(elt))
+			{
+				ct = (CatCTup *) DLE_VAL(elt);
 
-			break;
+				if (ct->dead || ct->negative)
+					continue;		/* ignore dead and negative entries */
+
+				if (ct->hash_value != hashValue)
+					continue;		/* quickly skip entry if wrong hash val */
+
+				if (!ItemPointerEquals(&(ct->tuple.t_self), &(ntp->t_self)))
+					continue;		/* not same tuple */
+
+				/*
+				 * Found a match, but can't use it if it belongs to another
+				 * list already
+				 */
+				if (ct->c_list)
+					continue;
+
+				/* Found a match, so move it to front */
+				DLMoveToFront(&ct->lrulist_elem);
+
+				break;
+			}
+
+			if (elt == NULL)
+			{
+				/* We didn't find a usable entry, so make a new one */
+				ct = CatalogCacheCreateEntry(cache, ntp,
+											 hashValue, hashIndex,
+											 false);
+			}
+
+			/* Careful here: add entry to ctlist, then bump its refcount */
+			ctlist = lappend(ctlist, ct);
+			ct->refcount++;
 		}
 
-		if (elt == NULL)
-		{
-			/* We didn't find a usable entry, so make a new one */
-			ct = CatalogCacheCreateEntry(cache, ntp,
-										 hashValue, hashIndex,
-										 false);
-		}
+		systable_endscan(scandesc);
+
+		heap_close(relation, AccessShareLock);
 
 		/*
-		 * We have to bump the member refcounts immediately to ensure they
-		 * won't get dropped from the cache while loading other members.
-		 * If we get an error before we finish constructing the CatCList
-		 * then we will leak those reference counts.  This is annoying but
-		 * it has no real consequence beyond possibly generating some
-		 * warning messages at the next transaction commit, so it's not
-		 * worth fixing.
+		 * Now we can build the CatCList entry.  First we need a dummy tuple
+		 * containing the key values...
 		 */
-		ct->refcount++;
-		ctlist = lappend(ctlist, ct);
-		nmembers++;
+		ntp = build_dummy_tuple(cache, nkeys, cur_skey);
+		oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
+		nmembers = list_length(ctlist);
+		cl = (CatCList *)
+			palloc(sizeof(CatCList) + nmembers * sizeof(CatCTup *));
+		heap_copytuple_with_tuple(ntp, &cl->tuple);
+		MemoryContextSwitchTo(oldcxt);
+		heap_freetuple(ntp);
+
+		/*
+		 * We are now past the last thing that could trigger an elog before
+		 * we have finished building the CatCList and remembering it in the
+		 * resource owner.  So it's OK to fall out of the PG_TRY, and indeed
+		 * we'd better do so before we start marking the members as belonging
+		 * to the list.
+		 */
+
 	}
+	PG_CATCH();
+	{
+		foreach(ctlist_item, ctlist)
+		{
+			ct = (CatCTup *) lfirst(ctlist_item);
+			Assert(ct->c_list == NULL);
+			Assert(ct->refcount > 0);
+			ct->refcount--;
+			if (ct->refcount == 0
+#ifndef CATCACHE_FORCE_RELEASE
+				&& ct->dead
+#endif
+				)
+				CatCacheRemoveCTup(cache, ct);
+		}
 
-	systable_endscan(scandesc);
-
-	heap_close(relation, AccessShareLock);
-
-	/*
-	 * Now we can build the CatCList entry.  First we need a dummy tuple
-	 * containing the key values...
-	 */
-	ntp = build_dummy_tuple(cache, nkeys, cur_skey);
-	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-	cl = (CatCList *) palloc(sizeof(CatCList) + nmembers * sizeof(CatCTup *));
-	heap_copytuple_with_tuple(ntp, &cl->tuple);
-	MemoryContextSwitchTo(oldcxt);
-	heap_freetuple(ntp);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 
 	cl->cl_magic = CL_MAGIC;
 	cl->my_cache = cache;
@@ -1536,28 +1548,26 @@ SearchCatCacheList(CatCache *cache,
 	cl->hash_value = lHashValue;
 	cl->n_members = nmembers;
 
-	Assert(nmembers == list_length(ctlist));
-	ctlist_item = list_head(ctlist);
-	for (i = 0; i < nmembers; i++)
+	i = 0;
+	foreach(ctlist_item, ctlist)
 	{
-		cl->members[i] = ct = (CatCTup *) lfirst(ctlist_item);
+		cl->members[i++] = ct = (CatCTup *) lfirst(ctlist_item);
 		Assert(ct->c_list == NULL);
 		ct->c_list = cl;
 		/* mark list dead if any members already dead */
 		if (ct->dead)
 			cl->dead = true;
-		ctlist_item = lnext(ctlist_item);
 	}
+	Assert(i == nmembers);
 
 	DLAddHead(&cache->cc_lists, &cl->cache_elem);
 
-	CACHE3_elog(DEBUG2, "SearchCatCacheList(%s): made list of %d members",
-				cache->cc_relname, nmembers);
-
 	/* Finally, bump the list's refcount and return it */
-	ResourceOwnerEnlargeCatCacheListRefs(CurrentResourceOwner);
 	cl->refcount++;
 	ResourceOwnerRememberCatCacheListRef(CurrentResourceOwner, cl);
+
+	CACHE3_elog(DEBUG2, "SearchCatCacheList(%s): made list of %d members",
+				cache->cc_relname, nmembers);
 
 	return cl;
 }

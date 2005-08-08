@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.12 2005/04/06 04:34:22 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.13 2005/08/08 19:17:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,32 +213,19 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 			ReleaseBuffer(owner->buffers[owner->nbuffers - 1]);
 		}
 
-		/* Release relcache references */
-		if (isTopLevel)
+		/*
+		 * Release relcache references.  Note that RelationClose will
+		 * remove the relref entry from my list, so I just have to
+		 * iterate till there are none.
+		 *
+		 * As with buffer pins, warn if any are left at commit time,
+		 * and release back-to-front for speed.
+		 */
+		while (owner->nrelrefs > 0)
 		{
-			/*
-			 * For a top-level xact we are going to release all
-			 * references, so just do a single relcache call at the top of
-			 * the recursion.
-			 */
-			if (owner == TopTransactionResourceOwner)
-				AtEOXact_RelationCache(isCommit);
-			/* Mark object as owning no relrefs, just for sanity */
-			owner->nrelrefs = 0;
-		}
-		else
-		{
-			/*
-			 * Release relcache refs retail.  Note that RelationClose will
-			 * remove the relref entry from my list, so I just have to
-			 * iterate till there are none.
-			 */
-			while (owner->nrelrefs > 0)
-			{
-				if (isCommit)
-					PrintRelCacheLeakWarning(owner->relrefs[owner->nrelrefs - 1]);
-				RelationClose(owner->relrefs[owner->nrelrefs - 1]);
-			}
+			if (isCommit)
+				PrintRelCacheLeakWarning(owner->relrefs[owner->nrelrefs - 1]);
+			RelationClose(owner->relrefs[owner->nrelrefs - 1]);
 		}
 	}
 	else if (phase == RESOURCE_RELEASE_LOCKS)
@@ -269,40 +256,27 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 	}
 	else if (phase == RESOURCE_RELEASE_AFTER_LOCKS)
 	{
-		/* Release catcache references */
-		if (isTopLevel)
+		/*
+		 * Release catcache references.  Note that ReleaseCatCache
+		 * will remove the catref entry from my list, so I just have
+		 * to iterate till there are none.	Ditto for catcache lists.
+		 *
+		 * As with buffer pins, warn if any are left at commit time,
+		 * and release back-to-front for speed.
+		 */
+		while (owner->ncatrefs > 0)
 		{
-			/*
-			 * For a top-level xact we are going to release all
-			 * references, so just do a single catcache call at the top of
-			 * the recursion.
-			 */
-			if (owner == TopTransactionResourceOwner)
-				AtEOXact_CatCache(isCommit);
-			/* Mark object as owning no catrefs, just for sanity */
-			owner->ncatrefs = 0;
-			owner->ncatlistrefs = 0;
+			if (isCommit)
+				PrintCatCacheLeakWarning(owner->catrefs[owner->ncatrefs - 1]);
+			ReleaseCatCache(owner->catrefs[owner->ncatrefs - 1]);
 		}
-		else
+		while (owner->ncatlistrefs > 0)
 		{
-			/*
-			 * Release catcache refs retail.  Note that ReleaseCatCache
-			 * will remove the catref entry from my list, so I just have
-			 * to iterate till there are none.	Ditto for catcache lists.
-			 */
-			while (owner->ncatrefs > 0)
-			{
-				if (isCommit)
-					PrintCatCacheLeakWarning(owner->catrefs[owner->ncatrefs - 1]);
-				ReleaseCatCache(owner->catrefs[owner->ncatrefs - 1]);
-			}
-			while (owner->ncatlistrefs > 0)
-			{
-				if (isCommit)
-					PrintCatCacheListLeakWarning(owner->catlistrefs[owner->ncatlistrefs - 1]);
-				ReleaseCatCacheList(owner->catlistrefs[owner->ncatlistrefs - 1]);
-			}
+			if (isCommit)
+				PrintCatCacheListLeakWarning(owner->catlistrefs[owner->ncatlistrefs - 1]);
+			ReleaseCatCacheList(owner->catlistrefs[owner->ncatlistrefs - 1]);
 		}
+
 		/* Clean up index scans too */
 		ReleaseResources_gist();
 		ReleaseResources_hash();

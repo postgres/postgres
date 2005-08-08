@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.211 2005/07/25 22:12:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.212 2005/08/08 19:17:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1549,6 +1549,9 @@ CommitTransaction(void)
 	/* Check we've released all buffer pins */
 	AtEOXact_Buffers(true);
 
+	/* Clean up the relation cache */
+	AtEOXact_RelationCache(true);
+
 	/*
 	 * Make catalog changes visible to all backends.  This has to happen
 	 * after relcache references are dropped (see comments for
@@ -1575,6 +1578,9 @@ CommitTransaction(void)
 	ResourceOwnerRelease(TopTransactionResourceOwner,
 						 RESOURCE_RELEASE_AFTER_LOCKS,
 						 true, true);
+
+	/* Check we've released all catcache entries */
+	AtEOXact_CatCache(true);
 
 	AtEOXact_GUC(true, false);
 	AtEOXact_SPI(true);
@@ -1768,6 +1774,9 @@ PrepareTransaction(void)
 	/* Check we've released all buffer pins */
 	AtEOXact_Buffers(true);
 
+	/* Clean up the relation cache */
+	AtEOXact_RelationCache(true);
+
 	/* notify and flatfiles don't need a postprepare call */
 
 	PostPrepare_Inval();
@@ -1784,6 +1793,9 @@ PrepareTransaction(void)
 	ResourceOwnerRelease(TopTransactionResourceOwner,
 						 RESOURCE_RELEASE_AFTER_LOCKS,
 						 true, true);
+
+	/* Check we've released all catcache entries */
+	AtEOXact_CatCache(true);
 
 	/* PREPARE acts the same as COMMIT as far as GUC is concerned */
 	AtEOXact_GUC(true, false);
@@ -1922,6 +1934,7 @@ AbortTransaction(void)
 						 RESOURCE_RELEASE_BEFORE_LOCKS,
 						 false, true);
 	AtEOXact_Buffers(false);
+	AtEOXact_RelationCache(false);
 	AtEOXact_Inval(false);
 	smgrDoPendingDeletes(false);
 	AtEOXact_MultiXact();
@@ -1931,6 +1944,7 @@ AbortTransaction(void)
 	ResourceOwnerRelease(TopTransactionResourceOwner,
 						 RESOURCE_RELEASE_AFTER_LOCKS,
 						 false, true);
+	AtEOXact_CatCache(false);
 
 	AtEOXact_GUC(false, false);
 	AtEOXact_SPI(false);
