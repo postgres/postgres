@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.105.4.1 2005/06/05 01:48:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.105.4.2 2005/08/08 23:39:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -325,10 +325,13 @@ assign_timezone(const char *value, bool doit, GucSource source)
 			 * pg_timezone_initialize() will eventually select a default
 			 * value from the environment.
 			 */
-			const char *curzone = pg_get_current_timezone();
+			if (doit)
+			{
+				const char *curzone = pg_get_current_timezone();
 
-			if (curzone)
-				value = curzone;
+				if (curzone)
+					value = curzone;
+			}
 		}
 		else
 		{
