@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.190 2005/08/02 20:52:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.191 2005/08/08 03:11:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,6 +45,7 @@
 #include "storage/buf_internals.h"
 #include "storage/bufmgr.h"
 #include "storage/bufpage.h"
+#include "storage/ipc.h"
 #include "storage/proc.h"
 #include "storage/smgr.h"
 #include "utils/relcache.h"
@@ -93,6 +94,7 @@ static void buffer_write_error_callback(void *arg);
 static BufferDesc *BufferAlloc(Relation reln, BlockNumber blockNum,
 			bool *foundPtr);
 static void FlushBuffer(BufferDesc *buf, SMgrRelation reln);
+static void AtProcExit_Buffers(int code, Datum arg);
 static void write_buffer(Buffer buffer, bool unpin);
 
 
@@ -1080,10 +1082,25 @@ AtEOXact_Buffers(bool isCommit)
 }
 
 /*
- * Ensure we have released all shared-buffer locks and pins during backend exit
+ * InitBufferPoolBackend --- second-stage initialization of a new backend
+ *
+ * This is called after we have acquired a PGPROC and so can safely get
+ * LWLocks.  We don't currently need to do anything at this stage ...
+ * except register a shmem-exit callback.  AtProcExit_Buffers needs LWLock
+ * access, and thereby has to be called at the corresponding phase of
+ * backend shutdown.
  */
 void
-AtProcExit_Buffers(void)
+InitBufferPoolBackend(void)
+{
+	on_shmem_exit(AtProcExit_Buffers, 0);
+}
+
+/*
+ * Ensure we have released all shared-buffer locks and pins during backend exit
+ */
+static void
+AtProcExit_Buffers(int code, Datum arg)
 {
 	int			i;
 
@@ -1105,6 +1122,9 @@ AtProcExit_Buffers(void)
 			Assert(PrivateRefCount[i] == 0);
 		}
 	}
+
+	/* localbuf.c needs a chance too */
+	AtProcExit_LocalBuffers();
 }
 
 /*

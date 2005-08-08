@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.102 2005/07/29 19:30:04 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.103 2005/08/08 03:11:40 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -665,7 +665,7 @@ pgstat_report_autovac(void)
  * pgstat_bestart() -
  *
  *	Tell the collector that this new backend is soon ready to process
- *	queries. Called from tcop/postgres.c before entering the mainloop.
+ *	queries. Called from InitPostgres.
  * ----------
  */
 void
@@ -686,7 +686,7 @@ pgstat_bestart(void)
 	 * Set up a process-exit hook to ensure we flush the last batch of
 	 * statistics to the collector.
 	 */
-	on_proc_exit(pgstat_beshutdown_hook, 0);
+	on_shmem_exit(pgstat_beshutdown_hook, 0);
 }
 
 /* ---------
@@ -738,9 +738,7 @@ pgstat_report_analyze(Oid tableoid, bool shared, PgStat_Counter livetuples,
 /*
  * Flush any remaining statistics counts out to the collector at process
  * exit.   Without this, operations triggered during backend exit (such as
- * temp table deletions) won't be counted.  This is an on_proc_exit hook,
- * not on_shmem_exit, so that everything interesting must have happened
- * already.
+ * temp table deletions) won't be counted.
  */
 static void
 pgstat_beshutdown_hook(int code, Datum arg)

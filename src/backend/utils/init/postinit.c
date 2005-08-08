@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.155 2005/07/31 17:19:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.156 2005/08/08 03:12:14 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -45,6 +45,7 @@
 #include "utils/portal.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
+#include "pgstat.h"
 
 
 static bool FindMyDatabase(const char *name, Oid *db_id, Oid *db_tablespace);
@@ -287,7 +288,8 @@ BaseInit(void)
 	InitCommunication();
 	DebugFileOpen();
 
-	/* Do local initialization of storage and buffer managers */
+	/* Do local initialization of file, storage and buffer managers */
+	InitFileAccess();
 	smgrinit();
 	InitBufferPoolAccess();
 }
@@ -399,6 +401,11 @@ InitPostgres(const char *dbname, const char *username)
 		elog(FATAL, "bad backend id: %d", MyBackendId);
 
 	/*
+	 * bufmgr needs another initialization call too
+	 */
+	InitBufferPoolBackend();
+
+	/*
 	 * Initialize local process's access to XLOG.  In bootstrap case we
 	 * may skip this since StartupXLOG() was run instead.
 	 */
@@ -503,6 +510,15 @@ InitPostgres(const char *dbname, const char *username)
 	InitializeClientEncoding();
 
 	/*
+	 * Initialize statistics collection for this backend.  We do this
+	 * here because the shutdown hook it sets up needs to be invoked
+	 * at the corresponding phase of backend shutdown: after
+	 * ShutdownPostgres and before we drop access to shared memory.
+	 */
+	if (IsUnderPostmaster)
+		pgstat_bestart();
+
+	/*
 	 * Set up process-exit callback to do pre-shutdown cleanup.  This
 	 * should be last because we want shmem_exit to call this routine
 	 * before the exit callbacks that are registered by buffer manager,
@@ -517,6 +533,7 @@ InitPostgres(const char *dbname, const char *username)
 
 	return am_superuser;
 }
+
 
 /*
  * Backend-shutdown callback.  Do cleanup that we want to be sure happens
@@ -533,30 +550,17 @@ InitPostgres(const char *dbname, const char *username)
 static void
 ShutdownPostgres(int code, Datum arg)
 {
-	/*
-	 * These operations are really just a minimal subset of
-	 * AbortTransaction(). We don't want to do any inessential cleanup,
-	 * since that just raises the odds of failure --- but there's some
-	 * stuff we need to do.
-	 *
-	 * Release any LW locks, buffer content locks, and buffer pins we might be
-	 * holding.  This is a kluge to improve the odds that we won't get into a
-	 * self-made stuck-lock scenario while trying to shut down.  We *must*
-	 * release buffer pins to make it safe to do file deletion, since we
-	 * might have some pins on pages of the target files.
-	 */
-	LWLockReleaseAll();
-	AtProcExit_Buffers();
-	AtProcExit_LocalBuffers();
+	/* Make sure we've killed any active transaction */
+	AbortOutOfAnyTransaction();
 
 	/*
-	 * In case a transaction is open, delete any files it created.	This
-	 * has to happen before bufmgr shutdown, so having smgr register a
-	 * callback for it wouldn't work.
+	 * User locks are not released by transaction end, so be sure to
+	 * release them explicitly.
 	 */
-	smgrDoPendingDeletes(false);	/* delete as though aborting xact */
+#ifdef USER_LOCKS
+	LockReleaseAll(USER_LOCKMETHOD, true);
+#endif
 }
-
 
 
 /*

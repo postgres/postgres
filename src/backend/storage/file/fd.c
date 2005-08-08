@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.119 2005/08/07 18:47:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.120 2005/08/08 03:11:49 tgl Exp $
  *
  * NOTES:
  *
@@ -294,6 +294,33 @@ pg_fdatasync(int fd)
 	}
 	else
 		return 0;
+}
+
+/*
+ * InitFileAccess --- initialize this module during backend startup
+ *
+ * This is called during either normal or standalone backend start.
+ * It is *not* called in the postmaster.
+ */
+void
+InitFileAccess(void)
+{
+	Assert(SizeVfdCache == 0);			/* call me only once */
+
+	/* initialize cache header entry */
+	VfdCache = (Vfd *) malloc(sizeof(Vfd));
+	if (VfdCache == NULL)
+		ereport(FATAL,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
+
+	MemSet((char *) &(VfdCache[0]), 0, sizeof(Vfd));
+	VfdCache->fd = VFD_CLOSED;
+
+	SizeVfdCache = 1;
+
+	/* register proc-exit hook to ensure temp files are dropped at exit */
+	on_proc_exit(AtProcExit_Files, 0);
 }
 
 /*
@@ -622,25 +649,7 @@ AllocateVfd(void)
 
 	DO_DB(elog(LOG, "AllocateVfd. Size %d", SizeVfdCache));
 
-	if (SizeVfdCache == 0)
-	{
-		/* initialize header entry first time through */
-		VfdCache = (Vfd *) malloc(sizeof(Vfd));
-		if (VfdCache == NULL)
-			ereport(FATAL,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory")));
-		MemSet((char *) &(VfdCache[0]), 0, sizeof(Vfd));
-		VfdCache->fd = VFD_CLOSED;
-
-		SizeVfdCache = 1;
-
-		/*
-		 * register proc-exit call to ensure temp files are dropped at
-		 * exit
-		 */
-		on_proc_exit(AtProcExit_Files, 0);
-	}
+	Assert(SizeVfdCache > 0);			/* InitFileAccess not called? */
 
 	if (VfdCache[0].nextFree == 0)
 	{

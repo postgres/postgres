@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.93 2005/03/20 22:00:54 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.94 2005/08/08 03:12:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,10 +123,10 @@ extern Buffer ReleaseAndReadBuffer(Buffer buffer, Relation relation,
 
 extern void InitBufferPool(void);
 extern void InitBufferPoolAccess(void);
+extern void InitBufferPoolBackend(void);
 extern char *ShowBufferUsage(void);
 extern void ResetBufferUsage(void);
 extern void AtEOXact_Buffers(bool isCommit);
-extern void AtProcExit_Buffers(void);
 extern void PrintBufferLeakWarning(Buffer buffer);
 extern void FlushBufferPool(void);
 extern BlockNumber BufferGetBlockNumber(Buffer buffer);

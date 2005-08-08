@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_init.c,v 1.73 2005/05/19 21:35:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_init.c,v 1.74 2005/08/08 03:11:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,6 +149,7 @@ InitBufferPool(void)
  * NB: this is called before InitProcess(), so we do not have a PGPROC and
  * cannot do LWLockAcquire; hence we can't actually access stuff in
  * shared memory yet.  We are only initializing local data here.
+ * (See also InitBufferPoolBackend, over in bufmgr.c.)
  */
 void
 InitBufferPoolAccess(void)

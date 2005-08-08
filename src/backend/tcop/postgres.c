@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.455 2005/07/21 03:56:11 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.456 2005/08/08 03:12:12 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2952,13 +2952,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 										   ALLOCSET_DEFAULT_MINSIZE,
 										   ALLOCSET_DEFAULT_INITSIZE,
 										   ALLOCSET_DEFAULT_MAXSIZE);
-
-	/* ----------
-	 * Tell the statistics collector that we're alive and
-	 * to which database we belong.
-	 * ----------
-	 */
-	pgstat_bestart();
 
 	/*
 	 * Remember stand-alone backend startup time

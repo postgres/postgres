@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.161 2005/07/31 17:19:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.162 2005/08/08 03:11:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,7 @@ InitProcGlobal(void)
 		ShmemInitStruct("Proc Header", sizeof(PROC_HDR), &foundProcGlobal);
 
 	/*
-	 * Create or attach to the PGPROC structures for dummy (checkpoint)
+	 * Create or attach to the PGPROC structures for dummy (bgwriter)
 	 * processes, too.	These do not get linked into the freeProcs list.
 	 */
 	DummyProcs = (PGPROC *)
@@ -289,9 +289,10 @@ InitProcess(void)
 /*
  * InitDummyProcess -- create a dummy per-process data structure
  *
- * This is called by checkpoint processes so that they will have a MyProc
- * value that's real enough to let them wait for LWLocks.  The PGPROC and
- * sema that are assigned are the extra ones created during InitProcGlobal.
+ * This is called by bgwriter and similar processes so that they will have a
+ * MyProc value that's real enough to let them wait for LWLocks.  The PGPROC
+ * and sema that are assigned are the extra ones created during
+ * InitProcGlobal.
  *
  * Dummy processes are presently not expected to wait for real (lockmgr)
  * locks, nor to participate in sinval messaging.
@@ -485,27 +486,12 @@ ProcKill(int code, Datum arg)
 
 	Assert(MyProc != NULL);
 
-	/* Release any LW locks I am holding */
-	LWLockReleaseAll();
-
 	/*
-	 * Make real sure we release any buffer locks and pins we might be
-	 * holding, too.  It is pretty ugly to do this here and not in a
-	 * shutdown callback registered by the bufmgr ... but we must do this
-	 * *after* LWLockReleaseAll and *before* zapping MyProc.
+	 * Release any LW locks I am holding.  There really shouldn't be any,
+	 * but it's cheap to check again before we cut the knees off the LWLock
+	 * facility by releasing our PGPROC ...
 	 */
-	AtProcExit_Buffers();
-
-	/* Get off any wait queue I might be on */
-	LockWaitCancel();
-
-	/* Remove from the standard lock table */
-	LockReleaseAll(DEFAULT_LOCKMETHOD, true);
-
-#ifdef USER_LOCKS
-	/* Remove from the user lock table */
-	LockReleaseAll(USER_LOCKMETHOD, true);
-#endif
+	LWLockReleaseAll();
 
 	/* Remove our PGPROC from the PGPROC array in shared memory */
 	ProcArrayRemove(MyProc);
@@ -523,7 +509,7 @@ ProcKill(int code, Datum arg)
 }
 
 /*
- * DummyProcKill() -- Cut-down version of ProcKill for dummy (checkpoint)
+ * DummyProcKill() -- Cut-down version of ProcKill for dummy (bgwriter)
  *		processes.	The PGPROC and sema are not released, only marked
  *		as not-in-use.
  */
@@ -539,13 +525,8 @@ DummyProcKill(int code, Datum arg)
 
 	Assert(MyProc == dummyproc);
 
-	/* Release any LW locks I am holding */
+	/* Release any LW locks I am holding (see notes above) */
 	LWLockReleaseAll();
-
-	/* Release buffer locks and pins, too */
-	AtProcExit_Buffers();
-
-	/* I can't be on regular lock queues, so needn't check */
 
 	/* Mark dummy proc no longer in use */
 	MyProc->pid = 0;

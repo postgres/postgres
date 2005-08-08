@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.205 2005/07/04 04:51:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.206 2005/08/08 03:11:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -378,9 +378,14 @@ BootstrapMain(int argc, char *argv[])
 
 	BaseInit();
 
-	/* needed to get LWLocks */
+	/*
+	 * We aren't going to do the full InitPostgres pushups, but there
+	 * are a couple of things that need to get lit up even in a dummy
+	 * process.
+	 */
 	if (IsUnderPostmaster)
 	{
+		/* set up proc.c to get use of LWLocks */
 		switch (xlogop)
 		{
 			case BS_XLOG_BGWRITER:
@@ -391,6 +396,9 @@ BootstrapMain(int argc, char *argv[])
 				InitDummyProcess(DUMMY_PROC_DEFAULT);
 				break;
 		}
+
+		/* finish setting up bufmgr.c */
+		InitBufferPoolBackend();
 	}
 
 	/*

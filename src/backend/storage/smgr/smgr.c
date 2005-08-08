@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.91 2005/06/20 18:37:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.92 2005/08/08 03:12:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,11 +136,12 @@ static void smgr_internal_unlink(RelFileNode rnode, int which,
 
 
 /*
- *	smgrinit(), smgrshutdown() -- Initialize or shut down all storage
+ *	smgrinit(), smgrshutdown() -- Initialize or shut down storage
  *								  managers.
  *
- * Note: in the normal multiprocess scenario with a postmaster, these are
- * called at postmaster start and stop, not per-backend.
+ * Note: smgrinit is called during backend startup (normal or standalone
+ * case), *not* during postmaster start.  Therefore, any resources created
+ * here or destroyed in smgrshutdown are backend-local.
  */
 void
 smgrinit(void)
@@ -162,6 +163,9 @@ smgrinit(void)
 	on_proc_exit(smgrshutdown, 0);
 }
 
+/*
+ * on_proc_exit hook for smgr cleanup during backend shutdown
+ */
 static void
 smgrshutdown(int code, Datum arg)
 {
