@@ -123,9 +123,10 @@
 # - Settings -
 
 #fsync = on			# turns forced synchronization on or off
-#wal_sync_method = fsync	# the default varies across platforms:
-				# fsync, fdatasync, fsync_writethrough,
-				# open_sync, open_datasync
+#wal_sync_method = fsync	# the default is the first option supported
+				# by the operating system:  open_datasync, 
+				# fdatasync, fsync, fsync_writethrough, 
+				# open_sync
 #full_page_writes = on		# recover from partial page writes
 #wal_buffers = 8		# min 4, 8KB each
 #commit_delay = 0		# range 0-100000, in microseconds
