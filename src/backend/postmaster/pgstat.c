@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.103 2005/08/08 03:11:40 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.104 2005/08/09 21:14:55 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -46,6 +46,7 @@
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
 #include "storage/pmsignal.h"
+#include "storage/procarray.h"
 #include "tcop/tcopprot.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
@@ -1605,8 +1606,8 @@ PgstatCollectorMain(int argc, char *argv[])
 	/*
 	 * Create the known backends table
 	 */
-	pgStatBeTable = (PgStat_StatBeEntry *) palloc0(
-							   sizeof(PgStat_StatBeEntry) * MaxBackends);
+	pgStatBeTable = (PgStat_StatBeEntry *)
+		palloc0(sizeof(PgStat_StatBeEntry) * MaxBackends);
 
 	readPipe = pgStatPipe[0];
 
@@ -2456,6 +2457,7 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 	PgStat_StatDBEntry dbbuf;
 	PgStat_StatTabEntry *tabentry;
 	PgStat_StatTabEntry tabbuf;
+	PgStat_StatBeEntry *beentry;
 	HASHCTL		hash_ctl;
 	HTAB	   *tabhash = NULL;
 	FILE	   *fpin;
@@ -2463,6 +2465,7 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 	int			maxbackends = 0;
 	int			havebackends = 0;
 	bool		found;
+	bool		check_pids;
 	MemoryContext use_mcxt;
 	int			mcxt_flags;
 
@@ -2472,16 +2475,22 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 	 * TopTransactionContext instead, so the caller must only know the last
 	 * XactId when this call happened to know if his tables are still valid or
 	 * already gone!
+	 *
+	 * Also, if running in a regular backend, we check backend entries against
+	 * the PGPROC array so that we can detect stale entries.  This lets us
+	 * discard entries whose BETERM message got lost for some reason.
 	 */
 	if (pgStatRunningInCollector || IsAutoVacuumProcess())
 	{
 		use_mcxt = NULL;
 		mcxt_flags = 0;
+		check_pids = false;
 	}
 	else
 	{
 		use_mcxt = TopTransactionContext;
 		mcxt_flags = HASH_CONTEXT;
+		check_pids = true;
 	}
 
 	/*
@@ -2665,11 +2674,15 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 				if (betab == NULL || numbackends == NULL || *betab == NULL)
 					goto done;
 
+				if (havebackends >= maxbackends)
+					goto done;
+
 				/*
 				 * Read it directly into the table.
 				 */
-				if (fread(&(*betab)[havebackends], 1,
-						  sizeof(PgStat_StatBeEntry), fpin) !=
+				beentry = &(*betab)[havebackends];
+
+				if (fread(beentry, 1, sizeof(PgStat_StatBeEntry), fpin) !=
 					sizeof(PgStat_StatBeEntry))
 				{
 					ereport(pgStatRunningInCollector ? LOG : WARNING,
@@ -2678,19 +2691,35 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 				}
 
 				/*
+				 * If possible, check PID to verify still running
+				 */
+				if (check_pids && !IsBackendPid(beentry->procpid))
+				{
+					/*
+					 * Note: we could send a BETERM message to tell the
+					 * collector to drop the entry, but I'm a bit worried
+					 * about race conditions.  For now, just silently ignore
+					 * dead entries; they'll get recycled eventually anyway.
+					 */
+
+					/* Don't accept the entry */
+					memset(beentry, 0, sizeof(PgStat_StatBeEntry));
+					break;
+				}
+
+				/*
 				 * Count backends per database here.
 				 */
-				dbentry = (PgStat_StatDBEntry *) hash_search(*dbhash,
-						   (void *) &((*betab)[havebackends].databaseid),
-														HASH_FIND, NULL);
+				dbentry = (PgStat_StatDBEntry *)
+					hash_search(*dbhash,
+								&(beentry->databaseid),
+								HASH_FIND,
+								NULL);
 				if (dbentry)
 					dbentry->n_backends++;
 
 				havebackends++;
-				if (numbackends != 0)
-					*numbackends = havebackends;
-				if (havebackends >= maxbackends)
-					goto done;
+				*numbackends = havebackends;
 
 				break;
 
@@ -2728,10 +2757,10 @@ backend_read_statsfile(void)
 {
 	if (IsAutoVacuumProcess())
 	{
-		Assert(!pgStatRunningInCollector);
 		/* already read it? */
 		if (pgStatDBHash)
 			return;
+		Assert(!pgStatRunningInCollector);
 		pgstat_read_statsfile(&pgStatDBHash, InvalidOid,
 							  &pgStatBeTable, &pgStatNumBackends);
 	}
