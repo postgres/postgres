@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Mon Aug  8 16:26:45 EDT 2005
+Last updated:           Tue Aug  9 00:51:13 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -720,7 +720,7 @@ first.
 <ul>
   <li>Improve commit_delay handling to reduce fsync()
   </li><li>Determine optimal fdatasync/fsync, O_SYNC/O_DSYNC options
-  </li><li>Allow multiple blocks to be written to WAL with one write()
+  </li><li>-<em>Allow multiple blocks to be written to WAL with one write()</em>
   </li><li>Add an option to sync() before fsync()'ing checkpoint files
   </li><li>Add program to test if fsync has a delay compared to non-fsync
 </li></ul>
