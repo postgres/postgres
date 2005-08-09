@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.342 2005/08/09 04:50:43 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.343 2005/08/09 05:01:10 momjian Exp $
 -->
 
 <chapter Id="runtime">
@@ -1744,12 +1744,12 @@ SET ENABLE_SEQSCAN TO OFF;
         </listitem>
         <listitem>
         <para>
-         <literal>open_sync</> (write WAL files with <function>open()</> option <symbol>O_SYNC</>)
+         <literal>fsync_writethrough</> (force write-through of any disk write cache)
         </para>
         </listitem>
         <listitem>
         <para>
-         <literal>fsync_writethrough</> (force write-through of any disk write cache)
+         <literal>open_sync</> (write WAL files with <function>open()</> option <symbol>O_SYNC</>)
         </para>
         </listitem>
        </itemizedlist>
