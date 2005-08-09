@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat May 14 12:26:01 EDT 2005
+   Last updated: Tue Aug 9 00:56:51 EDT 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -101,7 +101,7 @@ General Questions
    important to get community feeback on your proposal before starting
    work. Failure to do so might mean your patch is rejected.
    
-   A web site is maintained for patches that are ready to be applied,
+   A web site is maintained for patches awaiting review,
    http://momjian.postgresql.org/cgi-bin/pgpatches, and those that are
    being kept for the next release,
    http://momjian.postgresql.org/cgi-bin/pgpatches2.
