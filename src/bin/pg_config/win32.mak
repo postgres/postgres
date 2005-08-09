@@ -46,7 +46,7 @@ CLEAN :
 CPP_PROJ=/nologo $(OPT) /W3 /GX /D "WIN32" $(DEBUGDEF) /D "_CONSOLE" /D\
  "_MBCS" /Fp"$(INTDIR)\pg_config.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c \
  /I ..\..\include /I ..\..\interfaces\libpq /I ..\..\include\port\win32 \
- /D "HAVE_STRDUP" /D "FRONTEND" /D VAL_CONFIGURE="\"\""
+ /D "HAVE_STRDUP" /D "FRONTEND"
 
 CPP_OBJS=$(INTDIR)/
 CPP_SBRS=.

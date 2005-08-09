@@ -17,35 +17,267 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.11 2005/02/22 04:38:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.12 2005/08/09 22:47:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
+
 #include "port.h"
-#include <stdio.h>
 
 static const char *progname;
+static char		mypath[MAXPGPATH];
+
+
+/*
+ * For each piece of information known to pg_config, we define a subroutine
+ * to print it.  This is probably overkill, but it avoids code duplication
+ * and accidentally omitting items from the "all" display.
+ */
+
+static void
+show_bindir(bool all)
+{
+	char		path[MAXPGPATH];
+	char	   *lastsep;
+
+	if (all)
+		printf("BINDIR = ");
+	/* assume we are located in the bindir */
+	strcpy(path, mypath);
+	lastsep = strrchr(path, '/');
+	if (lastsep)
+		*lastsep = '\0';
+	printf("%s\n", path);
+}
+
+static void
+show_includedir(bool all)
+{
+	char		path[MAXPGPATH];
+
+	if (all)
+		printf("INCLUDEDIR = ");
+	get_include_path(mypath, path);
+	printf("%s\n", path);
+}
+
+static void
+show_includedir_server(bool all)
+{
+	char		path[MAXPGPATH];
+
+	if (all)
+		printf("INCLUDEDIR-SERVER = ");
+	get_includeserver_path(mypath, path);
+	printf("%s\n", path);
+}
+
+static void
+show_libdir(bool all)
+{
+	char		path[MAXPGPATH];
+
+	if (all)
+		printf("LIBDIR = ");
+	get_lib_path(mypath, path);
+	printf("%s\n", path);
+}
+
+static void
+show_pkglibdir(bool all)
+{
+	char		path[MAXPGPATH];
+
+	if (all)
+		printf("PKGLIBDIR = ");
+	get_pkglib_path(mypath, path);
+	printf("%s\n", path);
+}
+
+static void
+show_pgxs(bool all)
+{
+	char		path[MAXPGPATH];
+
+	if (all)
+		printf("PGXS = ");
+	get_pkglib_path(mypath, path);
+	strncat(path, "/pgxs/src/makefiles/pgxs.mk", MAXPGPATH - 1);
+	printf("%s\n", path);
+}
+
+static void
+show_configure(bool all)
+{
+#ifdef VAL_CONFIGURE
+	if (all)
+		printf("CONFIGURE = ");
+	printf("%s\n", VAL_CONFIGURE);
+#else
+	if (!all)
+		printf("not recorded\n");
+#endif
+}
+
+static void
+show_cc(bool all)
+{
+#ifdef VAL_CC
+	if (all)
+		printf("CC = ");
+	printf("%s\n", VAL_CC);
+#else
+	if (!all)
+		printf("not recorded\n");
+#endif
+}
+
+static void
+show_cppflags(bool all)
+{
+#ifdef VAL_CPPFLAGS
+	if (all)
+		printf("CPPFLAGS = ");
+	printf("%s\n", VAL_CPPFLAGS);
+#else
+	if (!all)
+		printf("not recorded\n");
+#endif
+}
+
+static void
+show_cflags(bool all)
+{
+#ifdef VAL_CFLAGS
+	if (all)
+		printf("CFLAGS = ");
+	printf("%s\n", VAL_CFLAGS);
+#else
+	if (!all)
+		printf("not recorded\n");
+#endif
+}
+
+static void
+show_cflags_sl(bool all)
+{
+#ifdef VAL_CFLAGS_SL
+	if (all)
+		printf("CFLAGS_SL = ");
+	printf("%s\n", VAL_CFLAGS_SL);
+#else
+	if (!all)
+		printf("not recorded\n");
+#endif
+}
+
+static void
+show_ldflags(bool all)
+{
+#ifdef VAL_LDFLAGS
+	if (all)
+		printf("LDFLAGS = ");
+	printf("%s\n", VAL_LDFLAGS);
+#else
+	if (!all)
+		printf("not recorded\n");
+#endif
+}
+
+static void
+show_ldflags_sl(bool all)
+{
+#ifdef VAL_LDFLAGS_SL
+	if (all)
+		printf("LDFLAGS_SL = ");
+	printf("%s\n", VAL_LDFLAGS_SL);
+#else
+	if (!all)
+		printf("not recorded\n");
+#endif
+}
+
+static void
+show_libs(bool all)
+{
+#ifdef VAL_LIBS
+	if (all)
+		printf("LIBS = ");
+	printf("%s\n", VAL_LIBS);
+#else
+	if (!all)
+		printf("not recorded\n");
+#endif
+}
+
+static void
+show_version(bool all)
+{
+	if (all)
+		printf("VERSION = ");
+	printf("PostgreSQL " PG_VERSION "\n");
+}
+
+
+/*
+ * Table of known information items
+ *
+ * Be careful to keep this in sync with the help() display.
+ */
+typedef struct
+{
+	const char *switchname;
+	void		(*show_func) (bool all);
+} InfoItem;
+
+static const InfoItem info_items[] = {
+	{ "--bindir", show_bindir },
+	{ "--includedir", show_includedir },
+	{ "--includedir-server", show_includedir_server },
+	{ "--libdir", show_libdir },
+	{ "--pkglibdir", show_pkglibdir },
+	{ "--pgxs", show_pgxs },
+	{ "--configure", show_configure },
+	{ "--cc", show_cc },
+	{ "--cppflags", show_cppflags },
+	{ "--cflags", show_cflags },
+	{ "--cflags_sl", show_cflags_sl },
+	{ "--ldflags", show_ldflags },
+	{ "--ldflags_sl", show_ldflags_sl },
+	{ "--libs", show_libs },
+	{ "--version", show_version },
+	{ NULL, NULL }
+};
+
 
 static void
 help(void)
 {
 	printf(_("\n%s provides information about the installed version of PostgreSQL.\n\n"), progname);
 	printf(_("Usage:\n"));
-	printf(_("  %s OPTION...\n\n"), progname);
+	printf(_("  %s [ OPTION ... ]\n\n"), progname);
 	printf(_("Options:\n"));
 	printf(_("  --bindir              show location of user executables\n"));
 	printf(_("  --includedir          show location of C header files of the client\n"
-		 "                        interfaces\n"));
+			 "                        interfaces\n"));
 	printf(_("  --includedir-server   show location of C header files for the server\n"));
 	printf(_("  --libdir              show location of object code libraries\n"));
 	printf(_("  --pkglibdir           show location of dynamically loadable modules\n"));
 	printf(_("  --pgxs                show location of extension makefile\n"));
 	printf(_("  --configure           show options given to \"configure\" script when\n"
 			 "                        PostgreSQL was built\n"));
-	printf(_("  --version             show the PostgreSQL version, then exit\n"));
-	printf(_("  --help                show this help, then exit\n\n"));
+	printf(_("  --cc                  show CC value used when PostgreSQL was built\n"));
+	printf(_("  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"));
+	printf(_("  --cflags              show CFLAGS value used when PostgreSQL was built\n"));
+	printf(_("  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"));
+	printf(_("  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"));
+	printf(_("  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was built\n"));
+	printf(_("  --libs                show LIBS value used when PostgreSQL was built\n"));
+	printf(_("  --version             show the PostgreSQL version\n"));
+	printf(_("  --help                show this help, then exit\n"));
+	printf(_("With no arguments, all known items are shown.\n\n"));
 	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
 
@@ -55,53 +287,36 @@ advice(void)
 	fprintf(stderr, _("\nTry \"%s --help\" for more information\n"), progname);
 }
 
+static void
+show_all(void)
+{
+	int			i;
+
+	for (i = 0; info_items[i].switchname != NULL; i++)
+	{
+		(*info_items[i].show_func) (true);
+	}
+}
 
 int
 main(int argc, char **argv)
 {
 	int			i;
+	int			j;
 	int			ret;
-	char		mypath[MAXPGPATH];
-	char		otherpath[MAXPGPATH];
 
 	set_pglocale_pgservice(argv[0], "pg_config");
 
 	progname = get_progname(argv[0]);
 
-	if (argc < 2)
-	{
-		fprintf(stderr, _("%s: argument required\n"), progname);
-		advice();
-		exit(1);
-	}
-
+	/* check for --help */
 	for (i = 1; i < argc; i++)
 	{
-		if (strcmp(argv[i], "--bindir") == 0 ||
-			strcmp(argv[i], "--includedir") == 0 ||
-			strcmp(argv[i], "--includedir-server") == 0 ||
-			strcmp(argv[i], "--libdir") == 0 ||
-			strcmp(argv[i], "--pkglibdir") == 0 ||
-			strcmp(argv[i], "--pgxs") == 0 ||
-			strcmp(argv[i], "--configure") == 0)
-		{
-			/* come back to these later */
-			continue;
-		}
-
-		if (strcmp(argv[i], "--version") == 0)
-		{
-			printf("PostgreSQL " PG_VERSION "\n");
-			exit(0);
-		}
 		if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-?") == 0)
 		{
 			help();
 			exit(0);
 		}
-		fprintf(stderr, _("%s: invalid argument: %s\n"), progname, argv[i]);
-		advice();
-		exit(1);
 	}
 
 	ret = find_my_exec(argv[0], mypath);
@@ -112,40 +327,30 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
+	/* no arguments -> print everything */
+	if (argc < 2)
+	{
+		show_all();
+		exit(0);
+	}
+
 	for (i = 1; i < argc; i++)
 	{
-		if (strcmp(argv[i], "--configure") == 0)
+		for (j = 0; info_items[j].switchname != NULL; j++)
 		{
-			/* the VAL_CONFIGURE macro must be defined by the Makefile */
-			printf("%s\n", VAL_CONFIGURE);
-			continue;
+			if (strcmp(argv[i], info_items[j].switchname) == 0)
+			{
+				(*info_items[j].show_func) (false);
+				break;
+			}
 		}
-
-		if (strcmp(argv[i], "--bindir") == 0)
+		if (info_items[j].switchname == NULL)
 		{
-			/* assume we are located in the bindir */
-			char	   *lastsep;
-
-			strcpy(otherpath, mypath);
-			lastsep = strrchr(otherpath, '/');
-			if (lastsep)
-				*lastsep = '\0';
+			fprintf(stderr, _("%s: invalid argument: %s\n"),
+					progname, argv[i]);
+			advice();
+			exit(1);
 		}
-		else if (strcmp(argv[i], "--includedir") == 0)
-			get_include_path(mypath, otherpath);
-		else if (strcmp(argv[i], "--includedir-server") == 0)
-			get_includeserver_path(mypath, otherpath);
-		else if (strcmp(argv[i], "--libdir") == 0)
-			get_lib_path(mypath, otherpath);
-		else if (strcmp(argv[i], "--pkglibdir") == 0)
-			get_pkglib_path(mypath, otherpath);
-		else if (strcmp(argv[i], "--pgxs") == 0)
-		{
-			get_pkglib_path(mypath, otherpath);
-			strncat(otherpath, "/pgxs/src/makefiles/pgxs.mk", MAXPGPATH - 1);
-		}
-
-		printf("%s\n", otherpath);
 	}
 
 	return 0;
