@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.341 2005/07/30 17:15:35 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.342 2005/08/09 04:50:43 momjian Exp $
 -->
 
 <chapter Id="runtime">
@@ -1724,13 +1724,38 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Method used for forcing WAL updates out to disk.  Possible
-        values are
-        <literal>fsync</> (call <function>fsync()</> at each commit),
-        <literal>fdatasync</> (call <function>fdatasync()</> at each commit),
-        <literal>fsync_writethrough</> (force write-through of any disk write cache),
-        <literal>open_sync</> (write WAL files with <function>open()</> option <symbol>O_SYNC</>), and
-        <literal>open_datasync</> (write WAL files with <function>open()</> option <symbol>O_DSYNC</>).
+        values are:
+       </para>
+       <itemizedlist>
+        <listitem>
+        <para>
+         <literal>open_datasync</> (write WAL files with <function>open()</> option <symbol>O_DSYNC</>)
+        </para>
+        </listitem>
+        <listitem>
+        <para>
+         <literal>fdatasync</> (call <function>fdatasync()</> at each commit),
+        </para>
+        </listitem>
+        <listitem>
+        <para>
+         <literal>fsync</> (call <function>fsync()</> at each commit)
+        </para>
+        </listitem>
+        <listitem>
+        <para>
+         <literal>open_sync</> (write WAL files with <function>open()</> option <symbol>O_SYNC</>)
+        </para>
+        </listitem>
+        <listitem>
+        <para>
+         <literal>fsync_writethrough</> (force write-through of any disk write cache)
+        </para>
+        </listitem>
+       </itemizedlist>
+       <para>
         Not all of these choices are available on all platforms.
+        The top-most supported option is used as the default.
         If <varname>fsync</varname> is off then this setting is irrelevant.
         This option can only be set at server start or in the
         <filename>postgresql.conf</filename> file.
