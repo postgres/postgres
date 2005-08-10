@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.121 2005/06/06 20:22:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.122 2005/08/10 21:36:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -392,7 +392,10 @@ _bt_insertonpg(Relation rel,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("index row size %lu exceeds btree maximum, %lu",
 						(unsigned long) itemsz,
-						(unsigned long) BTMaxItemSize(page))));
+						(unsigned long) BTMaxItemSize(page)),
+				 errhint("Values larger than 1/3 of a buffer page cannot be indexed\n"
+						 "Consider a separate column containing an MD5 hash of the value\n"
+						 "or use full text indexing.")));
 
 	/*
 	 * Determine exactly where new item will go.

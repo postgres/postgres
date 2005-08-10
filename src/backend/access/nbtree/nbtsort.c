@@ -56,7 +56,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.91 2005/06/06 20:22:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.92 2005/08/10 21:36:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -498,7 +498,10 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, BTItem bti)
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("index row size %lu exceeds btree maximum, %lu",
 						(unsigned long) btisz,
-						(unsigned long) BTMaxItemSize(npage))));
+						(unsigned long) BTMaxItemSize(npage)),
+				 errhint("Values larger than 1/3 of a buffer page cannot be indexed\n"
+						 "Consider a separate column containing an MD5 hash of the value\n"
+						 "or use full text indexing.")));
 
 	if (pgspc < btisz || pgspc < state->btps_full)
 	{

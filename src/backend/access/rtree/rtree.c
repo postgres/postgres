@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtree.c,v 1.90 2005/06/06 17:01:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtree.c,v 1.91 2005/08/10 21:36:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -733,7 +733,8 @@ rtpicksplit(Relation r,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("index row size %lu exceeds rtree maximum, %lu",
 						(unsigned long) newitemsz,
-						(unsigned long) RTPageAvailSpace)));
+						(unsigned long) RTPageAvailSpace),
+				 errhint("Values larger than a buffer page cannot be indexed.")));
 
 	maxoff = PageGetMaxOffsetNumber(page);
 	newitemoff = OffsetNumberNext(maxoff);		/* phony index for new
