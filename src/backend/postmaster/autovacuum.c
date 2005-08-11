@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.2 2005/07/29 19:30:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.3 2005/08/11 21:11:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_autovacuum.h"
+#include "catalog/pg_database.h"
 #include "commands/vacuum.h"
 #include "libpq/hba.h"
 #include "libpq/pqsignal.h"
@@ -57,6 +58,9 @@ double		autovacuum_vac_scale;
 int			autovacuum_anl_thresh;
 double		autovacuum_anl_scale;
 
+int			autovacuum_vac_cost_delay;
+int			autovacuum_vac_cost_limit;
+
 /* Flag to tell if we are in the autovacuum daemon process */
 static bool am_autovacuum = false;
 
@@ -64,27 +68,43 @@ static bool am_autovacuum = false;
 static time_t last_autovac_start_time = 0;
 static time_t last_autovac_stop_time = 0;
 
+/* Memory context for long-lived data */
+static MemoryContext	AutovacMemCxt;
+
 /* struct to keep list of candidate databases for vacuum */
 typedef struct autovac_dbase
 {
 	Oid				oid;
 	char		   *name;
 	TransactionId	frozenxid;
+	TransactionId	vacuumxid;
 	PgStat_StatDBEntry *entry;
 	int32			age;
 } autovac_dbase;
+
+/* struct to keep track of tables to vacuum and/or analyze */
+typedef struct autovac_table
+{
+	Oid			relid;
+	bool		dovacuum;
+	bool		doanalyze;
+	int			vacuum_cost_delay;
+	int			vacuum_cost_limit;
+} autovac_table;
 
 
 #ifdef EXEC_BACKEND
 static pid_t autovac_forkexec(void);
 #endif
 NON_EXEC_STATIC void AutoVacMain(int argc, char *argv[]);
-static void do_autovacuum(bool whole_db, PgStat_StatDBEntry *dbentry);
+static void process_whole_db(void);
+static void do_autovacuum(PgStat_StatDBEntry *dbentry);
 static List *autovac_get_database_list(void);
 static void test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 			 Form_pg_class classForm, Form_pg_autovacuum avForm,
-			 List **vacuum_tables, List **analyze_tables);
-static void autovacuum_do_vac_analyze(List *relids, bool dovacuum);
+			 List **vacuum_tables);
+static void autovacuum_do_vac_analyze(List *relids, bool dovacuum,
+									  bool doanalyze, bool freeze);
 
 
 /*
@@ -210,6 +230,12 @@ AutoVacMain(int argc, char *argv[])
 	/* Lose the postmaster's on-exit routines */
 	on_exit_reset();
 
+	/* Identify myself via ps */
+	init_ps_display("autovacuum process", "", "");
+	set_ps_display("");
+
+	SetProcessingMode(InitProcessing);
+
 	/*
 	 * Set up signal handlers.  We operate on databases much like a
 	 * regular backend, so we use the same signal handling.  See
@@ -233,11 +259,8 @@ AutoVacMain(int argc, char *argv[])
 	pqsignal(SIGUSR1, CatchupInterruptHandler);
 	/* We don't listen for async notifies */
 	pqsignal(SIGUSR2, SIG_IGN);
+	pqsignal(SIGFPE, FloatExceptionHandler);
 	pqsignal(SIGCHLD, SIG_DFL);
-
-	/* Identify myself via ps */
-	init_ps_display("autovacuum process", "", "");
-	set_ps_display("");
 
 	/* Early initialization */
 	BaseInit();
@@ -302,6 +325,8 @@ AutoVacMain(int argc, char *argv[])
 	{
 		autovac_dbase  *tmp = lfirst(cell);
 		bool			this_whole_db;
+		int32			freeze_age,
+						vacuum_age;
 
 		/*
 		 * We look for the database that most urgently needs a database-wide
@@ -309,9 +334,16 @@ AutoVacMain(int argc, char *argv[])
 		 * transactions sooner than vacuum.c's vac_truncate_clog() would
 		 * decide to start giving warnings.  If any such db is found, we
 		 * ignore all other dbs.
+		 *
+		 * Unlike vacuum.c, we also look at vacuumxid.  This is so that
+		 * pg_clog can be kept trimmed to a reasonable size.
 		 */
-		tmp->age = (int32) (nextXid - tmp->frozenxid);
-		this_whole_db = (tmp->age > (int32) ((MaxTransactionId >> 3) * 3 - 100000));
+		freeze_age = (int32) (nextXid - tmp->frozenxid);
+		vacuum_age = (int32) (nextXid - tmp->vacuumxid);
+		tmp->age = Max(freeze_age, vacuum_age);
+
+		this_whole_db = (tmp->age >
+						 (int32) ((MaxTransactionId >> 3) * 3 - 100000));
 		if (whole_db || this_whole_db)
 		{
 			if (!this_whole_db)
@@ -363,10 +395,21 @@ AutoVacMain(int argc, char *argv[])
 		set_ps_display(db->name);
 		ereport(LOG,
 				(errmsg("autovacuum: processing database \"%s\"", db->name)));
+
+		/* Create the memory context where cross-transaction state is stored */
+		AutovacMemCxt = AllocSetContextCreate(TopMemoryContext,
+											  "Autovacuum context",
+											  ALLOCSET_DEFAULT_MINSIZE,
+											  ALLOCSET_DEFAULT_INITSIZE,
+											  ALLOCSET_DEFAULT_MAXSIZE);
+
 		/*
-		 * And do an appropriate amount of work on it
+		 * And do an appropriate amount of work
 		 */
-		do_autovacuum(whole_db, db->entry);
+		if (whole_db)
+			process_whole_db();
+		else
+			do_autovacuum(db->entry);
 	}
 
 	/* One iteration done, go away */
@@ -389,6 +432,7 @@ autovac_get_database_list(void)
 	Oid		db_id;
 	Oid		db_tablespace;
 	TransactionId db_frozenxid;
+	TransactionId db_vacuumxid;
 
 	filename = database_getflatfilename();
 	db_file = AllocateFile(filename, "r");
@@ -398,7 +442,8 @@ autovac_get_database_list(void)
 				 errmsg("could not open file \"%s\": %m", filename)));
 
 	while (read_pg_database_line(db_file, thisname, &db_id,
-								 &db_tablespace, &db_frozenxid))
+								 &db_tablespace, &db_frozenxid,
+								 &db_vacuumxid))
 	{
 		autovac_dbase	*db;
 
@@ -407,6 +452,7 @@ autovac_get_database_list(void)
 		db->oid = db_id;
 		db->name = pstrdup(thisname);
 		db->frozenxid = db_frozenxid;
+		db->vacuumxid = db_vacuumxid;
 		/* these get set later: */
 		db->entry = NULL;
 		db->age = 0;
@@ -421,40 +467,79 @@ autovac_get_database_list(void)
 }
 
 /*
- * Process a database.
+ * Process a whole database.  If it's a template database or is disallowing
+ * connection by means of datallowconn=false, then issue a VACUUM FREEZE.
+ * Else use a plain VACUUM.
+ */
+static void
+process_whole_db(void)
+{
+	Relation		dbRel;
+	ScanKeyData		entry[1];
+	SysScanDesc		scan;
+	HeapTuple		tup;
+	Form_pg_database dbForm;
+	bool			freeze;
+
+	/* Start a transaction so our commands have one to play into. */
+	StartTransactionCommand();
+
+	dbRel = heap_open(DatabaseRelationId, AccessShareLock);
+
+	/* Must use a table scan, since there's no syscache for pg_database */
+	ScanKeyInit(&entry[0],
+				ObjectIdAttributeNumber,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(MyDatabaseId));
+
+	scan = systable_beginscan(dbRel, DatabaseOidIndexId, true,
+							  SnapshotNow, 1, entry);
+
+	tup = systable_getnext(scan);
+
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "could not find tuple for database %u", MyDatabaseId);
+
+	dbForm = (Form_pg_database) GETSTRUCT(tup);
+
+	if (!dbForm->datallowconn || dbForm->datistemplate)
+		freeze = true;
+	else
+		freeze = false;
+
+	systable_endscan(scan);
+
+	heap_close(dbRel, AccessShareLock);
+
+	elog(DEBUG2, "autovacuum: VACUUM%s whole database",
+		 (freeze) ? " FREEZE" : "");
+
+	autovacuum_do_vac_analyze(NIL, true, false, freeze);
+
+	/* Finally close out the last transaction. */
+	CommitTransactionCommand();
+}
+
+/*
+ * Process a database table-by-table
  *
- * If whole_db is true, the database is processed as a whole, and the
- * dbentry parameter is ignored.  If it's false, dbentry must be a valid
- * pointer to the database entry in the stats databases' hash table, and
- * it will be used to determine whether vacuum or analyze is needed on a
- * per-table basis.
- *
- * Note that test_rel_for_autovac generates two separate lists, one for
- * vacuum and other for analyze.  This is to facilitate processing all
- * analyzes first, and then all vacuums.
+ * dbentry must be a valid pointer to the database entry in the stats
+ * databases' hash table, and it will be used to determine whether vacuum or
+ * analyze is needed on a per-table basis.
  *
  * Note that CHECK_FOR_INTERRUPTS is supposed to be used in certain spots in
  * order not to ignore shutdown commands for too long.
  */
 static void
-do_autovacuum(bool whole_db, PgStat_StatDBEntry *dbentry)
+do_autovacuum(PgStat_StatDBEntry *dbentry)
 {
 	Relation		classRel,
 					avRel;
 	HeapTuple		tuple;
 	HeapScanDesc	relScan;
-	List		   *vacuum_tables = NIL,
-				   *analyze_tables = NIL;
-	MemoryContext	AutovacMemCxt;
-
-	Assert(whole_db || PointerIsValid(dbentry));
-
-	/* Memory context where cross-transaction state is stored */
-	AutovacMemCxt = AllocSetContextCreate(TopMemoryContext,
-										  "Autovacuum context",
-										  ALLOCSET_DEFAULT_MINSIZE,
-										  ALLOCSET_DEFAULT_INITSIZE,
-										  ALLOCSET_DEFAULT_MAXSIZE);
+	List		   *vacuum_tables = NIL;
+	ListCell *cell;
+	PgStat_StatDBEntry *shared;
 
 	/* Start a transaction so our commands have one to play into. */
 	StartTransactionCommand();
@@ -467,93 +552,87 @@ do_autovacuum(bool whole_db, PgStat_StatDBEntry *dbentry)
 	 */
 	MemoryContextSwitchTo(AutovacMemCxt);
 
-	if (whole_db)
+	/* The database hash where pgstat keeps shared relations */
+	shared = pgstat_fetch_stat_dbentry(InvalidOid);
+
+	classRel = heap_open(RelationRelationId, AccessShareLock);
+	avRel = heap_open(AutovacuumRelationId, AccessShareLock);
+
+	relScan = heap_beginscan(classRel, SnapshotNow, 0, NULL);
+
+	/* Scan pg_class looking for tables to vacuum */
+	while ((tuple = heap_getnext(relScan, ForwardScanDirection)) != NULL)
 	{
-		elog(DEBUG2, "autovacuum: VACUUM ANALYZE whole database");
-		autovacuum_do_vac_analyze(NIL, true);
-	}
-	else
-	{
-		/* the hash entry where pgstat stores shared relations */
-		PgStat_StatDBEntry *shared = pgstat_fetch_stat_dbentry(InvalidOid);
+		Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tuple);
+		Form_pg_autovacuum avForm = NULL;
+		PgStat_StatTabEntry *tabentry;
+		SysScanDesc	avScan;
+		HeapTuple	avTup;
+		ScanKeyData	entry[1];
+		Oid			relid;
 
-		classRel = heap_open(RelationRelationId, AccessShareLock);
-		avRel = heap_open(AutovacuumRelationId, AccessShareLock);
-
-		relScan = heap_beginscan(classRel, SnapshotNow, 0, NULL);
-
-		/* Scan pg_class looking for tables to vacuum */
-		while ((tuple = heap_getnext(relScan, ForwardScanDirection)) != NULL)
-		{
-			Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tuple);
-			Form_pg_autovacuum avForm = NULL;
-			PgStat_StatTabEntry *tabentry;
-			SysScanDesc	avScan;
-			HeapTuple	avTup;
-			ScanKeyData	entry[1];
-			Oid			relid;
-
-			/* Skip non-table entries. */
-			/* XXX possibly allow RELKIND_TOASTVALUE entries here too? */
-			if (classForm->relkind != RELKIND_RELATION)
-				continue;
-
-			/*
-			 * Skip temp tables (i.e. those in temp namespaces).  We cannot
-			 * safely process other backends' temp tables.
-			 */
-			if (isTempNamespace(classForm->relnamespace))
-				continue;
-
-			relid = HeapTupleGetOid(tuple);
-
-			/* See if we have a pg_autovacuum entry for this relation. */
-			ScanKeyInit(&entry[0],
-						Anum_pg_autovacuum_vacrelid,
-						BTEqualStrategyNumber, F_OIDEQ,
-						ObjectIdGetDatum(relid));
-
-			avScan = systable_beginscan(avRel, AutovacuumRelidIndexId, true,
-										SnapshotNow, 1, entry);
-
-			avTup = systable_getnext(avScan);
-
-			if (HeapTupleIsValid(avTup))
-				avForm = (Form_pg_autovacuum) GETSTRUCT(avTup);
-
-			if (classForm->relisshared && PointerIsValid(shared))
-				tabentry = hash_search(shared->tables, &relid,
-									   HASH_FIND, NULL);
-			else
-				tabentry = hash_search(dbentry->tables, &relid,
-									   HASH_FIND, NULL);
-
-			test_rel_for_autovac(relid, tabentry, classForm, avForm,
-								 &vacuum_tables, &analyze_tables);
-
-			systable_endscan(avScan);
-		}
-
-		heap_endscan(relScan);
-		heap_close(avRel, AccessShareLock);
-		heap_close(classRel, AccessShareLock);
-
-		CHECK_FOR_INTERRUPTS();
+		/* Skip non-table entries. */
+		/* XXX possibly allow RELKIND_TOASTVALUE entries here too? */
+		if (classForm->relkind != RELKIND_RELATION)
+			continue;
 
 		/*
-		 * Perform operations on collected tables.
+		 * Skip temp tables (i.e. those in temp namespaces).  We cannot
+		 * safely process other backends' temp tables.
 		 */
+		if (isTempNamespace(classForm->relnamespace))
+			continue;
 
-		if (analyze_tables)
-			autovacuum_do_vac_analyze(analyze_tables, false);
+		relid = HeapTupleGetOid(tuple);
+
+		/* See if we have a pg_autovacuum entry for this relation. */
+		ScanKeyInit(&entry[0],
+					Anum_pg_autovacuum_vacrelid,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(relid));
+
+		avScan = systable_beginscan(avRel, AutovacuumRelidIndexId, true,
+									SnapshotNow, 1, entry);
+
+		avTup = systable_getnext(avScan);
+
+		if (HeapTupleIsValid(avTup))
+			avForm = (Form_pg_autovacuum) GETSTRUCT(avTup);
+
+		if (classForm->relisshared && PointerIsValid(shared))
+			tabentry = hash_search(shared->tables, &relid,
+								   HASH_FIND, NULL);
+		else
+			tabentry = hash_search(dbentry->tables, &relid,
+								   HASH_FIND, NULL);
+
+		test_rel_for_autovac(relid, tabentry, classForm, avForm,
+							 &vacuum_tables);
+
+		systable_endscan(avScan);
+	}
+
+	heap_endscan(relScan);
+	heap_close(avRel, AccessShareLock);
+	heap_close(classRel, AccessShareLock);
+
+	/*
+	 * Perform operations on collected tables.
+	 */
+	foreach(cell, vacuum_tables)
+	{
+		autovac_table *tab = lfirst(cell);
 
 		CHECK_FOR_INTERRUPTS();
 
-		/* get back to proper context */
-		MemoryContextSwitchTo(AutovacMemCxt);
+		/* Set the vacuum cost parameters for this table */
+		VacuumCostDelay = tab->vacuum_cost_delay;
+		VacuumCostLimit = tab->vacuum_cost_limit;
 
-		if (vacuum_tables)
-			autovacuum_do_vac_analyze(vacuum_tables, true);
+		autovacuum_do_vac_analyze(list_make1_oid(tab->relid),
+								  tab->dovacuum,
+								  tab->doanalyze,
+								  false);
 	}
 
 	/* Finally close out the last transaction. */
@@ -564,7 +643,7 @@ do_autovacuum(bool whole_db, PgStat_StatDBEntry *dbentry)
  * test_rel_for_autovac
  *
  * Check whether a table needs to be vacuumed or analyzed.  Add it to the
- * respective list if so.
+ * output list if so.
  *
  * A table needs to be vacuumed if the number of dead tuples exceeds a
  * threshold.  This threshold is calculated as
@@ -591,7 +670,7 @@ static void
 test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 					 Form_pg_class classForm,
 					 Form_pg_autovacuum avForm,
-					 List **vacuum_tables, List **analyze_tables)
+					 List **vacuum_tables)
 {
 	Relation		rel;
 	float4			reltuples;	/* pg_class.reltuples */
@@ -606,6 +685,11 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 	/* number of vacuum (resp. analyze) tuples at this time */
 	float4			vactuples,
 					anltuples;
+	/* cost-based vacuum delay parameters */
+	int				vac_cost_limit;
+	int				vac_cost_delay;
+	bool			dovacuum;
+	bool			doanalyze;
 
 	/* User disabled it in pg_autovacuum? */
 	if (avForm && !avForm->enabled)
@@ -636,15 +720,25 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 	 */
 	if (avForm != NULL)
 	{
-		vac_scale_factor = (avForm->vac_scale_factor < 0) ?
-			autovacuum_vac_scale : avForm->vac_scale_factor;
-		vac_base_thresh = (avForm->vac_base_thresh < 0) ?
-			autovacuum_vac_thresh : avForm->vac_base_thresh;
+		vac_scale_factor = (avForm->vac_scale_factor >= 0) ?
+			avForm->vac_scale_factor : autovacuum_vac_scale;
+		vac_base_thresh = (avForm->vac_base_thresh >= 0) ?
+			avForm->vac_base_thresh : autovacuum_vac_thresh;
 
-		anl_scale_factor = (avForm->anl_scale_factor < 0) ?
-			autovacuum_anl_scale : avForm->anl_scale_factor;
-		anl_base_thresh = (avForm->anl_base_thresh < 0) ?
-			autovacuum_anl_thresh : avForm->anl_base_thresh;
+		anl_scale_factor = (avForm->anl_scale_factor >= 0) ?
+			avForm->anl_scale_factor : autovacuum_anl_scale;
+		anl_base_thresh = (avForm->anl_base_thresh >= 0) ?
+			avForm->anl_base_thresh : autovacuum_anl_thresh;
+
+		vac_cost_limit = (avForm->vac_cost_limit >= 0) ?
+			avForm->vac_cost_limit :
+			((autovacuum_vac_cost_limit >= 0) ?
+			 autovacuum_vac_cost_limit : VacuumCostLimit);
+
+		vac_cost_delay = (avForm->vac_cost_delay >= 0) ?
+			avForm->vac_cost_delay :
+			((autovacuum_vac_cost_delay >= 0) ?
+			 autovacuum_vac_cost_delay : VacuumCostDelay);
 	}
 	else
 	{
@@ -653,6 +747,12 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 
 		anl_scale_factor = autovacuum_anl_scale;
 		anl_base_thresh = autovacuum_anl_thresh;
+
+		vac_cost_limit = (autovacuum_vac_cost_limit >= 0) ?
+			autovacuum_vac_cost_limit : VacuumCostLimit;
+
+		vac_cost_delay = (autovacuum_vac_cost_delay >= 0) ?
+			autovacuum_vac_cost_delay : VacuumCostDelay;
 	}
 
 	vacthresh = (float4) vac_base_thresh + vac_scale_factor * reltuples;
@@ -668,22 +768,33 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 		 RelationGetRelationName(rel),
 		 vactuples, vacthresh, anltuples, anlthresh);
 
+	Assert(CurrentMemoryContext == AutovacMemCxt);
+
 	/* Determine if this table needs vacuum or analyze. */
-	if (vactuples > vacthresh)
+	dovacuum = (vactuples > vacthresh);
+	doanalyze = (anltuples > anlthresh);
+
+	/* ANALYZE refuses to work with pg_statistics */
+	if (relid == StatisticRelationId)
+		doanalyze = false;
+
+	if (dovacuum || doanalyze)
 	{
-		elog(DEBUG2, "will VACUUM ANALYZE %s",
+		autovac_table *tab;
+
+		elog(DEBUG2, "will%s%s %s",
+			 (dovacuum ? " VACUUM" : ""),
+			 (doanalyze ? " ANALYZE" : ""),
 			 RelationGetRelationName(rel));
-		*vacuum_tables = lappend_oid(*vacuum_tables, relid);
-	}
-	else if (anltuples > anlthresh)
-	{
-		/* ANALYZE refuses to work with pg_statistics */
-		if (relid != StatisticRelationId)
-		{
-			elog(DEBUG2, "will ANALYZE %s",
-					RelationGetRelationName(rel));
-			*analyze_tables = lappend_oid(*analyze_tables, relid);
-		}
+
+		tab = (autovac_table *) palloc(sizeof(autovac_table));
+		tab->relid = relid;
+		tab->dovacuum = dovacuum;
+		tab->doanalyze = doanalyze;
+		tab->vacuum_cost_limit = vac_cost_limit;
+		tab->vacuum_cost_delay = vac_cost_delay;
+
+		*vacuum_tables = lappend(*vacuum_tables, tab);
 	}
 
 	RelationClose(rel);
@@ -691,14 +802,22 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 
 /*
  * autovacuum_do_vac_analyze
- * 		Vacuum or analyze a list of tables; or all tables if relids = NIL
- *
- * We must be in AutovacMemCxt when this routine is called.
+ * 		Vacuum and/or analyze a list of tables; or all tables if relids = NIL
  */
 static void
-autovacuum_do_vac_analyze(List *relids, bool dovacuum)
+autovacuum_do_vac_analyze(List *relids, bool dovacuum, bool doanalyze,
+						  bool freeze)
 {
-	VacuumStmt		*vacstmt = makeNode(VacuumStmt);
+	VacuumStmt	   *vacstmt;
+	MemoryContext	old_cxt;
+	
+	/*
+	 * The node must survive transaction boundaries, so make sure we create it
+	 * in a long-lived context
+	 */
+	old_cxt = MemoryContextSwitchTo(AutovacMemCxt);
+	
+	vacstmt = makeNode(VacuumStmt);
 
 	/*
 	 * Point QueryContext to the autovac memory context to fake out the
@@ -710,13 +829,16 @@ autovacuum_do_vac_analyze(List *relids, bool dovacuum)
 	/* Set up command parameters */
 	vacstmt->vacuum = dovacuum;
 	vacstmt->full = false;
-	vacstmt->analyze = true;
-	vacstmt->freeze = false;
+	vacstmt->analyze = doanalyze;
+	vacstmt->freeze = freeze;
 	vacstmt->verbose = false;
 	vacstmt->relation = NULL;	/* all tables, or not used if relids != NIL */
 	vacstmt->va_cols = NIL;
 
 	vacuum(vacstmt, relids);
+
+	pfree(vacstmt);
+	MemoryContextSwitchTo(old_cxt);
 }
 
 /*

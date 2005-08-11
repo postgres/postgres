@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.214 2005/07/30 14:15:44 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.215 2005/08/11 21:11:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 #include "catalog/catversion.h"
 #include "catalog/pg_control.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "postmaster/bgwriter.h"
 #include "storage/bufpage.h"
 #include "storage/fd.h"
@@ -48,7 +49,7 @@
 
 
 /*
- *	Becauase O_DIRECT bypasses the kernel buffers, and because we never
+ *	Because O_DIRECT bypasses the kernel buffers, and because we never
  *	read those buffers except during crash recovery, it is a win to use
  *	it in all cases where we sync on each write().  We could allow O_DIRECT
  *	with fsync(), but because skipping the kernel buffer forces writes out
@@ -4684,6 +4685,11 @@ StartupXLOG(void)
 			if (RmgrTable[rmid].rm_cleanup != NULL)
 				RmgrTable[rmid].rm_cleanup();
 		}
+
+		/*
+		 * Reset pgstat data, because it may be invalid after recovery.
+		 */
+		pgstat_reset_all();
 
 		/*
 		 * Perform a new checkpoint to update our recovery activity to

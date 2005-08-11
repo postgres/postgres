@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.110 2005/07/31 17:19:16 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.111 2005/08/11 21:11:41 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -1197,6 +1197,20 @@
       <entry>Multiplier for reltuples to add to
        <structfield>anl_base_thresh</></entry>
      </row>
+
+     <row>
+      <entry><structfield>vac_cost_delay</structfield></entry>
+      <entry><type>integer</type></entry>
+      <entry></entry>
+      <entry>Custom <varname>vacuum_cost_delay</> parameter</entry>
+     </row>
+
+     <row>
+      <entry><structfield>vac_cost_limit</structfield></entry>
+      <entry><type>integer</type></entry>
+      <entry></entry>
+      <entry>Custom <varname>vacuum_cost_limit</> parameter</entry>
+     </row>
     </tbody>
    </tgroup>
   </table>
@@ -1217,7 +1231,11 @@
   <para>
    Any of the numerical fields can contain <literal>-1</> (or indeed
    any negative value) to indicate that the system-wide default should
-   be used for this particular value.
+   be used for this particular value.  Observe that the
+   <structfield>vac_cost_delay</> variable inherits its default value from the
+   <varname>autovacuum_vacuum_cost_delay</> configuration parameter,
+   or from <varname>vacuum_cost_delay</> if the former is set to a negative
+   value.  The same applies to <structfield>vac_cost_limit</>.
   </para>
 
  </sect1>

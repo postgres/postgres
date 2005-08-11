@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.104 2005/08/09 21:14:55 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.105 2005/08/11 21:11:44 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -100,7 +100,7 @@
  * ----------
  */
 bool		pgstat_collect_startcollector = true;
-bool		pgstat_collect_resetonpmstart = true;
+bool		pgstat_collect_resetonpmstart = false;
 bool		pgstat_collect_querystring = false;
 bool		pgstat_collect_tuplelevel = false;
 bool		pgstat_collect_blocklevel = false;
@@ -237,7 +237,7 @@ pgstat_init(void)
 	 * statistics on postmaster start, simply remove the stats file.
 	 */
 	if (!pgstat_collect_startcollector || pgstat_collect_resetonpmstart)
-		unlink(PGSTAT_STAT_FILENAME);
+		pgstat_reset_all();
 
 	/*
 	 * Nothing else required if collector will not get started
@@ -456,6 +456,18 @@ startup_failed:
 	pgstat_collect_blocklevel = false;
 }
 
+/*
+ * pgstat_reset_all() -
+ *
+ * Remove the stats file.  This is used on server start if the 
+ * stats_reset_on_server_start feature is enabled, or if WAL
+ * recovery is needed after a crash.
+ */
+void
+pgstat_reset_all(void)
+{
+	unlink(PGSTAT_STAT_FILENAME);
+}
 
 #ifdef EXEC_BACKEND
 
@@ -677,11 +689,19 @@ pgstat_bestart(void)
 	if (pgStatSock < 0)
 		return;
 
-	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_BESTART);
-	msg.m_databaseid = MyDatabaseId;
-	msg.m_userid = GetSessionUserId();
-	memcpy(&msg.m_clientaddr, &MyProcPort->raddr, sizeof(msg.m_clientaddr));
-	pgstat_send(&msg, sizeof(msg));
+	/*
+	 * We may not have a MyProcPort (eg, if this is the autovacuum process).
+	 * For the moment, punt and don't send BESTART --- would be better to
+	 * work out a clean way of handling "unknown clientaddr".
+	 */
+	if (MyProcPort)
+	{
+		pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_BESTART);
+		msg.m_databaseid = MyDatabaseId;
+		msg.m_userid = GetSessionUserId();
+		memcpy(&msg.m_clientaddr, &MyProcPort->raddr, sizeof(msg.m_clientaddr));
+		pgstat_send(&msg, sizeof(msg));
+	}
 
 	/*
 	 * Set up a process-exit hook to ensure we flush the last batch of

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.156 2005/08/08 03:12:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.157 2005/08/11 21:11:46 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -20,8 +20,10 @@
 #include <math.h>
 #include <unistd.h>
 
+#include "access/genam.h"
 #include "access/heapam.h"
 #include "catalog/catalog.h"
+#include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_database.h"
@@ -79,7 +81,7 @@ FindMyDatabase(const char *name, Oid *db_id, Oid *db_tablespace)
 	char	   *filename;
 	FILE	   *db_file;
 	char		thisname[NAMEDATALEN];
-	TransactionId frozenxid;
+	TransactionId dummyxid;
 
 	filename = database_getflatfilename();
 	db_file = AllocateFile(filename, "r");
@@ -89,7 +91,8 @@ FindMyDatabase(const char *name, Oid *db_id, Oid *db_tablespace)
 				 errmsg("could not open file \"%s\": %m", filename)));
 
 	while (read_pg_database_line(db_file, thisname, db_id,
-								 db_tablespace, &frozenxid))
+								 db_tablespace, &dummyxid,
+								 &dummyxid))
 	{
 		if (strcmp(thisname, name) == 0)
 		{
@@ -131,7 +134,7 @@ static void
 ReverifyMyDatabase(const char *name)
 {
 	Relation	pgdbrel;
-	HeapScanDesc pgdbscan;
+	SysScanDesc	pgdbscan;
 	ScanKeyData key;
 	HeapTuple	tup;
 	Form_pg_database dbform;
@@ -147,9 +150,10 @@ ReverifyMyDatabase(const char *name)
 				BTEqualStrategyNumber, F_NAMEEQ,
 				NameGetDatum(name));
 
-	pgdbscan = heap_beginscan(pgdbrel, SnapshotNow, 1, &key);
+	pgdbscan = systable_beginscan(pgdbrel, DatabaseNameIndexId, true,
+								  SnapshotNow, 1, &key);
 
-	tup = heap_getnext(pgdbscan, ForwardScanDirection);
+	tup = systable_getnext(pgdbscan);
 	if (!HeapTupleIsValid(tup) ||
 		HeapTupleGetOid(tup) != MyDatabaseId)
 	{
@@ -238,7 +242,7 @@ ReverifyMyDatabase(const char *name)
 		}
 	}
 
-	heap_endscan(pgdbscan);
+	systable_endscan(pgdbscan);
 	heap_close(pgdbrel, RowShareLock);
 }
 
@@ -428,6 +432,18 @@ InitPostgres(const char *dbname, const char *username)
 	/* Initialize portal manager */
 	EnablePortalManager();
 
+	/*
+	 * Set up process-exit callback to do pre-shutdown cleanup.  This
+	 * has to be after we've initialized all the low-level modules
+	 * like the buffer manager, because during shutdown this has to
+	 * run before the low-level modules start to close down.  On the
+	 * other hand, we want it in place before we begin our first
+	 * transaction --- if we fail during the initialization transaction,
+	 * as is entirely possible, we need the AbortTransaction call to
+	 * clean up.
+	 */
+	on_shmem_exit(ShutdownPostgres, 0);
+
 	/* start a new transaction here before access to db */
 	if (!bootstrap)
 		StartTransactionCommand();
@@ -465,7 +481,8 @@ InitPostgres(const char *dbname, const char *username)
 	/*
 	 * Unless we are bootstrapping, double-check that InitMyDatabaseInfo()
 	 * got a correct result.  We can't do this until all the
-	 * database-access infrastructure is up.
+	 * database-access infrastructure is up.  (Also, it wants to know if
+	 * the user is a superuser, so the above stuff has to happen first.)
 	 */
 	if (!bootstrap)
 		ReverifyMyDatabase(dbname);
@@ -509,23 +526,9 @@ InitPostgres(const char *dbname, const char *username)
 	/* initialize client encoding */
 	InitializeClientEncoding();
 
-	/*
-	 * Initialize statistics collection for this backend.  We do this
-	 * here because the shutdown hook it sets up needs to be invoked
-	 * at the corresponding phase of backend shutdown: after
-	 * ShutdownPostgres and before we drop access to shared memory.
-	 */
+	/* initialize statistics collection for this backend */
 	if (IsUnderPostmaster)
 		pgstat_bestart();
-
-	/*
-	 * Set up process-exit callback to do pre-shutdown cleanup.  This
-	 * should be last because we want shmem_exit to call this routine
-	 * before the exit callbacks that are registered by buffer manager,
-	 * lock manager, etc. We need to run this code before we close down
-	 * database access!
-	 */
-	on_shmem_exit(ShutdownPostgres, 0);
 
 	/* close the transaction we started above */
 	if (!bootstrap)
@@ -538,9 +541,7 @@ InitPostgres(const char *dbname, const char *username)
 /*
  * Backend-shutdown callback.  Do cleanup that we want to be sure happens
  * before all the supporting modules begin to nail their doors shut via
- * their own callbacks.  Note that because this has to be registered very
- * late in startup, it will not get called if we suffer a failure *during*
- * startup.
+ * their own callbacks.
  *
  * User-level cleanup, such as temp-relation removal and UNLISTEN, happens
  * via separate callbacks that execute before this one.  We don't combine the

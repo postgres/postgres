@@ -288,7 +288,7 @@
 #stats_command_string = off
 #stats_block_level = off
 #stats_row_level = off
-#stats_reset_on_server_start = on
+#stats_reset_on_server_start = off
 
 
 #---------------------------------------------------------------------------
@@ -301,6 +301,10 @@
 #autovacuum_analyze_threshold = 500	# min # of tuple updates before analyze
 #autovacuum_vacuum_scale_factor = 0.4	# fraction of rel size before vacuum
 #autovacuum_analyze_scale_factor = 0.2	# fraction of rel size before analyze
+#autovacuum_vacuum_cost_delay = -1  # default vacuum cost delay for autovac
+                                    # -1 means use vacuum_cost_delay
+#autovacuum_vacuum_cost_limit = -1  # default vacuum cost limit for autovac
+                                    # -1 means use vacuum_cost_limit
 
 
 #---------------------------------------------------------------------------

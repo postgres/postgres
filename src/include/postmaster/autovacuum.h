@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/postmaster/autovacuum.h,v 1.1 2005/07/14 05:13:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/postmaster/autovacuum.h,v 1.2 2005/08/11 21:11:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,8 @@ extern int		autovacuum_vac_thresh;
 extern double	autovacuum_vac_scale;
 extern int		autovacuum_anl_thresh;
 extern double	autovacuum_anl_scale;
+extern int		autovacuum_vac_cost_delay;
+extern int		autovacuum_vac_cost_limit;
 
 /* Status inquiry functions */
 extern bool AutoVacuumingActive(void);

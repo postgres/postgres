@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.13 2005/07/28 22:27:02 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.14 2005/08/11 21:11:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -208,12 +208,14 @@ write_database_file(Relation drel)
 		char	   *datname;
 		Oid			datoid;
 		Oid			dattablespace;
-		TransactionId datfrozenxid;
+		TransactionId datfrozenxid,
+					  datvacuumxid;
 
 		datname = NameStr(dbform->datname);
 		datoid = HeapTupleGetOid(tuple);
 		dattablespace = dbform->dattablespace;
 		datfrozenxid = dbform->datfrozenxid;
+		datvacuumxid = dbform->datvacuumxid;
 
 		/*
 		 * Identify the oldest datfrozenxid, ignoring databases that are not
@@ -242,13 +244,14 @@ write_database_file(Relation drel)
 		}
 
 		/*
-		 * The file format is: "dbname" oid tablespace frozenxid
+		 * The file format is: "dbname" oid tablespace frozenxid vacuumxid
 		 *
-		 * The xid is not needed for backend startup, but may be of use
-		 * for forensic purposes.
+		 * The xids are not needed for backend startup, but are of use to
+		 * autovacuum, and might also be helpful for forensic purposes.
 		 */
 		fputs_quote(datname, fp);
-		fprintf(fp, " %u %u %u\n", datoid, dattablespace, datfrozenxid);
+		fprintf(fp, " %u %u %u %u\n",
+				datoid, dattablespace, datfrozenxid, datvacuumxid);
 	}
 	heap_endscan(scan);
 
@@ -654,8 +657,10 @@ write_auth_file(Relation rel_authid, Relation rel_authmem)
  * base backup which may be far out of sync with the current state.
  *
  * In theory we could skip rebuilding the flat files if no WAL replay
- * occurred, but it seems safest to just do it always.  We have to
- * scan pg_database to compute the XID wrap limit anyway.
+ * occurred, but it seems best to just do it always.  We have to
+ * scan pg_database to compute the XID wrap limit anyway.  Also, this
+ * policy means we need not force initdb to change the format of the
+ * flat files.
  *
  * In a standalone backend we pass database_only = true to skip processing
  * the auth file.  We won't need it, and building it could fail if there's

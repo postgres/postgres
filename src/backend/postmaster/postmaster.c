@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.461 2005/07/29 19:30:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.462 2005/08/11 21:11:44 tgl Exp $
  *
  * NOTES
  *
@@ -342,6 +342,7 @@ typedef struct
 	int syslogPipe[2];
 #endif
 	char my_exec_path[MAXPGPATH];
+	char pkglib_path[MAXPGPATH];
 	char ExtraOptions[MAXPGPATH];
 	char lc_collate[LOCALE_NAME_BUFLEN];
 	char lc_ctype[LOCALE_NAME_BUFLEN];
@@ -3702,6 +3703,8 @@ save_backend_variables(BackendParameters *param, Port *port,
 
 	StrNCpy(param->my_exec_path, my_exec_path, MAXPGPATH);
 
+	StrNCpy(param->pkglib_path, pkglib_path, MAXPGPATH);
+
 	StrNCpy(param->ExtraOptions, ExtraOptions, MAXPGPATH);
 
 	StrNCpy(param->lc_collate, setlocale(LC_COLLATE, NULL), LOCALE_NAME_BUFLEN);
@@ -3902,6 +3905,8 @@ restore_backend_variables(BackendParameters *param, Port *port)
 	memcpy(&syslogPipe, &param->syslogPipe, sizeof(syslogPipe));
 
 	StrNCpy(my_exec_path, param->my_exec_path, MAXPGPATH);
+
+	StrNCpy(pkglib_path, param->pkglib_path, MAXPGPATH);
 
 	StrNCpy(ExtraOptions, param->ExtraOptions, MAXPGPATH);
 

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.280 2005/07/30 15:17:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.281 2005/08/11 21:11:47 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -672,7 +672,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&pgstat_collect_resetonpmstart,
-		true, NULL, NULL
+		false, NULL, NULL
 	},
 	{
 		{"stats_command_string", PGC_SUSET, STATS_COLLECTOR,
@@ -1158,6 +1158,24 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&VacuumCostDelay,
 		0, 0, 1000, NULL, NULL
+	},
+
+	{
+		{"autovacuum_vacuum_cost_delay", PGC_SIGHUP, AUTOVACUUM,
+			gettext_noop("Vacuum cost delay in milliseconds, for autovacuum."),
+			NULL
+		},
+		&autovacuum_vac_cost_delay,
+		-1, -1, 1000, NULL, NULL
+	},
+
+	{
+		{"autovacuum_vacuum_cost_limit", PGC_SIGHUP, AUTOVACUUM,
+			gettext_noop("Vacuum cost amount available before napping, for autovacuum."),
+			NULL
+		},
+		&autovacuum_vac_cost_limit,
+		-1, -1, 10000, NULL, NULL
 	},
 
 	{

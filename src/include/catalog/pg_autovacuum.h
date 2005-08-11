@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_autovacuum.h,v 1.1 2005/07/14 05:13:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_autovacuum.h,v 1.2 2005/08/11 21:11:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,8 @@ CATALOG(pg_autovacuum,1248) BKI_WITHOUT_OIDS
 	float4		vac_scale_factor;  	/* reltuples scaling factor */
 	int4		anl_base_thresh;	/* base threshold value */
 	float4		anl_scale_factor;	/* reltuples scaling factor */
+	int4		vac_cost_delay;		/* vacuum cost-based delay */
+	int4		vac_cost_limit;		/* vacuum cost limit */
 } FormData_pg_autovacuum;
 
 /* ----------------
@@ -47,13 +49,15 @@ typedef FormData_pg_autovacuum *Form_pg_autovacuum;
  *		compiler constants for pg_autovacuum
  * ----------------
  */
-#define Natts_pg_autovacuum							6
+#define Natts_pg_autovacuum							8
 #define Anum_pg_autovacuum_vacrelid					1
 #define Anum_pg_autovacuum_enabled					2
 #define Anum_pg_autovacuum_vac_base_thresh			3
 #define Anum_pg_autovacuum_vac_scale_factor			4
 #define Anum_pg_autovacuum_anl_base_thresh			5
 #define Anum_pg_autovacuum_anl_scale_factor			6
+#define Anum_pg_autovacuum_vac_cost_delay			7
+#define Anum_pg_autovacuum_vac_cost_limit			8
 
 /* There are no preloaded tuples in pg_autovacuum.h */
 

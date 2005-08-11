@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/tcop/tcopprot.h,v 1.76 2005/07/14 05:13:44 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tcop/tcopprot.h,v 1.77 2005/08/11 21:11:50 tgl Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -59,6 +59,7 @@ extern void die(SIGNAL_ARGS);
 extern void quickdie(SIGNAL_ARGS);
 extern void authdie(SIGNAL_ARGS);
 extern void StatementCancelHandler(SIGNAL_ARGS);
+extern void FloatExceptionHandler(SIGNAL_ARGS);
 extern void prepare_for_client_read(void);
 extern void client_read_ended(void);
 extern int	PostgresMain(int argc, char *argv[], const char *username);

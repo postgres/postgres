@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.343 2005/08/09 05:01:10 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.344 2005/08/11 21:11:42 tgl Exp $
 -->
 
 <chapter Id="runtime">
@@ -3296,7 +3296,7 @@ SELECT * FROM parent WHERE key = 2400;
        <para>
         If on, collected statistics are zeroed out whenever the server
         is restarted. If off, statistics are accumulated across server
-        restarts. The default is <literal>on</>. This option can only 
+        restarts. The default is <literal>off</>. This option can only 
         be set at server start.
        </para>
       </listitem>
@@ -3420,6 +3420,40 @@ SELECT * FROM parent WHERE key = 2400;
         The default is 0.2.
         This option can only be set at server start or in the
         <filename>postgresql.conf</filename> file.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-autovacuum-vacuum-cost-delay" xreflabel="autovacuum_vacuum_cost_delay">
+      <term><varname>autovacuum_vacuum_cost_delay</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>autovacuum_vacuum_cost_delay</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Specifies the cost delay value that will be used in automatic
+        <command>VACUUM</> operations.  If -1 is specified (which is the
+        default), the regular
+        <xref linkend="guc-vacuum-cost-delay"> value will be used.
+        This setting can be overridden for individual tables by entries in
+        <structname>pg_autovacuum</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-autovacuum-vacuum-cost-limit" xreflabel="autovacuum_vacuum_cost_limit">
+      <term><varname>autovacuum_vacuum_cost_limit</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>autovacuum_vacuum_cost_limit</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Specifies the cost limit value that will be used in automatic
+        <command>VACUUM</> operations.  If -1 is specified (which is the
+        default), the regular
+        <xref linkend="guc-vacuum-cost-limit"> value will be used.
+        This setting can be overridden for individual tables by entries in
+        <structname>pg_autovacuum</>.
        </para>
       </listitem>
      </varlistentry>
