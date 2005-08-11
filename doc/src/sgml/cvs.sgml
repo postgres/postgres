@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.30.4.1 2005/01/22 22:10:09 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.30.4.2 2005/08/11 13:54:10 momjian Exp $
 -->
 
 <appendix id="cvs">
@@ -52,7 +52,7 @@ $PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.30.4.1 2005/01/22 22:10:09 momjian 
     <para>
      You will need a local copy of <productname>CVS</productname>
      (Concurrent Version Control System), which you can get from
-     <ulink url="http://www.cvshome.org/">http://www.cvshome.org/</ulink>
+     <ulink url="http://www.nongnu.org/cvs/">http://www.nongnu.org/cvs/</ulink>
      (the official site with the latest version) or any GNU software
      archive site (often somewhat outdated). We recommend version 1.10
      or newer. Many systems have a recent version of
@@ -167,7 +167,7 @@ $ chmod -R go-w pgsql
    For more info consult the manual that comes with
    <productname>CVS</productname>, or see the online
    documentation at
-   <ulink url="http://www.cvshome.org/">http://www.cvshome.org/</ulink>.
+   <ulink url="http://www.nongnu.org/cvs/">http://www.nongnu.org/cvs/</ulink>.
   </para>
  </sect1>
 
