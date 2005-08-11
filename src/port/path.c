@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.51 2005/01/26 19:24:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.52 2005/08/11 03:53:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -284,7 +284,10 @@ canonicalize_path(char *path)
 
 		if (len > 2 && strcmp(path + len - 2, "/.") == 0)
 			trim_directory(path);
-		else if (len > 3 && strcmp(path + len - 3, "/..") == 0)
+		/* We can only deal with "/usr/local/..", not "/usr/local/../.." */
+		else if (len > 3 && strcmp(path + len - 3, "/..") == 0 &&
+				 (len != 5 || strcmp(path, "../..") != 0) &&
+				 (len < 6 || strcmp(path + len - 6, "/../..") != 0))
 		{
 			trim_directory(path);
 			trim_directory(path);	/* remove directory above */
