@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Wed Aug 10 15:29:42 EDT 2005</P>
+    <P>Last updated: Thu Aug 11 09:21:58 EDT 2005</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)
@@ -619,8 +619,8 @@ table?</TD><TD>unlimited</TD></TR>
 
     <P>One limitation is that indexes can not be created on columns
     longer than about 2,000 characters. Fortunately, such indexes are
-    rarely needed. Uniqueness is best guaranteed using another column
-    that is an MD5 hash of the long column, and full text indexing
+    rarely needed. Uniqueness is best guaranteed by a funtion index
+    of an MD5 hash of the long column, and full text indexing
     allows for searching of words within the column.</P>
 
     <H3><A name="4.5">4.5</A>) How much database disk space is required
