@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.53 2005/08/12 02:48:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.54 2005/08/12 03:07:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -289,7 +289,7 @@ canonicalize_path(char *path)
 		 *	not preceed it.
 		 *	So, we only deal with "/usr/local/..", not with "/usr/local/../..".
 		 *	We don't handle the even more complex cases, like
-		 *	"usr/local/../../.." and "usr/local/../bin/../..".
+		 *	"usr/local/../../..".
 		 */
 		else if (len > 3 && strcmp(path + len - 3, "/..") == 0 &&
 				 (len != 5 || strcmp(path, "../..") != 0) &&
