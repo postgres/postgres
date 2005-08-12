@@ -8,16 +8,12 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.55 2005/08/12 19:42:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.56 2005/08/12 19:43:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#ifndef FRONTEND
-#include "postgres.h"
-#else
-#include "postgres_fe.h"
-#endif
+#include "c.h"
 
 #include <ctype.h>
 #include <sys/stat.h>
@@ -230,7 +226,6 @@ canonicalize_path(char *path)
 {
 	char	   *p, *to_p;
 	bool		was_sep = false;
-	int			pending_strips = 0;
 
 #ifdef WIN32
 	/*
@@ -289,38 +284,19 @@ canonicalize_path(char *path)
 
 		if (len > 2 && strcmp(path + len - 2, "/.") == 0)
 			trim_directory(path);
-		else if (len > 3 && strcmp(path + len - 3, "/..") == 0)
+		/*
+		 *	Process only a single trailing "..", and only if ".." does
+		 *	not preceed it.
+		 *	So, we only deal with "/usr/local/..", not with "/usr/local/../..".
+		 *	We don't handle the even more complex cases, like
+		 *	"usr/local/../../..".
+		 */
+		else if (len > 3 && strcmp(path + len - 3, "/..") == 0 &&
+				 (len != 5 || strcmp(path, "../..") != 0) &&
+				 (len < 6 || strcmp(path + len - 6, "/../..") != 0))
 		{
 			trim_directory(path);
-			pending_strips++;
-		}
-		else if (pending_strips > 0)
-		{
-			/*	If path is not "", we can keep trimming.  Even if path is
-			 *	"/", we can keep trimming because trim_directory never removes
-			 *	the leading separator, and the parent directory of "/" is "/".
-			 */
-			if (*path != '\0')
-			{
-				trim_directory(path);
-				pending_strips--;
-			}
-			else
-			{
-				/*
-				 *	If we still have pending_strips, it means the supplied path
-				 *	was exhausted and we still have more directories to move up.
-				 *	This means that the resulting path is only parents, like
-				 *	".." or "../..".  If so, callers can not handle trailing "..",
-				 *	so we exit.
-				 */
-#ifndef FRONTEND
-				elog(ERROR, "relative paths (\"..\") not supported");
-#else
-				fprintf(stderr, _("relative paths (\"..\") not supported\n"));
-				exit(1);
-#endif
-			}
+			trim_directory(path);	/* remove directory above */
 		}
 		else
 			break;
@@ -329,10 +305,8 @@ canonicalize_path(char *path)
 
 
 /*
- *	Extracts the actual name of the program as called - 
- *	stripped of .exe suffix if any.
- * 	The server calling this must check for NULL return
- *	and report the error.
+ * Extracts the actual name of the program as called - 
+ * stripped of .exe suffix if any
  */
 const char *
 get_progname(const char *argv0)
@@ -355,16 +329,8 @@ get_progname(const char *argv0)
 		progname = strdup(nodir_name);
 		if (progname == NULL)
 		{
-#ifndef FRONTEND
-			/*
-			 *	No elog() support in postmaster at this stage,
-			 *	so return NULL and print error at the call.
-			 */
-			return NULL;
-#else
 			fprintf(stderr, "%s: out of memory\n", nodir_name);
-			exit(1);
-#endif
+			exit(1);	/* This could exit the postmaster */
 		}
 		progname[strlen(progname) - (sizeof(EXE) - 1)] = '\0';
 		nodir_name = progname; 
