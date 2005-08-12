@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.111 2005/06/21 20:45:44 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.112 2005/08/12 01:35:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1962,11 +1962,11 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool include_acls)
 	}
 
 	/*
-	 * Special case: <Init> type with <Max OID> tag; this is part of a
-	 * DATA restore even though it has SQL.
+	 * Special case: <Init> type with <Max OID> tag; this is obsolete
+	 * and we always ignore it.
 	 */
 	if ((strcmp(te->desc, "<Init>") == 0) && (strcmp(te->tag, "Max OID") == 0))
-		res = REQ_DATA;
+		return 0;
 
 	/* Mask it if we only want schema */
 	if (ropt->schemaOnly)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.51 2005/08/02 16:11:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.52 2005/08/12 01:35:54 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1007,6 +1007,15 @@ toast_save_datum(Relation rel, Datum value)
 	int32		data_todo;
 
 	/*
+	 * Open the toast relation and its index.  We can use the index to
+	 * check uniqueness of the OID we assign to the toasted item, even
+	 * though it has additional columns besides OID.
+	 */
+	toastrel = heap_open(rel->rd_rel->reltoastrelid, RowExclusiveLock);
+	toasttupDesc = toastrel->rd_att;
+	toastidx = index_open(toastrel->rd_rel->reltoastidxid);
+
+	/*
 	 * Create the varattrib reference
 	 */
 	result = (varattrib *) palloc(sizeof(varattrib));
@@ -1023,7 +1032,8 @@ toast_save_datum(Relation rel, Datum value)
 
 	result->va_content.va_external.va_extsize =
 		VARATT_SIZE(value) - VARHDRSZ;
-	result->va_content.va_external.va_valueid = newoid();
+	result->va_content.va_external.va_valueid =
+		GetNewOidWithIndex(toastrel, toastidx);
 	result->va_content.va_external.va_toastrelid =
 		rel->rd_rel->reltoastrelid;
 
@@ -1043,12 +1053,9 @@ toast_save_datum(Relation rel, Datum value)
 	data_todo = VARATT_SIZE(value) - VARHDRSZ;
 
 	/*
-	 * Open the toast relation.  We must explicitly lock the toast index
-	 * because we aren't using an index scan here.
+	 * We must explicitly lock the toast index because we aren't using an
+	 * index scan here.
 	 */
-	toastrel = heap_open(rel->rd_rel->reltoastrelid, RowExclusiveLock);
-	toasttupDesc = toastrel->rd_att;
-	toastidx = index_open(toastrel->rd_rel->reltoastidxid);
 	LockRelation(toastidx, RowExclusiveLock);
 
 	/*

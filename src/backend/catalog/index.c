@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.258 2005/06/25 16:53:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.259 2005/08/12 01:35:56 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -53,7 +53,7 @@
 static TupleDesc ConstructTupleDescriptor(Relation heapRelation,
 						 IndexInfo *indexInfo,
 						 Oid *classObjectId);
-static void UpdateRelationRelation(Relation indexRelation);
+static void UpdateRelationRelation(Relation pg_class, Relation indexRelation);
 static void InitializeAttributeOids(Relation indexRelation,
 						int numatts, Oid indexoid);
 static void AppendAttributeTuples(Relation indexRelation, int numatts);
@@ -241,12 +241,9 @@ ConstructTupleDescriptor(Relation heapRelation,
  * ----------------------------------------------------------------
  */
 static void
-UpdateRelationRelation(Relation indexRelation)
+UpdateRelationRelation(Relation pg_class, Relation indexRelation)
 {
-	Relation	pg_class;
 	HeapTuple	tuple;
-
-	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
 
 	/* XXX Natts_pg_class_fixed is a hack - see pg_class.h */
 	tuple = heap_addheader(Natts_pg_class_fixed,
@@ -259,13 +256,13 @@ UpdateRelationRelation(Relation indexRelation)
 	 * would be embarrassing to do this sort of thing in polite company.
 	 */
 	HeapTupleSetOid(tuple, RelationGetRelid(indexRelation));
+
 	simple_heap_insert(pg_class, tuple);
 
 	/* update the system catalog indexes */
 	CatalogUpdateIndexes(pg_class, tuple);
 
 	heap_freetuple(tuple);
-	heap_close(pg_class, RowExclusiveLock);
 }
 
 /* ----------------------------------------------------------------
@@ -464,13 +461,15 @@ index_create(Oid heapRelationId,
 			 bool allow_system_table_mods,
 			 bool skip_build)
 {
+	Relation	pg_class;
 	Relation	heapRelation;
 	Relation	indexRelation;
 	TupleDesc	indexTupDesc;
 	bool		shared_relation;
 	Oid			namespaceId;
-	Oid			indexoid;
 	int			i;
+
+	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
 
 	/*
 	 * Only SELECT ... FOR UPDATE/SHARE are allowed while doing this
@@ -525,6 +524,16 @@ index_create(Oid heapRelationId,
 											classObjectId);
 
 	/*
+	 * Allocate an OID for the index, unless we were told what to use.
+	 *
+	 * The OID will be the relfilenode as well, so make sure it doesn't
+	 * collide with either pg_class OIDs or existing physical files.
+	 */
+	if (!OidIsValid(indexRelationId))
+		indexRelationId = GetNewRelFileNode(tableSpaceId, shared_relation,
+											pg_class);
+
+	/*
 	 * create the index relation's relcache entry and physical disk file.
 	 * (If we fail further down, it's the smgr's responsibility to remove
 	 * the disk file again.)
@@ -538,8 +547,7 @@ index_create(Oid heapRelationId,
 								shared_relation,
 								allow_system_table_mods);
 
-	/* Fetch the relation OID assigned by heap_create */
-	indexoid = RelationGetRelid(indexRelation);
+	Assert(indexRelationId == RelationGetRelid(indexRelation));
 
 	/*
 	 * Obtain exclusive lock on it.  Although no other backends can see it
@@ -562,7 +570,10 @@ index_create(Oid heapRelationId,
 	/*
 	 * store index's pg_class entry
 	 */
-	UpdateRelationRelation(indexRelation);
+	UpdateRelationRelation(pg_class, indexRelation);
+
+	/* done with pg_class */
+	heap_close(pg_class, RowExclusiveLock);
 
 	/*
 	 * now update the object id's of all the attribute tuple forms in the
@@ -570,7 +581,7 @@ index_create(Oid heapRelationId,
 	 */
 	InitializeAttributeOids(indexRelation,
 							indexInfo->ii_NumIndexAttrs,
-							indexoid);
+							indexRelationId);
 
 	/*
 	 * append ATTRIBUTE tuples for the index
@@ -585,7 +596,7 @@ index_create(Oid heapRelationId,
 	 *	  (Or, could define a rule to maintain the predicate) --Nels, Feb '92
 	 * ----------------
 	 */
-	UpdateIndexRelation(indexoid, heapRelationId, indexInfo,
+	UpdateIndexRelation(indexRelationId, heapRelationId, indexInfo,
 						classObjectId, primary);
 
 	/*
@@ -608,7 +619,7 @@ index_create(Oid heapRelationId,
 					referenced;
 
 		myself.classId = RelationRelationId;
-		myself.objectId = indexoid;
+		myself.objectId = indexRelationId;
 		myself.objectSubId = 0;
 
 		if (isconstraint)
@@ -735,7 +746,7 @@ index_create(Oid heapRelationId,
 	 */
 	if (IsBootstrapProcessingMode())
 	{
-		index_register(heapRelationId, indexoid, indexInfo);
+		index_register(heapRelationId, indexRelationId, indexInfo);
 		/* XXX shouldn't we close the heap and index rels here? */
 	}
 	else if (skip_build)
@@ -750,7 +761,7 @@ index_create(Oid heapRelationId,
 		/* index_build closes the passed rels */
 	}
 
-	return indexoid;
+	return indexRelationId;
 }
 
 /*
@@ -1113,7 +1124,9 @@ setNewRelfilenode(Relation relation)
 	Assert(!relation->rd_rel->relisshared);
 
 	/* Allocate a new relfilenode */
-	newrelfilenode = newoid();
+	newrelfilenode = GetNewRelFileNode(relation->rd_rel->reltablespace,
+									   relation->rd_rel->relisshared,
+									   NULL);
 
 	/*
 	 * Find the pg_class tuple for the given relation.	This is not used
@@ -1738,6 +1751,11 @@ reindex_relation(Oid relid, bool toast_too)
 	 * whether they have index entries.  Also, a new pg_class index will
 	 * be created with an entry for its own pg_class row because we do
 	 * setNewRelfilenode() before we do index_build().
+	 *
+	 * Note that we also clear pg_class's rd_oidindex until the loop is done,
+	 * so that that index can't be accessed either.  This means we cannot
+	 * safely generate new relation OIDs while in the loop; shouldn't be a
+	 * problem.
 	 */
 	is_pg_class = (RelationGetRelid(rel) == RelationRelationId);
 	doneIndexes = NIL;
@@ -1748,7 +1766,7 @@ reindex_relation(Oid relid, bool toast_too)
 		Oid			indexOid = lfirst_oid(indexId);
 
 		if (is_pg_class)
-			RelationSetIndexList(rel, doneIndexes);
+			RelationSetIndexList(rel, doneIndexes, InvalidOid);
 
 		reindex_index(indexOid);
 
@@ -1759,7 +1777,7 @@ reindex_relation(Oid relid, bool toast_too)
 	}
 
 	if (is_pg_class)
-		RelationSetIndexList(rel, indexIds);
+		RelationSetIndexList(rel, indexIds, ClassOidIndexId);
 
 	/*
 	 * Close rel, but continue to hold the lock.

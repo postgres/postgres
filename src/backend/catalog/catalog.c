@@ -9,18 +9,25 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.62 2005/07/04 04:51:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.63 2005/08/12 01:35:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include <fcntl.h>
+#include <unistd.h>
+
+#include "access/genam.h"
 #include "access/transam.h"
 #include "catalog/catalog.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_tablespace.h"
 #include "miscadmin.h"
+#include "storage/fd.h"
+#include "utils/fmgroids.h"
+#include "utils/relcache.h"
 
 
 #define OIDCHARS	10			/* max chars printed by %u */
@@ -211,16 +218,171 @@ IsReservedName(const char *name)
 
 
 /*
- *		newoid			- returns a unique identifier across all catalogs.
+ * GetNewOid
+ *		Generate a new OID that is unique within the given relation.
  *
- *		Object Id allocation is now done by GetNewObjectID in
- *		access/transam/varsup.
+ * Caller must have a suitable lock on the relation.
  *
- *		This code probably needs to change to generate OIDs separately
- *		for each table.
+ * Uniqueness is promised only if the relation has a unique index on OID.
+ * This is true for all system catalogs that have OIDs, but might not be
+ * true for user tables.  Note that we are effectively assuming that the
+ * table has a relatively small number of entries (much less than 2^32)
+ * and there aren't very long runs of consecutive existing OIDs.  Again,
+ * this is reasonable for system catalogs but less so for user tables.
+ *
+ * Since the OID is not immediately inserted into the table, there is a
+ * race condition here; but a problem could occur only if someone else
+ * managed to cycle through 2^32 OIDs and generate the same OID before we
+ * finish inserting our row.  This seems unlikely to be a problem.  Note
+ * that if we had to *commit* the row to end the race condition, the risk
+ * would be rather higher; therefore we use SnapshotDirty in the test,
+ * so that we will see uncommitted rows.
  */
 Oid
-newoid(void)
+GetNewOid(Relation relation)
 {
-	return GetNewObjectId();
+	Oid			newOid;
+	Oid			oidIndex;
+	Relation	indexrel;
+
+	/* If relation doesn't have OIDs at all, caller is confused */
+	Assert(relation->rd_rel->relhasoids);
+
+	/* In bootstrap mode, we don't have any indexes to use */
+	if (IsBootstrapProcessingMode())
+		return GetNewObjectId();
+
+	/* The relcache will cache the identity of the OID index for us */
+	oidIndex = RelationGetOidIndex(relation);
+
+	/* If no OID index, just hand back the next OID counter value */
+	if (!OidIsValid(oidIndex))
+	{
+		/*
+		 * System catalogs that have OIDs should *always* have a unique
+		 * OID index; we should only take this path for user tables.
+		 * Give a warning if it looks like somebody forgot an index.
+		 */
+		if (IsSystemRelation(relation))
+			elog(WARNING, "generating possibly-non-unique OID for \"%s\"",
+				 RelationGetRelationName(relation));
+
+		return GetNewObjectId();
+	}
+
+	/* Otherwise, use the index to find a nonconflicting OID */
+	indexrel = index_open(oidIndex);
+	newOid = GetNewOidWithIndex(relation, indexrel);
+	index_close(indexrel);
+
+	return newOid;
+}
+
+/*
+ * GetNewOidWithIndex
+ *		Guts of GetNewOid: use the supplied index
+ *
+ * This is exported separately because there are cases where we want to use
+ * an index that will not be recognized by RelationGetOidIndex: TOAST tables
+ * and pg_largeobject have indexes that are usable, but have multiple columns
+ * and are on ordinary columns rather than a true OID column.  This code
+ * will work anyway, so long as the OID is the index's first column.
+ *
+ * Caller must have a suitable lock on the relation.
+ */
+Oid
+GetNewOidWithIndex(Relation relation, Relation indexrel)
+{
+	Oid			newOid;
+	IndexScanDesc scan;
+	ScanKeyData key;
+	bool		collides;
+
+	/* Generate new OIDs until we find one not in the table */
+	do
+	{
+		newOid = GetNewObjectId();
+
+		ScanKeyInit(&key,
+					(AttrNumber) 1,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(newOid));
+
+		/* see notes above about using SnapshotDirty */
+		scan = index_beginscan(relation, indexrel, SnapshotDirty, 1, &key);
+
+		collides = HeapTupleIsValid(index_getnext(scan, ForwardScanDirection));
+
+		index_endscan(scan);
+	} while (collides);
+
+	return newOid;
+}
+
+/*
+ * GetNewRelFileNode
+ *		Generate a new relfilenode number that is unique within the given
+ *		tablespace.
+ *
+ * If the relfilenode will also be used as the relation's OID, pass the
+ * opened pg_class catalog, and this routine will guarantee that the result
+ * is also an unused OID within pg_class.  If the result is to be used only
+ * as a relfilenode for an existing relation, pass NULL for pg_class.
+ *
+ * As with GetNewOid, there is some theoretical risk of a race condition,
+ * but it doesn't seem worth worrying about.
+ *
+ * Note: we don't support using this in bootstrap mode.  All relations
+ * created by bootstrap have preassigned OIDs, so there's no need.
+ */
+Oid
+GetNewRelFileNode(Oid reltablespace, bool relisshared, Relation pg_class)
+{
+	RelFileNode	rnode;
+	char	   *rpath;
+	int			fd;
+	bool		collides;
+
+	/* This should match RelationInitPhysicalAddr */
+	rnode.spcNode = reltablespace ? reltablespace : MyDatabaseTableSpace;
+	rnode.dbNode = relisshared ? InvalidOid : MyDatabaseId;
+
+	do
+	{
+		/* Generate the OID */
+		if (pg_class)
+			rnode.relNode = GetNewOid(pg_class);
+		else
+			rnode.relNode = GetNewObjectId();
+
+		/* Check for existing file of same name */
+		rpath = relpath(rnode);
+		fd = BasicOpenFile(rpath, O_RDONLY | PG_BINARY, 0);
+
+		if (fd >= 0)
+		{
+			/* definite collision */
+			close(fd);
+			collides = true;
+		}
+		else
+		{
+			/*
+			 * Here we have a little bit of a dilemma: if errno is something
+			 * other than ENOENT, should we declare a collision and loop?
+			 * In particular one might think this advisable for, say, EPERM.
+			 * However there really shouldn't be any unreadable files in a
+			 * tablespace directory, and if the EPERM is actually complaining
+			 * that we can't read the directory itself, we'd be in an infinite
+			 * loop.  In practice it seems best to go ahead regardless of the
+			 * errno.  If there is a colliding file we will get an smgr failure
+			 * when we attempt to create the new relation file.
+			 */
+			collides = false;
+		}
+
+		pfree(rpath);
+	} while (collides);
+
+	return rnode.relNode;
 }

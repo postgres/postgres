@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/transam.h,v 1.54 2005/04/13 18:54:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/transam.h,v 1.55 2005/08/12 01:36:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,6 +126,5 @@ extern TransactionId ReadNewTransactionId(void);
 extern void SetTransactionIdLimit(TransactionId oldest_datfrozenxid,
 								  Name oldest_datname);
 extern Oid	GetNewObjectId(void);
-extern void CheckMaxObjectId(Oid assigned_oid);
 
 #endif   /* TRAMSAM_H */

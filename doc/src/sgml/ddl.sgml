@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.42 2005/07/14 06:17:35 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.43 2005/08/12 01:35:53 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -871,7 +871,7 @@ CREATE TABLE order_items (
       The object identifier (object ID) of a row. This column is only
       present if the table was created using <literal>WITH
       OIDS</literal>, or if the <xref linkend="guc-default-with-oids">
-      configuration variable was enabled. This column is of type
+      configuration variable was set. This column is of type
       <type>oid</type> (same name as the column); see <xref
       linkend="datatype-oid"> for more information about the type.
      </para>
@@ -992,7 +992,13 @@ CREATE TABLE order_items (
      <listitem>
       <para>
        A unique constraint should be created on the OID column of each
-       table for which the OID will be used to identify rows.
+       table for which the OID will be used to identify rows.  When such
+       a unique constraint (or unique index) exists, the system takes
+       care not to generate an OID matching an already-existing row.
+       (Of course, this is only possible if the table contains fewer
+       than 2<superscript>32</> (4 billion) rows, and in practice the
+       table size had better be much less than that, or performance
+       may suffer.)
       </para>
      </listitem>
      <listitem>
@@ -1005,9 +1011,8 @@ CREATE TABLE order_items (
      <listitem>
       <para>
        The tables in question should be created using <literal>WITH
-       OIDS</literal> to ensure forward compatibility with future
-       releases of <productname>PostgreSQL</productname>.  It is
-       planned that <literal>WITHOUT OIDS</> will become the default.
+       OIDS</literal>.  As of <productname>PostgreSQL</productname> 8.1,
+       <literal>WITHOUT OIDS</> is the default.
       </para>
      </listitem>
     </itemizedlist>

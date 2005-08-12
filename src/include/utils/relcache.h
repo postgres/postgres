@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/relcache.h,v 1.50 2005/04/14 20:03:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/relcache.h,v 1.51 2005/08/12 01:36:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,10 +30,12 @@ extern void RelationClose(Relation relation);
  * Routines to compute/retrieve additional cached information
  */
 extern List *RelationGetIndexList(Relation relation);
+extern Oid	RelationGetOidIndex(Relation relation);
 extern List *RelationGetIndexExpressions(Relation relation);
 extern List *RelationGetIndexPredicate(Relation relation);
 
-extern void RelationSetIndexList(Relation relation, List *indexIds);
+extern void RelationSetIndexList(Relation relation,
+								 List *indexIds, Oid oidIndex);
 
 extern void RelationInitIndexAccessInfo(Relation relation);
 

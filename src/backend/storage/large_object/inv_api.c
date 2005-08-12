@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.111 2005/06/13 02:26:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.112 2005/08/12 01:35:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,14 +177,14 @@ inv_create(Oid lobjId)
 {
 	/*
 	 * Allocate an OID to be the LO's identifier, unless we were told
-	 * what to use.  In event of collision with an existing ID, loop
-	 * to find a free one.
+	 * what to use.  We can use the index on pg_largeobject for checking
+	 * OID uniqueness, even though it has additional columns besides OID.
 	 */
 	if (!OidIsValid(lobjId))
 	{
-		do {
-			lobjId = newoid();
-		} while (LargeObjectExists(lobjId));
+		open_lo_relation();
+
+		lobjId = GetNewOidWithIndex(lo_heap_r, lo_index_r);
 	}
 
 	/*

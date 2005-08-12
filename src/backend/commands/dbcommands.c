@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.169 2005/08/02 19:02:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.170 2005/08/12 01:35:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@ createdb(const CreatedbStmt *stmt)
 	TransactionId src_frozenxid;
 	Oid			src_deftablespace;
 	volatile Oid dst_deftablespace;
-	volatile Relation pg_database_rel = NULL;
+	volatile Relation pg_database_rel;
 	HeapTuple	tuple;
 	TupleDesc	pg_database_dsc;
 	Datum		new_record[Natts_pg_database];
@@ -347,9 +347,13 @@ createdb(const CreatedbStmt *stmt)
 
 	/*
 	 * Preassign OID for pg_database tuple, so that we can compute db
-	 * path.
+	 * path.  We have to open pg_database to do this, but we don't want
+	 * to take ExclusiveLock yet, so just do it and close again.
 	 */
-	dboid = newoid();
+	pg_database_rel = heap_open(DatabaseRelationId, AccessShareLock);
+	dboid = GetNewOid(pg_database_rel);
+	heap_close(pg_database_rel, AccessShareLock);
+	pg_database_rel = NULL;
 
 	/*
 	 * Force dirty buffers out to disk, to ensure source database is

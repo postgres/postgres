@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.196 2005/08/01 20:31:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.197 2005/08/12 01:35:54 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1069,9 +1069,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 		 * pointers to one another).
 		 */
 		if (!OidIsValid(HeapTupleGetOid(tup)))
-			HeapTupleSetOid(tup, newoid());
-		else
-			CheckMaxObjectId(HeapTupleGetOid(tup));
+			HeapTupleSetOid(tup, GetNewOid(relation));
 	}
 	else
 	{

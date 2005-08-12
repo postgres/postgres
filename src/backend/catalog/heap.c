@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.288 2005/07/28 07:38:33 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.289 2005/08/12 01:35:56 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -66,11 +66,10 @@ static void AddNewRelationTuple(Relation pg_class_desc,
 					Relation new_rel_desc,
 					Oid new_rel_oid, Oid new_type_oid,
 					char relkind);
-static void AddNewRelationType(const char *typeName,
+static Oid	AddNewRelationType(const char *typeName,
 				   Oid typeNamespace,
 				   Oid new_rel_oid,
-				   char new_rel_kind,
-				   Oid new_type_oid);
+				   char new_rel_kind);
 static void RelationRemoveInheritance(Oid relid);
 static void StoreRelCheck(Relation rel, char *ccname, char *ccbin);
 static void StoreConstraints(Relation rel, TupleDesc tupdesc);
@@ -190,9 +189,8 @@ SystemAttributeByName(const char *attname, bool relhasoids)
 /* ----------------------------------------------------------------
  *		heap_create		- Create an uncataloged heap relation
  *
- *		relid is normally InvalidOid to specify that this routine should
- *		generate an OID for the relation.  During bootstrap, it can be
- *		nonzero to specify a preselected OID.
+ *		Note API change: the caller must now always provide the OID
+ *		to use for the relation.
  *
  *		rel->rd_rel is initialized by RelationBuildLocalRelation,
  *		and is mostly zeroes at return.
@@ -211,6 +209,9 @@ heap_create(const char *relname,
 	bool		create_storage;
 	Relation	rel;
 
+	/* The caller must have provided an OID for the relation. */
+	Assert(OidIsValid(relid));
+
 	/*
 	 * sanity checks
 	 */
@@ -222,12 +223,6 @@ heap_create(const char *relname,
 				 errmsg("permission denied to create \"%s.%s\"",
 						get_namespace_name(relnamespace), relname),
 				 errdetail("System catalog modifications are currently disallowed.")));
-
-	/*
-	 * Allocate an OID for the relation, unless we were told what to use.
-	 */
-	if (!OidIsValid(relid))
-		relid = newoid();
 
 	/*
 	 * Decide if we need storage or not, and handle a couple other
@@ -307,11 +302,11 @@ heap_create(const char *relname,
  *
  *		3) heap_create() is called to create the new relation on disk.
  *
- *		4) AddNewRelationTuple() is called to register the
- *		   relation in pg_class.
- *
- *		5) TypeCreate() is called to define a new type corresponding
+ *		4) TypeCreate() is called to define a new type corresponding
  *		   to the new relation.
+ *
+ *		5) AddNewRelationTuple() is called to register the
+ *		   relation in pg_class.
  *
  *		6) AddNewAttributeTuples() is called to register the
  *		   new relation's schema in pg_attribute.
@@ -628,36 +623,35 @@ AddNewRelationTuple(Relation pg_class_desc,
  *		define a composite type corresponding to the new relation
  * --------------------------------
  */
-static void
+static Oid
 AddNewRelationType(const char *typeName,
 				   Oid typeNamespace,
 				   Oid new_rel_oid,
-				   char new_rel_kind,
-				   Oid new_type_oid)
+				   char new_rel_kind)
 {
-	TypeCreate(typeName,		/* type name */
-			   typeNamespace,	/* type namespace */
-			   new_type_oid,	/* preassigned oid for type */
-			   new_rel_oid,		/* relation oid */
-			   new_rel_kind,	/* relation kind */
-			   -1,				/* internal size (varlena) */
-			   'c',				/* type-type (complex) */
-			   ',',				/* default array delimiter */
-			   F_RECORD_IN,		/* input procedure */
-			   F_RECORD_OUT,	/* output procedure */
-			   F_RECORD_RECV,	/* receive procedure */
-			   F_RECORD_SEND,	/* send procedure */
-			   InvalidOid,		/* analyze procedure - default */
-			   InvalidOid,		/* array element type - irrelevant */
-			   InvalidOid,		/* domain base type - irrelevant */
-			   NULL,			/* default type value - none */
-			   NULL,			/* default type binary representation */
-			   false,			/* passed by reference */
-			   'd',				/* alignment - must be the largest! */
-			   'x',				/* fully TOASTable */
-			   -1,				/* typmod */
-			   0,				/* array dimensions for typBaseType */
-			   false);			/* Type NOT NULL */
+	return
+		TypeCreate(typeName,		/* type name */
+				   typeNamespace,	/* type namespace */
+				   new_rel_oid,		/* relation oid */
+				   new_rel_kind,	/* relation kind */
+				   -1,				/* internal size (varlena) */
+				   'c',				/* type-type (complex) */
+				   ',',				/* default array delimiter */
+				   F_RECORD_IN,		/* input procedure */
+				   F_RECORD_OUT,	/* output procedure */
+				   F_RECORD_RECV,	/* receive procedure */
+				   F_RECORD_SEND,	/* send procedure */
+				   InvalidOid,		/* analyze procedure - default */
+				   InvalidOid,		/* array element type - irrelevant */
+				   InvalidOid,		/* domain base type - irrelevant */
+				   NULL,			/* default value - none */
+				   NULL,			/* default binary representation */
+				   false,			/* passed by reference */
+				   'd',				/* alignment - must be the largest! */
+				   'x',				/* fully TOASTable */
+				   -1,				/* typmod */
+				   0,				/* array dimensions for typBaseType */
+				   false);			/* Type NOT NULL */
 }
 
 /* --------------------------------
@@ -681,8 +675,9 @@ heap_create_with_catalog(const char *relname,
 {
 	Relation	pg_class_desc;
 	Relation	new_rel_desc;
-	Oid			new_rel_oid;
 	Oid			new_type_oid;
+
+	pg_class_desc = heap_open(RelationRelationId, RowExclusiveLock);
 
 	/*
 	 * sanity checks
@@ -695,6 +690,16 @@ heap_create_with_catalog(const char *relname,
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_TABLE),
 				 errmsg("relation \"%s\" already exists", relname)));
+
+	/*
+	 * Allocate an OID for the relation, unless we were told what to use.
+	 *
+	 * The OID will be the relfilenode as well, so make sure it doesn't
+	 * collide with either pg_class OIDs or existing physical files.
+	 */
+	if (!OidIsValid(relid))
+		relid = GetNewRelFileNode(reltablespace, shared_relation,
+								  pg_class_desc);
 
 	/*
 	 * Create the relcache entry (mostly dummy at this point) and the
@@ -710,26 +715,7 @@ heap_create_with_catalog(const char *relname,
 							   shared_relation,
 							   allow_system_table_mods);
 
-	/* Fetch the relation OID assigned by heap_create */
-	new_rel_oid = RelationGetRelid(new_rel_desc);
-
-	/* Assign an OID for the relation's tuple type */
-	new_type_oid = newoid();
-
-	/*
-	 * now create an entry in pg_class for the relation.
-	 *
-	 * NOTE: we could get a unique-index failure here, in case someone else
-	 * is creating the same relation name in parallel but hadn't committed
-	 * yet when we checked for a duplicate name above.
-	 */
-	pg_class_desc = heap_open(RelationRelationId, RowExclusiveLock);
-
-	AddNewRelationTuple(pg_class_desc,
-						new_rel_desc,
-						new_rel_oid,
-						new_type_oid,
-						relkind);
+	Assert(relid == RelationGetRelid(new_rel_desc));
 
 	/*
 	 * since defining a relation also defines a complex type, we add a new
@@ -738,17 +724,29 @@ heap_create_with_catalog(const char *relname,
 	 * NOTE: we could get a unique-index failure here, in case the same name
 	 * has already been used for a type.
 	 */
-	AddNewRelationType(relname,
-					   relnamespace,
-					   new_rel_oid,
-					   relkind,
-					   new_type_oid);
+	new_type_oid = AddNewRelationType(relname,
+									  relnamespace,
+									  relid,
+									  relkind);
+
+	/*
+	 * now create an entry in pg_class for the relation.
+	 *
+	 * NOTE: we could get a unique-index failure here, in case someone else
+	 * is creating the same relation name in parallel but hadn't committed
+	 * yet when we checked for a duplicate name above.
+	 */
+	AddNewRelationTuple(pg_class_desc,
+						new_rel_desc,
+						relid,
+						new_type_oid,
+						relkind);
 
 	/*
 	 * now add tuples to pg_attribute for the attributes in our new
 	 * relation.
 	 */
-	AddNewAttributeTuples(new_rel_oid, new_rel_desc->rd_att, relkind,
+	AddNewAttributeTuples(relid, new_rel_desc->rd_att, relkind,
 						  oidislocal, oidinhcount);
 
 	/*
@@ -764,14 +762,14 @@ heap_create_with_catalog(const char *relname,
 					referenced;
 
 		myself.classId = RelationRelationId;
-		myself.objectId = new_rel_oid;
+		myself.objectId = relid;
 		myself.objectSubId = 0;
 		referenced.classId = NamespaceRelationId;
 		referenced.objectId = relnamespace;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
-		recordDependencyOnOwner(RelationRelationId, new_rel_oid, GetUserId());
+		recordDependencyOnOwner(RelationRelationId, relid, GetUserId());
 	}
 
 	/*
@@ -788,16 +786,16 @@ heap_create_with_catalog(const char *relname,
 	 * If there's a special on-commit action, remember it
 	 */
 	if (oncommit != ONCOMMIT_NOOP)
-		register_on_commit_action(new_rel_oid, oncommit);
+		register_on_commit_action(relid, oncommit);
 
 	/*
 	 * ok, the relation has been cataloged, so close our relations and
-	 * return the oid of the newly created relation.
+	 * return the OID of the newly created relation.
 	 */
 	heap_close(new_rel_desc, NoLock);	/* do not unlock till end of xact */
 	heap_close(pg_class_desc, RowExclusiveLock);
 
-	return new_rel_oid;
+	return relid;
 }
 
 

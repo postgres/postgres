@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.226 2005/08/08 19:17:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.227 2005/08/12 01:35:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1899,6 +1899,7 @@ AtEOXact_RelationCache(bool isCommit)
 		{
 			list_free(relation->rd_indexlist);
 			relation->rd_indexlist = NIL;
+			relation->rd_oidindex = InvalidOid;
 			relation->rd_indexvalid = 0;
 		}
 	}
@@ -1959,6 +1960,7 @@ AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
 		{
 			list_free(relation->rd_indexlist);
 			relation->rd_indexlist = NIL;
+			relation->rd_oidindex = InvalidOid;
 			relation->rd_indexvalid = 0;
 		}
 	}
@@ -2512,6 +2514,11 @@ CheckConstraintFetch(Relation relation)
  * may freeList() the returned list after scanning it.	This is necessary
  * since the caller will typically be doing syscache lookups on the relevant
  * indexes, and syscache lookup could cause SI messages to be processed!
+ *
+ * We also update rd_oidindex, which this module treats as effectively part
+ * of the index list.  rd_oidindex is valid when rd_indexvalid isn't zero;
+ * it is the pg_class OID of a unique index on OID when the relation has one,
+ * and InvalidOid if there is no such index.
  */
 List *
 RelationGetIndexList(Relation relation)
@@ -2521,6 +2528,7 @@ RelationGetIndexList(Relation relation)
 	ScanKeyData skey;
 	HeapTuple	htup;
 	List	   *result;
+	Oid			oidIndex;
 	MemoryContext oldcxt;
 
 	/* Quick exit if we already computed the list. */
@@ -2534,6 +2542,7 @@ RelationGetIndexList(Relation relation)
 	 * memory leakage if we get some sort of error partway through.
 	 */
 	result = NIL;
+	oidIndex = InvalidOid;
 
 	/* Prepare to scan pg_index for entries having indrelid = this rel. */
 	ScanKeyInit(&skey,
@@ -2549,7 +2558,16 @@ RelationGetIndexList(Relation relation)
 	{
 		Form_pg_index index = (Form_pg_index) GETSTRUCT(htup);
 
+		/* Add index's OID to result list in the proper order */
 		result = insert_ordered_oid(result, index->indexrelid);
+
+		/* Check to see if it is a unique, non-partial btree index on OID */
+		if (index->indnatts == 1 &&
+			index->indisunique &&
+			index->indkey.values[0] == ObjectIdAttributeNumber &&
+			index->indclass.values[0] == OID_BTREE_OPS_OID &&
+			heap_attisnull(htup, Anum_pg_index_indpred))
+			oidIndex = index->indexrelid;
 	}
 
 	systable_endscan(indscan);
@@ -2558,6 +2576,7 @@ RelationGetIndexList(Relation relation)
 	/* Now save a copy of the completed list in the relcache entry. */
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 	relation->rd_indexlist = list_copy(result);
+	relation->rd_oidindex = oidIndex;
 	relation->rd_indexvalid = 1;
 	MemoryContextSwitchTo(oldcxt);
 
@@ -2601,8 +2620,8 @@ insert_ordered_oid(List *list, Oid datum)
  * RelationSetIndexList -- externally force the index list contents
  *
  * This is used to temporarily override what we think the set of valid
- * indexes is.	The forcing will be valid only until transaction commit
- * or abort.
+ * indexes is (including the presence or absence of an OID index).
+ * The forcing will be valid only until transaction commit or abort.
  *
  * This should only be applied to nailed relations, because in a non-nailed
  * relation the hacked index list could be lost at any time due to SI
@@ -2611,7 +2630,7 @@ insert_ordered_oid(List *list, Oid datum)
  * It is up to the caller to make sure the given list is correctly ordered.
  */
 void
-RelationSetIndexList(Relation relation, List *indexIds)
+RelationSetIndexList(Relation relation, List *indexIds, Oid oidIndex)
 {
 	MemoryContext oldcxt;
 
@@ -2623,9 +2642,38 @@ RelationSetIndexList(Relation relation, List *indexIds)
 	/* Okay to replace old list */
 	list_free(relation->rd_indexlist);
 	relation->rd_indexlist = indexIds;
+	relation->rd_oidindex = oidIndex;
 	relation->rd_indexvalid = 2;	/* mark list as forced */
 	/* must flag that we have a forced index list */
 	need_eoxact_work = true;
+}
+
+/*
+ * RelationGetOidIndex -- get the pg_class OID of the relation's OID index
+ *
+ * Returns InvalidOid if there is no such index.
+ */
+Oid
+RelationGetOidIndex(Relation relation)
+{
+	List	   *ilist;
+
+	/*
+	 * If relation doesn't have OIDs at all, caller is probably confused.
+	 * (We could just silently return InvalidOid, but it seems better to
+	 * throw an assertion.)
+	 */
+	Assert(relation->rd_rel->relhasoids);
+
+	if (relation->rd_indexvalid == 0)
+	{
+		/* RelationGetIndexList does the heavy lifting. */
+		ilist = RelationGetIndexList(relation);
+		list_free(ilist);
+		Assert(relation->rd_indexvalid != 0);
+	}
+
+	return relation->rd_oidindex;
 }
 
 /*
@@ -3057,6 +3105,7 @@ load_relcache_init_file(void)
 			rel->rd_refcnt = 0;
 		rel->rd_indexvalid = 0;
 		rel->rd_indexlist = NIL;
+		rel->rd_oidindex = InvalidOid;
 		rel->rd_createSubid = InvalidSubTransactionId;
 		MemSet(&rel->pgstat_info, 0, sizeof(rel->pgstat_info));
 

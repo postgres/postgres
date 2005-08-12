@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.102 2005/07/07 20:39:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.103 2005/08/12 01:35:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,16 +142,12 @@ TypeShellMake(const char *typeName, Oid typeNamespace)
  *
  *		This does all the necessary work needed to define a new type.
  *
- * NOTE: if assignedTypeOid is not InvalidOid, then that OID is assigned to
- * the new type (which, therefore, cannot already exist as a shell type).
- * This hack is only intended for use in creating a relation's associated
- * type, where we need to have created the relation tuple already.
+ *		Returns the OID assigned to the new type.
  * ----------------------------------------------------------------
  */
 Oid
 TypeCreate(const char *typeName,
 		   Oid typeNamespace,
-		   Oid assignedTypeOid,
 		   Oid relationOid,		/* only for 'c'atalog types */
 		   char relationKind,	/* ditto */
 		   int16 internalSize,
@@ -285,10 +281,9 @@ TypeCreate(const char *typeName,
 	{
 		/*
 		 * check that the type is not already defined.	It may exist as a
-		 * shell type, however (but only if assignedTypeOid is not given).
+		 * shell type, however.
 		 */
-		if (((Form_pg_type) GETSTRUCT(tup))->typisdefined ||
-			assignedTypeOid != InvalidOid)
+		if (((Form_pg_type) GETSTRUCT(tup))->typisdefined)
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
 					 errmsg("type \"%s\" already exists", typeName)));
@@ -313,9 +308,6 @@ TypeCreate(const char *typeName,
 		tup = heap_formtuple(RelationGetDescr(pg_type_desc),
 							 values,
 							 nulls);
-
-		/* preassign tuple Oid, if one was given */
-		HeapTupleSetOid(tup, assignedTypeOid);
 
 		typeObjectId = simple_heap_insert(pg_type_desc, tup);
 	}

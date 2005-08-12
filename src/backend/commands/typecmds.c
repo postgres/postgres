@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.78 2005/08/04 01:09:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.79 2005/08/12 01:35:58 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -339,7 +339,6 @@ DefineType(List *names, List *parameters)
 	typoid =
 		TypeCreate(typeName,	/* type name */
 				   typeNamespace,		/* namespace */
-				   InvalidOid,	/* preassigned type oid (not done here) */
 				   InvalidOid,	/* relation oid (n/a here) */
 				   0,			/* relation kind (ditto) */
 				   internalLength,		/* internal size */
@@ -372,7 +371,6 @@ DefineType(List *names, List *parameters)
 
 	TypeCreate(shadow_type,		/* type name */
 			   typeNamespace,	/* namespace */
-			   InvalidOid,		/* preassigned type oid (not done here) */
 			   InvalidOid,		/* relation oid (n/a here) */
 			   0,				/* relation kind (ditto) */
 			   -1,				/* internal size */
@@ -724,7 +722,6 @@ DefineDomain(CreateDomainStmt *stmt)
 	domainoid =
 		TypeCreate(domainName,	/* type name */
 				   domainNamespace,		/* namespace */
-				   InvalidOid,	/* preassigned type oid (none here) */
 				   InvalidOid,	/* relation oid (n/a here) */
 				   0,			/* relation kind (ditto) */
 				   internalLength,		/* internal size */

@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.415 2005/07/10 15:08:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.416 2005/08/12 01:36:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,7 +158,6 @@ static const char *convertRegProcReference(const char *proc);
 static const char *convertOperatorReference(const char *opr);
 static Oid	findLastBuiltinOid_V71(const char *);
 static Oid	findLastBuiltinOid_V70(void);
-static void setMaxOid(Archive *fout);
 static void selectSourceSchema(const char *schemaName);
 static char *getFormattedTypeName(Oid oid, OidOptions opts);
 static char *myFormatType(const char *typname, int32 typmod);
@@ -610,10 +609,6 @@ main(int argc, char **argv)
 	/* The database item is always second. */
 	if (!dataOnly)
 		dumpDatabase(g_fout);
-
-	/* Max OID is next. */
-	if (oids == true)
-		setMaxOid(g_fout);
 
 	/* Now the rearrangeable objects. */
 	for (i = 0; i < numObjs; i++)
@@ -7406,51 +7401,6 @@ dumpTableConstraintComment(Archive *fout, ConstraintInfo *coninfo)
 				coninfo->separate ? coninfo->dobj.dumpId : tbinfo->dobj.dumpId);
 
 	destroyPQExpBuffer(q);
-}
-
-/*
- * setMaxOid -
- * find the maximum oid and generate a COPY statement to set it
- */
-static void
-setMaxOid(Archive *fout)
-{
-	PGresult   *res;
-	Oid			max_oid;
-	char		sql[1024];
-
-	if (fout->remoteVersion >= 70200)
-		do_sql_command(g_conn,
-					   "CREATE TEMPORARY TABLE pgdump_oid (dummy integer) WITH OIDS");
-	else
-		do_sql_command(g_conn,
-					   "CREATE TEMPORARY TABLE pgdump_oid (dummy integer)");
-	res = PQexec(g_conn, "INSERT INTO pgdump_oid VALUES (0)");
-	check_sql_result(res, g_conn, "INSERT INTO pgdump_oid VALUES (0)",
-					 PGRES_COMMAND_OK);
-	max_oid = PQoidValue(res);
-	if (max_oid == 0)
-	{
-		write_msg(NULL, "inserted invalid OID\n");
-		exit_nicely();
-	}
-	PQclear(res);
-	do_sql_command(g_conn, "DROP TABLE pgdump_oid;");
-	if (g_verbose)
-		write_msg(NULL, "maximum system OID is %u\n", max_oid);
-	snprintf(sql, sizeof(sql),
-			 "CREATE TEMPORARY TABLE pgdump_oid (dummy integer) WITH OIDS;\n"
-			 "COPY pgdump_oid WITH OIDS FROM stdin;\n"
-			 "%u\t0\n"
-			 "\\.\n"
-			 "DROP TABLE pgdump_oid;\n",
-			 max_oid);
-
-	ArchiveEntry(fout, nilCatalogId, createDumpId(),
-				 "Max OID", NULL, NULL, "",
-				 false, "<Init>", sql, "", NULL,
-				 NULL, 0,
-				 NULL, NULL);
 }
 
 /*
