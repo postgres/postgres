@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.277 2005/08/12 03:23:40 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.278 2005/08/12 15:57:48 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -9326,8 +9326,8 @@ SELECT set_config('log_statement_stats', 'off', false);
     The functions shown in <xref
     linkend="functions-admin-genfile"> provide native file access to
     files on the machine hosting the server. Only files relative to
-    the cluster directory are allowed, and the logfile directory,
-    because the logfile directory might be stored outside the 
+    the cluster directory are allowed, and the <varname>log_directory</>,
+    because the log file directory might be stored outside the 
     cluster directory.  Use of these functions is restricted to 
     superusers.
    </para>
