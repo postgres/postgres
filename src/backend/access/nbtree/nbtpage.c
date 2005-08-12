@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.86 2005/06/06 20:22:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.87 2005/08/12 14:34:14 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -826,7 +826,8 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 			_bt_relbuf(rel, lbuf);
 			if (leftsib == P_NONE)
 			{
-				elog(LOG, "no left sibling (concurrent deletion?)");
+				elog(LOG, "no left sibling (concurrent deletion?) in \"%s\"",
+					 RelationGetRelationName(rel));
 				return 0;
 			}
 			lbuf = _bt_getbuf(rel, leftsib, BT_WRITE);
@@ -861,7 +862,8 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 		return 0;
 	}
 	if (opaque->btpo_prev != leftsib)
-		elog(ERROR, "left link changed unexpectedly");
+		elog(ERROR, "left link changed unexpectedly in block %u of \"%s\"",
+			 target, RelationGetRelationName(rel));
 
 	/*
 	 * And next write-lock the (current) right sibling.
@@ -984,8 +986,8 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 		itemid = PageGetItemId(page, nextoffset);
 		btitem = (BTItem) PageGetItem(page, itemid);
 		if (ItemPointerGetBlockNumber(&(btitem->bti_itup.t_tid)) != rightsib)
-			elog(PANIC, "right sibling is not next child");
-
+			elog(PANIC, "right sibling is not next child in \"%s\"",
+				 RelationGetRelationName(rel));
 		PageIndexTupleDelete(page, nextoffset);
 	}
 
