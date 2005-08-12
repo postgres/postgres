@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.464 2005/08/12 18:23:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.465 2005/08/12 19:42:44 momjian Exp $
  *
  * NOTES
  *
@@ -377,8 +377,11 @@ PostmasterMain(int argc, char *argv[])
 	char	   *userDoption = NULL;
 	int			i;
 
-	/* This will call exit() if strdup() fails. */
-	progname = get_progname(argv[0]);	
+	if ((progname = get_progname(argv[0])) == NULL)
+	{
+		printf(_("unable to allocate memory for program name \"%s\".\n"), progname);
+		ExitPostmaster(0);
+	}
 
 	MyProcPid = PostmasterPid = getpid();
 

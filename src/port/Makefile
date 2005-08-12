@@ -15,7 +15,7 @@
 #		for use only by the backend binaries
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/port/Makefile,v 1.25 2005/03/20 03:53:39 momjian Exp $
+#    $PostgreSQL: pgsql/src/port/Makefile,v 1.26 2005/08/12 19:42:45 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -31,6 +31,7 @@ LIBOBJS_SRV := $(LIBOBJS)
 LIBOBJS_SRV := $(patsubst dirmod.o,dirmod_srv.o, $(LIBOBJS_SRV))
 LIBOBJS_SRV := $(patsubst exec.o,exec_srv.o, $(LIBOBJS_SRV))
 LIBOBJS_SRV := $(patsubst getaddrinfo.o,getaddrinfo_srv.o, $(LIBOBJS_SRV))
+LIBOBJS_SRV := $(patsubst path.o,path_srv.o, $(LIBOBJS_SRV))
 LIBOBJS_SRV := $(patsubst thread.o,thread_srv.o, $(LIBOBJS_SRV))
 
 all: libpgport.a libpgport_srv.a
@@ -66,7 +67,7 @@ exec_srv.o: exec.c
 getaddrinfo_srv.o: getaddrinfo.c
 	$(CC) $(CFLAGS) $(subst -DFRONTEND,, $(CPPFLAGS)) -c $< -o $@
 
-snprintf_srv.o: snprintf.c
+path_srv.o: path.c
 	$(CC) $(CFLAGS) $(subst -DFRONTEND,, $(CPPFLAGS)) -c $< -o $@
 
 # No thread flags for server version
