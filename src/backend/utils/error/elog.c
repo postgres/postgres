@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.155.4.1 2005/03/12 01:55:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.155.4.2 2005/08/12 21:38:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1266,6 +1266,7 @@ write_syslog(int level, const char *line)
 static void
 write_eventlog(int level, const char *line)
 {
+	int eventlevel = EVENTLOG_ERROR_TYPE;
 	static HANDLE evtHandle = INVALID_HANDLE_VALUE;
 
 	if (evtHandle == INVALID_HANDLE_VALUE)
@@ -1278,8 +1279,33 @@ write_eventlog(int level, const char *line)
 		}
 	}
 
+	switch (level)
+	{
+		case DEBUG5:
+		case DEBUG4:
+		case DEBUG3:
+		case DEBUG2:
+		case DEBUG1:
+		case LOG:
+		case COMMERROR:
+		case INFO:
+		case NOTICE:
+			eventlevel = EVENTLOG_INFORMATION_TYPE;
+			break;
+		case WARNING:
+			eventlevel = EVENTLOG_WARNING_TYPE;
+			break;
+		case ERROR:
+		case FATAL:
+		case PANIC:
+		default:
+			eventlevel = EVENTLOG_ERROR_TYPE;
+			break;
+	}
+
+
 	ReportEvent(evtHandle,
-				level,
+				eventlevel,
 				0,
 				0,				/* All events are Id 0 */
 				NULL,
@@ -1601,32 +1627,7 @@ send_message_to_server_log(ErrorData *edata)
 	/* Write to eventlog, if enabled */
 	if (Log_destination & LOG_DESTINATION_EVENTLOG)
 	{
-		int			eventlog_level;
-
-		switch (edata->elevel)
-		{
-			case DEBUG5:
-			case DEBUG4:
-			case DEBUG3:
-			case DEBUG2:
-			case DEBUG1:
-			case LOG:
-			case COMMERROR:
-			case INFO:
-			case NOTICE:
-				eventlog_level = EVENTLOG_INFORMATION_TYPE;
-				break;
-			case WARNING:
-				eventlog_level = EVENTLOG_WARNING_TYPE;
-				break;
-			case ERROR:
-			case FATAL:
-			case PANIC:
-			default:
-				eventlog_level = EVENTLOG_ERROR_TYPE;
-				break;
-		}
-		write_eventlog(eventlog_level, buf.data);
+		write_eventlog(edata->elevel, buf.data);
 	}
 #endif   /* WIN32 */
 
@@ -1642,7 +1643,7 @@ send_message_to_server_log(ErrorData *edata)
 		 * because that's really a pipe to the syslogger process.
 		 */
 		if ((!Redirect_stderr || am_syslogger) && pgwin32_is_service())
-			write_eventlog(EVENTLOG_ERROR_TYPE, buf.data);
+			write_eventlog(edata->elevel, buf.data);
 		else
 #endif
 			fprintf(stderr, "%s", buf.data);
