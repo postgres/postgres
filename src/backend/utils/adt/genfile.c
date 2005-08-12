@@ -1,14 +1,15 @@
 /*-------------------------------------------------------------------------
  *
  * genfile.c
+ *		Functions for direct access to files
  *
  *
- * Copyright (c) 2004, PostgreSQL Global Development Group
+ * Copyright (c) 2004-2005, PostgreSQL Global Development Group
  * 
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.1 2005/08/12 03:24:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.2 2005/08/12 18:23:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,13 +20,15 @@
 #include <unistd.h>
 #include <dirent.h>
 
-#include "utils/builtins.h"
-#include "miscadmin.h"
-#include "storage/fd.h"
+#include "access/heapam.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
+#include "miscadmin.h"
+#include "postmaster/syslogger.h"
+#include "storage/fd.h"
+#include "utils/builtins.h"
+#include "utils/memutils.h"
 
-extern  char *Log_directory;
 
 typedef struct 
 {
@@ -33,13 +36,16 @@ typedef struct
 	DIR		*dirdesc;
 } directory_fctx;
 
+
 /*
- * Return an absolute path. Argument may be absolute or 
- * relative to the DataDir.
+ * Validate a path and convert to absolute form.
+ *
+ * Argument may be absolute or relative to the DataDir (but we only allow
+ * absolute paths that match Log_directory).
  */
-static char *check_and_make_absolute(text *arg)
+static char *
+check_and_make_absolute(text *arg)
 {
-	int datadir_len = strlen(DataDir);
 	int filename_len = VARSIZE(arg) - VARHDRSZ;
 	char *filename = palloc(filename_len + 1);
 	
@@ -52,16 +58,21 @@ static char *check_and_make_absolute(text *arg)
 	/*
 	 *	Prevent reference to the parent directory.
 	 *	"..a.." is a valid file name though.
+	 *
+	 * XXX this is BROKEN because it fails to prevent "C:.." on Windows.
+	 * Need access to "skip_drive" functionality to do it right.  (There
+	 * is no actual security hole because we'll prepend the DataDir below,
+	 * resulting in a just-plain-broken path, but we should give the right
+	 * error message instead.)
 	 */
-	if (strcmp(filename, "..") == 0 ||							/* beginning */
-		strncmp(filename, "../", 3) == 0 ||						/* beginning */
-		strcmp(filename, "/..") == 0 ||							/* beginning */
-		strncmp(filename, "../", 3) == 0 ||						/* beginning */
-		strstr(filename, "/../") != NULL ||						/* middle */
-		strncmp(filename + filename_len - 3, "/..", 3) == 0)	/* end */
+	if (strcmp(filename, "..") == 0 ||						/* whole */
+		strncmp(filename, "../", 3) == 0 ||					/* beginning */
+		strstr(filename, "/../") != NULL ||					/* middle */
+		(filename_len >= 3 &&
+		 strcmp(filename + filename_len - 3, "/..") == 0))	/* end */
 			ereport(ERROR,
 				  (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				   (errmsg("Reference to a parent directory (\"..\") not allowed"))));
+				   (errmsg("reference to parent directory (\"..\") not allowed"))));
 
 	if (is_absolute_path(filename))
 	{
@@ -74,12 +85,12 @@ static char *check_and_make_absolute(text *arg)
 
 	    ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("Absolute paths not allowed"))));
-		return NULL;
+				 (errmsg("absolute path not allowed"))));
+		return NULL;			/* keep compiler quiet */
 	}
 	else
 	{
-	    char *absname = palloc(datadir_len + filename_len + 2);
+	    char *absname = palloc(strlen(DataDir) + filename_len + 2);
 		sprintf(absname, "%s/%s", DataDir, filename);
 		pfree(filename);
 		return absname;
@@ -87,11 +98,16 @@ static char *check_and_make_absolute(text *arg)
 }
 
 
-Datum pg_read_file(PG_FUNCTION_ARGS)
+/*
+ * Read a section of a file, returning it as text
+ */
+Datum
+pg_read_file(PG_FUNCTION_ARGS)
 {
-	int64		bytes_to_read = PG_GETARG_INT64(2);
+	text	   *filename_t = PG_GETARG_TEXT_P(0);
 	int64		seek_offset = PG_GETARG_INT64(1);
-	char 		*buf = 0;
+	int64		bytes_to_read = PG_GETARG_INT64(2);
+	char 		*buf;
 	size_t		nbytes;
 	FILE		*file;
 	char		*filename;
@@ -101,107 +117,108 @@ Datum pg_read_file(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser to read files"))));
 
-	filename = check_and_make_absolute(PG_GETARG_TEXT_P(0));
+	filename = check_and_make_absolute(filename_t);
 
 	if ((file = AllocateFile(filename, PG_BINARY_R)) == NULL)
-	{
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not open file %s for reading: %m", filename)));
-		PG_RETURN_NULL();
-	}
+				 errmsg("could not open file \"%s\" for reading: %m",
+						filename)));
 
-	if (fseeko(file, (off_t)seek_offset,
-		(seek_offset >= 0) ? SEEK_SET : SEEK_END) != 0)
-	{
+	if (fseeko(file, (off_t) seek_offset,
+			   (seek_offset >= 0) ? SEEK_SET : SEEK_END) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not seek in file %s: %m", filename)));
-		PG_RETURN_NULL();
-	}
+				 errmsg("could not seek in file \"%s\": %m", filename)));
 
 	if (bytes_to_read < 0)
-	{
 		ereport(ERROR,
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("length cannot be negative")));
-	}
-	
-	buf = palloc(bytes_to_read + VARHDRSZ);
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("requested length cannot be negative")));
 
-	nbytes = fread(VARDATA(buf), 1, bytes_to_read, file);
+	/* not sure why anyone thought that int64 length was a good idea */
+	if (bytes_to_read > (MaxAllocSize - VARHDRSZ))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("requested length too large")));
+	
+	buf = palloc((Size) bytes_to_read + VARHDRSZ);
+
+	nbytes = fread(VARDATA(buf), 1, (size_t) bytes_to_read, file);
 
 	if (nbytes < 0)
-	{
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not read file %s: %m", filename)));
-		PG_RETURN_NULL();
-	}
+				 errmsg("could not read file \"%s\": %m", filename)));
+
 	VARATT_SIZEP(buf) = nbytes + VARHDRSZ;
 
-	pfree(filename);
 	FreeFile(file);
+	pfree(filename);
+
 	PG_RETURN_TEXT_P(buf);
 }
 
-
-Datum pg_stat_file(PG_FUNCTION_ARGS)
+/*
+ * stat a file
+ */
+Datum
+pg_stat_file(PG_FUNCTION_ARGS)
 {
-	AttInMetadata *attinmeta;
-	char		*filename = check_and_make_absolute(PG_GETARG_TEXT_P(0));
+	text	   *filename_t = PG_GETARG_TEXT_P(0);
+	char		*filename;
 	struct stat fst;
-	char		lenbuf[30], cbuf[30], abuf[30], mbuf[30], dirbuf[2];
-	char		*values[5] = {lenbuf, cbuf, abuf, mbuf, dirbuf};
-	pg_time_t	timestamp;
+	Datum		values[5];
+	bool		isnull[5];
 	HeapTuple	tuple;
-	TupleDesc	tupdesc = CreateTemplateTupleDesc(5, false);
+	TupleDesc	tupdesc;
 
 	if (!superuser())
 	    ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser to get file information"))));
 
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "length", INT8OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "atime", TIMESTAMPOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "mtime", TIMESTAMPOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "ctime", TIMESTAMPOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 5, "isdir", BOOLOID, -1, 0);
-	attinmeta = TupleDescGetAttInMetadata(tupdesc);
+	filename = check_and_make_absolute(filename_t);
 
 	if (stat(filename, &fst) < 0)
-	{
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not stat file %s: %m", filename)));
-		PG_RETURN_NULL();
-	}
-	else
-	{
-		snprintf(lenbuf, 30, INT64_FORMAT, (int64)fst.st_size);
+				 errmsg("could not stat file \"%s\": %m", filename)));
 
-		timestamp = fst.st_atime;
-		pg_strftime(abuf, 30, "%F %T", pg_localtime(&timestamp, global_timezone));
+	tupdesc = CreateTemplateTupleDesc(5, false);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 1,
+					   "length", INT8OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 2,
+					   "atime", TIMESTAMPTZOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 3,
+					   "mtime", TIMESTAMPTZOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 4,
+					   "ctime", TIMESTAMPTZOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 5,
+					   "isdir", BOOLOID, -1, 0);
+	BlessTupleDesc(tupdesc);
 
-		timestamp = fst.st_mtime;
-		pg_strftime(mbuf, 30, "%F %T", pg_localtime(&timestamp, global_timezone));
+	values[0] = Int64GetDatum((int64) fst.st_size);
+	values[1] = TimestampTzGetDatum(time_t_to_timestamptz(fst.st_atime));
+	values[2] = TimestampTzGetDatum(time_t_to_timestamptz(fst.st_mtime));
+	values[3] = TimestampTzGetDatum(time_t_to_timestamptz(fst.st_ctime));
+	values[4] = BoolGetDatum(fst.st_mode & S_IFDIR);
 
-		timestamp = fst.st_ctime;
-		pg_strftime(cbuf, 30, "%F %T", pg_localtime(&timestamp, global_timezone));
+	memset(isnull, false, sizeof(isnull));
 
-		if (fst.st_mode & S_IFDIR)
-			strcpy(dirbuf, "t");
-		else
-			strcpy(dirbuf, "f");
+	tuple = heap_form_tuple(tupdesc, values, isnull);
 
-		tuple = BuildTupleFromCStrings(attinmeta, values);
-		pfree(filename);
-		PG_RETURN_DATUM(HeapTupleGetDatum(tuple));
-	}
+	pfree(filename);
+
+	PG_RETURN_DATUM(HeapTupleGetDatum(tuple));
 }
 
 
-Datum pg_ls_dir(PG_FUNCTION_ARGS)
+/*
+ * List a directory (returns the filenames only)
+ */
+Datum
+pg_ls_dir(PG_FUNCTION_ARGS)
 {
 	FuncCallContext	*funcctx;
 	struct dirent	*de;
@@ -227,7 +244,8 @@ Datum pg_ls_dir(PG_FUNCTION_ARGS)
 		if (!fctx->dirdesc)
 		    ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("%s is not browsable: %m", fctx->location)));
+					 errmsg("could not open directory \"%s\": %m",
+							fctx->location)));
 
 		funcctx->user_fctx = fctx;
 		MemoryContextSwitchTo(oldcontext);
@@ -236,17 +254,16 @@ Datum pg_ls_dir(PG_FUNCTION_ARGS)
 	funcctx = SRF_PERCALL_SETUP();
 	fctx = (directory_fctx*) funcctx->user_fctx;
 
-	if (!fctx->dirdesc)  /* not a readable directory  */
-		SRF_RETURN_DONE(funcctx);
-
 	while ((de = ReadDir(fctx->dirdesc, fctx->location)) != NULL)
 	{
 		int			len = strlen(de->d_name);
-		text		*result = palloc(len + VARHDRSZ);
+		text		*result;
 
-		if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
+		if (strcmp(de->d_name, ".") == 0 ||
+			strcmp(de->d_name, "..") == 0)
 		    continue;
 
+		result = palloc(len + VARHDRSZ);
 		VARATT_SIZEP(result) = len + VARHDRSZ;
 		memcpy(VARDATA(result), de->d_name, len);
 
@@ -254,5 +271,6 @@ Datum pg_ls_dir(PG_FUNCTION_ARGS)
 	}
 
 	FreeDir(fctx->dirdesc);
+
 	SRF_RETURN_DONE(funcctx);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.46 2005/08/12 03:24:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.47 2005/08/12 18:23:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,25 +18,18 @@
 #include <signal.h>
 #include <dirent.h>
 
-#include "commands/dbcommands.h"
-#include "miscadmin.h"
-#include "storage/procarray.h"
-#include "storage/pmsignal.h"
-#include "storage/fd.h"
-#include "utils/builtins.h"
-#include "utils/elog.h"
-#include "funcapi.h"
-#include "catalog/pg_type.h"
 #include "catalog/pg_tablespace.h"
+#include "catalog/pg_type.h"
+#include "commands/dbcommands.h"
+#include "funcapi.h"
+#include "miscadmin.h"
 #include "postmaster/syslogger.h"
+#include "storage/fd.h"
+#include "storage/pmsignal.h"
+#include "storage/procarray.h"
+#include "utils/builtins.h"
 
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
-
-typedef struct 
-{
-	char	*location;
-	DIR		*dirdesc;
-} directory_fctx;
 
 
 /*
@@ -150,15 +143,15 @@ pg_rotate_logfile(PG_FUNCTION_ARGS)
 
 	if (!Redirect_stderr)
 	{
-	    ereport(NOTICE,
-				(errcode(ERRCODE_WARNING),
-				 errmsg("no logfile configured; rotation not supported")));
+		ereport(WARNING,
+				(errmsg("rotation not possible because log redirection not active")));
+
 		PG_RETURN_INT32(0);
 	}
 
 	SendPostmasterSignal(PMSIGNAL_ROTATE_LOGFILE);
 
-	PG_RETURN_INT32(0);
+	PG_RETURN_INT32(1);
 }
 
 #ifdef NOT_USED

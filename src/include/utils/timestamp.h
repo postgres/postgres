@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.53 2005/07/22 05:08:26 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.54 2005/08/12 18:23:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -291,6 +291,8 @@ extern Datum pgsql_postmaster_start_time(PG_FUNCTION_ARGS);
 /* Internal routines (not fmgr-callable) */
 
 extern TimestampTz GetCurrentTimestamp(void);
+
+extern TimestampTz time_t_to_timestamptz(time_t tm);
 
 extern int	tm2timestamp(struct pg_tm *tm, fsec_t fsec, int *tzp, Timestamp *dt);
 extern int timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm,

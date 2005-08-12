@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.147 2005/07/30 18:20:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.148 2005/08/12 18:23:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -939,7 +939,7 @@ GetCurrentTimestamp(void)
 
 	gettimeofday(&tp, NULL);
 
-	result = tp.tv_sec -
+	result = (TimestampTz) tp.tv_sec -
 		((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
 
 #ifdef HAVE_INT64_TIMESTAMP
@@ -950,6 +950,29 @@ GetCurrentTimestamp(void)
 
 	return result;
 }
+
+
+/*
+ * Convert a time_t to TimestampTz.
+ *
+ * We do not use time_t internally in Postgres, but this is provided for use
+ * by functions that need to interpret, say, a stat(2) result.
+ */
+TimestampTz
+time_t_to_timestamptz(time_t tm)
+{
+	TimestampTz result;
+
+	result = (TimestampTz) tm -
+		((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
+
+#ifdef HAVE_INT64_TIMESTAMP
+	result *= USECS_PER_SEC;
+#endif
+
+	return result;
+}
+
 
 void
 dt2time(Timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)

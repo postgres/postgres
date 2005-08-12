@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.278 2005/08/12 15:57:48 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.279 2005/08/12 18:23:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -9072,13 +9072,13 @@ SELECT set_config('log_statement_stats', 'off', false);
 
    <para>
     The functions shown in <xref
-    linkend="functions-admin-signal-table"> sends control signals to
-    other server processes.  Use of this function is restricted
+    linkend="functions-admin-signal-table"> send control signals to
+    other server processes.  Use of these functions is restricted
     to superusers.
    </para>
 
    <table id="functions-admin-signal-table">
-    <title>Backend Signalling Functions</title>
+    <title>Server Signalling Functions</title>
     <tgroup cols="3">
      <thead>
       <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry>
@@ -9088,7 +9088,7 @@ SELECT set_config('log_statement_stats', 'off', false);
      <tbody>
       <row>
        <entry>
-        <literal><function>pg_cancel_backend</function>(<parameter>pid</parameter>)</literal>
+        <literal><function>pg_cancel_backend</function>(<parameter>pid</parameter> <type>int</>)</literal>
         </entry>
        <entry><type>int</type></entry>
        <entry>Cancel a backend's current query</entry>
@@ -9098,7 +9098,7 @@ SELECT set_config('log_statement_stats', 'off', false);
         <literal><function>pg_reload_conf</function>()</literal>
         </entry>
        <entry><type>int</type></entry>
-       <entry>Causes server processes to reload their configuration files</entry>
+       <entry>Cause server processes to reload their configuration files</entry>
       </row>
      </tbody>
     </tgroup>
@@ -9113,8 +9113,8 @@ SELECT set_config('log_statement_stats', 'off', false);
    </para>
    <para>
     <function>pg_reload_conf</> sends a SIGHUP signal to the
-    postmaster, causing the reload of the configuration files
-    in all backend processes.
+    postmaster, causing reload of the configuration files
+    in all server processes.
    </para>
 
    <indexterm zone="functions-admin">
@@ -9144,7 +9144,7 @@ SELECT set_config('log_statement_stats', 'off', false);
      <tbody>
       <row>
        <entry>
-        <literal><function>pg_start_backup</function>(<parameter>label_text</parameter>)</literal>
+        <literal><function>pg_start_backup</function>(<parameter>label</> <type>text</>)</literal>
         </entry>
        <entry><type>text</type></entry>
        <entry>Set up for performing on-line backup</entry>
@@ -9219,48 +9219,48 @@ SELECT set_config('log_statement_stats', 'off', false);
 
      <tbody>
       <row>
-       <entry><function>pg_column_size</function>(<parameter>any</parameter>)</entry>
+       <entry><function>pg_column_size</function>(<type>any</type>)</entry>
        <entry><type>integer</type></entry>
        <entry>Number of bytes used to store a particular value (possibly compressed)</entry>
       </row>
       <row>
        <entry>
-        <literal><function>pg_tablespace_size</function>(<parameter>oid</parameter>)</literal>
+        <literal><function>pg_tablespace_size</function>(<type>oid</type>)</literal>
         </entry>
        <entry><type>bigint</type></entry>
        <entry>Total disk space used by the tablespace with the specified OID</entry>
       </row>
       <row>
        <entry>
-        <literal><function>pg_tablespace_size</function>(<parameter>name</parameter>)</literal>
+        <literal><function>pg_tablespace_size</function>(<type>name</type>)</literal>
         </entry>
        <entry><type>bigint</type></entry>
        <entry>Total disk space used by the tablespace with the specified name</entry>
       </row>
       <row>
        <entry>
-        <literal><function>pg_database_size</function>(<parameter>oid</parameter>)</literal>
+        <literal><function>pg_database_size</function>(<type>oid</type>)</literal>
         </entry>
        <entry><type>bigint</type></entry>
        <entry>Total disk space used by the database with the specified OID</entry>
       </row>
       <row>
        <entry>
-        <literal><function>pg_database_size</function>(<parameter>name</parameter>)</literal>
+        <literal><function>pg_database_size</function>(<type>name</type>)</literal>
         </entry>
        <entry><type>bigint</type></entry>
        <entry>Total disk space used by the database with the specified name</entry>
       </row>
       <row>
        <entry>
-        <literal><function>pg_relation_size</function>(<parameter>oid</parameter>)</literal>
+        <literal><function>pg_relation_size</function>(<type>oid</type>)</literal>
         </entry>
        <entry><type>bigint</type></entry>
        <entry>Disk space used by the table or index with the specified OID</entry>
       </row>
       <row>
        <entry>
-        <literal><function>pg_relation_size</function>(<parameter>text</parameter>)</literal>
+        <literal><function>pg_relation_size</function>(<type>text</type>)</literal>
         </entry>
        <entry><type>bigint</type></entry>
        <entry>Disk space used by the table or index with the specified name.
@@ -9268,7 +9268,7 @@ SELECT set_config('log_statement_stats', 'off', false);
       </row>
       <row>
        <entry>
-        <literal><function>pg_complete_relation_size</function>(<parameter>oid</parameter>)</literal>
+        <literal><function>pg_complete_relation_size</function>(<type>oid</type>)</literal>
         </entry>
        <entry><type>bigint</type></entry>
        <entry>Total disk space used by the table with the specified OID, 
@@ -9276,7 +9276,7 @@ SELECT set_config('log_statement_stats', 'off', false);
       </row>
       <row>
        <entry>
-        <literal><function>pg_complete_relation_size</function>(<parameter>text</parameter>)</literal>
+        <literal><function>pg_complete_relation_size</function>(<type>text</type>)</literal>
         </entry>
        <entry><type>bigint</type></entry>
        <entry>Total disk space used by the table with the specified name, 
@@ -9285,7 +9285,7 @@ SELECT set_config('log_statement_stats', 'off', false);
       </row>
       <row>
        <entry>
-        <literal><function>pg_size_pretty</function>(<parameter>bigint</parameter>)</literal>
+        <literal><function>pg_size_pretty</function>(<type>bigint</type>)</literal>
         </entry>
        <entry><type>text</type></entry>
        <entry>Converts a size in bytes into a human-readable format with size units</entry>
@@ -9325,11 +9325,11 @@ SELECT set_config('log_statement_stats', 'off', false);
    <para>
     The functions shown in <xref
     linkend="functions-admin-genfile"> provide native file access to
-    files on the machine hosting the server. Only files relative to
-    the cluster directory are allowed, and the <varname>log_directory</>,
-    because the log file directory might be stored outside the 
-    cluster directory.  Use of these functions is restricted to 
-    superusers.
+    files on the machine hosting the server. Only files within the
+    database cluster directory and the <varname>log_directory</> may be
+    accessed.  Use a relative path for files within the cluster directory,
+    and a path matching the <varname>log_directory</> configuration setting
+    for log files.  Use of these functions is restricted to superusers.
    </para>
 
    <table id="functions-admin-genfile">
@@ -9343,17 +9343,17 @@ SELECT set_config('log_statement_stats', 'off', false);
      <tbody>
       <row>
        <entry>
-        <literal><function>pg_file_length</function>(<parameter>filename_text</parameter>)</literal>
+        <literal><function>pg_file_length</function>(<parameter>filename</> <type>text</>)</literal>
          <indexterm zone="functions-admin">
           <primary>pg_file_length</primary>
         </indexterm>
        </entry>
        <entry><type>int8</type></entry>
-       <entry>Returns the file length</entry>
+       <entry>Return the file length</entry>
       </row>
       <row>
        <entry>
-        <literal><function>pg_ls_dir</function>(<parameter>dirname_text</parameter>,<parameter>fullpath_bool</parameter>)</literal>
+        <literal><function>pg_ls_dir</function>(<parameter>dirname</> <type>text</>)</literal>
         <indexterm zone="functions-admin">
          <primary>pg_ls_dir</primary>
         </indexterm>
@@ -9363,18 +9363,17 @@ SELECT set_config('log_statement_stats', 'off', false);
       </row>
       <row>
        <entry>
-        <literal><function>pg_read_file</function>(<parameter>filename_text</parameter>,
-        <parameter>offset_int8</parameter>,<parameter>length_int8</parameter>)</literal>
+        <literal><function>pg_read_file</function>(<parameter>filename</> <type>text</>, <parameter>offset</> <type>int8</>, <parameter>length</> <type>int8</>)</literal>
        </entry>
        <entry><type>text</type></entry>
-       <entry>Returns the contents of a text file</entry>
+       <entry>Return the contents of a text file</entry>
       </row>
       <row>
        <entry>
-        <literal><function>pg_stat_file</function>(<parameter>filename_text</parameter>)</literal>
+        <literal><function>pg_stat_file</function>(<parameter>filename</> <type>text</>)</literal>
        </entry>
        <entry><type>record</type></entry>
-       <entry>Returns information about the file</entry>
+       <entry>Return information about the file</entry>
       </row>
      </tbody>
     </tgroup>
@@ -9385,8 +9384,9 @@ SELECT set_config('log_statement_stats', 'off', false);
    </indexterm>
    <para>
     <function>pg_read_file()</> returns part of a textfile, starting
-    at the given offset, returning length bytes.  If offset is negative, 
-    it is treated relative to the end of the file.
+    at the given offset, returning at most length bytes (less if the
+    end of file is reached first).  If offset is negative, 
+    it is relative to the end of the file.
    </para>
 
    <indexterm zone="functions-admin">
@@ -9396,18 +9396,25 @@ SELECT set_config('log_statement_stats', 'off', false);
     <function>pg_stat_file()</> returns a record containing the
     length, last accessed timestamp, last modified timestamp, 
     creation timestamp, and a flag indicating if it is a directory.
+    Use it like this:
+<programlisting>
+SELECT *
+FROM pg_stat_file('filename')
+     AS s(length int8, atime timestamptz, mtime timestamptz,
+          ctime timestamptz, isdir bool);
+</programlisting>
    </para>
 
    <para>
     The function shown in <xref
     linkend="functions-admin-logfile"> forces the server
-    logfile to be rotated if <varname>redirect_stderr</>
-    is used for logging.   Use of this functions is restricted
+    logfile to be rotated.  This works only when <varname>redirect_stderr</>
+    is used for logging.   Use of this function is restricted
     to superusers.
    </para>
 
    <table id="functions-admin-logfile">
-    <title>Backend Logfile Functions</title>
+    <title>Server Logfile Functions</title>
     <tgroup cols="3">
      <thead>
       <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry>
@@ -9423,7 +9430,7 @@ SELECT set_config('log_statement_stats', 'off', false);
         </indexterm>
         </entry>
        <entry><type>int</type></entry>
-       <entry>Rotate logfile</entry>
+       <entry>Rotate server's logfile</entry>
       </row>
      </tbody>
     </tgroup>
