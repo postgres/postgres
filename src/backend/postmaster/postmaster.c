@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.462 2005/08/11 21:11:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.463 2005/08/12 03:23:51 momjian Exp $
  *
  * NOTES
  *
@@ -3393,6 +3393,9 @@ sigusr1_handler(SIGNAL_ARGS)
 			kill(PgArchPID, SIGUSR1);
 		}
 	}
+
+	if (CheckPostmasterSignal(PMSIGNAL_ROTATE_LOGFILE) && SysLoggerPID != 0)
+	    kill(SysLoggerPID, SIGUSR1);
 
 	PG_SETMASK(&UnBlockSig);
 

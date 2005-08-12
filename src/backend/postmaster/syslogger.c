@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.18 2005/07/21 18:06:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.19 2005/08/12 03:23:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,6 +101,7 @@ static CRITICAL_SECTION sysfileSection;
  * Flags set by interrupt handlers for later service in the main loop.
  */
 static volatile sig_atomic_t got_SIGHUP = false;
+static volatile sig_atomic_t rotation_requested = false;
 
 
 /* Local subroutines */
@@ -117,6 +118,7 @@ static void logfile_rotate(bool time_based_rotation);
 static char *logfile_getname(pg_time_t timestamp);
 static void set_next_rotation_time(void);
 static void sigHupHandler(SIGNAL_ARGS);
+static void sigUsr1Handler(SIGNAL_ARGS);
 
 
 /*
@@ -200,7 +202,7 @@ SysLoggerMain(int argc, char *argv[])
 	pqsignal(SIGQUIT, SIG_IGN);
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
-	pqsignal(SIGUSR1, SIG_IGN);
+	pqsignal(SIGUSR1, sigUsr1Handler);  /* request log rotation */
 	pqsignal(SIGUSR2, SIG_IGN);
 
 	/*
@@ -235,7 +237,6 @@ SysLoggerMain(int argc, char *argv[])
 	/* main worker loop */
 	for (;;)
 	{
-		bool		rotation_requested = false;
 		bool		time_based_rotation = false;
 
 #ifndef WIN32
@@ -726,6 +727,8 @@ logfile_rotate(bool time_based_rotation)
 	char	   *filename;
 	FILE	   *fh;
 
+	rotation_requested = false;
+
 	/*
 	 * When doing a time-based rotation, invent the new logfile name based
 	 * on the planned rotation time, not current time, to avoid "slippage"
@@ -875,4 +878,11 @@ static void
 sigHupHandler(SIGNAL_ARGS)
 {
 	got_SIGHUP = true;
+}
+
+/* SIGUSR1: set flag to rotate logfile */
+static void
+sigUsr1Handler(SIGNAL_ARGS)
+{
+	rotation_requested = true;
 }

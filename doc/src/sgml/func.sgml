@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.276 2005/08/02 16:11:56 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.277 2005/08/12 03:23:40 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -9061,6 +9061,9 @@ SELECT set_config('log_statement_stats', 'off', false);
    <indexterm zone="functions-admin">
     <primary>pg_cancel_backend</primary>
    </indexterm>
+   <indexterm zone="functions-admin">
+    <primary>pg_reload_conf</primary>
+   </indexterm>
 
    <indexterm zone="functions-admin">
     <primary>signal</primary>
@@ -9068,7 +9071,7 @@ SELECT set_config('log_statement_stats', 'off', false);
    </indexterm>
 
    <para>
-    The function shown in <xref
+    The functions shown in <xref
     linkend="functions-admin-signal-table"> sends control signals to
     other server processes.  Use of this function is restricted
     to superusers.
@@ -9090,26 +9093,36 @@ SELECT set_config('log_statement_stats', 'off', false);
        <entry><type>int</type></entry>
        <entry>Cancel a backend's current query</entry>
       </row>
+      <row>
+       <entry>
+        <literal><function>pg_reload_conf</function>()</literal>
+        </entry>
+       <entry><type>int</type></entry>
+       <entry>Causes server processes to reload their configuration files</entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
 
    <para>
-    This function returns 1 if successful, 0 if not successful.
+    These functions return 1 if successful, 0 if not successful.
     The process ID (<literal>pid</literal>) of an active backend can be found
     from the <structfield>procpid</structfield> column in the
     <structname>pg_stat_activity</structname> view, or by listing the <command>postgres</command>
     processes on the server with <application>ps</>.
    </para>
+   <para>
+    <function>pg_reload_conf</> sends a SIGHUP signal to the
+    postmaster, causing the reload of the configuration files
+    in all backend processes.
+   </para>
 
    <indexterm zone="functions-admin">
     <primary>pg_start_backup</primary>
    </indexterm>
-
    <indexterm zone="functions-admin">
     <primary>pg_stop_backup</primary>
    </indexterm>
-
    <indexterm zone="functions-admin">
     <primary>backup</primary>
    </indexterm>
@@ -9308,6 +9321,113 @@ SELECT set_config('log_statement_stats', 'off', false);
     the other functions in a human-readable way, using kB, MB, GB or TB as
     appropriate.
    </para>
+
+   <para>
+    The functions shown in <xref
+    linkend="functions-admin-genfile"> provide native file access to
+    files on the machine hosting the server. Only files relative to
+    the cluster directory are allowed, and the logfile directory,
+    because the logfile directory might be stored outside the 
+    cluster directory.  Use of these functions is restricted to 
+    superusers.
+   </para>
+
+   <table id="functions-admin-genfile">
+    <title>Generic File Access Functions</title>
+    <tgroup cols="3">
+     <thead>
+      <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry>
+        <literal><function>pg_file_length</function>(<parameter>filename_text</parameter>)</literal>
+         <indexterm zone="functions-admin">
+          <primary>pg_file_length</primary>
+        </indexterm>
+       </entry>
+       <entry><type>int8</type></entry>
+       <entry>Returns the file length</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_ls_dir</function>(<parameter>dirname_text</parameter>,<parameter>fullpath_bool</parameter>)</literal>
+        <indexterm zone="functions-admin">
+         <primary>pg_ls_dir</primary>
+        </indexterm>
+       </entry>
+       <entry><type>setof text</type></entry>
+       <entry>List the contents of a directory</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_read_file</function>(<parameter>filename_text</parameter>,
+        <parameter>offset_int8</parameter>,<parameter>length_int8</parameter>)</literal>
+       </entry>
+       <entry><type>text</type></entry>
+       <entry>Returns the contents of a text file</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_stat_file</function>(<parameter>filename_text</parameter>)</literal>
+       </entry>
+       <entry><type>record</type></entry>
+       <entry>Returns information about the file</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <indexterm zone="functions-admin">
+    <primary>pg_read_file</primary>
+   </indexterm>
+   <para>
+    <function>pg_read_file()</> returns part of a textfile, starting
+    at the given offset, returning length bytes.  If offset is negative, 
+    it is treated relative to the end of the file.
+   </para>
+
+   <indexterm zone="functions-admin">
+    <primary>pg_stat_file</primary>
+   </indexterm>
+   <para>
+    <function>pg_stat_file()</> returns a record containing the
+    length, last accessed timestamp, last modified timestamp, 
+    creation timestamp, and a flag indicating if it is a directory.
+   </para>
+
+   <para>
+    The function shown in <xref
+    linkend="functions-admin-logfile"> forces the server
+    logfile to be rotated if <varname>redirect_stderr</>
+    is used for logging.   Use of this functions is restricted
+    to superusers.
+   </para>
+
+   <table id="functions-admin-logfile">
+    <title>Backend Logfile Functions</title>
+    <tgroup cols="3">
+     <thead>
+      <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry>
+        <literal><function>pg_rotate_logfile</function>()</literal>
+        <indexterm zone="functions-admin">
+         <primary>pg_rotate_logfile</primary>
+        </indexterm>
+        </entry>
+       <entry><type>int</type></entry>
+       <entry>Rotate logfile</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
   </sect1>
 </chapter>

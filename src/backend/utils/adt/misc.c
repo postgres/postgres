@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.45 2005/07/04 04:51:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.46 2005/08/12 03:24:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,13 +21,22 @@
 #include "commands/dbcommands.h"
 #include "miscadmin.h"
 #include "storage/procarray.h"
+#include "storage/pmsignal.h"
 #include "storage/fd.h"
 #include "utils/builtins.h"
+#include "utils/elog.h"
 #include "funcapi.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_tablespace.h"
+#include "postmaster/syslogger.h"
 
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
+
+typedef struct 
+{
+	char	*location;
+	DIR		*dirdesc;
+} directory_fctx;
 
 
 /*
@@ -105,6 +114,51 @@ Datum
 pg_cancel_backend(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_INT32(pg_signal_backend(PG_GETARG_INT32(0), SIGINT));
+}
+
+
+Datum
+pg_reload_conf(PG_FUNCTION_ARGS)
+{
+	if (!superuser()) 
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to signal the postmaster"))));
+
+	if (kill(PostmasterPid, SIGHUP))
+	{
+		ereport(WARNING,
+				(errmsg("failed to send signal to postmaster: %m")));
+
+		PG_RETURN_INT32(0);
+	}
+
+	PG_RETURN_INT32(1);
+}
+
+
+/*
+ * Rotate log file
+ */
+Datum
+pg_rotate_logfile(PG_FUNCTION_ARGS)
+{
+	if (!superuser()) 
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to rotate log files"))));
+
+	if (!Redirect_stderr)
+	{
+	    ereport(NOTICE,
+				(errcode(ERRCODE_WARNING),
+				 errmsg("no logfile configured; rotation not supported")));
+		PG_RETURN_INT32(0);
+	}
+
+	SendPostmasterSignal(PMSIGNAL_ROTATE_LOGFILE);
+
+	PG_RETURN_INT32(0);
 }
 
 #ifdef NOT_USED

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.380 2005/08/02 16:11:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.381 2005/08/12 03:24:22 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3049,6 +3049,23 @@ DESCR("Prepare for taking an online backup");
 DATA(insert OID = 2173 ( pg_stop_backup			PGNSP PGUID 12 f f t f v 0 25 "" _null_ _null_ _null_ pg_stop_backup - _null_ ));
 DESCR("Finish taking an online backup");
 
+DATA(insert OID = 2621 ( pg_reload_conf         PGNSP PGUID 12 f f t f v 0 23 "" _null_ _null_ _null_ pg_reload_conf - _null_ ));
+DESCR("Reload configuration files");
+
+DATA(insert OID = 2622 ( pg_rotate_logfile		PGNSP PGUID 12 f f t f v 0 23 "" _null_ _null_ _null_ pg_rotate_logfile - _null_ ));
+DESCR("Rotate log file");
+
+
+DATA(insert OID = 2623 ( pg_stat_file	    PGNSP PGUID 12 f f t f v 1 2249 "25" _null_ _null_ _null_ pg_stat_file - _null_ ));
+DESCR("Return file information");
+DATA(insert OID = 2624 ( pg_file_length	    PGNSP PGUID 14 f f t f v 1 20 "25" _null_ _null_ _null_ "SELECT len FROM pg_stat_file($1) AS s(len int8, c timestamp, a timestamp, m timestamp, i bool)" - _null_ ));
+DESCR("Return file length");
+DATA(insert OID = 2625 ( pg_read_file	    PGNSP PGUID 12 f f t f v 3 25 "25 20 20" _null_ _null_ _null_ pg_read_file - _null_ ));
+DESCR("Read text from a file");
+DATA(insert OID = 2626 ( pg_ls_dir		    PGNSP PGUID 12 f f t t v 1 25 "25" _null_ _null_ _null_ pg_ls_dir - _null_ ));
+DESCR("List all file in a directory");
+
+  
 /* Aggregates (moved here from pg_aggregate for 7.3) */
 
 DATA(insert OID = 2100 (  avg				PGNSP PGUID 12 t f f f i 1 1700 "20" _null_ _null_ _null_  aggregate_dummy - _null_ ));
