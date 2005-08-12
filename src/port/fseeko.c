@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/fseeko.c,v 1.17 2004/12/31 22:03:53 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/port/fseeko.c,v 1.17.4.1 2005/08/12 00:29:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,6 +72,7 @@ fseeko(FILE *stream, off_t offset, int whence)
 			if (fstat(fileno(stream), &filestat) != 0)
 				goto failure;
 			floc = filestat.st_size;
+			floc += offset;
 			if (fsetpos(stream, &floc) != 0)
 				goto failure;
 #ifdef bsdi
