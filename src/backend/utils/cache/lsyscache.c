@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.126 2005/06/28 05:09:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.127 2005/08/12 21:49:47 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -1223,13 +1223,14 @@ getTypeIOParam(HeapTuple typeTuple)
 	Form_pg_type typeStruct = (Form_pg_type) GETSTRUCT(typeTuple);
 
 	/*
-	 * Composite types get their own OID as parameter; array types get
-	 * their typelem as parameter; everybody else gets zero.
+	 * Array types get their typelem as parameter; everybody else gets
+	 * their own type OID as parameter.  (This is a change from 8.0,
+	 * in which only composite types got their own OID as parameter.)
 	 */
-	if (typeStruct->typtype == 'c')
-		return HeapTupleGetOid(typeTuple);
-	else
+	if (OidIsValid(typeStruct->typelem))
 		return typeStruct->typelem;
+	else
+		return HeapTupleGetOid(typeTuple);
 }
 
 /*
