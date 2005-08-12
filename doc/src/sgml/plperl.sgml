@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.42 2005/07/13 02:10:42 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.43 2005/08/12 21:42:53 momjian Exp $
 -->
 
  <chapter id="plperl">
@@ -46,7 +46,12 @@ $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.42 2005/07/13 02:10:42 neilc Exp
   <para>
    To create a function in the PL/Perl language, use the standard
    <xref linkend="sql-createfunction" endterm="sql-createfunction-title">
-   syntax:
+   syntax.  A PL/Perl function must always return a scalar value.  You
+   can return more complex structures (arrays, records, and sets) 
+   in the appropriate context by returning a reference.
+   Never return a list.  Here follows an example of a PL/Perl
+   function.
+
 <programlisting>
 CREATE FUNCTION <replaceable>funcname</replaceable> (<replaceable>argument-types</replaceable>) RETURNS <replaceable>return-type</replaceable> AS $$
     # PL/Perl function body
@@ -282,7 +287,7 @@ SELECT * FROM perl_set();
   </para>
 
   <para>
-   PL/Perl provides two additional Perl commands:
+   PL/Perl provides three additional Perl commands:
 
    <variablelist>
     <varlistentry>
@@ -293,11 +298,18 @@ SELECT * FROM perl_set();
 
      <term><literal><function>spi_exec_query</>(<replaceable>query</replaceable> [, <replaceable>max-rows</replaceable>])</literal></term>
      <term><literal><function>spi_exec_query</>(<replaceable>command</replaceable>)</literal></term>
+     <term><literal><function>spi_query</>(<replaceable>command</replaceable>)</literal></term>
+     <term><literal><function>spi_fetchrow</>(<replaceable>command</replaceable>)</literal></term>
+
      <listitem>
       <para>
-       Executes an SQL command.  Here is an example of a query
-       (<command>SELECT</command> command) with the optional maximum
-       number of rows:
+       <literal>spi_exec_query</literal> executes an SQL command and
+returns the entire rowset as a reference to an array of hash
+references.  <emphasis>You should only use this command when you know
+that the result set will be relatively small.</emphasis>  Here is an
+example of a query (<command>SELECT</command> command) with the
+optional maximum number of rows:
+
 <programlisting>
 $rv = spi_exec_query('SELECT * FROM my_table', 5);
 </programlisting>
@@ -345,7 +357,7 @@ INSERT INTO test (i, v) VALUES (2, 'second line');
 INSERT INTO test (i, v) VALUES (3, 'third line');
 INSERT INTO test (i, v) VALUES (4, 'immortal');
 
-CREATE FUNCTION test_munge() RETURNS SETOF test AS $$
+CREATE OR REPLACE FUNCTION test_munge() RETURNS SETOF test AS $$
     my $rv = spi_exec_query('select i, v from test;');
     my $status = $rv-&gt;{status};
     my $nrows = $rv-&gt;{processed};
@@ -360,7 +372,45 @@ $$ LANGUAGE plperl;
 
 SELECT * FROM test_munge();
 </programlisting>
-      </para>
+    </para>
+    <para>
+    <literal>spi_query</literal> and <literal>spi_fetchrow</literal>
+    work together as a pair for rowsets which may be large, or for cases
+    where you wish to return rows as they arrive.
+    <literal>spi_fetchrow</literal> works <emphasis>only</emphasis> with
+    <literal>spi_query</literal>. The following example illustrates how
+    you use them together:
+
+<programlisting>
+CREATE TYPE foo_type AS (the_num INTEGER, the_text TEXT);
+
+CREATE OR REPLACE FUNCTION lotsa_md5 (INTEGER) RETURNS SETOF foo_type AS $$
+    use Digest::MD5 qw(md5_hex);
+    my $file = '/usr/share/dict/words';
+    my $t = localtime;
+    elog(NOTICE, "opening file $file at $t" );
+    open my $fh, '&lt;', $file # ooh, it's a file access!
+        or elog(ERROR, "Can't open $file for reading: $!");
+    my @words = &lt;$fh&gt;;
+    close $fh;
+    $t = localtime;
+    elog(NOTICE, "closed file $file at $t");
+    chomp(@words);
+    my $row;
+    my $sth = spi_query("SELECT * FROM generate_series(1,$_[0]) AS b(a)");
+    while (defined ($row = spi_fetchrow($sth))) {
+        return_next({
+            the_num =&gt; $row-&gt;{a},
+            the_text =&gt; md5_hex($words[rand @words])
+        });
+    }
+    return;
+$$ LANGUAGE plperlu;
+
+SELECT * from lotsa_md5(500);
+</programlisting>
+    </para>
+
      </listitem>
     </varlistentry>
 
@@ -716,10 +766,20 @@ CREATE TRIGGER test_valid_id_trig
 
     <listitem>
      <para>
-      In the current implementation, if you are fetching or returning
-      very large data sets, you should be aware that these will all go
-      into memory.
+      If you are fetching very large data sets using
+      <literal>spi_exec_query</literal>, you should be aware that
+      these will all go into memory.  You can avoid this by using
+      <literal>spi_query</literal>/<literal>spi_fetchrow</literal> as
+      illustrated earlier.
      </para>
+     <para>
+        A similar problem occurs if a set-returning function passes a
+        large set of rows back to postgres via <literal>return</literal>. You
+        can avoid this problem too by instead using
+        <literal>return_next</literal> for each row returned, as shown
+        previously.
+     </para>
+
     </listitem>
    </itemizedlist>
   </para>
