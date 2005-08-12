@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.87 2005/08/12 20:48:03 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.88 2005/08/12 21:09:34 momjian Exp $
  *
  **********************************************************************/
 
@@ -909,7 +909,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	SV		   *perlret;
 	Datum		retval;
 	ReturnSetInfo *rsi;
-        SV* array_ret = NULL;
+	SV* array_ret = NULL;
 
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "could not connect to SPI manager");
@@ -920,6 +920,8 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	plperl_current_caller_info = fcinfo;
 	plperl_current_tuple_store = 0;
 	plperl_current_tuple_desc = 0;
+
+	rsi = (ReturnSetInfo *)fcinfo->resultinfo;
 
 	if (!rsi || !IsA(rsi, ReturnSetInfo) ||
 		(rsi->allowedModes & SFRM_Materialize) == 0 ||
@@ -941,8 +943,6 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	 ************************************************************/
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish() failed");
-
-	rsi = (ReturnSetInfo *)fcinfo->resultinfo;
 
 	if (prodesc->fn_retisset) 
 	{
