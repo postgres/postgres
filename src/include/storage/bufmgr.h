@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.94 2005/08/08 03:12:16 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.95 2005/08/12 05:05:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@ extern int	bgwriter_lru_maxpages;
 extern int	bgwriter_all_maxpages;
 
 /* in buf_init.c */
-extern DLLIMPORT Block *BufferBlockPointers;
+extern DLLIMPORT char *BufferBlocks;
 extern DLLIMPORT int32 *PrivateRefCount;
 
 /* in localbuf.c */
@@ -107,7 +107,7 @@ extern DLLIMPORT int32 *LocalRefCount;
 	BufferIsLocal(buffer) ? \
 		LocalBufferBlockPointers[-(buffer) - 1] \
 	: \
-		BufferBlockPointers[(buffer) - 1] \
+		(Block) (BufferBlocks + ((Size) ((buffer) - 1)) * BLCKSZ) \
 )
 
 /*

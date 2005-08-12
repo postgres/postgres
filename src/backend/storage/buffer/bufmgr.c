@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.192 2005/08/08 19:44:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.193 2005/08/12 05:05:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@
 
 
 /* Note: these two macros only work on shared buffers, not local ones! */
-#define BufHdrGetBlock(bufHdr)	BufferBlockPointers[(bufHdr)->buf_id]
+#define BufHdrGetBlock(bufHdr)	((Block) (BufferBlocks + ((Size) (bufHdr)->buf_id) * BLCKSZ))
 #define BufferGetLSN(bufHdr)	(*((XLogRecPtr*) BufHdrGetBlock(bufHdr)))
 
 /* Note: this macro only works on local buffers, not shared ones! */

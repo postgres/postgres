@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_init.c,v 1.74 2005/08/08 03:11:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_init.c,v 1.75 2005/08/12 05:05:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,10 +19,8 @@
 
 
 BufferDesc *BufferDescriptors;
-Block	   *BufferBlockPointers;
+char	   *BufferBlocks;
 int32	   *PrivateRefCount;
-
-static char *BufferBlocks;
 
 /* statistics counters */
 long int	ReadBufferCount;
@@ -154,30 +152,11 @@ InitBufferPool(void)
 void
 InitBufferPoolAccess(void)
 {
-	char	   *block;
-	int			i;
-
 	/*
 	 * Allocate and zero local arrays of per-buffer info.
 	 */
-	BufferBlockPointers = (Block *) calloc(NBuffers,
-										   sizeof(*BufferBlockPointers));
 	PrivateRefCount = (int32 *) calloc(NBuffers,
 									   sizeof(*PrivateRefCount));
-
-	/*
-	 * Construct addresses for the individual buffer data blocks.  We do
-	 * this just to speed up the BufferGetBlock() macro.  (Since the
-	 * addresses should be the same in every backend, we could inherit
-	 * this data from the postmaster --- but in the EXEC_BACKEND case
-	 * that doesn't work.)
-	 */
-	block = BufferBlocks;
-	for (i = 0; i < NBuffers; i++)
-	{
-		BufferBlockPointers[i] = (Block) block;
-		block += BLCKSZ;
-	}
 }
 
 /*
