@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.56 2005/08/12 19:43:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.57 2005/08/12 21:07:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -225,7 +225,9 @@ void
 canonicalize_path(char *path)
 {
 	char	   *p, *to_p;
+	char	   *spath;
 	bool		was_sep = false;
+	int			pending_strips;
 
 #ifdef WIN32
 	/*
@@ -277,30 +279,89 @@ canonicalize_path(char *path)
 
 	/*
 	 * Remove any trailing uses of "." and process ".." ourselves
+	 *
+	 * Note that "/../.." should reduce to just "/", while "../.." has to
+	 * be kept as-is.  In the latter case we put back mistakenly trimmed
+	 * ".." components below.  Also note that we want a Windows drive spec
+	 * to be visible to trim_directory(), but it's not part of the logic
+	 * that's looking at the name components; hence distinction between
+	 * path and spath.
 	 */
+	spath = skip_drive(path);
+	pending_strips = 0;
 	for (;;)
 	{
-		int			len = strlen(path);
+		int			len = strlen(spath);
 
-		if (len > 2 && strcmp(path + len - 2, "/.") == 0)
+		if (len >= 2 && strcmp(spath + len - 2, "/.") == 0)
 			trim_directory(path);
-		/*
-		 *	Process only a single trailing "..", and only if ".." does
-		 *	not preceed it.
-		 *	So, we only deal with "/usr/local/..", not with "/usr/local/../..".
-		 *	We don't handle the even more complex cases, like
-		 *	"usr/local/../../..".
-		 */
-		else if (len > 3 && strcmp(path + len - 3, "/..") == 0 &&
-				 (len != 5 || strcmp(path, "../..") != 0) &&
-				 (len < 6 || strcmp(path + len - 6, "/../..") != 0))
+		else if (strcmp(spath, ".") == 0)
+		{
+			/* Want to leave "." alone, but "./.." has to become ".." */
+			if (pending_strips > 0)
+				*spath = '\0';
+			break;
+		}
+		else if ((len >= 3 && strcmp(spath + len - 3, "/..") == 0) ||
+				 strcmp(spath, "..") == 0)
 		{
 			trim_directory(path);
-			trim_directory(path);	/* remove directory above */
+			pending_strips++;
+		}
+		else if (pending_strips > 0 && *spath != '\0')
+		{
+			/* trim a regular directory name cancelled by ".." */
+			trim_directory(path);
+			pending_strips--;
+			/* foo/.. should become ".", not empty */
+			if (*spath == '\0')
+				strcpy(spath, ".");
 		}
 		else
 			break;
 	}
+
+	if (pending_strips > 0)
+	{
+		/*
+		 * We could only get here if path is now totally empty (other than
+		 * a possible drive specifier on Windows).
+		 * We have to put back one or more ".."'s that we took off.
+		 */
+		while (--pending_strips > 0)
+			strcat(path, "../");
+		strcat(path, "..");
+	}
+}
+
+/*
+ * Detect whether a path contains any parent-directory references ("..")
+ *
+ * The input *must* have been put through canonicalize_path previously.
+ *
+ * This is a bit tricky because we mustn't be fooled by "..a.." (legal)
+ * nor "C:.." (legal on Unix but not Windows).
+ */
+bool
+path_contains_parent_reference(const char *path)
+{
+	int		path_len;
+
+	path = skip_drive(path);	/* C: shouldn't affect our conclusion */
+
+	path_len = strlen(path);
+
+	/*
+	 * ".." could be the whole path; otherwise, if it's present it must
+	 * be at the beginning, in the middle, or at the end.
+	 */
+	if (strcmp(path, "..") == 0 ||
+		strncmp(path, "../", 3) == 0 ||
+		strstr(path, "/../") != NULL ||
+		(path_len >= 3 && strcmp(path + path_len - 3, "/..") == 0))
+		return true;
+
+	return false;
 }
 
 

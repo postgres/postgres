@@ -9,7 +9,7 @@
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.2 2005/08/12 18:23:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.3 2005/08/12 21:07:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,33 +46,19 @@ typedef struct
 static char *
 check_and_make_absolute(text *arg)
 {
-	int filename_len = VARSIZE(arg) - VARHDRSZ;
-	char *filename = palloc(filename_len + 1);
+	int input_len = VARSIZE(arg) - VARHDRSZ;
+	char *filename = palloc(input_len + 1);
 	
-	memcpy(filename, VARDATA(arg), filename_len);
-	filename[filename_len] = '\0';
+	memcpy(filename, VARDATA(arg), input_len);
+	filename[input_len] = '\0';
 
-	canonicalize_path(filename);
-	filename_len = strlen(filename);	/* recompute */
+	canonicalize_path(filename);	/* filename can change length here */
 
-	/*
-	 *	Prevent reference to the parent directory.
-	 *	"..a.." is a valid file name though.
-	 *
-	 * XXX this is BROKEN because it fails to prevent "C:.." on Windows.
-	 * Need access to "skip_drive" functionality to do it right.  (There
-	 * is no actual security hole because we'll prepend the DataDir below,
-	 * resulting in a just-plain-broken path, but we should give the right
-	 * error message instead.)
-	 */
-	if (strcmp(filename, "..") == 0 ||						/* whole */
-		strncmp(filename, "../", 3) == 0 ||					/* beginning */
-		strstr(filename, "/../") != NULL ||					/* middle */
-		(filename_len >= 3 &&
-		 strcmp(filename + filename_len - 3, "/..") == 0))	/* end */
-			ereport(ERROR,
-				  (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				   (errmsg("reference to parent directory (\"..\") not allowed"))));
+	/* Disallow ".." in the path */
+	if (path_contains_parent_reference(filename))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("reference to parent directory (\"..\") not allowed"))));
 
 	if (is_absolute_path(filename))
 	{
@@ -90,7 +76,7 @@ check_and_make_absolute(text *arg)
 	}
 	else
 	{
-	    char *absname = palloc(strlen(DataDir) + filename_len + 2);
+	    char *absname = palloc(strlen(DataDir) + strlen(filename) + 2);
 		sprintf(absname, "%s/%s", DataDir, filename);
 		pfree(filename);
 		return absname;
