@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/pl/plpython/Makefile,v 1.21 2005/05/24 17:07:41 tgl Exp $
+# $PostgreSQL: pgsql/src/pl/plpython/Makefile,v 1.22 2005/08/12 20:57:11 momjian Exp $
 
 subdir = src/pl/plpython
 top_builddir = ../../..
@@ -9,7 +9,7 @@ include $(top_builddir)/src/Makefile.global
 # shared library.  Since there is no official way to determine this
 # (at least not in pre-2.3 Python), we see if there is a file that is
 # named like a shared library.
-ifneq (,$(wildcard $(python_libdir)/libpython*$(DLSUFFIX)*))
+ifneq (,$(wildcard $(python_libdir)/../../libpython*$(DLSUFFIX)*))
 shared_libpython = yes
 endif
 
