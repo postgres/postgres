@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.88 2005/08/12 21:09:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.89 2005/08/12 21:26:32 tgl Exp $
  *
  **********************************************************************/
 
@@ -923,14 +923,16 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 
 	rsi = (ReturnSetInfo *)fcinfo->resultinfo;
 
-	if (!rsi || !IsA(rsi, ReturnSetInfo) ||
-		(rsi->allowedModes & SFRM_Materialize) == 0 ||
-		rsi->expectedDesc == NULL)
+	if (prodesc->fn_retisset)
 	{
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("set-valued function called in context that "
-						"cannot accept a set")));
+		/* Check context before allowing the call to go through */
+		if (!rsi || !IsA(rsi, ReturnSetInfo) ||
+			(rsi->allowedModes & SFRM_Materialize) == 0 ||
+			rsi->expectedDesc == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("set-valued function called in context that "
+							"cannot accept a set")));
 	}
 
 	perlret = plperl_call_perl_func(prodesc, fcinfo);
@@ -944,12 +946,14 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish() failed");
 
-	if (prodesc->fn_retisset) 
+	if (prodesc->fn_retisset)
 	{
-		/* If the Perl function returned an arrayref, we pretend that it
+		/*
+		 * If the Perl function returned an arrayref, we pretend that it
 		 * called return_next() for each element of the array, to handle
 		 * old SRFs that didn't know about return_next(). Any other sort
-		 * of return value is an error. */
+		 * of return value is an error.
+		 */
 		if (SvTYPE(perlret) == SVt_RV &&
 			SvTYPE(SvRV(perlret)) == SVt_PVAV)
 		{
