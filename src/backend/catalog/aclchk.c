@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.116 2005/07/26 16:38:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.117 2005/08/12 21:20:24 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -388,6 +388,9 @@ ExecuteGrantStmt_Relation(GrantStmt *stmt)
 		pfree(new_acl);
 
 		heap_close(relation, RowExclusiveLock);
+
+		/* prevent error when processing duplicate objects */
+		CommandCounterIncrement();
 	}
 }
 
@@ -565,6 +568,9 @@ ExecuteGrantStmt_Database(GrantStmt *stmt)
 		heap_endscan(scan);
 
 		heap_close(relation, RowExclusiveLock);
+
+		/* prevent error when processing duplicate objects */
+		CommandCounterIncrement();
 	}
 }
 
@@ -738,6 +744,9 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 		pfree(new_acl);
 
 		heap_close(relation, RowExclusiveLock);
+
+		/* prevent error when processing duplicate objects */
+		CommandCounterIncrement();
 	}
 }
 
@@ -920,6 +929,9 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 		pfree(new_acl);
 
 		heap_close(relation, RowExclusiveLock);
+
+		/* prevent error when processing duplicate objects */
+		CommandCounterIncrement();
 	}
 }
 
@@ -1093,6 +1105,9 @@ ExecuteGrantStmt_Namespace(GrantStmt *stmt)
 		pfree(new_acl);
 
 		heap_close(relation, RowExclusiveLock);
+
+		/* prevent error when processing duplicate objects */
+		CommandCounterIncrement();
 	}
 }
 
@@ -1269,6 +1284,9 @@ ExecuteGrantStmt_Tablespace(GrantStmt *stmt)
 
 		heap_endscan(scan);
 		heap_close(relation, RowExclusiveLock);
+
+		/* prevent error when processing duplicate objects */
+		CommandCounterIncrement();
 	}
 }
 
