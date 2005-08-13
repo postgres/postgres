@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/catcache.h,v 1.54 2005/04/14 20:03:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/catcache.h,v 1.55 2005/08/13 22:18:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,21 +79,25 @@ typedef struct catctup
 	 * Each tuple in a cache is a member of two Dllists: one lists all the
 	 * elements in all the caches in LRU order, and the other lists just
 	 * the elements in one hashbucket of one cache, also in LRU order.
-	 *
+	 */
+	Dlelem		lrulist_elem;	/* list member of global LRU list */
+	Dlelem		cache_elem;		/* list member of per-bucket list */
+
+	/*
 	 * The tuple may also be a member of at most one CatCList.	(If a single
 	 * catcache is list-searched with varying numbers of keys, we may have
 	 * to make multiple entries for the same tuple because of this
 	 * restriction.  Currently, that's not expected to be common, so we
 	 * accept the potential inefficiency.)
 	 */
-	Dlelem		lrulist_elem;	/* list member of global LRU list */
-	Dlelem		cache_elem;		/* list member of per-bucket list */
-	struct catclist *c_list;	/* containing catclist, or NULL if none */
+	struct catclist *c_list;	/* containing CatCList, or NULL if none */
 
 	/*
 	 * A tuple marked "dead" must not be returned by subsequent searches.
 	 * However, it won't be physically deleted from the cache until its
-	 * refcount goes to zero.
+	 * refcount goes to zero.  (If it's a member of a CatCList, the list's
+	 * refcount must go to zero, too; also, remember to mark the list dead
+	 * at the same time the tuple is marked.)
 	 *
 	 * A negative cache entry is an assertion that there is no tuple matching
 	 * a particular key.  This is just as useful as a normal entry so far
@@ -123,14 +127,13 @@ typedef struct catclist
 	 * none of these will be negative cache entries.)
 	 *
 	 * A CatCList is only a member of a per-cache list; we do not do separate
-	 * LRU management for CatCLists.  Instead, a CatCList is dropped from
-	 * the cache as soon as any one of its member tuples ages out due to
-	 * tuple-level LRU management.
+	 * LRU management for CatCLists.  See CatalogCacheCleanup() for the
+	 * details of the management algorithm.
 	 *
 	 * A list marked "dead" must not be returned by subsequent searches.
 	 * However, it won't be physically deleted from the cache until its
-	 * refcount goes to zero.  (Its member tuples must have refcounts at
-	 * least as large, so they won't go away either.)
+	 * refcount goes to zero.  (A list should be marked dead if any of its
+	 * member entries are dead.)
 	 *
 	 * If "ordered" is true then the member tuples appear in the order of the
 	 * cache's underlying index.  This will be true in normal operation,
@@ -141,6 +144,7 @@ typedef struct catclist
 	int			refcount;		/* number of active references */
 	bool		dead;			/* dead but not yet removed? */
 	bool		ordered;		/* members listed in index order? */
+	bool		touched;		/* used since last CatalogCacheCleanup? */
 	short		nkeys;			/* number of lookup keys specified */
 	uint32		hash_value;		/* hash value for lookup keys */
 	HeapTupleData tuple;		/* header for tuple holding keys */

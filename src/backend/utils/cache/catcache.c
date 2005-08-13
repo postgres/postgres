@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.122 2005/08/08 19:17:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.123 2005/08/13 22:18:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,6 +97,7 @@ static void CatalogCacheInitializeCache(CatCache *cache);
 static CatCTup *CatalogCacheCreateEntry(CatCache *cache, HeapTuple ntp,
 						uint32 hashValue, Index hashIndex,
 						bool negative);
+static void CatalogCacheCleanup(CatCTup *savect);
 static HeapTuple build_dummy_tuple(CatCache *cache, int nkeys, ScanKey skeys);
 
 
@@ -344,6 +345,7 @@ CatCachePrintStats(void)
  * Unlink and delete the given cache entry
  *
  * NB: if it is a member of a CatCList, the CatCList is deleted too.
+ * Both the cache entry and the list had better have zero refcount.
  */
 static void
 CatCacheRemoveCTup(CatCache *cache, CatCTup *ct)
@@ -481,8 +483,13 @@ CatalogCacheIdInvalidate(int cacheId,
 			if (ct->negative ||
 				ItemPointerEquals(pointer, &ct->tuple.t_self))
 			{
-				if (ct->refcount > 0)
+				if (ct->refcount > 0 ||
+					(ct->c_list && ct->c_list->refcount > 0))
+				{
 					ct->dead = true;
+					/* list, if any, was marked dead above */
+					Assert(ct->c_list == NULL || ct->c_list->dead);
+				}
 				else
 					CatCacheRemoveCTup(ccp, ct);
 				CACHE1_elog(DEBUG2, "CatalogCacheIdInvalidate: invalidated");
@@ -606,8 +613,13 @@ ResetCatalogCache(CatCache *cache)
 
 			nextelt = DLGetSucc(elt);
 
-			if (ct->refcount > 0)
+			if (ct->refcount > 0 ||
+				(ct->c_list && ct->c_list->refcount > 0))
+			{
 				ct->dead = true;
+				/* list, if any, was marked dead above */
+				Assert(ct->c_list == NULL || ct->c_list->dead);
+			}
 			else
 				CatCacheRemoveCTup(cache, ct);
 #ifdef CATCACHE_STATS
@@ -718,8 +730,14 @@ CatalogCacheFlushRelation(Oid relId)
 
 				if (tupRelid == relId)
 				{
-					if (ct->refcount > 0)
+					if (ct->refcount > 0 ||
+						(ct->c_list && ct->c_list->refcount > 0))
+					{
 						ct->dead = true;
+						/* parent list must be considered dead too */
+						if (ct->c_list)
+							ct->c_list->dead = true;
+					}
 					else
 						CatCacheRemoveCTup(cache, ct);
 #ifdef CATCACHE_STATS
@@ -1279,11 +1297,12 @@ ReleaseCatCache(HeapTuple tuple)
 	ct->refcount--;
 	ResourceOwnerForgetCatCacheRef(CurrentResourceOwner, &ct->tuple);
 
-	if (ct->refcount == 0
+	if (
 #ifndef CATCACHE_FORCE_RELEASE
-		&& ct->dead
+		ct->dead &&
 #endif
-		)
+		ct->refcount == 0 &&
+		(ct->c_list == NULL || ct->c_list->refcount == 0))
 		CatCacheRemoveCTup(ct->my_cache, ct);
 }
 
@@ -1377,24 +1396,18 @@ SearchCatCacheList(CatCache *cache,
 			continue;
 
 		/*
-		 * we found a matching list: move each of its members to the front
-		 * of the global LRU list.	Also move the list itself to the front
-		 * of the cache's list-of-lists, to speed subsequent searches. (We
-		 * do not move the members to the fronts of their hashbucket
+		 * We found a matching list: mark it as touched since the last
+		 * CatalogCacheCleanup() sweep.  Also move the list to the front
+		 * of the cache's list-of-lists, to speed subsequent searches.
+		 * (We do not move the members to the fronts of their hashbucket
 		 * lists, however, since there's no point in that unless they are
-		 * searched for individually.)	Also bump the members' refcounts.
-		 * (member refcounts are NOT registered separately with the
-		 * resource owner.)
+		 * searched for individually.)
 		 */
-		ResourceOwnerEnlargeCatCacheListRefs(CurrentResourceOwner);
-		for (i = 0; i < cl->n_members; i++)
-		{
-			cl->members[i]->refcount++;
-			DLMoveToFront(&cl->members[i]->lrulist_elem);
-		}
+		cl->touched = true;
 		DLMoveToFront(&cl->cache_elem);
 
 		/* Bump the list's refcount and return it */
+		ResourceOwnerEnlargeCatCacheListRefs(CurrentResourceOwner);
 		cl->refcount++;
 		ResourceOwnerRememberCatCacheListRef(CurrentResourceOwner, cl);
 
@@ -1413,7 +1426,7 @@ SearchCatCacheList(CatCache *cache,
 	 * relation.  For each matching tuple found in the relation, use an
 	 * existing cache entry if possible, else build a new one.
 	 *
-	 * We have to bump the member refcounts immediately to ensure they
+	 * We have to bump the member refcounts temporarily to ensure they
 	 * won't get dropped from the cache while loading other members.
 	 * We use a PG_TRY block to ensure we can undo those refcounts if
 	 * we get an error before we finish constructing the CatCList.
@@ -1488,6 +1501,7 @@ SearchCatCacheList(CatCache *cache,
 			}
 
 			/* Careful here: add entry to ctlist, then bump its refcount */
+			/* This way leaves state correct if lappend runs out of memory */
 			ctlist = lappend(ctlist, ct);
 			ct->refcount++;
 		}
@@ -1526,11 +1540,12 @@ SearchCatCacheList(CatCache *cache,
 			Assert(ct->c_list == NULL);
 			Assert(ct->refcount > 0);
 			ct->refcount--;
-			if (ct->refcount == 0
+			if (
 #ifndef CATCACHE_FORCE_RELEASE
-				&& ct->dead
+				ct->dead &&
 #endif
-				)
+				ct->refcount == 0 &&
+				(ct->c_list == NULL || ct->c_list->refcount == 0))
 				CatCacheRemoveCTup(cache, ct);
 		}
 
@@ -1544,6 +1559,7 @@ SearchCatCacheList(CatCache *cache,
 	cl->refcount = 0;			/* for the moment */
 	cl->dead = false;
 	cl->ordered = ordered;
+	cl->touched = false;		/* we already moved members to front */
 	cl->nkeys = nkeys;
 	cl->hash_value = lHashValue;
 	cl->n_members = nmembers;
@@ -1554,6 +1570,9 @@ SearchCatCacheList(CatCache *cache,
 		cl->members[i++] = ct = (CatCTup *) lfirst(ctlist_item);
 		Assert(ct->c_list == NULL);
 		ct->c_list = cl;
+		/* release the temporary refcount on the member */
+		Assert(ct->refcount > 0);
+		ct->refcount--;
 		/* mark list dead if any members already dead */
 		if (ct->dead)
 			cl->dead = true;
@@ -1575,38 +1594,22 @@ SearchCatCacheList(CatCache *cache,
 /*
  *	ReleaseCatCacheList
  *
- *	Decrement the reference counts of a catcache list.
+ *	Decrement the reference count of a catcache list.
  */
 void
 ReleaseCatCacheList(CatCList *list)
 {
-	int			i;
-
 	/* Safety checks to ensure we were handed a cache entry */
 	Assert(list->cl_magic == CL_MAGIC);
 	Assert(list->refcount > 0);
-
-	for (i = list->n_members; --i >= 0;)
-	{
-		CatCTup    *ct = list->members[i];
-
-		Assert(ct->refcount > 0);
-
-		ct->refcount--;
-
-		if (ct->dead)
-			list->dead = true;
-		/* can't remove tuple before list is removed */
-	}
-
 	list->refcount--;
 	ResourceOwnerForgetCatCacheListRef(CurrentResourceOwner, list);
 
-	if (list->refcount == 0
+	if (
 #ifndef CATCACHE_FORCE_RELEASE
-		&& list->dead
+		list->dead &&
 #endif
-		)
+		list->refcount == 0)
 		CatCacheRemoveCList(list->my_cache, list);
 }
 
@@ -1654,35 +1657,87 @@ CatalogCacheCreateEntry(CatCache *cache, HeapTuple ntp,
 
 	/*
 	 * If we've exceeded the desired size of the caches, try to throw away
-	 * the least recently used entry.  NB: be careful not to throw away
+	 * the least recently used entry(s).  NB: be careful not to throw away
 	 * the newly-built entry...
 	 */
 	if (CacheHdr->ch_ntup > CacheHdr->ch_maxtup)
+		CatalogCacheCleanup(ct);
+
+	return ct;
+}
+
+/*
+ * CatalogCacheCleanup
+ *		Try to reduce the size of the catcaches when they get too big
+ *
+ * savect can be NULL, or a specific CatCTup not to remove even if it
+ * has zero refcount.
+ */
+static void
+CatalogCacheCleanup(CatCTup *savect)
+{
+	int			tup_target;
+	CatCache   *ccp;
+	Dlelem	   *elt,
+			   *prevelt;
+
+	/*
+	 * Each time we have to do this, try to cut the cache size down to
+	 * about 90% of the maximum.
+	 */
+	tup_target = (CacheHdr->ch_maxtup * 9) / 10;
+
+	/*
+	 * Our strategy for managing CatCLists is that, each time we have to
+	 * throw away some cache entries, we first move-to-front all the members
+	 * of CatCLists that have been touched since the last cleanup sweep.
+	 * Then we do strict LRU elimination by individual tuples, zapping a list
+	 * if any of its members gets zapped.  Before PostgreSQL 8.1, we moved
+	 * members to front each time their owning list was touched, which was
+	 * arguably more fair in balancing list members against standalone tuples
+	 * --- but the overhead for large lists was horrendous.  This scheme is
+	 * more heavily biased towards preserving lists, but that is not
+	 * necessarily bad either.
+	 */
+	for (ccp = CacheHdr->ch_caches; ccp; ccp = ccp->cc_next)
 	{
-		Dlelem	   *elt,
-				   *prevelt;
-
-		for (elt = DLGetTail(&CacheHdr->ch_lrulist); elt; elt = prevelt)
+		for (elt = DLGetHead(&ccp->cc_lists); elt; elt = DLGetSucc(elt))
 		{
-			CatCTup    *oldct = (CatCTup *) DLE_VAL(elt);
+			CatCList   *cl = (CatCList *) DLE_VAL(elt);
 
-			prevelt = DLGetPred(elt);
-
-			if (oldct->refcount == 0 && oldct != ct)
+			Assert(cl->cl_magic == CL_MAGIC);
+			if (cl->touched && !cl->dead)
 			{
-				CACHE2_elog(DEBUG2, "CatCacheCreateEntry(%s): Overflow, LRU removal",
-							cache->cc_relname);
-#ifdef CATCACHE_STATS
-				oldct->my_cache->cc_discards++;
-#endif
-				CatCacheRemoveCTup(oldct->my_cache, oldct);
-				if (CacheHdr->ch_ntup <= CacheHdr->ch_maxtup)
-					break;
+				int		i;
+
+				for (i = 0; i < cl->n_members; i++)
+					DLMoveToFront(&cl->members[i]->lrulist_elem);
 			}
+			cl->touched = false;
 		}
 	}
 
-	return ct;
+	/* Now get rid of unreferenced tuples in reverse global LRU order */
+	for (elt = DLGetTail(&CacheHdr->ch_lrulist); elt; elt = prevelt)
+	{
+		CatCTup    *ct = (CatCTup *) DLE_VAL(elt);
+
+		prevelt = DLGetPred(elt);
+
+		if (ct->refcount == 0 &&
+			(ct->c_list == NULL || ct->c_list->refcount == 0) &&
+			ct != savect)
+		{
+#ifdef CATCACHE_STATS
+			ct->my_cache->cc_discards++;
+#endif
+			CatCacheRemoveCTup(ct->my_cache, ct);
+
+			/* Quit when we've removed enough tuples */
+			if (CacheHdr->ch_ntup <= tup_target)
+				break;
+		}
+	}
 }
 
 /*
