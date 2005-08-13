@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.279 2005/08/12 18:23:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.280 2005/08/13 19:02:32 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -9064,6 +9064,9 @@ SELECT set_config('log_statement_stats', 'off', false);
    <indexterm zone="functions-admin">
     <primary>pg_reload_conf</primary>
    </indexterm>
+   <indexterm zone="functions-admin">
+    <primary>pg_rotate_logfile</primary>
+   </indexterm>
 
    <indexterm zone="functions-admin">
     <primary>signal</primary>
@@ -9100,21 +9103,42 @@ SELECT set_config('log_statement_stats', 'off', false);
        <entry><type>int</type></entry>
        <entry>Cause server processes to reload their configuration files</entry>
       </row>
+      <row>
+       <entry>
+        <literal><function>pg_rotate_logfile</function>()</literal>
+        </entry>
+       <entry><type>int</type></entry>
+       <entry>Rotate server's logfile</entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
 
    <para>
-    These functions return 1 if successful, 0 if not successful.
-    The process ID (<literal>pid</literal>) of an active backend can be found
-    from the <structfield>procpid</structfield> column in the
-    <structname>pg_stat_activity</structname> view, or by listing the <command>postgres</command>
-    processes on the server with <application>ps</>.
+    Each of these functions returns 1 if successful, 0 if not successful.
    </para>
+
+   <para>
+    <function>pg_cancel_backend</> sends a Query Cancel (SIGINT) signal
+    to a backend process identified by process ID (<literal>pid</literal>).
+    The process ID of an active backend can be found from the
+    <structfield>procpid</structfield> column in the
+    <structname>pg_stat_activity</structname> view, or by listing the
+    <command>postgres</command> processes on the server with
+    <application>ps</>.
+   </para>
+
    <para>
     <function>pg_reload_conf</> sends a SIGHUP signal to the
     postmaster, causing reload of the configuration files
     in all server processes.
+   </para>
+
+   <para>
+    <function>pg_rotate_logfile</> signals the logfile manager to switch
+    to a new output file immediately.  This works only when
+    <varname>redirect_stderr</> is used for logging, since otherwise there
+    is no logfile manager subprocess.
    </para>
 
    <indexterm zone="functions-admin">
@@ -9343,20 +9367,7 @@ SELECT set_config('log_statement_stats', 'off', false);
      <tbody>
       <row>
        <entry>
-        <literal><function>pg_file_length</function>(<parameter>filename</> <type>text</>)</literal>
-         <indexterm zone="functions-admin">
-          <primary>pg_file_length</primary>
-        </indexterm>
-       </entry>
-       <entry><type>int8</type></entry>
-       <entry>Return the file length</entry>
-      </row>
-      <row>
-       <entry>
         <literal><function>pg_ls_dir</function>(<parameter>dirname</> <type>text</>)</literal>
-        <indexterm zone="functions-admin">
-         <primary>pg_ls_dir</primary>
-        </indexterm>
        </entry>
        <entry><type>setof text</type></entry>
        <entry>List the contents of a directory</entry>
@@ -9373,68 +9384,44 @@ SELECT set_config('log_statement_stats', 'off', false);
         <literal><function>pg_stat_file</function>(<parameter>filename</> <type>text</>)</literal>
        </entry>
        <entry><type>record</type></entry>
-       <entry>Return information about the file</entry>
+       <entry>Return information about a file</entry>
       </row>
      </tbody>
     </tgroup>
    </table>
 
    <indexterm zone="functions-admin">
+    <primary>pg_ls_dir</primary>
+   </indexterm>
+   <para>
+    <function>pg_ls_dir()</> returns all the names in the specified
+    directory, except the special entries <quote><literal>.</></> and
+    <quote><literal>..</></>.
+   </para>
+
+   <indexterm zone="functions-admin">
     <primary>pg_read_file</primary>
    </indexterm>
    <para>
-    <function>pg_read_file()</> returns part of a textfile, starting
-    at the given offset, returning at most length bytes (less if the
-    end of file is reached first).  If offset is negative, 
-    it is relative to the end of the file.
+    <function>pg_read_file()</> returns part of a text file, starting
+    at the given <parameter>offset</>, returning at most <parameter>length</>
+    bytes (less if the end of file is reached first).  If <parameter>offset</>
+    is negative, it is relative to the end of the file.
    </para>
 
    <indexterm zone="functions-admin">
     <primary>pg_stat_file</primary>
    </indexterm>
    <para>
-    <function>pg_stat_file()</> returns a record containing the
+    <function>pg_stat_file()</> returns a record containing the file
     length, last accessed timestamp, last modified timestamp, 
-    creation timestamp, and a flag indicating if it is a directory.
-    Use it like this:
+    creation timestamp, and a boolean indicating if it is a directory.
+    Typical usages include:
 <programlisting>
-SELECT *
-FROM pg_stat_file('filename')
-     AS s(length int8, atime timestamptz, mtime timestamptz,
-          ctime timestamptz, isdir bool);
+SELECT * FROM pg_stat_file('filename');
+SELECT (pg_stat_file('filename')).mtime;
 </programlisting>
    </para>
-
-   <para>
-    The function shown in <xref
-    linkend="functions-admin-logfile"> forces the server
-    logfile to be rotated.  This works only when <varname>redirect_stderr</>
-    is used for logging.   Use of this function is restricted
-    to superusers.
-   </para>
-
-   <table id="functions-admin-logfile">
-    <title>Server Logfile Functions</title>
-    <tgroup cols="3">
-     <thead>
-      <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry>
-      </row>
-     </thead>
-
-     <tbody>
-      <row>
-       <entry>
-        <literal><function>pg_rotate_logfile</function>()</literal>
-        <indexterm zone="functions-admin">
-         <primary>pg_rotate_logfile</primary>
-        </indexterm>
-        </entry>
-       <entry><type>int</type></entry>
-       <entry>Rotate server's logfile</entry>
-      </row>
-     </tbody>
-    </tgroup>
-   </table>
 
   </sect1>
 </chapter>

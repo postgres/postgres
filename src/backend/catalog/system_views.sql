@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.18 2005/07/31 17:19:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.19 2005/08/13 19:02:33 tgl Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -331,3 +331,23 @@ CREATE VIEW pg_stat_database AS
                     pg_stat_get_db_blocks_hit(D.oid) AS blks_read, 
             pg_stat_get_db_blocks_hit(D.oid) AS blks_hit 
     FROM pg_database D;
+
+--
+-- Fix up built-in functions that make use of OUT parameters.
+-- We can't currently fill these values in during bootstrap, because
+-- array_in doesn't work in bootstrap mode.  Eventually that should be
+-- fixed, but for now the path of least resistance is to patch their
+-- pg_proc entries later during initdb.
+--
+
+UPDATE pg_proc SET
+  proallargtypes = ARRAY['text'::regtype,
+                         'int8',
+                         'timestamptz',
+                         'timestamptz',
+                         'timestamptz',
+                         'bool'],
+  proargmodes = ARRAY['i'::"char", 'o', 'o', 'o', 'o', 'o'],
+  proargnames = ARRAY['filename'::text,
+                      'length', 'atime', 'mtime', 'ctime','isdir']
+WHERE oid = 'pg_stat_file(text)'::regprocedure;

@@ -9,7 +9,7 @@
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.3 2005/08/12 21:07:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.4 2005/08/13 19:02:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,6 +171,10 @@ pg_stat_file(PG_FUNCTION_ARGS)
 				(errcode_for_file_access(),
 				 errmsg("could not stat file \"%s\": %m", filename)));
 
+	/*
+	 * This record type had better match the output parameters declared
+	 * for me in pg_proc.h (actually, in system_views.sql at the moment).
+	 */
 	tupdesc = CreateTemplateTupleDesc(5, false);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1,
 					   "length", INT8OID, -1, 0);
