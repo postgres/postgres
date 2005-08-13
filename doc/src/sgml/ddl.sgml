@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.43 2005/08/12 01:35:53 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.44 2005/08/13 01:55:41 momjian Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -1122,6 +1122,17 @@ SELECT name, altitude
    support this <quote>ONLY</quote> notation.
   </para>
 
+
+<note>
+  <title>Inheritance and Permissions</title>
+  <para>
+  Because permissions are not inherited automatically a user attempting to access
+  a parent table must either have at least the same permission for the child table
+  or must use the <quote>ONLY</quote> notation. If creating a new inheritance 
+  relationship in an existing system be careful that this does not create problems.
+  </para>
+</note>
+  
   <note>
    <title>Deprecated</title> 
    <para>
