@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/px.c,v 1.13 2005/07/11 15:07:59 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/px.c,v 1.14 2005/08/13 02:06:20 momjian Exp $
  */
 
 #include "postgres.h"
@@ -72,14 +72,14 @@ static const struct error_desc px_err_list[] = {
 	{PXE_PGP_SHORT_ELGAMAL_KEY, "Elgamal keys must be at least 1024 bits long"},
 	{PXE_PGP_RSA_UNSUPPORTED, "pgcrypto does not support RSA keys"},
 	{PXE_PGP_UNKNOWN_PUBALGO, "Unknown public-key encryption algorithm"},
-	{PXE_PGP_WRONG_KEYID, "Data is not encrypted with this key"},
+	{PXE_PGP_WRONG_KEY, "Wrong key"},
 	{PXE_PGP_MULTIPLE_KEYS,
 		"Several keys given - pgcrypto does not handle keyring"},
 	{PXE_PGP_EXPECT_PUBLIC_KEY, "Refusing to encrypt with secret key"},
 	{PXE_PGP_EXPECT_SECRET_KEY, "Cannot decrypt with public key"},
 	{PXE_PGP_NOT_V4_KEYPKT, "Only V4 key packets are supported"},
 	{PXE_PGP_KEYPKT_CORRUPT, "Corrupt key packet"},
-	{PXE_PGP_NO_USABLE_KEY, "No usable key found (expecting Elgamal key)"},
+	{PXE_PGP_NO_USABLE_KEY, "No encryption key found"},
 	{PXE_PGP_NEED_SECRET_PSW, "Need password for secret key"},
 	{PXE_PGP_BAD_S2K_MODE, "Bad S2K mode"},
 	{PXE_PGP_UNSUPPORTED_PUBALGO, "Unsupported public key algorithm"},

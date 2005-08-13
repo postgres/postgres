@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pgsql.c,v 1.3 2005/07/18 17:12:54 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pgsql.c,v 1.4 2005/08/13 02:06:20 momjian Exp $
  */
 
 #include "postgres.h"
@@ -496,7 +496,7 @@ encrypt_internal(int is_pubenc, int is_text,
 		mbuf_free(dst);
 		ereport(ERROR,
 				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
-				 errmsg("pgp_encrypt error: %s", px_strerror(err))));
+				 errmsg("%s", px_strerror(err))));
 	}
 
 	/* res_len includes VARHDRSZ */
@@ -591,7 +591,7 @@ out:
 			mbuf_free(dst);
 		ereport(ERROR,
 				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
-				 errmsg("pgp_decrypt error: %s", px_strerror(err))));
+				 errmsg("%s", px_strerror(err))));
 	}
 
 	res_len = mbuf_steal_data(dst, &restmp);
@@ -879,7 +879,7 @@ pg_dearmor(PG_FUNCTION_ARGS)
 	if (res_len < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
-				 errmsg("dearmor: %s", px_strerror(res_len))));
+				 errmsg("%s", px_strerror(res_len))));
 	if (res_len > guess_len)
 		ereport(ERROR,
 				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
@@ -909,9 +909,7 @@ pgp_key_id_w(PG_FUNCTION_ARGS)
 	buf = create_mbuf_from_vardata(data);
 	res = palloc(VARHDRSZ + 17);
 
-	px_set_debug_handler(show_debug);
 	res_len = pgp_get_keyid(buf, VARDATA(res));
-	px_set_debug_handler(NULL);
 	mbuf_free(buf);
 	if (res_len < 0)
 		ereport(ERROR,

@@ -43,7 +43,7 @@ NOTICE:  pgp_decrypt: unexpected compress_algo: expected 1 got 0
 
 -- bytea as text
 select pgp_sym_decrypt(pgp_sym_encrypt_bytea('Binary', 'baz'), 'baz');
-ERROR:  pgp_decrypt error: Not text data
+ERROR:  Not text data
 -- text as bytea
 select pgp_sym_decrypt_bytea(pgp_sym_encrypt('Text', 'baz'), 'baz');
  pgp_sym_decrypt_bytea 

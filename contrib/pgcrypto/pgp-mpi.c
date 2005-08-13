@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-mpi.c,v 1.2 2005/07/11 15:07:59 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-mpi.c,v 1.3 2005/08/13 02:06:20 momjian Exp $
  */
 #include "postgres.h"
 
@@ -66,6 +66,8 @@ int pgp_mpi_create(uint8 *data, int bits, PGP_MPI **mpi)
 
 int pgp_mpi_free(PGP_MPI *mpi)
 {
+	if (mpi == NULL)
+		return 0;
 	memset(mpi, 0, sizeof(*mpi) + mpi->bytes);
 	px_free(mpi);
 	return 0;
@@ -129,6 +131,6 @@ unsigned pgp_mpi_cksum(unsigned cksum, PGP_MPI *n)
 	for (i = 0; i < n->bytes; i++)
 		cksum += n->data[i];
 
-	return cksum;
+	return cksum & 0xFFFF;
 }
 

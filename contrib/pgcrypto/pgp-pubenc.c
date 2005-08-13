@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pubenc.c,v 1.2 2005/07/11 15:07:59 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pubenc.c,v 1.3 2005/08/13 02:06:20 momjian Exp $
  */
 #include "postgres.h"
 
@@ -84,39 +84,16 @@ pad_eme_pkcs1_v15(uint8 *data, int data_len, int res_len, uint8 **res_p)
 	return 0;
 }
 
-/*
- * Decide the padded message length in bytes.
- * It should be as large as possible, but not larger
- * than p.
- *
- * To get max size (and assuming p may have weird sizes):
- * ((p->bytes * 8 - 6) > p->bits) ? (p->bytes - 1) : p->bytes
- *
- * Following mirrors gnupg behaviour.
- */
 static int
-decide_msglen(PGP_MPI *p)
-{
-	return p->bytes - 1;
-}
-
-static int
-create_secmsg(PGP_Context *ctx, PGP_MPI **msg_p)
+create_secmsg(PGP_Context *ctx, PGP_MPI **msg_p, int full_bytes)
 {
 	uint8 *secmsg;
-	int res, i, full_bytes;
+	int res, i;
 	unsigned cksum = 0;
 	int klen = ctx->sess_key_len;
 	uint8 *padded = NULL;
 	PGP_MPI *m = NULL;
-	PGP_PubKey *pk = ctx->pub_key;
 
-	/*
-	 * Refuse to operate with keys < 1024
-	 */
-	if (pk->elg_p->bits < 1024)
-		return PXE_PGP_SHORT_ELGAMAL_KEY;
-	
 	/* calc checksum */
 	for (i = 0; i < klen; i++)
 		cksum += ctx->sess_key[i];
@@ -133,7 +110,6 @@ create_secmsg(PGP_Context *ctx, PGP_MPI **msg_p)
 	/*
 	 * now create a large integer of it
 	 */
-	full_bytes = decide_msglen(pk->elg_p);
 	res = pad_eme_pkcs1_v15(secmsg, klen + 3, full_bytes, &padded);
 	if (res >= 0)
 	{
@@ -156,37 +132,72 @@ create_secmsg(PGP_Context *ctx, PGP_MPI **msg_p)
 	return res;
 }
 
+static int
+encrypt_and_write_elgamal(PGP_Context *ctx, PGP_PubKey *pk, PushFilter *pkt)
+{
+	int res;
+	PGP_MPI *m = NULL, *c1 = NULL, *c2 = NULL;
+
+	/* create padded msg */
+	res = create_secmsg(ctx, &m, pk->pub.elg.p->bytes - 1);
+	if (res < 0)
+		goto err;
+
+	/* encrypt it */
+	res = pgp_elgamal_encrypt(pk, m, &c1, &c2);
+	if (res < 0)
+		goto err;
+
+	/* write out */
+	res = pgp_mpi_write(pkt, c1);
+	if (res < 0)
+		goto err;
+	res = pgp_mpi_write(pkt, c2);
+
+err:
+	pgp_mpi_free(m);
+	pgp_mpi_free(c1);
+	pgp_mpi_free(c2);
+	return res;
+}
+
+static int
+encrypt_and_write_rsa(PGP_Context *ctx, PGP_PubKey *pk, PushFilter *pkt)
+{
+	int res;
+	PGP_MPI *m = NULL, *c = NULL;
+
+	/* create padded msg */
+	res = create_secmsg(ctx, &m, pk->pub.rsa.n->bytes - 1);
+	if (res < 0)
+		goto err;
+
+	/* encrypt it */
+	res = pgp_rsa_encrypt(pk, m, &c);
+	if (res < 0)
+		goto err;
+
+	/* write out */
+	res = pgp_mpi_write(pkt, c);
+
+err:
+	pgp_mpi_free(m);
+	pgp_mpi_free(c);
+	return res;
+}
+
 int pgp_write_pubenc_sesskey(PGP_Context *ctx, PushFilter *dst)
 {
 	int res;
 	PGP_PubKey *pk = ctx->pub_key;
-	PGP_MPI *m = NULL, *c1 = NULL, *c2 = NULL;
 	uint8 ver = 3;
-	uint8 algo = PGP_PUB_ELG_ENCRYPT;
 	PushFilter *pkt = NULL;
+	uint8 algo = pk->algo;
 
 	if (pk == NULL) {
 		px_debug("no pubkey?\n");
 		return PXE_BUG;
 	}
-	if (!pk->elg_p || !pk->elg_g || !pk->elg_y) {
-		px_debug("pubkey not loaded?\n");
-		return PXE_BUG;
-	}
-
-	/*
-	 * sesskey packet
-	 */
-	res = create_secmsg(ctx, &m);
-	if (res < 0)
-		goto err;
-
-	/*
-	 * encrypt it
-	 */
-	res = pgp_elgamal_encrypt(pk, m, &c1, &c2);
-	if (res < 0)
-		goto err;
 
 	/*
 	 * now write packet
@@ -203,10 +214,17 @@ int pgp_write_pubenc_sesskey(PGP_Context *ctx, PushFilter *dst)
 	res = pushf_write(pkt, &algo, 1);
 	if (res < 0)
 		goto err;
-	res = pgp_mpi_write(pkt, c1);
-	if (res < 0)
-		goto err;
-	res = pgp_mpi_write(pkt, c2);
+
+	switch (algo)
+	{
+		case PGP_PUB_ELG_ENCRYPT:
+			res = encrypt_and_write_elgamal(ctx, pk, pkt);
+			break;
+		case PGP_PUB_RSA_ENCRYPT:
+		case PGP_PUB_RSA_ENCRYPT_SIGN:
+			res = encrypt_and_write_rsa(ctx, pk, pkt);
+			break;
+	}
 	if (res < 0)
 		goto err;
 
@@ -217,12 +235,6 @@ int pgp_write_pubenc_sesskey(PGP_Context *ctx, PushFilter *dst)
 err:
 	if (pkt)
 		pushf_free(pkt);
-	if (m)
-		pgp_mpi_free(m);
-	if (c1)
-		pgp_mpi_free(c1);
-	if (c2)
-		pgp_mpi_free(c2);
 
 	return res;
 }

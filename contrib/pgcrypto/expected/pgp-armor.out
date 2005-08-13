@@ -99,4 +99,4 @@ em9va2E=
 =ZZZZ
 -----END PGP MESSAGE-----
 ');
-ERROR:  dearmor: Corrupt ascii-armor
+ERROR:  Corrupt ascii-armor

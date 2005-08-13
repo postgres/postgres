@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-mpi-openssl.c,v 1.2 2005/07/11 15:07:59 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-mpi-openssl.c,v 1.3 2005/08/13 02:06:20 momjian Exp $
  */
 #include "postgres.h"
 
@@ -104,9 +104,9 @@ pgp_elgamal_encrypt(PGP_PubKey *pk, PGP_MPI *_m,
 	int res = PXE_PGP_MATH_FAILED;
 	int k_bits;
 	BIGNUM *m = mpi_to_bn(_m);
-	BIGNUM *p = mpi_to_bn(pk->elg_p);
-	BIGNUM *g = mpi_to_bn(pk->elg_g);
-	BIGNUM *y = mpi_to_bn(pk->elg_y);
+	BIGNUM *p = mpi_to_bn(pk->pub.elg.p);
+	BIGNUM *g = mpi_to_bn(pk->pub.elg.g);
+	BIGNUM *y = mpi_to_bn(pk->pub.elg.y);
 	BIGNUM *k = BN_new();
 	BIGNUM *yk = BN_new();
 	BIGNUM *c1 = BN_new();
@@ -120,7 +120,7 @@ pgp_elgamal_encrypt(PGP_PubKey *pk, PGP_MPI *_m,
 	 * generate k
 	 */
 	k_bits = decide_k_bits(BN_num_bits(p));
-	if (!BN_generate_prime(k, k_bits, 0, NULL, NULL, NULL, NULL))
+	if (!BN_rand(k, k_bits, 0, 0))
 		goto err;
 
 	/*
@@ -159,8 +159,8 @@ pgp_elgamal_decrypt(PGP_PubKey *pk, PGP_MPI *_c1, PGP_MPI *_c2,
 	int res = PXE_PGP_MATH_FAILED;
 	BIGNUM *c1 = mpi_to_bn(_c1);
 	BIGNUM *c2 = mpi_to_bn(_c2);
-	BIGNUM *p = mpi_to_bn(pk->elg_p);
-	BIGNUM *x = mpi_to_bn(pk->elg_x);
+	BIGNUM *p = mpi_to_bn(pk->pub.elg.p);
+	BIGNUM *x = mpi_to_bn(pk->sec.elg.x);
 	BIGNUM *c1x = BN_new();
 	BIGNUM *div = BN_new();
 	BIGNUM *m = BN_new();
@@ -192,6 +192,68 @@ err:
 	if (p) BN_clear_free(p);
 	if (c2) BN_clear_free(c2);
 	if (c1) BN_clear_free(c1);
+	return res;
+}
+
+int
+pgp_rsa_encrypt(PGP_PubKey *pk, PGP_MPI *_m, PGP_MPI **c_p)
+{
+	int res = PXE_PGP_MATH_FAILED;
+	BIGNUM *m = mpi_to_bn(_m);
+	BIGNUM *e = mpi_to_bn(pk->pub.rsa.e);
+	BIGNUM *n = mpi_to_bn(pk->pub.rsa.n);
+	BIGNUM *c = BN_new();
+	BN_CTX *tmp = BN_CTX_new();
+
+	if (!m || !e || !n || !c || !tmp)
+		goto err;
+
+	/*
+	 * c = m ^ e
+	 */
+	if (!BN_mod_exp(c, m, e, n, tmp))
+		goto err;
+
+	*c_p = bn_to_mpi(c);
+	if (*c_p)
+		res = 0;
+err:
+	if (tmp) BN_CTX_free(tmp);
+	if (c) BN_clear_free(c);
+	if (n) BN_clear_free(n);
+	if (e) BN_clear_free(e);
+	if (m) BN_clear_free(m);
+	return res;
+}
+
+int
+pgp_rsa_decrypt(PGP_PubKey *pk, PGP_MPI *_c, PGP_MPI **m_p)
+{
+	int res = PXE_PGP_MATH_FAILED;
+	BIGNUM *c = mpi_to_bn(_c);
+	BIGNUM *d = mpi_to_bn(pk->sec.rsa.d);
+	BIGNUM *n = mpi_to_bn(pk->pub.rsa.n);
+	BIGNUM *m = BN_new();
+	BN_CTX *tmp = BN_CTX_new();
+
+	if (!m || !d || !n || !c || !tmp)
+		goto err;
+
+	/*
+	 * m = c ^ d
+	 */
+	if (!BN_mod_exp(m, c, d, n, tmp))
+		goto err;
+
+	*m_p = bn_to_mpi(m);
+	if (*m_p)
+		res = 0;
+err:
+	if (tmp) BN_CTX_free(tmp);
+	if (m) BN_clear_free(m);
+	if (n) BN_clear_free(n);
+	if (d) BN_clear_free(d);
+	if (c) BN_clear_free(c);
 	return res;
 }
 

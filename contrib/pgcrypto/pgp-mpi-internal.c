@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-mpi-internal.c,v 1.2 2005/07/11 15:07:59 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-mpi-internal.c,v 1.3 2005/08/13 02:06:20 momjian Exp $
  */
 #include "postgres.h"
 
@@ -47,4 +47,15 @@ pgp_elgamal_decrypt(PGP_PubKey *pk, PGP_MPI *_c1, PGP_MPI *_c2,
 {
 	return PXE_PGP_NO_BIGNUM;
 }
+
+int pgp_rsa_encrypt(PGP_PubKey *pk, PGP_MPI *m, PGP_MPI **c)
+{
+	return PXE_PGP_NO_BIGNUM;
+}
+
+int pgp_rsa_decrypt(PGP_PubKey *pk, PGP_MPI *c, PGP_MPI **m)
+{
+	return PXE_PGP_NO_BIGNUM;
+}
+
 

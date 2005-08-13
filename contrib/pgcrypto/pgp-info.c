@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-info.c,v 1.2 2005/07/11 15:07:59 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-info.c,v 1.3 2005/08/13 02:06:20 momjian Exp $
  */
 #include "postgres.h"
 
@@ -36,26 +36,31 @@
 
 static int read_pubkey_keyid(PullFilter *pkt, uint8 *keyid_buf)
 {
-	int res = 0;
-	PGP_PubKey *pk;
+	int res;
+	PGP_PubKey *pk = NULL;
 
-	res = pgp_key_alloc(&pk);
-	if (res < 0)
-		return res;
-
-	res = _pgp_read_public_key(pkt, pk);
+	res = _pgp_read_public_key(pkt, &pk);
 	if (res < 0)
 		goto err;
+
+	/* skip secret key part, if it exists */
 	res = pgp_skip_packet(pkt);
 	if (res < 0)
 		goto err;
 
-	res = 0;
-	if (pk->algo == PGP_PUB_ELG_ENCRYPT)
+	/* is it encryption key */
+	switch (pk->algo)
 	{
-		memcpy(keyid_buf, pk->key_id, 8);
-		res = 1;
+		case PGP_PUB_ELG_ENCRYPT:
+		case PGP_PUB_RSA_ENCRYPT:
+		case PGP_PUB_RSA_ENCRYPT_SIGN:
+			memcpy(keyid_buf, pk->key_id, 8);
+			res = 1;
+			break;
+		default:
+			res = 0;
 	}
+
 err:
 	pgp_key_free(pk);
 	return res;
@@ -110,6 +115,7 @@ pgp_get_keyid(MBuf *pgp_data, char *dst)
 	int got_pub_key=0, got_symenc_key=0, got_pubenc_key=0;
 	int got_data=0;
 	uint8 keyid_buf[8];
+	int got_main_key=0;
 
 
 	res = pullf_create_mbuf_reader(&src, pgp_data);
@@ -128,6 +134,15 @@ pgp_get_keyid(MBuf *pgp_data, char *dst)
 		{
 			case PGP_PKT_SECRET_KEY:
 			case PGP_PKT_PUBLIC_KEY:
+				/* main key is for signing, so ignore it */
+				if (!got_main_key)
+				{
+					got_main_key = 1;
+					res = pgp_skip_packet(pkt);
+				}
+				else
+					res = PXE_PGP_MULTIPLE_KEYS;
+				break;
 			case PGP_PKT_SECRET_SUBKEY:
 			case PGP_PKT_PUBLIC_SUBKEY:
 				res = read_pubkey_keyid(pkt, keyid_buf);
@@ -142,6 +157,7 @@ pgp_get_keyid(MBuf *pgp_data, char *dst)
 				break;
 			case PGP_PKT_SYMENCRYPTED_DATA:
 			case PGP_PKT_SYMENCRYPTED_DATA_MDC:
+				/* don't skip it, just stop */
 				got_data = 1;
 				break;
 			case PGP_PKT_SYMENCRYPTED_SESSKEY:
@@ -179,10 +195,10 @@ pgp_get_keyid(MBuf *pgp_data, char *dst)
 		res = PXE_PGP_CORRUPT_DATA;
 
 	if (got_pub_key > 1)
-		res = -1;
+		res = PXE_PGP_MULTIPLE_KEYS;
 
 	if (got_pubenc_key > 1)
-		res = -1;
+		res = PXE_PGP_MULTIPLE_KEYS;
 
 	/*
 	 * if still ok, look what we got

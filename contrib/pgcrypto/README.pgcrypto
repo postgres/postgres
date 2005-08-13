@@ -1,4 +1,3 @@
-$PostgreSQL: pgsql/contrib/pgcrypto/README.pgcrypto,v 1.12 2005/07/18 17:17:12 tgl Exp $
 
 pgcrypto - cryptographic functions for PostgreSQL
 =================================================
@@ -278,7 +277,7 @@ cracking.  Or may not.
 -------------------
 
 The functions here implement the encryption part of OpenPGP (RFC2440)
-standard.
+standard.   Supported are both symmetric-key and public-key encryption.
 
 
 5.1.  Overview
@@ -334,6 +333,10 @@ Options are described in section 5.7.
 
 Decrypt a symmetric-key encrypted PGP message.
 
+Decrypting bytea data with `pgp_sym_decrypt` is disallowed.
+This is to avoid outputting invalid character data.  Decrypting
+originally textual data with `pgp_sym_decrypt_bytea` is fine.
+
 Options are described in section 5.7.
 
 
@@ -361,6 +364,10 @@ Decrypt a public-key encrypted message with secret key.  If the secret
 key is password-protected, you must give the password in `psw`.  If
 there is no password, but you want to specify option for function, you
 need to give empty password.
+
+Decrypting bytea data with `pgp_pub_decrypt` is disallowed.
+This is to avoid outputting invalid character data.  Decrypting
+originally textual data with `pgp_pub_decrypt_bytea` is fine.
 
 Options are described in section 5.7.
 
@@ -421,7 +428,6 @@ cipher-algo::
   Values: bf, aes128, aes192, aes256 (OpenSSL-only: `3des`, `cast5`)
   Default: aes128
   Applies: pgp_sym_encrypt, pgp_pub_encrypt
-
 
 compress-algo::
   Which compression algorithm to use.  Needs building with zlib.
@@ -492,7 +498,7 @@ s2k-cipher-algo::
   Which cipher to use for encrypting separate session key.
 
   Values: bf, aes, aes128, aes192, aes256
-  Default: same as cipher-algo.
+  Default: use cipher-algo.
   Applies: pgp_sym_encrypt
 
 unicode-mode::
@@ -513,7 +519,10 @@ Generate a new key:
 
     gpg --gen-key
 
-You need to pick "DSA and Elgamal" key type, others are sign-only.
+The preferred key type is "DSA and Elgamal".
+
+For RSA encryption you must create either DSA or RSA sign-only key
+as master and then add RSA encryption subkey with `gpg --edit-key`.
 
 List keys:
 
@@ -531,6 +540,9 @@ You need to use `dearmor()` on them before giving giving them to
 pgp_pub_* functions.  Or if you can handle binary data, you can drop
 "-a" from gpg.
 
+For more details see `man gpg`, http://www.gnupg.org/gph/en/manual.html[
+The GNU Privacy Handbook] and other docs on http://www.gnupg.org[] site.
+
 
 5.10.  Limitations of PGP code
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -538,9 +550,13 @@ pgp_pub_* functions.  Or if you can handle binary data, you can drop
 - No support for signing.  That also means that it is not checked
   whether the encryption subkey belongs to master key.
 
-- No support for RSA keys.  Only Elgamal encryption keys are supported
+- No support for encryption key as master key.  As such practice
+  is generally discouraged, it should not be a problem.
 
-- No support for several encryption subkeys.
+- No support for several subkeys.  This may seem like a problem, as this
+  is common practice.  On the other hand, you should not use your regular
+  GPG/PGP keys with pgcrypto, but create new ones, as the usage scenario
+  is rather different.
 
 
 6.  Raw encryption
@@ -631,6 +647,9 @@ I have used code from following sources:
 9.1.  Useful reading
 ~~~~~~~~~~~~~~~~~~~~~
 
+http://www.gnupg.org/gph/en/manual.html[]::
+	The GNU Privacy Handbook
+
 http://www.openwall.com/crypt/[]::
 	Describes the crypt-blowfish algorithm.
 
@@ -673,3 +692,7 @@ http://jlcooke.ca/random/[]::
 
 http://www.cs.ut.ee/~helger/crypto/[]::
 	Collection of cryptology pointers.
+
+
+// $PostgreSQL: pgsql/contrib/pgcrypto/README.pgcrypto,v 1.13 2005/08/13 02:06:20 momjian Exp $
+

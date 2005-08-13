@@ -326,6 +326,97 @@ saCh6QCfR1O48O8nYN93SPSfIFZK5rEmdv8=
 =Y6Qv
 -----END PGP PRIVATE KEY BLOCK-----
 ');
+insert into keytbl (id, name, pubkey, seckey)
+values (6, 'rsaenc2048', '
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: GnuPG v1.4.1 (GNU/Linux)
+
+mQELBELr2m0BCADOrnknlnXI0EzRExf/TgoHvK7Xx/E0keWqV3KrOyC3/tY2KOrj
+UVxaAX5pkFX9wdQObGPIJm06u6D16CH6CildX/vxG7YgvvKzK8JGAbwrXAfk7OIW
+czO2zRaZGDynoK3mAxHRBReyTKtNv8rDQhuZs6AOozJNARdbyUO/yqUnqNNygWuT
+4htFDEuLPIJwAbMSD0BvFW6YQaPdxzaAZm3EWVNbwDzjgbBUdBiUUwRdZIFUhsjJ
+dirFdy5+uuZru6y6CNC1OERkJ7P8EyoFiZckAIE5gshVZzNuyLOZjc5DhWBvLbX4
+NZElAnfiv+4nA6y8wQLSIbmHA3nqJaBklj85AAYptCVSU0EgMjA0OCBFbmMgPHJz
+YTIwNDhlbmNAZXhhbXBsZS5vcmc+iQE0BBMBAgAeBQJC69ptAhsDBgsJCAcDAgMV
+AgMDFgIBAh4BAheAAAoJEMiZ6pNEGVVZHMkIAJtGHHZ9iM8Yq1rr0zl1L6SvlQP8
+JCaxHa31wH3PKqGtq2M+cpb2rXf7gAY/doHJPXggfVzkyFrysmQ1gPbDGYLyOutw
++IkhihEb5bWxQBNj+3zAFs1YX6v2HXWbSUSmyY1V9/+NTtKk03olDc/swd3lXzku
+UOhcgfpBgIt3Q+MpT6M2+OIF7lVfSb1rWdpwTfGhZzW9szQOeoS4gPvxCCRyuabQ
+RJ6DWH61F8fFIDJg1z+A/Obx4fqX6GOA69RzgZ3oukFBIXxNwV9PZNnAmHtZVYO8
+0g/oVYBbuvOYedffDBeQarhERZ5W2TnIE+nqY61YOLBqosliygdZTXULzNi5AQsE
+QuvaugEIAOuCJZdkzORA6e1lr81Lnr4JzMsVBFA+X/yIkBbV6qX/A4nVSLAZKNPX
+z1YIrMTu+1rMIiy10IWbA6zgMTpzPhJRfgePONgdnCYyK5Ksh5/C5ntzKwwGwxfK
+lAXIxJurCHXTbEa+YvPdn76vJ3HsXOXVEL+fLb4U3l3Ng87YM202Lh1Ha2MeS2zE
+FZcAoKbFqAAjDLEai64SoOFh0W3CsD1DL4zmfp+YZrUPHTtZadsi53i4KKW/ws9U
+rHlolqYNhYze/uRLyfnUx9PN4r/GhEzauyDMV0smo91uB3aewPft+eCpmeWnu0PF
+JVK4xyRmhIq2rVCw16a1pBJirvGM+y0ABimJAR8EGAECAAkFAkLr2roCGwwACgkQ
+yJnqk0QZVVku1wgAg1bLSjPkhw+ldG5HzumpqR84+JKyozdJaJzefu2+1iqYE0B0
+WLz2PJVIiK41xiEkKhBvTOQYuXmtWqAWXptD91P5SoXoNJWLQO3TNwarANhHxkWg
+w/TOUxQqoctlRUej5NDD+4eW5G9lcS1FEGuKDWtX096u80vO+TbyJjvx2eVM1k+X
+dmeYsGOiNgDimCreJGYc14G7eY9jt24gw10n1sMAKI1qm6lcoHqZ9OOyla+wJdro
+PYZGO7R8+1O9R22WrK6BYDT5j/1JwMZqbOESjNvDEVT0yOHClCHRN4CChbt6LhKh
+CLUNdz/udIt0JAC6c/HdPLSW3HnmM3+iNj+Kug==
+=pwU2
+-----END PGP PUBLIC KEY BLOCK-----
+', '
+-----BEGIN PGP PRIVATE KEY BLOCK-----
+Version: GnuPG v1.4.1 (GNU/Linux)
+
+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
+=UKh3
+-----END PGP PRIVATE KEY BLOCK-----
+');
 -- elg1024 / aes128
 insert into encdata (id, data) values (1, '
 -----BEGIN PGP MESSAGE-----
@@ -393,6 +484,22 @@ DYKcOy60/OHMWVvpw6trAoA+iP+cVWPtrbRvLglTVTfYmi1ToZDDipkALBhndQ==
 =L/M/
 -----END PGP MESSAGE-----
 ');
+-- rsaenc2048 / aes128
+insert into encdata (id, data) values (4, '
+-----BEGIN PGP MESSAGE-----
+Version: GnuPG v1.4.1 (GNU/Linux)
+
+hQEMA/0CBsQJt0h1AQf+JyYnCiortj26P11zk28MKOGfWpWyAhuIgwbJXsdQ+e6r
+pEyyqs9GC6gI7SNF6+J8B/gsMwvkAL4FHAQCvA4ZZ6eeXR1Of4YG22JQGmpWVWZg
+DTyfhA2vkczuqfAD2tgUpMT6sdyGkQ/fnQ0lknlfHgC5GRx7aavOoAKtMqiZW5PR
+yae/qR48mjX7Mb+mLvbagv9mHEgQSmHwFpaq2k456BbcZ23bvCmBnCvqV/90Ggfb
+VP6gkSoFVsJ19RHsOhW1dk9ehbl51WB3zUOO5FZWwUTY9DJvKblRK/frF0+CXjE4
+HfcZXHSpSjx4haGGTsMvEJ85qFjZpr0eTGOdY5cFhNJAAVP8MZfji7OhPRAoOOIK
+eRGOCkao12pvPyFTFnPd5vqmyBbdNpK4Q0hS82ljugMJvM0p3vJZVzW402Kz6iBL
+GQ==
+=XHkF
+-----END PGP MESSAGE-----
+');
 -- successful decrypt
 select pgp_pub_decrypt(dearmor(data), dearmor(seckey))
 from keytbl, encdata where keytbl.id=1 and encdata.id=1;
@@ -415,22 +522,29 @@ from keytbl, encdata where keytbl.id=3 and encdata.id=3;
  Secret msg
 (1 row)
 
+select pgp_pub_decrypt(dearmor(data), dearmor(seckey))
+from keytbl, encdata where keytbl.id=6 and encdata.id=4;
+ pgp_pub_decrypt 
+-----------------
+ Secret message.
+(1 row)
+
 -- wrong key
 select pgp_pub_decrypt(dearmor(data), dearmor(seckey))
 from keytbl, encdata where keytbl.id=2 and encdata.id=1;
-ERROR:  pgp_decrypt error: Data is not encrypted with this key
+ERROR:  Wrong key
 -- sign-only key
 select pgp_pub_decrypt(dearmor(data), dearmor(seckey))
 from keytbl, encdata where keytbl.id=4 and encdata.id=1;
-ERROR:  pgp_decrypt error: No usable key found (expecting Elgamal key)
+ERROR:  No encryption key found
 -- password-protected secret key, no password
 select pgp_pub_decrypt(dearmor(data), dearmor(seckey))
 from keytbl, encdata where keytbl.id=5 and encdata.id=1;
-ERROR:  pgp_decrypt error: Need password for secret key
+ERROR:  Need password for secret key
 -- password-protected secret key, wrong password
 select pgp_pub_decrypt(dearmor(data), dearmor(seckey), 'foo')
 from keytbl, encdata where keytbl.id=5 and encdata.id=1;
-ERROR:  pgp_decrypt error: Corrupt data
+ERROR:  Corrupt data
 -- password-protected secret key, right password
 select pgp_pub_decrypt(dearmor(data), dearmor(seckey), 'parool')
 from keytbl, encdata where keytbl.id=5 and encdata.id=1;

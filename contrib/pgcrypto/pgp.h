@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp.h,v 1.2 2005/07/18 17:09:01 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp.h,v 1.3 2005/08/13 02:06:20 momjian Exp $
  */
 
 enum
@@ -173,14 +173,44 @@ struct PGP_PubKey {
 	uint8 ver;
 	uint8 time[4];
 	uint8 algo;
-	/* public */
-	PGP_MPI *elg_p;
-	PGP_MPI *elg_g;
-	PGP_MPI *elg_y;
-	/* secret */
-	PGP_MPI *elg_x;
+
+	/* public part */
+	union {
+		struct {
+			PGP_MPI *p;
+			PGP_MPI *g;
+			PGP_MPI *y;
+		} elg;
+		struct {
+			PGP_MPI *n;
+			PGP_MPI *e;
+		} rsa;
+		struct {
+			PGP_MPI *p;
+			PGP_MPI *q;
+			PGP_MPI *g;
+			PGP_MPI *y;
+		} dsa;
+	} pub;
+
+	/* secret part */
+	union {
+		struct {
+			PGP_MPI *x;
+		} elg;
+		struct {
+			PGP_MPI *d;
+			PGP_MPI *p;
+			PGP_MPI *q;
+			PGP_MPI *u;
+		} rsa;
+		struct {
+			PGP_MPI *x;
+		} dsa;
+	} sec;
 
 	uint8 key_id[8];
+	int can_encrypt;
 };
 
 int			pgp_init(PGP_Context ** ctx);
@@ -240,7 +270,7 @@ int pgp_decompress_filter(PullFilter **res, PGP_Context *ctx, PullFilter *src);
 
 int pgp_key_alloc(PGP_PubKey **pk_p);
 void pgp_key_free(PGP_PubKey *pk);
-int _pgp_read_public_key(PullFilter *pkt, PGP_PubKey *pk);
+int _pgp_read_public_key(PullFilter *pkt, PGP_PubKey **pk_p);
 
 int pgp_parse_pubenc_sesskey(PGP_Context *ctx, PullFilter *pkt);
 int pgp_create_pkt_reader(PullFilter **pf_p, PullFilter *src, int len,
@@ -266,6 +296,8 @@ int pgp_elgamal_encrypt(PGP_PubKey *pk, PGP_MPI *m,
 						PGP_MPI **c1, PGP_MPI **c2);
 int pgp_elgamal_decrypt(PGP_PubKey *pk, PGP_MPI *c1, PGP_MPI *c2,
 						PGP_MPI **m);
+int pgp_rsa_encrypt(PGP_PubKey *pk, PGP_MPI *m, PGP_MPI **c);
+int pgp_rsa_decrypt(PGP_PubKey *pk, PGP_MPI *c, PGP_MPI **m);
 
 extern struct PullFilterOps pgp_decrypt_filter;
 

@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/px.h,v 1.14 2005/07/10 03:57:55 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/px.h,v 1.15 2005/08/13 02:06:20 momjian Exp $
  */
 
 #ifndef __PX_H
@@ -101,7 +101,7 @@ void		px_free(void *p);
 #define PXE_PGP_SHORT_ELGAMAL_KEY	-110
 #define PXE_PGP_RSA_UNSUPPORTED		-111
 #define PXE_PGP_UNKNOWN_PUBALGO		-112
-#define PXE_PGP_WRONG_KEYID			-113
+#define PXE_PGP_WRONG_KEY			-113
 #define PXE_PGP_MULTIPLE_KEYS		-114
 #define PXE_PGP_EXPECT_PUBLIC_KEY	-115
 #define PXE_PGP_EXPECT_SECRET_KEY	-116

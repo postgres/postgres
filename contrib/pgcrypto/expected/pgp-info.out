@@ -21,11 +21,17 @@ select pgp_key_id(dearmor(pubkey)) from keytbl where id=3;
 (1 row)
 
 select pgp_key_id(dearmor(pubkey)) from keytbl where id=4; -- should fail
-ERROR:  No usable key found (expecting Elgamal key)
+ERROR:  No encryption key found
 select pgp_key_id(dearmor(pubkey)) from keytbl where id=5;
     pgp_key_id    
 ------------------
  D936CF64BB73F466
+(1 row)
+
+select pgp_key_id(dearmor(pubkey)) from keytbl where id=6;
+    pgp_key_id    
+------------------
+ FD0206C409B74875
 (1 row)
 
 select pgp_key_id(dearmor(seckey)) from keytbl where id=1;
@@ -47,11 +53,17 @@ select pgp_key_id(dearmor(seckey)) from keytbl where id=3;
 (1 row)
 
 select pgp_key_id(dearmor(seckey)) from keytbl where id=4; -- should fail
-ERROR:  No usable key found (expecting Elgamal key)
+ERROR:  No encryption key found
 select pgp_key_id(dearmor(seckey)) from keytbl where id=5;
     pgp_key_id    
 ------------------
  D936CF64BB73F466
+(1 row)
+
+select pgp_key_id(dearmor(seckey)) from keytbl where id=6;
+    pgp_key_id    
+------------------
+ FD0206C409B74875
 (1 row)
 
 select pgp_key_id(dearmor(data)) as data_key_id
@@ -61,5 +73,6 @@ from encdata order by id;
  D936CF64BB73F466
  2C226E1FFE5CC7D4
  B68504FD128E1FF9
-(3 rows)
+ FD0206C409B74875
+(4 rows)
 

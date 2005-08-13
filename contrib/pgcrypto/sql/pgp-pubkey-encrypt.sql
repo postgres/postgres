@@ -18,6 +18,11 @@ select pgp_pub_decrypt(
 		dearmor(seckey))
 from keytbl where keytbl.id=3;
 
+select pgp_pub_decrypt(
+		pgp_pub_encrypt('Secret msg', dearmor(pubkey)),
+		dearmor(seckey))
+from keytbl where keytbl.id=6;
+
 -- try with rsa-sign only
 select pgp_pub_decrypt(
 		pgp_pub_encrypt('Secret msg', dearmor(pubkey)),

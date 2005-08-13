@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/px-crypt.c,v 1.12 2005/07/11 15:07:59 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/px-crypt.c,v 1.13 2005/08/13 02:06:20 momjian Exp $
  */
 
 #include "postgres.h"
@@ -34,8 +34,6 @@
 #include "px.h"
 #include "px-crypt.h"
 
-
-#ifndef PX_SYSTEM_CRYPT
 
 static char *
 run_crypt_des(const char *psw, const char *salt,
@@ -106,24 +104,6 @@ px_crypt(const char *psw, const char *salt, char *buf, unsigned len)
 
 	return c->crypt(psw, salt, buf, len);
 }
-
-#else							/* PX_SYSTEM_CRYPT */
-
-extern char *crypt(const char *psw, const char *salt);
-
-char *
-px_crypt(const char *psw, const char *salt,
-		 char *buf, unsigned len)
-{
-	char	   *res;
-
-	res = crypt(psw, salt);
-	if (!res || strlen(res) >= len)
-		return NULL;
-	strcpy(buf, res);
-	return buf;
-}
-#endif
 
 /*
  * salt generators

@@ -29,18 +29,27 @@ from keytbl where keytbl.id=3;
  Secret msg
 (1 row)
 
+select pgp_pub_decrypt(
+		pgp_pub_encrypt('Secret msg', dearmor(pubkey)),
+		dearmor(seckey))
+from keytbl where keytbl.id=6;
+ pgp_pub_decrypt 
+-----------------
+ Secret msg
+(1 row)
+
 -- try with rsa-sign only
 select pgp_pub_decrypt(
 		pgp_pub_encrypt('Secret msg', dearmor(pubkey)),
 		dearmor(seckey))
 from keytbl where keytbl.id=4;
-ERROR:  pgp_encrypt error: No usable key found (expecting Elgamal key)
+ERROR:  No encryption key found
 -- try with secret key
 select pgp_pub_decrypt(
 		pgp_pub_encrypt('Secret msg', dearmor(seckey)),
 		dearmor(seckey))
 from keytbl where keytbl.id=1;
-ERROR:  pgp_encrypt error: Refusing to encrypt with secret key
+ERROR:  Refusing to encrypt with secret key
 -- does text-to-bytea works
 select pgp_pub_decrypt_bytea(
 		pgp_pub_encrypt('Secret msg', dearmor(pubkey)),
@@ -56,4 +65,4 @@ select pgp_pub_decrypt(
 		pgp_pub_encrypt_bytea('Secret msg', dearmor(pubkey)),
 		dearmor(seckey))
 from keytbl where keytbl.id=1;
-ERROR:  pgp_decrypt error: Not text data
+ERROR:  Not text data
