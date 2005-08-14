@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.42 2005/06/21 04:02:30 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.43 2005/08/14 23:35:37 tgl Exp $
 -->
 
 <chapter id="managing-databases">
@@ -94,7 +94,7 @@ SELECT datname FROM pg_database;
 CREATE DATABASE <replaceable>name</>;
 </synopsis>
    where <replaceable>name</> follows the usual rules for
-   <acronym>SQL</acronym> identifiers.  The current user automatically
+   <acronym>SQL</acronym> identifiers.  The current role automatically
    becomes the owner of the new database. It is the privilege of the
    owner of a database to remove it later on (which also removes all
    the objects in it, even if they have a different owner).
@@ -102,7 +102,7 @@ CREATE DATABASE <replaceable>name</>;
 
   <para>
    The creation of databases is a restricted operation. See <xref
-   linkend="user-attributes"> for how to grant permission.
+   linkend="role-attributes"> for how to grant permission.
   </para>
 
   <para>
@@ -158,18 +158,18 @@ createdb <replaceable class="parameter">dbname</replaceable>
 
   <para>
    Sometimes you want to create a database for someone else.  That
-   user should become the owner of the new database, so he can
+   role should become the owner of the new database, so he can
    configure and manage it himself.  To achieve that, use one of the
    following commands:
 <programlisting>
-CREATE DATABASE <replaceable>dbname</> OWNER <replaceable>username</>;
+CREATE DATABASE <replaceable>dbname</> OWNER <replaceable>rolename</>;
 </programlisting>
    from the SQL environment, or
 <programlisting>
-createdb -O <replaceable>username</> <replaceable>dbname</>
+createdb -O <replaceable>rolename</> <replaceable>dbname</>
 </programlisting>
    You must be a superuser to be allowed to create a database for
-   someone else.
+   someone else (that is, for a role you are not a member of).
   </para>
  </sect1>
 
@@ -327,7 +327,7 @@ ALTER DATABASE mydb SET geqo TO off;
 <synopsis>
 DROP DATABASE <replaceable>name</>;
 </synopsis>
-   Only the owner of the database (i.e., the user that created it), or
+   Only the owner of the database, or
    a superuser, can drop a database. Dropping a database removes all objects
    that were 
    contained within the database. The destruction of a database cannot

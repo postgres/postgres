@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_role.sgml,v 1.2 2005/07/31 17:19:17 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_role.sgml,v 1.3 2005/08/14 23:35:38 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -141,7 +141,7 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
        <para>
         These clauses determine whether a role <quote>inherits</> the
         privileges of roles it is a member of.
-        A role with <literal>INHERIT</literal> privilege can automatically
+        A role with the <literal>INHERIT</literal> attribute can automatically
         use whatever database privileges have been granted to all roles
         it is directly or indirectly a member of.
         Without <literal>INHERIT</literal>, membership in another role
@@ -162,7 +162,7 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
         These clauses determine whether a role is allowed to log in;
         that is, whether the role can be given as the initial session
         authorization name during client connection.  A role having
-        <literal>LOGIN</literal> privilege can be thought of as a user.
+        the <literal>LOGIN</literal> attribute can be thought of as a user.
         Roles without this attribute are useful for managing database
         privileges, but are not users in the usual sense of the word.
         If not specified,
@@ -188,7 +188,7 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
       <listitem>
        <para>
         Sets the role's password.  (A password is only of use for
-        roles having <literal>LOGIN</literal> privilege, but you can
+        roles having the <literal>LOGIN</literal> attribute, but you can
         nonetheless define one for roles without it.)
         If you do not plan to use password
         authentication you can omit this option.
@@ -325,7 +325,19 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
   </para>
 
   <para>
-   <literal>INHERIT</> privilege is the default for reasons of backwards
+   The <literal>INHERIT</> attribute governs inheritance of grantable
+   privileges (that is, access privileges for database objects and role
+   memberships).  It does not apply to the special role attributes set by
+   <command>CREATE ROLE</> and <command>ALTER ROLE</>.  For example, being
+   a member of a role with <literal>CREATEDB</> privilege does not immediately
+   grant the ability to create databases, even if <literal>INHERIT</> is set;
+   it would be necessary to become that role via
+   <xref linkend="SQL-SET-ROLE" endterm="SQL-SET-ROLE-title"> before
+   creating a database.
+  </para>
+
+  <para>
+   The <literal>INHERIT</> attribute is the default for reasons of backwards
    compatibility: in prior releases of <productname>PostgreSQL</productname>,
    users always had access to all privileges of groups they were members of.
    However, <literal>NOINHERIT</> provides a closer match to the semantics

@@ -1,55 +1,73 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.29 2005/03/25 16:38:58 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.30 2005/08/14 23:35:37 tgl Exp $
 -->
 
 <chapter id="user-manag">
- <title>Database Users and Privileges</title>
+ <title>Database Roles and Privileges</title>
 
  <para>
-  Every database cluster contains a set of database users.  Those
-  users are separate from the users managed by the operating system on
-  which the server runs.  Users own database objects (for example,
-  tables) and can assign privileges on those objects to other users to
-  control who has access to which object.
+  <productname>PostgreSQL</productname> manages database access permissions
+  using the concept of <firstterm>roles</>.  A role can be thought of as
+  either a database user, or a group of database users, depending on how
+  the role is set up.  Roles can own database objects (for example,
+  tables) and can assign privileges on those objects to other roles to
+  control who has access to which objects.  Furthermore, it is possible
+  to grant <firstterm>membership</> in a role to another role, thus
+  allowing the member role use of privileges assigned to the role it is
+  a member of.
  </para>
 
  <para>
-  This chapter describes how to create and manage users and introduces
+  The concept of roles subsumes the concepts of <quote>users</> and
+  <quote>groups</>.  In <productname>PostgreSQL</productname> versions
+  before 8.1, users and groups were distinct kinds of entities, but now
+  there are only roles.  Any role can act as a user, a group, or both.
+ </para>
+
+ <para>
+  This chapter describes how to create and manage roles and introduces
   the privilege system.  More information about the various types of
-  database objects and the effects of privileges can be found in <xref linkend="ddl">.
+  database objects and the effects of privileges can be found in
+  <xref linkend="ddl">.
  </para>
 
- <sect1 id="database-users">
-  <title>Database Users</title>
+ <sect1 id="database-roles">
+  <title>Database Roles</title>
 
-  <indexterm zone="database-users">
+  <indexterm zone="database-roles">
+   <primary>role</primary>
+  </indexterm>
+
+  <indexterm zone="database-roles">
    <primary>user</primary>
   </indexterm>
 
   <indexterm>
-   <primary>CREATE USER</primary>
+   <primary>CREATE ROLE</primary>
   </indexterm>
 
   <indexterm>
-   <primary>DROP USER</primary>
+   <primary>DROP ROLE</primary>
   </indexterm>
 
   <para>
-   Database users are conceptually completely separate from
+   Database roles are conceptually completely separate from
    operating system users. In practice it might be convenient to
-   maintain a correspondence, but this is not required. Database user
-   names are global across a database cluster installation (and not
-   per individual database). To create a user use the <xref
-   linkend="sql-createuser" endterm="sql-createuser-title"> SQL command:
+   maintain a correspondence, but this is not required. Database roles
+   are global across a database cluster installation (and not
+   per individual database). To create a role use the <xref
+   linkend="sql-createrole" endterm="sql-createrole-title"> SQL command:
 <synopsis>
-CREATE USER <replaceable>name</replaceable>;
+CREATE ROLE <replaceable>name</replaceable>;
 </synopsis>
    <replaceable>name</replaceable> follows the rules for SQL
    identifiers: either unadorned without special characters, or
-   double-quoted. To remove an existing user, use the analogous
-   <xref linkend="sql-dropuser" endterm="sql-dropuser-title"> command:
+   double-quoted.  (In practice, you will usually want to add additional
+   options, such as <literal>LOGIN</>, to the command.  More details appear
+   below.)  To remove an existing role, use the analogous
+   <xref linkend="sql-droprole" endterm="sql-droprole-title"> command:
 <synopsis>
-DROP USER <replaceable>name</replaceable>;
+DROP ROLE <replaceable>name</replaceable>;
 </synopsis>
   </para>
 
@@ -73,69 +91,93 @@ dropuser <replaceable>name</replaceable>
   </para>
 
   <para>
-   To determine the set of existing users, examine the <structname>pg_user</>
+   To determine the set of existing roles, examine the <structname>pg_roles</>
    system catalog, for example
 <synopsis>
-SELECT usename FROM pg_user;
+SELECT rolname FROM pg_roles;
 </synopsis>
    The <xref linkend="app-psql"> program's <literal>\du</> meta-command
-   is also useful for listing the existing users.
+   is also useful for listing the existing roles.
   </para>
 
   <para>
    In order to bootstrap the database system, a freshly initialized
-   system always contains one predefined user. This user will have the
-   fixed ID 1, and by default (unless altered when running
+   system always contains one predefined role. This role is always
+   a <quote>superuser</>, and by default (unless altered when running
    <command>initdb</command>) it will have the same name as the
    operating system user that initialized the database
-   cluster. Customarily, this user will be named
-   <literal>postgres</literal>. In order to create more users you
-   first have to connect as this initial user.
+   cluster. Customarily, this role will be named
+   <literal>postgres</literal>. In order to create more roles you
+   first have to connect as this initial role.
   </para>
 
   <para>
-   Exactly one user identity is active for a connection to the
-   database server.  The user name to use for a particular database
+   Every connection to the database server is made in the name of some
+   particular role, and this role determines the initial access privileges for
+   commands issued on that connection.
+   The role name to use for a particular database
    connection is indicated by the client that is initiating the
    connection request in an application-specific fashion. For example,
    the <command>psql</command> program uses the
-   <option>-U</option> command line option to indicate the user to
+   <option>-U</option> command line option to indicate the role to
    connect as.  Many applications assume the name of the current
    operating system user by default (including
    <command>createuser</> and <command>psql</>).  Therefore it
-   is convenient to maintain a naming correspondence between the two
-   user sets.
+   is often convenient to maintain a naming correspondence between
+   roles and operating system users.
   </para>
 
   <para>
-   The set of database users a given client connection may connect as
+   The set of database roles a given client connection may connect as
    is determined by the client authentication setup, as explained in
    <xref linkend="client-authentication">. (Thus, a client is not
-   necessarily limited to connect as the user with the same name as
+   necessarily limited to connect as the role with the same name as
    its operating system user, just as a person's login name 
-   need not match her real name.)  Since the user
+   need not match her real name.)  Since the role
    identity determines the set of privileges available to a connected
    client, it is important to carefully configure this when setting up
    a multiuser environment.
   </para>
  </sect1>
 
- <sect1 id="user-attributes">
-  <title>User Attributes</title>
+ <sect1 id="role-attributes">
+  <title>Role Attributes</title>
 
    <para>
-    A database user may have a number of attributes that define its
+    A database role may have a number of attributes that define its
     privileges and interact with the client authentication system.
 
     <variablelist>
      <varlistentry>
-      <term>superuser<indexterm><primary>superuser</></></term>
+      <term>login privilege<indexterm><primary>login privilege</></></term>
       <listitem>
        <para>
-        A database superuser bypasses all permission checks. Also,
-        only a superuser can create new users. To create a database
-        superuser, use <literal>CREATE USER <replaceable>name</replaceable>
-        CREATEUSER</literal>.
+        Only roles that have the <literal>LOGIN</> attribute can be used
+        as the initial role name for a database connection.  A role with
+        the <literal>LOGIN</> attribute can be considered the same thing
+        as a <quote>database user</>.  To create a role with login privilege,
+        use either
+<programlisting>
+CREATE ROLE <replaceable>name</replaceable> LOGIN;
+CREATE USER <replaceable>name</replaceable>;
+</programlisting>
+        (<command>CREATE USER</> is equivalent to <command>CREATE ROLE</>
+        except that <command>CREATE USER</> assumes <literal>LOGIN</> by
+        default, while <command>CREATE ROLE</> does not.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>superuser status<indexterm><primary>superuser</></></term>
+      <listitem>
+       <para>
+        A database superuser bypasses all permission checks.  This is a
+        dangerous privilege and should not be used carelessly; it is best
+        to do most of your work as a role that is not a superuser.
+        To create a new database superuser, use <literal>CREATE ROLE
+        <replaceable>name</replaceable> SUPERUSER</literal>.  You must do
+        this as a role that is already a superuser.
        </para>
       </listitem>
      </varlistentry>
@@ -144,10 +186,26 @@ SELECT usename FROM pg_user;
       <term>database creation<indexterm><primary>database</><secondary>privilege to create</></></term>
       <listitem>
        <para>
-        A user must be explicitly given permission to create databases
+        A role must be explicitly given permission to create databases
         (except for superusers, since those bypass all permission
-        checks). To create such a user, use <literal>CREATE USER
+        checks). To create such a role, use <literal>CREATE ROLE
         <replaceable>name</replaceable> CREATEDB</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>role creation<indexterm><primary>role</><secondary>privilege to create</></></term>
+      <listitem>
+       <para>
+        A role must be explicitly given permission to create more roles
+        (except for superusers, since those bypass all permission
+        checks). To create such a role, use <literal>CREATE ROLE
+        <replaceable>name</replaceable> CREATEROLE</literal>.
+        A role with <literal>CREATEROLE</> privilege can alter and drop
+        other roles, too.  However, to alter or drop a superuser role,
+        superuser status is required; <literal>CREATEROLE</> is not sufficient
+        for that.
        </para>
       </listitem>
      </varlistentry>
@@ -161,79 +219,159 @@ SELECT usename FROM pg_user;
         to the database. The <option>password</>,
         <option>md5</>, and <option>crypt</> authentication methods
         make use of passwords. Database passwords are separate from
-        operating system passwords. Specify a password upon user
-        creation with <literal>CREATE USER
+        operating system passwords. Specify a password upon role
+        creation with <literal>CREATE ROLE
         <replaceable>name</replaceable> PASSWORD '<replaceable>string</>'</literal>. 
        </para>
       </listitem>
      </varlistentry>
     </variablelist>
 
-    A user's attributes can be modified after creation with
-    <command>ALTER USER</command>.<indexterm><primary>ALTER USER</></>
-    See the reference pages for the <xref linkend="sql-createuser"
-    endterm="sql-createuser-title"> and <xref linkend="sql-alteruser"
-    endterm="sql-alteruser-title"> commands for details.
+    A role's attributes can be modified after creation with
+    <command>ALTER ROLE</command>.<indexterm><primary>ALTER ROLE</></>
+    See the reference pages for the <xref linkend="sql-createrole"
+    endterm="sql-createrole-title"> and <xref linkend="sql-alterrole"
+    endterm="sql-alterrole-title"> commands for details.
    </para>
 
   <para>
-   A user can also set personal defaults for many of the run-time
+   A role can also have role-specific defaults for many of the run-time
    configuration settings described in <xref
    linkend="runtime-config">.  For example, if for some reason you
    want to disable index scans (hint: not a good idea) anytime you
    connect, you can use
 <programlisting>
-ALTER USER myname SET enable_indexscan TO off;
+ALTER ROLE myname SET enable_indexscan TO off;
 </programlisting>
    This will save the setting (but not set it immediately).  In
-   subsequent connections by this user it will appear as though
+   subsequent connections by this role it will appear as though
    <literal>SET enable_indexscan TO off;</literal> had been executed
    just before the session started.
    You can still alter this setting during the session; it will only
-   be the default. To undo any such setting, use <literal>ALTER USER
-   <replaceable>username</> RESET <replaceable>varname</>;</literal>.
+   be the default. To remove a role-specific default setting, use
+   <literal>ALTER ROLE <replaceable>rolename</> RESET <replaceable>varname</>;</literal>.
+   Note that role-specific defaults attached to roles without
+   <literal>LOGIN</> privilege are fairly useless, since they will never
+   be invoked.
   </para>
  </sect1>
 
- <sect1 id="groups">
-  <title>Groups</title>
+ <sect1 id="role-membership">
+  <title>Role Membership</title>
 
-  <indexterm zone="groups">
-   <primary>group</primary>
+  <indexterm zone="role-membership">
+   <primary>role</><secondary>membership in</>
   </indexterm>
 
   <para>
-   As in Unix, groups are a way of logically grouping users to ease
-   management of privileges: privileges can be granted to, or revoked
-   from, a group as a whole.  To create a group, use the <xref
-   linkend="sql-creategroup" endterm="sql-creategroup-title"> SQL command:
-<synopsis>
-CREATE GROUP <replaceable>name</replaceable>;
-</synopsis>
-
-   To add users to or remove users from an existing group, use <xref
-   linkend="sql-altergroup" endterm="sql-altergroup-title">:
-<synopsis>
-ALTER GROUP <replaceable>name</replaceable> ADD USER <replaceable>uname1</replaceable>, ... ;
-ALTER GROUP <replaceable>name</replaceable> DROP USER <replaceable>uname1</replaceable>, ... ;
-</synopsis>
-
-   To destroy a group, use <xref
-   linkend="sql-dropgroup" endterm="sql-dropgroup-title">:
-<synopsis>
-DROP GROUP <replaceable>name</replaceable>;
-</synopsis>
-   This only drops the group, not its member users.
+   It is frequently convenient to group users together to ease
+   management of privileges: that way, privileges can be granted to, or
+   revoked from, a group as a whole.  In <productname>PostgreSQL</productname>
+   this is done by creating a role that represents the group, and then
+   granting <firstterm>membership</> in the group role to individual user
+   roles.
   </para>
 
   <para>
-   To determine the set of existing groups, examine the <structname>pg_group</>
-   system catalog, for example
+   To set up a group role, first create the role:
 <synopsis>
-SELECT groname FROM pg_group;
+CREATE ROLE <replaceable>name</replaceable>;
 </synopsis>
-   The <xref linkend="app-psql"> program's <literal>\dg</> meta-command
-   is also useful for listing the existing groups.
+   Typically a role being used as a group would not have the <literal>LOGIN</>
+   attribute, though you can set it if you wish.
+  </para>
+
+  <para>
+   Once the group role exists, you can add and remove members using the
+   <xref linkend="sql-grant" endterm="sql-grant-title"> and
+   <xref linkend="sql-revoke" endterm="sql-revoke-title"> commands:
+<synopsis>
+GRANT <replaceable>group_role</replaceable> TO <replaceable>role1</replaceable>, ... ;
+REVOKE <replaceable>group_role</replaceable> FROM <replaceable>role1</replaceable>, ... ;
+</synopsis>
+   You can grant membership to other group roles, too (since there isn't
+   really any distinction between group roles and non-group roles).  The
+   only restriction is that you can't set up circular membership loops.
+  </para>
+
+  <para>
+   The members of a role can use the privileges of the group role in two
+   ways.  First, every member of a group can explicitly do
+   <xref linkend="sql-set-role" endterm="sql-set-role-title"> to
+   temporarily <quote>become</> the group role.  In this state, the
+   database session has access to the privileges of the group role rather
+   than the original login role, and any database objects created are
+   considered owned by the group role not the login role.  Second, member
+   roles that have the <literal>INHERIT</> attribute automatically have use of
+   privileges of roles they are members of.  As an example, suppose we have
+   done
+<programlisting>
+CREATE ROLE joe LOGIN INHERIT;
+CREATE ROLE admin NOINHERIT;
+CREATE ROLE wheel NOINHERIT;
+GRANT admin TO joe;
+GRANT wheel TO admin;
+</programlisting>
+   Immediately after connecting as role <literal>joe</>, a database
+   session will have use of privileges granted directly to <literal>joe</>
+   plus any privileges granted to <literal>admin</>, because <literal>joe</>
+   <quote>inherits</> <literal>admin</>'s privileges.  However, privileges
+   granted to <literal>wheel</> are not available, because even though
+   <literal>joe</> is indirectly a member of <literal>wheel</>, the
+   membership is via <literal>admin</> which has the <literal>NOINHERIT</>
+   attribute.  After
+<programlisting>
+SET ROLE admin;
+</programlisting>
+   the session would have use of only those privileges granted to
+   <literal>admin</>, and not those granted to <literal>joe</>.  After
+<programlisting>
+SET ROLE wheel;
+</programlisting>
+   the session would have use of only those privileges granted to
+   <literal>wheel</>, and not those granted to either <literal>joe</>
+   or <literal>admin</>.  The original privilege state can be restored
+   with any of
+<programlisting>
+SET ROLE joe;
+SET ROLE NONE;
+RESET ROLE;
+</programlisting>
+  </para>
+
+  <note>
+   <para>
+    The <command>SET ROLE</> command always allows selecting any role
+    that the original login role is directly or indirectly a member of.
+    Thus, in the above example, it is not necessary to become
+    <literal>admin</> before becoming <literal>wheel</>.
+   </para>
+  </note>
+
+  <note>
+   <para>
+    In the SQL standard, there is a clear distinction between users and roles,
+    and users do not automatically inherit privileges while roles do.  This
+    behavior can be obtained in <productname>PostgreSQL</productname> by giving
+    roles being used as SQL roles the <literal>INHERIT</> attribute, while
+    giving roles being used as SQL users the <literal>NOINHERIT</> attribute.
+    However, <productname>PostgreSQL</productname> defaults to giving all roles
+    the <literal>INHERIT</> attribute, for backwards compatibility with pre-8.1
+    releases in which users always had use of permissions granted to groups
+    they were members of.
+   </para>
+  </note>
+
+  <para>
+   To destroy a group role, use <xref
+   linkend="sql-droprole" endterm="sql-droprole-title">:
+<synopsis>
+DROP ROLE <replaceable>name</replaceable>;
+</synopsis>
+   Any memberships in the group role are automatically revoked (but the
+   member roles are not otherwise affected).  Note however that any objects
+   owned by the group role must first be dropped or reassigned to other
+   owners; and any permissions granted to the group role must be revoked.
   </para>
  </sect1>
 
@@ -256,14 +394,12 @@ SELECT groname FROM pg_group;
    <primary>REVOKE</primary>
   </indexterm>
 
-  <remark>Being moved to the DDL chapter.  Will eventually disappear here.</remark>
-
   <para>
    When an object is created, it is assigned an owner. The
-   owner is normally the user that executed the creation statement.
+   owner is normally the role that executed the creation statement.
    For most kinds of objects, the initial state is that only the owner
    (or a superuser) can do anything with the object. To allow
-   other users to use it, <firstterm>privileges</firstterm> must be
+   other roles to use it, <firstterm>privileges</firstterm> must be
    granted.
    There are several different kinds of privilege: <literal>SELECT</>,
    <literal>INSERT</>, <literal>UPDATE</>, <literal>DELETE</>,
@@ -277,25 +413,21 @@ SELECT groname FROM pg_group;
 
   <para>
    To assign privileges, the <command>GRANT</command> command is
-   used. So, if <literal>joe</literal> is an existing user, and
+   used. So, if <literal>joe</literal> is an existing role, and
    <literal>accounts</literal> is an existing table, the privilege to
    update the table can be granted with
 <programlisting>
 GRANT UPDATE ON accounts TO joe;
 </programlisting>
-   To grant a privilege to a group, use
-<programlisting>
-GRANT SELECT ON accounts TO GROUP staff;
-</programlisting>
    The special name <literal>PUBLIC</literal> can
-   be used to grant a privilege to every user on the system. Writing
+   be used to grant a privilege to every role on the system. Writing
    <literal>ALL</literal> in place of a specific privilege specifies that all
    privileges that apply to the object will be granted.
   </para>
 
   <para>
    To revoke a privilege, use the fittingly named
-   <command>REVOKE</command> command:
+   <xref linkend="sql-revoke" endterm="sql-revoke-title"> command:
 <programlisting>
 REVOKE ALL ON accounts FROM PUBLIC;
 </programlisting>
@@ -311,8 +443,10 @@ REVOKE ALL ON accounts FROM PUBLIC;
 
   <para>
    An object can be assigned to a new owner with an <command>ALTER</command>
-   command of the appropriate kind for the object.  Only superusers can do
-   this.
+   command of the appropriate kind for the object.  Superusers can always do
+   this; ordinary roles can only do it if they are both the current owner
+   of the object (or a member of the owning role) and a member of the new
+   owning role.
   </para>
  </sect1>
 

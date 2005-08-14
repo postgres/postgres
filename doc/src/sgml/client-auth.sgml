@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.82 2005/06/27 02:04:23 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.83 2005/08/14 23:35:37 tgl Exp $
 -->
 
 <chapter id="client-authentication">
@@ -11,7 +11,7 @@ $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.82 2005/06/27 02:04:23 neil
 
  <para>
   When a client application connects to the database server, it
-  specifies which <productname>PostgreSQL</productname> user name it
+  specifies which <productname>PostgreSQL</productname> database user name it
   wants to connect as, much the same way one logs into a Unix computer
   as a particular user. Within the SQL environment the active database
   user name determines access privileges to database objects &mdash; see
@@ -19,12 +19,22 @@ $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.82 2005/06/27 02:04:23 neil
   essential to restrict which database users can connect.
  </para>
 
+ <note>
+  <para>
+   As explained in <xref linkend="user-manag">,
+   <productname>PostgreSQL</productname> actually does privilege
+   management in terms of <quote>roles</>.  In this chapter, we
+   consistently use <firstterm>database user</> to mean <quote>role with the
+   <literal>LOGIN</> privilege</quote>.
+  </para>
+ </note>
+
  <para>
   <firstterm>Authentication</firstterm> is the process by which the
   database server establishes the identity of the client, and by
   extension determines whether the client application (or the user
   who runs the client application) is permitted to connect with the
-  user name that was requested.
+  database user name that was requested.
  </para>
 
  <para>
@@ -35,7 +45,7 @@ $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.82 2005/06/27 02:04:23 neil
  </para>
 
  <para>
-  <productname>PostgreSQL</productname> user names are logically
+  <productname>PostgreSQL</productname> database user names are logically
   separate from user names of the operating system in which the server
   runs. If all the users of a particular server also have accounts on
   the server's machine, it makes sense to assign database user names
@@ -88,13 +98,13 @@ $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.82 2005/06/27 02:04:23 neil
   <para>
    A record may have one of the seven formats
 <synopsis>
-local      <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
-host       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>CIDR-address</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
-hostssl    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>CIDR-address</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
-hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>CIDR-address</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
-host       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
-hostssl    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
-hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
+local      <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-option</replaceable></optional>
+host       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>CIDR-address</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-option</replaceable></optional>
+hostssl    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>CIDR-address</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-option</replaceable></optional>
+hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>CIDR-address</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-option</replaceable></optional>
+host       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-option</replaceable></optional>
+hostssl    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-option</replaceable></optional>
+hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-option</replaceable></optional>
 </synopsis>
    The meaning of the fields is as follows:
 
@@ -165,16 +175,18 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
      <term><replaceable>database</replaceable></term>
      <listitem>
       <para>
-       Specifies which databases this record matches.  The value
+       Specifies which database names this record matches.  The value
        <literal>all</literal> specifies that it matches all databases.
        The value <literal>sameuser</> specifies that the record
        matches if the requested database has the same name as the
-       requested user.  The value <literal>samegroup</> specifies that
-       the requested user must be a member of the group with the same
-       name as the requested database.  Otherwise, this is the name of
+       requested user.  The value <literal>samerole</> specifies that
+       the requested user must be a member of the role with the same
+       name as the requested database.  (<literal>samegroup</> is an
+       obsolete but still accepted spelling of <literal>samerole</>.)
+       Otherwise, this is the name of
        a specific <productname>PostgreSQL</productname> database.
        Multiple database names can be supplied by separating them with
-       commas.  A file containing database names can be specified by
+       commas.  A separate file containing database names can be specified by
        preceding the file name with <literal>@</>.
       </para>
      </listitem>
@@ -184,13 +196,17 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
      <term><replaceable>user</replaceable></term>
      <listitem>
       <para>
-       Specifies which <productname>PostgreSQL</> users this record
+       Specifies which database user names this record
        matches. The value <literal>all</literal> specifies that it
-       matches all users.  Otherwise, this is the name of a specific
-       <productname>PostgreSQL</productname> user. Multiple user names
-       can be supplied by separating them with commas. Group names can
-       be specified by preceding the group name with <literal>+</>. A
-       file containing user names can be specified by preceding the
+       matches all users.  Otherwise, this is either the name of a specific
+       database user, or a group name preceded by <literal>+</>.
+       (Recall that there is no real distinction between users and groups
+       in <productname>PostgreSQL</>; a <literal>+</> mark really means
+       <quote>match any of the roles that are directly or indirectly members
+       of this role</>, while a name without a <literal>+</> mark matches
+       only that specific role.)
+       Multiple user names can be supplied by separating them with commas.
+       A separate file containing user names can be specified by preceding the
        file name with <literal>@</>.
       </para>
      </listitem>
@@ -257,7 +273,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
     </varlistentry>  
 
     <varlistentry>
-     <term><replaceable>authentication-method</replaceable></term>
+     <term><replaceable>auth-method</replaceable></term>
      <listitem>
       <para>
        Specifies the authentication method to use when connecting via
@@ -369,7 +385,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
     </varlistentry>
 
     <varlistentry>
-     <term><replaceable>authentication-option</replaceable></term>
+     <term><replaceable>auth-option</replaceable></term>
      <listitem>
       <para>
        The meaning of this optional field depends on the chosen
@@ -424,7 +440,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
     <title>Example <filename>pg_hba.conf</filename> entries</title>
 <programlisting>
 # Allow any user on the local system to connect to any database under
-# any user name using Unix-domain sockets (the default for local
+# any database user name using Unix-domain sockets (the default for local
 # connections).
 #
 # TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
@@ -445,7 +461,7 @@ host    all         all         127.0.0.1     255.255.255.255     trust
 # the connection (typically the Unix user name).
 # 
 # TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
-host    postgres   all         192.168.93.0/24       ident sameuser
+host    postgres    all         192.168.93.0/24       ident sameuser
 
 # Allow a user from host 192.168.12.10 to connect to database
 # "postgres" if the user's password is correctly supplied.
@@ -474,10 +490,10 @@ host    all         all         192.168.0.0/16        ident omicron
 
 # If these are the only three lines for local connections, they will
 # allow local users to connect only to their own databases (databases
-# with the same name as their user name) except for administrators and
-# members of group "support" who may connect to all databases.  The file
-# $PGDATA/admins contains a list of user names.  Passwords are required in
-# all cases.
+# with the same name as their database user name) except for administrators
+# and members of role "support", who may connect to all databases.  The file
+# $PGDATA/admins contains a list of names of administrators.  Passwords
+# are required in all cases.
 #
 # TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
 local   sameuser    all                               md5
@@ -487,7 +503,7 @@ local   all         +support                          md5
 # The last two lines above can be combined into a single line:
 local   all         @admins,+support                  md5
 
-# The database column can also use lists and file names, but not groups:
+# The database column can also use lists and file names:
 local   db1,db2,@demodbs  all                         md5
 </programlisting>
    </example>
@@ -506,7 +522,7 @@ local   db1,db2,@demodbs  all                         md5
     When <literal>trust</> authentication is specified,
     <productname>PostgreSQL</productname> assumes that anyone who can
     connect to the server is authorized to access the database with
-    whatever database user they specify (including the database superuser).
+    whatever database user name they specify (including superusers).
     Of course, restrictions made in the <literal>database</> and
     <literal>user</> columns still apply.
     This method should only be used when there is adequate
@@ -564,8 +580,9 @@ local   db1,db2,@demodbs  all                         md5
     The password-based authentication methods are <literal>md5</>,
     <literal>crypt</>, and <literal>password</>. These methods operate
     similarly except for the way that the password is sent across the
-    connection.  However, <literal>crypt</> does not allow encrypted
-    passwords to be stored in <structname>pg_shadow</structname>.
+    connection: respectively, MD5-hashed, crypt-encrypted, and clear-text.
+    A limitation is that the <literal>crypt</> method does not work with
+    passwords that have been encrypted in <structname>pg_authid</structname>.
    </para>
 
    <para>
@@ -573,15 +590,16 @@ local   db1,db2,@demodbs  all                         md5
     <quote>sniffing</> attacks then <literal>md5</> is preferred, with
     <literal>crypt</> a second choice if you must support pre-7.2
     clients. Plain <literal>password</> should especially be avoided for
-    connections over the open Internet (unless you use <acronym>SSL</acronym>, SSH, or
-    other communications security wrappers around the connection).
+    connections over the open Internet (unless you use <acronym>SSL</acronym>,
+    <acronym>SSH</>, or another
+    communications security wrapper around the connection).
    </para>
 
    <para>
     <productname>PostgreSQL</productname> database passwords are
     separate from operating system user passwords. The password for
-    each database user is stored in the <literal>pg_shadow</> system
-    catalog table. Passwords can be managed with the SQL commands
+    each database user is stored in the <literal>pg_authid</> system
+    catalog. Passwords can be managed with the SQL commands
     <xref linkend="sql-createuser" endterm="sql-createuser-title"> and
     <xref linkend="sql-alteruser" endterm="sql-alteruser-title">,
     e.g., <userinput>CREATE USER foo WITH PASSWORD 'secret';</userinput>.
@@ -607,41 +625,44 @@ local   db1,db2,@demodbs  all                         md5
     <ulink url="http://www.nrl.navy.mil/CCS/people/kenh/kerberos-faq.html">
     Kerberos <acronym>FAQ</></ulink> or 
     <ulink url="http://web.mit.edu/kerberos/www/">MIT Kerberos page</ulink>
-    can be a good starting point for exploration.
+    can be good starting points for exploration.
     Several sources for <productname>Kerberos</> distributions exist.
    </para>
 
    <para>
-    <productname>PostgreSQL</> supports Kerberos version 5, and it has
-	to be enabled at build time. See
-		<xref linkend="installation"> for more information.
+    <productname>PostgreSQL</> supports Kerberos version 5.  Kerberos
+    support has to be enabled when <productname>PostgreSQL</> is built;
+    see <xref linkend="installation"> for more information.
    </para>
 
    <para>
     <productname>PostgreSQL</> operates like a normal Kerberos service.
     The name of the service principal is
     <literal><replaceable>servicename</>/<replaceable>hostname</>@<replaceable>realm</></literal>.
-	 </para>
-	  <para>
+   </para>
+
+   <para>
     <replaceable>servicename</> can be set on the server side using the
     <xref linkend="guc-krb-srvname"> configuration parameter, and on the
-    client side using the krbsrvname connection parameter. (See also <xref linkend="libpq-connect">.). The installation default can be changed from the default
-		<literal>postgres</literal> at build time using 
-    <literal>./configure --with-krb-srvnam=whatever</>). In most environments,
-		this parameter never needs to be changed. However, to support multiple
-		<productname>PostgreSQL</> installations on the same host it is necessary.
-		Some Kerberos implementations may also require a different service name,
-		such as Microsoft Active Directory which requires the service name
-		to be in uppercase (<literal>POSTGRES</literal>).
-	 </para>
-	 <para>
+    client side using the <literal>krbsrvname</> connection parameter. (See
+    also <xref linkend="libpq-connect">.)  The installation default can be
+    changed from the default <literal>postgres</literal> at build time using
+    <literal>./configure --with-krb-srvnam=whatever</>. In most environments,
+    this parameter never needs to be changed. However, to support multiple
+    <productname>PostgreSQL</> installations on the same host it is necessary.
+    Some Kerberos implementations may also require a different service name,
+    such as Microsoft Active Directory which requires the service name
+    to be in uppercase (<literal>POSTGRES</literal>).
+   </para>
+
+   <para>
     <replaceable>hostname</> is the fully qualified host name of the
     server machine. The service principal's realm is the preferred realm
     of the server machine.
    </para>
 
    <para>
-    Client principals must have their <productname>PostgreSQL</> user
+    Client principals must have their <productname>PostgreSQL</> database user
     name as their first component, for example
     <literal>pgusername/otherstuff@realm</>. At present the realm of
     the client is not checked by <productname>PostgreSQL</>; so if you
@@ -661,9 +682,9 @@ local   db1,db2,@demodbs  all                         md5
    </para>
 
    <para>
-	  The keytab file is generated in the Kerberos system, see the 
-		Kerberos documentation for details. The following example is 
-		for MIT-compatible Kerberos 5 implementations:
+    The keytab file is generated by the Kerberos software; see the 
+    Kerberos documentation for details. The following example is 
+   for MIT-compatible Kerberos 5 implementations:
 <screen>
 <prompt>kadmin% </><userinput>ank -randkey postgres/server.my.domain.org</>
 <prompt>kadmin% </><userinput>ktadd -k krb5.keytab postgres/server.my.domain.org</>
@@ -672,10 +693,10 @@ local   db1,db2,@demodbs  all                         md5
 
    <para>
     When connecting to the database make sure you have a ticket for a
-    principal matching the requested database user name. An example: For
+    principal matching the requested database user name. For example, for
     database user name <literal>fred</>, both principal
     <literal>fred@EXAMPLE.COM</> and
-    <literal>fred/users.example.com@EXAMPLE.COM</> can be used to
+    <literal>fred/users.example.com@EXAMPLE.COM</> could be used to
     authenticate to the database server.
    </para>
 
@@ -900,7 +921,7 @@ FATAL:  no pg_hba.conf entry for host "123.123.123.123", user "andym", database 
     This is what you are most likely to get if you succeed in contacting
     the server, but it does not want to talk to you. As the message
     suggests, the server refused the connection request because it found
-    no authorizing entry in its <filename>pg_hba.conf</filename>
+    no matching entry in its <filename>pg_hba.conf</filename>
     configuration file.
    </para>
 
