@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.102 2005/06/26 19:16:05 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.103 2005/08/14 22:19:50 petere Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -274,7 +274,7 @@ UPDATE "my_table" SET "a" = 5;
      While ordinary strings now support C-style backslash escapes,
      future versions will generate warnings for such usage and
      eventually treat backslashes as literal characters to be
-     standard-compliant. The proper way to specify escape processing is
+     standard-conforming. The proper way to specify escape processing is
      to use the escape string syntax to indicate that escape
      processing is desired. Escape string syntax is specified by writing
      the letter <literal>E</literal> (upper or lower case) just before

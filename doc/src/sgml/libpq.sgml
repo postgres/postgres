@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.188 2005/06/27 02:04:24 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.189 2005/08/14 22:19:49 petere Exp $
 -->
 
  <chapter id="libpq">
@@ -890,10 +890,10 @@ Parameters reported as of the current release include
 <literal>DateStyle</>,
 <literal>TimeZone</>,
 <literal>integer_datetimes</>, and
-<literal>standard_compliant_strings</>.
+<literal>standard_conforming_strings</>.
 (<literal>server_encoding</>, <literal>TimeZone</>, and
 <literal>integer_datetimes</> were not reported by releases before 8.0;
-<literal>standard_compliant_strings</> was not reported by releases
+<literal>standard_conforming_strings</> was not reported by releases
 before 8.1.)
 Note that
 <literal>server_version</>,
@@ -917,7 +917,7 @@ in a numeric form that is much easier to compare against.
 </para>
 
 <para>
-If no value for <literal>standard_compliant_strings</> is reported,
+If no value for <literal>standard_conforming_strings</> is reported,
 applications may assume it is <literal>false</>, that is, backslashes
 are treated as escapes in string literals.  Also, the presence of this
 parameter may be taken as an indication that the escape string syntax

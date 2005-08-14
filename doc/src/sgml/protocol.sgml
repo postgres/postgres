@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.61 2005/06/27 02:04:24 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.62 2005/08/14 22:19:49 petere Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -1061,10 +1061,10 @@
     <literal>DateStyle</>,
     <literal>TimeZone</>,
     <literal>integer_datetimes</>, and
-    <literal>standard_compliant_strings</>.
+    <literal>standard_conforming_strings</>.
     (<literal>server_encoding</>, <literal>TimeZone</>, and
     <literal>integer_datetimes</> were not reported by releases before 8.0;
-    <literal>standard_compliant_strings</> was not reported by releases
+    <literal>standard_conforming_strings</> was not reported by releases
     before 8.1.)
     Note that
     <literal>server_version</>,

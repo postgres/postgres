@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.344 2005/08/11 21:11:42 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.345 2005/08/14 22:19:49 petere Exp $
 -->
 
 <chapter Id="runtime">
@@ -4089,7 +4089,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         Escape string syntax (<literal>E'...'</>) should be used for
         escapes, because in future versions of
         <productname>PostgreSQL</productname> ordinary strings will have
-        the standard-compliant behavior of treating backslashes
+        the standard-conforming behavior of treating backslashes
         literally.
        </para>
       </listitem>
@@ -4303,11 +4303,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-standard-compliant-strings" xreflabel="standard_compliant_strings">
-      <term><varname>standard_compliant_strings</varname> (<type>boolean</type>)</term>
+     <varlistentry id="guc-standard-conforming-strings" xreflabel="standard_conforming_strings">
+      <term><varname>standard_conforming_strings</varname> (<type>boolean</type>)</term>
       <indexterm><primary>strings</><secondary>escape</></>
       <indexterm>
-       <primary><varname>standard_compliant_strings</> configuration parameter</primary>
+       <primary><varname>standard_conforming_strings</> configuration parameter</primary>
       </indexterm>
       <listitem>
        <para>
