@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/createuser.sgml,v 1.41 2005/05/29 03:32:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createuser.sgml,v 1.42 2005/08/14 20:16:02 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -32,24 +32,24 @@ PostgreSQL documentation
   <title>Description</title>
   <para>
    <application>createuser</application> creates a 
-   new <productname>PostgreSQL</productname> user.  
-   Only superusers (users with <literal>usesuper</literal> set in
-   the <literal>pg_shadow</literal> table) can create 
-   new <productname>PostgreSQL</productname> users,
-   so <application>createuser</application> must be
-   invoked by someone who can connect as a <productname>PostgreSQL</productname>
-   superuser.
+   new <productname>PostgreSQL</productname> user (or more precisely, a role).
+   Only superusers and users with <literal>CREATEROLE</> privilege can create
+   new users, so <application>createuser</application> must be
+   invoked by someone who can connect as a superuser or a user with
+   <literal>CREATEROLE</> privilege.
   </para>
 
   <para>
-   Being a superuser also implies the ability to bypass access permission
+   If you wish to create a new superuser, you must connect as a
+   superuser, not merely with <literal>CREATEROLE</> privilege.
+   Being a superuser implies the ability to bypass all access permission
    checks within the database, so superuserdom should not be granted lightly.
   </para>
 
   <para>
    <application>createuser</application> is a wrapper around the
-   <acronym>SQL</acronym> command <xref linkend="SQL-CREATEUSER"
-   endterm="SQL-CREATEUSER-title">.
+   <acronym>SQL</acronym> command <xref linkend="SQL-CREATEROLE"
+   endterm="SQL-CREATEROLE-title">.
    There is no effective difference between creating users via
    this utility and via other methods for accessing the server.
   </para>
@@ -70,32 +70,28 @@ PostgreSQL documentation
        <para>
         Specifies the name of the <productname>PostgreSQL</productname> user
         to be created.
-        This name must be unique among all users of this
+        This name must be different from all existing roles in this
         <productname>PostgreSQL</productname> installation.
        </para>
       </listitem>
      </varlistentry>  
 
      <varlistentry>
-      <term><option>-a</></term>
-      <term><option>--adduser</></term>
+      <term><option>-s</></term>
+      <term><option>--superuser</></term>
       <listitem>
        <para>
-	The new user is allowed to create other users.
-	(Note: Actually, this makes the new user a <emphasis>superuser</>.
-	The option is poorly named.)
+        The new user will be a superuser.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-A</></term>
-      <term><option>--no-adduser</></term>
+      <term><option>-S</></term>
+      <term><option>--no-superuser</></term>
       <listitem>
        <para>
-	The new user is not allowed to create other users (i.e.,
-	the new user is a regular user, not a superuser).
-	This is the default.
+        The new user will not be a superuser.
        </para>
       </listitem>
      </varlistentry>
@@ -105,7 +101,7 @@ PostgreSQL documentation
       <term><option>--createdb</></term>
       <listitem>
        <para>
-	The new user is allowed to create databases.
+        The new user will be allowed to create databases.
        </para>
       </listitem>
      </varlistentry>
@@ -115,52 +111,86 @@ PostgreSQL documentation
       <term><option>--no-createdb</></term>
       <listitem>
        <para>
-	The new user is not allowed to create databases.
-	This is the default.
+        The new user will not be allowed to create databases.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-e</></term>
-      <term><option>--echo</></term>
+      <term><option>-r</></term>
+      <term><option>--createrole</></term>
       <listitem>
        <para>
-        Echo the commands that <application>createuser</application> generates
-	and sends to the server.
+        The new user will be allowed to create new roles (that is,
+        this user will have <literal>CREATEROLE</> privilege).
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-E</></term>
-      <term><option>--encrypted</></term>
+      <term><option>-R</></term>
+      <term><option>--no-createrole</></term>
       <listitem>
        <para>
-	Encrypts the user's password stored in the database. If not
-	specified, the default password behavior is used.
+        The new user will not be allowed to create new roles.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-i <replaceable class="parameter">number</replaceable></></term>
-      <term><option>--sysid <replaceable class="parameter">number</replaceable></></term>
+      <term><option>-l</></term>
+      <term><option>--login</></term>
       <listitem>
        <para>
-       Allows you to pick a non-default user ID for the new user. This is not
-       necessary, but some people like it.
+        The new user will be allowed to log in (that is, the user name
+        can be used as the initial session user identifier).
+        This is the default.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-N</></term>
-      <term><option>--unencrypted</></term>
+      <term><option>-L</></term>
+      <term><option>--no-login</></term>
       <listitem>
        <para>
-	Does not encrypt the user's password stored in the database. If
-	not specified, the default password behavior is used.
+        The new user will not be allowed to log in.
+        (A role without login privilege is still useful as a means of
+        managing database permissions.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-i</></term>
+      <term><option>--inherit</></term>
+      <listitem>
+       <para>
+        The new role will automatically inherit privileges of roles
+        it is a member of.
+        This is the default.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-I</></term>
+      <term><option>--no-inherit</></term>
+      <listitem>
+       <para>
+        The new role will not automatically inherit privileges of roles
+        it is a member of.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-c <replaceable class="parameter">number</replaceable></></term>
+      <term><option>--conn-limit <replaceable class="parameter">number</replaceable></></term>
+      <listitem>
+       <para>
+        Set a maximum number of connections for the new user.
+        The default is to set no limit.
        </para>
       </listitem>
      </varlistentry>
@@ -173,6 +203,39 @@ PostgreSQL documentation
        If given, <application>createuser</application> will issue a prompt for
        the password of the new user. This is not necessary if you do not plan
        on using password authentication.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-E</></term>
+      <term><option>--encrypted</></term>
+      <listitem>
+       <para>
+        Encrypts the user's password stored in the database. If not
+        specified, the default password behavior is used.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-N</></term>
+      <term><option>--unencrypted</></term>
+      <listitem>
+       <para>
+        Does not encrypt the user's password stored in the database. If
+        not specified, the default password behavior is used.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-e</></term>
+      <term><option>--echo</></term>
+      <listitem>
+       <para>
+        Echo the commands that <application>createuser</application> generates
+        and sends to the server.
        </para>
       </listitem>
      </varlistentry>
@@ -204,10 +267,10 @@ PostgreSQL documentation
       <term><option>--host <replaceable class="parameter">host</replaceable></></term>
       <listitem>
        <para>
-	Specifies the host name of the machine on which the 
-	server
-	is running.  If the value begins with a slash, it is used 
-	as the directory for the Unix domain socket.
+        Specifies the host name of the machine on which the 
+        server
+        is running.  If the value begins with a slash, it is used 
+        as the directory for the Unix domain socket.
        </para>
       </listitem>
      </varlistentry>
@@ -217,9 +280,9 @@ PostgreSQL documentation
       <term><option>--port <replaceable class="parameter">port</replaceable></></term>
       <listitem>
        <para>
-	Specifies the TCP port or local Unix domain socket file 
-	extension on which the server
-	is listening for connections.
+        Specifies the TCP port or local Unix domain socket file 
+        extension on which the server
+        is listening for connections.
        </para>
       </listitem>
      </varlistentry>
@@ -272,8 +335,8 @@ PostgreSQL documentation
   <title>Diagnostics</title>
 
   <para>
-   In case of difficulty, see <xref linkend="SQL-CREATEUSER"
-   endterm="sql-createuser-title"> and <xref linkend="APP-PSQL"> for
+   In case of difficulty, see <xref linkend="SQL-CREATEROLE"
+   endterm="sql-createrole-title"> and <xref linkend="APP-PSQL"> for
    discussions of potential problems and error messages.
    The database server must be running at the
    targeted host.  Also, any default connection settings and environment
@@ -292,8 +355,9 @@ PostgreSQL documentation
     server:
 <screen>
 <prompt>$ </prompt><userinput>createuser joe</userinput>
-<computeroutput>Shall the new user be allowed to create databases? (y/n) </computeroutput><userinput>n</userinput>
-<computeroutput>Shall the new user be allowed to create more new users? (y/n) </computeroutput><userinput>n</userinput>
+<computeroutput>Shall the new role be a superuser? (y/n) </computeroutput><userinput>n</userinput>
+<computeroutput>Shall the new role be allowed to create databases? (y/n) </computeroutput><userinput>n</userinput>
+<computeroutput>Shall the new role be allowed to create more new roles? (y/n) </computeroutput><userinput>n</userinput>
 <computeroutput>CREATE USER</computeroutput>
 </screen>
    </para>
@@ -303,9 +367,9 @@ PostgreSQL documentation
     server on host <literal>eden</>, port 5000, avoiding the prompts and
     taking a look at the underlying command:
 <screen>
-<prompt>$ </prompt><userinput>createuser -h eden -p 5000 -D -A -e joe</userinput>
-<computeroutput>CREATE USER joe NOCREATEDB NOCREATEUSER;</computeroutput>
-<computeroutput>CREATE USER</computeroutput>
+<prompt>$ </prompt><userinput>createuser -h eden -p 5000 -S -D -R -e joe</userinput>
+<computeroutput>CREATE ROLE joe NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT LOGIN;</computeroutput>
+<computeroutput>CREATE ROLE</computeroutput>
 </screen>
    </para>
 
@@ -313,11 +377,11 @@ PostgreSQL documentation
     To create the user <literal>joe</literal> as a superuser,
     and assign a password immediately:
 <screen>
-<prompt>$ </prompt><userinput>createuser -P -d -a -e joe</userinput>
-<computeroutput>Enter password for new user: </computeroutput><userinput>xyzzy</userinput>
+<prompt>$ </prompt><userinput>createuser -P -s -e joe</userinput>
+<computeroutput>Enter password for new role: </computeroutput><userinput>xyzzy</userinput>
 <computeroutput>Enter it again: </computeroutput><userinput>xyzzy</userinput>
-<computeroutput>CREATE USER joe PASSWORD 'xyzzy' CREATEDB CREATEUSER;</computeroutput>
-<computeroutput>CREATE USER</computeroutput>
+<computeroutput>CREATE ROLE joe PASSWORD 'xyzzy' SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN;</computeroutput>
+<computeroutput>CREATE ROLE</computeroutput>
 </screen>
     In the above example, the new password isn't actually echoed when typed,
     but we show what was typed for clarity.  However the password
@@ -333,7 +397,7 @@ PostgreSQL documentation
 
   <simplelist type="inline">
    <member><xref linkend="app-dropuser"></member>
-   <member><xref linkend="sql-createuser" endterm="sql-createuser-title"></member>
+   <member><xref linkend="sql-createrole" endterm="sql-createrole-title"></member>
    <member>Environment Variables (<xref linkend="libpq-envars">)</member>
   </simplelist>
  </refsect1>
