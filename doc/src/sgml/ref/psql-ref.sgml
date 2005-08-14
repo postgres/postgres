@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.148 2005/07/18 20:57:52 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.149 2005/08/14 18:49:29 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -963,9 +963,10 @@ testdb=&gt;
         <term><literal>\dg [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
-        Lists all database groups. If <replaceable
+        Lists all database roles. If <replaceable
         class="parameter">pattern</replaceable> is specified, only
-        those groups whose names match the pattern are listed.
+        those roles whose names match the pattern are listed.
+        (This command is now effectively the same as <literal>\du</>.)
         </para>
         </listitem>
       </varlistentry>
@@ -1073,7 +1074,7 @@ testdb=&gt;
         <term><literal>\du [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
-        Lists all database users or only those that match <replaceable
+        Lists all database roles, or only those that match <replaceable
         class="parameter">pattern</replaceable>.
         </para>
         </listitem>

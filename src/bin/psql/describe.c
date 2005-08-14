@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.122 2005/07/18 19:09:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.123 2005/08/14 18:49:30 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -1377,12 +1377,12 @@ add_tablespace_footer(char relkind, Oid tablespace, char **footers,
 }
 
 /*
- * \du
+ * \du or \dg
  *
- * Describes users.  Any schema portion of the pattern is ignored.
+ * Describes roles.  Any schema portion of the pattern is ignored.
  */
 bool
-describeUsers(const char *pattern)
+describeRoles(const char *pattern)
 {
 	PQExpBufferData buf;
 	PGresult   *res;
@@ -1391,22 +1391,24 @@ describeUsers(const char *pattern)
 	initPQExpBuffer(&buf);
 
 	printfPQExpBuffer(&buf,
-					  "SELECT u.usename AS \"%s\",\n"
-					  "  u.usesysid AS \"%s\",\n"
-					  "  CASE WHEN u.usesuper AND u.usecreatedb THEN CAST('%s' AS pg_catalog.text)\n"
-			"       WHEN u.usesuper THEN CAST('%s' AS pg_catalog.text)\n"
-		 "       WHEN u.usecreatedb THEN CAST('%s' AS pg_catalog.text)\n"
-					  "       ELSE CAST('' AS pg_catalog.text)\n"
-					  "  END AS \"%s\",\n"
-					  "  ARRAY(SELECT g.groname FROM pg_catalog.pg_group g WHERE u.usesysid = ANY(g.grolist)) as \"%s\"\n"
-					  "FROM pg_catalog.pg_user u\n",
-					  _("User name"), _("User ID"),
-					  _("superuser, create database"),
-					  _("superuser"), _("create database"),
-					  _("Attributes"), _("Groups"));
+					  "SELECT r.rolname AS \"%s\",\n"
+					  "  CASE WHEN r.rolsuper THEN '%s' ELSE '%s' END AS \"%s\",\n"
+					  "  CASE WHEN r.rolcreaterole THEN '%s' ELSE '%s' END AS \"%s\",\n"
+					  "  CASE WHEN r.rolcreatedb THEN '%s' ELSE '%s' END AS \"%s\",\n"
+					  "  CASE WHEN r.rolconnlimit < 0 THEN CAST('%s' AS pg_catalog.text)\n"
+					  "       ELSE CAST(r.rolconnlimit AS pg_catalog.text)\n"
+					  "  END AS \"%s\", \n"
+					  "  ARRAY(SELECT b.rolname FROM pg_catalog.pg_auth_members m JOIN pg_catalog.pg_roles b ON (m.roleid = b.oid) WHERE m.member = r.oid) as \"%s\"\n"
+					  "FROM pg_catalog.pg_roles r\n",
+					  _("Role name"),
+					  _("yes"),_("no"),_("Superuser"),
+					  _("yes"),_("no"),_("Create role"),
+					  _("yes"),_("no"),_("Create DB"),
+					  _("no limit"),_("Connections"),
+					  _("Member of"));
 
 	processNamePattern(&buf, pattern, false, false,
-					   NULL, "u.usename", NULL, NULL);
+					   NULL, "r.rolname", NULL, NULL);
 
 	appendPQExpBuffer(&buf, "ORDER BY 1;");
 
@@ -1416,47 +1418,7 @@ describeUsers(const char *pattern)
 		return false;
 
 	myopt.nullPrint = NULL;
-	myopt.title = _("List of users");
-
-	printQuery(res, &myopt, pset.queryFout, pset.logfile);
-
-	PQclear(res);
-	return true;
-}
-
-
-/*
- * \dg
- *
- * Describes groups.
- */
-bool
-describeGroups(const char *pattern)
-{
-	PQExpBufferData buf;
-	PGresult   *res;
-	printQueryOpt myopt = pset.popt;
-
-	initPQExpBuffer(&buf);
-
-	printfPQExpBuffer(&buf,
-					  "SELECT g.groname AS \"%s\",\n"
-					  "  g.grosysid AS \"%s\"\n"
-					  "FROM pg_catalog.pg_group g\n",
-					  _("Group name"), _("Group ID"));
-
-	processNamePattern(&buf, pattern, false, false,
-					   NULL, "g.groname", NULL, NULL);
-
-	appendPQExpBuffer(&buf, "ORDER BY 1;");
-
-	res = PSQLexec(buf.data, false);
-	termPQExpBuffer(&buf);
-	if (!res)
-		return false;
-
-	myopt.nullPrint = NULL;
-	myopt.title = _("List of groups");
+	myopt.title = _("List of roles");
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
