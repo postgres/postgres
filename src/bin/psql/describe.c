@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.123 2005/08/14 18:49:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.124 2005/08/14 19:20:45 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -177,7 +177,7 @@ describeFunctions(const char *pattern, bool verbose)
 
 	if (verbose)
 		appendPQExpBuffer(&buf,
-						  ",\n  u.usename as \"%s\",\n"
+						  ",\n  r.rolname as \"%s\",\n"
 						  "  l.lanname as \"%s\",\n"
 						  "  p.prosrc as \"%s\",\n"
 			  "  pg_catalog.obj_description(p.oid, 'pg_proc') as \"%s\"",
@@ -193,7 +193,7 @@ describeFunctions(const char *pattern, bool verbose)
 						  "\nFROM pg_catalog.pg_proc p"
 						  "\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace"
 		 "\n     LEFT JOIN pg_catalog.pg_language l ON l.oid = p.prolang"
-						  "\n     LEFT JOIN pg_catalog.pg_user u ON u.usesysid = p.proowner\n");
+						  "\n     LEFT JOIN pg_catalog.pg_roles r ON r.oid = p.proowner\n");
 
 	/*
 	 * we skip in/out funcs by excluding functions that take or return
@@ -357,7 +357,7 @@ listAllDbs(bool verbose)
 
 	printfPQExpBuffer(&buf,
 					  "SELECT d.datname as \"%s\",\n"
-					  "       u.usename as \"%s\"",
+					  "       r.rolname as \"%s\"",
 					  _("Name"), _("Owner"));
 	appendPQExpBuffer(&buf,
 		",\n       pg_catalog.pg_encoding_to_char(d.encoding) as \"%s\"",
@@ -368,7 +368,7 @@ listAllDbs(bool verbose)
 						  _("Description"));
 	appendPQExpBuffer(&buf,
 					  "\nFROM pg_catalog.pg_database d"
-		  "\n  LEFT JOIN pg_catalog.pg_user u ON d.datdba = u.usesysid\n"
+		  "\n  LEFT JOIN pg_catalog.pg_roles r ON d.datdba = r.oid\n"
 					  "ORDER BY 1;");
 
 	res = PSQLexec(buf.data, false);
@@ -1462,7 +1462,7 @@ listTables(const char *tabtypes, const char *pattern, bool verbose)
 					  "SELECT n.nspname as \"%s\",\n"
 					  "  c.relname as \"%s\",\n"
 					  "  CASE c.relkind WHEN 'r' THEN '%s' WHEN 'v' THEN '%s' WHEN 'i' THEN '%s' WHEN 'S' THEN '%s' WHEN 's' THEN '%s' END as \"%s\",\n"
-					  "  u.usename as \"%s\"",
+					  "  r.rolname as \"%s\"",
 					  _("Schema"), _("Name"),
 					  _("table"), _("view"), _("index"), _("sequence"),
 					  _("special"), _("Type"), _("Owner"));
@@ -1477,20 +1477,16 @@ listTables(const char *tabtypes, const char *pattern, bool verbose)
 		  ",\n  pg_catalog.obj_description(c.oid, 'pg_class') as \"%s\"",
 						  _("Description"));
 
+	appendPQExpBuffer(&buf,
+					  "\nFROM pg_catalog.pg_class c"
+					  "\n     LEFT JOIN pg_catalog.pg_roles r ON r.oid = c.relowner"
+					  "\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace");
 	if (showIndexes)
 		appendPQExpBuffer(&buf,
-						  "\nFROM pg_catalog.pg_class c"
-			  "\n     JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid"
-			  "\n     JOIN pg_catalog.pg_class c2 ON i.indrelid = c2.oid"
-		"\n     LEFT JOIN pg_catalog.pg_user u ON u.usesysid = c.relowner"
-						  "\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n");
-	else
-		appendPQExpBuffer(&buf,
-						  "\nFROM pg_catalog.pg_class c"
-		"\n     LEFT JOIN pg_catalog.pg_user u ON u.usesysid = c.relowner"
-						  "\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n");
+						  "\n     LEFT JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid"
+						  "\n     LEFT JOIN pg_catalog.pg_class c2 ON i.indrelid = c2.oid");
 
-	appendPQExpBuffer(&buf, "WHERE c.relkind IN (");
+	appendPQExpBuffer(&buf, "\nWHERE c.relkind IN (");
 	if (showTables)
 		appendPQExpBuffer(&buf, "'r',");
 	if (showViews)
@@ -1716,7 +1712,7 @@ listSchemas(const char *pattern, bool verbose)
 	initPQExpBuffer(&buf);
 	printfPQExpBuffer(&buf,
 					  "SELECT n.nspname AS \"%s\",\n"
-					  "       u.usename AS \"%s\"",
+					  "       r.rolname AS \"%s\"",
 					  _("Name"), _("Owner"));
 
 	if (verbose)
@@ -1726,8 +1722,8 @@ listSchemas(const char *pattern, bool verbose)
 						  _("Access privileges"), _("Description"));
 
 	appendPQExpBuffer(&buf,
-	  "\nFROM pg_catalog.pg_namespace n LEFT JOIN pg_catalog.pg_user u\n"
-					  "       ON n.nspowner=u.usesysid\n"
+	  "\nFROM pg_catalog.pg_namespace n LEFT JOIN pg_catalog.pg_roles r\n"
+					  "       ON n.nspowner=r.oid\n"
 					  "WHERE	(n.nspname !~ '^pg_temp_' OR\n"
 	   "		 n.nspname = (pg_catalog.current_schemas(true))[1])\n");		/* temp schema is first */
 
