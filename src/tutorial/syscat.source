@@ -7,7 +7,7 @@
 -- Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
 -- Portions Copyright (c) 1994, Regents of the University of California
 --
--- $PostgreSQL: pgsql/src/tutorial/syscat.source,v 1.14 2004/12/31 22:04:05 pgsql Exp $
+-- $PostgreSQL: pgsql/src/tutorial/syscat.source,v 1.15 2005/08/15 02:40:36 tgl Exp $
 --
 ---------------------------------------------------------------------------
 
@@ -18,13 +18,12 @@
 SET SEARCH_PATH TO pg_catalog;
 
 --
--- lists the name of all database adminstrators and the name of their
--- database(s)
+-- lists the names of all database owners and the name of their database(s)
 --
-SELECT usename, datname
-  FROM pg_user, pg_database
-  WHERE usesysid = datdba
-  ORDER BY usename, datname;
+SELECT rolname, datname
+  FROM pg_roles, pg_database
+  WHERE pg_roles.oid = datdba
+  ORDER BY rolname, datname;
 
 --
 -- lists all user-defined classes
@@ -81,15 +80,15 @@ SELECT n.nspname, c.relname, a.attname, format_type(t.oid, null) as typname
 --
 -- lists all user-defined base types (not including array types)
 --
-SELECT n.nspname, u.usename, format_type(t.oid, null) as typname
-  FROM pg_type t, pg_user u, pg_namespace n
-  WHERE u.usesysid = t.typowner
+SELECT n.nspname, r.rolname, format_type(t.oid, null) as typname
+  FROM pg_type t, pg_roles r, pg_namespace n
+  WHERE r.oid = t.typowner
     and t.typnamespace = n.oid
-    and t.typrelid = '0'::oid   -- no complex types
-    and t.typelem = '0'::oid    -- no arrays
-    and n.nspname not like 'pg\\_%' -- no catalogs
+    and t.typrelid = 0   -- no complex types
+    and t.typelem = 0    -- no arrays
+    and n.nspname not like 'pg\\_%' -- no built-in types
     and n.nspname != 'information_schema' -- no information_schema
-  ORDER BY nspname, usename, typname;
+  ORDER BY nspname, rolname, typname;
 
 
 --

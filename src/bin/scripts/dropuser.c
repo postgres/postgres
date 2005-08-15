@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/dropuser.c,v 1.14 2005/06/21 04:02:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/dropuser.c,v 1.15 2005/08/15 02:40:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,20 +101,20 @@ main(int argc, char *argv[])
 	}
 
 	if (dropuser == NULL)
-		dropuser = simple_prompt("Enter name of user to drop: ", 128, true);
+		dropuser = simple_prompt("Enter name of role to drop: ", 128, true);
 
 	if (interactive)
 	{
 		char	   *reply;
 
-		printf(_("User \"%s\" will be permanently removed.\n"), dropuser);
+		printf(_("Role \"%s\" will be permanently removed.\n"), dropuser);
 		reply = simple_prompt("Are you sure? (y/n) ", 1, true);
 		if (check_yesno_response(reply) != 1)
 			exit(0);
 	}
 
 	initPQExpBuffer(&sql);
-	appendPQExpBuffer(&sql, "DROP USER %s;\n", fmtId(dropuser));
+	appendPQExpBuffer(&sql, "DROP ROLE %s;\n", fmtId(dropuser));
 
 	conn = connectDatabase("postgres", host, port, username, password, progname);
 
@@ -124,7 +124,7 @@ main(int argc, char *argv[])
 
 	if (PQresultStatus(result) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, _("%s: removal of user \"%s\" failed: %s"),
+		fprintf(stderr, _("%s: removal of role \"%s\" failed: %s"),
 				progname, dropuser, PQerrorMessage(conn));
 		PQfinish(conn);
 		exit(1);
@@ -133,7 +133,7 @@ main(int argc, char *argv[])
 	PQfinish(conn);
 	if (!quiet)
 	{
-		puts("DROP USER");
+		puts("DROP ROLE");
 		fflush(stdout);
 	}
 	exit(0);

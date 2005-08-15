@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xaggr.sgml,v 1.28 2005/03/30 02:08:39 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xaggr.sgml,v 1.29 2005/08/15 02:40:23 tgl Exp $
 -->
 
  <sect1 id="xaggr">
@@ -141,22 +141,22 @@ CREATE AGGREGATE array_accum (
 <programlisting>
 SELECT attrelid::regclass, array_accum(attname)
     FROM pg_attribute
-    WHERE attnum &gt; 0 AND attrelid = 'pg_user'::regclass
+    WHERE attnum &gt; 0 AND attrelid = 'pg_tablespace'::regclass
     GROUP BY attrelid;
 
- attrelid |                                 array_accum
-----------+-----------------------------------------------------------------------------
- pg_user  | {usename,usesysid,usecreatedb,usesuper,usecatupd,passwd,valuntil,useconfig}
+   attrelid    |              array_accum              
+---------------+---------------------------------------
+ pg_tablespace | {spcname,spcowner,spclocation,spcacl}
 (1 row)
 
 SELECT attrelid::regclass, array_accum(atttypid)
     FROM pg_attribute
-    WHERE attnum &gt; 0 AND attrelid = 'pg_user'::regclass
+    WHERE attnum &gt; 0 AND attrelid = 'pg_tablespace'::regclass
     GROUP BY attrelid;
 
- attrelid |         array_accum
-----------+------------------------------
- pg_user  | {19,23,16,16,16,25,702,1009}
+   attrelid    |   array_accum   
+---------------+-----------------
+ pg_tablespace | {19,26,25,1034}
 (1 row)
 </programlisting>
   </para>

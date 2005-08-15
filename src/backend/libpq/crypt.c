@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/libpq/crypt.c,v 1.64 2005/06/29 22:51:54 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/libpq/crypt.c,v 1.65 2005/08/15 02:40:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass)
 	if (shadow_pass == NULL || *shadow_pass == '\0')
 		return STATUS_ERROR;
 
-	/* We can't do crypt with pg_shadow MD5 passwords */
+	/* We can't do crypt with MD5 passwords */
 	if (isMD5(shadow_pass) && port->auth_method == uaCrypt)
 	{
 		ereport(LOG,
@@ -75,7 +75,7 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass)
 			crypt_pwd = palloc(MD5_PASSWD_LEN + 1);
 			if (isMD5(shadow_pass))
 			{
-				/* pg_shadow already encrypted, only do salt */
+				/* stored password already encrypted, only do salt */
 				if (!EncryptMD5(shadow_pass + strlen("md5"),
 								(char *) port->md5Salt,
 								sizeof(port->md5Salt), crypt_pwd))
@@ -86,7 +86,7 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass)
 			}
 			else
 			{
-				/* pg_shadow plain, double-encrypt */
+				/* stored password is plain, double-encrypt */
 				char	   *crypt_pwd2 = palloc(MD5_PASSWD_LEN + 1);
 
 				if (!EncryptMD5(shadow_pass,
@@ -121,10 +121,7 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass)
 		default:
 			if (isMD5(shadow_pass))
 			{
-				/*
-				 * Encrypt user-supplied password to match MD5 in
-				 * pg_shadow
-				 */
+				/* Encrypt user-supplied password to match stored MD5 */
 				crypt_client_pass = palloc(MD5_PASSWD_LEN + 1);
 				if (!EncryptMD5(client_pass,
 								port->user_name,

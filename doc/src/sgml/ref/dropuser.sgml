@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.32 2005/05/29 03:32:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.33 2005/08/15 02:40:20 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -33,17 +33,16 @@ PostgreSQL documentation
 
   <para>
    <application>dropuser</application> removes an existing
-   <productname>PostgreSQL</productname> user
-   <emphasis>and</emphasis> the databases which that user owned.
-   Only superusers (users with <literal>usesuper</literal> set in
-   the <literal>pg_shadow</literal> table) can destroy 
-   <productname>PostgreSQL</productname> users.
+   <productname>PostgreSQL</productname> user.
+   Only superusers and users with the <literal>CREATEROLE</> privilege can
+   remove <productname>PostgreSQL</productname> users.  (To remove a
+   superuser, you must yourself be a superuser.)
   </para>
 
   <para>
    <application>dropuser</application> is a wrapper around the
-   <acronym>SQL</acronym> command <xref linkend="SQL-DROPUSER"
-   endterm="SQL-DROPUSER-title">.
+   <acronym>SQL</acronym> command <xref linkend="SQL-DROPROLE"
+   endterm="SQL-DROPROLE-title">.
    There is no effective difference between dropping users via
    this utility and via other methods for accessing the server.
   </para>
@@ -62,8 +61,8 @@ PostgreSQL documentation
       <term><replaceable class="parameter">username</replaceable></term>
       <listitem>
        <para>
-	Specifies the name of the <productname>PostgreSQL</productname> user to be removed. 
-	You will be prompted for a name if none is specified on the command line.
+        Specifies the name of the <productname>PostgreSQL</productname> user to be removed. 
+        You will be prompted for a name if none is specified on the command line.
        </para>
       </listitem>
      </varlistentry>
@@ -74,7 +73,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Echo the commands that <application>dropuser</application> generates
-	and sends to the server.
+        and sends to the server.
        </para>
       </listitem>
      </varlistentry>
@@ -111,10 +110,10 @@ PostgreSQL documentation
       <term><option>--host <replaceable class="parameter">host</replaceable></></term>
       <listitem>
        <para>
-	Specifies the host name of the machine on which the 
-	server
-	is running.  If the value begins with a slash, it is used 
-	as the directory for the Unix domain socket.
+        Specifies the host name of the machine on which the 
+        server
+        is running.  If the value begins with a slash, it is used 
+        as the directory for the Unix domain socket.
        </para>
       </listitem>
      </varlistentry>
@@ -124,9 +123,9 @@ PostgreSQL documentation
       <term><option>--port <replaceable class="parameter">port</replaceable></></term>
       <listitem>
        <para>
-	Specifies the TCP port or local Unix domain socket file 
-	extension on which the server
-	is listening for connections.
+        Specifies the TCP port or local Unix domain socket file 
+        extension on which the server
+        is listening for connections.
        </para>
       </listitem>
      </varlistentry>
@@ -179,8 +178,8 @@ PostgreSQL documentation
   <title>Diagnostics</title>
 
   <para>
-   In case of difficulty, see <xref linkend="SQL-DROPUSER"
-   endterm="sql-dropuser-title"> and <xref linkend="APP-PSQL"> for
+   In case of difficulty, see <xref linkend="SQL-DROPROLE"
+   endterm="sql-droprole-title"> and <xref linkend="APP-PSQL"> for
    discussions of potential problems and error messages.
    The database server must be running at the
    targeted host.  Also, any default connection settings and environment
@@ -199,7 +198,7 @@ PostgreSQL documentation
     server:
 <screen>
 <prompt>$ </prompt><userinput>dropuser joe</userinput>
-<computeroutput>DROP USER</computeroutput>
+<computeroutput>DROP ROLE</computeroutput>
 </screen>
    </para>
 
@@ -209,10 +208,10 @@ PostgreSQL documentation
     command:
 <screen>
 <prompt>$ </prompt><userinput>dropuser -p 5000 -h eden -i -e joe</userinput>
-<computeroutput>User "joe" and any owned databases will be permanently deleted.
+<computeroutput>Role "joe" will be permanently removed.
 Are you sure? (y/n) </computeroutput><userinput>y</userinput>
-<computeroutput>DROP USER "joe"
-DROP USER</computeroutput>
+<computeroutput>DROP ROLE "joe"
+DROP ROLE</computeroutput>
 </screen>
    </para>
  </refsect1>
@@ -223,7 +222,7 @@ DROP USER</computeroutput>
 
   <simplelist type="inline">
    <member><xref linkend="app-createuser"></member>
-   <member><xref linkend="sql-dropuser" endterm="sql-dropuser-title"></member>
+   <member><xref linkend="sql-droprole" endterm="sql-droprole-title"></member>
    <member>Environment Variables (<xref linkend="libpq-envars">)</member>
   </simplelist>
  </refsect1>
