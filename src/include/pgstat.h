@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.35 2005/08/11 21:11:49 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.36 2005/08/15 16:25:18 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -384,7 +384,7 @@ extern void pgstat_bestart(void);
 extern void pgstat_ping(void);
 extern void pgstat_report_activity(const char *what);
 extern void pgstat_report_tabstat(void);
-extern void pgstat_report_autovac(void);
+extern void pgstat_report_autovac(Oid dboid);
 extern void pgstat_report_vacuum(Oid tableoid, bool shared,
 								 bool analyze, PgStat_Counter tuples);
 extern void pgstat_report_analyze(Oid tableoid, bool shared,

@@ -10,15 +10,15 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.3 2005/08/11 21:11:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.4 2005/08/15 16:25:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include <signal.h>
-#include <time.h>
 #include <sys/types.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "access/genam.h"
@@ -86,6 +86,7 @@ typedef struct autovac_dbase
 typedef struct autovac_table
 {
 	Oid			relid;
+	Oid			toastrelid;
 	bool		dovacuum;
 	bool		doanalyze;
 	int			vacuum_cost_delay;
@@ -101,8 +102,10 @@ static void process_whole_db(void);
 static void do_autovacuum(PgStat_StatDBEntry *dbentry);
 static List *autovac_get_database_list(void);
 static void test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
-			 Form_pg_class classForm, Form_pg_autovacuum avForm,
-			 List **vacuum_tables);
+								 Form_pg_class classForm,
+								 Form_pg_autovacuum avForm,
+								 List **vacuum_tables,
+								 List **toast_table_ids);
 static void autovacuum_do_vac_analyze(List *relids, bool dovacuum,
 									  bool doanalyze, bool freeze);
 
@@ -387,11 +390,20 @@ AutoVacMain(int argc, char *argv[])
 	if (db)
 	{
 		/*
+		 * Report autovac startup to the stats collector.  We deliberately
+		 * do this before InitPostgres, so that the last_autovac_time will
+		 * get updated even if the connection attempt fails.  This is to
+		 * prevent autovac from getting "stuck" repeatedly selecting an
+		 * unopenable database, rather than making any progress on stuff
+		 * it can connect to.
+		 */
+		pgstat_report_autovac(db->oid);
+
+		/*
 		 * Connect to the selected database
 		 */
 		InitPostgres(db->name, NULL);
 		SetProcessingMode(NormalProcessing);
-		pgstat_report_autovac();
 		set_ps_display(db->name);
 		ereport(LOG,
 				(errmsg("autovacuum: processing database \"%s\"", db->name)));
@@ -538,6 +550,7 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
 	HeapTuple		tuple;
 	HeapScanDesc	relScan;
 	List		   *vacuum_tables = NIL;
+	List		   *toast_table_ids = NIL;
 	ListCell *cell;
 	PgStat_StatDBEntry *shared;
 
@@ -558,9 +571,25 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
 	classRel = heap_open(RelationRelationId, AccessShareLock);
 	avRel = heap_open(AutovacuumRelationId, AccessShareLock);
 
+	/*
+	 * Scan pg_class and determine which tables to vacuum.
+	 *
+	 * The stats subsystem collects stats for toast tables independently
+	 * of the stats for their parent tables.  We need to check those stats
+	 * since in cases with short, wide tables there might be proportionally
+	 * much more activity in the toast table than in its parent.
+	 *
+	 * Since we can only issue VACUUM against the parent table, we need to
+	 * transpose a decision to vacuum a toast table into a decision to vacuum
+	 * its parent.  There's no point in considering ANALYZE on a toast table,
+	 * either.  To support this, we keep a list of OIDs of toast tables that
+	 * need vacuuming alongside the list of regular tables.  Regular tables
+	 * will be entered into the table list even if they appear not to need
+	 * vacuuming; we go back and re-mark them after finding all the
+	 * vacuumable toast tables.
+	 */
 	relScan = heap_beginscan(classRel, SnapshotNow, 0, NULL);
 
-	/* Scan pg_class looking for tables to vacuum */
 	while ((tuple = heap_getnext(relScan, ForwardScanDirection)) != NULL)
 	{
 		Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tuple);
@@ -571,9 +600,9 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
 		ScanKeyData	entry[1];
 		Oid			relid;
 
-		/* Skip non-table entries. */
-		/* XXX possibly allow RELKIND_TOASTVALUE entries here too? */
-		if (classForm->relkind != RELKIND_RELATION)
+		/* Consider only regular and toast tables. */
+		if (classForm->relkind != RELKIND_RELATION &&
+			classForm->relkind != RELKIND_TOASTVALUE)
 			continue;
 
 		/*
@@ -607,7 +636,7 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
 								   HASH_FIND, NULL);
 
 		test_rel_for_autovac(relid, tabentry, classForm, avForm,
-							 &vacuum_tables);
+							 &vacuum_tables, &toast_table_ids);
 
 		systable_endscan(avScan);
 	}
@@ -624,6 +653,22 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
 		autovac_table *tab = lfirst(cell);
 
 		CHECK_FOR_INTERRUPTS();
+
+		/*
+		 * Check to see if we need to force vacuuming of this table because
+		 * its toast table needs it.
+		 */
+		if (OidIsValid(tab->toastrelid) && !tab->dovacuum &&
+			list_member_oid(toast_table_ids, tab->toastrelid))
+		{
+			tab->dovacuum = true;
+			elog(DEBUG2, "autovac: VACUUM %u because of TOAST table",
+				 tab->relid);
+		}
+
+		/* Otherwise, ignore table if it needs no work */
+		if (!tab->dovacuum && !tab->doanalyze)
+			continue;
 
 		/* Set the vacuum cost parameters for this table */
 		VacuumCostDelay = tab->vacuum_cost_delay;
@@ -643,7 +688,7 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
  * test_rel_for_autovac
  *
  * Check whether a table needs to be vacuumed or analyzed.  Add it to the
- * output list if so.
+ * appropriate output list if so.
  *
  * A table needs to be vacuumed if the number of dead tuples exceeds a
  * threshold.  This threshold is calculated as
@@ -670,7 +715,8 @@ static void
 test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 					 Form_pg_class classForm,
 					 Form_pg_autovacuum avForm,
-					 List **vacuum_tables)
+					 List **vacuum_tables,
+					 List **toast_table_ids)
 {
 	Relation		rel;
 	float4			reltuples;	/* pg_class.reltuples */
@@ -764,11 +810,9 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 	 * will be reset too.
 	 */
 
-	elog(DEBUG2, "%s: vac: %.0f (threshold %.0f), anl: %.0f (threshold %.0f)",
+	elog(DEBUG3, "%s: vac: %.0f (threshold %.0f), anl: %.0f (threshold %.0f)",
 		 RelationGetRelationName(rel),
 		 vactuples, vacthresh, anltuples, anlthresh);
-
-	Assert(CurrentMemoryContext == AutovacMemCxt);
 
 	/* Determine if this table needs vacuum or analyze. */
 	dovacuum = (vactuples > vacthresh);
@@ -778,23 +822,40 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 	if (relid == StatisticRelationId)
 		doanalyze = false;
 
-	if (dovacuum || doanalyze)
+	Assert(CurrentMemoryContext == AutovacMemCxt);
+
+	if (classForm->relkind == RELKIND_RELATION)
 	{
-		autovac_table *tab;
+		if (dovacuum || doanalyze)
+			elog(DEBUG2, "autovac: will%s%s %s",
+				 (dovacuum ? " VACUUM" : ""),
+				 (doanalyze ? " ANALYZE" : ""),
+				 RelationGetRelationName(rel));
 
-		elog(DEBUG2, "will%s%s %s",
-			 (dovacuum ? " VACUUM" : ""),
-			 (doanalyze ? " ANALYZE" : ""),
-			 RelationGetRelationName(rel));
+		/*
+		 * we must record tables that have a toast table, even if we currently
+		 * don't think they need vacuuming.
+		 */
+		if (dovacuum || doanalyze || OidIsValid(classForm->reltoastrelid))
+		{
+			autovac_table *tab;
 
-		tab = (autovac_table *) palloc(sizeof(autovac_table));
-		tab->relid = relid;
-		tab->dovacuum = dovacuum;
-		tab->doanalyze = doanalyze;
-		tab->vacuum_cost_limit = vac_cost_limit;
-		tab->vacuum_cost_delay = vac_cost_delay;
+			tab = (autovac_table *) palloc(sizeof(autovac_table));
+			tab->relid = relid;
+			tab->toastrelid = classForm->reltoastrelid;
+			tab->dovacuum = dovacuum;
+			tab->doanalyze = doanalyze;
+			tab->vacuum_cost_limit = vac_cost_limit;
+			tab->vacuum_cost_delay = vac_cost_delay;
 
-		*vacuum_tables = lappend(*vacuum_tables, tab);
+			*vacuum_tables = lappend(*vacuum_tables, tab);
+		}
+	}
+	else
+	{
+		Assert(classForm->relkind == RELKIND_TOASTVALUE);
+		if (dovacuum)
+			*toast_table_ids = lappend_oid(*toast_table_ids, relid);
 	}
 
 	RelationClose(rel);

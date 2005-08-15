@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.19 2005/08/13 19:02:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.20 2005/08/15 16:25:17 tgl Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -190,7 +190,7 @@ CREATE VIEW pg_stat_all_tables AS
     FROM pg_class C LEFT JOIN 
          pg_index I ON C.oid = I.indrelid 
          LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace) 
-    WHERE C.relkind = 'r' 
+    WHERE C.relkind IN ('r', 't')
     GROUP BY C.oid, N.nspname, C.relname;
 
 CREATE VIEW pg_stat_sys_tables AS 
@@ -223,7 +223,7 @@ CREATE VIEW pg_statio_all_tables AS
             pg_class T ON C.reltoastrelid = T.oid LEFT JOIN 
             pg_class X ON T.reltoastidxid = X.oid 
             LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace) 
-    WHERE C.relkind = 'r' 
+    WHERE C.relkind IN ('r', 't')
     GROUP BY C.oid, N.nspname, C.relname, T.oid, X.oid;
 
 CREATE VIEW pg_statio_sys_tables AS 
@@ -248,7 +248,7 @@ CREATE VIEW pg_stat_all_indexes AS
             pg_index X ON C.oid = X.indrelid JOIN 
             pg_class I ON I.oid = X.indexrelid 
             LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace) 
-    WHERE C.relkind = 'r';
+    WHERE C.relkind IN ('r', 't');
 
 CREATE VIEW pg_stat_sys_indexes AS 
     SELECT * FROM pg_stat_all_indexes 
@@ -272,7 +272,7 @@ CREATE VIEW pg_statio_all_indexes AS
             pg_index X ON C.oid = X.indrelid JOIN 
             pg_class I ON I.oid = X.indexrelid 
             LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace) 
-    WHERE C.relkind = 'r';
+    WHERE C.relkind IN ('r', 't');
 
 CREATE VIEW pg_statio_sys_indexes AS 
     SELECT * FROM pg_statio_all_indexes 

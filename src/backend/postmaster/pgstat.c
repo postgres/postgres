@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.105 2005/08/11 21:11:44 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.106 2005/08/15 16:25:17 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -651,10 +651,12 @@ pgstat_beterm(int pid)
  * pgstat_report_autovac() -
  *
  * 	Called from autovacuum.c to report startup of an autovacuum process.
+ *	We are called before InitPostgres is done, so can't rely on MyDatabaseId;
+ *	the db OID must be passed in, instead.
  * ----------
  */
 void
-pgstat_report_autovac(void)
+pgstat_report_autovac(Oid dboid)
 {
 	PgStat_MsgAutovacStart msg;
 
@@ -662,7 +664,7 @@ pgstat_report_autovac(void)
 		return;
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_AUTOVAC_START);
-	msg.m_databaseid = MyDatabaseId;
+	msg.m_databaseid = dboid;
 	msg.m_start_time = GetCurrentTimestamp();
 
 	pgstat_send(&msg, sizeof(msg));
