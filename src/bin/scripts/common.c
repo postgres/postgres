@@ -1,21 +1,27 @@
 /*-------------------------------------------------------------------------
  *
- * Miscellaneous shared code
+ *	common.c
+ *		Common support routines for bin/scripts/
+ *
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.17 2005/02/22 04:41:30 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.18 2005/08/15 21:02:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres_fe.h"
-#include "common.h"
-#include "libpq-fe.h"
 
 #include <pwd.h>
 #include <unistd.h>
+
+#include "common.h"
+
+#ifndef HAVE_INT_OPTRESET
+int		optreset;
+#endif
 
 
 /*
@@ -55,7 +61,8 @@ get_user_name(const char *progname)
  * options.
  */
 void
-handle_help_version_opts(int argc, char *argv[], const char *fixed_progname, help_handler hlp)
+handle_help_version_opts(int argc, char *argv[],
+						 const char *fixed_progname, help_handler hlp)
 {
 	if (argc > 1)
 	{
@@ -79,7 +86,8 @@ handle_help_version_opts(int argc, char *argv[], const char *fixed_progname, hel
  */
 PGconn *
 connectDatabase(const char *dbname, const char *pghost, const char *pgport,
-		 const char *pguser, bool require_password, const char *progname)
+				const char *pguser, bool require_password,
+				const char *progname)
 {
 	PGconn	   *conn;
 	char	   *password = NULL;
@@ -146,13 +154,43 @@ executeQuery(PGconn *conn, const char *query, const char *progname, bool echo)
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, _("%s: query failed: %s"), progname, PQerrorMessage(conn));
-		fprintf(stderr, _("%s: query was: %s\n"), progname, query);
+		fprintf(stderr, _("%s: query failed: %s"),
+				progname, PQerrorMessage(conn));
+		fprintf(stderr, _("%s: query was: %s\n"),
+				progname, query);
 		PQfinish(conn);
 		exit(1);
 	}
 
 	return res;
+}
+
+
+/*
+ * As above for a SQL command (which returns nothing).
+ */
+void
+executeCommand(PGconn *conn, const char *query,
+			   const char *progname, bool echo)
+{
+	PGresult   *res;
+
+	if (echo)
+		printf("%s\n", query);
+
+	res = PQexec(conn, query);
+	if (!res ||
+		PQresultStatus(res) != PGRES_COMMAND_OK)
+	{
+		fprintf(stderr, _("%s: query failed: %s"),
+				progname, PQerrorMessage(conn));
+		fprintf(stderr, _("%s: query was: %s\n"),
+				progname, query);
+		PQfinish(conn);
+		exit(1);
+	}
+
+	PQclear(res);
 }
 
 

@@ -1,24 +1,40 @@
-#include "postgres_fe.h"
+/*
+ *	common.h
+ *		Common support routines for bin/scripts/
+ *
+ *	Copyright (c) 2003-2005, PostgreSQL Global Development Group
+ *
+ *	$PostgreSQL: pgsql/src/bin/scripts/common.h,v 1.11 2005/08/15 21:02:26 tgl Exp $
+ */
+#ifndef COMMON_H
+#define COMMON_H
 
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"
 #include "getopt_long.h"
 
 #ifndef HAVE_INT_OPTRESET
-int			optreset;
+extern int		optreset;
 #endif
 
-const char *get_user_name(const char *progname);
+typedef void (*help_handler) (const char *progname);
 
-typedef void (*help_handler) (const char *);
+extern const char *get_user_name(const char *progname);
 
-void		handle_help_version_opts(int argc, char *argv[], const char *fixed_progname, help_handler hlp);
+extern void handle_help_version_opts(int argc, char *argv[],
+									 const char *fixed_progname,
+									 help_handler hlp);
 
-PGconn *connectDatabase(const char *dbname, const char *pghost, const char *pgport,
-		const char *pguser, bool require_password, const char *progname);
+extern PGconn *connectDatabase(const char *dbname, const char *pghost,
+							   const char *pgport, const char *pguser,
+							   bool require_password, const char *progname);
 
-PGresult *
-			executeQuery(PGconn *conn, const char *command, const char *progname, bool echo);
+extern PGresult *executeQuery(PGconn *conn, const char *query,
+							  const char *progname, bool echo);
 
-int
-			check_yesno_response(const char *string);
+extern void executeCommand(PGconn *conn, const char *query,
+						   const char *progname, bool echo);
+
+extern int	check_yesno_response(const char *string);
+
+#endif /* COMMON_H */

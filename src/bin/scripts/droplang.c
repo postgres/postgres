@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/droplang.c,v 1.16 2005/07/10 14:26:30 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/droplang.c,v 1.17 2005/08/15 21:02:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,9 +140,9 @@ main(int argc, char *argv[])
 		conn = connectDatabase(dbname, host, port, username, password, 
 							   progname);
 
-		printfPQExpBuffer(&sql, "SELECT lanname as \"%s\", (CASE "
-						  "WHEN lanpltrusted THEN '%s' ELSE '%s' END) "
-						  "as \"%s\" FROM pg_language WHERE lanispl IS TRUE;", 
+		printfPQExpBuffer(&sql, "SELECT lanname as \"%s\", "
+						  "(CASE WHEN lanpltrusted THEN '%s' ELSE '%s' END) as \"%s\" "
+						  "FROM pg_catalog.pg_language WHERE lanispl;", 
 						  _("Name"), _("yes"), _("no"), _("Trusted?"));
 		result = executeQuery(conn, sql.data, progname, echo);
 
@@ -171,6 +171,13 @@ main(int argc, char *argv[])
 			*p += ('a' - 'A');
 
 	conn = connectDatabase(dbname, host, port, username, password, progname);
+
+	/*
+	 * Force schema search path to be just pg_catalog, so that we don't
+	 * have to be paranoid about search paths below.
+	 */
+	executeCommand(conn, "SET search_path = pg_catalog;",
+				   progname, echo);
 
 	/*
 	 * Make sure the language is installed and find the OIDs of the
@@ -248,8 +255,8 @@ main(int argc, char *argv[])
 	 */
 	if (OidIsValid(lanvalidator))
 	{
-		printfPQExpBuffer(&sql, "SELECT count(*) FROM pg_language WHERE "
-						  "lanvalidator = %u AND lanname <> '%s';", 
+		printfPQExpBuffer(&sql, "SELECT count(*) FROM pg_language "
+						  "WHERE lanvalidator = %u AND lanname <> '%s';", 
 						  lanvalidator, langname);
 		result = executeQuery(conn, sql.data, progname, echo);
 		if (strcmp(PQgetvalue(result, 0, 0), "0") == 0)
