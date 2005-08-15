@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.417 2005/08/15 02:36:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.418 2005/08/15 21:50:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2305,9 +2305,9 @@ getFuncs(int *numFuncs)
 	if (g_fout->remoteVersion >= 70300)
 	{
 		/*
-		 * We now collect info on pg_catalog resident functions, but
-		 * only if they are language call handlers or validators, and
-		 * only for non-default languages (i.e. not internal/C/SQL).
+		 * For 7.3 and up, we consider it's user-defined if it's not in
+		 * pg_catalog.  We also collect info on functions in pg_catalog, but
+		 * only if they are call handlers or validators for PL languages.
 		 */
 		appendPQExpBuffer(query,
 						  "SELECT tableoid, oid, proname, prolang, "
@@ -2316,10 +2316,10 @@ getFuncs(int *numFuncs)
 						  "(%s proowner) as rolname, "
 						  "CASE WHEN oid IN "
 						  "  (select lanplcallfoid from pg_language "
-						  "   where lanplcallfoid != 0) THEN true "
+						  "   where lanispl) THEN true "
 						  " WHEN oid IN "
 						  "  (select lanvalidator from pg_language "
-						  "   where lanplcallfoid != 0) THEN true "
+						  "   where lanispl) THEN true "
 						  " ELSE false END AS is_pl_handler "
 						  "FROM pg_proc "
 						  "WHERE NOT proisagg "
@@ -2328,10 +2328,10 @@ getFuncs(int *numFuncs)
 						  "     where nspname = 'pg_catalog')"
 						  "  OR oid IN "
 						  "    (select lanplcallfoid from pg_language "
-						  "     where lanplcallfoid != 0) "
+						  "     where lanispl) "
 						  "  OR oid IN "
 						  "    (select lanvalidator from pg_language "
-						  "     where lanplcallfoid != 0))",
+						  "     where lanispl))",
 						  username_subquery);
 	}
 	else if (g_fout->remoteVersion >= 70100)
@@ -2402,7 +2402,7 @@ getFuncs(int *numFuncs)
 		finfo[i].prorettype = atooid(PQgetvalue(res, i, i_prorettype));
 		finfo[i].proacl = strdup(PQgetvalue(res, i, i_proacl));
 		finfo[i].nargs = atoi(PQgetvalue(res, i, i_pronargs));
-		finfo[i].isProlangFunc = 
+		finfo[i].islanghandler = 
 			strcmp(PQgetvalue(res, i, i_is_pl_handler), "t") == 0;
 		if (finfo[i].nargs == 0)
 			finfo[i].argtypes = NULL;
@@ -5096,6 +5096,29 @@ dumpCompositeType(Archive *fout, TypeInfo *tinfo)
 }
 
 /*
+ * Determine whether we want to dump definitions for procedural languages.
+ * Since the languages themselves don't have schemas, we can't rely on
+ * the normal schema-based selection mechanism.  We choose to dump them
+ * whenever neither --schema nor --table was given.  (Before 8.1, we used
+ * the dump flag of the PL's call handler function, but in 8.1 this will
+ * probably always be false since call handlers are created in pg_catalog.)
+ *
+ * For some backwards compatibility with the older behavior, we forcibly
+ * dump a PL if its handler function (and validator if any) are in a
+ * dumpable namespace.  That case is not checked here.
+ */
+static bool
+shouldDumpProcLangs(void)
+{
+	if (selectTableName != NULL || selectSchemaName != NULL)
+		return false;
+	/* And they're schema not data */
+	if (dataOnly)
+		return false;
+	return true;
+}
+
+/*
  * dumpProcLang
  *		  writes out to fout the queries to recreate a user-defined
  *		  procedural language
@@ -5113,27 +5136,32 @@ dumpProcLang(Archive *fout, ProcLangInfo *plang)
 		return;
 
 	/*
-	 * We dump PLs iff their underlying call handler functions have been
-	 * marked as language functions (or have a non-system OID in
-	 * pre-7.3 databases).	We treat the PL itself as being in
-	 * the underlying function's namespace, though it isn't really.  This
-	 * avoids searchpath problems for the HANDLER clause.
-	 *
+	 * Find the support functions, complaining if not there.
 	 */
-
 	funcInfo = findFuncByOid(plang->lanplcallfoid);
 	if (funcInfo == NULL)
+	{
+		write_msg(NULL, "WARNING: handler function for language \"%s\" not found\n",
+				  plang->dobj.name);
 		return;
-
-	if (!funcInfo->isProlangFunc && !funcInfo->dobj.namespace->dump)
-		return;
+	}
 
 	if (OidIsValid(plang->lanvalidator))
 	{
 		validatorInfo = findFuncByOid(plang->lanvalidator);
 		if (validatorInfo == NULL)
+		{
+			write_msg(NULL, "WARNING: validator function for language \"%s\" not found\n",
+					  plang->dobj.name);
 			return;
+		}
 	}
+
+	/* Dump if we should, or if both support functions are dumpable */
+	if (!shouldDumpProcLangs() &&
+		!(funcInfo->dobj.namespace->dump &&
+		  (validatorInfo == NULL || validatorInfo->dobj.namespace->dump)))
+		return;
 
 	defqry = createPQExpBuffer();
 	delqry = createPQExpBuffer();
@@ -5160,6 +5188,11 @@ dumpProcLang(Archive *fout, ProcLangInfo *plang)
 	}
 	appendPQExpBuffer(defqry, ";\n");
 
+	/*
+	 * We mark the PL's archive entry as being in the call handler's
+	 * namespace; this is what makes it OK to refer to the handler with
+	 * an unqualified name above.
+	 */
 	ArchiveEntry(fout, plang->dobj.catId, plang->dobj.dumpId,
 				 plang->dobj.name,
 				 funcInfo->dobj.namespace->dobj.name, NULL, "",
@@ -5323,10 +5356,13 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	char	  **argmodes = NULL;
 	char	  **argnames = NULL;
 
-	/* Dump only funcs in dumpable namespaces, or needed language handlers */
-	if ((!finfo->isProlangFunc && !finfo->dobj.namespace->dump) || dataOnly)
+	if (dataOnly)
 		return;
 
+	/* Dump only funcs in dumpable namespaces, or needed language handlers */
+	if (!finfo->dobj.namespace->dump &&
+		(!finfo->islanghandler || !shouldDumpProcLangs()))
+		return;
 
 	query = createPQExpBuffer();
 	q = createPQExpBuffer();
