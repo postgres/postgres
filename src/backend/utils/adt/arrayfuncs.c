@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.121 2005/07/10 21:13:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.122 2005/08/15 19:40:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,7 +160,7 @@ array_in(PG_FUNCTION_ARGS)
 		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
 												 sizeof(ArrayMetaState));
 		my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
-		my_extra->element_type = InvalidOid;
+		my_extra->element_type = ~element_type;
 	}
 
 	if (my_extra->element_type != element_type)
@@ -1173,15 +1173,6 @@ array_recv(PG_FUNCTION_ARGS)
 	}
 	nitems = ArrayGetNItems(ndim, dim);
 
-	if (nitems == 0)
-	{
-		/* Return empty array */
-		retval = (ArrayType *) palloc0(sizeof(ArrayType));
-		retval->size = sizeof(ArrayType);
-		retval->elemtype = element_type;
-		PG_RETURN_ARRAYTYPE_P(retval);
-	}
-
 	/*
 	 * We arrange to look up info about element type, including its
 	 * receive conversion proc, only once per series of calls, assuming
@@ -1193,7 +1184,7 @@ array_recv(PG_FUNCTION_ARGS)
 		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
 												 sizeof(ArrayMetaState));
 		my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
-		my_extra->element_type = InvalidOid;
+		my_extra->element_type = ~element_type;
 	}
 
 	if (my_extra->element_type != element_type)
@@ -1212,6 +1203,16 @@ array_recv(PG_FUNCTION_ARGS)
 					  fcinfo->flinfo->fn_mcxt);
 		my_extra->element_type = element_type;
 	}
+
+	if (nitems == 0)
+	{
+		/* Return empty array ... but not till we've validated element_type */
+		retval = (ArrayType *) palloc0(sizeof(ArrayType));
+		retval->size = sizeof(ArrayType);
+		retval->elemtype = element_type;
+		PG_RETURN_ARRAYTYPE_P(retval);
+	}
+
 	typlen = my_extra->typlen;
 	typbyval = my_extra->typbyval;
 	typalign = my_extra->typalign;
