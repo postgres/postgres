@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.280 2005/08/13 19:02:32 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.281 2005/08/15 23:00:13 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -9414,12 +9414,13 @@ SELECT set_config('log_statement_stats', 'off', false);
    </indexterm>
    <para>
     <function>pg_stat_file()</> returns a record containing the file
-    length, last accessed timestamp, last modified timestamp, 
-    creation timestamp, and a boolean indicating if it is a directory.
-    Typical usages include:
+    size, last accessed timestamp, last modified timestamp, 
+    last file status change timestamp (Unix platforms only), 
+    file creation timestamp (Win32 only), and a boolean indicating 
+    if it is a directory.  Typical usages include:
 <programlisting>
 SELECT * FROM pg_stat_file('filename');
-SELECT (pg_stat_file('filename')).mtime;
+SELECT (pg_stat_file('filename')).modification;
 </programlisting>
    </para>
 

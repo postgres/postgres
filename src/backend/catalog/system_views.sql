@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.20 2005/08/15 16:25:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.21 2005/08/15 23:00:13 momjian Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -346,8 +346,9 @@ UPDATE pg_proc SET
                          'timestamptz',
                          'timestamptz',
                          'timestamptz',
+                         'timestamptz',
                          'bool'],
-  proargmodes = ARRAY['i'::"char", 'o', 'o', 'o', 'o', 'o'],
-  proargnames = ARRAY['filename'::text,
-                      'length', 'atime', 'mtime', 'ctime','isdir']
+  proargmodes = ARRAY['i'::"char", 'o', 'o', 'o', 'o', 'o', 'o'],
+  proargnames = ARRAY['filename'::text, 'size', 'access', 'modification',
+		      'change', 'creation', 'isdir']
 WHERE oid = 'pg_stat_file(text)'::regprocedure;

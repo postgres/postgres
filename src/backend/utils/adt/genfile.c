@@ -9,7 +9,7 @@
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.4 2005/08/13 19:02:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.5 2005/08/15 23:00:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,8 +154,8 @@ pg_stat_file(PG_FUNCTION_ARGS)
 	text	   *filename_t = PG_GETARG_TEXT_P(0);
 	char		*filename;
 	struct stat fst;
-	Datum		values[5];
-	bool		isnull[5];
+	Datum		values[6];
+	bool		isnull[6];
 	HeapTuple	tuple;
 	TupleDesc	tupdesc;
 
@@ -175,26 +175,35 @@ pg_stat_file(PG_FUNCTION_ARGS)
 	 * This record type had better match the output parameters declared
 	 * for me in pg_proc.h (actually, in system_views.sql at the moment).
 	 */
-	tupdesc = CreateTemplateTupleDesc(5, false);
+	tupdesc = CreateTemplateTupleDesc(6, false);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1,
-					   "length", INT8OID, -1, 0);
+					   "size", INT8OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2,
-					   "atime", TIMESTAMPTZOID, -1, 0);
+					   "access", TIMESTAMPTZOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 3,
-					   "mtime", TIMESTAMPTZOID, -1, 0);
+					   "modification", TIMESTAMPTZOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 4,
-					   "ctime", TIMESTAMPTZOID, -1, 0);
+					   "change", TIMESTAMPTZOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 5,
+					   "creation", TIMESTAMPTZOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 6,
 					   "isdir", BOOLOID, -1, 0);
 	BlessTupleDesc(tupdesc);
+
+	memset(isnull, false, sizeof(isnull));
 
 	values[0] = Int64GetDatum((int64) fst.st_size);
 	values[1] = TimestampTzGetDatum(time_t_to_timestamptz(fst.st_atime));
 	values[2] = TimestampTzGetDatum(time_t_to_timestamptz(fst.st_mtime));
+	/* Unix has file status change time, while Win32 has creation time */
+#if !defined(WIN32) && !defined(__CYGWIN__)
 	values[3] = TimestampTzGetDatum(time_t_to_timestamptz(fst.st_ctime));
-	values[4] = BoolGetDatum(fst.st_mode & S_IFDIR);
-
-	memset(isnull, false, sizeof(isnull));
+	isnull[4] = true;
+#else
+	isnull[3] = true;
+	values[4] = TimestampTzGetDatum(time_t_to_timestamptz(fst.st_ctime));
+#endif
+	values[5] = BoolGetDatum(fst.st_mode & S_IFDIR);
 
 	tuple = heap_form_tuple(tupdesc, values, isnull);
 
