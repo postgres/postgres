@@ -200,9 +200,9 @@ int_enum(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	if (!fcinfo->context)
+	if (!fcinfo->flinfo->fn_extra)
 	{
-		/* Allocate a working context */
+		/* Allocate working state */
 		MemoryContext	oldcontext;
 
 		oldcontext = MemoryContextSwitchTo(fcinfo->flinfo->fn_mcxt);
@@ -226,19 +226,20 @@ int_enum(PG_FUNCTION_ARGS)
 		if (pc->p->a.ndim != 1)
 			elog(ERROR, "int_enum only accepts 1-D arrays");
 		pc->num = 0;
-		fcinfo->context = (Node *) pc;
+		fcinfo->flinfo->fn_extra = (void *) pc;
 		MemoryContextSwitchTo(oldcontext);
 	}
-	else	/* use an existing one */
-		pc = (CTX *) fcinfo->context;
+	else	/* use existing working state */
+		pc = (CTX *) fcinfo->flinfo->fn_extra;
+
 	/* Are we done yet? */
 	if (pc->num >= pc->p->items)
 	{
 		/* We are done */
 		if (pc->flags & TOASTED)
 			pfree(pc->p);
-		pfree(fcinfo->context);
-		fcinfo->context = NULL;
+		pfree(pc);
+		fcinfo->flinfo->fn_extra = NULL;
 		rsi->isDone = ExprEndResult;
 	}
 	else
