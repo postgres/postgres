@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.416 2005/08/12 01:36:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.417 2005/08/15 02:36:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,6 +86,9 @@ bool		attrNames;			/* put attr names into insert strings */
 bool		schemaOnly;
 bool		dataOnly;
 bool		aclsSkip;
+
+/* subquery used to convert user ID (eg, datdba) to user name */
+static const char *username_subquery;
 
 /* obsolete as of 7.3: */
 static Oid	g_last_builtin_oid; /* value of the last builtin oid */
@@ -528,6 +531,14 @@ main(int argc, char **argv)
 		do_sql_command(g_conn, cmd);
 		free(cmd);
 	}
+
+	/* Select the appropriate subquery to convert user IDs to names */
+	if (g_fout->remoteVersion >= 80100)
+		username_subquery = "SELECT rolname FROM pg_catalog.pg_roles WHERE oid =";
+	else if (g_fout->remoteVersion >= 70300)
+		username_subquery = "SELECT usename FROM pg_catalog.pg_user WHERE usesysid =";
+	else
+		username_subquery = "SELECT usename FROM pg_user WHERE usesysid =";
 
 	/*
 	 * If supported, set extra_float_digits so that we can dump float data
@@ -1095,7 +1106,7 @@ dumpTableData(Archive *fout, TableDataInfo *tdinfo)
 				 tbinfo->dobj.name,
 				 tbinfo->dobj.namespace->dobj.name,
 				 NULL,
-				 tbinfo->usename, false,
+				 tbinfo->rolname, false,
 				 "TABLE DATA", "", "", copyStmt,
 				 tdinfo->dobj.dependencies, tdinfo->dobj.nDeps,
 				 dumpFn, tdinfo);
@@ -1182,21 +1193,23 @@ dumpDatabase(Archive *AH)
 	if (g_fout->remoteVersion >= 80000)
 	{
 		appendPQExpBuffer(dbQry, "SELECT tableoid, oid, "
-		 "(SELECT usename FROM pg_user WHERE usesysid = datdba) as dba, "
+						  "(%s datdba) as dba, "
 						  "pg_encoding_to_char(encoding) as encoding, "
 						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = dattablespace) as tablespace "
 						  "FROM pg_database "
-						  "WHERE datname = ");
+						  "WHERE datname = ",
+						  username_subquery);
 		appendStringLiteral(dbQry, datname, true);
 	}
 	else if (g_fout->remoteVersion >= 70100)
 	{
 		appendPQExpBuffer(dbQry, "SELECT tableoid, oid, "
-		 "(SELECT usename FROM pg_user WHERE usesysid = datdba) as dba, "
+						  "(%s datdba) as dba, "
 						  "pg_encoding_to_char(encoding) as encoding, "
 						  "NULL as tablespace "
 						  "FROM pg_database "
-						  "WHERE datname = ");
+						  "WHERE datname = ",
+						  username_subquery);
 		appendStringLiteral(dbQry, datname, true);
 	}
 	else
@@ -1204,11 +1217,12 @@ dumpDatabase(Archive *AH)
 		appendPQExpBuffer(dbQry, "SELECT "
 						  "(SELECT oid FROM pg_class WHERE relname = 'pg_database') AS tableoid, "
 						  "oid, "
-		 "(SELECT usename FROM pg_user WHERE usesysid = datdba) as dba, "
+						  "(%s datdba) as dba, "
 						  "pg_encoding_to_char(encoding) as encoding, "
 						  "NULL as tablespace "
 						  "FROM pg_database "
-						  "WHERE datname = ");
+						  "WHERE datname = ",
+						  username_subquery);
 		appendStringLiteral(dbQry, datname, true);
 	}
 
@@ -1540,7 +1554,7 @@ getNamespaces(int *numNamespaces)
 	int			i_tableoid;
 	int			i_oid;
 	int			i_nspname;
-	int			i_usename;
+	int			i_rolname;
 	int			i_nspacl;
 
 	/*
@@ -1556,7 +1570,7 @@ getNamespaces(int *numNamespaces)
 		nsinfo[0].dobj.catId.oid = 0;
 		AssignDumpId(&nsinfo[0].dobj);
 		nsinfo[0].dobj.name = strdup("public");
-		nsinfo[0].usename = strdup("");
+		nsinfo[0].rolname = strdup("");
 		nsinfo[0].nspacl = strdup("");
 
 		selectDumpableNamespace(&nsinfo[0]);
@@ -1566,7 +1580,7 @@ getNamespaces(int *numNamespaces)
 		nsinfo[1].dobj.catId.oid = 1;
 		AssignDumpId(&nsinfo[1].dobj);
 		nsinfo[1].dobj.name = strdup("pg_catalog");
-		nsinfo[1].usename = strdup("");
+		nsinfo[1].rolname = strdup("");
 		nsinfo[1].nspacl = strdup("");
 
 		selectDumpableNamespace(&nsinfo[1]);
@@ -1587,8 +1601,9 @@ getNamespaces(int *numNamespaces)
 	 * we read in can be linked to a containing namespace.
 	 */
 	appendPQExpBuffer(query, "SELECT tableoid, oid, nspname, "
-					  "(select usename from pg_user where nspowner = usesysid) as usename, "
-					  "nspacl FROM pg_namespace");
+					  "(%s nspowner) as rolname, "
+					  "nspacl FROM pg_namespace",
+					  username_subquery);
 
 	res = PQexec(g_conn, query->data);
 	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
@@ -1600,7 +1615,7 @@ getNamespaces(int *numNamespaces)
 	i_tableoid = PQfnumber(res, "tableoid");
 	i_oid = PQfnumber(res, "oid");
 	i_nspname = PQfnumber(res, "nspname");
-	i_usename = PQfnumber(res, "usename");
+	i_rolname = PQfnumber(res, "rolname");
 	i_nspacl = PQfnumber(res, "nspacl");
 
 	for (i = 0; i < ntups; i++)
@@ -1610,13 +1625,13 @@ getNamespaces(int *numNamespaces)
 		nsinfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
 		AssignDumpId(&nsinfo[i].dobj);
 		nsinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_nspname));
-		nsinfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
+		nsinfo[i].rolname = strdup(PQgetvalue(res, i, i_rolname));
 		nsinfo[i].nspacl = strdup(PQgetvalue(res, i, i_nspacl));
 
 		/* Decide whether to dump this namespace */
 		selectDumpableNamespace(&nsinfo[i]);
 
-		if (strlen(nsinfo[i].usename) == 0)
+		if (strlen(nsinfo[i].rolname) == 0)
 			write_msg(NULL, "WARNING: owner of schema \"%s\" appears to be invalid\n",
 					  nsinfo[i].dobj.name);
 	}
@@ -1709,7 +1724,7 @@ getTypes(int *numTypes)
 	int			i_oid;
 	int			i_typname;
 	int			i_typnamespace;
-	int			i_usename;
+	int			i_rolname;
 	int			i_typinput;
 	int			i_typoutput;
 	int			i_typelem;
@@ -1734,25 +1749,27 @@ getTypes(int *numTypes)
 	{
 		appendPQExpBuffer(query, "SELECT tableoid, oid, typname, "
 						  "typnamespace, "
-						  "(select usename from pg_user where typowner = usesysid) as usename, "
+						  "(%s typowner) as rolname, "
 						  "typinput::oid as typinput, "
 					   "typoutput::oid as typoutput, typelem, typrelid, "
 						  "CASE WHEN typrelid = 0 THEN ' '::\"char\" "
 						  "ELSE (SELECT relkind FROM pg_class WHERE oid = typrelid) END as typrelkind, "
 						  "typtype, typisdefined "
-						  "FROM pg_type");
+						  "FROM pg_type",
+						  username_subquery);
 	}
 	else if (g_fout->remoteVersion >= 70100)
 	{
 		appendPQExpBuffer(query, "SELECT tableoid, oid, typname, "
 						  "0::oid as typnamespace, "
-						  "(select usename from pg_user where typowner = usesysid) as usename, "
+						  "(%s typowner) as rolname, "
 						  "typinput::oid as typinput, "
 					   "typoutput::oid as typoutput, typelem, typrelid, "
 						  "CASE WHEN typrelid = 0 THEN ' '::\"char\" "
 						  "ELSE (SELECT relkind FROM pg_class WHERE oid = typrelid) END as typrelkind, "
 						  "typtype, typisdefined "
-						  "FROM pg_type");
+						  "FROM pg_type",
+						  username_subquery);
 	}
 	else
 	{
@@ -1760,13 +1777,14 @@ getTypes(int *numTypes)
 						  "(SELECT oid FROM pg_class WHERE relname = 'pg_type') AS tableoid, "
 						  "oid, typname, "
 						  "0::oid as typnamespace, "
-						  "(select usename from pg_user where typowner = usesysid) as usename, "
+						  "(%s typowner) as rolname, "
 						  "typinput::oid as typinput, "
 					   "typoutput::oid as typoutput, typelem, typrelid, "
 						  "CASE WHEN typrelid = 0 THEN ' '::\"char\" "
 						  "ELSE (SELECT relkind FROM pg_class WHERE oid = typrelid) END as typrelkind, "
 						  "typtype, typisdefined "
-						  "FROM pg_type");
+						  "FROM pg_type",
+						  username_subquery);
 	}
 
 	res = PQexec(g_conn, query->data);
@@ -1780,7 +1798,7 @@ getTypes(int *numTypes)
 	i_oid = PQfnumber(res, "oid");
 	i_typname = PQfnumber(res, "typname");
 	i_typnamespace = PQfnumber(res, "typnamespace");
-	i_usename = PQfnumber(res, "usename");
+	i_rolname = PQfnumber(res, "rolname");
 	i_typinput = PQfnumber(res, "typinput");
 	i_typoutput = PQfnumber(res, "typoutput");
 	i_typelem = PQfnumber(res, "typelem");
@@ -1801,7 +1819,7 @@ getTypes(int *numTypes)
 		tinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_typname));
 		tinfo[i].dobj.namespace = findNamespace(atooid(PQgetvalue(res, i, i_typnamespace)),
 												tinfo[i].dobj.catId.oid);
-		tinfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
+		tinfo[i].rolname = strdup(PQgetvalue(res, i, i_rolname));
 		tinfo[i].typinput = atooid(PQgetvalue(res, i, i_typinput));
 		typoutput = atooid(PQgetvalue(res, i, i_typoutput));
 		tinfo[i].typelem = atooid(PQgetvalue(res, i, i_typelem));
@@ -1855,7 +1873,7 @@ getTypes(int *numTypes)
 			addObjectDependency(&tinfo[i].dobj,
 								funcInfo->dobj.dumpId);
 
-		if (strlen(tinfo[i].usename) == 0 && tinfo[i].isDefined)
+		if (strlen(tinfo[i].rolname) == 0 && tinfo[i].isDefined)
 			write_msg(NULL, "WARNING: owner of data type \"%s\" appears to be invalid\n",
 					  tinfo[i].dobj.name);
 	}
@@ -1888,7 +1906,7 @@ getOperators(int *numOprs)
 	int			i_oid;
 	int			i_oprname;
 	int			i_oprnamespace;
-	int			i_usename;
+	int			i_rolname;
 	int			i_oprcode;
 
 	/*
@@ -1903,17 +1921,19 @@ getOperators(int *numOprs)
 	{
 		appendPQExpBuffer(query, "SELECT tableoid, oid, oprname, "
 						  "oprnamespace, "
-						  "(select usename from pg_user where oprowner = usesysid) as usename, "
+						  "(%s oprowner) as rolname, "
 						  "oprcode::oid as oprcode "
-						  "FROM pg_operator");
+						  "FROM pg_operator",
+						  username_subquery);
 	}
 	else if (g_fout->remoteVersion >= 70100)
 	{
 		appendPQExpBuffer(query, "SELECT tableoid, oid, oprname, "
 						  "0::oid as oprnamespace, "
-						  "(select usename from pg_user where oprowner = usesysid) as usename, "
+						  "(%s oprowner) as rolname, "
 						  "oprcode::oid as oprcode "
-						  "FROM pg_operator");
+						  "FROM pg_operator",
+						  username_subquery);
 	}
 	else
 	{
@@ -1921,9 +1941,10 @@ getOperators(int *numOprs)
 						  "(SELECT oid FROM pg_class WHERE relname = 'pg_operator') AS tableoid, "
 						  "oid, oprname, "
 						  "0::oid as oprnamespace, "
-						  "(select usename from pg_user where oprowner = usesysid) as usename, "
+						  "(%s oprowner) as rolname, "
 						  "oprcode::oid as oprcode "
-						  "FROM pg_operator");
+						  "FROM pg_operator",
+						  username_subquery);
 	}
 
 	res = PQexec(g_conn, query->data);
@@ -1938,7 +1959,7 @@ getOperators(int *numOprs)
 	i_oid = PQfnumber(res, "oid");
 	i_oprname = PQfnumber(res, "oprname");
 	i_oprnamespace = PQfnumber(res, "oprnamespace");
-	i_usename = PQfnumber(res, "usename");
+	i_rolname = PQfnumber(res, "rolname");
 	i_oprcode = PQfnumber(res, "oprcode");
 
 	for (i = 0; i < ntups; i++)
@@ -1950,10 +1971,10 @@ getOperators(int *numOprs)
 		oprinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_oprname));
 		oprinfo[i].dobj.namespace = findNamespace(atooid(PQgetvalue(res, i, i_oprnamespace)),
 											  oprinfo[i].dobj.catId.oid);
-		oprinfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
+		oprinfo[i].rolname = strdup(PQgetvalue(res, i, i_rolname));
 		oprinfo[i].oprcode = atooid(PQgetvalue(res, i, i_oprcode));
 
-		if (strlen(oprinfo[i].usename) == 0)
+		if (strlen(oprinfo[i].rolname) == 0)
 			write_msg(NULL, "WARNING: owner of operator \"%s\" appears to be invalid\n",
 					  oprinfo[i].dobj.name);
 	}
@@ -1984,7 +2005,7 @@ getConversions(int *numConversions)
 	int			i_oid;
 	int			i_conname;
 	int			i_connamespace;
-	int			i_usename;
+	int			i_rolname;
 
 	/* Conversions didn't exist pre-7.3 */
 	if (g_fout->remoteVersion < 70300)
@@ -2003,8 +2024,9 @@ getConversions(int *numConversions)
 
 	appendPQExpBuffer(query, "SELECT tableoid, oid, conname, "
 					  "connamespace, "
-	"(select usename from pg_user where conowner = usesysid) as usename "
-					  "FROM pg_conversion");
+					  "(%s conowner) as rolname "
+					  "FROM pg_conversion",
+					  username_subquery);
 
 	res = PQexec(g_conn, query->data);
 	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
@@ -2018,7 +2040,7 @@ getConversions(int *numConversions)
 	i_oid = PQfnumber(res, "oid");
 	i_conname = PQfnumber(res, "conname");
 	i_connamespace = PQfnumber(res, "connamespace");
-	i_usename = PQfnumber(res, "usename");
+	i_rolname = PQfnumber(res, "rolname");
 
 	for (i = 0; i < ntups; i++)
 	{
@@ -2029,7 +2051,7 @@ getConversions(int *numConversions)
 		convinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_conname));
 		convinfo[i].dobj.namespace = findNamespace(atooid(PQgetvalue(res, i, i_connamespace)),
 											 convinfo[i].dobj.catId.oid);
-		convinfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
+		convinfo[i].rolname = strdup(PQgetvalue(res, i, i_rolname));
 	}
 
 	PQclear(res);
@@ -2058,7 +2080,7 @@ getOpclasses(int *numOpclasses)
 	int			i_oid;
 	int			i_opcname;
 	int			i_opcnamespace;
-	int			i_usename;
+	int			i_rolname;
 
 	/*
 	 * find all opclasses, including builtin opclasses; we filter out
@@ -2072,14 +2094,15 @@ getOpclasses(int *numOpclasses)
 	{
 		appendPQExpBuffer(query, "SELECT tableoid, oid, opcname, "
 						  "opcnamespace, "
-						  "(select usename from pg_user where opcowner = usesysid) as usename "
-						  "FROM pg_opclass");
+						  "(%s opcowner) as rolname "
+						  "FROM pg_opclass",
+						  username_subquery);
 	}
 	else if (g_fout->remoteVersion >= 70100)
 	{
 		appendPQExpBuffer(query, "SELECT tableoid, oid, opcname, "
 						  "0::oid as opcnamespace, "
-						  "''::name as usename "
+						  "''::name as rolname "
 						  "FROM pg_opclass");
 	}
 	else
@@ -2088,7 +2111,7 @@ getOpclasses(int *numOpclasses)
 						  "(SELECT oid FROM pg_class WHERE relname = 'pg_opclass') AS tableoid, "
 						  "oid, opcname, "
 						  "0::oid as opcnamespace, "
-						  "''::name as usename "
+						  "''::name as rolname "
 						  "FROM pg_opclass");
 	}
 
@@ -2104,7 +2127,7 @@ getOpclasses(int *numOpclasses)
 	i_oid = PQfnumber(res, "oid");
 	i_opcname = PQfnumber(res, "opcname");
 	i_opcnamespace = PQfnumber(res, "opcnamespace");
-	i_usename = PQfnumber(res, "usename");
+	i_rolname = PQfnumber(res, "rolname");
 
 	for (i = 0; i < ntups; i++)
 	{
@@ -2115,11 +2138,11 @@ getOpclasses(int *numOpclasses)
 		opcinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_opcname));
 		opcinfo[i].dobj.namespace = findNamespace(atooid(PQgetvalue(res, i, i_opcnamespace)),
 											  opcinfo[i].dobj.catId.oid);
-		opcinfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
+		opcinfo[i].rolname = strdup(PQgetvalue(res, i, i_rolname));
 
 		if (g_fout->remoteVersion >= 70300)
 		{
-			if (strlen(opcinfo[i].usename) == 0)
+			if (strlen(opcinfo[i].rolname) == 0)
 				write_msg(NULL, "WARNING: owner of operator class \"%s\" appears to be invalid\n",
 						  opcinfo[i].dobj.name);
 		}
@@ -2152,7 +2175,7 @@ getAggregates(int *numAggs)
 	int			i_aggname;
 	int			i_aggnamespace;
 	int			i_aggbasetype;
-	int			i_usename;
+	int			i_rolname;
 	int			i_aggacl;
 
 	/* Make sure we are in proper schema */
@@ -2165,22 +2188,24 @@ getAggregates(int *numAggs)
 		appendPQExpBuffer(query, "SELECT tableoid, oid, proname as aggname, "
 						  "pronamespace as aggnamespace, "
 						  "proargtypes[0] as aggbasetype, "
-						  "(select usename from pg_user where proowner = usesysid) as usename, "
+						  "(%s proowner) as rolname, "
 						  "proacl as aggacl "
 						  "FROM pg_proc "
 						  "WHERE proisagg "
 						  "AND pronamespace != "
-		  "(select oid from pg_namespace where nspname = 'pg_catalog')");
+		  "(select oid from pg_namespace where nspname = 'pg_catalog')",
+						  username_subquery);
 	}
 	else if (g_fout->remoteVersion >= 70100)
 	{
 		appendPQExpBuffer(query, "SELECT tableoid, oid, aggname, "
 						  "0::oid as aggnamespace, "
 						  "aggbasetype, "
-						  "(select usename from pg_user where aggowner = usesysid) as usename, "
+						  "(%s aggowner) as rolname, "
 						  "'{=X}' as aggacl "
 						  "FROM pg_aggregate "
 						  "where oid > '%u'::oid",
+						  username_subquery,
 						  g_last_builtin_oid);
 	}
 	else
@@ -2190,10 +2215,11 @@ getAggregates(int *numAggs)
 						  "oid, aggname, "
 						  "0::oid as aggnamespace, "
 						  "aggbasetype, "
-						  "(select usename from pg_user where aggowner = usesysid) as usename, "
+						  "(%s aggowner) as rolname, "
 						  "'{=X}' as aggacl "
 						  "FROM pg_aggregate "
 						  "where oid > '%u'::oid",
+						  username_subquery,
 						  g_last_builtin_oid);
 	}
 
@@ -2210,7 +2236,7 @@ getAggregates(int *numAggs)
 	i_aggname = PQfnumber(res, "aggname");
 	i_aggnamespace = PQfnumber(res, "aggnamespace");
 	i_aggbasetype = PQfnumber(res, "aggbasetype");
-	i_usename = PQfnumber(res, "usename");
+	i_rolname = PQfnumber(res, "rolname");
 	i_aggacl = PQfnumber(res, "aggacl");
 
 	for (i = 0; i < ntups; i++)
@@ -2222,8 +2248,8 @@ getAggregates(int *numAggs)
 		agginfo[i].aggfn.dobj.name = strdup(PQgetvalue(res, i, i_aggname));
 		agginfo[i].aggfn.dobj.namespace = findNamespace(atooid(PQgetvalue(res, i, i_aggnamespace)),
 										agginfo[i].aggfn.dobj.catId.oid);
-		agginfo[i].aggfn.usename = strdup(PQgetvalue(res, i, i_usename));
-		if (strlen(agginfo[i].aggfn.usename) == 0)
+		agginfo[i].aggfn.rolname = strdup(PQgetvalue(res, i, i_rolname));
+		if (strlen(agginfo[i].aggfn.rolname) == 0)
 			write_msg(NULL, "WARNING: owner of aggregate function \"%s\" appears to be invalid\n",
 					  agginfo[i].aggfn.dobj.name);
 		agginfo[i].aggfn.lang = InvalidOid;		/* not currently
@@ -2263,7 +2289,7 @@ getFuncs(int *numFuncs)
 	int			i_oid;
 	int			i_proname;
 	int			i_pronamespace;
-	int			i_usename;
+	int			i_rolname;
 	int			i_prolang;
 	int			i_pronargs;
 	int			i_proargtypes;
@@ -2287,8 +2313,7 @@ getFuncs(int *numFuncs)
 						  "SELECT tableoid, oid, proname, prolang, "
 						  "pronargs, proargtypes, prorettype, proacl, "
 						  "pronamespace, "
-						  "(select usename from pg_user "
-						  " where proowner = usesysid) as usename, "
+						  "(%s proowner) as rolname, "
 						  "CASE WHEN oid IN "
 						  "  (select lanplcallfoid from pg_language "
 						  "   where lanplcallfoid != 0) THEN true "
@@ -2306,8 +2331,8 @@ getFuncs(int *numFuncs)
 						  "     where lanplcallfoid != 0) "
 						  "  OR oid IN "
 						  "    (select lanvalidator from pg_language "
-						  "     where lanplcallfoid != 0))"
-			);
+						  "     where lanplcallfoid != 0))",
+						  username_subquery);
 	}
 	else if (g_fout->remoteVersion >= 70100)
 	{
@@ -2316,11 +2341,11 @@ getFuncs(int *numFuncs)
 						  "pronargs, proargtypes, prorettype, "
 						  "'{=X}' as proacl, "
 						  "0::oid as pronamespace, "
-						  "(select usename from pg_user "
-						  " where proowner = usesysid) as usename, "
+						  "(%s proowner) as rolname, "
 						  "false AS is_pl_handler "
 						  "FROM pg_proc "
 						  "where pg_proc.oid > '%u'::oid",
+						  username_subquery,
 						  g_last_builtin_oid);
 	}
 	else
@@ -2333,11 +2358,11 @@ getFuncs(int *numFuncs)
 						  "pronargs, proargtypes, prorettype, "
 						  "'{=X}' as proacl, "
 						  "0::oid as pronamespace, "
-						  "(select usename from pg_user "
-						  " where proowner = usesysid) as usename, "
+						  "(%s proowner) as rolname, "
 						  "false AS is_pl_handler "
 						  "FROM pg_proc "
 						  "where pg_proc.oid > '%u'::oid",
+						  username_subquery,
 						  g_last_builtin_oid);
 	}
 
@@ -2354,7 +2379,7 @@ getFuncs(int *numFuncs)
 	i_oid = PQfnumber(res, "oid");
 	i_proname = PQfnumber(res, "proname");
 	i_pronamespace = PQfnumber(res, "pronamespace");
-	i_usename = PQfnumber(res, "usename");
+	i_rolname = PQfnumber(res, "rolname");
 	i_prolang = PQfnumber(res, "prolang");
 	i_pronargs = PQfnumber(res, "pronargs");
 	i_proargtypes = PQfnumber(res, "proargtypes");
@@ -2372,7 +2397,7 @@ getFuncs(int *numFuncs)
 		finfo[i].dobj.namespace = 
 			findNamespace(atooid(PQgetvalue(res, i, i_pronamespace)),
 												finfo[i].dobj.catId.oid);
-		finfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
+		finfo[i].rolname = strdup(PQgetvalue(res, i, i_rolname));
 		finfo[i].lang = atooid(PQgetvalue(res, i, i_prolang));
 		finfo[i].prorettype = atooid(PQgetvalue(res, i, i_prorettype));
 		finfo[i].proacl = strdup(PQgetvalue(res, i, i_proacl));
@@ -2388,7 +2413,7 @@ getFuncs(int *numFuncs)
 						  finfo[i].argtypes, finfo[i].nargs);
 		}
 
-		if (strlen(finfo[i].usename) == 0)
+		if (strlen(finfo[i].rolname) == 0)
 			write_msg(NULL, 
 					  "WARNING: owner of function \"%s\" appears to be invalid\n",
 					  finfo[i].dobj.name);
@@ -2424,7 +2449,7 @@ getTables(int *numTables)
 	int			i_relnamespace;
 	int			i_relkind;
 	int			i_relacl;
-	int			i_usename;
+	int			i_rolname;
 	int			i_relchecks;
 	int			i_reltriggers;
 	int			i_relhasindex;
@@ -2467,7 +2492,7 @@ getTables(int *numTables)
 		appendPQExpBuffer(query,
 						  "SELECT c.tableoid, c.oid, relname, "
 						  "relacl, relkind, relnamespace, "
-						  "(select usename from pg_user where relowner = usesysid) as usename, "
+						  "(%s relowner) as rolname, "
 						  "relchecks, reltriggers, "
 						  "relhasindex, relhasrules, relhasoids, "
 						  "d.refobjid as owning_tab, "
@@ -2481,6 +2506,7 @@ getTables(int *numTables)
 						"d.refclassid = c.tableoid and d.deptype = 'i') "
 						  "where relkind in ('%c', '%c', '%c', '%c') "
 						  "order by c.oid",
+						  username_subquery,
 						  RELKIND_SEQUENCE,
 						  RELKIND_RELATION, RELKIND_SEQUENCE,
 						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE);
@@ -2494,7 +2520,7 @@ getTables(int *numTables)
 		appendPQExpBuffer(query,
 						  "SELECT c.tableoid, c.oid, relname, "
 						  "relacl, relkind, relnamespace, "
-						  "(select usename from pg_user where relowner = usesysid) as usename, "
+						  "(%s relowner) as rolname, "
 						  "relchecks, reltriggers, "
 						  "relhasindex, relhasrules, relhasoids, "
 						  "d.refobjid as owning_tab, "
@@ -2508,6 +2534,7 @@ getTables(int *numTables)
 						"d.refclassid = c.tableoid and d.deptype = 'i') "
 						  "where relkind in ('%c', '%c', '%c', '%c') "
 						  "order by c.oid",
+						  username_subquery,
 						  RELKIND_SEQUENCE,
 						  RELKIND_RELATION, RELKIND_SEQUENCE,
 						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE);
@@ -2517,7 +2544,7 @@ getTables(int *numTables)
 		appendPQExpBuffer(query,
 					   "SELECT tableoid, oid, relname, relacl, relkind, "
 						  "0::oid as relnamespace, "
-						  "(select usename from pg_user where relowner = usesysid) as usename, "
+						  "(%s relowner) as rolname, "
 						  "relchecks, reltriggers, "
 						  "relhasindex, relhasrules, relhasoids, "
 						  "NULL::oid as owning_tab, "
@@ -2526,7 +2553,8 @@ getTables(int *numTables)
 						  "from pg_class "
 						  "where relkind in ('%c', '%c', '%c') "
 						  "order by oid",
-					   RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
+						  username_subquery,
+						  RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
 	}
 	else if (g_fout->remoteVersion >= 70100)
 	{
@@ -2534,7 +2562,7 @@ getTables(int *numTables)
 		appendPQExpBuffer(query,
 					   "SELECT tableoid, oid, relname, relacl, relkind, "
 						  "0::oid as relnamespace, "
-						  "(select usename from pg_user where relowner = usesysid) as usename, "
+						  "(%s relowner) as rolname, "
 						  "relchecks, reltriggers, "
 						  "relhasindex, relhasrules, "
 						  "'t'::bool as relhasoids, "
@@ -2544,7 +2572,8 @@ getTables(int *numTables)
 						  "from pg_class "
 						  "where relkind in ('%c', '%c', '%c') "
 						  "order by oid",
-					   RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
+						  username_subquery,
+						  RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
 	}
 	else
 	{
@@ -2562,7 +2591,7 @@ getTables(int *numTables)
 						  "THEN '%c'::\"char\" "
 						  "ELSE relkind END AS relkind,"
 						  "0::oid as relnamespace, "
-						  "(select usename from pg_user where relowner = usesysid) as usename, "
+						  "(%s relowner) as rolname, "
 						  "relchecks, reltriggers, "
 						  "relhasindex, relhasrules, "
 						  "'t'::bool as relhasoids, "
@@ -2573,6 +2602,7 @@ getTables(int *numTables)
 						  "where relkind in ('%c', '%c') "
 						  "order by oid",
 						  RELKIND_VIEW,
+						  username_subquery,
 						  RELKIND_RELATION, RELKIND_SEQUENCE);
 	}
 
@@ -2600,7 +2630,7 @@ getTables(int *numTables)
 	i_relnamespace = PQfnumber(res, "relnamespace");
 	i_relacl = PQfnumber(res, "relacl");
 	i_relkind = PQfnumber(res, "relkind");
-	i_usename = PQfnumber(res, "usename");
+	i_rolname = PQfnumber(res, "rolname");
 	i_relchecks = PQfnumber(res, "relchecks");
 	i_reltriggers = PQfnumber(res, "reltriggers");
 	i_relhasindex = PQfnumber(res, "relhasindex");
@@ -2619,7 +2649,7 @@ getTables(int *numTables)
 		tblinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_relname));
 		tblinfo[i].dobj.namespace = findNamespace(atooid(PQgetvalue(res, i, i_relnamespace)),
 											  tblinfo[i].dobj.catId.oid);
-		tblinfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
+		tblinfo[i].rolname = strdup(PQgetvalue(res, i, i_rolname));
 		tblinfo[i].relacl = strdup(PQgetvalue(res, i, i_relacl));
 		tblinfo[i].relkind = *(PQgetvalue(res, i, i_relkind));
 		tblinfo[i].hasindex = (strcmp(PQgetvalue(res, i, i_relhasindex), "t") == 0);
@@ -2676,7 +2706,7 @@ getTables(int *numTables)
 		}
 
 		/* Emit notice if join for owner failed */
-		if (strlen(tblinfo[i].usename) == 0)
+		if (strlen(tblinfo[i].rolname) == 0)
 			write_msg(NULL, "WARNING: owner of table \"%s\" appears to be invalid\n",
 					  tblinfo[i].dobj.name);
 	}
@@ -4235,7 +4265,7 @@ dumpTableComment(Archive *fout, TableInfo *tbinfo,
 						 target->data,
 						 tbinfo->dobj.namespace->dobj.name,
 						 NULL,
-						 tbinfo->usename,
+						 tbinfo->rolname,
 						 false, "COMMENT", query->data, "", NULL,
 						 &(tbinfo->dobj.dumpId), 1,
 						 NULL, NULL);
@@ -4257,7 +4287,7 @@ dumpTableComment(Archive *fout, TableInfo *tbinfo,
 						 target->data,
 						 tbinfo->dobj.namespace->dobj.name,
 						 NULL,
-						 tbinfo->usename,
+						 tbinfo->rolname,
 						 false, "COMMENT", query->data, "", NULL,
 						 &(tbinfo->dobj.dumpId), 1,
 						 NULL, NULL);
@@ -4552,7 +4582,7 @@ dumpNamespace(Archive *fout, NamespaceInfo *nspinfo)
 	ArchiveEntry(fout, nspinfo->dobj.catId, nspinfo->dobj.dumpId,
 				 nspinfo->dobj.name,
 				 NULL, NULL, 
-				 nspinfo->usename,
+				 nspinfo->rolname,
 				 false, "SCHEMA", q->data, delq->data, NULL,
 				 nspinfo->dobj.dependencies, nspinfo->dobj.nDeps,
 				 NULL, NULL);
@@ -4561,12 +4591,12 @@ dumpNamespace(Archive *fout, NamespaceInfo *nspinfo)
 	resetPQExpBuffer(q);
 	appendPQExpBuffer(q, "SCHEMA %s", qnspname);
 	dumpComment(fout, q->data,
-				NULL, nspinfo->usename,
+				NULL, nspinfo->rolname,
 				nspinfo->dobj.catId, 0, nspinfo->dobj.dumpId);
 
 	dumpACL(fout, nspinfo->dobj.catId, nspinfo->dobj.dumpId, "SCHEMA",
 			qnspname, nspinfo->dobj.name, NULL,
-			nspinfo->usename, nspinfo->nspacl);
+			nspinfo->rolname, nspinfo->nspacl);
 
 	free(qnspname);
 
@@ -4844,7 +4874,7 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 				 tinfo->dobj.name,
 				 tinfo->dobj.namespace->dobj.name,
 				 NULL,
-				 tinfo->usename, false,
+				 tinfo->rolname, false,
 				 "TYPE", q->data, delq->data, NULL,
 				 tinfo->dobj.dependencies, tinfo->dobj.nDeps,
 				 NULL, NULL);
@@ -4854,7 +4884,7 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 
 	appendPQExpBuffer(q, "TYPE %s", fmtId(tinfo->dobj.name));
 	dumpComment(fout, q->data,
-				tinfo->dobj.namespace->dobj.name, tinfo->usename,
+				tinfo->dobj.namespace->dobj.name, tinfo->rolname,
 				tinfo->dobj.catId, 0, tinfo->dobj.dumpId);
 
 	PQclear(res);
@@ -4951,7 +4981,7 @@ dumpDomain(Archive *fout, TypeInfo *tinfo)
 				 tinfo->dobj.name,
 				 tinfo->dobj.namespace->dobj.name,
 				 NULL,
-				 tinfo->usename, false,
+				 tinfo->rolname, false,
 				 "DOMAIN", q->data, delq->data, NULL,
 				 tinfo->dobj.dependencies, tinfo->dobj.nDeps,
 				 NULL, NULL);
@@ -4961,7 +4991,7 @@ dumpDomain(Archive *fout, TypeInfo *tinfo)
 
 	appendPQExpBuffer(q, "DOMAIN %s", fmtId(tinfo->dobj.name));
 	dumpComment(fout, q->data,
-				tinfo->dobj.namespace->dobj.name, tinfo->usename,
+				tinfo->dobj.namespace->dobj.name, tinfo->rolname,
 				tinfo->dobj.catId, 0, tinfo->dobj.dumpId);
 
 	destroyPQExpBuffer(q);
@@ -5045,7 +5075,7 @@ dumpCompositeType(Archive *fout, TypeInfo *tinfo)
 				 tinfo->dobj.name,
 				 tinfo->dobj.namespace->dobj.name,
 				 NULL,
-				 tinfo->usename, false,
+				 tinfo->rolname, false,
 				 "TYPE", q->data, delq->data, NULL,
 				 tinfo->dobj.dependencies, tinfo->dobj.nDeps,
 				 NULL, NULL);
@@ -5056,7 +5086,7 @@ dumpCompositeType(Archive *fout, TypeInfo *tinfo)
 
 	appendPQExpBuffer(q, "TYPE %s", fmtId(tinfo->dobj.name));
 	dumpComment(fout, q->data,
-				tinfo->dobj.namespace->dobj.name, tinfo->usename,
+				tinfo->dobj.namespace->dobj.name, tinfo->rolname,
 				tinfo->dobj.catId, 0, tinfo->dobj.dumpId);
 
 	PQclear(res);
@@ -5528,7 +5558,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 				 funcsig_tag,
 				 finfo->dobj.namespace->dobj.name,
 				 NULL,
-				 finfo->usename, false,
+				 finfo->rolname, false,
 				 "FUNCTION", q->data, delqry->data, NULL,
 				 finfo->dobj.dependencies, finfo->dobj.nDeps,
 				 NULL, NULL);
@@ -5537,13 +5567,13 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	resetPQExpBuffer(q);
 	appendPQExpBuffer(q, "FUNCTION %s", funcsig);
 	dumpComment(fout, q->data,
-				finfo->dobj.namespace->dobj.name, finfo->usename,
+				finfo->dobj.namespace->dobj.name, finfo->rolname,
 				finfo->dobj.catId, 0, finfo->dobj.dumpId);
 
 	dumpACL(fout, finfo->dobj.catId, finfo->dobj.dumpId, "FUNCTION",
 			funcsig, funcsig_tag,
 			finfo->dobj.namespace->dobj.name,
-			finfo->usename, finfo->proacl);
+			finfo->rolname, finfo->proacl);
 
 	PQclear(res);
 
@@ -5926,7 +5956,7 @@ dumpOpr(Archive *fout, OprInfo *oprinfo)
 				 oprinfo->dobj.name,
 				 oprinfo->dobj.namespace->dobj.name, 
 				 NULL,
-				 oprinfo->usename,
+				 oprinfo->rolname,
 				 false, "OPERATOR", q->data, delq->data, NULL,
 				 oprinfo->dobj.dependencies, oprinfo->dobj.nDeps,
 				 NULL, NULL);
@@ -5935,7 +5965,7 @@ dumpOpr(Archive *fout, OprInfo *oprinfo)
 	resetPQExpBuffer(q);
 	appendPQExpBuffer(q, "OPERATOR %s", oprid->data);
 	dumpComment(fout, q->data,
-				oprinfo->dobj.namespace->dobj.name, oprinfo->usename,
+				oprinfo->dobj.namespace->dobj.name, oprinfo->rolname,
 				oprinfo->dobj.catId, 0, oprinfo->dobj.dumpId);
 
 	PQclear(res);
@@ -6235,7 +6265,7 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 				 opcinfo->dobj.name,
 				 opcinfo->dobj.namespace->dobj.name, 
 				 NULL,
-				 opcinfo->usename,
+				 opcinfo->rolname,
 				 false, "OPERATOR CLASS", q->data, delq->data, NULL,
 				 opcinfo->dobj.dependencies, opcinfo->dobj.nDeps,
 				 NULL, NULL);
@@ -6247,7 +6277,7 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 	appendPQExpBuffer(q, " USING %s",
 					  fmtId(amname));
 	dumpComment(fout, q->data,
-				NULL, opcinfo->usename,
+				NULL, opcinfo->rolname,
 				opcinfo->dobj.catId, 0, opcinfo->dobj.dumpId);
 
 	free(amname);
@@ -6347,7 +6377,7 @@ dumpConversion(Archive *fout, ConvInfo *convinfo)
 				 convinfo->dobj.name,
 				 convinfo->dobj.namespace->dobj.name, 
 				 NULL, 
-				 convinfo->usename,
+				 convinfo->rolname,
 				 false, "CONVERSION", q->data, delq->data, NULL,
 				 convinfo->dobj.dependencies, convinfo->dobj.nDeps,
 				 NULL, NULL);
@@ -6356,7 +6386,7 @@ dumpConversion(Archive *fout, ConvInfo *convinfo)
 	resetPQExpBuffer(q);
 	appendPQExpBuffer(q, "CONVERSION %s", fmtId(convinfo->dobj.name));
 	dumpComment(fout, q->data,
-				convinfo->dobj.namespace->dobj.name, convinfo->usename,
+				convinfo->dobj.namespace->dobj.name, convinfo->rolname,
 				convinfo->dobj.catId, 0, convinfo->dobj.dumpId);
 
 	PQclear(res);
@@ -6612,7 +6642,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 				 aggsig_tag,
 				 agginfo->aggfn.dobj.namespace->dobj.name,
 				 NULL,
-				 agginfo->aggfn.usename,
+				 agginfo->aggfn.rolname,
 				 false, "AGGREGATE", q->data, delq->data, NULL,
 				 agginfo->aggfn.dobj.dependencies, agginfo->aggfn.dobj.nDeps,
 				 NULL, NULL);
@@ -6621,7 +6651,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	resetPQExpBuffer(q);
 	appendPQExpBuffer(q, "AGGREGATE %s", aggsig);
 	dumpComment(fout, q->data,
-		agginfo->aggfn.dobj.namespace->dobj.name, agginfo->aggfn.usename,
+		agginfo->aggfn.dobj.namespace->dobj.name, agginfo->aggfn.rolname,
 				agginfo->aggfn.dobj.catId, 0, agginfo->aggfn.dobj.dumpId);
 
 	/*
@@ -6639,7 +6669,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 			"FUNCTION",
 			aggsig, aggsig_tag,
 			agginfo->aggfn.dobj.namespace->dobj.name,
-			agginfo->aggfn.usename, agginfo->aggfn.proacl);
+			agginfo->aggfn.rolname, agginfo->aggfn.proacl);
 
 	free(aggsig);
 	free(aggsig_tag);
@@ -6720,7 +6750,7 @@ dumpTable(Archive *fout, TableInfo *tbinfo)
 		namecopy = strdup(fmtId(tbinfo->dobj.name));
 		dumpACL(fout, tbinfo->dobj.catId, tbinfo->dobj.dumpId, "TABLE",
 				namecopy, tbinfo->dobj.name,
-				tbinfo->dobj.namespace->dobj.name, tbinfo->usename,
+				tbinfo->dobj.namespace->dobj.name, tbinfo->rolname,
 				tbinfo->relacl);
 		free(namecopy);
 	}
@@ -6996,7 +7026,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				 tbinfo->dobj.name,
 				 tbinfo->dobj.namespace->dobj.name,
 				 (tbinfo->relkind == RELKIND_VIEW) ? NULL : tbinfo->reltablespace,
-				 tbinfo->usename,
+				 tbinfo->rolname,
 				 (strcmp(reltypename, "TABLE") == 0) ? tbinfo->hasoids : false,
 				 reltypename, q->data, delq->data, NULL,
 				 tbinfo->dobj.dependencies, tbinfo->dobj.nDeps,
@@ -7064,7 +7094,7 @@ dumpAttrDef(Archive *fout, AttrDefInfo *adinfo)
 				 tbinfo->attnames[adnum - 1],
 				 tbinfo->dobj.namespace->dobj.name, 
 				 NULL,
-				 tbinfo->usename,
+				 tbinfo->rolname,
 				 false, "DEFAULT", q->data, delq->data, NULL,
 				 adinfo->dobj.dependencies, adinfo->dobj.nDeps,
 				 NULL, NULL);
@@ -7157,7 +7187,7 @@ dumpIndex(Archive *fout, IndxInfo *indxinfo)
 					 indxinfo->dobj.name,
 					 tbinfo->dobj.namespace->dobj.name,
 					 indxinfo->tablespace,
-					 tbinfo->usename, false,
+					 tbinfo->rolname, false,
 					 "INDEX", q->data, delq->data, NULL,
 					 indxinfo->dobj.dependencies, indxinfo->dobj.nDeps,
 					 NULL, NULL);
@@ -7169,7 +7199,7 @@ dumpIndex(Archive *fout, IndxInfo *indxinfo)
 					  fmtId(indxinfo->dobj.name));
 	dumpComment(fout, q->data,
 				tbinfo->dobj.namespace->dobj.name,
-				tbinfo->usename,
+				tbinfo->rolname,
 				indxinfo->dobj.catId, 0, indxinfo->dobj.dumpId);
 
 	destroyPQExpBuffer(q);
@@ -7256,7 +7286,7 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 					 coninfo->dobj.name,
 					 tbinfo->dobj.namespace->dobj.name,
 					 indxinfo->tablespace,
-					 tbinfo->usename, false,
+					 tbinfo->rolname, false,
 					 "CONSTRAINT", q->data, delq->data, NULL,
 					 coninfo->dobj.dependencies, coninfo->dobj.nDeps,
 					 NULL, NULL);
@@ -7288,7 +7318,7 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 					 coninfo->dobj.name,
 					 tbinfo->dobj.namespace->dobj.name,
 					 NULL,
-					 tbinfo->usename, false,
+					 tbinfo->rolname, false,
 					 "FK CONSTRAINT", q->data, delq->data, NULL,
 					 coninfo->dobj.dependencies, coninfo->dobj.nDeps,
 					 NULL, NULL);
@@ -7322,7 +7352,7 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 						 coninfo->dobj.name,
 						 tbinfo->dobj.namespace->dobj.name,
 						 NULL,
-						 tbinfo->usename, false,
+						 tbinfo->rolname, false,
 						 "CHECK CONSTRAINT", q->data, delq->data, NULL,
 						 coninfo->dobj.dependencies, coninfo->dobj.nDeps,
 						 NULL, NULL);
@@ -7357,7 +7387,7 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 						 coninfo->dobj.name,
 						 tinfo->dobj.namespace->dobj.name,
 						 NULL,
-						 tinfo->usename, false,
+						 tinfo->rolname, false,
 						 "CHECK CONSTRAINT", q->data, delq->data, NULL,
 						 coninfo->dobj.dependencies, coninfo->dobj.nDeps,
 						 NULL, NULL);
@@ -7396,7 +7426,7 @@ dumpTableConstraintComment(Archive *fout, ConstraintInfo *coninfo)
 					  fmtId(tbinfo->dobj.name));
 	dumpComment(fout, q->data,
 				tbinfo->dobj.namespace->dobj.name,
-				tbinfo->usename,
+				tbinfo->rolname,
 				coninfo->dobj.catId, 0,
 				coninfo->separate ? coninfo->dobj.dumpId : tbinfo->dobj.dumpId);
 
@@ -7598,7 +7628,7 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 					 tbinfo->dobj.name,
 					 tbinfo->dobj.namespace->dobj.name, 
 					 NULL,
-					 tbinfo->usename,
+					 tbinfo->rolname,
 					 false, "SEQUENCE", query->data, delqry->data, NULL,
 					 tbinfo->dobj.dependencies, tbinfo->dobj.nDeps,
 					 NULL, NULL);
@@ -7636,7 +7666,7 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 					 tbinfo->dobj.name,
 					 tbinfo->dobj.namespace->dobj.name,
 					 NULL,
-					 tbinfo->usename,
+					 tbinfo->rolname,
 					 false, "SEQUENCE SET", query->data, "", NULL,
 					 &(tbinfo->dobj.dumpId), 1,
 					 NULL, NULL);
@@ -7648,7 +7678,7 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 		resetPQExpBuffer(query);
 		appendPQExpBuffer(query, "SEQUENCE %s", fmtId(tbinfo->dobj.name));
 		dumpComment(fout, query->data,
-					tbinfo->dobj.namespace->dobj.name, tbinfo->usename,
+					tbinfo->dobj.namespace->dobj.name, tbinfo->rolname,
 					tbinfo->dobj.catId, 0, tbinfo->dobj.dumpId);
 	}
 
@@ -7812,7 +7842,7 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 				 tginfo->dobj.name,
 				 tbinfo->dobj.namespace->dobj.name,
 				 NULL,
-				 tbinfo->usename, false,
+				 tbinfo->rolname, false,
 				 "TRIGGER", query->data, delqry->data, NULL,
 				 tginfo->dobj.dependencies, tginfo->dobj.nDeps,
 				 NULL, NULL);
@@ -7824,7 +7854,7 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 					  fmtId(tbinfo->dobj.name));
 
 	dumpComment(fout, query->data,
-				tbinfo->dobj.namespace->dobj.name, tbinfo->usename,
+				tbinfo->dobj.namespace->dobj.name, tbinfo->rolname,
 				tginfo->dobj.catId, 0, tginfo->dobj.dumpId);
 
 	destroyPQExpBuffer(query);
@@ -7907,7 +7937,7 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 				 rinfo->dobj.name,
 				 tbinfo->dobj.namespace->dobj.name,
 				 NULL,
-				 tbinfo->usename, false,
+				 tbinfo->rolname, false,
 				 "RULE", cmd->data, delcmd->data, NULL,
 				 rinfo->dobj.dependencies, rinfo->dobj.nDeps,
 				 NULL, NULL);
@@ -7920,7 +7950,7 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 					  fmtId(tbinfo->dobj.name));
 	dumpComment(fout, query->data,
 				tbinfo->dobj.namespace->dobj.name,
-				tbinfo->usename,
+				tbinfo->rolname,
 				rinfo->dobj.catId, 0, rinfo->dobj.dumpId);
 
 	PQclear(res);
