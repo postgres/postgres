@@ -1,7 +1,7 @@
 #
 # PostgreSQL top level makefile
 #
-# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.30 2002/10/21 00:12:45 momjian Exp $
+# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.30.2.1 2005/08/16 03:32:33 tgl Exp $
 #
 
 subdir =
@@ -16,7 +16,7 @@ all:
 install:
 	$(MAKE) -C doc install
 	$(MAKE) -C src install
-	@cat $(srcdir)/register.txt
+	@echo "PostgreSQL installation complete."
 
 installdirs uninstall distprep:
 	$(MAKE) -C doc $@
