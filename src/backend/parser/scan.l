@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.111.2.1 2004/02/21 00:35:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.111.2.2 2005/08/16 00:48:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -478,6 +478,15 @@ other			.
 							strchr(",()[].;:+-*/%^<>=", yytext[0]))
 							return yytext[0];
 					}
+
+					/*
+					 * Complain if operator is too long.  Unlike the case
+					 * for identifiers, we make this an error not a notice-
+					 * and-truncate, because the odds are we are looking at
+					 * a syntactic mistake anyway.
+					 */
+					if (nchars >= NAMEDATALEN)
+						yyerror("operator too long");
 
 					/* Convert "!=" operator to "<>" for compatibility */
 					if (strcmp(yytext, "!=") == 0)
