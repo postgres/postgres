@@ -18,7 +18,8 @@
 # To find branch time, look for "branches:" tag in CVS commit logs
 # e.g. "branches:  1.398.4;" matches "REL8_0_STABLE: 1.398.0.4".
 #
-# Remove TODO and FAQ logs if desired
+# Remove these:  TODO,v, TODO.html,v, FAQ,v, FAQ.html,v from logs
+# before processing
 #
 
 if [ "X$1" == "X-h" ]
