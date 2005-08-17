@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.96 2005/08/17 21:54:50 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.97 2005/08/17 22:06:53 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2005, PostgreSQL Global Development Group
@@ -4461,8 +4461,6 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 #endif
 		return Np->number;
 	}
-
-	return NULL;
 }
 
 /* ----------
@@ -4639,7 +4637,6 @@ numeric_to_char(PG_FUNCTION_ARGS)
 
 		if (Num.pre > len)
 			plen = Num.pre - len;
-
 		else if (len > Num.pre)
 		{
 			fill_str(numstr, '#', Num.pre);
@@ -4847,10 +4844,7 @@ float4_to_char(PG_FUNCTION_ARGS)
 	NUM_TOCHAR_prepare;
 
 	if (IS_ROMAN(&Num))
-	{
 		numstr = orgnum = int_to_roman((int) rint(value));
-
-	}
 	else
 	{
 		float4		val = value;
@@ -4891,7 +4885,6 @@ float4_to_char(PG_FUNCTION_ARGS)
 
 		if (Num.pre > len)
 			plen = Num.pre - len;
-
 		else if (len > Num.pre)
 		{
 			fill_str(numstr, '#', Num.pre);
@@ -4928,10 +4921,7 @@ float8_to_char(PG_FUNCTION_ARGS)
 	NUM_TOCHAR_prepare;
 
 	if (IS_ROMAN(&Num))
-	{
 		numstr = orgnum = int_to_roman((int) rint(value));
-
-	}
 	else
 	{
 		float8		val = value;
@@ -4970,7 +4960,6 @@ float8_to_char(PG_FUNCTION_ARGS)
 
 		if (Num.pre > len)
 			plen = Num.pre - len;
-
 		else if (len > Num.pre)
 		{
 			fill_str(numstr, '#', Num.pre);
