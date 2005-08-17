@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.46 2005/07/04 04:51:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.47 2005/08/17 03:50:59 momjian Exp $
  *
  *
  * NOTES:
@@ -736,8 +736,8 @@ CheckFreeSpaceMapStatistics(int elevel, int numRels, double needed)
 	else if (needed > MaxFSMPages)
 		ereport(elevel,
 			(errmsg("the number of page slots needed (%.0f) exceeds max_fsm_pages (%d)",
-			 needed,MaxFSMPages),
-			 errhint("Consider increasing the configuration parameter \"max_fsm_relations\"\n"
+			 needed, MaxFSMPages),
+			 errhint("Consider increasing the configuration parameter \"max_fsm_pages\"\n"
 					 "to a value over %.0f.", needed)));
 }
 
