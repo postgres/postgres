@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.95 2005/08/17 21:47:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.96 2005/08/17 21:54:50 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2005, PostgreSQL Global Development Group
@@ -4446,7 +4446,6 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 	}
 	else
 	{
-
 		if (*(Np->number_p - 1) == '.')
 			*(Np->number_p - 1) = '\0';
 		else
@@ -4462,8 +4461,6 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 #endif
 		return Np->number;
 	}
-	else
-		return NULL;
 
 	return NULL;
 }
