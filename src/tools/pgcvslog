@@ -95,7 +95,7 @@ awk '	BEGIN	{html="'"$HTML"'"; lineno = 0;}
 	/* clear working file */
 	$0 ~ /^====*$/	{workingfile=""}' |
 
-sort | cut -d'|' -f3 | cat |
+sort | cut -d'|' -f3 |
 
 # collect duplicate narratives
 
