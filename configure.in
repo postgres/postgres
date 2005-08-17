@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.398.4.5 2005/05/05 20:07:34 tgl Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.398.4.6 2005/08/17 20:20:22 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -855,10 +855,9 @@ AC_CHECK_DECLS(fdatasync, [], [], [#include <unistd.h>])
 
 HAVE_IPV6=no
 AC_CHECK_TYPE([struct sockaddr_in6],
-              [AC_CHECK_FUNC(inet_ntop,
-                             [AC_DEFINE(HAVE_IPV6, 1, [Define to 1 if you have support for IPv6.])
-							  HAVE_IPV6=yes])],
-              [],
+        [AC_DEFINE(HAVE_IPV6, 1, [Define to 1 if you have support for IPv6.])
+         HAVE_IPV6=yes],
+        [],
 [$ac_includes_default
 #include <netinet/in.h>])
 AC_SUBST(HAVE_IPV6)
