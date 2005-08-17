@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.117 2005/08/12 21:20:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.118 2005/08/17 19:45:51 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -53,7 +53,7 @@ static const char *privilege_to_string(AclMode privilege);
 
 
 #ifdef ACLDEBUG
-static
+static void
 dumpacl(Acl *acl)
 {
 	int			i;
