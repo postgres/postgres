@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.178 2005/07/25 22:12:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.179 2005/08/17 22:14:34 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to other files.
@@ -235,6 +235,7 @@ extern Oid GetOuterUserId(void);
 extern Oid GetSessionUserId(void);
 extern void InitializeSessionUserId(const char *rolename);
 extern void InitializeSessionUserIdStandalone(void);
+extern void AtAbort_UserId(void);
 extern void SetSessionAuthorization(Oid userid, bool is_superuser);
 extern Oid GetCurrentRoleId(void);
 extern void SetCurrentRoleId(Oid roleid, bool is_superuser);

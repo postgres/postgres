@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.148 2005/07/31 17:19:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.149 2005/08/17 22:14:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -286,7 +286,7 @@ make_absolute_path(const char *path)
  * OuterUserId is the current user ID in effect at the "outer level" (outside
  * any transaction or function).  This is initially the same as SessionUserId,
  * but can be changed by SET ROLE to any role that SessionUserId is a
- * member of.  We store this mainly so that AbortTransaction knows what to
+ * member of.  We store this mainly so that AtAbort_UserId knows what to
  * reset CurrentUserId to.
  *
  * CurrentUserId is the current effective user ID; this is the one to use
@@ -493,6 +493,21 @@ InitializeSessionUserIdStandalone(void)
 	AuthenticatedUserIsSuperuser = true;
 
 	SetSessionUserId(BOOTSTRAP_SUPERUSERID, true);
+}
+
+
+/*
+ * Reset effective userid during AbortTransaction
+ *
+ * This is essentially SetUserId(GetOuterUserId()), but without the Asserts.
+ * The reason is that if a backend's InitPostgres transaction fails (eg,
+ * because an invalid user name was given), we have to be able to get through
+ * AbortTransaction without asserting.
+ */
+void
+AtAbort_UserId(void)
+{
+	CurrentUserId = OuterUserId;
 }
 
 
