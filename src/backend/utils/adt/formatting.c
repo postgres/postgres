@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.94 2005/07/27 12:44:09 neilc Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.95 2005/08/17 21:47:55 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2005, PostgreSQL Global Development Group
@@ -136,7 +136,7 @@ typedef struct
 	const char *name;			/* keyword			*/
 	int			len;			/* keyword length		*/
 	int (*action) (int arg, char *inout,	/* action for keyword */
-				   int suf, int flag,
+				   int suf, bool is_to_char,
 				   FormatNode *node, void *data);
 	int			id;				/* keyword id			*/
 	bool		isitdigit;		/* is expected output/input digit */
@@ -231,9 +231,6 @@ static char *numth[] = {"st", "nd", "rd", "th", NULL};
  * Flags & Options:
  * ----------
  */
-#define TO_CHAR		1
-#define FROM_CHAR	2
-
 #define ONE_UPPER	1			/* Name */
 #define ALL_UPPER	2			/* NAME */
 #define ALL_LOWER	3			/* name */
@@ -250,11 +247,7 @@ static char *numth[] = {"st", "nd", "rd", "th", NULL};
  * Flags for DCH version
  * ----------
  */
-static int	DCH_global_flag = 0;
-
-#define DCH_F_FX	0x01
-
-#define IS_FX		(DCH_global_flag & DCH_F_FX)
+static bool	DCH_global_fx = false;
 
 
 /* ----------
@@ -440,9 +433,9 @@ typedef struct TmToChar
  *			KeyWords definition & action
  *****************************************************************************/
 
-static int	dch_global(int arg, char *inout, int suf, int flag, FormatNode *node, void *data);
-static int	dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data);
-static int	dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data);
+static int	dch_global(int arg, char *inout, int suf, bool is_to_char, FormatNode *node, void *data);
+static int	dch_time(int arg, char *inout, int suf, bool is_to_char, FormatNode *node, void *data);
+static int	dch_date(int arg, char *inout, int suf, bool is_to_char, FormatNode *node, void *data);
 
 /* ----------
  * Suffixes:
@@ -843,8 +836,7 @@ static const int	NUM_index[KeyWord_INDEX_SIZE] = {
  */
 typedef struct NUMProc
 {
-	int			type;			/* FROM_CHAR (TO_NUMBER) or TO_CHAR */
-
+	bool		is_to_char;
 	NUMDesc    *Num;			/* number description		*/
 
 	int			sign,			/* '-' or '+'			*/
@@ -883,7 +875,7 @@ static KeySuffix *suff_search(char *str, KeySuffix *suf, int type);
 static void NUMDesc_prepare(NUMDesc *num, FormatNode *n);
 static void parse_format(FormatNode *node, char *str, const KeyWord *kw,
 			 KeySuffix *suf, const int *index, int ver, NUMDesc *Num);
-static char *DCH_processor(FormatNode *node, char *inout, int flag, void *data);
+static char *DCH_processor(FormatNode *node, char *inout, bool is_to_char, void *data);
 
 #ifdef DEBUG_TO_FROM_CHAR
 static void dump_index(const KeyWord *k, const int *index);
@@ -908,7 +900,7 @@ static char *get_last_relevant_decnum(char *num);
 static void NUM_numpart_from_char(NUMProc *Np, int id, int plen);
 static void NUM_numpart_to_char(NUMProc *Np, int id);
 static char *NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
-			  int plen, int sign, int type);
+			  int plen, int sign, bool is_to_char);
 static DCHCacheEntry *DCH_cache_search(char *str);
 static DCHCacheEntry *DCH_cache_getnew(char *str);
 
@@ -1298,7 +1290,7 @@ parse_format(FormatNode *node, char *str, const KeyWord *kw,
  * ----------
  */
 static char *
-DCH_processor(FormatNode *node, char *inout, int flag, void *data)
+DCH_processor(FormatNode *node, char *inout, bool is_to_char, void *data)
 {
 	FormatNode *n;
 	char	   *s;
@@ -1307,11 +1299,11 @@ DCH_processor(FormatNode *node, char *inout, int flag, void *data)
 	/*
 	 * Zeroing global flags
 	 */
-	DCH_global_flag = 0;
+	DCH_global_fx = false;
 
 	for (n = node, s = inout; n->type != NODE_TYPE_END; n++)
 	{
-		if (flag == FROM_CHAR && *s == '\0')
+		if (!is_to_char && *s == '\0')
 
 			/*
 			 * The input string is shorter than format picture, so it's
@@ -1329,7 +1321,7 @@ DCH_processor(FormatNode *node, char *inout, int flag, void *data)
 			/*
 			 * Call node action function
 			 */
-			len = n->key->action(n->key->id, s, n->suffix, flag, n, data);
+			len = n->key->action(n->key->id, s, n->suffix, is_to_char, n, data);
 			if (len > 0)
 				s += len;
 			else if (len == -1)
@@ -1341,26 +1333,22 @@ DCH_processor(FormatNode *node, char *inout, int flag, void *data)
 			/*
 			 * Remove to output char from input in TO_CHAR
 			 */
-			if (flag == TO_CHAR)
+			if (is_to_char)
 				*s = n->character;
-
 			else
 			{
 				/*
 				 * Skip blank space in FROM_CHAR's input
 				 */
-				if (isspace((unsigned char) n->character) && IS_FX == 0)
-				{
+				if (isspace((unsigned char) n->character) && !DCH_global_fx)
 					while (*s != '\0' && isspace((unsigned char) *(s + 1)))
 						++s;
-				}
 			}
 		}
-
-		++s;					/* ! */
+		++s;
 	}
 
-	if (flag == TO_CHAR)
+	if (is_to_char)
 		*s = '\0';
 	return inout;
 }
@@ -1630,10 +1618,10 @@ dump_index(const KeyWord *k, const int *index)
  * ----------
  */
 static int
-dch_global(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
+dch_global(int arg, char *inout, int suf, bool is_to_char, FormatNode *node, void *data)
 {
 	if (arg == DCH_FX)
-		DCH_global_flag |= DCH_F_FX;
+		DCH_global_fx = true;
 	return -1;
 }
 
@@ -1696,14 +1684,14 @@ strdigits_len(char *str)
  * ----------
  */
 static int
-dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
+dch_time(int arg, char *inout, int suf, bool is_to_char, FormatNode *node, void *data)
 {
 	char	   *p_inout = inout;
 	struct pg_tm *tm = NULL;
 	TmFromChar *tmfc = NULL;
 	TmToChar   *tmtc = NULL;
 
-	if (flag == TO_CHAR)
+	if (is_to_char)
 	{
 		tmtc = (TmToChar *) data;
 		tm = tmtcTm(tmtc);
@@ -1715,13 +1703,13 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 	{
 		case DCH_A_M:
 		case DCH_P_M:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				strcpy(inout, ((tm->tm_hour > 11
 							  && tm->tm_hour < HOURS_PER_DAY) ? P_M_STR : A_M_STR));
 				return 3;
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				if (strncmp(inout, P_M_STR, 4) == 0)
 					tmfc->pm = TRUE;
@@ -1734,13 +1722,13 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			break;
 		case DCH_AM:
 		case DCH_PM:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				strcpy(inout, ((tm->tm_hour > 11
 								&& tm->tm_hour < HOURS_PER_DAY) ? PM_STR : AM_STR));
 				return 1;
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				if (strncmp(inout, PM_STR, 2) == 0)
 					tmfc->pm = TRUE;
@@ -1753,13 +1741,13 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			break;
 		case DCH_a_m:
 		case DCH_p_m:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				strcpy(inout, ((tm->tm_hour > 11
 							  && tm->tm_hour < HOURS_PER_DAY) ? p_m_STR : a_m_STR));
 				return 3;
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				if (strncmp(inout, p_m_STR, 4) == 0)
 					tmfc->pm = TRUE;
@@ -1772,13 +1760,13 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			break;
 		case DCH_am:
 		case DCH_pm:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				strcpy(inout, ((tm->tm_hour > 11
 								&& tm->tm_hour < HOURS_PER_DAY) ? pm_STR : am_STR));
 				return 1;
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				if (strncmp(inout, pm_STR, 2) == 0)
 					tmfc->pm = TRUE;
@@ -1791,7 +1779,7 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			break;
 		case DCH_HH:
 		case DCH_HH12:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				sprintf(inout, "%0*d", S_FM(suf) ? 0 : 2,
 						tm->tm_hour == 0 ? 12 :
@@ -1804,7 +1792,7 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 					return 1;
 
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				if (S_FM(suf) || is_next_separator(node))
 				{
@@ -1819,7 +1807,7 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			}
 			break;
 		case DCH_HH24:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				sprintf(inout, "%0*d", S_FM(suf) ? 0 : 2, tm->tm_hour);
 				if (S_THth(suf))
@@ -1830,7 +1818,7 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 					return 1;
 
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				if (S_FM(suf) || is_next_separator(node))
 				{
@@ -1845,7 +1833,7 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			}
 			break;
 		case DCH_MI:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				sprintf(inout, "%0*d", S_FM(suf) ? 0 : 2, tm->tm_min);
 				if (S_THth(suf))
@@ -1856,7 +1844,7 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 					return 1;
 
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				if (S_FM(suf) || is_next_separator(node))
 				{
@@ -1871,7 +1859,7 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			}
 			break;
 		case DCH_SS:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				sprintf(inout, "%0*d", S_FM(suf) ? 0 : 2, tm->tm_sec);
 				if (S_THth(suf))
@@ -1882,7 +1870,7 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 					return 1;
 
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				if (S_FM(suf) || is_next_separator(node))
 				{
@@ -1897,7 +1885,7 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			}
 			break;
 		case DCH_MS:			/* millisecond */
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 #ifdef HAVE_INT64_TIMESTAMP
 				sprintf(inout, "%03d", (int) (tmtc->fsec / INT64CONST(1000)));
@@ -1912,7 +1900,7 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 					return 2;
 
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				int			len,
 							x;
@@ -1944,7 +1932,7 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			}
 			break;
 		case DCH_US:			/* microsecond */
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 #ifdef HAVE_INT64_TIMESTAMP
 				sprintf(inout, "%06d", (int) tmtc->fsec);
@@ -1958,7 +1946,7 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 				else
 					return 5;
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				int			len,
 							x;
@@ -1989,7 +1977,7 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			}
 			break;
 		case DCH_SSSS:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				sprintf(inout, "%d", tm->tm_hour * SECS_PER_HOUR +
 						tm->tm_min * SECS_PER_MINUTE +
@@ -1998,7 +1986,7 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 					str_numth(p_inout, inout, S_TH_TYPE(suf));
 				return strlen(p_inout) - 1;
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				if (S_FM(suf) || is_next_separator(node))
 				{
@@ -2014,7 +2002,7 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			break;
 		case DCH_tz:
 		case DCH_TZ:
-			if (flag == TO_CHAR && tmtcTzn(tmtc))
+			if (is_to_char && tmtcTzn(tmtc))
 			{
 				int			siz = strlen(tmtcTzn(tmtc));
 
@@ -2030,7 +2018,7 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 				}
 				return siz - 1;
 			}
-			else if (flag == FROM_CHAR)
+			else if (!is_to_char)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("\"TZ\"/\"tz\" not supported")));
@@ -2055,7 +2043,7 @@ do { \
  * ----------
  */
 static int
-dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
+dch_date(int arg, char *inout, int suf, bool is_to_char, FormatNode *node, void *data)
 {
 	char		buff[DCH_CACHE_SIZE],
 				workbuff[32],
@@ -2066,7 +2054,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 	TmFromChar *tmfc = NULL;
 	TmToChar   *tmtc = NULL;
 
-	if (flag == TO_CHAR)
+	if (is_to_char)
 	{
 		tmtc = (TmToChar *) data;
 		tm = tmtcTm(tmtc);
@@ -2081,7 +2069,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 	 * or "january", all is before search convert to "first-upper". This
 	 * convention is used for MONTH, MON, DAY, DY
 	 */
-	if (flag == FROM_CHAR)
+	if (!is_to_char)
 	{
 		if (arg == DCH_MONTH || arg == DCH_Month || arg == DCH_month)
 		{
@@ -2121,13 +2109,13 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 	{
 		case DCH_A_D:
 		case DCH_B_C:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				strcpy(inout, (tm->tm_year <= 0 ? B_C_STR : A_D_STR));
 				return 3;
 
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				if (strncmp(inout, B_C_STR, 4) == 0)
 					tmfc->bc = TRUE;
@@ -2136,13 +2124,13 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			break;
 		case DCH_AD:
 		case DCH_BC:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				strcpy(inout, (tm->tm_year <= 0 ? BC_STR : AD_STR));
 				return 1;
 
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				if (strncmp(inout, BC_STR, 2) == 0)
 					tmfc->bc = TRUE;
@@ -2151,13 +2139,13 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			break;
 		case DCH_a_d:
 		case DCH_b_c:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				strcpy(inout, (tm->tm_year <= 0 ? b_c_STR : a_d_STR));
 				return 3;
 
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				if (strncmp(inout, b_c_STR, 4) == 0)
 					tmfc->bc = TRUE;
@@ -2166,13 +2154,13 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			break;
 		case DCH_ad:
 		case DCH_bc:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				strcpy(inout, (tm->tm_year <= 0 ? bc_STR : ad_STR));
 				return 1;
 
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				if (strncmp(inout, bc_STR, 2) == 0)
 					tmfc->bc = TRUE;
@@ -2229,7 +2217,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			return 2;
 
 		case DCH_MM:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				sprintf(inout, "%0*d", S_FM(suf) ? 0 : 2, tm->tm_mon);
 				if (S_THth(suf))
@@ -2239,7 +2227,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 				else
 					return 1;
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				if (S_FM(suf) || is_next_separator(node))
 				{
@@ -2291,7 +2279,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			return 2;
 
 		case DCH_DDD:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				sprintf(inout, "%0*d", S_FM(suf) ? 0 : 3, tm->tm_yday);
 				if (S_THth(suf))
@@ -2302,7 +2290,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 					return 2;
 
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				if (S_FM(suf) || is_next_separator(node))
 				{
@@ -2317,7 +2305,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			}
 			break;
 		case DCH_DD:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				sprintf(inout, "%0*d", S_FM(suf) ? 0 : 2, tm->tm_mday);
 				if (S_THth(suf))
@@ -2328,7 +2316,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 					return 1;
 
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				if (S_FM(suf) || is_next_separator(node))
 				{
@@ -2343,7 +2331,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			}
 			break;
 		case DCH_D:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				sprintf(inout, "%d", tm->tm_wday + 1);
 				if (S_THth(suf))
@@ -2353,14 +2341,14 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 				}
 				return 0;
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				sscanf(inout, "%1d", &tmfc->d);
 				return 0 + SKIP_THth(suf);
 			}
 			break;
 		case DCH_WW:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				sprintf(inout, "%0*d", S_FM(suf) ? 0 : 2,
 						(tm->tm_yday - 1) / 7 + 1);
@@ -2372,7 +2360,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 					return 1;
 
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				if (S_FM(suf) || is_next_separator(node))
 				{
@@ -2387,7 +2375,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			}
 			break;
 		case DCH_IW:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				sprintf(inout, "%0*d", S_FM(suf) ? 0 : 2,
 					 date2isoweek(tm->tm_year, tm->tm_mon, tm->tm_mday));
@@ -2398,7 +2386,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 				else
 					return 1;
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				if (S_FM(suf) || is_next_separator(node))
 				{
@@ -2413,7 +2401,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			}
 			break;
 		case DCH_Q:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				if (!tm->tm_mon)
 					return -1;
@@ -2425,14 +2413,14 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 				}
 				return 0;
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				sscanf(inout, "%1d", &tmfc->q);
 				return 0 + SKIP_THth(suf);
 			}
 			break;
 		case DCH_CC:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				i = tm->tm_year / 100 + 1;
 				if (i <= 99 && i >= -99)
@@ -2444,7 +2432,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 				return strlen(p_inout) - 1;
 
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				if (S_FM(suf) || is_next_separator(node))
 				{
@@ -2459,7 +2447,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			}
 			break;
 		case DCH_Y_YYY:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				i = YEAR_ABS(tm->tm_year) / 1000;
 				sprintf(inout, "%d,%03d", i, YEAR_ABS(tm->tm_year) - (i * 1000));
@@ -2467,7 +2455,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 					str_numth(p_inout, inout, S_TH_TYPE(suf));
 				return strlen(p_inout) - 1;
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				int			cc;
 
@@ -2479,7 +2467,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			break;
 		case DCH_YYYY:
 		case DCH_IYYY:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				if (tm->tm_year <= 9999 && tm->tm_year >= -9998)
 					sprintf(inout, "%0*d",
@@ -2502,7 +2490,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 					str_numth(p_inout, inout, S_TH_TYPE(suf));
 				return strlen(p_inout) - 1;
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				if (S_FM(suf) || is_next_separator(node))
 				{
@@ -2520,7 +2508,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			break;
 		case DCH_YYY:
 		case DCH_IYY:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				snprintf(buff, sizeof(buff), "%03d",
 						 arg == DCH_YYY ?
@@ -2537,7 +2525,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 				return 2;
 
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				sscanf(inout, "%03d", &tmfc->year);
 
@@ -2555,7 +2543,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			break;
 		case DCH_YY:
 		case DCH_IY:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				snprintf(buff, sizeof(buff), "%02d",
 						 arg == DCH_YY ?
@@ -2572,7 +2560,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 				return 1;
 
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				sscanf(inout, "%02d", &tmfc->year);
 
@@ -2590,7 +2578,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			break;
 		case DCH_Y:
 		case DCH_I:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				snprintf(buff, sizeof(buff), "%1d",
 						 arg == DCH_Y ?
@@ -2607,7 +2595,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 				return 0;
 
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				sscanf(inout, "%1d", &tmfc->year);
 
@@ -2620,7 +2608,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			}
 			break;
 		case DCH_RM:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				if (!tm->tm_mon)
 					return -1;
@@ -2632,7 +2620,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 					return 3;
 
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				tmfc->mm = 12 - seq_search(inout, rm_months_upper, ALL_UPPER, FULL_SIZ, &len);
 				CHECK_SEQ_SEARCH(len, "RM");
@@ -2643,7 +2631,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			}
 			break;
 		case DCH_rm:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				if (!tm->tm_mon)
 					return -1;
@@ -2655,7 +2643,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 					return 3;
 
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				tmfc->mm = 12 - seq_search(inout, rm_months_lower, ALL_LOWER, FULL_SIZ, &len);
 				CHECK_SEQ_SEARCH(len, "rm");
@@ -2666,7 +2654,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			}
 			break;
 		case DCH_W:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				sprintf(inout, "%d", (tm->tm_mday - 1) / 7 + 1);
 				if (S_THth(suf))
@@ -2676,21 +2664,21 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 				}
 				return 0;
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				sscanf(inout, "%1d", &tmfc->w);
 				return 0 + SKIP_THth(suf);
 			}
 			break;
 		case DCH_J:
-			if (flag == TO_CHAR)
+			if (is_to_char)
 			{
 				sprintf(inout, "%d", date2j(tm->tm_year, tm->tm_mon, tm->tm_mday));
 				if (S_THth(suf))
 					str_numth(p_inout, inout, S_TH_TYPE(suf));
 				return strlen(p_inout) - 1;
 			}
-			else if (flag == FROM_CHAR)
+			else
 			{
 				sscanf(inout, "%d", &tmfc->j);
 				return strdigits_len(inout) - 1 + SKIP_THth(suf);
@@ -2857,7 +2845,7 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt)
 		format = ent->format;
 	}
 
-	DCH_processor(format, result, TO_CHAR, (void *) tmtc);
+	DCH_processor(format, result, true, (void *) tmtc);
 
 	if (!incache)
 		pfree(format);
@@ -3111,7 +3099,7 @@ do_to_timestamp(text *date_txt, text *fmt,
 		memcpy(date_str, VARDATA(date_txt), date_len);
 		*(date_str + date_len) = '\0';
 
-		DCH_processor(format, date_str, FROM_CHAR, (void *) &tmfc);
+		DCH_processor(format, date_str, false, (void *) &tmfc);
 
 		pfree(date_str);
 		pfree(fmt_str);
@@ -4081,7 +4069,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
  */
 static char *
 NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
-			  int plen, int sign, int type)
+			  int plen, int sign, bool is_to_char)
 {
 	FormatNode *n;
 	NUMProc		_Np,
@@ -4090,7 +4078,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 	MemSet(Np, 0, sizeof(NUMProc));
 
 	Np->Num = Num;
-	Np->type = type;
+	Np->is_to_char = is_to_char;
 	Np->number = number;
 	Np->inout = inout;
 	Np->last_relevant = NULL;
@@ -4106,7 +4094,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 	 */
 	if (IS_ROMAN(Np->Num))
 	{
-		if (Np->type == FROM_CHAR)
+		if (!Np->is_to_char)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("\"RN\" not supported")));
@@ -4127,9 +4115,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 	/*
 	 * Sign
 	 */
-	if (type == FROM_CHAR)
-		Np->sign = FALSE;
-	else
+	if (is_to_char)
 	{
 		Np->sign = sign;
 
@@ -4162,13 +4148,15 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 				Np->Num->lsign = NUM_LSIGN_POST;
 		}
 	}
+	else
+		Np->sign = FALSE;
 
 	/*
 	 * Count
 	 */
 	Np->num_count = Np->Num->post + Np->Num->pre - 1;
 
-	if (type == TO_CHAR)
+	if (is_to_char)
 	{
 		Np->num_pre = plen;
 
@@ -4224,15 +4212,14 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 	/*
 	 * Processor direct cycle
 	 */
-	if (Np->type == FROM_CHAR)
-		Np->number_p = Np->number + 1;	/* first char is space for sign */
-	else if (Np->type == TO_CHAR)
+	if (Np->is_to_char)
 		Np->number_p = Np->number;
+	else
+		Np->number_p = Np->number + 1;	/* first char is space for sign */
 
 	for (n = node, Np->inout_p = Np->inout; n->type != NODE_TYPE_END; n++)
 	{
-
-		if (Np->type == FROM_CHAR)
+		if (!Np->is_to_char)
 		{
 			/*
 			 * Check non-string inout end
@@ -4261,7 +4248,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 				case NUM_0:
 				case NUM_DEC:
 				case NUM_D:
-					if (Np->type == TO_CHAR)
+					if (Np->is_to_char)
 					{
 						NUM_numpart_to_char(Np, n->key->id);
 						continue;		/* for() */
@@ -4273,7 +4260,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 					}
 
 				case NUM_COMMA:
-					if (Np->type == TO_CHAR)
+					if (Np->is_to_char)
 					{
 						if (!Np->num_in)
 						{
@@ -4284,9 +4271,8 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 						}
 						else
 							*Np->inout_p = ',';
-
 					}
-					else if (Np->type == FROM_CHAR)
+					else
 					{
 						if (!Np->num_in)
 						{
@@ -4297,7 +4283,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 					break;
 
 				case NUM_G:
-					if (Np->type == TO_CHAR)
+					if (Np->is_to_char)
 					{
 						if (!Np->num_in)
 						{
@@ -4318,7 +4304,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 						}
 
 					}
-					else if (Np->type == FROM_CHAR)
+					else
 					{
 						if (!Np->num_in)
 						{
@@ -4330,13 +4316,13 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 					break;
 
 				case NUM_L:
-					if (Np->type == TO_CHAR)
+					if (Np->is_to_char)
 					{
 						strcpy(Np->inout_p, Np->L_currency_symbol);
 						Np->inout_p += strlen(Np->inout_p) - 1;
 
 					}
-					else if (Np->type == FROM_CHAR)
+					else
 						Np->inout_p += strlen(Np->L_currency_symbol) - 1;
 					break;
 
@@ -4371,7 +4357,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 						Np->sign == '-' || IS_DECIMAL(Np->Num))
 						continue;
 
-					if (Np->type == TO_CHAR)
+					if (Np->is_to_char)
 						strcpy(Np->inout_p, get_th(Np->number, TH_LOWER));
 					Np->inout_p += 1;
 					break;
@@ -4381,13 +4367,13 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 						Np->sign == '-' || IS_DECIMAL(Np->Num))
 						continue;
 
-					if (Np->type == TO_CHAR)
+					if (Np->is_to_char)
 						strcpy(Np->inout_p, get_th(Np->number, TH_UPPER));
 					Np->inout_p += 1;
 					break;
 
 				case NUM_MI:
-					if (Np->type == TO_CHAR)
+					if (Np->is_to_char)
 					{
 						if (Np->sign == '-')
 							*Np->inout_p = '-';
@@ -4397,7 +4383,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 							*Np->inout_p = ' ';
 
 					}
-					else if (Np->type == FROM_CHAR)
+					else
 					{
 						if (*Np->inout_p == '-')
 							*Np->number = '-';
@@ -4405,7 +4391,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 					break;
 
 				case NUM_PL:
-					if (Np->type == TO_CHAR)
+					if (Np->is_to_char)
 					{
 						if (Np->sign == '+')
 							*Np->inout_p = '+';
@@ -4415,7 +4401,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 							*Np->inout_p = ' ';
 
 					}
-					else if (Np->type == FROM_CHAR)
+					else
 					{
 						if (*Np->inout_p == '+')
 							*Np->number = '+';
@@ -4423,10 +4409,10 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 					break;
 
 				case NUM_SG:
-					if (Np->type == TO_CHAR)
+					if (Np->is_to_char)
 						*Np->inout_p = Np->sign;
 
-					else if (Np->type == FROM_CHAR)
+					else
 					{
 						if (*Np->inout_p == '-')
 							*Np->number = '-';
@@ -4447,19 +4433,18 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 			/*
 			 * Remove to output char from input in TO_CHAR
 			 */
-			if (Np->type == TO_CHAR)
+			if (Np->is_to_char)
 				*Np->inout_p = n->character;
 		}
 		Np->inout_p++;
 	}
 
-	if (Np->type == TO_CHAR)
+	if (Np->is_to_char)
 	{
 		*Np->inout_p = '\0';
 		return Np->inout;
-
 	}
-	else if (Np->type == FROM_CHAR)
+	else
 	{
 
 		if (*(Np->number_p - 1) == '.')
@@ -4505,7 +4490,7 @@ do { \
 #define NUM_TOCHAR_finish \
 do { \
 	NUM_processor(format, &Num, VARDATA(result),			\
-		numstr, plen, sign, TO_CHAR);				\
+		numstr, plen, sign, true);				\
 	pfree(orgnum);							\
 									\
 	if (shouldFree)							\
@@ -4557,7 +4542,7 @@ numeric_to_number(PG_FUNCTION_ARGS)
 	numstr = (char *) palloc((len * NUM_MAX_ITEM_SIZ) + 1);
 
 	NUM_processor(format, &Num, VARDATA(value), numstr,
-				  VARSIZE(value) - VARHDRSZ, 0, FROM_CHAR);
+				  VARSIZE(value) - VARHDRSZ, 0, false);
 
 	scale = Num.post;
 	precision = Max(0, Num.pre) + scale;
