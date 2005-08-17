@@ -13804,105 +13804,12 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_type_struct_sockaddr_in6" >&5
 echo "${ECHO_T}$ac_cv_type_struct_sockaddr_in6" >&6
 if test $ac_cv_type_struct_sockaddr_in6 = yes; then
-  echo "$as_me:$LINENO: checking for inet_ntop" >&5
-echo $ECHO_N "checking for inet_ntop... $ECHO_C" >&6
-if test "${ac_cv_func_inet_ntop+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-/* Define inet_ntop to an innocuous variant, in case <limits.h> declares inet_ntop.
-   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
-#define inet_ntop innocuous_inet_ntop
-
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char inet_ntop (); below.
-    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
-    <limits.h> exists even on freestanding compilers.  */
-
-#ifdef __STDC__
-# include <limits.h>
-#else
-# include <assert.h>
-#endif
-
-#undef inet_ntop
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char inet_ntop ();
-/* The GNU C library defines this for functions which it implements
-    to always fail with ENOSYS.  Some functions are actually named
-    something starting with __ and the normal name is an alias.  */
-#if defined (__stub_inet_ntop) || defined (__stub___inet_ntop)
-choke me
-#else
-char (*f) () = inet_ntop;
-#endif
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-return f != inet_ntop;
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_func_inet_ntop=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_func_inet_ntop=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: $ac_cv_func_inet_ntop" >&5
-echo "${ECHO_T}$ac_cv_func_inet_ntop" >&6
-if test $ac_cv_func_inet_ntop = yes; then
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_IPV6 1
 _ACEOF
 
-							  HAVE_IPV6=yes
-fi
-
+         HAVE_IPV6=yes
 fi
 
 
