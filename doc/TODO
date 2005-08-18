@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Aug 18 00:42:37 EDT 2005
+Last updated:		Thu Aug 18 10:14:29 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -601,6 +601,7 @@ Clients
 
 	o Add CSV output format
 	o Update pg_dump and psql to use the new COPY libpq API (Christopher)
+	o Remove unnecessary abstractions in pg_dump source code
 
 
 * ecpg
