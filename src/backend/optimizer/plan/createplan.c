@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.196 2005/07/28 20:26:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.197 2005/08/18 17:51:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2673,8 +2673,16 @@ make_setop(SetOpCmd cmd, Plan *lefttree,
 	return node;
 }
 
+/*
+ * Note: offset_est and count_est are passed in to save having to repeat
+ * work already done to estimate the values of the limitOffset and limitCount
+ * expressions.  Their values are as returned by preprocess_limit (0 means
+ * "not relevant", -1 means "couldn't estimate").  Keep the code below in sync
+ * with that function!
+ */
 Limit *
-make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount)
+make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount,
+		   int offset_est, int count_est)
 {
 	Limit	   *node = makeNode(Limit);
 	Plan	   *plan = &node->plan;
@@ -2682,46 +2690,50 @@ make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount)
 	copy_plan_costsize(plan, lefttree);
 
 	/*
-	 * If offset/count are constants, adjust the output rows count and
-	 * costs accordingly.  This is only a cosmetic issue if we are at top
-	 * level, but if we are building a subquery then it's important to
-	 * report correct info to the outer planner.
+	 * Adjust the output rows count and costs according to the offset/limit.
+	 * This is only a cosmetic issue if we are at top level, but if we are
+	 * building a subquery then it's important to report correct info to the
+	 * outer planner.
+	 *
+	 * When the offset or count couldn't be estimated, use 10% of the
+	 * estimated number of rows emitted from the subplan.
 	 */
-	if (limitOffset && IsA(limitOffset, Const))
+	if (offset_est != 0)
 	{
-		Const	   *limito = (Const *) limitOffset;
-		int32		offset = DatumGetInt32(limito->constvalue);
+		double		offset_rows;
 
-		if (!limito->constisnull && offset > 0)
-		{
-			if (offset > plan->plan_rows)
-				offset = (int32) plan->plan_rows;
-			if (plan->plan_rows > 0)
-				plan->startup_cost +=
-					(plan->total_cost - plan->startup_cost)
-					* ((double) offset) / plan->plan_rows;
-			plan->plan_rows -= offset;
-			if (plan->plan_rows < 1)
-				plan->plan_rows = 1;
-		}
+		if (offset_est > 0)
+			offset_rows = (double) offset_est;
+		else
+			offset_rows = clamp_row_est(lefttree->plan_rows * 0.10);
+		if (offset_rows > plan->plan_rows)
+			offset_rows = plan->plan_rows;
+		if (plan->plan_rows > 0)
+			plan->startup_cost +=
+				(plan->total_cost - plan->startup_cost)
+				* offset_rows / plan->plan_rows;
+		plan->plan_rows -= offset_rows;
+		if (plan->plan_rows < 1)
+			plan->plan_rows = 1;
 	}
-	if (limitCount && IsA(limitCount, Const))
-	{
-		Const	   *limitc = (Const *) limitCount;
-		int32		count = DatumGetInt32(limitc->constvalue);
 
-		if (!limitc->constisnull && count >= 0)
-		{
-			if (count > plan->plan_rows)
-				count = (int32) plan->plan_rows;
-			if (plan->plan_rows > 0)
-				plan->total_cost = plan->startup_cost +
-					(plan->total_cost - plan->startup_cost)
-					* ((double) count) / plan->plan_rows;
-			plan->plan_rows = count;
-			if (plan->plan_rows < 1)
-				plan->plan_rows = 1;
-		}
+	if (count_est != 0)
+	{
+		double		count_rows;
+
+		if (count_est > 0)
+			count_rows = (double) count_est;
+		else
+			count_rows = clamp_row_est(lefttree->plan_rows * 0.10);
+		if (count_rows > plan->plan_rows)
+			count_rows = plan->plan_rows;
+		if (plan->plan_rows > 0)
+			plan->total_cost = plan->startup_cost +
+				(plan->total_cost - plan->startup_cost)
+				* count_rows / plan->plan_rows;
+		plan->plan_rows = count_rows;
+		if (plan->plan_rows < 1)
+			plan->plan_rows = 1;
 	}
 
 	plan->targetlist = copyObject(lefttree->targetlist);

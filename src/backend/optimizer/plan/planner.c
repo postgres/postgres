@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.190 2005/07/02 23:00:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.191 2005/08/18 17:51:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,8 +58,9 @@ static Node *preprocess_expression(PlannerInfo *root, Node *expr, int kind);
 static void preprocess_qual_conditions(PlannerInfo *root, Node *jtnode);
 static Plan *inheritance_planner(PlannerInfo *root, List *inheritlist);
 static Plan *grouping_planner(PlannerInfo *root, double tuple_fraction);
-static double adjust_tuple_fraction_for_limit(PlannerInfo *root,
-											  double tuple_fraction);
+static double preprocess_limit(PlannerInfo *root,
+							   double tuple_fraction,
+							   int *offset_est, int *count_est);
 static bool choose_hashed_grouping(PlannerInfo *root, double tuple_fraction,
 					   Path *cheapest_path, Path *sorted_path,
 					   List *sort_pathkeys, List *group_pathkeys,
@@ -649,13 +650,16 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 {
 	Query	   *parse = root->parse;
 	List	   *tlist = parse->targetList;
+	int			offset_est;
+	int			count_est;
 	Plan	   *result_plan;
 	List	   *current_pathkeys;
 	List	   *sort_pathkeys;
 
-	/* Tweak caller-supplied tuple_fraction if have LIMIT */
-	if (parse->limitCount != NULL)
-		tuple_fraction = adjust_tuple_fraction_for_limit(root, tuple_fraction);
+	/* Tweak caller-supplied tuple_fraction if have LIMIT/OFFSET */
+	if (parse->limitCount || parse->limitOffset)
+		tuple_fraction = preprocess_limit(root, tuple_fraction,
+										  &offset_est, &count_est);
 
 	if (parse->setOperations)
 	{
@@ -1144,11 +1148,13 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	/*
 	 * Finally, if there is a LIMIT/OFFSET clause, add the LIMIT node.
 	 */
-	if (parse->limitOffset || parse->limitCount)
+	if (parse->limitCount || parse->limitOffset)
 	{
 		result_plan = (Plan *) make_limit(result_plan,
 										  parse->limitOffset,
-										  parse->limitCount);
+										  parse->limitCount,
+										  offset_est,
+										  count_est);
 	}
 
 	/*
@@ -1161,72 +1167,107 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 }
 
 /*
- * adjust_tuple_fraction_for_limit - adjust tuple fraction for LIMIT
+ * preprocess_limit - do pre-estimation for LIMIT and/or OFFSET clauses
  *
- * If the query contains LIMIT, we adjust the caller-supplied tuple_fraction
- * accordingly.  This is not overridable by the caller, since it reflects plan
- * actions that grouping_planner() will certainly take, not assumptions about
- * context.
+ * We try to estimate the values of the LIMIT/OFFSET clauses, and pass the
+ * results back in *count_est and *offset_est.  These variables are set to
+ * 0 if the corresponding clause is not present, and -1 if it's present
+ * but we couldn't estimate the value for it.  (The "0" convention is OK
+ * for OFFSET but a little bit bogus for LIMIT: effectively we estimate
+ * LIMIT 0 as though it were LIMIT 1.  But this is in line with the planner's
+ * usual practice of never estimating less than one row.)  These values will
+ * be passed to make_limit, which see if you change this code.
+ *
+ * The return value is the suitably adjusted tuple_fraction to use for
+ * planning the query.  This adjustment is not overridable, since it reflects
+ * plan actions that grouping_planner() will certainly take, not assumptions
+ * about context.
  */
 static double
-adjust_tuple_fraction_for_limit(PlannerInfo *root, double tuple_fraction)
+preprocess_limit(PlannerInfo *root, double tuple_fraction,
+				 int *offset_est, int *count_est)
 {
 	Query	   *parse = root->parse;
-	double		limit_fraction = 0.0;
+	Node	   *est;
+	double		limit_fraction;
 
-	/* Should not be called unless LIMIT */
-	Assert(parse->limitCount != NULL);
+	/* Should not be called unless LIMIT or OFFSET */
+	Assert(parse->limitCount || parse->limitOffset);
 
 	/*
-	 * A LIMIT clause limits the absolute number of tuples returned. However,
-	 * if it's not a constant LIMIT then we have to punt; for lack of a better
-	 * idea, assume 10% of the plan's result is wanted.
+	 * Try to obtain the clause values.  We use estimate_expression_value
+	 * primarily because it can sometimes do something useful with Params.
 	 */
-	if (IsA(parse->limitCount, Const))
+	if (parse->limitCount)
 	{
-		Const	   *limitc = (Const *) parse->limitCount;
-		int32		count = DatumGetInt32(limitc->constvalue);
-
-		/*
-		 * A NULL-constant LIMIT represents "LIMIT ALL", which we treat the
-		 * same as no limit (ie, expect to retrieve all the tuples).
-		 */
-		if (!limitc->constisnull && count > 0)
+		est = estimate_expression_value(parse->limitCount);
+		if (est && IsA(est, Const))
 		{
-			limit_fraction = (double) count;
-			/* We must also consider the OFFSET, if present */
-			if (parse->limitOffset != NULL)
+			if (((Const *) est)->constisnull)
 			{
-				if (IsA(parse->limitOffset, Const))
-				{
-					int32		offset;
-
-					limitc = (Const *) parse->limitOffset;
-					offset = DatumGetInt32(limitc->constvalue);
-					if (!limitc->constisnull && offset > 0)
-						limit_fraction += (double) offset;
-				}
-				else
-				{
-					/* OFFSET is an expression ... punt ... */
-					limit_fraction = 0.10;
-				}
+				/* NULL indicates LIMIT ALL, ie, no limit */
+				*count_est = 0;			/* treat as not present */
+			}
+			else
+			{
+				*count_est = DatumGetInt32(((Const *) est)->constvalue);
+				if (*count_est <= 0)
+					*count_est = 1;		/* force to at least 1 */
 			}
 		}
+		else
+			*count_est = -1;	/* can't estimate */
 	}
 	else
-	{
-		/* LIMIT is an expression ... punt ... */
-		limit_fraction = 0.10;
-	}
+		*count_est = 0;			/* not present */
 
-	if (limit_fraction > 0.0)
+	if (parse->limitOffset)
+	{
+		est = estimate_expression_value(parse->limitOffset);
+		if (est && IsA(est, Const))
+		{
+			if (((Const *) est)->constisnull)
+			{
+				/* Treat NULL as no offset; the executor will too */
+				*offset_est = 0;		/* treat as not present */
+			}
+			else
+			{
+				*offset_est = DatumGetInt32(((Const *) est)->constvalue);
+				if (*offset_est < 0)
+					*offset_est = 0;	/* less than 0 is same as 0 */
+			}
+		}
+		else
+			*offset_est = -1;	/* can't estimate */
+	}
+	else
+		*offset_est = 0;		/* not present */
+
+	if (*count_est != 0)
 	{
 		/*
+		 * A LIMIT clause limits the absolute number of tuples returned.
+		 * However, if it's not a constant LIMIT then we have to guess; for
+		 * lack of a better idea, assume 10% of the plan's result is wanted.
+		 */
+		if (*count_est < 0 || *offset_est < 0)
+		{
+			/* LIMIT or OFFSET is an expression ... punt ... */
+			limit_fraction = 0.10;
+		}
+		else
+		{
+			/* LIMIT (plus OFFSET, if any) is max number of tuples needed */
+			limit_fraction = (double) *count_est + (double) *offset_est;
+		}
+
+		/*
 		 * If we have absolute limits from both caller and LIMIT, use the
-		 * smaller value; if one is fractional and the other absolute,
-		 * treat the fraction as a fraction of the absolute value;
-		 * else we can multiply the two fractions together.
+		 * smaller value; likewise if they are both fractional.  If one is
+		 * fractional and the other absolute, we can't easily determine which
+		 * is smaller, but we use the heuristic that the absolute will usually
+		 * be smaller.
 		 */
 		if (tuple_fraction >= 1.0)
 		{
@@ -1237,31 +1278,76 @@ adjust_tuple_fraction_for_limit(PlannerInfo *root, double tuple_fraction)
 			}
 			else
 			{
-				/* caller absolute, limit fractional */
-				tuple_fraction *= limit_fraction;
-				if (tuple_fraction < 1.0)
-					tuple_fraction = 1.0;
+				/* caller absolute, limit fractional; use caller's value */
 			}
 		}
 		else if (tuple_fraction > 0.0)
 		{
 			if (limit_fraction >= 1.0)
 			{
-				/* caller fractional, limit absolute */
-				tuple_fraction *= limit_fraction;
-				if (tuple_fraction < 1.0)
-					tuple_fraction = 1.0;
+				/* caller fractional, limit absolute; use limit */
+				tuple_fraction = limit_fraction;
 			}
 			else
 			{
 				/* both fractional */
-				tuple_fraction *= limit_fraction;
+				tuple_fraction = Min(tuple_fraction, limit_fraction);
 			}
 		}
 		else
 		{
 			/* no info from caller, just use limit */
 			tuple_fraction = limit_fraction;
+		}
+	}
+	else if (*offset_est != 0 && tuple_fraction > 0.0)
+	{
+		/*
+		 * We have an OFFSET but no LIMIT.  This acts entirely differently
+		 * from the LIMIT case: here, we need to increase rather than
+		 * decrease the caller's tuple_fraction, because the OFFSET acts
+		 * to cause more tuples to be fetched instead of fewer.  This only
+		 * matters if we got a tuple_fraction > 0, however.
+		 *
+		 * As above, use 10% if OFFSET is present but unestimatable.
+		 */
+		if (*offset_est < 0)
+			limit_fraction = 0.10;
+		else
+			limit_fraction = (double) *offset_est;
+
+		/*
+		 * If we have absolute counts from both caller and OFFSET, add them
+		 * together; likewise if they are both fractional.  If one is
+		 * fractional and the other absolute, we want to take the larger,
+		 * and we heuristically assume that's the fractional one.
+		 */
+		if (tuple_fraction >= 1.0)
+		{
+			if (limit_fraction >= 1.0)
+			{
+				/* both absolute, so add them together */
+				tuple_fraction += limit_fraction;
+			}
+			else
+			{
+				/* caller absolute, limit fractional; use limit */
+				tuple_fraction = limit_fraction;
+			}
+		}
+		else
+		{
+			if (limit_fraction >= 1.0)
+			{
+				/* caller fractional, limit absolute; use caller's value */
+			}
+			else
+			{
+				/* both fractional, so add them together */
+				tuple_fraction += limit_fraction;
+				if (tuple_fraction >= 1.0)
+					tuple_fraction = 0.0; /* assume fetch all */
+			}
 		}
 	}
 

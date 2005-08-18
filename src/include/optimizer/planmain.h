@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.86 2005/06/05 22:32:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.87 2005/08/18 17:51:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,8 @@ extern Group *make_group(PlannerInfo *root, List *tlist, List *qual,
 extern Material *make_material(Plan *lefttree);
 extern Plan *materialize_finished_plan(Plan *subplan);
 extern Unique *make_unique(Plan *lefttree, List *distinctList);
-extern Limit *make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount);
+extern Limit *make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount,
+						 int offset_est, int count_est);
 extern SetOp *make_setop(SetOpCmd cmd, Plan *lefttree,
 		   List *distinctList, AttrNumber flagColIdx);
 extern Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
