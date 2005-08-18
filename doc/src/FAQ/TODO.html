@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Tue Aug  9 16:24:23 EDT 2005
+Last updated:           Thu Aug 18 00:42:37 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -252,7 +252,7 @@ first.
     </li><li>to_char(INTERVAL '43 hours 20 minutes', 'WK:DD:HR:MI') =&gt; 0:1:19:20
     </li><li>to_char(INTERVAL '3 years 5 months','MM') =&gt; 41
   </li></ul>
-  </li><li>Prevent to_char() on interval from returning meaningless values
+  </li><li>-<em>Prevent to_char() on interval from returning meaningless values</em>
 <p>  For example, to_char('1 month', 'mon') is meaningless.  Basically,
   most date-related parameters to to_char() are meaningless for
   intervals because interval is not anchored to a date.

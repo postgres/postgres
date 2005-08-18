@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Aug  9 16:24:23 EDT 2005
+Last updated:		Thu Aug 18 00:42:37 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -268,7 +268,7 @@ Functions
 	o to_char(INTERVAL '43 hours 20 minutes', 'WK:DD:HR:MI') => 0:1:19:20
 	o to_char(INTERVAL '3 years 5 months','MM') => 41
 
-* Prevent to_char() on interval from returning meaningless values
+* -Prevent to_char() on interval from returning meaningless values
 
   For example, to_char('1 month', 'mon') is meaningless.  Basically,
   most date-related parameters to to_char() are meaningless for
