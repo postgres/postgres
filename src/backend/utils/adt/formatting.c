@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.98 2005/08/18 04:37:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.99 2005/08/18 13:43:08 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2005, PostgreSQL Global Development Group
@@ -421,26 +421,27 @@ typedef struct TmToChar
 #define tmtcFsec(_X)	((_X)->fsec)
 
 #define ZERO_tm(_X) \
-	do {	\
-		(_X)->tm_sec  = (_X)->tm_year = (_X)->tm_min = (_X)->tm_wday = \
-		(_X)->tm_hour = (_X)->tm_yday = (_X)->tm_isdst = 0; \
-		(_X)->tm_mday = (_X)->tm_mon  = 1; \
-	} while(0)
+do {	\
+	(_X)->tm_sec  = (_X)->tm_year = (_X)->tm_min = (_X)->tm_wday = \
+	(_X)->tm_hour = (_X)->tm_yday = (_X)->tm_isdst = 0; \
+	(_X)->tm_mday = (_X)->tm_mon  = 1; \
+} while(0)
 
 #define ZERO_tmtc(_X) \
-	do { \
-		ZERO_tm( tmtcTm(_X) ); \
-		tmtcFsec(_X) = 0; \
-		tmtcTzn(_X) = NULL; \
-	} while(0)
+do { \
+	ZERO_tm( tmtcTm(_X) ); \
+	tmtcFsec(_X) = 0; \
+	tmtcTzn(_X) = NULL; \
+} while(0)
 
 #define INVALID_FOR_INTERVAL  \
-	do { \
-		if (is_interval) \
-			ereport(ERROR, \
-					(errcode(ERRCODE_INVALID_DATETIME_FORMAT), \
-					 errmsg("invalid format specification for an interval value"))); \
-	} while(0)
+do { \
+	if (is_interval) \
+		ereport(ERROR, \
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT), \
+				 errmsg("invalid format specification for an interval value"), \
+				 errhint("Intervals are not tied to specific calendar dates."))); \
+} while(0)
 	
 /*****************************************************************************
  *			KeyWords definition & action
