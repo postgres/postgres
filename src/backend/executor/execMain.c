@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.252 2005/08/01 20:31:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.253 2005/08/18 21:34:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1371,7 +1371,6 @@ ExecInsert(TupleTableSlot *slot,
 	HeapTuple	tuple;
 	ResultRelInfo *resultRelInfo;
 	Relation	resultRelationDesc;
-	int			numIndices;
 	Oid			newId;
 
 	/*
@@ -1418,6 +1417,9 @@ ExecInsert(TupleTableSlot *slot,
 
 	/*
 	 * insert the tuple
+	 *
+	 * Note: heap_insert returns the tid (location) of the new tuple
+	 * in the t_self field.
 	 */
 	newId = heap_insert(resultRelationDesc, tuple,
 						estate->es_snapshot->curcid,
@@ -1429,14 +1431,9 @@ ExecInsert(TupleTableSlot *slot,
 	setLastTid(&(tuple->t_self));
 
 	/*
-	 * process indices
-	 *
-	 * Note: heap_insert adds a new tuple to a relation.  As a side effect,
-	 * the tupleid of the new tuple is placed in the new tuple's t_ctid
-	 * field.
+	 * insert index entries for tuple
 	 */
-	numIndices = resultRelInfo->ri_NumIndices;
-	if (numIndices > 0)
+	if (resultRelInfo->ri_NumIndices > 0)
 		ExecInsertIndexTuples(slot, &(tuple->t_self), estate, false);
 
 	/* AFTER ROW INSERT Triggers */
@@ -1563,7 +1560,6 @@ ExecUpdate(TupleTableSlot *slot,
 	Relation	resultRelationDesc;
 	ItemPointerData ctid;
 	HTSU_Result	result;
-	int			numIndices;
 
 	/*
 	 * abort the operation if not running transactions
@@ -1676,23 +1672,18 @@ lreplace:;
 	/*
 	 * Note: instead of having to update the old index tuples associated
 	 * with the heap tuple, all we do is form and insert new index tuples.
-	 * This is because UPDATEs are actually DELETEs and INSERTs and index
+	 * This is because UPDATEs are actually DELETEs and INSERTs, and index
 	 * tuple deletion is done automagically by the vacuum daemon. All we
 	 * do is insert new index tuples.  -cim 9/27/89
 	 */
 
 	/*
-	 * process indices
+	 * insert index entries for tuple
 	 *
-	 * heap_update updates a tuple in the base relation by invalidating it
-	 * and then inserting a new tuple to the relation.	As a side effect,
-	 * the tupleid of the new tuple is placed in the new tuple's t_ctid
-	 * field.  So we now insert index tuples using the new tupleid stored
-	 * there.
+	 * Note: heap_update returns the tid (location) of the new tuple
+	 * in the t_self field.
 	 */
-
-	numIndices = resultRelInfo->ri_NumIndices;
-	if (numIndices > 0)
+	if (resultRelInfo->ri_NumIndices > 0)
 		ExecInsertIndexTuples(slot, &(tuple->t_self), estate, false);
 
 	/* AFTER ROW UPDATE Triggers */
