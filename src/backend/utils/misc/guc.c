@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.282 2005/08/14 22:19:50 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.283 2005/08/19 18:58:18 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1365,7 +1365,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"bgwriter_lru_maxpages", PGC_SIGHUP, RESOURCES,
-			gettext_noop("Background writer maximum number of all pages to flush per round"),
+			gettext_noop("Background writer maximum number of LRU pages to flush per round"),
 			NULL
 		},
 		&bgwriter_lru_maxpages,
@@ -1374,7 +1374,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"bgwriter_all_maxpages", PGC_SIGHUP, RESOURCES,
-			gettext_noop("Background writer maximum number of LRU pages to flush per round"),
+			gettext_noop("Background writer maximum number of all pages to flush per round"),
 			NULL
 		},
 		&bgwriter_all_maxpages,
