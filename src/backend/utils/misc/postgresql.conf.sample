@@ -33,8 +33,8 @@
 # switch or PGDATA environment variable, represented here as ConfigDir.
 
 # data_directory = 'ConfigDir'		# use data in another directory
-# hba_file = 'ConfigDir/pg_hba.conf'	# the host-based authentication file
-# ident_file = 'ConfigDir/pg_ident.conf'  # the IDENT configuration file
+# hba_file = 'ConfigDir/pg_hba.conf'	# host-based authentication file
+# ident_file = 'ConfigDir/pg_ident.conf	# IDENT configuration file
 
 # If external_pid_file is not explicitly set, no extra pid file is written.
 # external_pid_file = '(none)'		# write an extra pid file
@@ -46,22 +46,23 @@
 
 # - Connection Settings -
 
-#listen_addresses = 'localhost'	# what IP interface(s) to listen on; 
-				# defaults to localhost, '*' = any
+#listen_addresses = 'localhost'		# what IP interface(s) to listen on; 
+					# defaults to localhost, '*' = any
 #port = 5432
-#max_connections = 100	# note: increasing max_connections costs about 500
-			# bytes of shared memory per connection slot, in
-			# addition to costs from shared_buffers and
-			# max_locks_per_transaction.
+#max_connections = 100			# note: increasing max_connections costs
+					# about 500 bytes of shared memory per 
+					# connection slot, in addition to costs
+					# from shared_buffers and 
+					# max_locks_per_transaction.
 #superuser_reserved_connections = 2
 #unix_socket_directory = ''
 #unix_socket_group = ''
-#unix_socket_permissions = 0777	# octal
-#bonjour_name = ''		# defaults to the computer name
+#unix_socket_permissions = 0777		# octal
+#bonjour_name = ''			# defaults to the computer name
 
 # - Security & Authentication -
 
-#authentication_timeout = 60	# 1-600, in seconds
+#authentication_timeout = 60		# 1-600, in seconds
 #ssl = off
 #password_encryption = on
 #db_user_namespace = off
@@ -72,9 +73,12 @@
 
 # - TCP Keepalives -
 # see 'man 7 tcp' for details
-#tcp_keepalives_idle = 0        # TCP_KEEPIDLE, in seconds; 0 uses the system default.
-#tcp_keepalives_interval = 0    # TCP_KEEPINTVL, in seconds; 0 uses the system default.
-#tcp_keepalives_count = 0       # TCP_KEEPCNT, in seconds; 0 uses the system default.
+#tcp_keepalives_idle = 0		# TCP_KEEPIDLE, in secs; 0 uses the
+					# system default
+#tcp_keepalives_interval = 0		# TCP_KEEPINTVL, in seconds; 0 uses the
+					# system default
+#tcp_keepalives_count = 0		# TCP_KEEPCNT, in seconds; 0 uses the
+					# system default
 
 #---------------------------------------------------------------------------
 # RESOURCE USAGE (except WAL)
@@ -82,38 +86,38 @@
 
 # - Memory -
 
-#shared_buffers = 1000		# min 16, minimum max_connections*2, 8KB each
-#temp_buffers = 1000		# min 100, 8KB each
+#shared_buffers = 1000			# min 16 or max_connections*2, 8KB each
+#temp_buffers = 1000			# min 100, 8KB each
 #max_prepared_transactions = 50 # 0-10000
-#work_mem = 1024		# min 64, size in KB
-#maintenance_work_mem = 16384	# min 1024, size in KB
-#max_stack_depth = 2048		# min 100, size in KB
+#work_mem = 1024			# min 64, size in KB
+#maintenance_work_mem = 16384		# min 1024, size in KB
+#max_stack_depth = 2048			# min 100, size in KB
 
 # - Free Space Map -
 
-#max_fsm_pages = 20000		# min max_fsm_relations*16, 6 bytes each
-#max_fsm_relations = 1000	# min 100, ~50 bytes each
+#max_fsm_pages = 20000			# min max_fsm_relations*16, 6 bytes each
+#max_fsm_relations = 1000		# min 100, ~50 bytes each
 
 # - Kernel Resource Usage -
 
-#max_files_per_process = 1000	# min 25
+#max_files_per_process = 1000		# min 25
 #preload_libraries = ''
 
 # - Cost-Based Vacuum Delay -
 
-#vacuum_cost_delay = 0		# 0-1000 milliseconds
-#vacuum_cost_page_hit = 1	# 0-10000 credits
-#vacuum_cost_page_miss = 10	# 0-10000 credits
-#vacuum_cost_page_dirty = 20	# 0-10000 credits
-#vacuum_cost_limit = 200	# 0-10000 credits
+#vacuum_cost_delay = 0			# 0-1000 milliseconds
+#vacuum_cost_page_hit = 1		# 0-10000 credits
+#vacuum_cost_page_miss = 10		# 0-10000 credits
+#vacuum_cost_page_dirty = 20		# 0-10000 credits
+#vacuum_cost_limit = 200		# 0-10000 credits
 
 # - Background writer -
 
-#bgwriter_delay = 200		# 10-10000 milliseconds between rounds
-#bgwriter_lru_percent = 1.0	# 0-100% of LRU buffers scanned in each round
-#bgwriter_lru_maxpages = 5	# 0-1000 buffers max written per round
-#bgwriter_all_percent = 0.333	# 0-100% of all buffers scanned in each round
-#bgwriter_all_maxpages = 5	# 0-1000 buffers max written per round
+#bgwriter_delay = 200			# 10-10000 milliseconds between rounds
+#bgwriter_lru_percent = 1.0		# 0-100% of LRU buffers scanned/round
+#bgwriter_lru_maxpages = 5		# 0-1000 buffers max written/round
+#bgwriter_all_percent = 0.333		# 0-100% of all buffers scanned/round
+#bgwriter_all_maxpages = 5		# 0-1000 buffers max written/round
 
 
 #---------------------------------------------------------------------------
@@ -122,25 +126,29 @@
 
 # - Settings -
 
-#fsync = on			# turns forced synchronization on or off
-#wal_sync_method = fsync	# the default is the first option supported
-				# by the operating system:  open_datasync, 
-				# fdatasync, fsync, fsync_writethrough, 
-				# open_sync
-#full_page_writes = on		# recover from partial page writes
-#wal_buffers = 8		# min 4, 8KB each
-#commit_delay = 0		# range 0-100000, in microseconds
-#commit_siblings = 5		# range 1-1000
+#fsync = on				# turns forced synchronization on or off
+#wal_sync_method = fsync		# the default is the first option 
+					# supported by the operating system:
+					#   open_datasync
+					#   fdatasync
+					#   fsync
+					#   fsync_writethrough
+					#   open_sync
+#full_page_writes = on			# recover from partial page writes
+#wal_buffers = 8			# min 4, 8KB each
+#commit_delay = 0			# range 0-100000, in microseconds
+#commit_siblings = 5			# range 1-1000
 
 # - Checkpoints -
 
-#checkpoint_segments = 3	# in logfile segments, min 1, 16MB each
-#checkpoint_timeout = 300	# range 30-3600, in seconds
-#checkpoint_warning = 30	# 0 is off, in seconds
+#checkpoint_segments = 3		# in logfile segments, min 1, 16MB each
+#checkpoint_timeout = 300		# range 30-3600, in seconds
+#checkpoint_warning = 30		# in seconds, 0 is off
 
 # - Archiving -
 
-#archive_command = ''		# command to use to archive a logfile segment
+#archive_command = ''			# command to use to archive a logfile 
+					# segment
 
 
 #---------------------------------------------------------------------------
@@ -161,27 +169,29 @@
 
 # - Planner Cost Constants -
 
-#effective_cache_size = 1000	# typically 8KB each
-#random_page_cost = 4		# units are one sequential page fetch cost
-#cpu_tuple_cost = 0.01		# (same)
-#cpu_index_tuple_cost = 0.001	# (same)
-#cpu_operator_cost = 0.0025	# (same)
+#effective_cache_size = 1000		# typically 8KB each
+#random_page_cost = 4			# units are one sequential page fetch 
+					# cost
+#cpu_tuple_cost = 0.01			# (same)
+#cpu_index_tuple_cost = 0.001		# (same)
+#cpu_operator_cost = 0.0025		# (same)
 
 # - Genetic Query Optimizer -
 
 #geqo = on
 #geqo_threshold = 12
-#geqo_effort = 5		# range 1-10
-#geqo_pool_size = 0		# selects default based on effort
-#geqo_generations = 0		# selects default based on effort
-#geqo_selection_bias = 2.0	# range 1.5-2.0
+#geqo_effort = 5			# range 1-10
+#geqo_pool_size = 0			# selects default based on effort
+#geqo_generations = 0			# selects default based on effort
+#geqo_selection_bias = 2.0		# range 1.5-2.0
 
 # - Other Planner Options -
 
-#default_statistics_target = 10	# range 1-1000
+#default_statistics_target = 10		# range 1-1000
 #enable_constraint_exclusion = off
 #from_collapse_limit = 8
-#join_collapse_limit = 8	# 1 disables collapsing of explicit JOINs
+#join_collapse_limit = 8		# 1 disables collapsing of explicit 
+					# JOINs
 
 
 #---------------------------------------------------------------------------
@@ -190,31 +200,33 @@
 
 # - Where to Log -
 
-#log_destination = 'stderr'	# Valid values are combinations of stderr,
-                                # syslog and eventlog, depending on
-                                # platform.
+#log_destination = 'stderr'		# Valid values are combinations of 
+					# stderr, syslog and eventlog, 
+					# depending on platform.
 
 # This is used when logging to stderr:
-#redirect_stderr = off		# Enable capturing of stderr into log files.
+#redirect_stderr = off			# Enable capturing of stderr into log 
+					# files
 
 # These are only used if redirect_stderr is on:
-#log_directory = 'pg_log'	# Directory where log files are written.
-				# Can be absolute or relative to PGDATA
+#log_directory = 'pg_log'		# Directory where log files are written
+					# Can be absolute or relative to PGDATA
 #log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log' # Log file name pattern.
-				# Can include strftime() escapes
+					# Can include strftime() escapes
 #log_truncate_on_rotation = off # If on, any existing log file of the same 
-				# name as the new log file will be
-				# truncated rather than appended to. But
-				# such truncation only occurs on
-				# time-driven rotation, not on restarts
-				# or size-driven rotation. Default is
-				# off, meaning append to existing files
-				# in all cases.
-#log_rotation_age = 1440	# Automatic rotation of logfiles will happen 
-				# after so many minutes.  0 to disable.
-#log_rotation_size = 10240	# Automatic rotation of logfiles will happen
-				# afterso many kilobytes of log output.  
-				# 0 to disable.
+					# name as the new log file will be
+					# truncated rather than appended to. But
+					# such truncation only occurs on
+					# time-driven rotation, not on restarts
+					# or size-driven rotation. Default is
+					# off, meaning append to existing files
+					# in all cases.
+#log_rotation_age = 1440		# Automatic rotation of logfiles will 
+					# happen after so many minutes.  0 to 
+					# disable.
+#log_rotation_size = 10240		# Automatic rotation of logfiles will 
+					# happen after so many kilobytes of log
+					# output.  0 to disable.
 
 # These are relevant when logging to syslog:
 #syslog_facility = 'LOCAL0'
@@ -223,25 +235,50 @@
 
 # - When to Log -
 
-#client_min_messages = notice	# Values, in order of decreasing detail:
-				#   debug5, debug4, debug3, debug2, debug1,
-				#   log, notice, warning, error
+#client_min_messages = notice		# Values, in order of decreasing detail:
+					#   debug5
+					#   debug4
+					#   debug3
+					#   debug2
+					#   debug1
+					#   log
+					#   notice
+					#   warning
+					#   error
 
-#log_min_messages = notice	# Values, in order of decreasing detail:
-				#   debug5, debug4, debug3, debug2, debug1,
-				#   info, notice, warning, error, log, fatal,
-				#   panic
+#log_min_messages = notice		# Values, in order of decreasing detail:
+					#   debug5
+					#   debug4
+					#   debug3
+					#   debug2
+					#   debug1
+					#   info
+					#   notice
+					#   warning
+					#   error
+					#   log
+					#   fatal
+					#   panic
 
-#log_error_verbosity = default	# terse, default, or verbose messages
+#log_error_verbosity = default		# terse, default, or verbose messages
 
-#log_min_error_statement = panic # Values in order of increasing severity:
-				 #   debug5, debug4, debug3, debug2, debug1,
-				 #   info, notice, warning, error, panic(off)
+#log_min_error_statement = panic	# Values in order of increasing severity:
+				 	#   debug5
+					#   debug4
+					#   debug3
+					#   debug2
+					#   debug1
+				 	#   info
+					#   notice
+					#   warning
+					#   error
+					#   panic(off)
 				 
-#log_min_duration_statement = -1 # -1 is disabled, 0 logs all statements
-				 # and their durations, in milliseconds.
+#log_min_duration_statement = -1	# -1 is disabled, 0 logs all statements
+					# and their durations, in milliseconds.
 
-#silent_mode = off		 # DO NOT USE without syslog or redirect_stderr
+#silent_mode = off			# DO NOT USE without syslog or 
+					# redirect_stderr
 
 # - What to Log -
 
@@ -252,22 +289,24 @@
 #log_connections = off
 #log_disconnections = off
 #log_duration = off
-#log_line_prefix = ''		# %u = user name
-				# %d = database name
-				# %r = remote host and port
-				# %h = remote host
-				# %p = PID
-				# %t = timestamp (no milliseconds)
-				# %m = timestamp with milliseconds
-				# %i = command tag
-				# %c = session id
-				# %l = session line number
-				# %s = session start timestamp
-				# %x = transaction id
-				# %q = stop here in non-session processes
-				# %% = '%'
-				# e.g. '<%u%%%d> '
-#log_statement = 'none'		# none, mod, ddl, all
+#log_line_prefix = ''			# Special values:
+					#   %u = user name
+					#   %d = database name
+					#   %r = remote host and port
+					#   %h = remote host
+					#   %p = PID
+					#   %t = timestamp (no milliseconds)
+					#   %m = timestamp with milliseconds
+					#   %i = command tag
+					#   %c = session id
+					#   %l = session line number
+					#   %s = session start timestamp
+					#   %x = transaction id
+					#   %q = stop here in non-session 
+					#        processes
+					#   %% = '%'
+					# e.g. '<%u%%%d> '
+#log_statement = 'none'			# none, mod, ddl, all
 #log_hostname = off
 
 
@@ -295,16 +334,22 @@
 # AUTOVACUUM PARAMETERS
 #---------------------------------------------------------------------------
 
-#autovacuum = false		# enable autovacuum subprocess?
-#autovacuum_naptime = 60	# time between autovacuum runs, in seconds
-#autovacuum_vacuum_threshold = 1000	# min # of tuple updates before vacuum
-#autovacuum_analyze_threshold = 500	# min # of tuple updates before analyze
-#autovacuum_vacuum_scale_factor = 0.4	# fraction of rel size before vacuum
-#autovacuum_analyze_scale_factor = 0.2	# fraction of rel size before analyze
-#autovacuum_vacuum_cost_delay = -1  # default vacuum cost delay for autovac
-                                    # -1 means use vacuum_cost_delay
-#autovacuum_vacuum_cost_limit = -1  # default vacuum cost limit for autovac
-                                    # -1 means use vacuum_cost_limit
+#autovacuum = false			# enable autovacuum subprocess?
+#autovacuum_naptime = 60		# time between autovacuum runs, in secs
+#autovacuum_vacuum_threshold = 1000	# min # of tuple updates before
+					# vacuum
+#autovacuum_analyze_threshold = 500	# min # of tuple updates before 
+					# analyze
+#autovacuum_vacuum_scale_factor = 0.4	# fraction of rel size before 
+					# vacuum
+#autovacuum_analyze_scale_factor = 0.2	# fraction of rel size before 
+					# analyze
+#autovacuum_vacuum_cost_delay = -1	# default vacuum cost delay for 
+					# autovac, -1 means use 
+					# vacuum_cost_delay
+#autovacuum_vacuum_cost_limit = -1	# default vacuum cost limit for 
+					# autovac, -1 means use
+					# vacuum_cost_limit
 
 
 #---------------------------------------------------------------------------
@@ -313,26 +358,30 @@
 
 # - Statement Behavior -
 
-#search_path = '$user,public'	# schema names
-#default_tablespace = ''	# a tablespace name, or '' for default
+#search_path = '$user,public'		# schema names
+#default_tablespace = ''		# a tablespace name, '' uses
+					# the default
 #check_function_bodies = on
 #default_transaction_isolation = 'read committed'
 #default_transaction_read_only = off
-#statement_timeout = 0		# 0 is disabled, in milliseconds
+#statement_timeout = 0			# 0 is disabled, in milliseconds
 
 # - Locale and Formatting -
 
 #datestyle = 'iso, mdy'
-#timezone = unknown		# actually, defaults to TZ environment setting
+#timezone = unknown			# actually, defaults to TZ 
+					# environment setting
 #australian_timezones = off
-#extra_float_digits = 0		# min -15, max 2
-#client_encoding = sql_ascii	# actually, defaults to database encoding
+#extra_float_digits = 0			# min -15, max 2
+#client_encoding = sql_ascii		# actually, defaults to database
+					# encoding
 
 # These settings are initialized by initdb -- they might be changed
-#lc_messages = 'C'		# locale for system error message strings
-#lc_monetary = 'C'		# locale for monetary formatting
-#lc_numeric = 'C'		# locale for number formatting
-#lc_time = 'C'			# locale for time formatting
+#lc_messages = 'C'			# locale for system error message 
+					# strings
+#lc_monetary = 'C'			# locale for monetary formatting
+#lc_numeric = 'C'			# locale for number formatting
+#lc_time = 'C'				# locale for time formatting
 
 # - Other Defaults -
 
@@ -344,8 +393,9 @@
 # LOCK MANAGEMENT
 #---------------------------------------------------------------------------
 
-#deadlock_timeout = 1000	# in milliseconds
-#max_locks_per_transaction = 64	# min 10, ~200*max_connections bytes each
+#deadlock_timeout = 1000		# in milliseconds
+#max_locks_per_transaction = 64		# min 10, ~200*max_connections 
+					# bytes each
 
 
 #---------------------------------------------------------------------------
@@ -355,7 +405,7 @@
 # - Previous Postgres Versions -
 
 #add_missing_from = off
-#regex_flavor = advanced	# advanced, extended, or basic
+#regex_flavor = advanced		# advanced, extended, or basic
 #sql_inheritance = on
 #default_with_oids = off
 #escape_string_warning = off
