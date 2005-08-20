@@ -32,7 +32,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.89 2005/05/19 21:35:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.90 2005/08/20 00:39:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -677,14 +677,15 @@ HeapTupleSatisfiesUpdate(HeapTupleHeader tuple, CommandId curcid,
  * However, we also include the effects of other xacts still in progress.
  *
  * Returns extra information in the global variable SnapshotDirty, namely
- * xids of concurrent xacts that affected the tuple.  Also, the tuple's
- * t_ctid (forward link) is returned if it's being updated.
+ * xids of concurrent xacts that affected the tuple.  SnapshotDirty->xmin
+ * is set to InvalidTransactionId if xmin is either committed good or
+ * committed dead; or to xmin if that transaction is still in progress.
+ * Similarly for SnapshotDirty->xmax.
  */
 bool
 HeapTupleSatisfiesDirty(HeapTupleHeader tuple, Buffer buffer)
 {
 	SnapshotDirty->xmin = SnapshotDirty->xmax = InvalidTransactionId;
-	ItemPointerSetInvalid(&(SnapshotDirty->tid));
 
 	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
 	{
@@ -781,7 +782,6 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple, Buffer buffer)
 	{
 		if (tuple->t_infomask & HEAP_IS_LOCKED)
 			return true;
-		SnapshotDirty->tid = tuple->t_ctid;
 		return false;			/* updated by other */
 	}
 
@@ -824,7 +824,6 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple, Buffer buffer)
 
 	tuple->t_infomask |= HEAP_XMAX_COMMITTED;
 	SetBufferCommitInfoNeedsSave(buffer);
-	SnapshotDirty->tid = tuple->t_ctid;
 	return false;				/* updated by other */
 }
 
@@ -1224,10 +1223,13 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin,
 							HeapTupleHeaderGetXmax(tuple)))
 	{
 		/*
-		 * inserter also deleted it, so it was never visible to anyone
-		 * else
+		 * Inserter also deleted it, so it was never visible to anyone
+		 * else.  However, we can only remove it early if it's not an
+		 * updated tuple; else its parent tuple is linking to it via t_ctid,
+		 * and this tuple mustn't go away before the parent does.
 		 */
-		return HEAPTUPLE_DEAD;
+		if (!(tuple->t_infomask & HEAP_UPDATED))
+			return HEAPTUPLE_DEAD;
 	}
 
 	if (!TransactionIdPrecedes(HeapTupleHeaderGetXmax(tuple), OldestXmin))

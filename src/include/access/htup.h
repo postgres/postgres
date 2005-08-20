@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.75 2005/06/08 15:50:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.76 2005/08/20 00:39:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,6 +79,21 @@
  * Note that in 7.3 and 7.4 a similar idea was applied to Xmax and Cmin.
  * However, with the advent of subtransactions, a tuple may need both Xmax
  * and Cmin simultaneously, so this is no longer possible.
+ *
+ * A word about t_ctid: whenever a new tuple is stored on disk, its t_ctid
+ * is initialized with its own TID (location).  If the tuple is ever updated,
+ * its t_ctid is changed to point to the replacement version of the tuple.
+ * Thus, a tuple is the latest version of its row iff XMAX is invalid or
+ * t_ctid points to itself (in which case, if XMAX is valid, the tuple is
+ * either locked or deleted).  One can follow the chain of t_ctid links
+ * to find the newest version of the row.  Beware however that VACUUM might
+ * erase the pointed-to (newer) tuple before erasing the pointing (older)
+ * tuple.  Hence, when following a t_ctid link, it is necessary to check
+ * to see if the referenced slot is empty or contains an unrelated tuple.
+ * Check that the referenced tuple has XMIN equal to the referencing tuple's
+ * XMAX to verify that it is actually the descendant version and not an
+ * unrelated tuple stored into a slot recently freed by VACUUM.  If either
+ * check fails, one may assume that there is no live descendant version.
  *
  * Following the fixed header fields, the nulls bitmap is stored (beginning
  * at t_bits).	The bitmap is *not* stored if t_infomask shows that there
@@ -334,18 +349,29 @@ do { \
 /*
  * HeapTupleData is an in-memory data structure that points to a tuple.
  *
- * This new HeapTuple for version >= 6.5 and this is why it was changed:
+ * There are several ways in which this data structure is used:
  *
- * 1. t_len moved off on-disk tuple data - ItemIdData is used to get len;
- * 2. t_ctid above is not self tuple TID now - it may point to
- *	  updated version of tuple (required by MVCC);
- * 3. someday someone let tuple to cross block boundaries -
- *	  he have to add something below...
+ * * Pointer to a tuple in a disk buffer: t_data points directly into the
+ *	 buffer (which the code had better be holding a pin on, but this is not
+ *	 reflected in HeapTupleData itself).  t_datamcxt must be NULL.
  *
- * Change for 7.0:
- *	  Up to now t_data could be NULL, the memory location directly following
- *	  HeapTupleData, or pointing into a buffer. Now, it could also point to
- *	  a separate allocation that was done in the t_datamcxt memory context.
+ * * Pointer to nothing: t_data and t_datamcxt are NULL.  This is used as
+ *	 a failure indication in some functions.
+ *
+ * * Part of a palloc'd tuple: the HeapTupleData itself and the tuple
+ *	 form a single palloc'd chunk.  t_data points to the memory location
+ *	 immediately following the HeapTupleData struct (at offset HEAPTUPLESIZE),
+ *	 and t_datamcxt is the containing context.  This is used as the output
+ *	 format of heap_form_tuple and related routines.
+ *
+ * * Separately allocated tuple: t_data points to a palloc'd chunk that
+ *	 is not adjacent to the HeapTupleData, and t_datamcxt is the context
+ *	 containing that chunk.
+ *
+ * t_len should always be valid, except in the pointer-to-nothing case.
+ * t_self and t_tableOid should be valid if the HeapTupleData points to
+ * a disk buffer, or if it represents a copy of a tuple on disk.  They
+ * should be explicitly set invalid in manufactured tuples.
  */
 typedef struct HeapTupleData
 {

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.191 2005/08/12 01:35:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.192 2005/08/20 00:39:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1592,14 +1592,18 @@ GetTupleForTrigger(EState *estate, ResultRelInfo *relinfo,
 	if (newSlot != NULL)
 	{
 		HTSU_Result	test;
+		ItemPointerData update_ctid;
+		TransactionId update_xmax;
+
+		*newSlot = NULL;
 
 		/*
 		 * lock tuple for update
 		 */
-		*newSlot = NULL;
-		tuple.t_self = *tid;
 ltrmark:;
-		test = heap_lock_tuple(relation, &tuple, &buffer, cid,
+		tuple.t_self = *tid;
+		test = heap_lock_tuple(relation, &tuple, &buffer,
+							   &update_ctid, &update_xmax, cid,
 							   LockTupleExclusive, false);
 		switch (test)
 		{
@@ -1617,15 +1621,18 @@ ltrmark:;
 					ereport(ERROR,
 							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 							 errmsg("could not serialize access due to concurrent update")));
-				else if (!(ItemPointerEquals(&(tuple.t_self), tid)))
+				else if (!ItemPointerEquals(&update_ctid, &tuple.t_self))
 				{
-					TupleTableSlot *epqslot = EvalPlanQual(estate,
-											 relinfo->ri_RangeTableIndex,
-														&(tuple.t_self));
+					/* it was updated, so look at the updated version */
+					TupleTableSlot *epqslot;
 
-					if (!(TupIsNull(epqslot)))
+					epqslot = EvalPlanQual(estate,
+										   relinfo->ri_RangeTableIndex,
+										   &update_ctid,
+										   update_xmax);
+					if (!TupIsNull(epqslot))
 					{
-						*tid = tuple.t_self;
+						*tid = update_ctid;
 						*newSlot = epqslot;
 						goto ltrmark;
 					}
@@ -1639,7 +1646,7 @@ ltrmark:;
 
 			default:
 				ReleaseBuffer(buffer);
-				elog(ERROR, "invalid heap_lock_tuple status: %d", test);
+				elog(ERROR, "unrecognized heap_lock_tuple status: %u", test);
 				return NULL;	/* keep compiler quiet */
 		}
 	}
@@ -1659,6 +1666,7 @@ ltrmark:;
 		tuple.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
 		tuple.t_len = ItemIdGetLength(lp);
 		tuple.t_self = *tid;
+		tuple.t_tableOid = RelationGetRelid(relation);
 	}
 
 	result = heap_copytuple(&tuple);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.123 2005/06/17 22:32:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.124 2005/08/20 00:39:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -550,8 +550,9 @@ AtCommit_Notify(void)
 			}
 			else if (listener->notification == 0)
 			{
-				ItemPointerData ctid;
 				HTSU_Result		result;
+				ItemPointerData update_ctid;
+				TransactionId update_xmax;
 
 				rTuple = heap_modifytuple(lTuple, tdesc,
 										  value, nulls, repl);
@@ -573,7 +574,7 @@ AtCommit_Notify(void)
 				 * heap_update calls.
 				 */
 				result = heap_update(lRel, &lTuple->t_self, rTuple,
-									 &ctid,
+									 &update_ctid, &update_xmax,
 									 GetCurrentCommandId(), InvalidSnapshot,
 									 false /* no wait for commit */ );
 				switch (result)
@@ -585,7 +586,6 @@ AtCommit_Notify(void)
 
 					case HeapTupleMayBeUpdated:
 						/* done successfully */
-
 #ifdef NOT_USED					/* currently there are no indexes */
 						CatalogUpdateIndexes(lRel, rTuple);
 #endif
