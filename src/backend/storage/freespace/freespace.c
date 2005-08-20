@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.47 2005/08/17 03:50:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.48 2005/08/20 23:26:20 tgl Exp $
  *
  *
  * NOTES:
@@ -271,11 +271,13 @@ InitFreeSpaceMap(void)
 	bool		found;
 
 	/* Create table header */
-	FreeSpaceMap = (FSMHeader *) ShmemInitStruct("Free Space Map Header", sizeof(FSMHeader), &found);
+	FreeSpaceMap = (FSMHeader *) ShmemInitStruct("Free Space Map Header",
+												 sizeof(FSMHeader),
+												 &found);
 	if (FreeSpaceMap == NULL)
 		ereport(FATAL,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
-			   errmsg("insufficient shared memory for free space map")));
+				 errmsg("insufficient shared memory for free space map")));
 	if (!found)
 		MemSet(FreeSpaceMap, 0, sizeof(FSMHeader));
 
@@ -308,7 +310,7 @@ InitFreeSpaceMap(void)
 			   errmsg("max_fsm_pages must exceed max_fsm_relations * %d",
 					  CHUNKPAGES)));
 
-	FreeSpaceMap->arena = (char *) ShmemAlloc(nchunks * CHUNKBYTES);
+	FreeSpaceMap->arena = (char *) ShmemAlloc((Size) nchunks * CHUNKBYTES);
 	if (FreeSpaceMap->arena == NULL)
 		ereport(FATAL,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -322,27 +324,22 @@ InitFreeSpaceMap(void)
 /*
  * Estimate amount of shmem space needed for FSM.
  */
-int
+Size
 FreeSpaceShmemSize(void)
 {
-	int			size;
+	Size		size;
 	int			nchunks;
 
 	/* table header */
 	size = MAXALIGN(sizeof(FSMHeader));
 
 	/* hash table, including the FSMRelation objects */
-	size += hash_estimate_size(MaxFSMRelations + 1, sizeof(FSMRelation));
+	size = add_size(size, hash_estimate_size(MaxFSMRelations + 1,
+											 sizeof(FSMRelation)));
 
 	/* page-storage arena */
 	nchunks = (MaxFSMPages - 1) / CHUNKPAGES + 1;
-
-	if (nchunks >= (INT_MAX / CHUNKBYTES))
-		ereport(FATAL,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("max_fsm_pages is too large")));
-
-	size += MAXALIGN(nchunks * CHUNKBYTES);
+	size = add_size(size, mul_size(nchunks, CHUNKBYTES));
 
 	return size;
 }

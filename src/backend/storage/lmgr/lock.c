@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.156 2005/06/17 22:32:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.157 2005/08/20 23:26:23 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -46,7 +46,8 @@
 /* This configuration variable is used to set the lock table size */
 int			max_locks_per_xact; /* set by guc.c */
 
-#define NLOCKENTS()	(max_locks_per_xact * (MaxBackends + max_prepared_xacts))
+#define NLOCKENTS()	\
+	mul_size(max_locks_per_xact, add_size(MaxBackends, max_prepared_xacts))
 
 
 /* Record that's written to 2PC state file when a lock is persisted */
@@ -1864,20 +1865,20 @@ next_item:
 /*
  * Estimate shared-memory space used for lock tables
  */
-int
+Size
 LockShmemSize(void)
 {
-	int			size = 0;
+	Size		size;
 	long		max_table_size = NLOCKENTS();
 
 	/* lock method headers */
-	size += MAX_LOCK_METHODS * MAXALIGN(sizeof(LockMethodData));
+	size = MAX_LOCK_METHODS * MAXALIGN(sizeof(LockMethodData));
 
 	/* lockHash table */
-	size += hash_estimate_size(max_table_size, sizeof(LOCK));
+	size = add_size(size, hash_estimate_size(max_table_size, sizeof(LOCK)));
 
 	/* proclockHash table */
-	size += hash_estimate_size(max_table_size, sizeof(PROCLOCK));
+	size = add_size(size, hash_estimate_size(max_table_size, sizeof(PROCLOCK)));
 
 	/*
 	 * Note we count only one pair of hash tables, since the userlocks
@@ -1886,7 +1887,7 @@ LockShmemSize(void)
 	 * Since the lockHash entry count above is only an estimate, add 10%
 	 * safety margin.
 	 */
-	size += size / 10;
+	size = add_size(size, size / 10);
 
 	return size;
 }

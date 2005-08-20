@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.56 2005/07/29 19:30:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.57 2005/08/20 23:26:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -954,16 +954,16 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 static void
 lazy_space_alloc(LVRelStats *vacrelstats, BlockNumber relblocks)
 {
-	int			maxtuples;
+	long		maxtuples;
 	int			maxpages;
 
-	maxtuples = (int) ((maintenance_work_mem * 1024L) / sizeof(ItemPointerData));
+	maxtuples = (maintenance_work_mem * 1024L) / sizeof(ItemPointerData);
+	maxtuples = Min(maxtuples, INT_MAX);
 	/* stay sane if small maintenance_work_mem */
-	if (maxtuples < MAX_TUPLES_PER_PAGE)
-		maxtuples = MAX_TUPLES_PER_PAGE;
+	maxtuples = Max(maxtuples, MAX_TUPLES_PER_PAGE);
 
 	vacrelstats->num_dead_tuples = 0;
-	vacrelstats->max_dead_tuples = maxtuples;
+	vacrelstats->max_dead_tuples = (int) maxtuples;
 	vacrelstats->dead_tuples = (ItemPointer)
 		palloc(maxtuples * sizeof(ItemPointerData));
 

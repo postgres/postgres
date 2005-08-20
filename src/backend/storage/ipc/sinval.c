@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.76 2005/05/19 21:35:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.77 2005/08/20 23:26:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,10 +55,10 @@ static void ProcessCatchupEvent(void);
 /*	should be called only by the POSTMASTER									*/
 /****************************************************************************/
 void
-CreateSharedInvalidationState(int maxBackends)
+CreateSharedInvalidationState(void)
 {
 	/* SInvalLock must be initialized already, during LWLock init */
-	SIBufferInit(maxBackends);
+	SIBufferInit();
 }
 
 /*

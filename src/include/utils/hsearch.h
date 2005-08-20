@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/hsearch.h,v 1.39 2005/06/26 23:32:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/hsearch.h,v 1.40 2005/08/20 23:26:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,7 +190,7 @@ extern void *hash_search(HTAB *hashp, const void *keyPtr, HASHACTION action,
 			bool *foundPtr);
 extern void hash_seq_init(HASH_SEQ_STATUS *status, HTAB *hashp);
 extern void *hash_seq_search(HASH_SEQ_STATUS *status);
-extern long hash_estimate_size(long num_entries, Size entrysize);
+extern Size hash_estimate_size(long num_entries, Size entrysize);
 extern long hash_select_dirsize(long num_entries);
 
 /*

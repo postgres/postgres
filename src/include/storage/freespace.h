@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/freespace.h,v 1.17 2004/12/31 22:03:42 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/storage/freespace.h,v 1.18 2005/08/20 23:26:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@ extern int	MaxFSMPages;
  * function prototypes
  */
 extern void InitFreeSpaceMap(void);
-extern int	FreeSpaceShmemSize(void);
+extern Size FreeSpaceShmemSize(void);
 
 extern BlockNumber GetPageWithFreeSpace(RelFileNode *rel, Size spaceNeeded);
 extern BlockNumber RecordAndGetPageWithFreeSpace(RelFileNode *rel,

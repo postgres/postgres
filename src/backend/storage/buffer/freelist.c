@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.51 2005/03/04 20:21:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.52 2005/08/20 23:26:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -208,16 +208,16 @@ StrategyHintVacuum(bool vacuum_active)
  * Note: for somewhat historical reasons, the buffer lookup hashtable size
  * is also determined here.
  */
-int
+Size
 StrategyShmemSize(void)
 {
-	int			size = 0;
+	Size		size = 0;
 
 	/* size of lookup hash table */
-	size += BufTableShmemSize(NBuffers);
+	size = add_size(size, BufTableShmemSize(NBuffers));
 
 	/* size of the shared replacement strategy control block */
-	size += MAXALIGN(sizeof(BufferStrategyControl));
+	size = add_size(size, MAXALIGN(sizeof(BufferStrategyControl)));
 
 	return size;
 }

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/clog.h,v 1.13 2005/06/06 17:01:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/clog.h,v 1.14 2005/08/20 23:26:29 tgl Exp $
  */
 #ifndef CLOG_H
 #define CLOG_H
@@ -31,7 +31,7 @@ typedef int XidStatus;
 extern void TransactionIdSetStatus(TransactionId xid, XidStatus status);
 extern XidStatus TransactionIdGetStatus(TransactionId xid);
 
-extern int	CLOGShmemSize(void);
+extern Size CLOGShmemSize(void);
 extern void CLOGShmemInit(void);
 extern void BootStrapCLOG(void);
 extern void StartupCLOG(void);

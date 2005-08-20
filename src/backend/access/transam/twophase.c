@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.9 2005/07/31 17:19:17 tgl Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.10 2005/08/20 23:26:10 tgl Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -152,13 +152,20 @@ static void ProcessRecords(char *bufptr, TransactionId xid,
 /*
  * Initialization of shared memory
  */
-int
+Size
 TwoPhaseShmemSize(void)
 {
+	Size		size;
+
 	/* Need the fixed struct, the array of pointers, and the GTD structs */
-	return MAXALIGN(offsetof(TwoPhaseStateData, prepXacts) + 
-					sizeof(GlobalTransaction) * max_prepared_xacts) +
-		sizeof(GlobalTransactionData) * max_prepared_xacts;
+	size = offsetof(TwoPhaseStateData, prepXacts);
+	size = add_size(size, mul_size(max_prepared_xacts,
+								   sizeof(GlobalTransaction)));
+	size = MAXALIGN(size);
+	size = add_size(size, mul_size(max_prepared_xacts,
+								   sizeof(GlobalTransactionData)));
+
+	return size;
 }
 
 void

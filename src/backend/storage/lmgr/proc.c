@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.162 2005/08/08 03:11:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.163 2005/08/20 23:26:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,15 +91,19 @@ static bool CheckStatementTimeout(void);
 /*
  * Report shared-memory space needed by InitProcGlobal.
  */
-int
+Size
 ProcGlobalShmemSize(void)
 {
-	int			size = 0;
+	Size		size = 0;
 
-	size += MAXALIGN(sizeof(PROC_HDR)); /* ProcGlobal */
-	size += MAXALIGN(NUM_DUMMY_PROCS * sizeof(PGPROC));	/* DummyProcs */
-	size += MAXALIGN(MaxBackends * sizeof(PGPROC));		/* MyProcs */
-	size += MAXALIGN(sizeof(slock_t)); /* ProcStructLock */
+	/* ProcGlobal */
+	size = add_size(size, sizeof(PROC_HDR));
+	/* DummyProcs */
+	size = add_size(size, mul_size(NUM_DUMMY_PROCS, sizeof(PGPROC)));
+	/* MyProcs */
+	size = add_size(size, mul_size(MaxBackends, sizeof(PGPROC)));
+	/* ProcStructLock */
+	size = add_size(size, sizeof(slock_t));
 
 	return size;
 }

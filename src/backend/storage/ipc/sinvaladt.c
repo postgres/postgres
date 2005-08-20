@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.59 2005/05/19 21:35:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.60 2005/08/20 23:26:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,14 +32,15 @@ static void SISetProcStateInvalid(SISeg *segP);
 /*
  * SInvalShmemSize --- return shared-memory space needed
  */
-int
-SInvalShmemSize(int maxBackends)
+Size
+SInvalShmemSize(void)
 {
-	/*
-	 * Figure space needed. Note sizeof(SISeg) includes the first
-	 * ProcState entry.
-	 */
-	return sizeof(SISeg) + sizeof(ProcState) * (maxBackends - 1);
+	Size		size;
+
+	size = offsetof(SISeg, procState);
+	size = add_size(size, mul_size(sizeof(ProcState), MaxBackends));
+
+	return size;
 }
 
 /*
@@ -47,16 +48,15 @@ SInvalShmemSize(int maxBackends)
  *		Create and initialize a new SI message buffer
  */
 void
-SIBufferInit(int maxBackends)
+SIBufferInit(void)
 {
-	int			segSize;
 	SISeg	   *segP;
 	int			i;
 	bool		found;
 
 	/* Allocate space in shared memory */
-	segSize = SInvalShmemSize(maxBackends);
-	shmInvalBuffer = segP = (SISeg *) ShmemInitStruct("shmInvalBuffer", segSize, &found);
+	shmInvalBuffer = segP = (SISeg *)
+		ShmemInitStruct("shmInvalBuffer", SInvalShmemSize(), &found);
 	if (found)
 		return;
 
@@ -64,13 +64,13 @@ SIBufferInit(int maxBackends)
 	segP->minMsgNum = 0;
 	segP->maxMsgNum = 0;
 	segP->lastBackend = 0;
-	segP->maxBackends = maxBackends;
-	segP->freeBackends = maxBackends;
+	segP->maxBackends = MaxBackends;
+	segP->freeBackends = MaxBackends;
 
 	/* The buffer[] array is initially all unused, so we need not fill it */
 
 	/* Mark all backends inactive */
-	for (i = 0; i < maxBackends; i++)
+	for (i = 0; i < segP->maxBackends; i++)
 	{
 		segP->procState[i].nextMsgNum = -1;		/* inactive */
 		segP->procState[i].resetState = false;

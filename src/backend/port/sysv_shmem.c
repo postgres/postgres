@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.42 2004/12/31 22:00:30 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.43 2005/08/20 23:26:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ typedef int IpcMemoryId;		/* shared memory ID returned by shmget(2) */
 unsigned long UsedShmemSegID = 0;
 void	   *UsedShmemSegAddr = NULL;
 
-static void *InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size);
+static void *InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size);
 static void IpcMemoryDetach(int status, Datum shmaddr);
 static void IpcMemoryDelete(int status, Datum shmId);
 static PGShmemHeader *PGSharedMemoryAttach(IpcMemoryKey key,
@@ -71,7 +71,7 @@ static PGShmemHeader *PGSharedMemoryAttach(IpcMemoryKey key,
  * print out an error and abort.  Other types of errors are not recoverable.
  */
 static void *
-InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size)
+InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 {
 	IpcMemoryId shmid;
 	void	   *memAddress;
@@ -99,14 +99,14 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size)
 		 */
 		ereport(FATAL,
 				(errmsg("could not create shared memory segment: %m"),
-		errdetail("Failed system call was shmget(key=%lu, size=%u, 0%o).",
-				  (unsigned long) memKey, size,
+		errdetail("Failed system call was shmget(key=%lu, size=%lu, 0%o).",
+				  (unsigned long) memKey, (unsigned long) size,
 				  IPC_CREAT | IPC_EXCL | IPCProtection),
 				 (errno == EINVAL) ?
 				 errhint("This error usually means that PostgreSQL's request for a shared memory "
 						 "segment exceeded your kernel's SHMMAX parameter.  You can either "
 						 "reduce the request size or reconfigure the kernel with larger SHMMAX.  "
-			   "To reduce the request size (currently %u bytes), reduce "
+			   "To reduce the request size (currently %lu bytes), reduce "
 		   "PostgreSQL's shared_buffers parameter (currently %d) and/or "
 						 "its max_connections parameter (currently %d).\n"
 						 "If the request size is already small, it's possible that it is less than "
@@ -114,28 +114,28 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size)
 						 "reconfiguring SHMMIN is called for.\n"
 						 "The PostgreSQL documentation contains more information about shared "
 						 "memory configuration.",
-						 size, NBuffers, MaxBackends) : 0,
+						 (unsigned long) size, NBuffers, MaxBackends) : 0,
 				 (errno == ENOMEM) ?
 				 errhint("This error usually means that PostgreSQL's request for a shared "
 			   "memory segment exceeded available memory or swap space. "
-			   "To reduce the request size (currently %u bytes), reduce "
+			   "To reduce the request size (currently %lu bytes), reduce "
 		   "PostgreSQL's shared_buffers parameter (currently %d) and/or "
 						 "its max_connections parameter (currently %d).\n"
 						 "The PostgreSQL documentation contains more information about shared "
 						 "memory configuration.",
-						 size, NBuffers, MaxBackends) : 0,
+						 (unsigned long) size, NBuffers, MaxBackends) : 0,
 				 (errno == ENOSPC) ?
 				 errhint("This error does *not* mean that you have run out of disk space. "
 						 "It occurs either if all available shared memory IDs have been taken, "
 						 "in which case you need to raise the SHMMNI parameter in your kernel, "
 						 "or because the system's overall limit for shared memory has been "
 			 "reached.  If you cannot increase the shared memory limit, "
-		"reduce PostgreSQL's shared memory request (currently %u bytes), "
+		"reduce PostgreSQL's shared memory request (currently %lu bytes), "
 		"by reducing its shared_buffers parameter (currently %d) and/or "
 						 "its max_connections parameter (currently %d).\n"
 						 "The PostgreSQL documentation contains more information about shared "
 						 "memory configuration.",
-						 size, NBuffers, MaxBackends) : 0));
+						 (unsigned long) size, NBuffers, MaxBackends) : 0));
 	}
 
 	/* Register on-exit routine to delete the new segment */
@@ -289,7 +289,7 @@ PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2)
  * zero will be passed.
  */
 PGShmemHeader *
-PGSharedMemoryCreate(uint32 size, bool makePrivate, int port)
+PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 {
 	IpcMemoryKey NextShmemSegID;
 	void	   *memAddress;

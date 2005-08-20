@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.466 2005/08/12 19:43:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.467 2005/08/20 23:26:17 tgl Exp $
  *
  * NOTES
  *
@@ -816,9 +816,9 @@ PostmasterMain(int argc, char *argv[])
 	 * Initialize the child pid/HANDLE arrays for signal handling.
 	 */
 	win32_childPIDArray = (pid_t *)
-		malloc(NUM_BACKENDARRAY_ELEMS * sizeof(pid_t));
+		malloc(mul_size(NUM_BACKENDARRAY_ELEMS, sizeof(pid_t)));
 	win32_childHNDArray = (HANDLE *)
-		malloc(NUM_BACKENDARRAY_ELEMS * sizeof(HANDLE));
+		malloc(mul_size(NUM_BACKENDARRAY_ELEMS, sizeof(HANDLE)));
 	if (!win32_childPIDArray || !win32_childHNDArray)
 		ereport(FATAL,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -3920,16 +3920,16 @@ restore_backend_variables(BackendParameters *param, Port *port)
 }
 
 
-size_t
+Size
 ShmemBackendArraySize(void)
 {
-	return (NUM_BACKENDARRAY_ELEMS * sizeof(Backend));
+	return mul_size(NUM_BACKENDARRAY_ELEMS, sizeof(Backend));
 }
 
 void
 ShmemBackendArrayAllocation(void)
 {
-	size_t		size = ShmemBackendArraySize();
+	Size		size = ShmemBackendArraySize();
 
 	ShmemBackendArray = (Backend *) ShmemAlloc(size);
 	/* Mark all slots as empty */

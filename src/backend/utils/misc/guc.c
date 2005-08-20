@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.283 2005/08/19 18:58:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.284 2005/08/20 23:26:26 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -76,6 +76,13 @@
 #ifdef EXEC_BACKEND
 #define CONFIG_EXEC_PARAMS "global/config_exec_params"
 #define CONFIG_EXEC_PARAMS_NEW "global/config_exec_params.new"
+#endif
+
+/* upper limit for GUC variables measured in kilobytes of memory */
+#if SIZEOF_SIZE_T > 4
+#define MAX_KILOBYTES	INT_MAX
+#else
+#define MAX_KILOBYTES	(INT_MAX / 1024)
 #endif
 
 /* XXX these should appear in other modules' header files */
@@ -1027,6 +1034,10 @@ static struct config_int ConfigureNamesInt[] =
 	 * constraints here are partially unused. Similarly, the superuser
 	 * reserved number is checked to ensure it is less than the max
 	 * backends number.
+	 *
+	 * MaxBackends is limited to INT_MAX/4 because some places compute
+	 * 4*MaxBackends without any overflow check.  Likewise we have to
+	 * limit NBuffers to INT_MAX/2.
 	 */
 	{
 		{"max_connections", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
@@ -1034,7 +1045,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&MaxBackends,
-		100, 1, INT_MAX / BLCKSZ, NULL, NULL
+		100, 1, INT_MAX / 4, NULL, NULL
 	},
 
 	{
@@ -1043,7 +1054,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&ReservedBackends,
-		2, 0, INT_MAX / BLCKSZ, NULL, NULL
+		2, 0, INT_MAX / 4, NULL, NULL
 	},
 
 	{
@@ -1052,7 +1063,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&NBuffers,
-		1000, 16, INT_MAX / BLCKSZ, NULL, NULL
+		1000, 16, INT_MAX / 2, NULL, NULL
 	},
 
 	{
@@ -1061,7 +1072,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&num_temp_buffers,
-		1000, 100, INT_MAX / BLCKSZ, NULL, show_num_temp_buffers
+		1000, 100, INT_MAX / 2, NULL, show_num_temp_buffers
 	},
 
 	{
@@ -1094,7 +1105,7 @@ static struct config_int ConfigureNamesInt[] =
 						 "temporary disk files.")
 		},
 		&work_mem,
-		1024, 8 * BLCKSZ / 1024, INT_MAX / 1024, NULL, NULL
+		1024, 8 * BLCKSZ / 1024, MAX_KILOBYTES, NULL, NULL
 	},
 
 	{
@@ -1103,7 +1114,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("This includes operations such as VACUUM and CREATE INDEX.")
 		},
 		&maintenance_work_mem,
-		16384, 1024, INT_MAX / 1024, NULL, NULL
+		16384, 1024, MAX_KILOBYTES, NULL, NULL
 	},
 
 	{
@@ -1112,7 +1123,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&max_stack_depth,
-		2048, 100, INT_MAX / 1024, assign_max_stack_depth, NULL
+		2048, 100, MAX_KILOBYTES, assign_max_stack_depth, NULL
 	},
 
 	{
@@ -1193,7 +1204,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&max_prepared_xacts,
-		50, 0, 10000, NULL, NULL
+		50, 0, INT_MAX, NULL, NULL
 	},
 
 #ifdef LOCK_DEBUG
@@ -1310,7 +1321,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&XLOGbuffers,
-		8, 4, INT_MAX / BLCKSZ, NULL, NULL
+		8, 4, INT_MAX, NULL, NULL
 	},
 
 	{

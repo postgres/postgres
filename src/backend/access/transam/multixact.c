@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.7 2005/08/20 01:29:27 ishii Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.8 2005/08/20 23:26:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1159,13 +1159,20 @@ AtEOXact_MultiXact(void)
  * thus double memory.  Also, reserve space for the shared MultiXactState
  * struct and the per-backend MultiXactId arrays (two of those, too).
  */
-int
+Size
 MultiXactShmemSize(void)
 {
-#define SHARED_MULTIXACT_STATE_SIZE \
-	(sizeof(MultiXactStateData) + sizeof(MultiXactId) * 2 * MaxBackends)
+	Size		size;
 
-	return (SimpleLruShmemSize() * 2 + SHARED_MULTIXACT_STATE_SIZE);
+#define SHARED_MULTIXACT_STATE_SIZE \
+	add_size(sizeof(MultiXactStateData), \
+			 mul_size(sizeof(MultiXactId) * 2, MaxBackends))
+
+	size = SHARED_MULTIXACT_STATE_SIZE;
+	size = add_size(size, SimpleLruShmemSize());
+	size = add_size(size, SimpleLruShmemSize());
+
+	return size;
 }
 
 void

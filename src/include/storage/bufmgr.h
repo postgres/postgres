@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.95 2005/08/12 05:05:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.96 2005/08/20 23:26:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,7 +140,7 @@ extern void DropBuffers(Oid dbid);
 #ifdef NOT_USED
 extern void PrintPinnedBufs(void);
 #endif
-extern int	BufferShmemSize(void);
+extern Size BufferShmemSize(void);
 extern RelFileNode BufferGetFileNode(Buffer buffer);
 
 extern void SetBufferCommitInfoNeedsSave(Buffer buffer);

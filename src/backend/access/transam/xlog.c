@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.215 2005/08/11 21:11:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.216 2005/08/20 23:26:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,31 +91,6 @@
 #endif
 #endif
 
-/*
- * Limitation of buffer-alignment for direct io depend on OS and filesystem,
- * but BLCKSZ is assumed to be enough for it. 
- */
-#ifdef O_DIRECT
-#define ALIGNOF_XLOG_BUFFER		BLCKSZ
-#else
-#define ALIGNOF_XLOG_BUFFER		MAXIMUM_ALIGNOF
-#endif
-
-/*
- * Switch the alignment routine because ShmemAlloc() returns a max-aligned
- * buffer and ALIGNOF_XLOG_BUFFER may be greater than MAXIMUM_ALIGNOF.
- */
-#if ALIGNOF_XLOG_BUFFER <= MAXIMUM_ALIGNOF
-#define XLOG_BUFFER_ALIGN(LEN)	MAXALIGN((LEN))
-#else
-#define XLOG_BUFFER_ALIGN(LEN)	((LEN) + (ALIGNOF_XLOG_BUFFER))
-#endif
-/* assume sizeof(ptrdiff_t) == sizeof(void*) */
-#define POINTERALIGN(ALIGNVAL,PTR)	\
-	((char *)(((ptrdiff_t) (PTR) + (ALIGNVAL-1)) & ~((ptrdiff_t) (ALIGNVAL-1))))
-#define XLOG_BUFFER_POINTERALIGN(PTR)	\
-	POINTERALIGN((ALIGNOF_XLOG_BUFFER), (PTR))
-
 #ifdef OPEN_DATASYNC_FLAG
 #define DEFAULT_SYNC_METHOD_STR	"open_datasync"
 #define DEFAULT_SYNC_METHOD		SYNC_METHOD_OPEN
@@ -132,6 +107,17 @@
 #define DEFAULT_SYNC_METHOD_STR "fsync_writethrough"
 #define DEFAULT_SYNC_METHOD		SYNC_METHOD_FSYNC_WRITETHROUGH
 #define DEFAULT_SYNC_FLAGBIT	0
+#endif
+
+
+/*
+ * Limitation of buffer-alignment for direct IO depends on OS and filesystem,
+ * but BLCKSZ is assumed to be enough for it. 
+ */
+#ifdef O_DIRECT
+#define ALIGNOF_XLOG_BUFFER		BLCKSZ
+#else
+#define ALIGNOF_XLOG_BUFFER		ALIGNOF_BUFFER
 #endif
 
 
@@ -172,8 +158,6 @@ int	sync_method = DEFAULT_SYNC_METHOD;
 static int	open_sync_bit = DEFAULT_SYNC_FLAGBIT;
 
 #define XLOG_SYNC_BIT  (enableFsync ? open_sync_bit : 0)
-
-#define MinXLOGbuffers	4
 
 
 /*
@@ -3615,16 +3599,27 @@ UpdateControlFile(void)
 /*
  * Initialization of shared memory for XLOG
  */
-
-int
+Size
 XLOGShmemSize(void)
 {
-	if (XLOGbuffers < MinXLOGbuffers)
-		XLOGbuffers = MinXLOGbuffers;
+	Size		size;
 
-	return XLOG_BUFFER_ALIGN(sizeof(XLogCtlData) + sizeof(XLogRecPtr) * XLOGbuffers)
-		+ BLCKSZ * XLOGbuffers +
-		MAXALIGN(sizeof(ControlFileData));
+	/* XLogCtl */
+	size = sizeof(XLogCtlData);
+	/* xlblocks array */
+	size = add_size(size, mul_size(sizeof(XLogRecPtr), XLOGbuffers));
+	/* extra alignment padding for XLOG I/O buffers */
+	size = add_size(size, ALIGNOF_XLOG_BUFFER);
+	/* and the buffers themselves */
+	size = add_size(size, mul_size(BLCKSZ, XLOGbuffers));
+
+	/*
+	 * Note: we don't count ControlFileData, it comes out of the "slop
+	 * factor" added by CreateSharedMemoryAndSemaphores.  This lets us
+	 * use this routine again below to compute the actual allocation size.
+	 */
+
+	return size;
 }
 
 void
@@ -3632,17 +3627,10 @@ XLOGShmemInit(void)
 {
 	bool		foundXLog,
 				foundCFile;
-
-	/* this must agree with space requested by XLOGShmemSize() */
-	if (XLOGbuffers < MinXLOGbuffers)
-		XLOGbuffers = MinXLOGbuffers;
+	char	   *allocptr;
 
 	XLogCtl = (XLogCtlData *)
-		ShmemInitStruct("XLOG Ctl",
-						XLOG_BUFFER_ALIGN(sizeof(XLogCtlData) +
-								 sizeof(XLogRecPtr) * XLOGbuffers)
-						+ BLCKSZ * XLOGbuffers,
-						&foundXLog);
+		ShmemInitStruct("XLOG Ctl", XLOGShmemSize(), &foundXLog);
 	ControlFile = (ControlFileData *)
 		ShmemInitStruct("Control File", sizeof(ControlFileData), &foundCFile);
 
@@ -3660,17 +3648,16 @@ XLOGShmemInit(void)
 	 * a multiple of the alignment for same, so no extra alignment padding
 	 * is needed here.
 	 */
-	XLogCtl->xlblocks = (XLogRecPtr *)
-		(((char *) XLogCtl) + sizeof(XLogCtlData));
+	allocptr = ((char *) XLogCtl) + sizeof(XLogCtlData);
+	XLogCtl->xlblocks = (XLogRecPtr *) allocptr;
 	memset(XLogCtl->xlblocks, 0, sizeof(XLogRecPtr) * XLOGbuffers);
+	allocptr += sizeof(XLogRecPtr) * XLOGbuffers;
 
 	/*
-	 * Here, on the other hand, we must MAXALIGN to ensure the page
-	 * buffers have worst-case alignment.
+	 * Align the start of the page buffers to an ALIGNOF_XLOG_BUFFER boundary.
 	 */
-	XLogCtl->pages = XLOG_BUFFER_POINTERALIGN(
-		((char *) XLogCtl)
-		+ sizeof(XLogCtlData) + sizeof(XLogRecPtr) * XLOGbuffers);
+	allocptr = (char *) TYPEALIGN(ALIGNOF_XLOG_BUFFER, allocptr);
+	XLogCtl->pages = allocptr;
 	memset(XLogCtl->pages, 0, BLCKSZ * XLOGbuffers);
 
 	/*
@@ -3728,8 +3715,9 @@ BootStrapXLOG(void)
 	/* First timeline ID is always 1 */
 	ThisTimeLineID = 1;
 
- 	buffer = (char *) malloc(BLCKSZ + ALIGNOF_XLOG_BUFFER);
-	page = (XLogPageHeader) XLOG_BUFFER_POINTERALIGN(buffer);
+	/* page buffer must be aligned suitably for O_DIRECT */
+ 	buffer = (char *) palloc(BLCKSZ + ALIGNOF_XLOG_BUFFER);
+	page = (XLogPageHeader) TYPEALIGN(ALIGNOF_XLOG_BUFFER, buffer);
 	memset(page, 0, BLCKSZ);
 
 	/* Set up information for the initial checkpoint record */
@@ -3824,7 +3812,7 @@ BootStrapXLOG(void)
 	BootStrapSUBTRANS();
 	BootStrapMultiXact();
 
-	free(buffer);
+	pfree(buffer);
 }
 
 static char *

@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/pg_shmem.h,v 1.14 2004/12/31 22:03:42 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/storage/pg_shmem.h,v 1.15 2005/08/20 23:26:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,8 +29,8 @@ typedef struct PGShmemHeader	/* standard header for all Postgres shmem */
 	int32		magic;			/* magic # to identify Postgres segments */
 #define PGShmemMagic  679834893
 	pid_t		creatorPID;		/* PID of creating process */
-	uint32		totalsize;		/* total size of segment */
-	uint32		freeoffset;		/* offset to first free space */
+	Size		totalsize;		/* total size of segment */
+	Size		freeoffset;		/* offset to first free space */
 #ifndef WIN32					/* Windows doesn't have useful inode#s */
 	dev_t		device;			/* device data directory is on */
 	ino_t		inode;			/* inode number of data directory */
@@ -45,8 +45,8 @@ extern void *UsedShmemSegAddr;
 extern void PGSharedMemoryReAttach(void);
 #endif
 
-extern PGShmemHeader *PGSharedMemoryCreate(uint32 size, bool makePrivate,
-					 int port);
+extern PGShmemHeader *PGSharedMemoryCreate(Size size, bool makePrivate,
+										   int port);
 extern bool PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2);
 extern void PGSharedMemoryDetach(void);
 

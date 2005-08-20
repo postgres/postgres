@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/subtrans.c,v 1.9 2005/06/17 22:32:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/subtrans.c,v 1.10 2005/08/20 23:26:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,8 +161,7 @@ SubTransGetTopmostTransaction(TransactionId xid)
 /*
  * Initialization of shared memory for SUBTRANS
  */
-
-int
+Size
 SUBTRANSShmemSize(void)
 {
 	return SimpleLruShmemSize();

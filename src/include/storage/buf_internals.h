@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.78 2005/05/19 21:35:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.79 2005/08/20 23:26:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,11 +182,11 @@ extern long int LocalBufferFlushCount;
 extern BufferDesc *StrategyGetBuffer(void);
 extern void StrategyFreeBuffer(BufferDesc *buf, bool at_head);
 extern int	StrategySyncStart(void);
-extern int	StrategyShmemSize(void);
+extern Size StrategyShmemSize(void);
 extern void StrategyInitialize(bool init);
 
 /* buf_table.c */
-extern int	BufTableShmemSize(int size);
+extern Size	BufTableShmemSize(int size);
 extern void InitBufTable(int size);
 extern int	BufTableLookup(BufferTag *tagPtr);
 extern int	BufTableInsert(BufferTag *tagPtr, int buf_id);

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.28 2005/04/28 21:47:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.29 2005/08/20 23:26:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,17 +129,18 @@ NumLWLocks(void)
 /*
  * Compute shmem space needed for LWLocks.
  */
-int
+Size
 LWLockShmemSize(void)
 {
+	Size		size;
 	int			numLocks = NumLWLocks();
-	uint32		spaceLocks;
 
 	/* Allocate the LWLocks plus space for shared allocation counter. */
-	spaceLocks = numLocks * sizeof(LWLock) + 2 * sizeof(int);
-	spaceLocks = MAXALIGN(spaceLocks);
+	size = mul_size(numLocks, sizeof(LWLock));
 
-	return (int) spaceLocks;
+	size = add_size(size, 2 * sizeof(int));
+
+	return size;
 }
 
 
@@ -150,7 +151,7 @@ void
 CreateLWLocks(void)
 {
 	int			numLocks = NumLWLocks();
-	uint32		spaceLocks = LWLockShmemSize();
+	Size		spaceLocks = LWLockShmemSize();
 	LWLock	   *lock;
 	int			id;
 

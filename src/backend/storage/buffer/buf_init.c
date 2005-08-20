@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_init.c,v 1.75 2005/08/12 05:05:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_init.c,v 1.76 2005/08/20 23:26:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,7 +89,7 @@ InitBufferPool(void)
 
 	BufferBlocks = (char *)
 		ShmemInitStruct("Buffer Blocks",
-						NBuffers * BLCKSZ, &foundBufs);
+						NBuffers * (Size) BLCKSZ, &foundBufs);
 
 	if (foundDescs || foundBufs)
 	{
@@ -155,8 +155,11 @@ InitBufferPoolAccess(void)
 	/*
 	 * Allocate and zero local arrays of per-buffer info.
 	 */
-	PrivateRefCount = (int32 *) calloc(NBuffers,
-									   sizeof(*PrivateRefCount));
+	PrivateRefCount = (int32 *) calloc(NBuffers, sizeof(int32));
+	if (!PrivateRefCount)
+		ereport(FATAL,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 }
 
 /*
@@ -165,19 +168,19 @@ InitBufferPoolAccess(void)
  * compute the size of shared memory for the buffer pool including
  * data pages, buffer descriptors, hash tables, etc.
  */
-int
+Size
 BufferShmemSize(void)
 {
-	int			size = 0;
+	Size		size = 0;
 
 	/* size of buffer descriptors */
-	size += MAXALIGN(NBuffers * sizeof(BufferDesc));
+	size = add_size(size, mul_size(NBuffers, sizeof(BufferDesc)));
 
 	/* size of data pages */
-	size += NBuffers * MAXALIGN(BLCKSZ);
+	size = add_size(size, mul_size(NBuffers, BLCKSZ));
 
 	/* size of stuff controlled by freelist.c */
-	size += StrategyShmemSize();
+	size = add_size(size, StrategyShmemSize());
 
 	return size;
 }

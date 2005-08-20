@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.68 2005/08/08 19:44:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.69 2005/08/20 23:26:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -255,15 +255,13 @@ InitLocalBuffers(void)
 	int			i;
 
 	/* Allocate and zero buffer headers and auxiliary arrays */
-	LocalBufferDescriptors = (BufferDesc *)
-		MemoryContextAllocZero(TopMemoryContext,
-							   nbufs * sizeof(BufferDesc));
-	LocalBufferBlockPointers = (Block *)
-		MemoryContextAllocZero(TopMemoryContext,
-							   nbufs * sizeof(Block));
-	LocalRefCount = (int32 *)
-		MemoryContextAllocZero(TopMemoryContext,
-							   nbufs * sizeof(int32));
+	LocalBufferDescriptors = (BufferDesc *) calloc(nbufs, sizeof(BufferDesc));
+	LocalBufferBlockPointers = (Block *) calloc(nbufs, sizeof(Block));
+	LocalRefCount = (int32 *) calloc(nbufs, sizeof(int32));
+	if (!LocalBufferDescriptors || !LocalBufferBlockPointers || !LocalRefCount)
+		ereport(FATAL,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 
 	nextFreeLocalBuf = 0;
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.63 2005/06/26 23:32:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.64 2005/08/20 23:26:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@
 
 #include "postgres.h"
 
+#include "storage/shmem.h"
 #include "utils/dynahash.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
@@ -391,10 +392,10 @@ init_htab(HTAB *hashp, long nelem)
  * memory; therefore it does not count HTAB which is in local memory.
  * NB: assumes that all hash structure parameters have default values!
  */
-long
+Size
 hash_estimate_size(long num_entries, Size entrysize)
 {
-	long		size = 0;
+	Size		size;
 	long		nBuckets,
 				nSegments,
 				nDirEntries,
@@ -412,17 +413,20 @@ hash_estimate_size(long num_entries, Size entrysize)
 		nDirEntries <<= 1;		/* dir_alloc doubles dsize at each call */
 
 	/* fixed control info */
-	size += MAXALIGN(sizeof(HASHHDR));	/* but not HTAB, per above */
+	size = MAXALIGN(sizeof(HASHHDR));	/* but not HTAB, per above */
 	/* directory */
-	size += MAXALIGN(nDirEntries * sizeof(HASHSEGMENT));
+	size = add_size(size, mul_size(nDirEntries, sizeof(HASHSEGMENT)));
 	/* segments */
-	size += nSegments * MAXALIGN(DEF_SEGSIZE * sizeof(HASHBUCKET));
+	size = add_size(size, mul_size(nSegments,
+								   MAXALIGN(DEF_SEGSIZE * sizeof(HASHBUCKET))));
 	/* elements --- allocated in groups of up to HASHELEMENT_ALLOC_MAX */
 	elementSize = MAXALIGN(sizeof(HASHELEMENT)) + MAXALIGN(entrysize);
 	elementAllocCnt = Min(num_entries, HASHELEMENT_ALLOC_MAX);
 	elementAllocCnt = Max(elementAllocCnt, 1);
 	nElementAllocs = (num_entries - 1) / elementAllocCnt + 1;
-	size += nElementAllocs * elementAllocCnt * elementSize;
+	size = add_size(size,
+					mul_size(nElementAllocs,
+							 mul_size(elementAllocCnt, elementSize)));
 
 	return size;
 }

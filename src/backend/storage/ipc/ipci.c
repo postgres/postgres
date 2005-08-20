@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.77 2005/06/17 22:32:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.78 2005/08/20 23:26:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,36 +61,44 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 
 	if (!IsUnderPostmaster)
 	{
-		int			size;
+		Size		size;
 		int			numSemas;
 
 		/*
 		 * Size of the Postgres shared-memory block is estimated via
 		 * moderately-accurate estimates for the big hogs, plus 100K for
 		 * the stuff that's too small to bother with estimating.
+		 *
+		 * We take some care during this phase to ensure that the total
+		 * size request doesn't overflow size_t.  If this gets through,
+		 * we don't need to be so careful during the actual allocation
+		 * phase.
 		 */
-		size = hash_estimate_size(SHMEM_INDEX_SIZE, sizeof(ShmemIndexEnt));
-		size += BufferShmemSize();
-		size += LockShmemSize();
-		size += ProcGlobalShmemSize();
-		size += XLOGShmemSize();
-		size += CLOGShmemSize();
-		size += SUBTRANSShmemSize();
-		size += TwoPhaseShmemSize();
-		size += MultiXactShmemSize();
-		size += LWLockShmemSize();
-		size += ProcArrayShmemSize();
-		size += SInvalShmemSize(MaxBackends);
-		size += FreeSpaceShmemSize();
-		size += BgWriterShmemSize();
+		size = 100000;
+		size = add_size(size, hash_estimate_size(SHMEM_INDEX_SIZE,
+												 sizeof(ShmemIndexEnt)));
+		size = add_size(size, BufferShmemSize());
+		size = add_size(size, LockShmemSize());
+		size = add_size(size, ProcGlobalShmemSize());
+		size = add_size(size, XLOGShmemSize());
+		size = add_size(size, CLOGShmemSize());
+		size = add_size(size, SUBTRANSShmemSize());
+		size = add_size(size, TwoPhaseShmemSize());
+		size = add_size(size, MultiXactShmemSize());
+		size = add_size(size, LWLockShmemSize());
+		size = add_size(size, ProcArrayShmemSize());
+		size = add_size(size, SInvalShmemSize());
+		size = add_size(size, FreeSpaceShmemSize());
+		size = add_size(size, BgWriterShmemSize());
 #ifdef EXEC_BACKEND
-		size += ShmemBackendArraySize();
+		size = add_size(size, ShmemBackendArraySize());
 #endif
-		size += 100000;
-		/* might as well round it off to a multiple of a typical page size */
-		size += 8192 - (size % 8192);
 
-		elog(DEBUG3, "invoking IpcMemoryCreate(size=%d)", size);
+		/* might as well round it off to a multiple of a typical page size */
+		size = add_size(size, 8192 - (size % 8192));
+
+		elog(DEBUG3, "invoking IpcMemoryCreate(size=%lu)",
+			 (unsigned long) size);
 
 		/*
 		 * Create the shmem segment
@@ -163,7 +171,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	/*
 	 * Set up shared-inval messaging
 	 */
-	CreateSharedInvalidationState(MaxBackends);
+	CreateSharedInvalidationState();
 
 	/*
 	 * Set up free-space map
