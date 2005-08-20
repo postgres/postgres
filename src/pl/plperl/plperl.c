@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.67.4.2 2005/07/03 21:56:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.67.4.3 2005/08/20 19:19:31 tgl Exp $
  *
  **********************************************************************/
 
@@ -591,7 +591,7 @@ plperl_create_sub(char *s, bool trusted)
 	 * errors properly.  Perhaps it's because there's another level of
 	 * eval inside mksafefunc?
 	 */
-	count = perl_call_pv((trusted ? "mksafefunc" : "mkunsafefunc"),
+	count = perl_call_pv((trusted ? "::mksafefunc" : "::mkunsafefunc"),
 						 G_SCALAR | G_EVAL | G_KEEPERR);
 	SPAGAIN;
 
