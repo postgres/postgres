@@ -23,7 +23,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.4 2005/07/31 17:19:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.5 2005/08/20 01:26:36 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -676,6 +676,44 @@ BackendPidGetProc(int pid)
 		if (proc->pid == pid)
 		{
 			result = proc;
+			break;
+		}
+	}
+
+	LWLockRelease(ProcArrayLock);
+
+	return result;
+}
+
+/*
+ * BackendXidGetPid -- get a backend's pid given its XID
+ *
+ * Returns 0 if not found or it's a prepared transaction.  Note that
+ * it is up to the caller to be sure that the question remains
+ * meaningful for long enough for the answer to be used ...
+ * 
+ * Only main transaction Ids are considered.  This function is mainly
+ * useful for determining what backend owns a lock.
+ */
+int
+BackendXidGetPid(TransactionId xid)
+{
+	int result = 0;
+	ProcArrayStruct *arrayP = procArray;
+	int			index;
+
+	if (xid == InvalidTransactionId)	/* never match invalid xid */
+		return 0;
+
+	LWLockAcquire(ProcArrayLock, LW_SHARED);
+
+	for (index = 0; index < arrayP->numProcs; index++)
+	{
+		PGPROC	   *proc = arrayP->procs[index];
+
+		if (proc->xid == xid)
+		{
+			result = proc->pid;
 			break;
 		}
 	}
