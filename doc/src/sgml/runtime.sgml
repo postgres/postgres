@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.345 2005/08/14 22:19:49 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.346 2005/08/21 03:39:26 tgl Exp $
 -->
 
 <chapter Id="runtime">
@@ -1027,20 +1027,6 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-krb-caseins-users" xreflabel="krb_caseins_users">
-      <term><varname>krb_caseins_users</varname> (<type>boolean</type>)</term>
-      <indexterm>
-       <primary><varname>krb_caseins_users</varname> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        Sets if Kerberos usernames should be treated case-insensitive.
-        The default is <literal>off</> (case sensitive). This parameter
-        can only be set at server start.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="guc-krb-server-hostname" xreflabel="krb_server_hostname">
       <term><varname>krb_server_hostname</varname> (<type>string</type>)</term>
       <indexterm>
@@ -1061,6 +1047,20 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-krb-caseins-users" xreflabel="krb_caseins_users">
+      <term><varname>krb_caseins_users</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>krb_caseins_users</varname> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Sets if Kerberos usernames should be treated case-insensitively.
+        The default is <literal>off</> (case sensitive). This parameter
+        can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-db-user-namespace" xreflabel="db_user_namespace">
       <term><varname>db_user_namespace</varname> (<type>boolean</type>)</term>
       <indexterm>
@@ -1068,13 +1068,13 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-        This allows per-database user names.  It is off by default.
+        This enables per-database user names.  It is off by default.
        </para>
 
        <para>
         If this is on, you should create users as <literal>username@dbname</>.
         When <literal>username</> is passed by a connecting client,
-        <literal>@</> and the database name is appended to the user
+        <literal>@</> and the database name are appended to the user
         name and that database-specific user name is looked up by the
         server. Note that when you create users with names containing
         <literal>@</> within the SQL environment, you will need to

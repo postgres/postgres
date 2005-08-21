@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.284 2005/08/20 23:26:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.285 2005/08/21 03:39:34 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2029,7 +2029,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"custom_variable_classes", PGC_POSTMASTER, RESOURCES_KERNEL,
+		{"custom_variable_classes", PGC_SIGHUP, CUSTOM_OPTIONS,
 			gettext_noop("Sets the list of known custom variable classes."),
 			NULL,
 			GUC_LIST_INPUT | GUC_LIST_QUOTE

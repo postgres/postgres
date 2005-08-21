@@ -32,12 +32,12 @@
 # The default values of these variables are driven from the -D command line
 # switch or PGDATA environment variable, represented here as ConfigDir.
 
-# data_directory = 'ConfigDir'		# use data in another directory
-# hba_file = 'ConfigDir/pg_hba.conf'	# host-based authentication file
-# ident_file = 'ConfigDir/pg_ident.conf	# IDENT configuration file
+#data_directory = 'ConfigDir'		# use data in another directory
+#hba_file = 'ConfigDir/pg_hba.conf'	# host-based authentication file
+#ident_file = 'ConfigDir/pg_ident.conf	# IDENT configuration file
 
 # If external_pid_file is not explicitly set, no extra pid file is written.
-# external_pid_file = '(none)'		# write an extra pid file
+#external_pid_file = '(none)'		# write an extra pid file
 
 
 #---------------------------------------------------------------------------
@@ -66,10 +66,12 @@
 #ssl = off
 #password_encryption = on
 #db_user_namespace = off
+
 # Kerberos
 #krb_server_keyfile = ''
-#krb_caseins_users = off
 #krb_srvname = 'postgres'
+#krb_server_hostname = '(any)'		# if not set, matches any keytab entry
+#krb_caseins_users = off
 
 # - TCP Keepalives -
 # see 'man 7 tcp' for details
@@ -413,3 +415,10 @@
 # - Other Platforms & Clients -
 
 #transform_null_equals = off
+
+
+#---------------------------------------------------------------------------
+# CUSTOMIZED OPTIONS
+#---------------------------------------------------------------------------
+
+#custom_variable_classes = ''		# list of custom variable class names
