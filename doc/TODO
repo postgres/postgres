@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Aug 18 10:14:29 EDT 2005
+Last updated:		Sat Aug 20 21:04:41 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -294,6 +294,7 @@ Multi-Language Support
 * Improve UTF8 combined character handling?
 * Add octet_length_server() and octet_length_client()
 * Make octet_length_client() the same as octet_length()?
+* Fix problems with wrong runtime encoding conversion for NLS message files
 
 
 Views / Rules
