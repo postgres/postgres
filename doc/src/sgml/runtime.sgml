@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.346 2005/08/21 03:39:26 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.347 2005/08/22 17:34:56 momjian Exp $
 -->
 
 <chapter Id="runtime">
@@ -2352,24 +2352,24 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-enable-constraint-exclusion" xreflabel="enable_constraint_exclusion">
-      <term><varname>enable_constraint_exclusion</varname> (<type>boolean</type>)</term>
+     <varlistentry id="guc-constraint-exclusion" xreflabel="constraint_exclusion">
+      <term><varname>constraint_exclusion</varname> (<type>boolean</type>)</term>
       <indexterm>
        <primary>constraint exclusion</primary>
       </indexterm>
       <indexterm>
-       <primary><varname>enable_constraint_exclusion</> configuration parameter</primary>
+       <primary><varname>constraint_exclusion</> configuration parameter</primary>
       </indexterm>
       <listitem>
        <para>
-        Enables or disables the query planner's use of table constraints.
-        The default is <literal>off</>.
+        Enables or disables the query planner's use of table constraints to
+        limit table access.  The default is <literal>off</>.
        </para>
 
        <para>
         When this parameter is <literal>on</>, the planner compares query
-        conditions to table CHECK constraints, and omits scanning tables
-        for which the conditions contradict the constraints.  (Presently
+        conditions with table CHECK constraints, and omits scanning tables
+        where the conditions contradict the constraints.  (Presently
         this is done only for child tables of inheritance scans.)  For
         example:
 
@@ -2387,15 +2387,15 @@ SELECT * FROM parent WHERE key = 2400;
        </para>
 
        <para>
-        Currently, <varname>enable_constraint_exclusion</> defaults to
-        <literal>off</>, because it creates a risk of wrong answers when
-        query plans are cached: if a table constraint is changed or dropped,
-        the previously generated plan may now be wrong, and there is no
+        Currently, <varname>constraint_exclusion</> defaults to
+        <literal>off</>, because it risks incorrect results if
+        query plans are cached --- if a table constraint is changed or dropped,
+        the previously generated plan might now be wrong, and there is no
         built-in mechanism to force re-planning.  (This deficiency will
         probably be addressed in a future
         <productname>PostgreSQL</productname> release.)  Another reason
         for keeping it off is that the constraint checks are relatively
-        expensive to make, and in many circumstances will yield no savings.
+        expensive, and in many circumstances will yield no savings.
         It is recommended to turn this on only if you are actually using
         partitioned tables designed to take advantage of the feature.
        </para>

@@ -385,7 +385,7 @@ SQL Commands
 
 * Add GUC to issue notice about queries that use unjoined tables
 * Allow EXPLAIN to identify tables that were skipped because of 
-  enable_constraint_exclusion
+  constraint_exclusion
 * Allow EXPLAIN output to be more easily processed by scripts
 
 
@@ -769,7 +769,7 @@ Indexes
 * Allow the creation of indexes with mixed ascending/descending specifiers
 * -Fix incorrect rtree results due to wrong assumptions about "over"
   operator semantics
-* Allow enable_constraint_exclusion to work for UNIONs like it does for
+* Allow constraint_exclusion to work for UNIONs like it does for
   inheritance, and allow it to work for UPDATE and DELETE queries
 
 

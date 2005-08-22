@@ -355,7 +355,7 @@ first.
 </p>
   </li><li>Add GUC to issue notice about queries that use unjoined tables
   </li><li>Allow EXPLAIN to identify tables that were skipped because of 
-  enable_constraint_exclusion
+  constraint_exclusion
   </li><li>Allow EXPLAIN output to be more easily processed by scripts
   </li><li>CREATE
   <ul>
@@ -694,7 +694,7 @@ first.
   </li><li>Allow the creation of indexes with mixed ascending/descending specifiers
   </li><li>-<em>Fix incorrect rtree results due to wrong assumptions about "over"</em>
   operator semantics
-  </li><li>Allow enable_constraint_exclusion to work for UNIONs like it does for
+  </li><li>Allow constraint_exclusion to work for UNIONs like it does for
   inheritance, and allow it to work for UPDATE and DELETE queries
   </li><li>GIST
   <ul>

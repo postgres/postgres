@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.135 2005/07/23 21:05:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.136 2005/08/22 17:34:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@
 
 
 /* These parameters are set by GUC */
-bool		enable_constraint_exclusion = false;
+bool		constraint_exclusion = false;
 bool		enable_geqo = false;	/* just in case GUC doesn't set it */
 int			geqo_threshold;
 
@@ -318,7 +318,7 @@ set_inherited_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		 * exclusion, just ignore it.  (We have to have converted the
 		 * baserestrictinfo Vars before we can make the test.)
 		 */
-		if (enable_constraint_exclusion)
+		if (constraint_exclusion)
 		{
 			List   *constraint_pred;
 

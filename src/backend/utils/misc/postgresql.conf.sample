@@ -190,7 +190,7 @@
 # - Other Planner Options -
 
 #default_statistics_target = 10		# range 1-1000
-#enable_constraint_exclusion = off
+#constraint_exclusion = off
 #from_collapse_limit = 8
 #join_collapse_limit = 8		# 1 disables collapsing of explicit 
 					# JOINs
