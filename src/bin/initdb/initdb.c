@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.94 2005/08/02 15:16:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.95 2005/08/22 16:27:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,13 +54,13 @@
 #include <unistd.h>
 #include <locale.h>
 #include <signal.h>
-#include <errno.h>
 #ifdef HAVE_LANGINFO_H
 #include <langinfo.h>
 #endif
 
 #include "libpq/pqsignal.h"
 #include "mb/pg_wchar.h"
+#include "getaddrinfo.h"
 #include "getopt_long.h"
 
 #ifndef HAVE_INT_OPTRESET
@@ -1210,11 +1210,42 @@ setup_config(void)
 	conflines = replace_token(conflines,"@remove-line-for-nolocal@","");
 #endif
 
-#ifndef HAVE_IPV6
+#if defined(HAVE_IPV6) && defined(HAVE_STRUCT_ADDRINFO) && defined(HAVE_GETADDRINFO)
+	/* 
+	 * Probe to see if there is really any platform support for IPv6, and
+	 * comment out the relevant pg_hba line if not.  This avoids runtime
+	 * warnings if getaddrinfo doesn't actually cope with IPv6.  Particularly
+	 * useful on Windows, where executables built on a machine with IPv6
+	 * may have to run on a machine without.
+	 *
+	 * We don't bother with testing if we aren't using the system version
+	 * of getaddrinfo, since we know our own version doesn't do IPv6.
+	 */
+	{
+		struct addrinfo *gai_result;
+		struct addrinfo hints;
+
+		/* for best results, this code should match parse_hba() */
+		hints.ai_flags = AI_NUMERICHOST;
+		hints.ai_family = PF_UNSPEC;
+		hints.ai_socktype = 0;
+		hints.ai_protocol = 0;
+		hints.ai_addrlen = 0;
+		hints.ai_canonname = NULL;
+		hints.ai_addr = NULL;
+		hints.ai_next = NULL;
+
+		if (getaddrinfo("::1", NULL, &hints, &gai_result) != 0)
+			conflines = replace_token(conflines,
+									  "host    all         all         ::1",
+									  "#host    all         all         ::1");
+	}
+#else /* !HAVE_IPV6 etc */
+	/* If we didn't compile IPV6 support at all, always comment it out */
 	conflines = replace_token(conflines,
 							  "host    all         all         ::1",
 							  "#host    all         all         ::1");
-#endif
+#endif /* HAVE_IPV6 etc */
 
 	/* Replace default authentication methods */
 	conflines = replace_token(conflines,
