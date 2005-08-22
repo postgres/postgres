@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.216 2005/08/20 23:26:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.217 2005/08/22 00:41:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,7 +112,7 @@
 
 /*
  * Limitation of buffer-alignment for direct IO depends on OS and filesystem,
- * but BLCKSZ is assumed to be enough for it. 
+ * but BLCKSZ is assumed to be enough for it.
  */
 #ifdef O_DIRECT
 #define ALIGNOF_XLOG_BUFFER		BLCKSZ
@@ -339,7 +339,7 @@ typedef struct XLogCtlInsert
 {
 	XLogwrtResult LogwrtResult; /* a recent value of LogwrtResult */
 	XLogRecPtr	PrevRecord;		/* start of previously-inserted record */
-	uint16		curridx;		/* current block index in cache */
+	int			curridx;		/* current block index in cache */
 	XLogPageHeader currpage;	/* points to header of block in cache */
 	char	   *currpos;		/* current insertion point in cache */
 	XLogRecPtr	RedoRecPtr;		/* current redo point for insertions */
@@ -351,7 +351,7 @@ typedef struct XLogCtlInsert
 typedef struct XLogCtlWrite
 {
 	XLogwrtResult LogwrtResult; /* current value of LogwrtResult */
-	uint16		curridx;		/* cache index of next block to write */
+	int			curridx;		/* cache index of next block to write */
 } XLogCtlWrite;
 
 /*
@@ -375,8 +375,8 @@ typedef struct XLogCtlData
 	 */
 	char	   *pages;			/* buffers for unwritten XLOG pages */
 	XLogRecPtr *xlblocks;		/* 1st byte ptr-s + BLCKSZ */
-	uint32		XLogCacheByte;	/* # bytes in xlog buffers */
-	uint32		XLogCacheBlck;	/* highest allocated xlog buffer index */
+	Size		XLogCacheByte;	/* # bytes in xlog buffers */
+	int			XLogCacheBlck;	/* highest allocated xlog buffer index */
 	TimeLineID	ThisTimeLineID;
 
 	slock_t		info_lck;		/* locks shared LogwrtRqst/LogwrtResult */
@@ -497,13 +497,14 @@ static void ReadControlFile(void);
 static char *str_time(time_t tnow);
 static void issue_xlog_fsync(void);
 
-/* XLog gather-write staffs */
+/* XLog gather-write stuff */
 typedef struct XLogPages
 {
-	char	*head;		/* Head of first page */
-	int		 size;		/* Total bytes of pages == count(pages) * BLCKSZ */
-	int		 offset;	/* Offset in xlog segment file  */
+	char	*head;		/* Start of first page to write */
+	Size	 size;		/* Total bytes to write == count(pages) * BLCKSZ */
+	uint32	 offset;	/* Starting offset in xlog segment file */
 } XLogPages;
+
 static void XLogPageReset(XLogPages *pages);
 static void XLogPageWrite(XLogPages *pages, int index);
 static void XLogPageFlush(XLogPages *pages, int index);
@@ -539,7 +540,7 @@ XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata)
 	XLogRecPtr	RecPtr;
 	XLogRecPtr	WriteRqst;
 	uint32		freespace;
-	uint16		curridx;
+	int			curridx;
 	XLogRecData *rdt;
 	Buffer		dtbuf[XLR_MAX_BKP_BLOCKS];
 	bool		dtbuf_bkp[XLR_MAX_BKP_BLOCKS];
@@ -1154,7 +1155,7 @@ AdvanceXLInsertBuffer(void)
 {
 	XLogCtlInsert *Insert = &XLogCtl->Insert;
 	XLogCtlWrite *Write = &XLogCtl->Write;
-	uint16		nextidx = NextBufIdx(Insert->curridx);
+	int			nextidx = NextBufIdx(Insert->curridx);
 	bool		update_needed = true;
 	XLogRecPtr	OldPageRqstPtr;
 	XLogwrtRqst WriteRqst;
@@ -1239,7 +1240,7 @@ AdvanceXLInsertBuffer(void)
 	else
 		NewPageEndPtr.xrecoff += BLCKSZ;
 	XLogCtl->xlblocks[nextidx] = NewPageEndPtr;
-	NewPage = (XLogPageHeader) (XLogCtl->pages + nextidx * BLCKSZ);
+	NewPage = (XLogPageHeader) (XLogCtl->pages + nextidx * (Size) BLCKSZ);
 	Insert->curridx = nextidx;
 	Insert->currpage = NewPage;
 	Insert->currpos = ((char *) NewPage) + SizeOfXLogShortPHD;
@@ -3625,19 +3626,19 @@ XLOGShmemSize(void)
 void
 XLOGShmemInit(void)
 {
-	bool		foundXLog,
-				foundCFile;
+	bool		foundCFile,
+				foundXLog;
 	char	   *allocptr;
 
-	XLogCtl = (XLogCtlData *)
-		ShmemInitStruct("XLOG Ctl", XLOGShmemSize(), &foundXLog);
 	ControlFile = (ControlFileData *)
 		ShmemInitStruct("Control File", sizeof(ControlFileData), &foundCFile);
+	XLogCtl = (XLogCtlData *)
+		ShmemInitStruct("XLOG Ctl", XLOGShmemSize(), &foundXLog);
 
-	if (foundXLog || foundCFile)
+	if (foundCFile || foundXLog)
 	{
 		/* both should be present or neither */
-		Assert(foundXLog && foundCFile);
+		Assert(foundCFile && foundXLog);
 		return;
 	}
 
@@ -3658,13 +3659,13 @@ XLOGShmemInit(void)
 	 */
 	allocptr = (char *) TYPEALIGN(ALIGNOF_XLOG_BUFFER, allocptr);
 	XLogCtl->pages = allocptr;
-	memset(XLogCtl->pages, 0, BLCKSZ * XLOGbuffers);
+	memset(XLogCtl->pages, 0, (Size) BLCKSZ * XLOGbuffers);
 
 	/*
 	 * Do basic initialization of XLogCtl shared data. (StartupXLOG will
 	 * fill in additional info.)
 	 */
-	XLogCtl->XLogCacheByte = BLCKSZ * XLOGbuffers;
+	XLogCtl->XLogCacheByte = (Size) BLCKSZ * XLOGbuffers;
 	XLogCtl->XLogCacheBlck = XLOGbuffers - 1;
 	XLogCtl->Insert.currpage = (XLogPageHeader) (XLogCtl->pages);
 	SpinLockInit(&XLogCtl->info_lck);
@@ -5747,7 +5748,7 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 						BACKUP_LABEL_FILE)));
 
 	RemoveOldBackupHistory();
-	
+
 	/*
 	 * Notify archiver that history file may be archived immediately
 	 */
@@ -5899,7 +5900,7 @@ remove_backup_label(void)
 }
 
 
-/* XLog gather-write staffs */
+/* XLog gather-write stuff */
 
 static void
 XLogPageReset(XLogPages *pages)
@@ -5910,12 +5911,12 @@ XLogPageReset(XLogPages *pages)
 static void
 XLogPageWrite(XLogPages *pages, int index)
 {
-	char *page = XLogCtl->pages + index * BLCKSZ;
-	int size = BLCKSZ;
-	int offset = (LogwrtResult.Write.xrecoff - BLCKSZ) % XLogSegSize;
+	char *page = XLogCtl->pages + index * (Size) BLCKSZ;
+	Size size = BLCKSZ;
+	uint32 offset = (LogwrtResult.Write.xrecoff - BLCKSZ) % XLogSegSize;
 
-	if (pages->head + pages->size == page
-		&& pages->offset + pages->size == offset)
+	if (pages->head + pages->size == page &&
+		pages->offset + pages->size == offset)
 	{	/* Pages are continuous. Append new page. */
 		pages->size += size;
 	}
@@ -5932,11 +5933,11 @@ static void
 XLogPageFlush(XLogPages *pages, int index)
 {
 	if (!pages->head)
-	{	/* No needs to write pages. */
+	{	/* Nothing to write */
 		XLogCtl->Write.curridx = index;
 		return;
 	}
-	
+
 	/* Need to seek in the file? */
 	if (openLogOff != pages->offset)
 	{
@@ -5957,8 +5958,9 @@ XLogPageFlush(XLogPages *pages, int index)
 			errno = ENOSPC;
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("could not write to log file %u, segment %u at offset %u: %m",
-						openLogId, openLogSeg, openLogOff)));
+				 errmsg("could not write to log file %u, segment %u length %u at offset %u: %m",
+						openLogId, openLogSeg,
+						(unsigned int) pages->size, openLogOff)));
 	}
 
 	openLogOff += pages->size;
