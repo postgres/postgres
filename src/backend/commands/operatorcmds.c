@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.24 2005/07/14 21:46:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.25 2005/08/22 17:38:20 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -296,20 +296,25 @@ AlterOperatorOwner(List *name, TypeName *typeName1, TypeName *typeName2,
 	 */
 	if (oprForm->oprowner != newOwnerId)
 	{
-		/* Otherwise, must be owner of the existing object */
-		if (!pg_oper_ownercheck(operOid,GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPER,
-						   NameListToString(name));
+		/* Superusers can always do it */
+		if (!superuser())
+		{
+			/* Otherwise, must be owner of the existing object */
+			if (!pg_oper_ownercheck(operOid,GetUserId()))
+				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPER,
+							   NameListToString(name));
 
-		/* Must be able to become new owner */
-		check_is_member_of_role(GetUserId(), newOwnerId);
+			/* Must be able to become new owner */
+			check_is_member_of_role(GetUserId(), newOwnerId);
 
-		/* New owner must have CREATE privilege on namespace */
-		aclresult = pg_namespace_aclcheck(oprForm->oprnamespace, newOwnerId,
-										  ACL_CREATE);
-		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
-					get_namespace_name(oprForm->oprnamespace));
+			/* New owner must have CREATE privilege on namespace */
+			aclresult = pg_namespace_aclcheck(oprForm->oprnamespace,
+											  newOwnerId,
+											  ACL_CREATE);
+			if (aclresult != ACLCHECK_OK)
+				aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+							   get_namespace_name(oprForm->oprnamespace));
+		}
 
 		/*
 		 * Modify the owner --- okay to scribble on tup because it's a

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.166 2005/08/04 01:09:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.167 2005/08/22 17:38:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5307,23 +5307,27 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing)
 		/* skip permission checks when recursing to index or toast table */
 		if (!recursing)
 		{
-			Oid		    namespaceOid = tuple_class->relnamespace;
-			AclResult	aclresult;
+			/* Superusers can always do it */
+			if (!superuser())
+			{
+				Oid		    namespaceOid = tuple_class->relnamespace;
+				AclResult	aclresult;
 
-			/* Otherwise, must be owner of the existing object */
-			if (!pg_class_ownercheck(relationOid,GetUserId()))
-				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
-							   RelationGetRelationName(target_rel));
+				/* Otherwise, must be owner of the existing object */
+				if (!pg_class_ownercheck(relationOid,GetUserId()))
+					aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+								   RelationGetRelationName(target_rel));
 
-			/* Must be able to become new owner */
-			check_is_member_of_role(GetUserId(), newOwnerId);
+				/* Must be able to become new owner */
+				check_is_member_of_role(GetUserId(), newOwnerId);
 
-			/* New owner must have CREATE privilege on namespace */
-			aclresult = pg_namespace_aclcheck(namespaceOid, newOwnerId,
-											  ACL_CREATE);
-			if (aclresult != ACLCHECK_OK)
-				aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
-							   get_namespace_name(namespaceOid));
+				/* New owner must have CREATE privilege on namespace */
+				aclresult = pg_namespace_aclcheck(namespaceOid, newOwnerId,
+												  ACL_CREATE);
+				if (aclresult != ACLCHECK_OK)
+					aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+								   get_namespace_name(namespaceOid));
+			}
 		}
 
 		memset(repl_null, ' ', sizeof(repl_null));

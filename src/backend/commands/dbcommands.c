@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.170 2005/08/12 01:35:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.171 2005/08/22 17:38:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1024,7 +1024,8 @@ AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 		 * NOTE: This is different from other alter-owner checks in 
 		 * that the current user is checked for createdb privileges 
 		 * instead of the destination owner.  This is consistent
-		 * with the CREATE case for databases.
+		 * with the CREATE case for databases.  Because superusers
+		 * will always have this right, we need no special case for them.
 		 */
 		if (!have_createdb_privilege())
 			ereport(ERROR,

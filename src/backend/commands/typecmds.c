@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.79 2005/08/12 01:35:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.80 2005/08/22 17:38:20 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -2067,20 +2067,25 @@ AlterTypeOwner(List *names, Oid newOwnerId)
 	 */
 	if (typTup->typowner != newOwnerId)
 	{
-		/* Otherwise, must be owner of the existing object */
-		if (!pg_type_ownercheck(HeapTupleGetOid(tup),GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
-						   TypeNameToString(typename));
+		/* Superusers can always do it */
+		if (!superuser())
+		{
+			/* Otherwise, must be owner of the existing object */
+			if (!pg_type_ownercheck(HeapTupleGetOid(tup),GetUserId()))
+				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
+							   TypeNameToString(typename));
 
-		/* Must be able to become new owner */
-		check_is_member_of_role(GetUserId(), newOwnerId);
+			/* Must be able to become new owner */
+			check_is_member_of_role(GetUserId(), newOwnerId);
 
-		/* New owner must have CREATE privilege on namespace */
-		aclresult = pg_namespace_aclcheck(typTup->typnamespace, newOwnerId,
-										  ACL_CREATE);
-		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
-						   get_namespace_name(typTup->typnamespace));
+			/* New owner must have CREATE privilege on namespace */
+			aclresult = pg_namespace_aclcheck(typTup->typnamespace,
+											  newOwnerId,
+											  ACL_CREATE);
+			if (aclresult != ACLCHECK_OK)
+				aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+							   get_namespace_name(typTup->typnamespace));
+		}
 
 		/*
 		 * Modify the owner --- okay to scribble on typTup because it's a

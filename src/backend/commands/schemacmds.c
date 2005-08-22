@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.33 2005/07/14 21:46:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.34 2005/08/22 17:38:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -315,7 +315,8 @@ AlterSchemaOwner(const char *name, Oid newOwnerId)
 		 * NOTE: This is different from other alter-owner checks in 
 		 * that the current user is checked for create privileges 
 		 * instead of the destination owner.  This is consistent
-		 * with the CREATE case for schemas.
+		 * with the CREATE case for schemas.  Because superusers
+		 * will always have this right, we need no special case for them.
 		 */
 		aclresult = pg_database_aclcheck(MyDatabaseId, GetUserId(),
 										 ACL_CREATE);
