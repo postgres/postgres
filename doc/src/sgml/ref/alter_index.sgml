@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_index.sgml,v 1.5 2005/03/14 00:19:36 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_index.sgml,v 1.6 2005/08/22 19:39:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -20,13 +20,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER INDEX <replaceable class="PARAMETER">name</replaceable> <replaceable class="PARAMETER">action</replaceable> [, ... ]
 ALTER INDEX <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
-
-where <replaceable class="PARAMETER">action</replaceable> is one of:
-
-    OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
-    SET TABLESPACE <replaceable class="PARAMETER">indexspace_name</replaceable>
+ALTER INDEX <replaceable class="PARAMETER">name</replaceable> SET TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -40,11 +35,11 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
   <variablelist>
 
    <varlistentry>
-    <term><literal>OWNER</literal></term>
+    <term><literal>RENAME</literal></term>
     <listitem>
      <para>
-      This form changes the owner of the index to the
-      specified user.  This can only be done by a superuser.
+      The <literal>RENAME</literal> form changes the name of the index. 
+      There is no effect on the stored data.
      </para>
     </listitem>
    </varlistentry>
@@ -61,22 +56,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
     </listitem>
    </varlistentry>
 
-   <varlistentry>
-    <term><literal>RENAME</literal></term>
-    <listitem>
-     <para>
-      The <literal>RENAME</literal> form changes the name of the index. 
-	  There is no effect on the stored data.
-     </para>
-    </listitem>
-   </varlistentry>
-
   </variablelist>
-  </para>
-
-  <para>
-   All the actions except <literal>RENAME</literal> can be combined into
-   a list of multiple alterations to apply in parallel.
   </para>
 
  </refsect1>
@@ -90,28 +70,17 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       <term><replaceable class="PARAMETER">name</replaceable></term>
       <listitem>
        <para>
-	The name (possibly schema-qualified) of an existing index to
-	alter.
+        The name (possibly schema-qualified) of an existing index to
+        alter.
        </para>
       </listitem>
      </varlistentry>
-
 
      <varlistentry>
       <term><replaceable class="PARAMETER">new_name</replaceable></term>
       <listitem>
        <para>
-	New name for the index.
-       </para>
-      </listitem>
-     </varlistentry>
-
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER">new_owner</replaceable></term>
-      <listitem>
-       <para>
-	The user name of the new owner of the index.
+        New name for the index.
        </para>
       </listitem>
      </varlistentry>
@@ -120,7 +89,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       <term><replaceable class="PARAMETER">tablespace_name</replaceable></term>
       <listitem>
        <para>
-	The tablespace name to which the index will be moved.
+        The tablespace to which the index will be moved.
        </para>
       </listitem>
      </varlistentry>
@@ -139,6 +108,13 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
    </para>
 
    <para>
+    There was formerly an <command>ALTER INDEX OWNER</> variant, but
+    this is now ignored (with a warning).  An index cannot have an owner
+    different from its table's owner.  Changing the table's owner
+    automatically changes the index as well.
+   </para>
+
+   <para>
     Changing any part of a system catalog index is not permitted.
    </para>
  </refsect1>
@@ -153,7 +129,7 @@ ALTER INDEX distributors RENAME TO suppliers;
   </para>
 
   <para> 
-	To move a index to a different tablespace:
+   To move an index to a different tablespace:
 <programlisting>
 ALTER INDEX distributors SET TABLESPACE fasttablespace;
 </programlisting>

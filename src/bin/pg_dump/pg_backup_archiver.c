@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.112 2005/08/12 01:35:59 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.113 2005/08/22 19:40:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2305,14 +2305,9 @@ _getObjectDescription(PQExpBuffer buf, TocEntry *te, ArchiveHandle *AH)
 		strcmp(type, "SEQUENCE") == 0)
 		type = "TABLE";
 
-	/* We assume CONSTRAINTs are always pkey/unique indexes */
-	if (strcmp(type, "CONSTRAINT") == 0)
-		type = "INDEX";
-
 	/* objects named by a schema and name */
 	if (strcmp(type, "CONVERSION") == 0 ||
 		strcmp(type, "DOMAIN") == 0 ||
-		strcmp(type, "INDEX") == 0 ||
 		strcmp(type, "TABLE") == 0 ||
 		strcmp(type, "TYPE") == 0)
 	{
@@ -2473,12 +2468,10 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 		strlen(te->owner) > 0 && strlen(te->dropStmt) > 0)
 	{
 		if (strcmp(te->desc, "AGGREGATE") == 0 ||
-			strcmp(te->desc, "CONSTRAINT") == 0 ||
 			strcmp(te->desc, "CONVERSION") == 0 ||
 			strcmp(te->desc, "DATABASE") == 0 ||
 			strcmp(te->desc, "DOMAIN") == 0 ||
 			strcmp(te->desc, "FUNCTION") == 0 ||
-			strcmp(te->desc, "INDEX") == 0 ||
 			strcmp(te->desc, "OPERATOR") == 0 ||
 			strcmp(te->desc, "OPERATOR CLASS") == 0 ||
 			strcmp(te->desc, "SCHEMA") == 0 ||
@@ -2497,8 +2490,10 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 		}
 		else if (strcmp(te->desc, "CAST") == 0 ||
 				 strcmp(te->desc, "CHECK CONSTRAINT") == 0 ||
+				 strcmp(te->desc, "CONSTRAINT") == 0 ||
 				 strcmp(te->desc, "DEFAULT") == 0 ||
 				 strcmp(te->desc, "FK CONSTRAINT") == 0 ||
+				 strcmp(te->desc, "INDEX") == 0 ||
 				 strcmp(te->desc, "PROCEDURAL LANGUAGE") == 0 ||
 				 strcmp(te->desc, "RULE") == 0 ||
 				 strcmp(te->desc, "TRIGGER") == 0)
