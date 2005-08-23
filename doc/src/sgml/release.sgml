@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.350 2005/08/23 21:17:15 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.351 2005/08/23 21:25:56 momjian Exp $
 -->
 
 <appendix id="release">
@@ -1719,57 +1719,48 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.350 2005/08/23 21:17:15 momjian
 
       <listitem>
        <para>
-        <filename>/contrib/pgcrypto</> - Remove support for
-        libmhash/libmcrypt (Marko Kreen)
+        <filename>/contrib/pgcrypto</> (Marko Kreen)
        </para>
-      </listitem>
 
-      <listitem>
-       <para>
-        <filename>/contrib/pgcrypto</> - Add support for new encryption
-        methods (Marko Kreen)
-       </para>
-       <para>
-        <itemizedlist>
+       <itemizedlist>
   
-         <listitem>
-          <para>
-           3DES
-          </para>
-         </listitem>
+        <listitem>
+         <para>
+          Implemention of OpenPGP symmetric-key and public-key encryption
+         </para>
+         <para>
+          Supported are both RSA and Elgamal public-key algorithms.
+         </para>
+        </listitem>
 
-         <listitem>
-          <para>
-           AES
-          </para>
-         </listitem>
+        <listitem>
+         <para>
+          Standalone build: include SHA256/384/512 hashes, Fortuna PRNG
+         </para>
+        </listitem>
 
-         <listitem>
-          <para>
-           Fortuna PRNG
-          </para>
-         </listitem>
+        <listitem>
+         <para>
+          OpenSSL build: support 3DES, use internal AES with OpenSSL < 0.9.7
+         </para>
+        </listitem>
 
-         <listitem>
-          <para>
-           PGP
-          </para>
-         </listitem>
+        <listitem>
+         <para>
+          Take build parameters (OpenSSL, zlib) from <filename>/configure</>. result
+         </para>
+         <para>
+          No need to edit the <filename>Makefile</> anymore.
+         </para>
+        </listitem>
 
-         <listitem>
-          <para>
-           RSA
-          </para>
-         </listitem>
+        <listitem>
+         <para>
+          Remove support for <filename>libmhash</> and <filename>libmcrypt</> (Marko Kreen)
+         </para>
+        </listitem>
 
-         <listitem>
-          <para>
-           SHA2 (SHA256, SHA384, SHA512)
-          </para>
-         </listitem>
-
-        </itemizedlist>
-       </para>
+       </itemizedlist>
       </listitem>
 
      </itemizedlist>
