@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.351 2005/08/23 21:25:56 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.352 2005/08/23 23:31:52 momjian Exp $
 -->
 
 <appendix id="release">
@@ -597,7 +597,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.351 2005/08/23 21:25:56 momjian
        </para>
        <para>
         Using <command>ALTER USER</> and <command>ALTER DATABASE</>,
-        limits can not be enforced on the maximum number of users who
+        limits can now be enforced on the maximum number of users who
         can connect as as a specific uesr or to a specific database.
         Setting the limit to zero disables user or database connections.
        </para>
@@ -735,7 +735,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.351 2005/08/23 21:25:56 momjian
   
       <listitem>
        <para>
-        Allow <command>TRUNCATE</> to truncate multiple files in a
+        Allow <command>TRUNCATE</> to truncate multiple tables in a
         single command (Alvaro)
        </para>
        <para>
@@ -1726,7 +1726,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.351 2005/08/23 21:25:56 momjian
   
         <listitem>
          <para>
-          Implemention of OpenPGP symmetric-key and public-key encryption
+          Implemention of OpenPGP symmetric-key and public-key encryption.
          </para>
          <para>
           Supported are both RSA and Elgamal public-key algorithms.
@@ -1735,19 +1735,19 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.351 2005/08/23 21:25:56 momjian
 
         <listitem>
          <para>
-          Standalone build: include SHA256/384/512 hashes, Fortuna PRNG
+          Standalone build: include SHA256/384/512 hashes, Fortuna PRNG.
          </para>
         </listitem>
 
         <listitem>
          <para>
-          OpenSSL build: support 3DES, use internal AES with OpenSSL < 0.9.7
+          OpenSSL build: support 3DES, use internal AES with OpenSSL &lt; 0.9.7.
          </para>
         </listitem>
 
         <listitem>
          <para>
-          Take build parameters (OpenSSL, zlib) from <filename>/configure</>. result
+          Take build parameters (OpenSSL, zlib) from <filename>./configure</> result.
          </para>
          <para>
           No need to edit the <filename>Makefile</> anymore.
@@ -1756,7 +1756,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.351 2005/08/23 21:25:56 momjian
 
         <listitem>
          <para>
-          Remove support for <filename>libmhash</> and <filename>libmcrypt</> (Marko Kreen)
+          Remove support for <filename>libmhash</> and <filename>libmcrypt</>.
          </para>
         </listitem>
 
