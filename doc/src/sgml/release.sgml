@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.344 2005/08/23 12:47:30 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.345 2005/08/23 14:54:06 momjian Exp $
 -->
 
 <appendix id="release">
@@ -52,14 +52,22 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.344 2005/08/23 12:47:30 momjian
 
      <varlistentry>
       <term>
-       Add in-memory bitmaps which allows multiple indexes to be merged in a
-       single query (Tom)
+       Add in-memory bitmaps which allows multiple indexes to be merged
+       in a single query (Tom)
       </term>
 
       <listitem>
        <para>
-        This allows multiple indexes to be combined to access a single
-        table.
+        In previous releases, only a single index could be used to do
+        lookups on a table. With this feature, if a query has WHERE
+        tab.col1 = 4 and tab.col2 = 9, and there is no multicolumn index
+        on col1 and col2, but there is an index on col1 and another on
+        col2, it is possible to do lookups on the col1 index and the
+        col2 index and combine them in memory to do heap lookups on rows
+        matching both the col1 and col2 restrictions. This is very
+        useful in environments that have a lot of unstructured queries
+        where it is impossible to create indexes that match all possible
+        access conditions.
        </para>
       </listitem>
      </varlistentry>
@@ -72,25 +80,65 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.344 2005/08/23 12:47:30 momjian
       <listitem>
        <para>
         Two-phase commit allows transactions to be "prepared" on several
-        computers, and once all computers have successfully prepared their
-        transactions (and can not be rolled back) all transactions can be
-        committed. Even if a machine crashes after a prepare, the prepared
-        transaction can be committed after it is restarted. New syntax
-        includes PREPARE TRANSACTION and COMMIT/ROLLBACK PREPARED. A new
-        system view pg_prepared_xacts has also been added.
+        computers, and once all computers have successfully prepared
+        their transactions (none failed), all transactions can be
+        committed. Even if a machine crashes after a prepare, the
+        prepared transaction can be committed after it is restarted. New
+        syntax includes PREPARE TRANSACTION and COMMIT/ROLLBACK
+        PREPARED. A new system view pg_prepared_xacts has also been
+        added.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
       <term>
-       Replace pg_shadow and pg_group by new role-capable catalogs pg_authid
-       and pg_auth_members.                                                   
+       Create a new role system that replaces users and groups 
+       (Stephen Frost)
       </term>
 
       <listitem>
        <para>
-        Add SET ROLE (Stephen Frost)
+        Roles are a combination of users and groups. Like users, they
+        can have login capability, and like groups, a role can have
+        other roles as members. Roles basically remove the distinction
+        between users and groups. For example, a role can:
+       </para>
+
+       <itemizedlist>
+  
+        <listitem>
+         <para>
+           Have optionally have login capability
+         </para>
+        </listitem>
+
+        <listitem>
+         <para>
+          Own objects
+         </para>
+        </listitem>
+
+        <listitem>
+         <para>
+          Inherit permission from other member roles
+         </para>
+        </listitem>
+
+        <listitem>
+         <para>
+          Switch to another member role using SET ROLE
+         </para>
+        </listitem>
+
+       </itemizedlist>
+       <para>
+        So, once a user logs into a role, she inherits capabilities of
+        the login role plus any inherited roles, and can use SET ROLE to
+        switch to other member roles. This change also replaces
+        pg_shadow and pg_group by with new role-capable catalogs
+        pg_authid and pg_auth_members. The old tables are redefined as
+        views on the new role tables.
        </para>
       </listitem>
      </varlistentry>
@@ -102,7 +150,9 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.344 2005/08/23 12:47:30 momjian
 
       <listitem>
        <para>
-        Add SET ROLE (Stephen Frost)
+        Moving pgautovacuum from /contrib allows it to be automatically
+        started and stoped in sync with the database server, and allows
+        for pgautovacuum to be configured from postgresql.conf.
        </para>
       </listitem>
      </varlistentry>
@@ -114,10 +164,11 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.344 2005/08/23 12:47:30 momjian
 
       <listitem>
        <para>
-        While PostgreSQL's MVCC locking allows SELECT to never be blocked by writers
-        and therefore does not need shared row locks for typical operations,
-        shared locks are useful for applications that require shared row locking,
-        and to reduce the locking requirements to maintain referential integrity.
+        While PostgreSQL's MVCC locking allows SELECT to never be
+        blocked by writers and therefore does not need shared row locks
+        for typical operations, shared locks are useful for applications
+        that require shared row locking, and to reduce the locking
+        requirements to maintain referential integrity.
        </para>
       </listitem>
      </varlistentry>
@@ -159,7 +210,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.344 2005/08/23 12:47:30 momjian
 
      <listitem>
       <para>
-       Cause input of a zero-length string ('') for float4/float8/oid to throw
+       Cause input of a zero-length strings ('') for float4/float8/oid to throw
        an error, rather than treat it as a zero (Neil)
       </para>
       <para>
@@ -170,11 +221,11 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.344 2005/08/23 12:47:30 momjian
 
      <listitem>
       <para>
-       Make default_with_oids default to false (Neil)
+       Change the default for default_with_oids to false (Neil)
       </para>
       <para>
        With this option set to false, user-created tables no 
-       have an the usually-invisible OID column unless WITH OIDS
+       longer have an the usually-invisible OID column unless WITH OIDS
        is specified in CREATE TABLE. Though OIDs have existed in all previous
        releases of PostgreSQL, their use is limited because they are only four
        bytes long and the counter is unique across all installed databases.
@@ -185,25 +236,49 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.344 2005/08/23 12:47:30 momjian
 
      <listitem>
       <para>
-       Add E'' syntax so eventually normal strings can treat backslashes
+       Add E'' syntax so eventually ordinary strings can treat backslashes
        literally (Bruce)
       </para>
       <para>
-       Currently PostgreSQL considers a backslash to be a special character
-       so the character after the backslash is treated specially. While this
-       allows easy entry of special values, it is non-standard and makes
-       porting of application from other databases more difficult. For this
-       reason, the PostgreSQL project is moving to remove the special meaning
-       of backslashes in strings, and allow only an E preceeding a string to
-       turn on the special handling of backslashes. For this reason, this
-       release adds several new GUC variables related to backslash
-       processing:
-
-        escape_string_warning - warn about backslashes in non-E strings
-        escape_string_syntax - does this release support the E'' syntax?
-        standard_conforming_strings - does this release treat backslashes 
-        literally in non-E strings
+       Currently PostgreSQL processes a backslash in a string
+       as preceeding a character that requires special processing, e.g.
+       \n or \010.  While this allows easy entry of special values, it is
+       non-standard and makes porting of application from other
+       databases more difficult. For this reason, the PostgreSQL project
+       is planning to remove the special meaning of backslashes in
+       strings. For backward compatibility and for users who want
+       special backslash procesing, a new string type will be created.
+       This new string type is formed by having an E preceed
+       the single quote that starts the string, e.g. E'hi\n'.
+       While this release does not change the handling of backslashes in
+       strings, it does add several new GUC variables to help users
+       migrate applications for future releases:
       </para>
+
+      <itemizedlist>
+  
+       <listitem>
+        <para>
+         escape_string_warning - warn about backslashes in ordinary
+         (non-E) strings
+         </para>
+        </listitem>
+
+        <listitem>
+         <para>
+          escape_string_syntax - does this release support the E'' syntax?
+         </para>
+        </listitem>
+
+        <listitem>
+         <para>
+          standard_conforming_strings - does this release treat
+          backslashes literally in normal strings?
+         </para>
+        </listitem>
+
+      </itemizedlist>
+
       <para>
        The last two values are read-only and should assist in the porting of
        applications. Applications can retrieve these values to know how
@@ -244,8 +319,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.344 2005/08/23 12:47:30 momjian
        (Tom)
       </para>
       <para>
-       These have never been documented and complicated the use of modulus
-       (%) with negative numbers.
+       These have never been documented and complicated the use of the modulus
+       operator (%) with negative numbers.
       </para>
      </listitem>
 
@@ -274,7 +349,6 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.344 2005/08/23 12:47:30 momjian
       <listitem>
        <para>
         Improve rtree index capabilities and performance (Neil)
-        Replaced by contrib?
        </para>
       </listitem>
 
@@ -286,14 +360,13 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.344 2005/08/23 12:47:30 momjian
 
       <listitem>
        <para>
-        Overhaul internal API in several areas to improve performance
+        Overhaul internal API in several areas
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Change WAL CRC records from 64bit to 32bit to improve performance
-        (Tom)
+        Change WAL CRC records from 64bit to 32bit (Tom)
        </para>
       </listitem>
 
@@ -326,8 +399,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.344 2005/08/23 12:47:30 momjian
 
       <listitem>
        <para>
-        Allow concurrent GIST index access, greatly improving performance
-        (Teodor, Oleg)
+        Allow concurrent GIST index access (Teodor, Oleg)
        </para>
       </listitem>
 
@@ -340,7 +412,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.344 2005/08/23 12:47:30 momjian
         PostgreSQL writes a complete copy of each database disk page to WAL
         the first time it is modified after a checkpoint. This turns off that
         functionality for users with battery-backed disk caches where partial
-        page writes can not happen.
+        page writes cannot happen.
        </para>
       </listitem>
 
@@ -388,7 +460,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.344 2005/08/23 12:47:30 momjian
   
       <listitem>
        <para>
-        Prevent problems due to transaction ID wraparound (Tom)
+        Prevent problems due to transaction ID (XID) wraparound (Tom)
        </para>
        <para>
         This was accomplished by warning the transaction counter is 
@@ -400,8 +472,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.344 2005/08/23 12:47:30 momjian
 
       <listitem>
        <para>
-        Fix problem of OID wraparound conflicting with existing system objects
-        (Tom)
+        Fix problem of object ID (OID) wraparound conflicting 
+	with existing system objects (Tom)
        </para>
       </listitem>
   
@@ -439,24 +511,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.344 2005/08/23 12:47:30 momjian
 
       <listitem>
        <para>
-        Allow Kerberos name and user name case sensitivity to be specified from
-        postgresql.conf (Magnus)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add log_line_prefix options for millisecond timestamps (%m) and 
-        remote host (%h) (Ed L.)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add WAL logging for GIST indexes (Teodor, Oleg)
-       </para>
-       <para>
-        GIST indexes now work for online backup and crash recovery
+        Allow Kerberos name and user name case sensitivity to be
+        specified in postgresql.conf (Magnus)
        </para>
       </listitem>
 
@@ -473,24 +529,46 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.344 2005/08/23 12:47:30 momjian
 
       <listitem>
        <para>
-        Remove old *.backup files when we do pg_stop_backup() (Bruce)
-       </para>
-       <para>
-        This prevents a large number of *.backup files from existing in 
-         pg_xlog/.
+        Add log_line_prefix options for millisecond timestamps (%m) and 
+        remote host (%h) (Ed L.)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add GUC variables to control keep-alive times for idle, interval, and
-        count (Oliver Jowett)
+        Add WAL logging for GIST indexes (Teodor, Oleg)
+       </para>
+       <para>
+        GIST indexes now work for point-in-time recovery and crash recovery
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Remove old *.backup files when we do pg_stop_backup() (Bruce)
+       </para>
+       <para>
+        This prevents a large number of *.backup files from existing in 
+         /seemspg_xlog.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add GUC variables to control TCP/IP keep-alive times for idle,
+        interval, and count (Oliver Jowett)
        </para>
       </listitem>
 
       <listitem>
        <para>
         Add per-user and per-database connection limits (Petr Jelinek)
+       </para>
+       <para>
+        Using ALTER USER and ALTER DATABASE, limits can not be enforced
+        on the maximum number of users who can connect as as a specific
+        uesr or to a specific database. Setting the limit to zero
+        disables user or database connections.
        </para>
       </listitem>
 
@@ -513,12 +591,20 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.344 2005/08/23 12:47:30 momjian
         Fix HAVING without aggregate functions and no GROUP BY to behave 
         as if the main query returns a single group (Tom)
        </para>
+       <para>
+        Previously, such a case would treat the HAVING clause as WHERE
+        clause.
       </listitem>
 
       <listitem>
        <para>
         Add USING clause to allow additional tables to be specified to DELETE 
         (Euler Taveira de Oliveira)
+       </para>
+       <para>
+        In prior releases, there was no clear method for specifying
+        additional tables to be used for joins in a DELETE statement.
+        UPDATE already has a FROM clause for this purpose.
        </para>
       </listitem>
 
@@ -527,7 +613,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.344 2005/08/23 12:47:30 momjian
         Add support for \x hex escapes in backend and ecpg strings (Bruce)
        </para>
        <para>
-        This supports the typical C standard \x escape.  Octal was already 
+        This is just like the standar C \x escape syntax.  Octal was already
         supported.  
        </para>
       </listitem>
@@ -537,10 +623,10 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.344 2005/08/23 12:47:30 momjian
         Add BETWEEN SYMMETRIC query syntax (Pavel Stehule)
        </para>
        <para>
-        This feature allows BETWEEN comparisons without requiring the first
-        value to be less than the second.  For example, 2 BETWEEN [ASYMMETRIC] 3 AND 1
-        returns false, while 2 BETWEEN SYMMETRIC 3 AND 1 returns true.  BETWEEN
-        ASYMMETRIC was already supported.
+        This feature allows BETWEEN comparisons without requiring the
+        first value to be less than the second. For example, 2 BETWEEN
+        [ASYMMETRIC] 3 AND 1 returns false, while 2 BETWEEN SYMMETRIC 3
+        AND 1 returns true. BETWEEN ASYMMETRIC was already supported.
        </para>
       </listitem>
 
@@ -551,7 +637,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.344 2005/08/23 12:47:30 momjian
        <para>
         While SET statement_timeout allows a query taking over a certain
         amount of time to be cancelled, the NO WAIT option allows a query to
-        be canceled as soon as a SELECT ... FOR UPDATE/SHARE can not
+        be canceled as soon as a SELECT ... FOR UPDATE/SHARE cannot
         immediately acquire a row lock.
        </para>
       </listitem>
@@ -1415,15 +1501,6 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.344 2005/08/23 12:47:30 momjian
       <listitem>
        <para>
         Enhance pg_config to be able to report more build-time values (Tom)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Replace rtree index code with code from /contrib/rtree_gist (Tom)
-       </para>
-       <para>
-        The improved capabilities of GIST indexes made this possible.
        </para>
       </listitem>
 
