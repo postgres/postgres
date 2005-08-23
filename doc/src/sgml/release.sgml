@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.342 2005/08/23 12:14:33 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.343 2005/08/23 12:46:35 momjian Exp $
 -->
 
 <appendix id="release">
@@ -23,11 +23,11 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.342 2005/08/23 12:14:33 momjian
     <variablelist>
 
      <varlistentry>
-       <term>
+      <term>
        Improve concurrent access to the shared buffer cache (Tom)
-       </term>
+      </term>
 
-       <listitem>
+      <listitem>
        <para>
         This was accomplished by eliminating global locks and using a clock
        sweep algorithm to find free buffers.
@@ -37,59 +37,87 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.342 2005/08/23 12:14:33 momjian
 
      <varlistentry>
       <term>
-        Allow indexes to be used for MIN/MAX (Tom)
+       Allow indexes to be used for MIN/MAX (Tom)
       </term>
  
       <listitem>
-        <para>
+       <para>
         In previous releases, the only way to use index for MIN/MAX was to rewrite
-         the query as SELECT col FROM tab ORDER BY col LIMIT 1. This now happens
+        the query as SELECT col FROM tab ORDER BY col LIMIT 1. This now happens
         automatically.
-        </para> 
+       </para> 
       </listitem>
      </varlistentry>
 
      <varlistentry>
       <term>
-        Add in-memory bitmaps which allows multiple indexes to be merged in a
-        single query (Tom)
-       </term>
+       Add in-memory bitmaps which allows multiple indexes to be merged in a
+       single query (Tom)
+      </term>
 
-       <listitem>
+      <listitem>
        <para>
         This allows multiple indexes to be combined to access a single
         table.
-        </para>
+       </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
       <term>
-       </term>
-
-       <listitem>
+       Add two-phase commit (Heikki Linnakangas, Alvaro, Tom)
+      </term>
+      
+      <listitem>
        <para>
-        </para>
+        Two-phase commit allows transactions to be "prepared" on several
+        computers, and once all computers have successfully prepared their
+        transactions (and can not be rolled back) all transactions can be
+        committed. Even if a machine crashes after a prepare, the prepared
+        transaction can be committed after it is restarted. New syntax
+        includes PREPARE TRANSACTION and COMMIT/ROLLBACK PREPARED. A new
+        system view pg_prepared_xacts has also been added.
+       </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
       <term>
-       </term>
+       Replace pg_shadow and pg_group by new role-capable catalogs pg_authid
+       and pg_auth_members.                                                   
+      </term>
 
-       <listitem>
+      <listitem>
        <para>
-        </para>
+        Add SET ROLE (Stephen Frost)
+       </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
       <term>
-       </term>
+       Move /contrib/pgautovacuum into the main server (Alvaro Herrera)
+      </term>
 
-       <listitem>
+      <listitem>
        <para>
-        </para>
+        Add SET ROLE (Stephen Frost)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       Add shared row level locks using SELECT ... FOR SHARE (Alvaro)
+      </term>
+
+      <listitem>
+       <para>
+        While PostgreSQL's MVCC locking allows SELECT to never be blocked by writers
+        and therefore does not need shared row locks for typical operations,
+        shared locks are useful for applications that require shared row locking,
+        and to reduce the locking requirements to maintain referential integrity.
+       </para>
       </listitem>
      </varlistentry>
 
@@ -151,6 +179,50 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.342 2005/08/23 12:14:33 momjian
        bytes long and the counter is unique across all installed databases.
        The preferred way of uniquely identifying rows is via sequences and
        SERIAL, which has been supported since PostgreSQL 6.4.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add E'' syntax so eventually normal strings can treat backslashes
+       literally (Bruce)
+      </para>
+      <para>
+       Currently PostgreSQL considers a backslash to be a special character
+       so the character after the backslash is treated specially. While this
+       allows easy entry of special values, it is non-standard and makes
+       porting of application from other databases more difficult. For this
+       reason, the PostgreSQL project is moving to remove the special meaning
+       of backslashes in strings, and allow only an E preceeding a string to
+       turn on the special handling of backslashes. For this reason, this
+       release adds several new GUC variables related to backslash
+       processing:
+
+        escape_string_warning - warn about backslashes in non-E strings
+        escape_string_syntax - does this release support the E'' syntax?
+        standard_conforming_strings - does this release treat backslashes 
+        literally in non-E strings
+      </para>
+      <para>
+       The last two values are read-only and should assist in the porting of
+       applications. Applications can retrieve these values to know how
+       backslashes are processed. In a later release,
+       standard_conforming_strings will be true, meaning backslashes will be
+       treated literally in non-E strings. To prepare for this change, use
+       E'' strings in places that need special backslash processing, and turn
+       on escape_string_warning to find additional strings that need to be
+       converted to use E''.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Make REINDEX DATABASE reindex all indexes in the database (Tom)
+      </para>
+      <para>
+       The old behavior of REINDEX database reindexed only system tables.
+       This new behavior seems more intuitive. A new command REINDEX SYSTEM
+       allows for reindexing just the system tables.
       </para>
      </listitem>
 
@@ -327,6 +399,13 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.342 2005/08/23 12:14:33 momjian
 
       <listitem>
        <para>
+        Fix problem of OID wraparound conflicting with existing system objects
+        (Tom)
+       </para>
+      </listitem>
+  
+      <listitem>
+       <para>
         Add warning about the need to increase "max_fsm_relations" and
         "max_fsm_pages" during VACUUM (Ron Mayer)
        </para>
@@ -360,7 +439,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.342 2005/08/23 12:14:33 momjian
       <listitem>
        <para>
         Allow Kerberos name and user name case sensitivity to be specified from
-        postgresql.conf
+        postgresql.conf (Magnus)
        </para>
       </listitem>
 
@@ -403,25 +482,6 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.342 2005/08/23 12:14:33 momjian
 
       <listitem>
        <para>
-        Replace pg_shadow and pg_group by new role-capable catalogs pg_authid
-        and pg_auth_members.                                                   
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add SET ROLE (Stephen Frost)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Move /contrib/pgautovacuum into the main server (Alvaro Herrera)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Add GUC variables to control keep-alive times for idle, interval, and
         count (Oliver Jowett)
        </para>
@@ -433,13 +493,6 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.342 2005/08/23 12:14:33 momjian
        </para>
       </listitem>
 
-      <listitem>
-       <para>
-        Fix problem of OID wraparound conflicting with existing system objects
-        (Tom)
-       </para>
-      </listitem>
-  
      </itemizedlist>
     </sect3>
   
@@ -480,18 +533,6 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.342 2005/08/23 12:14:33 momjian
 
       <listitem>
        <para>
-        Add shared row level locks using SELECT ... FOR SHARE (Alvaro)
-       </para>
-       <para>
-        While PostgreSQL's MVCC locking allows SELECT to never be blocked by writers
-        and therefore does not need shared row locks for typical operations,
-        shared locks are useful for applications that require shared row locking,
-        and to reduce the locking requirements to maintain referential integrity.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Add BETWEEN SYMMETRIC query syntax (Pavel Stehule)
        </para>
        <para>
@@ -499,39 +540,6 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.342 2005/08/23 12:14:33 momjian
         value to be less than the second.  For example, 2 BETWEEN [ASYMMETRIC] 3 AND 1
         returns false, while 2 BETWEEN SYMMETRIC 3 AND 1 returns true.  BETWEEN
         ASYMMETRIC was already supported.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add E'' syntax so eventually normal strings can treat backslashes
-        literally (Bruce)
-       </para>
-       <para>
-        Currently PostgreSQL considers a backslash to be a special character
-        so the character after the backslash is treated specially. While this
-        allows easy entry of special values, it is non-standard and makes
-        porting of application from other databases more difficult. For this
-        reason, the PostgreSQL project is moving to remove the special meaning
-        of backslashes in strings, and allow only an E preceeding a string to
-        turn on the special handling of backslashes. For this reason, this
-        release adds several new GUC variables related to backslash
-        processing:
- 
-         escape_string_warning - warn about backslashes in non-E strings
-         escape_string_syntax - does this release support the E'' syntax?
-         standard_conforming_strings - does this release treat backslashes 
-         literally in non-E strings
-       </para>
-       <para>
-        The last two values are read-only and should assist in the porting of
-        applications. Applications can retrieve these values to know how
-        backslashes are processed. In a later release,
-        standard_conforming_strings will be true, meaning backslashes will be
-        treated literally in non-E strings. To prepare for this change, use
-        E'' strings in places that need special backslash processing, and turn
-        on escape_string_warning to find additional strings that need to be
-        converted to use E''.
        </para>
       </listitem>
 
@@ -675,22 +683,9 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.342 2005/08/23 12:14:33 momjian
 
       <listitem>
        <para>
-        Add two-phase commit (Heikki Linnakangas, Alvaro, Tom)
- 
-        Two-phase commit allows transactions to be "prepared" on several
-        computers, and once all computers have successfully prepared their
-        transactions (and can not be rolled back) all transactions can be
-        committed. Even if a machine crashes after a prepare, the prepared
-        transaction can be committed after it is restarted. New syntax
-        includes PREPARE TRANSACTION and COMMIT/ROLLBACK PREPARED. A new
-        system view pg_prepared_xacts has also been added.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Have initdb create new standard database called "postgres" and convert utilities
-        to use "postgres" rather than "template1" for standard lookups (Dave)
+        Have initdb create new standard database called "postgres" and
+        convert utilities to use "postgres" rather than "template1" for
+        standard lookups (Dave)
        </para>
        <para>
         In prior releases, template1 was used both as a default
@@ -700,17 +695,6 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.342 2005/08/23 12:14:33 momjian
         the template database. With this change, the default connection
         database is now 'postgres', meaning it is much less likely
         someone will be using template1 during CREATE DATABASE.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Make REINDEX DATABASE reindex all indexes in the database (Tom)
-       </para>
-       <para>
-        The old behavior of REINDEX database reindexed only system tables.
-        This new behavior seems more intuitive. A new command REINDEX SYSTEM
-        allows for reindexing just the system tables.
        </para>
       </listitem>
 
@@ -960,7 +944,9 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.342 2005/08/23 12:14:33 momjian
       <listitem>
        <para>
         Change pg_stat_* views to show TOAST tables (Tom)
-  
+       </para>
+      </listitem>
+
      </itemizedlist>
     </sect3>
   
@@ -1388,7 +1374,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.342 2005/08/23 12:14:33 momjian
 
       <listitem>
        <para>
-        Streamline the passing information within the server, the optimizer,
+        Streamline the passing of information within the server, the optimizer,
         and the lock system (Tom)
        </para>
       </listitem>
