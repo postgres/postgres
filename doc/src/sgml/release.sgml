@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.338 2005/08/23 02:57:07 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.339 2005/08/23 11:32:33 momjian Exp $
 -->
 
 <appendix id="release">
@@ -36,7 +36,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.338 2005/08/23 02:57:07 momjian
    </sect2>
  
    <sect2>
-    <title>Migration to version 8.0</title>
+    <title>Migration to version 8.1</title>
                                        
     <para>
      A dump/restore using <application>pg_dump</application> is
@@ -58,6 +58,16 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.338 2005/08/23 02:57:07 momjian
  
       <listitem>
        <para>
+        Change add_missing_from to 'false'
+       </para>
+       <para>
+        Generate an error if a table used in a query without a FROM reference (Neil)
+        No more SELECT pg_class.*;
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Cause input of a zero-length string ('') for float4/float8/oid to throw
         an error, rather than treat it as a zero (Neil)
        </para>
@@ -67,6 +77,21 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.338 2005/08/23 02:57:07 momjian
        </para>
       </listitem>
  
+      <listitem>
+       <para>
+        Make default_with_oids default to false (Neil)
+       </para>
+       <para>
+        With this option set to false, user-created tables no 
+        have an the usually-invisible OID column unless WITH OIDS
+        is specified in CREATE TABLE. Though OIDs have existed in all previous
+        releases of PostgreSQL, their use is limited because they are only four
+        bytes long and the counter is unique across all installed databases.
+        The preferred way of uniquely identifying rows is via sequences and
+        SERIAL, which has been supported since PostgreSQL 6.4.
+       </para>
+      </listitem>
+
       <listitem>
        <para>
         In psql, treat unquoted \{digit}+ sequences as octal (Bruce)
@@ -146,7 +171,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.338 2005/08/23 02:57:07 momjian
        </para>
        <para>
         In previous releases, the only way to use index for MIN/MAX was to rewrite
-        the query as SELECT col FROM tab ORDER BY col LIMIT 1.  This not happens
+        the query as SELECT col FROM tab ORDER BY col LIMIT 1. This now happens
         automatically.
        </para>
       </listitem>
@@ -157,7 +182,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.338 2005/08/23 02:57:07 momjian
         single query (Tom)
        </para>
        <para>
-        Multiple AND and ORs
+        This allows multiple indexes to be combined to access a single
+        table.
        </para>
       </listitem>
 
@@ -165,7 +191,17 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.338 2005/08/23 02:57:07 momjian
        <para>
         Change WAL CRC records from 64bit to 32bit to improve performance
         (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Prevent writing large empty gaps in WAL pages (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Allow non-consecutive index columns to be used in a multi-column index
         (Tom)
        </para>
@@ -188,13 +224,18 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.338 2005/08/23 02:57:07 momjian
       <listitem>
        <para>
         Allow concurrent GIST index access, greatly improving performance
-        (Teodor)
+        (Teodor, Oleg)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Add GUC full_page_writes to control writing full pages to WAL (Bruce)
        </para>
        <para>
         To prevent partial disk writes from corrupting the database,
         PostgreSQL writes a complete copy of each database disk page to WAL
-        the first time it is modified after a checkpoint.  This turns of that
+        the first time it is modified after a checkpoint. This turns off that
         functionality for users with battery-backed disk caches where partial
         page writes can not happen.
        </para>
@@ -221,7 +262,11 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.338 2005/08/23 02:57:07 momjian
        <para>
         O_DIRECT causes disk writes to bypass the kernel cache, and for WAL
         writes, this improves performance.
-  
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Improve COPY FROM performance (Alon Goldshuv)
        </para>
        <para>
@@ -267,6 +312,11 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.338 2005/08/23 02:57:07 momjian
       <listitem>
        <para>
         Add session start time and client IP address to pg_stat_activity (Magnus)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Enhance pg_locks display (Tom)
        </para>
       </listitem>
@@ -293,7 +343,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.338 2005/08/23 02:57:07 momjian
 
       <listitem>
        <para>
-        Add WAL logging for GIST indexes (Teodor)
+        Add WAL logging for GIST indexes (Teodor, Oleg)
        </para>
        <para>
         GIST indexes now work for online backup and crash recovery
@@ -315,9 +365,6 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.338 2005/08/23 02:57:07 momjian
        <para>
         Remove old *.backup files when we do pg_stop_backup() (Bruce)
        </para>
-      </listitem>
-
-      <listitem>
        <para>
         This prevents a large number of *.backup files from existing in 
          pg_xlog/.
@@ -388,16 +435,6 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.338 2005/08/23 02:57:07 momjian
        <para>
         Add USING clause to allow additional tables to be specified to DELETE 
         (Euler Taveira de Oliveira)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Change add_missing_from to 'false'
-       </para>
-       <para>
-        Generate an error if a table used in a query without a FROM reference (Neil)
-        No more SELECT pg_class.*;
        </para>
       </listitem>
 
@@ -490,21 +527,6 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.338 2005/08/23 02:57:07 momjian
   
       <listitem>
        <para>
-        Make default_with_oids default to false (Neil)
-       </para>
-       <para>
-        With this option set to false, user-created tables no 
-        have an the usually-invisible OID column unless WITH OIDS
-        is specified in CREATE TABLE. Though OIDs have existed in all previous
-        releases of PostgreSQL, their use is limited because they are only four
-        bytes long and the counter is unique across all installed databases.
-        The preferred way of uniquely identifying rows is via sequences and
-        SERIAL, which has been supported since PostgreSQL 6.4.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Track dependencies of shared objects (Alvaro)
        </para>
        <para>
@@ -567,7 +589,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.338 2005/08/23 02:57:07 momjian
        </para>
        <para>
         In release 8.0, carriage returns and line feeds in CSV COPY TO were
-        not processed in a inconsitent manner. (This was documented on the TODO
+        processed in an inconsistent manner. (This was documented on the TODO
         list.)
        </para>
       </listitem>
@@ -641,13 +663,13 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.338 2005/08/23 02:57:07 momjian
         to use "postgres" rather than "template1" for standard lookups (Dave)
        </para>
        <para>
-        In prior releases, template1 was used both as a default connection for
-        things like createuser, and as a template for new databases. This
-        caused CREATE DATABASE to sometimes fail because a new database can
-        not be created if anyone else is in the template database. With this
-        change, the default connection database is now 'postgres', meaning is
-        is much less likely someone will be using template1 during CREATE
-        DATABASE.
+        In prior releases, template1 was used both as a default
+        connection for utilities like createuser, and as a template for
+        new databases. This caused CREATE DATABASE to sometimes fail
+        because a new database cannot be created if anyone else is in
+        the template database. With this change, the default connection
+        database is now 'postgres', meaning it is much less likely
+        someone will be using template1 during CREATE DATABASE.
        </para>
       </listitem>
 
@@ -812,7 +834,11 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.338 2005/08/23 02:57:07 momjian
         This allows regular expression replacement, like sed. A four-argument
         version also allows for global (replace all) and case-insensitive
         modes.
- 
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Fix interval division and multiplication (Bruce)
        </para>
        <para>
@@ -851,15 +877,10 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.338 2005/08/23 02:57:07 momjian
       <listitem>
        <para>
         Move /contrib/dbsize into the backend, and rename some of the functions
-        (Dave Page)
+        (Dave Page, Andreas Pflug)
        </para>
        <para>
         The new functions are:
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         pg_tablespace_size()
         pg_database_size()
         pg_relation_size()
@@ -1090,14 +1111,24 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.338 2005/08/23 02:57:07 momjian
     <sect3>
      <title>PL/Perl Server-Side Language Changes</title>
      <itemizedlist>
-  
+
       <listitem>
        <para>
-        Allow the return large result sets (Abhijit Menon-Sen)
+        Allow large result sets to be returned efficiently (Abhijit Menon-Sen)
        </para>
        <para>
-        This allows PL/Perl to use spi_query(), spi_fetchrow(), and 
-        return_next() to return one row at a time from the function.
+        This allows functions to use return_next() to avoid building
+        the entire result set in memory.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow one-row-at-a-time retrieval of query results (Abhijit)
+       </para>
+       <para>
+        This allows functions to use spi_query() and spi_fetchrow() to
+        avoid accumulating the entire result set in memory.
        </para>
       </listitem>
 
