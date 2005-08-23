@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.136 2005/08/23 20:48:46 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.137 2005/08/23 21:02:03 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -43,9 +43,7 @@ libpqrc.o: libpq.rc
 	windres -i libpq.rc -o libpqrc.o
 
 ifeq ($(enable_thread_safety), yes)
-# This doesn't work yet because configure test fails.  2004-06-19
 OBJS += pthread-win32.o
-PTHREAD_H_WIN32 = pthread.h
 endif
 endif
 
@@ -59,7 +57,7 @@ SHLIB_LINK += -lshfolder -lwsock32 -lws2_32 $(filter -leay32 -lssleay32 -lcomerr
 endif
 
 
-all: $(PTHREAD_H_WIN32) def-files $(srcdir)/libpq.rc all-lib
+all: def-files $(srcdir)/libpq.rc all-lib
 
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib
@@ -121,11 +119,6 @@ $(srcdir)/blibpqdll.def: exports.txt
 # depend on Makefile.global to force rebuild on re-run of configure
 $(srcdir)/libpq.rc: libpq.rc.in $(top_builddir)/src/Makefile.global
 	sed -e 's/\(VERSION.*\),0 *$$/\1,'`date '+%y%j' | sed 's/^0*//'`'/' < $< > $@
-
-ifneq ($(PTHREAD_H_WIN32), "")
-pthread.h: $(top_srcdir)/src/interfaces/libpq/pthread.h.win
-	rm -f $@ && $(LN_S) $< .
-endif
 
 fe-connect.o: fe-connect.c $(top_builddir)/src/port/pg_config_paths.h
 

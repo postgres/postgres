@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.69 2005/08/23 20:48:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.70 2005/08/23 21:02:03 momjian Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -103,7 +103,11 @@
 #include <sys/stat.h>
 
 #ifdef ENABLE_THREAD_SAFETY
+#ifdef WIN32
+#include "pthread-win32.h"
+#else
 #include <pthread.h>
+#endif
 #endif
 
 #ifndef HAVE_STRDUP
@@ -388,20 +392,21 @@ ssize_t
 pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 {
 	ssize_t		n;
-	
+    
+#ifndef WIN32	
 #ifdef ENABLE_THREAD_SAFETY
 	sigset_t	osigmask;
 	bool		sigpipe_pending;
 	bool		got_epipe = false;
 	
+
 	if (pq_block_sigpipe(&osigmask, &sigpipe_pending) < 0)
 		return -1;
 #else
-#ifndef WIN32
 	pqsigfunc	oldsighandler = pqsignal(SIGPIPE, SIG_IGN);
-#endif
-#endif
-
+#endif /* ENABLE_THREAD_SAFETY */
+#endif /* WIN32 */
+    
 #ifdef USE_SSL
 	if (conn->ssl)
 	{
@@ -431,7 +436,7 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 
 					if (n == -1)
 					{
-#ifdef ENABLE_THREAD_SAFETY
+#if defined(ENABLE_THREAD_SAFETY) && !defined(WIN32)
 						if (SOCK_ERRNO == EPIPE)
 							got_epipe = true;
 #endif
@@ -473,19 +478,19 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 #endif
 	{
 		n = send(conn->sock, ptr, len, 0);
-#ifdef ENABLE_THREAD_SAFETY
+#if defined(ENABLE_THREAD_SAFETY) && !defined(WIN32)
 		if (n < 0 && SOCK_ERRNO == EPIPE)
 			got_epipe = true;
 #endif
 	}
-
+    
+#ifndef WIN32
 #ifdef ENABLE_THREAD_SAFETY
 	pq_reset_sigpipe(&osigmask, sigpipe_pending, got_epipe);
 #else
-#ifndef WIN32
 	pqsignal(SIGPIPE, oldsighandler);
-#endif
-#endif
+#endif /* ENABLE_THREAD_SAFETY */
+#endif /* WIN32 */
 
 	return n;
 }
@@ -1232,7 +1237,7 @@ PQgetssl(PGconn *conn)
 
 #endif   /* USE_SSL */
 
-#ifdef ENABLE_THREAD_SAFETY
+#if defined(ENABLE_THREAD_SAFETY) && !defined(WIN32)
 
 /*
  *	Block SIGPIPE for this thread.  This prevents send()/write() from exiting

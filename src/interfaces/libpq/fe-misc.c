@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.118 2005/08/23 20:48:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.119 2005/08/23 21:02:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1133,7 +1133,11 @@ libpq_gettext(const char *msgid)
 	if (!already_bound)
 	{
 		/* dgettext() preserves errno, but bindtextdomain() doesn't */
-		int		save_errno = errno;
+#ifdef WIN32
+		int		save_errno = GetLastError();
+#else
+		int		save_errno = errno;    
+#endif
 		const char *ldir;
 
 		already_bound = true;

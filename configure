@@ -20908,6 +20908,8 @@ fi
 
 
 
+if test x"$template" != x"win32"
+then
 echo "$as_me:$LINENO: checking for POSIX signal interface" >&5
 echo $ECHO_N "checking for POSIX signal interface... $ECHO_C" >&6
 if test "${pgac_cv_func_posix_signals+set}" = set; then
@@ -20985,6 +20987,7 @@ echo "$as_me: error:
 *** operating system.
 " >&2;}
    { (exit 1); exit 1; }; }
+fi
 fi
 
 if test $ac_cv_func_fseeko = yes; then
@@ -22432,6 +22435,8 @@ done
 # defined.  Cross compiling throws a warning.
 #
 if test "$enable_thread_safety_force" = yes; then
+if test x"$template" != x"win32"
+then
   { echo "$as_me:$LINENO: WARNING:
 *** Skipping thread test program.  --enable-thread-safety-force was used.
 *** Run the program in src/tools/thread on the your machine and add
@@ -22444,7 +22449,13 @@ echo "$as_me: WARNING:
 proper locking function calls to your applications to guarantee thread
 safety.
 " >&2;}
+else
+{ echo "$as_me:$LINENO: WARNING: *** Skipping thread test on Win32" >&5
+echo "$as_me: WARNING: *** Skipping thread test on Win32" >&2;}
+fi
 elif test "$enable_thread_safety" = yes; then
+if test x"$template" != x"win32"
+then
 echo "$as_me:$LINENO: checking thread safety of required library functions" >&5
 echo $ECHO_N "checking thread safety of required library functions... $ECHO_C" >&6
 
@@ -22517,6 +22528,10 @@ rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftes
 fi
 CFLAGS="$_CFLAGS"
 LIBS="$_LIBS"
+else
+{ echo "$as_me:$LINENO: WARNING: *** Skipping thread test on Win32" >&5
+echo "$as_me: WARNING: *** Skipping thread test on Win32" >&2;}
+fi
 fi
 
 # prepare build tree if outside source tree

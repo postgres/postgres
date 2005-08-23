@@ -10,7 +10,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.62 2005/08/23 20:48:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.63 2005/08/23 21:02:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,7 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 		int			total_line_length = 0;
 		int			usePipe = 0;
 		char	   *pagerenv;
-#ifdef ENABLE_THREAD_SAFETY
+#if defined(ENABLE_THREAD_SAFETY) && !defined(WIN32)
 		sigset_t	osigset;
 		bool		sigpipe_masked = false;
 		bool		sigpipe_pending;
@@ -189,14 +189,14 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 				if (fout)
 				{
 					usePipe = 1;
+#ifndef WIN32
 #ifdef ENABLE_THREAD_SAFETY
 					if (pq_block_sigpipe(&osigset, &sigpipe_pending) == 0)
 						sigpipe_masked = true;
 #else
-#ifndef WIN32
 					oldsigpipehandler = pqsignal(SIGPIPE, SIG_IGN);
-#endif
-#endif
+#endif /* ENABLE_THREAD_SAFETY */
+#endif /* WIN32 */
 				}
 				else
 					fout = stdout;
@@ -311,16 +311,15 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 			_pclose(fout);
 #else
 			pclose(fout);
-#endif
+            
 #ifdef ENABLE_THREAD_SAFETY
 			/* we can't easily verify if EPIPE occurred, so say it did */
 			if (sigpipe_masked)
 				pq_reset_sigpipe(&osigset, sigpipe_pending, true);
 #else
-#ifndef WIN32
 			pqsignal(SIGPIPE, oldsigpipehandler);
-#endif
-#endif
+#endif /* ENABLE_THREAD_SAFETY */
+#endif /* WIN32 */
 		}
 		if (po->html3 && !po->expanded)
 			fputs("</table>\n", fout);
