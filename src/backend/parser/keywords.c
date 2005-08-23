@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.164 2005/07/31 17:19:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.165 2005/08/23 22:40:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,6 +117,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"delimiter", DELIMITER},
 	{"delimiters", DELIMITERS},
 	{"desc", DESC},
+	{"disable", DISABLE_P},
 	{"distinct", DISTINCT},
 	{"do", DO},
 	{"domain", DOMAIN_P},
@@ -124,6 +125,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"drop", DROP},
 	{"each", EACH},
 	{"else", ELSE},
+	{"enable", ENABLE_P},
 	{"encoding", ENCODING},
 	{"encrypted", ENCRYPTED},
 	{"end", END_P},

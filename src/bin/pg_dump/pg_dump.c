@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.418 2005/08/15 21:50:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.419 2005/08/23 22:40:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3350,6 +3350,7 @@ getTriggers(TableInfo tblinfo[], int numTables)
 				i_tgconstrname,
 				i_tgconstrrelid,
 				i_tgconstrrelname,
+				i_tgenabled,
 				i_tgdeferrable,
 				i_tginitdeferred;
 	int			ntups;
@@ -3381,7 +3382,7 @@ getTriggers(TableInfo tblinfo[], int numTables)
 			appendPQExpBuffer(query,
 							  "SELECT tgname, "
 							  "tgfoid::pg_catalog.regproc as tgfname, "
-							  "tgtype, tgnargs, tgargs, "
+							  "tgtype, tgnargs, tgargs, tgenabled, "
 						   "tgisconstraint, tgconstrname, tgdeferrable, "
 						 "tgconstrrelid, tginitdeferred, tableoid, oid, "
 				 "tgconstrrelid::pg_catalog.regclass as tgconstrrelname "
@@ -3398,7 +3399,7 @@ getTriggers(TableInfo tblinfo[], int numTables)
 		{
 			appendPQExpBuffer(query,
 							"SELECT tgname, tgfoid::regproc as tgfname, "
-							  "tgtype, tgnargs, tgargs, "
+							  "tgtype, tgnargs, tgargs, tgenabled, "
 						   "tgisconstraint, tgconstrname, tgdeferrable, "
 						 "tgconstrrelid, tginitdeferred, tableoid, oid, "
 			  "(select relname from pg_class where oid = tgconstrrelid) "
@@ -3411,7 +3412,7 @@ getTriggers(TableInfo tblinfo[], int numTables)
 		{
 			appendPQExpBuffer(query,
 							"SELECT tgname, tgfoid::regproc as tgfname, "
-							  "tgtype, tgnargs, tgargs, "
+							  "tgtype, tgnargs, tgargs, tgenabled, "
 						   "tgisconstraint, tgconstrname, tgdeferrable, "
 							  "tgconstrrelid, tginitdeferred, "
 							  "(SELECT oid FROM pg_class WHERE relname = 'pg_trigger') AS tableoid, "
@@ -3449,6 +3450,7 @@ getTriggers(TableInfo tblinfo[], int numTables)
 		i_tgconstrname = PQfnumber(res, "tgconstrname");
 		i_tgconstrrelid = PQfnumber(res, "tgconstrrelid");
 		i_tgconstrrelname = PQfnumber(res, "tgconstrrelname");
+		i_tgenabled = PQfnumber(res, "tgenabled");
 		i_tgdeferrable = PQfnumber(res, "tgdeferrable");
 		i_tginitdeferred = PQfnumber(res, "tginitdeferred");
 
@@ -3468,6 +3470,7 @@ getTriggers(TableInfo tblinfo[], int numTables)
 			tginfo[j].tgnargs = atoi(PQgetvalue(res, j, i_tgnargs));
 			tginfo[j].tgargs = strdup(PQgetvalue(res, j, i_tgargs));
 			tginfo[j].tgisconstraint = *(PQgetvalue(res, j, i_tgisconstraint)) == 't';
+			tginfo[j].tgenabled = *(PQgetvalue(res, j, i_tgenabled)) == 't';
 			tginfo[j].tgdeferrable = *(PQgetvalue(res, j, i_tgdeferrable)) == 't';
 			tginfo[j].tginitdeferred = *(PQgetvalue(res, j, i_tginitdeferred)) == 't';
 
@@ -7873,6 +7876,14 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 		p = p + 4;
 	}
 	appendPQExpBuffer(query, ");\n");
+
+	if (!tginfo->tgenabled)
+	{
+		appendPQExpBuffer(query, "\nALTER TABLE %s ",
+						  fmtId(tbinfo->dobj.name));
+		appendPQExpBuffer(query, "DISABLE TRIGGER %s;\n",
+						  fmtId(tginfo->dobj.name));
+	}
 
 	ArchiveEntry(fout, tginfo->dobj.catId, tginfo->dobj.dumpId,
 				 tginfo->dobj.name,

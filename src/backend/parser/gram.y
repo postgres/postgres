@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.507 2005/08/01 20:31:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.508 2005/08/23 22:40:20 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -350,9 +350,9 @@ static void doNegateFloat(Value *v);
 
 	DATABASE DAY_P DEALLOCATE DEC DECIMAL_P DECLARE DEFAULT DEFAULTS
 	DEFERRABLE DEFERRED DEFINER DELETE_P DELIMITER DELIMITERS
-	DESC DISTINCT DO DOMAIN_P DOUBLE_P DROP
+	DESC DISABLE_P DISTINCT DO DOMAIN_P DOUBLE_P DROP
 
-	EACH ELSE ENCODING ENCRYPTED END_P ESCAPE EXCEPT EXCLUDING
+	EACH ELSE ENABLE_P ENCODING ENCRYPTED END_P ESCAPE EXCEPT EXCLUDING
 	EXCLUSIVE EXECUTE EXISTS EXPLAIN EXTERNAL EXTRACT
 
 	FALSE_P FETCH FIRST_P FLOAT_P FOR FORCE FOREIGN FORWARD
@@ -1413,6 +1413,50 @@ alter_table_cmd:
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_DropCluster;
 					n->name = NULL;
+					$$ = (Node *)n;
+				}
+			/* ALTER TABLE <name> ENABLE TRIGGER <trig> */
+			| ENABLE_P TRIGGER name
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_EnableTrig;
+					n->name = $3;
+					$$ = (Node *)n;
+				}
+			/* ALTER TABLE <name> ENABLE TRIGGER ALL */
+			| ENABLE_P TRIGGER ALL
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_EnableTrigAll;
+					$$ = (Node *)n;
+				}
+			/* ALTER TABLE <name> ENABLE TRIGGER USER */
+			| ENABLE_P TRIGGER USER
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_EnableTrigUser;
+					$$ = (Node *)n;
+				}
+			/* ALTER TABLE <name> DISABLE TRIGGER <trig> */
+			| DISABLE_P TRIGGER name
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_DisableTrig;
+					n->name = $3;
+					$$ = (Node *)n;
+				}
+			/* ALTER TABLE <name> DISABLE TRIGGER ALL */
+			| DISABLE_P TRIGGER ALL
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_DisableTrigAll;
+					$$ = (Node *)n;
+				}
+			/* ALTER TABLE <name> DISABLE TRIGGER USER */
+			| DISABLE_P TRIGGER USER
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_DisableTrigUser;
 					$$ = (Node *)n;
 				}
 			| alter_rel_cmd
@@ -8067,10 +8111,12 @@ unreserved_keyword:
 			| DELETE_P
 			| DELIMITER
 			| DELIMITERS
+			| DISABLE_P
 			| DOMAIN_P
 			| DOUBLE_P
 			| DROP
 			| EACH
+			| ENABLE_P
 			| ENCODING
 			| ENCRYPTED
 			| ESCAPE

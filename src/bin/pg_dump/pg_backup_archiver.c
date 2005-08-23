@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.113 2005/08/22 19:40:37 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.114 2005/08/23 22:40:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -413,32 +413,23 @@ _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *rop
 	if (!ropt->dataOnly || !ropt->disable_triggers)
 		return;
 
+	ahlog(AH, 1, "disabling triggers for %s\n", te->tag);
+
 	/*
 	 * Become superuser if possible, since they are the only ones who can
-	 * update pg_class.  If -S was not given, assume the initial user
-	 * identity is a superuser.
+	 * disable constraint triggers.  If -S was not given, assume the initial
+	 * user identity is a superuser.  (XXX would it be better to become the
+	 * table owner?)
 	 */
 	_becomeUser(AH, ropt->superuser);
 
-	ahlog(AH, 1, "disabling triggers\n");
-
 	/*
-	 * Disable them. This is a hack. Needs to be done via an appropriate
-	 * 'SET' command when one is available.
+	 * Disable them.
 	 */
-	ahprintf(AH, "-- Disable triggers\n");
+	_selectOutputSchema(AH, te->namespace);
 
-	/*
-	 * Just update the AFFECTED table, if known.  Otherwise update all
-	 * non-system tables.
-	 */
-	if (te && te->tag && strlen(te->tag) > 0)
-		ahprintf(AH, "UPDATE pg_catalog.pg_class SET reltriggers = 0 "
-				 "WHERE oid = '%s'::pg_catalog.regclass;\n\n",
-				 fmtId(te->tag));
-	else
-		ahprintf(AH, "UPDATE pg_catalog.pg_class SET reltriggers = 0 FROM pg_catalog.pg_namespace "
-				 "WHERE relnamespace = pg_namespace.oid AND nspname !~ '^pg_';\n\n");
+	ahprintf(AH, "ALTER TABLE %s DISABLE TRIGGER ALL;\n\n",
+			 fmtId(te->tag));
 }
 
 static void
@@ -448,35 +439,23 @@ _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt
 	if (!ropt->dataOnly || !ropt->disable_triggers)
 		return;
 
+	ahlog(AH, 1, "enabling triggers for %s\n", te->tag);
+
 	/*
 	 * Become superuser if possible, since they are the only ones who can
-	 * update pg_class.  If -S was not given, assume the initial user
-	 * identity is a superuser.
+	 * disable constraint triggers.  If -S was not given, assume the initial
+	 * user identity is a superuser.  (XXX would it be better to become the
+	 * table owner?)
 	 */
 	_becomeUser(AH, ropt->superuser);
 
-	ahlog(AH, 1, "enabling triggers\n");
-
 	/*
-	 * Enable them. This is a hack. Needs to be done via an appropriate
-	 * 'SET' command when one is available.
+	 * Enable them.
 	 */
-	ahprintf(AH, "-- Enable triggers\n");
+	_selectOutputSchema(AH, te->namespace);
 
-	/*
-	 * Just update the AFFECTED table, if known.  Otherwise update all
-	 * non-system tables.
-	 */
-	if (te && te->tag && strlen(te->tag) > 0)
-		ahprintf(AH, "UPDATE pg_catalog.pg_class SET reltriggers = "
-				 "(SELECT pg_catalog.count(*) FROM pg_catalog.pg_trigger where pg_class.oid = tgrelid) "
-				 "WHERE oid = '%s'::pg_catalog.regclass;\n\n",
-				 fmtId(te->tag));
-	else
-		ahprintf(AH, "UPDATE pg_catalog.pg_class SET reltriggers = "
-				 "(SELECT pg_catalog.count(*) FROM pg_catalog.pg_trigger where pg_class.oid = tgrelid) "
-				 "FROM pg_catalog.pg_namespace "
-				 "WHERE relnamespace = pg_namespace.oid AND nspname !~ '^pg_';\n\n");
+	ahprintf(AH, "ALTER TABLE %s ENABLE TRIGGER ALL;\n\n",
+			 fmtId(te->tag));
 }
 
 /*

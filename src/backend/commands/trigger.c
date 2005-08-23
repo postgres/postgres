@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.192 2005/08/20 00:39:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.193 2005/08/23 22:40:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -711,6 +711,114 @@ renametrig(Oid relid,
 	 */
 	heap_close(targetrel, NoLock);
 }
+
+
+/*
+ * EnableDisableTrigger()
+ *
+ *	Called by ALTER TABLE ENABLE/DISABLE TRIGGER
+ *	to change 'tgenabled' flag for the specified trigger(s)
+ *
+ * rel: relation to process (caller must hold suitable lock on it)
+ * tgname: trigger to process, or NULL to scan all triggers
+ * enable: new value for tgenabled flag
+ * skip_system: if true, skip "system" triggers (constraint triggers)
+ *
+ * Caller should have checked permissions for the table; here we also
+ * enforce that superuser privilege is required to alter the state of
+ * system triggers
+ */
+void
+EnableDisableTrigger(Relation rel, const char *tgname,
+					 bool enable, bool skip_system)
+{
+	Relation tgrel;
+	int nkeys;
+	ScanKeyData keys[2];
+	SysScanDesc tgscan;
+	HeapTuple tuple;
+	bool found;
+	bool changed;
+
+	/* Scan the relevant entries in pg_triggers */
+	tgrel = heap_open(TriggerRelationId, RowExclusiveLock);
+
+	ScanKeyInit(&keys[0],
+				Anum_pg_trigger_tgrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(RelationGetRelid(rel)));
+	if (tgname)
+	{
+		ScanKeyInit(&keys[1],
+					Anum_pg_trigger_tgname,
+					BTEqualStrategyNumber, F_NAMEEQ,
+					CStringGetDatum(tgname));
+		nkeys = 2;
+	}
+	else
+		nkeys = 1;
+
+	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId, true,
+								SnapshotNow, nkeys, keys);
+
+	found = changed = false;
+
+	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
+	{
+		Form_pg_trigger oldtrig = (Form_pg_trigger) GETSTRUCT(tuple);
+
+		if (oldtrig->tgisconstraint)
+		{
+			/* system trigger ... ok to process? */
+			if (skip_system)
+				continue;
+			if (!superuser())
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("permission denied: \"%s\" is a system trigger",
+								NameStr(oldtrig->tgname))));
+		}
+
+		found = true;
+
+		if (oldtrig->tgenabled != enable)
+		{
+			/* need to change this one ... make a copy to scribble on */
+			HeapTuple newtup = heap_copytuple(tuple);
+			Form_pg_trigger newtrig = (Form_pg_trigger) GETSTRUCT(newtup);
+
+			newtrig->tgenabled = enable;
+
+			simple_heap_update(tgrel, &newtup->t_self, newtup);
+
+			/* Keep catalog indexes current */
+			CatalogUpdateIndexes(tgrel, newtup);
+
+			heap_freetuple(newtup);
+
+			changed = true;
+		}
+	}
+
+	systable_endscan(tgscan);
+
+	heap_close(tgrel, RowExclusiveLock);
+
+	if (tgname && !found)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("trigger \"%s\" for table \"%s\" does not exist",
+						tgname, RelationGetRelationName(rel))));
+
+	/*
+	 * If we changed anything, broadcast a SI inval message to force each
+	 * backend (including our own!) to rebuild relation's relcache entry.
+	 * Otherwise they will fail to apply the change promptly.
+	 */
+	if (changed)
+		CacheInvalidateRelcache(rel);
+}
+
 
 /*
  * Build trigger data to attach to the given relcache entry.

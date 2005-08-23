@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.168 2005/08/22 19:40:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.169 2005/08/23 22:40:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -246,6 +246,8 @@ static void ATExecDropCluster(Relation rel);
 static void ATPrepSetTableSpace(AlteredTableInfo *tab, Relation rel,
 					char *tablespacename);
 static void ATExecSetTableSpace(Oid tableOid, Oid newTableSpace);
+static void ATExecEnableDisableTrigger(Relation rel, char *trigname,
+									   bool enable, bool skip_system);
 static void copy_relation_data(Relation rel, SMgrRelation dst);
 static void update_ri_trigger_args(Oid relid,
 					   const char *oldname,
@@ -2005,6 +2007,17 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			ATPrepSetTableSpace(tab, rel, cmd->name);
 			pass = AT_PASS_MISC;	/* doesn't actually matter */
 			break;
+		case AT_EnableTrig:		/* ENABLE TRIGGER variants */
+		case AT_EnableTrigAll:
+		case AT_EnableTrigUser:
+		case AT_DisableTrig:	/* DISABLE TRIGGER variants */
+		case AT_DisableTrigAll:
+		case AT_DisableTrigUser:
+			ATSimplePermissions(rel, false);
+			/* These commands never recurse */
+			/* No command-specific prep needed */
+			pass = AT_PASS_MISC;
+			break;
 		default:				/* oops */
 			elog(ERROR, "unrecognized alter table type: %d",
 				 (int) cmd->subtype);
@@ -2162,6 +2175,24 @@ ATExecCmd(AlteredTableInfo *tab, Relation rel, AlterTableCmd *cmd)
 			/*
 			 * Nothing to do here; Phase 3 does the work
 			 */
+			break;
+		case AT_EnableTrig:		/* ENABLE TRIGGER name */
+			ATExecEnableDisableTrigger(rel, cmd->name, true, false);
+			break;
+		case AT_DisableTrig:	/* DISABLE TRIGGER name */
+			ATExecEnableDisableTrigger(rel, cmd->name, false, false);
+			break;
+		case AT_EnableTrigAll:	/* ENABLE TRIGGER ALL */
+			ATExecEnableDisableTrigger(rel, NULL, true, false);
+			break;
+		case AT_DisableTrigAll:	/* DISABLE TRIGGER ALL */
+			ATExecEnableDisableTrigger(rel, NULL, false, false);
+			break;
+		case AT_EnableTrigUser:	/* ENABLE TRIGGER USER */
+			ATExecEnableDisableTrigger(rel, NULL, true, true);
+			break;
+		case AT_DisableTrigUser: /* DISABLE TRIGGER USER */
+			ATExecEnableDisableTrigger(rel, NULL, false, true);
 			break;
 		default:				/* oops */
 			elog(ERROR, "unrecognized alter table type: %d",
@@ -5776,6 +5807,18 @@ copy_relation_data(Relation rel, SMgrRelation dst)
 	 */
 	if (!rel->rd_istemp)
 		smgrimmedsync(dst);
+}
+
+/*
+ * ALTER TABLE ENABLE/DISABLE TRIGGER
+ *
+ * We just pass this off to trigger.c.
+ */
+static void
+ATExecEnableDisableTrigger(Relation rel, char *trigname,
+						   bool enable, bool skip_system)
+{
+	EnableDisableTrigger(rel, trigname, enable, skip_system);
 }
 
 /*
