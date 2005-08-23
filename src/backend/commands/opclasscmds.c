@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.36 2005/08/22 17:38:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.37 2005/08/23 01:41:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -926,6 +926,7 @@ AlterOpClassOwner(List *name, const char *access_method, Oid newOwnerId)
 					 errmsg("operator class \"%s\" does not exist for access method \"%s\"",
 							opcname, access_method)));
 
+		opcOid = HeapTupleGetOid(tup);
 	}
 	else
 	{
@@ -981,7 +982,7 @@ AlterOpClassOwner(List *name, const char *access_method, Oid newOwnerId)
 		CatalogUpdateIndexes(rel, tup);
 
 		/* Update owner dependency reference */
-		changeDependencyOnOwner(OperatorClassRelationId, amOid, newOwnerId);
+		changeDependencyOnOwner(OperatorClassRelationId, opcOid, newOwnerId);
 	}
 
 	heap_close(rel, NoLock);
