@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Aug 20 21:04:41 EDT 2005
+Last updated:		Tue Aug 23 19:51:09 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -638,10 +638,13 @@ Referential Integrity
 * Change foreign key constraint for array -> element to mean element
   in array?
 * Allow DEFERRABLE UNIQUE constraints?
-* Allow triggers to be disabled [trigger]
+* -Allow triggers to be disabled [trigger]
+* Allow triggers to be disabled in only the current session.
 
-  Currently the only way to disable triggers is to modify the system
-  tables.
+  This is currently possible by starting a multi-statement transaction,
+  modifying the system tables, performing the desired SQL, restoring the
+  system tables, and committing the transaction.  ALTER TABLE ...
+  TRIGGER requires a table lock so it is not idea for this usage.
 
 * With disabled triggers, allow pg_dump to use ALTER TABLE ADD FOREIGN KEY
 
