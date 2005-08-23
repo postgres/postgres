@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.340 2005/08/23 11:53:33 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.341 2005/08/23 11:59:09 momjian Exp $
 -->
 
 <appendix id="release">
@@ -51,10 +51,14 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.340 2005/08/23 11:53:33 momjian
 
      <varlistentry>
       <term>
+        Add in-memory bitmaps which allows multiple indexes to be merged in a
+        single query (Tom)
        </term>
 
        <listitem>
        <para>
+        This allows multiple indexes to be combined to access a single
+        table.
         </para>
       </listitem>
      </varlistentry>
@@ -210,17 +214,6 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.340 2005/08/23 11:53:33 momjian
       <listitem>
        <para>
         Overhaul internal API in several areas to improve performance
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add in-memory bitmaps which allows multiple indexes to be merged in a
-        single query (Tom)
-       </para>
-       <para>
-        This allows multiple indexes to be combined to access a single
-        table.
        </para>
       </listitem>
 
@@ -9186,7 +9179,6 @@ Subqueries in FROM are now supported.
     </varlistentry>
 
    </variablelist>
-  </para>
 
    <sect2>
     <title>Migration to version 7.1</title>
