@@ -1,190 +1,151 @@
 /*-------------------------------------------------------------------------
  *
  * tidpath.c
- *	  Routines to determine which tids are usable for scanning a
- *	  given relation, and create TidPaths accordingly.
+ *	  Routines to determine which TID conditions are usable for scanning
+ *	  a given relation, and create TidPaths accordingly.
+ *
+ * What we are looking for here is WHERE conditions of the form
+ * "CTID = pseudoconstant", which can be implemented by just fetching
+ * the tuple directly via heap_fetch().  We can also handle OR conditions
+ * if each OR arm contains such a condition; in particular this allows
+ *		WHERE ctid IN (tid1, tid2, ...)
+ *
+ * There is currently no special support for joins involving CTID; in
+ * particular nothing corresponding to best_inner_indexscan().  Since it's
+ * not very useful to store TIDs of one table in another table, there
+ * doesn't seem to be enough use-case to justify adding a lot of code
+ * for that.
+ *
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/tidpath.c,v 1.23 2005/06/05 22:32:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/tidpath.c,v 1.24 2005/08/23 20:49:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include <math.h>
-
+#include "access/htup.h"
 #include "catalog/pg_operator.h"
+#include "catalog/pg_type.h"
 #include "optimizer/clauses.h"
-#include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
-#include "parser/parse_coerce.h"
-#include "utils/lsyscache.h"
+#include "parser/parse_expr.h"
 
 
-static List *TidqualFromRestrictinfo(Relids relids, List *restrictinfo);
-static bool isEvaluable(int varno, Node *node);
-static Node *TidequalClause(int varno, OpExpr *node);
-static List *TidqualFromExpr(int varno, Expr *expr);
+static Node *IsTidEqualClause(int varno, OpExpr *node);
+static List *TidQualFromExpr(int varno, Node *expr);
+static List *TidQualFromRestrictinfo(int varno, List *restrictinfo);
 
-
-static bool
-isEvaluable(int varno, Node *node)
-{
-	ListCell   *l;
-	FuncExpr   *expr;
-
-	if (IsA(node, Const))
-		return true;
-	if (IsA(node, Param))
-		return true;
-	if (IsA(node, Var))
-	{
-		Var		   *var = (Var *) node;
-
-		if (var->varno == varno)
-			return false;
-		return true;
-	}
-	if (!is_funcclause(node))
-		return false;
-	expr = (FuncExpr *) node;
-	foreach(l, expr->args)
-	{
-		if (!isEvaluable(varno, lfirst(l)))
-			return false;
-	}
-
-	return true;
-}
 
 /*
- *	The 2nd parameter should be an opclause
- *	Extract the right node if the opclause is CTID= ....
- *	  or	the left  node if the opclause is ....=CTID
+ * Check to see if an opclause is of the form
+ *		CTID = pseudoconstant
+ * or
+ *		pseudoconstant = CTID
+ *
+ * If it is, return the pseudoconstant subnode; if not, return NULL.
+ *
+ * We check that the CTID Var belongs to relation "varno".  That is probably
+ * redundant considering this is only applied to restriction clauses, but
+ * let's be safe.
  */
 static Node *
-TidequalClause(int varno, OpExpr *node)
+IsTidEqualClause(int varno, OpExpr *node)
 {
-	Node	   *rnode = NULL,
-			   *arg1,
+	Node	   *arg1,
 			   *arg2,
-			   *arg;
+			   *other;
 	Var		   *var;
-	Const	   *aconst;
-	Param	   *param;
-	FuncExpr   *expr;
 
+	/* Operator must be tideq */
 	if (node->opno != TIDEqualOperator)
-		return rnode;
+		return NULL;
 	if (list_length(node->args) != 2)
-		return rnode;
+		return NULL;
 	arg1 = linitial(node->args);
 	arg2 = lsecond(node->args);
 
-	arg = NULL;
-	if (IsA(arg1, Var))
+	/* Look for CTID as either argument */
+	other = NULL;
+	if (arg1 && IsA(arg1, Var))
 	{
 		var = (Var *) arg1;
-		if (var->varno == varno &&
-			var->varattno == SelfItemPointerAttributeNumber &&
-			var->vartype == TIDOID)
-			arg = arg2;
-		else if (var->varnoold == varno &&
-				 var->varoattno == SelfItemPointerAttributeNumber &&
-				 var->vartype == TIDOID)
-			arg = arg2;
+		if (var->varattno == SelfItemPointerAttributeNumber &&
+			var->vartype == TIDOID &&
+			var->varno == varno &&
+			var->varlevelsup == 0)
+			other = arg2;
 	}
-	if ((!arg) && IsA(arg2, Var))
+	if (!other && arg2 && IsA(arg2, Var))
 	{
 		var = (Var *) arg2;
-		if (var->varno == varno &&
-			var->varattno == SelfItemPointerAttributeNumber &&
-			var->vartype == TIDOID)
-			arg = arg1;
+		if (var->varattno == SelfItemPointerAttributeNumber &&
+			var->vartype == TIDOID &&
+			var->varno == varno &&
+			var->varlevelsup == 0)
+			other = arg1;
 	}
-	if (!arg)
-		return rnode;
-	switch (nodeTag(arg))
-	{
-		case T_Const:
-			aconst = (Const *) arg;
-			if (aconst->consttype != TIDOID)
-				return rnode;
-			if (aconst->constbyval)
-				return rnode;
-			rnode = arg;
-			break;
-		case T_Param:
-			param = (Param *) arg;
-			if (param->paramtype != TIDOID)
-				return rnode;
-			rnode = arg;
-			break;
-		case T_Var:
-			var = (Var *) arg;
-			if (var->varno == varno ||
-				var->vartype != TIDOID)
-				return rnode;
-			rnode = arg;
-			break;
-		case T_FuncExpr:
-			expr = (FuncExpr *) arg;
-			if (expr->funcresulttype != TIDOID)
-				return rnode;
-			if (isEvaluable(varno, (Node *) expr))
-				rnode = arg;
-			break;
-		default:
-			break;
-	}
-	return rnode;
+	if (!other)
+		return NULL;
+	if (exprType(other) != TIDOID)
+		return NULL;			/* probably can't happen */
+
+	/* The other argument must be a pseudoconstant */
+	if (!is_pseudo_constant_clause(other))
+		return NULL;
+
+	return other;				/* success */
 }
 
 /*
- *	Extract the list of CTID values from a specified expr node.
- *	When the expr node is an or_clause,we try to extract CTID
- *	values from all member nodes. However we would discard them
- *	all if we couldn't extract CTID values from a member node.
- *	When the expr node is an and_clause,we return the list of
- *	CTID values if we could extract the CTID values from a member
- *	node.
+ *	Extract a set of CTID conditions from the given qual expression
+ *
+ *	If the expression is an AND clause, we can use a CTID condition
+ *	from any sub-clause.  If it is an OR clause, we must be able to
+ *	extract a CTID condition from every sub-clause, or we can't use it.
+ *
+ *	In theory, in the AND case we could get CTID conditions from different
+ *	sub-clauses, in which case we could try to pick the most efficient one.
+ *	In practice, such usage seems very unlikely, so we don't bother; we
+ *	just exit as soon as we find the first candidate.
+ *
+ *	Returns a List of pseudoconstant TID expressions, or NIL if no match.
+ *	(Has to be a list for the OR case.)
  */
 static List *
-TidqualFromExpr(int varno, Expr *expr)
+TidQualFromExpr(int varno, Node *expr)
 {
 	List	   *rlst = NIL,
 			   *frtn;
 	ListCell   *l;
-	Node	   *node = (Node *) expr,
-			   *rnode;
+	Node	   *rnode;
 
-	if (is_opclause(node))
+	if (is_opclause(expr))
 	{
-		rnode = TidequalClause(varno, (OpExpr *) expr);
+		/* base case: check for tideq opclause */
+		rnode = IsTidEqualClause(varno, (OpExpr *) expr);
 		if (rnode)
-			rlst = lcons(rnode, rlst);
+			rlst = list_make1(rnode);
 	}
-	else if (and_clause(node))
+	else if (and_clause(expr))
 	{
 		foreach(l, ((BoolExpr *) expr)->args)
 		{
-			node = (Node *) lfirst(l);
-			rlst = TidqualFromExpr(varno, (Expr *) node);
+			rlst = TidQualFromExpr(varno, (Node *) lfirst(l));
 			if (rlst)
 				break;
 		}
 	}
-	else if (or_clause(node))
+	else if (or_clause(expr))
 	{
 		foreach(l, ((BoolExpr *) expr)->args)
 		{
-			node = (Node *) lfirst(l);
-			frtn = TidqualFromExpr(varno, (Expr *) node);
+			frtn = TidQualFromExpr(varno, (Node *) lfirst(l));
 			if (frtn)
 				rlst = list_concat(rlst, frtn);
 			else
@@ -199,25 +160,25 @@ TidqualFromExpr(int varno, Expr *expr)
 	return rlst;
 }
 
+/*
+ *	Extract a set of CTID conditions from the given restrictinfo list
+ *
+ *	This is essentially identical to the AND case of TidQualFromExpr,
+ *	except for the format of the input.
+ */
 static List *
-TidqualFromRestrictinfo(Relids relids, List *restrictinfo)
+TidQualFromRestrictinfo(int varno, List *restrictinfo)
 {
-	ListCell   *l;
 	List	   *rlst = NIL;
-	int			varno;
-	Node	   *node;
-	Expr	   *expr;
+	ListCell   *l;
 
-	if (bms_membership(relids) != BMS_SINGLETON)
-		return NIL;
-	varno = bms_singleton_member(relids);
 	foreach(l, restrictinfo)
 	{
-		node = (Node *) lfirst(l);
-		if (!IsA(node, RestrictInfo))
-			continue;
-		expr = ((RestrictInfo *) node)->clause;
-		rlst = TidqualFromExpr(varno, expr);
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
+
+		if (!IsA(rinfo, RestrictInfo))
+			continue;			/* probably should never happen */
+		rlst = TidQualFromExpr(varno, (Node *) rinfo->clause);
 		if (rlst)
 			break;
 	}
@@ -226,14 +187,16 @@ TidqualFromRestrictinfo(Relids relids, List *restrictinfo)
 
 /*
  * create_tidscan_paths
- *	  Creates paths corresponding to tid direct scans of the given rel.
+ *	  Create paths corresponding to direct TID scans of the given rel.
+ *
  *	  Candidate paths are added to the rel's pathlist (using add_path).
  */
 void
 create_tidscan_paths(PlannerInfo *root, RelOptInfo *rel)
 {
-	List	   *tideval = TidqualFromRestrictinfo(rel->relids,
-												  rel->baserestrictinfo);
+	List	   *tideval;
+
+	tideval = TidQualFromRestrictinfo(rel->relid, rel->baserestrictinfo);
 
 	if (tideval)
 		add_path(rel, (Path *) create_tidscan_path(root, rel, tideval));
