@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.172 2005/08/23 20:45:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.173 2005/08/23 20:48:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2156,16 +2156,25 @@ PQoidValue(const PGresult *res)
 	char	   *endptr = NULL;
 	unsigned long result;
 
-	if (!res || 
-        !res->cmdStatus || 
-        strncmp(res->cmdStatus, "INSERT ", 7) != 0 ||
-        res->cmdStatus[7] < '0' || 
-        res->cmdStatus[7] > '9')
+	if (!res || !res->cmdStatus || strncmp(res->cmdStatus, "INSERT ", 7) != 0)
 		return InvalidOid;
 
+#ifdef WIN32
+	SetLastError(0);
+#else
+	errno = 0;
+#endif
 	result = strtoul(res->cmdStatus + 7, &endptr, 10);
 
-	if (!endptr || (*endptr != ' ' && *endptr != '\0'))
+	if (!endptr || (*endptr != ' ' && *endptr != '\0')
+#ifndef WIN32
+	/*
+	 *	On WIN32, errno is not thread-safe and GetLastError() isn't set by
+	 *	strtoul(), so we can't check on this platform.
+	 */
+ || errno == ERANGE
+#endif
+		)
 		return InvalidOid;
 	else
 		return (Oid) result;
