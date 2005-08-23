@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.349 2005/08/23 20:51:27 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.350 2005/08/23 21:17:15 momjian Exp $
 -->
 
 <appendix id="release">
@@ -704,13 +704,14 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.349 2005/08/23 20:51:27 momjian
 
       <listitem>
        <para>
-        Allow <command>ALTER OWNER</> commands to be performed by the
-        object owner as well as the superuser (Stephen Frost)
+        Allow limited <command>ALTER OWNER</> commands to be performed 
+        by the object owner (Stephen Frost)
        </para>
        <para>
-        Prior releases only allowed super-user to change object owners,
+        Prior releases allowed only the super-user to change object owners,
         even if the current owner was executing the command and the new
-        owner have permission to create objects of that type.
+        owner was in the same group.  With roles such transfers are now
+        possible.
        </para>
       </listitem>
 
