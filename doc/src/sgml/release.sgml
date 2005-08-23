@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.341 2005/08/23 11:59:09 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.342 2005/08/23 12:14:33 momjian Exp $
 -->
 
 <appendix id="release">
@@ -114,76 +114,76 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.341 2005/08/23 11:59:09 momjian
 
     <para>
      Observe the following incompatibilities:
- 
-     <itemizedlist>
- 
-      <listitem>
-       <para>
-        Change add_missing_from to 'false'
-       </para>
-       <para>
-        Generate an error if a table used in a query without a FROM reference (Neil)
-        No more SELECT pg_class.*;
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Cause input of a zero-length string ('') for float4/float8/oid to throw
-        an error, rather than treat it as a zero (Neil)
-       </para>
-       <para>
-        This change is consistent with the current handling of zero-length
-        strings for integers.  The schedule for this change was announced in 8.0.
-       </para>
-      </listitem>
- 
-      <listitem>
-       <para>
-        Make default_with_oids default to false (Neil)
-       </para>
-       <para>
-        With this option set to false, user-created tables no 
-        have an the usually-invisible OID column unless WITH OIDS
-        is specified in CREATE TABLE. Though OIDs have existed in all previous
-        releases of PostgreSQL, their use is limited because they are only four
-        bytes long and the counter is unique across all installed databases.
-        The preferred way of uniquely identifying rows is via sequences and
-        SERIAL, which has been supported since PostgreSQL 6.4.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        In psql, treat unquoted \{digit}+ sequences as octal (Bruce)
-       </para>
-       <para>
-        In previous releases, \{digit}+ sequences were treated as
-        decimal, and only \0{digit}+ were treated as octal.  This
-        change was made for consistency.
-       </para>
-      </listitem>
- 
-      <listitem>
-       <para>
-        Remove grammar productions for prefix and postfix % and ^ operators
-        (Tom)
-       </para>
-       <para>
-        These have never been documented and complicated the use of modulus
-        (%) with negative numbers.
-       </para>
-      </listitem>
- 
-      <listitem>
-       <para>
-        Make "&amp;&lt;" and "&amp;&gt;" for polygons consistent with the box 
-        "over" operators (Tom)
-       </para>
-      </listitem>
- 
-     </itemizedlist>
     </para>
+
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Change add_missing_from to 'false'
+      </para>
+      <para>
+       Generate an error if a table used in a query without a FROM reference (Neil)
+       No more SELECT pg_class.*;
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Cause input of a zero-length string ('') for float4/float8/oid to throw
+       an error, rather than treat it as a zero (Neil)
+      </para>
+      <para>
+       This change is consistent with the current handling of zero-length
+       strings for integers.  The schedule for this change was announced in 8.0.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Make default_with_oids default to false (Neil)
+      </para>
+      <para>
+       With this option set to false, user-created tables no 
+       have an the usually-invisible OID column unless WITH OIDS
+       is specified in CREATE TABLE. Though OIDs have existed in all previous
+       releases of PostgreSQL, their use is limited because they are only four
+       bytes long and the counter is unique across all installed databases.
+       The preferred way of uniquely identifying rows is via sequences and
+       SERIAL, which has been supported since PostgreSQL 6.4.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       In psql, treat unquoted \{digit}+ sequences as octal (Bruce)
+      </para>
+      <para>
+       In previous releases, \{digit}+ sequences were treated as
+       decimal, and only \0{digit}+ were treated as octal.  This
+       change was made for consistency.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Remove grammar productions for prefix and postfix % and ^ operators
+       (Tom)
+      </para>
+      <para>
+       These have never been documented and complicated the use of modulus
+       (%) with negative numbers.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Make "&amp;&lt;" and "&amp;&gt;" for polygons consistent with the box 
+       "over" operators (Tom)
+      </para>
+     </listitem>
+
+    </itemizedlist>
    </sect2>
  
    <sect2>
@@ -2032,241 +2032,241 @@ typedefs (Michael)</para></listitem>
     
     <para>
      Observe the following incompatibilities:
- 
-     <itemizedlist>
- 
-      <listitem>
-       <para>
-        In <option>READ COMMITTED</> serialization mode, volatile functions
-        now see the results of concurrent transactions committed up to the
-        beginning of each statement within the function, rather than up to the
-        beginning of the interactive command that called the function.
-       </para>
-      </listitem>
- 
-      <listitem>
-       <para>
-        Functions declared <option>STABLE</> or <option>IMMUTABLE</> always
-        use the snapshot of the calling query, and therefore do not see the
-        effects of actions taken after the calling query starts, whether in
-        their own transaction or other transactions.  Such a function must be
-        read-only, too, meaning that it cannot use any SQL commands other than
-        <command>SELECT</>.
-       </para>
-      </listitem>
- 
-      <listitem>
-       <para>
-        Non-deferred <option>AFTER</> triggers are now fired immediately
-        after completion of the triggering query, rather than upon
-        finishing the current interactive command. This makes a
-        difference when the triggering query occurred within a function:
-        the trigger is invoked before the function proceeds to its next
-        operation.
-       </para>
-      </listitem>
- 
-      <listitem>
-       <para>
-        Server configuration parameters <varname>virtual_host</> and
-        <varname>tcpip_socket</> have been replaced with a more general
-        parameter <varname>listen_addresses</>. Also, the server now listens on
-        <literal>localhost</> by default, which eliminates the need for the
-        <literal>-i</> postmaster switch in many scenarios.
-       </para>
-      </listitem>
- 
-      <listitem>
-       <para>
-        Server configuration parameters <varname>SortMem</> and
-        <varname>VacuumMem</> have been renamed to <varname>work_mem</>
-        and <varname>maintenance_work_mem</> to better reflect their
-        use. The original names are still supported in
-        <command>SET</command> and <command>SHOW</command>.
-       </para>
-      </listitem>
- 
-      <listitem>
-       <para>
-        Server configuration parameters <varname>log_pid</>,
-        <varname>log_timestamp</>, and <varname>log_source_port</> have been
-        replaced with a more general parameter <varname>log_line_prefix</>.
-       </para>
-      </listitem>
- 
-      <listitem>
-       <para>
-        Server configuration parameter <varname>syslog</> has been
-        replaced with a more logical <varname>log_destination</> variable to
-        control the log output destination.
-       </para>
-      </listitem>
- 
-      <listitem>
-       <para>
-        Server configuration parameter <varname>log_statement</> has been
-        changed so it can selectively log just database modification or
-        data definition statements.  Server configuration parameter
-        <varname>log_duration</> now prints only when <varname>log_statement</>
-        prints the query.
-       </para>
-      </listitem>
- 
-      <listitem>
-       <para>
-        Server configuration parameter <varname>max_expr_depth</> parameter has
-        been replaced with <varname>max_stack_depth</> which measures the
-        physical stack size rather than the expression nesting depth. This
-        helps prevent session termination due to stack overflow caused by
-        recursive functions.
-       </para>
-      </listitem>
- 
-      <listitem>
-       <para>
-        The <function>length()</> function no longer counts trailing spaces in
-        <type>CHAR(n)</> values.
-       </para>
-      </listitem>
- 
-     <listitem>
-      <para>
-       Casting an integer to <type>BIT(N)</> selects the rightmost N bits of the
-       integer, not the leftmost N bits as before.
-      </para>
-     </listitem>
- 
-     <listitem>
-      <para>
-       Updating an element or slice of a NULL array value now produces
-       a non-NULL array result, namely an array containing
-       just the assigned-to positions.
-      </para>
-     </listitem>
- 
-      <listitem>
-       <para>
-        Syntax checking of array input values has been tightened up
-        considerably. Junk that was previously allowed in odd places with
-        odd results now causes an error. Empty-string element values
-        must now be written as <literal>""</>, rather than writing nothing.
-        Also changed behavior with respect to whitespace surrounding
-        array elements: trailing whitespace is now ignored, for symmetry
-        with leading whitespace (which has always been ignored).
-       </para>
-      </listitem>
- 
-      <listitem>
-       <para>
-        Overflow in integer arithmetic operations is now detected and
-        reported as an error.
-       </para>
-      </listitem>
- 
-      <listitem>
-       <para>
-        The arithmetic operators associated with the single-byte
-        <type>"char"</> data type have been removed.
-       </para>
-      </listitem>
- 
-      <listitem>
-       <para>
-        The <function>extract()</> function (also called
-        <function>date_part</>) now returns the proper year for BC dates.
-        It previously returned one less than the correct year. The
-        function now also returns the proper values for millennium and
-        century.
-       </para>
-      </listitem>
- 
-     <listitem>
-      <para>
-       <type>CIDR</> values now must have their non-masked bits be zero.
-       For example, we no longer allow
-       <literal>204.248.199.1/31</literal> as a <type>CIDR</> value. Such
-       values should never have been accepted by
-       <productname>PostgreSQL</productname> and will now be rejected.
-      </para>
-     </listitem>
- 
-      <listitem>
-       <para>
-        <command>EXECUTE</command> now returns a completion tag that
-        matches the executed statement.
-       </para>
-      </listitem>
- 
-      <listitem>
-       <para>
-        <application>psql</>'s <command>\copy</> command now reads or
-        writes to the query's <literal>stdin/stdout</>, rather than
-        <application>psql</>'s <literal>stdin/stdout</>. The previous
-        behavior can be accessed via new
-        <option>pstdin</>/<option>pstdout</> parameters.
-       </para>
-      </listitem>
- 
-      <listitem>
-       <para>
-       The JDBC client interface has been removed from the core
-       distribution, and is now hosted at <ulink url=
-       "http://jdbc.postgresql.org"></ulink>.
-       </para>
-      </listitem>
- 
-      <listitem>
-       <para>
-       The Tcl client interface has also been removed. There are several
-       Tcl interfaces now hosted at <ulink url=
-       "http://gborg.postgresql.org"></ulink>.
-       </para>
-      </listitem>
- 
-      <listitem>
-       <para>
-        The server now uses its own time zone database, rather than the
-        one supplied by the operating system. This will provide consistent
-        behavior across all platforms.  In most cases, there should be
-        little noticeable difference in time zone behavior, except that
-        the time zone names used by <command>SET</>/<command>SHOW</>
-        <varname>TimeZone</> may
-        be different from what your platform provides.
-       </para>
-      </listitem>
- 
-      <listitem>
-       <para>
-        <application>Configure</>'s threading option no longer requires
-        users to run tests or edit configuration files; threading options
-        are now detected automatically.
-       </para>
-      </listitem>
- 
-      <listitem>
-       <para>
-        Now that tablespaces have been implemented,
-        <application>initlocation</> has been removed.
-       </para>
-      </listitem>
- 
-      <listitem>
-       <para>
-        The API for user-defined GiST indexes has been changed. The
-        Union and PickSplit methods are now passed a pointer to a
-        special <structname>GistEntryVector</structname> structure,
-        rather than a <type>bytea</type>.
-       </para>
-      </listitem>
- 
-     </itemizedlist>
     </para>
+    
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       In <option>READ COMMITTED</> serialization mode, volatile functions
+       now see the results of concurrent transactions committed up to the
+       beginning of each statement within the function, rather than up to the
+       beginning of the interactive command that called the function.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Functions declared <option>STABLE</> or <option>IMMUTABLE</> always
+       use the snapshot of the calling query, and therefore do not see the
+       effects of actions taken after the calling query starts, whether in
+       their own transaction or other transactions.  Such a function must be
+       read-only, too, meaning that it cannot use any SQL commands other than
+       <command>SELECT</>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Non-deferred <option>AFTER</> triggers are now fired immediately
+       after completion of the triggering query, rather than upon
+       finishing the current interactive command. This makes a
+       difference when the triggering query occurred within a function:
+       the trigger is invoked before the function proceeds to its next
+       operation.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Server configuration parameters <varname>virtual_host</> and
+       <varname>tcpip_socket</> have been replaced with a more general
+       parameter <varname>listen_addresses</>. Also, the server now listens on
+       <literal>localhost</> by default, which eliminates the need for the
+       <literal>-i</> postmaster switch in many scenarios.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Server configuration parameters <varname>SortMem</> and
+       <varname>VacuumMem</> have been renamed to <varname>work_mem</>
+       and <varname>maintenance_work_mem</> to better reflect their
+       use. The original names are still supported in
+       <command>SET</command> and <command>SHOW</command>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Server configuration parameters <varname>log_pid</>,
+       <varname>log_timestamp</>, and <varname>log_source_port</> have been
+       replaced with a more general parameter <varname>log_line_prefix</>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Server configuration parameter <varname>syslog</> has been
+       replaced with a more logical <varname>log_destination</> variable to
+       control the log output destination.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Server configuration parameter <varname>log_statement</> has been
+       changed so it can selectively log just database modification or
+       data definition statements.  Server configuration parameter
+       <varname>log_duration</> now prints only when <varname>log_statement</>
+       prints the query.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Server configuration parameter <varname>max_expr_depth</> parameter has
+       been replaced with <varname>max_stack_depth</> which measures the
+       physical stack size rather than the expression nesting depth. This
+       helps prevent session termination due to stack overflow caused by
+       recursive functions.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The <function>length()</> function no longer counts trailing spaces in
+       <type>CHAR(n)</> values.
+      </para>
+     </listitem>
+
+    <listitem>
+     <para>
+      Casting an integer to <type>BIT(N)</> selects the rightmost N bits of the
+      integer, not the leftmost N bits as before.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Updating an element or slice of a NULL array value now produces
+      a non-NULL array result, namely an array containing
+      just the assigned-to positions.
+     </para>
+    </listitem>
+
+     <listitem>
+      <para>
+       Syntax checking of array input values has been tightened up
+       considerably. Junk that was previously allowed in odd places with
+       odd results now causes an error. Empty-string element values
+       must now be written as <literal>""</>, rather than writing nothing.
+       Also changed behavior with respect to whitespace surrounding
+       array elements: trailing whitespace is now ignored, for symmetry
+       with leading whitespace (which has always been ignored).
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Overflow in integer arithmetic operations is now detected and
+       reported as an error.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The arithmetic operators associated with the single-byte
+       <type>"char"</> data type have been removed.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The <function>extract()</> function (also called
+       <function>date_part</>) now returns the proper year for BC dates.
+       It previously returned one less than the correct year. The
+       function now also returns the proper values for millennium and
+       century.
+      </para>
+     </listitem>
+
+    <listitem>
+     <para>
+      <type>CIDR</> values now must have their non-masked bits be zero.
+      For example, we no longer allow
+      <literal>204.248.199.1/31</literal> as a <type>CIDR</> value. Such
+      values should never have been accepted by
+      <productname>PostgreSQL</productname> and will now be rejected.
+     </para>
+    </listitem>
+
+     <listitem>
+      <para>
+       <command>EXECUTE</command> now returns a completion tag that
+       matches the executed statement.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       <application>psql</>'s <command>\copy</> command now reads or
+       writes to the query's <literal>stdin/stdout</>, rather than
+       <application>psql</>'s <literal>stdin/stdout</>. The previous
+       behavior can be accessed via new
+       <option>pstdin</>/<option>pstdout</> parameters.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+      The JDBC client interface has been removed from the core
+      distribution, and is now hosted at <ulink url=
+      "http://jdbc.postgresql.org"></ulink>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+      The Tcl client interface has also been removed. There are several
+      Tcl interfaces now hosted at <ulink url=
+      "http://gborg.postgresql.org"></ulink>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The server now uses its own time zone database, rather than the
+       one supplied by the operating system. This will provide consistent
+       behavior across all platforms.  In most cases, there should be
+       little noticeable difference in time zone behavior, except that
+       the time zone names used by <command>SET</>/<command>SHOW</>
+       <varname>TimeZone</> may
+       be different from what your platform provides.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       <application>Configure</>'s threading option no longer requires
+       users to run tests or edit configuration files; threading options
+       are now detected automatically.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Now that tablespaces have been implemented,
+       <application>initlocation</> has been removed.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The API for user-defined GiST indexes has been changed. The
+       Union and PickSplit methods are now passed a pointer to a
+       special <structname>GistEntryVector</structname> structure,
+       rather than a <type>bytea</type>.
+      </para>
+     </listitem>
+
+    </itemizedlist>
    </sect2>
- 
-   <sect2>
-    <title>Deprecated Features</title>
- 
-    <para>
+
+  <sect2>
+   <title>Deprecated Features</title>
+
+   <para>
      Some aspects of <productname>PostgreSQL</productname>'s behavior
      have been determined to be suboptimal. For the sake of backward
      compatibility these have not been removed in 8.0, but they are
@@ -2305,6 +2305,7 @@ typedefs (Michael)</para></listitem>
        <productname>PostgreSQL</productname>.
       </para>
      </listitem>
+
     </itemizedlist>
    </sect2>
  
@@ -5198,146 +5199,147 @@ DROP SCHEMA information_schema CASCADE;
    
    <para>
     Observe the following incompatibilities:
-
-    <itemizedlist>
-     <listitem>
-      <para>
-       The server-side autocommit setting was removed and
-       reimplemented in client applications and languages.
-       Server-side autocommit was causing too many problems with
-       languages and applications that wanted to control their own
-       autocommit behavior, so autocommit was removed from the server
-       and added to individual client APIs as appropriate.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Error message wording has changed substantially in this
-       release.  Significant effort was invested to make the messages
-       more consistent and user-oriented.  If your applications try to
-       detect different error conditions by parsing the error message,
-       you are strongly encouraged to use the new error code facility instead.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Inner joins using the explicit <literal>JOIN</literal> syntax
-       may behave differently because they are now better
-       optimized.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       A number of server configuration parameters have been renamed
-       for clarity, primarily those related to
-       logging.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       <literal>FETCH 0</literal> or <literal>MOVE 0</literal> now
-       does nothing.  In prior releases, <literal>FETCH 0</literal>
-       would fetch all remaining rows, and <literal>MOVE 0</literal>
-       would move to the end of the cursor.
-      </para>
-     </listitem>
- 
-     <listitem>
-      <para>
-       <command>FETCH</command> and <command>MOVE</command> now return
-       the actual number of rows fetched/moved, or zero if at the
-       beginning/end of the cursor.  Prior releases would return the
-       row count passed to the command, not the number of rows
-       actually fetched or moved.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       <command>COPY</command> now can process files that use
-       carriage-return or carriage-return/line-feed end-of-line
-       sequences. Literal carriage-returns and line-feeds are no
-       longer accepted in data values; use <literal>\r</literal> and
-       <literal>\n</literal> instead.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Trailing spaces are now trimmed when converting from type
-       <type>char(<replaceable>n</>)</type> to
-       <type>varchar(<replaceable>n</>)</type> or <type>text</type>.
-       This is what most people always expected to happen anyway.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       The data type <type>float(<replaceable>p</>)</type> now
-       measures <replaceable>p</> in binary digits, not decimal
-       digits.  The new behavior follows the SQL standard.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Ambiguous date values now must match the ordering specified by
-       the <varname>datestyle</varname> setting.  In prior releases, a
-       date specification of <literal>10/20/03</> was interpreted as a
-       date in October even if <varname>datestyle</> specified that
-       the day should be first.  7.4 will throw an error if a date
-       specification is invalid for the current setting of
-       <varname>datestyle</>.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       The functions <function>oidrand</function>,
-       <function>oidsrand</function>, and
-       <function>userfntest</function> have been removed.  These
-       functions were determined to be no longer useful.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       String literals specifying time-varying date/time values, such
-       as <literal>'now'</literal> or <literal>'today'</literal> will
-       no longer work as expected in column default expressions; they
-       now cause the time of the table creation to be the default, not
-       the time of the insertion.  Functions such as
-       <function>now()</>, <function>current_timestamp</>, or
-       <function>current_date</function> should be used instead.
-      </para>
-
-      <para>
-       In previous releases, there was special code so that strings
-       such as <literal>'now'</literal> were interpreted at
-       <command>INSERT</> time and not at table creation time, but
-       this work around didn't cover all cases.  Release 7.4 now
-       requires that defaults be defined properly using functions such
-       as <function>now()</> or <function>current_timestamp</>. These
-       will work in all situations.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       The dollar sign (<literal>$</>) is no longer allowed in
-       operator names.  It can instead be a non-first character in
-       identifiers.  This was done to improve compatibility with other
-       database systems, and to avoid syntax problems when parameter
-       placeholders (<literal>$<replaceable>n</></>) are written
-       adjacent to operators.
-      </para>
-     </listitem>
-    </itemizedlist>
    </para>
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      The server-side autocommit setting was removed and
+      reimplemented in client applications and languages.
+      Server-side autocommit was causing too many problems with
+      languages and applications that wanted to control their own
+      autocommit behavior, so autocommit was removed from the server
+      and added to individual client APIs as appropriate.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Error message wording has changed substantially in this
+      release.  Significant effort was invested to make the messages
+      more consistent and user-oriented.  If your applications try to
+      detect different error conditions by parsing the error message,
+      you are strongly encouraged to use the new error code facility instead.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Inner joins using the explicit <literal>JOIN</literal> syntax
+      may behave differently because they are now better
+      optimized.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      A number of server configuration parameters have been renamed
+      for clarity, primarily those related to
+      logging.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <literal>FETCH 0</literal> or <literal>MOVE 0</literal> now
+      does nothing.  In prior releases, <literal>FETCH 0</literal>
+      would fetch all remaining rows, and <literal>MOVE 0</literal>
+      would move to the end of the cursor.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <command>FETCH</command> and <command>MOVE</command> now return
+      the actual number of rows fetched/moved, or zero if at the
+      beginning/end of the cursor.  Prior releases would return the
+      row count passed to the command, not the number of rows
+      actually fetched or moved.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <command>COPY</command> now can process files that use
+      carriage-return or carriage-return/line-feed end-of-line
+      sequences. Literal carriage-returns and line-feeds are no
+      longer accepted in data values; use <literal>\r</literal> and
+      <literal>\n</literal> instead.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Trailing spaces are now trimmed when converting from type
+      <type>char(<replaceable>n</>)</type> to
+      <type>varchar(<replaceable>n</>)</type> or <type>text</type>.
+      This is what most people always expected to happen anyway.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The data type <type>float(<replaceable>p</>)</type> now
+      measures <replaceable>p</> in binary digits, not decimal
+      digits.  The new behavior follows the SQL standard.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ambiguous date values now must match the ordering specified by
+      the <varname>datestyle</varname> setting.  In prior releases, a
+      date specification of <literal>10/20/03</> was interpreted as a
+      date in October even if <varname>datestyle</> specified that
+      the day should be first.  7.4 will throw an error if a date
+      specification is invalid for the current setting of
+      <varname>datestyle</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The functions <function>oidrand</function>,
+      <function>oidsrand</function>, and
+      <function>userfntest</function> have been removed.  These
+      functions were determined to be no longer useful.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      String literals specifying time-varying date/time values, such
+      as <literal>'now'</literal> or <literal>'today'</literal> will
+      no longer work as expected in column default expressions; they
+      now cause the time of the table creation to be the default, not
+      the time of the insertion.  Functions such as
+      <function>now()</>, <function>current_timestamp</>, or
+      <function>current_date</function> should be used instead.
+     </para>
+
+     <para>
+      In previous releases, there was special code so that strings
+      such as <literal>'now'</literal> were interpreted at
+      <command>INSERT</> time and not at table creation time, but
+      this work around didn't cover all cases.  Release 7.4 now
+      requires that defaults be defined properly using functions such
+      as <function>now()</> or <function>current_timestamp</>. These
+      will work in all situations.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The dollar sign (<literal>$</>) is no longer allowed in
+      operator names.  It can instead be a non-first character in
+      identifiers.  This was done to improve compatibility with other
+      database systems, and to avoid syntax problems when parameter
+      placeholders (<literal>$<replaceable>n</></>) are written
+      adjacent to operators.
+     </para>
+    </listitem>
+
+   </itemizedlist>
   </sect2>
 
   <sect2>
@@ -7560,99 +7562,98 @@ operations on bytea columns (Joe)</para></listitem>
 
    <para>
     Observe the following incompatibilities:
-
-    <itemizedlist>
-     <listitem>
-      <para>
-       Pre-6.3 clients are no longer supported.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       <filename>pg_hba.conf</filename> now has a column for the user
-       name and additional features.  Existing files need to be
-       adjusted.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Several <filename>postgresql.conf</filename> logging parameters
-       have been renamed.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       <literal>LIMIT #,#</literal> has been disabled; use
-       <literal>LIMIT # OFFSET #</literal>.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       <command>INSERT</command> statements with column lists must
-       specify a value for each specified column. For example,
-       <literal>INSERT INTO tab (col1, col2) VALUES ('val1')</literal>
-       is now invalid.  It's still allowed to supply fewer columns than
-       expected if the <command>INSERT</command> does not have a column list.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       <type>serial</type> columns are no longer automatically
-       <literal>UNIQUE</>; thus, an index will not automatically be
-       created.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       A <command>SET</command> command inside an aborted transaction
-       is now rolled back.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       <command>COPY</command> no longer considers missing trailing
-       columns to be null.  All columns need to be specified.
-       (However, one may achieve a similar effect by specifying a
-       column list in the <command>COPY</command> command.)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       The data type <type>timestamp</type> is now equivalent to
-       <type>timestamp without time zone</type>, instead of
-       <type>timestamp with time zone</type>.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Pre-7.3 databases loaded into 7.3 will not have the new object
-       dependencies for <type>serial</type> columns, unique
-       constraints, and foreign keys. See the directory
-       <filename>contrib/adddepend/</filename> for a detailed
-       description and a script that will add such dependencies.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       An empty string (<literal>''</literal>) is no longer allowed as
-       the input into an integer field.  Formerly, it was silently
-       interpreted as 0.
-      </para>
-     </listitem>
-
-    </itemizedlist>
    </para>
 
+   <itemizedlist>
+    <listitem>
+     <para>
+      Pre-6.3 clients are no longer supported.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <filename>pg_hba.conf</filename> now has a column for the user
+      name and additional features.  Existing files need to be
+      adjusted.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Several <filename>postgresql.conf</filename> logging parameters
+      have been renamed.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <literal>LIMIT #,#</literal> has been disabled; use
+      <literal>LIMIT # OFFSET #</literal>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <command>INSERT</command> statements with column lists must
+      specify a value for each specified column. For example,
+      <literal>INSERT INTO tab (col1, col2) VALUES ('val1')</literal>
+      is now invalid.  It's still allowed to supply fewer columns than
+      expected if the <command>INSERT</command> does not have a column list.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <type>serial</type> columns are no longer automatically
+      <literal>UNIQUE</>; thus, an index will not automatically be
+      created.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      A <command>SET</command> command inside an aborted transaction
+      is now rolled back.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <command>COPY</command> no longer considers missing trailing
+      columns to be null.  All columns need to be specified.
+      (However, one may achieve a similar effect by specifying a
+      column list in the <command>COPY</command> command.)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The data type <type>timestamp</type> is now equivalent to
+      <type>timestamp without time zone</type>, instead of
+      <type>timestamp with time zone</type>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Pre-7.3 databases loaded into 7.3 will not have the new object
+      dependencies for <type>serial</type> columns, unique
+      constraints, and foreign keys. See the directory
+      <filename>contrib/adddepend/</filename> for a detailed
+      description and a script that will add such dependencies.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      An empty string (<literal>''</literal>) is no longer allowed as
+      the input into an integer field.  Formerly, it was silently
+      interpreted as 0.
+     </para>
+    </listitem>
+
+   </itemizedlist>
   </sect2>
 
   <sect2>
@@ -8516,57 +8517,58 @@ since <productname>PostgreSQL</productname> 7.1.
 
    <para>
     Observe the following incompatibilities:
-
-    <itemizedlist>
-     <listitem>
-      <para>
-       The semantics of the <command>VACUUM</command> command have
-       changed in this release.  You may wish to update your
-       maintenance procedures accordingly.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       In this release, comparisons using <literal>= NULL</literal>
-       will always return false (or NULL, more precisely).  Previous
-       releases automatically transformed this syntax to <literal>IS
-       NULL</literal>.  The old behavior can be re-enabled using a
-       <filename>postgresql.conf</filename> parameter.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       The <filename>pg_hba.conf</> and <filename>pg_ident.conf</>
-       configuration is now only reloaded after receiving a
-       <systemitem>SIGHUP</> signal, not with each connection.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       The function <filename>octet_length()</> now returns the uncompressed data length.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       The date/time value <literal>'current'</literal> is no longer
-       available.  You will need to rewrite your applications.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       The <literal>timestamp()</literal>, <literal>time()</literal>,
-       and <literal>interval()</literal> functions are no longer
-       available.  Instead of <literal>timestamp()</literal>, use 
-       <literal>timestamp 'string'</literal> or <literal>CAST</literal>.
-      </para>
-     </listitem>
-    </itemizedlist>
    </para>
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      The semantics of the <command>VACUUM</command> command have
+      changed in this release.  You may wish to update your
+      maintenance procedures accordingly.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In this release, comparisons using <literal>= NULL</literal>
+      will always return false (or NULL, more precisely).  Previous
+      releases automatically transformed this syntax to <literal>IS
+      NULL</literal>.  The old behavior can be re-enabled using a
+      <filename>postgresql.conf</filename> parameter.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The <filename>pg_hba.conf</> and <filename>pg_ident.conf</>
+      configuration is now only reloaded after receiving a
+      <systemitem>SIGHUP</> signal, not with each connection.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The function <filename>octet_length()</> now returns the uncompressed data length.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The date/time value <literal>'current'</literal> is no longer
+      available.  You will need to rewrite your applications.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The <literal>timestamp()</literal>, <literal>time()</literal>,
+      and <literal>interval()</literal> functions are no longer
+      available.  Instead of <literal>timestamp()</literal>, use 
+      <literal>timestamp 'string'</literal> or <literal>CAST</literal>.
+     </para>
+    </listitem>
+
+   </itemizedlist>
 
    <para>
     The <literal>SELECT ... LIMIT #,#</literal> syntax will be removed
