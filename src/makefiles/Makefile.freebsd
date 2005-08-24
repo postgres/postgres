@@ -7,10 +7,10 @@ endif
 
 DLSUFFIX = .so
 
-ifeq ($(findstring sparc,$(host_cpu)), sparc)
 CFLAGS_SL = -fPIC -DPIC
-else
-CFLAGS_SL = -fPIC -DPIC
+
+ifeq ($(findstring i386,$(host_cpu)), i386)
+allow_nonpic_in_shlib = yes
 endif
 
 
@@ -28,5 +28,3 @@ else
 endif
 
 sqlmansect = 7
-
-allow_nonpic_in_shlib = yes
