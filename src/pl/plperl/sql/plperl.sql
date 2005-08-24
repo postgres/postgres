@@ -240,7 +240,7 @@ SELECT perl_get_field((11,12), 'z');
 --
 
 CREATE OR REPLACE FUNCTION perl_srf_rn() RETURNS SETOF RECORD AS $$
-$i = 0;
+my $i = 0;
 for ("World", "PostgreSQL", "PL/Perl") {
     return_next({f1=>++$i, f2=>'Hello', f3=>$_});
 }
@@ -253,8 +253,8 @@ SELECT * from perl_srf_rn() AS (f1 INTEGER, f2 TEXT, f3 TEXT);
 --
 
 CREATE OR REPLACE FUNCTION perl_spi_func() RETURNS SETOF INTEGER AS $$
-$x = spi_query("select 1 as a union select 2 as a");
-while (defined ($y = spi_fetchrow($x))) {
+my $x = spi_query("select 1 as a union select 2 as a");
+while (defined (my $y = spi_fetchrow($x))) {
     return_next($y->{a});
 }
 return;
