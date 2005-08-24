@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.91 2005/08/24 18:16:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.92 2005/08/24 19:06:28 tgl Exp $
  *
  **********************************************************************/
 
@@ -370,7 +370,7 @@ plperl_convert_to_pg_array(SV *src)
 	SPAGAIN ;
 
 	if (count != 1)
-		croak("Big trouble\n") ;
+		elog(ERROR, "unexpected _plperl_to_pg_array failure");
 
 	rv = POPs;
 			   
