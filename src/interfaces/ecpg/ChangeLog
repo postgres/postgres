@@ -1929,6 +1929,12 @@ Thu Jun  2 14:22:32 CEST 2005
 	- Fixed memory leak in ecpglib by adding some missing free() commands.
 	- Added patch by Gavin Scott <gavin@planetacetech.com> for Intel 64bit
 	  hardware.
+
+Wed Aug 24 12:17:48 CEST 2005
+
+	- Check for NULL before checking whether argument is an array.
+	- Removed stray character from string quoting.
+	- Fixed check to report missing varchar pointer implementation.
 	- Set ecpg library version to 5.1.
 	- Set ecpg version to 4.1.1.
 

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.309 2005/08/22 20:25:03 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.310 2005/08/24 10:34:19 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -5144,7 +5144,8 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_initializer
 							*dim = '\0';
 					else	
 							sprintf(dim, "[%s]", dimension);
-					if (strcmp(length, "0") == 0)
+					/* if (strcmp(length, "0") == 0)*/
+					if (atoi(length) <= 0)
 						mmerror(PARSE_ERROR, ET_ERROR, "pointer to varchar are not implemented");
 
 					if (strcmp(dimension, "0") == 0)

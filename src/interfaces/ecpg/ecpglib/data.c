@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.27 2004/08/29 05:06:59 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.28 2005/08/24 10:34:19 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -49,29 +49,6 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 	int			value_for_indicator = 0;
 
 	ECPGlog("ECPGget_data line %d: RESULT: %s offset: %ld array: %s\n", lineno, pval ? pval : "", offset, isarray ? "Yes" : "No");
-
-	/* pval is a pointer to the value */
-	/* let's check if it really is an array if it should be one */
-	if (isarray == ECPG_ARRAY_ARRAY)
-	{
-		if (*pval != '{')
-		{
-			ECPGraise(lineno, ECPG_DATA_NOT_ARRAY, ECPG_SQLSTATE_DATATYPE_MISMATCH, NULL);
-			return (false);
-		}
-
-		switch (type)
-		{
-			case ECPGt_char:
-			case ECPGt_unsigned_char:
-			case ECPGt_varchar:
-				break;
-
-			default:
-				pval++;
-				break;
-		}
-	}
 
 	/* We will have to decode the value */
 
@@ -128,6 +105,29 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 
 	if (value_for_indicator == -1)
 		return (true);
+
+	/* pval is a pointer to the value */
+	/* let's check if it really is an array if it should be one */
+	if (isarray == ECPG_ARRAY_ARRAY)
+	{
+		if (*pval != '{')
+		{
+			ECPGraise(lineno, ECPG_DATA_NOT_ARRAY, ECPG_SQLSTATE_DATATYPE_MISMATCH, NULL);
+			return (false);
+		}
+
+		switch (type)
+		{
+			case ECPGt_char:
+			case ECPGt_unsigned_char:
+			case ECPGt_varchar:
+				break;
+
+			default:
+				pval++;
+				break;
+		}
+	}
 
 	do
 	{
