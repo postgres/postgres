@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.131 2005/08/02 16:11:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.132 2005/08/24 17:50:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -849,6 +849,8 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 		char	   *a1p,
 				   *a2p;
 
+#ifndef WIN32
+
 		if (len1 >= STACKBUFLEN)
 			a1p = (char *) palloc(len1 + 1);
 		else
@@ -865,10 +867,87 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 
 		result = strcoll(a1p, a2p);
 
-		if (len1 >= STACKBUFLEN)
+		if (a1p != a1buf)
 			pfree(a1p);
-		if (len2 >= STACKBUFLEN)
+		if (a2p != a2buf)
 			pfree(a2p);
+
+#else /* WIN32 */
+
+		/* Win32 does not have UTF-8, so we need to map to UTF-16 */
+		if (GetDatabaseEncoding() == PG_UTF8)
+		{
+			int a1len;
+			int a2len;
+			int r;
+
+			if (len1 >= STACKBUFLEN/2)
+			{
+				a1len = len1 * 2 + 2;
+				a1p = palloc(a1len);
+			}
+			else
+			{
+				a1len = STACKBUFLEN;
+				a1p = a1buf;
+			}
+			if (len2 >= STACKBUFLEN/2)
+			{
+				a2len = len2 * 2 + 2;
+				a2p = palloc(a2len);
+			}
+			else
+			{
+				a2len = STACKBUFLEN;
+				a2p = a2buf;
+			}
+
+			/* stupid Microsloth API does not work for zero-length input */
+			if (len1 == 0)
+				r = 0;
+			else
+			{
+				r = MultiByteToWideChar(CP_UTF8, 0, arg1, len1,
+										(LPWSTR) a1p, a1len/2);
+				if (!r)
+					ereport(ERROR,
+							(errmsg("could not convert string to UTF16: %lu",
+									GetLastError())));
+			}
+			((LPWSTR) a1p)[r] = 0;
+
+			if (len2 == 0)
+				r = 0;
+			else
+			{
+				r = MultiByteToWideChar(CP_UTF8, 0, arg2, len2,
+										(LPWSTR) a2p, a2len/2);
+				if (!r)
+					ereport(ERROR,
+							(errmsg("could not convert string to UTF16: %lu",
+									GetLastError())));
+			}
+			((LPWSTR) a2p)[r] = 0;
+
+			errno = 0;
+			result = wcscoll((LPWSTR) a1p, (LPWSTR) a2p);
+			if (result == 2147483647) /* _NLSCMPERROR; missing from mingw headers */
+				ereport(ERROR,
+						(errmsg("could not compare unicode strings: %d",
+								errno)));
+
+			if (a1p != a1buf)
+				pfree(a1p);
+			if (a2p != a2buf)
+				pfree(a2p);
+
+			return result;
+		}
+
+		/* Win32 has strncoll(), so use it to avoid copying */
+		return _strncoll(arg1, arg2, Min(len1, len2));
+
+#endif /* WIN32 */
 	}
 	else
 	{
@@ -2000,7 +2079,7 @@ replace_text(PG_FUNCTION_ARGS)
 
 /*
  * check_replace_text_has_escape_char
- * check whether replace_text has escape char. 
+ * check whether replace_text has escape char.
  */
 static bool
 check_replace_text_has_escape_char(const text *replace_text)
@@ -2175,7 +2254,7 @@ replace_text_regexp(PG_FUNCTION_ARGS)
 
 		/*
 		 * Copy the replace_text. Process back references when the
-		 * replace_text has escape characters. 
+		 * replace_text has escape characters.
 		 */
 		if (have_escape)
 			appendStringInfoRegexpSubstr(str, replace_text, pmatch, src_text);
@@ -2573,7 +2652,7 @@ md5_bytea(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(result_text);
 }
 
-/* 
+/*
  * Return the size of a datum, possibly compressed
  *
  * Works on any data type

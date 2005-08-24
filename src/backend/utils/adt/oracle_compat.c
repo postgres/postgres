@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.60 2005/05/07 15:18:17 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.61 2005/08/24 17:50:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,6 +147,117 @@ wcstotext(const wchar_t *str, int ncodes)
 	return result;
 }
 #endif   /* USE_WIDE_UPPER_LOWER */
+
+
+/*
+ * On Windows, the "Unicode" locales assume UTF16 not UTF8 encoding.
+ * To make use of the upper/lower functionality, we need to map UTF8 to
+ * UTF16, which for some reason mbstowcs and wcstombs won't do for us.
+ * This conversion layer takes care of it.
+ */
+
+#ifdef WIN32
+
+/* texttowcs for the case of UTF8 to UTF16 */
+static wchar_t *
+win32_utf8_texttowcs(const text *txt)
+{
+	int			nbytes = VARSIZE(txt) - VARHDRSZ;
+	wchar_t    *result;
+	int         r;
+
+	/* Overflow paranoia */
+	if (nbytes < 0 ||
+		nbytes > (int) (INT_MAX / sizeof(wchar_t)) -1)
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
+
+	/* Output workspace cannot have more codes than input bytes */
+	result = (wchar_t *) palloc((nbytes + 1) * sizeof(wchar_t));
+
+	/* stupid Microsloth API does not work for zero-length input */
+	if (nbytes == 0)
+		r = 0;
+	else
+	{
+		/* Do the conversion */
+		r = MultiByteToWideChar(CP_UTF8, 0, VARDATA(txt), nbytes,
+								result, nbytes);
+
+		if (!r)					/* assume it's NO_UNICODE_TRANSLATION */
+		{
+			/* see notes above about error reporting */
+			pg_verifymbstr(VARDATA(txt), nbytes, false);
+			ereport(ERROR,
+					(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
+					 errmsg("invalid multibyte character for locale"),
+					 errhint("The server's LC_CTYPE locale is probably incompatible with the database encoding.")));
+		}
+	}
+
+	Assert(r <= nbytes);
+	result[r] = 0;
+
+	return result;
+}
+
+/* wcstotext for the case of UTF16 to UTF8 */
+static text *
+win32_utf8_wcstotext(const wchar_t *str)
+{
+	text		*result;
+	int			 nbytes;
+	int			 r;
+
+	nbytes = WideCharToMultiByte(CP_UTF8, 0, str, -1, NULL, 0, NULL, NULL);
+	if (nbytes == 0)			/* shouldn't happen */
+		ereport(ERROR,
+				(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
+				 errmsg("UTF16 to UTF8 translation failed: %lu",
+						GetLastError())));
+
+	result = palloc(nbytes+VARHDRSZ);
+
+	r = WideCharToMultiByte(CP_UTF8, 0, str, -1, VARDATA(result), nbytes,
+							NULL, NULL);
+	if (r == 0)					/* shouldn't happen */
+		ereport(ERROR,
+				(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
+				 errmsg("UTF16 to UTF8 translation failed: %lu",
+						GetLastError())));
+
+	VARATT_SIZEP(result) = nbytes + VARHDRSZ - 1; /* -1 to ignore null */
+
+	return result;
+}
+
+/* interface layer to check which encoding is in use */
+
+static wchar_t *
+win32_texttowcs(const text *txt)
+{
+	if (GetDatabaseEncoding() == PG_UTF8)
+		return win32_utf8_texttowcs(txt);
+	else
+		return texttowcs(txt);
+}
+
+static text *
+win32_wcstotext(const wchar_t *str, int ncodes)
+{
+	if (GetDatabaseEncoding() == PG_UTF8)
+		return win32_utf8_wcstotext(str);
+	else
+		return wcstotext(str, ncodes);
+}
+
+/* use macros to cause routines below to call interface layer */
+
+#define texttowcs	win32_texttowcs
+#define wcstotext	win32_wcstotext
+
+#endif /* WIN32 */
 
 
 /********************************************************************
