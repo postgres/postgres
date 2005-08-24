@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Aug 23 19:51:09 EDT 2005
+Last updated:		Wed Aug 24 09:57:22 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -66,6 +66,10 @@ Administration
 	  by the user
 	o Allow commenting of variables in postgresql.conf to restore them
 	  to defaults
+
+          Currently, if a variable is commented out, it keeps the
+          previous uncommented value until a server restarted.
+
 	o Allow pg_hba.conf settings to be controlled via SQL
 
 	  This would add a function to load the SQL table from
