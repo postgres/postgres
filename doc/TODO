@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Wed Aug 24 10:05:23 EDT 2005
+Last updated:		Wed Aug 24 10:24:13 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -649,7 +649,7 @@ Referential Integrity
   This is currently possible by starting a multi-statement transaction,
   modifying the system tables, performing the desired SQL, restoring the
   system tables, and committing the transaction.  ALTER TABLE ...
-  TRIGGER requires a table lock so it is not idea for this usage.
+  TRIGGER requires a table lock so it is not ideal for this usage.
 
 * With disabled triggers, allow pg_dump to use ALTER TABLE ADD FOREIGN KEY
 
