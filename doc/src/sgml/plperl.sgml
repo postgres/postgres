@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.43 2005/08/12 21:42:53 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.44 2005/08/24 18:56:07 tgl Exp $
 -->
 
  <chapter id="plperl">
@@ -46,46 +46,18 @@ $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.43 2005/08/12 21:42:53 momjian E
   <para>
    To create a function in the PL/Perl language, use the standard
    <xref linkend="sql-createfunction" endterm="sql-createfunction-title">
-   syntax.  A PL/Perl function must always return a scalar value.  You
-   can return more complex structures (arrays, records, and sets) 
-   in the appropriate context by returning a reference.
-   Never return a list.  Here follows an example of a PL/Perl
-   function.
+   syntax:
 
 <programlisting>
 CREATE FUNCTION <replaceable>funcname</replaceable> (<replaceable>argument-types</replaceable>) RETURNS <replaceable>return-type</replaceable> AS $$
     # PL/Perl function body
 $$ LANGUAGE plperl;
 </programlisting>
-   The body of the function is ordinary Perl code.
+   The body of the function is ordinary Perl code. A PL/Perl function must
+   always return a scalar value.  You can return more complex structures
+   (arrays, records, and sets) by returning a reference, as discussed below.
+   Never return a list.
   </para>
-    <para>
-    As with ordinary Perl code, you should use the strict pragma,
-    which you can do in one of two ways:
-
-    <itemizedlist>
-     <listitem>
-      <para>
-       Globally, by adding <quote>plperl</quote> to the list of <xref
-        linkend="guc-custom-variable-classes"> and setting
-       <literal>plperl.use_strict</literal> to true in
-       <filename>postgresql.conf</filename>
-      </para>
-    </listitem>
-     <listitem>
-      <para>
-       One function at a time, by using PL/PerlU (you must be database
-       superuser to do this) and including
-
-<programlisting>
-use strict;
-</programlisting>
-
-        in the function body.
-        </para>
-    </listitem>
-    </itemizedlist>
-    </para>
 
    <para>
     The syntax of the <command>CREATE FUNCTION</command> command requires
@@ -205,13 +177,13 @@ SELECT * FROM perl_row();
 
   <para>
     PL/Perl functions can also return sets of either scalar or
-    composite types.  In general, you'll want to return rows one at a
-    time both to speed up startup time and to keep from queueing up
+    composite types.  Usually you'll want to return rows one at a
+    time, both to speed up startup time and to keep from queueing up
     the entire result set in memory.  You can do this with
     <function>return_next</function> as illustrated below.  Note that
     after the last <function>return_next</function>, you must put
-    either <literal>return;</literal> or (better) <literal>return
-    undef;</literal>
+    either <literal>return</literal> or (better) <literal>return
+    undef</literal>.
 
 <programlisting>
 CREATE OR REPLACE FUNCTION perl_set_int(int)
@@ -237,7 +209,7 @@ $$ LANGUAGE plperl;
     contains either scalars, references to arrays, or references to
     hashes for simple types, array types, and composite types,
     respectively.  Here are some simple examples of returning the entire
-    result set as a reference:
+    result set as an array reference:
 
 <programlisting>
 CREATE OR REPLACE FUNCTION perl_set_int(int) RETURNS SETOF INTEGER AS $$
@@ -267,6 +239,27 @@ SELECT * FROM perl_set();
      it is a hazard if you declare a <application>PL/Perl</> function
      as returning a domain type.
     </para>
+
+  <para>
+   If you wish to use the <literal>strict</> pragma with your code,
+   the easiest way to do so is to <command>SET</>
+   <literal>plperl.use_strict</literal> to true.  This parameter affects
+   subsequent compilations of <application>PL/Perl</> functions, but not
+   functions already compiled in the current session.  To set the
+   parameter before <application>PL/Perl</> has been loaded, it is
+   necessary to have added <quote><literal>plperl</></> to the <xref
+   linkend="guc-custom-variable-classes"> list in
+   <filename>postgresql.conf</filename>.
+  </para>
+
+  <para>
+   Another way to use the <literal>strict</> pragma is to just put
+<programlisting>
+use strict;
+</programlisting>
+   in the function body.  But this only works for <application>PL/PerlU</>
+   functions, since <literal>use</> is not a trusted operation.
+  </para>
  </sect1>
 
  <sect1 id="plperl-database">

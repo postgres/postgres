@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.347 2005/08/22 17:34:56 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.348 2005/08/24 18:56:07 tgl Exp $
 -->
 
 <chapter Id="runtime">
@@ -4382,10 +4382,10 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      when using custom variables:
 
 <programlisting>
-custom_variable_classes = 'plr,pljava'
+custom_variable_classes = 'plr,plperl'
 plr.path = '/usr/lib/R'
-pljava.foo = 1
-plruby.bar = true        # generates error, unknown class name
+plperl.use_strict = true
+plruby.use_strict = true        # generates error: unknown class name
 </programlisting>
     </para>
    </sect2>
