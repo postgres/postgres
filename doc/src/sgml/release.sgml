@@ -1,15 +1,16 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.359 2005/08/24 19:31:46 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.360 2005/08/24 19:34:33 momjian Exp $
 
 Typical markup:
-[A-Z][A-Z ]+[A-Z]		<command>
-[A-Za-z_][A-Za-z0-9_]+()	<function>
-[A-Za-z_]/[A-Za-z_]+		<filename>
-PostgreSQL			<productname>
-pg_[A-Za-z0-9_]			<appication>
-[A-Z][A-Z]			<type>, <envar.
-				<literal>
-&<>				use &
+
+[A-Z][A-Z ]+[A-Z]               <command>
+[A-Za-z_][A-Za-z0-9_]+()        <function>
+[A-Za-z_]/[A-Za-z_]+            <filename>
+PostgreSQL                      <productname>
+pg_[A-Za-z0-9_]                 <appication>
+[A-Z][A-Z]                      <type>, <envar.
+                                <literal>
+&<>                             use &
 -->
 
 <appendix id="release">
