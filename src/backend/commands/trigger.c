@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.193 2005/08/23 22:40:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.194 2005/08/24 17:38:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1492,9 +1492,10 @@ ExecBRDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
 	int			ntrigs = trigdesc->n_before_row[TRIGGER_EVENT_DELETE];
 	int		   *tgindx = trigdesc->tg_before_row[TRIGGER_EVENT_DELETE];
+	bool		result = true;
 	TriggerData LocTriggerData;
 	HeapTuple	trigtuple;
-	HeapTuple	newtuple = NULL;
+	HeapTuple	newtuple;
 	TupleTableSlot *newSlot;
 	int			i;
 
@@ -1524,13 +1525,16 @@ ExecBRDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 									   relinfo->ri_TrigInstrument,
 									   GetPerTupleMemoryContext(estate));
 		if (newtuple == NULL)
+		{
+			result = false;		/* tell caller to suppress delete */
 			break;
+		}
 		if (newtuple != trigtuple)
 			heap_freetuple(newtuple);
 	}
 	heap_freetuple(trigtuple);
 
-	return (newtuple == NULL) ? false : true;
+	return result;
 }
 
 void
