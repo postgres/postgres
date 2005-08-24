@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.80 2005/08/22 21:32:01 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.81 2005/08/24 17:24:19 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -41,6 +41,8 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }
     ADD <replaceable class="PARAMETER">table_constraint</replaceable>
     DROP CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
+    DISABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
+    ENABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
     CLUSTER ON <replaceable class="PARAMETER">index_name</replaceable>
     SET WITHOUT CLUSTER
     SET WITHOUT OIDS
@@ -190,6 +192,25 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
    </varlistentry>
 
    <varlistentry>
+    <term><literal>DISABLE</literal>/<literal>ENABLE TRIGGER</literal></term>
+    <listitem>
+     <para>
+      These forms disable or enable trigger(s) belonging to the table.
+      A disabled trigger is still known to the system, but is not executed
+      when its triggering event occurs.  For a deferred trigger, the enable
+      status is checked when the event occurs, not when the trigger function
+      is actually executed.  One may disable or enable a single
+      trigger specified by name, or all triggers on the table, or only
+      user triggers (this option excludes triggers that are used to implement
+      foreign key constraints).  Disabling or enabling constraint triggers
+      requires superuser privileges; it should be done with caution since
+      of course the integrity of the constraint cannot be guaranteed if the
+      triggers are not executed.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><literal>CLUSTER</literal></term>
     <listitem>
      <para>
@@ -292,8 +313,11 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
    You must own the table to use <command>ALTER TABLE</>.
    To change the schema of a table, you must also have
    <literal>CREATE</literal> privilege on the new schema.
-   To alter the owner, the new owner must have
-   <literal>CREATE</literal> privilege on the schema.
+   To alter the owner, you must also be a direct or indirect member of the new
+   owning role, and that role must have <literal>CREATE</literal> privilege on
+   the table's schema.  (These restrictions enforce that altering the owner
+   doesn't do anything you couldn't do by dropping and recreating the table.
+   However, a superuser can alter ownership of any table anyway.)
   </para>
  </refsect1>
 
@@ -390,6 +414,36 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
        <para>
         Refuse to drop the column or constraint if there are any dependent
         objects. This is the default behavior.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">trigger_name</replaceable></term>
+      <listitem>
+       <para>
+        Name of a single trigger to disable or enable.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>ALL</literal></term>
+      <listitem>
+       <para>
+        Disable or enable all triggers belonging to the table.
+        (This requires superuser privilege if any of the triggers are for
+        foreign key constraints.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>USER</literal></term>
+      <listitem>
+       <para>
+        Disable or enable all triggers belonging to the table except for
+        foreign key constraint triggers.
        </para>
       </listitem>
      </varlistentry>
@@ -522,6 +576,13 @@ ALTER TABLE table ALTER COLUMN anycol TYPE anytype;
     COLUMN</literal> (i.e., <command>ALTER TABLE ONLY ... DROP
     COLUMN</command>) never removes any descendant columns, but
     instead marks them as independently defined rather than inherited.
+   </para>
+
+   <para>
+    The <literal>TRIGGER</>, <literal>CLUSTER</>, <literal>OWNER</>,
+    and <literal>TABLESPACE</> actions never recurse to descendant tables;
+    that is, they always act as though <literal>ONLY</> were specified.
+    Adding a constraint can recurse only for <literal>CHECK</> constraints.
    </para>
 
    <para>

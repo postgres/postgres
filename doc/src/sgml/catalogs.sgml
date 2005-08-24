@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.111 2005/08/11 21:11:41 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.112 2005/08/24 17:24:17 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -3789,9 +3789,7 @@
       <entry><structfield>tgenabled</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>True if trigger is enabled (not presently checked everywhere
-      it should be, so disabling a trigger by setting this false does not
-      work reliably)</entry>
+      <entry>True if trigger is enabled</entry>
      </row>
 
      <row>
