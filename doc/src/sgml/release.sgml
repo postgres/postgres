@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.357 2005/08/24 18:26:36 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.358 2005/08/24 19:24:20 momjian Exp $
 -->
 
 <appendix id="release">
@@ -10,7 +10,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.357 2005/08/24 18:26:36 tgl Exp
 
    <note>
     <title>Release date</title>
-    <simpara>2005-1?-??, Current as of 2005-08-16</simpara>
+    <simpara>2005-1?-??, Current as of 2005-08-24</simpara>
    </note>
  
    <sect2>
@@ -609,6 +609,13 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.357 2005/08/24 18:26:36 tgl Exp
        </para>
       </listitem>
 
+      <listitem>
+       <para>
+        Allow more than two gigabyes of shared memory and per-backend
+        work memory on 64-bit machines (Koichi Suzuki)
+       </para>
+      </listitem>
+
      </itemizedlist>
     </sect3>
   
@@ -731,6 +738,13 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.357 2005/08/24 18:26:36 tgl Exp
        </para>
       </listitem>
     
+      <listitem>
+       <para>
+        Add ALTER TABLE ENABLE/DISABLE TRIGGER to disable triggers 
+        (Satoshi Nagayasu)
+       </para>
+      </listitem>
+
      </itemizedlist>
     </sect3>
   
@@ -1214,6 +1228,15 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.357 2005/08/24 18:26:36 tgl Exp
        </para>
       </listitem>
 
+      <listitem>
+       <para>
+        Allow the UTF8 encoding to work on Win32 (Magnus)
+       </para>
+       <para>
+        This is done by mapping UTF8 to the Win32-native UTF16 
+        implementation.
+      </listitem>
+
      </itemizedlist>
     </sect3>
   
@@ -1418,6 +1441,12 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.357 2005/08/24 18:26:36 tgl Exp
        <para>
         Allow Perl non-fatal warnings to generate <command>NOTICE</>
         messages (Andrew)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow <literal>strict</> mode to be enabled (Andrew)
        </para>
       </listitem>
 
@@ -1675,6 +1704,12 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.357 2005/08/24 18:26:36 tgl Exp
        <para>
         Enhance <application>pg_config</> to be able to report more
         build-time values (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow libpq to be build thread-safe on Win32 (Dave Page)
        </para>
       </listitem>
 
