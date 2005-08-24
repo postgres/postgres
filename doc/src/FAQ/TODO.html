@@ -8,12 +8,13 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Wed Aug 24 10:00:31 EDT 2005
+Last updated:           Wed Aug 24 10:05:23 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
 </p>
-<p><strong>A hyphen, "-", marks changes that will appear in the upcoming 8.1 release.</strong>
+<p><strong>A hyphen, "-", marks changes that will appear in the upcoming 8.1 release.</strong><br/>
+<strong>A percent sign, "%", marks items that are easier to implement.</strong>
 </p>
 <p>Bracketed items, "[<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?"></a>]", have more detail.
 </p>
@@ -24,10 +25,10 @@ first.
 <h1><a name="section_2">Administration</a></h1>
 
 <ul>
-  <li>Remove behavior of postmaster -o after making postmaster/postgres
+  <li>%Remove behavior of postmaster -o after making postmaster/postgres
   flags unique
   </li><li>-<em>Allow limits on per-db/role connections</em>
-  </li><li>Allow pooled connections to list all prepared queries
+  </li><li>%Allow pooled connections to list all prepared queries
 <p>  This would allow an application inheriting a pooled connection to know
   the queries prepared in the current session.
 </p>
@@ -40,7 +41,7 @@ first.
 <p>  Currently SIGTERM of a backend can lead to lock table corruption.
 </p>
   </li><li>-<em>Prevent dropping user that still owns objects, or auto-drop the objects</em>
-  </li><li>Set proper permissions on non-system schemas during db creation
+  </li><li>%Set proper permissions on non-system schemas during db creation
 <p>  Currently all schemas are owned by the super-user because they are
   copied from the template1 database.
 </p>
@@ -59,22 +60,22 @@ first.
   </li></ul>
   </li><li>Configuration files
   <ul>
-    <li>Add "include file" functionality in postgresql.conf
+    <li>%Add "include file" functionality in postgresql.conf
     </li><li>Allow postgresql.conf values to be set so they can not be changed
           by the user
-    </li><li>Allow commenting of variables in postgresql.conf to restore them
+    </li><li>%Allow commenting of variables in postgresql.conf to restore them
           to defaults
 <p>          Currently, if a variable is commented out, it keeps the
           previous uncommented value until a server restarted.
 </p>
-    </li><li>Allow pg_hba.conf settings to be controlled via SQL
+    </li><li>%Allow pg_hba.conf settings to be controlled via SQL
 <p>          This would add a function to load the SQL table from
           pg_hba.conf, and one to writes its contents to the flat file.
           The table should have a line number that is a float so rows
           can be inserted between existing rows, e.g. row 2.5 goes
           between row 2 and row 3.
 </p>
-    </li><li>Allow postgresql.conf file values to be changed via an SQL
+    </li><li>%Allow postgresql.conf file values to be changed via an SQL
           API, perhaps using SET GLOBAL
     </li><li>Allow the server to be stopped/restarted via an SQL API
   </li></ul>
@@ -100,7 +101,7 @@ first.
           database to find the objects in each database for that tablespace.
 </p>
     <ul>
-      <li>Add a GUC variable to control the tablespace for temporary objects
+      <li>%Add a GUC variable to control the tablespace for temporary objects
           and sort files
 <p>          It could start with a random tablespace from a supplied list and
           cycle through the list.
@@ -125,7 +126,7 @@ first.
             the archive contins all the files needed for point-in-time
             recovery.
 </p>
-    </li><li>Create dump tool for write-ahead logs for use in determining
+    </li><li>%Create dump tool for write-ahead logs for use in determining
             transaction id for point-in-time recovery
     </li><li>Allow a warm standby system to also allow read-only queries
             [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?pitr">pitr</a>]
@@ -141,7 +142,7 @@ first.
 <p>  This would allow server log information to be easily loaded into
   a database for analysis.
 </p>
-  </li><li>Add ability to monitor the use of temporary sort files
+  </li><li>%Add ability to monitor the use of temporary sort files
   </li><li>-<em>Add session start time and last statement time to pg_stat_activity</em>
   </li><li>-<em>Add a function that returns the start time of the postmaster</em>
   </li><li>Allow server logs to be remotely read and removed using SQL commands
@@ -149,7 +150,7 @@ first.
 <h1><a name="section_4">Data Types</a></h1>
 
 <ul>
-  <li>Remove Money type, add money formatting for decimal type
+  <li>%Remove Money type, add money formatting for decimal type
   </li><li>Change NUMERIC to enforce the maximum precision, and increase it
   </li><li>Add NUMERIC division operator that doesn't round?
 <p>  Currently NUMERIC _rounds_ the result to the specified precision.  
@@ -165,14 +166,14 @@ first.
 <ul>
   <li>Have sequence dependency track use of DEFAULT sequences,
   seqname.nextval?
-  </li><li>Disallow changing default expression of a SERIAL column?
+  </li><li>%Disallow changing default expression of a SERIAL column?
   </li><li>Fix data types where equality comparison isn't intuitive, e.g. box
-  </li><li>Prevent INET cast to CIDR if the unmasked bits are not zero, or
+  </li><li>%Prevent INET cast to CIDR if the unmasked bits are not zero, or
   zero the bits
-  </li><li>Prevent INET cast to CIDR from droping netmask, SELECT '<a href="telnet://1.1.1.1">1.1.1.1</a>'::inet::cidr
+  </li><li>%Prevent INET cast to CIDR from droping netmask, SELECT '<a href="telnet://1.1.1.1">1.1.1.1</a>'::inet::cidr
   </li><li>Allow INET + INT4 to increment the host part of the address, or
   throw an error on overflow
-  </li><li>Add 'tid != tid ' operator for use in corruption recovery
+  </li><li>%Add 'tid != tid ' operator for use in corruption recovery
   </li><li>Dates and Times
   <ul>
     <li>Allow infinite dates just like infinite timestamps
@@ -207,7 +208,7 @@ first.
   </li><li>Arrays
   <ul>
     <li>Allow NULLs in arrays
-    </li><li>Allow MIN()/MAX() on arrays
+    </li><li>%Allow MIN()/MAX() on arrays
     </li><li>Delay resolution of array expression's data type so assignment
           coercion can be performed on empty array expressions
     </li><li>Modify array literal representation to handle array index lower bound
@@ -238,7 +239,7 @@ first.
   make time reporting more consistent and will allow reporting of
   the statement start time.
 </p>
-  </li><li>Add pg_get_acldef(), pg_get_typedefault(), and pg_get_attrdef()
+  </li><li>%Add pg_get_acldef(), pg_get_typedefault(), and pg_get_attrdef()
   </li><li>Allow to_char() to print localized month names
   </li><li>Allow functions to have a schema search path specified at creation time
   </li><li>Allow substring/replace() to get/set bit values
@@ -283,15 +284,15 @@ first.
 <h1><a name="section_7">Views / Rules</a></h1>
 
 <ul>
-  <li>Automatically create rules on views so they are updateable, per SQL99
+  <li>%Automatically create rules on views so they are updateable, per SQL99
 <p>  We can only auto-create rules for simple views.  For more complex
   cases users will still have to write rules.
 </p>
   </li><li>Add the functionality for WITH CHECK OPTION clause of CREATE VIEW
   </li><li>Allow NOTIFY in rules involving conditionals
-  </li><li>Have views on temporary tables exist in the temporary namespace
+  </li><li>%Have views on temporary tables exist in the temporary namespace
   </li><li>Allow temporary views on non-temporary tables
-  </li><li>Allow RULE recompilation
+  </li><li>%Allow RULE recompilation
 </li></ul>
 <h1><a name="section_8">SQL Commands</a></h1>
 
@@ -308,9 +309,9 @@ first.
   </li><li>Add CORRESPONDING BY to UNION/INTERSECT/EXCEPT
   </li><li>-<em>Allow REINDEX to rebuild all database indexes</em>
   </li><li>Add ROLLUP, CUBE, GROUPING SETS options to GROUP BY
-  </li><li>Allow SET CONSTRAINTS to be qualified by schema/table name
-  </li><li>Allow TRUNCATE ... CASCADE/RESTRICT
-  </li><li>Add a separate TRUNCATE permission
+  </li><li>%Allow SET CONSTRAINTS to be qualified by schema/table name
+  </li><li>%Allow TRUNCATE ... CASCADE/RESTRICT
+  </li><li>%Add a separate TRUNCATE permission
 <p>  Currently only the owner can TRUNCATE a table because triggers are not
   called, and the table is locked in exclusive mode.
 </p>
@@ -338,7 +339,7 @@ first.
   triggers?)
   </li><li>Add NOVICE output level for helpful messages like automatic sequence/index
   creation
-  </li><li>Add COMMENT ON for all cluster global objects (roles, databases
+  </li><li>%Add COMMENT ON for all cluster global objects (roles, databases
   and tablespaces)
   </li><li>-<em>Add an option to automatically use savepoints for each statement in a</em>
   multi-statement transaction.
@@ -383,11 +384,11 @@ first.
   </li></ul>
   </li><li>ALTER
   <ul>
-    <li>Have ALTER TABLE RENAME rename SERIAL sequence names
-    </li><li>Add ALTER DOMAIN TYPE
-    </li><li>Allow ALTER TABLE ... ALTER CONSTRAINT ... RENAME
-    </li><li>Allow ALTER TABLE to change constraint deferrability and actions
-    </li><li>Disallow dropping of an inherited constraint
+    <li>%Have ALTER TABLE RENAME rename SERIAL sequence names
+    </li><li>%Add ALTER DOMAIN TYPE
+    </li><li>%Allow ALTER TABLE ... ALTER CONSTRAINT ... RENAME
+    </li><li>%Allow ALTER TABLE to change constraint deferrability and actions
+    </li><li>%Disallow dropping of an inherited constraint
     </li><li>-<em>Allow objects to be moved to different schemas</em>
     </li><li>Allow ALTER TABLESPACE to move to different directories
     </li><li>Allow databases to be moved to different tablespaces
@@ -395,7 +396,7 @@ first.
 <p>          Currently non-global system tables must be in the default database
           tablespace. Global system tables can never be moved.
 </p>
-    </li><li>Prevent child tables from altering constraints like CHECK that were
+    </li><li>%Prevent child tables from altering constraints like CHECK that were
           inherited from the parent table
   </li></ul>
   </li><li>CLUSTER
@@ -409,7 +410,7 @@ first.
           store heap rows in hashed groups, perhaps using a user-supplied
           hash function.
 </p>
-    </li><li>Add default clustering to system tables
+    </li><li>%Add default clustering to system tables
 <p>          To do this, determine the ideal cluster index for each system
           table and set the cluster setting during initdb.
 </p>
@@ -421,7 +422,7 @@ first.
           processed, with ROLLBACK on COPY failure.
 </p>
     </li><li>-<em>Allow COPY to understand \x as a hex byte</em>
-    </li><li>Have COPY return the number of rows loaded/unloaded?
+    </li><li>%Have COPY return the number of rows loaded/unloaded?
     </li><li>-<em>Allow COPY to optionally include column headings in the first line</em>
     </li><li>-<em>Allow COPY FROM ... CSV to interpret newlines and carriage</em>
           returns in data
@@ -429,7 +430,7 @@ first.
   </li><li>GRANT/REVOKE
   <ul>
     <li>Allow column-level privileges
-    </li><li>Allow GRANT/REVOKE permissions to be applied to all schema objects
+    </li><li>%Allow GRANT/REVOKE permissions to be applied to all schema objects
           with one command
 <p>          The proposed syntax is:
 </p><p>                GRANT SELECT ON ALL TABLES IN public TO phpuser;
@@ -450,7 +451,7 @@ first.
 </p>
     </li><li>Prevent DROP TABLE from dropping a row referenced by its own open
           cursor?
-    </li><li>Allow pooled connections to list all open WITH HOLD cursors
+    </li><li>%Allow pooled connections to list all open WITH HOLD cursors
 <p>          Because WITH HOLD cursors exist outside transactions, this allows
           them to be listed so they can be closed.
 </p>
@@ -534,21 +535,21 @@ first.
   </li></ul>
   </li><li>pg_dump
   <ul>
-    <li>Have pg_dump use multi-statement transactions for INSERT dumps
-    </li><li>Allow pg_dump to use multiple -t and -n switches [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?pg_dump">pg_dump</a>]
-    </li><li>Add dumping of comments on composite type columns
-    </li><li>Add dumping of comments on index columns
-    </li><li>Replace crude DELETE FROM method of pg_dumpall --clean for 
+    <li>%Have pg_dump use multi-statement transactions for INSERT dumps
+    </li><li>%Allow pg_dump to use multiple -t and -n switches [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?pg_dump">pg_dump</a>]
+    </li><li>%Add dumping of comments on composite type columns
+    </li><li>%Add dumping of comments on index columns
+    </li><li>%Replace crude DELETE FROM method of pg_dumpall --clean for 
           cleaning of roles with separate DROP commands
     </li><li>-<em>Add dumping and restoring of LOB comments</em>
     </li><li>Stop dumping CASCADE on DROP TYPE commands in clean mode
-    </li><li>Add full object name to the tag field.  eg. for operators we need
+    </li><li>%Add full object name to the tag field.  eg. for operators we need
           '=(integer, integer)', instead of just '='.
     </li><li>Add pg_dumpall custom format dumps.
 <p>          This is probably best done by combining pg_dump and pg_dumpall
           into a single binary.
 </p>
-    </li><li>Add CSV output format
+    </li><li>%Add CSV output format
     </li><li>Update pg_dump and psql to use the new COPY libpq API (Christopher)
     </li><li>Remove unnecessary abstractions in pg_dump source code
   </li></ul>
@@ -564,7 +565,7 @@ first.
     </li><li>Use backend PREPARE/EXECUTE facility for ecpg where possible
     </li><li>Implement SQLDA
     </li><li>Fix nested C comments
-    </li><li>sqlwarn[<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?6">6</a>] should be 'W' if the PRECISION or SCALE value specified
+    </li><li>%sqlwarn[<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?6">6</a>] should be 'W' if the PRECISION or SCALE value specified
     </li><li>Make SET CONNECTION thread-aware, non-standard?
     </li><li>Allow multidimensional arrays
     </li><li>Add internationalized message strings
@@ -596,7 +597,7 @@ first.
 </p>
   </li><li>Allow statement-level triggers to access modified rows
   </li><li>Support triggers on columns (Greg Sabino Mullane)
-  </li><li>Remove CREATE CONSTRAINT TRIGGER
+  </li><li>%Remove CREATE CONSTRAINT TRIGGER
 <p>  This was used in older releases to dump referential integrity
   constraints.
 </p>
@@ -728,7 +729,7 @@ first.
   <li>Improve commit_delay handling to reduce fsync()
   </li><li>Determine optimal fdatasync/fsync, O_SYNC/O_DSYNC options
   </li><li>-<em>Allow multiple blocks to be written to WAL with one write()</em>
-  </li><li>Add an option to sync() before fsync()'ing checkpoint files
+  </li><li>%Add an option to sync() before fsync()'ing checkpoint files
   </li><li>Add program to test if fsync has a delay compared to non-fsync
 </li></ul>
 <h1><a name="section_15">Cache Usage</a></h1>
@@ -813,12 +814,12 @@ first.
   VACUUM can look at just those pages rather than the entire table.  In
   the event of a system crash, the bitmap would probably be invalidated.
 </p>
-  </li><li>Add system view to show free space map contents
+  </li><li>%Add system view to show free space map contents
   </li><li>Auto-vacuum
   <ul>
     <li>-<em>Move into the backend code</em>
     </li><li>Use free-space map information to guide refilling
-    </li><li>Suggest VACUUM FULL if a table is nearly empty
+    </li><li>%Suggest VACUUM FULL if a table is nearly empty
     </li><li>Improve xid wraparound detection by recording per-table rather
           than per-database
   </li></ul>
@@ -967,7 +968,7 @@ first.
   </li><li>Rename some /contrib modules from pg* to pg_*
   </li><li>Move some things from /contrib into main tree
   </li><li>Move some /contrib modules out to their own project sites
-  </li><li>Remove warnings created by -Wcast-align
+  </li><li>%Remove warnings created by -Wcast-align
   </li><li>Move platform-specific ps status display info from ps_status.c to ports
   </li><li>Add optional CRC checksum to heap and index pages
   </li><li>Improve documentation to build only interfaces (Marc)
@@ -996,6 +997,7 @@ first.
   </li><li>Fix cross-compiling of time zone database via 'zic'
   </li><li>Fix sgmltools so PDFs can be generated with bookmarks
   </li><li>-<em>Add C code on Unix to copy directories for use in creating new databases</em>
+  </li><li>%Clean up compiler warnings (especially with gcc version 4)
   </li><li>Win32
   <ul>
     <li>Remove configure.in check for link failure when cause is found

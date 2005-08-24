@@ -2,12 +2,13 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Wed Aug 24 10:00:31 EDT 2005
+Last updated:		Wed Aug 24 10:05:23 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
 
 #A hyphen, "-", marks changes that will appear in the upcoming 8.1 release.#
+#A percent sign, "%", marks items that are easier to implement.#
 
 Bracketed items, "[]", have more detail.
 
@@ -19,10 +20,10 @@ first.
 Administration
 ==============
 
-* Remove behavior of postmaster -o after making postmaster/postgres
+* %Remove behavior of postmaster -o after making postmaster/postgres
   flags unique
 * -Allow limits on per-db/role connections
-* Allow pooled connections to list all prepared queries
+* %Allow pooled connections to list all prepared queries
 
   This would allow an application inheriting a pooled connection to know
   the queries prepared in the current session.
@@ -37,7 +38,7 @@ Administration
   Currently SIGTERM of a backend can lead to lock table corruption.
 
 * -Prevent dropping user that still owns objects, or auto-drop the objects
-* Set proper permissions on non-system schemas during db creation
+* %Set proper permissions on non-system schemas during db creation
 
   Currently all schemas are owned by the super-user because they are
   copied from the template1 database.
@@ -61,16 +62,16 @@ Administration
 
 * Configuration files
 
-	o Add "include file" functionality in postgresql.conf
+	o %Add "include file" functionality in postgresql.conf
 	o Allow postgresql.conf values to be set so they can not be changed
 	  by the user
-	o Allow commenting of variables in postgresql.conf to restore them
+	o %Allow commenting of variables in postgresql.conf to restore them
 	  to defaults
 
           Currently, if a variable is commented out, it keeps the
           previous uncommented value until a server restarted.
 
-	o Allow pg_hba.conf settings to be controlled via SQL
+	o %Allow pg_hba.conf settings to be controlled via SQL
 
 	  This would add a function to load the SQL table from
           pg_hba.conf, and one to writes its contents to the flat file.
@@ -78,7 +79,7 @@ Administration
 	  can be inserted between existing rows, e.g. row 2.5 goes
 	  between row 2 and row 3.
 
-	o Allow postgresql.conf file values to be changed via an SQL
+	o %Allow postgresql.conf file values to be changed via an SQL
 	  API, perhaps using SET GLOBAL
 	o Allow the server to be stopped/restarted via an SQL API
 
@@ -106,7 +107,7 @@ Administration
 	  requires a tool that will call that function and connect to each
 	  database to find the objects in each database for that tablespace.
 
-	o Add a GUC variable to control the tablespace for temporary objects
+	o %Add a GUC variable to control the tablespace for temporary objects
 	  and sort files
 
 	  It could start with a random tablespace from a supplied list and
@@ -135,7 +136,7 @@ Administration
 	    the archive contins all the files needed for point-in-time
 	    recovery.
 
-	  o Create dump tool for write-ahead logs for use in determining
+	  o %Create dump tool for write-ahead logs for use in determining
 	    transaction id for point-in-time recovery
 	  o Allow a warm standby system to also allow read-only queries
 	    [pitr]
@@ -153,7 +154,7 @@ Monitoring
   This would allow server log information to be easily loaded into
   a database for analysis.
 
-* Add ability to monitor the use of temporary sort files
+* %Add ability to monitor the use of temporary sort files
 * -Add session start time and last statement time to pg_stat_activity
 * -Add a function that returns the start time of the postmaster
 * Allow server logs to be remotely read and removed using SQL commands
@@ -162,7 +163,7 @@ Monitoring
 Data Types
 ==========
 
-* Remove Money type, add money formatting for decimal type
+* %Remove Money type, add money formatting for decimal type
 * Change NUMERIC to enforce the maximum precision, and increase it
 * Add NUMERIC division operator that doesn't round?
 
@@ -177,14 +178,14 @@ Data Types
 
 * Have sequence dependency track use of DEFAULT sequences,
   seqname.nextval?
-* Disallow changing default expression of a SERIAL column?
+* %Disallow changing default expression of a SERIAL column?
 * Fix data types where equality comparison isn't intuitive, e.g. box
-* Prevent INET cast to CIDR if the unmasked bits are not zero, or
+* %Prevent INET cast to CIDR if the unmasked bits are not zero, or
   zero the bits
-* Prevent INET cast to CIDR from droping netmask, SELECT '1.1.1.1'::inet::cidr
+* %Prevent INET cast to CIDR from droping netmask, SELECT '1.1.1.1'::inet::cidr
 * Allow INET + INT4 to increment the host part of the address, or
   throw an error on overflow
-* Add 'tid != tid ' operator for use in corruption recovery
+* %Add 'tid != tid ' operator for use in corruption recovery
 
 
 * Dates and Times
@@ -221,7 +222,7 @@ Data Types
 * Arrays
 
 	o Allow NULLs in arrays
-	o Allow MIN()/MAX() on arrays
+	o %Allow MIN()/MAX() on arrays
 	o Delay resolution of array expression's data type so assignment
 	  coercion can be performed on empty array expressions
 	o Modify array literal representation to handle array index lower bound
@@ -255,7 +256,7 @@ Functions
   make time reporting more consistent and will allow reporting of
   the statement start time.
 
-* Add pg_get_acldef(), pg_get_typedefault(), and pg_get_attrdef()
+* %Add pg_get_acldef(), pg_get_typedefault(), and pg_get_attrdef()
 * Allow to_char() to print localized month names
 * Allow functions to have a schema search path specified at creation time
 * Allow substring/replace() to get/set bit values
@@ -304,16 +305,16 @@ Multi-Language Support
 Views / Rules
 =============
 
-* Automatically create rules on views so they are updateable, per SQL99
+* %Automatically create rules on views so they are updateable, per SQL99
 
   We can only auto-create rules for simple views.  For more complex
   cases users will still have to write rules.
 
 * Add the functionality for WITH CHECK OPTION clause of CREATE VIEW
 * Allow NOTIFY in rules involving conditionals
-* Have views on temporary tables exist in the temporary namespace
+* %Have views on temporary tables exist in the temporary namespace
 * Allow temporary views on non-temporary tables
-* Allow RULE recompilation
+* %Allow RULE recompilation
 
 
 SQL Commands
@@ -333,9 +334,9 @@ SQL Commands
 * Add CORRESPONDING BY to UNION/INTERSECT/EXCEPT
 * -Allow REINDEX to rebuild all database indexes
 * Add ROLLUP, CUBE, GROUPING SETS options to GROUP BY
-* Allow SET CONSTRAINTS to be qualified by schema/table name
-* Allow TRUNCATE ... CASCADE/RESTRICT
-* Add a separate TRUNCATE permission
+* %Allow SET CONSTRAINTS to be qualified by schema/table name
+* %Allow TRUNCATE ... CASCADE/RESTRICT
+* %Add a separate TRUNCATE permission
 
   Currently only the owner can TRUNCATE a table because triggers are not
   called, and the table is locked in exclusive mode.
@@ -367,7 +368,7 @@ SQL Commands
   triggers?)
 * Add NOVICE output level for helpful messages like automatic sequence/index
   creation
-* Add COMMENT ON for all cluster global objects (roles, databases
+* %Add COMMENT ON for all cluster global objects (roles, databases
   and tablespaces)
 * -Add an option to automatically use savepoints for each statement in a
   multi-statement transaction.
@@ -420,11 +421,11 @@ SQL Commands
 
 * ALTER
 
-	o Have ALTER TABLE RENAME rename SERIAL sequence names
-	o Add ALTER DOMAIN TYPE
-	o Allow ALTER TABLE ... ALTER CONSTRAINT ... RENAME
-	o Allow ALTER TABLE to change constraint deferrability and actions
-	o Disallow dropping of an inherited constraint
+	o %Have ALTER TABLE RENAME rename SERIAL sequence names
+	o %Add ALTER DOMAIN TYPE
+	o %Allow ALTER TABLE ... ALTER CONSTRAINT ... RENAME
+	o %Allow ALTER TABLE to change constraint deferrability and actions
+	o %Disallow dropping of an inherited constraint
 	o -Allow objects to be moved to different schemas
 	o Allow ALTER TABLESPACE to move to different directories
 	o Allow databases to be moved to different tablespaces
@@ -433,7 +434,7 @@ SQL Commands
 	  Currently non-global system tables must be in the default database
 	  tablespace. Global system tables can never be moved.
 
-	o Prevent child tables from altering constraints like CHECK that were
+	o %Prevent child tables from altering constraints like CHECK that were
 	  inherited from the parent table
 
 
@@ -449,7 +450,7 @@ SQL Commands
 	  store heap rows in hashed groups, perhaps using a user-supplied
 	  hash function.
 
-	o Add default clustering to system tables
+	o %Add default clustering to system tables
 
 	  To do this, determine the ideal cluster index for each system
 	  table and set the cluster setting during initdb.
@@ -463,7 +464,7 @@ SQL Commands
 	  processed, with ROLLBACK on COPY failure.
 
 	o -Allow COPY to understand \x as a hex byte
-	o Have COPY return the number of rows loaded/unloaded?
+	o %Have COPY return the number of rows loaded/unloaded?
 	o -Allow COPY to optionally include column headings in the first line
 	o -Allow COPY FROM ... CSV to interpret newlines and carriage
 	  returns in data
@@ -472,7 +473,7 @@ SQL Commands
 * GRANT/REVOKE
 
 	o Allow column-level privileges
-	o Allow GRANT/REVOKE permissions to be applied to all schema objects
+	o %Allow GRANT/REVOKE permissions to be applied to all schema objects
 	  with one command
 
 	  The proposed syntax is:
@@ -495,7 +496,7 @@ SQL Commands
 	o Prevent DROP TABLE from dropping a row referenced by its own open
 	  cursor?
 
-	o Allow pooled connections to list all open WITH HOLD cursors
+	o %Allow pooled connections to list all open WITH HOLD cursors
 
 	  Because WITH HOLD cursors exist outside transactions, this allows
 	  them to be listed so they can be closed.
@@ -589,22 +590,22 @@ Clients
 
 * pg_dump
 
-	o Have pg_dump use multi-statement transactions for INSERT dumps
-	o Allow pg_dump to use multiple -t and -n switches [pg_dump]
-	o Add dumping of comments on composite type columns
-	o Add dumping of comments on index columns
-	o Replace crude DELETE FROM method of pg_dumpall --clean for 
+	o %Have pg_dump use multi-statement transactions for INSERT dumps
+	o %Allow pg_dump to use multiple -t and -n switches [pg_dump]
+	o %Add dumping of comments on composite type columns
+	o %Add dumping of comments on index columns
+	o %Replace crude DELETE FROM method of pg_dumpall --clean for 
           cleaning of roles with separate DROP commands
 	o -Add dumping and restoring of LOB comments
 	o Stop dumping CASCADE on DROP TYPE commands in clean mode
-	o Add full object name to the tag field.  eg. for operators we need
+	o %Add full object name to the tag field.  eg. for operators we need
 	  '=(integer, integer)', instead of just '='.
 	o Add pg_dumpall custom format dumps.
 
 	  This is probably best done by combining pg_dump and pg_dumpall
 	  into a single binary.
 
-	o Add CSV output format
+	o %Add CSV output format
 	o Update pg_dump and psql to use the new COPY libpq API (Christopher)
 	o Remove unnecessary abstractions in pg_dump source code
 
@@ -622,7 +623,7 @@ Clients
 	o Use backend PREPARE/EXECUTE facility for ecpg where possible
 	o Implement SQLDA
 	o Fix nested C comments
-	o sqlwarn[6] should be 'W' if the PRECISION or SCALE value specified
+	o %sqlwarn[6] should be 'W' if the PRECISION or SCALE value specified
 	o Make SET CONNECTION thread-aware, non-standard?
 	o Allow multidimensional arrays
 	o Add internationalized message strings
@@ -657,7 +658,7 @@ Referential Integrity
 
 * Allow statement-level triggers to access modified rows
 * Support triggers on columns (Greg Sabino Mullane)
-* Remove CREATE CONSTRAINT TRIGGER
+* %Remove CREATE CONSTRAINT TRIGGER
 
   This was used in older releases to dump referential integrity
   constraints.
@@ -808,7 +809,7 @@ Fsync
 * Improve commit_delay handling to reduce fsync()
 * Determine optimal fdatasync/fsync, O_SYNC/O_DSYNC options
 * -Allow multiple blocks to be written to WAL with one write()
-* Add an option to sync() before fsync()'ing checkpoint files
+* %Add an option to sync() before fsync()'ing checkpoint files
 * Add program to test if fsync has a delay compared to non-fsync
 
 
@@ -906,14 +907,14 @@ Vacuum
   VACUUM can look at just those pages rather than the entire table.  In
   the event of a system crash, the bitmap would probably be invalidated.
 
-* Add system view to show free space map contents
+* %Add system view to show free space map contents
 
 
 * Auto-vacuum
 
 	o -Move into the backend code
 	o Use free-space map information to guide refilling
-	o Suggest VACUUM FULL if a table is nearly empty
+	o %Suggest VACUUM FULL if a table is nearly empty
 	o Improve xid wraparound detection by recording per-table rather
 	  than per-database
 
@@ -1079,7 +1080,7 @@ Source Code
 * Rename some /contrib modules from pg* to pg_*
 * Move some things from /contrib into main tree
 * Move some /contrib modules out to their own project sites
-* Remove warnings created by -Wcast-align
+* %Remove warnings created by -Wcast-align
 * Move platform-specific ps status display info from ps_status.c to ports
 * Add optional CRC checksum to heap and index pages
 * Improve documentation to build only interfaces (Marc)
@@ -1110,6 +1111,7 @@ Source Code
 * Fix cross-compiling of time zone database via 'zic'
 * Fix sgmltools so PDFs can be generated with bookmarks
 * -Add C code on Unix to copy directories for use in creating new databases
+* %Clean up compiler warnings (especially with gcc version 4)
 
 
 * Win32
