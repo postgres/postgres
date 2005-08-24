@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.354 2005/08/24 14:35:26 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.355 2005/08/24 15:35:01 tgl Exp $
 -->
 
 <appendix id="release">
@@ -284,8 +284,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.354 2005/08/24 14:35:26 momjian
 
        <listitem>
         <para>
-         <varname>standard_conforming_strings>/> - does this release
-         treat backslashes literally in normal strings?
+         <varname>standard_conforming_strings</> - does this release
+         treat backslashes literally in ordinary strings?
         </para>
        </listitem>
 
@@ -625,13 +625,13 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.354 2005/08/24 14:35:26 momjian
 
       <listitem>
        <para>
-        Fix <command>HAVING</> without aggregate functions and no
-        <command>GROUP BY</> to behave as if the main query returns a
-        single group (Tom)
+        Fix <command>HAVING</> without any aggregate functions or
+        <command>GROUP BY</> so that the query returns a single group (Tom)
        </para>
        <para>
         Previously, such a case would treat the <command>HAVING</>
-        clause as <command>WHERE</> clause.
+        clause the same as a <command>WHERE</> clause.  This was not per spec.
+       </para>
       </listitem>
 
       <listitem>
