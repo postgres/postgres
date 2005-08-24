@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.44 2005/08/24 18:56:07 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.45 2005/08/24 19:16:49 tgl Exp $
 -->
 
  <chapter id="plperl">
@@ -253,12 +253,16 @@ SELECT * FROM perl_set();
   </para>
 
   <para>
-   Another way to use the <literal>strict</> pragma is to just put
+   Another way to use the <literal>strict</> pragma is to put
 <programlisting>
 use strict;
 </programlisting>
-   in the function body.  But this only works for <application>PL/PerlU</>
-   functions, since <literal>use</> is not a trusted operation.
+   in the function body.  But this only works in <application>PL/PerlU</>
+   functions, since <literal>use</> is not a trusted operation.  In
+   <application>PL/Perl</> functions you can instead do
+<programlisting>
+BEGIN { strict->import(); }
+</programlisting>
   </para>
  </sect1>
 
