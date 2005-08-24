@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.508 2005/08/23 22:40:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.509 2005/08/24 19:34:12 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1164,7 +1164,7 @@ ColId_or_Sconst:
 
 
 VariableShowStmt:
-			SHOW ColId
+			SHOW var_name
 				{
 					VariableShowStmt *n = makeNode(VariableShowStmt);
 					n->name = $2;
@@ -1197,7 +1197,7 @@ VariableShowStmt:
 		;
 
 VariableResetStmt:
-			RESET ColId
+			RESET var_name
 				{
 					VariableResetStmt *n = makeNode(VariableResetStmt);
 					n->name = $2;
