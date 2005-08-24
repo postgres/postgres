@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.360 2005/08/24 19:34:33 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.361 2005/08/24 19:41:33 momjian Exp $
 
 Typical markup:
 
@@ -7,7 +7,7 @@ Typical markup:
 [A-Za-z_][A-Za-z0-9_]+()        <function>
 [A-Za-z_]/[A-Za-z_]+            <filename>
 PostgreSQL                      <productname>
-pg_[A-Za-z0-9_]                 <appication>
+pg_[A-Za-z0-9_]                 <application>
 [A-Z][A-Z]                      <type>, <envar.
                                 <literal>
 &<>                             use &
@@ -166,9 +166,9 @@ pg_[A-Za-z0-9_]                 <appication>
       <listitem>
        <para>
         Moving pgautovacuum from <filename>/contrib</> allows it to be
-        automatically started and stoped in sync with the database
+        automatically started and stopped in sync with the database
         server, and allows for pgautovacuum to be configured from
-        postgresql.conf.
+        <filename>postgresql.conf</>.
        </para>
       </listitem>
      </varlistentry>
@@ -271,8 +271,8 @@ pg_[A-Za-z0-9_]                 <appication>
        <productname>PostgreSQL</productname> project is planning to
        remove the special meaning of backslashes in strings. For
        backward compatibility and for users who want special backslash
-       procesing, a new string type will be created. This new string
-       type is formed by having an E preceed the single quote that
+       processing, a new string type will be created. This new string
+       type is formed by having an E precede the single quote that
        starts the string, e.g. <literal>E'hi\n'</>. While this release
        does not change the handling of backslashes in strings, it does
        add several new GUC variables to help users migrate applications
@@ -616,7 +616,7 @@ pg_[A-Za-z0-9_]                 <appication>
        <para>
         Using <command>ALTER USER</> and <command>ALTER DATABASE</>,
         limits can now be enforced on the maximum number of users who
-        can connect as as a specific uesr or to a specific database.
+        can connect as as a specific user or to a specific database.
         Setting the limit to zero disables user or database connections.
        </para>
       </listitem>
@@ -1368,7 +1368,7 @@ pg_[A-Za-z0-9_]                 <appication>
         exception (Pavel Stehule)
        </para>
        <para>
-        These variables are only accessable inside exception blocks.
+        These variables are only accessible inside exception blocks.
        </para>
       </listitem>
 
@@ -1478,7 +1478,7 @@ pg_[A-Za-z0-9_]                 <appication>
        </para>
        <para>
         This is basically implemented by wrapping every statement in a
-        subtransaction.
+        sub-transaction.
        </para>
       </listitem>
 
@@ -1710,7 +1710,7 @@ pg_[A-Za-z0-9_]                 <appication>
 
       <listitem>
        <para>
-        Modify <filename>postgresql.conf</> to use documention defaults
+        Modify <filename>postgresql.conf</> to use documentation defaults
         <literal>on</>/<literal>off</> rather than
         <literal>true</>/<literal>false</> (Bruce)
        </para>
@@ -1793,7 +1793,7 @@ pg_[A-Za-z0-9_]                 <appication>
   
         <listitem>
          <para>
-          Implemention of OpenPGP symmetric-key and public-key encryption
+          implementation of OpenPGP symmetric-key and public-key encryption
          </para>
          <para>
           Supported are both RSA and Elgamal public-key algorithms.
@@ -1802,7 +1802,7 @@ pg_[A-Za-z0-9_]                 <appication>
 
         <listitem>
          <para>
-          Standalone build: include SHA256/384/512 hashes, Fortuna PRNG
+          Stand alone build: include SHA256/384/512 hashes, Fortuna PRNG
          </para>
         </listitem>
 
@@ -1872,7 +1872,7 @@ pg_[A-Za-z0-9_]                 <appication>
 
     <para>
      The lesser problem is that the <filename>contrib/tsearch2</> module
-     creates several functions that are misdeclared to return
+     creates several functions that are improperly declared to return
      <type>internal</> when they do not accept <type>internal</> arguments.
      This breaks type safety for all functions using <type>internal</>
      arguments.
