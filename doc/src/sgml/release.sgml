@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.355 2005/08/24 15:35:01 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.356 2005/08/24 16:47:00 momjian Exp $
 -->
 
 <appendix id="release">
@@ -1254,6 +1254,17 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.355 2005/08/24 15:35:01 tgl Exp
         the function. While returning multiple values from a function
         was possible in previous releases, this greatly simplifies the
         process.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Move language handlers into the pg_catalog schema
+       </para>
+       </para>
+       <para>
+        This makes it possible to dump installed languages and makes it
+        easier to drop the public schema.
        </para>
       </listitem>
 
