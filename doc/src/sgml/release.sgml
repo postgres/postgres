@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.356 2005/08/24 16:47:00 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.357 2005/08/24 18:26:36 tgl Exp $
 -->
 
 <appendix id="release">
@@ -1243,17 +1243,18 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.356 2005/08/24 16:47:00 momjian
 
       <listitem>
        <para>
-        Allow SQL, plperl, PL/PgSQL functions to use <command>OUT</> and
+        Allow SQL and PL/PgSQL functions to use <command>OUT</> and
         <command>INOUT</> parameters (Tom)
        </para>
        <para>
         <command>OUT</> is an alternate way for a function to return
-        values. Instead of using <command>RETURNS</>, the function's
-        parameters can be specified as <command>OUT</> or
-        <command>INOUT</>, allowing multiple values to be returned by
-        the function. While returning multiple values from a function
+        values. Instead of using <command>RETURN</>, values can be
+        returned by assigning to parameters declared as <command>OUT</> or
+        <command>INOUT</>.  This is notationally simpler in some cases,
+        particularly so when multiple values need to be returned.
+        While returning multiple values from a function
         was possible in previous releases, this greatly simplifies the
-        process.
+        process.  (The feature will be extended to other PLs in due course.)
        </para>
       </listitem>
 
@@ -1261,10 +1262,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.356 2005/08/24 16:47:00 momjian
        <para>
         Move language handlers into the pg_catalog schema
        </para>
-       </para>
        <para>
-        This makes it possible to dump installed languages and makes it
-        easier to drop the public schema.
+        This makes it easier to drop the public schema if desired.
        </para>
       </listitem>
 
