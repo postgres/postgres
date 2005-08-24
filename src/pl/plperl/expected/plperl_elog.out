@@ -19,10 +19,38 @@ create or replace function perl_warn(text) returns void language plperl as $$
 
 $$;
 select perl_warn('implicit elog via warn');
-NOTICE:  implicit elog via warn at (eval 7) line 4.
+NOTICE:  implicit elog via warn at line 4.
 
  perl_warn 
 -----------
  
+(1 row)
+
+-- test strict mode on/off
+SET plperl.use_strict = true;
+create or replace function uses_global() returns text language plperl as $$
+
+  $global = 1;
+  $other_global = 2;
+  return 'uses_global worked';
+
+$$;
+ERROR:  creation of Perl function failed: Global symbol "$global" requires explicit package name at line 3.
+Global symbol "$other_global" requires explicit package name at line 4.
+select uses_global();
+ERROR:  function uses_global() does not exist
+HINT:  No function matches the given name and argument types. You may need to add explicit type casts.
+SET plperl.use_strict = false;
+create or replace function uses_global() returns text language plperl as $$
+
+  $global = 1;
+  $other_global=2;
+  return 'uses_global worked';
+
+$$;
+select uses_global();
+    uses_global     
+--------------------
+ uses_global worked
 (1 row)
 

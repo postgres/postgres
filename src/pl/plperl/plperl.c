@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.90 2005/08/20 19:19:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.91 2005/08/24 18:16:56 tgl Exp $
  *
  **********************************************************************/
 
@@ -185,48 +185,80 @@ plperl_init_all(void)
 	/* We don't need to do anything yet when a new backend starts. */
 }
 
+/* Each of these macros must represent a single string literal */
+
+#define PERLBOOT \
+	"SPI::bootstrap(); use vars qw(%_SHARED);" \
+	"sub ::plperl_warn { my $msg = shift; " \
+	"       $msg =~ s/\\(eval \\d+\\) //g; &elog(&NOTICE, $msg); } " \
+	"$SIG{__WARN__} = \\&::plperl_warn; " \
+	"sub ::plperl_die { my $msg = shift; " \
+	"       $msg =~ s/\\(eval \\d+\\) //g; die $msg; } " \
+	"$SIG{__DIE__} = \\&::plperl_die; " \
+	"sub ::mkunsafefunc {" \
+	"      my $ret = eval(qq[ sub { $_[0] $_[1] } ]); " \
+	"      $@ =~ s/\\(eval \\d+\\) //g if $@; return $ret; }" \
+	"use strict; " \
+	"sub ::mk_strict_unsafefunc {" \
+	"      my $ret = eval(qq[ sub { use strict; $_[0] $_[1] } ]); " \
+	"      $@ =~ s/\\(eval \\d+\\) //g if $@; return $ret; } " \
+	"sub ::_plperl_to_pg_array {" \
+	"  my $arg = shift; ref $arg eq 'ARRAY' || return $arg; " \
+	"  my $res = ''; my $first = 1; " \
+	"  foreach my $elem (@$arg) " \
+	"  { " \
+	"    $res .= ', ' unless $first; $first = undef; " \
+	"    if (ref $elem) " \
+	"    { " \
+	"      $res .= _plperl_to_pg_array($elem); " \
+	"    } " \
+	"    else " \
+	"    { " \
+	"      my $str = qq($elem); " \
+	"      $str =~ s/([\"\\\\])/\\\\$1/g; " \
+	"      $res .= qq(\"$str\"); " \
+	"    } " \
+	"  } " \
+	"  return qq({$res}); " \
+	"} "
+
+#define SAFE_MODULE \
+	"require Safe; $Safe::VERSION"
+
+#define SAFE_OK \
+	"use vars qw($PLContainer); $PLContainer = new Safe('PLPerl');" \
+	"$PLContainer->permit_only(':default');" \
+	"$PLContainer->permit(qw[:base_math !:base_io sort time]);" \
+	"$PLContainer->share(qw[&elog &spi_exec_query &return_next " \
+	"&spi_query &spi_fetchrow " \
+	"&_plperl_to_pg_array " \
+	"&DEBUG &LOG &INFO &NOTICE &WARNING &ERROR %_SHARED ]);" \
+	"sub ::mksafefunc {" \
+	"      my $ret = $PLContainer->reval(qq[sub { $_[0] $_[1] }]); " \
+	"      $@ =~ s/\\(eval \\d+\\) //g if $@; return $ret; }" \
+	"$PLContainer->permit('require'); $PLContainer->reval('use strict;');" \
+	"$PLContainer->deny('require');" \
+	"sub ::mk_strict_safefunc {" \
+	"      my $ret = $PLContainer->reval(qq[sub { BEGIN { strict->import(); } $_[0] $_[1] }]); " \
+	"      $@ =~ s/\\(eval \\d+\\) //g if $@; return $ret; }" 
+
+#define SAFE_BAD \
+	"use vars qw($PLContainer); $PLContainer = new Safe('PLPerl');" \
+	"$PLContainer->permit_only(':default');" \
+	"$PLContainer->share(qw[&elog &ERROR ]);" \
+	"sub ::mksafefunc { return $PLContainer->reval(qq[sub { " \
+	"      elog(ERROR,'trusted Perl functions disabled - " \
+	"      please upgrade Perl Safe module to version 2.09 or later');}]); }" \
+	"sub ::mk_strict_safefunc { return $PLContainer->reval(qq[sub { " \
+	"      elog(ERROR,'trusted Perl functions disabled - " \
+	"      please upgrade Perl Safe module to version 2.09 or later');}]); }"
+
 
 static void
 plperl_init_interp(void)
 {
-	static char	   *loose_embedding[3] = {
-		"", "-e",
-		/* all one string follows (no commas please) */
-		"SPI::bootstrap(); use vars qw(%_SHARED);"
-		"sub ::plperl_warn { my $msg = shift; &elog(&NOTICE, $msg); } "
-		"$SIG{__WARN__} = \\&::plperl_warn; "
-		"sub ::mkunsafefunc {return eval(qq[ sub { $_[0] $_[1] } ]); }"
-		"sub ::_plperl_to_pg_array"
-		"{"
-		"  my $arg = shift; ref $arg eq 'ARRAY' || return $arg; "
-		"  my $res = ''; my $first = 1; "
-		"  foreach my $elem (@$arg) "
-		"  { "
-		"    $res .= ', ' unless $first; $first = undef; "
-		"    if (ref $elem) "
-		"    { "
-		"      $res .= _plperl_to_pg_array($elem); "
-		"    } "
-		"    else "
-		"    { "
-		"      my $str = qq($elem); "
-		"      $str =~ s/([\"\\\\])/\\\\$1/g; "
-		"      $res .= qq(\"$str\"); "
-		"    } "
-		"  } "
-		"  return qq({$res}); "
-		"} "
-	};
-
-
-	static char	   *strict_embedding[3] = {
-		"", "-e",
-		/* all one string follows (no commas please) */
-		"SPI::bootstrap(); use vars qw(%_SHARED);"
-		"sub ::plperl_warn { my $msg = shift; &elog(&NOTICE, $msg); } "
-		"$SIG{__WARN__} = \\&::plperl_warn; "
-		"sub ::mkunsafefunc {return eval("
-		"qq[ sub { use strict; $_[0] $_[1] } ]); }"
+	static char	   *embedding[3] = {
+		"", "-e", PERLBOOT
 	};
 
 	plperl_interp = perl_alloc();
@@ -234,8 +266,7 @@ plperl_init_interp(void)
 		elog(ERROR, "could not allocate Perl interpreter");
 
 	perl_construct(plperl_interp);
-	perl_parse(plperl_interp, plperl_init_shared_libs, 3 ,
-			   (plperl_use_strict ? strict_embedding : loose_embedding), NULL);
+	perl_parse(plperl_interp, plperl_init_shared_libs, 3, embedding, NULL);
 	perl_run(plperl_interp);
 
 	plperl_proc_hash = newHV();
@@ -245,44 +276,10 @@ plperl_init_interp(void)
 static void
 plperl_safe_init(void)
 {
-	static char *safe_module =
-	"require Safe; $Safe::VERSION";
-
-	static char *common_safe_ok =
-	"use vars qw($PLContainer); $PLContainer = new Safe('PLPerl');"
-	"$PLContainer->permit_only(':default');"
-	"$PLContainer->permit(qw[:base_math !:base_io sort time]);"
-	"$PLContainer->share(qw[&elog &spi_exec_query &return_next "
-	"&spi_query &spi_fetchrow "
-	"&_plperl_to_pg_array "
-	"&DEBUG &LOG &INFO &NOTICE &WARNING &ERROR %_SHARED ]);"
-			   ;
-
-	static char * strict_safe_ok =
-		"$PLContainer->permit('require');$PLContainer->reval('use strict;');"
-		"$PLContainer->deny('require');"
-		"sub ::mksafefunc { return $PLContainer->reval(qq[ "
-		"             sub { BEGIN { strict->import(); } $_[0] $_[1]}]); }"
-		;
-
-	static char * loose_safe_ok =
-		"sub ::mksafefunc { return $PLContainer->reval(qq[ "
-		"             sub { $_[0] $_[1]}]); }"
-		;
-
-	static char *safe_bad =
-	"use vars qw($PLContainer); $PLContainer = new Safe('PLPerl');"
-	"$PLContainer->permit_only(':default');"
-	"$PLContainer->share(qw[&elog &ERROR ]);"
-	"sub ::mksafefunc { return $PLContainer->reval(qq[sub { "
-	"elog(ERROR,'trusted Perl functions disabled - "
-	"please upgrade Perl Safe module to version 2.09 or later');}]); }"
-			   ;
-
 	SV		   *res;
 	double		safe_version;
 
-	res = eval_pv(safe_module, FALSE);	/* TRUE = croak if failure */
+	res = eval_pv(SAFE_MODULE, FALSE);	/* TRUE = croak if failure */
 
 	safe_version = SvNV(res);
 
@@ -294,12 +291,11 @@ plperl_safe_init(void)
 	if (safe_version < 2.0899 )
 	{
 		/* not safe, so disallow all trusted funcs */
-		eval_pv(safe_bad, FALSE);
+		eval_pv(SAFE_BAD, FALSE);
 	}
 	else
 	{
-		eval_pv(common_safe_ok, FALSE);
-		eval_pv((plperl_use_strict ? strict_safe_ok : loose_safe_ok), FALSE);
+		eval_pv(SAFE_OK, FALSE);
 	}
 
 	plperl_safe_init_done = true;
@@ -369,7 +365,7 @@ plperl_convert_to_pg_array(SV *src)
 	XPUSHs(src);
 	PUTBACK ;
 
-	count = call_pv("_plperl_to_pg_array", G_SCALAR);
+	count = call_pv("::_plperl_to_pg_array", G_SCALAR);
 
 	SPAGAIN ;
 
@@ -661,6 +657,7 @@ plperl_create_sub(char *s, bool trusted)
 	dSP;
 	SV		   *subref;
 	int			count;
+	char       *compile_sub;
 
 	if (trusted && !plperl_safe_init_done)
 	{
@@ -680,8 +677,17 @@ plperl_create_sub(char *s, bool trusted)
 	 * errors properly.  Perhaps it's because there's another level of
 	 * eval inside mksafefunc?
 	 */
-	count = perl_call_pv((trusted ? "::mksafefunc" : "::mkunsafefunc"),
-						 G_SCALAR | G_EVAL | G_KEEPERR);
+
+	if (trusted && plperl_use_strict)
+		compile_sub = "::mk_strict_safefunc";
+	else if (plperl_use_strict)
+		compile_sub = "::mk_strict_unsafefunc";
+	else if (trusted)
+		compile_sub = "::mksafefunc";
+	else
+		compile_sub = "::mkunsafefunc";
+
+	count = perl_call_pv(compile_sub, G_SCALAR | G_EVAL | G_KEEPERR);
 	SPAGAIN;
 
 	if (count != 1)
