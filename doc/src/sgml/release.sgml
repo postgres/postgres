@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.361 2005/08/24 19:41:33 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.362 2005/08/24 22:03:14 tgl Exp $
 
 Typical markup:
 
@@ -23,7 +23,7 @@ pg_[A-Za-z0-9_]                 <application>
     <title>Release date</title>
     <simpara>2005-1?-??, Current as of 2005-08-24</simpara>
    </note>
- 
+
    <sect2>
     <title>Overview</title>
  
@@ -49,24 +49,7 @@ pg_[A-Za-z0-9_]                 <application>
 
      <varlistentry>
       <term>
-       Automatically use indexes for <function>MIN()</> and
-       <function>MAX()</> (Tom)
-      </term>
- 
-      <listitem>
-       <para>
-        In previous releases, the only way to use an index for
-        <function>MIN()</> or <function>MAX()</> was to rewrite the
-        query as <command>SELECT col FROM tab ORDER BY col LIMIT 1</>.
-        Index usage now happens automatically.
-       </para> 
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       Add in-memory bitmaps which allows multiple indexes to be merged
-       in a single query (Tom)
+       Allow index scans to use an intermediate in-memory bitmap (Tom)
       </term>
 
       <listitem>
@@ -75,12 +58,16 @@ pg_[A-Za-z0-9_]                 <application>
         lookups on a table. With this feature, if a query has
         <command>WHERE tab.col1 = 4 and tab.col2 = 9</>, and there is no
         multicolumn index on col1 and col2, but there is an index on
-        col1 and another on col2, it is possible to do lookups on the
-        col1 index and the col2 index and combine them in memory to do
-        heap lookups on rows matching both the col1 and col2
+        col1 and another on col2, it is possible to search both indexes
+        and combine the results in memory, then do heap fetches for only
+        the rows matching both the col1 and col2
         restrictions. This is very useful in environments that have a
         lot of unstructured queries where it is impossible to create
-        indexes that match all possible access conditions.
+        indexes that match all possible access conditions.  Bitmap scans
+        are useful even with a single index, as they reduce the amount
+        of random access needed; a bitmap index scan is efficient for
+        retrieving fairly large fractions of the complete table, whereas
+        plain index scans are not.
        </para>
       </listitem>
      </varlistentry>
@@ -96,8 +83,8 @@ pg_[A-Za-z0-9_]                 <application>
         computers, and once all computers have successfully prepared
         their transactions (none failed), all transactions can be
         committed. Even if a machine crashes after a prepare, the
-        prepared transaction can be committed after it is restarted. New
-        syntax includes <command>PREPARE TRANSACTION</> and
+        prepared transaction can be committed after the machine is
+        restarted. New syntax includes <command>PREPARE TRANSACTION</> and
         <command>COMMIT/ROLLBACK PREPARED</>. A new system view
         <literal>pg_prepared_xacts</> has also been added.
        </para>
@@ -122,7 +109,7 @@ pg_[A-Za-z0-9_]                 <application>
   
         <listitem>
          <para>
-           Have optionally have login capability
+           Have login capability (optionally)
          </para>
         </listitem>
 
@@ -134,40 +121,58 @@ pg_[A-Za-z0-9_]                 <application>
 
         <listitem>
          <para>
-          Inherit permission from other member roles
+          Hold access permissions for database objects
          </para>
         </listitem>
 
         <listitem>
          <para>
-          Switch to another member role using <command>SET ROLE</>
+          Inherit permissions from other roles it is a member of
          </para>
         </listitem>
 
        </itemizedlist>
        <para>
-        So, once a user logs into a role, she inherits capabilities of
+        Once a user logs into a role, she obtains capabilities of
         the login role plus any inherited roles, and can use
-        <command>SET ROLE</> to switch to other member roles. This
-        change also replaces <literal>pg_shadow</> and 
-        <literal>pg_group</> by with new role-capable catalogs 
-        <literal>pg_authid</> and <literal>pg_auth_members</>. The old
-        tables are redefined as views on the new role tables.
+        <command>SET ROLE</> to switch to other roles she is a member of.
+        This feature is a generalization of the SQL standard's concept of
+        roles.
+        This change also replaces <structname>pg_shadow</> and 
+        <structname>pg_group</> by new role-capable catalogs 
+        <structname>pg_authid</> and <structname>pg_auth_members</>. The old
+        tables are redefined as read-only views on the new role tables.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
       <term>
-       Move <filename>/contrib/pgautovacuum</> into the main server
+       Automatically use indexes for <function>MIN()</> and
+       <function>MAX()</> (Tom)
+      </term>
+ 
+      <listitem>
+       <para>
+        In previous releases, the only way to use an index for
+        <function>MIN()</> or <function>MAX()</> was to rewrite the
+        query as <command>SELECT col FROM tab ORDER BY col LIMIT 1</>.
+        Index usage now happens automatically.
+       </para> 
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       Move <filename>/contrib/pg_autovacuum</> into the main server
        (Alvaro Herrera)
       </term>
 
       <listitem>
        <para>
-        Moving pgautovacuum from <filename>/contrib</> allows it to be
+        Integrating autovacuum into the server allows it to be
         automatically started and stopped in sync with the database
-        server, and allows for pgautovacuum to be configured from
+        server, and allows autovacuum to be configured from
         <filename>postgresql.conf</>.
        </para>
       </listitem>
@@ -185,8 +190,25 @@ pg_[A-Za-z0-9_]                 <application>
         allows <command>SELECT</> to never be blocked by writers and
         therefore does not need shared row locks for typical operations,
         shared locks are useful for applications that require shared row
-        locking, and to reduce the locking requirements to maintain
-        referential integrity.
+        locking.  In particular this reduces the locking requirements
+        imposed by referential integrity checks.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       Add dependencies on shared objects, specifically roles
+       (Alvaro)
+      </term>
+
+      <listitem>
+       <para>
+        This extension of the dependency mechanism prevents roles from
+        being dropped while there are still database objects they own.
+        Formerly it was possible to accidentally <quote>orphan</> objects by
+        deleting their owner.  While this could be recovered from, it
+        was messy and unpleasant.
        </para>
       </listitem>
      </varlistentry>
@@ -205,8 +227,8 @@ pg_[A-Za-z0-9_]                 <application>
     <para>
      The 8.0 release announced that the <function>to_char()</> function
      for intervals would be removed in 8.1. However, since no better API
-     has been suggested, to_char(interval) has been enhanced in 8.1 and
-     will remain in the server.
+     has been suggested, <function>to_char(interval)</> has been enhanced in
+     8.1 and will remain in the server.
     </para>
 
     <para>
@@ -217,19 +239,19 @@ pg_[A-Za-z0-9_]                 <application>
 
      <listitem>
       <para>
-       Change add_missing_from to 'false'
+       <varname>add_missing_from</> is now false by default (Neil)
       </para>
       <para>
-       Generate an error if a table used in a query without a
-       <command>FROM</> reference (Neil) This command, <command>SELECT
-       pg_class.*</>, now generates an error.
+       By default, we now generate an error if a table is used in a query
+       without a <command>FROM</> reference.  The old behavior is still
+       available, but the parameter must be set to 'true' to obtain it.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Cause input of a zero-length strings ('') for float4/float8/oid
-       to throw an error, rather than treat it as a zero (Neil)
+       Cause input of a zero-length string ('') for float4/float8/oid
+       to throw an error, rather than treating it as a zero (Neil)
       </para>
       <para>
        This change is consistent with the current handling of
@@ -240,18 +262,18 @@ pg_[A-Za-z0-9_]                 <application>
 
      <listitem>
       <para>
-       Change <varname>default_with_oids</> to default to false (Neil)
+       <varname>default_with_oids</> is now false by default (Neil)
       </para>
       <para>
        With this option set to false, user-created tables no longer have
-       an the usually-invisible OID column unless <command>WITH OIDS</>
+       the usually-invisible OID column unless <command>WITH OIDS</>
        is specified in <command>CREATE TABLE</>. Though OIDs have
-       existed in all previous releases of
+       existed in all releases of
        <productname>PostgreSQL</productname>, their use is limited
-       because they are only four bytes long and the counter is unique
+       because they are only four bytes long and the counter is shared
        across all installed databases. The preferred way of uniquely
        identifying rows is via sequences and <command>SERIAL</>, which
-       has been supported since <productname>PostgreSQL</productname>
+       have been supported since <productname>PostgreSQL</productname>
        6.4.
       </para>
      </listitem>
@@ -263,22 +285,29 @@ pg_[A-Za-z0-9_]                 <application>
       </para>
       <para>
        Currently <productname>PostgreSQL</productname> processes a
-       backslash in a string as preceeding a character that requires
-       special processing, e.g. <literal>\n</> or <literal>\010</>.
+       backslash in a string literal as introducing a special escape sequence,
+       e.g. <literal>\n</> or <literal>\010</>.
        While this allows easy entry of special values, it is
-       non-standard and makes porting of application from other
+       non-standard and makes porting of applications from other
        databases more difficult. For this reason, the
        <productname>PostgreSQL</productname> project is planning to
        remove the special meaning of backslashes in strings. For
        backward compatibility and for users who want special backslash
-       processing, a new string type will be created. This new string
-       type is formed by having an E precede the single quote that
-       starts the string, e.g. <literal>E'hi\n'</>. While this release
-       does not change the handling of backslashes in strings, it does
-       add several new GUC variables to help users migrate applications
+       processing, a new string syntax has been created. This new string
+       syntax is formed by writing an <literal>E</> immediately preceding the
+       single quote that starts the string, e.g. <literal>E'hi\n'</>. While
+       this release does not change the handling of backslashes in strings, it
+       does add new GUC variables to help users migrate applications
        for future releases:
       </para>
       <itemizedlist>
+
+       <listitem>
+        <para>
+         <varname>standard_conforming_strings</> - does this release
+         treat backslashes literally in ordinary strings?
+        </para>
+       </listitem>
   
        <listitem>
        <para>
@@ -287,36 +316,24 @@ pg_[A-Za-z0-9_]                 <application>
        </para>
       </listitem>
 
-       <listitem>
-        <para>
-         <varname>escape_string_syntax</> - does this release support
-         the E'' syntax?
-        </para>
-       </listitem>
-
-       <listitem>
-        <para>
-         <varname>standard_conforming_strings</> - does this release
-         treat backslashes literally in ordinary strings?
-        </para>
-       </listitem>
-
       </itemizedlist>
 
       <para>
-       The last two values are read-only and should assist in the
-       porting of applications. Applications can retrieve these values
-       to know how backslashes are processed. In a later release,
-       standard_conforming_strings will be true, meaning backslashes
-       will be treated literally in non-E strings. To prepare for this
-       change, use E'' strings in places that need special backslash
-       processing, and turn on escape_string_warning to find additional
-       strings that need to be converted to use <literal>E''</>.  Also,
-       use two single-quotes ('') to embed a literal single-quote
-       in a string, rather than the PostgreSQL-supported syntax of
-       backslash single-quote (\').  The former is standards-conforming
-       and does not require the use of the E'' string syntax.  You can
-       also use the $$ string syntax, which does not treat backslashes
+       The <varname>standard_conforming_strings</> value is read-only.
+       Applications can retrieve the value to know how backslashes are
+       processed.  (Presence of the parameter can also be taken as an
+       indication that <literal>E''</> string syntax is supported.)  In a
+       future release, <varname>standard_conforming_strings</> will be true,
+       meaning backslashes will be treated literally in non-E strings. To
+       prepare for this change, use <literal>E''</> strings in places that
+       need special backslash processing, and turn on
+       <varname>escape_string_warning</> to find additional strings that need
+       to be converted to use <literal>E''</>.  Also, use two single-quotes
+       (<literal>''</>) to embed a literal single-quote in a string, rather
+       than the PostgreSQL-supported syntax of backslash single-quote
+       (<literal>\'</>).  The former is standards-conforming and does not
+       require the use of the <literal>E''</> string syntax.  You can also use
+       the <literal>$$</> string syntax, which does not treat backslashes
        specially.
       </para>
      </listitem>
@@ -401,7 +418,11 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Change WAL CRC records from 64bit to 32bit (Tom)
+        Change WAL record CRCs from 64-bit to 32-bit (Tom)
+       </para>
+       <para>
+        We determined that the extra cost of computing 64-bit CRCs was
+        significant, and the gain in reliability too marginal to justify it.
        </para>
       </listitem>
 
@@ -431,7 +452,8 @@ pg_[A-Za-z0-9_]                 <application>
        <para>
         Since a crash during <command>CREATE TABLE</> would cause the
         table to be dropped during recovery, there is no reason to WAL
-        log as the table is loaded.
+        log as the table is loaded.  (Logging still happens if WAL
+        archiving is enabled, however.)
        </para>
       </listitem>
 
@@ -451,9 +473,9 @@ pg_[A-Za-z0-9_]                 <application>
         To prevent partial disk writes from corrupting the database,
         <productname>PostgreSQL</productname> writes a complete copy of
         each database disk page to WAL the first time it is modified
-        after a checkpoint. This turns off that functionality for users
-        with battery-backed disk caches where partial page writes cannot
-        happen.
+        after a checkpoint. This option turns off that functionality for more
+        speed.  This is safe to use with battery-backed disk caches where
+        partial page writes cannot happen.
        </para>
       </listitem>
 
@@ -463,10 +485,10 @@ pg_[A-Za-z0-9_]                 <application>
         on table constraints (Simon)
        </para>
        <para>
-        This allows for a type of table partitioning. If child table
-        placed in a different tablespaces using appropriate
+        This allows for a type of table partitioning. If child tables
+        store separate key ranges and this is enforced using appropriate
         <command>CHECK</> constraints, the optimizer will skip child
-        table accesses if the constraint guarantees no matching rows
+        table accesses when the constraint guarantees no matching rows
         exist in the child table.
        </para>
       </listitem>
@@ -505,17 +527,17 @@ pg_[A-Za-z0-9_]                 <application>
         Prevent problems due to transaction ID (XID) wraparound (Tom)
        </para>
        <para>
-        This was accomplished by warning the transaction counter is near
-        the the earliest transaction id determined by the database whose
-        last vacuum is the oldest. If the limit is reached, the server
-        will no longer accept queries.
+        The server will now warn when the transaction counter approaches
+        the wraparound point.  If the counter becomes too close to wraparound,
+        the server will stop accepting queries.  This ensures that data is
+        not lost before needed vacuuming is performed.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Fix problem of object ID (OID) wraparound conflicting with
-        existing system objects (Tom)
+        Fix problems with object IDs (OIDs) conflicting with existing system
+        objects after the OID counter has wrapped around (Tom)
        </para>
       </listitem>
   
@@ -607,6 +629,11 @@ pg_[A-Za-z0-9_]                 <application>
         Add GUC variables to control TCP/IP keep-alive times for idle,
         interval, and count (Oliver Jowett)
        </para>
+
+       <para>
+        These values can be changed to allow more rapid detection of
+        lost client connections.
+       </para>
       </listitem>
 
       <listitem>
@@ -615,8 +642,8 @@ pg_[A-Za-z0-9_]                 <application>
        </para>
        <para>
         Using <command>ALTER USER</> and <command>ALTER DATABASE</>,
-        limits can now be enforced on the maximum number of users who
-        can connect as as a specific user or to a specific database.
+        limits can now be enforced on the maximum number of sessions that
+        can concurrently connect as a specific user or to a specific database.
         Setting the limit to zero disables user or database connections.
        </para>
       </listitem>
@@ -696,10 +723,10 @@ pg_[A-Za-z0-9_]                 <application>
         UPDATE/SHARE</> (Hans-Juergen Schoenig)
        </para>
        <para>
-        While <command>SET</> statement_timeout allows a query taking
-        over a certain amount of time to be cancelled, the <command>NO
-        WAIT</> option allows a query to be canceled as soon as a
-        <command>SELECT ... FOR UPDATE/SHARE</> cannot immediately
+        While <command>SET</> <varname>statement_timeout</> allows a query
+        taking over a certain amount of time to be cancelled, the
+        <command>NOWAIT</> option allows a query to be canceled as soon as a
+        <command>SELECT ... FOR UPDATE/SHARE</> command cannot immediately
         acquire a row lock.
        </para>
       </listitem>
@@ -733,10 +760,12 @@ pg_[A-Za-z0-9_]                 <application>
         by the object owner (Stephen Frost)
        </para>
        <para>
-        Prior releases allowed only the super-user to change object owners,
-        even if the current owner was executing the command and the new
-        owner was in the same group.  With roles such transfers are now
-        possible.
+        Prior releases allowed only superusers to change object owners.
+        Now, ownership can be transferred if the user executing the command
+        owns the object and would be able to create it as the new owner
+        (that is, the user is a member of the new owning role and that role
+        has the CREATE permission that would be needed to create the object
+        afresh).
        </para>
       </listitem>
 
@@ -771,12 +800,12 @@ pg_[A-Za-z0-9_]                 <application>
         single command (Alvaro)
        </para>
        <para>
-        Because of referential integrity checks, it is impossible to
+        Because of referential integrity checks, it is not allowed to
         truncate a table that is part of a referential integrity
         constraint. Using this new functionality, <command>TRUNCATE</>
-        can be used to truncate all tables involved in referential
-        integrity if they are truncated in a single <command>TRUNCATE</>
-        command.
+        can be used to truncate such tables, if both tables involved in
+        a referential integrity constraint are truncated in a single
+        <command>TRUNCATE</> command.
        </para>
       </listitem>
 
@@ -807,7 +836,7 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        On Win32, display better sub-second precision in
+        On Windows, display better sub-second precision in
         <command>EXPLAIN ANALYZE</> (Magnus)
        </para>
       </listitem>
@@ -818,8 +847,9 @@ pg_[A-Za-z0-9_]                 <application>
         (Tom)
        </para>
        <para>
-        Prior releases accumulated trigger execution time as part of the
-        total execution time.
+        Prior releases included trigger execution time as part of the
+        total execution time, but did not show it separately.  It is now
+        possible to see how much time is spent in each trigger.
        </para>
       </listitem>
 
@@ -835,7 +865,7 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Have <command>SHOW ALL</> include variable descriptions
+        Make <command>SHOW ALL</> include variable descriptions
         (Matthias Schmidt)
        </para>
        <para>
@@ -846,16 +876,16 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Have initdb create new standard database called
-        <literal>postgres</> and convert utilities to use
+        Make initdb create a new standard database called
+        <literal>postgres</>, and convert utilities to use
         <literal>postgres</> rather than <literal>template1</> for
         standard lookups (Dave)
        </para>
        <para>
-        In prior releases, template1 was used both as a default
+        In prior releases, <literal>template1</> was used both as a default
         connection for utilities like createuser, and as a template for
         new databases. This caused <command>CREATE DATABASE</> to
-        sometimes fail because a new database cannot be created if
+        sometimes fail, because a new database cannot be created if
         anyone else is in the template database. With this change, the
         default connection database is now <literal>postgres</>, meaning
         it is much less likely someone will be using
@@ -884,9 +914,6 @@ pg_[A-Za-z0-9_]                 <application>
         Add <function>MAX()</> and <function>MIN()</> aggregates for
         array types (Koju Iijima)
        </para>
-       <para>
-        How does this work?
-       </para>
       </listitem>
 
       <listitem>
@@ -899,7 +926,7 @@ pg_[A-Za-z0-9_]                 <application>
         If the format specification contains <literal>CC</> and a year
         specification is <literal>YYY</> or longer, ignore the
         <literal>CC</>. If the year specification is <literal>YY</> or
-        shorter, interpret <literal>CC</> as the previous century. ?
+        shorter, interpret <literal>CC</> as the previous century.
        </para>
       </listitem>
 
@@ -927,7 +954,7 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Add support for <command>NUMERIC ^ NUMERIC</> based on
+        Add support for <command>numeric ^ numeric</> based on
         <function>power(numeric, numeric)</>
        </para>
        <para>
@@ -943,7 +970,7 @@ pg_[A-Za-z0-9_]                 <application>
        </para>
        <para>
         In previous releases, modulus for large values sometimes
-        returned negative results due to the rounding of the quotient.
+        returned negative results due to rounding of the quotient.
        </para>
       </listitem>
 
@@ -1001,7 +1028,7 @@ pg_[A-Za-z0-9_]                 <application>
        </para>
        <para>
         These functions take a variable number of arguments and return
-        the greatest or least value.
+        the greatest or least value among the arguments.
        </para>
       </listitem>
 
@@ -1020,8 +1047,8 @@ pg_[A-Za-z0-9_]                 <application>
         Add <function>regexp_replace()</> (Atsushi Ogawa)
        </para>
        <para>
-        This allows regular expression replacement, like sed. A
-        four-argument version also allows for global (replace all) and
+        This allows regular expression replacement, like sed. An optional
+        flag argument allows selection of global (replace all) and
         case-insensitive modes.
        </para>
       </listitem>
@@ -1049,7 +1076,7 @@ pg_[A-Za-z0-9_]                 <application>
         (not fixed 24-hour periods) to be added to dates who's result
         includes a daylight savings time adjustment period. Therefore,
         while in previous releases <literal>1 day</> and <literal>24
-        hours</> where interchangeable interval periods, in this release
+        hours</> were interchangeable interval values, in this release
         they are treated differently, e.g.
         <programlisting>
          '2005-05-03 00:00:00 EST' + '1 day' = '2005-05-04 00:00:00-04'
@@ -1157,13 +1184,13 @@ pg_[A-Za-z0-9_]                 <application>
       <listitem>
        <para>
         Add <function>pg_rotate_logfile()</> to force rotation of the
-        server log file (Dave Page,
+        server log file (Dave Page, Andreas Pflug)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Change <literal>pg_stat_*</> views to show TOAST tables (Tom)
+        Change <literal>pg_stat_*</> views to include TOAST tables (Tom)
        </para>
       </listitem>
 
@@ -1178,7 +1205,7 @@ pg_[A-Za-z0-9_]                 <application>
       <listitem>
        <para>
         Rename some encodings to be more consistent and to follow
-        international standards(Bruce)
+        international standards (Bruce)
        </para>
        <para>
         <itemizedlist>
@@ -1228,7 +1255,7 @@ pg_[A-Za-z0-9_]                 <application>
        <para>
         Previously only one and two-byte <literal>UTF8</> characters
         were supported. This is particularly important for support for
-        some Chinese character.
+        some Chinese characters.
        </para>
       </listitem>
 
@@ -1242,11 +1269,12 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Allow the UTF8 encoding to work on Win32 (Magnus)
+        Allow the UTF8 encoding to work on Windows (Magnus)
        </para>
        <para>
-        This is done by mapping UTF8 to the Win32-native UTF16 
+        This is done by mapping UTF8 to the Windows-native UTF16 
         implementation.
+       </para>
       </listitem>
 
      </itemizedlist>
@@ -1295,7 +1323,7 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Move language handlers into the <literal>pg_catalog</> schema
+        Move language handler functions into the <literal>pg_catalog</> schema
        </para>
        <para>
         This makes it easier to drop the public schema if desired.
@@ -1321,7 +1349,7 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Check function syntax as <command>CREATE FUNCTION</> time,
+        Check function syntax at <command>CREATE FUNCTION</> time,
         rather than at runtime (Neil)
        </para>
        <para>
@@ -1344,7 +1372,8 @@ pg_[A-Za-z0-9_]                 <application>
        </para>
        <para>
         This is a byproduct of the newly added <command>OUT</> and
-        <command>INOUT</> functionality.
+        <command>INOUT</> functionality.  <command>RETURN</> can
+        be omitted when it is not needed to provide the function result.
        </para>
       </listitem>
 
@@ -1511,8 +1540,8 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Prevent psql <command>\x</> (expanded mode) from affecting other
-        backslash output (Neil)
+        Prevent psql <command>\x</> (expanded mode) from affecting 
+        backslash-command displays (Neil)
        </para>
       </listitem>
 
@@ -1528,7 +1557,7 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Have psql <command>\d</> show tablespace of indexes (Qingqing
+        Make psql <command>\d</> show tablespaces of indexes (Qingqing
         Zhou)
        </para>
       </listitem>
@@ -1541,8 +1570,8 @@ pg_[A-Za-z0-9_]                 <application>
        <para>
         This allows the user to just add <command>\h</> to the front of
         the syntax error query and get help on the supported syntax.
-        Previously any additional query text beyond the help topics
-        supported had to be removed to use <command>\h</>.
+        Previously any additional query text beyond the command name
+        had to be removed to use <command>\h</>.
        </para>
       </listitem>
 
@@ -1553,7 +1582,7 @@ pg_[A-Za-z0-9_]                 <application>
        </para>
        <para>
         For example, using <literal>C</> locale <literal>100000</> would
-        be output as <literal>100,000.0</> and European locale might
+        be output as <literal>100,000.0</> while a European locale might
         output this value as <literal>100.000,0</>.
        </para>
       </listitem>
@@ -1650,7 +1679,7 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Add Kerberos 5 support for Win32 (Magnus)
+        Add Kerberos 5 support for Windows (Magnus)
        </para>
       </listitem>
 
@@ -1725,7 +1754,7 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Allow libpq to be build thread-safe on Win32 (Dave Page)
+        Allow libpq to be built thread-safe on Windows (Dave Page)
        </para>
       </listitem>
 
@@ -1756,7 +1785,7 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Cleanup the <filename>/contrib/lo</> module (Tom)
+        Clean up the <filename>/contrib/lo</> module (Tom)
        </para>
       </listitem>
 
@@ -1786,7 +1815,7 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        <filename>/contrib/pgcrypto</> (Marko Kreen)
+        Improve <filename>/contrib/pgcrypto</> (Marko Kreen)
        </para>
 
        <itemizedlist>
@@ -1796,7 +1825,7 @@ pg_[A-Za-z0-9_]                 <application>
           implementation of OpenPGP symmetric-key and public-key encryption
          </para>
          <para>
-          Supported are both RSA and Elgamal public-key algorithms.
+          Both RSA and Elgamal public-key algorithms are supported.
          </para>
         </listitem>
 
