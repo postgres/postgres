@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.95 2005/08/22 16:27:36 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.96 2005/08/25 02:22:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1210,16 +1210,13 @@ setup_config(void)
 	conflines = replace_token(conflines,"@remove-line-for-nolocal@","");
 #endif
 
-#if defined(HAVE_IPV6) && defined(HAVE_STRUCT_ADDRINFO) && defined(HAVE_GETADDRINFO)
+#ifdef HAVE_IPV6
 	/* 
 	 * Probe to see if there is really any platform support for IPv6, and
 	 * comment out the relevant pg_hba line if not.  This avoids runtime
 	 * warnings if getaddrinfo doesn't actually cope with IPv6.  Particularly
 	 * useful on Windows, where executables built on a machine with IPv6
 	 * may have to run on a machine without.
-	 *
-	 * We don't bother with testing if we aren't using the system version
-	 * of getaddrinfo, since we know our own version doesn't do IPv6.
 	 */
 	{
 		struct addrinfo *gai_result;
@@ -1240,12 +1237,12 @@ setup_config(void)
 									  "host    all         all         ::1",
 									  "#host    all         all         ::1");
 	}
-#else /* !HAVE_IPV6 etc */
+#else /* !HAVE_IPV6 */
 	/* If we didn't compile IPV6 support at all, always comment it out */
 	conflines = replace_token(conflines,
 							  "host    all         all         ::1",
 							  "#host    all         all         ::1");
-#endif /* HAVE_IPV6 etc */
+#endif /* HAVE_IPV6 */
 
 	/* Replace default authentication methods */
 	conflines = replace_token(conflines,
