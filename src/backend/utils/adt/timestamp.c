@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.149 2005/08/25 01:30:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.150 2005/08/25 03:53:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1892,7 +1892,7 @@ timestamp_mi(PG_FUNCTION_ARGS)
 {
 	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
 	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
-	Interval   *result, *result2;
+	Interval   *result;
 
 	result = (Interval *) palloc(sizeof(Interval));
 
@@ -1914,10 +1914,9 @@ timestamp_mi(PG_FUNCTION_ARGS)
 	result->month = 0;
 	result->day = 0;
 
-	result2 = DatumGetIntervalP(DirectFunctionCall1(interval_justify_hours,
+	result = DatumGetIntervalP(DirectFunctionCall1(interval_justify_hours,
 												IntervalPGetDatum(result)));
-	pfree(result);
-	PG_RETURN_INTERVAL_P(result2);
+	PG_RETURN_INTERVAL_P(result);
 }
 
 /*	interval_justify_hours()
@@ -2264,7 +2263,7 @@ interval_mul(PG_FUNCTION_ARGS)
 	Interval   *span = PG_GETARG_INTERVAL_P(0);
 	float8		factor = PG_GETARG_FLOAT8(1);
 	double		month_remainder, day_remainder;
-	Interval   *result, *result2;
+	Interval   *result;
 
 	result = (Interval *) palloc(sizeof(Interval));
 
@@ -2290,10 +2289,9 @@ interval_mul(PG_FUNCTION_ARGS)
 					day_remainder * SECS_PER_DAY);
 #endif
 
-	result2 = DatumGetIntervalP(DirectFunctionCall1(interval_justify_hours,
+	result = DatumGetIntervalP(DirectFunctionCall1(interval_justify_hours,
 												IntervalPGetDatum(result)));
-	pfree(result);
-	PG_RETURN_INTERVAL_P(result2);
+	PG_RETURN_INTERVAL_P(result);
 }
 
 Datum
@@ -2312,7 +2310,7 @@ interval_div(PG_FUNCTION_ARGS)
 	Interval   *span = PG_GETARG_INTERVAL_P(0);
 	float8		factor = PG_GETARG_FLOAT8(1);
 	double		month_remainder, day_remainder;
-	Interval   *result, *result2;
+	Interval   *result;
 
 	result = (Interval *) palloc(sizeof(Interval));
 
@@ -2343,10 +2341,9 @@ interval_div(PG_FUNCTION_ARGS)
 	result->time = JROUND(result->time);
 #endif
 
-	result2 = DatumGetIntervalP(DirectFunctionCall1(interval_justify_hours,
+	result = DatumGetIntervalP(DirectFunctionCall1(interval_justify_hours,
 												IntervalPGetDatum(result)));
-	pfree(result);
-	PG_RETURN_INTERVAL_P(result2);
+	PG_RETURN_INTERVAL_P(result);
 }
 
 /*
