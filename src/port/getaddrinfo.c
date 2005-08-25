@@ -16,7 +16,7 @@
  * Copyright (c) 2003-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/getaddrinfo.c,v 1.18 2005/08/24 22:13:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/getaddrinfo.c,v 1.19 2005/08/25 17:51:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,9 +103,12 @@ haveNativeWindowsIPv6routines(void)
 	{
 		/* We found a dll, so now get the addresses of the routines */
 
-		getaddrinfo_ptr = GetProcAddress(hLibrary, "getaddrinfo");
-		freeaddrinfo_ptr = GetProcAddress(hLibrary, "freeaddrinfo");
-		getnameinfo_ptr = GetProcAddress(hLibrary, "getnameinfo");
+		getaddrinfo_ptr = (getaddrinfo_ptr_t) GetProcAddress(hLibrary,
+															 "getaddrinfo");
+		freeaddrinfo_ptr = (freeaddrinfo_ptr_t) GetProcAddress(hLibrary,
+															   "freeaddrinfo");
+		getnameinfo_ptr = (getnameinfo_ptr_t) GetProcAddress(hLibrary,
+															 "getnameinfo");
 
 		/*
 		 * If any one of the routines is missing, let's play it safe and
@@ -277,7 +280,7 @@ freeaddrinfo(struct addrinfo * res)
 		 */
 		if (haveNativeWindowsIPv6routines())
 		{
-			(*freeaddrinfo_ptr) (node, service, hintp, res);
+			(*freeaddrinfo_ptr) (res);
 			return;
 		}
 #endif
@@ -310,7 +313,8 @@ gai_strerror(int errcode)
 	}
 
 	return hstrerror(hcode);
-#else							/* !HAVE_HSTRERROR */
+
+#else	/* !HAVE_HSTRERROR */
 
 	switch (errcode)
 	{
@@ -318,7 +322,31 @@ gai_strerror(int errcode)
 			return "Unknown host";
 		case EAI_AGAIN:
 			return "Host name lookup failure";
-		case EAI_FAIL:
+		/* Errors below are probably WIN32 only */
+#ifdef EAI_BADFLAGS
+		case EAI_BADFLAGS:
+			return "Invalid argument";
+#endif
+#ifdef EAI_FAMILY
+		case EAI_FAMILY:
+			return "Address family not supported";
+#endif
+#ifdef EAI_MEMORY
+		case EAI_MEMORY:
+			return "Not enough memory";
+#endif
+#ifdef EAI_NODATA
+		case EAI_NODATA:
+			return "No host data of that type was found";
+#endif
+#ifdef EAI_SERVICE
+		case EAI_SERVICE:
+			return "Class type not found";
+#endif
+#ifdef EAI_SOCKTYPE
+		case EAI_SOCKTYPE:
+			return "Socket type not supported";
+#endif
 		default:
 			return "Unknown server error";
 	}
