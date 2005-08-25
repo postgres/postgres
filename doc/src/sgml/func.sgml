@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.282 2005/08/24 20:49:35 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.283 2005/08/25 01:29:55 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -5187,6 +5187,12 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
       </tbody>
      </tgroup>
     </table>
+
+   <para>
+    If you are using both <function>justify_hours</> and <function>justify_days</>,
+    it is best to use <function>justify_hours</> first so any additional days will
+    justified by <function>justify_days</>.
+   </para>
 
    <para>
     In addition to these functions, the SQL <literal>OVERLAPS</> operator is
