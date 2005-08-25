@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.363 2005/08/25 00:38:37 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.364 2005/08/25 01:32:54 momjian Exp $
 
 Typical markup:
 
@@ -1756,6 +1756,12 @@ pg_[A-Za-z0-9_]                 <application>
       <listitem>
        <para>
         Allow libpq to be built thread-safe on Windows (Dave Page)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow IPv6 connections to be used on Win32 (Andrew)
        </para>
       </listitem>
 
