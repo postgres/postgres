@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.241 2005/01/14 17:53:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.241.4.1 2005/08/25 19:45:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1114,8 +1114,10 @@ lnext:	;
 				foreach(l, estate->es_rowMark)
 				{
 					execRowMark *erm = lfirst(l);
-					Buffer		buffer;
 					HeapTupleData tuple;
+					Buffer		buffer;
+					ItemPointerData update_ctid;
+					TransactionId update_xmax;
 					TupleTableSlot *newSlot;
 					int			test;
 
@@ -1133,6 +1135,7 @@ lnext:	;
 
 					tuple.t_self = *((ItemPointer) DatumGetPointer(datum));
 					test = heap_mark4update(erm->relation, &tuple, &buffer,
+											&update_ctid, &update_xmax,
 											estate->es_snapshot->curcid);
 					ReleaseBuffer(buffer);
 					switch (test)
@@ -1149,11 +1152,15 @@ lnext:	;
 								ereport(ERROR,
 										(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 										 errmsg("could not serialize access due to concurrent update")));
-							if (!(ItemPointerEquals(&(tuple.t_self),
-								  (ItemPointer) DatumGetPointer(datum))))
+							if (!ItemPointerEquals(&update_ctid,
+												   &tuple.t_self))
 							{
-								newSlot = EvalPlanQual(estate, erm->rti, &(tuple.t_self));
-								if (!(TupIsNull(newSlot)))
+								/* updated, so look at updated version */
+								newSlot = EvalPlanQual(estate,
+													   erm->rti,
+													   &update_ctid,
+													   update_xmax);
+								if (!TupIsNull(newSlot))
 								{
 									slot = newSlot;
 									estate->es_useEvalPlan = true;
@@ -1405,8 +1412,9 @@ ExecDelete(TupleTableSlot *slot,
 {
 	ResultRelInfo *resultRelInfo;
 	Relation	resultRelationDesc;
-	ItemPointerData ctid;
 	int			result;
+	ItemPointerData update_ctid;
+	TransactionId update_xmax;
 
 	/*
 	 * get information on the (current) result relation
@@ -1437,7 +1445,7 @@ ExecDelete(TupleTableSlot *slot,
 	 */
 ldelete:;
 	result = heap_delete(resultRelationDesc, tupleid,
-						 &ctid,
+						 &update_ctid, &update_xmax,
 						 estate->es_snapshot->curcid,
 						 estate->es_crosscheck_snapshot,
 						 true /* wait for commit */ );
@@ -1455,14 +1463,17 @@ ldelete:;
 				ereport(ERROR,
 						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 						 errmsg("could not serialize access due to concurrent update")));
-			else if (!(ItemPointerEquals(tupleid, &ctid)))
+			else if (!ItemPointerEquals(tupleid, &update_ctid))
 			{
-				TupleTableSlot *epqslot = EvalPlanQual(estate,
-							   resultRelInfo->ri_RangeTableIndex, &ctid);
+				TupleTableSlot *epqslot;
 
+				epqslot = EvalPlanQual(estate,
+									   resultRelInfo->ri_RangeTableIndex,
+									   &update_ctid,
+									   update_xmax);
 				if (!TupIsNull(epqslot))
 				{
-					*tupleid = ctid;
+					*tupleid = update_ctid;
 					goto ldelete;
 				}
 			}
@@ -1509,8 +1520,9 @@ ExecUpdate(TupleTableSlot *slot,
 	HeapTuple	tuple;
 	ResultRelInfo *resultRelInfo;
 	Relation	resultRelationDesc;
-	ItemPointerData ctid;
 	int			result;
+	ItemPointerData update_ctid;
+	TransactionId update_xmax;
 	int			numIndices;
 
 	/*
@@ -1578,7 +1590,7 @@ lreplace:;
 	 * referential integrity updates in serializable transactions.
 	 */
 	result = heap_update(resultRelationDesc, tupleid, tuple,
-						 &ctid,
+						 &update_ctid, &update_xmax,
 						 estate->es_snapshot->curcid,
 						 estate->es_crosscheck_snapshot,
 						 true /* wait for commit */ );
@@ -1596,14 +1608,17 @@ lreplace:;
 				ereport(ERROR,
 						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 						 errmsg("could not serialize access due to concurrent update")));
-			else if (!(ItemPointerEquals(tupleid, &ctid)))
+			else if (!(ItemPointerEquals(tupleid, &update_ctid)))
 			{
-				TupleTableSlot *epqslot = EvalPlanQual(estate,
-							   resultRelInfo->ri_RangeTableIndex, &ctid);
+				TupleTableSlot *epqslot;
 
+				epqslot = EvalPlanQual(estate,
+									   resultRelInfo->ri_RangeTableIndex,
+									   &update_ctid,
+									   update_xmax);
 				if (!TupIsNull(epqslot))
 				{
-					*tupleid = ctid;
+					*tupleid = update_ctid;
 					tuple = ExecRemoveJunk(estate->es_junkFilter, epqslot);
 					slot = ExecStoreTuple(tuple,
 									estate->es_junkFilter->jf_resultSlot,
@@ -1750,9 +1765,21 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
  * under READ COMMITTED rules.
  *
  * See backend/executor/README for some info about how this works.
+ *
+ *	estate - executor state data
+ *	rti - rangetable index of table containing tuple
+ *	*tid - t_ctid from the outdated tuple (ie, next updated version)
+ *	priorXmax - t_xmax from the outdated tuple
+ *
+ * *tid is also an output parameter: it's modified to hold the TID of the
+ * latest version of the tuple (note this may be changed even on failure)
+ *
+ * Returns a slot containing the new candidate update/delete tuple, or
+ * NULL if we determine we shouldn't process the row.
  */
 TupleTableSlot *
-EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
+EvalPlanQual(EState *estate, Index rti,
+			 ItemPointer tid, TransactionId priorXmax)
 {
 	evalPlanQual *epq;
 	EState	   *epqstate;
@@ -1796,11 +1823,24 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 	{
 		Buffer		buffer;
 
-		if (heap_fetch(relation, SnapshotDirty, &tuple, &buffer, false, NULL))
+		if (heap_fetch(relation, SnapshotDirty, &tuple, &buffer, true, NULL))
 		{
-			TransactionId xwait = SnapshotDirty->xmax;
+			/*
+			 * If xmin isn't what we're expecting, the slot must have been
+			 * recycled and reused for an unrelated tuple.  This implies
+			 * that the latest version of the row was deleted, so we need
+			 * do nothing.  (Should be safe to examine xmin without getting
+			 * buffer's content lock, since xmin never changes in an existing
+			 * tuple.)
+			 */
+			if (!TransactionIdEquals(HeapTupleHeaderGetXmin(tuple.t_data),
+									 priorXmax))
+			{
+				ReleaseBuffer(buffer);
+				return NULL;
+			}
 
-			/* xmin should not be dirty... */
+			/* otherwise xmin should not be dirty... */
 			if (TransactionIdIsValid(SnapshotDirty->xmin))
 				elog(ERROR, "t_xmin is uncommitted in tuple to be updated");
 
@@ -1808,11 +1848,11 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 			 * If tuple is being updated by other transaction then we have
 			 * to wait for its commit/abort.
 			 */
-			if (TransactionIdIsValid(xwait))
+			if (TransactionIdIsValid(SnapshotDirty->xmax))
 			{
 				ReleaseBuffer(buffer);
-				XactLockTableWait(xwait);
-				continue;
+				XactLockTableWait(SnapshotDirty->xmax);
+				continue;		/* loop back to repeat heap_fetch */
 			}
 
 			/*
@@ -1824,22 +1864,50 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 		}
 
 		/*
-		 * Oops! Invalid tuple. Have to check is it updated or deleted.
-		 * Note that it's possible to get invalid SnapshotDirty->tid if
-		 * tuple updated by this transaction. Have we to check this ?
+		 * If the referenced slot was actually empty, the latest version
+		 * of the row must have been deleted, so we need do nothing.
 		 */
-		if (ItemPointerIsValid(&(SnapshotDirty->tid)) &&
-			!(ItemPointerEquals(&(tuple.t_self), &(SnapshotDirty->tid))))
+		if (tuple.t_data == NULL)
 		{
-			/* updated, so look at the updated copy */
-			tuple.t_self = SnapshotDirty->tid;
-			continue;
+			ReleaseBuffer(buffer);
+			return NULL;
 		}
 
 		/*
-		 * Deleted or updated by this transaction; forget it.
+		 * As above, if xmin isn't what we're expecting, do nothing.
 		 */
-		return NULL;
+		if (!TransactionIdEquals(HeapTupleHeaderGetXmin(tuple.t_data),
+								 priorXmax))
+		{
+			ReleaseBuffer(buffer);
+			return NULL;
+		}
+
+		/*
+		 * If we get here, the tuple was found but failed SnapshotDirty.
+		 * Assuming the xmin is either a committed xact or our own xact
+		 * (as it certainly should be if we're trying to modify the tuple),
+		 * this must mean that the row was updated or deleted by either
+		 * a committed xact or our own xact.  If it was deleted, we can
+		 * ignore it; if it was updated then chain up to the next version
+		 * and repeat the whole test.
+		 *
+		 * As above, it should be safe to examine xmax and t_ctid without
+		 * the buffer content lock, because they can't be changing.
+		 */
+		if (ItemPointerEquals(&tuple.t_self, &tuple.t_data->t_ctid))
+		{
+			/* deleted, so forget about it */
+			ReleaseBuffer(buffer);
+			return NULL;
+		}
+
+		/* updated, so look at the updated row */
+		tuple.t_self = tuple.t_data->t_ctid;
+		/* updated row should have xmin matching this xmax */
+		priorXmax = HeapTupleHeaderGetXmax(tuple.t_data);
+		ReleaseBuffer(buffer);
+		/* loop back to fetch next in chain */
 	}
 
 	/*

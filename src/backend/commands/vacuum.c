@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.299 2004/12/31 21:59:42 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.299.4.1 2005/08/25 19:44:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1817,72 +1817,85 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					break;		/* out of walk-along-page loop */
 				}
 
-				vtmove = (VTupleMove) palloc(100 * sizeof(VTupleMoveData));
-				num_vtmove = 0;
-				free_vtmove = 100;
-
 				/*
 				 * If this tuple is in the begin/middle of the chain then
-				 * we have to move to the end of chain.
+				 * we have to move to the end of chain.  As with any
+				 * t_ctid chase, we have to verify that each new tuple
+				 * is really the descendant of the tuple we came from.
 				 */
 				while (!(tp.t_data->t_infomask & (HEAP_XMAX_INVALID |
 											  HEAP_MARKED_FOR_UPDATE)) &&
 					   !(ItemPointerEquals(&(tp.t_self),
 										   &(tp.t_data->t_ctid))))
 				{
-					Page		Cpage;
-					ItemId		Citemid;
-					ItemPointerData Ctid;
+					ItemPointerData nextTid;
+					TransactionId priorXmax;
+					Buffer		nextBuf;
+					Page		nextPage;
+					OffsetNumber nextOffnum;
+					ItemId		nextItemid;
+					HeapTupleHeader nextTdata;
 
-					Ctid = tp.t_data->t_ctid;
-					if (freeCbuf)
-						ReleaseBuffer(Cbuf);
-					freeCbuf = true;
-					Cbuf = ReadBuffer(onerel,
-									  ItemPointerGetBlockNumber(&Ctid));
-					Cpage = BufferGetPage(Cbuf);
-					Citemid = PageGetItemId(Cpage,
-									  ItemPointerGetOffsetNumber(&Ctid));
-					if (!ItemIdIsUsed(Citemid))
+					nextTid = tp.t_data->t_ctid;
+					priorXmax = HeapTupleHeaderGetXmax(tp.t_data);
+					/* assume block# is OK (see heap_fetch comments) */
+					nextBuf = ReadBuffer(onerel,
+										 ItemPointerGetBlockNumber(&nextTid));
+					nextPage = BufferGetPage(nextBuf);
+					/* If bogus or unused slot, assume tp is end of chain */
+					nextOffnum = ItemPointerGetOffsetNumber(&nextTid);
+					if (nextOffnum < FirstOffsetNumber ||
+						nextOffnum > PageGetMaxOffsetNumber(nextPage))
 					{
-						/*
-						 * This means that in the middle of chain there
-						 * was tuple updated by older (than OldestXmin)
-						 * xaction and this tuple is already deleted by
-						 * me. Actually, upper part of chain should be
-						 * removed and seems that this should be handled
-						 * in scan_heap(), but it's not implemented at the
-						 * moment and so we just stop shrinking here.
-						 */
-						elog(DEBUG2, "child itemid in update-chain marked as unused --- can't continue repair_frag");
-						chain_move_failed = true;
-						break;	/* out of loop to move to chain end */
+						ReleaseBuffer(nextBuf);
+						break;
 					}
+					nextItemid = PageGetItemId(nextPage, nextOffnum);
+					if (!ItemIdIsUsed(nextItemid))
+					{
+						ReleaseBuffer(nextBuf);
+						break;
+					}
+					/* if not matching XMIN, assume tp is end of chain */
+					nextTdata = (HeapTupleHeader) PageGetItem(nextPage,
+															  nextItemid);
+					if (!TransactionIdEquals(HeapTupleHeaderGetXmin(nextTdata),
+											 priorXmax))
+					{
+						ReleaseBuffer(nextBuf);
+						break;
+					}
+					/* OK, switch our attention to the next tuple in chain */
 					tp.t_datamcxt = NULL;
-					tp.t_data = (HeapTupleHeader) PageGetItem(Cpage, Citemid);
-					tp.t_self = Ctid;
-					tlen = tp.t_len = ItemIdGetLength(Citemid);
-				}
-				if (chain_move_failed)
-				{
+					tp.t_data = nextTdata;
+					tp.t_self = nextTid;
+					tlen = tp.t_len = ItemIdGetLength(nextItemid);
 					if (freeCbuf)
 						ReleaseBuffer(Cbuf);
-					pfree(vtmove);
-					break;		/* out of walk-along-page loop */
+					Cbuf = nextBuf;
+					freeCbuf = true;
 				}
+
+				/* Set up workspace for planning the chain move */
+				vtmove = (VTupleMove) palloc(100 * sizeof(VTupleMoveData));
+				num_vtmove = 0;
+				free_vtmove = 100;
 
 				/*
-				 * Check if all items in chain can be moved
+				 * Now, walk backwards up the chain (towards older tuples)
+				 * and check if all items in chain can be moved.  We record
+				 * all the moves that need to be made in the vtmove array.
 				 */
 				for (;;)
 				{
 					Buffer		Pbuf;
 					Page		Ppage;
 					ItemId		Pitemid;
-					HeapTupleData Ptp;
+					HeapTupleHeader PTdata;
 					VTupleLinkData vtld,
 							   *vtlp;
 
+					/* Identify a target page to move this tuple to */
 					if (to_vacpage == NULL ||
 						!enough_space(to_vacpage, tlen))
 					{
@@ -1952,18 +1965,17 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					/* this can't happen since we saw tuple earlier: */
 					if (!ItemIdIsUsed(Pitemid))
 						elog(ERROR, "parent itemid marked as unused");
-					Ptp.t_datamcxt = NULL;
-					Ptp.t_data = (HeapTupleHeader) PageGetItem(Ppage, Pitemid);
+					PTdata = (HeapTupleHeader) PageGetItem(Ppage, Pitemid);
 
 					/* ctid should not have changed since we saved it */
 					Assert(ItemPointerEquals(&(vtld.new_tid),
-											 &(Ptp.t_data->t_ctid)));
+											 &(PTdata->t_ctid)));
 
 					/*
-					 * Read above about cases when !ItemIdIsUsed(Citemid)
+					 * Read above about cases when !ItemIdIsUsed(nextItemid)
 					 * (child item is removed)... Due to the fact that at
 					 * the moment we don't remove unuseful part of
-					 * update-chain, it's possible to get too old parent
+					 * update-chain, it's possible to get non-matching parent
 					 * row here. Like as in the case which caused this
 					 * problem, we stop shrinking here. I could try to
 					 * find real parent row but want not to do it because
@@ -1971,7 +1983,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					 * and we are too close to 6.5 release. - vadim
 					 * 06/11/99
 					 */
-					if (!(TransactionIdEquals(HeapTupleHeaderGetXmax(Ptp.t_data),
+					if (!(TransactionIdEquals(HeapTupleHeaderGetXmax(PTdata),
 									 HeapTupleHeaderGetXmin(tp.t_data))))
 					{
 						ReleaseBuffer(Pbuf);
@@ -1979,8 +1991,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						chain_move_failed = true;
 						break;	/* out of check-all-items loop */
 					}
-					tp.t_datamcxt = Ptp.t_datamcxt;
-					tp.t_data = Ptp.t_data;
+					tp.t_datamcxt = NULL;
+					tp.t_data = PTdata;
 					tlen = tp.t_len = ItemIdGetLength(Pitemid);
 					if (freeCbuf)
 						ReleaseBuffer(Cbuf);
@@ -2499,15 +2511,26 @@ move_chain_tuple(Relation rel,
 	newoff = PageAddItem(dst_page, (Item) newtup.t_data, tuple_len,
 						 InvalidOffsetNumber, LP_USED);
 	if (newoff == InvalidOffsetNumber)
-	{
 		elog(PANIC, "failed to add item with len = %lu to page %u while moving tuple chain",
 			 (unsigned long) tuple_len, dst_vacpage->blkno);
-	}
 	newitemid = PageGetItemId(dst_page, newoff);
+	/* drop temporary copy, and point to the version on the dest page */
 	pfree(newtup.t_data);
 	newtup.t_datamcxt = NULL;
 	newtup.t_data = (HeapTupleHeader) PageGetItem(dst_page, newitemid);
+
 	ItemPointerSet(&(newtup.t_self), dst_vacpage->blkno, newoff);
+
+	/*
+	 * Set new tuple's t_ctid pointing to itself if last tuple in chain,
+	 * and to next tuple in chain otherwise.  (Since we move the chain
+	 * in reverse order, this is actually the previously processed tuple.)
+	 */
+	if (!ItemPointerIsValid(ctid))
+		newtup.t_data->t_ctid = newtup.t_self;
+	else
+		newtup.t_data->t_ctid = *ctid;
+	*ctid = newtup.t_self;
 
 	/* XLOG stuff */
 	if (!rel->rd_istemp)
@@ -2532,17 +2555,6 @@ move_chain_tuple(Relation rel,
 	}
 
 	END_CRIT_SECTION();
-
-	/*
-	 * Set new tuple's t_ctid pointing to itself for last tuple in chain,
-	 * and to next tuple in chain otherwise.
-	 */
-	/* Is this ok after log_heap_move() and END_CRIT_SECTION()? */
-	if (!ItemPointerIsValid(ctid))
-		newtup.t_data->t_ctid = newtup.t_self;
-	else
-		newtup.t_data->t_ctid = *ctid;
-	*ctid = newtup.t_self;
 
 	LockBuffer(dst_buf, BUFFER_LOCK_UNLOCK);
 	if (dst_buf != old_buf)

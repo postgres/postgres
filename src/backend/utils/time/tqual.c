@@ -32,7 +32,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.81.4.1 2005/05/07 21:22:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.81.4.2 2005/08/25 19:45:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1137,10 +1137,13 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin,
 							HeapTupleHeaderGetXmax(tuple)))
 	{
 		/*
-		 * inserter also deleted it, so it was never visible to anyone
-		 * else
+		 * Inserter also deleted it, so it was never visible to anyone
+		 * else.  However, we can only remove it early if it's not an
+		 * updated tuple; else its parent tuple is linking to it via t_ctid,
+		 * and this tuple mustn't go away before the parent does.
 		 */
-		return HEAPTUPLE_DEAD;
+		if (!(tuple->t_infomask & HEAP_UPDATED))
+			return HEAPTUPLE_DEAD;
 	}
 
 	if (!TransactionIdPrecedes(HeapTupleHeaderGetXmax(tuple), OldestXmin))
