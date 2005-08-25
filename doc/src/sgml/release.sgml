@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.362 2005/08/24 22:03:14 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.363 2005/08/25 00:38:37 momjian Exp $
 
 Typical markup:
 
@@ -1317,7 +1317,8 @@ pg_[A-Za-z0-9_]                 <application>
         particularly so when multiple values need to be returned.
         While returning multiple values from a function
         was possible in previous releases, this greatly simplifies the
-        process.  (The feature will be extended to other PLs in due course.)
+        process.  (The feature will be extended to other server-side
+        languages in future releases.)
        </para>
       </listitem>
 
