@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/s_lock.c,v 1.36 2005/07/30 03:07:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/s_lock.c,v 1.37 2005/08/25 17:17:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,34 +170,6 @@ _success:						\n\
 );
 }
 #endif   /* __m68k__ */
-
-
-#if defined(__mips__) && !defined(__sgi)
-static void
-tas_dummy()
-{
-	__asm__		__volatile__(
-										 "\
-.global	tas						\n\
-tas:							\n\
-			.frame	$sp, 0, $31	\n\
-			.set push		\n\
-			.set mips2		\n\
-			ll		$14, 0($4)	\n\
-			or		$15, $14, 1	\n\
-			sc		$15, 0($4)	\n\
-			.set pop			\n\
-			beq		$15, 0, fail\n\
-			bne		$14, 0, fail\n\
-			li		$2, 0		\n\
-			.livereg 0x2000FF0E,0x00000FFF	\n\
-			j		$31			\n\
-fail:							\n\
-			li		$2, 1		\n\
-			j   	$31			\n\
-");
-}
-#endif   /* __mips__ && !__sgi */
 
 
 #else							/* not __GNUC__ */
