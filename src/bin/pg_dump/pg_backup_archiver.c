@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.79.2.5 2005/05/17 17:30:53 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.79.2.6 2005/08/25 00:11:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2256,7 +2256,7 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 	 */
 	if (AH->ropt && AH->ropt->noOwner && strcmp(te->desc, "SCHEMA") == 0)
 	{
-		ahprintf(AH, "CREATE SCHEMA %s;\n\n\n", te->tag);
+		ahprintf(AH, "CREATE SCHEMA %s;\n\n\n", fmtId(te->tag));
 	}
 	else
 	{
