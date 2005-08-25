@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Wed Aug 24 16:33:53 EDT 2005
+Last updated:		Wed Aug 24 21:24:51 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -645,7 +645,7 @@ Referential Integrity
 * Change foreign key constraint for array -> element to mean element
   in array?
 * Allow DEFERRABLE UNIQUE constraints?
-* -Allow triggers to be disabled [trigger]
+* -Allow triggers to be disabled
 * Allow triggers to be disabled in only the current session.
 
   This is currently possible by starting a multi-statement transaction,
