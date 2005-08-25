@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.85.2.1 2005/02/06 20:15:29 tgl Exp $
+ * $Id: heapam.h,v 1.85.2.2 2005/08/25 22:07:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,17 +149,21 @@ extern bool heap_fetch(Relation relation, Snapshot snapshot,
 		   HeapTuple tuple, Buffer *userbuf, bool keep_buf,
 		   PgStat_Info *pgstat_info);
 
-extern ItemPointer heap_get_latest_tid(Relation relation, Snapshot snapshot,
+extern void heap_get_latest_tid(Relation relation, Snapshot snapshot,
 					ItemPointer tid);
 extern void setLastTid(const ItemPointer tid);
 
 extern Oid	heap_insert(Relation relation, HeapTuple tup, CommandId cid);
-extern int heap_delete(Relation relation, ItemPointer tid, ItemPointer ctid,
-			CommandId cid, Snapshot crosscheck, bool wait);
-extern int heap_update(Relation relation, ItemPointer otid, HeapTuple tup,
-			ItemPointer ctid, CommandId cid, Snapshot crosscheck, bool wait);
-extern int heap_mark4update(Relation relation, HeapTuple tup,
-				 Buffer *userbuf, CommandId cid);
+extern int heap_delete(Relation relation, ItemPointer tid,
+					   ItemPointer ctid, TransactionId *update_xmax,
+					   CommandId cid, Snapshot crosscheck, bool wait);
+extern int heap_update(Relation relation, ItemPointer otid,
+					   HeapTuple newtup,
+					   ItemPointer ctid, TransactionId *update_xmax,
+					   CommandId cid, Snapshot crosscheck, bool wait);
+extern int heap_mark4update(Relation relation, HeapTuple tuple,
+							Buffer *buffer, ItemPointer ctid,
+							TransactionId *update_xmax, CommandId cid);
 
 extern Oid	simple_heap_insert(Relation relation, HeapTuple tup);
 extern void simple_heap_delete(Relation relation, ItemPointer tid);

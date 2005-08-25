@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.159 2003/10/02 06:34:03 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.159.2.1 2005/08/25 22:07:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1556,14 +1556,18 @@ GetTupleForTrigger(EState *estate, ResultRelInfo *relinfo,
 	if (newSlot != NULL)
 	{
 		int			test;
+		ItemPointerData update_ctid;
+		TransactionId update_xmax;
+
+		*newSlot = NULL;
 
 		/*
 		 * mark tuple for update
 		 */
-		*newSlot = NULL;
-		tuple.t_self = *tid;
 ltrmark:;
-		test = heap_mark4update(relation, &tuple, &buffer, cid);
+		tuple.t_self = *tid;
+		test = heap_mark4update(relation, &tuple, &buffer,
+								&update_ctid, &update_xmax, cid);
 		switch (test)
 		{
 			case HeapTupleSelfUpdated:
@@ -1580,15 +1584,18 @@ ltrmark:;
 					ereport(ERROR,
 							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 							 errmsg("could not serialize access due to concurrent update")));
-				else if (!(ItemPointerEquals(&(tuple.t_self), tid)))
+				else if (!ItemPointerEquals(&update_ctid, &tuple.t_self))
 				{
-					TupleTableSlot *epqslot = EvalPlanQual(estate,
-											 relinfo->ri_RangeTableIndex,
-														&(tuple.t_self));
+					/* it was updated, so look at the updated version */
+					TupleTableSlot *epqslot;
 
-					if (!(TupIsNull(epqslot)))
+					epqslot = EvalPlanQual(estate,
+										   relinfo->ri_RangeTableIndex,
+										   &update_ctid,
+										   update_xmax);
+					if (!TupIsNull(epqslot))
 					{
-						*tid = tuple.t_self;
+						*tid = update_ctid;
 						*newSlot = epqslot;
 						goto ltrmark;
 					}
@@ -1626,6 +1633,7 @@ ltrmark:;
 		tuple.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
 		tuple.t_len = ItemIdGetLength(lp);
 		tuple.t_self = *tid;
+		tuple.t_tableOid = RelationGetRelid(relation);
 	}
 
 	result = heap_copytuple(&tuple);
