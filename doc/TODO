@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Aug 26 15:10:29 EDT 2005
+Last updated:		Fri Aug 26 15:32:39 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -621,7 +621,9 @@ Dependency Checking
 
   This is particularly important for references to temporary tables
   in PL/PgSQL because PL/PgSQL caches query plans.  The only workaround
-  in PL/PgSQL is to use EXECUTE.
+  in PL/PgSQL is to use EXECUTE.  One complexity is that a function
+  might itself drop and recreate dependent tables, causing it to
+  invalidate its own query plan.
 
 
 Exotic Features
