@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Aug 26 15:32:39 EDT 2005
+Last updated:		Fri Aug 26 15:41:03 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -538,6 +538,16 @@ Clients
 	  than toggle
 	o Consistently display privilege information for all objects in psql
 	o Improve psql's handling of multi-line queries
+
+	  Currently, while \e saves a single query as one entry, interactive
+	  queries are saved one line at a time.  Ideally all queries
+	  whould be saved like \e does.
+
+	o Allow multi-line column values to align in the proper columns
+
+	  If the second output column value is 'a\nb', the 'b' should appear
+	  in the second display column, rather than the first column as it
+	  does now.
 
 
 * pg_dump
