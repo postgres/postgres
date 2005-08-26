@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.61.2.1 2005/05/07 21:23:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.61.2.2 2005/08/26 20:07:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -931,10 +931,13 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 							HeapTupleHeaderGetXmax(tuple)))
 	{
 		/*
-		 * inserter also deleted it, so it was never visible to anyone
-		 * else
+		 * Inserter also deleted it, so it was never visible to anyone
+		 * else.  However, we can only remove it early if it's not an
+		 * updated tuple; else its parent tuple is linking to it via t_ctid,
+		 * and this tuple mustn't go away before the parent does.
 		 */
-		return HEAPTUPLE_DEAD;
+		if (!(tuple->t_infomask & HEAP_UPDATED))
+			return HEAPTUPLE_DEAD;
 	}
 
 	if (!TransactionIdPrecedes(HeapTupleHeaderGetXmax(tuple), OldestXmin))
