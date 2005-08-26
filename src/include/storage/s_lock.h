@@ -66,7 +66,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.133 2004/12/31 22:03:42 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.133.4.1 2005/08/26 14:48:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -313,7 +313,7 @@ do \
 #endif /* powerpc */
 
 
-#if defined(__mc68000__) && defined(__linux__)
+#if (defined(__mc68000__) || defined(__m68k__)) && defined(__linux__)
 #define HAS_TEST_AND_SET
 
 typedef unsigned char slock_t;
@@ -335,7 +335,7 @@ tas(volatile slock_t *lock)
 	return rv;
 }
 
-#endif	 /* defined(__mc68000__) && defined(__linux__) */
+#endif	 /* (__mc68000__ || __m68k__) && __linux__ */
 
 
 #if defined(__vax__)
@@ -438,20 +438,48 @@ do \
 #endif /* __alpha || __alpha__ */
 
 
-/* These live in s_lock.c, but only for gcc */
-
-
-#if defined(__m68k__)
-#define HAS_TEST_AND_SET
-
-typedef unsigned char slock_t;
-#endif
-
-
 #if defined(__mips__) && !defined(__sgi)
+/* Note: on SGI we use the OS' mutex ABI, see below */
 #define HAS_TEST_AND_SET
 
 typedef unsigned int slock_t;
+
+#define TAS(lock) tas(lock)
+
+static __inline__ int
+tas(volatile slock_t *lock)
+{
+	register volatile slock_t *__l = lock;
+	register int __r;
+
+	__asm__ __volatile__(
+		"       .set push           \n"
+		"       .set mips2          \n"
+		"       .set noreorder      \n"
+		"       .set nomacro        \n"
+		"1:     ll      %0, %1      \n"
+		"       bne     %0, $0, 1f  \n"
+		"        xori   %0, 1       \n"
+		"       sc      %0, %1      \n"
+		"       beq     %0, $0, 1b  \n"
+		"        sync               \n"
+		"1:     .set pop              "
+:		"=&r" (__r), "+R" (*__l)
+:
+:		"memory", "cc");
+	return __r;
+}
+
+#endif /* __mips__ && !__sgi */
+
+
+/* These live in s_lock.c, but only for gcc */
+
+
+#if defined(__m68k__) && !defined(__linux__)
+#define HAS_TEST_AND_SET
+
+typedef unsigned char slock_t;
 #endif
 
 

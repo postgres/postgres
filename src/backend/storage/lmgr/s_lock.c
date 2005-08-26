@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/s_lock.c,v 1.35 2004/12/31 22:01:05 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/s_lock.c,v 1.35.4.1 2005/08/26 14:48:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,7 +135,12 @@ s_lock(volatile slock_t *lock, const char *file, int line)
  */
 
 
-#if defined(__m68k__)
+/*
+ * Note: all the if-tests here probably ought to be testing gcc version
+ * rather than platform, but I don't have adequate info to know what to
+ * write.  Ideally we'd flush all this in favor of the inline version.
+ */
+#if defined(__m68k__) && !defined(__linux__)
 /* really means: extern int tas(slock_t* **lock); */
 static void
 tas_dummy()
@@ -169,35 +174,7 @@ _success:						\n\
 #endif   /* __NetBSD__ && __ELF__ */
 );
 }
-#endif   /* __m68k__ */
-
-
-#if defined(__mips__) && !defined(__sgi)
-static void
-tas_dummy()
-{
-	__asm__		__volatile__(
-										 "\
-.global	tas						\n\
-tas:							\n\
-			.frame	$sp, 0, $31	\n\
-			.set push		\n\
-			.set mips2		\n\
-			ll		$14, 0($4)	\n\
-			or		$15, $14, 1	\n\
-			sc		$15, 0($4)	\n\
-			.set pop			\n\
-			beq		$15, 0, fail\n\
-			bne		$14, 0, fail\n\
-			li		$2, 0		\n\
-			.livereg 0x2000FF0E,0x00000FFF	\n\
-			j		$31			\n\
-fail:							\n\
-			li		$2, 1		\n\
-			j   	$31			\n\
-");
-}
-#endif   /* __mips__ && !__sgi */
+#endif   /* __m68k__ && !__linux__ */
 
 
 #else							/* not __GNUC__ */
