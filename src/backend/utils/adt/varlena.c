@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.132 2005/08/24 17:50:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.133 2005/08/26 17:40:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -840,40 +840,22 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 	 * C.  We also try to optimize relatively-short strings by avoiding
 	 * palloc/pfree overhead.
 	 */
+	if (lc_collate_is_c())
+	{
+		result = strncmp(arg1, arg2, Min(len1, len2));
+		if ((result == 0) && (len1 != len2))
+			result = (len1 < len2) ? -1 : 1;
+	}
+	else
+	{
 #define STACKBUFLEN		1024
 
-	if (!lc_collate_is_c())
-	{
 		char		a1buf[STACKBUFLEN];
 		char		a2buf[STACKBUFLEN];
 		char	   *a1p,
 				   *a2p;
 
-#ifndef WIN32
-
-		if (len1 >= STACKBUFLEN)
-			a1p = (char *) palloc(len1 + 1);
-		else
-			a1p = a1buf;
-		if (len2 >= STACKBUFLEN)
-			a2p = (char *) palloc(len2 + 1);
-		else
-			a2p = a2buf;
-
-		memcpy(a1p, arg1, len1);
-		a1p[len1] = '\0';
-		memcpy(a2p, arg2, len2);
-		a2p[len2] = '\0';
-
-		result = strcoll(a1p, a2p);
-
-		if (a1p != a1buf)
-			pfree(a1p);
-		if (a2p != a2buf)
-			pfree(a2p);
-
-#else /* WIN32 */
-
+#ifdef WIN32
 		/* Win32 does not have UTF-8, so we need to map to UTF-16 */
 		if (GetDatabaseEncoding() == PG_UTF8)
 		{
@@ -943,17 +925,28 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 
 			return result;
 		}
-
-		/* Win32 has strncoll(), so use it to avoid copying */
-		return _strncoll(arg1, arg2, Min(len1, len2));
-
 #endif /* WIN32 */
-	}
-	else
-	{
-		result = strncmp(arg1, arg2, Min(len1, len2));
-		if ((result == 0) && (len1 != len2))
-			result = (len1 < len2) ? -1 : 1;
+
+		if (len1 >= STACKBUFLEN)
+			a1p = (char *) palloc(len1 + 1);
+		else
+			a1p = a1buf;
+		if (len2 >= STACKBUFLEN)
+			a2p = (char *) palloc(len2 + 1);
+		else
+			a2p = a2buf;
+
+		memcpy(a1p, arg1, len1);
+		a1p[len1] = '\0';
+		memcpy(a2p, arg2, len2);
+		a2p[len2] = '\0';
+
+		result = strcoll(a1p, a2p);
+
+		if (a1p != a1buf)
+			pfree(a1p);
+		if (a2p != a2buf)
+			pfree(a2p);
 	}
 
 	return result;
