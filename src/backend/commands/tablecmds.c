@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.169 2005/08/23 22:40:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.170 2005/08/26 03:07:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -427,6 +427,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 										  namespaceId,
 										  tablespaceId,
 										  InvalidOid,
+										  GetUserId(),
 										  descriptor,
 										  relkind,
 										  false,
@@ -5946,6 +5947,7 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 										   PG_TOAST_NAMESPACE,
 										   rel->rd_rel->reltablespace,
 										   InvalidOid,
+										   rel->rd_rel->relowner,
 										   tupdesc,
 										   RELKIND_TOASTVALUE,
 										   shared_relation,

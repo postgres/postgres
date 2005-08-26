@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.259 2005/08/12 01:35:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.260 2005/08/26 03:07:12 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -562,7 +562,7 @@ index_create(Oid heapRelationId,
 	 *
 	 * XXX should have a cleaner way to create cataloged indexes
 	 */
-	indexRelation->rd_rel->relowner = GetUserId();
+	indexRelation->rd_rel->relowner = heapRelation->rd_rel->relowner;
 	indexRelation->rd_rel->relam = accessMethodObjectId;
 	indexRelation->rd_rel->relkind = RELKIND_INDEX;
 	indexRelation->rd_rel->relhasoids = false;

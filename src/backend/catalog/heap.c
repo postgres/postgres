@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.289 2005/08/12 01:35:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.290 2005/08/26 03:07:12 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -65,6 +65,7 @@
 static void AddNewRelationTuple(Relation pg_class_desc,
 					Relation new_rel_desc,
 					Oid new_rel_oid, Oid new_type_oid,
+					Oid relowner,
 					char relkind);
 static Oid	AddNewRelationType(const char *typeName,
 				   Oid typeNamespace,
@@ -555,6 +556,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 					Relation new_rel_desc,
 					Oid new_rel_oid,
 					Oid new_type_oid,
+					Oid relowner,
 					char relkind)
 {
 	Form_pg_class new_rel_reltup;
@@ -587,7 +589,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 			break;
 	}
 
-	new_rel_reltup->relowner = GetUserId();
+	new_rel_reltup->relowner = relowner;
 	new_rel_reltup->reltype = new_type_oid;
 	new_rel_reltup->relkind = relkind;
 
@@ -665,6 +667,7 @@ heap_create_with_catalog(const char *relname,
 						 Oid relnamespace,
 						 Oid reltablespace,
 						 Oid relid,
+						 Oid ownerid,
 						 TupleDesc tupdesc,
 						 char relkind,
 						 bool shared_relation,
@@ -740,6 +743,7 @@ heap_create_with_catalog(const char *relname,
 						new_rel_desc,
 						relid,
 						new_type_oid,
+						ownerid,
 						relkind);
 
 	/*
@@ -769,7 +773,7 @@ heap_create_with_catalog(const char *relname,
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
-		recordDependencyOnOwner(RelationRelationId, relid, GetUserId());
+		recordDependencyOnOwner(RelationRelationId, relid, ownerid);
 	}
 
 	/*
