@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Aug 26 14:59:39 EDT 2005
+Last updated:		Fri Aug 26 15:10:29 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -686,7 +686,8 @@ Indexes
 * Add fillfactor to control reserved free space during index creation
 * Allow the creation of indexes with mixed ascending/descending specifiers
 * Allow constraint_exclusion to work for UNIONs like it does for
-  inheritance, and allow it to work for UPDATE and DELETE queries
+  inheritance, allow it to work for UPDATE and DELETE queries, and allow
+  it to be used for all queries with little performance impact
 
 
 * GIST
@@ -913,10 +914,6 @@ Optimizer / Executor
 
 * Log queries where the optimizer row estimates were dramatically
   different from the number of rows actually found?
-* Allow constraint_elimination to be automatically performed
-
-  This requires additional code to reduce the performance loss caused by
-  constraint elimination.
 
 
 Miscellaneous Performance
