@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Wed Aug 24 21:24:51 EDT 2005
+Last updated:           Fri Aug 26 14:52:30 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -38,7 +38,10 @@ first.
   in-progress when the server terminated abruptly
   </li><li>Allow administrators to safely terminate individual sessions either
   via an SQL function or SIGTERM 
-<p>  Currently SIGTERM of a backend can lead to lock table corruption.
+<p>  Lock table corruption following SIGTERM of an individual backend
+  has been reported in 8.0.  A possible cause was fixed in 8.1, but
+  it is unknown whether other problems exist.  This item mostly
+  requires additional testing rather than of writing any new code.
 </p>
   </li><li>-<em>Prevent dropping user that still owns objects, or auto-drop the objects</em>
   </li><li>%Set proper permissions on non-system schemas during db creation
@@ -61,8 +64,6 @@ first.
   </li><li>Configuration files
   <ul>
     <li>%Add "include file" functionality in postgresql.conf
-    </li><li>Allow postgresql.conf values to be set so they can not be changed
-          by the user
     </li><li>%Allow commenting of variables in postgresql.conf to restore them
           to defaults
 <p>          Currently, if a variable is commented out, it keeps the
@@ -150,7 +151,10 @@ first.
 <h1><a name="section_4">Data Types</a></h1>
 
 <ul>
-  <li>%Remove Money type, add money formatting for decimal type
+  <li>Improve the MONEY data type
+<p>  Change the MONEY data type to use DECIMAL internally, with special
+  locale-aware output formatting.
+</p>
   </li><li>Change NUMERIC to enforce the maximum precision, and increase it
   </li><li>Add NUMERIC division operator that doesn't round?
 <p>  Currently NUMERIC _rounds_ the result to the specified precision.  
@@ -208,20 +212,19 @@ first.
   </li><li>Arrays
   <ul>
     <li>Allow NULLs in arrays
-    </li><li>%Allow MIN()/MAX() on arrays
+    </li><li>-<em>Allow MIN()/MAX() on arrays</em>
     </li><li>Delay resolution of array expression's data type so assignment
           coercion can be performed on empty array expressions
-    </li><li>Modify array literal representation to handle array index lower bound
+    </li><li>-<em>Modify array literal representation to handle array index lower bound</em>
           of other than one
   </li></ul>
   </li><li>Binary Data
   <ul>
     <li>Improve vacuum of large objects, like /contrib/vacuumlo?
     </li><li>Add security checking for large objects
-<p>          Currently large objects entries do not have owners. Permissions can
-          only be set at the pg_largeobject table level.
-</p>
     </li><li>Auto-delete large objects when referencing row is deleted
+<p>          /contrib/lo offers this functionality.
+</p>
     </li><li>Allow read/write into TOAST values like large objects
 <p>          This requires the TOAST column to be stored EXTERNAL.
 </p>
@@ -291,9 +294,9 @@ first.
 </p>
   </li><li>Add the functionality for WITH CHECK OPTION clause of CREATE VIEW
   </li><li>Allow NOTIFY in rules involving conditionals
-  </li><li>%Have views on temporary tables exist in the temporary namespace
-  </li><li>Allow temporary views on non-temporary tables
-  </li><li>%Allow RULE recompilation
+  </li><li>-<em>Have views on temporary tables exist in the temporary namespace</em>
+  </li><li>-<em>Allow temporary views on non-temporary tables</em>
+  </li><li>Allow VIEW/RULE recompilation when the underlying tables change
 </li></ul>
 <h1><a name="section_8">SQL Commands</a></h1>
 
@@ -312,6 +315,8 @@ first.
   </li><li>Add ROLLUP, CUBE, GROUPING SETS options to GROUP BY
   </li><li>%Allow SET CONSTRAINTS to be qualified by schema/table name
   </li><li>%Allow TRUNCATE ... CASCADE/RESTRICT
+<p>  This is like DELETE CASCADE, but truncates.
+</p>
   </li><li>%Add a separate TRUNCATE permission
 <p>  Currently only the owner can TRUNCATE a table because triggers are not
   called, and the table is locked in exclusive mode.
@@ -347,7 +352,7 @@ first.
 <p>  When enabled, this would allow errors in multi-statement transactions
   to be automatically ignored.
 </p>
-  </li><li>Make row-wise comparisons work per SQL spec
+  </li><li>%Make row-wise comparisons work per SQL spec
   </li><li>Add RESET CONNECTION command to reset all session state
 <p>  This would include resetting of all variables (RESET ALL), dropping of
   temporary tables, removing any NOTIFYs, cursors, open transactions,
@@ -368,9 +373,7 @@ first.
           expressions like SELECT col1 || col2
     </li><li>Use more reliable method for CREATE DATABASE to get a consistent
           copy of db?
-    </li><li>Currently the system uses the operating system COPY command to
-          create a new database. Add ON COMMIT capability to CREATE TABLE AS
-          SELECT
+    </li><li>Add ON COMMIT capability to CREATE TABLE AS ... SELECT
   </li></ul>
   </li><li>UPDATE
   <ul>
@@ -386,19 +389,19 @@ first.
   </li><li>ALTER
   <ul>
     <li>%Have ALTER TABLE RENAME rename SERIAL sequence names
-    </li><li>%Add ALTER DOMAIN TYPE
+    </li><li>Add ALTER DOMAIN to modify the underlying data type
     </li><li>%Allow ALTER TABLE ... ALTER CONSTRAINT ... RENAME
     </li><li>%Allow ALTER TABLE to change constraint deferrability and actions
-    </li><li>%Disallow dropping of an inherited constraint
-    </li><li>-<em>Allow objects to be moved to different schemas</em>
+    </li><li>Add missing object types for ALTER ... SET SCHEMA
     </li><li>Allow ALTER TABLESPACE to move to different directories
     </li><li>Allow databases to be moved to different tablespaces
     </li><li>Allow moving system tables to other tablespaces, where possible
 <p>          Currently non-global system tables must be in the default database
           tablespace. Global system tables can never be moved.
 </p>
-    </li><li>%Prevent child tables from altering constraints like CHECK that were
-          inherited from the parent table
+    </li><li>%Disallow dropping of an inherited constraint
+    </li><li>%Prevent child tables from altering or dropping constraints 
+          like CHECK that were inherited from the parent table
   </li></ul>
   </li><li>CLUSTER
   <ul>
@@ -482,23 +485,21 @@ first.
 <p>          Currently only constants are supported.
 </p>
     </li><li>-<em>Change PL/PgSQL to use palloc() instead of malloc()</em>
-    </li><li>Handle references to temporary tables that are created, destroyed,
-          then recreated during a session, and EXECUTE is not used
-<p>          This requires the cached PL/PgSQL byte code to be invalidated when
-          an object referenced in the function is changed.
-</p>
     </li><li>Fix PL/pgSQL RENAME to work on variables other than OLD/NEW
     </li><li>Allow function parameters to be passed by name,
           get_employee_salary(emp_id =&gt; 12345, tax_year =&gt; 2001)
     </li><li>Add Oracle-style packages
-    </li><li>Add table function support to pltcl, plperl, plpython?
-    </li><li>Allow PL/pgSQL to name columns by ordinal position, e.g. rec.(3)
+    </li><li>Add table function support to pltcl, plpython
     </li><li>-<em>Allow PL/pgSQL EXECUTE query_var INTO record_var;</em>
     </li><li>Add capability to create and call PROCEDURES
     </li><li>Allow PL/pgSQL to handle %TYPE arrays, e.g. tab.col%TYPE[<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?"></a>]
+    </li><li>Allow function argument names to be queries from PL/PgSQL
     </li><li>Add MOVE to PL/pgSQL
-    </li><li>Pass arrays natively instead of as text between plperl and postgres
-    </li><li>Add support for polymorphic arguments and return types to plperl
+    </li><li>-<em>Pass arrays natively instead of as text between plperl and postgres</em>
+    </li><li>Add support for polymorphic arguments and return types to
+          languages other than PL/PgSQL
+    </li><li>Add support for OUT and INOUT parameters to languages other 
+          than PL/PgSQL
   </li></ul>
 </li></ul>
 <h1><a name="section_9">Clients</a></h1>
@@ -506,13 +507,9 @@ first.
 <ul>
   <li>Add a libpq function to support Parse/DescribeStatement capability
   </li><li>Prevent libpq's PQfnumber() from lowercasing the column name?
-  </li><li>Allow libpq to access SQLSTATE so pg_ctl can test for connection failure
-<p>  This would be used for checking if the server is up.
-</p>
   </li><li>Add PQescapeIdentifier() to libpq
-  </li><li>Have initdb set DateStyle based on locale?
+  </li><li>Have initdb set the input DateStyle (MDY or DMY) based on locale?
   </li><li>Have pg_ctl look at PGHOST in case it is a socket directory?
-  </li><li>Add a schema option to createlang
   </li><li>Allow pg_ctl to work properly with configuration files located outside
   the PGDATA directory
 <p>  pg_ctl can not read the pid file because it isn't located in the
@@ -546,13 +543,11 @@ first.
     </li><li>Stop dumping CASCADE on DROP TYPE commands in clean mode
     </li><li>%Add full object name to the tag field.  eg. for operators we need
           '=(integer, integer)', instead of just '='.
-    </li><li>Add pg_dumpall custom format dumps.
-<p>          This is probably best done by combining pg_dump and pg_dumpall
-          into a single binary.
-</p>
+    </li><li>Add pg_dumpall custom format dumps?
     </li><li>%Add CSV output format
     </li><li>Update pg_dump and psql to use the new COPY libpq API (Christopher)
-    </li><li>Remove unnecessary abstractions in pg_dump source code
+    </li><li>Remove unnecessary function pointer abstractions in pg_dump source
+          code
   </li></ul>
   </li><li>ecpg
   <ul>
@@ -598,10 +593,6 @@ first.
 </p>
   </li><li>Allow statement-level triggers to access modified rows
   </li><li>Support triggers on columns (Greg Sabino Mullane)
-  </li><li>%Remove CREATE CONSTRAINT TRIGGER
-<p>  This was used in older releases to dump referential integrity
-  constraints.
-</p>
   </li><li>Enforce referential integrity for system tables
   </li><li>Allow AFTER triggers on system tables
 <p>  System tables are modified in many places in the backend without going
@@ -615,6 +606,10 @@ first.
 <ul>
   <li>Flush cached query plans when the dependent objects change
   </li><li>Track dependencies in function bodies and recompile/invalidate
+<p>  This is particularly important for references to temporary tables
+  in PL/PgSQL because PL/PgSQL caches query plans.  The only workaround
+  in PL/PgSQL is to use EXECUTE.
+</p>
 </li></ul>
 <h1><a name="section_12">Exotic Features</a></h1>
 
@@ -672,7 +667,7 @@ first.
 <p>  Uniqueness (index) checks are done when updating a column even if the
   column is not modified by the UPDATE.
 </p>
-  </li><li>Fetch heap pages matching index entries in sequential order
+  </li><li>-<em>Fetch heap pages matching index entries in sequential order</em>
 <p>  Rather than randomly accessing heap pages based on index entries, mark
   heap pages needing access in a bitmap and do the lookups in sequential
   order. Another method would be to sort heap ctids matching the index
@@ -714,7 +709,7 @@ first.
   </li><li>Hash
   <ul>
     <li>Pack hash index buckets onto disk pages more efficiently
-<p>          Currently no only one hash bucket can be stored on a page. Ideally
+<p>          Currently only one hash bucket can be stored on a page. Ideally
           several hash buckets could be stored on a single page and greater
           granularity used for the hash algorithm.
 </p>
@@ -722,6 +717,8 @@ first.
           binary search, rather than a linear scan
     </li><li>In hash indexes, consider storing the hash value with or instead
           of the key itself
+    </li><li>Add WAL logging for crash recovery
+    </li><li>Allow multi-column hash indexes
   </li></ul>
 </li></ul>
 <h1><a name="section_14">Fsync</a></h1>
@@ -729,6 +726,9 @@ first.
 <ul>
   <li>Improve commit_delay handling to reduce fsync()
   </li><li>Determine optimal fdatasync/fsync, O_SYNC/O_DSYNC options
+<p>  Ideally this requires a separate test program that can be run
+  at initdb time or optionally later.
+</p>
   </li><li>-<em>Allow multiple blocks to be written to WAL with one write()</em>
   </li><li>%Add an option to sync() before fsync()'ing checkpoint files
   </li><li>Add program to test if fsync has a delay compared to non-fsync
@@ -776,7 +776,7 @@ first.
 <p>  Larger local buffer cache sizes requires more efficient handling of
   local cache lookups.
 </p>
-  </li><li>Improve the background writer
+  </li><li>-<em>Improve the background writer</em>
 <p>  Allow the background writer to more efficiently write dirty buffers
   from the end of the LRU cache and use a clock sweep algorithm to
   write other dirty buffers to reduced checkpoint I/O
@@ -793,11 +793,11 @@ first.
 
 <ul>
   <li>Improve speed with indexes
-<p>  For large table adjustements during vacuum, it is faster to reindex
-  rather than update the index.
+<p>  For large table adjustements during VACUUM FULL, it is faster to 
+  reindex rather than update the index.
 </p>
-  </li><li>Reduce lock time by moving tuples with read lock, then write
-  lock and truncate table
+  </li><li>Reduce lock time during VACUUM FULL by moving tuples with read lock,
+  then write lock and truncate table
 <p>  Moved tuples are invisible to other backends so they don't require a
   write lock. However, the read lock promotion to write lock could lead
   to deadlock situations.
@@ -820,7 +820,8 @@ first.
   <ul>
     <li>-<em>Move into the backend code</em>
     </li><li>Use free-space map information to guide refilling
-    </li><li>%Suggest VACUUM FULL if a table is nearly empty
+    </li><li>%Issue log message to suggest VACUUM FULL if a table is nearly
+          empty?
     </li><li>Improve xid wraparound detection by recording per-table rather
           than per-database
   </li></ul>
@@ -889,7 +890,6 @@ first.
   </li></ul>
   </li><li>Reduce WAL traffic so only modified values are written rather than
   entire rows?
-  </li><li>Add WAL index reliability improvement to non-btree indexes
   </li><li>Allow the pg_xlog directory location to be specified during initdb
   with a symlink back to the /data location
   </li><li>Allow WAL information to recover corrupted pg_controldata
@@ -933,9 +933,13 @@ first.
   </li><li>Consider using hash buckets to do DISTINCT, rather than sorting
 <p>  This would be beneficial when there are few distinct values.
 </p>
-  </li><li>ANALYZE should record a pg_statistic entry for an all-NULL column
+  </li><li>-<em>ANALYZE should record a pg_statistic entry for an all-NULL column</em>
   </li><li>Log queries where the optimizer row estimates were dramatically
   different from the number of rows actually found?
+  </li><li>Allow constraint_elimination to be automatically performed
+<p>  This requires additional code to reduce the performance loss caused by
+  constraint elimination.
+</p>
 </li></ul>
 <h1><a name="section_21">Miscellaneous Performance</a></h1>
 
@@ -974,10 +978,10 @@ first.
   </li><li>Add optional CRC checksum to heap and index pages
   </li><li>Improve documentation to build only interfaces (Marc)
   </li><li>Remove or relicense modules that are not under the BSD license, if possible
-  </li><li>Remove memory/file descriptor freeing before ereport(ERROR)
+  </li><li>%Remove memory/file descriptor freeing before ereport(ERROR)
   </li><li>Acquire lock on a relation before building a relcache entry for it
-  </li><li>Promote debug_query_string into a server-side function current_query()
-  </li><li>Allow the identifier length to be increased via a configure option
+  </li><li>%Promote debug_query_string into a server-side function current_query()
+  </li><li>%Allow the identifier length to be increased via a configure option
   </li><li>Remove Win32 rename/unlink looping if unnecessary
   </li><li>-<em>Remove kerberos4 from source tree</em>
   </li><li>Allow cross-compiling by generating the zic database on the target system
@@ -995,7 +999,6 @@ first.
   is already possible to install into a directory that doesn't contain 
   spaces and then copy the install to a directory with spaces.
 </p>
-  </li><li>Fix cross-compiling of time zone database via 'zic'
   </li><li>Fix sgmltools so PDFs can be generated with bookmarks
   </li><li>-<em>Add C code on Unix to copy directories for use in creating new databases</em>
   </li><li>%Clean up compiler warnings (especially with gcc version 4)
@@ -1010,9 +1013,9 @@ first.
           backslashes
     </li><li>Re-enable timezone output on log_line_prefix '%t' when a
           shorter timezone string is available
-    </li><li>Improve dlerror() reporting string
+    </li><li>-<em>Improve dlerror() reporting string</em>
     </li><li>Fix problem with shared memory on the Win32 Terminal Server
-    </li><li>Add support for Unicode
+    </li><li>%Add support for Unicode
 <p>          To fix this, the data needs to be converted to/from UTF16/UTF8
           so the Win32 wcscoll() can be used, and perhaps other functions
           like towupper().  However, UTF8 already works with normal
