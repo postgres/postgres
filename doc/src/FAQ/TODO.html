@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Fri Aug 26 14:52:30 EDT 2005
+Last updated:           Fri Aug 26 14:59:39 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -27,7 +27,6 @@ first.
 <ul>
   <li>%Remove behavior of postmaster -o after making postmaster/postgres
   flags unique
-  </li><li>-<em>Allow limits on per-db/role connections</em>
   </li><li>%Allow pooled connections to list all prepared queries
 <p>  This would allow an application inheriting a pooled connection to know
   the queries prepared in the current session.
@@ -43,12 +42,10 @@ first.
   it is unknown whether other problems exist.  This item mostly
   requires additional testing rather than of writing any new code.
 </p>
-  </li><li>-<em>Prevent dropping user that still owns objects, or auto-drop the objects</em>
   </li><li>%Set proper permissions on non-system schemas during db creation
 <p>  Currently all schemas are owned by the super-user because they are
   copied from the template1 database.
 </p>
-  </li><li>-<em>Add the client IP address and port to pg_stat_activity</em>
   </li><li>Support table partitioning that allows a single table to be stored
   in subtables that are partitioned based on the primary key or a WHERE
   clause
@@ -144,8 +141,6 @@ first.
   a database for analysis.
 </p>
   </li><li>%Add ability to monitor the use of temporary sort files
-  </li><li>-<em>Add session start time and last statement time to pg_stat_activity</em>
-  </li><li>-<em>Add a function that returns the start time of the postmaster</em>
   </li><li>Allow server logs to be remotely read and removed using SQL commands
 </li></ul>
 <h1><a name="section_4">Data Types</a></h1>
@@ -212,11 +207,8 @@ first.
   </li><li>Arrays
   <ul>
     <li>Allow NULLs in arrays
-    </li><li>-<em>Allow MIN()/MAX() on arrays</em>
     </li><li>Delay resolution of array expression's data type so assignment
           coercion can be performed on empty array expressions
-    </li><li>-<em>Modify array literal representation to handle array index lower bound</em>
-          of other than one
   </li></ul>
   </li><li>Binary Data
   <ul>
@@ -233,8 +225,7 @@ first.
 <h1><a name="section_5">Functions</a></h1>
 
 <ul>
-  <li>-<em>Add function to return compressed length of TOAST data values</em>
-  </li><li>Allow INET subnet tests using non-constants to be indexed
+  <li>Allow INET subnet tests using non-constants to be indexed
   </li><li>Add transaction_timestamp(), statement_timestamp(), clock_timestamp()
   functionality
 <p>  Current CURRENT_TIMESTAMP returns the start time of the current
@@ -259,11 +250,6 @@ first.
     </li><li>to_char(INTERVAL '43 hours 20 minutes', 'WK:DD:HR:MI') =&gt; 0:1:19:20
     </li><li>to_char(INTERVAL '3 years 5 months','MM') =&gt; 41
   </li></ul>
-  </li><li>-<em>Prevent to_char() on interval from returning meaningless values</em>
-<p>  For example, to_char('1 month', 'mon') is meaningless.  Basically,
-  most date-related parameters to to_char() are meaningless for
-  intervals because interval is not anchored to a date.
-</p>
   </li><li>Add sleep() function, remove from regress.c
 </li></ul>
 <h1><a name="section_6">Multi-Language Support</a></h1>
@@ -294,24 +280,13 @@ first.
 </p>
   </li><li>Add the functionality for WITH CHECK OPTION clause of CREATE VIEW
   </li><li>Allow NOTIFY in rules involving conditionals
-  </li><li>-<em>Have views on temporary tables exist in the temporary namespace</em>
-  </li><li>-<em>Allow temporary views on non-temporary tables</em>
   </li><li>Allow VIEW/RULE recompilation when the underlying tables change
 </li></ul>
 <h1><a name="section_8">SQL Commands</a></h1>
 
 <ul>
-  <li>-<em>Add BETWEEN SYMMETRIC/ASYMMETRIC</em>
-  </li><li>Change LIMIT/OFFSET and FETCH/MOVE to use int8
-  </li><li>-<em>Add E'' escape string marker so eventually ordinary strings can treat</em>
-  backslashes literally, for portability
-  </li><li>-<em>Allow additional tables to be specified in DELETE for joins</em>
-<p>  UPDATE already allows this (UPDATE...FROM) but we need similar
-  functionality in DELETE.  It's been agreed that the keyword should
-  be USING, to avoid anything as confusing as DELETE FROM a FROM b.
-</p>
+  <li>Change LIMIT/OFFSET and FETCH/MOVE to use int8
   </li><li>Add CORRESPONDING BY to UNION/INTERSECT/EXCEPT
-  </li><li>-<em>Allow REINDEX to rebuild all database indexes</em>
   </li><li>Add ROLLUP, CUBE, GROUPING SETS options to GROUP BY
   </li><li>%Allow SET CONSTRAINTS to be qualified by schema/table name
   </li><li>%Allow TRUNCATE ... CASCADE/RESTRICT
@@ -347,11 +322,6 @@ first.
   creation
   </li><li>%Add COMMENT ON for all cluster global objects (roles, databases
   and tablespaces)
-  </li><li>-<em>Add an option to automatically use savepoints for each statement in a</em>
-  multi-statement transaction.
-<p>  When enabled, this would allow errors in multi-statement transactions
-  to be automatically ignored.
-</p>
   </li><li>%Make row-wise comparisons work per SQL spec
   </li><li>Add RESET CONNECTION command to reset all session state
 <p>  This would include resetting of all variables (RESET ALL), dropping of
@@ -384,7 +354,6 @@ first.
 </p>
     </li><li>Allow UPDATE tab SET ROW (col, ...) = (...) for updating multiple
           columns
-    </li><li>-<em>Allow FOR UPDATE queries to do NOWAIT locks</em>
   </li></ul>
   </li><li>ALTER
   <ul>
@@ -425,11 +394,7 @@ first.
 <p>          This requires the use of a savepoint before each COPY line is
           processed, with ROLLBACK on COPY failure.
 </p>
-    </li><li>-<em>Allow COPY to understand \x as a hex byte</em>
     </li><li>%Have COPY return the number of rows loaded/unloaded?
-    </li><li>-<em>Allow COPY to optionally include column headings in the first line</em>
-    </li><li>-<em>Allow COPY FROM ... CSV to interpret newlines and carriage</em>
-          returns in data
   </li></ul>
   </li><li>GRANT/REVOKE
   <ul>
@@ -472,8 +437,7 @@ first.
   </li></ul>
   </li><li>SHOW/SET
   <ul>
-    <li>-<em>Have SHOW ALL show descriptions for server-side variables</em>
-    </li><li>Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
+    <li>Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
           ANALYZE, and CLUSTER
     </li><li>Add SET PATH for schemas?
 <p>          This is basically the same as SET search_path.
@@ -481,21 +445,15 @@ first.
   </li></ul>
   </li><li>Server-Side Languages
   <ul>
-    <li>-<em>Allow PL/PgSQL's RAISE function to take expressions</em>
-<p>          Currently only constants are supported.
-</p>
-    </li><li>-<em>Change PL/PgSQL to use palloc() instead of malloc()</em>
-    </li><li>Fix PL/pgSQL RENAME to work on variables other than OLD/NEW
+    <li>Fix PL/pgSQL RENAME to work on variables other than OLD/NEW
     </li><li>Allow function parameters to be passed by name,
           get_employee_salary(emp_id =&gt; 12345, tax_year =&gt; 2001)
     </li><li>Add Oracle-style packages
     </li><li>Add table function support to pltcl, plpython
-    </li><li>-<em>Allow PL/pgSQL EXECUTE query_var INTO record_var;</em>
     </li><li>Add capability to create and call PROCEDURES
     </li><li>Allow PL/pgSQL to handle %TYPE arrays, e.g. tab.col%TYPE[<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?"></a>]
     </li><li>Allow function argument names to be queries from PL/PgSQL
     </li><li>Add MOVE to PL/pgSQL
-    </li><li>-<em>Pass arrays natively instead of as text between plperl and postgres</em>
     </li><li>Add support for polymorphic arguments and return types to
           languages other than PL/PgSQL
     </li><li>Add support for OUT and INOUT parameters to languages other 
@@ -539,7 +497,6 @@ first.
     </li><li>%Add dumping of comments on index columns
     </li><li>%Replace crude DELETE FROM method of pg_dumpall --clean for 
           cleaning of roles with separate DROP commands
-    </li><li>-<em>Add dumping and restoring of LOB comments</em>
     </li><li>Stop dumping CASCADE on DROP TYPE commands in clean mode
     </li><li>%Add full object name to the tag field.  eg. for operators we need
           '=(integer, integer)', instead of just '='.
@@ -576,11 +533,9 @@ first.
   memory.  This could exhaust memory for very large trigger queues.
   This item involves dumping large queues into files.
 </p>
-  </li><li>-<em>Implement shared row locks and use them in RI triggers</em>
   </li><li>Change foreign key constraint for array -&gt; element to mean element
   in array?
   </li><li>Allow DEFERRABLE UNIQUE constraints?
-  </li><li>-<em>Allow triggers to be disabled</em>
   </li><li>Allow triggers to be disabled in only the current session.
 <p>  This is currently possible by starting a multi-statement transaction,
   modifying the system tables, performing the desired SQL, restoring the
@@ -628,7 +583,6 @@ first.
   semantics
 <p>  This can be done using dblink and two-phase commit.
 </p>
-  </li><li>-<em>Add two-phase commit</em>
   </li><li>Add the features of packages
   <ul>
     <li>Make private objects accessable only to objects in the same schema
@@ -649,38 +603,10 @@ first.
   that can span more than one table.
 </p>
   </li><li>Allow SELECT ... FOR UPDATE on inherited tables
-  </li><li>-<em>Prevent inherited tables from expanding temporary subtables of other</em>
-  sessions
   </li><li>Add UNIQUE capability to non-btree indexes
-  </li><li>-<em>Use indexes for MIN() and MAX()</em>
-<p>  MIN/MAX queries can already be rewritten as SELECT col FROM tab ORDER
-  BY col {DESC} LIMIT 1. Completing this item involves doing this
-  transformation automatically.
-</p>
-  </li><li>-<em>Use index to restrict rows returned by multi-key index when used with</em>
-  non-consecutive keys to reduce heap accesses
-<p>  For an index on col1,col2,col3, and a WHERE clause of col1 = 5 and
-  col3 = 9, spin though the index checking for col1 and col3 matches,
-  rather than just col1; also called skip-scanning.
-</p>
   </li><li>Prevent index uniqueness checks when UPDATE does not modify the column
 <p>  Uniqueness (index) checks are done when updating a column even if the
   column is not modified by the UPDATE.
-</p>
-  </li><li>-<em>Fetch heap pages matching index entries in sequential order</em>
-<p>  Rather than randomly accessing heap pages based on index entries, mark
-  heap pages needing access in a bitmap and do the lookups in sequential
-  order. Another method would be to sort heap ctids matching the index
-  before accessing the heap rows.
-</p>
-  </li><li>-<em>Allow non-bitmap indexes to be combined by creating bitmaps in memory</em>
-<p>  This feature allows separate indexes to be ANDed or ORed together.  This
-  is particularly useful for data warehousing applications that need to
-  query the database in an many permutations.  This feature scans an index
-  and creates an in-memory bitmap, and allows that bitmap to be combined
-  with other bitmap created in a similar way.  The bitmap can either index
-  all TIDs, or be lossy, meaning it records just page numbers and each
-  page tuple has to be checked for validity in a separate pass.
 </p>
   </li><li>Allow the creation of on-disk bitmap indexes which can be quickly
   combined with other bitmap indexes
@@ -695,14 +621,11 @@ first.
   one column or expression indexes, perhaps using per-index statistics
   </li><li>Add fillfactor to control reserved free space during index creation
   </li><li>Allow the creation of indexes with mixed ascending/descending specifiers
-  </li><li>-<em>Fix incorrect rtree results due to wrong assumptions about "over"</em>
-  operator semantics
   </li><li>Allow constraint_exclusion to work for UNIONs like it does for
   inheritance, and allow it to work for UPDATE and DELETE queries
   </li><li>GIST
   <ul>
     <li>Add more GIST index support for geometric data types
-    </li><li>-<em>Add concurrency to GIST</em>
     </li><li>Allow GIST indexes to create certain complex index types, like
           digital trees (see Aoki)
   </li></ul>
@@ -729,7 +652,6 @@ first.
 <p>  Ideally this requires a separate test program that can be run
   at initdb time or optionally later.
 </p>
-  </li><li>-<em>Allow multiple blocks to be written to WAL with one write()</em>
   </li><li>%Add an option to sync() before fsync()'ing checkpoint files
   </li><li>Add program to test if fsync has a delay compared to non-fsync
 </li></ul>
@@ -743,12 +665,6 @@ first.
   backends that also have the file open, and the feature is not supported
   on all operating systems.
 </p>
-  </li><li>-<em>Consider use of open/fcntl(O_DIRECT) to minimize OS caching,</em>
-  for WAL writes
-<p>  O_DIRECT doesn't have the same media write guarantees as fsync, so it
-  is in addition to the fsync method, not in place of it.
-</p>
-  </li><li>-<em>Cache last known per-tuple offsets to speed long tuple access</em>
   </li><li>Speed up COUNT(*)
 <p>  We could use a fixed row count and a +/- count to follow MVCC
   visibility rules, or a single cached value could be used and
@@ -771,16 +687,6 @@ first.
     </li><li>Query execute plan
     </li><li>Query results
   </li></ul>
-  </li><li>-<em>Allow the size of the buffer cache used by temporary objects to be</em>
-  specified as a GUC variable
-<p>  Larger local buffer cache sizes requires more efficient handling of
-  local cache lookups.
-</p>
-  </li><li>-<em>Improve the background writer</em>
-<p>  Allow the background writer to more efficiently write dirty buffers
-  from the end of the LRU cache and use a clock sweep algorithm to
-  write other dirty buffers to reduced checkpoint I/O
-</p>
   </li><li>Allow sequential scans to take advantage of other concurrent
   sequentiqal scans, also called "Synchronised Scanning"
 <p>  One possible implementation is to start sequential scans from the lowest
@@ -802,7 +708,6 @@ first.
   write lock. However, the read lock promotion to write lock could lead
   to deadlock situations.
 </p>
-  </li><li>-<em>Add a warning when the free space map is too small</em>
   </li><li>Maintain a map of recently-expired rows
 <p>  This allows vacuum to target specific pages for possible free space 
   without requiring a sequential scan.
@@ -818,8 +723,7 @@ first.
   </li><li>%Add system view to show free space map contents
   </li><li>Auto-vacuum
   <ul>
-    <li>-<em>Move into the backend code</em>
-    </li><li>Use free-space map information to guide refilling
+    <li>Use free-space map information to guide refilling
     </li><li>%Issue log message to suggest VACUUM FULL if a table is nearly
           empty?
     </li><li>Improve xid wraparound detection by recording per-table rather
@@ -829,21 +733,12 @@ first.
 <h1><a name="section_17">Locking</a></h1>
 
 <ul>
-  <li>-<em>Make locking of shared data structures more fine-grained</em>
-<p>  This requires that more locks be acquired but this would reduce lock
-  contention, improving concurrency.
-</p>
-  </li><li>Add code to detect an SMP machine and handle spinlocks accordingly
+  <li>Add code to detect an SMP machine and handle spinlocks accordingly
   from distributted.net, <a href="http://www1.distributed.net/source">http://www1.distributed.net/source</a>,
   in client/common/cpucheck.cpp
 <p>  On SMP machines, it is possible that locks might be released shortly,
   while on non-SMP machines, the backend should sleep so the process
   holding the lock can complete and release it.
-</p>
-  </li><li>-<em>Improve SMP performance on i386 machines</em>
-<p>  i386-based SMP machines can generate excessive context switching
-  caused by lock failure in high concurrency situations. This may be
-  caused by CPU cache line invalidation inefficiencies.
 </p>
   </li><li>Research use of sched_yield() for spinlock acquisition failure
   </li><li>Fix priority ordering of read and write light-weight locks (Neil)
@@ -874,8 +769,7 @@ first.
   eliminated from point-in-time archive files.
 </p>
   <ul>
-    <li>-Add ability to turn off full page writes
-    </li><li>When off, write CRC to WAL and check file system blocks
+    <li>When off, write CRC to WAL and check file system blocks
            on recovery
 <p>           If CRC check fails during recovery, remember the page in case
            a later CRC for that page properly matches.
@@ -907,8 +801,6 @@ first.
   remove the 'fsync' parameter (which results in an an inconsistent
   database) in favor of this capability.
 </p>
-  </li><li>-<em>Eliminate WAL logging for CREATE TABLE AS when not doing WAL archiving</em>
-  </li><li>-<em>Change WAL to use 32-bit CRC, for performance reasons</em>
 </li></ul>
 <h1><a name="section_20">Optimizer / Executor</a></h1>
 
@@ -925,15 +817,9 @@ first.
   </li><li>Create utility to compute accurate random_page_cost value
   </li><li>Improve ability to display optimizer analysis using OPTIMIZER_DEBUG
   </li><li>Have EXPLAIN ANALYZE highlight poor optimizer estimates
-  </li><li>-<em>Use CHECK constraints to influence optimizer decisions</em>
-<p>  CHECK constraints contain information about the distribution of values
-  within the table. This is also useful for implementing subtables where
-  a tables content is distributed across several subtables.
-</p>
   </li><li>Consider using hash buckets to do DISTINCT, rather than sorting
 <p>  This would be beneficial when there are few distinct values.
 </p>
-  </li><li>-<em>ANALYZE should record a pg_statistic entry for an all-NULL column</em>
   </li><li>Log queries where the optimizer row estimates were dramatically
   different from the number of rows actually found?
   </li><li>Allow constraint_elimination to be automatically performed
@@ -983,11 +869,9 @@ first.
   </li><li>%Promote debug_query_string into a server-side function current_query()
   </li><li>%Allow the identifier length to be increased via a configure option
   </li><li>Remove Win32 rename/unlink looping if unnecessary
-  </li><li>-<em>Remove kerberos4 from source tree</em>
   </li><li>Allow cross-compiling by generating the zic database on the target system
   </li><li>Improve NLS maintenace of libpgport messages linked onto applications
   </li><li>Allow ecpg to work with MSVC and BCC
-  </li><li>-<em>Make src/port/snprintf.c thread-safe</em>
   </li><li>Add xpath_array() to /contrib/xml2 to return results as an array
   </li><li>Allow building in directories containing spaces
 <p>  This is probably not possible because 'gmake' and other compiler tools
@@ -1000,7 +884,6 @@ first.
   spaces and then copy the install to a directory with spaces.
 </p>
   </li><li>Fix sgmltools so PDFs can be generated with bookmarks
-  </li><li>-<em>Add C code on Unix to copy directories for use in creating new databases</em>
   </li><li>%Clean up compiler warnings (especially with gcc version 4)
   </li><li>Win32
   <ul>
@@ -1013,7 +896,6 @@ first.
           backslashes
     </li><li>Re-enable timezone output on log_line_prefix '%t' when a
           shorter timezone string is available
-    </li><li>-<em>Improve dlerror() reporting string</em>
     </li><li>Fix problem with shared memory on the Win32 Terminal Server
     </li><li>%Add support for Unicode
 <p>          To fix this, the data needs to be converted to/from UTF16/UTF8
