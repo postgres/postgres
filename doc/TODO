@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Aug 27 09:38:42 EDT 2005
+Last updated:		Sat Aug 27 09:52:07 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -189,6 +189,8 @@ Data Types
 * Allow INET + INT4 to increment the host part of the address, or
   throw an error on overflow
 * %Add 'tid != tid ' operator for use in corruption recovery
+* Allow user-defined types to specify a type modifier at table creation
+  time
 
 
 * Dates and Times
