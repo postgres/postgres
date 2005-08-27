@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.146 2005/06/05 22:32:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.147 2005/08/27 22:37:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -872,7 +872,7 @@ cost_agg(Path *path, PlannerInfo *root,
 	 * for grouping comparisons.
 	 *
 	 * We will produce a single output tuple if not grouping, and a tuple per
-	 * group otherwise.
+	 * group otherwise.  We charge cpu_tuple_cost for each output tuple.
 	 *
 	 * Note: in this cost model, AGG_SORTED and AGG_HASHED have exactly the
 	 * same total CPU cost, but AGG_SORTED has lower startup cost.	If the
@@ -888,7 +888,7 @@ cost_agg(Path *path, PlannerInfo *root,
 		startup_cost = input_total_cost;
 		startup_cost += cpu_operator_cost * (input_tuples + 1) * numAggs;
 		/* we aren't grouping */
-		total_cost = startup_cost;
+		total_cost = startup_cost + cpu_tuple_cost;
 	}
 	else if (aggstrategy == AGG_SORTED)
 	{
@@ -899,6 +899,7 @@ cost_agg(Path *path, PlannerInfo *root,
 		total_cost += cpu_operator_cost * input_tuples * numGroupCols;
 		total_cost += cpu_operator_cost * input_tuples * numAggs;
 		total_cost += cpu_operator_cost * numGroups * numAggs;
+		total_cost += cpu_tuple_cost * numGroups;
 	}
 	else
 	{
@@ -908,6 +909,7 @@ cost_agg(Path *path, PlannerInfo *root,
 		startup_cost += cpu_operator_cost * input_tuples * numAggs;
 		total_cost = startup_cost;
 		total_cost += cpu_operator_cost * numGroups * numAggs;
+		total_cost += cpu_tuple_cost * numGroups;
 	}
 
 	path->startup_cost = startup_cost;
