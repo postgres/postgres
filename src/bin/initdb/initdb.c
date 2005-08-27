@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.96 2005/08/25 02:22:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.97 2005/08/27 18:44:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1221,6 +1221,13 @@ setup_config(void)
 	{
 		struct addrinfo *gai_result;
 		struct addrinfo hints;
+		int err = 0;
+#ifdef WIN32
+		/* need to call WSAStartup before calling getaddrinfo */
+		WSADATA	wsaData;
+
+		err = WSAStartup(MAKEWORD(2,2), &wsaData);
+#endif
 
 		/* for best results, this code should match parse_hba() */
 		hints.ai_flags = AI_NUMERICHOST;
@@ -1232,7 +1239,8 @@ setup_config(void)
 		hints.ai_addr = NULL;
 		hints.ai_next = NULL;
 
-		if (getaddrinfo("::1", NULL, &hints, &gai_result) != 0)
+		if (err != 0 ||
+			getaddrinfo("::1", NULL, &hints, &gai_result) != 0)
 			conflines = replace_token(conflines,
 									  "host    all         all         ::1",
 									  "#host    all         all         ::1");
