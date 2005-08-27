@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/paths.h,v 1.86 2005/07/28 20:26:22 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/paths.h,v 1.87 2005/08/27 22:13:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,9 +102,6 @@ extern void generate_implied_equalities(PlannerInfo *root);
 extern List *canonicalize_pathkeys(PlannerInfo *root, List *pathkeys);
 extern PathKeysComparison compare_pathkeys(List *keys1, List *keys2);
 extern bool pathkeys_contained_in(List *keys1, List *keys2);
-extern PathKeysComparison compare_noncanonical_pathkeys(List *keys1,
-							  List *keys2);
-extern bool noncanonical_pathkeys_contained_in(List *keys1, List *keys2);
 extern Path *get_cheapest_path_for_pathkeys(List *paths, List *pathkeys,
 							   CostSelector cost_criterion);
 extern Path *get_cheapest_fractional_path_for_pathkeys(List *paths,

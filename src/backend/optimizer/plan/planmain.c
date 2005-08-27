@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.86 2005/07/02 23:00:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.87 2005/08/27 22:13:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,9 +25,11 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
+#include "optimizer/tlist.h"
+#include "utils/selfuncs.h"
 
 
-/*--------------------
+/*
  * query_planner
  *	  Generate a path (that is, a simplified plan) for a basic query,
  *	  which may involve joins but not any fancier features.
@@ -51,6 +53,8 @@
  * *cheapest_path receives the overall-cheapest path for the query
  * *sorted_path receives the cheapest presorted path for the query,
  *				if any (NULL if there is no useful presorted path)
+ * *num_groups receives the estimated number of groups, or 1 if query
+ *				does not use grouping
  *
  * Note: the PlannerInfo node also includes a query_pathkeys field, which is
  * both an input and an output of query_planner().  The input value signals
@@ -61,17 +65,21 @@
  * PlannerInfo field and not a passed parameter is that the low-level routines
  * in indxpath.c need to see it.)
  *
+ * Note: the PlannerInfo node also includes group_pathkeys and sort_pathkeys,
+ * which like query_pathkeys need to be canonicalized once the info is
+ * available.
+ *
  * tuple_fraction is interpreted as follows:
  *	  0: expect all tuples to be retrieved (normal case)
  *	  0 < tuple_fraction < 1: expect the given fraction of tuples available
  *		from the plan to be retrieved
  *	  tuple_fraction >= 1: tuple_fraction is the absolute number of tuples
  *		expected to be retrieved (ie, a LIMIT specification)
- *--------------------
  */
 void
 query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
-			  Path **cheapest_path, Path **sorted_path)
+			  Path **cheapest_path, Path **sorted_path,
+			  double *num_groups)
 {
 	Query	   *parse = root->parse;
 	List	   *constant_quals;
@@ -81,6 +89,8 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 
 	/* Make tuple_fraction accessible to lower-level routines */
 	root->tuple_fraction = tuple_fraction;
+
+	*num_groups = 1;			/* default result */
 
 	/*
 	 * If the query has an empty join tree, then it's something easy like
@@ -156,9 +166,12 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 	/*
 	 * We should now have all the pathkey equivalence sets built, so it's
 	 * now possible to convert the requested query_pathkeys to canonical
-	 * form.
+	 * form.  Also canonicalize the groupClause and sortClause pathkeys
+	 * for use later.
 	 */
 	root->query_pathkeys = canonicalize_pathkeys(root, root->query_pathkeys);
+	root->group_pathkeys = canonicalize_pathkeys(root, root->group_pathkeys);
+	root->sort_pathkeys = canonicalize_pathkeys(root, root->sort_pathkeys);
 
 	/*
 	 * Ready to do the primary planning.
@@ -169,12 +182,87 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 		elog(ERROR, "failed to construct the join relation");
 
 	/*
-	 * Now that we have an estimate of the final rel's size, we can
-	 * convert a tuple_fraction specified as an absolute count (ie, a
-	 * LIMIT option) into a fraction of the total tuples.
+	 * If there's grouping going on, estimate the number of result groups.
+	 * We couldn't do this any earlier because it depends on relation size
+	 * estimates that were set up above.
+	 *
+	 * Then convert tuple_fraction to fractional form if it is absolute,
+	 * and adjust it based on the knowledge that grouping_planner will be
+	 * doing grouping or aggregation work with our result.
+	 *
+	 * This introduces some undesirable coupling between this code and
+	 * grouping_planner, but the alternatives seem even uglier; we couldn't
+	 * pass back completed paths without making these decisions here.
 	 */
-	if (tuple_fraction >= 1.0)
-		tuple_fraction /= final_rel->rows;
+	if (parse->groupClause)
+	{
+		List	   *groupExprs;
+
+		groupExprs = get_sortgrouplist_exprs(parse->groupClause,
+											 parse->targetList);
+		*num_groups = estimate_num_groups(root,
+										  groupExprs,
+										  final_rel->rows);
+
+		/*
+		 * In GROUP BY mode, an absolute LIMIT is relative to the number
+		 * of groups not the number of tuples.  If the caller gave us
+		 * a fraction, keep it as-is.  (In both cases, we are effectively
+		 * assuming that all the groups are about the same size.)
+		 */
+		if (tuple_fraction >= 1.0)
+			tuple_fraction /= *num_groups;
+
+		/*
+		 * If both GROUP BY and ORDER BY are specified, we will need two
+		 * levels of sort --- and, therefore, certainly need to read all
+		 * the tuples --- unless ORDER BY is a subset of GROUP BY.
+		 */
+		if (parse->groupClause && parse->sortClause &&
+			!pathkeys_contained_in(root->sort_pathkeys, root->group_pathkeys))
+			tuple_fraction = 0.0;
+	}
+	else if (parse->hasAggs || root->hasHavingQual)
+	{
+		/*
+		 * Ungrouped aggregate will certainly want to read all the tuples,
+		 * and it will deliver a single result row (so leave *num_groups 1).
+		 */
+		tuple_fraction = 0.0;
+	}
+	else if (parse->distinctClause)
+	{
+		/*
+		 * Since there was no grouping or aggregation, it's reasonable to
+		 * assume the UNIQUE filter has effects comparable to GROUP BY.
+		 * Return the estimated number of output rows for use by caller.
+		 * (If DISTINCT is used with grouping, we ignore its effects for
+		 * rowcount estimation purposes; this amounts to assuming the grouped
+		 * rows are distinct already.)
+		 */
+		List	   *distinctExprs;
+
+		distinctExprs = get_sortgrouplist_exprs(parse->distinctClause,
+												parse->targetList);
+		*num_groups = estimate_num_groups(root,
+										  distinctExprs,
+										  final_rel->rows);
+
+		/*
+		 * Adjust tuple_fraction the same way as for GROUP BY, too.
+		 */
+		if (tuple_fraction >= 1.0)
+			tuple_fraction /= *num_groups;
+	}
+	else
+	{
+		/*
+		 * Plain non-grouped, non-aggregated query: an absolute tuple
+		 * fraction can be divided by the number of tuples.
+		 */
+		if (tuple_fraction >= 1.0)
+			tuple_fraction /= final_rel->rows;
+	}
 
 	/*
 	 * Pick out the cheapest-total path and the cheapest presorted path

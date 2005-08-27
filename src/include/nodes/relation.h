@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.117 2005/07/23 21:05:48 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.118 2005/08/27 22:13:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,6 +100,9 @@ typedef struct PlannerInfo
 
 	List	   *query_pathkeys; /* desired pathkeys for query_planner(),
 								 * and actual pathkeys afterwards */
+
+	List	   *group_pathkeys; /* groupClause pathkeys, if any */
+	List	   *sort_pathkeys;	/* sortClause pathkeys, if any */
 
 	double		tuple_fraction;	/* tuple_fraction passed to query_planner */
 

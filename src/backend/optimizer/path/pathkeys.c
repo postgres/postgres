@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.71 2005/07/28 22:27:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.72 2005/08/27 22:13:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -801,54 +801,6 @@ compare_pathkeys(List *keys1, List *keys2)
 }
 
 /*
- * compare_noncanonical_pathkeys
- *	  Compare two pathkeys to see if they are equivalent, and if not whether
- *	  one is "better" than the other.  This is used when we must compare
- *	  non-canonicalized pathkeys.
- *
- *	  A pathkey can be considered better than another if it is a superset:
- *	  it contains all the keys of the other plus more.	For example, either
- *	  ((A) (B)) or ((A B)) is better than ((A)).
- *
- *	  Currently, the only user of this routine is grouping_planner(),
- *	  and it will only pass single-element sublists (from
- *	  make_pathkeys_for_sortclauses).  Therefore we don't have to do the
- *	  full two-way-subset-inclusion test on each pair of sublists that is
- *	  implied by the above statement.  Instead we just verify they are
- *	  singleton lists and then do an equal().  This could be improved if
- *	  necessary.
- */
-PathKeysComparison
-compare_noncanonical_pathkeys(List *keys1, List *keys2)
-{
-	ListCell   *key1,
-			   *key2;
-
-	forboth(key1, keys1, key2, keys2)
-	{
-		List	   *subkey1 = (List *) lfirst(key1);
-		List	   *subkey2 = (List *) lfirst(key2);
-
-		Assert(list_length(subkey1) == 1);
-		Assert(list_length(subkey2) == 1);
-		if (!equal(subkey1, subkey2))
-			return PATHKEYS_DIFFERENT;	/* no need to keep looking */
-	}
-
-	/*
-	 * If we reached the end of only one list, the other is longer and
-	 * therefore not a subset.	(We assume the additional sublist(s) of
-	 * the other list are not NIL --- no pathkey list should ever have a
-	 * NIL sublist.)
-	 */
-	if (key1 == NULL && key2 == NULL)
-		return PATHKEYS_EQUAL;
-	if (key1 != NULL)
-		return PATHKEYS_BETTER1;	/* key1 is longer */
-	return PATHKEYS_BETTER2;	/* key2 is longer */
-}
-
-/*
  * pathkeys_contained_in
  *	  Common special case of compare_pathkeys: we just want to know
  *	  if keys2 are at least as well sorted as keys1.
@@ -857,24 +809,6 @@ bool
 pathkeys_contained_in(List *keys1, List *keys2)
 {
 	switch (compare_pathkeys(keys1, keys2))
-	{
-		case PATHKEYS_EQUAL:
-		case PATHKEYS_BETTER2:
-			return true;
-		default:
-			break;
-	}
-	return false;
-}
-
-/*
- * noncanonical_pathkeys_contained_in
- *	  The same, when we don't have canonical pathkeys.
- */
-bool
-noncanonical_pathkeys_contained_in(List *keys1, List *keys2)
-{
-	switch (compare_noncanonical_pathkeys(keys1, keys2))
 	{
 		case PATHKEYS_EQUAL:
 		case PATHKEYS_BETTER2:

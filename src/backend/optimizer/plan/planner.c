@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.191 2005/08/18 17:51:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.192 2005/08/27 22:13:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,6 @@ static double preprocess_limit(PlannerInfo *root,
 							   int *offset_est, int *count_est);
 static bool choose_hashed_grouping(PlannerInfo *root, double tuple_fraction,
 					   Path *cheapest_path, Path *sorted_path,
-					   List *sort_pathkeys, List *group_pathkeys,
 					   double dNumGroups, AggClauseCounts *agg_counts);
 static bool hash_safe_grouping(PlannerInfo *root);
 static List *make_subplanTargetList(PlannerInfo *root, List *tlist,
@@ -655,6 +654,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	Plan	   *result_plan;
 	List	   *current_pathkeys;
 	List	   *sort_pathkeys;
+	double		dNumGroups = 0;
 
 	/* Tweak caller-supplied tuple_fraction if have LIMIT/OFFSET */
 	if (parse->limitCount || parse->limitOffset)
@@ -727,11 +727,9 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		AttrNumber *groupColIdx = NULL;
 		bool		need_tlist_eval = true;
 		QualCost	tlist_cost;
-		double		sub_tuple_fraction;
 		Path	   *cheapest_path;
 		Path	   *sorted_path;
 		Path	   *best_path;
-		double		dNumGroups = 0;
 		long		numGroups = 0;
 		AggClauseCounts agg_counts;
 		int			numGroupCols = list_length(parse->groupClause);
@@ -750,13 +748,14 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 										 &groupColIdx, &need_tlist_eval);
 
 		/*
-		 * Calculate pathkeys that represent grouping/ordering
-		 * requirements
+		 * Calculate pathkeys that represent grouping/ordering requirements.
+		 * Stash them in PlannerInfo so that query_planner can canonicalize
+		 * them.
 		 */
-		group_pathkeys = make_pathkeys_for_sortclauses(parse->groupClause,
-													   tlist);
-		sort_pathkeys = make_pathkeys_for_sortclauses(parse->sortClause,
-													  tlist);
+		root->group_pathkeys =
+			make_pathkeys_for_sortclauses(parse->groupClause, tlist);
+		root->sort_pathkeys =
+			make_pathkeys_for_sortclauses(parse->sortClause, tlist);
 
 		/*
 		 * Will need actual number of aggregates for estimating costs.
@@ -787,112 +786,36 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 * Needs more thought...)
 		 */
 		if (parse->groupClause)
-			root->query_pathkeys = group_pathkeys;
+			root->query_pathkeys = root->group_pathkeys;
 		else if (parse->sortClause)
-			root->query_pathkeys = sort_pathkeys;
+			root->query_pathkeys = root->sort_pathkeys;
 		else
 			root->query_pathkeys = NIL;
 
 		/*
-		 * With grouping or aggregation, the tuple fraction to pass to
-		 * query_planner() may be different from what it is at top level.
-		 */
-		sub_tuple_fraction = tuple_fraction;
-
-		if (parse->groupClause)
-		{
-			/*
-			 * In GROUP BY mode, we have the little problem that we don't
-			 * really know how many input tuples will be needed to make a
-			 * group, so we can't translate an output LIMIT count into an
-			 * input count.  For lack of a better idea, assume 25% of the
-			 * input data will be processed if there is any output limit.
-			 * However, if the caller gave us a fraction rather than an
-			 * absolute count, we can keep using that fraction (which
-			 * amounts to assuming that all the groups are about the same
-			 * size).
-			 */
-			if (sub_tuple_fraction >= 1.0)
-				sub_tuple_fraction = 0.25;
-
-			/*
-			 * If both GROUP BY and ORDER BY are specified, we will need
-			 * two levels of sort --- and, therefore, certainly need to
-			 * read all the input tuples --- unless ORDER BY is a subset
-			 * of GROUP BY.  (We have not yet canonicalized the pathkeys,
-			 * so must use the slower noncanonical comparison method.)
-			 */
-			if (parse->groupClause && parse->sortClause &&
-				!noncanonical_pathkeys_contained_in(sort_pathkeys,
-													group_pathkeys))
-				sub_tuple_fraction = 0.0;
-		}
-		else if (parse->hasAggs)
-		{
-			/*
-			 * Ungrouped aggregate will certainly want all the input
-			 * tuples.
-			 */
-			sub_tuple_fraction = 0.0;
-		}
-		else if (parse->distinctClause)
-		{
-			/*
-			 * SELECT DISTINCT, like GROUP, will absorb an unpredictable
-			 * number of input tuples per output tuple.  Handle the same
-			 * way.
-			 */
-			if (sub_tuple_fraction >= 1.0)
-				sub_tuple_fraction = 0.25;
-		}
-
-		/*
 		 * Generate the best unsorted and presorted paths for this Query
-		 * (but note there may not be any presorted path).
+		 * (but note there may not be any presorted path).  query_planner
+		 * will also estimate the number of groups in the query, and
+		 * canonicalize all the pathkeys.
 		 */
-		query_planner(root, sub_tlist, sub_tuple_fraction,
-					  &cheapest_path, &sorted_path);
+		query_planner(root, sub_tlist, tuple_fraction,
+					  &cheapest_path, &sorted_path, &dNumGroups);
+
+		group_pathkeys = root->group_pathkeys;
+		sort_pathkeys = root->sort_pathkeys;
 
 		/*
-		 * We couldn't canonicalize group_pathkeys and sort_pathkeys
-		 * before running query_planner(), so do it now.
-		 */
-		group_pathkeys = canonicalize_pathkeys(root, group_pathkeys);
-		sort_pathkeys = canonicalize_pathkeys(root, sort_pathkeys);
-
-		/*
-		 * If grouping, estimate the number of groups.  (We can't do this
-		 * until after running query_planner(), either.)  Then decide
-		 * whether we want to use hashed grouping.
+		 * If grouping, decide whether we want to use hashed grouping.
 		 */
 		if (parse->groupClause)
 		{
-			List	   *groupExprs;
-			double		cheapest_path_rows;
-
-			/*
-			 * Beware of the possibility that cheapest_path->parent is NULL.
-			 * This could happen if user does something silly like
-			 *		SELECT 'foo' GROUP BY 1;
-			 */
-			if (cheapest_path->parent)
-				cheapest_path_rows = cheapest_path->parent->rows;
-			else
-				cheapest_path_rows = 1; /* assume non-set result */
-
-			groupExprs = get_sortgrouplist_exprs(parse->groupClause,
-												 parse->targetList);
-			dNumGroups = estimate_num_groups(root,
-											 groupExprs,
-											 cheapest_path_rows);
-			/* Also want it as a long int --- but 'ware overflow! */
-			numGroups = (long) Min(dNumGroups, (double) LONG_MAX);
-
 			use_hashed_grouping =
 				choose_hashed_grouping(root, tuple_fraction,
 									   cheapest_path, sorted_path,
-									   sort_pathkeys, group_pathkeys,
 									   dNumGroups, &agg_counts);
+
+			/* Also convert # groups to long int --- but 'ware overflow! */
+			numGroups = (long) Min(dNumGroups, (double) LONG_MAX);
 		}
 
 		/*
@@ -1130,19 +1053,10 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		/*
 		 * If there was grouping or aggregation, leave plan_rows as-is
 		 * (ie, assume the result was already mostly unique).  If not,
-		 * it's reasonable to assume the UNIQUE filter has effects
-		 * comparable to GROUP BY.
+		 * use the number of distinct-groups calculated by query_planner.
 		 */
 		if (!parse->groupClause && !root->hasHavingQual && !parse->hasAggs)
-		{
-			List	   *distinctExprs;
-
-			distinctExprs = get_sortgrouplist_exprs(parse->distinctClause,
-													parse->targetList);
-			result_plan->plan_rows = estimate_num_groups(root,
-														 distinctExprs,
-												 result_plan->plan_rows);
-		}
+			result_plan->plan_rows = dNumGroups;
 	}
 
 	/*
@@ -1360,7 +1274,6 @@ preprocess_limit(PlannerInfo *root, double tuple_fraction,
 static bool
 choose_hashed_grouping(PlannerInfo *root, double tuple_fraction,
 					   Path *cheapest_path, Path *sorted_path,
-					   List *sort_pathkeys, List *group_pathkeys,
 					   double dNumGroups, AggClauseCounts *agg_counts)
 {
 	int			numGroupCols = list_length(root->parse->groupClause);
@@ -1439,8 +1352,8 @@ choose_hashed_grouping(PlannerInfo *root, double tuple_fraction,
 			 cheapest_path->startup_cost, cheapest_path->total_cost,
 			 cheapest_path_rows);
 	/* Result of hashed agg is always unsorted */
-	if (sort_pathkeys)
-		cost_sort(&hashed_p, root, sort_pathkeys, hashed_p.total_cost,
+	if (root->sort_pathkeys)
+		cost_sort(&hashed_p, root, root->sort_pathkeys, hashed_p.total_cost,
 				  dNumGroups, cheapest_path_width);
 
 	if (sorted_path)
@@ -1455,12 +1368,11 @@ choose_hashed_grouping(PlannerInfo *root, double tuple_fraction,
 		sorted_p.total_cost = cheapest_path->total_cost;
 		current_pathkeys = cheapest_path->pathkeys;
 	}
-	if (!pathkeys_contained_in(group_pathkeys,
-							   current_pathkeys))
+	if (!pathkeys_contained_in(root->group_pathkeys, current_pathkeys))
 	{
-		cost_sort(&sorted_p, root, group_pathkeys, sorted_p.total_cost,
+		cost_sort(&sorted_p, root, root->group_pathkeys, sorted_p.total_cost,
 				  cheapest_path_rows, cheapest_path_width);
-		current_pathkeys = group_pathkeys;
+		current_pathkeys = root->group_pathkeys;
 	}
 
 	if (root->parse->hasAggs)
@@ -1473,9 +1385,9 @@ choose_hashed_grouping(PlannerInfo *root, double tuple_fraction,
 				   sorted_p.startup_cost, sorted_p.total_cost,
 				   cheapest_path_rows);
 	/* The Agg or Group node will preserve ordering */
-	if (sort_pathkeys &&
-		!pathkeys_contained_in(sort_pathkeys, current_pathkeys))
-		cost_sort(&sorted_p, root, sort_pathkeys, sorted_p.total_cost,
+	if (root->sort_pathkeys &&
+		!pathkeys_contained_in(root->sort_pathkeys, current_pathkeys))
+		cost_sort(&sorted_p, root, root->sort_pathkeys, sorted_p.total_cost,
 				  dNumGroups, cheapest_path_width);
 
 	/*
