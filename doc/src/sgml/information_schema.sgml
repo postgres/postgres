@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.20 2004/12/28 22:47:15 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.21 2005/08/27 14:13:21 momjian Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -3163,7 +3163,7 @@ ORDER BY c.ordinal_position;
   <title><literal>sql_implementation_info</literal></title>
 
   <para>
-   The table <literal>sql_information_info</literal> contains
+   The table <literal>sql_implementation_info</literal> contains
    information about various aspects that are left
    implementation-defined by the SQL standard.  This information is
    primarily intended for use in the context of the ODBC interface;
