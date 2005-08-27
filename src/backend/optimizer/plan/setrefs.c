@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.111 2005/06/10 00:28:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.112 2005/08/27 18:04:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -367,7 +367,12 @@ set_subqueryscan_references(SubqueryScan *plan, List *rtable)
 						   QTW_IGNORE_RT_SUBQUERIES);
 		rtable = list_concat(rtable, sub_rtable);
 
-		result = plan->subplan;
+		/*
+		 * we have to copy the subplan to make sure there are no duplicately
+		 * linked nodes in it, else adjust_plan_varnos might increment some
+		 * varnos twice
+		 */
+		result = copyObject(plan->subplan);
 
 		adjust_plan_varnos(result, rtoffset);
 
@@ -538,10 +543,7 @@ adjust_plan_varnos(Plan *plan, int rtoffset)
 			 * Even though the targetlist won't be used by the executor,
 			 * we fix it up for possible use by EXPLAIN (not to mention
 			 * ease of debugging --- wrong varnos are very confusing).
-			 * We have to make a copy because the tlist is very likely
-			 * shared with lower plan levels.
 			 */
-			plan->targetlist = copyObject(plan->targetlist);
 			adjust_expr_varnos((Node *) plan->targetlist, rtoffset);
 			Assert(plan->qual == NIL);
 			break;
@@ -552,7 +554,6 @@ adjust_plan_varnos(Plan *plan, int rtoffset)
 			 * or quals.  It does have live expressions for limit/offset,
 			 * however.
 			 */
-			plan->targetlist = copyObject(plan->targetlist);
 			adjust_expr_varnos((Node *) plan->targetlist, rtoffset);
 			Assert(plan->qual == NIL);
 			adjust_expr_varnos(((Limit *) plan)->limitOffset, rtoffset);
@@ -569,14 +570,6 @@ adjust_plan_varnos(Plan *plan, int rtoffset)
 			adjust_expr_varnos(((Result *) plan)->resconstantqual, rtoffset);
 			break;
 		case T_Append:
-
-			/*
-			 * Append, like Sort et al, doesn't actually evaluate its
-			 * targetlist or check quals, and we haven't bothered to give it
-			 * its own tlist copy. So, copy tlist before fixing.  Then
-			 * recurse into child plans.
-			 */
-			plan->targetlist = copyObject(plan->targetlist);
 			adjust_expr_varnos((Node *) plan->targetlist, rtoffset);
 			Assert(plan->qual == NIL);
 			foreach(l, ((Append *) plan)->appendplans)
@@ -849,39 +842,38 @@ set_inner_join_references(Plan *inner_plan,
 		/*
 		 * The inner side is a bitmap scan plan.  Fix the top node,
 		 * and recurse to get the lower nodes.
+		 *
+		 * Note: create_bitmap_scan_plan removes clauses from bitmapqualorig
+		 * if they are duplicated in qpqual, so must test these independently.
 		 */
 		BitmapHeapScan *innerscan = (BitmapHeapScan *) inner_plan;
+		Index		innerrel = innerscan->scan.scanrelid;
 		List	   *bitmapqualorig = innerscan->bitmapqualorig;
 
-		/* No work needed if bitmapqual refers only to its own rel... */
+		/* only refs to outer vars get changed in the inner qual */
 		if (NumRelids((Node *) bitmapqualorig) > 1)
-		{
-			Index		innerrel = innerscan->scan.scanrelid;
-
-			/* only refs to outer vars get changed in the inner qual */
 			innerscan->bitmapqualorig = join_references(bitmapqualorig,
-													  rtable,
-													  outer_itlist,
-													  NULL,
-													  innerrel);
+														rtable,
+														outer_itlist,
+														NULL,
+														innerrel);
 
-			/*
-			 * We must fix the inner qpqual too, if it has join
-			 * clauses (this could happen if special operators are
-			 * involved: some indexquals may get rechecked as qpquals).
-			 */
-			if (NumRelids((Node *) inner_plan->qual) > 1)
-				inner_plan->qual = join_references(inner_plan->qual,
-												   rtable,
-												   outer_itlist,
-												   NULL,
-												   innerrel);
+		/*
+		 * We must fix the inner qpqual too, if it has join
+		 * clauses (this could happen if special operators are
+		 * involved: some indexquals may get rechecked as qpquals).
+		 */
+		if (NumRelids((Node *) inner_plan->qual) > 1)
+			inner_plan->qual = join_references(inner_plan->qual,
+											   rtable,
+											   outer_itlist,
+											   NULL,
+											   innerrel);
 
-			/* Now recurse */
-			set_inner_join_references(inner_plan->lefttree,
-									  rtable,
-									  outer_itlist);
-		}
+		/* Now recurse */
+		set_inner_join_references(inner_plan->lefttree,
+								  rtable,
+								  outer_itlist);
 	}
 	else if (IsA(inner_plan, BitmapAnd))
 	{
