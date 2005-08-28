@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.66 2005/07/31 17:19:19 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.67 2005/08/28 16:31:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -928,10 +928,10 @@ dumpUserConfig(PGconn *conn, const char *username)
 		else
 			printfPQExpBuffer(buf, "SELECT useconfig[%d] FROM pg_shadow WHERE usename = ", count);
 		appendStringLiteral(buf, username, true);
-		appendPQExpBuffer(buf, ";");
 
 		res = executeQuery(conn, buf->data);
-		if (!PQgetisnull(res, 0, 0))
+		if (PQntuples(res) == 1 &&
+			!PQgetisnull(res, 0, 0))
 		{
 			makeAlterConfigCommand(PQgetvalue(res, 0, 0), "ROLE", username);
 			PQclear(res);
