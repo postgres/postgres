@@ -23,7 +23,7 @@
  * Copyright (c) 2003-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/tidbitmap.c,v 1.5 2005/07/24 02:25:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/tidbitmap.c,v 1.6 2005/08/28 22:47:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -508,6 +508,15 @@ tbm_intersect_page(TIDBitmap *a, PagetableEntry *apage, const TIDBitmap *b)
 		}
 		return candelete;
 	}
+}
+
+/*
+ * tbm_is_empty - is a TIDBitmap completely empty?
+ */
+bool
+tbm_is_empty(const TIDBitmap *tbm)
+{
+	return (tbm->nentries == 0);
 }
 
 /*

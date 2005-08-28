@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapAnd.c,v 1.2 2005/04/20 15:48:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapAnd.c,v 1.3 2005/08/28 22:47:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,6 +143,16 @@ MultiExecBitmapAnd(BitmapAndState *node)
 			tbm_intersect(result, subresult);
 			tbm_free(subresult);
 		}
+
+		/*
+		 * If at any stage we have a completely empty bitmap, we can fall
+		 * out without evaluating the remaining subplans, since ANDing them
+		 * can no longer change the result.  (Note: the fact that indxpath.c
+		 * orders the subplans by selectivity should make this case more
+		 * likely to occur.)
+		 */
+		if (tbm_is_empty(result))
+			break;
 	}
 
 	if (result == NULL)

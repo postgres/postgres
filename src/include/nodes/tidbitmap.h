@@ -15,7 +15,7 @@
  *
  * Copyright (c) 2003-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/nodes/tidbitmap.h,v 1.1 2005/04/17 22:24:02 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/tidbitmap.h,v 1.2 2005/08/28 22:47:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,8 @@ extern void tbm_add_tuples(TIDBitmap *tbm, const ItemPointer tids, int ntids);
 
 extern void tbm_union(TIDBitmap *a, const TIDBitmap *b);
 extern void tbm_intersect(TIDBitmap *a, const TIDBitmap *b);
+
+extern bool tbm_is_empty(const TIDBitmap *tbm);
 
 extern void tbm_begin_iterate(TIDBitmap *tbm);
 extern TBMIterateResult *tbm_iterate(TIDBitmap *tbm);
