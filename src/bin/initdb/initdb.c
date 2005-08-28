@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.97 2005/08/27 18:44:03 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.98 2005/08/28 22:21:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2706,12 +2706,12 @@ main(int argc, char *argv[])
 	get_parent_directory(bin_dir);
 	
 	printf(_("\nSuccess. You can now start the database server using:\n\n"
-			 "    %s%s%s%spostmaster -D %s%s%s\n"
+			 "    %s%s%spostmaster%s -D %s%s%s\n"
 			 "or\n"
-			 "    %s%s%s%spg_ctl -D %s%s%s -l logfile start\n\n"),
-	  QUOTE_PATH, bin_dir, QUOTE_PATH, (strlen(bin_dir) > 0) ? DIR_SEP : "",
+			 "    %s%s%spg_ctl%s -D %s%s%s -l logfile start\n\n"),
+	  QUOTE_PATH, bin_dir, (strlen(bin_dir) > 0) ? DIR_SEP : "", QUOTE_PATH,
 	  QUOTE_PATH, pg_data_native, QUOTE_PATH,
-	  QUOTE_PATH, bin_dir, QUOTE_PATH, (strlen(bin_dir) > 0) ? DIR_SEP : "",
+	  QUOTE_PATH, bin_dir, (strlen(bin_dir) > 0) ? DIR_SEP : "", QUOTE_PATH,
 	  QUOTE_PATH, pg_data_native, QUOTE_PATH);
 
 	return 0;
