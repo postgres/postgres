@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.70 2005/08/23 21:02:03 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.71 2005/08/28 16:37:48 momjian Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -880,6 +880,11 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 static unsigned long
 pq_threadidcallback(void)
 {
+	/*
+	 *	This is not starndard-compliant.  pthread_self() returns
+	 *	pthread_t, and shouldn't be cast to unsigned long, but
+	 *	CRYPTO_set_id_callback requires it, so we have to do it.
+	 */
 	return (unsigned long) pthread_self();
 }
 
