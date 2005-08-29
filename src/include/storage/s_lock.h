@@ -66,7 +66,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.133.4.4 2005/08/28 18:26:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.133.4.5 2005/08/29 00:41:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -475,8 +475,14 @@ tas(volatile slock_t *lock)
 /* MIPS S_UNLOCK is almost standard but requires a "sync" instruction */
 #define S_UNLOCK(lock)	\
 do \
-{\
-	__asm__ __volatile__ ("	sync \n"); \
+{ \
+	__asm__ __volatile__( \
+		"       .set push           \n" \
+		"       .set mips2          \n" \
+		"       .set noreorder      \n" \
+		"       .set nomacro        \n" \
+		"       sync                \n" \
+		"       .set pop              "); \
 	*((volatile slock_t *) (lock)) = 0; \
 } while (0)
 
