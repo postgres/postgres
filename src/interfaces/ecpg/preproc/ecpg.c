@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.91 2004/11/09 15:57:55 petere Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.92 2005/08/29 01:32:00 tgl Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -434,7 +434,7 @@ main(int argc, char *const argv[])
 						 * Does not really make sense to declare a cursor
 						 * but not open it
 						 */
-						snprintf(errortext, sizeof(errortext), "cursor `%s´ has been declared but ot opened\n", ptr->name);
+						snprintf(errortext, sizeof(errortext), "cursor \"%s\" has been declared but not opened\n", ptr->name);
 						mmerror(PARSE_ERROR, ET_WARNING, errortext);
 					}
 					ptr = ptr->next;
