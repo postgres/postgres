@@ -9,7 +9,7 @@
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.5 2005/08/15 23:00:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.6 2005/08/29 19:39:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ typedef struct
  * Validate a path and convert to absolute form.
  *
  * Argument may be absolute or relative to the DataDir (but we only allow
- * absolute paths that match Log_directory).
+ * absolute paths that match DataDir or Log_directory).
  */
 static char *
 check_and_make_absolute(text *arg)
@@ -62,11 +62,12 @@ check_and_make_absolute(text *arg)
 
 	if (is_absolute_path(filename))
 	{
+		/* Allow absolute references within DataDir */
+		if (path_is_prefix_of_path(DataDir, filename))
+			return filename;
 		/* The log directory might be outside our datadir, but allow it */
-	    if (is_absolute_path(Log_directory) &&
-			strncmp(filename, Log_directory, strlen(Log_directory)) == 0 &&
-			(filename[strlen(Log_directory)] == '/' ||
-			 filename[strlen(Log_directory)] == '\0'))
+		if (is_absolute_path(Log_directory) &&
+			path_is_prefix_of_path(Log_directory, filename))
 			return filename;
 
 	    ereport(ERROR,

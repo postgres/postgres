@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.57 2005/08/12 21:07:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.58 2005/08/29 19:39:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -364,6 +364,22 @@ path_contains_parent_reference(const char *path)
 	return false;
 }
 
+/*
+ * Detect whether path1 is a prefix of path2 (including equality).
+ *
+ * This is pretty trivial, but it seems better to export a function than
+ * to export IS_DIR_SEP.
+ */
+bool
+path_is_prefix_of_path(const char *path1, const char *path2)
+{
+	int path1_len = strlen(path1);
+
+	if (strncmp(path1, path2, path1_len) == 0 &&
+		(IS_DIR_SEP(path2[path1_len]) || path2[path1_len] == '\0'))
+		return true;
+	return false;
+}
 
 /*
  * Extracts the actual name of the program as called - 
