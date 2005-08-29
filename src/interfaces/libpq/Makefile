@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.137 2005/08/23 21:02:03 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.138 2005/08/29 00:47:35 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,7 +21,9 @@ SO_MINOR_VERSION= 1
 DLTYPE= library
 
 override CPPFLAGS :=  -DFRONTEND -I$(srcdir) $(CPPFLAGS) -I$(top_builddir)/src/port
+ifneq ($(PORTNAME), win32)
 override CFLAGS += $(PTHREAD_CFLAGS)
+endif
 
 # Need to recomple any libpgport object files
 LIBS := $(patsubst -lpgport,, $(LIBS))
@@ -51,7 +53,11 @@ endif
 # Add libraries that libpq depends (or might depend) on into the
 # shared library link.  (The order in which you list them here doesn't
 # matter.)
+ifneq ($(PORTNAME), win32)
 SHLIB_LINK += $(filter -lcrypt -ldes -lcom_err -lcrypto -lk5crypto -lkrb5 -lssl -lsocket -lnsl -lresolv -lintl, $(LIBS)) $(PTHREAD_LIBS)
+else
+SHLIB_LINK += $(filter -lcrypt -ldes -lcom_err -lcrypto -lk5crypto -lkrb5 -lssl -lsocket -lnsl -lresolv -lintl $(PTHREAD_LIBS), $(LIBS))
+endif
 ifeq ($(PORTNAME), win32)
 SHLIB_LINK += -lshfolder -lwsock32 -lws2_32 $(filter -leay32 -lssleay32 -lcomerr32 -lkrb5_32, $(LIBS))
 endif
