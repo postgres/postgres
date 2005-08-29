@@ -90,7 +90,7 @@
 
 #shared_buffers = 1000			# min 16 or max_connections*2, 8KB each
 #temp_buffers = 1000			# min 100, 8KB each
-#max_prepared_transactions = 50		# can be 0 or more
+#max_prepared_transactions = 5		# can be 0 or more
 #work_mem = 1024			# min 64, size in KB
 #maintenance_work_mem = 16384		# min 1024, size in KB
 #max_stack_depth = 2048			# min 100, size in KB

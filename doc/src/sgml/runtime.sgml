@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.348 2005/08/24 18:56:07 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.349 2005/08/29 21:38:17 tgl Exp $
 -->
 
 <chapter Id="runtime">
@@ -1179,7 +1179,7 @@ SET ENABLE_SEQSCAN TO OFF;
         endterm="sql-prepare-transaction-title">).
         Setting this parameter to zero disables the prepared-transaction
         feature.
-        The default is 50.
+        The default is 5.
         This option can only be set at server start.
        </para>
 

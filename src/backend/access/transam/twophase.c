@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.10 2005/08/20 23:26:10 tgl Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.11 2005/08/29 21:38:18 tgl Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -64,7 +64,7 @@
 #define TWOPHASE_DIR "pg_twophase"
 
 /* GUC variable, can't be changed after startup */
-int max_prepared_xacts = 50;
+int max_prepared_xacts = 5;
 
 /*
  * This struct describes one global transaction that is in prepared state
