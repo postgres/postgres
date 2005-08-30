@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.26 2005/07/14 21:46:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.27 2005/08/30 01:08:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -445,6 +445,11 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 	simple_heap_delete(rel, &tuple->t_self);
 
 	heap_endscan(scandesc);
+
+	/*
+	 * Remove dependency on owner.
+	 */
+	deleteSharedDependencyRecordsFor(TableSpaceRelationId, tablespaceoid);
 
 	/*
 	 * Try to remove the physical infrastructure
