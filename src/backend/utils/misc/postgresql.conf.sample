@@ -49,11 +49,10 @@
 #listen_addresses = 'localhost'		# what IP interface(s) to listen on; 
 					# defaults to localhost, '*' = any
 #port = 5432
-#max_connections = 100			# note: increasing max_connections costs
-					# about 500 bytes of shared memory per 
-					# connection slot, in addition to costs
-					# from shared_buffers and 
-					# max_locks_per_transaction.
+#max_connections = 100
+# note: increasing max_connections costs ~400 bytes of shared memory per 
+# connection slot, plus lock space (see max_locks_per_transaction).  You
+# might also need to raise shared_buffers to support more connections.
 #superuser_reserved_connections = 2
 #unix_socket_directory = ''
 #unix_socket_group = ''
@@ -91,6 +90,8 @@
 #shared_buffers = 1000			# min 16 or max_connections*2, 8KB each
 #temp_buffers = 1000			# min 100, 8KB each
 #max_prepared_transactions = 5		# can be 0 or more
+# note: increasing max_prepared_transactions costs ~600 bytes of shared memory
+# per transaction slot, plus lock space (see max_locks_per_transaction).
 #work_mem = 1024			# min 64, size in KB
 #maintenance_work_mem = 16384		# min 1024, size in KB
 #max_stack_depth = 2048			# min 100, size in KB
@@ -98,7 +99,7 @@
 # - Free Space Map -
 
 #max_fsm_pages = 20000			# min max_fsm_relations*16, 6 bytes each
-#max_fsm_relations = 1000		# min 100, ~50 bytes each
+#max_fsm_relations = 1000		# min 100, ~70 bytes each
 
 # - Kernel Resource Usage -
 
@@ -396,8 +397,10 @@
 #---------------------------------------------------------------------------
 
 #deadlock_timeout = 1000		# in milliseconds
-#max_locks_per_transaction = 64		# min 10, ~200*max_connections 
-					# bytes each
+#max_locks_per_transaction = 64		# min 10
+# note: each lock table slot uses ~220 bytes of shared memory, and there are
+# max_locks_per_transaction * (max_connections + max_prepared_transactions)
+# lock table slots.
 
 
 #---------------------------------------------------------------------------
