@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.112 2004/12/31 21:59:10 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.112.4.1 2005/08/30 07:57:48 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -503,7 +503,7 @@ gistlayerinsert(Relation r, BlockNumber blkno,
 		 * changed beginning from 'child' offset
 		 */
 		if (ret & SPLITED)
-			gistadjscans(r, GISTOP_SPLIT, blkno, child);
+			gistadjscans(r, GISTOP_SPLIT, nblkno, FirstOffsetNumber);
 	}
 
 	ret = INSERTED;
@@ -1420,6 +1420,9 @@ gistnewroot(Relation r, IndexTuple *itup, int len)
 	Page		p;
 
 	b = ReadBuffer(r, GISTP_ROOT);
+
+	gistadjscans(r, GISTOP_SPLIT, GISTP_ROOT, FirstOffsetNumber);
+
 	GISTInitBuffer(b, 0);
 	p = BufferGetPage(b);
 

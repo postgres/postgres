@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistscan.c,v 1.56 2004/12/31 21:59:10 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistscan.c,v 1.56.4.1 2005/08/30 07:57:48 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@ static void gistregscan(IndexScanDesc s);
 static void gistdropscan(IndexScanDesc s);
 static void gistadjone(IndexScanDesc s, int op, BlockNumber blkno,
 		   OffsetNumber offnum);
-static void adjuststack(GISTSTACK *stk, BlockNumber blkno);
+static void adjuststack(GISTSTACK *stk, int op,BlockNumber blkno, OffsetNumber offnum);
 static void adjustiptr(IndexScanDesc s, ItemPointer iptr,
 		   int op, BlockNumber blkno, OffsetNumber offnum);
 
@@ -325,11 +325,8 @@ gistadjone(IndexScanDesc s,
 
 	so = (GISTScanOpaque) s->opaque;
 
-	if (op == GISTOP_SPLIT)
-	{
-		adjuststack(so->s_stack, blkno);
-		adjuststack(so->s_markstk, blkno);
-	}
+	adjuststack(so->s_stack, op, blkno, offnum);
+	adjuststack(so->s_markstk, op, blkno, offnum);
 }
 
 /*
@@ -411,14 +408,31 @@ adjustiptr(IndexScanDesc s,
  *		access method update code for heaps; if we've modified the tuple we
  *		are looking at already in this transaction, we ignore the update
  *		request.
+ *		If index tuple on our parent stack has been deleted, we need 
+ *		to make step back to avoid miss.
  */
 static void
-adjuststack(GISTSTACK *stk, BlockNumber blkno)
+adjuststack(GISTSTACK *stk, int op, BlockNumber blkno, OffsetNumber offnum)
 {
 	while (stk != NULL)
 	{
-		if (stk->gs_blk == blkno)
-			stk->gs_child = FirstOffsetNumber;
+		if (stk->gs_blk == blkno) {
+			switch (op) {
+				case GISTOP_DEL:
+					if ( stk->gs_child >= offnum ) {
+						if ( stk->gs_child > FirstOffsetNumber )
+							stk->gs_child = OffsetNumberPrev( stk->gs_child );
+						else
+							stk->gs_child = InvalidOffsetNumber;
+					}
+					break;
+				case GISTOP_SPLIT:
+					stk->gs_child = InvalidOffsetNumber;
+					break;
+				default:
+					elog(ERROR, "Bad operation in GiST scan adjust: %d", op);
+			}
+		}
 
 		stk = stk->gs_parent;
 	}
