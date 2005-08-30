@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.106 2005/08/15 16:25:17 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.107 2005/08/30 02:47:37 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -1446,8 +1446,13 @@ pgstat_send(void *msg, int len)
 
 	((PgStat_MsgHdr *) msg)->m_size = len;
 
+#ifdef USE_ASSERT_CHECKING
+	if (send(pgStatSock, msg, len, 0) < 0)
+		elog(LOG, "could not send to statistics collector: %m");
+#else
 	send(pgStatSock, msg, len, 0);
 	/* We deliberately ignore any error from send() */
+#endif
 }
 
 
