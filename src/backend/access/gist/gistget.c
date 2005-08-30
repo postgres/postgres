@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistget.c,v 1.35 2002/09/04 20:31:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistget.c,v 1.35.2.1 2005/08/30 08:48:16 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,10 +167,18 @@ gistnext(IndexScanDesc s, ScanDirection dir)
 			maxoff = PageGetMaxOffsetNumber(p);
 			po = (GISTPageOpaque) PageGetSpecialPointer(p);
 
-			if (ScanDirectionIsBackward(dir))
-				n = OffsetNumberPrev(stk->gs_child);
-			else
-				n = OffsetNumberNext(stk->gs_child);
+			if ( stk->gs_child == InvalidOffsetNumber ) { 
+				/* rescan page */
+				if (ScanDirectionIsBackward(dir))
+					n = PageGetMaxOffsetNumber(p);
+				else
+					n = FirstOffsetNumber;
+			} else {
+				if (ScanDirectionIsBackward(dir))
+					n = OffsetNumberPrev(stk->gs_child);
+				else
+					n = OffsetNumberNext(stk->gs_child);
+			}
 			so->s_stack = stk->gs_parent;
 			pfree(stk);
 
