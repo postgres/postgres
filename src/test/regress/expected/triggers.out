@@ -322,3 +322,67 @@ SELECT * FROM main_table ORDER BY a, b;
     |   
 (8 rows)
 
+-- Test enable/disable triggers
+create table trigtest (i serial primary key);
+NOTICE:  CREATE TABLE will create implicit sequence "trigtest_i_seq" for serial column "trigtest.i"
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "trigtest_pkey" for table "trigtest"
+-- test that disabling RI triggers works
+create table trigtest2 (i int references trigtest(i) on delete cascade);
+create function trigtest() returns trigger as $$
+begin
+	raise notice '% % % %', TG_RELNAME, TG_OP, TG_WHEN, TG_LEVEL;
+	return new;
+end;$$ language plpgsql;
+create trigger trigtest_b_row_tg before insert or update or delete on trigtest
+for each row execute procedure trigtest();
+create trigger trigtest_a_row_tg after insert or update or delete on trigtest
+for each row execute procedure trigtest();
+create trigger trigtest_b_stmt_tg before insert or update or delete on trigtest
+for each statement execute procedure trigtest();
+create trigger trigtest_a_stmt_tg after insert or update or delete on trigtest
+for each statement execute procedure trigtest();
+insert into trigtest default values;
+NOTICE:  trigtest INSERT BEFORE STATEMENT
+NOTICE:  trigtest INSERT BEFORE ROW
+NOTICE:  trigtest INSERT AFTER ROW
+NOTICE:  trigtest INSERT AFTER STATEMENT
+alter table trigtest disable trigger trigtest_b_row_tg;
+insert into trigtest default values;
+NOTICE:  trigtest INSERT BEFORE STATEMENT
+NOTICE:  trigtest INSERT AFTER ROW
+NOTICE:  trigtest INSERT AFTER STATEMENT
+alter table trigtest disable trigger user;
+insert into trigtest default values;
+alter table trigtest enable trigger trigtest_a_stmt_tg;
+insert into trigtest default values;
+NOTICE:  trigtest INSERT AFTER STATEMENT
+insert into trigtest2 values(1);
+insert into trigtest2 values(2);
+delete from trigtest where i=2;
+NOTICE:  trigtest DELETE AFTER STATEMENT
+select * from trigtest2;
+ i 
+---
+ 1
+(1 row)
+
+alter table trigtest disable trigger all;
+delete from trigtest where i=1;
+select * from trigtest2;
+ i 
+---
+ 1
+(1 row)
+
+-- ensure we still insert, even when all triggers are disabled
+insert into trigtest default values;
+select *  from trigtest;
+ i 
+---
+ 3
+ 4
+ 5
+(3 rows)
+
+drop table trigtest2;
+drop table trigtest;
