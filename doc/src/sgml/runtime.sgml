@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.351 2005/08/30 02:09:29 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.352 2005/08/30 15:48:28 tgl Exp $
 -->
 
 <chapter Id="runtime">
@@ -362,8 +362,8 @@ DETAIL:  Failed system call was shmget(key=5440001, size=4011376640, 03600).
      is trying to create (4011376640 bytes in this example). Or it could
      mean that you do not have System-V-style shared memory support
      configured into your kernel at all. As a temporary workaround, you
-     can try starting the server with a smaller-than-normal number
-     of buffers (<option>-B</option> switch). You will eventually want
+     can try starting the server with a smaller-than-normal number of
+     buffers (<xref linkend="guc-shared-buffers">). You will eventually want
      to reconfigure your kernel to increase the allowed shared memory
      size. You may also see this message when trying to start multiple
      servers on the same machine, if their total space requested
@@ -382,7 +382,7 @@ DETAIL:  Failed system call was semget(5440126, 17, 03600).
      <productname>PostgreSQL</productname> wants to create. As above,
      you may be able to work around the problem by starting the
      server with a reduced number of allowed connections
-     (<option>-N</option> switch), but you'll eventually want to
+     (<xref linkend="guc-max-connections">), but you'll eventually want to
      increase the kernel limit.
     </para>
 
@@ -5116,9 +5116,8 @@ sysctl -w kern.sysv.shmall
       <listitem>
        <para>
         In the default configuration, only 512 kB of shared memory per
-        segment is allowed, which is about enough for <option>-B 24 -N
-        12</>. To increase the setting, first change to the directory
-        <filename>/etc/conf/cf.d</>. To display the current value of
+        segment is allowed. To increase the setting, first change to the
+        directory <filename>/etc/conf/cf.d</>. To display the current value of
         <varname>SHMMAX</>, run
 <programlisting>
 ./configure -y SHMMAX
@@ -5197,9 +5196,8 @@ set semsys:seminfo_semmsl=32
       <listitem>
        <para>
         On <productname>UnixWare</> 7, the maximum size for shared
-        memory segments is 512 kB in the default configuration. This
-        is enough for about <option>-B 24 -N 12</>. To display the
-        current value of <varname>SHMMAX</>, run
+        memory segments is only 512 kB in the default configuration.
+        To display the current value of <varname>SHMMAX</>, run
 <programlisting>
 /etc/conf/bin/idtune -g SHMMAX
 </programlisting>
