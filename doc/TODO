@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sun Aug 28 14:52:34 EDT 2005
+Last updated:		Tue Aug 30 19:25:23 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -377,6 +377,7 @@ SQL Commands
 * Allow EXPLAIN to identify tables that were skipped because of 
   constraint_exclusion
 * Allow EXPLAIN output to be more easily processed by scripts
+* Eventually enable escape_string_warning and standard_conforming_strings
 
 
 * CREATE
