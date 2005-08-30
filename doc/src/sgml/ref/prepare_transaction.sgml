@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/prepare_transaction.sgml,v 1.2 2005/08/01 19:38:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/prepare_transaction.sgml,v 1.3 2005/08/30 01:37:38 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -116,6 +116,16 @@ PREPARE TRANSACTION <replaceable class="PARAMETER">transaction_id</replaceable>
    usage of the feature is that a prepared transaction will normally be
    committed or rolled back as soon as an external transaction manager
    has verified that other databases are also prepared to commit.
+  </para>
+
+  <para>
+   If you make any serious use of prepared transactions, you will probably
+   want to increase the value of <xref
+   linkend="guc-max-prepared-transactions">, as the default setting is
+   quite small (to avoid wasting resources for those who don't use it).
+   It is recommendable to make it at least equal to
+   <xref linkend="guc-max-connections">, so that every session can have
+   a prepared transaction pending.
   </para>
  </refsect1>
 
