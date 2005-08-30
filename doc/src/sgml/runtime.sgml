@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.350 2005/08/30 00:58:47 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.351 2005/08/30 02:09:29 tgl Exp $
 -->
 
 <chapter Id="runtime">
@@ -5238,28 +5238,22 @@ set semsys:seminfo_semmsl=32
      <tbody>
       <row>
        <entry><xref linkend="guc-max-connections"></>
-       <entry>400 (but see also <varname>max_locks_per_transaction</>)</entry>
+       <entry>400 + 220 * <xref linkend="guc-max-locks-per-transaction"></entry>
       </row>
 
       <row>
        <entry><xref linkend="guc-max-prepared-transactions"></>
-       <entry>600 (but see also <varname>max_locks_per_transaction</>)</entry>
-      </row>
-
-      <row>
-       <entry><xref linkend="guc-max-locks-per-transaction"></>
-       <entry>220 * (<xref linkend="guc-max-connections"> +
-        <xref linkend="guc-max-prepared-transactions">)</>
+       <entry>600 + 220 * <xref linkend="guc-max-locks-per-transaction"></entry>
       </row>
 
       <row>
        <entry><xref linkend="guc-shared-buffers"></>
-       <entry>8300</>
+       <entry>8300 (assuming 8K <symbol>BLCKSZ</>)</entry>
       </row>
 
       <row>
        <entry><xref linkend="guc-wal-buffers"></>
-       <entry>8200</>
+       <entry>8200 (assuming 8K <symbol>BLCKSZ</>)</entry>
       </row>
 
       <row>
