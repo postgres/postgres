@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Thu Aug 11 09:21:58 EDT 2005
+   Last updated: Thu Sep 1 12:17:52 EDT 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -489,23 +489,23 @@
    twenty bytes in length. The flat file would be 2.8 MB. The size of the
    PostgreSQL database file containing this data can be estimated as 6.4
    MB:
-    32 bytes: each row header (approximate)
+    28 bytes: each row header (approximate)
     24 bytes: one int field and one text field
    + 4 bytes: pointer on page to tuple
    ----------------------------------------
-    60 bytes per row
+    56 bytes per row
 
    The data page size in PostgreSQL is 8192 bytes (8 KB), so:
 
    8192 bytes per page
-   -------------------   =  136 rows per database page (rounded down)
-     60 bytes per row
+   -------------------   =  146 rows per database page (rounded down)
+     56 bytes per row
 
    100000 data rows
-   --------------------  =  735 database pages (rounded up)
-      128 rows per page
+   --------------------  =  685 database pages (rounded up)
+      146 rows per page
 
-735 database pages * 8192 bytes per page  =  6,021,120 bytes (6 MB)
+685 database pages * 8192 bytes per page  =  5,611,520 bytes (5.6 MB)
 
    Indexes do not require as much overhead, but do contain the data that
    is being indexed, so they can be large also.
