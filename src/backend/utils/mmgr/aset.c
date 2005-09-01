@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.62 2005/06/04 22:57:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.63 2005/09/01 18:15:42 tgl Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -123,6 +123,12 @@ typedef void *AllocPointer;
 
 /*
  * AllocSetContext is our standard implementation of MemoryContext.
+ *
+ * Note: isReset means there is nothing for AllocSetReset to do.  This is
+ * different from the aset being physically empty (empty blocks list) because
+ * we may still have a keeper block.  It's also different from the set being
+ * logically empty, because we don't attempt to detect pfree'ing the last
+ * active chunk.
  */
 typedef struct AllocSetContext
 {
@@ -130,6 +136,7 @@ typedef struct AllocSetContext
 	/* Info about storage allocated in this context: */
 	AllocBlock	blocks;			/* head of list of blocks in this set */
 	AllocChunk	freelist[ALLOCSET_NUM_FREELISTS];		/* free chunk lists */
+	bool		isReset;		/* T = no space alloced since last reset */
 	/* Allocation parameters for this context: */
 	Size		initBlockSize;	/* initial block size */
 	Size		maxBlockSize;	/* maximum block size */
@@ -347,6 +354,8 @@ AllocSetContextCreate(MemoryContext parent,
 		context->keeper = block;
 	}
 
+	context->isReset = true;
+
 	return (MemoryContext) context;
 }
 
@@ -386,26 +395,28 @@ static void
 AllocSetReset(MemoryContext context)
 {
 	AllocSet	set = (AllocSet) context;
-	AllocBlock	block = set->blocks;
+	AllocBlock	block;
 
 	AssertArg(AllocSetIsValid(set));
+
+	/* Nothing to do if no pallocs since startup or last reset */
+	if (set->isReset)
+		return;
 
 #ifdef MEMORY_CONTEXT_CHECKING
 	/* Check for corruption and leaks before freeing */
 	AllocSetCheck(context);
 #endif
 
-	/* Nothing to do if context has never contained any data */
-	if (block == NULL)
-		return;
-
 	/* Clear chunk freelists */
 	MemSetAligned(set->freelist, 0, sizeof(set->freelist));
+
+	block = set->blocks;
 
 	/* New blocks list is either empty or just the keeper block */
 	set->blocks = set->keeper;
 
-	do
+	while (block != NULL)
 	{
 		AllocBlock	next = block->next;
 
@@ -432,7 +443,8 @@ AllocSetReset(MemoryContext context)
 		}
 		block = next;
 	}
-	while (block != NULL);
+
+	set->isReset = true;
 }
 
 /*
@@ -538,6 +550,8 @@ AllocSetAlloc(MemoryContext context, Size size)
 			set->blocks = block;
 		}
 
+		set->isReset = false;
+
 		AllocAllocInfo(set, chunk);
 		return AllocChunkGetPointer(chunk);
 	}
@@ -575,6 +589,9 @@ AllocSetAlloc(MemoryContext context, Size size)
 		if (size < chunk->size)
 			((char *) AllocChunkGetPointer(chunk))[size] = 0x7E;
 #endif
+
+		/* isReset must be false already */
+		Assert(!set->isReset);
 
 		AllocAllocInfo(set, chunk);
 		return AllocChunkGetPointer(chunk);
@@ -748,6 +765,8 @@ AllocSetAlloc(MemoryContext context, Size size)
 		((char *) AllocChunkGetPointer(chunk))[size] = 0x7E;
 #endif
 
+	set->isReset = false;
+
 	AllocAllocInfo(set, chunk);
 	return AllocChunkGetPointer(chunk);
 }
@@ -845,6 +864,9 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 			elog(WARNING, "detected write past chunk end in %s %p",
 				 set->header.name, chunk);
 #endif
+
+	/* isReset must be false already */
+	Assert(!set->isReset);
 
 	/*
 	 * Chunk sizes are aligned to power of 2 in AllocSetAlloc(). Maybe the
@@ -1009,12 +1031,12 @@ AllocSetIsEmpty(MemoryContext context)
 	AllocSet	set = (AllocSet) context;
 
 	/*
-	 * For now, we say "empty" only if the context never contained any
-	 * space at all.  We could examine the freelists to determine if all
-	 * space has been freed, but it's not really worth the trouble for
-	 * present uses of this functionality.
+	 * For now, we say "empty" only if the context is new or just reset.
+	 * We could examine the freelists to determine if all space has been
+	 * freed, but it's not really worth the trouble for present uses of
+	 * this functionality.
 	 */
-	if (set->blocks == NULL)
+	if (set->isReset)
 		return true;
 	return false;
 }
