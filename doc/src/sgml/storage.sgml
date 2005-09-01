@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.6 2005/04/28 21:47:09 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.7 2005/09/01 20:01:53 tgl Exp $
 -->
 
 <chapter id="storage">
@@ -34,9 +34,8 @@ files, as shown in <xref linkend="pgdata-contents-table">.  In addition to
 these required items, the cluster configuration files
 <filename>postgresql.conf</filename>, <filename>pg_hba.conf</filename>, and
 <filename>pg_ident.conf</filename> are traditionally stored in
-<varname>PGDATA</> (although beginning in
-<productname>PostgreSQL</productname> 8.0 it is possible to keep them
-elsewhere). 
+<varname>PGDATA</> (although in <productname>PostgreSQL</productname> 8.0 and
+later, it is possible to keep them elsewhere). 
 </para>
 
 <table tocentry="1" id="pgdata-contents-table">
@@ -88,6 +87,11 @@ Item
 <row>
  <entry><filename>pg_tblspc</></entry>
  <entry>Subdirectory containing symbolic links to tablespaces</entry>
+</row>
+
+<row>
+ <entry><filename>pg_twophase</></entry>
+ <entry>Subdirectory containing state files for prepared transactions</entry>
 </row>
 
 <row>
@@ -437,7 +441,8 @@ data. Empty in ordinary tables.</entry>
   The last 2 bytes of the page header,
   <structfield>pd_pagesize_version</structfield>, store both the page size
   and a version indicator.  Beginning with
-  <productname>PostgreSQL</productname> 8.0 the version number is 2; 
+  <productname>PostgreSQL</productname> 8.1 the version number is 3;
+  <productname>PostgreSQL</productname> 8.0 used version number 2;
   <productname>PostgreSQL</productname> 7.3 and 7.4 used version number 1;
   prior releases used version number 0.
   (The basic page layout and header format has not changed in these versions,
