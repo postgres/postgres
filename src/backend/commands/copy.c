@@ -8,12 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.248 2005/08/06 20:41:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.249 2005/09/01 15:34:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include <ctype.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <netinet/in.h>
@@ -2657,10 +2658,10 @@ CopyReadLineCSV(CopyState cstate)
 static int
 GetDecimalFromHex(char hex)
 {
-	if (isdigit(hex))
+	if (isdigit((unsigned char) hex))
 		return hex - '0';
 	else
-		return tolower(hex) - 'a' + 10;
+		return tolower((unsigned char) hex) - 'a' + 10;
 }
 
 /*
@@ -2802,7 +2803,7 @@ CopyReadAttributesText(CopyState cstate, int maxfields, char **fieldvals)
 						{
 							char hexchar = *cur_ptr;
 
-							if (isxdigit(hexchar))
+							if (isxdigit((unsigned char) hexchar))
 							{
 								int val = GetDecimalFromHex(hexchar);
 
@@ -2810,7 +2811,7 @@ CopyReadAttributesText(CopyState cstate, int maxfields, char **fieldvals)
 								if (cur_ptr < line_end_ptr)
 								{
 									hexchar = *cur_ptr;
-									if (isxdigit(hexchar))
+									if (isxdigit((unsigned char) hexchar))
 									{
 										cur_ptr++;
 										val = (val << 4) + GetDecimalFromHex(hexchar);
