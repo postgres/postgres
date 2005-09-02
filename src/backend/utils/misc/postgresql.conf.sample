@@ -46,8 +46,9 @@
 
 # - Connection Settings -
 
-#listen_addresses = 'localhost'		# what IP interface(s) to listen on; 
-					# defaults to localhost, '*' = any
+#listen_addresses = 'localhost'		# what IP address(es) to listen on; 
+					# comma seperated;
+					# defaults to localhost, '*' = all
 #port = 5432
 #max_connections = 100
 # note: increasing max_connections costs ~400 bytes of shared memory per 
