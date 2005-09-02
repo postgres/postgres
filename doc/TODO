@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Sep  2 16:11:27 EDT 2005
+Last updated:		Fri Sep  2 17:01:18 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -389,7 +389,7 @@ SQL Commands
 	  copy of db?
 
 	o Add ON COMMIT capability to CREATE TABLE AS ... SELECT
-	o Allow COPY into an empty table to skip WAL logging
+	o Allow COPY into an new table to skip WAL logging
 
 
 * UPDATE
