@@ -11,7 +11,7 @@
  *	as a service.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.12 2005/08/02 19:02:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.13 2005/09/02 18:55:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,10 +88,15 @@ copydir(char *fromdir, char *todir, bool recurse)
 static void
 copy_file(char *fromfile, char *tofile)
 {
-	char		buffer[8 * BLCKSZ];
+	char	   *buffer;
 	int			srcfd;
 	int			dstfd;
 	int			nbytes;
+
+	/* Use palloc to ensure we get a maxaligned buffer */
+#define COPY_BUF_SIZE (8 * BLCKSZ)
+
+	buffer = palloc(COPY_BUF_SIZE);
 
 	/*
 	 * Open the files
@@ -114,7 +119,7 @@ copy_file(char *fromfile, char *tofile)
 	 */
 	for (;;)
 	{
-		nbytes = read(srcfd, buffer, sizeof(buffer));
+		nbytes = read(srcfd, buffer, COPY_BUF_SIZE);
 		if (nbytes < 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
@@ -147,4 +152,6 @@ copy_file(char *fromfile, char *tofile)
 				 errmsg("could not close file \"%s\": %m", tofile)));
 
 	close(srcfd);
+
+	pfree(buffer);
 }
