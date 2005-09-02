@@ -23,7 +23,7 @@
  * Copyright (c) 2003-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/tidbitmap.c,v 1.6 2005/08/28 22:47:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/tidbitmap.c,v 1.7 2005/09/02 19:02:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@
  * the per-page bitmaps variable size.  We just legislate that the size
  * is this:
  */
-#define MAX_TUPLES_PER_PAGE  ((BLCKSZ - 1) / MAXALIGN(offsetof(HeapTupleHeaderData, t_bits) + sizeof(ItemIdData)) + 1)
+#define MAX_TUPLES_PER_PAGE  MaxHeapTuplesPerPage
 
 /*
  * When we have to switch over to lossy storage, we use a data structure

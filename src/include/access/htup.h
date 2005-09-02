@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.76 2005/08/20 00:39:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.77 2005/09/02 19:02:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -322,6 +322,16 @@ do { \
 
 #define MaxTupleSize	\
 	(BLCKSZ - MAXALIGN(sizeof(PageHeaderData) + MaxSpecialSpace))
+
+/*
+ * MaxHeapTuplesPerPage is an upper bound on the number of tuples that can
+ * fit on one heap page.  (Note that indexes could have more, because they
+ * use a smaller tuple header.)  We arrive at the divisor because each tuple
+ * must be maxaligned, and it must have an associated item pointer.
+ */
+#define MaxHeapTuplesPerPage	\
+	((int) ((BLCKSZ - offsetof(PageHeaderData, pd_linp)) / \
+			(MAXALIGN(offsetof(HeapTupleHeaderData, t_bits)) + sizeof(ItemIdData))))
 
 /*
  * MaxAttrSize is a somewhat arbitrary upper limit on the declared size of

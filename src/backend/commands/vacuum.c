@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.313 2005/08/20 00:39:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.314 2005/09/02 19:02:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2407,7 +2407,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 		{
 			Buffer		buf;
 			Page		page;
-			OffsetNumber unused[BLCKSZ / sizeof(OffsetNumber)];
+			OffsetNumber unused[MaxOffsetNumber];
 			OffsetNumber offnum,
 						maxoff;
 			int			uncnt;
@@ -2896,7 +2896,7 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 static void
 vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage)
 {
-	OffsetNumber unused[BLCKSZ / sizeof(OffsetNumber)];
+	OffsetNumber unused[MaxOffsetNumber];
 	int			uncnt;
 	Page		page = BufferGetPage(buffer);
 	ItemId		itemid;

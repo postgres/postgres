@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.57 2005/08/20 23:26:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.58 2005/09/02 19:02:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,9 +59,6 @@
  */
 #define REL_TRUNCATE_MINIMUM	1000
 #define REL_TRUNCATE_FRACTION	16
-
-/* MAX_TUPLES_PER_PAGE can be a conservative upper limit */
-#define MAX_TUPLES_PER_PAGE		((int) (BLCKSZ / sizeof(HeapTupleHeaderData)))
 
 
 typedef struct LVRelStats
@@ -259,7 +256,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		 * dead-tuple TIDs, pause and do a cycle of vacuuming before we
 		 * tackle this page.
 		 */
-		if ((vacrelstats->max_dead_tuples - vacrelstats->num_dead_tuples) < MAX_TUPLES_PER_PAGE &&
+		if ((vacrelstats->max_dead_tuples - vacrelstats->num_dead_tuples) < MaxHeapTuplesPerPage &&
 			vacrelstats->num_dead_tuples > 0)
 		{
 			/* Remove index entries */
@@ -554,7 +551,7 @@ static int
 lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 				 int tupindex, LVRelStats *vacrelstats)
 {
-	OffsetNumber unused[BLCKSZ / sizeof(OffsetNumber)];
+	OffsetNumber unused[MaxOffsetNumber];
 	int			uncnt;
 	Page		page = BufferGetPage(buffer);
 	ItemId		itemid;
@@ -960,7 +957,7 @@ lazy_space_alloc(LVRelStats *vacrelstats, BlockNumber relblocks)
 	maxtuples = (maintenance_work_mem * 1024L) / sizeof(ItemPointerData);
 	maxtuples = Min(maxtuples, INT_MAX);
 	/* stay sane if small maintenance_work_mem */
-	maxtuples = Max(maxtuples, MAX_TUPLES_PER_PAGE);
+	maxtuples = Max(maxtuples, MaxHeapTuplesPerPage);
 
 	vacrelstats->num_dead_tuples = 0;
 	vacrelstats->max_dead_tuples = (int) maxtuples;

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.130 2005/05/11 06:24:53 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.131 2005/09/02 19:02:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -584,7 +584,7 @@ btbulkdelete(PG_FUNCTION_ARGS)
 	IndexBulkDeleteResult *result;
 	double		tuples_removed;
 	double		num_index_tuples;
-	OffsetNumber deletable[BLCKSZ / sizeof(OffsetNumber)];
+	OffsetNumber deletable[MaxOffsetNumber];
 	int			ndeletable;
 	Buffer		buf;
 	BlockNumber num_pages;

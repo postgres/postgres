@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.6 2005/06/30 17:52:14 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.7 2005/09/02 19:02:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ gistVacuumUpdate( GistVacuum *gv, BlockNumber blkno, bool needunion ) {
 	int 		lenaddon=4, curlenaddon=0, ntodelete=0;
 	IndexTuple	idxtuple, *addon=NULL;
 	bool		needwrite=false;
-	OffsetNumber    todelete[ BLCKSZ/SizeOfIptrData ];
+	OffsetNumber    todelete[MaxOffsetNumber];
 	ItemPointerData	*completed=NULL;
 	int 		ncompleted=0, lencompleted=16;
 
@@ -439,7 +439,7 @@ gistbulkdelete(PG_FUNCTION_ARGS) {
 		page   = (Page) BufferGetPage(buffer);
 
 		if ( GistPageIsLeaf(page) ) {
-			OffsetNumber todelete[BLCKSZ/SizeOfIptrData];
+			OffsetNumber todelete[MaxOffsetNumber];
 			int ntodelete = 0;
 
 			LockBuffer(buffer, GIST_UNLOCK);
