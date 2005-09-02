@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Sep  2 17:10:58 EDT 2005
+Last updated:		Fri Sep  2 17:23:03 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -450,10 +450,10 @@ SQL Commands
 	o Allow COPY on a newly-created table to skip WAL logging
 
 	  On crash recovery, the table involved in the COPY would
-	  have its heap and index files truncated.  One issue is
-	  that no other backend should be able to add to the table
-	  at the same time, which is something that is currently
-	  allowed.
+	  removed or have its heap and index files truncated.  One
+	  issue is that no other backend should be able to add to 
+	  the table at the same time, which is something that is 
+	  currently allowed.
 
 * GRANT/REVOKE
 
