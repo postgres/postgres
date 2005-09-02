@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Aug 30 19:25:23 EDT 2005
+Last updated:		Thu Sep  1 20:49:44 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -810,11 +810,6 @@ Vacuum
   write lock. However, the read lock promotion to write lock could lead
   to deadlock situations.
 
-* Maintain a map of recently-expired rows
-
-  This allows vacuum to target specific pages for possible free space 
-  without requiring a sequential scan.
-
 * Auto-fill the free space map by scanning the buffer cache or by
   checking pages written by the background writer
 * Create a bitmap of pages that need vacuuming
@@ -823,6 +818,10 @@ Vacuum
   writer or some other process record pages that have expired rows, then
   VACUUM can look at just those pages rather than the entire table.  In
   the event of a system crash, the bitmap would probably be invalidated.
+  One complexity is that index entries still have to be vacuumed, and
+  doing this without an index scan (by using the heap values to find the
+  index entry) might be slow and unreliable, especially for user-defined
+  index functions.
 
 * %Add system view to show free space map contents
 

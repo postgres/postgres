@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Tue Aug 30 19:25:23 EDT 2005
+Last updated:           Thu Sep  1 20:49:44 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -731,10 +731,6 @@ first.
   write lock. However, the read lock promotion to write lock could lead
   to deadlock situations.
 </p>
-  </li><li>Maintain a map of recently-expired rows
-<p>  This allows vacuum to target specific pages for possible free space 
-  without requiring a sequential scan.
-</p>
   </li><li>Auto-fill the free space map by scanning the buffer cache or by
   checking pages written by the background writer
   </li><li>Create a bitmap of pages that need vacuuming
@@ -742,6 +738,10 @@ first.
   writer or some other process record pages that have expired rows, then
   VACUUM can look at just those pages rather than the entire table.  In
   the event of a system crash, the bitmap would probably be invalidated.
+  One complexity is that index entries still have to be vacuumed, and
+  doing this without an index scan (by using the heap values to find the
+  index entry) might be slow and unreliable, especially for user-defined
+  index functions.
 </p>
   </li><li>%Add system view to show free space map contents
   </li><li>Auto-vacuum
