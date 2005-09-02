@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Sep  1 20:49:44 EDT 2005
+Last updated:		Fri Sep  2 11:22:36 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -962,6 +962,26 @@ Miscellaneous Performance
   could hit disk before WAL is written.
 
 * Add a script to ask system configuration questions and tune postgresql.conf
+* Merge xmin/xmax/cmin/cmax back into three header fields
+
+  Before subtransactions, there used to be only three fields needed to
+  store these four values. This was possible because only the current
+  transaction looks at the cmin/cmax values. If the current transaction
+  created and expired the row the fields stored where xmin (same as
+  xmax), cmin, cmax, and if the transaction was expiring a row from a
+  another transaction, the fields stored were xmin (cmin was not
+  needed), xmax, and cmax. Such a system worked because a transaction
+  could only see committed rows from another transaction. However,
+  subtransactions can see rows from outer transactions, and once the
+  subtransaction completes, the outer transaction continues, requiring
+  the storage of all four fields. With subtransactions, an outer
+  transaction can create a row, a subtransaction expire it, and when the
+  subtransaction completes, the outer transaction still has to have
+  proper visibility of the row, for example, for cursors.
+
+  One possible solution is to create a phantom cid which represents a
+  cmin/cmax pair and is stored in local memory.
+
 * Use a phantom command counter for nested subtransactions to reduce
   per-tuple overhead
 * Research storing disk pages with no alignment/padding
