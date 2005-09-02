@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Sep  2 15:39:11 EDT 2005
+Last updated:		Fri Sep  2 15:51:34 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -972,13 +972,13 @@ Miscellaneous Performance
   xmax), cmin, cmax, and if the transaction was expiring a row from a
   another transaction, the fields stored were xmin (cmin was not
   needed), xmax, and cmax. Such a system worked because a transaction
-  could only see committed rows from another transaction. However,
+  could only see rows from another completed transaction. However,
   subtransactions can see rows from outer transactions, and once the
   subtransaction completes, the outer transaction continues, requiring
   the storage of all four fields. With subtransactions, an outer
   transaction can create a row, a subtransaction expire it, and when the
   subtransaction completes, the outer transaction still has to have
-  proper visibility of the row, for example, for cursors.
+  proper visibility of the row's cmin, for example, for cursors.
 
   One possible solution is to create a phantom cid which represents a
   cmin/cmax pair and is stored in local memory.
