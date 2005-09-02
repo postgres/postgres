@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Fri Sep  2 17:01:18 EDT 2005
+Last updated:           Fri Sep  2 17:10:58 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -355,7 +355,6 @@ first.
     </li><li>Use more reliable method for CREATE DATABASE to get a consistent
           copy of db?
     </li><li>Add ON COMMIT capability to CREATE TABLE AS ... SELECT
-    </li><li>Allow COPY into an new table to skip WAL logging
   </li></ul>
   </li><li>UPDATE
   <ul>
@@ -407,6 +406,13 @@ first.
           processed, with ROLLBACK on COPY failure.
 </p>
     </li><li>%Have COPY return the number of rows loaded/unloaded?
+    </li><li>Allow COPY on a newly-created table to skip WAL logging
+<p>          On crash recovery, the table involved in the COPY would
+          have its heap and index files truncated.  One issue is
+          that no other backend should be able to add to the table
+          at the same time, which is something that is currently
+          allowed.
+</p>
   </li></ul>
   </li><li>GRANT/REVOKE
   <ul>
