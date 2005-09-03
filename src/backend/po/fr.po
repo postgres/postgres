@@ -1,7 +1,7 @@
 # translation of postgres-fr.po to FR_fr
 # French message translation file for pg_dump
 #
-# $PostgreSQL: pgsql/src/backend/po/fr.po,v 1.7.4.2 2005/06/17 11:42:00 petere Exp $
+# $PostgreSQL: pgsql/src/backend/po/fr.po,v 1.7.4.3 2005/09/03 07:41:58 petere Exp $
 #
 # Use these quotes: «%s»
 # Guillaume Lelarge <gleu@wanadoo.fr>, 2003, 2004, 2005.
@@ -9,8 +9,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2005-06-11 01:19-0300\n"
-"PO-Revision-Date: 2005-06-11 13:04+0100\n"
+"POT-Creation-Date: 2005-08-20 19:42-0300\n"
+"PO-Revision-Date: 2005-08-23 08:09+0100\n"
 "Last-Translator: Guillaume Lelarge <gleu@wanadoo.fr>\n"
 "Language-Team: français <pgsql-fr@tuxfamily.org>\n"
 "MIME-Version: 1.0\n"
@@ -1313,9 +1313,9 @@ msgstr "tous les privilèges n'ont pu être révoqué"
 msgid "invalid privilege type %s for database"
 msgstr "type de privilège %s invalide pour la base de données"
 
-#: catalog/aclchk.c:451 commands/comment.c:458 commands/dbcommands.c:544
-#: commands/dbcommands.c:673 commands/dbcommands.c:773
-#: commands/dbcommands.c:860 utils/adt/acl.c:1661 utils/init/postinit.c:273
+#: catalog/aclchk.c:451 commands/comment.c:458 commands/dbcommands.c:574
+#: commands/dbcommands.c:703 commands/dbcommands.c:803
+#: commands/dbcommands.c:890 utils/adt/acl.c:1661 utils/init/postinit.c:273
 #: utils/init/postinit.c:285
 #, c-format
 msgid "database \"%s\" does not exist"
@@ -1692,7 +1692,7 @@ msgstr "Les index définis par l'utilisateur sur les tables du catalogue systèm
 msgid "shared indexes cannot be created after initdb"
 msgstr "Les index partagés ne peuvent pas être créés après initdb"
 
-#: catalog/index.c:1634
+#: catalog/index.c:1642
 #, c-format
 msgid "shared index \"%s\" can only be reindexed in stand-alone mode"
 msgstr "Un index partagé «%s» peut seulement être réindexé en mode autonome"
@@ -1933,7 +1933,7 @@ msgid "function %s already exists in schema \"%s\""
 msgstr "la fonction %s existe déjà dans le schéma «%s»"
 
 #: commands/aggregatecmds.c:335 commands/conversioncmds.c:213
-#: commands/dbcommands.c:883 commands/functioncmds.c:773
+#: commands/dbcommands.c:913 commands/functioncmds.c:773
 #: commands/opclasscmds.c:954 commands/operatorcmds.c:303
 #: commands/schemacmds.c:319 commands/tablecmds.c:5273
 #: commands/tablespace.c:839 commands/typecmds.c:2106
@@ -2187,7 +2187,7 @@ msgid "must be superuser to create database for another user"
 msgstr "doit être super-utilisateur pour créer une base de données pour un autre utilisateur"
 
 #: commands/dbcommands.c:216 commands/dbcommands.c:452
-#: commands/dbcommands.c:706
+#: commands/dbcommands.c:736
 #, c-format
 msgid "database \"%s\" already exists"
 msgstr "la base de données «%s» existe déjà"
@@ -2225,9 +2225,9 @@ msgid ""
 msgstr "Il existe un conflit car la base de données «%s» a déjà quelques tables dans son espace logique."
 
 #: commands/dbcommands.c:382 commands/dbcommands.c:404
-#: commands/dbcommands.c:414 commands/dbcommands.c:1218
-#: commands/dbcommands.c:1226 commands/dbcommands.c:1294
-#: commands/dbcommands.c:1302
+#: commands/dbcommands.c:414 commands/dbcommands.c:1248
+#: commands/dbcommands.c:1256 commands/dbcommands.c:1324
+#: commands/dbcommands.c:1332
 msgid "could not initialize database directory"
 msgstr "n'a pas pu initialiser le répertoire de la base de données"
 
@@ -2236,43 +2236,43 @@ msgstr "n'a pas pu initialiser le répertoire de la base de données"
 msgid "Directory \"%s\" already exists."
 msgstr "Le répertoire «%s» existe déjà"
 
-#: commands/dbcommands.c:405 commands/dbcommands.c:1219
-#: commands/dbcommands.c:1295
+#: commands/dbcommands.c:405 commands/dbcommands.c:1249
+#: commands/dbcommands.c:1325
 #, c-format
 msgid "Failing system command was: %s"
 msgstr "La commande système ayant échouée était : %s"
 
-#: commands/dbcommands.c:406 commands/dbcommands.c:1220
-#: commands/dbcommands.c:1296
+#: commands/dbcommands.c:406 commands/dbcommands.c:1250
+#: commands/dbcommands.c:1326
 msgid "Look in the postmaster's stderr log for more information."
 msgstr ""
 "Regardez dans le journal des erreurs (stderr) de postmaster pour plus "
 "d'informations."
 
-#: commands/dbcommands.c:527
+#: commands/dbcommands.c:557
 msgid "cannot drop the currently open database"
 msgstr "n'a pas pu supprimer la base de données actuellement ouverte"
 
-#: commands/dbcommands.c:558
+#: commands/dbcommands.c:588
 msgid "cannot drop a template database"
 msgstr "n'a pas pu supprimer une base de données modèle"
 
-#: commands/dbcommands.c:566 commands/dbcommands.c:693
+#: commands/dbcommands.c:596 commands/dbcommands.c:723
 #, c-format
 msgid "database \"%s\" is being accessed by other users"
 msgstr "la base de données «%s» est actuellement accédée par d'autres utilisateurs"
 
-#: commands/dbcommands.c:684
+#: commands/dbcommands.c:714
 msgid "current database may not be renamed"
 msgstr "la base de données pourrait ne pas être renommée"
 
-#: commands/dbcommands.c:718
+#: commands/dbcommands.c:748
 msgid "permission denied to rename database"
 msgstr "droit refusé pour le renommage de la base de données"
 
-#: commands/dbcommands.c:1054 commands/dbcommands.c:1192
-#: commands/dbcommands.c:1245 commands/dbcommands.c:1268
-#: commands/dbcommands.c:1318
+#: commands/dbcommands.c:1084 commands/dbcommands.c:1222
+#: commands/dbcommands.c:1275 commands/dbcommands.c:1298
+#: commands/dbcommands.c:1348
 #, c-format
 msgid "could not remove database directory \"%s\""
 msgstr "n'a pas pu supprimer le répertoire de bases de données «%s»"
@@ -3410,16 +3410,16 @@ msgstr "setval : la valeur %s est en dehors des limites de la séquence «%s» (
 #: lib/dllist.c:88 libpq/auth.c:640 postmaster/pgstat.c:2450
 #: postmaster/pgstat.c:2517 postmaster/postmaster.c:810
 #: postmaster/postmaster.c:1701 postmaster/postmaster.c:2420
-#: storage/buffer/localbuf.c:139 storage/file/fd.c:588 storage/file/fd.c:621
-#: storage/file/fd.c:767 storage/ipc/sinval.c:789 storage/lmgr/lock.c:496
+#: storage/buffer/localbuf.c:139 storage/file/fd.c:598 storage/file/fd.c:631
+#: storage/file/fd.c:777 storage/ipc/sinval.c:789 storage/lmgr/lock.c:496
 #: storage/smgr/md.c:844 storage/smgr/smgr.c:213 utils/adt/cash.c:297
 #: utils/adt/cash.c:312 utils/adt/oracle_compat.c:74
 #: utils/adt/oracle_compat.c:126 utils/adt/regexp.c:200
 #: utils/adt/ri_triggers.c:3472 utils/cache/relcache.c:169
 #: utils/cache/relcache.c:183 utils/cache/relcache.c:1135
 #: utils/cache/typcache.c:165 utils/cache/typcache.c:487
-#: utils/fmgr/dfmgr.c:127 utils/fmgr/fmgr.c:527 utils/hash/dynahash.c:178
-#: utils/hash/dynahash.c:248 utils/init/miscinit.c:213
+#: utils/fmgr/dfmgr.c:127 utils/fmgr/fmgr.c:527 utils/hash/dynahash.c:186
+#: utils/hash/dynahash.c:256 utils/init/miscinit.c:213
 #: utils/init/miscinit.c:234 utils/init/miscinit.c:244 utils/misc/guc.c:1910
 #: utils/misc/guc.c:1923 utils/misc/guc.c:1936 utils/mmgr/aset.c:337
 #: utils/mmgr/aset.c:503 utils/mmgr/aset.c:700 utils/mmgr/aset.c:893
@@ -3620,35 +3620,35 @@ msgstr "Spécifications «datestyle» conflictuelles"
 msgid "invalid interval value for time zone: month not allowed"
 msgstr "Valeur d'intervalle invalide pour la zone horaire : les mois ne sont pas autorisés"
 
-#: commands/variable.c:407
+#: commands/variable.c:410
 #, c-format
 msgid "unrecognized time zone name: \"%s\""
 msgstr "Nom de zone horaire non reconnu : «%s»"
 
-#: commands/variable.c:415
+#: commands/variable.c:418
 #, c-format
 msgid "time zone \"%s\" appears to use leap seconds"
 msgstr "La zone horaire «%s» semble utiliser les secondes «leap»"
 
-#: commands/variable.c:417
+#: commands/variable.c:420
 msgid "PostgreSQL does not support leap seconds."
 msgstr "PostgreSQL ne supporte pas les secondes «leap»."
 
-#: commands/variable.c:491
+#: commands/variable.c:494
 msgid "SET TRANSACTION ISOLATION LEVEL must be called before any query"
 msgstr "SET TRANSACTION ISOLATION LEVEL doit être appelé avant toute requête"
 
-#: commands/variable.c:501
+#: commands/variable.c:504
 msgid "SET TRANSACTION ISOLATION LEVEL must not be called in a subtransaction"
 msgstr "SET TRANSACTION ISOLATION LEVEL ne doit pas être appelé dans une sous-transaction"
 
-#: commands/variable.c:601 utils/mb/mbutils.c:188
+#: commands/variable.c:604 utils/mb/mbutils.c:188
 #, c-format
 msgid "conversion between %s and %s is not supported"
 msgstr "La conversion entre %s et %s n'est pas supportée"
 
 #: commands/user.c:899 commands/user.c:1012 commands/user.c:1104
-#: commands/user.c:1233 commands/variable.c:672 utils/cache/lsyscache.c:2044
+#: commands/user.c:1233 commands/variable.c:675 utils/cache/lsyscache.c:2044
 #: utils/init/miscinit.c:335
 #, c-format
 msgid "user \"%s\" does not exist"
@@ -4163,7 +4163,7 @@ msgstr "La nouvelle ligne pour la relation «%s» viole la contrainte de vérifi
 #: executor/execQual.c:260 executor/execQual.c:288 executor/execQual.c:2138
 #: utils/adt/array_userfuncs.c:362 utils/adt/arrayfuncs.c:216
 #: utils/adt/arrayfuncs.c:472 utils/adt/arrayfuncs.c:1153
-#: utils/adt/arrayfuncs.c:2414
+#: utils/adt/arrayfuncs.c:2415
 #, c-format
 msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
 msgstr "Le nombre de dimensions du tableau (%d) dépasse le maximum autorisé (%d)"
@@ -4739,7 +4739,7 @@ msgstr "masque IP invalide «%s» dans le fichier «%s», ligne %d : %s"
 msgid "IP address and mask do not match in file \"%s\" line %d"
 msgstr "L'adresse IP et le masque ne correspondent pas dans le fichier «%s», ligne %d"
 
-#: libpq/hba.c:874 libpq/hba.c:1111
+#: libpq/hba.c:874
 #, c-format
 msgid "invalid entry in file \"%s\" at line %d, token \"%s\""
 msgstr "entrée invalide dans le fichier «%s» à la ligne %d, jeton «%s»"
@@ -4754,67 +4754,67 @@ msgstr "champ manquant dans le fichier «%s» à la fin de la ligne %d"
 msgid "could not open configuration file \"%s\": %m"
 msgstr "n'a pas pu ouvrir le fichier de configuration «%s» : %m"
 
-#: libpq/hba.c:1117
+#: libpq/hba.c:1111
 #, c-format
 msgid "missing entry in file \"%s\" at end of line %d"
 msgstr "entrée manquante dans le fichier «%s» à la fin de la ligne %d"
 
-#: libpq/hba.c:1148
+#: libpq/hba.c:1141
 msgid "cannot use Ident authentication without usermap field"
 msgstr "n'a pas pu utiliser l'authentication Ident sans le champ field"
 
-#: libpq/hba.c:1193
+#: libpq/hba.c:1186
 #, c-format
 msgid "could not open Ident usermap file \"%s\": %m"
 msgstr "n'a pas pu ouvrir Ident pour le fichier usermap «%s» : %m"
 
-#: libpq/hba.c:1371
+#: libpq/hba.c:1364
 #, c-format
 msgid "could not create socket for Ident connection: %m"
 msgstr "n'a pas pu créer le socket pour la connexion Ident : %m"
 
-#: libpq/hba.c:1387
+#: libpq/hba.c:1380
 #, c-format
 msgid "could not bind to local address \"%s\": %m"
 msgstr "n'a pas pu se lier à l'adresse locale «%s» : %m"
 
-#: libpq/hba.c:1399
+#: libpq/hba.c:1392
 #, c-format
 msgid "could not connect to Ident server at address \"%s\", port %s: %m"
 msgstr "n'a pas pu se connecter au serveur Ident à l'adresse «%s», port %s : %m"
 
-#: libpq/hba.c:1419
+#: libpq/hba.c:1412
 #, c-format
 msgid "could not send query to Ident server at address \"%s\", port %s: %m"
 msgstr "n'a pas pu envoyer la requête au serveur Ident à l'adresse «%s», port %s : %m"
 
-#: libpq/hba.c:1434
+#: libpq/hba.c:1427
 #, c-format
 msgid ""
 "could not receive response from Ident server at address \"%s\", port %s: %m"
 msgstr "n'a pas pu recevoir la réponse du serveur Ident à l'adresse «%s», port %s : %m"
 
-#: libpq/hba.c:1444
+#: libpq/hba.c:1437
 #, c-format
 msgid "invalidly formatted response from Ident server: \"%s\""
 msgstr "réponse invalide du serveur Ident : «%s»"
 
-#: libpq/hba.c:1479 libpq/hba.c:1510 libpq/hba.c:1578
+#: libpq/hba.c:1472 libpq/hba.c:1503 libpq/hba.c:1571
 #, c-format
 msgid "could not get peer credentials: %m"
 msgstr "n'a pas pu obtenir l'authentification de l'autre : %m"
 
-#: libpq/hba.c:1488 libpq/hba.c:1519 libpq/hba.c:1589
+#: libpq/hba.c:1481 libpq/hba.c:1512 libpq/hba.c:1582
 #, c-format
 msgid "local user with ID %d does not exist"
 msgstr "L'utilisateur local dont l'identifiant est %d n'existe pas"
 
-#: libpq/hba.c:1601
+#: libpq/hba.c:1594
 msgid ""
 "Ident authentication is not supported on local connections on this platform"
 msgstr "L'authentication Ident n'est pas supportée sur les connexions locales sur cette plateforme"
 
-#: libpq/hba.c:1644
+#: libpq/hba.c:1637
 #, c-format
 msgid "Ident protocol identifies remote user as \"%s\""
 msgstr "Le protocole Ident identifie l'utilisateur distant comme «%s»"
@@ -4935,7 +4935,7 @@ msgid "no data left in message"
 msgstr "Pas de données dans le message"
 
 #: libpq/pqformat.c:591 libpq/pqformat.c:609 libpq/pqformat.c:630
-#: utils/adt/arrayfuncs.c:1277 utils/adt/rowtypes.c:525
+#: utils/adt/arrayfuncs.c:1278 utils/adt/rowtypes.c:525
 msgid "insufficient data left in message"
 msgstr "Données insuffisantes laissées dans le message"
 
@@ -5359,46 +5359,6 @@ msgstr "Il n'existe pas de paramètres $%d"
 msgid "could not determine data type of parameter $%d"
 msgstr "n'a pas pudéterminer le type de données du paramètres $%d"
 
-#: scan.l:312
-msgid "unterminated /* comment"
-msgstr "Commentaire /* non terminé"
-
-#: scan.l:339
-msgid "unterminated bit string literal"
-msgstr "Chaîne littérale bit non terminée"
-
-#: scan.l:358
-msgid "unterminated hexadecimal string literal"
-msgstr "Chaîne littérale héxadécimale non terminée"
-
-#: scan.l:407
-msgid "unterminated quoted string"
-msgstr "Chaîne quotée non terminée"
-
-#: scan.l:441
-msgid "unterminated dollar-quoted string"
-msgstr "chaîne quotée non terminée"
-
-#: scan.l:453
-msgid "zero-length delimited identifier"
-msgstr "Identifiant délimité de longueur nulle"
-
-#: scan.l:466
-msgid "unterminated quoted identifier"
-msgstr "Identifiant quoté non terminé"
-
-#. translator: %s is typically "syntax error"
-#: scan.l:621
-#, c-format
-msgid "%s at end of input"
-msgstr "%s à la fin de l'entrée"
-
-#. translator: first %s is typically "syntax error"
-#: scan.l:629
-#, c-format
-msgid "%s at or near \"%s\""
-msgstr "%s sur ou près de «%s»"
-
 #: parser/parse_agg.c:120
 msgid "aggregates not allowed in WHERE clause"
 msgstr "Les aggrégats ne sont pas autorisés dans une clause WHERE"
@@ -5722,7 +5682,7 @@ msgstr ""
 msgid "operator does not exist: %s"
 msgstr "L'opérateur n'existe pas : %s"
 
-#: parser/parse_oper.c:185 utils/adt/arrayfuncs.c:2569
+#: parser/parse_oper.c:185 utils/adt/arrayfuncs.c:2570
 #: utils/adt/ri_triggers.c:3642
 #, c-format
 msgid "could not identify an equality operator for type %s"
@@ -5771,9 +5731,53 @@ msgstr "op ANY/ALL (tableau) requiert un opérateur pour comparer des booléens"
 msgid "op ANY/ALL (array) requires operator not to return a set"
 msgstr "op ANY/ALL (tableau) requiert que l'opérateur ne renvoie pas un ensemble"
 
+#: scan.l:312
+msgid "unterminated /* comment"
+msgstr "Commentaire /* non terminé"
+
+#: scan.l:339
+msgid "unterminated bit string literal"
+msgstr "Chaîne littérale bit non terminée"
+
+#: scan.l:358
+msgid "unterminated hexadecimal string literal"
+msgstr "Chaîne littérale héxadécimale non terminée"
+
+#: scan.l:407
+msgid "unterminated quoted string"
+msgstr "Chaîne quotée non terminée"
+
+#: scan.l:441
+msgid "unterminated dollar-quoted string"
+msgstr "chaîne quotée non terminée"
+
+#: scan.l:453
+msgid "zero-length delimited identifier"
+msgstr "Identifiant délimité de longueur nulle"
+
+#: scan.l:466
+msgid "unterminated quoted identifier"
+msgstr "Identifiant quoté non terminé"
+
+#: scan.l:544
+msgid "operator too long"
+msgstr "Opérateur trop long"
+
+#. translator: %s is typically "syntax error"
+#: scan.l:630
+#, c-format
+msgid "%s at end of input"
+msgstr "%s à la fin de l'entrée"
+
+#. translator: first %s is typically "syntax error"
+#: scan.l:638
+#, c-format
+msgid "%s at or near \"%s\""
+msgstr "%s sur ou près de «%s»"
+
 #: y.tab.c:9499
 msgid "syntax error: cannot back up"
-msgstr "erreur de syntaxe : n'a pas purevenir"
+msgstr "erreur de syntaxe : n'a pas pu revenir"
 
 #: gram.y:989 gram.y:1015
 msgid "time zone interval must be HOUR or HOUR TO MINUTE"
@@ -7073,18 +7077,18 @@ msgstr "écriture du bloc %u de la relation %u/%u/%u"
 msgid "no empty local buffer available"
 msgstr "Aucun tampon local vide disponible"
 
-#: storage/file/fd.c:356
+#: storage/file/fd.c:366
 msgid "insufficient file descriptors available to start server process"
 msgstr ""
 "Nombre de descripteurs de fichier insuffisants pour lancer le processus "
 "serveur"
 
-#: storage/file/fd.c:357
+#: storage/file/fd.c:367
 #, c-format
 msgid "System allows %d, we need at least %d."
 msgstr "Le système autorise %d, nous avons besoin d'au moins %d."
 
-#: storage/file/fd.c:398 storage/file/fd.c:1181 storage/file/fd.c:1296
+#: storage/file/fd.c:408 storage/file/fd.c:1191 storage/file/fd.c:1306
 #, c-format
 msgid "out of file descriptors: %m; release and retry"
 msgstr "Plus de descripteurs de fichiers : %m; quittez et ré-essayez"
@@ -7585,7 +7589,7 @@ msgid "invalid array element type OID: %u"
 msgstr "OID du type d'élément du tableau invalide : %u"
 
 #: utils/adt/array_userfuncs.c:358 utils/adt/arrayfuncs.c:1149
-#: utils/adt/arrayfuncs.c:2410
+#: utils/adt/arrayfuncs.c:2411
 #, c-format
 msgid "invalid number of dimensions: %d"
 msgstr "Nombre de dimensions invalides : %d"
@@ -7736,63 +7740,63 @@ msgstr "Drapeaux de tableau invalides"
 msgid "wrong element type"
 msgstr "Mauvais type d'élément"
 
-#: utils/adt/arrayfuncs.c:1211 utils/cache/lsyscache.c:1764
+#: utils/adt/arrayfuncs.c:1202 utils/cache/lsyscache.c:1764
 #, c-format
 msgid "no binary input function available for type %s"
 msgstr "Aucune fonction d'entrée binaire disponible pour le type %s"
 
-#: utils/adt/arrayfuncs.c:1304
+#: utils/adt/arrayfuncs.c:1305
 #, c-format
 msgid "improper binary format in array element %d"
 msgstr "Format binaire mal conçu dans l'élément du tableau %d"
 
-#: utils/adt/arrayfuncs.c:1383 utils/cache/lsyscache.c:1800
+#: utils/adt/arrayfuncs.c:1384 utils/cache/lsyscache.c:1800
 #, c-format
 msgid "no binary output function available for type %s"
 msgstr "Aucune fonction de sortie binaire disponible pour le type %s"
 
-#: utils/adt/arrayfuncs.c:1657
+#: utils/adt/arrayfuncs.c:1658
 msgid "slices of fixed-length arrays not implemented"
 msgstr "Les morceaux des tableaux à longueur fixe ne sont pas implémentés"
 
-#: utils/adt/arrayfuncs.c:1795 utils/adt/arrayfuncs.c:1800
-#: utils/adt/arrayfuncs.c:1840 utils/adt/arrayfuncs.c:1862
-#: utils/adt/arrayfuncs.c:1874 utils/adt/arrayfuncs.c:2035
-#: utils/adt/arrayfuncs.c:2052 utils/adt/arrayfuncs.c:2063
-#: utils/adt/arrayfuncs.c:2072 utils/adt/arrayfuncs.c:2083
+#: utils/adt/arrayfuncs.c:1796 utils/adt/arrayfuncs.c:1801
+#: utils/adt/arrayfuncs.c:1841 utils/adt/arrayfuncs.c:1863
+#: utils/adt/arrayfuncs.c:1875 utils/adt/arrayfuncs.c:2036
+#: utils/adt/arrayfuncs.c:2053 utils/adt/arrayfuncs.c:2064
+#: utils/adt/arrayfuncs.c:2073 utils/adt/arrayfuncs.c:2084
 msgid "invalid array subscripts"
 msgstr "Indices de tableau invalides"
 
-#: utils/adt/arrayfuncs.c:1991
+#: utils/adt/arrayfuncs.c:1992
 msgid "updates on slices of fixed-length arrays not implemented"
 msgstr "Les mises à jour de morceaux des tableaux à longueur fixe ne sont pas implémentées"
 
-#: utils/adt/arrayfuncs.c:2026 utils/adt/arrayfuncs.c:2095
+#: utils/adt/arrayfuncs.c:2027 utils/adt/arrayfuncs.c:2096
 msgid "source array too small"
 msgstr "Tableau source trop petit"
 
-#: utils/adt/arrayfuncs.c:2312 utils/adt/arrayfuncs.c:3311
+#: utils/adt/arrayfuncs.c:2313 utils/adt/arrayfuncs.c:3312
 msgid "null array elements not supported"
 msgstr "Les éléments de tableau NULL ne sont pas supportés"
 
-#: utils/adt/arrayfuncs.c:2547 utils/adt/arrayfuncs.c:2702
+#: utils/adt/arrayfuncs.c:2548 utils/adt/arrayfuncs.c:2703
 msgid "cannot compare arrays of different element types"
 msgstr "n'a pas pu comparer des tableaux ayant des types d'éléments différents"
 
-#: utils/adt/arrayfuncs.c:2719
+#: utils/adt/arrayfuncs.c:2720
 #, c-format
 msgid "could not identify a comparison function for type %s"
 msgstr "n'a pas pu identifier une fonction de comparaison pour le type %s"
 
-#: utils/adt/arrayfuncs.c:3118
+#: utils/adt/arrayfuncs.c:3119
 msgid "could not determine target array type"
 msgstr "n'a pas pu déterminer le type de tableau cible"
 
-#: utils/adt/arrayfuncs.c:3124
+#: utils/adt/arrayfuncs.c:3125
 msgid "target type is not an array"
 msgstr "Le type cible n'est pas un tableau"
 
-#: utils/adt/arrayfuncs.c:3136
+#: utils/adt/arrayfuncs.c:3137
 msgid "array coercion to domain type elements not currently supported"
 msgstr "La coercion du tableau vers les éléments de type domaine n'est pas actuellement supportée"
 
@@ -7840,14 +7844,14 @@ msgstr "La valeur «current» pour la date et heure n'est plus supportée"
 #: utils/adt/timestamp.c:1943 utils/adt/timestamp.c:2001
 #: utils/adt/timestamp.c:2024 utils/adt/timestamp.c:2406
 #: utils/adt/timestamp.c:2524 utils/adt/timestamp.c:2746
-#: utils/adt/timestamp.c:2830 utils/adt/timestamp.c:2877
-#: utils/adt/timestamp.c:2984 utils/adt/timestamp.c:3267
-#: utils/adt/timestamp.c:3400 utils/adt/timestamp.c:3407
-#: utils/adt/timestamp.c:3420 utils/adt/timestamp.c:3428
-#: utils/adt/timestamp.c:3491 utils/adt/timestamp.c:3626
-#: utils/adt/timestamp.c:3634 utils/adt/timestamp.c:3901
-#: utils/adt/timestamp.c:3908 utils/adt/timestamp.c:3936
-#: utils/adt/timestamp.c:3940
+#: utils/adt/timestamp.c:2833 utils/adt/timestamp.c:2880
+#: utils/adt/timestamp.c:2990 utils/adt/timestamp.c:3273
+#: utils/adt/timestamp.c:3406 utils/adt/timestamp.c:3413
+#: utils/adt/timestamp.c:3426 utils/adt/timestamp.c:3434
+#: utils/adt/timestamp.c:3497 utils/adt/timestamp.c:3632
+#: utils/adt/timestamp.c:3640 utils/adt/timestamp.c:3907
+#: utils/adt/timestamp.c:3914 utils/adt/timestamp.c:3942
+#: utils/adt/timestamp.c:3946
 msgid "timestamp out of range"
 msgstr "timestamp en dehors des limites"
 
@@ -7880,7 +7884,7 @@ msgstr "Syntaxe en entrée invalide pour le type «time with time zone» : «%s�
 msgid "\"time with time zone\" units \"%s\" not recognized"
 msgstr "L'unité «time with time zone» «%s» n'est pas reconnu"
 
-#: utils/adt/date.c:2512 utils/adt/timestamp.c:3832 utils/adt/timestamp.c:3981
+#: utils/adt/date.c:2512 utils/adt/timestamp.c:3838 utils/adt/timestamp.c:3987
 #, c-format
 msgid "time zone \"%s\" not recognized"
 msgstr "La zone horaire «%s» n'est pas reconnue"
@@ -8708,7 +8712,7 @@ msgstr "mauvais type de données : %u, %u attendu"
 msgid "improper binary format in record column %d"
 msgstr "format binaire mal conçu dans l'enregistrement de la colonne %d"
 
-#: utils/adt/ruleutils.c:1615
+#: utils/adt/ruleutils.c:1621
 #, c-format
 msgid "rule \"%s\" has unsupported event type %d"
 msgstr "La règle «%s» a un type d'événement %d non supporté"
@@ -8743,7 +8747,7 @@ msgid "timestamp(%d) precision must be between %d and %d"
 msgstr "La précision de timestamp(%d) doit être comprise entre %d et %d"
 
 #: utils/adt/timestamp.c:522 utils/adt/timestamp.c:2401
-#: utils/adt/timestamp.c:2519 utils/adt/timestamp.c:3076
+#: utils/adt/timestamp.c:2519 utils/adt/timestamp.c:3082
 msgid "interval out of range"
 msgstr "intervalle en dehors des limites"
 
@@ -8771,43 +8775,43 @@ msgstr "Syntaxe en entrée invalide pour le type «timestamp with time zone» : 
 msgid "invalid input syntax for type interval: \"%s\""
 msgstr "Syntaxe en entrée invalide pour le type interval : «%s»"
 
-#: utils/adt/timestamp.c:2822 utils/adt/timestamp.c:3379
-#: utils/adt/timestamp.c:3436
+#: utils/adt/timestamp.c:2825 utils/adt/timestamp.c:3385
+#: utils/adt/timestamp.c:3442
 #, c-format
 msgid "timestamp units \"%s\" not supported"
 msgstr "Les unités timestamp «%s» ne sont pas supportées"
 
-#: utils/adt/timestamp.c:2836 utils/adt/timestamp.c:3446
+#: utils/adt/timestamp.c:2839 utils/adt/timestamp.c:3452
 #, c-format
 msgid "timestamp units \"%s\" not recognized"
 msgstr "Les unités timestamp «%s» ne sont pas reconnues"
 
-#: utils/adt/timestamp.c:2973 utils/adt/timestamp.c:3604
-#: utils/adt/timestamp.c:3642
+#: utils/adt/timestamp.c:2979 utils/adt/timestamp.c:3610
+#: utils/adt/timestamp.c:3648
 #, c-format
 msgid "timestamp with time zone units \"%s\" not supported"
 msgstr "Les unités «timestamp with time zone» «%s» ne sont pas supportées"
 
-#: utils/adt/timestamp.c:2990 utils/adt/timestamp.c:3651
+#: utils/adt/timestamp.c:2996 utils/adt/timestamp.c:3657
 #, c-format
 msgid "timestamp with time zone units \"%s\" not recognized"
 msgstr "Les unités «timestamp with time zone units» «%s» ne sont pas reconnues"
 
-#: utils/adt/timestamp.c:3069 utils/adt/timestamp.c:3757
+#: utils/adt/timestamp.c:3075 utils/adt/timestamp.c:3763
 #, c-format
 msgid "interval units \"%s\" not supported"
 msgstr "Les unités interval «%s» ne sont pas supportées"
 
-#: utils/adt/timestamp.c:3085 utils/adt/timestamp.c:3787
+#: utils/adt/timestamp.c:3091 utils/adt/timestamp.c:3793
 #, c-format
 msgid "interval units \"%s\" not recognized"
 msgstr "Les unités interval «%s» ne sont pas reconnues"
 
-#: utils/adt/timestamp.c:3109
+#: utils/adt/timestamp.c:3115
 msgid "cannot calculate week number without year information"
 msgstr "n'a pas pu calculer le numéro de la semaine sans informations sur l'année"
 
-#: utils/adt/timestamp.c:3858 utils/adt/timestamp.c:4007
+#: utils/adt/timestamp.c:3864 utils/adt/timestamp.c:4013
 #, c-format
 msgid "interval time zone \"%s\" must not specify month"
 msgstr "L'intervalle de zone horaire «%s» ne doit pas spécifier le mois"
@@ -8920,84 +8924,84 @@ msgstr "n'a pas pu ré-ouvrir le fichier «%s» comme stderr : %m"
 msgid "could not reopen file \"%s\" as stdout: %m"
 msgstr "n'a pas pu ré-ouvrir le fichier «%s» comme stdout : %m"
 
-#: utils/error/elog.c:1350 utils/error/elog.c:1360
+#: utils/error/elog.c:1376 utils/error/elog.c:1386
 msgid "[unknown]"
 msgstr "[inconnu]"
 
-#: utils/error/elog.c:1488 utils/error/elog.c:1697 utils/error/elog.c:1773
+#: utils/error/elog.c:1514 utils/error/elog.c:1698 utils/error/elog.c:1774
 msgid "missing error text"
 msgstr "Message d'erreur manquant"
 
-#: utils/error/elog.c:1491 utils/error/elog.c:1494 utils/error/elog.c:1776
-#: utils/error/elog.c:1779
+#: utils/error/elog.c:1517 utils/error/elog.c:1520 utils/error/elog.c:1777
+#: utils/error/elog.c:1780
 #, c-format
 msgid " at character %d"
 msgstr " au caractère %d"
 
-#: utils/error/elog.c:1504
+#: utils/error/elog.c:1530
 msgid "DETAIL:  "
 msgstr "DETAIL :  "
 
-#: utils/error/elog.c:1511
+#: utils/error/elog.c:1537
 msgid "HINT:  "
 msgstr "ASTUCE :  "
 
-#: utils/error/elog.c:1518
+#: utils/error/elog.c:1544
 msgid "QUERY:  "
 msgstr "REQUÊTE :  "
 
-#: utils/error/elog.c:1525
+#: utils/error/elog.c:1551
 msgid "CONTEXT:  "
 msgstr "CONTEXTE :  "
 
-#: utils/error/elog.c:1535
+#: utils/error/elog.c:1561
 #, c-format
 msgid "LOCATION:  %s, %s:%d\n"
 msgstr "EMPLACEMENT :  %s, %s:%d\n"
 
-#: utils/error/elog.c:1542
+#: utils/error/elog.c:1568
 #, c-format
 msgid "LOCATION:  %s:%d\n"
 msgstr "EMPLACEMENT :  %s:%d\n"
 
-#: utils/error/elog.c:1555
+#: utils/error/elog.c:1581
 msgid "STATEMENT:  "
 msgstr "INSTRUCTION :  "
 
-#: utils/error/elog.c:1889
+#: utils/error/elog.c:1890
 #, c-format
 msgid "operating system error %d"
 msgstr "Erreur du système d'exploitation %d"
 
-#: utils/error/elog.c:1912
+#: utils/error/elog.c:1913
 msgid "DEBUG"
 msgstr "DEBUG"
 
-#: utils/error/elog.c:1916
+#: utils/error/elog.c:1917
 msgid "LOG"
 msgstr "TRACE"
 
-#: utils/error/elog.c:1919
+#: utils/error/elog.c:1920
 msgid "INFO"
 msgstr "INFO"
 
-#: utils/error/elog.c:1922
+#: utils/error/elog.c:1923
 msgid "NOTICE"
 msgstr "NOTICE"
 
-#: utils/error/elog.c:1925
+#: utils/error/elog.c:1926
 msgid "WARNING"
 msgstr "ATTENTION"
 
-#: utils/error/elog.c:1928
+#: utils/error/elog.c:1929
 msgid "ERROR"
 msgstr "ERREUR"
 
-#: utils/error/elog.c:1931
+#: utils/error/elog.c:1932
 msgid "FATAL"
 msgstr "FATAL"
 
-#: utils/error/elog.c:1934
+#: utils/error/elog.c:1935
 msgid "PANIC"
 msgstr "PANIQUE"
 
@@ -10497,8 +10501,8 @@ msgstr "n'a pas pu copier le fichier «%s» : %m"
 
 #: ../port/dirmod.c:283
 #, c-format
-msgid "Error setting junction for %s: %s"
-msgstr "Erreur lors de l'initialisation de la jonction pour %s : %s"
+msgid "could not set junction for \"%s\": %s"
+msgstr "n'a pas initialiser de jonction pour «%s» : %s"
 
 #: ../port/exec.c:194 ../port/exec.c:308 ../port/exec.c:351
 #, c-format
@@ -10544,6 +10548,9 @@ msgstr "le processus fils a été terminé par le signal %d"
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "le processus fils a quitté avec le statut %d non reconnu"
+
+#~ msgid "Error setting junction for %s: %s"
+#~ msgstr "Erreur lors de l'initialisation de la jonction pour %s : %s"
 
 #~ msgid "out of memory\n"
 #~ msgstr "mémoire insuffisante\n"
