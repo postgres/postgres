@@ -1,7 +1,7 @@
 # translation of postgres-fr.po to FR_fr
 # French message translation file for postgres
 #
-# $Header: /cvsroot/pgsql/src/backend/po/fr.po,v 1.1.2.5 2005/06/17 11:30:54 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/po/fr.po,v 1.1.2.6 2005/09/03 07:41:11 petere Exp $
 #
 # Use these quotes: «%s»
 # Guillaume Lelarge <gleu@wanadoo.fr>, 2003, 2004.
@@ -9,7 +9,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: postgres-fr\n"
-"POT-Creation-Date: 2005-06-11 01:22-0300\n"
+"POT-Creation-Date: 2005-08-16 01:45-0300\n"
 "PO-Revision-Date: 2005-06-11 12:55+0100\n"
 "Last-Translator: Guillaume Lelarge <gleu@wanadoo.fr>\n"
 "Language-Team: FR_fr <traduction@pgsql-fr.tuxfamily.org>\n"
@@ -1170,7 +1170,7 @@ msgstr "Les index définis par l'utilisateur sur les tables du catalogue systèm
 msgid "shared indexes cannot be created after initdb"
 msgstr "Les index partagés ne peuvent pas être créés après initdb"
 
-#: catalog/index.c:1659
+#: catalog/index.c:1667
 #, c-format
 msgid "shared index \"%s\" can only be reindexed in stand-alone mode"
 msgstr "Un index partagé «%s» peut seulement être réindexé en mode autonome"
@@ -2512,7 +2512,7 @@ msgstr "setval : la valeur %s est en dehors des limites de la séquence «%s» (
 #: postmaster/pgstat.c:2399 postmaster/pgstat.c:2450
 #: postmaster/postmaster.c:1562 postmaster/postmaster.c:2159
 #: postmaster/postmaster.c:2922 storage/buffer/localbuf.c:129
-#: storage/file/fd.c:582 storage/file/fd.c:615 storage/file/fd.c:760
+#: storage/file/fd.c:592 storage/file/fd.c:625 storage/file/fd.c:770
 #: storage/ipc/sinval.c:348 storage/smgr/mm.c:191 utils/adt/cash.c:297
 #: utils/adt/cash.c:312 utils/adt/regexp.c:199 utils/adt/ri_triggers.c:3434
 #: utils/cache/relcache.c:172 utils/cache/relcache.c:182
@@ -3363,7 +3363,7 @@ msgstr "La nouvelle ligne pour la relation «%s» viole la contrainte de vérifi
 #: executor/execQual.c:180 executor/execQual.c:204 executor/execQual.c:1756
 #: utils/adt/array_userfuncs.c:362 utils/adt/arrayfuncs.c:212
 #: utils/adt/arrayfuncs.c:378 utils/adt/arrayfuncs.c:897
-#: utils/adt/arrayfuncs.c:2237
+#: utils/adt/arrayfuncs.c:2238
 #, c-format
 msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
 msgstr "Le nombre de dimensions du tableau (%d) dépasse le maximum autorisé (%d)"
@@ -4011,7 +4011,7 @@ msgid "no data left in message"
 msgstr "Pas de données dans le message"
 
 #: libpq/pqformat.c:591 libpq/pqformat.c:609 libpq/pqformat.c:630
-#: utils/adt/arrayfuncs.c:1023
+#: utils/adt/arrayfuncs.c:1024
 msgid "insufficient data left in message"
 msgstr "Données insuffisantes laissées dans le message"
 
@@ -4746,7 +4746,7 @@ msgstr ""
 msgid "operator does not exist: %s"
 msgstr "L'opérateur n'existe pas : %s"
 
-#: parser/parse_oper.c:185 utils/adt/arrayfuncs.c:2392
+#: parser/parse_oper.c:185 utils/adt/arrayfuncs.c:2393
 #: utils/adt/ri_triggers.c:3604
 #, c-format
 msgid "could not identify an equality operator for type %s"
@@ -4794,42 +4794,6 @@ msgstr "op ANY/ALL (tableau) requiert un opérateur pour comparer des booléens"
 #: parser/parse_oper.c:910
 msgid "op ANY/ALL (array) requires operator not to return a set"
 msgstr "op ANY/ALL (tableau) requiert que l'opérateur ne renvoie pas un ensemble"
-
-#: scan.l:296
-msgid "unterminated /* comment"
-msgstr "Commentaire /* non terminé"
-
-#: scan.l:324
-msgid "unterminated bit string literal"
-msgstr "Chaîne littérale bit non terminée"
-
-#: scan.l:343
-msgid "unterminated hexadecimal string literal"
-msgstr "Chaîne littérale héxadécimale non terminée"
-
-#: scan.l:389
-msgid "unterminated quoted string"
-msgstr "Chaîne quotée non terminée"
-
-#: scan.l:402
-msgid "zero-length delimited identifier"
-msgstr "Identifiant délimité de longueur nulle"
-
-#: scan.l:415
-msgid "unterminated quoted identifier"
-msgstr "Identifiant quoté non terminé"
-
-#. translator: %s is typically "syntax error"
-#: scan.l:564
-#, c-format
-msgid "%s at end of input"
-msgstr "%s à la fin de l'entrée"
-
-#. translator: first %s is typically "syntax error"
-#: scan.l:572
-#, c-format
-msgid "%s at or near \"%s\""
-msgstr "%s sur ou près de «%s»"
 
 #: parser/parse_target.c:66
 #, c-format
@@ -4883,6 +4847,46 @@ msgstr "Le stype «%s» n'est pas seulement un shell"
 #, c-format
 msgid "invalid type name \"%s\""
 msgstr "Nom de type invalide «%s»"
+
+#: scan.l:296
+msgid "unterminated /* comment"
+msgstr "Commentaire /* non terminé"
+
+#: scan.l:324
+msgid "unterminated bit string literal"
+msgstr "Chaîne littérale bit non terminée"
+
+#: scan.l:343
+msgid "unterminated hexadecimal string literal"
+msgstr "Chaîne littérale héxadécimale non terminée"
+
+#: scan.l:389
+msgid "unterminated quoted string"
+msgstr "Chaîne quotée non terminée"
+
+#: scan.l:402
+msgid "zero-length delimited identifier"
+msgstr "Identifiant délimité de longueur nulle"
+
+#: scan.l:415
+msgid "unterminated quoted identifier"
+msgstr "Identifiant quoté non terminé"
+
+#: scan.l:489
+msgid "operator too long"
+msgstr "Opérateur trop long"
+
+#. translator: %s is typically "syntax error"
+#: scan.l:573
+#, c-format
+msgid "%s at end of input"
+msgstr "%s à la fin de l'entrée"
+
+#. translator: first %s is typically "syntax error"
+#: scan.l:581
+#, c-format
+msgid "%s at or near \"%s\""
+msgstr "%s sur ou près de «%s»"
 
 #: parser/scansup.c:181
 #, c-format
@@ -5941,18 +5945,18 @@ msgstr "Plus de tampons libres"
 msgid "no empty local buffer available"
 msgstr "Aucun tampon local vide disponible"
 
-#: storage/file/fd.c:351
+#: storage/file/fd.c:361
 msgid "insufficient file descriptors available to start server process"
 msgstr ""
 "Nombre de descripteurs de fichier insuffisants pour lancer le processus "
 "serveur"
 
-#: storage/file/fd.c:352
+#: storage/file/fd.c:362
 #, c-format
 msgid "System allows %d, we need at least %d."
 msgstr "Le système autorise %d, nous avons besoin d'au moins %d."
 
-#: storage/file/fd.c:393 storage/file/fd.c:1133 storage/file/fd.c:1206
+#: storage/file/fd.c:403 storage/file/fd.c:1143 storage/file/fd.c:1216
 #, c-format
 msgid "out of file descriptors: %m; release and retry"
 msgstr "Plus de descripteurs de fichiers : %m; quittez et ré-essayez"
@@ -6434,7 +6438,7 @@ msgid "invalid array element type OID: %u"
 msgstr "OID du type d'élément du tableau invalide : %u"
 
 #: utils/adt/array_userfuncs.c:358 utils/adt/arrayfuncs.c:893
-#: utils/adt/arrayfuncs.c:2233
+#: utils/adt/arrayfuncs.c:2234
 #, c-format
 msgid "invalid number of dimensions: %d"
 msgstr "Nombre de dimensions invalides : %d"
@@ -6561,63 +6565,63 @@ msgstr "Drapeaux de tableau invalides"
 msgid "wrong element type"
 msgstr "Mauvais type d'élément"
 
-#: utils/adt/arrayfuncs.c:955 utils/cache/lsyscache.c:1701
+#: utils/adt/arrayfuncs.c:946 utils/cache/lsyscache.c:1701
 #, c-format
 msgid "no binary input function available for type %s"
 msgstr "Aucune fonction d'entrée binaire disponible pour le type %s"
 
-#: utils/adt/arrayfuncs.c:1050
+#: utils/adt/arrayfuncs.c:1051
 #, c-format
 msgid "improper binary format in array element %d"
 msgstr "Format binaire mal conçu dans l'élément du tableau %d"
 
-#: utils/adt/arrayfuncs.c:1129 utils/cache/lsyscache.c:1737
+#: utils/adt/arrayfuncs.c:1130 utils/cache/lsyscache.c:1737
 #, c-format
 msgid "no binary output function available for type %s"
 msgstr "Aucune fonction de sortie binaire disponible pour le type %s"
 
-#: utils/adt/arrayfuncs.c:1480
+#: utils/adt/arrayfuncs.c:1481
 msgid "slices of fixed-length arrays not implemented"
 msgstr "Les morceaux des tableaux à longueur fixe ne sont pas implémentés"
 
-#: utils/adt/arrayfuncs.c:1618 utils/adt/arrayfuncs.c:1623
-#: utils/adt/arrayfuncs.c:1663 utils/adt/arrayfuncs.c:1685
-#: utils/adt/arrayfuncs.c:1697 utils/adt/arrayfuncs.c:1858
-#: utils/adt/arrayfuncs.c:1875 utils/adt/arrayfuncs.c:1886
-#: utils/adt/arrayfuncs.c:1895 utils/adt/arrayfuncs.c:1906
+#: utils/adt/arrayfuncs.c:1619 utils/adt/arrayfuncs.c:1624
+#: utils/adt/arrayfuncs.c:1664 utils/adt/arrayfuncs.c:1686
+#: utils/adt/arrayfuncs.c:1698 utils/adt/arrayfuncs.c:1859
+#: utils/adt/arrayfuncs.c:1876 utils/adt/arrayfuncs.c:1887
+#: utils/adt/arrayfuncs.c:1896 utils/adt/arrayfuncs.c:1907
 msgid "invalid array subscripts"
 msgstr "Indices de tableau invalides"
 
-#: utils/adt/arrayfuncs.c:1814
+#: utils/adt/arrayfuncs.c:1815
 msgid "updates on slices of fixed-length arrays not implemented"
 msgstr "Les mises à jour de morceaux des tableaux à longueur fixe ne sont pas implémentées"
 
-#: utils/adt/arrayfuncs.c:1849 utils/adt/arrayfuncs.c:1918
+#: utils/adt/arrayfuncs.c:1850 utils/adt/arrayfuncs.c:1919
 msgid "source array too small"
 msgstr "Tableau source trop petit"
 
-#: utils/adt/arrayfuncs.c:2135 utils/adt/arrayfuncs.c:3027
+#: utils/adt/arrayfuncs.c:2136 utils/adt/arrayfuncs.c:3028
 msgid "null array elements not supported"
 msgstr "Les éléments de tableau NULL ne sont pas supportés"
 
-#: utils/adt/arrayfuncs.c:2370 utils/adt/arrayfuncs.c:2525
+#: utils/adt/arrayfuncs.c:2371 utils/adt/arrayfuncs.c:2526
 msgid "cannot compare arrays of different element types"
 msgstr "Impossible de comparer des tableaux ayant des types d'éléments différents"
 
-#: utils/adt/arrayfuncs.c:2542
+#: utils/adt/arrayfuncs.c:2543
 #, c-format
 msgid "could not identify a comparison function for type %s"
 msgstr "Impossible d'identifier une fonction de comparaison pour le type %s"
 
-#: utils/adt/arrayfuncs.c:2916
+#: utils/adt/arrayfuncs.c:2917
 msgid "could not determine target array type"
 msgstr "Impossible de déterminer le type de tableau cible"
 
-#: utils/adt/arrayfuncs.c:2922
+#: utils/adt/arrayfuncs.c:2923
 msgid "target type is not an array"
 msgstr "Le type cible n'est pas un tableau"
 
-#: utils/adt/arrayfuncs.c:2934
+#: utils/adt/arrayfuncs.c:2935
 msgid "array coercion to domain type elements not currently supported"
 msgstr "La coercion du tableau vers les éléments de type domaine n'est pas actuellement supportée"
 
