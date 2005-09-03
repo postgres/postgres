@@ -11,7 +11,7 @@
  *	as a service.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.13 2005/09/02 18:55:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.14 2005/09/03 15:55:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,17 @@
 #include <sys/stat.h>
 
 #include "storage/fd.h"
+
+/*
+ *	On Windows, call non-macro versions of palloc; we can't reference
+ *	CurrentMemoryContext in this file because of DLLIMPORT conflict.
+ */
+#if defined(WIN32) || defined(__CYGWIN__)
+#undef palloc
+#undef pstrdup
+#define palloc(sz)		pgport_palloc(sz)
+#define pstrdup(str)	pgport_pstrdup(str)
+#endif
 
 
 static void copy_file(char *fromfile, char *tofile);
