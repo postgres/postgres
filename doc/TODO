@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Sep  2 17:23:03 EDT 2005
+Last updated:		Fri Sep  2 20:41:29 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -986,7 +986,8 @@ Miscellaneous Performance
   proper visibility of the row's cmin, for example, for cursors.
 
   One possible solution is to create a phantom cid which represents a
-  cmin/cmax pair and is stored in local memory.
+  cmin/cmax pair and is stored in local memory.  Another idea is to
+  store both cmin and cmax only in local memory.
 
 * Use a phantom command counter for nested subtransactions to reduce
   per-tuple overhead
