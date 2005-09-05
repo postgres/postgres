@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.121 2005/09/05 13:59:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.122 2005/09/05 18:05:13 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -78,6 +78,7 @@ struct adhoc_opts
 	bool		no_psqlrc;
 };
 
+static int	parse_version(const char *versionString);
 static void parse_psql_options(int argc, char *argv[],
 				   struct adhoc_opts * options);
 static void process_psqlrc(char *argv0);
@@ -312,51 +313,46 @@ main(int argc, char *argv[])
 
 		if (!QUIET() && !pset.notty)
 		{
-			/*
-			 *	Server value for 8.12 is 80102.
-			 *	This code does not handle release numbers like
-			 *	8.112.  (Is that 8.1, version 12, or 8.11, version 2?
-			 */
-			int		client_ver_major_int = atoi(PG_VERSION) * 100 +
-									   strchr(PG_VERSION, '.')[1] - '0';
-			int		client_ver_int = atoi(PG_VERSION) * 10000 +
-									   (strchr(PG_VERSION, '.')[1] - '0') * 100 +
-									   (isdigit(strchr(PG_VERSION, '.')[2]) ?
-									   strchr(PG_VERSION, '.')[2] - '0' : '\0');
+			int		client_ver = parse_version(PG_VERSION);
 
-			if (pset.sversion / 100 != client_ver_major_int)
+			if (pset.sversion != client_ver)
 			{
-				printf(_("WARNING:  You are connected to a server with major version %d.%d,\n"
-						 "but your %s client is major version %d.%d.  Informational backslash\n"
-						 "commands, like \\d, might not work properly.\n\n"),
-						 pset.sversion / 10000, (pset.sversion / 100) % 10,
-						 pset.progname, atoi(PG_VERSION), strchr(PG_VERSION, '.')[1] - '0');
-			}
-
-			if (pset.sversion != client_ver_int)
-			{
+				const char *server_version;
 				char	server_ver_str[16];
 
-				snprintf(server_ver_str, 16, "%d.%c%c", pset.sversion / 10000,
-						(pset.sversion / 100) % 10 + '0',
-						/* print last digit? */
-						(pset.sversion % 10 != 0) ?
-						pset.sversion % 10 + '0' : '\0');
-				
-				printf(_("Welcome to %s, the PostgreSQL interactive terminal.\n"),
-						 pset.progname);
-				printf(_("%s version %s, server version %s\n\n"),
-						 pset.progname, PG_VERSION, server_ver_str);
+				/* Try to get full text form, might include "devel" etc */
+				server_version = PQparameterStatus(pset.db, "server_version");
+				if (!server_version)
+				{
+					snprintf(server_ver_str, sizeof(server_ver_str),
+							 "%d.%d.%d",
+							 pset.sversion / 10000,
+							 (pset.sversion / 100) % 100,
+							 pset.sversion % 100);
+					server_version = server_ver_str;
+				}
+
+				printf(_("Welcome to %s %s (server %s), the PostgreSQL interactive terminal.\n\n"),
+					   pset.progname, PG_VERSION, server_version);
 			}
 			else
 				printf(_("Welcome to %s %s, the PostgreSQL interactive terminal.\n\n"),
-					 pset.progname, PG_VERSION);
+					   pset.progname, PG_VERSION);
 
 			printf(_("Type:  \\copyright for distribution terms\n"
 						   "       \\h for help with SQL commands\n"
 						   "       \\? for help with psql commands\n"
 			  "       \\g or terminate with semicolon to execute query\n"
 						   "       \\q to quit\n\n"));
+
+			if (pset.sversion / 100 != client_ver / 100)
+				printf(_("WARNING:  You are connected to a server with major version %d.%d,\n"
+						 "but your %s client is major version %d.%d.  Some backslash commands,\n"
+						 "such as \\d, might not work properly.\n\n"),
+						 pset.sversion / 10000, (pset.sversion / 100) % 100,
+						 pset.progname,
+						 client_ver / 10000, (client_ver / 100) % 100);
+
 #ifdef USE_SSL
 			printSSLInfo();
 #endif
@@ -382,6 +378,28 @@ main(int argc, char *argv[])
 	return successResult;
 }
 
+
+/*
+ * Convert a version string into a number.
+ */
+static int
+parse_version(const char *versionString)
+{
+	int			cnt;
+	int			vmaj,
+				vmin,
+				vrev;
+
+	cnt = sscanf(versionString, "%d.%d.%d", &vmaj, &vmin, &vrev);
+
+	if (cnt < 2)
+		return -1;
+
+	if (cnt == 2)
+		vrev = 0;
+
+	return (100 * vmaj + vmin) * 100 + vrev;
+}
 
 
 /*
