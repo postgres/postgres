@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.112 2005/08/27 18:04:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.113 2005/09/05 17:25:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,6 +130,7 @@ static void set_sa_opfuncid(ScalarArrayOpExpr *opexpr);
 Plan *
 set_plan_references(Plan *plan, List *rtable)
 {
+	bool		copy_lefttree_tlist = false;
 	ListCell   *l;
 
 	if (plan == NULL)
@@ -218,14 +219,13 @@ set_plan_references(Plan *plan, List *rtable)
 
 			/*
 			 * These plan types don't actually bother to evaluate their
-			 * targetlists (because they just return their unmodified
-			 * input tuples).  The optimizer is lazy about creating really
-			 * valid targetlists for them --- it tends to just put in a
-			 * pointer to the child plan node's tlist.  Hence, we leave
-			 * the tlist alone.  In particular, we do not want to process
-			 * subplans in the tlist, since we will likely end up reprocessing
-			 * subplans that also appear in lower levels of the plan tree!
-			 *
+			 * targetlists, because they just return their unmodified
+			 * input tuples; so their targetlists should just be copies
+			 * of their input plan nodes' targetlists.  The actual copying
+			 * has to be done after we've finalized the input node.
+			 */
+			copy_lefttree_tlist = true;
+			/*
 			 * Since these plan types don't check quals either, we should
 			 * not find any qual expression attached to them.
 			 */
@@ -238,6 +238,7 @@ set_plan_references(Plan *plan, List *rtable)
 			 * or quals.  It does have live expressions for limit/offset,
 			 * however.
 			 */
+			copy_lefttree_tlist = true;
 			Assert(plan->qual == NIL);
 			fix_expr_references(plan, ((Limit *) plan)->limitOffset);
 			fix_expr_references(plan, ((Limit *) plan)->limitCount);
@@ -266,9 +267,10 @@ set_plan_references(Plan *plan, List *rtable)
 
 			/*
 			 * Append, like Sort et al, doesn't actually evaluate its
-			 * targetlist or check quals, and we haven't bothered to give it
-			 * its own tlist copy. So, don't fix targetlist/qual. But do
-			 * recurse into child plans.
+			 * targetlist or check quals, so don't fix targetlist/qual.
+			 * But do recurse into child plans.  (Unlike Sort et al, the
+			 * correct tlist was made by createplan.c and we shouldn't
+			 * replace it.)
 			 */
 			Assert(plan->qual == NIL);
 			foreach(l, ((Append *) plan)->appendplans)
@@ -314,6 +316,20 @@ set_plan_references(Plan *plan, List *rtable)
 		Assert(IsA(sp, SubPlan));
 		sp->plan = set_plan_references(sp->plan, sp->rtable);
 	}
+
+	/*
+	 * If this is a non-projecting plan node, create a minimally valid
+	 * targetlist for it.  Someday we might need to make this look really
+	 * real, with Vars referencing the input node's outputs, but for now
+	 * the executor only cares that the tlist has the right TargetEntry
+	 * fields (resname, resjunk etc) and exprType results.  So we can
+	 * get away with just copying the input node's tlist.  (Note:
+	 * createplan.c already did copy the input, but we have to do it
+	 * over in case we removed a SubqueryScan node: the new input plan
+	 * node might have extra resjunk fields.)
+	 */
+	if (copy_lefttree_tlist)
+		plan->targetlist = copyObject(plan->lefttree->targetlist);
 
 	return plan;
 }
