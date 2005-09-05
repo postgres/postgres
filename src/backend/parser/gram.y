@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.509 2005/08/24 19:34:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.510 2005/09/05 23:50:48 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2303,13 +2303,24 @@ IntegerOnly: SignedIconst							{ $$ = makeInteger($1); };
 
 CreatePLangStmt:
 			CREATE opt_trusted opt_procedural LANGUAGE ColId_or_Sconst
-			HANDLER handler_name opt_validator opt_lancompiler
+			{
+				CreatePLangStmt *n = makeNode(CreatePLangStmt);
+				n->plname = $5;
+				/* parameters are all to be supplied by system */
+				n->plhandler = NIL;
+				n->plvalidator = NIL;
+				n->pltrusted = false;
+				$$ = (Node *)n;
+			}
+			| CREATE opt_trusted opt_procedural LANGUAGE ColId_or_Sconst
+			  HANDLER handler_name opt_validator opt_lancompiler
 			{
 				CreatePLangStmt *n = makeNode(CreatePLangStmt);
 				n->plname = $5;
 				n->plhandler = $7;
 				n->plvalidator = $8;
 				n->pltrusted = $2;
+				/* LANCOMPILER is now ignored entirely */
 				$$ = (Node *)n;
 			}
 		;
@@ -2328,14 +2339,14 @@ handler_name:
 			| name attrs				{ $$ = lcons(makeString($1), $2); }
 		;
 
-opt_lancompiler:
-			LANCOMPILER Sconst						{ $$ = $2; }
-			| /*EMPTY*/								{ $$ = ""; }
+opt_validator:
+			VALIDATOR handler_name					{ $$ = $2; }
+			| /*EMPTY*/								{ $$ = NIL; }
 		;
 
-opt_validator:
-			VALIDATOR handler_name { $$ = $2; }
-			| /*EMPTY*/ { $$ = NULL; }
+opt_lancompiler:
+			LANCOMPILER Sconst						{ $$ = $2; }
+			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
 DropPLangStmt:

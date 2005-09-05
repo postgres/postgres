@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.59 2005/07/17 18:28:45 tgl Exp $
+# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.60 2005/09/05 23:50:49 tgl Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -84,7 +84,6 @@ fi
 : ${outputdir=.}
 
 libdir='@libdir@'
-pkglibdir='@pkglibdir@'
 bindir='@bindir@'
 datadir='@datadir@'
 host_platform='@host_tuple@'
@@ -322,16 +321,7 @@ LOGDIR=$outputdir/log
 if [ x"$temp_install" != x"" ]
 then
     if echo x"$temp_install" | grep -v '^x/' >/dev/null 2>&1; then
-        case $host_platform in
-          *-*-mingw32*)
-                pkglibdir="`pwd -W`/$temp_install/install/$pkglibdir"
-                temp_install="`pwd`/$temp_install"
-                ;;
-          *)
-                temp_install="`pwd`/$temp_install"
-                pkglibdir=$temp_install/install/$pkglibdir
-                ;;
-        esac
+        temp_install="`pwd`/$temp_install"
     fi
 
     bindir=$temp_install/install/$bindir
@@ -411,13 +401,6 @@ then
         echo
         (exit 2); exit
     fi
-
-    # fix conversion shared objs path
-    conv=$datadir/conversion_create.sql
-    backup=$conv.bak
-    mv $conv $backup
-    sed -e "s@\$libdir@$pkglibdir@g" $backup > $conv
-    rm $backup
 
     message "initializing database system"
     [ "$debug" = yes ] && initdb_options='--debug'
@@ -586,7 +569,7 @@ if [ "$enable_shared" = yes ]; then
     for lang in xyzzy $load_langs ; do    
         if [ "$lang" != "xyzzy" ]; then
             message "installing $lang"
-            "$bindir/createlang" -L "$pkglibdir" $psql_options $lang $dbname
+            "$bindir/createlang" $psql_options $lang $dbname
             if [ $? -ne 0 ] && [ $? -ne 2 ]; then
                 echo "$me: createlang $lang failed"
                 (exit 2); exit

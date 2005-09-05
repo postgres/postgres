@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_language.sgml,v 1.39 2005/01/04 00:39:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_language.sgml,v 1.40 2005/09/05 23:50:48 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -20,6 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
+CREATE [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</replaceable>
 CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</replaceable>
     HANDLER <replaceable class="parameter">call_handler</replaceable> [ VALIDATOR <replaceable>valfunction</replaceable> ]
 </synopsis>
@@ -46,9 +47,25 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</
   </para>
 
   <para>
-   Note that procedural languages are local to individual databases.
-   To make a language available in all databases by default, it should
-   be installed into the <literal>template1</literal> database.
+   There are two forms of the <command>CREATE LANGUAGE</command> command.
+   In the first form, the user merely supplies the name of the desired
+   language, and the <productname>PostgreSQL</productname> server consults
+   an internal table to determine the correct parameters.  In
+   the second form, the user supplies the language parameters along with
+   the language name.  The second form must be used to create a language
+   that is not present in the internal table, but this form is considered
+   obsolescent.  (It is expected that future releases of
+   <productname>PostgreSQL</productname> will replace the internal table
+   with a system catalog that can be extended to support additional
+   languages.)
+  </para>
+
+  <para>
+   When the server finds an entry in its internal table for the given
+   language name, it will use the table data even if the given command
+   includes language parameters.  This behavior simplifies loading of
+   old dump files, which are likely to contain out-of-date information
+   about language support functions.
   </para>
  </refsect1>
 
@@ -145,18 +162,58 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</
      </listitem>
     </varlistentry>
    </variablelist>
+
+  <para>
+   The <literal>TRUSTED</> option and the support function name(s) are
+   ignored if the server has information about the specified language
+   name in its internal table.
+  </para>
  </refsect1>
 
  <refsect1 id="sql-createlanguage-notes">
   <title>Notes</title>
 
   <para>
-   This command normally should not be executed directly by users.
-   For the procedural languages supplied in the
-   <productname>PostgreSQL</productname> distribution, the <xref
-   linkend="app-createlang"> program should be used, which will also
-   install the correct call handler.  (<command>createlang</command>
-   will call <command>CREATE LANGUAGE</command> internally.)
+   The <xref linkend="app-createlang"> program is a simple wrapper around
+   the <command>CREATE LANGUAGE</> command.  It eases
+   installation of procedural languages from the shell command line.
+  </para>
+
+  <para>
+   Use <xref linkend="sql-droplanguage" endterm="sql-droplanguage-title">, or better yet the <xref
+   linkend="app-droplang"> program, to drop procedural languages.
+  </para>
+
+  <para>
+   The system catalog <classname>pg_language</classname> (see <xref
+   linkend="catalog-pg-language">) records information about the
+   currently installed languages.  Also, <command>createlang</command>
+   has an option to list the installed languages.
+  </para>
+
+  <para>
+   To create functions in a procedural language, a user must have the
+   <literal>USAGE</literal> privilege for the language.  By default,
+   <literal>USAGE</> is granted to <literal>PUBLIC</> (i.e., everyone)
+   for trusted languages.  This may be revoked if desired.
+  </para>
+
+  <para>
+   Procedural languages are local to individual databases.
+   However, a language can be installed into the <literal>template1</literal>
+   database, which will cause it to be available automatically in
+   all subsequently-created databases.
+  </para>
+
+  <para>
+   The call handler function and the validator function (if any)
+   must already exist if the server does not have information about
+   the language in its internal table.  But when there is an entry
+   in the internal table, the functions need not already exist;
+   they will be automatically defined if not present in the database.
+   (This can result in <command>CREATE LANGUAGE</> failing, if the
+   shared library that implements the language is not available in
+   the installation.)
   </para>
 
   <para>
@@ -168,38 +225,22 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</
    declared as returning <type>opaque</>, but it will issue a notice and
    change the function's declared return type to <type>language_handler</>.
   </para>
-
-  <para>
-   Use the <xref linkend="sql-createfunction" endterm="sql-createfunction-title"> command to create a new
-   function.
-  </para>
-
-  <para>
-   Use <xref linkend="sql-droplanguage" endterm="sql-droplanguage-title">, or better yet the <xref
-   linkend="app-droplang"> program, to drop procedural languages.
-  </para>
-
-  <para>
-   The system catalog <classname>pg_language</classname> (see <xref
-   linkend="catalog-pg-language">) records information about the
-   currently installed languages.  Also <command>createlang</command>
-   has an option to list the installed languages.
-  </para>
-
-  <para>
-   To be able to use a procedural language, a user must be granted the
-   <literal>USAGE</literal> privilege.  The
-   <command>createlang</command> program automatically grants
-   permissions to everyone if the language is known to be trusted.
-  </para>
  </refsect1>
 
  <refsect1 id="sql-createlanguage-examples">
   <title>Examples</title>
 
   <para>
-   The following two commands executed in sequence will register a new
-   procedural language and the associated call handler.
+   The preferred way of creating any of the standard procedural languages
+   is just:
+<programlisting>
+CREATE LANGUAGE plpgsql;
+</programlisting>
+  </para>
+
+  <para>
+   For a language not known in the server's internal table, a sequence
+   such as this is needed:
 <programlisting>
 CREATE FUNCTION plsample_call_handler() RETURNS language_handler
     AS '$libdir/plsample'

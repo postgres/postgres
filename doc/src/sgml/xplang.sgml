@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xplang.sgml,v 1.28 2004/12/30 21:45:37 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xplang.sgml,v 1.29 2005/09/05 23:50:48 tgl Exp $
 -->
 
  <chapter id="xplang">
@@ -59,17 +59,19 @@ $PostgreSQL: pgsql/doc/src/sgml/xplang.sgml,v 1.28 2004/12/30 21:45:37 tgl Exp $
    </para>
 
    <para>
-    For the languages supplied with the standard distribution, the
-    program <xref linkend="app-createlang"> may be used to install the
-    language instead of carrying out the details by hand.  For
-    example, to install the language
+    For the languages supplied with the standard distribution, it is
+    only necessary to execute <command>CREATE LANGUAGE</>
+    <replaceable>language_name</> to install the language into the
+    current database.  Alternatively, the program <xref
+    linkend="app-createlang"> may be used to do this from the shell
+    command line.  For example, to install the language
     <application>PL/pgSQL</application> into the database
     <literal>template1</>, use
 <programlisting>
 createlang plpgsql template1
 </programlisting>
     The manual procedure described below is only recommended for
-    installing custom languages that <command>createlang</command>
+    installing custom languages that <command>CREATE LANGUAGE</command>
     does not know about.
    </para>
 
@@ -80,9 +82,10 @@ createlang plpgsql template1
 
     <para>
      A procedural language is installed in a database in four steps,
-     which must be carried out by a database superuser.  The
-     <command>createlang</command> program automates all but <xref
-     linkend="xplang-install-cr1">.
+     which must be carried out by a database superuser.  (For languages
+     known to <command>CREATE LANGUAGE</>, the second and third steps
+     can be omitted, because they will be carried out automatically
+     if needed.)
     </para>
 
     <step performance="required" id="xplang-install-cr1">
@@ -202,10 +205,11 @@ CREATE TRUSTED PROCEDURAL LANGUAGE plpgsql
     In a default <productname>PostgreSQL</productname> installation,
     the handler for the <application>PL/pgSQL</application> language
     is built and installed into the <quote>library</quote>
-    directory. If <application>Tcl</> support is configured in, the handlers for
-    <application>PL/Tcl</> and <application>PL/TclU</> are also built and installed in the same
-    location.  Likewise, the <application>PL/Perl</> and <application>PL/PerlU</> handlers are built
-    and installed if Perl support is configured, and <application>PL/PythonU</> is
+    directory. If <application>Tcl</> support is configured in, the handlers
+    for <application>PL/Tcl</> and <application>PL/TclU</> are also built and
+    installed in the same location.  Likewise, the <application>PL/Perl</> and
+    <application>PL/PerlU</> handlers are built and installed if Perl support
+    is configured, and the <application>PL/PythonU</> handler is
     installed if Python support is configured.
    </para>
 

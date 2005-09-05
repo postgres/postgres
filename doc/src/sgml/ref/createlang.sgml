@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/createlang.sgml,v 1.35 2005/06/21 04:02:31 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createlang.sgml,v 1.36 2005/09/05 23:50:48 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -42,13 +42,7 @@ PostgreSQL documentation
    programming language to a <productname>PostgreSQL</productname> database.
    <application>createlang</application> can handle all the languages
    supplied in the default <productname>PostgreSQL</> distribution, but
-   not languages provided by other parties.
-  </para>
-  <para>
-   Although backend programming languages can be added directly using
-   several <acronym>SQL</acronym> commands, it is recommended to use
-   <application>createlang</application> because it performs a number
-   of checks and is much easier to use. See
+   not languages provided by other parties.  See
    <xref linkend="sql-createlanguage" endterm="sql-createlanguage-title">
    for additional information.
   </para>
@@ -66,8 +60,8 @@ PostgreSQL documentation
       <term><replaceable class="parameter">langname</replaceable></term>
       <listitem>
        <para>
-	Specifies the name of the procedural programming language to be
-	defined.
+        Specifies the name of the procedural programming language to be
+        defined.
        </para>
       </listitem>
      </varlistentry>
@@ -77,7 +71,7 @@ PostgreSQL documentation
       <term><option><optional>--dbname</> <replaceable class="parameter">dbname</replaceable></></term>
       <listitem>
        <para>
-	Specifies to which database the language should be added.
+        Specifies to which database the language should be added.
         The default is to use the database with the same name as the
         current system user.
        </para>
@@ -104,17 +98,6 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
-     <varlistentry>
-      <term><option>-L <replaceable class="parameter">directory</replaceable></></term>
-      <listitem>
-       <para>
-	Specifies the directory in which the language interpreter is
-        to be found.  The directory is normally found automatically; this
-        option is primarily for debugging purposes.
-       </para>
-      </listitem>
-     </varlistentry>
-
     </variablelist>
    </para>
 
@@ -128,10 +111,10 @@ PostgreSQL documentation
       <term><option>--host <replaceable class="parameter">host</replaceable></></term>
       <listitem>
        <para>
-	Specifies the host name of the machine on which the 
-	server
-	is running.  If the value begins with a slash, it is used 
-	as the directory for the Unix domain socket.
+        Specifies the host name of the machine on which the 
+        server
+        is running.  If the value begins with a slash, it is used 
+        as the directory for the Unix domain socket.
        </para>
       </listitem>
      </varlistentry>
@@ -141,9 +124,9 @@ PostgreSQL documentation
       <term><option>--port <replaceable class="parameter">port</replaceable></></term>
       <listitem>
        <para>
-	Specifies the TCP port or local Unix domain socket file 
-	extension on which the server
-	is listening for connections.
+        Specifies the TCP port or local Unix domain socket file 
+        extension on which the server
+        is listening for connections.
        </para>
       </listitem>
      </varlistentry>

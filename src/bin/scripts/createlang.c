@@ -5,12 +5,12 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createlang.c,v 1.19 2005/08/15 21:02:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createlang.c,v 1.20 2005/09/05 23:50:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres_fe.h"
+
 #include "common.h"
 #include "print.h"
 
@@ -28,7 +28,6 @@ main(int argc, char *argv[])
 		{"username", required_argument, NULL, 'U'},
 		{"password", no_argument, NULL, 'W'},
 		{"dbname", required_argument, NULL, 'd'},
-		{"pglib", required_argument, NULL, 'L'},
 		{"echo", no_argument, NULL, 'e'},
 		{NULL, 0, NULL, 0}
 	};
@@ -44,16 +43,9 @@ main(int argc, char *argv[])
 	char	   *username = NULL;
 	bool		password = false;
 	bool		echo = false;
-	char	   *pglib = NULL;
 	char	   *langname = NULL;
 
 	char	   *p;
-	bool		handlerexists;
-	bool		validatorexists;
-	bool		trusted;
-	char	   *handler;
-	char	   *validator = NULL;
-	char	   *object;
 
 	PQExpBufferData sql;
 
@@ -65,7 +57,7 @@ main(int argc, char *argv[])
 
 	handle_help_version_opts(argc, argv, "createlang", help);
 
-	while ((c = getopt_long(argc, argv, "lh:p:U:Wd:L:e", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "lh:p:U:Wd:e", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -86,9 +78,6 @@ main(int argc, char *argv[])
 				break;
 			case 'd':
 				dbname = optarg;
-				break;
-			case 'L':
-				pglib = optarg;
 				break;
 			case 'e':
 				echo = true;
@@ -165,75 +154,17 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (!pglib)
-		pglib = "$libdir";
-
 	for (p = langname; *p; p++)
 		if (*p >= 'A' && *p <= 'Z')
 			*p += ('a' - 'A');
 
-	if (strcmp(langname, "plpgsql") == 0)
-	{
-		trusted = true;
-		handler = "plpgsql_call_handler";
-		validator = "plpgsql_validator";
-		object = "plpgsql";
-	}
-	else if (strcmp(langname, "pltcl") == 0)
-	{
-		trusted = true;
-		handler = "pltcl_call_handler";
-		object = "pltcl";
-	}
-	else if (strcmp(langname, "pltclu") == 0)
-	{
-		trusted = false;
-		handler = "pltclu_call_handler";
-		object = "pltcl";
-	}
-	else if (strcmp(langname, "plperl") == 0)
-	{
-		trusted = true;
-		handler = "plperl_call_handler";
-		validator = "plperl_validator";
-		object = "plperl";
-	}
-	else if (strcmp(langname, "plperlu") == 0)
-	{
-		trusted = false;
-		handler = "plperl_call_handler";
-		validator = "plperl_validator";
-		object = "plperl";
-	}
-	else if (strcmp(langname, "plpythonu") == 0)
-	{
-		trusted = false;
-		handler = "plpython_call_handler";
-		object = "plpython";
-	}
-	else
-	{
-		fprintf(stderr, _("%s: unsupported language \"%s\"\n"), 
-				progname, langname);
-		fprintf(stderr, _("Supported languages are plpgsql, pltcl, pltclu, "
-						  "plperl, plperlu, and plpythonu.\n"));
-		exit(1);
-	}
-
 	conn = connectDatabase(dbname, host, port, username, password, progname);
-
-	/*
-	 * Force schema search path to be just pg_catalog, so that we don't
-	 * have to be paranoid about search paths below.
-	 */
-	executeCommand(conn, "SET search_path = pg_catalog;",
-				   progname, echo);
 
 	/*
 	 * Make sure the language isn't already installed
 	 */
 	printfPQExpBuffer(&sql, 
-					  "SELECT oid FROM pg_language WHERE lanname = '%s';", 
+					  "SELECT oid FROM pg_catalog.pg_language WHERE lanname = '%s';", 
 					  langname);
 	result = executeQuery(conn, sql.data, progname, echo);
 	if (PQntuples(result) > 0)
@@ -247,61 +178,7 @@ main(int argc, char *argv[])
 	}
 	PQclear(result);
 
-	/*
-	 * Check whether the call handler exists
-	 */
-	printfPQExpBuffer(&sql, "SELECT oid FROM pg_proc WHERE proname = '%s' "
-					  "AND pronamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog') "
-					  "AND prorettype = 'language_handler'::regtype "
-					  "AND pronargs = 0;", handler);
-	result = executeQuery(conn, sql.data, progname, echo);
-	handlerexists = (PQntuples(result) > 0);
-	PQclear(result);
-
-	/*
-	 * Check whether the validator exists
-	 */
-	if (validator)
-	{
-		printfPQExpBuffer(&sql, "SELECT oid FROM pg_proc WHERE proname = '%s' "
-						  "AND pronamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog') "
-						  "AND proargtypes[0] = 'oid'::regtype "
-						  "AND pronargs = 1;", validator);
-		result = executeQuery(conn, sql.data, progname, echo);
-		validatorexists = (PQntuples(result) > 0);
-		PQclear(result);
-	}
-	else
-		validatorexists = true; /* don't try to create it */
-
-	/*
-	 * Create the function(s) and the language
-	 *
-	 * NOTE: the functions will be created in pg_catalog because
-	 * of our previous "SET search_path".
-	 */
-	resetPQExpBuffer(&sql);
-
-	if (!handlerexists)
-		appendPQExpBuffer(&sql,
-						  "CREATE FUNCTION \"%s\" () RETURNS language_handler "
-						  "AS '%s/%s' LANGUAGE C;\n",
-						  handler, pglib, object);
-
-	if (!validatorexists)
-		appendPQExpBuffer(&sql,
-						  "CREATE FUNCTION \"%s\" (oid) RETURNS void "
-						  "AS '%s/%s' LANGUAGE C;\n",
-						  validator, pglib, object);
-
-	appendPQExpBuffer(&sql,
-					  "CREATE %sLANGUAGE \"%s\" HANDLER \"%s\"",
-					  (trusted ? "TRUSTED " : ""), langname, handler);
-
-	if (validator)
-		appendPQExpBuffer(&sql, " VALIDATOR \"%s\"", validator);
-
-	appendPQExpBuffer(&sql, ";\n");
+	printfPQExpBuffer(&sql, "CREATE LANGUAGE \"%s\";\n", langname);
 
 	if (echo)
 		printf("%s", sql.data);
@@ -330,7 +207,6 @@ help(const char *progname)
 	printf(_("  -d, --dbname=DBNAME       database to install language in\n"));
 	printf(_("  -e, --echo                show the commands being sent to the server\n"));
 	printf(_("  -l, --list                show a list of currently installed languages\n"));
-	printf(_("  -L, --pglib=DIRECTORY     find language interpreter file in DIRECTORY\n"));
 	printf(_("  -h, --host=HOSTNAME       database server host or socket directory\n"));
 	printf(_("  -p, --port=PORT           database server port\n"));
 	printf(_("  -U, --username=USERNAME   user name to connect as\n"));

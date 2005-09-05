@@ -7,29 +7,44 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.60 2005/04/14 20:03:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.61 2005/09/05 23:50:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-
-#include <ctype.h>
 
 #include "access/heapam.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_language.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "commands/proclang.h"
 #include "commands/defrem.h"
 #include "fmgr.h"
 #include "miscadmin.h"
+#include "parser/gramparse.h"
 #include "parser/parse_func.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+
+
+typedef struct
+{
+	char	   *lanname;		/* PL name */
+	bool		lantrusted;		/* trusted? */
+	char	   *lanhandler;		/* name of handler function */
+	char	   *lanvalidator;	/* name of validator function, or NULL */
+	char	   *lanlibrary;		/* path of shared library */
+} PLTemplate;
+
+static void create_proc_lang(const char *languageName,
+							 Oid handlerOid, Oid valOid, bool trusted);
+static PLTemplate *find_language_template(const char *languageName);
 
 
 /* ---------------------------------------------------------------------
@@ -40,19 +55,11 @@ void
 CreateProceduralLanguage(CreatePLangStmt *stmt)
 {
 	char	   *languageName;
-	Oid			procOid,
-				valProcOid;
+	PLTemplate *pltemplate;
+	Oid			handlerOid,
+				valOid;
 	Oid			funcrettype;
 	Oid			funcargtypes[1];
-	NameData	langname;
-	char		nulls[Natts_pg_language];
-	Datum		values[Natts_pg_language];
-	Relation	rel;
-	HeapTuple	tup;
-	TupleDesc	tupDesc;
-	int			i;
-	ObjectAddress myself,
-				referenced;
 
 	/*
 	 * Check permission
@@ -76,64 +83,181 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 				 errmsg("language \"%s\" already exists", languageName)));
 
 	/*
-	 * Lookup the PL handler function and check that it is of the expected
-	 * return type
+	 * If we have template information for the language, ignore the supplied
+	 * parameters (if any) and use the template information.
 	 */
-	procOid = LookupFuncName(stmt->plhandler, 0, funcargtypes, false);
-	funcrettype = get_func_rettype(procOid);
-	if (funcrettype != LANGUAGE_HANDLEROID)
+	if ((pltemplate = find_language_template(languageName)) != NULL)
 	{
+		List	*funcname;
+
 		/*
-		 * We allow OPAQUE just so we can load old dump files.	When we
-		 * see a handler function declared OPAQUE, change it to
-		 * LANGUAGE_HANDLER.
+		 * Find or create the handler function, which we force to be in
+		 * the pg_catalog schema.  If already present, it must have the
+		 * correct return type.
 		 */
-		if (funcrettype == OPAQUEOID)
+		funcname = SystemFuncName(pltemplate->lanhandler);
+		handlerOid = LookupFuncName(funcname, 0, funcargtypes, true);
+		if (OidIsValid(handlerOid))
 		{
-			ereport(WARNING,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("changing return type of function %s from \"opaque\" to \"language_handler\"",
-							NameListToString(stmt->plhandler))));
-			SetFunctionReturnType(procOid, LANGUAGE_HANDLEROID);
+			funcrettype = get_func_rettype(handlerOid);
+			if (funcrettype != LANGUAGE_HANDLEROID)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("function %s must return type \"language_handler\"",
+								NameListToString(funcname))));
 		}
 		else
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-			  errmsg("function %s must return type \"language_handler\"",
-					 NameListToString(stmt->plhandler))));
-	}
+		{
+			handlerOid = ProcedureCreate(pltemplate->lanhandler,
+										 PG_CATALOG_NAMESPACE,
+										 false,		/* replace */
+										 false,		/* returnsSet */
+										 LANGUAGE_HANDLEROID,
+										 ClanguageId,
+										 F_FMGR_C_VALIDATOR,
+										 pltemplate->lanhandler,
+										 pltemplate->lanlibrary,
+										 false,		/* isAgg */
+										 false,		/* security_definer */
+										 false,		/* isStrict */
+										 PROVOLATILE_VOLATILE,
+										 buildoidvector(funcargtypes, 0),
+										 PointerGetDatum(NULL),
+										 PointerGetDatum(NULL),
+										 PointerGetDatum(NULL));
+		}
 
-	/* validate the validator function */
-	if (stmt->plvalidator)
-	{
-		funcargtypes[0] = OIDOID;
-		valProcOid = LookupFuncName(stmt->plvalidator, 1, funcargtypes, false);
-		/* return value is ignored, so we don't check the type */
+		/*
+		 * Likewise for the validator, if required; but we don't care about
+		 * its return type.
+		 */
+		if (pltemplate->lanvalidator)
+		{
+			funcname = SystemFuncName(pltemplate->lanvalidator);
+			funcargtypes[0] = OIDOID;
+			valOid = LookupFuncName(funcname, 1, funcargtypes, true);
+			if (!OidIsValid(valOid))
+			{
+				valOid = ProcedureCreate(pltemplate->lanvalidator,
+										 PG_CATALOG_NAMESPACE,
+										 false,		/* replace */
+										 false,		/* returnsSet */
+										 VOIDOID,
+										 ClanguageId,
+										 F_FMGR_C_VALIDATOR,
+										 pltemplate->lanvalidator,
+										 pltemplate->lanlibrary,
+										 false,		/* isAgg */
+										 false,		/* security_definer */
+										 false,		/* isStrict */
+										 PROVOLATILE_VOLATILE,
+										 buildoidvector(funcargtypes, 1),
+										 PointerGetDatum(NULL),
+										 PointerGetDatum(NULL),
+										 PointerGetDatum(NULL));
+			}
+		}
+		else
+			valOid = InvalidOid;
+
+		/* ok, create it */
+		create_proc_lang(languageName, handlerOid, valOid,
+						 pltemplate->lantrusted);
 	}
 	else
-		valProcOid = InvalidOid;
+	{
+		/*
+		 * No template, so use the provided information.  If there's
+		 * no handler clause, the user is trying to rely on a template
+		 * that we don't have, so complain accordingly.
+		 *
+		 * XXX In 8.2, replace the detail message with a hint to look in
+		 * pg_pltemplate.
+		 */
+		if (!stmt->plhandler)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("unsupported language \"%s\"",
+							languageName),
+					 errdetail("Supported languages are plpgsql, pltcl, pltclu, "
+							   "plperl, plperlu, and plpythonu.")));
+
+		/*
+		 * Lookup the PL handler function and check that it is of the expected
+		 * return type
+		 */
+		handlerOid = LookupFuncName(stmt->plhandler, 0, funcargtypes, false);
+		funcrettype = get_func_rettype(handlerOid);
+		if (funcrettype != LANGUAGE_HANDLEROID)
+		{
+			/*
+			 * We allow OPAQUE just so we can load old dump files.	When we
+			 * see a handler function declared OPAQUE, change it to
+			 * LANGUAGE_HANDLER.  (This is probably obsolete and removable?)
+			 */
+			if (funcrettype == OPAQUEOID)
+			{
+				ereport(WARNING,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("changing return type of function %s from \"opaque\" to \"language_handler\"",
+								NameListToString(stmt->plhandler))));
+				SetFunctionReturnType(handlerOid, LANGUAGE_HANDLEROID);
+			}
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("function %s must return type \"language_handler\"",
+								NameListToString(stmt->plhandler))));
+		}
+
+		/* validate the validator function */
+		if (stmt->plvalidator)
+		{
+			funcargtypes[0] = OIDOID;
+			valOid = LookupFuncName(stmt->plvalidator, 1, funcargtypes, false);
+			/* return value is ignored, so we don't check the type */
+		}
+		else
+			valOid = InvalidOid;
+
+		/* ok, create it */
+		create_proc_lang(languageName, handlerOid, valOid, stmt->pltrusted);
+	}
+}
+
+/*
+ * Guts of language creation.
+ */
+static void
+create_proc_lang(const char *languageName,
+				 Oid handlerOid, Oid valOid, bool trusted)
+{
+	Relation	rel;
+	TupleDesc	tupDesc;
+	Datum		values[Natts_pg_language];
+	char		nulls[Natts_pg_language];
+	NameData	langname;
+	HeapTuple	tup;
+	ObjectAddress myself,
+				referenced;
 
 	/*
 	 * Insert the new language into pg_language
 	 */
-	for (i = 0; i < Natts_pg_language; i++)
-	{
-		nulls[i] = ' ';
-		values[i] = (Datum) NULL;
-	}
-
-	i = 0;
-	namestrcpy(&langname, languageName);
-	values[i++] = NameGetDatum(&langname);		/* lanname */
-	values[i++] = BoolGetDatum(true);	/* lanispl */
-	values[i++] = BoolGetDatum(stmt->pltrusted);		/* lanpltrusted */
-	values[i++] = ObjectIdGetDatum(procOid);	/* lanplcallfoid */
-	values[i++] = ObjectIdGetDatum(valProcOid); /* lanvalidator */
-	nulls[i] = 'n';				/* lanacl */
-
 	rel = heap_open(LanguageRelationId, RowExclusiveLock);
-
 	tupDesc = rel->rd_att;
+
+	memset(values, 0, sizeof(values));
+	memset(nulls, ' ', sizeof(nulls));
+
+	namestrcpy(&langname, languageName);
+	values[Anum_pg_language_lanname - 1] = NameGetDatum(&langname);
+	values[Anum_pg_language_lanispl - 1] = BoolGetDatum(true);
+	values[Anum_pg_language_lanpltrusted - 1] = BoolGetDatum(trusted);
+	values[Anum_pg_language_lanplcallfoid - 1] = ObjectIdGetDatum(handlerOid);
+	values[Anum_pg_language_lanvalidator - 1] = ObjectIdGetDatum(valOid);
+	nulls[Anum_pg_language_lanacl - 1] = 'n';
+
 	tup = heap_formtuple(tupDesc, values, nulls);
 
 	simple_heap_insert(rel, tup);
@@ -149,20 +273,59 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 
 	/* dependency on the PL handler function */
 	referenced.classId = ProcedureRelationId;
-	referenced.objectId = procOid;
+	referenced.objectId = handlerOid;
 	referenced.objectSubId = 0;
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 	/* dependency on the validator function, if any */
-	if (OidIsValid(valProcOid))
+	if (OidIsValid(valOid))
 	{
 		referenced.classId = ProcedureRelationId;
-		referenced.objectId = valProcOid;
+		referenced.objectId = valOid;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
 
 	heap_close(rel, RowExclusiveLock);
+}
+
+/*
+ * Look to see if we have template information for the given language name.
+ *
+ * XXX for PG 8.1, the template info is hard-wired.  This is to be replaced
+ * by a shared system catalog in 8.2.
+ *
+ * XXX if you add languages to this list, add them also to the errdetail
+ * message above and the list in functioncmds.c.  Those hard-wired lists
+ * should go away in 8.2, also.
+ */
+static PLTemplate *
+find_language_template(const char *languageName)
+{
+	static PLTemplate templates[] = {
+		{ "plpgsql", true, "plpgsql_call_handler", "plpgsql_validator",
+		  "$libdir/plpgsql" },
+		{ "pltcl", true, "pltcl_call_handler", NULL,
+		  "$libdir/pltcl" },
+		{ "pltclu", false, "pltclu_call_handler", NULL,
+		  "$libdir/pltcl" },
+		{ "plperl", true, "plperl_call_handler", "plperl_validator",
+		  "$libdir/plperl" },
+		{ "plperlu", false, "plperl_call_handler", "plperl_validator",
+		  "$libdir/plperl" },
+		{ "plpythonu", false, "plpython_call_handler", NULL,
+		  "$libdir/plpython" },
+		{ NULL, false, NULL, NULL, NULL }
+	};
+
+	PLTemplate *ptr;
+
+	for (ptr = templates; ptr->lanname != NULL; ptr++)
+	{
+		if (strcmp(languageName, ptr->lanname) == 0)
+			return ptr;
+	}
+	return NULL;
 }
 
 
@@ -186,8 +349,7 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 			   errmsg("must be superuser to drop procedural language")));
 
 	/*
-	 * Translate the language name, check that this language exist and is
-	 * a PL
+	 * Translate the language name, check that the language exists
 	 */
 	languageName = case_translate_language_name(stmt->plname);
 
@@ -244,6 +406,10 @@ RenameLanguage(const char *oldname, const char *newname)
 	HeapTuple	tup;
 	Relation	rel;
 
+	/* Translate both names for consistency with CREATE */
+	oldname = case_translate_language_name(oldname);
+	newname = case_translate_language_name(newname);
+
 	rel = heap_open(LanguageRelationId, RowExclusiveLock);
 
 	tup = SearchSysCacheCopy(LANGNAME,
@@ -262,7 +428,7 @@ RenameLanguage(const char *oldname, const char *newname)
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("language \"%s\" already exists", newname)));
 
-	/* must be superuser */
+	/* must be superuser, since we do not have owners for PLs */
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
