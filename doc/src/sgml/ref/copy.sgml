@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.66 2005/06/02 01:21:21 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.67 2005/09/05 14:44:05 adunstan Exp $
 PostgreSQL documentation
 -->
 
@@ -510,6 +510,19 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
     use <literal>FORCE NOT NULL</> to prevent <literal>NULL</> input
     comparisons for specific columns.
    </para>
+
+   <note>
+	<para>
+	 In <literal>CSV</> mode, all characters are significant. A quoted value 
+	 surrounded by white space, or any characters other than 
+	 <literal>DELIMITER</>, will include those characters. This can cause 
+	 errors if  you import data from a system that pads <literal>CSV</> 
+	 lines with white space out to some fixed width. If such a situation 
+	 arises you might need to preprocess the <literal>CSV</> file to remove 
+	 the trailing white space, before importing the data into 
+	 <productname>PostgreSQL</>. 
+	</para>
+   </note>
 
    <note>
     <para>
