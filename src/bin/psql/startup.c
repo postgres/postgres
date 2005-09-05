@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.120 2005/07/25 17:17:41 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.121 2005/09/05 13:59:08 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -312,13 +312,51 @@ main(int argc, char *argv[])
 
 		if (!QUIET() && !pset.notty)
 		{
-			printf(_("Welcome to %s %s, the PostgreSQL interactive terminal.\n\n"
-						   "Type:  \\copyright for distribution terms\n"
+			/*
+			 *	Server value for 8.12 is 80102.
+			 *	This code does not handle release numbers like
+			 *	8.112.  (Is that 8.1, version 12, or 8.11, version 2?
+			 */
+			int		client_ver_major_int = atoi(PG_VERSION) * 100 +
+									   strchr(PG_VERSION, '.')[1] - '0';
+			int		client_ver_int = atoi(PG_VERSION) * 10000 +
+									   (strchr(PG_VERSION, '.')[1] - '0') * 100 +
+									   (isdigit(strchr(PG_VERSION, '.')[2]) ?
+									   strchr(PG_VERSION, '.')[2] - '0' : '\0');
+
+			if (pset.sversion / 100 != client_ver_major_int)
+			{
+				printf(_("WARNING:  You are connected to a server with major version %d.%d,\n"
+						 "but your %s client is major version %d.%d.  Informational backslash\n"
+						 "commands, like \\d, might not work properly.\n\n"),
+						 pset.sversion / 10000, (pset.sversion / 100) % 10,
+						 pset.progname, atoi(PG_VERSION), strchr(PG_VERSION, '.')[1] - '0');
+			}
+
+			if (pset.sversion != client_ver_int)
+			{
+				char	server_ver_str[16];
+
+				snprintf(server_ver_str, 16, "%d.%c%c", pset.sversion / 10000,
+						(pset.sversion / 100) % 10 + '0',
+						/* print last digit? */
+						(pset.sversion % 10 != 0) ?
+						pset.sversion % 10 + '0' : '\0');
+				
+				printf(_("Welcome to %s, the PostgreSQL interactive terminal.\n"),
+						 pset.progname);
+				printf(_("%s version %s, server version %s\n\n"),
+						 pset.progname, PG_VERSION, server_ver_str);
+			}
+			else
+				printf(_("Welcome to %s %s, the PostgreSQL interactive terminal.\n\n"),
+					 pset.progname, PG_VERSION);
+
+			printf(_("Type:  \\copyright for distribution terms\n"
 						   "       \\h for help with SQL commands\n"
 						   "       \\? for help with psql commands\n"
 			  "       \\g or terminate with semicolon to execute query\n"
-						   "       \\q to quit\n\n"),
-				   pset.progname, PG_VERSION);
+						   "       \\q to quit\n\n"));
 #ifdef USE_SSL
 			printSSLInfo();
 #endif
