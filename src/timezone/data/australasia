@@ -1,4 +1,4 @@
-# @(#)australasia	7.69
+# @(#)australasia	7.73
 # This file also includes Pacific islands.
 
 # Notes are at the end of this file
@@ -38,7 +38,7 @@ Zone Australia/Perth	 7:43:24 -	LMT	1895 Dec
 			 8:00	-	WST
 # Queensland
 #
-# From Alex Livingston <alex@agsm.unsw.edu.au> (1996-11-01):
+# From Alex Livingston (1996-11-01):
 # I have heard or read more than once that some resort islands off the coast
 # of Queensland chose to keep observing daylight-saving time even after
 # Queensland ceased to.
@@ -77,7 +77,9 @@ Rule	AS	1991	only	-	Mar	Sun>=1	2:00s	0	-
 Rule	AS	1992	only	-	Mar	Sun>=18	2:00s	0	-
 Rule	AS	1993	only	-	Mar	Sun>=1	2:00s	0	-
 Rule	AS	1994	only	-	Mar	Sun>=18	2:00s	0	-
-Rule	AS	1995	max	-	Mar	lastSun	2:00s	0	-
+Rule	AS	1995	2005	-	Mar	lastSun	2:00s	0	-
+Rule	AS	2006	only	-	Apr	Sun>=1	2:00s	0	-
+Rule	AS	2007	max	-	Mar	lastSun	2:00s	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone Australia/Adelaide	9:14:20 -	LMT	1895 Feb
 			9:00	-	CST	1899 May
@@ -85,6 +87,11 @@ Zone Australia/Adelaide	9:14:20 -	LMT	1895 Feb
 			9:30	AS	CST
 
 # Tasmania
+#
+# From Paul Eggert (2005-08-16):
+# <http://www.bom.gov.au/climate/averages/tables/dst_times.shtml>
+# says King Island didn't observe DST from WWII until late 1971.
+#
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	AT	1967	only	-	Oct	Sun>=1	2:00s	1:00	-
 Rule	AT	1968	only	-	Mar	lastSun	2:00s	0	-
@@ -99,14 +106,21 @@ Rule	AT	1987	1990	-	Mar	Sun>=15	2:00s	0	-
 Rule	AT	1987	only	-	Oct	Sun>=22	2:00s	1:00	-
 Rule	AT	1988	1990	-	Oct	lastSun	2:00s	1:00	-
 Rule	AT	1991	1999	-	Oct	Sun>=1	2:00s	1:00	-
-Rule	AT	1991	max	-	Mar	lastSun	2:00s	0	-
+Rule	AT	1991	2005	-	Mar	lastSun	2:00s	0	-
 Rule	AT	2000	only	-	Aug	lastSun	2:00s	1:00	-
 Rule	AT	2001	max	-	Oct	Sun>=1	2:00s	1:00	-
+Rule	AT	2006	only	-	Apr	Sun>=1	2:00s	0	-
+Rule	AT	2007	max	-	Mar	lastSun	2:00s	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone Australia/Hobart	9:49:16	-	LMT	1895 Sep
 			10:00	-	EST	1916 Oct 1 2:00
 			10:00	1:00	EST	1917 Feb
 			10:00	Aus	EST	1967
+			10:00	AT	EST
+Zone Australia/Currie	9:35:28	-	LMT	1895 Sep
+			10:00	-	EST	1916 Oct 1 2:00
+			10:00	1:00	EST	1917 Feb
+			10:00	Aus	EST	1971 Jul
 			10:00	AT	EST
 
 # Victoria
@@ -118,9 +132,11 @@ Rule	AV	1986	1990	-	Mar	Sun>=15	2:00s	0	-
 Rule	AV	1986	1987	-	Oct	Sun>=15	2:00s	1:00	-
 Rule	AV	1988	1999	-	Oct	lastSun	2:00s	1:00	-
 Rule	AV	1991	1994	-	Mar	Sun>=1	2:00s	0	-
-Rule	AV	1995	max	-	Mar	lastSun	2:00s	0	-
+Rule	AV	1995	2005	-	Mar	lastSun	2:00s	0	-
 Rule	AV	2000	only	-	Aug	lastSun	2:00s	1:00	-
 Rule	AV	2001	max	-	Oct	lastSun	2:00s	1:00	-
+Rule	AV	2006	only	-	Apr	Sun>=1	2:00s	0	-
+Rule	AV	2007	max	-	Mar	lastSun	2:00s	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone Australia/Melbourne 9:39:52 -	LMT	1895 Feb
 			10:00	Aus	EST	1971
@@ -137,9 +153,11 @@ Rule	AN	1986	1989	-	Mar	Sun>=15	2:00s	0	-
 Rule	AN	1986	only	-	Oct	19	2:00s	1:00	-
 Rule	AN	1987	1999	-	Oct	lastSun	2:00s	1:00	-
 Rule	AN	1990	1995	-	Mar	Sun>=1	2:00s	0	-
-Rule	AN	1996	max	-	Mar	lastSun	2:00s	0	-
+Rule	AN	1996	2005	-	Mar	lastSun	2:00s	0	-
 Rule	AN	2000	only	-	Aug	lastSun	2:00s	1:00	-
 Rule	AN	2001	max	-	Oct	lastSun	2:00s	1:00	-
+Rule	AN	2006	only	-	Apr	Sun>=1	2:00s	0	-
+Rule	AN	2007	max	-	Mar	lastSun	2:00s	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone Australia/Sydney	10:04:52 -	LMT	1895 Feb
 			10:00	Aus	EST	1971
@@ -160,9 +178,11 @@ Rule	LH	1986	1989	-	Mar	Sun>=15	2:00	0	-
 Rule	LH	1986	only	-	Oct	19	2:00	0:30	-
 Rule	LH	1987	1999	-	Oct	lastSun	2:00	0:30	-
 Rule	LH	1990	1995	-	Mar	Sun>=1	2:00	0	-
-Rule	LH	1996	max	-	Mar	lastSun	2:00	0	-
+Rule	LH	1996	2005	-	Mar	lastSun	2:00	0	-
 Rule	LH	2000	only	-	Aug	lastSun	2:00	0:30	-
 Rule	LH	2001	max	-	Oct	lastSun	2:00	0:30	-
+Rule	LH	2006	only	-	Apr	Sun>=1	2:00	0	-
+Rule	LH	2007	max	-	Mar	lastSun	2:00	0	-
 Zone Australia/Lord_Howe 10:36:20 -	LMT	1895 Feb
 			10:00	-	EST	1981 Mar
 			10:30	LH	LHST
@@ -199,9 +219,11 @@ Zone Pacific/Rarotonga	-10:39:04 -	LMT	1901		# Avarua
 			-10:00	Cook	CK%sT
 
 # Cocos
-# From USNO (1989):
+# These islands were ruled by the Ross family from about 1830 to 1978.
+# We don't know when standard time was introduced; for now, we guess 1900.
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
-Zone	Indian/Cocos	6:30	-	CCT	# Cocos Islands Time
+Zone	Indian/Cocos	6:27:40	-	LMT	1900
+			6:30	-	CCT	# Cocos Islands Time
 
 # Fiji
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
@@ -262,9 +284,6 @@ Zone Pacific/Kwajalein	11:09:20 -	LMT	1901
 
 # Micronesia
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
-Zone Pacific/Yap	9:12:32	-	LMT	1901		# Colonia
-			9:00	-	YAPT	1969 Oct	# Yap Time
-			10:00	-	YAPT
 Zone Pacific/Truk	10:07:08 -	LMT	1901
 			10:00	-	TRUT			# Truk Time
 Zone Pacific/Ponape	10:32:52 -	LMT	1901		# Kolonia
@@ -381,11 +400,11 @@ Zone Pacific/Pago_Pago	 12:37:12 -	LMT	1879 Jul  5
 			-11:00	-	BST	1983 Nov 30	# B=Bering
 			-11:00	-	SST			# S=Samoa
 
-# W Samoa
+# Samoa
 Zone Pacific/Apia	 12:33:04 -	LMT	1879 Jul  5
 			-11:26:56 -	LMT	1911
 			-11:30	-	SAMT	1950		# Samoa Time
-			-11:00	-	WST			# W Samoa Time
+			-11:00	-	WST			# Samoa Time
 
 # Solomon Is
 # excludes Bougainville, for which see Papua New Guinea
@@ -434,6 +453,17 @@ Zone Pacific/Johnston	-10:00	-	HST
 # uninhabited
 
 # Midway
+#
+# From Mark Brader (2005-01-23):
+# [Fallacies and Fantasies of Air Transport History, by R.E.G. Davies,
+# published 1994 by Paladwr Press, McLean, VA, USA; ISBN 0-9626483-5-3]
+# reproduced a Pan American Airways timeables from 1936, for their weekly
+# "Orient Express" flights between San Francisco and Manila, and connecting
+# flights to Chicago and the US East Coast.  As it uses some time zone
+# designations that I've never seen before:....
+# Fri. 6:30A Lv. HONOLOLU (Pearl Harbor), H.I.   H.L.T. Ar. 5:30P Sun.
+#  "   3:00P Ar. MIDWAY ISLAND . . . . . . . . . M.L.T. Lv. 6:00A  "
+#
 Zone Pacific/Midway	-11:49:28 -	LMT	1901
 			-11:00	-	NST	1956 Jun  3
 			-11:00	1:00	NDT	1956 Sep  2
@@ -475,7 +505,7 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # go ahead and edit the file (and please send any changes to
 # tz@elsie.nci.nih.gov for general use in the future).
 
-# From Paul Eggert <eggert@twinsun.com> (1999-10-29):
+# From Paul Eggert (1999-10-29):
 # A good source for time zone historical data outside the U.S. is
 # Thomas G. Shanks, The International Atlas (5th edition),
 # San Diego: ACS Publications, Inc. (1999).
@@ -632,13 +662,13 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 
 # From Paul Eggert (1995-12-19):
 # Shanks reports 2:00 for all autumn changes in Australia and New Zealand.
-# Mark Prior <mrp@itd.adelaide.edu.au> writes that his newspaper
+# Mark Prior writes that his newspaper
 # reports that NSW's fall 1995 change will occur at 2:00,
 # but Robert Elz says it's been 3:00 in Victoria since 1970
 # and perhaps the newspaper's `2:00' is referring to standard time.
 # For now we'll continue to assume 2:00s for changes since 1960.
 
-# From Eric Ulevik <eau@zip.com.au> (1998-01-05):
+# From Eric Ulevik (1998-01-05):
 #
 # Here are some URLs to Australian time legislation. These URLs are stable,
 # and should probably be included in the data file. There are probably more
@@ -656,6 +686,24 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # <a href="http://www.austlii.edu.au/au/legis/sa/consol_act/sta1898137/index.html">
 # Standard Time Act, 1898
 # </a>
+
+# From David Grosz (2005-06-13):
+# It was announced last week that Daylight Saving would be extended by
+# one week next year to allow for the 2006 Commonwealth Games.
+# Daylight Saving is now to end for next year only on the first Sunday
+# in April instead of the last Sunday in March.
+#
+# From Gwillim Law (2005-06-14):
+# I did some Googling and found that all of those states (and territory) plan
+# to extend DST together in 2006.
+# ACT: http://www.cmd.act.gov.au/mediareleases/fileread.cfm?file=86.txt
+# New South Wales: http://www.thecouriermail.news.com.au/common/story_page/0,5936,15538869%255E1702,00.html
+# South Australia: http://www.news.com.au/story/0,10117,15555031-1246,00.html
+# Tasmania: http://www.media.tas.gov.au/release.php?id=14772
+# Victoria: I wasn't able to find anything separate, but the other articles
+# allude to it.
+# But not Queensland
+# http://www.news.com.au/story/0,10117,15564030-1248,00.html.
 
 # Northern Territory
 
@@ -843,7 +891,7 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # 1994 was at +0930 as John Connolly's customer seems to assert, then I can
 # only conclude that the actual rule is more complicated....
 
-# From John Warburton <jwarb@SACBH.com.au> (1994-10-07):
+# From John Warburton (1994-10-07):
 # The new Daylight Savings dates for South Australia ...
 # was gazetted in the Government Hansard on Sep 26 1994....
 # start on last Sunday in October and end in last sunday in March.
@@ -903,7 +951,7 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 
 # From Arthur David Olson:
 # New South Wales and subjurisdictions have their own ideas of a fun time.
-# Based on law library research by John Mackin (john@basser.cs.su.oz),
+# Based on law library research by John Mackin,
 # who notes:
 #	In Australia, time is not legislated federally, but rather by the
 #	individual states.  Thus, while such terms as ``Eastern Standard Time''
@@ -923,7 +971,7 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # Lawlink NSW: Daylight Saving in New South Wales
 # </a>
 
-# From Eric Ulevik <eau@ozemail.com.au> (1999-05-26):
+# From Eric Ulevik (1999-05-26):
 # DST will start in NSW on the last Sunday of August, rather than the usual
 # October in 2000.  [See: Matthew Moore,
 # <a href="http://www.smh.com.au/news/9905/26/pageone/pageone4.html">
@@ -1057,7 +1105,7 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 
 # From Paul Eggert (1995-12-19);
 # Shanks reports 2:00 for all autumn changes in Australia and New Zealand.
-# Robert Uzgalis <buz@cs.aukuni.ac.nz> writes that the New Zealand Daylight
+# Robert Uzgalis writes that the New Zealand Daylight
 # Savings Time Order in Council dated 1990-06-18 specifies 2:00 standard
 # time on both the first Sunday in October and the third Sunday in March.
 # As with Australia, we'll assume the tradition is 2:00s, not 2:00.
@@ -1136,7 +1184,7 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 
 # Micronesia
 
-# Alan Eugene Davis <adavis@kuentos.guam.net> writes (1996-03-16),
+# Alan Eugene Davis writes (1996-03-16),
 # ``I am certain, having lived there for the past decade, that "Truk"
 # (now properly known as Chuuk) ... is in the time zone GMT+10.''
 #
@@ -1244,10 +1292,10 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # October to March, which has won approval in principle from the Tongan
 # Government.
 
-# From Steffen Thorsen [straen@thorsen.priv.no] (1999-09-09):
+# From Steffen Thorsen (1999-09-09):
 # * Tonga will introduce DST in November
 #
-# I was given this link by John Letts <johnletts@earthlink.net>:
+# I was given this link by John Letts:
 # <a hef="http://news.bbc.co.uk/hi/english/world/asia-pacific/newsid_424000/424764.stm">
 # http://news.bbc.co.uk/hi/english/world/asia-pacific/newsid_424000/424764.stm
 # </a>
@@ -1257,7 +1305,7 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # of UTC as well, but as far as I know Fiji will only be 13 hours ahead
 # (12 + 1 hour DST).
 
-# From Arthur David Olson [arthur_david_olson@nih.gov] (1999-09-20):
+# From Arthur David Olson (1999-09-20):
 # According to <a href="http://www.tongaonline.com/news/sept1799.html>
 # http://www.tongaonline.com/news/sept1799.html
 # </a>:
@@ -1336,3 +1384,11 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # places as late as fourteen hours later than UTC.  And, since the IDL is not
 # an international standard, there are some places on the high seas where the
 # correct date is ambiguous.
+
+# From Paul Eggert, using references suggested by Oscar van Vlijmen
+# (2005-03-20):
+#
+# The American Practical Navigator (2002)
+# <http://pollux.nss.nima.mil/pubs/pubs_j_apn_sections.html?rid=187>
+# talks only about the 180-degree meridian with respect to ships in
+# international waters; it ignores the international date line.

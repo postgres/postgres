@@ -1,4 +1,4 @@
-# @(#)solar88	7.3
+# @(#)solar88	7.4
 
 # Apparent noon times below are for Riyadh; they're a bit off for other places.
 # Times were computed using formulas in the U.S. Naval Observatory's
@@ -381,8 +381,8 @@ Rule	sol88	1988	only	-	Dec	31	12:03:05s -0:03:05 -
 # Before and after 1988, we'll operate on local mean solar time.
 
 # Zone	NAME		GMTOFF	RULES/SAVE	FORMAT	[UNTIL]
-Zone	Asia/Riyadh88	3:07:04	-		??	1988
-			3:07:04	sol88		??	1989
-			3:07:04	-		??
+Zone	Asia/Riyadh88	3:07:04	-		zzz	1988
+			3:07:04	sol88		zzz	1989
+			3:07:04	-		zzz
 # For backward compatibility...
 Link	Asia/Riyadh88	Mideast/Riyadh88

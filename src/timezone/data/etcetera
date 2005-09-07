@@ -1,10 +1,11 @@
-# @(#)etcetera	7.11
+# @(#)etcetera	7.12
 
 # These entries are mostly present for historical reasons, so that
 # people in areas not otherwise covered by the tz files could "zic -l"
 # to a time zone that was right for their area.  These days, the
-# tz files cover almost all the inhabited world, so there's little
-# need now for the entries that are not on UTC.
+# tz files cover almost all the inhabited world, and the only practical
+# need now for the entries that are not on UTC are for ships at sea
+# that cannot use POSIX TZ settings.
 
 Zone	Etc/GMT		0	-	GMT
 Zone	Etc/UTC		0	-	UTC
