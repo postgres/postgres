@@ -1,10 +1,10 @@
-# @(#)africa	7.36
+# @(#)africa	7.39
 
 # This data is by no means authoritative; if you think you know better,
 # go ahead and edit the file (and please send any changes to
 # tz@elsie.nci.nih.gov for general use in the future).
 
-# From Paul Eggert <eggert@twinsun.com> (1999-03-22):
+# From Paul Eggert (1999-03-22):
 #
 # A good source for time zone historical data outside the U.S. is
 # Thomas G. Shanks, The International Atlas (5th edition),
@@ -28,7 +28,7 @@
 #
 # Previous editions of this database used WAT, CAT, SAT, and EAT
 # for +0:00 through +3:00, respectively,
-# but Mark R V Murray <markm@grondar.za> reports that
+# but Mark R V Murray reports that
 # `SAST' is the official abbreviation for +2:00 in the country of South Africa,
 # `CAT' is commonly used for +2:00 in countries north of South Africa, and
 # `WAT' is probably the best name for +1:00, as the common phrase for
@@ -287,7 +287,7 @@ Zone	Africa/Maseru	1:50:00 -	LMT	1903 Mar
 			2:00	-	SAST
 
 # Liberia
-# From Paul Eggert <eggert@twinsun.com> (2001-07-17):
+# From Paul Eggert (2001-07-17):
 # In 1972 Liberia was the last country to switch
 # from a UTC offset that was not a multiple of 15 or 20 minutes.
 # Howse reports that it was in honor of their president's birthday.
@@ -317,7 +317,7 @@ Rule	Libya	1985	only	-	Apr	 6	0:00	1:00	S
 Rule	Libya	1986	only	-	Apr	 4	0:00	1:00	S
 Rule	Libya	1986	only	-	Oct	 3	0:00	0	-
 Rule	Libya	1987	1989	-	Apr	 1	0:00	1:00	S
-Rule	Libya	1987	1990	-	Oct	 1	0:00	0	-
+Rule	Libya	1987	1989	-	Oct	 1	0:00	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Africa/Tripoli	0:52:44 -	LMT	1920
 			1:00	Libya	CE%sT	1959
@@ -347,9 +347,6 @@ Zone	Africa/Blantyre	2:20:00 -	LMT	1903 Mar
 Zone	Africa/Bamako	-0:32:00 -	LMT	1912
 			 0:00	-	GMT	1934 Feb 26
 			-1:00	-	WAT	1960 Jun 20
-			 0:00	-	GMT
-# no longer different from Bamako, but too famous to omit
-Zone	Africa/Timbuktu	-0:12:04 -	LMT	1912
 			 0:00	-	GMT
 
 # Mauritania
@@ -557,6 +554,23 @@ Zone	Africa/Lome	0:04:52 -	LMT	1893
 			0:00	-	GMT
 
 # Tunisia
+
+# From Gwillim Law (2005-04-30):
+#
+# My correspondent, Risto Nykanen, has alerted me to another adoption of DST,
+# this time in Tunisia.  According to Yahoo France News
+# <http://fr.news.yahoo.com/050426/5/4dumk.html>, in a story attributed to AP
+# and dated 2005-04-26, "Tunisia has decided to advance its official time by
+# one hour, starting on Sunday, May 1.  Henceforth, Tunisian time will be
+# UTC+2 instead of UTC+1.  The change will take place at 23:00 UTC next
+# Saturday."  (My translation)
+#
+# From Oscar van Vlijmen (2005-05-02):
+# LaPresse, the first national daily newspaper ...
+# <http://www.lapresse.tn/archives/archives280405/actualites/lheure.html>
+# ... DST for 2005: on: Sun May 1 0h standard time, off: Fri Sept. 30,
+# 1h standard time.
+
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Tunisia	1939	only	-	Apr	15	23:00s	1:00	S
 Rule	Tunisia	1939	only	-	Nov	18	23:00s	0	-
@@ -579,6 +593,8 @@ Rule	Tunisia	1988	only	-	Jun	 1	 0:00s	1:00	S
 Rule	Tunisia	1988	1990	-	Sep	lastSun	 0:00s	0	-
 Rule	Tunisia	1989	only	-	Mar	26	 0:00s	1:00	S
 Rule	Tunisia	1990	only	-	May	 1	 0:00s	1:00	S
+Rule	Tunisia	2005	only	-	May	 1	 0:00s	1:00	S
+Rule	Tunisia	2005	only	-	Sep	30	 1:00s	0	-
 # Shanks gives 0:09 for Paris Mean Time; go with Howse's more precise 0:09:21.
 # Shanks says the 1911 switch occurred on Mar 9; go with Howse's Mar 11.
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]

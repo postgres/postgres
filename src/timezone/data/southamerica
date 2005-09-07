@@ -1,10 +1,10 @@
-# @(#)southamerica	7.54
+# @(#)southamerica	7.61
 
 # This data is by no means authoritative; if you think you know better,
 # go ahead and edit the file (and please send any changes to
 # tz@elsie.nci.nih.gov for general use in the future).
 
-# From Paul Eggert <eggert@twinsun.com> (1999-07-07):
+# From Paul Eggert (1999-07-07):
 # A good source for time zone historical data outside the U.S. is
 # Thomas G. Shanks, The International Atlas (5th edition),
 # San Diego: ACS Publications, Inc. (1999).
@@ -58,7 +58,7 @@
 # From U. S. Naval Observatory (1988-01-199):
 # ARGENTINA           3 H BEHIND   UTC
 
-# From Hernan G. Otero <hernan@isoft.com.ar> (1995-06-26):
+# From Hernan G. Otero (1995-06-26):
 # I am sending modifications to the Argentine time zone table...
 # AR was chosen because they are the ISO letters that represent Argentina.
 
@@ -86,7 +86,7 @@ Rule	Arg	1974	only	-	Jan	23	0:00	1:00	S
 Rule	Arg	1974	only	-	May	 1	0:00	0	-
 Rule	Arg	1988	only	-	Dec	 1	0:00	1:00	S
 #
-# From Hernan G. Otero <hernan@isoft.com.ar> (1995-06-26):
+# From Hernan G. Otero (1995-06-26):
 # These corrections were contributed by InterSoft Argentina S.A.,
 # obtaining the data from the:
 # Talleres de Hidrografia Naval Argentina
@@ -96,7 +96,7 @@ Rule	Arg	1988	only	-	Dec	 1	0:00	1:00	S
 Rule	Arg	1989	1993	-	Mar	Sun>=1	0:00	0	-
 Rule	Arg	1989	1992	-	Oct	Sun>=15	0:00	1:00	S
 #
-# From Hernan G. Otero <hernan@isoft.com.ar> (1995-06-26):
+# From Hernan G. Otero (1995-06-26):
 # From this moment on, the law that mandated the daylight saving
 # time corrections was derogated and no more modifications
 # to the time zones (for daylight saving) are now made.
@@ -113,7 +113,7 @@ Rule	Arg	2000	only	-	Mar	Sun>=1	0:00	0	-
 # Argentina decided not to become one of the countries that go on or off DST.
 # So Buenos Aires should be -3 hours from GMT at all times.
 #
-# From Fabian L. Arce Jofre <farcejofre@bigfoot.com> (2000-04-04):
+# From Fabian L. Arce Jofre (2000-04-04):
 # The law that claimed DST for Argentina was derogated by President Fernando
 # de la Rua on March 2, 2000, because it would make people spend more energy
 # in the winter time, rather than less.  The change took effect on March 3.
@@ -293,7 +293,7 @@ Zone America/Argentina/Jujuy -4:21:12 -	LMT	1894 Oct 31
 			-4:00	Arg	AR%sT	2000 Mar  3
 			-3:00	-	ART
 #
-# Catamarca (CT)
+# Catamarca (CT), Chubut (CH)
 Zone America/Argentina/Catamarca -4:23:08 - LMT	1894 Oct 31
 			-4:16:48 -	CMT	1920 May
 			-4:00	-	ART	1930 Dec
@@ -321,20 +321,6 @@ Zone America/Argentina/Mendoza -4:35:16 - LMT	1894 Oct 31
 			-4:00	Arg	AR%sT	2000 Mar  3
 			-3:00	-	ART	2004 May 23
 			-4:00	-	WART	2004 Sep 26
-			-3:00	-	ART
-#
-# Chubut (CH)
-# The name "Comodoro Rivadavia" exceeds the 14-byte POSIX limit.
-Zone America/Argentina/ComodRivadavia -4:30:00 - LMT	1894 Oct 31
-			-4:16:48 -	CMT	1920 May
-			-4:00	-	ART	1930 Dec
-			-4:00	Arg	AR%sT	1969 Oct  5
-			-3:00	Arg	AR%sT	1991 Mar  3
-			-4:00	-	WART	1991 Oct 20
-			-3:00	Arg	AR%sT	1999 Oct  3
-			-4:00	Arg	AR%sT	2000 Mar  3
-			-3:00	-	ART	2004 Jun  1
-			-4:00	-	WART	2004 Jun 20
 			-3:00	-	ART
 #
 # Santa Cruz (SC)
@@ -374,7 +360,7 @@ Zone	America/La_Paz	-4:32:36 -	LMT	1890
 
 # Brazil
 
-# From Paul Eggert <eggert@twinsun.com> (1993-11-18):
+# From Paul Eggert (1993-11-18):
 # The mayor of Rio recently attempted to change the time zone rules
 # just in his city, in order to leave more summer time for the tourist trade.
 # The rule change lasted only part of the day;
@@ -532,7 +518,7 @@ Rule	Brazil	1996	only	-	Feb	11	 0:00	0	-
 # adopted by same states, minus AL, SE.
 Rule	Brazil	1996	only	-	Oct	 6	 0:00	1:00	S
 Rule	Brazil	1997	only	-	Feb	16	 0:00	0	-
-# From Daniel C. Sobral <dcs@gns.com.br> (1998-02-12):
+# From Daniel C. Sobral (1998-02-12):
 # In 1997, the DS began on October 6. The stated reason was that
 # because international television networks ignored Brazil's policy on DS,
 # they bought the wrong times on satellite for coverage of Pope's visit.
@@ -671,7 +657,7 @@ Zone America/Campo_Grande -3:38:28 -	LMT	1914
 # Mato Grosso (MT)
 Zone America/Cuiaba	-3:44:20 -	LMT	1914
 			-4:00	Brazil	AM%sT	2003 Sep 24
-			-4:00	-	AMT	2004 Oct  4
+			-4:00	-	AMT	2004 Oct  1
 			-4:00	Brazil	AM%sT
 #
 # west Para (PA), Rondonia (RO)
@@ -942,9 +928,16 @@ Rule	Para	1998	2001	-	Mar	Sun>=1	0:00	0	-
 # A decree was issued in Paraguay (no. 16350) on 2002-02-26 that changed the
 # dst method to be from the first Sunday in September to the first Sunday in
 # April.
-Rule	Para	2002	max	-	Apr	Sun>=1	0:00	0	-
-Rule	Para	2002	max	-	Sep	Sun>=1	0:00	1:00	S
-
+Rule	Para	2002	2004	-	Apr	Sun>=1	0:00	0	-
+Rule	Para	2002	2003	-	Sep	Sun>=1	0:00	1:00	S
+#
+# From Jesper Norgaard Welen (2005-01-02):
+# There are several sources that claim that Paraguay made
+# a timezone rule change in autumn 2004.
+# From Steffen Thorsen (2005-01-05):
+# Decree 1,867 (2004-03-05) <http://www.labor.com.py/noticias.asp?id=27>
+Rule	Para	2004	max	-	Oct	Sun>=15	0:00	1:00	S
+Rule	Para	2005	max	-	Mar	Sun>=8	0:00	0	-
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone America/Asuncion	-3:50:40 -	LMT	1890
@@ -957,7 +950,7 @@ Zone America/Asuncion	-3:50:40 -	LMT	1890
 #
 # <a href="news:xrGmb.39935$gA1.13896113@news4.srv.hcvlny.cv.net">
 # From Evelyn C. Leeper via Mark Brader (2003-10-26):</a>
-# When we were in Peru in 1985-1986, they apparently switched over 
+# When we were in Peru in 1985-1986, they apparently switched over
 # sometime between December 29 and January 3 while we were on the Amazon.
 #
 # From Paul Eggert (2003-11-02):
@@ -1003,7 +996,7 @@ Zone America/Port_of_Spain -4:06:04 -	LMT	1912 Mar 2
 			-4:00	-	AST
 
 # Uruguay
-# From Paul Eggert <eggert@twinsun.com> (1993-11-18):
+# From Paul Eggert (1993-11-18):
 # Uruguay wins the prize for the strangest peacetime manipulation of the rules.
 # From Shanks:
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
@@ -1056,8 +1049,12 @@ Rule	Uruguay	1993	only	-	Feb	28	 0:00	0	-
 # From Eduardo Cota (2004-09-20):
 # The uruguayan government has decreed a change in the local time....
 # http://www.presidencia.gub.uy/decretos/2004091502.htm
-Rule	Uruguay	2004	only	-	Sep	Sun>=15	 0:00	1:00	S
-Rule	Uruguay	2005	only	-	Mar	Sun>=8	 0:00	0	-
+Rule	Uruguay	2004	only	-	Sep	19	 0:00	1:00	S
+# From Steffen Thorsen (2005-03-11):
+# Uruguay's DST was scheduled to end on Sunday, 2005-03-13, but in order to
+# save energy ... it was postponed two weeks....
+# http://www.presidencia.gub.uy/_Web/noticias/2005/03/2005031005.htm
+Rule	Uruguay	2005	only	-	Mar	27	 2:00	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone America/Montevideo	-3:44:44 -	LMT	1898 Jun 28
 			-3:44:44 -	MMT	1920 May  1	# Montevideo MT

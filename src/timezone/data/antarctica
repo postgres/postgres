@@ -1,4 +1,4 @@
-# @(#)antarctica	7.23
+# @(#)antarctica	7.25
 
 # From Paul Eggert (1999-11-15):
 # To keep things manageable, we list only locations occupied year-round; see
@@ -90,19 +90,19 @@ Zone Antarctica/Mawson	0	-	zzz	1954 Feb 13
 # </a>
 
 # Brazil - year-round base
-# Ferraz, King George Island, since 1983/4
+# Comandante Ferraz, King George Island, -6205+05824, since 1983/4
 
 # Chile - year-round bases and towns
 # Escudero, South Shetland Is, -621157-0585735, since 1994
-# Frei, King George Island, -6214-05848, since 1969-03-07
-# O'Higgins, Antarctic Peninsula, -6319-05704, since 1948-02
-# Prat, -6230-05941
-# Villa Las Estrellas (a town), King George Island, since 1984-04-09
+# Presidente Eduadro Frei, King George Island, -6214-05848, since 1969-03-07
+# General Bernardo O'Higgins, Antarctic Peninsula, -6319-05704, since 1948-02
+# Capitan Arturo Prat, -6230-05941
+# Villa Las Estrellas (a town), around the Frei base, since 1984-04-09
 # These locations have always used Santiago time; use TZ='America/Santiago'.
 
 # China - year-round bases
-# Great Wall, King George Island, since 1985-02-20
-# Zhongshan, Larsemann Hills, Prydz Bay, since 1989-02-26
+# Great Wall, King George Island, -6213-05858, since 1985-02-20
+# Zhongshan, Larsemann Hills, Prydz Bay, -6922+07623, since 1989-02-26
 
 # France - year-round bases
 #
@@ -145,19 +145,19 @@ Zone Antarctica/DumontDUrville 0 -	zzz	1947
 
 
 # Germany - year-round base
-# Georg von Neumayer
+# Georg von Neumayer, -7039-00815
 
 # India - year-round base
-# Dakshin Gangotri
+# Dakshin Gangotri, -7005+01200
 
 # Japan - year-round bases
-# Dome Fuji
-# Syowa
+# Dome Fuji, -7719+03942
+# Syowa, -690022+0393524
 #
 # From Hideyuki Suzuki (1999-02-06):
 # In all Japanese stations, +0300 is used as the standard time.  [See]
 # <a href="http://www.crl.go.jp/uk/uk201/basyo.htm">[reference in Japanese]</a>
-# and information from KAMO Hiroyasu <wd@ics.nara-wu.ac.jp>.
+# and information from KAMO Hiroyasu.
 #
 # Syowa station, which is the first antarctic station of Japan,
 # was established on 1957-01-29.  Since Syowa station is still the main
@@ -171,7 +171,7 @@ Zone Antarctica/Syowa	0	-	zzz	1957 Jan 29
 # </a>
 
 # S Korea - year-round base
-# King Sejong, King George Island, since 1988
+# King Sejong, King George Island, -6213-05847, since 1988
 
 # New Zealand - claims
 # Balleny Islands (never inhabited)
@@ -202,7 +202,8 @@ Rule	NZAQ	1990	max	-	Mar	Sun>=15	2:00s	0	S
 # Russia - year-round bases
 # Bellingshausen, King George Island, -621159-0585337, since 1968-02-22
 # Mirny, Davis coast, -6633+09301, since 1956-02
-# Molodezhnaya, Alasheyev Bay, year-round from 1962-02 to 1999-07-01
+# Molodezhnaya, Alasheyev Bay, -6740+04551,
+#	year-round from 1962-02 to 1999-07-01
 # Novolazarevskaya, Queen Maud Land, -7046+01150,
 #	year-round from 1960/61 to 1992
 
@@ -234,8 +235,8 @@ Zone Antarctica/Vostok	0	-	zzz	1957 Dec 16
 			6:00	-	VOST	# Vostok time
 
 # S Africa - year-round bases
-# Marion Island
-# Sanae
+# Marion Island, -4653+03752
+# Sanae, -7141-00250
 
 # UK
 #
@@ -270,7 +271,7 @@ Zone Antarctica/Rothera	0	-	zzz	1976 Dec  1
 #
 # Palmer, Anvers Island, since 1965 (moved 2 miles in 1968)
 #
-# From Ethan Dicks <erd@mcmsun5.mcmurdo.gov> (1996-10-06):
+# From Ethan Dicks (1996-10-06):
 # It keeps the same time as Punta Arenas, Chile, because, just like us
 # and the South Pole, that's the other end of their supply line....
 # I verified with someone who was there that since 1980,

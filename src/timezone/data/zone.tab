@@ -1,8 +1,8 @@
-# @(#)zone.tab	1.30
+# @(#)zone.tab	1.32
 #
 # TZ zone descriptions
 #
-# From Paul Eggert <eggert@twinsun.com> (1996-08-05):
+# From Paul Eggert (1996-08-05):
 #
 # This file contains a table with the following columns:
 # 1.  ISO 3166 2-character country code.  See the file `iso3166.tab'.
@@ -45,17 +45,17 @@ AR	-3436-05827	America/Argentina/Buenos_Aires	Buenos Aires (BA, CF)
 AR	-3124-06411	America/Argentina/Cordoba	most locations (CB, CC, CN, ER, FM, LP, MN, NQ, RN, SA, SE, SF, SL)
 AR	-2411-06518	America/Argentina/Jujuy	Jujuy (JY)
 AR	-3124-06411	America/Argentina/Tucuman	Tucuman (TM)
-AR	-2828-06547	America/Argentina/Catamarca	Catamarca (CT)
+AR	-2828-06547	America/Argentina/Catamarca	Catamarca (CT), Chubut (CH)
 AR	-2926-06651	America/Argentina/La_Rioja	La Rioja (LR)
 AR	-3132-06831	America/Argentina/San_Juan	San Juan (SJ)
 AR	-3253-06849	America/Argentina/Mendoza	Mendoza (MZ)
-AR	-4552-06730	America/Argentina/ComodRivadavia	Chubut (CH)
 AR	-5138-06913	America/Argentina/Rio_Gallegos	Santa Cruz (SC)
 AR	-5448-06818	America/Argentina/Ushuaia	Tierra del Fuego (TF)
 AS	-1416-17042	Pacific/Pago_Pago
 AT	+4813+01620	Europe/Vienna
 AU	-3133+15905	Australia/Lord_Howe	Lord Howe Island
-AU	-4253+14719	Australia/Hobart	Tasmania
+AU	-4253+14719	Australia/Hobart	Tasmania - most locations
+AU	-3956+14352	Australia/Currie	Tasmania - King Island
 AU	-3749+14458	Australia/Melbourne	Victoria
 AU	-3352+15113	Australia/Sydney	New South Wales - most locations
 AU	-3157+14127	Australia/Broken_Hill	New South Wales - Yancowinna
@@ -107,9 +107,10 @@ CA	+4531-07334	America/Montreal	Eastern Time - Quebec - most locations
 CA	+4339-07923	America/Toronto	Eastern Time - Ontario - most locations
 CA	+4901-08816	America/Nipigon	Eastern Time - Ontario & Quebec - places that did not observe DST 1967-1973
 CA	+4823-08915	America/Thunder_Bay	Eastern Time - Thunder Bay, Ontario
-CA	+6608-06544	America/Pangnirtung	Eastern Standard Time - Pangnirtung, Nunavut
-CA	+6344-06828	America/Iqaluit	Eastern Standard Time - east Nunavut
-CA	+6245-09210	America/Rankin_Inlet	Eastern Standard Time - central Nunavut
+CA	+6608-06544	America/Pangnirtung	Eastern Time - Pangnirtung, Nunavut
+CA	+6344-06828	America/Iqaluit	Eastern Time - east Nunavut
+CA	+6408-08310	America/Coral_Harbour	Eastern Standard Time - Southampton Island
+CA	+6245-09210	America/Rankin_Inlet	Central Time - central Nunavut
 CA	+4953-09709	America/Winnipeg	Central Time - Manitoba & west Ontario
 CA	+4843-09429	America/Rainy_River	Central Time - Rainy River & Fort Frances, Ontario
 CA	+6903-10505	America/Cambridge_Bay	Central Time - west Nunavut
@@ -165,15 +166,13 @@ ET	+0902+03842	Africa/Addis_Ababa
 FI	+6010+02458	Europe/Helsinki
 FJ	-1808+17825	Pacific/Fiji
 FK	-5142-05751	Atlantic/Stanley
-FM	+0931+13808	Pacific/Yap	Yap
-FM	+0725+15147	Pacific/Truk	Truk (Chuuk)
+FM	+0725+15147	Pacific/Truk	Truk (Chuuk) and Yap
 FM	+0658+15813	Pacific/Ponape	Ponape (Pohnpei)
 FM	+0519+16259	Pacific/Kosrae	Kosrae
 FO	+6201-00646	Atlantic/Faeroe
 FR	+4852+00220	Europe/Paris
 GA	+0023+00927	Africa/Libreville
-GB	+512830-0001845	Europe/London	Great Britain
-GB	+5435-00555	Europe/Belfast	Northern Ireland
+GB	+512830-0001845	Europe/London
 GD	+1203-06145	America/Grenada
 GE	+4143+04449	Asia/Tbilisi
 GF	+0456-05220	America/Cayenne
@@ -248,8 +247,7 @@ MG	-1855+04731	Indian/Antananarivo
 MH	+0709+17112	Pacific/Majuro	most locations
 MH	+0905+16720	Pacific/Kwajalein	Kwajalein
 MK	+4159+02126	Europe/Skopje
-ML	+1239-00800	Africa/Bamako	southwest Mali
-ML	+1446-00301	Africa/Timbuktu	northeast Mali
+ML	+1239-00800	Africa/Bamako
 MM	+1647+09610	Asia/Rangoon
 MN	+4755+10653	Asia/Ulaanbaatar	most locations
 MN	+4801+09139	Asia/Hovd	Bayan-Olgiy, Govi-Altai, Hovd, Uvs, Zavkhan
@@ -370,9 +368,9 @@ UM	+2813-17722	Pacific/Midway	Midway Islands
 UM	+1917+16637	Pacific/Wake	Wake Island
 US	+404251-0740023	America/New_York	Eastern Time
 US	+421953-0830245	America/Detroit	Eastern Time - Michigan - most locations
-US	+381515-0854534	America/Louisville	Eastern Time - Kentucky - Louisville area
+US	+381515-0854534	America/Kentucky/Louisville	Eastern Time - Kentucky - Louisville area
 US	+364947-0845057	America/Kentucky/Monticello	Eastern Time - Kentucky - Wayne County
-US	+394606-0860929	America/Indianapolis	Eastern Standard Time - Indiana - most locations
+US	+394606-0860929	America/Indiana/Indianapolis	Eastern Standard Time - Indiana - most locations
 US	+382232-0862041	America/Indiana/Marengo	Eastern Standard Time - Indiana - Crawford County
 US	+411745-0863730	America/Indiana/Knox	Eastern Standard Time - Indiana - Starke County
 US	+384452-0850402	America/Indiana/Vevay	Eastern Standard Time - Indiana - Switzerland County
