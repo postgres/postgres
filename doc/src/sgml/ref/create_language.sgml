@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_language.sgml,v 1.40 2005/09/05 23:50:48 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_language.sgml,v 1.41 2005/09/08 20:07:41 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -48,22 +48,19 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</
 
   <para>
    There are two forms of the <command>CREATE LANGUAGE</command> command.
-   In the first form, the user merely supplies the name of the desired
+   In the first form, the user supplies just the name of the desired
    language, and the <productname>PostgreSQL</productname> server consults
-   an internal table to determine the correct parameters.  In
-   the second form, the user supplies the language parameters along with
-   the language name.  The second form must be used to create a language
-   that is not present in the internal table, but this form is considered
-   obsolescent.  (It is expected that future releases of
-   <productname>PostgreSQL</productname> will replace the internal table
-   with a system catalog that can be extended to support additional
-   languages.)
+   the <link linkend="catalog-pg-pltemplate"><structname>pg_pltemplate</structname></link>
+   system catalog to determine the correct parameters.  In the second form,
+   the user supplies the language parameters along with the language name.
+   The second form can be used to create a language that is not defined in
+   <structname>pg_pltemplate</>, but this approach is considered obsolescent.
   </para>
 
   <para>
-   When the server finds an entry in its internal table for the given
-   language name, it will use the table data even if the given command
-   includes language parameters.  This behavior simplifies loading of
+   When the server finds an entry in the <structname>pg_pltemplate</> catalog
+   for the given language name, it will use the catalog data even if the
+   command includes language parameters.  This behavior simplifies loading of
    old dump files, which are likely to contain out-of-date information
    about language support functions.
   </para>
@@ -165,8 +162,8 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</
 
   <para>
    The <literal>TRUSTED</> option and the support function name(s) are
-   ignored if the server has information about the specified language
-   name in its internal table.
+   ignored if the server has an entry for the specified language
+   name in <structname>pg_pltemplate</>.
   </para>
  </refsect1>
 
@@ -207,9 +204,9 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</
 
   <para>
    The call handler function and the validator function (if any)
-   must already exist if the server does not have information about
-   the language in its internal table.  But when there is an entry
-   in the internal table, the functions need not already exist;
+   must already exist if the server does not have an entry for the language
+   in <structname>pg_pltemplate</>.  But when there is an entry,
+   the functions need not already exist;
    they will be automatically defined if not present in the database.
    (This can result in <command>CREATE LANGUAGE</> failing, if the
    shared library that implements the language is not available in
@@ -239,8 +236,8 @@ CREATE LANGUAGE plpgsql;
   </para>
 
   <para>
-   For a language not known in the server's internal table, a sequence
-   such as this is needed:
+   For a language not known in the <structname>pg_pltemplate</> catalog, a
+   sequence such as this is needed:
 <programlisting>
 CREATE FUNCTION plsample_call_handler() RETURNS language_handler
     AS '$libdir/plsample'

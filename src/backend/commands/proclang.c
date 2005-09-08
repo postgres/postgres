@@ -7,18 +7,20 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.61 2005/09/05 23:50:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.62 2005/09/08 20:07:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "access/genam.h"
 #include "access/heapam.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
+#include "catalog/pg_pltemplate.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "commands/proclang.h"
@@ -35,11 +37,10 @@
 
 typedef struct
 {
-	char	   *lanname;		/* PL name */
-	bool		lantrusted;		/* trusted? */
-	char	   *lanhandler;		/* name of handler function */
-	char	   *lanvalidator;	/* name of validator function, or NULL */
-	char	   *lanlibrary;		/* path of shared library */
+	bool		tmpltrusted;	/* trusted? */
+	char	   *tmplhandler;	/* name of handler function */
+	char	   *tmplvalidator;	/* name of validator function, or NULL */
+	char	   *tmpllibrary;	/* path of shared library */
 } PLTemplate;
 
 static void create_proc_lang(const char *languageName,
@@ -91,11 +92,18 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 		List	*funcname;
 
 		/*
+		 * Give a notice if we are ignoring supplied parameters.
+		 */
+		if (stmt->plhandler)
+			ereport(NOTICE,
+					(errmsg("using pg_pltemplate information instead of CREATE LANGUAGE parameters")));
+
+		/*
 		 * Find or create the handler function, which we force to be in
 		 * the pg_catalog schema.  If already present, it must have the
 		 * correct return type.
 		 */
-		funcname = SystemFuncName(pltemplate->lanhandler);
+		funcname = SystemFuncName(pltemplate->tmplhandler);
 		handlerOid = LookupFuncName(funcname, 0, funcargtypes, true);
 		if (OidIsValid(handlerOid))
 		{
@@ -108,15 +116,15 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 		}
 		else
 		{
-			handlerOid = ProcedureCreate(pltemplate->lanhandler,
+			handlerOid = ProcedureCreate(pltemplate->tmplhandler,
 										 PG_CATALOG_NAMESPACE,
 										 false,		/* replace */
 										 false,		/* returnsSet */
 										 LANGUAGE_HANDLEROID,
 										 ClanguageId,
 										 F_FMGR_C_VALIDATOR,
-										 pltemplate->lanhandler,
-										 pltemplate->lanlibrary,
+										 pltemplate->tmplhandler,
+										 pltemplate->tmpllibrary,
 										 false,		/* isAgg */
 										 false,		/* security_definer */
 										 false,		/* isStrict */
@@ -131,22 +139,22 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 		 * Likewise for the validator, if required; but we don't care about
 		 * its return type.
 		 */
-		if (pltemplate->lanvalidator)
+		if (pltemplate->tmplvalidator)
 		{
-			funcname = SystemFuncName(pltemplate->lanvalidator);
+			funcname = SystemFuncName(pltemplate->tmplvalidator);
 			funcargtypes[0] = OIDOID;
 			valOid = LookupFuncName(funcname, 1, funcargtypes, true);
 			if (!OidIsValid(valOid))
 			{
-				valOid = ProcedureCreate(pltemplate->lanvalidator,
+				valOid = ProcedureCreate(pltemplate->tmplvalidator,
 										 PG_CATALOG_NAMESPACE,
 										 false,		/* replace */
 										 false,		/* returnsSet */
 										 VOIDOID,
 										 ClanguageId,
 										 F_FMGR_C_VALIDATOR,
-										 pltemplate->lanvalidator,
-										 pltemplate->lanlibrary,
+										 pltemplate->tmplvalidator,
+										 pltemplate->tmpllibrary,
 										 false,		/* isAgg */
 										 false,		/* security_definer */
 										 false,		/* isStrict */
@@ -162,7 +170,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 
 		/* ok, create it */
 		create_proc_lang(languageName, handlerOid, valOid,
-						 pltemplate->lantrusted);
+						 pltemplate->tmpltrusted);
 	}
 	else
 	{
@@ -170,17 +178,13 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 		 * No template, so use the provided information.  If there's
 		 * no handler clause, the user is trying to rely on a template
 		 * that we don't have, so complain accordingly.
-		 *
-		 * XXX In 8.2, replace the detail message with a hint to look in
-		 * pg_pltemplate.
 		 */
 		if (!stmt->plhandler)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("unsupported language \"%s\"",
 							languageName),
-					 errdetail("Supported languages are plpgsql, pltcl, pltclu, "
-							   "plperl, plperlu, and plpythonu.")));
+					 errhint("The supported languages are listed in the pg_pltemplate system catalog.")));
 
 		/*
 		 * Lookup the PL handler function and check that it is of the expected
@@ -291,41 +295,76 @@ create_proc_lang(const char *languageName,
 
 /*
  * Look to see if we have template information for the given language name.
- *
- * XXX for PG 8.1, the template info is hard-wired.  This is to be replaced
- * by a shared system catalog in 8.2.
- *
- * XXX if you add languages to this list, add them also to the errdetail
- * message above and the list in functioncmds.c.  Those hard-wired lists
- * should go away in 8.2, also.
  */
 static PLTemplate *
 find_language_template(const char *languageName)
 {
-	static PLTemplate templates[] = {
-		{ "plpgsql", true, "plpgsql_call_handler", "plpgsql_validator",
-		  "$libdir/plpgsql" },
-		{ "pltcl", true, "pltcl_call_handler", NULL,
-		  "$libdir/pltcl" },
-		{ "pltclu", false, "pltclu_call_handler", NULL,
-		  "$libdir/pltcl" },
-		{ "plperl", true, "plperl_call_handler", "plperl_validator",
-		  "$libdir/plperl" },
-		{ "plperlu", false, "plperl_call_handler", "plperl_validator",
-		  "$libdir/plperl" },
-		{ "plpythonu", false, "plpython_call_handler", NULL,
-		  "$libdir/plpython" },
-		{ NULL, false, NULL, NULL, NULL }
-	};
+	PLTemplate *result;
+	Relation	rel;
+	SysScanDesc scan;
+	ScanKeyData key;
+	HeapTuple	tup;
 
-	PLTemplate *ptr;
+	rel = heap_open(PLTemplateRelationId, AccessShareLock);
 
-	for (ptr = templates; ptr->lanname != NULL; ptr++)
+	ScanKeyInit(&key,
+				Anum_pg_pltemplate_tmplname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(languageName));
+	scan = systable_beginscan(rel, PLTemplateNameIndexId, true,
+							  SnapshotNow, 1, &key);
+
+	tup = systable_getnext(scan);
+	if (HeapTupleIsValid(tup))
 	{
-		if (strcmp(languageName, ptr->lanname) == 0)
-			return ptr;
+		Form_pg_pltemplate tmpl = (Form_pg_pltemplate) GETSTRUCT(tup);
+		Datum		datum;
+		bool		isnull;
+
+		result = (PLTemplate *) palloc0(sizeof(PLTemplate));
+		result->tmpltrusted = tmpl->tmpltrusted;
+
+		/* Remaining fields are variable-width so we need heap_getattr */
+		datum = heap_getattr(tup, Anum_pg_pltemplate_tmplhandler,
+							 RelationGetDescr(rel), &isnull);
+		if (!isnull)
+			result->tmplhandler =
+				DatumGetCString(DirectFunctionCall1(textout, datum));
+
+		datum = heap_getattr(tup, Anum_pg_pltemplate_tmplvalidator,
+							 RelationGetDescr(rel), &isnull);
+		if (!isnull)
+			result->tmplvalidator =
+				DatumGetCString(DirectFunctionCall1(textout, datum));
+
+		datum = heap_getattr(tup, Anum_pg_pltemplate_tmpllibrary,
+							 RelationGetDescr(rel), &isnull);
+		if (!isnull)
+			result->tmpllibrary =
+				DatumGetCString(DirectFunctionCall1(textout, datum));
+
+		/* Ignore template if handler or library info is missing */
+		if (!result->tmplhandler || !result->tmpllibrary)
+			result = NULL;
 	}
-	return NULL;
+	else
+		result = NULL;
+
+	systable_endscan(scan);
+
+	heap_close(rel, AccessShareLock);
+
+	return result;
+}
+
+
+/*
+ * This just returns TRUE if we have a valid template for a given language
+ */
+bool
+PLTemplateExists(const char *languageName)
+{
+	return (find_language_template(languageName) != NULL);
 }
 
 

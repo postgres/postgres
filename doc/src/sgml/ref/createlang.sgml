@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/createlang.sgml,v 1.36 2005/09/05 23:50:48 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createlang.sgml,v 1.37 2005/09/08 20:07:41 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -40,11 +40,9 @@ PostgreSQL documentation
   <para>
    <application>createlang</application> is a utility for adding a new 
    programming language to a <productname>PostgreSQL</productname> database.
-   <application>createlang</application> can handle all the languages
-   supplied in the default <productname>PostgreSQL</> distribution, but
-   not languages provided by other parties.  See
+   <application>createlang</application> is just a wrapper around the
    <xref linkend="sql-createlanguage" endterm="sql-createlanguage-title">
-   for additional information.
+   command, which see for additional information.
   </para>
  </refsect1>
 

@@ -2,7 +2,7 @@
 #
 # Makefile for backend/catalog
 #
-# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.56 2005/07/14 05:13:39 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.57 2005/09/08 20:07:41 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -32,8 +32,9 @@ POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/,\
 	pg_operator.h pg_opclass.h pg_am.h pg_amop.h pg_amproc.h \
 	pg_language.h pg_largeobject.h pg_aggregate.h pg_statistic.h \
 	pg_rewrite.h pg_trigger.h pg_listener.h pg_description.h pg_cast.h \
-	pg_namespace.h pg_conversion.h pg_database.h pg_shdepend.h \
-	pg_authid.h pg_auth_members.h pg_tablespace.h pg_depend.h \
+	pg_namespace.h pg_conversion.h pg_depend.h \
+	pg_database.h pg_tablespace.h pg_pltemplate.h \
+	pg_authid.h pg_auth_members.h pg_shdepend.h \
 	indexing.h \
     )
 

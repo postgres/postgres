@@ -55,6 +55,7 @@ SELECT relname, relhasindex
  pg_namespace        | t
  pg_opclass          | t
  pg_operator         | t
+ pg_pltemplate       | t
  pg_proc             | t
  pg_rewrite          | t
  pg_shdepend         | t
@@ -67,7 +68,7 @@ SELECT relname, relhasindex
  shighway            | t
  tenk1               | t
  tenk2               | t
-(57 rows)
+(58 rows)
 
 --
 -- another sanity check: every system catalog that has OIDs should have
