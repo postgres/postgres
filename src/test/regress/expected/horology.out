@@ -204,61 +204,61 @@ SELECT timestamp with time zone '27.12.2001 04:05:06.789-08';
 SET DateStyle = 'ISO';
 -- As of 7.4, allow time without time zone having a time zone specified
 SELECT time without time zone '040506.789+08';
-     time      
+     time     
 --------------
  04:05:06.789
 (1 row)
 
 SELECT time without time zone '040506.789-08';
-     time      
+     time     
 --------------
  04:05:06.789
 (1 row)
 
 SELECT time without time zone 'T040506.789+08';
-     time      
+     time     
 --------------
  04:05:06.789
 (1 row)
 
 SELECT time without time zone 'T040506.789-08';
-     time      
+     time     
 --------------
  04:05:06.789
 (1 row)
 
 SELECT time with time zone '040506.789+08';
-      timetz      
+     timetz      
 -----------------
  04:05:06.789+08
 (1 row)
 
 SELECT time with time zone '040506.789-08';
-      timetz      
+     timetz      
 -----------------
  04:05:06.789-08
 (1 row)
 
 SELECT time with time zone 'T040506.789+08';
-      timetz      
+     timetz      
 -----------------
  04:05:06.789+08
 (1 row)
 
 SELECT time with time zone 'T040506.789-08';
-      timetz      
+     timetz      
 -----------------
  04:05:06.789-08
 (1 row)
 
 SELECT time with time zone 'T040506.789 +08';
-      timetz      
+     timetz      
 -----------------
  04:05:06.789+08
 (1 row)
 
 SELECT time with time zone 'T040506.789 -08';
-      timetz      
+     timetz      
 -----------------
  04:05:06.789-08
 (1 row)
@@ -1770,11 +1770,11 @@ SELECT '' AS "160", d.f1 AS "timestamp", t.f1 AS "interval", d.f1 + t.f1 AS plus
      | Tue Dec 31 17:32:01 1996 PST | @ 34 years                    | Tue Dec 31 17:32:01 2030 PST
      | Fri Dec 31 17:32:01 1999 PST | @ 34 years                    | Sat Dec 31 17:32:01 2033 PST
      | Sat Jan 01 17:32:01 2000 PST | @ 34 years                    | Sun Jan 01 17:32:01 2034 PST
-     | Wed Mar 15 02:14:05 2000 PST | @ 34 years                    | Wed Mar 15 02:14:05 2034 PST
-     | Wed Mar 15 03:14:04 2000 PST | @ 34 years                    | Wed Mar 15 03:14:04 2034 PST
-     | Wed Mar 15 08:14:01 2000 PST | @ 34 years                    | Wed Mar 15 08:14:01 2034 PST
-     | Wed Mar 15 12:14:03 2000 PST | @ 34 years                    | Wed Mar 15 12:14:03 2034 PST
-     | Wed Mar 15 13:14:02 2000 PST | @ 34 years                    | Wed Mar 15 13:14:02 2034 PST
+     | Wed Mar 15 02:14:05 2000 PST | @ 34 years                    | Wed Mar 15 02:14:05 2034 PDT
+     | Wed Mar 15 03:14:04 2000 PST | @ 34 years                    | Wed Mar 15 03:14:04 2034 PDT
+     | Wed Mar 15 08:14:01 2000 PST | @ 34 years                    | Wed Mar 15 08:14:01 2034 PDT
+     | Wed Mar 15 12:14:03 2000 PST | @ 34 years                    | Wed Mar 15 12:14:03 2034 PDT
+     | Wed Mar 15 13:14:02 2000 PST | @ 34 years                    | Wed Mar 15 13:14:02 2034 PDT
      | Sun Dec 31 17:32:01 2000 PST | @ 34 years                    | Sun Dec 31 17:32:01 2034 PST
      | Mon Jan 01 17:32:01 2001 PST | @ 34 years                    | Mon Jan 01 17:32:01 2035 PST
      | Sat Sep 22 18:19:20 2001 PDT | @ 34 years                    | Sat Sep 22 18:19:20 2035 PDT
