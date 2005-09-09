@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.383 2005/08/13 19:02:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.384 2005/09/09 06:51:12 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2959,7 +2959,7 @@ DATA(insert OID = 2035 (  timestamp_smaller PGNSP PGUID 12 f f t f i 2 1114 "111
 DESCR("smaller of two");
 DATA(insert OID = 2036 (  timestamp_larger	PGNSP PGUID 12 f f t f i 2 1114 "1114 1114" _null_ _null_ _null_	timestamp_larger - _null_ ));
 DESCR("larger of two");
-DATA(insert OID = 2037 (  timezone			PGNSP PGUID 12 f f t f i 2 1266 "25 1266" _null_ _null_ _null_  timetz_zone - _null_ ));
+DATA(insert OID = 2037 (  timezone			PGNSP PGUID 12 f f t f v 2 1266 "25 1266" _null_ _null_ _null_  timetz_zone - _null_ ));
 DESCR("adjust time with time zone to new zone");
 DATA(insert OID = 2038 (  timezone			PGNSP PGUID 12 f f t f i 2 1266 "1186 1266" _null_ _null_ _null_	timetz_izone - _null_ ));
 DESCR("adjust time with time zone to new zone");
