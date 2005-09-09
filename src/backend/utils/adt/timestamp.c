@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.151 2005/08/25 05:01:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.152 2005/09/09 02:31:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1014,7 +1014,7 @@ dt2time(Timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
  *	 0 on success
  *	-1 on out of range
  *
- * If attimezone is NULL, the global timezone (including possblly brute forced
+ * If attimezone is NULL, the global timezone (including possibly brute forced
  * timezone) will be used.
  */
 int
@@ -1113,8 +1113,8 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm, fsec_t *fsec, char **tzn,
 	utime = (pg_time_t) dt;
 	if ((Timestamp) utime == dt)
 	{
-		struct pg_tm *tx = pg_localtime(&utime, (attimezone != NULL) ?
-										attimezone : global_timezone);
+		struct pg_tm *tx = pg_localtime(&utime,
+										attimezone ? attimezone : global_timezone);
 
 		tm->tm_year = tx->tm_year + 1900;
 		tm->tm_mon = tx->tm_mon + 1;
@@ -3948,48 +3948,64 @@ Datum
 timestamp_zone(PG_FUNCTION_ARGS)
 {
 	text	   *zone = PG_GETARG_TEXT_P(0);
-	Timestamp timestamp = PG_GETARG_TIMESTAMP(1);
+	Timestamp	timestamp = PG_GETARG_TIMESTAMP(1);
 	TimestampTz	result;
 	int			tz;
 	pg_tz      *tzp;
-	char        tzname[TZ_STRLEN_MAX+1];
+	char        tzname[TZ_STRLEN_MAX + 1];
 	int         len;
-	struct pg_tm tm;
-	fsec_t      fsec;
-	bool		fail;
 	
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_TIMESTAMPTZ(timestamp);
 
-	/* Find the specified timezone */
-	len = (VARSIZE(zone) - VARHDRSZ>TZ_STRLEN_MAX) ?
-			TZ_STRLEN_MAX : VARSIZE(zone) - VARHDRSZ;
+	/*
+	 * Look up the requested timezone.  First we look in the timezone
+	 * database (to handle cases like "America/New_York"), and if that
+	 * fails, we look in the date token table (to handle cases like "EST").
+	 */ 
+	len = Min(VARSIZE(zone) - VARHDRSZ, TZ_STRLEN_MAX);
 	memcpy(tzname, VARDATA(zone), len);
-	tzname[len] = 0;
+	tzname[len] = '\0';
 	tzp = pg_tzset(tzname);
-	if (!tzp)
+	if (tzp)
 	{
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("time zone \"%s\" not recognised",
-				        tzname)));
-		PG_RETURN_NULL();
-	}
+		/* Apply the timezone change */
+		struct pg_tm tm;
+		fsec_t      fsec;
 
-	/* Apply the timezone change */
-	fail = (timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, tzp) != 0);
-	if (!fail)
-	{
+		if (timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, tzp) != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("timestamp out of range")));
 		tz = DetermineTimeZoneOffset(&tm, tzp);
-		fail = (tm2timestamp(&tm, fsec, &tz, &result) != 0);
+		if (tm2timestamp(&tm, fsec, &tz, &result) != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("could not convert to time zone \"%s\"",
+							tzname)));
 	}
-	if (fail)
+	else
 	{
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("could not convert to time zone \"%s\"",
-				        tzname)));
-		PG_RETURN_NULL();
+		char	   *lowzone;
+		int			type,
+					val;
+
+		lowzone = downcase_truncate_identifier(VARDATA(zone),
+											   VARSIZE(zone) - VARHDRSZ,
+											   false);
+		type = DecodeSpecial(0, lowzone, &val);
+
+		if (type == TZ || type == DTZ)
+			tz = -(val * 60);
+		else
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("time zone \"%s\" not recognized", tzname)));
+			tz = 0;				/* keep compiler quiet */
+		}
+
+		result = dt2local(timestamp, tz);
 	}
 
 	PG_RETURN_TIMESTAMPTZ(result);
@@ -4109,37 +4125,59 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 	Timestamp	result;
 	int			tz;
 	pg_tz	   *tzp;
-	char        tzname[TZ_STRLEN_MAX];
+	char        tzname[TZ_STRLEN_MAX + 1];
 	int         len;
-	struct pg_tm tm;
-	fsec_t      fsec = 0;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
-		PG_RETURN_NULL();
+		PG_RETURN_TIMESTAMP(timestamp);
 
-	/* Find the specified zone */
-	len = (VARSIZE(zone) - VARHDRSZ > TZ_STRLEN_MAX) ?
-			TZ_STRLEN_MAX : VARSIZE(zone) - VARHDRSZ;
+	/*
+	 * Look up the requested timezone.  First we look in the timezone
+	 * database (to handle cases like "America/New_York"), and if that
+	 * fails, we look in the date token table (to handle cases like "EST").
+	 */ 
+	len = Min(VARSIZE(zone) - VARHDRSZ, TZ_STRLEN_MAX);
 	memcpy(tzname, VARDATA(zone), len);
-	tzname[len] = 0;
+	tzname[len] = '\0';
 	tzp = pg_tzset(tzname);
-
-	if (!tzp)
+	if (tzp)
 	{
-		ereport(ERROR,
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			 errmsg("time zone \"%s\" not recognized", tzname)));
+		/* Apply the timezone change */
+		struct pg_tm tm;
+		fsec_t      fsec;
 
-		PG_RETURN_NULL();
+		if (timestamp2tm(timestamp, &tz, &tm, &fsec, NULL, tzp) != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("timestamp out of range")));
+		if (tm2timestamp(&tm, fsec, NULL, &result) != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("could not convert to time zone \"%s\"",
+							tzname)));
 	}
+	else
+	{
+		char	   *lowzone;
+		int			type,
+					val;
 
-	if (timestamp2tm(timestamp, &tz, &tm, &fsec, NULL, tzp) != 0 ||
-	    tm2timestamp(&tm, fsec, NULL, &result))
-	{ 
-		ereport(ERROR,
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("could not to convert to time zone \"%s\"", tzname)));
-		PG_RETURN_NULL();
+		lowzone = downcase_truncate_identifier(VARDATA(zone),
+											   VARSIZE(zone) - VARHDRSZ,
+											   false);
+		type = DecodeSpecial(0, lowzone, &val);
+
+		if (type == TZ || type == DTZ)
+			tz = val * 60;
+		else
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("time zone \"%s\" not recognized", tzname)));
+			tz = 0;				/* keep compiler quiet */
+		}
+
+		result = dt2local(timestamp, tz);
 	}
 
 	PG_RETURN_TIMESTAMP(result);

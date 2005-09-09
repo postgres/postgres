@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.36 2005/06/26 23:32:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.37 2005/09/09 02:31:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -974,7 +974,7 @@ init_timezone_hashtable(void)
 
 	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
 
-	hash_ctl.keysize = TZ_STRLEN_MAX;
+	hash_ctl.keysize = TZ_STRLEN_MAX + 1;
 	hash_ctl.entrysize = sizeof(pg_tz);
 
 	timezone_cache = hash_create("Timezones",
@@ -997,7 +997,7 @@ pg_tzset(const char *name)
 	pg_tz *tzp;
 	pg_tz tz;
 	
-	if (strlen(name) >= TZ_STRLEN_MAX)
+	if (strlen(name) > TZ_STRLEN_MAX)
 		return NULL;			/* not going to fit */
 
 	if (!timezone_cache)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.119 2005/07/23 14:25:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.120 2005/09/09 02:31:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2484,37 +2484,53 @@ timetz_zone(PG_FUNCTION_ARGS)
 	TimeTzADT  *t = PG_GETARG_TIMETZADT_P(1);
 	TimeTzADT  *result;
 	int			tz;
-	char        tzname[TZ_STRLEN_MAX];
+	char        tzname[TZ_STRLEN_MAX + 1];
 	int         len;
 	pg_tz	   *tzp;
-	struct pg_tm *tm;
-	pg_time_t   now;
 
-	/* Find the specified timezone */ 
-	len = (VARSIZE(zone) - VARHDRSZ > TZ_STRLEN_MAX) ?
-					TZ_STRLEN_MAX : VARSIZE(zone) - VARHDRSZ;
+	/*
+	 * Look up the requested timezone.  First we look in the timezone
+	 * database (to handle cases like "America/New_York"), and if that
+	 * fails, we look in the date token table (to handle cases like "EST").
+	 */ 
+	len = Min(VARSIZE(zone) - VARHDRSZ, TZ_STRLEN_MAX);
 	memcpy(tzname, VARDATA(zone), len);
-	tzname[len]=0;
+	tzname[len] = '\0';
 	tzp = pg_tzset(tzname);
-	if (!tzp) {
-		ereport(ERROR,
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		 	 errmsg("time zone \"%s\" not recognized", tzname)));
-		PG_RETURN_NULL();
+	if (tzp)
+	{
+		/* Get the offset-from-GMT that is valid today for the selected zone */
+		pg_time_t   now;
+		struct pg_tm *tm;
+
+		now = time(NULL);
+		tm = pg_localtime(&now, tzp);
+		tz = -tm->tm_gmtoff;
+	}
+	else
+	{
+		char	   *lowzone;
+		int			type,
+					val;
+
+		lowzone = downcase_truncate_identifier(VARDATA(zone),
+											   VARSIZE(zone) - VARHDRSZ,
+											   false);
+		type = DecodeSpecial(0, lowzone, &val);
+
+		if (type == TZ || type == DTZ)
+			tz = val * 60;
+		else
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("time zone \"%s\" not recognized", tzname)));
+			tz = 0;				/* keep compiler quiet */
+		}
 	}
 
-	/* Get the offset-from-GMT that is valid today for the selected zone */
-	if ((now = time(NULL)) < 0 ||
-	    (tm = pg_localtime(&now, tzp)) == NULL) {
-	   	ereport(ERROR,
-	   		(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			 errmsg("could not determine current time")));
-		PG_RETURN_NULL();
-	}
-
-	result = (TimeTzADT *)palloc(sizeof(TimeTzADT));
+	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
 	
-	tz = -tm->tm_gmtoff;
 #ifdef HAVE_INT64_TIMESTAMP
 	result->time = t->time + (t->zone - tz) * USECS_PER_SEC;
 	while (result->time < INT64CONST(0))

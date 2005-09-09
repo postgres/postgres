@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.46 2005/06/15 00:34:08 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.47 2005/09/09 02:31:48 tgl Exp $
 -->
 
  <appendix id="datetime-appendix">
@@ -990,9 +990,7 @@ $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.46 2005/06/15 00:34:08 momjian
    <para>
     <xref linkend="datetime-timezone-set-table"> shows the time zone
     names recognized by <productname>PostgreSQL</productname> as valid
-    settings for the <xref linkend="guc-timezone"> parameter, and as
-	parameters to the <literal>AT TIME ZONE function</> (see 
-	<xref linkend="functions-datetime-zoneconvert">).  Note that
+    settings for the <xref linkend="guc-timezone"> parameter.  Note that
     these names are conceptually as well as practically different from
     the names shown in <xref linkend="datetime-timezone-input-table">:
     most of these names imply a local daylight-savings time rule, whereas
@@ -1006,7 +1004,7 @@ $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.46 2005/06/15 00:34:08 momjian
    </para>
 
     <table id="datetime-timezone-set-table">
-     <title>Time Zone Names for Setting <varname>timezone</> and <literal>AT TIME ZONE</></title>
+     <title>Time Zone Names for Setting <varname>timezone</></title>
      <tgroup cols="1">
       <thead>
        <row>
