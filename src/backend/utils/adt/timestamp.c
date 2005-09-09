@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.152 2005/09/09 02:31:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.153 2005/09/09 06:46:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1897,18 +1897,14 @@ timestamp_mi(PG_FUNCTION_ARGS)
 	result = (Interval *) palloc(sizeof(Interval));
 
 	if (TIMESTAMP_NOT_FINITE(dt1) || TIMESTAMP_NOT_FINITE(dt2))
-	{
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("cannot subtract infinite timestamps")));
 
-		result->time = 0;
-	}
-	else
 #ifdef HAVE_INT64_TIMESTAMP
-		result->time = dt1 - dt2;
+	result->time = dt1 - dt2;
 #else
-		result->time = JROUND(dt1 - dt2);
+	result->time = JROUND(dt1 - dt2);
 #endif
 
 	result->month = 0;
@@ -4196,7 +4192,7 @@ timestamptz_izone(PG_FUNCTION_ARGS)
 	int			tz;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
-		PG_RETURN_NULL();
+		PG_RETURN_TIMESTAMP(timestamp);
 
 	if (zone->month != 0)
 		ereport(ERROR,
