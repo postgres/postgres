@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.365 2005/09/04 13:40:24 alvherre Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.366 2005/09/11 23:40:33 neilc Exp $
 
 Typical markup:
 
@@ -8,8 +8,7 @@ Typical markup:
 [A-Za-z_]/[A-Za-z_]+            <filename>
 PostgreSQL                      <productname>
 pg_[A-Za-z0-9_]                 <application>
-[A-Z][A-Z]                      <type>, <envar.
-                                <literal>
+[A-Z][A-Z]                      <type>, <envar>, <literal>
 &<>                             use &
 -->
 
@@ -40,10 +39,14 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        This was accomplished by eliminating global locks and using a
-        clock sweep algorithm to find free buffers. This increases
-        scalability on multi-CPU systems.
-       </para> 
+        Access to the shared buffer cache was identified as a
+        significant scalability problem, particularly on multi-CPU
+        systems. In this release, the way that locking is done in the
+        buffer manager has been overhauled to reduce lock contention
+        and improve scalability. The buffer manager has also been
+        changed to use a <quote>clock sweep</quote> replacement
+        policy.
+       </para>
       </listitem>
      </varlistentry>
 
@@ -56,18 +59,19 @@ pg_[A-Za-z0-9_]                 <application>
        <para>
         In previous releases, only a single index could be used to do
         lookups on a table. With this feature, if a query has
-        <command>WHERE tab.col1 = 4 and tab.col2 = 9</>, and there is no
-        multicolumn index on col1 and col2, but there is an index on
-        col1 and another on col2, it is possible to search both indexes
-        and combine the results in memory, then do heap fetches for only
-        the rows matching both the col1 and col2
-        restrictions. This is very useful in environments that have a
-        lot of unstructured queries where it is impossible to create
-        indexes that match all possible access conditions.  Bitmap scans
-        are useful even with a single index, as they reduce the amount
-        of random access needed; a bitmap index scan is efficient for
-        retrieving fairly large fractions of the complete table, whereas
-        plain index scans are not.
+        <command>WHERE tab.col1 = 4 and tab.col2 = 9</>, and there is
+        no multicolumn index on <literal>col1</> and <literal>col2</>,
+        but there is an index on <literal>col1</> and another on
+        <literal>col2</>, it is possible to search both indexes and
+        combine the results in memory, then do heap fetches for only
+        the rows matching both the <literal>col1</> and
+        <literal>col2</> restrictions. This is very useful in
+        environments that have a lot of unstructured queries where it
+        is impossible to create indexes that match all possible access
+        conditions.  Bitmap scans are useful even with a single index,
+        as they reduce the amount of random access needed; a bitmap
+        index scan is efficient for retrieving fairly large fractions
+        of the complete table, whereas plain index scans are not.
        </para>
       </listitem>
      </varlistentry>
@@ -165,7 +169,7 @@ pg_[A-Za-z0-9_]                 <application>
      <varlistentry>
       <term>
        Move <filename>/contrib/pg_autovacuum</> into the main server
-       (Alvaro Herrera)
+       (Alvaro)
       </term>
 
       <listitem>
@@ -217,7 +221,7 @@ pg_[A-Za-z0-9_]                 <application>
    </sect2>
  
    <sect2>
-    <title>Migration to version 8.1</title>
+    <title>Migration to 8.1</title>
                                        
     <para>
      A dump/restore using <application>pg_dump</application> is required
@@ -265,16 +269,14 @@ pg_[A-Za-z0-9_]                 <application>
        <varname>default_with_oids</> is now false by default (Neil)
       </para>
       <para>
-       With this option set to false, user-created tables no longer have
-       the usually-invisible OID column unless <command>WITH OIDS</>
-       is specified in <command>CREATE TABLE</>. Though OIDs have
-       existed in all releases of
-       <productname>PostgreSQL</productname>, their use is limited
+       With this option set to false, user-created tables no longer
+       have an OID column unless <command>WITH OIDS</> is specified in
+       <command>CREATE TABLE</>. Though OIDs have existed in all
+       releases of <productname>PostgreSQL</>, their use is limited
        because they are only four bytes long and the counter is shared
        across all installed databases. The preferred way of uniquely
-       identifying rows is via sequences and <command>SERIAL</>, which
-       have been supported since <productname>PostgreSQL</productname>
-       6.4.
+       identifying rows is via sequences and the <type>SERIAL</> type,
+       which have been supported since <productname>PostgreSQL</> 6.4.
       </para>
      </listitem>
 
@@ -297,21 +299,21 @@ pg_[A-Za-z0-9_]                 <application>
        syntax is formed by writing an <literal>E</> immediately preceding the
        single quote that starts the string, e.g. <literal>E'hi\n'</>. While
        this release does not change the handling of backslashes in strings, it
-       does add new GUC variables to help users migrate applications
+       does add new configuration parameters to help users migrate applications
        for future releases:
       </para>
       <itemizedlist>
 
        <listitem>
         <para>
-         <varname>standard_conforming_strings</> - does this release
+         <varname>standard_conforming_strings</> &mdash; does this release
          treat backslashes literally in ordinary strings?
         </para>
        </listitem>
   
        <listitem>
        <para>
-        <varname>escape_string_warning</> - warn about backslashes in
+        <varname>escape_string_warning</> &mdash; warn about backslashes in
         ordinary (non-E) strings
        </para>
       </listitem>
@@ -322,18 +324,20 @@ pg_[A-Za-z0-9_]                 <application>
        The <varname>standard_conforming_strings</> value is read-only.
        Applications can retrieve the value to know how backslashes are
        processed.  (Presence of the parameter can also be taken as an
-       indication that <literal>E''</> string syntax is supported.)  In a
-       future release, <varname>standard_conforming_strings</> will be true,
-       meaning backslashes will be treated literally in non-E strings. To
-       prepare for this change, use <literal>E''</> strings in places that
-       need special backslash processing, and turn on
-       <varname>escape_string_warning</> to find additional strings that need
-       to be converted to use <literal>E''</>.  Also, use two single-quotes
-       (<literal>''</>) to embed a literal single-quote in a string, rather
-       than the PostgreSQL-supported syntax of backslash single-quote
-       (<literal>\'</>).  The former is standards-conforming and does not
-       require the use of the <literal>E''</> string syntax.  You can also use
-       the <literal>$$</> string syntax, which does not treat backslashes
+       indication that <literal>E''</> string syntax is supported.)
+       In a future release, <varname>standard_conforming_strings</>
+       will be true, meaning backslashes will be treated literally in
+       non-E strings. To prepare for this change, use <literal>E''</>
+       strings in places that need special backslash processing, and
+       turn on <varname>escape_string_warning</> to find additional
+       strings that need to be converted to use <literal>E''</>.
+       Also, use two single-quotes (<literal>''</>) to embed a literal
+       single-quote in a string, rather than the
+       <productname>PostgreSQL</productname>-supported syntax of
+       backslash single-quote (<literal>\'</>).  The former is
+       standards-conforming and does not require the use of the
+       <literal>E''</> string syntax.  You can also use the
+       <literal>$$</> string syntax, which does not treat backslashes
        specially.
       </para>
      </listitem>
@@ -353,8 +357,8 @@ pg_[A-Za-z0-9_]                 <application>
 
      <listitem>
       <para>
-       In psql, treat unquoted <literal>\{digit}+</> sequences as octal
-       (Bruce)
+       In <application>psql</application>, treat unquoted
+       <literal>\{digit}+</> sequences as octal (Bruce)
       </para>
       <para>
        In previous releases, <literal>\{digit}+</> sequences were
@@ -389,8 +393,9 @@ pg_[A-Za-z0-9_]                 <application>
     <title>Additional Changes</title>
  
     <para>
-     Below you will find a detailed account of the additional changes 
-     between release 8.1 and the previous major release.
+     Below you will find a detailed account of the additional changes
+     between <productname>PostgreSQL</productname> 8.1 and the
+     previous major release.
     </para>
  
     <sect3>
@@ -399,7 +404,7 @@ pg_[A-Za-z0-9_]                 <application>
   
       <listitem>
        <para>
-        Improve rtree index capabilities and performance (Neil)
+        Improve GiST and rtree index performance (Neil)
        </para>
       </listitem>
 
@@ -435,8 +440,7 @@ pg_[A-Za-z0-9_]                 <application>
       <listitem>
        <para>
         Allow non-consecutive index columns to be used in a multi-column
-        index
-        (Tom)
+        index (Tom)
        </para>
        <para>
         For example, this allows an index on columns a,b,c to be used in
@@ -465,9 +469,8 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Add GUC <varname>full_page_writes</> to control writing full
-        pages to WAL
-        (Bruce)
+        Add configuration parameter <varname>full_page_writes</> to
+        control writing full pages to WAL (Bruce)
        </para>
        <para>
         To prevent partial disk writes from corrupting the database,
@@ -481,8 +484,9 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Add constraint_exclusion to restrict child table lookups based
-        on table constraints (Simon)
+        Add <varname>constraint_exclusion</varname> configuration
+        parameter to restrict child table lookups based on table
+        constraints (Simon)
        </para>
        <para>
         This allows for a type of table partitioning. If child tables
@@ -496,7 +500,8 @@ pg_[A-Za-z0-9_]                 <application>
       <listitem>
        <para>
         Use <literal>O_DIRECT</> if available when using
-        <literal>O_SYNC</> for wal_sync_method (Itagaki Takahiro)
+        <literal>O_SYNC</> for <varname>wal_sync_method</varname>
+        (Itagaki Takahiro)
        </para>
        <para>
         <literal>O_DIRECT</> causes disk writes to bypass the kernel
@@ -516,12 +521,11 @@ pg_[A-Za-z0-9_]                 <application>
   
      </itemizedlist>
     </sect3>
-  
-  
+
     <sect3>
      <title>Server Changes</title>
      <itemizedlist>
-  
+
       <listitem>
        <para>
         Prevent problems due to transaction ID (XID) wraparound (Tom)
@@ -551,9 +555,9 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Add <varname>temp_buffers</> GUC variable to allow users to
-        determine the size of the local buffer area for temporary table
-        access (Tom)
+        Add <varname>temp_buffers</> configuration parameter to allow
+        users to determine the size of the local buffer area for
+        temporary table access (Tom)
        </para>
       </listitem>
 
@@ -586,8 +590,9 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Add GUC <varname>krb_server_hostname</> so the server hostname
-        can be specified as part of service principal (Todd Kover)
+        Add configuration parameter <varname>krb_server_hostname</> so
+        that the server hostname can be specified as part of service
+        principal (Todd Kover)
        </para>
        <para>
         If not set, any service principal matching an entry in the
@@ -609,7 +614,7 @@ pg_[A-Za-z0-9_]                 <application>
         Add WAL logging for GIST indexes (Teodor, Oleg)
        </para>
        <para>
-        GIST indexes are now safe for crash and point-in-time recovery
+        GIST indexes are now safe for crash and point-in-time recovery.
        </para>
       </listitem>
 
@@ -626,8 +631,8 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Add GUC variables to control TCP/IP keep-alive times for idle,
-        interval, and count (Oliver Jowett)
+        Add configuration parameters to control TCP/IP keep-alive
+        times for idle, interval, and count (Oliver Jowett)
        </para>
 
        <para>
@@ -650,7 +655,7 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Allow more than two gigabyes of shared memory and per-backend
+        Allow more than two gigabytes of shared memory and per-backend
         work memory on 64-bit machines (Koichi Suzuki)
        </para>
       </listitem>
@@ -665,7 +670,7 @@ pg_[A-Za-z0-9_]                 <application>
   
       <listitem>
        <para>
-        Add temporary views (Koju Iijima) 
+        Add temporary views (Koju Iijima, Neil) 
        </para>
       </listitem>
 
@@ -683,12 +688,12 @@ pg_[A-Za-z0-9_]                 <application>
       <listitem>
        <para>
         Add <command>USING</> clause to allow additional tables to be
-        specified to <command>DELETE</> (Euler Taveira de Oliveira)
+        specified to <command>DELETE</> (Euler Taveira de Oliveira, Neil)
        </para>
        <para>
         In prior releases, there was no clear method for specifying
         additional tables to be used for joins in a <command>DELETE</>
-        statement. <command>UPDATE</> already has a <command>FROM</>
+        statement. <command>UPDATE</> already has a <literal>FROM</>
         clause for this purpose.
        </para>
       </listitem>
@@ -723,14 +728,13 @@ pg_[A-Za-z0-9_]                 <application>
         UPDATE/SHARE</> (Hans-Juergen Schoenig)
        </para>
        <para>
-        While <command>SET</> <varname>statement_timeout</> allows a query
-        taking over a certain amount of time to be cancelled, the
-        <command>NOWAIT</> option allows a query to be canceled as soon as a
-        <command>SELECT ... FOR UPDATE/SHARE</> command cannot immediately
-        acquire a row lock.
+        While the <varname>statement_timeout</> configuration
+        parameter allows a query taking more than a certain amount of
+        time to be cancelled, the <command>NOWAIT</> option allows a
+        query to be canceled as soon as a <command>SELECT ... FOR
+        UPDATE/SHARE</> command cannot immediately acquire a row lock.
        </para>
       </listitem>
-
      </itemizedlist>
     </sect3>
   
@@ -781,8 +785,8 @@ pg_[A-Za-z0-9_]                 <application>
     
       <listitem>
        <para>
-        Add ALTER TABLE ENABLE/DISABLE TRIGGER to disable triggers 
-        (Satoshi Nagayasu)
+        Add <command>ALTER TABLE ENABLE/DISABLE TRIGGER</command> to
+        disable triggers (Satoshi Nagayasu)
        </para>
       </listitem>
 
@@ -812,7 +816,7 @@ pg_[A-Za-z0-9_]                 <application>
       <listitem>
        <para>
         Properly process carriage returns and line feeds in
-        <command>COPY CSV</> mode (Andrew Dunstan)
+        <command>COPY CSV</> mode (Andrew)
        </para>
        <para>
         In release 8.0, carriage returns and line feeds in <command>CSV
@@ -876,28 +880,29 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Make initdb create a new standard database called
-        <literal>postgres</>, and convert utilities to use
-        <literal>postgres</> rather than <literal>template1</> for
+        Make <application>initdb</application> create a new standard
+        database called <literal>postgres</>, and convert utilities to
+        use <literal>postgres</> rather than <literal>template1</> for
         standard lookups (Dave)
        </para>
        <para>
-        In prior releases, <literal>template1</> was used both as a default
-        connection for utilities like createuser, and as a template for
+        In prior releases, <literal>template1</> was used both as a
+        default connection for utilities like
+        <application>createuser</application>, and as a template for
         new databases. This caused <command>CREATE DATABASE</> to
         sometimes fail, because a new database cannot be created if
         anyone else is in the template database. With this change, the
-        default connection database is now <literal>postgres</>, meaning
-        it is much less likely someone will be using
+        default connection database is now <literal>postgres</>,
+        meaning it is much less likely someone will be using
         <literal>template1</> during <command>CREATE DATABASE</>.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Create new reindexdb command-line utility by moving
-        <filename>/contrib/reindexdb</> into the server (Euler Taveira
-        de Oliveira)
+        Create new <application>reindexdb</application> command-line
+        utility by moving <filename>/contrib/reindexdb</> into the
+        server (Euler Taveira de Oliveira)
        </para>
       </listitem>
 
@@ -1023,8 +1028,8 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Add <function>GREATEST()</> and <function>LEAST()</> functions
-        (Pavel Stehule)
+        Add <function>GREATEST()</> and <function>LEAST()</> variadic
+        functions (Pavel Stehule)
        </para>
        <para>
         These functions take a variable number of arguments and return
@@ -1180,7 +1185,6 @@ pg_[A-Za-z0-9_]                 <application>
        </para>
       </listitem>
 
-
       <listitem>
        <para>
         Add <function>pg_rotate_logfile()</> to force rotation of the
@@ -1236,6 +1240,7 @@ pg_[A-Za-z0-9_]                 <application>
 
         </itemizedlist>
        </para>
+
        <para>
         The original names still work.
        </para>
@@ -1262,8 +1267,7 @@ pg_[A-Za-z0-9_]                 <application>
       <listitem>
        <para>
         Allow direct conversion between <literal>EUC_JP</> and
-        <literal>SJIS</> to improve performance (Atsushi
-        Ogawa)
+        <literal>SJIS</> to improve performance (Atsushi Ogawa)
        </para>
       </listitem>
 
@@ -1343,8 +1347,9 @@ pg_[A-Za-z0-9_]                 <application>
         Reduce memory usage of PL/PgSQL functions (Neil)
        </para>
        <para>
-        Each function now has its own memory context that can be freed
-        when the function exits.
+        The parsetree of each function is now stored in a separate
+        memory context. This allows the memory to be easily reclaimed
+        when it is no longer needed.
        </para>
       </listitem>
 
@@ -1354,8 +1359,8 @@ pg_[A-Za-z0-9_]                 <application>
         rather than at runtime (Neil)
        </para>
        <para>
-        Previously, syntax errors were reported only when the function
-        was executed.
+        Previously, most syntax errors were reported only when the
+        function was executed.
        </para>
       </listitem>
 
@@ -1381,7 +1386,7 @@ pg_[A-Za-z0-9_]                 <application>
       <listitem>
        <para>
         Add support for an optional <command>INTO</> clause to
-        PL/PgSQL's <command>EXECUTE</> command (Pavel Stehule)
+        PL/PgSQL's <command>EXECUTE</> command (Pavel Stehule, Neil)
        </para>
       </listitem>
 
@@ -1395,7 +1400,7 @@ pg_[A-Za-z0-9_]                 <application>
        <para>
         Define <literal>SQLSTATE</> and <literal>SQLERRM</> to return
         the <literal>SQLSTATE</> and error message of the current
-        exception (Pavel Stehule)
+        exception (Pavel Stehule, Neil)
        </para>
        <para>
         These variables are only accessible inside exception blocks.
@@ -1405,13 +1410,13 @@ pg_[A-Za-z0-9_]                 <application>
       <listitem>
        <para>
         Allow the parameters to the <command>RAISE</> statement to be
-        expressions (Pavel Stehule)
+        expressions (Pavel Stehule, Neil)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add a loop <command>CONTINUE</> statement (Pavel Stehule)
+        Add a loop <command>CONTINUE</> statement (Pavel Stehule, Neil)
        </para>
       </listitem>
 
@@ -1442,7 +1447,7 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Allow one-row-at-a-time retrieval of query results (Abhijit)
+        Allow one-row-at-a-time retrieval of query results (Abhijit Menon-Sen)
        </para>
        <para>
         This allows functions to use <function>spi_query()</> and
@@ -1488,22 +1493,22 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Allow <literal>strict</> mode to be enabled (Andrew)
+        Allow Perl's <literal>strict</> mode to be enabled (Andrew)
        </para>
       </listitem>
 
      </itemizedlist>
     </sect3>
-  
-  
+
+
     <sect3>
      <title><application>psql</> Changes</title>
      <itemizedlist>
   
       <listitem>
        <para>
-        Add psql <command>\set ON_ERROR_ROLLBACK</> to allow statements
-        in a transaction to error without affecting the rest of the
+        Add <command>\set ON_ERROR_ROLLBACK</> to allow statements in
+        a transaction to error without affecting the rest of the
         transaction (Greg Sabino Mullane)
        </para>
        <para>
@@ -1514,8 +1519,8 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Add support for <literal>\x</> hex strings in psql variables
-        (Bruce)
+        Add support for <literal>\x</> hex strings in
+        <application>psql</> variables (Bruce)
        </para>
        <para>
         Octal escapes were already supported.
@@ -1524,14 +1529,14 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Add psql support for <command>troff -ms</> output format (Roger
+        Add support for <command>troff -ms</> output format (Roger
         Leigh)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow psql's history file location to be controlled by
+        Allow the history file location to be controlled by
         <envar>HISTFILE</> (Andreas Seltenreich)
        </para>
        <para>
@@ -1541,14 +1546,15 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Prevent psql <command>\x</> (expanded mode) from affecting 
+        Prevent <command>\x</> (expanded mode) from affecting
         backslash-command displays (Neil)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add <option>-L</> option to psql to log sessions (Lorne Sunley)
+        Add <option>-L</> option to <application>psql</application> to
+        log sessions (Lorne Sunley)
        </para>
        <para>
         This option was added because some operating systems do not have
@@ -1558,15 +1564,16 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Make psql <command>\d</> show tablespaces of indexes (Qingqing
+        Make <command>\d</> show the tablespaces of indexes (Qingqing
         Zhou)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow psql help (<command>\h</>) to make a best guess on the
-        proper help information (Greg Sabino Mullane)
+        Allow <application>psql</application> help (<command>\h</>) to
+        make a best guess on the proper help information (Greg Sabino
+        Mullane)
        </para>
        <para>
         This allows the user to just add <command>\h</> to the front of
@@ -1578,7 +1585,7 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Add psql <command>\pset numericlocale</> to allow numbers to be
+        Add <command>\pset numericlocale</> to allow numbers to be
         output in a locale-aware format (Eugen Nedelcu)
        </para>
        <para>
@@ -1609,8 +1616,7 @@ pg_[A-Za-z0-9_]                 <application>
       <listitem>
        <para>
         Allow <application>pg_dump</> to dump a consistent snapshot of 
-        large objects
-        (Tom)
+        large objects (Tom)
        </para>
       </listitem>
 
@@ -1644,13 +1650,13 @@ pg_[A-Za-z0-9_]                 <application>
   
   
     <sect3>
-     <title>libpq Changes</title>
+     <title><application>libpq</application> Changes</title>
      <itemizedlist>
   
       <listitem>
        <para>
         Add a <envar>PGPASSFILE</> environment variable to specify the
-        password file's filename (Andrew Dunstan)
+        password file's filename (Andrew)
        </para>
       </listitem>
 
@@ -1673,8 +1679,7 @@ pg_[A-Za-z0-9_]                 <application>
       <listitem>
        <para>
         Add spinlock support for the Itanium processor using Intel
-        compiler (Vikram
-        Kalsi)
+        compiler (Vikram Kalsi)
        </para>
       </listitem>
 
@@ -1699,8 +1704,8 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Add support for wal_fsync_writethrough for Darwin (Chris
-        Campbell)
+        Add support for <literal>fsync_writethrough</literal> on
+        Darwin (Chris Campbell)
        </para>
       </listitem>
 
@@ -1713,8 +1718,7 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Allow <application>pg_config</> to be compiled using MSVC (Andrew
-        Dunstan)
+        Allow <application>pg_config</> to be compiled using MSVC (Andrew)
        </para>
        <para>
         This is required to build DBD::Pg using <application>MSVC</>.
@@ -1727,7 +1731,7 @@ pg_[A-Za-z0-9_]                 <application>
        </para>
        <para>
         Kerberos 4 had security vulnerabilities and is no longer being
-        maintained by the authors.
+        maintained.
        </para>
       </listitem>
 
@@ -1755,7 +1759,8 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Allow libpq to be built thread-safe on Windows (Dave Page)
+        Allow <application>libpq</application> to be built thread-safe
+        on Windows (Dave Page)
        </para>
       </listitem>
 
@@ -1829,7 +1834,7 @@ pg_[A-Za-z0-9_]                 <application>
   
         <listitem>
          <para>
-          implementation of OpenPGP symmetric-key and public-key encryption
+          Implementation of OpenPGP symmetric-key and public-key encryption
          </para>
          <para>
           Both RSA and Elgamal public-key algorithms are supported.
@@ -1850,7 +1855,7 @@ pg_[A-Za-z0-9_]                 <application>
 
         <listitem>
          <para>
-          Take build parameters (OpenSSL, zlib) from <filename>./configure</> result
+          Take build parameters (OpenSSL, zlib) from <filename>configure</> result
          </para>
          <para>
           No need to edit the <filename>Makefile</> anymore.
