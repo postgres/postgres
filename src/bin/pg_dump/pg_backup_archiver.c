@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.101.4.7 2005/05/17 17:30:41 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.101.4.8 2005/09/11 00:36:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1714,11 +1714,12 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 
 	/*
 	 * On Windows, we need to use binary mode to read/write non-text archive
-	 * formats.  Force stdin/stdout into binary mode in case that is what
+	 * formats.  Force stdin/stdout into binary mode if that is what
 	 * we are using.
 	 */
 #ifdef WIN32
-	if (fmt != archNull)
+	if (fmt != archNull &&
+		(AH->fSpec == NULL || strcmp(AH->fSpec, "") == 0))
 	{
 		if (mode == archModeWrite)
 			setmode(fileno(stdout), O_BINARY);
