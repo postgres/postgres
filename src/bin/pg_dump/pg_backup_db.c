@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.64 2005/07/27 05:14:12 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.65 2005/09/11 04:10:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,8 +36,8 @@ static void notice_processor(void *arg, const char *message);
 static char *_sendSQLLine(ArchiveHandle *AH, char *qry, char *eos);
 static char *_sendCopyLine(ArchiveHandle *AH, char *qry, char *eos);
 
-static int	_isIdentChar(unsigned char c);
-static int	_isDQChar(unsigned char c, int atStart);
+static bool _isIdentChar(unsigned char c);
+static bool _isDQChar(unsigned char c, bool atStart);
 
 #define DB_MAX_ERR_STMT 128
 
@@ -410,215 +410,187 @@ _sendCopyLine(ArchiveHandle *AH, char *qry, char *eos)
 }
 
 /*
- * Used by ExecuteSqlCommandBuf to send one buffered line of SQL (not data for the copy command).
+ * Used by ExecuteSqlCommandBuf to send one buffered line of SQL
+ * (not data for the copy command).
  */
 static char *
 _sendSQLLine(ArchiveHandle *AH, char *qry, char *eos)
 {
-	int			pos = 0;		/* Current position */
-	char	   *sqlPtr;
-	int			consumed;
-	int			startDT = 0;
-
 	/*
 	 * The following is a mini state machine to assess the end of an SQL
 	 * statement. It really only needs to parse good SQL, or at least
 	 * that's the theory... End-of-statement is assumed to be an unquoted,
-	 * un commented semi-colon.
+	 * un-commented semi-colon that's not within any parentheses.
+	 *
+	 * Note: the input can be split into bufferloads at arbitrary boundaries.
+	 * Therefore all state must be kept in AH->sqlparse, not in local
+	 * variables of this routine.  We assume that AH->sqlparse was
+	 * filled with zeroes when created.
 	 */
-
-	/*
-	 * fprintf(stderr, "Buffer at start is: '%s'\n\n", AH->sqlBuf->data);
-	 */
-
-	for (pos = 0; pos < (eos - qry); pos++)
+	for (; qry < eos; qry++)
 	{
-		appendPQExpBufferChar(AH->sqlBuf, qry[pos]);
-		/* fprintf(stderr, " %c",qry[pos]); */
-
-		/* Loop until character consumed */
-		do
+		switch (AH->sqlparse.state)
 		{
-			/*
-			 * If a character needs to be scanned in a different state,
-			 * consumed can be set to 0 to avoid advancing. Care must be
-			 * taken to ensure internal state is not damaged.
-			 */
-			consumed = 1;
-
-			switch (AH->sqlparse.state)
-			{
-
-				case SQL_SCAN:	/* Default state == 0, set in _allocAH */
-					if (qry[pos] == ';' && AH->sqlparse.braceDepth == 0)
-					{
-						/*
-						 * We've got the end of a statement. Send It &
-						 * reset the buffer.
-						 */
-
-						/*
-						 * fprintf(stderr, "    sending: '%s'\n\n",
-						 * AH->sqlBuf->data);
-						 */
-						ExecuteSqlCommand(AH, AH->sqlBuf, "could not execute query");
-						resetPQExpBuffer(AH->sqlBuf);
-						AH->sqlparse.lastChar = '\0';
-
-						/*
-						 * Remove any following newlines - so that
-						 * embedded COPY commands don't get a starting
-						 * newline.
-						 */
-						pos++;
-						for (; pos < (eos - qry) && qry[pos] == '\n'; pos++);
-
-						/* We've got our line, so exit */
-						return qry + pos;
-					}
-					else
-					{
-						/*
-						 * Look for normal boring quote chars, or
-						 * dollar-quotes. We make the assumption that
-						 * $-quotes will not have an ident character
-						 * before them in all pg_dump output.
-						 */
-						if (qry[pos] == '"'
-							|| qry[pos] == '\''
-							|| (qry[pos] == '$' && _isIdentChar(AH->sqlparse.lastChar) == 0)
-							)
-						{
-							/* fprintf(stderr,"[startquote]\n"); */
-							AH->sqlparse.state = SQL_IN_QUOTE;
-							AH->sqlparse.quoteChar = qry[pos];
-							AH->sqlparse.backSlash = 0;
-							if (qry[pos] == '$')
-							{
-								/* override the state */
-								AH->sqlparse.state = SQL_IN_DOLLARTAG;
-								/* Used for checking first char of tag */
-								startDT = 1;
-								/* We store the tag for later comparison. */
-								AH->sqlparse.tagBuf = createPQExpBuffer();
-								/* Get leading $ */
-								appendPQExpBufferChar(AH->sqlparse.tagBuf, qry[pos]);
-							}
-						}
-						else if (qry[pos] == '-' && AH->sqlparse.lastChar == '-')
-							AH->sqlparse.state = SQL_IN_SQL_COMMENT;
-						else if (qry[pos] == '*' && AH->sqlparse.lastChar == '/')
-							AH->sqlparse.state = SQL_IN_EXT_COMMENT;
-						else if (qry[pos] == '(')
-							AH->sqlparse.braceDepth++;
-						else if (qry[pos] == ')')
-							AH->sqlparse.braceDepth--;
-
-						AH->sqlparse.lastChar = qry[pos];
-					}
-					break;
-
-				case SQL_IN_DOLLARTAG:
+			case SQL_SCAN:		/* Default state == 0, set in _allocAH */
+				if (*qry == ';' && AH->sqlparse.braceDepth == 0)
+				{
+					/*
+					 * We've found the end of a statement. Send it and
+					 * reset the buffer.
+					 */
+					appendPQExpBufferChar(AH->sqlBuf, ';'); /* inessential */
+					ExecuteSqlCommand(AH, AH->sqlBuf,
+									  "could not execute query");
+					resetPQExpBuffer(AH->sqlBuf);
+					AH->sqlparse.lastChar = '\0';
 
 					/*
-					 * Like a quote, we look for a closing char *but* we
-					 * only allow a very limited set of contained chars,
-					 * and no escape chars. If invalid chars are found, we
-					 * abort tag processing.
+					 * Remove any following newlines - so that
+					 * embedded COPY commands don't get a starting newline.
 					 */
+					qry++;
+					while (qry < eos && *qry == '\n')
+						qry++;
 
-					if (qry[pos] == '$')
-					{
-						/* fprintf(stderr,"[endquote]\n"); */
-						/* Get trailing $ */
-						appendPQExpBufferChar(AH->sqlparse.tagBuf, qry[pos]);
-						AH->sqlparse.state = SQL_IN_DOLLARQUOTE;
-					}
+					/* We've finished one line, so exit */
+					return qry;
+				}
+				else if (*qry == '\'')
+				{
+					if (AH->sqlparse.lastChar == 'E')
+						AH->sqlparse.state = SQL_IN_E_QUOTE;
 					else
-					{
-						if (_isDQChar(qry[pos], startDT))
-						{
-							/* Valid, so add */
-							appendPQExpBufferChar(AH->sqlparse.tagBuf, qry[pos]);
-						}
-						else
-						{
-							/*
-							 * Jump back to 'scan' state, we're not really
-							 * in a tag, and valid tag chars do not
-							 * include the various chars we look for in
-							 * this state machine, so it's safe to just
-							 * jump from this state back to SCAN. We set
-							 * consumed = 0 so that this char gets
-							 * rescanned in new state.
-							 */
-							destroyPQExpBuffer(AH->sqlparse.tagBuf);
-							AH->sqlparse.state = SQL_SCAN;
-							consumed = 0;
-						}
-					}
-					startDT = 0;
-					break;
+						AH->sqlparse.state = SQL_IN_SINGLE_QUOTE;
+					AH->sqlparse.backSlash = false;
+				}
+				else if (*qry == '"')
+				{
+					AH->sqlparse.state = SQL_IN_DOUBLE_QUOTE;
+				}
+				/*
+				 * Look for dollar-quotes. We make the assumption that
+				 * $-quotes will not have an ident character just
+				 * before them in pg_dump output.  XXX is this
+				 * good enough?
+				 */
+				else if (*qry == '$' && !_isIdentChar(AH->sqlparse.lastChar))
+				{
+					AH->sqlparse.state = SQL_IN_DOLLAR_TAG;
+					/* initialize separate buffer with possible tag */
+					if (AH->sqlparse.tagBuf == NULL)
+						AH->sqlparse.tagBuf = createPQExpBuffer();
+					else
+						resetPQExpBuffer(AH->sqlparse.tagBuf);
+					appendPQExpBufferChar(AH->sqlparse.tagBuf, *qry);
+				}
+				else if (*qry == '-' && AH->sqlparse.lastChar == '-')
+					AH->sqlparse.state = SQL_IN_SQL_COMMENT;
+				else if (*qry == '*' && AH->sqlparse.lastChar == '/')
+					AH->sqlparse.state = SQL_IN_EXT_COMMENT;
+				else if (*qry == '(')
+					AH->sqlparse.braceDepth++;
+				else if (*qry == ')')
+					AH->sqlparse.braceDepth--;
+				break;
 
+			case SQL_IN_SQL_COMMENT:
+				if (*qry == '\n')
+					AH->sqlparse.state = SQL_SCAN;
+				break;
 
-				case SQL_IN_DOLLARQUOTE:
+			case SQL_IN_EXT_COMMENT:
+				/*
+				 * This isn't fully correct, because we don't account for
+				 * nested slash-stars, but pg_dump never emits such.
+				 */
+				if (AH->sqlparse.lastChar == '*' && *qry == '/')
+					AH->sqlparse.state = SQL_SCAN;
+				break;
 
+			case SQL_IN_SINGLE_QUOTE:
+				/* We needn't handle '' specially */
+				if (*qry == '\'' && !AH->sqlparse.backSlash)
+					AH->sqlparse.state = SQL_SCAN;
+				else if (*qry == '\\')
+					AH->sqlparse.backSlash = !AH->sqlparse.backSlash;
+				else
+					AH->sqlparse.backSlash = false;
+				break;
+
+			case SQL_IN_E_QUOTE:
+				/*
+				 * Eventually we will need to handle '' specially, because
+				 * after E'...''... we should still be in E_QUOTE state.
+				 *
+				 * XXX problem: how do we tell whether the dump was made
+				 * by a version that thinks backslashes aren't special
+				 * in non-E literals??
+				 */
+				if (*qry == '\'' && !AH->sqlparse.backSlash)
+					AH->sqlparse.state = SQL_SCAN;
+				else if (*qry == '\\')
+					AH->sqlparse.backSlash = !AH->sqlparse.backSlash;
+				else
+					AH->sqlparse.backSlash = false;
+				break;
+
+			case SQL_IN_DOUBLE_QUOTE:
+				/* We needn't handle "" specially */
+				if (*qry == '"')
+					AH->sqlparse.state = SQL_SCAN;
+				break;
+
+			case SQL_IN_DOLLAR_TAG:
+				if (*qry == '$')
+				{
+					/* Do not add the closing $ to tagBuf */
+					AH->sqlparse.state = SQL_IN_DOLLAR_QUOTE;
+					AH->sqlparse.minTagEndPos = AH->sqlBuf->len + AH->sqlparse.tagBuf->len + 1;
+				}
+				else if (_isDQChar(*qry, (AH->sqlparse.tagBuf->len == 1)))
+				{
+					/* Valid, so add to tag */
+					appendPQExpBufferChar(AH->sqlparse.tagBuf, *qry);
+				}
+				else
+				{
 					/*
-					 * Comparing the entire string backwards each time is
-					 * NOT efficient, but dollar quotes in pg_dump are
-					 * small and the code is a lot simpler.
+					 * Ooops, we're not really in a dollar-tag.  Valid tag
+					 * chars do not include the various chars we look for
+					 * in this state machine, so it's safe to just jump
+					 * from this state back to SCAN.  We have to back up
+					 * the qry pointer so that the current character gets
+					 * rescanned in SCAN state; and then "continue" so that
+					 * the bottom-of-loop actions aren't done yet.
 					 */
-					sqlPtr = AH->sqlBuf->data + AH->sqlBuf->len - AH->sqlparse.tagBuf->len;
+					AH->sqlparse.state = SQL_SCAN;
+					qry--;
+					continue;
+				}
+				break;
 
-					if (strncmp(AH->sqlparse.tagBuf->data, sqlPtr, AH->sqlparse.tagBuf->len) == 0)
-					{
-						/* End of $-quote */
-						AH->sqlparse.state = SQL_SCAN;
-						destroyPQExpBuffer(AH->sqlparse.tagBuf);
-					}
-					break;
+			case SQL_IN_DOLLAR_QUOTE:
+				/*
+				 * If we are at a $, see whether what precedes it matches
+				 * tagBuf.  (Remember that the trailing $ of the tag was
+				 * not added to tagBuf.)  However, don't compare until we
+				 * have enough data to be a possible match --- this is
+				 * needed to avoid false match on '$a$a$...'
+				 */
+				if (*qry == '$' &&
+					AH->sqlBuf->len >= AH->sqlparse.minTagEndPos &&
+					strcmp(AH->sqlparse.tagBuf->data,
+						   AH->sqlBuf->data + AH->sqlBuf->len - AH->sqlparse.tagBuf->len) == 0)
+					AH->sqlparse.state = SQL_SCAN;
+				break;
+		}
 
-				case SQL_IN_SQL_COMMENT:
-					if (qry[pos] == '\n')
-						AH->sqlparse.state = SQL_SCAN;
-					break;
-
-				case SQL_IN_EXT_COMMENT:
-					if (AH->sqlparse.lastChar == '*' && qry[pos] == '/')
-						AH->sqlparse.state = SQL_SCAN;
-					break;
-
-				case SQL_IN_QUOTE:
-
-					if (!AH->sqlparse.backSlash && AH->sqlparse.quoteChar == qry[pos])
-					{
-						/* fprintf(stderr,"[endquote]\n"); */
-						AH->sqlparse.state = SQL_SCAN;
-					}
-					else
-					{
-						if (qry[pos] == '\\')
-						{
-							if (AH->sqlparse.lastChar == '\\')
-								AH->sqlparse.backSlash = !AH->sqlparse.backSlash;
-							else
-								AH->sqlparse.backSlash = 1;
-						}
-						else
-							AH->sqlparse.backSlash = 0;
-					}
-					break;
-
-			}
-
-		} while (consumed == 0);
-
-		AH->sqlparse.lastChar = qry[pos];
-		/* fprintf(stderr, "\n"); */
+		appendPQExpBufferChar(AH->sqlBuf, *qry);
+		AH->sqlparse.lastChar = *qry;
 	}
 
 	/*
-	 * If we get here, we've processed entire string with no complete SQL
+	 * If we get here, we've processed entire bufferload with no complete SQL
 	 * stmt
 	 */
 	return eos;
@@ -673,7 +645,7 @@ CommitTransaction(ArchiveHandle *AH)
 	destroyPQExpBuffer(qry);
 }
 
-static int
+static bool
 _isIdentChar(unsigned char c)
 {
 	if ((c >= 'a' && c <= 'z')
@@ -684,22 +656,22 @@ _isIdentChar(unsigned char c)
 		|| (c >= (unsigned char) '\200')		/* no need to check <=
 												 * \377 */
 		)
-		return 1;
+		return true;
 	else
-		return 0;
+		return false;
 }
 
-static int
-_isDQChar(unsigned char c, int atStart)
+static bool
+_isDQChar(unsigned char c, bool atStart)
 {
 	if ((c >= 'a' && c <= 'z')
 		|| (c >= 'A' && c <= 'Z')
 		|| (c == '_')
-		|| (atStart == 0 && c >= '0' && c <= '9')
+		|| (!atStart && c >= '0' && c <= '9')
 		|| (c >= (unsigned char) '\200')		/* no need to check <=
 												 * \377 */
 		)
-		return 1;
+		return true;
 	else
-		return 0;
+		return false;
 }
