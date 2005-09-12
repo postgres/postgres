@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.13 2005/09/12 22:11:38 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.14 2005/09/12 22:39:30 neilc Exp $
 -->
 <chapter Id="runtime-config">
   <title>Run-time Configuration</title>
@@ -2070,7 +2070,7 @@ SELECT * FROM parent WHERE key = 2400;
     </indexterm>
 
     <sect2 id="runtime-config-logging-where">
-     <title>Where to log</title>
+     <title>Where To Log</title>
 
      <indexterm zone="runtime-config-logging-where">
       <primary>where to log</primary>
