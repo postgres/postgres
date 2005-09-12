@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.366 2005/09/11 23:40:33 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.367 2005/09/12 05:10:12 neilc Exp $
 
 Typical markup:
 
@@ -221,7 +221,7 @@ pg_[A-Za-z0-9_]                 <application>
    </sect2>
  
    <sect2>
-    <title>Migration to 8.1</title>
+    <title>Migration to version 8.1</title>
                                        
     <para>
      A dump/restore using <application>pg_dump</application> is required
@@ -401,7 +401,7 @@ pg_[A-Za-z0-9_]                 <application>
     <sect3>
      <title>Performance Improvements</title>
      <itemizedlist>
-  
+
       <listitem>
        <para>
         Improve GiST and rtree index performance (Neil)
@@ -454,7 +454,7 @@ pg_[A-Za-z0-9_]                 <application>
         <command>SELECT INTO</> (Simon)
        </para>
        <para>
-        Since a crash during <command>CREATE TABLE</> would cause the
+        Since a crash during <command>CREATE TABLE AS</> would cause the
         table to be dropped during recovery, there is no reason to WAL
         log as the table is loaded.  (Logging still happens if WAL
         archiving is enabled, however.)
@@ -518,7 +518,15 @@ pg_[A-Za-z0-9_]                 <application>
         larger chunks, rather than character by character.
        </para>
       </listitem>
-  
+
+      <listitem>
+       <para>
+        Improve the performance of <function>COUNT()</function>,
+        <function>SUM</function>, <function>AVG()</function>,
+        <function>STDDEV()</function>, and
+        <function>VARIANCE()</function> (Neil, Tom)
+       </para>
+      </listitem>
      </itemizedlist>
     </sect3>
 
@@ -1335,6 +1343,12 @@ pg_[A-Za-z0-9_]                 <application>
        </para>
       </listitem>
 
+      <listitem>
+       <para>
+        Add <function>SPI_getnspname()</function> to SPI (Neil)
+       </para>
+      </listitem>
+
      </itemizedlist>
     </sect3>
   
@@ -1344,11 +1358,11 @@ pg_[A-Za-z0-9_]                 <application>
   
       <listitem>
        <para>
-        Reduce memory usage of PL/PgSQL functions (Neil)
+        Overhaul the memory management of PL/PgSQL functions (Neil)
        </para>
        <para>
         The parsetree of each function is now stored in a separate
-        memory context. This allows the memory to be easily reclaimed
+        memory context. This allows this memory to be easily reclaimed
         when it is no longer needed.
        </para>
       </listitem>
@@ -1379,14 +1393,15 @@ pg_[A-Za-z0-9_]                 <application>
        <para>
         This is a byproduct of the newly added <command>OUT</> and
         <command>INOUT</> functionality.  <command>RETURN</> can
-        be omitted when it is not needed to provide the function result.
+        be omitted when it is not needed to provide the function's
+        return value.
        </para>
       </listitem>
 
       <listitem>
        <para>
         Add support for an optional <command>INTO</> clause to
-        PL/PgSQL's <command>EXECUTE</> command (Pavel Stehule, Neil)
+        PL/PgSQL's <command>EXECUTE</> statement (Pavel Stehule, Neil)
        </para>
       </listitem>
 
@@ -1403,7 +1418,7 @@ pg_[A-Za-z0-9_]                 <application>
         exception (Pavel Stehule, Neil)
        </para>
        <para>
-        These variables are only accessible inside exception blocks.
+        These variables are only defined inside exception blocks.
        </para>
       </listitem>
 
@@ -1668,6 +1683,13 @@ pg_[A-Za-z0-9_]                 <application>
        </para>
       </listitem>
 
+      <listitem>
+       <para>
+        Make <application>libpq</application> consistently return an error
+        to the client application on <function>malloc()</function>
+        failure (Neil)
+       </para>
+      </listitem>
      </itemizedlist>
     </sect3>
   
@@ -1730,7 +1752,7 @@ pg_[A-Za-z0-9_]                 <application>
         Remove support for Kerberos V4 (Magnus)
        </para>
        <para>
-        Kerberos 4 had security vulnerabilities and is no longer being
+        Kerberos 4 had security vulnerabilities and is no longer
         maintained.
        </para>
       </listitem>
@@ -1770,10 +1792,39 @@ pg_[A-Za-z0-9_]                 <application>
        </para>
       </listitem>
 
+      <listitem>
+       <para>
+        Move private declarations from <filename>gist.h</filename> to
+        <filename>gist_private.h</filename> (Neil)
+       </para>
+
+       <para>
+        In previous releases, <filename>gist.h</> contained both the
+        public GiST API (intended for use by authors of GiST index
+        implementations) as well as some private declarations used by
+        the implementation of GiST itself. The latter have been moved
+        to a separate file, <filename>gist_private.h</>. Most GiST
+        index implementations should be unaffected.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Overhaul GiST memory management (Neil)
+       </para>
+
+       <para>
+        GiST methods are now always invoked in a short-lived memory
+        context. Therefore, memory allocated via <function>palloc()</>
+        will be reclaimed automatically, so GiST index implementations
+        do not need to manually release allocated memory via
+        <function>pfree()</>.
+       </para>
+      </listitem>
      </itemizedlist>
     </sect3>
-  
-  
+
+
     <sect3>
      <title>Contrib Changes</title>
      <itemizedlist>
@@ -1858,7 +1909,7 @@ pg_[A-Za-z0-9_]                 <application>
           Take build parameters (OpenSSL, zlib) from <filename>configure</> result
          </para>
          <para>
-          No need to edit the <filename>Makefile</> anymore.
+          There is no need to edit the <filename>Makefile</> anymore.
          </para>
         </listitem>
 
