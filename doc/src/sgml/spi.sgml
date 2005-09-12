@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.37.4.2 2005/01/22 23:05:50 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.37.4.3 2005/09/12 18:49:08 neilc Exp $
 -->
 
 <chapter id="spi">
@@ -1934,7 +1934,7 @@ Datum SPI_getbinval(HeapTuple <parameter>row</parameter>, TupleDesc <parameter>r
    </varlistentry>
 
    <varlistentry>
-    <term><literal>int <parameter>rownumber</parameter></literal></term>
+    <term><literal>int <parameter>colnumber</parameter></literal></term>
     <listitem>
      <para>
       column number (count starts at 1)
