@@ -1933,8 +1933,13 @@ Thu Jun  2 14:22:32 CEST 2005
 Wed Aug 24 12:17:48 CEST 2005
 
 	- Check for NULL before checking whether argument is an array.
-	- Removed stray character from string quoting.
+	- Remove stray character from string quoting.
 	- Fixed check to report missing varchar pointer implementation.
+
+Mon Sep 12 13:53:35 CEST 2005
+
+	- Fixed transaction command handling to not ignore savepoints
+	  and to correctly check for errors.
 	- Set ecpg library version to 5.1.
 	- Set ecpg version to 4.1.1.
 
