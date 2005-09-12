@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.24 2004/10/14 20:23:46 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.24.4.1 2005/09/12 11:58:33 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -186,31 +186,35 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 	/* if we have no connection we just simulate the command */
 	if (con && con->connection)
 	{
-		/*
-		 * if we are not in autocommit mode, already have committed the
-		 * transaction and get another commit, just ignore it
+		/* If we got a transaction command but have no open transaction,
+		 * we have to start one, unless we are in autocommit, where the
+		 * developers have to take care themselves.
+		 * However, if the command is a begin statement, we just execute it once.
 		 */
-		if (!con->committed || con->autocommit)
+		if (con->committed && !con->autocommit && strncmp(transaction, "begin", 5) != 0 && strncmp(transaction, "start", 5) != 0)
 		{
-			if ((res = PQexec(con->connection, transaction)) == NULL)
+			res = PQexec(con->connection, "begin transaction");
+			if (res == NULL || PQresultStatus(res) != PGRES_COMMAND_OK)
 			{
 				ECPGraise(lineno, ECPG_TRANS, ECPG_SQLSTATE_TRANSACTION_RESOLUTION_UNKNOWN, NULL);
 				return FALSE;
 			}
 			PQclear(res);
 		}
+		
+		res = PQexec(con->connection, transaction);
+		if (res == NULL || PQresultStatus(res) != PGRES_COMMAND_OK)
+		{
+			ECPGraise(lineno, ECPG_TRANS, ECPG_SQLSTATE_TRANSACTION_RESOLUTION_UNKNOWN, NULL);
+			return FALSE;
+		}
+		PQclear(res);
 	}
 
 	if (strcmp(transaction, "commit") == 0 || strcmp(transaction, "rollback") == 0)
-	{
 		con->committed = true;
-
-#if 0
-		/* deallocate all prepared statements */
-		if (!ECPGdeallocate_all(lineno))
-			return false;
-#endif
-	}
+	else
+		con->committed = false;
 
 	return true;
 }
