@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.51 2005/06/24 20:53:30 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.52 2005/09/12 19:17:45 tgl Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -49,9 +49,9 @@ SELECT content FROM test1 WHERE id = <replaceable>constant</replaceable>;
    can scan the index relatively quickly and flip to the appropriate
    page(s), rather than having to read the entire book to find the
    material of interest.  Just as it is the task of the author to
-   anticipate the items that the readers are most likely to look up,
+   anticipate the items that the readers are likely to look up,
    it is the task of the database programmer to foresee which indexes
-   would be of advantage.
+   will be of advantage.
   </para>
 
   <para>
@@ -84,19 +84,17 @@ CREATE INDEX test1_id_index ON test1 (id);
 
   <para>
    Indexes can also benefit <command>UPDATE</command> and
-   <command>DELETE</command> commands with search conditions.  Indexes can moreover be
-   used in join queries.  Thus,
+   <command>DELETE</command> commands with search conditions.
+   Indexes can moreover be used in join searches.  Thus,
    an index defined on a column that is part of a join condition can
    significantly speed up queries with joins.
   </para>
 
   <para>
-   When an index is created, the system has to keep it synchronized with the
+   After an index is created, the system has to keep it synchronized with the
    table.  This adds overhead to data manipulation operations.
-   Therefore indexes that are non-essential or do not get used at all
-   should be removed.  Note that a
-   query or data manipulation command can use at most one index
-   per table.
+   Therefore indexes that are seldom or never used in queries
+   should be removed.
   </para>
  </sect1>
 
@@ -145,10 +143,10 @@ CREATE INDEX test1_id_index ON test1 (id);
    The optimizer can also use a B-tree index for queries involving the
    pattern matching operators <literal>LIKE</>,
    <literal>ILIKE</literal>, <literal>~</literal>, and
-   <literal>~*</literal>, <emphasis>if</emphasis> the pattern is
-   anchored to the beginning of the string, e.g., <literal>col LIKE
-   'foo%'</literal> or <literal>col ~ '^foo'</literal>, but not
-   <literal>col LIKE '%bar'</literal>.  However, if your server does
+   <literal>~*</literal>, <emphasis>if</emphasis> the pattern is a constant
+   and is anchored to the beginning of the string &mdash; for example,
+   <literal>col LIKE 'foo%'</literal> or <literal>col ~ '^foo'</literal>,
+   but not <literal>col LIKE '%bar'</literal>.  However, if your server does
    not use the C locale you will need to create the index with a
    special operator class to support indexing of pattern-matching queries.
    See <xref linkend="indexes-opclass"> below.
@@ -163,10 +161,10 @@ CREATE INDEX test1_id_index ON test1 (id);
     <primary>R-tree</primary>
     <see>index</see>
    </indexterm>
-   R-tree indexes are suited for queries on spatial data.  To create
-   an R-tree index, use a command of the form
+   R-tree indexes are suited for queries on two-dimensional spatial data.
+   To create an R-tree index, use a command of the form
 <synopsis>
-CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING RTREE (<replaceable>column</replaceable>);
+CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING rtree (<replaceable>column</replaceable>);
 </synopsis>
    The <productname>PostgreSQL</productname> query planner will
    consider using an R-tree index whenever an indexed column is
@@ -206,7 +204,7 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
    <literal>=</literal> operator.  The following command is used to
    create a hash index:
 <synopsis>
-CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING HASH (<replaceable>column</replaceable>);
+CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING hash (<replaceable>column</replaceable>);
 </synopsis>
    <note>
     <para>
@@ -223,17 +221,19 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
    within which many different indexing strategies can be implemented.
    Accordingly, the particular operators with which a GiST index can be
    used vary depending on the indexing strategy (the <firstterm>operator
-   class</>).  For more information see <xref linkend="GiST">.
-  </para>
-
-  <para>
-   The B-tree index method is an implementation of Lehman-Yao
-   high-concurrency B-trees.  The R-tree index method implements
-   standard R-trees using Guttman's quadratic split algorithm.  The
-   hash index method is an implementation of Litwin's linear hashing.  We
-   mention the algorithms used solely to indicate that all of these
-   index methods are fully dynamic and do not have to be optimized
-   periodically (as is the case with, for example, static hash methods).
+   class</>).  The standard distribution of
+   <productname>PostgreSQL</productname> includes GiST operator classes
+   equivalent to the R-tree operator classes, and many other GiST operator
+   classes are available in the <literal>contrib</> collection or as separate
+   projects.  For more information see <xref linkend="GiST">.
+   <note>
+    <para>
+     It is likely that the R-tree index type will be retired in a future
+     release, as GiST indexes appear to do everything R-trees can do with
+     similar or better performance.  Users are encouraged to migrate
+     applications that use R-tree indexes to GiST indexes.
+    </para>
+   </note>  
   </para>
  </sect1>
 
@@ -247,7 +247,7 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
   </indexterm>
 
   <para>
-   An index can be defined on more than one column.  For example, if
+   An index can be defined on more than one column of a table.  For example, if
    you have a table of this form:
 <programlisting>
 CREATE TABLE test2 (
@@ -270,46 +270,136 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
   </para>
 
   <para>
-   Currently, only the B-tree and GiST implementations support multicolumn
+   Currently, only the B-tree and GiST index types support multicolumn
    indexes.  Up to 32 columns may be specified.  (This limit can be
    altered when building <productname>PostgreSQL</productname>; see the
    file <filename>pg_config_manual.h</filename>.)
   </para>
 
   <para>
-   The query planner can use a multicolumn index for queries that
-   involve the leftmost column in the index definition plus any number
-   of columns listed to the right of it, without a gap.  For example,
-   an index on <literal>(a, b, c)</literal> can be used in queries
-   involving all of <literal>a</literal>, <literal>b</literal>, and
-   <literal>c</literal>, or in queries involving both
-   <literal>a</literal> and <literal>b</literal>, or in queries
-   involving only <literal>a</literal>, but not in other combinations.
-   (In a query involving <literal>a</literal> and <literal>c</literal>
-   the planner could choose to use the index for
-   <literal>a</literal>, while treating <literal>c</literal> like an
-   ordinary unindexed column.)  Of course, each column must be used with
-   operators appropriate to the index type; clauses that involve other
-   operators will not be considered.
+   A multicolumn B-tree index can be used with query conditions that
+   involve any subset of the index's columns, but the index is most
+   efficient when there are constraints on the leading (leftmost) columns.
+   The exact rule is that equality constraints on leading columns, plus
+   any inequality constraints on the first column that does not have an
+   equality constraint, will be used to limit the portion of the index
+   that is scanned.  Constraints on columns to the right of these columns
+   are checked in the index, so they save visits to the table proper, but
+   they do not reduce the portion of the index that has to be scanned.
+   For example, given an index on <literal>(a, b, c)</literal> and a
+   query condition <literal>WHERE a = 5 AND b &gt;= 42 AND c &lt; 77</>,
+   the index would have to be scanned from the first entry with
+   <literal>a</> = 5 and <literal>b</> = 42 up through the last entry with
+   <literal>a</> = 5.  Index entries with <literal>c</> &gt;= 77 would be
+   skipped, but they'd still have to be scanned through.
+   This index could in principle be used for queries that have constraints
+   on <literal>b</> and/or <literal>c</> with no constraint on <literal>a</>
+   &mdash; but the entire index would have to be scanned, so in most cases
+   the planner would prefer a sequential table scan over using the index.
   </para>
 
   <para>
-   Multicolumn indexes can only be used if the clauses involving the
-   indexed columns are joined with <literal>AND</literal>.  For instance,
-<programlisting>
-SELECT name FROM test2 WHERE major = <replaceable>constant</replaceable> OR minor = <replaceable>constant</replaceable>;
-</programlisting>
-   cannot make use of the index <structname>test2_mm_idx</structname>
-   defined above to look up both columns.  (It can be used to look up
-   only the <structfield>major</structfield> column, however.)
+   A multicolumn GiST index can only be used when there is a query condition
+   on its leading column.  As with B-trees, conditions on additional columns
+   restrict the entries returned by the index, but do not in themselves aid
+   the index search.
   </para>
 
   <para>
-   Multicolumn indexes should be used sparingly.  Most of the time,
+   Of course, each column must be used with operators appropriate to the index
+   type; clauses that involve other operators will not be considered.
+  </para>
+
+  <para>
+   Multicolumn indexes should be used sparingly.  In most situations,
    an index on a single column is sufficient and saves space and time.
    Indexes with more than three columns are unlikely to be helpful
-   unless the usage of the table is extremely stylized.
+   unless the usage of the table is extremely stylized.  See also
+   <xref linkend="indexes-bitmap-scans"> for some discussion of the
+   merits of different index setups.
   </para>
+ </sect1>
+
+
+ <sect1 id="indexes-bitmap-scans">
+  <title>Combining Multiple Indexes</title>
+
+  <indexterm zone="indexes-bitmap-scans">
+   <primary>index</primary>
+   <secondary>combining multiple indexes</secondary>
+  </indexterm>
+
+  <indexterm zone="indexes-bitmap-scans">
+   <primary>bitmap scan</primary>
+  </indexterm>
+
+  <para>
+   A single index scan can only use query clauses that use the index's
+   columns with operators of its operator class and are joined with
+   <literal>AND</>.  For example, given an index on <literal>(a, b)</literal>
+   a query condition like <literal>WHERE a = 5 AND b = 6</> could
+   use the index, but a query like <literal>WHERE a = 5 OR b = 6</> could not
+   directly use the index.
+  </para>
+
+  <para>
+   Beginning in release 8.1,
+   <productname>PostgreSQL</> has the ability to combine multiple indexes
+   (including multiple uses of the same index) to handle cases that cannot
+   be implemented by single index scans.  The system can form <literal>AND</>
+   and <literal>OR</> conditions across several index scans.  For example,
+   a query like <literal>WHERE x = 42 OR x = 47 OR x = 53 OR x = 99</>
+   could be broken down into four separate scans of an index on <literal>x</>,
+   each scan using one of the query clauses.  The results of these scans are
+   then ORed together to produce the result.  Another example is that if we
+   have separate indexes on <literal>x</> and <literal>y</>, one possible
+   implementation of a query like <literal>WHERE x = 5 AND y = 6</> is to
+   use each index with the appropriate query clause and then AND together
+   the index results to identify the result rows.
+  </para>
+
+  <para>
+   To combine multiple indexes, the system scans each needed index and
+   prepares a <firstterm>bitmap</> in memory giving the locations of
+   table rows that are reported as matching that index's conditions.
+   The bitmaps are then ANDed and ORed together as needed by the query.
+   Finally, the actual table rows are visited and returned.  The table rows
+   are visited in physical order, because that is how the bitmap is laid
+   out; this means that any ordering of the original indexes is lost, and
+   so a separate sort step will be needed if the query has an <literal>ORDER
+   BY</> clause.  For this reason, and because each additional index scan
+   adds extra time, the planner will sometimes choose to use a simple index
+   scan even though additional indexes are available that could have been
+   used as well.
+  </para>
+
+  <para>
+   In all but the simplest applications, there are various combinations of
+   indexes that may be useful, and the database developer must make
+   tradeoffs to decide which indexes to provide.  Sometimes multicolumn
+   indexes are best, but sometimes it's better to create separate indexes
+   and rely on the index-combination feature.  For example, if your
+   workload includes a mix of queries that sometimes involve only column
+   <literal>x</>, sometimes only column <literal>y</>, and sometimes both
+   columns, you might choose to create two separate indexes on
+   <literal>x</> and <literal>y</>, relying on index combination to
+   process the queries that use both columns.  You could also create a
+   multicolumn index on <literal>(x, y)</>.  This index would typically be
+   more efficient than index combination for queries involving both
+   columns, but as discussed in <xref linkend="indexes-multicolumn">, it
+   would be almost useless for queries involving only <literal>y</>, so it
+   could not be the only index.  A combination of the multicolumn index
+   and a separate index on <literal>y</> would serve reasonably well.  For
+   queries involving only <literal>x</>, the multicolumn index could be
+   used, though it would be larger and hence slower than an index on
+   <literal>x</> alone.  The last alternative is to create all three
+   indexes, but this is probably only reasonable if the table is searched
+   much more often than it is updated and all three types of query are
+   common.  If one of the types of query is much less common than the
+   others, you'd probably settle for creating just the two indexes that
+   best match the common types.
+  </para>
+
  </sect1>
 
 
@@ -415,99 +505,15 @@ CREATE INDEX people_names ON people ((first_name || ' ' || last_name));
   </para>
 
   <para>
-   Index expressions are relatively expensive to maintain, since the
+   Index expressions are relatively expensive to maintain, because the
    derived expression(s) must be computed for each row upon insertion
-   or whenever it is updated.  Therefore they should be used only when
-   queries that can use the index are very frequent.
-  </para>
- </sect1>
-
-
- <sect1 id="indexes-opclass">
-  <title>Operator Classes</title>
-
-  <indexterm zone="indexes-opclass">
-   <primary>operator class</primary>
-  </indexterm>
-
-  <para>
-   An index definition may specify an <firstterm>operator
-   class</firstterm> for each column of an index.
-<synopsis>
-CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> (<replaceable>column</replaceable> <replaceable>opclass</replaceable> <optional>, ...</optional>);
-</synopsis>
-   The operator class identifies the operators to be used by the index
-   for that column.  For example, a B-tree index on the type <type>int4</type>
-   would use the <literal>int4_ops</literal> class; this operator
-   class includes comparison functions for values of type <type>int4</type>.
-   In practice the default operator class for the column's data type is
-   usually sufficient.  The main point of having operator classes is
-   that for some data types, there could be more than one meaningful
-   index behavior.  For example, we might want to sort a complex-number data
-   type either by absolute value or by real part.  We could do this by
-   defining two operator classes for the data type and then selecting
-   the proper class when making an index.
-  </para>
-
-  <para>
-   There are also some built-in operator classes besides the default ones:
-
-   <itemizedlist>
-    <listitem>
-     <para>
-      The operator classes <literal>text_pattern_ops</literal>,
-      <literal>varchar_pattern_ops</literal>,
-      <literal>bpchar_pattern_ops</literal>, and
-      <literal>name_pattern_ops</literal> support B-tree indexes on
-      the types <type>text</type>, <type>varchar</type>,
-      <type>char</type>, and <type>name</type>, respectively.  The
-      difference from the ordinary operator classes is that the values
-      are compared strictly character by character rather than
-      according to the locale-specific collation rules.  This makes
-      these operator classes suitable for use by queries involving
-      pattern matching expressions (<literal>LIKE</literal> or POSIX
-      regular expressions) if the server does not use the standard
-      <quote>C</quote> locale.  As an example, you might index a
-      <type>varchar</type> column like this:
-<programlisting>
-CREATE INDEX test_index ON test_table (col varchar_pattern_ops);
-</programlisting>
-      If you do use the C locale, you may instead create an index
-      with the default operator class, and it will still be useful
-      for pattern-matching queries.  Also note that you should
-      create an index with the default operator class if you want
-      queries involving ordinary comparisons to use an index.  Such
-      queries cannot use the
-      <literal><replaceable>xxx</replaceable>_pattern_ops</literal>
-      operator classes.  It is allowed to create multiple
-      indexes on the same column with different operator classes.
-     </para>
-    </listitem>
-   </itemizedlist>
-  </para>
-
-  <para>
-    The following query shows all defined operator classes:
-
-<programlisting>
-SELECT am.amname AS index_method,
-       opc.opcname AS opclass_name
-    FROM pg_am am, pg_opclass opc
-    WHERE opc.opcamid = am.oid
-    ORDER BY index_method, opclass_name;
-</programlisting>
-
-    It can be extended to show all the operators included in each class:
-<programlisting>
-SELECT am.amname AS index_method,
-       opc.opcname AS opclass_name,
-       opr.oprname AS opclass_operator
-    FROM pg_am am, pg_opclass opc, pg_amop amop, pg_operator opr
-    WHERE opc.opcamid = am.oid AND
-          amop.amopclaid = opc.oid AND
-          amop.amopopr = opr.oid
-    ORDER BY index_method, opclass_name, opclass_operator;
-</programlisting>
+   and whenever it is updated.  However, the index expressions are
+   <emphasis>not</> recomputed during an indexed search, since they are
+   already stored in the index.  In both examples above, the system
+   sees the query as just <literal>WHERE indexedcolumn = 'constant'</>
+   and so the speed of the search is equivalent to any other simple index
+   query.  Thus, indexes on expressions are useful when retrieval speed
+   is more important than insertion and update speed.
   </para>
  </sect1>
 
@@ -525,11 +531,12 @@ SELECT am.amname AS index_method,
    subset of a table; the subset is defined by a conditional
    expression (called the <firstterm>predicate</firstterm> of the
    partial index).  The index contains entries for only those table
-   rows that satisfy the predicate.
+   rows that satisfy the predicate.  Partial indexes are a specialized
+   feature, but there are several situations in which they are useful.
   </para>
 
   <para>
-   A major motivation for partial indexes is to avoid indexing common
+   One major reason for using a partial index is to avoid indexing common
    values.  Since a query searching for a common value (one that
    accounts for more than a few percent of all the table rows) will not
    use the index anyway, there is no point in keeping those rows in the
@@ -589,12 +596,13 @@ SELECT * FROM access_log WHERE client_ip = inet '192.168.100.23';
     inherent (due to the nature of the application) and static (not
     changing over time), this is not difficult, but if the common values are
     merely due to the coincidental data load this can require a lot of
-    maintenance work.
+    maintenance work to change the index definition from time to time.
    </para>
   </example>
 
   <para>
-   Another possibility is to exclude values from the index that the
+   Another possible use for a partial index is to exclude values from the
+   index that the
    typical query workload is not interested in; this is shown in <xref
    linkend="indexes-partial-ex2">.  This results in the same
    advantages as listed above, but it prevents the
@@ -731,6 +739,97 @@ CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
   </para>
  </sect1>
 
+
+ <sect1 id="indexes-opclass">
+  <title>Operator Classes</title>
+
+  <indexterm zone="indexes-opclass">
+   <primary>operator class</primary>
+  </indexterm>
+
+  <para>
+   An index definition may specify an <firstterm>operator
+   class</firstterm> for each column of an index.
+<synopsis>
+CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> (<replaceable>column</replaceable> <replaceable>opclass</replaceable> <optional>, ...</optional>);
+</synopsis>
+   The operator class identifies the operators to be used by the index
+   for that column.  For example, a B-tree index on the type <type>int4</type>
+   would use the <literal>int4_ops</literal> class; this operator
+   class includes comparison functions for values of type <type>int4</type>.
+   In practice the default operator class for the column's data type is
+   usually sufficient.  The main point of having operator classes is
+   that for some data types, there could be more than one meaningful
+   index behavior.  For example, we might want to sort a complex-number data
+   type either by absolute value or by real part.  We could do this by
+   defining two operator classes for the data type and then selecting
+   the proper class when making an index.
+  </para>
+
+  <para>
+   There are also some built-in operator classes besides the default ones:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      The operator classes <literal>text_pattern_ops</literal>,
+      <literal>varchar_pattern_ops</literal>,
+      <literal>bpchar_pattern_ops</literal>, and
+      <literal>name_pattern_ops</literal> support B-tree indexes on
+      the types <type>text</type>, <type>varchar</type>,
+      <type>char</type>, and <type>name</type>, respectively.  The
+      difference from the default operator classes is that the values
+      are compared strictly character by character rather than
+      according to the locale-specific collation rules.  This makes
+      these operator classes suitable for use by queries involving
+      pattern matching expressions (<literal>LIKE</literal> or POSIX
+      regular expressions) when the server does not use the standard
+      <quote>C</quote> locale.  As an example, you might index a
+      <type>varchar</type> column like this:
+<programlisting>
+CREATE INDEX test_index ON test_table (col varchar_pattern_ops);
+</programlisting>
+      Note that you should also create an index with the default operator
+      class if you want queries involving ordinary comparisons to use an
+      index.  Such queries cannot use the
+      <literal><replaceable>xxx</replaceable>_pattern_ops</literal>
+      operator classes.  It is allowed to create multiple
+      indexes on the same column with different operator classes.
+      If you do use the C locale, you do not need the
+      <literal><replaceable>xxx</replaceable>_pattern_ops</literal>
+      operator classes, because an index with the default operator class
+      is usable for pattern-matching queries in the C locale.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+
+  <para>
+    The following query shows all defined operator classes:
+
+<programlisting>
+SELECT am.amname AS index_method,
+       opc.opcname AS opclass_name
+    FROM pg_am am, pg_opclass opc
+    WHERE opc.opcamid = am.oid
+    ORDER BY index_method, opclass_name;
+</programlisting>
+
+    It can be extended to show all the operators included in each class:
+<programlisting>
+SELECT am.amname AS index_method,
+       opc.opcname AS opclass_name,
+       opr.oid::regoperator AS opclass_operator
+    FROM pg_am am, pg_opclass opc, pg_amop amop, pg_operator opr
+    WHERE opc.opcamid = am.oid AND
+          amop.amopclaid = opc.oid AND
+          amop.amopopr = opr.oid
+    ORDER BY index_method, opclass_name, opclass_operator;
+</programlisting>
+  </para>
+ </sect1>
+
+
  <sect1 id="indexes-examine">
   <title>Examining Index Usage</title>
 
@@ -803,14 +902,14 @@ CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
     <para>
      When indexes are not used, it can be useful for testing to force
      their use.  There are run-time parameters that can turn off
-     various plan types (described in <xref linkend="runtime-config">).
+     various plan types (see <xref linkend="runtime-config-query-enable">).
      For instance, turning off sequential scans
      (<varname>enable_seqscan</>) and nested-loop joins
      (<varname>enable_nestloop</>), which are the most basic plans,
      will force the system to use a different plan.  If the system
      still chooses a sequential scan or nested-loop join then there is
-     probably a more fundamental problem for why the index is not
-     used, for example, the query condition does not match the index.
+     probably a more fundamental reason why the index is not
+     used; for example, the query condition does not match the index.
      (What kind of query can use what kind of index is explained in
      the previous sections.)
     </para>
@@ -832,10 +931,11 @@ CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
      If it turns out that the cost estimates are wrong, there are,
      again, two possibilities.  The total cost is computed from the
      per-row costs of each plan node times the selectivity estimate of
-     the plan node.  The costs of the plan nodes can be tuned with
-     run-time parameters (described in <xref linkend="runtime-config">).
+     the plan node.  The costs estimated for the plan nodes can be adjusted
+     via run-time parameters (described in <xref
+     linkend="runtime-config-query-constants">).
      An inaccurate selectivity estimate is due to
-     insufficient statistics.  It may be possible to help this by
+     insufficient statistics.  It may be possible to improve this by
      tuning the statistics-gathering parameters (see
      <xref linkend="sql-altertable" endterm="sql-altertable-title">).
     </para>
