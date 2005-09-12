@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.287 2005/08/29 21:38:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.288 2005/09/12 02:26:32 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -5884,10 +5884,8 @@ assign_canonical_path(const char *newval, bool doit, GucSource source)
 static bool
 assign_tcp_keepalives_idle(int newval, bool doit, GucSource source)
 {
-	if (doit && MyProcPort != NULL)
-	{
+	if (doit)
 		return (pq_setkeepalivesidle(newval, MyProcPort) == STATUS_OK);
-	}
 
 	return true;
 }
@@ -5895,18 +5893,17 @@ assign_tcp_keepalives_idle(int newval, bool doit, GucSource source)
 static const char *
 show_tcp_keepalives_idle(void)
 {
-	static char nbuf[32];
-	snprintf(nbuf, sizeof(nbuf), "%d", MyProcPort == NULL ? 0 : pq_getkeepalivesidle(MyProcPort));
+	static char nbuf[16];
+
+	snprintf(nbuf, sizeof(nbuf), "%d", pq_getkeepalivesidle(MyProcPort));
 	return nbuf;
 }
 
 static bool
 assign_tcp_keepalives_interval(int newval, bool doit, GucSource source)
 {
-	if (doit && MyProcPort != NULL)
-	{
+	if (doit)
 		return (pq_setkeepalivesinterval(newval, MyProcPort) == STATUS_OK);
-	}
 
 	return true;
 }
@@ -5914,18 +5911,17 @@ assign_tcp_keepalives_interval(int newval, bool doit, GucSource source)
 static const char *
 show_tcp_keepalives_interval(void)
 {
-	static char nbuf[32];
-	snprintf(nbuf, sizeof(nbuf), "%d", MyProcPort == NULL ? 0 : pq_getkeepalivesinterval(MyProcPort));
+	static char nbuf[16];
+
+	snprintf(nbuf, sizeof(nbuf), "%d", pq_getkeepalivesinterval(MyProcPort));
 	return nbuf;
 }
 
 static bool
 assign_tcp_keepalives_count(int newval, bool doit, GucSource source)
 {
-	if (doit && MyProcPort != NULL)
-	{
+	if (doit)
 		return (pq_setkeepalivescount(newval, MyProcPort) == STATUS_OK);
-	}
 
 	return true;
 }
@@ -5933,9 +5929,11 @@ assign_tcp_keepalives_count(int newval, bool doit, GucSource source)
 static const char *
 show_tcp_keepalives_count(void)
 {
-	static char nbuf[32];
-	snprintf(nbuf, sizeof(nbuf), "%d", MyProcPort == NULL ? 0 : pq_getkeepalivescount(MyProcPort));
+	static char nbuf[16];
+
+	snprintf(nbuf, sizeof(nbuf), "%d", pq_getkeepalivescount(MyProcPort));
 	return nbuf;
 }
+
 
 #include "guc-file.c"

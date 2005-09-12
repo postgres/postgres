@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.50 2005/07/30 15:17:25 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.51 2005/09/12 02:26:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,6 +86,21 @@ typedef struct Port
 	struct timeval session_start;		/* for session duration logging */
 
 	/*
+	 * TCP keepalive settings.
+	 *
+	 *	default values are 0 if AF_UNIX or not yet known;
+	 *	current values are 0 if AF_UNIX or using the default.
+	 *	Also, -1 in a default value means we were unable to find out the
+	 *	default (getsockopt failed).
+	 */
+	int         default_keepalives_idle;
+	int         default_keepalives_interval;
+	int         default_keepalives_count;
+	int         keepalives_idle;
+	int         keepalives_interval;
+	int         keepalives_count;
+
+	/*
 	 * SSL structures
 	 */
 #ifdef USE_SSL
@@ -94,24 +109,6 @@ typedef struct Port
 	char		peer_dn[128 + 1];
 	char		peer_cn[SM_USER + 1];
 	unsigned long count;
-#endif
-
-	/*
-	 * TCP keepalive settings;
-	 *  default values are 0 if AF_UNIX or not yet known;
-	 *  current values are 0 if AF_UNIX or using the default.
-	 */
-#ifdef TCP_KEEPIDLE
-	int         default_keepalives_idle;
-	int         keepalives_idle;
-#endif
-#ifdef TCP_KEEPINTVL
-	int         default_keepalives_interval;
-	int         keepalives_interval;
-#endif
-#ifdef TCP_KEEPCNT
-	int         default_keepalives_count;
-	int         keepalives_count;
 #endif
 } Port;
 

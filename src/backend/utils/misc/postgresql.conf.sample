@@ -75,12 +75,14 @@
 
 # - TCP Keepalives -
 # see 'man 7 tcp' for details
-#tcp_keepalives_idle = 0		# TCP_KEEPIDLE, in secs; 0 uses the
-					# system default
-#tcp_keepalives_interval = 0		# TCP_KEEPINTVL, in seconds; 0 uses the
-					# system default
-#tcp_keepalives_count = 0		# TCP_KEEPCNT, in seconds; 0 uses the
-					# system default
+
+#tcp_keepalives_idle = 0		# TCP_KEEPIDLE, in seconds;
+					# 0 selects the system default
+#tcp_keepalives_interval = 0		# TCP_KEEPINTVL, in seconds;
+					# 0 selects the system default
+#tcp_keepalives_count = 0		# TCP_KEEPCNT;
+					# 0 selects the system default
+
 
 #---------------------------------------------------------------------------
 # RESOURCE USAGE (except WAL)

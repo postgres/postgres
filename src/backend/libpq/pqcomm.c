@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.178 2005/07/30 20:28:20 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.179 2005/09/12 02:26:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -595,18 +595,16 @@ StreamConnection(int server_fd, Port *port)
 			return STATUS_ERROR;
 		}
 
-		/* Set default keepalive parameters. This should also catch
-		 * misconfigurations (non-zero values when socket options aren't
-		 * supported)
+		/*
+		 * Also apply the current keepalive parameters.  If we fail to set
+		 * a parameter, don't error out, because these aren't universally
+		 * supported.  (Note: you might think we need to reset the GUC
+		 * variables to 0 in such a case, but it's not necessary because
+		 * the show hooks for these variables report the truth anyway.)
 		 */
-		if (pq_setkeepalivesidle(tcp_keepalives_idle, port) != STATUS_OK)
-			return STATUS_ERROR;
-
-		if (pq_setkeepalivesinterval(tcp_keepalives_interval, port) != STATUS_OK)
-			return STATUS_ERROR;
-
-		if (pq_setkeepalivescount(tcp_keepalives_count, port) != STATUS_OK)
-			return STATUS_ERROR;
+		(void) pq_setkeepalivesidle(tcp_keepalives_idle, port);
+		(void) pq_setkeepalivesinterval(tcp_keepalives_interval, port);
+		(void) pq_setkeepalivescount(tcp_keepalives_count, port);
 	}
 
 	return STATUS_OK;
@@ -1172,11 +1170,16 @@ pq_endcopyout(bool errorAbort)
 	DoingCopyOut = false;
 }
 
+
+/*
+ * Support for TCP Keepalive parameters
+ */
+
 int
 pq_getkeepalivesidle(Port *port)
 {
 #ifdef TCP_KEEPIDLE
-	if (IS_AF_UNIX(port->laddr.addr.ss_family))
+	if (port == NULL || IS_AF_UNIX(port->laddr.addr.ss_family))
 		return 0;
 
 	if (port->keepalives_idle != 0)
@@ -1185,12 +1188,13 @@ pq_getkeepalivesidle(Port *port)
 	if (port->default_keepalives_idle == 0)
 	{
 		socklen_t size = sizeof(port->default_keepalives_idle);
+
 		if (getsockopt(port->sock, IPPROTO_TCP, TCP_KEEPIDLE,
-					   (char *) &port->default_keepalives_idle, 
+					   (char *) &port->default_keepalives_idle,
 					   &size) < 0)
 		{
 			elog(LOG, "getsockopt(TCP_KEEPIDLE) failed: %m");
-			return -1;
+			port->default_keepalives_idle = -1;	/* don't know */
 		}
 	}
 
@@ -1199,23 +1203,28 @@ pq_getkeepalivesidle(Port *port)
 	return 0;
 #endif
 }
-   
+
 int
 pq_setkeepalivesidle(int idle, Port *port)
 {
-	if (IS_AF_UNIX(port->laddr.addr.ss_family))
+	if (port == NULL || IS_AF_UNIX(port->laddr.addr.ss_family))
 		return STATUS_OK;
 
 #ifdef TCP_KEEPIDLE
 	if (idle == port->keepalives_idle)
 		return STATUS_OK;
 
-	if (port->default_keepalives_idle == 0)
+	if (port->default_keepalives_idle <= 0)
 	{
 		if (pq_getkeepalivesidle(port) < 0)
-			return STATUS_ERROR;
+		{
+			if (idle == 0)
+				return STATUS_OK; /* default is set but unknown */
+			else
+				return STATUS_ERROR;
+		}
 	}
-			
+
 	if (idle == 0)
 		idle = port->default_keepalives_idle;
 
@@ -1242,7 +1251,7 @@ int
 pq_getkeepalivesinterval(Port *port)
 {
 #ifdef TCP_KEEPINTVL
-	if (IS_AF_UNIX(port->laddr.addr.ss_family))
+	if (port == NULL || IS_AF_UNIX(port->laddr.addr.ss_family))
 		return 0;
 
 	if (port->keepalives_interval != 0)
@@ -1251,12 +1260,13 @@ pq_getkeepalivesinterval(Port *port)
 	if (port->default_keepalives_interval == 0)
 	{
 		socklen_t size = sizeof(port->default_keepalives_interval);
+
 		if (getsockopt(port->sock, IPPROTO_TCP, TCP_KEEPINTVL,
-					   (char *) &port->default_keepalives_interval, 
+					   (char *) &port->default_keepalives_interval,
 					   &size) < 0)
 		{
 			elog(LOG, "getsockopt(TCP_KEEPINTVL) failed: %m");
-			return -1;
+			port->default_keepalives_interval = -1;	/* don't know */
 		}
 	}
 
@@ -1265,22 +1275,28 @@ pq_getkeepalivesinterval(Port *port)
 	return 0;
 #endif
 }
-   
+
 int
 pq_setkeepalivesinterval(int interval, Port *port)
 {
-	if (IS_AF_UNIX(port->laddr.addr.ss_family))
+	if (port == NULL || IS_AF_UNIX(port->laddr.addr.ss_family))
 		return STATUS_OK;
 
 #ifdef TCP_KEEPINTVL
 	if (interval == port->keepalives_interval)
 		return STATUS_OK;
 
-	if (port->default_keepalives_interval == 0) {
+	if (port->default_keepalives_interval <= 0)
+	{
 		if (pq_getkeepalivesinterval(port) < 0)
-			return STATUS_ERROR;
+		{
+			if (interval == 0)
+				return STATUS_OK; /* default is set but unknown */
+			else
+				return STATUS_ERROR;
+		}
 	}
-			
+
 	if (interval == 0)
 		interval = port->default_keepalives_interval;
 
@@ -1297,7 +1313,7 @@ pq_setkeepalivesinterval(int interval, Port *port)
 	{
 		elog(LOG, "setsockopt(TCP_KEEPINTVL) not supported");
 		return STATUS_ERROR;
-	}		
+	}
 #endif
 
 	return STATUS_OK;
@@ -1307,7 +1323,7 @@ int
 pq_getkeepalivescount(Port *port)
 {
 #ifdef TCP_KEEPCNT
-	if (IS_AF_UNIX(port->laddr.addr.ss_family))
+	if (port == NULL || IS_AF_UNIX(port->laddr.addr.ss_family))
 		return 0;
 
 	if (port->keepalives_count != 0)
@@ -1316,12 +1332,13 @@ pq_getkeepalivescount(Port *port)
 	if (port->default_keepalives_count == 0)
 	{
 		socklen_t size = sizeof(port->default_keepalives_count);
+
 		if (getsockopt(port->sock, IPPROTO_TCP, TCP_KEEPCNT,
-					   (char *) &port->default_keepalives_count, 
+					   (char *) &port->default_keepalives_count,
 					   &size) < 0)
 		{
 			elog(LOG, "getsockopt(TCP_KEEPCNT) failed: %m");
-			return -1;
+			port->default_keepalives_count = -1;	/* don't know */
 		}
 	}
 
@@ -1330,22 +1347,28 @@ pq_getkeepalivescount(Port *port)
 	return 0;
 #endif
 }
-   
+
 int
 pq_setkeepalivescount(int count, Port *port)
 {
-	if (IS_AF_UNIX(port->laddr.addr.ss_family))
+	if (port == NULL || IS_AF_UNIX(port->laddr.addr.ss_family))
 		return STATUS_OK;
 
 #ifdef TCP_KEEPCNT
 	if (count == port->keepalives_count)
 		return STATUS_OK;
 
-	if (port->default_keepalives_count == 0) {
+	if (port->default_keepalives_count <= 0)
+	{
 		if (pq_getkeepalivescount(port) < 0)
-			return STATUS_ERROR;
+		{
+			if (count == 0)
+				return STATUS_OK; /* default is set but unknown */
+			else
+				return STATUS_ERROR;
+		}
 	}
-			
+
 	if (count == 0)
 		count = port->default_keepalives_count;
 
