@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.14 2005/09/12 22:39:30 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.15 2005/09/12 23:09:05 tgl Exp $
 -->
 <chapter Id="runtime-config">
   <title>Run-time Configuration</title>
@@ -489,8 +489,9 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         On systems that support the TCP_KEEPCNT socket option, specifies how
         many keepalives may be lost before the connection is considered dead. 
-        A value of 0 uses the system default. If TCP_KEEPINTVL is not
-        supported, this parameter must be 0.
+        A value of 0 uses the system default. If TCP_KEEPCNT is not
+        supported, this parameter must be 0. This option is ignored
+        for connections made via a Unix-domain socket.
        </para>
       </listitem>
      </varlistentry>
