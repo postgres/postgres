@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.151 2005/07/28 07:51:13 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.152 2005/09/13 16:16:17 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -3388,11 +3388,12 @@ exec_assign_value(PLpgSQL_execstate *estate,
  *
  * If expectedtypeid isn't InvalidOid, it is checked against the actual type.
  *
- * This obviously only handles scalar datums (not whole records or rows);
- * at present it doesn't need to handle PLpgSQL_expr datums, either.
+ * At present this doesn't handle PLpgSQL_expr or PLpgSQL_arrayelem datums.
  *
  * NOTE: caller must not modify the returned value, since it points right
- * at the stored value in the case of pass-by-reference datatypes.
+ * at the stored value in the case of pass-by-reference datatypes.  In some
+ * cases we have to palloc a return value, and in such cases we put it into
+ * the estate's short-term memory context.
  */
 static void
 exec_eval_datum(PLpgSQL_execstate *estate,
@@ -3997,34 +3998,34 @@ make_tuple_from_row(PLpgSQL_execstate *estate,
 	int			natts = tupdesc->natts;
 	HeapTuple	tuple;
 	Datum	   *dvalues;
-	char	   *nulls;
+	bool	   *nulls;
 	int			i;
 
 	if (natts != row->nfields)
 		return NULL;
 
 	dvalues = (Datum *) palloc0(natts * sizeof(Datum));
-	nulls = (char *) palloc(natts * sizeof(char));
-	MemSet(nulls, 'n', natts);
+	nulls = (bool *) palloc(natts * sizeof(bool));
 
 	for (i = 0; i < natts; i++)
 	{
-		PLpgSQL_var *var;
+		Oid			fieldtypeid;
 
 		if (tupdesc->attrs[i]->attisdropped)
-			continue;			/* leave the column as null */
+		{
+			nulls[i] = true;	/* leave the column as null */
+			continue;
+		}
 		if (row->varnos[i] < 0) /* should not happen */
 			elog(ERROR, "dropped rowtype entry for non-dropped column");
 
-		var = (PLpgSQL_var *) (estate->datums[row->varnos[i]]);
-		if (var->datatype->typoid != tupdesc->attrs[i]->atttypid)
+		exec_eval_datum(estate, estate->datums[row->varnos[i]],
+						InvalidOid, &fieldtypeid, &dvalues[i], &nulls[i]);
+		if (fieldtypeid != tupdesc->attrs[i]->atttypid)
 			return NULL;
-		dvalues[i] = var->value;
-		if (!var->isnull)
-			nulls[i] = ' ';
 	}
 
-	tuple = heap_formtuple(tupdesc, dvalues, nulls);
+	tuple = heap_form_tuple(tupdesc, dvalues, nulls);
 
 	pfree(dvalues);
 	pfree(nulls);
