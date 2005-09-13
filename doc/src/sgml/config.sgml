@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.15 2005/09/12 23:09:05 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.16 2005/09/13 01:51:18 alvherre Exp $
 -->
 <chapter Id="runtime-config">
   <title>Run-time Configuration</title>
@@ -2897,18 +2897,15 @@ SELECT * FROM parent WHERE key = 2400;
    <sect1 id="runtime-config-autovacuum">
     <title>Automatic Vacuuming</title>
 
+    <indexterm>
+     <primary>autovacuum</primary>
+     <secondary>global configuration parameters</secondary>
+    </indexterm>
+
      <para>
-      Beginning in <productname>PostgreSQL</> 8.1, there is an optional server
-      process called the <firstterm>autovacuum daemon</>, whose purpose is
-      to automate the issuance of periodic <command>VACUUM</> and
-      <command>ANALYZE</> commands.  When enabled, the autovacuum daemon
-      runs periodically and checks for tables that have had a large number
-      of updated or deleted tuples.  This check uses the row-level statistics
-      collection facility; therefore, the autovacuum daemon cannot be used
-      unless <xref linkend="guc-stats-start-collector"> and
-      <xref linkend="guc-stats-row-level"> are set TRUE.  Also, it's
-      important to allow a slot for the autovacuum process when choosing
-      the value of <xref linkend="guc-superuser-reserved-connections">.
+      These settings control the default behavior for the <firstterm>autovacuum
+      daemon</firstterm>. Please refer to <xref linkend="autovacuum"> for
+      more information.
      </para>
 
     <variablelist>
@@ -2958,6 +2955,8 @@ SELECT * FROM parent WHERE key = 2400;
         The default is 1000.
         This option can only be set at server start or in the
         <filename>postgresql.conf</filename> file.
+        This setting can be overridden for individual tables by entries in
+        <structname>pg_autovacuum</>.
        </para>
       </listitem>
      </varlistentry>
@@ -2974,6 +2973,8 @@ SELECT * FROM parent WHERE key = 2400;
         The default is 500.
         This option can only be set at server start or in the
         <filename>postgresql.conf</filename> file.
+        This setting can be overridden for individual tables by entries in
+        <structname>pg_autovacuum</>.
        </para>
       </listitem>
      </varlistentry>
@@ -2991,6 +2992,8 @@ SELECT * FROM parent WHERE key = 2400;
         The default is 0.4.
         This option can only be set at server start or in the
         <filename>postgresql.conf</filename> file.
+        This setting can be overridden for individual tables by entries in
+        <structname>pg_autovacuum</>.
        </para>
       </listitem>
      </varlistentry>
@@ -3008,6 +3011,8 @@ SELECT * FROM parent WHERE key = 2400;
         The default is 0.2.
         This option can only be set at server start or in the
         <filename>postgresql.conf</filename> file.
+        This setting can be overridden for individual tables by entries in
+        <structname>pg_autovacuum</>.
        </para>
       </listitem>
      </varlistentry>

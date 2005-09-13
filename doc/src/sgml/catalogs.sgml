@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.113 2005/09/08 20:07:41 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.114 2005/09/13 01:51:18 alvherre Exp $
  -->
 
 <chapter id="catalogs">
@@ -1137,9 +1137,14 @@
    <primary>pg_autovacuum</primary>
   </indexterm>
 
+  <indexterm zone="catalog-pg-autovacuum">
+   <primary>autovacuum</primary>
+   <secondary>table-specific configuration</secondary>
+  </indexterm>
+
   <para>
    The catalog <structname>pg_autovacuum</structname> stores optional
-   per-relation configuration parameters for <quote>autovacuum</>.
+   per-relation configuration parameters for <xref linkend="autovacuum" endterm="autovacuum-title">.
    If there is an entry here for a particular relation, the given
    parameters will be used for autovacuuming that table.  If no entry
    is present, the system-wide defaults will be used.
