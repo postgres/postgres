@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.16 2005/09/13 01:51:18 alvherre Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.17 2005/09/13 15:24:56 neilc Exp $
 -->
 <chapter Id="runtime-config">
   <title>Run-time Configuration</title>
@@ -1715,20 +1715,20 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
        <para>
         Sets the planner's assumption about the effective size of the
         disk cache that is available to a single index scan.  This is
-        factored into estimates of the cost of using an index; a higher
-        value makes it more likely index scans will be used, a lower
-        value makes it more likely sequential scans will be used. When
-        setting this parameter you should consider both
+        factored into estimates of the cost of using an index; a
+        higher value makes it more likely index scans will be used, a
+        lower value makes it more likely sequential scans will be
+        used. When setting this parameter you should consider both
         <productname>PostgreSQL</productname>'s shared buffers and the
         portion of the kernel's disk cache that will be used for
-        <productname>PostgreSQL</productname> data files.  Also, take into
-        account the expected number of concurrent queries using different
-        indexes, since they will have to share the available space.
-        This parameter has no effect on the size of shared memory
-        allocated by PostgreSQL, nor does it reserve kernel disk cache;
-        it is used only for estimation purposes.
-        The value is measured in disk pages, which are
-        normally 8192 bytes each. The default is 1000.
+        <productname>PostgreSQL</productname> data files.  Also, take
+        into account the expected number of concurrent queries using
+        different indexes, since they will have to share the available
+        space.  This parameter has no effect on the size of shared
+        memory allocated by <productname>PostgreSQL</productname>, nor
+        does it reserve kernel disk cache; it is used only for
+        estimation purposes.  The value is measured in disk pages,
+        which are normally 8192 bytes each. The default is 1000.
        </para>
       </listitem>
      </varlistentry>
@@ -3662,7 +3662,8 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         determines whether OIDs will be included in tables created by
         <command>SELECT INTO</command>. In <productname>PostgreSQL</>
         8.1 <varname>default_with_oids</> is disabled by default; in
-        prior versions of PostgreSQL, it was on by default.
+        prior versions of <productname>PostgreSQL</productname>, it
+        was on by default.
        </para>
 
        <para>

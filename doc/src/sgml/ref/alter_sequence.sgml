@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.10 2005/08/01 16:11:14 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.11 2005/09/13 15:24:57 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -132,7 +132,7 @@ ALTER SEQUENCE <replaceable class="parameter">name</replaceable> SET SCHEMA <rep
      </varlistentry>
 
      <varlistentry>
-      <term>CYCLE</term>
+      <term><literal>CYCLE</literal></term>
       <listitem>
        <para>
         The optional <literal>CYCLE</literal> key word may be used to enable
@@ -150,7 +150,7 @@ ALTER SEQUENCE <replaceable class="parameter">name</replaceable> SET SCHEMA <rep
      </varlistentry>
 
      <varlistentry>
-      <term>NO CYCLE</term>
+      <term><literal>NO CYCLE</literal></term>
       <listitem>
        <para>
         If the optional <literal>NO CYCLE</literal> key word is
@@ -197,7 +197,7 @@ ALTER SEQUENCE serial RESTART WITH 105;
 
   <para>
    <command>ALTER SEQUENCE</command> will not immediately affect
-   <literal>nextval</> results in backends,
+   <function>nextval</> results in backends,
    other than the current one, that have preallocated (cached) sequence
    values. They will use up all cached values prior to noticing the changed
    sequence parameters.  The current backend will be affected immediately.
