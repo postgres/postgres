@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/dfunc.sgml,v 1.31 2005/04/09 03:52:43 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/dfunc.sgml,v 1.32 2005/09/14 21:14:26 neilc Exp $
 -->
 
 <sect2 id="dfunc">
@@ -28,11 +28,10 @@ $PostgreSQL: pgsql/doc/src/sgml/dfunc.sgml,v 1.31 2005/04/09 03:52:43 momjian Ex
  </para>
 
  <para>
-  <indexterm><primary>PIC</></> Creating shared libraries is generally
-  analogous to linking executables: first the source files are
-  compiled into object files, then the object files are linked
-  together.  The object files need to be created as
-  <firstterm>position-independent code</firstterm>
+  Creating shared libraries is generally analogous to linking
+  executables: first the source files are compiled into object files,
+  then the object files are linked together.  The object files need to
+  be created as <firstterm>position-independent code</firstterm>
   (<acronym>PIC</acronym>),<indexterm><primary>PIC</></> which
   conceptually means that they can be placed at an arbitrary location
   in memory when they are loaded by the executable.  (Object files

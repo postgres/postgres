@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.284 2005/09/09 02:31:48 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.285 2005/09/14 21:14:26 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -263,7 +263,7 @@ PostgreSQL documentation
      <primary>BETWEEN</primary>
     </indexterm>
     In addition to the comparison operators, the special
-    <token>BETWEEN</token> construct is available.<indexterm><primary>BETWEEN</primary></indexterm>
+    <token>BETWEEN</token> construct is available.
 <synopsis>
 <replaceable>a</replaceable> BETWEEN <replaceable>x</replaceable> AND <replaceable>y</replaceable>
 </synopsis>
@@ -567,6 +567,64 @@ PostgreSQL documentation
    boundary cases may therefore vary depending on the host system.
   </para>
 
+   <indexterm>
+    <primary>abs</primary>
+   </indexterm>
+   <indexterm>
+    <primary>cbrt</primary>
+   </indexterm>
+   <indexterm>
+    <primary>ceiling</primary>
+   </indexterm>
+   <indexterm>
+    <primary>degrees</primary>
+   </indexterm>
+   <indexterm>
+    <primary>exp</primary>
+   </indexterm>
+   <indexterm>
+    <primary>floor</primary>
+   </indexterm>
+   <indexterm>
+    <primary>ln</primary>
+   </indexterm>
+   <indexterm>
+    <primary>log</primary>
+   </indexterm>
+   <indexterm>
+    <primary>mod</primary>
+   </indexterm>
+   <indexterm>
+    <primary>&pi;</primary>
+   </indexterm>
+   <indexterm>
+    <primary>power</primary>
+   </indexterm>
+   <indexterm>
+    <primary>radians</primary>
+   </indexterm>
+   <indexterm>
+    <primary>random</primary>
+   </indexterm>
+   <indexterm>
+    <primary>round</primary>
+   </indexterm>
+   <indexterm>
+    <primary>setseed</primary>
+   </indexterm>
+   <indexterm>
+    <primary>sign</primary>
+   </indexterm>
+   <indexterm>
+    <primary>sqrt</primary>
+   </indexterm>
+   <indexterm>
+    <primary>trunc</primary>
+   </indexterm>
+   <indexterm>
+    <primary>width_bucket</primary>
+   </indexterm>
+
    <table id="functions-math-func-table">
     <title>Mathematical Functions</title>
     <tgroup cols="5">
@@ -722,7 +780,7 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal><function>round</function>(<parameter>v</parameter> <type>numeric</type>, <parameter>s</parameter> <type>integer</type>)</literal></entry>
+       <entry><literal><function>round</function>(<parameter>v</parameter> <type>numeric</type>, <parameter>s</parameter> <type>int</type>)</literal></entry>
        <entry><type>numeric</type></entry>
        <entry>round to <parameter>s</parameter> decimal places</entry>
        <entry><literal>round(42.4382, 2)</literal></entry>
@@ -731,7 +789,7 @@ PostgreSQL documentation
 
       <row>
        <entry><literal><function>setseed</function>(<type>dp</type>)</literal></entry>
-       <entry><type>integer</type></entry>
+       <entry><type>int</type></entry>
        <entry>set seed for subsequent <literal>random()</literal> calls</entry>
        <entry><literal>setseed(0.54823)</literal></entry>
        <entry><literal>1177314959</literal></entry>
@@ -762,7 +820,7 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal><function>trunc</function>(<parameter>v</parameter> <type>numeric</type>, <parameter>s</parameter> <type>integer</type>)</literal></entry>
+       <entry><literal><function>trunc</function>(<parameter>v</parameter> <type>numeric</type>, <parameter>s</parameter> <type>int</type>)</literal></entry>
        <entry><type>numeric</type></entry>
        <entry>truncate to <parameter>s</parameter> decimal places</entry>
        <entry><literal>trunc(42.4382, 2)</literal></entry>
@@ -770,8 +828,8 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal><function>width_bucket</function>(<parameter>op</parameter> <type>numeric</type>, <parameter>b1</parameter> <type>numeric</type>, <parameter>b2</parameter> <type>numeric</type>, <parameter>count</parameter> <type>integer</type>)</literal></entry>
-       <entry><type>integer</type></entry>
+       <entry><literal><function>width_bucket</function>(<parameter>op</parameter> <type>numeric</type>, <parameter>b1</parameter> <type>numeric</type>, <parameter>b2</parameter> <type>numeric</type>, <parameter>count</parameter> <type>int</type>)</literal></entry>
+       <entry><type>int</type></entry>
        <entry>return the bucket to which <parameter>operand</> would
        be assigned in an equidepth histogram with <parameter>count</>
        buckets, an upper bound of <parameter>b1</>, and a lower bound
@@ -789,6 +847,31 @@ PostgreSQL documentation
    take arguments and return values of type <type>double
    precision</type>.
   </para>
+
+   <indexterm>
+    <primary>acos</primary>
+   </indexterm>
+   <indexterm>
+    <primary>asin</primary>
+   </indexterm>
+   <indexterm>
+    <primary>atan</primary>
+   </indexterm>
+   <indexterm>
+    <primary>atan2</primary>
+   </indexterm>
+   <indexterm>
+    <primary>cos</primary>
+   </indexterm>
+   <indexterm>
+    <primary>cot</primary>
+   </indexterm>
+   <indexterm>
+    <primary>sin</primary>
+   </indexterm>
+   <indexterm>
+    <primary>tan</primary>
+   </indexterm>
 
    <table id="functions-math-trig-table">
     <title>Trigonometric Functions</title>
@@ -874,6 +957,37 @@ PostgreSQL documentation
     function invocation.  (See <xref linkend="functions-string-other">.)
    </para>
 
+   <indexterm>
+    <primary>bit_length</primary>
+   </indexterm>
+   <indexterm>
+    <primary>char_length</primary>
+   </indexterm>
+   <indexterm>
+    <primary>convert</primary>
+   </indexterm>
+   <indexterm>
+    <primary>lower</primary>
+   </indexterm>
+   <indexterm>
+    <primary>octet_length</primary>
+   </indexterm>
+   <indexterm>
+    <primary>overlay</primary>
+   </indexterm>
+   <indexterm>
+    <primary>position</primary>
+   </indexterm>
+   <indexterm>
+    <primary>substring</primary>
+   </indexterm>
+   <indexterm>
+    <primary>trim</primary>
+   </indexterm>
+   <indexterm>
+    <primary>upper</primary>
+   </indexterm>
+
    <table id="functions-string-sql">
     <title><acronym>SQL</acronym> String Functions and Operators</title>
     <tgroup cols="5">
@@ -905,7 +1019,7 @@ PostgreSQL documentation
 
       <row>
        <entry><literal><function>bit_length</function>(<parameter>string</parameter>)</literal></entry>
-       <entry><type>integer</type></entry>
+       <entry><type>int</type></entry>
        <entry>Number of bits in string</entry>
        <entry><literal>bit_length('jose')</literal></entry>
        <entry><literal>32</literal></entry>
@@ -913,7 +1027,7 @@ PostgreSQL documentation
 
       <row>
        <entry><literal><function>char_length</function>(<parameter>string</parameter>)</literal> or <literal><function>character_length</function>(<parameter>string</parameter>)</literal></entry>
-       <entry><type>integer</type></entry>
+       <entry><type>int</type></entry>
        <entry>
         Number of characters in string
         <indexterm>
@@ -923,7 +1037,7 @@ PostgreSQL documentation
         <indexterm>
          <primary>length</primary>
          <secondary sortas="character string">of a character string</secondary>
-         <see>character strings, length</see>
+         <see>character string, length</see>
         </indexterm>
        </entry>
        <entry><literal>char_length('jose')</literal></entry>
@@ -955,20 +1069,17 @@ PostgreSQL documentation
 
       <row>
        <entry><literal><function>octet_length</function>(<parameter>string</parameter>)</literal></entry>
-       <entry><type>integer</type></entry>
+       <entry><type>int</type></entry>
        <entry>Number of bytes in string</entry>
        <entry><literal>octet_length('jose')</literal></entry>
        <entry><literal>4</literal></entry>
       </row>
 
       <row>
-       <entry><literal><function>overlay</function>(<parameter>string</parameter> placing <parameter>string</parameter> from <type>integer</type> <optional>for <type>integer</type></optional>)</literal></entry>
+       <entry><literal><function>overlay</function>(<parameter>string</parameter> placing <parameter>string</parameter> from <type>int</type> <optional>for <type>int</type></optional>)</literal></entry>
        <entry><type>text</type></entry>
        <entry>
         Replace substring
-        <indexterm>
-         <primary>overlay</primary>
-        </indexterm>
        </entry>
        <entry><literal>overlay('Txxxxas' placing 'hom' from 2 for 4)</literal></entry>
        <entry><literal>Thomas</literal></entry>
@@ -976,20 +1087,17 @@ PostgreSQL documentation
 
       <row>
        <entry><literal><function>position</function>(<parameter>substring</parameter> in <parameter>string</parameter>)</literal></entry>
-       <entry><type>integer</type></entry>
+       <entry><type>int</type></entry>
        <entry>Location of specified substring</entry>
        <entry><literal>position('om' in 'Thomas')</literal></entry>
        <entry><literal>3</literal></entry>
       </row>
 
       <row>
-       <entry><literal><function>substring</function>(<parameter>string</parameter> <optional>from <type>integer</type></optional> <optional>for <type>integer</type></optional>)</literal></entry>
+       <entry><literal><function>substring</function>(<parameter>string</parameter> <optional>from <type>int</type></optional> <optional>for <type>int</type></optional>)</literal></entry>
        <entry><type>text</type></entry>
        <entry>
         Extract substring
-        <indexterm>
-         <primary>substring</primary>
-        </indexterm>
        </entry>
        <entry><literal>substring('Thomas' from 2 for 3)</literal></entry>
        <entry><literal>hom</literal></entry>
@@ -1000,9 +1108,6 @@ PostgreSQL documentation
        <entry><type>text</type></entry>
        <entry>
         Extract substring matching POSIX regular expression
-        <indexterm>
-         <primary>substring</primary>
-        </indexterm>
        </entry>
        <entry><literal>substring('Thomas' from '...$')</literal></entry>
        <entry><literal>mas</literal></entry>
@@ -1014,9 +1119,6 @@ PostgreSQL documentation
        <entry>
         Extract substring matching <acronym>SQL</acronym> regular
         expression
-        <indexterm>
-         <primary>substring</primary>
-        </indexterm>
        </entry>
        <entry><literal>substring('Thomas' from '%#"o_a#"_' for '#')</literal></entry>
        <entry><literal>oma</literal></entry>
@@ -1055,6 +1157,76 @@ PostgreSQL documentation
     <acronym>SQL</acronym>-standard string functions listed in <xref linkend="functions-string-sql">.
    </para>
 
+   <indexterm>
+    <primary>ascii</primary>
+   </indexterm>
+   <indexterm>
+    <primary>btrim</primary>
+   </indexterm>
+   <indexterm>
+    <primary>chr</primary>
+   </indexterm>
+   <indexterm>
+    <primary>decode</primary>
+   </indexterm>
+   <indexterm>
+    <primary>encode</primary>
+   </indexterm>
+   <indexterm>
+    <primary>initcap</primary>
+   </indexterm>
+   <indexterm>
+    <primary>lpad</primary>
+   </indexterm>
+   <indexterm>
+    <primary>ltrim</primary>
+   </indexterm>
+   <indexterm>
+    <primary>md5</primary>
+   </indexterm>
+   <indexterm>
+    <primary>pg_client_encoding</primary>
+   </indexterm>
+   <indexterm>
+    <primary>quote_ident</primary>
+   </indexterm>
+   <indexterm>
+    <primary>quote_literal</primary>
+   </indexterm>
+   <indexterm>
+    <primary>regexp_replace</primary>
+   </indexterm>
+   <indexterm>
+    <primary>repeat</primary>
+   </indexterm>
+   <indexterm>
+    <primary>replace</primary>
+   </indexterm>
+   <indexterm>
+    <primary>rpad</primary>
+   </indexterm>
+   <indexterm>
+    <primary>rtrim</primary>
+   </indexterm>
+   <indexterm>
+    <primary>split_part</primary>
+   </indexterm>
+   <indexterm>
+    <primary>strpos</primary>
+   </indexterm>
+   <indexterm>
+    <primary>substr</primary>
+   </indexterm>
+   <indexterm>
+    <primary>to_ascii</primary>
+   </indexterm>
+   <indexterm>
+    <primary>to_hex</primary>
+   </indexterm>
+   <indexterm>
+    <primary>translate</primary>
+   </indexterm>
+
    <table id="functions-string-other">
     <title>Other String Functions</title>
     <tgroup cols="5">
@@ -1071,7 +1243,7 @@ PostgreSQL documentation
      <tbody>
       <row>
        <entry><literal><function>ascii</function>(<type>text</type>)</literal></entry>
-       <entry><type>integer</type></entry>
+       <entry><type>int</type></entry>
        <entry><acronym>ASCII</acronym> code of the first character of the argument</entry>
        <entry><literal>ascii('x')</literal></entry>
        <entry><literal>120</literal></entry>
@@ -1091,7 +1263,7 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal><function>chr</function>(<type>integer</type>)</literal></entry>
+       <entry><literal><function>chr</function>(<type>int</type>)</literal></entry>
        <entry><type>text</type></entry>
        <entry>Character with the given <acronym>ASCII</acronym> code</entry>
        <entry><literal>chr(65)</literal></entry>
@@ -1159,18 +1331,9 @@ PostgreSQL documentation
 
       <row>
        <entry><literal><function>length</function>(<parameter>string</parameter> <type>text</type>)</literal></entry>
-       <entry><type>integer</type></entry>
+       <entry><type>int</type></entry>
        <entry>
         Number of characters in <parameter>string</parameter>
-        <indexterm>
-         <primary>character string</primary>
-         <secondary>length</secondary>
-        </indexterm>
-        <indexterm>
-         <primary>length</primary>
-         <secondary sortas="character string">of a character string</secondary>
-         <see>character strings, length</see>
-        </indexterm>
        </entry>
        <entry><literal>length('jose')</literal></entry>
        <entry><literal>4</literal></entry>
@@ -1179,7 +1342,7 @@ PostgreSQL documentation
       <row>
        <entry>
         <literal><function>lpad</function>(<parameter>string</parameter> <type>text</type>,
-        <parameter>length</parameter> <type>integer</type>
+        <parameter>length</parameter> <type>int</type>
         <optional>, <parameter>fill</parameter> <type>text</type></optional>)</literal>
        </entry>
        <entry><type>text</type></entry>
@@ -1231,7 +1394,7 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal><function>quote_ident</function>(<parameter>string</parameter> text)</literal><indexterm><primary>quote_ident</></></entry>
+       <entry><literal><function>quote_ident</function>(<parameter>string</parameter> text)</literal></entry>
        <entry><type>text</type></entry>
        <entry>
         Return the given string suitably quoted to be used as an identifier
@@ -1245,7 +1408,7 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal><function>quote_literal</function>(<parameter>string</parameter> text)</literal><indexterm><primary>quote_literal</></></entry>
+       <entry><literal><function>quote_literal</function>(<parameter>string</parameter> text)</literal></entry>
        <entry><type>text</type></entry>
        <entry>
         Return the given string suitably quoted to be used as a string literal
@@ -1277,7 +1440,7 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal><function>repeat</function>(<parameter>string</parameter> <type>text</type>, <parameter>number</parameter> <type>integer</type>)</literal></entry>
+       <entry><literal><function>repeat</function>(<parameter>string</parameter> <type>text</type>, <parameter>number</parameter> <type>int</type>)</literal></entry>
        <entry><type>text</type></entry>
        <entry>Repeat <parameter>string</parameter> the specified
        <parameter>number</parameter> of times</entry>
@@ -1300,7 +1463,7 @@ PostgreSQL documentation
       <row>
        <entry>
         <literal><function>rpad</function>(<parameter>string</parameter> <type>text</type>,
-        <parameter>length</parameter> <type>integer</type>
+        <parameter>length</parameter> <type>int</type>
         <optional>, <parameter>fill</parameter> <type>text</type></optional>)</literal>
        </entry>
        <entry><type>text</type></entry>
@@ -1332,12 +1495,12 @@ PostgreSQL documentation
       <row>
        <entry><literal><function>split_part</function>(<parameter>string</parameter> <type>text</type>,
        <parameter>delimiter</parameter> <type>text</type>,
-       <parameter>field</parameter> <type>integer</type>)</literal></entry>
+       <parameter>field</parameter> <type>int</type>)</literal></entry>
        <entry><type>text</type></entry>
        <entry>Split <parameter>string</parameter> on <parameter>delimiter</parameter>
         and return the given field (counting from one)
        </entry>
-       <entry><literal>split_part( 'abc~@~def~@~ghi', '~@~', 2)</literal></entry>
+       <entry><literal>split_part('abc~@~def~@~ghi', '~@~', 2)</literal></entry>
        <entry><literal>def</literal></entry>
       </row>
 
@@ -1386,7 +1549,7 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal><function>to_hex</function>(<parameter>number</parameter> <type>integer</type>
+       <entry><literal><function>to_hex</function>(<parameter>number</parameter> <type>int</type>
        or <type>bigint</type>)</literal></entry>
        <entry><type>text</type></entry>
        <entry>Convert <parameter>number</parameter> to its equivalent hexadecimal
@@ -2200,7 +2363,7 @@ PostgreSQL documentation
 
       <row>
        <entry><literal><function>octet_length</function>(<parameter>string</parameter>)</literal></entry>
-       <entry><type>integer</type></entry>
+       <entry><type>int</type></entry>
        <entry>Number of bytes in binary string</entry>
        <entry><literal>octet_length( 'jo\\000se'::bytea)</literal></entry>
        <entry><literal>5</literal></entry>
@@ -2208,14 +2371,14 @@ PostgreSQL documentation
 
       <row>
        <entry><literal><function>position</function>(<parameter>substring</parameter> in <parameter>string</parameter>)</literal></entry>
-       <entry><type>integer</type></entry>
+       <entry><type>int</type></entry>
        <entry>Location of specified substring</entry>
       <entry><literal>position('\\000om'::bytea in 'Th\\000omas'::bytea)</literal></entry>
        <entry><literal>3</literal></entry>
       </row>
 
       <row>
-       <entry><literal><function>substring</function>(<parameter>string</parameter> <optional>from <type>integer</type></optional> <optional>for <type>integer</type></optional>)</literal></entry>
+       <entry><literal><function>substring</function>(<parameter>string</parameter> <optional>from <type>int</type></optional> <optional>for <type>int</type></optional>)</literal></entry>
        <entry><type>bytea</type></entry>
        <entry>
         Extract substring
@@ -2245,7 +2408,7 @@ PostgreSQL documentation
 
       <row>
        <entry><function>get_byte</function>(<parameter>string</parameter>, <parameter>offset</parameter>)</entry>
-       <entry><type>integer</type></entry>
+       <entry><type>int</type></entry>
        <entry>
         Extract byte from string
         <indexterm>
@@ -2272,7 +2435,7 @@ PostgreSQL documentation
 
       <row>
        <entry><function>get_bit</function>(<parameter>string</parameter>, <parameter>offset</parameter>)</entry>
-       <entry><type>integer</type></entry>
+       <entry><type>int</type></entry>
        <entry>
         Extract bit from string
         <indexterm>
@@ -2337,7 +2500,7 @@ PostgreSQL documentation
 
      <row>
       <entry><literal><function>length</function>(<parameter>string</parameter>)</literal></entry>
-      <entry><type>integer</type></entry>
+      <entry><type>int</type></entry>
       <entry>
        Length of binary string
        <indexterm>
@@ -2553,7 +2716,7 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
   <sect2 id="functions-like">
    <title><function>LIKE</function></title>
 
-   <indexterm zone="functions-like">
+   <indexterm>
     <primary>LIKE</primary>
    </indexterm>
 
@@ -2650,7 +2813,7 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
   <sect2 id="functions-similarto-regexp">
    <title><function>SIMILAR TO</function> Regular Expressions</title>
 
-   <indexterm zone="functions-similarto-regexp">
+   <indexterm>
     <primary>regular expression</primary>
     <!-- <seealso>pattern matching</seealso> breaks index build -->
    </indexterm>
@@ -4090,12 +4253,21 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
   <sect1 id="functions-formatting">
    <title>Data Type Formatting Functions</title>
 
-   <indexterm zone="functions-formatting">
+   <indexterm>
     <primary>formatting</primary>
    </indexterm>
 
-   <indexterm zone="functions-formatting">
+   <indexterm>
     <primary>to_char</primary>
+   </indexterm>
+   <indexterm>
+    <primary>to_date</primary>
+   </indexterm>
+   <indexterm>
+    <primary>to_timestamp</primary>
+   </indexterm>
+   <indexterm>
+    <primary>to_number</primary>
    </indexterm>
 
    <para>
@@ -5008,6 +5180,49 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
      </tgroup>
     </table>
 
+   <indexterm>
+    <primary>age</primary>
+   </indexterm>
+   <indexterm>
+    <primary>current_date</primary>
+   </indexterm>
+   <indexterm>
+    <primary>current_time</primary>
+   </indexterm>
+   <indexterm>
+    <primary>current_timestamp</primary>
+   </indexterm>
+   <indexterm>
+    <primary>date_part</primary>
+   </indexterm>
+   <indexterm>
+    <primary>date_trunc</primary>
+   </indexterm>
+   <indexterm>
+    <primary>extract</primary>
+   </indexterm>
+   <indexterm>
+    <primary>isfinite</primary>
+   </indexterm>
+   <indexterm>
+    <primary>justify_hours</primary>
+   </indexterm>
+   <indexterm>
+    <primary>justify_days</primary>
+   </indexterm>
+   <indexterm>
+    <primary>localtime</primary>
+   </indexterm>
+   <indexterm>
+    <primary>localtimestamp</primary>
+   </indexterm>
+   <indexterm>
+    <primary>now</primary>
+   </indexterm>
+   <indexterm>
+    <primary>timeofday</primary>
+   </indexterm>
+
     <table id="functions-datetime-table">
      <title>Date/Time Functions</title>
      <tgroup cols="5">
@@ -5198,8 +5413,8 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
     In addition to these functions, the SQL <literal>OVERLAPS</> operator is
     supported:
 <synopsis>
-( <replaceable>start1</replaceable>, <replaceable>end1</replaceable> ) OVERLAPS ( <replaceable>start2</replaceable>, <replaceable>end2</replaceable> )
-( <replaceable>start1</replaceable>, <replaceable>length1</replaceable> ) OVERLAPS ( <replaceable>start2</replaceable>, <replaceable>length2</replaceable> )
+(<replaceable>start1</replaceable>, <replaceable>end1</replaceable>) OVERLAPS (<replaceable>start2</replaceable>, <replaceable>end2</replaceable>)
+(<replaceable>start1</replaceable>, <replaceable>length1</replaceable>) OVERLAPS (<replaceable>start2</replaceable>, <replaceable>length2</replaceable>)
 </synopsis>
     This expression yields true when two time periods (defined by their
     endpoints) overlap, false when they do not overlap.  The endpoints
@@ -5237,8 +5452,15 @@ SELECT (DATE '2001-02-16', INTERVAL '100 days') OVERLAPS
   <sect2 id="functions-datetime-extract">
    <title><function>EXTRACT</function>, <function>date_part</function></title>
 
+   <indexterm>
+    <primary>date_part</primary>
+   </indexterm>
+   <indexterm>
+    <primary>extract</primary>
+   </indexterm>
+
 <synopsis>
-EXTRACT (<replaceable>field</replaceable> FROM <replaceable>source</replaceable>)
+EXTRACT(<replaceable>field</replaceable> FROM <replaceable>source</replaceable>)
 </synopsis>
 
    <para>
@@ -5586,7 +5808,6 @@ SELECT EXTRACT(YEAR FROM TIMESTAMP '2001-02-16 20:38:40');
      </varlistentry>
 
     </variablelist>
-
    </para>
 
    <para>
@@ -5620,6 +5841,10 @@ SELECT date_part('hour', INTERVAL '4 hours 3 minutes');
 
   <sect2 id="functions-datetime-trunc">
    <title><function>date_trunc</function></title>
+
+   <indexterm>
+    <primary>date_trunc</primary>
+   </indexterm>
 
    <para>
     The function <function>date_trunc</function> is conceptually
@@ -5678,6 +5903,10 @@ SELECT date_trunc('year', TIMESTAMP '2001-02-16 20:38:40');
    <indexterm>
     <primary>time zone</primary>
     <secondary>conversion</secondary>
+   </indexterm>
+
+   <indexterm>
+    <primary>AT TIME ZONE</primary>
    </indexterm>
 
    <para>
@@ -5777,12 +6006,12 @@ SELECT TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40-05' AT TIME ZONE 'MST';
 CURRENT_DATE
 CURRENT_TIME
 CURRENT_TIMESTAMP
-CURRENT_TIME ( <replaceable>precision</replaceable> )
-CURRENT_TIMESTAMP ( <replaceable>precision</replaceable> )
+CURRENT_TIME (<replaceable>precision</replaceable>)
+CURRENT_TIMESTAMP (<replaceable>precision</replaceable>)
 LOCALTIME
 LOCALTIMESTAMP
-LOCALTIME ( <replaceable>precision</replaceable> )
-LOCALTIMESTAMP ( <replaceable>precision</replaceable> )
+LOCALTIME (<replaceable>precision</replaceable>)
+LOCALTIMESTAMP (<replaceable>precision</replaceable>)
 </synopsis>
     </para>
 
@@ -6090,6 +6319,42 @@ SELECT TIMESTAMP 'now';  -- incorrect for use with DEFAULT
      </tgroup>
    </table>
 
+   <indexterm>
+    <primary>area</primary>
+   </indexterm>
+   <indexterm>
+    <primary>center</primary>
+   </indexterm>
+   <indexterm>
+    <primary>diameter</primary>
+   </indexterm>
+   <indexterm>
+    <primary>height</primary>
+   </indexterm>
+   <indexterm>
+    <primary>isclosed</primary>
+   </indexterm>
+   <indexterm>
+    <primary>isopen</primary>
+   </indexterm>
+   <indexterm>
+    <primary>length</primary>
+   </indexterm>
+   <indexterm>
+    <primary>npoints</primary>
+   </indexterm>
+   <indexterm>
+    <primary>pclose</primary>
+   </indexterm>
+   <indexterm>
+    <primary>popen</primary>
+   </indexterm>
+   <indexterm>
+    <primary>radius</primary>
+   </indexterm>
+   <indexterm>
+    <primary>width</primary>
+   </indexterm>
 
    <table id="functions-geometry-func-table">
      <title>Geometric Functions</title>
@@ -6147,13 +6412,13 @@ SELECT TIMESTAMP 'now';  -- incorrect for use with DEFAULT
        </row>
        <row>
         <entry><literal><function>npoints</function>(<type>path</>)</literal></entry>
-        <entry><type>integer</type></entry>
+        <entry><type>int</type></entry>
         <entry>number of points</entry>
         <entry><literal>npoints(path '[(0,0),(1,1),(2,0)]')</literal></entry>
        </row>
        <row>
         <entry><literal><function>npoints</function>(<type>polygon</>)</literal></entry>
-        <entry><type>integer</type></entry>
+        <entry><type>int</type></entry>
         <entry>number of points</entry>
         <entry><literal>npoints(polygon '((1,1),(0,0))')</literal></entry>
        </row>
@@ -6193,7 +6458,6 @@ SELECT TIMESTAMP 'now';  -- incorrect for use with DEFAULT
       </tbody>
      </tgroup>
    </table>
-
 
    <table id="functions-geometry-conv-table">
      <title>Geometric Type Conversion Functions</title>
@@ -6468,13 +6732,13 @@ SELECT TIMESTAMP 'now';  -- incorrect for use with DEFAULT
        </row>
        <row>
         <entry><literal><function>masklen</function>(<type>inet</type>)</literal></entry>
-        <entry><type>integer</type></entry>
+        <entry><type>int</type></entry>
         <entry>extract netmask length</entry>
         <entry><literal>masklen('192.168.1.5/24')</literal></entry>
         <entry><literal>24</literal></entry>
        </row>
        <row>
-        <entry><literal><function>set_masklen</function>(<type>inet</type>, <type>integer</type>)</literal></entry>
+        <entry><literal><function>set_masklen</function>(<type>inet</type>, <type>int</type>)</literal></entry>
         <entry><type>inet</type></entry>
         <entry>set netmask length for <type>inet</type> value</entry>
         <entry><literal>set_masklen('192.168.1.5/24', 16)</literal></entry>
@@ -6517,7 +6781,7 @@ SELECT TIMESTAMP 'now';  -- incorrect for use with DEFAULT
        </row>
        <row>
     <entry><literal><function>family</function>(<type>inet</type>)</literal></entry>
-    <entry><type>integer</type></entry>
+    <entry><type>int</type></entry>
     <entry>extract family of address; <literal>4</literal> for IPv4,
     <literal>6</literal> for IPv6</entry>
     <entry><literal>family('::1')</literal></entry>
@@ -6982,7 +7246,6 @@ SELECT NULLIF(value, '(none)') ...
     the SQL standard, but are a common extension.
    </para>
   </sect2>
-
  </sect1>
 
 
@@ -7155,10 +7418,10 @@ SELECT NULLIF(value, '(none)') ...
         <entry>
      <literal>
       <function>array_lower</function>
-      (<type>anyarray</type>, <type>integer</type>)
+      (<type>anyarray</type>, <type>int</type>)
      </literal>
     </entry>
-        <entry><type>integer</type></entry>
+        <entry><type>int</type></entry>
         <entry>returns lower bound of the requested array dimension</entry>
         <entry><literal>array_lower(array_prepend(0, ARRAY[1,2,3]), 1)</literal></entry>
         <entry><literal>0</literal></entry>
@@ -7167,10 +7430,10 @@ SELECT NULLIF(value, '(none)') ...
         <entry>
      <literal>
       <function>array_upper</function>
-      (<type>anyarray</type>, <type>integer</type>)
+      (<type>anyarray</type>, <type>int</type>)
      </literal>
     </entry>
-        <entry><type>integer</type></entry>
+        <entry><type>int</type></entry>
         <entry>returns upper bound of the requested array dimension</entry>
         <entry><literal>array_upper(ARRAY[1,2,3,4], 1)</literal></entry>
         <entry><literal>4</literal></entry>
@@ -7244,7 +7507,7 @@ SELECT NULLIF(value, '(none)') ...
        <function>avg(<replaceable class="parameter">expression</replaceable>)</function>
       </entry>
       <entry>
-       <type>smallint</type>, <type>integer</type>,
+       <type>smallint</type>, <type>int</type>,
        <type>bigint</type>, <type>real</type>, <type>double
        precision</type>, <type>numeric</type>, or <type>interval</type>
       </entry>
@@ -7264,7 +7527,7 @@ SELECT NULLIF(value, '(none)') ...
        <function>bit_and(<replaceable class="parameter">expression</replaceable>)</function>
       </entry>
       <entry>
-       <type>smallint</type>, <type>integer</type>, <type>bigint</type>, or
+       <type>smallint</type>, <type>int</type>, <type>bigint</type>, or
        <type>bit</type>
       </entry>
       <entry>
@@ -7281,7 +7544,7 @@ SELECT NULLIF(value, '(none)') ...
        <function>bit_or(<replaceable class="parameter">expression</replaceable>)</function>
       </entry>
       <entry>
-       <type>smallint</type>, <type>integer</type>, <type>bigint</type>, or
+       <type>smallint</type>, <type>int</type>, <type>bigint</type>, or
        <type>bit</type>
       </entry>
       <entry>
@@ -7385,7 +7648,7 @@ SELECT NULLIF(value, '(none)') ...
        <function>stddev(<replaceable class="parameter">expression</replaceable>)</function>
       </entry>
       <entry>
-       <type>smallint</type>, <type>integer</type>,
+       <type>smallint</type>, <type>int</type>,
        <type>bigint</type>, <type>real</type>, <type>double
        precision</type>, or <type>numeric</type>
       </entry>
@@ -7399,14 +7662,14 @@ SELECT NULLIF(value, '(none)') ...
      <row>
       <entry><function>sum(<replaceable class="parameter">expression</replaceable>)</function></entry>
       <entry>
-       <type>smallint</type>, <type>integer</type>,
+       <type>smallint</type>, <type>int</type>,
        <type>bigint</type>, <type>real</type>, <type>double
        precision</type>, <type>numeric</type>, or
        <type>interval</type>
       </entry>
       <entry>
        <type>bigint</type> for <type>smallint</type> or
-       <type>integer</type> arguments, <type>numeric</type> for
+       <type>int</type> arguments, <type>numeric</type> for
        <type>bigint</type> arguments, <type>double precision</type>
        for floating-point arguments, otherwise the same as the
        argument data type
@@ -7422,7 +7685,7 @@ SELECT NULLIF(value, '(none)') ...
        <function>variance</function>(<replaceable class="parameter">expression</replaceable>)
       </entry>
       <entry>
-       <type>smallint</type>, <type>integer</type>,
+       <type>smallint</type>, <type>int</type>,
        <type>bigint</type>, <type>real</type>, <type>double
        precision</type>, or <type>numeric</type>
       </entry>
@@ -7526,7 +7789,7 @@ SELECT count(*) FROM sometable;
    <title><literal>EXISTS</literal></title>
 
 <synopsis>
-EXISTS ( <replaceable>subquery</replaceable> )
+EXISTS (<replaceable>subquery</replaceable>)
 </synopsis>
 
   <para>
@@ -8049,6 +8312,10 @@ AND
    otherwise the result of the row comparison is unknown (null).
   </para>
 
+  <indexterm>
+   <primary>IS DISTINCT FROM</primary>
+  </indexterm>
+
 <synopsis>
 <replaceable>row_constructor</replaceable> IS DISTINCT FROM <replaceable>row_constructor</replaceable>
 </synopsis>
@@ -8080,6 +8347,10 @@ AND
   <indexterm zone="functions-srf">
    <primary>set returning functions</primary>
    <secondary>functions</secondary>
+  </indexterm>
+
+  <indexterm>
+   <primary>generate_series</primary>
   </indexterm>
 
   <para>
@@ -8213,7 +8484,7 @@ select current_date + s.a as dates from generate_series(0,14,7) as s(a);
 
       <row>
        <entry><literal><function>inet_client_port</function>()</literal></entry>
-       <entry><type>int4</type></entry>
+       <entry><type>int</type></entry>
        <entry>port of the remote connection</entry>
       </row>
 
@@ -8225,7 +8496,7 @@ select current_date + s.a as dates from generate_series(0,14,7) as s(a);
 
       <row>
        <entry><literal><function>inet_server_port</function>()</literal></entry>
-       <entry><type>int4</type></entry>
+       <entry><type>int</type></entry>
        <entry>port of the local connection</entry>
       </row>
 
@@ -8345,8 +8616,9 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
    </indexterm>
 
    <para>
-     <function>pg_postmaster_start_time</function> returns the timestamp with time zone
-     when the <command>postmaster</> started.
+     <function>pg_postmaster_start_time</function> returns the
+     <type>timestamp with time zone</type> when the
+     <command>postmaster</> started.
    </para>
 
    <indexterm zone="functions-info">
@@ -8851,7 +9123,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
       <row>
        <entry><literal><function>pg_tablespace_databases</function>(<parameter>tablespace_oid</parameter>)</literal></entry>
        <entry><type>setof oid</type></entry>
-       <entry>get set of database OIDs that have objects in the tablespace</entry>
+       <entry>get the set of database OIDs that have objects in the tablespace</entry>
       </row>
      </tbody>
     </tgroup>
@@ -8886,20 +9158,22 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
   </para>
 
   <para>
-   <function>pg_get_userbyid</function>
-   extracts a role's name given its OID.
-   <function>pg_get_serial_sequence</function>
-   fetches the name of the sequence associated with a serial or
-   bigserial column.  The name is suitably formatted
-   for passing to the sequence functions (see <xref
-   linkend="functions-sequence">).
-   NULL is returned if the column does not have a sequence attached.
+   <function>pg_get_userbyid</function> extracts a role's name given
+   its OID.
   </para>
 
   <para>
-  <function>pg_tablespace_databases</function> allows usage examination of a
-  tablespace. It will return a set of OIDs of databases that have objects
-  stored in the tablespace. If this function returns any row, the
+   <function>pg_get_serial_sequence</function> fetches the name of the
+   sequence associated with a <type>serial</> or <type>bigserial</>
+   column.  The name is suitably formatted for passing to the sequence
+   functions (see <xref linkend="functions-sequence">).  NULL is
+   returned if the column does not have an associated sequence.
+  </para>
+
+  <para>
+  <function>pg_tablespace_databases</function> allows a tablespace to
+  be examined. It returns the set of OIDs of databases that have objects
+  stored in the tablespace. If this function returns any rows, the
   tablespace is not empty and cannot be dropped. To
   display the specific objects populating the tablespace, you will need
   to connect to the databases identified by 
@@ -9120,19 +9394,19 @@ SELECT set_config('log_statement_stats', 'off', false);
    </para>
 
    <para>
-    <function>pg_cancel_backend</> sends a Query Cancel (SIGINT) signal
-    to a backend process identified by process ID (<literal>pid</literal>).
-    The process ID of an active backend can be found from the
-    <structfield>procpid</structfield> column in the
+    <function>pg_cancel_backend</> sends a query cancel
+    (<systemitem>SIGINT</>) signal to a backend process identified by
+    process ID.  The process ID of an active backend can be found from
+    the <structfield>procpid</structfield> column in the
     <structname>pg_stat_activity</structname> view, or by listing the
     <command>postgres</command> processes on the server with
     <application>ps</>.
    </para>
 
    <para>
-    <function>pg_reload_conf</> sends a SIGHUP signal to the
-    postmaster, causing reload of the configuration files
-    in all server processes.
+    <function>pg_reload_conf</> sends a <systemitem>SIGHUP</> signal
+    to the <application>postmaster</>, causing the configuration files
+    to be reloaded by all server processes.
    </para>
 
    <para>
@@ -9245,7 +9519,7 @@ SELECT set_config('log_statement_stats', 'off', false);
      <tbody>
       <row>
        <entry><function>pg_column_size</function>(<type>any</type>)</entry>
-       <entry><type>integer</type></entry>
+       <entry><type>int</type></entry>
        <entry>Number of bytes used to store a particular value (possibly compressed)</entry>
       </row>
       <row>
@@ -9375,7 +9649,7 @@ SELECT set_config('log_statement_stats', 'off', false);
       </row>
       <row>
        <entry>
-        <literal><function>pg_read_file</function>(<parameter>filename</> <type>text</>, <parameter>offset</> <type>int8</>, <parameter>length</> <type>int8</>)</literal>
+        <literal><function>pg_read_file</function>(<parameter>filename</> <type>text</>, <parameter>offset</> <type>bigint</>, <parameter>length</> <type>bigint</>)</literal>
        </entry>
        <entry><type>text</type></entry>
        <entry>Return the contents of a text file</entry>

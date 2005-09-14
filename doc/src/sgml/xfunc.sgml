@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.103 2005/05/30 23:09:07 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.104 2005/09/14 21:14:26 neilc Exp $
 -->
 
  <sect1 id="xfunc">
@@ -99,9 +99,8 @@ $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.103 2005/05/30 23:09:07 tgl Exp $
     <indexterm><primary>SETOF</><seealso>function</></> Alternatively,
     an SQL function may be declared to return a set, by specifying the
     function's return type as <literal>SETOF
-    <replaceable>sometype</></literal>.<indexterm><primary>SETOF</></>
-    In this case all rows of the last query's result are returned.
-    Further details appear below.
+    <replaceable>sometype</></literal>.  In this case all rows of the
+    last query's result are returned.  Further details appear below.
    </para>
 
    <para>

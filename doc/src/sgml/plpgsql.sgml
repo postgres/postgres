@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.75 2005/07/02 08:59:47 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.76 2005/09/14 21:14:26 neilc Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1320,20 +1320,27 @@ EXECUTE 'UPDATE tbl SET '
 </programlisting>
     </para>
 
+    <indexterm>
+     <primary>quote_ident</primary>
+     <secondary>use in PL/PgSQL</secondary>
+    </indexterm>
+
+    <indexterm>
+     <primary>quote_literal</primary>
+     <secondary>use in PL/PgSQL</secondary>
+    </indexterm>
+
     <para>
-     This example shows use of the functions
-     <function>quote_ident(<type>text</type>)</function> and
-     <function>quote_literal(<type>text</type>)</function>.<indexterm><primary>quote_ident</><secondary>use
-     in
-     PL/pgSQL</></indexterm><indexterm><primary>quote_literal</><secondary>use
-     in PL/pgSQL</></indexterm> For safety, variables containing column and
-     table identifiers should be passed to function
-     <function>quote_ident</function>.  Variables containing values
-     that should be literal strings in the constructed command should
-     be passed to <function>quote_literal</function>.  Both take the
-     appropriate steps to return the input text enclosed in double or
-     single quotes respectively, with any embedded special characters
-     properly escaped.
+     This example demonstrates the use of the
+     <function>quote_ident</function> and
+     <function>quote_literal</function> functions.  For safety,
+     expressions containing column and table identifiers should be
+     passed to <function>quote_ident</function>.  Expressions containing
+     values that should be literal strings in the constructed command
+     should be passed to <function>quote_literal</function>.  Both
+     take the appropriate steps to return the input text enclosed in
+     double or single quotes respectively, with any embedded special
+     characters properly escaped.
     </para>
 
     <para>
@@ -3599,11 +3606,11 @@ $$ LANGUAGE plpgsql;
      The <application>PL/pgSQL</> version of
      <command>EXECUTE</command> works similarly to the
      <application>PL/SQL</> version, but you have to remember to use
-     <function>quote_literal(text)</function> and
-     <function>quote_string(text)</function> as described in <xref
+     <function>quote_literal</function> and
+     <function>quote_ident</function> as described in <xref
      linkend="plpgsql-statements-executing-dyn">.  Constructs of the
-     type <literal>EXECUTE 'SELECT * FROM $1';</literal> will not
-     work unless you use these functions.
+     type <literal>EXECUTE 'SELECT * FROM $1';</literal> will not work
+     unless you use these functions.
     </para>
    </sect3>
 
