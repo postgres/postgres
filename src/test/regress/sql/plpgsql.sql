@@ -1926,12 +1926,12 @@ commit;
 -- should fail
 fetch next from test1;
 
-create function refcursor_test2(int) returns boolean as $$
+create function refcursor_test2(int, int) returns boolean as $$
 declare
-    c1 cursor (param integer) for select * from rc_test where a > param;
+    c1 cursor (param1 int, param2 int) for select * from rc_test where a > param1 and b > param2;
     nonsense record;
 begin
-    open c1($1);
+    open c1($1, $2);
     fetch c1 into nonsense;
     close c1;
     if found then
@@ -1942,8 +1942,8 @@ begin
 end
 $$ language 'plpgsql';
 
-select refcursor_test2(20000) as "Should be false",
-       refcursor_test2(20) as "Should be true";
+select refcursor_test2(20000, 20000) as "Should be false",
+       refcursor_test2(20, 20) as "Should be true";
 
 --
 -- tests for "raise" processing
