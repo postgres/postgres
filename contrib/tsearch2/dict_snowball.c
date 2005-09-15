@@ -52,7 +52,7 @@ snb_en_init(PG_FUNCTION_ARGS)
 		PG_FREE_IF_COPY(in, 0);
 	}
 
-	d->z = english_create_env();
+	d->z = english_ISO_8859_1_create_env();
 	if (!d->z)
 	{
 		freestoplist(&(d->stoplist));
@@ -60,7 +60,7 @@ snb_en_init(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory")));
 	}
-	d->stem = english_stem;
+	d->stem = english_ISO_8859_1_stem;
 
 	PG_RETURN_POINTER(d);
 }
@@ -86,7 +86,7 @@ snb_ru_init(PG_FUNCTION_ARGS)
 		PG_FREE_IF_COPY(in, 0);
 	}
 
-	d->z = russian_create_env();
+	d->z = russian_KOI8_R_create_env();
 	if (!d->z)
 	{
 		freestoplist(&(d->stoplist));
@@ -94,7 +94,7 @@ snb_ru_init(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory")));
 	}
-	d->stem = russian_stem;
+	d->stem = russian_KOI8_R_stem;
 
 	PG_RETURN_POINTER(d);
 }
