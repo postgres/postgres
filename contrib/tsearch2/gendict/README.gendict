@@ -50,7 +50,7 @@ Example 1:
    
    2. Create template files for Portuguese
 
-      ./config.sh -n pt -s -p portuguese -v -C'Snowball stemmer for Portuguese'
+      ./config.sh -n pt -s -p portuguese_ISO_8859_1 -v -C'Snowball stemmer for Portuguese'
 
       Note, that argument for -p option should be *the same* as name of stemming
       function in stem.c (without _stem)
@@ -81,9 +81,10 @@ Example 1:
 	Here is what I have in pg_ts_dict table
 
 	psql -d testdict -c "select * from pg_ts_dict where dict_name='pt';"
-	 dict_name | dict_init | dict_initoption | dict_lexize |          dict_comment           
-	-----------+-----------+-----------------+-------------+---------------------------------
-	 pt        |   7177806 |                 |     7159330 | Snowball stemmer for Portuguese
+	 dict_name |     dict_init      | dict_initoption |              dict_lexize              |          dict_comment           
+	-----------+--------------------+-----------------+---------------------------------------+---------------------------------
+	 pt        | dinit_pt(internal) |                 | snb_lexize(internal,internal,integer) | Snowball stemmer for Portuguese
+
 	(1 row)
 
  
