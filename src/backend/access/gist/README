@@ -1,0 +1,225 @@
+$PostgreSQL: pgsql/src/backend/access/gist/README,v 1.1 2005/09/15 16:39:15 teodor Exp $
+
+This directory contains an implementation of GiST indexing for Postgres.
+
+GiST is stands for Generalized Search Tree. It was introduced in seminal paper
+"Generalized Search Trees for Database Systems", 1995,Joseph M. Hellerstein,
+Jeffrey F. Naughton,Avi Pfeffer (http://www.sai.msu.su/~megera/postgres/gist/papers/gist.ps) and implemented by J. Hellerstein and P.Aoki in early version of 
+PostgreSQL ( more details is available from The GiST Indexing Project at 
+Berkeley at http://gist.cs.berkeley.edu/). As an "university" project it had a 
+limited number of features and was in rare use. 
+
+Current implementation of GiST supports:
+
+  * Variable length keys
+  * Composite keys (multi-key)
+  * provides NULL-safe interface to GiST core
+  * Concurrency
+  * Recovery support via WAL logging
+
+Concurrence algoritms implemented in PostgreSQL were developed following paper 
+"Access Methods for Next-Generation Database Systems" by Marcel Kornaker (http://www.sai.msu.su/~megera/postgres/gist/papers/concurrency/access-methods-for-next-generation.pdf.gz).
+
+Original algorithms were modified by following reasons:
+
+* They should be adapted to PostgreSQL conventions. For example, SEARCH 
+  algorithm was considerably changed, because in PostgreSQL function search 
+  should return one tuple (next), not all tuples at once. Also, it should 
+  release page locks between calls.
+* since we added support of variable length keys, it's not possible to guarantee
+  enough free space for all keys on pages after splitting. User defined function
+  picksplit doesn't have information about size of tuples (each tuple may 
+  contain several keys as in multicolumn index while picksplit could work with 
+  only one key ) and pages.
+* We modified original INSERT algorithm for perfomance reason. In particularly,
+  it's single-pass algorithm.
+* Since the paper were theoretical, some details were omited and we have to find
+  out ourself how to solve some specific problems.
+
+Because of above reasons, we have to revised interaction of GiST core and 
+PostgreSQL WAL system. Moreover, we encountered (and solved) a problem of 
+uncompleted insertions when recovering after crash, which was not touched in 
+the paper.
+
+SEARCH ALGORITHM
+Function gettuple finds tuple, which satisfy search predicate. It store their 
+state and returns next tuple under subsequent calls. Stack contains page, 
+its LSN and LSN of parent page and currentposition is saved between calls.
+
+gettuple(search-pred)
+	if ( firsttime )
+		push(stack, [root, 0, 0]) // page, LSN, parentLSN
+		currentposition=0
+	end
+	ptr = top of stack
+	while(true)
+		latch( ptr->page, S-mode )
+		if ( ptr->page->lsn != ptr->lsn ) 
+			ptr->lsn = ptr->page->lsn
+			currentposition=0
+			if ( ptr->parentlsn < ptr->page->nsn )
+				add to stack rightlink
+		else
+			currentposition++
+		end
+
+		while(true)
+			currentposition = find_first_match( currentposition )
+			if ( currentposition is invalid )
+				unlatch( ptr->page )
+				pop stack
+				ptr = top of stack
+				if (ptr is NULL)
+					return NULL
+				break loop
+			else if ( ptr->page is leaf )
+				unlatch( ptr->page )
+				return tuple
+			else 
+				add to stack child page
+			end
+			currentposition++
+		end
+	end
+
+
+INSERT ALGORITHM
+
+INSERT guarantees that the GiST tree remains balanced. User defined key method 
+Penalty is used for choosing a subtree to insert; method PickSplit is used for 
+the node splitting algorithm; method Union is used for propagating changes 
+upward to maintain the tree properties.
+
+NOTICE: We modified original INSERT algorithm for perfomance reason. In 
+particularly, it's single-pass algorithm.
+
+Function findLeaf is used to identify subtree for insertion. Page, in which 
+insertion is proceeded, is locked as well as its parent page. Functions 
+findParent and findPath are used to find parent pages, which could be changed 
+because of concurrent access. Function pageSplit is reccurrent and could split 
+page by more than 2 pages, which could be necessary if keys have different 
+lengths or more than one key are inserted (in such situation, user defined 
+function pickSplit cannot guarantee free space on page).
+
+findLeaf(new-key)
+	push(stack, [root, 0]) //page, LSN
+	while(true)
+		ptr = top of stack
+		latch( ptr->page, S-mode )
+		ptr->lsn = ptr->page->lsn
+		if ( exists ptr->parent AND ptr->parent->lsn < ptr->page->nsn )
+			unlatch( ptr->page )
+			pop stack
+		else if ( ptr->page is not leaf )
+			push( stack, [get_best_child(ptr->page, new-key), 0] )
+			unlatch( ptr->page )
+		else
+			unlatch( ptr->page )
+			latch( ptr->page, X-mode )
+			if ( ptr->page is not leaf )
+				//the only root page can become a non-leaf
+				unlatch( ptr->page )
+			else if ( ptr->parent->lsn < ptr->page->nsn )
+				unlatch( ptr->page )
+				pop stack
+			else
+				return stack
+			end
+		end
+	end
+
+findPath( stack item )
+	push stack, [root, 0, 0] // page, LSN, parent 
+	while( stack )
+		ptr = top of stack
+		latch( ptr->page, S-mode )
+		if ( ptr->parent->page->lsn < ptr->page->nsn )
+			push stack, [ ptr->page->rightlink, 0, ptr->parent ]
+		end
+		for( each tuple on page )
+			if ( tuple->pagepointer == item->page )
+				return stack	
+			else
+				add to stack at the end [tuple->pagepointer,0, ptr]
+			end
+		end
+		unlatch( ptr->page )
+		pop stack
+	end
+	
+findParent( stack item )
+	parent = item->parent
+	latch( parent->page, X-mode )
+	if ( parent->page->lsn != parent->lsn )
+		while(true) 
+			search parent tuple on parent->page, if found the return
+			rightlink = parent->page->rightlink
+			unlatch( parent->page )
+			if ( rightlink is incorrect )
+				break loop
+			end
+			parent->page = rightlink
+			latch( parent->page, X-mode )
+		end
+		newstack = findPath( item->parent )
+		replace part of stack to new one
+		return findParent( item )
+	end
+
+pageSplit(page, allkeys)
+	(lkeys, rkeys) = pickSplit( allkeys )
+	if ( page is root )
+		lpage = new page
+	else
+		lpage = page
+	rpage = new page
+	if ( no space left on rpage )
+		newkeys = pageSplit( rpage, rkeys )
+	else
+		push newkeys, union(rkeys)
+	end
+	if ( no space left on lpage )
+		push newkeys, pageSplit( lpage, lkeys )
+	else
+		push newkeys, union(lkeys)
+	end
+	return newkeys
+
+
+placetopage(page, keysarray)
+	if ( no space left on page )
+		keysarray = pageSplit(page, [ extract_keys(page), keysarray])
+		last page in chain gets old NSN,
+		original and others - new NSN from current LSN
+		if ( page is root )
+			make new root with keysarray
+		end
+	else
+		put keysarray on page
+		if ( length of keysarray > 1 )
+			keysarray = [ union(keysarray) ]
+		end
+	end
+	
+insert(new-key)
+	stack = findLeaf(new-key)
+	keysarray = [new-key]
+	ptr = top of stack
+	while(true)
+		findParent( ptr ) //findParent latches parent page
+		keysarray = placetopage(ptr->page, keysarray)
+		unlatch( ptr->page )
+		pop stack;
+		ptr = top of stack
+		if (length of keysarray == 1)
+			newboundingkey = union(oldboundingkey, keysarray)
+			if (newboundingkey == oldboundingkey)
+				unlatch ptr->page
+				break loop
+			end
+		end
+	end
+
+Authors:
+	Teodor Sigaev	<teodor@sigaev.ru>
+	Oleg Bartunov   <oleg@sai.msu.su>
