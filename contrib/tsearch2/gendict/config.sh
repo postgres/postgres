@@ -131,9 +131,16 @@ fi
 if [ ${#cfile} -ne 0 ] || [ ${#hfile} -ne 0 ] ; then
 	[ $verbose = "yes" ] && echo -n 'Copy source and header files...  '
 	if [ ${#cfile} -ne 0 ] ; then
-		if ! cp $cfile ../../$dir ; then 
-			echo "Cant cp all or one of files: $cfile"
-			exit 1
+		if [ $stemmode = "yes" ] ; then
+			for cfn in $cfile
+			do
+				sed s#../runtime/## < $cfn > ../../$dir/$cfn
+			done
+		else
+			if ! cp $cfile ../../$dir ; then 
+				echo "Can't cp all or one of files: $cfile"
+				exit 1
+			fi
 		fi
 	fi
 	if [ ${#hfile} -ne 0 ] ; then 
