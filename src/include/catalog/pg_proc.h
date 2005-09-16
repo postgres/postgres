@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.384 2005/09/09 06:51:12 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.385 2005/09/16 05:35:40 neilc Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3042,16 +3042,16 @@ DATA(insert OID = 2093 (  pg_conversion_is_visible	PGNSP PGUID 12 f f t f s 1 16
 DESCR("is conversion visible in search path?");
 
 
-DATA(insert OID = 2171 ( pg_cancel_backend		PGNSP PGUID 12 f f t f v 1 23 "23" _null_ _null_ _null_ pg_cancel_backend - _null_ ));
+DATA(insert OID = 2171 ( pg_cancel_backend		PGNSP PGUID 12 f f t f v 1 16 "23" _null_ _null_ _null_ pg_cancel_backend - _null_ ));
 DESCR("Cancel a server process' current query");
 DATA(insert OID = 2172 ( pg_start_backup		PGNSP PGUID 12 f f t f v 1 25 "25" _null_ _null_ _null_ pg_start_backup - _null_ ));
 DESCR("Prepare for taking an online backup");
 DATA(insert OID = 2173 ( pg_stop_backup			PGNSP PGUID 12 f f t f v 0 25 "" _null_ _null_ _null_ pg_stop_backup - _null_ ));
 DESCR("Finish taking an online backup");
 
-DATA(insert OID = 2621 ( pg_reload_conf         PGNSP PGUID 12 f f t f v 0 23 "" _null_ _null_ _null_ pg_reload_conf - _null_ ));
+DATA(insert OID = 2621 ( pg_reload_conf         PGNSP PGUID 12 f f t f v 0 16 "" _null_ _null_ _null_ pg_reload_conf - _null_ ));
 DESCR("Reload configuration files");
-DATA(insert OID = 2622 ( pg_rotate_logfile		PGNSP PGUID 12 f f t f v 0 23 "" _null_ _null_ _null_ pg_rotate_logfile - _null_ ));
+DATA(insert OID = 2622 ( pg_rotate_logfile		PGNSP PGUID 12 f f t f v 0 16 "" _null_ _null_ _null_ pg_rotate_logfile - _null_ ));
 DESCR("Rotate log file");
 
 DATA(insert OID = 2623 ( pg_stat_file	    PGNSP PGUID 12 f f t f v 1 2249 "25" _null_ _null_ _null_ pg_stat_file - _null_ ));
@@ -3254,9 +3254,9 @@ DATA(insert OID = 2325 ( pg_relation_size		PGNSP PGUID 12 f f t f v 1 20 "26" _n
 DESCR("Calculate disk space usage for the specified table or index");
 DATA(insert OID = 2289 ( pg_relation_size		PGNSP PGUID 12 f f t f v 1 20 "25" _null_ _null_ _null_ pg_relation_size_name - _null_ ));
 DESCR("Calculate disk space usage for the specified table or index");
-DATA(insert OID = 2286 ( pg_complete_relation_size		PGNSP PGUID 12 f f t f v 1 20 "26" _null_ _null_ _null_ pg_complete_relation_size_oid - _null_ ));
+DATA(insert OID = 2286 ( pg_total_relation_size		PGNSP PGUID 12 f f t f v 1 20 "26" _null_ _null_ _null_ pg_total_relation_size_oid - _null_ ));
 DESCR("Calculate total disk space usage for the specified table and associated indexes and toast tables");
-DATA(insert OID = 2287 ( pg_complete_relation_size		PGNSP PGUID 12 f f t f v 1 20 "25" _null_ _null_ _null_ pg_complete_relation_size_name - _null_ ));
+DATA(insert OID = 2287 ( pg_total_relation_size		PGNSP PGUID 12 f f t f v 1 20 "25" _null_ _null_ _null_ pg_total_relation_size_name - _null_ ));
 DESCR("Calculate total disk space usage for the specified table and associated indexes and toast tables");
 DATA(insert OID = 2288 ( pg_size_pretty  		PGNSP PGUID 12 f f t f v 1 25 "20" _null_ _null_ _null_ pg_size_pretty - _null_ ));
 DESCR("Convert a long int to a human readable text using size units");

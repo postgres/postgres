@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.47 2005/08/12 18:23:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.48 2005/09/16 05:35:40 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,8 +73,7 @@ current_database(PG_FUNCTION_ARGS)
 /*
  * Functions to send signals to other backends.
  */
-
-static int
+static bool
 pg_signal_backend(int pid, int sig)
 {
 	if (!superuser())
@@ -90,7 +89,7 @@ pg_signal_backend(int pid, int sig)
 		 */
 		ereport(WARNING,
 			 (errmsg("PID %d is not a PostgreSQL server process", pid)));
-		return 0;
+		return false;
 	}
 
 	if (kill(pid, sig))
@@ -98,17 +97,16 @@ pg_signal_backend(int pid, int sig)
 		/* Again, just a warning to allow loops */
 		ereport(WARNING,
 				(errmsg("could not send signal to process %d: %m", pid)));
-		return 0;
+		return false;
 	}
-	return 1;
+	return true;
 }
 
 Datum
 pg_cancel_backend(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_INT32(pg_signal_backend(PG_GETARG_INT32(0), SIGINT));
+	PG_RETURN_BOOL(pg_signal_backend(PG_GETARG_INT32(0), SIGINT));
 }
-
 
 Datum
 pg_reload_conf(PG_FUNCTION_ARGS)
@@ -122,11 +120,10 @@ pg_reload_conf(PG_FUNCTION_ARGS)
 	{
 		ereport(WARNING,
 				(errmsg("failed to send signal to postmaster: %m")));
-
-		PG_RETURN_INT32(0);
+		PG_RETURN_BOOL(false);
 	}
 
-	PG_RETURN_INT32(1);
+	PG_RETURN_BOOL(true);
 }
 
 
@@ -145,19 +142,16 @@ pg_rotate_logfile(PG_FUNCTION_ARGS)
 	{
 		ereport(WARNING,
 				(errmsg("rotation not possible because log redirection not active")));
-
-		PG_RETURN_INT32(0);
+		PG_RETURN_BOOL(false);
 	}
 
 	SendPostmasterSignal(PMSIGNAL_ROTATE_LOGFILE);
-
-	PG_RETURN_INT32(1);
+	PG_RETURN_BOOL(true);
 }
 
 #ifdef NOT_USED
 
 /* Disabled in 8.0 due to reliability concerns; FIXME someday */
-
 Datum
 pg_terminate_backend(PG_FUNCTION_ARGS)
 {

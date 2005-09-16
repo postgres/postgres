@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.285 2005/09/14 21:14:26 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.286 2005/09/16 05:35:39 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -9368,21 +9368,21 @@ SELECT set_config('log_statement_stats', 'off', false);
        <entry>
         <literal><function>pg_cancel_backend</function>(<parameter>pid</parameter> <type>int</>)</literal>
         </entry>
-       <entry><type>int</type></entry>
+       <entry><type>boolean</type></entry>
        <entry>Cancel a backend's current query</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_reload_conf</function>()</literal>
         </entry>
-       <entry><type>int</type></entry>
+       <entry><type>boolean</type></entry>
        <entry>Cause server processes to reload their configuration files</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_rotate_logfile</function>()</literal>
         </entry>
-       <entry><type>int</type></entry>
+       <entry><type>boolean</type></entry>
        <entry>Rotate server's logfile</entry>
       </row>
      </tbody>
@@ -9390,7 +9390,8 @@ SELECT set_config('log_statement_stats', 'off', false);
    </table>
 
    <para>
-    Each of these functions returns 1 if successful, 0 if not successful.
+    Each of these functions returns <literal>true</literal> if
+    successful and <literal>false</literal> otherwise.
    </para>
 
    <para>
@@ -9502,7 +9503,7 @@ SELECT set_config('log_statement_stats', 'off', false);
     <primary>pg_relation_size</primary>
    </indexterm>
    <indexterm zone="functions-admin">
-    <primary>pg_complete_relation_size</primary>
+    <primary>pg_total_relation_size</primary>
    </indexterm>
    <indexterm zone="functions-admin">
     <primary>pg_size_pretty</primary>
@@ -9527,28 +9528,28 @@ SELECT set_config('log_statement_stats', 'off', false);
         <literal><function>pg_tablespace_size</function>(<type>oid</type>)</literal>
         </entry>
        <entry><type>bigint</type></entry>
-       <entry>Total disk space used by the tablespace with the specified OID</entry>
+       <entry>Disk space used by the tablespace with the specified OID</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_tablespace_size</function>(<type>name</type>)</literal>
         </entry>
        <entry><type>bigint</type></entry>
-       <entry>Total disk space used by the tablespace with the specified name</entry>
+       <entry>Disk space used by the tablespace with the specified name</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_database_size</function>(<type>oid</type>)</literal>
         </entry>
        <entry><type>bigint</type></entry>
-       <entry>Total disk space used by the database with the specified OID</entry>
+       <entry>Disk space used by the database with the specified OID</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_database_size</function>(<type>name</type>)</literal>
         </entry>
        <entry><type>bigint</type></entry>
-       <entry>Total disk space used by the database with the specified name</entry>
+       <entry>Disk space used by the database with the specified name</entry>
       </row>
       <row>
        <entry>
@@ -9562,25 +9563,31 @@ SELECT set_config('log_statement_stats', 'off', false);
         <literal><function>pg_relation_size</function>(<type>text</type>)</literal>
         </entry>
        <entry><type>bigint</type></entry>
-       <entry>Disk space used by the table or index with the specified name.
-       The name may be qualified with a schema name</entry>
+       <entry>
+        Disk space used by the table or index with the specified name.
+        The table name may be qualified with a schema name
+       </entry>
       </row>
       <row>
        <entry>
-        <literal><function>pg_complete_relation_size</function>(<type>oid</type>)</literal>
+        <literal><function>pg_total_relation_size</function>(<type>oid</type>)</literal>
         </entry>
        <entry><type>bigint</type></entry>
-       <entry>Total disk space used by the table with the specified OID, 
-       including indexes and toasted data</entry>
+       <entry>
+        Total disk space used by the table with the specified OID,
+        including indexes and toasted data
+       </entry>
       </row>
       <row>
        <entry>
-        <literal><function>pg_complete_relation_size</function>(<type>text</type>)</literal>
+        <literal><function>pg_total_relation_size</function>(<type>text</type>)</literal>
         </entry>
        <entry><type>bigint</type></entry>
-       <entry>Total disk space used by the table with the specified name, 
-       including indexes and toasted data.
-       The table name may be qualified with a schema name</entry>
+       <entry>
+        Total disk space used by the table with the specified name,
+        including indexes and toasted data.  The table name may be
+        qualified with a schema name
+       </entry>
       </row>
       <row>
        <entry>
@@ -9610,9 +9617,9 @@ SELECT set_config('log_statement_stats', 'off', false);
    </para>
 
    <para>
-    <function>pg_complete_relation_size</> accepts the OID or name of a table
-    or toast table, and returns the size in bytes of the data and all
-    associated indexes and toast tables.
+    <function>pg_total_relation_size</> accepts the OID or name of a
+    table or toast table, and returns the size in bytes of the data
+    and all associated indexes and toast tables.
    </para>
 
    <para>
@@ -9669,7 +9676,7 @@ SELECT set_config('log_statement_stats', 'off', false);
     <primary>pg_ls_dir</primary>
    </indexterm>
    <para>
-    <function>pg_ls_dir()</> returns all the names in the specified
+    <function>pg_ls_dir</> returns all the names in the specified
     directory, except the special entries <quote><literal>.</></> and
     <quote><literal>..</></>.
    </para>
@@ -9678,7 +9685,7 @@ SELECT set_config('log_statement_stats', 'off', false);
     <primary>pg_read_file</primary>
    </indexterm>
    <para>
-    <function>pg_read_file()</> returns part of a text file, starting
+    <function>pg_read_file</> returns part of a text file, starting
     at the given <parameter>offset</>, returning at most <parameter>length</>
     bytes (less if the end of file is reached first).  If <parameter>offset</>
     is negative, it is relative to the end of the file.
@@ -9688,7 +9695,7 @@ SELECT set_config('log_statement_stats', 'off', false);
     <primary>pg_stat_file</primary>
    </indexterm>
    <para>
-    <function>pg_stat_file()</> returns a record containing the file
+    <function>pg_stat_file</> returns a record containing the file
     size, last accessed timestamp, last modified timestamp, 
     last file status change timestamp (Unix platforms only), 
     file creation timestamp (Win32 only), and a boolean indicating 

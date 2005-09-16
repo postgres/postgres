@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.3 2005/08/02 15:17:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.4 2005/09/16 05:35:40 neilc Exp $
  *
  */
 
@@ -68,7 +68,7 @@ db_dir_size(const char *path)
 static int64
 calculate_database_size(Oid dbOid)
 {
-	int64		totalsize = 0;
+	int64		totalsize;
 	DIR         *dirdesc;
     struct dirent *direntry;
 	char dirpath[MAXPGPATH];
@@ -78,7 +78,7 @@ calculate_database_size(Oid dbOid)
 
 	/* Include pg_default storage */
 	snprintf(pathname, MAXPGPATH, "%s/base/%u", DataDir, dbOid);
-	totalsize += db_dir_size(pathname);
+	totalsize = db_dir_size(pathname);
 
 	/* Scan the non-default tablespaces */
 	snprintf(dirpath, MAXPGPATH, "%s/pg_tblspc", DataDir);
@@ -273,9 +273,7 @@ pg_relation_size_oid(PG_FUNCTION_ARGS)
 						   ObjectIdGetDatum(relOid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-	    ereport(ERROR,
-				(ERRCODE_UNDEFINED_TABLE,
-				 errmsg("relation with OID %u does not exist", relOid)));
+		elog(ERROR, "cache lookup failed for relation %u", relOid);
 
 	pg_class = (Form_pg_class) GETSTRUCT(tuple);
 	relnodeOid = pg_class->relfilenode;
@@ -308,11 +306,12 @@ pg_relation_size_name(PG_FUNCTION_ARGS)
 
 
 /*
- *  Compute on-disk size of files for 'relation' according to the stat function, 
- *  optionally including heap data, index data, and/or toast data.
+ *  Compute the on-disk size of files for 'relation' according to the
+ *  stat function, optionally including heap data, index data, and/or
+ *  toast data.
  */
 static int64
-calculate_complete_relation_size(Oid tblspcOid, Oid relnodeOid)
+calculate_total_relation_size(Oid tblspcOid, Oid relnodeOid)
 {
     Relation        heapRelation;
 	Relation        idxRelation;
@@ -322,7 +321,7 @@ calculate_complete_relation_size(Oid tblspcOid, Oid relnodeOid)
 	Oid             toastOid;
 	Oid             toastTblspcOid;
 	bool            hasIndices;
-	int64           size = 0;
+	int64           size;
 	List            *indexoidlist;
 	ListCell        *idx;
 
@@ -331,14 +330,16 @@ calculate_complete_relation_size(Oid tblspcOid, Oid relnodeOid)
 	hasIndices = heapRelation->rd_rel->relhasindex;
 
     /* Get the heap size */
-    size += calculate_relation_size(tblspcOid, relnodeOid);
+    size = calculate_relation_size(tblspcOid, relnodeOid);
 
-    /* Get Index size */
-	if ( hasIndices ) {
-		/* recursively include any dependent indexes ... */
+    /* Get index size */
+	if (hasIndices)
+	{
+		/* recursively include any dependent indexes */
 		indexoidlist = RelationGetIndexList(heapRelation);
-             
-		foreach(idx, indexoidlist) {
+
+		foreach(idx, indexoidlist)
+		{
             idxOid = lfirst_oid(idx);
 			idxRelation = relation_open(idxOid, AccessShareLock);
             idxTblspcOid = idxRelation->rd_rel->reltablespace;
@@ -347,14 +348,13 @@ calculate_complete_relation_size(Oid tblspcOid, Oid relnodeOid)
 		}
 		list_free(indexoidlist);
 	}
-    
-    /* Close heapReleation now we no longer need it */
+
     relation_close(heapRelation, AccessShareLock);
 
     /* Get toast table size */
-	if ( toastOid != 0 ) {
-
-		/* recursively include any toast relations ... */
+	if (toastOid != 0)
+	{
+		/* recursively include any toast relations */
 		toastRelation = relation_open(toastOid, AccessShareLock);
 		toastTblspcOid = toastRelation->rd_rel->reltablespace;
 		size += calculate_relation_size(toastTblspcOid, toastOid);
@@ -369,7 +369,7 @@ calculate_complete_relation_size(Oid tblspcOid, Oid relnodeOid)
  *  heap data, index data, and toasted data.
  */
 Datum
-pg_complete_relation_size_oid(PG_FUNCTION_ARGS)
+pg_total_relation_size_oid(PG_FUNCTION_ARGS)
 {
 	Oid		relOid=PG_GETARG_OID(0);
 	HeapTuple	tuple;
@@ -378,12 +378,10 @@ pg_complete_relation_size_oid(PG_FUNCTION_ARGS)
 	Oid		tblspcOid;
 
 	tuple = SearchSysCache(RELOID,
-				   ObjectIdGetDatum(relOid),
-				   0, 0, 0);
+						   ObjectIdGetDatum(relOid),
+						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-	    ereport(ERROR,
-				(ERRCODE_UNDEFINED_TABLE,
-				 errmsg("relation with OID %u does not exist", relOid)));
+		elog(ERROR, "cache lookup failed for relation %u", relOid);
 
 	pg_class = (Form_pg_class) GETSTRUCT(tuple);
 	relnodeOid = pg_class->relfilenode;
@@ -391,11 +389,11 @@ pg_complete_relation_size_oid(PG_FUNCTION_ARGS)
 
 	ReleaseSysCache(tuple);
 
-	PG_RETURN_INT64(calculate_complete_relation_size(tblspcOid, relnodeOid));
+	PG_RETURN_INT64(calculate_total_relation_size(tblspcOid, relnodeOid));
 }
 
 Datum
-pg_complete_relation_size_name(PG_FUNCTION_ARGS)
+pg_total_relation_size_name(PG_FUNCTION_ARGS)
 {
 	text		*relname = PG_GETARG_TEXT_P(0);
 	RangeVar	*relrv;
@@ -411,7 +409,7 @@ pg_complete_relation_size_name(PG_FUNCTION_ARGS)
              
 	relation_close(relation, AccessShareLock);
 
-	PG_RETURN_INT64(calculate_complete_relation_size(tblspcOid, relnodeOid));
+	PG_RETURN_INT64(calculate_total_relation_size(tblspcOid, relnodeOid));
 }
 
 /*

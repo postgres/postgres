@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.368 2005/09/16 03:37:35 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.369 2005/09/16 05:35:39 neilc Exp $
 
 Typical markup:
 
@@ -408,6 +408,12 @@ pg_[A-Za-z0-9_]                 <application>
       </para>
      </listitem>
 
+     <listitem>
+      <para>
+       Make <function>pg_cancel_backend(int)</function> return a
+       <type>boolean</type> rather than an <type>integer</type> (Neil)
+      </para>
+     </listitem>
     </itemizedlist>
    </sect2>
  
@@ -1167,7 +1173,7 @@ pg_[A-Za-z0-9_]                 <application>
 
          <listitem>
           <para>
-           <function>pg_complete_relation_size()</>
+           <function>pg_total_relation_size()</>
           </para>
          </listitem>
 
@@ -1180,7 +1186,7 @@ pg_[A-Za-z0-9_]                 <application>
         </itemizedlist>
        </para>
        <para>
-        <function>pg_complete_relation_size()</> includes indexes and TOAST
+        <function>pg_total_relation_size()</> includes indexes and TOAST
         tables.
        </para>
       </listitem>
