@@ -106,13 +106,10 @@ LIB32_OBJS= \
 	"$(INTDIR)\pthread-win32.obj"
 
 
-config: ..\..\include\pg_config.h pthread.h pg_config_paths.h
+config: ..\..\include\pg_config.h pg_config_paths.h
 
 ..\..\include\pg_config.h: ..\..\include\pg_config.h.win32
 	copy ..\..\include\pg_config.h.win32 ..\..\include\pg_config.h
-
-pthread.h: pthread.h.win32
-	copy pthread.h.win32 pthread.h
 
 pg_config_paths.h: win32.mak
 	echo #define SYSCONFDIR "" > pg_config_paths.h
