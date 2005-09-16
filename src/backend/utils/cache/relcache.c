@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.228 2005/08/26 03:07:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.229 2005/09/16 04:13:18 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2514,7 +2514,7 @@ CheckConstraintFetch(Relation relation)
  *
  * Since shared cache inval causes the relcache's copy of the list to go away,
  * we return a copy of the list palloc'd in the caller's context.  The caller
- * may freeList() the returned list after scanning it.	This is necessary
+ * may list_free() the returned list after scanning it.	This is necessary
  * since the caller will typically be doing syscache lookups on the relevant
  * indexes, and syscache lookup could cause SI messages to be processed!
  *
