@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Sep 16 12:46:03 EDT 2005
+Last updated:		Fri Sep 16 13:37:02 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1028,7 +1028,7 @@ Source Code
 * Add function to return the thread safety status of libpq and ecpg
 * Use UTF8 encoding for NLS messages so all server encodings can
   read them properly
-
+* Update Bonjour to work with newer cross-platform SDK
 
 * Win32
 
