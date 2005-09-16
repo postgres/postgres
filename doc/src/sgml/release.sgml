@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.367 2005/09/12 05:10:12 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.368 2005/09/16 03:37:35 tgl Exp $
 
 Typical markup:
 
@@ -20,7 +20,7 @@ pg_[A-Za-z0-9_]                 <application>
 
    <note>
     <title>Release date</title>
-    <simpara>2005-1?-??, Current as of 2005-08-24</simpara>
+    <simpara>2005-1?-??, Current as of 2005-09-15</simpara>
    </note>
 
    <sect2>
@@ -348,10 +348,10 @@ pg_[A-Za-z0-9_]                 <application>
        database (Tom)
       </para>
       <para>
-       The old behavior of <command>REINDEX</> database reindexed only
+       Formerly, <command>REINDEX DATABASE</> reindexed only
        system tables. This new behavior seems more intuitive. A new
-       command <command>REINDEX SYSTEM</> allows for reindexing just the
-       system tables.
+       command <command>REINDEX SYSTEM</> provides the old functionality
+       of reindexing just the system tables.
       </para>
      </listitem>
 
@@ -383,6 +383,28 @@ pg_[A-Za-z0-9_]                 <application>
       <para>
        Make <literal>&amp;&lt;</> and <literal>&amp;&gt;</> for polygons
        consistent with the box "over" operators (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       <command>CREATE LANGUAGE</> may ignore the provided arguments
+       in favor of information from <structname>pg_pltemplate</>
+       (Tom)
+      </para>
+      <para>
+       A new system catalog <structname>pg_pltemplate</> has been defined
+       to carry information about the preferred definitions of procedural
+       languages (such as whether they have validator functions).  When
+       an entry exists in this catalog for the language being created,
+       <command>CREATE LANGUAGE</> will ignore all its parameters except the
+       language name and instead use the catalog information.  This measure
+       was taken because of increasing problems with obsolete language
+       definitions being loaded by old dump files.  As of 8.1,
+       <application>pg_dump</> will dump procedural language definitions as
+       just <command>CREATE LANGUAGE <replaceable>name</></command>, relying
+       on a template entry to exist at load time.  We expect this will be a
+       more future-proof representation.
       </para>
      </listitem>
 
@@ -665,6 +687,13 @@ pg_[A-Za-z0-9_]                 <application>
        <para>
         Allow more than two gigabytes of shared memory and per-backend
         work memory on 64-bit machines (Koichi Suzuki)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        New system catalog <structname>pg_pltemplate</> allows overriding
+        obsolete procedural-language definitions in dump files (Tom)
        </para>
       </listitem>
 
@@ -1610,6 +1639,17 @@ pg_[A-Za-z0-9_]                 <application>
        </para>
       </listitem>
 
+      <listitem>
+       <para>
+        Make startup banner show both server version number and
+        <application>psql</>'s version number, when they are different (Bruce)
+       </para>
+       <para>
+        Also, a warning will be shown if the server and <application>psql</>
+        are from different major releases.
+       </para>
+      </listitem>
+
      </itemizedlist>
     </sect3>
   
@@ -1657,6 +1697,20 @@ pg_[A-Za-z0-9_]                 <application>
         This allows a database to be dumped in an encoding that is
         different from the server's encoding. This is valuable when
         transferring the dump to a machine with a different encoding.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Rely on <structname>pg_pltemplate</> for procedural languages (Tom)
+       </para>
+       <para>
+        If the call handler for a procedural language is in the
+        <literal>pg_catalog</> schema, <application>pg_dump</> does not
+        dump the handler.  Instead, it dumps the language using just
+        <command>CREATE LANGUAGE <replaceable>name</></command>,
+        relying on the <structname>pg_pltemplate</> catalog to provide
+        the language's creation parameters at load time.
        </para>
       </listitem>
 
