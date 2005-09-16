@@ -159,7 +159,7 @@ SELECT gid FROM pg_prepared_xacts;
 -- pxtest3 should be locked because of the pending DROP
 set statement_timeout to 1000;
 SELECT * FROM pxtest3;
-ERROR:  canceling query due to user request
+ERROR:  canceling query due to user request or statement timeout
 reset statement_timeout;
 -- Disconnect, we will continue testing in a different backend
 \c -
@@ -174,7 +174,7 @@ SELECT gid FROM pg_prepared_xacts;
 -- pxtest3 should still be locked because of the pending DROP
 set statement_timeout to 1000;
 SELECT * FROM pxtest3;
-ERROR:  canceling query due to user request
+ERROR:  canceling query due to user request or statement timeout
 reset statement_timeout;
 -- Commit table creation
 COMMIT PREPARED 'regress-one';
