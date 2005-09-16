@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Thu Sep 1 12:18:41 EDT 2005
+   Last updated: Fri Sep 16 14:07:22 EDT 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -789,7 +789,7 @@
    There are also commercial and hardware-based replication solutions
    available supporting a variety of replication models.
    
-  4.20) Why are my table and column names not recognized in my query?
+  4.21) Why are my table and column names not recognized in my query?
   
    The most common cause is the use of double-quotes around table or
    column names during table creation. When double-quotes are used, table
