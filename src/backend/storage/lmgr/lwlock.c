@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.29 2005/08/20 23:26:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.30 2005/09/16 00:30:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,11 +39,31 @@ typedef struct LWLock
 } LWLock;
 
 /*
- * This points to the array of LWLocks in shared memory.  Backends inherit
- * the pointer by fork from the postmaster.  LWLockIds are indexes into
- * the array.
+ * All the LWLock structs are allocated as an array in shared memory.
+ * (LWLockIds are indexes into the array.)  We force the array stride to
+ * be a power of 2, which saves a few cycles in indexing, but more
+ * importantly also ensures that individual LWLocks don't cross cache line
+ * boundaries.  This reduces cache contention problems, especially on AMD
+ * Opterons.  (Of course, we have to also ensure that the array start
+ * address is suitably aligned.)
+ *
+ * LWLock is between 16 and 32 bytes on all known platforms, so these two
+ * cases are sufficient.
  */
-NON_EXEC_STATIC LWLock *LWLockArray = NULL;
+#define LWLOCK_PADDED_SIZE	(sizeof(LWLock) <= 16 ? 16 : 32)
+
+typedef union LWLockPadded
+{
+	LWLock		lock;
+	char		pad[LWLOCK_PADDED_SIZE];
+} LWLockPadded;
+
+/*
+ * This points to the array of LWLocks in shared memory.  Backends inherit
+ * the pointer by fork from the postmaster (except in the EXEC_BACKEND case,
+ * where we have special measures to pass it down).
+ */
+NON_EXEC_STATIC LWLockPadded *LWLockArray = NULL;
 
 /* shared counter for dynamic allocation of LWLockIds */
 static int *LWLockCounter;
@@ -135,10 +155,11 @@ LWLockShmemSize(void)
 	Size		size;
 	int			numLocks = NumLWLocks();
 
-	/* Allocate the LWLocks plus space for shared allocation counter. */
-	size = mul_size(numLocks, sizeof(LWLock));
+	/* Space for the LWLock array. */
+	size = mul_size(numLocks, sizeof(LWLockPadded));
 
-	size = add_size(size, 2 * sizeof(int));
+	/* Space for shared allocation counter, plus room for alignment. */
+	size = add_size(size, 2 * sizeof(int) + LWLOCK_PADDED_SIZE);
 
 	return size;
 }
@@ -152,23 +173,29 @@ CreateLWLocks(void)
 {
 	int			numLocks = NumLWLocks();
 	Size		spaceLocks = LWLockShmemSize();
-	LWLock	   *lock;
+	LWLockPadded *lock;
+	char	   *ptr;
 	int			id;
 
 	/* Allocate space */
-	LWLockArray = (LWLock *) ShmemAlloc(spaceLocks);
+	ptr = (char *) ShmemAlloc(spaceLocks);
+
+	/* Ensure desired alignment of LWLock array */
+	ptr += LWLOCK_PADDED_SIZE - ((unsigned long) ptr) % LWLOCK_PADDED_SIZE;
+
+	LWLockArray = (LWLockPadded *) ptr;
 
 	/*
 	 * Initialize all LWLocks to "unlocked" state
 	 */
 	for (id = 0, lock = LWLockArray; id < numLocks; id++, lock++)
 	{
-		SpinLockInit(&lock->mutex);
-		lock->releaseOK = true;
-		lock->exclusive = 0;
-		lock->shared = 0;
-		lock->head = NULL;
-		lock->tail = NULL;
+		SpinLockInit(&lock->lock.mutex);
+		lock->lock.releaseOK = true;
+		lock->lock.exclusive = 0;
+		lock->lock.shared = 0;
+		lock->lock.head = NULL;
+		lock->lock.tail = NULL;
 	}
 
 	/*
@@ -206,7 +233,7 @@ LWLockAssign(void)
 void
 LWLockAcquire(LWLockId lockid, LWLockMode mode)
 {
-	volatile LWLock *lock = LWLockArray + lockid;
+	volatile LWLock *lock = &(LWLockArray[lockid].lock);
 	PGPROC	   *proc = MyProc;
 	bool		retry = false;
 	int			extraWaits = 0;
@@ -358,7 +385,7 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 bool
 LWLockConditionalAcquire(LWLockId lockid, LWLockMode mode)
 {
-	volatile LWLock *lock = LWLockArray + lockid;
+	volatile LWLock *lock = &(LWLockArray[lockid].lock);
 	bool		mustwait;
 
 	PRINT_LWDEBUG("LWLockConditionalAcquire", lockid, lock);
@@ -423,7 +450,7 @@ LWLockConditionalAcquire(LWLockId lockid, LWLockMode mode)
 void
 LWLockRelease(LWLockId lockid)
 {
-	volatile LWLock *lock = LWLockArray + lockid;
+	volatile LWLock *lock = &(LWLockArray[lockid].lock);
 	PGPROC	   *head;
 	PGPROC	   *proc;
 	int			i;
