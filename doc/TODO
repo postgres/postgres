@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Sep 16 07:23:51 EDT 2005
+Last updated:		Fri Sep 16 12:46:03 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -384,10 +384,8 @@ SQL Commands
 
 	o Allow CREATE TABLE AS to determine column lengths for complex
 	  expressions like SELECT col1 || col2
-
 	o Use more reliable method for CREATE DATABASE to get a consistent
 	  copy of db?
-
 	o Add ON COMMIT capability to CREATE TABLE AS ... SELECT
 
 
@@ -450,7 +448,7 @@ SQL Commands
 	o Allow COPY on a newly-created table to skip WAL logging
 
 	  On crash recovery, the table involved in the COPY would
-	  removed or have its heap and index files truncated.  One
+	  be removed or have its heap and index files truncated.  One
 	  issue is that no other backend should be able to add to 
 	  the table at the same time, which is something that is 
 	  currently allowed.
@@ -990,8 +988,6 @@ Miscellaneous Performance
   cmin/cmax pair and is stored in local memory.  Another idea is to
   store both cmin and cmax only in local memory.
 
-* Use a phantom command counter for nested subtransactions to reduce
-  per-tuple overhead
 * Research storing disk pages with no alignment/padding
 
 Source Code

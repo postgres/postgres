@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Fri Sep 16 07:23:51 EDT 2005
+Last updated:           Fri Sep 16 12:46:03 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -408,7 +408,7 @@ first.
     </li><li>%Have COPY return the number of rows loaded/unloaded?
     </li><li>Allow COPY on a newly-created table to skip WAL logging
 <p>          On crash recovery, the table involved in the COPY would
-          removed or have its heap and index files truncated.  One
+          be removed or have its heap and index files truncated.  One
           issue is that no other backend should be able to add to 
           the table at the same time, which is something that is 
           currently allowed.
@@ -895,8 +895,6 @@ first.
   cmin/cmax pair and is stored in local memory.  Another idea is to
   store both cmin and cmax only in local memory.
 </p>
-  </li><li>Use a phantom command counter for nested subtransactions to reduce
-  per-tuple overhead
   </li><li>Research storing disk pages with no alignment/padding
 </li></ul>
 <h1><a name="section_22">Source Code</a></h1>
