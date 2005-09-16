@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/gist/README,v 1.2 2005/09/15 17:44:27 neilc Exp $
+$PostgreSQL: pgsql/src/backend/access/gist/README,v 1.3 2005/09/16 14:40:54 teodor Exp $
 
 This directory contains an implementation of GiST indexing for Postgres.
 
@@ -21,7 +21,9 @@ The current implementation of GiST supports:
   * Concurrency
   * Recovery support via WAL logging
 
-The support for concurrency implemented in PostgreSQL was developed based on the paper "Access Methods for Next-Generation Database Systems" by Marcel Kornaker:
+The support for concurrency implemented in PostgreSQL was developed based on 
+the paper "Access Methods for Next-Generation Database Systems" by 
+Marcel Kornaker:
 
     http://www.sai.msu.su/~megera/postgres/gist/papers/concurrency/access-methods-for-next-generation.pdf.gz
 
@@ -31,11 +33,11 @@ The original algorithms were modified in several ways:
   algorithm was considerably changed, because in PostgreSQL function search 
   should return one tuple (next), not all tuples at once. Also, it should 
   release page locks between calls.
-* Since we added support for variable length keys, it's not possible to guarantee
-  enough free space for all keys on pages after splitting. User defined function
-  picksplit doesn't have information about size of tuples (each tuple may 
-  contain several keys as in multicolumn index while picksplit could work with 
-  only one key) and pages.
+* Since we added support for variable length keys, it's not possible to 
+  guarantee enough free space for all keys on pages after splitting. User 
+  defined function picksplit doesn't have information about size of tuples 
+  (each tuple may contain several keys as in multicolumn index while picksplit
+  could work with only one key) and pages.
 * We modified original INSERT algorithm for performance reason. In particular,
   it is now a single-pass algorithm.
 * Since the papers were theoretical, some details were omitted and we
@@ -197,7 +199,7 @@ placetopage(page, keysarray)
 	if ( no space left on page )
 		keysarray = pageSplit(page, [ extract_keys(page), keysarray])
 		last page in chain gets old NSN,
-		original and others - new NSN from current LSN
+		original and others - new NSN equals to LSN
 		if ( page is root )
 			make new root with keysarray
 		end
