@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.46 2005/09/13 01:51:18 alvherre Exp $
+$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.47 2005/09/16 03:12:32 alvherre Exp $
 -->
 
 <chapter id="maintenance">
@@ -542,9 +542,19 @@ vacuum threshold = vacuum base threshold + vacuum scale factor * number of tuple
     values, the <varname>vacuum_cost_limit</varname> and
     <varname>vacuum_cost_delay</varname> values will be used instead.
     The other parameter, <structname>pg_autovacuum</>.<structfield>enabled</>,
-	can be used to instruct the autovacuum daemon to skip any particular table
-	by setting it to <literal>false</literal>.
+    can be used to instruct the autovacuum daemon to skip any particular table
+    by setting it to <literal>false</literal>.
    </para>
+
+   <note>
+    <para>
+     The contents of the <structname>pg_autovacuum</structname> system
+     catalog are currently not saved in database dumps created by
+     the tools <command>pg_dump</command> and <command>pg_dumpall</command>.
+     If you need to preserve them across a dump/reload cycle, make sure you
+     dump the catalog manually.
+    </para>
+   </note>
 
   </sect2>
  </sect1>
