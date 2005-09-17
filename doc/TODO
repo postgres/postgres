@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Sep 16 15:39:22 EDT 2005
+Last updated:		Sat Sep 17 08:12:56 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -991,6 +991,7 @@ Miscellaneous Performance
 
 * Research storing disk pages with no alignment/padding
 
+
 Source Code
 ===========
 
@@ -1030,6 +1031,7 @@ Source Code
 * Use UTF8 encoding for NLS messages so all server encodings can
   read them properly
 * Update Bonjour to work with newer cross-platform SDK
+* Remove BeOS and QNX-specific code
 
 * Win32
 
