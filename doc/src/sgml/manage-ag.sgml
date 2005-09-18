@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.43 2005/08/14 23:35:37 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.44 2005/09/18 04:02:05 tgl Exp $
 -->
 
 <chapter id="managing-databases">
@@ -389,7 +389,7 @@ dropdb <replaceable class="parameter">dbname</replaceable>
 
    <para>
     To define a tablespace, use the <xref
-    linkend="sql-createtablespace" endterm="sql-createdatabase-title">
+    linkend="sql-createtablespace" endterm="sql-createtablespace-title">
     command, for example:<indexterm><primary>CREATE TABLESPACE</></>
 <programlisting>
 CREATE TABLESPACE fastspace LOCATION '/mnt/sda1/postgresql/data';
