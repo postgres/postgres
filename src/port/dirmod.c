@@ -10,7 +10,7 @@
  *	Win32 (NT, Win2k, XP).	replace() doesn't work on Win95/98/Me.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.39 2005/08/10 19:52:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.40 2005/09/18 09:48:24 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,10 +141,10 @@ pgrename(const char *from, const char *to)
 			pg_usleep(100000);	/* us */
 			if (loops == 30)
 #ifndef FRONTEND
-				elog(LOG, "could not rename \"%s\" to \"%s\", continuing to try",
+				elog(LOG, "could not rename file \"%s\" to \"%s\", continuing to try",
 					 from, to);
 #else
-				fprintf(stderr, _("could not rename \"%s\" to \"%s\", continuing to try\n"),
+				fprintf(stderr, _("could not rename file \"%s\" to \"%s\", continuing to try\n"),
 						from, to);
 #endif
 			loops++;
@@ -152,9 +152,9 @@ pgrename(const char *from, const char *to)
 
 	if (loops > 30)
 #ifndef FRONTEND
-		elog(LOG, "completed rename of \"%s\" to \"%s\"", from, to);
+		elog(LOG, "completed rename of file \"%s\" to \"%s\"", from, to);
 #else
-		fprintf(stderr, _("completed rename of \"%s\" to \"%s\"\n"), from, to);
+		fprintf(stderr, _("completed rename of file \"%s\" to \"%s\"\n"), from, to);
 #endif
 	return 0;
 }
@@ -181,10 +181,10 @@ pgunlink(const char *path)
 		pg_usleep(100000);		/* us */
 		if (loops == 30)
 #ifndef FRONTEND
-			elog(LOG, "could not unlink \"%s\", continuing to try",
+			elog(LOG, "could not remove file \"%s\", continuing to try",
 				 path);
 #else
-			fprintf(stderr, _("could not unlink \"%s\", continuing to try\n"),
+			fprintf(stderr, _("could not remove file \"%s\", continuing to try\n"),
 					path);
 #endif
 		loops++;
@@ -192,9 +192,9 @@ pgunlink(const char *path)
 
 	if (loops > 30)
 #ifndef FRONTEND
-		elog(LOG, "completed unlink of \"%s\"", path);
+		elog(LOG, "completed removal of file \"%s\"", path);
 #else
-		fprintf(stderr, _("completed unlink of \"%s\"\n"), path);
+		fprintf(stderr, _("completed removal of file \"%s\"\n"), path);
 #endif
 	return 0;
 }
