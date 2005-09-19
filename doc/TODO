@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Sep 19 11:01:16 EDT 2005
+Last updated:		Mon Sep 19 18:32:28 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -852,7 +852,6 @@ Locking
   while on non-SMP machines, the backend should sleep so the process
   holding the lock can complete and release it.
 
-* Research use of sched_yield() for spinlock acquisition failure
 * Fix priority ordering of read and write light-weight locks (Neil)
 
 
