@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.17 2005/09/13 15:24:56 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.18 2005/09/19 17:21:46 momjian Exp $
 -->
 <chapter Id="runtime-config">
   <title>Run-time Configuration</title>
@@ -3232,7 +3232,10 @@ SELECT * FROM parent WHERE key = 2400;
       <listitem>
        <para>
         Abort any statement that takes over the specified number of
-        milliseconds.  A value of zero (the default) turns off the limitation.
+        milliseconds.  If <varname>log_min_error_statement</> is set to
+        <literal>ERROR</> or lower, the statement that timed out will also be
+        logged.  A value of zero (the default) turns off the 
+        limitation.
        </para>
       </listitem>
      </varlistentry>

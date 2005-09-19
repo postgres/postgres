@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.459 2005/09/16 19:31:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.460 2005/09/19 17:21:47 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1979,7 +1979,9 @@ start_xact_command(void)
 		/* Set statement timeout running, if any */
 		if (StatementTimeout > 0)
 			enable_sig_alarm(StatementTimeout, true);
-
+		else
+			cancel_from_timeout = false;
+		
 		xact_started = true;
 	}
 }
@@ -2203,9 +2205,14 @@ ProcessInterrupts(void)
 		ImmediateInterruptOK = false;	/* not idle anymore */
 		DisableNotifyInterrupt();
 		DisableCatchupInterrupt();
-		ereport(ERROR,
-				(errcode(ERRCODE_QUERY_CANCELED),
-				 errmsg("canceling query due to user request or statement timeout")));
+		if (cancel_from_timeout)
+			ereport(ERROR,
+					(errcode(ERRCODE_QUERY_CANCELED),
+					 errmsg("canceling statement due to statement timeout")));
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_QUERY_CANCELED),
+					 errmsg("canceling statement due to user request")));
 	}
 	/* If we get here, do nothing (probably, QueryCancelPending was reset) */
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.163 2005/08/20 23:26:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.164 2005/09/19 17:21:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,6 +78,7 @@ static bool waitingForLock = false;
 /* Mark these volatile because they can be changed by signal handler */
 static volatile bool statement_timeout_active = false;
 static volatile bool deadlock_timeout_active = false;
+volatile bool cancel_from_timeout = false;
 
 /* statement_fin_time is valid only if statement_timeout_active is true */
 static struct timeval statement_fin_time;
@@ -1058,6 +1059,7 @@ enable_sig_alarm(int delayms, bool is_statement_timeout)
 		Assert(!deadlock_timeout_active);
 		statement_fin_time = fin_time;
 		statement_timeout_active = true;
+		cancel_from_timeout = false;
 	}
 	else if (statement_timeout_active)
 	{
@@ -1128,14 +1130,18 @@ disable_sig_alarm(bool is_statement_timeout)
 		MemSet(&timeval, 0, sizeof(struct itimerval));
 		if (setitimer(ITIMER_REAL, &timeval, NULL))
 		{
-			statement_timeout_active = deadlock_timeout_active = false;
+			statement_timeout_active = false;
+			cancel_from_timeout = false;
+			deadlock_timeout_active = false;
 			return false;
 		}
 #else
 		/* BeOS doesn't have setitimer, but has set_alarm */
 		if (set_alarm(B_INFINITE_TIMEOUT, B_PERIODIC_ALARM) < 0)
 		{
-			statement_timeout_active = deadlock_timeout_active = false;
+			statement_timeout_active = false;
+			cancel_from_timeout = false;
+			deadlock_timeout_active = false;
 			return false;
 		}
 #endif
@@ -1146,7 +1152,10 @@ disable_sig_alarm(bool is_statement_timeout)
 
 	/* Cancel or reschedule statement timeout */
 	if (is_statement_timeout)
+	{
 		statement_timeout_active = false;
+		cancel_from_timeout = false;
+	}
 	else if (statement_timeout_active)
 	{
 		if (!CheckStatementTimeout())
@@ -1179,6 +1188,7 @@ CheckStatementTimeout(void)
 	{
 		/* Time to die */
 		statement_timeout_active = false;
+		cancel_from_timeout = true;
 		kill(MyProcPid, SIGINT);
 	}
 	else
