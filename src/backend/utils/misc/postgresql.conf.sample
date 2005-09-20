@@ -340,7 +340,7 @@
 # AUTOVACUUM PARAMETERS
 #---------------------------------------------------------------------------
 
-#autovacuum = false			# enable autovacuum subprocess?
+#autovacuum = off			# enable autovacuum subprocess?
 #autovacuum_naptime = 60		# time between autovacuum runs, in secs
 #autovacuum_vacuum_threshold = 1000	# min # of tuple updates before
 					# vacuum
