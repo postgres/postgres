@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.122 2005/09/05 18:05:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.123 2005/09/20 18:59:02 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -690,9 +690,9 @@ process_psqlrc_file(char *filename)
 	sprintf(psqlrc, "%s-%s", filename, PG_VERSION);
 
 	if (access(psqlrc, R_OK) == 0)
-		process_file(psqlrc);
+		(void)process_file(psqlrc);
 	else if (access(filename, R_OK) == 0)
-		process_file(filename);
+		(void)process_file(filename);
 	free(psqlrc);
 }
 
