@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Sep 19 22:16:41 EDT 2005
+Last updated:		Mon Sep 19 22:21:26 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -897,7 +897,7 @@ Write-Ahead Log
 	   into a partially-written page, but later the full page will be
 	   replaced from WAL.
 
-* Allow WAL traffic to be steamed to another server for stand-by
+* Allow WAL traffic to be streamed to another server for stand-by
   replication
 * Reduce WAL traffic so only modified values are written rather than
   entire rows?
