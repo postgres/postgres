@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.104 2005/06/22 21:14:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.105 2005/09/20 21:43:08 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -1010,13 +1010,15 @@ SendQuery(const char *query)
 			return false;
 		}
 		PQclear(results);
+		transaction_status = PQtransactionStatus(pset.db);
 	}
-	else if (transaction_status == PQTRANS_INTRANS &&
-			 (rollback_str = GetVariable(pset.vars, "ON_ERROR_ROLLBACK")) != NULL &&
-			 /* !off and !interactive is 'on' */
-			 pg_strcasecmp(rollback_str, "off") != 0 &&
-			 (pset.cur_cmd_interactive ||
-			  pg_strcasecmp(rollback_str, "interactive") != 0))
+
+	if (transaction_status == PQTRANS_INTRANS &&
+		(rollback_str = GetVariable(pset.vars, "ON_ERROR_ROLLBACK")) != NULL &&
+		/* !off and !interactive is 'on' */
+		pg_strcasecmp(rollback_str, "off") != 0 &&
+		(pset.cur_cmd_interactive ||
+		 pg_strcasecmp(rollback_str, "interactive") != 0))
 	{
 		if (on_error_rollback_warning == false && pset.sversion < 80000)
 		{
