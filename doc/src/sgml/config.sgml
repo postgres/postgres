@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.18 2005/09/19 17:21:46 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.19 2005/09/21 20:33:33 tgl Exp $
 -->
 <chapter Id="runtime-config">
   <title>Run-time Configuration</title>
@@ -45,7 +45,8 @@ search_path = '$user, public'
     value is optional. Whitespace is insignificant and blank lines are
     ignored. Hash marks (<literal>#</literal>) introduce comments
     anywhere.  Parameter values that are not simple identifiers or
-    numbers must be single-quoted.
+    numbers must be single-quoted.  To embed a single quote in a parameter
+    value, write either two quotes (preferred) or backslash-quote.
   </para>
 
    <para>

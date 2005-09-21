@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.31 2005/07/08 18:41:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.32 2005/09/21 20:33:34 tgl Exp $
  */
 
 %{
@@ -38,7 +38,7 @@ enum {
 
 /* prototype, so compiler is happy with our high warnings setting */
 int GUC_yylex(void);
-static char *GUC_scanstr(char *);
+static char *GUC_scanstr(const char *s);
 %}
 
 %option 8bit
@@ -64,7 +64,7 @@ ID              {LETTER}{LETTER_OR_DIGIT}*
 QUALIFIED_ID    {ID}"."{ID}
 
 UNQUOTED_STRING {LETTER}({LETTER_OR_DIGIT}|[-._:/])*
-STRING          \'([^'\n]|\\.)*\'
+STRING          \'([^'\\\n]|\\.|\'\')*\'
 
 %%
 
@@ -181,22 +181,16 @@ ProcessConfigFile(GucContext context)
                 if (token == GUC_EQUALS)
                     token = yylex();
 
-                if (token != GUC_ID && token != GUC_STRING && 
+                if (token != GUC_ID &&
+					token != GUC_STRING && 
 					token != GUC_INTEGER && 
 					token != GUC_REAL && 
 					token != GUC_UNQUOTED_STRING)
                     goto parse_error;
-                opt_value = pstrdup(yytext);
-				if (token == GUC_STRING)
-				{
-					/* remove the beginning and ending quote/apostrophe */
-					/* first: shift the whole thing down one character */
-					memmove(opt_value, opt_value+1, strlen(opt_value)-1);
-					/* second: null out the 2 characters we shifted */
-					opt_value[strlen(opt_value)-2] = '\0';
-					/* do the escape thing.  pfree()'s the pstrdup above */
-					opt_value = GUC_scanstr(opt_value);
-				}
+				if (token == GUC_STRING)	/* strip quotes and escapes */
+					opt_value = GUC_scanstr(yytext);
+				else
+					opt_value = pstrdup(yytext);
                 parse_state = 2;
                 break;
 
@@ -280,34 +274,33 @@ ProcessConfigFile(GucContext context)
 
 
 
-/* ----------------
+/*
  *		scanstr
  *
- * if the string passed in has escaped codes, map the escape codes to actual
- * chars
+ * Strip the quotes surrounding the given string, and collapse any embedded
+ * '' sequences and backslash escapes.
  *
  * the string returned is palloc'd and should eventually be pfree'd by the
- * caller; also we assume we should pfree the input string.
- * ----------------
+ * caller.
  */
-
 static char *
-GUC_scanstr(char *s)
+GUC_scanstr(const char *s)
 {
 	char	   *newStr;
 	int			len,
 				i,
 				j;
 
-	if (s == NULL || s[0] == '\0')
-	{
-		if (s != NULL)
-			pfree(s);
-		return pstrdup("");
-	}
+	Assert(s != NULL && s[0] == '\'');
 	len = strlen(s);
+	Assert(len >= 2);
+	Assert(s[len-1] == '\'');
 
-	newStr = palloc(len + 1);	/* string cannot get longer */
+	/* Skip the leading quote; we'll handle the trailing quote below */
+	s++, len--;
+
+	/* Since len still includes trailing quote, this is enough space */
+	newStr = palloc(len);
 
 	for (i = 0, j = 0; i < len; i++)
 	{
@@ -354,13 +347,21 @@ GUC_scanstr(char *s)
 				default:
 					newStr[j] = s[i];
 					break;
-				}
 			}					/* switch */
+		}
+		else if (s[i] == '\'' && s[i+1] == '\'')
+		{
+			/* doubled quote becomes just one quote */
+			newStr[j] = s[++i];
+		}
 		else
 			newStr[j] = s[i];
 		j++;
 	}
-	newStr[j] = '\0';
-	pfree(s);
+
+	/* We copied the ending quote to newStr, so replace with \0 */
+	Assert(j > 0 && j <= len);
+	newStr[--j] = '\0';
+
 	return newStr;
 }
