@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.420 2005/09/05 23:50:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.421 2005/09/21 19:58:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -617,8 +617,8 @@ main(int argc, char **argv)
 	/* First the special encoding entry. */
 	dumpEncoding(g_fout);
 
-	/* The database item is always second. */
-	if (!dataOnly)
+	/* The database item is always second, unless we don't want it at all */
+	if (!dataOnly && selectTableName == NULL && selectSchemaName == NULL)
 		dumpDatabase(g_fout);
 
 	/* Now the rearrangeable objects. */
