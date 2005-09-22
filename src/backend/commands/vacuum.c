@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.314 2005/09/02 19:02:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.315 2005/09/22 17:32:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1273,10 +1273,14 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 		page = BufferGetPage(buf);
 
 		/*
-		 * We don't bother to do LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE)
-		 * because we assume that holding exclusive lock on the relation
-		 * will keep other backends from looking at the page.
+		 * Since we are holding exclusive lock on the relation, no other
+		 * backend can be accessing the page; however it is possible that
+		 * the background writer will try to write the page if it's already
+		 * marked dirty.  To ensure that invalid data doesn't get written to
+		 * disk, we must take exclusive buffer lock wherever we potentially
+		 * modify pages.
 		 */
+		LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 
 		vacpage->blkno = blkno;
 		vacpage->offsets_used = 0;
@@ -1297,6 +1301,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 			vacpagecopy = copy_vac_page(vacpage);
 			vpage_insert(vacuum_pages, vacpagecopy);
 			vpage_insert(fraged_pages, vacpagecopy);
+			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 			WriteBuffer(buf);
 			continue;
 		}
@@ -1312,6 +1317,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 			vacpagecopy = copy_vac_page(vacpage);
 			vpage_insert(vacuum_pages, vacpagecopy);
 			vpage_insert(fraged_pages, vacpagecopy);
+			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 			ReleaseBuffer(buf);
 			continue;
 		}
@@ -1520,6 +1526,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 		else
 			empty_end_pages = 0;
 
+		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 		if (pgchanged)
 			WriteBuffer(buf);
 		else

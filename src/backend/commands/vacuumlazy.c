@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.58 2005/09/02 19:02:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.59 2005/09/22 17:32:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -299,7 +299,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			 * or temp relation, but it's probably not worth the code space
 			 * to check that, since this surely isn't a critical path.
 			 *
-			 * Note: the comparable code in vacuum.c need not do all this
+			 * Note: the comparable code in vacuum.c need not worry
 			 * because it's got exclusive lock on the whole relation.
 			 */
 			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
