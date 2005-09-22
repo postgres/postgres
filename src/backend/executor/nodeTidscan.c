@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.41 2004/12/31 21:59:45 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.42 2005/09/22 15:09:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -375,7 +375,6 @@ ExecInitTidScan(TidScan *node, EState *estate)
 	Oid			relid;
 	Oid			reloid;
 	Relation	currentRelation;
-	Bitmapset  *execParam = NULL;
 
 	/*
 	 * create state structure
@@ -444,12 +443,6 @@ ExecInitTidScan(TidScan *node, EState *estate)
 	 * get the scan type from the relation descriptor.
 	 */
 	ExecAssignScanType(&tidstate->ss, RelationGetDescr(currentRelation), false);
-
-	/*
-	 * if there are some PARAM_EXEC in skankeys then force tid rescan on
-	 * first scan.
-	 */
-	tidstate->ss.ps.chgParam = execParam;
 
 	/*
 	 * Initialize result tuple type and projection info.
