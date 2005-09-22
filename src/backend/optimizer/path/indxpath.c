@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.188 2005/08/28 22:47:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.189 2005/09/22 23:25:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -955,15 +955,13 @@ indexable_outerrelids(RelOptInfo *rel)
 	/*
 	 * Examine each joinclause in the joininfo list to see if it matches any
 	 * key of any index.  If so, add the clause's other rels to the result.
-	 * (Note: we consider only actual participants, not extraneous rels
-	 * possibly mentioned in required_relids.)
 	 */
 	foreach(l, rel->joininfo)
 	{
 		RestrictInfo *joininfo = (RestrictInfo *) lfirst(l);
 		Relids	other_rels;
 
-		other_rels = bms_difference(joininfo->clause_relids, rel->relids);
+		other_rels = bms_difference(joininfo->required_relids, rel->relids);
 		if (matches_any_index(joininfo, rel, other_rels))
 			outer_relids = bms_join(outer_relids, other_rels);
 		else
