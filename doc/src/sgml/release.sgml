@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.369 2005/09/16 05:35:39 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.370 2005/09/22 23:24:58 momjian Exp $
 
 Typical markup:
 
@@ -517,7 +517,7 @@ pg_[A-Za-z0-9_]                 <application>
         constraints (Simon)
        </para>
        <para>
-        This allows for a type of table partitioning. If child tables
+        This allows for a basic type of table partitioning. If child tables
         store separate key ranges and this is enforced using appropriate
         <command>CHECK</> constraints, the optimizer will skip child
         table accesses when the constraint guarantees no matching rows
