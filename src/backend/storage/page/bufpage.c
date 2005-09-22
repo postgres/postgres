@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.65 2005/06/06 20:22:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.66 2005/09/22 16:45:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,8 +149,7 @@ PageAddItem(Page page,
 			if (offsetNumber < limit)
 			{
 				itemId = PageGetItemId(phdr, offsetNumber);
-				if ((itemId->lp_flags & LP_USED) ||
-					(itemId->lp_len != 0))
+				if (ItemIdIsUsed(itemId) || ItemIdGetLength(itemId) != 0)
 				{
 					elog(WARNING, "will not overwrite a used ItemId");
 					return InvalidOffsetNumber;
@@ -170,8 +169,7 @@ PageAddItem(Page page,
 		for (offsetNumber = 1; offsetNumber < limit; offsetNumber++)
 		{
 			itemId = PageGetItemId(phdr, offsetNumber);
-			if (((itemId->lp_flags & LP_USED) == 0) &&
-				(itemId->lp_len == 0))
+			if (!ItemIdIsUsed(itemId) && ItemIdGetLength(itemId) == 0)
 				break;
 		}
 		/* if no free slot, we'll put it at limit (1st open slot) */
@@ -341,9 +339,9 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 	for (i = 0; i < nline; i++)
 	{
 		lp = PageGetItemId(page, i + 1);
-		if (lp->lp_flags & LP_DELETE)	/* marked for deletion */
+		if (ItemIdDeleted(lp))	/* marked for deletion */
 			lp->lp_flags &= ~(LP_USED | LP_DELETE);
-		if (lp->lp_flags & LP_USED)
+		if (ItemIdIsUsed(lp))
 			nused++;
 		else if (unused)
 			unused[i - nused] = (OffsetNumber) i;
@@ -368,17 +366,17 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 		for (i = 0; i < nline; i++)
 		{
 			lp = PageGetItemId(page, i + 1);
-			if (lp->lp_flags & LP_USED)
+			if (ItemIdIsUsed(lp))
 			{
 				itemidptr->offsetindex = i;
-				itemidptr->itemoff = lp->lp_off;
+				itemidptr->itemoff = ItemIdGetOffset(lp);
 				if (itemidptr->itemoff < (int) pd_upper ||
 					itemidptr->itemoff >= (int) pd_special)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATA_CORRUPTED),
 							 errmsg("corrupted item pointer: %u",
 									itemidptr->itemoff)));
-				itemidptr->alignedlen = MAXALIGN(lp->lp_len);
+				itemidptr->alignedlen = MAXALIGN(ItemIdGetLength(lp));
 				totallen += itemidptr->alignedlen;
 				itemidptr++;
 			}
@@ -540,7 +538,7 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
 		{
 			ItemId		ii = PageGetItemId(phdr, i);
 
-			if (ii->lp_off <= offset)
+			if (ItemIdGetOffset(ii) <= offset)
 				ii->lp_off += size;
 		}
 	}

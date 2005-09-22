@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufpage.h,v 1.65 2005/04/28 21:47:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufpage.h,v 1.66 2005/09/22 16:46:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,8 +258,8 @@ typedef PageHeaderData *PageHeader;
 #define PageGetItem(page, itemId) \
 ( \
 	AssertMacro(PageIsValid(page)), \
-	AssertMacro((itemId)->lp_flags & LP_USED), \
-	(Item)(((char *)(page)) + (itemId)->lp_off) \
+	AssertMacro(ItemIdIsUsed(itemId)), \
+	(Item)(((char *)(page)) + ItemIdGetOffset(itemId)) \
 )
 
 /*
