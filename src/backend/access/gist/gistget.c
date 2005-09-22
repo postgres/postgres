@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.50 2005/06/27 12:45:22 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.51 2005/09/22 20:44:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,64 +20,71 @@
 #include "utils/memutils.h"
 
 static OffsetNumber gistfindnext(IndexScanDesc scan, OffsetNumber n,
-								 ScanDirection dir);
-static int gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids, int maxtids, bool ignore_killed_tuples);
+			 ScanDirection dir);
+static int	gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids, int maxtids, bool ignore_killed_tuples);
 static bool gistindex_keytest(IndexTuple tuple, IndexScanDesc scan,
-							  OffsetNumber offset);
+				  OffsetNumber offset);
 
-static void 
-killtuple(Relation r, GISTScanOpaque so, ItemPointer iptr) {
-	Buffer buffer = so->curbuf;
+static void
+killtuple(Relation r, GISTScanOpaque so, ItemPointer iptr)
+{
+	Buffer		buffer = so->curbuf;
 
-	for(;;) {
-		Page p;
+	for (;;)
+	{
+		Page		p;
 		BlockNumber blkno;
-		OffsetNumber offset, maxoff;
+		OffsetNumber offset,
+					maxoff;
 
-		LockBuffer( buffer, GIST_SHARE );
-		p = (Page)BufferGetPage( buffer );
- 
-		if ( buffer == so->curbuf && XLByteEQ( so->stack->lsn, PageGetLSN(p) ) ) {
+		LockBuffer(buffer, GIST_SHARE);
+		p = (Page) BufferGetPage(buffer);
+
+		if (buffer == so->curbuf && XLByteEQ(so->stack->lsn, PageGetLSN(p)))
+		{
 			/* page unchanged, so all is simple */
 			offset = ItemPointerGetOffsetNumber(iptr);
 			PageGetItemId(p, offset)->lp_flags |= LP_DELETE;
 			SetBufferCommitInfoNeedsSave(buffer);
-			LockBuffer( buffer, GIST_UNLOCK );
+			LockBuffer(buffer, GIST_UNLOCK);
 			break;
 		}
 
-		maxoff = PageGetMaxOffsetNumber( p );
+		maxoff = PageGetMaxOffsetNumber(p);
 
-		for(offset = FirstOffsetNumber; offset<= maxoff; offset = OffsetNumberNext(offset)) {
-			IndexTuple ituple = (IndexTuple) PageGetItem(p, PageGetItemId(p, offset));
+		for (offset = FirstOffsetNumber; offset <= maxoff; offset = OffsetNumberNext(offset))
+		{
+			IndexTuple	ituple = (IndexTuple) PageGetItem(p, PageGetItemId(p, offset));
 
-			if ( ItemPointerEquals( &(ituple->t_tid), iptr ) ) {
+			if (ItemPointerEquals(&(ituple->t_tid), iptr))
+			{
 				/* found */
 				PageGetItemId(p, offset)->lp_flags |= LP_DELETE;
 				SetBufferCommitInfoNeedsSave(buffer);
-				LockBuffer( buffer, GIST_UNLOCK );
-				if ( buffer != so->curbuf )
-					ReleaseBuffer( buffer );
+				LockBuffer(buffer, GIST_UNLOCK);
+				if (buffer != so->curbuf)
+					ReleaseBuffer(buffer);
 				return;
-			} 
+			}
 		}
 
 		/* follow right link */
+
 		/*
- 		 * ??? is it good? if tuple dropped by concurrent vacuum,
-		 * we will read all leaf pages...  
+		 * ??? is it good? if tuple dropped by concurrent vacuum, we will read
+		 * all leaf pages...
 		 */
 		blkno = GistPageGetOpaque(p)->rightlink;
-		LockBuffer( buffer, GIST_UNLOCK );
-		if ( buffer != so->curbuf )
-			ReleaseBuffer( buffer );
+		LockBuffer(buffer, GIST_UNLOCK);
+		if (buffer != so->curbuf)
+			ReleaseBuffer(buffer);
 
-		if ( blkno==InvalidBlockNumber )
+		if (blkno == InvalidBlockNumber)
 			/* can't found, dropped by somebody else */
 			return;
-		buffer = ReadBuffer( r, blkno ); 
+		buffer = ReadBuffer(r, blkno);
 	}
-} 
+}
 
 /*
  * gistgettuple() -- Get the next tuple in the scan
@@ -85,27 +92,27 @@ killtuple(Relation r, GISTScanOpaque so, ItemPointer iptr) {
 Datum
 gistgettuple(PG_FUNCTION_ARGS)
 {
-	IndexScanDesc	scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	ScanDirection	dir = (ScanDirection) PG_GETARG_INT32(1);
-	GISTScanOpaque	so;
-	ItemPointerData	tid;
-	bool 	res;
+	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
+	ScanDirection dir = (ScanDirection) PG_GETARG_INT32(1);
+	GISTScanOpaque so;
+	ItemPointerData tid;
+	bool		res;
 
 	so = (GISTScanOpaque) scan->opaque;
 
 	/*
-	 * If we have produced an index tuple in the past and the executor
-	 * has informed us we need to mark it as "killed", do so now.
+	 * If we have produced an index tuple in the past and the executor has
+	 * informed us we need to mark it as "killed", do so now.
 	 */
-	if (scan->kill_prior_tuple && ItemPointerIsValid(&(scan->currentItemData))) 
+	if (scan->kill_prior_tuple && ItemPointerIsValid(&(scan->currentItemData)))
 		killtuple(scan->indexRelation, so, &(scan->currentItemData));
 
 	/*
-	 * Get the next tuple that matches the search key. If asked to
-	 * skip killed tuples, continue looping until we find a non-killed
-	 * tuple that matches the search key.
+	 * Get the next tuple that matches the search key. If asked to skip killed
+	 * tuples, continue looping until we find a non-killed tuple that matches
+	 * the search key.
 	 */
-	res = ( gistnext(scan, dir, &tid, 1, scan->ignore_killed_tuples) ) ? true : false;
+	res = (gistnext(scan, dir, &tid, 1, scan->ignore_killed_tuples)) ? true : false;
 
 	PG_RETURN_BOOL(res);
 }
@@ -114,12 +121,12 @@ Datum
 gistgetmulti(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	ItemPointer	tids = (ItemPointer) PG_GETARG_POINTER(1);
+	ItemPointer tids = (ItemPointer) PG_GETARG_POINTER(1);
 	int32		max_tids = PG_GETARG_INT32(2);
 	int32	   *returned_tids = (int32 *) PG_GETARG_POINTER(3);
 
 	*returned_tids = gistnext(scan, ForwardScanDirection, tids, max_tids, false);
- 
+
 	PG_RETURN_BOOL(*returned_tids == max_tids);
 }
 
@@ -128,17 +135,17 @@ gistgetmulti(PG_FUNCTION_ARGS)
  * either to fetch the first such tuple or subsequent matching
  * tuples. Returns true iff a matching tuple was found.
  */
-static int 
+static int
 gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids, int maxtids, bool ignore_killed_tuples)
 {
 	Page		p;
 	OffsetNumber n;
 	GISTScanOpaque so;
-	GISTSearchStack  *stk;
+	GISTSearchStack *stk;
 	IndexTuple	it;
-	GISTPageOpaque	opaque;
-	bool	resetoffset=false;
-	int ntids=0;
+	GISTPageOpaque opaque;
+	bool		resetoffset = false;
+	int			ntids = 0;
 
 	so = (GISTScanOpaque) scan->opaque;
 
@@ -149,59 +156,67 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids, int maxtids, b
 		Assert(so->stack == NULL);
 
 		so->curbuf = ReadBuffer(scan->indexRelation, GIST_ROOT_BLKNO);
-	
-		stk = so->stack = (GISTSearchStack*) palloc0( sizeof(GISTSearchStack) );
+
+		stk = so->stack = (GISTSearchStack *) palloc0(sizeof(GISTSearchStack));
 
 		stk->next = NULL;
 		stk->block = GIST_ROOT_BLKNO;
-	} else if ( so->curbuf ==  InvalidBuffer ) {
+	}
+	else if (so->curbuf == InvalidBuffer)
+	{
 		return 0;
 	}
 
-	for(;;) {
+	for (;;)
+	{
 		/* First of all, we need lock buffer */
-		Assert( so->curbuf != InvalidBuffer );
-		LockBuffer( so->curbuf, GIST_SHARE );
+		Assert(so->curbuf != InvalidBuffer);
+		LockBuffer(so->curbuf, GIST_SHARE);
 		p = BufferGetPage(so->curbuf);
-		opaque = GistPageGetOpaque( p );
+		opaque = GistPageGetOpaque(p);
 		resetoffset = false;
- 
-		if ( XLogRecPtrIsInvalid( so->stack->lsn ) || !XLByteEQ( so->stack->lsn, PageGetLSN(p) ) ) {
+
+		if (XLogRecPtrIsInvalid(so->stack->lsn) || !XLByteEQ(so->stack->lsn, PageGetLSN(p)))
+		{
 			/* page changed from last visit or visit first time , reset offset */
 			so->stack->lsn = PageGetLSN(p);
 			resetoffset = true;
 
 			/* check page split, occured from last visit or visit to parent */
-			if ( !XLogRecPtrIsInvalid( so->stack->parentlsn ) && 
-				XLByteLT( so->stack->parentlsn, opaque->nsn ) &&
-					opaque->rightlink != InvalidBlockNumber /* sanity check */  &&
-					(so->stack->next==NULL || so->stack->next->block != opaque->rightlink)  /* check if already added */) {
+			if (!XLogRecPtrIsInvalid(so->stack->parentlsn) &&
+				XLByteLT(so->stack->parentlsn, opaque->nsn) &&
+				opaque->rightlink != InvalidBlockNumber /* sanity check */ &&
+				(so->stack->next == NULL || so->stack->next->block != opaque->rightlink)		/* check if already
+					added */ )
+			{
 				/* detect page split, follow right link to add pages */
-	
-				stk = (GISTSearchStack*) palloc( sizeof(GISTSearchStack) );
+
+				stk = (GISTSearchStack *) palloc(sizeof(GISTSearchStack));
 				stk->next = so->stack->next;
 				stk->block = opaque->rightlink;
 				stk->parentlsn = so->stack->parentlsn;
-				memset( &(stk->lsn), 0, sizeof(GistNSN) );
+				memset(&(stk->lsn), 0, sizeof(GistNSN));
 				so->stack->next = stk;
 			}
 		}
 
 		/* if page is empty, then just skip it */
-		if ( PageIsEmpty(p) ) {
-			LockBuffer( so->curbuf, GIST_UNLOCK );
+		if (PageIsEmpty(p))
+		{
+			LockBuffer(so->curbuf, GIST_UNLOCK);
 			stk = so->stack->next;
-			pfree( so->stack );
+			pfree(so->stack);
 			so->stack = stk;
 
-			if (so->stack == NULL) {
+			if (so->stack == NULL)
+			{
 				ReleaseBuffer(so->curbuf);
 				so->curbuf = InvalidBuffer;
 				return ntids;
 			}
 
 			so->curbuf = ReleaseAndReadBuffer(so->curbuf, scan->indexRelation,
-								stk->block);
+											  stk->block);
 			continue;
 		}
 
@@ -215,33 +230,33 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids, int maxtids, b
 		else
 		{
 			n = ItemPointerGetOffsetNumber(&(scan->currentItemData));
-	
+
 			if (ScanDirectionIsBackward(dir))
 				n = OffsetNumberPrev(n);
 			else
 				n = OffsetNumberNext(n);
 		}
 
-		/* wonderfull, we can look at page */ 
+		/* wonderfull, we can look at page */
 
-		for(;;)
+		for (;;)
 		{
 			n = gistfindnext(scan, n, dir);
 
 			if (!OffsetNumberIsValid(n))
 			{
 				/*
-				 * We ran out of matching index entries on the current
-				 * page, so pop the top stack entry and use it to continue
-				 * the search.
+				 * We ran out of matching index entries on the current page,
+				 * so pop the top stack entry and use it to continue the
+				 * search.
 				 */
-				LockBuffer( so->curbuf, GIST_UNLOCK );
+				LockBuffer(so->curbuf, GIST_UNLOCK);
 				stk = so->stack->next;
-				pfree( so->stack );
+				pfree(so->stack);
 				so->stack = stk;
 
 				/* If we're out of stack entries, we're done */
-			
+
 				if (so->stack == NULL)
 				{
 					ReleaseBuffer(so->curbuf);
@@ -250,8 +265,8 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids, int maxtids, b
 				}
 
 				so->curbuf = ReleaseAndReadBuffer(so->curbuf, scan->indexRelation,
-											  stk->block);
-				/* XXX  go up */
+												  stk->block);
+				/* XXX	go up */
 				break;
 			}
 
@@ -259,20 +274,22 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids, int maxtids, b
 			{
 				/*
 				 * We've found a matching index entry in a leaf page, so
-				 * return success. Note that we keep "curbuf" pinned so
-				 * that we can efficiently resume the index scan later.
+				 * return success. Note that we keep "curbuf" pinned so that
+				 * we can efficiently resume the index scan later.
 				 */
 
 				ItemPointerSet(&(scan->currentItemData),
-						   BufferGetBlockNumber(so->curbuf), n);
+							   BufferGetBlockNumber(so->curbuf), n);
 
-				if ( ! ( ignore_killed_tuples && ItemIdDeleted(PageGetItemId(p, n)) ) ) {
+				if (!(ignore_killed_tuples && ItemIdDeleted(PageGetItemId(p, n))))
+				{
 					it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
 					tids[ntids] = scan->xs_ctup.t_self = it->t_tid;
 					ntids++;
 
-					if ( ntids == maxtids ) {
-						LockBuffer( so->curbuf, GIST_UNLOCK );
+					if (ntids == maxtids)
+					{
+						LockBuffer(so->curbuf, GIST_UNLOCK);
 						return ntids;
 					}
 				}
@@ -281,14 +298,14 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids, int maxtids, b
 			{
 				/*
 				 * We've found an entry in an internal node whose key is
-				 * consistent with the search key, so push it to stack 
+				 * consistent with the search key, so push it to stack
 				 */
 
 				stk = (GISTSearchStack *) palloc(sizeof(GISTSearchStack));
 
 				it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
 				stk->block = ItemPointerGetBlockNumber(&(it->t_tid));
-				memset( &(stk->lsn), 0, sizeof(GistNSN) );
+				memset(&(stk->lsn), 0, sizeof(GistNSN));
 				stk->parentlsn = so->stack->lsn;
 
 				stk->next = so->stack->next;
@@ -320,12 +337,12 @@ gistindex_keytest(IndexTuple tuple,
 				  IndexScanDesc scan,
 				  OffsetNumber offset)
 {
-	int keySize = scan->numberOfKeys;
-	ScanKey key = scan->keyData;
-	Relation r = scan->indexRelation;
+	int			keySize = scan->numberOfKeys;
+	ScanKey		key = scan->keyData;
+	Relation	r = scan->indexRelation;
 	GISTScanOpaque so;
-	Page p;
-	GISTSTATE *giststate;
+	Page		p;
+	GISTSTATE  *giststate;
 
 	so = (GISTScanOpaque) scan->opaque;
 	giststate = so->giststate;
@@ -334,9 +351,10 @@ gistindex_keytest(IndexTuple tuple,
 	IncrIndexProcessed();
 
 	/*
-         * Tuple doesn't restore after crash recovery because of inclomplete insert 
-         */
-	if ( !GistPageIsLeaf(p) && GistTupleIsInvalid(tuple) ) 
+	 * Tuple doesn't restore after crash recovery because of inclomplete
+	 * insert
+	 */
+	if (!GistPageIsLeaf(p) && GistTupleIsInvalid(tuple))
 		return true;
 
 	while (keySize > 0)
@@ -366,13 +384,12 @@ gistindex_keytest(IndexTuple tuple,
 					   FALSE, isNull);
 
 		/*
-		 * Call the Consistent function to evaluate the test.  The
-		 * arguments are the index datum (as a GISTENTRY*), the comparison
-		 * datum, and the comparison operator's strategy number and
-		 * subtype from pg_amop.
+		 * Call the Consistent function to evaluate the test.  The arguments
+		 * are the index datum (as a GISTENTRY*), the comparison datum, and
+		 * the comparison operator's strategy number and subtype from pg_amop.
 		 *
-		 * (Presently there's no need to pass the subtype since it'll always
-		 * be zero, but might as well pass it for possible future use.)
+		 * (Presently there's no need to pass the subtype since it'll always be
+		 * zero, but might as well pass it for possible future use.)
 		 */
 		test = FunctionCall4(&key->sk_func,
 							 PointerGetDatum(&de),
@@ -399,26 +416,26 @@ gistindex_keytest(IndexTuple tuple,
 static OffsetNumber
 gistfindnext(IndexScanDesc scan, OffsetNumber n, ScanDirection dir)
 {
-	OffsetNumber	maxoff;
-	IndexTuple		it;
-	GISTScanOpaque	so;
-	MemoryContext	oldcxt;
-	Page			p;
+	OffsetNumber maxoff;
+	IndexTuple	it;
+	GISTScanOpaque so;
+	MemoryContext oldcxt;
+	Page		p;
 
 	so = (GISTScanOpaque) scan->opaque;
 	p = BufferGetPage(so->curbuf);
 	maxoff = PageGetMaxOffsetNumber(p);
 
 	/*
-	 * Make sure we're in a short-lived memory context when we invoke
-	 * a user-supplied GiST method in gistindex_keytest(), so we don't
-	 * leak memory
+	 * Make sure we're in a short-lived memory context when we invoke a
+	 * user-supplied GiST method in gistindex_keytest(), so we don't leak
+	 * memory
 	 */
 	oldcxt = MemoryContextSwitchTo(so->tempCxt);
 
 	/*
-	 * If we modified the index during the scan, we may have a pointer to
-	 * a ghost tuple, before the scan.	If this is the case, back up one.
+	 * If we modified the index during the scan, we may have a pointer to a
+	 * ghost tuple, before the scan.  If this is the case, back up one.
 	 */
 	if (so->flags & GS_CURBEFORE)
 	{
@@ -442,9 +459,8 @@ gistfindnext(IndexScanDesc scan, OffsetNumber n, ScanDirection dir)
 	MemoryContextReset(so->tempCxt);
 
 	/*
-	 * If we found a matching entry, return its offset; otherwise
-	 * return InvalidOffsetNumber to inform the caller to go to the
-	 * next page.
+	 * If we found a matching entry, return its offset; otherwise return
+	 * InvalidOffsetNumber to inform the caller to go to the next page.
 	 */
 	if (n >= FirstOffsetNumber && n <= maxoff)
 		return n;

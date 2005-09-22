@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *          $PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.6 2005/09/22 18:49:45 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.7 2005/09/22 20:44:36 momjian Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -22,9 +22,9 @@
 #include "storage/freespace.h"
 
 /* group flags ( in gistadjsubkey ) */
-#define LEFT_ADDED      0x01
+#define LEFT_ADDED		0x01
 #define RIGHT_ADDED 0x02
-#define BOTH_ADDED      ( LEFT_ADDED | RIGHT_ADDED )
+#define BOTH_ADDED		( LEFT_ADDED | RIGHT_ADDED )
 
 
 /*
@@ -47,8 +47,7 @@
 } while(0);
 
 
-static void
-gistpenalty(GISTSTATE *giststate, int attno,
+static void gistpenalty(GISTSTATE *giststate, int attno,
 			GISTENTRY *key1, bool isNull1,
 			GISTENTRY *key2, bool isNull2, float *penalty);
 
@@ -57,13 +56,13 @@ gistpenalty(GISTSTATE *giststate, int attno,
  */
 OffsetNumber
 gistfillbuffer(Relation r, Page page, IndexTuple *itup,
-				int len, OffsetNumber off)
+			   int len, OffsetNumber off)
 {
 	OffsetNumber l = InvalidOffsetNumber;
 	int			i;
 
-	if ( off == InvalidOffsetNumber ) 
-		off = ( PageIsEmpty(page) ) ?  FirstOffsetNumber : 
+	if (off == InvalidOffsetNumber)
+		off = (PageIsEmpty(page)) ? FirstOffsetNumber :
 			OffsetNumberNext(PageGetMaxOffsetNumber(page));
 
 	for (i = 0; i < len; i++)
@@ -137,13 +136,13 @@ gistunion(Relation r, IndexTuple *itvec, int len, GISTSTATE *giststate)
 	GistEntryVector *evec;
 	int			i;
 	GISTENTRY	centry[INDEX_MAX_KEYS];
-	IndexTuple 	res;
+	IndexTuple	res;
 
 	evec = (GistEntryVector *) palloc(((len == 1) ? 2 : len) * sizeof(GISTENTRY) + GEVHDRSZ);
 
-	for(i = 0; i<len; i++) 
-		if ( GistTupleIsInvalid( itvec[i] ) )
-			return gist_form_invalid_tuple( InvalidBlockNumber );	
+	for (i = 0; i < len; i++)
+		if (GistTupleIsInvalid(itvec[i]))
+			return gist_form_invalid_tuple(InvalidBlockNumber);
 
 	for (i = 0; i < r->rd_att->natts; i++)
 	{
@@ -155,6 +154,7 @@ gistunion(Relation r, IndexTuple *itvec, int len, GISTSTATE *giststate)
 		for (j = 0; j < len; j++)
 		{
 			bool		IsNull;
+
 			datum = index_getattr(itvec[j], i + 1, giststate->tupdesc, &IsNull);
 			if (IsNull)
 				continue;
@@ -176,7 +176,7 @@ gistunion(Relation r, IndexTuple *itvec, int len, GISTSTATE *giststate)
 		}
 		else
 		{
-			int datumsize;
+			int			datumsize;
 
 			if (real_len == 1)
 			{
@@ -202,7 +202,7 @@ gistunion(Relation r, IndexTuple *itvec, int len, GISTSTATE *giststate)
 	}
 
 	res = index_form_tuple(giststate->tupdesc, attr, isnull);
-	GistTupleSetValid( res );
+	GistTupleSetValid(res);
 	return res;
 }
 
@@ -227,9 +227,9 @@ gistgetadjusted(Relation r, IndexTuple oldtup, IndexTuple addtup, GISTSTATE *gis
 	IndexTuple	newtup = NULL;
 	int			i;
 
-	if ( GistTupleIsInvalid(oldtup) || GistTupleIsInvalid(addtup) )
-		return gist_form_invalid_tuple( ItemPointerGetBlockNumber( &(oldtup->t_tid) ) ); 
- 
+	if (GistTupleIsInvalid(oldtup) || GistTupleIsInvalid(addtup))
+		return gist_form_invalid_tuple(ItemPointerGetBlockNumber(&(oldtup->t_tid)));
+
 	evec = palloc(2 * sizeof(GISTENTRY) + GEVHDRSZ);
 	evec->n = 2;
 	ev0p = &(evec->vector[0]);
@@ -268,7 +268,7 @@ gistgetadjusted(Relation r, IndexTuple oldtup, IndexTuple addtup, GISTSTATE *gis
 			}
 			else
 			{
-				bool	result;
+				bool		result;
 
 				FunctionCall3(&giststate->equalFn[i],
 							  ev0p->key,
@@ -301,7 +301,7 @@ gistgetadjusted(Relation r, IndexTuple oldtup, IndexTuple addtup, GISTSTATE *gis
 void
 gistunionsubkey(Relation r, GISTSTATE *giststate, IndexTuple *itvec, GIST_SPLITVEC *spl, bool isall)
 {
-	int lr;
+	int			lr;
 
 	for (lr = 0; lr < 2; lr++)
 	{
@@ -309,7 +309,7 @@ gistunionsubkey(Relation r, GISTSTATE *giststate, IndexTuple *itvec, GIST_SPLITV
 		int			i;
 		Datum	   *attr;
 		int			len,
-					*attrsize;
+				   *attrsize;
 		bool	   *isnull;
 		GistEntryVector *evec;
 
@@ -354,7 +354,7 @@ gistunionsubkey(Relation r, GISTSTATE *giststate, IndexTuple *itvec, GIST_SPLITV
 							   &(evec->vector[real_len]),
 							   datum,
 							   NULL, NULL, (OffsetNumber) 0,
-							   ATTSIZE(datum, giststate->tupdesc, i + 1, IsNull),
+						   ATTSIZE(datum, giststate->tupdesc, i + 1, IsNull),
 							   FALSE, IsNull);
 				real_len++;
 
@@ -402,14 +402,14 @@ gistfindgroup(GISTSTATE *giststate, GISTENTRY *valvec, GIST_SPLITVEC *spl)
 	int			curid = 1;
 
 	/*
-	 * first key is always not null (see gistinsert), so we may not check
-	 * for nulls
+	 * first key is always not null (see gistinsert), so we may not check for
+	 * nulls
 	 */
 	for (i = 0; i < spl->spl_nleft; i++)
 	{
-		int j;
-		int len;
-		bool result;
+		int			j;
+		int			len;
+		bool		result;
 
 		if (spl->spl_idgrp[spl->spl_left[i]])
 			continue;
@@ -540,12 +540,12 @@ gistadjsubkey(Relation r,
 			for (j = 1; j < r->rd_att->natts; j++)
 			{
 				gistentryinit(entry, v->spl_lattr[j], r, NULL,
-						   (OffsetNumber) 0, v->spl_lattrsize[j], FALSE);
+							  (OffsetNumber) 0, v->spl_lattrsize[j], FALSE);
 				gistpenalty(giststate, j, &entry, v->spl_lisnull[j],
 							&identry[j], isnull[j], &lpenalty);
 
 				gistentryinit(entry, v->spl_rattr[j], r, NULL,
-						   (OffsetNumber) 0, v->spl_rattrsize[j], FALSE);
+							  (OffsetNumber) 0, v->spl_rattrsize[j], FALSE);
 				gistpenalty(giststate, j, &entry, v->spl_risnull[j],
 							&identry[j], isnull[j], &rpenalty);
 
@@ -555,8 +555,7 @@ gistadjsubkey(Relation r,
 		}
 
 		/*
-		 * add
-		 * XXX: refactor this to avoid duplicating code
+		 * add XXX: refactor this to avoid duplicating code
 		 */
 		if (lpenalty < rpenalty)
 		{
@@ -643,12 +642,13 @@ gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 	{
 		int			j;
 		IndexTuple	itup = (IndexTuple) PageGetItem(p, PageGetItemId(p, i));
-		
-		if ( !GistPageIsLeaf(p) && GistTupleIsInvalid(itup) ) {
+
+		if (!GistPageIsLeaf(p) && GistTupleIsInvalid(itup))
+		{
 			ereport(LOG,
 					(errmsg("index \"%s\" needs VACUUM or REINDEX to finish crash recovery",
 							RelationGetRelationName(r))));
-			continue; 
+			continue;
 		}
 
 		sum_grow = 0;
@@ -683,7 +683,7 @@ gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 		}
 	}
 
-	if ( which == InvalidOffsetNumber )
+	if (which == InvalidOffsetNumber)
 		which = FirstOffsetNumber;
 
 	return which;
@@ -775,7 +775,8 @@ gistDeCompressAtt(GISTSTATE *giststate, Relation r, IndexTuple tuple, Page p,
 
 	for (i = 0; i < r->rd_att->natts; i++)
 	{
-		Datum datum = index_getattr(tuple, i + 1, giststate->tupdesc, &isnull[i]);
+		Datum		datum = index_getattr(tuple, i + 1, giststate->tupdesc, &isnull[i]);
+
 		gistdentryinit(giststate, i, &attdata[i],
 					   datum, r, p, o,
 					   ATTSIZE(datum, giststate->tupdesc, i + 1, isnull[i]),
@@ -801,8 +802,8 @@ void
 GISTInitBuffer(Buffer b, uint32 f)
 {
 	GISTPageOpaque opaque;
-	Page            page;
-	Size            pageSize;
+	Page		page;
+	Size		pageSize;
 
 	pageSize = BufferGetPageSize(b);
 	page = BufferGetPage(b);
@@ -811,15 +812,16 @@ GISTInitBuffer(Buffer b, uint32 f)
 	opaque = GistPageGetOpaque(page);
 	opaque->flags = f;
 	opaque->rightlink = InvalidBlockNumber;
-	memset( &(opaque->nsn), 0, sizeof(GistNSN) );
+	memset(&(opaque->nsn), 0, sizeof(GistNSN));
 }
 
 void
-gistUserPicksplit(Relation r, GistEntryVector *entryvec, GIST_SPLITVEC *v, 
-		IndexTuple *itup, int len, GISTSTATE *giststate) {
+gistUserPicksplit(Relation r, GistEntryVector *entryvec, GIST_SPLITVEC *v,
+				  IndexTuple *itup, int len, GISTSTATE *giststate)
+{
 	/*
-	 * now let the user-defined picksplit function set up the split
-	 * vector; in entryvec have no null value!!
+	 * now let the user-defined picksplit function set up the split vector; in
+	 * entryvec have no null value!!
 	 */
 	FunctionCall2(&giststate->picksplitFn[0],
 				  PointerGetDatum(entryvec),
@@ -837,8 +839,8 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, GIST_SPLITVEC *v,
 	v->spl_risnull[0] = false;
 
 	/*
-	 * if index is multikey, then we must to try get smaller bounding box
-	 * for subkey(s)
+	 * if index is multikey, then we must to try get smaller bounding box for
+	 * subkey(s)
 	 */
 	if (r->rd_att->natts > 1)
 	{
@@ -854,35 +856,42 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, GIST_SPLITVEC *v,
 		gistunionsubkey(r, giststate, itup, v, false);
 
 		/*
-		 * if possible, we insert equivalent tuples with control by
-		 * penalty for a subkey(s)
+		 * if possible, we insert equivalent tuples with control by penalty
+		 * for a subkey(s)
 		 */
 		if (MaxGrpId > 1)
 			gistadjsubkey(r, itup, len, v, giststate);
 	}
 }
 
-Buffer  
-gistNewBuffer(Relation r) {
-	Buffer buffer = InvalidBuffer;
-	bool needLock;
+Buffer
+gistNewBuffer(Relation r)
+{
+	Buffer		buffer = InvalidBuffer;
+	bool		needLock;
 
-	while(true) {
+	while (true)
+	{
 		BlockNumber blkno = GetFreeIndexPage(&r->rd_node);
+
 		if (blkno == InvalidBlockNumber)
 			break;
 
 		buffer = ReadBuffer(r, blkno);
-		if ( ConditionalLockBuffer(buffer) ) {
-			Page page = BufferGetPage(buffer);
-			if ( GistPageIsDeleted( page ) ) {
-				GistPageSetNonDeleted( page );
+		if (ConditionalLockBuffer(buffer))
+		{
+			Page		page = BufferGetPage(buffer);
+
+			if (GistPageIsDeleted(page))
+			{
+				GistPageSetNonDeleted(page);
 				return buffer;
-			} else
+			}
+			else
 				LockBuffer(buffer, GIST_UNLOCK);
 		}
 
-		ReleaseBuffer( buffer );
+		ReleaseBuffer(buffer);
 	}
 
 	needLock = !RELATION_IS_LOCAL(r);
@@ -895,6 +904,6 @@ gistNewBuffer(Relation r) {
 
 	if (needLock)
 		UnlockRelationForExtension(r, ExclusiveLock);
- 
+
 	return buffer;
 }

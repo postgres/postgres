@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistscan.c,v 1.60 2005/09/22 18:49:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistscan.c,v 1.61 2005/09/22 20:44:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,11 +120,11 @@ gistrescan(PG_FUNCTION_ARGS)
 				scan->numberOfKeys * sizeof(ScanKeyData));
 
 		/*
-		 * Modify the scan key so that all the Consistent method is
-		 * called for all comparisons. The original operator is passed
-		 * to the Consistent function in the form of its strategy
-		 * number, which is available from the sk_strategy field, and
-		 * its subtype from the sk_subtype field.
+		 * Modify the scan key so that all the Consistent method is called for
+		 * all comparisons. The original operator is passed to the Consistent
+		 * function in the form of its strategy number, which is available
+		 * from the sk_strategy field, and its subtype from the sk_subtype
+		 * field.
 		 */
 		for (i = 0; i < scan->numberOfKeys; i++)
 			scan->keyData[i].sk_func = so->giststate->consistentFn[scan->keyData[i].sk_attno - 1];
@@ -138,7 +138,7 @@ gistmarkpos(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	GISTScanOpaque so;
-	GISTSearchStack  *o,
+	GISTSearchStack *o,
 			   *n,
 			   *tmp;
 
@@ -187,7 +187,7 @@ gistrestrpos(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	GISTScanOpaque so;
-	GISTSearchStack  *o,
+	GISTSearchStack *o,
 			   *n,
 			   *tmp;
 
@@ -308,9 +308,9 @@ ReleaseResources_gist(void)
 	GISTScanList next;
 
 	/*
-	 * Note: this should be a no-op during normal query shutdown. However,
-	 * in an abort situation ExecutorEnd is not called and so there may be
-	 * open index scans to clean up.
+	 * Note: this should be a no-op during normal query shutdown. However, in
+	 * an abort situation ExecutorEnd is not called and so there may be open
+	 * index scans to clean up.
 	 */
 	prev = NULL;
 
@@ -338,8 +338,8 @@ gistadjscans(Relation rel, int op, BlockNumber blkno, OffsetNumber offnum, XLogR
 	GISTScanList l;
 	Oid			relid;
 
-	if ( XLogRecPtrIsInvalid(newlsn) || XLogRecPtrIsInvalid(oldlsn) )
-		return; 
+	if (XLogRecPtrIsInvalid(newlsn) || XLogRecPtrIsInvalid(oldlsn))
+		return;
 
 	relid = RelationGetRelid(rel);
 	for (l = GISTScans; l != NULL; l = l->gsl_next)
@@ -365,7 +365,7 @@ gistadjone(IndexScanDesc scan,
 		   BlockNumber blkno,
 		   OffsetNumber offnum, XLogRecPtr newlsn, XLogRecPtr oldlsn)
 {
-	GISTScanOpaque so = (GISTScanOpaque) scan->opaque ;
+	GISTScanOpaque so = (GISTScanOpaque) scan->opaque;
 
 	adjustiptr(scan, &(scan->currentItemData), so->stack, op, blkno, offnum, newlsn, oldlsn);
 	adjustiptr(scan, &(scan->currentMarkData), so->markstk, op, blkno, offnum, newlsn, oldlsn);
@@ -399,7 +399,8 @@ adjustiptr(IndexScanDesc scan,
 			{
 				case GISTOP_DEL:
 					/* back up one if we need to */
-					if (curoff >= offnum && XLByteEQ(stk->lsn, oldlsn) ) /* the same vesrion of page */
+					if (curoff >= offnum && XLByteEQ(stk->lsn, oldlsn)) /* the same vesrion of
+																		 * page */
 					{
 						if (curoff > FirstOffsetNumber)
 						{
@@ -409,8 +410,7 @@ adjustiptr(IndexScanDesc scan,
 						else
 						{
 							/*
-							 * remember that we're before the current
-							 * tuple
+							 * remember that we're before the current tuple
 							 */
 							ItemPointerSet(iptr, blkno, FirstOffsetNumber);
 							if (iptr == &(scan->currentItemData))
@@ -435,6 +435,7 @@ gistfreestack(GISTSearchStack *s)
 	while (s != NULL)
 	{
 		GISTSearchStack *p = s->next;
+
 		pfree(s);
 		s = p;
 	}

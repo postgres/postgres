@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/access/gist/gistproc.c,v 1.1 2005/07/01 19:19:02 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/access/gist/gistproc.c,v 1.2 2005/09/22 20:44:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,10 +30,10 @@ typedef struct
 
 static int	compare_KB(const void *a, const void *b);
 static bool gist_box_leaf_consistent(BOX *key, BOX *query,
-									 StrategyNumber strategy);
+						 StrategyNumber strategy);
 static double size_box(Datum dbox);
 static bool rtree_internal_consistent(BOX *key, BOX *query,
-									  StrategyNumber strategy);
+						  StrategyNumber strategy);
 
 
 /**************************************************
@@ -268,11 +268,11 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 #define ADDLIST( list, unionD, pos, num ) do { \
 	if ( pos ) { \
 		if ( (unionD)->high.x < cur->high.x ) (unionD)->high.x	= cur->high.x; \
-		if ( (unionD)->low.x  > cur->low.x  ) (unionD)->low.x	= cur->low.x; \
+		if ( (unionD)->low.x  > cur->low.x	) (unionD)->low.x	= cur->low.x; \
 		if ( (unionD)->high.y < cur->high.y ) (unionD)->high.y	= cur->high.y; \
-		if ( (unionD)->low.y  > cur->low.y  ) (unionD)->low.y	= cur->low.y; \
+		if ( (unionD)->low.y  > cur->low.y	) (unionD)->low.y	= cur->low.y; \
 	} else { \
-			memcpy( (void*)(unionD), (void*) cur, sizeof( BOX ) );  \
+			memcpy( (void*)(unionD), (void*) cur, sizeof( BOX ) );	\
 	} \
 	(list)[pos] = num; \
 	(pos)++; \
@@ -411,62 +411,62 @@ gist_box_leaf_consistent(BOX *key, BOX *query, StrategyNumber strategy)
 		case RTLeftStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_left,
 													  PointerGetDatum(key),
-													  PointerGetDatum(query)));
+													PointerGetDatum(query)));
 			break;
 		case RTOverLeftStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_overleft,
 													  PointerGetDatum(key),
-													  PointerGetDatum(query)));
+													PointerGetDatum(query)));
 			break;
 		case RTOverlapStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_overlap,
 													  PointerGetDatum(key),
-													  PointerGetDatum(query)));
+													PointerGetDatum(query)));
 			break;
 		case RTOverRightStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_overright,
 													  PointerGetDatum(key),
-													  PointerGetDatum(query)));
+													PointerGetDatum(query)));
 			break;
 		case RTRightStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_right,
 													  PointerGetDatum(key),
-													  PointerGetDatum(query)));
+													PointerGetDatum(query)));
 			break;
 		case RTSameStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_same,
 													  PointerGetDatum(key),
-													  PointerGetDatum(query)));
+													PointerGetDatum(query)));
 			break;
 		case RTContainsStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_contain,
 													  PointerGetDatum(key),
-													  PointerGetDatum(query)));
+													PointerGetDatum(query)));
 			break;
 		case RTContainedByStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_contained,
 													  PointerGetDatum(key),
-													  PointerGetDatum(query)));
+													PointerGetDatum(query)));
 			break;
 		case RTOverBelowStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_overbelow,
 													  PointerGetDatum(key),
-													  PointerGetDatum(query)));
+													PointerGetDatum(query)));
 			break;
 		case RTBelowStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_below,
 													  PointerGetDatum(key),
-													  PointerGetDatum(query)));
+													PointerGetDatum(query)));
 			break;
 		case RTAboveStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_above,
 													  PointerGetDatum(key),
-													  PointerGetDatum(query)));
+													PointerGetDatum(query)));
 			break;
 		case RTOverAboveStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_overabove,
 													  PointerGetDatum(key),
-													  PointerGetDatum(query)));
+													PointerGetDatum(query)));
 			break;
 		default:
 			retval = FALSE;
@@ -477,7 +477,7 @@ gist_box_leaf_consistent(BOX *key, BOX *query, StrategyNumber strategy)
 static double
 size_box(Datum dbox)
 {
-	BOX	   *box = DatumGetBoxP(dbox);
+	BOX		   *box = DatumGetBoxP(dbox);
 
 	if (box == NULL || box->high.x <= box->low.x || box->high.y <= box->low.y)
 		return 0.0;
@@ -506,58 +506,58 @@ rtree_internal_consistent(BOX *key, BOX *query, StrategyNumber strategy)
 		case RTLeftStrategyNumber:
 			retval = !DatumGetBool(DirectFunctionCall2(box_overright,
 													   PointerGetDatum(key),
-													   PointerGetDatum(query)));
+													PointerGetDatum(query)));
 			break;
 		case RTOverLeftStrategyNumber:
 			retval = !DatumGetBool(DirectFunctionCall2(box_right,
 													   PointerGetDatum(key),
-													   PointerGetDatum(query)));
+													PointerGetDatum(query)));
 			break;
 		case RTOverlapStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_overlap,
 													  PointerGetDatum(key),
-													  PointerGetDatum(query)));
+													PointerGetDatum(query)));
 			break;
 		case RTOverRightStrategyNumber:
 			retval = !DatumGetBool(DirectFunctionCall2(box_left,
 													   PointerGetDatum(key),
-													   PointerGetDatum(query)));
+													PointerGetDatum(query)));
 			break;
 		case RTRightStrategyNumber:
 			retval = !DatumGetBool(DirectFunctionCall2(box_overleft,
 													   PointerGetDatum(key),
-													   PointerGetDatum(query)));
+													PointerGetDatum(query)));
 			break;
 		case RTSameStrategyNumber:
 		case RTContainsStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_contain,
 													  PointerGetDatum(key),
-													  PointerGetDatum(query)));
+													PointerGetDatum(query)));
 			break;
 		case RTContainedByStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_overlap,
 													  PointerGetDatum(key),
-													  PointerGetDatum(query)));
+													PointerGetDatum(query)));
 			break;
 		case RTOverBelowStrategyNumber:
 			retval = !DatumGetBool(DirectFunctionCall2(box_above,
 													   PointerGetDatum(key),
-													   PointerGetDatum(query)));
+													PointerGetDatum(query)));
 			break;
 		case RTBelowStrategyNumber:
 			retval = !DatumGetBool(DirectFunctionCall2(box_overabove,
 													   PointerGetDatum(key),
-													   PointerGetDatum(query)));
+													PointerGetDatum(query)));
 			break;
 		case RTAboveStrategyNumber:
 			retval = !DatumGetBool(DirectFunctionCall2(box_overbelow,
 													   PointerGetDatum(key),
-													   PointerGetDatum(query)));
+													PointerGetDatum(query)));
 			break;
 		case RTOverAboveStrategyNumber:
 			retval = !DatumGetBool(DirectFunctionCall2(box_below,
 													   PointerGetDatum(key),
-													   PointerGetDatum(query)));
+													PointerGetDatum(query)));
 			break;
 		default:
 			retval = FALSE;
@@ -621,8 +621,8 @@ gist_poly_consistent(PG_FUNCTION_ARGS)
 
 	/*
 	 * Since the operators are marked lossy anyway, we can just use
-	 * rtree_internal_consistent even at leaf nodes.  (This works
-	 * in part because the index entries are bounding boxes not polygons.)
+	 * rtree_internal_consistent even at leaf nodes.  (This works in part
+	 * because the index entries are bounding boxes not polygons.)
 	 */
 	result = rtree_internal_consistent(DatumGetBoxP(entry->key),
 									   &(query->boundbox), strategy);
@@ -651,7 +651,7 @@ gist_circle_compress(PG_FUNCTION_ARGS)
 		retval = palloc(sizeof(GISTENTRY));
 		if (DatumGetCircleP(entry->key) != NULL)
 		{
-			CIRCLE    *in = DatumGetCircleP(entry->key);
+			CIRCLE	   *in = DatumGetCircleP(entry->key);
 			BOX		   *r;
 
 			r = (BOX *) palloc(sizeof(BOX));
@@ -683,7 +683,7 @@ Datum
 gist_circle_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	CIRCLE    *query = PG_GETARG_CIRCLE_P(1);
+	CIRCLE	   *query = PG_GETARG_CIRCLE_P(1);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 	BOX			bbox;
 	bool		result;
@@ -693,8 +693,8 @@ gist_circle_consistent(PG_FUNCTION_ARGS)
 
 	/*
 	 * Since the operators are marked lossy anyway, we can just use
-	 * rtree_internal_consistent even at leaf nodes.  (This works
-	 * in part because the index entries are bounding boxes not circles.)
+	 * rtree_internal_consistent even at leaf nodes.  (This works in part
+	 * because the index entries are bounding boxes not circles.)
 	 */
 	bbox.high.x = query->center.x + query->radius;
 	bbox.low.x = query->center.x - query->radius;
