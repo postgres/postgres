@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Sep 22 12:01:48 EDT 2005
+Last updated:		Thu Sep 22 17:50:57 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -455,6 +455,8 @@ SQL Commands
 	  currently allowed.
 
 	o Allow COPY to output from views
+
+	  Another idea would be to allow actual SELECT queries in a COPY.
 
 
 * GRANT/REVOKE
