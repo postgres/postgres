@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Sep 20 16:51:26 EDT 2005
+Last updated:		Thu Sep 22 12:01:48 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -453,6 +453,9 @@ SQL Commands
 	  issue is that no other backend should be able to add to 
 	  the table at the same time, which is something that is 
 	  currently allowed.
+
+	o Allow COPY to output from views
+
 
 * GRANT/REVOKE
 
