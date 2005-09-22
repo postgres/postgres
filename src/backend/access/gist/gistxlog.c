@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *           $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.7 2005/07/01 13:18:17 teodor Exp $
+ *           $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.8 2005/09/22 18:49:45 tgl Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -162,7 +162,7 @@ gistRedoEntryUpdateRecord(XLogRecPtr lsn, XLogRecord *record, bool isnewroot) {
 		return;
 	buffer = XLogReadBuffer(false, reln, xlrec.data->blkno);
 	if (!BufferIsValid(buffer))
-		elog(PANIC, "gistRedoEntryUpdateRecord: block %u unfound", xlrec.data->blkno);
+		elog(PANIC, "block %u unfound", xlrec.data->blkno);
 	page = (Page) BufferGetPage(buffer);
 
 	if ( isnewroot ) {
@@ -173,7 +173,7 @@ gistRedoEntryUpdateRecord(XLogRecPtr lsn, XLogRecord *record, bool isnewroot) {
 		}
 	} else { 
 		if ( PageIsNew((PageHeader) page) )
-			elog(PANIC, "gistRedoEntryUpdateRecord: uninitialized page blkno %u", xlrec.data->blkno);
+			elog(PANIC, "uninitialized page %u", xlrec.data->blkno);
 		if (XLByteLE(lsn, PageGetLSN(page))) {
 			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 			ReleaseBuffer(buffer);
@@ -270,11 +270,10 @@ gistRedoPageSplitRecord(XLogRecPtr lsn, XLogRecord *record ) {
 	/* first of all wee need get F_LEAF flag from original page */
 	buffer = XLogReadBuffer( false, reln, xlrec.data->origblkno);
 	if (!BufferIsValid(buffer))
-		elog(PANIC, "gistRedoEntryUpdateRecord: block %u unfound", xlrec.data->origblkno);
+		elog(PANIC, "block %u unfound", xlrec.data->origblkno);
 	page = (Page) BufferGetPage(buffer);
 	if ( PageIsNew((PageHeader) page) )
-		elog(PANIC, "gistRedoEntryUpdateRecord: uninitialized page blkno %u",
-				xlrec.data->origblkno);
+		elog(PANIC, "uninitialized page %u", xlrec.data->origblkno);
 
 	flags = ( GistPageIsLeaf(page) ) ? F_LEAF : 0;
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
@@ -287,7 +286,7 @@ gistRedoPageSplitRecord(XLogRecPtr lsn, XLogRecord *record ) {
  
 		buffer = XLogReadBuffer( !isorigpage, reln, newpage->header->blkno);
 		if (!BufferIsValid(buffer))
-			elog(PANIC, "gistRedoEntryUpdateRecord: block %u unfound", newpage->header->blkno);
+			elog(PANIC, "block %u unfound", newpage->header->blkno);
 		page = (Page) BufferGetPage(buffer);
 			
 		if (XLByteLE(lsn, PageGetLSN(page))) {
@@ -330,7 +329,7 @@ gistRedoCreateIndex(XLogRecPtr lsn, XLogRecord *record) {
 		return;
 	buffer = XLogReadBuffer( true, reln, GIST_ROOT_BLKNO);
 	if (!BufferIsValid(buffer))
-		elog(PANIC, "gistRedoCreateIndex: block unfound");
+		elog(PANIC, "root block unfound");
 	page = (Page) BufferGetPage(buffer);
 
 	if (!PageIsNew((PageHeader) page) && XLByteLE(lsn, PageGetLSN(page))) {
@@ -450,6 +449,7 @@ gist_desc(char *buf, uint8 xl_info, char *rec)
 				((gistxlogInsertComplete*)rec)->node.spcNode, 
 				((gistxlogInsertComplete*)rec)->node.dbNode, 
 				((gistxlogInsertComplete*)rec)->node.relNode);
+			break;
 		default:
 			elog(PANIC, "gist_desc: unknown op code %u", info);
 	}
@@ -474,9 +474,9 @@ static Buffer
 gistXLogReadAndLockBuffer( Relation r, BlockNumber blkno ) {
 	Buffer  buffer = XLogReadBuffer( false, r, blkno );
 	if (!BufferIsValid(buffer))
-		elog(PANIC, "gistXLogReadAndLockBuffer: block %u unfound", blkno);
+		elog(PANIC, "block %u unfound", blkno);
 	if ( PageIsNew( (PageHeader)(BufferGetPage(buffer)) ) )
-		elog(PANIC, "gistXLogReadAndLockBuffer: uninitialized page blkno %u", blkno);
+		elog(PANIC, "uninitialized page %u", blkno);
 	
 	return buffer;
 }
@@ -507,7 +507,7 @@ gixtxlogFindPath( Relation index, gistIncompleteInsert *insert ) {
 			ptr = ptr->parent;
 		}
 	} else
-		elog(LOG, "gixtxlogFindPath: lost parent for block %u", insert->origblkno);
+		elog(LOG, "lost parent for block %u", insert->origblkno);
 }
 
 /*
@@ -545,7 +545,7 @@ gistContinueInsert(gistIncompleteInsert *insert) {
         	Page   page;
 
 		if (!BufferIsValid(buffer))
-			elog(PANIC, "gistContinueInsert: root block unfound");
+			elog(PANIC, "root block unfound");
 
         	page = BufferGetPage(buffer);
 		if (XLByteLE(insert->lsn, PageGetLSN(page))) {
@@ -580,10 +580,10 @@ gistContinueInsert(gistIncompleteInsert *insert) {
 			numbuffer=1;
 			buffers[numbuffer-1] = XLogReadBuffer(false, index, insert->path[i]);
 			if (!BufferIsValid(buffers[numbuffer-1]))
-				elog(PANIC, "gistContinueInsert: block %u unfound", insert->path[i]);
+				elog(PANIC, "block %u unfound", insert->path[i]);
 			pages[numbuffer-1] = BufferGetPage( buffers[numbuffer-1] );
 			if ( PageIsNew((PageHeader)(pages[numbuffer-1])) )
-				elog(PANIC, "gistContinueInsert: uninitialized page blkno %u", insert->path[i]);
+				elog(PANIC, "uninitialized page %u", insert->path[i]);
 
 			if (XLByteLE(insert->lsn, PageGetLSN(pages[numbuffer-1]))) {
 				LockBuffer(buffers[numbuffer-1], BUFFER_LOCK_UNLOCK);
@@ -614,7 +614,7 @@ gistContinueInsert(gistIncompleteInsert *insert) {
 				/* no space left on page, so we should split */
 				buffers[numbuffer] = XLogReadBuffer(true, index, P_NEW);
 				if (!BufferIsValid(buffers[numbuffer]))
-					elog(PANIC, "gistContinueInsert: can't create new block");
+					elog(PANIC, "could not obtain new block");
         			GISTInitBuffer(buffers[numbuffer], 0);
 				pages[numbuffer] = BufferGetPage( buffers[numbuffer] );
 				gistfillbuffer( index, pages[numbuffer], itup, lenitup, FirstOffsetNumber );
@@ -628,13 +628,13 @@ gistContinueInsert(gistIncompleteInsert *insert) {
 
 					/* sanity check */
 					if ( i+1 != insert->pathlen )
-						elog(PANIC,"gistContinueInsert: can't restore index '%s'",
-							RelationGetRelationName( index ));
+						elog(PANIC,"unexpected pathlen in index \"%s\"",
+							 RelationGetRelationName( index ));
 
 					/* fill new page */ 
 					buffers[numbuffer] = XLogReadBuffer(true, index, P_NEW);
 					if (!BufferIsValid(buffers[numbuffer]))
-						elog(PANIC, "gistContinueInsert: can't create new block");
+						elog(PANIC, "could not obtain new block");
         				GISTInitBuffer(buffers[numbuffer], 0);
 					pages[numbuffer] = BufferGetPage( buffers[numbuffer] );
 					gistfillbuffer(index, pages[numbuffer], parentitup, pituplen, FirstOffsetNumber);
@@ -644,12 +644,12 @@ gistContinueInsert(gistIncompleteInsert *insert) {
 					GISTInitBuffer(buffers[0], 0);
 					for(j=1;j<numbuffer;j++) {
 						IndexTuple  tuple = gist_form_invalid_tuple( BufferGetBlockNumber( buffers[j] ) );
-						if ( InvalidOffsetNumber == PageAddItem(pages[0], 
+						if (PageAddItem(pages[0], 
 								(Item)tuple,
 								IndexTupleSize( tuple ),
 								(OffsetNumber)j,
-								LP_USED) )
-							elog( PANIC,"gistContinueInsert: can't restore index '%s'",
+								LP_USED) == InvalidOffsetNumber)
+							elog(PANIC, "failed to add item to index page in \"%s\"",
 									RelationGetRelationName( index ));
 						}
 				}
@@ -668,8 +668,10 @@ gistContinueInsert(gistIncompleteInsert *insert) {
 		}
 	}
 
-	elog(LOG,"Detected incomplete insert into GiST index %u/%u/%u; It's desirable to vacuum or reindex index",
-		 insert->node.spcNode, insert->node.dbNode, insert->node.relNode);
+	ereport(LOG,
+			(errmsg("index %u/%u/%u needs VACUUM or REINDEX to finish crash recovery",
+					insert->node.spcNode, insert->node.dbNode, insert->node.relNode),
+			 errdetail("Incomplete insertion detected during crash replay.")));
 }
 
 void

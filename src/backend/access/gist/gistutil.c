@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *          $PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.5 2005/06/30 17:52:14 teodor Exp $
+ *          $PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.6 2005/09/22 18:49:45 tgl Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -71,7 +71,7 @@ gistfillbuffer(Relation r, Page page, IndexTuple *itup,
 		l = PageAddItem(page, (Item) itup[i], IndexTupleSize(itup[i]),
 						off, LP_USED);
 		if (l == InvalidOffsetNumber)
-			elog(ERROR, "gistfillbuffer: failed to add index item to \"%s\"",
+			elog(ERROR, "failed to add item to index page in \"%s\"",
 				 RelationGetRelationName(r));
 		off++;
 	}
@@ -645,8 +645,9 @@ gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 		IndexTuple	itup = (IndexTuple) PageGetItem(p, PageGetItemId(p, i));
 		
 		if ( !GistPageIsLeaf(p) && GistTupleIsInvalid(itup) ) {
-			elog(LOG, "It's desirable to vacuum or reindex GiST index '%s' due to crash recovery", 
-				RelationGetRelationName(r));
+			ereport(LOG,
+					(errmsg("index \"%s\" needs VACUUM or REINDEX to finish crash recovery",
+							RelationGetRelationName(r))));
 			continue; 
 		}
 
