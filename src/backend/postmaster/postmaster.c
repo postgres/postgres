@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.467 2005/08/20 23:26:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.468 2005/09/22 15:33:35 momjian Exp $
  *
  * NOTES
  *
@@ -2701,8 +2701,9 @@ BackendRun(Port *port)
 
 	if (Log_connections)
 		ereport(LOG,
-				(errmsg("connection received: host=%s port=%s",
-						remote_host, remote_port)));
+				(errmsg("connection received: host=%s%s%s",
+						remote_host, remote_port[0] ? " port=" : "",
+						remote_port)));
 
 	/*
 	 * save remote_host and remote_port in port stucture

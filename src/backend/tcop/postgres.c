@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.460 2005/09/19 17:21:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.461 2005/09/22 15:33:36 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -3525,9 +3525,11 @@ log_disconnections(int code, Datum arg)
 	snprintf(dbname, sizeof(dbname), " database=%s", port->database_name);
 	snprintf(remote_host, sizeof(remote_host), " host=%s",
 			 port->remote_host);
-	snprintf(remote_port, sizeof(remote_port), " port=%s", port->remote_port);
-
-
+	if (port->remote_port[0])
+		snprintf(remote_port, sizeof(remote_port), " port=%s", port->remote_port);
+	else
+		remote_port[0] = '\0';
+		
 	gettimeofday(&end, NULL);
 
 	if (end.tv_usec < port->session_start.tv_usec)
