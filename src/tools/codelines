@@ -1,0 +1,4 @@
+:
+
+# This script is used to compute the total number of "C" lines in the release
+find . -name '*.[chyl]' | xargs cat| wc -l
