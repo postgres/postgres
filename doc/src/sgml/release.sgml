@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.370 2005/09/22 23:24:58 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.371 2005/09/22 23:47:44 momjian Exp $
 
 Typical markup:
 
@@ -213,6 +213,27 @@ pg_[A-Za-z0-9_]                 <application>
         Formerly it was possible to accidentally <quote>orphan</> objects by
         deleting their owner.  While this could be recovered from, it
         was messy and unpleasant.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       Improve performance for partitioned tables (Simon)
+      </term>
+
+      <listitem>
+       <para>
+        The new <varname>constraint_exclusion</varname> configuration
+        parameter avoids lookups on child tables where constraints indicate
+        that no matching rows exist in the child table.
+       </para>
+       <para>
+        This allows for a basic type of table partitioning. If child tables
+        store separate key ranges and this is enforced using appropriate
+        <command>CHECK</> constraints, the optimizer will skip child
+        table accesses when the constraint guarantees no matching rows
+        exist in the child table.
        </para>
       </listitem>
      </varlistentry>
@@ -507,21 +528,6 @@ pg_[A-Za-z0-9_]                 <application>
         after a checkpoint. This option turns off that functionality for more
         speed.  This is safe to use with battery-backed disk caches where
         partial page writes cannot happen.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add <varname>constraint_exclusion</varname> configuration
-        parameter to restrict child table lookups based on table
-        constraints (Simon)
-       </para>
-       <para>
-        This allows for a basic type of table partitioning. If child tables
-        store separate key ranges and this is enforced using appropriate
-        <command>CHECK</> constraints, the optimizer will skip child
-        table accesses when the constraint guarantees no matching rows
-        exist in the child table.
        </para>
       </listitem>
 
