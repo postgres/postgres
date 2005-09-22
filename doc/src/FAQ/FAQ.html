@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Mon May 30 09:11:03 EDT 2005</P>
+    <P>Last updated: Fri Sep 16 14:07:22 EDT 2005</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)
@@ -26,7 +26,7 @@
     <HR>
 
     <H2 align="center">General Questions</H2>
-    <A href="#1.1">1.1</A>) What is PostgreSQL? How is it pronounced?<BR>
+     <A href="#1.1">1.1</A>) What is PostgreSQL? How is it pronounced?<BR>
      <A href="#1.2">1.2</A>) What is the copyright of PostgreSQL?<BR>
      <A href="#1.3">1.3</A>) What platforms does PostgreSQL support?<BR>
      <A href="#1.4">1.4</A>) Where can I get PostgreSQL?<BR>
@@ -116,7 +116,9 @@
     does not exist" errors when accessing temporary tables in PL/PgSQL
     functions?<BR>
      <A href="#4.20">4.20</A>) What replication solutions are available?<BR>
-     
+     <A href="#4.21">4.21</A>) Why are my table and column names not
+    recognized in my query?<BR>
+
 
     <HR>
 
@@ -124,8 +126,10 @@
 
     <H3><A name="1.1">1.1</A>) What is PostgreSQL? How is it pronounced?</H3>
 
-    <P>PostgreSQL is pronounced <I>Post-Gres-Q-L</I>, also called just
-    <I>Postgres</I>.</P>
+    <P>PostgreSQL is pronounced <I>Post-Gres-Q-L</I>, and is also sometimes 
+    referred to as just <I>Postgres</I>. An audio file is available in 
+    <a href="http://www.postgresql.org/files/postgresql.mp3">MP3 format</a> for 
+    those would like to hear the pronunciation.</P>
 
     <P>PostgreSQL is an object-relational database system that has the
     features of traditional commercial database systems with
@@ -231,7 +235,7 @@
 
     <H3><A name="1.7">1.7</A>) What is the latest release?</H3>
 
-    <P>The latest release of PostgreSQL is version 8.0.2.</P>
+    <P>The latest release of PostgreSQL is version 8.0.3.</P>
 
     <P>We plan to have a major release every year, with minor releases
     every few months.</P>
@@ -613,6 +617,12 @@ table?</TD><TD>unlimited</TD></TR>
     <P>The maximum table size and maximum number of columns can be
     quadrupled by increasing the default block size to 32k.</P>
 
+    <P>One limitation is that indexes can not be created on columns
+    longer than about 2,000 characters. Fortunately, such indexes are
+    rarely needed. Uniqueness is best guaranteed by a funtion index
+    of an MD5 hash of the long column, and full text indexing
+    allows for searching of words within the column.</P>
+
     <H3><A name="4.5">4.5</A>) How much database disk space is required
     to store data from a typical text file?</H3>
 
@@ -625,23 +635,23 @@ table?</TD><TD>unlimited</TD></TR>
     The size of the PostgreSQL database file containing this data can
     be estimated as 6.4 MB:</P>
 <PRE>
-    32 bytes: each row header (approximate)
+    28 bytes: each row header (approximate)
     24 bytes: one int field and one text field
    + 4 bytes: pointer on page to tuple
    ----------------------------------------
-    60 bytes per row
+    56 bytes per row
 
    The data page size in PostgreSQL is 8192 bytes (8 KB), so:
 
    8192 bytes per page
-   -------------------   =  136 rows per database page (rounded down)
-     60 bytes per row
+   -------------------   =  146 rows per database page (rounded down)
+     56 bytes per row
 
    100000 data rows
-   --------------------  =  735 database pages (rounded up)
-      128 rows per page
+   --------------------  =  685 database pages (rounded up)
+      146 rows per page
 
-735 database pages * 8192 bytes per page  =  6,021,120 bytes (6 MB)
+685 database pages * 8192 bytes per page  =  5,611,520 bytes (5.6 MB)
 </PRE>
 
     <P>Indexes do not require as much overhead, but do contain the data
@@ -740,7 +750,12 @@ table?</TD><TD>unlimited</TD></TR>
 <PRE>
     CREATE INDEX tabindex ON tab (lower(col));
 </PRE>
-
+    <P>If the above index is created as <SMALL>UNIQUE</SMALL>, though
+    the column can store upper and lowercase characters, it can not have
+    identical values that differ only in case. To force a particular
+    case to be stored in the column, use a <SMALL>CHECK</SMALL>
+    constraint or a trigger.</P>
+					 
     <H3><A name="4.9">4.9</A>) In a query, how do I detect if a field
     is <SMALL>NULL</SMALL>?  How can I sort on whether a field is <SMALL>
     NULL</SMALL> or not?</H3>
@@ -1000,5 +1015,22 @@ length</TD></TR>
 
     <P>There are also commercial and hardware-based replication solutions
     available supporting a variety of replication models.</P>
+
+    <H3><A name="4.21">4.21</A>) Why are my table and column names not
+    recognized in my query?</H3>
+
+    <P>The most common cause is the use of double-quotes around table or
+    column names during table creation. When double-quotes are used,
+    table and column names (called identifiers) are stored <a
+    href="http://www.postgresql.org/docs/8.0/static/sql-syntax.html#SQL-
+    SYNTAX-IDENTIFIERS">case-sensitive</a>, meaning you must use
+    double-quotes when referencing the names in a query. Some interfaces,
+    like pgAdmin, automatically double-quote identifiers during table
+    creation. So, for identifiers to be recognized, you must either:
+    <UL>
+    <LI>Avoid double-quoting identifiers when creating tables</LI>
+    <LI>Use only lowercase characters in identifiers</LI>
+    <LI>Double-quote identifiers when referencing them in queries</LI>
+    </UL>
   </BODY>
 </HTML>

@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon May 30 09:11:03 EDT 2005
+   Last updated: Fri Sep 16 14:07:22 EDT 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -79,13 +79,16 @@
    4.19) Why do I get "relation with OID ##### does not exist" errors
    when accessing temporary tables in PL/PgSQL functions?
    4.20) What replication solutions are available?
+   4.21) Why are my table and column names not recognized in my query?
      _________________________________________________________________
    
                              General Questions
                                       
   1.1) What is PostgreSQL? How is it pronounced?
   
-   PostgreSQL is pronounced Post-Gres-Q-L, also called just Postgres.
+   PostgreSQL is pronounced Post-Gres-Q-L, and is also sometimes referred
+   to as just Postgres. An audio file is available in MP3 format for
+   those would like to hear the pronunciation.
    
    PostgreSQL is an object-relational database system that has the
    features of traditional commercial database systems with enhancements
@@ -179,7 +182,7 @@
    
   1.7) What is the latest release?
   
-   The latest release of PostgreSQL is version 8.0.2.
+   The latest release of PostgreSQL is version 8.0.3.
    
    We plan to have a major release every year, with minor releases every
    few months.
@@ -469,6 +472,12 @@
    The maximum table size and maximum number of columns can be quadrupled
    by increasing the default block size to 32k.
    
+   One limitation is that indexes can not be created on columns longer
+   than about 2,000 characters. Fortunately, such indexes are rarely
+   needed. Uniqueness is best guaranteed by a funtion index of an MD5
+   hash of the long column, and full text indexing allows for searching
+   of words within the column.
+   
   4.5) How much database disk space is required to store data from a typical
   text file?
   
@@ -480,23 +489,23 @@
    twenty bytes in length. The flat file would be 2.8 MB. The size of the
    PostgreSQL database file containing this data can be estimated as 6.4
    MB:
-    32 bytes: each row header (approximate)
+    28 bytes: each row header (approximate)
     24 bytes: one int field and one text field
    + 4 bytes: pointer on page to tuple
    ----------------------------------------
-    60 bytes per row
+    56 bytes per row
 
    The data page size in PostgreSQL is 8192 bytes (8 KB), so:
 
    8192 bytes per page
-   -------------------   =  136 rows per database page (rounded down)
-     60 bytes per row
+   -------------------   =  146 rows per database page (rounded down)
+     56 bytes per row
 
    100000 data rows
-   --------------------  =  735 database pages (rounded up)
-      128 rows per page
+   --------------------  =  685 database pages (rounded up)
+      146 rows per page
 
-735 database pages * 8192 bytes per page  =  6,021,120 bytes (6 MB)
+685 database pages * 8192 bytes per page  =  5,611,520 bytes (5.6 MB)
 
    Indexes do not require as much overhead, but do contain the data that
    is being indexed, so they can be large also.
@@ -576,6 +585,11 @@
    expresssion index, it will be used:
     CREATE INDEX tabindex ON tab (lower(col));
 
+   If the above index is created as UNIQUE, though the column can store
+   upper and lowercase characters, it can not have identical values that
+   differ only in case. To force a particular case to be stored in the
+   column, use a CHECK constraint or a trigger.
+   
   4.9) In a query, how do I detect if a field is NULL? How can I sort on
   whether a field is NULL or not?
   
@@ -774,3 +788,16 @@
    
    There are also commercial and hardware-based replication solutions
    available supporting a variety of replication models.
+   
+  4.21) Why are my table and column names not recognized in my query?
+  
+   The most common cause is the use of double-quotes around table or
+   column names during table creation. When double-quotes are used, table
+   and column names (called identifiers) are stored case-sensitive,
+   meaning you must use double-quotes when referencing the names in a
+   query. Some interfaces, like pgAdmin, automatically double-quote
+   identifiers during table creation. So, for identifiers to be
+   recognized, you must either:
+     * Avoid double-quoting identifiers when creating tables
+     * Use only lowercase characters in identifiers
+     * Double-quote identifiers when referencing them in queries
