@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.371 2005/09/22 23:47:44 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.372 2005/09/23 02:25:35 momjian Exp $
 
 Typical markup:
 
@@ -177,7 +177,9 @@ pg_[A-Za-z0-9_]                 <application>
         Integrating autovacuum into the server allows it to be
         automatically started and stopped in sync with the database
         server, and allows autovacuum to be configured from
-        <filename>postgresql.conf</>.
+        <filename>postgresql.conf</>.  Autovacuum now checks to see if
+        the database is in danger of xid wraparound and
+        <command>VACUUM</command>s the whole database if needed.
        </para>
       </listitem>
      </varlistentry>
