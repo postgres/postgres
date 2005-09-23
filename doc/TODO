@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Sep 23 16:32:41 EDT 2005
+Last updated:		Fri Sep 23 16:41:34 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -528,6 +528,7 @@ SQL Commands
 	o Add support for OUT and INOUT parameters to languages other 
 	  than PL/PgSQL
 	o Add single-step debugging of PL/PgSQL functions
+	o Allow PL/PgSQL to support WITH HOLD cursors
 
 
 Clients
