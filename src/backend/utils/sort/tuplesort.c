@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.49 2005/05/25 21:40:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.50 2005/09/23 15:36:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1332,7 +1332,7 @@ beginmerge(Tuplesortstate *state)
  * as explained in the header comments of this file.  Load tuples from each
  * active source tape until the tape's run is exhausted or it has used up
  * its fair share of available memory.	In any case, we guarantee that there
- * is at one preread tuple available from each unexhausted input tape.
+ * is at least one preread tuple available from each unexhausted input tape.
  */
 static void
 mergepreread(Tuplesortstate *state)
