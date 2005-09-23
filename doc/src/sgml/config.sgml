@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.19 2005/09/21 20:33:33 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.20 2005/09/23 02:06:58 momjian Exp $
 -->
 <chapter Id="runtime-config">
   <title>Run-time Configuration</title>
@@ -2920,6 +2920,8 @@ SELECT * FROM parent WHERE key = 2400;
        <para>
         Controls whether the server should start the
         autovacuum subprocess.  This is off by default.
+        <varname>stats_start_collector</> and <varname>stats_row_level</>
+        must also be on for this to start.
         This option can only be set at server start or in the
         <filename>postgresql.conf</filename> file.
        </para>
