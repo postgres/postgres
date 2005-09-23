@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.510 2005/09/05 23:50:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.511 2005/09/23 22:25:25 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -623,10 +623,6 @@ OptRoleElem:
 					$$ = makeDefElem("unencryptedPassword",
 									 (Node *)makeString($3));
 				}
-			| SYSID Iconst
-				{
-					$$ = makeDefElem("sysid", (Node *)makeInteger($2));
-				}
 			| SUPERUSER_P
 				{
 					$$ = makeDefElem("superuser", (Node *)makeInteger(TRUE));
@@ -680,17 +676,19 @@ OptRoleElem:
 				{
 					$$ = makeDefElem("connectionlimit", (Node *)makeInteger($3));
 				}
-			| IN_P ROLE name_list
-				{
-					$$ = makeDefElem("addroleto", (Node *)$3);
-				}
-			| IN_P GROUP_P name_list
-				{
-					$$ = makeDefElem("addroleto", (Node *)$3);
-				}
 			| VALID UNTIL Sconst
 				{
 					$$ = makeDefElem("validUntil", (Node *)makeString($3));
+				}
+		/*	Supported but not documented for roles, for use by ALTER GROUP. */
+			| USER name_list
+				{
+					$$ = makeDefElem("rolemembers", (Node *)$2);
+				}
+		/* The following are not supported by ALTER ROLE/USER/GROUP */
+			| SYSID Iconst
+				{
+					$$ = makeDefElem("sysid", (Node *)makeInteger($2));
 				}
 			| ADMIN name_list
 				{
@@ -700,9 +698,13 @@ OptRoleElem:
 				{
 					$$ = makeDefElem("rolemembers", (Node *)$2);
 				}
-			| USER name_list
+			| IN_P ROLE name_list
 				{
-					$$ = makeDefElem("rolemembers", (Node *)$2);
+					$$ = makeDefElem("addroleto", (Node *)$3);
+				}
+			| IN_P GROUP_P name_list
+				{
+					$$ = makeDefElem("addroleto", (Node *)$3);
 				}
 		;
 
