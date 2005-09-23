@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.23 2005/09/22 23:56:46 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.24 2005/09/23 02:01:35 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -52,10 +52,16 @@ where <replaceable class="PARAMETER">constraint</replaceable> is:
    into a single location for maintenance.  For example, an email address
    column may be used in several tables, all with the same properties.
    Define a domain and use that rather than setting up each table's
-   constraints individually. <note>Keep in mind also that declaring a
-   function result value as a domain is pretty dangerous, because none of
-   the PLs enforce domain constraints on their results.</note>
+   constraints individually. 
   </para>
+
+  <note>
+  <para>
+   Keep in mind also that declaring a function result value as a domain 
+   is pretty dangerous, because none of the PLs enforce domain constraints 
+   on their results.
+  </para>
+  </note>
  </refsect1>
 
  <refsect1>

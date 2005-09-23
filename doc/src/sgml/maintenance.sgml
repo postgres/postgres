@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.47 2005/09/16 03:12:32 alvherre Exp $
+$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.48 2005/09/23 02:01:34 momjian Exp $
 -->
 
 <chapter id="maintenance">
@@ -180,7 +180,8 @@ $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.47 2005/09/16 03:12:32 alvh
     rate of data modification <command>VACUUM</command> busy tables as
     often as once every few minutes.)  If you have multiple databases
     in a cluster, don't forget to <command>VACUUM</command> each one;
-    the program <filename>vacuumdb</> may be helpful.
+    the program <xref linkend="app-vacuumdb" endterm="app-vacuumdb-title">
+    may be helpful.
    </para>
 
    <para>
@@ -466,7 +467,7 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
    <para>
     Beginning in <productname>PostgreSQL </productname> 8.1, there is a
     separate optional server process called the <firstterm>autovacuum
-    daemon</firstterm>, whose purpose is to automate the issuance of
+    daemon</firstterm>, whose purpose is to automate the execution of
     <command>VACUUM</command> and <command>ANALYZE </command> commands.
     When enabled, the autovacuum daemon runs periodically and checks for
     tables that have had a large number of inserted, updated or deleted
@@ -521,29 +522,29 @@ vacuum threshold = vacuum base threshold + vacuum scale factor * number of tuple
 
    <para>
     Note that if any of the values in <structname>pg_autovacuum</structname>
-    is set to a negative number, or if a tuple is not present at all in
+    are set to a negative number, or if a tuple is not present at all in
     <structname>pg_autovacuum</structname> for any particular table, the
     equivalent value from <filename>postgresql.conf</filename> is used.
    </para>
 
    <para>
     Besides the base threshold values and scale factors, there are three
-    parameters that can be set for each table in <structname>pg_autovacuum</structname>: 
-    the vacuum cost delay
+    parameters that can be set for each table in <structname>pg_autovacuum</structname>. 
+    The first parameter, <structname>pg_autovacuum</>.<structfield>enabled</>,
+    can be used to instruct the autovacuum daemon to skip any particular table
+    by setting it to <literal>false</literal>.
+    The other two, the vacuum cost delay
     (<structname>pg_autovacuum</structname>.<structfield>vac_cost_delay</structfield>)
     and the vacuum cost limit
-    (<structname>pg_autovacuum</structname>.<structfield>vac_cost_limit</structfield>).
-    They are used to set table-specific values for the
+    (<structname>pg_autovacuum</structname>.<structfield>vac_cost_limit</structfield>), 
+    are used to set table-specific values for the
     <xref linkend="runtime-config-resource-vacuum-cost" endterm="runtime-config-resource-vacuum-cost-title">
     feature.  The above note about negative values also applies here, but
     also note that if the <filename>postgresql.conf</filename> variables
     <varname>autovacuum_vacuum_cost_limit</varname> and
     <varname>autovacuum_vacuum_cost_delay</varname> are also set to negative 
-    values, the <varname>vacuum_cost_limit</varname> and
+    values, the global <varname>vacuum_cost_limit</varname> and
     <varname>vacuum_cost_delay</varname> values will be used instead.
-    The other parameter, <structname>pg_autovacuum</>.<structfield>enabled</>,
-    can be used to instruct the autovacuum daemon to skip any particular table
-    by setting it to <literal>false</literal>.
    </para>
 
    <note>
