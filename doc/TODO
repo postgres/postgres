@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Sep 23 16:41:34 EDT 2005
+Last updated:		Fri Sep 23 17:44:12 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -380,6 +380,7 @@ SQL Commands
   constraint_exclusion
 * Allow EXPLAIN output to be more easily processed by scripts
 * Eventually enable escape_string_warning and standard_conforming_strings
+* Simplify dropping roles that have objects in several databases
 
 
 * CREATE
