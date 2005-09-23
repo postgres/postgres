@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/contrib/chkpass/README.chkpass,v 1.2 2003/11/29 19:51:19 pgsql Exp $
+$PostgreSQL: pgsql/contrib/chkpass/README.chkpass,v 1.3 2005/09/23 15:05:04 tgl Exp $
 
 Chkpass is a password type that is automatically checked and converted upon
 entry.  It is stored encrypted.  To compare, simply compare agains a clear
@@ -16,6 +16,10 @@ On output, a colon is prepended.  This makes it possible to dump and reload
 passwords without re-encrypting them.  If you want the password (encrypted)
 without the colon then use the raw() function.  This allows you to use the
 type with things like Apache's Auth_PostgreSQL module.
+
+The encryption uses the standard Unix function crypt(), and so it suffers
+from all the usual limitations of that function; notably that only the
+first eight characters of a password are considered.
 
 D'Arcy J.M. Cain
 darcy@druid.net
