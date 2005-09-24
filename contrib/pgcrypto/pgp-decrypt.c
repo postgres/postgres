@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-decrypt.c,v 1.4 2005/07/18 17:09:01 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-decrypt.c,v 1.5 2005/09/24 19:14:04 tgl Exp $
  */
 
 #include "postgres.h"
@@ -792,7 +792,7 @@ parse_literal_data(PGP_Context * ctx, MBuf * dst, PullFilter * pkt)
 			break;
 	}
 	if (res >= 0 && got_cr)
-		res = mbuf_append(dst, "\r", 1);
+		res = mbuf_append(dst, (const uint8 *) "\r", 1);
 	return res;
 }
 

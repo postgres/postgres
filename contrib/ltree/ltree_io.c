@@ -469,7 +469,7 @@ lquery_in(PG_FUNCTION_ARGS)
 				cur->totallen += MAXALIGN(LVAR_HDRSIZE + lptr->len);
 				lrptr->len = lptr->len;
 				lrptr->flag = lptr->flag;
-				lrptr->val = ltree_crc32_sz((uint8 *) lptr->start, lptr->len);
+				lrptr->val = ltree_crc32_sz(lptr->start, lptr->len);
 				memcpy(lrptr->name, lptr->start, lptr->len);
 				lptr++;
 				lrptr = LVAR_NEXT(lrptr);

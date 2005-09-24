@@ -651,9 +651,9 @@ px_crypt_des(const char *key, const char *setting)
 				r0,
 				r1,
 				keybuf[2];
-	uint8	   *p,
-			   *q;
-	static uint8 output[21];
+	char	   *p;
+	uint8	   *q;
+	static char output[21];
 
 	if (!des_initialised)
 		des_init();
@@ -669,7 +669,7 @@ px_crypt_des(const char *key, const char *setting)
 		if ((*q++ = *key << 1))
 			key++;
 	}
-	if (des_setkey((uint8 *) keybuf))
+	if (des_setkey((char *) keybuf))
 		return (NULL);
 
 #ifndef DISABLE_XDES
@@ -690,7 +690,7 @@ px_crypt_des(const char *key, const char *setting)
 			/*
 			 * Encrypt the key with itself.
 			 */
-			if (des_cipher((uint8 *) keybuf, (uint8 *) keybuf, 0L, 1))
+			if (des_cipher((char *) keybuf, (char *) keybuf, 0L, 1))
 				return (NULL);
 
 			/*
@@ -700,7 +700,7 @@ px_crypt_des(const char *key, const char *setting)
 			while (q - (uint8 *) keybuf - 8 && *key)
 				*q++ ^= *key++ << 1;
 
-			if (des_setkey((uint8 *) keybuf))
+			if (des_setkey((char *) keybuf))
 				return (NULL);
 		}
 		strncpy(output, setting, 9);

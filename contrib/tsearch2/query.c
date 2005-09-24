@@ -238,7 +238,7 @@ pushval_asis(QPRS_STATE * state, int type, char *strval, int lenval, int2 weight
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("word is too long")));
 
-	pushquery(state, type, crc32_sz((uint8 *) strval, lenval),
+	pushquery(state, type, crc32_sz(strval, lenval),
 			  state->curop - state->op, lenval, weight);
 
 	while (state->curop - state->op + lenval + 1 >= state->lenop)

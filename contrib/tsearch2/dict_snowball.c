@@ -111,7 +111,7 @@ snb_lexize(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		SN_set_current(d->z, strlen(txt), txt);
+		SN_set_current(d->z, strlen(txt), (symbol *) txt);
 		(d->stem) (d->z);
 		if (d->z->p && d->z->l)
 		{

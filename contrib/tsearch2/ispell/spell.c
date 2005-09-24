@@ -52,12 +52,12 @@ strnduplicate(char *s, int len)
 	return d;
 }
 
-/* backward string compaire for suffix tree operations */
+/* backward string compare for suffix tree operations */
 static int
 strbcmp(const unsigned char *s1, const unsigned char *s2)
 {
-	int			l1 = strlen(s1) - 1,
-				l2 = strlen(s2) - 1;
+	int			l1 = strlen((const char *) s1) - 1,
+				l2 = strlen((const char *) s2) - 1;
 
 	while (l1 >= 0 && l2 >= 0)
 	{
@@ -78,8 +78,8 @@ strbcmp(const unsigned char *s1, const unsigned char *s2)
 static int
 strbncmp(const unsigned char *s1, const unsigned char *s2, size_t count)
 {
-	int			l1 = strlen(s1) - 1,
-				l2 = strlen(s2) - 1,
+	int			l1 = strlen((const char *) s1) - 1,
+				l2 = strlen((const char *) s2) - 1,
 				l = count;
 
 	while (l1 >= 0 && l2 >= 0 && l > 0)
@@ -104,14 +104,18 @@ strbncmp(const unsigned char *s1, const unsigned char *s2, size_t count)
 static int
 cmpaffix(const void *s1, const void *s2)
 {
-	if (((const AFFIX *) s1)->type < ((const AFFIX *) s2)->type)
+	const AFFIX *a1 = (const AFFIX *) s1;
+	const AFFIX *a2 = (const AFFIX *) s2;
+
+	if (a1->type < a2->type)
 		return -1;
-	if (((const AFFIX *) s1)->type > ((const AFFIX *) s2)->type)
+	if (a1->type > a2->type)
 		return 1;
-	if (((const AFFIX *) s1)->type == FF_PREFIX)
-		return (strcmp(((const AFFIX *) s1)->repl, ((const AFFIX *) s2)->repl));
+	if (a1->type == FF_PREFIX)
+		return strcmp(a1->repl, a2->repl);
 	else
-		return (strbcmp(((const AFFIX *) s1)->repl, ((const AFFIX *) s2)->repl));
+		return strbcmp((const unsigned char *) a1->repl,
+					   (const unsigned char *) a2->repl);
 }
 
 int
@@ -142,29 +146,29 @@ NIAddSpell(IspellDict * Conf, const char *word, const char *flag)
 int
 NIImportDictionary(IspellDict * Conf, const char *filename)
 {
-	unsigned char str[BUFSIZ];
+	char		str[BUFSIZ];
 	FILE	   *dict;
 
 	if (!(dict = fopen(filename, "r")))
 		return (1);
 	while (fgets(str, sizeof(str), dict))
 	{
-		unsigned char *s;
-		const unsigned char *flag;
+		char *s;
+		const char *flag;
 
 		flag = NULL;
 		if ((s = strchr(str, '/')))
 		{
-			*s = 0;
-			s++;
+			*s++ = '\0';
 			flag = s;
 			while (*s)
 			{
-				if (isprint(*s) && !isspace(*s))
+				if (isprint((unsigned char) *s) &&
+					!isspace((unsigned char) *s))
 					s++;
 				else
 				{
-					*s = 0;
+					*s = '\0';
 					break;
 				}
 			}
@@ -177,10 +181,8 @@ NIImportDictionary(IspellDict * Conf, const char *filename)
 		s = str;
 		while (*s)
 		{
-			if (*s == '\r')
-				*s = 0;
-			if (*s == '\n')
-				*s = 0;
+			if (*s == '\r' || *s == '\n')
+				*s = '\0';
 			s++;
 		}
 		NIAddSpell(Conf, str, flag);
@@ -311,16 +313,16 @@ remove_spaces(char *dist, char *src)
 int
 NIImportAffixes(IspellDict * Conf, const char *filename)
 {
-	unsigned char str[BUFSIZ];
-	unsigned char flag = 0;
-	unsigned char mask[BUFSIZ] = "";
-	unsigned char find[BUFSIZ] = "";
-	unsigned char repl[BUFSIZ] = "";
-	unsigned char *s;
+	char		str[BUFSIZ];
+	char		mask[BUFSIZ];
+	char		find[BUFSIZ];
+	char		repl[BUFSIZ];
+	char	   *s;
 	int			i;
 	int			suffixes = 0;
 	int			prefixes = 0;
-	unsigned char flagflags = 0;
+	int			flag = 0;
+	char		flagflags = 0;
 	FILE	   *affix;
 
 	if (!(affix = fopen(filename, "r")))
@@ -374,7 +376,7 @@ NIImportAffixes(IspellDict * Conf, const char *filename)
 			if (*s == '\\')
 				s++;
 
-			flag = *s;
+			flag = (unsigned char) *s;
 			continue;
 		}
 		if ((!suffixes) && (!prefixes))
@@ -409,7 +411,7 @@ NIImportAffixes(IspellDict * Conf, const char *filename)
 				continue;
 		}
 
-		NIAddAffix(Conf, (int) flag, (char) flagflags, mask, find, repl, suffixes ? FF_SUFFIX : FF_PREFIX);
+		NIAddAffix(Conf, flag, flagflags, mask, find, repl, suffixes ? FF_SUFFIX : FF_PREFIX);
 
 	}
 	fclose(affix);
@@ -681,7 +683,10 @@ NISortAffixes(IspellDict * Conf)
 				firstsuffix = i;
 			if (Affix->flagflags & FF_COMPOUNDONLYAFX)
 			{
-				if (!ptr->affix || strbncmp((ptr - 1)->affix, Affix->repl, (ptr - 1)->len))
+				if (!ptr->affix ||
+					strbncmp((const unsigned char *) (ptr - 1)->affix,
+							 (const unsigned char *) Affix->repl,
+							 (ptr - 1)->len))
 				{
 					/* leave only unique and minimals suffixes */
 					ptr->affix = Affix->repl;

@@ -156,7 +156,7 @@ gtsvector_compress(PG_FUNCTION_ARGS)
 		len = val->size;
 		while (len--)
 		{
-			*arr = crc32_sz((uint8 *) &words[ptr->pos], ptr->len);
+			*arr = crc32_sz(&words[ptr->pos], ptr->len);
 			arr++;
 			ptr++;
 		}

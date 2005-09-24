@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgcrypto.c,v 1.18 2005/03/21 05:19:55 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgcrypto.c,v 1.19 2005/09/24 19:14:04 tgl Exp $
  */
 
 #include "postgres.h"
@@ -75,8 +75,8 @@ pg_digest(PG_FUNCTION_ARGS)
 	arg = PG_GETARG_BYTEA_P(0);
 	len = VARSIZE(arg) - VARHDRSZ;
 
-	px_md_update(md, VARDATA(arg), len);
-	px_md_finish(md, VARDATA(res));
+	px_md_update(md, (uint8 *) VARDATA(arg), len);
+	px_md_finish(md, (uint8 *) VARDATA(res));
 	px_md_free(md);
 
 	PG_FREE_IF_COPY(arg, 0);
@@ -144,9 +144,9 @@ pg_hmac(PG_FUNCTION_ARGS)
 	len = VARSIZE(arg) - VARHDRSZ;
 	klen = VARSIZE(key) - VARHDRSZ;
 
-	px_hmac_init(h, VARDATA(key), klen);
-	px_hmac_update(h, VARDATA(arg), len);
-	px_hmac_finish(h, VARDATA(res));
+	px_hmac_init(h, (uint8 *) VARDATA(key), klen);
+	px_hmac_update(h, (uint8 *) VARDATA(arg), len);
+	px_hmac_finish(h, (uint8 *) VARDATA(res));
 	px_hmac_free(h);
 
 	PG_FREE_IF_COPY(arg, 0);
@@ -346,9 +346,10 @@ pg_encrypt(PG_FUNCTION_ARGS)
 	rlen = px_combo_encrypt_len(c, dlen);
 	res = palloc(VARHDRSZ + rlen);
 
-	err = px_combo_init(c, VARDATA(key), klen, NULL, 0);
+	err = px_combo_init(c, (uint8 *) VARDATA(key), klen, NULL, 0);
 	if (!err)
-		err = px_combo_encrypt(c, VARDATA(data), dlen, VARDATA(res), &rlen);
+		err = px_combo_encrypt(c, (uint8 *) VARDATA(data), dlen,
+							   (uint8 *) VARDATA(res), &rlen);
 	px_combo_free(c);
 
 	PG_FREE_IF_COPY(data, 0);
@@ -397,9 +398,10 @@ pg_decrypt(PG_FUNCTION_ARGS)
 	rlen = px_combo_decrypt_len(c, dlen);
 	res = palloc(VARHDRSZ + rlen);
 
-	err = px_combo_init(c, VARDATA(key), klen, NULL, 0);
+	err = px_combo_init(c, (uint8 *) VARDATA(key), klen, NULL, 0);
 	if (!err)
-		err = px_combo_decrypt(c, VARDATA(data), dlen, VARDATA(res), &rlen);
+		err = px_combo_decrypt(c, (uint8 *) VARDATA(data), dlen,
+							   (uint8 *) VARDATA(res), &rlen);
 
 	px_combo_free(c);
 
@@ -452,9 +454,11 @@ pg_encrypt_iv(PG_FUNCTION_ARGS)
 	rlen = px_combo_encrypt_len(c, dlen);
 	res = palloc(VARHDRSZ + rlen);
 
-	err = px_combo_init(c, VARDATA(key), klen, VARDATA(iv), ivlen);
+	err = px_combo_init(c, (uint8 *) VARDATA(key), klen,
+						(uint8 *) VARDATA(iv), ivlen);
 	if (!err)
-		px_combo_encrypt(c, VARDATA(data), dlen, VARDATA(res), &rlen);
+		px_combo_encrypt(c, (uint8 *) VARDATA(data), dlen,
+						 (uint8 *) VARDATA(res), &rlen);
 
 	px_combo_free(c);
 
@@ -508,9 +512,11 @@ pg_decrypt_iv(PG_FUNCTION_ARGS)
 	rlen = px_combo_decrypt_len(c, dlen);
 	res = palloc(VARHDRSZ + rlen);
 
-	err = px_combo_init(c, VARDATA(key), klen, VARDATA(iv), ivlen);
+	err = px_combo_init(c, (uint8 *) VARDATA(key), klen,
+						(uint8 *) VARDATA(iv), ivlen);
 	if (!err)
-		px_combo_decrypt(c, VARDATA(data), dlen, VARDATA(res), &rlen);
+		px_combo_decrypt(c, (uint8 *) VARDATA(data), dlen,
+						 (uint8 *) VARDATA(res), &rlen);
 
 	px_combo_free(c);
 

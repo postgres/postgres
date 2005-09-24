@@ -434,11 +434,11 @@ do_inserts(PGconn *conn, char *table, dbhead * dbh)
 												 * separator */
 
 				if (upper)
-					strtoupper(fields[h].db_contents);
+					strtoupper((char *) fields[h].db_contents);
 				if (lower)
-					strtolower(fields[h].db_contents);
+					strtolower((char *) fields[h].db_contents);
 
-				foo = fields[h].db_contents;
+				foo = (char *) fields[h].db_contents;
 #ifdef HAVE_ICONV_H
 				if (charset_from)
 					foo = convert_charset(foo);

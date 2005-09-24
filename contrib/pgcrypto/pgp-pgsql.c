@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pgsql.c,v 1.4 2005/08/13 02:06:20 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pgsql.c,v 1.5 2005/09/24 19:14:04 tgl Exp $
  */
 
 #include "postgres.h"
@@ -94,7 +94,7 @@ static void add_block_entropy(PX_MD *md, text *data)
 	uint8 sha1[20];
 
 	px_md_reset(md);
-	px_md_update(md, VARDATA(data), VARSIZE(data) - VARHDRSZ);
+	px_md_update(md, (uint8 *) VARDATA(data), VARSIZE(data) - VARHDRSZ);
 	px_md_finish(md, sha1);
 
 	px_add_entropy(sha1, 20);
@@ -151,14 +151,14 @@ static text *convert_charset(text *src, int cset_from, int cset_to)
 	int src_len = VARSIZE(src) - VARHDRSZ;
 	int dst_len;
 	unsigned char *dst;
-	unsigned char *csrc = VARDATA(src);
+	unsigned char *csrc = (unsigned char *) VARDATA(src);
 	text *res;
 	
 	dst = pg_do_encoding_conversion(csrc, src_len, cset_from, cset_to);
 	if (dst == csrc)
 		return src;
 
-	dst_len = strlen(dst);
+	dst_len = strlen((char *) dst);
 	res = palloc(dst_len + VARHDRSZ);
 	memcpy(VARDATA(res), dst, dst_len);
 	VARATT_SIZEP(res) = VARHDRSZ + dst_len;
@@ -398,7 +398,8 @@ static int parse_args(PGP_Context *ctx, uint8 *args, int arg_len,
 static MBuf *
 create_mbuf_from_vardata(text *data)
 {
-	return mbuf_create_from_data(VARDATA(data), VARSIZE(data) - VARHDRSZ);
+	return mbuf_create_from_data((uint8 *) VARDATA(data),
+								 VARSIZE(data) - VARHDRSZ);
 }
 
 static void
@@ -410,7 +411,8 @@ init_work(PGP_Context **ctx_p, int is_text,
 	fill_expect(ex, is_text);
 
 	if (err == 0 && args != NULL)
-		err = parse_args(*ctx_p, VARDATA(args), VARSIZE(args) - VARHDRSZ, ex);
+		err = parse_args(*ctx_p, (uint8 *) VARDATA(args),
+						 VARSIZE(args) - VARHDRSZ, ex);
 
 	if (err)
 	{
@@ -474,7 +476,8 @@ encrypt_internal(int is_pubenc, int is_text,
 		mbuf_free(kbuf);
 	}
 	else
-		err = pgp_set_symkey(ctx, VARDATA(key), VARSIZE(key) - VARHDRSZ);
+		err = pgp_set_symkey(ctx, (uint8 *) VARDATA(key),
+							 VARSIZE(key) - VARHDRSZ);
 	
 	/*
 	 * encrypt
@@ -532,7 +535,8 @@ decrypt_internal(int is_pubenc, int need_text, text *data,
 
 	init_work(&ctx, need_text, args, &ex);
 
-	src = mbuf_create_from_data(VARDATA(data), VARSIZE(data) - VARHDRSZ);
+	src = mbuf_create_from_data((uint8 *) VARDATA(data),
+								VARSIZE(data) - VARHDRSZ);
 	dst = mbuf_create(VARSIZE(data) + 2048);
 
 	/*
@@ -550,7 +554,7 @@ decrypt_internal(int is_pubenc, int need_text, text *data,
 		MBuf *kbuf;
 		if (keypsw)
 		{
-			psw = VARDATA(keypsw);
+			psw = (uint8 *) VARDATA(keypsw);
 			psw_len = VARSIZE(keypsw) - VARHDRSZ;
 		}
 		kbuf = create_mbuf_from_vardata(key);
@@ -558,7 +562,8 @@ decrypt_internal(int is_pubenc, int need_text, text *data,
 		mbuf_free(kbuf);
 	}
 	else
-		err = pgp_set_symkey(ctx, VARDATA(key), VARSIZE(key) - VARHDRSZ);
+		err = pgp_set_symkey(ctx, (uint8 *) VARDATA(key),
+							 VARSIZE(key) - VARHDRSZ);
 
 	/*
 	 * decrypt
@@ -846,7 +851,8 @@ pg_armor(PG_FUNCTION_ARGS)
 	guess_len = pgp_armor_enc_len(data_len);
 	res = palloc(VARHDRSZ + guess_len);
 
-	res_len = pgp_armor_encode(VARDATA(data), data_len, VARDATA(res));
+	res_len = pgp_armor_encode((uint8 *) VARDATA(data), data_len,
+							   (uint8 *) VARDATA(res));
 	if (res_len > guess_len)
 		ereport(ERROR,
 				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
@@ -875,7 +881,8 @@ pg_dearmor(PG_FUNCTION_ARGS)
 	guess_len = pgp_armor_dec_len(data_len);
 	res = palloc(VARHDRSZ + guess_len);
 
-	res_len = pgp_armor_decode(VARDATA(data), data_len, VARDATA(res));
+	res_len = pgp_armor_decode((uint8 *) VARDATA(data), data_len,
+							   (uint8 *) VARDATA(res));
 	if (res_len < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),

@@ -20,7 +20,7 @@
 /* open a dbf-file, get it's field-info and store this information */
 
 dbhead *
-dbf_open(u_char *file, int flags)
+dbf_open(char *file, int flags)
 {
 	int			file_no;
 	dbhead	   *dbh;
@@ -200,7 +200,7 @@ dbf_put_fields(dbhead * dbh)
 }
 
 int
-dbf_add_field(dbhead * dbh, u_char *name, u_char type,
+dbf_add_field(dbhead * dbh, char *name, u_char type,
 			  u_char length, u_char dec)
 {
 	f_descr    *ptr;
@@ -232,7 +232,7 @@ dbf_add_field(dbhead * dbh, u_char *name, u_char type,
 }
 
 dbhead *
-dbf_open_new(u_char *name, int flags)
+dbf_open_new(char *name, int flags)
 {
 	dbhead	   *dbh;
 
@@ -339,7 +339,7 @@ dbf_get_record(dbhead * dbh, field * fields, u_long rec)
 				end--;
 				i--;
 			}
-			strncpy(fields[t].db_contents, dbffield, i);
+			strncpy((char *) fields[t].db_contents, (char *) dbffield, i);
 			fields[t].db_contents[i] = '\0';
 		}
 		else
@@ -351,7 +351,7 @@ dbf_get_record(dbhead * dbh, field * fields, u_long rec)
 				end++;
 				i--;
 			}
-			strncpy(fields[t].db_contents, end, i);
+			strncpy((char *) fields[t].db_contents, (char *) end, i);
 			fields[t].db_contents[i] = '\0';
 		}
 
@@ -419,7 +419,7 @@ dbf_put_record(dbhead * dbh, field * rec, u_long where)
 	u_char	   *data,
 				end = 0x1a;
 	double		fl;
-	u_char		foo[128],
+	char		foo[128],
 				format[32];
 
 /*	offset: offset in file for this record
@@ -473,11 +473,12 @@ dbf_put_record(dbhead * dbh, field * rec, u_long where)
 /*	Handle text */
 			if (rec[t].db_type == 'C')
 			{
-				if (strlen(rec[t].db_contents) > rec[t].db_flen)
+				if (strlen((char *) rec[t].db_contents) > rec[t].db_flen)
 					length = rec[t].db_flen;
 				else
-					length = strlen(rec[t].db_contents);
-				strncpy(data + idx, rec[t].db_contents, length);
+					length = strlen((char *) rec[t].db_contents);
+				strncpy((char *) data + idx, (char *) rec[t].db_contents,
+						length);
 			}
 			else
 			{
@@ -485,18 +486,18 @@ dbf_put_record(dbhead * dbh, field * rec, u_long where)
 /* Numeric is special, because of real numbers */
 				if ((rec[t].db_type == 'N') && (rec[t].db_dec != 0))
 				{
-					fl = atof(rec[t].db_contents);
+					fl = atof((char *) rec[t].db_contents);
 					snprintf(format, 32, "%%.%df", rec[t].db_dec);
 					snprintf(foo, 128, format, fl);
 				}
 				else
-					strncpy(foo, rec[t].db_contents, 128);
+					strncpy(foo, (char *) rec[t].db_contents, 128);
 				if (strlen(foo) > rec[t].db_flen)
 					length = rec[t].db_flen;
 				else
 					length = strlen(foo);
 				h = rec[t].db_flen - length;
-				strncpy(data + idx + h, foo, length);
+				strncpy((char *) (data + idx + h), foo, length);
 			}
 		}
 		idx += rec[t].db_flen;

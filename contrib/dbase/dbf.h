@@ -60,7 +60,7 @@ typedef struct
 
 typedef struct
 {
-	u_char		dbf_name[DBF_NAMELEN];	/* field-name terminated with \0 */
+	char		dbf_name[DBF_NAMELEN];	/* field-name terminated with \0 */
 	u_char		dbf_type;		/* field-type */
 	u_char		dbf_reserved[4];	/* some reserved stuff */
 	u_char		dbf_flen;		/* field-length */
@@ -73,7 +73,7 @@ typedef struct
 
 typedef struct
 {
-	u_char		db_name[DBF_NAMELEN];	/* field-name terminated with \0 */
+	char		db_name[DBF_NAMELEN];	/* field-name terminated with \0 */
 	u_char		db_type;		/* field-type */
 	u_char		db_flen;		/* field-length */
 	u_char		db_dec;			/* number of decimal positions */
@@ -107,7 +107,7 @@ typedef struct
 
 typedef struct
 {
-	u_char		db_name[DBF_NAMELEN];	/* field-name terminated with \0 */
+	char		db_name[DBF_NAMELEN];	/* field-name terminated with \0 */
 	u_char		db_type;		/* field-type */
 	u_char		db_flen;		/* field-length */
 	u_char		db_dec;			/* number of decimal positions */
@@ -116,12 +116,12 @@ typedef struct
 
 /* prototypes for functions */
 
-extern dbhead *dbf_open(u_char *file, int flags);
+extern dbhead *dbf_open(char *file, int flags);
 extern int	dbf_write_head(dbhead * dbh);
 extern int	dbf_put_fields(dbhead * dbh);
-extern int dbf_add_field(dbhead * dbh, u_char *name, u_char type,
+extern int dbf_add_field(dbhead * dbh, char *name, u_char type,
 			  u_char length, u_char dec);
-extern dbhead *dbf_open_new(u_char *name, int flags);
+extern dbhead *dbf_open_new(char *name, int flags);
 extern void dbf_close(dbhead * dbh);
 extern int	dbf_get_record(dbhead * dbh, field * fields, u_long rec);
 extern field *dbf_build_record(dbhead * dbh);
