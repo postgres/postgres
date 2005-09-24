@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.375 2005/09/24 20:35:21 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.376 2005/09/24 22:57:15 momjian Exp $
 
 Typical markup:
 
@@ -1318,13 +1318,13 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Add support for 3 and 4-byte <literal>UTF8</> characters (John
+        Add support for four-byte <literal>UTF8</> characters (John
         Hansen)
        </para>
        <para>
-        Previously only one and two-byte <literal>UTF8</> characters
+        Previously only one, two, and three-byte <literal>UTF8</> characters
         were supported. This is particularly important for support for
-        some Chinese characters.
+        some Chinese character sets.
        </para>
       </listitem>
 
