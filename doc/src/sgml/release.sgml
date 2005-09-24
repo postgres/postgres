@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.374 2005/09/23 16:36:35 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.375 2005/09/24 20:35:21 tgl Exp $
 
 Typical markup:
 
@@ -373,6 +373,21 @@ pg_[A-Za-z0-9_]                 <application>
        system tables. This new behavior seems more intuitive. A new
        command <command>REINDEX SYSTEM</> provides the old functionality
        of reindexing just the system tables.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Read-only large object descriptors now obey MVCC snapshot semantics
+      </para>
+      <para>
+       When a large object is opened with <literal>INV_READ</> (and not
+       <literal>INV_WRITE</>), the data read from the descriptor will now
+       reflect a <quote>snapshot</> of the large object's state at the
+       time of the transaction snapshot in use by the query that called
+       <function>lo_open()</>.  To obtain the old behavior of always
+       returning the latest committed data, include <literal>INV_WRITE</>
+       in the mode flags for <function>lo_open()</>.
       </para>
      </listitem>
 
