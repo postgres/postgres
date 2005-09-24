@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.92 2005/07/06 16:42:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.93 2005/09/24 22:54:44 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1395,24 +1395,22 @@ plpgsql_parse_tripwordtype(char *word)
 	for (i = 0; i < qualified_att_len; i++)
 	{
 		if (word[i] == '.' && ++numdots == 2)
-		{
-			cp[0] = (char *) palloc((i + 1) * sizeof(char));
-			memset(cp[0], 0, (i + 1) * sizeof(char));
-			memcpy(cp[0], word, i * sizeof(char));
-
-			/*
-			 * qualified_att_len - one based position + 1 (null
-			 * terminator)
-			 */
-			cp[1] = (char *) palloc((qualified_att_len - i) * sizeof(char));
-			memset(cp[1], 0, (qualified_att_len - i) * sizeof(char));
-			memcpy(cp[1], &word[i + 1], (qualified_att_len - i - 1) * sizeof(char));
-
 			break;
-		}
 	}
 
-	relvar = makeRangeVarFromNameList(stringToQualifiedNameList(cp[0], "plpgsql_parse_tripwordtype"));
+	cp[0] = (char *) palloc((i + 1) * sizeof(char));
+	memcpy(cp[0], word, i * sizeof(char));
+	cp[0][i] = '\0';
+
+	/*
+	 * qualified_att_len - one based position + 1 (null terminator)
+	 */
+	cp[1] = (char *) palloc((qualified_att_len - i) * sizeof(char));
+	memcpy(cp[1], &word[i + 1], (qualified_att_len - i - 1) * sizeof(char));
+	cp[1][qualified_att_len - i - 1] = '\0';
+
+	relvar = makeRangeVarFromNameList(stringToQualifiedNameList(cp[0],
+												"plpgsql_parse_tripwordtype"));
 	classOid = RangeVarGetRelid(relvar, true);
 	if (!OidIsValid(classOid))
 		goto done;

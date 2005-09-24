@@ -28,7 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/backend/regex/rege_dfa.c,v 1.4 2003/11/29 19:51:55 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/regex/rege_dfa.c,v 1.5 2005/09/24 22:54:38 tgl Exp $
  *
  */
 
@@ -578,7 +578,6 @@ getvacant(struct vars * v,		/* used only for debug flags */
 	struct sset *ss;
 	struct sset *p;
 	struct arcp ap;
-	struct arcp lastap;
 	color		co;
 
 	ss = pickss(v, d, cp, start);
@@ -608,6 +607,8 @@ getvacant(struct vars * v,		/* used only for debug flags */
 			p->ins = ss->inchain[i];
 		else
 		{
+			struct arcp lastap = {NULL, 0};
+
 			assert(p->ins.ss != NULL);
 			for (ap = p->ins; ap.ss != NULL &&
 				 !(ap.ss == ss && ap.co == i);

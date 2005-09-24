@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.197 2005/08/18 17:51:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.198 2005/09/24 22:54:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1634,7 +1634,8 @@ fix_indexqual_operand(Node *node, IndexOptInfo *index, Oid *opclass)
 
 	/* Ooops... */
 	elog(ERROR, "node is not an index attribute");
-	return NULL;				/* keep compiler quiet */
+	*opclass = InvalidOid;		/* keep compiler quiet */
+	return NULL;
 }
 
 /*

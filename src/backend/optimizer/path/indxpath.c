@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.189 2005/09/22 23:25:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.190 2005/09/24 22:54:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,10 +65,9 @@ static bool matches_any_index(RestrictInfo *rinfo, RelOptInfo *rel,
 							  Relids outer_relids);
 static List *find_clauses_for_join(PlannerInfo *root, RelOptInfo *rel,
 								   Relids outer_relids, bool isouterjoin);
-static bool match_variant_ordering(PlannerInfo *root,
-								   IndexOptInfo *index,
-								   List *restrictclauses,
-								   ScanDirection *indexscandir);
+static ScanDirection match_variant_ordering(PlannerInfo *root,
+											IndexOptInfo *index,
+											List *restrictclauses);
 static List *identify_ignorable_ordering_cols(PlannerInfo *root,
 											  IndexOptInfo *index,
 											  List *restrictclauses);
@@ -362,15 +361,15 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 			root->query_pathkeys != NIL &&
 			pathkeys_useful_for_ordering(root, useful_pathkeys) == 0)
 		{
-			ScanDirection	indexscandir;
+			ScanDirection	scandir;
 
-			if (match_variant_ordering(root, index, restrictclauses,
-									   &indexscandir))
+			scandir = match_variant_ordering(root, index, restrictclauses);
+			if (!ScanDirectionIsNoMovement(scandir))
 			{
 				ipath = create_index_path(root, index,
 										  restrictclauses,
 										  root->query_pathkeys,
-										  indexscandir,
+										  scandir,
 										  false);
 				result = lappend(result, ipath);
 			}
@@ -1304,15 +1303,14 @@ find_clauses_for_join(PlannerInfo *root, RelOptInfo *rel,
  * 'restrictclauses' is the list of sublists of restriction clauses
  *		matching the columns of the index (NIL if none)
  *
- * Returns TRUE if able to match the requested query pathkeys, FALSE if not.
- * In the TRUE case, sets '*indexscandir' to either ForwardScanDirection or
- * BackwardScanDirection to indicate the proper scan direction.
+ * If able to match the requested query pathkeys, returns either
+ * ForwardScanDirection or BackwardScanDirection to indicate the proper index
+ * scan direction.  If no match, returns NoMovementScanDirection.
  */
-static bool
+static ScanDirection
 match_variant_ordering(PlannerInfo *root,
 					   IndexOptInfo *index,
-					   List *restrictclauses,
-					   ScanDirection *indexscandir)
+					   List *restrictclauses)
 {
 	List	   *ignorables;
 
@@ -1328,7 +1326,7 @@ match_variant_ordering(PlannerInfo *root,
 	 * won't cope.
 	 */
 	if (index->relam != BTREE_AM_OID)
-		return false;
+		return NoMovementScanDirection;
 	/*
 	 * Figure out which index columns can be optionally ignored because
 	 * they have an equality constraint.  This is the same set for either
@@ -1344,17 +1342,13 @@ match_variant_ordering(PlannerInfo *root,
 	if (ignorables &&
 		match_index_to_query_keys(root, index, ForwardScanDirection,
 								  ignorables))
-	{
-		*indexscandir = ForwardScanDirection;
-		return true;
-	}
+		return ForwardScanDirection;
+
 	if (match_index_to_query_keys(root, index, BackwardScanDirection,
 								  ignorables))
-	{
-		*indexscandir = BackwardScanDirection;
-		return true;
-	}
-	return false;
+		return BackwardScanDirection;
+
+	return NoMovementScanDirection;
 }
 
 /*

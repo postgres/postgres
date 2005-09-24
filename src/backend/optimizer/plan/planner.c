@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.192 2005/08/27 22:13:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.193 2005/09/24 22:54:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -649,8 +649,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 {
 	Query	   *parse = root->parse;
 	List	   *tlist = parse->targetList;
-	int			offset_est;
-	int			count_est;
+	int			offset_est = 0;
+	int			count_est = 0;
 	Plan	   *result_plan;
 	List	   *current_pathkeys;
 	List	   *sort_pathkeys;

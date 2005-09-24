@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.188 2005/09/24 17:53:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.189 2005/09/24 22:54:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2403,6 +2403,7 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 			return true;
 	}
 	/* Don't know how to convert */
+	*scaledvalue = *scaledlobound = *scaledhibound = 0;
 	return false;
 }
 

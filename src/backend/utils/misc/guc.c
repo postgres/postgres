@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.288 2005/09/12 02:26:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.289 2005/09/24 22:54:39 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -3401,7 +3401,11 @@ parse_bool(const char *value, bool *result)
 	}
 
 	else
+	{
+		if (result)
+			*result = false;	/* suppress compiler warning */
 		return false;
+	}
 	return true;
 }
 
@@ -3427,7 +3431,11 @@ parse_int(const char *value, int *result)
 		|| val != (long) ((int32) val)
 #endif
 		)
+	{
+		if (result)
+			*result = 0;		/* suppress compiler warning */
 		return false;
+	}
 	if (result)
 		*result = (int) val;
 	return true;
@@ -3449,7 +3457,11 @@ parse_real(const char *value, double *result)
 	errno = 0;
 	val = strtod(value, &endptr);
 	if (endptr == value || *endptr != '\0' || errno == ERANGE)
+	{
+		if (result)
+			*result = 0;		/* suppress compiler warning */
 		return false;
+	}
 	if (result)
 		*result = val;
 	return true;

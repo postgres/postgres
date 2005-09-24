@@ -27,7 +27,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/backend/regex/regexec.c,v 1.25 2005/07/10 04:54:30 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/regex/regexec.c,v 1.26 2005/09/24 22:54:38 tgl Exp $
  *
  */
 
@@ -464,6 +464,7 @@ cfindloop(struct vars * v,
 				if (er != REG_NOMATCH)
 				{
 					ERR(er);
+					*coldp = cold;
 					return er;
 				}
 				if ((shorter) ? end == estop : end == begin)

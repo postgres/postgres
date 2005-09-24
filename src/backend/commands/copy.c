@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.250 2005/09/24 17:53:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.251 2005/09/24 22:54:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -542,7 +542,10 @@ CopyGetInt32(CopyState cstate, int32 *val)
 	uint32		buf;
 
 	if (CopyGetData(cstate, &buf, sizeof(buf), sizeof(buf)) != sizeof(buf))
+	{
+		*val = 0;				/* suppress compiler warning */
 		return false;
+	}
 	*val = (int32) ntohl(buf);
 	return true;
 }
@@ -568,7 +571,10 @@ CopyGetInt16(CopyState cstate, int16 *val)
 	uint16		buf;
 
 	if (CopyGetData(cstate, &buf, sizeof(buf), sizeof(buf)) != sizeof(buf))
+	{
+		*val = 0;				/* suppress compiler warning */
 		return false;
+	}
 	*val = (int16) ntohs(buf);
 	return true;
 }

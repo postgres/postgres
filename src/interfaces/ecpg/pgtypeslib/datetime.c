@@ -334,6 +334,8 @@ PGTYPESdate_defmt_asc(date *d, char *fmt, char *str)
 	char	   *str_copy;
 	struct tm	tm;
 
+	tm.tm_year = tm.tm_mon = tm.tm_mday = 0; /* keep compiler quiet */
+
 	if (!d || !str || !fmt)
 	{
 		errno = PGTYPES_DATE_ERR_EARGS;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.170 2005/08/26 03:07:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.171 2005/09/24 22:54:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4109,6 +4109,8 @@ transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
 	 * look up each one in the pg_index syscache until we find one marked
 	 * primary key (hopefully there isn't more than one such).
 	 */
+	*indexOid = InvalidOid;
+
 	indexoidlist = RelationGetIndexList(pkrel);
 
 	foreach(indexoidscan, indexoidlist)
@@ -4127,7 +4129,6 @@ transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
 			break;
 		}
 		ReleaseSysCache(indexTuple);
-		indexStruct = NULL;
 	}
 
 	list_free(indexoidlist);
@@ -4135,7 +4136,7 @@ transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
 	/*
 	 * Check that we found it
 	 */
-	if (indexStruct == NULL)
+	if (!OidIsValid(*indexOid))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 			errmsg("there is no primary key for referenced table \"%s\"",

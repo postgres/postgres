@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.124 2005/08/11 13:22:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.125 2005/09/24 22:54:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,8 +49,7 @@ static void _bt_insertonpg(Relation rel, Buffer buf,
 			   bool split_only_page);
 static Buffer _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		  OffsetNumber newitemoff, Size newitemsz,
-		  BTItem newitem, bool newitemonleft,
-		  OffsetNumber *itup_off, BlockNumber *itup_blkno);
+		  BTItem newitem, bool newitemonleft);
 static OffsetNumber _bt_findsplitloc(Relation rel, Page page,
 				 OffsetNumber newitemoff,
 				 Size newitemsz,
@@ -365,8 +364,6 @@ _bt_insertonpg(Relation rel,
 {
 	Page		page;
 	BTPageOpaque lpageop;
-	OffsetNumber itup_off;
-	BlockNumber itup_blkno;
 	OffsetNumber newitemoff;
 	OffsetNumber firstright = InvalidOffsetNumber;
 	Size		itemsz;
@@ -490,8 +487,7 @@ _bt_insertonpg(Relation rel,
 
 		/* split the buffer into left and right halves */
 		rbuf = _bt_split(rel, buf, firstright,
-						 newitemoff, itemsz, btitem, newitemonleft,
-						 &itup_off, &itup_blkno);
+						 newitemoff, itemsz, btitem, newitemonleft);
 
 		/*----------
 		 * By here,
@@ -516,6 +512,8 @@ _bt_insertonpg(Relation rel,
 		Buffer		metabuf = InvalidBuffer;
 		Page		metapg = NULL;
 		BTMetaPageData *metad = NULL;
+		OffsetNumber itup_off;
+		BlockNumber itup_blkno;
 
 		itup_off = newitemoff;
 		itup_blkno = BufferGetBlockNumber(buf);
@@ -640,14 +638,12 @@ _bt_insertonpg(Relation rel,
  *		must be inserted along with the data from the old page.
  *
  *		Returns the new right sibling of buf, pinned and write-locked.
- *		The pin and lock on buf are maintained.  *itup_off and *itup_blkno
- *		are set to the exact location where newitem was inserted.
+ *		The pin and lock on buf are maintained.
  */
 static Buffer
 _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		  OffsetNumber newitemoff, Size newitemsz, BTItem newitem,
-		  bool newitemonleft,
-		  OffsetNumber *itup_off, BlockNumber *itup_blkno)
+		  bool newitemonleft)
 {
 	Buffer		rbuf;
 	Page		origpage;
@@ -659,6 +655,8 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	Buffer		sbuf = InvalidBuffer;
 	Page		spage = NULL;
 	BTPageOpaque sopaque = NULL;
+	OffsetNumber itup_off = 0;
+	BlockNumber itup_blkno = 0;
 	Size		itemsz;
 	ItemId		itemid;
 	BTItem		item;
@@ -752,16 +750,16 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 			{
 				_bt_pgaddtup(rel, leftpage, newitemsz, newitem, leftoff,
 							 "left sibling");
-				*itup_off = leftoff;
-				*itup_blkno = BufferGetBlockNumber(buf);
+				itup_off = leftoff;
+				itup_blkno = BufferGetBlockNumber(buf);
 				leftoff = OffsetNumberNext(leftoff);
 			}
 			else
 			{
 				_bt_pgaddtup(rel, rightpage, newitemsz, newitem, rightoff,
 							 "right sibling");
-				*itup_off = rightoff;
-				*itup_blkno = BufferGetBlockNumber(rbuf);
+				itup_off = rightoff;
+				itup_blkno = BufferGetBlockNumber(rbuf);
 				rightoff = OffsetNumberNext(rightoff);
 			}
 		}
@@ -788,16 +786,16 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		{
 			_bt_pgaddtup(rel, leftpage, newitemsz, newitem, leftoff,
 						 "left sibling");
-			*itup_off = leftoff;
-			*itup_blkno = BufferGetBlockNumber(buf);
+			itup_off = leftoff;
+			itup_blkno = BufferGetBlockNumber(buf);
 			leftoff = OffsetNumberNext(leftoff);
 		}
 		else
 		{
 			_bt_pgaddtup(rel, rightpage, newitemsz, newitem, rightoff,
 						 "right sibling");
-			*itup_off = rightoff;
-			*itup_blkno = BufferGetBlockNumber(rbuf);
+			itup_off = rightoff;
+			itup_blkno = BufferGetBlockNumber(rbuf);
 			rightoff = OffsetNumberNext(rightoff);
 		}
 	}
@@ -839,7 +837,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		XLogRecData rdata[4];
 
 		xlrec.target.node = rel->rd_node;
-		ItemPointerSet(&(xlrec.target.tid), *itup_blkno, *itup_off);
+		ItemPointerSet(&(xlrec.target.tid), itup_blkno, itup_off);
 		if (newitemonleft)
 			xlrec.otherblk = BufferGetBlockNumber(rbuf);
 		else

@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/inet_net_ntop.c,v 1.19 2005/02/01 00:59:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/inet_net_ntop.c,v 1.20 2005/09/24 22:54:38 tgl Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -443,6 +443,8 @@ inet_net_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 		words[i / 2] |= (src[i] << ((1 - (i % 2)) << 3));
 	best.base = -1;
 	cur.base = -1;
+	best.len = 0;
+	cur.len = 0;
 	for (i = 0; i < (NS_IN6ADDRSZ / NS_INT16SZ); i++)
 	{
 		if (words[i] == 0)

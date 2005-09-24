@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.142 2005/07/23 14:25:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.143 2005/09/24 22:54:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,9 +79,9 @@
 
 static AbsoluteTime tm2abstime(struct pg_tm *tm, int tz);
 static void reltime2tm(RelativeTime time, struct pg_tm *tm);
-static int istinterval(char *i_string,
-			AbsoluteTime *i_start,
-			AbsoluteTime *i_end);
+static void parsetinterval(char *i_string,
+						   AbsoluteTime *i_start,
+						   AbsoluteTime *i_end);
 
 
 /*
@@ -727,24 +727,19 @@ tintervalin(PG_FUNCTION_ARGS)
 				t1,
 				t2;
 
+	parsetinterval(tintervalstr, &t1, &t2);
+
 	tinterval = (TimeInterval) palloc(sizeof(TimeIntervalData));
 
-	if (istinterval(tintervalstr, &t1, &t2) == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for type tinterval: \"%s\"",
-						tintervalstr)));
-
 	if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
-		tinterval  ->status = T_INTERVAL_INVAL;	/* undefined  */
-
+		tinterval->status = T_INTERVAL_INVAL;	/* undefined  */
 	else
-		tinterval  ->status = T_INTERVAL_VALID;
+		tinterval->status = T_INTERVAL_VALID;
 
 	i_start = ABSTIMEMIN(t1, t2);
 	i_end = ABSTIMEMAX(t1, t2);
-	tinterval  ->data[0] = i_start;
-	tinterval  ->data[1] = i_end;
+	tinterval->data[0] = i_start;
+	tinterval->data[1] = i_end;
 
 	PG_RETURN_TIMEINTERVAL(tinterval);
 }
@@ -1444,11 +1439,9 @@ tintervalend(PG_FUNCTION_ARGS)
  *****************************************************************************/
 
 /*
- *		istinterval		- returns 1, iff i_string is a valid tinterval descr.
- *								  0, iff i_string is NOT a valid tinterval desc.
- *								  2, iff any time is INVALID_ABSTIME
+ *		parsetinterval -- parse a tinterval string
  *
- *		output parameter:
+ *		output parameters:
  *				i_start, i_end: tinterval margins
  *
  *		Time interval:
@@ -1460,10 +1453,10 @@ tintervalend(PG_FUNCTION_ARGS)
  *
  *		e.g.  [  '  Jan 18 1902'   'Jan 1 00:00:00 1970']
  */
-static int
-istinterval(char *i_string,
-			AbsoluteTime *i_start,
-			AbsoluteTime *i_end)
+static void
+parsetinterval(char *i_string,
+			   AbsoluteTime *i_start,
+			   AbsoluteTime *i_end)
 {
 	char	   *p,
 			   *p1;
@@ -1476,10 +1469,12 @@ istinterval(char *i_string,
 		if (IsSpace(c))
 			p++;
 		else if (c != '[')
-			return 0;			/* syntax error */
+			goto bogus;			/* syntax error */
 		else
 			break;
 	}
+	if (c == '\0')
+		goto bogus;				/* syntax error */
 	p++;
 	/* skip leading blanks up to '"' */
 	while ((c = *p) != '\0')
@@ -1487,30 +1482,32 @@ istinterval(char *i_string,
 		if (IsSpace(c))
 			p++;
 		else if (c != '"')
-			return 0;			/* syntax error */
+			goto bogus;			/* syntax error */
 		else
 			break;
 	}
+	if (c == '\0')
+		goto bogus;				/* syntax error */
 	p++;
 	if (strncmp(INVALID_INTERVAL_STR, p, strlen(INVALID_INTERVAL_STR)) == 0)
-		return 0;				/* undefined range, handled like a syntax
+		goto bogus;				/* undefined range, handled like a syntax
 								 * err. */
-	/* search for the end of the first date and change it to a NULL */
+	/* search for the end of the first date and change it to a \0 */
 	p1 = p;
 	while ((c = *p1) != '\0')
 	{
 		if (c == '"')
-		{
-			*p1 = '\0';
 			break;
-		}
 		p1++;
 	}
+	if (c == '\0')
+		goto bogus;				/* syntax error */
+	*p1 = '\0';
 	/* get the first date */
 	*i_start = DatumGetAbsoluteTime(DirectFunctionCall1(abstimein,
 													CStringGetDatum(p)));
-	/* rechange NULL at the end of the first date to a '"' */
-	*p1 = '"';
+	/* undo change to \0 */
+	*p1 = c;
 	p = ++p1;
 	/* skip blanks up to '"', beginning of second date */
 	while ((c = *p) != '\0')
@@ -1518,27 +1515,29 @@ istinterval(char *i_string,
 		if (IsSpace(c))
 			p++;
 		else if (c != '"')
-			return 0;			/* syntax error */
+			goto bogus;			/* syntax error */
 		else
 			break;
 	}
+	if (c == '\0')
+		goto bogus;				/* syntax error */
 	p++;
-	/* search for the end of the second date and change it to a NULL */
+	/* search for the end of the second date and change it to a \0 */
 	p1 = p;
 	while ((c = *p1) != '\0')
 	{
 		if (c == '"')
-		{
-			*p1 = '\0';
 			break;
-		}
 		p1++;
 	}
+	if (c == '\0')
+		goto bogus;				/* syntax error */
+	*p1 = '\0';
 	/* get the second date */
 	*i_end = DatumGetAbsoluteTime(DirectFunctionCall1(abstimein,
 													CStringGetDatum(p)));
-	/* rechange NULL at the end of the first date to a '"' */
-	*p1 = '"';
+	/* undo change to \0 */
+	*p1 = c;
 	p = ++p1;
 	/* skip blanks up to ']' */
 	while ((c = *p) != '\0')
@@ -1546,16 +1545,26 @@ istinterval(char *i_string,
 		if (IsSpace(c))
 			p++;
 		else if (c != ']')
-			return 0;			/* syntax error */
+			goto bogus;			/* syntax error */
 		else
 			break;
 	}
+	if (c == '\0')
+		goto bogus;				/* syntax error */
 	p++;
 	c = *p;
 	if (c != '\0')
-		return 0;				/* syntax error */
+		goto bogus;				/* syntax error */
+
 	/* it seems to be a valid tinterval */
-	return 1;
+	return;
+
+bogus:
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+			 errmsg("invalid input syntax for type tinterval: \"%s\"",
+					i_string)));
+	*i_start = *i_end = INVALID_ABSTIME; /* keep compiler quiet */
 }
 
 

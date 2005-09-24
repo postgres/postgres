@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.132 2005/07/07 20:39:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.133 2005/09/24 22:54:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -789,21 +789,27 @@ match_prosrc_to_literal(const char *prosrc, const char *literal,
 		else if (*literal == '\'')
 		{
 			if (literal[1] != '\'')
-				return false;
+				goto fail;
 			literal++;
 			if (cursorpos > 0)
 				newcp++;
 		}
 		chlen = pg_mblen(prosrc);
 		if (strncmp(prosrc, literal, chlen) != 0)
-			return false;
+			goto fail;
 		prosrc += chlen;
 		literal += chlen;
 	}
 
-	*newcursorpos = newcp;
-
 	if (*literal == '\'' && literal[1] != '\'')
+	{
+		/* success */
+		*newcursorpos = newcp;
 		return true;
+	}
+
+fail:
+	/* Must set *newcursorpos to suppress compiler warning */
+	*newcursorpos = newcp;
 	return false;
 }
