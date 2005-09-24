@@ -197,13 +197,13 @@ pushval_asis(QPRS_STATE * state, int type, char *strval, int lenval, uint16 flag
 static int4
 makepol(QPRS_STATE * state)
 {
-	int4		val,
+	int4		val = 0,
 				type;
-	int4		lenval;
-	char	   *strval;
+	int4		lenval = 0;
+	char	   *strval = NULL;
 	int4		stack[STACKDEPTH];
 	int4		lenstack = 0;
-	uint16		flag;
+	uint16		flag = 0;
 
 	while ((type = gettoken_query(state, &val, &lenval, &strval, &flag)) != END)
 	{

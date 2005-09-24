@@ -58,6 +58,8 @@ gettoken(WORKSTATE * state, int4 *val)
 	char		nnn[16],
 			   *curnnn;
 
+	*val = 0;					/* default result */
+
 	curnnn = nnn;
 	while (1)
 	{

@@ -317,13 +317,13 @@ pushval_morph(QPRS_STATE * state, int typeval, char *strval, int lenval, int2 we
 static int4
 makepol(QPRS_STATE * state, void (*pushval) (QPRS_STATE *, int, char *, int, int2))
 {
-	int4		val,
+	int4		val = 0,
 				type;
-	int4		lenval;
-	char	   *strval;
+	int4		lenval = 0;
+	char	   *strval = NULL;
 	int4		stack[STACKDEPTH];
 	int4		lenstack = 0;
-	int2		weight;
+	int2		weight = 0;
 
 	while ((type = gettoken_query(state, &val, &lenval, &strval, &weight)) != END)
 	{
