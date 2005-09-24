@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.22 2005/09/24 23:08:07 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.23 2005/09/24 23:25:31 neilc Exp $
 -->
 <chapter Id="runtime-config">
   <title>Run-time Configuration</title>
@@ -2546,9 +2546,9 @@ SELECT * FROM parent WHERE key = 2400;
         connection. This is off by default, although it is probably very
         useful.  Some client programs, like <application>psql</>, attempt 
         to connect twice while determining if a password is required, so 
-        duplicate <literal>connection received</> messasges are not a sign
-        of  problem.  This option can only be set at server start or in the
-        <filename>postgresql.conf</filename> configuration file.
+        duplicate <quote>connection received</> messages do not
+        necessarily indicate a problem. This option can only be set at
+        server start or in the <filename>postgresql.conf</> configuration file.
        </para>
       </listitem>
      </varlistentry>
