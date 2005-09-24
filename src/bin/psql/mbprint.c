@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mbprint.c,v 1.16 2005/01/01 05:43:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mbprint.c,v 1.17 2005/09/24 17:53:27 tgl Exp $
  */
 
 #include "postgres_fe.h"
@@ -158,7 +158,7 @@ ucs_wcwidth(pg_wchar ucs)
 		  (ucs >= 0x20000 && ucs <= 0x2ffff)));
 }
 
-pg_wchar
+static pg_wchar
 utf2ucs(const unsigned char *c)
 {
 	/*
@@ -195,7 +195,7 @@ utf2ucs(const unsigned char *c)
 /* mb_utf_wcwidth : calculate column length for the utf8 string pwcs
  */
 static int
-mb_utf_wcswidth(unsigned char *pwcs, size_t len)
+mb_utf_wcswidth(const unsigned char *pwcs, size_t len)
 {
 	int			w,
 				l = 0;
@@ -272,15 +272,15 @@ utf_charcheck(const unsigned char *c)
 	return -1;
 }
 
-static unsigned char *
+static void
 mb_utf_validate(unsigned char *pwcs)
 {
-	int			l = 0;
 	unsigned char *p = pwcs;
-	unsigned char *p0 = pwcs;
 
 	while (*pwcs)
 	{
+		int			l;
+
 		if ((l = utf_charcheck(pwcs)) > 0)
 		{
 			if (p != pwcs)
@@ -304,7 +304,6 @@ mb_utf_validate(unsigned char *pwcs)
 	}
 	if (p != pwcs)
 		*p = '\0';
-	return p0;
 }
 
 /*
@@ -312,10 +311,10 @@ mb_utf_validate(unsigned char *pwcs)
  */
 
 int
-pg_wcswidth(unsigned char *pwcs, size_t len, int encoding)
+pg_wcswidth(const char *pwcs, size_t len, int encoding)
 {
 	if (encoding == PG_UTF8)
-		return mb_utf_wcswidth(pwcs, len);
+		return mb_utf_wcswidth((const unsigned char *) pwcs, len);
 	else
 	{
 		/*
@@ -326,17 +325,18 @@ pg_wcswidth(unsigned char *pwcs, size_t len, int encoding)
 	}
 }
 
-unsigned char *
-mbvalidate(unsigned char *pwcs, int encoding)
+char *
+mbvalidate(char *pwcs, int encoding)
 {
 	if (encoding == PG_UTF8)
-		return mb_utf_validate(pwcs);
+		mb_utf_validate((unsigned char *) pwcs);
 	else
 	{
 		/*
 		 * other encodings needing validation should add their own
 		 * routines here
 		 */
-		return pwcs;
 	}
+
+	return pwcs;
 }

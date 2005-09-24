@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_jp_and_sjis/euc_jp_and_sjis.c,v 1.11 2005/06/24 13:56:39 ishii Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_jp_and_sjis/euc_jp_and_sjis.c,v 1.12 2005/09/24 17:53:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,8 +64,8 @@ static void sjis2euc_jp(unsigned char *mic, unsigned char *p, int len);
 Datum
 euc_jp_to_sjis(PG_FUNCTION_ARGS)
 {
-	unsigned char *src = PG_GETARG_CSTRING(2);
-	unsigned char *dest = PG_GETARG_CSTRING(3);
+	unsigned char *src = (unsigned char *) PG_GETARG_CSTRING(2);
+	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_EUC_JP);
@@ -80,8 +80,8 @@ euc_jp_to_sjis(PG_FUNCTION_ARGS)
 Datum
 sjis_to_euc_jp(PG_FUNCTION_ARGS)
 {
-	unsigned char *src = PG_GETARG_CSTRING(2);
-	unsigned char *dest = PG_GETARG_CSTRING(3);
+	unsigned char *src = (unsigned char *) PG_GETARG_CSTRING(2);
+	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_SJIS);
@@ -96,8 +96,8 @@ sjis_to_euc_jp(PG_FUNCTION_ARGS)
 Datum
 euc_jp_to_mic(PG_FUNCTION_ARGS)
 {
-	unsigned char *src = PG_GETARG_CSTRING(2);
-	unsigned char *dest = PG_GETARG_CSTRING(3);
+	unsigned char *src = (unsigned char *) PG_GETARG_CSTRING(2);
+	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_EUC_JP);
@@ -112,8 +112,8 @@ euc_jp_to_mic(PG_FUNCTION_ARGS)
 Datum
 mic_to_euc_jp(PG_FUNCTION_ARGS)
 {
-	unsigned char *src = PG_GETARG_CSTRING(2);
-	unsigned char *dest = PG_GETARG_CSTRING(3);
+	unsigned char *src = (unsigned char *) PG_GETARG_CSTRING(2);
+	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
@@ -128,8 +128,8 @@ mic_to_euc_jp(PG_FUNCTION_ARGS)
 Datum
 sjis_to_mic(PG_FUNCTION_ARGS)
 {
-	unsigned char *src = PG_GETARG_CSTRING(2);
-	unsigned char *dest = PG_GETARG_CSTRING(3);
+	unsigned char *src = (unsigned char *) PG_GETARG_CSTRING(2);
+	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_SJIS);
@@ -144,8 +144,8 @@ sjis_to_mic(PG_FUNCTION_ARGS)
 Datum
 mic_to_sjis(PG_FUNCTION_ARGS)
 {
-	unsigned char *src = PG_GETARG_CSTRING(2);
-	unsigned char *dest = PG_GETARG_CSTRING(3);
+	unsigned char *src = (unsigned char *) PG_GETARG_CSTRING(2);
+	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);

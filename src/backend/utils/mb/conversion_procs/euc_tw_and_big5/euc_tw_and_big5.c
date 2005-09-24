@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_tw_and_big5/euc_tw_and_big5.c,v 1.9 2004/12/31 22:02:07 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_tw_and_big5/euc_tw_and_big5.c,v 1.10 2005/09/24 17:53:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,8 +50,8 @@ static void mic2euc_tw(unsigned char *mic, unsigned char *p, int len);
 Datum
 euc_tw_to_big5(PG_FUNCTION_ARGS)
 {
-	unsigned char *src = PG_GETARG_CSTRING(2);
-	unsigned char *dest = PG_GETARG_CSTRING(3);
+	unsigned char *src = (unsigned char *) PG_GETARG_CSTRING(2);
+	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	unsigned char *buf;
 
@@ -61,7 +61,7 @@ euc_tw_to_big5(PG_FUNCTION_ARGS)
 
 	buf = palloc(len * ENCODING_GROWTH_RATE);
 	euc_tw2mic(src, buf, len);
-	mic2big5(buf, dest, strlen(buf));
+	mic2big5(buf, dest, strlen((char *) buf));
 	pfree(buf);
 
 	PG_RETURN_VOID();
@@ -70,8 +70,8 @@ euc_tw_to_big5(PG_FUNCTION_ARGS)
 Datum
 big5_to_euc_tw(PG_FUNCTION_ARGS)
 {
-	unsigned char *src = PG_GETARG_CSTRING(2);
-	unsigned char *dest = PG_GETARG_CSTRING(3);
+	unsigned char *src = (unsigned char *) PG_GETARG_CSTRING(2);
+	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	unsigned char *buf;
 
@@ -81,7 +81,7 @@ big5_to_euc_tw(PG_FUNCTION_ARGS)
 
 	buf = palloc(len * ENCODING_GROWTH_RATE);
 	big52mic(src, buf, len);
-	mic2euc_tw(buf, dest, strlen(buf));
+	mic2euc_tw(buf, dest, strlen((char *) buf));
 	pfree(buf);
 
 	PG_RETURN_VOID();
@@ -90,8 +90,8 @@ big5_to_euc_tw(PG_FUNCTION_ARGS)
 Datum
 euc_tw_to_mic(PG_FUNCTION_ARGS)
 {
-	unsigned char *src = PG_GETARG_CSTRING(2);
-	unsigned char *dest = PG_GETARG_CSTRING(3);
+	unsigned char *src = (unsigned char *) PG_GETARG_CSTRING(2);
+	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_EUC_TW);
@@ -106,8 +106,8 @@ euc_tw_to_mic(PG_FUNCTION_ARGS)
 Datum
 mic_to_euc_tw(PG_FUNCTION_ARGS)
 {
-	unsigned char *src = PG_GETARG_CSTRING(2);
-	unsigned char *dest = PG_GETARG_CSTRING(3);
+	unsigned char *src = (unsigned char *) PG_GETARG_CSTRING(2);
+	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
@@ -122,8 +122,8 @@ mic_to_euc_tw(PG_FUNCTION_ARGS)
 Datum
 big5_to_mic(PG_FUNCTION_ARGS)
 {
-	unsigned char *src = PG_GETARG_CSTRING(2);
-	unsigned char *dest = PG_GETARG_CSTRING(3);
+	unsigned char *src = (unsigned char *) PG_GETARG_CSTRING(2);
+	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_BIG5);
@@ -138,8 +138,8 @@ big5_to_mic(PG_FUNCTION_ARGS)
 Datum
 mic_to_big5(PG_FUNCTION_ARGS)
 {
-	unsigned char *src = PG_GETARG_CSTRING(2);
-	unsigned char *dest = PG_GETARG_CSTRING(3);
+	unsigned char *src = (unsigned char *) PG_GETARG_CSTRING(2);
+	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);

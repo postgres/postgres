@@ -5,7 +5,7 @@
  *	 Portions Copyright (c) 1999-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ascii.c,v 1.24 2005/01/01 05:43:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ascii.c,v 1.25 2005/09/24 17:53:15 tgl Exp $
  *
  *-----------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ pg_to_ascii(unsigned char *src, unsigned char *src_end, unsigned char *dest, int
 		/*
 		 * ISO-8859-1 <range: 160 -- 255>
 		 */
-		ascii = "  cL Y  \"Ca  -R     'u .,      ?AAAAAAACEEEEIIII NOOOOOxOUUUUYTBaaaaaaaceeeeiiii nooooo/ouuuuyty";
+		ascii = (const unsigned char *) "  cL Y  \"Ca  -R     'u .,      ?AAAAAAACEEEEIIII NOOOOOxOUUUUYTBaaaaaaaceeeeiiii nooooo/ouuuuyty";
 		range = RANGE_160;
 	}
 	else if (enc == PG_LATIN2)
@@ -50,7 +50,7 @@ pg_to_ascii(unsigned char *src, unsigned char *src_end, unsigned char *dest, int
 		/*
 		 * ISO-8859-2 <range: 160 -- 255>
 		 */
-		ascii = " A L LS \"SSTZ-ZZ a,l'ls ,sstz\"zzRAAAALCCCEEEEIIDDNNOOOOxRUUUUYTBraaaalccceeeeiiddnnoooo/ruuuuyt.";
+		ascii = (const unsigned char *) " A L LS \"SSTZ-ZZ a,l'ls ,sstz\"zzRAAAALCCCEEEEIIDDNNOOOOxRUUUUYTBraaaalccceeeeiiddnnoooo/ruuuuyt.";
 		range = RANGE_160;
 	}
 	else if (enc == PG_LATIN9)
@@ -58,7 +58,7 @@ pg_to_ascii(unsigned char *src, unsigned char *src_end, unsigned char *dest, int
 		/*
 		 * ISO-8859-15 <range: 160 -- 255>
 		 */
-		ascii = "  cL YS sCa  -R     Zu .z   EeY?AAAAAAACEEEEIIII NOOOOOxOUUUUYTBaaaaaaaceeeeiiii nooooo/ouuuuyty";
+		ascii = (const unsigned char *) "  cL YS sCa  -R     Zu .z   EeY?AAAAAAACEEEEIIII NOOOOOxOUUUUYTBaaaaaaaceeeeiiii nooooo/ouuuuyty";
 		range = RANGE_160;
 	}
 	else if (enc == PG_WIN1250)
@@ -66,7 +66,7 @@ pg_to_ascii(unsigned char *src, unsigned char *src_end, unsigned char *dest, int
 		/*
 		 * Window CP1250 <range: 128 -- 255>
 		 */
-		ascii = "  ' \"    %S<STZZ `'\"\".--  s>stzz   L A  \"CS  -RZ  ,l'u .,as L\"lzRAAAALCCCEEEEIIDDNNOOOOxRUUUUYTBraaaalccceeeeiiddnnoooo/ruuuuyt ";
+		ascii = (const unsigned char *) "  ' \"    %S<STZZ `'\"\".--  s>stzz   L A  \"CS  -RZ  ,l'u .,as L\"lzRAAAALCCCEEEEIIDDNNOOOOxRUUUUYTBraaaalccceeeeiiddnnoooo/ruuuuyt ";
 		range = RANGE_128;
 	}
 	else

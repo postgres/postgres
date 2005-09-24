@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.179 2005/09/12 02:26:31 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.180 2005/09/24 17:53:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,11 +106,11 @@ static char sock_path[MAXPGPATH];
 
 #define PQ_BUFFER_SIZE 8192
 
-static unsigned char PqSendBuffer[PQ_BUFFER_SIZE];
+static char PqSendBuffer[PQ_BUFFER_SIZE];
 static int	PqSendPointer;		/* Next index to store a byte in
 								 * PqSendBuffer */
 
-static unsigned char PqRecvBuffer[PQ_BUFFER_SIZE];
+static char PqRecvBuffer[PQ_BUFFER_SIZE];
 static int	PqRecvPointer;		/* Next index to read a byte from
 								 * PqRecvBuffer */
 static int	PqRecvLength;		/* End of data available in PqRecvBuffer */
@@ -482,7 +482,7 @@ Setup_AF_UNIX(void)
 		elog(WARNING, "configuration item unix_socket_group is not supported on this platform");
 #else
 		char	   *endptr;
-		unsigned long int val;
+		unsigned long val;
 		gid_t		gid;
 
 		val = strtoul(Unix_socket_group, &endptr, 10);
@@ -741,7 +741,7 @@ pq_getbyte(void)
 		if (pq_recvbuf())		/* If nothing in buffer, then recv some */
 			return EOF;			/* Failed to recv data */
 	}
-	return PqRecvBuffer[PqRecvPointer++];
+	return (unsigned char) PqRecvBuffer[PqRecvPointer++];
 }
 
 /* --------------------------------
@@ -758,7 +758,7 @@ pq_peekbyte(void)
 		if (pq_recvbuf())		/* If nothing in buffer, then recv some */
 			return EOF;			/* Failed to recv data */
 	}
-	return PqRecvBuffer[PqRecvPointer];
+	return (unsigned char) PqRecvBuffer[PqRecvPointer];
 }
 
 /* --------------------------------
@@ -1029,8 +1029,8 @@ internal_flush(void)
 {
 	static int	last_reported_send_errno = 0;
 
-	unsigned char *bufptr = PqSendBuffer;
-	unsigned char *bufend = PqSendBuffer + PqSendPointer;
+	char	   *bufptr = PqSendBuffer;
+	char	   *bufend = PqSendBuffer + PqSendPointer;
 
 	while (bufptr < bufend)
 	{

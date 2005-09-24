@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.57 2005/07/10 04:54:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.58 2005/09/24 17:53:15 tgl Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -134,7 +134,7 @@ RE_compile_and_cache(text *text_re, int cflags)
 
 	/* Convert pattern string to wide characters */
 	pattern = (pg_wchar *) palloc((text_re_len - VARHDRSZ + 1) * sizeof(pg_wchar));
-	pattern_len = pg_mb2wchar_with_len((unsigned char *) VARDATA(text_re),
+	pattern_len = pg_mb2wchar_with_len(VARDATA(text_re),
 									   pattern,
 									   text_re_len - VARHDRSZ);
 
@@ -206,7 +206,7 @@ RE_compile_and_cache(text *text_re, int cflags)
  * convert to array of pg_wchar which is what Spencer's regex package wants.
  */
 static bool
-RE_compile_and_execute(text *text_re, unsigned char *dat, int dat_len,
+RE_compile_and_execute(text *text_re, char *dat, int dat_len,
 					   int cflags, int nmatch, regmatch_t *pmatch)
 {
 	pg_wchar   *data;
@@ -287,7 +287,7 @@ nameregexeq(PG_FUNCTION_ARGS)
 	text	   *p = PG_GETARG_TEXT_P(1);
 
 	PG_RETURN_BOOL(RE_compile_and_execute(p,
-										  (unsigned char *) NameStr(*n),
+										  NameStr(*n),
 										  strlen(NameStr(*n)),
 										  regex_flavor,
 										  0, NULL));
@@ -300,7 +300,7 @@ nameregexne(PG_FUNCTION_ARGS)
 	text	   *p = PG_GETARG_TEXT_P(1);
 
 	PG_RETURN_BOOL(!RE_compile_and_execute(p,
-										   (unsigned char *) NameStr(*n),
+										   NameStr(*n),
 										   strlen(NameStr(*n)),
 										   regex_flavor,
 										   0, NULL));
@@ -313,7 +313,7 @@ textregexeq(PG_FUNCTION_ARGS)
 	text	   *p = PG_GETARG_TEXT_P(1);
 
 	PG_RETURN_BOOL(RE_compile_and_execute(p,
-										  (unsigned char *) VARDATA(s),
+										  VARDATA(s),
 										  VARSIZE(s) - VARHDRSZ,
 										  regex_flavor,
 										  0, NULL));
@@ -326,7 +326,7 @@ textregexne(PG_FUNCTION_ARGS)
 	text	   *p = PG_GETARG_TEXT_P(1);
 
 	PG_RETURN_BOOL(!RE_compile_and_execute(p,
-										   (unsigned char *) VARDATA(s),
+										   VARDATA(s),
 										   VARSIZE(s) - VARHDRSZ,
 										   regex_flavor,
 										   0, NULL));
@@ -346,7 +346,7 @@ nameicregexeq(PG_FUNCTION_ARGS)
 	text	   *p = PG_GETARG_TEXT_P(1);
 
 	PG_RETURN_BOOL(RE_compile_and_execute(p,
-										  (unsigned char *) NameStr(*n),
+										  NameStr(*n),
 										  strlen(NameStr(*n)),
 										  regex_flavor | REG_ICASE,
 										  0, NULL));
@@ -359,7 +359,7 @@ nameicregexne(PG_FUNCTION_ARGS)
 	text	   *p = PG_GETARG_TEXT_P(1);
 
 	PG_RETURN_BOOL(!RE_compile_and_execute(p,
-										   (unsigned char *) NameStr(*n),
+										   NameStr(*n),
 										   strlen(NameStr(*n)),
 										   regex_flavor | REG_ICASE,
 										   0, NULL));
@@ -372,7 +372,7 @@ texticregexeq(PG_FUNCTION_ARGS)
 	text	   *p = PG_GETARG_TEXT_P(1);
 
 	PG_RETURN_BOOL(RE_compile_and_execute(p,
-										  (unsigned char *) VARDATA(s),
+										  VARDATA(s),
 										  VARSIZE(s) - VARHDRSZ,
 										  regex_flavor | REG_ICASE,
 										  0, NULL));
@@ -385,7 +385,7 @@ texticregexne(PG_FUNCTION_ARGS)
 	text	   *p = PG_GETARG_TEXT_P(1);
 
 	PG_RETURN_BOOL(!RE_compile_and_execute(p,
-										   (unsigned char *) VARDATA(s),
+										   VARDATA(s),
 										   VARSIZE(s) - VARHDRSZ,
 										   regex_flavor | REG_ICASE,
 										   0, NULL));
@@ -411,7 +411,7 @@ textregexsubstr(PG_FUNCTION_ARGS)
 	 * matched; else return what the whole regexp matched.
 	 */
 	match = RE_compile_and_execute(p,
-								   (unsigned char *) VARDATA(s),
+								   VARDATA(s),
 								   VARSIZE(s) - VARHDRSZ,
 								   regex_flavor,
 								   2, pmatch);
@@ -524,7 +524,7 @@ similar_escape(PG_FUNCTION_ARGS)
 	text	   *pat_text;
 	text	   *esc_text;
 	text	   *result;
-	unsigned char *p,
+	char	   *p,
 			   *e,
 			   *r;
 	int			plen,
@@ -566,7 +566,7 @@ similar_escape(PG_FUNCTION_ARGS)
 
 	while (plen > 0)
 	{
-		unsigned char pchar = *p;
+		char	pchar = *p;
 
 		if (afterescape)
 		{
@@ -604,7 +604,7 @@ similar_escape(PG_FUNCTION_ARGS)
 
 	*r++ = '$';
 
-	VARATT_SIZEP(result) = r - ((unsigned char *) result);
+	VARATT_SIZEP(result) = r - ((char *) result);
 
 	PG_RETURN_TEXT_P(result);
 }

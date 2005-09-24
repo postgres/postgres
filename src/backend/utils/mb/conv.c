@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conv.c,v 1.53 2005/06/15 00:15:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conv.c,v 1.54 2005/09/24 17:53:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -421,7 +421,7 @@ LocalToUtf(unsigned char *iso, unsigned char *utf,
 			continue;
 		}
 
-		l = pg_encoding_mblen(encoding, iso);
+		l = pg_encoding_mblen(encoding, (char *) iso);
 
 		if (l == 1)
 			iiso = *iso++;

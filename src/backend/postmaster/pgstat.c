@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.107 2005/08/30 02:47:37 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.108 2005/09/24 17:53:14 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -788,8 +788,7 @@ pgstat_report_activity(const char *what)
 		return;
 
 	len = strlen(what);
-	len = pg_mbcliplen((const unsigned char *) what, len,
-					   PGSTAT_ACTIVITY_SIZE - 1);
+	len = pg_mbcliplen(what, len, PGSTAT_ACTIVITY_SIZE - 1);
 
 	memcpy(msg.m_what, what, len);
 	msg.m_what[len] = '\0';

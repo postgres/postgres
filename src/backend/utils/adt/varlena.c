@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.134 2005/09/16 04:13:17 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.135 2005/09/24 17:53:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -793,10 +793,10 @@ text_position(text *t1, text *t2, int matchnum)
 				   *ps2;
 
 		ps1 = p1 = (pg_wchar *) palloc((len1 + 1) * sizeof(pg_wchar));
-		(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(t1), p1, len1);
+		(void) pg_mb2wchar_with_len(VARDATA(t1), p1, len1);
 		len1 = pg_wchar_strlen(p1);
 		ps2 = p2 = (pg_wchar *) palloc((len2 + 1) * sizeof(pg_wchar));
-		(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(t2), p2, len2);
+		(void) pg_mb2wchar_with_len(VARDATA(t2), p2, len2);
 		len2 = pg_wchar_strlen(p2);
 
 		/* no use in searching str past point where search_str will fit */

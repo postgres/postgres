@@ -19,7 +19,7 @@
  * Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.10 2004/12/31 22:01:22 pgsql Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.11 2005/09/24 17:53:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,7 +71,7 @@
  */
 
 static int
-MatchText(unsigned char *t, int tlen, unsigned char *p, int plen)
+MatchText(char *t, int tlen, char *p, int plen)
 {
 	/* Fast path for match-everything pattern */
 	if ((plen == 1) && (*p == '%'))
@@ -157,7 +157,7 @@ MatchText(unsigned char *t, int tlen, unsigned char *p, int plen)
  * Same as above, but ignore case
  */
 static int
-MatchTextIC(unsigned char *t, int tlen, unsigned char *p, int plen)
+MatchTextIC(char *t, int tlen, char *p, int plen)
 {
 	/* Fast path for match-everything pattern */
 	if ((plen == 1) && (*p == '%'))
@@ -247,7 +247,7 @@ static text *
 do_like_escape(text *pat, text *esc)
 {
 	text	   *result;
-	unsigned char *p,
+	char	   *p,
 			   *e,
 			   *r;
 	int			plen,
@@ -332,7 +332,7 @@ do_like_escape(text *pat, text *esc)
 		}
 	}
 
-	VARATT_SIZEP(result) = r - ((unsigned char *) result);
+	VARATT_SIZEP(result) = r - ((char *) result);
 
 	return result;
 }

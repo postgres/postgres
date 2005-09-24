@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.249 2005/09/01 15:34:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.250 2005/09/24 17:53:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1194,9 +1194,8 @@ CopyTo(CopyState cstate)
 		 * encoding, because it will be sent directly with CopySendString.
 		 */
 		if (cstate->need_transcoding)
-			null_print_client = (char *)
-				pg_server_to_client((unsigned char *) cstate->null_print,
-									cstate->null_print_len);
+			null_print_client = pg_server_to_client(cstate->null_print,
+													cstate->null_print_len);
 
 		/* if a header has been requested send the line */
 		if (cstate->header_line)
@@ -2025,8 +2024,8 @@ CopyReadLine(CopyState cstate)
 	{
 		char	   *cvt;
 
-		cvt = (char *) pg_client_to_server((unsigned char *) cstate->line_buf.data,
-										   cstate->line_buf.len);
+		cvt = pg_client_to_server(cstate->line_buf.data,
+								  cstate->line_buf.len);
 		if (cvt != cstate->line_buf.data)
 		{
 			/* transfer converted data back to line_buf */
@@ -2057,7 +2056,7 @@ CopyReadLineText(CopyState cstate)
 	int			copy_buf_len;
 	bool		need_data;
 	bool		hit_eof;
-	unsigned char s[2];
+	char		s[2];
 
 	s[1] = 0;
 
@@ -2331,7 +2330,7 @@ CopyReadLineCSV(CopyState cstate)
 	int			copy_buf_len;
 	bool		need_data;
 	bool		hit_eof;
-	unsigned char s[2];
+	char		s[2];
 	bool        in_quote = false, last_was_esc = false;
 	char		quotec = cstate->quote[0];
 	char		escapec = cstate->escape[0];
@@ -3100,8 +3099,7 @@ CopyAttributeOutText(CopyState cstate, char *server_string)
 	int			mblen;
 
 	if (cstate->need_transcoding)
-		string = (char *) pg_server_to_client((unsigned char *) server_string,
-											  strlen(server_string));
+		string = pg_server_to_client(server_string, strlen(server_string));
 	else
 		string = server_string;
 
@@ -3170,8 +3168,7 @@ CopyAttributeOutCSV(CopyState cstate, char *server_string,
 		use_quote = true;
 
 	if (cstate->need_transcoding)
-		string = (char *) pg_server_to_client((unsigned char *) server_string,
-											  strlen(server_string));
+		string = pg_server_to_client(server_string, strlen(server_string));
 	else
 		string = server_string;
 

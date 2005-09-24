@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.187 2005/07/21 04:41:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.188 2005/09/24 17:53:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,11 +135,11 @@ static bool convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 				  Datum lobound, Datum hibound, Oid boundstypid,
 				  double *scaledlobound, double *scaledhibound);
 static double convert_numeric_to_scalar(Datum value, Oid typid);
-static void convert_string_to_scalar(unsigned char *value,
+static void convert_string_to_scalar(char *value,
 						 double *scaledvalue,
-						 unsigned char *lobound,
+						 char *lobound,
 						 double *scaledlobound,
-						 unsigned char *hibound,
+						 char *hibound,
 						 double *scaledhibound);
 static void convert_bytea_to_scalar(Datum value,
 						double *scaledvalue,
@@ -147,11 +147,11 @@ static void convert_bytea_to_scalar(Datum value,
 						double *scaledlobound,
 						Datum hibound,
 						double *scaledhibound);
-static double convert_one_string_to_scalar(unsigned char *value,
+static double convert_one_string_to_scalar(char *value,
 							 int rangelo, int rangehi);
 static double convert_one_bytea_to_scalar(unsigned char *value, int valuelen,
 							int rangelo, int rangehi);
-static unsigned char *convert_string_datum(Datum value, Oid typid);
+static char *convert_string_datum(Datum value, Oid typid);
 static double convert_timevalue_to_scalar(Datum value, Oid typid);
 static bool get_restriction_variable(PlannerInfo *root, List *args, int varRelid,
 						 VariableStatData *vardata, Node **other,
@@ -2350,9 +2350,9 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 		case TEXTOID:
 		case NAMEOID:
 			{
-				unsigned char *valstr = convert_string_datum(value, valuetypid);
-				unsigned char *lostr = convert_string_datum(lobound, boundstypid);
-				unsigned char *histr = convert_string_datum(hibound, boundstypid);
+				char *valstr = convert_string_datum(value, valuetypid);
+				char *lostr = convert_string_datum(lobound, boundstypid);
+				char *histr = convert_string_datum(hibound, boundstypid);
 
 				convert_string_to_scalar(valstr, scaledvalue,
 										 lostr, scaledlobound,
@@ -2471,31 +2471,31 @@ convert_numeric_to_scalar(Datum value, Oid typid)
  * so this is more likely to happen than you might think.)
  */
 static void
-convert_string_to_scalar(unsigned char *value,
+convert_string_to_scalar(char *value,
 						 double *scaledvalue,
-						 unsigned char *lobound,
+						 char *lobound,
 						 double *scaledlobound,
-						 unsigned char *hibound,
+						 char *hibound,
 						 double *scaledhibound)
 {
 	int			rangelo,
 				rangehi;
-	unsigned char *sptr;
+	char	   *sptr;
 
-	rangelo = rangehi = hibound[0];
+	rangelo = rangehi = (unsigned char) hibound[0];
 	for (sptr = lobound; *sptr; sptr++)
 	{
-		if (rangelo > *sptr)
-			rangelo = *sptr;
-		if (rangehi < *sptr)
-			rangehi = *sptr;
+		if (rangelo > (unsigned char) *sptr)
+			rangelo = (unsigned char) *sptr;
+		if (rangehi < (unsigned char) *sptr)
+			rangehi = (unsigned char) *sptr;
 	}
 	for (sptr = hibound; *sptr; sptr++)
 	{
-		if (rangelo > *sptr)
-			rangelo = *sptr;
-		if (rangehi < *sptr)
-			rangehi = *sptr;
+		if (rangelo > (unsigned char) *sptr)
+			rangelo = (unsigned char) *sptr;
+		if (rangehi < (unsigned char) *sptr)
+			rangehi = (unsigned char) *sptr;
 	}
 	/* If range includes any upper-case ASCII chars, make it include all */
 	if (rangelo <= 'Z' && rangehi >= 'A')
@@ -2551,9 +2551,9 @@ convert_string_to_scalar(unsigned char *value,
 }
 
 static double
-convert_one_string_to_scalar(unsigned char *value, int rangelo, int rangehi)
+convert_one_string_to_scalar(char *value, int rangelo, int rangehi)
 {
-	int			slen = strlen((char *) value);
+	int			slen = strlen(value);
 	double		num,
 				denom,
 				base;
@@ -2574,7 +2574,7 @@ convert_one_string_to_scalar(unsigned char *value, int rangelo, int rangehi)
 	denom = base;
 	while (slen-- > 0)
 	{
-		int			ch = *value++;
+		int			ch = (unsigned char) *value++;
 
 		if (ch < rangelo)
 			ch = rangelo - 1;
@@ -2593,7 +2593,7 @@ convert_one_string_to_scalar(unsigned char *value, int rangelo, int rangehi)
  * When using a non-C locale, we must pass the string through strxfrm()
  * before continuing, so as to generate correct locale-specific results.
  */
-static unsigned char *
+static char *
 convert_string_datum(Datum value, Oid typid)
 {
 	char	   *val;
@@ -2660,7 +2660,7 @@ convert_string_datum(Datum value, Oid typid)
 		val = xfrmstr;
 	}
 
-	return (unsigned char *) val;
+	return val;
 }
 
 /*
@@ -4104,8 +4104,7 @@ make_greater_string(const Const *str_const)
 			if (datatype != BYTEAOID)
 			{
 				/* do not generate invalid encoding sequences */
-				if (!pg_verifymbstr((const unsigned char *) workstr,
-									len, true))
+				if (!pg_verifymbstr(workstr, len, true))
 					continue;
 				workstr_const = string_to_const(workstr, datatype);
 			}
@@ -4124,7 +4123,7 @@ make_greater_string(const Const *str_const)
 		 * byte, depending on the character encoding.
 		 */
 		if (datatype != BYTEAOID && pg_database_encoding_max_length() > 1)
-			len = pg_mbcliplen((const unsigned char *) workstr, len, len - 1);
+			len = pg_mbcliplen(workstr, len, len - 1);
 		else
 			len -= 1;
 

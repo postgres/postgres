@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.81 2005/07/10 21:13:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.82 2005/09/24 17:53:15 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -473,9 +473,7 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info * fip,
 			 * have to do encoding conversion before calling the typinput
 			 * routine, though.
 			 */
-			pstring = (char *)
-				pg_client_to_server((unsigned char *) abuf.data,
-									argsize);
+			pstring = pg_client_to_server(abuf.data, argsize);
 			fcinfo->arg[i] =
 				OidFunctionCall3(typinput,
 								 CStringGetDatum(pstring),

@@ -19,15 +19,13 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.31 2005/06/21 20:45:44 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.32 2005/09/24 17:53:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "pg_backup.h"
 #include "pg_backup_archiver.h"
-
-#include <errno.h>
 
 /*--------
  * Routines in the format interface
@@ -548,7 +546,7 @@ _PrintData(ArchiveHandle *AH)
 
 		ctx->filePos += blkLen;
 
-		zp->next_in = in;
+		zp->next_in = (void *) in;
 		zp->avail_in = blkLen;
 
 #ifdef HAVE_LIBZ
@@ -557,7 +555,7 @@ _PrintData(ArchiveHandle *AH)
 		{
 			while (zp->avail_in != 0)
 			{
-				zp->next_out = out;
+				zp->next_out = (void *) out;
 				zp->avail_out = zlibOutSize;
 				res = inflate(zp, 0);
 				if (res != Z_OK && res != Z_STREAM_END)
@@ -587,7 +585,7 @@ _PrintData(ArchiveHandle *AH)
 		zp->avail_in = 0;
 		while (res != Z_STREAM_END)
 		{
-			zp->next_out = out;
+			zp->next_out = (void *) out;
 			zp->avail_out = zlibOutSize;
 			res = inflate(zp, 0);
 			if (res != Z_OK && res != Z_STREAM_END)
@@ -891,7 +889,7 @@ _StartDataCompressor(ArchiveHandle *AH, TocEntry *te)
 #endif
 
 	/* Just be paranoid - maybe End is called after Start, with no Write */
-	zp->next_out = ctx->zlibOut;
+	zp->next_out = (void *) ctx->zlibOut;
 	zp->avail_out = zlibOutSize;
 }
 
@@ -937,7 +935,7 @@ _DoDeflate(ArchiveHandle *AH, lclContext *ctx, int flush)
 					die_horribly(AH, modulename, "could not write compressed chunk\n");
 				ctx->filePos += zlibOutSize - zp->avail_out;
 			}
-			zp->next_out = out;
+			zp->next_out = (void *) out;
 			zp->avail_out = zlibOutSize;
 		}
 	}

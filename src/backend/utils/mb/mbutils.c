@@ -4,7 +4,7 @@
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.50 2005/07/10 21:13:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.51 2005/09/24 17:53:17 tgl Exp $
  */
 #include "postgres.h"
 
@@ -43,9 +43,9 @@ static int	pending_client_encoding = PG_SQL_ASCII;
 
 
 /* Internal functions */
-static unsigned char *perform_default_encoding_conversion(unsigned char *src,
+static char *perform_default_encoding_conversion(const char *src,
 									int len, bool is_client_to_server);
-static int	cliplen(const unsigned char *str, int len, int limit);
+static int	cliplen(const char *str, int len, int limit);
 
 
 /*
@@ -303,7 +303,7 @@ pg_convert(PG_FUNCTION_ARGS)
 }
 
 /*
- * Convert string using encoding_nanme.
+ * Convert string using encoding_name.
  *
  * TEXT convert2(TEXT string, NAME src_encoding_name, NAME dest_encoding_name)
  */
@@ -346,7 +346,7 @@ pg_convert2(PG_FUNCTION_ARGS)
 	 * textin assumes that input string encoding is same as database
 	 * encoding.
 	 */
-	len = strlen(result) + VARHDRSZ;
+	len = strlen((char *) result) + VARHDRSZ;
 	retval = palloc(len);
 	VARATT_SIZEP(retval) = len;
 	memcpy(VARDATA(retval), result, len - VARHDRSZ);
@@ -364,14 +364,14 @@ pg_convert2(PG_FUNCTION_ARGS)
 /*
  * convert client encoding to server encoding.
  */
-unsigned char *
-pg_client_to_server(unsigned char *s, int len)
+char *
+pg_client_to_server(const char *s, int len)
 {
 	Assert(DatabaseEncoding);
 	Assert(ClientEncoding);
 
 	if (ClientEncoding->encoding == DatabaseEncoding->encoding)
-		return s;
+		return (char *) s;
 
 	return perform_default_encoding_conversion(s, len, true);
 }
@@ -379,14 +379,14 @@ pg_client_to_server(unsigned char *s, int len)
 /*
  * convert server encoding to client encoding.
  */
-unsigned char *
-pg_server_to_client(unsigned char *s, int len)
+char *
+pg_server_to_client(const char *s, int len)
 {
 	Assert(DatabaseEncoding);
 	Assert(ClientEncoding);
 
 	if (ClientEncoding->encoding == DatabaseEncoding->encoding)
-		return s;
+		return (char *) s;
 
 	return perform_default_encoding_conversion(s, len, false);
 }
@@ -398,16 +398,16 @@ pg_server_to_client(unsigned char *s, int len)
  *	before calling this function. Otherwise no conversion is
  *	performed.
 */
-static unsigned char *
-perform_default_encoding_conversion(unsigned char *src, int len, bool is_client_to_server)
+static char *
+perform_default_encoding_conversion(const char *src, int len, bool is_client_to_server)
 {
-	unsigned char *result;
+	char	   *result;
 	int			src_encoding,
 				dest_encoding;
 	FmgrInfo   *flinfo;
 
 	if (len <= 0)
-		return src;
+		return (char *) src;
 
 	if (is_client_to_server)
 	{
@@ -423,13 +423,13 @@ perform_default_encoding_conversion(unsigned char *src, int len, bool is_client_
 	}
 
 	if (flinfo == NULL)
-		return src;
+		return (char *) src;
 
 	if (src_encoding == dest_encoding)
-		return src;
+		return (char *) src;
 
 	if (src_encoding == PG_SQL_ASCII || dest_encoding == PG_SQL_ASCII)
-		return src;
+		return (char *) src;
 
 	result = palloc(len * 4 + 1);
 
@@ -444,41 +444,41 @@ perform_default_encoding_conversion(unsigned char *src, int len, bool is_client_
 
 /* convert a multibyte string to a wchar */
 int
-pg_mb2wchar(const unsigned char *from, pg_wchar *to)
+pg_mb2wchar(const char *from, pg_wchar *to)
 {
-	return (*pg_wchar_table[DatabaseEncoding->encoding].mb2wchar_with_len) (from, to, strlen(from));
+	return (*pg_wchar_table[DatabaseEncoding->encoding].mb2wchar_with_len) ((const unsigned char *) from, to, strlen(from));
 }
 
 /* convert a multibyte string to a wchar with a limited length */
 int
-pg_mb2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
+pg_mb2wchar_with_len(const char *from, pg_wchar *to, int len)
 {
-	return (*pg_wchar_table[DatabaseEncoding->encoding].mb2wchar_with_len) (from, to, len);
+	return (*pg_wchar_table[DatabaseEncoding->encoding].mb2wchar_with_len) ((const unsigned char *) from, to, len);
 }
 
 /* returns the byte length of a multibyte word */
 int
-pg_mblen(const unsigned char *mbstr)
+pg_mblen(const char *mbstr)
 {
-	return ((*pg_wchar_table[DatabaseEncoding->encoding].mblen) (mbstr));
+	return ((*pg_wchar_table[DatabaseEncoding->encoding].mblen) ((const unsigned char *) mbstr));
 }
 
 /* returns the display length of a multibyte word */
 int
-pg_dsplen(const unsigned char *mbstr)
+pg_dsplen(const char *mbstr)
 {
-	return ((*pg_wchar_table[DatabaseEncoding->encoding].dsplen) (mbstr));
+	return ((*pg_wchar_table[DatabaseEncoding->encoding].dsplen) ((const unsigned char *) mbstr));
 }
 
-/* returns the length (counted as a wchar) of a multibyte string */
+/* returns the length (counted in wchars) of a multibyte string */
 int
-pg_mbstrlen(const unsigned char *mbstr)
+pg_mbstrlen(const char *mbstr)
 {
 	int			len = 0;
 
 	/* optimization for single byte encoding */
 	if (pg_database_encoding_max_length() == 1)
-		return strlen((char *) mbstr);
+		return strlen(mbstr);
 
 	while (*mbstr)
 	{
@@ -488,11 +488,11 @@ pg_mbstrlen(const unsigned char *mbstr)
 	return (len);
 }
 
-/* returns the length (counted as a wchar) of a multibyte string
+/* returns the length (counted in wchars) of a multibyte string
  * (not necessarily NULL terminated)
  */
 int
-pg_mbstrlen_with_len(const unsigned char *mbstr, int limit)
+pg_mbstrlen_with_len(const char *mbstr, int limit)
 {
 	int			len = 0;
 
@@ -518,7 +518,7 @@ pg_mbstrlen_with_len(const unsigned char *mbstr, int limit)
  * this function does not break multibyte word boundary.
  */
 int
-pg_mbcliplen(const unsigned char *mbstr, int len, int limit)
+pg_mbcliplen(const char *mbstr, int len, int limit)
 {
 	int			clen = 0;
 	int			l;
@@ -545,7 +545,7 @@ pg_mbcliplen(const unsigned char *mbstr, int len, int limit)
  * Similar to pg_mbcliplen except the limit parameter specifies the
  * character length, not the byte length.  */
 int
-pg_mbcharcliplen(const unsigned char *mbstr, int len, int limit)
+pg_mbcharcliplen(const char *mbstr, int len, int limit)
 {
 	int			clen = 0;
 	int			nch = 0;
@@ -613,10 +613,10 @@ pg_client_encoding(PG_FUNCTION_ARGS)
 }
 
 static int
-cliplen(const unsigned char *str, int len, int limit)
+cliplen(const char *str, int len, int limit)
 {
 	int			l = 0;
-	const unsigned char *s;
+	const char *s;
 
 	for (s = str; *s; s++, l++)
 	{

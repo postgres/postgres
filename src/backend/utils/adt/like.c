@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/like.c,v 1.60 2005/05/25 22:59:33 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/like.c,v 1.61 2005/09/24 17:53:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,18 +28,13 @@
 #define LIKE_ABORT						(-1)
 
 
-static int MatchText(unsigned char *t, int tlen,
-		  unsigned char *p, int plen);
-static int MatchTextIC(unsigned char *t, int tlen,
-			unsigned char *p, int plen);
-static int MatchBytea(unsigned char *t, int tlen,
-		   unsigned char *p, int plen);
+static int MatchText(char *t, int tlen, char *p, int plen);
+static int MatchTextIC(char *t, int tlen, char *p, int plen);
+static int MatchBytea(char *t, int tlen, char *p, int plen);
 static text *do_like_escape(text *, text *);
 
-static int MBMatchText(unsigned char *t, int tlen,
-			unsigned char *p, int plen);
-static int MBMatchTextIC(unsigned char *t, int tlen,
-			  unsigned char *p, int plen);
+static int MBMatchText(char *t, int tlen, char *p, int plen);
+static int MBMatchTextIC(char *t, int tlen, char *p, int plen);
 static text *MB_do_like_escape(text *, text *);
 
 /*--------------------
@@ -48,7 +43,7 @@ static text *MB_do_like_escape(text *, text *);
  *--------------------
  */
 static int
-wchareq(unsigned char *p1, unsigned char *p2)
+wchareq(char *p1, char *p2)
 {
 	int			p1_len;
 
@@ -78,9 +73,9 @@ wchareq(unsigned char *p1, unsigned char *p2)
 #define CHARMAX 0x80
 
 static int
-iwchareq(unsigned char *p1, unsigned char *p2)
+iwchareq(char *p1, char *p2)
 {
-	int			c1[2],
+	pg_wchar	c1[2],
 				c2[2];
 	int			l;
 
@@ -88,14 +83,14 @@ iwchareq(unsigned char *p1, unsigned char *p2)
 	 * short cut. if *p1 and *p2 is lower than CHARMAX, then we could
 	 * assume they are ASCII
 	 */
-	if (*p1 < CHARMAX && *p2 < CHARMAX)
-		return (tolower(*p1) == tolower(*p2));
+	if ((unsigned char) *p1 < CHARMAX && (unsigned char) *p2 < CHARMAX)
+		return (tolower((unsigned char) *p1) == tolower((unsigned char) *p2));
 
 	/*
 	 * if one of them is an ASCII while the other is not, then they must
 	 * be different characters
 	 */
-	else if (*p1 < CHARMAX || *p2 < CHARMAX)
+	else if ((unsigned char) *p1 < CHARMAX || (unsigned char) *p2 < CHARMAX)
 		return (0);
 
 	/*
@@ -103,10 +98,10 @@ iwchareq(unsigned char *p1, unsigned char *p2)
 	 * characters
 	 */
 	l = pg_mblen(p1);
-	(void) pg_mb2wchar_with_len(p1, (pg_wchar *) c1, l);
+	(void) pg_mb2wchar_with_len(p1, c1, l);
 	c1[0] = tolower(c1[0]);
 	l = pg_mblen(p2);
-	(void) pg_mb2wchar_with_len(p2, (pg_wchar *) c2, l);
+	(void) pg_mb2wchar_with_len(p2, c2, l);
 	c2[0] = tolower(c2[0]);
 	return (c1[0] == c2[0]);
 }
@@ -135,7 +130,7 @@ iwchareq(unsigned char *p1, unsigned char *p2)
 #undef do_like_escape
 
 #define CHAREQ(p1, p2) (*(p1) == *(p2))
-#define ICHAREQ(p1, p2) (tolower(*(p1)) == tolower(*(p2)))
+#define ICHAREQ(p1, p2) (tolower((unsigned char) *(p1)) == tolower((unsigned char) *(p2)))
 #define NextChar(p, plen) ((p)++, (plen)--)
 #define CopyAdvChar(dst, src, srclen) (*(dst)++ = *(src)++, (srclen)--)
 
@@ -154,7 +149,7 @@ namelike(PG_FUNCTION_ARGS)
 	Name		str = PG_GETARG_NAME(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
 	bool		result;
-	unsigned char *s,
+	char	   *s,
 			   *p;
 	int			slen,
 				plen;
@@ -178,7 +173,7 @@ namenlike(PG_FUNCTION_ARGS)
 	Name		str = PG_GETARG_NAME(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
 	bool		result;
-	unsigned char *s,
+	char	   *s,
 			   *p;
 	int			slen,
 				plen;
@@ -202,7 +197,7 @@ textlike(PG_FUNCTION_ARGS)
 	text	   *str = PG_GETARG_TEXT_P(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
 	bool		result;
-	unsigned char *s,
+	char	   *s,
 			   *p;
 	int			slen,
 				plen;
@@ -226,7 +221,7 @@ textnlike(PG_FUNCTION_ARGS)
 	text	   *str = PG_GETARG_TEXT_P(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
 	bool		result;
-	unsigned char *s,
+	char	   *s,
 			   *p;
 	int			slen,
 				plen;
@@ -250,7 +245,7 @@ bytealike(PG_FUNCTION_ARGS)
 	bytea	   *str = PG_GETARG_BYTEA_P(0);
 	bytea	   *pat = PG_GETARG_BYTEA_P(1);
 	bool		result;
-	unsigned char *s,
+	char	   *s,
 			   *p;
 	int			slen,
 				plen;
@@ -271,7 +266,7 @@ byteanlike(PG_FUNCTION_ARGS)
 	bytea	   *str = PG_GETARG_BYTEA_P(0);
 	bytea	   *pat = PG_GETARG_BYTEA_P(1);
 	bool		result;
-	unsigned char *s,
+	char	   *s,
 			   *p;
 	int			slen,
 				plen;
@@ -296,7 +291,7 @@ nameiclike(PG_FUNCTION_ARGS)
 	Name		str = PG_GETARG_NAME(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
 	bool		result;
-	unsigned char *s,
+	char	   *s,
 			   *p;
 	int			slen,
 				plen;
@@ -320,7 +315,7 @@ nameicnlike(PG_FUNCTION_ARGS)
 	Name		str = PG_GETARG_NAME(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
 	bool		result;
-	unsigned char *s,
+	char	   *s,
 			   *p;
 	int			slen,
 				plen;
@@ -344,7 +339,7 @@ texticlike(PG_FUNCTION_ARGS)
 	text	   *str = PG_GETARG_TEXT_P(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
 	bool		result;
-	unsigned char *s,
+	char	   *s,
 			   *p;
 	int			slen,
 				plen;
@@ -368,7 +363,7 @@ texticnlike(PG_FUNCTION_ARGS)
 	text	   *str = PG_GETARG_TEXT_P(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
 	bool		result;
-	unsigned char *s,
+	char	   *s,
 			   *p;
 	int			slen,
 				plen;
@@ -415,7 +410,7 @@ like_escape_bytea(PG_FUNCTION_ARGS)
 	bytea	   *pat = PG_GETARG_BYTEA_P(0);
 	bytea	   *esc = PG_GETARG_BYTEA_P(1);
 	bytea	   *result;
-	unsigned char *p,
+	char	   *p,
 			   *e,
 			   *r;
 	int			plen,
@@ -500,7 +495,7 @@ like_escape_bytea(PG_FUNCTION_ARGS)
 		}
 	}
 
-	VARATT_SIZEP(result) = r - ((unsigned char *) result);
+	VARATT_SIZEP(result) = r - ((char *) result);
 
 	PG_RETURN_BYTEA_P(result);
 }
@@ -509,7 +504,7 @@ like_escape_bytea(PG_FUNCTION_ARGS)
  * Same as above, but specifically for bytea (binary) datatype
  */
 static int
-MatchBytea(unsigned char *t, int tlen, unsigned char *p, int plen)
+MatchBytea(char *t, int tlen, char *p, int plen)
 {
 	/* Fast path for match-everything pattern */
 	if ((plen == 1) && (*p == '%'))

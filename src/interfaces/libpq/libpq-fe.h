@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.118 2005/06/13 02:26:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.119 2005/09/24 17:53:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -489,10 +489,10 @@ extern int	lo_export(PGconn *conn, Oid lobjId, const char *filename);
 /* === in fe-misc.c === */
 
 /* Determine length of multibyte encoded char at *s */
-extern int	PQmblen(const unsigned char *s, int encoding);
+extern int	PQmblen(const char *s, int encoding);
 
 /* Determine display length of multibyte encoded char at *s */
-extern int	PQdsplen(const unsigned char *s, int encoding);
+extern int	PQdsplen(const char *s, int encoding);
 
 /* Get encoding id from environment variable PGCLIENTENCODING */
 extern int	PQenv2encoding(void);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_conversion.c,v 1.25 2005/07/07 20:39:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_conversion.c,v 1.26 2005/09/24 17:53:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -291,8 +291,8 @@ pg_convert_using(PG_FUNCTION_ARGS)
 	Oid			convoid;
 	HeapTuple	tuple;
 	Form_pg_conversion body;
-	unsigned char *str;
-	unsigned char *result;
+	char	   *str;
+	char	   *result;
 	int			len;
 
 	/* Convert input string to null-terminated form */

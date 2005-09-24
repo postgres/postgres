@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.44 2005/06/15 00:15:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.45 2005/09/24 17:53:17 tgl Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -769,28 +769,28 @@ pg_mic_mblen(const unsigned char *mbstr)
  * Returns the byte length of a multibyte word.
  */
 int
-pg_encoding_mblen(int encoding, const unsigned char *mbstr)
+pg_encoding_mblen(int encoding, const char *mbstr)
 {
 	Assert(PG_VALID_ENCODING(encoding));
 
 	return ((encoding >= 0 &&
 			 encoding < sizeof(pg_wchar_table) / sizeof(pg_wchar_tbl)) ?
-			((*pg_wchar_table[encoding].mblen) (mbstr)) :
-			((*pg_wchar_table[PG_SQL_ASCII].mblen) (mbstr)));
+			((*pg_wchar_table[encoding].mblen) ((const unsigned char *) mbstr)) :
+			((*pg_wchar_table[PG_SQL_ASCII].mblen) ((const unsigned char *) mbstr)));
 }
 
 /*
  * Returns the display length of a multibyte word.
  */
 int
-pg_encoding_dsplen(int encoding, const unsigned char *mbstr)
+pg_encoding_dsplen(int encoding, const char *mbstr)
 {
 	Assert(PG_VALID_ENCODING(encoding));
 
 	return ((encoding >= 0 &&
 			 encoding < sizeof(pg_wchar_table) / sizeof(pg_wchar_tbl)) ?
-			((*pg_wchar_table[encoding].dsplen) (mbstr)) :
-			((*pg_wchar_table[PG_SQL_ASCII].dsplen) (mbstr)));
+			((*pg_wchar_table[encoding].dsplen) ((const unsigned char *) mbstr)) :
+			((*pg_wchar_table[PG_SQL_ASCII].dsplen) ((const unsigned char *) mbstr)));
 }
 
 /*
@@ -840,7 +840,7 @@ bool pg_utf8_islegal(const unsigned char *source, int length) {
  * true; when noError is false, ereport() a descriptive message.
  */
 bool
-pg_verifymbstr(const unsigned char *mbstr, int len, bool noError)
+pg_verifymbstr(const char *mbstr, int len, bool noError)
 {
 	int			l;
 	int			i;
@@ -857,24 +857,30 @@ pg_verifymbstr(const unsigned char *mbstr, int len, bool noError)
 		l = pg_mblen(mbstr);
 		
 		/* special UTF-8 check */
-		if (encoding == PG_UTF8) {
-            		if(!pg_utf8_islegal(mbstr,l)) {
-                    		if (noError) return false;
-				ereport(ERROR,(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),errmsg("Invalid UNICODE byte sequence detected near byte %c",*mbstr)));
+		if (encoding == PG_UTF8)
+		{
+			if(!pg_utf8_islegal((const unsigned char *) mbstr, l))
+			{
+				if (noError)
+					return false;
+				ereport(ERROR,
+						(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
+						 errmsg("invalid UNICODE byte sequence detected near byte 0x%02x",
+								(unsigned char) *mbstr)));
 			}
 		} else {
 			for (i = 1; i < l; i++)
 			{
-                        	/*
-                    		* we expect that every multibyte char consists of bytes
-                                * having the 8th bit set
-                                */
-                    		if (i >= len || (mbstr[i] & 0x80) == 0)
-                        	{
-                            		char		buf[8 * 2 + 1];
-                                        char		*p = buf;
-                                        int		j,
-							jlimit;
+				/*
+				 * we expect that every multibyte char consists of bytes
+				 * having the 8th bit set
+				 */
+				if (i >= len || (mbstr[i] & 0x80) == 0)
+				{
+					char		buf[8 * 2 + 1];
+					char		*p = buf;
+					int		j,
+						jlimit;
 
 					if (noError)
 						return false;
@@ -883,12 +889,12 @@ pg_verifymbstr(const unsigned char *mbstr, int len, bool noError)
 					jlimit = Min(jlimit, 8);		/* prevent buffer overrun */
 
 					for (j = 0; j < jlimit; j++)
-						p += sprintf(p, "%02x", mbstr[j]);
+						p += sprintf(p, "%02x", (unsigned char) mbstr[j]);
 
 					ereport(ERROR,
 							(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
-					errmsg("invalid byte sequence for encoding \"%s\": 0x%s",
-						GetDatabaseEncodingName(), buf)));
+							 errmsg("invalid byte sequence for encoding \"%s\": 0x%s",
+									GetDatabaseEncodingName(), buf)));
 				}
 			}
 		}

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.45 2005/07/10 21:13:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.46 2005/09/24 17:53:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -555,7 +555,7 @@ varbit_send(PG_FUNCTION_ARGS)
 
 	pq_begintypsend(&buf);
 	pq_sendint(&buf, VARBITLEN(s), sizeof(int32));
-	pq_sendbytes(&buf, VARBITS(s), VARBITBYTES(s));
+	pq_sendbytes(&buf, (char *) VARBITS(s), VARBITBYTES(s));
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 

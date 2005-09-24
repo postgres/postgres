@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/encode.c,v 1.14 2005/01/01 05:43:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/encode.c,v 1.15 2005/09/24 17:53:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,10 +20,10 @@
 
 struct pg_encoding
 {
-	unsigned	(*encode_len) (const uint8 *data, unsigned dlen);
-	unsigned	(*decode_len) (const uint8 *data, unsigned dlen);
-	unsigned	(*encode) (const uint8 *data, unsigned dlen, uint8 *res);
-	unsigned	(*decode) (const uint8 *data, unsigned dlen, uint8 *res);
+	unsigned	(*encode_len) (const char *data, unsigned dlen);
+	unsigned	(*decode_len) (const char *data, unsigned dlen);
+	unsigned	(*encode) (const char *data, unsigned dlen, char *res);
+	unsigned	(*decode) (const char *data, unsigned dlen, char *res);
 };
 
 static struct pg_encoding *pg_find_encoding(const char *name);
@@ -123,9 +123,9 @@ static const int8 hexlookup[128] = {
 };
 
 static unsigned
-hex_encode(const uint8 *src, unsigned len, uint8 *dst)
+hex_encode(const char *src, unsigned len, char *dst)
 {
-	const uint8 *end = src + len;
+	const char *end = src + len;
 
 	while (src < end)
 	{
@@ -136,28 +136,28 @@ hex_encode(const uint8 *src, unsigned len, uint8 *dst)
 	return len * 2;
 }
 
-static uint8
-get_hex(unsigned c)
+static char
+get_hex(char c)
 {
 	int			res = -1;
 
 	if (c > 0 && c < 127)
-		res = hexlookup[c];
+		res = hexlookup[(unsigned char) c];
 
 	if (res < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid hexadecimal digit: \"%c\"", c)));
 
-	return (uint8) res;
+	return (char) res;
 }
 
 static unsigned
-hex_decode(const uint8 *src, unsigned len, uint8 *dst)
+hex_decode(const char *src, unsigned len, char *dst)
 {
-	const uint8 *s,
+	const char *s,
 			   *srcend;
-	uint8		v1,
+	char		v1,
 				v2,
 			   *p = dst;
 
@@ -185,13 +185,13 @@ hex_decode(const uint8 *src, unsigned len, uint8 *dst)
 }
 
 static unsigned
-hex_enc_len(const uint8 *src, unsigned srclen)
+hex_enc_len(const char *src, unsigned srclen)
 {
 	return srclen << 1;
 }
 
 static unsigned
-hex_dec_len(const uint8 *src, unsigned srclen)
+hex_dec_len(const char *src, unsigned srclen)
 {
 	return srclen >> 1;
 }
@@ -200,7 +200,7 @@ hex_dec_len(const uint8 *src, unsigned srclen)
  * BASE64
  */
 
-static const unsigned char _base64[] =
+static const char _base64[] =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 static const int8 b64lookup[128] = {
@@ -215,11 +215,11 @@ static const int8 b64lookup[128] = {
 };
 
 static unsigned
-b64_encode(const uint8 *src, unsigned len, uint8 *dst)
+b64_encode(const char *src, unsigned len, char *dst)
 {
-	uint8	   *p,
+	char	   *p,
 			   *lend = dst + 76;
-	const uint8 *s,
+	const char *s,
 			   *end = src + len;
 	int			pos = 2;
 	uint32		buf = 0;
@@ -229,7 +229,7 @@ b64_encode(const uint8 *src, unsigned len, uint8 *dst)
 
 	while (s < end)
 	{
-		buf |= *s << (pos << 3);
+		buf |= (unsigned char) *s << (pos << 3);
 		pos--;
 		s++;
 
@@ -262,12 +262,12 @@ b64_encode(const uint8 *src, unsigned len, uint8 *dst)
 }
 
 static unsigned
-b64_decode(const uint8 *src, unsigned len, uint8 *dst)
+b64_decode(const char *src, unsigned len, char *dst)
 {
 	const char *srcend = src + len,
 			   *s = src;
-	uint8	   *p = dst;
-	unsigned	c;
+	char	   *p = dst;
+	char		c;
 	int			b = 0;
 	uint32		buf = 0;
 	int			pos = 0,
@@ -300,7 +300,7 @@ b64_decode(const uint8 *src, unsigned len, uint8 *dst)
 		{
 			b = -1;
 			if (c > 0 && c < 127)
-				b = b64lookup[c];
+				b = b64lookup[(unsigned char) c];
 			if (b < 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -331,14 +331,14 @@ b64_decode(const uint8 *src, unsigned len, uint8 *dst)
 
 
 static unsigned
-b64_enc_len(const uint8 *src, unsigned srclen)
+b64_enc_len(const char *src, unsigned srclen)
 {
 	/* 3 bytes will be converted to 4, linefeed after 76 chars */
 	return (srclen + 2) * 4 / 3 + srclen / (76 * 3 / 4);
 }
 
 static unsigned
-b64_dec_len(const uint8 *src, unsigned srclen)
+b64_dec_len(const char *src, unsigned srclen)
 {
 	return (srclen * 3) >> 2;
 }
@@ -358,10 +358,10 @@ b64_dec_len(const uint8 *src, unsigned srclen)
 #define DIG(VAL)		((VAL) + '0')
 
 static unsigned
-esc_encode(const uint8 *src, unsigned srclen, uint8 *dst)
+esc_encode(const char *src, unsigned srclen, char *dst)
 {
-	const uint8 *end = src + srclen;
-	uint8	   *rp = dst;
+	const char *end = src + srclen;
+	char	   *rp = dst;
 	int			len = 0;
 
 	while (src < end)
@@ -395,10 +395,10 @@ esc_encode(const uint8 *src, unsigned srclen, uint8 *dst)
 }
 
 static unsigned
-esc_decode(const uint8 *src, unsigned srclen, uint8 *dst)
+esc_decode(const char *src, unsigned srclen, char *dst)
 {
-	const uint8 *end = src + srclen;
-	uint8	   *rp = dst;
+	const char *end = src + srclen;
+	char	   *rp = dst;
 	int			len = 0;
 
 	while (src < end)
@@ -443,9 +443,9 @@ esc_decode(const uint8 *src, unsigned srclen, uint8 *dst)
 }
 
 static unsigned
-esc_enc_len(const uint8 *src, unsigned srclen)
+esc_enc_len(const char *src, unsigned srclen)
 {
-	const uint8 *end = src + srclen;
+	const char *end = src + srclen;
 	int			len = 0;
 
 	while (src < end)
@@ -464,9 +464,9 @@ esc_enc_len(const uint8 *src, unsigned srclen)
 }
 
 static unsigned
-esc_dec_len(const uint8 *src, unsigned srclen)
+esc_dec_len(const char *src, unsigned srclen)
 {
-	const uint8 *end = src + srclen;
+	const char *end = src + srclen;
 	int			len = 0;
 
 	while (src < end)

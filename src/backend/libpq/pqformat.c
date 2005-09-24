@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqformat.c,v 1.38 2005/09/24 15:34:07 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqformat.c,v 1.39 2005/09/24 17:53:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,7 +137,7 @@ pq_sendcountedtext(StringInfo buf, const char *str, int slen,
 	int			extra = countincludesself ? 4 : 0;
 	char	   *p;
 
-	p = (char *) pg_server_to_client((unsigned char *) str, slen);
+	p = pg_server_to_client(str, slen);
 	if (p != str)				/* actual conversion has been done? */
 	{
 		slen = strlen(p);
@@ -167,7 +167,7 @@ pq_sendtext(StringInfo buf, const char *str, int slen)
 {
 	char	   *p;
 
-	p = (char *) pg_server_to_client((unsigned char *) str, slen);
+	p = pg_server_to_client(str, slen);
 	if (p != str)				/* actual conversion has been done? */
 	{
 		slen = strlen(p);
@@ -192,7 +192,7 @@ pq_sendstring(StringInfo buf, const char *str)
 
 	char	   *p;
 
-	p = (char *) pg_server_to_client((unsigned char *) str, slen);
+	p = pg_server_to_client(str, slen);
 	if (p != str)				/* actual conversion has been done? */
 	{
 		slen = strlen(p);
@@ -408,7 +408,7 @@ pq_puttextmessage(char msgtype, const char *str)
 	int			slen = strlen(str);
 	char	   *p;
 
-	p = (char *) pg_server_to_client((unsigned char *) str, slen);
+	p = pg_server_to_client(str, slen);
 	if (p != str)				/* actual conversion has been done? */
 	{
 		(void) pq_putmessage(msgtype, p, strlen(p) + 1);
@@ -635,7 +635,7 @@ pq_getmsgtext(StringInfo msg, int rawbytes, int *nbytes)
 	str = &msg->data[msg->cursor];
 	msg->cursor += rawbytes;
 
-	p = (char *) pg_client_to_server((unsigned char *) str, rawbytes);
+	p = pg_client_to_server(str, rawbytes);
 	if (p != str)				/* actual conversion has been done? */
 		*nbytes = strlen(p);
 	else
@@ -675,7 +675,7 @@ pq_getmsgstring(StringInfo msg)
 				 errmsg("invalid string in message")));
 	msg->cursor += slen + 1;
 
-	return (const char *) pg_client_to_server((unsigned char *) str, slen);
+	return pg_client_to_server(str, slen);
 }
 
 /* --------------------------------
