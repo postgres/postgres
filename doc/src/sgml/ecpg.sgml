@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.65 2005/07/14 06:17:35 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.66 2005/09/25 03:06:41 momjian Exp $
 -->
 
 <chapter id="ecpg">
@@ -1607,6 +1607,13 @@ ECPG = ecpg
      useful when searching for errors in your <acronym>SQL</acronym>
      statements.
     </para>
+    <note>
+    <para>
+    On Win32, if the <application>ecpg</> libraries and application are compiled with
+    different flags, this function call will crash the application because the
+    internal representation of the <literal>FILE</> pointers differ.
+    </para>
+    </note>
    </listitem>
 
    <listitem>
