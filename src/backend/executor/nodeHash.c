@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.94 2005/06/15 07:27:44 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.95 2005/09/25 19:37:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,22 +37,14 @@ static void ExecHashIncreaseNumBatches(HashJoinTable hashtable);
 /* ----------------------------------------------------------------
  *		ExecHash
  *
- *		produce the first tuple from our child node (and _only_ the
- *		first tuple). This is of limited general use -- it does not
- *		hash its output, and produces only a single tuple. It is
- *		provided so that hash join can probe the inner hash input to
- *		determine whether it is empty without needing to build the
- *		entire hash table first, which is what MultiExecHash() would
- *		do.
+ *		stub for pro forma compliance
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
 ExecHash(HashState *node)
 {
-	if (TupIsNull(node->firstTuple))
-		node->firstTuple = ExecProcNode(outerPlanState(node));
-
-	return node->firstTuple;
+	elog(ERROR, "Hash node does not support ExecProcNode call convention");
+	return NULL;
 }
 
 /* ----------------------------------------------------------------
@@ -71,7 +63,6 @@ MultiExecHash(HashState *node)
 	TupleTableSlot *slot;
 	ExprContext *econtext;
 	uint32		hashvalue;
-	bool		cleared_first_tuple = false;
 
 	/* must provide our own instrumentation support */
 	if (node->ps.instrument)
@@ -94,19 +85,9 @@ MultiExecHash(HashState *node)
 	 */
 	for (;;)
 	{
-		/* use and clear the tuple produced by ExecHash(), if any */
-		if (!TupIsNull(node->firstTuple))
-		{
-			slot = node->firstTuple;
-			node->firstTuple = NULL;
-			cleared_first_tuple = true;
-		}
-		else
-		{
-			slot = ExecProcNode(outerNode);
-			if (TupIsNull(slot))
-				break;
-		}
+		slot = ExecProcNode(outerNode);
+		if (TupIsNull(slot))
+			break;
 		hashtable->totalTuples += 1;
 		/* We have to compute the hash value */
 		econtext->ecxt_innertuple = slot;
@@ -116,19 +97,7 @@ MultiExecHash(HashState *node)
 
 	/* must provide our own instrumentation support */
 	if (node->ps.instrument)
-	{
-		/*
-		 * XXX: kludge -- if ExecHash() was invoked, we've already
-		 * included the tuple that it produced in the row output count
-		 * for this node, so subtract 1 from the # of hashed tuples.
-		 */
-		if (cleared_first_tuple)
-			InstrStopNodeMulti(node->ps.instrument,
-							   hashtable->totalTuples - 1);
-		else
-			InstrStopNodeMulti(node->ps.instrument,
-							   hashtable->totalTuples);
-	}
+		InstrStopNodeMulti(node->ps.instrument, hashtable->totalTuples);
 
 	/*
 	 * We do not return the hash table directly because it's not a subtype
@@ -161,7 +130,6 @@ ExecInitHash(Hash *node, EState *estate)
 	hashstate->ps.state = estate;
 	hashstate->hashtable = NULL;
 	hashstate->hashkeys = NIL;	/* will be set by parent HashJoin */
-	hashstate->firstTuple = NULL;
 
 	/*
 	 * Miscellaneous initialization
@@ -220,8 +188,6 @@ void
 ExecEndHash(HashState *node)
 {
 	PlanState  *outerPlan;
-
-	node->firstTuple = NULL;
 
 	/*
 	 * free exprcontext
@@ -864,8 +830,6 @@ ExecHashTableReset(HashJoinTable hashtable)
 void
 ExecReScanHash(HashState *node, ExprContext *exprCtxt)
 {
-	node->firstTuple = NULL;
-
 	/*
 	 * if chgParam of subnode is not null then plan will be re-scanned by
 	 * first ExecProcNode.
