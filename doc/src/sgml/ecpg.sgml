@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.66 2005/09/25 03:06:41 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.67 2005/09/25 03:12:13 momjian Exp $
 -->
 
 <chapter id="ecpg">
@@ -1609,9 +1609,10 @@ ECPG = ecpg
     </para>
     <note>
     <para>
-    On Win32, if the <application>ecpg</> libraries and application are compiled with
-    different flags, this function call will crash the application because the
-    internal representation of the <literal>FILE</> pointers differ.
+    On Win32, if the <application>ecpg</> libraries and an application are
+    compiled with different flags, this function call will crash the 
+    application because the internal representation of the 
+    <literal>FILE</> pointers differ.
     </para>
     </note>
    </listitem>
