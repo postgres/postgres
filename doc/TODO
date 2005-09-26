@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sun Sep 25 22:44:22 EDT 2005
+Last updated:		Mon Sep 26 11:52:28 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -159,8 +159,6 @@ Monitoring
 * %Add ability to monitor the use of temporary sort files
 * Allow server logs to be remotely read and removed using SQL commands
 * Allow protocol-level BIND parameter values to be logged
-* Allow protocol-level EXECUTE that is actually a fetch to appear
-  in the logs as a fetch rather than another execute
 
 
 Data Types
