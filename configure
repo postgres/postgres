@@ -4743,6 +4743,26 @@ echo "$as_me:$LINENO: result: ${python_libspec} ${python_additional_libs}" >&5
 echo "${ECHO_T}${python_libspec} ${python_additional_libs}" >&6
 
 
+# threaded python is not supported on bsd's
+echo "$as_me:$LINENO: checking whether Python is compiled with thread support" >&5
+echo $ECHO_N "checking whether Python is compiled with thread support... $ECHO_C" >&6
+pythreads=`${PYTHON} -c "import sys; print int('thread' in sys.builtin_module_names)"`
+if test "$pythreads" = "1"; then
+  echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+  case $host_os in
+  openbsd*|freebsd*)
+    { { echo "$as_me:$LINENO: error: *** Threaded Python not supported on this platform ***" >&5
+echo "$as_me: error: *** Threaded Python not supported on this platform ***" >&2;}
+   { (exit 1); exit 1; }; }
+    ;;
+  esac
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+
 fi
 
 

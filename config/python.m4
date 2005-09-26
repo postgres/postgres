@@ -1,7 +1,7 @@
 #
 # Autoconf macros for configuring the build of Python extension modules
 #
-# $PostgreSQL: pgsql/config/python.m4,v 1.11 2004/10/11 19:32:16 tgl Exp $
+# $PostgreSQL: pgsql/config/python.m4,v 1.12 2005/09/26 16:48:28 momjian Exp $
 #
 
 # PGAC_PATH_PYTHON
@@ -77,4 +77,19 @@ AC_MSG_RESULT([${python_libspec} ${python_additional_libs}])
 AC_SUBST(python_libdir)[]dnl
 AC_SUBST(python_libspec)[]dnl
 AC_SUBST(python_additional_libs)[]dnl
+
+# threaded python is not supported on bsd's
+AC_MSG_CHECKING(whether Python is compiled with thread support)
+pythreads=`${PYTHON} -c "import sys; print int('thread' in sys.builtin_module_names)"`
+if test "$pythreads" = "1"; then
+  AC_MSG_RESULT(yes)
+  case $host_os in
+  openbsd*|freebsd*)
+    AC_MSG_ERROR([*** Threaded Python not supported on this platform ***])
+    ;;
+  esac
+else
+  AC_MSG_RESULT(no)
+fi
+
 ])# PGAC_CHECK_PYTHON_EMBED_SETUP
