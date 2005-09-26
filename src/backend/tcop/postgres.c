@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.462 2005/09/24 17:53:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.463 2005/09/26 15:51:12 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1466,6 +1466,7 @@ exec_bind_message(StringInfo input_message)
 	else
 		portal = CreatePortal(portal_name, false, false);
 
+	/* We need to output the parameter values someday */
 	if (log_statement == LOGSTMT_ALL)
 		ereport(LOG,
 				(errmsg("statement: <BIND> %s", portal_name)));
@@ -1681,6 +1682,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 	bool		save_log_duration = log_duration;
 	int			save_log_min_duration_statement = log_min_duration_statement;
 	bool		save_log_statement_stats = log_statement_stats;
+	bool		execute_is_fetch = false;
 
 	/* Adjust destination to tell printtup.c what to do */
 	dest = whereToSendOutput;
@@ -1694,6 +1696,15 @@ exec_execute_message(const char *portal_name, long max_rows)
 				 errmsg("portal \"%s\" does not exist", portal_name)));
 
 	/*
+	 * If we re-issue an Execute protocol request against an existing
+	 * portal, then we are only fetching more rows rather than 
+	 * completely re-executing the query from the start. atStart is never
+	 * reset for a v3 portal, so we are safe to use this check.
+	 */
+	if (!portal->atStart)
+		execute_is_fetch = true;
+
+	/*
 	 * If the original query was a null string, just return
 	 * EmptyQueryResponse.
 	 */
@@ -1704,7 +1715,13 @@ exec_execute_message(const char *portal_name, long max_rows)
 		return;
 	}
 
-	if (portal->sourceText)
+	/* Should we display the portal names here? */
+	if (execute_is_fetch)
+	{
+		debug_query_string = "fetch message";
+		pgstat_report_activity("<FETCH>");
+	}
+	else if (portal->sourceText)
 	{
 		debug_query_string = portal->sourceText;
 		pgstat_report_activity(portal->sourceText);
@@ -1732,7 +1749,8 @@ exec_execute_message(const char *portal_name, long max_rows)
 	if (log_statement == LOGSTMT_ALL)
 		/* We have the portal, so output the source query. */
 		ereport(LOG,
-				(errmsg("statement: EXECUTE %s  [PREPARE:  %s]",
+				(errmsg("statement: %sEXECUTE %s  [PREPARE:  %s]",
+						(execute_is_fetch) ? "FETCH from " : "",
 						(*portal_name != '\0') ? portal_name : "<unnamed>",
 						portal->sourceText ? portal->sourceText : "")));
 
@@ -1864,10 +1882,11 @@ exec_execute_message(const char *portal_name, long max_rows)
 			(save_log_min_duration_statement > 0 &&
 			 usecs >= save_log_min_duration_statement * 1000))
 			ereport(LOG,
-					(errmsg("duration: %ld.%03ld ms  statement: EXECUTE %s  [PREPARE:  %s]",
+					(errmsg("duration: %ld.%03ld ms  statement: %sEXECUTE %s  [PREPARE:  %s]",
 						(long) ((stop_t.tv_sec - start_t.tv_sec) * 1000 +
 							  (stop_t.tv_usec - start_t.tv_usec) / 1000),
 						(long) (stop_t.tv_usec - start_t.tv_usec) % 1000,
+							(execute_is_fetch) ? "FETCH from " : "",
 							(*portal_name != '\0') ? portal_name : "<unnamed>",
 							portal->sourceText ? portal->sourceText : "")));
 	}
