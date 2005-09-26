@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.120 2005/09/24 17:53:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.121 2005/09/26 17:49:09 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,7 @@ pqGetc(char *result, PGconn *conn)
 	*result = conn->inBuffer[conn->inCursor++];
 
 	if (conn->Pfdebug)
-		fprintf(conn->Pfdebug, libpq_gettext("From backend> %c\n"), *result);
+		fprintf(conn->Pfdebug, "From backend> %c\n", *result);
 
 	return 0;
 }
@@ -101,7 +101,7 @@ pqPutc(char c, PGconn *conn)
 		return EOF;
 
 	if (conn->Pfdebug)
-		fprintf(conn->Pfdebug, libpq_gettext("To backend> %c\n"), c);
+		fprintf(conn->Pfdebug, "To backend> %c\n", c);
 
 	return 0;
 }
@@ -137,7 +137,7 @@ pqGets(PQExpBuffer buf, PGconn *conn)
 	conn->inCursor = ++inCursor;
 
 	if (conn->Pfdebug)
-		fprintf(conn->Pfdebug, libpq_gettext("From backend> \"%s\"\n"),
+		fprintf(conn->Pfdebug, "From backend> \"%s\"\n",
 				buf->data);
 
 	return 0;
@@ -154,7 +154,7 @@ pqPuts(const char *s, PGconn *conn)
 		return EOF;
 
 	if (conn->Pfdebug)
-		fprintf(conn->Pfdebug, libpq_gettext("To backend> '%s'\n"), s);
+		fprintf(conn->Pfdebug, "To backend> \"%s\"\n", s);
 
 	return 0;
 }
@@ -175,7 +175,7 @@ pqGetnchar(char *s, size_t len, PGconn *conn)
 	conn->inCursor += len;
 
 	if (conn->Pfdebug)
-		fprintf(conn->Pfdebug, libpq_gettext("From backend (%lu)> %.*s\n"),
+		fprintf(conn->Pfdebug, "From backend (%lu)> %.*s\n",
 				(unsigned long) len, (int) len, s);
 
 	return 0;
@@ -192,7 +192,7 @@ pqPutnchar(const char *s, size_t len, PGconn *conn)
 		return EOF;
 
 	if (conn->Pfdebug)
-		fprintf(conn->Pfdebug, libpq_gettext("To backend> %.*s\n"), (int) len, s);
+		fprintf(conn->Pfdebug, "To backend> %.*s\n", (int) len, s);
 
 	return 0;
 }
@@ -232,7 +232,7 @@ pqGetInt(int *result, size_t bytes, PGconn *conn)
 	}
 
 	if (conn->Pfdebug)
-		fprintf(conn->Pfdebug, libpq_gettext("From backend (#%lu)> %d\n"), (unsigned long) bytes, *result);
+		fprintf(conn->Pfdebug, "From backend (#%lu)> %d\n", (unsigned long) bytes, *result);
 
 	return 0;
 }
@@ -268,7 +268,7 @@ pqPutInt(int value, size_t bytes, PGconn *conn)
 	}
 
 	if (conn->Pfdebug)
-		fprintf(conn->Pfdebug, libpq_gettext("To backend (%lu#)> %d\n"), (unsigned long) bytes, value);
+		fprintf(conn->Pfdebug, "To backend (%lu#)> %d\n", (unsigned long) bytes, value);
 
 	return 0;
 }
@@ -456,7 +456,7 @@ pqPutMsgStart(char msg_type, bool force_len, PGconn *conn)
 	/* length word, if needed, will be filled in by pqPutMsgEnd */
 
 	if (conn->Pfdebug)
-		fprintf(conn->Pfdebug, libpq_gettext("To backend> Msg %c\n"),
+		fprintf(conn->Pfdebug, "To backend> Msg %c\n",
 				msg_type ? msg_type : ' ');
 
 	return 0;
@@ -494,7 +494,7 @@ int
 pqPutMsgEnd(PGconn *conn)
 {
 	if (conn->Pfdebug)
-		fprintf(conn->Pfdebug, libpq_gettext("To backend> Msg complete, length %u\n"),
+		fprintf(conn->Pfdebug, "To backend> Msg complete, length %u\n",
 				conn->outMsgEnd - conn->outCount);
 
 	/* Fill in length word if needed */

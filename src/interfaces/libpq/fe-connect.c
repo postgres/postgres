@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.320 2005/08/23 21:02:03 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.321 2005/09/26 17:49:09 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1357,7 +1357,7 @@ keep_going:						/* We will come back to here until there
 					{
 						/* Received error - probably protocol mismatch */
 						if (conn->Pfdebug)
-							fprintf(conn->Pfdebug, libpq_gettext("Postmaster reports error, attempting fallback to pre-7.0.\n"));
+							fprintf(conn->Pfdebug, "received error from server, attempting fallback to pre-7.0\n");
 						if (conn->sslmode[0] == 'r')	/* "require" */
 						{
 							/* Require SSL, but server is too old */
@@ -2385,7 +2385,7 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 		f = fopen(serviceFile, "r");
 		if (f == NULL)
 		{
-			printfPQExpBuffer(errorMessage, libpq_gettext("ERROR: Service file '%s' not found\n"),
+			printfPQExpBuffer(errorMessage, libpq_gettext("ERROR: service file \"%s\" not found\n"),
 							  serviceFile);
 			return 1;
 		}
@@ -2398,7 +2398,7 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 			{
 				fclose(f);
 				printfPQExpBuffer(errorMessage,
-						libpq_gettext("ERROR: line %d too long in service file '%s'\n"),
+						libpq_gettext("ERROR: line %d too long in service file \"%s\"\n"),
 								  linenr,
 								  serviceFile);
 				return 2;
@@ -2449,7 +2449,7 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 					if (val == NULL)
 					{
 						printfPQExpBuffer(errorMessage,
-										  libpq_gettext("ERROR: syntax error in service file '%s', line %d\n"),
+										  libpq_gettext("ERROR: syntax error in service file \"%s\", line %d\n"),
 										  serviceFile,
 										  linenr);
 						fclose(f);
@@ -2476,7 +2476,7 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 					if (!found_keyword)
 					{
 						printfPQExpBuffer(errorMessage,
-										  libpq_gettext("ERROR: syntax error in service file '%s', line %d\n"),
+										  libpq_gettext("ERROR: syntax error in service file \"%s\", line %d\n"),
 										  serviceFile,
 										  linenr);
 						fclose(f);
@@ -3138,7 +3138,7 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 	if (!S_ISREG(stat_buf.st_mode))
 	{
 		fprintf(stderr,
-				libpq_gettext("WARNING: Password file %s is not a plain file.\n"),
+				libpq_gettext("WARNING: password file \"%s\" is not a plain file\n"),
 				pgpassfile);
 		free(pgpassfile);
 		return NULL;
@@ -3148,7 +3148,7 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 	if (stat_buf.st_mode & (S_IRWXG | S_IRWXO))
 	{
 		fprintf(stderr,
-				libpq_gettext("WARNING: Password file %s has world or group read access; permission should be u=rw (0600)\n"),
+				libpq_gettext("WARNING: password file \"%s\" has world or group read access; permission should be u=rw (0600)\n"),
 				pgpassfile);
 		return NULL;
 	}
