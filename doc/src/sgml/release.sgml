@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.376 2005/09/24 22:57:15 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.377 2005/09/26 21:44:04 tgl Exp $
 
 Typical markup:
 
@@ -1010,19 +1010,6 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Fix <type>CHAR()</> to properly pad spaces to the specified
-        length when using a multiple-byte character set (Yoshiyuki
-        Asaba)
-       </para>
-       <para>
-        In prior releases, the padding of <type>CHAR()</> was incorrect
-        because it only padded to the specified number of bytes without
-        considering how many characters were stored.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Add support for <command>numeric ^ numeric</> based on
         <function>power(numeric, numeric)</>
        </para>
@@ -2006,6 +1993,94 @@ pg_[A-Za-z0-9_]                 <application>
      </itemizedlist>
     </sect3>
   
+   </sect2>
+  </sect1>
+ 
+  <sect1 id="release-8-0-4">
+   <title>Release 8.0.4</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2005-09-??</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 8.0.3.
+   </para>
+
+   <sect2>
+    <title>Migration to version 8.0.4</title>
+
+    <para>
+     A dump/restore is not required for those running 8.0.X.  However,
+     if you are upgrading from a version earlier than 8.0.3, see the release
+     notes for 8.0.3.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Fix error that allowed <command>VACUUM</> to remove
+<literal>ctid</> chains too soon, and add more checking in code that follows
+<literal>ctid</> links</para>
+<para>This fixes a long-standing problem that could cause crashes in very rare
+circumstances.</para></listitem>
+<listitem><para>Fix <type>CHAR()</> to properly pad spaces to the specified
+length when using a multiple-byte character set (Yoshiyuki Asaba)</para>
+<para>In prior releases, the padding of <type>CHAR()</> was incorrect
+because it only padded to the specified number of bytes without
+considering how many characters were stored.</para></listitem>
+<listitem><para>Force a checkpoint before committing <command>CREATE
+DATABASE</></para>
+<para>This should fix recent reports of <quote>index is not a btree</>
+failures when a crash occurs shortly after <command>CREATE
+DATABASE</>.</para></listitem>
+<listitem><para>Handle consecutive embedded newlines in <command>COPY</>
+CSV-mode input</para></listitem>
+<listitem><para>Further fixes for <literal>x FULL JOIN y ON true</> corner
+cases</para></listitem>
+<listitem><para>Fix <function>date_trunc(week)</> for dates near year
+end</para></listitem>
+<listitem><para>Fix overenthusiastic optimization of <literal>x IN (SELECT
+DISTINCT ...)</> and related cases</para></listitem>
+<listitem><para>Fix mis-planning of queries with small <literal>LIMIT</>
+values due to poorly thought out <quote>fuzzy</> cost
+comparison</para></listitem>
+<listitem><para>Make <function>array_in</> and <function>array_recv</> more
+paranoid about validating their OID parameter</para></listitem>
+<listitem><para>Fix missing rows in queries like <literal>UPDATE a=... WHERE
+a...</> with GiST index on column <literal>a</></para></listitem>
+<listitem><para>Improve robustness of datetime parsing</para></listitem>
+<listitem><para>Improve checking for partially-written WAL
+pages</para></listitem>
+<listitem><para>Improve robustness of signal handling when SSL is
+enabled</para></listitem>
+<listitem><para>Improve MIPS and M68K spinlock code</para></listitem>
+<listitem><para>Don't try to open more than <literal>max_files_per_process</>
+files during postmaster startup</para></listitem>
+<listitem><para>Various memory leakage fixes</para></listitem>
+<listitem><para>Various portability improvements</para></listitem>
+<listitem><para>Update timezone data files</para></listitem>
+<listitem><para>Improve handling of DLL load failures on Windows</para></listitem>
+<listitem><para>Improve random-number generation on Windows</para></listitem>
+<listitem><para>Make <literal>psql -f filename</> return a nonzero exit code
+when opening the file fails</para></listitem>
+<listitem><para>Change <application>pg_dump</> to handle inherited check
+constraints more reliably</para></listitem>
+<listitem><para>Fix password prompting in <application>pg_restore</> on
+Windows</para></listitem>
+<listitem><para>Fix PL/PgSQL to handle <literal>var := var</> correctly when
+the variable is of pass-by-reference type</para></listitem>
+<listitem><para>Fix PL/Perl <literal>%_SHARED</> so it's actually
+shared</para></listitem>
+<listitem><para>Fix <filename>contrib/pg_autovacuum</> to allow sleep
+intervals over 2000 sec</para></listitem>
+<listitem><para>Update <filename>contrib/tsearch2</> to use current Snowball
+code</para></listitem>
+</itemizedlist>
+
    </sect2>
   </sect1>
  
@@ -4695,6 +4770,66 @@ typedefs (Michael)</para></listitem>
    </sect2>
   </sect1>
  
+  <sect1 id="release-7-4-9">
+   <title>Release 7.4.9</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2005-09-??</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.4.8.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.4.9</title>
+
+    <para>
+     A dump/restore is not required for those running 7.4.X.  However,
+     if you are upgrading from a version earlier than 7.4.8, see the release
+     notes for 7.4.8.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Fix error that allowed <command>VACUUM</> to remove
+<literal>ctid</> chains too soon, and add more checking in code that follows
+<literal>ctid</> links</para>
+<para>This fixes a long-standing problem that could cause crashes in very rare
+circumstances.</para></listitem>
+<listitem><para>Fix <type>CHAR()</> to properly pad spaces to the specified
+length when using a multiple-byte character set (Yoshiyuki Asaba)</para>
+<para>In prior releases, the padding of <type>CHAR()</> was incorrect
+because it only padded to the specified number of bytes without
+considering how many characters were stored.</para></listitem>
+<listitem><para>Further fixes for <literal>x FULL JOIN y ON true</> corner
+cases</para></listitem>
+<listitem><para>Make <function>array_in</> and <function>array_recv</> more
+paranoid about validating their OID parameter</para></listitem>
+<listitem><para>Fix missing rows in queries like <literal>UPDATE a=... WHERE
+a...</> with GiST index on column <literal>a</></para></listitem>
+<listitem><para>Improve robustness of datetime parsing</para></listitem>
+<listitem><para>Improve checking for partially-written WAL
+pages</para></listitem>
+<listitem><para>Improve robustness of signal handling when SSL is
+enabled</para></listitem>
+<listitem><para>Don't try to open more than <literal>max_files_per_process</>
+files during postmaster startup</para></listitem>
+<listitem><para>Various memory leakage fixes</para></listitem>
+<listitem><para>Various portability improvements</para></listitem>
+<listitem><para>Fix PL/PgSQL to handle <literal>var := var</> correctly when
+the variable is of pass-by-reference type</para></listitem>
+<listitem><para>Update <filename>contrib/tsearch2</> to use current Snowball
+code</para></listitem>
+</itemizedlist>
+
+   </sect2>
+  </sect1>
+ 
   <sect1 id="release-7-4-8">
    <title>Release 7.4.8</title>
 
@@ -7259,6 +7394,57 @@ DROP SCHEMA information_schema CASCADE;
   </sect3>
   </sect2>
  </sect1>
+ 
+  <sect1 id="release-7-3-11">
+   <title>Release 7.3.11</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2005-09-??</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.3.10.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.3.11</title>
+
+    <para>
+     A dump/restore is not required for those running 7.3.X.  However,
+     if you are upgrading from a version earlier than 7.3.10, see the release
+     notes for 7.3.10.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Fix error that allowed <command>VACUUM</> to remove
+<literal>ctid</> chains too soon, and add more checking in code that follows
+<literal>ctid</> links</para>
+<para>This fixes a long-standing problem that could cause crashes in very rare
+circumstances.</para></listitem>
+<listitem><para>Fix <type>CHAR()</> to properly pad spaces to the specified
+length when using a multiple-byte character set (Yoshiyuki Asaba)</para>
+<para>In prior releases, the padding of <type>CHAR()</> was incorrect
+because it only padded to the specified number of bytes without
+considering how many characters were stored.</para></listitem>
+<listitem><para>Fix missing rows in queries like <literal>UPDATE a=... WHERE
+a...</> with GiST index on column <literal>a</></para></listitem>
+<listitem><para>Improve checking for partially-written WAL
+pages</para></listitem>
+<listitem><para>Improve robustness of signal handling when SSL is
+enabled</para></listitem>
+<listitem><para>Various memory leakage fixes</para></listitem>
+<listitem><para>Various portability improvements</para></listitem>
+<listitem><para>Fix PL/PgSQL to handle <literal>var := var</> correctly when
+the variable is of pass-by-reference type</para></listitem>
+</itemizedlist>
+
+   </sect2>
+  </sect1>
 
   <sect1 id="release-7-3-10">
    <title>Release 7.3.10</title>
