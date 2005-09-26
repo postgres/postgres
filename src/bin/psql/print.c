@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.74 2005/09/24 17:53:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.75 2005/09/26 18:09:57 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -399,14 +399,14 @@ print_aligned_text(const char *title, const char *const *headers,
 
 	for (i = 0, ptr = cells; *ptr; ptr++, i++)
 	{
-		int numeric_locale_len;
+		int add_numeric_locale_len;
 
 		if (opt_align[i % col_count] == 'r' && opt_numeric_locale)
-		    numeric_locale_len = additional_numeric_locale_len(*ptr);
+		    add_numeric_locale_len = additional_numeric_locale_len(*ptr);
 		else 
-		    numeric_locale_len = 0;
+		    add_numeric_locale_len = 0;
 		
-		tmp = pg_wcswidth(*ptr, strlen(*ptr), encoding) + numeric_locale_len;
+		tmp = pg_wcswidth(*ptr, strlen(*ptr), encoding) + add_numeric_locale_len;
 		if (tmp > widths[i % col_count])
 			widths[i % col_count] = tmp;
 		cell_w[i] = tmp;
@@ -616,14 +616,14 @@ print_aligned_vertical(const char *title, const char *const *headers,
 	/* find longest data cell */
 	for (i = 0, ptr = cells; *ptr; ptr++, i++)
 	{
-		int numeric_locale_len;
+		int add_numeric_locale_len;
 
 		if (opt_align[i % col_count] == 'r' && opt_numeric_locale)
-		    numeric_locale_len = additional_numeric_locale_len(*ptr);
+			add_numeric_locale_len = additional_numeric_locale_len(*ptr);
 		else 
-		    numeric_locale_len = 0;
+			add_numeric_locale_len = 0;
 
-		tmp = pg_wcswidth(*ptr, strlen(*ptr), encoding) + numeric_locale_len;
+		tmp = pg_wcswidth(*ptr, strlen(*ptr), encoding) + add_numeric_locale_len;
 		if (tmp > dwidth)
 			dwidth = tmp;
 		cell_w[i] = tmp;
