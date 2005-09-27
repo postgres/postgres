@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Sep 27 09:39:26 EDT 2005
+Last updated:		Tue Sep 27 11:18:04 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1067,6 +1067,8 @@ Source Code
 	o Re-enable timezone output on log_line_prefix '%t' when a
 	  shorter timezone string is available
 	o Fix problem with shared memory on the Win32 Terminal Server
+	o Improve signal handling,
+	  http://archives.postgresql.org/pgsql-patches/2005-06/msg00027.php
 
 
 * Wire Protocol Changes
