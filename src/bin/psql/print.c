@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.75 2005/09/26 18:09:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.76 2005/09/27 16:30:25 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -86,22 +86,26 @@ strlen_with_numeric_locale(const char *my_str)
 	return strlen(my_str) + additional_numeric_locale_len(my_str);
 }
 
-static void 
-format_numeric_locale(char *my_str)
+static char *
+format_numeric_locale(const char *my_str)
 {
 	int i, j, int_len = integer_digits(my_str), leading_digits;
 	int	groupdigits = atoi(grouping);
-	char *new_str;
-    
-	if (my_str[0] == '-')
-		my_str++;
-	
-	new_str = pg_local_malloc(strlen_with_numeric_locale(my_str) + 1);
+	int	new_str_start = 0;
+	char *new_str = new_str = pg_local_malloc(
+							  strlen_with_numeric_locale(my_str) + 1);
 
 	leading_digits = (int_len % groupdigits != 0) ?
 					 int_len % groupdigits : groupdigits;
 
-	for (i=0, j=0; ; i++, j++)
+	if (my_str[0] == '-')	/* skip over sign, affects grouping calculations */
+	{
+		new_str[0] = my_str[0];
+		my_str++;
+		new_str_start = 1;
+	}
+
+	for (i=0, j=new_str_start; ; i++, j++)
 	{
 		/* Hit decimal point? */
 		if (my_str[i] == '.')
@@ -130,8 +134,7 @@ format_numeric_locale(char *my_str)
 		new_str[j] = my_str[i];
 	}
 	    
-	strcpy(my_str, new_str);
-	free(new_str);
+	return new_str;
 }
 
 /*************************/
@@ -185,10 +188,8 @@ print_unaligned_text(const char *title, const char *const *headers,
 		}
 		if (opt_align[i % col_count] == 'r' && opt_numeric_locale)
 		{
-			char *my_cell = pg_local_malloc(strlen_with_numeric_locale(*ptr) + 1);
-		
-			strcpy(my_cell, *ptr);
-			format_numeric_locale(my_cell);
+			char *my_cell = format_numeric_locale(*ptr);
+
 			fputs(my_cell, fout);
 			free(my_cell);
 		}
@@ -261,10 +262,8 @@ print_unaligned_vertical(const char *title, const char *const *headers,
 		fputs(opt_fieldsep, fout);
 		if (opt_align[i % col_count] == 'r' && opt_numeric_locale)
 		{
-			char *my_cell = pg_local_malloc(strlen_with_numeric_locale(*ptr) + 1);
-		
-			strcpy(my_cell, *ptr);
-			format_numeric_locale(my_cell);
+			char *my_cell = format_numeric_locale(*ptr);
+
 			fputs(my_cell, fout);
 			free(my_cell);
 		}
@@ -488,13 +487,11 @@ print_aligned_text(const char *title, const char *const *headers,
 		{
 		    if (opt_numeric_locale)
 		    {
-				char *my_cell = pg_local_malloc(cell_w[i] + 1);
+				char *my_cell = format_numeric_locale(*ptr);
 
-				strcpy(my_cell, *ptr);
-				format_numeric_locale(my_cell);
 				fprintf(fout, "%*s%s", widths[i % col_count] - cell_w[i], "", my_cell);
 				free(my_cell);
-		    }
+			}
 			else
 				fprintf(fout, "%*s%s", widths[i % col_count] - cell_w[i], "", *ptr);
 		}
@@ -697,17 +694,22 @@ print_aligned_vertical(const char *title, const char *const *headers,
 		else
 			fputs(" ", fout);
 
+		if (opt_align[i % col_count] == 'r' && opt_numeric_locale)
 		{
-			char *my_cell = pg_local_malloc(cell_w[i] + 1);
-
-			strcpy(my_cell, *ptr);
-			if (opt_align[i % col_count] == 'r' && opt_numeric_locale)
-			    format_numeric_locale(my_cell);
+			char *my_cell = format_numeric_locale(*ptr);
+				
 			if (opt_border < 2)
 				fprintf(fout, "%s\n", my_cell);
 			else
 				fprintf(fout, "%-s%*s |\n", my_cell, dwidth - cell_w[i], "");
 			free(my_cell);
+		}
+		else
+		{
+			if (opt_border < 2)
+				fprintf(fout, "%s\n", *ptr);
+			else
+				fprintf(fout, "%-s%*s |\n", *ptr, dwidth - cell_w[i], "");
 		}
 	}
 
@@ -837,10 +839,8 @@ print_html_text(const char *title, const char *const *headers,
 			fputs("&nbsp; ", fout);
 		else if (opt_align[i % col_count] == 'r' && opt_numeric_locale)
 		{
-			char *my_cell = pg_local_malloc(strlen_with_numeric_locale(*ptr) + 1);
+			char *my_cell = format_numeric_locale(*ptr);
 
-		    strcpy(my_cell, *ptr);
-		    format_numeric_locale(my_cell);
 		    html_escaped_print(my_cell, fout);
 		    free(my_cell);
 		}
@@ -922,10 +922,8 @@ print_html_vertical(const char *title, const char *const *headers,
 			fputs("&nbsp; ", fout);
 		else if (opt_align[i % col_count] == 'r' && opt_numeric_locale)
 		{
-			char *my_cell = pg_local_malloc(strlen_with_numeric_locale(*ptr) + 1);
-		    
-		    strcpy(my_cell, *ptr);
-		    format_numeric_locale(my_cell);
+			char *my_cell = format_numeric_locale(*ptr);
+
 		    html_escaped_print(my_cell, fout);
 		    free(my_cell);
 		}
@@ -1064,10 +1062,8 @@ print_latex_text(const char *title, const char *const *headers,
 	{
 		if (opt_numeric_locale)
 		{
-			char *my_cell = pg_local_malloc(strlen_with_numeric_locale(*ptr) + 1);
-		    
-			strcpy(my_cell, *ptr);
-			format_numeric_locale(my_cell);
+			char *my_cell = format_numeric_locale(*ptr);
+
 			latex_escaped_print(my_cell, fout);
 			free(my_cell);
 		}
@@ -1177,10 +1173,8 @@ print_latex_vertical(const char *title, const char *const *headers,
 		{
 			if (opt_numeric_locale)
 			{
-				char *my_cell = pg_local_malloc(strlen_with_numeric_locale(*ptr) + 1);
+				char *my_cell = format_numeric_locale(*ptr);
 
-				strcpy(my_cell, *ptr);
-				format_numeric_locale(my_cell);
 				latex_escaped_print(my_cell, fout);
 				free(my_cell);
 			}
@@ -1277,10 +1271,8 @@ print_troff_ms_text(const char *title, const char *const *headers,
 	{
 		if (opt_numeric_locale)
 		{
-			char *my_cell = pg_local_malloc(strlen_with_numeric_locale(*ptr) + 1);
-		    
-			strcpy(my_cell, *ptr);
-			format_numeric_locale(my_cell);
+			char *my_cell = format_numeric_locale(*ptr);
+
 			troff_ms_escaped_print(my_cell, fout);
 			free(my_cell);
 		}
@@ -1389,10 +1381,8 @@ print_troff_ms_vertical(const char *title, const char *const *headers,
 		fputc('\t', fout);
 		if (opt_numeric_locale)
 		{
-			char *my_cell = pg_local_malloc(strlen_with_numeric_locale(*ptr) + 1);
-		    
-			strcpy(my_cell, *ptr);
-			format_numeric_locale(my_cell);
+			char *my_cell = format_numeric_locale(*ptr);
+
 			troff_ms_escaped_print(my_cell, fout);
 			free(my_cell);
 		}
