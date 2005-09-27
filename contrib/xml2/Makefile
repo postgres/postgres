@@ -14,7 +14,7 @@ DOCS = README.xml2
 override CFLAGS += $(shell xml2-config --cflags)
 
 ifdef USE_PGXS
-PGXS = $(shell pg_config --pgxs)
+PGXS := $(shell pg_config --pgxs)
 include $(PGXS)
 else
 subdir = contrib/xml2

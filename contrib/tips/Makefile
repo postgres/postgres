@@ -1,9 +1,9 @@
-# $PostgreSQL: pgsql/contrib/tips/Makefile,v 1.7 2004/08/20 20:13:08 momjian Exp $
+# $PostgreSQL: pgsql/contrib/tips/Makefile,v 1.8 2005/09/27 17:13:10 tgl Exp $
 
 DOCS = README.apachelog
 
 ifdef USE_PGXS
-PGXS = $(shell pg_config --pgxs)
+PGXS := $(shell pg_config --pgxs)
 include $(PGXS)
 else
 subdir = contrib/tips

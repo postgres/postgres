@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/dbase/Makefile,v 1.7 2005/03/25 18:17:10 momjian Exp $
+# $PostgreSQL: pgsql/contrib/dbase/Makefile,v 1.8 2005/09/27 17:13:01 tgl Exp $
 
 PROGRAM = dbf2pg
 OBJS	= dbf.o dbf2pg.o endian.o
@@ -16,7 +16,7 @@ MAN = dbf2pg.1			# XXX not implemented
 
 
 ifdef USE_PGXS
-PGXS = $(shell pg_config --pgxs)
+PGXS := $(shell pg_config --pgxs)
 include $(PGXS)
 else
 subdir = contrib/dbase

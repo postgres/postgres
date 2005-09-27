@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/dblink/Makefile,v 1.9 2004/08/20 20:13:03 momjian Exp $
+# $PostgreSQL: pgsql/contrib/dblink/Makefile,v 1.10 2005/09/27 17:13:01 tgl Exp $
 
 MODULE_big = dblink
 PG_CPPFLAGS = -I$(libpq_srcdir)
@@ -11,7 +11,7 @@ REGRESS = dblink
 
 
 ifdef USE_PGXS
-PGXS = $(shell pg_config --pgxs)
+PGXS := $(shell pg_config --pgxs)
 include $(PGXS)
 else
 subdir = contrib/dblink

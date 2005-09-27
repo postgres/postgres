@@ -1,5 +1,5 @@
 #
-# $PostgreSQL: pgsql/contrib/mSQL-interface/Makefile,v 1.9 2004/08/20 20:13:05 momjian Exp $
+# $PostgreSQL: pgsql/contrib/mSQL-interface/Makefile,v 1.10 2005/09/27 17:13:05 tgl Exp $
 #
 
 NAME	= mpgsql
@@ -10,7 +10,7 @@ OBJS	= mpgsql.o
 PG_CPPFLAGS = -I$(libpq_srcdir)
 
 ifdef USE_PGXS
-PGXS = $(shell pg_config --pgxs)
+PGXS := $(shell pg_config --pgxs)
 include $(PGXS)
 else
 subdir = contrib/mSQL-interface

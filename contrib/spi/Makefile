@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/spi/Makefile,v 1.25 2004/11/17 17:45:59 tgl Exp $
+# $PostgreSQL: pgsql/contrib/spi/Makefile,v 1.26 2005/09/27 17:13:10 tgl Exp $
 
 MODULES = autoinc insert_username moddatetime refint timetravel
 DATA_built = $(addsuffix .sql, $(MODULES))
@@ -9,7 +9,7 @@ DOCS	= README.spi $(addsuffix .example, $(MODULES))
 PG_CPPFLAGS = -DREFINT_VERBOSE
 
 ifdef USE_PGXS
-PGXS = $(shell pg_config --pgxs)
+PGXS := $(shell pg_config --pgxs)
 include $(PGXS)
 else
 subdir = contrib/spi

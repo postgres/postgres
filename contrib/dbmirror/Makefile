@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/dbmirror/Makefile,v 1.4 2004/11/04 06:09:19 neilc Exp $
+# $PostgreSQL: pgsql/contrib/dbmirror/Makefile,v 1.5 2005/09/27 17:13:01 tgl Exp $
 
 MODULES = pending
 SCRIPTS = clean_pending.pl DBMirror.pl
@@ -6,7 +6,7 @@ DATA = AddTrigger.sql MirrorSetup.sql slaveDatabase.conf
 DOCS = README.dbmirror
 
 ifdef USE_PGXS
-PGXS = $(shell pg_config --pgxs)
+PGXS := $(shell pg_config --pgxs)
 include $(PGXS)
 else
 subdir = contrib/dbmirror

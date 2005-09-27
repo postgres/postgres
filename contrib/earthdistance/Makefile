@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/earthdistance/Makefile,v 1.15 2005/07/24 23:30:09 tgl Exp $
+# $PostgreSQL: pgsql/contrib/earthdistance/Makefile,v 1.16 2005/09/27 17:13:02 tgl Exp $
 
 MODULES = earthdistance
 DATA_built = earthdistance.sql
@@ -8,7 +8,7 @@ REGRESS = earthdistance
 SHLIB_LINK += $(filter -lm, $(LIBS))
 
 ifdef USE_PGXS
-PGXS = $(shell pg_config --pgxs)
+PGXS := $(shell pg_config --pgxs)
 include $(PGXS)
 else
 subdir = contrib/earthdistance

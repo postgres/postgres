@@ -1,5 +1,5 @@
 #
-# $PostgreSQL: pgsql/contrib/pgcrypto/Makefile,v 1.22 2005/08/13 02:06:20 momjian Exp $
+# $PostgreSQL: pgsql/contrib/pgcrypto/Makefile,v 1.23 2005/09/27 17:13:08 tgl Exp $
 #
 
 INT_SRCS = md5.c sha1.c sha2.c internal.c blf.c rijndael.c \
@@ -44,7 +44,7 @@ REGRESS = init md5 sha1 hmac-md5 hmac-sha1 blowfish rijndael \
 
 
 ifdef USE_PGXS
-PGXS = $(shell pg_config --pgxs)
+PGXS := $(shell pg_config --pgxs)
 include $(PGXS)
 else
 subdir = contrib/pgcrypto

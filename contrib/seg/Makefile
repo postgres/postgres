@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/seg/Makefile,v 1.12 2004/08/20 20:13:07 momjian Exp $
+# $PostgreSQL: pgsql/contrib/seg/Makefile,v 1.13 2005/09/27 17:13:09 tgl Exp $
 
 MODULE_big = seg
 OBJS = seg.o segparse.o
@@ -9,7 +9,7 @@ REGRESS = seg
 EXTRA_CLEAN = segparse.c segparse.h segscan.c y.tab.c y.tab.h
 
 ifdef USE_PGXS
-PGXS = $(shell pg_config --pgxs)
+PGXS := $(shell pg_config --pgxs)
 include $(PGXS)
 else
 subdir = contrib/seg

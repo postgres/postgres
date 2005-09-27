@@ -13,7 +13,7 @@ REGRESS     = init int2 int4 int8 float4 float8 cash oid timestamp timestamptz t
               date interval macaddr inet cidr text varchar char bytea bit varbit numeric
 
 ifdef USE_PGXS
-PGXS = $(shell pg_config --pgxs)
+PGXS := $(shell pg_config --pgxs)
 include $(PGXS)
 else
 subdir = contrib/btree_gist

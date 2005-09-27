@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/oid2name/Makefile,v 1.7 2005/03/25 18:17:11 momjian Exp $
+# $PostgreSQL: pgsql/contrib/oid2name/Makefile,v 1.8 2005/09/27 17:13:06 tgl Exp $
 
 PROGRAM = oid2name
 OBJS	= oid2name.o
@@ -9,7 +9,7 @@ PG_LIBS = $(libpq_pgport)
 DOCS = README.oid2name
 
 ifdef USE_PGXS
-PGXS = $(shell pg_config --pgxs)
+PGXS := $(shell pg_config --pgxs)
 include $(PGXS)
 else
 subdir = contrib/oid2name

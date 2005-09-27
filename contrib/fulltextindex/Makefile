@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/fulltextindex/Makefile,v 1.13 2004/08/20 20:13:04 momjian Exp $
+# $PostgreSQL: pgsql/contrib/fulltextindex/Makefile,v 1.14 2005/09/27 17:13:02 tgl Exp $
 
 MODULES = fti
 DATA_built = fti.sql
@@ -6,7 +6,7 @@ DOCS = README.fti
 SCRIPTS = fti.pl
 
 ifdef USE_PGXS
-PGXS = $(shell pg_config --pgxs)
+PGXS := $(shell pg_config --pgxs)
 include $(PGXS)
 else
 subdir = contrib/fulltextindex

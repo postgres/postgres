@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/tsearch2/Makefile,v 1.9 2005/07/24 23:30:10 tgl Exp $
+# $PostgreSQL: pgsql/contrib/tsearch2/Makefile,v 1.10 2005/09/27 17:13:11 tgl Exp $
 
 MODULE_big = tsearch2
 OBJS = dict_ex.o dict.o snmap.o stopword.o common.o prs_dcfg.o \
@@ -23,7 +23,7 @@ SHLIB_LINK += $(filter -lm, $(LIBS))
 
 
 ifdef USE_PGXS
-PGXS = $(shell pg_config --pgxs)
+PGXS := $(shell pg_config --pgxs)
 include $(PGXS)
 else
 subdir = contrib/tsearch2
