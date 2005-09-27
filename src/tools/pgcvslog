@@ -51,6 +51,12 @@ awk '	BEGIN	{html="'"$HTML"'"; lineno = 0;}
 	# store working directory
 	$0 ~ /^Working file:/	{workingfile = "/" $3}
 
+	# no need to show TODO or FAQ changes in the output
+	$0 !~ /^====*$/ &&
+	(workingfile == "/doc/TODO" || workingfile == "/doc/src/FAQ/TODO.html" ||
+	 workingfile == "/doc/FAQ" || workingfile == "/doc/src/FAQ/FAQ.html") \
+		{next}
+
 	($0 ~ /^====*$/ || $0 ~ /^----*$/) \
 	{
 		# print blank line to separate entries
