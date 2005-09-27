@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Sep 26 11:52:28 EDT 2005
+Last updated:		Tue Sep 27 09:39:26 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1051,7 +1051,7 @@ Source Code
   read them properly
 * Update Bonjour to work with newer cross-platform SDK
 * Remove BeOS and QNX-specific code
-* Add options to pg_config to show the share_dir, sysconfdir,
+* +Add options to pg_config to show the share_dir, sysconfdir,
   pkgincludedir, and localedir
 
 
