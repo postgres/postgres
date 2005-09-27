@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.21 2005/08/09 22:47:03 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.22 2005/09/27 17:39:32 tgl Exp $ -->
 
 <refentry id="app-pgconfig">
  <refmeta>
@@ -54,6 +54,17 @@
     </varlistentry>
 
     <varlistentry>
+     <term><option>--docdir</option></>
+     <listitem>
+      <para>
+       Print the location of documentation files.  (This will be an empty
+       string if <literal>--without-docdir</> was specified when
+       <productname>PostgreSQL</> was built.)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><option>--includedir</option></>
      <listitem>
       <para>
@@ -63,11 +74,19 @@
     </varlistentry>
 
     <varlistentry>
+     <term><option>--pkgincludedir</option></>
+     <listitem>
+      <para>
+       Print the location of other C header files.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><option>--includedir-server</option></>
      <listitem>
       <para>
-       Print the location of C header files for server
-       programming.
+       Print the location of C header files for server programming.
       </para>
      </listitem>
     </varlistentry>
@@ -89,6 +108,44 @@
        the server would search for them.  (Other
        architecture-dependent data files may also be installed in this
        directory.)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--localedir</option></>
+     <listitem>
+      <para>
+       Print the location of locale support files.  (This will be an empty
+       string if locale support was not configured when
+       <productname>PostgreSQL</> was built.)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--mandir</option></>
+     <listitem>
+      <para>
+       Print the location of manual pages.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--sharedir</option></>
+     <listitem>
+      <para>
+       Print the location of architecture-independent support files.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--sysconfdir</option></>
+     <listitem>
+      <para>
+       Print the location of system-wide configuration files.
       </para>
      </listitem>
     </varlistentry>

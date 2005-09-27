@@ -39,6 +39,8 @@ CLEAN :
 	echo #define LIBDIR "" >>$@
 	echo #define PKGLIBDIR "" >>$@
 	echo #define LOCALEDIR "" >>$@
+	echo #define DOCDIR "" >>$@
+	echo #define MANDIR "" >>$@
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"

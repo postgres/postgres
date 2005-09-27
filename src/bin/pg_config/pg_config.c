@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.12 2005/08/09 22:47:03 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.13 2005/09/27 17:39:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,17 @@ show_bindir(bool all)
 }
 
 static void
+show_docdir(bool all)
+{
+	char		path[MAXPGPATH];
+
+	if (all)
+		printf("DOCDIR = ");
+	get_doc_path(mypath, path);
+	printf("%s\n", path);
+}
+
+static void
 show_includedir(bool all)
 {
 	char		path[MAXPGPATH];
@@ -60,6 +71,17 @@ show_includedir(bool all)
 	if (all)
 		printf("INCLUDEDIR = ");
 	get_include_path(mypath, path);
+	printf("%s\n", path);
+}
+
+static void
+show_pkgincludedir(bool all)
+{
+	char		path[MAXPGPATH];
+
+	if (all)
+		printf("PKGINCLUDEDIR = ");
+	get_pkginclude_path(mypath, path);
 	printf("%s\n", path);
 }
 
@@ -93,6 +115,50 @@ show_pkglibdir(bool all)
 	if (all)
 		printf("PKGLIBDIR = ");
 	get_pkglib_path(mypath, path);
+	printf("%s\n", path);
+}
+
+static void
+show_localedir(bool all)
+{
+	char		path[MAXPGPATH];
+
+	if (all)
+		printf("LOCALEDIR = ");
+	get_locale_path(mypath, path);
+	printf("%s\n", path);
+}
+
+static void
+show_mandir(bool all)
+{
+	char		path[MAXPGPATH];
+
+	if (all)
+		printf("MANDIR = ");
+	get_man_path(mypath, path);
+	printf("%s\n", path);
+}
+
+static void
+show_sharedir(bool all)
+{
+	char		path[MAXPGPATH];
+
+	if (all)
+		printf("SHAREDIR = ");
+	get_share_path(mypath, path);
+	printf("%s\n", path);
+}
+
+static void
+show_sysconfdir(bool all)
+{
+	char		path[MAXPGPATH];
+
+	if (all)
+		printf("SYSCONFDIR = ");
+	get_etc_path(mypath, path);
 	printf("%s\n", path);
 }
 
@@ -234,10 +300,16 @@ typedef struct
 
 static const InfoItem info_items[] = {
 	{ "--bindir", show_bindir },
+	{ "--docdir", show_docdir },
 	{ "--includedir", show_includedir },
+	{ "--pkgincludedir", show_pkgincludedir },
 	{ "--includedir-server", show_includedir_server },
 	{ "--libdir", show_libdir },
 	{ "--pkglibdir", show_pkglibdir },
+	{ "--localedir", show_localedir },
+	{ "--mandir", show_mandir },
+	{ "--sharedir", show_sharedir },
+	{ "--sysconfdir", show_sysconfdir },
 	{ "--pgxs", show_pgxs },
 	{ "--configure", show_configure },
 	{ "--cc", show_cc },
@@ -260,11 +332,17 @@ help(void)
 	printf(_("  %s [ OPTION ... ]\n\n"), progname);
 	printf(_("Options:\n"));
 	printf(_("  --bindir              show location of user executables\n"));
+	printf(_("  --docdir              show location of documentation files\n"));
 	printf(_("  --includedir          show location of C header files of the client\n"
 			 "                        interfaces\n"));
+	printf(_("  --pkgincludedir       show location of other C header files\n"));
 	printf(_("  --includedir-server   show location of C header files for the server\n"));
 	printf(_("  --libdir              show location of object code libraries\n"));
 	printf(_("  --pkglibdir           show location of dynamically loadable modules\n"));
+	printf(_("  --localedir           show location of locale support files\n"));
+	printf(_("  --mandir              show location of manual pages\n"));
+	printf(_("  --sharedir            show location of architecture-independent support files\n"));
+	printf(_("  --sysconfdir          show location of system-wide configuration files\n"));
 	printf(_("  --pgxs                show location of extension makefile\n"));
 	printf(_("  --configure           show options given to \"configure\" script when\n"
 			 "                        PostgreSQL was built\n"));

@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.219 2005/08/02 19:02:31 tgl Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.220 2005/09/27 17:39:32 tgl Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -55,19 +55,20 @@ configure_args = @configure_args@
 # These are set by the equivalent --xxxdir configure options.  We
 # append "postgresql" to some of them, if the string does not already
 # contain "pgsql" or "postgres", in order to avoid directory clutter.
+#
+# In a PGXS build, we cannot use the values inserted into Makefile.global
+# by configure, since the installation tree may have been relocated.
+# Instead get the path values from pg_config.
+
+ifndef PGXS
+
+# Note that prefix and exec_prefix aren't defined in a PGXS build;
+# makefiles may only use the derived variables such as bindir.
 
 prefix := @prefix@
 exec_prefix := @exec_prefix@
 
 bindir := @bindir@
-sbindir := @sbindir@
-
-libexecdir := @libexecdir@
-ifeq "$(findstring pgsql, $(libexecdir))" ""
-ifeq "$(findstring postgres, $(libexecdir))" ""
-override libexecdir := $(libexecdir)/postgresql
-endif
-endif
 
 datadir := @datadir@
 ifeq "$(findstring pgsql, $(datadir))" ""
@@ -84,6 +85,7 @@ endif
 endif
 
 libdir := @libdir@
+
 pkglibdir = $(libdir)
 ifeq "$(findstring pgsql, $(pkglibdir))" ""
 ifeq "$(findstring postgres, $(pkglibdir))" ""
@@ -92,17 +94,15 @@ endif
 endif
 
 includedir := @includedir@
+
 pkgincludedir = $(includedir)
 ifeq "$(findstring pgsql, $(pkgincludedir))" ""
 ifeq "$(findstring postgres, $(pkgincludedir))" ""
 override pkgincludedir := $(pkgincludedir)/postgresql
 endif
 endif
-includedir_server = $(pkgincludedir)/server
-includedir_internal = $(pkgincludedir)/internal
 
 mandir := @mandir@
-sqlmansect_dummy = l
 
 docdir := @docdir@
 # docdir can be an empty string to signify --without-docdir
@@ -116,7 +116,28 @@ endif
 
 localedir := @localedir@
 
+else # PGXS case
+
+bindir := $(shell pg_config --bindir)
+datadir := $(shell pg_config --sharedir)
+sysconfdir := $(shell pg_config --sysconfdir)
+libdir := $(shell pg_config --libdir)
+pkglibdir := $(shell pg_config --pkglibdir)
+includedir := $(shell pg_config --includedir)
+pkgincludedir := $(shell pg_config --pkgincludedir)
+mandir := $(shell pg_config --mandir)
+docdir := $(shell pg_config --docdir)
+localedir := $(shell pg_config --localedir)
+
+endif # PGXS
+
+# These derived path variables aren't separately configurable.
+
+includedir_server = $(pkgincludedir)/server
+includedir_internal = $(pkgincludedir)/internal
 pgxsdir = $(pkglibdir)/pgxs
+
+sqlmansect_dummy = l
 
 
 ##########################################################################
