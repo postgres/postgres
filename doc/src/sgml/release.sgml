@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.378 2005/09/27 17:28:51 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.379 2005/09/27 23:32:38 momjian Exp $
 
 Typical markup:
 
@@ -1044,7 +1044,7 @@ pg_[A-Za-z0-9_]                 <application>
 
       <listitem>
        <para>
-        Add <function>to_timestamp(DOUBLE PRECISION)</>
+        Add <function>to_timestamp(DOUBLE PRECISION) (Michael Glaesemann)</>
        </para>
        <para>
         Converts Unix seconds since 1970 to a <type>TIMESTAMP WITH
