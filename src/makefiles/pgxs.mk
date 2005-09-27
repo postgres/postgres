@@ -1,6 +1,6 @@
 # PGXS: PostgreSQL extensions makefile
 
-# $PostgreSQL: pgsql/src/makefiles/pgxs.mk,v 1.5 2005/08/12 21:02:25 momjian Exp $ 
+# $PostgreSQL: pgsql/src/makefiles/pgxs.mk,v 1.6 2005/09/27 17:43:31 tgl Exp $ 
 
 # This file contains generic rules to build many kinds of simple
 # extension modules.  You only need to set a few variables and include
@@ -205,6 +205,11 @@ distclean maintainer-clean: clean
 
 ifdef REGRESS
 
+# Calling makefile can set REGRESS_OPTS, but this is the default:
+ifndef REGRESS_OPTS
+REGRESS_OPTS = --dbname=$(CONTRIB_TESTDB)
+endif
+
 # When doing a VPATH build, must copy over the test .sql and .out
 # files so that the driver script can find them.  We have to use an
 # absolute path for the targets, because otherwise make will try to
@@ -224,7 +229,9 @@ endif # VPATH
 
 .PHONY: submake
 submake:
+ifndef PGXS
 	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress
+endif
 
 # against installed postmaster
 installcheck: submake
