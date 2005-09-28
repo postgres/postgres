@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.32 2005/09/28 18:18:02 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.33 2005/09/28 18:40:28 momjian Exp $ -->
 
 <chapter id="reliability">
  <title>Reliability</title>
@@ -14,7 +14,7 @@
    disk drives for permanent storage that is immune to the failures
    listed above. In fact, a computer can be completely destroyed, but if
    the disk drives survive they can be moved to another computer with
-   similar hardware and all committed transaction will remain intact.
+   similar hardware and all committed transactions will remain intact.
   </para>
 
   <para>
