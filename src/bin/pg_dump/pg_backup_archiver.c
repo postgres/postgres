@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.115 2005/09/11 00:36:14 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.116 2005/09/28 13:11:26 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -304,7 +304,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 
 					if (strcmp(te->desc, "BLOBS") == 0)
 					{
-						ahlog(AH, 1, "restoring blob data\n");
+						ahlog(AH, 1, "restoring large object data\n");
 
 						_selectOutputSchema(AH, "pg_catalog");
 
