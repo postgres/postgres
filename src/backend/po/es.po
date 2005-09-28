@@ -8,9 +8,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-01-17 10:37-0300\n"
-"PO-Revision-Date: 2004-05-31 12:43-0400\n"
-"Last-Translator: Álvaro Herrera <alvherre@dcc.uchile.cl>\n"
+"POT-Creation-Date: 2005-09-26 19:16-0400\n"
+"PO-Revision-Date: 2005-09-27 22:38-0400\n"
+"Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
@@ -832,6 +832,10 @@ msgstr "permiso denegado: «%s» es un catálogo de sistema"
 msgid "transaction is read-only"
 msgstr "la transacción es de sólo lectura"
 
+#: /pg/source/980_rel/src/backend/tcop/utility.c:809
+msgid "must be superuser to do LOAD"
+msgstr "debe ser superusuario para ejecutar LOAD"
+
 #: /home/alvherre/CVS/pgsql/source/00orig/src/backend/tcop/utility.c:973
 msgid "must be superuser to do CHECKPOINT"
 msgstr "debe ser superusuario para ejecutar CHECKPOINT"
@@ -1531,7 +1535,9 @@ msgstr "no se pudo traducir el servicio «%s» a dirección: %s"
 #: /home/alvherre/CVS/pgsql/source/00orig/src/backend/libpq/pqcomm.c:302
 #, c-format
 msgid "could not bind to all requested addresses: MAXLISTEN (%d) exceeded"
-msgstr "no se pudo enlazar a todas las direcciones pedidas: MAXLISTEN (%d) fue excedido"
+msgstr ""
+"no se pudo enlazar a todas las direcciones pedidas: MAXLISTEN (%d) fue "
+"excedido"
 
 #: /home/alvherre/CVS/pgsql/source/00orig/src/backend/libpq/pqcomm.c:311
 msgid "IPv4"
@@ -3720,7 +3726,7 @@ msgstr "no hay usuarios definidos en esta base de datos"
 msgid ""
 "You should immediately run CREATE USER \"%s\" WITH SYSID %d CREATEUSER;."
 msgstr ""
-"Debería que ejecutar imediatamente CREATE USER «%s» WITH SYSID %d "
+"Debería ejecutar inmediatamente CREATE USER \"%s\" WITH SYSID %d "
 "CREATEUSER;."
 
 #: /home/alvherre/CVS/pgsql/source/00orig/src/backend/utils/init/postinit.c:423
@@ -4468,12 +4474,12 @@ msgstr "Tiempo de descanso entre ejecuciones del background writer"
 #: /home/alvherre/CVS/pgsql/source/00orig/src/backend/utils/misc/guc.c:1253
 msgid "Background writer percentage of dirty buffers to flush per round"
 msgstr ""
-"Porcentaje de buffers a escribir en cada ejecución del background writer"
+"Porcentaje de «dirty buffers» a escribir en cada ronda de ejecución del background writer"
 
 #: /home/alvherre/CVS/pgsql/source/00orig/src/backend/utils/misc/guc.c:1262
 msgid "Background writer maximum number of pages to flush per round"
 msgstr ""
-"Número máximo de páginas a escribir por ejecución del background writer"
+"Número máximo de páginas a escribir en cada ronda de ejecución del background writer"
 
 #: /home/alvherre/CVS/pgsql/source/00orig/src/backend/utils/misc/guc.c:1271
 msgid "Automatic log file rotation will occur after N minutes"
@@ -5498,7 +5504,7 @@ msgstr ""
 #, c-format
 msgid "could not write to log file %u, segment %u at offset %u: %m"
 msgstr ""
-"no se pudo escribir archivo de registro %u, segmento %u en la posición %u: %m"
+"no se pudo escribir el archivo de registro %u, segmento %u, posición %u: %m"
 
 #: /home/alvherre/CVS/pgsql/source/00orig/src/backend/access/transam/xlog.c:1521
 #: /home/alvherre/CVS/pgsql/source/00orig/src/backend/access/transam/xlog.c:1612
@@ -5633,6 +5639,12 @@ msgstr "registro de largo cero en %X/%X"
 #, c-format
 msgid "invalid resource manager ID %u at %X/%X"
 msgstr "el ID de gestor de recursos %u es no válido en %X/%X"
+
+#: /pg/source/980_rel/src/backend/access/transam/xlog.c:2515
+#: /pg/source/980_rel/src/backend/access/transam/xlog.c:2531
+#, c-format
+msgid "record with incorrect prev-link %X/%X at %X/%X"
+msgstr "registro con prev-link %X/%X incorrecto en %X/%X"
 
 #: /home/alvherre/CVS/pgsql/source/00orig/src/backend/access/transam/xlog.c:2531
 #, c-format
@@ -8052,7 +8064,7 @@ msgstr "no se puede reordenar en un índice parcial"
 
 #: /home/alvherre/CVS/pgsql/source/00orig/src/backend/commands/cluster.c:357
 msgid "cannot cluster when index access method does not handle null values"
-msgstr "no se puede reordenar cuando el índice no maneja nulls"
+msgstr "no se puede reordenar cuando el método de acceso del índice no maneja nulls"
 
 #: /home/alvherre/CVS/pgsql/source/00orig/src/backend/commands/cluster.c:358
 #, c-format
@@ -8733,7 +8745,7 @@ msgstr "el ID de grupo %d ya está asignado"
 
 #: /home/alvherre/CVS/pgsql/source/00orig/src/backend/commands/user.c:1518
 msgid "must be superuser to alter groups"
-msgstr "debe ser superusuario para alterar grupos"
+msgstr "debe ser superusuario para modificar grupos"
 
 #: /home/alvherre/CVS/pgsql/source/00orig/src/backend/commands/user.c:1597
 #, c-format
@@ -9631,6 +9643,10 @@ msgstr "un identificador delimitado tiene largo cero"
 msgid "unterminated quoted identifier"
 msgstr "un identificador entre comillas está inconcluso"
 
+#: /pg/source/980_rel/src/backend/parser/scan.l:544
+msgid "operator too long"
+msgstr "el operador es demasiado largo"
+
 #. translator: %s is typically "syntax error"
 #: /home/alvherre/CVS/pgsql/source/00orig/src/backend/parser/scan.l:622
 #, c-format
@@ -10286,17 +10302,18 @@ msgstr "subtransacción dejó un stack SPI no vacío"
 msgid "cannot open multi-query plan as cursor"
 msgstr "no se puede abrir plan de varias consultas como cursor"
 
-#: /home/alvherre/CVS/pgsql/source/00orig/src/backend/executor/spi.c:846
-msgid "cannot open non-SELECT query as cursor"
-msgstr "no se puede abrir consulta que no es SELECT como cursor"
-
 #: /home/alvherre/CVS/pgsql/source/00orig/src/backend/executor/spi.c:850
 msgid "cannot open SELECT INTO query as cursor"
 msgstr "no se puede abrir consulta SELECT INTO como cursor"
 
+#: /pg/source/980_rel/src/backend/executor/spi.c:856
+#: /pg/source/980_rel/src/backend/executor/spi.c:861
+msgid "cannot open non-SELECT query as cursor"
+msgstr "no se puede abrir consulta que no es SELECT como cursor"
+
 #. translator: %s is a SQL statement name
-#: /home/alvherre/CVS/pgsql/source/00orig/src/backend/executor/spi.c:1404
-#: /home/alvherre/CVS/pgsql/source/00orig/src/backend/executor/functions.c:124
+#: /pg/source/980_rel/src/backend/executor/spi.c:1418
+#: /pg/source/980_rel/src/backend/executor/functions.c:125
 #, c-format
 msgid "%s is not allowed in a non-volatile function"
 msgstr "%s no está permitido en una función no-«volatile»"
@@ -11048,6 +11065,18 @@ msgid "permission denied to create temporary tables in database \"%s\""
 msgstr ""
 "se ha denegado el permiso a crear tablas temporales en la base de datos «%s»"
 
+#: /pg/source/980_rel/src/backend/catalog/pg_proc.c:134
+msgid "unsafe use of INTERNAL pseudo-type"
+msgstr "uso inseguro del pseudo-tipo INTERNAL"
+
+#: /pg/source/980_rel/src/backend/catalog/pg_proc.c:135
+msgid ""
+"A function returning \"internal\" must have at least one \"internal\" "
+"argument."
+msgstr ""
+"Una función que retorne «internal» debe tener al menos un "
+"argumento de tipo «internal»."
+
 #: /home/alvherre/CVS/pgsql/source/00orig/src/backend/catalog/pg_proc.c:145
 #, c-format
 msgid "\"%s\" is already an attribute of type %s"
@@ -11231,6 +11260,15 @@ msgstr "no existe el directorio de datos «%s»"
 #, c-format
 msgid "could not read permissions of directory \"%s\": %m"
 msgstr "no se pudo obtener los permisos del directorio «%s»: %m"
+
+#: /pg/source/980_rel/src/backend/postmaster/postmaster.c:969
+#, c-format
+msgid "data directory \"%s\" has wrong ownership"
+msgstr "el directorio de datos «%s» no tiene el dueño correcto"
+
+#: /pg/source/980_rel/src/backend/postmaster/postmaster.c:971
+msgid "The server must be started by the user that owns the data directory."
+msgstr "El servidor debe ser iniciado por el usuario que es dueño del directorio de datos."
 
 #: /home/alvherre/CVS/pgsql/source/00orig/src/backend/postmaster/postmaster.c:967
 #, c-format
@@ -11790,12 +11828,12 @@ msgstr "no se pudo redirigir stdout: %m"
 msgid "could not redirect stderr: %m"
 msgstr "no se pudo redirigir stderr: %m"
 
-#: /home/alvherre/CVS/pgsql/source/00orig/src/backend/postmaster/syslogger.c:703
+#: /pg/source/980_rel/src/backend/postmaster/syslogger.c:702
 #, c-format
-msgid "could not write to log file: %m"
-msgstr "no se pudo escribir al archivo de log: %m"
+msgid "could not write to log file: %s\n"
+msgstr "no se pudo escribir al archivo de log: %s\n"
 
-#: /home/alvherre/CVS/pgsql/source/00orig/src/backend/postmaster/syslogger.c:790
+#: /pg/source/980_rel/src/backend/postmaster/syslogger.c:789
 #, c-format
 msgid "could not open new log file \"%s\": %m"
 msgstr "no se pudo abrir el nuevo archivo de log «%s»: %m"
@@ -11849,21 +11887,14 @@ msgstr ""
 "  -o archivo       enviar salida de depuración a archivo\n"
 "  -x número        uso interno\n"
 
-#: /home/alvherre/CVS/pgsql/source/00orig/src/backend/../port/dirmod.c:75
-#: /home/alvherre/CVS/pgsql/source/00orig/src/backend/../port/dirmod.c:88
-#: /home/alvherre/CVS/pgsql/source/00orig/src/backend/../port/dirmod.c:101
+#: /pg/source/980_rel/src/backend/../port/dirmod.c:283
 #, c-format
-msgid "out of memory\n"
-msgstr "memoria agotada\n"
+msgid "could not set junction for \"%s\": %s"
+msgstr "no se pudo definir junction para «%s»: %s"
 
-#: /home/alvherre/CVS/pgsql/source/00orig/src/backend/../port/dirmod.c:283
-#, c-format
-msgid "Error setting junction for %s: %s"
-msgstr "Error definiendo «junction» para %s: %s"
-
-#: /home/alvherre/CVS/pgsql/source/00orig/src/backend/../port/exec.c:194
-#: /home/alvherre/CVS/pgsql/source/00orig/src/backend/../port/exec.c:308
-#: /home/alvherre/CVS/pgsql/source/00orig/src/backend/../port/exec.c:351
+#: /pg/source/980_rel/src/backend/../port/exec.c:194
+#: /pg/source/980_rel/src/backend/../port/exec.c:308
+#: /pg/source/980_rel/src/backend/../port/exec.c:351
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "no se pudo identificar el directorio actual: %s"

@@ -1,13 +1,13 @@
 # translation of psql.
-# (c) <alvherre@dcc.uchile.cl>, 2003, 2004
+# (c) Alvaro Herrera <alvherre@alvh.no-ip.org>, 2003, 2004, 2005
 # 
 msgid ""
 msgstr ""
 "Project-Id-Version: psql 8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-01-17 10:17-0300\n"
+"POT-Creation-Date: 2005-09-27 22:41-0400\n"
 "PO-Revision-Date: 2004-11-03 01:12-0300\n"
-"Last-Translator: Álvaro Herrera <alvherre@dcc.uchile.cl>\n"
+"Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: Castellano <pgsql-es-ayuda@postgresql.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=iso-8859-1\n"
@@ -317,8 +317,8 @@ msgstr ""
 "***(Modo paso a paso: verifique comando)"
 "****************************************\n"
 "%s\n"
-"***(presione enter para continuar, o x y enter para cancelar)"
-"*******************\n"
+"***(presione «enter» para continuar, o «x <enter>» para cancelar)"
+"***************\n"
 
 #: common.c:1010
 #, c-format
@@ -398,8 +398,7 @@ msgstr "Opciones generales:"
 msgid ""
 "  -d DBNAME       specify database name to connect to (default: \"%s\")\n"
 msgstr ""
-"  -d BASE-DE-DATOS nombre de base de datos a conectarse (por omisión: \"%s"
-"\")\n"
+"  -d BASE-DE-DATOS nombre de base de datos a conectarse (por omisión: «%s»)\n"
 
 #: help.c:95
 msgid "  -c COMMAND      run only single command (SQL or internal) and exit"
@@ -483,7 +482,7 @@ msgstr ""
 
 #: help.c:114
 msgid "  -A              unaligned table output mode (-P format=unaligned)"
-msgstr "  -A               modo de salida desalineado"
+msgstr "  -A               modo de salida desalineado (-P format=unaligned)"
 
 #: help.c:115
 msgid "  -H              HTML table output mode (-P format=html)"
@@ -554,15 +553,15 @@ msgstr "socket local"
 #, c-format
 msgid "  -p PORT         database server port (default: \"%s\")\n"
 msgstr ""
-"  -p PORT          puerto del servidor de bases de datos (por omisión: \"%s"
-"\")\n"
+"  -p PORT          puerto del servidor de bases de datos (por omisión: «%"
+"s»)\n"
 
 #: help.c:137
 #, c-format
 msgid "  -U NAME         database user name (default: \"%s\")\n"
 msgstr ""
-"  -U NOMBRE        nombre de usuario de la base de datos (por omisión: \"%s"
-"\")\n"
+"  -U NOMBRE        nombre de usuario de la base de datos (por omisión: «%"
+"s»)\n"
 
 #: help.c:138
 msgid "  -W              prompt for password (should happen automatically)"
@@ -579,7 +578,7 @@ msgid ""
 "Report bugs to <pgsql-bugs@postgresql.org>."
 msgstr ""
 "\n"
-"Para obtener más ayuda, digite \"\\?« (para comandos internos) o »\\help\"\n"
+"Para obtener más ayuda, digite «\\?» (para comandos internos) o «\\help»\n"
 "(para comandos SQL) dentro de psql, o consulte la sección de psql\n"
 "en la documentación de PostgreSQL.\n"
 "\n"
@@ -809,7 +808,8 @@ msgstr "  \\dl             listar objetos grandes, lo mismo que \\lo_list\n"
 #, c-format
 msgid "  \\dp [PATTERN]  list table, view, and sequence access privileges\n"
 msgstr ""
-"  \\dp [PATRÓN]    listar privilegios de acceso a tablas, vistas y secuencias\n"
+"  \\dp [PATRÓN]    listar privilegios de acceso a tablas, vistas y "
+"secuencias\n"
 
 #: help.c:228
 #, c-format
@@ -985,7 +985,7 @@ msgstr "Objetos grandes"
 #: mainloop.c:175
 #, c-format
 msgid "Use \"\\q\" to leave %s.\n"
-msgstr "Use \"\\q\" para salir de %s.\n"
+msgstr "Use «\\q» para salir de %s.\n"
 
 #: print.c:428
 msgid "(No rows)\n"
@@ -2050,7 +2050,7 @@ msgstr ""
 "    FOR EACH ROW EXECUTE PROCEDURE funcname ( args )"
 
 #: sql_help.h:141
-msgid "define a new conversion"
+msgid "define a new encoding conversion"
 msgstr "define una nueva conversión de codificación"
 
 #: sql_help.h:142
