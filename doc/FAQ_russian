@@ -1,12 +1,12 @@
 
                Otvety na chasto zadavaemye voprosy po PostgreSQL
                                        
-   Data poslednego obnovleniya: Ponedel'nik 30 maya 09:11:03 EDT 2005
+   Data poslednego obnovleniya: Pyatnica 16 sentyabrya 14:07:22 EDT 2005
    
    Anglijskij variant soprovozhdaet: Bryus Mom'yan (Bruce Momjian)
    (pgman@candle.pha.pa.us)
    
-   Pereviol na russkij: Viktor Vislobokov (corochoone@perm.ru)
+   Pereviol na russkij: Viktor Vislobokov (admin@linuxshare.ru)
    
    Samuyu svezhuyu anglijskuyu versiyu dokumenta mozhno najti na
    http://www.PostgreSQL.org/files/documentation/faqs/FAQ.html.
@@ -94,6 +94,8 @@
    suschestvuet", kogda obraschayuts' k vremennym tablicam v funkciyah
    PL/PgSQL?
    4.20) Kakie est' resheniya dlya replikacii?
+   4.21) Pochemu imena tablicy i kolonok ne raspoznayutsya v v moiom
+   zaprose?
      _________________________________________________________________
    
                               Obschie voprosy
@@ -101,7 +103,8 @@
   1.1) CHto takoe PostgreSQL? Kak proiznositsya `eto nazvanie?
   
    PostgreSQL proiznositsya Post-Gres-Q-L (Post-Gres-K'yu-`El), takzhe
-   chasto govoryat prosto Postgres.
+   inogda govoryat prosto Postgres. Vy mozhete uslyshat' kak `eto
+   proiznositsya s pomosch'yu audiofajla, kotoryj dostupen v formate MP3.
    
    PostgreSQL - `eto ob"ektno-relyacionnaya sistema upravleniya bazami
    dannyh (SUBD), kotoraya imeet tradicionnye vozmozhnosti kommercheskih
@@ -205,7 +208,7 @@
    
   1.7) Kakaya poslednyaya versiya?
   
-   Poslednij vypusk PostgreSQL - `eto versiya 8.0.2
+   Poslednij vypusk PostgreSQL - `eto versiya 8.0.3
    
    My planiruem vypuskat' novye starshie versii kazhdyj god, a mladshie
    versii kazhdye neskol'ko mesyacev.
@@ -535,6 +538,13 @@
    byt' uvelicheny v chetyre raza, esli razmer bloka po umolchaniyu budet
    uvelichen do 32k.
    
+   Suschestvuet ogranichenie, po kotoromu indeksy ne mogut sozdavat'sya
+   dlya kolonok dlinnee chem 2,000 simvolov. K schast'yu takie indeksy
+   vryad li dejstvitel'no komu-to nuzhny. Unikal'nost' garantiruetsya
+   nailuchim obrazom, s pomosch'yu funkcional'nogo indeksa iz h`esha MD5
+   dlinnoj kolonki, a polnotekstovoe indeksirovanie pozvolyaet iskat'
+   slova vnutri kolonki.
+   
   4.5) Kak mnogo diskovogo prostranstva v baze dannyh nuzhno dlya sohraneniya
   dannyh iz obychnogo tekstovogo fajla?
   
@@ -546,23 +556,23 @@
    srednem, sostavlyaet 20 bajt. Razmer prostogo fajla sostavit 2.8 MB.
    Razmer bazy PostgreSQL, soderzhaschej `eti zhe dannye sostavit
    priblizitel'no 6.4 MB iz kotoryh:
-    32 bajt: na kazhdyj zagolovok stroki v tablice (priblizitel'no)
+    28 bajt: na kazhdyj zagolovok stroki v tablice (priblizitel'no)
   + 24 bajta: odno pole s celochislennym tipom i odno tekstovoe pole
   +  4 bajta: ukazatel' na stranice dlya vsej tablichnoj stroki
    ----------------------------------------
-    60 bajt na stroku v tablice
+    56 bajt na stroku v tablice
 
    Razmer stranicy dannyh v PostgreSQL sostavlyaet 8192 bajt (8 KB), tak chto:
 
    8192 bajt na stranicu
-   ---------------------   =  136 strok v tablice na stranicu BD (okruglionno)
-     60 bajt na stroku v tablice
+   ---------------------   =  146 strok v tablice na stranicu BD (okruglionno)
+     56 bajt na stroku v tablice
 
      100000 strok dannyh
-   ----------------------- =  735 stranic v BD (okruglionno)
-   128 strok v tablice na stranicu
+   ----------------------- =  685 stranic v BD (okruglionno)
+   146 strok v tablice na stranicu
 
-   735 stranic BD * 8192 bajt na stranicu = 6,021,120 bajt (6 MB)
+   685 stranic BD * 8192 bajt na stranicu = 5,611,520 bajt (5.6 MB)
 
    Indeksy ne trebuyut tak mnogo, no poskol'ku oni sozdayutsya dlya
    bol'shogo kolichestva dannyh, oni takzhe mogut byt' veliki.
@@ -650,6 +660,13 @@
    esli vy sozdadite indeks vyrazheniya, on budet ispol'zovan:
     CREATE INDEX tabindex ON tab (lower(col));
 
+   Esli vysheukazannyj indeks sozdaiotsya kak UNIQUE, to kolonka, dlya
+   kotoroj on sozdaiotsya mozhet hranit' simvoly i v verhnem, i v nizhnem
+   registre, indes ne mozhet imet' identichnyh znachenij, kotorye
+   otlichayutsya tol'ko registrom. CHtoby v kolonke mozhno bylo hranit'
+   simvoly tol'ko v opredelionnom registre, ispol'zujte ogranichenie
+   CHECK ili proverku cherez trigger.
+   
   4.9) Kak mne opredelit', chto znachenie polya ravno NULL v kakom-libo
   zaprose? Mogu ya otsortirovat' polya NULL ili net?
   
@@ -869,3 +886,18 @@ CREATE TABLE test (x int, modtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP );
    neobhodima sinhronizaciya izmenenij mezhdu neskol'kimi serverami.
    Naibolee populyarnym resheniem dlya takoj replikacii v PostgreSQL
    yavlyaetsya Pgcluster.
+   
+  4.21) Pochemu imena tablicy i kolonok ne raspoznayutsya v v moiom zaprose?
+  
+   Naibolee chasto `eto proishodit iz-za ispol'zovaniya dvojnyh kavychek
+   v imeni tablicy ili kolonki pri sozdanii tablicy. Pri ispol'zovanii
+   dvojnyh kavychek, imya tablicy i kolonki (kotorye nazyvayut
+   identifikatorami) sohranyayutsya v registro-zavisimom vide; `eto
+   oznachaet, chto vy dolzhny ispol'zovat' dvojnye kavychki, kogda
+   ukazyvaete `eti imena v zaprose. Nekotorye interfejsy, takie kak
+   pgAdmin, vo vremya sozdaniya tablicy dobavlyayut dvojnye kavychki
+   avtomaticheski. Takim obrazom, chtoby identifikatory raspoznavalis' vy
+   dolzhny sledovat' odnomu iz sleduyuschih pravil:
+     * Izbegat' ispol'zovaniya dvojnyh kavychek pri sozdanii tablic
+     * Ispol'zovat' v identifikatorah tol'ko simvoly nizhnego registra
+     * Ispol'zovat' dvojnye kavychki dlya identifikatorov v zaprosah
