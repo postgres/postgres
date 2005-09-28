@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Sep 16 14:07:22 EDT 2005
+   Last updated: Wed Sep 28 07:45:42 EDT 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -210,7 +210,7 @@
    
   1.9) How do I find out about known bugs or missing features?
   
-   PostgreSQL supports an extended subset of SQL-92. See our TODO list
+   PostgreSQL supports an extended subset of SQL:2003. See our TODO list
    for known bugs, missing features, and future plans.
    
   1.10) How can I learn SQL?
