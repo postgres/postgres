@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.104 2004/12/31 22:00:09 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.104.4.1 2005/09/28 21:17:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,8 @@ static void mark_baserels_for_outer_join(Query *root, Relids rels,
 							 Relids outerrels);
 static void distribute_qual_to_rels(Query *root, Node *clause,
 						bool is_pushed_down,
-						bool isdeduced,
+						bool is_deduced,
+						bool below_outer_join,
 						Relids outerjoin_nonnullable,
 						Relids qualscope);
 static void add_vars_to_targetlist(Query *root, List *vars,
@@ -174,6 +175,10 @@ add_vars_to_targetlist(Query *root, List *vars, Relids where_needed)
  *	  with outerjoinset information, to aid in proper positioning of qual
  *	  clauses that appear above outer joins.
  *
+ * jtnode is the jointree node currently being examined.  below_outer_join
+ * is TRUE if this node is within the nullable side of a higher-level outer
+ * join.
+ *
  * NOTE: when dealing with inner joins, it is appropriate to let a qual clause
  * be evaluated at the lowest level where all the variables it mentions are
  * available.  However, we cannot push a qual down into the nullable side(s)
@@ -189,7 +194,8 @@ add_vars_to_targetlist(Query *root, List *vars, Relids where_needed)
  * internal convenience; no outside callers pay attention to the result.
  */
 Relids
-distribute_quals_to_rels(Query *root, Node *jtnode)
+distribute_quals_to_rels(Query *root, Node *jtnode,
+						 bool below_outer_join)
 {
 	Relids		result = NULL;
 
@@ -214,7 +220,8 @@ distribute_quals_to_rels(Query *root, Node *jtnode)
 		{
 			result = bms_add_members(result,
 									 distribute_quals_to_rels(root,
-															  lfirst(l)));
+															  lfirst(l),
+															  below_outer_join));
 		}
 
 		/*
@@ -223,7 +230,8 @@ distribute_quals_to_rels(Query *root, Node *jtnode)
 		 */
 		foreach(l, (List *) f->quals)
 			distribute_qual_to_rels(root, (Node *) lfirst(l),
-									true, false, NULL, result);
+									true, false, below_outer_join,
+									NULL, result);
 	}
 	else if (IsA(jtnode, JoinExpr))
 	{
@@ -247,27 +255,47 @@ distribute_quals_to_rels(Query *root, Node *jtnode)
 		 * rels from being pushed down below this level.  (It's okay for
 		 * upper quals to be pushed down to the outer side, however.)
 		 */
-		leftids = distribute_quals_to_rels(root, j->larg);
-		rightids = distribute_quals_to_rels(root, j->rarg);
-
-		result = bms_union(leftids, rightids);
-
-		nonnullable_rels = nullable_rels = NULL;
 		switch (j->jointype)
 		{
 			case JOIN_INNER:
+				leftids = distribute_quals_to_rels(root, j->larg,
+												   below_outer_join);
+				rightids = distribute_quals_to_rels(root, j->rarg,
+													below_outer_join);
+
+				result = bms_union(leftids, rightids);
 				/* Inner join adds no restrictions for quals */
+				nonnullable_rels = NULL;
+				nullable_rels = NULL;
 				break;
 			case JOIN_LEFT:
+				leftids = distribute_quals_to_rels(root, j->larg,
+												   below_outer_join);
+				rightids = distribute_quals_to_rels(root, j->rarg,
+													true);
+
+				result = bms_union(leftids, rightids);
 				nonnullable_rels = leftids;
 				nullable_rels = rightids;
 				break;
 			case JOIN_FULL:
+				leftids = distribute_quals_to_rels(root, j->larg,
+												   true);
+				rightids = distribute_quals_to_rels(root, j->rarg,
+													true);
+
+				result = bms_union(leftids, rightids);
 				/* each side is both outer and inner */
 				nonnullable_rels = result;
 				nullable_rels = result;
 				break;
 			case JOIN_RIGHT:
+				leftids = distribute_quals_to_rels(root, j->larg,
+												   true);
+				rightids = distribute_quals_to_rels(root, j->rarg,
+													below_outer_join);
+
+				result = bms_union(leftids, rightids);
 				nonnullable_rels = rightids;
 				nullable_rels = leftids;
 				break;
@@ -280,16 +308,20 @@ distribute_quals_to_rels(Query *root, Node *jtnode)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("UNION JOIN is not implemented")));
+				nonnullable_rels = NULL;	/* keep compiler quiet */
+				nullable_rels = NULL;
 				break;
 			default:
 				elog(ERROR, "unrecognized join type: %d",
 					 (int) j->jointype);
+				nonnullable_rels = NULL;	/* keep compiler quiet */
+				nullable_rels = NULL;
 				break;
 		}
 
 		foreach(qual, (List *) j->quals)
 			distribute_qual_to_rels(root, (Node *) lfirst(qual),
-									false, false,
+									false, false, below_outer_join,
 									nonnullable_rels, result);
 
 		if (nullable_rels != NULL)
@@ -357,7 +389,9 @@ mark_baserels_for_outer_join(Query *root, Relids rels, Relids outerrels)
  * 'clause': the qual clause to be distributed
  * 'is_pushed_down': if TRUE, force the clause to be marked 'is_pushed_down'
  *		(this indicates the clause came from a FromExpr, not a JoinExpr)
- * 'isdeduced': TRUE if the qual came from implied-equality deduction
+ * 'is_deduced': TRUE if the qual came from implied-equality deduction
+ * 'below_outer_join': TRUE if the qual is from a JOIN/ON that is below the
+ *		nullable side of a higher-level outer join.
  * 'outerjoin_nonnullable': NULL if not an outer-join qual, else the set of
  *		baserels appearing on the outer (nonnullable) side of the join
  * 'qualscope': set of baserels the qual's syntactic scope covers
@@ -369,7 +403,8 @@ mark_baserels_for_outer_join(Query *root, Relids rels, Relids outerrels)
 static void
 distribute_qual_to_rels(Query *root, Node *clause,
 						bool is_pushed_down,
-						bool isdeduced,
+						bool is_deduced,
+						bool below_outer_join,
 						Relids outerjoin_nonnullable,
 						Relids qualscope)
 {
@@ -406,7 +441,7 @@ distribute_qual_to_rels(Query *root, Node *clause,
 	 * Check to see if clause application must be delayed by outer-join
 	 * considerations.
 	 */
-	if (isdeduced)
+	if (is_deduced)
 	{
 		/*
 		 * If the qual came from implied-equality deduction, we can
@@ -431,7 +466,8 @@ distribute_qual_to_rels(Query *root, Node *clause,
 		 *
 		 * Note: an outer-join qual that mentions only nullable-side rels can
 		 * be pushed down into the nullable side without changing the join
-		 * result, so we treat it the same as an ordinary inner-join qual.
+		 * result, so we treat it the same as an ordinary inner-join qual,
+		 * except for not setting can_be_equijoin (see below).
 		 */
 		relids = qualscope;
 		valid_everywhere = false;
@@ -475,8 +511,19 @@ distribute_qual_to_rels(Query *root, Node *clause,
 
 		if (bms_is_subset(addrelids, relids))
 		{
-			/* Qual is not affected by any outer-join restriction */
-			can_be_equijoin = true;
+			/*
+			 * Qual is not delayed by any lower outer-join restriction.
+			 * If it is not itself below or within an outer join, we
+			 * can consider it "valid everywhere", so consider feeding
+			 * it to the equijoin machinery.  (If it is within an outer
+			 * join, we can't consider it "valid everywhere": once the
+			 * contained variables have gone to NULL, we'd be asserting
+			 * things like NULL = NULL, which is not true.)
+			 */
+			if (!below_outer_join && outerjoin_nonnullable == NULL)
+				can_be_equijoin = true;
+			else
+				can_be_equijoin = false;
 		}
 		else
 		{
@@ -545,7 +592,7 @@ distribute_qual_to_rels(Query *root, Node *clause,
 			 * redundancy will be detected when the join clause is moved
 			 * into a join rel's restriction list.)
 			 */
-			if (!isdeduced ||
+			if (!is_deduced ||
 				!qual_is_redundant(root, restrictinfo,
 								   rel->baserestrictinfo))
 			{
@@ -610,7 +657,7 @@ distribute_qual_to_rels(Query *root, Node *clause,
 	 */
 	if (can_be_equijoin &&
 		restrictinfo->mergejoinoperator != InvalidOid &&
-		!isdeduced)
+		!is_deduced)
 		add_equijoined_keys(root, restrictinfo);
 }
 
@@ -776,7 +823,7 @@ process_implied_equality(Query *root,
 	 * taken for an original JOIN/ON clause.
 	 */
 	distribute_qual_to_rels(root, (Node *) clause,
-							true, true, NULL, relids);
+							true, true, false, NULL, relids);
 }
 
 /*
