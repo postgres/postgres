@@ -1,5 +1,5 @@
 From: Zeugswetter Andreas <ZeugswetterA@spardat.at>
-$Date: 2005/09/22 22:14:10 $
+$Date: 2005/09/28 11:33:41 $
 
 On AIX 4.3.2 PostgreSQL compiled with the native IBM compiler xlc
 (vac.C 5.0.1) passes all regression tests.  Other versions of OS and
