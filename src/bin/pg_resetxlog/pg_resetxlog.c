@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.35 2005/07/04 04:51:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.36 2005/09/29 08:34:50 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,7 +156,7 @@ main(int argc, char *argv[])
 				}
 				if (set_mxid == 0)
 				{
-					fprintf(stderr, _("%s: multi transaction ID (-m) must not be 0\n"), progname);
+					fprintf(stderr, _("%s: multitransaction ID (-m) must not be 0\n"), progname);
 					exit(1);
 				}
 				break;
@@ -171,7 +171,7 @@ main(int argc, char *argv[])
 				}
 				if (set_mxoff == -1)
 				{
-					fprintf(stderr, _("%s: multi transaction offset (-O) must not be -1\n"), progname);
+					fprintf(stderr, _("%s: multitransaction offset (-O) must not be -1\n"), progname);
 					exit(1);
 				}
 				break;
@@ -798,11 +798,11 @@ usage(void)
 	printf(_("Options:\n"));
 	printf(_("  -f              force update to be done\n"));
 	printf(_("  -l TLI,FILE,SEG force minimum WAL starting location for new transaction log\n"));
+	printf(_("  -m XID          set next multitransaction ID\n"));
 	printf(_("  -n              no update, just show extracted control values (for testing)\n"));
 	printf(_("  -o OID          set next OID\n"));
+	printf(_("  -O OFFSET       set next multitransaction offset\n"));
 	printf(_("  -x XID          set next transaction ID\n"));
-	printf(_("  -m multiXID     set next multi transaction ID\n"));
-	printf(_("  -O multiOffset  set next multi transaction offset\n"));
 	printf(_("  --help          show this help, then exit\n"));
 	printf(_("  --version       output version information, then exit\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
