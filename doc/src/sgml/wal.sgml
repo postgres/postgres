@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.33 2005/09/28 18:40:28 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.34 2005/09/29 02:29:48 momjian Exp $ -->
 
 <chapter id="reliability">
  <title>Reliability</title>
@@ -110,7 +110,7 @@
   </sect1>
 
   <sect1 id="wal-benefits">
-   <title>Benefits of <acronym>WAL</acronym></title>
+   <title>Benefits of Write-Ahead Logging</title>
 
    <indexterm zone="wal-benefits">
     <primary>fsync</primary>
