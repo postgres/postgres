@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.4 2005/09/16 05:35:40 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.5 2005/09/29 22:04:36 alvherre Exp $
  *
  */
 
@@ -216,34 +216,33 @@ pg_tablespace_size_name(PG_FUNCTION_ARGS)
  * calculate size of a relation
  */
 static int64
-calculate_relation_size(Oid tblspcOid, Oid relnodeOid)
+calculate_relation_size(RelFileNode *rfn)
 {
-	int64		totalsize=0;
-	unsigned int segcount=0;
-	char dirpath[MAXPGPATH];
-	char pathname[MAXPGPATH];
+	int64		totalsize = 0;
+	char		dirpath[MAXPGPATH];
+	char		pathname[MAXPGPATH];
+	unsigned int segcount = 0;
 
-	if (!tblspcOid)
-		tblspcOid = MyDatabaseTableSpace;
+	Assert(OidIsValid(rfn->spcNode));
 
-	if (tblspcOid == DEFAULTTABLESPACE_OID)
-	    snprintf(dirpath, MAXPGPATH, "%s/base/%u", DataDir, MyDatabaseId);
-	else if (tblspcOid == GLOBALTABLESPACE_OID)
+	if (rfn->spcNode == DEFAULTTABLESPACE_OID)
+	    snprintf(dirpath, MAXPGPATH, "%s/base/%u", DataDir, rfn->dbNode);
+	else if (rfn->spcNode == GLOBALTABLESPACE_OID)
 	    snprintf(dirpath, MAXPGPATH, "%s/global", DataDir);
 	else
 	    snprintf(dirpath, MAXPGPATH, "%s/pg_tblspc/%u/%u",
-				 DataDir, tblspcOid, MyDatabaseId);
+				 DataDir, rfn->spcNode, rfn->dbNode);
 
-	for (segcount = 0 ;; segcount++)
+	for (segcount = 0; ; segcount++)
 	{
 		struct stat fst;
 
 		if (segcount == 0)
 		    snprintf(pathname, MAXPGPATH, "%s/%u",
-					 dirpath, relnodeOid);
+					 dirpath, rfn->relNode);
 		else
 		    snprintf(pathname, MAXPGPATH, "%s/%u.%u",
-					 dirpath, relnodeOid, segcount);
+					 dirpath, rfn->relNode, segcount);
 
 		if (stat(pathname, &fst) < 0)
 		{
@@ -264,24 +263,16 @@ Datum
 pg_relation_size_oid(PG_FUNCTION_ARGS)
 {
 	Oid         relOid=PG_GETARG_OID(0);
-	HeapTuple   tuple;
-	Form_pg_class pg_class;
-	Oid			relnodeOid;
-	Oid         tblspcOid;
+	Relation	rel;
+	int64		size;
 
-	tuple = SearchSysCache(RELOID,
-						   ObjectIdGetDatum(relOid),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "cache lookup failed for relation %u", relOid);
+	rel = relation_open(relOid, AccessShareLock);
 
-	pg_class = (Form_pg_class) GETSTRUCT(tuple);
-	relnodeOid = pg_class->relfilenode;
-	tblspcOid = pg_class->reltablespace;
+	size = calculate_relation_size(&(rel->rd_node));
 
-	ReleaseSysCache(tuple);
+	relation_close(rel, AccessShareLock);
 
-	PG_RETURN_INT64(calculate_relation_size(tblspcOid, relnodeOid));
+	PG_RETURN_INT64(size);
 }
 
 Datum
@@ -289,77 +280,65 @@ pg_relation_size_name(PG_FUNCTION_ARGS)
 {
 	text	   *relname = PG_GETARG_TEXT_P(0);
 	RangeVar   *relrv;
-	Relation	relation;
-	Oid			relnodeOid;
-	Oid         tblspcOid;
+	Relation	rel;
+	int64		size;
     
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));    
-	relation = relation_openrv(relrv, AccessShareLock);
+	rel = relation_openrv(relrv, AccessShareLock);
     
-	tblspcOid  = relation->rd_rel->reltablespace;             
-	relnodeOid = relation->rd_rel->relfilenode;
+	size = calculate_relation_size(&(rel->rd_node));
              
-	relation_close(relation, AccessShareLock);
+	relation_close(rel, AccessShareLock);
 
-	PG_RETURN_INT64(calculate_relation_size(tblspcOid, relnodeOid));
+	PG_RETURN_INT64(size);
 }
 
 
 /*
- *  Compute the on-disk size of files for 'relation' according to the
+ *  Compute the on-disk size of files for the relation according to the
  *  stat function, optionally including heap data, index data, and/or
  *  toast data.
  */
 static int64
-calculate_total_relation_size(Oid tblspcOid, Oid relnodeOid)
+calculate_total_relation_size(Oid Relid)
 {
-    Relation        heapRelation;
-	Relation        idxRelation;
-	Relation        toastRelation;
-    Oid             idxOid;
-    Oid             idxTblspcOid;
-	Oid             toastOid;
-	Oid             toastTblspcOid;
-	bool            hasIndices;
-	int64           size;
-	List            *indexoidlist;
-	ListCell        *idx;
+	Relation	heapRel;
+	Oid			toastOid;
+	int64		size;
+	ListCell   *cell;
 
-    heapRelation = relation_open(relnodeOid, AccessShareLock);
-	toastOid = heapRelation->rd_rel->reltoastrelid;
-	hasIndices = heapRelation->rd_rel->relhasindex;
+	heapRel = relation_open(Relid, AccessShareLock);
+	toastOid = heapRel->rd_rel->reltoastrelid;
 
-    /* Get the heap size */
-    size = calculate_relation_size(tblspcOid, relnodeOid);
+	/* Get the heap size */
+	size = calculate_relation_size(&(heapRel->rd_node));
 
-    /* Get index size */
-	if (hasIndices)
+	/* Get index size */
+	if (heapRel->rd_rel->relhasindex)
 	{
 		/* recursively include any dependent indexes */
-		indexoidlist = RelationGetIndexList(heapRelation);
+		List *index_oids = RelationGetIndexList(heapRel);
 
-		foreach(idx, indexoidlist)
+		foreach(cell, index_oids)
 		{
-            idxOid = lfirst_oid(idx);
-			idxRelation = relation_open(idxOid, AccessShareLock);
-            idxTblspcOid = idxRelation->rd_rel->reltablespace;
- 			size += calculate_relation_size(idxTblspcOid, idxOid);
-			relation_close(idxRelation, AccessShareLock);
+			Oid			idxOid = lfirst_oid(cell);
+			Relation	iRel;
+
+			iRel = relation_open(idxOid, AccessShareLock);
+
+			size += calculate_relation_size(&(iRel->rd_node));
+
+			relation_close(iRel, AccessShareLock);
 		}
-		list_free(indexoidlist);
+
+		list_free(index_oids);
 	}
 
-    relation_close(heapRelation, AccessShareLock);
+	/* Get toast table (and index) size */
+	if (OidIsValid(toastOid))
+		size += calculate_total_relation_size(toastOid);
 
-    /* Get toast table size */
-	if (toastOid != 0)
-	{
-		/* recursively include any toast relations */
-		toastRelation = relation_open(toastOid, AccessShareLock);
-		toastTblspcOid = toastRelation->rd_rel->reltablespace;
-		size += calculate_relation_size(toastTblspcOid, toastOid);
-		relation_close(toastRelation, AccessShareLock);
-	}
+	relation_close(heapRel, AccessShareLock);
 
 	return size;
 }
@@ -371,45 +350,22 @@ calculate_total_relation_size(Oid tblspcOid, Oid relnodeOid)
 Datum
 pg_total_relation_size_oid(PG_FUNCTION_ARGS)
 {
-	Oid		relOid=PG_GETARG_OID(0);
-	HeapTuple	tuple;
-	Form_pg_class	pg_class;
-	Oid		relnodeOid;
-	Oid		tblspcOid;
+	Oid		relid = PG_GETARG_OID(0);
 
-	tuple = SearchSysCache(RELOID,
-						   ObjectIdGetDatum(relOid),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "cache lookup failed for relation %u", relOid);
-
-	pg_class = (Form_pg_class) GETSTRUCT(tuple);
-	relnodeOid = pg_class->relfilenode;
-	tblspcOid = pg_class->reltablespace;
-
-	ReleaseSysCache(tuple);
-
-	PG_RETURN_INT64(calculate_total_relation_size(tblspcOid, relnodeOid));
+	PG_RETURN_INT64(calculate_total_relation_size(relid));
 }
 
 Datum
 pg_total_relation_size_name(PG_FUNCTION_ARGS)
 {
-	text		*relname = PG_GETARG_TEXT_P(0);
-	RangeVar	*relrv;
-	Relation	relation;
-	Oid		relnodeOid;
-	Oid		tblspcOid;
+	text	   *relname = PG_GETARG_TEXT_P(0);
+	RangeVar   *relrv;
+	Oid			relid;
     
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));    
-	relation = relation_openrv(relrv, AccessShareLock);
+	relid = RangeVarGetRelid(relrv, false);
     
-	tblspcOid  = relation->rd_rel->reltablespace;             
-	relnodeOid = relation->rd_rel->relfilenode;
-             
-	relation_close(relation, AccessShareLock);
-
-	PG_RETURN_INT64(calculate_total_relation_size(tblspcOid, relnodeOid));
+	PG_RETURN_INT64(calculate_total_relation_size(relid));
 }
 
 /*
@@ -418,37 +374,36 @@ pg_total_relation_size_name(PG_FUNCTION_ARGS)
 Datum
 pg_size_pretty(PG_FUNCTION_ARGS)
 {
-	int64 size=PG_GETARG_INT64(0);
-	char *result=palloc(50+VARHDRSZ);
-	int64 limit = 10*1024;
-	int64 mult=1;
+	int64	size = PG_GETARG_INT64(0);
+	char   *result = palloc(50 + VARHDRSZ);
+	int64	limit = 10 * 1024;
+	int64	mult = 1;
 
-	if (size < limit*mult)
-	    snprintf(VARDATA(result), 50, INT64_FORMAT" bytes",
-				 size);
+	if (size < limit * mult)
+	    snprintf(VARDATA(result), 50, INT64_FORMAT " bytes", size);
 	else
 	{
 		mult *= 1024;
-		if (size < limit*mult)
+		if (size < limit * mult)
 		     snprintf(VARDATA(result), 50, INT64_FORMAT " kB",
-					  (size+mult/2) / mult);
+					  (size + mult / 2) / mult);
 		else
 		{
 			mult *= 1024;
-			if (size < limit*mult)
+			if (size < limit * mult)
 			    snprintf(VARDATA(result), 50, INT64_FORMAT " MB",
-						 (size+mult/2) / mult);
+						 (size + mult / 2) / mult);
 			else
 			{
 				mult *= 1024;
-				if (size < limit*mult)
+				if (size < limit * mult)
 				    snprintf(VARDATA(result), 50, INT64_FORMAT " GB",
-							 (size+mult/2) / mult);
+							 (size + mult / 2) / mult);
 				else
 				{
 				    mult *= 1024;
 				    snprintf(VARDATA(result), 50, INT64_FORMAT " TB",
-							 (size+mult/2) / mult);
+							 (size + mult / 2) / mult);
 				}
 			}
 		}
