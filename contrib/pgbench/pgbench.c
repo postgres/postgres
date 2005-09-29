@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.37 2005/09/29 13:44:25 ishii Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.38 2005/09/29 16:18:26 tgl Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -20,8 +20,6 @@
 #include "postgres_fe.h"
 
 #include "libpq-fe.h"
-
-#include <errno.h>
 
 #ifdef WIN32
 #include "win32.h"
@@ -275,14 +273,17 @@ assignVariables(CState * st, char *sql)
 	while ((p = strchr(&sql[i], ':')) != NULL)
 	{
 		i = j = p - sql;
-		do
+		do {
 			i++;
-		while (isalnum(sql[i]) != 0 || sql[i] == '_');
+		} while (isalnum((unsigned char) sql[i]) || sql[i] == '_');
 		if (i == j + 1)
 			continue;
 
-		if ((name = strndup(&sql[j + 1], i - (j + 1))) == NULL)
+		name = malloc(i - j);
+		if (name == NULL)
 			return NULL;
+		memcpy(name, &sql[j + 1], i - (j + 1));
+		name[i - (j + 1)] = '\0';
 		val = getVariable(st, name);
 		free(name);
 		if (val == NULL)
@@ -966,7 +967,7 @@ process_file(char *filename)
 		if ((p = strchr(buf, '\n')) != NULL)
 			*p = '\0';
 		p = buf;
-		while (isspace(*p))
+		while (isspace((unsigned char) *p))
 			p++;
 		if (*p == '\0' || strncmp(p, "--", 2) == 0)
 		{
