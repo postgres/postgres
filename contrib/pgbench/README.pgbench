@@ -1,4 +1,4 @@
-pgbench README		2003/11/26 Tatsuo Ishii (t-ishii@sra.co.jp)
+pgbench README		2005/09/29 Tatsuo Ishii
 
 o What is pgbench?
 
@@ -34,16 +34,8 @@ o features of pgbench
 
 o How to install pgbench
 
- (1) Configure and build the standard Postgres distribution.
-
-     You can get away with just running configure at the top level
-     and doing "make all" in src/interfaces/libpq.
-
- (2) Run make in this directory.
-
-     You will see an executable file "pgbench".  You can run it here,
-     or install it with the standard Postgres programs by doing
-     "make install".
+ $make
+ $make install
 
 o How to use pgbench?
 
@@ -124,6 +116,15 @@ o options
 	-S
 		Perform select only transactions instead of TPC-B.
 
+	-N	Do not update "branches" and "tellers". This will
+	        avoid heavy update contention on branches and tellers,
+	        while it will not make pgbench supporting TPC-B like
+	        transactions.
+
+	-f filename
+		Read transaction script from file. Detailed
+		explanation will appear later.
+
 	-C
 		Establish connection for each transaction, rather than
 		doing it just once at beginning of pgbench in the normal
@@ -158,11 +159,57 @@ o What is the "transaction" actually performed in pgbench?
 
   (7) end;
 
+o -f option
+
+  This supports for reading transaction script from a specified
+  file. This file should include SQL commands in each line. SQL
+  command consists of multiple lines are not supported. Empty lines
+  and lines begging with "--" will be ignored.
+
+  SQL commands can include "meta command" which begins with "\" (back
+  slash). A meta command takes some arguments separted by white
+  spaces. Currently following meta command is supported:
+
+  \setrandom name min max
+
+	assign random integer to name between min and max
+
+  example:
+
+  \setrandom aid 1 100000
+
+  variables can be reffered to in SQL comands by adding ":" in front
+  of the varible name.
+
+  example:
+
+  SELECT abalance FROM accounts WHERE aid = :aid
+
+  For example, TPC-B like benchmark can be defined as follows(scaling
+  factor = 1):
+
+\setrandom aid 1 100000
+\setrandom bid 1 1
+\setrandom tid 1 10
+\setrandom delta 1 10000
+BEGIN
+UPDATE accounts SET abalance = abalance + :delta WHERE aid = :aid
+SELECT abalance FROM accounts WHERE aid = :aid
+UPDATE tellers SET tbalance = tbalance + :delta WHERE tid = :tid
+UPDATE branches SET bbalance = bbalance + :delta WHERE bid = :bid
+INSERT INTO history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, 'now')
+END
+
 o License?
 
 Basically it is same as BSD license. See pgbench.c for more details.
 
 o History
+
+2005/09/29
+	* add -f option. contributed by Tomoaki Sato.
+
+[updation records were missing]
 
 2003/11/26
 	* create indexes after data insertion to reduce time.

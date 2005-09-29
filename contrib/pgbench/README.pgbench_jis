@@ -1,9 +1,9 @@
-pgbench README		2003/11/26 Tatsuo Ishii (t-ishii@sra.co.jp)
+pgbench README		2005/09/29 Tatsuo Ishii
 
 $B"#(Bpgbench $B$H$O!)(B
 
-pgbench $B$O(B TPC-B$B$K;w$?%Y%s%A%^!<%/%F%9%H$r9T$J$&%W%m%0%i%`$G$9!%:#$N$H(B
-$B$3$m(B PostgreSQL $B@lMQ$G$9!%(B
+pgbench $B$O%Y%s%A%^!<%/%F%9%H$r9T$J$&%W%m%0%i%`$G$9!%:#$N$H$3$m(B 
+PostgreSQL $B@lMQ$G$9!%(B
 
 pgbench $B$O(B select/update/insert $B$r4^$`%H%i%s%6%/%7%g%s$r<B9T$7!$A4BN$N(B
 $B<B9T;~4V$H<B:]$K40N;$7$?%H%i%s%6%/%7%g%s$N?t$+$i(B 1 $BIC4V$K<B9T$G$-$?%H(B
@@ -31,16 +31,12 @@ o pgbench $B$O(B libpq $B$NHsF14|=hM}5!G=$r;H$C$F%^%k%A%f!<%64D6-$r%7%_%e%l!<
 
 $B"#(Bpgbench $B$N%$%s%9%H!<%k(B
 
-(1) PostgreSQL$B$r(Bconfigure$B!$%3%s%Q%$%k$7$^$9!%(Bpgbench$B$N%$%s%9%H!<%k$@$1(B
-    $B$,L\E*$G$"$l$P!$(BPostgreSQL$B$N$9$Y$F$r%3%s%Q%$%k$9$kI,MW$O$"$j$^$;$s!%(B
-	PostgreSQL$B%=!<%9$N%H%C%W%G%#%l%/%H%j$G(Bconfigure$B$r$7$?8e!$(B
-    src/interface/libpq $B$G(B "make all" $B$r<B9T$9$l$P=`Hw40N;$G$9!%(B
+PostgreSQL$B$r%3%s%Q%$%k!$%$%s%9%H!<%k$7$?8e(B
 
-(2) $B$3$N%G%#%l%/%H%j$G(B make $B$r<B9T$7$^$9!%$=$&$9$k$H!$(B"pgbench" $B$H$$$&(B
-    $B<B9T%W%m%0%i%`$,$G$-$^$9!%$=$N$^$^<B9T$7$F$b9=$$$^$;$s$7!$(B"make
-    install" $B$r<B9T$7$F(B PostgreSQL $B$NI8=`<B9T%W%m%0%i%`%G%#%l%/%H%j(B
-    ($B%G%U%)%k%H$G$O(B /usr/local/pgsql/bin) $B$K%$%s%9%H!<%k$9$k$3$H$b$G$-(B
-    $B$^$9!%(B
+$ make
+$ make install
+
+$B$H$7$^$9!%(B
 
 $B"#(Bpgbench $B$N;H$$J}(B
 
@@ -103,6 +99,12 @@ pgbench $B$K$O$$$m$$$m$J%*%W%7%g%s$,$"$j$^$9!%(B
 		$B$$>uBV$G$NB,Dj$r9T$$$^$9!%$7$?$,$C$F(BTPC-B$B$N%9%Z%C%/$K(B
 		$B$OE,9g$7$J$/$J$j$^$9$,!$$h$j8=<BE*$JIi2Y$r%F%9%H$9$k$3(B
 		$B$H$,$G$-$^$9!%(B
+
+-f filename	$B%H%i%s%6%/%7%g%s$NFbMF$,5-=R$5$l$?%U%!%$%kL>$r;XDj$7$^(B
+		$B$9!%$3$N%*%W%7%g%s$r;XDj$9$k$H!$%U%!%$%k$K5-=R$5$l$?Fb(B
+		$BMF$N%H%i%s%6%/%7%g%s$r<B9T$7$^$9!%$J$*!$%Y%s%A%^!<%/$N(B
+		$BBP>]$H$J$k%G!<%?%Y!<%9$O$"$i$+$8$a=i4|2=$7$F$*$/I,MW$,(B
+		$B$"$j$^$9!%F~NO%U%)!<%^%C%H$K$D$$$F$O8e=R$7$^$9!%(B
 
 -C		$B$3$N%*%W%7%g%s$r;XDj$9$k$H!$:G=i$K3NN)$7$?%3%M%/%7%g%s(B
 		$B$r;H$$2s$9$N$G$O$J$/!$3F%H%i%s%6%/%7%g%s$4$H$K(BDB$B$X$N@\(B
@@ -176,6 +178,52 @@ pgbench $B$G$O!$0J2<$N%7!<%1%s%9$rA4It40N;$7$F(B1$B%H%i%s%6%/%7%g%s$H?t$($F(
 
 (7) end;
 
+$B"#F~NO%U%!%$%k$N%U%)!<%^%C%H(B
+
+pgbench $B$G$O!$(B-f $B%*%W%7%g%s$r;XDj$7$F%H%i%s%6%/%7%g%s$K4^$^$l$k(B SQL $B%3(B
+$B%^%s%I$NFbMF$r5-=R$7$?%U%!%$%k$rFI$_9~$`$3$H$,$G$-$^$9!%F~NO%U%!%$%k$K(B
+$B$O(B 1 $B9T$K$D$-(B 1 $B$D$N%3%^%s%I$r5-=R$7$^$9!%6u9T$OL5;k$5$l!$Fs=E%O%$%U%s(B
+$B$G;O$^$k9T$O%3%a%s%H$r0UL#$7$^$9!%(B
+
+$B%3%^%s%I$K$O!$(BSQL $B%3%^%s%I$K2C$(!$%P%C%/%9%i%C%7%e$G;O$^$k%a%?%3%^%s%I(B
+$B$r5-=R$G$-$^$9!%%a%?%3%^%s%I$O(B pgbench $B<+?H$K$h$C$F<B9T$5$l$^$9!%%a%?(B
+$B%3%^%s%I$N7A<0$O%P%C%/%9%i%C%7%e!$$=$ND>8e$K%3%^%s%I$NF0;l!$$=$N<!$K0z(B
+$B?t$,B3$-$^$9!%F0;l%3%^%s%I$H0z?t!$$^$?$=$l$>$l$N0z?t$O6uGrJ8;z$K$h$C$F(B
+$B6h@Z$i$l$^$9!%(B
+
+$B8=:_$N$H$3$m!$0J2<$N%a%?%3%^%s%I$,Dj5A$5$l$F$$$^$9!%(B
+
+\setrandom name min max
+	$B:G>.CM(B min $B$H:GBgCM(B max $B$N4V$NCM$r<h$kMp?t$r!$(Bname $BJQ?t$K@_Dj(B
+	$B$7$^$9!%(B
+
+$BJQ?t$KMp?t$r@_Dj$9$k$K$O!$(B\setrandom $B%a%?%3%^%s%I$r;HMQ$7$F0J2<$N$h$&(B
+$B$K5-=R$7$^$9!%(B
+
+\setrandom aid 1 100000
+
+$B$3$l$O!$JQ?t(B aid $B$K(B 1 $B$+$i(B 100000 $B$N4V$NMp?t$r@_Dj$7$^$9!%$^$?!$JQ?t$N(B
+$BCM$r(B SQL $B%3%^%s%I$KKd$a9~$`$K$O!$0J2<$N$h$&$K$=$NL>A0$NA0$K%3%m%s$rIU(B
+$B$1$^$9!%(B
+
+SELECT abalance FROM accounts WHERE aid = :aid
+
+$BNc$($P!$(BTCP-B $B$KN`;w$7$?%Y%s%A%^!<%/$r7WB,$9$k$K$O!$0J2<$N$h$&$K%H%i%s(B
+$B%6%/%7%g%s$NFbMF$r%U%!%$%k$K5-=R$7!$(B-f $B%*%W%7%g%s$K$h$C$F$=$N%U%!%$%k(B
+$B$r;XDj$7$F(B pgbench $B$r<B9T$7$^$9!%(B
+
+\setrandom aid 1 100000
+\setrandom bid 1 1
+\setrandom tid 1 10
+\setrandom delta 1 10000
+BEGIN
+UPDATE accounts SET abalance = abalance + :delta WHERE aid = :aid
+SELECT abalance FROM accounts WHERE aid = :aid
+UPDATE tellers SET tbalance = tbalance + :delta WHERE tid = :tid
+UPDATE branches SET bbalance = bbalance + :delta WHERE bid = :bid
+INSERT INTO history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, 'now')
+END
+
 $B"#:n<T$H%i%$%;%s%9>r7o(B
 
 pgbench $B$O@P0f(B $BC#IW$K$h$C$F=q$+$l$^$7$?!%%i%$%;%s%9>r7o$O(B pgbench.c $B$N(B
@@ -183,6 +231,11 @@ pgbench $B$O@P0f(B $BC#IW$K$h$C$F=q$+$l$^$7$?!%%i%$%;%s%9>r7o$O(B pgbench.c 
 $B$G$-$^$9!%(B
 
 $B"#2~DjMzNr(B
+
+2005/09/29
+	* $B:4F#$5$s$N%Q%C%A$rE,MQ!%(B-f $B%*%W%7%g%s$NDI2C!%(B
+
+[$B$3$N4V$$$m$$$mJQ99$,$"$C$?$h$&$@$,(BREADME$B$O%a%$%s%F%J%s%9$5$l$F$$$J$$(B]
 
 2003/11/26
 	* $BC+ED$5$s$N%Q%C%A$rE,MQ!%(Bpgbench -i$B$N:]$K!$8e$+$i<g%-!<$r:n@.(B
