@@ -119,7 +119,7 @@ levenshtein(PG_FUNCTION_ARGS)
 	str_s0 = str_s;
 
 	/*
-	 * Loop throught the rows, starting at row 1. Row 0 is used for the
+	 * Loop through the rows, starting at row 1. Row 0 is used for the
 	 * initial "upper" row.
 	 */
 	for (j = 1; j < rows; j++)

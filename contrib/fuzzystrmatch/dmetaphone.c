@@ -6,11 +6,11 @@
  * especially they can be a bit different, depending on pronunciation.
  *
  * Information on using Double Metaphone can be found at
- *	 http://www.codeproject.com/useritems/dmetaphone1.asp
+ *	 http://www.codeproject.com/string/dmetaphone1.asp
  * and the original article describing it can be found at
  *	 http://www.cuj.com/documents/s=8038/cuj0006philips/
  *
- * For PostgrSQL we provide 2 functions - one for the primary and one for
+ * For PostgreSQL we provide 2 functions - one for the primary and one for
  * the alternate. That way the functions are pure text->text mappings that
  * are useful in functional indexes. These are 'dmetaphone' for the
  * primary and 'dmetaphone_alt' for the alternate.
@@ -48,8 +48,8 @@
 
 
 /*
- * $Revision: 1.4 $
- * $Id: dmetaphone.c,v 1.4 2004/10/07 15:21:49 momjian Exp $
+ * $Revision: 1.5 $
+ * $Id: dmetaphone.c,v 1.5 2005/09/30 22:38:44 momjian Exp $
  */
 
 
@@ -252,7 +252,7 @@ dmetaphone_alt(PG_FUNCTION_ARGS)
 
 
 
-/* this typedef was orignally in the perl module's .h file */
+/* this typedef was originally in the perl module's .h file */
 
 typedef struct
 {
@@ -1188,7 +1188,7 @@ DoubleMetaphone(char *str, char **codes)
 				/*
 				 * german & anglicisations, e.g. 'smith' match 'schmidt',
 				 * 'snider' match 'schneider' also, -sz- in slavic
-				 * language altho in hungarian it is pronounced 's'
+				 * language although in hungarian it is pronounced 's'
 				 */
 				if (((current == 0)
 					 && StringAt(original, (current + 1), 1,
