@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/scripts/reindexdb.c,v 1.1 2005/07/29 15:13:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/reindexdb.c,v 1.2 2005/09/30 07:58:01 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -332,20 +332,20 @@ help(const char *progname)
 	printf(_("Usage:\n"));
 	printf(_("  %s [OPTION]... [DBNAME]\n"), progname);
 	printf(_("\nOptions:\n"));
-	printf(_("  -a, --all                reindex all databases\n"));
-	printf(_("  -s, --system             reindex system catalogs\n"));
-	printf(_("  -d, --dbname=DBNAME      database to reindex\n"));
-	printf(_("  -t, --table=TABLE        reindex specific table only\n"));
-	printf(_("  -i, --index=INDEX        recreate specific index only\n"));
-	printf(_("  -e, --echo               show the commands sent to the server\n"));
-	printf(_("  -q, --quiet              don't write any output\n"));
-	printf(_("  --help                   show this help, then exit\n"));
-	printf(_("  --version                output version information, then exit\n"));
+	printf(_("  -a, --all                 reindex all databases\n"));
+	printf(_("  -s, --system              reindex system catalogs\n"));
+	printf(_("  -d, --dbname=DBNAME       database to reindex\n"));
+	printf(_("  -t, --table=TABLE         reindex specific table only\n"));
+	printf(_("  -i, --index=INDEX         recreate specific index only\n"));
+	printf(_("  -e, --echo                show the commands sent to the server\n"));
+	printf(_("  -q, --quiet               don't write any output\n"));
+	printf(_("  --help                    show this help, then exit\n"));
+	printf(_("  --version                 output version information, then exit\n"));
 	printf(_("\nConnection options:\n"));
-	printf(_("  -h, --host=HOSTNAME      database server host or socket direcotry\n"));
-	printf(_("  -p, --port=PORT          database server port\n"));
-	printf(_("  -U, --username=NAME      user name to connect as\n"));
-	printf(_("  -W, --password           prompt for password\n"));
+	printf(_("  -h, --host=HOSTNAME       database server host or socket direcotry\n"));
+	printf(_("  -p, --port=PORT           database server port\n"));
+	printf(_("  -U, --username=NAME       user name to connect as\n"));
+	printf(_("  -W, --password            prompt for password\n"));
 	printf(_("\nRead the description of the SQL command REINDEX for details.\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }

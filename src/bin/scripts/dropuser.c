@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/dropuser.c,v 1.15 2005/08/15 02:40:28 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/dropuser.c,v 1.16 2005/09/30 07:58:01 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,9 +143,9 @@ main(int argc, char *argv[])
 static void
 help(const char *progname)
 {
-	printf(_("%s removes a PostgreSQL user.\n\n"), progname);
+	printf(_("%s removes a PostgreSQL role.\n\n"), progname);
 	printf(_("Usage:\n"));
-	printf(_("  %s [OPTION]... [USERNAME]\n"), progname);
+	printf(_("  %s [OPTION]... [ROLENAME]\n"), progname);
 	printf(_("\nOptions:\n"));
 	printf(_("  -e, --echo                show the commands being sent to the server\n"));
 	printf(_("  -i, --interactive         prompt before deleting anything\n"));

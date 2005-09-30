@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.19 2005/09/30 07:13:54 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.20 2005/09/30 07:58:01 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -302,7 +302,7 @@ help(const char *progname)
 {
 	printf(_("%s creates a new PostgreSQL role.\n\n"), progname);
 	printf(_("Usage:\n"));
-	printf(_("  %s [OPTION]... [USERNAME]\n"), progname);
+	printf(_("  %s [OPTION]... [ROLENAME]\n"), progname);
 	printf(_("\nOptions:\n"));
 	printf(_("  -s, --superuser           role will be superuser\n"));
 	printf(_("  -S, --no-superuser        role will not be superuser\n"));
@@ -312,9 +312,9 @@ help(const char *progname)
 	printf(_("  -R, --no-createrole       role cannot create roles\n"));
 	printf(_("  -l, --login               role can login (default)\n"));
 	printf(_("  -L, --no-login            role cannot login\n"));
-	printf(_("  -i, --inherit             role inherits permissions of roles\n"));
-	printf(_("                            it is a member of (default)\n"));
-	printf(_("  -I, --no-inherit          role does not inherit permissions\n"));
+	printf(_("  -i, --inherit             role inherits privileges of roles it is a\n"
+                 "                            member of (default)\n"));
+	printf(_("  -I, --no-inherit          role does not inherit privileges\n"));
 	printf(_("  -c, --connection-limit=N  connection limit for role (default: no limit)\n"));
 	printf(_("  -P, --pwprompt            assign a password to new role\n"));
 	printf(_("  -E, --encrypted           encrypt stored password\n"));
@@ -328,7 +328,7 @@ help(const char *progname)
 	printf(_("  -p, --port=PORT           database server port\n"));
 	printf(_("  -U, --username=USERNAME   user name to connect as (not the one to create)\n"));
 	printf(_("  -W, --password            prompt for password to connect\n"));
-	printf(_("\nIf one of -s, -S, -d, -D, -r, -R and USERNAME is not specified,\n"
-			 "you will be prompted interactively.\n"));
+	printf(_("\nIf one of -s, -S, -d, -D, -r, -R and ROLENAME is not specified, you will\n"
+		 "be prompted interactively.\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
