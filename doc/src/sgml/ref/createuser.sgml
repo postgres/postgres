@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/createuser.sgml,v 1.42 2005/08/14 20:16:02 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createuser.sgml,v 1.43 2005/09/30 07:13:53 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -186,7 +186,7 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-c <replaceable class="parameter">number</replaceable></></term>
-      <term><option>--conn-limit <replaceable class="parameter">number</replaceable></></term>
+      <term><option>--connection-limit <replaceable class="parameter">number</replaceable></></term>
       <listitem>
        <para>
         Set a maximum number of connections for the new user.

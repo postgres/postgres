@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.18 2005/08/14 20:16:03 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.19 2005/09/30 07:13:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ main(int argc, char *argv[])
 		/* adduser is obsolete, undocumented spelling of superuser */
 		{"adduser", no_argument, NULL, 'a'},
 		{"no-adduser", no_argument, NULL, 'A'},
-		{"conn-limit", required_argument, NULL, 'c'},
+		{"connection-limit", required_argument, NULL, 'c'},
 		{"pwprompt", no_argument, NULL, 'P'},
 		{"encrypted", no_argument, NULL, 'E'},
 		{"unencrypted", no_argument, NULL, 'N'},
@@ -315,7 +315,7 @@ help(const char *progname)
 	printf(_("  -i, --inherit             role inherits permissions of roles\n"));
 	printf(_("                            it is a member of (default)\n"));
 	printf(_("  -I, --no-inherit          role does not inherit permissions\n"));
-	printf(_("  -c, --conn-limit=N        max connections for role (default: no limit)\n"));
+	printf(_("  -c, --connection-limit=N  connection limit for role (default: no limit)\n"));
 	printf(_("  -P, --pwprompt            assign a password to new role\n"));
 	printf(_("  -E, --encrypted           encrypt stored password\n"));
 	printf(_("  -N, --unencrypted         do not encrypt stored password\n"));
