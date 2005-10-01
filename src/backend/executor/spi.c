@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.141 2005/06/09 21:25:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.142 2005/10/01 18:43:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,6 +104,7 @@ SPI_connect(void)
 
 	_SPI_current = &(_SPI_stack[_SPI_connected]);
 	_SPI_current->processed = 0;
+	_SPI_current->lastoid = InvalidOid;
 	_SPI_current->tuptable = NULL;
 	_SPI_current->procCxt = NULL; /* in case we fail to create 'em */
 	_SPI_current->execCxt = NULL;
@@ -859,7 +860,7 @@ SPI_cursor_open(const char *name, void *plan,
 			break;
 	}
 
-	/* Reset SPI result */
+	/* Reset SPI result (note we deliberately don't touch lastoid) */
 	SPI_processed = 0;
 	SPI_tuptable = NULL;
 	_SPI_current->processed = 0;
@@ -1313,6 +1314,9 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 				  bool read_only, long tcount)
 {
 	volatile int res = 0;
+	volatile uint32 my_processed = 0;
+	volatile Oid my_lastoid = InvalidOid;
+	SPITupleTable * volatile my_tuptable = NULL;
 	Snapshot	saveActiveSnapshot;
 
 	/* Be sure to restore ActiveSnapshot on error exit */
@@ -1347,12 +1351,6 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 		else
 			paramLI = NULL;
 
-		/* Reset state (only needed in case string is empty) */
-		SPI_processed = 0;
-		SPI_lastoid = InvalidOid;
-		SPI_tuptable = NULL;
-		_SPI_current->tuptable = NULL;
-
 		/*
 		 * Setup error traceback support for ereport()
 		 */
@@ -1366,13 +1364,6 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 			List	   *query_list = lfirst(query_list_list_item);
 			ListCell   *query_list_item;
 
-			/* Reset state for each original parsetree */
-			/* (at most one of its querytrees will be marked canSetTag) */
-			SPI_processed = 0;
-			SPI_lastoid = InvalidOid;
-			SPI_tuptable = NULL;
-			_SPI_current->tuptable = NULL;
-
 			foreach(query_list_item, query_list)
 			{
 				Query	   *queryTree = (Query *) lfirst(query_list_item);
@@ -1382,6 +1373,10 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 
 				planTree = lfirst(plan_list_item);
 				plan_list_item = lnext(plan_list_item);
+
+				_SPI_current->processed = 0;
+				_SPI_current->lastoid = InvalidOid;
+				_SPI_current->tuptable = NULL;
 
 				if (queryTree->commandType == CMD_UTILITY)
 				{
@@ -1467,6 +1462,23 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 				}
 				FreeSnapshot(ActiveSnapshot);
 				ActiveSnapshot = NULL;
+				/*
+				 * The last canSetTag query sets the auxiliary values returned
+				 * to the caller.  Be careful to free any tuptables not
+				 * returned, to avoid intratransaction memory leak.
+				 */
+				if (queryTree->canSetTag)
+				{
+					my_processed = _SPI_current->processed;
+					my_lastoid = _SPI_current->lastoid;
+					SPI_freetuptable(my_tuptable);
+					my_tuptable = _SPI_current->tuptable;
+				}
+				else
+				{
+					SPI_freetuptable(_SPI_current->tuptable);
+					_SPI_current->tuptable = NULL;
+				}
 				/* we know that the receiver doesn't need a destroy call */
 				if (res < 0)
 					goto fail;
@@ -1490,6 +1502,11 @@ fail:
 
 	ActiveSnapshot = saveActiveSnapshot;
 
+	/* Save results for caller */
+	SPI_processed = my_processed;
+	SPI_lastoid = my_lastoid;
+	SPI_tuptable = my_tuptable;
+
 	return res;
 }
 
@@ -1497,9 +1514,7 @@ static int
 _SPI_pquery(QueryDesc *queryDesc, long tcount)
 {
 	int			operation = queryDesc->operation;
-	CommandDest	origDest = queryDesc->dest->mydest;
 	int			res;
-	Oid			save_lastoid;
 
 	switch (operation)
 	{
@@ -1509,6 +1524,11 @@ _SPI_pquery(QueryDesc *queryDesc, long tcount)
 			{
 				res = SPI_OK_SELINTO;
 				queryDesc->dest = None_Receiver;	/* don't output results */
+			}
+			else if (queryDesc->dest->mydest != SPI)
+			{
+				/* Don't return SPI_OK_SELECT if we're discarding result */
+				res = SPI_OK_UTILITY;
 			}
 			break;
 		case CMD_INSERT:
@@ -1536,7 +1556,7 @@ _SPI_pquery(QueryDesc *queryDesc, long tcount)
 	ExecutorRun(queryDesc, ForwardScanDirection, tcount);
 
 	_SPI_current->processed = queryDesc->estate->es_processed;
-	save_lastoid = queryDesc->estate->es_lastoid;
+	_SPI_current->lastoid = queryDesc->estate->es_lastoid;
 
 	if (operation == CMD_SELECT && queryDesc->dest->mydest == SPI)
 	{
@@ -1548,19 +1568,6 @@ _SPI_pquery(QueryDesc *queryDesc, long tcount)
 	AfterTriggerEndQuery(queryDesc->estate);
 
 	ExecutorEnd(queryDesc);
-
-	/* Test origDest here so that SPI_processed gets set in SELINTO case */
-	if (origDest == SPI)
-	{
-		SPI_processed = _SPI_current->processed;
-		SPI_lastoid = save_lastoid;
-		SPI_tuptable = _SPI_current->tuptable;
-	}
-	else if (res == SPI_OK_SELECT)
-	{
-		/* Don't return SPI_OK_SELECT if we discarded the result */
-		res = SPI_OK_UTILITY;
-	}
 
 #ifdef SPI_EXECUTOR_STATS
 	if (ShowExecutorStats)
@@ -1615,7 +1622,7 @@ _SPI_cursor_operation(Portal portal, bool forward, long count,
 	if (_SPI_begin_call(true) < 0)
 		elog(ERROR, "SPI cursor operation called while not connected");
 
-	/* Reset the SPI result */
+	/* Reset the SPI result (note we deliberately don't touch lastoid) */
 	SPI_processed = 0;
 	SPI_tuptable = NULL;
 	_SPI_current->processed = 0;

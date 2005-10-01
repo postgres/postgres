@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/spi_priv.h,v 1.22 2004/12/31 22:03:29 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/executor/spi_priv.h,v 1.23 2005/10/01 18:43:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,8 +18,11 @@
 
 typedef struct
 {
+	/* current results */
 	uint32		processed;		/* by Executor */
+	Oid			lastoid;
 	SPITupleTable *tuptable;
+
 	MemoryContext procCxt;		/* procedure context */
 	MemoryContext execCxt;		/* executor context */
 	MemoryContext savedcxt;
