@@ -19,18 +19,82 @@ SELECT * FROM serialTest;
  force | 100
 (3 rows)
 
- 
+-- basic sequence operations using both text and oid references
 CREATE SEQUENCE sequence_test;
  
-BEGIN;
-SELECT nextval('sequence_test');
+SELECT nextval('sequence_test'::text);
  nextval 
 ---------
        1
 (1 row)
 
+SELECT nextval('sequence_test'::regclass);
+ nextval 
+---------
+       2
+(1 row)
+
+SELECT currval('sequence_test'::text);
+ currval 
+---------
+       2
+(1 row)
+
+SELECT currval('sequence_test'::regclass);
+ currval 
+---------
+       2
+(1 row)
+
+SELECT setval('sequence_test'::text, 32);
+ setval 
+--------
+     32
+(1 row)
+
+SELECT nextval('sequence_test'::regclass);
+ nextval 
+---------
+      33
+(1 row)
+
+SELECT setval('sequence_test'::text, 99, false);
+ setval 
+--------
+     99
+(1 row)
+
+SELECT nextval('sequence_test'::regclass);
+ nextval 
+---------
+      99
+(1 row)
+
+SELECT setval('sequence_test'::regclass, 32);
+ setval 
+--------
+     32
+(1 row)
+
+SELECT nextval('sequence_test'::text);
+ nextval 
+---------
+      33
+(1 row)
+
+SELECT setval('sequence_test'::regclass, 99, false);
+ setval 
+--------
+     99
+(1 row)
+
+SELECT nextval('sequence_test'::text);
+ nextval 
+---------
+      99
+(1 row)
+
 DROP SEQUENCE sequence_test;
-END;
 -- renaming sequences
 CREATE SEQUENCE foo_seq;
 ALTER TABLE foo_seq RENAME TO foo_seq_new;
@@ -41,6 +105,45 @@ SELECT * FROM foo_seq_new;
 (1 row)
 
 DROP SEQUENCE foo_seq_new;
+-- renaming serial sequences
+ALTER TABLE serialtest_f2_seq RENAME TO serialtest_f2_foo;
+INSERT INTO serialTest VALUES ('more');
+SELECT * FROM serialTest;
+  f1   | f2  
+-------+-----
+ foo   |   1
+ bar   |   2
+ force | 100
+ more  |   3
+(4 rows)
+
+--
+-- Check dependencies of serial and ordinary sequences
+--
+CREATE TEMP SEQUENCE myseq2;
+CREATE TEMP SEQUENCE myseq3;
+CREATE TEMP TABLE t1 (
+  f1 serial,
+  f2 int DEFAULT nextval('myseq2'),
+  f3 int DEFAULT nextval('myseq3'::text)
+);
+NOTICE:  CREATE TABLE will create implicit sequence "t1_f1_seq" for serial column "t1.f1"
+-- Both drops should fail, but with different error messages:
+DROP SEQUENCE t1_f1_seq;
+ERROR:  cannot drop sequence t1_f1_seq because table t1 column f1 requires it
+HINT:  You may drop table t1 column f1 instead.
+DROP SEQUENCE myseq2;
+NOTICE:  default for table t1 column f2 depends on sequence myseq2
+ERROR:  cannot drop sequence myseq2 because other objects depend on it
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+-- This however will work:
+DROP SEQUENCE myseq3;
+DROP TABLE t1;
+-- Fails because no longer existent:
+DROP SEQUENCE t1_f1_seq;
+ERROR:  sequence "t1_f1_seq" does not exist
+-- Now OK:
+DROP SEQUENCE myseq2;
 --
 -- Alter sequence
 --

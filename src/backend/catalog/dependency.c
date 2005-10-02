@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.45 2005/07/07 20:39:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.46 2005/10/02 23:50:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1027,6 +1027,59 @@ find_expr_references_walker(Node *node,
 										context);
 			list_free(context->rtables);
 			context->rtables = save_rtables;
+		}
+		return false;
+	}
+	if (IsA(node, Const))
+	{
+		Const	   *con = (Const *) node;
+		Oid			objoid;
+
+		/*
+		 * If it's a regclass or similar literal referring to an existing
+		 * object, add a reference to that object.  (Currently, only the
+		 * regclass case has any likely use, but we may as well handle all
+		 * the OID-alias datatypes consistently.)
+		 */
+		if (!con->constisnull)
+		{
+			switch (con->consttype)
+			{
+				case REGPROCOID:
+				case REGPROCEDUREOID:
+					objoid = DatumGetObjectId(con->constvalue);
+					if (SearchSysCacheExists(PROCOID,
+											 ObjectIdGetDatum(objoid),
+											 0, 0, 0))
+						add_object_address(OCLASS_PROC, objoid, 0,
+										   &context->addrs);
+					break;
+				case REGOPEROID:
+				case REGOPERATOROID:
+					objoid = DatumGetObjectId(con->constvalue);
+					if (SearchSysCacheExists(OPEROID,
+											 ObjectIdGetDatum(objoid),
+											 0, 0, 0))
+						add_object_address(OCLASS_OPERATOR, objoid, 0,
+										   &context->addrs);
+					break;
+				case REGCLASSOID:
+					objoid = DatumGetObjectId(con->constvalue);
+					if (SearchSysCacheExists(RELOID,
+											 ObjectIdGetDatum(objoid),
+											 0, 0, 0))
+						add_object_address(OCLASS_CLASS, objoid, 0,
+										   &context->addrs);
+					break;
+				case REGTYPEOID:
+					objoid = DatumGetObjectId(con->constvalue);
+					if (SearchSysCacheExists(TYPEOID,
+											 ObjectIdGetDatum(objoid),
+											 0, 0, 0))
+						add_object_address(OCLASS_TYPE, objoid, 0,
+										   &context->addrs);
+					break;
+			}
 		}
 		return false;
 	}

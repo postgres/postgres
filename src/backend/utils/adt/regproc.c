@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.94 2005/04/14 20:03:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.95 2005/10/02 23:50:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1086,6 +1086,23 @@ regtypesend(PG_FUNCTION_ARGS)
 {
 	/* Exactly the same as oidsend, so share code */
 	return oidsend(fcinfo);
+}
+
+
+/*
+ * text_regclass: convert text to regclass
+ */
+Datum
+text_regclass(PG_FUNCTION_ARGS)
+{
+	text	   *relname = PG_GETARG_TEXT_P(0);
+	Oid			result;
+	RangeVar   *rv;
+
+	rv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
+	result = RangeVarGetRelid(rv, false);
+
+	PG_RETURN_OID(result);
 }
 
 

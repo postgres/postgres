@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.159 2005/09/13 15:24:56 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.160 2005/10/02 23:50:06 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -3111,6 +3111,18 @@ SELECT * FROM pg_attribute
     <type>regoperator</> is more appropriate.  For <type>regoperator</>,
     unary operators are identified by writing <literal>NONE</> for the unused
     operand.
+   </para>
+
+   <para>
+    An additional property of the OID alias types is that if a
+    constant of one of these types appears in a stored expression
+    (such as a column default expression or view), it creates a dependency
+    on the referenced object.  For example, if a column has a default
+    expression <literal>nextval('my_seq'::regclass)</>,
+    <productname>PostgreSQL</productname>
+    understands that the default expression depends on the sequence
+    <literal>my_seq</>; the system will not let the sequence be dropped
+    without first removing the default expression.
    </para>
 
    <para>

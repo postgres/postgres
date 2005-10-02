@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2003-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.30 2005/07/26 00:04:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.31 2005/10/02 23:50:07 tgl Exp $
  */
 
 /*
@@ -357,7 +357,8 @@ CREATE VIEW columns AS
            CAST(a.attname AS sql_identifier) AS column_name,
            CAST(a.attnum AS cardinal_number) AS ordinal_position,
            CAST(
-             CASE WHEN pg_has_role(c.relowner, 'MEMBER') THEN ad.adsrc ELSE null END
+             CASE WHEN pg_has_role(c.relowner, 'MEMBER') THEN pg_get_expr(ad.adbin, ad.adrelid)
+                  ELSE null END
              AS character_data)
              AS column_default,
            CAST(CASE WHEN a.attnotnull OR (t.typtype = 'd' AND t.typnotnull) THEN 'NO' ELSE 'YES' END

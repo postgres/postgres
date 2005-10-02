@@ -131,7 +131,7 @@ create domain ddef2 oid DEFAULT '12';
 -- Type mixing, function returns int8
 create domain ddef3 text DEFAULT 5;
 create sequence ddef4_seq;
-create domain ddef4 int4 DEFAULT nextval(cast('ddef4_seq' as text));
+create domain ddef4 int4 DEFAULT nextval('ddef4_seq');
 create domain ddef5 numeric(8,2) NOT NULL DEFAULT '12.12';
 
 create table defaulttest
@@ -155,7 +155,6 @@ COPY defaulttest(col5) FROM stdin;
 
 select * from defaulttest;
 
-drop sequence ddef4_seq;
 drop table defaulttest cascade;
 
 -- Test ALTER DOMAIN .. NOT NULL
@@ -244,6 +243,7 @@ drop domain ddef2 restrict;
 drop domain ddef3 restrict;
 drop domain ddef4 restrict;
 drop domain ddef5 restrict;
+drop sequence ddef4_seq;
 
 -- Make sure that constraints of newly-added domain columns are
 -- enforced correctly, even if there's no default value for the new

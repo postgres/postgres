@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.286 2005/09/16 05:35:39 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.287 2005/10/02 23:50:06 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -6875,12 +6875,12 @@ SELECT TIMESTAMP 'now';  -- incorrect for use with DEFAULT
 
      <tbody>
       <row>
-        <entry><literal><function>nextval</function>(<type>text</type>)</literal></entry>
+        <entry><literal><function>nextval</function>(<type>regclass</type>)</literal></entry>
         <entry><type>bigint</type></entry>
         <entry>Advance sequence and return new value</entry>
       </row>
       <row>
-        <entry><literal><function>currval</function>(<type>text</type>)</literal></entry>
+        <entry><literal><function>currval</function>(<type>regclass</type>)</literal></entry>
         <entry><type>bigint</type></entry>
         <entry>Return value most recently obtained with
         <function>nextval</function> for specified sequence</entry>
@@ -6891,12 +6891,12 @@ SELECT TIMESTAMP 'now';  -- incorrect for use with DEFAULT
         <entry>Return value most recently obtained with <function>nextval</function></entry>
       </row>
       <row>
-        <entry><literal><function>setval</function>(<type>text</type>, <type>bigint</type>)</literal></entry>
+        <entry><literal><function>setval</function>(<type>regclass</type>, <type>bigint</type>)</literal></entry>
         <entry><type>bigint</type></entry>
         <entry>Set sequence's current value</entry>
       </row>
       <row>
-        <entry><literal><function>setval</function>(<type>text</type>, <type>bigint</type>, <type>boolean</type>)</literal></entry>
+        <entry><literal><function>setval</function>(<type>regclass</type>, <type>bigint</type>, <type>boolean</type>)</literal></entry>
         <entry><type>bigint</type></entry>
         <entry>Set sequence's current value and <literal>is_called</literal> flag</entry>
       </row>
@@ -6905,11 +6905,15 @@ SELECT TIMESTAMP 'now';  -- incorrect for use with DEFAULT
    </table>
 
   <para>
-   For largely historical reasons, the sequence to be operated on by a
-   sequence-function call is specified by a text-string argument.  To
+   The sequence to be operated on by a sequence-function call is specified by
+   a <type>regclass</> argument, which is just the OID of the sequence in the
+   <structname>pg_class</> system catalog.  You do not have to look up the
+   OID by hand, however, since the <type>regclass</> datatype's input
+   converter will do the work for you.  Just write the sequence name enclosed
+   in single quotes, so that it looks like a literal constant.  To
    achieve some compatibility with the handling of ordinary
-   <acronym>SQL</acronym> names, the sequence functions convert their
-   argument to lowercase unless the string is double-quoted.  Thus
+   <acronym>SQL</acronym> names, the string will be converted to lowercase
+   unless it contains double quotes around the sequence name.  Thus
 <programlisting>
 nextval('foo')      <lineannotation>operates on sequence <literal>foo</literal></>
 nextval('FOO')      <lineannotation>operates on sequence <literal>foo</literal></>
@@ -6921,9 +6925,45 @@ nextval('myschema.foo')     <lineannotation>operates on <literal>myschema.foo</l
 nextval('"myschema".foo')   <lineannotation>same as above</lineannotation>
 nextval('foo')              <lineannotation>searches search path for <literal>foo</literal></>
 </programlisting>
-   Of course, the text argument can be the result of an expression,
-   not only a simple literal, which is occasionally useful.
+   See <xref linkend="datatype-oid"> for more information about
+   <type>regclass</>.
   </para>
+
+  <note>
+   <para>
+    Before <productname>PostgreSQL</productname> 8.1, the arguments of the
+    sequence functions were of type <type>text</>, not <type>regclass</>, and
+    the above-described conversion from a text string to an OID value would
+    happen at runtime during each call.  For backwards compatibility, this
+    facility still exists, but internally it is now handled as an implicit
+    coercion from <type>text</> to <type>regclass</> before the function is
+    invoked.
+   </para>
+
+   <para>
+    When you write the argument of a sequence function as an unadorned
+    literal string, it becomes a constant of type <type>regclass</>.
+    Since this is really just an OID, it will track the originally
+    identified sequence despite later renaming, schema reassignment,
+    etc.  This <quote>early binding</> behavior is usually desirable for
+    sequence references in column defaults and views.  But sometimes you will
+    want <quote>late binding</> where the sequence reference is resolved
+    at runtime.  To get late-binding behavior, force the constant to be
+    stored as a <type>text</> constant instead of <type>regclass</>:
+<programlisting>
+nextval('foo'::text)      <lineannotation><literal>foo</literal> is looked up at runtime</>
+</programlisting>
+    Note that late binding was the only behavior supported in
+    <productname>PostgreSQL</productname> releases before 8.1, so you
+    may need to do this to preserve the semantics of old applications.
+   </para>
+
+   <para>
+    Of course, the argument of a sequence function can be an expression
+    as well as a constant.  If it is a text expression then the implicit
+    coercion will result in a run-time lookup.
+   </para>
+  </note>
 
   <para>
    The available sequence functions are:
@@ -7001,6 +7041,14 @@ SELECT setval('foo', 42, false);    <lineannotation>Next <function>nextval</> wi
     </variablelist>
   </para>
 
+  <para>
+   If a sequence object has been created with default parameters,
+   <function>nextval</function> calls on it will return successive values
+   beginning with 1.  Other behaviors can be obtained by using
+   special parameters in the <xref linkend="sql-createsequence" endterm="sql-createsequence-title"> command;
+   see its command reference page for more information.
+  </para>
+
   <important>
    <para>
     To avoid blocking of concurrent transactions that obtain numbers from the
@@ -7012,14 +7060,6 @@ SELECT setval('foo', 42, false);    <lineannotation>Next <function>nextval</> wi
     rolled back, either.
    </para>
   </important>
-
-  <para>
-   If a sequence object has been created with default parameters,
-   <function>nextval</function> calls on it will return successive values
-   beginning with 1.  Other behaviors can be obtained by using
-   special parameters in the <xref linkend="sql-createsequence" endterm="sql-createsequence-title"> command;
-   see its command reference page for more information.
-  </para>
 
  </sect1>
 

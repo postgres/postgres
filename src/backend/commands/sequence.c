@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.123 2005/06/07 07:08:34 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.124 2005/10/02 23:50:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,12 +75,12 @@ static SeqTable seqtab = NULL;	/* Head of list of SeqTable items */
  */
 static SeqTableData *last_used_seq = NULL;
 
+static int64 nextval_internal(Oid relid);
 static void acquire_share_lock(Relation seqrel, SeqTable seq);
-static void init_sequence(RangeVar *relation,
-			  SeqTable *p_elm, Relation *p_rel);
+static void init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel);
 static Form_pg_sequence read_info(SeqTable elm, Relation rel, Buffer *buf);
 static void init_params(List *options, Form_pg_sequence new, bool isInit);
-static void do_setval(RangeVar *sequence, int64 next, bool iscalled);
+static void do_setval(Oid relid, int64 next, bool iscalled);
 
 /*
  * DefineSequence
@@ -302,6 +302,7 @@ DefineSequence(CreateSeqStmt *seq)
 void
 AlterSequence(AlterSeqStmt *stmt)
 {
+	Oid			relid;
 	SeqTable	elm;
 	Relation	seqrel;
 	Buffer		buf;
@@ -310,7 +311,8 @@ AlterSequence(AlterSeqStmt *stmt)
 	FormData_pg_sequence new;
 
 	/* open and AccessShareLock sequence */
-	init_sequence(stmt->sequence, &elm, &seqrel);
+	relid = RangeVarGetRelid(stmt->sequence, false);
+	init_sequence(relid, &elm, &seqrel);
 
 	/* allow ALTER to sequence owner only */
 	if (!pg_class_ownercheck(elm->relid, GetUserId()))
@@ -372,11 +374,35 @@ AlterSequence(AlterSeqStmt *stmt)
 }
 
 
+/*
+ * Note: nextval with a text argument is no longer exported as a pg_proc
+ * entry, but we keep it around to ease porting of C code that may have
+ * called the function directly.
+ */
 Datum
 nextval(PG_FUNCTION_ARGS)
 {
 	text	   *seqin = PG_GETARG_TEXT_P(0);
 	RangeVar   *sequence;
+	Oid			relid;
+
+	sequence = makeRangeVarFromNameList(textToQualifiedNameList(seqin));
+	relid = RangeVarGetRelid(sequence, false);
+
+	PG_RETURN_INT64(nextval_internal(relid));
+}
+
+Datum
+nextval_oid(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+
+	PG_RETURN_INT64(nextval_internal(relid));
+}
+
+static int64
+nextval_internal(Oid relid)
+{
 	SeqTable	elm;
 	Relation	seqrel;
 	Buffer		buf;
@@ -394,23 +420,21 @@ nextval(PG_FUNCTION_ARGS)
 				rescnt = 0;
 	bool		logit = false;
 
-	sequence = makeRangeVarFromNameList(textToQualifiedNameList(seqin));
-
 	/* open and AccessShareLock sequence */
-	init_sequence(sequence, &elm, &seqrel);
+	init_sequence(relid, &elm, &seqrel);
 
 	if (pg_class_aclcheck(elm->relid, GetUserId(), ACL_UPDATE) != ACLCHECK_OK)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied for sequence %s",
-						sequence->relname)));
+						RelationGetRelationName(seqrel))));
 
 	if (elm->last != elm->cached)		/* some numbers were cached */
 	{
 		last_used_seq = elm;
 		elm->last += elm->increment;
 		relation_close(seqrel, NoLock);
-		PG_RETURN_INT64(elm->last);
+		return elm->last;
 	}
 
 	/* lock page' buffer and read tuple */
@@ -481,7 +505,7 @@ nextval(PG_FUNCTION_ARGS)
 					ereport(ERROR,
 					  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					   errmsg("nextval: reached maximum value of sequence \"%s\" (%s)",
-							  sequence->relname, buf)));
+							  RelationGetRelationName(seqrel), buf)));
 				}
 				next = minv;
 			}
@@ -504,7 +528,7 @@ nextval(PG_FUNCTION_ARGS)
 					ereport(ERROR,
 					  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					   errmsg("nextval: reached minimum value of sequence \"%s\" (%s)",
-							  sequence->relname, buf)));
+							  RelationGetRelationName(seqrel), buf)));
 				}
 				next = maxv;
 			}
@@ -576,34 +600,31 @@ nextval(PG_FUNCTION_ARGS)
 
 	relation_close(seqrel, NoLock);
 
-	PG_RETURN_INT64(result);
+	return result;
 }
 
 Datum
-currval(PG_FUNCTION_ARGS)
+currval_oid(PG_FUNCTION_ARGS)
 {
-	text	   *seqin = PG_GETARG_TEXT_P(0);
-	RangeVar   *sequence;
+	Oid			relid = PG_GETARG_OID(0);
+	int64		result;
 	SeqTable	elm;
 	Relation	seqrel;
-	int64		result;
-
-	sequence = makeRangeVarFromNameList(textToQualifiedNameList(seqin));
 
 	/* open and AccessShareLock sequence */
-	init_sequence(sequence, &elm, &seqrel);
+	init_sequence(relid, &elm, &seqrel);
 
 	if (pg_class_aclcheck(elm->relid, GetUserId(), ACL_SELECT) != ACLCHECK_OK)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied for sequence %s",
-						sequence->relname)));
+						RelationGetRelationName(seqrel))));
 
 	if (elm->increment == 0)	/* nextval/read_info were not called */
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("currval of sequence \"%s\" is not yet defined in this session",
-						sequence->relname)));
+						RelationGetRelationName(seqrel))));
 
 	result = elm->last;
 
@@ -645,6 +666,7 @@ lastval(PG_FUNCTION_ARGS)
 
 	result = last_used_seq->last;
 	relation_close(seqrel, NoLock);
+
 	PG_RETURN_INT64(result);
 }
 
@@ -662,7 +684,7 @@ lastval(PG_FUNCTION_ARGS)
  * sequence.
  */
 static void
-do_setval(RangeVar *sequence, int64 next, bool iscalled)
+do_setval(Oid relid, int64 next, bool iscalled)
 {
 	SeqTable	elm;
 	Relation	seqrel;
@@ -670,13 +692,13 @@ do_setval(RangeVar *sequence, int64 next, bool iscalled)
 	Form_pg_sequence seq;
 
 	/* open and AccessShareLock sequence */
-	init_sequence(sequence, &elm, &seqrel);
+	init_sequence(relid, &elm, &seqrel);
 
 	if (pg_class_aclcheck(elm->relid, GetUserId(), ACL_UPDATE) != ACLCHECK_OK)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied for sequence %s",
-						sequence->relname)));
+						RelationGetRelationName(seqrel))));
 
 	/* lock page' buffer and read tuple */
 	seq = read_info(elm, seqrel, &buf);
@@ -693,7 +715,8 @@ do_setval(RangeVar *sequence, int64 next, bool iscalled)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("setval: value %s is out of bounds for sequence \"%s\" (%s..%s)",
-						bufv, sequence->relname, bufm, bufx)));
+						bufv, RelationGetRelationName(seqrel),
+						bufm, bufx)));
 	}
 
 	/* save info in local cache */
@@ -753,15 +776,12 @@ do_setval(RangeVar *sequence, int64 next, bool iscalled)
  * See do_setval for discussion.
  */
 Datum
-setval(PG_FUNCTION_ARGS)
+setval_oid(PG_FUNCTION_ARGS)
 {
-	text	   *seqin = PG_GETARG_TEXT_P(0);
+	Oid			relid = PG_GETARG_OID(0);
 	int64		next = PG_GETARG_INT64(1);
-	RangeVar   *sequence;
 
-	sequence = makeRangeVarFromNameList(textToQualifiedNameList(seqin));
-
-	do_setval(sequence, next, true);
+	do_setval(relid, next, true);
 
 	PG_RETURN_INT64(next);
 }
@@ -771,16 +791,13 @@ setval(PG_FUNCTION_ARGS)
  * See do_setval for discussion.
  */
 Datum
-setval_and_iscalled(PG_FUNCTION_ARGS)
+setval3_oid(PG_FUNCTION_ARGS)
 {
-	text	   *seqin = PG_GETARG_TEXT_P(0);
+	Oid			relid = PG_GETARG_OID(0);
 	int64		next = PG_GETARG_INT64(1);
 	bool		iscalled = PG_GETARG_BOOL(2);
-	RangeVar   *sequence;
 
-	sequence = makeRangeVarFromNameList(textToQualifiedNameList(seqin));
-
-	do_setval(sequence, next, iscalled);
+	do_setval(relid, next, iscalled);
 
 	PG_RETURN_INT64(next);
 }
@@ -822,15 +839,14 @@ acquire_share_lock(Relation seqrel, SeqTable seq)
 }
 
 /*
- * Given a relation name, open and lock the sequence.  p_elm and p_rel are
+ * Given a relation OID, open and lock the sequence.  p_elm and p_rel are
  * output parameters.
  */
 static void
-init_sequence(RangeVar *relation, SeqTable *p_elm, Relation *p_rel)
+init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel)
 {
-	Oid			relid = RangeVarGetRelid(relation, false);
-	volatile SeqTable elm;
 	Relation	seqrel;
+	volatile SeqTable elm;
 
 	/*
 	 * Open the sequence relation.
@@ -841,7 +857,7 @@ init_sequence(RangeVar *relation, SeqTable *p_elm, Relation *p_rel)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is not a sequence",
-						relation->relname)));
+						RelationGetRelationName(seqrel))));
 
 	/* Look to see if we already have a seqtable entry for relation */
 	for (elm = seqtab; elm != NULL; elm = elm->next)

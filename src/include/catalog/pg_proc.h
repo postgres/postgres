@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.385 2005/09/16 05:35:40 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.386 2005/10/02 23:50:11 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2073,14 +2073,14 @@ DATA(insert OID = 1572 (  notlike			PGNSP PGUID 12 f f t f i 2 16 "19 25" _null_
 DESCR("does not match LIKE expression");
 
 
-/* SEQUENCEs nextval & currval functions */
-DATA(insert OID = 1574 (  nextval			PGNSP PGUID 12 f f t f v 1 20 "25" _null_ _null_ _null_	nextval - _null_ ));
+/* SEQUENCE functions */
+DATA(insert OID = 1574 (  nextval			PGNSP PGUID 12 f f t f v 1 20 "2205" _null_ _null_ _null_	nextval_oid - _null_ ));
 DESCR("sequence next value");
-DATA(insert OID = 1575 (  currval			PGNSP PGUID 12 f f t f v 1 20 "25" _null_ _null_ _null_	currval - _null_ ));
+DATA(insert OID = 1575 (  currval			PGNSP PGUID 12 f f t f v 1 20 "2205" _null_ _null_ _null_	currval_oid - _null_ ));
 DESCR("sequence current value");
-DATA(insert OID = 1576 (  setval			PGNSP PGUID 12 f f t f v 2 20 "25 20" _null_ _null_ _null_  setval - _null_ ));
+DATA(insert OID = 1576 (  setval			PGNSP PGUID 12 f f t f v 2 20 "2205 20" _null_ _null_ _null_  setval_oid - _null_ ));
 DESCR("set sequence value");
-DATA(insert OID = 1765 (  setval			PGNSP PGUID 12 f f t f v 3 20 "25 20 16" _null_ _null_ _null_ setval_and_iscalled - _null_ ));
+DATA(insert OID = 1765 (  setval			PGNSP PGUID 12 f f t f v 3 20 "2205 20 16" _null_ _null_ _null_ setval3_oid - _null_ ));
 DESCR("set sequence value and iscalled status");
 
 DATA(insert OID = 1579 (  varbit_in			PGNSP PGUID 12 f f t f i 3 1562 "2275 26 23" _null_ _null_ _null_ varbit_in - _null_ ));
@@ -3190,6 +3190,8 @@ DATA(insert OID = 2220 (  regtypein			PGNSP PGUID 12 f f t f s 1 2206 "2275" _nu
 DESCR("I/O");
 DATA(insert OID = 2221 (  regtypeout		PGNSP PGUID 12 f f t f s 1 2275 "2206" _null_ _null_ _null_	regtypeout - _null_ ));
 DESCR("I/O");
+DATA(insert OID = 1079 (  regclass			PGNSP PGUID 12 f f t f s 1 2205 "25" _null_ _null_ _null_	text_regclass - _null_ ));
+DESCR("convert text to regclass");
 
 DATA(insert OID = 2246 ( fmgr_internal_validator PGNSP PGUID 12 f f t f s 1 2278 "26" _null_ _null_ _null_ fmgr_internal_validator - _null_ ));
 DESCR("(internal)");

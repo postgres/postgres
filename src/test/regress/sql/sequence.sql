@@ -10,19 +10,56 @@ INSERT INTO serialTest VALUES ('force', 100);
 INSERT INTO serialTest VALUES ('wrong', NULL);
  
 SELECT * FROM serialTest;
- 
+
+-- basic sequence operations using both text and oid references
 CREATE SEQUENCE sequence_test;
  
-BEGIN;
-SELECT nextval('sequence_test');
+SELECT nextval('sequence_test'::text);
+SELECT nextval('sequence_test'::regclass);
+SELECT currval('sequence_test'::text);
+SELECT currval('sequence_test'::regclass);
+SELECT setval('sequence_test'::text, 32);
+SELECT nextval('sequence_test'::regclass);
+SELECT setval('sequence_test'::text, 99, false);
+SELECT nextval('sequence_test'::regclass);
+SELECT setval('sequence_test'::regclass, 32);
+SELECT nextval('sequence_test'::text);
+SELECT setval('sequence_test'::regclass, 99, false);
+SELECT nextval('sequence_test'::text);
+
 DROP SEQUENCE sequence_test;
-END;
 
 -- renaming sequences
 CREATE SEQUENCE foo_seq;
 ALTER TABLE foo_seq RENAME TO foo_seq_new;
 SELECT * FROM foo_seq_new;
 DROP SEQUENCE foo_seq_new;
+
+-- renaming serial sequences
+ALTER TABLE serialtest_f2_seq RENAME TO serialtest_f2_foo;
+INSERT INTO serialTest VALUES ('more');
+SELECT * FROM serialTest;
+
+--
+-- Check dependencies of serial and ordinary sequences
+--
+CREATE TEMP SEQUENCE myseq2;
+CREATE TEMP SEQUENCE myseq3;
+CREATE TEMP TABLE t1 (
+  f1 serial,
+  f2 int DEFAULT nextval('myseq2'),
+  f3 int DEFAULT nextval('myseq3'::text)
+);
+-- Both drops should fail, but with different error messages:
+DROP SEQUENCE t1_f1_seq;
+DROP SEQUENCE myseq2;
+-- This however will work:
+DROP SEQUENCE myseq3;
+DROP TABLE t1;
+-- Fails because no longer existent:
+DROP SEQUENCE t1_f1_seq;
+-- Now OK:
+DROP SEQUENCE myseq2;
 
 --
 -- Alter sequence

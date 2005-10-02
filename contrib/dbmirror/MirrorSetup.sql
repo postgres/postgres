@@ -2,7 +2,7 @@ BEGIN;
 
 
 CREATE FUNCTION "recordchange" () RETURNS trigger AS
-'$libdir/pending.so', 'recordchange' LANGUAGE 'C';
+'$libdir/pending', 'recordchange' LANGUAGE 'C';
 
 
 
@@ -48,15 +48,15 @@ CASCADE ON DELETE CASCADE
 
 UPDATE pg_proc SET proname='nextval_pg' WHERE proname='nextval';
 
-CREATE FUNCTION pg_catalog.nextval(text) RETURNS int8  AS
-'$libdir/pending.so', 'nextval' LANGUAGE 'C' STRICT;
+CREATE FUNCTION pg_catalog.nextval(regclass) RETURNS int8 AS
+  '$libdir/pending', 'nextval_mirror' LANGUAGE 'C' STRICT;
 
 
 UPDATE pg_proc set proname='setval_pg' WHERE proname='setval';
 
-CREATE FUNCTION pg_catalog.setval("unknown",integer,boolean) RETURNS int8  AS
-'$libdir/pending.so', 'setval' LANGUAGE 'C' STRICT;
-CREATE FUNCTION pg_catalog.setval("unknown",integer) RETURNS int8  AS
-'$libdir/pending.so', 'setval' LANGUAGE 'C' STRICT;
+CREATE FUNCTION pg_catalog.setval(regclass, int8, boolean) RETURNS int8 AS
+  '$libdir/pending', 'setval3_mirror' LANGUAGE 'C' STRICT;
+CREATE FUNCTION pg_catalog.setval(regclass, int8) RETURNS int8 AS
+  '$libdir/pending', 'setval_mirror' LANGUAGE 'C' STRICT;
 
 COMMIT;

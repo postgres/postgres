@@ -56,7 +56,7 @@ Pending tables.
 
 Requirements:
 ---------------------------------
--PostgreSQL-7.4 (Older versions are no longer supported)
+-PostgreSQL-8.1 (Older versions are no longer supported)
 -Perl 5.6 or 5.8 (Other versions might work)
 -PgPerl (http://gborg.postgresql.org/project/pgperl/projdisplay.php)
 
@@ -177,15 +177,15 @@ If you are starting with an empty master database then the slave should
 be empty as well.  Otherwise use pg_dump to ensure that the slave database
 tables are initially identical to the master.
 
-6) Add entries in the MirrorHost table.
+6) Add entries in the dbmirror_MirrorHost table.
 
-Each slave database must have an entry in the MirrorHost table.
+Each slave database must have an entry in the dbmirror_MirrorHost table.
 
-The name of the host in the MirrorHost table must exactly match the
+The name of the host in the dbmirror_MirrorHost table must exactly match the
 slaveHost variable for that slave in the configuration file.
 
 For example
-INSERT INTO "MirrorHost" ("SlaveName") VALUES ('backup_system');
+INSERT INTO dbmirror_MirrorHost (SlaveName) VALUES ('backup_system');
 
 
 6)  Start DBMirror.pl

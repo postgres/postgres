@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.380 2005/09/28 21:22:12 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.381 2005/10/02 23:50:06 tgl Exp $
 
 Typical markup:
 
@@ -388,6 +388,25 @@ pg_[A-Za-z0-9_]                 <application>
        <function>lo_open()</>.  To obtain the old behavior of always
        returning the latest committed data, include <literal>INV_WRITE</>
        in the mode flags for <function>lo_open()</>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Sequence arguments of <function>nextval()</> and related functions
+       are now bound early by default (Tom)
+      </para>
+      <para>
+       When an expression like <literal>nextval('myseq')</> appears in a
+       column default expression or view, the referenced sequence (here
+       <literal>myseq</>) is now looked up immediately, and its pg_class
+       OID is placed in the stored expression.  This representation will
+       survive renaming of the referenced sequence, as well as changes in
+       schema search paths.  The system also understands that the sequence
+       reference represents a dependency, so the sequence cannot be dropped
+       without dropping the referencing object.  To get the old behavior of
+       run-time lookup of the sequence by name, cast the argument to
+       <type>text</>, for example <literal>nextval('myseq'::text)</>.
       </para>
      </listitem>
 

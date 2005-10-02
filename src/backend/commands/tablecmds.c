@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.171 2005/09/24 22:54:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.172 2005/10/02 23:50:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,8 +168,6 @@ static void AlterIndexNamespaces(Relation classRel, Relation rel,
 static void AlterSeqNamespaces(Relation classRel, Relation rel,
 							   Oid oldNspOid, Oid newNspOid,
 							   const char *newNspName);
-static void RebuildSerialDefaultExpr(Relation rel, AttrNumber attnum,
-									 const char *seqname, const char *nspname);
 static int transformColumnNameList(Oid relId, List *colList,
 						int16 *attnums, Oid *atttypids);
 static int transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
@@ -6313,15 +6311,6 @@ AlterSeqNamespaces(Relation classRel, Relation rel,
 		 */
 		AlterTypeNamespaceInternal(RelationGetForm(seqRel)->reltype,
 								   newNspOid, false);
-		/*
-		 * And we need to rebuild the column default expression that
-		 * relies on this sequence.
-		 */
-		if (depForm->refobjsubid > 0)
-			RebuildSerialDefaultExpr(rel,
-									 depForm->refobjsubid,
-									 RelationGetRelationName(seqRel),
-									 newNspName);
 
 		/* Now we can close it.  Keep the lock till end of transaction. */
 		relation_close(seqRel, NoLock);
@@ -6330,56 +6319,6 @@ AlterSeqNamespaces(Relation classRel, Relation rel,
 	systable_endscan(scan);
 
 	relation_close(depRel, AccessShareLock);
-}
-
-/*
- * Rebuild the default expression for a SERIAL column identified by rel
- * and attnum.  This is annoying, but we have to do it because the
- * stored expression has the schema name as a text constant.
- *
- * The caller must be sure the specified column is really a SERIAL column,
- * because no further checks are done here.
- */
-static void
-RebuildSerialDefaultExpr(Relation rel, AttrNumber attnum,
-						 const char *seqname, const char *nspname)
-{
-	char	   *qstring;
-	A_Const    *snamenode;
-	FuncCall   *funccallnode;
-	RawColumnDefault *rawEnt;
-
-	/*
-	 * Create raw parse tree for the updated column default expression.
-	 * This should match transformColumnDefinition() in parser/analyze.c.
-	 */
-	qstring = quote_qualified_identifier(nspname, seqname);
-	snamenode = makeNode(A_Const);
-	snamenode->val.type = T_String;
-	snamenode->val.val.str = qstring;
-	funccallnode = makeNode(FuncCall);
-	funccallnode->funcname = SystemFuncName("nextval");
-	funccallnode->args = list_make1(snamenode);
-	funccallnode->agg_star = false;
-	funccallnode->agg_distinct = false;
-
-	/*
-	 * Remove any old default for the column.  We use RESTRICT here for
-	 * safety, but at present we do not expect anything to depend on the
-	 * default.
-	 */
-	RemoveAttrDefault(RelationGetRelid(rel), attnum, DROP_RESTRICT, false);
-
-	/* Do the equivalent of ALTER TABLE ... SET DEFAULT */
-	rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
-	rawEnt->attnum = attnum;
-	rawEnt->raw_default = (Node *) funccallnode;
-
-	/*
-	 * This function is intended for CREATE TABLE, so it processes a
-	 * _list_ of defaults, but we just do one.
-	 */
-	AddRelationRawConstraints(rel, list_make1(rawEnt), NIL);
 }
 
 
