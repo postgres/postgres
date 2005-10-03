@@ -42,7 +42,9 @@ if ( $opt{a} ) {
 		push @where, "message.sections @ '{$opt{s}}'";
 	} else {
 		foreach my $sid ( split(/[,\s]+/, $opt{s} )) {
-			push @where, "EXISTS ( select  message_section_map.mid from message_section_map where message.mid=message_section_map.mid and message_section_map.sid = $sid )";
+			push @where, "message.mid = msp$sid.mid";
+			push @where, "msp$sid.sid = $sid";
+			$table{"message_section_map msp$sid"}=1;
 		}
 	}
 } else {

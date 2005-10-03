@@ -144,21 +144,21 @@ BENCHMARK:
                   see availbale options.
 
      a)test without RD-Tree (OR)
-       ./bench.pl -d TEST -s 1,2 -v
+       ./bench.pl -d TEST -c -s 1,2 -v
      b)test with RD-Tree 
-       ./bench.pl -d TEST -s 1,2 -v -r
+       ./bench.pl -d TEST -c -s 1,2 -v -r
 
 BENCHMARKS:
 
 Size of table <message>: 200000
-Size of table <message_section_map>: 268538 
+Size of table <message_section_map>: 269133 
 
 Distribution of messages by sections:
 
-section 0: 73899 messages
-section 1: 16298 messages
-section 50: 1241 messages
-section 99: 705 messages
+section 0: 74377 messages
+section 1: 16284 messages
+section 50: 1229 messages
+section 99: 683 messages
 
 old - without RD-Tree support,
 new - with RD-Tree
@@ -168,11 +168,11 @@ new - with RD-Tree
 |          +-------+-------+--------+-------+
 |          |  old  |  new  |   old  |  new  |
 +----------+-------+-------+--------+-------+
-|         1|  1.427|  0.215|       -|      -|
+|         1|  0.625|  0.101|       -|      -|
 +----------+-------+-------+--------+-------+
-|        99|  1.029|  0.018|       -|      -|
+|        99|  0.018|  0.017|       -|      -|
 +----------+-------+-------+--------+-------+
-|       1,2|  1.829|  0.334|   5.654|  0.042|
+|       1,2|  0.766|  0.133|   0.628|  0.045|
 +----------+-------+-------+--------+-------+
-| 1,2,50,60|  2.057|  0.359|   5.044|  0.007|
+| 1,2,50,65|  0.794|  0.141|   0.030|  0.006|
 +----------+-------+-------+--------+-------+
