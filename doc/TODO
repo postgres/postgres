@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Sep 27 14:04:25 EDT 2005
+Last updated:		Sun Oct  2 20:42:27 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -181,8 +181,7 @@ Data Types
   The positive modulus result returned by NUMERICs might be considered
   inaccurate, in one sense.
 
-* Have sequence dependency track use of DEFAULT sequences,
-  seqname.nextval?
+* -Have sequence dependency track use of DEFAULT sequences
 * %Disallow changing default expression of a SERIAL column?
 * Fix data types where equality comparison isn't intuitive, e.g. box
 * %Prevent INET cast to CIDR if the unmasked bits are not zero, or
