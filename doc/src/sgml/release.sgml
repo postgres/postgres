@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.381 2005/10/02 23:50:06 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.382 2005/10/03 01:57:59 momjian Exp $
 
 Typical markup:
 
@@ -264,6 +264,21 @@ pg_[A-Za-z0-9_]                 <application>
 
      <listitem>
       <para>
+       <varname>Add proper sequence function dependencies (Tom)
+      </para>
+      <para>
+       In previous releases, <function>nextval()</>,
+       <function>currval</>, and <function>setval()</> recorded
+       sequence names as simple text strings, meaning that renaming or
+       dropping a sequence used in a <command>DEFAULT</> made the
+       clause invalid. This release stores all newly-created sequence
+       function arguments using internal oids, allowing them to handle
+       sequence renaming, and adding dependency information that
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        <varname>add_missing_from</> is now false by default (Neil)
       </para>
       <para>
@@ -398,16 +413,53 @@ pg_[A-Za-z0-9_]                 <application>
       </para>
       <para>
        When an expression like <literal>nextval('myseq')</> appears in a
-       column default expression or view, the referenced sequence (here
-       <literal>myseq</>) is now looked up immediately, and its pg_class
-       OID is placed in the stored expression.  This representation will
-       survive renaming of the referenced sequence, as well as changes in
-       schema search paths.  The system also understands that the sequence
-       reference represents a dependency, so the sequence cannot be dropped
-       without dropping the referencing object.  To get the old behavior of
-       run-time lookup of the sequence by name, cast the argument to
-       <type>text</>, for example <literal>nextval('myseq'::text)</>.
+       column <command>DEFAULT</> expression or view, the referenced
+       sequence (here <literal>myseq</>) is now looked up immediately,
+       and its pg_class OID is placed in the stored expression. This
+       representation will survive renaming of the referenced sequence,
+       as well as changes in schema search paths. The system also
+       understands that the sequence reference represents a dependency,
+       so the sequence cannot be dropped without dropping the
+       referencing object. Previous releases stored this information as
+       a simple text string, with none of the benefits outlined above.
+       To get the old text-based behavior of run-time lookup of the
+       sequence name, cast the argument to <type>text</>, for example
+       <literal>nextval('myseq'::text)</>.
       </para>
+      <para>
+       Pre-8.1 schemas loaded into 8.1 will use the previous, text-based
+       representation and therefore will not have these protections.
+       However, it is possible to upgrade a database to the newer
+       OID-based arguments. First, save this query into a file, such as
+       <filename>fixseq.sql</>:
+<programlisting>
+SELECT  'ALTER TABLE ' ||
+    pg_catalog.quote_ident(n.nspname) || '.' ||
+    pg_catalog.quote_ident(c.relname) ||
+    ' ALTER COLUMN ' || pg_catalog.quote_ident(a.attname) ||
+    ' SET DEFAULT ' ||
+    regexp_replace(d.adsrc, '(nextval\\(''[^'']*'')::text', '\\1', 'g') ||
+    ';'
+FROM    pg_namespace n, pg_class c, pg_attribute a, pg_attrdef d
+WHERE   n.oid = c.relnamespace AND
+    c.oid = a.attrelid AND
+    a.attrelid = d.adrelid AND
+    a.attnum = d.adnum AND
+    d.adsrc ~ '.*nextval\\(''[^'']*''::text';
+</programlisting>
+       Next, run the query against a database to find what
+       adjustments are required, like this for database <literal>db1</>:
+<programlisting>
+psql -aT -f fixseq.sql db1
+</programlisting>
+       This will show the <command>ALTER TABLE</> commands needed to
+       convert the database to the newer OID-based representation.
+       Finally, run this to update the database:
+<programlisting>
+psql -aT -f fixseq.sql db1 | psql -e db1
+</programlisting>
+       This process should be done for each database loaded with pre-8.1
+       schemas.
      </listitem>
 
      <listitem>
