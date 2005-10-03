@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.382 2005/10/03 01:57:59 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.383 2005/10/03 02:21:16 momjian Exp $
 
 Typical markup:
 
@@ -264,21 +264,6 @@ pg_[A-Za-z0-9_]                 <application>
 
      <listitem>
       <para>
-       <varname>Add proper sequence function dependencies (Tom)
-      </para>
-      <para>
-       In previous releases, <function>nextval()</>,
-       <function>currval</>, and <function>setval()</> recorded
-       sequence names as simple text strings, meaning that renaming or
-       dropping a sequence used in a <command>DEFAULT</> made the
-       clause invalid. This release stores all newly-created sequence
-       function arguments using internal oids, allowing them to handle
-       sequence renaming, and adding dependency information that
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
        <varname>add_missing_from</> is now false by default (Neil)
       </para>
       <para>
@@ -408,22 +393,25 @@ pg_[A-Za-z0-9_]                 <application>
 
      <listitem>
       <para>
-       Sequence arguments of <function>nextval()</> and related functions
-       are now bound early by default (Tom)
+       <varname>Add proper sequence function dependencies for <command>
+       DEFAULT</> clauses (Tom)
       </para>
       <para>
-       When an expression like <literal>nextval('myseq')</> appears in a
-       column <command>DEFAULT</> expression or view, the referenced
-       sequence (here <literal>myseq</>) is now looked up immediately,
-       and its pg_class OID is placed in the stored expression. This
-       representation will survive renaming of the referenced sequence,
-       as well as changes in schema search paths. The system also
-       understands that the sequence reference represents a dependency,
-       so the sequence cannot be dropped without dropping the
-       referencing object. Previous releases stored this information as
-       a simple text string, with none of the benefits outlined above.
-       To get the old text-based behavior of run-time lookup of the
-       sequence name, cast the argument to <type>text</>, for example
+       In previous releases, <function>nextval()</>,
+       <function>currval</>, and <function>setval()</> recorded
+       sequence names as simple text strings, meaning that renaming or
+       dropping a sequence used in a <command>DEFAULT</> made the
+       clause invalid. This release stores all newly-created sequence
+       function arguments using internal OIDs, allowing them to handle
+       sequence renaming, and adding dependency information that
+       prevents improper sequence removal. It also makes
+       <command>DEFAULT</> clauses immune to schema search
+       path changes.
+      </para>
+      <para>
+       Some applications might rely on the old text-based behavior of
+       run-time lookup of the sequence name. This can still be done by
+       casting the argument to <type>text</>, for example
        <literal>nextval('myseq'::text)</>.
       </para>
       <para>
@@ -13495,3 +13483,4 @@ sgml-local-catalogs:("/usr/lib/sgml/catalog")
 sgml-local-ecat-files:nil
 End:
 -->
+                                                                                                                                   
