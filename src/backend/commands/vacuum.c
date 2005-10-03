@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.315 2005/09/22 17:32:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.316 2005/10/03 22:52:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,7 @@
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/pg_rusage.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 #include "pgstat.h"
@@ -1233,9 +1234,9 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 	VTupleLink	vtlinks = (VTupleLink) palloc(100 * sizeof(VTupleLinkData));
 	int			num_vtlinks = 0;
 	int			free_vtlinks = 100;
-	VacRUsage	ru0;
+	PGRUsage	ru0;
 
-	vac_init_rusage(&ru0);
+	pg_rusage_init(&ru0);
 
 	relname = RelationGetRelationName(onerel);
 	ereport(elevel,
@@ -1592,14 +1593,14 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 	"Total free space (including removable row versions) is %.0f bytes.\n"
 					   "%u pages are or will become empty, including %u at the end of the table.\n"
 					   "%u pages containing %.0f free bytes are potential move destinations.\n"
-					   "%s",
+					   "%s.",
 					   nkeep,
 					   (unsigned long) min_tlen, (unsigned long) max_tlen,
 					   nunused,
 					   free_space,
 					   empty_pages, empty_end_pages,
 					   fraged_pages->num_pages, usable_free_space,
-					   vac_show_rusage(&ru0))));
+					   pg_rusage_show(&ru0))));
 }
 
 
@@ -1636,9 +1637,9 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				num_fraged_pages,
 				vacuumed_pages;
 	int			keep_tuples = 0;
-	VacRUsage	ru0;
+	PGRUsage	ru0;
 
-	vac_init_rusage(&ru0);
+	pg_rusage_init(&ru0);
 
 	ExecContext_Init(&ec, onerel);
 
@@ -2362,8 +2363,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 	   (errmsg("\"%s\": moved %u row versions, truncated %u to %u pages",
 			   RelationGetRelationName(onerel),
 			   num_moved, nblocks, blkno),
-		errdetail("%s",
-				  vac_show_rusage(&ru0))));
+		errdetail("%s.",
+				  pg_rusage_show(&ru0))));
 
 	/*
 	 * Reflect the motion of system tuples to catalog cache here.
@@ -2950,9 +2951,9 @@ scan_index(Relation indrel, double num_tuples)
 {
 	IndexBulkDeleteResult *stats;
 	IndexVacuumCleanupInfo vcinfo;
-	VacRUsage	ru0;
+	PGRUsage	ru0;
 
-	vac_init_rusage(&ru0);
+	pg_rusage_init(&ru0);
 
 	/*
 	 * Even though we're not planning to delete anything, we use the
@@ -2982,9 +2983,9 @@ scan_index(Relation indrel, double num_tuples)
 			   stats->num_index_tuples,
 			   stats->num_pages),
 		errdetail("%u index pages have been deleted, %u are currently reusable.\n"
-				  "%s",
+				  "%s.",
 				  stats->pages_deleted, stats->pages_free,
-				  vac_show_rusage(&ru0))));
+				  pg_rusage_show(&ru0))));
 
 	/*
 	 * Check for tuple count mismatch.	If the index is partial, then it's
@@ -3022,9 +3023,9 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 {
 	IndexBulkDeleteResult *stats;
 	IndexVacuumCleanupInfo vcinfo;
-	VacRUsage	ru0;
+	PGRUsage	ru0;
 
-	vac_init_rusage(&ru0);
+	pg_rusage_init(&ru0);
 
 	/* Do bulk deletion */
 	stats = index_bulk_delete(indrel, tid_reaped, (void *) vacpagelist);
@@ -3050,10 +3051,10 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 			   stats->num_pages),
 		errdetail("%.0f index row versions were removed.\n"
 		 "%u index pages have been deleted, %u are currently reusable.\n"
-				  "%s",
+				  "%s.",
 				  stats->tuples_removed,
 				  stats->pages_deleted, stats->pages_free,
-				  vac_show_rusage(&ru0))));
+				  pg_rusage_show(&ru0))));
 
 	/*
 	 * Check for tuple count mismatch.	If the index is partial, then it's
@@ -3428,60 +3429,6 @@ enough_space(VacPage vacpage, Size len)
 	return false;
 }
 
-
-/*
- * Initialize usage snapshot.
- */
-void
-vac_init_rusage(VacRUsage *ru0)
-{
-	struct timezone tz;
-
-	getrusage(RUSAGE_SELF, &ru0->ru);
-	gettimeofday(&ru0->tv, &tz);
-}
-
-/*
- * Compute elapsed time since ru0 usage snapshot, and format into
- * a displayable string.  Result is in a static string, which is
- * tacky, but no one ever claimed that the Postgres backend is
- * threadable...
- */
-const char *
-vac_show_rusage(VacRUsage *ru0)
-{
-	static char result[100];
-	VacRUsage	ru1;
-
-	vac_init_rusage(&ru1);
-
-	if (ru1.tv.tv_usec < ru0->tv.tv_usec)
-	{
-		ru1.tv.tv_sec--;
-		ru1.tv.tv_usec += 1000000;
-	}
-	if (ru1.ru.ru_stime.tv_usec < ru0->ru.ru_stime.tv_usec)
-	{
-		ru1.ru.ru_stime.tv_sec--;
-		ru1.ru.ru_stime.tv_usec += 1000000;
-	}
-	if (ru1.ru.ru_utime.tv_usec < ru0->ru.ru_utime.tv_usec)
-	{
-		ru1.ru.ru_utime.tv_sec--;
-		ru1.ru.ru_utime.tv_usec += 1000000;
-	}
-
-	snprintf(result, sizeof(result),
-			 "CPU %d.%02ds/%d.%02du sec elapsed %d.%02d sec.",
-			 (int) (ru1.ru.ru_stime.tv_sec - ru0->ru.ru_stime.tv_sec),
-	  (int) (ru1.ru.ru_stime.tv_usec - ru0->ru.ru_stime.tv_usec) / 10000,
-			 (int) (ru1.ru.ru_utime.tv_sec - ru0->ru.ru_utime.tv_sec),
-	  (int) (ru1.ru.ru_utime.tv_usec - ru0->ru.ru_utime.tv_usec) / 10000,
-			 (int) (ru1.tv.tv_sec - ru0->tv.tv_sec),
-			 (int) (ru1.tv.tv_usec - ru0->tv.tv_usec) / 10000);
-
-	return result;
-}
 
 /*
  * vacuum_delay_point --- check for interrupts and cost-based delay.

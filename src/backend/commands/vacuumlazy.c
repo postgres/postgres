@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.59 2005/09/22 17:32:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.60 2005/10/03 22:52:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,7 @@
 #include "storage/freespace.h"
 #include "storage/smgr.h"
 #include "utils/lsyscache.h"
+#include "utils/pg_rusage.h"
 
 
 /*
@@ -209,9 +210,9 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	BlockNumber *index_pages_removed;
 	bool		did_vacuum_index = false;
 	int			i;
-	VacRUsage	ru0;
+	PGRUsage	ru0;
 
-	vac_init_rusage(&ru0);
+	pg_rusage_init(&ru0);
 
 	relname = RelationGetRelationName(onerel);
 	ereport(elevel,
@@ -478,11 +479,11 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			 errdetail("%.0f dead row versions cannot be removed yet.\n"
 					   "There were %.0f unused item pointers.\n"
 					   "%u pages are entirely empty.\n"
-					   "%s",
+					   "%s.",
 					   nkeep,
 					   nunused,
 					   empty_pages,
-					   vac_show_rusage(&ru0))));
+					   pg_rusage_show(&ru0))));
 }
 
 
@@ -502,9 +503,9 @@ lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats)
 {
 	int			tupindex;
 	int			npages;
-	VacRUsage	ru0;
+	PGRUsage	ru0;
 
-	vac_init_rusage(&ru0);
+	pg_rusage_init(&ru0);
 	npages = 0;
 
 	tupindex = 0;
@@ -533,8 +534,8 @@ lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats)
 			(errmsg("\"%s\": removed %d row versions in %d pages",
 					RelationGetRelationName(onerel),
 					tupindex, npages),
-			 errdetail("%s",
-					   vac_show_rusage(&ru0))));
+			 errdetail("%s.",
+					   pg_rusage_show(&ru0))));
 }
 
 /*
@@ -602,9 +603,9 @@ lazy_scan_index(Relation indrel, LVRelStats *vacrelstats)
 {
 	IndexBulkDeleteResult *stats;
 	IndexVacuumCleanupInfo vcinfo;
-	VacRUsage	ru0;
+	PGRUsage	ru0;
 
-	vac_init_rusage(&ru0);
+	pg_rusage_init(&ru0);
 
 	/*
 	 * Acquire appropriate type of lock on index: must be exclusive if
@@ -652,9 +653,9 @@ lazy_scan_index(Relation indrel, LVRelStats *vacrelstats)
 			   stats->num_index_tuples,
 			   stats->num_pages),
 		errdetail("%u index pages have been deleted, %u are currently reusable.\n"
-				  "%s",
+				  "%s.",
 				  stats->pages_deleted, stats->pages_free,
-				  vac_show_rusage(&ru0))));
+				  pg_rusage_show(&ru0))));
 
 	pfree(stats);
 }
@@ -679,9 +680,9 @@ lazy_vacuum_index(Relation indrel,
 {
 	IndexBulkDeleteResult *stats;
 	IndexVacuumCleanupInfo vcinfo;
-	VacRUsage	ru0;
+	PGRUsage	ru0;
 
-	vac_init_rusage(&ru0);
+	pg_rusage_init(&ru0);
 
 	/*
 	 * Acquire appropriate type of lock on index: must be exclusive if
@@ -729,10 +730,10 @@ lazy_vacuum_index(Relation indrel,
 			   stats->num_pages),
 		errdetail("%.0f index row versions were removed.\n"
 		 "%u index pages have been deleted, %u are currently reusable.\n"
-				  "%s",
+				  "%s.",
 				  stats->tuples_removed,
 				  stats->pages_deleted, stats->pages_free,
-				  vac_show_rusage(&ru0))));
+				  pg_rusage_show(&ru0))));
 
 	pfree(stats);
 }
@@ -749,9 +750,9 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 	int			n;
 	int			i,
 				j;
-	VacRUsage	ru0;
+	PGRUsage	ru0;
 
-	vac_init_rusage(&ru0);
+	pg_rusage_init(&ru0);
 
 	/*
 	 * We need full exclusive lock on the relation in order to do
@@ -828,8 +829,8 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 			(errmsg("\"%s\": truncated %u to %u pages",
 					RelationGetRelationName(onerel),
 					old_rel_pages, new_rel_pages),
-			 errdetail("%s",
-					   vac_show_rusage(&ru0))));
+			 errdetail("%s.",
+					   pg_rusage_show(&ru0))));
 }
 
 /*
