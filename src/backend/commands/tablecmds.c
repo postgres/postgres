@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.142.4.3 2005/03/25 18:04:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.142.4.4 2005/10/03 02:45:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2486,8 +2486,12 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 		{
 			if (newrel)
 			{
+				Oid		tupOid = InvalidOid;
+
 				/* Extract data from old tuple */
 				heap_deformtuple(tuple, oldTupDesc, values, nulls);
+				if (oldTupDesc->tdhasoid)
+					tupOid = HeapTupleGetOid(tuple);
 
 				/* Set dropped attributes to null in new tuple */
 				foreach (lc, dropped_attrs)
@@ -2521,6 +2525,10 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 				 * be reset shortly.
 				 */
 				tuple = heap_formtuple(newTupDesc, values, nulls);
+
+				/* Preserve OID, if any */
+				if (newTupDesc->tdhasoid)
+					HeapTupleSetOid(tuple, tupOid);
 			}
 
 			/* Now check any constraints on the possibly-changed tuple */
