@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.23 2005/06/08 15:50:28 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.24 2005/10/03 00:28:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 
 
 /* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	811
+#define PG_CONTROL_VERSION	812
 
 /*
  * Body of CheckPoint XLOG records.  This is declared here because we keep
@@ -106,6 +106,22 @@ typedef struct ControlFileData
 	XLogRecPtr	prevCheckPoint; /* previous check point record ptr */
 
 	CheckPoint	checkPointCopy; /* copy of last check point record */
+
+	/*
+	 * This data is used to check for hardware-architecture compatibility
+	 * of the database and the backend executable.  We need not check
+	 * endianness explicitly, since the pg_control version will surely
+	 * look wrong to a machine of different endianness, but we do need
+	 * to worry about MAXALIGN and floating-point format.  (Note: storage
+	 * layout nominally also depends on SHORTALIGN and INTALIGN, but in
+	 * practice these are the same on all architectures of interest.)
+	 *
+	 * Testing just one double value is not a very bulletproof test for
+	 * floating-point compatibility, but it will catch most cases.
+	 */
+	uint32		maxAlign;		/* alignment requirement for tuples */
+	double		floatFormat;	/* constant 1234567.0 */
+#define FLOATFORMAT_VALUE	1234567.0
 
 	/*
 	 * This data is used to make sure that configuration of this database

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.218 2005/08/22 23:59:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.219 2005/10/03 00:28:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3417,6 +3417,10 @@ WriteControlFile(void)
 	 */
 	ControlFile->pg_control_version = PG_CONTROL_VERSION;
 	ControlFile->catalog_version_no = CATALOG_VERSION_NO;
+
+	ControlFile->maxAlign = MAXIMUM_ALIGNOF;
+	ControlFile->floatFormat = FLOATFORMAT_VALUE;
+
 	ControlFile->blcksz = BLCKSZ;
 	ControlFile->relseg_size = RELSEG_SIZE;
 	ControlFile->xlog_seg_size = XLOG_SEG_SIZE;
@@ -3561,6 +3565,18 @@ ReadControlFile(void)
 				 errdetail("The database cluster was initialized with CATALOG_VERSION_NO %d,"
 			  " but the server was compiled with CATALOG_VERSION_NO %d.",
 					ControlFile->catalog_version_no, CATALOG_VERSION_NO),
+				 errhint("It looks like you need to initdb.")));
+	if (ControlFile->maxAlign != MAXIMUM_ALIGNOF)
+		ereport(FATAL,
+				(errmsg("database files are incompatible with server"),
+		 errdetail("The database cluster was initialized with MAXALIGN %d,"
+				   " but the server was compiled with MAXALIGN %d.",
+				   ControlFile->maxAlign, MAXIMUM_ALIGNOF),
+				   errhint("It looks like you need to initdb.")));
+	if (ControlFile->floatFormat != FLOATFORMAT_VALUE)
+		ereport(FATAL,
+				(errmsg("database files are incompatible with server"),
+				 errdetail("The database cluster appears to use a different floating-point format than the server executable."),
 				 errhint("It looks like you need to initdb.")));
 	if (ControlFile->blcksz != BLCKSZ)
 		ereport(FATAL,

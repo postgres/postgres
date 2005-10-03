@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.36 2005/09/29 08:34:50 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.37 2005/10/03 00:28:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -456,6 +456,8 @@ GuessControlValues(void)
 	ControlFile.logSeg = 1;
 	ControlFile.checkPoint = ControlFile.checkPointCopy.redo;
 
+	ControlFile.maxAlign = MAXIMUM_ALIGNOF;
+	ControlFile.floatFormat = FLOATFORMAT_VALUE;
 	ControlFile.blcksz = BLCKSZ;
 	ControlFile.relseg_size = RELSEG_SIZE;
 	ControlFile.xlog_seg_size = XLOG_SEG_SIZE;
@@ -523,6 +525,8 @@ PrintControlValues(bool guessed)
 	printf(_("Latest checkpoint's NextOID:          %u\n"), ControlFile.checkPointCopy.nextOid);
 	printf(_("Latest checkpoint's NextMultiXactId:  %u\n"), ControlFile.checkPointCopy.nextMulti);
 	printf(_("Latest checkpoint's NextMultiOffset:  %u\n"), ControlFile.checkPointCopy.nextMultiOffset);
+	printf(_("Maximum data alignment:               %u\n"), ControlFile.maxAlign);
+	/* we don't print floatFormat since can't say much useful about it */
 	printf(_("Database block size:                  %u\n"), ControlFile.blcksz);
 	printf(_("Blocks per segment of large relation: %u\n"), ControlFile.relseg_size);
 	printf(_("Maximum length of identifiers:        %u\n"), ControlFile.nameDataLen);
