@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.383 2005/10/03 02:21:16 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.384 2005/10/03 02:46:43 momjian Exp $
 
 Typical markup:
 
@@ -398,28 +398,28 @@ pg_[A-Za-z0-9_]                 <application>
       </para>
       <para>
        In previous releases, <function>nextval()</>,
-       <function>currval</>, and <function>setval()</> recorded
-       sequence names as simple text strings, meaning that renaming or
-       dropping a sequence used in a <command>DEFAULT</> made the
-       clause invalid. This release stores all newly-created sequence
-       function arguments using internal OIDs, allowing them to handle
-       sequence renaming, and adding dependency information that
-       prevents improper sequence removal. It also makes
-       <command>DEFAULT</> clauses immune to schema search
-       path changes.
+       <function>currval</>, and <function>setval()</> recorded sequence
+       names as simple text strings, meaning that renaming or dropping a
+       sequence used in a <command>DEFAULT</> clause made the clause
+       invalid. This release stores all newly-created sequence function
+       arguments as internal OIDs, allowing them to handle sequence
+       renaming, and adding dependency information that prevents
+       improper sequence removal. It also makes <command>DEFAULT</>
+       clauses immune to schema search path changes, and allows schema
+       renaming.
       </para>
       <para>
        Some applications might rely on the old text-based behavior of
-       run-time lookup of the sequence name. This can still be done by
+       run-time lookup for sequence names. This can still be done by
        casting the argument to <type>text</>, for example
        <literal>nextval('myseq'::text)</>.
       </para>
       <para>
        Pre-8.1 schemas loaded into 8.1 will use the previous, text-based
-       representation and therefore will not have these protections.
-       However, it is possible to upgrade a database to the newer
-       OID-based arguments. First, save this query into a file, such as
-       <filename>fixseq.sql</>:
+       representation and therefore will not have the features of
+       OID-stored arguments. However, it is possible to upgrade a
+       database loaded with pre-8.1 schemas. First, save this query into
+       a file, such as <filename>fixseq.sql</>:
 <programlisting>
 SELECT  'ALTER TABLE ' ||
     pg_catalog.quote_ident(n.nspname) || '.' ||
