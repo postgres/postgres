@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.386 2005/10/03 13:52:28 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.387 2005/10/03 16:04:13 tgl Exp $
 
 Typical markup:
 
@@ -393,61 +393,62 @@ pg_[A-Za-z0-9_]                 <application>
 
      <listitem>
       <para>
-       Add proper sequence function dependencies for <command>
-       DEFAULT</> clauses (Tom)
+       Add proper dependencies for arguments of sequence functions (Tom)
       </para>
       <para>
-       In previous releases, <function>nextval()</>,
-       <function>currval</>, and <function>setval()</> recorded sequence
-       names as simple text strings, meaning that renaming or dropping a
-       sequence used in a <command>DEFAULT</> clause made the clause
+       In previous releases, sequence names passed to <function>nextval()</>,
+       <function>currval()</>, and <function>setval()</> were stored as
+       simple text strings, meaning that renaming or dropping a
+       sequence used in a <literal>DEFAULT</> clause made the clause
        invalid. This release stores all newly-created sequence function
-       arguments as internal OIDs, allowing them to handle sequence
+       arguments as internal OIDs, allowing them to track sequence
        renaming, and adding dependency information that prevents
-       improper sequence removal. It also makes <command>DEFAULT</>
-       clauses immune to schema search path changes, and allows schema
-       renaming.
+       improper sequence removal. It also makes such <literal>DEFAULT</>
+       clauses immune to schema renaming and search path changes.
       </para>
       <para>
-       Some applications might rely on the old text-based behavior of
+       Some applications might rely on the old behavior of
        run-time lookup for sequence names. This can still be done by
-       casting the argument to <type>text</>, for example
+       explicitly casting the argument to <type>text</>, for example
        <literal>nextval('myseq'::text)</>.
       </para>
       <para>
-       Pre-8.1 schemas loaded into 8.1 will use the previous, text-based
+       Pre-8.1 database dumps loaded into 8.1 will use the old text-based
        representation and therefore will not have the features of
-       OID-stored arguments. However, it is possible to upgrade a
-       database loaded with pre-8.1 schemas. First, save this query into
-       a file, such as <filename>fixseq.sql</>:
+       OID-stored arguments. However, it is possible to update a
+       database containing text-based <literal>DEFAULT</> clauses.
+       First, save this query into a file, such as <filename>fixseq.sql</>:
 <programlisting>
 SELECT  'ALTER TABLE ' ||
     pg_catalog.quote_ident(n.nspname) || '.' ||
     pg_catalog.quote_ident(c.relname) ||
     ' ALTER COLUMN ' || pg_catalog.quote_ident(a.attname) ||
     ' SET DEFAULT ' ||
-    regexp_replace(d.adsrc, '(nextval\\(''[^'']*'')::text', '\\1', 'g') ||
+    regexp_replace(d.adsrc,
+                   $$val\(\(('[^']*')::text\)::regclass$$,
+                   $$val\(\1$$,
+                   'g') ||
     ';'
 FROM    pg_namespace n, pg_class c, pg_attribute a, pg_attrdef d
 WHERE   n.oid = c.relnamespace AND
     c.oid = a.attrelid AND
     a.attrelid = d.adrelid AND
     a.attnum = d.adnum AND
-    d.adsrc ~ '.*nextval\\(''[^'']*''::text';
+    d.adsrc ~ $$val\(\('[^']*'::text\)::regclass$$;
 </programlisting>
        Next, run the query against a database to find what
        adjustments are required, like this for database <literal>db1</>:
 <programlisting>
-psql -aT -f fixseq.sql db1
+psql -t -f fixseq.sql db1
 </programlisting>
        This will show the <command>ALTER TABLE</> commands needed to
        convert the database to the newer OID-based representation.
-       Finally, run this to update the database:
+       If the commands look reasonable, run this to update the database:
 <programlisting>
-psql -aT -f fixseq.sql db1 | psql -e db1
+psql -t -f fixseq.sql db1 | psql -e db1
 </programlisting>
-       This process should be done for each database loaded with pre-8.1
-       schemas.
+       This process must be repeated in each database to be updated.
+      </para>
      </listitem>
 
      <listitem>
@@ -2060,7 +2061,7 @@ psql -aT -f fixseq.sql db1 | psql -e db1
 
    <note>
    <title>Release date</title>
-   <simpara>2005-09-??</simpara>
+   <simpara>2005-10-04</simpara>
    </note>
 
    <para>
@@ -4836,7 +4837,7 @@ typedefs (Michael)</para></listitem>
 
    <note>
    <title>Release date</title>
-   <simpara>2005-09-??</simpara>
+   <simpara>2005-10-04</simpara>
    </note>
 
    <para>
@@ -7463,7 +7464,7 @@ DROP SCHEMA information_schema CASCADE;
 
    <note>
    <title>Release date</title>
-   <simpara>2005-09-??</simpara>
+   <simpara>2005-10-04</simpara>
    </note>
 
    <para>
