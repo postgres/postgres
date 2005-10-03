@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.385 2005/10/03 02:49:31 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.386 2005/10/03 13:52:28 momjian Exp $
 
 Typical markup:
 
@@ -393,7 +393,7 @@ pg_[A-Za-z0-9_]                 <application>
 
      <listitem>
       <para>
-       <varname>Add proper sequence function dependencies for <command>
+       Add proper sequence function dependencies for <command>
        DEFAULT</> clauses (Tom)
       </para>
       <para>
