@@ -2,8 +2,8 @@
     configure.in and configure
     bump interface version numbers
       o src/interfaces/*/Makefile
-      o src/interfaces/libpq/libpq.rc
-      o src/include/pg_config.h.win32
+      o src/interfaces/libpq/libpq.rc (update for minor release)
+      o src/include/pg_config.h.win32 (update for minor release)
 
 * Release notes
     update doc/src/sgml/release.sgml 
