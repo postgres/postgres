@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.13 2005/10/03 16:04:51 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.14 2005/10/03 23:43:27 tgl Exp $
 -->
 
 <appendix id="release">
@@ -46,6 +46,11 @@ DATABASE</></para>
 <para>This should fix recent reports of <quote>index is not a btree</>
 failures when a crash occurs shortly after <command>CREATE
 DATABASE</>.</para></listitem>
+<listitem><para>Fix the sense of the test for read-only transaction
+in <command>COPY</></para>
+<para>The code formerly prohibited <command>COPY TO</>, where it should
+prohibit <command>COPY FROM</>.
+</para></listitem>
 <listitem><para>Handle consecutive embedded newlines in <command>COPY</>
 CSV-mode input</para></listitem>
 <listitem><para>Fix <function>date_trunc(week)</> for dates near year
@@ -2817,6 +2822,11 @@ length when using a multiple-byte character set (Yoshiyuki Asaba)</para>
 <para>In prior releases, the padding of <type>CHAR()</> was incorrect
 because it only padded to the specified number of bytes without
 considering how many characters were stored.</para></listitem>
+<listitem><para>Fix the sense of the test for read-only transaction
+in <command>COPY</></para>
+<para>The code formerly prohibited <command>COPY TO</>, where it should
+prohibit <command>COPY FROM</>.
+</para></listitem>
 <listitem><para>Fix planning problem with outer-join ON clauses that reference
 only the inner-side relation</para></listitem>
 <listitem><para>Further fixes for <literal>x FULL JOIN y ON true</> corner
