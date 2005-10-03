@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.213.2.1 2004/01/18 02:15:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.213.2.2 2005/10/03 23:43:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -752,7 +752,8 @@ DoCopy(const CopyStmt *stmt)
 	rel = heap_openrv(relation, (is_from ? RowExclusiveLock : AccessShareLock));
 
 	/* check read-only transaction */
-	if (XactReadOnly && !is_from && !isTempNamespace(RelationGetNamespace(rel)))
+	if (XactReadOnly && is_from &&
+		!isTempNamespace(RelationGetNamespace(rel)))
 		ereport(ERROR,
 				(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
 				 errmsg("transaction is read-only")));
