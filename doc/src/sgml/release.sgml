@@ -1,10 +1,72 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235.2.31 2005/05/09 00:10:22 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235.2.32 2005/10/03 16:05:09 tgl Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
+ 
+  <sect1 id="release-7-4-9">
+   <title>Release 7.4.9</title>
 
+   <note>
+   <title>Release date</title>
+   <simpara>2005-10-04</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.4.8.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.4.9</title>
+
+    <para>
+     A dump/restore is not required for those running 7.4.X.  However,
+     if you are upgrading from a version earlier than 7.4.8, see the release
+     notes for 7.4.8.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Fix error that allowed <command>VACUUM</> to remove
+<literal>ctid</> chains too soon, and add more checking in code that follows
+<literal>ctid</> links</para>
+<para>This fixes a long-standing problem that could cause crashes in very rare
+circumstances.</para></listitem>
+<listitem><para>Fix <type>CHAR()</> to properly pad spaces to the specified
+length when using a multiple-byte character set (Yoshiyuki Asaba)</para>
+<para>In prior releases, the padding of <type>CHAR()</> was incorrect
+because it only padded to the specified number of bytes without
+considering how many characters were stored.</para></listitem>
+<listitem><para>Fix planning problem with outer-join ON clauses that reference
+only the inner-side relation</para></listitem>
+<listitem><para>Further fixes for <literal>x FULL JOIN y ON true</> corner
+cases</para></listitem>
+<listitem><para>Make <function>array_in</> and <function>array_recv</> more
+paranoid about validating their OID parameter</para></listitem>
+<listitem><para>Fix missing rows in queries like <literal>UPDATE a=... WHERE
+a...</> with GiST index on column <literal>a</></para></listitem>
+<listitem><para>Improve robustness of datetime parsing</para></listitem>
+<listitem><para>Improve checking for partially-written WAL
+pages</para></listitem>
+<listitem><para>Improve robustness of signal handling when SSL is
+enabled</para></listitem>
+<listitem><para>Don't try to open more than <literal>max_files_per_process</>
+files during postmaster startup</para></listitem>
+<listitem><para>Various memory leakage fixes</para></listitem>
+<listitem><para>Various portability improvements</para></listitem>
+<listitem><para>Fix PL/PgSQL to handle <literal>var := var</> correctly when
+the variable is of pass-by-reference type</para></listitem>
+<listitem><para>Update <filename>contrib/tsearch2</> to use current Snowball
+code</para></listitem>
+</itemizedlist>
+
+   </sect2>
+  </sect1>
+ 
   <sect1 id="release-7-4-8">
    <title>Release 7.4.8</title>
 
@@ -184,8 +246,8 @@ holder of the lock released it within a very narrow window.
 <command>ALTER TABLE SET WITHOUT OIDS</></para></listitem>
 </itemizedlist>
 
-  </sect2>
- </sect1>
+   </sect2>
+  </sect1>
 
   <sect1 id="release-7-4-7">
    <title>Release 7.4.7</title>
@@ -242,8 +304,8 @@ datestyles</para></listitem>
 GMT</para></listitem>
 </itemizedlist>
 
-  </sect2>
- </sect1>
+   </sect2>
+  </sect1>
 
   <sect1 id="release-7-4-6">
    <title>Release 7.4.6</title>
@@ -312,8 +374,8 @@ This could arise in cases such as CLUSTER after ALTER TABLE DROP COLUMN.
 ECPG prepare statement</para></listitem>
 </itemizedlist>
 
-  </sect2>
- </sect1>
+   </sect2>
+  </sect1>
 
   <sect1 id="release-7-4-5">
    <title>Release 7.4.5</title>
@@ -348,8 +410,8 @@ still worth a re-release.  The bug does not exist in pre-7.4 releases.
 </para></listitem>
 </itemizedlist>
 
-  </sect2>
- </sect1>
+   </sect2>
+  </sect1>
 
   <sect1 id="release-7-4-4">
    <title>Release 7.4.4</title>
@@ -398,8 +460,8 @@ aggregate plan</para></listitem>
 <listitem><para>Translation updates (various contributors)</para></listitem>
 </itemizedlist>
 
-  </sect2>
- </sect1>
+   </sect2>
+  </sect1>
 
   <sect1 id="release-7-4-3">
    <title>Release 7.4.3</title>
@@ -454,8 +516,8 @@ names from outer query levels.
 <listitem><para>Numerous translation updates (various contributors)</para></listitem>
 </itemizedlist>
 
-  </sect2>
- </sect1>
+   </sect2>
+  </sect1>
 
   <sect1 id="release-7-4-2">
    <title>Release 7.4.2</title>
@@ -595,8 +657,8 @@ inconveniences associated with the <literal>i/I</> problem.</para></listitem>
 <listitem><para>Various JDBC fixes</para></listitem>
 </itemizedlist>
 
-  </sect2>
- </sect1>
+   </sect2>
+  </sect1>
 
   <sect1 id="release-7-4-1">
    <title>Release 7.4.1</title>
@@ -723,271 +785,272 @@ DROP SCHEMA information_schema CASCADE;
 
    <para>
     Major changes in this release:
-
-    <variablelist>
-     <varlistentry>
-      <term>
-       <literal>IN</literal> / <literal>NOT IN</literal> subqueries are
-       now much more efficient
-      </term>
-
-      <listitem>
-       <para>
-        In previous releases, <literal>IN</literal>/<literal>NOT
-        IN</literal> subqueries were joined to the upper query by
-        sequentially scanning the subquery looking for a match.  The
-        7.4 code uses the same sophisticated techniques used by
-        ordinary joins and so is much faster.  An
-        <literal>IN</literal> will now usually be as fast as or faster
-        than an equivalent <literal>EXISTS</literal> subquery; this
-        reverses the conventional wisdom that applied to previous
-        releases.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       Improved <literal>GROUP BY</literal> processing by using hash buckets
-      </term>
-
-      <listitem>
-       <para>
-        In previous releases, rows to be grouped had to be sorted
-        first.  The 7.4 code can do <literal>GROUP BY</literal>
-        without sorting, by accumulating results into a hash table
-        with one entry per group.  It will still use the sort
-        technique, however, if the hash table is estimated to be too
-        large to fit in <varname>sort_mem</>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       New multikey hash join capability
-      </term>
-
-      <listitem>
-       <para>
-        In previous releases, hash joins could only occur on single
-        keys.  This release allows multicolumn hash joins.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       Queries using the explicit <literal>JOIN</literal> syntax are
-       now better optimized
-      </term>
-
-      <listitem>
-       <para>
-        Prior releases evaluated queries using the explicit
-        <literal>JOIN</literal> syntax only in the order implied by
-        the syntax. 7.4 allows full optimization of these queries,
-        meaning the optimizer considers all possible join orderings
-        and chooses the most efficient.  Outer joins, however, must
-        still follow the declared ordering.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       Faster and more powerful regular expression code
-      </term>
-
-      <listitem>
-       <para>
-        The entire regular expression module has been replaced with a
-        new version by Henry Spencer, originally written for Tcl.  The
-        code greatly improves performance and supports several flavors
-        of regular expressions.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       Function-inlining for simple SQL functions
-      </term>
-
-      <listitem>
-       <para>
-        Simple SQL functions can now be inlined by including their SQL
-        in the main query.  This improves performance by eliminating
-        per-call overhead.  That means simple SQL functions now
-        behave like macros.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       Full support for IPv6 connections and IPv6 address data types
-      </term>
-
-      <listitem>
-       <para>
-        Previous releases allowed only IPv4 connections, and the IP
-        data types only supported IPv4 addresses. This release adds
-        full IPv6 support in both of these areas.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       Major improvements in SSL performance and reliability
-      </term>
-
-      <listitem>
-       <para>
-        Several people very familiar with the SSL API have overhauled
-        our SSL code to improve SSL key negotiation and error
-        recovery.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       Make free space map efficiently reuse empty index pages,
-       and other free space management improvements
-      </term>
-
-      <listitem>
-       <para>
-        In previous releases, B-tree index pages that were left empty
-        because of deleted rows could only be reused by rows with
-        index values similar to the rows originally indexed on that
-        page. In 7.4, <command>VACUUM</command> records empty index
-        pages and allows them to be reused for any future index rows.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       SQL-standard information schema
-      </term>
-
-      <listitem>
-       <para>
-        The information schema provides a standardized and stable way
-        to access information about the schema objects defined in a
-        database.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       Cursors conform more closely to the SQL standard
-      </term>
-
-      <listitem>
-       <para>
-        The commands <command>FETCH</command> and
-        <command>MOVE</command> have been overhauled to conform more
-        closely to the SQL standard.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       Cursors can exist outside transactions
-      </term>
-
-      <listitem>
-       <para>
-        These cursors are also called holdable cursors.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       New client-to-server protocol
-      </term>
-
-      <listitem>
-       <para>
-        The new protocol adds error codes, more status information,
-        faster startup, better support for binary data transmission,
-        parameter values separated from SQL commands, prepared
-        statements available at the protocol level, and cleaner
-        recovery from <command>COPY</command> failures.  The older
-        protocol is still supported by both server and clients.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       <application>libpq</application> and
-       <application>ECPG</application> applications are now fully
-       thread-safe
-      </term>
-
-      <listitem>
-       <para>
-        While previous <application>libpq</application> releases
-        already supported threads, this release improves thread safety
-        by fixing some non-thread-safe code that was used during
-        database connection startup.  The <command>configure</command>
-        option <option>--enable-thread-safety</option> must be used to
-        enable this feature.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       New version of full-text indexing
-      </term>
-
-      <listitem>
-       <para>
-        A new full-text indexing suite is available in
-        <filename>contrib/tsearch2</filename>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       New autovacuum tool
-      </term>
-
-      <listitem>
-       <para>
-        The new autovacuum tool in
-        <filename>contrib/autovacuum</filename> monitors the database
-        statistics tables for
-        <command>INSERT</command>/<command>UPDATE</command>/<command>DELETE</command>
-        activity and automatically vacuums tables when needed.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       Array handling has been improved and moved into the server core
-      </term>
-
-      <listitem>
-       <para>
-        Many array limitations have been removed, and arrays behave
-        more like fully-supported data types.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
    </para>
+
+   <variablelist>
+    <varlistentry>
+     <term>
+      <literal>IN</literal> / <literal>NOT IN</literal> subqueries are
+      now much more efficient
+     </term>
+
+     <listitem>
+      <para>
+       In previous releases, <literal>IN</literal>/<literal>NOT
+       IN</literal> subqueries were joined to the upper query by
+       sequentially scanning the subquery looking for a match.  The
+       7.4 code uses the same sophisticated techniques used by
+       ordinary joins and so is much faster.  An
+       <literal>IN</literal> will now usually be as fast as or faster
+       than an equivalent <literal>EXISTS</literal> subquery; this
+       reverses the conventional wisdom that applied to previous
+       releases.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      Improved <literal>GROUP BY</literal> processing by using hash buckets
+     </term>
+
+     <listitem>
+      <para>
+       In previous releases, rows to be grouped had to be sorted
+       first.  The 7.4 code can do <literal>GROUP BY</literal>
+       without sorting, by accumulating results into a hash table
+       with one entry per group.  It will still use the sort
+       technique, however, if the hash table is estimated to be too
+       large to fit in <varname>sort_mem</>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      New multikey hash join capability
+     </term>
+
+     <listitem>
+      <para>
+       In previous releases, hash joins could only occur on single
+       keys.  This release allows multicolumn hash joins.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      Queries using the explicit <literal>JOIN</literal> syntax are
+      now better optimized
+     </term>
+
+     <listitem>
+      <para>
+       Prior releases evaluated queries using the explicit
+       <literal>JOIN</literal> syntax only in the order implied by
+       the syntax. 7.4 allows full optimization of these queries,
+       meaning the optimizer considers all possible join orderings
+       and chooses the most efficient.  Outer joins, however, must
+       still follow the declared ordering.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      Faster and more powerful regular expression code
+     </term>
+
+     <listitem>
+      <para>
+       The entire regular expression module has been replaced with a
+       new version by Henry Spencer, originally written for Tcl.  The
+       code greatly improves performance and supports several flavors
+       of regular expressions.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      Function-inlining for simple SQL functions
+     </term>
+
+     <listitem>
+      <para>
+       Simple SQL functions can now be inlined by including their SQL
+       in the main query.  This improves performance by eliminating
+       per-call overhead.  That means simple SQL functions now
+       behave like macros.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      Full support for IPv6 connections and IPv6 address data types
+     </term>
+
+     <listitem>
+      <para>
+       Previous releases allowed only IPv4 connections, and the IP
+       data types only supported IPv4 addresses. This release adds
+       full IPv6 support in both of these areas.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      Major improvements in SSL performance and reliability
+     </term>
+
+     <listitem>
+      <para>
+       Several people very familiar with the SSL API have overhauled
+       our SSL code to improve SSL key negotiation and error
+       recovery.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      Make free space map efficiently reuse empty index pages,
+      and other free space management improvements
+     </term>
+
+     <listitem>
+      <para>
+       In previous releases, B-tree index pages that were left empty
+       because of deleted rows could only be reused by rows with
+       index values similar to the rows originally indexed on that
+       page. In 7.4, <command>VACUUM</command> records empty index
+       pages and allows them to be reused for any future index rows.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      SQL-standard information schema
+     </term>
+
+     <listitem>
+      <para>
+       The information schema provides a standardized and stable way
+       to access information about the schema objects defined in a
+       database.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      Cursors conform more closely to the SQL standard
+     </term>
+
+     <listitem>
+      <para>
+       The commands <command>FETCH</command> and
+       <command>MOVE</command> have been overhauled to conform more
+       closely to the SQL standard.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      Cursors can exist outside transactions
+     </term>
+
+     <listitem>
+      <para>
+       These cursors are also called holdable cursors.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      New client-to-server protocol
+     </term>
+
+     <listitem>
+      <para>
+       The new protocol adds error codes, more status information,
+       faster startup, better support for binary data transmission,
+       parameter values separated from SQL commands, prepared
+       statements available at the protocol level, and cleaner
+       recovery from <command>COPY</command> failures.  The older
+       protocol is still supported by both server and clients.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      <application>libpq</application> and
+      <application>ECPG</application> applications are now fully
+      thread-safe
+     </term>
+
+     <listitem>
+      <para>
+       While previous <application>libpq</application> releases
+       already supported threads, this release improves thread safety
+       by fixing some non-thread-safe code that was used during
+       database connection startup.  The <command>configure</command>
+       option <option>--enable-thread-safety</option> must be used to
+       enable this feature.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      New version of full-text indexing
+     </term>
+
+     <listitem>
+      <para>
+       A new full-text indexing suite is available in
+       <filename>contrib/tsearch2</filename>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      New autovacuum tool
+     </term>
+
+     <listitem>
+      <para>
+       The new autovacuum tool in
+       <filename>contrib/autovacuum</filename> monitors the database
+       statistics tables for
+       <command>INSERT</command>/<command>UPDATE</command>/<command>DELETE</command>
+       activity and automatically vacuums tables when needed.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      Array handling has been improved and moved into the server core
+     </term>
+
+     <listitem>
+      <para>
+       Many array limitations have been removed, and arrays behave
+       more like fully-supported data types.
+      </para>
+     </listitem>
+    </varlistentry>
+
+   </variablelist>
   </sect2>
 
   <sect2>
@@ -1001,146 +1064,147 @@ DROP SCHEMA information_schema CASCADE;
    
    <para>
     Observe the following incompatibilities:
-
-    <itemizedlist>
-     <listitem>
-      <para>
-       The server-side autocommit setting was removed and
-       reimplemented in client applications and languages.
-       Server-side autocommit was causing too many problems with
-       languages and applications that wanted to control their own
-       autocommit behavior, so autocommit was removed from the server
-       and added to individual client APIs as appropriate.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Error message wording has changed substantially in this
-       release.  Significant effort was invested to make the messages
-       more consistent and user-oriented.  If your applications try to
-       detect different error conditions by parsing the error message,
-       you are strongly encouraged to use the new error code facility instead.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Inner joins using the explicit <literal>JOIN</literal> syntax
-       may behave differently because they are now better
-       optimized.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       A number of server configuration parameters have been renamed
-       for clarity, primarily those related to
-       logging.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       <literal>FETCH 0</literal> or <literal>MOVE 0</literal> now
-       does nothing.  In prior releases, <literal>FETCH 0</literal>
-       would fetch all remaining rows, and <literal>MOVE 0</literal>
-       would move to the end of the cursor.
-      </para>
-     </listitem>
- 
-     <listitem>
-      <para>
-       <command>FETCH</command> and <command>MOVE</command> now return
-       the actual number of rows fetched/moved, or zero if at the
-       beginning/end of the cursor.  Prior releases would return the
-       row count passed to the command, not the number of rows
-       actually fetched or moved.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       <command>COPY</command> now can process files that use
-       carriage-return or carriage-return/line-feed end-of-line
-       sequences. Literal carriage-returns and line-feeds are no
-       longer accepted in data values; use <literal>\r</literal> and
-       <literal>\n</literal> instead.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Trailing spaces are now trimmed when converting from type
-       <type>char(<replaceable>n</>)</type> to
-       <type>varchar(<replaceable>n</>)</type> or <type>text</type>.
-       This is what most people always expected to happen anyway.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       The data type <type>float(<replaceable>p</>)</type> now
-       measures <replaceable>p</> in binary digits, not decimal
-       digits.  The new behavior follows the SQL standard.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Ambiguous date values now must match the ordering specified by
-       the <varname>datestyle</varname> setting.  In prior releases, a
-       date specification of <literal>10/20/03</> was interpreted as a
-       date in October even if <varname>datestyle</> specified that
-       the day should be first.  7.4 will throw an error if a date
-       specification is invalid for the current setting of
-       <varname>datestyle</>.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       The functions <function>oidrand</function>,
-       <function>oidsrand</function>, and
-       <function>userfntest</function> have been removed.  These
-       functions were determined to be no longer useful.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       String literals specifying time-varying date/time values, such
-       as <literal>'now'</literal> or <literal>'today'</literal> will
-       no longer work as expected in column default expressions; they
-       now cause the time of the table creation to be the default, not
-       the time of the insertion.  Functions such as
-       <function>now()</>, <function>current_timestamp</>, or
-       <function>current_date</function> should be used instead.
-      </para>
-
-      <para>
-       In previous releases, there was special code so that strings
-       such as <literal>'now'</literal> were interpreted at
-       <command>INSERT</> time and not at table creation time, but
-       this work around didn't cover all cases.  Release 7.4 now
-       requires that defaults be defined properly using functions such
-       as <function>now()</> or <function>current_timestamp</>. These
-       will work in all situations.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       The dollar sign (<literal>$</>) is no longer allowed in
-       operator names.  It can instead be a non-first character in
-       identifiers.  This was done to improve compatibility with other
-       database systems, and to avoid syntax problems when parameter
-       placeholders (<literal>$<replaceable>n</></>) are written
-       adjacent to operators.
-      </para>
-     </listitem>
-    </itemizedlist>
    </para>
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      The server-side autocommit setting was removed and
+      reimplemented in client applications and languages.
+      Server-side autocommit was causing too many problems with
+      languages and applications that wanted to control their own
+      autocommit behavior, so autocommit was removed from the server
+      and added to individual client APIs as appropriate.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Error message wording has changed substantially in this
+      release.  Significant effort was invested to make the messages
+      more consistent and user-oriented.  If your applications try to
+      detect different error conditions by parsing the error message,
+      you are strongly encouraged to use the new error code facility instead.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Inner joins using the explicit <literal>JOIN</literal> syntax
+      may behave differently because they are now better
+      optimized.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      A number of server configuration parameters have been renamed
+      for clarity, primarily those related to
+      logging.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <literal>FETCH 0</literal> or <literal>MOVE 0</literal> now
+      does nothing.  In prior releases, <literal>FETCH 0</literal>
+      would fetch all remaining rows, and <literal>MOVE 0</literal>
+      would move to the end of the cursor.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <command>FETCH</command> and <command>MOVE</command> now return
+      the actual number of rows fetched/moved, or zero if at the
+      beginning/end of the cursor.  Prior releases would return the
+      row count passed to the command, not the number of rows
+      actually fetched or moved.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <command>COPY</command> now can process files that use
+      carriage-return or carriage-return/line-feed end-of-line
+      sequences. Literal carriage-returns and line-feeds are no
+      longer accepted in data values; use <literal>\r</literal> and
+      <literal>\n</literal> instead.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Trailing spaces are now trimmed when converting from type
+      <type>char(<replaceable>n</>)</type> to
+      <type>varchar(<replaceable>n</>)</type> or <type>text</type>.
+      This is what most people always expected to happen anyway.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The data type <type>float(<replaceable>p</>)</type> now
+      measures <replaceable>p</> in binary digits, not decimal
+      digits.  The new behavior follows the SQL standard.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ambiguous date values now must match the ordering specified by
+      the <varname>datestyle</varname> setting.  In prior releases, a
+      date specification of <literal>10/20/03</> was interpreted as a
+      date in October even if <varname>datestyle</> specified that
+      the day should be first.  7.4 will throw an error if a date
+      specification is invalid for the current setting of
+      <varname>datestyle</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The functions <function>oidrand</function>,
+      <function>oidsrand</function>, and
+      <function>userfntest</function> have been removed.  These
+      functions were determined to be no longer useful.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      String literals specifying time-varying date/time values, such
+      as <literal>'now'</literal> or <literal>'today'</literal> will
+      no longer work as expected in column default expressions; they
+      now cause the time of the table creation to be the default, not
+      the time of the insertion.  Functions such as
+      <function>now()</>, <function>current_timestamp</>, or
+      <function>current_date</function> should be used instead.
+     </para>
+
+     <para>
+      In previous releases, there was special code so that strings
+      such as <literal>'now'</literal> were interpreted at
+      <command>INSERT</> time and not at table creation time, but
+      this work around didn't cover all cases.  Release 7.4 now
+      requires that defaults be defined properly using functions such
+      as <function>now()</> or <function>current_timestamp</>. These
+      will work in all situations.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The dollar sign (<literal>$</>) is no longer allowed in
+      operator names.  It can instead be a non-first character in
+      identifiers.  This was done to improve compatibility with other
+      database systems, and to avoid syntax problems when parameter
+      placeholders (<literal>$<replaceable>n</></>) are written
+      adjacent to operators.
+     </para>
+    </listitem>
+
+   </itemizedlist>
   </sect2>
 
   <sect2>
@@ -2567,6 +2631,57 @@ DROP SCHEMA information_schema CASCADE;
   </sect3>
   </sect2>
  </sect1>
+ 
+  <sect1 id="release-7-3-11">
+   <title>Release 7.3.11</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2005-10-04</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.3.10.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.3.11</title>
+
+    <para>
+     A dump/restore is not required for those running 7.3.X.  However,
+     if you are upgrading from a version earlier than 7.3.10, see the release
+     notes for 7.3.10.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Fix error that allowed <command>VACUUM</> to remove
+<literal>ctid</> chains too soon, and add more checking in code that follows
+<literal>ctid</> links</para>
+<para>This fixes a long-standing problem that could cause crashes in very rare
+circumstances.</para></listitem>
+<listitem><para>Fix <type>CHAR()</> to properly pad spaces to the specified
+length when using a multiple-byte character set (Yoshiyuki Asaba)</para>
+<para>In prior releases, the padding of <type>CHAR()</> was incorrect
+because it only padded to the specified number of bytes without
+considering how many characters were stored.</para></listitem>
+<listitem><para>Fix missing rows in queries like <literal>UPDATE a=... WHERE
+a...</> with GiST index on column <literal>a</></para></listitem>
+<listitem><para>Improve checking for partially-written WAL
+pages</para></listitem>
+<listitem><para>Improve robustness of signal handling when SSL is
+enabled</para></listitem>
+<listitem><para>Various memory leakage fixes</para></listitem>
+<listitem><para>Various portability improvements</para></listitem>
+<listitem><para>Fix PL/PgSQL to handle <literal>var := var</> correctly when
+the variable is of pass-by-reference type</para></listitem>
+</itemizedlist>
+
+   </sect2>
+  </sect1>
 
   <sect1 id="release-7-3-10">
    <title>Release 7.3.10</title>
@@ -3230,123 +3345,123 @@ operations on bytea columns (Joe)</para></listitem>
 
    <para>
     Major changes in this release:
-
-    <variablelist>
-     <varlistentry>
-      <term>Schemas</term>
-      <listitem>
-       <para>
-        Schemas allow users to create objects in separate namespaces,
-        so two people or applications can have tables with the same
-        name. There is also a public schema for shared tables.
-        Table/index creation can be restricted by removing privileges
-        on the public schema.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>Drop Column</term>
-      <listitem>
-       <para>
-        <productname>PostgreSQL</productname> now supports the
-        <literal>ALTER TABLE ... DROP COLUMN</literal> functionality.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>Table Functions</term>
-      <listitem>
-       <para>
-        Functions returning multiple rows and/or multiple columns are
-        now much easier to use than before.  You can call such a
-        <quote>table function</quote> in the <literal>SELECT</literal>
-        <literal>FROM</literal> clause, treating its output like a
-        table. Also, <application>PL/pgSQL</application> functions can
-        now return sets.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>Prepared Queries</term>
-      <listitem>
-       <para>
-        <productname>PostgreSQL</productname> now supports prepared
-        queries, for improved performance.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>Dependency Tracking</term>
-      <listitem>
-       <para>
-        <productname>PostgreSQL</productname> now records object
-        dependencies, which allows improvements in many areas.
-        <command>DROP</command> statements now take either
-        <literal>CASCADE</> or <literal>RESTRICT</> to control whether
-        dependent objects are also dropped.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>Privileges</term>
-      <listitem>
-       <para>
-        Functions and procedural languages now have privileges, and
-        functions can be defined to run with the privileges of their
-        creator.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>Internationalization</term>
-      <listitem>
-       <para>
-        Both multibyte and locale support are now always enabled.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>Logging</term>
-      <listitem>
-       <para>
-        A variety of logging options have been enhanced.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>Interfaces</term>
-      <listitem>
-       <para>
-        A large number of interfaces have been moved to <ulink
-        url="http://gborg.postgresql.org">http://gborg.postgresql.org</>
-        where they can be developed and released independently.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>Functions/Identifiers</term>
-      <listitem>
-       <para>
-        By default, functions can now take up to 32 parameters, and
-        identifiers can be up to 63 bytes long.  Also, <literal>OPAQUE</>
-        is now deprecated: there are specific <quote>pseudo-datatypes</>
-        to represent each of the former meanings of <literal>OPAQUE</>
-        in function argument and result types.
-       </para>
-      </listitem>
-     </varlistentry>
-
-    </variablelist>
    </para>
+
+   <variablelist>
+    <varlistentry>
+     <term>Schemas</term>
+     <listitem>
+      <para>
+       Schemas allow users to create objects in separate namespaces,
+       so two people or applications can have tables with the same
+       name. There is also a public schema for shared tables.
+       Table/index creation can be restricted by removing privileges
+       on the public schema.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>Drop Column</term>
+     <listitem>
+      <para>
+       <productname>PostgreSQL</productname> now supports the
+       <literal>ALTER TABLE ... DROP COLUMN</literal> functionality.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>Table Functions</term>
+     <listitem>
+      <para>
+       Functions returning multiple rows and/or multiple columns are
+       now much easier to use than before.  You can call such a
+       <quote>table function</quote> in the <literal>SELECT</literal>
+       <literal>FROM</literal> clause, treating its output like a
+       table. Also, <application>PL/pgSQL</application> functions can
+       now return sets.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>Prepared Queries</term>
+     <listitem>
+      <para>
+       <productname>PostgreSQL</productname> now supports prepared
+       queries, for improved performance.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>Dependency Tracking</term>
+     <listitem>
+      <para>
+       <productname>PostgreSQL</productname> now records object
+       dependencies, which allows improvements in many areas.
+       <command>DROP</command> statements now take either
+       <literal>CASCADE</> or <literal>RESTRICT</> to control whether
+       dependent objects are also dropped.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>Privileges</term>
+     <listitem>
+      <para>
+       Functions and procedural languages now have privileges, and
+       functions can be defined to run with the privileges of their
+       creator.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>Internationalization</term>
+     <listitem>
+      <para>
+       Both multibyte and locale support are now always enabled.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>Logging</term>
+     <listitem>
+      <para>
+       A variety of logging options have been enhanced.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>Interfaces</term>
+     <listitem>
+      <para>
+       A large number of interfaces have been moved to <ulink
+       url="http://gborg.postgresql.org">http://gborg.postgresql.org</>
+       where they can be developed and released independently.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>Functions/Identifiers</term>
+     <listitem>
+      <para>
+       By default, functions can now take up to 32 parameters, and
+       identifiers can be up to 63 bytes long.  Also, <literal>OPAQUE</>
+       is now deprecated: there are specific <quote>pseudo-datatypes</>
+       to represent each of the former meanings of <literal>OPAQUE</>
+       in function argument and result types.
+      </para>
+     </listitem>
+    </varlistentry>
+
+   </variablelist>
   </sect2>
 
   <sect2>
@@ -3358,105 +3473,103 @@ operations on bytea columns (Joe)</para></listitem>
     application examines the system catalogs, additional changes will
     be required due to the introduction of schemas in 7.3; for more
     information, see: <ulink
-    url="http://developer.postgresql.org/~momjian/upgrade_tips_7.3">
-    http://developer.postgresql.org/~momjian/upgrade_tips_7.3</>.
+    url="http://developer.postgresql.org/~momjian/upgrade_tips_7.3"></>.
    </para>
 
    <para>
     Observe the following incompatibilities:
-
-    <itemizedlist>
-     <listitem>
-      <para>
-       Pre-6.3 clients are no longer supported.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       <filename>pg_hba.conf</filename> now has a column for the user
-       name and additional features.  Existing files need to be
-       adjusted.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Several <filename>postgresql.conf</filename> logging parameters
-       have been renamed.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       <literal>LIMIT #,#</literal> has been disabled; use
-       <literal>LIMIT # OFFSET #</literal>.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       <command>INSERT</command> statements with column lists must
-       specify a value for each specified column. For example,
-       <literal>INSERT INTO tab (col1, col2) VALUES ('val1')</literal>
-       is now invalid.  It's still allowed to supply fewer columns than
-       expected if the <command>INSERT</command> does not have a column list.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       <type>serial</type> columns are no longer automatically
-       <literal>UNIQUE</>; thus, an index will not automatically be
-       created.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       A <command>SET</command> command inside an aborted transaction
-       is now rolled back.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       <command>COPY</command> no longer considers missing trailing
-       columns to be null.  All columns need to be specified.
-       (However, one may achieve a similar effect by specifying a
-       column list in the <command>COPY</command> command.)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       The data type <type>timestamp</type> is now equivalent to
-       <type>timestamp without time zone</type>, instead of
-       <type>timestamp with time zone</type>.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Pre-7.3 databases loaded into 7.3 will not have the new object
-       dependencies for <type>serial</type> columns, unique
-       constraints, and foreign keys. See the directory
-       <filename>contrib/adddepend/</filename> for a detailed
-       description and a script that will add such dependencies.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       An empty string (<literal>''</literal>) is no longer allowed as
-       the input into an integer field.  Formerly, it was silently
-       interpreted as 0.
-      </para>
-     </listitem>
-
-    </itemizedlist>
    </para>
 
+   <itemizedlist>
+    <listitem>
+     <para>
+      Pre-6.3 clients are no longer supported.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <filename>pg_hba.conf</filename> now has a column for the user
+      name and additional features.  Existing files need to be
+      adjusted.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Several <filename>postgresql.conf</filename> logging parameters
+      have been renamed.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <literal>LIMIT #,#</literal> has been disabled; use
+      <literal>LIMIT # OFFSET #</literal>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <command>INSERT</command> statements with column lists must
+      specify a value for each specified column. For example,
+      <literal>INSERT INTO tab (col1, col2) VALUES ('val1')</literal>
+      is now invalid.  It's still allowed to supply fewer columns than
+      expected if the <command>INSERT</command> does not have a column list.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <type>serial</type> columns are no longer automatically
+      <literal>UNIQUE</>; thus, an index will not automatically be
+      created.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      A <command>SET</command> command inside an aborted transaction
+      is now rolled back.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <command>COPY</command> no longer considers missing trailing
+      columns to be null.  All columns need to be specified.
+      (However, one may achieve a similar effect by specifying a
+      column list in the <command>COPY</command> command.)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The data type <type>timestamp</type> is now equivalent to
+      <type>timestamp without time zone</type>, instead of
+      <type>timestamp with time zone</type>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Pre-7.3 databases loaded into 7.3 will not have the new object
+      dependencies for <type>serial</type> columns, unique
+      constraints, and foreign keys. See the directory
+      <filename>contrib/adddepend/</filename> for a detailed
+      description and a script that will add such dependencies.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      An empty string (<literal>''</literal>) is no longer allowed as
+      the input into an integer field.  Formerly, it was silently
+      interpreted as 0.
+     </para>
+    </listitem>
+
+   </itemizedlist>
   </sect2>
 
   <sect2>
@@ -4231,82 +4344,83 @@ since <productname>PostgreSQL</productname> 7.1.
 
    <para>
     Major changes in this release:
-
-    <variablelist>
-     <varlistentry>
-      <term>VACUUM</term>
-      <listitem>
-       <para>
-        Vacuuming no longer locks tables, thus allowing normal user
-        access during the vacuum.  A new <command>VACUUM FULL</>
-        command does old-style vacuum by locking the table and
-        shrinking the on-disk copy of the table.
-       </para>
-      </listitem>
-     </varlistentry>
- 
-     <varlistentry>
-      <term>Transactions</term>
-      <listitem>
-       <para>
-        There is no longer a problem with installations that exceed
-        four billion transactions.
-       </para>
-      </listitem>
-     </varlistentry>
- 
-     <varlistentry>
-      <term>OIDs</term>
-      <listitem>
-       <para>
-        OIDs are now optional.  Users can now create tables without
-        OIDs for cases where OID usage is excessive.
-       </para>
-      </listitem>
-     </varlistentry>
- 
-     <varlistentry>
-      <term>Optimizer</term>
-      <listitem>
-       <para>
-        The system now computes histogram column statistics during
-        <command>ANALYZE</>, allowing much better optimizer choices.
-       </para>
-      </listitem>
-     </varlistentry>
- 
-     <varlistentry>
-      <term>Security</term>
-      <listitem>
-       <para>
-        A new MD5 encryption option allows more secure storage and
-        transfer of passwords.  A new Unix-domain socket
-        authentication option is available on Linux and BSD systems.
-       </para>
-      </listitem>
-     </varlistentry>
- 
-     <varlistentry>
-      <term>Statistics</term>
-      <listitem>
-       <para>
-        Administrators can use the new table access statistics module
-        to get fine-grained information about table and index usage.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>Internationalization</term>
-      <listitem>
-       <para>
-        Program and library messages can now be displayed in several
-        languages.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
    </para>
+
+   <variablelist>
+    <varlistentry>
+     <term>VACUUM</term>
+     <listitem>
+      <para>
+       Vacuuming no longer locks tables, thus allowing normal user
+       access during the vacuum.  A new <command>VACUUM FULL</>
+       command does old-style vacuum by locking the table and
+       shrinking the on-disk copy of the table.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>Transactions</term>
+     <listitem>
+      <para>
+       There is no longer a problem with installations that exceed
+       four billion transactions.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>OIDs</term>
+     <listitem>
+      <para>
+       OIDs are now optional.  Users can now create tables without
+       OIDs for cases where OID usage is excessive.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>Optimizer</term>
+     <listitem>
+      <para>
+       The system now computes histogram column statistics during
+       <command>ANALYZE</>, allowing much better optimizer choices.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>Security</term>
+     <listitem>
+      <para>
+       A new MD5 encryption option allows more secure storage and
+       transfer of passwords.  A new Unix-domain socket
+       authentication option is available on Linux and BSD systems.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>Statistics</term>
+     <listitem>
+      <para>
+       Administrators can use the new table access statistics module
+       to get fine-grained information about table and index usage.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>Internationalization</term>
+     <listitem>
+      <para>
+       Program and library messages can now be displayed in several
+       languages.
+      </para>
+     </listitem>
+    </varlistentry>
+
+   </variablelist>
   </sect2>
 
   <sect2>
@@ -4319,57 +4433,58 @@ since <productname>PostgreSQL</productname> 7.1.
 
    <para>
     Observe the following incompatibilities:
-
-    <itemizedlist>
-     <listitem>
-      <para>
-       The semantics of the <command>VACUUM</command> command have
-       changed in this release.  You may wish to update your
-       maintenance procedures accordingly.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       In this release, comparisons using <literal>= NULL</literal>
-       will always return false (or NULL, more precisely).  Previous
-       releases automatically transformed this syntax to <literal>IS
-       NULL</literal>.  The old behavior can be re-enabled using a
-       <filename>postgresql.conf</filename> parameter.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       The <filename>pg_hba.conf</> and <filename>pg_ident.conf</>
-       configuration is now only reloaded after receiving a
-       <systemitem>SIGHUP</> signal, not with each connection.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       The function <filename>octet_length()</> now returns the uncompressed data length.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       The date/time value <literal>'current'</literal> is no longer
-       available.  You will need to rewrite your applications.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       The <literal>timestamp()</literal>, <literal>time()</literal>,
-       and <literal>interval()</literal> functions are no longer
-       available.  Instead of <literal>timestamp()</literal>, use 
-       <literal>timestamp 'string'</literal> or <literal>CAST</literal>.
-      </para>
-     </listitem>
-    </itemizedlist>
    </para>
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      The semantics of the <command>VACUUM</command> command have
+      changed in this release.  You may wish to update your
+      maintenance procedures accordingly.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In this release, comparisons using <literal>= NULL</literal>
+      will always return false (or NULL, more precisely).  Previous
+      releases automatically transformed this syntax to <literal>IS
+      NULL</literal>.  The old behavior can be re-enabled using a
+      <filename>postgresql.conf</filename> parameter.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The <filename>pg_hba.conf</> and <filename>pg_ident.conf</>
+      configuration is now only reloaded after receiving a
+      <systemitem>SIGHUP</> signal, not with each connection.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The function <filename>octet_length()</> now returns the uncompressed data length.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The date/time value <literal>'current'</literal> is no longer
+      available.  You will need to rewrite your applications.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The <literal>timestamp()</literal>, <literal>time()</literal>,
+      and <literal>interval()</literal> functions are no longer
+      available.  Instead of <literal>timestamp()</literal>, use 
+      <literal>timestamp 'string'</literal> or <literal>CAST</literal>.
+     </para>
+    </listitem>
+
+   </itemizedlist>
 
    <para>
     The <literal>SELECT ... LIMIT #,#</literal> syntax will be removed
@@ -4905,83 +5020,83 @@ Python fixes (Darcy)
 
    <para>
     Major changes in this release:
+   </para>
 
-    <variablelist>
-     <varlistentry>
-      <term>
-        Write-ahead Log (WAL)
-      </term>
-      <listitem>
-       <para>
+   <variablelist>
+    <varlistentry>
+     <term>
+       Write-ahead Log (WAL)
+     </term>
+     <listitem>
+      <para>
 To maintain database consistency in case of an operating system crash,
 previous releases of <productname>PostgreSQL</productname> have forced
 all data modifications to disk before each transaction commit.  With
 WAL, only one log file must be flushed to disk, greatly improving
 performance.  If you have been using -F in previous releases to
 disable disk flushes, you may want to consider discontinuing its use.
-       </para>
-      </listitem>
-     </varlistentry>
+      </para>
+     </listitem>
+    </varlistentry>
 
-     <varlistentry>
-      <term>
-        TOAST
-      </term>
-      <listitem>
-       <para>
-        TOAST - Previous releases had a compiled-in row length limit,
+    <varlistentry>
+     <term>
+       TOAST
+     </term>
+     <listitem>
+      <para>
+       TOAST - Previous releases had a compiled-in row length limit,
 typically 8k - 32k. This limit made storage of long text fields
 difficult.  With TOAST, long rows of any length can be stored with good
 performance.
-       </para>
-      </listitem>
-     </varlistentry>
+      </para>
+     </listitem>
+    </varlistentry>
 
-     <varlistentry>
-      <term>
-        Outer Joins
-      </term>
-      <listitem>
-       <para>
+    <varlistentry>
+     <term>
+       Outer Joins
+     </term>
+     <listitem>
+      <para>
 We now support outer joins.  The UNION/NOT IN
 workaround for outer joins is no longer required.  We use the SQL92
 outer join syntax.
-       </para>
-      </listitem>
-     </varlistentry>
+      </para>
+     </listitem>
+    </varlistentry>
 
-     <varlistentry>
-      <term>
-        Function Manager
-      </term>
-      <listitem>
-       <para>
+    <varlistentry>
+     <term>
+       Function Manager
+     </term>
+     <listitem>
+      <para>
 The previous C function manager did not
 handle null values properly, nor did it support 64-bit <acronym>CPU</acronym>'s (Alpha).  The new
 function manager does.  You can continue using your old custom
 functions, but you may want to rewrite them in the future to use the new
 function manager call interface.
-       </para>
-      </listitem>
-     </varlistentry>
+      </para>
+     </listitem>
+    </varlistentry>
 
-     <varlistentry>
-      <term>
-        Complex Queries
-      </term>
-      <listitem>
-       <para>
+    <varlistentry>
+     <term>
+       Complex Queries
+     </term>
+     <listitem>
+      <para>
 A large number of complex queries that were
 unsupported in previous releases now work.  Many combinations of views,
 aggregates, UNION, LIMIT, cursors, subqueries, and inherited tables
 now work properly. Inherited tables are now accessed by default. 
 Subqueries in FROM are now supported.
-       </para>
-      </listitem>
-     </varlistentry>
+      </para>
+     </listitem>
+    </varlistentry>
 
-    </variablelist>
-   </para>
+   </variablelist>
 
    <sect2>
     <title>Migration to version 7.1</title>
@@ -5368,62 +5483,63 @@ ecpg changes (Michael)
 
    <para>
     Major changes in this release:
-
-    <variablelist>
-     <varlistentry>
-      <term>
-       Foreign Keys
-      </term>
-      <listitem>
-       <para>
-        Foreign keys are now implemented, with the exception of PARTIAL MATCH
-        foreign keys. Many users have been asking for this feature, and we are
-        pleased to offer it.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       Optimizer Overhaul
-      </term>
-      <listitem>
-       <para>
-        Continuing on work started a year ago, the optimizer has been
-        improved, allowing better query plan selection and faster performance
-        with less memory usage.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       Updated <application>psql</application>
-      </term>
-      <listitem>
-       <para>
-        <application>psql</application>, our interactive terminal monitor, has been
-        updated with a variety of new features. See the <application>psql</application> manual page for details.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       Join Syntax
-      </term>
-      <listitem>
-       <para>
-        SQL92 join syntax is now supported, though only as
-        <literal>INNER JOIN</> for this release. <literal>JOIN</>,
-        <literal>NATURAL JOIN</>, <literal>JOIN</>/<literal>USING</>,
-        and <literal>JOIN</>/<literal>ON</> are available, as are
-        column correlation names.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
    </para>
+
+   <variablelist>
+    <varlistentry>
+     <term>
+      Foreign Keys
+     </term>
+     <listitem>
+      <para>
+       Foreign keys are now implemented, with the exception of PARTIAL MATCH
+       foreign keys. Many users have been asking for this feature, and we are
+       pleased to offer it.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      Optimizer Overhaul
+     </term>
+     <listitem>
+      <para>
+       Continuing on work started a year ago, the optimizer has been
+       improved, allowing better query plan selection and faster performance
+       with less memory usage.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      Updated <application>psql</application>
+     </term>
+     <listitem>
+      <para>
+       <application>psql</application>, our interactive terminal monitor, has been
+       updated with a variety of new features. See the <application>psql</application> manual page for details.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>
+      Join Syntax
+     </term>
+     <listitem>
+      <para>
+       SQL92 join syntax is now supported, though only as
+       <literal>INNER JOIN</> for this release. <literal>JOIN</>,
+       <literal>NATURAL JOIN</>, <literal>JOIN</>/<literal>USING</>,
+       and <literal>JOIN</>/<literal>ON</> are available, as are
+       column correlation names.
+      </para>
+     </listitem>
+
+    </varlistentry>
+   </variablelist>
 
    <sect2>
     <title>Migration to version 7.0</title>
@@ -5441,54 +5557,53 @@ ecpg changes (Michael)
     <para>
      Interface and compatibility issues to consider for the new
      release include:
-
-     <itemizedlist>
-      <listitem>
-       <para>
-        The date/time types <type>datetime</type> and
-        <type>timespan</type> have been superseded by the
-        SQL92-defined types <type>timestamp</type> and
-        <type>interval</type>. Although there has been some effort to
-        ease the transition by allowing
-        <productname>PostgreSQL</productname> to recognize
-        the deprecated type names and translate them to the new type
-        names, this mechanism may not be completely transparent to
-        your existing application.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        The optimizer has been substantially improved in the area of
-        query cost estimation. In some cases, this will result in
-        decreased query times as the optimizer makes a better choice
-        for the preferred plan. However, in a small number of cases,
-        usually involving pathological distributions of data, your
-        query times may go up. If you are dealing with large amounts
-        of data, you may want to check your queries to verify
-        performance.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        The <acronym>JDBC</acronym> and <acronym>ODBC</acronym>
-        interfaces have been upgraded and extended.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        The string function <function>CHAR_LENGTH</function> is now a
-        native function. Previous versions translated this into a call
-        to <function>LENGTH</function>, which could result in
-        ambiguity with other types implementing
-        <function>LENGTH</function> such as the geometric types.
-       </para>
-      </listitem>
-     </itemizedlist>
     </para>
 
+    <itemizedlist>
+     <listitem>
+      <para>
+       The date/time types <type>datetime</type> and
+       <type>timespan</type> have been superseded by the
+       SQL92-defined types <type>timestamp</type> and
+       <type>interval</type>. Although there has been some effort to
+       ease the transition by allowing
+       <productname>PostgreSQL</productname> to recognize
+       the deprecated type names and translate them to the new type
+       names, this mechanism may not be completely transparent to
+       your existing application.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The optimizer has been substantially improved in the area of
+       query cost estimation. In some cases, this will result in
+       decreased query times as the optimizer makes a better choice
+       for the preferred plan. However, in a small number of cases,
+       usually involving pathological distributions of data, your
+       query times may go up. If you are dealing with large amounts
+       of data, you may want to check your queries to verify
+       performance.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The <acronym>JDBC</acronym> and <acronym>ODBC</acronym>
+       interfaces have been upgraded and extended.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The string function <function>CHAR_LENGTH</function> is now a
+       native function. Previous versions translated this into a call
+       to <function>LENGTH</function>, which could result in
+       ambiguity with other types implementing
+       <function>LENGTH</function> such as the geometric types.
+      </para>
+     </listitem>
+    </itemizedlist>
    </sect2>
 
    <sect2>
@@ -6976,7 +7091,7 @@ Better identify tcl and tk libs and includes(Bruce)
 
    <para>
     There are some general 6.3 issues that I want to mention.  These are
-    only the big items that can not be described in one sentence.  A review
+    only the big items that cannot be described in one sentence.  A review
     of the detailed changes list is still needed.
    </para>
    <para>
@@ -8542,4 +8657,3 @@ sgml-local-catalogs:("/usr/lib/sgml/catalog")
 sgml-local-ecat-files:nil
 End:
 -->
-
