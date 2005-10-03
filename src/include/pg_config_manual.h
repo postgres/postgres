@@ -6,7 +6,7 @@
  * for developers.	If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.16 2005/03/29 03:01:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.17 2005/10/03 22:55:56 tgl Exp $
  *------------------------------------------------------------------------
  */
 
@@ -230,10 +230,14 @@
 /* #define WAL_DEBUG */
 
 /*
+ * Enable tracing of resource consumption during sort operations;
+ * see also the trace_sort GUC var.  For 8.1 this is enabled by default.
+ */
+#define TRACE_SORT 1
+
+/*
  * Other debug #defines (documentation, anyone?)
  */
-/* #define IPORTAL_DEBUG  */
-/* #define HEAPDEBUGALL  */
+/* #define HEAPDEBUGALL */
 /* #define ACLDEBUG */
 /* #define RTDEBUG */
-/* #define GISTDEBUG */

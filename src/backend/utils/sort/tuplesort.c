@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.50 2005/09/23 15:36:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.51 2005/10/03 22:55:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,8 +95,15 @@
 #include "utils/logtape.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/pg_rusage.h"
 #include "utils/syscache.h"
 #include "utils/tuplesort.h"
+
+
+/* GUC variable */
+#ifdef TRACE_SORT
+bool			trace_sort = false;
+#endif
 
 
 /*
@@ -283,6 +290,13 @@ struct Tuplesortstate
 	/* we need typelen and byval in order to know how to copy the Datums. */
 	int			datumTypeLen;
 	bool		datumTypeByVal;
+
+	/*
+	 * Resource snapshot for time of sort start.
+	 */
+#ifdef TRACE_SORT
+	PGRUsage	ru_start;
+#endif
 };
 
 #define COMPARETUP(state,a,b)	((*(state)->comparetup) (state, a, b))
@@ -422,6 +436,11 @@ tuplesort_begin_common(int workMem, bool randomAccess)
 
 	state = (Tuplesortstate *) palloc0(sizeof(Tuplesortstate));
 
+#ifdef TRACE_SORT
+	if (trace_sort)
+		pg_rusage_init(&state->ru_start);
+#endif
+
 	state->status = TSS_INITIAL;
 	state->randomAccess = randomAccess;
 	state->availMem = workMem * 1024L;
@@ -455,6 +474,13 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 	int			i;
 
 	AssertArg(nkeys > 0);
+
+#ifdef TRACE_SORT
+	if (trace_sort)
+		elog(NOTICE,
+			 "begin tuple sort: nkeys = %d, workMem = %d, randomAccess = %c",
+			 nkeys, workMem, randomAccess ? 't' : 'f');
+#endif
 
 	state->comparetup = comparetup_heap;
 	state->copytup = copytup_heap;
@@ -499,6 +525,14 @@ tuplesort_begin_index(Relation indexRel,
 {
 	Tuplesortstate *state = tuplesort_begin_common(workMem, randomAccess);
 
+#ifdef TRACE_SORT
+	if (trace_sort)
+		elog(NOTICE,
+			 "begin index sort: unique = %c, workMem = %d, randomAccess = %c",
+			 enforceUnique ? 't' : 'f',
+			 workMem, randomAccess ? 't' : 'f');
+#endif
+
 	state->comparetup = comparetup_index;
 	state->copytup = copytup_index;
 	state->writetup = writetup_index;
@@ -521,6 +555,13 @@ tuplesort_begin_datum(Oid datumType,
 	RegProcedure sortFunction;
 	int16		typlen;
 	bool		typbyval;
+
+#ifdef TRACE_SORT
+	if (trace_sort)
+		elog(NOTICE,
+			 "begin datum sort: workMem = %d, randomAccess = %c",
+			 workMem, randomAccess ? 't' : 'f');
+#endif
 
 	state->comparetup = comparetup_datum;
 	state->copytup = copytup_datum;
@@ -572,6 +613,12 @@ tuplesort_end(Tuplesortstate *state)
 		pfree(state->scanKeys);
 	if (state->sortFnKinds)
 		pfree(state->sortFnKinds);
+
+#ifdef TRACE_SORT
+	if (trace_sort)
+		elog(NOTICE, "sort ended: %s",
+			 pg_rusage_show(&state->ru_start));
+#endif
 
 	pfree(state);
 }
@@ -712,6 +759,12 @@ puttuple_common(Tuplesortstate *state, void *tuple)
 void
 tuplesort_performsort(Tuplesortstate *state)
 {
+#ifdef TRACE_SORT
+	if (trace_sort)
+		elog(NOTICE, "performsort starting: %s",
+			 pg_rusage_show(&state->ru_start));
+#endif
+
 	switch (state->status)
 	{
 		case TSS_INITIAL:
@@ -751,6 +804,13 @@ tuplesort_performsort(Tuplesortstate *state)
 			elog(ERROR, "invalid tuplesort state");
 			break;
 	}
+
+#ifdef TRACE_SORT
+	if (trace_sort)
+		elog(NOTICE, "performsort done%s: %s",
+			 (state->status == TSS_FINALMERGE) ? " (except final merge)" : "",
+			 pg_rusage_show(&state->ru_start));
+#endif
 }
 
 /*
@@ -985,6 +1045,12 @@ inittapes(Tuplesortstate *state)
 {
 	int			ntuples,
 				j;
+
+#ifdef TRACE_SORT
+	if (trace_sort)
+		elog(NOTICE, "switching to external sort: %s",
+			 pg_rusage_show(&state->ru_start));
+#endif
 
 	state->tapeset = LogicalTapeSetCreate(MAXTAPES);
 
@@ -1243,6 +1309,12 @@ mergeonerun(Tuplesortstate *state)
 	 */
 	markrunend(state, destTape);
 	state->tp_runs[TAPERANGE]++;
+
+#ifdef TRACE_SORT
+	if (trace_sort)
+		elog(NOTICE, "finished merge step: %s",
+			 pg_rusage_show(&state->ru_start));
+#endif
 }
 
 /*
@@ -1455,6 +1527,14 @@ dumptuples(Tuplesortstate *state, bool alltuples)
 			state->currentRun++;
 			state->tp_runs[state->destTape]++;
 			state->tp_dummy[state->destTape]--; /* per Alg D step D2 */
+
+#ifdef TRACE_SORT
+			if (trace_sort)
+				elog(NOTICE, "finished writing%s run %d: %s",
+					 (state->memtupcount == 0) ? " final" : "",
+					 state->currentRun,
+					 pg_rusage_show(&state->ru_start));
+#endif
 
 			/*
 			 * Done if heap is empty, else prepare for new run.

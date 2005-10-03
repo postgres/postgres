@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.23 2005/09/24 23:25:31 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.24 2005/10/03 22:55:50 tgl Exp $
 -->
 <chapter Id="runtime-config">
   <title>Run-time Configuration</title>
@@ -4067,6 +4067,21 @@ plruby.use_strict = true        # generates error: unknown class name
         <xref linkend="guc-log-min-messages"> must be
         <literal>DEBUG1</literal> or lower to send this output to the
         client or server log, respectively.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-trace-sort" xreflabel="trace_sort">
+      <term><varname>trace_sort</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>trace_sort</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        If on, emit information about resource usage during sort operations.
+        This option is only available if the <symbol>TRACE_SORT</symbol> macro
+        was defined when <productname>PostgreSQL</productname> was compiled.
+        (However, <symbol>TRACE_SORT</symbol> is currently defined by default.)
        </para>
       </listitem>
      </varlistentry>
