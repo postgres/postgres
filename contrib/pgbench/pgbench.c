@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.39 2005/10/04 13:40:45 ishii Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.40 2005/10/04 17:10:55 teodor Exp $
  *
  * pgbench: a simple benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -137,37 +137,37 @@ int num_files;	/* its number */
 
 /* default scenario */
 static char *tpc_b = {
-"\\setrandom aid 1 100000
-\\setrandom bid 1 1
-\\setrandom tid 1 10
-\\setrandom delta 1 10000
-BEGIN;
-UPDATE accounts SET abalance = abalance + :delta WHERE aid = :aid;
-SELECT abalance FROM accounts WHERE aid = :aid;
-UPDATE tellers SET tbalance = tbalance + :delta WHERE tid = :tid;
-UPDATE branches SET bbalance = bbalance + :delta WHERE bid = :bid;
-INSERT INTO history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);
-END;
-"};
+"\\setrandom aid 1 100000\n"
+"\\setrandom bid 1 1\n"
+"\\setrandom tid 1 10\n"
+"\\setrandom delta 1 10000\n"
+"BEGIN;\n"
+"UPDATE accounts SET abalance = abalance + :delta WHERE aid = :aid;\n"
+"SELECT abalance FROM accounts WHERE aid = :aid;\n"
+"UPDATE tellers SET tbalance = tbalance + :delta WHERE tid = :tid;\n"
+"UPDATE branches SET bbalance = bbalance + :delta WHERE bid = :bid;\n"
+"INSERT INTO history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);\n"
+"END;\n"
+};
 
 /* -N case */
 static char *simple_update = {
-"\\setrandom aid 1 100000
-\\setrandom bid 1 1
-\\setrandom tid 1 10
-\\setrandom delta 1 10000
-BEGIN;
-UPDATE accounts SET abalance = abalance + :delta WHERE aid = :aid;
-SELECT abalance FROM accounts WHERE aid = :aid;
-INSERT INTO history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);
-END;
-"};
+"\\setrandom aid 1 100000\n"
+"\\setrandom bid 1 1\n"
+"\\setrandom tid 1 10\n"
+"\\setrandom delta 1 10000\n"
+"BEGIN;\n"
+"UPDATE accounts SET abalance = abalance + :delta WHERE aid = :aid;\n"
+"SELECT abalance FROM accounts WHERE aid = :aid;\n"
+"INSERT INTO history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);\n"
+"END;\n"
+};
 
 /* -S case */
 static char *select_only = {
-"\\setrandom aid 1 100000
-SELECT abalance FROM accounts WHERE aid = :aid;
-"};
+"\\setrandom aid 1 100000\n"
+"SELECT abalance FROM accounts WHERE aid = :aid;\n"
+};
 
 static void
 usage(void)
