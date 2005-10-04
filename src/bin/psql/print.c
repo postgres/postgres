@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.76 2005/09/27 16:30:25 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.77 2005/10/04 19:01:18 petere Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -1579,7 +1579,7 @@ printTable(const char *title,
 									border, output);
 			break;
 		default:
-			fprintf(stderr, _("illegal output format: %d"), opt->format);
+			fprintf(stderr, _("invalid output format (internal error): %d"), opt->format);
 			exit(EXIT_FAILURE);
 	}
 

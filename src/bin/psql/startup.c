@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.123 2005/09/20 18:59:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.124 2005/10/04 19:01:18 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -191,14 +191,14 @@ main(int argc, char *argv[])
 	}
 
 	if (options.username == NULL)
-		password_prompt = strdup("Password: ");
+		password_prompt = pg_strdup(_("Password: "));
 	else
 	{
-		password_prompt = malloc(strlen("Password for user %s: ") - 2 +
+		password_prompt = malloc(strlen(_("Password for user %s: ")) - 2 +
 								 strlen(options.username) + 1);
-		sprintf(password_prompt,"Password for user %s: ", options.username);
+		sprintf(password_prompt, _("Password for user %s: "), options.username);
 	}
-	
+
 	if (pset.getPassword)
 		password = simple_prompt(password_prompt, 100, false);
 
@@ -252,7 +252,8 @@ main(int argc, char *argv[])
 	{
 		pset.logfile = fopen(options.logfilename, "a");
 		if (!pset.logfile)
-			fprintf(stderr, gettext("logfile open failed for %s\n\n"), options.logfilename);
+			fprintf(stderr, _("%s: could not open log file \"%s\": %s\n"),
+					pset.progname, options.logfilename, strerror(errno));
 	}
 
 	/*
@@ -422,7 +423,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 		{"host", required_argument, NULL, 'h'},
 		{"html", no_argument, NULL, 'H'},
 		{"list", no_argument, NULL, 'l'},
-		{"log", required_argument, NULL, 'L'},
+		{"log-file", required_argument, NULL, 'L'},
 		{"no-readline", no_argument, NULL, 'n'},
 		{"output", required_argument, NULL, 'o'},
 		{"port", required_argument, NULL, 'p'},
@@ -528,7 +529,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 
 					if (!result)
 					{
-						fprintf(stderr, _("%s: couldn't set printing parameter \"%s\"\n"), pset.progname, value);
+						fprintf(stderr, _("%s: could not set printing parameter \"%s\"\n"), pset.progname, value);
 						exit(EXIT_FAILURE);
 					}
 

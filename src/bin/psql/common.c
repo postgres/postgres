@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.105 2005/09/20 21:43:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.106 2005/10/04 19:01:18 petere Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -74,7 +74,7 @@ pg_strdup(const char *string)
 
 	if (!string)
 	{
-		fprintf(stderr, _("%s: xstrdup: cannot duplicate null pointer (internal error)\n"),
+		fprintf(stderr, _("%s: pg_strdup: cannot duplicate null pointer (internal error)\n"),
 				pset.progname);
 		exit(EXIT_FAILURE);
 	}
@@ -719,15 +719,16 @@ PSQLexec(const char *query, bool start_xact)
 	echo_hidden = SwitchVariable(pset.vars, "ECHO_HIDDEN", "noexec", NULL);
 	if (echo_hidden != VAR_NOTSET)
 	{
-		printf("********* QUERY **********\n"
-			   "%s\n"
-			   "**************************\n\n", query);
+		printf(_("********* QUERY **********\n"
+				 "%s\n"
+				 "**************************\n\n"), query);
 		fflush(stdout);
 		if (pset.logfile)
 		{
-			fprintf(pset.logfile, "********* QUERY **********\n"
-			   "%s\n"
-			   "**************************\n\n", query);
+			fprintf(pset.logfile,
+					_("********* QUERY **********\n"
+					  "%s\n"
+					  "**************************\n\n"), query);
 			fflush(pset.logfile);
 		}
 
@@ -987,9 +988,10 @@ SendQuery(const char *query)
 
 	if (pset.logfile)
 	{
-		fprintf(pset.logfile, "********* QUERY **********\n"
-		   "%s\n"
-		   "**************************\n\n", query);
+		fprintf(pset.logfile,
+				_("********* QUERY **********\n"
+				  "%s\n"
+				  "**************************\n\n"), query);
 		fflush(pset.logfile);
 	}
 

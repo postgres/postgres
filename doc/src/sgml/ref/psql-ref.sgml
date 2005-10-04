@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.149 2005/08/14 18:49:29 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.150 2005/10/04 19:01:14 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -224,10 +224,10 @@ PostgreSQL documentation
 
     <varlistentry>
       <term><option>-L <replaceable class="parameter">filename</replaceable></></term>
-      <term><option>--log <replaceable class="parameter">filename</replaceable></></term>
+      <term><option>--log-file <replaceable class="parameter">filename</replaceable></></term>
       <listitem>
       <para>
-      Log all query output into file <replaceable
+      Write all query output into file <replaceable
       class="parameter">filename</replaceable> in addition to the regular output source.
       </para>
       </listitem>
