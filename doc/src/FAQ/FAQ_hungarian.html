@@ -1,0 +1,1668 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+  <title>PostgreSQL GYIK</title>
+</head>
+<body>
+<br>
+<div style="text-align: center;">
+<h1>PostgreSQL GyIK</h1>
+<br>
+</div>
+<br>
+<pre>Utols&oacute; m&oacute;dos&iacute;t&aacute;s d&aacute;tuma: 2005 m&aacute;jus 9.</pre>
+<pre>Ford&iacute;t&aacute;s aktualiz&aacute;l&aacute;sa: 2005 j&uacute;nius</pre>
+<pre><br>
+A GyIK karbantart&oacute;ja: Bruce Momjian (<a
+ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)</pre>
+<pre>Ford&iacute;t&oacute;: Horny&aacute;k L&aacute;szl&oacute;<br>(<a
+ href="mailto:laszlo.hornyak.nospam@gmail.com">laszlo.hornyak.nospam@gmail.com</a>)</pre>
+<pre><br>
+A legfrissebb verzi&oacute; itt &eacute;rhet&otilde; el (angol):</pre>
+<pre><a href="http://www.PostgreSQL.org/docs/faq-english.html">http://www.PostgreSQL.org/docs/faq-english.html</a>.</pre>
+<pre><br>
+Legfrissebb magyar nyelv&ucirc; verzi&oacute;:</pre>
+<pre><a href="http://hackers.forgeahead.hu/space/PostgreSQL/GYIK">http://hackers.forgeahead.hu/space/PostgreSQL/GYIK</a></pre>
+<pre><br>
+Platform specifikus k&eacute;rd&eacute;sek:</pre>
+<pre><a href="http://www.PostgreSQL.org/users-lounge/docs/faq.htm">http://www.PostgreSQL.org/users-lounge/docs/faq.htm</a>l.</pre>
+<hr style="width: 100%; height: 2px;">
+<div style="text-align: center;">
+<h2>&Aacute;ltal&aacute;nos k&eacute;rd&eacute;sek</h2>
+</div>
+<a href="#1.1">1.1</a> Mi a PostgreSQL? Hogy kell kimondani?<br>
+<a href="#1.2">1.2</a> Mik a PostgreSQL felhaszn&aacute;l&aacute;si
+felt&eacute;telei?<br>
+<a href="#1.3">1.3</a> Milyen UNIX oper&aacute;ci&oacute;s
+rendszereken fut PostgreSQL?<br>
+<a href="#1.4">1.4</a> Milyen nem UNIX oper&aacute;ci&oacute;s
+rendszerek el&eacute;rhet&otilde;ek?<br>
+<a href="#1.5">1.5</a> Hogyan tudok PostgreSQL-t szerezni?<br>
+<a href="#1.6">1.6</a> Hogyan kapok
+term&eacute;kt&aacute;mogat&aacute;st?<br>
+<a href="#1.7">1.7</a> Melyik a legfrissebb kiad&aacute;s?<br>
+<a href="#1.8">1.8</a> Milyen dokument&aacute;ci&oacute; &aacute;ll
+rendelkez&eacute;sre?<br>
+<a href="#1.9">1.9</a> Hogyan tal&aacute;lok inform&aacute;ci&oacute;t
+hib&aacute;kr&oacute;l vagy hi&aacute;nyz&oacute;
+funkcional&iacute;t&aacute;sr&oacute;l?<br>
+<a href="#1.10">1.10</a> Hogy tanuljam meg az SQL nyelvet?<br>
+<a href="#1.11">1.11</a> A PostgreSQL 2000. &eacute;v kompatibilis?<br>
+<a href="#1.12">1.12</a> Hogyan lehet csatlakozni a fejleszt&otilde;
+csapathoz?<br>
+<a href="#1.13">1.13</a> Hogyan k&uuml;ldjek hibajelent&eacute;st?<br>
+<a href="#1.14">1.14</a> Milyen a PostgreSQL m&aacute;s DBMS-ekkel
+&ouml;sszehasonl&iacute;tva?<br>
+<a href="#1.15">1.15</a> Hogyan tudom &uuml;zletileg segiteni a
+PostgreSQL-t?<br>
+<a href="#1.16">1.16</a> Ki ir&aacute;ny&iacute;tja a PostgreSQL-t?<br>
+<br>
+<div style="text-align: center;">
+<h2>Felhaszn&aacute;l&oacute;i kliens k&eacute;rd&eacute;sek</h2>
+</div>
+<br>
+<a href="#2.1">2.1</a> Van ODBC meghajt&oacute; PostgreSQL-hez?<br>
+<a href="#2.2">2.2</a> Milyen eszk&ouml;z&ouml;k &aacute;llnak
+rendelkez&eacute;sre PostgreSQL Web fejleszt&eacute;sekhez?<br>
+<a href="#2.3">2.3</a> Van a PostgreSQL-hez grafikus
+felhaszn&aacute;l&oacute;i fel&uuml;let ? Riport gener&aacute;tor?
+Be&aacute;gyazott lek&eacute;rdez&otilde; nyelv fel&uuml;let?<br>
+<a href="#2.4">2.4</a> Milyen programoz&aacute;si nyelvekkel lehet
+el&eacute;rni a PostgreSQL szervert?<br>
+<br>
+<div style="text-align: center;">
+<h2>Adminisztr&aacute;ci&oacute;s k&eacute;rd&eacute;sek</h2>
+</div>
+<br>
+<a href="#3.1">3.1</a> Hogyan tudom a PostgreSQL-t /usr/local/pgsql
+-t&otilde;l elt&eacute;r&otilde; helyre install&aacute;lni?<br>
+<a href="#3.2">3.2</a> AMikor elind&iacute;tom a postmaster-t, egy
+"Bad System Call"-t vagy core dump-ot kapok. Mi&eacute;rt?<br>
+<a href="#3.3">3.3</a> Amikor megpr&oacute;b&aacute;lom inditani a
+postmaster-t, "IpcMemoryCreate" hib&aacute;kat kapok. Mi&eacute;rt?<br>
+<a href="#3.4">3.4</a> Amikor megpr&oacute;b&aacute;lom inditani a
+postmaster-t, "IpcSemaphoreCreate" hib&aacute;kat kapok. Mi&eacute;rt?<br>
+<a href="#3.5">3.5</a> Hogyan tudom kontroll&aacute;lni a m&aacute;s
+g&eacute;pekr&otilde;l &eacute;rkez&otilde; kapcsolat
+k&eacute;r&eacute;seket?<br>
+<a href="#3.6">3.6</a> Hogyan tudom nagyobb
+teljes&iacute;tm&eacute;nyre hangolni az
+adatb&aacute;zisomat?<br>
+<a href="#3.7">3.7</a> Milyen hibakeres&otilde;
+lehet&otilde;s&eacute;gek
+&eacute;rhet&otilde;ek el?<br>
+<a href="#3.8">3.8</a> Mi&eacute;rt kapok "Sorry, too many clients"
+hib&aacute;t
+csatlakoz&aacute;sn&aacute;l?<br>
+<a href="#3.9">3.9</a> Mi van pgsql_tmp k&ouml;nyvt&aacute;rban?<br>
+<a href="#3.10">3.10</a> Mi&eacute;rt kell dumpolni &eacute;s
+&uacute;jrat&ouml;lteni
+PostgreSQL kiad&aacute;s v&aacute;lt&aacute;s&aacute;n&aacute;l?<br>
+<br>
+<div style="text-align: center;">
+<h2>M&ucirc;k&ouml;dtet&eacute;si k&eacute;rd&eacute;sek</h2>
+</div>
+<br>
+<a href="#4.1">4.1</a> Mi a k&uuml;l&ouml;nbs&eacute;g a bin&aacute;ris
+&eacute;s a
+norm&aacute;l kurzorok k&ouml;z&ouml;tt?<br>
+<a href="#4.2">4.2</a> Hogyan tudom select-elni a
+lek&eacute;rdez&eacute;s els&otilde;
+p&aacute;r sor&aacute;t?<br>
+<a href="#4.3">4.3</a> Hogy tudom kilist&aacute;zni a
+t&aacute;bl&aacute;kat vagy
+m&aacute;s dolgokat a PostgreSQL-ben?<br>
+<a href="#4.4">4.4</a> Hogyan tudok elt&aacute;vol&iacute;tani egy
+oszlopot egy
+t&aacute;bl&aacute;b&oacute;l?<br>
+<a href="#4.5">4.5</a> Mi a maxim&aacute;lis m&eacute;rete egy sornak,
+egy
+t&aacute;bl&aacute;nak vagy egy adatb&aacute;zisnak?<br>
+<a href="#4.6">4.6</a> Mekkora adatb&aacute;zis lemez ter&uuml;let
+sz&uuml;ks&eacute;ges
+egy tipikus sz&ouml;veg &aacute;llom&aacute;ny
+t&aacute;rol&aacute;s&aacute;hoz?<br>
+<a href="#4.7">4.7</a> Hogy tudhatom meg milyen t&aacute;bl&aacute;k,
+indexek,
+adatb&aacute;zisok vagy felhaszn&aacute;l&oacute;k vannak
+defini&aacute;lva?<br>
+<a href="#4.8">4.8</a> A lek&eacute;rdez&eacute;seim lass&uacute;ak,
+vagy nem
+haszn&aacute;lj&aacute;k az indexeket. Mi&eacute;rt?<br>
+<a href="#4.9">4.9</a> Hogy tudom ellen&otilde;rizni, hogy
+optimaliz&aacute;lta a
+lek&eacute;rdez&eacute;s optimaliz&aacute;l&oacute; a
+lek&eacute;rdez&eacute;sem?<br>
+<a href="#4.10">4.10</a> Mi az R-tree index?<br>
+<a href="#4.11">4.11</a> Mi a Genetic Query Optimizer?<br>
+<a href="4.12">4.12</a> Hogyan tudok regexp keres&eacute;st &eacute;s
+case-insensitive
+regexp keres&eacute;st haszn&aacute;lni? Hogyan tudok indexet
+haszn&aacute;lni case-insensitive keres&eacute;shez?<br>
+<a href="4.13">4.13</a> Hogyan tudom &eacute;szlelni egy
+lek&eacute;rdez&eacute;sban, ha
+egy mez&otilde; NULL?<br>
+<a href="#4.14">4.14</a> Mi a k&uuml;l&ouml;nbs&eacute;g a
+k&uuml;l&ouml;nb&ouml;z&otilde;
+karaktert&iacute;pusok k&ouml;z&ouml;tt?<br>
+<a href="#4.15.1">4.15.1</a> Hogyan tudok l&eacute;trehozni
+automatikusan
+n&ouml;vekv&otilde; &eacute;rt&eacute;k&ucirc; mez&otilde;t?<br>
+<a href="#4.15.2">4.15.2</a> Hogyan kaphatom meg egy SERIAL
+besz&uacute;r&aacute;s
+&eacute;rt&eacute;k&eacute;t?<br>
+<a href="#4.15.3">4.15.3</a> A currval() &eacute;s a nextval() nem
+teremt holtpont
+vesz&eacute;lyes helyzetet a felhaszn&aacute;l&oacute;k
+k&ouml;z&ouml;tt?<br>
+<a href="#4.15.4">4.15.4</a> Mi&eacute;rt nem
+haszn&aacute;l&oacute;dnak fel &uacute;jra a
+sequence sz&aacute;mok tranzakci&oacute; abort eset&eacute;n?
+Mi&eacute;rt vannak probl&eacute;m&aacute;k a serial oszlopok
+sz&aacute;moz&aacute;s&aacute;val?<br>
+<a href="#4.16">4.16</a> Mi a OID? Mi a TID?<br>
+<a href="#4.17">4.17</a> Mi a PostgreSQL-ben haszn&aacute;lt
+kifejez&eacute;sek
+jelent&eacute;se?<br>
+<a href="#4.18">4.18</a> Mi&eacute;rt kapom ezt a hib&aacute;t: "ERROR:
+Memory exhausted
+in AllocSetAlloc()"?<br>
+<a href="#4.19">4.19</a> Hogyan tudhatom meg PostgreSQL, milyen
+verzi&oacute;t futtatok?<br>
+<a href="#4.20">4.20</a> Mi&eacute;rt kapok "invalid large obj
+descriptor" hib&aacute;t
+nagy objektumok kezel&eacute;s&eacute;n&eacute;l?<br>
+<a href="#4.21">4.21</a> Hogy hozhatok l&eacute;tre olyan oszlopot,
+aminek
+alap&eacute;rtelmezett &eacute;r&eacute;tke a jelenlegi id&otilde;?<br>
+<a href="#4.22">4.22</a> Mi&eacute;rt olyan lass&uacute;ak az
+al-lek&eacute;rdez&eacute;seim IN-nel?<br>
+<a href="#4.23">4.23</a> Hogyan tudok outer join-t v&eacute;grehajtani?<br>
+<a href="#4.24">4.24</a> Hogyan tudok t&ouml;bb adatb&aacute;zison
+v&eacute;grehajtani
+lek&eacute;rdez&eacute;st?<br>
+<a href="#4.25">4.25</a> Hogy tudok t&ouml;bb soros vagy oszlopos
+eredm&eacute;nyt
+visszaadni egy funkci&oacute;b&oacute;l?<br>
+<a href="#4.26">4.26</a> Mi&eacute;rt nem tudom megbizhat&oacute;an
+l&eacute;trehozni
+&eacute;s t&ouml;r&ouml;lni az &aacute;tmeneti t&aacute;bl&aacute;kat a
+PL/pgSQL funkci&oacute;kban?<br>
+<a href="#4.27">4.27</a> Milyen replik&aacute;ci&oacute;s
+lehet&otilde;s&eacute;gek vannak?<br>
+<a href="#4.28">4.28</a> Milyen k&oacute;dol&aacute;si
+lehet&otilde;s&eacute;gek vannak?<br>
+<br>
+<div style="text-align: center;">
+<h2>A PostgreSQL kiterjeszt&eacute;se</h2>
+</div>
+<br>
+<a href="#5.1">5.1</a>) &Iacute;rtam egy felhaszn&aacute;l&oacute;i
+funkci&oacute;t.
+Mi&eacute;rt core dumpol az adatb&aacute;zis amikor haszn&aacute;lom?<br>
+<a href="#5.1">5.2</a>) Hogyan lehet &uacute;j adatt&iacute;pusokat
+&eacute;s
+funkci&oacute;kat hozz&aacute;adni a PostgreSQL
+disztrib&uacute;ci&oacute;hoz?<br>
+<a href="#5.3">5.3</a>) Hogyan lehet olyan C funkci&oacute;t
+&iacute;rni, ami Tuple-t ad
+vissza? (t&ouml;bb soros t&ouml;bb oszlopos eredm&eacute;nyek)<br>
+<a href="#5.4">5.4</a>) Megv&aacute;ltoztattam egy forr&aacute;s
+&aacute;llom&aacute;nyt.
+Mi&eacute;rt nem v&aacute;ltozik a bin&aacute;ris
+&uacute;jraford&iacute;t&aacute;s ut&aacute;n?<br>
+<hr style="width: 100%; height: 2px;">
+<h2 style="text-align: center;"> &Aacute;ltal&aacute;nos
+k&eacute;rd&eacute;sek</h2>
+<br>
+<a name="1.1"></a><big style="text-decoration: underline;">1.1 Mi a
+PostgreSQL? Hogy kell kimondani?</big><br>
+<p>&Iacute;gy ejstd ki: Post-Gres-Q-L.</p>
+<p>(Vagy tal&aacute;n ink&aacute;bb t&ouml;ltsd le a kis mp3-at a
+PostgreSQL homepage-r&otilde;l)</p>
+<p>A PostgreSQL a POSTGRES adatb&aacute;zis management rendszer egy
+kieg&eacute;sz&iacute;t&eacute;se, ami egy k&ouml;vetkez&otilde;
+gener&aacute;ci&oacute;s DBMS kutat&aacute;si protot&iacute;pus.
+Megtartja a POSTGRES adatmodell&eacute;t &eacute;s gazdag
+adatt&iacute;pus v&aacute;laszt&eacute;k&aacute;t, de a PostQuel
+lek&eacute;rdez&otilde; nyelvet az SQL egy kiterjesztett
+verzi&oacute;j&aacute;val helyettes&iacute;ti. A PostgreSQL szabad
+&eacute;s a teljes forr&aacute;sk&oacute;d
+hozz&aacute;f&eacute;rhet&otilde;.</p>
+<p>A PostgreSQL fejleszt&eacute;s&eacute;t egy csapat v&eacute;gzi,
+amelynek minden tagja megtal&aacute;lhat&oacute; a PostgreSQL
+fejleszt&otilde;i levelez&eacute;si list&aacute;n. A jelenlegi
+koordin&aacute;tor
+Marc G. Fournier (scrappyp@PostgreSQL.org). Ez a csapat felel&otilde;s
+minden fejleszt&eacute;s&eacute;rt. &lt;&gt;A PostgreSQL 1.01
+alkot&oacute;i
+Andrew Yu &eacute;s Jolly Chen voltak. Sokan j&aacute;rultak
+hozz&aacute; portol&aacute;ssal, tesztel&eacute;ssel,
+hibakeres&eacute;ssel &eacute;s fejleszt&eacute;ssel. Az eredeti
+Postgres k&oacute;d, amib&otilde;l a PostgreSQL sz&aacute;rmazik
+Michael Stonebraker professzor ir&aacute;ny&iacute;t&aacute;sa alatt
+fejlesztettek az egyetem programoz&oacute;i, tanul&oacute;i &eacute;s
+v&eacute;gzett tanul&oacute;i. &lt;&gt;</p>
+<p>A szoftver eredeti neve Postgres volt. Amikor SQL
+funkcional&iacute;t&aacute;ssal eg&eacute;sz&iacute;tett&eacute;k ki
+1995-ben, a nev&eacute;t Postgres95-re v&aacute;ltoztatt&aacute;k. 1996
+v&eacute;g&eacute;n kapta mai nev&eacute;t. </p>
+<br>
+<a name="1.2"></a> <big style="text-decoration: underline;">1.2 Mik a
+PostgreSQL felhaszn&aacute;l&aacute;si
+felt&eacute;telei?</big><br>
+<br>
+<pre>   Az eredeti angol copyright sz&ouml;veg: </pre>
+<pre>   -------------------- </pre>
+<pre>   PostgreSQL is subject to the following COPYRIGHT:</pre>
+<pre><br>   PostgreSQL Data Base Management System</pre>
+<pre><br>   Portions copyright (c) 1996-2002, PostgreSQL Global Development Group</pre>
+<pre>   Portions Copyright (c) 1994-6 Regents of the University of California</pre>
+<pre><br>   Permission to use, copy, modify, and distribute this software and its</pre>
+<pre>   documentation for any purpose, without fee, and without a written</pre>
+<pre>   agreement is hereby granted, provided that the above copyright notice</pre>
+<pre>   and this paragraph and the following two paragraphs appear in all</pre>
+<pre>   copies.</pre>
+<pre><br>   IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY</pre>
+<pre>   FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,</pre>
+<pre>   INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND</pre>
+<pre>   ITS DOCUMENTATION, EVEN IF THE UNIVERSITY OF CALIFORNIA HAS BEEN</pre>
+<pre>   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</pre>
+<pre><br>   THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES,</pre>
+<pre>   INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF</pre>
+<pre>   MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE</pre>
+<pre>   PROVIDED HEREUNDER IS ON AN "AS IS" BASIS, AND THE UNIVERSITY OF</pre>
+<pre>   CALIFORNIA HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE, SUPPORT,</pre>
+<pre>   UPDATES, ENHANCEMENTS, OR MODIFICATIONS.</pre>
+<pre>   --------------------</pre>
+<p><br>
+</p>
+Ami nagyon leegyszer&ucirc;s&iacute;tve azt jelenti, hogy jogod van
+haszn&aacute;lni a szoftvert mindenf&eacute;le
+ellenszolg&aacute;ltat&aacute;s (p&eacute;nz, stb) n&eacute;lk&uuml;l,
+a forr&aacute;s k&oacute;dot m&oacute;dos&iacute;thatod, &eacute;s
+tov&aacute;bbadhatod, DE semmilyen, a szoftver
+haszn&aacute;lat&aacute;b&oacute;l k&ouml;vetkez&otilde;
+k&aacute;rosod&aacute;s&eacute;rt nem v&aacute;llal garanci&aacute;t a
+fejleszt&otilde;. A fenti a BSD licensz, egy klasszikus
+nyilt-forr&aacute;sk&oacute;d licensz. Nem tartalmaz
+megszor&iacute;t&aacute;sokat arra, hogy a forr&aacute;sk&oacute;dot
+hogyan haszn&aacute;lod fel.
+<p> Kedvelj&uuml;k ezt a licensz form&aacute;t &eacute;s nem &aacute;ll
+sz&aacute;nd&eacute;kunkban megv&aacute;ltoztatni.</p>
+<a name="1.3"></a> <big><span style="text-decoration: underline;">1.3
+Milyen UNIX oper&aacute;ci&oacute;s
+rendszereken fut PostgreSQL?</span></big><br>
+<p>&Aacute;ltal&aacute;ban minden UNIX-kompatibilis
+oper&aacute;ci&oacute;s rendszer k&eacute;pes arra hogy futtassa a
+PostgreSQL-t. Azokat a platformokat, amiken tesztelt&eacute;k a
+kiad&aacute;st
+megtal&aacute;lhatod a install&aacute;ci&oacute;s
+utas&iacute;t&aacute;sok k&ouml;z&ouml;tt. </p>
+<a name="1.4"></a> <big><span style="text-decoration: underline;">1.4
+Milyen nem UNIX oper&aacute;ci&oacute;s
+rendszerek el&eacute;rhet&otilde;ek?</span></big><br>
+<br>
+<p>Kliens<br>
+</p>
+<p>A libpq C f&uuml;ggv&eacute;nyk&ouml;nyvt&aacute;rat, a psql-t
+&eacute;s m&aacute;s fel&uuml;leteket le lehet &uacute;gy
+ford&iacute;tani, hogy fussanak MS Windows oper&aacute;ci&oacute;s
+rendszereken. Ebben az esetben a kliens MS Windows-on fut &eacute;s
+TCP/IP seg&iacute;ts&eacute;g&eacute;vel kommunik&aacute;l a Unixon
+fut&oacute; szerverrel. A "win32.mak" &aacute;llom&aacute;ny a
+kiad&aacute;s r&eacute;sze, ennek seg&iacute;ts&eacute;g&eacute;vel
+lehet Win32 platformokra leford&iacute;tani a libpq-t &eacute;s a
+psql-t. A PostgreSQL ODBC kliensekkel is k&eacute;pes
+kommunik&aacute;lni.</p>
+<p>
+Szerver</p>
+&lt;&gt;Az adatb&aacute;zis szerver Cygwin
+seg&iacute;ts&eacute;g&eacute;vel
+fut Windows NT &eacute;s Win2k rendszereken. Tov&aacute;bbi
+inform&aacute;ci&oacute;
+tal&aacute;lhat&oacute; a pgsql/doc/FAQ_MSWIN &aacute;llom&aacute;nyban
+&eacute;s a MS Windows FAQ-ban a k&ouml;vetkez&otilde; helyen: <a
+ href="http://www.PostgreSQL.org/docs/faq-mswin.html">http://www.PostgreSQL.org/docs/faq-mswin.html</a>.&nbsp;
+Nat&iacute;v MS Windows NT/2000/XP portok jelenleg fejleszt&eacute;s
+alatt &aacute;llnak.<br>
+<br>
+<a name="1.5"></a> <big style="text-decoration: underline;">1.5 Hogyan
+tudok PostgreSQL-t szerezni?</big><br>
+<p>Az els&otilde;dleges anonim ftp oldal: <a
+ href="ftp://ftp.PostgreSQL.org/pub">ftp://ftp.PostgreSQL.org/pub</a>. </p>
+<p>A t&uuml;k&ouml;r oldalak list&aacute;ja megtal&aacute;lhat&oacute;
+a
+f&otilde; weboldalunkon.</p>
+<a name="1.6"></a> <big style="text-decoration: underline;">1.6 Hogyan
+kapok
+term&eacute;kt&aacute;mogat&aacute;st?</big><br>
+<br>
+<p>Az els&otilde;dleges lista a <a
+ href="mailto:pgsql-general@postgresql.org">pgsql-general@postgresql.org</a>.
+Ez
+haszn&aacute;lhat&oacute; a PostgreSQL-lel kapcsolatos
+p&aacute;rbesz&eacute;dekre. Ha fel
+szeretn&eacute;l &iacute;ratkozni, k&uuml;ldj egy levelet a
+k&ouml;vetkez&otilde; tartalommal (nem
+t&aacute;rggyal) a<a
+ href="mailto:%20pgsql-general-request@postgresql.org">
+pgsql-general-request@postgresql.org</a> c&iacute;mre:</p>
+<pre>
+subscribe</pre>
+<pre>
+end </pre>
+<br>
+Van egy hib&aacute;kkal kapcsolatos levelez&eacute;si lista is:
+pgsql-bugs-request@PostgreSQL.org a k&ouml;vetkez&otilde; tartalommal:<br>
+<br>
+<pre>
+subscribe</pre>
+<pre>
+end
+</pre>
+<p>A fejleszt&#337;i levelez&eacute;si lista:<a
+ href="mailto:pgsql-hackers-request@PostgreSQL.org">
+pgsql-hackers-request@PostgreSQL.org</a> a k&ouml;vetkez&otilde;
+tartalommal:</p>
+<pre>
+subscribe</pre>
+<pre>
+end</pre>
+<br>
+Egy&eacute;b levelez&eacute;si list&aacute;k
+tal&aacute;lhat&oacute;ak
+a weboldalunkon: <a href="http://www.PostgreSQL.org">http://www.PostgreSQL.org</a>
+<p>Van egy IRC csatorna is <a href="irc://irc.freenode.net/#postgresql">#PostgreSQL</a>
+n&eacute;ven ahol felteheted
+k&eacute;r&eacute;dseid. A k&ouml;vetkez&otilde; unix paranccsal
+csatlakozhatsz:
+</p>
+<p>irc -c '#PostgreSQL' "$USER" irc.phoenix.net.</p>
+<p>
+A kereskedelmi term&eacute;kt&aacute;mogat&aacute;st
+ny&uacute;jt&oacute; c&eacute;gek list&aacute;ja el&eacute;rhet&ouml;
+itt:<a
+ href="http://www.PostgreSQL.org/users-lounge/commercial-support.html">
+http://www.PostgreSQL.org/users-lounge/commercial-support.html</a><br>
+</p>
+<p>Magyar nyelv&#369; levelez&eacute;si lista nincs, de ha tudok segiteni a
+fenit e-mail cimemen el&eacute;rhet&#337; vagyok.</p>
+<a name="1.7"></a> <big style="text-decoration: underline;">1.7 Melyik
+a legfrissebb kiad&aacute;s?</big><br>
+<p>A legfrissebb PostgreSQL kiad&aacute;s a 8.0.</p>
+<p>A tervek szerint minden &eacute;vben lesz egy nagyobb
+fejleszt&eacute;seket tartalmaz&oacute; kiad&aacute;s, m&iacute;g a
+kisebb fejleszt&eacute;seket n&eacute;h&aacute;ny havonta adjuk ki.<br>
+</p>
+<a name="1.8"></a> <big style="text-decoration: underline;">1.8 Milyen
+dokument&aacute;ci&oacute; &aacute;ll
+rendelkez&eacute;sre?</big><br>
+<p>Sz&aacute;mos k&eacute;zik&ouml;nyv, man oldalak &eacute;s kis teszt
+p&eacute;ld&aacute;k tal&aacute;lhat&oacute;ak a kiad&aacute;sban a
+doc/ k&ouml;nyvt&aacute;r alatt. Az interneten is olvashatod a
+dokument&aacute;ci&oacute;t a k&ouml;vetkez&otilde; c&iacute;men:</p>
+<p><a href="http://www.PostgreSQL.org/users-lounge/docs/">http://www.PostgreSQL.org/users-lounge/docs/</a>.</p>
+<p>K&eacute;t PostgreSQL k&ouml;nyv &eacute;rhet&otilde; el az
+interneten
+a <a href="http://www.PostgreSQL.org/docs/awbook.html">http://www.PostgreSQL.org/docs/awbook.html</a>
+&eacute;s a <a href="http://www.commandprompt.com/ppbook/">http://www.commandprompt.com/ppbook/</a>
+c&iacute;meken. A megv&aacute;s&aacute;rolhat&oacute; k&ouml;nyvek
+list&aacute;ja itt
+tal&aacute;lhat&oacute;: <a href="http://www.ca.PostgreSQL.org/books/">http://www.ca.PostgreSQL.org/books/</a>.
+A PostgreSQL-lel kapcsolatos technikai jelleg&ucirc; cikkek
+gy&ucirc;jtem&eacute;nye: <a href="http://techdocs.PostgreSQL.org/">http://techdocs.PostgreSQL.org/</a>.</p>
+<p>A psql parancs rendelkezik n&eacute;h&aacute;ny \d
+utas&iacute;t&aacute;ssal, amellyekkel list&aacute;zhat&oacute;ak az
+oper&aacute;torok, a funkci&oacute;k, stb.</p>
+<p>A website is tartalmaz tov&aacute;bbi dokument&aacute;ci&oacute;kat.</p>
+<a name="1.9"></a> <big style="text-decoration: underline;">1.9 Hogyan
+tal&aacute;lok inform&aacute;ci&oacute;t
+hib&aacute;kr&oacute;l vagy hi&aacute;nyz&oacute;
+funkcional&iacute;t&aacute;sr&oacute;l?</big><br>
+<p>A PostgreSQLaz SQL-92 szabv&aacute;ny egy
+kieg&eacute;sz&iacute;t&eacute;se. N&eacute;zd meg a TODO
+list&aacute;kat ha &eacute;rdekelnek az ismert hib&aacute;k.</p>
+<a name="1.10"></a> <big style="text-decoration: underline;">1.10 Hogy
+tanuljam meg az SQL nyelvet?</big><br>
+<br>
+<p>A PostgreSQL k&ouml;nyv a
+<a href="http://www.PostgreSQL.org/docs/awbook.html">http://www.PostgreSQL.org/docs/awbook.html</a>
+c&iacute;men tartalmaz SQL
+alapokat. El&eacute;rhet&otilde; egy
+m&aacute;sik SQL k&ouml;nyv is a <a
+ href="http://www.commandprompt.com/ppbook">http://www.commandprompt.com/ppbook</a>
+c&iacute;men. Egy sz&eacute;p
+oktat&oacute; anyag tal&aacute;lhat&oacute; a
+<a href="http://www.intermedia.net/support/sql/sqltut.shtm">http://www.intermedia.net/support/sql/sqltut.shtm</a>,
+a
+<a
+ href="http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM">http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM</a>
+&eacute;s a <a href="http://sqlcourse.com">http://sqlcourse.com</a>
+oldalakon.
+</p>
+<p>Egy m&aacute;sik lehet&otilde;s&eacute;g a "Tan&iacute;tsd magad 21
+nap
+alatt SQL-re, m&aacute;sodik kiad&aacute;s" a
+<a href="http://members.tripod.com/er4ebus/sql/index.htm">http://members.tripod.com/er4ebus/sql/index.htm</a>.</p>
+<p>
+Sok felhaszn&aacute;l&oacute;nak tetszett a gyakorlati SQL k&ouml;nyv
+("The Practical SQL Handbook"). </p>
+<br>
+<a name="1.11"></a> <big style="text-decoration: underline;">1.11 A
+PostgreSQL 2000. &eacute;v kompatibilis?</big><br>
+<br>
+<p>Igen, k&ouml;nnyed&eacute;n kezeli a 2000 ut&aacute;ni &eacute;s
+id&otilde;sz&aacute;m&iacute;t&aacute;sunk el&ouml;tt 2000 el&ouml;tti
+d&aacute;tumokat is. </p>
+<br>
+<a name="1.12"></a> <big style="text-decoration: underline;">1.12
+Hogyan lehet csatlakozni a fejleszt&otilde;
+csapathoz?</big><br>
+<br>
+El&ouml;ssz&ouml;r is t&ouml;ltsd le a forr&aacute;sk&oacute;dot,
+&eacute;s olvasd el a PostgreSQL<br>
+fejleszt&otilde;i dokumnet&aacute;ci&oacute;t a web oldalunkon vagy a
+kiad&aacute;sban. Ezut&aacute;n<br>
+&iacute;ratkozz fel a pgsql-hackers &eacute;s a pgsql-patches
+levelez&eacute;si list&aacute;kra.<br>
+V&eacute;g&uuml;l pedig k&uuml;ldj be magas szinvonal&uacute;
+patch-eket a pgsql-patches list&aacute;ra.<br>
+<br>
+Van egy p&aacute;r ember, akiknek commit privil&eacute;giumuk a
+PostgreSQL CVS f&aacute;n.<br>
+&Otilde;k olyan sok magas szinvonal&uacute; patch-et k&uuml;ldtek be,
+hogy az addigi <br>
+csapat m&aacute;r nem tudta k&ouml;vetni, &eacute;s nem volt
+k&eacute;ts&eacute;g&uuml;nk arr&oacute;l, hogy a<br>
+patch-ek amiket &otilde;k k&uuml;ldenek j&oacute;
+min&otilde;s&eacute;g&ucirc;.<br>
+<br>
+<a name="1.13"></a> <big style="text-decoration: underline;">1.13
+Hogyan k&uuml;ldjek hibajelent&eacute;st?</big><br>
+<br>
+L&aacute;togass el a BugTool oldalra: <br>
+<a href="http://www.PostgreSQL.org/bugs/bugs.php">http://www.PostgreSQL.org/bugs/bugs.php</a><br>
+Itt megtal&aacute;lod k&ouml;vetend&otilde; utas&iacute;t&aacute;sokat.<br>
+<br>
+Ellen&otilde;rizd az ftp oldalunkon is, hogy nincs-e &uacute;jabb
+verzi&oacute; vagy folt.<br>
+<a href="ftp://ftp.PostgreSQL.org/pub">ftp://ftp.PostgreSQL.org/pub </a><br>
+<br>
+<a name="1.14"></a><big style="text-decoration: underline;">1.14 Milyen
+a PostgreSQL m&aacute;s DBMS-ekkel
+&ouml;sszehasonl&iacute;tva?</big><br>
+<p>Sz&aacute;mos n&eacute;z&otilde;pontb&oacute;l lehet
+vizsg&aacute;lni
+a
+szoftvert: k&eacute;pess&eacute;gek, teljes&iacute;tm&eacute;ny
+megb&iacute;zhat&oacute;s&aacute;g, t&aacute;mogatotts&aacute;g
+&eacute;s &aacute;r.</p>
+<span style="text-decoration: underline;">K&eacute;pess&eacute;gek:</span>
+A PostgreSQL rendelkezik a nagy, kereskedelmi DBMS-ek
+k&eacute;pess&eacute;geivel: tranzakci&oacute;k,
+al-lek&eacute;rdez&eacute;sek, triggerek,
+n&eacute;zetek, k&uuml;ls&otilde; kulcsok, integr&iacute;t&aacute;s
+&eacute;s kifinoult z&aacute;rmechanizmusok.
+Van n&eacute;h&aacute;ny k&eacute;pess&eacute;ge, ami a kereskedelmi
+adatb&aacute;zisokb&oacute;l hi&aacute;nyzik, mint
+p&eacute;ld&aacute;ul a felhaszn&aacute;l&oacute; &aacute;ltal
+defini&aacute;lt t&iacute;pusok,
+&ouml;r&ouml;kl&otilde;d&eacute;s, szab&aacute;lyok &eacute;s
+verzi&oacute; kontroll a z&aacute;rol&aacute;si vit&aacute;k
+reduk&aacute;l&aacute;s&aacute;&eacute;rt.
+<p><span style="text-decoration: underline;">Teljes&iacute;tm&eacute;ny:</span>
+A PostgreSQL teljes&iacute;tm&eacute;nye hasonl&iacute;t a
+kereskedelmi
+&eacute;s m&aacute;s ny&iacute;lt adatb&aacute;zis
+szerverek&eacute;hez. Lehet bizonyos esetekben
+lassabb, m&aacute;sokban gyorsabb. A MySQL nev&ucirc; tanul&oacute;
+RDBMS p&eacute;ld&aacute;ul gyorsabban hajt v&eacute;gre insert/update
+m&ucirc;veleteket, mivel a tranzakci&oacute;kat
+elsum&aacute;kolja. Persze a MySQL nem rendelkezik a
+k&eacute;pess&eacute;gek
+r&eacute;szben felsoroltak nagy r&eacute;sz&eacute;vel. Mi a
+megb&iacute;zhat&oacute;s&aacute;gra
+&eacute;s a k&eacute;pess&eacute;gekre &eacute;p&iacute;t&uuml;nk,
+b&aacute;r a teljes&iacute;tm&eacute;ny is n&otilde; minden
+kiad&aacute;ssal. Van
+egy &eacute;rdekes oldal a MySQL &eacute;s a PostgreSQL
+&ouml;sszehasonl&iacute;t&aacute;s&aacute;val a
+<a href="http://openacs.org/philosophy/why-not-mysql.html">http://openacs.org/philosophy/why-not-mysql.html
+</a>c&iacute;men.
+</p>
+<p><span style="text-decoration: underline;">Megb&iacute;zhat&oacute;s&aacute;g:</span>
+Tudjuk hogy ha egy DBMS nem megb&iacute;zhat&oacute;, akkor
+teljesen
+haszontalan. Igyeksz&uuml;nk j&oacute;l tesztelt, stabil k&oacute;dot
+kiadni, amiben
+a lehet&otilde; legkevesebb hiba van. Minden kiad&aacute;s
+el&ouml;tt eltellik
+legal&aacute;bb 1 h&oacute;nap b&eacute;ta teszt, &eacute;s a
+kiad&aacute;si
+t&ouml;rt&eacute;net is azt mutatja, hogy stabil k&oacute;dot adunk ki,
+ami k&eacute;szen &aacute;ll a
+produkt&iacute;v felhaszn&aacute;l&aacute;sra. &Uacute;gy gondoljuk,
+fel&uuml;lm&uacute;lunk m&aacute;s
+adatb&aacute;zis szoftvereket ezen a t&eacute;ren.
+</p>
+<p></p>
+<p><span style="text-decoration: underline;">T&aacute;mogat&aacute;s:</span>
+A levelez&eacute;si list&aacute;ink kapcsolatot teremtenek a
+fejleszt&otilde;k &eacute;s felhaszn&aacute;l&oacute;k
+csoportj&aacute;val , akik
+seg&iacute;tenek a probl&eacute;m&aacute;k megold&aacute;s&aacute;ban.
+B&aacute;r nem tudjuk garant&aacute;lni
+hogy ki tudjuk jav&iacute;tani a hib&aacute;t, m&aacute;s, kereskedelmi
+adatb&aacute;zis c&eacute;gek sem tudj&aacute;k. A fejleszt&otilde;
+csoport k&ouml;zvetlen el&eacute;r&eacute;si
+lehet&otilde;s&eacute;ge, a k&ouml;z&ouml;ss&eacute;g, a
+dokument&aacute;ci&oacute; &eacute;s a forr&aacute;sk&oacute;d
+gyakran t&aacute;mogat&aacute;st biztos&iacute;t, mint m&aacute;s
+adatb&aacute;zisokn&aacute;l. Van kereskedelmi, alkalmi
+t&aacute;mogat&aacute;s azoknak, akiknek sz&uuml;ks&eacute;ge van
+r&aacute; (l&aacute;sd: 1.6).
+</p>
+<p></p>
+<p><span style="text-decoration: underline;">&Aacute;r:</span> A
+PostgreSQL szabad b&aacute;rmilyen
+felhaszn&aacute;l&aacute;sra,
+ak&aacute;r kereskedelmire is. A term&eacute;khez hozz&aacute;adhatod a
+saj&aacute;t
+forr&aacute;sk&oacute;djaidat korl&aacute;toz&aacute;s
+n&eacute;lk&uuml;l.</p>
+<a name="1.15"></a> <big style="text-decoration: underline;">1.15
+Hogyan tudom &uuml;zletileg segiteni a
+PostgreSQL-t?</big><br>
+<p>A PostgreSQL els&otilde; oszt&aacute;ly&uacute;
+infrastrukt&uacute;r&aacute;val rendelkezik, amit 1996-ban
+ind&iacute;tottunk el. Mindent Marc Fourniernek
+k&ouml;sz&ouml;nhet&uuml;nk, aki l&eacute;trehozta &eacute;s
+karbantartja a rendszert.
+</p>
+<p>A min&otilde;s&eacute;gi infrastrukt&uacute;ra nagyon fontos egy
+nyilt
+forr&aacute;s&uacute; szoftver eset&eacute;ben. Megv&eacute;d az olyan
+fennakad&aacute;sokt&oacute;l,
+amelyek komoly k&eacute;s&eacute;seket okoznak a
+fejleszt&eacute;sekben. Term&eacute;szetesen ez az
+infrastrukt&uacute;ra nem olcs&oacute;.
+Sz&aacute;mos havi &eacute;s &aacute;lland&oacute; kiad&aacute;sunk
+van. Ha a c&eacute;gednek van p&eacute;nze, amivel
+t&aacute;mogatn&aacute; er&otilde;fesz&iacute;t&eacute;seinket,
+k&eacute;rlek l&aacute;togass el a <a
+ href="http://store.pgsql.com/shopping/">http://store.pgsql.com/shopping/</a>
+oldalra.</p>
+<p>
+B&aacute;r a weboldal "PostgreSQL, Inc"-k&eacute;nt
+eml&iacute;ti, a
+hozz&aacute;j&aacute;rul&aacute;sok kiz&aacute;r&oacute;lag a
+PostgreSQL fejleszt&eacute;sre &eacute;rtend&oacute;ek, &eacute;s nem
+egy meghat&aacute;rozott c&eacute;gnek. Ha jobban tetszik,
+k&uuml;ldhetsz csekket is a kapcsolati c&iacute;mek
+b&aacute;rmelyik&eacute;re.</p>
+<p><big style="text-decoration: underline;"><a name="1.16"></a>1.16 Ki
+ir&aacute;ny&iacute;tja a PostgreSQL-t?<br>
+</big></p>
+<p><big style="text-decoration: underline;"><small><span
+ style="text-decoration: underline;"></span></small></big><big><small>Ha
+k&ouml;zponti bizotts&aacute;got, ellen&ouml;rz&#337; c&eacute;get keresel a
+PostgreSQL m&ouml;g&ouml;tt, add fel, nincs ilyesmi. L&eacute;tezik egy
+mag &eacute;s CVS commiter csoport, de ez ink&aacute;b adminisztrativ
+mint ellen&ouml;rz&#337; c&eacute;l&uacute;. A projectet fejleszt&#337;k
+&eacute;s felhaszn&aacute;l&oacute;k k&ouml;z&ouml;ss&eacute;ge
+ir&aacute;ny&iacute;tja, amihez b&aacute;rki csatlakozhat.
+Csup&aacute;n annyit kell tenned hogy fel&iacute;ratkozol a
+levelez&#337;list&eacute;kra &eacute;s r&eacute;szt veszel a
+besz&eacute;lget&eacute;sekben.</small></big><big
+ style="text-decoration: underline;"><small><span
+ style="text-decoration: underline;"></span></small></big></p>
+<p></p>
+<hr style="width: 100%; height: 2px;">
+<h2 style="text-align: center;">Felhaszn&aacute;l&oacute;i kliens
+k&eacute;rd&eacute;sek</h2>
+<br>
+<a name="2.1"></a> <big style="text-decoration: underline;">2.1 Van
+ODBC meghajt&oacute; PostgreSQL-hez?</big><br>
+<p>K&eacute;t ODBC meghajt&oacute; &eacute;rhet&otilde; el: PsqlODBC
+&eacute;s a OpenLink ODBC.</p>
+<p>A PsqlODBC a PostgreSQL kiad&aacute;s r&eacute;sze. Tov&aacute;bbi
+inform&aacute;ci&oacute; tal&aacute;lhat&oacute; a&nbsp;
+ftp://ftp.PostgreSQL.org/pub/odbc/ oldalon.</p>
+<p>Az OpenLink ODBC-t a <a href="http://www.openlinksw.com">http://www.openlinksw.com</a>
+c&iacute;mr&otilde;l
+t&ouml;ltheted le. Ez az &otilde; szabv&aacute;nyos ODBC kliens
+szoftver&uuml;kkel
+m&ucirc;k&ouml;dik, &iacute;gy minden</p>
+<p>&aacute;ltaluk t&aacute;mogatott platformon (Win, Mac, Unix, VMS)
+el&eacute;rhet&otilde; lesz&nbsp; a PostgreSQL szerver.</p>
+<p>Tal&aacute;n olyan vev&otilde;knek fogj&aacute;k eladni, akik
+kereskedelmi min&otilde;s&eacute;g&ucirc; term&eacute;ket
+szeretn&eacute;nek kapni, de a freeware verzi&oacute; mindig
+el&eacute;rhet&otilde; lesz. K&eacute;rd&eacute;seidet a
+term&eacute;kkel kapcsolatban a postgres95@openlink.co.uk
+c&iacute;men teheted fel.</p>
+<p>Olvasd el az ODBC fejezetet is a programoz&oacute;k
+k&eacute;zik&ouml;nyv&eacute;ben!</p>
+<p><a name="2.2"></a><big style="text-decoration: underline;">2.2
+Milyen
+eszk&ouml;z&ouml;k &aacute;llnak
+rendelkez&eacute;sre PostgreSQL Web fejleszt&eacute;sekhez?</big></p>
+<p>Egy sz&eacute;p bemutat&oacute; olvashat&oacute; az
+adatb&aacute;zissal
+t&aacute;mogatott web oldalanr&oacute;l a http://www.webreview.com
+weboldalon.</p>
+<p>A web integr&aacute;ci&oacute;hoz a PHP egy kiv&aacute;ll&oacute;
+szoftver. Let&ouml;lthet&otilde; a <a href="http://www.php.net">http://www.php.net</a>
+c&iacute;mr&otilde;l. </p>
+<p>Komplexebb esetekre sokan haszn&aacute;lj&aacute;k a Perl
+fel&uuml;letet &eacute;s a CGI.pm vagy a mod_perl-t.</p>
+<p><a name="2.3"></a><big style="text-decoration: underline;">2.3 Van a
+PostgreSQL-hez grafikus
+felhaszn&aacute;l&oacute;i fel&uuml;let?</big></p>
+<p>Van egy sz&eacute;p PgAccess nev&ucirc; grafikus
+fel&uuml;let&uuml;nk,
+ami riport gener&aacute;tork&eacute;nt is haszn&aacute;lhat&oacute;. A
+weboldal&aacute;t megtal&aacute;lod a
+<a href="http://www.pgaccess.org/">http://www.pgaccess.org/</a>
+c&iacute;men.</p>
+<p>A <a href="http://techdocs.postgresql.org/guides/GUITools">http://techdocs.postgresql.org/guides/GUITools</a>
+oldalon tal&aacute;lhatsz egy pontos &eacute;s r&eacute;szltes
+list&aacute;t.<br>
+</p>
+<p><a name="2.4"></a><big style="text-decoration: underline;">2.4
+Milyen
+programoz&aacute;si nyelvekkel lehet
+el&eacute;rni a PostgreSQL szervert?</big></p>
+<p>A k&ouml;vetkez&ouml;k: </p>
+<ul>
+  <li>C (libpq)</li>
+  <li>C++ (libpq++)</li>
+  <li>Embedded C (ecpg)</li>
+  <li>Java (jdbc)</li>
+  <li>Perl (DBD::Pg and perl5)</li>
+  <li>ODBC (odbc)</li>
+  <li>Python (PyGreSQL)</li>
+  <li>TCL (libpgtcl)</li>
+  <li>C Easy API (libpgeasy)</li>
+  <li>PHP ('pg_' functions, Pear::DB)</li>
+</ul>
+<br>
+Tov&aacute;bbi programoz&aacute;si fel&uuml;letek
+&eacute;rhet&otilde;ek el a <br>
+<a href="http://www.PostgreSQL.org/interfaces.html">
+http://www.PostgreSQL.org/interfaces.html</a> &eacute;s a<br>
+<a href="http://gborg.PostgreSQL.org"> http://gborg.PostgreSQL.org</a>
+oldalakon.<br>
+<br>
+<hr style="width: 100%; height: 2px;">
+<h2 style="text-align: center;">Adminisztr&aacute;ci&oacute;s
+k&eacute;rd&eacute;sek</h2>
+<br>
+<a name="3.1"></a> <big><span style="text-decoration: underline;">3.1
+Hogyan tudom a PostgreSQL-t /usr/local/pgsql
+-t&otilde;l elt&eacute;r&otilde; helyre install&aacute;lni?</span></big><br>
+<p>A configure script --prefix param&eacute;ter&eacute;nek
+haszn&aacute;lat&aacute;val.</p>
+<a name="3.2"></a> <big style="text-decoration: underline;">3.2 AMikor
+elind&iacute;tom a postmaster-t, egy
+"Bad System Call"-t vagy core dump-ot kapok. Mi&eacute;rt?</big><br>
+<p>Sz&aacute;mos probl&eacute;ma lehet, de legel&ouml;ssz&ouml;r
+ellen&otilde;rizd le, hogy a kerneled System V
+kieg&eacute;sz&iacute;t&eacute;sekkel rendelkezik-e. A
+PostgreSQL haszn&aacute;lja a kernel osztott mem&oacute;ria &eacute;s
+szemafor API-j&aacute;t. </p>
+<p><a name="3.3"></a><big style="text-decoration: underline;">3.3
+Amikor
+megpr&oacute;b&aacute;lom inditani a
+postmaster-t, "IpcMemoryCreate" hib&aacute;kat kapok. Mi&eacute;rt?</big></p>
+<p>
+Vagy nincs megfelel&otilde;en konfigur&aacute;lva a kerneled osztott
+mem&oacute;ria t&aacute;mogat&aacute;sa vagy meg kell
+nagyobb&iacute;tanod a maxim&aacute;lis osztott
+mem&oacute;ria m&eacute;retet.</p>
+<p>A pontos m&eacute;ret sz&uuml;ks&eacute;glet f&uuml;gg az
+architekt&uacute;r&aacute;dt&oacute;l &eacute;s att&oacute;l hogy
+h&aacute;ny buffert &eacute;s processzt konfigur&aacute;lsz a
+postmasternek.
+Legal&aacute;bb 1 MB ter&uuml;letre sz&uuml;ks&eacute;ged van. A
+PostgreSQL
+Adminisztr&aacute;ci&oacute; k&eacute;zik&ouml;nyvben olvashatsz
+r&eacute;szletesebb inform&aacute;ci&oacute;kat az osztott
+mem&oacute;ri&aacute;r&oacute;l &eacute;s a szemaforokr&oacute;l.</p>
+<a name="3.4"></a><big style="text-decoration: underline;">3.4) Amikor
+megpr&oacute;b&aacute;lom inditani a
+postmaster-t, "IpcSemaphoreCreate" <br>
+hib&aacute;kat kapok. Mi&eacute;rt?</big><br>
+<p>Ha a hiba&uuml;zenet ez: " IpcSemaphoreCreate: semget failed (No
+space left on device)", akkor a kerneled konfigur&aacute;ci&oacute;ja
+nem
+tesz lehet&otilde;v&eacute; elegend&otilde; szemafort. A PostgreSQL
+szerver processzenk&eacute;nt 1
+szemafort ig&eacute;nyel. Egy &aacute;tmeneti megold&aacute;s lehet az
+hogy a
+postmastert kevesebb maxim&aacute;lis processz sz&aacute;mmal inditod
+el. Haszn&aacute;ld a
+-D param&eacute;tert. Egy sokkal megfelel&otilde;bb megold&aacute;s az
+ha n&ouml;veled a
+kerneled SEMMNS &eacute;s SEMMNI param&eacute;tereit.</p>
+<p>A hib&aacute;s szemaforok is adat&aacute;zis
+lerobban&aacute;s&aacute;hoz is vezethet nagy terhel&eacute;s
+eset&eacute;n.Ha a hiba&uuml;zenet valami m&aacute;s, lehet hogy nincs
+szemaforok
+t&aacute;mogat&aacute;s</p>
+<p>forditva a kerneledbe. Olvasd el a PostgreSQL
+adminisztr&aacute;torok k&eacute;zik&ouml;nyv&eacute;ben az osztott
+mem&oacute;ri&aacute;r&oacute;l &eacute;s a szemaforokr&oacute;l
+sz&oacute;l&oacute; fejezetet.</p>
+<p><a name="3.5"></a><big style="text-decoration: underline;">3.5)
+Hogyan tudom kontroll&aacute;lni a m&aacute;s
+g&eacute;pekr&otilde;l &eacute;rkez&otilde; kapcsolat
+k&eacute;r&eacute;seket?</big></p>
+<p>Alap&eacute;rtelmez&eacute;sben a PostgreSQL a helyi kapcsolatokat
+Unix
+socketekkel val&oacute;s&iacute;tja meg. M&aacute;s g&eacute;pek nem
+lesznek
+k&eacute;pesek csatlakozni, ha nem enged&eacute;lyezed azt -i
+opci&oacute;val a postmasternek, &eacute;s
+nem &aacute;ll&iacute;tod be host a alap&uacute;
+azonos&iacute;t&aacute;st a pg_hba.conf
+&aacute;llom&aacute;nyban. Ezzel v&aacute;lnak lehet&otilde;v&eacute; a
+TCP/IP kapcsolatok.</p>
+<p><a name="3.6"></a><big style="text-decoration: underline;">3.6)
+Hogyan tudom nagyobb
+teljes&iacute;tm&eacute;nyre hangolni az adatb&aacute;zisomat?</big></p>
+<p>Az indexel&eacute;s felt&eacute;tlen&uuml;l gyors&iacute;tja a
+lek&eacute;rdez&eacute;seket. Az EXPLAIN parancs lehet&otilde;v&eacute;
+teszi hogy l&aacute;sd, hogy a
+PostgreSQL mik&eacute;nt interpret&aacute;lja a
+lek&eacute;rdez&eacute;st &eacute;s melyik indexet haszn&aacute;lja.</p>
+<p>Ha sok INSERT m&ucirc;veletet hajtassz v&eacute;gre, csin&aacute;ld
+nagy k&ouml;tegekben a COPY paranccsal. Ez sokkal gyorsabb mint az
+egyedi INSERT parancsok.
+M&aacute;sodszor: Azok a m&ucirc;veletek, amelyek nincsenek
+tranzakci&oacute; blokkon
+bel&uuml;l, azok saj&aacute;t tranzakci&oacute;t ind&iacute;tanak. Sok
+m&ucirc;veletet &eacute;rdemes
+egy tranzakci&oacute;n bel&uuml;l v&eacute;grehajtani. Ez
+cs&ouml;kkenti a tranzakci&oacute;
+kezel&eacute;s t&ouml;bbletidej&eacute;t. Az indexeket javasolt a nagy
+adatv&aacute;ltoz&aacute;sok el&ouml;tt
+elt&aacute;vol&iacute;tani, majd &uacute;jra l&eacute;trehozni.</p>
+<p>Sz&aacute;mos teljes&iacute;tm&eacute;ny jav&iacute;t&oacute;
+lehet&otilde;s&eacute;g van. Kikapcsolhatod az fsync() m&ucirc;veletet
+a postmaster -o -F opci&oacute;kval val&oacute;
+ind&iacute;t&aacute;sakor. &Iacute;gy nem fog az amugy lass&uacute;
+fsync() f&uuml;ggv&eacute;ny
+megh&iacute;v&oacute;dni minden tranzakci&oacute; v&eacute;g&eacute;n.</p>
+<p>Haszn&aacute;lhatod a postmaster -B opci&oacute;j&aacute;t is az
+osztott mem&oacute;ria szegmens m&eacute;ret&eacute;nek
+n&ouml;vel&eacute;s&eacute;hez. Ha az
+&eacute;rt&eacute;ket t&uacute;l magasra &aacute;ll&iacute;tod, lehet
+hogy a postmaster nem indul el, mert t&uacute;ll&eacute;pted az
+oper&aacute;ci&oacute;s rendszer &aacute;ltal&nbsp; megengedett
+m&eacute;retet. Minden buffer 8K m&eacute;ret&ucirc;
+&eacute;s alap&eacute;rtelmez&eacute;sban 64 buffer van.</p>
+<p>A -S opci&oacute;val n&ouml;velheted a szerver &aacute;tmeneti
+rendez&eacute;sekre fenntartott mem&oacute;ria ter&uuml;let&eacute;t.
+Az &eacute;rt&eacute;ket
+kilobyteban add meg. Az alap&eacute;rtelmezett &eacute;rt&eacute;k
+512K. </p>
+<p>Haszn&aacute;lhatod a CLUSTER utas&iacute;t&aacute;st is, hogy a
+t&aacute;bl&aacute;kat egy indexnek megfelel&otilde;en
+csoportos&iacute;tsd. Olvasd el a CLUSTER
+k&eacute;zik&ouml;nyv oldalt tov&aacute;bbi r&eacute;szletek&eacute;rt.<br>
+</p>
+<p>Hardver kiv&aacute;laszt&aacute;s&aacute;ban seg&iacute;thet: <a
+ href="http://candle.pha.pa.us/main/writings/pgsql/hw_performance/index.html">http://candle.pha.pa.us/main/writings/pgsql/hw_performance/index.html</a>
+&eacute;s <a href="http://www.powerpostgresql.com/PerfList/">http://www.powerpostgresql.com/PerfList/</a>.<br>
+</p>
+<p>A postgresql.conf be&aacute;llit&aacute;saival kapcsolatos
+tudnival&oacute;k: <a
+ href="http://www.varlena.com/varlena/GeneralBits/Tidbits/annotated_conf_e.html">http://www.varlena.com/varlena/GeneralBits/Tidbits/annotated_conf_e.html</a>
+&eacute;s <a
+ href="http://www.varlena.com/varlena/GeneralBits/Tidbits/perf.html">http://www.varlena.com/varlena/GeneralBits/Tidbits/perf.html</a>.</p>
+<p></p>
+<p><a name="3.7"></a> <big style="text-decoration: underline;">3.7)
+Milyen hibakeres&otilde;
+lehet&otilde;s&eacute;gek &eacute;rhet&otilde;ek el?</big></p>
+<p>A PostgreSQL sz&aacute;mos lehet&ouml;s&eacute;ggel rendelkezik ami
+&eacute;rt&eacute;kes lehet a hibakeres&eacute;sn&eacute;l.</p>
+El&ouml;ssz&ouml;r is, futtathatod a configure scriptet
+--enable-cassert opci&oacute;val, sok assert()
+funkci&oacute;hiv&aacute;s ellen&ouml;rzi
+a program fut&aacute;s&aacute;t &eacute;s meg&aacute;llitja ha valami
+v&eacute;ratlan hiba t&ouml;rt&eacute;nik.<br>
+<p>Mind a postmaster &eacute;s a postgres sz&aacute;mos hibakeres&ouml;
+lehet&uuml;s&eacute;ggel rendelkezik. Mindig amikor elinditod a
+postmastert, gy&ouml;z&ouml;dj meg
+r&oacute;la, hogy a kimenetet log &aacute;llom&aacute;nyba
+k&uuml;ld&ouml;d. Igy:</p>
+<p>cd /usr/local/pgsql</p>
+<p>./bin/postmaster &gt;server.log 2&gt;&amp;1 &amp;</p>
+<p>Ez egy server.log &aacute;llom&aacute;nyt hoz l&eacute;tre a
+fels&ouml;
+PostgreSQL k&ouml;nyvt&aacute;rban. Ez az &aacute;llom&aacute;ny
+tartlamaz majd sz&aacute;mos hasznos
+inform&aacute;ci&oacute;t a szerverrel kapcsolatos
+probl&eacute;m&aacute;kr&oacute;l &eacute;s
+hib&aacute;kr&oacute;l. A postmaster -d opci&oacute;j&aacute;val lehet
+r&eacute;szletesebb hibakeres&ouml; inform&aacute;ci&oacute;t kapni. A
+-d opci&oacute;hoz meg kell hat&aacute;rozni egy hiba szintet.
+Vigy&aacute;zz, a magas
+hibakeres&ouml; szint nagy log &aacute;llom&aacute;nyt okozhat.</p>
+<p>Ha a postmaster nem fut, akkor futtathatod a postgres szervert
+parancssorb&oacute;l is, &eacute;s az SQL kifejez&eacute;st
+k&ouml;zvetlen&uuml;l ennek adhatod &aacute;t. Ez csak
+hibakeres&eacute;s eset&eacute;ben javasolt. Az &uacute;j sor a
+kifejez&eacute;s v&eacute;g&eacute;t jelenti, nem a pontosvessz&ouml;.
+Ha hibakeres&ouml; opci&oacute;kkal
+forditottad a szervert, haszn&aacute;lhatsz egy debuggert is hogy
+l&aacute;sd hogy mi
+t&ouml;rt&eacute;nik. Mivel igy a szervert nem a postmaster inditotta,
+nem
+t&ouml;bbfelhaszn&aacute;l&oacute;s k&ouml;rnyezetk&eacute;nt fut, igy
+a z&aacute;rol&aacute;si &eacute;s a szerverek
+k&ouml;z&ouml;tti kommunik&aacute;ci&oacute;s hiba jelens&eacute;gek
+nem jelentkeznek.</p>
+<p>Ha m&aacute;r fut a postmaster, indits egy psql-t, &eacute;s
+n&eacute;zd meg a szerver processz PID-j&eacute;t! Egy debuggert
+haszn&aacute;lhatsz a processzhez
+csatlakoz&aacute;shoz. Be&aacute;llithatsz t&ouml;r&eacute;spontokat
+&eacute;s elindithatsz
+lek&eacute;rdez&eacute;seket. Ha a postgres indit&aacute;sban keresel
+hib&aacute;t, a PGOPTIONS k&ouml;rnyezeti
+v&aacute;ltoz&oacute;t &aacute;llitsd be "-W n" &eacute;rt&eacute;kre.
+Ez n m&aacute;sodperc v&aacute;rakoz&aacute;st
+id&eacute;z el&ouml;, igy tudsz csatlakozni a processzhez, el tdsz
+hejezni t&ouml;r&eacute;spontokat, majd
+folytathatod a ind&iacute;t&aacute;st.</p>
+<p>A postgres program -s, -A &eacute;s -t opci&oacute;i is nagyon
+hasznosak lehetnek hibakeres&eacute;sn&eacute;l &eacute;s
+teljes&iacute;tm&eacute;ny
+m&eacute;r&eacute;sn&eacute;l.</p>
+<p>Profiling leht&ouml;s&eacute;ggel is fordithatod a szervert, hogy
+l&aacute;sd melyik funkci&oacute;k foglalj&aacute;k el a fut&aacute;si
+id&otilde;t. A
+szerver profile &aacute;llom&aacute;nyai a pgsql/data/base/dbname
+k&ouml;nzvt&aacute;rba ker&uuml;lnek, a kliens
+profile &aacute;llom&aacute;nyok az aktu&aacute;lis
+k&ouml;nyvt&aacute;rba.
+Linuxon ehhez sz&uuml;ks&eacute;ges a -DLINUX_PROFILE
+ford&iacute;t&aacute;si direktiva.</p>
+<a name="3.8"></a> <big style="text-decoration: underline;">3.8)
+Mi&eacute;rt kapok "Sorry, too many clients"
+(T&uacute;l sok kliens) <br>
+hib&aacute;t csatlakoz&aacute;sn&aacute;l?</big><br>
+<p>N&ouml;velned kell a postmaster egyidej&ucirc;leg futtatott szerver
+processz sz&aacute;m korl&aacute;tj&aacute;t.</p>
+<p>Az alap&eacute;rtelmezett korl&aacute;t 32 processz. Ezt
+n&ouml;velhetjed &uacute;gy, hogy &uacute;jrainditod a postmastert
+&eacute;s -N opci&oacute;val
+meghat&aacute;rotod az &uacute;j &eacute;rt&eacute;ket, vagy
+m&oacute;dositod a postgresql.conf-ot.</p>
+<p>Ne felejtsd el, hogy ha n&ouml;veled a szerver processzek
+maxim&aacute;lis sz&aacute;m&aacute;t, akkor bufferek
+sz&aacute;m&aacute;t is n&ouml;velned kell,
+legal&aacute;bb a processzek sz&aacute;m&aacute;nak
+k&eacute;tszeres&eacute;re. Nagy processz sz&aacute;mokeset&eacute;ben
+val&oacute;szin&uuml;leg a Unix konfigur&aacute;ci&oacute;s
+param&eacute;tereken is n&ouml;velni kell.
+Ellen&ouml;rizd a SHMMAX (az osztott mem&oacute;ria szegmensek
+maxim&aacute;lis m&eacute;rete),
+a SEMMNS &eacute;s a SEMMNI (a szemaforok maxim&aacute;lis
+sz&aacute;ma), az NPROC (a processzek
+maxim&aacute;lis sz&aacute;ma), a MAXUPRC
+(felhaszn&aacute;l&oacute;nk&eacute;nti maxim&aacute;lis
+processz sz&aacute;m) &eacute;s a NFILE &eacute;s NINODE (a megnzitott
+&aacute;llom&aacute;nzok maxim&aacute;lis sz&aacute;ma)
+param&eacute;tereket. A PostgreSQL az&eacute;rt korl&aacute;tozza
+k&uuml;l&ouml;n a processz
+sz&aacute;mot, hogy a rendszeredet ne terhelhesse meg
+t&uacute;ls&aacute;gosan.</p>
+<p>A PostgreSQL 6.5 verzi&oacute;ban a maxim&aacute;lis szerver
+processz
+sz&aacute;m 64 volt &eacute;s a m&oacute;dosit&aacute;shoz bele kellett
+irni a
+include/storage/sinvaladt.h &aacute;llom&aacute;nyba &eacute;s
+&uacute;jra kellett forditani a servert. <a name="3.9"></a></p>
+<big style="text-decoration: underline;">3.9) Mi van pgsql_tmp
+k&ouml;nyvt&aacute;rban?</big><br>
+<p>Ez a k&ouml;nyvt&aacute;r a lek&eacute;rdez&eacute;s
+v&eacute;grehajt&oacute; &aacute;ltal l&eacute;trehezott
+&aacute;tmeneti &aacute;llom&aacute;nyokat tartalmazza.
+P&eacute;ld&aacute;ul ha egy
+rendez&eacute;st kell v&eacute;grehajtani egy ORDER BY kifejez&eacute;s
+miatt &eacute;s a m?velet t&ouml;bb
+mem&oacute;ri&aacute;t vesz ig&eacute;nybe, mint amennyit a -S
+param&eacute;ter megenged, akkor az
+&aacute;tmeneti k&ouml;nyvt&aacute;rban hoz l&eacute;tre egy
+&aacute;llom&aacute;nyt a
+fennmarad&oacute; adat t&aacute;rol&aacute;s&aacute;ra.</p>
+<p>Az &aacute;tmeneti &aacute;llom&aacute;nyok t&ouml;bbnyire
+t&ouml;rl?dnek, de meg is maradhat ha p&eacute;ld&aacute;ul
+v&aacute;ratlan hib&aacute;val le&aacute;ll a
+szerver egy rendez&eacute;s k&ouml;zben. Indit&aacute;skor &eacute;s
+le&aacute;llit&aacute;skor ezeket az
+&aacute;llom&aacute;nyokat t&ouml;rli a postmaster.</p>
+<a name="3.10"></a> <big style="text-decoration: underline;">3.10)
+Mi&eacute;rt kell dumpolni &eacute;s
+&uacute;jrat&ouml;lteni PostgreSQL kiad&aacute;s
+v&aacute;lt&aacute;s&aacute;n&aacute;l?</big><br>
+<p>A PostgreSQL csapat csak apr&oacute;bb
+v&aacute;ltoztat&aacute;sokat
+hajt v&eacute;gre a kisebb kiad&aacute;sok k&ouml;z&ouml;tt, igy ha 7.2
+verzi&oacute;r&oacute;l
+&aacute;llsz &aacute;t 7.2.1 verzi&oacute;ra, akkor nem
+sz&uuml;ks&eacute;ges kidumplonod az adatb&aacute;zist. A nagy
+kiad&aacute;sok eset&eacute;ben (p&eacute;ld&aacute;ul
+verzi&oacute;r&oacute;l 7.3-ra &aacute;tt&eacute;r&eacute;sn&eacute;l)
+v&aacute;ltozik a belsi&otilde; adatstrukt&uacute;r&aacute;k &eacute;s
+adat&aacute;llom&aacute;nyok form&aacute;tuma. Ezek a
+v&aacute;ltoz&aacute;sok gyakran nagyon &ouml;sszetettek, ez&eacute;rt
+ink&aacute;b nem tartunk fenn visszafel&eacute;
+kompatibilit&aacute;st. A dump az adatot &aacute;ltal&aacute;nos
+form&aacute;tumban irja ki, majd az
+&uacute;j form&aacute;tumban lehet azt visszat&ouml;leni.
+</p>
+Azokban a kiad&aacute;sokban, amelyek k&ouml;z&ouml;tt az adat
+form&aacute;tum nem v&aacute;ltozik, a pg_upgrade program
+haszn&aacute;lhat&oacute; dumpol&aacute;s
+&eacute;s helyre&aacute;llit&aacute;s n&eacute;lk&uuml;l.
+<hr style="width: 100%; height: 2px;"><br>
+<h2 style="text-align: center;"> M&ucirc;k&ouml;dtet&eacute;si
+k&eacute;rd&eacute;sek</h2>
+<br>
+<a name="4.1"></a> <big style="text-decoration: underline;">4.1) Mi a
+k&uuml;l&ouml;nbs&eacute;g a
+bin&aacute;ris &eacute;s a norm&aacute;l kurzorok k&ouml;z&ouml;tt?</big><br>
+<p>N&eacute;zd meg a DECLARE dokument&aacute;ci&oacute;j&aacute;t.</p>
+<a name="4.2"></a> <big style="text-decoration: underline;">4.2)
+Hogyan tudom select-elni a
+lek&eacute;rdez&eacute;s els&otilde; p&aacute;r sor&aacute;t?</big><br>
+<p>Olvasd el a FETCH dokument&aacute;ci&oacute;j&aacute;t, vagy
+haszn&aacute;ld a SELECT LIMIT-et.</p>
+<p>Az eg&eacute;sz lek&eacute;rdez&eacute;st v&eacute;gre kell
+hajtani,
+m&eacute;g akkor is, ha csak az els&otilde; p&aacute;r sort akarod
+megkapni. Gondolj arra, hogy a
+lek&eacute;rdez&eacute;sben lehet ORDER BY is. Ha van olyan index, ami
+megfelel az ORDER BY kifejez&eacute;sednek,
+a PostgreSQL k&eacute;pes lehet az els&ouml; n&eacute;h&aacute;ny
+rekord
+visszaad&aacute;s&aacute;ra, vagy a teljes lek&eacute;rdez&eacute;snek
+le kell futnia, amig a k&eacute;rt rekordok
+le nem gener&aacute;l&oacute;dnak.
+<a name="4.3"></a><big style="text-decoration: underline;"><br>
+</big></p>
+<p><big style="text-decoration: underline;">4.3) Hogy tudom
+kilist&aacute;zni a
+t&aacute;bl&aacute;kat vagy m&aacute;s dolgokat a PostgreSQL-ben?</big></p>
+<p>Elolvashatod a psql forr&aacute;s k&oacute;dj&aacute;ban a
+pgsql/src/bin/psql/describe.c &aacute;llom&aacute;nyban. Ez SQL
+parancsokat tartalmaz, amelyek azokat
+a kimeneteket &aacute;llitj&aacute;k el&ouml;, amiket a per jellel
+kezd&ouml;d&ouml;
+parancsok adnak vissza.</p>
+<a name="4.4"></a> <big style="text-decoration: underline;">4.4)
+Hogyan tudok elt&aacute;vol&iacute;tani egy
+oszlopot egy t&aacute;bl&aacute;b&oacute;l?</big><br>
+<br>
+<p>Ez a funkcionalit&aacute;s a 7.3 verzi&oacute;t&uuml;l kezdve
+&eacute;rhet&ouml; el az ALTER TABLE DROP COLUMN -nal. A r&eacute;gebbi
+verti&oacute;kban igy lehet
+v&eacute;grehajtani:</p>
+<pre>BEGIN;</pre>
+<pre>LOCK TABLE old_table;</pre>
+<pre>SELECT ... -- minden oszlopot, kiv&eacute;tel amit t&ouml;r&ouml;lni szeretn&eacute;l<br></pre>
+<pre>INTO TABLE new_table</pre>
+<pre>FROM old_table;</pre>
+<pre>DROP TABLE old_table;</pre>
+<pre>ALTER TABLE new_table RENAME TO old_table;</pre>
+<pre>COMMIT;</pre>
+<pre><br></pre>
+<h4><a name="4.5"></a><big
+ style="text-decoration: underline; font-weight: normal;">4.5) Mi a
+maxim&aacute;lis m&eacute;rete egy sornak,
+egy t&aacute;bl&aacute;nak vagy egy adatb&aacute;zisnak?</big></h4>
+<br>
+<p>A korl&aacute;tok:</p>
+<ul>
+  <li>
+    <p>adatb&aacute;zis: korl&aacute;tlan (1 TB az &aacute;ltalunk
+ismert
+lagnagyobb)</p>
+  </li>
+  <li>
+    <p>t&aacute;bla: 16 TB</p>
+  </li>
+  <li>
+    <p>rekord/sor 1.6TB</p>
+  </li>
+  <li>
+    <p>mez&ouml; 1 GB</p>
+  </li>
+  <li>
+    <p>a t&aacute;bla sorainak sz&aacute;ma: korl&aacute;tlan</p>
+  </li>
+  <li>
+    <p>a t&aacute;bla oszlopainak sz&aacute;ma: 250-1600 az oszlop
+nevekt&otilde;l f&uuml;gg&ouml;en</p>
+  </li>
+  <li>
+    <p>A t&aacute;bla indexeinek sz&aacute;ma: korl&aacute;tlan</p>
+  </li>
+</ul>
+<p>Term&eacute;szetesen nem igaz&aacute;n korl&aacute;tlan, de a
+t&aacute;rter&uuml;let, mem&oacute;ria &eacute;s egy&eacute;b
+k&uuml;ls&ouml; t&eacute;nyez&ouml;k korl&aacute;tozz&aacute;k. A
+teljesitm&eacute;ny romolhat, ha ezek az &eacute;rt&eacute;kek
+szokatlanul nagyok.</p>
+<p>A 16 TB-os legnagyobb t&aacute;bla m&eacute;ret nem ig&eacute;nyel
+nagy
+&aacute;llom&aacute;ny t&aacute;mogat&aacute;st. A nagy
+t&aacute;bl&aacute;k t&ouml;bb 1 GB m&eacute;ret&uuml;
+&aacute;llom&aacute;nyba ker&ouml;lnek, igy az &aacute;llom&aacute;ny
+rendszer korl&aacute;tai nem l&eacute;nyegesek.</p>
+<p>A maxim&aacute;lis t&aacute;bla m&eacute;ret &eacute;s az oszlopok
+maxim&aacute;lis oszlop sz&aacute;m n&ouml;velhet&ouml;, ha az
+alap&eacute;rtelmezett blokkm&eacute;retet 32k-ra n&ouml;veled.</p>
+<a name="4.6"></a> <big style="text-decoration: underline;">4.6)
+Mekkora adatb&aacute;zis lemez ter&uuml;let
+sz&uuml;ks&eacute;ges egy tipikus sz&ouml;veg &aacute;llom&aacute;ny <br>
+t&aacute;rol&aacute;s&aacute;hoz?</big><br>
+<p>A PostgreSQL ak&aacute;r a sz&ouml;veg &aacute;llom&aacute;ny
+helyig&eacute;ny&eacute;nek &ouml;tsz&ouml;r&ouml;s&eacute;t is
+elfoglalhatja.</p>
+<p>K&eacute;pzelj el p&eacute;ld&aacute;ul, egy 100.000 soros
+sz&ouml;veget, aminek minde sora egy sz&aacute;mb&oacute;l &eacute;s
+egy sz&ouml;vegb&otilde;l
+&aacute;ll. Tegy&uuml;k el, hogy &aacute;tlagosan 20 byte hossz&uacute;
+sz&ouml;vegek. Ez a sz&ouml;veg&aacute;llom&aacute;ny
+k&ouml;r&uuml;lbel&uuml;l 2.8 MB helyet foglalna el. A t&aacute;bla ami
+a fenti adatszerkezetet elt&aacute;roln&aacute;,
+k&ouml;r&uuml;lbel&uuml;l 6.4 MB-os lenne. Ezt a
+k&ouml;vetkez&ouml;k&eacute;ppen sz&aacute;molhatjuk ki:</p>
+<p>36 byte: sor fejl&eacute;c</p>
+<pre>24 byte: egy int mez&ouml; + egy sz&ouml;veg mez&ouml;</pre>
+<pre>4 byte: mutato</pre>
+<pre>---------------------------------------</pre>
+<pre>64 byte soronkent.</pre>
+<p>Az adat oldal m&eacute;rete a PostgreSQL-ben 8192 byte, igy 8192 /
+64 = 128 rekord adatb&aacute;zis oldalank&eacute;nt
+(lefel&eacute; kerekitve).</p>
+<pre>100000 rekord / 128 rekord oldalank&eacute;nt = 782 adat oldal<br>(felel&eacute; kerekitve).</pre>
+<pre>782 adatb&aacute;zis oldal * 8192 byte olalank&eacute;nt = 6,406,144<br>byte (6.4 MB)</pre>
+<p>Az indexek nem foglalnak t&uacute;l sokat, de tartalmazz&aacute;k az
+indexelt adatot, igy ezek is lehetnek nagyok.</p>
+<p>A NULL &eacute;rt&eacute;kek bitt&eacute;rk&eacute;pben vannak
+t&aacute;rolva, igy kev&eacute;s helyet foglanak.</p>
+<p><a name="4.7"></a><big style="text-decoration: underline;">4.7) Hogy
+tudhatom meg milyen t&aacute;bl&aacute;k,
+indexek, adatb&aacute;zisok vagy felhaszn&aacute;l&oacute;k</big></p>
+<big style="text-decoration: underline;">vannak defini&aacute;lva?<br>
+</big>
+<p>A psql-ben tal&aacute;lsz sz&aacute;mos '\' karakterrel
+kezd&ouml;d&ouml; utas&iacute;t&aacute;st az ilyen
+inform&aacute;ci&oacute;k list&aacute;z&aacute;s&aacute;ra. A '\?'
+segits&eacute;g&eacute;vel tudot kilist&aacute;zni ezeketa parancsokat.
+Ezen kiv&uuml;l vannak rendszer t&aacute;bl&aacute;k,
+amelyek nevei 'pg_'-vel kezd&ouml;dnek.</p>
+<p>Pr&oacute;b&aacute;ld ki a pgsql/src/tutorial/syscat.source
+&aacute;llom&aacute;nyt is. Ez sok p&eacute;ld&aacute;t tartalmaz az
+rendszert&aacute;bl&aacute;kon
+v&eacute;grehajtott SELECT-ekr&ouml;l.</p>
+<p><a name="4.8"></a><big style="text-decoration: underline;">4.8) A
+lek&eacute;rdez&eacute;seim lass&uacute;ak,
+vagy nem haszn&aacute;lj&aacute;k az indexeket. Mi&eacute;rt?</big></p>
+<p><big style="text-decoration: underline;"></big></p>
+<p>Az indexeket nem haszn&aacute;lja a szerver minden
+lek&eacute;rdez&eacute;sn&eacute;l automatikusan. Csak akkor
+haszn&aacute;l indexet, ha a t&aacute;bla m&eacute;rete egy
+megadott als&oacute; hat&aacute;r felett van, &eacute;s a
+lek&eacute;rdez&eacute;s csak a sorok egy kis
+r&eacute;sz&eacute;t &eacute;rinti. Ez az&eacute;rt van, mert a
+v&eacute;letlen hozz&aacute;f&eacute;r&eacute;s m&eacute;g
+mindig lassabb lehet mint az t&aacute;bla szekvenci&aacute;lis
+olvas&aacute;sa.</p>
+<p>Hogy a PostgreSQL meg tudja hat&aacute;rozni hogy kell-e indexet
+haszn&aacute;lni, l&eacute;teznie kell egy statisztik&aacute;nak a
+t&aacute;bl&aacute;r&oacute;l. Ez a statisztikai adatok a VAACUM
+ANALYZE vagy az egyszer&ucirc; ANALYZE m&ucirc;veletek
+sor&aacute;n j&ouml;nnek l&eacute;tre. A statisztikai adatok
+felhaszn&aacute;l&aacute;s&aacute;val az optimaliz&aacute;l&oacute; meg
+tudja hat&aacute;rozni, hogy h&aacute;ny sor van a
+t&aacute;bl&aacute;ban, &eacute;s el tudja d&ouml;nteni, hogy
+haszn&aacute;ljon-e indexet. A statisztiaki
+adatgy&uuml;jt&eacute;st id&otilde;nk&eacute;nt v&eacute;gre kell
+hajtani, ahogy a t&aacute;bla adatai v&aacute;ltoznak.</p>
+<p>Az indexeket norm&aacute;lis esetben nem haszn&aacute;lja az ORDER
+BY
+vagy az OUTER JOIN. A szekvenci&aacute;lis olvas&aacute;s
+&aacute;ltal&aacute;ban gyorsabb, mint az index keres&eacute;s egy nagy
+t&aacute;bl&aacute;ban. B&aacute;r a LIMIT az ORDER BY-val
+kombin&aacute;lva haszn&aacute;lhat
+indexet, mert a t&aacute;bla csak kis r&eacute;sze &eacute;rintett.
+B&aacute;r a MIN
+&eacute;s MAX SQL funkci&oacute;k sem haszn&aacute;lj&aacute;k az
+indexeket, ezeket az
+&eacute;rt&eacute;keket egy ORDER BY + LIMIT
+lek&eacute;rdez&eacute;ssel is le lehet k&eacute;rdezni:</p>
+<pre>SELECT col</pre>
+<pre>FROM tab</pre>
+<pre>ORDER BY col [ DESC ]</pre>
+<pre>LIMIT 1;</pre>
+<br>
+<p>Amikor helyettes&iacute;t&otilde; jel oper&aacute;torokat
+haszn&aacute;lsz, mint a LIKE kulcssz&oacute; vagy a ~, az indexeket
+csak bizonyos k&ouml;r&uuml;lm&eacute;nyek
+k&ouml;z&ouml;tt lehet haszn&aacute;lni:</p>
+<p>A keres&otilde; string kezdete a keres&eacute;si minta elej&eacute;n
+kell hogy legyen. P&eacute;ld&aacute;ul:</p>
+<ul>
+  <li>A LIKE mint&aacute;k nem kezd&otilde;dhetnek % jellel.</li>
+  <li>&nbsp;~ (regexp) kifejez&eacute;sek nem kezd&otilde;dhetnek ^
+jellel.</li>
+  <li>A keres&eacute;si kifejez&eacute;s nem kezd&otilde;dhet karakter
+oszt&aacute;llyal.</li>
+  <li>A case-insensitive keres&eacute;s (ILIKE, ~*) nem
+haszn&aacute;lnak
+indexet ehelyett funkcion&aacute;lis indexet haszn&aacute;lnak, amit a
+4.12
+pontban tal&aacute;lhatsz.</li>
+  <li>Az alap&eacute;rtelmezett C hellyel kell futtatni az initdb-t.</li>
+</ul>
+<a name="4.9"></a> <big style="text-decoration: underline;">4.9) Hogy
+tudom ellen&otilde;rizni, hogy
+optimaliz&aacute;lta a lek&eacute;rdez&eacute;s
+optimaliz&aacute;l&oacute;<br>
+a lek&eacute;rdez&eacute;sem?<br>
+</big>
+<p>Olvasd el a dokument&aacute;ci&oacute; EXPLAIN-r&oacute;l
+sz&oacute;l&oacute; r&eacute;sz&eacute;t.</p>
+<p><a name="4.10"></a><big style="text-decoration: underline;">4.10) Mi
+az R-tree index?</big></p>
+<p>Az R-tree index a t&eacute;rbeli adat indexel&eacute;s&eacute;re
+alkalmas. Egy hash index nem k&eacute;pes tartom&aacute;ny
+keres&eacute;sekre. A B-tree
+index csak egy dimenzi&oacute;n kezeli a tartom&aacute;ny
+keres&eacute;seket.
+P&eacute;ld&aacute;ul ha az indexet egy pont (point adatt&iacute;pus)
+t&iacute;pus&uacute; mez.re
+&eacute;p&iacute;tj&uuml;k, gyorsabban kezeli az olyan jelleg&uuml;
+lek&eacute;rdez&eacute;seket, mint egy
+adott k&ouml;rben</p>
+<p>tal&aacute;lhat&oacute; pontok.</p>
+<p>Az R-tree tervez&eacute;si mint&aacute;t eredetileg
+le&iacute;r&oacute;
+sz&ouml;veg: Guttman, A. "R-trees: A Dynamic Index Structure for
+Spatial Searching." Proceedings of the 1984 ACM SIGMOD Int'l Conf on
+Mgmt of Data, 45-57.</p>
+<p>Ezt olvashatod Stonebraker "Readings in Database Systems" c.
+k&ouml;nyv&eacute;ben.</p>
+<p>A be&eacute;p&iacute;tett R-tree kezelni tudj&aacute;k a
+soksz&ouml;geket (polygon adatt&iacute;pus) &eacute;s a dobozokat
+(box). Elm&eacute;letileg, az R-tree
+kiterjeszthet&otilde; tov&aacute;bbi dimenzi&oacute;kra is.
+Gyakorlatilag ezen dolgoznod kell egy kicsit,
+&eacute;s m&eacute;g nincs dokument&aacute;ci&oacute;nk arr&oacute;l
+hogy az
+hogyan m&ucirc;k&ouml;dik.</p>
+<p><a name="4.11"></a><big style="text-decoration: underline;">4.11) Mi
+a Genetic Query Optimizer?</big></p>
+<p><big style="text-decoration: underline;"></big></p>
+<p>A GEQO modul a lek&eacute;rdez&eacute;s optimaliz&aacute;ci&oacute;
+sebess&eacute;g&eacute;t n&ouml;veli nagy mennyis&eacute;g&ucirc;
+t&aacute;bla &ouml;sszekapcsol&aacute;sa
+eset&eacute;n. Lehet&otilde;v&eacute; teszi a nagy
+lek&eacute;rdez&eacute;sek v&eacute;grehajt&aacute;s&aacute;t nem
+teljes keres&eacute;ssel.</p>
+<p><a name="4.12"></a><big style="text-decoration: underline;">4.12)
+Hogyan tudok regexp keres&eacute;st &eacute;s
+case-insensitive regexp keres&eacute;st </big><big
+ style="text-decoration: underline;">haszn&aacute;lni? Hogyan tudok
+indexet haszn&aacute;lni
+case-insensitive keres&eacute;shez?</big><br>
+</p>
+<p>A ~ oper&aacute;tor hajt v&eacute;gre regul&aacute;ris
+kifejez&eacute;s
+(regexp) &eacute;rtelmez&eacute;st, a ~* ennek case-insensitive
+v&aacute;ltozata. A LIKE case-insensitive v&aacute;ltozata az ILIKE.</p>
+<p>A case-insensitive egyenl&otilde;s&eacute;g m&ucirc;veleteket
+&aacute;ltal&aacute;ban igy hajtjuk v&eacute;gre:</p>
+<p>SELECT *</p>
+<pre>FROM tab</pre>
+<pre>WHERE lower(col) = 'abc';</pre>
+<p>Ez nem fog indexet haszn&aacute;lni, b&aacute;r l&eacute;trehozhatsz
+egy funkci&oacute; indexet:</p>
+<pre>CREATE INDEX tabindex ON tab (lower(col));</pre>
+<a name="4.13"></a> <big style="text-decoration: underline;">4.13)
+Hogyan tudom &eacute;szlelni egy
+lek&eacute;rdez&eacute;sben, ha egy mez&otilde; NULL?</big><br>
+<p>Haszn&aacute;ld "IS NULL"-t &eacute;s az "IS NOT NULL"-t.</p>
+<p><a name="4.14"></a><big style="text-decoration: underline;">4.14) Mi
+a k&uuml;l&ouml;nbs&eacute;g a
+k&uuml;l&ouml;nb&ouml;z&otilde; karaktert&iacute;pusok k&ouml;z&ouml;tt?</big></p>
+<ul>
+  <li>"char" egy karakter hossz&uacute; string</li>
+  <li>CHAR(n) bpchar &uuml;res hellyel a megadott n
+hossz&uacute;s&aacute;gig</li>
+  <li>VARCHAR(n) varchar m&eacute;ret maxim&aacute;lis hossz
+meghat&aacute;roz&aacute;s&aacute;val, a lefogllat ter&uuml;let is
+v&aacute;ltoz&oacute; hossz&uacute; lesz</li>
+  <li>TEXT nincs meghat&aacute;rozott fels&#337; korl&aacute;t</li>
+  <li>BYTEA v&aacute;ltoz&oacute; hossz&uacute;s&aacute;g&uacute;
+byte-t&ouml;mb</li>
+</ul>
+<p>L&aacute;tni fogod a bels&otilde; elnevez&eacute;s&uuml;ket, ha
+tanulm&aacute;nyozod a rendszert&aacute;bl&aacute;kat&eacute;s
+n&eacute;h&aacute;ny hiba&uuml;zenetet.</p>
+<p>Az ut&oacute;bbi n&eacute;gy a "varlena" t&iacute;pusok, ami a
+t&aacute;rol&aacute;suk m&oacute;dj&aacute;ra utal: az els&otilde; 4
+byte a lemezen a hossz&uacute;s&aacute;g, a t&ouml;bbi
+az adat. A val&oacute;di m&eacute;ret teh&aacute;t nagyobb mint a
+deklar&aacute;lt
+hossz&uacute;s&aacute;g.Ezek azadatok t&ouml;m&ouml;ritve
+t&aacute;rol&oacute;dnak el, igy kevesebb helyet foglalnek el az
+el&ouml;re sz&aacute;mitottn&aacute;l.</p>
+<p>A CHAR(n) a legjobb megold&aacute;s, ha stabil
+hossz&uacute;s&aacute;g&uacute; stringet t&aacute;rolsz. A VARCHAR(n)
+j&oacute; arra az esetekre, ha a hossz&uacute;s&aacute;g
+v&aacute;ltozik, de van fels&otilde; korl&aacute;tja. A TEXT
+t&iacute;pus korl&aacute;tlan
+hossz&uacute;s&aacute;g&uacute; (1 GB-ig) sz&ouml;vegek
+t&aacute;rol&aacute;s&aacute;ra alklamas. A BYTEA bin&aacute;ris adatok
+t&aacute;rol&aacute;s&aacute;ra van. A teljesitm&eacute;ny
+mutat&oacute;i hasonl&oacute;ak ezenek a
+t&iacute;pusoknak.</p>
+<p><a name="4.15.1"></a><big style="text-decoration: underline;">4.15.1)
+Hogyan tudok l&eacute;trehozni
+automatikusan n&ouml;vekv&otilde; &eacute;rt&eacute;k&ucirc;
+mez&otilde;t?</big></p>
+<br>
+A PostgreSQL rendelkezik egy SERIAL adatt&iacute;pussal. Ez egy
+szekvenci&aacute;t &eacute;s egy indexet hoz l&eacute;tre az oszlopon.
+P&eacute;ld&aacute;ul ez:<br>
+<pre>CREATE TABLE person (</pre>
+<pre>id SERIAL,</pre>
+<pre>name TEXT</pre>
+<pre>);</pre>
+<p>ugyanezt jelenti:</p>
+<pre>CREATE SEQUENCE person_id_seq;</pre>
+<pre>CREATE TABLE person (</pre>
+<pre>id INT4 NOT NULL DEFAULT nextval('person_id_seq'),</pre>
+<pre>name TEXT</pre>
+<pre>);</pre>
+<pre>CREATE UNIQUE INDEX person_id_key ON person ( id );</pre>
+<br>
+<p>A szekvenci&aacute;kkal kapcsolatban olvasd el a create_sequence man
+oldalt. A sor OID-j&eacute;t is haszn&aacute;lhatod egyedi
+azonosit&oacute;k&eacute;nt, b&aacute;r ebben az esetben figyelj a
+pg_gump haszn&aacute;lat&aacute;n&aacute;l a
+-o opci&oacute;ra (COPY WITH OIDS, m&aacute;sol&aacute;s OID-dal), hogy
+meg?rizd az
+&eacute;rt&eacute;keket.</p>
+<p><a name="4.15.2"></a><big style="text-decoration: underline;">4.15.2)
+Hogyan kaphatom meg egy SERIAL
+besz&uacute;r&aacute;s &eacute;rt&eacute;k&eacute;t?</big></p>
+<p>Egy megold&aacute;s erre az, ha a nextval() funkci&oacute;val
+megszerzed az &eacute;rt&eacute;ket m&eacute;g miel&ouml;tt
+besz&uacute;rn&aacute;d
+az adatot a t&aacute;bl&aacute;ba. Erre itt l&aacute;thatsz egy
+p&eacute;ld&aacute;t:</p>
+<pre>new_id = execute("SELECT nextval('person_id_seq')");</pre>
+<pre>execute("INSERT INTO person (id, name) VALUES (new_id, 'Blaise<br>Pascal')");</pre>
+<p>
+Esetleg lek&eacute;rdezheted a szekvencia &aacute;llapot&aacute;t a sor
+besz&uacute;r&aacute;sa ut&aacute;n. </p>
+<pre>execute("INSERT INTO person (name) VALUES ('Blaise Pascal')");</pre>
+<pre>new_id = execute("SELECT currval('person_id_seq')");</pre>
+<p>
+V&eacute;g&uuml;l pedig, haszn&aacute;lhatod a visszaadott OID
+&eacute;rt&eacute;ket is, b&aacute;r ez a lehet&otilde;
+legkev&eacute;sb&eacute; portolhat&oacute;. Perl DBI-ben, Edmund Mergl
+DBD::Pg modulj&aacute;ban az OID &eacute;rt&eacute;k
+haszn&aacute;lhat&oacute; a
+$sth-&gt;execute() ut&aacute;n ($sth-&gt;{pg_oid_status}).</p>
+<a name="4.15.3"></a> <big style="text-decoration: underline;">4.15.3)
+A currval() &eacute;s a nextval() nem
+teremt holtpont vesz&eacute;lyes helyzetet a felhaszn&aacute;l&oacute;k
+k&ouml;z&ouml;tt?</big><br>
+<p>Nem. A currval() funkci&oacute; a szerver processzed &aacute;ltal
+adott
+&eacute;rt&eacute;ket adja vissza, nem pedig a t&ouml;bbi szerver
+processz &aacute;ltal adottat.</p>
+<big style="text-decoration: underline;"><a name="4.15.4"></a>4.15.4)
+Mi&eacute;rt nem haszn&aacute;l&oacute;dnak fel &uacute;jra a
+sequence sz&aacute;mok tranzakci&oacute; abort eset&eacute;n?</big><br>
+<p>Mi&eacute;rt vannak probl&eacute;m&aacute;k a serial oszlopok
+sz&aacute;moz&aacute;s&aacute;val?</p>
+<p>A p&aacute;rhuzamoss&aacute;g fejleszt&eacute;se
+&eacute;rdek&eacute;ben a sorozat sz&aacute;mokat k&eacute;r&eacute;sre
+adja ki a szerver fut&oacute; tranzakci&oacute;knak, &eacute;s azokat
+nem z&aacute;rja, amig a tranzakci&oacute; v&eacute;get nem &eacute;r.
+Ez jukakat okoz a
+sz&aacute;moz&aacute;sokban a visszaforditott tranzakci&oacute;k miatt.</p>
+<p><a name="4.16"></a><big style="text-decoration: underline;"> 4.16)
+Mi a
+OID? Mi a TID?</big></p>
+<p>Az OID a PostgreSQL egyedi sor azonosit&oacute;ja. Minden sor, ami
+l&eacute;trej&ouml;n a szerveren, kap egy OID-t. Minden OID, amit az
+initdb alatt j&ouml;n
+l&eacute;tre 16384 alatt van (l&aacute;sd include/access/transam.h).
+Minden,
+felhaszn&aacute;l&oacute; &aacute;ltal l&eacute;trehozott OID
+legal&aacute;bb ennyi.
+Alap&eacute;rtelmez&eacute;sben, az OID nem csak a
+t&aacute;bl&aacute;ban vagy az adatb&aacute;zisban egyedi,
+hanem a teljes PostgreSQL adatb&aacute;zis rendszerben.</p>
+<p>A PostgreSQL az OID-okat a bels&ouml; t&aacute;bl&aacute;iban
+haszn&aacute;lja a sorok t&aacute;bl&aacute;k k&ouml;z&ouml;tt
+&ouml;sszekapcsol&aacute;s&aacute;hoz. Ezek az OID-k
+haszn&aacute;lhat&oacute;ak a rekordok azonosit&aacute;s&aacute;ra is
+amikor t&aacute;bl&aacute;kat csatol
+&ouml;ssze a szerver (JOIN). Az OID-ot haszn&aacute;lhatod mez&ouml;
+t&iacute;pusk&eacute;nt is,
+&eacute;s indexelheted is.</p>
+<p>Az OID &eacute;rt&eacute;k egy k&ouml;zponti ter&uuml;letr&ouml;l
+sz&aacute;rmazik, amit minden szerver processz haszn&aacute;l. Ha az
+OID-ot valami m&aacute;sra
+szeretn&eacute;d cser&eacute;lni:</p>
+<p>CREATE TABLE new_table(old_oid oid, mycol int);</p>
+<pre>SELECT old_oid, mycol INTO new FROM old;</pre>
+<pre>COPY new TO '/tmp/pgtable';</pre>
+<pre>DELETE FROM new;</pre>
+<pre>COPY new WITH OIDS FROM '/tmp/pgtable';</pre>
+<br>
+<p>Az OID 4 byte-os integer &eacute;rt&eacute;kk&eacute;nt
+t&aacute;rol&oacute;dik, igy 4 milli&aacute;rdn&aacute;l
+t&uacute;lcsordul. M&eacute;g soha senki nem jelezte hogy ez
+t&ouml;rt&eacute;nt volna,
+&eacute;s ezt a korl&aacute;tot igyeksz&uuml;nk elt&aacute;volitani,
+m&eacute;g miel&ouml;tt
+b&aacute;rki &eacute;szrevenn&eacute;.</p>
+<p>A TID a fizikai sorok blokk &eacute;s offszet c&iacute;mmel
+val&oacute;
+azonosit&aacute;s&aacute;ra szolg&aacute;l. A TID v&aacute;ltozik
+minden rekord m&oacute;dosit&aacute;s &eacute;s
+t&ouml;rl&eacute;s alkalm&aacute;val. Ezeket az indexek
+haszn&aacute;lj&aacute;k hogy a fizikai sort gyorsan
+megtal&aacute;lj&aacute;k.</p>
+<p><a name="4.17"></a><big style="text-decoration: underline;">4.17) Mi
+a PostgreSQL-ben haszn&aacute;lt
+kifejez&eacute;sek jelent&eacute;se?</big></p>
+<br>
+<p>N&eacute;hol a forr&aacute;s k&oacute;dban &eacute;s a
+dokumnet&aacute;ci&oacute;ban tal&aacute;lhat&oacute;ak
+kifejez&eacute;sek, amelyek &aacute;ltal&aacute;nosabb
+jelent&eacute;ssel b&iacute;rnak.
+Itt van n&eacute;h&aacute;ny:</p>
+<ul>
+  <li>t&aacute;bla (table), rel&aacute;ci&oacute; (relation),
+oszt&aacute;ly (class)</li>
+  <li>sor (row), rekord (record), tuple (nincs magyar jelent&eacute;s)</li>
+  <li>oszlop (column), mez&ouml; (field), attributum (attribute)</li>
+  <li>retrieve, select</li>
+  <li>helyettesit (replace), m&oacute;dosit (update)</li>
+  <li>hozz&aacute;f&ucirc;z (append), besz&uacute;r (insert)</li>
+  <li>OID, sorozat &eacute;rt&eacute;k (serial value)</li>
+  <li>portal, cursor</li>
+  <li>range variable, t&aacute;bla n&eacute;v, t&aacute;bla alias</li>
+</ul>
+Az &aacute;ltal&aacute;nos adatb&aacute;zis kifejez&eacute;sek
+&ouml;sszefoglal&oacute;j&aacute;t itt olvashat&oacute;:
+<p><a
+ href="http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary%0A/glossary.html">http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glossary.html</a></p>
+<br>
+<a name="4.18"></a> <big style="text-decoration: underline;">4.18)
+Mi&eacute;rt kapom ezt a hib&aacute;t:
+"ERROR: Memory exhausted in AllocSetAlloc()"?<br>
+</big>
+<p>Lehet hogy elfogyott a virtu&aacute;lis mem&oacute;ri&aacute;d, vagy
+a
+kerneled er&otilde;forr&aacute;s korl&aacute;tai alacsonyak.
+Pr&oacute;b&aacute;ld ki ezt miel&ouml;tt
+elinditan&aacute;d a postmastert:</p>
+<pre>ulimit -d 262144</pre>
+<pre>limit datasize 256m</pre>
+<p>A shellt&otilde;l f&uuml;gg&otilde;en ezek k&ouml;z&uuml;l csak az
+egyik fut majd le, de a processzek adatszegmens&eacute;t sokkal
+magasabbra &aacute;llitja, ami
+tal&aacute;n el&eacute;g lesz a lek&eacute;rdez&eacute;s
+v&eacute;grehajt&aacute;s&aacute;hoz. Ez az utas&iacute;t&aacute;s a
+jelenlegi processzre (a shelled) &eacute;rv&eacute;nyes, &eacute;s
+minden
+&aacute;ltala l&eacute;trehozott processzre. Ha probl&eacute;m&aacute;d
+van az SQL klienssel, mert a
+szerver t&uacute;l nagy adatot k&uuml;ld vissza, pr&oacute;b&aacute;ld
+meg e
+klienssel is ugyanezt.</p>
+<p><a name="4.19"></a><big style="text-decoration: underline;">4.19)
+Hogyan tudhatom meg PostgreSQL, milyen
+verzi&oacute;t futtatok?</big></p>
+<p>A psql programban select version();</p>
+<a name="4.20"></a> <big style="text-decoration: underline;">4.20)
+Mi&eacute;rt kapok "invalid large obj
+descriptor" hib&aacute;t nagy objektumok
+kezel&eacute;s&eacute;n&eacute;l?</big><br>
+<p>A nagy objektumok kezel&eacute;s&eacute;t egy tranzakci&oacute;s
+blokkban helyezd el. (BEGIN &eacute;s COMMIT k&ouml;z&ouml;tt)</p>
+<p><br>
+Jelenleg a PostgreSQL ezt a szab&aacute;lyt azzal teszi
+k&ouml;telez&otilde;v&eacute;, hogy a tranzakci&oacute;
+v&eacute;g&eacute;n a nagy objektumokat
+lez&aacute;rja, igy a tranzakci&oacute; ut&aacute;n az els&otilde;
+m&ucirc;velet amit az objektumon
+v&eacute;grahajtan&aacute;l hib&aacute;s lesz.</p>
+<p>Ha olyan programoz&aacute;si fel&uuml;letet haszn&aacute;lsz mint az
+ODBC vagy a JDBC akkor val&oacute;szin&ucirc;leg ki kell kapcsolnod az
+auto-commit-ot.</p>
+<p><a name="4.21"></a><big style="text-decoration: underline;">4.21)
+Hogy hozhatok l&eacute;tre olyan oszlopot,
+aminek alap&eacute;rtelmezett </big><big
+ style="text-decoration: underline;">&eacute;r&eacute;tke a jelenlegi
+id&otilde;?</big><br>
+</p>
+<p>Haszn&aacute;ld a CURRENT_TIMESTAMP -ot:</p>
+<pre>CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );</pre>
+<a name="4.22"></a> <big style="text-decoration: underline;">4.22)
+Mi&eacute;rt olyan lass&uacute;ak az
+al-lek&eacute;rdez&eacute;seim IN-nel?</big><br>
+<p>Jelenleg az al-lek&eacute;rdez&eacute;seket a k&uuml;ls&otilde;
+lek&eacute;rdez&eacute;shez csatoljuk. Ha az allek&eacute;rdez&eacute;s
+csak kev&eacute;s sort eredm&eacute;nyez
+&eacute;s a k&uuml;ls&otilde; lek&eacute;rdez&eacute;s sokat, akkor az
+IN is gyors. Az EXISTS kulcssz&oacute;
+haszn&aacute;lat&aacute;val gyorsithatod a lek&eacute;rdez&eacute;seket.</p>
+<p>SELECT *</p>
+<pre>FROM tab</pre>
+<pre>WHERE col IN (SELECT subcol FROM subtab);</pre>
+<br>
+<p>EXISTS haszn&aacute;lat&aacute;val:</p>
+<pre>SELECT *</pre>
+<pre>FROM tab</pre>
+<pre>WHERE EXISTS (SELECT subcol FROM subtab WHERE subcol = col);</pre>
+Ahhoz hogy ez gyorsan fusson le, a subcol indexelt oszlopnak kell hogy
+legyen. Rem&eacute;lj&uuml;k ezt a korl&aacute;tot siker&uuml;l
+hamarosan legy&otilde;zn&uuml;nk.
+<p><a name="4.23"></a><big style="text-decoration: underline;">4.23)
+Hogyan tudok outer join-t v&eacute;grehajtani?</big></p>
+<p>A PostgreSQL a szabv&aacute;nyos SQL szintaktik&aacute;t
+k&ouml;veti.
+Itt van k&eacute;t p&eacute;lda:</p>
+<p>SELECT *</p>
+<pre>FROM t1 LEFT OUTER JOIN t2 ON (t1.col = t2.col);</pre>
+<p>
+vagy</p>
+<pre>SELECT *</pre>
+<pre>FROM t1 LEFT OUTER JOIN t2 USING (col);</pre>
+<p>Ezek az identikus lek&eacute;rdez&eacute;sek
+&ouml;sszekapcsolj&aacute;k a t1.col &eacute;s a t2.col mez&otilde;ket,
+&eacute;s a t1 b&aacute;rmelyik kapcsolatlan
+sor&aacute;t is visszadj&aacute;k. A RIGHT JOIN a t2 kapcsolatlan
+sorait adta volna vissza, a FULL JOIN pedig a kapcsolt, &eacute;s
+mindk&eacute;t t&aacute;bla kapcsolatlan sorait
+adja. Az OUTER kulcssz&oacute; opcion&aacute;lis, a LEFT, RIGHT
+&eacute;s FULL JOIN
+szintaktikailag helyes. Az &aacute;tlagos
+&ouml;sszekapcsol&aacute;sokat INNER JOIN-nak
+nevezz&uuml;k.</p>
+<p>Az el&otilde;z&otilde; kiad&aacute;sokban a OUTER JOIN
+lek&eacute;rdez&eacute;seket UNION &eacute;s NOT IN kulcsszavakkal
+lehetett szimul&aacute;lni. P&eacute;ld&aacute;ul a tab1
+&eacute;s a tab2 &ouml;sszekapcsol&aacute;sa:</p>
+<pre><code>SELECT tab1.col1, tab2.col2</code></pre>
+<pre><code>
+FROM tab1, tab2</code></pre>
+<pre><code>
+WHERE tab1.col1 = tab2.col1</code></pre>
+<pre><code>
+UNION ALL</code></pre>
+<pre><code>
+SELECT tab1.col1, NULL</code></pre>
+<pre><code>
+FROM tab1</code></pre>
+<pre><code>
+WHERE tab1.col1 NOT IN (SELECT tab2.col1 FROM tab2)</code></pre>
+<pre><code>
+ORDER BY col1</code></pre>
+<pre><code></code></pre>
+<code></code>
+<a name="4.24"></a> <big style="text-decoration: underline;">4.24)
+Hogyan tudok t&ouml;bb adatb&aacute;zison
+v&eacute;grehajtani lek&eacute;rdez&eacute;st?<br>
+</big>
+<p>Arra nincs lehet&otilde;s&eacute;g, hogy m&aacute;s
+adatb&aacute;zisb&oacute;l k&eacute;rdezz le adatot.Mivel a PostgreSQL
+adatb&aacute;zis specifikus rendszer
+t&aacute;bl&aacute;kat t&ouml;ltbe, bizonytalan hogy egy
+adatb&aacute;zisok k&ouml;z&ouml;tti
+lek&eacute;rdez&eacute;snek hogyankellene viselkednie. </p>
+<p>A contrib/dblink k&ouml;nyvt&aacute;rban tal&aacute;lsz egy
+megold&aacute;st erre, ami funkci&oacute; hiv&aacute;sok
+segits&eacute;g&eacute;vel
+m&ucirc;k&ouml;dik. Persze, a kliens hozhat
+l&eacute;treszimult&aacute;n kapcsolatot t&ouml;bb adatb&aacute;zissal,
+&eacute;s
+&ouml;sszef&eacute;s&uuml;lheti az eredm&eacute;nyeket.</p>
+<p><big style="text-decoration: underline;"><a name="4.25"></a>4.25)
+Hogy tudok t&ouml;bb soros vagy oszlopos
+eredm&eacute;nyt visszaadni egy funkci&oacute;b&oacute;l?</big><br>
+</p>
+<big style="text-decoration: underline;"></big>
+<p>A PL/pgSQL t&aacute;rolt elj&aacute;r&aacute;s nyelvvel refcursor
+haszn&aacute;lat&aacute;val. R&eacute;szletesen itt:</p>
+<p><a
+ href="http://www.PostgreSQL.org/idocs/index.php?plpgsql-cursors.html">http://www.PostgreSQL.org/idocs/index.php?plpgsql-cursors.html</a></p>
+<a name="4.26"></a> <big style="text-decoration: underline;">4.26)
+Mi&eacute;rt nem tudom megbizhat&oacute;an
+l&eacute;trehozni &eacute;s t&ouml;r&ouml;lni az &aacute;tmeneti
+t&aacute;bl&aacute;kat a PL/pgSQL funkci&oacute;kban?</big><br>
+<p>A PL/pgSQL cacheli a funkci&oacute;k tartalm&aacute;t, aminek az a
+szerencs&eacute;tlen mell&eacute;khat&aacute;sa, hogy ha egy PL/pgSQL
+funkci&oacute;
+haszn&aacute;l egy &aacute;tmeneti t&aacute;bl&aacute;t, ami
+k&eacute;s&#337;bb t&ouml;rl&otilde;dik majd ujra
+l&eacute;trej&ouml;n, akkor az &uacute;jra lefut&oacute; funkci&oacute;
+nem fogja megtal&aacute;lni a t&aacute;bl&aacute;t, mert
+a cache v&aacute;ltozat a r&eacute;gi t&aacute;bl&aacute;ra tartalmaz
+mutat&oacute;t. A megold&aacute;s erre
+az <code>EXECUTE</code> haszn&aacute;lata az &aacute;tmeneti
+t&aacute;bl&aacute;k
+kezel&eacute;s&eacute;re PL/pgSQL-ben. Ez a lek&eacute;rdez&eacute;s
+&uacute;jraford&iacute;t&aacute;s&aacute;t
+fogja el&otilde;id&eacute;zni minden alkalommal.</p>
+<big style="text-decoration: underline;">4.27)
+Milyen replik&aacute;ci&oacute;s
+lehet&otilde;s&eacute;gek vannak?</big><br>
+<p>B&aacute;r a replik&aacute;ci&oacute; egyetlen ter&uuml;let,
+t&ouml;bb technol&oacute;gia l&eacute;tezik replik&aacute;ci&oacute;ra,
+term&eacute;szetesen mindnek meg vannak a maga el&#337;nyei &eacute;s
+h&aacute;tr&aacute;nyai.</p>
+<p>A master/slave replik&aacute;ci&oacute;s megold&aacute;ssal a master
+adatb&aacute;zison hajthatunk v&eacute;gre modos&iacute;t&aacute;sokat,
+m&iacute;g a slave adatb&aacute;zisokon csak
+lek&eacute;rdez&eacute;seket. A PostgreSQL legn&eacute;pszer&#369;bb
+master/slave replik&aacute;ci&oacute;s megold&aacute;sa a Solny-I. </p>
+<p>Sz&aacute;mos m&aacute;s master/slave replik&aacute;ci&oacute;s
+lehet&otilde;s&eacute;g l&eacute;tezik.Egy List&aacute;t olvashatsz
+ezekr&otilde;l itt: </p>
+<p><a href="http://gborg.PostgreSQL.org/genpage?replication_research">http://gborg.PostgreSQL.org/genpage?replication_research</a></p>
+<p>A multi-master replik&aacute;ci&oacute; lehet&#337;v&eacute; teszi
+t&ouml;bb master adatb&aacute;zis haszn&aacute;lat&aacute;t, b&aacute;r
+ez a technol&oacute;gia drasztikusan cs&ouml;kkenti az adatb&aacute;zis
+teljes&iacute;tm&eacute;ny&eacute;t a sok szinkorniz&aacute;ci&oacute;
+miatt. A PGCluster a legelterjedtebb ilyen megold&aacute;s.</p>
+<p>Egy t&ouml;bbfelhaszn&aacute;l&oacute;s replik&aacute;ci&oacute;s
+rendszer k&eacute;sz&uuml;l itt:</p>
+<p><a
+ href="http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php">http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php.</a></p>
+<p><a name="4.28"></a><big style="text-decoration: underline;">4.28)
+Milyen k&oacute;dol&aacute;si
+lehet&otilde;s&eacute;gek vannak?</big></p>
+<ul>
+  <li>A contrib/pgcrypto tartlamaz sz&aacute;mos SQL
+lek&eacute;rdez&eacute;sben haszn&aacute;lhat&oacute;
+k&oacute;dol&aacute;st.</li>
+  <li>A kliens-szerver kommunik&aacute;ci&oacute;
+rejtjelez&eacute;s&eacute;re a hostssl haszn&aacute;lhat&oacute;. Ezt a
+pg_hba.conf-ben enged&eacute;lyeztheted.</li>
+  <li>Az adatb&aacute;zis felhszn&aacute;l&oacute;k jelszavait
+t&aacute;rol&aacute;skor k&oacute;dolja a rendszer.&nbsp;</li>
+  <li>R&eacute;gebbi verzi&oacute;kban a PASSWORD_ENCRYPTION
+opci&oacute;val
+lehetett bekapcsolni.</li>
+  <li>A szerveren haszn&aacute;lhatsz k&oacute;dolt f&aacute;jrendszert.<br>
+  </li>
+</ul>
+<hr style="width: 100%; height: 2px;"><br>
+<div style="text-align: center;">
+<h2>A PostgreSQL kiterjeszt&eacute;se</h2>
+</div>
+<br>
+<a name="5.1"></a> <big style="text-decoration: underline;">5.1)
+&Iacute;rtam egy felhaszn&aacute;l&oacute;i
+funkci&oacute;t. Mi&eacute;rt core dumpol az adatb&aacute;zis amikor
+haszn&aacute;lom?<br>
+</big>
+<p>Sz&aacute;mos probl&eacute;ma lehet. El&ouml;bb prob&aacute;ld ki a
+funkci&oacute;dat egy k&uuml;l&ouml;n&aacute;ll&oacute;
+alkalmaz&aacute;sban.</p>
+<p><a name="5.2"></a><big style="text-decoration: underline;">5.2)
+Hogyan lehet &uacute;j adatt&iacute;pusokat
+&eacute;s funkci&oacute;kat hozz&aacute;adni a PostgreSQL </big><big
+ style="text-decoration: underline;">disztrib&uacute;ci&oacute;hoz?</big><br>
+</p>
+<p>K&uuml;ldd el a kieg&eacute;sz&iacute;t&eacute;seid a pgsql-hackers
+levelez&eacute;si list&aacute;ra &eacute;s a forr&aacute;skodjaid
+v&eacute;g&uuml;l a contrib-ban k&ouml;tnek ki.</p>
+<a name="5.3"></a> <big style="text-decoration: underline;">5.3)
+Hogyan lehet olyan C funkci&oacute;t
+&iacute;rni, ami Tuple-t ad vissza?</big><br>
+<p>A 7.3 verzi&oacute;t&oacute;l kezdve a PostgreSQL t&aacute;mogatja a
+t&aacute;bl&aacute;zatokat viszzaad&oacute; funkci&oacute;kat C,
+PL/pgSQL &eacute;s SQL nyelveken.
+B&otilde;vebb dokument&aacute;ci&oacute;t a Programoz&oacute;
+k&eacute;zik&ouml;nyvben tal&aacute;lsz. Egy C p&eacute;lda
+funkci&oacute; tal&aacute;lhat&oacute; a contrib/tablefunc
+k&ouml;nyvt&aacute;rban.</p>
+<p><a name="5.4"></a><big style="text-decoration: underline;">5.4)
+Megv&aacute;ltoztattam egy forr&aacute;s
+&aacute;llom&aacute;nyt. Mi&eacute;rt nem v&aacute;ltozik a
+bin&aacute;ris </big><big style="text-decoration: underline;">&uacute;jraford&iacute;t&aacute;s
+ut&aacute;n?</big><br>
+</p>
+<p>A Makefile-ok nem ismerik a include &aacute;llom&aacute;nyok
+megfelel&otilde; f&uuml;gg&otilde;s&eacute;geit. V&eacute;gre kell
+hajtanod egy make clean-t, majd &uacute;jra egy
+make-t. Ha GCC-t haszn&aacute;lsz felhaszn&aacute;lhatod a configure
+script
+--enable-depend opci&oacute;j&aacute;t, &iacute;gy a compiler maga
+fogja ellen&otilde;rizni a
+f&uuml;gg&otilde;s&eacute;geket.</p>
+<br>
+<br>
+</body>
+</html>
