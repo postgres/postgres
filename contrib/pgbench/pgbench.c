@@ -1,7 +1,7 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.38 2005/09/29 16:18:26 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.39 2005/10/04 13:40:45 ishii Exp $
  *
- * pgbench: a simple TPC-B like benchmark program for PostgreSQL
+ * pgbench: a simple benchmark program for PostgreSQL
  * written by Tatsuo Ishii
  *
  * Copyright (c) 2000-2005	Tatsuo Ishii
@@ -73,9 +73,6 @@ int			tps = 1;
 #define ntellers	10
 #define naccounts	100000
 
-#define SQL_COMMAND		1
-#define META_COMMAND	2
-
 FILE	   *LOGFILE = NULL;
 
 bool		use_log;			/* log transaction latencies to a file */
@@ -95,12 +92,6 @@ char	   *dbName;
 
 typedef struct
 {
-	char	   *name;
-	char	   *value;
-}	Variable;
-
-typedef struct
-{
 	PGconn	   *con;			/* connection handle to DB */
 	int			id;				/* client No. */
 	int			state;			/* state No. */
@@ -108,23 +99,75 @@ typedef struct
 	int			ecnt;			/* error count */
 	int			listen;			/* 0 indicates that an async query has
 								 * been sent */
-	int			aid;			/* account id for this transaction */
-	int			bid;			/* branch id for this transaction */
-	int			tid;			/* teller id for this transaction */
-	int			delta;
-	int			abalance;
 	void	   *variables;
 	struct timeval txn_begin;	/* used for measuring latencies */
+	int			use_file;		/* index in sql_files for this client */
 }	CState;
+
+
+/*
+ * structures used in custom query mode
+ */
+
+/* variable definitions */
+typedef struct
+{
+	char	   *name;	/* variable name */
+	char	   *value;	/* its value */
+}	Variable;
+
+/*
+ * queries read from files
+ */
+#define SQL_COMMAND		1
+#define META_COMMAND	2
+#define MAX_ARGS		10
 
 typedef struct
 {
-	int			type;
-	int			argc;
-	char	  **argv;
+	int			type;	/* command type (SQL_COMMAND or META_COMMAND) */
+	int			argc;	/* number of commands */
+	char	  *argv[MAX_ARGS];	/* command list */
 }	Command;
 
-Command	  **commands = NULL;
+#define MAX_FILES		128		/* max number of SQL script files allowed */
+
+Command	**sql_files[MAX_FILES];	/* SQL script files */
+int num_files;	/* its number */
+
+/* default scenario */
+static char *tpc_b = {
+"\\setrandom aid 1 100000
+\\setrandom bid 1 1
+\\setrandom tid 1 10
+\\setrandom delta 1 10000
+BEGIN;
+UPDATE accounts SET abalance = abalance + :delta WHERE aid = :aid;
+SELECT abalance FROM accounts WHERE aid = :aid;
+UPDATE tellers SET tbalance = tbalance + :delta WHERE tid = :tid;
+UPDATE branches SET bbalance = bbalance + :delta WHERE bid = :bid;
+INSERT INTO history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);
+END;
+"};
+
+/* -N case */
+static char *simple_update = {
+"\\setrandom aid 1 100000
+\\setrandom bid 1 1
+\\setrandom tid 1 10
+\\setrandom delta 1 10000
+BEGIN;
+UPDATE accounts SET abalance = abalance + :delta WHERE aid = :aid;
+SELECT abalance FROM accounts WHERE aid = :aid;
+INSERT INTO history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);
+END;
+"};
+
+/* -S case */
+static char *select_only = {
+"\\setrandom aid 1 100000
+SELECT abalance FROM accounts WHERE aid = :aid;
+"};
 
 static void
 usage(void)
@@ -137,7 +180,7 @@ usage(void)
 static int
 getrand(int min, int max)
 {
-	return (min + (int) (max * 1.0 * rand() / (RAND_MAX + 1.0)));
+	return (min + (int) (max * 1.0 * rand() / (RAND_MAX + 1.0) + 0.5));
 }
 
 /* set up a connection to the backend */
@@ -322,286 +365,14 @@ assignVariables(CState * st, char *sql)
 	return sql;
 }
 
-/* process a transaction */
-static void
-doOne(CState * state, int n, int debug, int ttype)
-{
-	char		sql[256];
-	PGresult   *res;
-	CState	   *st = &state[n];
-
-	if (st->listen)
-	{							/* are we receiver? */
-		if (debug)
-			fprintf(stderr, "client %d receiving\n", n);
-		if (!PQconsumeInput(st->con))
-		{						/* there's something wrong */
-			fprintf(stderr, "Client %d aborted in state %d. Probably the backend died while processing.\n", n, st->state);
-			remains--;			/* I've aborted */
-			PQfinish(st->con);
-			st->con = NULL;
-			return;
-		}
-		if (PQisBusy(st->con))
-			return;				/* don't have the whole result yet */
-
-		switch (st->state)
-		{
-			case 0:				/* response to "begin" */
-				res = PQgetResult(st->con);
-				if (check(state, res, n, PGRES_COMMAND_OK))
-					return;
-				PQclear(res);
-				discard_response(st);
-				break;
-			case 1:				/* response to "update accounts..." */
-				res = PQgetResult(st->con);
-				if (check(state, res, n, PGRES_COMMAND_OK))
-					return;
-				PQclear(res);
-				discard_response(st);
-				break;
-			case 2:				/* response to "select abalance ..." */
-				res = PQgetResult(st->con);
-				if (check(state, res, n, PGRES_TUPLES_OK))
-					return;
-				PQclear(res);
-				discard_response(st);
-				break;
-			case 3:				/* response to "update tellers ..." */
-				res = PQgetResult(st->con);
-				if (check(state, res, n, PGRES_COMMAND_OK))
-					return;
-				PQclear(res);
-				discard_response(st);
-				break;
-			case 4:				/* response to "update branches ..." */
-				res = PQgetResult(st->con);
-				if (check(state, res, n, PGRES_COMMAND_OK))
-					return;
-				PQclear(res);
-				discard_response(st);
-				break;
-			case 5:				/* response to "insert into history ..." */
-				res = PQgetResult(st->con);
-				if (check(state, res, n, PGRES_COMMAND_OK))
-					return;
-				PQclear(res);
-				discard_response(st);
-				break;
-			case 6:				/* response to "end" */
-
-				/*
-				 * transaction finished: record the time it took in the
-				 * log
-				 */
-				if (use_log)
-				{
-					double		diff;
-					struct timeval now;
-
-					gettimeofday(&now, NULL);
-					diff = (int) (now.tv_sec - st->txn_begin.tv_sec) * 1000000.0 +
-						(int) (now.tv_usec - st->txn_begin.tv_usec);
-
-					fprintf(LOGFILE, "%d %d %.0f\n", st->id, st->cnt, diff);
-				}
-
-				res = PQgetResult(st->con);
-				if (check(state, res, n, PGRES_COMMAND_OK))
-					return;
-				PQclear(res);
-				discard_response(st);
-
-				if (is_connect)
-				{
-					PQfinish(st->con);
-					st->con = NULL;
-				}
-
-				if (++st->cnt >= nxacts)
-				{
-					remains--;	/* I'm done */
-					if (st->con != NULL)
-					{
-						PQfinish(st->con);
-						st->con = NULL;
-					}
-					return;
-				}
-				break;
-		}
-
-		/* increment state counter */
-		st->state++;
-		if (st->state > 6)
-			st->state = 0;
-	}
-
-	if (st->con == NULL)
-	{
-		if ((st->con = doConnect()) == NULL)
-		{
-			fprintf(stderr, "Client %d aborted in establishing connection.\n",
-					n);
-			remains--;			/* I've aborted */
-			PQfinish(st->con);
-			st->con = NULL;
-			return;
-		}
-	}
-
-	switch (st->state)
-	{
-		case 0:			/* about to start */
-			strcpy(sql, "begin");
-			st->aid = getrand(1, naccounts * tps);
-			st->bid = getrand(1, nbranches * tps);
-			st->tid = getrand(1, ntellers * tps);
-			st->delta = getrand(1, 1000);
-			if (use_log)
-				gettimeofday(&(st->txn_begin), NULL);
-			break;
-		case 1:
-			snprintf(sql, 256, "update accounts set abalance = abalance + %d where aid = %d\n", st->delta, st->aid);
-			break;
-		case 2:
-			snprintf(sql, 256, "select abalance from accounts where aid = %d", st->aid);
-			break;
-		case 3:
-			if (ttype == 0)
-			{
-				snprintf(sql, 256, "update tellers set tbalance = tbalance + %d where tid = %d\n",
-						 st->delta, st->tid);
-				break;
-			}
-		case 4:
-			if (ttype == 0)
-			{
-				snprintf(sql, 256, "update branches set bbalance = bbalance + %d where bid = %d", st->delta, st->bid);
-				break;
-			}
-		case 5:
-			snprintf(sql, 256, "insert into history(tid,bid,aid,delta,mtime) values(%d,%d,%d,%d,'now')",
-					 st->tid, st->bid, st->aid, st->delta);
-			break;
-		case 6:
-			strcpy(sql, "end");
-			break;
-	}
-
-	if (debug)
-		fprintf(stderr, "client %d sending %s\n", n, sql);
-	if (PQsendQuery(st->con, sql) == 0)
-	{
-		if (debug)
-			fprintf(stderr, "PQsendQuery(%s)failed\n", sql);
-		st->ecnt++;
-	}
-	else
-	{
-		st->listen++;			/* flags that should be listened */
-	}
-}
-
-/* process a select only transaction */
-static void
-doSelectOnly(CState * state, int n, int debug)
-{
-	char		sql[256];
-	PGresult   *res;
-	CState	   *st = &state[n];
-
-	if (st->listen)
-	{							/* are we receiver? */
-		if (debug)
-			fprintf(stderr, "client %d receiving\n", n);
-		if (!PQconsumeInput(st->con))
-		{						/* there's something wrong */
-			fprintf(stderr, "Client %d aborted in state %d. Probably the backend died while processing.\n", n, st->state);
-			remains--;			/* I've aborted */
-			PQfinish(st->con);
-			st->con = NULL;
-			return;
-		}
-		if (PQisBusy(st->con))
-			return;				/* don't have the whole result yet */
-
-		switch (st->state)
-		{
-			case 0:				/* response to "select abalance ..." */
-				res = PQgetResult(st->con);
-				if (check(state, res, n, PGRES_TUPLES_OK))
-					return;
-				PQclear(res);
-				discard_response(st);
-
-				if (is_connect)
-				{
-					PQfinish(st->con);
-					st->con = NULL;
-				}
-
-				if (++st->cnt >= nxacts)
-				{
-					remains--;	/* I've done */
-					if (st->con != NULL)
-					{
-						PQfinish(st->con);
-						st->con = NULL;
-					}
-					return;
-				}
-				break;
-		}
-
-		/* increment state counter */
-		st->state++;
-		if (st->state > 0)
-			st->state = 0;
-	}
-
-	if (st->con == NULL)
-	{
-		if ((st->con = doConnect()) == NULL)
-		{
-			fprintf(stderr, "Client %d aborted in establishing connection.\n",
-					n);
-			remains--;			/* I've aborted */
-			PQfinish(st->con);
-			st->con = NULL;
-			return;
-		}
-	}
-
-	switch (st->state)
-	{
-		case 0:
-			st->aid = getrand(1, naccounts * tps);
-			snprintf(sql, 256, "select abalance from accounts where aid = %d", st->aid);
-			break;
-	}
-
-	if (debug)
-		fprintf(stderr, "client %d sending %s\n", n, sql);
-
-	if (PQsendQuery(st->con, sql) == 0)
-	{
-		if (debug)
-			fprintf(stderr, "PQsendQuery(%s)failed\n", sql);
-		st->ecnt++;
-	}
-	else
-	{
-		st->listen++;			/* flags that should be listened */
-	}
-}
-
 static void
 doCustom(CState * state, int n, int debug)
 {
 	PGresult   *res;
 	CState	   *st = &state[n];
+	Command		**commands;
+
+	commands = sql_files[st->use_file];
 
 	if (st->listen)
 	{							/* are we receiver? */
@@ -664,7 +435,7 @@ doCustom(CState * state, int n, int debug)
 
 			if (++st->cnt >= nxacts)
 			{
-				remains--;	/* I'm done */
+				remains--;	/* I've done */
 				if (st->con != NULL)
 				{
 					PQfinish(st->con);
@@ -677,7 +448,10 @@ doCustom(CState * state, int n, int debug)
 		/* increment state counter */
 		st->state++;
 		if (commands[st->state] == NULL)
+		{
 			st->state = 0;
+			st->use_file = getrand(0, num_files-1);
+		}
 	}
 
 	if (st->con == NULL)
@@ -718,8 +492,9 @@ doCustom(CState * state, int n, int debug)
 		}
 		else
 		{
-			st->listen++;			/* flags that should be listened */
+			st->listen = 1;			/* flags that should be listened */
 		}
+		free(sql);
 	}
 	else if (commands[st->state]->type == META_COMMAND)
 	{
@@ -756,7 +531,7 @@ doCustom(CState * state, int n, int debug)
 			}
 
 			free(val);
-			st->listen++;
+			st->listen = 1;
 		}
 	}
 }
@@ -940,15 +715,121 @@ init(void)
 	PQfinish(con);
 }
 
-static int
-process_file(char *filename)
+static Command*
+process_commands(char *buf)
 {
 	const char	delim[] = " \f\n\r\t\v";
 
+	Command	  *my_commands;
+	int			j;
+	char		*p, *tok;
+
+	if ((p = strchr(buf, '\n')) != NULL)
+	  *p = '\0';
+
+	p = buf;
+	while (isspace((unsigned char) *p))
+	  p++;
+
+	if (*p == '\0' || strncmp(p, "--", 2) == 0)
+	{
+		return NULL;
+	}
+
+	my_commands = (Command *)malloc(sizeof(Command));
+	if (my_commands == NULL)
+	{
+		return NULL;
+	}
+
+	my_commands->argc = 0;
+
+	if (*p == '\\')
+	{
+		my_commands->type = META_COMMAND;
+
+		j = 0;
+		tok = strtok(++p, delim);
+
+		while (tok != NULL)
+		{
+			if ((my_commands->argv[j] = strdup(tok)) == NULL)
+				return NULL;
+
+			my_commands->argc++;
+
+			j++;
+			tok = strtok(NULL, delim);
+		}
+		
+		if (strcasecmp(my_commands->argv[0], "setrandom") == 0)
+		{
+			int			min, max;
+
+			if (my_commands->argc < 4)
+			{
+				fprintf(stderr, "%s: missing argument\n", my_commands->argv[0]);
+				return NULL;
+			}
+
+			for (j = 4; j < my_commands->argc; j++)
+			  fprintf(stderr, "%s: extra argument \"%s\" ignored\n",
+					  my_commands->argv[0], my_commands->argv[j]);
+
+			if ((min = atoi(my_commands->argv[2])) < 0)
+			{
+				fprintf(stderr, "%s: invalid minimum number %s\n",
+						my_commands->argv[0], my_commands->argv[2]);
+				return NULL;
+			}
+
+			if ((max = atoi(my_commands->argv[3])) < min || max > RAND_MAX)
+			{
+				fprintf(stderr, "%s: invalid maximum number %s\n",
+						my_commands->argv[0], my_commands->argv[3]);
+				return NULL;
+			}
+		}
+		else
+		{
+			fprintf(stderr, "invalid command %s\n",	my_commands->argv[0]);
+			return NULL;
+		}
+	}
+	else
+	{
+		my_commands->type = SQL_COMMAND;
+
+		if ((my_commands->argv[0] = strdup(p)) == NULL)
+			return NULL;
+
+		my_commands->argc++;
+	}
+
+	return my_commands;
+}
+
+static int
+process_file(char *filename)
+{
+#define COMMANDS_ALLOC_NUM 128
+
+	Command	  **my_commands;
 	FILE	   *fd;
-	int			lineno, i, j;
-	char		buf[BUFSIZ], *p, *tok;
-	void	   *tmp;
+	int			lineno;
+	char		buf[BUFSIZ];
+	int	alloc_num;
+
+	if (num_files >= MAX_FILES)
+	{
+		fprintf(stderr, "Up to only %d SQL files are allowed\n", MAX_FILES);
+		exit(1);
+	}
+
+	alloc_num = COMMANDS_ALLOC_NUM;
+	my_commands = (Command **)malloc(sizeof(Command **)*alloc_num);
+	if (my_commands == NULL)
+		return false;
 
 	if (strcmp(filename, "-") == 0)
 		fd = stdin;
@@ -958,140 +839,102 @@ process_file(char *filename)
 		return false;
 	}
 
-	fprintf(stderr, "processing file...\n");
+	lineno = 0;
 
-	lineno = 1;
-	i = 0;
 	while (fgets(buf, sizeof(buf), fd) != NULL)
 	{
-		if ((p = strchr(buf, '\n')) != NULL)
-			*p = '\0';
-		p = buf;
-		while (isspace((unsigned char) *p))
-			p++;
-		if (*p == '\0' || strncmp(p, "--", 2) == 0)
+		Command *commands;
+
+		commands = process_commands(buf);
+		if (commands == NULL)
 		{
-			lineno++;
-			continue;
+			fclose(fd);
+			return false;
 		}
 
-		if ((tmp = realloc(commands, sizeof(Command *) * (i + 1))) == NULL)
-		{
-			i--;
-			goto error;
-		}
-		commands = tmp;
-
-		if ((commands[i] = malloc(sizeof(Command))) == NULL)
-			goto error;
-
-		commands[i]->argv = NULL;
-		commands[i]->argc = 0;
-
-		if (*p == '\\')
-		{
-			commands[i]->type = META_COMMAND;
-
-			j = 0;
-			tok = strtok(++p, delim);
-			while (tok != NULL)
-			{
-				tmp = realloc(commands[i]->argv, sizeof(char *) * (j + 1));
-				if (tmp == NULL)
-					goto error;
-				commands[i]->argv = tmp;
-
-				if ((commands[i]->argv[j] = strdup(tok)) == NULL)
-					goto error;
-
-				commands[i]->argc++;
-
-				j++;
-				tok = strtok(NULL, delim);
-			}
-
-			if (strcasecmp(commands[i]->argv[0], "setrandom") == 0)
-			{
-				int			min, max;
-
-				if (commands[i]->argc < 4)
-				{
-					fprintf(stderr, "%s: %d: \\%s: missing argument\n", filename, lineno, commands[i]->argv[0]);
-					goto error;
-				}
-
-				for (j = 4; j < commands[i]->argc; j++)
-					fprintf(stderr, "%s: %d: \\%s: extra argument \"%s\" ignored\n", filename, lineno, commands[i]->argv[0], commands[i]->argv[j]);
-
-				if ((min = atoi(commands[i]->argv[2])) < 0)
-				{
-					fprintf(stderr, "%s: %d: \\%s: invalid minimum number %s\n", filename, lineno, commands[i]->argv[0], commands[i]->argv[2]);
-					goto error;
-				}
-
-				if ((max = atoi(commands[i]->argv[3])) < min || max > RAND_MAX)
-				{
-					fprintf(stderr, "%s: %d: \\%s: invalid maximum number %s\n", filename, lineno, commands[i]->argv[0], commands[i]->argv[3]);
-					goto error;
-				}
-			}
-			else
-			{
-				fprintf(stderr, "%s: %d: invalid command \\%s\n", filename, lineno, commands[i]->argv[0]);
-				goto error;
-			}
-		}
-		else
-		{
-			commands[i]->type = SQL_COMMAND;
-
-			if ((commands[i]->argv = malloc(sizeof(char *))) == NULL)
-				goto error;
-
-			if ((commands[i]->argv[0] = strdup(p)) == NULL)
-				goto error;
-
-			commands[i]->argc++;
-		}
-
-		i++;
+		my_commands[lineno] = commands;
 		lineno++;
+
+		if (lineno >= alloc_num)
+		{
+			alloc_num += COMMANDS_ALLOC_NUM;
+			my_commands = realloc(my_commands, alloc_num);
+			if (my_commands == NULL)
+			{
+				fclose(fd);
+				return false;
+			}
+		}
 	}
 	fclose(fd);
 
-	if ((tmp = realloc(commands, sizeof(Command *) * (i + 1))) == NULL)
-		goto error;
-	commands = tmp;
+	my_commands[lineno] = NULL;
 
-	commands[i] = NULL;
+	sql_files[num_files++] = my_commands;
 
 	return true;
+}
 
-error:
-	if (errno == ENOMEM)
-		fprintf(stderr, "%s: %d: out of memory\n", filename, lineno);
+static Command **
+process_builtin(char *tb)
+{
+#define COMMANDS_ALLOC_NUM 128
 
-	fclose(fd);
+	Command	  **my_commands;
+	int			lineno;
+	char		buf[BUFSIZ];
+	int	alloc_num;
 
-	if (commands == NULL)
-		return false;
+	if (*tb == '\0')
+		return NULL;
 
-	while (i >= 0)
+	alloc_num = COMMANDS_ALLOC_NUM;
+	my_commands = malloc(sizeof(Command **)*alloc_num);
+	if (my_commands == NULL)
+		return NULL;
+
+	lineno = 0;
+
+	for(;;)
 	{
-		if (commands[i] != NULL)
-		{
-			for (j = 0; j < commands[i]->argc; j++)
-				free(commands[i]->argv[j]);
+		char *p;
+		Command *commands;
 
-			free(commands[i]->argv);
-			free(commands[i]);
+		p = buf;
+		while (*tb && *tb != '\n')
+			*p++ = *tb++;
+
+		if (*tb == '\0')
+			break;
+
+		if (*tb == '\n')
+			tb++;
+
+		*p = '\0';
+
+		commands = process_commands(buf);
+		if (commands == NULL)
+		{
+			return NULL;
 		}
 
-		i--;
-	}
-	free(commands);
+		my_commands[lineno] = commands;
+		lineno++;
 
-	return false;
+		if (lineno >= alloc_num)
+		{
+			alloc_num += COMMANDS_ALLOC_NUM;
+			my_commands = realloc(my_commands, alloc_num);
+			if (my_commands == NULL)
+			{
+				return NULL;
+			}
+		}
+	}
+
+	my_commands[lineno] = NULL;
+
+	return my_commands;
 }
 
 /* print out results */
@@ -1262,6 +1105,8 @@ main(int argc, char **argv)
 			case 'f':
 				ttype = 3;
 				filename = optarg;
+				if (process_file(filename) == false)
+					exit(1);
 				break;
 			default:
 				usage();
@@ -1291,6 +1136,12 @@ main(int argc, char **argv)
 	remains = nclients;
 
 	state = (CState *) malloc(sizeof(*state) * nclients);
+	if (state == NULL)
+	{
+		fprintf(stderr, "Couldn't allocate memory for state\n");
+		exit(1);
+	}
+
 	memset(state, 0, sizeof(*state) * nclients);
 
 	if (use_log)
@@ -1325,17 +1176,11 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (ttype == 3)
-	{
-		PQfinish(con);
-		if (process_file(filename) == false)
-			exit(1);
-	}
-	else
+	if (ttype != 3)
 	{
 		/*
 		 * get the scaling factor that should be same as count(*) from
-		 * branches...
+		 * branches if this is not a custom query
 		 */
 		res = PQexec(con, "select count(*) from branches");
 		if (PQresultStatus(res) != PGRES_TUPLES_OK)
@@ -1350,58 +1195,58 @@ main(int argc, char **argv)
 			exit(1);
 		}
 		PQclear(res);
-
-		if (!is_no_vacuum)
-		{
-			fprintf(stderr, "starting vacuum...");
-			res = PQexec(con, "vacuum branches");
-			if (PQresultStatus(res) != PGRES_COMMAND_OK)
-			{
-				fprintf(stderr, "%s", PQerrorMessage(con));
-				exit(1);
-			}
-			PQclear(res);
-
-			res = PQexec(con, "vacuum tellers");
-			if (PQresultStatus(res) != PGRES_COMMAND_OK)
-			{
-				fprintf(stderr, "%s", PQerrorMessage(con));
-				exit(1);
-			}
-			PQclear(res);
-
-			res = PQexec(con, "delete from history");
-			if (PQresultStatus(res) != PGRES_COMMAND_OK)
-			{
-				fprintf(stderr, "%s", PQerrorMessage(con));
-				exit(1);
-			}
-			PQclear(res);
-			res = PQexec(con, "vacuum history");
-			if (PQresultStatus(res) != PGRES_COMMAND_OK)
-			{
-				fprintf(stderr, "%s", PQerrorMessage(con));
-				exit(1);
-			}
-			PQclear(res);
-
-			fprintf(stderr, "end.\n");
-
-			if (is_full_vacuum)
-			{
-				fprintf(stderr, "starting full vacuum...");
-				res = PQexec(con, "vacuum analyze accounts");
-				if (PQresultStatus(res) != PGRES_COMMAND_OK)
-				{
-					fprintf(stderr, "%s", PQerrorMessage(con));
-					exit(1);
-				}
-				PQclear(res);
-				fprintf(stderr, "end.\n");
-			}
-		}
-		PQfinish(con);
 	}
+
+	if (!is_no_vacuum)
+	{
+		fprintf(stderr, "starting vacuum...");
+		res = PQexec(con, "vacuum branches");
+		if (PQresultStatus(res) != PGRES_COMMAND_OK)
+		{
+			fprintf(stderr, "%s", PQerrorMessage(con));
+			exit(1);
+		}
+		PQclear(res);
+
+		res = PQexec(con, "vacuum tellers");
+		if (PQresultStatus(res) != PGRES_COMMAND_OK)
+		{
+			fprintf(stderr, "%s", PQerrorMessage(con));
+			exit(1);
+		}
+		PQclear(res);
+
+		res = PQexec(con, "delete from history");
+		if (PQresultStatus(res) != PGRES_COMMAND_OK)
+		{
+			fprintf(stderr, "%s", PQerrorMessage(con));
+			exit(1);
+		}
+		PQclear(res);
+		res = PQexec(con, "vacuum history");
+		if (PQresultStatus(res) != PGRES_COMMAND_OK)
+		{
+			fprintf(stderr, "%s", PQerrorMessage(con));
+			exit(1);
+		}
+		PQclear(res);
+
+		fprintf(stderr, "end.\n");
+
+		if (is_full_vacuum)
+		{
+			fprintf(stderr, "starting full vacuum...");
+			res = PQexec(con, "vacuum analyze accounts");
+			if (PQresultStatus(res) != PGRES_COMMAND_OK)
+			{
+				fprintf(stderr, "%s", PQerrorMessage(con));
+				exit(1);
+			}
+			PQclear(res);
+			fprintf(stderr, "end.\n");
+		}
+	}
+	PQfinish(con);
 
 	/* set random seed */
 	gettimeofday(&tv1, NULL);
@@ -1424,15 +1269,50 @@ main(int argc, char **argv)
 	/* time after connections set up */
 	gettimeofday(&tv2, NULL);
 
+	/* process bultin SQL scripts */
+	switch (ttype)
+	{
+		char buf[128];
+
+		case 0:
+			sql_files[0] = process_builtin(tpc_b);
+			snprintf(buf, sizeof(buf), "%d", 100000*tps);
+			sql_files[0][0]->argv[3] = strdup(buf);
+			snprintf(buf, sizeof(buf), "%d", 1*tps);
+			sql_files[0][1]->argv[3] = strdup(buf);
+			snprintf(buf, sizeof(buf), "%d", 10*tps);
+			sql_files[0][2]->argv[3] = strdup(buf);
+			snprintf(buf, sizeof(buf), "%d", 10000*tps);
+			sql_files[0][3]->argv[3] = strdup(buf);
+			num_files = 1;
+			break;
+		case 1:
+			sql_files[0] = process_builtin(select_only);
+			snprintf(buf, sizeof(buf), "%d", 100000*tps);
+			sql_files[0][0]->argv[3] = strdup(buf);
+			num_files = 1;
+			break;
+		case 2:
+			sql_files[0] = process_builtin(simple_update);
+			snprintf(buf, sizeof(buf), "%d", 100000*tps);
+			sql_files[0][0]->argv[3] = strdup(buf);
+			snprintf(buf, sizeof(buf), "%d", 1*tps);
+			sql_files[0][1]->argv[3] = strdup(buf);
+			snprintf(buf, sizeof(buf), "%d", 10*tps);
+			sql_files[0][2]->argv[3] = strdup(buf);
+			snprintf(buf, sizeof(buf), "%d", 10000*tps);
+			sql_files[0][3]->argv[3] = strdup(buf);
+			num_files = 1;
+			break;
+		default:
+			break;
+	}
+
 	/* send start up queries in async manner */
 	for (i = 0; i < nclients; i++)
 	{
-		if (ttype == 0 || ttype == 2)
-			doOne(state, i, debug, ttype);
-		else if (ttype == 1)
-			doSelectOnly(state, i, debug);
-		else if (ttype == 3)
-			doCustom(state, i, debug);
+		state[i].use_file = getrand(0, num_files-1);
+		doCustom(state, i, debug);
 	}
 
 	for (;;)
@@ -1453,8 +1333,9 @@ main(int argc, char **argv)
 		maxsock = -1;
 		for (i = 0; i < nclients; i++)
 		{
-			if (state[i].con &&
-				(ttype != 3 || commands[state[i].state]->type != META_COMMAND))
+			Command **commands = sql_files[state[i].use_file];
+
+			if (state[i].con &&	commands[state[i].state]->type != META_COMMAND)
 			{
 				int			sock = PQsocket(state[i].con);
 
@@ -1496,16 +1377,12 @@ main(int argc, char **argv)
 		/* ok, backend returns reply */
 		for (i = 0; i < nclients; i++)
 		{
+			Command **commands = sql_files[state[i].use_file];
+
 			if (state[i].con && (FD_ISSET(PQsocket(state[i].con), &input_mask)
-								 || (ttype == 3
-									 && commands[state[i].state]->type == META_COMMAND)))
+								 || commands[state[i].state]->type == META_COMMAND))
 			{
-				if (ttype == 0 || ttype == 2)
-					doOne(state, i, debug, ttype);
-				else if (ttype == 1)
-					doSelectOnly(state, i, debug);
-				else if (ttype == 3)
-					doCustom(state, i, debug);
+				doCustom(state, i, debug);
 			}
 		}
 	}

@@ -1,4 +1,4 @@
-pgbench README		2005/09/29 Tatsuo Ishii
+pgbench README		2005/10/04 Tatsuo Ishii
 
 o What is pgbench?
 
@@ -165,6 +165,9 @@ o -f option
   file. This file should include SQL commands in each line. SQL
   command consists of multiple lines are not supported. Empty lines
   and lines begging with "--" will be ignored.
+
+  Multiple -f options are allowed. In this case each transaction is
+  assigned randomly chosen script.
 
   SQL commands can include "meta command" which begins with "\" (back
   slash). A meta command takes some arguments separted by white
