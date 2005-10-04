@@ -1,0 +1,38 @@
+-- test error handling, i forgot to restore Warn_restart in
+-- the trigger handler once. the errors and subsequent core dump were
+-- interesting.
+SELECT invalid_type_uncaught('rick');
+WARNING:  plpython: in function invalid_type_uncaught:
+DETAIL:  plpy.SPIError: Unknown error in PLy_spi_prepare
+ERROR:  type "test" does not exist
+SELECT invalid_type_caught('rick');
+WARNING:  plpython: in function invalid_type_caught:
+DETAIL:  plpy.SPIError: Unknown error in PLy_spi_prepare
+ERROR:  type "test" does not exist
+SELECT invalid_type_reraised('rick');
+WARNING:  plpython: in function invalid_type_reraised:
+DETAIL:  plpy.SPIError: Unknown error in PLy_spi_prepare
+ERROR:  type "test" does not exist
+SELECT valid_type('rick');
+ valid_type 
+------------
+ 
+(1 row)
+
+--
+-- Test Unicode error handling.
+--
+SELECT unicode_return_error();
+ERROR:  plpython: function "unicode_return_error" could not create return value
+DETAIL:  exceptions.UnicodeError: ASCII encoding error: ordinal not in range(128)
+INSERT INTO unicode_test (testvalue) VALUES ('test');
+ERROR:  plpython: function "unicode_trigger_error" could not modify tuple
+DETAIL:  exceptions.UnicodeError: ASCII encoding error: ordinal not in range(128)
+SELECT unicode_plan_error1();
+WARNING:  plpython: in function unicode_plan_error1:
+DETAIL:  plpy.Error: Unknown error in PLy_spi_execute_plan
+ERROR:  plpython: function "unicode_plan_error1" could not execute plan
+DETAIL:  exceptions.UnicodeError: ASCII encoding error: ordinal not in range(128)
+SELECT unicode_plan_error2();
+ERROR:  plpython: function "unicode_plan_error2" could not execute plan
+DETAIL:  exceptions.UnicodeError: ASCII encoding error: ordinal not in range(128)
