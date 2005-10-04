@@ -1940,6 +1940,11 @@ Mon Sep 12 13:53:35 CEST 2005
 
 	- Fixed transaction command handling to not ignore savepoints
 	  and to correctly check for errors.
+
+Tue Oct  4 15:23:00 CEST 2005
+
+	- Synced parser.
+	- Fixed another bug in check to report missing varchar pointer implementation.
 	- Set ecpg library version to 5.1.
 	- Set ecpg version to 4.1.1.
 
