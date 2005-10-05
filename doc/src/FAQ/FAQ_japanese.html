@@ -9,7 +9,7 @@
 <div id="pgContentWrap">
 
 <h1>PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)</h1>
-<p>原文最終更新日:		Mon May 9 13:15:04 EDT 2005</p>
+<p>原文最終更新日:		Wed Sep 28 07:45:42 EDT 2005</p>
 <p>現在の維持管理者:	Bruce Momjian (<A
 href="mailto:pgman at candle.pha.pa.us">pgman at candle.pha.pa.us</a>)<br />
 Maintainer of Japanese Translation:	Jun Kuwamura (<A
@@ -30,7 +30,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 [訳注：
 	日本語版の製作については、この文書の最後をごらんください。
 
-						2005年05月18日    桑村 潤
+						2005年10月05日    桑村 潤
 ]
 </pre></small>
 </p>
@@ -54,11 +54,11 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 <a href="#1.13">1.13</a>) 誰が PostgreSQL をコントロールしますか？<br />
 
 
-<h2 align="center">ユーザー・クライアントの質問</h2>
+<h2 align="center">ユーザ・クライアントの質問</h2>
 
 <a href="#2.1">2.1</a>) PostgreSQL にはどんなインターフェースが使えますか？<br />
 <a href="#2.2">2.2</a>) PostgreSQL を Web ページと連携させるにはどんなツールがありますか？<br />
-<a href="#2.3">2.3</a>) PostgreSQL にグラフィカル・ユーザインターフェイスはありますか？<br />
+<a href="#2.3">2.3</a>) PostgreSQL にグラフィカル・ユーザインターフェースはありますか？<br />
 
 
 <h2 align="center">管理上の質問</h2>
@@ -97,6 +97,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 <a href="#4.18">4.18</a>) 関数から複数のロウまたはカラムを返すにはどうしますか？<br />
 <a href="#4.19">4.19</a>)  PL/PgSQL の関数の中で一時テーブルにアクセスするとき、どうして "relation with OID ##### does not exist" というエラーを受け取るのでしょうか？<br />
 <a href="#4.20">4.20</a>) どのようなレプリケーションのソリューションがありますか？<br />
+<a href="#4.21">4.21</a>) テーブルとカラムの名前がクエリーの中で認識されないのはなぜですか？<br />
 
 
 <hr />
@@ -106,7 +107,10 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 <h4><a name="1.1">1.1</a>) PostgreSQL とは何ですか？  何と発音しますか？</h4>
 
     <p>PostgreSQLは<i>Post-Gres-Q-L</i>(ポスト - グレス - キュー - エル) 
-    と発音します。</p>また、単純に Postgres とも呼ばれます。
+    と発音します。</p>また、ときによっては単純に <i>Postgres</i> として
+    参照されます。この発音を聞きたい人のために、
+     <a href="http://www.postgresql.org/files/postgresql.mp3">MP3フォー
+    マット</a>の音声ファイルがあります。</p>
 
     <p>PostgreSQL はオブジェクト-リレーショナルデータベースシステムで、
     伝統的な商用データベースシステムに、次世代<small>DBMS</small>システ
@@ -262,7 +266,8 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 		<a href="http://www.PostgreSQL.jp/">http://www.PostgreSQL.jp/</a>
 	をごらんください。会員登録も可能となっています。
 
-	日本語のIRCチャンネル '#PostgreSQL*jp' も存在します。
+	日本語のIRCチャンネル '#PostgreSQL:*.jp' も存在します。
+    ]
     </pre></small>
 
     <p>商用サポート会社のリストは<a
@@ -286,9 +291,9 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 
 <h4><a name="1.7">1.7</a>) 最新版はどれですか</h4>
 
-    <p>PostgreSQL の最新版はバージョン 8.0.3 です。</p>
+    <p>PostgreSQL の最新版はバージョン 8.0.4 です。</p>
     <p>我々は、1年毎にメジャーリリースを行ない、数ヵ月ごとのマイナーリリー
-    スをを計画しています。</p>
+    スを計画しています。</p>
 
 
 <h4><a name="1.8">1.8</a>) どのような文書がありますか？</h4>
@@ -347,7 +352,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 
     <small><pre>
     [訳注:
-	日本語の書籍等についてはは、日本PostgreSQLユーザ会の、<A
+	日本語の書籍等については、日本PostgreSQLユーザ会の、<A
 	href="http://www.postgresql.jp/PostgreSQL/references.html">http://www.postgresql.jp/PostgreSQL/references.html</a>
 	もごらんください。
     ]
@@ -364,7 +369,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 <h4><a name="1.9">1.9</a>) 既知のバグや未だ無い機能はどうやって見つけますか？
 </h4>
 
-    <p>PostgreSQLは拡張された<small>SQL</small>-92のサブセットをサポート
+    <p>PostgreSQLは拡張された<small>SQL:2003</small>のサブセットをサポート
     します。我々のページの <A
     href="http://www.PostgreSQL.org/docs/todo.html">TODO</a> リストに、
     既知のバグや欠落機能や将来計画についての記述があります。</p> 
@@ -414,7 +419,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 <h4><a name="1.11">1.11</a>) 開発チームにはどのように参加しますか？</h4>
 
     <p><a href="http://www.postgresql.org/docs/faqs.FAQ_DEV.html">
-    （開発者向けの）Developer's FAQ</a>をごらんください。
+    （開発者向けの）Developer's FAQ</a>をごらんください。</p>
 
 
 <h4><a name="1.12">1.12</a>) 他の<small>DBMS</small>と比べPostgreSQLはどうなのですか？</h4>
@@ -490,7 +495,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 
 <hr />
 
-<h2 align="center">ユーザー・クライアントの質問</h2>
+<h2 align="center">ユーザ・クライアントの質問</h2>
 
 
 <h4><a name="2.1">2.1</a>) PostgreSQL にはどんなインターフェースが使えますか？</h4>
@@ -515,7 +520,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
     <p> データベースを裏に持つ Web ページについての素晴らしい紹介が、<br />
     <a href="http://www.webreview.com">http://www.webreview.com</a>にあります。</p>
     <p> Web への拡張のためには、PHP(<a  href="http://www.php.net">http://www.php.net/</a>)
-     が卓越したインターフェイスとなっています。</p>
+     が卓越したインターフェースとなっています。</p>
 
     <small><pre>
     [訳注:
@@ -527,11 +532,11 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
     ]
     </pre></small>
 
-    <p> 処理が複雑な場合、多くの人は Perl インターフェイスと CGI.pm か
+    <p> 処理が複雑な場合、多くの人は Perl インターフェースと CGI.pm か
     mod_perl を使います。 </p>
 
 
-<h4><a name="2.3">2.3</a>) PostgreSQL にグラフィカル・ユーザインターフェイスはありますか？</h4>
+<h4><a name="2.3">2.3</a>) PostgreSQL にグラフィカル・ユーザインターフェースはありますか？</h4>
 
 
     <p>もちろん、あります。 
@@ -585,7 +590,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
     詳しくは、<a href=
     "http://www.postgresql.org/docs/current/static/runtime.html">
     Administration Guide/Server Run-time Environment/Run-time
-    Configuration</a> の全件リストごらんください(<a
+    Configuration</a> の全件リストをごらんください(<a
     href="http://www.postgresql.jp/document/pg803doc/html/runtime.html">
     JPUGサイトの日本語版</a>)。
     そして、解説として、<a
@@ -670,7 +675,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 
 <h4><a name="4.2">4.2</a>) 定義されたテーブル、インデックス、データベース、および、ユーザをどのようにして見つけ出しますか？<i>psql</i>で使われているクエリを表示するにはどうしますか？</h4>
 
-    <p><i>psql</i> の中で \dtコマンドをを使ってテーブルを見ることができ
+    <p><i>psql</i> の中で \dtコマンドを使ってテーブルを見ることができ
     ます。psqlの中で \? を使って、コマンドの全リストを調べることができま
     す。一方で、<i>psql</i> のソースコードで、バックスラッシュコマンドを
     出力する <i>pgsql/src/bin/psql/describe.c</i> ファイルを読むこともで
@@ -736,6 +741,11 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
     <p> デフォルトのブロックサイズを32kにすることで、最大テーブルサイズ
     と最大カラム数とを4倍にすることができます。</p> 
 
+    <p>ひとつの制限は、約2,000文字以上の長さのカラムにインデックスを付
+    けることができないことです。 幸いにも、そのようなインデックスは実際
+    は必要ありません。長いカラムのMD5ハッシュの関数インデックスは一意性
+    がなによりの保険で、また、フルテキストのインデックスではカラム内の
+    単語を検索することができます。</p>
 
 <h4><a name="4.5">4.5</a>) 一般的なテキストファイルのデータを保存するには、データベースのディスク容量はどのくらい必要です？</h4>
 
@@ -750,23 +760,23 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
     ます： 
 
 <pre>
-    32 bytes: 各ロウのヘッダ(概算)
+    28 bytes: 各ロウのヘッダ(概算)
     24 bytes: 整数(int)フィールドとテキスト(text)フィールド
    + 4 bytes: ページ上のタップルへのポインタ
    ----------------------------------------
-   60 bytes per row
+    56 bytes per row
 
    PostgreSQL のデータページサイズは 8192バイト(8KB)なので:
 
    8192 bytes per page
-   -------------------   =  136 rows per database page (切り捨て)
-     60 bytes per row
+   -------------------   =  146 rows per database page (切り捨て)
+     56 bytes per row
 
    100000 data rows
-   --------------------  =  782 database pages (切り上げ)
-      128 rows per page
+   --------------------  =  685 database pages (切り上げ)
+      146 rows per page
  
-  735 database pages * 8192 bytes per page  =  6,021,120 bytes (6 MB)
+  685 database pages * 8192 bytes per page  =  5,611,520 bytes (5.6 MB)
 </pre>
 
     <p>インデックスは、これほどのオーバヘッドは要求しませんが、インデッ
@@ -786,7 +796,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
     <p>インデックスを使うかを決定するために、PostgreSQL はテーブルについ
     ての統計情報を持たなければなりません。この統計情報は、
     <small>VACUUMANALYZE</small>または、単に <small>ANALYZE</small> を使っ
-    て収集することができます。統計情報を使ってオブティマイザはテーブルの
+    て収集することができます。統計情報を使ってオプティマイザはテーブルの
     中にあるロウ数を知り、インデックスを使うべきかの決定をより正しくでき
     ます。統計情報は最適な結合順や結合方法を決める上でも貴重なものもあり
     ます。統計情報の収集は、テーブルの内容がかわると毎に繰返しなされるべ
@@ -842,7 +852,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
     です。</p> 
 
 
-<h4><a NAME="4.7">4.7</a>) 問い合わせオブティマイザがどのように問い合わせを評価するのかを見るにはどうしますか？</h4>
+<h4><a NAME="4.7">4.7</a>) 問い合わせオプティマイザがどのように問い合わせを評価するのかを見るにはどうしますか？</h4>
 
     <p>オンラインマニュアルで <small>EXPLAIN</small> を見てください。</p>
 
@@ -866,6 +876,12 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 <pre>
     CREATE INDEX tabindex ON tab (lower(col));
 </pre>
+
+    <p>上記のインデックスが<small>UNIQUE</small>で作成された場合、カラム
+    は大文字と小文字を格納できますが、その違いが文字ケースだけであっても
+    同一にはなりません。あえて特定の文字ケースをカラムに格納するには
+    <small>CHECK</small>制約か、トリガーを使ってください。</p>
+
 
 
 <h4><a name="4.9">4.9</a>) クエリの中で、フィールドが<small>NULL</small> であることを検出するにはどうしますか？ フィールドが<small>NULL</small>かどうかでどのようにソートができますか？</h4>
@@ -1002,7 +1018,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
     O<small>ID</small>は自動的に4バイトの整数で与えられ、それは、全イン
     ストレーションを通して一意な値となります。しかし、約40億でオーバーフ
     ローし、そして、O<small>ID</small>は重複をしはじめます。PostgreSQLは
-    内部システムテーブルを一緒にリンクするtためにO<small>ID</small> を使
+    内部システムテーブルを一緒にリンクするためにO<small>ID</small> を使
     います。
 
     <p>ユーザのテーブルのカラムに一意の番号を付けるためには、
@@ -1121,12 +1137,38 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
     <p>この他にも、商用やハードウェア−ベースのレプリケーションソリュー
     ションがいろいろなレプリケーションモデルをサポートしています。</p>
   
+<h3><a name="4.21">4.21</a>)テーブルとカラムの名前がクエリーの中で認識されないのはなぜですか？</h3>
+
+    <p>The most common cause is the use of double-quotes around table or
++    column names during table creation. When double-quotes are used,
++    table and column names (called identifiers) are stored <a href="http://www.postgresql.org/docs/8.0/static/sql-syntax.html#SQL-
++    SYNTAX-IDENTIFIERS">case-sensitive</a>, meaning you must use
++    double-quotes when referencing the names in a query. Some interfaces,
++    like pgAdmin, automatically double-quote identifiers during table
++    creation. So, for identifiers to be recognized, you must either:
+
+    もっとも一般的な原因は、テーブルを作成する際に、テーブルやカラムを囲
+    う二重引用符の使用です。二重引用符を使うと、テーブルとカラムの名前
+    （識別子と呼びます）は<a
+    href="http://www.postgresql.org/docs/8.0/static/sql-syntax.html#SQL-SYNTAX-IDENTIFIERS">大文字と小文字の区別</a>
+    をして格納されす。したがって、pgAdminのようにテーブル作成のときに自
+    動的に二重引用符を使うものはクエリの中でそれらの名前を使うときに二
+    重引用符を付けなくてはならないことを意味します。このため、識別子を
+    認識させるためには以下のいずれかを心がけます。
+
+    <ul>
+    <li>テーブルを作成するときに二重引用符で識別子を囲うことを避ける</li>
+    <li>Use only lowercase characters in identifiers</li>
+    <li>識別子には小文字だけを使う</li>
+    <li>クエリの中で参照するときは二重引用譜で識別子を囲う</li>
+    </ul>
+
 <hr />
 <small><pre>
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:	2005年05月18日
+  最終更新日:	2005年10月05日
   翻訳者:	桑村 潤 (<a href="mailto:juk at PostgreSQL.jp">Jun Kuwamura &lt;juk at PostgreSQL.jp&gt;</a>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
@@ -1148,12 +1190,11 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 		稲葉 香理(<a href="mailto:i-kaori at sra.co.jp">Kaori Inaba &lt;i-kaori at sra.co.jp&gt;</a>)
 		石井 達夫(<a href="mailto:t-ishii at sra.co.jp">Tatsuo Ishii &lt;t-ishii at sra.co.jp&gt;</a>)
 
-  をはじめ、ポストグレスに関する話題豊富な日本語ポストグレス・メーリングリ
-  スト、 和訳のきっかけを作ってくれた <a
-  href="http://jf.linux.or.jp/">JF(Linux Japanese FAQ Mailing List)プロジェ
-  クト</a>、FreeBSD ドキュメンテーションプロジェクト、 その他、直接あるい
-  は間接的にかかわっているすべてのオープンソースコミュニティーの皆さんに
-  感謝します。
+  をはじめ、ポストグレスに関する話題豊富な日本語PostgreSQLメーリングリスト、
+  和訳のきっかけを作ってくれたり、いつもチェックをしてくれる
+   <a href="http://jf.linux.or.jp/">JF(Linux Japanese FAQ)プロジェクト</a>、
+  FreeBSD ドキュメンテーションプロジェクト、 その他、直接あるいは間接的に
+  かかわっているすべてのオープンソースコミュニティーのみなさまに感謝します。
 
   日本語版のこの文書は <a href="http://www.postgresql.org/docs/faq/">本家 "Frequently Asked Questions" </a> のページに "Japanese FAQ" という見出であります。
   また、最新版は以下のサイトにあります。
