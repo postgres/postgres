@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.13 2005/09/27 17:39:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.14 2005/10/05 12:16:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,64 @@ static char		mypath[MAXPGPATH];
 
 
 /*
+ * This function cleans up the paths for use with either cmd.exe or Msys
+ * on Windows. We need them to use double backslashes and filenames without
+ * spaces (for which a short filename is the safest equivalent) eg:
+ * C:\\Progra~1\\
+ *
+ * This can fail in 2 ways - if the path doesn't exist, or short names are
+ * disabled. In the first case, don't return any path. In the second case, 
+ * we leave the path in the long form. In this case, it does still seem to
+ * fix elements containing spaces which is all we actually need.
+ */
+static void
+cleanup_path(char *path)
+{
+#ifdef WIN32
+	int	x=0, y=0;
+	char	temp[MAXPGPATH];
+
+	if (GetShortPathName(path, path, MAXPGPATH - 1) == 0)
+	{
+		/* Ignore ERROR_INVALID_PARAMETER as it almost certainly 
+		 * means that short names are disabled
+		 */
+		if (GetLastError() != ERROR_INVALID_PARAMETER)
+		{
+			path[0] = '\0';
+			return;
+		}
+	}
+		
+
+	/* Replace '\' with '\\'. */
+	for (x = 0; x < strlen(path); x++)
+        {
+		if (path[x] == '/' || path[x] == '\\')
+		{
+			temp[y] = '\\';
+			y++;
+			temp[y] = '\\';
+		}
+		else
+		{
+			temp[y] = path[x];
+		}
+
+		y++;
+
+		/* Bail out if we're too close to MAXPGPATH */
+		if (y >= MAXPGPATH - 2)
+			break;
+	}
+	temp[y] = '\0';
+
+	strncpy(path, temp, MAXPGPATH - 1);
+#endif
+}
+
+
+/*
  * For each piece of information known to pg_config, we define a subroutine
  * to print it.  This is probably overkill, but it avoids code duplication
  * and accidentally omitting items from the "all" display.
@@ -39,138 +97,152 @@ static char		mypath[MAXPGPATH];
 static void
 show_bindir(bool all)
 {
-	char		path[MAXPGPATH];
-	char	   *lastsep;
+	char	path[MAXPGPATH];
+	char	*lastsep;
 
 	if (all)
 		printf("BINDIR = ");
 	/* assume we are located in the bindir */
 	strcpy(path, mypath);
 	lastsep = strrchr(path, '/');
+
 	if (lastsep)
 		*lastsep = '\0';
+
+	cleanup_path(path);
 	printf("%s\n", path);
 }
 
 static void
 show_docdir(bool all)
 {
-	char		path[MAXPGPATH];
+	char	path[MAXPGPATH];
 
 	if (all)
 		printf("DOCDIR = ");
 	get_doc_path(mypath, path);
+	cleanup_path(path);
 	printf("%s\n", path);
 }
 
 static void
 show_includedir(bool all)
 {
-	char		path[MAXPGPATH];
+	char	path[MAXPGPATH];
 
 	if (all)
 		printf("INCLUDEDIR = ");
 	get_include_path(mypath, path);
+	cleanup_path(path);
 	printf("%s\n", path);
 }
 
 static void
 show_pkgincludedir(bool all)
 {
-	char		path[MAXPGPATH];
+	char	path[MAXPGPATH];
 
 	if (all)
 		printf("PKGINCLUDEDIR = ");
 	get_pkginclude_path(mypath, path);
+	cleanup_path(path);
 	printf("%s\n", path);
 }
 
 static void
 show_includedir_server(bool all)
 {
-	char		path[MAXPGPATH];
+	char	path[MAXPGPATH];
 
 	if (all)
 		printf("INCLUDEDIR-SERVER = ");
 	get_includeserver_path(mypath, path);
+	cleanup_path(path);
 	printf("%s\n", path);
 }
 
 static void
 show_libdir(bool all)
 {
-	char		path[MAXPGPATH];
+	char	path[MAXPGPATH];
 
 	if (all)
 		printf("LIBDIR = ");
 	get_lib_path(mypath, path);
+	cleanup_path(path);
 	printf("%s\n", path);
 }
 
 static void
 show_pkglibdir(bool all)
 {
-	char		path[MAXPGPATH];
+	char	path[MAXPGPATH];
 
 	if (all)
 		printf("PKGLIBDIR = ");
 	get_pkglib_path(mypath, path);
+	cleanup_path(path);
 	printf("%s\n", path);
 }
 
 static void
 show_localedir(bool all)
 {
-	char		path[MAXPGPATH];
+	char	path[MAXPGPATH];
 
 	if (all)
 		printf("LOCALEDIR = ");
 	get_locale_path(mypath, path);
+	cleanup_path(path);
 	printf("%s\n", path);
 }
 
 static void
 show_mandir(bool all)
 {
-	char		path[MAXPGPATH];
+	char	path[MAXPGPATH];
 
 	if (all)
 		printf("MANDIR = ");
 	get_man_path(mypath, path);
+	cleanup_path(path);
 	printf("%s\n", path);
 }
 
 static void
 show_sharedir(bool all)
 {
-	char		path[MAXPGPATH];
+	char	path[MAXPGPATH];
 
 	if (all)
 		printf("SHAREDIR = ");
 	get_share_path(mypath, path);
+	cleanup_path(path);
 	printf("%s\n", path);
 }
 
 static void
 show_sysconfdir(bool all)
 {
-	char		path[MAXPGPATH];
+	char	path[MAXPGPATH];
 
 	if (all)
 		printf("SYSCONFDIR = ");
 	get_etc_path(mypath, path);
+	cleanup_path(path);
 	printf("%s\n", path);
 }
 
 static void
 show_pgxs(bool all)
 {
-	char		path[MAXPGPATH];
+	char	path[MAXPGPATH];
 
 	if (all)
 		printf("PGXS = ");
 	get_pkglib_path(mypath, path);
 	strncat(path, "/pgxs/src/makefiles/pgxs.mk", MAXPGPATH - 1);
+	cleanup_path(path);
 	printf("%s\n", path);
 }
 
