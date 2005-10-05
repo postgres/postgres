@@ -1,6 +1,6 @@
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)
 
-原文最終更新日: Mon May 9 13:15:04 EDT 2005
+原文最終更新日: Wed Sep 28 07:45:42 EDT 2005
 
 現在の維持管理者: Bruce Momjian (pgman at candle.pha.pa.us)
 Maintainer of Japanese Translation: Jun Kuwamura (juk at PostgreSQL.jp)
@@ -15,13 +15,13 @@ Maintainer of Japanese Translation: Jun Kuwamura (juk at PostgreSQL.jp)
 [訳注：
         日本語版の製作については、この文書の最後をごらんください。
 
-                                                2005年05月18日    桑村 潤
+                                                2005年10月05日    桑村 潤
 ]
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-                                 一般的な質問                                  
-                                                                               
+                                 一般的な質問
+
 1.1) PostgreSQLとは何ですか？何と読みますか？
 1.2) PostgreSQLの著作権はどうなってますか？
 1.3) PostgreSQLをサポートするプラットホームは？
@@ -36,14 +36,14 @@ Maintainer of Japanese Translation: Jun Kuwamura (juk at PostgreSQL.jp)
 1.12) 他のDBMSと比べてPostgreSQLはどうなのですか？
 1.13) 誰が PostgreSQL をコントロールしますか？
 
-                         ユーザー・クライアントの質問                          
-                                                                               
+                          ユーザ・クライアントの質問
+
 2.1) PostgreSQL にはどんなインターフェースが使えますか？
 2.2) PostgreSQL を Web ページと連携させるにはどんなツールがありますか？
-2.3) PostgreSQL にグラフィカル・ユーザインターフェイスはありますか？
+2.3) PostgreSQL にグラフィカル・ユーザインターフェースはありますか？
 
-                                 管理上の質問                                  
-                                                                               
+                                 管理上の質問
+
 3.1) どうすれば、PostgreSQLを/usr/local/pgsql 以外の場所にインストールできます
 か？
 3.2) 他のホストからの接続はどのように制御しますか？
@@ -55,8 +55,8 @@ Maintainer of Japanese Translation: Jun Kuwamura (juk at PostgreSQL.jp)
 てはならないのはなぜですか？
 3.7) ハードウェアにはどんなコンピュータを使えばよいですか？
 
-                                 操作上の質問                                  
-                                                                               
+                                 操作上の質問
+
 4.1) 最初のいくつかのロウのみを select するにはどうしますか？ランダムなロウ？
 4.2) 定義されたテーブル、インデックス、データベース、および、ユーザをどのように
 して見つけ出しますか？
@@ -89,15 +89,17 @@ Maintainer of Japanese Translation: Jun Kuwamura (juk at PostgreSQL.jp)
 4.19) PL/PgSQL の関数の中で一時テーブルにアクセスするとき、どうして "relation
 with OID ##### does not exist" というエラーを受け取るのでしょうか？
 4.20) どのようなレプリケーションのソリューションがありますか？
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+4.21) テーブルとカラムの名前がクエリーの中で認識されないのはなぜですか？
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-                                 一般的な質問                                  
-                                                                               
+                                 一般的な質問
+
 1.1) PostgreSQL とは何ですか？何と発音しますか？
 
 PostgreSQLはPost-Gres-Q-L(ポスト - グレス - キュー - エル) と発音します。
 
-また、単純に Postgres とも呼ばれます。
+また、ときによっては単純に Postgres として参照されます。この発音を聞きたい人の
+ために、 MP3フォーマットの音声ファイルがあります。
 
 PostgreSQL はオブジェクト-リレーショナルデータベースシステムで、伝統的な商用デ
 ータベースシステムに、次世代DBMSシステムに見られるような改良が施された特徴を有
@@ -116,7 +118,7 @@ PostgreSQL は下記の著作権に従います。
     [訳注：
         正文は英語です。参考として、訳文を併記掲載します。
     ]
-    
+
 
 PostgreSQL Data Base Management System
 
@@ -150,12 +152,12 @@ SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
         およびこれに続く二つの段落が全ての複製に添付されている限りにおい
         て、使用、複製、修正および配付の許可を、いかなる目的であっても、
         無償でかつ同意書無しに行なえることをここに認めます。
-        
+
           カリフォルニア大学は、いかなる当事者にたいしても、利益の壊失を
         含む、直接的、間接的、特別、偶然あるいは必然的にかかわらず生じた
         損害について、たとえカリフォルニア大学がこれらの損害について訴追
         を受けていたとしても、一切の責任を負いません。
-        
+
           カリフォルニア大学は、商用目的における暗黙の保証と、特定目的で
         の適合性に関してはもとより、これらに限らず、いかなる保証も放棄す
         ることを明言します。以下に用意されたソフトウェアは「そのまま」を
@@ -166,7 +168,7 @@ SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
         著作権に関する正文は上記の英語による表記です。日本語訳はあくまで
         参考です。
     ]
-    
+
 
 1.3) PostgreSQL の動作環境は？
 
@@ -187,7 +189,7 @@ PostgreSQL を走らせることができます。
         詳しくは、次の Windwos版に関するFAQの和訳をごらんください。
         http://www.postgresql.jp/wg/jpugdoc/FAQ_windows.ja.html
     ]
-    
+
 
 次のサイトに Novell Netware 6 への移植版もあります。 http://forge.novell.com ま
 た、OS/2 (eComStation) バージョンは、 http://hobbes.nmsu.edu/cgi-bin/h-search?
@@ -196,13 +198,13 @@ sh=1&button=Search&key=postgreSQL&stype=all&sort=type&dir=%2Fにあります。
 
 1.4) PostgreSQL はどこから入手できますか？
 
-Webブラウザ経由だと、 http://www.postgresql.org/ftp/、それから、ftp経由だと、 
+Webブラウザ経由だと、 http://www.postgresql.org/ftp/、それから、ftp経由だと、
 ftp://ftp.PostgreSQL.org/pub/ を使います。
 
 1.5) サポートはどこで受けられますか？
 
 PostgreSQL コミュニティは多くのユーザのために、電子メール経由の支援を提供してい
-ます。電子メールリストをサブスクライブするためのメインとなるウェブサイトは 
+ます。電子メールリストをサブスクライブするためのメインとなるウェブサイトは
 http://www.postgresql.org/community/lists/です。これから、始めるのであれば
 general または、bugs といったリストがよいでしょう。
 
@@ -220,15 +222,16 @@ postgresql-es)もあり、フランス語のチャンネル (#postgresqlfr)もあります。EFNetに
 
     [訳注:
           1999年7月23日、日本ポストグレスユーザー会、略称JPUGが設立されました。
-        JPUG は非営利組織で、PostgreSQLを利用する人達の相互協力の場となっています。  
+        JPUG は非営利組織で、PostgreSQLを利用する人達の相互協力の場となっています。
         (2003年5月17日、「日本PostgreSQLユーザ会」に名称を改めました。)
         正会員の会費は無料ですが、協賛会員の会費と会員の積極的な貢献が会の運営を助けています。
         詳しくは、JPUG のWeb サイト:
                 http://www.PostgreSQL.jp/
         をごらんください。会員登録も可能となっています。
 
-        日本語のIRCチャンネル '#PostgreSQL*jp' も存在します。
-    
+        日本語のIRCチャンネル '#PostgreSQL:*.jp' も存在します。
+    ]
+
 
 商用サポート会社のリストは http://techdocs.postgresql.org/companies.phpにありま
 す。
@@ -243,10 +246,10 @@ PostgreSQL を探してみてください。
 
 1.7) 最新版はどれですか
 
-PostgreSQL の最新版はバージョン 8.0.3 です。
+PostgreSQL の最新版はバージョン 8.0.4 です。
 
-我々は、1年毎にメジャーリリースを行ない、数ヵ月ごとのマイナーリリースをを計画し
-ています。
+我々は、1年毎にメジャーリリースを行ない、数ヵ月ごとのマイナーリリースを計画して
+います。
 
 1.8) どのような文書がありますか？
 
@@ -257,14 +260,14 @@ PostgreSQL の最新版はバージョン 8.0.3 です。
 
     [訳注:
         JPUG 文書・書籍関連分科会で翻訳されたマニュアルもあります。
-                
+
         http://www.postgresql.jp/document/pg803doc/
         インプレスから、
-        
+
         PostgreSQLオフィシャルマニュアルとして出版されています。
 
     ]
-    
+
 
 オンラインで参照できる PostgreSQL の本も2冊あります。 http://www.PostgreSQL.org
 /docs/awbook.html
@@ -274,7 +277,7 @@ PostgreSQL の最新版はバージョン 8.0.3 です。
         で翻訳され、ピアソンから
         「はじめてのPostgreSQL」として出版されました。
     ]
-    
+
 
 および、 http://www.commandprompt.com/ppbook/です。
 
@@ -282,17 +285,17 @@ PostgreSQL の最新版はバージョン 8.0.3 です。
         邦訳は「実践 PostgreSQL」
         がオライリーから出版されています。
     ]
-    
+
 
 購入可能な書籍の目録は、http://techdocs.PostgreSQL.org/techdocs/bookreviews.php
 にあります。 PostgreSQL 技術情報記事も、http://techdocs.PostgreSQL.org/ にあり
 ます。
 
     [訳注:
-        日本語の書籍等についてはは、日本PostgreSQLユーザ会の、http://www.postgresql.jp/PostgreSQL/references.html
+        日本語の書籍等については、日本PostgreSQLユーザ会の、http://www.postgresql.jp/PostgreSQL/references.html
         もごらんください。
     ]
-    
+
 
 コマンドラインのクライアントプログラムpsql も、型、演算子、関数、集約、その他の
 情報をお見せする、いくつかの素晴らしい \d コマンドを持ちます。 - \? を使うと利
@@ -302,7 +305,7 @@ PostgreSQL の最新版はバージョン 8.0.3 です。
 
 1.9) 既知のバグや未だ無い機能はどうやって見つけますか？
 
-PostgreSQLは拡張されたSQL-92のサブセットをサポートします。我々のページの TODO
+PostgreSQLは拡張されたSQL:2003のサブセットをサポートします。我々のページの TODO
 リストに、既知のバグや欠落機能や将来計画についての記述があります。
 
 1.10) SQL はどうすれば学べますか？
@@ -335,7 +338,7 @@ sqlcourse.com にあります。
          Nikkei BP IT Pro にある石井達夫氏の PostgreSQL ウォッチ
         では毎回新しい情報をとりあげています。
     ]
-    
+
 
 1.11) 開発チームにはどのように参加しますか？
 
@@ -386,10 +389,10 @@ PostgreSQLの門番、中央委員会、あるいは、コントロールをする会社を探そうとしても
 をサブスクライブして、議論に参加することです。（Developer's FAQには、PostgreSQL
 開発に加わり方についての情報があります。）
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-                         ユーザー・クライアントの質問                          
-                                                                               
+                          ユーザ・クライアントの質問
+
 2.1) PostgreSQL にはどんなインターフェースが使えますか？
 
 PostgreSQL のインストールに含まれる物はCと組込み Cのインターフェースだけです。
@@ -407,7 +410,7 @@ PHP のようないくつかのプログラミング言語は、 PostgreSQLのインターフェースを含ん
 データベースを裏に持つ Web ページについての素晴らしい紹介が、
 http://www.webreview.comにあります。
 
-Web への拡張のためには、PHP(http://www.php.net/) が卓越したインターフェイスとな
+Web への拡張のためには、PHP(http://www.php.net/) が卓越したインターフェースとな
 っています。
 
     [訳注:
@@ -417,20 +420,20 @@ Web への拡張のためには、PHP(http://www.php.net/) が卓越したインターフェイスとな
                 http://www.geocities.jp/rui_hirokawa/php/
         にかなりまとめられています。
     ]
-    
 
-処理が複雑な場合、多くの人は Perl インターフェイスと CGI.pm か mod_perl を使い
+
+処理が複雑な場合、多くの人は Perl インターフェースと CGI.pm か mod_perl を使い
 ます。
 
-2.3) PostgreSQL にグラフィカル・ユーザインターフェイスはありますか？
+2.3) PostgreSQL にグラフィカル・ユーザインターフェースはありますか？
 
 もちろん、あります。詳細は、http://techdocs.postgresql.org/guides/GUITools をご
 らんください。
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-                                 管理上の質問                                  
-                                                                               
+                                 管理上の質問
+
 3.1) どのようにすれば /usr/local/pgsql 以外の場所にインストールできますか？
 
 簡単な方法は、 configure を走らせるときに --prefix オプションを指定することです
@@ -460,21 +463,21 @@ Web への拡張のためには、PHP(http://www.php.net/) が卓越したインターフェイスとな
      □ オプティマイザの正確な統計を維持するためにANALYZEを使用
      □ VACUUM または pg_autovacuum の常用
      □ 大きなデータ変更のあるときはインデックスを削除
-   
-   
+
+
 サーバ構成
     postgresql.confの設定のいくつかは性能に影響します。詳しくは、
     Administration Guide/Server Run-time Environment/Run-time Configuration の
-    全件リストごらんください( JPUGサイトの日本語版)。そして、解説として、 http:
-    //www.varlena.com/varlena/GeneralBits/Tidbits/annotated_conf_e.html および
-    、 http://www.varlena.com/varlena/GeneralBits/Tidbits/perf.html をごらんく
-    ださい。
-   
+    全件リストをごらんください( JPUGサイトの日本語版)。そして、解説として、
+    http://www.varlena.com/varlena/GeneralBits/Tidbits/annotated_conf_e.html お
+    よび、 http://www.varlena.com/varlena/GeneralBits/Tidbits/perf.html をごら
+    んください。
+
 ハードウェアの選定
     性能におけるハードウェアの影響は http://candle.pha.pa.us/main/writings/
     pgsql/hw_performance/index.html (JPUGサイトの日本語版) と http://
     www.powerpostgresql.com/PerfList/ に述べられています。
-   
+
 
 3.4) どのようなデバグ機能が使えますか？
 
@@ -509,10 +512,10 @@ SCSI、および、高品質マザーボードは、安いハードウェアに比べると、より信頼性が高
 メーリングリストでもハードウェアオプションとトレードオフについて議論することが
 できます。
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-                                 操作上の質問                                  
-                                                                               
+                                 操作上の質問
+
 4.1) 最初の数ロウのみを SELECTするにはどうしますか？ランダムなロウ？
 
 たったの数行のロウを取り出すために、何行必要かがわかれば、 SELECT のときに
@@ -530,14 +533,14 @@ LIMIT を使います。 ORDER BYにインデックスがマッチした場合、まったくクエリが実行
 4.2) 定義されたテーブル、インデックス、データベース、および、ユーザをどのように
 して見つけ出しますか？psqlで使われているクエリを表示するにはどうしますか？
 
-psql の中で \dtコマンドをを使ってテーブルを見ることができます。psqlの中で \? を
-使って、コマンドの全リストを調べることができます。一方で、psql のソースコードで
-、バックスラッシュコマンドを出力する pgsql/src/bin/psql/describe.c ファイルを読
-むこともできます。その中には、 SQL コマンドを生成する部分も含まれます。また、
--E オプションを付けて psql を開始すると、入力されたコマンドを実行するためのクエ
-リを印字出力するようになります。 PostgreSQLは SQL 準拠の INFORMATION SCHEMA イ
-ンターフェースを提供しますので、データベースについての情報を問い合わせることも
-できます。
+psql の中で \dtコマンドを使ってテーブルを見ることができます。psqlの中で \? を使
+って、コマンドの全リストを調べることができます。一方で、psql のソースコードで、
+バックスラッシュコマンドを出力する pgsql/src/bin/psql/describe.c ファイルを読む
+こともできます。その中には、 SQL コマンドを生成する部分も含まれます。また、 -E
+オプションを付けて psql を開始すると、入力されたコマンドを実行するためのクエリ
+を印字出力するようになります。 PostgreSQLは SQL 準拠の INFORMATION SCHEMA イン
+ターフェースを提供しますので、データベースについての情報を問い合わせることもで
+きます。
 
 pg_ で始まるシステムテーブルでもこれらを記述することができます。
 
@@ -566,16 +569,16 @@ VACUUM FULL tabをしたほうが良いかもしれません。
 
 制限は以下のとおりです:
 
-    データベースの最大サイズ?        制限無し (32 TB のデータベースも存在しま  
-                                     す)                                       
-    テーブルの最大サイズ?            32 TB                                     
-    ロウの最大サイズ?                1.6TB                                     
-    フィールドの最大サイズ?          1 GB                                      
-    テーブル内での最大ロウ数?        制限無し                                  
-    テーブル内での最大カラム数?      カラムの型によって 250-1600               
-    テーブル内での最大インデックス   制限無し                                  
-    数?                                                                        
-   
+    データベースの最大サイズ?        制限無し (32 TB のデータベースも存在しま
+                                     す)
+    テーブルの最大サイズ?            32 TB
+    ロウの最大サイズ?                1.6TB
+    フィールドの最大サイズ?          1 GB
+    テーブル内での最大ロウ数?        制限無し
+    テーブル内での最大カラム数?      カラムの型によって 250-1600
+    テーブル内での最大インデックス   制限無し
+    数?
+
 もちろん、これらは実際は無制限ではなく、ディスク容量とメモリーやスワップスペー
 スの大きさにより制限されます。性能はこれらの値がことのほか大きな時に煽りを受け
 ます。
@@ -586,6 +589,11 @@ VACUUM FULL tabをしたほうが良いかもしれません。
 
 デフォルトのブロックサイズを32kにすることで、最大テーブルサイズと最大カラム数と
 を4倍にすることができます。
+
+ひとつの制限は、約2,000文字以上の長さのカラムにインデックスを付けることができな
+いことです。幸いにも、そのようなインデックスは実際は必要ありません。長いカラム
+のMD5ハッシュの関数インデックスは一意性がなによりの保険で、また、フルテキストの
+インデックスではカラム内の単語を検索することができます。
 
 4.5) 一般的なテキストファイルのデータを保存するには、データベースのディスク容量
 はどのくらい必要です？
@@ -598,23 +606,23 @@ VACUUM FULL tabをしたほうが良いかもしれません。
 は約2.8MB です。このデータを含む PostgreSQL データベースファイルの大きさは次の
 ように約6.4MBと見積もることができます：
 
-    32 bytes: 各ロウのヘッダ(概算)
+    28 bytes: 各ロウのヘッダ(概算)
     24 bytes: 整数(int)フィールドとテキスト(text)フィールド
    + 4 bytes: ページ上のタップルへのポインタ
    ----------------------------------------
-   60 bytes per row
+    56 bytes per row
 
    PostgreSQL のデータページサイズは 8192バイト(8KB)なので:
 
    8192 bytes per page
-   -------------------   =  136 rows per database page (切り捨て)
-     60 bytes per row
+   -------------------   =  146 rows per database page (切り捨て)
+     56 bytes per row
 
    100000 data rows
-   --------------------  =  782 database pages (切り上げ)
-      128 rows per page
- 
-  735 database pages * 8192 bytes per page  =  6,021,120 bytes (6 MB)
+   --------------------  =  685 database pages (切り上げ)
+      146 rows per page
+
+  685 database pages * 8192 bytes per page  =  5,611,520 bytes (5.6 MB)
 
 インデックスは、これほどのオーバヘッドは要求しませんが、インデックス付けされる
 データを含む以上、それなりに大きくなります。
@@ -631,7 +639,7 @@ NULLはビットマップとして保存されていて、それらがわずかにスペースを使います。
 
 インデックスを使うかを決定するために、PostgreSQL はテーブルについての統計情報を
 持たなければなりません。この統計情報は、 VACUUMANALYZEまたは、単に ANALYZE を使
-って収集することができます。統計情報を使ってオブティマイザはテーブルの中にある
+って収集することができます。統計情報を使ってオプティマイザはテーブルの中にある
 ロウ数を知り、インデックスを使うべきかの決定をより正しくできます。統計情報は最
 適な結合順や結合方法を決める上でも貴重なものもあります。統計情報の収集は、テー
 ブルの内容がかわると毎に繰返しなされるべきです。
@@ -665,20 +673,20 @@ LIKE あるいは ~ のようなワイルドカード演算子は特別な環境でしか使えません：
  ・ initdb においては、デフォルトでCロケールが使われなくてはなりません。その理
     由は、Cロケール以外では次に大きな文字を知ることができないからです。このよう
     な場合、
-   
+
     LIKE
-    
+
     インデクシングにだけ働くような、特別な
-   
+
     text_pattern_ops
-    
+
     インデックスを作成することもできます。
 
 8.0より前のリリースでは、インデックスは、データ型がちょうどインデックスのカラム
 の型と一致しなければ、使えないことがしばしばありました。おそらく、int2, int8,
 および numeric 等のカラムのインデックスがそうです。
 
-4.7) 問い合わせオブティマイザがどのように問い合わせを評価するのかを見るにはどう
+4.7) 問い合わせオプティマイザがどのように問い合わせを評価するのかを見るにはどう
 しますか？
 
 オンラインマニュアルで EXPLAIN を見てください。
@@ -702,6 +710,10 @@ LIKE あるいは ~ のようなワイルドカード演算子は特別な環境でしか使えません：
 
     CREATE INDEX tabindex ON tab (lower(col));
 
+上記のインデックスがUNIQUEで作成された場合、カラムは大文字と小文字を格納できま
+すが、その違いが文字ケースだけであっても同一にはなりません。あえて特定の文字ケ
+ースをカラムに格納するには CHECK制約か、トリガーを使ってください。
+
 4.9) クエリの中で、フィールドがNULL であることを検出するにはどうしますか？フィ
 ールドがNULLかどうかでどのようにソートができますか？
 
@@ -721,13 +733,13 @@ NULL状態でソートするには、IS NULL と IS NOT NULL の修飾子を ORDER BY 句の中で使
 
 4.10) いろいろな文字型のそれぞれの違いは何ですか？
 
-        型     内部名                      備考                    
-    VARCHAR(n) varchar 最大長のサイズを指定する、詰め物無し        
+        型     内部名                      備考
+    VARCHAR(n) varchar 最大長のサイズを指定する、詰め物無し
     CHAR(n)    bpchar  指定された固定長となるように空白が詰められる
-    TEXT       text    長さに特別な上限は無し                      
-    BYTEA      bytea   可変長のバイト配列(null-byte safe)          
-    "char"     char    1文字                                       
-   
+    TEXT       text    長さに特別な上限は無し
+    BYTEA      bytea   可変長のバイト配列(null-byte safe)
+    "char"     char    1文字
+
 内部名にお目にかかるのは、システム・カタログを調べるときや、エラーメッセージを
 受け取るときです。
 
@@ -748,15 +760,15 @@ NULL のバイトを含むバイナリデータを保存するためのものです。これらのタイプは同じ
 PostgreSQL は SERIAL データ型をサポートします。カラム上にシーケンスを自動作成し
 ます。たとえば、
 
-    CREATE TABLE person ( 
-        id   SERIAL, 
-        name TEXT 
+    CREATE TABLE person (
+        id   SERIAL,
+        name TEXT
     );
 
 は自動的に次のように翻訳されます:
 
     CREATE SEQUENCE person_id_seq;
-    CREATE TABLE person ( 
+    CREATE TABLE person (
         id   INT4 NOT NULL DEFAULT nextval('person_id_seq'),
         name TEXT
     );
@@ -805,7 +817,7 @@ currval() 関数を使って取り出すこともできます。たとえば、
 PostgreSQLでつくられるすべてのロウは、WITHOUT OIDS でつくられないかぎり一意の
 OIDを得ます。 OIDは自動的に4バイトの整数で与えられ、それは、全インストレーショ
 ンを通して一意な値となります。しかし、約40億でオーバーフローし、そして、OIDは重
-複をしはじめます。PostgreSQLは内部システムテーブルを一緒にリンクするtためにOID
+複をしはじめます。PostgreSQLは内部システムテーブルを一緒にリンクするためにOID
 を使います。
 
 ユーザのテーブルのカラムに一意の番号を付けるためには、 OID ではなく SERIAL を使
@@ -908,12 +920,32 @@ PL/PgSQL は関数スクリプトをキャッシュし、不幸にもその副作用で、 PL/PgSQL関数が
 この他にも、商用やハードウェア−ベースのレプリケーションソリューションがいろい
 ろなレプリケーションモデルをサポートしています。
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+4.21)テーブルとカラムの名前がクエリーの中で認識されないのはなぜですか？
+
+The most common cause is the use of double-quotes around table or + column
+names during table creation. When double-quotes are used, + table and column
+names (called identifiers) are stored case-sensitive, meaning you must use +
+double-quotes when referencing the names in a query. Some interfaces, + like
+pgAdmin, automatically double-quote identifiers during table + creation. So,
+for identifiers to be recognized, you must either: もっとも一般的な原因は、テー
+ブルを作成する際に、テーブルやカラムを囲う二重引用符の使用です。二重引用符を使
+うと、テーブルとカラムの名前（識別子と呼びます）は大文字と小文字の区別をして格
+納されす。したがって、pgAdminのようにテーブル作成のときに自動的に二重引用符を使
+うものはクエリの中でそれらの名前を使うときに二重引用符を付けなくてはならないこ
+とを意味します。このため、識別子を認識させるためには以下のいずれかを心がけます
+。
+
+ ・ テーブルを作成するときに二重引用符で識別子を囲うことを避ける
+ ・ Use only lowercase characters in identifiers
+ ・ 識別子には小文字だけを使う
+ ・ クエリの中で参照するときは二重引用譜で識別子を囲う
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:   2005年05月18日
+  最終更新日:   2005年10月05日
   翻訳者:       桑村 潤 (Jun Kuwamura <juk at PostgreSQL.jp>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
@@ -935,11 +967,11 @@ PL/PgSQL は関数スクリプトをキャッシュし、不幸にもその副作用で、 PL/PgSQL関数が
                 稲葉 香理(Kaori Inaba <i-kaori at sra.co.jp>)
                 石井 達夫(Tatsuo Ishii <t-ishii at sra.co.jp>)
 
-  をはじめ、ポストグレスに関する話題豊富な日本語ポストグレス・メーリングリ
-  スト、 和訳のきっかけを作ってくれた JF(Linux Japanese FAQ Mailing List)プロジェ
-  クト、FreeBSD ドキュメンテーションプロジェクト、 その他、直接あるい
-  は間接的にかかわっているすべてのオープンソースコミュニティーの皆さんに
-  感謝します。
+  をはじめ、ポストグレスに関する話題豊富な日本語PostgreSQLメーリングリスト、
+  和訳のきっかけを作ってくれたり、いつもチェックをしてくれる
+   JF(Linux Japanese FAQ)プロジェクト、
+  FreeBSD ドキュメンテーションプロジェクト、 その他、直接あるいは間接的に
+  かかわっているすべてのオープンソースコミュニティーのみなさまに感謝します。
 
   日本語版のこの文書は 本家 "Frequently Asked Questions"  のページに "Japanese FAQ" という見出であります。
   また、最新版は以下のサイトにあります。
