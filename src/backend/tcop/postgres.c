@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.463 2005/09/26 15:51:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.464 2005/10/05 23:46:06 neilc Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -3526,29 +3526,13 @@ ShowUsage(const char *title)
 static void
 log_disconnections(int code, Datum arg)
 {
-	Port	   *port = MyProcPort;
-	struct timeval end;
-	int			hours,
-				minutes,
-				seconds;
+	Port	*port = MyProcPort;
+	struct	timeval end;
+	int		hours,
+			minutes,
+			seconds;
 
-	char		session_time[20];
-	char		uname[6 + NAMEDATALEN];
-	char		dbname[10 + NAMEDATALEN];
-	char		remote_host[7 + NI_MAXHOST];
-	char		remote_port[7 + NI_MAXSERV];
-
-	snprintf(uname, sizeof(uname), " user=%s", port->user_name);
-	snprintf(dbname, sizeof(dbname), " database=%s", port->database_name);
-	snprintf(remote_host, sizeof(remote_host), " host=%s",
-			 port->remote_host);
-	if (port->remote_port[0])
-		snprintf(remote_port, sizeof(remote_port), " port=%s", port->remote_port);
-	else
-		remote_port[0] = '\0';
-		
 	gettimeofday(&end, NULL);
-
 	if (end.tv_usec < port->session_start.tv_usec)
 	{
 		end.tv_sec--;
@@ -3557,28 +3541,16 @@ log_disconnections(int code, Datum arg)
 	end.tv_sec -= port->session_start.tv_sec;
 	end.tv_usec -= port->session_start.tv_usec;
 
+	/* for stricter accuracy here we could round - this is close enough */
 	hours = end.tv_sec / SECS_PER_HOUR;
 	end.tv_sec %= SECS_PER_HOUR;
 	minutes = end.tv_sec / SECS_PER_MINUTE;
 	seconds = end.tv_sec % SECS_PER_MINUTE;
 
-	/* if time has gone backwards for some reason say so, or print time */
-
-	if (end.tv_sec < 0)
-		snprintf(session_time, sizeof(session_time), "negative!");
-	else
-
-		/*
-		 * for stricter accuracy here we could round - this is close
-		 * enough
-		 */
-		snprintf(session_time, sizeof(session_time),
-				 "%d:%02d:%02d.%02d",
-				 hours, minutes, seconds, (int) (end.tv_usec / 10000));
-
-	ereport(
-			LOG,
-			(errmsg("disconnection: session time: %s%s%s%s%s",
-				session_time, uname, dbname, remote_host, remote_port)));
-
+	ereport(LOG,
+			(errmsg("disconnection: session time: %d:%02d:%02d.%02d "
+					"user=%s database=%s host=%s%s%s",
+					hours, minutes, seconds, (int) (end.tv_usec / 10000),
+					port->user_name, port->database_name, port->remote_host,
+					port->remote_port[0] ? " port=" : "", port->remote_port)));
 }
