@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.136 2005/06/16 01:43:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.137 2005/10/05 14:58:36 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,8 @@ extern YYSTYPE yylval;
 
 static int		xcdepth = 0;	/* depth of nesting in slash-star comments */
 static char    *dolqstart;      /* current $foo$ quote start string */
+bool                    escape_string_warning;
+static bool             warn_on_first_escape;
 
 /*
  * literalbuf is used to accumulate literal values when multiple rules
@@ -44,6 +46,7 @@ static int		literalalloc;			/* current allocated buffer size */
 static void addlit(char *ytext, int yleng);
 static void addlitchar (unsigned char);
 static void parse_include (void);
+static void check_escape_warning(void);
 
 char *token_start;
 int state_before;
@@ -111,48 +114,44 @@ static struct _if_value
 /* Bit string
  */
 xbstart			[bB]{quote}
-xbstop			{quote}
 xbinside		[^']*
-xbcat			{quote}{whitespace_with_newline}{quote}
 
-/* Hexadecimal number
- */
+/* Hexadecimal number */
 xhstart			[xX]{quote}
-xhstop			{quote}
 xhinside		[^']*
-xhcat			{quote}{whitespace_with_newline}{quote}
 
-/* National character
- */
+/* National character */
 xnstart                        [nN]{quote}
 
-/* C version of hex number
- */
+/* Quoted string that allows backslash escapes */
+xestart                 [eE]{quote}
+
+/* C version of hex number */
 xch			0[xX][0-9A-Fa-f]*
 
 /* Extended quote
- * xqdouble implements embedded quote
- * xqcat allows strings to cross input lines
+ * xqdouble implements embedded quote, ''''
  */
-quote			'
 xqstart			{quote}
-xqstop			{quote}
 xqdouble		{quote}{quote}
 xqinside		[^\\']+
 xqescape		[\\][^0-7]
 xqoctesc		[\\][0-7]{1,3}
 xqhexesc		[\\]x[0-9A-Fa-f]{1,2}
-xqcat			{quote}{whitespace_with_newline}{quote}
 
 /* $foo$ style quotes ("dollar quoting")
  * The quoted string starts with $foo$ where "foo" is an optional string
  * in the form of an identifier, except that it may not contain "$",
  * and extends to the first occurrence of an identical string.
  * There is *no* processing of the quoted text.
+ *
+ * {dolqfailed} is an error rule to avoid scanner backup when {dolqdelim}
+ * fails to match its trailing "$".
  */
 dolq_start             [A-Za-z\200-\377_]
 dolq_cont              [A-Za-z\200-\377_0-9]
 dolqdelim              \$({dolq_start}{dolq_cont}*)?\$
+dolqfailed             \${dolq_start}{dolq_cont}*
 dolqinside             [^$]+
 
 /* Double quote
@@ -218,11 +217,16 @@ operator		{op_chars}+
 /* we no longer allow unary minus in numbers.
  * instead we pass it separately to parser. there it gets
  * coerced via doNegate() -- Leon aug 20 1999
+ *
+ * {realfail1} and {realfail2} are added to prevent the need for scanner
+ * backup when the {real} rule fails to match completely.
  */
 
 integer			{digit}+
 decimal			(({digit}*\.{digit}+)|({digit}+\.{digit}*))
-real			((({digit}*\.{digit}+)|({digit}+\.{digit}*)|({digit}+))([Ee][-+]?{digit}+))
+real                   ({integer}|{decimal})[Ee][-+]?{digit}+
+realfail1              ({integer}|{decimal})[Ee]
+realfail2              ({integer}|{decimal})[Ee][-+]
 
 param			\${integer}
 
@@ -261,6 +265,11 @@ whitespace		({space}+|{comment})
 
 horiz_whitespace	({horiz_space}|{comment})
 whitespace_with_newline ({horiz_whitespace}*{newline}{whitespace}*)
+
+quote			'
+quotestop		{quote}{whitespace}*
+quotecontinue		{quote}{whitespace_with_newline}{quote}
+quotefail		{quote}{whitespace}*"-"
 
 /* special characters for other dbms */
 /* we have to react differently in compat mode */
@@ -343,6 +352,7 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 
 <xc>{xcinside}		{ ECHO; }
 <xc>{op_chars}		{ ECHO; }
+<xc>\*+ 		{ ECHO; }
 
 <xc><<EOF>>		{ mmerror(PARSE_ERROR, ET_FATAL, "Unterminated /* comment"); }
 
@@ -352,7 +362,9 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 						startlit();
 						addlitchar('b');
 					}
-<xb>{xbstop}	{
+<xb>{quotestop} |
+<xb>{quotefail}	{
+						yyless(1);
 						BEGIN(SQL);
 						if (literalbuf[strspn(literalbuf, "01") + 1] != '\0')
 							mmerror(PARSE_ERROR, ET_ERROR, "invalid bit string input.");
@@ -362,8 +374,8 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 
 <xh>{xhinside}	|
 <xb>{xbinside}	{ addlit(yytext, yyleng); }
-<xh>{xhcat}		|
-<xb>{xbcat}		{ /* ignore */ }
+<xh>{quotecontinue}	|
+<xb>{quotecontinue}	{ /* ignore */ }
 <xb><<EOF>>		{ mmerror(PARSE_ERROR, ET_FATAL, "Unterminated bit string"); }
 
 <SQL>{xhstart}		{
@@ -371,44 +383,71 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 						BEGIN(xh);
 						startlit();
 						addlitchar('x');
-					}
-<xh>{xhstop}		{
-						yylval.str = mm_strdup(literalbuf);
-						return XCONST;
-					}
+			}
+<xh>{quotestop}	|
+<xh>{quotefail} 	{
+				yyless(1);
+				BEGIN(SQL);
+				yylval.str = mm_strdup(literalbuf);
+				return XCONST;
+			}
 
 <xh><<EOF>>		{ mmerror(PARSE_ERROR, ET_FATAL, "Unterminated hexadecimal integer"); }
 <SQL>{xnstart}              {
 				/* National character.
-				 * Need to remember type info to flow it forward into the parser.
-		                 * Not yet implemented. - thomas 2002-06-17
+		                 * Transfer it as-is to the backend.
 		                 */
 			        token_start = yytext;
 				BEGIN(xq);
 				startlit();
 			}
 <C,SQL>{xqstart}	{
-						token_start = yytext;
-						state_before = YYSTATE;
-						BEGIN(xq);
-						startlit();
-					}
-<xq>{xqstop}		{
-						BEGIN(state_before);
-						yylval.str = mm_strdup(literalbuf);
-						return SCONST;
-					}
+				warn_on_first_escape = true;
+				token_start = yytext;
+				state_before = YYSTATE;
+				BEGIN(xq);
+				startlit();
+			}
+<C,SQL>{xestart}	{
+				warn_on_first_escape = false;
+				token_start = yytext;
+				state_before = YYSTATE;
+				BEGIN(xq);
+				startlit();
+			}
+<xq>{quotestop} |
+<xq>{quotefail}		{
+				yyless(1);
+				BEGIN(state_before);
+				yylval.str = mm_strdup(literalbuf);
+				return SCONST;
+			}
 <xq>{xqdouble}		{ addlitchar('\''); }
 <xq>{xqinside}		{ addlit(yytext, yyleng); }
-<xq>{xqescape}  	{ addlit(yytext, yyleng); }
-<xq>{xqoctesc}		{ addlit(yytext, yyleng); }
-<xq>{xqhexesc}		{ addlit(yytext, yyleng); }
-<xq>{xqcat}		{ /* ignore */ }
+<xq>{xqescape}  	{ 
+				check_escape_warning();
+				addlit(yytext, yyleng);
+			}
+<xq>{xqoctesc}		{ 
+				check_escape_warning();
+				addlit(yytext, yyleng);
+			}
+<xq>{xqhexesc}		{ 
+				check_escape_warning();
+				addlit(yytext, yyleng);
+			}
+<xq>{quotecontinue}	{ /* ignore */ }
 <xq>.                   {
                                        /* This is only needed for \ just before EOF */
                                        addlitchar(yytext[0]);
                         }
 <xq><<EOF>>		{ mmerror(PARSE_ERROR, ET_FATAL, "Unterminated quoted string"); }
+<SQL>{dolqfailed}	{
+				/* throw back all but the initial "$" */
+				yyless(1);
+				/* and treat it as {other} */
+				return yytext[0];	
+			}
 <SQL>{dolqdelim}        {
 				token_start = yytext;
 				dolqstart = mm_strdup(yytext);
@@ -434,9 +473,8 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 				        yyless(yyleng-1);
 				}
 			}
-<xdolq>{dolqinside} 	{
-				addlit(yytext, yyleng);
-			}
+<xdolq>{dolqinside} 	{ addlit(yytext, yyleng); }
+<xdolq>{dolqfailed}	{ addlit(yytext, yyleng); }
 <xdolq>.		{
 				/* This is only needed for $ inside the quoted text */
 				addlitchar(yytext[0]);
@@ -588,11 +626,21 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 {decimal}			{
 						yylval.str = mm_strdup(yytext);
 						return FCONST;
-					}
+			}
 <C,SQL>{real}		{
 						yylval.str = mm_strdup(yytext);
 						return FCONST;
-					}
+			}
+<SQL>{realfail1}	{
+				yyless(yyleng-1);
+				yylval.str = mm_strdup(yytext);
+				return FCONST;
+			}
+<SQL>{realfail2}	{
+				yyless(yyleng-2);
+				yylval.str = mm_strdup(yytext);
+				return FCONST;
+			}
 <SQL>:{identifier}((("->"|\.){identifier})|(\[{array}\]))*	{
 						yylval.str = mm_strdup(yytext+1);
 						return(CVARIABLE);
@@ -1188,4 +1236,12 @@ parse_include(void)
 	output_line_number();
 
   	BEGIN C;
+}
+
+static void
+check_escape_warning(void)
+{
+	if (warn_on_first_escape && escape_string_warning)
+	       	mmerror (PARSE_ERROR, ET_WARNING, "nonstandard use of escape in a string literal");
+        warn_on_first_escape = false;   /* warn only once per string */
 }

@@ -1945,6 +1945,10 @@ Tue Oct  4 15:23:00 CEST 2005
 
 	- Synced parser.
 	- Fixed another bug in check to report missing varchar pointer implementation.
+
+Wed Oct  5 16:57:42 CEST 2005
+
+	- Synced lexer.
 	- Set ecpg library version to 5.1.
 	- Set ecpg version to 4.1.1.
 
