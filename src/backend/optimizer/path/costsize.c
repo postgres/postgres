@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.147 2005/08/27 22:37:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.148 2005/10/05 17:19:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1898,17 +1898,23 @@ join_in_selectivity(JoinPath *path, PlannerInfo *root)
 void
 set_function_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 {
+	RangeTblEntry *rte;
+
 	/* Should only be applied to base relations that are functions */
 	Assert(rel->relid > 0);
-	Assert(rel->rtekind == RTE_FUNCTION);
+	rte = rt_fetch(rel->relid, root->parse->rtable);
+	Assert(rte->rtekind == RTE_FUNCTION);
 
 	/*
 	 * Estimate number of rows the function itself will return.
 	 *
-	 * XXX no idea how to do this yet; but should at least check whether
+	 * XXX no idea how to do this yet; but we can at least check whether
 	 * function returns set or not...
 	 */
-	rel->tuples = 1000;
+	if (expression_returns_set(rte->funcexpr))
+		rel->tuples = 1000;
+	else
+		rel->tuples = 1;
 
 	/* Now estimate number of output rows, etc */
 	set_baserel_size_estimates(root, rel);
