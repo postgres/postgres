@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.198 2005/09/24 22:54:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.199 2005/10/06 16:01:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -819,7 +819,9 @@ create_indexscan_plan(PlannerInfo *root,
 	 * (particularly with OR'd index conditions) we may have scan_clauses
 	 * that are not equal to, but are logically implied by, the index quals;
 	 * so we also try a predicate_implied_by() check to see if we can discard
-	 * quals that way.
+	 * quals that way.  (predicate_implied_by assumes its first input contains
+	 * only immutable functions, so we have to check that.)  We can also
+	 * discard quals that are implied by a partial index's predicate.
 	 *
 	 * While at it, we strip off the RestrictInfos to produce a list of
 	 * plain expressions.
@@ -832,9 +834,15 @@ create_indexscan_plan(PlannerInfo *root,
 		Assert(IsA(rinfo, RestrictInfo));
 		if (list_member_ptr(nonlossy_indexquals, rinfo))
 			continue;
-		if (predicate_implied_by(list_make1(rinfo->clause),
-								 nonlossy_indexquals))
-			continue;
+		if (!contain_mutable_functions((Node *) rinfo->clause))
+		{
+			List	*clausel = list_make1(rinfo->clause);
+
+			if (predicate_implied_by(clausel, nonlossy_indexquals))
+				continue;
+			if (predicate_implied_by(clausel, best_path->indexinfo->indpred))
+				continue;
+		}
 		qpqual = lappend(qpqual, rinfo->clause);
 	}
 
@@ -916,6 +924,14 @@ create_bitmap_scan_plan(PlannerInfo *root,
 	 * OR'd index conditions) we may have scan_clauses that are not equal to,
 	 * but are logically implied by, the index quals; so we also try a
 	 * predicate_implied_by() check to see if we can discard quals that way.
+	 * (predicate_implied_by assumes its first input contains only immutable
+	 * functions, so we have to check that.)  We can also discard quals that
+	 * are implied by a partial index's predicate.
+	 *
+	 * XXX For the moment, we only consider partial index predicates in the
+	 * simple single-index-scan case.  Is it worth trying to be smart about
+	 * more complex cases?  Perhaps create_bitmap_subplan should be made to
+	 * include predicate info in what it constructs.
 	 */
 	qpqual = NIL;
 	foreach(l, scan_clauses)
@@ -924,9 +940,20 @@ create_bitmap_scan_plan(PlannerInfo *root,
 
 		if (list_member(indexquals, clause))
 			continue;
-		if (predicate_implied_by(list_make1(clause),
-								 indexquals))
-			continue;
+		if (!contain_mutable_functions(clause))
+		{
+			List	*clausel = list_make1(clause);
+
+			if (predicate_implied_by(clausel, indexquals))
+				continue;
+			if (IsA(best_path->bitmapqual, IndexPath))
+			{
+				IndexPath *ipath = (IndexPath *) best_path->bitmapqual;
+
+				if (predicate_implied_by(clausel, ipath->indexinfo->indpred))
+					continue;
+			}
+		}
 		qpqual = lappend(qpqual, clause);
 	}
 

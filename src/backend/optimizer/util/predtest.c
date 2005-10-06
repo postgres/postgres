@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.2 2005/07/23 21:05:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.3 2005/10/06 16:01:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@ static bool btree_predicate_proof(Expr *predicate, Node *clause,
  * valid, but no worse consequences will ensue.
  *
  * We assume the predicate has already been checked to contain only
- * immutable functions and operators.  (In current use this is true
+ * immutable functions and operators.  (In most current uses this is true
  * because the predicate is part of an index predicate that has passed
  * CheckPredicate().)  We dare not make deductions based on non-immutable
  * functions, because they might change answers between the time we make
