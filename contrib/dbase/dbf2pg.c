@@ -301,6 +301,9 @@ do_create(PGconn *conn, char *table, dbhead * dbh)
 			case 'L':
 				strcat(query, " char");
 				break;
+			case 'M':
+				strcat(query, " text");
+				break;
 		}
 	}
 
@@ -312,7 +315,8 @@ do_create(PGconn *conn, char *table, dbhead * dbh)
 		printf("%s\n", query);
 	}
 
-	if ((res = PQexec(conn, query)) == NULL)
+	if ((res = PQexec(conn, query)) == NULL ||
+		PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
 		fprintf(stderr, "Error creating table!\n");
 		fprintf(stderr, "Detailed report: %s\n", PQerrorMessage(conn));
