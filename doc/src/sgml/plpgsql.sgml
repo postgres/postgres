@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.76 2005/09/14 21:14:26 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.77 2005/10/06 20:51:20 neilc Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1593,9 +1593,10 @@ SELECT * FROM some_func();
        allow users to define set-returning functions
        that do not have this limitation.  Currently, the point at
        which data begins being written to disk is controlled by the
-       <varname>work_mem</> configuration variable.  Administrators
-       who have sufficient memory to store larger result sets in
-       memory should consider increasing this parameter.
+       <xref linkend="guc-work-mem" xreflabel="work_mem">
+       configuration variable.  Administrators who have sufficient
+       memory to store larger result sets in memory should consider
+       increasing this parameter.
       </para>
      </note>
     </sect3>
@@ -2122,14 +2123,13 @@ END;
     </para>
 
     <para>
-     The <replaceable>condition</replaceable> names can be any of those
-     shown in <xref linkend="errcodes-appendix">.  A category name matches
-     any error within its category.
-     The special condition name <literal>OTHERS</>
-     matches every error type except <literal>QUERY_CANCELED</>.
-     (It is possible, but often unwise, to trap
-     <literal>QUERY_CANCELED</> by name.)
-     Condition names are not case-sensitive.
+     The <replaceable>condition</replaceable> names can be any of
+     those shown in <xref linkend="errcodes-appendix">.  A category
+     name matches any error within its category.  The special
+     condition name <literal>OTHERS</> matches every error type except
+     <literal>QUERY_CANCELED</>.  (It is possible, but often unwise,
+     to trap <literal>QUERY_CANCELED</> by name.)  Condition names are
+     not case-sensitive.
     </para>
 
     <para>
@@ -2188,15 +2188,16 @@ END;
     </para>
 
     <example id="plpgsql-upsert-example">
-    <title>Exceptions with UPDATE/INSERT</title>
+    <title>Exceptions with <command>UPDATE</>/<command>INSERT</></title>
     <para>
-    This example uses an <literal>EXCEPTION</> to <command>UPDATE</> or
-    <command>INSERT</>, as appropriate.
+
+    This example uses exception handling to perform either
+    <command>UPDATE</> or <command>INSERT</>, as appropriate.
 
 <programlisting>
 CREATE TABLE db (a INT PRIMARY KEY, b TEXT);
 
-CREATE FUNCTION merge_db (key INT, data TEXT) RETURNS VOID AS
+CREATE FUNCTION merge_db(key INT, data TEXT) RETURNS VOID AS
 $$
 BEGIN
     LOOP
@@ -2216,8 +2217,8 @@ END;
 $$
 LANGUAGE plpgsql;
 
-SELECT merge_db (1, 'david');
-SELECT merge_db (1, 'dennis');
+SELECT merge_db(1, 'david');
+SELECT merge_db(1, 'dennis');
 </programlisting>
 
     </para>
