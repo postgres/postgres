@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.85 2005/08/12 01:36:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.86 2005/10/06 02:29:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,9 +94,6 @@ typedef struct TriggerDesc
 typedef struct PgStat_Info
 {
 	void	   *tabentry;
-	bool		no_stats;
-	bool		heap_scan_counted;
-	bool		index_scan_counted;
 } PgStat_Info;
 
 

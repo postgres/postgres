@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.84 2005/06/27 12:45:22 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.85 2005/10/06 02:29:11 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -65,9 +65,9 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "pgstat.h"
 #include "utils/relcache.h"
 
-#include "pgstat.h"
 
 /* ----------------------------------------------------------------
  *					macros used in index_ routines
@@ -354,8 +354,6 @@ index_rescan(IndexScanDesc scan, ScanKey key)
 	FunctionCall2(procedure,
 				  PointerGetDatum(scan),
 				  PointerGetDatum(key));
-
-	pgstat_reset_index_scan(&scan->xs_pgstat_info);
 }
 
 /* ----------------
@@ -521,8 +519,6 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 	{
 		bool		found;
 
-		pgstat_count_index_scan(&scan->xs_pgstat_info);
-
 		/*
 		 * The AM's gettuple proc finds the next tuple matching the scan
 		 * keys.
@@ -544,6 +540,8 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 			}
 			return NULL;		/* failure exit */
 		}
+
+		pgstat_count_index_tuples(&scan->xs_pgstat_info, 1);
 
 		/*
 		 * Fetch the heap tuple and see if it matches the snapshot.
@@ -583,8 +581,6 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 	 * initialized to 0, which is the correct state ("on row").
 	 */
 
-	pgstat_count_index_getnext(&scan->xs_pgstat_info);
-
 	return heapTuple;
 }
 
@@ -620,6 +616,9 @@ index_getnext_indexitem(IndexScanDesc scan,
 	found = DatumGetBool(FunctionCall2(procedure,
 									   PointerGetDatum(scan),
 									   Int32GetDatum(direction)));
+
+	if (found)
+		pgstat_count_index_tuples(&scan->xs_pgstat_info, 1);
 
 	return found;
 }
@@ -659,6 +658,8 @@ index_getmulti(IndexScanDesc scan,
 									   PointerGetDatum(tids),
 									   Int32GetDatum(max_tids),
 									   PointerGetDatum(returned_tids)));
+
+	pgstat_count_index_tuples(&scan->xs_pgstat_info, *returned_tids);
 
 	return found;
 }

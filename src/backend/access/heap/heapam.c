@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.198 2005/08/20 00:39:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.199 2005/10/06 02:29:10 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -47,10 +47,10 @@
 #include "catalog/catalog.h"
 #include "catalog/namespace.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "storage/procarray.h"
 #include "utils/inval.h"
 #include "utils/relcache.h"
-#include "pgstat.h"
 
 
 static XLogRecPtr log_heap_update(Relation reln, Buffer oldbuf,
@@ -90,6 +90,8 @@ initscan(HeapScanDesc scan, ScanKey key)
 	 */
 	if (key != NULL)
 		memcpy(scan->rs_key, key, scan->rs_nkeys * sizeof(ScanKeyData));
+
+	pgstat_count_heap_scan(&scan->rs_pgstat_info);
 }
 
 /* ----------------
@@ -680,8 +682,6 @@ heap_rescan(HeapScanDesc scan,
 	 * reinitialize scan descriptor
 	 */
 	initscan(scan, key);
-
-	pgstat_reset_heap_scan(&scan->rs_pgstat_info);
 }
 
 /* ----------------
@@ -761,8 +761,6 @@ heap_getnext(HeapScanDesc scan, ScanDirection direction)
 		HEAPDEBUG_2;			/* heap_getnext returning EOS */
 		return NULL;
 	}
-
-	pgstat_count_heap_scan(&scan->rs_pgstat_info);
 
 	/*
 	 * if we get here it means we have a new current scan tuple, so point
@@ -927,14 +925,9 @@ heap_release_fetch(Relation relation,
 		 */
 		*userbuf = buffer;
 
-		/*
-		 * Count the successful fetch in *pgstat_info if given, otherwise
-		 * in the relation's default statistics area.
-		 */
+		/* Count the successful fetch in *pgstat_info, if given. */
 		if (pgstat_info != NULL)
 			pgstat_count_heap_fetch(pgstat_info);
-		else
-			pgstat_count_heap_fetch(&relation->pgstat_info);
 
 		return true;
 	}
@@ -1152,8 +1145,6 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 
 	RelationPutHeapTuple(relation, buffer, tup);
 
-	pgstat_count_heap_insert(&relation->pgstat_info);
-
 	/* XLOG stuff */
 	if (relation->rd_istemp)
 	{
@@ -1228,6 +1219,8 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	 * memory, not in the shared buffer.
 	 */
 	CacheInvalidateHeapTuple(relation, tup);
+
+	pgstat_count_heap_insert(&relation->pgstat_info);
 
 	return HeapTupleGetOid(tup);
 }
@@ -1481,8 +1474,6 @@ l1:
 	if (HeapTupleHasExternal(&tp))
 		heap_tuple_toast_attrs(relation, NULL, &tp);
 
-	pgstat_count_heap_delete(&relation->pgstat_info);
-
 	/*
 	 * Mark tuple for invalidation from system caches at next command
 	 * boundary. We have to do this before WriteBuffer because we need to
@@ -1498,6 +1489,8 @@ l1:
 	 */
 	if (have_tuple_lock)
 		UnlockTuple(relation, &(tp.t_self), ExclusiveLock);
+
+	pgstat_count_heap_delete(&relation->pgstat_info);
 
 	return HeapTupleMayBeUpdated;
 }
@@ -1851,8 +1844,6 @@ l2:
 		newbuf = buffer;
 	}
 
-	pgstat_count_heap_update(&relation->pgstat_info);
-
 	/*
 	 * At this point newbuf and buffer are both pinned and locked, and
 	 * newbuf has enough space for the new tuple.  If they are the same
@@ -1928,6 +1919,8 @@ l2:
 	 */
 	if (have_tuple_lock)
 		UnlockTuple(relation, &(oldtup.t_self), ExclusiveLock);
+
+	pgstat_count_heap_update(&relation->pgstat_info);
 
 	return HeapTupleMayBeUpdated;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtget.c,v 1.35 2005/03/27 23:53:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtget.c,v 1.36 2005/10/06 02:29:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,8 @@
 #include "access/iqual.h"
 #include "access/relscan.h"
 #include "access/rtree.h"
+#include "pgstat.h"
+
 
 static OffsetNumber findnext(IndexScanDesc s, OffsetNumber n,
 		 ScanDirection dir);
@@ -118,6 +120,7 @@ rtnext(IndexScanDesc s, ScanDirection dir)
 		/* first call: start at the root */
 		Assert(BufferIsValid(so->curbuf) == false);
 		so->curbuf = ReadBuffer(s->indexRelation, P_ROOT);
+		pgstat_count_index_scan(&s->xs_pgstat_info);
 	}
 
 	p = BufferGetPage(so->curbuf);

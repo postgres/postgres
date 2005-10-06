@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.28 2005/05/09 11:31:32 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.29 2005/10/06 02:29:06 tgl Exp $
 -->
 
 <chapter id="monitoring">
@@ -185,11 +185,12 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    Each individual server process transmits new block and row access counts to
    the collector just before going idle; so a query or transaction still in
    progress does not affect the displayed totals.  Also, the collector itself
-   emits a new report at most once per <varname>pgstat_stat_interval</varname>
-   milliseconds (500 by default).  So the displayed information lags behind
-   actual activity.  Current-query information is reported to the collector
-   immediately, but is still subject to the
-   <varname>pgstat_stat_interval</varname> delay before it becomes visible.
+   emits a new report at most once per <varname>PGSTAT_STAT_INTERVAL</varname>
+   milliseconds (500 unless altered while building the server).  So the
+   displayed information lags behind actual activity.  Current-query
+   information is reported to the collector immediately, but is still subject
+   to the <varname>PGSTAT_STAT_INTERVAL</varname> delay before it becomes
+   visible.
   </para>
 
   <para>
@@ -220,10 +221,10 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
     <tbody>
      <row>
       <entry><structname>pg_stat_activity</></entry>
-      <entry>One row per server process, showing process
-      <acronym>ID</>, database, user, current query, the time at which
-      the current query began execution, the time at which the backend
-      was started and the client address and port number.  The columns
+      <entry>One row per server process, showing database OID, database name,
+      process <acronym>ID</>, user OID, user name, current query, time at
+      which the current query began execution, time at which the process
+      was started, and client's address and port number.  The columns
       that report data on the current query are only available if the
       parameter <varname>stats_command_string</varname> has been
       turned on.  Furthermore, these columns read as null unless the
@@ -235,114 +236,122 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
 
      <row>
       <entry><structname>pg_stat_database</></entry>
-      <entry>One row per database, showing the number of active backend server processes,
-      total transactions committed and total rolled back in that database,
-      total disk blocks read, and total number of buffer hits (i.e., block
+      <entry>One row per database, showing database OID, database name,
+      number of active server processes connected to that database,
+      number of transactions committed and rolled back in that database,
+      total disk blocks read, and total buffer hits (i.e., block
       read requests avoided by finding the block already in buffer cache).
      </entry>
      </row>
 
      <row>
       <entry><structname>pg_stat_all_tables</></entry>
-      <entry>For each table in the current database, total numbers of
-      sequential and index scans, total numbers of rows returned by
-      each type of scan, and totals of row insertions, updates,
-      and deletions.</entry>
+      <entry>For each table in the current database (including TOAST tables),
+      the table OID, schema and table name, number of sequential
+      scans initiated, number of live rows fetched by sequential
+      scans, number of index scans initiated (over all indexes
+      belonging to the table), number of live rows fetched by index
+      scans,
+      and numbers of row insertions, updates, and deletions.</entry>
      </row>
 
      <row>
       <entry><structname>pg_stat_sys_tables</></entry>
-      <entry>Same as <structname>pg_stat_all_tables</>, except that only system tables
-      are shown.</entry>
+      <entry>Same as <structname>pg_stat_all_tables</>, except that only
+      system tables are shown.</entry>
      </row>
 
      <row>
       <entry><structname>pg_stat_user_tables</></entry>
-      <entry>Same as <structname>pg_stat_all_tables</>, except that only user tables
-      are shown.</entry>
+      <entry>Same as <structname>pg_stat_all_tables</>, except that only user
+      tables are shown.</entry>
      </row>
 
      <row>
       <entry><structname>pg_stat_all_indexes</></entry>
-      <entry>For each index in the current database, the total number
-      of index scans that have used that index, the number of index rows
-      read, and the number of successfully fetched heap rows. (This may
-      be less when there are index entries pointing to expired heap rows.)
+      <entry>For each index in the current database,
+      the table and index OID, schema, table and index name,
+      number of index scans initiated on that index, number of
+      index entries returned by index scans, and number of live table rows
+      fetched by simple index scans using that index.
       </entry>
      </row>
 
      <row>
       <entry><structname>pg_stat_sys_indexes</></entry>
-      <entry>Same as <structname>pg_stat_all_indexes</>, except that only indexes on
-      system tables are shown.</entry>
+      <entry>Same as <structname>pg_stat_all_indexes</>, except that only
+      indexes on system tables are shown.</entry>
      </row>
 
      <row>
       <entry><structname>pg_stat_user_indexes</></entry>
-      <entry>Same as <structname>pg_stat_all_indexes</>, except that only indexes on
-      user tables are shown.</entry>
+      <entry>Same as <structname>pg_stat_all_indexes</>, except that only
+      indexes on user tables are shown.</entry>
      </row>
 
      <row>
       <entry><structname>pg_statio_all_tables</></entry>
-      <entry>For each table in the current database, the total number of disk
-      blocks read from that table, the number of buffer hits, the numbers of
-      disk blocks read and buffer hits in all the indexes of that table,
-      the numbers of disk blocks read and buffer hits from the table's
-      auxiliary TOAST table (if any), and the numbers of disk blocks read
+      <entry>For each table in the current database (including TOAST tables),
+      the table OID, schema and table name, number of disk
+      blocks read from that table, number of buffer hits, numbers of
+      disk blocks read and buffer hits in all indexes of that table,
+      numbers of disk blocks read and buffer hits from that table's
+      auxiliary TOAST table (if any), and numbers of disk blocks read
       and buffer hits for the TOAST table's index.
       </entry>
      </row>
 
      <row>
       <entry><structname>pg_statio_sys_tables</></entry>
-      <entry>Same as <structname>pg_statio_all_tables</>, except that only system tables
-      are shown.</entry>
+      <entry>Same as <structname>pg_statio_all_tables</>, except that only
+      system tables are shown.</entry>
      </row>
 
      <row>
       <entry><structname>pg_statio_user_tables</></entry>
-      <entry>Same as <structname>pg_statio_all_tables</>, except that only user tables
-      are shown.</entry>
+      <entry>Same as <structname>pg_statio_all_tables</>, except that only
+      user tables are shown.</entry>
      </row>
 
      <row>
       <entry><structname>pg_statio_all_indexes</></entry>
-      <entry>For each index in the current database, the numbers of
-      disk blocks read and buffer hits in that index.
+      <entry>For each index in the current database,
+      the table and index OID, schema, table and index name,
+      numbers of disk blocks read and buffer hits in that index.
       </entry>
      </row>
 
      <row>
       <entry><structname>pg_statio_sys_indexes</></entry>
-      <entry>Same as <structname>pg_statio_all_indexes</>, except that only indexes on
-      system tables are shown.</entry>
+      <entry>Same as <structname>pg_statio_all_indexes</>, except that only
+      indexes on system tables are shown.</entry>
      </row>
 
      <row>
       <entry><structname>pg_statio_user_indexes</></entry>
-      <entry>Same as <structname>pg_statio_all_indexes</>, except that only indexes on
-      user tables are shown.</entry>
+      <entry>Same as <structname>pg_statio_all_indexes</>, except that only
+      indexes on user tables are shown.</entry>
      </row>
 
      <row>
       <entry><structname>pg_statio_all_sequences</></entry>
-      <entry>For each sequence object in the current database, the numbers
-      of disk blocks read and buffer hits in that sequence.
+      <entry>For each sequence object in the current database,
+      the sequence OID, schema and sequence name,
+      numbers of disk blocks read and buffer hits in that sequence.
       </entry>
      </row>
 
      <row>
       <entry><structname>pg_statio_sys_sequences</></entry>
-      <entry>Same as <structname>pg_statio_all_sequences</>, except that only system
-      sequences are shown.  (Presently, no system sequences are defined,
+      <entry>Same as <structname>pg_statio_all_sequences</>, except that only
+      system sequences are shown.  (Presently, no system sequences are defined,
       so this view is always empty.)</entry>
      </row>
 
      <row>
       <entry><structname>pg_statio_user_sequences</></entry>
-      <entry>Same as <structname>pg_statio_all_sequences</>, except that only user
-      sequences are shown.</entry>
+      <entry>Same as <structname>pg_statio_all_sequences</>, except that only
+      user sequences are shown.</entry>
      </row>
     </tbody>
    </tgroup>
@@ -352,6 +361,32 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    The per-index statistics are particularly useful to determine which
    indexes are being used and how effective they are.
   </para>
+
+  <para>
+   Beginning in <productname>PostgreSQL</productname> 8.1, indexes can be
+   used either directly or via <quote>bitmap scans</>.  In a bitmap scan
+   the output of several indexes can be combined via AND or OR rules;
+   so it is difficult to associate individual heap row fetches 
+   with specific indexes when a bitmap scan is used.  Therefore, a bitmap
+   scan increments the
+   <structname>pg_stat_all_indexes</>.<structfield>idx_tup_read</>
+   count(s) for the index(es) it uses, and it increments the
+   <structname>pg_stat_all_tables</>.<structfield>idx_tup_fetch</>
+   count for the table, but it does not affect
+   <structname>pg_stat_all_indexes</>.<structfield>idx_tup_fetch</>.
+  </para>
+
+  <note>
+   <para>
+    Before <productname>PostgreSQL</productname> 8.1, the
+    <structfield>idx_tup_read</> and <structfield>idx_tup_fetch</> counts
+    were essentially always equal.  Now they can be different even without
+    considering bitmap scans, because <structfield>idx_tup_read</> counts
+    index entries retrieved from the index while <structfield>idx_tup_fetch</>
+    counts live rows fetched from the table; the latter will be less if any
+    dead or not-yet-committed rows are fetched using the index.
+   </para>
+  </note>
 
   <para>
    The <structname>pg_statio_</> views are primarily useful to
@@ -379,9 +414,9 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    database to report on.  The per-table and per-index functions take
    a table or index OID.  (Note that only tables and indexes in the
    current database can be seen with these functions.)  The
-   per-backend process access functions take a backend process ID
+   per-server-process access functions take a server process
    number, which ranges from one to the number of currently active
-   backend processes.
+   server processes.
   </para>
 
   <table id="monitoring-stats-funcs-table">
@@ -401,7 +436,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_db_numbackends</function>(<type>oid</type>)</literal></entry>
       <entry><type>integer</type></entry>
       <entry>
-       Number of active backend processes for database
+       Number of active server processes for database
       </entry>
      </row>
 
@@ -451,7 +486,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><type>bigint</type></entry>
       <entry>
        Number of rows read by sequential scans when argument is a table,
-       or number of index rows read when argument is an index
+       or number of index entries returned when argument is an index
       </entry>
      </row>
 
@@ -459,8 +494,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_tuples_fetched</function>(<type>oid</type>)</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       Number of valid (unexpired) table rows fetched by sequential scans
-       when argument is a table, or fetched by index scans using this index
+       Number of table rows fetched by bitmap scans when argument is a table,
+       or table rows fetched by simple index scans using the index
        when argument is an index
       </entry>
      </row>
@@ -507,10 +542,10 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
 
      <row>
       <entry><literal><function>pg_stat_get_backend_idset</function>()</literal></entry>
-      <entry><type>set of integer</type></entry>
+      <entry><type>setof integer</type></entry>
       <entry>
-       Set of currently active backend process IDs (from 1 to the
-       number of active backend processes).  See usage example in the text
+       Set of currently active server process numbers (from 1 to the
+       number of active server processes).  See usage example in the text
       </entry>
      </row>
 
@@ -518,7 +553,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_backend_pid</function>()</literal></entry>
       <entry><type>integer</type></entry>
       <entry>
-       Process ID of the backend process attached to the current session
+       Process ID of the server process attached to the current session
       </entry>
      </row>
 
@@ -526,7 +561,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_backend_pid</function>(<type>integer</type>)</literal></entry>
       <entry><type>integer</type></entry>
       <entry>
-       Process ID of the given backend process
+       Process ID of the given server process
       </entry>
      </row>
 
@@ -534,7 +569,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_backend_dbid</function>(<type>integer</type>)</literal></entry>
       <entry><type>oid</type></entry>
       <entry>
-       Database ID of the given backend process
+       Database ID of the given server process
       </entry>
      </row>
 
@@ -542,7 +577,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_backend_userid</function>(<type>integer</type>)</literal></entry>
       <entry><type>oid</type></entry>
       <entry>
-       User ID of the given backend process
+       User ID of the given server process
       </entry>
      </row>
 
@@ -550,7 +585,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_backend_activity</function>(<type>integer</type>)</literal></entry>
       <entry><type>text</type></entry>
       <entry>
-       Active command of the given backend process (null if the
+       Active command of the given server process (null if the
        current user is not a superuser nor the same user as that of
        the session being queried, or
        <varname>stats_command_string</varname> is not on)
@@ -561,7 +596,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_backend_activity_start</function>(<type>integer</type>)</literal></entry>
       <entry><type>timestamp with time zone</type></entry>
       <entry>
-       The time at which the given backend process' currently
+       The time at which the given server process' currently
        executing query was started (null if the
        current user is not a superuser nor the same user as that of
        the session being queried, or
@@ -573,7 +608,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_backend_start</function>(<type>integer</type>)</literal></entry>
       <entry><type>timestamp with time zone</type></entry>
       <entry>
-       The time at which the given backend process was started, or
+       The time at which the given server process was started, or
        null if the current user is not a superuser nor the same user
        as that of the session being queried
       </entry>
@@ -584,7 +619,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><type>inet</type></entry>
       <entry>
        The IP address of the client connected to the given
-       backend. Null if the connection is over a Unix domain
+       server process. Null if the connection is over a Unix domain
        socket. Also null if the current user is not a superuser nor
        the same user as that of the session being queried
       </entry>
@@ -595,7 +630,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><type>integer</type></entry>
       <entry>
        The IP port number of the client connected to the given
-       backend.  -1 if the connection is over a Unix domain
+       server process.  -1 if the connection is over a Unix domain
        socket. Null if the current user is not a superuser nor the
        same user as that of the session being queried
       </entry>
@@ -614,8 +649,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
 
    <note>
     <para>
-     <function>pg_stat_get_db_blocks_fetched</function> minus
-     <function>pg_stat_get_db_blocks_hit</function> gives the number of kernel
+     <function>blocks_fetched</function> minus
+     <function>blocks_hit</function> gives the number of kernel
      <function>read()</> calls issued for the table, index, or
      database; but the actual number of physical reads is usually
      lower due to kernel-level buffering.
@@ -624,8 +659,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
 
   <para>
    The function <function>pg_stat_get_backend_idset</function> provides
-   a convenient way to generate one row for each active backend process.  For
-   example, to show the <acronym>PID</>s and current queries of all backend processes:
+   a convenient way to generate one row for each active server process.  For
+   example, to show the <acronym>PID</>s and current queries of all server processes:
 
 <programlisting>
 SELECT pg_stat_get_backend_pid(s.backendid) AS procpid,

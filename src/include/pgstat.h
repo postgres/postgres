@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.36 2005/08/15 16:25:18 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.37 2005/10/06 02:29:19 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -70,6 +70,13 @@ typedef struct PgStat_MsgHdr
 
 /* ----------
  * PgStat_TableEntry			Per-table info in a MsgTabstat
+ *
+ * Note: for a table, tuples_returned is the number of tuples successfully
+ * fetched by heap_getnext, while tuples_fetched is the number of tuples
+ * successfully fetched by heap_fetch under the control of bitmap indexscans.
+ * For an index, tuples_returned is the number of index entries returned by
+ * the index AM, while tuples_fetched is the number of tuples successfully
+ * fetched by heap_fetch under the control of simple indexscans for this index.
  * ----------
  */
 typedef struct PgStat_TableEntry
@@ -80,6 +87,7 @@ typedef struct PgStat_TableEntry
 
 	PgStat_Counter t_tuples_returned;
 	PgStat_Counter t_tuples_fetched;
+
 	PgStat_Counter t_tuples_inserted;
 	PgStat_Counter t_tuples_updated;
 	PgStat_Counter t_tuples_deleted;
@@ -179,8 +187,9 @@ typedef struct PgStat_MsgActivity
  *								and buffer access statistics.
  * ----------
  */
-#define PGSTAT_NUM_TABENTRIES	((PGSTAT_MSG_PAYLOAD - 3 * sizeof(int))		\
-								/ sizeof(PgStat_TableEntry))
+#define PGSTAT_NUM_TABENTRIES  \
+	((PGSTAT_MSG_PAYLOAD - sizeof(Oid) - 3 * sizeof(int))  \
+	 / sizeof(PgStat_TableEntry))
 
 typedef struct PgStat_MsgTabstat
 {
@@ -197,8 +206,9 @@ typedef struct PgStat_MsgTabstat
  *								about dead tables.
  * ----------
  */
-#define PGSTAT_NUM_TABPURGE		((PGSTAT_MSG_PAYLOAD - sizeof(int))		\
-								/ sizeof(Oid))
+#define PGSTAT_NUM_TABPURGE  \
+	((PGSTAT_MSG_PAYLOAD - sizeof(Oid) - sizeof(int))  \
+	 / sizeof(Oid))
 
 typedef struct PgStat_MsgTabpurge
 {
@@ -211,7 +221,7 @@ typedef struct PgStat_MsgTabpurge
 
 /* ----------
  * PgStat_MsgDropdb				Sent by the backend to tell the collector
- *								about dropped database
+ *								about a dropped database
  * ----------
  */
 typedef struct PgStat_MsgDropdb
@@ -264,7 +274,7 @@ typedef union PgStat_Msg
 #define PGSTAT_FILE_FORMAT_ID	0x01A5BC93
 
 /* ----------
- * PgStat_StatDBEntry			The collectors data per database
+ * PgStat_StatDBEntry			The collector's data per database
  * ----------
  */
 typedef struct PgStat_StatDBEntry
@@ -282,7 +292,7 @@ typedef struct PgStat_StatDBEntry
 
 
 /* ----------
- * PgStat_StatBeEntry			The collectors data per backend
+ * PgStat_StatBeEntry			The collector's data per backend
  * ----------
  */
 typedef struct PgStat_StatBeEntry
@@ -323,7 +333,7 @@ typedef struct PgStat_StatBeDead
 
 
 /* ----------
- * PgStat_StatTabEntry			The collectors data table data
+ * PgStat_StatTabEntry			The collector's data per table (or index)
  * ----------
  */
 typedef struct PgStat_StatTabEntry
@@ -334,6 +344,7 @@ typedef struct PgStat_StatTabEntry
 
 	PgStat_Counter tuples_returned;
 	PgStat_Counter tuples_fetched;
+
 	PgStat_Counter tuples_inserted;
 	PgStat_Counter tuples_updated;
 	PgStat_Counter tuples_deleted;
@@ -397,18 +408,16 @@ extern void pgstat_reset_counters(void);
 extern void pgstat_initstats(PgStat_Info *stats, Relation rel);
 
 
-#define pgstat_reset_heap_scan(s)										\
-	do {																\
-		if (pgstat_collect_tuplelevel && (s)->tabentry != NULL)			\
-			(s)->heap_scan_counted = FALSE;								\
-	} while (0)
 #define pgstat_count_heap_scan(s)										\
 	do {																\
-		if (pgstat_collect_tuplelevel && (s)->tabentry != NULL &&		\
-				!(s)->heap_scan_counted) {								\
+		if (pgstat_collect_tuplelevel && (s)->tabentry != NULL)			\
 			((PgStat_TableEntry *)((s)->tabentry))->t_numscans++;		\
-			(s)->heap_scan_counted = TRUE;								\
-		}																\
+	} while (0)
+/* kluge for bitmap scans: */
+#define pgstat_discount_heap_scan(s)									\
+	do {																\
+		if (pgstat_collect_tuplelevel && (s)->tabentry != NULL)			\
+			((PgStat_TableEntry *)((s)->tabentry))->t_numscans--;		\
 	} while (0)
 #define pgstat_count_heap_getnext(s)									\
 	do {																\
@@ -435,30 +444,22 @@ extern void pgstat_initstats(PgStat_Info *stats, Relation rel);
 		if (pgstat_collect_tuplelevel && (s)->tabentry != NULL)			\
 			((PgStat_TableEntry *)((s)->tabentry))->t_tuples_deleted++; \
 	} while (0)
-#define pgstat_reset_index_scan(s)										\
-	do {																\
-		if (pgstat_collect_tuplelevel && (s)->tabentry != NULL)			\
-			(s)->index_scan_counted = FALSE;							\
-	} while (0)
 #define pgstat_count_index_scan(s)										\
 	do {																\
-		if (pgstat_collect_tuplelevel && (s)->tabentry != NULL &&		\
-				!(s)->index_scan_counted) {								\
+		if (pgstat_collect_tuplelevel && (s)->tabentry != NULL)			\
 			((PgStat_TableEntry *)((s)->tabentry))->t_numscans++;		\
-			(s)->index_scan_counted = TRUE;								\
-		}																\
 	} while (0)
-#define pgstat_count_index_getnext(s)									\
+#define pgstat_count_index_tuples(s, n)									\
 	do {																\
 		if (pgstat_collect_tuplelevel && (s)->tabentry != NULL)			\
-			((PgStat_TableEntry *)((s)->tabentry))->t_tuples_returned++; \
+			((PgStat_TableEntry *)((s)->tabentry))->t_tuples_returned += (n); \
 	} while (0)
 #define pgstat_count_buffer_read(s,r)									\
 	do {																\
-		if (pgstat_collect_blocklevel && (s)->tabentry != NULL)			\
-			((PgStat_TableEntry *)((s)->tabentry))->t_blocks_fetched++; \
-		else {															\
-			if (pgstat_collect_blocklevel && !(s)->no_stats) {			\
+		if (pgstat_collect_blocklevel) {								\
+			if ((s)->tabentry != NULL)									\
+				((PgStat_TableEntry *)((s)->tabentry))->t_blocks_fetched++; \
+			else {														\
 				pgstat_initstats((s), (r));								\
 				if ((s)->tabentry != NULL)								\
 					((PgStat_TableEntry *)((s)->tabentry))->t_blocks_fetched++; \
@@ -467,10 +468,10 @@ extern void pgstat_initstats(PgStat_Info *stats, Relation rel);
 	} while (0)
 #define pgstat_count_buffer_hit(s,r)									\
 	do {																\
-		if (pgstat_collect_blocklevel && (s)->tabentry != NULL)			\
-			((PgStat_TableEntry *)((s)->tabentry))->t_blocks_hit++;		\
-		else {															\
-			if (pgstat_collect_blocklevel && !(s)->no_stats) {			\
+		if (pgstat_collect_blocklevel) {								\
+			if ((s)->tabentry != NULL)									\
+				((PgStat_TableEntry *)((s)->tabentry))->t_blocks_hit++; \
+			else {														\
 				pgstat_initstats((s), (r));								\
 				if ((s)->tabentry != NULL)								\
 					((PgStat_TableEntry *)((s)->tabentry))->t_blocks_hit++; \

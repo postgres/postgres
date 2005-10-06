@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.2 2005/05/06 17:24:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.3 2005/10/06 02:29:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@
 #include "executor/execdebug.h"
 #include "executor/nodeBitmapHeapscan.h"
 #include "parser/parsetree.h"
+#include "pgstat.h"
 #include "utils/memutils.h"
 
 
@@ -328,6 +329,9 @@ ExecBitmapHeapReScan(BitmapHeapScanState *node, ExprContext *exprCtxt)
 	/* rescan to release any page pin */
 	heap_rescan(node->ss.ss_currentScanDesc, NULL);
 
+	/* undo bogus "seq scan" count (see notes in ExecInitBitmapHeapScan) */
+	pgstat_discount_heap_scan(&node->ss.ss_currentScanDesc->rs_pgstat_info);
+
 	if (node->tbm)
 		tbm_free(node->tbm);
 	node->tbm = NULL;
@@ -474,6 +478,13 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate)
 													  estate->es_snapshot,
 													  0,
 													  NULL);
+
+	/*
+	 * One problem is that heap_beginscan counts a "sequential scan" start,
+	 * when we actually aren't doing any such thing.  Reverse out the added
+	 * scan count.  (Eventually we may want to count bitmap scans separately.)
+	 */
+	pgstat_discount_heap_scan(&scanstate->ss.ss_currentScanDesc->rs_pgstat_info);
 
 	/*
 	 * get the scan type from the relation descriptor.

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.21 2005/08/15 23:00:13 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.22 2005/10/06 02:29:15 tgl Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -182,8 +182,9 @@ CREATE VIEW pg_stat_all_tables AS
             C.relname AS relname, 
             pg_stat_get_numscans(C.oid) AS seq_scan, 
             pg_stat_get_tuples_returned(C.oid) AS seq_tup_read, 
-            sum(pg_stat_get_numscans(I.indexrelid)) AS idx_scan, 
-            sum(pg_stat_get_tuples_fetched(I.indexrelid)) AS idx_tup_fetch, 
+            sum(pg_stat_get_numscans(I.indexrelid))::bigint AS idx_scan, 
+            sum(pg_stat_get_tuples_fetched(I.indexrelid))::bigint +
+                    pg_stat_get_tuples_fetched(C.oid) AS idx_tup_fetch, 
             pg_stat_get_tuples_inserted(C.oid) AS n_tup_ins, 
             pg_stat_get_tuples_updated(C.oid) AS n_tup_upd, 
             pg_stat_get_tuples_deleted(C.oid) AS n_tup_del 
@@ -210,8 +211,8 @@ CREATE VIEW pg_statio_all_tables AS
                     pg_stat_get_blocks_hit(C.oid) AS heap_blks_read, 
             pg_stat_get_blocks_hit(C.oid) AS heap_blks_hit, 
             sum(pg_stat_get_blocks_fetched(I.indexrelid) - 
-                    pg_stat_get_blocks_hit(I.indexrelid)) AS idx_blks_read, 
-            sum(pg_stat_get_blocks_hit(I.indexrelid)) AS idx_blks_hit, 
+                    pg_stat_get_blocks_hit(I.indexrelid))::bigint AS idx_blks_read, 
+            sum(pg_stat_get_blocks_hit(I.indexrelid))::bigint AS idx_blks_hit, 
             pg_stat_get_blocks_fetched(T.oid) - 
                     pg_stat_get_blocks_hit(T.oid) AS toast_blks_read, 
             pg_stat_get_blocks_hit(T.oid) AS toast_blks_hit, 
@@ -350,5 +351,5 @@ UPDATE pg_proc SET
                          'bool'],
   proargmodes = ARRAY['i'::"char", 'o', 'o', 'o', 'o', 'o', 'o'],
   proargnames = ARRAY['filename'::text, 'size', 'access', 'modification',
-		      'change', 'creation', 'isdir']
+                      'change', 'creation', 'isdir']
 WHERE oid = 'pg_stat_file(text)'::regprocedure;

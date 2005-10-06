@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.51 2005/09/22 20:44:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.52 2005/10/06 02:29:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,9 @@
 #include "access/itup.h"
 #include "access/gist_private.h"
 #include "executor/execdebug.h"
+#include "pgstat.h"
 #include "utils/memutils.h"
+
 
 static OffsetNumber gistfindnext(IndexScanDesc scan, OffsetNumber n,
 			 ScanDirection dir);
@@ -161,6 +163,8 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids, int maxtids, b
 
 		stk->next = NULL;
 		stk->block = GIST_ROOT_BLKNO;
+
+		pgstat_count_index_scan(&scan->xs_pgstat_info);
 	}
 	else if (so->curbuf == InvalidBuffer)
 	{
