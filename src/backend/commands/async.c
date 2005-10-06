@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.124 2005/08/20 00:39:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.125 2005/10/06 21:30:32 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,13 +146,10 @@ static void ClearPendingNotifies(void);
  *		Actual notification happens during transaction commit.
  *		^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  *
- * Results:
- *		XXX
- *
  *--------------------------------------------------------------
  */
 void
-Async_Notify(char *relname)
+Async_Notify(const char *relname)
 {
 	if (Trace_notify)
 		elog(DEBUG1, "Async_Notify(%s)", relname);
@@ -180,11 +177,8 @@ Async_Notify(char *relname)
  *
  *		This is executed by the SQL listen command.
  *
- *		Register a backend (identified by its Unix PID) as listening
- *		on the specified relation.
- *
- * Results:
- *		XXX
+ *		Register the current backend as listening on the specified
+ *		relation.
  *
  * Side effects:
  *		pg_listener is updated.
@@ -192,7 +186,7 @@ Async_Notify(char *relname)
  *--------------------------------------------------------------
  */
 void
-Async_Listen(char *relname, int pid)
+Async_Listen(const char *relname)
 {
 	Relation	lRel;
 	HeapScanDesc scan;
@@ -203,7 +197,7 @@ Async_Listen(char *relname, int pid)
 	bool		alreadyListener = false;
 
 	if (Trace_notify)
-		elog(DEBUG1, "Async_Listen(%s,%d)", relname, pid);
+		elog(DEBUG1, "Async_Listen(%s,%d)", relname, MyProcPid);
 
 	lRel = heap_open(ListenerRelationId, ExclusiveLock);
 
@@ -213,7 +207,7 @@ Async_Listen(char *relname, int pid)
 	{
 		Form_pg_listener listener = (Form_pg_listener) GETSTRUCT(tuple);
 
-		if (listener->listenerpid == pid &&
+		if (listener->listenerpid == MyProcPid &&
 		  strncmp(NameStr(listener->relname), relname, NAMEDATALEN) == 0)
 		{
 			alreadyListener = true;
@@ -241,7 +235,7 @@ Async_Listen(char *relname, int pid)
 
 	i = 0;
 	values[i++] = (Datum) relname;
-	values[i++] = (Datum) pid;
+	values[i++] = (Datum) MyProcPid;
 	values[i++] = (Datum) 0;	/* no notifies pending */
 
 	tuple = heap_formtuple(RelationGetDescr(lRel), values, nulls);
@@ -271,11 +265,8 @@ Async_Listen(char *relname, int pid)
  *
  *		This is executed by the SQL unlisten command.
  *
- *		Remove the backend from the list of listening backends
+ *		Remove the current backend from the list of listening backends
  *		for the specified relation.
- *
- * Results:
- *		XXX
  *
  * Side effects:
  *		pg_listener is updated.
@@ -283,7 +274,7 @@ Async_Listen(char *relname, int pid)
  *--------------------------------------------------------------
  */
 void
-Async_Unlisten(char *relname, int pid)
+Async_Unlisten(const char *relname)
 {
 	Relation	lRel;
 	HeapScanDesc scan;
@@ -297,7 +288,7 @@ Async_Unlisten(char *relname, int pid)
 	}
 
 	if (Trace_notify)
-		elog(DEBUG1, "Async_Unlisten(%s,%d)", relname, pid);
+		elog(DEBUG1, "Async_Unlisten(%s,%d)", relname, MyProcPid);
 
 	lRel = heap_open(ListenerRelationId, ExclusiveLock);
 
@@ -306,7 +297,7 @@ Async_Unlisten(char *relname, int pid)
 	{
 		Form_pg_listener listener = (Form_pg_listener) GETSTRUCT(tuple);
 
-		if (listener->listenerpid == pid &&
+		if (listener->listenerpid == MyProcPid &&
 		  strncmp(NameStr(listener->relname), relname, NAMEDATALEN) == 0)
 		{
 			/* Found the matching tuple, delete it */
