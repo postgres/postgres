@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.14 2005/10/05 12:16:28 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.15 2005/10/06 12:04:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -255,7 +255,10 @@ show_configure(bool all)
 	printf("%s\n", VAL_CONFIGURE);
 #else
 	if (!all)
-		printf("not recorded\n");
+	{
+		fprintf(stderr, _("not recorded\n"));
+		exit(1);
+	}
 #endif
 }
 
@@ -268,7 +271,10 @@ show_cc(bool all)
 	printf("%s\n", VAL_CC);
 #else
 	if (!all)
-		printf("not recorded\n");
+	{
+		fprintf(stderr, _("not recorded\n"));
+		exit(1);
+	}
 #endif
 }
 
@@ -281,7 +287,10 @@ show_cppflags(bool all)
 	printf("%s\n", VAL_CPPFLAGS);
 #else
 	if (!all)
-		printf("not recorded\n");
+	{
+		fprintf(stderr, _("not recorded\n"));
+		exit(1);
+	}
 #endif
 }
 
@@ -294,7 +303,10 @@ show_cflags(bool all)
 	printf("%s\n", VAL_CFLAGS);
 #else
 	if (!all)
-		printf("not recorded\n");
+	{
+		fprintf(stderr, _("not recorded\n"));
+		exit(1);
+	}
 #endif
 }
 
@@ -307,7 +319,10 @@ show_cflags_sl(bool all)
 	printf("%s\n", VAL_CFLAGS_SL);
 #else
 	if (!all)
-		printf("not recorded\n");
+	{
+		fprintf(stderr, _("not recorded\n"));
+		exit(1);
+	}
 #endif
 }
 
@@ -320,7 +335,10 @@ show_ldflags(bool all)
 	printf("%s\n", VAL_LDFLAGS);
 #else
 	if (!all)
-		printf("not recorded\n");
+	{
+		fprintf(stderr, _("not recorded\n"));
+		exit(1);
+	}
 #endif
 }
 
@@ -333,7 +351,10 @@ show_ldflags_sl(bool all)
 	printf("%s\n", VAL_LDFLAGS_SL);
 #else
 	if (!all)
-		printf("not recorded\n");
+	{
+		fprintf(stderr, _("not recorded\n"));
+		exit(1);
+	}
 #endif
 }
 
@@ -346,7 +367,10 @@ show_libs(bool all)
 	printf("%s\n", VAL_LIBS);
 #else
 	if (!all)
-		printf("not recorded\n");
+	{
+		fprintf(stderr, _("not recorded\n"));
+		exit(1);
+	}
 #endif
 }
 
@@ -427,14 +451,14 @@ help(void)
 	printf(_("  --libs                show LIBS value used when PostgreSQL was built\n"));
 	printf(_("  --version             show the PostgreSQL version\n"));
 	printf(_("  --help                show this help, then exit\n"));
-	printf(_("With no arguments, all known items are shown.\n\n"));
+	printf(_("\nWith no arguments, all known items are shown.\n\n"));
 	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
 
 static void
 advice(void)
 {
-	fprintf(stderr, _("\nTry \"%s --help\" for more information\n"), progname);
+	fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 }
 
 static void
