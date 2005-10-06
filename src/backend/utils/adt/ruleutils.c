@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.205 2005/08/01 20:31:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.206 2005/10/06 19:51:14 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -204,8 +204,8 @@ static void get_from_clause(Query *query, const char *prefix,
 							deparse_context *context);
 static void get_from_clause_item(Node *jtnode, Query *query,
 					 deparse_context *context);
-static void get_from_clause_alias(Alias *alias, int varno,
-					  Query *query, deparse_context *context);
+static void get_from_clause_alias(Alias *alias, RangeTblEntry *rte,
+								  deparse_context *context);
 static void get_from_clause_coldeflist(List *coldeflist,
 						   deparse_context *context);
 static void get_opclass_name(Oid opclass, Oid actual_datatype,
@@ -4113,16 +4113,15 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 				elog(ERROR, "unrecognized RTE kind: %d", (int) rte->rtekind);
 				break;
 		}
+
 		if (rte->alias != NULL)
 		{
 			appendStringInfo(buf, " %s",
 							 quote_identifier(rte->alias->aliasname));
 			gavealias = true;
-			if (coldeflist == NIL)
-				get_from_clause_alias(rte->alias, varno, query, context);
 		}
 		else if (rte->rtekind == RTE_RELATION &&
-			 strcmp(rte->eref->aliasname, get_rel_name(rte->relid)) != 0)
+				 strcmp(rte->eref->aliasname, get_rel_name(rte->relid)) != 0)
 		{
 			/*
 			 * Apparently the rel has been renamed since the rule was
@@ -4134,12 +4133,40 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 							 quote_identifier(rte->eref->aliasname));
 			gavealias = true;
 		}
+		else if (rte->rtekind == RTE_FUNCTION)
+		{
+			/*
+			 * For a function RTE, always give an alias.
+			 * This covers possible renaming of the function and/or
+			 * instability of the FigureColname rules for things that
+			 * aren't simple functions.
+			 */
+			appendStringInfo(buf, " %s",
+							 quote_identifier(rte->eref->aliasname));
+			gavealias = true;
+		}
+
 		if (coldeflist != NIL)
 		{
 			if (!gavealias)
 				appendStringInfo(buf, " AS ");
 			get_from_clause_coldeflist(coldeflist, context);
 		}
+		else
+		{
+			/*
+			 * For a function RTE, always emit a complete column alias list;
+			 * this is to protect against possible instability of the default
+			 * column names (eg, from altering parameter names).  Otherwise
+			 * just report whatever the user originally gave as column
+			 * aliases.
+			 */
+			if (rte->rtekind == RTE_FUNCTION)
+				get_from_clause_alias(rte->eref, rte, context);
+			else
+				get_from_clause_alias(rte->alias, rte, context);
+		}
+
 	}
 	else if (IsA(jtnode, JoinExpr))
 	{
@@ -4273,7 +4300,9 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 		{
 			appendStringInfo(buf, " %s",
 							 quote_identifier(j->alias->aliasname));
-			get_from_clause_alias(j->alias, j->rtindex, query, context);
+			get_from_clause_alias(j->alias,
+								  rt_fetch(j->rtindex, query->rtable),
+								  context);
 		}
 	}
 	else
@@ -4287,11 +4316,10 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
  * This is tricky because we must ignore dropped columns.
  */
 static void
-get_from_clause_alias(Alias *alias, int varno,
-					  Query *query, deparse_context *context)
+get_from_clause_alias(Alias *alias, RangeTblEntry *rte,
+					  deparse_context *context)
 {
 	StringInfo	buf = context->buf;
-	RangeTblEntry *rte = rt_fetch(varno, query->rtable);
 	ListCell   *col;
 	AttrNumber	attnum;
 	bool		first = true;

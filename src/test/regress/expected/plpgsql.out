@@ -1762,7 +1762,7 @@ select f1(42);
 (1 row)
 
 select * from f1(42);
- f1 
+ j  
 ----
  43
 (1 row)
@@ -1778,7 +1778,7 @@ select f1(42);
 (1 row)
 
 select * from f1(42);
- f1 
+ i  
 ----
  43
 (1 row)
@@ -1793,7 +1793,7 @@ begin
   return;
 end$$ language plpgsql;
 select * from f1(42);
- f1 
+ j  
 ----
  43
  44

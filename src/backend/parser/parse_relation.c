@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.113 2005/08/01 20:31:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.114 2005/10/06 19:51:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -506,6 +506,59 @@ buildRelationAliases(TupleDesc tupdesc, Alias *alias, Alias *eref)
 }
 
 /*
+ * buildScalarFunctionAlias
+ *		Construct the eref column name list for a function RTE,
+ *		when the function returns a scalar type (not composite or RECORD).
+ *
+ * funcexpr: transformed expression tree for the function call
+ * funcname: function name (used only for error message)
+ * alias: the user-supplied alias, or NULL if none
+ * eref: the eref Alias to store column names in
+ *
+ * eref->colnames is filled in.
+ */
+static void
+buildScalarFunctionAlias(Node *funcexpr, char *funcname,
+						 Alias *alias, Alias *eref)
+{
+	char	   *pname;
+
+	Assert(eref->colnames == NIL);
+
+	/* Use user-specified column alias if there is one. */
+	if (alias && alias->colnames != NIL)
+	{
+		if (list_length(alias->colnames) != 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+					 errmsg("too many column aliases specified for function %s",
+							funcname)));
+		eref->colnames = copyObject(alias->colnames);
+		return;
+	}
+
+	/*
+	 * If the expression is a simple function call, and the function has a
+	 * single OUT parameter that is named, use the parameter's name.
+	 */
+	if (funcexpr && IsA(funcexpr, FuncExpr))
+	{
+		pname = get_func_result_name(((FuncExpr *) funcexpr)->funcid);
+		if (pname)
+		{
+			eref->colnames = list_make1(makeString(pname));
+			return;
+		}
+	}
+
+	/*
+	 * Otherwise use the previously-determined alias (not necessarily the
+	 * function name!)
+	 */
+	eref->colnames = list_make1(makeString(eref->aliasname));
+}
+
+/*
  * Add an entry for a relation to the pstate's range table (p_rtable).
  *
  * If pstate is NULL, we just build an RTE and return it without adding it
@@ -776,18 +829,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	else if (functypclass == TYPEFUNC_SCALAR)
 	{
 		/* Base data type, i.e. scalar */
-		/* Just add one alias column named for the function. */
-		if (alias && alias->colnames != NIL)
-		{
-			if (list_length(alias->colnames) != 1)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-						 errmsg("too many column aliases specified for function %s",
-								funcname)));
-			eref->colnames = copyObject(alias->colnames);
-		}
-		else
-			eref->colnames = list_make1(makeString(eref->aliasname));
+		buildScalarFunctionAlias(funcexpr, funcname, alias, eref);
 	}
 	else if (functypclass == TYPEFUNC_RECORD)
 	{

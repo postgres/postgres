@@ -9,7 +9,7 @@
  *
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/funcapi.h,v 1.18 2005/05/30 23:09:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/funcapi.h,v 1.19 2005/10/06 19:51:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,6 +166,8 @@ extern TypeFuncClass get_expr_result_type(Node *expr,
 extern TypeFuncClass get_func_result_type(Oid functionId,
 										  Oid *resultTypeId,
 										  TupleDesc *resultTupleDesc);
+
+extern char *get_func_result_name(Oid functionId);
 
 extern bool resolve_polymorphic_argtypes(int numargs, Oid *argtypes,
 										 char *argmodes,

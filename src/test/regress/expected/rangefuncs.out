@@ -1,15 +1,15 @@
 SELECT name, setting FROM pg_settings WHERE name LIKE 'enable%';
-            name             | setting 
+       name        | setting 
 -------------------+---------
- enable_bitmapscan           | on
- enable_hashagg              | on
- enable_hashjoin             | on
- enable_indexscan            | on
- enable_mergejoin            | on
- enable_nestloop             | on
- enable_seqscan              | on
- enable_sort                 | on
- enable_tidscan              | on
+ enable_bitmapscan | on
+ enable_hashagg    | on
+ enable_hashjoin   | on
+ enable_indexscan  | on
+ enable_mergejoin  | on
+ enable_nestloop   | on
+ enable_seqscan    | on
+ enable_sort       | on
+ enable_tidscan    | on
 (9 rows)
 
 CREATE TABLE foo2(fooid int, f2 int);
@@ -409,9 +409,9 @@ SELECT foo(42);
 (1 row)
 
 SELECT * FROM foo(42);
- foo 
------
-  43
+ f2 
+----
+ 43
 (1 row)
 
 SELECT * FROM foo(42) AS p(x);

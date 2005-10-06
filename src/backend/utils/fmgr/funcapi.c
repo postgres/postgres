@@ -7,7 +7,7 @@
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.24 2005/07/03 21:14:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.25 2005/10/06 19:51:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -624,6 +624,108 @@ get_type_func_class(Oid typid)
 	}
 	/* shouldn't get here, probably */
 	return TYPEFUNC_OTHER;
+}
+
+
+/*
+ * get_func_result_name
+ *
+ * If the function has exactly one output parameter, and that parameter
+ * is named, return the name (as a palloc'd string).  Else return NULL.
+ *
+ * This is used to determine the default output column name for functions
+ * returning scalar types.
+ */
+char *
+get_func_result_name(Oid functionId)
+{
+	char	   *result;
+	HeapTuple	procTuple;
+	Datum		proargmodes;
+	Datum		proargnames;
+	bool		isnull;
+	ArrayType  *arr;
+	int			numargs;
+	char	   *argmodes;
+	Datum	   *argnames;
+	int			numoutargs;
+	int			nargnames;
+	int			i;
+
+	/* First fetch the function's pg_proc row */
+	procTuple = SearchSysCache(PROCOID,
+							   ObjectIdGetDatum(functionId),
+							   0, 0, 0);
+	if (!HeapTupleIsValid(procTuple))
+		elog(ERROR, "cache lookup failed for function %u", functionId);
+
+	/* If there are no named OUT parameters, return NULL */
+	if (heap_attisnull(procTuple, Anum_pg_proc_proargmodes) ||
+		heap_attisnull(procTuple, Anum_pg_proc_proargnames))
+		result = NULL;
+	else
+	{
+		/* Get the data out of the tuple */
+		proargmodes = SysCacheGetAttr(PROCOID, procTuple,
+									  Anum_pg_proc_proargmodes,
+									  &isnull);
+		Assert(!isnull);
+		proargnames = SysCacheGetAttr(PROCOID, procTuple,
+									  Anum_pg_proc_proargnames,
+									  &isnull);
+		Assert(!isnull);
+
+		/*
+		 * We expect the arrays to be 1-D arrays of the right types; verify
+		 * that.  For the char array, we don't need to use deconstruct_array()
+		 * since the array data is just going to look like a C array of
+		 * values.
+		 */
+		arr = DatumGetArrayTypeP(proargmodes);		/* ensure not toasted */
+		numargs = ARR_DIMS(arr)[0];
+		if (ARR_NDIM(arr) != 1 ||
+			numargs < 0 ||
+			ARR_ELEMTYPE(arr) != CHAROID)
+			elog(ERROR, "proargmodes is not a 1-D char array");
+		argmodes = (char *) ARR_DATA_PTR(arr);
+		arr = DatumGetArrayTypeP(proargnames);		/* ensure not toasted */
+		if (ARR_NDIM(arr) != 1 ||
+			ARR_DIMS(arr)[0] != numargs ||
+			ARR_ELEMTYPE(arr) != TEXTOID)
+			elog(ERROR, "proargnames is not a 1-D text array");
+		deconstruct_array(arr, TEXTOID, -1, false, 'i',
+						  &argnames, &nargnames);
+		Assert(nargnames == numargs);
+
+		/* scan for output argument(s) */
+		result = NULL;
+		numoutargs = 0;
+		for (i = 0; i < numargs; i++)
+		{
+			if (argmodes[i] == PROARGMODE_IN)
+				continue;
+			Assert(argmodes[i] == PROARGMODE_OUT ||
+				   argmodes[i] == PROARGMODE_INOUT);
+			if (++numoutargs > 1)
+			{
+				/* multiple out args, so forget it */
+				result = NULL;
+				break;
+			}
+			result = DatumGetCString(DirectFunctionCall1(textout,
+														 argnames[i]));
+			if (result == NULL || result[0] == '\0')
+			{
+				/* Parameter is not named, so forget it */
+				result = NULL;
+				break;
+			}
+		}
+	}
+
+	ReleaseSysCache(procTuple);
+
+	return result;
 }
 
 
