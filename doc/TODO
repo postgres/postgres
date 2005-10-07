@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Oct  6 22:43:58 EDT 2005
+Last updated:		Fri Oct  7 10:04:19 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -731,8 +731,10 @@ Indexes
   it to be used for all queries with little performance impact
 * Allow CREATE INDEX to take an additional parameter for use with
   special index types
-* Consider compressing indexes by storing key prefix values shared by
+* Consider compressing indexes by storing key values duplicated in
   several rows as a single index entry
+
+  This is difficult because it requires datatype-specific knowledge.
 
 
 * GIST
