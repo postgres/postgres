@@ -655,7 +655,6 @@ do
 -TIndexScan \
 -TIndexScanDesc \
 -TIndexScanDescData \
--TIndexScanDescPtr \
 -TIndexScanState \
 -TIndexStmt \
 -TIndexTuple \

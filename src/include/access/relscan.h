@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.39 2005/05/27 23:31:21 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.40 2005/10/07 14:55:35 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,14 +89,6 @@ typedef struct IndexScanDescData
 
 typedef IndexScanDescData *IndexScanDesc;
 
-
-/* ----------------
- *		IndexScanDescPtr is used in the executor where we have to
- *		keep track of several index scans when using several indices
- *		- cim 9/10/89
- * ----------------
- */
-typedef IndexScanDesc *IndexScanDescPtr;
 
 /*
  * HeapScanIsValid
