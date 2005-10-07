@@ -260,7 +260,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm *tm, fsec
 #ifdef HAVE_INT64_TIMESTAMP
 							*fsec += ((fval - sec) * 1000000);
 #else
-							*fsec += (fval - sec);
+							*fsec += fval - sec;
 #endif
 						}
 						tmask = DTK_M(MINUTE);
@@ -278,7 +278,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm *tm, fsec
 #ifdef HAVE_INT64_TIMESTAMP
 							*fsec += (fval - sec) * 1000000;
 #else
-							*fsec += (fval - sec);
+							*fsec += fval - sec;
 #endif
 						}
 						tmask = DTK_M(HOUR);
@@ -296,7 +296,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm *tm, fsec
 #ifdef HAVE_INT64_TIMESTAMP
 							*fsec += (fval - sec) * 1000000;
 #else
-							*fsec += (fval - sec);
+							*fsec += fval - sec;
 #endif
 						}
 						tmask = (fmask & DTK_M(DAY)) ? 0 : DTK_M(DAY);
@@ -314,7 +314,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm *tm, fsec
 #ifdef HAVE_INT64_TIMESTAMP
 							*fsec += (fval - sec) * 1000000;
 #else
-							*fsec += (fval - sec);
+							*fsec += fval - sec;
 #endif
 						}
 						tmask = (fmask & DTK_M(DAY)) ? 0 : DTK_M(DAY);
@@ -332,7 +332,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm *tm, fsec
 #ifdef HAVE_INT64_TIMESTAMP
 							*fsec += (fval - sec) * 1000000;
 #else
-							*fsec += (fval - sec);
+							*fsec += fval - sec;
 #endif
 						}
 						tmask = DTK_M(MONTH);
@@ -413,8 +413,8 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm *tm, fsec
 		int			sec;
 
 #ifdef HAVE_INT64_TIMESTAMP
-		sec = (*fsec / USECS_PER_SEC);
-		*fsec -= (sec * USECS_PER_SEC);
+		sec = *fsec / USECS_PER_SEC;
+		*fsec -= sec * USECS_PER_SEC;
 #else
 		TMODULO(*fsec, sec, 1.0);
 #endif
@@ -693,14 +693,14 @@ interval2tm(interval span, struct tm *tm, fsec_t *fsec)
 	time = span.time;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	tm->tm_mday = (time / USECS_PER_DAY);
-	time -= (tm->tm_mday * USECS_PER_DAY);
-	tm->tm_hour = (time / USECS_PER_HOUR);
-	time -= (tm->tm_hour * USECS_PER_HOUR);
-	tm->tm_min = (time / USECS_PER_MINUTE);
-	time -= (tm->tm_min * USECS_PER_MINUTE);
-	tm->tm_sec = (time / USECS_PER_SEC);
-	*fsec = (time - (tm->tm_sec * USECS_PER_SEC));
+	tm->tm_mday = time / USECS_PER_DAY;
+	time -= tm->tm_mday * USECS_PER_DAY;
+	tm->tm_hour = time / USECS_PER_HOUR;
+	time -= tm->tm_hour * USECS_PER_HOUR;
+	tm->tm_min = time / USECS_PER_MINUTE;
+	time -= tm->tm_min * USECS_PER_MINUTE;
+	tm->tm_sec = time / USECS_PER_SEC;
+	*fsec = time - (tm->tm_sec * USECS_PER_SEC);
 #else
 	TMODULO(time, tm->tm_mday, (double)SECS_PER_DAY);
 	TMODULO(time, tm->tm_hour, (double)SECS_PER_HOUR);
