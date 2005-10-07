@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.123 2005/07/28 22:27:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.124 2005/10/07 19:59:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1013,10 +1013,11 @@ aclmask(const Acl *acl, Oid roleid, Oid ownerId,
 	result = 0;
 
 	/* Owner always implicitly has all grant options */
-	if (has_privs_of_role(roleid, ownerId))
+	if ((mask & ACLITEM_ALL_GOPTION_BITS) &&
+		has_privs_of_role(roleid, ownerId))
 	{
 		result = mask & ACLITEM_ALL_GOPTION_BITS;
-		if (result == mask)
+		if ((how == ACLMASK_ALL) ? (result == mask) : (result != 0))
 			return result;
 	}
 
@@ -1024,7 +1025,7 @@ aclmask(const Acl *acl, Oid roleid, Oid ownerId,
 	aidat = ACL_DAT(acl);
 
 	/*
-	 * Check privileges granted directly to user or to public
+	 * Check privileges granted directly to roleid or to public
 	 */
 	for (i = 0; i < num; i++)
 	{
@@ -1040,11 +1041,11 @@ aclmask(const Acl *acl, Oid roleid, Oid ownerId,
 	}
 
 	/*
-	 * Check privileges granted indirectly via roles.
+	 * Check privileges granted indirectly via role memberships.
 	 * We do this in a separate pass to minimize expensive indirect
 	 * membership tests.  In particular, it's worth testing whether
 	 * a given ACL entry grants any privileges still of interest before
-	 * we perform the is_member test.
+	 * we perform the has_privs_of_role test.
 	 */
 	remaining = mask & ~result;
 	for (i = 0; i < num; i++)
