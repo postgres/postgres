@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.40 2005/10/04 17:10:55 teodor Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.41 2005/10/07 15:31:49 tgl Exp $
  *
  * pgbench: a simple benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -40,7 +40,6 @@
 #endif   /* ! WIN32 */
 
 #include <ctype.h>
-#include <search.h>
 
 extern char *optarg;
 extern int	optind;
@@ -90,6 +89,17 @@ char	   *login = NULL;
 char	   *pwd = NULL;
 char	   *dbName;
 
+/* variable definitions */
+typedef struct
+{
+	char	   *name;	/* variable name */
+	char	   *value;	/* its value */
+}	Variable;
+
+/*
+ * structures used in custom query mode
+ */
+
 typedef struct
 {
 	PGconn	   *con;			/* connection handle to DB */
@@ -99,22 +109,11 @@ typedef struct
 	int			ecnt;			/* error count */
 	int			listen;			/* 0 indicates that an async query has
 								 * been sent */
-	void	   *variables;
+	Variable   *variables;		/* array of variable definitions */
+	int			nvariables;
 	struct timeval txn_begin;	/* used for measuring latencies */
 	int			use_file;		/* index in sql_files for this client */
 }	CState;
-
-
-/*
- * structures used in custom query mode
- */
-
-/* variable definitions */
-typedef struct
-{
-	char	   *name;	/* variable name */
-	char	   *value;	/* its value */
-}	Variable;
 
 /*
  * queries read from files
@@ -180,7 +179,7 @@ usage(void)
 static int
 getrand(int min, int max)
 {
-	return (min + (int) (max * 1.0 * rand() / (RAND_MAX + 1.0) + 0.5));
+	return min + (int) (((max - min) * (double) random()) / MAX_RANDOM_VALUE + 0.5);
 }
 
 /* set up a connection to the backend */
@@ -256,7 +255,8 @@ check(CState * state, PGresult *res, int n, int good)
 static int
 compareVariables(const void *v1, const void *v2)
 {
-	return strcmp(((Variable *)v1)->name, ((Variable *)v2)->name);
+	return strcmp(((const Variable *) v1)->name,
+				  ((const Variable *) v2)->name);
 }
 
 static char *
@@ -264,9 +264,17 @@ getVariable(CState * st, char *name)
 {
 	Variable		key = { name }, *var;
 
-	var = tfind(&key, &st->variables, compareVariables);
+	/* On some versions of Solaris, bsearch of zero items dumps core */
+	if (st->nvariables <= 0)
+		return NULL;
+
+	var = (Variable *) bsearch((void *) &key,
+							   (void *) st->variables,
+							   st->nvariables,
+							   sizeof(Variable),
+							   compareVariables);
 	if (var != NULL)
-		return (*(Variable **)var)->value;
+		return var->value;
 	else
 		return NULL;
 }
@@ -276,30 +284,55 @@ putVariable(CState * st, char *name, char *value)
 {
 	Variable		key = { name }, *var;
 
-	var = tfind(&key, &st->variables, compareVariables);
+	/* On some versions of Solaris, bsearch of zero items dumps core */
+	if (st->nvariables > 0)
+		var = (Variable *) bsearch((void *) &key,
+								   (void *) st->variables,
+								   st->nvariables,
+								   sizeof(Variable),
+								   compareVariables);
+	else
+		var = NULL;
+
 	if (var == NULL)
 	{
-		if ((var = malloc(sizeof(Variable))) == NULL)
+		Variable   *newvars;
+
+		if (st->variables)
+			newvars = (Variable *) realloc(st->variables,
+								(st->nvariables + 1) * sizeof(Variable));
+		else
+			newvars = (Variable *) malloc(sizeof(Variable));
+
+		if (newvars == NULL)
 			return false;
+
+		st->variables = newvars;
+
+		var = &newvars[st->nvariables];
 
 		var->name = NULL;
 		var->value = NULL;
 
 		if ((var->name = strdup(name)) == NULL
-			|| (var->value = strdup(value)) == NULL
-			|| tsearch(var, &st->variables, compareVariables) == NULL)
+			|| (var->value = strdup(value)) == NULL)
 		{
 			free(var->name);
 			free(var->value);
-			free(var);
 			return false;
 		}
+
+		st->nvariables++;
+
+		qsort((void *) st->variables, st->nvariables, sizeof(Variable),
+			  compareVariables);
 	}
 	else
 	{
-		free((*(Variable **)var)->value);
-		if (((*(Variable **)var)->value = strdup(value)) == NULL)
+		if ((value = strdup(value)) == NULL)
 			return false;
+		free(var->value);
+		var->value = value;
 	}
 
 	return true;
@@ -783,7 +816,7 @@ process_commands(char *buf)
 				return NULL;
 			}
 
-			if ((max = atoi(my_commands->argv[3])) < min || max > RAND_MAX)
+			if ((max = atoi(my_commands->argv[3])) < min || max > MAX_RANDOM_VALUE)
 			{
 				fprintf(stderr, "%s: invalid maximum number %s\n",
 						my_commands->argv[0], my_commands->argv[3]);
