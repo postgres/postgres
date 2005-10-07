@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.85 2005/08/20 23:26:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.86 2005/10/07 21:42:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,8 +71,7 @@ SHMEM_OFFSET ShmemBase;			/* start address of shared memory */
 
 static SHMEM_OFFSET ShmemEnd;	/* end+1 address of shared memory */
 
-NON_EXEC_STATIC slock_t *ShmemLock;		/* spinlock for shared memory
-										 * allocation */
+slock_t *ShmemLock;		/* spinlock for shared memory and LWLock allocation */
 
 NON_EXEC_STATIC slock_t *ShmemIndexLock;		/* spinlock for ShmemIndex */
 

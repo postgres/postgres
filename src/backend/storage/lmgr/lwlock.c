@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.31 2005/10/07 20:11:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.32 2005/10/07 21:42:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,10 @@
 #include "storage/lwlock.h"
 #include "storage/proc.h"
 #include "storage/spin.h"
+
+
+/* We use the ShmemLock spinlock to protect LWLockAssign */
+extern slock_t *ShmemLock;
 
 
 typedef struct LWLock
@@ -64,9 +68,6 @@ typedef union LWLockPadded
  * where we have special measures to pass it down).
  */
 NON_EXEC_STATIC LWLockPadded *LWLockArray = NULL;
-
-/* shared counter for dynamic allocation of LWLockIds */
-static int *LWLockCounter;
 
 
 /*
@@ -159,7 +160,7 @@ LWLockShmemSize(void)
 	/* Space for the LWLock array. */
 	size = mul_size(numLocks, sizeof(LWLockPadded));
 
-	/* Space for shared allocation counter, plus room for alignment. */
+	/* Space for dynamic allocation counter, plus room for alignment. */
 	size = add_size(size, 2 * sizeof(int) + LWLOCK_PADDED_SIZE);
 
 	return size;
@@ -175,11 +176,15 @@ CreateLWLocks(void)
 	int			numLocks = NumLWLocks();
 	Size		spaceLocks = LWLockShmemSize();
 	LWLockPadded *lock;
+	int		   *LWLockCounter;
 	char	   *ptr;
 	int			id;
 
 	/* Allocate space */
 	ptr = (char *) ShmemAlloc(spaceLocks);
+
+	/* Leave room for dynamic allocation counter */
+	ptr += 2 * sizeof(int);
 
 	/* Ensure desired alignment of LWLock array */
 	ptr += LWLOCK_PADDED_SIZE - ((unsigned long) ptr) % LWLOCK_PADDED_SIZE;
@@ -200,9 +205,10 @@ CreateLWLocks(void)
 	}
 
 	/*
-	 * Initialize the dynamic-allocation counter at the end of the array
+	 * Initialize the dynamic-allocation counter, which is stored just before
+	 * the first LWLock.
 	 */
-	LWLockCounter = (int *) lock;
+	LWLockCounter = (int *) ((char *) LWLockArray - 2 * sizeof(int));
 	LWLockCounter[0] = (int) NumFixedLWLocks;
 	LWLockCounter[1] = numLocks;
 }
@@ -211,16 +217,27 @@ CreateLWLocks(void)
 /*
  * LWLockAssign - assign a dynamically-allocated LWLock number
  *
- * NB: we do not currently try to interlock this.  Could perhaps use
- * ShmemLock spinlock if there were any need to assign LWLockIds after
- * shmem setup.
+ * We interlock this using the same spinlock that is used to protect
+ * ShmemAlloc().  Interlocking is not really necessary during postmaster
+ * startup, but it is needed if any user-defined code tries to allocate
+ * LWLocks after startup.
  */
 LWLockId
 LWLockAssign(void)
 {
+	LWLockId	result;
+	int		   *LWLockCounter;
+
+	LWLockCounter = (int *) ((char *) LWLockArray - 2 * sizeof(int));
+	SpinLockAcquire(ShmemLock);
 	if (LWLockCounter[0] >= LWLockCounter[1])
-		elog(FATAL, "no more LWLockIds available");
-	return (LWLockId) (LWLockCounter[0]++);
+	{
+		SpinLockRelease(ShmemLock);
+		elog(ERROR, "no more LWLockIds available");
+	}
+	result = (LWLockId) (LWLockCounter[0]++);
+	SpinLockRelease(ShmemLock);
+	return result;
 }
 
 
