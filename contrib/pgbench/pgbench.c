@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.41 2005/10/07 15:31:49 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.42 2005/10/07 15:34:17 tgl Exp $
  *
  * pgbench: a simple benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -21,6 +21,8 @@
 
 #include "libpq-fe.h"
 
+#include <ctype.h>
+
 #ifdef WIN32
 #include "win32.h"
 #else
@@ -38,8 +40,6 @@
 /* for getrlimit */
 #include <sys/resource.h>
 #endif   /* ! WIN32 */
-
-#include <ctype.h>
 
 extern char *optarg;
 extern int	optind;
