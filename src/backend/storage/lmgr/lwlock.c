@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.30 2005/09/16 00:30:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.31 2005/10/07 20:11:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,7 +140,8 @@ NumLWLocks(void)
 	 */
 	numLocks += 2 * NUM_SLRU_BUFFERS;
 
-	/* Perhaps create a few more for use by user-defined modules? */
+	/* Leave a few extra for use by user-defined modules. */
+	numLocks += NUM_USER_DEFINED_LWLOCKS;
 
 	return numLocks;
 }

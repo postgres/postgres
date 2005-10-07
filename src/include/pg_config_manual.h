@@ -6,7 +6,7 @@
  * for developers.	If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.17 2005/10/03 22:55:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.18 2005/10/07 20:11:03 tgl Exp $
  *------------------------------------------------------------------------
  */
 
@@ -73,6 +73,11 @@
  * Changing this requires an initdb.
  */
 #define INDEX_MAX_KEYS		32
+
+/*
+ * Number of spare LWLocks to allocate for user-defined add-on code.
+ */
+#define NUM_USER_DEFINED_LWLOCKS	4
 
 /*
  * Define this to make libpgtcl's "pg_result -assign" command process
