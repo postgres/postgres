@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.24 2005/10/03 22:55:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.25 2005/10/08 20:27:25 tgl Exp $
 -->
 <chapter Id="runtime-config">
   <title>Run-time Configuration</title>
@@ -592,8 +592,8 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Sets the hostname part of the service principal.
         This, combined with <varname>krb_srvname</>, is used to generate
-        the complete service principal, i.e.
-        <varname>krb_server_hostname</><literal>/</><varname>krb_server_hostname</><literal>@</>REALM.
+        the complete service principal, that is
+        <varname>krb_srvname</><literal>/</><varname>krb_server_hostname</><literal>@</>REALM.
        </para>
        <para>
         If not set, the default is to allow any service principal matching an entry
@@ -610,7 +610,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-        Sets if Kerberos usernames should be treated case-insensitively.
+        Sets whether Kerberos usernames should be treated case-insensitively.
         The default is <literal>off</> (case sensitive). This parameter
         can only be set at server start.
        </para>
