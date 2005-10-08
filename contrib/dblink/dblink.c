@@ -60,9 +60,10 @@
 
 typedef struct remoteConn
 {
-	PGconn	   *con;			/* Hold the remote connection */
-	bool		remoteTrFlag;	/* Indicates whether or not a transaction
-								 * on remote database is in progress */
+	PGconn	   *conn;				/* Hold the remote connection */
+	int			autoXactCursors;	/* Indicates the number of open cursors,
+									 * non-zero means we opened the xact
+									 * ourselves */
 }	remoteConn;
 
 /*
@@ -70,7 +71,7 @@ typedef struct remoteConn
  */
 static remoteConn *getConnectionByName(const char *name);
 static HTAB *createConnHash(void);
-static void createNewConnection(const char *name, remoteConn * con);
+static void createNewConnection(const char *name, remoteConn *rconn);
 static void deleteConnection(const char *name);
 static char **get_pkey_attnames(Oid relid, int16 *numatts);
 static char *get_sql_insert(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pkattvals, char **tgt_pkattvals);
@@ -99,7 +100,7 @@ much like ecpg e.g. a mapping between a name and a PGconn object.
 typedef struct remoteConnHashEnt
 {
 	char		name[NAMEDATALEN];
-	remoteConn *rcon;
+	remoteConn *rconn;
 }	remoteConnHashEnt;
 
 /* initial number of connection hashes */
@@ -162,10 +163,10 @@ typedef struct remoteConnHashEnt
 #define DBLINK_GET_CONN \
 	do { \
 			char *conname_or_str = GET_STR(PG_GETARG_TEXT_P(0)); \
-			rcon = getConnectionByName(conname_or_str); \
-			if(rcon) \
+			rconn = getConnectionByName(conname_or_str); \
+			if(rconn) \
 			{ \
-				conn = rcon->con; \
+				conn = rconn->conn; \
 			} \
 			else \
 			{ \
@@ -197,7 +198,7 @@ dblink_connect(PG_FUNCTION_ARGS)
 	char	   *msg;
 	MemoryContext oldcontext;
 	PGconn	   *conn = NULL;
-	remoteConn *rcon = NULL;
+	remoteConn *rconn = NULL;
 
 	if (PG_NARGS() == 2)
 	{
@@ -210,7 +211,7 @@ dblink_connect(PG_FUNCTION_ARGS)
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 
 	if (connname)
-		rcon = (remoteConn *) palloc(sizeof(remoteConn));
+		rconn = (remoteConn *) palloc(sizeof(remoteConn));
 	conn = PQconnectdb(connstr);
 
 	MemoryContextSwitchTo(oldcontext);
@@ -219,8 +220,8 @@ dblink_connect(PG_FUNCTION_ARGS)
 	{
 		msg = pstrdup(PQerrorMessage(conn));
 		PQfinish(conn);
-		if (rcon)
-			pfree(rcon);
+		if (rconn)
+			pfree(rconn);
 
 		ereport(ERROR,
 		   (errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
@@ -230,8 +231,8 @@ dblink_connect(PG_FUNCTION_ARGS)
 
 	if (connname)
 	{
-		rcon->con = conn;
-		createNewConnection(connname, rcon);
+		rconn->conn = conn;
+		createNewConnection(connname, rconn);
 	}
 	else
 		persistent_conn = conn;
@@ -247,15 +248,15 @@ Datum
 dblink_disconnect(PG_FUNCTION_ARGS)
 {
 	char	   *conname = NULL;
-	remoteConn *rcon = NULL;
+	remoteConn *rconn = NULL;
 	PGconn	   *conn = NULL;
 
 	if (PG_NARGS() == 1)
 	{
 		conname = GET_STR(PG_GETARG_TEXT_P(0));
-		rcon = getConnectionByName(conname);
-		if (rcon)
-			conn = rcon->con;
+		rconn = getConnectionByName(conname);
+		if (rconn)
+			conn = rconn->conn;
 	}
 	else
 		conn = persistent_conn;
@@ -264,10 +265,10 @@ dblink_disconnect(PG_FUNCTION_ARGS)
 		DBLINK_CONN_NOT_AVAIL;
 
 	PQfinish(conn);
-	if (rcon)
+	if (rconn)
 	{
 		deleteConnection(conname);
-		pfree(rcon);
+		pfree(rconn);
 	}
 	else
 		persistent_conn = NULL;
@@ -289,7 +290,7 @@ dblink_open(PG_FUNCTION_ARGS)
 	char	   *sql = NULL;
 	char	   *conname = NULL;
 	StringInfo	str = makeStringInfo();
-	remoteConn *rcon = NULL;
+	remoteConn *rconn = NULL;
 	bool		fail = true;	/* default to backward compatible behavior */
 
 	if (PG_NARGS() == 2)
@@ -314,9 +315,9 @@ dblink_open(PG_FUNCTION_ARGS)
 			conname = GET_STR(PG_GETARG_TEXT_P(0));
 			curname = GET_STR(PG_GETARG_TEXT_P(1));
 			sql = GET_STR(PG_GETARG_TEXT_P(2));
-			rcon = getConnectionByName(conname);
-			if (rcon)
-				conn = rcon->con;
+			rconn = getConnectionByName(conname);
+			if (rconn)
+				conn = rconn->conn;
 		}
 	}
 	else if (PG_NARGS() == 4)
@@ -326,9 +327,9 @@ dblink_open(PG_FUNCTION_ARGS)
 		curname = GET_STR(PG_GETARG_TEXT_P(1));
 		sql = GET_STR(PG_GETARG_TEXT_P(2));
 		fail = PG_GETARG_BOOL(3);
-		rcon = getConnectionByName(conname);
-		if (rcon)
-			conn = rcon->con;
+		rconn = getConnectionByName(conname);
+		if (rconn)
+			conn = rconn->conn;
 	}
 
 	if (!conn)
@@ -370,7 +371,7 @@ dblink_close(PG_FUNCTION_ARGS)
 	char	   *conname = NULL;
 	StringInfo	str = makeStringInfo();
 	char	   *msg;
-	remoteConn *rcon = NULL;
+	remoteConn *rconn = NULL;
 	bool		fail = true;	/* default to backward compatible behavior */
 
 	if (PG_NARGS() == 1)
@@ -392,9 +393,9 @@ dblink_close(PG_FUNCTION_ARGS)
 		{
 			conname = GET_STR(PG_GETARG_TEXT_P(0));
 			curname = GET_STR(PG_GETARG_TEXT_P(1));
-			rcon = getConnectionByName(conname);
-			if (rcon)
-				conn = rcon->con;
+			rconn = getConnectionByName(conname);
+			if (rconn)
+				conn = rconn->conn;
 		}
 	}
 	if (PG_NARGS() == 3)
@@ -403,9 +404,9 @@ dblink_close(PG_FUNCTION_ARGS)
 		conname = GET_STR(PG_GETARG_TEXT_P(0));
 		curname = GET_STR(PG_GETARG_TEXT_P(1));
 		fail = PG_GETARG_BOOL(2);
-		rcon = getConnectionByName(conname);
-		if (rcon)
-			conn = rcon->con;
+		rconn = getConnectionByName(conname);
+		if (rconn)
+			conn = rconn->conn;
 	}
 
 	if (!conn)
@@ -454,7 +455,7 @@ dblink_fetch(PG_FUNCTION_ARGS)
 	PGresult   *res = NULL;
 	MemoryContext oldcontext;
 	char	   *conname = NULL;
-	remoteConn *rcon = NULL;
+	remoteConn *rconn = NULL;
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
@@ -473,9 +474,9 @@ dblink_fetch(PG_FUNCTION_ARGS)
 			howmany = PG_GETARG_INT32(2);
 			fail = PG_GETARG_BOOL(3);
 
-			rcon = getConnectionByName(conname);
-			if (rcon)
-				conn = rcon->con;
+			rconn = getConnectionByName(conname);
+			if (rconn)
+				conn = rconn->conn;
 		}
 		else if (PG_NARGS() == 3)
 		{
@@ -493,9 +494,9 @@ dblink_fetch(PG_FUNCTION_ARGS)
 				curname = GET_STR(PG_GETARG_TEXT_P(1));
 				howmany = PG_GETARG_INT32(2);
 
-				rcon = getConnectionByName(conname);
-				if (rcon)
-					conn = rcon->con;
+				rconn = getConnectionByName(conname);
+				if (rconn)
+					conn = rconn->conn;
 			}
 		}
 		else if (PG_NARGS() == 2)
@@ -656,7 +657,7 @@ dblink_record(PG_FUNCTION_ARGS)
 		char	   *connstr = NULL;
 		char	   *sql = NULL;
 		char	   *conname = NULL;
-		remoteConn *rcon = NULL;
+		remoteConn *rconn = NULL;
 		bool		fail = true;	/* default to backward compatible */
 
 		/* create a function context for cross-call persistence */
@@ -855,7 +856,7 @@ dblink_exec(PG_FUNCTION_ARGS)
 	char	   *connstr = NULL;
 	char	   *sql = NULL;
 	char	   *conname = NULL;
-	remoteConn *rcon = NULL;
+	remoteConn *rconn = NULL;
 	bool		freeconn = false;
 	bool		fail = true;	/* default to backward compatible behavior */
 
@@ -2027,7 +2028,7 @@ getConnectionByName(const char *name)
 											   key, HASH_FIND, NULL);
 
 	if (hentry)
-		return (hentry->rcon);
+		return (hentry->rconn);
 
 	return (NULL);
 }
@@ -2063,7 +2064,7 @@ createNewConnection(const char *name, remoteConn *rconn)
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("duplicate connection name")));
 
-	hentry->rcon = rconn;
+	hentry->rconn = rconn;
 	strncpy(hentry->name, name, NAMEDATALEN - 1);
 }
 
