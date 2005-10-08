@@ -14,7 +14,7 @@ typedef int32 fsec_t;
 typedef double fsec_t;
 
 #define TIME_PREC_INV 1000000.0
-#define JROUND(j) (rint(((double) (j))*TIME_PREC_INV)/TIME_PREC_INV)
+#define JROUND(j) (rint(((double) (j)) * TIME_PREC_INV) / TIME_PREC_INV)
 #endif
 
 #define USE_POSTGRES_DATES				0
