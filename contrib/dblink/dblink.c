@@ -116,6 +116,7 @@ typedef struct remoteConnHashEnt
 			var_ = NULL; \
 		} \
 	} while (0)
+
 #define DBLINK_RES_INTERNALERROR(p2) \
 	do { \
 			msg = pstrdup(PQerrorMessage(conn)); \
@@ -123,6 +124,7 @@ typedef struct remoteConnHashEnt
 				PQclear(res); \
 			elog(ERROR, "%s: %s", p2, msg); \
 	} while (0)
+
 #define DBLINK_RES_ERROR(p2) \
 	do { \
 			msg = pstrdup(PQerrorMessage(conn)); \
@@ -133,6 +135,7 @@ typedef struct remoteConnHashEnt
 					 errmsg("%s", p2), \
 					 errdetail("%s", msg))); \
 	} while (0)
+
 #define DBLINK_RES_ERROR_AS_NOTICE(p2) \
 	do { \
 			msg = pstrdup(PQerrorMessage(conn)); \
@@ -143,6 +146,7 @@ typedef struct remoteConnHashEnt
 					 errmsg("%s", p2), \
 					 errdetail("%s", msg))); \
 	} while (0)
+
 #define DBLINK_CONN_NOT_AVAIL \
 	do { \
 		if(conname) \
@@ -154,6 +158,7 @@ typedef struct remoteConnHashEnt
 					(errcode(ERRCODE_CONNECTION_DOES_NOT_EXIST), \
 					 errmsg("connection not available"))); \
 	} while (0)
+
 #define DBLINK_GET_CONN \
 	do { \
 			char *conname_or_str = GET_STR(PG_GETARG_TEXT_P(0)); \
@@ -2039,7 +2044,7 @@ createConnHash(void)
 }
 
 static void
-createNewConnection(const char *name, remoteConn * con)
+createNewConnection(const char *name, remoteConn *rconn)
 {
 	remoteConnHashEnt *hentry;
 	bool		found;
@@ -2058,7 +2063,7 @@ createNewConnection(const char *name, remoteConn * con)
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("duplicate connection name")));
 
-	hentry->rcon = con;
+	hentry->rcon = rconn;
 	strncpy(hentry->name, name, NAMEDATALEN - 1);
 }
 
