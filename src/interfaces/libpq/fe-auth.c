@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.103 2005/06/30 01:59:20 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.104 2005/10/08 19:32:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -280,7 +280,7 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname, const char *s
 	}
 
 	retval = krb5_sendauth(pg_krb5_context, &auth_context,
-						   (krb5_pointer) & sock, "postgres",
+						   (krb5_pointer) & sock, (char *) servicename,
 						   pg_krb5_client, server,
 						   AP_OPTS_MUTUAL_REQUIRED,
 						   NULL, 0,		/* no creds, use ccache instead */

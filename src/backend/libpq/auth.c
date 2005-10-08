@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.127 2005/07/25 04:52:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.128 2005/10/08 19:32:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,6 +119,7 @@ static int
 pg_krb5_init(void)
 {
 	krb5_error_code retval;
+	char *khostname;
 
 	if (pg_krb5_initialised)
 		return STATUS_OK;
@@ -145,25 +146,31 @@ pg_krb5_init(void)
 		return STATUS_ERROR;
 	}
 
-	if (pg_krb_server_hostname)
+	/*
+	 * If no hostname was specified, pg_krb_server_hostname is already
+	 * NULL. If it's set to blank, force it to NULL.
+	 */
+	khostname = pg_krb_server_hostname;
+	if (khostname && khostname[0] == '\0')
+		khostname = NULL;
+
+	retval = krb5_sname_to_principal(pg_krb5_context,
+									 khostname,
+									 pg_krb_srvnam,
+									 KRB5_NT_SRV_HST,
+									 &pg_krb5_server);
+	if (retval)
 	{
-		retval = krb5_sname_to_principal(pg_krb5_context, 
-					pg_krb_server_hostname, pg_krb_srvnam,
-			 		KRB5_NT_SRV_HST, &pg_krb5_server);
-	 	if (retval)
-		{
-			ereport(LOG,
-		 	(errmsg("Kerberos sname_to_principal(\"%s\") returned error %d",
-				 	pg_krb_srvnam, retval)));
-			com_err("postgres", retval,
-					"while getting server principal for service \"%s\"",
-					pg_krb_srvnam);
-			krb5_kt_close(pg_krb5_context, pg_krb5_keytab);
-			krb5_free_context(pg_krb5_context);
-			return STATUS_ERROR;
-		}
-	} else
-		pg_krb5_server = NULL;
+		ereport(LOG,
+				(errmsg("Kerberos sname_to_principal(\"%s\") returned error %d",
+						pg_krb_srvnam, retval)));
+		com_err("postgres", retval,
+				"while getting server principal for service \"%s\"",
+				pg_krb_srvnam);
+		krb5_kt_close(pg_krb5_context, pg_krb5_keytab);
+		krb5_free_context(pg_krb5_context);
+		return STATUS_ERROR;
+	}
 
 	pg_krb5_initialised = 1;
 	return STATUS_OK;
@@ -194,7 +201,7 @@ pg_krb5_recvauth(Port *port)
 		return ret;
 
 	retval = krb5_recvauth(pg_krb5_context, &auth_context,
-						   (krb5_pointer) & port->sock, "postgres",
+						   (krb5_pointer) & port->sock, pg_krb_srvnam,
 						   pg_krb5_server, 0, pg_krb5_keytab, &ticket);
 	if (retval)
 	{

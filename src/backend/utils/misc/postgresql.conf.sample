@@ -70,7 +70,7 @@
 # Kerberos
 #krb_server_keyfile = ''
 #krb_srvname = 'postgres'
-#krb_server_hostname = '(any)'		# if not set, matches any keytab entry
+#krb_server_hostname = ''		# empty string matches any keytab entry
 #krb_caseins_users = off
 
 # - TCP Keepalives -
