@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.290 2005/10/03 22:55:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.291 2005/10/08 20:08:19 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -920,7 +920,7 @@ static struct config_bool ConfigureNamesBool[] =
 
 	{
 		{"integer_datetimes", PGC_INTERNAL, PRESET_OPTIONS,
-			gettext_noop("Datetimes are integer based"),
+			gettext_noop("Datetimes are integer based."),
 			NULL,
 			GUC_REPORT | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
@@ -934,7 +934,7 @@ static struct config_bool ConfigureNamesBool[] =
 
 	{
 		{"krb_caseins_users", PGC_POSTMASTER, CONN_AUTH_SECURITY,
-			gettext_noop("Sets whether Kerberos user names should be treated case insensitive."),
+			gettext_noop("Sets whether Kerberos user names should be treated as case-insensitive."),
 			NULL
 		},
 		&pg_krb_caseins_users,
