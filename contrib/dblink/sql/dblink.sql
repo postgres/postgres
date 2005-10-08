@@ -117,9 +117,6 @@ SELECT dblink_exec('ABORT');
 -- close the wrong cursor
 SELECT dblink_close('rmt_foobar_cursor',false);
 
--- reset remote transaction state
-SELECT dblink_exec('ABORT');
-
 -- should generate 'cursor "rmt_foo_cursor" not found' error
 SELECT *
 FROM dblink_fetch('rmt_foo_cursor',4) AS t(a int, b text, c text[]);
@@ -155,9 +152,6 @@ FROM dblink('SELECT * FROM foo') AS t(a int, b text, c text[]);
 SELECT *
 FROM dblink('SELECT * FROM foobar',false) AS t(a int, b text, c text[]);
 
--- reset remote transaction state
-SELECT dblink_exec('ABORT');
-
 -- change some data
 SELECT dblink_exec('UPDATE foo SET f3[2] = ''b99'' WHERE f1 = 11');
 
@@ -168,9 +162,6 @@ WHERE a = 11;
 
 -- botch a change to some other data
 SELECT dblink_exec('UPDATE foobar SET f3[2] = ''b99'' WHERE f1 = 11',false);
-
--- reset remote transaction state
-SELECT dblink_exec('ABORT');
 
 -- delete some data
 SELECT dblink_exec('DELETE FROM foo WHERE f1 = 11');
@@ -204,9 +195,6 @@ WHERE t.a > 7;
 SELECT *
 FROM dblink('myconn','SELECT * FROM foobar',false) AS t(a int, b text, c text[])
 WHERE t.a > 7;
-
--- reset remote transaction state
-SELECT dblink_exec('myconn','ABORT');
 
 -- create a second named persistent connection
 -- should error with "duplicate connection name"

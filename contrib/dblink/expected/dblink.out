@@ -223,13 +223,6 @@ DETAIL:  ERROR:  cursor "rmt_foobar_cursor" does not exist
  ERROR
 (1 row)
 
--- reset remote transaction state
-SELECT dblink_exec('ABORT');
- dblink_exec 
--------------
- ROLLBACK
-(1 row)
-
 -- should generate 'cursor "rmt_foo_cursor" not found' error
 SELECT *
 FROM dblink_fetch('rmt_foo_cursor',4) AS t(a int, b text, c text[]);
@@ -310,13 +303,6 @@ DETAIL:  ERROR:  relation "foobar" does not exist
 ---+---+---
 (0 rows)
 
--- reset remote transaction state
-SELECT dblink_exec('ABORT');
- dblink_exec 
--------------
- ROLLBACK
-(1 row)
-
 -- change some data
 SELECT dblink_exec('UPDATE foo SET f3[2] = ''b99'' WHERE f1 = 11');
  dblink_exec 
@@ -341,13 +327,6 @@ DETAIL:  ERROR:  relation "foobar" does not exist
  dblink_exec 
 -------------
  ERROR
-(1 row)
-
--- reset remote transaction state
-SELECT dblink_exec('ABORT');
- dblink_exec 
--------------
- ROLLBACK
 (1 row)
 
 -- delete some data
@@ -410,13 +389,6 @@ DETAIL:  ERROR:  relation "foobar" does not exist
  a | b | c 
 ---+---+---
 (0 rows)
-
--- reset remote transaction state
-SELECT dblink_exec('myconn','ABORT');
- dblink_exec 
--------------
- ROLLBACK
-(1 row)
 
 -- create a second named persistent connection
 -- should error with "duplicate connection name"
