@@ -91,11 +91,11 @@ PGconn	   *persistent_conn = NULL;
 static HTAB *remoteConnHash = NULL;
 
 /*
-Following is list that holds multiple remote connections.
-Calling convention of each dblink function changes to accept
-connection name as the first parameter. The connection list is
-much like ecpg e.g. a mapping between a name and a PGconn object.
-*/
+ *	Following is list that holds multiple remote connections.
+ *	Calling convention of each dblink function changes to accept
+ *	connection name as the first parameter. The connection list is
+ *	much like ecpg e.g. a mapping between a name and a PGconn object.
+ */
 
 typedef struct remoteConnHashEnt
 {
