@@ -1255,9 +1255,8 @@ dt2time(double jd, int *hour, int *min, int *sec, fsec_t *fsec)
 	*min = time / SECS_PER_MINUTE;
 	time -= (*min) * SECS_PER_MINUTE;
 	*sec = time;
-	*fsec = JROUND(time - *sec);
+	*fsec = time - *sec;
 #endif
-	return;
 }	/* dt2time() */
 
 

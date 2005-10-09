@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.153 2005/09/09 06:46:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.154 2005/10/09 17:21:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -998,10 +998,8 @@ dt2time(Timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
 	*min = time / SECS_PER_MINUTE;
 	time -= (*min) * SECS_PER_MINUTE;
 	*sec = time;
-	*fsec = JROUND(time - *sec);
+	*fsec = time - *sec;
 #endif
-
-	return;
 }	/* dt2time() */
 
 
@@ -1038,8 +1036,8 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm, fsec_t *fsec, char **tzn,
 #endif
 	}
 
-	time = dt;
 #ifdef HAVE_INT64_TIMESTAMP
+	time = dt;
 	TMODULO(time, date, USECS_PER_DAY);
 
 	if (time < INT64CONST(0))
@@ -1047,25 +1045,52 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm, fsec_t *fsec, char **tzn,
 		time += USECS_PER_DAY;
 		date -= 1;
 	}
-#else
-	TMODULO(time, date, (double)SECS_PER_DAY);
-
-	if (time < 0)
-	{
-		time += SECS_PER_DAY;
-		date -=1;
-	}
-#endif
 
 	/* add offset to go from J2000 back to standard Julian date */
 	date += POSTGRES_EPOCH_JDATE;
 
 	/* Julian day routine does not work for negative Julian days */
-	if (date <0 || date >(Timestamp) INT_MAX)
+	if (date < 0 || date > (Timestamp) INT_MAX)
 		return -1;
 
 	j2date((int) date, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 	dt2time(time, &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
+#else
+	time = dt;
+	TMODULO(time, date, (double)SECS_PER_DAY);
+
+	if (time < 0)
+	{
+		time += SECS_PER_DAY;
+		date -= 1;
+	}
+
+	/* add offset to go from J2000 back to standard Julian date */
+	date += POSTGRES_EPOCH_JDATE;
+
+recalc_d:
+	/* Julian day routine does not work for negative Julian days */
+	if (date < 0 || date > (Timestamp) INT_MAX)
+		return -1;
+
+	j2date((int) date, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+recalc_t:
+	dt2time(time, &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
+
+	*fsec = TSROUND(*fsec);
+	/* roundoff may need to propagate to higher-order fields */
+	if (*fsec >= 1.0)
+	{
+		time = ceil(time);
+		if (time >= (double)SECS_PER_DAY)
+		{
+			time = 0;
+			date += 1;
+			goto recalc_d;
+		}
+		goto recalc_t;
+	}
+#endif
 
 	/* Done if no TZ conversion wanted */
 	if (tzp == NULL)
@@ -1216,9 +1241,17 @@ interval2tm(Interval span, struct pg_tm *tm, fsec_t *fsec)
 	tm->tm_sec = time / USECS_PER_SEC;
 	*fsec = time - (tm->tm_sec * USECS_PER_SEC);
 #else
+recalc:
 	TMODULO(time, tm->tm_hour, (double)SECS_PER_HOUR);
 	TMODULO(time, tm->tm_min, (double)SECS_PER_MINUTE);
 	TMODULO(time, tm->tm_sec, 1.0);
+	time = TSROUND(time);
+	/* roundoff may need to propagate to higher-order fields */
+	if (time >= 1.0)
+	{
+		time = ceil(span.time);
+		goto recalc;
+	}
 	*fsec = time;
 #endif
 
@@ -1237,8 +1270,7 @@ tm2interval(struct pg_tm *tm, fsec_t fsec, Interval *span)
 #else
 	span->time = (((tm->tm_hour * (double)MINS_PER_HOUR) +
 						tm->tm_min) * (double)SECS_PER_MINUTE) +
-						tm->tm_sec;
-	span->time = JROUND(span->time + fsec);
+						tm->tm_sec + fsec;
 #endif
 
 	return 0;
@@ -1266,7 +1298,6 @@ dt2local(Timestamp dt, int tz)
 	dt -= (tz * USECS_PER_SEC);
 #else
 	dt -= tz;
-	dt = JROUND(dt);
 #endif
 	return dt;
 }	/* dt2local() */
@@ -1901,11 +1932,7 @@ timestamp_mi(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("cannot subtract infinite timestamps")));
 
-#ifdef HAVE_INT64_TIMESTAMP
 	result->time = dt1 - dt2;
-#else
-	result->time = JROUND(dt1 - dt2);
-#endif
 
 	result->month = 0;
 	result->day = 0;
@@ -2224,11 +2251,7 @@ interval_pl(PG_FUNCTION_ARGS)
 
 	result->month = span1->month + span2->month;
 	result->day = span1->day + span2->day;
-#ifdef HAVE_INT64_TIMESTAMP
 	result->time = span1->time + span2->time;
-#else
-	result->time = JROUND(span1->time + span2->time);
-#endif
 
 	PG_RETURN_INTERVAL_P(result);
 }
@@ -2244,11 +2267,7 @@ interval_mi(PG_FUNCTION_ARGS)
 
 	result->month = span1->month - span2->month;
 	result->day = span1->day - span2->day;
-#ifdef HAVE_INT64_TIMESTAMP
 	result->time = span1->time - span2->time;
-#else
-	result->time = JROUND(span1->time - span2->time);
-#endif
 
 	PG_RETURN_INTERVAL_P(result);
 }
@@ -2280,7 +2299,7 @@ interval_mul(PG_FUNCTION_ARGS)
 #ifdef HAVE_INT64_TIMESTAMP
 	result->time = rint(span->time * factor + day_remainder * USECS_PER_DAY);
 #else
-	result->time = JROUND(span->time * factor + day_remainder * SECS_PER_DAY);
+	result->time = span->time * factor + day_remainder * SECS_PER_DAY;
 #endif
 
 	result = DatumGetIntervalP(DirectFunctionCall1(interval_justify_hours,
@@ -2332,7 +2351,6 @@ interval_div(PG_FUNCTION_ARGS)
 	result->time += rint(day_remainder * USECS_PER_DAY);
 #else
 	result->time += day_remainder * SECS_PER_DAY;
-	result->time = JROUND(result->time);
 #endif
 
 	result = DatumGetIntervalP(DirectFunctionCall1(interval_justify_hours,

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/date.h,v 1.30 2005/02/25 16:13:29 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/utils/date.h,v 1.31 2005/10/09 17:21:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,10 @@ typedef struct
 #else
 
 #define MAX_TIME_PRECISION 10
+
+/* round off to MAX_TIME_PRECISION decimal places */
+#define TIME_PREC_INV 10000000000.0
+#define TIMEROUND(j) (rint(((double) (j)) * TIME_PREC_INV) / TIME_PREC_INV)
 
 #define DatumGetDateADT(X)	  ((DateADT) DatumGetInt32(X))
 #define DatumGetTimeADT(X)	  ((TimeADT) DatumGetFloat8(X))

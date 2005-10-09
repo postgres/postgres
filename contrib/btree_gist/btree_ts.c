@@ -122,9 +122,7 @@ tstz_to_ts_gmt(Timestamp *gmt, TimestampTz *ts)
 		*gmt -= (tz * INT64CONST(1000000));
 #else
 		*gmt -= tz;
-		*gmt = JROUND(*gmt);
 #endif
-
 	}
 	return gmt;
 }

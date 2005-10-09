@@ -702,10 +702,18 @@ interval2tm(interval span, struct tm *tm, fsec_t *fsec)
 	tm->tm_sec = time / USECS_PER_SEC;
 	*fsec = time - (tm->tm_sec * USECS_PER_SEC);
 #else
+recalc:
 	TMODULO(time, tm->tm_mday, (double)SECS_PER_DAY);
 	TMODULO(time, tm->tm_hour, (double)SECS_PER_HOUR);
 	TMODULO(time, tm->tm_min, (double)SECS_PER_MINUTE);
 	TMODULO(time, tm->tm_sec, 1.0);
+	time = TSROUND(time);
+	/* roundoff may need to propagate to higher-order fields */
+	if (time >= 1.0)
+	{
+		time = ceil(span.time);
+		goto recalc;
+	}
 	*fsec = time;
 #endif
 
@@ -725,8 +733,7 @@ tm2interval(struct tm *tm, fsec_t fsec, interval *span)
 	span->time = (((((tm->tm_mday * (double)HOURS_PER_DAY) +
 						tm->tm_hour) * (double)MINS_PER_HOUR) +
 						tm->tm_min) * (double)SECS_PER_MINUTE) +
-						tm->tm_sec;
-	span->time = JROUND(span->time + fsec);
+						tm->tm_sec + fsec;
 #endif
 
 	return 0;

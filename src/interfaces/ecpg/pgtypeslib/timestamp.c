@@ -38,7 +38,6 @@ dt2local(timestamp dt, int tz)
 	dt -= (tz * USECS_PER_SEC);
 #else
 	dt -= tz;
-	dt = JROUND(dt);
 #endif
 	return dt;
 }	/* dt2local() */
@@ -124,9 +123,8 @@ dt2time(timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
 	*min = time / SECS_PER_MINUTE;
 	time -= (*min) * SECS_PER_MINUTE;
 	*sec = time;
-	*fsec = JROUND(time - *sec);
+	*fsec = time - *sec;
 #endif
-	return;
 }	/* dt2time() */
 
 /* timestamp2tm()
@@ -144,7 +142,7 @@ static int
 timestamp2tm(timestamp dt, int *tzp, struct tm *tm, fsec_t *fsec, char **tzn)
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	int			dDate,
+	int64		dDate,
 				date0;
 	int64		time;
 #else
@@ -160,8 +158,8 @@ timestamp2tm(timestamp dt, int *tzp, struct tm *tm, fsec_t *fsec, char **tzn)
 
 	date0 = date2j(2000, 1, 1);
 
-	time = dt;
 #ifdef HAVE_INT64_TIMESTAMP
+	time = dt;
 	TMODULO(time, dDate, USECS_PER_DAY);
 
 	if (time < INT64CONST(0))
@@ -169,7 +167,18 @@ timestamp2tm(timestamp dt, int *tzp, struct tm *tm, fsec_t *fsec, char **tzn)
 		time += USECS_PER_DAY;
 		dDate -= 1;
 	}
+
+	/* add offset to go from J2000 back to standard Julian date */
+	dDate += date0;
+
+	/* Julian day routine does not work for negative Julian days */
+	if (dDate < 0 || dDate > (timestamp) INT_MAX)
+		return -1;
+
+	j2date((int) dDate, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+	dt2time(time, &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
 #else
+	time = dt;
 	TMODULO(time, dDate, (double)SECS_PER_DAY);
 
 	if (time < 0)
@@ -177,17 +186,33 @@ timestamp2tm(timestamp dt, int *tzp, struct tm *tm, fsec_t *fsec, char **tzn)
 		time += SECS_PER_DAY;
 		dDate -= 1;
 	}
-#endif
-
-	/* Julian day routine does not work for negative Julian days */
-	if (dDate < -date0)
-		return -1;
 
 	/* add offset to go from J2000 back to standard Julian date */
 	dDate += date0;
 
+recalc_d:
+	/* Julian day routine does not work for negative Julian days */
+	if (dDate < 0 || dDate > (timestamp) INT_MAX)
+		return -1;
+
 	j2date((int) dDate, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+recalc_t:
 	dt2time(time, &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
+
+	*fsec = TSROUND(*fsec);
+	/* roundoff may need to propagate to higher-order fields */
+	if (*fsec >= 1.0)
+	{
+		time = ceil(time);
+		if (time >= (double)SECS_PER_DAY)
+		{
+			time = 0;
+			dDate += 1;
+			goto recalc_d;
+		}
+		goto recalc_t;
+	}
+#endif
 
 	if (tzp != NULL)
 	{
@@ -791,11 +816,7 @@ PGTYPEStimestamp_sub(timestamp *ts1, timestamp *ts2, interval *iv)
 	if (TIMESTAMP_NOT_FINITE(*ts1) || TIMESTAMP_NOT_FINITE(*ts2))
 		return PGTYPES_TS_ERR_EINFTIME;
 	else
-#ifdef HAVE_INT64_TIMESTAMP
 		iv->time = (ts1 - ts2);
-#else
-		iv->time = JROUND(ts1 - ts2);
-#endif
 
 	iv->month = 0;
 

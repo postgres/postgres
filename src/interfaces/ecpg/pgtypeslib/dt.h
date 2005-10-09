@@ -13,8 +13,11 @@ typedef int32 fsec_t;
 
 typedef double fsec_t;
 
-#define TIME_PREC_INV 1000000.0
-#define JROUND(j) (rint(((double) (j)) * TIME_PREC_INV) / TIME_PREC_INV)
+/* round off to MAX_TIMESTAMP_PRECISION decimal places */
+/* note: this is also used for rounding off intervals */
+#define TS_PREC_INV 1000000.0
+#define TSROUND(j) (rint(((double) (j)) * TS_PREC_INV) / TS_PREC_INV)
+
 #endif
 
 #define USE_POSTGRES_DATES				0

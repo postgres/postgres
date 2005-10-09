@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.157 2005/07/23 14:25:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.158 2005/10/09 17:21:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3488,8 +3488,8 @@ EncodeTimeOnly(struct pg_tm *tm, fsec_t fsec, int *tzp, int style, char *str)
 	sprintf(str, "%02d:%02d", tm->tm_hour, tm->tm_min);
 
 	/*
-	 * Print fractional seconds if any.  The field widths here should be
-	 * at least equal to the larger of MAX_TIME_PRECISION and
+	 * Print fractional seconds if any.  The fractional field widths
+	 * here should be equal to the larger of MAX_TIME_PRECISION and
 	 * MAX_TIMESTAMP_PRECISION.
 	 */
 	if (fsec != 0)
@@ -3497,7 +3497,7 @@ EncodeTimeOnly(struct pg_tm *tm, fsec_t fsec, int *tzp, int style, char *str)
 #ifdef HAVE_INT64_TIMESTAMP
 		sprintf(str + strlen(str), ":%02d.%06d", tm->tm_sec, fsec);
 #else
-		sprintf(str + strlen(str), ":%012.9f", tm->tm_sec + fsec);
+		sprintf(str + strlen(str), ":%013.10f", tm->tm_sec + fsec);
 #endif
 		TrimTrailingZeros(str);
 	}
