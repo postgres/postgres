@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.171 2005/08/22 17:38:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.172 2005/10/10 20:02:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -647,6 +647,11 @@ dropdb(const char *dbname)
 	DeleteComments(db_id, DatabaseRelationId, 0);
 
 	/*
+	 * Remove shared dependency references for the database.
+	 */
+	dropDatabaseDependencies(db_id);
+
+	/*
 	 * Drop pages for this database that are in the shared buffer cache.
 	 * This is important to ensure that no remaining backend tries to
 	 * write out a dirty buffer to the dead database later...
@@ -673,11 +678,6 @@ dropdb(const char *dbname)
 
 	/* Close pg_database, but keep exclusive lock till commit */
 	heap_close(pgdbrel, NoLock);
-
-	/*
-	 * Remove shared dependency references for the database.
-	 */
-	dropDatabaseDependencies(db_id);
 
 	/*
 	 * Set flag to update flat database file at commit.
