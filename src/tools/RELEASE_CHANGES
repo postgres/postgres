@@ -45,6 +45,13 @@
 
 * Update pg_upgrade to handle new version, or disable
 
+* Translation updates
+	Translations are kept in the project "pgtranslation" on PgFoundry.
+	1. Check out the messages module (of the right branch).
+	2. Check out the admin module.
+	3. Run "sh .../admin/cp-po .../messages .../pgsql
+	4. Commit.
+
 
 ---------------------------------------------------------------------------
 
