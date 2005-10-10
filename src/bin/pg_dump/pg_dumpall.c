@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.67 2005/08/28 16:31:37 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.68 2005/10/10 22:29:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ static const char *progname;
 
 static void help(void);
 
-static void dumpRoles(PGconn *conn, bool initdbonly);
+static void dumpRoles(PGconn *conn);
 static void dumpRoleMembership(PGconn *conn);
 static void dumpGroups(PGconn *conn);
 static void dumpTablespaces(PGconn *conn);
@@ -316,8 +316,8 @@ main(int argc, char *argv[])
 
 	if (!data_only)
 	{
-		/* Dump all users excluding the initdb user */
-		dumpRoles(conn, false);
+		/* Dump roles (users) */
+		dumpRoles(conn);
 
 		/* Dump role memberships --- need different method for pre-8.1 */
 		if (server_version >= 80100)
@@ -325,14 +325,13 @@ main(int argc, char *argv[])
 		else
 			dumpGroups(conn);
 
+		/* Dump tablespaces */
 		if (server_version >= 80000)
 			dumpTablespaces(conn);
 
+		/* Dump CREATE DATABASE commands */
 		if (!globals_only)
 			dumpCreateDB(conn);
-
-		/* Dump alter command for initdb user */
-		dumpRoles(conn, true);
 	}
 
 	if (!globals_only)
@@ -394,11 +393,9 @@ help(void)
 
 /*
  * Dump roles
- *
- * Is able to dump all non initdb users or just the initdb user.
  */
 static void
-dumpRoles(PGconn *conn, bool initdbonly)
+dumpRoles(PGconn *conn)
 {
 	PQExpBuffer buf = createPQExpBuffer();
 	PGresult   *res;
@@ -411,8 +408,7 @@ dumpRoles(PGconn *conn, bool initdbonly)
 				i_rolcanlogin,
 				i_rolconnlimit,
 				i_rolpassword,
-				i_rolvaliduntil,
-				i_clusterowner;
+				i_rolvaliduntil;
 	int			i;
 
 	/* note: rolconfig is dumped later */
@@ -421,8 +417,7 @@ dumpRoles(PGconn *conn, bool initdbonly)
 						  "SELECT rolname, rolsuper, rolinherit, "
 						  "rolcreaterole, rolcreatedb, rolcatupdate, "
 						  "rolcanlogin, rolconnlimit, rolpassword, "
-						  "rolvaliduntil, "
-						  "(oid = (SELECT datdba FROM pg_database WHERE datname = 'template0')) AS clusterowner "
+						  "rolvaliduntil "
 						  "FROM pg_authid");
 	else
 		printfPQExpBuffer(buf,
@@ -435,8 +430,7 @@ dumpRoles(PGconn *conn, bool initdbonly)
 						  "true as rolcanlogin, "
 						  "-1 as rolconnlimit, "
 						  "passwd as rolpassword, "
-						  "valuntil as rolvaliduntil, "
-						  "(usesysid = (SELECT datdba FROM pg_database WHERE datname = '%s')) AS clusterowner "
+						  "valuntil as rolvaliduntil "
 						  "FROM pg_shadow "
 						  "UNION ALL "
 						  "SELECT groname as rolname, "
@@ -448,10 +442,8 @@ dumpRoles(PGconn *conn, bool initdbonly)
 						  "false as rolcanlogin, "
 						  "-1 as rolconnlimit, "
 						  "null::text as rolpassword, "
-						  "null::abstime as rolvaliduntil, "
-						  "false AS clusterowner "
-						  "FROM pg_group",
-						  (server_version >= 70100) ? "template0" : "template1");
+						  "null::abstime as rolvaliduntil "
+						  "FROM pg_group");
 
 	res = executeQuery(conn, buf->data);
 
@@ -465,33 +457,29 @@ dumpRoles(PGconn *conn, bool initdbonly)
 	i_rolconnlimit = PQfnumber(res, "rolconnlimit");
 	i_rolpassword = PQfnumber(res, "rolpassword");
 	i_rolvaliduntil = PQfnumber(res, "rolvaliduntil");
-	i_clusterowner = PQfnumber(res, "clusterowner");
 
-	if (PQntuples(res) > 0 || (!initdbonly && output_clean))
+	if (PQntuples(res) > 0)
 		printf("--\n-- Roles\n--\n\n");
-	if (!initdbonly && output_clean)
-		printf("DELETE FROM pg_shadow WHERE usesysid <> (SELECT datdba FROM pg_database WHERE datname = 'template0');\n\n");
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
 		const char *rolename;
-		bool		clusterowner;
 
 		rolename = PQgetvalue(res, i, i_rolname);
-		clusterowner = (strcmp(PQgetvalue(res, i, i_clusterowner), "t") == 0);
 
-		/* Check which pass we're on */
-		if ((initdbonly && !clusterowner) || (!initdbonly && clusterowner))
-			continue;
+		resetPQExpBuffer(buf);
+
+		if (output_clean)
+			appendPQExpBuffer(buf, "DROP ROLE %s;\n", fmtId(rolename));
 
 		/*
-		 * Dump ALTER ROLE for the cluster owner and CREATE ROLE for all
-		 * other roles
+		 * We dump CREATE ROLE followed by ALTER ROLE to ensure that the
+		 * role will acquire the right properties even if it already exists.
+		 * (The above DROP may therefore seem redundant, but it isn't really,
+		 * because this technique doesn't get rid of role memberships.)
 		 */
-		if (!clusterowner)
-			printfPQExpBuffer(buf, "CREATE ROLE %s WITH", fmtId(rolename));
-		else
-			printfPQExpBuffer(buf, "ALTER ROLE %s WITH", fmtId(rolename));
+		appendPQExpBuffer(buf, "CREATE ROLE %s;\n", fmtId(rolename));
+		appendPQExpBuffer(buf, "ALTER ROLE %s WITH", fmtId(rolename));
 
 		if (strcmp(PQgetvalue(res, i, i_rolsuper), "t") == 0)
 			appendPQExpBuffer(buf, " SUPERUSER");
@@ -569,10 +557,8 @@ dumpRoleMembership(PGconn *conn)
 					   "LEFT JOIN pg_authid um on um.oid = a.member "
 					   "LEFT JOIN pg_authid ug on ug.oid = a.grantor");
 
-	if (PQntuples(res) > 0 || output_clean)
+	if (PQntuples(res) > 0)
 		printf("--\n-- Role memberships\n--\n\n");
-	if (output_clean)
-		printf("DELETE FROM pg_auth_members;\n\n");
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
@@ -610,10 +596,8 @@ dumpGroups(PGconn *conn)
 
 	res = executeQuery(conn, "SELECT groname, grolist FROM pg_group");
 
-	if (PQntuples(res) > 0 || output_clean)
+	if (PQntuples(res) > 0)
 		printf("--\n-- Role memberships\n--\n\n");
-	if (output_clean)
-		printf("DELETE FROM pg_auth_members;\n\n");
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
