@@ -1,21 +1,34 @@
+# translation of pg_config-tr.po to 
 # translation of pg_config-tr.po to Turkish
-# Devrim GUNDUZ <devrim@PostgreSQL.org>, 2004.
+# Devrim GUNDUZ <devrim@PostgreSQL.org>, 2004, 2005.
+# Nicolai Tufar <ntufar@gmail.com>, 2005.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_config-tr\n"
 "POT-Creation-Date: 2004-10-19 01:08+0100\n"
-"PO-Revision-Date: 2005-01-15 14:02+0200\n"
-"Last-Translator: Nicolai Tufar <ntufar@tdmsoft.com>\n"
+"PO-Revision-Date: 2005-10-07 10:06+0200\n"
+"Last-Translator: Nicolai Tufar <ntufar@gmail.com>\n"
 "Language-Team: Turkish <pgsql-tr-genel@PostgreSQL.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 1.3.1\n"
+"X-Generator: KBabel 1.9.1\n"
 "X-Poedit-Language: Turkish\n"
 "X-Poedit-Country: TURKEY\n"
 
-#: pg_config.c:36
+#: pg_config.c:259
+#: pg_config.c:275
+#: pg_config.c:291
+#: pg_config.c:307
+#: pg_config.c:323
+#: pg_config.c:339
+#: pg_config.c:355
+#: pg_config.c:371
+msgid "not recorded\n"
+msgstr "kayıtlı değil\n"
+
+#: pg_config.c:426
 #, c-format
 msgid ""
 "\n"
@@ -26,52 +39,76 @@ msgstr ""
 "%s kurulu PostgreSQL sürümü hakkında bilgi verir.\n"
 "\n"
 
-#: pg_config.c:37
+#: pg_config.c:427
 msgid "Usage:\n"
 msgstr "Kullanımı:\n"
 
-#: pg_config.c:38
+#: pg_config.c:428
 #, c-format
 msgid ""
-"  %s OPTION...\n"
+"  %s [ OPTION ... ]\n"
 "\n"
 msgstr ""
-"  %s SEÇENEK...\n"
+"  %s [ SEÇENEK ... ]\n"
 "\n"
 
-#: pg_config.c:39
+#: pg_config.c:429
 msgid "Options:\n"
 msgstr "Seçenekler:\n"
 
-#: pg_config.c:40
+#: pg_config.c:430
 msgid "  --bindir              show location of user executables\n"
 msgstr "  --bindir              kullanıcı tarafından çalıştırılabilir dosyaların yerlerini göster\n"
 
-#: pg_config.c:41
+#: pg_config.c:431
+msgid "  --docdir              show location of documentation files\n"
+msgstr "  --docdir              dokümantasyon dosyaların yerini göster\n"
+
+#: pg_config.c:432
 msgid ""
 "  --includedir          show location of C header files of the client\n"
 "                        interfaces\n"
 msgstr ""
-"  --includedir         Istenci arabirimlerinin C başlık dosyalarının yerlerini\n"
+"  --includedir         İstemci arabirimlerinin C başlık dosyalarının yerlerini\n"
 "                        göster\n"
 
-#: pg_config.c:43
+#: pg_config.c:434
+msgid "  --pkgincludedir       show location of other C header files\n"
+msgstr "  --pkgincludedir       diğer C başlık dosyalarının yerlerini göster\n"
+
+#: pg_config.c:435
 msgid "  --includedir-server   show location of C header files for the server\n"
 msgstr "  --includedir-server   Sunucu için C başlık dosyalarının yerlerini göster\n"
 
-#: pg_config.c:44
+#: pg_config.c:436
 msgid "  --libdir              show location of object code libraries\n"
 msgstr "  --libdir              nesne kod kütüphanelerinin yerini göster\n"
 
-#: pg_config.c:45
+#: pg_config.c:437
 msgid "  --pkglibdir           show location of dynamically loadable modules\n"
 msgstr "  --pkglibdir           Dinamik olarak yüklenebilen modüllerin yerlerini göster\n"
 
-#: pg_config.c:46
+#: pg_config.c:438
+msgid "  --localedir           show location of locale support files\n"
+msgstr "  --localedir           yerel dil destek dosyalarının yerini göster\n"
+
+#: pg_config.c:439
+msgid "  --mandir              show location of manual pages\n"
+msgstr "  --mandir              kullanıcı kılavuzu (man) dosyaların yerini göster\n"
+
+#: pg_config.c:440
+msgid "  --sharedir            show location of architecture-independent support files\n"
+msgstr "  --sharedir            platform bağımsız dosyaların yerini göster\n"
+
+#: pg_config.c:441
+msgid "  --sysconfdir          show location of system-wide configuration files\n"
+msgstr "  --sysconfdir          sistem geneli parametre dosyaların yerini göster\n"
+
+#: pg_config.c:442
 msgid "  --pgxs                show location of extension makefile\n"
 msgstr "  --pgxs                extension makefile dosyasının yerini göster\n"
 
-#: pg_config.c:47
+#: pg_config.c:443
 msgid ""
 "  --configure           show options given to \"configure\" script when\n"
 "                        PostgreSQL was built\n"
@@ -79,45 +116,70 @@ msgstr ""
 "  --configure           PostgreSQL yapılandırıldığında \"configure\" betiğine verilen\n"
 "                        seçeneklerin listesini göster\n"
 
-#: pg_config.c:49
-msgid "  --version             show the PostgreSQL version, then exit\n"
+#: pg_config.c:445
+msgid "  --cc                  show CC value used when PostgreSQL was built\n"
+msgstr "  --ldflags             PostgreSQL derleme sırasında kullanılan CC değerini göster\n"
+
+#: pg_config.c:446
+msgid "  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
+msgstr "  --ldflags             PostgreSQL derleme sırasında kullanılan CPPFLAGS değerini göster\n"
+
+#: pg_config.c:447
+msgid "  --cflags              show CFLAGS value used when PostgreSQL was built\n"
+msgstr "  --ldflags             PostgreSQL derleme sırasında kullanılan CFLAGS değerini göster\n"
+
+#: pg_config.c:448
+msgid "  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
+msgstr "  --ldflags             PostgreSQL derleme sırasında kullanılan CFLAGS_SL değerini göster\n"
+
+#: pg_config.c:449
+msgid "  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
+msgstr "  --ldflags             PostgreSQL derleme sırasında kullanılan LDFLAGS değerini göster\n"
+
+#: pg_config.c:450
+msgid "  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was built\n"
+msgstr "  --ldflags             PostgreSQL derleme sırasında kullanılan LDFLAGS_SL değerini göster\n"
+
+#: pg_config.c:451
+msgid "  --libs                show LIBS value used when PostgreSQL was built\n"
+msgstr "  --libs                PostgreSQL derleme sırasında kullanılan LIBS değerini göster\n"
+
+#: pg_config.c:452
+msgid "  --version             show the PostgreSQL version\n"
 msgstr "  --version             PostgreSQL sürümünü göster ve çık\n"
 
-#: pg_config.c:50
+#: pg_config.c:453
+msgid "  --help                show this help, then exit\n"
+msgstr "  --help                bu yardımı göster ve çık\n"
+
+#: pg_config.c:454
 msgid ""
-"  --help                show this help, then exit\n"
+"\n"
+"With no arguments, all known items are shown.\n"
 "\n"
 msgstr ""
-"  --help                bu yardımı göster ve çık\n"
+"\n"
+"Parametre verilmediyse, tüm değerleri gösterilmektedir.\n"
 "\n"
 
-#: pg_config.c:51
+#: pg_config.c:455
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr "Hataları <pgsql-bugs@postgresql.org> adresine bildirebilirsiniz.\n"
 
-#: pg_config.c:57
+#: pg_config.c:461
 #, c-format
-msgid ""
-"\n"
-"Try \"%s --help\" for more information\n"
-msgstr ""
-"\n"
-"Daha fazla bilgi için\"%s --help\" parametresini kullanabilirsiniz\n"
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Daha fazla bilgi için\"%s --help\" parametresini kullanabilirsiniz\n"
 
-#: pg_config.c:75
-#, c-format
-msgid "%s: argument required\n"
-msgstr "%s: argüman gerekli\n"
-
-#: pg_config.c:104
-#, c-format
-msgid "%s: invalid argument: %s\n"
-msgstr "%s: geçersiz argüman: %s\n"
-
-#: pg_config.c:113
+#: pg_config.c:500
 #, c-format
 msgid "%s: could not find own executable\n"
 msgstr "%s: çalıştırılabilir dosya bulunamadı\n"
+
+#: pg_config.c:523
+#, c-format
+msgid "%s: invalid argument: %s\n"
+msgstr "%s: geçersiz argüman: %s\n"
 
 #: ../../port/exec.c:194
 #: ../../port/exec.c:308

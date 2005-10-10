@@ -1,18 +1,18 @@
 # translation of pg_dump-tr.po to Turkish
 # Devrim GUNDUZ <devrim@PostgreSQL.org>, 2004.
-# Nicolai TUFAR <ntufar@tdmsoft.org>, 2004.
+# Nicolai TUFAR <ntufar@gmail.org>, 2004, 2005.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump-tr\n"
-"POT-Creation-Date: 2004-09-13 07:40+0100\n"
-"PO-Revision-Date: 2005-01-15 14:04+0200\n"
-"Last-Translator: Nicolai Tufar <ntufar@tdmsoft.com>\n"
+"POT-Creation-Date: 2005-04-02 07:12+0100\n"
+"PO-Revision-Date: 2005-10-07 10:11+0200\n"
+"Last-Translator: Nicolai Tufar <ntufar@gmail.com>\n"
 "Language-Team: Turkish <pgsql-tr-genel@PostgreSQL.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 1.3.1\n"
+"X-Generator: KBabel 1.9.1\n"
 "X-Poedit-Language: Turkish\n"
 "X-Poedit-Country: TURKEY\n"
 "X-Poedit-Basepath: C:\\pgsql\\src\\bin\\pg_dump\n"
@@ -20,96 +20,75 @@ msgstr ""
 "X-Poedit-SearchPath-1: /home/ntufar/pg/pgsql/src/backend\n"
 "X-Poedit-SearchPath-2: c:\\pgsql\\src\\backend\n"
 
-#: pg_dump.c:364
-#: pg_restore.c:229
+#: pg_dump.c:371
+#: pg_restore.c:234
 msgid "User name: "
 msgstr "Kullanıcı adı: "
 
-#: pg_dump.c:400
-#: pg_dumpall.c:264
-#: pg_restore.c:256
+#: pg_dump.c:407
+#: pg_dumpall.c:267
+#: pg_restore.c:261
 #, c-format
 msgid "%s: invalid -X option -- %s\n"
 msgstr "%s: geçersiz -X seçeneği -- %s\n"
 
-#: pg_dump.c:402
-#: pg_dump.c:416
-#: pg_dump.c:425
-#: pg_dumpall.c:266
-#: pg_dumpall.c:275
-#: pg_dumpall.c:292
-#: pg_restore.c:258
-#: pg_restore.c:268
-#: pg_restore.c:285
+#: pg_dump.c:409
+#: pg_dump.c:423
+#: pg_dump.c:432
+#: pg_dumpall.c:269
+#: pg_dumpall.c:278
+#: pg_dumpall.c:295
+#: pg_restore.c:263
+#: pg_restore.c:273
+#: pg_restore.c:290
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Daha fazla bilgi için \"%s --help\" yazabilirsiniz.\n"
 
-#: pg_dump.c:423
-#: pg_dumpall.c:290
+#: pg_dump.c:430
+#: pg_dumpall.c:293
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: çok fazla komut satırı argümanı (ilki \"%s\" idi)\n"
 
-#: pg_dump.c:436
+#: pg_dump.c:443
 msgid "options \"schema only\" (-s) and \"data only\" (-a) cannot be used together\n"
 msgstr "\"schema only\" (-s) ve \"data only\" (-a) seçenekleri beraber kullanılamaz\n"
 
-#: pg_dump.c:442
+#: pg_dump.c:449
 msgid "options \"clean\" (-c) and \"data only\" (-a) cannot be used together\n"
 msgstr "\"clean\" (-c) ve \"data only\" (-a) seçenekleri beraber kullanılamaz\n"
 
-#: pg_dump.c:448
-msgid "large-object output not supported for a single table\n"
-msgstr "tek bir tablo için large-object çıktısı desteklenmemektedir\n"
-
-#: pg_dump.c:449
-#: pg_dump.c:456
-msgid "use a full dump instead\n"
-msgstr "bunun yerine tam dump kullanınız\n"
-
-#: pg_dump.c:455
-msgid "large-object output not supported for a single schema\n"
-msgstr "tek bir şema için large-object çıktısı desteklenmemektedir\n"
-
-#: pg_dump.c:462
+#: pg_dump.c:458
 msgid "INSERT (-d, -D) and OID (-o) options cannot be used together\n"
 msgstr "INSERT (-d, -D) ve OID (-o)seçenekleri beraber kullanılamaz\n"
 
-#: pg_dump.c:463
+#: pg_dump.c:459
 msgid "(The INSERT command cannot set OIDs.)\n"
 msgstr "(INSERT komutu OIDleri ayarlayamaz.)\n"
 
-#: pg_dump.c:469
-msgid "large-object output is not supported for plain-text dump files\n"
-msgstr "düz metin dump dosyaları için large-object çıktısı desteklenmemektedir\n"
-
-#: pg_dump.c:470
-msgid "(Use a different output format.)\n"
-msgstr "(Değişik bir çıktı biçimi kullanınız.)\n"
-
-#: pg_dump.c:499
+#: pg_dump.c:488
 #, c-format
 msgid "invalid output format \"%s\" specified\n"
 msgstr "Geçersiz çıkto biçimi belirtildi: \"%s\" \n"
 
-#: pg_dump.c:505
+#: pg_dump.c:494
 #, c-format
 msgid "could not open output file \"%s\" for writing\n"
 msgstr "\"%s\" çıktı dosyası yazmak için açılamadı\n"
 
-#: pg_backup_db.c:52
-#: pg_dump.c:516
+#: pg_backup_db.c:51
+#: pg_dump.c:505
 #, c-format
 msgid "could not parse version string \"%s\"\n"
 msgstr "\"%s\" sürüm bilgisi parse edilemedi\n"
 
-#: pg_dump.c:552
+#: pg_dump.c:558
 #, c-format
 msgid "last built-in OID is %u\n"
 msgstr "Son gömülü OID : %u\n"
 
-#: pg_dump.c:663
+#: pg_dump.c:666
 #, c-format
 msgid ""
 "%s dumps a database as a text file or to other formats.\n"
@@ -118,20 +97,20 @@ msgstr ""
 "%s veritabanını metin dosyası ya da diğer biçimlerde dump eder.\n"
 "\n"
 
-#: pg_dump.c:664
-#: pg_dumpall.c:337
-#: pg_restore.c:359
+#: pg_dump.c:667
+#: pg_dumpall.c:356
+#: pg_restore.c:364
 msgid "Usage:\n"
 msgstr "Kullanımı:\n"
 
-#: pg_dump.c:665
+#: pg_dump.c:668
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [SEÇENEK]... [VERİTABANI_ADI]\n"
 
-#: pg_dump.c:667
-#: pg_dumpall.c:340
-#: pg_restore.c:362
+#: pg_dump.c:670
+#: pg_dumpall.c:359
+#: pg_restore.c:367
 msgid ""
 "\n"
 "General options:\n"
@@ -139,16 +118,16 @@ msgstr ""
 "\n"
 "Genel seçenekler:\n"
 
-#: pg_dump.c:668
-#: pg_restore.c:364
+#: pg_dump.c:671
+#: pg_restore.c:369
 msgid "  -f, --file=FILENAME      output file name\n"
 msgstr "  -f, --file=DOSYA_ADI      çıktı dosya adı\n"
 
-#: pg_dump.c:669
+#: pg_dump.c:672
 msgid "  -F, --format=c|t|p       output file format (custom, tar, plain text)\n"
 msgstr "  -F, --format=c|t|p       çıktı dosya biçimi (özel, tar, düz metin)\n"
 
-#: pg_dump.c:670
+#: pg_dump.c:673
 msgid ""
 "  -i, --ignore-version     proceed even when server version mismatches\n"
 "                           pg_dump version\n"
@@ -156,29 +135,29 @@ msgstr ""
 "  -i, --ignore-version     sunucunun sürümü ile pg_dump'ın sürümü eşleşmezse\n"
 "                           bile devam et\n"
 
-#: pg_dump.c:672
-#: pg_restore.c:368
+#: pg_dump.c:675
+#: pg_restore.c:373
 msgid "  -v, --verbose            verbose mode\n"
 msgstr "  -v, --verbose            verbose modu\n"
 
-#: pg_dump.c:673
+#: pg_dump.c:676
 msgid "  -Z, --compress=0-9       compression level for compressed formats\n"
 msgstr "  -Z, --compress=0-9       sıkıştırılmış biçimler için sıkıştırma seviyesi\n"
 
-#: pg_dump.c:674
-#: pg_dumpall.c:343
-#: pg_restore.c:369
+#: pg_dump.c:677
+#: pg_dumpall.c:362
+#: pg_restore.c:374
 msgid "  --help                   show this help, then exit\n"
 msgstr "  --help                   bu yardımı gösterir ve çıkar\n"
 
-#: pg_dump.c:675
-#: pg_dumpall.c:344
-#: pg_restore.c:370
+#: pg_dump.c:678
+#: pg_dumpall.c:363
+#: pg_restore.c:375
 msgid "  --version                output version information, then exit\n"
 msgstr "  --version                sürüm bilgisini gösterir ve çıkar\n"
 
-#: pg_dump.c:677
-#: pg_dumpall.c:345
+#: pg_dump.c:680
+#: pg_dumpall.c:364
 msgid ""
 "\n"
 "Options controlling the output content:\n"
@@ -186,44 +165,44 @@ msgstr ""
 "\n"
 "Çıktı içeriğini kontrol eden seçenekler:\n"
 
-#: pg_dump.c:678
-#: pg_dumpall.c:346
+#: pg_dump.c:681
+#: pg_dumpall.c:365
 msgid "  -a, --data-only          dump only the data, not the schema\n"
 msgstr "  -a, --data-only          sadece veriyi dump eder, şemayı etmez\n"
 
-#: pg_dump.c:679
-msgid "  -b, --blobs              include large objects in dump\n"
-msgstr "  -b, --blobs              dump içine large-objectleri de ekler\n"
-
-#: pg_dump.c:680
-#: pg_restore.c:374
+#: pg_dump.c:682
+#: pg_restore.c:379
 msgid "  -c, --clean              clean (drop) schema prior to create\n"
 msgstr "  -c, --clean              şemayı yaratmadan önce onu temizle (kaldır)\n"
 
-#: pg_dump.c:681
+#: pg_dump.c:683
 msgid "  -C, --create             include commands to create database in dump\n"
 msgstr "  -C, --create             dump'ın içinde veritabanını yaratacak komutları da ekle\n"
 
-#: pg_dump.c:682
-#: pg_dumpall.c:348
+#: pg_dump.c:684
+#: pg_dumpall.c:367
 msgid "  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"
 msgstr "  -d, --inserts            verileri COPYkomutları yerine INSERT olarak dump et\n"
 
-#: pg_dump.c:683
-#: pg_dumpall.c:349
+#: pg_dump.c:685
+#: pg_dumpall.c:368
 msgid "  -D, --column-inserts     dump data as INSERT commands with column names\n"
 msgstr "  -D, --column-inserts     veriyi kolon adları ile insert komutu olarak dump et.\n"
 
-#: pg_dump.c:684
+#: pg_dump.c:686
+msgid "  -E, --encoding=ENCODING  dump the data in encoding ENCODING\n"
+msgstr "  -E, --encoding=ENCODING  veriyi ENCODING dil kodlamasıyla dump et\n"
+
+#: pg_dump.c:687
 msgid "  -n, --schema=SCHEMA      dump the named schema only\n"
 msgstr "  -n, --schema=SCHEMA      sadece verilen şemayı dump et\n"
 
-#: pg_dump.c:685
-#: pg_dumpall.c:351
+#: pg_dump.c:688
+#: pg_dumpall.c:370
 msgid "  -o, --oids               include OIDs in dump\n"
 msgstr "  -o, --oids               dump içinde OIDleri de içer\n"
 
-#: pg_dump.c:686
+#: pg_dump.c:689
 msgid ""
 "  -O, --no-owner           skip restoration of object ownership\n"
 "                           in plain text format\n"
@@ -231,12 +210,12 @@ msgstr ""
 "  -O, --no-owner           düz metin biçiminde nesne sahipliğini \n"
 "                          ayarlayan komutlarının oluşturmasını engelle\n"
 
-#: pg_dump.c:688
-#: pg_dumpall.c:353
+#: pg_dump.c:691
+#: pg_dumpall.c:372
 msgid "  -s, --schema-only        dump only the schema, no data\n"
 msgstr "  -s, --schema-only        sadece şemayı dump et, veriyi etme\n"
 
-#: pg_dump.c:689
+#: pg_dump.c:692
 msgid ""
 "  -S, --superuser=NAME     specify the superuser user name to use in\n"
 "                           plain text format\n"
@@ -244,17 +223,17 @@ msgstr ""
 "  -S, --superuser=NAME     kullanılacak superuser kullanıcısının adı\n"
 "                           düz metin olarak\n"
 
-#: pg_dump.c:691
+#: pg_dump.c:694
 msgid "  -t, --table=TABLE        dump the named table only\n"
 msgstr "  -t, --table=TABLE        sadece bu tabloyu aktar\n"
 
-#: pg_dump.c:692
-#: pg_dumpall.c:355
+#: pg_dump.c:695
+#: pg_dumpall.c:374
 msgid "  -x, --no-privileges      do not dump privileges (grant/revoke)\n"
 msgstr "  -x, --no-privileges      yetkileri aktarmayı engelle (grant/revoke)\n"
 
-#: pg_dump.c:693
-#: pg_dumpall.c:356
+#: pg_dump.c:696
+#: pg_dumpall.c:375
 msgid ""
 "  -X disable-dollar-quoting, --disable-dollar-quoting\n"
 "                           disable dollar quoting, use SQL standard quoting\n"
@@ -262,9 +241,9 @@ msgstr ""
 "  -X disable-dollar-quoting, --disable-dollar-quoting\n"
 "                           dollar quoting kullanmayı engelle, standart SQL quoting kullan\n"
 
-#: pg_dump.c:695
-#: pg_dumpall.c:358
-#: pg_restore.c:388
+#: pg_dump.c:698
+#: pg_dumpall.c:377
+#: pg_restore.c:394
 msgid ""
 "  -X disable-triggers, --disable-triggers\n"
 "                           disable triggers during data-only restore\n"
@@ -272,9 +251,9 @@ msgstr ""
 "  -X disable-triggers, --disable-triggers\n"
 "                           sadece veri geri yüklemede tetikleyicileri devre dışı bırak\n"
 
-#: pg_dump.c:697
-#: pg_dumpall.c:360
-#: pg_restore.c:390
+#: pg_dump.c:700
+#: pg_dumpall.c:379
+#: pg_restore.c:396
 msgid ""
 "  -X use-set-session-authorization, --use-set-session-authorization\n"
 "                           use SESSION AUTHORIZATION commands instead of\n"
@@ -284,9 +263,9 @@ msgstr ""
 "                           OWNER TO komutun yerine\n"
 "                           SESSION AUTHORIZATION komutunu kullan\n"
 
-#: pg_dump.c:701
-#: pg_dumpall.c:364
-#: pg_restore.c:394
+#: pg_dump.c:704
+#: pg_dumpall.c:383
+#: pg_restore.c:400
 msgid ""
 "\n"
 "Connection options:\n"
@@ -294,31 +273,31 @@ msgstr ""
 "\n"
 "Bağlantı Seçenekleri:\n"
 
-#: pg_dump.c:702
-#: pg_dumpall.c:365
-#: pg_restore.c:395
+#: pg_dump.c:705
+#: pg_dumpall.c:384
+#: pg_restore.c:401
 msgid "  -h, --host=HOSTNAME      database server host or socket directory\n"
 msgstr "  -h, --host=HOSTNAME          veritabanı sunucusu adresi ya da soket dizini\n"
 
-#: pg_dump.c:703
-#: pg_dumpall.c:366
-#: pg_restore.c:396
+#: pg_dump.c:706
+#: pg_dumpall.c:385
+#: pg_restore.c:402
 msgid "  -p, --port=PORT          database server port number\n"
 msgstr "  -p PORT         veritabanı sunucusunun port numarası\n"
 
-#: pg_dump.c:704
-#: pg_dumpall.c:367
-#: pg_restore.c:397
+#: pg_dump.c:707
+#: pg_dumpall.c:386
+#: pg_restore.c:403
 msgid "  -U, --username=NAME      connect as specified database user\n"
 msgstr "  -U, --username=KULLANICI_ADI   bağlanılacak kullanıcı adı\n"
 
-#: pg_dump.c:705
-#: pg_dumpall.c:368
-#: pg_restore.c:398
+#: pg_dump.c:708
+#: pg_dumpall.c:387
+#: pg_restore.c:404
 msgid "  -W, --password           force password prompt (should happen automatically)\n"
 msgstr "  -W              şifre sor (otomatik olarak her zaman açık)\n"
 
-#: pg_dump.c:707
+#: pg_dump.c:710
 msgid ""
 "\n"
 "If no database name is supplied, then the PGDATABASE environment\n"
@@ -330,54 +309,54 @@ msgstr ""
 "kullanılacaktır.\n"
 "\n"
 
-#: pg_dump.c:709
-#: pg_dumpall.c:371
-#: pg_restore.c:402
+#: pg_dump.c:712
+#: pg_dumpall.c:390
+#: pg_restore.c:408
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr "Hataları <pgsql-bugs@postgresql.org> adresine bildirin.\n"
 
-#: pg_backup_archiver.c:1219
-#: pg_dump.c:717
+#: pg_backup_archiver.c:1102
+#: pg_dump.c:720
 msgid "*** aborted because of error\n"
 msgstr "*** hata nedeniyle durduruldu\n"
 
-#: pg_dump.c:799
+#: pg_dump.c:802
 #, c-format
 msgid "dumping contents of table %s\n"
 msgstr "%s tablosunun içeriği aktarılıyor\n"
 
-#: pg_dump.c:911
+#: pg_dump.c:914
 #, c-format
 msgid "SQL command to dump the contents of table \"%s\" failed: PQendcopy() failed.\n"
 msgstr "\"%s\" tablosunu içeriğini aktarmak için üretilen SQL sorgusu başarısız: PQendcopy() başarısız.\n"
 
-#: pg_dump.c:912
-#: pg_dump.c:8116
+#: pg_dump.c:915
+#: pg_dump.c:8397
 #, c-format
 msgid "Error message from server: %s"
 msgstr "Sunucudan hata mesajı alındı: %s"
 
-#: pg_dump.c:913
-#: pg_dump.c:8117
+#: pg_dump.c:916
+#: pg_dump.c:8398
 #, c-format
 msgid "The command was: %s\n"
 msgstr "O sırada yürütülen komut: %s\n"
 
-#: pg_dump.c:1184
+#: pg_dump.c:1187
 msgid "saving database definition\n"
 msgstr "veritabanın tanımı kaydediliyor\n"
 
-#: pg_dump.c:1230
+#: pg_dump.c:1236
 #, c-format
 msgid "missing pg_database entry for database \"%s\"\n"
 msgstr "\"%s\" veritabanı için pg_database kaydı bulunamadı\n"
 
-#: pg_dump.c:1237
+#: pg_dump.c:1243
 #, c-format
 msgid "query returned more than one (%d) pg_database entry for database \"%s\"\n"
 msgstr "\"%2$s\" veritabanı için sorgu, birden fazla (%1$d) pg_database kaydı getirdi\n"
 
-#: pg_dump.c:1345
+#: pg_dump.c:1322
 msgid "saving encoding\n"
 msgstr "dil kodlaması kaydediliyor\n"
 
@@ -385,250 +364,262 @@ msgstr "dil kodlaması kaydediliyor\n"
 msgid "saving large objects\n"
 msgstr "large objectler kaydediliyor\n"
 
-#: pg_dump.c:1428
+#: pg_dump.c:1431
 #, c-format
 msgid "dumpBlobs(): could not open large object: %s"
 msgstr "dumpBlobs(): large object açılamadı: %s"
 
-#: pg_dump.c:1441
+#: pg_dump.c:1444
 #, c-format
 msgid "dumpBlobs(): error reading large object: %s"
 msgstr "dumpBlobs(): large object okuma hatası: %s"
 
-#: pg_dump.c:1558
+#: pg_dump.c:1481
+msgid "saving large object comments\n"
+msgstr "large object açıklamaları kaydediliyor\n"
+
+#: pg_dump.c:1635
 #, c-format
 msgid "WARNING: owner of schema \"%s\" appears to be invalid\n"
 msgstr "UYARI: \"%s\" şemasının sahibi geçersizdir\n"
 
-#: pg_dump.c:1575
+#: pg_dump.c:1652
 #, c-format
 msgid "specified schema \"%s\" does not exist\n"
 msgstr "belirlenen \"%s\" şeması mevcut değil\n"
 
-#: pg_dump.c:1612
+#: pg_dump.c:1689
 #, c-format
 msgid "schema with OID %u does not exist\n"
 msgstr "OID %u olan şema mevcut değil\n"
 
-#: pg_dump.c:1797
+#: pg_dump.c:1877
 #, c-format
 msgid "WARNING: owner of data type \"%s\" appears to be invalid\n"
 msgstr "UYARI: \"%s\" veri tipinin sahibi geçersizdir\n"
 
-#: pg_dump.c:1895
+#: pg_dump.c:1978
 #, c-format
 msgid "WARNING: owner of operator \"%s\" appears to be invalid\n"
 msgstr "UYARI: \"%s\" operatörün  sahibi geçersizdir\n"
 
-#: pg_dump.c:2061
+#: pg_dump.c:2146
 #, c-format
 msgid "WARNING: owner of operator class \"%s\" appears to be invalid\n"
 msgstr "UYARI: \"%s\" operator sınıfının sahibi geçersizdir\n"
 
-#: pg_dump.c:2165
+#: pg_dump.c:2253
 #, c-format
 msgid "WARNING: owner of aggregate function \"%s\" appears to be invalid\n"
 msgstr "UYARI: \"%s\" aggregate fonksiyonun sahibi geçersizdir\n"
 
-#: pg_dump.c:2299
+#: pg_dump.c:2394
 #, c-format
 msgid "WARNING: owner of function \"%s\" appears to be invalid\n"
 msgstr "UYARI: \"%s\" fonksiyonunun sahibi geçersizdir\n"
 
-#: pg_dump.c:2586
+#: pg_dump.c:2686
 #, c-format
 msgid "WARNING: owner of table \"%s\" appears to be invalid\n"
 msgstr "UYARI: \"%s\" tablosunun sahibi geçersizdir\n"
 
-#: pg_dump.c:2605
+#: pg_dump.c:2705
 #, c-format
 msgid "specified table \"%s\" does not exist\n"
 msgstr "belirlenen \"%s\" tablosu mevcut değil\n"
 
-#: pg_dump.c:2712
+#: pg_dump.c:2812
 #, c-format
 msgid "reading indexes for table \"%s\"\n"
 msgstr "\"%s\" tablosunun indexleri okunuyor\n"
 
-#: pg_dump.c:2949
+#: pg_dump.c:3049
 #, c-format
 msgid "reading foreign key constraints for table \"%s\"\n"
 msgstr "\"%s\" tablosunun foreign key bütünlük kısıtlamaları okunuyor\n"
 
-#: pg_dump.c:3234
+#: pg_dump.c:3261
+#, c-format
+msgid "failed sanity check, parent table OID %u of pg_rewrite entry OID %u not found\n"
+msgstr "tutarlılık kontrolü başarısız, üst tablo OID'inin %u, pg_rewrite girdisi OID'i %u bulunamadı\n"
+
+#: pg_dump.c:3342
 #, c-format
 msgid "reading triggers for table \"%s\"\n"
 msgstr "\"%s\" tablosunun tetikleyicileri okunuyor\n"
 
-#: pg_dump.c:3306
+#: pg_dump.c:3414
 #, c-format
 msgid "expected %d triggers on table \"%s\" but found %d\n"
 msgstr "\"%2$s\" tablosu zerinde %1$d tetikleyici beklenirken %3$d bulundu\n"
 
-#: pg_dump.c:3351
+#: pg_dump.c:3461
 #, c-format
 msgid "query produced null referenced table name for foreign key trigger \"%s\" on table \"%s\" (OID of table: %u)\n"
 msgstr "\"%2$s\" tablosu üzerindeki \"%1$s\" foreign key tetikleyici için sorgu, null referans edilen tablo sayısı getirdi (tablo OID: %3$u)\n"
 
-#: pg_dump.c:3652
+#: pg_dump.c:3762
 #, c-format
 msgid "finding the columns and types of table \"%s\"\n"
 msgstr "\"%s\" tablosunun bütünlük kısıtlamaları ve tipleri bulunuyor\n"
 
-#: pg_dump.c:3738
+#: pg_dump.c:3848
 #, c-format
 msgid "invalid column numbering in table \"%s\"\n"
 msgstr "\"%s\" tablosunda geçersiz kolon numaralandırlması\n"
 
-#: pg_dump.c:3772
+#: pg_dump.c:3882
 #, c-format
 msgid "finding default expressions of table \"%s\"\n"
 msgstr "\"%s\" tablosu için varsayılan ifadeler aranıyor\n"
 
-#: pg_dump.c:3855
+#: pg_dump.c:3965
 #, c-format
 msgid "invalid adnum value %d for table \"%s\"\n"
 msgstr "\"%2$s\" tablosu için geçersiz adnum değeri %1$d\n"
 
-#: pg_dump.c:3873
+#: pg_dump.c:3983
 #, c-format
 msgid "finding check constraints for table \"%s\"\n"
 msgstr "\"%s\" tablosu için bütünlük kısıtlamaları bulunuyor\n"
 
-#: pg_dump.c:3937
+#: pg_dump.c:4047
 #, c-format
 msgid "expected %d check constraints on table \"%s\" but found %d\n"
 msgstr "\"%2$s\" tablosu üzerinde %1$dbütünlük kısıtlaması beklenirken %3$d bulundu\n"
 
-#: pg_dump.c:3939
+#: pg_dump.c:4049
 msgid "(The system catalogs might be corrupted.)\n"
 msgstr "(Sistem kataloğu bozulmuş olabilir.)\n"
 
-#: pg_dump.c:4628
-#: pg_dump.c:4794
-#: pg_dump.c:5195
-#: pg_dump.c:5581
-#: pg_dump.c:5880
-#: pg_dump.c:6082
-#: pg_dump.c:6267
+#: pg_dump.c:4745
+#: pg_dump.c:4911
+#: pg_dump.c:5437
+#: pg_dump.c:5862
+#: pg_dump.c:6161
+#: pg_dump.c:6363
+#: pg_dump.c:6567
 #, c-format
 msgid "Got %d rows instead of one from: %s"
 msgstr "%2$s sorgusundan bir yerine %1$d satır alındı"
 
-#: pg_dump.c:4903
+#: pg_dump.c:5020
 #, c-format
 msgid "query yielded no rows: %s\n"
 msgstr "sorgu hiçbir satır getirmedi: %s\n"
 
-#: pg_dump.c:5251
+#: pg_dump.c:5257
+msgid "WARNING: bogus value in proargmodes array\n"
+msgstr "UYARI: proargnames dizisi içinde beklenmeyen değer\n"
+
+#: pg_dump.c:5497
+msgid "WARNING: could not parse proallargtypes array\n"
+msgstr "UYARI: proallargtypes dizisi ayrıştırılamadı\n"
+
+#: pg_dump.c:5513
+msgid "WARNING: could not parse proargmodes array\n"
+msgstr "UYARI: proargmodes dizisi ayrıştırılamadı\n"
+
+#: pg_dump.c:5527
 msgid "WARNING: could not parse proargnames array\n"
 msgstr "UYARI: proargnames dizisi ayrıştırılamadı\n"
 
-#: pg_dump.c:5288
+#: pg_dump.c:5565
 #, c-format
 msgid "unrecognized provolatile value for function \"%s\"\n"
 msgstr "\"%s\" fonksiyonu için bilinmeyen provolatile değeri\n"
 
-#: pg_dump.c:5805
+#: pg_dump.c:6086
 #, c-format
 msgid "WARNING: could not find operator with OID %s\n"
 msgstr "UYARI: OID %s olan operatör bulunamadı\n"
 
-#: pg_dump.c:6295
+#: pg_dump.c:6597
 #, c-format
 msgid "WARNING: aggregate function %s could not be dumped correctly for this database version; ignored\n"
 msgstr "UYARI: %s aggregate fonksiyonu veritabanın bu sürümünde düzgün dump edilemiyor; atlanıyor\n"
 
-#: pg_dump.c:6429
+#: pg_dump.c:6738
 #, c-format
 msgid "could not parse ACL list (%s) for object \"%s\" (%s)\n"
 msgstr "\"%2$s\" nesnesinin ACL listesi (%1$s) ayrıştırılamıyor (%3$s)\n"
 
-#: pg_dump.c:6523
+#: pg_dump.c:6832
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned no data\n"
 msgstr "\"%s\" vew tanımını getirecek sorgu hiçbir veri getirmedi\n"
 
-#: pg_dump.c:6526
+#: pg_dump.c:6835
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned more than one definition\n"
 msgstr "\"%s\" vew tanımını getirecek sorgu birden çık tanımı getirdi\n"
 
-#: pg_dump.c:6535
+#: pg_dump.c:6844
 #, c-format
 msgid "definition of view \"%s\" appears to be empty (length zero)\n"
 msgstr "\"%s\" vew tanımı boştur (uzunluk sıfır)\n"
 
-#: pg_dump.c:6848
+#: pg_dump.c:7157
 #, c-format
 msgid "invalid column number %d for table \"%s\"\n"
 msgstr "\"%2$s\" tablosu için geçersiz sütun numarası %1$d\n"
 
-#: pg_dump.c:6951
+#: pg_dump.c:7260
 #, c-format
 msgid "missing index for constraint \"%s\"\n"
 msgstr "\"%s\" bütünlük kısıtlamasının indexi eksik\n"
 
-#: pg_dump.c:7111
+#: pg_dump.c:7420
 #, c-format
 msgid "unrecognized constraint type: %c\n"
 msgstr "bilinmeyen bütünlük kısıtlama türü: %c\n"
 
-#: pg_dump.c:7172
-msgid "inserted invalid OID\n"
-msgstr "geçersiz OID eklendi\n"
-
-#: pg_dump.c:7178
-#, c-format
-msgid "maximum system OID is %u\n"
-msgstr "ne yüksek OID değeri: %u\n"
-
-#: pg_dump.c:7219
+#: pg_dump.c:7483
 msgid "missing pg_database entry for this database\n"
 msgstr "bu veritabanı için pg_database kaydı bulunamadı\n"
 
-#: pg_dump.c:7224
+#: pg_dump.c:7488
 msgid "found more than one pg_database entry for this database\n"
 msgstr "bu veritabanı için birden fazla pg_database kaydı bulundu\n"
 
-#: pg_dump.c:7256
+#: pg_dump.c:7520
 msgid "could not find entry for pg_indexes in pg_class\n"
 msgstr "pg_class içinde pg_indexes için kayıt bulunamadı\n"
 
-#: pg_dump.c:7261
+#: pg_dump.c:7525
 msgid "found more than one entry for pg_indexes in pg_class\n"
 msgstr "pg_class içinde pg_indexes için birden çok kayıt bulundu\n"
 
-#: pg_dump.c:7310
+#: pg_dump.c:7574
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d rows (expected 1)\n"
 msgstr "\"%s\" sequence verisini getirecek sorgu %d satır getirdi tanımı getirdi (bir satır bekleniyordu)\n"
 
-#: pg_dump.c:7319
+#: pg_dump.c:7583
 #, c-format
 msgid "query to get data of sequence \"%s\" returned name \"%s\"\n"
 msgstr "\"%s\" sequence verisini getirecek sorgu \"%s\" adını getirdi\n"
 
-#: pg_dump.c:7560
+#: pg_dump.c:7825
 #, c-format
 msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\"\n"
 msgstr "\"%3$s\" tablosunun \"%2$s\" tetikleyicisi için geçersiz satır argümanı (%1$s)\n"
 
-#: pg_dump.c:7667
+#: pg_dump.c:7948
 #, c-format
 msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned"
 msgstr "\"%2$s\" tablosunun \"%1$s\" rule getiren sorgu başarısız: yanlış satır sayısı getirildi"
 
-#: pg_dump.c:7735
+#: pg_dump.c:8016
 msgid "reading dependency data\n"
 msgstr "bağımlılık verileri okunuyor\n"
 
-#: pg_dump.c:7924
+#: pg_dump.c:8205
 #, c-format
 msgid "query yielded %d rows instead of one: %s\n"
 msgstr "%2$s sorgusundan bir yerine %1$d satır alındı\n"
 
-#: pg_dump.c:8111
+#: pg_dump.c:8392
 msgid "SQL command failed\n"
 msgstr "SQL komutu başarısız\n"
 
@@ -704,457 +695,435 @@ msgstr "bütünlük kısıtlamaları okunuyor\n"
 msgid "reading triggers\n"
 msgstr "tetikleyiciler okunuyor\n"
 
-#: common.c:421
-#: common.c:553
-#: common.c:587
-#: pg_backup_archiver.c:619
-#: pg_backup_archiver.c:970
-#: pg_backup_archiver.c:1084
-#: pg_backup_archiver.c:1522
-#: pg_backup_archiver.c:1672
-#: pg_backup_archiver.c:1705
-#: pg_backup_custom.c:141
-#: pg_backup_custom.c:146
-#: pg_backup_custom.c:152
-#: pg_backup_custom.c:167
-#: pg_backup_custom.c:544
-#: pg_backup_db.c:157
-#: pg_backup_db.c:233
+#: common.c:422
+#: common.c:554
+#: common.c:588
+#: pg_backup_archiver.c:500
+#: pg_backup_archiver.c:822
+#: pg_backup_archiver.c:936
+#: pg_backup_archiver.c:994
+#: pg_backup_archiver.c:1404
+#: pg_backup_archiver.c:1554
+#: pg_backup_archiver.c:1587
+#: pg_backup_custom.c:139
+#: pg_backup_custom.c:144
+#: pg_backup_custom.c:150
+#: pg_backup_custom.c:165
+#: pg_backup_custom.c:535
+#: pg_backup_db.c:156
+#: pg_backup_db.c:232
 #: pg_backup_files.c:112
+#: pg_backup_null.c:69
+#: pg_backup_null.c:107
 #: pg_backup_tar.c:168
 #: pg_backup_tar.c:960
 msgid "out of memory\n"
 msgstr "yetersiz bellek\n"
 
-#: common.c:728
+#: common.c:729
 #, c-format
 msgid "failed sanity check, parent OID %u of table \"%s\" (OID %u) not found\n"
 msgstr "tutarlılık kontrolü başarısız, \"%2$s\" tablosunun (OID %3$u) üst OID %1$u bulunamadı\n"
 
-#: common.c:770
+#: common.c:771
 msgid "could not parse numeric array: too many numbers\n"
 msgstr "numerik dizi ayrıştırılamadı: çok fazla sayı\n"
 
-#: common.c:785
+#: common.c:786
 msgid "could not parse numeric array: invalid character in number\n"
 msgstr "numerik sizi ayrıştırılamadı: sayıda geçersiz karakter\n"
 
-#: pg_backup_archiver.c:45
+#: pg_backup_archiver.c:42
 msgid "archiver"
 msgstr "arşivleyici"
 
-#: pg_backup_archiver.c:126
+#: pg_backup_archiver.c:122
 msgid "could not close output archive file\n"
 msgstr "çıkış arşiv dosyası kapatılamadı\n"
 
-#: pg_backup_archiver.c:153
+#: pg_backup_archiver.c:148
 msgid "-C and -c are incompatible options\n"
 msgstr "-C ve -c seçenekler bir arada kullanılamaz\n"
 
-#: pg_backup_archiver.c:160
+#: pg_backup_archiver.c:155
 msgid "connecting to database for restore\n"
 msgstr "geri yüklemek için veritabana bağlanılıyor\n"
 
-#: pg_backup_archiver.c:162
+#: pg_backup_archiver.c:157
 msgid "direct database connections are not supported in pre-1.3 archives\n"
 msgstr "1.3 sürüm öncesi arşivlerinde doğrudan veritabanı bağlantıları desteklenmemektedir\n"
 
-#: pg_backup_archiver.c:205
+#: pg_backup_archiver.c:199
 msgid "implied data-only restore\n"
 msgstr "örtük salt veri geri yükleme\n"
 
-#: pg_backup_archiver.c:238
+#: pg_backup_archiver.c:234
 #, c-format
 msgid "dropping %s %s\n"
 msgstr "%s %s kaldırılıyor\n"
 
-#: pg_backup_archiver.c:264
-#: pg_backup_archiver.c:266
+#: pg_backup_archiver.c:258
+#: pg_backup_archiver.c:260
 #, c-format
 msgid "warning from original dump file: %s\n"
 msgstr "asıl dump dosyasından uyarı: %s\n"
 
-#: pg_backup_archiver.c:273
+#: pg_backup_archiver.c:267
 #, c-format
 msgid "creating %s %s\n"
 msgstr "%s %s oluşturuluyor\n"
 
-#: pg_backup_archiver.c:281
+#: pg_backup_archiver.c:275
 #, c-format
 msgid "connecting to new database \"%s\"\n"
 msgstr "\"%s\" veritabanına bağlanılıyor\n"
 
-#: pg_backup_archiver.c:306
+#: pg_backup_archiver.c:300
 msgid "cannot restore from compressed archive (not configured for compression support)\n"
 msgstr "sıkıştırılmış arşivden yüklenemiyor (sıkıştırma desteği dahil edilmemiş)\n"
 
-#: pg_backup_archiver.c:326
-msgid "WARNING: skipping large-object restoration\n"
-msgstr "UYARI: large-object yüklemesi atlanıyor\n"
+#: pg_backup_archiver.c:307
+msgid "restoring large object data\n"
+msgstr "large-object verileri geri yükleniyor\n"
 
-#: pg_backup_archiver.c:336
+#: pg_backup_archiver.c:321
 #, c-format
 msgid "restoring data for table \"%s\"\n"
 msgstr "\"%s\" tablosunun verileri geri yükleniyor\n"
 
-#: pg_backup_archiver.c:368
-#: pg_backup_archiver.c:454
-#, c-format
-msgid "fixing up large-object cross-reference for \"%s\"\n"
-msgstr "\"%s\" için large-object referansı düzeltiliyor\n"
-
-#: pg_backup_archiver.c:379
+#: pg_backup_archiver.c:347
 #, c-format
 msgid "executing %s %s\n"
 msgstr "%s %s yürütülüyor\n"
 
-#: pg_backup_archiver.c:399
+#: pg_backup_archiver.c:365
 #, c-format
 msgid "setting owner and privileges for %s %s\n"
 msgstr "%s %s için sahiplik ve izinler ayarlanıyor\n"
 
-#: pg_backup_archiver.c:517
-msgid "disabling triggers\n"
-msgstr "tetikleyiciler etkisiz hale getiriliyor\n"
+#: pg_backup_archiver.c:416
+#, c-format
+msgid "disabling triggers for %s\n"
+msgstr "%s nesnesinin tetikleyicileri etkisiz hale getiriliyor\n"
 
-#: pg_backup_archiver.c:556
-msgid "enabling triggers\n"
-msgstr "tetikleyiciler etkineştiriliyor\n"
+#: pg_backup_archiver.c:442
+#, c-format
+msgid "enabling triggers for %s\n"
+msgstr "%s nesnesinin tetikleyicileri etkineştiriliyor\n"
 
-#: pg_backup_archiver.c:591
+#: pg_backup_archiver.c:472
 msgid "internal error -- WriteData cannot be called outside the context of a DataDumper routine\n"
 msgstr "İç hata - WriteData cannot be called outside the context of a DataDumper routine\n"
 
-#: pg_backup_archiver.c:734
+#: pg_backup_archiver.c:615
 msgid "large-object output not supported in chosen format\n"
 msgstr "seçilen biçimde large-object çıktısı desteklenememektedir\n"
 
-#: pg_backup_archiver.c:774
-#: pg_backup_archiver.c:862
-msgid "committing large-object transactions\n"
-msgstr "large-object transaction commit ediliyor\n"
-
-#: pg_backup_archiver.c:784
+#: pg_backup_archiver.c:663
 #, c-format
 msgid "restored %d large objects\n"
 msgstr "%d large object geri yüklendi\n"
 
-#: pg_backup_archiver.c:801
-msgid "cannot restore large objects without a database connection\n"
-msgstr "veritabanı bağlantısı olmadan large-object yüklemesi yapılamıyor\n"
-
-#: pg_backup_archiver.c:815
-msgid "starting large-object transactions\n"
-msgstr "large-object transaction başlatılıyor\n"
-
-#: pg_backup_archiver.c:823
-msgid "could not create large object\n"
-msgstr "large object oluşturulamadı\n"
-
-#: pg_backup_archiver.c:825
+#: pg_backup_archiver.c:680
 #, c-format
-msgid "restoring large object with OID %u as %u\n"
-msgstr "UID %u olan large-object %u olarak yükleniyor\n"
+msgid "restoring large object with OID %u\n"
+msgstr "large-object OID %u geri yükleniyor\n"
 
-#: pg_backup_archiver.c:831
+#: pg_backup_archiver.c:686
+#, c-format
+msgid "could not create large object %u\n"
+msgstr "large object oluşturulamadı %u\n"
+
+#: pg_backup_archiver.c:691
 msgid "could not open large object\n"
 msgstr "large object açılamadı\n"
 
-#: pg_backup_archiver.c:846
-#, c-format
-msgid "wrote remaining %lu bytes of large-object data (result = %lu)\n"
-msgstr "large-objectin kalan %lu bayt verisi yazılıyor (sonuç = %lu)\n"
-
-#: pg_backup_archiver.c:849
-#: pg_backup_archiver.c:1141
-#, c-format
-msgid "could not write to large object (result: %lu, expected: %lu)\n"
-msgstr "large-object yazılamıyor (sonuç: %lu, beklenen: %lu)\n"
-
-#: pg_backup_archiver.c:895
+#: pg_backup_archiver.c:750
 msgid "could not open TOC file\n"
 msgstr "TOC dosyası açılamadı\n"
 
-#: pg_backup_archiver.c:916
+#: pg_backup_archiver.c:768
 #, c-format
 msgid "WARNING: line ignored: %s\n"
 msgstr "UYARI: satır yoksayıldı: %s\n"
 
-#: pg_backup_archiver.c:923
+#: pg_backup_archiver.c:775
 #, c-format
 msgid "could not find entry for ID %d\n"
 msgstr "ID %d için bir alan girdisi bulunamıyor\n"
 
-#: pg_backup_archiver.c:933
+#: pg_backup_archiver.c:785
 #: pg_backup_files.c:156
 #: pg_backup_files.c:439
 #, c-format
 msgid "could not close TOC file: %s\n"
 msgstr "TOC dosyası kapatılamıyor: %s\n"
 
-#: pg_backup_archiver.c:1032
+#: pg_backup_archiver.c:884
 #: pg_backup_files.c:130
 #, c-format
 msgid "could not open output file: %s\n"
 msgstr "çıktı dosyası açılamadı: %s\n"
 
-#: pg_backup_archiver.c:1048
+#: pg_backup_archiver.c:900
 #, c-format
 msgid "could not close output file: %s\n"
 msgstr "çıktı dosyası kapatılamadı: %s\n"
 
-#: pg_backup_archiver.c:1137
+#: pg_backup_archiver.c:979
 #, c-format
 msgid "wrote %lu bytes of large object data (result = %lu)\n"
 msgstr "large object verisinn %lu baytı yazıldı (sonuç = %lu)\n"
 
-#: pg_backup_archiver.c:1159
+#: pg_backup_archiver.c:983
+#, c-format
+msgid "could not write to large object (result: %lu, expected: %lu)\n"
+msgstr "large-object yazılamıyor (sonuç: %lu, beklenen: %lu)\n"
+
+#: pg_backup_archiver.c:1042
 msgid "could not write to compressed archive\n"
 msgstr "sıkıştırılmış arşive yazma hatası\n"
 
-#: pg_backup_archiver.c:1167
+#: pg_backup_archiver.c:1050
 msgid "could not write to custom output routine\n"
 msgstr "kullanıcı tanımlı çıktı yordamına yazma hatası\n"
 
-#: pg_backup_archiver.c:1182
+#: pg_backup_archiver.c:1065
 #, c-format
 msgid "could not write to output file (%lu != %lu)\n"
 msgstr "çıktı dosysına yazma hatası (%lu != %lu)\n"
 
-#: pg_backup_archiver.c:1267
+#: pg_backup_archiver.c:1148
 msgid "Error while INITIALIZING:\n"
 msgstr "INITIALIZING sırasında hata:\n"
 
-#: pg_backup_archiver.c:1272
+#: pg_backup_archiver.c:1153
 msgid "Error while PROCESSING TOC:\n"
 msgstr "PROCESSING TOC sırasında hata:\n"
 
-#: pg_backup_archiver.c:1277
+#: pg_backup_archiver.c:1158
 msgid "Error while FINALIZING:\n"
 msgstr "FINALIZING sırasında hata:\n"
 
-#: pg_backup_archiver.c:1282
+#: pg_backup_archiver.c:1163
 #, c-format
 msgid "Error from TOC entry %d; %u %u %s %s %s\n"
 msgstr "TOC girişte hata %d; %u %u %s %s %s\n"
 
-#: pg_backup_archiver.c:1415
+#: pg_backup_archiver.c:1297
 #, c-format
 msgid "Unexpected data offset flag %d\n"
 msgstr "Beklenmeyen veri konum bayrağı %d\n"
 
-#: pg_backup_archiver.c:1428
+#: pg_backup_archiver.c:1310
 msgid "file offset in dump file is too large\n"
 msgstr "dump dosyasında dosya göstergesi çok büyük\n"
 
-#: pg_backup_archiver.c:1540
+#: pg_backup_archiver.c:1422
 msgid "attempting to ascertain archive format\n"
 msgstr "arşiv formatı doğrulanmaya çalışılıyor\n"
 
-#: pg_backup_archiver.c:1560
+#: pg_backup_archiver.c:1442
 #: pg_backup_files.c:148
 #, c-format
 msgid "could not open input file: %s\n"
 msgstr "giriş dosyası açılamadı: %s\n"
 
-#: pg_backup_archiver.c:1567
+#: pg_backup_archiver.c:1449
 #, c-format
 msgid "could not read input file: %s\n"
 msgstr "giriş dosyası okuma hatası: %s\n"
 
-#: pg_backup_archiver.c:1569
+#: pg_backup_archiver.c:1451
 #, c-format
 msgid "input file is too short (read %lu, expected 5)\n"
 msgstr "giriş fazla kısa (okunan: %lu, beklenen: 5)\n"
 
-#: pg_backup_archiver.c:1622
+#: pg_backup_archiver.c:1504
 msgid "input file does not appear to be a valid archive (too short?)\n"
 msgstr "giriş, geçerli bir arşiv değildir (çok kısa?)\n"
 
-#: pg_backup_archiver.c:1625
+#: pg_backup_archiver.c:1507
 msgid "input file does not appear to be a valid archive\n"
 msgstr "girdi geçerli bir arşiv değildir\n"
 
-#: pg_backup_archiver.c:1643
+#: pg_backup_archiver.c:1525
 #, c-format
 msgid "read %lu bytes into lookahead buffer\n"
 msgstr "ileri bakma art alanına %lu bayt okundu\n"
 
-#: pg_backup_archiver.c:1650
+#: pg_backup_archiver.c:1532
 #, c-format
 msgid "could not close the input file after reading header: %s\n"
 msgstr "başlık okumaktan sonra giriş dosysı kapatma hatası: %s\n"
 
-#: pg_backup_archiver.c:1667
+#: pg_backup_archiver.c:1549
 #, c-format
 msgid "allocating AH for %s, format %d\n"
 msgstr "%s için AH ayırılıyor, biçim %d\n"
 
-#: pg_backup_archiver.c:1721
+#: pg_backup_archiver.c:1619
 #, c-format
 msgid "archive format is %d\n"
 msgstr "%d arşiv biçimi\n"
 
-#: pg_backup_archiver.c:1749
+#: pg_backup_archiver.c:1646
 #, c-format
 msgid "unrecognized file format \"%d\"\n"
 msgstr "tanınmayan dosya biçimi: \"%d\"\n"
 
-#: pg_backup_archiver.c:1877
+#: pg_backup_archiver.c:1774
 #, c-format
 msgid "entry ID %d out of range -- perhaps a corrupt TOC\n"
 msgstr "ID %d olan giriş kapsam dışıdır -- bozuk TOC olabilir\n"
 
-#: pg_backup_archiver.c:1962
+#: pg_backup_archiver.c:1859
 #, c-format
 msgid "read TOC entry %d (ID %d) for %s %s\n"
 msgstr "%3$s %4$s için TOC öğe %1$d (ID %2$d) okunuyor\n"
 
-#: pg_backup_archiver.c:2124
+#: pg_backup_archiver.c:2029
 #, c-format
 msgid "could not set session user to \"%s\": %s"
 msgstr "oturum kullanıcısını \"%s\" olarak değiştirilemedi: %s"
 
-#: pg_backup_archiver.c:2436
-#: pg_backup_archiver.c:2573
+#: pg_backup_archiver.c:2348
+#: pg_backup_archiver.c:2485
 #, c-format
 msgid "WARNING: don't know how to set owner for object type %s\n"
 msgstr "UAYRI: %s tipinde nesnenin sahib bilgisi ayarlanamıyor\n"
 
-#: pg_backup_archiver.c:2606
+#: pg_backup_archiver.c:2518
 msgid "WARNING: requested compression not available in this installation -- archive will be uncompressed\n"
 msgstr "UYARI: bu kurulumda sıkıştırma desteklenmemektedir -- arşiv sıkıştırılmayacak\n"
 
-#: pg_backup_archiver.c:2641
+#: pg_backup_archiver.c:2553
 msgid "did not find magic string in file header\n"
 msgstr "dosya başlığında kod satırı blunamadı\n"
 
-#: pg_backup_archiver.c:2655
+#: pg_backup_archiver.c:2567
 #, c-format
 msgid "unsupported version (%d.%d) in file header\n"
 msgstr "dosya başlığında desteklenmeyen sürüm (%d.%d)\n"
 
-#: pg_backup_archiver.c:2660
+#: pg_backup_archiver.c:2572
 #, c-format
 msgid "sanity check on integer size (%lu) failed\n"
 msgstr "integer boyutu (%lu) turtarlılık kontrolü başarısız\n"
 
-#: pg_backup_archiver.c:2664
+#: pg_backup_archiver.c:2576
 msgid "WARNING: archive was made on a machine with larger integers, some operations may fail\n"
 msgstr "UYARI: arşıv doyası daha büyük integer sayılarınasahip platformda yapılmış, bazı işlemler başarısız olabilir\n"
 
-#: pg_backup_archiver.c:2674
+#: pg_backup_archiver.c:2586
 #, c-format
 msgid "expected format (%d) differs from format found in file (%d)\n"
 msgstr "dosyada bulunan biçim (%2$d) beklenen biçimden (%1$d) farklıdır\n"
 
-#: pg_backup_archiver.c:2690
+#: pg_backup_archiver.c:2602
 msgid "WARNING: archive is compressed, but this installation does not support compression -- no data will be available\n"
 msgstr "UYARI: arşiv sıkıştırılmıştır, ancak bu kurulum sıkıştırmayı desteklemiyor -- veri kaydedilmeyecek\n"
 
-#: pg_backup_archiver.c:2708
+#: pg_backup_archiver.c:2620
 msgid "WARNING: invalid creation date in header\n"
 msgstr "UTAYI: veri başlığında geçersiz tarih\n"
 
-#: pg_backup_custom.c:97
+#: pg_backup_custom.c:95
 msgid "custom archiver"
 msgstr "özel arşiv uygulaması"
 
-#: pg_backup_custom.c:180
-#: pg_backup_custom.c:191
+#: pg_backup_custom.c:178
+#: pg_backup_custom.c:189
 #, c-format
 msgid "could not open archive file \"%s\": %s\n"
 msgstr "\"%s\" arşiv dosyası açılamadı: %s\n"
 
-#: pg_backup_custom.c:389
+#: pg_backup_custom.c:385
+#: pg_backup_null.c:148
 msgid "invalid OID for large object\n"
 msgstr "large object için geçersiz OID\n"
 
-#: pg_backup_custom.c:447
+#: pg_backup_custom.c:441
 msgid "Dumping a specific TOC data block out of order is not supported without ID on this input stream (fseek required)\n"
 msgstr "Sıra dışı TOC veri blokun aktarılması, giriş akımında ID olmadan desteklenmemektedir (fseek gerekir)\n"
 
-#: pg_backup_custom.c:462
+#: pg_backup_custom.c:456
 #, c-format
 msgid "unrecognized data block type (%d) while searching archive\n"
 msgstr "arşivde ararken tanınmayan veri tipine (%d) rastlandı\n"
 
-#: pg_backup_custom.c:473
+#: pg_backup_custom.c:467
 #, c-format
 msgid "error during file seek: %s\n"
 msgstr "dosya içerisinde gösterge ilerleme hatası: %s\n"
 
-#: pg_backup_custom.c:480
+#: pg_backup_custom.c:474
 #, c-format
 msgid "found unexpected block ID (%d) when reading data -- expected %d\n"
 msgstr "veriyi okurken beklenmeyen blok ID (%d) bulundu -- beklenen: %d\n"
 
-#: pg_backup_custom.c:491
-msgid "large objects cannot be loaded without a database connection\n"
-msgstr "veritabanı bağlantısı olmadan large-object yüklemesi yapılamıyor\n"
-
-#: pg_backup_custom.c:497
+#: pg_backup_custom.c:488
 #, c-format
 msgid "unrecognized data block type %d while restoring archive\n"
 msgstr "arşivi yüklerken bilinmeyen veri blok tipi %d bulundu\n"
 
-#: pg_backup_custom.c:531
-#: pg_backup_custom.c:893
+#: pg_backup_custom.c:522
+#: pg_backup_custom.c:883
 #, c-format
 msgid "could not initialize compression library: %s\n"
 msgstr "sıkıştırma kütüphanesi ilklendirilemedi: %s\n"
 
-#: pg_backup_custom.c:553
-#: pg_backup_custom.c:676
+#: pg_backup_custom.c:544
+#: pg_backup_custom.c:667
 #, c-format
 msgid "could not read data block -- expected %lu, got %lu\n"
 msgstr "veri bloğu okunamıyor -- %lu beklenirken, %lu alındı\n"
 
-#: pg_backup_custom.c:571
-#: pg_backup_custom.c:601
+#: pg_backup_custom.c:562
+#: pg_backup_custom.c:592
 #, c-format
 msgid "could not uncompress data: %s\n"
 msgstr "sıkıştırılmış veri açılamadı: %s\n"
 
-#: pg_backup_custom.c:607
+#: pg_backup_custom.c:598
 #, c-format
 msgid "could not close compression library: %s\n"
 msgstr "sıkıştırma kütüphanesi kapatılamadı: %s\n"
 
-#: pg_backup_custom.c:704
+#: pg_backup_custom.c:695
 #, c-format
 msgid "could not write byte: %s\n"
 msgstr "bayt yazılamadı: %s\n"
 
-#: pg_backup_custom.c:748
+#: pg_backup_custom.c:739
 #: pg_backup_files.c:414
 #, c-format
 msgid "write error in _WriteBuf (%lu != %lu)\n"
 msgstr "_WriteBuf yazma hatası (%lu != %lu)\n"
 
-#: pg_backup_custom.c:819
+#: pg_backup_custom.c:810
 #, c-format
 msgid "could not close archive file: %s\n"
 msgstr "arşiv dosyası kapatma hatası: %s\n"
 
-#: pg_backup_custom.c:842
+#: pg_backup_custom.c:833
 msgid "WARNING: ftell mismatch with expected position -- ftell used\n"
 msgstr "WARNING: ftell fonksiyonun bidirdiği pozisyonu ile beklenen pozisyon uyumsuz -- ftell kullanıldı\n"
 
-#: pg_backup_custom.c:925
+#: pg_backup_custom.c:915
 #, c-format
 msgid "could not compress data: %s\n"
 msgstr "veri sıkıştırılamadı: %s\n"
 
-#: pg_backup_custom.c:945
+#: pg_backup_custom.c:935
 msgid "could not write compressed chunk\n"
 msgstr "sıkıştırılmış parça yazılamadı\n"
 
-#: pg_backup_custom.c:959
+#: pg_backup_custom.c:949
 msgid "could not write uncompressed chunk\n"
 msgstr "sıkıştırılmamış parça yazılamadı\n"
 
-#: pg_backup_custom.c:1005
+#: pg_backup_custom.c:995
 #, c-format
 msgid "could not close compression stream: %s\n"
 msgstr "sıkıştırma akımı kapatılamadı: %s\n"
@@ -1163,150 +1132,91 @@ msgstr "sıkıştırma akımı kapatılamadı: %s\n"
 msgid "archiver (db)"
 msgstr "arşivlendirici (db)"
 
-#: pg_backup_db.c:68
+#: pg_backup_db.c:67
 msgid "could not get server_version from libpq\n"
 msgstr "libpq kütüphanesinden server_version alınamadı\n"
 
-#: pg_backup_db.c:79
+#: pg_backup_db.c:78
+#: pg_dumpall.c:1177
 #, c-format
 msgid "server version: %s; %s version: %s\n"
 msgstr "sunucu sürümü: %s; %s sürümü: %s\n"
 
-#: pg_backup_db.c:82
+#: pg_backup_db.c:81
+#: pg_dumpall.c:1180
 msgid "proceeding despite version mismatch\n"
 msgstr "sürüm uyuşmazlığa rağmen devam ediliyor\n"
 
-#: pg_backup_db.c:84
+#: pg_backup_db.c:83
+#: pg_dumpall.c:1183
 msgid "aborting because of version mismatch  (Use the -i option to proceed anyway.)\n"
 msgstr "sürüm uyuşmazlığı yüzünden işlem duruduruldu (Buna rağmen devam etmek için -i seçeneği kullanın).\n"
 
-#: pg_backup_db.c:151
+#: pg_backup_db.c:150
 #, c-format
 msgid "connecting to database \"%s\" as user \"%s\"\n"
 msgstr "\"%2$s\" kullanıcısı olarak \"%1$s\" veritabanına bağlanıldı\n"
 
-#: pg_backup_db.c:155
-#: pg_backup_db.c:187
-#: pg_backup_db.c:231
-#: pg_backup_db.c:260
-#: pg_dumpall.c:941
-#: pg_dumpall.c:967
+#: pg_backup_db.c:154
+#: pg_backup_db.c:186
+#: pg_backup_db.c:230
+#: pg_backup_db.c:259
+#: pg_dumpall.c:1103
+#: pg_dumpall.c:1130
 msgid "Password: "
 msgstr "Şifre: "
 
-#: pg_backup_db.c:167
+#: pg_backup_db.c:166
 msgid "failed to reconnect to database\n"
 msgstr "veritabana yeniden bağlanma hatası\n"
 
-#: pg_backup_db.c:190
+#: pg_backup_db.c:189
 #, c-format
 msgid "could not reconnect to database: %s"
 msgstr "%s veritabanına yeniden bağlanılamadı"
 
-#: pg_backup_db.c:227
+#: pg_backup_db.c:226
 msgid "already connected to a database\n"
 msgstr "bir veritabanına zaten bağlı\n"
 
-#: pg_backup_db.c:250
+#: pg_backup_db.c:249
 msgid "failed to connect to database\n"
 msgstr "veritabanına bağlantı başarısız oldu\n"
 
-#: pg_backup_db.c:269
+#: pg_backup_db.c:268
 #, c-format
 msgid "connection to database \"%s\" failed: %s"
 msgstr "\"%s\" veritabanına bağlantı başarısız oldu: %s"
 
-#: pg_backup_db.c:284
+#: pg_backup_db.c:283
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pg_backup_db.c:313
+#: pg_backup_db.c:299
 #, c-format
 msgid "%s: no result from server\n"
 msgstr "%s: sunucudan sonuç gelmedi\n"
 
-#: pg_backup_db.c:320
-msgid "COPY command executed in non-primary connection\n"
-msgstr "COPY komutu birincil olmayan bağlantıda çalıştırıldı\n"
-
-#: pg_backup_db.c:410
+#: pg_backup_db.c:393
 msgid "error returned by PQputline\n"
 msgstr "PQputline hata döndürdü\n"
 
-#: pg_backup_db.c:421
+#: pg_backup_db.c:404
 msgid "error returned by PQendcopy\n"
 msgstr "PQendcopy hata döndürdü\n"
 
-#: pg_backup_db.c:481
+#: pg_backup_db.c:443
 msgid "could not execute query"
 msgstr "sorgu çalıştırılamadı"
 
-#: pg_backup_db.c:701
-#, c-format
-msgid "could not find OID columns of table \"%s\": %s"
-msgstr "\"%s\" tablosunun OID kolonları bulunamadı: %s"
-
-#: pg_backup_db.c:707
-#, c-format
-msgid "no OID type columns in table %s\n"
-msgstr "%s tablosunda OID tipli kolon yok\n"
-
-#: pg_backup_db.c:721
-#, c-format
-msgid "fixing large object cross-references for %s.%s\n"
-msgstr "%s.%s için large object karşılıkllı referanslar düzeltiliyor\n"
-
-#: pg_backup_db.c:760
-#, c-format
-msgid "SQL: %s\n"
-msgstr "SQL: %s\n"
-
-#: pg_backup_db.c:765
-#, c-format
-msgid "could not update column \"%s\" of table \"%s\": %s"
-msgstr "\"%s\" kolonu, \"%s\" tablosunda güncellenemedi: %s"
-
-#: pg_backup_db.c:770
-#, c-format
-msgid "error while updating column \"%s\" of table \"%s\": %s"
-msgstr "\"%s\" kolonu ( \"%s\" tablosunda) güncellenirken hata oluştu: %s"
-
-#: pg_backup_db.c:793
-msgid "creating table for large object cross-references\n"
-msgstr "large object karşılıkllı referanslar için tablo oluişturuluyor\n"
-
-#: pg_backup_db.c:796
-msgid "could not create large object cross-reference table"
-msgstr "büyük karşılıklı referans tablosu oluşturulamadı"
-
-#: pg_backup_db.c:806
-msgid "creating index for large object cross-references\n"
-msgstr "büyük karşılıklı referans tablosu için index oluşturuluyor\n"
-
-#: pg_backup_db.c:810
-msgid "could not create index on large object cross-reference table"
-msgstr "büyük karşılıklı referans tablosu için index oluşturulamadı"
-
-#: pg_backup_db.c:823
-msgid "could not create large object cross-reference entry"
-msgstr "large object karşılıklı referans kaydı oluşturulamadı"
-
-#: pg_backup_db.c:835
+#: pg_backup_db.c:631
 msgid "could not start database transaction"
 msgstr ";veritabanı transaction'u başlatılamadı"
 
-#: pg_backup_db.c:849
-msgid "could not start transaction for large object cross-references"
-msgstr "large object karşılıklı referans kaydı için transaction başlatılamadı"
-
-#: pg_backup_db.c:862
+#: pg_backup_db.c:643
 msgid "could not commit database transaction"
 msgstr "Veritabanı transaction'u commit edilemedi"
-
-#: pg_backup_db.c:875
-msgid "could not commit transaction for large object cross-references"
-msgstr "large object karşılıklı referans kaydı için transaction commit edilemedi"
 
 #: pg_backup_files.c:69
 msgid "file archiver"
@@ -1344,7 +1254,7 @@ msgid "could not open large object TOC for input: %s\n"
 msgstr "girdi için large object TOC açılamadı: %s\n"
 
 #: pg_backup_files.c:375
-#: pg_backup_files.c:545
+#: pg_backup_files.c:542
 #, c-format
 msgid "could not close large object TOC file: %s\n"
 msgstr "large object TOC dosyası kapatılamadı: %s\n"
@@ -1353,26 +1263,26 @@ msgstr "large object TOC dosyası kapatılamadı: %s\n"
 msgid "could not write byte\n"
 msgstr "byte yazılamadı\n"
 
-#: pg_backup_files.c:473
+#: pg_backup_files.c:472
 #, c-format
 msgid "could not open large object TOC for output: %s\n"
 msgstr "çıktı için large object TOC açılamadı: %s\n"
 
-#: pg_backup_files.c:493
+#: pg_backup_files.c:492
 #: pg_backup_tar.c:884
 #, c-format
 msgid "invalid OID for large object (%u)\n"
 msgstr "(%u) large objecti için geçersiz OID\n"
 
-#: pg_backup_files.c:512
+#: pg_backup_files.c:511
 msgid "could not open large object file\n"
 msgstr "large object dosyası açılamadı\n"
 
-#: pg_backup_files.c:527
+#: pg_backup_files.c:525
 msgid "could not close large object file\n"
 msgstr "large object dosyası kapatılamadı\n"
 
-#: pg_backup_null.c:55
+#: pg_backup_null.c:75
 msgid "this format cannot be read\n"
 msgstr "bu biçim okunamıyor\n"
 
@@ -1498,12 +1408,12 @@ msgstr "%s tar öğesi atlandı\n"
 msgid "dumping data out of order is not supported in this archive format: %s is required, but comes before %s in the archive file.\n"
 msgstr "bu arşiv biçinide sıra dışı veri aktarımı desteklenmemektedir: %s bekleniyor ancak arşiv dosyasında ondan önce %s gelmektedir.\n"
 
-#: pg_backup_tar.c:1172
+#: pg_backup_tar.c:1171
 #, c-format
 msgid "mismatch in actual vs. predicted file position (%s vs. %s)\n"
 msgstr "gerçek ile beklenilen dosya pozisyonunda uyumsuzluk (%s ile %s)\n"
 
-#: pg_backup_tar.c:1187
+#: pg_backup_tar.c:1186
 #, c-format
 msgid "incomplete tar header found (%lu bytes)\n"
 msgstr "eksik tar başlığı bulundu (%lu bayt)\n"
@@ -1522,17 +1432,22 @@ msgstr "%s dosyasında bozuk tar başlığı (beklenen: %d, hesaplanan: %d) dosy
 msgid "could not write tar header\n"
 msgstr "tar başlığı yazma hatası\n"
 
-#: pg_restore.c:283
+#: pg_restore.c:288
 #, c-format
 msgid "%s: cannot specify both -d and -f output\n"
 msgstr "%s: çıktıda hem -d hem de -f belirtilemez\n"
 
-#: pg_restore.c:344
+#: pg_restore.c:322
+#, c-format
+msgid "unrecognized archive format \"%s\"; please specify \"c\" or \"t\"\n"
+msgstr "'%s' arşiv biçimi tanınmadı; lütfen \"t\" veya \"c\" belirtin\n"
+
+#: pg_restore.c:349
 #, c-format
 msgid "WARNING: errors ignored on restore: %d\n"
 msgstr "UYARI: yükleme sırasında hata esgeçildi: %d\n"
 
-#: pg_restore.c:358
+#: pg_restore.c:363
 #, c-format
 msgid ""
 "%s restores a PostgreSQL database from an archive created by pg_dump.\n"
@@ -1541,28 +1456,28 @@ msgstr ""
 "%s, pg_dump tarafından oluşturulan PostgreSQL arşivinden veritabanı geri yükleniyor.\n"
 "\n"
 
-#: pg_restore.c:360
+#: pg_restore.c:365
 #, c-format
 msgid "  %s [OPTION]... [FILE]\n"
 msgstr "  %s [SEÇENEK]... [DOSYA]\n"
 
-#: pg_restore.c:363
+#: pg_restore.c:368
 msgid "  -d, --dbname=NAME        connect to database name\n"
 msgstr "  -d, --dbname=NAME        bağlanacak veritabanının adı\n"
 
-#: pg_restore.c:365
+#: pg_restore.c:370
 msgid "  -F, --format=c|t         specify backup file format\n"
 msgstr "  -F, --format=c|t         yedek dosya biçimi\n"
 
-#: pg_restore.c:366
+#: pg_restore.c:371
 msgid "  -i, --ignore-version     proceed even when server version mismatches\n"
 msgstr "  -i, --ignore-version     sunucunun sürümü uyuşmadığında bile devam et\n"
 
-#: pg_restore.c:367
+#: pg_restore.c:372
 msgid "  -l, --list               print summarized TOC of the archive\n"
 msgstr "  -l, --list               arşivin kısa içeriğini yaz\n"
 
-#: pg_restore.c:372
+#: pg_restore.c:377
 msgid ""
 "\n"
 "Options controlling the restore:\n"
@@ -1570,19 +1485,19 @@ msgstr ""
 "\n"
 "Geri güklemeyi kontrol eden seçenekler:\n"
 
-#: pg_restore.c:373
+#: pg_restore.c:378
 msgid "  -a, --data-only          restore only the data, no schema\n"
 msgstr "  -s, --schema-only        sadece şemayı aktar, veriyi aktarma\n"
 
-#: pg_restore.c:375
+#: pg_restore.c:380
 msgid "  -C, --create             create the target database\n"
 msgstr "  -C, --create             hedef veritabanını oluştur\n"
 
-#: pg_restore.c:376
+#: pg_restore.c:381
 msgid "  -I, --index=NAME         restore named index\n"
 msgstr "  -I, --index=NAME         adı geçen indexi de yükle\n"
 
-#: pg_restore.c:377
+#: pg_restore.c:382
 msgid ""
 "  -L, --use-list=FILENAME  use specified table of contents for ordering\n"
 "                           output from this file\n"
@@ -1590,12 +1505,16 @@ msgstr ""
 "  -L, --use-list=FILENAME  bu dosyadan çıkışını sıralamak için belirli bir\n"
 "                           içerik tablosuınu kullan\n"
 
-#: pg_dumpall.c:352
-#: pg_restore.c:379
+#: pg_restore.c:384
+msgid "  -n, --schema=NAME        restore only objects in this schema\n"
+msgstr "  -s, --schema=NAME        sadece bu şemaya ait nesneleri yükle\n"
+
+#: pg_dumpall.c:371
+#: pg_restore.c:385
 msgid "  -O, --no-owner           skip restoration of object ownership\n"
 msgstr "  -O, --no-owner           nesne sahipliğini ayarlayan komutlarının oluşturmasını engelle\n"
 
-#: pg_restore.c:380
+#: pg_restore.c:386
 msgid ""
 "  -P, --function=NAME(args)\n"
 "                           restore named function\n"
@@ -1603,11 +1522,11 @@ msgstr ""
 "  -P, --function=NAME(args)\n"
 "                           adı geçen fonksiyonu geri yükle\n"
 
-#: pg_restore.c:382
+#: pg_restore.c:388
 msgid "  -s, --schema-only        restore only the schema, no data\n"
 msgstr "  -s, --schema-only        sadece şemayı yükle, veriyi yükleme\n"
 
-#: pg_restore.c:383
+#: pg_restore.c:389
 msgid ""
 "  -S, --superuser=NAME     specify the superuser user name to use for\n"
 "                           disabling triggers\n"
@@ -1615,23 +1534,23 @@ msgstr ""
 "  -S, --superuser=NAME     veritabanı tetikleyicileri için kullanılacak superuser\n"
 "                           kullanıcı adını ayarla\n"
 
-#: pg_restore.c:385
+#: pg_restore.c:391
 msgid "  -t, --table=NAME         restore named table\n"
 msgstr "  -t, --table=NAME         adı geçen tabloyu yükle\n"
 
-#: pg_restore.c:386
+#: pg_restore.c:392
 msgid "  -T, --trigger=NAME       restore named trigger\n"
 msgstr "  -T, --trigger=NAME         adı geçen triggeri de yükle\n"
 
-#: pg_restore.c:387
+#: pg_restore.c:393
 msgid "  -x, --no-privileges      skip restoration of access privileges (grant/revoke)\n"
 msgstr "  -x, --no-privileges      erişim haklarının yüklemesini engelle (grant/revoke)\n"
 
-#: pg_restore.c:399
+#: pg_restore.c:405
 msgid "  -e, --exit-on-error      exit on error, default is to continue\n"
 msgstr "  -e, --exit-on-error      hata durumunda çık, varsayılan seçenek ise devam et\n"
 
-#: pg_restore.c:401
+#: pg_restore.c:407
 msgid ""
 "\n"
 "If no input file name is supplied, then standard input is used.\n"
@@ -1641,7 +1560,7 @@ msgstr ""
 "Eğer giriş dosya adı verilmemişse, standart giriş akımı (stdin) kulanılacaktır.\n"
 "\n"
 
-#: pg_dumpall.c:149
+#: pg_dumpall.c:150
 #, c-format
 msgid ""
 "The program \"pg_dump\" is needed by %s but was not found in the\n"
@@ -1652,7 +1571,7 @@ msgstr ""
 "\"%s\" ile aynı dizinde bulunamadı.\n"
 "Kurulumunuzu kontrol edin.\n"
 
-#: pg_dumpall.c:156
+#: pg_dumpall.c:157
 #, c-format
 msgid ""
 "The program \"pg_dump\" was found by \"%s\"\n"
@@ -1663,7 +1582,7 @@ msgstr ""
 "ancak %s ile aynı sürüm değildir.\n"
 "Kurulumunuzu kontrol edin.\n"
 
-#: pg_dumpall.c:336
+#: pg_dumpall.c:355
 #, c-format
 msgid ""
 "%s extracts a PostgreSQL database cluster into an SQL script file.\n"
@@ -1672,12 +1591,12 @@ msgstr ""
 "%s, PostgreSQL veritabanı clusteri SQL betik dosyasına aktarıyor.\n"
 "\n"
 
-#: pg_dumpall.c:338
+#: pg_dumpall.c:357
 #, c-format
 msgid "  %s [OPTION]...\n"
 msgstr "  %s [SEÇENEK]...\n"
 
-#: pg_dumpall.c:341
+#: pg_dumpall.c:360
 msgid ""
 "  -i, --ignore-version     proceed even when server version mismatches\n"
 "                           pg_dumpall version\n"
@@ -1685,21 +1604,21 @@ msgstr ""
 "  -i, --ignore-version     sunucunun sürümü uyuşmadığı durumda\n"
 "                           bile devam et\n"
 
-#: pg_dumpall.c:347
+#: pg_dumpall.c:366
 msgid "  -c, --clean              clean (drop) databases prior to create\n"
 msgstr "  -c, --clean              şemayı yaratmadan önce onu temizle (kaldır)\n"
 
-#: pg_dumpall.c:350
+#: pg_dumpall.c:369
 msgid "  -g, --globals-only       dump only global objects, no databases\n"
 msgstr "  -g, --globals-only       sadece global nesneleri aktarıyor, veritabanları aktarmıyor\n"
 
-#: pg_dumpall.c:354
+#: pg_dumpall.c:373
 msgid "  -S, --superuser=NAME     specify the superuser user name to use in the dump\n"
 msgstr ""
 "  -S, --superuser=NAME     kullanılacak superuser kullanıcısının adı\n"
 "                           düz metin olarak ayarla\n"
 
-#: pg_dumpall.c:370
+#: pg_dumpall.c:389
 msgid ""
 "\n"
 "The SQL script will be written to the standard output.\n"
@@ -1709,62 +1628,70 @@ msgstr ""
 "SQL betik dosyası standart çıktısına (stdout) yazılacaktır.\n"
 "\n"
 
-#: pg_dumpall.c:570
+#: pg_dumpall.c:705
 #, c-format
 msgid "%s: could not parse ACL list (%s) for tablespace \"%s\"\n"
 msgstr "%1$s: \"%3$s\" tablespace için ACL (%2$s) listesi ayrıştırılamadı\n"
 
-#: pg_dumpall.c:702
+#: pg_dumpall.c:855
 #, c-format
 msgid "%s: could not parse ACL list (%s) for database \"%s\"\n"
 msgstr "%1$s: \"%3$s\" veritabanı için ACL (%2$s) listesi ayrıştırılamadı\n"
 
-#: pg_dumpall.c:852
+#: pg_dumpall.c:1010
 #, c-format
 msgid "%s: dumping database \"%s\"...\n"
 msgstr "%s: \"%s\" veritabanı aktarılıyor...\n"
 
-#: pg_dumpall.c:858
+#: pg_dumpall.c:1016
 #, c-format
 msgid "%s: pg_dump failed on database \"%s\", exiting\n"
 msgstr "%s: pg_dump \"%s\" veritabanında başarısız oldu, çıkılıyor\n"
 
-#: pg_dumpall.c:913
+#: pg_dumpall.c:1071
 #, c-format
 msgid "%s: running \"%s\"\n"
 msgstr "%s: \"%s\" yürütülüyor\n"
 
-#: pg_dumpall.c:954
+#: pg_dumpall.c:1116
 #, c-format
 msgid "%s: could not connect to database \"%s\"\n"
 msgstr "%s: \"%s\" veritabanına bağlanılamadı\n"
 
-#: pg_dumpall.c:977
+#: pg_dumpall.c:1140
 #, c-format
 msgid "%s: could not connect to database \"%s\": %s\n"
 msgstr "%s: \"%s\" veritabanına bağlanılamadı: %s\n"
 
-#: pg_dumpall.c:985
+#: pg_dumpall.c:1154
 #, c-format
 msgid "%s: could not get server version\n"
 msgstr "%s: sunucu sürüm bilgisi alınamadı\n"
 
-#: pg_dumpall.c:991
+#: pg_dumpall.c:1160
 #, c-format
 msgid "%s: could not parse server version \"%s\"\n"
 msgstr "%s: \"%s\" sürüm bilgisi ayrıştırılamadı\n"
 
-#: pg_dumpall.c:1010
+#: pg_dumpall.c:1168
+#, c-format
+msgid "%s: could not parse version \"%s\"\n"
+msgstr "%s: \"%s\" sürüm bilgisi ayrıştırılamadı\n"
+
+#: pg_dumpall.c:1208
+#: pg_dumpall.c:1234
 #, c-format
 msgid "%s: executing %s\n"
 msgstr "%s: %s yürütülüyor\n"
 
-#: pg_dumpall.c:1016
+#: pg_dumpall.c:1214
+#: pg_dumpall.c:1240
 #, c-format
 msgid "%s: query failed: %s"
 msgstr "%s: sorgu başarısız oldu: %s"
 
-#: pg_dumpall.c:1017
+#: pg_dumpall.c:1216
+#: pg_dumpall.c:1242
 #, c-format
 msgid "%s: query was: %s\n"
 msgstr "%s: sorgu şu idi: %s\n"
