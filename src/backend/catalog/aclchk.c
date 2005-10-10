@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.118 2005/08/17 19:45:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.119 2005/10/10 18:49:01 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -68,32 +68,6 @@ dumpacl(Acl *acl)
 											 PointerGetDatum(aip + i))));
 }
 #endif   /* ACLDEBUG */
-
-
-/*
- * Determine the effective grantor ID for a GRANT or REVOKE operation.
- *
- * Ordinarily this is just the current user, but when a superuser does
- * GRANT or REVOKE, we pretend he is the object owner.	This ensures that
- * all granted privileges appear to flow from the object owner, and there
- * are never multiple "original sources" of a privilege.
- */
-static Oid
-select_grantor(Oid ownerId)
-{
-	Oid		grantorId;
-
-	grantorId = GetUserId();
-
-	/* fast path if no difference */
-	if (grantorId == ownerId)
-		return grantorId;
-
-	if (superuser())
-		grantorId = ownerId;
-
-	return grantorId;
-}
 
 
 /*
@@ -243,7 +217,7 @@ ExecuteGrantStmt_Relation(GrantStmt *stmt)
 		Form_pg_class pg_class_tuple;
 		Datum		aclDatum;
 		bool		isNull;
-		AclMode		my_goptions;
+		AclMode		avail_goptions;
 		AclMode		this_privileges;
 		Acl		   *old_acl;
 		Acl		   *new_acl;
@@ -282,28 +256,36 @@ ExecuteGrantStmt_Relation(GrantStmt *stmt)
 					 errmsg("\"%s\" is a composite type",
 							relvar->relname)));
 
+		/*
+		 * Get owner ID and working copy of existing ACL.
+		 * If there's no ACL, substitute the proper default.
+		 */
 		ownerId = pg_class_tuple->relowner;
-		grantorId = select_grantor(ownerId);
+		aclDatum = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_relacl,
+								   &isNull);
+		if (isNull)
+			old_acl = acldefault(ACL_OBJECT_RELATION, ownerId);
+		else
+			old_acl = DatumGetAclPCopy(aclDatum);
+
+		/* Determine ID to do the grant as, and available grant options */
+		select_best_grantor(GetUserId(), privileges,
+							old_acl, ownerId,
+							&grantorId, &avail_goptions);
 
 		/*
-		 * Must be owner or have some privilege on the object (per spec,
-		 * any privilege will get you by here).  The owner is always
-		 * treated as having all grant options.
+		 * If we found no grant options, consider whether to issue a hard
+		 * error.  Per spec, having any privilege at all on the object
+		 * will get you by here.
 		 */
-		if (pg_class_ownercheck(relOid, GetUserId()))
-			my_goptions = ACL_ALL_RIGHTS_RELATION;
-		else
+		if (avail_goptions == ACL_NO_RIGHTS)
 		{
-			AclMode		my_rights;
-
-			my_rights = pg_class_aclmask(relOid,
-										 GetUserId(),
-										 ACL_ALL_RIGHTS_RELATION | ACL_GRANT_OPTION_FOR(ACL_ALL_RIGHTS_RELATION),
-										 ACLMASK_ALL);
-			if (my_rights == ACL_NO_RIGHTS)
+			if (pg_class_aclmask(relOid,
+								 grantorId,
+								 ACL_ALL_RIGHTS_RELATION | ACL_GRANT_OPTION_FOR(ACL_ALL_RIGHTS_RELATION),
+								 ACLMASK_ANY) == ACL_NO_RIGHTS)
 				aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
 							   relvar->relname);
-			my_goptions = ACL_OPTION_TO_PRIVS(my_rights);
 		}
 
 		/*
@@ -314,7 +296,7 @@ ExecuteGrantStmt_Relation(GrantStmt *stmt)
 		 * In practice that behavior seems much too noisy, as well as
 		 * inconsistent with the GRANT case.)
 		 */
-		this_privileges = privileges & my_goptions;
+		this_privileges = privileges & ACL_OPTION_TO_PRIVS(avail_goptions);
 		if (stmt->is_grant)
 		{
 			if (this_privileges == 0)
@@ -339,17 +321,8 @@ ExecuteGrantStmt_Relation(GrantStmt *stmt)
 		}
 
 		/*
-		 * If there's no ACL, substitute the proper default.
-		 */
-		aclDatum = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_relacl,
-								   &isNull);
-		if (isNull)
-			old_acl = acldefault(ACL_OBJECT_RELATION, ownerId);
-		else
-			/* get a detoasted copy of the ACL */
-			old_acl = DatumGetAclPCopy(aclDatum);
-
-		/*
+		 * Generate new ACL.
+		 *
 		 * We need the members of both old and new ACLs so we can correct
 		 * the shared dependency information.
 		 */
@@ -434,7 +407,7 @@ ExecuteGrantStmt_Database(GrantStmt *stmt)
 		Form_pg_database pg_database_tuple;
 		Datum		aclDatum;
 		bool		isNull;
-		AclMode		my_goptions;
+		AclMode		avail_goptions;
 		AclMode		this_privileges;
 		Acl		   *old_acl;
 		Acl		   *new_acl;
@@ -462,28 +435,36 @@ ExecuteGrantStmt_Database(GrantStmt *stmt)
 					 errmsg("database \"%s\" does not exist", dbname)));
 		pg_database_tuple = (Form_pg_database) GETSTRUCT(tuple);
 
+		/*
+		 * Get owner ID and working copy of existing ACL.
+		 * If there's no ACL, substitute the proper default.
+		 */
 		ownerId = pg_database_tuple->datdba;
-		grantorId = select_grantor(ownerId);
+		aclDatum = heap_getattr(tuple, Anum_pg_database_datacl,
+								RelationGetDescr(relation), &isNull);
+		if (isNull)
+			old_acl = acldefault(ACL_OBJECT_DATABASE, ownerId);
+		else
+			old_acl = DatumGetAclPCopy(aclDatum);
+
+		/* Determine ID to do the grant as, and available grant options */
+		select_best_grantor(GetUserId(), privileges,
+							old_acl, ownerId,
+							&grantorId, &avail_goptions);
 
 		/*
-		 * Must be owner or have some privilege on the object (per spec,
-		 * any privilege will get you by here).  The owner is always
-		 * treated as having all grant options.
+		 * If we found no grant options, consider whether to issue a hard
+		 * error.  Per spec, having any privilege at all on the object
+		 * will get you by here.
 		 */
-		if (pg_database_ownercheck(HeapTupleGetOid(tuple), GetUserId()))
-			my_goptions = ACL_ALL_RIGHTS_DATABASE;
-		else
+		if (avail_goptions == ACL_NO_RIGHTS)
 		{
-			AclMode		my_rights;
-
-			my_rights = pg_database_aclmask(HeapTupleGetOid(tuple),
-											GetUserId(),
-											ACL_ALL_RIGHTS_DATABASE | ACL_GRANT_OPTION_FOR(ACL_ALL_RIGHTS_DATABASE),
-											ACLMASK_ALL);
-			if (my_rights == ACL_NO_RIGHTS)
+			if (pg_database_aclmask(HeapTupleGetOid(tuple),
+									grantorId,
+									ACL_ALL_RIGHTS_DATABASE | ACL_GRANT_OPTION_FOR(ACL_ALL_RIGHTS_DATABASE),
+									ACLMASK_ANY) == ACL_NO_RIGHTS)
 				aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_DATABASE,
 							   NameStr(pg_database_tuple->datname));
-			my_goptions = ACL_OPTION_TO_PRIVS(my_rights);
 		}
 
 		/*
@@ -494,7 +475,7 @@ ExecuteGrantStmt_Database(GrantStmt *stmt)
 		 * In practice that behavior seems much too noisy, as well as
 		 * inconsistent with the GRANT case.)
 		 */
-		this_privileges = privileges & my_goptions;
+		this_privileges = privileges & ACL_OPTION_TO_PRIVS(avail_goptions);
 		if (stmt->is_grant)
 		{
 			if (this_privileges == 0)
@@ -519,17 +500,8 @@ ExecuteGrantStmt_Database(GrantStmt *stmt)
 		}
 
 		/*
-		 * If there's no ACL, substitute the proper default.
-		 */
-		aclDatum = heap_getattr(tuple, Anum_pg_database_datacl,
-								RelationGetDescr(relation), &isNull);
-		if (isNull)
-			old_acl = acldefault(ACL_OBJECT_DATABASE, ownerId);
-		else
-			/* get a detoasted copy of the ACL */
-			old_acl = DatumGetAclPCopy(aclDatum);
-
-		/*
+		 * Generate new ACL.
+		 *
 		 * We need the members of both old and new ACLs so we can correct
 		 * the shared dependency information.
 		 */
@@ -613,7 +585,7 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 		Form_pg_proc pg_proc_tuple;
 		Datum		aclDatum;
 		bool		isNull;
-		AclMode		my_goptions;
+		AclMode		avail_goptions;
 		AclMode		this_privileges;
 		Acl		   *old_acl;
 		Acl		   *new_acl;
@@ -638,28 +610,36 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 			elog(ERROR, "cache lookup failed for function %u", oid);
 		pg_proc_tuple = (Form_pg_proc) GETSTRUCT(tuple);
 
+		/*
+		 * Get owner ID and working copy of existing ACL.
+		 * If there's no ACL, substitute the proper default.
+		 */
 		ownerId = pg_proc_tuple->proowner;
-		grantorId = select_grantor(ownerId);
+		aclDatum = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_proacl,
+								   &isNull);
+		if (isNull)
+			old_acl = acldefault(ACL_OBJECT_FUNCTION, ownerId);
+		else
+			old_acl = DatumGetAclPCopy(aclDatum);
+
+		/* Determine ID to do the grant as, and available grant options */
+		select_best_grantor(GetUserId(), privileges,
+							old_acl, ownerId,
+							&grantorId, &avail_goptions);
 
 		/*
-		 * Must be owner or have some privilege on the object (per spec,
-		 * any privilege will get you by here).  The owner is always
-		 * treated as having all grant options.
+		 * If we found no grant options, consider whether to issue a hard
+		 * error.  Per spec, having any privilege at all on the object
+		 * will get you by here.
 		 */
-		if (pg_proc_ownercheck(oid, GetUserId()))
-			my_goptions = ACL_ALL_RIGHTS_FUNCTION;
-		else
+		if (avail_goptions == ACL_NO_RIGHTS)
 		{
-			AclMode		my_rights;
-
-			my_rights = pg_proc_aclmask(oid,
-										GetUserId(),
-										ACL_ALL_RIGHTS_FUNCTION | ACL_GRANT_OPTION_FOR(ACL_ALL_RIGHTS_FUNCTION),
-										ACLMASK_ALL);
-			if (my_rights == ACL_NO_RIGHTS)
+			if (pg_proc_aclmask(oid,
+								grantorId,
+								ACL_ALL_RIGHTS_FUNCTION | ACL_GRANT_OPTION_FOR(ACL_ALL_RIGHTS_FUNCTION),
+								ACLMASK_ANY) == ACL_NO_RIGHTS)
 				aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_PROC,
 							   NameStr(pg_proc_tuple->proname));
-			my_goptions = ACL_OPTION_TO_PRIVS(my_rights);
 		}
 
 		/*
@@ -670,7 +650,7 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 		 * In practice that behavior seems much too noisy, as well as
 		 * inconsistent with the GRANT case.)
 		 */
-		this_privileges = privileges & my_goptions;
+		this_privileges = privileges & ACL_OPTION_TO_PRIVS(avail_goptions);
 		if (stmt->is_grant)
 		{
 			if (this_privileges == 0)
@@ -695,17 +675,8 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 		}
 
 		/*
-		 * If there's no ACL, substitute the proper default.
-		 */
-		aclDatum = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_proacl,
-								   &isNull);
-		if (isNull)
-			old_acl = acldefault(ACL_OBJECT_FUNCTION, ownerId);
-		else
-			/* get a detoasted copy of the ACL */
-			old_acl = DatumGetAclPCopy(aclDatum);
-
-		/*
+		 * Generate new ACL.
+		 *
 		 * We need the members of both old and new ACLs so we can correct
 		 * the shared dependency information.
 		 */
@@ -788,7 +759,7 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 		Form_pg_language pg_language_tuple;
 		Datum		aclDatum;
 		bool		isNull;
-		AclMode		my_goptions;
+		AclMode		avail_goptions;
 		AclMode		this_privileges;
 		Acl		   *old_acl;
 		Acl		   *new_acl;
@@ -820,31 +791,38 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 			   errhint("Only superusers may use untrusted languages.")));
 
 		/*
+		 * Get owner ID and working copy of existing ACL.
+		 * If there's no ACL, substitute the proper default.
+		 *
 		 * Note: for now, languages are treated as owned by the bootstrap
 		 * user.  We should add an owner column to pg_language instead.
 		 */
 		ownerId = BOOTSTRAP_SUPERUSERID;
-		grantorId = select_grantor(ownerId);
+		aclDatum = SysCacheGetAttr(LANGNAME, tuple, Anum_pg_language_lanacl,
+								   &isNull);
+		if (isNull)
+			old_acl = acldefault(ACL_OBJECT_LANGUAGE, ownerId);
+		else
+			old_acl = DatumGetAclPCopy(aclDatum);
+
+		/* Determine ID to do the grant as, and available grant options */
+		select_best_grantor(GetUserId(), privileges,
+							old_acl, ownerId,
+							&grantorId, &avail_goptions);
 
 		/*
-		 * Must be owner or have some privilege on the object (per spec,
-		 * any privilege will get you by here).  The owner is always
-		 * treated as having all grant options.
+		 * If we found no grant options, consider whether to issue a hard
+		 * error.  Per spec, having any privilege at all on the object
+		 * will get you by here.
 		 */
-		if (superuser())		/* XXX no ownercheck() available */
-			my_goptions = ACL_ALL_RIGHTS_LANGUAGE;
-		else
+		if (avail_goptions == ACL_NO_RIGHTS)
 		{
-			AclMode		my_rights;
-
-			my_rights = pg_language_aclmask(HeapTupleGetOid(tuple),
-											GetUserId(),
-											ACL_ALL_RIGHTS_LANGUAGE | ACL_GRANT_OPTION_FOR(ACL_ALL_RIGHTS_LANGUAGE),
-											ACLMASK_ALL);
-			if (my_rights == ACL_NO_RIGHTS)
+			if (pg_language_aclmask(HeapTupleGetOid(tuple),
+									grantorId,
+									ACL_ALL_RIGHTS_LANGUAGE | ACL_GRANT_OPTION_FOR(ACL_ALL_RIGHTS_LANGUAGE),
+									ACLMASK_ANY) == ACL_NO_RIGHTS)
 				aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_LANGUAGE,
 							   NameStr(pg_language_tuple->lanname));
-			my_goptions = ACL_OPTION_TO_PRIVS(my_rights);
 		}
 
 		/*
@@ -855,7 +833,7 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 		 * In practice that behavior seems much too noisy, as well as
 		 * inconsistent with the GRANT case.)
 		 */
-		this_privileges = privileges & my_goptions;
+		this_privileges = privileges & ACL_OPTION_TO_PRIVS(avail_goptions);
 		if (stmt->is_grant)
 		{
 			if (this_privileges == 0)
@@ -880,17 +858,8 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 		}
 
 		/*
-		 * If there's no ACL, substitute the proper default.
-		 */
-		aclDatum = SysCacheGetAttr(LANGNAME, tuple, Anum_pg_language_lanacl,
-								   &isNull);
-		if (isNull)
-			old_acl = acldefault(ACL_OBJECT_LANGUAGE, ownerId);
-		else
-			/* get a detoasted copy of the ACL */
-			old_acl = DatumGetAclPCopy(aclDatum);
-
-		/*
+		 * Generate new ACL.
+		 *
 		 * We need the members of both old and new ACLs so we can correct
 		 * the shared dependency information.
 		 */
@@ -973,7 +942,7 @@ ExecuteGrantStmt_Namespace(GrantStmt *stmt)
 		Form_pg_namespace pg_namespace_tuple;
 		Datum		aclDatum;
 		bool		isNull;
-		AclMode		my_goptions;
+		AclMode		avail_goptions;
 		AclMode		this_privileges;
 		Acl		   *old_acl;
 		Acl		   *new_acl;
@@ -998,28 +967,37 @@ ExecuteGrantStmt_Namespace(GrantStmt *stmt)
 					 errmsg("schema \"%s\" does not exist", nspname)));
 		pg_namespace_tuple = (Form_pg_namespace) GETSTRUCT(tuple);
 
+		/*
+		 * Get owner ID and working copy of existing ACL.
+		 * If there's no ACL, substitute the proper default.
+		 */
 		ownerId = pg_namespace_tuple->nspowner;
-		grantorId = select_grantor(ownerId);
+		aclDatum = SysCacheGetAttr(NAMESPACENAME, tuple,
+								   Anum_pg_namespace_nspacl,
+								   &isNull);
+		if (isNull)
+			old_acl = acldefault(ACL_OBJECT_NAMESPACE, ownerId);
+		else
+			old_acl = DatumGetAclPCopy(aclDatum);
+
+		/* Determine ID to do the grant as, and available grant options */
+		select_best_grantor(GetUserId(), privileges,
+							old_acl, ownerId,
+							&grantorId, &avail_goptions);
 
 		/*
-		 * Must be owner or have some privilege on the object (per spec,
-		 * any privilege will get you by here).  The owner is always
-		 * treated as having all grant options.
+		 * If we found no grant options, consider whether to issue a hard
+		 * error.  Per spec, having any privilege at all on the object
+		 * will get you by here.
 		 */
-		if (pg_namespace_ownercheck(HeapTupleGetOid(tuple), GetUserId()))
-			my_goptions = ACL_ALL_RIGHTS_NAMESPACE;
-		else
+		if (avail_goptions == ACL_NO_RIGHTS)
 		{
-			AclMode		my_rights;
-
-			my_rights = pg_namespace_aclmask(HeapTupleGetOid(tuple),
-											 GetUserId(),
-											 ACL_ALL_RIGHTS_NAMESPACE | ACL_GRANT_OPTION_FOR(ACL_ALL_RIGHTS_NAMESPACE),
-											 ACLMASK_ALL);
-			if (my_rights == ACL_NO_RIGHTS)
+			if (pg_namespace_aclmask(HeapTupleGetOid(tuple),
+									 grantorId,
+									 ACL_ALL_RIGHTS_NAMESPACE | ACL_GRANT_OPTION_FOR(ACL_ALL_RIGHTS_NAMESPACE),
+									 ACLMASK_ANY) == ACL_NO_RIGHTS)
 				aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_NAMESPACE,
 							   nspname);
-			my_goptions = ACL_OPTION_TO_PRIVS(my_rights);
 		}
 
 		/*
@@ -1030,7 +1008,7 @@ ExecuteGrantStmt_Namespace(GrantStmt *stmt)
 		 * In practice that behavior seems much too noisy, as well as
 		 * inconsistent with the GRANT case.)
 		 */
-		this_privileges = privileges & my_goptions;
+		this_privileges = privileges & ACL_OPTION_TO_PRIVS(avail_goptions);
 		if (stmt->is_grant)
 		{
 			if (this_privileges == 0)
@@ -1055,18 +1033,8 @@ ExecuteGrantStmt_Namespace(GrantStmt *stmt)
 		}
 
 		/*
-		 * If there's no ACL, substitute the proper default.
-		 */
-		aclDatum = SysCacheGetAttr(NAMESPACENAME, tuple,
-								   Anum_pg_namespace_nspacl,
-								   &isNull);
-		if (isNull)
-			old_acl = acldefault(ACL_OBJECT_NAMESPACE, ownerId);
-		else
-			/* get a detoasted copy of the ACL */
-			old_acl = DatumGetAclPCopy(aclDatum);
-
-		/*
+		 * Generate new ACL.
+		 *
 		 * We need the members of both old and new ACLs so we can correct
 		 * the shared dependency information.
 		 */
@@ -1151,7 +1119,7 @@ ExecuteGrantStmt_Tablespace(GrantStmt *stmt)
 		Form_pg_tablespace pg_tablespace_tuple;
 		Datum		aclDatum;
 		bool		isNull;
-		AclMode		my_goptions;
+		AclMode		avail_goptions;
 		AclMode		this_privileges;
 		Acl		   *old_acl;
 		Acl		   *new_acl;
@@ -1179,28 +1147,36 @@ ExecuteGrantStmt_Tablespace(GrantStmt *stmt)
 				   errmsg("tablespace \"%s\" does not exist", spcname)));
 		pg_tablespace_tuple = (Form_pg_tablespace) GETSTRUCT(tuple);
 
+		/*
+		 * Get owner ID and working copy of existing ACL.
+		 * If there's no ACL, substitute the proper default.
+		 */
 		ownerId = pg_tablespace_tuple->spcowner;
-		grantorId = select_grantor(ownerId);
+		aclDatum = heap_getattr(tuple, Anum_pg_tablespace_spcacl,
+								RelationGetDescr(relation), &isNull);
+		if (isNull)
+			old_acl = acldefault(ACL_OBJECT_TABLESPACE, ownerId);
+		else
+			old_acl = DatumGetAclPCopy(aclDatum);
+
+		/* Determine ID to do the grant as, and available grant options */
+		select_best_grantor(GetUserId(), privileges,
+							old_acl, ownerId,
+							&grantorId, &avail_goptions);
 
 		/*
-		 * Must be owner or have some privilege on the object (per spec,
-		 * any privilege will get you by here).  The owner is always
-		 * treated as having all grant options.
+		 * If we found no grant options, consider whether to issue a hard
+		 * error.  Per spec, having any privilege at all on the object
+		 * will get you by here.
 		 */
-		if (pg_tablespace_ownercheck(HeapTupleGetOid(tuple), GetUserId()))
-			my_goptions = ACL_ALL_RIGHTS_TABLESPACE;
-		else
+		if (avail_goptions == ACL_NO_RIGHTS)
 		{
-			AclMode		my_rights;
-
-			my_rights = pg_tablespace_aclmask(HeapTupleGetOid(tuple),
-											  GetUserId(),
-											  ACL_ALL_RIGHTS_TABLESPACE | ACL_GRANT_OPTION_FOR(ACL_ALL_RIGHTS_TABLESPACE),
-											  ACLMASK_ALL);
-			if (my_rights == ACL_NO_RIGHTS)
+			if (pg_tablespace_aclmask(HeapTupleGetOid(tuple),
+									  grantorId,
+									  ACL_ALL_RIGHTS_TABLESPACE | ACL_GRANT_OPTION_FOR(ACL_ALL_RIGHTS_TABLESPACE),
+									  ACLMASK_ANY) == ACL_NO_RIGHTS)
 				aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_TABLESPACE,
 							   spcname);
-			my_goptions = ACL_OPTION_TO_PRIVS(my_rights);
 		}
 
 		/*
@@ -1211,7 +1187,7 @@ ExecuteGrantStmt_Tablespace(GrantStmt *stmt)
 		 * In practice that behavior seems much too noisy, as well as
 		 * inconsistent with the GRANT case.)
 		 */
-		this_privileges = privileges & my_goptions;
+		this_privileges = privileges & ACL_OPTION_TO_PRIVS(avail_goptions);
 		if (stmt->is_grant)
 		{
 			if (this_privileges == 0)
@@ -1236,17 +1212,8 @@ ExecuteGrantStmt_Tablespace(GrantStmt *stmt)
 		}
 
 		/*
-		 * If there's no ACL, substitute the proper default.
-		 */
-		aclDatum = heap_getattr(tuple, Anum_pg_tablespace_spcacl,
-								RelationGetDescr(relation), &isNull);
-		if (isNull)
-			old_acl = acldefault(ACL_OBJECT_TABLESPACE, ownerId);
-		else
-			/* get a detoasted copy of the ACL */
-			old_acl = DatumGetAclPCopy(aclDatum);
-
-		/*
+		 * Generate new ACL.
+		 *
 		 * We need the members of both old and new ACLs so we can correct
 		 * the shared dependency information.
 		 */

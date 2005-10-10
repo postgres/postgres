@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.124 2005/10/07 19:59:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.125 2005/10/10 18:49:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1063,6 +1063,65 @@ aclmask(const Acl *acl, Oid roleid, Oid ownerId,
 			if ((how == ACLMASK_ALL) ? (result == mask) : (result != 0))
 				return result;
 			remaining = mask & ~result;
+		}
+	}
+
+	return result;
+}
+
+
+/*
+ * aclmask_direct --- compute bitmask of all privileges held by roleid.
+ *
+ * This is exactly like aclmask() except that we consider only privileges
+ * held *directly* by roleid, not those inherited via role membership.
+ */
+static AclMode
+aclmask_direct(const Acl *acl, Oid roleid, Oid ownerId,
+			   AclMode mask, AclMaskHow how)
+{
+	AclMode		result;
+	AclItem    *aidat;
+	int			i,
+				num;
+
+	/*
+	 * Null ACL should not happen, since caller should have inserted
+	 * appropriate default
+	 */
+	if (acl == NULL)
+		elog(ERROR, "null ACL");
+
+	/* Quick exit for mask == 0 */
+	if (mask == 0)
+		return 0;
+
+	result = 0;
+
+	/* Owner always implicitly has all grant options */
+	if ((mask & ACLITEM_ALL_GOPTION_BITS) &&
+		roleid == ownerId)
+	{
+		result = mask & ACLITEM_ALL_GOPTION_BITS;
+		if ((how == ACLMASK_ALL) ? (result == mask) : (result != 0))
+			return result;
+	}
+
+	num = ACL_NUM(acl);
+	aidat = ACL_DAT(acl);
+
+	/*
+	 * Check privileges granted directly to roleid (and not to public)
+	 */
+	for (i = 0; i < num; i++)
+	{
+		AclItem    *aidata = &aidat[i];
+
+		if (aidata->ai_grantee == roleid)
+		{
+			result |= aidata->ai_privs & mask;
+			if ((how == ACLMASK_ALL) ? (result == mask) : (result != 0))
+				return result;
 		}
 	}
 
@@ -2778,37 +2837,33 @@ has_rolinherit(Oid roleid)
 
 
 /*
- * Does member have the privileges of role (directly or indirectly)?
+ * Get a list of roles that the specified roleid has the privileges of
  *
  * This is defined not to recurse through roles that don't have rolinherit
  * set; for such roles, membership implies the ability to do SET ROLE, but
  * the privileges are not available until you've done so.
  *
  * Since indirect membership testing is relatively expensive, we cache
- * a list of memberships.
+ * a list of memberships.  Hence, the result is only guaranteed good until
+ * the next call of roles_has_privs_of()!
+ *
+ * For the benefit of select_best_grantor, the result is defined to be
+ * in breadth-first order, ie, closer relationships earlier.
  */
-bool
-has_privs_of_role(Oid member, Oid role)
+static List *
+roles_has_privs_of(Oid roleid)
 {
 	List		*roles_list;
 	ListCell	*l;
 	List		*new_cached_privs_roles;
 	MemoryContext	oldctx;
 
-	/* Fast path for simple case */
-	if (member == role)
-		return true;
-
-	/* Superusers have every privilege, so are part of every role */
-	if (superuser_arg(member))
-		return true;
-
-	/* If cache is already valid, just use the list */
-	if (OidIsValid(cached_privs_role) && cached_privs_role == member)
-		return list_member_oid(cached_privs_roles, role);
+	/* If cache is already valid, just return the list */
+	if (OidIsValid(cached_privs_role) && cached_privs_role == roleid)
+		return cached_privs_roles;
 
 	/* 
-	 * Find all the roles that member is a member of,
+	 * Find all the roles that roleid is a member of,
 	 * including multi-level recursion.  The role itself will always
 	 * be the first element of the resulting list.
 	 *
@@ -2818,7 +2873,7 @@ has_privs_of_role(Oid member, Oid role)
 	 * This is a bit tricky but works because the foreach() macro doesn't
 	 * fetch the next list element until the bottom of the loop.
 	 */
-	roles_list = list_make1_oid(member);
+	roles_list = list_make1_oid(roleid);
 
 	foreach(l, roles_list)
 	{
@@ -2863,43 +2918,36 @@ has_privs_of_role(Oid member, Oid role)
 	cached_privs_role = InvalidOid;	/* just paranoia */
 	list_free(cached_privs_roles);
 	cached_privs_roles = new_cached_privs_roles;
-	cached_privs_role = member;
+	cached_privs_role = roleid;
 
 	/* And now we can return the answer */
-	return list_member_oid(cached_privs_roles, role);
+	return cached_privs_roles;
 }
 
 
 /*
- * Is member a member of role (directly or indirectly)?
+ * Get a list of roles that the specified roleid is a member of
  *
  * This is defined to recurse through roles regardless of rolinherit.
  *
  * Since indirect membership testing is relatively expensive, we cache
- * a list of memberships.
+ * a list of memberships.  Hence, the result is only guaranteed good until
+ * the next call of roles_is_member_of()!
  */
-bool
-is_member_of_role(Oid member, Oid role)
+static List *
+roles_is_member_of(Oid roleid)
 {
 	List		*roles_list;
 	ListCell	*l;
 	List		*new_cached_membership_roles;
 	MemoryContext	oldctx;
 
-	/* Fast path for simple case */
-	if (member == role)
-		return true;
-
-	/* Superusers have every privilege, so are part of every role */
-	if (superuser_arg(member))
-		return true;
-
-	/* If cache is already valid, just use the list */
-	if (OidIsValid(cached_member_role) && cached_member_role == member)
-		return list_member_oid(cached_membership_roles, role);
+	/* If cache is already valid, just return the list */
+	if (OidIsValid(cached_member_role) && cached_member_role == roleid)
+		return cached_membership_roles;
 
 	/* 
-	 * Find all the roles that member is a member of,
+	 * Find all the roles that roleid is a member of,
 	 * including multi-level recursion.  The role itself will always
 	 * be the first element of the resulting list.
 	 *
@@ -2909,7 +2957,7 @@ is_member_of_role(Oid member, Oid role)
 	 * This is a bit tricky but works because the foreach() macro doesn't
 	 * fetch the next list element until the bottom of the loop.
 	 */
-	roles_list = list_make1_oid(member);
+	roles_list = list_make1_oid(roleid);
 
 	foreach(l, roles_list)
 	{
@@ -2950,10 +2998,60 @@ is_member_of_role(Oid member, Oid role)
 	cached_member_role = InvalidOid;	/* just paranoia */
 	list_free(cached_membership_roles);
 	cached_membership_roles = new_cached_membership_roles;
-	cached_member_role = member;
+	cached_member_role = roleid;
 
 	/* And now we can return the answer */
-	return list_member_oid(cached_membership_roles, role);
+	return cached_membership_roles;
+}
+
+
+/*
+ * Does member have the privileges of role (directly or indirectly)?
+ *
+ * This is defined not to recurse through roles that don't have rolinherit
+ * set; for such roles, membership implies the ability to do SET ROLE, but
+ * the privileges are not available until you've done so.
+ */
+bool
+has_privs_of_role(Oid member, Oid role)
+{
+	/* Fast path for simple case */
+	if (member == role)
+		return true;
+
+	/* Superusers have every privilege, so are part of every role */
+	if (superuser_arg(member))
+		return true;
+
+	/* 
+	 * Find all the roles that member has the privileges of, including
+	 * multi-level recursion, then see if target role is any one of them.
+	 */
+	return list_member_oid(roles_has_privs_of(member), role);
+}
+
+
+/*
+ * Is member a member of role (directly or indirectly)?
+ *
+ * This is defined to recurse through roles regardless of rolinherit.
+ */
+bool
+is_member_of_role(Oid member, Oid role)
+{
+	/* Fast path for simple case */
+	if (member == role)
+		return true;
+
+	/* Superusers have every privilege, so are part of every role */
+	if (superuser_arg(member))
+		return true;
+
+	/* 
+	 * Find all the roles that member is a member of, including multi-level
+	 * recursion, then see if target role is any one of them.
+	 */
+	return list_member_oid(roles_is_member_of(member), role);
 }
 
 /*
@@ -3033,4 +3131,114 @@ is_admin_of_role(Oid member, Oid role)
 	list_free(roles_list);
 
 	return result;
+}
+
+
+/* does what it says ... */
+static int
+count_one_bits(AclMode mask)
+{
+	int		nbits = 0;
+
+	/* this code relies on AclMode being an unsigned type */
+	while (mask)
+	{
+		if (mask & 1)
+			nbits++;
+		mask >>= 1;
+	}
+	return nbits;
+}
+
+
+/*
+ * Select the effective grantor ID for a GRANT or REVOKE operation.
+ *
+ * The grantor must always be either the object owner or some role that has
+ * been explicitly granted grant options.  This ensures that all granted
+ * privileges appear to flow from the object owner, and there are never
+ * multiple "original sources" of a privilege.  Therefore, if the would-be
+ * grantor is a member of a role that has the needed grant options, we have
+ * to do the grant as that role instead.
+ *
+ * It is possible that the would-be grantor is a member of several roles
+ * that have different subsets of the desired grant options, but no one
+ * role has 'em all.  In this case we pick a role with the largest number
+ * of desired options.  Ties are broken in favor of closer ancestors.
+ *
+ * roleId: the role attempting to do the GRANT/REVOKE
+ * privileges: the privileges to be granted/revoked
+ * acl: the ACL of the object in question
+ * ownerId: the role owning the object in question
+ * *grantorId: receives the OID of the role to do the grant as
+ * *grantOptions: receives the grant options actually held by grantorId
+ *
+ * If no grant options exist, we set grantorId to roleId, grantOptions to 0.
+ */
+void
+select_best_grantor(Oid roleId, AclMode privileges,
+					const Acl *acl, Oid ownerId,
+					Oid *grantorId, AclMode *grantOptions)
+{
+	AclMode		needed_goptions = ACL_GRANT_OPTION_FOR(privileges);
+	List		*roles_list;
+	int			nrights;
+	ListCell   *l;
+
+	/*
+	 * The object owner is always treated as having all grant options,
+	 * so if roleId is the owner it's easy.  Also, if roleId is a superuser
+	 * it's easy: superusers are implicitly members of every role, so they
+	 * act as the object owner.
+	 */
+	if (roleId == ownerId || superuser_arg(roleId))
+	{
+		*grantorId = ownerId;
+		*grantOptions = needed_goptions;
+		return;
+	}
+
+	/*
+	 * Otherwise we have to do a careful search to see if roleId has the
+	 * privileges of any suitable role.  Note: we can hang onto the result
+	 * of roles_has_privs_of() throughout this loop, because aclmask_direct()
+	 * doesn't query any role memberships.
+	 */
+	roles_list = roles_has_privs_of(roleId);
+
+	/* initialize candidate result as default */
+	*grantorId = roleId;
+	*grantOptions = ACL_NO_RIGHTS;
+	nrights = 0;
+
+	foreach(l, roles_list)
+	{
+		Oid		otherrole = lfirst_oid(l);
+		AclMode	otherprivs;
+
+		otherprivs = aclmask_direct(acl, otherrole, ownerId,
+									needed_goptions, ACLMASK_ALL);
+		if (otherprivs == needed_goptions)
+		{
+			/* Found a suitable grantor */
+			*grantorId = otherrole;
+			*grantOptions = otherprivs;
+			return;
+		}
+		/*
+		 * If it has just some of the needed privileges, remember best
+		 * candidate.
+		 */
+		if (otherprivs != ACL_NO_RIGHTS)
+		{
+			int		nnewrights = count_one_bits(otherprivs);
+
+			if (nnewrights > nrights)
+			{
+				*grantorId = otherrole;
+				*grantOptions = otherprivs;
+				nrights = nnewrights;
+			}
+		}
+	}
 }
