@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.164 2005/09/19 17:21:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.165 2005/10/11 20:41:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,6 +171,8 @@ InitProcGlobal(void)
 
 		ProcGlobal->freeProcs = INVALID_OFFSET;
 
+		ProcGlobal->spins_per_delay = DEFAULT_SPINS_PER_DELAY;
+
 		/*
 		 * Pre-create the PGPROC structures and create a semaphore for
 		 * each.
@@ -225,8 +227,13 @@ InitProcess(void)
 	/*
 	 * Try to get a proc struct from the free list.  If this fails, we
 	 * must be out of PGPROC structures (not to mention semaphores).
+	 *
+	 * While we are holding the ProcStructLock, also copy the current
+	 * shared estimate of spins_per_delay to local storage.
 	 */
 	SpinLockAcquire(ProcStructLock);
+
+	set_spins_per_delay(procglobal->spins_per_delay);
 
 	myOffset = procglobal->freeProcs;
 
@@ -319,21 +326,38 @@ InitDummyProcess(int proctype)
 
 	Assert(proctype >= 0 && proctype < NUM_DUMMY_PROCS);
 
+	/*
+	 * Just for paranoia's sake, we use the ProcStructLock to protect
+	 * assignment and releasing of DummyProcs entries.
+	 *
+	 * While we are holding the ProcStructLock, also copy the current
+	 * shared estimate of spins_per_delay to local storage.
+	 */
+	SpinLockAcquire(ProcStructLock);
+
+	set_spins_per_delay(ProcGlobal->spins_per_delay);
+
 	dummyproc = &DummyProcs[proctype];
 
 	/*
 	 * dummyproc should not presently be in use by anyone else
 	 */
 	if (dummyproc->pid != 0)
+	{
+		SpinLockRelease(ProcStructLock);
 		elog(FATAL, "DummyProc[%d] is in use by PID %d",
 			 proctype, dummyproc->pid);
+	}
 	MyProc = dummyproc;
+
+	MyProc->pid = MyProcPid;	/* marks dummy proc as in use by me */
+
+	SpinLockRelease(ProcStructLock);
 
 	/*
 	 * Initialize all fields of MyProc, except MyProc->sem which was set
 	 * up by InitProcGlobal.
 	 */
-	MyProc->pid = MyProcPid;	/* marks dummy proc as in use by me */
 	SHMQueueElemInit(&(MyProc->links));
 	MyProc->waitStatus = STATUS_OK;
 	MyProc->xid = InvalidTransactionId;
@@ -510,6 +534,9 @@ ProcKill(int code, Datum arg)
 	/* PGPROC struct isn't mine anymore */
 	MyProc = NULL;
 
+	/* Update shared estimate of spins_per_delay */
+	procglobal->spins_per_delay = update_spins_per_delay(procglobal->spins_per_delay);
+
 	SpinLockRelease(ProcStructLock);
 }
 
@@ -533,11 +560,18 @@ DummyProcKill(int code, Datum arg)
 	/* Release any LW locks I am holding (see notes above) */
 	LWLockReleaseAll();
 
+	SpinLockAcquire(ProcStructLock);
+
 	/* Mark dummy proc no longer in use */
 	MyProc->pid = 0;
 
 	/* PGPROC struct isn't mine anymore */
 	MyProc = NULL;
+
+	/* Update shared estimate of spins_per_delay */
+	ProcGlobal->spins_per_delay = update_spins_per_delay(ProcGlobal->spins_per_delay);
+
+	SpinLockRelease(ProcStructLock);
 }
 
 
