@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Fri Oct  7 10:04:19 EDT 2005
+Last updated:           Tue Oct 11 19:55:10 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -543,6 +543,10 @@ first.
     </li><li>Update pg_dump and psql to use the new COPY libpq API (Christopher)
     </li><li>Remove unnecessary function pointer abstractions in pg_dump source
           code
+    </li><li>Allow selection of individual object(s) of all types, not just
+          tables
+    </li><li>In a selective dump, allow dumping of an object and all its 
+          dependencies
   </li></ul>
   </li><li>ecpg
   <ul>
