@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.127 2005/08/12 21:49:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.128 2005/10/11 17:27:14 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -1841,8 +1841,8 @@ get_attavgwidth(Oid relid, AttrNumber attnum)
  * entry, and we don't want to repeat the cache lookup unnecessarily.
  *
  * statstuple: pg_statistics tuple to be examined.
- * atttype: type OID of attribute.
- * atttypmod: typmod of attribute.
+ * atttype: type OID of attribute (can be InvalidOid if values == NULL).
+ * atttypmod: typmod of attribute (can be 0 if values == NULL).
  * reqkind: STAKIND code for desired statistics slot kind.
  * reqop: STAOP value wanted, or InvalidOid if don't care.
  * values, nvalues: if not NULL, the slot's stavalues are extracted.
@@ -1960,6 +1960,12 @@ get_attstatsslot(HeapTuple statstuple,
 	return true;
 }
 
+/*
+ * free_attstatsslot
+ *		Free data allocated by get_attstatsslot
+ *
+ * atttype need be valid only if values != NULL.
+ */
 void
 free_attstatsslot(Oid atttype,
 				  Datum *values, int nvalues,

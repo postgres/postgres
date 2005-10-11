@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.189 2005/09/24 22:54:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.190 2005/10/11 17:27:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4466,15 +4466,10 @@ btcostestimate(PG_FUNCTION_ARGS)
 
 	if (HeapTupleIsValid(tuple))
 	{
-		Oid			typid;
-		int32		typmod;
 		float4	   *numbers;
 		int			nnumbers;
 
-		/* XXX this code would break with different storage type */
-		get_atttypetypmod(relid, colnum, &typid, &typmod);
-
-		if (get_attstatsslot(tuple, typid, typmod,
+		if (get_attstatsslot(tuple, InvalidOid, 0,
 							 STATISTIC_KIND_CORRELATION,
 							 index->ordering[0],
 							 NULL, NULL, &numbers, &nnumbers))
@@ -4489,7 +4484,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 			else
 				*indexCorrelation = varCorrelation;
 
-			free_attstatsslot(typid, NULL, 0, numbers, nnumbers);
+			free_attstatsslot(InvalidOid, NULL, 0, numbers, nnumbers);
 		}
 		ReleaseSysCache(tuple);
 	}
