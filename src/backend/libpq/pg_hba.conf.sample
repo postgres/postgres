@@ -30,7 +30,7 @@
 #
 # CIDR-ADDRESS specifies the set of hosts the record matches.
 # It is made up of an IP address and a CIDR mask that is an integer
-# (between 0 and 32 (IPv6) or 128(IPv6) inclusive) that specifies
+# (between 0 and 32 (IPv4) or 128 (IPv6) inclusive) that specifies
 # the number of significant bits in the mask.  Alternatively, you can write
 # an IP address and netmask in separate columns to specify the set of hosts.
 #
