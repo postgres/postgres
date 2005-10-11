@@ -26,7 +26,7 @@
 # USER can be "all", an actual user name or a group name prefixed with
 # "+" or a list containing either.  IP-ADDRESS and IP-MASK specify the
 # set of hosts the record matches.  CIDR-MASK is an integer between 0
-# and 32 (IPv6) or 128(IPv6) inclusive, that specifies the number of
+# and 32 (IPv4) or 128 (IPv6) inclusive, that specifies the number of
 # significant bits in the mask, so an IPv4 CIDR-MASK of 8 is equivalent
 # to an IP-MASK of 255.0.0.0, and an IPv6 CIDR-MASK of 64 is equivalent
 # to an IP-MASK of ffff:ffff:ffff:ffff::. METHOD can be "trust", "reject",
