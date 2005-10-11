@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.73 2005/06/05 22:32:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.74 2005/10/11 16:44:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -461,8 +461,15 @@ clause_selectivity(PlannerInfo *root,
 			}
 		}
 
-		/* Proceed with examination of contained clause */
-		clause = (Node *) rinfo->clause;
+		/*
+		 * Proceed with examination of contained clause.  If the clause is an
+		 * OR-clause, we want to look at the variant with sub-RestrictInfos,
+		 * so that per-subclause selectivities can be cached.
+		 */
+		if (rinfo->orclause)
+			clause = (Node *) rinfo->orclause;
+		else
+			clause = (Node *) rinfo->clause;
 	}
 
 	if (IsA(clause, Var))
