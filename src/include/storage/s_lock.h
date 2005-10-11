@@ -66,7 +66,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.140 2005/08/29 00:41:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.141 2005/10/11 20:01:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,7 +108,7 @@
  */
 
 
-#if defined(__i386__) || defined(__x86_64__) /* AMD Opteron */
+#ifdef __i386__
 #define HAS_TEST_AND_SET
 
 typedef unsigned char slock_t;
@@ -120,7 +120,11 @@ tas(volatile slock_t *lock)
 {
 	register slock_t _res = 1;
 
-	/* Use a non-locking test before asserting the bus lock */
+	/*
+	 * Use a non-locking test before asserting the bus lock.  Note that the
+	 * extra test appears to be a small loss on some x86 platforms and a small
+	 * win on others; it's by no means clear that we should keep it.
+	 */
 	__asm__ __volatile__(
 		"	cmpb	$0,%1	\n"
 		"	jne		1f		\n"
@@ -165,7 +169,49 @@ spin_delay(void)
 		" rep; nop			\n");
 }
 
-#endif	 /* __i386__ || __x86_64__ */
+#endif	 /* __i386__ */
+
+
+#ifdef __x86_64__		/* AMD Opteron, Intel EM64T */
+#define HAS_TEST_AND_SET
+
+typedef unsigned char slock_t;
+
+#define TAS(lock) tas(lock)
+
+static __inline__ int
+tas(volatile slock_t *lock)
+{
+	register slock_t _res = 1;
+
+	/*
+	 * On Opteron, using a non-locking test before the locking instruction
+	 * is a huge loss.  On EM64T, it appears to be a wash or small loss,
+	 * so we needn't bother to try to distinguish the sub-architectures.
+	 */
+	__asm__ __volatile__(
+		"	lock			\n"
+		"	xchgb	%0,%1	\n"
+:		"+q"(_res), "+m"(*lock)
+:
+:		"memory", "cc");
+	return (int) _res;
+}
+
+#define SPIN_DELAY() spin_delay()
+
+static __inline__ void
+spin_delay(void)
+{
+	/*
+	 * Adding a PAUSE in the spin delay loop is demonstrably a no-op on
+	 * Opteron, but it may be of some use on EM64T, so we keep it.
+	 */
+	__asm__ __volatile__(
+		" rep; nop			\n");
+}
+
+#endif	 /* __x86_64__ */
 
 
 #if defined(__ia64__) || defined(__ia64)
