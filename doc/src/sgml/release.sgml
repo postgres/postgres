@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.389 2005/10/05 19:52:22 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.390 2005/10/11 21:17:11 tgl Exp $
 
 Typical markup:
 
@@ -20,7 +20,7 @@ pg_[A-Za-z0-9_]                 <application>
 
    <note>
     <title>Release date</title>
-    <simpara>2005-1?-??, Current as of 2005-09-27</simpara>
+    <simpara>2005-1?-??, Current as of 2005-10-11</simpara>
    </note>
 
    <sect2>
@@ -563,6 +563,12 @@ psql -t -f fixseq.sql db1 | psql -e db1
 
       <listitem>
        <para>
+        Improve spinlock behavior on SMP machines, particularly Opterons (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Allow non-consecutive index columns to be used in a multi-column
         index (Tom)
        </para>
@@ -687,7 +693,16 @@ psql -t -f fixseq.sql db1 | psql -e db1
 
       <listitem>
        <para>
-        Enhance <literal>pg_locks</> display (Tom)
+        Adjust <literal>pg_stat</> views for bitmap scans (Tom)
+       </para>
+       <para>
+        The meanings of some of the fields have changed slightly.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Enhance <literal>pg_locks</> view (Tom)
        </para>
       </listitem>
 
@@ -1176,6 +1191,16 @@ psql -t -f fixseq.sql db1 | psql -e db1
         Previous versions sometimes returned unjustified results, like
         <command>'4 months'::interval / 5</> returning <command>'1 mon
         -6 days'</>.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Fix roundoff behavior in timestamp, time, and interval output (Tom)
+       </para>
+       <para>
+        This fixes some cases in which the seconds field would be shown as
+        <literal>60</> instead of incrementing the higher-order fields.
        </para>
       </listitem>
 
@@ -1827,6 +1852,13 @@ psql -t -f fixseq.sql db1 | psql -e db1
   
       <listitem>
        <para>
+        Fix <application>pgxs</> to support building against a relocated
+        installation
+       </para>
+      </listitem>
+  
+      <listitem>
+       <para>
         Add spinlock support for the Itanium processor using Intel
         compiler (Vikram Kalsi)
        </para>
@@ -2000,6 +2032,16 @@ psql -t -f fixseq.sql db1 | psql -e db1
       <listitem>
        <para>
         Improve <filename>/contrib/btree_gist</> (Janko Richter)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve <filename>/contrib/pgbench</> (Tatsuo)
+       </para>
+       <para>
+        There is now a facility for testing with SQL command scripts given
+        by the user, instead of only a hard-wired command sequence.
        </para>
       </listitem>
 
