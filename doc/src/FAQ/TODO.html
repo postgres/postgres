@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Wed Oct 12 09:39:47 EDT 2005
+Last updated:           Wed Oct 12 09:41:01 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -534,9 +534,7 @@ first.
   <ul>
     <li>%Have pg_dump use multi-statement transactions for INSERT dumps
     </li><li>%Allow pg_dump to use multiple -t and -n switches [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?pg_dump">pg_dump</a>]
-    </li><li>%Add dumping of comments on composite type columns
-    </li><li>%Add dumping of comments on index columns
-    </li><li>Stop dumping CASCADE on DROP TYPE commands in clean mode
+    </li><li>%Add dumping of comments on index columns and composite type columns
     </li><li>%Add full object name to the tag field.  eg. for operators we need
           '=(integer, integer)', instead of just '='.
     </li><li>Add pg_dumpall custom format dumps?
@@ -549,6 +547,7 @@ first.
     </li><li>In a selective dump, allow dumping of an object and all its 
           dependencies
     </li><li>Add options like pg_restore -l and -L to pg_dump
+    </li><li>Stop dumping CASCADE on DROP TYPE commands in clean mode
     </li><li>Allow pg_dump --clean to drop roles that own objects or have
           privileges
   </li></ul>
