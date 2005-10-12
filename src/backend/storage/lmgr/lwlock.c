@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.32 2005/10/07 21:42:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.33 2005/10/12 16:55:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -226,7 +226,8 @@ LWLockId
 LWLockAssign(void)
 {
 	LWLockId	result;
-	int		   *LWLockCounter;
+	/* use volatile pointer to prevent code rearrangement */
+	volatile int *LWLockCounter;
 
 	LWLockCounter = (int *) ((char *) LWLockArray - 2 * sizeof(int));
 	SpinLockAcquire(ShmemLock);
