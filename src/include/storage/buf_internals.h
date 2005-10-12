@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.79 2005/08/20 23:26:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.80 2005/10/12 16:45:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,6 +145,11 @@ typedef struct sbufdesc
  * NoHoldoff cases may be used when we know that we hold some LWLock
  * and therefore interrupts are already held off.  Do not apply these
  * to local buffers!
+ *
+ * Note: as a general coding rule, if you are using these then you probably
+ * want to be using a volatile-qualified pointer to the buffer header, to
+ * ensure that the compiler doesn't rearrange accesses to the header to
+ * occur before or after the spinlock is acquired/released.
  */
 #define LockBufHdr(bufHdr)  \
 	SpinLockAcquire(&(bufHdr)->buf_hdr_lock)
@@ -179,8 +184,8 @@ extern long int LocalBufferFlushCount;
  */
 
 /* freelist.c */
-extern BufferDesc *StrategyGetBuffer(void);
-extern void StrategyFreeBuffer(BufferDesc *buf, bool at_head);
+extern volatile BufferDesc *StrategyGetBuffer(void);
+extern void StrategyFreeBuffer(volatile BufferDesc *buf, bool at_head);
 extern int	StrategySyncStart(void);
 extern Size StrategyShmemSize(void);
 extern void StrategyInitialize(bool init);

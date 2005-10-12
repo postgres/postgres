@@ -3,7 +3,7 @@
  * pg_buffercache_pages.c
  *    display some contents of the buffer cache
  *
- *	  $PostgreSQL: pgsql/contrib/pg_buffercache/pg_buffercache_pages.c,v 1.4 2005/05/31 00:07:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/pg_buffercache/pg_buffercache_pages.c,v 1.5 2005/10/12 16:45:13 tgl Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -72,10 +72,8 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		RelFileNode	rnode;
 		uint32		i;
-		BufferDesc	*bufHdr;
-
+		volatile BufferDesc	*bufHdr;
 
 		funcctx = SRF_FIRSTCALL_INIT();
 
@@ -136,35 +134,24 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 			/* Lock each buffer header before inspecting. */
 			LockBufHdr(bufHdr);
 
-			rnode = bufHdr->tag.rnode;
-
 			fctx->record[i].bufferid = BufferDescriptorGetBuffer(bufHdr);
-			fctx->record[i].relfilenode = rnode.relNode;
-			fctx->record[i].reltablespace = rnode.spcNode;
-			fctx->record[i].reldatabase = rnode.dbNode;
+			fctx->record[i].relfilenode = bufHdr->tag.rnode.relNode;
+			fctx->record[i].reltablespace = bufHdr->tag.rnode.spcNode;
+			fctx->record[i].reldatabase = bufHdr->tag.rnode.dbNode;
 			fctx->record[i].blocknum = bufHdr->tag.blockNum;
 
-			if ( bufHdr->flags & BM_DIRTY) 
-			{
+			if (bufHdr->flags & BM_DIRTY) 
 				fctx->record[i].isdirty = true;
-			}
 			else
-			{
 				fctx->record[i].isdirty = false;
-			}
 
 			/* Note if the buffer is valid, and has storage created */
-			if ( (bufHdr->flags & BM_VALID) && (bufHdr->flags & BM_TAG_VALID))
-			{
+			if ((bufHdr->flags & BM_VALID) && (bufHdr->flags & BM_TAG_VALID))
 				fctx->record[i].isvalid = true;
-			}
 			else
-			{
 				fctx->record[i].isvalid = false;
-			}
 
 			UnlockBufHdr(bufHdr);
-
 		}
 
 		/* Release Buffer map. */

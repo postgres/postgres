@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.52 2005/08/20 23:26:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.53 2005/10/12 16:45:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,10 +55,10 @@ bool		strategy_hint_vacuum = false;
  *	means that we return with the BufFreelistLock still held, as well;
  *	the caller must release that lock once the spinlock is dropped.
  */
-BufferDesc *
+volatile BufferDesc *
 StrategyGetBuffer(void)
 {
-	BufferDesc *buf;
+	volatile BufferDesc *buf;
 	int			trycounter;
 
 	LWLockAcquire(BufFreelistLock, LW_EXCLUSIVE);
@@ -138,7 +138,7 @@ StrategyGetBuffer(void)
  * quickly the buffer is reused.
  */
 void
-StrategyFreeBuffer(BufferDesc *buf, bool at_head)
+StrategyFreeBuffer(volatile BufferDesc *buf, bool at_head)
 {
 	LWLockAcquire(BufFreelistLock, LW_EXCLUSIVE);
 

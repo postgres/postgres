@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.195 2005/08/12 23:13:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.196 2005/10/12 16:45:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,24 +76,24 @@ long		NDirectFileWrite;	/* e.g., I/O in psort and hashjoin. */
 
 
 /* local state for StartBufferIO and related functions */
-static BufferDesc *InProgressBuf = NULL;
+static volatile BufferDesc *InProgressBuf = NULL;
 static bool IsForInput;
 /* local state for LockBufferForCleanup */
-static BufferDesc *PinCountWaitBuf = NULL;
+static volatile BufferDesc *PinCountWaitBuf = NULL;
 
 
-static bool PinBuffer(BufferDesc *buf);
-static void PinBuffer_Locked(BufferDesc *buf);
-static void UnpinBuffer(BufferDesc *buf, bool fixOwner, bool trashOK);
+static bool PinBuffer(volatile BufferDesc *buf);
+static void PinBuffer_Locked(volatile BufferDesc *buf);
+static void UnpinBuffer(volatile BufferDesc *buf, bool fixOwner, bool trashOK);
 static bool SyncOneBuffer(int buf_id, bool skip_pinned);
-static void WaitIO(BufferDesc *buf);
-static bool StartBufferIO(BufferDesc *buf, bool forInput);
-static void TerminateBufferIO(BufferDesc *buf, bool clear_dirty,
+static void WaitIO(volatile BufferDesc *buf);
+static bool StartBufferIO(volatile BufferDesc *buf, bool forInput);
+static void TerminateBufferIO(volatile BufferDesc *buf, bool clear_dirty,
 							  int set_flag_bits);
 static void buffer_write_error_callback(void *arg);
-static BufferDesc *BufferAlloc(Relation reln, BlockNumber blockNum,
+static volatile BufferDesc *BufferAlloc(Relation reln, BlockNumber blockNum,
 			bool *foundPtr);
-static void FlushBuffer(BufferDesc *buf, SMgrRelation reln);
+static void FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln);
 static void AtProcExit_Buffers(int code, Datum arg);
 static void write_buffer(Buffer buffer, bool unpin);
 
@@ -116,7 +116,7 @@ static void write_buffer(Buffer buffer, bool unpin);
 Buffer
 ReadBuffer(Relation reln, BlockNumber blockNum)
 {
-	BufferDesc *bufHdr;
+	volatile BufferDesc *bufHdr;
 	Block		bufBlock;
 	bool		found;
 	bool		isExtend;
@@ -255,7 +255,7 @@ ReadBuffer(Relation reln, BlockNumber blockNum)
  *
  * No locks are held either at entry or exit.
  */
-static BufferDesc *
+static volatile BufferDesc *
 BufferAlloc(Relation reln,
 			BlockNumber blockNum,
 			bool *foundPtr)
@@ -264,7 +264,7 @@ BufferAlloc(Relation reln,
 	BufferTag	oldTag;
 	BufFlags	oldFlags;
 	int			buf_id;
-	BufferDesc *buf;
+	volatile BufferDesc *buf;
 	bool		valid;
 
 	/* create a tag so we can lookup the buffer */
@@ -512,7 +512,7 @@ BufferAlloc(Relation reln,
  * to acquire the necessary locks; if so, don't mess it up.
  */
 static void
-InvalidateBuffer(BufferDesc *buf)
+InvalidateBuffer(volatile BufferDesc *buf)
 {
 	BufferTag	oldTag;
 	BufFlags	oldFlags;
@@ -602,7 +602,7 @@ retry:
 static void
 write_buffer(Buffer buffer, bool unpin)
 {
-	BufferDesc *bufHdr;
+	volatile BufferDesc *bufHdr;
 
 	if (!BufferIsValid(buffer))
 		elog(ERROR, "bad buffer id: %d", buffer);
@@ -679,7 +679,7 @@ ReleaseAndReadBuffer(Buffer buffer,
 					 Relation relation,
 					 BlockNumber blockNum)
 {
-	BufferDesc *bufHdr;
+	volatile BufferDesc *bufHdr;
 
 	if (BufferIsValid(buffer))
 	{
@@ -722,7 +722,7 @@ ReleaseAndReadBuffer(Buffer buffer,
  * some callers to avoid an extra spinlock cycle.
  */
 static bool
-PinBuffer(BufferDesc *buf)
+PinBuffer(volatile BufferDesc *buf)
 {
 	int			b = buf->buf_id;
 	bool		result;
@@ -760,7 +760,7 @@ PinBuffer(BufferDesc *buf)
  * its state can change under us.
  */
 static void
-PinBuffer_Locked(BufferDesc *buf)
+PinBuffer_Locked(volatile BufferDesc *buf)
 {
 	int			b = buf->buf_id;
 
@@ -787,7 +787,7 @@ PinBuffer_Locked(BufferDesc *buf)
  * used recently, and trashOK is true, send the buffer to the freelist.
  */
 static void
-UnpinBuffer(BufferDesc *buf, bool fixOwner, bool trashOK)
+UnpinBuffer(volatile BufferDesc *buf, bool fixOwner, bool trashOK)
 {
 	int			b = buf->buf_id;
 
@@ -967,7 +967,7 @@ BgBufferSync(void)
 static bool
 SyncOneBuffer(int buf_id, bool skip_pinned)
 {
-	BufferDesc *bufHdr = &BufferDescriptors[buf_id];
+	volatile BufferDesc *bufHdr = &BufferDescriptors[buf_id];
 
 	/*
 	 * Check whether buffer needs writing.
@@ -1114,7 +1114,7 @@ AtProcExit_Buffers(int code, Datum arg)
 	{
 		if (PrivateRefCount[i] != 0)
 		{
-			BufferDesc *buf = &(BufferDescriptors[i]);
+			volatile BufferDesc *buf = &(BufferDescriptors[i]);
 
 			/*
 			 * We don't worry about updating ResourceOwner; if we even got
@@ -1136,7 +1136,7 @@ AtProcExit_Buffers(int code, Datum arg)
 void
 PrintBufferLeakWarning(Buffer buffer)
 {
-	BufferDesc *buf;
+	volatile BufferDesc *buf;
 	int32		loccount;
 
 	Assert(BufferIsValid(buffer));
@@ -1199,7 +1199,7 @@ BufmgrCommit(void)
 BlockNumber
 BufferGetBlockNumber(Buffer buffer)
 {
-	BufferDesc *bufHdr;
+	volatile BufferDesc *bufHdr;
 
 	Assert(BufferIsPinned(buffer));
 
@@ -1222,7 +1222,7 @@ BufferGetBlockNumber(Buffer buffer)
 RelFileNode
 BufferGetFileNode(Buffer buffer)
 {
-	BufferDesc *bufHdr;
+	volatile BufferDesc *bufHdr;
 
 	if (BufferIsLocal(buffer))
 		bufHdr = &(LocalBufferDescriptors[-buffer - 1]);
@@ -1252,7 +1252,7 @@ BufferGetFileNode(Buffer buffer)
  * as the second parameter.  If not, pass NULL.
  */
 static void
-FlushBuffer(BufferDesc *buf, SMgrRelation reln)
+FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 {
 	XLogRecPtr	recptr;
 	ErrorContextCallback errcontext;
@@ -1267,7 +1267,7 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln)
 
 	/* Setup error traceback support for ereport() */
 	errcontext.callback = buffer_write_error_callback;
-	errcontext.arg = buf;
+	errcontext.arg = (void *) buf;
 	errcontext.previous = error_context_stack;
 	error_context_stack = &errcontext;
 
@@ -1375,7 +1375,7 @@ DropRelFileNodeBuffers(RelFileNode rnode, bool istemp,
 					   BlockNumber firstDelBlock)
 {
 	int			i;
-	BufferDesc *bufHdr;
+	volatile BufferDesc *bufHdr;
 
 	if (istemp)
 	{
@@ -1427,7 +1427,7 @@ void
 DropBuffers(Oid dbid)
 {
 	int			i;
-	BufferDesc *bufHdr;
+	volatile BufferDesc *bufHdr;
 
 	/*
 	 * We needn't consider local buffers, since by assumption the target
@@ -1457,7 +1457,7 @@ void
 PrintBufferDescs(void)
 {
 	int			i;
-	BufferDesc *buf = BufferDescriptors;
+	volatile BufferDesc *buf = BufferDescriptors;
 
 	for (i = 0; i < NBuffers; ++i, ++buf)
 	{
@@ -1479,7 +1479,7 @@ void
 PrintPinnedBufs(void)
 {
 	int			i;
-	BufferDesc *buf = BufferDescriptors;
+	volatile BufferDesc *buf = BufferDescriptors;
 
 	for (i = 0; i < NBuffers; ++i, ++buf)
 	{
@@ -1522,7 +1522,7 @@ void
 FlushRelationBuffers(Relation rel)
 {
 	int			i;
-	BufferDesc *bufHdr;
+	volatile BufferDesc *bufHdr;
 
 	/* Open rel at the smgr level if not already done */
 	RelationOpenSmgr(rel);
@@ -1539,7 +1539,7 @@ FlushRelationBuffers(Relation rel)
 
 				/* Setup error traceback support for ereport() */
 				errcontext.callback = buffer_write_error_callback;
-				errcontext.arg = bufHdr;
+				errcontext.arg = (void *) bufHdr;
 				errcontext.previous = error_context_stack;
 				error_context_stack = &errcontext;
 
@@ -1586,7 +1586,7 @@ FlushRelationBuffers(Relation rel)
 void
 ReleaseBuffer(Buffer buffer)
 {
-	BufferDesc *bufHdr;
+	volatile BufferDesc *bufHdr;
 
 	if (!BufferIsValid(buffer))
 		elog(ERROR, "bad buffer id: %d", buffer);
@@ -1657,7 +1657,7 @@ IncrBufferRefCount(Buffer buffer)
 void
 SetBufferCommitInfoNeedsSave(Buffer buffer)
 {
-	BufferDesc *bufHdr;
+	volatile BufferDesc *bufHdr;
 
 	if (!BufferIsValid(buffer))
 		elog(ERROR, "bad buffer id: %d", buffer);
@@ -1694,7 +1694,7 @@ SetBufferCommitInfoNeedsSave(Buffer buffer)
 void
 UnlockBuffers(void)
 {
-	BufferDesc *buf = PinCountWaitBuf;
+	volatile BufferDesc *buf = PinCountWaitBuf;
 
 	if (buf)
 	{
@@ -1727,7 +1727,7 @@ UnlockBuffers(void)
 void
 LockBuffer(Buffer buffer, int mode)
 {
-	BufferDesc *buf;
+	volatile BufferDesc *buf;
 
 	Assert(BufferIsValid(buffer));
 	if (BufferIsLocal(buffer))
@@ -1765,7 +1765,7 @@ LockBuffer(Buffer buffer, int mode)
 bool
 ConditionalLockBuffer(Buffer buffer)
 {
-	BufferDesc *buf;
+	volatile BufferDesc *buf;
 
 	Assert(BufferIsValid(buffer));
 	if (BufferIsLocal(buffer))
@@ -1809,7 +1809,7 @@ ConditionalLockBuffer(Buffer buffer)
 void
 LockBufferForCleanup(Buffer buffer)
 {
-	BufferDesc *bufHdr;
+	volatile BufferDesc *bufHdr;
 
 	Assert(BufferIsValid(buffer));
 	Assert(PinCountWaitBuf == NULL);
@@ -1875,7 +1875,7 @@ LockBufferForCleanup(Buffer buffer)
  * WaitIO -- Block until the IO_IN_PROGRESS flag on 'buf' is cleared.
  */
 static void
-WaitIO(BufferDesc *buf)
+WaitIO(volatile BufferDesc *buf)
 {
 	/*
 	 * Changed to wait until there's no IO - Inoue 01/13/2000
@@ -1922,7 +1922,7 @@ WaitIO(BufferDesc *buf)
  * FALSE if someone else already did the work.
  */
 static bool
-StartBufferIO(BufferDesc *buf, bool forInput)
+StartBufferIO(volatile BufferDesc *buf, bool forInput)
 {
 	Assert(!InProgressBuf);
 
@@ -1989,7 +1989,8 @@ StartBufferIO(BufferDesc *buf, bool forInput)
  * be 0, or BM_VALID if we just finished reading in the page.
  */
 static void
-TerminateBufferIO(BufferDesc *buf, bool clear_dirty, int set_flag_bits)
+TerminateBufferIO(volatile BufferDesc *buf, bool clear_dirty,
+				  int set_flag_bits)
 {
 	Assert(buf == InProgressBuf);
 
@@ -2021,7 +2022,7 @@ TerminateBufferIO(BufferDesc *buf, bool clear_dirty, int set_flag_bits)
 void
 AbortBufferIO(void)
 {
-	BufferDesc *buf = InProgressBuf;
+	volatile BufferDesc *buf = InProgressBuf;
 
 	if (buf)
 	{
@@ -2075,7 +2076,7 @@ AbortBufferIO(void)
 static void
 buffer_write_error_callback(void *arg)
 {
-	BufferDesc *bufHdr = (BufferDesc *) arg;
+	volatile BufferDesc *bufHdr = (volatile BufferDesc *) arg;
 
 	/* Buffer is pinned, so we can read the tag without locking the spinlock */
 	if (bufHdr != NULL)
