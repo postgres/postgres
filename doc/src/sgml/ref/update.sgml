@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/update.sgml,v 1.32 2005/01/09 05:57:45 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/update.sgml,v 1.33 2005/10/12 23:19:22 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -168,7 +168,7 @@ UPDATE <replaceable class="parameter">count</replaceable>
   </para>
 
   <para>
-   Because of this indeterminancy, referencing other tables only within
+   Because of this indeterminacy, referencing other tables only within
    sub-selects is safer, though often harder to read and slower than
    using a join.
   </para>
