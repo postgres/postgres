@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Oct 11 23:26:33 EDT 2005
+Last updated:		Wed Oct 12 09:39:19 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -604,7 +604,8 @@ Clients
 	o In a selective dump, allow dumping of an object and all its 
 	  dependencies
 	o Add options like pg_restore -l and -L to pg_dump
-
+	o Allow pg_dump --clean to drop roles that own objects or have
+	  privileges
 
 * ecpg
 
