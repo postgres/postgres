@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.96.2.1 2003/02/21 18:24:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.96.2.2 2005/10/12 17:18:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -266,7 +266,10 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 						HEAPTUPLE_DEAD)
 					{
 						curitemid->lp_flags |= LP_DELETE;
-						SetBufferCommitInfoNeedsSave(buf);
+						if (nbuf != InvalidBuffer)
+							SetBufferCommitInfoNeedsSave(nbuf);
+						else
+							SetBufferCommitInfoNeedsSave(buf);
 					}
 					if (sv_infomask != htup.t_data->t_infomask)
 						SetBufferCommitInfoNeedsSave(hbuffer);
