@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.119 2004/12/31 21:59:22 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.119.4.1 2005/10/12 17:18:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -266,7 +266,10 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 												 hbuffer) == HEAPTUPLE_DEAD)
 					{
 						curitemid->lp_flags |= LP_DELETE;
-						SetBufferCommitInfoNeedsSave(buf);
+						if (nbuf != InvalidBuffer)
+							SetBufferCommitInfoNeedsSave(nbuf);
+						else
+							SetBufferCommitInfoNeedsSave(buf);
 					}
 					LockBuffer(hbuffer, BUFFER_LOCK_UNLOCK);
 				}
