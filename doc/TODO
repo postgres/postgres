@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Oct 11 22:57:45 EDT 2005
+Last updated:		Tue Oct 11 23:26:33 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -535,7 +535,11 @@ Clients
 =======
 
 * Add a libpq function to support Parse/DescribeStatement capability
-* Prevent libpq's PQfnumber() from lowercasing the column name?
+* Prevent libpq's PQfnumber() from lowercasing the column name
+
+  One idea is to lowercase all identifiers except those that are
+  surrounded by quotes.
+
 * Add PQescapeIdentifier() to libpq
 * Have initdb set the input DateStyle (MDY or DMY) based on locale?
 * Have pg_ctl look at PGHOST in case it is a socket directory?
