@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.26 2005/10/13 17:32:42 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.27 2005/10/13 20:58:42 momjian Exp $
 -->
 <chapter Id="runtime-config">
   <title>Run-time Configuration</title>
@@ -2295,7 +2295,8 @@ SELECT * FROM parent WHERE key = 2400;
         Valid values are <literal>DEBUG5</>,
         <literal>DEBUG4</>, <literal>DEBUG3</>, <literal>DEBUG2</>,
         <literal>DEBUG1</>, <literal>LOG</>, <literal>NOTICE</>,
-        <literal>WARNING</>, and <literal>ERROR</>.  Each level
+        <literal>WARNING</>, <literal>ERROR</>, <literal>FATAL</>,
+        and <literal>PANIC</>.  Each level
         includes all the levels that follow it.  The later the level,
         the fewer messages are sent.  The default is
         <literal>NOTICE</>.  Note that <literal>LOG</> has a different

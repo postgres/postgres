@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.106 2005/10/04 19:01:18 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.107 2005/10/13 20:58:42 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -681,7 +681,10 @@ AcceptResult(const PGresult *result, const char *query)
 
 	if (!OK)
 	{
-		psql_error("%s", PQerrorMessage(pset.db));
+		const char *error = PQerrorMessage(pset.db);
+		if (strlen(error))
+			psql_error("%s", error);
+
 		ReportSyntaxErrorPosition(result, query);
 		CheckConnection();
 	}
