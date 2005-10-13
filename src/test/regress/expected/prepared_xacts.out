@@ -98,7 +98,7 @@ SELECT * FROM pxtest1;
 
 -- This should fail, because the gid foo3 is already in use
 PREPARE TRANSACTION 'foo3';
-ERROR:  global transaction identifier "foo3" is already in use
+ERROR:  transaction identifier "foo3" is already in use
 SELECT * FROM pxtest1;
  foobar 
 --------
