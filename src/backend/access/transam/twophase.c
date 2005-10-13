@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.11 2005/08/29 21:38:18 tgl Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.12 2005/10/13 17:57:17 momjian Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -221,7 +221,7 @@ MarkAsPreparing(TransactionId xid, const char *gid,
 	if (strlen(gid) >= GIDSIZE)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("global transaction identifier \"%s\" is too long",
+				 errmsg("transaction identifier \"%s\" is too long",
 						gid)));
 
 	LWLockAcquire(TwoPhaseStateLock, LW_EXCLUSIVE);
@@ -256,7 +256,7 @@ MarkAsPreparing(TransactionId xid, const char *gid,
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
-					 errmsg("global transaction identifier \"%s\" is already in use",
+					 errmsg("transaction identifier \"%s\" is already in use",
 							gid)));
 		}
 	}
@@ -380,7 +380,7 @@ LockGXact(const char *gid, Oid user)
 			if (TransactionIdIsActive(gxact->locking_xid))
 				ereport(ERROR,
 						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-						 errmsg("prepared transaction with gid \"%s\" is busy",
+						 errmsg("prepared transaction with identifier \"%s\" is busy",
 								gid)));
 			gxact->locking_xid = InvalidTransactionId;
 		}
@@ -403,7 +403,7 @@ LockGXact(const char *gid, Oid user)
 
 	ereport(ERROR,
 			(errcode(ERRCODE_UNDEFINED_OBJECT),
-			 errmsg("prepared transaction with gid \"%s\" does not exist",
+			 errmsg("prepared transaction with identifier \"%s\" does not exist",
 					gid)));
 
 	/* NOTREACHED */
