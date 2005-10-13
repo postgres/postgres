@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.42 2005/03/29 00:16:49 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.43 2005/10/13 02:23:12 momjian Exp $
 -->
 
  <chapter id="triggers">
@@ -675,8 +675,8 @@ vac=&gt; SELECT * FROM ttest;
 
 =&gt; DELETE FROM ttest;
 INFO:  trigf (fired before): there are 2 rows in ttest
-INFO:  trigf (fired after ): there are 1 rows in ttest
 INFO:  trigf (fired before): there are 1 rows in ttest
+INFO:  trigf (fired after ): there are 0 rows in ttest
 INFO:  trigf (fired after ): there are 0 rows in ttest
                                        ^^^^^^
                              remember what we said about visibility.
