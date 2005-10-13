@@ -7,21 +7,21 @@
  *	The hardware-independent interface to spinlocks is defined by the
  *	typedef "slock_t" and these macros:
  *
- *	void SpinLockInit(slock_t *lock)
+ *	void SpinLockInit(volatile slock_t *lock)
  *		Initialize a spinlock (to the unlocked state).
  *
- *	void SpinLockAcquire(slock_t *lock)
+ *	void SpinLockAcquire(volatile slock_t *lock)
  *		Acquire a spinlock, waiting if necessary.
  *		Time out and abort() if unable to acquire the lock in a
  *		"reasonable" amount of time --- typically ~ 1 minute.
  *		Cancel/die interrupts are held off until the lock is released.
  *
- *	void SpinLockRelease(slock_t *lock)
+ *	void SpinLockRelease(volatile slock_t *lock)
  *		Unlock a previously acquired lock.
  *		Release the cancel/die interrupt holdoff.
  *
- *	void SpinLockAcquire_NoHoldoff(slock_t *lock)
- *	void SpinLockRelease_NoHoldoff(slock_t *lock)
+ *	void SpinLockAcquire_NoHoldoff(volatile slock_t *lock)
+ *	void SpinLockRelease_NoHoldoff(volatile slock_t *lock)
  *		Same as above, except no interrupt holdoff processing is done.
  *		This pair of macros may be used when there is a surrounding
  *		interrupt holdoff.
@@ -33,14 +33,24 @@
  *	Callers must beware that the macro argument may be evaluated multiple
  *	times!
  *
- *	The macros are implemented in terms of hardware-dependent macros
+ *	CAUTION: Care must be taken to ensure that loads and stores of
+ *	shared memory values are not rearranged around spinlock acquire
+ *	and release. This is done using the "volatile" qualifier: the C
+ *	standard states that loads and stores of volatile objects cannot
+ *	be rearranged *with respect to other volatile objects*. The
+ *	spinlock is always written through a volatile pointer by the
+ *	spinlock macros, but this is not sufficient by itself: code that
+ *	protects shared data with a spinlock MUST reference that shared
+ *	data through a volatile pointer.
+ *
+ *	These macros are implemented in terms of hardware-dependent macros
  *	supplied by s_lock.h.
  *
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/spin.h,v 1.25 2004/12/31 22:03:42 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/storage/spin.h,v 1.26 2005/10/13 06:17:34 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
