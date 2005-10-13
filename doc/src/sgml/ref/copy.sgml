@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.67 2005/09/05 14:44:05 adunstan Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.68 2005/10/13 02:00:09 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -705,6 +705,18 @@ COPY country TO STDOUT WITH DELIMITER '|';
    To copy data from a file into the <literal>country</> table:
 <programlisting>
 COPY country FROM '/usr1/proj/bray/sql/country_data';
+</programlisting>
+  </para>
+
+  <para>
+   To copy into a file just the countries whose names start with 'A'
+   using a temporary table which is automatically deleted:
+<programlisting>
+BEGIN;
+CREATE TEMP TABLE a_list_COUNTRIES AS
+    SELECT * FROM country WHERE country_name LIKE 'A%';
+COPY a_list_countries TO '/usr1/proj/bray/sql/a_list_countries.copy';
+ROLLBACK;
 </programlisting>
   </para>
 
