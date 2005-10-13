@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.191 2005/09/25 03:12:13 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.192 2005/10/13 17:46:18 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -3520,7 +3520,9 @@ void PQtrace(PGconn *conn, FILE *stream);
 On Win32, if the <application>libpq</> library and an application are
 compiled with different flags, this function call will crash the 
 application because the internal representation of the <literal>FILE</> 
-pointers differ.
+pointers differ.  Specifically, threading/non-threading, release/debug, and
+static/dynamic flags should be the same for the library and all applications
+using that library.
 </para>
 </note>
 </listitem>
