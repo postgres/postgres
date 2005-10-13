@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.39 2005/07/28 20:26:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.40 2005/10/13 00:06:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,9 +123,13 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 		List	   *withoutris = NIL;
 
 		/*
-		 * Here, we detect both obvious redundancies and qual-free subplans.
-		 * A qual-free subplan would cause us to generate "... OR true ..."
-		 * which we may as well reduce to just "true".
+		 * Here, we only detect qual-free subplans.  A qual-free subplan would
+		 * cause us to generate "... OR true ..."  which we may as well reduce
+		 * to just "true".  We do not try to eliminate redundant subclauses
+		 * because (a) it's not as likely as in the AND case, and (b) we might
+		 * well be working with hundreds or even thousands of OR conditions,
+		 * perhaps from a long IN list.  The performance of list_append_unique
+		 * would be unacceptable.
 		 */
 		foreach(l, opath->bitmapquals)
 		{
@@ -144,12 +148,12 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 				return NIL;
 			}
 			/* Create AND subclause with RestrictInfos */
-			withris = list_append_unique(withris,
-										 make_ands_explicit(sublist));
+			withris = lappend(withris,
+							  make_ands_explicit(sublist));
 			/* And one without */
 			sublist = get_actual_clauses(sublist);
-			withoutris = list_append_unique(withoutris,
-											make_ands_explicit(sublist));
+			withoutris = lappend(withoutris,
+								 make_ands_explicit(sublist));
 		}
 
 		/*

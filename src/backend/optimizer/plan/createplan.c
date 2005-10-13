@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.199 2005/10/06 16:01:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.200 2005/10/13 00:06:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1046,9 +1046,13 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 		ListCell   *l;
 
 		/*
-		 * Here, we detect both obvious redundancies and qual-free subplans.
-		 * A qual-free subplan would cause us to generate "... OR true ..."
-		 * which we may as well reduce to just "true".
+		 * Here, we only detect qual-free subplans.  A qual-free subplan would
+		 * cause us to generate "... OR true ..."  which we may as well reduce
+		 * to just "true".  We do not try to eliminate redundant subclauses
+		 * because (a) it's not as likely as in the AND case, and (b) we might
+		 * well be working with hundreds or even thousands of OR conditions,
+		 * perhaps from a long IN list.  The performance of list_append_unique
+		 * would be unacceptable.
 		 */
 		foreach(l, opath->bitmapquals)
 		{
@@ -1062,13 +1066,13 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 			if (subqual == NIL)
 				const_true_subqual = true;
 			else if (!const_true_subqual)
-				subquals = list_append_unique(subquals,
-											  make_ands_explicit(subqual));
+				subquals = lappend(subquals,
+								   make_ands_explicit(subqual));
 			if (subindexqual == NIL)
 				const_true_subindexqual = true;
 			else if (!const_true_subindexqual)
-				subindexquals = list_append_unique(subindexquals,
-												   make_ands_explicit(subindexqual));
+				subindexquals = lappend(subindexquals,
+										make_ands_explicit(subindexqual));
 		}
 		plan = (Plan *) make_bitmap_or(subplans);
 		plan->startup_cost = opath->path.startup_cost;
