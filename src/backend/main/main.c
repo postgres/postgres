@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.94 2004/12/31 21:59:53 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.95 2005/10/13 15:37:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,8 +50,6 @@
 int
 main(int argc, char *argv[])
 {
-	int			len;
-
 #ifndef WIN32
 	struct passwd *pw;
 #endif
@@ -256,13 +254,7 @@ main(int argc, char *argv[])
 	 * (and possibly first argument) we were called with. The lack of
 	 * consistency here is historical.
 	 */
-	len = strlen(argv[0]);
-
-	if ((len >= 10 && strcmp(argv[0] + len - 10, "postmaster") == 0)
-#ifdef WIN32
-	  || (len >= 14 && strcmp(argv[0] + len - 14, "postmaster.exe") == 0)
-#endif
-		)
+	if (strcmp(get_progname(argv[0]), "postmaster") == 0)
 	{
 		/* Called as "postmaster" */
 		exit(PostmasterMain(argc, argv));

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.59 2005/09/27 17:39:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.60 2005/10/13 15:37:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -403,7 +403,7 @@ get_progname(const char *argv0)
 	{
 		char *progname;
 
-		progname = strdup(nodir_name);
+		progname = strdup(nodir_name);	/* leaks memory, but called only once */
 		if (progname == NULL)
 		{
 			fprintf(stderr, "%s: out of memory\n", nodir_name);
