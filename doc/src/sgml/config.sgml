@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.27 2005/10/13 20:58:42 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.28 2005/10/13 22:55:19 momjian Exp $
 -->
 <chapter Id="runtime-config">
   <title>Run-time Configuration</title>
@@ -596,9 +596,8 @@ SET ENABLE_SEQSCAN TO OFF;
         <varname>krb_srvname</><literal>/</><varname>krb_server_hostname</><literal>@</>REALM.
        </para>
        <para>
-        If not set, the default is to allow any service principal matching an entry
-        in the keytab.  See <xref linkend="kerberos-auth"> for details.
-        This parameter can only be set at server start.
+        If not set, the default is <literal>localhost</>.  See <xref linkend="kerberos-auth">
+        for details.  This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
