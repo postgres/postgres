@@ -52,7 +52,7 @@ CREATE OR REPLACE FUNCTION xpath_table(text,text,text,text,text) RETURNS setof r
 
 
 CREATE OR REPLACE FUNCTION xslt_process(text,text,text) RETURNS text 
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' STRICT STABLE;
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' STRICT VOLATILE;
 
 -- the function checks for the correct argument count
 
