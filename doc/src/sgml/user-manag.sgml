@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.30 2005/08/14 23:35:37 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.31 2005/10/13 23:26:00 tgl Exp $
 -->
 
 <chapter id="user-manag">
@@ -203,9 +203,10 @@ CREATE USER <replaceable>name</replaceable>;
         checks). To create such a role, use <literal>CREATE ROLE
         <replaceable>name</replaceable> CREATEROLE</literal>.
         A role with <literal>CREATEROLE</> privilege can alter and drop
-        other roles, too.  However, to alter or drop a superuser role,
-        superuser status is required; <literal>CREATEROLE</> is not sufficient
-        for that.
+        other roles, too, as well as grant or revoke membership in them.
+        However, to create, alter, drop, or change membership of a
+        superuser role, superuser status is required;
+        <literal>CREATEROLE</> is not sufficient for that.
        </para>
       </listitem>
      </varlistentry>
@@ -233,6 +234,16 @@ CREATE USER <replaceable>name</replaceable>;
     endterm="sql-createrole-title"> and <xref linkend="sql-alterrole"
     endterm="sql-alterrole-title"> commands for details.
    </para>
+
+  <tip>
+   <para>
+    It is good practice to create a role that has the <literal>CREATEDB</>
+    and <literal>CREATEROLE</> privileges, but is not a superuser, and then
+    use this role for all routine management of databases and roles.  This
+    approach avoids the dangers of operating as a superuser for tasks that
+    do not really require it.
+   </para>
+  </tip>
 
   <para>
    A role can also have role-specific defaults for many of the run-time

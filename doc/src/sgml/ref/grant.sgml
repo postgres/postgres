@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.48 2005/07/26 23:24:02 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.49 2005/10/13 23:26:00 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -293,8 +293,12 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...]
 
   <para>
    If <literal>WITH ADMIN OPTION</literal> is specified, the member may
-   in turn grant membership in the role to others.  Without the admin
-   option, the recipient cannot do that.
+   in turn grant membership in the role to others, and revoke membership
+   in the role as well.  Without the admin option, ordinary users cannot do
+   that.  However,
+   database superusers can grant or revoke membership in any role to anyone.
+   Roles having <literal>CREATEROLE</> privilege can grant or revoke
+   membership in any role that is not a superuser.
   </para>
  </refsect2>
  </refsect1>
