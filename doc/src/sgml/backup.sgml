@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.69 2005/06/25 22:47:28 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.70 2005/10/13 17:32:42 momjian Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -1147,13 +1147,22 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
    </para>
 
    <para>
-    It should also be noted that the present <acronym>WAL</acronym>
-    format is extremely bulky since it includes many disk page
-    snapshots.  This is appropriate for crash recovery purposes,
+    It should also be noted that the default <acronym>WAL</acronym>
+    format is fairly bulky since it includes many disk page snapshots. The pages
+    are partially compressed, using the simple expedient of removing the
+    empty space (if any) within each block. You can significantly reduce
+    the total volume of archived logs by turning off page snapshots 
+    using the <xref linkend="guc-full-page-writes"> parameter, 
+    though you should read the notes and warnings in 
+    <xref linkend="reliability"> before you do so. 
+    These page snapshots are designed to allow crash recovery,
     since we may need to fix partially-written disk pages.  It is not
-    necessary to store so many page copies for PITR operations, however.
+    necessary to store these page copies for PITR operations, however.
+    If you turn off <xref linkend="guc-full-page-writes">, your PITR
+    backup and recovery operations will continue to work successfully.
     An area for future development is to compress archived WAL data by
-    removing unnecessary page copies.  In the meantime, administrators
+    removing unnecessary page copies when <xref linkend="guc-full-page-writes">
+    is turned on.  In the meantime, administrators
     may wish to reduce the number of page snapshots included in WAL by
     increasing the checkpoint interval parameters as much as feasible.
    </para>

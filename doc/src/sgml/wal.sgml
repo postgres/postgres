@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.35 2005/10/01 01:42:43 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.36 2005/10/13 17:32:42 momjian Exp $ -->
 
 <chapter id="reliability">
  <title>Reliability</title>
@@ -12,7 +12,7 @@
    failure (unrelated to the non-volatile area itself). To accomplish
    this, <productname>PostgreSQL</> uses the magnetic platters of modern
    disk drives for permanent storage that is immune to the failures
-   listed above. In fact, a computer can be completely destroyed, but if
+   listed above. In fact, even if a computer is fatally damaged, if
    the disk drives survive they can be moved to another computer with
    similar hardware and all committed transactions will remain intact.
   </para>
@@ -68,11 +68,13 @@
    these partially written cases. To guard against that,
    <productname>PostgreSQL</> periodically writes full page images to
    permanent storage <emphasis>before</> modifying the actual page on
-   disk. By doing this, during recovery <productname>PostgreSQL</> can
+   disk. By doing this, during crash recovery <productname>PostgreSQL</> can
    restore partially-written pages. If you have a battery-backed disk
-   controller that prevents partial page writes, you can turn off this
-   page imaging by using the <xref linkend="guc-full-page-writes">
-   parameter.
+   controller or filesystem (e.g. Reiser4) that prevents partial page writes, 
+   you can turn off this page imaging by using the 
+   <xref linkend="guc-full-page-writes"> parameter. This parameter has no 
+   effect on the successful use of Point in Time Recovery (PITR), 
+   described in <xref linkend="backup-online">.
   </para>
  
   <para>
@@ -107,14 +109,10 @@
     the data pages can be redone from the log records.  (This is
     roll-forward recovery, also known as REDO.)
    </para>
-  </sect1>
 
-  <sect1 id="wal-benefits">
-   <title>Benefits of Write-Ahead Logging</title>
-
-   <indexterm zone="wal-benefits">
-    <primary>fsync</primary>
-   </indexterm>
+   <para>
+    WAL brings three major benefits:
+   </para>
 
    <para>
     The first major benefit of using <acronym>WAL</acronym> is a
@@ -131,11 +129,11 @@
    </para>
 
    <para>
-    The next benefit is consistency of the data pages. The truth is
-    that, before <acronym>WAL</acronym>,
+    The next benefit is crash recovery protection. The truth is
+    that, before <acronym>WAL</acronym> was introduced back in release 7.1,
     <productname>PostgreSQL</productname> was never able to guarantee
-    consistency in the case of a crash.  Before
-    <acronym>WAL</acronym>, any crash during writing could result in:
+    consistency in the case of a crash.  Now, 
+    <acronym>WAL</acronym> protects fully against the following problems:
 
     <orderedlist>
      <listitem>
@@ -151,13 +149,6 @@
       of partially written data pages</simpara>
      </listitem>
     </orderedlist>
-
-    Problems with indexes (problems 1 and 2) could possibly have been
-    fixed by additional <function>fsync</function> calls, but it is
-    not obvious how to handle the last case without
-    <acronym>WAL</acronym>.  <acronym>WAL</acronym> saves the entire data
-    page content in the log if that is required to ensure page
-    consistency for after-crash recovery.
    </para>
 
    <para>
@@ -214,12 +205,14 @@
    <varname>checkpoint_timeout</varname> causes checkpoints to be done
    more often. This allows faster after-crash recovery (since less work
    will need to be redone). However, one must balance this against the
-   increased cost of flushing dirty data pages more often. In addition,
-   to ensure data page consistency, the first modification of a data
-   page after each checkpoint results in logging the entire page
-   content. Thus a smaller checkpoint interval increases the volume of
-   output to the WAL log, partially negating the goal of using a smaller
-   interval, and in any case causing more disk I/O.
+   increased cost of flushing dirty data pages more often. If 
+   <xref linkend="guc-full-page-writes"> is set (the default), there is 
+   another factor to consider. To ensure data page consistency, 
+   the first modification of a data page after each checkpoint results in 
+   logging the entire page content. In that case,
+   a smaller checkpoint interval increases the volume of output to the WAL log,
+   partially negating the goal of using a smaller interval, 
+   and in any case causing more disk I/O.
   </para>
 
   <para>
@@ -234,7 +227,9 @@
    a message will be output to the server log recommending increasing 
    <varname>checkpoint_segments</varname>.  Occasional appearance of such
    a message is not cause for alarm, but if it appears often then the
-   checkpoint control parameters should be increased.
+   checkpoint control parameters should be increased. Bulk operations such
+   as a COPY, INSERT SELECT etc. may cause a number of such warnings if you
+   do not set <xref linkend="guc-checkpoint-segments"> high enough.
   </para>
 
   <para>
@@ -252,7 +247,7 @@
   </para>
 
   <para>
-   There are two commonly used <acronym>WAL</acronym> functions:
+   There are two commonly used internal <acronym>WAL</acronym> functions:
    <function>LogInsert</function> and <function>LogFlush</function>.
    <function>LogInsert</function> is used to place a new record into
    the <acronym>WAL</acronym> buffers in shared memory. If there is no
@@ -275,9 +270,11 @@
    modifying the configuration parameter <xref
    linkend="guc-wal-buffers">.  The default number of <acronym>WAL</acronym>
    buffers is 8.  Increasing this value will
-   correspondingly increase shared memory usage.  (It should be noted
-   that there is presently little evidence to suggest that increasing
-   <varname>wal_buffers</> beyond the default is worthwhile.)
+   correspondingly increase shared memory usage.  When 
+   <xref linkend="guc-full-page-writes"> is set and the system is very busy, 
+   setting this value higher will help smooth response times during the 
+   period immediately following each checkpoint.  As a guide, a setting of 1024 
+   would be considered to be high.
   </para>
 
   <para>
@@ -313,7 +310,8 @@
    (provided that <productname>PostgreSQL</productname> has been
    compiled with support for it) will result in each
    <function>LogInsert</function> and <function>LogFlush</function>
-   <acronym>WAL</acronym> call being logged to the server log. This
+   <acronym>WAL</acronym> call being logged to the server log. The output
+   is too verbose for use as a guide to performance tuning. This
    option may be replaced by a more general mechanism in the future.
   </para>
  </sect1>
