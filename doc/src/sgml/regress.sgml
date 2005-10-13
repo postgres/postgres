@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.47 2005/07/24 17:07:18 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.48 2005/10/13 23:41:07 tgl Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -137,6 +137,28 @@ gmake installcheck-parallel
    The tests will expect to contact the server at the local host and the
    default port number, unless directed otherwise by <envar>PGHOST</envar> and
    <envar>PGPORT</envar> environment variables.
+  </para>
+
+  <para>
+   The source distribution also contains regression tests for the optional
+   procedural languages and for some of the <filename>contrib</> modules.
+   At present, these tests can be used only against an already-installed
+   server.  To run the tests for all procedural languages that have been
+   built and installed, change to the <filename>src/pl</> directory of the
+   build tree and type
+<screen>
+gmake installcheck
+</screen>
+   You can also do this in any of the subdirectories of <filename>src/pl</>
+   to run tests for just one procedural language.  To run the tests for all
+   <filename>contrib</> modules that have them, change to the
+   <filename>contrib</> directory of the build tree and type
+<screen>
+gmake installcheck
+</screen>
+   The <filename>contrib</> modules must have been built and installed first.
+   You can also do this in a subdirectory of <filename>contrib</> to run
+   the tests for just one module.
   </para>
   </sect1>
 
