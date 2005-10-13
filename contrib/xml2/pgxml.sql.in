@@ -44,7 +44,7 @@ CREATE OR REPLACE FUNCTION xpath_nodeset(text,text,text) RETURNS text AS
 
 CREATE OR REPLACE FUNCTION xpath_table(text,text,text,text,text) RETURNS setof record
 	AS 'MODULE_PATHNAME'
-	LANGUAGE 'c' STRICT IMMUTABLE;
+	LANGUAGE 'c' STRICT STABLE;
 
 -- XSLT functions
 -- Delete from here to the end of the file if you are not compiling with
@@ -52,7 +52,7 @@ CREATE OR REPLACE FUNCTION xpath_table(text,text,text,text,text) RETURNS setof r
 
 
 CREATE OR REPLACE FUNCTION xslt_process(text,text,text) RETURNS text 
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' STRICT IMMUTABLE;
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' STRICT STABLE;
 
 -- the function checks for the correct argument count
 

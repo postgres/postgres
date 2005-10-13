@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.68 2005/10/13 02:00:09 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.69 2005/10/13 14:44:58 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -713,7 +713,7 @@ COPY country FROM '/usr1/proj/bray/sql/country_data';
    using a temporary table which is automatically deleted:
 <programlisting>
 BEGIN;
-CREATE TEMP TABLE a_list_COUNTRIES AS
+CREATE TEMP TABLE a_list_countries AS
     SELECT * FROM country WHERE country_name LIKE 'A%';
 COPY a_list_countries TO '/usr1/proj/bray/sql/a_list_countries.copy';
 ROLLBACK;
