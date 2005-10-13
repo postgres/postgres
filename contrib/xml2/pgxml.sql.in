@@ -30,7 +30,7 @@ AS 'SELECT xpath_list($1,$2,'','')' language 'SQL' STRICT IMMUTABLE;
 
 
 
--- Wrapper functions for nodeset where no tags needed.
+-- Wrapper functions for nodeset where no tags needed
 
 
 CREATE OR REPLACE FUNCTION xpath_nodeset(text,text) RETURNS text AS
