@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.15 2005/10/06 12:04:58 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.16 2005/10/13 17:58:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,9 +32,9 @@ static char		mypath[MAXPGPATH];
 
 /*
  * This function cleans up the paths for use with either cmd.exe or Msys
- * on Windows. We need them to use double backslashes and filenames without
- * spaces (for which a short filename is the safest equivalent) eg:
- * C:\\Progra~1\\
+ * on Windows. We need them to use filenames without spaces, for which a
+ * short filename is the safest equivalent, eg:
+ *		C:/Progra~1/
  *
  * This can fail in 2 ways - if the path doesn't exist, or short names are
  * disabled. In the first case, don't return any path. In the second case, 
@@ -45,8 +45,7 @@ static void
 cleanup_path(char *path)
 {
 #ifdef WIN32
-	int	x=0, y=0;
-	char	temp[MAXPGPATH];
+	char	   *ptr;
 
 	if (GetShortPathName(path, path, MAXPGPATH - 1) == 0)
 	{
@@ -59,31 +58,13 @@ cleanup_path(char *path)
 			return;
 		}
 	}
-		
 
-	/* Replace '\' with '\\'. */
-	for (x = 0; x < strlen(path); x++)
-        {
-		if (path[x] == '/' || path[x] == '\\')
-		{
-			temp[y] = '\\';
-			y++;
-			temp[y] = '\\';
-		}
-		else
-		{
-			temp[y] = path[x];
-		}
-
-		y++;
-
-		/* Bail out if we're too close to MAXPGPATH */
-		if (y >= MAXPGPATH - 2)
-			break;
+	/* Replace '\' with '/' */
+	for (ptr = path; *ptr; ptr++)
+	{
+		if (*ptr == '\\')
+			*ptr = '/';
 	}
-	temp[y] = '\0';
-
-	strncpy(path, temp, MAXPGPATH - 1);
 #endif
 }
 
