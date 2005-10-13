@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.43 2005/10/13 02:23:12 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.44 2005/10/13 21:09:38 tgl Exp $
 -->
 
  <chapter id="triggers">
@@ -10,17 +10,32 @@ $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.43 2005/10/13 02:23:12 momjian 
   </indexterm>
 
   <para>
-   This chapter describes how to write trigger functions.  Trigger
-   functions can be written in C or in some of the available procedural
-   languages.  It is not currently possible to write a SQL-language
-   trigger function.
+   This chapter provides general information about writing trigger functions.
+   Trigger functions can be written in most of the available procedural
+   languages, including
+   <application>PL/pgSQL</application> (<xref linkend="plpgsql">),
+   <application>PL/Tcl</application> (<xref linkend="pltcl">),
+   <application>PL/Perl</application> (<xref linkend="plperl">), and
+   <application>PL/Python</application> (<xref linkend="plpython">).
+   After reading this chapter, you should consult the chapter for
+   your favorite procedural language to find out the language-specific
+   details of writing a trigger in it.
+  </para>
+
+  <para>
+   It is also possible to write a trigger function in C, although
+   most people find it easier to use one of the procedural languages.
+   It is not currently possible to write a trigger function in the
+   plain SQL function language.
   </para>
 
   <sect1 id="trigger-definition">
    <title>Overview of Trigger Behavior</title>
 
    <para>
-    A trigger can be defined to execute before or after an
+    A trigger is a specification that the database should automatically
+    execute a particular function whenever a certain type of operation is
+    performed.  Triggers can be defined to execute either before or after any
     <command>INSERT</command>, <command>UPDATE</command>, or
     <command>DELETE</command> operation, either once per modified row,
     or once per <acronym>SQL</acronym> statement.
@@ -45,26 +60,29 @@ $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.43 2005/10/13 02:23:12 momjian 
    </para>
 
    <para>
-    There are two types of triggers: per-row triggers and
-    per-statement triggers. In a per-row trigger, the trigger function
-    is invoked once for every row that is affected by the statement
+    <productname>PostgreSQL</productname> offers both <firstterm>per-row</>
+    triggers and <firstterm>per-statement</> triggers.  With a per-row
+    trigger, the trigger function
+    is invoked once for each row that is affected by the statement
     that fired the trigger. In contrast, a per-statement trigger is
     invoked only once when an appropriate statement is executed,
     regardless of the number of rows affected by that statement. In
     particular, a statement that affects zero rows will still result
     in the execution of any applicable per-statement triggers. These
-    two types of triggers are sometimes called <quote>row-level
-    triggers</quote> and <quote>statement-level triggers</quote>,
+    two types of triggers are sometimes called <firstterm>row-level</>
+    triggers and <firstterm>statement-level</> triggers,
     respectively.
    </para>
 
    <para>
-    Statement-level <quote>before</> triggers naturally fire before the
-    statement starts to do anything, while statement-level <quote>after</>
-    triggers fire at the very end of the statement.  Row-level <quote>before</>
+    Triggers are also classified as <firstterm>before</> triggers and
+    <firstterm>after</> triggers.
+    Statement-level before triggers naturally fire before the
+    statement starts to do anything, while statement-level after
+    triggers fire at the very end of the statement.  Row-level before
     triggers fire immediately before a particular row is operated on,
-    while row-level <quote>after</> triggers fire at the end of the statement
-    (but before any statement-level <quote>after</> triggers).
+    while row-level after triggers fire at the end of the statement
+    (but before any statement-level after triggers).
    </para>
 
    <para>
@@ -115,7 +133,7 @@ $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.43 2005/10/13 02:23:12 momjian 
     trigger name.  In the case of before triggers, the
     possibly-modified row returned by each trigger becomes the input
     to the next trigger.  If any before trigger returns
-    <symbol>NULL</>, the operation is abandoned and subsequent
+    <symbol>NULL</>, the operation is abandoned for that row and subsequent
     triggers are not fired.
    </para>
 
@@ -248,11 +266,12 @@ $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.43 2005/10/13 02:23:12 momjian 
 
    <para>
     This section describes the low-level details of the interface to a
-    trigger function.  This information is only needed when writing a
-    trigger function in C.  If you are using a higher-level
-    language then these details are handled for you.  The documentation
-    of each procedural language explains how to write a trigger in that
-    language.
+    trigger function.  This information is only needed when writing
+    trigger functions in C.  If you are using a higher-level language then
+    these details are handled for you.  In most cases you should consider
+    using a procedural language before writing your triggers in C.  The
+    documentation of each procedural language explains how to write a
+    trigger in that language.
    </para>
 
    <para>
