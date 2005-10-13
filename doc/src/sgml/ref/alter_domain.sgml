@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.17 2005/08/01 16:11:14 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.18 2005/10/13 22:44:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -112,10 +112,14 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
   </variablelist>
 
   <para>
-   You must own the domain to use <command>ALTER DOMAIN</>; except for
-   <command>ALTER DOMAIN OWNER</>, which may only be executed by a superuser.
-   To change a domain's schema, you must also have <literal>CREATE</>
-   privilege on the new schema.
+   You must own the domain to use <command>ALTER DOMAIN</>.
+   To change the schema of a domain, you must also have
+   <literal>CREATE</literal> privilege on the new schema.
+   To alter the owner, you must also be a direct or indirect member of the new
+   owning role, and that role must have <literal>CREATE</literal> privilege on
+   the domain's schema.  (These restrictions enforce that altering the owner
+   doesn't do anything you couldn't do by dropping and recreating the domain.
+   However, a superuser can alter ownership of any domain anyway.)
   </para>
  </refsect1>
 

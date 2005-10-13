@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_operator.sgml,v 1.1 2004/06/25 21:55:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_operator.sgml,v 1.2 2005/10/13 22:44:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -31,6 +31,15 @@ ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>lefttype</replac
    <command>ALTER OPERATOR</command> changes the definition of
    an operator.  The only currently available functionality is to change the
    owner of the operator.
+  </para>
+
+  <para>
+   You must own the operator to use <command>ALTER OPERATOR</>.
+   To alter the owner, you must also be a direct or indirect member of the new
+   owning role, and that role must have <literal>CREATE</literal> privilege on
+   the operator's schema.  (These restrictions enforce that altering the owner
+   doesn't do anything you couldn't do by dropping and recreating the operator.
+   However, a superuser can alter ownership of any operator anyway.)
   </para>
  </refsect1>
   
@@ -72,7 +81,6 @@ ALTER OPERATOR <replaceable>name</replaceable> ( { <replaceable>lefttype</replac
     <listitem>
      <para>
       The new owner of the operator.
-      You must be a superuser to change the owner of an operator.
      </para>
     </listitem>
    </varlistentry>

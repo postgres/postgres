@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.16 2005/07/31 17:19:16 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.17 2005/10/13 22:44:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -71,8 +71,11 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> OWNER TO <repla
   </para>
 
   <para>
-   The fifth form changes the owner of the database.  Only a superuser
-   can change the database's owner.
+   The fifth form changes the owner of the database.
+   To alter the owner, you must own the database and also be a direct or
+   indirect member of the new owning role, and you must have the
+   <literal>CREATEDB</literal> privilege.
+   (Note that superusers have all these privileges automatically.)
   </para>
  </refsect1>
 

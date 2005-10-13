@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_function.sgml,v 1.8 2005/08/01 16:11:14 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_function.sgml,v 1.9 2005/10/13 22:44:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -46,10 +46,14 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
   </para>
 
   <para>
-   You must own the function to use <command>ALTER FUNCTION</>; except for
-   <command>ALTER FUNCTION OWNER</>, which may only be executed by a superuser.
+   You must own the function to use <command>ALTER FUNCTION</>.
    To change a function's schema, you must also have <literal>CREATE</>
    privilege on the new schema.
+   To alter the owner, you must also be a direct or indirect member of the new
+   owning role, and that role must have <literal>CREATE</literal> privilege on
+   the function's schema.  (These restrictions enforce that altering the owner
+   doesn't do anything you couldn't do by dropping and recreating the function.
+   However, a superuser can alter ownership of any function anyway.)
   </para>
  </refsect1>
   

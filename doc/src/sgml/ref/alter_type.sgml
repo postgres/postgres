@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_type.sgml,v 1.2 2005/08/01 16:11:14 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_type.sgml,v 1.3 2005/10/13 22:44:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -37,6 +37,17 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> SET SCHEMA <replace
    The only currently available capabilities are changing the owner and schema
    of a type.
   </para>
+
+  <para>
+   You must own the type to use <command>ALTER TYPE</>.
+   To change the schema of a type, you must also have
+   <literal>CREATE</literal> privilege on the new schema.
+   To alter the owner, you must also be a direct or indirect member of the new
+   owning role, and that role must have <literal>CREATE</literal> privilege on
+   the type's schema.  (These restrictions enforce that altering the owner
+   doesn't do anything you couldn't do by dropping and recreating the type.
+   However, a superuser can alter ownership of any type anyway.)
+  </para>
  </refsect1>
 
  <refsect1>
@@ -59,7 +70,6 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> SET SCHEMA <replace
       <listitem>
        <para>
         The user name of the new owner of the type.
-        You must be a superuser to change a type's owner.
        </para>
       </listitem>
      </varlistentry>
@@ -68,9 +78,7 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> SET SCHEMA <replace
       <term><replaceable class="PARAMETER">new_schema</replaceable></term>
       <listitem>
        <para>
-        The new schema for the type.  To move a
-        type to a new schema, you must be the owner of the
-        type and have <literal>CREATE</> privilege on the new schema.
+        The new schema for the type.
        </para>
       </listitem>
      </varlistentry>

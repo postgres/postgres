@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_schema.sgml,v 1.7 2004/06/25 21:55:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_schema.sgml,v 1.8 2005/10/13 22:44:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -30,9 +30,16 @@ ALTER SCHEMA <replaceable>name</replaceable> OWNER TO <replaceable>newowner</rep
 
   <para>
    <command>ALTER SCHEMA</command> changes the definition of a schema.
-   To rename a schema you must own the schema and have the privilege
-   <literal>CREATE</literal> for the database.  To change the owner
-   of a schema, you must be a superuser.
+  </para>
+
+  <para>
+   You must own the schema to use <command>ALTER SCHEMA</>.
+   To rename a schema you must also have the
+   <literal>CREATE</literal> privilege for the database.
+   To alter the owner, you must also be a direct or
+   indirect member of the new owning role, and you must have the
+   <literal>CREATE</literal> privilege for the database.
+   (Note that superusers have all these privileges automatically.)
   </para>
  </refsect1>
 

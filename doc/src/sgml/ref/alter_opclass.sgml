@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_opclass.sgml,v 1.5 2004/06/25 21:55:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_opclass.sgml,v 1.6 2005/10/13 22:44:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -31,6 +31,16 @@ ALTER OPERATOR CLASS <replaceable>name</replaceable> USING <replaceable class="p
   <para>
    <command>ALTER OPERATOR CLASS</command> changes the definition of
    an operator class.
+  </para>
+
+  <para>
+   You must own the operator class to use <command>ALTER OPERATOR CLASS</>.
+   To alter the owner, you must also be a direct or indirect member of the new
+   owning role, and that role must have <literal>CREATE</literal> privilege on
+   the operator class's schema.  (These restrictions enforce that altering the
+   owner doesn't do anything you couldn't do by dropping and recreating the
+   operator class.  However, a superuser can alter ownership of any operator
+   class anyway.)
   </para>
  </refsect1>
   
@@ -71,7 +81,6 @@ ALTER OPERATOR CLASS <replaceable>name</replaceable> USING <replaceable class="p
     <listitem>
      <para>
       The new owner of the operator class.
-      You must be a superuser to change the owner of an operator class.
      </para>
     </listitem>
    </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_conversion.sgml,v 1.6 2005/03/07 04:30:51 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_conversion.sgml,v 1.7 2005/10/13 22:44:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -32,6 +32,16 @@ ALTER CONVERSION <replaceable>name</replaceable> OWNER TO <replaceable>newowner<
    <command>ALTER CONVERSION</command> changes the definition of a
    conversion.
   </para>
+
+  <para>
+   You must own the conversion to use <command>ALTER CONVERSION</>.
+   To alter the owner, you must also be a direct or indirect member of the new
+   owning role, and that role must have <literal>CREATE</literal> privilege on
+   the conversion's schema.  (These restrictions enforce that altering the
+   owner doesn't do anything you couldn't do by dropping and recreating the
+   conversion. However, a superuser can alter ownership of any conversion
+   anyway.)
+  </para>
  </refsect1>
   
  <refsect1>
@@ -60,8 +70,7 @@ ALTER CONVERSION <replaceable>name</replaceable> OWNER TO <replaceable>newowner<
     <term><replaceable class="parameter">newowner</replaceable></term>
     <listitem>
      <para>
-      The new owner of the conversion. To change the owner of a conversion,
-      you must be a superuser.
+      The new owner of the conversion.
      </para>
     </listitem>
    </varlistentry>

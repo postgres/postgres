@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_tablespace.sgml,v 1.1 2004/06/25 21:55:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_tablespace.sgml,v 1.2 2005/10/13 22:44:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -32,6 +32,13 @@ ALTER TABLESPACE <replaceable>name</replaceable> OWNER TO <replaceable>newowner<
    <command>ALTER TABLESPACE</command> changes the definition of
    a tablespace.
   </para>
+
+  <para>
+   You must own the tablespace to use <command>ALTER TABLESPACE</>.
+   To alter the owner, you must also be a direct or indirect member of the new
+   owning role.
+   (Note that superusers have these privileges automatically.)
+  </para>
  </refsect1>
   
  <refsect1>
@@ -63,7 +70,6 @@ ALTER TABLESPACE <replaceable>name</replaceable> OWNER TO <replaceable>newowner<
     <listitem>
      <para>
       The new owner of the tablespace.
-      You must be a superuser to change the owner of a tablespace.
      </para>
     </listitem>
    </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_aggregate.sgml,v 1.6 2005/08/01 16:11:14 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_aggregate.sgml,v 1.7 2005/10/13 22:44:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -35,11 +35,15 @@ ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable
   </para>
 
   <para>
-   You must own the aggregate function to use <command>ALTER AGGREGATE</>;
-   except for <command>ALTER AGGREGATE OWNER</>, which may only be executed by
-   a superuser.
+   You must own the aggregate function to use <command>ALTER AGGREGATE</>.
    To change the schema of an aggregate function, you must also have
    <literal>CREATE</literal> privilege on the new schema.
+   To alter the owner, you must also be a direct or indirect member of the new
+   owning role, and that role must have <literal>CREATE</literal> privilege on
+   the aggregate function's schema.  (These restrictions enforce that altering
+   the owner doesn't do anything you couldn't do by dropping and recreating
+   the aggregate function.  However, a superuser can alter ownership of any
+   aggregate function anyway.)
   </para>
  </refsect1>
   
