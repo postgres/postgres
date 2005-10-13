@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/stylesheet.dsl,v 1.28 2004/11/10 23:01:47 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/stylesheet.dsl,v 1.29 2005/10/13 20:10:03 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -178,6 +178,7 @@
 (define %graphic-default-extension% "gif")
 (define %gentext-nav-use-ff%    #t)
 (define %body-attr%             '())
+(define ($generate-book-lot-list$) '())
 
 ;; Returns the depth of auto TOC that should be made at the nd-level
 (define (toc-depth nd)
