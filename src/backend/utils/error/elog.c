@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.104 2002/11/01 17:55:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.104.2.1 2005/10/14 16:41:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -634,7 +634,6 @@ write_syslog(int level, const char *line)
 {
 	static bool openlog_done = false;
 	static unsigned long seq = 0;
-	static int	syslog_fac = LOG_LOCAL0;
 
 	int			len = strlen(line);
 
@@ -643,6 +642,9 @@ write_syslog(int level, const char *line)
 
 	if (!openlog_done)
 	{
+		int	syslog_fac = LOG_LOCAL0;
+		char   *syslog_ident;
+
 		if (strcasecmp(Syslog_facility, "LOCAL0") == 0)
 			syslog_fac = LOG_LOCAL0;
 		if (strcasecmp(Syslog_facility, "LOCAL1") == 0)
@@ -659,7 +661,10 @@ write_syslog(int level, const char *line)
 			syslog_fac = LOG_LOCAL6;
 		if (strcasecmp(Syslog_facility, "LOCAL7") == 0)
 			syslog_fac = LOG_LOCAL7;
-		openlog(Syslog_ident, LOG_PID | LOG_NDELAY, syslog_fac);
+		syslog_ident = strdup(Syslog_ident);
+		if (syslog_ident == NULL)			/* out of memory already!? */
+			syslog_ident = "postgres";
+		openlog(syslog_ident, LOG_PID | LOG_NDELAY, syslog_fac);
 		openlog_done = true;
 	}
 
