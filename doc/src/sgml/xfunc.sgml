@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.104 2005/09/14 21:14:26 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.105 2005/10/14 20:48:18 adunstan Exp $
 -->
 
  <sect1 id="xfunc">
@@ -616,7 +616,7 @@ SELECT *, upper(fooname) FROM getfoo(1) AS t1;
  fooid | foosubid | fooname | upper
 -------+----------+---------+-------
      1 |        1 | Joe     | JOE
-(2 rows)
+(1 row)
 </screen>
 
      As the example shows, we can work with the columns of the function's
