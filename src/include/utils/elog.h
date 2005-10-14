@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.79 2005/06/10 16:23:10 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.80 2005/10/14 20:53:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -283,6 +283,9 @@ extern int	Log_destination;
 /* Other exported functions */
 extern void DebugFileOpen(void);
 extern char *unpack_sql_state(int sql_state);
+#ifdef HAVE_SYSLOG
+extern void set_syslog_parameters(const char *ident, int facility);
+#endif
 
 /*
  * Write errors to stderr (or by equal means when stderr is

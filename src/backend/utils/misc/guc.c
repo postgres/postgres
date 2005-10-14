@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.291 2005/10/08 20:08:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.292 2005/10/14 20:53:56 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -21,6 +21,9 @@
 #include <limits.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#ifdef HAVE_SYSLOG
+#include <syslog.h>
+#endif
 
 #include "utils/guc.h"
 #include "utils/guc_tables.h"
@@ -100,10 +103,11 @@ static const char *assign_log_destination(const char *value,
 					   bool doit, GucSource source);
 
 #ifdef HAVE_SYSLOG
-extern char *Syslog_facility;
-extern char *Syslog_ident;
+static int	syslog_facility = LOG_LOCAL0;
 
-static const char *assign_facility(const char *facility,
+static const char *assign_syslog_facility(const char *facility,
+				bool doit, GucSource source);
+static const char *assign_syslog_ident(const char *ident,
 				bool doit, GucSource source);
 #endif
 
@@ -192,6 +196,8 @@ static char *log_error_verbosity_str;
 static char *log_statement_str;
 static char *log_min_error_statement_str;
 static char *log_destination_string;
+static char *syslog_facility_str;
+static char *syslog_ident_str;
 static bool phony_autocommit;
 static bool session_auth_is_superuser;
 static double phony_random_seed;
@@ -1964,22 +1970,22 @@ static struct config_string ConfigureNamesString[] =
 
 #ifdef HAVE_SYSLOG
 	{
-		{"syslog_facility", PGC_POSTMASTER, LOGGING_WHERE,
+		{"syslog_facility", PGC_SIGHUP, LOGGING_WHERE,
 			gettext_noop("Sets the syslog \"facility\" to be used when syslog enabled."),
 			gettext_noop("Valid values are LOCAL0, LOCAL1, LOCAL2, LOCAL3, "
 						 "LOCAL4, LOCAL5, LOCAL6, LOCAL7.")
 		},
-		&Syslog_facility,
-		"LOCAL0", assign_facility, NULL
+		&syslog_facility_str,
+		"LOCAL0", assign_syslog_facility, NULL
 	},
 	{
-		{"syslog_ident", PGC_POSTMASTER, LOGGING_WHERE,
-			gettext_noop("Sets the program name used to identify PostgreSQL messages "
-						 "in syslog."),
+		{"syslog_ident", PGC_SIGHUP, LOGGING_WHERE,
+			gettext_noop("Sets the program name used to identify PostgreSQL "
+						 "messages in syslog."),
 			NULL
 		},
-		&Syslog_ident,
-		"postgres", NULL, NULL
+		&syslog_ident_str,
+		"postgres", assign_syslog_ident, NULL
 	},
 #endif
 
@@ -5552,27 +5558,49 @@ assign_log_destination(const char *value, bool doit, GucSource source)
 #ifdef HAVE_SYSLOG
 
 static const char *
-assign_facility(const char *facility, bool doit, GucSource source)
+assign_syslog_facility(const char *facility, bool doit, GucSource source)
 {
+	int		syslog_fac;
+
 	if (pg_strcasecmp(facility, "LOCAL0") == 0)
-		return facility;
-	if (pg_strcasecmp(facility, "LOCAL1") == 0)
-		return facility;
-	if (pg_strcasecmp(facility, "LOCAL2") == 0)
-		return facility;
-	if (pg_strcasecmp(facility, "LOCAL3") == 0)
-		return facility;
-	if (pg_strcasecmp(facility, "LOCAL4") == 0)
-		return facility;
-	if (pg_strcasecmp(facility, "LOCAL5") == 0)
-		return facility;
-	if (pg_strcasecmp(facility, "LOCAL6") == 0)
-		return facility;
-	if (pg_strcasecmp(facility, "LOCAL7") == 0)
-		return facility;
-	return NULL;
+		syslog_fac = LOG_LOCAL0;
+	else if (pg_strcasecmp(facility, "LOCAL1") == 0)
+		syslog_fac = LOG_LOCAL1;
+	else if (pg_strcasecmp(facility, "LOCAL2") == 0)
+		syslog_fac = LOG_LOCAL2;
+	else if (pg_strcasecmp(facility, "LOCAL3") == 0)
+		syslog_fac = LOG_LOCAL3;
+	else if (pg_strcasecmp(facility, "LOCAL4") == 0)
+		syslog_fac = LOG_LOCAL4;
+	else if (pg_strcasecmp(facility, "LOCAL5") == 0)
+		syslog_fac = LOG_LOCAL5;
+	else if (pg_strcasecmp(facility, "LOCAL6") == 0)
+		syslog_fac = LOG_LOCAL6;
+	else if (pg_strcasecmp(facility, "LOCAL7") == 0)
+		syslog_fac = LOG_LOCAL7;
+	else
+		return NULL;			/* reject */
+
+	if (doit)
+	{
+		syslog_facility = syslog_fac;
+		set_syslog_parameters(syslog_ident_str ? syslog_ident_str : "postgres",
+							  syslog_facility);
+	}
+
+	return facility;
 }
-#endif
+
+static const char *
+assign_syslog_ident(const char *ident, bool doit, GucSource source)
+{
+	if (doit)
+		set_syslog_parameters(ident, syslog_facility);
+
+	return ident;
+}
+
+#endif /* HAVE_SYSLOG */
 
 
 static const char *

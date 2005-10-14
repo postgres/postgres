@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.163 2005/10/14 16:41:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.164 2005/10/14 20:53:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,8 +80,9 @@ char	   *Log_line_prefix = NULL;		/* format for extra log line info */
 int			Log_destination = LOG_DESTINATION_STDERR;
 
 #ifdef HAVE_SYSLOG
-char	   *Syslog_facility;	/* openlog() parameters */
-char	   *Syslog_ident;
+static bool openlog_done = false;
+static char *syslog_ident = NULL;
+static int	syslog_facility = LOG_LOCAL0;
 
 static void write_syslog(int level, const char *line);
 #endif
@@ -1148,6 +1149,39 @@ DebugFileOpen(void)
 
 #ifdef HAVE_SYSLOG
 
+/*
+ * Set or update the parameters for syslog logging
+ */
+void
+set_syslog_parameters(const char *ident, int facility)
+{
+	/*
+	 * guc.c is likely to call us repeatedly with same parameters, so
+	 * don't thrash the syslog connection unnecessarily.  Also, we do not
+	 * re-open the connection until needed, since this routine will get called
+	 * whether or not Log_destination actually mentions syslog.
+	 *
+	 * Note that we make our own copy of the ident string rather than relying
+	 * on guc.c's.  This may be overly paranoid, but it ensures that we cannot
+	 * accidentally free a string that syslog is still using.
+	 */
+	if (syslog_ident == NULL || strcmp(syslog_ident, ident) != 0 ||
+		syslog_facility != facility)
+	{
+		if (openlog_done)
+		{
+			closelog();
+			openlog_done = false;
+		}
+		if (syslog_ident)
+			free(syslog_ident);
+		syslog_ident = strdup(ident);
+		/* if the strdup fails, we will cope in write_syslog() */
+		syslog_facility = facility;
+	}
+}
+
+
 #ifndef PG_SYSLOG_LIMIT
 #define PG_SYSLOG_LIMIT 128
 #endif
@@ -1158,46 +1192,16 @@ DebugFileOpen(void)
 static void
 write_syslog(int level, const char *line)
 {
-	static bool openlog_done = false;
 	static unsigned long seq = 0;
 
 	int			len;
 
+	/* Open syslog connection if not done yet */
 	if (!openlog_done)
 	{
-		int		syslog_fac;
-		char   *syslog_ident;
-
-		if (pg_strcasecmp(Syslog_facility, "LOCAL0") == 0)
-			syslog_fac = LOG_LOCAL0;
-		else if (pg_strcasecmp(Syslog_facility, "LOCAL1") == 0)
-			syslog_fac = LOG_LOCAL1;
-		else if (pg_strcasecmp(Syslog_facility, "LOCAL2") == 0)
-			syslog_fac = LOG_LOCAL2;
-		else if (pg_strcasecmp(Syslog_facility, "LOCAL3") == 0)
-			syslog_fac = LOG_LOCAL3;
-		else if (pg_strcasecmp(Syslog_facility, "LOCAL4") == 0)
-			syslog_fac = LOG_LOCAL4;
-		else if (pg_strcasecmp(Syslog_facility, "LOCAL5") == 0)
-			syslog_fac = LOG_LOCAL5;
-		else if (pg_strcasecmp(Syslog_facility, "LOCAL6") == 0)
-			syslog_fac = LOG_LOCAL6;
-		else if (pg_strcasecmp(Syslog_facility, "LOCAL7") == 0)
-			syslog_fac = LOG_LOCAL7;
-		else
-			syslog_fac = LOG_LOCAL0;
-		/*
-		 * openlog() usually just stores the passed char pointer as-is,
-		 * so we must give it a string that will be unchanged for the life of
-		 * the process.  The Syslog_ident GUC variable does not meet this
-		 * requirement, so strdup() it.  This isn't a memory leak because
-		 * this code is executed at most once per process.
-		 */
-		syslog_ident = strdup(Syslog_ident);
-		if (syslog_ident == NULL)			/* out of memory already!? */
-			syslog_ident = "postgres";
-
-		openlog(syslog_ident, LOG_PID | LOG_NDELAY | LOG_NOWAIT, syslog_fac);
+		openlog(syslog_ident ? syslog_ident : "postgres",
+				LOG_PID | LOG_NDELAY | LOG_NOWAIT,
+				syslog_facility);
 		openlog_done = true;
 	}
 
