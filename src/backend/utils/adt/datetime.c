@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.158 2005/10/09 17:21:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.159 2005/10/14 11:47:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1114,7 +1114,9 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				 * Check upper limit on hours; other limits checked in
 				 * DecodeTime()
 				 */
-				if (tm->tm_hour > 23)
+				/* test for > 24:00:00 */
+				if  (tm->tm_hour > 24 ||
+					 (tm->tm_hour == 24 && (tm->tm_min > 0 || tm->tm_sec > 0)))
 					return DTERR_FIELD_OVERFLOW;
 				break;
 
@@ -2243,14 +2245,16 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 	else if (mer == PM && tm->tm_hour != 12)
 		tm->tm_hour += 12;
 
+	if (tm->tm_hour < 0 || tm->tm_min < 0 || tm->tm_min > 59 ||
+		tm->tm_sec < 0 || tm->tm_sec > 60 || tm->tm_hour > 24 ||
+		/* test for > 24:00:00 */
+	    (tm->tm_hour == 24 && (tm->tm_min > 0 || tm->tm_sec > 0 ||
 #ifdef HAVE_INT64_TIMESTAMP
-	if (tm->tm_hour < 0 || tm->tm_hour > 23 || tm->tm_min < 0 ||
-		tm->tm_min > 59 || tm->tm_sec < 0 || tm->tm_sec > 60 ||
+		*fsec > INT64CONST(0))) ||
 		*fsec < INT64CONST(0) || *fsec >= USECS_PER_SEC)
 		return DTERR_FIELD_OVERFLOW;
 #else
-	if (tm->tm_hour < 0 || tm->tm_hour > 23 || tm->tm_min < 0 ||
-		tm->tm_min > 59 || tm->tm_sec < 0 || tm->tm_sec > 60 ||
+		*fsec > 0)) ||
 		*fsec < 0 || *fsec >= 1)
 		return DTERR_FIELD_OVERFLOW;
 #endif

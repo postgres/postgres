@@ -2095,7 +2095,9 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				 * Check upper limit on hours; other limits checked in
 				 * DecodeTime()
 				 */
-				if (tm->tm_hour > 23)
+				/* test for > 24:00:00 */
+				if  (tm->tm_hour > 24 ||
+					 (tm->tm_hour == 24 && (tm->tm_min > 0 || tm->tm_sec > 0)))
 					return -1;
 				break;
 
@@ -3161,7 +3163,8 @@ PGTYPEStimestamp_defmt_scan(char **str, char *fmt, timestamp *d,
 			err = 1;
 			*minute = 0;
 		}
-		if (*hour > 23)
+		if (*hour > 24 ||	/* test for > 24:00:00 */
+			(*hour == 24 && (*minute > 0 || *second > 0)))
 		{
 			err = 1;
 			*hour = 0;

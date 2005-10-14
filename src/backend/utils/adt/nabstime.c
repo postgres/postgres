@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.143 2005/09/24 22:54:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.144 2005/10/14 11:47:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,12 +184,14 @@ tm2abstime(struct pg_tm *tm, int tz)
 	AbsoluteTime sec;
 
 	/* validate, before going out of range on some members */
-	if (tm->tm_year < 1901 || tm->tm_year > 2038
-		|| tm->tm_mon < 1 || tm->tm_mon > 12
-		|| tm->tm_mday < 1 || tm->tm_mday > 31
-		|| tm->tm_hour < 0 || tm->tm_hour > 23
-		|| tm->tm_min < 0 || tm->tm_min > 59
-		|| tm->tm_sec < 0 || tm->tm_sec > 60)
+	if (tm->tm_year < 1901 || tm->tm_year > 2038 ||
+		tm->tm_mon < 1 || tm->tm_mon > 12 ||
+		tm->tm_mday < 1 || tm->tm_mday > 31 ||
+		tm->tm_hour < 0 ||
+		tm->tm_hour > 24 ||	/* test for > 24:00:00 */
+		(tm->tm_hour == 24 && (tm->tm_min > 0 || tm->tm_sec > 0)) ||
+		tm->tm_min < 0 || tm->tm_min > 59 ||
+		tm->tm_sec < 0 || tm->tm_sec > 60)
 		return INVALID_ABSTIME;
 
 	day = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - UNIX_EPOCH_JDATE;
