@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.162 2005/08/12 21:36:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.163 2005/10/14 16:41:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,6 +85,7 @@ char	   *Syslog_ident;
 
 static void write_syslog(int level, const char *line);
 #endif
+
 #ifdef WIN32
 static void write_eventlog(int level, const char *line);
 #endif
@@ -1152,41 +1153,51 @@ DebugFileOpen(void)
 #endif
 
 /*
- * Write a message line to syslog if the syslog option is set.
- *
- * Our problem here is that many syslog implementations don't handle
- * long messages in an acceptable manner. While this function doesn't
- * help that fact, it does work around by splitting up messages into
- * smaller pieces.
+ * Write a message line to syslog
  */
 static void
 write_syslog(int level, const char *line)
 {
 	static bool openlog_done = false;
 	static unsigned long seq = 0;
-	static int	syslog_fac = LOG_LOCAL0;
 
-	int			len = strlen(line);
+	int			len;
 
 	if (!openlog_done)
 	{
+		int		syslog_fac;
+		char   *syslog_ident;
+
 		if (pg_strcasecmp(Syslog_facility, "LOCAL0") == 0)
 			syslog_fac = LOG_LOCAL0;
-		if (pg_strcasecmp(Syslog_facility, "LOCAL1") == 0)
+		else if (pg_strcasecmp(Syslog_facility, "LOCAL1") == 0)
 			syslog_fac = LOG_LOCAL1;
-		if (pg_strcasecmp(Syslog_facility, "LOCAL2") == 0)
+		else if (pg_strcasecmp(Syslog_facility, "LOCAL2") == 0)
 			syslog_fac = LOG_LOCAL2;
-		if (pg_strcasecmp(Syslog_facility, "LOCAL3") == 0)
+		else if (pg_strcasecmp(Syslog_facility, "LOCAL3") == 0)
 			syslog_fac = LOG_LOCAL3;
-		if (pg_strcasecmp(Syslog_facility, "LOCAL4") == 0)
+		else if (pg_strcasecmp(Syslog_facility, "LOCAL4") == 0)
 			syslog_fac = LOG_LOCAL4;
-		if (pg_strcasecmp(Syslog_facility, "LOCAL5") == 0)
+		else if (pg_strcasecmp(Syslog_facility, "LOCAL5") == 0)
 			syslog_fac = LOG_LOCAL5;
-		if (pg_strcasecmp(Syslog_facility, "LOCAL6") == 0)
+		else if (pg_strcasecmp(Syslog_facility, "LOCAL6") == 0)
 			syslog_fac = LOG_LOCAL6;
-		if (pg_strcasecmp(Syslog_facility, "LOCAL7") == 0)
+		else if (pg_strcasecmp(Syslog_facility, "LOCAL7") == 0)
 			syslog_fac = LOG_LOCAL7;
-		openlog(Syslog_ident, LOG_PID | LOG_NDELAY | LOG_NOWAIT, syslog_fac);
+		else
+			syslog_fac = LOG_LOCAL0;
+		/*
+		 * openlog() usually just stores the passed char pointer as-is,
+		 * so we must give it a string that will be unchanged for the life of
+		 * the process.  The Syslog_ident GUC variable does not meet this
+		 * requirement, so strdup() it.  This isn't a memory leak because
+		 * this code is executed at most once per process.
+		 */
+		syslog_ident = strdup(Syslog_ident);
+		if (syslog_ident == NULL)			/* out of memory already!? */
+			syslog_ident = "postgres";
+
+		openlog(syslog_ident, LOG_PID | LOG_NDELAY | LOG_NOWAIT, syslog_fac);
 		openlog_done = true;
 	}
 
@@ -1196,8 +1207,16 @@ write_syslog(int level, const char *line)
 	 */
 	seq++;
 
-	/* divide into multiple syslog() calls if message is too long */
-	/* or if the message contains embedded NewLine(s) '\n' */
+	/*
+	 * Our problem here is that many syslog implementations don't handle
+	 * long messages in an acceptable manner. While this function doesn't
+	 * help that fact, it does work around by splitting up messages into
+	 * smaller pieces.
+	 *
+	 * We divide into multiple syslog() calls if message is too long
+	 * or if the message contains embedded NewLine(s) '\n'.
+	 */
+	len = strlen(line);
 	if (len > PG_SYSLOG_LIMIT || strchr(line, '\n') != NULL)
 	{
 		int			chunk_nr = 0;
@@ -1230,8 +1249,8 @@ write_syslog(int level, const char *line)
 			buf[buflen] = '\0';
 
 			/* already word boundary? */
-			if (!isspace((unsigned char) line[buflen]) &&
-				line[buflen] != '\0')
+			if (line[buflen] != '\0' &&
+				!isspace((unsigned char) line[buflen]))
 			{
 				/* try to divide at word boundary */
 				i = buflen - 1;
@@ -1259,6 +1278,7 @@ write_syslog(int level, const char *line)
 	}
 }
 #endif   /* HAVE_SYSLOG */
+
 #ifdef WIN32
 /*
  * Write a message line to the windows event log
