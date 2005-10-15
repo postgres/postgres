@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.77 2005/10/06 20:51:20 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.78 2005/10/15 01:47:11 neilc Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -963,16 +963,17 @@ $$ LANGUAGE plpgsql;
     </para>
 
     <para>
-     In the case of <function>logfunc1</function>, the 
-     <productname>PostgreSQL</productname> main parser knows when 
-     preparing the plan for the <command>INSERT</command>, that the string 
-     <literal>'now'</literal> should be interpreted as 
-     <type>timestamp</type> because the target column of <classname>logtable</classname>
-     is of that type. Thus, it will make a constant from it at this
-     time and this constant value is then used in all invocations of 
-     <function>logfunc1</function> during the lifetime of the
-     session. Needless to say that this isn't what the
-     programmer wanted.
+     In the case of <function>logfunc1</function>, the
+     <productname>PostgreSQL</productname> main parser knows when
+     preparing the plan for the <command>INSERT</command> that the
+     string <literal>'now'</literal> should be interpreted as
+     <type>timestamp</type> because the target column of
+     <classname>logtable</classname> is of that type. Thus,
+     <literal>'now'</literal> will be converted to a constant when the
+     <command>INSERT</command> is planned, and then used in all
+     invocations of <function>logfunc1</function> during the lifetime
+     of the session. Needless to say, this isn't what the programmer
+     wanted.
     </para>
 
     <para>
@@ -985,7 +986,7 @@ $$ LANGUAGE plpgsql;
      <application>PL/pgSQL</application> interpreter casts this
      string to the <type>timestamp</type> type by calling the
      <function>text_out</function> and <function>timestamp_in</function>
-     functions for the conversion.  So, the computed time stamp is updated
+     functions for the conversion.  So, the computed timestamp is updated
      on each execution as the programmer expects.
     </para>
 
@@ -1452,8 +1453,8 @@ GET DIAGNOSTICS integer_var = ROW_COUNT;
          </itemizedlist>
 
      <literal>FOUND</literal> is a local variable within each
-     <application>PL/pgSQL</application> function; so any changes
-     to it affect only the current function.
+     <application>PL/pgSQL</application> function; any changes to it
+     affect only the current function.
     </para>
 
    </sect2>

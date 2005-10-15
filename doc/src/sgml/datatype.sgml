@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.161 2005/10/14 11:47:56 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.162 2005/10/15 01:47:11 neilc Exp $
 -->
 
  <chapter id="datatype">
@@ -15,10 +15,10 @@ $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.161 2005/10/14 11:47:56 momjia
   </indexterm>
 
   <para>
-   <productname>PostgreSQL</productname> has a rich set of native data 
-   types available to users.
-   Users may add new types to <productname>PostgreSQL</productname> using the
-   <command>CREATE TYPE</command> command.
+   <productname>PostgreSQL</productname> has a rich set of native data
+   types available to users.  Users may add new types to
+   <productname>PostgreSQL</productname> using the <xref
+   linkend="sql-createtype" endterm="sql-createtype-title"> command.
   </para>
 
   <para>

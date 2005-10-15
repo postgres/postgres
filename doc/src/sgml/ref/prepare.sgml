@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/prepare.sgml,v 1.15 2004/10/29 19:40:33 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/prepare.sgml,v 1.16 2005/10/15 01:47:12 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -63,7 +63,8 @@ PREPARE <replaceable class="PARAMETER">plan_name</replaceable> [ (<replaceable c
    also means that a single  prepared statement cannot be used by
    multiple simultaneous database clients; however, each client can create
    their own prepared statement to use.  The prepared statement can be
-   manually cleaned up using the <command>DEALLOCATE</> command.
+   manually cleaned up using the <xref linkend="sql-deallocate"
+   endterm="sql-deallocate-title"> command.
   </para>
 
   <para>

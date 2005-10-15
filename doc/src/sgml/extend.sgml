@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/extend.sgml,v 1.29 2004/12/30 03:13:56 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/extend.sgml,v 1.30 2005/10/15 01:47:11 neilc Exp $
 -->
 
  <chapter id="extend">
@@ -131,12 +131,14 @@ $PostgreSQL: pgsql/doc/src/sgml/extend.sgml,v 1.29 2004/12/30 03:13:56 tgl Exp $
 
     <para>
      Composite types, or row types, are created whenever the user
-     creates a table; it's also possible to define a
-     <quote>stand-alone</> composite type with no associated table.  A
-     composite type is simply a list of base types with associated
-     field names.  A value of a composite type is a row or record of
-     field values.  The user can access the component fields from
-     <acronym>SQL</> queries.
+     creates a table. It is also possible to use <xref
+     linkend="sql-createtype" endterm="sql-createtype-title"> to
+     define a <quote>stand-alone</> composite type with no associated
+     table.  A composite type is simply a list of types with
+     associated field names.  A value of a composite type is a row or
+     record of field values.  The user can access the component fields
+     from <acronym>SQL</> queries. Refer to <xref linkend="rowtypes">
+     for more information on composite types.
     </para>
    </sect2>
 

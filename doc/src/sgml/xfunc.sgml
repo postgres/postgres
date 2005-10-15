@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.105 2005/10/14 20:48:18 adunstan Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.106 2005/10/15 01:47:12 neilc Exp $
 -->
 
  <sect1 id="xfunc">
@@ -881,9 +881,9 @@ CREATE FUNCTION test(int, int) RETURNS int
     Every function has a <firstterm>volatility</> classification, with
     the possibilities being <literal>VOLATILE</>, <literal>STABLE</>, or
     <literal>IMMUTABLE</>.  <literal>VOLATILE</> is the default if the
-    <command>CREATE FUNCTION</command> command does not specify a category.
-    The volatility category is a promise to the optimizer about the behavior
-    of the function:
+    <xref linkend="sql-createfunction" endterm="sql-createfunction-title">
+    command does not specify a category.  The volatility category is a
+    promise to the optimizer about the behavior of the function:
 
    <itemizedlist>
     <listitem>
@@ -1180,8 +1180,9 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
     file is retained in memory.  Future calls in the same session to
     the function(s) in that file will only incur the small overhead of
     a symbol table lookup.  If you need to force a reload of an object
-    file, for example after recompiling it, use the <command>LOAD</>
-    command or begin a fresh session.
+    file, for example after recompiling it, use the <xref
+    linkend="sql-load" endterm="sql-load-title"> command or begin a
+    fresh session.
    </para>
 
    <para>
@@ -1652,7 +1653,7 @@ CREATE FUNCTION copytext(text) RETURNS text
      LANGUAGE C STRICT;
 
 CREATE FUNCTION concat_text(text, text) RETURNS text
-     AS '<replaceable>DIRECTORY</replaceable>/funcs', 'concat_text',
+     AS '<replaceable>DIRECTORY</replaceable>/funcs', 'concat_text'
      LANGUAGE C STRICT;
 </programlisting>
     </para>

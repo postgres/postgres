@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.241 2005/07/20 23:57:46 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.242 2005/10/15 01:47:11 neilc Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -94,9 +94,9 @@ su - postgres
 
     <listitem>
      <para>
-      <application>gzip</> is needed to unpack the distribution in the
-      first place.<![%standalone-include;[  If you are reading this, you probably already got
-      past that hurdle.]]>
+      <application>tar</> is required to unpack the source
+      distribution in the first place, in addition to either
+      <application>gzip</> or <application>bzip2</>.
      </para>
     </listitem>
 
@@ -117,6 +117,21 @@ su - postgres
       a package-based Linux distribution, be aware that you need both
       the <literal>readline</> and <literal>readline-devel</> packages,
       if those are separate in your distribution.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <indexterm>
+       <primary>zlib</primary>
+      </indexterm>
+
+      The <productname>zlib</productname> compression library will be
+      used by default. If you don't want to use it then you must
+      specify the <option>--without-zlib</option> option for
+      <filename>configure</filename>. Using this option disables
+      support for compressed archives in <application>pg_dump</> and
+      <application>pg_restore</>.
      </para>
     </listitem>
 
