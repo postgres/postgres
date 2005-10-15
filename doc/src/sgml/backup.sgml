@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.70 2005/10/13 17:32:42 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.71 2005/10/15 01:15:33 alvherre Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -722,7 +722,7 @@ SELECT pg_stop_backup();
     segments with names numerically less are no longer needed to recover
     the file system backup and may be deleted. However, you should
     consider keeping several backup sets to be absolutely certain that
-    you are can recover your data. Keep in mind that only completed WAL
+    you can recover your data. Keep in mind that only completed WAL
     segment files are archived, so there will be delay between running
     <function>pg_stop_backup</> and the archiving of all WAL segment
     files needed to make the file system backup consistent.
