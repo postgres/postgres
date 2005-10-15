@@ -412,6 +412,7 @@ ts_accum_finish(PG_FUNCTION_ARGS)
 }
 
 static Oid	tiOid = InvalidOid;
+
 static void
 get_ti_Oid(void)
 {
@@ -422,7 +423,7 @@ get_ti_Oid(void)
 		/* internal error */
 		elog(ERROR, "SPI_exec to get tsvector oid returns %d", ret);
 
-	if (SPI_processed < 0)
+	if (SPI_processed < 1)
 		/* internal error */
 		elog(ERROR, "There is no tsvector type");
 	tiOid = DatumGetObjectId(SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 1, &isnull));
