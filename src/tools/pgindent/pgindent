@@ -178,8 +178,10 @@ do
 -TAllocateDesc \
 -TAllocateDescKind \
 -TAlterDatabaseSetStmt \
+-TAlterDatabaseStmt \
 -TAlterDomainStmt \
 -TAlterFunctionStmt \
+-TAlterObjectSchemaStmt \
 -TAlterOwnerStmt \
 -TAlterRoleSetStmt \
 -TAlterRoleStmt \
@@ -353,7 +355,8 @@ do
 -TConvertRowtypeExprState \
 -TCookedConstraint \
 -TCopyDest \
--TCopyReadResult \
+-TCopyState \
+-TCopyStateData \
 -TCopyStmt \
 -TCost \
 -TCostSelector \
@@ -482,6 +485,7 @@ do
 -TFormData_pg_attribute \
 -TFormData_pg_auth_members \
 -TFormData_pg_authid \
+-TFormData_pg_autovacuum \
 -TFormData_pg_cast \
 -TFormData_pg_class \
 -TFormData_pg_constraint \
@@ -497,9 +501,11 @@ do
 -TFormData_pg_namespace \
 -TFormData_pg_opclass \
 -TFormData_pg_operator \
+-TFormData_pg_pltemplate \
 -TFormData_pg_proc \
 -TFormData_pg_rewrite \
 -TFormData_pg_sequence \
+-TFormData_pg_shdepend \
 -TFormData_pg_statistic \
 -TFormData_pg_tablespace \
 -TFormData_pg_trigger \
@@ -512,6 +518,7 @@ do
 -TForm_pg_attribute \
 -TForm_pg_auth_members \
 -TForm_pg_authid \
+-TForm_pg_autovacuum \
 -TForm_pg_cast \
 -TForm_pg_class \
 -TForm_pg_constraint \
@@ -527,9 +534,11 @@ do
 -TForm_pg_namespace \
 -TForm_pg_opclass \
 -TForm_pg_operator \
+-TForm_pg_pltemplate \
 -TForm_pg_proc \
 -TForm_pg_rewrite \
 -TForm_pg_sequence \
+-TForm_pg_shdepend \
 -TForm_pg_statistic \
 -TForm_pg_tablespace \
 -TForm_pg_trigger \
@@ -662,6 +671,7 @@ do
 -TIndexVacuumCleanupInfo \
 -TIndirectBlock \
 -TIndxInfo \
+-TInfoItem \
 -TInhInfo \
 -TInhOption \
 -TInhPaths \
@@ -696,6 +706,7 @@ do
 -TJoinState \
 -TJoinType \
 -TJunkFilter \
+-TKBsort \
 -TKEYMAP_ENTRY \
 -TKEYMAP_ENTRY_ARRAY \
 -TKeySuffix \
@@ -721,6 +732,7 @@ do
 -TLWLock \
 -TLWLockId \
 -TLWLockMode \
+-TLWLockPadded \
 -TLargeObjectDesc \
 -TLimit \
 -TLimitState \
@@ -741,6 +753,7 @@ do
 -TLockStmt \
 -TLockTagType \
 -TLockTupleMode \
+-TLockingClause \
 -TLogStmtLevel \
 -TLogicalTape \
 -TLogicalTapeSet \
@@ -831,6 +844,7 @@ do
 -TPGLZ_HistEntry \
 -TPGLZ_Strategy \
 -TPGPROC \
+-TPGRUsage \
 -TPGSemaphore \
 -TPGSemaphoreData \
 -TPGShmemHeader \
@@ -852,6 +866,7 @@ do
 -TPKCS7_SIGNER_INFO \
 -TPKCS7_SIGN_ENVELOPE \
 -TPKCS8_PRIV_KEY_INFO \
+-TPLTemplate \
 -TPMSignalReason \
 -TPOLYGON \
 -TPQArgBlock \
@@ -889,6 +904,8 @@ do
 -TPgStat_Info \
 -TPgStat_Msg \
 -TPgStat_MsgActivity \
+-TPgStat_MsgAnalyze \
+-TPgStat_MsgAutovacStart \
 -TPgStat_MsgBestart \
 -TPgStat_MsgBeterm \
 -TPgStat_MsgDropdb \
@@ -897,6 +914,7 @@ do
 -TPgStat_MsgResetcounter \
 -TPgStat_MsgTabpurge \
 -TPgStat_MsgTabstat \
+-TPgStat_MsgVacuum \
 -TPgStat_StatBeDead \
 -TPgStat_StatBeEntry \
 -TPgStat_StatDBEntry \
@@ -1004,6 +1022,7 @@ do
 -TRewriteRule \
 -TRmgrData \
 -TRmgrId \
+-TRoleStmtType \
 -TRowExpr \
 -TRowExprState \
 -TRuleInfo \
@@ -1060,6 +1079,7 @@ do
 -TSetOperation \
 -TSetOperationStmt \
 -TSetToDefault \
+-TSharedDependencyType \
 -TSharedInvalCatcacheMsg \
 -TSharedInvalRelcacheMsg \
 -TSharedInvalSmgrMsg \
@@ -1091,6 +1111,7 @@ do
 -TStartBlobsPtr \
 -TStartDataPtr \
 -TStartupPacket \
+-TStatMsgType \
 -TStdAnalyzeData \
 -TStrategyNumber \
 -TStringInfo \
@@ -1113,6 +1134,7 @@ do
 -TTBlockState \
 -TTIDBitmap \
 -TTStoreState \
+-TTabStatArray \
 -TTableDataInfo \
 -TTableInfo \
 -TTargetEntry \
@@ -1195,7 +1217,6 @@ do
 -TVacPageData \
 -TVacPageList \
 -TVacPageListData \
--TVacRUsage \
 -TVacuumStmt \
 -TValue \
 -TVar \
@@ -1283,6 +1304,8 @@ do
 -Tattribute_used_context \
 -Tauth_entry \
 -Tauthmem_entry \
+-Tautovac_dbase \
+-Tautovac_table \
 -TbackslashResult \
 -Tbio_info_cb \
 -Tbitmapword \
@@ -1312,6 +1335,7 @@ do
 -Tdeparse_context \
 -Tdeparse_namespace \
 -Tdev_t \
+-Tdirectory_fctx \
 -Tdiv_t \
 -Tdouble \
 -TevalPlanQual \
@@ -1393,6 +1417,7 @@ do
 -Tmode_t \
 -Tnlink_t \
 -Tnls_uint32 \
+-TobjectType \
 -Toff_t \
 -Toidvector \
 -ToptType \
@@ -1438,6 +1463,7 @@ do
 -Tregmatch_t \
 -Tregoff_t \
 -Tregproc \
+-TremoteDep \
 -Treplace_vars_with_subplan_refs_context \
 -Trewrite_event \
 -Trm_detail_t \
