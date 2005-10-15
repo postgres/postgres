@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.130 2005/10/15 02:49:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.131 2005/10/15 21:27:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,10 +163,10 @@ pg_krb5_init(void)
 	{
 		ereport(LOG,
 				(errmsg("Kerberos sname_to_principal(\"%s\", \"%s\") returned error %d",
-			   khostname ? khostname : "localhost", pg_krb_srvnam, retval)));
+			   khostname ? khostname : "server hostname", pg_krb_srvnam, retval)));
 		com_err("postgres", retval,
 		"while getting server principal for server \"%s\" for service \"%s\"",
-				khostname ? khostname : "localhost", pg_krb_srvnam);
+				khostname ? khostname : "server hostname", pg_krb_srvnam);
 		krb5_kt_close(pg_krb5_context, pg_krb5_keytab);
 		krb5_free_context(pg_krb5_context);
 		return STATUS_ERROR;
