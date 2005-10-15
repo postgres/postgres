@@ -9,6 +9,7 @@
 #define YY_READ_BUF_SIZE 16777216
 
 /* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
+#undef fprintf
 #define fprintf(file, fmt, msg)  ereport(ERROR, (errmsg_internal("%s", msg)))
 
 /* Handles to the buffer that the lexer uses internally */

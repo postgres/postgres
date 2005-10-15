@@ -6,6 +6,7 @@
 #include "common.h"
 
 /* Avoid exit() on fatal scanner errors */
+#undef fprintf
 #define fprintf(file, fmt, msg)  ts_error(ERROR, fmt, msg)
 
 char *token = NULL;  /* pointer to token */
