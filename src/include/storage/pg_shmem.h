@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/pg_shmem.h,v 1.15 2005/08/20 23:26:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/pg_shmem.h,v 1.16 2005/10/15 02:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ extern void PGSharedMemoryReAttach(void);
 #endif
 
 extern PGShmemHeader *PGSharedMemoryCreate(Size size, bool makePrivate,
-										   int port);
+					 int port);
 extern bool PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2);
 extern void PGSharedMemoryDetach(void);
 

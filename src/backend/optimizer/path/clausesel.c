@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.74 2005/10/11 16:44:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.75 2005/10/15 02:49:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,7 @@ static void addRangeClause(RangeQueryClause **rqlist, Node *clause,
  * hisel + losel + null_frac - 1.)
  *
  * If either selectivity is exactly DEFAULT_INEQ_SEL, we forget this equation
- * and instead use DEFAULT_RANGE_INEQ_SEL.  The same applies if the equation
+ * and instead use DEFAULT_RANGE_INEQ_SEL.	The same applies if the equation
  * yields an impossible (negative) result.
  *
  * A free side-effect is that we can recognize redundant inequalities such
@@ -102,9 +102,9 @@ clauselist_selectivity(PlannerInfo *root,
 	ListCell   *l;
 
 	/*
-	 * Initial scan over clauses.  Anything that doesn't look like a
-	 * potential rangequery clause gets multiplied into s1 and forgotten.
-	 * Anything that does gets inserted into an rqlist entry.
+	 * Initial scan over clauses.  Anything that doesn't look like a potential
+	 * rangequery clause gets multiplied into s1 and forgotten. Anything that
+	 * does gets inserted into an rqlist entry.
 	 */
 	foreach(l, clauses)
 	{
@@ -127,10 +127,10 @@ clauselist_selectivity(PlannerInfo *root,
 			rinfo = NULL;
 
 		/*
-		 * See if it looks like a restriction clause with a pseudoconstant
-		 * on one side.  (Anything more complicated than that might not
-		 * behave in the simple way we are expecting.)	Most of the tests
-		 * here can be done more efficiently with rinfo than without.
+		 * See if it looks like a restriction clause with a pseudoconstant on
+		 * one side.  (Anything more complicated than that might not behave in
+		 * the simple way we are expecting.)  Most of the tests here can be
+		 * done more efficiently with rinfo than without.
 		 */
 		if (is_opclause(clause) && list_length(((OpExpr *) clause)->args) == 2)
 		{
@@ -142,10 +142,10 @@ clauselist_selectivity(PlannerInfo *root,
 			{
 				ok = (bms_membership(rinfo->clause_relids) == BMS_SINGLETON) &&
 					(is_pseudo_constant_clause_relids(lsecond(expr->args),
-												  rinfo->right_relids) ||
+													  rinfo->right_relids) ||
 					 (varonleft = false,
-				   is_pseudo_constant_clause_relids(linitial(expr->args),
-													rinfo->left_relids)));
+					  is_pseudo_constant_clause_relids(linitial(expr->args),
+													   rinfo->left_relids)));
 			}
 			else
 			{
@@ -159,8 +159,8 @@ clauselist_selectivity(PlannerInfo *root,
 			{
 				/*
 				 * If it's not a "<" or ">" operator, just merge the
-				 * selectivity in generically.	But if it's the right
-				 * oprrest, add the clause to rqlist for later processing.
+				 * selectivity in generically.	But if it's the right oprrest,
+				 * add the clause to rqlist for later processing.
 				 */
 				switch (get_oprrest(expr->opno))
 				{
@@ -199,8 +199,8 @@ clauselist_selectivity(PlannerInfo *root,
 
 			/*
 			 * Exact equality to the default value probably means the
-			 * selectivity function punted.  This is not airtight but
-			 * should be good enough.
+			 * selectivity function punted.  This is not airtight but should
+			 * be good enough.
 			 */
 			if (rqlist->hibound == DEFAULT_INEQ_SEL ||
 				rqlist->lobound == DEFAULT_INEQ_SEL)
@@ -289,8 +289,8 @@ addRangeClause(RangeQueryClause **rqlist, Node *clause,
 	for (rqelem = *rqlist; rqelem; rqelem = rqelem->next)
 	{
 		/*
-		 * We use full equal() here because the "var" might be a function
-		 * of one or more attributes of the same relation...
+		 * We use full equal() here because the "var" might be a function of
+		 * one or more attributes of the same relation...
 		 */
 		if (!equal(var, rqelem->var))
 			continue;
@@ -423,17 +423,16 @@ clause_selectivity(PlannerInfo *root,
 		rinfo = (RestrictInfo *) clause;
 
 		/*
-		 * If possible, cache the result of the selectivity calculation
-		 * for the clause.	We can cache if varRelid is zero or the clause
-		 * contains only vars of that relid --- otherwise varRelid will
-		 * affect the result, so mustn't cache.  We also have to be
-		 * careful about the jointype.	It's OK to cache when jointype is
-		 * JOIN_INNER or one of the outer join types (any given outer-join
-		 * clause should always be examined with the same jointype, so
-		 * result won't change). It's not OK to cache when jointype is one
-		 * of the special types associated with IN processing, because the
-		 * same clause may be examined with different jointypes and the
-		 * result should vary.
+		 * If possible, cache the result of the selectivity calculation for
+		 * the clause.	We can cache if varRelid is zero or the clause
+		 * contains only vars of that relid --- otherwise varRelid will affect
+		 * the result, so mustn't cache.  We also have to be careful about the
+		 * jointype.  It's OK to cache when jointype is JOIN_INNER or one of
+		 * the outer join types (any given outer-join clause should always be
+		 * examined with the same jointype, so result won't change). It's not
+		 * OK to cache when jointype is one of the special types associated
+		 * with IN processing, because the same clause may be examined with
+		 * different jointypes and the result should vary.
 		 */
 		if (varRelid == 0 ||
 			bms_is_subset_singleton(rinfo->clause_relids, varRelid))
@@ -477,8 +476,8 @@ clause_selectivity(PlannerInfo *root,
 		Var		   *var = (Var *) clause;
 
 		/*
-		 * We probably shouldn't ever see an uplevel Var here, but if we
-		 * do, return the default selectivity...
+		 * We probably shouldn't ever see an uplevel Var here, but if we do,
+		 * return the default selectivity...
 		 */
 		if (var->varlevelsup == 0 &&
 			(varRelid == 0 || varRelid == (int) var->varno))
@@ -488,23 +487,23 @@ clause_selectivity(PlannerInfo *root,
 			if (rte->rtekind == RTE_SUBQUERY)
 			{
 				/*
-				 * XXX not smart about subquery references... any way to
-				 * do better?
+				 * XXX not smart about subquery references... any way to do
+				 * better?
 				 */
 				s1 = 0.5;
 			}
 			else
 			{
 				/*
-				 * A Var at the top of a clause must be a bool Var. This
-				 * is equivalent to the clause reln.attribute = 't', so we
+				 * A Var at the top of a clause must be a bool Var. This is
+				 * equivalent to the clause reln.attribute = 't', so we
 				 * compute the selectivity as if that is what we have.
 				 */
 				s1 = restriction_selectivity(root,
 											 BooleanEqualOperator,
 											 list_make2(var,
-													  makeBoolConst(true,
-																 false)),
+														makeBoolConst(true,
+																	  false)),
 											 varRelid);
 			}
 		}
@@ -534,7 +533,7 @@ clause_selectivity(PlannerInfo *root,
 	{
 		/* inverse of the selectivity of the underlying clause */
 		s1 = 1.0 - clause_selectivity(root,
-							  (Node *) get_notclausearg((Expr *) clause),
+								  (Node *) get_notclausearg((Expr *) clause),
 									  varRelid,
 									  jointype);
 	}
@@ -576,17 +575,16 @@ clause_selectivity(PlannerInfo *root,
 		{
 			/*
 			 * If we are considering a nestloop join then all clauses are
-			 * restriction clauses, since we are only interested in the
-			 * one relation.
+			 * restriction clauses, since we are only interested in the one
+			 * relation.
 			 */
 			is_join_clause = false;
 		}
 		else
 		{
 			/*
-			 * Otherwise, it's a join if there's more than one relation
-			 * used.  We can optimize this calculation if an rinfo was
-			 * passed.
+			 * Otherwise, it's a join if there's more than one relation used.
+			 * We can optimize this calculation if an rinfo was passed.
 			 */
 			if (rinfo)
 				is_join_clause = (bms_membership(rinfo->clause_relids) ==
@@ -613,8 +611,8 @@ clause_selectivity(PlannerInfo *root,
 	else if (is_funcclause(clause))
 	{
 		/*
-		 * This is not an operator, so we guess at the selectivity. THIS
-		 * IS A HACK TO GET V4 OUT THE DOOR.  FUNCS SHOULD BE ABLE TO HAVE
+		 * This is not an operator, so we guess at the selectivity. THIS IS A
+		 * HACK TO GET V4 OUT THE DOOR.  FUNCS SHOULD BE ABLE TO HAVE
 		 * SELECTIVITIES THEMSELVES.	   -- JMH 7/9/92
 		 */
 		s1 = (Selectivity) 0.3333333;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.34 2005/08/22 17:38:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.35 2005/10/15 02:49:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,8 +42,8 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 	Oid			namespaceId;
 	List	   *parsetree_list;
 	ListCell   *parsetree_item;
-	Oid		owner_uid;
-	Oid		saved_uid;
+	Oid			owner_uid;
+	Oid			saved_uid;
 	AclResult	aclresult;
 
 	saved_uid = GetUserId();
@@ -60,8 +60,8 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 	 * To create a schema, must have schema-create privilege on the current
 	 * database and must be able to become the target role (this does not
 	 * imply that the target role itself must have create-schema privilege).
-	 * The latter provision guards against "giveaway" attacks.  Note that
-	 * a superuser will always have both of these privileges a fortiori.
+	 * The latter provision guards against "giveaway" attacks.	Note that a
+	 * superuser will always have both of these privileges a fortiori.
 	 */
 	aclresult = pg_database_aclcheck(MyDatabaseId, saved_uid, ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
@@ -75,15 +75,15 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_RESERVED_NAME),
 				 errmsg("unacceptable schema name \"%s\"", schemaName),
-		errdetail("The prefix \"pg_\" is reserved for system schemas.")));
+		   errdetail("The prefix \"pg_\" is reserved for system schemas.")));
 
 	/*
 	 * If the requested authorization is different from the current user,
-	 * temporarily set the current user so that the object(s) will be
-	 * created with the correct ownership.
+	 * temporarily set the current user so that the object(s) will be created
+	 * with the correct ownership.
 	 *
-	 * (The setting will revert to session user on error or at the end of
-	 * this routine.)
+	 * (The setting will revert to session user on error or at the end of this
+	 * routine.)
 	 */
 	if (saved_uid != owner_uid)
 		SetUserId(owner_uid);
@@ -95,19 +95,18 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 	CommandCounterIncrement();
 
 	/*
-	 * Temporarily make the new namespace be the front of the search path,
-	 * as well as the default creation target namespace.  This will be
-	 * undone at the end of this routine, or upon error.
+	 * Temporarily make the new namespace be the front of the search path, as
+	 * well as the default creation target namespace.  This will be undone at
+	 * the end of this routine, or upon error.
 	 */
 	PushSpecialNamespace(namespaceId);
 
 	/*
-	 * Examine the list of commands embedded in the CREATE SCHEMA command,
-	 * and reorganize them into a sequentially executable order with no
-	 * forward references.	Note that the result is still a list of raw
-	 * parsetrees in need of parse analysis --- we cannot, in general, run
-	 * analyze.c on one statement until we have actually executed the
-	 * prior ones.
+	 * Examine the list of commands embedded in the CREATE SCHEMA command, and
+	 * reorganize them into a sequentially executable order with no forward
+	 * references.	Note that the result is still a list of raw parsetrees in
+	 * need of parse analysis --- we cannot, in general, run analyze.c on one
+	 * statement until we have actually executed the prior ones.
 	 */
 	parsetree_list = analyzeCreateSchemaStmt(stmt);
 
@@ -174,8 +173,8 @@ RemoveSchema(List *names, DropBehavior behavior)
 					   namespaceName);
 
 	/*
-	 * Do the deletion.  Objects contained in the schema are removed by
-	 * means of their dependency links to the schema.
+	 * Do the deletion.  Objects contained in the schema are removed by means
+	 * of their dependency links to the schema.
 	 */
 	object.classId = NamespaceRelationId;
 	object.objectId = namespaceId;
@@ -254,7 +253,7 @@ RenameSchema(const char *oldname, const char *newname)
 		ereport(ERROR,
 				(errcode(ERRCODE_RESERVED_NAME),
 				 errmsg("unacceptable schema name \"%s\"", newname),
-		errdetail("The prefix \"pg_\" is reserved for system schemas.")));
+		   errdetail("The prefix \"pg_\" is reserved for system schemas.")));
 
 	/* rename */
 	namestrcpy(&(((Form_pg_namespace) GETSTRUCT(tup))->nspname), newname);
@@ -302,21 +301,21 @@ AlterSchemaOwner(const char *name, Oid newOwnerId)
 		AclResult	aclresult;
 
 		/* Otherwise, must be owner of the existing object */
-		if (!pg_namespace_ownercheck(HeapTupleGetOid(tup),GetUserId()))
+		if (!pg_namespace_ownercheck(HeapTupleGetOid(tup), GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_NAMESPACE,
 						   name);
 
 		/* Must be able to become new owner */
-		check_is_member_of_role(GetUserId(),newOwnerId);
+		check_is_member_of_role(GetUserId(), newOwnerId);
 
 		/*
 		 * must have create-schema rights
 		 *
-		 * NOTE: This is different from other alter-owner checks in 
-		 * that the current user is checked for create privileges 
-		 * instead of the destination owner.  This is consistent
-		 * with the CREATE case for schemas.  Because superusers
-		 * will always have this right, we need no special case for them.
+		 * NOTE: This is different from other alter-owner checks in that the
+		 * current user is checked for create privileges instead of the
+		 * destination owner.  This is consistent with the CREATE case for
+		 * schemas.  Because superusers will always have this right, we need
+		 * no special case for them.
 		 */
 		aclresult = pg_database_aclcheck(MyDatabaseId, GetUserId(),
 										 ACL_CREATE);

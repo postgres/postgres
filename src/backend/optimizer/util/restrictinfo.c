@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.40 2005/10/13 00:06:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.41 2005/10/15 02:49:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,8 +51,8 @@ RestrictInfo *
 make_restrictinfo(Expr *clause, bool is_pushed_down, Relids required_relids)
 {
 	/*
-	 * If it's an OR clause, build a modified copy with RestrictInfos
-	 * inserted above each subclause of the top-level AND/OR structure.
+	 * If it's an OR clause, build a modified copy with RestrictInfos inserted
+	 * above each subclause of the top-level AND/OR structure.
 	 */
 	if (or_clause((Node *) clause))
 		return (RestrictInfo *) make_sub_restrictinfos(clause, is_pushed_down);
@@ -101,9 +101,9 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 		/*
 		 * There may well be redundant quals among the subplans, since a
 		 * top-level WHERE qual might have gotten used to form several
-		 * different index quals.  We don't try exceedingly hard to
-		 * eliminate redundancies, but we do eliminate obvious duplicates
-		 * by using list_concat_unique.
+		 * different index quals.  We don't try exceedingly hard to eliminate
+		 * redundancies, but we do eliminate obvious duplicates by using
+		 * list_concat_unique.
 		 */
 		result = NIL;
 		foreach(l, apath->bitmapquals)
@@ -125,7 +125,7 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 		/*
 		 * Here, we only detect qual-free subplans.  A qual-free subplan would
 		 * cause us to generate "... OR true ..."  which we may as well reduce
-		 * to just "true".  We do not try to eliminate redundant subclauses
+		 * to just "true".	We do not try to eliminate redundant subclauses
 		 * because (a) it's not as likely as in the AND case, and (b) we might
 		 * well be working with hundreds or even thousands of OR conditions,
 		 * perhaps from a long IN list.  The performance of list_append_unique
@@ -142,8 +142,8 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 			{
 				/*
 				 * If we find a qual-less subscan, it represents a constant
-				 * TRUE, and hence the OR result is also constant TRUE, so
-				 * we can stop here.
+				 * TRUE, and hence the OR result is also constant TRUE, so we
+				 * can stop here.
 				 */
 				return NIL;
 			}
@@ -157,8 +157,8 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 		}
 
 		/*
-		 * Avoid generating one-element ORs, which could happen
-		 * due to redundancy elimination.
+		 * Avoid generating one-element ORs, which could happen due to
+		 * redundancy elimination.
 		 */
 		if (list_length(withris) <= 1)
 			result = withris;
@@ -174,20 +174,20 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 	}
 	else if (IsA(bitmapqual, IndexPath))
 	{
-		IndexPath *ipath = (IndexPath *) bitmapqual;
+		IndexPath  *ipath = (IndexPath *) bitmapqual;
 
 		result = list_copy(ipath->indexclauses);
 		if (include_predicates && ipath->indexinfo->indpred != NIL)
 		{
 			foreach(l, ipath->indexinfo->indpred)
 			{
-				Expr   *pred = (Expr *) lfirst(l);
+				Expr	   *pred = (Expr *) lfirst(l);
 
 				/*
-				 * We know that the index predicate must have been implied
-				 * by the query condition as a whole, but it may or may not
-				 * be implied by the conditions that got pushed into the
-				 * bitmapqual.  Avoid generating redundant conditions.
+				 * We know that the index predicate must have been implied by
+				 * the query condition as a whole, but it may or may not be
+				 * implied by the conditions that got pushed into the
+				 * bitmapqual.	Avoid generating redundant conditions.
 				 */
 				if (!predicate_implied_by(list_make1(pred), result))
 					result = lappend(result,
@@ -223,8 +223,8 @@ make_restrictinfo_internal(Expr *clause, Expr *orclause,
 	restrictinfo->can_join = false;		/* may get set below */
 
 	/*
-	 * If it's a binary opclause, set up left/right relids info. In any
-	 * case set up the total clause relids info.
+	 * If it's a binary opclause, set up left/right relids info. In any case
+	 * set up the total clause relids info.
 	 */
 	if (is_opclause(clause) && list_length(((OpExpr *) clause)->args) == 2)
 	{
@@ -232,13 +232,13 @@ make_restrictinfo_internal(Expr *clause, Expr *orclause,
 		restrictinfo->right_relids = pull_varnos(get_rightop(clause));
 
 		restrictinfo->clause_relids = bms_union(restrictinfo->left_relids,
-											 restrictinfo->right_relids);
+												restrictinfo->right_relids);
 
 		/*
 		 * Does it look like a normal join clause, i.e., a binary operator
-		 * relating expressions that come from distinct relations? If so
-		 * we might be able to use it in a join algorithm.	Note that this
-		 * is a purely syntactic test that is made regardless of context.
+		 * relating expressions that come from distinct relations? If so we
+		 * might be able to use it in a join algorithm.  Note that this is a
+		 * purely syntactic test that is made regardless of context.
 		 */
 		if (!bms_is_empty(restrictinfo->left_relids) &&
 			!bms_is_empty(restrictinfo->right_relids) &&
@@ -262,11 +262,11 @@ make_restrictinfo_internal(Expr *clause, Expr *orclause,
 		restrictinfo->required_relids = restrictinfo->clause_relids;
 
 	/*
-	 * Fill in all the cacheable fields with "not yet set" markers. None
-	 * of these will be computed until/unless needed.  Note in particular
-	 * that we don't mark a binary opclause as mergejoinable or
-	 * hashjoinable here; that happens only if it appears in the right
-	 * context (top level of a joinclause list).
+	 * Fill in all the cacheable fields with "not yet set" markers. None of
+	 * these will be computed until/unless needed.	Note in particular that we
+	 * don't mark a binary opclause as mergejoinable or hashjoinable here;
+	 * that happens only if it appears in the right context (top level of a
+	 * joinclause list).
 	 */
 	restrictinfo->eval_cost.startup = -1;
 	restrictinfo->this_selec = -1;
@@ -420,17 +420,16 @@ remove_redundant_join_clauses(PlannerInfo *root, List *restrictinfo_list,
 	QualCost	cost;
 
 	/*
-	 * If there are any redundant clauses, we want to eliminate the ones
-	 * that are more expensive in favor of the ones that are less so. Run
+	 * If there are any redundant clauses, we want to eliminate the ones that
+	 * are more expensive in favor of the ones that are less so. Run
 	 * cost_qual_eval() to ensure the eval_cost fields are set up.
 	 */
 	cost_qual_eval(&cost, restrictinfo_list);
 
 	/*
-	 * We don't have enough knowledge yet to be able to estimate the
-	 * number of times a clause might be evaluated, so it's hard to weight
-	 * the startup and per-tuple costs appropriately.  For now just weight
-	 * 'em the same.
+	 * We don't have enough knowledge yet to be able to estimate the number of
+	 * times a clause might be evaluated, so it's hard to weight the startup
+	 * and per-tuple costs appropriately.  For now just weight 'em the same.
 	 */
 #define CLAUSECOST(r)  ((r)->eval_cost.startup + (r)->eval_cost.per_tuple)
 

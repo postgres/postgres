@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conv.c,v 1.54 2005/09/24 17:53:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conv.c,v 1.55 2005/10/15 02:49:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,8 +223,8 @@ pg_mic2ascii(unsigned char *mic, unsigned char *p, int len)
 void
 latin2mic_with_table(
 					 unsigned char *l,	/* local charset string (source) */
-					 unsigned char *p,	/* pointer to store mule internal
-										 * code (destination) */
+					 unsigned char *p,	/* pointer to store mule internal code
+										 * (destination) */
 					 int len,	/* length of l */
 					 int lc,	/* leading character of p */
 					 unsigned char *tab /* code conversion table */
@@ -265,8 +265,7 @@ latin2mic_with_table(
  */
 void
 mic2latin_with_table(
-					 unsigned char *mic,		/* mule internal code
-												 * (source) */
+					 unsigned char *mic,		/* mule internal code (source) */
 					 unsigned char *p,	/* local code (destination) */
 					 int len,	/* length of p */
 					 int lc,	/* leading character */
@@ -380,8 +379,8 @@ UtfToLocal(unsigned char *utf, unsigned char *iso,
 		{
 			ereport(WARNING,
 					(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
-				  errmsg("ignoring unconvertible UTF8 character 0x%04x",
-						 iutf)));
+					 errmsg("ignoring unconvertible UTF8 character 0x%04x",
+							iutf)));
 			continue;
 		}
 		if (p->code & 0xff000000)

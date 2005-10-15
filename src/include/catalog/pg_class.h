@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_class.h,v 1.89 2005/06/28 05:09:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_class.h,v 1.90 2005/10/15 02:49:42 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -40,7 +40,7 @@
  *		to get the relacl field ... and don't forget to check isNull.
  * ----------------
  */
-#define RelationRelationId  1259
+#define RelationRelationId	1259
 
 CATALOG(pg_class,1259) BKI_BOOTSTRAP
 {
@@ -62,8 +62,8 @@ CATALOG(pg_class,1259) BKI_BOOTSTRAP
 
 	/*
 	 * Class pg_attribute must contain exactly "relnatts" user attributes
-	 * (with attnums ranging from 1 to relnatts) for this class.  It may
-	 * also contain entries with negative attnums for system attributes.
+	 * (with attnums ranging from 1 to relnatts) for this class.  It may also
+	 * contain entries with negative attnums for system attributes.
 	 */
 	int2		relchecks;		/* # of CHECK constraints for class */
 	int2		reltriggers;	/* # of TRIGGERs */

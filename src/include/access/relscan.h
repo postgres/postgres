@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.40 2005/10/07 14:55:35 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.41 2005/10/15 02:49:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,9 +77,9 @@ typedef struct IndexScanDescData
 
 	/*
 	 * If keys_are_unique and got_tuple are both true, we stop calling the
-	 * index AM; it is then necessary for index_getnext to keep track of
-	 * the logical scan position for itself.  It does that using
-	 * unique_tuple_pos: -1 = before row, 0 = on row, +1 = after row.
+	 * index AM; it is then necessary for index_getnext to keep track of the
+	 * logical scan position for itself.  It does that using unique_tuple_pos:
+	 * -1 = before row, 0 = on row, +1 = after row.
 	 */
 	int			unique_tuple_pos;		/* logical position */
 	int			unique_tuple_mark;		/* logical marked position */

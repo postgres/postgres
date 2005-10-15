@@ -487,7 +487,7 @@ g_intbig_consistent(PG_FUNCTION_ARGS)
 	if (strategy == BooleanSearchStrategy)
 	{
 		PG_RETURN_BOOL(signconsistent((QUERYTYPE *) query,
-									GETSIGN(DatumGetPointer(entry->key)),
+									  GETSIGN(DatumGetPointer(entry->key)),
 									  false));
 	}
 

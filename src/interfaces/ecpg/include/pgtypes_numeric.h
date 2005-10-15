@@ -14,35 +14,31 @@
 typedef unsigned char NumericDigit;
 typedef struct
 {
-	int			ndigits;		/* number of digits in digits[] - can be
-								 * 0! */
+	int			ndigits;		/* number of digits in digits[] - can be 0! */
 	int			weight;			/* weight of first digit */
 	int			rscale;			/* result scale */
 	int			dscale;			/* display scale */
-	int			sign;			/* NUMERIC_POS, NUMERIC_NEG, or
-								 * NUMERIC_NAN */
+	int			sign;			/* NUMERIC_POS, NUMERIC_NEG, or NUMERIC_NAN */
 	NumericDigit *buf;			/* start of alloc'd space for digits[] */
 	NumericDigit *digits;		/* decimal digits */
-} numeric;
+}	numeric;
 
 typedef struct
 {
-	int			ndigits;		/* number of digits in digits[] - can be
-								 * 0! */
+	int			ndigits;		/* number of digits in digits[] - can be 0! */
 	int			weight;			/* weight of first digit */
 	int			rscale;			/* result scale */
 	int			dscale;			/* display scale */
-	int			sign;			/* NUMERIC_POS, NUMERIC_NEG, or
-								 * NUMERIC_NAN */
+	int			sign;			/* NUMERIC_POS, NUMERIC_NEG, or NUMERIC_NAN */
 	NumericDigit digits[DECSIZE];		/* decimal digits */
-} decimal;
+}	decimal;
 
 #ifdef __cplusplus
 extern		"C"
 {
 #endif
 
-numeric    *PGTYPESnumeric_new(void);
+			numeric * PGTYPESnumeric_new(void);
 void		PGTYPESnumeric_free(numeric *);
 numeric    *PGTYPESnumeric_from_asc(char *, char **);
 char	   *PGTYPESnumeric_to_asc(numeric *, int);

@@ -25,7 +25,7 @@
  * scenario of this sort is "out of memory"; and it's also the nastiest
  * to handle because we'd likely also run out of memory while trying to
  * report this error!  Our escape hatch for this case is to reset the
- * ErrorContext to empty before trying to process the inner error.  Since
+ * ErrorContext to empty before trying to process the inner error.	Since
  * ErrorContext is guaranteed to have at least 8K of space in it (see mcxt.c),
  * we should be able to process an "out of memory" message successfully.
  * Since we lose the prior error state due to the reset, we won't be able
@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.164 2005/10/14 20:53:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.165 2005/10/15 02:49:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -188,8 +188,8 @@ errstart(int elevel, const char *filename, int lineno,
 
 	/*
 	 * Now decide whether we need to process this report at all; if it's
-	 * warning or less and not enabled for logging, just return FALSE
-	 * without starting up any error logging machinery.
+	 * warning or less and not enabled for logging, just return FALSE without
+	 * starting up any error logging machinery.
 	 */
 
 	/* Determine whether message is enabled for server log output */
@@ -256,8 +256,8 @@ errstart(int elevel, const char *filename, int lineno,
 		MemoryContextReset(ErrorContext);
 
 		/*
-		 * If we recurse more than once, the problem might be something
-		 * broken in a context traceback routine.  Abandon them too.
+		 * If we recurse more than once, the problem might be something broken
+		 * in a context traceback routine.	Abandon them too.
 		 */
 		if (recursion_depth > 2)
 			error_context_stack = NULL;
@@ -316,15 +316,15 @@ errfinish(int dummy,...)
 	CHECK_STACK_DEPTH();
 
 	/*
-	 * Do processing in ErrorContext, which we hope has enough reserved
-	 * space to report an error.
+	 * Do processing in ErrorContext, which we hope has enough reserved space
+	 * to report an error.
 	 */
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
 	/*
 	 * Call any context callback functions.  Errors occurring in callback
-	 * functions will be treated as recursive errors --- this ensures we
-	 * will avoid infinite recursion (see errstart).
+	 * functions will be treated as recursive errors --- this ensures we will
+	 * avoid infinite recursion (see errstart).
 	 */
 	for (econtext = error_context_stack;
 		 econtext != NULL;
@@ -333,34 +333,32 @@ errfinish(int dummy,...)
 
 	/*
 	 * If ERROR (not more nor less) we pass it off to the current handler.
-	 * Printing it and popping the stack is the responsibility of
-	 * the handler.
+	 * Printing it and popping the stack is the responsibility of the handler.
 	 */
 	if (elevel == ERROR)
 	{
 		/*
-		 * We do some minimal cleanup before longjmp'ing so that handlers
-		 * can execute in a reasonably sane state.
+		 * We do some minimal cleanup before longjmp'ing so that handlers can
+		 * execute in a reasonably sane state.
 		 */
 
 		/* This is just in case the error came while waiting for input */
 		ImmediateInterruptOK = false;
 
 		/*
-		 * Reset InterruptHoldoffCount in case we ereport'd from
-		 * inside an interrupt holdoff section.  (We assume here that
-		 * no handler will itself be inside a holdoff section.	If
-		 * necessary, such a handler could save and restore
-		 * InterruptHoldoffCount for itself, but this should make life
-		 * easier for most.)
+		 * Reset InterruptHoldoffCount in case we ereport'd from inside an
+		 * interrupt holdoff section.  (We assume here that no handler will
+		 * itself be inside a holdoff section.	If necessary, such a handler
+		 * could save and restore InterruptHoldoffCount for itself, but this
+		 * should make life easier for most.)
 		 */
 		InterruptHoldoffCount = 0;
 
-		CritSectionCount = 0;		/* should be unnecessary, but... */
+		CritSectionCount = 0;	/* should be unnecessary, but... */
 
 		/*
-		 * Note that we leave CurrentMemoryContext set to ErrorContext.
-		 * The handler should reset it to something else soon.
+		 * Note that we leave CurrentMemoryContext set to ErrorContext. The
+		 * handler should reset it to something else soon.
 		 */
 
 		recursion_depth--;
@@ -370,12 +368,11 @@ errfinish(int dummy,...)
 	/*
 	 * If we are doing FATAL or PANIC, abort any old-style COPY OUT in
 	 * progress, so that we can report the message before dying.  (Without
-	 * this, pq_putmessage will refuse to send the message at all, which
-	 * is what we want for NOTICE messages, but not for fatal exits.) This
-	 * hack is necessary because of poor design of old-style copy
-	 * protocol.  Note we must do this even if client is fool enough to
-	 * have set client_min_messages above FATAL, so don't look at
-	 * output_to_client.
+	 * this, pq_putmessage will refuse to send the message at all, which is
+	 * what we want for NOTICE messages, but not for fatal exits.) This hack
+	 * is necessary because of poor design of old-style copy protocol.	Note
+	 * we must do this even if client is fool enough to have set
+	 * client_min_messages above FATAL, so don't look at output_to_client.
 	 */
 	if (elevel >= FATAL && whereToSendOutput == Remote)
 		pq_endcopyout(true);
@@ -412,28 +409,27 @@ errfinish(int dummy,...)
 		ImmediateInterruptOK = false;
 
 		/*
-		 * If we just reported a startup failure, the client will
-		 * disconnect on receiving it, so don't send any more to the
-		 * client.
+		 * If we just reported a startup failure, the client will disconnect
+		 * on receiving it, so don't send any more to the client.
 		 */
 		if (PG_exception_stack == NULL && whereToSendOutput == Remote)
 			whereToSendOutput = None;
 
 		/*
 		 * fflush here is just to improve the odds that we get to see the
-		 * error message, in case things are so hosed that proc_exit
-		 * crashes.  Any other code you might be tempted to add here
-		 * should probably be in an on_proc_exit callback instead.
+		 * error message, in case things are so hosed that proc_exit crashes.
+		 * Any other code you might be tempted to add here should probably be
+		 * in an on_proc_exit callback instead.
 		 */
 		fflush(stdout);
 		fflush(stderr);
 
 		/*
-		 * If proc_exit is already running, we exit with nonzero exit code
-		 * to indicate that something's pretty wrong.  We also want to
-		 * exit with nonzero exit code if not running under the postmaster
-		 * (for example, if we are being run from the initdb script, we'd
-		 * better return an error status).
+		 * If proc_exit is already running, we exit with nonzero exit code to
+		 * indicate that something's pretty wrong.  We also want to exit with
+		 * nonzero exit code if not running under the postmaster (for example,
+		 * if we are being run from the initdb script, we'd better return an
+		 * error status).
 		 */
 		proc_exit(proc_exit_inprogress || !IsUnderPostmaster);
 	}
@@ -441,8 +437,8 @@ errfinish(int dummy,...)
 	if (elevel >= PANIC)
 	{
 		/*
-		 * Serious crash time. Postmaster will observe nonzero process
-		 * exit status and kill the other backends too.
+		 * Serious crash time. Postmaster will observe nonzero process exit
+		 * status and kill the other backends too.
 		 *
 		 * XXX: what if we are *in* the postmaster?  abort() won't kill our
 		 * children...
@@ -977,8 +973,8 @@ CopyErrorData(void)
 	ErrorData  *newedata;
 
 	/*
-	 * we don't increment recursion_depth because out-of-memory here does
-	 * not indicate a problem within the error subsystem.
+	 * we don't increment recursion_depth because out-of-memory here does not
+	 * indicate a problem within the error subsystem.
 	 */
 	CHECK_STACK_DEPTH();
 
@@ -1037,9 +1033,9 @@ void
 FlushErrorState(void)
 {
 	/*
-	 * Reset stack to empty.  The only case where it would be more than
-	 * one deep is if we serviced an error that interrupted construction
-	 * of another message.	We assume control escaped out of that message
+	 * Reset stack to empty.  The only case where it would be more than one
+	 * deep is if we serviced an error that interrupted construction of
+	 * another message.  We assume control escaped out of that message
 	 * construction and won't ever go back.
 	 */
 	errordata_stack_depth = -1;
@@ -1117,7 +1113,7 @@ DebugFileOpen(void)
 					   0666)) < 0)
 			ereport(FATAL,
 					(errcode_for_file_access(),
-			  errmsg("could not open file \"%s\": %m", OutputFileName)));
+				  errmsg("could not open file \"%s\": %m", OutputFileName)));
 		istty = isatty(fd);
 		close(fd);
 
@@ -1131,17 +1127,17 @@ DebugFileOpen(void)
 							OutputFileName)));
 
 		/*
-		 * If the file is a tty and we're running under the postmaster,
-		 * try to send stdout there as well (if it isn't a tty then stderr
-		 * will block out stdout, so we may as well let stdout go wherever
-		 * it was going before).
+		 * If the file is a tty and we're running under the postmaster, try to
+		 * send stdout there as well (if it isn't a tty then stderr will block
+		 * out stdout, so we may as well let stdout go wherever it was going
+		 * before).
 		 */
 		if (istty && IsUnderPostmaster)
 			if (!freopen(OutputFileName, "a", stdout))
 				ereport(FATAL,
 						(errcode_for_file_access(),
-					 errmsg("could not reopen file \"%s\" as stdout: %m",
-							OutputFileName)));
+						 errmsg("could not reopen file \"%s\" as stdout: %m",
+								OutputFileName)));
 	}
 }
 
@@ -1156,13 +1152,13 @@ void
 set_syslog_parameters(const char *ident, int facility)
 {
 	/*
-	 * guc.c is likely to call us repeatedly with same parameters, so
-	 * don't thrash the syslog connection unnecessarily.  Also, we do not
-	 * re-open the connection until needed, since this routine will get called
-	 * whether or not Log_destination actually mentions syslog.
+	 * guc.c is likely to call us repeatedly with same parameters, so don't
+	 * thrash the syslog connection unnecessarily.	Also, we do not re-open
+	 * the connection until needed, since this routine will get called whether
+	 * or not Log_destination actually mentions syslog.
 	 *
-	 * Note that we make our own copy of the ident string rather than relying
-	 * on guc.c's.  This may be overly paranoid, but it ensures that we cannot
+	 * Note that we make our own copy of the ident string rather than relying on
+	 * guc.c's.  This may be overly paranoid, but it ensures that we cannot
 	 * accidentally free a string that syslog is still using.
 	 */
 	if (syslog_ident == NULL || strcmp(syslog_ident, ident) != 0 ||
@@ -1212,13 +1208,12 @@ write_syslog(int level, const char *line)
 	seq++;
 
 	/*
-	 * Our problem here is that many syslog implementations don't handle
-	 * long messages in an acceptable manner. While this function doesn't
-	 * help that fact, it does work around by splitting up messages into
-	 * smaller pieces.
+	 * Our problem here is that many syslog implementations don't handle long
+	 * messages in an acceptable manner. While this function doesn't help that
+	 * fact, it does work around by splitting up messages into smaller pieces.
 	 *
-	 * We divide into multiple syslog() calls if message is too long
-	 * or if the message contains embedded NewLine(s) '\n'.
+	 * We divide into multiple syslog() calls if message is too long or if the
+	 * message contains embedded NewLine(s) '\n'.
 	 */
 	len = strlen(line);
 	if (len > PG_SYSLOG_LIMIT || strchr(line, '\n') != NULL)
@@ -1290,7 +1285,7 @@ write_syslog(int level, const char *line)
 static void
 write_eventlog(int level, const char *line)
 {
-	int eventlevel = EVENTLOG_ERROR_TYPE;
+	int			eventlevel = EVENTLOG_ERROR_TYPE;
 	static HANDLE evtHandle = INVALID_HANDLE_VALUE;
 
 	if (evtHandle == INVALID_HANDLE_VALUE)
@@ -1356,9 +1351,9 @@ log_line_prefix(StringInfo buf)
 	int			i;
 
 	/*
-	 * This is one of the few places where we'd rather not inherit a
-	 * static variable's value from the postmaster.  But since we will,
-	 * reset it when MyProcPid changes.
+	 * This is one of the few places where we'd rather not inherit a static
+	 * variable's value from the postmaster.  But since we will, reset it when
+	 * MyProcPid changes.
 	 */
 	if (log_my_pid != MyProcPid)
 	{
@@ -1412,8 +1407,8 @@ log_line_prefix(StringInfo buf)
 				if (MyProcPort)
 				{
 					appendStringInfo(buf, "%lx.%x",
-							   (long) (MyProcPort->session_start.tv_sec),
-							   MyProcPid);
+								   (long) (MyProcPort->session_start.tv_sec),
+									 MyProcPid);
 				}
 				break;
 			case 'p':
@@ -1425,21 +1420,22 @@ log_line_prefix(StringInfo buf)
 			case 'm':
 				{
 					/*
-					 * Note: for %m, %t, and %s we deliberately use the
-					 * C library's strftime/localtime, and not the
-					 * equivalent functions from src/timezone.	This
-					 * ensures that all backends will report log entries
-					 * in the same timezone, namely whatever C-library
-					 * setting they inherit from the postmaster.  If we
-					 * used src/timezone then local settings of the
-					 * TimeZone GUC variable would confuse the log.
+					 * Note: for %m, %t, and %s we deliberately use the C
+					 * library's strftime/localtime, and not the equivalent
+					 * functions from src/timezone.  This ensures that all
+					 * backends will report log entries in the same timezone,
+					 * namely whatever C-library setting they inherit from the
+					 * postmaster.	If we used src/timezone then local
+					 * settings of the TimeZone GUC variable would confuse the
+					 * log.
 					 */
-					time_t stamp_time;
-					char strfbuf[128], msbuf[8];
+					time_t		stamp_time;
+					char		strfbuf[128],
+								msbuf[8];
 					struct timeval tv;
 
 					gettimeofday(&tv, NULL);
- 					stamp_time = tv.tv_sec;
+					stamp_time = tv.tv_sec;
 
 					strftime(strfbuf, sizeof(strfbuf),
 					/* leave room for milliseconds... */
@@ -1452,8 +1448,8 @@ log_line_prefix(StringInfo buf)
 							 localtime(&stamp_time));
 
 					/* 'paste' milliseconds into place... */
- 					sprintf(msbuf, ".%03d", (int) (tv.tv_usec/1000));
-					strncpy(strfbuf+19, msbuf, 4);
+					sprintf(msbuf, ".%03d", (int) (tv.tv_usec / 1000));
+					strncpy(strfbuf + 19, msbuf, 4);
 
 					appendStringInfoString(buf, strfbuf);
 				}
@@ -1535,7 +1531,7 @@ log_line_prefix(StringInfo buf)
 char *
 unpack_sql_state(int sql_state)
 {
-	static char	buf[12];
+	static char buf[12];
 	int			i;
 
 	for (i = 0; i < 5; i++)
@@ -1629,8 +1625,7 @@ send_message_to_server_log(ErrorData *edata)
 	}
 
 	/*
-	 * If the user wants the query that generated this error logged, do
-	 * it.
+	 * If the user wants the query that generated this error logged, do it.
 	 */
 	if (edata->elevel >= log_min_error_statement && debug_query_string != NULL)
 	{
@@ -1692,12 +1687,13 @@ send_message_to_server_log(ErrorData *edata)
 	if ((Log_destination & LOG_DESTINATION_STDERR) || whereToSendOutput == Debug)
 	{
 #ifdef WIN32
+
 		/*
 		 * In a win32 service environment, there is no usable stderr. Capture
 		 * anything going there and write it to the eventlog instead.
 		 *
-		 * If stderr redirection is active, it's ok to write to stderr
-		 * because that's really a pipe to the syslogger process.
+		 * If stderr redirection is active, it's ok to write to stderr because
+		 * that's really a pipe to the syslogger process.
 		 */
 		if ((!Redirect_stderr || am_syslogger) && pgwin32_is_service())
 			write_eventlog(edata->elevel, buf.data);
@@ -1847,12 +1843,12 @@ send_message_to_frontend(ErrorData *edata)
 	pq_endmessage(&msgbuf);
 
 	/*
-	 * This flush is normally not necessary, since postgres.c will flush
-	 * out waiting data when control returns to the main loop. But it
-	 * seems best to leave it here, so that the client has some clue what
-	 * happened if the backend dies before getting back to the main loop
-	 * ... error/notice messages should not be a performance-critical path
-	 * anyway, so an extra flush won't hurt much ...
+	 * This flush is normally not necessary, since postgres.c will flush out
+	 * waiting data when control returns to the main loop. But it seems best
+	 * to leave it here, so that the client has some clue what happened if the
+	 * backend dies before getting back to the main loop ... error/notice
+	 * messages should not be a performance-critical path anyway, so an extra
+	 * flush won't hurt much ...
 	 */
 	pq_flush();
 }
@@ -1887,9 +1883,9 @@ expand_fmt_string(const char *fmt, ErrorData *edata)
 			if (*cp == 'm')
 			{
 				/*
-				 * Replace %m by system error string.  If there are any
-				 * %'s in the string, we'd better double them so that
-				 * vsnprintf won't misinterpret.
+				 * Replace %m by system error string.  If there are any %'s in
+				 * the string, we'd better double them so that vsnprintf won't
+				 * misinterpret.
 				 */
 				const char *cp2;
 
@@ -1934,8 +1930,8 @@ useful_strerror(int errnum)
 	str = strerror(errnum);
 
 	/*
-	 * Some strerror()s return an empty string for out-of-range errno.
-	 * This is ANSI C spec compliant, but not exactly useful.
+	 * Some strerror()s return an empty string for out-of-range errno. This is
+	 * ANSI C spec compliant, but not exactly useful.
 	 */
 	if (str == NULL || *str == '\0')
 	{

@@ -157,7 +157,7 @@ bool ltree_execute(ITEM * curitem, void *checkval,
 int			ltree_compare(const ltree * a, const ltree * b);
 bool		inner_isparent(const ltree * c, const ltree * p);
 bool compare_subnode(ltree_level * t, char *q, int len,
-		int (*cmpptr) (const char *, const char *, size_t), bool anyend);
+			int (*cmpptr) (const char *, const char *, size_t), bool anyend);
 ltree	   *lca_inner(ltree ** a, int len);
 
 #define PG_GETARG_LTREE(x)	((ltree*)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(x))))

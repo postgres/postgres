@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pubkey.c,v 1.3 2005/08/13 02:06:20 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pubkey.c,v 1.4 2005/10/15 02:49:06 momjian Exp $
  */
 #include "postgres.h"
 
@@ -34,16 +34,19 @@
 #include "mbuf.h"
 #include "pgp.h"
 
-int pgp_key_alloc(PGP_PubKey **pk_p)
+int
+pgp_key_alloc(PGP_PubKey ** pk_p)
 {
 	PGP_PubKey *pk;
+
 	pk = px_alloc(sizeof(*pk));
 	memset(pk, 0, sizeof(*pk));
 	*pk_p = pk;
 	return 0;
 }
 
-void pgp_key_free(PGP_PubKey *pk)
+void
+pgp_key_free(PGP_PubKey * pk)
 {
 	if (pk == NULL)
 		return;
@@ -79,13 +82,13 @@ void pgp_key_free(PGP_PubKey *pk)
 }
 
 static int
-calc_key_id(PGP_PubKey *pk)
+calc_key_id(PGP_PubKey * pk)
 {
-	int res;
-	PX_MD *md;
-	int len;
-	uint8 hdr[3];
-	uint8 hash[20];
+	int			res;
+	PX_MD	   *md;
+	int			len;
+	uint8		hdr[3];
+	uint8		hash[20];
 
 	res = pgp_load_digest(PGP_DIGEST_SHA1, &md);
 	if (res < 0)
@@ -121,7 +124,7 @@ calc_key_id(PGP_PubKey *pk)
 	px_md_update(md, &pk->ver, 1);
 	px_md_update(md, pk->time, 4);
 	px_md_update(md, &pk->algo, 1);
-	
+
 	switch (pk->algo)
 	{
 		case PGP_PUB_ELG_ENCRYPT:
@@ -152,9 +155,10 @@ calc_key_id(PGP_PubKey *pk)
 	return 0;
 }
 
-int _pgp_read_public_key(PullFilter *pkt, PGP_PubKey **pk_p)
+int
+_pgp_read_public_key(PullFilter * pkt, PGP_PubKey ** pk_p)
 {
-	int res;
+	int			res;
 	PGP_PubKey *pk;
 
 	res = pgp_key_alloc(&pk);
@@ -163,11 +167,12 @@ int _pgp_read_public_key(PullFilter *pkt, PGP_PubKey **pk_p)
 
 	/* get version */
 	GETBYTE(pkt, pk->ver);
-	if (pk->ver != 4) {
+	if (pk->ver != 4)
+	{
 		res = PXE_PGP_NOT_V4_KEYPKT;
 		goto out;
 	}
-	
+
 	/* read time */
 	res = pullf_read_fixed(pkt, 4, pk->time);
 	if (res < 0)
@@ -176,16 +181,21 @@ int _pgp_read_public_key(PullFilter *pkt, PGP_PubKey **pk_p)
 	/* pubkey algorithm */
 	GETBYTE(pkt, pk->algo);
 
-	switch (pk->algo) {
+	switch (pk->algo)
+	{
 		case PGP_PUB_DSA_SIGN:
 			res = pgp_mpi_read(pkt, &pk->pub.dsa.p);
-			if (res < 0) break;
+			if (res < 0)
+				break;
 			res = pgp_mpi_read(pkt, &pk->pub.dsa.q);
-			if (res < 0) break;
+			if (res < 0)
+				break;
 			res = pgp_mpi_read(pkt, &pk->pub.dsa.g);
-			if (res < 0) break;
+			if (res < 0)
+				break;
 			res = pgp_mpi_read(pkt, &pk->pub.dsa.y);
-			if (res < 0) break;
+			if (res < 0)
+				break;
 
 			res = calc_key_id(pk);
 			break;
@@ -194,9 +204,11 @@ int _pgp_read_public_key(PullFilter *pkt, PGP_PubKey **pk_p)
 		case PGP_PUB_RSA_ENCRYPT:
 		case PGP_PUB_RSA_ENCRYPT_SIGN:
 			res = pgp_mpi_read(pkt, &pk->pub.rsa.n);
-			if (res < 0) break;
+			if (res < 0)
+				break;
 			res = pgp_mpi_read(pkt, &pk->pub.rsa.e);
-			if (res < 0) break;
+			if (res < 0)
+				break;
 
 			res = calc_key_id(pk);
 
@@ -206,11 +218,14 @@ int _pgp_read_public_key(PullFilter *pkt, PGP_PubKey **pk_p)
 
 		case PGP_PUB_ELG_ENCRYPT:
 			res = pgp_mpi_read(pkt, &pk->pub.elg.p);
-			if (res < 0) break;
+			if (res < 0)
+				break;
 			res = pgp_mpi_read(pkt, &pk->pub.elg.g);
-			if (res < 0) break;
+			if (res < 0)
+				break;
 			res = pgp_mpi_read(pkt, &pk->pub.elg.y);
-			if (res < 0) break;
+			if (res < 0)
+				break;
 
 			res = calc_key_id(pk);
 
@@ -236,12 +251,12 @@ out:
 #define HIDE_SHA1 254
 
 static int
-check_key_sha1(PullFilter *src, PGP_PubKey *pk)
+check_key_sha1(PullFilter * src, PGP_PubKey * pk)
 {
-	int res;
-	uint8 got_sha1[20];
-	uint8 my_sha1[20];
-	PX_MD *md;
+	int			res;
+	uint8		got_sha1[20];
+	uint8		my_sha1[20];
+	PX_MD	   *md;
 
 	res = pullf_read_fixed(src, 20, got_sha1);
 	if (res < 0)
@@ -282,17 +297,18 @@ err:
 }
 
 static int
-check_key_cksum(PullFilter *src, PGP_PubKey *pk)
+check_key_cksum(PullFilter * src, PGP_PubKey * pk)
 {
-	int res;
-	unsigned got_cksum, my_cksum = 0;
-	uint8 buf[2];
+	int			res;
+	unsigned	got_cksum,
+				my_cksum = 0;
+	uint8		buf[2];
 
 	res = pullf_read_fixed(src, 2, buf);
 	if (res < 0)
 		return res;
 
-	got_cksum = ((unsigned)buf[0] << 8) + buf[1];
+	got_cksum = ((unsigned) buf[0] << 8) + buf[1];
 	switch (pk->algo)
 	{
 		case PGP_PUB_ELG_ENCRYPT:
@@ -318,17 +334,19 @@ check_key_cksum(PullFilter *src, PGP_PubKey *pk)
 	return 0;
 }
 
-static int process_secret_key(PullFilter *pkt, PGP_PubKey **pk_p,
-		const uint8 *key, int key_len)
+static int
+process_secret_key(PullFilter * pkt, PGP_PubKey ** pk_p,
+				   const uint8 *key, int key_len)
 {
-	int res;
-	int hide_type;
-	int cipher_algo;
-	int bs;
-	uint8 iv[512];
-	PullFilter *pf_decrypt = NULL, *pf_key;
-	PGP_CFB *cfb = NULL;
-	PGP_S2K s2k;
+	int			res;
+	int			hide_type;
+	int			cipher_algo;
+	int			bs;
+	uint8		iv[512];
+	PullFilter *pf_decrypt = NULL,
+			   *pf_key;
+	PGP_CFB    *cfb = NULL;
+	PGP_S2K		s2k;
 	PGP_PubKey *pk;
 
 	/* first read public key part */
@@ -340,7 +358,8 @@ static int process_secret_key(PullFilter *pkt, PGP_PubKey **pk_p,
 	 * is secret key encrypted?
 	 */
 	GETBYTE(pkt, hide_type);
-	if (hide_type == HIDE_SHA1 || hide_type == HIDE_CKSUM) {
+	if (hide_type == HIDE_SHA1 || hide_type == HIDE_CKSUM)
+	{
 		if (key == NULL)
 			return PXE_PGP_NEED_SECRET_PSW;
 		GETBYTE(pkt, cipher_algo);
@@ -351,15 +370,17 @@ static int process_secret_key(PullFilter *pkt, PGP_PubKey **pk_p,
 		res = pgp_s2k_process(&s2k, cipher_algo, key, key_len);
 		if (res < 0)
 			return res;
-				
+
 		bs = pgp_get_cipher_block_size(cipher_algo);
-		if (bs == 0) {
+		if (bs == 0)
+		{
 			px_debug("unknown cipher algo=%d", cipher_algo);
 			return PXE_PGP_UNSUPPORTED_CIPHER;
 		}
 		res = pullf_read_fixed(pkt, bs, iv);
 		if (res < 0)
 			return res;
+
 		/*
 		 * create decrypt filter
 		 */
@@ -370,26 +391,35 @@ static int process_secret_key(PullFilter *pkt, PGP_PubKey **pk_p,
 		if (res < 0)
 			return res;
 		pf_key = pf_decrypt;
-	} else if (hide_type == HIDE_CLEAR) {
+	}
+	else if (hide_type == HIDE_CLEAR)
+	{
 		pf_key = pkt;
-	} else {
+	}
+	else
+	{
 		px_debug("unknown hide type");
 		return PXE_PGP_KEYPKT_CORRUPT;
 	}
 
 	/* read secret key */
-	switch (pk->algo) {
+	switch (pk->algo)
+	{
 		case PGP_PUB_RSA_SIGN:
 		case PGP_PUB_RSA_ENCRYPT:
 		case PGP_PUB_RSA_ENCRYPT_SIGN:
 			res = pgp_mpi_read(pkt, &pk->sec.rsa.d);
-			if (res < 0) break;
+			if (res < 0)
+				break;
 			res = pgp_mpi_read(pkt, &pk->sec.rsa.p);
-			if (res < 0) break;
+			if (res < 0)
+				break;
 			res = pgp_mpi_read(pkt, &pk->sec.rsa.q);
-			if (res < 0) break;
+			if (res < 0)
+				break;
 			res = pgp_mpi_read(pkt, &pk->sec.rsa.u);
-			if (res < 0) break;
+			if (res < 0)
+				break;
 			break;
 		case PGP_PUB_ELG_ENCRYPT:
 			res = pgp_mpi_read(pf_key, &pk->sec.elg.x);
@@ -426,31 +456,33 @@ static int process_secret_key(PullFilter *pkt, PGP_PubKey **pk_p,
 }
 
 static int
-internal_read_key(PullFilter *src, PGP_PubKey **pk_p,
-					const uint8 *psw, int psw_len, int pubtype)
+internal_read_key(PullFilter * src, PGP_PubKey ** pk_p,
+				  const uint8 *psw, int psw_len, int pubtype)
 {
 	PullFilter *pkt = NULL;
-	int res;
-	uint8 tag;
-	int len;
+	int			res;
+	uint8		tag;
+	int			len;
 	PGP_PubKey *enc_key = NULL;
 	PGP_PubKey *pk = NULL;
-	int got_main_key = 0;
+	int			got_main_key = 0;
 
 	/*
 	 * Search for encryption key.
 	 *
 	 * Error out on anything fancy.
 	 */
-	while (1) {
+	while (1)
+	{
 		res = pgp_parse_pkt_hdr(src, &tag, &len, 0);
 		if (res <= 0)
 			break;
 		res = pgp_create_pkt_reader(&pkt, src, len, res, NULL);
 		if (res < 0)
 			break;
-		
-		switch (tag) {
+
+		switch (tag)
+		{
 			case PGP_PKT_PUBLIC_KEY:
 			case PGP_PKT_SECRET_KEY:
 				if (got_main_key)
@@ -489,7 +521,7 @@ internal_read_key(PullFilter *src, PGP_PubKey **pk_p,
 				res = PXE_PGP_UNEXPECTED_PKT;
 		}
 		pullf_free(pkt);
-	   	pkt = NULL;
+		pkt = NULL;
 
 		if (pk != NULL)
 		{
@@ -531,10 +563,10 @@ internal_read_key(PullFilter *src, PGP_PubKey **pk_p,
 }
 
 int
-pgp_set_pubkey(PGP_Context *ctx, MBuf *keypkt, 
-		const uint8 *key, int key_len, int pubtype)
+pgp_set_pubkey(PGP_Context * ctx, MBuf * keypkt,
+			   const uint8 *key, int key_len, int pubtype)
 {
-	int res;
+	int			res;
 	PullFilter *src;
 	PGP_PubKey *pk = NULL;
 
@@ -550,4 +582,3 @@ pgp_set_pubkey(PGP_Context *ctx, MBuf *keypkt,
 
 	return res < 0 ? res : 0;
 }
-

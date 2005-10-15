@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/smgr.h,v 1.52 2005/06/17 22:32:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/smgr.h,v 1.53 2005/10/15 02:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
  *
  * An SMgrRelation may have an "owner", which is just a pointer to it from
  * somewhere else; smgr.c will clear this pointer if the SMgrRelation is
- * closed.  We use this to avoid dangling pointers from relcache to smgr
+ * closed.	We use this to avoid dangling pointers from relcache to smgr
  * without having to make the smgr explicitly aware of relcache.  There
  * can't be more than one "owner" pointer per SMgrRelation, but that's
  * all we need.

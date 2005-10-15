@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/makefuncs.h,v 1.52 2005/04/06 16:34:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/makefuncs.h,v 1.53 2005/10/15 02:49:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,9 +30,9 @@ extern Var *makeVar(Index varno,
 		Index varlevelsup);
 
 extern TargetEntry *makeTargetEntry(Expr *expr,
-									AttrNumber resno,
-									char *resname,
-									bool resjunk);
+				AttrNumber resno,
+				char *resname,
+				bool resjunk);
 
 extern TargetEntry *flatCopyTargetEntry(TargetEntry *src_tle);
 

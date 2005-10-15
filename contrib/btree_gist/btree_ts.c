@@ -32,13 +32,13 @@ Datum		gbt_ts_penalty(PG_FUNCTION_ARGS);
 Datum		gbt_ts_same(PG_FUNCTION_ARGS);
 
 
-#define P_TimestampGetDatum(x)  PointerGetDatum( &(x) )
+#define P_TimestampGetDatum(x)	PointerGetDatum( &(x) )
 
 static bool
 gbt_tsgt(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(timestamp_gt, PointerGetDatum(a), PointerGetDatum(b))
+	DirectFunctionCall2(timestamp_gt, PointerGetDatum(a), PointerGetDatum(b))
 		);
 }
 
@@ -46,7 +46,7 @@ static bool
 gbt_tsge(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(timestamp_ge, PointerGetDatum(a), PointerGetDatum(b))
+	DirectFunctionCall2(timestamp_ge, PointerGetDatum(a), PointerGetDatum(b))
 		);
 }
 
@@ -54,7 +54,7 @@ static bool
 gbt_tseq(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(timestamp_eq, PointerGetDatum(a), PointerGetDatum(b))
+	DirectFunctionCall2(timestamp_eq, PointerGetDatum(a), PointerGetDatum(b))
 		);
 }
 
@@ -62,7 +62,7 @@ static bool
 gbt_tsle(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(timestamp_le, PointerGetDatum(a), PointerGetDatum(b))
+	DirectFunctionCall2(timestamp_le, PointerGetDatum(a), PointerGetDatum(b))
 		);
 }
 
@@ -70,7 +70,7 @@ static bool
 gbt_tslt(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(timestamp_lt, PointerGetDatum(a), PointerGetDatum(b))
+	DirectFunctionCall2(timestamp_lt, PointerGetDatum(a), PointerGetDatum(b))
 		);
 }
 
@@ -114,7 +114,7 @@ tstz_to_ts_gmt(Timestamp *gmt, TimestampTz *ts)
 	*gmt = *ts;
 	DecodeSpecial(0, "gmt", &val);
 
-	if ( *ts < DT_NOEND  && *ts > DT_NOBEGIN )
+	if (*ts < DT_NOEND && *ts > DT_NOBEGIN)
 	{
 		tz = val * 60;
 
@@ -217,10 +217,10 @@ gbt_ts_union(PG_FUNCTION_ARGS)
 
 
 #define penalty_check_max_float(val) do { \
-        if ( val > FLT_MAX ) \
-                val = FLT_MAX; \
-        if ( val < -FLT_MAX ) \
-                val = -FLT_MAX; \
+		if ( val > FLT_MAX ) \
+				val = FLT_MAX; \
+		if ( val < -FLT_MAX ) \
+				val = -FLT_MAX; \
 } while(false);
 
 
@@ -232,24 +232,24 @@ gbt_ts_penalty(PG_FUNCTION_ARGS)
 	tsKEY	   *newentry = (tsKEY *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(1))->key);
 	float	   *result = (float *) PG_GETARG_POINTER(2);
 
-	double orgdbl[2],
-				 newdbl[2];
+	double		orgdbl[2],
+				newdbl[2];
 
 	/*
-		We are allways using "double" timestamps here.
-		Precision should be good enough.
-	*/
-	orgdbl[0] = ( (double) origentry->lower ) ;
-	orgdbl[1] = ( (double) origentry->upper ) ;
-	newdbl[0] = ( (double) newentry->lower  ) ;
-	newdbl[1] = ( (double) newentry->upper  ) ;
+	 * We are allways using "double" timestamps here. Precision should be good
+	 * enough.
+	 */
+	orgdbl[0] = ((double) origentry->lower);
+	orgdbl[1] = ((double) origentry->upper);
+	newdbl[0] = ((double) newentry->lower);
+	newdbl[1] = ((double) newentry->upper);
 
-	penalty_check_max_float( orgdbl[0] );
-	penalty_check_max_float( orgdbl[1] );
-	penalty_check_max_float( newdbl[0] );
-	penalty_check_max_float( newdbl[1] );
+	penalty_check_max_float(orgdbl[0]);
+	penalty_check_max_float(orgdbl[1]);
+	penalty_check_max_float(newdbl[0]);
+	penalty_check_max_float(newdbl[1]);
 
-	penalty_num(result,orgdbl[0],orgdbl[1],newdbl[0],newdbl[1]);
+	penalty_num(result, orgdbl[0], orgdbl[1], newdbl[0], newdbl[1]);
 
 	PG_RETURN_POINTER(result);
 
@@ -260,8 +260,8 @@ Datum
 gbt_ts_picksplit(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_POINTER(gbt_num_picksplit(
-								(GistEntryVector *) PG_GETARG_POINTER(0),
-								  (GIST_SPLITVEC *) PG_GETARG_POINTER(1),
+									(GistEntryVector *) PG_GETARG_POINTER(0),
+									  (GIST_SPLITVEC *) PG_GETARG_POINTER(1),
 										&tinfo
 										));
 }

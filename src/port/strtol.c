@@ -92,19 +92,18 @@ int			base;
 
 	/*
 	 * Compute the cutoff value between legal numbers and illegal numbers.
-	 * That is the largest legal value, divided by the base.  An input
-	 * number that is greater than this value, if followed by a legal
-	 * input character, is too big.  One that is equal to this value may
-	 * be valid or not; the limit between valid and invalid numbers is
-	 * then based on the last digit.  For instance, if the range for longs
-	 * is [-2147483648..2147483647] and the input base is 10, cutoff will
-	 * be set to 214748364 and cutlim to either 7 (neg==0) or 8 (neg==1),
-	 * meaning that if we have accumulated a value > 214748364, or equal
-	 * but the next digit is > 7 (or 8), the number is too big, and we
-	 * will return a range error.
+	 * That is the largest legal value, divided by the base.  An input number
+	 * that is greater than this value, if followed by a legal input
+	 * character, is too big.  One that is equal to this value may be valid or
+	 * not; the limit between valid and invalid numbers is then based on the
+	 * last digit.	For instance, if the range for longs is
+	 * [-2147483648..2147483647] and the input base is 10, cutoff will be set
+	 * to 214748364 and cutlim to either 7 (neg==0) or 8 (neg==1), meaning
+	 * that if we have accumulated a value > 214748364, or equal but the next
+	 * digit is > 7 (or 8), the number is too big, and we will return a range
+	 * error.
 	 *
-	 * Set any if any `digits' consumed; make it negative to indicate
-	 * overflow.
+	 * Set any if any `digits' consumed; make it negative to indicate overflow.
 	 */
 	cutoff = neg ? -(unsigned long) LONG_MIN : LONG_MAX;
 	cutlim = cutoff % (unsigned long) base;

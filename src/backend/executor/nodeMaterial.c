@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.49 2005/03/16 21:38:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.50 2005/10/15 02:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,8 +68,8 @@ ExecMaterial(MaterialState *node)
 	}
 
 	/*
-	 * If we are not at the end of the tuplestore, or are going backwards,
-	 * try to fetch a tuple from tuplestore.
+	 * If we are not at the end of the tuplestore, or are going backwards, try
+	 * to fetch a tuple from tuplestore.
 	 */
 	eof_tuplestore = tuplestore_ateof(tuplestorestate);
 
@@ -79,9 +79,9 @@ ExecMaterial(MaterialState *node)
 		{
 			/*
 			 * When reversing direction at tuplestore EOF, the first
-			 * getheaptuple call will fetch the last-added tuple; but we
-			 * want to return the one before that, if possible. So do an
-			 * extra fetch.
+			 * getheaptuple call will fetch the last-added tuple; but we want
+			 * to return the one before that, if possible. So do an extra
+			 * fetch.
 			 */
 			heapTuple = tuplestore_getheaptuple(tuplestorestate,
 												forward,
@@ -106,10 +106,10 @@ ExecMaterial(MaterialState *node)
 	/*
 	 * If necessary, try to fetch another row from the subplan.
 	 *
-	 * Note: the eof_underlying state variable exists to short-circuit
-	 * further subplan calls.  It's not optional, unfortunately, because
-	 * some plan node types are not robust about being called again when
-	 * they've already returned NULL.
+	 * Note: the eof_underlying state variable exists to short-circuit further
+	 * subplan calls.  It's not optional, unfortunately, because some plan
+	 * node types are not robust about being called again when they've already
+	 * returned NULL.
 	 */
 	if (eof_tuplestore && !node->eof_underlying)
 	{
@@ -117,8 +117,8 @@ ExecMaterial(MaterialState *node)
 		TupleTableSlot *outerslot;
 
 		/*
-		 * We can only get here with forward==true, so no need to worry
-		 * about which direction the subplan will go.
+		 * We can only get here with forward==true, so no need to worry about
+		 * which direction the subplan will go.
 		 */
 		outerNode = outerPlanState(node);
 		outerslot = ExecProcNode(outerNode);
@@ -132,8 +132,8 @@ ExecMaterial(MaterialState *node)
 
 		/*
 		 * Append returned tuple to tuplestore, too.  NOTE: because the
-		 * tuplestore is certainly in EOF state, its read position will
-		 * move forward over the added tuple.  This is what we want.
+		 * tuplestore is certainly in EOF state, its read position will move
+		 * forward over the added tuple.  This is what we want.
 		 */
 		tuplestore_puttuple(tuplestorestate, (void *) heapTuple);
 	}
@@ -192,8 +192,8 @@ ExecInitMaterial(Material *node, EState *estate)
 	outerPlanState(matstate) = ExecInitNode(outerPlan, estate);
 
 	/*
-	 * initialize tuple type.  no need to initialize projection info
-	 * because this node doesn't do projections.
+	 * initialize tuple type.  no need to initialize projection info because
+	 * this node doesn't do projections.
 	 */
 	ExecAssignResultTypeFromOuterPlan(&matstate->ss.ps);
 	ExecAssignScanTypeFromOuterPlan(&matstate->ss);
@@ -284,9 +284,9 @@ void
 ExecMaterialReScan(MaterialState *node, ExprContext *exprCtxt)
 {
 	/*
-	 * If we haven't materialized yet, just return. If outerplan' chgParam
-	 * is not NULL then it will be re-scanned by ExecProcNode, else - no
-	 * reason to re-scan it at all.
+	 * If we haven't materialized yet, just return. If outerplan' chgParam is
+	 * not NULL then it will be re-scanned by ExecProcNode, else - no reason
+	 * to re-scan it at all.
 	 */
 	if (!node->tuplestorestate)
 		return;
@@ -294,11 +294,11 @@ ExecMaterialReScan(MaterialState *node, ExprContext *exprCtxt)
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
 
 	/*
-	 * If subnode is to be rescanned then we forget previous stored
-	 * results; we have to re-read the subplan and re-store.
+	 * If subnode is to be rescanned then we forget previous stored results;
+	 * we have to re-read the subplan and re-store.
 	 *
-	 * Otherwise we can just rewind and rescan the stored output. The state
-	 * of the subnode does not change.
+	 * Otherwise we can just rewind and rescan the stored output. The state of
+	 * the subnode does not change.
 	 */
 	if (((PlanState *) node)->lefttree->chgParam != NULL)
 	{

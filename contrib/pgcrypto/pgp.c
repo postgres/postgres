@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp.c,v 1.2 2005/07/11 15:07:59 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp.c,v 1.3 2005/10/15 02:49:06 momjian Exp $
  */
 
 #include "postgres.h"
@@ -62,8 +62,8 @@ struct cipher_info
 	const char *name;
 	int			code;
 	const char *int_name;
-	int key_len;
-	int block_len;
+	int			key_len;
+	int			block_len;
 };
 
 static const struct digest_info digest_list[] = {
@@ -78,15 +78,15 @@ static const struct digest_info digest_list[] = {
 };
 
 static const struct cipher_info cipher_list[] = {
-	{"3des", PGP_SYM_DES3, "3des-ecb", 192/8, 64/8},
-	{"cast5", PGP_SYM_CAST5, "cast5-ecb", 128/8, 64/8},
-	{"bf", PGP_SYM_BLOWFISH, "bf-ecb", 128/8, 64/8},
-	{"blowfish", PGP_SYM_BLOWFISH, "bf-ecb", 128/8, 64/8},
-	{"aes", PGP_SYM_AES_128, "aes-ecb", 128/8, 128/8},
-	{"aes128", PGP_SYM_AES_128, "aes-ecb", 128/8, 128/8},
-	{"aes192", PGP_SYM_AES_192, "aes-ecb", 192/8, 128/8},
-	{"aes256", PGP_SYM_AES_256, "aes-ecb", 256/8, 128/8},
-	{"twofish", PGP_SYM_TWOFISH, "twofish-ecb", 256/8, 128/8},
+	{"3des", PGP_SYM_DES3, "3des-ecb", 192 / 8, 64 / 8},
+	{"cast5", PGP_SYM_CAST5, "cast5-ecb", 128 / 8, 64 / 8},
+	{"bf", PGP_SYM_BLOWFISH, "bf-ecb", 128 / 8, 64 / 8},
+	{"blowfish", PGP_SYM_BLOWFISH, "bf-ecb", 128 / 8, 64 / 8},
+	{"aes", PGP_SYM_AES_128, "aes-ecb", 128 / 8, 128 / 8},
+	{"aes128", PGP_SYM_AES_128, "aes-ecb", 128 / 8, 128 / 8},
+	{"aes192", PGP_SYM_AES_192, "aes-ecb", 192 / 8, 128 / 8},
+	{"aes256", PGP_SYM_AES_256, "aes-ecb", 256 / 8, 128 / 8},
+	{"twofish", PGP_SYM_TWOFISH, "twofish-ecb", 256 / 8, 128 / 8},
 	{NULL, 0, NULL}
 };
 
@@ -94,6 +94,7 @@ static const struct cipher_info *
 get_cipher_info(int code)
 {
 	const struct cipher_info *i;
+
 	for (i = cipher_list; i->name; i++)
 		if (i->code == code)
 			return i;
@@ -104,6 +105,7 @@ int
 pgp_get_digest_code(const char *name)
 {
 	const struct digest_info *i;
+
 	for (i = digest_list; i->name; i++)
 		if (pg_strcasecmp(i->name, name) == 0)
 			return i->code;
@@ -114,6 +116,7 @@ int
 pgp_get_cipher_code(const char *name)
 {
 	const struct cipher_info *i;
+
 	for (i = cipher_list; i->name; i++)
 		if (pg_strcasecmp(i->name, name) == 0)
 			return i->code;
@@ -124,6 +127,7 @@ const char *
 pgp_get_digest_name(int code)
 {
 	const struct digest_info *i;
+
 	for (i = digest_list; i->name; i++)
 		if (i->code == code)
 			return i->name;
@@ -134,6 +138,7 @@ const char *
 pgp_get_cipher_name(int code)
 {
 	const struct cipher_info *i = get_cipher_info(code);
+
 	if (i != NULL)
 		return i->name;
 	return NULL;
@@ -143,6 +148,7 @@ int
 pgp_get_cipher_key_size(int code)
 {
 	const struct cipher_info *i = get_cipher_info(code);
+
 	if (i != NULL)
 		return i->key_len;
 	return 0;
@@ -152,6 +158,7 @@ int
 pgp_get_cipher_block_size(int code)
 {
 	const struct cipher_info *i = get_cipher_info(code);
+
 	if (i != NULL)
 		return i->block_len;
 	return 0;
@@ -300,6 +307,7 @@ int
 pgp_set_cipher_algo(PGP_Context * ctx, const char *name)
 {
 	int			code = pgp_get_cipher_code(name);
+
 	if (code < 0)
 		return code;
 	ctx->cipher_algo = code;
@@ -310,6 +318,7 @@ int
 pgp_set_s2k_cipher_algo(PGP_Context * ctx, const char *name)
 {
 	int			code = pgp_get_cipher_code(name);
+
 	if (code < 0)
 		return code;
 	ctx->s2k_cipher_algo = code;
@@ -320,6 +329,7 @@ int
 pgp_set_s2k_digest_algo(PGP_Context * ctx, const char *name)
 {
 	int			code = pgp_get_digest_code(name);
+
 	if (code < 0)
 		return code;
 	ctx->s2k_digest_algo = code;
@@ -327,20 +337,20 @@ pgp_set_s2k_digest_algo(PGP_Context * ctx, const char *name)
 }
 
 int
-pgp_get_unicode_mode(PGP_Context *ctx)
+pgp_get_unicode_mode(PGP_Context * ctx)
 {
 	return ctx->unicode_mode;
 }
 
 int
-pgp_set_unicode_mode(PGP_Context *ctx, int mode)
+pgp_set_unicode_mode(PGP_Context * ctx, int mode)
 {
 	ctx->unicode_mode = mode ? 1 : 0;
 	return 0;
 }
 
 int
-pgp_set_symkey(PGP_Context *ctx, const uint8 *key, int len)
+pgp_set_symkey(PGP_Context * ctx, const uint8 *key, int len)
 {
 	if (key == NULL || len < 1)
 		return PXE_ARGUMENT_ERROR;
@@ -348,4 +358,3 @@ pgp_set_symkey(PGP_Context *ctx, const uint8 *key, int len)
 	ctx->sym_key_len = len;
 	return 0;
 }
-

@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-armor.c,v 1.2 2005/07/11 15:07:59 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-armor.c,v 1.3 2005/10/15 02:49:06 momjian Exp $
  */
 
 #include "postgres.h"
@@ -40,7 +40,7 @@
  */
 
 static const unsigned char _base64[] =
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 static int
 b64_encode(const uint8 *src, unsigned len, uint8 *dst)
@@ -96,13 +96,13 @@ static int
 b64_decode(const uint8 *src, unsigned len, uint8 *dst)
 {
 	const uint8 *srcend = src + len,
-		*s = src;
+			   *s = src;
 	uint8	   *p = dst;
 	char		c;
 	unsigned	b = 0;
 	unsigned long buf = 0;
 	int			pos = 0,
-		end = 0;
+				end = 0;
 
 	while (s < srcend)
 	{
@@ -242,11 +242,13 @@ static const uint8 *
 find_str(const uint8 *data, const uint8 *data_end, const char *str, int strlen)
 {
 	const uint8 *p = data;
+
 	if (!strlen)
 		return NULL;
 	if (data_end - data < strlen)
 		return NULL;
-	while (p < data_end) {
+	while (p < data_end)
+	{
 		p = memchr(p, str[0], data_end - p);
 		if (p == NULL)
 			return NULL;
@@ -261,7 +263,7 @@ find_str(const uint8 *data, const uint8 *data_end, const char *str, int strlen)
 
 static int
 find_header(const uint8 *data, const uint8 *datend,
-		const uint8 **start_p, int is_end)
+			const uint8 **start_p, int is_end)
 {
 	const uint8 *p = data;
 	static const char *start_sep = "-----BEGIN";
@@ -285,7 +287,7 @@ find_header(const uint8 *data, const uint8 *datend,
 	/* check if header text ok */
 	for (; p < datend && *p != '-'; p++)
 	{
-		/* various junk can be there, but definitely not line-feed  */
+		/* various junk can be there, but definitely not line-feed	*/
 		if (*p >= ' ')
 			continue;
 		return PXE_PGP_CORRUPT_ARMOR;
@@ -313,7 +315,8 @@ pgp_armor_decode(const uint8 *src, unsigned len, uint8 *dst)
 	const uint8 *p = src;
 	const uint8 *data_end = src + len;
 	long		crc;
-	const uint8 *base64_start, *armor_end;
+	const uint8 *base64_start,
+			   *armor_end;
 	const uint8 *base64_end = NULL;
 	uint8		buf[4];
 	int			hlen;
@@ -329,7 +332,7 @@ pgp_armor_decode(const uint8 *src, unsigned len, uint8 *dst)
 	hlen = find_header(p, data_end, &armor_end, 1);
 	if (hlen <= 0)
 		goto out;
-	
+
 	/* skip comments - find empty line */
 	while (p < armor_end && *p != '\n' && *p != '\r')
 	{
@@ -341,7 +344,7 @@ pgp_armor_decode(const uint8 *src, unsigned len, uint8 *dst)
 		p++;
 	}
 	base64_start = p;
-	
+
 	/* find crc pos */
 	for (p = armor_end; p >= base64_start; p--)
 		if (*p == '=')
@@ -355,7 +358,7 @@ pgp_armor_decode(const uint8 *src, unsigned len, uint8 *dst)
 	/* decode crc */
 	if (b64_decode(p + 1, 4, buf) != 3)
 		goto out;
-	crc = (((long)buf[0]) << 16) + (((long)buf[1]) << 8) + (long)buf[2];
+	crc = (((long) buf[0]) << 16) + (((long) buf[1]) << 8) + (long) buf[2];
 
 	/* decode data */
 	res = b64_decode(base64_start, base64_end - base64_start, dst);
@@ -378,4 +381,3 @@ pgp_armor_dec_len(unsigned len)
 {
 	return b64_dec_len(len);
 }
-

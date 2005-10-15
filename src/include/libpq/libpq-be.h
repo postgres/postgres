@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.51 2005/09/12 02:26:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.52 2005/10/15 02:49:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,10 +58,9 @@ typedef struct Port
 	CAC_state	canAcceptConnections;	/* postmaster connection status */
 
 	/*
-	 * Information that needs to be saved from the startup packet and
-	 * passed into backend execution.  "char *" fields are NULL if not
-	 * set. guc_options points to a List of alternating option names and
-	 * values.
+	 * Information that needs to be saved from the startup packet and passed
+	 * into backend execution.	"char *" fields are NULL if not set.
+	 * guc_options points to a List of alternating option names and values.
 	 */
 	char	   *database_name;
 	char	   *user_name;
@@ -77,10 +76,9 @@ typedef struct Port
 	char		cryptSalt[2];	/* Password salt */
 
 	/*
-	 * Information that really has no business at all being in struct
-	 * Port, but since it gets used by elog.c in the same way as
-	 * database_name and other members of this struct, we may as well keep
-	 * it here.
+	 * Information that really has no business at all being in struct Port,
+	 * but since it gets used by elog.c in the same way as database_name and
+	 * other members of this struct, we may as well keep it here.
 	 */
 	const char *commandTag;		/* current command tag */
 	struct timeval session_start;		/* for session duration logging */
@@ -88,17 +86,16 @@ typedef struct Port
 	/*
 	 * TCP keepalive settings.
 	 *
-	 *	default values are 0 if AF_UNIX or not yet known;
-	 *	current values are 0 if AF_UNIX or using the default.
-	 *	Also, -1 in a default value means we were unable to find out the
-	 *	default (getsockopt failed).
+	 * default values are 0 if AF_UNIX or not yet known; current values are 0 if
+	 * AF_UNIX or using the default. Also, -1 in a default value means we were
+	 * unable to find out the default (getsockopt failed).
 	 */
-	int         default_keepalives_idle;
-	int         default_keepalives_interval;
-	int         default_keepalives_count;
-	int         keepalives_idle;
-	int         keepalives_interval;
-	int         keepalives_count;
+	int			default_keepalives_idle;
+	int			default_keepalives_interval;
+	int			default_keepalives_count;
+	int			keepalives_idle;
+	int			keepalives_interval;
+	int			keepalives_count;
 
 	/*
 	 * SSL structures
@@ -117,12 +114,12 @@ extern ProtocolVersion FrontendProtocol;
 
 /* TCP keepalives configuration. These are no-ops on an AF_UNIX socket. */
 
-extern int pq_getkeepalivesidle(Port *port);
-extern int pq_getkeepalivesinterval(Port *port);
-extern int pq_getkeepalivescount(Port *port);
+extern int	pq_getkeepalivesidle(Port *port);
+extern int	pq_getkeepalivesinterval(Port *port);
+extern int	pq_getkeepalivescount(Port *port);
 
-extern int pq_setkeepalivesidle(int idle, Port *port);
-extern int pq_setkeepalivesinterval(int interval, Port *port);
-extern int pq_setkeepalivescount(int count, Port *port);
+extern int	pq_setkeepalivesidle(int idle, Port *port);
+extern int	pq_setkeepalivesinterval(int interval, Port *port);
+extern int	pq_setkeepalivescount(int count, Port *port);
 
 #endif   /* LIBPQ_BE_H */

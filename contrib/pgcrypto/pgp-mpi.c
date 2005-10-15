@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-mpi.c,v 1.3 2005/08/13 02:06:20 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-mpi.c,v 1.4 2005/10/15 02:49:06 momjian Exp $
  */
 #include "postgres.h"
 
@@ -34,10 +34,12 @@
 #include "mbuf.h"
 #include "pgp.h"
 
-int pgp_mpi_alloc(int bits, PGP_MPI **mpi)
+int
+pgp_mpi_alloc(int bits, PGP_MPI ** mpi)
 {
-	PGP_MPI *n;
-	int len = (bits + 7) / 8;
+	PGP_MPI    *n;
+	int			len = (bits + 7) / 8;
+
 	if (bits < 0 || bits > 0xFFFF)
 	{
 		px_debug("pgp_mpi_alloc: unreasonable request: bits=%d", bits);
@@ -46,15 +48,16 @@ int pgp_mpi_alloc(int bits, PGP_MPI **mpi)
 	n = px_alloc(sizeof(*n) + len);
 	n->bits = bits;
 	n->bytes = len;
-	n->data = (uint8*)(n) + sizeof(*n);
+	n->data = (uint8 *) (n) + sizeof(*n);
 	*mpi = n;
 	return 0;
 }
 
-int pgp_mpi_create(uint8 *data, int bits, PGP_MPI **mpi)
+int
+pgp_mpi_create(uint8 *data, int bits, PGP_MPI ** mpi)
 {
-	int res;
-	PGP_MPI *n;
+	int			res;
+	PGP_MPI    *n;
 
 	res = pgp_mpi_alloc(bits, &n);
 	if (res < 0)
@@ -64,7 +67,8 @@ int pgp_mpi_create(uint8 *data, int bits, PGP_MPI **mpi)
 	return 0;
 }
 
-int pgp_mpi_free(PGP_MPI *mpi)
+int
+pgp_mpi_free(PGP_MPI * mpi)
 {
 	if (mpi == NULL)
 		return 0;
@@ -73,17 +77,18 @@ int pgp_mpi_free(PGP_MPI *mpi)
 	return 0;
 }
 
-int pgp_mpi_read(PullFilter *src, PGP_MPI **mpi)
+int
+pgp_mpi_read(PullFilter * src, PGP_MPI ** mpi)
 {
-	int res;
-	uint8 hdr[2];
-	int bits;
-	PGP_MPI *n;
+	int			res;
+	uint8		hdr[2];
+	int			bits;
+	PGP_MPI    *n;
 
 	res = pullf_read_fixed(src, 2, hdr);
 	if (res < 0)
 		return res;
-	bits = ((unsigned)hdr[0] << 8) + hdr[1];
+	bits = ((unsigned) hdr[0] << 8) + hdr[1];
 
 	res = pgp_mpi_alloc(bits, &n);
 	if (res < 0)
@@ -97,10 +102,11 @@ int pgp_mpi_read(PullFilter *src, PGP_MPI **mpi)
 	return res;
 }
 
-int pgp_mpi_write(PushFilter *dst, PGP_MPI *n)
+int
+pgp_mpi_write(PushFilter * dst, PGP_MPI * n)
 {
-	int res;
-	uint8 buf[2];
+	int			res;
+	uint8		buf[2];
 
 	buf[0] = n->bits >> 8;
 	buf[1] = n->bits & 0xFF;
@@ -110,9 +116,10 @@ int pgp_mpi_write(PushFilter *dst, PGP_MPI *n)
 	return res;
 }
 
-int pgp_mpi_hash(PX_MD *md, PGP_MPI *n)
+int
+pgp_mpi_hash(PX_MD * md, PGP_MPI * n)
 {
-	uint8 buf[2];
+	uint8		buf[2];
 
 	buf[0] = n->bits >> 8;
 	buf[1] = n->bits & 0xFF;
@@ -122,9 +129,10 @@ int pgp_mpi_hash(PX_MD *md, PGP_MPI *n)
 	return 0;
 }
 
-unsigned pgp_mpi_cksum(unsigned cksum, PGP_MPI *n)
+unsigned
+pgp_mpi_cksum(unsigned cksum, PGP_MPI * n)
 {
-	int i;
+	int			i;
 
 	cksum += n->bits >> 8;
 	cksum += n->bits & 0xFF;
@@ -133,4 +141,3 @@ unsigned pgp_mpi_cksum(unsigned cksum, PGP_MPI *n)
 
 	return cksum & 0xFFFF;
 }
-

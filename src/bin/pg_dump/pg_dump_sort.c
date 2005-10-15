@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.10 2005/06/30 03:03:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.11 2005/10/15 02:49:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,8 +128,8 @@ DOTypeNameCompare(const void *p1, const void *p2)
 
 	/*
 	 * Sort by namespace.  Note that all objects of the same type should
-	 * either have or not have a namespace link, so we needn't be fancy
-	 * about cases where one link is null and the other not.
+	 * either have or not have a namespace link, so we needn't be fancy about
+	 * cases where one link is null and the other not.
 	 */
 	if (obj1->namespace && obj2->namespace)
 	{
@@ -248,17 +248,16 @@ TopoSort(DumpableObject **objs,
 				k;
 
 	/*
-	 * This is basically the same algorithm shown for topological sorting
-	 * in Knuth's Volume 1.  However, we would like to minimize
-	 * unnecessary rearrangement of the input ordering; that is, when we
-	 * have a choice of which item to output next, we always want to take
-	 * the one highest in the original list.  Therefore, instead of
-	 * maintaining an unordered linked list of items-ready-to-output as
-	 * Knuth does, we maintain a heap of their item numbers, which we can
-	 * use as a priority queue.  This turns the algorithm from O(N) to O(N
-	 * log N) because each insertion or removal of a heap item takes O(log
-	 * N) time.  However, that's still plenty fast enough for this
-	 * application.
+	 * This is basically the same algorithm shown for topological sorting in
+	 * Knuth's Volume 1.  However, we would like to minimize unnecessary
+	 * rearrangement of the input ordering; that is, when we have a choice of
+	 * which item to output next, we always want to take the one highest in
+	 * the original list.  Therefore, instead of maintaining an unordered
+	 * linked list of items-ready-to-output as Knuth does, we maintain a heap
+	 * of their item numbers, which we can use as a priority queue.  This
+	 * turns the algorithm from O(N) to O(N log N) because each insertion or
+	 * removal of a heap item takes O(log N) time.	However, that's still
+	 * plenty fast enough for this application.
 	 */
 
 	*nOrdering = numObjs;		/* for success return */
@@ -273,11 +272,11 @@ TopoSort(DumpableObject **objs,
 		exit_horribly(NULL, modulename, "out of memory\n");
 
 	/*
-	 * Scan the constraints, and for each item in the input, generate a
-	 * count of the number of constraints that say it must be before
-	 * something else. The count for the item with dumpId j is stored in
-	 * beforeConstraints[j].  We also make a map showing the input-order
-	 * index of the item with dumpId j.
+	 * Scan the constraints, and for each item in the input, generate a count
+	 * of the number of constraints that say it must be before something else.
+	 * The count for the item with dumpId j is stored in beforeConstraints[j].
+	 * We also make a map showing the input-order index of the item with
+	 * dumpId j.
 	 */
 	beforeConstraints = (int *) malloc((maxDumpId + 1) * sizeof(int));
 	if (beforeConstraints == NULL)
@@ -303,16 +302,15 @@ TopoSort(DumpableObject **objs,
 	}
 
 	/*
-	 * Now initialize the heap of items-ready-to-output by filling it with
-	 * the indexes of items that already have beforeConstraints[id] == 0.
+	 * Now initialize the heap of items-ready-to-output by filling it with the
+	 * indexes of items that already have beforeConstraints[id] == 0.
 	 *
-	 * The essential property of a heap is heap[(j-1)/2] >= heap[j] for each
-	 * j in the range 1..heapLength-1 (note we are using 0-based
-	 * subscripts here, while the discussion in Knuth assumes 1-based
-	 * subscripts). So, if we simply enter the indexes into pendingHeap[]
-	 * in decreasing order, we a-fortiori have the heap invariant
-	 * satisfied at completion of this loop, and don't need to do any
-	 * sift-up comparisons.
+	 * The essential property of a heap is heap[(j-1)/2] >= heap[j] for each j in
+	 * the range 1..heapLength-1 (note we are using 0-based subscripts here,
+	 * while the discussion in Knuth assumes 1-based subscripts). So, if we
+	 * simply enter the indexes into pendingHeap[] in decreasing order, we
+	 * a-fortiori have the heap invariant satisfied at completion of this
+	 * loop, and don't need to do any sift-up comparisons.
 	 */
 	heapLength = 0;
 	for (i = numObjs; --i >= 0;)
@@ -355,8 +353,8 @@ TopoSort(DumpableObject **objs,
 	}
 
 	/*
-	 * If we failed, report the objects that couldn't be output; these are
-	 * the ones with beforeConstraints[] still nonzero.
+	 * If we failed, report the objects that couldn't be output; these are the
+	 * ones with beforeConstraints[] still nonzero.
 	 */
 	if (i != 0)
 	{
@@ -389,8 +387,8 @@ addHeapElement(int val, int *heap, int heapLength)
 	int			j;
 
 	/*
-	 * Sift-up the new entry, per Knuth 5.2.3 exercise 16. Note that Knuth
-	 * is using 1-based array indexes, not 0-based.
+	 * Sift-up the new entry, per Knuth 5.2.3 exercise 16. Note that Knuth is
+	 * using 1-based array indexes, not 0-based.
 	 */
 	j = heapLength;
 	while (j > 0)
@@ -464,22 +462,20 @@ findDependencyLoops(DumpableObject **objs, int nObjs, int totObjs)
 {
 	/*
 	 * We use a workspace array, the initial part of which stores objects
-	 * already processed, and the rest of which is used as temporary space
-	 * to try to build a loop in.  This is convenient because we do not
-	 * care about loops involving already-processed objects (see notes
-	 * above); we can easily reject such loops in findLoop() because of
-	 * this representation.  After we identify and process a loop, we can
-	 * add it to the initial part of the workspace just by moving the
-	 * boundary pointer.
+	 * already processed, and the rest of which is used as temporary space to
+	 * try to build a loop in.	This is convenient because we do not care
+	 * about loops involving already-processed objects (see notes above); we
+	 * can easily reject such loops in findLoop() because of this
+	 * representation.	After we identify and process a loop, we can add it to
+	 * the initial part of the workspace just by moving the boundary pointer.
 	 *
-	 * When we determine that an object is not part of any interesting loop,
-	 * we also add it to the initial part of the workspace.  This is not
-	 * necessary for correctness, but saves later invocations of
-	 * findLoop() from uselessly chasing references to such an object.
+	 * When we determine that an object is not part of any interesting loop, we
+	 * also add it to the initial part of the workspace.  This is not
+	 * necessary for correctness, but saves later invocations of findLoop()
+	 * from uselessly chasing references to such an object.
 	 *
 	 * We make the workspace large enough to hold all objects in the original
-	 * universe.  This is probably overkill, but it's provably enough
-	 * space...
+	 * universe.  This is probably overkill, but it's provably enough space...
 	 */
 	DumpableObject **workspace;
 	int			initiallen;
@@ -510,10 +506,10 @@ findDependencyLoops(DumpableObject **objs, int nObjs, int totObjs)
 		else
 		{
 			/*
-			 * Didn't find a loop, but add this object to workspace
-			 * anyway, unless it's already present.  We piggyback on the
-			 * test that findLoop() already did: it won't have tentatively
-			 * added obj to workspace if it's already present.
+			 * Didn't find a loop, but add this object to workspace anyway,
+			 * unless it's already present.  We piggyback on the test that
+			 * findLoop() already did: it won't have tentatively added obj to
+			 * workspace if it's already present.
 			 */
 			if (workspace[initiallen] == obj)
 				initiallen++;
@@ -553,8 +549,8 @@ findLoop(DumpableObject *obj,
 	int			i;
 
 	/*
-	 * Reject if obj is already present in workspace.  This test serves
-	 * three purposes: it prevents us from finding loops that overlap
+	 * Reject if obj is already present in workspace.  This test serves three
+	 * purposes: it prevents us from finding loops that overlap
 	 * previously-processed loops, it prevents us from going into infinite
 	 * recursion if we are given a startPoint object that links to a cycle
 	 * it's not a member of, and it guarantees that we can't overflow the
@@ -572,8 +568,7 @@ findLoop(DumpableObject *obj,
 	workspace[depth++] = obj;
 
 	/*
-	 * See if we've found a loop back to the desired startPoint; if so,
-	 * done
+	 * See if we've found a loop back to the desired startPoint; if so, done
 	 */
 	for (i = 0; i < obj->nDeps; i++)
 	{
@@ -630,10 +625,10 @@ repairTypeFuncLoop(DumpableObject *typeobj, DumpableObject *funcobj)
 	addObjectDependency(funcobj, inputFuncInfo->dobj.dumpId);
 
 	/*
-	 * Make sure the input function's dependency on type gets removed too;
-	 * if it hasn't been done yet, we'd end up with loops involving the
-	 * type and two or more functions, which repairDependencyLoop() is not
-	 * smart enough to handle.
+	 * Make sure the input function's dependency on type gets removed too; if
+	 * it hasn't been done yet, we'd end up with loops involving the type and
+	 * two or more functions, which repairDependencyLoop() is not smart enough
+	 * to handle.
 	 */
 	removeObjectDependency(&inputFuncInfo->dobj, typeobj->dumpId);
 }
@@ -951,8 +946,8 @@ repairDependencyLoop(DumpableObject **loop,
 	}
 
 	/*
-	 * If we can't find a principled way to break the loop, complain and
-	 * break it in an arbitrary fashion.
+	 * If we can't find a principled way to break the loop, complain and break
+	 * it in an arbitrary fashion.
 	 */
 	write_msg(modulename, "WARNING: could not resolve dependency loop among these items:\n");
 	for (i = 0; i < nLoop; i++)

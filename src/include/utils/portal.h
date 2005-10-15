@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.56 2005/06/17 22:32:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.57 2005/10/15 02:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,10 +106,11 @@ typedef struct PortalData
 	MemoryContext heap;			/* subsidiary memory for portal */
 	ResourceOwner resowner;		/* resources owned by portal */
 	void		(*cleanup) (Portal portal);		/* cleanup hook */
-	SubTransactionId createSubid;	/* the ID of the creating subxact */
+	SubTransactionId createSubid;		/* the ID of the creating subxact */
+
 	/*
-	 * if createSubid is InvalidSubTransactionId, the portal is held over
-	 * from a previous transaction
+	 * if createSubid is InvalidSubTransactionId, the portal is held over from
+	 * a previous transaction
 	 */
 
 	/* The query or queries the portal will execute */
@@ -120,11 +121,11 @@ typedef struct PortalData
 	MemoryContext queryContext; /* where the above trees live */
 
 	/*
-	 * Note: queryContext effectively identifies which prepared statement
-	 * the portal depends on, if any.  The queryContext is *not* owned by
-	 * the portal and is not to be deleted by portal destruction.  (But
-	 * for a cursor it is the same as "heap", and that context is deleted
-	 * by portal destruction.)
+	 * Note: queryContext effectively identifies which prepared statement the
+	 * portal depends on, if any.  The queryContext is *not* owned by the
+	 * portal and is not to be deleted by portal destruction.  (But for a
+	 * cursor it is the same as "heap", and that context is deleted by portal
+	 * destruction.)
 	 */
 	ParamListInfo portalParams; /* params to pass to query */
 
@@ -145,21 +146,21 @@ typedef struct PortalData
 	int16	   *formats;		/* a format code for each column */
 
 	/*
-	 * Where we store tuples for a held cursor or a PORTAL_UTIL_SELECT
-	 * query. (A cursor held past the end of its transaction no longer has
-	 * any active executor state.)
+	 * Where we store tuples for a held cursor or a PORTAL_UTIL_SELECT query.
+	 * (A cursor held past the end of its transaction no longer has any active
+	 * executor state.)
 	 */
 	Tuplestorestate *holdStore; /* store for holdable cursors */
 	MemoryContext holdContext;	/* memory containing holdStore */
 
 	/*
 	 * atStart, atEnd and portalPos indicate the current cursor position.
-	 * portalPos is zero before the first row, N after fetching N'th row
-	 * of query.  After we run off the end, portalPos = # of rows in
-	 * query, and atEnd is true.  If portalPos overflows, set posOverflow
-	 * (this causes us to stop relying on its value for navigation).  Note
-	 * that atStart implies portalPos == 0, but not the reverse (portalPos
-	 * could have overflowed).
+	 * portalPos is zero before the first row, N after fetching N'th row of
+	 * query.  After we run off the end, portalPos = # of rows in query, and
+	 * atEnd is true.  If portalPos overflows, set posOverflow (this causes us
+	 * to stop relying on its value for navigation).  Note that atStart
+	 * implies portalPos == 0, but not the reverse (portalPos could have
+	 * overflowed).
 	 */
 	bool		atStart;
 	bool		atEnd;
@@ -188,11 +189,11 @@ extern void AtCommit_Portals(void);
 extern void AtAbort_Portals(void);
 extern void AtCleanup_Portals(void);
 extern void AtSubCommit_Portals(SubTransactionId mySubid,
-								SubTransactionId parentSubid,
-								ResourceOwner parentXactOwner);
+					SubTransactionId parentSubid,
+					ResourceOwner parentXactOwner);
 extern void AtSubAbort_Portals(SubTransactionId mySubid,
-							   SubTransactionId parentSubid,
-							   ResourceOwner parentXactOwner);
+				   SubTransactionId parentSubid,
+				   ResourceOwner parentXactOwner);
 extern void AtSubCleanup_Portals(SubTransactionId mySubid);
 extern Portal CreatePortal(const char *name, bool allowDup, bool dupSilent);
 extern Portal CreateNewPortal(void);

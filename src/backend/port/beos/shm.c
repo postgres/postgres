@@ -48,16 +48,15 @@ shmat(int memId, int m1, int m2)
 	if (ainfo.team == teinfo.team)
 	{
 		/*
-		 * the area is already in our address space, just return the
-		 * address
+		 * the area is already in our address space, just return the address
 		 */
 		return (int *) ainfo.address;
 	}
 	else
 	{
 		/*
-		 * the area is not in our address space, clone it before and
-		 * return the address
+		 * the area is not in our address space, clone it before and return
+		 * the address
 		 */
 		area_id		narea;
 
@@ -131,8 +130,8 @@ shmget(int memKey, int size, int flag)
 		return -1;
 
 	/*
-	 * area does not exist and its creation is requested, create it (be
-	 * sure to have a 4ko multiple size
+	 * area does not exist and its creation is requested, create it (be sure
+	 * to have a 4ko multiple size
 	 */
 	return create_area(nom, &Address, B_ANY_ADDRESS, ((size / 4096) + 1) * 4096, B_NO_LOCK, B_READ_AREA | B_WRITE_AREA);
 }

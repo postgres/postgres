@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.65 2005/07/21 04:41:43 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.66 2005/10/15 02:49:28 momjian Exp $
  */
 
 #include "postgres.h"
@@ -85,14 +85,14 @@ cash_in(PG_FUNCTION_ARGS)
 	struct lconv *lconvert = PGLC_localeconv();
 
 	/*
-	 * frac_digits will be CHAR_MAX in some locales, notably C.  However,
-	 * just testing for == CHAR_MAX is risky, because of compilers like
-	 * gcc that "helpfully" let you alter the platform-standard definition
-	 * of whether char is signed or not.  If we are so unfortunate as to
-	 * get compiled with a nonstandard -fsigned-char or -funsigned-char
-	 * switch, then our idea of CHAR_MAX will not agree with libc's. The
-	 * safest course is not to test for CHAR_MAX at all, but to impose a
-	 * range check for plausible frac_digits values.
+	 * frac_digits will be CHAR_MAX in some locales, notably C.  However, just
+	 * testing for == CHAR_MAX is risky, because of compilers like gcc that
+	 * "helpfully" let you alter the platform-standard definition of whether
+	 * char is signed or not.  If we are so unfortunate as to get compiled
+	 * with a nonstandard -fsigned-char or -funsigned-char switch, then our
+	 * idea of CHAR_MAX will not agree with libc's. The safest course is not
+	 * to test for CHAR_MAX at all, but to impose a range check for plausible
+	 * frac_digits values.
 	 */
 	fpoint = lconvert->frac_digits;
 	if (fpoint < 0 || fpoint > 10)
@@ -195,7 +195,7 @@ cash_in(PG_FUNCTION_ARGS)
 	if (*s != '\0')
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			errmsg("invalid input syntax for type money: \"%s\"", str)));
+				 errmsg("invalid input syntax for type money: \"%s\"", str)));
 
 	result = value * sgn;
 
@@ -238,8 +238,8 @@ cash_out(PG_FUNCTION_ARGS)
 		points = 2;				/* best guess in this case, I think */
 
 	/*
-	 * As with frac_digits, must apply a range check to mon_grouping to
-	 * avoid being fooled by variant CHAR_MAX values.
+	 * As with frac_digits, must apply a range check to mon_grouping to avoid
+	 * being fooled by variant CHAR_MAX values.
 	 */
 	mon_group = *lconvert->mon_grouping;
 	if (mon_group <= 0 || mon_group > 6)

@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.45 2005/09/24 17:53:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.46 2005/10/15 02:49:33 momjian Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -406,14 +406,14 @@ pg_utf_mblen(const unsigned char *s)
 		len = 1;
 	else if ((*s & 0xe0) == 0xc0)
 		len = 2;
-        else if ((*s & 0xf0) == 0xe0)
-                len = 3;
-        else if ((*s & 0xf8) == 0xf0)
-                len = 4;
-        else if ((*s & 0xfc) == 0xf8)
-                len = 5;
-        else if ((*s & 0xfe) == 0xfc)
-                len = 6;
+	else if ((*s & 0xf0) == 0xe0)
+		len = 3;
+	else if ((*s & 0xf8) == 0xf0)
+		len = 4;
+	else if ((*s & 0xfc) == 0xf8)
+		len = 5;
+	else if ((*s & 0xfe) == 0xfc)
+		len = 6;
 	return (len);
 }
 
@@ -727,8 +727,8 @@ pg_wchar_tbl pg_wchar_table[] = {
 	{pg_euckr2wchar_with_len, pg_euckr_mblen, pg_euckr_dsplen, 3},		/* 3; PG_EUC_KR */
 	{pg_euctw2wchar_with_len, pg_euctw_mblen, pg_euctw_dsplen, 3},		/* 4; PG_EUC_TW */
 	{pg_johab2wchar_with_len, pg_johab_mblen, pg_johab_dsplen, 3},		/* 5; PG_JOHAB */
-	{pg_utf2wchar_with_len, pg_utf_mblen, pg_utf_dsplen, 4},		/* 6; PG_UTF8 */
-	{pg_mule2wchar_with_len, pg_mule_mblen, pg_mule_dsplen, 3}, 		/* 7; PG_MULE_INTERNAL */
+	{pg_utf2wchar_with_len, pg_utf_mblen, pg_utf_dsplen, 4},	/* 6; PG_UTF8 */
+	{pg_mule2wchar_with_len, pg_mule_mblen, pg_mule_dsplen, 3}, /* 7; PG_MULE_INTERNAL */
 	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 8; PG_LATIN1 */
 	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 9; PG_LATIN2 */
 	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 10; PG_LATIN3 */
@@ -775,8 +775,8 @@ pg_encoding_mblen(int encoding, const char *mbstr)
 
 	return ((encoding >= 0 &&
 			 encoding < sizeof(pg_wchar_table) / sizeof(pg_wchar_tbl)) ?
-			((*pg_wchar_table[encoding].mblen) ((const unsigned char *) mbstr)) :
-			((*pg_wchar_table[PG_SQL_ASCII].mblen) ((const unsigned char *) mbstr)));
+		((*pg_wchar_table[encoding].mblen) ((const unsigned char *) mbstr)) :
+	((*pg_wchar_table[PG_SQL_ASCII].mblen) ((const unsigned char *) mbstr)));
 }
 
 /*
@@ -789,8 +789,8 @@ pg_encoding_dsplen(int encoding, const char *mbstr)
 
 	return ((encoding >= 0 &&
 			 encoding < sizeof(pg_wchar_table) / sizeof(pg_wchar_tbl)) ?
-			((*pg_wchar_table[encoding].dsplen) ((const unsigned char *) mbstr)) :
-			((*pg_wchar_table[PG_SQL_ASCII].dsplen) ((const unsigned char *) mbstr)));
+	   ((*pg_wchar_table[encoding].dsplen) ((const unsigned char *) mbstr)) :
+	((*pg_wchar_table[PG_SQL_ASCII].dsplen) ((const unsigned char *) mbstr)));
 }
 
 /*
@@ -806,28 +806,57 @@ pg_encoding_max_length(int encoding)
 
 #ifndef FRONTEND
 
-bool pg_utf8_islegal(const unsigned char *source, int length) {
-    unsigned char a;
-    const unsigned char *srcptr = source+length;
-    switch (length) {
-       default: return false;
-        /* Everything else falls through when "true"... */
-       case 4: if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false;
-       case 3: if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false;
-       case 2: if ((a = (*--srcptr)) > 0xBF) return false;
-        switch (*source) {
-            /* no fall-through in this inner switch */
-            case 0xE0: if (a < 0xA0) return false; break;
-            case 0xED: if (a > 0x9F) return false; break;
-            case 0xF0: if (a < 0x90) return false; break;
-            case 0xF4: if (a > 0x8F) return false; break;
-            default:   if (a < 0x80) return false;
-        }
+bool
+pg_utf8_islegal(const unsigned char *source, int length)
+{
+	unsigned char a;
+	const unsigned char *srcptr = source + length;
 
-    case 1: if (*source >= 0x80 && *source < 0xC2) return false;
-    }
-    if (*source > 0xF4) return false;
-    return true;
+	switch (length)
+	{
+		default:
+			return false;
+			/* Everything else falls through when "true"... */
+		case 4:
+			if ((a = (*--srcptr)) < 0x80 || a > 0xBF)
+				return false;
+		case 3:
+			if ((a = (*--srcptr)) < 0x80 || a > 0xBF)
+				return false;
+		case 2:
+			if ((a = (*--srcptr)) > 0xBF)
+				return false;
+			switch (*source)
+			{
+					/* no fall-through in this inner switch */
+				case 0xE0:
+					if (a < 0xA0)
+						return false;
+					break;
+				case 0xED:
+					if (a > 0x9F)
+						return false;
+					break;
+				case 0xF0:
+					if (a < 0x90)
+						return false;
+					break;
+				case 0xF4:
+					if (a > 0x8F)
+						return false;
+					break;
+				default:
+					if (a < 0x80)
+						return false;
+			}
+
+		case 1:
+			if (*source >= 0x80 && *source < 0xC2)
+				return false;
+	}
+	if (*source > 0xF4)
+		return false;
+	return true;
 }
 
 
@@ -855,11 +884,11 @@ pg_verifymbstr(const char *mbstr, int len, bool noError)
 	while (len > 0 && *mbstr)
 	{
 		l = pg_mblen(mbstr);
-		
+
 		/* special UTF-8 check */
 		if (encoding == PG_UTF8)
 		{
-			if(!pg_utf8_islegal((const unsigned char *) mbstr, l))
+			if (!pg_utf8_islegal((const unsigned char *) mbstr, l))
 			{
 				if (noError)
 					return false;
@@ -868,7 +897,9 @@ pg_verifymbstr(const char *mbstr, int len, bool noError)
 						 errmsg("invalid UNICODE byte sequence detected near byte 0x%02x",
 								(unsigned char) *mbstr)));
 			}
-		} else {
+		}
+		else
+		{
 			for (i = 1; i < l; i++)
 			{
 				/*
@@ -878,23 +909,23 @@ pg_verifymbstr(const char *mbstr, int len, bool noError)
 				if (i >= len || (mbstr[i] & 0x80) == 0)
 				{
 					char		buf[8 * 2 + 1];
-					char		*p = buf;
-					int		j,
-						jlimit;
+					char	   *p = buf;
+					int			j,
+								jlimit;
 
 					if (noError)
 						return false;
 
 					jlimit = Min(l, len);
-					jlimit = Min(jlimit, 8);		/* prevent buffer overrun */
+					jlimit = Min(jlimit, 8);	/* prevent buffer overrun */
 
 					for (j = 0; j < jlimit; j++)
 						p += sprintf(p, "%02x", (unsigned char) mbstr[j]);
 
 					ereport(ERROR,
 							(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
-							 errmsg("invalid byte sequence for encoding \"%s\": 0x%s",
-									GetDatabaseEncodingName(), buf)));
+					errmsg("invalid byte sequence for encoding \"%s\": 0x%s",
+						   GetDatabaseEncodingName(), buf)));
 				}
 			}
 		}

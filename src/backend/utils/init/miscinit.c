@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.149 2005/08/17 22:14:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.150 2005/10/15 02:49:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
 #include "storage/proc.h"
-#include "storage/procarray.h" 
+#include "storage/procarray.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
@@ -295,10 +295,10 @@ make_absolute_path(const char *path)
  * DEFINER functions, as well as locally in some specialized commands.
  * ----------------------------------------------------------------
  */
-static Oid AuthenticatedUserId = InvalidOid;
-static Oid SessionUserId = InvalidOid;
-static Oid OuterUserId = InvalidOid;
-static Oid CurrentUserId = InvalidOid;
+static Oid	AuthenticatedUserId = InvalidOid;
+static Oid	SessionUserId = InvalidOid;
+static Oid	OuterUserId = InvalidOid;
+static Oid	CurrentUserId = InvalidOid;
 
 /* We also have to remember the superuser state of some of these levels */
 static bool AuthenticatedUserIsSuperuser = false;
@@ -418,8 +418,8 @@ InitializeSessionUserId(const char *rolename)
 
 	/*
 	 * These next checks are not enforced when in standalone mode, so that
-	 * there is a way to recover from sillinesses like
-	 * "UPDATE pg_authid SET rolcanlogin = false;".
+	 * there is a way to recover from sillinesses like "UPDATE pg_authid SET
+	 * rolcanlogin = false;".
 	 *
 	 * We do not enforce them for the autovacuum process either.
 	 */
@@ -433,15 +433,16 @@ InitializeSessionUserId(const char *rolename)
 					(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
 					 errmsg("role \"%s\" is not permitted to log in",
 							rolename)));
+
 		/*
 		 * Check connection limit for this role.
 		 *
 		 * There is a race condition here --- we create our PGPROC before
-		 * checking for other PGPROCs.  If two backends did this at about the
+		 * checking for other PGPROCs.	If two backends did this at about the
 		 * same time, they might both think they were over the limit, while
 		 * ideally one should succeed and one fail.  Getting that to work
-		 * exactly seems more trouble than it is worth, however; instead
-		 * we just document that the connection limit is approximate.
+		 * exactly seems more trouble than it is worth, however; instead we
+		 * just document that the connection limit is approximate.
 		 */
 		if (rform->rolconnlimit >= 0 &&
 			!AuthenticatedUserIsSuperuser &&
@@ -451,7 +452,7 @@ InitializeSessionUserId(const char *rolename)
 					 errmsg("too many connections for role \"%s\"",
 							rolename)));
 	}
-	
+
 	/* Record username and superuser status as GUC settings too */
 	SetConfigOption("session_authorization", rolename,
 					PGC_BACKEND, PGC_S_OVERRIDE);
@@ -460,9 +461,8 @@ InitializeSessionUserId(const char *rolename)
 					PGC_INTERNAL, PGC_S_OVERRIDE);
 
 	/*
-	 * Set up user-specific configuration variables.  This is a good place
-	 * to do it so we don't have to read pg_authid twice during session
-	 * startup.
+	 * Set up user-specific configuration variables.  This is a good place to
+	 * do it so we don't have to read pg_authid twice during session startup.
 	 */
 	datum = SysCacheGetAttr(AUTHNAME, roleTup,
 							Anum_pg_authid_rolconfig, &isnull);
@@ -534,7 +534,7 @@ SetSessionAuthorization(Oid userid, bool is_superuser)
 		!AuthenticatedUserIsSuperuser)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			  errmsg("permission denied to set session authorization")));
+				 errmsg("permission denied to set session authorization")));
 
 	SetSessionUserId(userid, is_superuser);
 
@@ -562,7 +562,7 @@ GetCurrentRoleId(void)
  * Change Role ID while running (SET ROLE)
  *
  * If roleid is InvalidOid, we are doing SET ROLE NONE: revert to the
- * session user authorization.  In this case the is_superuser argument
+ * session user authorization.	In this case the is_superuser argument
  * is ignored.
  *
  * When roleid is not InvalidOid, the caller must have checked whether
@@ -686,17 +686,17 @@ CreateLockFile(const char *filename, bool amPostmaster,
 	pid_t		my_pid = getpid();
 
 	/*
-	 * We need a loop here because of race conditions.	But don't loop
-	 * forever (for example, a non-writable $PGDATA directory might cause
-	 * a failure that won't go away).  100 tries seems like plenty.
+	 * We need a loop here because of race conditions.	But don't loop forever
+	 * (for example, a non-writable $PGDATA directory might cause a failure
+	 * that won't go away).  100 tries seems like plenty.
 	 */
 	for (ntries = 0;; ntries++)
 	{
 		/*
 		 * Try to create the lock file --- O_EXCL makes this atomic.
 		 *
-		 * Think not to make the file protection weaker than 0600.  See
-		 * comments below.
+		 * Think not to make the file protection weaker than 0600.	See comments
+		 * below.
 		 */
 		fd = open(filename, O_RDWR | O_CREAT | O_EXCL, 0600);
 		if (fd >= 0)
@@ -745,38 +745,38 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		/*
 		 * Check to see if the other process still exists
 		 *
-		 * If the PID in the lockfile is our own PID or our parent's PID,
-		 * then the file must be stale (probably left over from a previous
-		 * system boot cycle).  We need this test because of the likelihood
-		 * that a reboot will assign exactly the same PID as we had in the
-		 * previous reboot.  Also, if there is just one more process launch
-		 * in this reboot than in the previous one, the lockfile might mention
-		 * our parent's PID.  We can reject that since we'd never be launched
-		 * directly by a competing postmaster.  We can't detect grandparent
-		 * processes unfortunately, but if the init script is written carefully
-		 * then all but the immediate parent shell will be root-owned processes
-		 * and so the kill test will fail with EPERM.
+		 * If the PID in the lockfile is our own PID or our parent's PID, then
+		 * the file must be stale (probably left over from a previous system
+		 * boot cycle).  We need this test because of the likelihood that a
+		 * reboot will assign exactly the same PID as we had in the previous
+		 * reboot.	Also, if there is just one more process launch in this
+		 * reboot than in the previous one, the lockfile might mention our
+		 * parent's PID.  We can reject that since we'd never be launched
+		 * directly by a competing postmaster.	We can't detect grandparent
+		 * processes unfortunately, but if the init script is written
+		 * carefully then all but the immediate parent shell will be
+		 * root-owned processes and so the kill test will fail with EPERM.
 		 *
 		 * We can treat the EPERM-error case as okay because that error implies
 		 * that the existing process has a different userid than we do, which
 		 * means it cannot be a competing postmaster.  A postmaster cannot
 		 * successfully attach to a data directory owned by a userid other
-		 * than its own.  (This is now checked directly in checkDataDir(),
-		 * but has been true for a long time because of the restriction that
-		 * the data directory isn't group- or world-accessible.)  Also,
-		 * since we create the lockfiles mode 600, we'd have failed above
-		 * if the lockfile belonged to another userid --- which means that
-		 * whatever process kill() is reporting about isn't the one that
-		 * made the lockfile.  (NOTE: this last consideration is the only
-		 * one that keeps us from blowing away a Unix socket file belonging
-		 * to an instance of Postgres being run by someone else, at least
-		 * on machines where /tmp hasn't got a stickybit.)
+		 * than its own.  (This is now checked directly in checkDataDir(), but
+		 * has been true for a long time because of the restriction that the
+		 * data directory isn't group- or world-accessible.)  Also, since we
+		 * create the lockfiles mode 600, we'd have failed above if the
+		 * lockfile belonged to another userid --- which means that whatever
+		 * process kill() is reporting about isn't the one that made the
+		 * lockfile.  (NOTE: this last consideration is the only one that
+		 * keeps us from blowing away a Unix socket file belonging to an
+		 * instance of Postgres being run by someone else, at least on
+		 * machines where /tmp hasn't got a stickybit.)
 		 *
-		 * Windows hasn't got getppid(), but doesn't need it since it's not
-		 * using real kill() either...
+		 * Windows hasn't got getppid(), but doesn't need it since it's not using
+		 * real kill() either...
 		 *
-		 * Normally kill() will fail with ESRCH if the given PID doesn't
-		 * exist.  BeOS returns EINVAL for some silly reason, however.
+		 * Normally kill() will fail with ESRCH if the given PID doesn't exist.
+		 * BeOS returns EINVAL for some silly reason, however.
 		 */
 		if (other_pid != my_pid
 #ifndef WIN32
@@ -811,11 +811,11 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		}
 
 		/*
-		 * No, the creating process did not exist.	However, it could be
-		 * that the postmaster crashed (or more likely was kill -9'd by a
-		 * clueless admin) but has left orphan backends behind.  Check for
-		 * this by looking to see if there is an associated shmem segment
-		 * that is still in use.
+		 * No, the creating process did not exist.	However, it could be that
+		 * the postmaster crashed (or more likely was kill -9'd by a clueless
+		 * admin) but has left orphan backends behind.	Check for this by
+		 * looking to see if there is an associated shmem segment that is
+		 * still in use.
 		 */
 		if (isDDLock)
 		{
@@ -833,23 +833,23 @@ CreateLockFile(const char *filename, bool amPostmaster,
 					if (PGSharedMemoryIsInUse(id1, id2))
 						ereport(FATAL,
 								(errcode(ERRCODE_LOCK_FILE_EXISTS),
-							   errmsg("pre-existing shared memory block "
-									  "(key %lu, ID %lu) is still in use",
-									  id1, id2),
-							   errhint("If you're sure there are no old "
-								"server processes still running, remove "
-									   "the shared memory block with "
-										"the command \"ipcclean\", \"ipcrm\", "
-										"or just delete the file \"%s\".",
-									   filename)));
+								 errmsg("pre-existing shared memory block "
+										"(key %lu, ID %lu) is still in use",
+										id1, id2),
+								 errhint("If you're sure there are no old "
+									"server processes still running, remove "
+										 "the shared memory block with "
+									  "the command \"ipcclean\", \"ipcrm\", "
+										 "or just delete the file \"%s\".",
+										 filename)));
 				}
 			}
 		}
 
 		/*
-		 * Looks like nobody's home.  Unlink the file and try again to
-		 * create it.  Need a loop because of possible race condition
-		 * against other would-be creators.
+		 * Looks like nobody's home.  Unlink the file and try again to create
+		 * it.	Need a loop because of possible race condition against other
+		 * would-be creators.
 		 */
 		if (unlink(filename) < 0)
 			ereport(FATAL,
@@ -857,7 +857,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 					 errmsg("could not remove old lock file \"%s\": %m",
 							filename),
 					 errhint("The file seems accidentally left over, but "
-					   "it could not be removed. Please remove the file "
+						   "it could not be removed. Please remove the file "
 							 "by hand and try again.")));
 	}
 
@@ -878,7 +878,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		errno = save_errno ? save_errno : ENOSPC;
 		ereport(FATAL,
 				(errcode_for_file_access(),
-			  errmsg("could not write lock file \"%s\": %m", filename)));
+				 errmsg("could not write lock file \"%s\": %m", filename)));
 	}
 	if (close(fd))
 	{
@@ -888,7 +888,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		errno = save_errno;
 		ereport(FATAL,
 				(errcode_for_file_access(),
-			  errmsg("could not write lock file \"%s\": %m", filename)));
+				 errmsg("could not write lock file \"%s\": %m", filename)));
 	}
 
 	/*
@@ -939,10 +939,10 @@ TouchSocketLockFile(void)
 	if (socketLockFile[0] != '\0')
 	{
 		/*
-		 * utime() is POSIX standard, utimes() is a common alternative; if
-		 * we have neither, fall back to actually reading the file (which
-		 * only sets the access time not mod time, but that should be
-		 * enough in most cases).  In all paths, we ignore errors.
+		 * utime() is POSIX standard, utimes() is a common alternative; if we
+		 * have neither, fall back to actually reading the file (which only
+		 * sets the access time not mod time, but that should be enough in
+		 * most cases).  In all paths, we ignore errors.
 		 */
 #ifdef HAVE_UTIME
 		utime(socketLockFile, NULL);
@@ -1093,7 +1093,7 @@ ValidatePgVersion(const char *path)
 		else
 			ereport(FATAL,
 					(errcode_for_file_access(),
-				   errmsg("could not open file \"%s\": %m", full_path)));
+					 errmsg("could not open file \"%s\": %m", full_path)));
 	}
 
 	ret = fscanf(file, "%ld.%ld", &file_major, &file_minor);
@@ -1113,7 +1113,7 @@ ValidatePgVersion(const char *path)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("database files are incompatible with server"),
 				 errdetail("The data directory was initialized by PostgreSQL version %ld.%ld, "
-						 "which is not compatible with this version %s.",
+						   "which is not compatible with this version %s.",
 						   file_major, file_minor, version_string)));
 }
 
@@ -1149,7 +1149,7 @@ process_preload_libraries(char *preload_libraries_string)
 		list_free(elemlist);
 		ereport(LOG,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("invalid list syntax for parameter \"preload_libraries\"")));
+		 errmsg("invalid list syntax for parameter \"preload_libraries\"")));
 		return;
 	}
 
@@ -1164,9 +1164,8 @@ process_preload_libraries(char *preload_libraries_string)
 		if (sep)
 		{
 			/*
-			 * a colon separator implies there is an initialization
-			 * function that we need to run in addition to loading the
-			 * library
+			 * a colon separator implies there is an initialization function
+			 * that we need to run in addition to loading the library
 			 */
 			size_t		filename_len = sep - tok;
 			size_t		funcname_len = strlen(tok) - filename_len - 1;

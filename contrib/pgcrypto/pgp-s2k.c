@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-s2k.c,v 1.3 2005/07/18 17:12:54 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-s2k.c,v 1.4 2005/10/15 02:49:06 momjian Exp $
  */
 
 #include "postgres.h"
@@ -36,7 +36,7 @@
 #include "pgp.h"
 
 static int
-calc_s2k_simple(PGP_S2K * s2k, PX_MD *md, const uint8 *key,
+calc_s2k_simple(PGP_S2K * s2k, PX_MD * md, const uint8 *key,
 				unsigned key_len)
 {
 	unsigned	md_bs,
@@ -81,7 +81,7 @@ calc_s2k_simple(PGP_S2K * s2k, PX_MD *md, const uint8 *key,
 }
 
 static int
-calc_s2k_salted(PGP_S2K * s2k, PX_MD *md, const uint8 *key, unsigned key_len)
+calc_s2k_salted(PGP_S2K * s2k, PX_MD * md, const uint8 *key, unsigned key_len)
 {
 	unsigned	md_bs,
 				md_rlen;
@@ -126,8 +126,8 @@ calc_s2k_salted(PGP_S2K * s2k, PX_MD *md, const uint8 *key, unsigned key_len)
 }
 
 static int
-calc_s2k_iter_salted(PGP_S2K * s2k, PX_MD *md, const uint8 *key,
-					unsigned key_len)
+calc_s2k_iter_salted(PGP_S2K * s2k, PX_MD * md, const uint8 *key,
+					 unsigned key_len)
 {
 	unsigned	md_bs,
 				md_rlen;
@@ -200,7 +200,7 @@ calc_s2k_iter_salted(PGP_S2K * s2k, PX_MD *md, const uint8 *key,
 
 /*
  * Decide S2K_ISALTED iteration count
- * 
+ *
  * Too small: weak
  * Too big: slow
  * gpg defaults to 96 => 65536 iters
@@ -213,15 +213,16 @@ decide_count(unsigned rand_byte)
 }
 
 int
-pgp_s2k_fill(PGP_S2K *s2k, int mode,int digest_algo)
+pgp_s2k_fill(PGP_S2K * s2k, int mode, int digest_algo)
 {
-	int res = 0;
-	uint8 tmp;
+	int			res = 0;
+	uint8		tmp;
 
 	s2k->mode = mode;
 	s2k->digest_algo = digest_algo;
 
-	switch (s2k->mode) {
+	switch (s2k->mode)
+	{
 		case 0:
 			break;
 		case 1:
@@ -243,13 +244,14 @@ pgp_s2k_fill(PGP_S2K *s2k, int mode,int digest_algo)
 }
 
 int
-pgp_s2k_read(PullFilter *src, PGP_S2K *s2k)
+pgp_s2k_read(PullFilter * src, PGP_S2K * s2k)
 {
-	int res = 0;
+	int			res = 0;
 
 	GETBYTE(src, s2k->mode);
 	GETBYTE(src, s2k->digest_algo);
-	switch (s2k->mode) {
+	switch (s2k->mode)
+	{
 		case 0:
 			break;
 		case 1:
@@ -267,10 +269,11 @@ pgp_s2k_read(PullFilter *src, PGP_S2K *s2k)
 	return res;
 }
 
-int pgp_s2k_process(PGP_S2K *s2k, int cipher, const uint8 *key, int key_len)
+int
+pgp_s2k_process(PGP_S2K * s2k, int cipher, const uint8 *key, int key_len)
 {
-	int res;
-	PX_MD *md;
+	int			res;
+	PX_MD	   *md;
 
 	s2k->key_len = pgp_get_cipher_key_size(cipher);
 	if (s2k->key_len <= 0)
@@ -280,7 +283,8 @@ int pgp_s2k_process(PGP_S2K *s2k, int cipher, const uint8 *key, int key_len)
 	if (res < 0)
 		return res;
 
-	switch (s2k->mode) {
+	switch (s2k->mode)
+	{
 		case 0:
 			res = calc_s2k_simple(s2k, md, key, key_len);
 			break;
@@ -296,4 +300,3 @@ int pgp_s2k_process(PGP_S2K *s2k, int cipher, const uint8 *key, int key_len)
 	px_md_free(md);
 	return res;
 }
-

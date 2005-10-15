@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.16 2005/10/13 17:58:44 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.17 2005/10/15 02:49:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
 #include "port.h"
 
 static const char *progname;
-static char		mypath[MAXPGPATH];
+static char mypath[MAXPGPATH];
 
 
 /*
@@ -37,7 +37,7 @@ static char		mypath[MAXPGPATH];
  *		C:/Progra~1/
  *
  * This can fail in 2 ways - if the path doesn't exist, or short names are
- * disabled. In the first case, don't return any path. In the second case, 
+ * disabled. In the first case, don't return any path. In the second case,
  * we leave the path in the long form. In this case, it does still seem to
  * fix elements containing spaces which is all we actually need.
  */
@@ -49,8 +49,9 @@ cleanup_path(char *path)
 
 	if (GetShortPathName(path, path, MAXPGPATH - 1) == 0)
 	{
-		/* Ignore ERROR_INVALID_PARAMETER as it almost certainly 
-		 * means that short names are disabled
+		/*
+		 * Ignore ERROR_INVALID_PARAMETER as it almost certainly means that
+		 * short names are disabled
 		 */
 		if (GetLastError() != ERROR_INVALID_PARAMETER)
 		{
@@ -78,8 +79,8 @@ cleanup_path(char *path)
 static void
 show_bindir(bool all)
 {
-	char	path[MAXPGPATH];
-	char	*lastsep;
+	char		path[MAXPGPATH];
+	char	   *lastsep;
 
 	if (all)
 		printf("BINDIR = ");
@@ -97,7 +98,7 @@ show_bindir(bool all)
 static void
 show_docdir(bool all)
 {
-	char	path[MAXPGPATH];
+	char		path[MAXPGPATH];
 
 	if (all)
 		printf("DOCDIR = ");
@@ -109,7 +110,7 @@ show_docdir(bool all)
 static void
 show_includedir(bool all)
 {
-	char	path[MAXPGPATH];
+	char		path[MAXPGPATH];
 
 	if (all)
 		printf("INCLUDEDIR = ");
@@ -121,7 +122,7 @@ show_includedir(bool all)
 static void
 show_pkgincludedir(bool all)
 {
-	char	path[MAXPGPATH];
+	char		path[MAXPGPATH];
 
 	if (all)
 		printf("PKGINCLUDEDIR = ");
@@ -133,7 +134,7 @@ show_pkgincludedir(bool all)
 static void
 show_includedir_server(bool all)
 {
-	char	path[MAXPGPATH];
+	char		path[MAXPGPATH];
 
 	if (all)
 		printf("INCLUDEDIR-SERVER = ");
@@ -145,7 +146,7 @@ show_includedir_server(bool all)
 static void
 show_libdir(bool all)
 {
-	char	path[MAXPGPATH];
+	char		path[MAXPGPATH];
 
 	if (all)
 		printf("LIBDIR = ");
@@ -157,7 +158,7 @@ show_libdir(bool all)
 static void
 show_pkglibdir(bool all)
 {
-	char	path[MAXPGPATH];
+	char		path[MAXPGPATH];
 
 	if (all)
 		printf("PKGLIBDIR = ");
@@ -169,7 +170,7 @@ show_pkglibdir(bool all)
 static void
 show_localedir(bool all)
 {
-	char	path[MAXPGPATH];
+	char		path[MAXPGPATH];
 
 	if (all)
 		printf("LOCALEDIR = ");
@@ -181,7 +182,7 @@ show_localedir(bool all)
 static void
 show_mandir(bool all)
 {
-	char	path[MAXPGPATH];
+	char		path[MAXPGPATH];
 
 	if (all)
 		printf("MANDIR = ");
@@ -193,7 +194,7 @@ show_mandir(bool all)
 static void
 show_sharedir(bool all)
 {
-	char	path[MAXPGPATH];
+	char		path[MAXPGPATH];
 
 	if (all)
 		printf("SHAREDIR = ");
@@ -205,7 +206,7 @@ show_sharedir(bool all)
 static void
 show_sysconfdir(bool all)
 {
-	char	path[MAXPGPATH];
+	char		path[MAXPGPATH];
 
 	if (all)
 		printf("SYSCONFDIR = ");
@@ -217,7 +218,7 @@ show_sysconfdir(bool all)
 static void
 show_pgxs(bool all)
 {
-	char	path[MAXPGPATH];
+	char		path[MAXPGPATH];
 
 	if (all)
 		printf("PGXS = ");
@@ -376,28 +377,28 @@ typedef struct
 } InfoItem;
 
 static const InfoItem info_items[] = {
-	{ "--bindir", show_bindir },
-	{ "--docdir", show_docdir },
-	{ "--includedir", show_includedir },
-	{ "--pkgincludedir", show_pkgincludedir },
-	{ "--includedir-server", show_includedir_server },
-	{ "--libdir", show_libdir },
-	{ "--pkglibdir", show_pkglibdir },
-	{ "--localedir", show_localedir },
-	{ "--mandir", show_mandir },
-	{ "--sharedir", show_sharedir },
-	{ "--sysconfdir", show_sysconfdir },
-	{ "--pgxs", show_pgxs },
-	{ "--configure", show_configure },
-	{ "--cc", show_cc },
-	{ "--cppflags", show_cppflags },
-	{ "--cflags", show_cflags },
-	{ "--cflags_sl", show_cflags_sl },
-	{ "--ldflags", show_ldflags },
-	{ "--ldflags_sl", show_ldflags_sl },
-	{ "--libs", show_libs },
-	{ "--version", show_version },
-	{ NULL, NULL }
+	{"--bindir", show_bindir},
+	{"--docdir", show_docdir},
+	{"--includedir", show_includedir},
+	{"--pkgincludedir", show_pkgincludedir},
+	{"--includedir-server", show_includedir_server},
+	{"--libdir", show_libdir},
+	{"--pkglibdir", show_pkglibdir},
+	{"--localedir", show_localedir},
+	{"--mandir", show_mandir},
+	{"--sharedir", show_sharedir},
+	{"--sysconfdir", show_sysconfdir},
+	{"--pgxs", show_pgxs},
+	{"--configure", show_configure},
+	{"--cc", show_cc},
+	{"--cppflags", show_cppflags},
+	{"--cflags", show_cflags},
+	{"--cflags_sl", show_cflags_sl},
+	{"--ldflags", show_ldflags},
+	{"--ldflags_sl", show_ldflags_sl},
+	{"--libs", show_libs},
+	{"--version", show_version},
+	{NULL, NULL}
 };
 
 

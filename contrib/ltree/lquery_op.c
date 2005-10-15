@@ -101,7 +101,7 @@ checkLevel(lquery_level * curq, ltree_level * curt)
 		else if (
 				 (
 				  curvar->len == curt->len ||
-				(curt->len > curvar->len && (curvar->flag & LVAR_ANYEND))
+				  (curt->len > curvar->len && (curvar->flag & LVAR_ANYEND))
 				  ) &&
 				 (*cmpptr) (curvar->name, curt->name, curvar->len) == 0)
 		{
@@ -332,7 +332,7 @@ lt_q_regex(PG_FUNCTION_ARGS)
 	while (num > 0)
 	{
 		if (DatumGetBool(DirectFunctionCall2(ltq_regex,
-						 PointerGetDatum(tree), PointerGetDatum(query))))
+							 PointerGetDatum(tree), PointerGetDatum(query))))
 		{
 
 			res = true;

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.86 2005/06/27 02:17:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.87 2005/10/15 02:49:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -292,8 +292,8 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 				{
 					foundAttr = true;
 					foundNotNull |= parent->notnull[inhAttrInd];
-					if (attrDef != NULL)		/* If we have a default,
-												 * check parent */
+					if (attrDef != NULL)		/* If we have a default, check
+												 * parent */
 					{
 						AttrDefInfo *inhDef;
 
@@ -302,15 +302,15 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 						{
 							defaultsFound = true;
 							defaultsMatch &= (strcmp(attrDef->adef_expr,
-												inhDef->adef_expr) == 0);
+													 inhDef->adef_expr) == 0);
 						}
 					}
 				}
 			}
 
 			/*
-			 * Based on the scan of the parents, decide if we can rely on
-			 * the inherited attr
+			 * Based on the scan of the parents, decide if we can rely on the
+			 * inherited attr
 			 */
 			if (foundAttr)		/* Attr was inherited */
 			{
@@ -330,8 +330,7 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 				}
 
 				/*
-				 * Clear it if NOT NULL and none of the parents were NOT
-				 * NULL
+				 * Clear it if NOT NULL and none of the parents were NOT NULL
 				 */
 				if (tbinfo->notnull[j] && !foundNotNull)
 				{
@@ -346,9 +345,9 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 		}
 
 		/*
-		 * Check for inherited CHECK constraints.  We assume a constraint
-		 * is inherited if its name matches the name of any constraint in
-		 * the parent.  Originally this code tried to compare the expression
+		 * Check for inherited CHECK constraints.  We assume a constraint is
+		 * inherited if its name matches the name of any constraint in the
+		 * parent.	Originally this code tried to compare the expression
 		 * texts, but that can fail if the parent and child tables are in
 		 * different schemas, because reverse-listing of function calls may
 		 * produce different text (schema-qualified or not) depending on
@@ -528,8 +527,8 @@ DOCatalogIdCompare(const void *p1, const void *p2)
 	int			cmpval;
 
 	/*
-	 * Compare OID first since it's usually unique, whereas there will
-	 * only be a few distinct values of tableoid.
+	 * Compare OID first since it's usually unique, whereas there will only be
+	 * a few distinct values of tableoid.
 	 */
 	cmpval = oidcmp(obj1->catId.oid, obj2->catId.oid);
 	if (cmpval == 0)

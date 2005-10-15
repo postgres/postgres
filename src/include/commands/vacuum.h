@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.61 2005/10/03 22:52:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.62 2005/10/15 02:49:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,8 +59,8 @@ typedef Datum (*AnalyzeAttrFetchFunc) (VacAttrStatsP stats, int rownum,
 typedef struct VacAttrStats
 {
 	/*
-	 * These fields are set up by the main ANALYZE code before invoking
-	 * the type-specific typanalyze function.
+	 * These fields are set up by the main ANALYZE code before invoking the
+	 * type-specific typanalyze function.
 	 */
 	Form_pg_attribute attr;		/* copy of pg_attribute row for column */
 	Form_pg_type attrtype;		/* copy of pg_type row for column */
@@ -71,15 +71,15 @@ typedef struct VacAttrStats
 	 * returns FALSE.
 	 */
 	void		(*compute_stats) (VacAttrStatsP stats,
-										  AnalyzeAttrFetchFunc fetchfunc,
+											  AnalyzeAttrFetchFunc fetchfunc,
 											  int samplerows,
 											  double totalrows);
 	int			minrows;		/* Minimum # of rows wanted for stats */
 	void	   *extra_data;		/* for extra type-specific data */
 
 	/*
-	 * These fields are to be filled in by the compute_stats routine.
-	 * (They are initialized to zero when the struct is created.)
+	 * These fields are to be filled in by the compute_stats routine. (They
+	 * are initialized to zero when the struct is created.)
 	 */
 	bool		stats_valid;
 	float4		stanullfrac;	/* fraction of entries that are NULL */
@@ -112,7 +112,7 @@ extern DLLIMPORT int default_statistics_target; /* DLLIMPORT for PostGIS */
 /* in commands/vacuum.c */
 extern void vacuum(VacuumStmt *vacstmt, List *relids);
 extern void vac_open_indexes(Relation relation, LOCKMODE lockmode,
-							 int *nindexes, Relation **Irel);
+				 int *nindexes, Relation **Irel);
 extern void vac_close_indexes(int nindexes, Relation *Irel, LOCKMODE lockmode);
 extern void vac_update_relstats(Oid relid,
 					BlockNumber num_pages,

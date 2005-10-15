@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.43 2005/08/20 23:26:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.44 2005/10/15 02:49:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,11 +81,10 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 	if (shmid < 0)
 	{
 		/*
-		 * Fail quietly if error indicates a collision with existing
-		 * segment. One would expect EEXIST, given that we said IPC_EXCL,
-		 * but perhaps we could get a permission violation instead?  Also,
-		 * EIDRM might occur if an old seg is slated for destruction but
-		 * not gone yet.
+		 * Fail quietly if error indicates a collision with existing segment.
+		 * One would expect EEXIST, given that we said IPC_EXCL, but perhaps
+		 * we could get a permission violation instead?  Also, EIDRM might
+		 * occur if an old seg is slated for destruction but not gone yet.
 		 */
 		if (errno == EEXIST || errno == EACCES
 #ifdef EIDRM
@@ -99,41 +98,41 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 		 */
 		ereport(FATAL,
 				(errmsg("could not create shared memory segment: %m"),
-		errdetail("Failed system call was shmget(key=%lu, size=%lu, 0%o).",
-				  (unsigned long) memKey, (unsigned long) size,
-				  IPC_CREAT | IPC_EXCL | IPCProtection),
+		  errdetail("Failed system call was shmget(key=%lu, size=%lu, 0%o).",
+					(unsigned long) memKey, (unsigned long) size,
+					IPC_CREAT | IPC_EXCL | IPCProtection),
 				 (errno == EINVAL) ?
 				 errhint("This error usually means that PostgreSQL's request for a shared memory "
-						 "segment exceeded your kernel's SHMMAX parameter.  You can either "
+		  "segment exceeded your kernel's SHMMAX parameter.  You can either "
 						 "reduce the request size or reconfigure the kernel with larger SHMMAX.  "
-			   "To reduce the request size (currently %lu bytes), reduce "
-		   "PostgreSQL's shared_buffers parameter (currently %d) and/or "
+				  "To reduce the request size (currently %lu bytes), reduce "
+			   "PostgreSQL's shared_buffers parameter (currently %d) and/or "
 						 "its max_connections parameter (currently %d).\n"
 						 "If the request size is already small, it's possible that it is less than "
 						 "your kernel's SHMMIN parameter, in which case raising the request size or "
 						 "reconfiguring SHMMIN is called for.\n"
-						 "The PostgreSQL documentation contains more information about shared "
+		"The PostgreSQL documentation contains more information about shared "
 						 "memory configuration.",
 						 (unsigned long) size, NBuffers, MaxBackends) : 0,
 				 (errno == ENOMEM) ?
 				 errhint("This error usually means that PostgreSQL's request for a shared "
-			   "memory segment exceeded available memory or swap space. "
-			   "To reduce the request size (currently %lu bytes), reduce "
-		   "PostgreSQL's shared_buffers parameter (currently %d) and/or "
+				   "memory segment exceeded available memory or swap space. "
+				  "To reduce the request size (currently %lu bytes), reduce "
+			   "PostgreSQL's shared_buffers parameter (currently %d) and/or "
 						 "its max_connections parameter (currently %d).\n"
-						 "The PostgreSQL documentation contains more information about shared "
+		"The PostgreSQL documentation contains more information about shared "
 						 "memory configuration.",
 						 (unsigned long) size, NBuffers, MaxBackends) : 0,
 				 (errno == ENOSPC) ?
 				 errhint("This error does *not* mean that you have run out of disk space. "
 						 "It occurs either if all available shared memory IDs have been taken, "
 						 "in which case you need to raise the SHMMNI parameter in your kernel, "
-						 "or because the system's overall limit for shared memory has been "
-			 "reached.  If you cannot increase the shared memory limit, "
-		"reduce PostgreSQL's shared memory request (currently %lu bytes), "
-		"by reducing its shared_buffers parameter (currently %d) and/or "
+		  "or because the system's overall limit for shared memory has been "
+				 "reached.  If you cannot increase the shared memory limit, "
+		  "reduce PostgreSQL's shared memory request (currently %lu bytes), "
+			"by reducing its shared_buffers parameter (currently %d) and/or "
 						 "its max_connections parameter (currently %d).\n"
-						 "The PostgreSQL documentation contains more information about shared "
+		"The PostgreSQL documentation contains more information about shared "
 						 "memory configuration.",
 						 (unsigned long) size, NBuffers, MaxBackends) : 0));
 	}
@@ -187,7 +186,7 @@ IpcMemoryDelete(int status, Datum shmId)
  * Is a previously-existing shmem segment still existing and in use?
  *
  * The point of this exercise is to detect the case where a prior postmaster
- * crashed, but it left child backends that are still running.  Therefore
+ * crashed, but it left child backends that are still running.	Therefore
  * we only care about shmem segments that are associated with the intended
  * DataDir.  This is an important consideration since accidental matches of
  * shmem segment IDs are reasonably common.
@@ -197,35 +196,38 @@ PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2)
 {
 	IpcMemoryId shmId = (IpcMemoryId) id2;
 	struct shmid_ds shmStat;
+
 #ifndef WIN32
 	struct stat statbuf;
 	PGShmemHeader *hdr;
 #endif
 
 	/*
-	 * We detect whether a shared memory segment is in use by seeing
-	 * whether it (a) exists and (b) has any processes are attached to it.
+	 * We detect whether a shared memory segment is in use by seeing whether
+	 * it (a) exists and (b) has any processes are attached to it.
 	 */
 	if (shmctl(shmId, IPC_STAT, &shmStat) < 0)
 	{
 		/*
 		 * EINVAL actually has multiple possible causes documented in the
-		 * shmctl man page, but we assume it must mean the segment no
-		 * longer exists.
+		 * shmctl man page, but we assume it must mean the segment no longer
+		 * exists.
 		 */
 		if (errno == EINVAL)
 			return false;
+
 		/*
-		 * EACCES implies that the segment belongs to some other userid,
-		 * which means it is not a Postgres shmem segment (or at least,
-		 * not one that is relevant to our data directory).
+		 * EACCES implies that the segment belongs to some other userid, which
+		 * means it is not a Postgres shmem segment (or at least, not one that
+		 * is relevant to our data directory).
 		 */
 		if (errno == EACCES)
 			return false;
+
 		/*
-		 * Otherwise, we had better assume that the segment is in use.
-		 * The only likely case is EIDRM, which implies that the segment
-		 * has been IPC_RMID'd but there are still processes attached to it.
+		 * Otherwise, we had better assume that the segment is in use. The
+		 * only likely case is EIDRM, which implies that the segment has been
+		 * IPC_RMID'd but there are still processes attached to it.
 		 */
 		return true;
 	}
@@ -295,6 +297,7 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 	void	   *memAddress;
 	PGShmemHeader *hdr;
 	IpcMemoryId shmid;
+
 #ifndef WIN32
 	struct stat statbuf;
 #endif
@@ -338,11 +341,10 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 		}
 
 		/*
-		 * The segment appears to be from a dead Postgres process, or from
-		 * a previous cycle of life in this same process.  Zap it, if
-		 * possible.  This probably shouldn't fail, but if it does, assume
-		 * the segment belongs to someone else after all, and continue
-		 * quietly.
+		 * The segment appears to be from a dead Postgres process, or from a
+		 * previous cycle of life in this same process.  Zap it, if possible.
+		 * This probably shouldn't fail, but if it does, assume the segment
+		 * belongs to someone else after all, and continue quietly.
 		 */
 		shmdt(memAddress);
 		if (shmctl(shmid, IPC_RMID, NULL) < 0)
@@ -356,17 +358,16 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 			break;				/* successful create and attach */
 
 		/*
-		 * Can only get here if some other process managed to create the
-		 * same shmem key before we did.  Let him have that one, loop
-		 * around to try next key.
+		 * Can only get here if some other process managed to create the same
+		 * shmem key before we did.  Let him have that one, loop around to try
+		 * next key.
 		 */
 	}
 
 	/*
-	 * OK, we created a new segment.  Mark it as created by this process.
-	 * The order of assignments here is critical so that another Postgres
-	 * process can't see the header as valid but belonging to an invalid
-	 * PID!
+	 * OK, we created a new segment.  Mark it as created by this process. The
+	 * order of assignments here is critical so that another Postgres process
+	 * can't see the header as valid but belonging to an invalid PID!
 	 */
 	hdr = (PGShmemHeader *) memAddress;
 	hdr->creatorPID = getpid();
@@ -401,7 +402,7 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 /*
  * PGSharedMemoryReAttach
  *
- * Re-attach to an already existing shared memory segment.  In the non
+ * Re-attach to an already existing shared memory segment.	In the non
  * EXEC_BACKEND case this is not used, because postmaster children inherit
  * the shared memory segment attachment via fork().
  *
@@ -436,8 +437,7 @@ PGSharedMemoryReAttach(void)
 
 	UsedShmemSegAddr = hdr;		/* probably redundant */
 }
-
-#endif /* EXEC_BACKEND */
+#endif   /* EXEC_BACKEND */
 
 /*
  * PGSharedMemoryDetach

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.77 2005/09/02 19:02:20 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.78 2005/10/15 02:49:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,7 @@
  * and Cmin simultaneously, so this is no longer possible.
  *
  * A word about t_ctid: whenever a new tuple is stored on disk, its t_ctid
- * is initialized with its own TID (location).  If the tuple is ever updated,
+ * is initialized with its own TID (location).	If the tuple is ever updated,
  * its t_ctid is changed to point to the replacement version of the tuple.
  * Thus, a tuple is the latest version of its row iff XMAX is invalid or
  * t_ctid points to itself (in which case, if XMAX is valid, the tuple is
@@ -161,15 +161,13 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
  */
 #define HEAP_HASNULL			0x0001	/* has null attribute(s) */
 #define HEAP_HASVARWIDTH		0x0002	/* has variable-width attribute(s) */
-#define HEAP_HASEXTERNAL		0x0004	/* has external stored
-										 * attribute(s) */
-#define HEAP_HASCOMPRESSED		0x0008	/* has compressed stored
-										 * attribute(s) */
+#define HEAP_HASEXTERNAL		0x0004	/* has external stored attribute(s) */
+#define HEAP_HASCOMPRESSED		0x0008	/* has compressed stored attribute(s) */
 #define HEAP_HASEXTENDED		0x000C	/* the two above combined */
 #define HEAP_HASOID				0x0010	/* has an object-id field */
 /* 0x0020 is presently unused */
-#define HEAP_XMAX_EXCL_LOCK		0x0040  /* xmax is exclusive locker */
-#define HEAP_XMAX_SHARED_LOCK	0x0080  /* xmax is shared locker */
+#define HEAP_XMAX_EXCL_LOCK		0x0040	/* xmax is exclusive locker */
+#define HEAP_XMAX_SHARED_LOCK	0x0080	/* xmax is shared locker */
 /* if either LOCK bit is set, xmax hasn't deleted the tuple, only locked it */
 #define HEAP_IS_LOCKED	(HEAP_XMAX_EXCL_LOCK | HEAP_XMAX_SHARED_LOCK)
 #define HEAP_XMIN_COMMITTED		0x0100	/* t_xmin committed */
@@ -178,10 +176,10 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
 #define HEAP_XMAX_INVALID		0x0800	/* t_xmax invalid/aborted */
 #define HEAP_XMAX_IS_MULTI		0x1000	/* t_xmax is a MultiXactId */
 #define HEAP_UPDATED			0x2000	/* this is UPDATEd version of row */
-#define HEAP_MOVED_OFF			0x4000	/* moved to another place by
-										 * VACUUM FULL */
-#define HEAP_MOVED_IN			0x8000	/* moved from another place by
-										 * VACUUM FULL */
+#define HEAP_MOVED_OFF			0x4000	/* moved to another place by VACUUM
+										 * FULL */
+#define HEAP_MOVED_IN			0x8000	/* moved from another place by VACUUM
+										 * FULL */
 #define HEAP_MOVED (HEAP_MOVED_OFF | HEAP_MOVED_IN)
 
 #define HEAP_XACT_MASK			0xFFC0	/* visibility-related bits */
@@ -371,7 +369,7 @@ do { \
  * * Part of a palloc'd tuple: the HeapTupleData itself and the tuple
  *	 form a single palloc'd chunk.  t_data points to the memory location
  *	 immediately following the HeapTupleData struct (at offset HEAPTUPLESIZE),
- *	 and t_datamcxt is the containing context.  This is used as the output
+ *	 and t_datamcxt is the containing context.	This is used as the output
  *	 format of heap_form_tuple and related routines.
  *
  * * Separately allocated tuple: t_data points to a palloc'd chunk that

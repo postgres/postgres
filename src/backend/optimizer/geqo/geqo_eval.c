@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.76 2005/06/09 04:18:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.77 2005/10/15 02:49:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,15 +52,15 @@ geqo_eval(Gene *tour, int num_gene, GeqoEvalData *evaldata)
 	struct HTAB *savehash;
 
 	/*
-	 * Because gimme_tree considers both left- and right-sided trees,
-	 * there is no difference between a tour (a,b,c,d,...) and a tour
-	 * (b,a,c,d,...) --- the same join orders will be considered. To avoid
-	 * redundant cost calculations, we simply reject tours where tour[0] >
-	 * tour[1], assigning them an artificially bad fitness.
+	 * Because gimme_tree considers both left- and right-sided trees, there is
+	 * no difference between a tour (a,b,c,d,...) and a tour (b,a,c,d,...) ---
+	 * the same join orders will be considered. To avoid redundant cost
+	 * calculations, we simply reject tours where tour[0] > tour[1], assigning
+	 * them an artificially bad fitness.
 	 *
 	 * init_tour() is aware of this rule and so we should never reject a tour
-	 * during the initial filling of the pool.	It seems difficult to
-	 * persuade the recombination logic never to break the rule, however.
+	 * during the initial filling of the pool.	It seems difficult to persuade
+	 * the recombination logic never to break the rule, however.
 	 */
 	if (num_gene >= 2 && tour[0] > tour[1])
 		return DBL_MAX;
@@ -69,10 +69,10 @@ geqo_eval(Gene *tour, int num_gene, GeqoEvalData *evaldata)
 	 * Create a private memory context that will hold all temp storage
 	 * allocated inside gimme_tree().
 	 *
-	 * Since geqo_eval() will be called many times, we can't afford to let
-	 * all that memory go unreclaimed until end of statement.  Note we
-	 * make the temp context a child of the planner's normal context, so
-	 * that it will be freed even if we abort via ereport(ERROR).
+	 * Since geqo_eval() will be called many times, we can't afford to let all
+	 * that memory go unreclaimed until end of statement.  Note we make the
+	 * temp context a child of the planner's normal context, so that it will
+	 * be freed even if we abort via ereport(ERROR).
 	 */
 	mycontext = AllocSetContextCreate(CurrentMemoryContext,
 									  "GEQO",
@@ -84,15 +84,15 @@ geqo_eval(Gene *tour, int num_gene, GeqoEvalData *evaldata)
 	/*
 	 * gimme_tree will add entries to root->join_rel_list, which may or may
 	 * not already contain some entries.  The newly added entries will be
-	 * recycled by the MemoryContextDelete below, so we must ensure that
-	 * the list is restored to its former state before exiting.  We can
-	 * do this by truncating the list to its original length.  NOTE this
-	 * assumes that any added entries are appended at the end!
+	 * recycled by the MemoryContextDelete below, so we must ensure that the
+	 * list is restored to its former state before exiting.  We can do this by
+	 * truncating the list to its original length.	NOTE this assumes that any
+	 * added entries are appended at the end!
 	 *
-	 * We also must take care not to mess up the outer join_rel_hash,
-	 * if there is one.  We can do this by just temporarily setting the
-	 * link to NULL.  (If we are dealing with enough join rels, which we
-	 * very likely are, a new hash table will get built and used locally.)
+	 * We also must take care not to mess up the outer join_rel_hash, if there is
+	 * one.  We can do this by just temporarily setting the link to NULL.  (If
+	 * we are dealing with enough join rels, which we very likely are, a new
+	 * hash table will get built and used locally.)
 	 */
 	savelength = list_length(evaldata->root->join_rel_list);
 	savehash = evaldata->root->join_rel_hash;
@@ -170,23 +170,22 @@ gimme_tree(Gene *tour, int num_gene, GeqoEvalData *evaldata)
 	 * Push each relation onto the stack in the specified order.  After
 	 * pushing each relation, see whether the top two stack entries are
 	 * joinable according to the desirable_join() heuristics.  If so, join
-	 * them into one stack entry, and try again to combine with the next
-	 * stack entry down (if any).  When the stack top is no longer
-	 * joinable, continue to the next input relation.  After we have
-	 * pushed the last input relation, the heuristics are disabled and we
-	 * force joining all the remaining stack entries.
+	 * them into one stack entry, and try again to combine with the next stack
+	 * entry down (if any).  When the stack top is no longer joinable,
+	 * continue to the next input relation.  After we have pushed the last
+	 * input relation, the heuristics are disabled and we force joining all
+	 * the remaining stack entries.
 	 *
 	 * If desirable_join() always returns true, this produces a straight
-	 * left-to-right join just like the old code.  Otherwise we may
-	 * produce a bushy plan or a left/right-sided plan that really
-	 * corresponds to some tour other than the one given.  To the extent
-	 * that the heuristics are helpful, however, this will be a better
-	 * plan than the raw tour.
+	 * left-to-right join just like the old code.  Otherwise we may produce a
+	 * bushy plan or a left/right-sided plan that really corresponds to some
+	 * tour other than the one given.  To the extent that the heuristics are
+	 * helpful, however, this will be a better plan than the raw tour.
 	 *
-	 * Also, when a join attempt fails (because of IN-clause constraints), we
-	 * may be able to recover and produce a workable plan, where the old
-	 * code just had to give up.  This case acts the same as a false
-	 * result from desirable_join().
+	 * Also, when a join attempt fails (because of IN-clause constraints), we may
+	 * be able to recover and produce a workable plan, where the old code just
+	 * had to give up.	This case acts the same as a false result from
+	 * desirable_join().
 	 */
 	for (rel_count = 0; rel_count < num_gene; rel_count++)
 	{
@@ -199,8 +198,8 @@ gimme_tree(Gene *tour, int num_gene, GeqoEvalData *evaldata)
 		stack_depth++;
 
 		/*
-		 * While it's feasible, pop the top two stack entries and replace
-		 * with their join.
+		 * While it's feasible, pop the top two stack entries and replace with
+		 * their join.
 		 */
 		while (stack_depth >= 2)
 		{
@@ -208,20 +207,18 @@ gimme_tree(Gene *tour, int num_gene, GeqoEvalData *evaldata)
 			RelOptInfo *inner_rel = stack[stack_depth - 1];
 
 			/*
-			 * Don't pop if heuristics say not to join now.  However, once
-			 * we have exhausted the input, the heuristics can't prevent
-			 * popping.
+			 * Don't pop if heuristics say not to join now.  However, once we
+			 * have exhausted the input, the heuristics can't prevent popping.
 			 */
 			if (rel_count < num_gene - 1 &&
 				!desirable_join(evaldata->root, outer_rel, inner_rel))
 				break;
 
 			/*
-			 * Construct a RelOptInfo representing the join of these two
-			 * input relations.  These are always inner joins. Note that
-			 * we expect the joinrel not to exist in root->join_rel_list
-			 * yet, and so the paths constructed for it will only include
-			 * the ones we want.
+			 * Construct a RelOptInfo representing the join of these two input
+			 * relations.  These are always inner joins. Note that we expect
+			 * the joinrel not to exist in root->join_rel_list yet, and so the
+			 * paths constructed for it will only include the ones we want.
 			 */
 			joinrel = make_join_rel(evaldata->root, outer_rel, inner_rel,
 									JOIN_INNER);
@@ -266,9 +263,9 @@ desirable_join(PlannerInfo *root,
 		return true;
 
 	/*
-	 * Join if the rels are members of the same IN sub-select.	This is
-	 * needed to improve the odds that we will find a valid solution in a
-	 * case where an IN sub-select has a clauseless join.
+	 * Join if the rels are members of the same IN sub-select.	This is needed
+	 * to improve the odds that we will find a valid solution in a case where
+	 * an IN sub-select has a clauseless join.
 	 */
 	foreach(l, root->in_info_list)
 	{

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/libpq/crypt.c,v 1.65 2005/08/15 02:40:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/libpq/crypt.c,v 1.66 2005/10/15 02:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,9 +148,9 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass)
 			TimestampTz vuntil;
 
 			vuntil = DatumGetTimestampTz(DirectFunctionCall3(timestamptz_in,
-								CStringGetDatum(valuntil),
-								ObjectIdGetDatum(InvalidOid),
-								Int32GetDatum(-1)));
+												   CStringGetDatum(valuntil),
+												ObjectIdGetDatum(InvalidOid),
+														 Int32GetDatum(-1)));
 
 			if (vuntil < GetCurrentTimestamp())
 				retval = STATUS_ERROR;

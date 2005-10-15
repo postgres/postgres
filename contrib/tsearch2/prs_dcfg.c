@@ -73,8 +73,8 @@ parse_cfgdict(text *in, Map ** m)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("syntax error"),
-					 errdetail("Syntax error in position %d near \"%c\"",
-							   (int) (ptr - VARDATA(in)), *ptr)));
+						 errdetail("Syntax error in position %d near \"%c\"",
+								   (int) (ptr - VARDATA(in)), *ptr)));
 		}
 		else if (state == CS_INKEY)
 		{
@@ -92,8 +92,8 @@ parse_cfgdict(text *in, Map ** m)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("syntax error"),
-					 errdetail("Syntax error in position %d near \"%c\"",
-							   (int) (ptr - VARDATA(in)), *ptr)));
+						 errdetail("Syntax error in position %d near \"%c\"",
+								   (int) (ptr - VARDATA(in)), *ptr)));
 		}
 		else if (state == CS_WAITEQ)
 		{
@@ -103,8 +103,8 @@ parse_cfgdict(text *in, Map ** m)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("syntax error"),
-					 errdetail("Syntax error in position %d near \"%c\"",
-							   (int) (ptr - VARDATA(in)), *ptr)));
+						 errdetail("Syntax error in position %d near \"%c\"",
+								   (int) (ptr - VARDATA(in)), *ptr)));
 		}
 		else if (state == CS_WAITVALUE)
 		{
@@ -149,8 +149,8 @@ parse_cfgdict(text *in, Map ** m)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("syntax error"),
-					 errdetail("Syntax error in position %d near \"%c\"",
-							   (int) (ptr - VARDATA(in)), *ptr)));
+						 errdetail("Syntax error in position %d near \"%c\"",
+								   (int) (ptr - VARDATA(in)), *ptr)));
 		}
 		else if (state == CS_INESC)
 			state = CS_INVALUE;

@@ -56,7 +56,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.94 2005/08/11 13:22:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.95 2005/10/15 02:49:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,12 +99,10 @@ typedef struct BTPageState
 {
 	Page		btps_page;		/* workspace for page building */
 	BlockNumber btps_blkno;		/* block # to write this page at */
-	BTItem		btps_minkey;	/* copy of minimum key (first item) on
-								 * page */
+	BTItem		btps_minkey;	/* copy of minimum key (first item) on page */
 	OffsetNumber btps_lastoff;	/* last item offset loaded */
 	uint32		btps_level;		/* tree level (0 = leaf) */
-	Size		btps_full;		/* "full" if less than this much free
-								 * space */
+	Size		btps_full;		/* "full" if less than this much free space */
 	struct BTPageState *btps_next;		/* link to parent level, if any */
 } BTPageState;
 
@@ -157,21 +155,21 @@ _bt_spoolinit(Relation index, bool isunique, bool isdead)
 	btspool->isunique = isunique;
 
 	/*
-	 * We size the sort area as maintenance_work_mem rather than work_mem
-	 * to speed index creation.  This should be OK since a single backend
-	 * can't run multiple index creations in parallel.  Note that creation
-	 * of a unique index actually requires two BTSpool objects.  We expect
-	 * that the second one (for dead tuples) won't get very full, so we
-	 * give it only work_mem.
+	 * We size the sort area as maintenance_work_mem rather than work_mem to
+	 * speed index creation.  This should be OK since a single backend can't
+	 * run multiple index creations in parallel.  Note that creation of a
+	 * unique index actually requires two BTSpool objects.	We expect that the
+	 * second one (for dead tuples) won't get very full, so we give it only
+	 * work_mem.
 	 */
 	btKbytes = isdead ? work_mem : maintenance_work_mem;
 	btspool->sortstate = tuplesort_begin_index(index, isunique,
 											   btKbytes, false);
 
 	/*
-	 * Currently, tuplesort provides sort functions on IndexTuples. If we
-	 * kept anything in a BTItem other than a regular IndexTuple, we'd
-	 * need to modify tuplesort to understand BTItems as such.
+	 * Currently, tuplesort provides sort functions on IndexTuples. If we kept
+	 * anything in a BTItem other than a regular IndexTuple, we'd need to
+	 * modify tuplesort to understand BTItems as such.
 	 */
 	Assert(sizeof(BTItemData) == sizeof(IndexTupleData));
 
@@ -222,8 +220,8 @@ _bt_leafbuild(BTSpool *btspool, BTSpool *btspool2)
 	wstate.index = btspool->index;
 
 	/*
-	 * We need to log index creation in WAL iff WAL archiving is enabled
-	 * AND it's not a temp index.
+	 * We need to log index creation in WAL iff WAL archiving is enabled AND
+	 * it's not a temp index.
 	 */
 	wstate.btws_use_wal = XLogArchivingActive() && !wstate.index->rd_istemp;
 
@@ -313,9 +311,9 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 	/*
 	 * If we have to write pages nonsequentially, fill in the space with
 	 * zeroes until we come back and overwrite.  This is not logically
-	 * necessary on standard Unix filesystems (unwritten space will read
-	 * as zeroes anyway), but it should help to avoid fragmentation. The
-	 * dummy pages aren't WAL-logged though.
+	 * necessary on standard Unix filesystems (unwritten space will read as
+	 * zeroes anyway), but it should help to avoid fragmentation. The dummy
+	 * pages aren't WAL-logged though.
 	 */
 	while (blkno > wstate->btws_pages_written)
 	{
@@ -328,8 +326,8 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 
 	/*
 	 * Now write the page.	We say isTemp = true even if it's not a temp
-	 * index, because there's no need for smgr to schedule an fsync for
-	 * this write; we'll do it ourselves before ending the build.
+	 * index, because there's no need for smgr to schedule an fsync for this
+	 * write; we'll do it ourselves before ending the build.
 	 */
 	smgrwrite(wstate->index->rd_smgr, blkno, (char *) page, true);
 
@@ -483,15 +481,15 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, BTItem bti)
 	btisz = MAXALIGN(btisz);
 
 	/*
-	 * Check whether the item can fit on a btree page at all. (Eventually,
-	 * we ought to try to apply TOAST methods if not.) We actually need to
-	 * be able to fit three items on every page, so restrict any one item
-	 * to 1/3 the per-page available space. Note that at this point, btisz
-	 * doesn't include the ItemId.
+	 * Check whether the item can fit on a btree page at all. (Eventually, we
+	 * ought to try to apply TOAST methods if not.) We actually need to be
+	 * able to fit three items on every page, so restrict any one item to 1/3
+	 * the per-page available space. Note that at this point, btisz doesn't
+	 * include the ItemId.
 	 *
-	 * NOTE: similar code appears in _bt_insertonpg() to defend against
-	 * oversize items being inserted into an already-existing index. But
-	 * during creation of an index, we don't go through there.
+	 * NOTE: similar code appears in _bt_insertonpg() to defend against oversize
+	 * items being inserted into an already-existing index. But during
+	 * creation of an index, we don't go through there.
 	 */
 	if (btisz > BTMaxItemSize(npage))
 		ereport(ERROR,
@@ -499,9 +497,9 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, BTItem bti)
 				 errmsg("index row size %lu exceeds btree maximum, %lu",
 						(unsigned long) btisz,
 						(unsigned long) BTMaxItemSize(npage)),
-				 errhint("Values larger than 1/3 of a buffer page cannot be indexed.\n"
-						 "Consider a function index of an MD5 hash of the value, "
-						 "or use full text indexing.")));
+		errhint("Values larger than 1/3 of a buffer page cannot be indexed.\n"
+				"Consider a function index of an MD5 hash of the value, "
+				"or use full text indexing.")));
 
 	if (pgspc < btisz || pgspc < state->btps_full)
 	{
@@ -523,11 +521,11 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, BTItem bti)
 
 		/*
 		 * We copy the last item on the page into the new page, and then
-		 * rearrange the old page so that the 'last item' becomes its high
-		 * key rather than a true data item.  There had better be at least
-		 * two items on the page already, else the page would be empty of
-		 * useful data.  (Hence, we must allow pages to be packed at least
-		 * 2/3rds full; the 70% figure used above is close to minimum.)
+		 * rearrange the old page so that the 'last item' becomes its high key
+		 * rather than a true data item.  There had better be at least two
+		 * items on the page already, else the page would be empty of useful
+		 * data.  (Hence, we must allow pages to be packed at least 2/3rds
+		 * full; the 70% figure used above is close to minimum.)
 		 */
 		Assert(last_off > P_FIRSTKEY);
 		ii = PageGetItemId(opage, last_off);
@@ -544,8 +542,8 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, BTItem bti)
 
 		/*
 		 * Link the old page into its parent, using its minimum key. If we
-		 * don't have a parent, we have to create one; this adds a new
-		 * btree level.
+		 * don't have a parent, we have to create one; this adds a new btree
+		 * level.
 		 */
 		if (state->btps_next == NULL)
 			state->btps_next = _bt_pagestate(wstate, state->btps_level + 1);
@@ -557,9 +555,9 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, BTItem bti)
 		pfree(state->btps_minkey);
 
 		/*
-		 * Save a copy of the minimum key for the new page.  We have to
-		 * copy it off the old page, not the new one, in case we are not
-		 * at leaf level.
+		 * Save a copy of the minimum key for the new page.  We have to copy
+		 * it off the old page, not the new one, in case we are not at leaf
+		 * level.
 		 */
 		state->btps_minkey = _bt_formitem(&(obti->bti_itup));
 
@@ -576,8 +574,8 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, BTItem bti)
 		}
 
 		/*
-		 * Write out the old page.	We never need to touch it again, so we
-		 * can free the opage workspace too.
+		 * Write out the old page.	We never need to touch it again, so we can
+		 * free the opage workspace too.
 		 */
 		_bt_blwritepage(wstate, opage, oblkno);
 
@@ -588,10 +586,10 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, BTItem bti)
 	}
 
 	/*
-	 * If the new item is the first for its page, stash a copy for later.
-	 * Note this will only happen for the first item on a level; on later
-	 * pages, the first item for a page is copied from the prior page in
-	 * the code above.
+	 * If the new item is the first for its page, stash a copy for later. Note
+	 * this will only happen for the first item on a level; on later pages,
+	 * the first item for a page is copied from the prior page in the code
+	 * above.
 	 */
 	if (last_off == P_HIKEY)
 	{
@@ -636,9 +634,9 @@ _bt_uppershutdown(BTWriteState *wstate, BTPageState *state)
 		 * We have to link the last page on this level to somewhere.
 		 *
 		 * If we're at the top, it's the root, so attach it to the metapage.
-		 * Otherwise, add an entry for it to its parent using its minimum
-		 * key.  This may cause the last page of the parent level to
-		 * split, but that's not a problem -- we haven't gotten to it yet.
+		 * Otherwise, add an entry for it to its parent using its minimum key.
+		 * This may cause the last page of the parent level to split, but
+		 * that's not a problem -- we haven't gotten to it yet.
 		 */
 		if (s->btps_next == NULL)
 		{
@@ -657,8 +655,8 @@ _bt_uppershutdown(BTWriteState *wstate, BTPageState *state)
 		}
 
 		/*
-		 * This is the rightmost page, so the ItemId array needs to be
-		 * slid back one slot.	Then we can dump out the page.
+		 * This is the rightmost page, so the ItemId array needs to be slid
+		 * back one slot.  Then we can dump out the page.
 		 */
 		_bt_slideleft(s->btps_page);
 		_bt_blwritepage(wstate, s->btps_page, s->btps_blkno);
@@ -667,9 +665,9 @@ _bt_uppershutdown(BTWriteState *wstate, BTPageState *state)
 
 	/*
 	 * As the last step in the process, construct the metapage and make it
-	 * point to the new root (unless we had no data at all, in which case
-	 * it's set to point to "P_NONE").  This changes the index to the
-	 * "valid" state by filling in a valid magic number in the metapage.
+	 * point to the new root (unless we had no data at all, in which case it's
+	 * set to point to "P_NONE").  This changes the index to the "valid" state
+	 * by filling in a valid magic number in the metapage.
 	 */
 	metapage = (Page) palloc(BLCKSZ);
 	_bt_initmetapage(metapage, rootblkno, rootlevel);
@@ -748,7 +746,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 
 						compare = DatumGetInt32(FunctionCall2(&entry->sk_func,
 															  attrDatum1,
-															attrDatum2));
+															  attrDatum2));
 						if (compare > 0)
 						{
 							load1 = false;
@@ -772,7 +770,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 				if (should_free)
 					pfree(bti);
 				bti = (BTItem) tuplesort_getindextuple(btspool->sortstate,
-													 true, &should_free);
+													   true, &should_free);
 			}
 			else
 			{
@@ -780,7 +778,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 				if (should_free2)
 					pfree(bti2);
 				bti2 = (BTItem) tuplesort_getindextuple(btspool2->sortstate,
-													true, &should_free2);
+														true, &should_free2);
 			}
 		}
 		_bt_freeskey(indexScanKey);
@@ -789,7 +787,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 	{
 		/* merge is unnecessary */
 		while ((bti = (BTItem) tuplesort_getindextuple(btspool->sortstate,
-											true, &should_free)) != NULL)
+												true, &should_free)) != NULL)
 		{
 			/* When we see first tuple, create first index page */
 			if (state == NULL)
@@ -805,19 +803,19 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 	_bt_uppershutdown(wstate, state);
 
 	/*
-	 * If the index isn't temp, we must fsync it down to disk before it's
-	 * safe to commit the transaction.	(For a temp index we don't care
-	 * since the index will be uninteresting after a crash anyway.)
+	 * If the index isn't temp, we must fsync it down to disk before it's safe
+	 * to commit the transaction.  (For a temp index we don't care since the
+	 * index will be uninteresting after a crash anyway.)
 	 *
 	 * It's obvious that we must do this when not WAL-logging the build. It's
 	 * less obvious that we have to do it even if we did WAL-log the index
-	 * pages.  The reason is that since we're building outside shared
-	 * buffers, a CHECKPOINT occurring during the build has no way to
-	 * flush the previously written data to disk (indeed it won't know the
-	 * index even exists).	A crash later on would replay WAL from the
-	 * checkpoint, therefore it wouldn't replay our earlier WAL entries.
-	 * If we do not fsync those pages here, they might still not be on
-	 * disk when the crash occurs.
+	 * pages.  The reason is that since we're building outside shared buffers,
+	 * a CHECKPOINT occurring during the build has no way to flush the
+	 * previously written data to disk (indeed it won't know the index even
+	 * exists).  A crash later on would replay WAL from the checkpoint,
+	 * therefore it wouldn't replay our earlier WAL entries. If we do not
+	 * fsync those pages here, they might still not be on disk when the crash
+	 * occurs.
 	 */
 	if (!wstate->index->rd_istemp)
 		smgrimmedsync(wstate->index->rd_smgr);

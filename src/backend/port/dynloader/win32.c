@@ -1,31 +1,32 @@
-/* $PostgreSQL: pgsql/src/backend/port/dynloader/win32.c,v 1.6 2005/08/12 21:23:10 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/backend/port/dynloader/win32.c,v 1.7 2005/10/15 02:49:23 momjian Exp $ */
 
 #include <windows.h>
 #include <stdio.h>
 
-char *dlerror(void);
-int dlclose(void *handle);
-void *dlsym(void *handle, const char *symbol);
-void *dlopen(const char *path, int mode);
+char	   *dlerror(void);
+int			dlclose(void *handle);
+void	   *dlsym(void *handle, const char *symbol);
+void	   *dlopen(const char *path, int mode);
 
 static char last_dyn_error[512];
 
-static void set_dl_error(void)
+static void
+set_dl_error(void)
 {
-	DWORD err = GetLastError();
+	DWORD		err = GetLastError();
 
 	if (FormatMessage(FORMAT_MESSAGE_IGNORE_INSERTS |
-				FORMAT_MESSAGE_FROM_SYSTEM,
-				NULL,
-				err,
-				MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-				last_dyn_error,
-				sizeof(last_dyn_error)-1,
-				NULL) == 0)
+					  FORMAT_MESSAGE_FROM_SYSTEM,
+					  NULL,
+					  err,
+					  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+					  last_dyn_error,
+					  sizeof(last_dyn_error) - 1,
+					  NULL) == 0)
 	{
-		snprintf(last_dyn_error, sizeof(last_dyn_error)-1,
-				"unknown error %lu", err);
-	}	
+		snprintf(last_dyn_error, sizeof(last_dyn_error) - 1,
+				 "unknown error %lu", err);
+	}
 }
 
 char *
@@ -52,9 +53,10 @@ dlclose(void *handle)
 void *
 dlsym(void *handle, const char *symbol)
 {
-	void *ptr;
+	void	   *ptr;
+
 	ptr = GetProcAddress((HMODULE) handle, symbol);
-	if (!ptr) 
+	if (!ptr)
 	{
 		set_dl_error();
 		return NULL;
@@ -66,15 +68,15 @@ dlsym(void *handle, const char *symbol)
 void *
 dlopen(const char *path, int mode)
 {
-	HMODULE h;
-	int prevmode;
+	HMODULE		h;
+	int			prevmode;
 
 	/* Disable popup error messages when loading DLLs */
 	prevmode = SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
 	h = LoadLibrary(path);
 	SetErrorMode(prevmode);
-	
-	if (!h) 
+
+	if (!h)
 	{
 		set_dl_error();
 		return NULL;

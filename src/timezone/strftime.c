@@ -15,7 +15,7 @@
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/strftime.c,v 1.7 2005/06/20 08:00:51 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/strftime.c,v 1.8 2005/10/15 02:49:51 momjian Exp $
  */
 
 #include "postgres.h"
@@ -73,9 +73,9 @@ static const struct lc_time_T C_time_locale = {
 	/*
 	 * c_fmt
 	 *
-	 * C99 requires this format. Previously this code used "%D %X", but we
-	 * now conform to C99. Note that "%a %b %d %H:%M:%S %Y" is used by
-	 * Solaris 2.3.
+	 * C99 requires this format. Previously this code used "%D %X", but we now
+	 * conform to C99. Note that "%a %b %d %H:%M:%S %Y" is used by Solaris
+	 * 2.3.
 	 */
 	"%a %b %e %T %Y",
 
@@ -102,7 +102,7 @@ static char *_fmt(const char *, const struct pg_tm *, char *,
 
 size_t
 pg_strftime(char *s, size_t maxsize, const char *format,
-			const struct pg_tm *t)
+			const struct pg_tm * t)
 {
 	char	   *p;
 	int			warn;
@@ -116,7 +116,7 @@ pg_strftime(char *s, size_t maxsize, const char *format,
 }
 
 static char *
-_fmt(const char *format, const struct pg_tm *t, char *pt, const char *ptlim,
+_fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim,
 	 int *warnp)
 {
 	for (; *format; ++format)
@@ -185,9 +185,9 @@ _fmt(const char *format, const struct pg_tm *t, char *pt, const char *ptlim,
 				case 'O':
 
 					/*
-					 * C99 locale modifiers. The sequences	%Ec %EC %Ex
-					 * %EX %Ey %EY	%Od %oe %OH %OI %Om %OM  %OS %Ou %OU
-					 * %OV %Ow %OW %Oy are supposed to provide alternate
+					 * C99 locale modifiers. The sequences	%Ec %EC %Ex %EX
+					 * %Ey %EY	%Od %oe %OH %OI %Om %OM  %OS %Ou %OU %OV %Ow
+					 * %OW %Oy are supposed to provide alternate
 					 * representations.
 					 */
 					goto label;
@@ -211,11 +211,11 @@ _fmt(const char *format, const struct pg_tm *t, char *pt, const char *ptlim,
 				case 'k':
 
 					/*
-					 * This used to be...  _conv(t->tm_hour % 12 ?
-					 * t->tm_hour % 12 : 12, 2, ' '); ...and has been
-					 * changed to the below to match SunOS 4.1.1 and
-					 * Arnold Robbins' strftime version 3.0.  That is,
-					 * "%k" and "%l" have been swapped. (ado, 1993-05-24)
+					 * This used to be...  _conv(t->tm_hour % 12 ? t->tm_hour
+					 * % 12 : 12, 2, ' '); ...and has been changed to the
+					 * below to match SunOS 4.1.1 and Arnold Robbins' strftime
+					 * version 3.0.  That is, "%k" and "%l" have been swapped.
+					 * (ado, 1993-05-24)
 					 */
 					pt = _conv(t->tm_hour, "%2d", pt, ptlim);
 					continue;
@@ -231,11 +231,10 @@ _fmt(const char *format, const struct pg_tm *t, char *pt, const char *ptlim,
 				case 'l':
 
 					/*
-					 * This used to be...  _conv(t->tm_hour, 2, ' ');
-					 * ...and has been changed to the below to match SunOS
-					 * 4.1.1 and Arnold Robbin's strftime version 3.0.
-					 * That is, "%k" and "%l" have been swapped. (ado,
-					 * 1993-05-24)
+					 * This used to be...  _conv(t->tm_hour, 2, ' '); ...and
+					 * has been changed to the below to match SunOS 4.1.1 and
+					 * Arnold Robbin's strftime version 3.0. That is, "%k" and
+					 * "%l" have been swapped. (ado, 1993-05-24)
 					 */
 					pt = _conv((t->tm_hour % 12) ?
 							   (t->tm_hour % 12) : 12,
@@ -279,9 +278,9 @@ _fmt(const char *format, const struct pg_tm *t, char *pt, const char *ptlim,
 				case 'u':
 
 					/*
-					 * From Arnold Robbins' strftime version 3.0: "ISO
-					 * 8601: Weekday as a decimal number [1 (Monday) - 7]"
-					 * (ado, 1993-05-24)
+					 * From Arnold Robbins' strftime version 3.0: "ISO 8601:
+					 * Weekday as a decimal number [1 (Monday) - 7]" (ado,
+					 * 1993-05-24)
 					 */
 					pt = _conv((t->tm_wday == 0) ?
 							   DAYSPERWEEK : t->tm_wday,
@@ -328,8 +327,8 @@ _fmt(const char *format, const struct pg_tm *t, char *pt, const char *ptlim,
 								DAYSPERNYEAR;
 
 							/*
-							 * What yday (-3 ... 3) does the ISO year
-							 * begin on?
+							 * What yday (-3 ... 3) does the ISO year begin
+							 * on?
 							 */
 							bot = ((yday + 11 - wday) %
 								   DAYSPERWEEK) - 3;
@@ -419,8 +418,8 @@ _fmt(const char *format, const struct pg_tm *t, char *pt, const char *ptlim,
 						pt = _add(t->tm_zone, pt, ptlim);
 
 					/*
-					 * C99 says that %Z must be replaced by the empty
-					 * string if the time zone is not determinable.
+					 * C99 says that %Z must be replaced by the empty string
+					 * if the time zone is not determinable.
 					 */
 					continue;
 				case 'z':

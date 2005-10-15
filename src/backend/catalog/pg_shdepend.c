@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.2 2005/08/30 01:07:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.3 2005/10/15 02:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,22 +36,22 @@ typedef enum
 } objectType;
 
 static int getOidListDiff(Oid *list1, int nlist1, Oid *list2, int nlist2,
-						  Oid **diff);
-static Oid classIdGetDbId(Oid classId);
+			   Oid **diff);
+static Oid	classIdGetDbId(Oid classId);
 static void shdepLockAndCheckObject(Oid classId, Oid objectId);
 static void shdepChangeDep(Relation sdepRel, Oid classid, Oid objid,
-						   Oid refclassid, Oid refobjid,
-						   SharedDependencyType deptype);
+			   Oid refclassid, Oid refobjid,
+			   SharedDependencyType deptype);
 static void shdepAddDependency(Relation sdepRel, Oid classId, Oid objectId,
-							   Oid refclassId, Oid refobjId,
-							   SharedDependencyType deptype);
+				   Oid refclassId, Oid refobjId,
+				   SharedDependencyType deptype);
 static void shdepDropDependency(Relation sdepRel, Oid classId, Oid objectId,
-							   Oid refclassId, Oid refobjId,
-							   SharedDependencyType deptype);
+					Oid refclassId, Oid refobjId,
+					SharedDependencyType deptype);
 static void storeObjectDescription(StringInfo descs, objectType type,
-								   ObjectAddress *object,
-								   SharedDependencyType deptype,
-								   int count);
+					   ObjectAddress *object,
+					   SharedDependencyType deptype,
+					   int count);
 static bool isSharedObjectPinned(Oid classId, Oid objectId, Relation sdepRel);
 
 
@@ -70,7 +70,7 @@ static bool isSharedObjectPinned(Oid classId, Oid objectId, Relation sdepRel);
  */
 void
 recordSharedDependencyOn(ObjectAddress *depender,
-					     ObjectAddress *referenced,
+						 ObjectAddress *referenced,
 						 SharedDependencyType deptype)
 {
 	Relation	sdepRel;
@@ -95,7 +95,7 @@ recordSharedDependencyOn(ObjectAddress *depender,
 							  sdepRel))
 	{
 		shdepAddDependency(sdepRel, depender->classId, depender->objectId,
-	   					   referenced->classId, referenced->objectId,
+						   referenced->classId, referenced->objectId,
 						   deptype);
 	}
 
@@ -132,11 +132,11 @@ recordDependencyOnOwner(Oid classId, Oid objectId, Oid owner)
  * shdepChangeDep
  *
  * Update shared dependency records to account for an updated referenced
- * object.  This is an internal workhorse for operations such as changing
+ * object.	This is an internal workhorse for operations such as changing
  * an object's owner.
  *
  * There must be no more than one existing entry for the given dependent
- * object and dependency type!  So in practice this can only be used for
+ * object and dependency type!	So in practice this can only be used for
  * updating SHARED_DEPENDENCY_OWNER entries, which should have that property.
  *
  * If there is no previous entry, we assume it was referencing a PINned
@@ -154,12 +154,12 @@ shdepChangeDep(Relation sdepRel, Oid classid, Oid objid,
 	Oid			dbid = classIdGetDbId(classid);
 	HeapTuple	oldtup = NULL;
 	HeapTuple	scantup;
-	ScanKeyData	key[3];
-	SysScanDesc	scan;
+	ScanKeyData key[3];
+	SysScanDesc scan;
 
 	/*
-	 * Make sure the new referenced object doesn't go away while we record
-	 * the dependency.
+	 * Make sure the new referenced object doesn't go away while we record the
+	 * dependency.
 	 */
 	shdepLockAndCheckObject(refclassid, refobjid);
 
@@ -167,11 +167,11 @@ shdepChangeDep(Relation sdepRel, Oid classid, Oid objid,
 	 * Look for a previous entry
 	 */
 	ScanKeyInit(&key[0],
-			    Anum_pg_shdepend_dbid,
+				Anum_pg_shdepend_dbid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(dbid));
 	ScanKeyInit(&key[1],
-			    Anum_pg_shdepend_classid,
+				Anum_pg_shdepend_classid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(classid));
 	ScanKeyInit(&key[2],
@@ -181,7 +181,7 @@ shdepChangeDep(Relation sdepRel, Oid classid, Oid objid,
 
 	scan = systable_beginscan(sdepRel, SharedDependDependerIndexId, true,
 							  SnapshotNow, 3, key);
-	
+
 	while ((scantup = systable_getnext(scan)) != NULL)
 	{
 		/* Ignore if not of the target dependency type */
@@ -220,8 +220,8 @@ shdepChangeDep(Relation sdepRel, Oid classid, Oid objid,
 	else
 	{
 		/* Need to insert new entry */
-		Datum	values[Natts_pg_shdepend];
-		bool	nulls[Natts_pg_shdepend];
+		Datum		values[Natts_pg_shdepend];
+		bool		nulls[Natts_pg_shdepend];
 
 		memset(nulls, 0, sizeof(nulls));
 
@@ -234,8 +234,8 @@ shdepChangeDep(Relation sdepRel, Oid classid, Oid objid,
 		values[Anum_pg_shdepend_deptype - 1] = CharGetDatum(deptype);
 
 		/*
-		 * we are reusing oldtup just to avoid declaring a new variable,
-		 * but it's certainly a new tuple
+		 * we are reusing oldtup just to avoid declaring a new variable, but
+		 * it's certainly a new tuple
 		 */
 		oldtup = heap_form_tuple(RelationGetDescr(sdepRel), values, nulls);
 		simple_heap_insert(sdepRel, oldtup);
@@ -271,7 +271,7 @@ changeDependencyOnOwner(Oid classId, Oid objectId, Oid newOwnerId)
 	 * was previously granted some rights to the object.
 	 *
 	 * This step is analogous to aclnewowner's removal of duplicate entries
-	 * in the ACL.  We have to do it to handle this scenario:
+	 * in the ACL.	We have to do it to handle this scenario:
 	 *		A grants some rights on an object to B
 	 *		ALTER OWNER changes the object's owner to B
 	 *		ALTER OWNER changes the object's owner to C
@@ -296,7 +296,7 @@ changeDependencyOnOwner(Oid classId, Oid objectId, Oid newOwnerId)
  *		Helper for updateAclDependencies.
  *
  * Takes two Oid arrays and returns elements from the first not found in the
- * second.  We assume both arrays are sorted and de-duped, and that the
+ * second.	We assume both arrays are sorted and de-duped, and that the
  * second array does not contain any values not found in the first.
  *
  * NOTE: Both input arrays are pfreed.
@@ -304,17 +304,17 @@ changeDependencyOnOwner(Oid classId, Oid objectId, Oid newOwnerId)
 static int
 getOidListDiff(Oid *list1, int nlist1, Oid *list2, int nlist2, Oid **diff)
 {
-	Oid	   *result;
-	int		i,
-			j,
-			k = 0;
+	Oid		   *result;
+	int			i,
+				j,
+				k = 0;
 
 	AssertArg(nlist1 >= nlist2 && nlist2 >= 0);
 
 	result = palloc(sizeof(Oid) * (nlist1 - nlist2));
 	*diff = result;
 
-	for (i = 0, j = 0; i < nlist1 && j < nlist2; )
+	for (i = 0, j = 0; i < nlist1 && j < nlist2;)
 	{
 		if (list1[i] == list2[j])
 		{
@@ -350,7 +350,7 @@ getOidListDiff(Oid *list1, int nlist1, Oid *list2, int nlist2, Oid **diff)
 
 /*
  * updateAclDependencies
- * 		Update the pg_shdepend info for an object's ACL during GRANT/REVOKE.
+ *		Update the pg_shdepend info for an object's ACL during GRANT/REVOKE.
  *
  * classId, objectId: identify the object whose ACL this is
  * ownerId: role owning the object
@@ -398,12 +398,12 @@ updateAclDependencies(Oid classId, Oid objectId, Oid ownerId, bool isGrant,
 		/* Add or drop the respective dependency */
 		for (i = 0; i < ndiff; i++)
 		{
-			Oid	roleid = diff[i];
+			Oid			roleid = diff[i];
 
 			/*
-			 * Skip the owner: he has an OWNER shdep entry instead.
-			 * (This is not just a space optimization; it makes ALTER OWNER
-			 * easier.  See notes in changeDependencyOnOwner.)
+			 * Skip the owner: he has an OWNER shdep entry instead. (This is
+			 * not just a space optimization; it makes ALTER OWNER easier.
+			 * See notes in changeDependencyOnOwner.)
 			 */
 			if (roleid == ownerId)
 				continue;
@@ -416,7 +416,7 @@ updateAclDependencies(Oid classId, Oid objectId, Oid ownerId, bool isGrant,
 				shdepAddDependency(sdepRel, classId, objectId,
 								   AuthIdRelationId, roleid,
 								   SHARED_DEPENDENCY_ACL);
-			else 
+			else
 				shdepDropDependency(sdepRel, classId, objectId,
 									AuthIdRelationId, roleid,
 									SHARED_DEPENDENCY_ACL);
@@ -433,15 +433,15 @@ updateAclDependencies(Oid classId, Oid objectId, Oid ownerId, bool isGrant,
  */
 typedef struct
 {
-	Oid		dbOid;
-	int		count;
+	Oid			dbOid;
+	int			count;
 } remoteDep;
 
 /*
  * checkSharedDependencies
  *
  * Check whether there are shared dependency entries for a given shared
- * object.  Returns a string containing a newline-separated list of object
+ * object.	Returns a string containing a newline-separated list of object
  * descriptions that depend on the shared object, or NULL if none is found.
  *
  * We can find three different kinds of dependencies: dependencies on objects
@@ -456,20 +456,20 @@ char *
 checkSharedDependencies(Oid classId, Oid objectId)
 {
 	Relation	sdepRel;
-	ScanKeyData	key[2];
-	SysScanDesc	scan;
+	ScanKeyData key[2];
+	SysScanDesc scan;
 	HeapTuple	tup;
 	int			totalDeps = 0;
 	int			numLocalDeps = 0;
 	int			numSharedDeps = 0;
 	List	   *remDeps = NIL;
 	ListCell   *cell;
-	ObjectAddress	object;
+	ObjectAddress object;
 	StringInfoData descs;
 
 	/*
-	 * We try to limit the number of reported dependencies to something
-	 * sane, both for the user's sake and to avoid blowing out memory.
+	 * We try to limit the number of reported dependencies to something sane,
+	 * both for the user's sake and to avoid blowing out memory.
 	 */
 #define MAX_REPORTED_DEPS 100
 
@@ -478,20 +478,20 @@ checkSharedDependencies(Oid classId, Oid objectId)
 	sdepRel = heap_open(SharedDependRelationId, AccessShareLock);
 
 	ScanKeyInit(&key[0],
-			    Anum_pg_shdepend_refclassid,
+				Anum_pg_shdepend_refclassid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(classId));
 	ScanKeyInit(&key[1],
-			    Anum_pg_shdepend_refobjid,
+				Anum_pg_shdepend_refobjid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(objectId));
-				
+
 	scan = systable_beginscan(sdepRel, SharedDependReferenceIndexId, true,
 							  SnapshotNow, 2, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
-		Form_pg_shdepend	sdepForm = (Form_pg_shdepend) GETSTRUCT(tup);
+		Form_pg_shdepend sdepForm = (Form_pg_shdepend) GETSTRUCT(tup);
 
 		/* This case can be dispatched quickly */
 		if (sdepForm->deptype == SHARED_DEPENDENCY_PIN)
@@ -502,7 +502,7 @@ checkSharedDependencies(Oid classId, Oid objectId)
 			ereport(ERROR,
 					(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
 					 errmsg("cannot drop %s because it is required by the database system",
-						   getObjectDescription(&object))));
+							getObjectDescription(&object))));
 		}
 
 		object.classId = sdepForm->classid;
@@ -513,8 +513,8 @@ checkSharedDependencies(Oid classId, Oid objectId)
 		 * If it's a dependency local to this database or it's a shared
 		 * object, describe it.
 		 *
-		 * If it's a remote dependency, keep track of it so we can report
-		 * the number of them later.
+		 * If it's a remote dependency, keep track of it so we can report the
+		 * number of them later.
 		 */
 		if (sdepForm->dbid == MyDatabaseId)
 		{
@@ -537,10 +537,10 @@ checkSharedDependencies(Oid classId, Oid objectId)
 			bool		stored = false;
 
 			/*
-			 * XXX this info is kept on a simple List.  Maybe it's not good
+			 * XXX this info is kept on a simple List.	Maybe it's not good
 			 * for performance, but using a hash table seems needlessly
-			 * complex.  The expected number of databases is not high
-			 * anyway, I suppose.
+			 * complex.  The expected number of databases is not high anyway,
+			 * I suppose.
 			 */
 			foreach(cell, remDeps)
 			{
@@ -572,8 +572,8 @@ checkSharedDependencies(Oid classId, Oid objectId)
 		/*
 		 * Report seems unreasonably long, so reduce it to per-database info
 		 *
-		 * Note: we don't ever suppress per-database totals, which should
-		 * be OK as long as there aren't too many databases ...
+		 * Note: we don't ever suppress per-database totals, which should be OK
+		 * as long as there aren't too many databases ...
 		 */
 		descs.len = 0;			/* reset to empty */
 		descs.data[0] = '\0';
@@ -592,7 +592,7 @@ checkSharedDependencies(Oid classId, Oid objectId)
 
 	foreach(cell, remDeps)
 	{
-		remoteDep	   *dep = lfirst(cell);
+		remoteDep  *dep = lfirst(cell);
 
 		object.classId = DatabaseRelationId;
 		object.objectId = dep->dbOid;
@@ -624,8 +624,8 @@ copyTemplateDependencies(Oid templateDbId, Oid newDbId)
 {
 	Relation	sdepRel;
 	TupleDesc	sdepDesc;
-	ScanKeyData	key[1];
-	SysScanDesc	scan;
+	ScanKeyData key[1];
+	SysScanDesc scan;
 	HeapTuple	tup;
 	CatalogIndexState indstate;
 	Datum		values[Natts_pg_shdepend];
@@ -655,11 +655,11 @@ copyTemplateDependencies(Oid templateDbId, Oid newDbId)
 	values[Anum_pg_shdepend_dbid - 1] = ObjectIdGetDatum(newDbId);
 
 	/*
-	 * Copy the entries of the original database, changing the database Id
-	 * to that of the new database.  Note that because we are not copying
-	 * rows with dbId == 0 (ie, rows describing dependent shared objects)
-	 * we won't copy the ownership dependency of the template database
-	 * itself; this is what we want.
+	 * Copy the entries of the original database, changing the database Id to
+	 * that of the new database.  Note that because we are not copying rows
+	 * with dbId == 0 (ie, rows describing dependent shared objects) we won't
+	 * copy the ownership dependency of the template database itself; this is
+	 * what we want.
 	 */
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
@@ -690,15 +690,15 @@ void
 dropDatabaseDependencies(Oid databaseId)
 {
 	Relation	sdepRel;
-	ScanKeyData	key[1];
-	SysScanDesc	scan;
+	ScanKeyData key[1];
+	SysScanDesc scan;
 	HeapTuple	tup;
 
 	sdepRel = heap_open(SharedDependRelationId, RowExclusiveLock);
 
 	/*
-	 * First, delete all the entries that have the database Oid in the
-	 * dbid field.
+	 * First, delete all the entries that have the database Oid in the dbid
+	 * field.
 	 */
 	ScanKeyInit(&key[0],
 				Anum_pg_shdepend_dbid,
@@ -747,7 +747,7 @@ deleteSharedDependencyRecordsFor(Oid classId, Oid objectId)
 
 /*
  * shdepAddDependency
- * 		Internal workhorse for inserting into pg_shdepend
+ *		Internal workhorse for inserting into pg_shdepend
  *
  * sdepRel must be the pg_shdepend relation, already opened and suitably
  * locked.
@@ -762,9 +762,9 @@ shdepAddDependency(Relation sdepRel, Oid classId, Oid objectId,
 	bool		nulls[Natts_pg_shdepend];
 
 	/*
-	 * Make sure the object doesn't go away while we record the dependency
-	 * on it.  DROP routines should lock the object exclusively before they
-	 * check shared dependencies.
+	 * Make sure the object doesn't go away while we record the dependency on
+	 * it.	DROP routines should lock the object exclusively before they check
+	 * shared dependencies.
 	 */
 	shdepLockAndCheckObject(refclassId, refobjId);
 
@@ -794,7 +794,7 @@ shdepAddDependency(Relation sdepRel, Oid classId, Oid objectId,
 
 /*
  * shdepDropDependency
- * 		Internal workhorse for deleting entries from pg_shdepend.
+ *		Internal workhorse for deleting entries from pg_shdepend.
  *
  * We drop entries having the following properties:
  *	dependent object is the one identified by classId/objectId
@@ -810,17 +810,17 @@ shdepDropDependency(Relation sdepRel, Oid classId, Oid objectId,
 					Oid refclassId, Oid refobjId,
 					SharedDependencyType deptype)
 {
-	ScanKeyData	key[3];
-	SysScanDesc	scan;
+	ScanKeyData key[3];
+	SysScanDesc scan;
 	HeapTuple	tup;
 
 	/* Scan for entries matching the dependent object */
 	ScanKeyInit(&key[0],
-			    Anum_pg_shdepend_dbid,
+				Anum_pg_shdepend_dbid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(classIdGetDbId(classId)));
 	ScanKeyInit(&key[1],
-			    Anum_pg_shdepend_classid,
+				Anum_pg_shdepend_classid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(classId));
 	ScanKeyInit(&key[2],
@@ -899,8 +899,8 @@ shdepLockAndCheckObject(Oid classId, Oid objectId)
 	LockSharedObject(classId, objectId, 0, AccessShareLock);
 
 	/*
-	 * We have to recognize sinval updates here, else our local syscache
-	 * may still contain the object even if it was just dropped.
+	 * We have to recognize sinval updates here, else our local syscache may
+	 * still contain the object even if it was just dropped.
 	 */
 	AcceptInvalidationMessages();
 
@@ -916,25 +916,26 @@ shdepLockAndCheckObject(Oid classId, Oid objectId)
 								objectId)));
 			break;
 
-		/*
-		 * Currently, this routine need not support any other shared object
-		 * types besides roles.  If we wanted to record explicit dependencies
-		 * on databases or tablespaces, we'd need code along these lines:
-		 */
+			/*
+			 * Currently, this routine need not support any other shared
+			 * object types besides roles.	If we wanted to record explicit
+			 * dependencies on databases or tablespaces, we'd need code along
+			 * these lines:
+			 */
 #ifdef NOT_USED
 		case TableSpaceRelationId:
-		{
-			/* For lack of a syscache on pg_tablespace, do this: */
-			char   *tablespace = get_tablespace_name(objectId);
+			{
+				/* For lack of a syscache on pg_tablespace, do this: */
+				char	   *tablespace = get_tablespace_name(objectId);
 
-			if (tablespace == NULL)
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_OBJECT),
-						 errmsg("tablespace %u was concurrently dropped",
-								objectId)));
-			pfree(tablespace);
-			break;
-		}
+				if (tablespace == NULL)
+					ereport(ERROR,
+							(errcode(ERRCODE_UNDEFINED_OBJECT),
+							 errmsg("tablespace %u was concurrently dropped",
+									objectId)));
+				pfree(tablespace);
+				break;
+			}
 #endif
 
 		default:
@@ -963,13 +964,13 @@ storeObjectDescription(StringInfo descs, objectType type,
 					   SharedDependencyType deptype,
 					   int count)
 {
-	char *objdesc = getObjectDescription(object);
+	char	   *objdesc = getObjectDescription(object);
 
 	/* separate entries with a newline */
 	if (descs->len != 0)
 		appendStringInfoChar(descs, '\n');
 
-    switch (type)
+	switch (type)
 	{
 		case LOCAL_OBJECT:
 		case SHARED_OBJECT:
@@ -1006,16 +1007,16 @@ static bool
 isSharedObjectPinned(Oid classId, Oid objectId, Relation sdepRel)
 {
 	bool		result = false;
-	ScanKeyData	key[2];
-	SysScanDesc	scan;
+	ScanKeyData key[2];
+	SysScanDesc scan;
 	HeapTuple	tup;
 
 	ScanKeyInit(&key[0],
-			    Anum_pg_shdepend_refclassid,
+				Anum_pg_shdepend_refclassid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(classId));
 	ScanKeyInit(&key[1],
-			    Anum_pg_shdepend_refobjid,
+				Anum_pg_shdepend_refobjid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(objectId));
 
@@ -1024,9 +1025,9 @@ isSharedObjectPinned(Oid classId, Oid objectId, Relation sdepRel)
 
 	/*
 	 * Since we won't generate additional pg_shdepend entries for pinned
-	 * objects, there can be at most one entry referencing a pinned
-	 * object.	Hence, it's sufficient to look at the first returned
-	 * tuple; we don't need to loop.
+	 * objects, there can be at most one entry referencing a pinned object.
+	 * Hence, it's sufficient to look at the first returned tuple; we don't
+	 * need to loop.
 	 */
 	tup = systable_getnext(scan);
 	if (HeapTupleIsValid(tup))

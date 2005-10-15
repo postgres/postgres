@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAppend.c,v 1.64 2005/05/22 22:30:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAppend.c,v 1.65 2005/10/15 02:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,10 +88,9 @@ exec_append_initialize_next(AppendState *appendstate)
 	if (whichplan < appendstate->as_firstplan)
 	{
 		/*
-		 * if scanning in reverse, we start at the last scan in the list
-		 * and then proceed back to the first.. in any case we inform
-		 * ExecAppend that we are at the end of the line by returning
-		 * FALSE
+		 * if scanning in reverse, we start at the last scan in the list and
+		 * then proceed back to the first.. in any case we inform ExecAppend
+		 * that we are at the end of the line by returning FALSE
 		 */
 		appendstate->as_whichplan = appendstate->as_firstplan;
 		return FALSE;
@@ -99,8 +98,7 @@ exec_append_initialize_next(AppendState *appendstate)
 	else if (whichplan > appendstate->as_lastplan)
 	{
 		/*
-		 * as above, end the scan if we go beyond the last scan in our
-		 * list..
+		 * as above, end the scan if we go beyond the last scan in our list..
 		 */
 		appendstate->as_whichplan = appendstate->as_lastplan;
 		return FALSE;
@@ -110,8 +108,8 @@ exec_append_initialize_next(AppendState *appendstate)
 		/*
 		 * initialize the scan
 		 *
-		 * If we are controlling the target relation, select the proper
-		 * active ResultRelInfo and junk filter for this target.
+		 * If we are controlling the target relation, select the proper active
+		 * ResultRelInfo and junk filter for this target.
 		 */
 		if (((Append *) appendstate->ps.plan)->isTarget)
 		{
@@ -168,9 +166,8 @@ ExecInitAppend(Append *node, EState *estate)
 	appendstate->as_nplans = nplans;
 
 	/*
-	 * Do we want to scan just one subplan?  (Special case for
-	 * EvalPlanQual) XXX pretty dirty way of determining that this case
-	 * applies ...
+	 * Do we want to scan just one subplan?  (Special case for EvalPlanQual)
+	 * XXX pretty dirty way of determining that this case applies ...
 	 */
 	if (node->isTarget && estate->es_evTuple != NULL)
 	{
@@ -199,8 +196,8 @@ ExecInitAppend(Append *node, EState *estate)
 #define APPEND_NSLOTS 1
 
 	/*
-	 * append nodes still have Result slots, which hold pointers to
-	 * tuples, so we have to initialize them.
+	 * append nodes still have Result slots, which hold pointers to tuples, so
+	 * we have to initialize them.
 	 */
 	ExecInitResultTupleSlot(estate, &appendstate->ps);
 
@@ -220,10 +217,10 @@ ExecInitAppend(Append *node, EState *estate)
 	}
 
 	/*
-	 * Initialize tuple type.  (Note: in an inherited UPDATE situation,
-	 * the tuple type computed here corresponds to the parent table, which
-	 * is really a lie since tuples returned from child subplans will not
-	 * all look the same.)
+	 * Initialize tuple type.  (Note: in an inherited UPDATE situation, the
+	 * tuple type computed here corresponds to the parent table, which is
+	 * really a lie since tuples returned from child subplans will not all
+	 * look the same.)
 	 */
 	ExecAssignResultTypeFromTL(&appendstate->ps);
 	appendstate->ps.ps_ProjInfo = NULL;
@@ -275,19 +272,19 @@ ExecAppend(AppendState *node)
 		if (!TupIsNull(result))
 		{
 			/*
-			 * If the subplan gave us something then return it as-is.
-			 * We do NOT make use of the result slot that was set up in
-			 * ExecInitAppend, first because there's no reason to and
-			 * second because it may have the wrong tuple descriptor in
+			 * If the subplan gave us something then return it as-is. We do
+			 * NOT make use of the result slot that was set up in
+			 * ExecInitAppend, first because there's no reason to and second
+			 * because it may have the wrong tuple descriptor in
 			 * inherited-UPDATE cases.
 			 */
 			return result;
 		}
 
 		/*
-		 * Go on to the "next" subplan in the appropriate direction.
-		 * If no more subplans, return the empty slot set up for us
-		 * by ExecInitAppend.
+		 * Go on to the "next" subplan in the appropriate direction. If no
+		 * more subplans, return the empty slot set up for us by
+		 * ExecInitAppend.
 		 */
 		if (ScanDirectionIsForward(node->ps.state->es_direction))
 			node->as_whichplan++;
@@ -348,8 +345,8 @@ ExecReScanAppend(AppendState *node, ExprContext *exprCtxt)
 			UpdateChangedParamSet(subnode, node->ps.chgParam);
 
 		/*
-		 * if chgParam of subnode is not null then plan will be re-scanned
-		 * by first ExecProcNode.
+		 * if chgParam of subnode is not null then plan will be re-scanned by
+		 * first ExecProcNode.
 		 */
 		if (subnode->chgParam == NULL)
 		{

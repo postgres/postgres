@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.3 2005/10/06 16:01:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.4 2005/10/15 02:49:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@ static bool predicate_refuted_by_recurse(Node *clause, Node *predicate);
 static bool predicate_implied_by_simple_clause(Expr *predicate, Node *clause);
 static bool predicate_refuted_by_simple_clause(Expr *predicate, Node *clause);
 static bool btree_predicate_proof(Expr *predicate, Node *clause,
-								  bool refute_it);
+					  bool refute_it);
 
 
 /*
@@ -66,9 +66,9 @@ predicate_implied_by(List *predicate_list, List *restrictinfo_list)
 	/*
 	 * In all cases where the predicate is an AND-clause,
 	 * predicate_implied_by_recurse() will prefer to iterate over the
-	 * predicate's components.  So we can just do that to start with here,
-	 * and eliminate the need for predicate_implied_by_recurse() to handle
-	 * a bare List on the predicate side.
+	 * predicate's components.  So we can just do that to start with here, and
+	 * eliminate the need for predicate_implied_by_recurse() to handle a bare
+	 * List on the predicate side.
 	 *
 	 * Logic is: restriction must imply each of the AND'ed predicate items.
 	 */
@@ -110,11 +110,11 @@ predicate_refuted_by(List *predicate_list, List *restrictinfo_list)
 		return false;			/* no restriction: refutation must fail */
 
 	/*
-	 * Unlike the implication case, predicate_refuted_by_recurse needs to
-	 * be able to see the top-level AND structure on both sides --- otherwise
-	 * it will fail to handle the case where one restriction clause is an OR
-	 * that can refute the predicate AND as a whole, but not each predicate
-	 * clause separately.
+	 * Unlike the implication case, predicate_refuted_by_recurse needs to be
+	 * able to see the top-level AND structure on both sides --- otherwise it
+	 * will fail to handle the case where one restriction clause is an OR that
+	 * can refute the predicate AND as a whole, but not each predicate clause
+	 * separately.
 	 */
 	return predicate_refuted_by_recurse((Node *) restrictinfo_list,
 										(Node *) predicate_list);
@@ -137,7 +137,7 @@ predicate_refuted_by(List *predicate_list, List *restrictinfo_list)
  *	OR-expr A => AND-expr B iff:	A => each of B's components
  *	OR-expr A => OR-expr B iff:		each of A's components => any of B's
  *
- * An "atom" is anything other than an AND or OR node.  Notice that we don't
+ * An "atom" is anything other than an AND or OR node.	Notice that we don't
  * have any special logic to handle NOT nodes; these should have been pushed
  * down or eliminated where feasible by prepqual.c.
  *
@@ -152,7 +152,7 @@ predicate_refuted_by(List *predicate_list, List *restrictinfo_list)
  * under the assumption that both inputs have been AND/OR flattened.
  *
  * A bare List node on the restriction side is interpreted as an AND clause,
- * in order to handle the top-level restriction List properly.  However we
+ * in order to handle the top-level restriction List properly.	However we
  * need not consider a List on the predicate side since predicate_implied_by()
  * already expanded it.
  *
@@ -228,8 +228,8 @@ predicate_implied_by_recurse(Node *clause, Node *predicate)
 		if (or_clause(predicate))
 		{
 			/*
-			 * OR-clause => OR-clause if each of A's items implies any of
-			 * B's items.  Messy but can't do it any more simply.
+			 * OR-clause => OR-clause if each of A's items implies any of B's
+			 * items.  Messy but can't do it any more simply.
 			 */
 			foreach(item, ((BoolExpr *) clause)->args)
 			{
@@ -242,7 +242,7 @@ predicate_implied_by_recurse(Node *clause, Node *predicate)
 						break;
 				}
 				if (item2 == NULL)
-					return false; /* doesn't imply any of B's */
+					return false;		/* doesn't imply any of B's */
 			}
 			return true;
 		}
@@ -520,7 +520,7 @@ predicate_implied_by_simple_clause(Expr *predicate, Node *clause)
  *
  * When the predicate is of the form "foo IS NULL", we can conclude that
  * the predicate is refuted if the clause is a strict operator or function
- * that has "foo" as an input.  See notes for implication case.
+ * that has "foo" as an input.	See notes for implication case.
  *
  * Finally, we may be able to deduce something using knowledge about btree
  * operator classes; this is encapsulated in btree_predicate_proof().
@@ -602,28 +602,28 @@ static const StrategyNumber BT_implic_table[6][6] = {
 /*
  *			The target operator:
  *
- *	 LT    LE    EQ    GE    GT    NE
+ *	 LT    LE	 EQ    GE	 GT    NE
  */
-	{BTGE, BTGE, 0   , 0   , 0   , BTGE},	/* LT */
-	{BTGT, BTGE, 0   , 0   , 0   , BTGT},	/* LE */
-	{BTGT, BTGE, BTEQ, BTLE, BTLT, BTNE},	/* EQ */
-	{0   , 0   , 0   , BTLE, BTLT, BTLT},	/* GE */
-	{0   , 0   , 0   , BTLE, BTLE, BTLE},	/* GT */
-	{0   , 0   , 0   , 0   , 0   , BTEQ}	/* NE */
+	{BTGE, BTGE, 0, 0, 0, BTGE},	/* LT */
+	{BTGT, BTGE, 0, 0, 0, BTGT},	/* LE */
+	{BTGT, BTGE, BTEQ, BTLE, BTLT, BTNE},		/* EQ */
+	{0, 0, 0, BTLE, BTLT, BTLT},	/* GE */
+	{0, 0, 0, BTLE, BTLE, BTLE},	/* GT */
+	{0, 0, 0, 0, 0, BTEQ}		/* NE */
 };
 
 static const StrategyNumber BT_refute_table[6][6] = {
 /*
  *			The target operator:
  *
- *	 LT    LE    EQ    GE    GT    NE
+ *	 LT    LE	 EQ    GE	 GT    NE
  */
-	{0   , 0   , BTGE, BTGE, BTGE, 0   },	/* LT */
-	{0   , 0   , BTGT, BTGT, BTGE, 0   },	/* LE */
-	{BTLE, BTLT, BTNE, BTGT, BTGE, BTEQ},	/* EQ */
-	{BTLE, BTLT, BTLT, 0   , 0   , 0   },	/* GE */
-	{BTLE, BTLE, BTLE, 0   , 0   , 0   },	/* GT */
-	{0   , 0   , BTEQ, 0   , 0   , 0   }	/* NE */
+	{0, 0, BTGE, BTGE, BTGE, 0},	/* LT */
+	{0, 0, BTGT, BTGT, BTGE, 0},	/* LE */
+	{BTLE, BTLT, BTNE, BTGT, BTGE, BTEQ},		/* EQ */
+	{BTLE, BTLT, BTLT, 0, 0, 0},	/* GE */
+	{BTLE, BTLE, BTLE, 0, 0, 0},	/* GT */
+	{0, 0, BTEQ, 0, 0, 0}		/* NE */
 };
 
 
@@ -683,13 +683,13 @@ btree_predicate_proof(Expr *predicate, Node *clause, bool refute_it)
 	MemoryContext oldcontext;
 
 	/*
-	 * Both expressions must be binary opclauses with a
-	 * Const on one side, and identical subexpressions on the other sides.
-	 * Note we don't have to think about binary relabeling of the Const
-	 * node, since that would have been folded right into the Const.
+	 * Both expressions must be binary opclauses with a Const on one side, and
+	 * identical subexpressions on the other sides. Note we don't have to
+	 * think about binary relabeling of the Const node, since that would have
+	 * been folded right into the Const.
 	 *
-	 * If either Const is null, we also fail right away; this assumes that
-	 * the test operator will always be strict.
+	 * If either Const is null, we also fail right away; this assumes that the
+	 * test operator will always be strict.
 	 */
 	if (!is_opclause(predicate))
 		return false;
@@ -738,11 +738,11 @@ btree_predicate_proof(Expr *predicate, Node *clause, bool refute_it)
 		return false;
 
 	/*
-	 * Check for matching subexpressions on the non-Const sides.  We used
-	 * to only allow a simple Var, but it's about as easy to allow any
-	 * expression.	Remember we already know that the pred expression does
-	 * not contain any non-immutable functions, so identical expressions
-	 * should yield identical results.
+	 * Check for matching subexpressions on the non-Const sides.  We used to
+	 * only allow a simple Var, but it's about as easy to allow any
+	 * expression.	Remember we already know that the pred expression does not
+	 * contain any non-immutable functions, so identical expressions should
+	 * yield identical results.
 	 */
 	if (!equal(pred_var, clause_var))
 		return false;
@@ -772,24 +772,24 @@ btree_predicate_proof(Expr *predicate, Node *clause, bool refute_it)
 	 *
 	 * We must find a btree opclass that contains both operators, else the
 	 * implication can't be determined.  Also, the pred_op has to be of
-	 * default subtype (implying left and right input datatypes are the
-	 * same); otherwise it's unsafe to put the pred_const on the left side
-	 * of the test.  Also, the opclass must contain a suitable test
-	 * operator matching the clause_const's type (which we take to mean
-	 * that it has the same subtype as the original clause_operator).
+	 * default subtype (implying left and right input datatypes are the same);
+	 * otherwise it's unsafe to put the pred_const on the left side of the
+	 * test.  Also, the opclass must contain a suitable test operator matching
+	 * the clause_const's type (which we take to mean that it has the same
+	 * subtype as the original clause_operator).
 	 *
 	 * If there are multiple matching opclasses, assume we can use any one to
-	 * determine the logical relationship of the two operators and the
-	 * correct corresponding test operator.  This should work for any
-	 * logically consistent opclasses.
+	 * determine the logical relationship of the two operators and the correct
+	 * corresponding test operator.  This should work for any logically
+	 * consistent opclasses.
 	 */
 	catlist = SearchSysCacheList(AMOPOPID, 1,
 								 ObjectIdGetDatum(pred_op),
 								 0, 0, 0);
 
 	/*
-	 * If we couldn't find any opclass containing the pred_op, perhaps it
-	 * is a <> operator.  See if it has a negator that is in an opclass.
+	 * If we couldn't find any opclass containing the pred_op, perhaps it is a
+	 * <> operator.  See if it has a negator that is in an opclass.
 	 */
 	pred_op_negated = false;
 	if (catlist->n_members == 0)
@@ -800,7 +800,7 @@ btree_predicate_proof(Expr *predicate, Node *clause, bool refute_it)
 			pred_op_negated = true;
 			ReleaseSysCacheList(catlist);
 			catlist = SearchSysCacheList(AMOPOPID, 1,
-									   ObjectIdGetDatum(pred_op_negator),
+										 ObjectIdGetDatum(pred_op_negator),
 										 0, 0, 0);
 		}
 	}
@@ -837,8 +837,8 @@ btree_predicate_proof(Expr *predicate, Node *clause, bool refute_it)
 		}
 
 		/*
-		 * From the same opclass, find a strategy number for the
-		 * clause_op, if possible
+		 * From the same opclass, find a strategy number for the clause_op, if
+		 * possible
 		 */
 		clause_tuple = SearchSysCache(AMOPOPID,
 									  ObjectIdGetDatum(clause_op),
@@ -857,7 +857,7 @@ btree_predicate_proof(Expr *predicate, Node *clause, bool refute_it)
 		else if (OidIsValid(clause_op_negator))
 		{
 			clause_tuple = SearchSysCache(AMOPOPID,
-									 ObjectIdGetDatum(clause_op_negator),
+										  ObjectIdGetDatum(clause_op_negator),
 										  ObjectIdGetDatum(opclass_id),
 										  0, 0);
 			if (HeapTupleIsValid(clause_tuple))
@@ -896,8 +896,8 @@ btree_predicate_proof(Expr *predicate, Node *clause, bool refute_it)
 		}
 
 		/*
-		 * See if opclass has an operator for the test strategy and the
-		 * clause datatype.
+		 * See if opclass has an operator for the test strategy and the clause
+		 * datatype.
 		 */
 		if (test_strategy == BTNE)
 		{
@@ -918,9 +918,9 @@ btree_predicate_proof(Expr *predicate, Node *clause, bool refute_it)
 			 *
 			 * Note that we require only the test_op to be immutable, not the
 			 * original clause_op.	(pred_op is assumed to have been checked
-			 * immutable by the caller.)  Essentially we are assuming that
-			 * the opclass is consistent even if it contains operators that
-			 * are merely stable.
+			 * immutable by the caller.)  Essentially we are assuming that the
+			 * opclass is consistent even if it contains operators that are
+			 * merely stable.
 			 */
 			if (op_volatile(test_op) == PROVOLATILE_IMMUTABLE)
 			{
@@ -958,7 +958,7 @@ btree_predicate_proof(Expr *predicate, Node *clause, bool refute_it)
 
 	/* And execute it. */
 	test_result = ExecEvalExprSwitchContext(test_exprstate,
-										  GetPerTupleExprContext(estate),
+											GetPerTupleExprContext(estate),
 											&isNull, NULL);
 
 	/* Get back to outer memory context */

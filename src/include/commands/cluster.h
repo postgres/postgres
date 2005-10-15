@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/cluster.h,v 1.28 2005/05/10 13:16:26 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/cluster.h,v 1.29 2005/10/15 02:49:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 extern void cluster(ClusterStmt *stmt);
 
 extern void check_index_is_clusterable(Relation OldHeap, Oid indexOid,
-			  bool recheck);
+						   bool recheck);
 extern void mark_index_clustered(Relation rel, Oid indexOid);
 extern Oid make_new_heap(Oid OIDOldHeap, const char *NewName,
 			  Oid NewTableSpace);

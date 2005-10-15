@@ -44,10 +44,10 @@ enum ECPGttype
 	ECPGt_bool,
 	ECPGt_float, ECPGt_double,
 	ECPGt_varchar, ECPGt_varchar2,
-	ECPGt_numeric,				/* this is a decimal that stores its
-								 * digits in a malloced array */
-	ECPGt_decimal,				/* this is a decimal that stores its
-								 * digits in a fixed array */
+	ECPGt_numeric,				/* this is a decimal that stores its digits in
+								 * a malloced array */
+	ECPGt_decimal,				/* this is a decimal that stores its digits in
+								 * a fixed array */
 	ECPGt_date,
 	ECPGt_timestamp,
 	ECPGt_interval,

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/indexing.c,v 1.109 2005/03/21 01:24:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/indexing.c,v 1.110 2005/10/15 02:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,8 +109,8 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 		Assert(indexInfo->ii_Predicate == NIL);
 
 		/*
-		 * FormIndexDatum fills in its values and isnull parameters with
-		 * the appropriate values for the column(s) of the index.
+		 * FormIndexDatum fills in its values and isnull parameters with the
+		 * appropriate values for the column(s) of the index.
 		 */
 		FormIndexDatum(indexInfo,
 					   slot,
@@ -122,8 +122,8 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 		 * The index AM does the rest.
 		 */
 		index_insert(relationDescs[i],	/* index relation */
-					 values,			/* array of index Datums */
-					 isnull,			/* is-null flags */
+					 values,	/* array of index Datums */
+					 isnull,	/* is-null flags */
 					 &(heapTuple->t_self),		/* tid of heap tuple */
 					 heapRelation,
 					 relationDescs[i]->rd_index->indisunique);

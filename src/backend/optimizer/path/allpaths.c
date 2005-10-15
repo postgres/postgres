@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.136 2005/08/22 17:34:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.137 2005/10/15 02:49:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,7 @@ static void compare_tlist_datatypes(List *tlist, List *colTypes,
 static bool qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
 					  bool *differentTypes);
 static void subquery_push_qual(Query *subquery,
-							   RangeTblEntry *rte, Index rti, Node *qual);
+				   RangeTblEntry *rte, Index rti, Node *qual);
 static void recurse_push_qual(Node *setOp, Query *topquery,
 				  RangeTblEntry *rte, Index rti, Node *qual);
 
@@ -105,7 +105,7 @@ make_one_rel(PlannerInfo *root)
 			if (brel == NULL)
 				continue;
 
-			Assert(brel->relid == rti);		/* sanity check on array */
+			Assert(brel->relid == rti); /* sanity check on array */
 
 			/* ignore RTEs that are "other rels" */
 			if (brel->reloptkind != RELOPT_BASEREL)
@@ -134,9 +134,9 @@ set_base_rel_pathlists(PlannerInfo *root)
 	Index		rti;
 
 	/*
-	 * Note: because we call expand_inherited_rtentry inside the loop,
-	 * it's quite possible for the base_rel_array to be enlarged while
-	 * the loop runs.  Hence don't try to optimize the loop.
+	 * Note: because we call expand_inherited_rtentry inside the loop, it's
+	 * quite possible for the base_rel_array to be enlarged while the loop
+	 * runs.  Hence don't try to optimize the loop.
 	 */
 	for (rti = 1; rti < root->base_rel_array_size; rti++)
 	{
@@ -255,8 +255,8 @@ set_inherited_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	ListCell   *il;
 
 	/*
-	 * XXX for now, can't handle inherited expansion of FOR UPDATE/SHARE;
-	 * can we do better?
+	 * XXX for now, can't handle inherited expansion of FOR UPDATE/SHARE; can
+	 * we do better?
 	 */
 	if (list_member_int(root->parse->rowMarks, parentRTindex))
 		ereport(ERROR,
@@ -270,8 +270,8 @@ set_inherited_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	rel->width = 0;
 
 	/*
-	 * Generate access paths for each table in the tree (parent AND
-	 * children), and pick the cheapest path for each table.
+	 * Generate access paths for each table in the tree (parent AND children),
+	 * and pick the cheapest path for each table.
 	 */
 	foreach(il, inheritlist)
 	{
@@ -286,18 +286,17 @@ set_inherited_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		childOID = childrte->relid;
 
 		/*
-		 * Make a RelOptInfo for the child so we can do planning.
-		 * Mark it as an "other rel" since it will not be part of the
-		 * main join tree.
+		 * Make a RelOptInfo for the child so we can do planning. Mark it as
+		 * an "other rel" since it will not be part of the main join tree.
 		 */
 		childrel = build_other_rel(root, childRTindex);
 
 		/*
-		 * Copy the parent's targetlist and restriction quals to the
-		 * child, with attribute-number adjustment as needed.  We don't
-		 * bother to copy the join quals, since we can't do any joining of
-		 * the individual tables.  Also, we just zap attr_needed rather
-		 * than trying to adjust it; it won't be looked at in the child.
+		 * Copy the parent's targetlist and restriction quals to the child,
+		 * with attribute-number adjustment as needed.	We don't bother to
+		 * copy the join quals, since we can't do any joining of the
+		 * individual tables.  Also, we just zap attr_needed rather than
+		 * trying to adjust it; it won't be looked at in the child.
 		 */
 		childrel->reltargetlist = (List *)
 			adjust_inherited_attrs((Node *) rel->reltargetlist,
@@ -320,13 +319,14 @@ set_inherited_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		 */
 		if (constraint_exclusion)
 		{
-			List   *constraint_pred;
+			List	   *constraint_pred;
 
 			constraint_pred = get_relation_constraints(childOID, childrel);
+
 			/*
-			 * We do not currently enforce that CHECK constraints contain
-			 * only immutable functions, so it's necessary to check here.
-			 * We daren't draw conclusions from plan-time evaluation of
+			 * We do not currently enforce that CHECK constraints contain only
+			 * immutable functions, so it's necessary to check here. We
+			 * daren't draw conclusions from plan-time evaluation of
 			 * non-immutable functions.
 			 */
 			if (!contain_mutable_functions((Node *) constraint_pred))
@@ -351,9 +351,9 @@ set_inherited_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		subpaths = lappend(subpaths, childrel->cheapest_total_path);
 
 		/*
-		 * Propagate size information from the child back to the parent.
-		 * For simplicity, we use the largest widths from any child as the
-		 * parent estimates.
+		 * Propagate size information from the child back to the parent. For
+		 * simplicity, we use the largest widths from any child as the parent
+		 * estimates.
 		 */
 		rel->rows += childrel->rows;
 		if (childrel->width > rel->width)
@@ -377,9 +377,9 @@ set_inherited_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	}
 
 	/*
-	 * Finally, build Append path and install it as the only access path
-	 * for the parent rel.  (Note: this is correct even if we have zero
-	 * or one live subpath due to constraint exclusion.)
+	 * Finally, build Append path and install it as the only access path for
+	 * the parent rel.	(Note: this is correct even if we have zero or one
+	 * live subpath due to constraint exclusion.)
 	 */
 	add_path(rel, (Path *) create_append_path(rel, subpaths));
 
@@ -430,18 +430,18 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 
 	/*
 	 * If there are any restriction clauses that have been attached to the
-	 * subquery relation, consider pushing them down to become WHERE or
-	 * HAVING quals of the subquery itself.  This transformation is useful
-	 * because it may allow us to generate a better plan for the subquery
-	 * than evaluating all the subquery output rows and then filtering them.
+	 * subquery relation, consider pushing them down to become WHERE or HAVING
+	 * quals of the subquery itself.  This transformation is useful because it
+	 * may allow us to generate a better plan for the subquery than evaluating
+	 * all the subquery output rows and then filtering them.
 	 *
-	 * There are several cases where we cannot push down clauses.
-	 * Restrictions involving the subquery are checked by
-	 * subquery_is_pushdown_safe().  Restrictions on individual clauses
-	 * are checked by qual_is_pushdown_safe().
+	 * There are several cases where we cannot push down clauses. Restrictions
+	 * involving the subquery are checked by subquery_is_pushdown_safe().
+	 * Restrictions on individual clauses are checked by
+	 * qual_is_pushdown_safe().
 	 *
-	 * Non-pushed-down clauses will get evaluated as qpquals of the
-	 * SubqueryScan node.
+	 * Non-pushed-down clauses will get evaluated as qpquals of the SubqueryScan
+	 * node.
 	 *
 	 * XXX Are there any cases where we want to make a policy decision not to
 	 * push down a pushable qual, because it'd result in a worse plan?
@@ -475,10 +475,10 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	pfree(differentTypes);
 
 	/*
-	 * We can safely pass the outer tuple_fraction down to the subquery
-	 * if the outer level has no joining, aggregation, or sorting to do.
-	 * Otherwise we'd better tell the subquery to plan for full retrieval.
-	 * (XXX This could probably be made more intelligent ...)
+	 * We can safely pass the outer tuple_fraction down to the subquery if the
+	 * outer level has no joining, aggregation, or sorting to do. Otherwise
+	 * we'd better tell the subquery to plan for full retrieval. (XXX This
+	 * could probably be made more intelligent ...)
 	 */
 	if (parse->hasAggs ||
 		parse->groupClause ||
@@ -540,8 +540,8 @@ make_fromexpr_rel(PlannerInfo *root, FromExpr *from)
 
 	/*
 	 * Count the number of child jointree nodes.  This is the depth of the
-	 * dynamic-programming algorithm we must employ to consider all ways
-	 * of joining the child nodes.
+	 * dynamic-programming algorithm we must employ to consider all ways of
+	 * joining the child nodes.
 	 */
 	levels_needed = list_length(from->fromlist);
 
@@ -603,11 +603,11 @@ make_one_rel_by_joins(PlannerInfo *root, int levels_needed, List *initial_rels)
 	RelOptInfo *rel;
 
 	/*
-	 * We employ a simple "dynamic programming" algorithm: we first find
-	 * all ways to build joins of two jointree items, then all ways to
-	 * build joins of three items (from two-item joins and single items),
-	 * then four-item joins, and so on until we have considered all ways
-	 * to join all the items into one rel.
+	 * We employ a simple "dynamic programming" algorithm: we first find all
+	 * ways to build joins of two jointree items, then all ways to build joins
+	 * of three items (from two-item joins and single items), then four-item
+	 * joins, and so on until we have considered all ways to join all the
+	 * items into one rel.
 	 *
 	 * joinitems[j] is a list of all the j-item rels.  Initially we set
 	 * joinitems[1] to represent all the single-jointree-item relations.
@@ -823,8 +823,8 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
 		return false;
 
 	/*
-	 * Examine all Vars used in clause; since it's a restriction clause,
-	 * all such Vars must refer to subselect output columns.
+	 * Examine all Vars used in clause; since it's a restriction clause, all
+	 * such Vars must refer to subselect output columns.
 	 */
 	vars = pull_var_clause(qual, false);
 	foreach(vl, vars)
@@ -835,9 +835,9 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
 		Assert(var->varno == rti);
 
 		/*
-		 * We use a bitmapset to avoid testing the same attno more than
-		 * once.  (NB: this only works because subquery outputs can't have
-		 * negative attnos.)
+		 * We use a bitmapset to avoid testing the same attno more than once.
+		 * (NB: this only works because subquery outputs can't have negative
+		 * attnos.)
 		 */
 		if (bms_is_member(var->varattno, tested))
 			continue;
@@ -893,11 +893,10 @@ subquery_push_qual(Query *subquery, RangeTblEntry *rte, Index rti, Node *qual)
 	else
 	{
 		/*
-		 * We need to replace Vars in the qual (which must refer to
-		 * outputs of the subquery) with copies of the subquery's
-		 * targetlist expressions.	Note that at this point, any uplevel
-		 * Vars in the qual should have been replaced with Params, so they
-		 * need no work.
+		 * We need to replace Vars in the qual (which must refer to outputs of
+		 * the subquery) with copies of the subquery's targetlist expressions.
+		 * Note that at this point, any uplevel Vars in the qual should have
+		 * been replaced with Params, so they need no work.
 		 *
 		 * This step also ensures that when we are pushing into a setop tree,
 		 * each component query gets its own copy of the qual.
@@ -907,9 +906,9 @@ subquery_push_qual(Query *subquery, RangeTblEntry *rte, Index rti, Node *qual)
 						  CMD_SELECT, 0);
 
 		/*
-		 * Now attach the qual to the proper place: normally WHERE, but
-		 * if the subquery uses grouping or aggregation, put it in HAVING
-		 * (since the qual really refers to the group-result rows).
+		 * Now attach the qual to the proper place: normally WHERE, but if the
+		 * subquery uses grouping or aggregation, put it in HAVING (since the
+		 * qual really refers to the group-result rows).
 		 */
 		if (subquery->hasAggs || subquery->groupClause || subquery->havingQual)
 			subquery->havingQual = make_and_qual(subquery->havingQual, qual);
@@ -919,8 +918,8 @@ subquery_push_qual(Query *subquery, RangeTblEntry *rte, Index rti, Node *qual)
 
 		/*
 		 * We need not change the subquery's hasAggs or hasSublinks flags,
-		 * since we can't be pushing down any aggregates that weren't
-		 * there before, and we don't push down subselects at all.
+		 * since we can't be pushing down any aggregates that weren't there
+		 * before, and we don't push down subselects at all.
 		 */
 	}
 }

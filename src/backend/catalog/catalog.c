@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.63 2005/08/12 01:35:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.64 2005/10/15 02:49:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -233,7 +233,7 @@ IsReservedName(const char *name)
  * Since the OID is not immediately inserted into the table, there is a
  * race condition here; but a problem could occur only if someone else
  * managed to cycle through 2^32 OIDs and generate the same OID before we
- * finish inserting our row.  This seems unlikely to be a problem.  Note
+ * finish inserting our row.  This seems unlikely to be a problem.	Note
  * that if we had to *commit* the row to end the race condition, the risk
  * would be rather higher; therefore we use SnapshotDirty in the test,
  * so that we will see uncommitted rows.
@@ -259,9 +259,9 @@ GetNewOid(Relation relation)
 	if (!OidIsValid(oidIndex))
 	{
 		/*
-		 * System catalogs that have OIDs should *always* have a unique
-		 * OID index; we should only take this path for user tables.
-		 * Give a warning if it looks like somebody forgot an index.
+		 * System catalogs that have OIDs should *always* have a unique OID
+		 * index; we should only take this path for user tables. Give a
+		 * warning if it looks like somebody forgot an index.
 		 */
 		if (IsSystemRelation(relation))
 			elog(WARNING, "generating possibly-non-unique OID for \"%s\"",
@@ -338,7 +338,7 @@ GetNewOidWithIndex(Relation relation, Relation indexrel)
 Oid
 GetNewRelFileNode(Oid reltablespace, bool relisshared, Relation pg_class)
 {
-	RelFileNode	rnode;
+	RelFileNode rnode;
 	char	   *rpath;
 	int			fd;
 	bool		collides;
@@ -369,14 +369,14 @@ GetNewRelFileNode(Oid reltablespace, bool relisshared, Relation pg_class)
 		{
 			/*
 			 * Here we have a little bit of a dilemma: if errno is something
-			 * other than ENOENT, should we declare a collision and loop?
-			 * In particular one might think this advisable for, say, EPERM.
+			 * other than ENOENT, should we declare a collision and loop? In
+			 * particular one might think this advisable for, say, EPERM.
 			 * However there really shouldn't be any unreadable files in a
 			 * tablespace directory, and if the EPERM is actually complaining
 			 * that we can't read the directory itself, we'd be in an infinite
 			 * loop.  In practice it seems best to go ahead regardless of the
-			 * errno.  If there is a colliding file we will get an smgr failure
-			 * when we attempt to create the new relation file.
+			 * errno.  If there is a colliding file we will get an smgr
+			 * failure when we attempt to create the new relation file.
 			 */
 			collides = false;
 		}

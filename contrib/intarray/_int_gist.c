@@ -38,8 +38,8 @@ g_int_consistent(PG_FUNCTION_ARGS)
 
 	if (strategy == BooleanSearchStrategy)
 		PG_RETURN_BOOL(execconsistent((QUERYTYPE *) query,
-							   (ArrayType *) DatumGetPointer(entry->key),
-				  ISLEAFKEY((ArrayType *) DatumGetPointer(entry->key))));
+								   (ArrayType *) DatumGetPointer(entry->key),
+					  ISLEAFKEY((ArrayType *) DatumGetPointer(entry->key))));
 
 	/* XXX are we sure it's safe to scribble on the query object here? */
 	/* XXX what about toasted input? */
@@ -73,7 +73,7 @@ g_int_consistent(PG_FUNCTION_ARGS)
 		case RTContainedByStrategyNumber:
 			if (GIST_LEAF(entry))
 				retval = inner_int_contains(query,
-							  (ArrayType *) DatumGetPointer(entry->key));
+								  (ArrayType *) DatumGetPointer(entry->key));
 			else
 				retval = inner_int_overlap((ArrayType *) DatumGetPointer(entry->key),
 										   query);
@@ -134,7 +134,7 @@ g_int_compress(PG_FUNCTION_ARGS)
 		r->flags |= LEAFKEY;
 		retval = palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(r),
-			  entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
+				  entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
 
 		PG_RETURN_POINTER(retval);
 	}
@@ -175,7 +175,7 @@ g_int_compress(PG_FUNCTION_ARGS)
 		r = resize_intArrayType(r, len);
 		retval = palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(r),
-			  entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
+				  entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
 		PG_RETURN_POINTER(retval);
 	}
 	else
@@ -211,7 +211,7 @@ g_int_decompress(PG_FUNCTION_ARGS)
 		{
 			retval = palloc(sizeof(GISTENTRY));
 			gistentryinit(*retval, PointerGetDatum(in),
-			 entry->rel, entry->page, entry->offset, VARSIZE(in), FALSE);
+				 entry->rel, entry->page, entry->offset, VARSIZE(in), FALSE);
 
 			PG_RETURN_POINTER(retval);
 		}
@@ -233,7 +233,7 @@ g_int_decompress(PG_FUNCTION_ARGS)
 		pfree(in);
 	retval = palloc(sizeof(GISTENTRY));
 	gistentryinit(*retval, PointerGetDatum(r),
-			  entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
+				  entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
 
 	PG_RETURN_POINTER(retval);
 }
@@ -378,8 +378,7 @@ g_int_picksplit(PG_FUNCTION_ARGS)
 				pfree(inter_d);
 
 			/*
-			 * are these a more promising split that what we've already
-			 * seen?
+			 * are these a more promising split that what we've already seen?
 			 */
 
 			if (size_waste > waste || firsttime)
@@ -430,15 +429,15 @@ g_int_picksplit(PG_FUNCTION_ARGS)
 	qsort((void *) costvector, maxoff, sizeof(SPLITCOST), comparecost);
 
 	/*
-	 * Now split up the regions between the two seeds.	An important
-	 * property of this split algorithm is that the split vector v has the
-	 * indices of items to be split in order in its left and right
-	 * vectors.  We exploit this property by doing a merge in the code
-	 * that actually splits the page.
+	 * Now split up the regions between the two seeds.	An important property
+	 * of this split algorithm is that the split vector v has the indices of
+	 * items to be split in order in its left and right vectors.  We exploit
+	 * this property by doing a merge in the code that actually splits the
+	 * page.
 	 *
-	 * For efficiency, we also place the new index tuple in this loop. This
-	 * is handled at the very end, when we have placed all the existing
-	 * tuples and i == maxoff + 1.
+	 * For efficiency, we also place the new index tuple in this loop. This is
+	 * handled at the very end, when we have placed all the existing tuples
+	 * and i == maxoff + 1.
 	 */
 
 
@@ -447,9 +446,9 @@ g_int_picksplit(PG_FUNCTION_ARGS)
 		i = costvector[j].pos;
 
 		/*
-		 * If we've already decided where to place this item, just put it
-		 * on the right list.  Otherwise, we need to figure out which page
-		 * needs the least enlargement in order to store the item.
+		 * If we've already decided where to place this item, just put it on
+		 * the right list.	Otherwise, we need to figure out which page needs
+		 * the least enlargement in order to store the item.
 		 */
 
 		if (i == seed_1)

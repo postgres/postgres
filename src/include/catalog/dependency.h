@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.16 2005/08/01 04:03:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.17 2005/10/15 02:49:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,13 +109,12 @@ typedef struct ObjectAddress
 {
 	Oid			classId;		/* Class Id from pg_class */
 	Oid			objectId;		/* OID of the object */
-	int32		objectSubId;	/* Subitem within the object (column of
-								 * table) */
+	int32		objectSubId;	/* Subitem within the object (column of table) */
 } ObjectAddress;
 
 
 /*
- * This enum covers all system catalogs whose OIDs can appear in 
+ * This enum covers all system catalogs whose OIDs can appear in
  * pg_depend.classId or pg_shdepend.classId.
  */
 typedef enum ObjectClass
@@ -175,26 +174,26 @@ extern void recordMultipleDependencies(const ObjectAddress *depender,
 extern long deleteDependencyRecordsFor(Oid classId, Oid objectId);
 
 extern long changeDependencyFor(Oid classId, Oid objectId,
-								Oid refClassId, Oid oldRefObjectId,
-								Oid newRefObjectId);
+					Oid refClassId, Oid oldRefObjectId,
+					Oid newRefObjectId);
 
 /* in pg_shdepend.c */
 
 extern void recordSharedDependencyOn(ObjectAddress *depender,
-									 ObjectAddress *referenced,
-									 SharedDependencyType deptype);
+						 ObjectAddress *referenced,
+						 SharedDependencyType deptype);
 
 extern void deleteSharedDependencyRecordsFor(Oid classId, Oid objectId);
 
 extern void recordDependencyOnOwner(Oid classId, Oid objectId, Oid owner);
 
 extern void changeDependencyOnOwner(Oid classId, Oid objectId,
-									Oid newOwnerId);
+						Oid newOwnerId);
 
 extern void updateAclDependencies(Oid classId, Oid objectId,
-								  Oid ownerId, bool isGrant, 
-								  int noldmembers, Oid *oldmembers,
-								  int nnewmembers, Oid *newmembers);
+					  Oid ownerId, bool isGrant,
+					  int noldmembers, Oid *oldmembers,
+					  int nnewmembers, Oid *newmembers);
 
 extern char *checkSharedDependencies(Oid classId, Oid objectId);
 

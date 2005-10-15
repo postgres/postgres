@@ -52,7 +52,7 @@ comparePos(const void *a, const void *b)
 {
 	if (WEP_GETPOS(*(WordEntryPos *) a) == WEP_GETPOS(*(WordEntryPos *) b))
 		return 0;
-	return (WEP_GETPOS(*(WordEntryPos *) a)> WEP_GETPOS(*(WordEntryPos *) b)) ? 1 : -1;
+	return (WEP_GETPOS(*(WordEntryPos *) a) > WEP_GETPOS(*(WordEntryPos *) b)) ? 1 : -1;
 }
 
 static int
@@ -328,7 +328,7 @@ gettoken_tsvector(TI_IN_STATE * state)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("wrong position info")));
-				WEP_SETWEIGHT( state->pos[*(uint16 *) (state->pos)], 0 );
+				WEP_SETWEIGHT(state->pos[*(uint16 *) (state->pos)], 0);
 				state->state = WAITPOSDELIM;
 			}
 			else
@@ -342,35 +342,35 @@ gettoken_tsvector(TI_IN_STATE * state)
 				state->state = INPOSINFO;
 			else if (tolower(*(state->prsbuf)) == 'a' || *(state->prsbuf) == '*')
 			{
-				if ( WEP_GETWEIGHT(state->pos[*(uint16 *) (state->pos)]) )
+				if (WEP_GETWEIGHT(state->pos[*(uint16 *) (state->pos)]))
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("syntax error")));
-				WEP_SETWEIGHT( state->pos[*(uint16 *) (state->pos)], 3 );
+				WEP_SETWEIGHT(state->pos[*(uint16 *) (state->pos)], 3);
 			}
 			else if (tolower(*(state->prsbuf)) == 'b')
 			{
-				if ( WEP_GETWEIGHT(state->pos[*(uint16 *) (state->pos)]) )
+				if (WEP_GETWEIGHT(state->pos[*(uint16 *) (state->pos)]))
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("syntax error")));
-				WEP_SETWEIGHT( state->pos[*(uint16 *) (state->pos)], 2 );
+				WEP_SETWEIGHT(state->pos[*(uint16 *) (state->pos)], 2);
 			}
 			else if (tolower(*(state->prsbuf)) == 'c')
 			{
-				if ( WEP_GETWEIGHT(state->pos[*(uint16 *) (state->pos)]) )
+				if (WEP_GETWEIGHT(state->pos[*(uint16 *) (state->pos)]))
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("syntax error")));
-				WEP_SETWEIGHT( state->pos[*(uint16 *) (state->pos)], 1 );
+				WEP_SETWEIGHT(state->pos[*(uint16 *) (state->pos)], 1);
 			}
 			else if (tolower(*(state->prsbuf)) == 'd')
 			{
-				if ( WEP_GETWEIGHT(state->pos[*(uint16 *) (state->pos)]) )
+				if (WEP_GETWEIGHT(state->pos[*(uint16 *) (state->pos)]))
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("syntax error")));
-				WEP_SETWEIGHT( state->pos[*(uint16 *) (state->pos)], 0 );
+				WEP_SETWEIGHT(state->pos[*(uint16 *) (state->pos)], 0);
 			}
 			else if (isspace((unsigned char) *(state->prsbuf)) ||
 					 *(state->prsbuf) == '\0')
@@ -906,9 +906,9 @@ tsearch2(PG_FUNCTION_ARGS)
 		if (funcoid != InvalidOid)
 		{
 			text	   *txttmp = (text *) DatumGetPointer(OidFunctionCall1(
-																 funcoid,
-											 PointerGetDatum(txt_toasted)
-																	  ));
+																	 funcoid,
+												 PointerGetDatum(txt_toasted)
+																		   ));
 
 			txt = (text *) DatumGetPointer(PG_DETOAST_DATUM(PointerGetDatum(txttmp)));
 			if (txt == txttmp)

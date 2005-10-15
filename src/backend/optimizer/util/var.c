@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.65 2005/06/05 22:32:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.66 2005/10/15 02:49:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,8 +88,8 @@ pull_varnos(Node *node)
 	context.sublevels_up = 0;
 
 	/*
-	 * Must be prepared to start with a Query or a bare expression tree;
-	 * if it's a Query, we don't want to increment sublevels_up.
+	 * Must be prepared to start with a Query or a bare expression tree; if
+	 * it's a Query, we don't want to increment sublevels_up.
 	 */
 	query_or_expression_tree_walker(node,
 									pull_varnos_walker,
@@ -149,8 +149,8 @@ contain_var_reference(Node *node, int varno, int varattno, int levelsup)
 	context.sublevels_up = levelsup;
 
 	/*
-	 * Must be prepared to start with a Query or a bare expression tree;
-	 * if it's a Query, we don't want to increment sublevels_up.
+	 * Must be prepared to start with a Query or a bare expression tree; if
+	 * it's a Query, we don't want to increment sublevels_up.
 	 */
 	return query_or_expression_tree_walker(node,
 										   contain_var_reference_walker,
@@ -215,8 +215,7 @@ contain_var_clause_walker(Node *node, void *context)
 	if (IsA(node, Var))
 	{
 		if (((Var *) node)->varlevelsup == 0)
-			return true;		/* abort the tree traversal and return
-								 * true */
+			return true;		/* abort the tree traversal and return true */
 		return false;
 	}
 	return expression_tree_walker(node, contain_var_clause_walker, context);
@@ -286,7 +285,7 @@ contain_vars_above_level(Node *node, int levelsup)
 	int			sublevels_up = levelsup;
 
 	return query_or_expression_tree_walker(node,
-										 contain_vars_above_level_walker,
+										   contain_vars_above_level_walker,
 										   (void *) &sublevels_up,
 										   0);
 }
@@ -370,8 +369,8 @@ find_minimum_var_level_walker(Node *node,
 				context->min_varlevel = varlevelsup;
 
 				/*
-				 * As soon as we find a local variable, we can abort the
-				 * tree traversal, since min_varlevel is then certainly 0.
+				 * As soon as we find a local variable, we can abort the tree
+				 * traversal, since min_varlevel is then certainly 0.
 				 */
 				if (varlevelsup == 0)
 					return true;
@@ -380,10 +379,9 @@ find_minimum_var_level_walker(Node *node,
 	}
 
 	/*
-	 * An Aggref must be treated like a Var of its level.  Normally we'd
-	 * get the same result from looking at the Vars in the aggregate's
-	 * argument, but this fails in the case of a Var-less aggregate call
-	 * (COUNT(*)).
+	 * An Aggref must be treated like a Var of its level.  Normally we'd get
+	 * the same result from looking at the Vars in the aggregate's argument,
+	 * but this fails in the case of a Var-less aggregate call (COUNT(*)).
 	 */
 	if (IsA(node, Aggref))
 	{
@@ -400,8 +398,8 @@ find_minimum_var_level_walker(Node *node,
 				context->min_varlevel = agglevelsup;
 
 				/*
-				 * As soon as we find a local aggregate, we can abort the
-				 * tree traversal, since min_varlevel is then certainly 0.
+				 * As soon as we find a local aggregate, we can abort the tree
+				 * traversal, since min_varlevel is then certainly 0.
 				 */
 				if (agglevelsup == 0)
 					return true;
@@ -553,8 +551,8 @@ flatten_join_alias_vars_mutator(Node *node,
 		newvar = (Node *) list_nth(rte->joinaliasvars, var->varattno - 1);
 
 		/*
-		 * If we are expanding an alias carried down from an upper query,
-		 * must adjust its varlevelsup fields.
+		 * If we are expanding an alias carried down from an upper query, must
+		 * adjust its varlevelsup fields.
 		 */
 		if (context->sublevels_up != 0)
 		{
@@ -570,8 +568,8 @@ flatten_join_alias_vars_mutator(Node *node,
 		InClauseInfo *ininfo;
 
 		ininfo = (InClauseInfo *) expression_tree_mutator(node,
-										 flatten_join_alias_vars_mutator,
-													   (void *) context);
+											 flatten_join_alias_vars_mutator,
+														  (void *) context);
 		/* now fix InClauseInfo's relid sets */
 		if (context->sublevels_up == 0)
 		{

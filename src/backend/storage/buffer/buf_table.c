@@ -3,7 +3,7 @@
  * buf_table.c
  *	  routines for mapping BufferTags to buffer indexes.
  *
- * Note: the routines in this file do no locking of their own.  The caller
+ * Note: the routines in this file do no locking of their own.	The caller
  * must hold a suitable lock on the BufMappingLock, as specified in the
  * comments.
  *
@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_table.c,v 1.42 2005/08/20 23:26:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_table.c,v 1.43 2005/10/15 02:49:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,7 @@ BufTableLookup(BufferTag *tagPtr)
  *		Insert a hashtable entry for given tag and buffer ID,
  *		unless an entry already exists for that tag
  *
- * Returns -1 on successful insertion.  If a conflicting entry exists
+ * Returns -1 on successful insertion.	If a conflicting entry exists
  * already, returns the buffer ID in that entry.
  *
  * Caller must hold write lock on BufMappingLock
@@ -105,7 +105,7 @@ BufTableInsert(BufferTag *tagPtr, int buf_id)
 	bool		found;
 
 	Assert(buf_id >= 0);		/* -1 is reserved for not-in-table */
-	Assert(tagPtr->blockNum != P_NEW); /* invalid tag */
+	Assert(tagPtr->blockNum != P_NEW);	/* invalid tag */
 
 	result = (BufferLookupEnt *)
 		hash_search(SharedBufHash, (void *) tagPtr, HASH_ENTER, &found);

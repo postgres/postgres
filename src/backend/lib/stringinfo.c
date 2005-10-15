@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/backend/lib/stringinfo.c,v 1.41 2004/12/31 21:59:48 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/lib/stringinfo.c,v 1.42 2005/10/15 02:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,8 +106,8 @@ appendStringInfoVA(StringInfo str, const char *fmt, va_list args)
 	Assert(str != NULL);
 
 	/*
-	 * If there's hardly any space, don't bother trying, just fail to make
-	 * the caller enlarge the buffer first.
+	 * If there's hardly any space, don't bother trying, just fail to make the
+	 * caller enlarge the buffer first.
 	 */
 	avail = str->maxlen - str->len - 1;
 	if (avail < 16)
@@ -115,8 +115,8 @@ appendStringInfoVA(StringInfo str, const char *fmt, va_list args)
 
 	/*
 	 * Assert check here is to catch buggy vsnprintf that overruns the
-	 * specified buffer length.  Solaris 7 in 64-bit mode is an example of
-	 * a platform with such a bug.
+	 * specified buffer length.  Solaris 7 in 64-bit mode is an example of a
+	 * platform with such a bug.
 	 */
 #ifdef USE_ASSERT_CHECKING
 	str->data[str->maxlen - 1] = '\0';
@@ -127,9 +127,9 @@ appendStringInfoVA(StringInfo str, const char *fmt, va_list args)
 	Assert(str->data[str->maxlen - 1] == '\0');
 
 	/*
-	 * Note: some versions of vsnprintf return the number of chars
-	 * actually stored, but at least one returns -1 on failure. Be
-	 * conservative about believing whether the print worked.
+	 * Note: some versions of vsnprintf return the number of chars actually
+	 * stored, but at least one returns -1 on failure. Be conservative about
+	 * believing whether the print worked.
 	 */
 	if (nprinted >= 0 && nprinted < avail - 1)
 	{
@@ -193,8 +193,8 @@ appendBinaryStringInfo(StringInfo str, const char *data, int datalen)
 	str->len += datalen;
 
 	/*
-	 * Keep a trailing null in place, even though it's probably useless
-	 * for binary data...
+	 * Keep a trailing null in place, even though it's probably useless for
+	 * binary data...
 	 */
 	str->data[str->len] = '\0';
 }
@@ -222,9 +222,9 @@ enlargeStringInfo(StringInfo str, int needed)
 	int			newlen;
 
 	/*
-	 * Guard against ridiculous "needed" values, which can occur if we're
-	 * fed bogus data.	Without this, we can get an overflow or infinite
-	 * loop in the following.
+	 * Guard against ridiculous "needed" values, which can occur if we're fed
+	 * bogus data.	Without this, we can get an overflow or infinite loop in
+	 * the following.
 	 */
 	if (needed < 0 ||
 		((Size) needed) >= (MaxAllocSize - (Size) str->len))
@@ -239,19 +239,18 @@ enlargeStringInfo(StringInfo str, int needed)
 		return;					/* got enough space already */
 
 	/*
-	 * We don't want to allocate just a little more space with each
-	 * append; for efficiency, double the buffer size each time it
-	 * overflows. Actually, we might need to more than double it if
-	 * 'needed' is big...
+	 * We don't want to allocate just a little more space with each append;
+	 * for efficiency, double the buffer size each time it overflows.
+	 * Actually, we might need to more than double it if 'needed' is big...
 	 */
 	newlen = 2 * str->maxlen;
 	while (needed > newlen)
 		newlen = 2 * newlen;
 
 	/*
-	 * Clamp to MaxAllocSize in case we went past it.  Note we are
-	 * assuming here that MaxAllocSize <= INT_MAX/2, else the above loop
-	 * could overflow.	We will still have newlen >= needed.
+	 * Clamp to MaxAllocSize in case we went past it.  Note we are assuming
+	 * here that MaxAllocSize <= INT_MAX/2, else the above loop could
+	 * overflow.  We will still have newlen >= needed.
 	 */
 	if (newlen > (int) MaxAllocSize)
 		newlen = (int) MaxAllocSize;

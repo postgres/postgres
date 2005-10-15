@@ -7,7 +7,7 @@
  * Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/instrument.c,v 1.12 2005/04/16 20:07:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/instrument.c,v 1.13 2005/10/15 02:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@ InstrStartNode(Instrumentation *instr)
 void
 InstrStopNode(Instrumentation *instr, bool returnedTuple)
 {
-	instr_time endtime;
+	instr_time	endtime;
 
 	/* count the returned tuples */
 	if (returnedTuple)
@@ -72,7 +72,7 @@ InstrStopNode(Instrumentation *instr, bool returnedTuple)
 		instr->counter.tv_usec -= 1000000;
 		instr->counter.tv_sec++;
 	}
-#else /* WIN32 */
+#else							/* WIN32 */
 	instr->counter.QuadPart += (endtime.QuadPart - instr->starttime.QuadPart);
 #endif
 

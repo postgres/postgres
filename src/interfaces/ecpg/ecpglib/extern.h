@@ -125,8 +125,9 @@ PGresult  **ECPGdescriptor_lvalue(int line, const char *descriptor);
 bool ECPGstore_result(const PGresult *results, int act_field,
 				 const struct statement * stmt, struct variable * var);
 bool		ECPGstore_input(const int, const bool, const struct variable *, const char **, bool *);
+
 #if defined(__GNUC__) && (defined (__powerpc__) || defined(__amd64__) || defined(__x86_64__))
-  // work around a gcc/ABI bug with va_lists on ppc+amd64
+ /* work around a gcc/ABI bug with va_lists on ppc+amd64 */
 void		ECPGget_variable(va_list, enum ECPGttype, struct variable *, bool);
 #else
 void		ECPGget_variable(va_list *, enum ECPGttype, struct variable *, bool);

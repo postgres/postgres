@@ -102,7 +102,7 @@ snb_lexize(PG_FUNCTION_ARGS)
 	DictSnowball *d = (DictSnowball *) PG_GETARG_POINTER(0);
 	char	   *in = (char *) PG_GETARG_POINTER(1);
 	char	   *txt = pnstrdup(in, PG_GETARG_INT32(2));
-	TSLexeme	  *res = palloc(sizeof(TSLexeme) * 2);
+	TSLexeme   *res = palloc(sizeof(TSLexeme) * 2);
 
 	memset(res, 0, sizeof(TSLexeme) * 2);
 	if (*txt == '\0' || searchstoplist(&(d->stoplist), txt))

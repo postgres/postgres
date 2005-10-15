@@ -194,10 +194,11 @@ PG_FUNCTION_INFO_V1(xml_encode_special_chars);
 Datum
 xml_encode_special_chars(PG_FUNCTION_ARGS)
 {
-	text *tin = PG_GETARG_TEXT_P(0);
-	text *tout;
-	int32 ressize;
-	xmlChar *ts, *tt;
+	text	   *tin = PG_GETARG_TEXT_P(0);
+	text	   *tout;
+	int32		ressize;
+	xmlChar    *ts,
+			   *tt;
 
 	ts = pgxml_texttoxmlchar(tin);
 
@@ -225,15 +226,15 @@ pgxmlNodeSetToText(xmlNodeSetPtr nodeset,
 	/* Function translates a nodeset into a text representation */
 
 	/*
-	 * iterates over each node in the set and calls xmlNodeDump to write
-	 * it to an xmlBuffer -from which an xmlChar * string is returned.
+	 * iterates over each node in the set and calls xmlNodeDump to write it to
+	 * an xmlBuffer -from which an xmlChar * string is returned.
 	 */
 
 	/* each representation is surrounded by <tagname> ... </tagname> */
 
 	/*
-	 * plainsep is an ordinary (not tag) seperator - if used, then nodes
-	 * are cast to string as output method
+	 * plainsep is an ordinary (not tag) seperator - if used, then nodes are
+	 * cast to string as output method
 	 */
 
 
@@ -257,7 +258,7 @@ pgxmlNodeSetToText(xmlNodeSetPtr nodeset,
 			if (plainsep != NULL)
 			{
 				xmlBufferWriteCHAR(buf,
-						  xmlXPathCastNodeToString(nodeset->nodeTab[i]));
+							  xmlXPathCastNodeToString(nodeset->nodeTab[i]));
 
 				/* If this isn't the last entry, write the plain sep. */
 				if (i < (nodeset->nodeNr) - 1)
@@ -412,8 +413,8 @@ xpath_string(PG_FUNCTION_ARGS)
 	pathsize = VARSIZE(xpathsupp) - VARHDRSZ;
 
 	/*
-	 * We encapsulate the supplied path with "string()" = 8 chars + 1 for
-	 * NUL at end
+	 * We encapsulate the supplied path with "string()" = 8 chars + 1 for NUL
+	 * at end
 	 */
 	/* We could try casting to string using the libxml function? */
 
@@ -663,8 +664,8 @@ xpath_table(PG_FUNCTION_ARGS)
 	int			proc;
 	int			i;
 	int			j;
-	int			rownr;			/* For issuing multiple rows from one
-								 * original document */
+	int			rownr;			/* For issuing multiple rows from one original
+								 * document */
 	int			had_values;		/* To determine end of nodeset results */
 
 	StringInfo	querysql;
@@ -686,17 +687,19 @@ xpath_table(PG_FUNCTION_ARGS)
 	if (!(rsinfo->allowedModes & SFRM_Materialize))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("xpath_table requires Materialize mode, but it is not "
-						"allowed in this context")));
+			   errmsg("xpath_table requires Materialize mode, but it is not "
+					  "allowed in this context")));
 
-	/* The tuplestore must exist in a higher context than
-	 * this function call (per_query_ctx is used)
+	/*
+	 * The tuplestore must exist in a higher context than this function call
+	 * (per_query_ctx is used)
 	 */
 
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
-	/* Create the tuplestore - work_mem is the max in-memory size before a
+	/*
+	 * Create the tuplestore - work_mem is the max in-memory size before a
 	 * file is created on disk to hold it.
 	 */
 	tupstore = tuplestore_begin_heap(true, false, work_mem);
@@ -707,11 +710,11 @@ xpath_table(PG_FUNCTION_ARGS)
 	ret_tupdesc = CreateTupleDescCopy(rsinfo->expectedDesc);
 
 	/*
-	 * At the moment we assume that the returned attributes make sense for
-	 * the XPath specififed (i.e. we trust the caller). It's not fatal if
-	 * they get it wrong - the input function for the column type will
-	 * raise an error if the path result can't be converted into the
-	 * correct binary representation.
+	 * At the moment we assume that the returned attributes make sense for the
+	 * XPath specififed (i.e. we trust the caller). It's not fatal if they get
+	 * it wrong - the input function for the column type will raise an error
+	 * if the path result can't be converted into the correct binary
+	 * representation.
 	 */
 
 	attinmeta = TupleDescGetAttInMetadata(ret_tupdesc);
@@ -810,8 +813,8 @@ xpath_table(PG_FUNCTION_ARGS)
 
 
 		/*
-		 * Clear the values array, so that not-well-formed documents
-		 * return NULL in all columns.
+		 * Clear the values array, so that not-well-formed documents return
+		 * NULL in all columns.
 		 */
 
 		/* Note that this also means that spare columns will be NULL. */
@@ -825,8 +828,7 @@ xpath_table(PG_FUNCTION_ARGS)
 		doctree = xmlParseMemory(xmldoc, strlen(xmldoc));
 
 		if (doctree == NULL)
-		{						/* not well-formed, so output all-NULL
-								 * tuple */
+		{						/* not well-formed, so output all-NULL tuple */
 
 			ret_tuple = BuildTupleFromCStrings(attinmeta, values);
 			oldcontext = MemoryContextSwitchTo(per_query_ctx);
@@ -933,10 +935,10 @@ xpath_table(PG_FUNCTION_ARGS)
 
 	/*
 	 * SFRM_Materialize mode expects us to return a NULL Datum. The actual
-	 * tuples are in our tuplestore and passed back through
-	 * rsinfo->setResult. rsinfo->setDesc is set to the tuple description
-	 * that we actually used to build our tuples with, so the caller can
-	 * verify we did what it was expecting.
+	 * tuples are in our tuplestore and passed back through rsinfo->setResult.
+	 * rsinfo->setDesc is set to the tuple description that we actually used
+	 * to build our tuples with, so the caller can verify we did what it was
+	 * expecting.
 	 */
 	return (Datum) 0;
 

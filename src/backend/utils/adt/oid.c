@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.63 2005/07/10 21:36:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.64 2005/10/15 02:49:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,9 +47,9 @@ oidin_subr(const char *funcname, const char *s, char **endloc)
 	cvt = strtoul(s, &endptr, 10);
 
 	/*
-	 * strtoul() normally only sets ERANGE.  On some systems it also may
-	 * set EINVAL, which simply means it couldn't parse the input string.
-	 * This is handled by the second "if" consistent across platforms.
+	 * strtoul() normally only sets ERANGE.  On some systems it also may set
+	 * EINVAL, which simply means it couldn't parse the input string. This is
+	 * handled by the second "if" consistent across platforms.
 	 */
 	if (errno && errno != ERANGE && errno != EINVAL)
 		ereport(ERROR,
@@ -88,16 +88,16 @@ oidin_subr(const char *funcname, const char *s, char **endloc)
 	result = (Oid) cvt;
 
 	/*
-	 * Cope with possibility that unsigned long is wider than Oid, in
-	 * which case strtoul will not raise an error for some values that are
-	 * out of the range of Oid.
+	 * Cope with possibility that unsigned long is wider than Oid, in which
+	 * case strtoul will not raise an error for some values that are out of
+	 * the range of Oid.
 	 *
-	 * For backwards compatibility, we want to accept inputs that are given
-	 * with a minus sign, so allow the input value if it matches after
-	 * either signed or unsigned extension to long.
+	 * For backwards compatibility, we want to accept inputs that are given with
+	 * a minus sign, so allow the input value if it matches after either
+	 * signed or unsigned extension to long.
 	 *
-	 * To ensure consistent results on 32-bit and 64-bit platforms, make sure
-	 * the error message is the same as if strtoul() had returned ERANGE.
+	 * To ensure consistent results on 32-bit and 64-bit platforms, make sure the
+	 * error message is the same as if strtoul() had returned ERANGE.
 	 */
 #if OID_MAX != ULONG_MAX
 	if (cvt != (unsigned long) result &&
@@ -171,8 +171,8 @@ buildoidvector(const Oid *oids, int n)
 		memcpy(result->values, oids, n * sizeof(Oid));
 
 	/*
-	 * Attach standard array header.  For historical reasons, we set the
-	 * index lower bound to 0 not 1.
+	 * Attach standard array header.  For historical reasons, we set the index
+	 * lower bound to 0 not 1.
 	 */
 	result->size = OidVectorSize(n);
 	result->ndim = 1;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/vacuumlo/vacuumlo.c,v 1.29 2004/12/31 21:58:50 pgsql Exp $
+ *	  $PostgreSQL: pgsql/contrib/vacuumlo/vacuumlo.c,v 1.30 2005/10/15 02:49:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,8 +130,8 @@ vacuumlo(char *database, struct _param * param)
 	PQclear(res);
 
 	/*
-	 * Vacuum the temp table so that planner will generate decent plans
-	 * for the DELETEs below.
+	 * Vacuum the temp table so that planner will generate decent plans for
+	 * the DELETEs below.
 	 */
 	buf[0] = '\0';
 	strcat(buf, "VACUUM ANALYZE vacuum_l");
@@ -193,8 +193,8 @@ vacuumlo(char *database, struct _param * param)
 
 		/*
 		 * The "IN" construct used here was horribly inefficient before
-		 * Postgres 7.4, but should be now competitive if not better than
-		 * the bogus join we used before.
+		 * Postgres 7.4, but should be now competitive if not better than the
+		 * bogus join we used before.
 		 */
 		snprintf(buf, BUFSIZE,
 				 "DELETE FROM vacuum_l "
@@ -216,10 +216,9 @@ vacuumlo(char *database, struct _param * param)
 	PQclear(res);
 
 	/*
-	 * Run the actual deletes in a single transaction.	Note that this
-	 * would be a bad idea in pre-7.1 Postgres releases (since rolling
-	 * back a table delete used to cause problems), but it should be safe
-	 * now.
+	 * Run the actual deletes in a single transaction.	Note that this would
+	 * be a bad idea in pre-7.1 Postgres releases (since rolling back a table
+	 * delete used to cause problems), but it should be safe now.
 	 */
 	res = PQexec(conn, "begin");
 	PQclear(res);
@@ -277,7 +276,7 @@ vacuumlo(char *database, struct _param * param)
 
 	if (param->verbose)
 		fprintf(stdout, "\r%s %d large objects from %s.\n",
-		(param->dry_run ? "Would remove" : "Removed"), deleted, database);
+		   (param->dry_run ? "Would remove" : "Removed"), deleted, database);
 
 	return 0;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.100 2005/06/28 05:09:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.101 2005/10/15 02:49:32 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -56,7 +56,7 @@
 
 	Add your entry to the cacheinfo[] array below.	All cache lists are
 	alphabetical, so add it in the proper place.  Specify the relation
-	OID, index OID, number of keys, and key attribute numbers.  If the
+	OID, index OID, number of keys, and key attribute numbers.	If the
 	relation contains tuples that are associated with a particular relation
 	(for example, its attributes, rules, triggers, etc) then specify the
 	attribute number that contains the OID of the associated relation.
@@ -92,7 +92,7 @@ struct cachedesc
 };
 
 static const struct cachedesc cacheinfo[] = {
-	{AggregateRelationId,				/* AGGFNOID */
+	{AggregateRelationId,		/* AGGFNOID */
 		AggregateFnoidIndexId,
 		0,
 		1,
@@ -102,7 +102,7 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{AccessMethodRelationId,			/* AMNAME */
+	{AccessMethodRelationId,	/* AMNAME */
 		AmNameIndexId,
 		0,
 		1,
@@ -112,7 +112,7 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{AccessMethodRelationId,			/* AMOID */
+	{AccessMethodRelationId,	/* AMOID */
 		AmOidIndexId,
 		0,
 		1,
@@ -152,7 +152,7 @@ static const struct cachedesc cacheinfo[] = {
 			Anum_pg_amproc_amprocnum,
 			0
 	}},
-	{AttributeRelationId,				/* ATTNAME */
+	{AttributeRelationId,		/* ATTNAME */
 		AttributeRelidNameIndexId,
 		Anum_pg_attribute_attrelid,
 		2,
@@ -162,7 +162,7 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{AttributeRelationId,				/* ATTNUM */
+	{AttributeRelationId,		/* ATTNUM */
 		AttributeRelidNumIndexId,
 		Anum_pg_attribute_attrelid,
 		2,
@@ -172,7 +172,7 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{AuthMemRelationId,				/* AUTHMEMMEMROLE */
+	{AuthMemRelationId,			/* AUTHMEMMEMROLE */
 		AuthMemMemRoleIndexId,
 		0,
 		2,
@@ -182,7 +182,7 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{AuthMemRelationId,				/* AUTHMEMROLEMEM */
+	{AuthMemRelationId,			/* AUTHMEMROLEMEM */
 		AuthMemRoleMemIndexId,
 		0,
 		2,
@@ -192,7 +192,7 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{AuthIdRelationId,				/* AUTHNAME */
+	{AuthIdRelationId,			/* AUTHNAME */
 		AuthIdRolnameIndexId,
 		0,
 		1,
@@ -202,7 +202,7 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{AuthIdRelationId,				/* AUTHOID */
+	{AuthIdRelationId,			/* AUTHOID */
 		AuthIdOidIndexId,
 		0,
 		1,
@@ -213,7 +213,7 @@ static const struct cachedesc cacheinfo[] = {
 			0
 	}},
 	{
-		CastRelationId,					/* CASTSOURCETARGET */
+		CastRelationId,			/* CASTSOURCETARGET */
 		CastSourceTargetIndexId,
 		0,
 		2,
@@ -223,7 +223,7 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{OperatorClassRelationId,			/* CLAAMNAMENSP */
+	{OperatorClassRelationId,	/* CLAAMNAMENSP */
 		OpclassAmNameNspIndexId,
 		0,
 		3,
@@ -233,7 +233,7 @@ static const struct cachedesc cacheinfo[] = {
 			Anum_pg_opclass_opcnamespace,
 			0
 	}},
-	{OperatorClassRelationId,			/* CLAOID */
+	{OperatorClassRelationId,	/* CLAOID */
 		OpclassOidIndexId,
 		0,
 		1,
@@ -243,7 +243,7 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{ConversionRelationId,				/* CONDEFAULT */
+	{ConversionRelationId,		/* CONDEFAULT */
 		ConversionDefaultIndexId,
 		0,
 		4,
@@ -253,7 +253,7 @@ static const struct cachedesc cacheinfo[] = {
 			Anum_pg_conversion_contoencoding,
 			ObjectIdAttributeNumber,
 	}},
-	{ConversionRelationId,				/* CONNAMENSP */
+	{ConversionRelationId,		/* CONNAMENSP */
 		ConversionNameNspIndexId,
 		0,
 		2,
@@ -263,7 +263,7 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{ConversionRelationId,				/* CONOID */
+	{ConversionRelationId,		/* CONOID */
 		ConversionOidIndexId,
 		0,
 		1,
@@ -273,7 +273,7 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{IndexRelationId,					/* INDEXRELID */
+	{IndexRelationId,			/* INDEXRELID */
 		IndexRelidIndexId,
 		Anum_pg_index_indrelid,
 		1,
@@ -283,7 +283,7 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{InheritsRelationId,				/* INHRELID */
+	{InheritsRelationId,		/* INHRELID */
 		InheritsRelidSeqnoIndexId,
 		Anum_pg_inherits_inhrelid,
 		2,
@@ -293,7 +293,7 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{LanguageRelationId,				/* LANGNAME */
+	{LanguageRelationId,		/* LANGNAME */
 		LanguageNameIndexId,
 		0,
 		1,
@@ -303,7 +303,7 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{LanguageRelationId,				/* LANGOID */
+	{LanguageRelationId,		/* LANGOID */
 		LanguageOidIndexId,
 		0,
 		1,
@@ -313,7 +313,7 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{NamespaceRelationId,				/* NAMESPACENAME */
+	{NamespaceRelationId,		/* NAMESPACENAME */
 		NamespaceNameIndexId,
 		0,
 		1,
@@ -323,7 +323,7 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{NamespaceRelationId,				/* NAMESPACEOID */
+	{NamespaceRelationId,		/* NAMESPACEOID */
 		NamespaceOidIndexId,
 		0,
 		1,
@@ -333,7 +333,7 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{OperatorRelationId,				/* OPERNAMENSP */
+	{OperatorRelationId,		/* OPERNAMENSP */
 		OperatorNameNspIndexId,
 		0,
 		4,
@@ -343,7 +343,7 @@ static const struct cachedesc cacheinfo[] = {
 			Anum_pg_operator_oprright,
 			Anum_pg_operator_oprnamespace
 	}},
-	{OperatorRelationId,				/* OPEROID */
+	{OperatorRelationId,		/* OPEROID */
 		OperatorOidIndexId,
 		0,
 		1,
@@ -353,7 +353,7 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{ProcedureRelationId,				/* PROCNAMEARGSNSP */
+	{ProcedureRelationId,		/* PROCNAMEARGSNSP */
 		ProcedureNameArgsNspIndexId,
 		0,
 		3,
@@ -363,7 +363,7 @@ static const struct cachedesc cacheinfo[] = {
 			Anum_pg_proc_pronamespace,
 			0
 	}},
-	{ProcedureRelationId,				/* PROCOID */
+	{ProcedureRelationId,		/* PROCOID */
 		ProcedureOidIndexId,
 		0,
 		1,
@@ -373,7 +373,7 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{RelationRelationId,				/* RELNAMENSP */
+	{RelationRelationId,		/* RELNAMENSP */
 		ClassNameNspIndexId,
 		ObjectIdAttributeNumber,
 		2,
@@ -383,7 +383,7 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{RelationRelationId,				/* RELOID */
+	{RelationRelationId,		/* RELOID */
 		ClassOidIndexId,
 		ObjectIdAttributeNumber,
 		1,
@@ -393,7 +393,7 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{RewriteRelationId,					/* RULERELNAME */
+	{RewriteRelationId,			/* RULERELNAME */
 		RewriteRelRulenameIndexId,
 		Anum_pg_rewrite_ev_class,
 		2,
@@ -403,7 +403,7 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{StatisticRelationId,				/* STATRELATT */
+	{StatisticRelationId,		/* STATRELATT */
 		StatisticRelidAttnumIndexId,
 		Anum_pg_statistic_starelid,
 		2,
@@ -413,7 +413,7 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{TypeRelationId,					/* TYPENAMENSP */
+	{TypeRelationId,			/* TYPENAMENSP */
 		TypeNameNspIndexId,
 		Anum_pg_type_typrelid,
 		2,
@@ -423,7 +423,7 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{TypeRelationId,					/* TYPEOID */
+	{TypeRelationId,			/* TYPEOID */
 		TypeOidIndexId,
 		Anum_pg_type_typrelid,
 		1,
@@ -435,7 +435,8 @@ static const struct cachedesc cacheinfo[] = {
 	}}
 };
 
-static CatCache *SysCache[lengthof(cacheinfo)];
+static CatCache *SysCache[
+						  lengthof(cacheinfo)];
 static int	SysCacheSize = lengthof(cacheinfo);
 static bool CacheInitialized = false;
 
@@ -697,10 +698,10 @@ SysCacheGetAttr(int cacheId, HeapTuple tup,
 				bool *isNull)
 {
 	/*
-	 * We just need to get the TupleDesc out of the cache entry, and then
-	 * we can apply heap_getattr().  We expect that the cache control data
-	 * is currently valid --- if the caller recently fetched the tuple,
-	 * then it should be.
+	 * We just need to get the TupleDesc out of the cache entry, and then we
+	 * can apply heap_getattr().  We expect that the cache control data is
+	 * currently valid --- if the caller recently fetched the tuple, then it
+	 * should be.
 	 */
 	if (cacheId < 0 || cacheId >= SysCacheSize)
 		elog(ERROR, "invalid cache id: %d", cacheId);

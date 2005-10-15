@@ -4,15 +4,12 @@
 typedef struct
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	int64		time;			/* all time units other than months and
-								 * years */
+	int64		time;			/* all time units other than months and years */
 #else
-	double		time;			/* all time units other than months and
-								 * years */
+	double		time;			/* all time units other than months and years */
 #endif
-	long		month;			/* months and years, after time for
-								 * alignment */
-} interval;
+	long		month;			/* months and years, after time for alignment */
+}	interval;
 
 #ifdef __cplusplus
 extern		"C"

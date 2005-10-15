@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.133 2005/06/22 21:14:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.134 2005/10/15 02:49:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,10 +145,9 @@ DefineIndex(RangeVar *heapRelation,
 
 	/*
 	 * Verify we (still) have CREATE rights in the rel's namespace.
-	 * (Presumably we did when the rel was created, but maybe not
-	 * anymore.)  Skip check if caller doesn't want it.  Also skip check
-	 * if bootstrapping, since permissions machinery may not be working
-	 * yet.
+	 * (Presumably we did when the rel was created, but maybe not anymore.)
+	 * Skip check if caller doesn't want it.  Also skip check if
+	 * bootstrapping, since permissions machinery may not be working yet.
 	 */
 	if (check_rights && !IsBootstrapProcessingMode())
 	{
@@ -193,8 +192,8 @@ DefineIndex(RangeVar *heapRelation,
 	}
 
 	/*
-	 * Force shared indexes into the pg_global tablespace.  This is a bit of
-	 * a hack but seems simpler than marking them in the BKI commands.
+	 * Force shared indexes into the pg_global tablespace.	This is a bit of a
+	 * hack but seems simpler than marking them in the BKI commands.
 	 */
 	if (rel->rd_rel->relisshared)
 		tablespaceId = GLOBALTABLESPACE_OID;
@@ -221,8 +220,7 @@ DefineIndex(RangeVar *heapRelation,
 	}
 
 	/*
-	 * look up the access method, verify it can handle the requested
-	 * features
+	 * look up the access method, verify it can handle the requested features
 	 */
 	tuple = SearchSysCache(AMNAME,
 						   PointerGetDatum(accessMethodName),
@@ -238,13 +236,13 @@ DefineIndex(RangeVar *heapRelation,
 	if (unique && !accessMethodForm->amcanunique)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		   errmsg("access method \"%s\" does not support unique indexes",
-				  accessMethodName)));
+			   errmsg("access method \"%s\" does not support unique indexes",
+					  accessMethodName)));
 	if (numberOfAttributes > 1 && !accessMethodForm->amcanmulticol)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("access method \"%s\" does not support multicolumn indexes",
-						accessMethodName)));
+		  errmsg("access method \"%s\" does not support multicolumn indexes",
+				 accessMethodName)));
 
 	ReleaseSysCache(tuple);
 
@@ -275,23 +273,23 @@ DefineIndex(RangeVar *heapRelation,
 		ListCell   *keys;
 
 		/*
-		 * If ALTER TABLE, check that there isn't already a PRIMARY KEY.
-		 * In CREATE TABLE, we have faith that the parser rejected
-		 * multiple pkey clauses; and CREATE INDEX doesn't have a way to
-		 * say PRIMARY KEY, so it's no problem either.
+		 * If ALTER TABLE, check that there isn't already a PRIMARY KEY. In
+		 * CREATE TABLE, we have faith that the parser rejected multiple pkey
+		 * clauses; and CREATE INDEX doesn't have a way to say PRIMARY KEY, so
+		 * it's no problem either.
 		 */
 		if (is_alter_table &&
 			relationHasPrimaryKey(rel))
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("multiple primary keys for table \"%s\" are not allowed",
-							RelationGetRelationName(rel))));
+			 errmsg("multiple primary keys for table \"%s\" are not allowed",
+					RelationGetRelationName(rel))));
 		}
 
 		/*
-		 * Check that all of the attributes in a primary key are marked as
-		 * not null, otherwise attempt to ALTER TABLE .. SET NOT NULL
+		 * Check that all of the attributes in a primary key are marked as not
+		 * null, otherwise attempt to ALTER TABLE .. SET NOT NULL
 		 */
 		cmds = NIL;
 		foreach(keys, attributeList)
@@ -326,35 +324,35 @@ DefineIndex(RangeVar *heapRelation,
 			else
 			{
 				/*
-				 * This shouldn't happen during CREATE TABLE, but can
-				 * happen during ALTER TABLE.  Keep message in sync with
+				 * This shouldn't happen during CREATE TABLE, but can happen
+				 * during ALTER TABLE.	Keep message in sync with
 				 * transformIndexConstraints() in parser/analyze.c.
 				 */
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
-					  errmsg("column \"%s\" named in key does not exist",
-							 key->name)));
+						 errmsg("column \"%s\" named in key does not exist",
+								key->name)));
 			}
 		}
 
 		/*
 		 * XXX: Shouldn't the ALTER TABLE .. SET NOT NULL cascade to child
-		 * tables?	Currently, since the PRIMARY KEY itself doesn't
-		 * cascade, we don't cascade the notnull constraint(s) either; but
-		 * this is pretty debatable.
+		 * tables?	Currently, since the PRIMARY KEY itself doesn't cascade,
+		 * we don't cascade the notnull constraint(s) either; but this is
+		 * pretty debatable.
 		 *
-		 * XXX: possible future improvement: when being called from ALTER
-		 * TABLE, it would be more efficient to merge this with the outer
-		 * ALTER TABLE, so as to avoid two scans.  But that seems to
-		 * complicate DefineIndex's API unduly.
+		 * XXX: possible future improvement: when being called from ALTER TABLE,
+		 * it would be more efficient to merge this with the outer ALTER
+		 * TABLE, so as to avoid two scans.  But that seems to complicate
+		 * DefineIndex's API unduly.
 		 */
 		if (cmds)
 			AlterTableInternal(relationId, cmds, false);
 	}
 
 	/*
-	 * Prepare arguments for index_create, primarily an IndexInfo
-	 * structure.  Note that ii_Predicate must be in implicit-AND format.
+	 * Prepare arguments for index_create, primarily an IndexInfo structure.
+	 * Note that ii_Predicate must be in implicit-AND format.
 	 */
 	indexInfo = makeNode(IndexInfo);
 	indexInfo->ii_NumIndexAttrs = numberOfAttributes;
@@ -372,15 +370,15 @@ DefineIndex(RangeVar *heapRelation,
 	heap_close(rel, NoLock);
 
 	/*
-	 * Report index creation if appropriate (delay this till after most of
-	 * the error checks)
+	 * Report index creation if appropriate (delay this till after most of the
+	 * error checks)
 	 */
 	if (isconstraint && !quiet)
 		ereport(NOTICE,
-				(errmsg("%s %s will create implicit index \"%s\" for table \"%s\"",
-				 is_alter_table ? "ALTER TABLE / ADD" : "CREATE TABLE /",
-						primary ? "PRIMARY KEY" : "UNIQUE",
-					  indexRelationName, RelationGetRelationName(rel))));
+		  (errmsg("%s %s will create implicit index \"%s\" for table \"%s\"",
+				  is_alter_table ? "ALTER TABLE / ADD" : "CREATE TABLE /",
+				  primary ? "PRIMARY KEY" : "UNIQUE",
+				  indexRelationName, RelationGetRelationName(rel))));
 
 	index_create(relationId, indexRelationName, indexRelationId,
 				 indexInfo, accessMethodId, tablespaceId, classObjectId,
@@ -391,8 +389,8 @@ DefineIndex(RangeVar *heapRelation,
 	 * We update the relation's pg_class tuple even if it already has
 	 * relhasindex = true.	This is needed to cause a shared-cache-inval
 	 * message to be sent for the pg_class tuple, which will cause other
-	 * backends to flush their relcache entries and in particular their
-	 * cached lists of the indexes for this relation.
+	 * backends to flush their relcache entries and in particular their cached
+	 * lists of the indexes for this relation.
 	 */
 	setRelhasindex(relationId, true, primary, InvalidOid);
 }
@@ -414,8 +412,7 @@ CheckPredicate(Expr *predicate)
 {
 	/*
 	 * We don't currently support generation of an actual query plan for a
-	 * predicate, only simple scalar expressions; hence these
-	 * restrictions.
+	 * predicate, only simple scalar expressions; hence these restrictions.
 	 */
 	if (contain_subplans((Node *) predicate))
 		ereport(ERROR,
@@ -433,7 +430,7 @@ CheckPredicate(Expr *predicate)
 	if (contain_mutable_functions((Node *) predicate))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-		errmsg("functions in index predicate must be marked IMMUTABLE")));
+		   errmsg("functions in index predicate must be marked IMMUTABLE")));
 }
 
 static void
@@ -470,8 +467,8 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 				if (isconstraint)
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_COLUMN),
-					  errmsg("column \"%s\" named in key does not exist",
-							 attribute->name)));
+						  errmsg("column \"%s\" named in key does not exist",
+								 attribute->name)));
 				else
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_COLUMN),
@@ -501,24 +498,23 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			atttype = exprType(attribute->expr);
 
 			/*
-			 * We don't currently support generation of an actual query
-			 * plan for an index expression, only simple scalar
-			 * expressions; hence these restrictions.
+			 * We don't currently support generation of an actual query plan
+			 * for an index expression, only simple scalar expressions; hence
+			 * these restrictions.
 			 */
 			if (contain_subplans(attribute->expr))
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot use subquery in index expression")));
+						 errmsg("cannot use subquery in index expression")));
 			if (contain_agg_clause(attribute->expr))
 				ereport(ERROR,
 						(errcode(ERRCODE_GROUPING_ERROR),
-						 errmsg("cannot use aggregate function in index expression")));
+				errmsg("cannot use aggregate function in index expression")));
 
 			/*
-			 * A expression using mutable functions is probably wrong,
-			 * since if you aren't going to get the same result for the
-			 * same data every time, it's not clear what the index entries
-			 * mean at all.
+			 * A expression using mutable functions is probably wrong, since
+			 * if you aren't going to get the same result for the same data
+			 * every time, it's not clear what the index entries mean at all.
 			 */
 			if (contain_mutable_functions(attribute->expr))
 				ereport(ERROR,
@@ -548,16 +544,16 @@ GetIndexOpClass(List *opclass, Oid attrType,
 				opInputType;
 
 	/*
-	 * Release 7.0 removed network_ops, timespan_ops, and datetime_ops, so
-	 * we ignore those opclass names so the default *_ops is used.	This
-	 * can be removed in some later release.  bjm 2000/02/07
+	 * Release 7.0 removed network_ops, timespan_ops, and datetime_ops, so we
+	 * ignore those opclass names so the default *_ops is used.  This can be
+	 * removed in some later release.  bjm 2000/02/07
 	 *
 	 * Release 7.1 removes lztext_ops, so suppress that too for a while.  tgl
 	 * 2000/07/30
 	 *
-	 * Release 7.2 renames timestamp_ops to timestamptz_ops, so suppress that
-	 * too for awhile.	I'm starting to think we need a better approach.
-	 * tgl 2000/10/01
+	 * Release 7.2 renames timestamp_ops to timestamptz_ops, so suppress that too
+	 * for awhile.	I'm starting to think we need a better approach. tgl
+	 * 2000/10/01
 	 *
 	 * Release 8.0 removes bigbox_ops (which was dead code for a long while
 	 * anyway).  tgl 2003/11/11
@@ -628,8 +624,8 @@ GetIndexOpClass(List *opclass, Oid attrType,
 						NameListToString(opclass), accessMethodName)));
 
 	/*
-	 * Verify that the index operator class accepts this datatype.	Note
-	 * we will accept binary compatibility.
+	 * Verify that the index operator class accepts this datatype.	Note we
+	 * will accept binary compatibility.
 	 */
 	opClassId = HeapTupleGetOid(tuple);
 	opInputType = ((Form_pg_opclass) GETSTRUCT(tuple))->opcintype;
@@ -637,8 +633,8 @@ GetIndexOpClass(List *opclass, Oid attrType,
 	if (!IsBinaryCoercible(attrType, opInputType))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-			 errmsg("operator class \"%s\" does not accept data type %s",
-				  NameListToString(opclass), format_type_be(attrType))));
+				 errmsg("operator class \"%s\" does not accept data type %s",
+					  NameListToString(opclass), format_type_be(attrType))));
 
 	ReleaseSysCache(tuple);
 
@@ -663,8 +659,8 @@ GetDefaultOpClass(Oid attrType, Oid accessMethodId)
 	 * (either exactly or binary-compatibly, but prefer an exact match).
 	 *
 	 * We could find more than one binary-compatible match, in which case we
-	 * require the user to specify which one he wants.	If we find more
-	 * than one exact match, then someone put bogus entries in pg_opclass.
+	 * require the user to specify which one he wants.	If we find more than
+	 * one exact match, then someone put bogus entries in pg_opclass.
 	 *
 	 * The initial search is done by namespace.c so that we only consider
 	 * opclasses visible in the current namespace search path.	(See also
@@ -694,8 +690,8 @@ GetDefaultOpClass(Oid attrType, Oid accessMethodId)
 	if (nexact != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("there are multiple default operator classes for data type %s",
-						format_type_be(attrType))));
+		errmsg("there are multiple default operator classes for data type %s",
+			   format_type_be(attrType))));
 	if (ncompatible == 1)
 		return compatibleOid;
 
@@ -749,8 +745,8 @@ makeObjectName(const char *name1, const char *name2, const char *label)
 
 	/*
 	 * If we must truncate,  preferentially truncate the longer name. This
-	 * logic could be expressed without a loop, but it's simple and
-	 * obvious as a loop.
+	 * logic could be expressed without a loop, but it's simple and obvious as
+	 * a loop.
 	 */
 	while (name1chars + name2chars > availchars)
 	{
@@ -842,9 +838,9 @@ relationHasPrimaryKey(Relation rel)
 	ListCell   *indexoidscan;
 
 	/*
-	 * Get the list of index OIDs for the table from the relcache, and
-	 * look up each one in the pg_index syscache until we find one marked
-	 * primary key (hopefully there isn't more than one such).
+	 * Get the list of index OIDs for the table from the relcache, and look up
+	 * each one in the pg_index syscache until we find one marked primary key
+	 * (hopefully there isn't more than one such).
 	 */
 	indexoidlist = RelationGetIndexList(rel);
 
@@ -1004,16 +1000,16 @@ ReindexDatabase(const char *databaseName, bool do_system, bool do_user)
 
 	/*
 	 * We cannot run inside a user transaction block; if we were inside a
-	 * transaction, then our commit- and start-transaction-command calls
-	 * would not have the intended effect!
+	 * transaction, then our commit- and start-transaction-command calls would
+	 * not have the intended effect!
 	 */
 	PreventTransactionChain((void *) databaseName, "REINDEX DATABASE");
 
 	/*
-	 * Create a memory context that will survive forced transaction
-	 * commits we do below.  Since it is a child of PortalContext, it will
-	 * go away eventually even if we suffer an error; there's no need for
-	 * special abort cleanup logic.
+	 * Create a memory context that will survive forced transaction commits we
+	 * do below.  Since it is a child of PortalContext, it will go away
+	 * eventually even if we suffer an error; there's no need for special
+	 * abort cleanup logic.
 	 */
 	private_context = AllocSetContextCreate(PortalContext,
 											"ReindexDatabase",
@@ -1022,10 +1018,10 @@ ReindexDatabase(const char *databaseName, bool do_system, bool do_user)
 											ALLOCSET_DEFAULT_MAXSIZE);
 
 	/*
-	 * We always want to reindex pg_class first.  This ensures that if
-	 * there is any corruption in pg_class' indexes, they will be fixed
-	 * before we process any other tables.	This is critical because
-	 * reindexing itself will try to update pg_class.
+	 * We always want to reindex pg_class first.  This ensures that if there
+	 * is any corruption in pg_class' indexes, they will be fixed before we
+	 * process any other tables.  This is critical because reindexing itself
+	 * will try to update pg_class.
 	 */
 	if (do_system)
 	{

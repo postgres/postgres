@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mbprint.c,v 1.17 2005/09/24 17:53:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mbprint.c,v 1.18 2005/10/15 02:49:40 momjian Exp $
  */
 
 #include "postgres_fe.h"
@@ -140,8 +140,7 @@ ucs_wcwidth(pg_wchar ucs)
 		return 0;
 
 	/*
-	 * if we arrive here, ucs is not a combining or C0/C1 control
-	 * character
+	 * if we arrive here, ucs is not a combining or C0/C1 control character
 	 */
 
 	return 1 +
@@ -217,10 +216,9 @@ utf_charcheck(const unsigned char *c)
 {
 	/*
 	 * Unicode 3.1 compliant validation : for each category, it checks the
-	 * combination of each byte to make sur it maps to a valid range. It
-	 * also returns -1 for the following UCS values: ucs > 0x10ffff ucs &
-	 * 0xfffe = 0xfffe 0xfdd0 < ucs < 0xfdef ucs & 0xdb00 = 0xd800
-	 * (surrogates)
+	 * combination of each byte to make sur it maps to a valid range. It also
+	 * returns -1 for the following UCS values: ucs > 0x10ffff ucs & 0xfffe =
+	 * 0xfffe 0xfdd0 < ucs < 0xfdef ucs & 0xdb00 = 0xd800 (surrogates)
 	 */
 	if ((*c & 0x80) == 0)
 		return 1;
@@ -245,7 +243,7 @@ utf_charcheck(const unsigned char *c)
 			/* check 0xfffe/0xffff, 0xfdd0..0xfedf range, surrogates */
 			if (((z == 0x0f) &&
 				 (((yx & 0xffe) == 0xffe) ||
-			(((yx & 0xf80) == 0xd80) && (lx >= 0x30) && (lx <= 0x4f)))) ||
+			   (((yx & 0xf80) == 0xd80) && (lx >= 0x30) && (lx <= 0x4f)))) ||
 				((z == 0x0d) && ((yx & 0xb00) == 0x800)))
 				return -1;
 			return 3;
@@ -318,8 +316,8 @@ pg_wcswidth(const char *pwcs, size_t len, int encoding)
 	else
 	{
 		/*
-		 * obviously, other encodings may want to fix this, but I don't
-		 * know them myself, unfortunately.
+		 * obviously, other encodings may want to fix this, but I don't know
+		 * them myself, unfortunately.
 		 */
 		return len;
 	}
@@ -333,8 +331,8 @@ mbvalidate(char *pwcs, int encoding)
 	else
 	{
 		/*
-		 * other encodings needing validation should add their own
-		 * routines here
+		 * other encodings needing validation should add their own routines
+		 * here
 		 */
 	}
 

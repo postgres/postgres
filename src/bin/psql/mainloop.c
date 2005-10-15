@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.67 2005/02/22 04:40:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.68 2005/10/15 02:49:40 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -35,8 +35,8 @@ MainLoop(FILE *source)
 {
 	PsqlScanState scan_state;	/* lexer working state */
 	PQExpBuffer query_buf;		/* buffer for query being accumulated */
-	PQExpBuffer previous_buf;	/* if there isn't anything in the new
-								 * buffer yet, use this one for \e, etc. */
+	PQExpBuffer previous_buf;	/* if there isn't anything in the new buffer
+								 * yet, use this one for \e, etc. */
 	char	   *line;			/* current line of input */
 	int			added_nl_pos;
 	bool		success;
@@ -117,12 +117,10 @@ MainLoop(FILE *source)
 		}
 
 		/*
-		 * establish the control-C handler only after main_loop_jmp is
-		 * ready
+		 * establish the control-C handler only after main_loop_jmp is ready
 		 */
 		pqsignal(SIGINT, handle_sigint);		/* control-C => cancel */
-
-#else /* WIN32 */
+#else							/* WIN32 */
 		setup_cancel_handler();
 #endif
 
@@ -156,9 +154,8 @@ MainLoop(FILE *source)
 			line = gets_fromFile(source);
 
 		/*
-		 * query_buf holds query already accumulated.  line is the
-		 * malloc'd new line of input (note it must be freed before
-		 * looping around!)
+		 * query_buf holds query already accumulated.  line is the malloc'd
+		 * new line of input (note it must be freed before looping around!)
 		 */
 
 		/* No more input.  Time to quit, or \i done */
@@ -225,8 +222,8 @@ MainLoop(FILE *source)
 			prompt_status = prompt_tmp;
 
 			/*
-			 * Send command if semicolon found, or if end of line and
-			 * we're in single-line mode.
+			 * Send command if semicolon found, or if end of line and we're in
+			 * single-line mode.
 			 */
 			if (scan_result == PSCAN_SEMICOLON ||
 				(scan_result == PSCAN_EOL &&
@@ -247,11 +244,10 @@ MainLoop(FILE *source)
 				/* handle backslash command */
 
 				/*
-				 * If we added a newline to query_buf, and nothing else
-				 * has been inserted in query_buf by the lexer, then strip
-				 * off the newline again.  This avoids any change to
-				 * query_buf when a line contains only a backslash
-				 * command.
+				 * If we added a newline to query_buf, and nothing else has
+				 * been inserted in query_buf by the lexer, then strip off the
+				 * newline again.  This avoids any change to query_buf when a
+				 * line contains only a backslash command.
 				 */
 				if (query_buf->len == added_nl_pos)
 					query_buf->data[--query_buf->len] = '\0';
@@ -259,7 +255,7 @@ MainLoop(FILE *source)
 
 				slashCmdStatus = HandleSlashCmds(scan_state,
 												 query_buf->len > 0 ?
-											   query_buf : previous_buf);
+												 query_buf : previous_buf);
 
 				success = slashCmdStatus != CMD_ERROR;
 
@@ -326,10 +322,10 @@ MainLoop(FILE *source)
 	}
 
 	/*
-	 * Reset SIGINT handler because main_loop_jmp will be invalid as soon
-	 * as we exit this routine.  If there is an outer MainLoop instance,
-	 * it will re-enable ^C catching as soon as it gets back to the top of
-	 * its loop and resets main_loop_jmp to point to itself.
+	 * Reset SIGINT handler because main_loop_jmp will be invalid as soon as
+	 * we exit this routine.  If there is an outer MainLoop instance, it will
+	 * re-enable ^C catching as soon as it gets back to the top of its loop
+	 * and resets main_loop_jmp to point to itself.
 	 */
 #ifndef WIN32
 	pqsignal(SIGINT, SIG_DFL);

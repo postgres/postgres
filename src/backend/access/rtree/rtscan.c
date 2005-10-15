@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtscan.c,v 1.59 2005/06/24 00:18:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtscan.c,v 1.60 2005/10/15 02:49:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,11 +123,11 @@ rtrescan(PG_FUNCTION_ARGS)
 
 		/*
 		 * Scans on internal pages use different operators than they do on
-		 * leaf pages.	For example, if the user wants all boxes that
-		 * exactly match (x1,y1,x2,y2), then on internal pages we need to
-		 * find all boxes that contain (x1,y1,x2,y2).  rtstrat.c knows
-		 * how to pick the opclass member to use for internal pages.
-		 * In some cases we need to negate the result of the opclass member.
+		 * leaf pages.	For example, if the user wants all boxes that exactly
+		 * match (x1,y1,x2,y2), then on internal pages we need to find all
+		 * boxes that contain (x1,y1,x2,y2).  rtstrat.c knows how to pick the
+		 * opclass member to use for internal pages. In some cases we need to
+		 * negate the result of the opclass member.
 		 */
 		for (i = 0; i < s->numberOfKeys; i++)
 		{
@@ -333,9 +333,9 @@ ReleaseResources_rtree(void)
 	RTScanList	next;
 
 	/*
-	 * Note: this should be a no-op during normal query shutdown. However,
-	 * in an abort situation ExecutorEnd is not called and so there may be
-	 * open index scans to clean up.
+	 * Note: this should be a no-op during normal query shutdown. However, in
+	 * an abort situation ExecutorEnd is not called and so there may be open
+	 * index scans to clean up.
 	 */
 	prev = NULL;
 
@@ -440,8 +440,7 @@ adjustiptr(IndexScanDesc s,
 						else
 						{
 							/*
-							 * remember that we're before the current
-							 * tuple
+							 * remember that we're before the current tuple
 							 */
 							ItemPointerSet(iptr, blkno, FirstOffsetNumber);
 							if (iptr == &(s->currentItemData))

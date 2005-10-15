@@ -21,7 +21,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/palloc.h,v 1.33 2005/02/18 21:52:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/palloc.h,v 1.34 2005/10/15 02:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,14 +80,13 @@ static __inline__ MemoryContext
 MemoryContextSwitchTo(MemoryContext context)
 {
 	MemoryContext old = CurrentMemoryContext;
+
 	CurrentMemoryContext = context;
 	return old;
 }
-
 #else
 
 extern MemoryContext MemoryContextSwitchTo(MemoryContext context);
-
 #endif   /* __GNUC__ */
 
 /*

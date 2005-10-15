@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/list.c,v 1.65 2005/07/28 20:26:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/list.c,v 1.66 2005/10/15 02:49:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,6 @@ check_list_invariants(List *list)
 		Assert(list->head->next == list->tail);
 	Assert(list->tail->next == NULL);
 }
-
 #else
 #define check_list_invariants(l)
 #endif   /* USE_ASSERT_CHECKING */
@@ -532,9 +531,9 @@ list_delete_cell(List *list, ListCell *cell, ListCell *prev)
 	Assert(prev != NULL ? lnext(prev) == cell : list_head(list) == cell);
 
 	/*
-	 * If we're about to delete the last node from the list, free the
-	 * whole list instead and return NIL, which is the only valid
-	 * representation of a zero-length list.
+	 * If we're about to delete the last node from the list, free the whole
+	 * list instead and return NIL, which is the only valid representation of
+	 * a zero-length list.
 	 */
 	if (list->length == 1)
 	{
@@ -543,9 +542,8 @@ list_delete_cell(List *list, ListCell *cell, ListCell *prev)
 	}
 
 	/*
-	 * Otherwise, adjust the necessary list links, deallocate the
-	 * particular node we have just removed, and return the list we were
-	 * given.
+	 * Otherwise, adjust the necessary list links, deallocate the particular
+	 * node we have just removed, and return the list we were given.
 	 */
 	list->length--;
 
@@ -951,7 +949,7 @@ list_append_unique_oid(List *list, Oid datum)
  * via equal().
  *
  * This is almost the same functionality as list_union(), but list1 is
- * modified in-place rather than being copied.  Note also that list2's cells
+ * modified in-place rather than being copied.	Note also that list2's cells
  * are not inserted in list1, so the analogy to list_concat() isn't perfect.
  */
 List *
@@ -1110,8 +1108,8 @@ list_copy(List *oldlist)
 	newlist->length = oldlist->length;
 
 	/*
-	 * Copy over the data in the first cell; new_list() has already
-	 * allocated the head cell itself
+	 * Copy over the data in the first cell; new_list() has already allocated
+	 * the head cell itself
 	 */
 	newlist->head->data = oldlist->head->data;
 
@@ -1163,8 +1161,8 @@ list_copy_tail(List *oldlist, int nskip)
 		oldlist_cur = oldlist_cur->next;
 
 	/*
-	 * Copy over the data in the first remaining cell; new_list() has
-	 * already allocated the head cell itself
+	 * Copy over the data in the first remaining cell; new_list() has already
+	 * allocated the head cell itself
 	 */
 	newlist->head->data = oldlist_cur->data;
 

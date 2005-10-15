@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.58 2005/03/12 20:25:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.59 2005/10/15 02:49:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,8 +59,8 @@ scanint8(const char *str, bool errorOK, int64 *result)
 	int			sign = 1;
 
 	/*
-	 * Do our own scan, rather than relying on sscanf which might be
-	 * broken for long long.
+	 * Do our own scan, rather than relying on sscanf which might be broken
+	 * for long long.
 	 */
 
 	/* skip leading spaces */
@@ -74,8 +74,7 @@ scanint8(const char *str, bool errorOK, int64 *result)
 
 		/*
 		 * Do an explicit check for INT64_MIN.	Ugly though this is, it's
-		 * cleaner than trying to get the loop below to handle it
-		 * portably.
+		 * cleaner than trying to get the loop below to handle it portably.
 		 */
 #ifndef INT64_IS_BUSTED
 		if (strncmp(ptr, "9223372036854775808", 19) == 0)
@@ -115,8 +114,8 @@ scanint8(const char *str, bool errorOK, int64 *result)
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-						 errmsg("value \"%s\" is out of range for type bigint",
-								str)));
+					   errmsg("value \"%s\" is out of range for type bigint",
+							  str)));
 		}
 		tmp = newtmp;
 	}
@@ -524,10 +523,11 @@ int8pl(PG_FUNCTION_ARGS)
 	int64		result;
 
 	result = arg1 + arg2;
+
 	/*
-	 * Overflow check.  If the inputs are of different signs then their sum
-	 * cannot overflow.  If the inputs are of the same sign, their sum
-	 * had better be that sign too.
+	 * Overflow check.	If the inputs are of different signs then their sum
+	 * cannot overflow.  If the inputs are of the same sign, their sum had
+	 * better be that sign too.
 	 */
 	if (SAMESIGN(arg1, arg2) && !SAMESIGN(result, arg1))
 		ereport(ERROR,
@@ -544,10 +544,11 @@ int8mi(PG_FUNCTION_ARGS)
 	int64		result;
 
 	result = arg1 - arg2;
+
 	/*
-	 * Overflow check.  If the inputs are of the same sign then their
-	 * difference cannot overflow.  If they are of different signs then
-	 * the result should be of the same sign as the first input.
+	 * Overflow check.	If the inputs are of the same sign then their
+	 * difference cannot overflow.	If they are of different signs then the
+	 * result should be of the same sign as the first input.
 	 */
 	if (!SAMESIGN(arg1, arg2) && !SAMESIGN(result, arg1))
 		ereport(ERROR,
@@ -564,21 +565,22 @@ int8mul(PG_FUNCTION_ARGS)
 	int64		result;
 
 	result = arg1 * arg2;
+
 	/*
-	 * Overflow check.  We basically check to see if result / arg2 gives
-	 * arg1 again.  There are two cases where this fails: arg2 = 0 (which
-	 * cannot overflow) and arg1 = INT64_MIN, arg2 = -1 (where the division
-	 * itself will overflow and thus incorrectly match).
+	 * Overflow check.	We basically check to see if result / arg2 gives arg1
+	 * again.  There are two cases where this fails: arg2 = 0 (which cannot
+	 * overflow) and arg1 = INT64_MIN, arg2 = -1 (where the division itself
+	 * will overflow and thus incorrectly match).
 	 *
 	 * Since the division is likely much more expensive than the actual
-	 * multiplication, we'd like to skip it where possible.  The best
-	 * bang for the buck seems to be to check whether both inputs are in
-	 * the int32 range; if so, no overflow is possible.
+	 * multiplication, we'd like to skip it where possible.  The best bang for
+	 * the buck seems to be to check whether both inputs are in the int32
+	 * range; if so, no overflow is possible.
 	 */
 	if (!(arg1 == (int64) ((int32) arg1) &&
 		  arg2 == (int64) ((int32) arg2)) &&
 		arg2 != 0 &&
-		(result/arg2 != arg1 || (arg2 == -1 && arg1 < 0 && result < 0)))
+		(result / arg2 != arg1 || (arg2 == -1 && arg1 < 0 && result < 0)))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("bigint out of range")));
@@ -598,10 +600,11 @@ int8div(PG_FUNCTION_ARGS)
 				 errmsg("division by zero")));
 
 	result = arg1 / arg2;
+
 	/*
-	 * Overflow check.  The only possible overflow case is for
-	 * arg1 = INT64_MIN, arg2 = -1, where the correct result is -INT64_MIN,
-	 * which can't be represented on a two's-complement machine.
+	 * Overflow check.	The only possible overflow case is for arg1 =
+	 * INT64_MIN, arg2 = -1, where the correct result is -INT64_MIN, which
+	 * can't be represented on a two's-complement machine.
 	 */
 	if (arg2 == -1 && arg1 < 0 && result < 0)
 		ereport(ERROR,
@@ -653,9 +656,9 @@ int8inc(PG_FUNCTION_ARGS)
 	if (fcinfo->context && IsA(fcinfo->context, AggState))
 	{
 		/*
-		 * Special case to avoid palloc overhead for COUNT(): when called
-		 * from nodeAgg, we know that the argument is modifiable local
-		 * storage, so just update it in-place.
+		 * Special case to avoid palloc overhead for COUNT(): when called from
+		 * nodeAgg, we know that the argument is modifiable local storage, so
+		 * just update it in-place.
 		 *
 		 * Note: this assumes int8 is a pass-by-ref type; if we ever support
 		 * pass-by-val int8, this should be ifdef'd out when int8 is
@@ -723,10 +726,11 @@ int84pl(PG_FUNCTION_ARGS)
 	int64		result;
 
 	result = arg1 + arg2;
+
 	/*
-	 * Overflow check.  If the inputs are of different signs then their sum
-	 * cannot overflow.  If the inputs are of the same sign, their sum
-	 * had better be that sign too.
+	 * Overflow check.	If the inputs are of different signs then their sum
+	 * cannot overflow.  If the inputs are of the same sign, their sum had
+	 * better be that sign too.
 	 */
 	if (SAMESIGN(arg1, arg2) && !SAMESIGN(result, arg1))
 		ereport(ERROR,
@@ -743,10 +747,11 @@ int84mi(PG_FUNCTION_ARGS)
 	int64		result;
 
 	result = arg1 - arg2;
+
 	/*
-	 * Overflow check.  If the inputs are of the same sign then their
-	 * difference cannot overflow.  If they are of different signs then
-	 * the result should be of the same sign as the first input.
+	 * Overflow check.	If the inputs are of the same sign then their
+	 * difference cannot overflow.	If they are of different signs then the
+	 * result should be of the same sign as the first input.
 	 */
 	if (!SAMESIGN(arg1, arg2) && !SAMESIGN(result, arg1))
 		ereport(ERROR,
@@ -763,18 +768,19 @@ int84mul(PG_FUNCTION_ARGS)
 	int64		result;
 
 	result = arg1 * arg2;
+
 	/*
-	 * Overflow check.  We basically check to see if result / arg1 gives
-	 * arg2 again.  There is one case where this fails: arg1 = 0 (which
-	 * cannot overflow).
+	 * Overflow check.	We basically check to see if result / arg1 gives arg2
+	 * again.  There is one case where this fails: arg1 = 0 (which cannot
+	 * overflow).
 	 *
 	 * Since the division is likely much more expensive than the actual
-	 * multiplication, we'd like to skip it where possible.  The best
-	 * bang for the buck seems to be to check whether both inputs are in
-	 * the int32 range; if so, no overflow is possible.
+	 * multiplication, we'd like to skip it where possible.  The best bang for
+	 * the buck seems to be to check whether both inputs are in the int32
+	 * range; if so, no overflow is possible.
 	 */
 	if (arg1 != (int64) ((int32) arg1) &&
-		result/arg1 != arg2)
+		result / arg1 != arg2)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("bigint out of range")));
@@ -794,10 +800,11 @@ int84div(PG_FUNCTION_ARGS)
 				 errmsg("division by zero")));
 
 	result = arg1 / arg2;
+
 	/*
-	 * Overflow check.  The only possible overflow case is for
-	 * arg1 = INT64_MIN, arg2 = -1, where the correct result is -INT64_MIN,
-	 * which can't be represented on a two's-complement machine.
+	 * Overflow check.	The only possible overflow case is for arg1 =
+	 * INT64_MIN, arg2 = -1, where the correct result is -INT64_MIN, which
+	 * can't be represented on a two's-complement machine.
 	 */
 	if (arg2 == -1 && arg1 < 0 && result < 0)
 		ereport(ERROR,
@@ -814,10 +821,11 @@ int48pl(PG_FUNCTION_ARGS)
 	int64		result;
 
 	result = arg1 + arg2;
+
 	/*
-	 * Overflow check.  If the inputs are of different signs then their sum
-	 * cannot overflow.  If the inputs are of the same sign, their sum
-	 * had better be that sign too.
+	 * Overflow check.	If the inputs are of different signs then their sum
+	 * cannot overflow.  If the inputs are of the same sign, their sum had
+	 * better be that sign too.
 	 */
 	if (SAMESIGN(arg1, arg2) && !SAMESIGN(result, arg1))
 		ereport(ERROR,
@@ -834,10 +842,11 @@ int48mi(PG_FUNCTION_ARGS)
 	int64		result;
 
 	result = arg1 - arg2;
+
 	/*
-	 * Overflow check.  If the inputs are of the same sign then their
-	 * difference cannot overflow.  If they are of different signs then
-	 * the result should be of the same sign as the first input.
+	 * Overflow check.	If the inputs are of the same sign then their
+	 * difference cannot overflow.	If they are of different signs then the
+	 * result should be of the same sign as the first input.
 	 */
 	if (!SAMESIGN(arg1, arg2) && !SAMESIGN(result, arg1))
 		ereport(ERROR,
@@ -854,18 +863,19 @@ int48mul(PG_FUNCTION_ARGS)
 	int64		result;
 
 	result = arg1 * arg2;
+
 	/*
-	 * Overflow check.  We basically check to see if result / arg2 gives
-	 * arg1 again.  There is one case where this fails: arg2 = 0 (which
-	 * cannot overflow).
+	 * Overflow check.	We basically check to see if result / arg2 gives arg1
+	 * again.  There is one case where this fails: arg2 = 0 (which cannot
+	 * overflow).
 	 *
 	 * Since the division is likely much more expensive than the actual
-	 * multiplication, we'd like to skip it where possible.  The best
-	 * bang for the buck seems to be to check whether both inputs are in
-	 * the int32 range; if so, no overflow is possible.
+	 * multiplication, we'd like to skip it where possible.  The best bang for
+	 * the buck seems to be to check whether both inputs are in the int32
+	 * range; if so, no overflow is possible.
 	 */
 	if (arg2 != (int64) ((int32) arg2) &&
-		result/arg2 != arg1)
+		result / arg2 != arg1)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("bigint out of range")));
@@ -1027,9 +1037,9 @@ dtoi8(PG_FUNCTION_ARGS)
 	arg = rint(arg);
 
 	/*
-	 * Does it fit in an int64?  Avoid assuming that we have handy
-	 * constants defined for the range boundaries, instead test for
-	 * overflow by reverse-conversion.
+	 * Does it fit in an int64?  Avoid assuming that we have handy constants
+	 * defined for the range boundaries, instead test for overflow by
+	 * reverse-conversion.
 	 */
 	result = (int64) arg;
 
@@ -1066,9 +1076,9 @@ ftoi8(PG_FUNCTION_ARGS)
 	darg = rint(arg);
 
 	/*
-	 * Does it fit in an int64?  Avoid assuming that we have handy
-	 * constants defined for the range boundaries, instead test for
-	 * overflow by reverse-conversion.
+	 * Does it fit in an int64?  Avoid assuming that we have handy constants
+	 * defined for the range boundaries, instead test for overflow by
+	 * reverse-conversion.
 	 */
 	result = (int64) darg;
 
@@ -1183,8 +1193,7 @@ generate_series_step_int8(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 
 		/*
-		 * switch to memory context appropriate for multiple function
-		 * calls
+		 * switch to memory context appropriate for multiple function calls
 		 */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
@@ -1207,8 +1216,7 @@ generate_series_step_int8(PG_FUNCTION_ARGS)
 	funcctx = SRF_PERCALL_SETUP();
 
 	/*
-	 * get the saved state and use current as the result for this
-	 * iteration
+	 * get the saved state and use current as the result for this iteration
 	 */
 	fctx = funcctx->user_fctx;
 	result = fctx->current;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.193 2005/09/24 22:54:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.194 2005/10/15 02:49:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,8 +59,8 @@ static void preprocess_qual_conditions(PlannerInfo *root, Node *jtnode);
 static Plan *inheritance_planner(PlannerInfo *root, List *inheritlist);
 static Plan *grouping_planner(PlannerInfo *root, double tuple_fraction);
 static double preprocess_limit(PlannerInfo *root,
-							   double tuple_fraction,
-							   int *offset_est, int *count_est);
+				 double tuple_fraction,
+				 int *offset_est, int *count_est);
 static bool choose_hashed_grouping(PlannerInfo *root, double tuple_fraction,
 					   Path *cheapest_path, Path *sorted_path,
 					   double dNumGroups, AggClauseCounts *agg_counts);
@@ -95,14 +95,13 @@ planner(Query *parse, bool isCursor, int cursorOptions,
 	 * these global state variables must be saved and restored.
 	 *
 	 * Query level and the param list cannot be moved into the per-query
-	 * PlannerInfo structure since their whole purpose is communication
-	 * across multiple sub-queries. Also, boundParams is explicitly info
-	 * from outside the query, and so is likewise better handled as a global
-	 * variable.
+	 * PlannerInfo structure since their whole purpose is communication across
+	 * multiple sub-queries. Also, boundParams is explicitly info from outside
+	 * the query, and so is likewise better handled as a global variable.
 	 *
-	 * Note we do NOT save and restore PlannerPlanId: it exists to assign
-	 * unique IDs to SubPlan nodes, and we want those IDs to be unique for
-	 * the life of a backend.  Also, PlannerInitPlan is saved/restored in
+	 * Note we do NOT save and restore PlannerPlanId: it exists to assign unique
+	 * IDs to SubPlan nodes, and we want those IDs to be unique for the life
+	 * of a backend.  Also, PlannerInitPlan is saved/restored in
 	 * subquery_planner, not here.
 	 */
 	save_PlannerQueryLevel = PlannerQueryLevel;
@@ -118,10 +117,10 @@ planner(Query *parse, bool isCursor, int cursorOptions,
 	if (isCursor)
 	{
 		/*
-		 * We have no real idea how many tuples the user will ultimately
-		 * FETCH from a cursor, but it seems a good bet that he doesn't
-		 * want 'em all.  Optimize for 10% retrieval (you gotta better
-		 * number?	Should this be a SETtable parameter?)
+		 * We have no real idea how many tuples the user will ultimately FETCH
+		 * from a cursor, but it seems a good bet that he doesn't want 'em
+		 * all.  Optimize for 10% retrieval (you gotta better number?  Should
+		 * this be a SETtable parameter?)
 		 */
 		tuple_fraction = 0.10;
 	}
@@ -207,10 +206,10 @@ subquery_planner(Query *parse, double tuple_fraction,
 	root->parse = parse;
 
 	/*
-	 * Look for IN clauses at the top level of WHERE, and transform them
-	 * into joins.	Note that this step only handles IN clauses originally
-	 * at top level of WHERE; if we pull up any subqueries in the next
-	 * step, their INs are processed just before pulling them up.
+	 * Look for IN clauses at the top level of WHERE, and transform them into
+	 * joins.  Note that this step only handles IN clauses originally at top
+	 * level of WHERE; if we pull up any subqueries in the next step, their
+	 * INs are processed just before pulling them up.
 	 */
 	root->in_info_list = NIL;
 	if (parse->hasSubLinks)
@@ -225,14 +224,14 @@ subquery_planner(Query *parse, double tuple_fraction,
 		pull_up_subqueries(root, (Node *) parse->jointree, false);
 
 	/*
-	 * Detect whether any rangetable entries are RTE_JOIN kind; if not, we
-	 * can avoid the expense of doing flatten_join_alias_vars().  Also
-	 * check for outer joins --- if none, we can skip reduce_outer_joins()
-	 * and some other processing.  This must be done after we have done
+	 * Detect whether any rangetable entries are RTE_JOIN kind; if not, we can
+	 * avoid the expense of doing flatten_join_alias_vars().  Also check for
+	 * outer joins --- if none, we can skip reduce_outer_joins() and some
+	 * other processing.  This must be done after we have done
 	 * pull_up_subqueries, of course.
 	 *
 	 * Note: if reduce_outer_joins manages to eliminate all outer joins,
-	 * root->hasOuterJoins is not reset currently.  This is OK since its
+	 * root->hasOuterJoins is not reset currently.	This is OK since its
 	 * purpose is merely to suppress unnecessary processing in simple cases.
 	 */
 	root->hasJoinRTEs = false;
@@ -255,8 +254,8 @@ subquery_planner(Query *parse, double tuple_fraction,
 
 	/*
 	 * Set hasHavingQual to remember if HAVING clause is present.  Needed
-	 * because preprocess_expression will reduce a constant-true condition
-	 * to an empty qual list ... but "HAVING TRUE" is not a semantic no-op.
+	 * because preprocess_expression will reduce a constant-true condition to
+	 * an empty qual list ... but "HAVING TRUE" is not a semantic no-op.
 	 */
 	root->hasHavingQual = (parse->havingQual != NULL);
 
@@ -292,29 +291,29 @@ subquery_planner(Query *parse, double tuple_fraction,
 	}
 
 	/*
-	 * In some cases we may want to transfer a HAVING clause into WHERE.
-	 * We cannot do so if the HAVING clause contains aggregates (obviously)
-	 * or volatile functions (since a HAVING clause is supposed to be executed
+	 * In some cases we may want to transfer a HAVING clause into WHERE. We
+	 * cannot do so if the HAVING clause contains aggregates (obviously) or
+	 * volatile functions (since a HAVING clause is supposed to be executed
 	 * only once per group).  Also, it may be that the clause is so expensive
 	 * to execute that we're better off doing it only once per group, despite
 	 * the loss of selectivity.  This is hard to estimate short of doing the
 	 * entire planning process twice, so we use a heuristic: clauses
-	 * containing subplans are left in HAVING.  Otherwise, we move or copy
-	 * the HAVING clause into WHERE, in hopes of eliminating tuples before
+	 * containing subplans are left in HAVING.	Otherwise, we move or copy the
+	 * HAVING clause into WHERE, in hopes of eliminating tuples before
 	 * aggregation instead of after.
 	 *
-	 * If the query has explicit grouping then we can simply move such a
-	 * clause into WHERE; any group that fails the clause will not be
-	 * in the output because none of its tuples will reach the grouping
-	 * or aggregation stage.  Otherwise we must have a degenerate
-	 * (variable-free) HAVING clause, which we put in WHERE so that
-	 * query_planner() can use it in a gating Result node, but also keep
-	 * in HAVING to ensure that we don't emit a bogus aggregated row.
-	 * (This could be done better, but it seems not worth optimizing.)
+	 * If the query has explicit grouping then we can simply move such a clause
+	 * into WHERE; any group that fails the clause will not be in the output
+	 * because none of its tuples will reach the grouping or aggregation
+	 * stage.  Otherwise we must have a degenerate (variable-free) HAVING
+	 * clause, which we put in WHERE so that query_planner() can use it in a
+	 * gating Result node, but also keep in HAVING to ensure that we don't
+	 * emit a bogus aggregated row. (This could be done better, but it seems
+	 * not worth optimizing.)
 	 *
 	 * Note that both havingQual and parse->jointree->quals are in
-	 * implicitly-ANDed-list form at this point, even though they are
-	 * declared as Node *.
+	 * implicitly-ANDed-list form at this point, even though they are declared
+	 * as Node *.
 	 */
 	newHaving = NIL;
 	foreach(l, (List *) parse->havingQual)
@@ -346,28 +345,27 @@ subquery_planner(Query *parse, double tuple_fraction,
 	parse->havingQual = (Node *) newHaving;
 
 	/*
-	 * If we have any outer joins, try to reduce them to plain inner
-	 * joins. This step is most easily done after we've done expression
+	 * If we have any outer joins, try to reduce them to plain inner joins.
+	 * This step is most easily done after we've done expression
 	 * preprocessing.
 	 */
 	if (root->hasOuterJoins)
 		reduce_outer_joins(root);
 
 	/*
-	 * See if we can simplify the jointree; opportunities for this may
-	 * come from having pulled up subqueries, or from flattening explicit
-	 * JOIN syntax.  We must do this after flattening JOIN alias
-	 * variables, since eliminating explicit JOIN nodes from the jointree
-	 * will cause get_relids_for_join() to fail.  But it should happen
-	 * after reduce_outer_joins, anyway.
+	 * See if we can simplify the jointree; opportunities for this may come
+	 * from having pulled up subqueries, or from flattening explicit JOIN
+	 * syntax.	We must do this after flattening JOIN alias variables, since
+	 * eliminating explicit JOIN nodes from the jointree will cause
+	 * get_relids_for_join() to fail.  But it should happen after
+	 * reduce_outer_joins, anyway.
 	 */
 	parse->jointree = (FromExpr *)
 		simplify_jointree(root, (Node *) parse->jointree);
 
 	/*
-	 * Do the main planning.  If we have an inherited target relation,
-	 * that needs special processing, else go straight to
-	 * grouping_planner.
+	 * Do the main planning.  If we have an inherited target relation, that
+	 * needs special processing, else go straight to grouping_planner.
 	 */
 	if (parse->resultRelation &&
 		(lst = expand_inherited_rtentry(root, parse->resultRelation)) != NIL)
@@ -377,8 +375,8 @@ subquery_planner(Query *parse, double tuple_fraction,
 
 	/*
 	 * If any subplans were generated, or if we're inside a subplan, build
-	 * initPlan list and extParam/allParam sets for plan nodes, and attach
-	 * the initPlans to the top plan node.
+	 * initPlan list and extParam/allParam sets for plan nodes, and attach the
+	 * initPlans to the top plan node.
 	 */
 	if (PlannerPlanId != saved_planid || PlannerQueryLevel > 1)
 		SS_finalize_plan(plan, parse->rtable);
@@ -405,9 +403,9 @@ static Node *
 preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 {
 	/*
-	 * Fall out quickly if expression is empty.  This occurs often enough
-	 * to be worth checking.  Note that null->null is the correct conversion
-	 * for implicit-AND result format, too.
+	 * Fall out quickly if expression is empty.  This occurs often enough to
+	 * be worth checking.  Note that null->null is the correct conversion for
+	 * implicit-AND result format, too.
 	 */
 	if (expr == NULL)
 		return NULL;
@@ -415,8 +413,7 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 	/*
 	 * If the query has any join RTEs, replace join alias variables with
 	 * base-relation variables. We must do this before sublink processing,
-	 * else sublinks expanded out from join aliases wouldn't get
-	 * processed.
+	 * else sublinks expanded out from join aliases wouldn't get processed.
 	 */
 	if (root->hasJoinRTEs)
 		expr = flatten_join_alias_vars(root, expr);
@@ -429,13 +426,13 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 	 * careful to maintain AND/OR flatness --- that is, do not generate a tree
 	 * with AND directly under AND, nor OR directly under OR.
 	 *
-	 * Because this is a relatively expensive process, we skip it when the
-	 * query is trivial, such as "SELECT 2+2;" or "INSERT ... VALUES()".
-	 * The expression will only be evaluated once anyway, so no point in
+	 * Because this is a relatively expensive process, we skip it when the query
+	 * is trivial, such as "SELECT 2+2;" or "INSERT ... VALUES()". The
+	 * expression will only be evaluated once anyway, so no point in
 	 * pre-simplifying; we can't execute it any faster than the executor can,
 	 * and we will waste cycles copying the tree.  Notice however that we
-	 * still must do it for quals (to get AND/OR flatness); and if we are
-	 * in a subquery we should not assume it will be done only once.
+	 * still must do it for quals (to get AND/OR flatness); and if we are in a
+	 * subquery we should not assume it will be done only once.
 	 */
 	if (root->parse->jointree->fromlist != NIL ||
 		kind == EXPRKIND_QUAL ||
@@ -460,8 +457,8 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 		expr = SS_process_sublinks(expr, (kind == EXPRKIND_QUAL));
 
 	/*
-	 * XXX do not insert anything here unless you have grokked the
-	 * comments in SS_replace_correlation_vars ...
+	 * XXX do not insert anything here unless you have grokked the comments in
+	 * SS_replace_correlation_vars ...
 	 */
 
 	/* Replace uplevel vars with Param nodes */
@@ -469,9 +466,9 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 		expr = SS_replace_correlation_vars(expr);
 
 	/*
-	 * If it's a qual or havingQual, convert it to implicit-AND format.
-	 * (We don't want to do this before eval_const_expressions, since the
-	 * latter would be unable to simplify a top-level AND correctly. Also,
+	 * If it's a qual or havingQual, convert it to implicit-AND format. (We
+	 * don't want to do this before eval_const_expressions, since the latter
+	 * would be unable to simplify a top-level AND correctly. Also,
 	 * SS_process_sublinks expects explicit-AND format.)
 	 */
 	if (kind == EXPRKIND_QUAL)
@@ -557,9 +554,9 @@ inheritance_planner(PlannerInfo *root, List *inheritlist)
 		Plan	   *subplan;
 
 		/*
-		 * Generate modified query with this rel as target.  We have to
-		 * be prepared to translate varnos in in_info_list as well as in
-		 * the Query proper.
+		 * Generate modified query with this rel as target.  We have to be
+		 * prepared to translate varnos in in_info_list as well as in the
+		 * Query proper.
 		 */
 		memcpy(&subroot, root, sizeof(PlannerInfo));
 		subroot.parse = (Query *)
@@ -580,26 +577,26 @@ inheritance_planner(PlannerInfo *root, List *inheritlist)
 		 * XXX my goodness this next bit is ugly.  Really need to think about
 		 * ways to rein in planner's habit of scribbling on its input.
 		 *
-		 * Planning of the subquery might have modified the rangetable,
-		 * either by addition of RTEs due to expansion of inherited source
-		 * tables, or by changes of the Query structures inside subquery
-		 * RTEs.  We have to ensure that this gets propagated back to the
-		 * master copy.  However, if we aren't done planning yet, we also
-		 * need to ensure that subsequent calls to grouping_planner have
-		 * virgin sub-Queries to work from.  So, if we are at the last
-		 * list entry, just copy the subquery rangetable back to the master
-		 * copy; if we are not, then extend the master copy by adding
-		 * whatever the subquery added.  (We assume these added entries
-		 * will go untouched by the future grouping_planner calls.  We are
-		 * also effectively assuming that sub-Queries will get planned
-		 * identically each time, or at least that the impacts on their
-		 * rangetables will be the same each time.  Did I say this is ugly?)
+		 * Planning of the subquery might have modified the rangetable, either by
+		 * addition of RTEs due to expansion of inherited source tables, or by
+		 * changes of the Query structures inside subquery RTEs.  We have to
+		 * ensure that this gets propagated back to the master copy.  However,
+		 * if we aren't done planning yet, we also need to ensure that
+		 * subsequent calls to grouping_planner have virgin sub-Queries to
+		 * work from.  So, if we are at the last list entry, just copy the
+		 * subquery rangetable back to the master copy; if we are not, then
+		 * extend the master copy by adding whatever the subquery added.  (We
+		 * assume these added entries will go untouched by the future
+		 * grouping_planner calls.	We are also effectively assuming that
+		 * sub-Queries will get planned identically each time, or at least
+		 * that the impacts on their rangetables will be the same each time.
+		 * Did I say this is ugly?)
 		 */
 		if (lnext(l) == NULL)
 			parse->rtable = subroot.parse->rtable;
 		else
 		{
-			int		subrtlength = list_length(subroot.parse->rtable);
+			int			subrtlength = list_length(subroot.parse->rtable);
 
 			if (subrtlength > mainrtlength)
 			{
@@ -666,38 +663,37 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		List	   *set_sortclauses;
 
 		/*
-		 * If there's a top-level ORDER BY, assume we have to fetch all
-		 * the tuples.  This might seem too simplistic given all the
-		 * hackery below to possibly avoid the sort ... but a nonzero
-		 * tuple_fraction is only of use to plan_set_operations() when
-		 * the setop is UNION ALL, and the result of UNION ALL is always
-		 * unsorted.
+		 * If there's a top-level ORDER BY, assume we have to fetch all the
+		 * tuples.	This might seem too simplistic given all the hackery below
+		 * to possibly avoid the sort ... but a nonzero tuple_fraction is only
+		 * of use to plan_set_operations() when the setop is UNION ALL, and
+		 * the result of UNION ALL is always unsorted.
 		 */
 		if (parse->sortClause)
 			tuple_fraction = 0.0;
 
 		/*
-		 * Construct the plan for set operations.  The result will not
-		 * need any work except perhaps a top-level sort and/or LIMIT.
+		 * Construct the plan for set operations.  The result will not need
+		 * any work except perhaps a top-level sort and/or LIMIT.
 		 */
 		result_plan = plan_set_operations(root, tuple_fraction,
 										  &set_sortclauses);
 
 		/*
-		 * Calculate pathkeys representing the sort order (if any) of the
-		 * set operation's result.  We have to do this before overwriting
-		 * the sort key information...
+		 * Calculate pathkeys representing the sort order (if any) of the set
+		 * operation's result.  We have to do this before overwriting the sort
+		 * key information...
 		 */
 		current_pathkeys = make_pathkeys_for_sortclauses(set_sortclauses,
-												result_plan->targetlist);
+													result_plan->targetlist);
 		current_pathkeys = canonicalize_pathkeys(root, current_pathkeys);
 
 		/*
-		 * We should not need to call preprocess_targetlist, since we must
-		 * be in a SELECT query node.  Instead, use the targetlist
-		 * returned by plan_set_operations (since this tells whether it
-		 * returned any resjunk columns!), and transfer any sort key
-		 * information from the original tlist.
+		 * We should not need to call preprocess_targetlist, since we must be
+		 * in a SELECT query node.	Instead, use the targetlist returned by
+		 * plan_set_operations (since this tells whether it returned any
+		 * resjunk columns!), and transfer any sort key information from the
+		 * original tlist.
 		 */
 		Assert(parse->commandType == CMD_SELECT);
 
@@ -741,11 +737,11 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		tlist = preprocess_targetlist(root, tlist);
 
 		/*
-		 * Generate appropriate target list for subplan; may be different
-		 * from tlist if grouping or aggregation is needed.
+		 * Generate appropriate target list for subplan; may be different from
+		 * tlist if grouping or aggregation is needed.
 		 */
 		sub_tlist = make_subplanTargetList(root, tlist,
-										 &groupColIdx, &need_tlist_eval);
+										   &groupColIdx, &need_tlist_eval);
 
 		/*
 		 * Calculate pathkeys that represent grouping/ordering requirements.
@@ -763,10 +759,10 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 * Note: we do not attempt to detect duplicate aggregates here; a
 		 * somewhat-overestimated count is okay for our present purposes.
 		 *
-		 * Note: think not that we can turn off hasAggs if we find no aggs.
-		 * It is possible for constant-expression simplification to remove
-		 * all explicit references to aggs, but we still have to follow
-		 * the aggregate semantics (eg, producing only one output row).
+		 * Note: think not that we can turn off hasAggs if we find no aggs. It is
+		 * possible for constant-expression simplification to remove all
+		 * explicit references to aggs, but we still have to follow the
+		 * aggregate semantics (eg, producing only one output row).
 		 */
 		if (parse->hasAggs)
 		{
@@ -777,13 +773,12 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		/*
 		 * Figure out whether we need a sorted result from query_planner.
 		 *
-		 * If we have a GROUP BY clause, then we want a result sorted
-		 * properly for grouping.  Otherwise, if there is an ORDER BY
-		 * clause, we want to sort by the ORDER BY clause.	(Note: if we
-		 * have both, and ORDER BY is a superset of GROUP BY, it would be
-		 * tempting to request sort by ORDER BY --- but that might just
-		 * leave us failing to exploit an available sort order at all.
-		 * Needs more thought...)
+		 * If we have a GROUP BY clause, then we want a result sorted properly
+		 * for grouping.  Otherwise, if there is an ORDER BY clause, we want
+		 * to sort by the ORDER BY clause.	(Note: if we have both, and ORDER
+		 * BY is a superset of GROUP BY, it would be tempting to request sort
+		 * by ORDER BY --- but that might just leave us failing to exploit an
+		 * available sort order at all. Needs more thought...)
 		 */
 		if (parse->groupClause)
 			root->query_pathkeys = root->group_pathkeys;
@@ -793,10 +788,10 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			root->query_pathkeys = NIL;
 
 		/*
-		 * Generate the best unsorted and presorted paths for this Query
-		 * (but note there may not be any presorted path).  query_planner
-		 * will also estimate the number of groups in the query, and
-		 * canonicalize all the pathkeys.
+		 * Generate the best unsorted and presorted paths for this Query (but
+		 * note there may not be any presorted path).  query_planner will also
+		 * estimate the number of groups in the query, and canonicalize all
+		 * the pathkeys.
 		 */
 		query_planner(root, sub_tlist, tuple_fraction,
 					  &cheapest_path, &sorted_path, &dNumGroups);
@@ -820,8 +815,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 		/*
 		 * Select the best path.  If we are doing hashed grouping, we will
-		 * always read all the input tuples, so use the cheapest-total
-		 * path. Otherwise, trust query_planner's decision about which to use.
+		 * always read all the input tuples, so use the cheapest-total path.
+		 * Otherwise, trust query_planner's decision about which to use.
 		 */
 		if (use_hashed_grouping || !sorted_path)
 			best_path = cheapest_path;
@@ -829,10 +824,10 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			best_path = sorted_path;
 
 		/*
-		 * Check to see if it's possible to optimize MIN/MAX aggregates.
-		 * If so, we will forget all the work we did so far to choose a
-		 * "regular" path ... but we had to do it anyway to be able to
-		 * tell which way is cheaper.
+		 * Check to see if it's possible to optimize MIN/MAX aggregates. If
+		 * so, we will forget all the work we did so far to choose a "regular"
+		 * path ... but we had to do it anyway to be able to tell which way is
+		 * cheaper.
 		 */
 		result_plan = optimize_minmax_aggregates(root,
 												 tlist,
@@ -840,8 +835,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		if (result_plan != NULL)
 		{
 			/*
-			 * optimize_minmax_aggregates generated the full plan, with
-			 * the right tlist, and it has no sort order.
+			 * optimize_minmax_aggregates generated the full plan, with the
+			 * right tlist, and it has no sort order.
 			 */
 			current_pathkeys = NIL;
 		}
@@ -985,8 +980,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				 * GROUP BY without aggregation, so insert a group node (plus
 				 * the appropriate sort node, if necessary).
 				 *
-				 * Add an explicit sort if we couldn't make the path come
-				 * out the way the GROUP node needs it.
+				 * Add an explicit sort if we couldn't make the path come out the
+				 * way the GROUP node needs it.
 				 */
 				if (!pathkeys_contained_in(group_pathkeys, current_pathkeys))
 				{
@@ -1014,11 +1009,12 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				 * This is a degenerate case in which we are supposed to emit
 				 * either 0 or 1 row depending on whether HAVING succeeds.
 				 * Furthermore, there cannot be any variables in either HAVING
-				 * or the targetlist, so we actually do not need the FROM table
-				 * at all!  We can just throw away the plan-so-far and generate
-				 * a Result node.  This is a sufficiently unusual corner case
-				 * that it's not worth contorting the structure of this routine
-				 * to avoid having to generate the plan in the first place.
+				 * or the targetlist, so we actually do not need the FROM
+				 * table at all!  We can just throw away the plan-so-far and
+				 * generate a Result node.	This is a sufficiently unusual
+				 * corner case that it's not worth contorting the structure of
+				 * this routine to avoid having to generate the plan in the
+				 * first place.
 				 */
 				result_plan = (Plan *) make_result(tlist,
 												   parse->havingQual,
@@ -1028,8 +1024,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	}							/* end of if (setOperations) */
 
 	/*
-	 * If we were not able to make the plan come out in the right order,
-	 * add an explicit sort step.
+	 * If we were not able to make the plan come out in the right order, add
+	 * an explicit sort step.
 	 */
 	if (parse->sortClause)
 	{
@@ -1051,9 +1047,9 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		result_plan = (Plan *) make_unique(result_plan, parse->distinctClause);
 
 		/*
-		 * If there was grouping or aggregation, leave plan_rows as-is
-		 * (ie, assume the result was already mostly unique).  If not,
-		 * use the number of distinct-groups calculated by query_planner.
+		 * If there was grouping or aggregation, leave plan_rows as-is (ie,
+		 * assume the result was already mostly unique).  If not, use the
+		 * number of distinct-groups calculated by query_planner.
 		 */
 		if (!parse->groupClause && !root->hasHavingQual && !parse->hasAggs)
 			result_plan->plan_rows = dNumGroups;
@@ -1072,8 +1068,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	}
 
 	/*
-	 * Return the actual output ordering in query_pathkeys for possible
-	 * use by an outer query level.
+	 * Return the actual output ordering in query_pathkeys for possible use by
+	 * an outer query level.
 	 */
 	root->query_pathkeys = current_pathkeys;
 
@@ -1084,7 +1080,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
  * preprocess_limit - do pre-estimation for LIMIT and/or OFFSET clauses
  *
  * We try to estimate the values of the LIMIT/OFFSET clauses, and pass the
- * results back in *count_est and *offset_est.  These variables are set to
+ * results back in *count_est and *offset_est.	These variables are set to
  * 0 if the corresponding clause is not present, and -1 if it's present
  * but we couldn't estimate the value for it.  (The "0" convention is OK
  * for OFFSET but a little bit bogus for LIMIT: effectively we estimate
@@ -1093,7 +1089,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
  * be passed to make_limit, which see if you change this code.
  *
  * The return value is the suitably adjusted tuple_fraction to use for
- * planning the query.  This adjustment is not overridable, since it reflects
+ * planning the query.	This adjustment is not overridable, since it reflects
  * plan actions that grouping_planner() will certainly take, not assumptions
  * about context.
  */
@@ -1120,7 +1116,7 @@ preprocess_limit(PlannerInfo *root, double tuple_fraction,
 			if (((Const *) est)->constisnull)
 			{
 				/* NULL indicates LIMIT ALL, ie, no limit */
-				*count_est = 0;			/* treat as not present */
+				*count_est = 0; /* treat as not present */
 			}
 			else
 			{
@@ -1143,7 +1139,7 @@ preprocess_limit(PlannerInfo *root, double tuple_fraction,
 			if (((Const *) est)->constisnull)
 			{
 				/* Treat NULL as no offset; the executor will too */
-				*offset_est = 0;		/* treat as not present */
+				*offset_est = 0;	/* treat as not present */
 			}
 			else
 			{
@@ -1217,11 +1213,11 @@ preprocess_limit(PlannerInfo *root, double tuple_fraction,
 	else if (*offset_est != 0 && tuple_fraction > 0.0)
 	{
 		/*
-		 * We have an OFFSET but no LIMIT.  This acts entirely differently
-		 * from the LIMIT case: here, we need to increase rather than
-		 * decrease the caller's tuple_fraction, because the OFFSET acts
-		 * to cause more tuples to be fetched instead of fewer.  This only
-		 * matters if we got a tuple_fraction > 0, however.
+		 * We have an OFFSET but no LIMIT.	This acts entirely differently
+		 * from the LIMIT case: here, we need to increase rather than decrease
+		 * the caller's tuple_fraction, because the OFFSET acts to cause more
+		 * tuples to be fetched instead of fewer.  This only matters if we got
+		 * a tuple_fraction > 0, however.
 		 *
 		 * As above, use 10% if OFFSET is present but unestimatable.
 		 */
@@ -1232,9 +1228,9 @@ preprocess_limit(PlannerInfo *root, double tuple_fraction,
 
 		/*
 		 * If we have absolute counts from both caller and OFFSET, add them
-		 * together; likewise if they are both fractional.  If one is
-		 * fractional and the other absolute, we want to take the larger,
-		 * and we heuristically assume that's the fractional one.
+		 * together; likewise if they are both fractional.	If one is
+		 * fractional and the other absolute, we want to take the larger, and
+		 * we heuristically assume that's the fractional one.
 		 */
 		if (tuple_fraction >= 1.0)
 		{
@@ -1260,7 +1256,7 @@ preprocess_limit(PlannerInfo *root, double tuple_fraction,
 				/* both fractional, so add them together */
 				tuple_fraction += limit_fraction;
 				if (tuple_fraction >= 1.0)
-					tuple_fraction = 0.0; /* assume fetch all */
+					tuple_fraction = 0.0;		/* assume fetch all */
 			}
 		}
 	}
@@ -1303,9 +1299,8 @@ choose_hashed_grouping(PlannerInfo *root, double tuple_fraction,
 	 * Don't do it if it doesn't look like the hashtable will fit into
 	 * work_mem.
 	 *
-	 * Beware here of the possibility that cheapest_path->parent is NULL.
-	 * This could happen if user does something silly like
-	 *		SELECT 'foo' GROUP BY 1;
+	 * Beware here of the possibility that cheapest_path->parent is NULL. This
+	 * could happen if user does something silly like SELECT 'foo' GROUP BY 1;
 	 */
 	if (cheapest_path->parent)
 	{
@@ -1314,8 +1309,8 @@ choose_hashed_grouping(PlannerInfo *root, double tuple_fraction,
 	}
 	else
 	{
-		cheapest_path_rows = 1;				/* assume non-set result */
-		cheapest_path_width = 100;			/* arbitrary */
+		cheapest_path_rows = 1; /* assume non-set result */
+		cheapest_path_width = 100;		/* arbitrary */
 	}
 
 	/* Estimate per-hash-entry space at tuple width... */
@@ -1329,23 +1324,19 @@ choose_hashed_grouping(PlannerInfo *root, double tuple_fraction,
 		return false;
 
 	/*
-	 * See if the estimated cost is no more than doing it the other way.
-	 * While avoiding the need for sorted input is usually a win, the fact
-	 * that the output won't be sorted may be a loss; so we need to do an
-	 * actual cost comparison.
+	 * See if the estimated cost is no more than doing it the other way. While
+	 * avoiding the need for sorted input is usually a win, the fact that the
+	 * output won't be sorted may be a loss; so we need to do an actual cost
+	 * comparison.
 	 *
-	 * We need to consider
-	 *		cheapest_path + hashagg [+ final sort]
-	 * versus either
-	 *		cheapest_path [+ sort] + group or agg [+ final sort]
-	 * or
-	 *		presorted_path + group or agg [+ final sort]
-	 * where brackets indicate a step that may not be needed. We assume
-	 * query_planner() will have returned a presorted path only if it's a
-	 * winner compared to cheapest_path for this purpose.
+	 * We need to consider cheapest_path + hashagg [+ final sort] versus either
+	 * cheapest_path [+ sort] + group or agg [+ final sort] or presorted_path
+	 * + group or agg [+ final sort] where brackets indicate a step that may
+	 * not be needed. We assume query_planner() will have returned a presorted
+	 * path only if it's a winner compared to cheapest_path for this purpose.
 	 *
-	 * These path variables are dummies that just hold cost fields; we don't
-	 * make actual Paths for these steps.
+	 * These path variables are dummies that just hold cost fields; we don't make
+	 * actual Paths for these steps.
 	 */
 	cost_agg(&hashed_p, root, AGG_HASHED, agg_counts->numAggs,
 			 numGroupCols, dNumGroups,
@@ -1502,8 +1493,8 @@ make_subplanTargetList(PlannerInfo *root,
 
 	/*
 	 * Otherwise, start with a "flattened" tlist (having just the vars
-	 * mentioned in the targetlist and HAVING qual --- but not upper-
-	 * level Vars; they will be replaced by Params later on).
+	 * mentioned in the targetlist and HAVING qual --- but not upper- level
+	 * Vars; they will be replaced by Params later on).
 	 */
 	sub_tlist = flatten_tlist(tlist);
 	extravars = pull_var_clause(parse->havingQual, false);
@@ -1513,9 +1504,8 @@ make_subplanTargetList(PlannerInfo *root,
 
 	/*
 	 * If grouping, create sub_tlist entries for all GROUP BY expressions
-	 * (GROUP BY items that are simple Vars should be in the list
-	 * already), and make an array showing where the group columns are in
-	 * the sub_tlist.
+	 * (GROUP BY items that are simple Vars should be in the list already),
+	 * and make an array showing where the group columns are in the sub_tlist.
 	 */
 	numCols = list_length(parse->groupClause);
 	if (numCols > 0)
@@ -1634,7 +1624,7 @@ postprocess_setop_tlist(List *new_tlist, List *orig_tlist)
 		Assert(orig_tlist_item != NULL);
 		orig_tle = (TargetEntry *) lfirst(orig_tlist_item);
 		orig_tlist_item = lnext(orig_tlist_item);
-		if (orig_tle->resjunk)			/* should not happen */
+		if (orig_tle->resjunk)	/* should not happen */
 			elog(ERROR, "resjunk output columns are not implemented");
 		Assert(new_tle->resno == orig_tle->resno);
 		new_tle->ressortgroupref = orig_tle->ressortgroupref;

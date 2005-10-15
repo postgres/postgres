@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/shmem.c,v 1.10 2004/12/31 22:00:37 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/shmem.c,v 1.11 2005/10/15 02:49:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@ shmat(int memId, void *shmaddr, int flag)
 	/* TODO -- shmat needs to count # attached to shared mem */
 	void	   *lpmem = MapViewOfFileEx((HANDLE) memId,
 										FILE_MAP_WRITE | FILE_MAP_READ,
-		0, 0, /* (DWORD)pshmdsc->segsize */ 0 /* s_segsize */ , shmaddr);
+			0, 0, /* (DWORD)pshmdsc->segsize */ 0 /* s_segsize */ , shmaddr);
 
 	if (lpmem == NULL)
 	{

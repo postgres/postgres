@@ -9,7 +9,7 @@
 #define _DBF_H
 
 #ifdef _WIN32
-#include <gmon.h>			/* we need it to define u_char type */
+#include <gmon.h>				/* we need it to define u_char type */
 #endif
 #include <sys/types.h>
 
@@ -64,8 +64,7 @@ typedef struct
 	u_char		dbf_type;		/* field-type */
 	u_char		dbf_reserved[4];	/* some reserved stuff */
 	u_char		dbf_flen;		/* field-length */
-	u_char		dbf_dec;		/* number of decimal positions if type is
-								 * 'N' */
+	u_char		dbf_dec;		/* number of decimal positions if type is 'N' */
 	u_char		dbf_stub[14];	/* stuff we don't need */
 }	dbf_field;
 
@@ -89,15 +88,14 @@ typedef struct
 	u_char		db_year;		/* last update as YYMMDD */
 	u_char		db_month;
 	u_char		db_day;
-	u_long		db_hlen;		/* length of the diskheader, for
-								 * calculating the offsets */
+	u_long		db_hlen;		/* length of the diskheader, for calculating
+								 * the offsets */
 	u_long		db_records;		/* number of records */
 	u_long		db_currec;		/* current record-number starting at 0 */
 	u_short		db_rlen;		/* length of the record */
 	u_char		db_nfields;		/* number of fields */
 	u_char	   *db_buff;		/* record-buffer to save malloc()'s */
-	f_descr    *db_fields;		/* pointer to an array of field-
-								 * descriptions */
+	f_descr    *db_fields;		/* pointer to an array of field- descriptions */
 }	dbhead;
 
 /* structure that contains everything a user wants from a field, including

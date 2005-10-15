@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.95 2005/10/02 23:50:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.96 2005/10/15 02:49:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,17 +71,17 @@ regprocin(PG_FUNCTION_ARGS)
 		strspn(pro_name_or_oid, "0123456789") == strlen(pro_name_or_oid))
 	{
 		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-									  CStringGetDatum(pro_name_or_oid)));
+										  CStringGetDatum(pro_name_or_oid)));
 		PG_RETURN_OID(result);
 	}
 
 	/* Else it's a name, possibly schema-qualified */
 
 	/*
-	 * In bootstrap mode we assume the given name is not schema-qualified,
-	 * and just search pg_proc for a unique match.	This is needed for
-	 * initializing other system catalogs (pg_namespace may not exist yet,
-	 * and certainly there are no schemas other than pg_catalog).
+	 * In bootstrap mode we assume the given name is not schema-qualified, and
+	 * just search pg_proc for a unique match.	This is needed for
+	 * initializing other system catalogs (pg_namespace may not exist yet, and
+	 * certainly there are no schemas other than pg_catalog).
 	 */
 	if (IsBootstrapProcessingMode())
 	{
@@ -113,7 +113,7 @@ regprocin(PG_FUNCTION_ARGS)
 		if (matches == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-			 errmsg("function \"%s\" does not exist", pro_name_or_oid)));
+				 errmsg("function \"%s\" does not exist", pro_name_or_oid)));
 
 		else if (matches > 1)
 			ereport(ERROR,
@@ -125,8 +125,8 @@ regprocin(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Normal case: parse the name into components and see if it matches
-	 * any pg_proc entries in the current search path.
+	 * Normal case: parse the name into components and see if it matches any
+	 * pg_proc entries in the current search path.
 	 */
 	names = stringToQualifiedNameList(pro_name_or_oid, "regprocin");
 	clist = FuncnameGetCandidates(names, -1);
@@ -134,7 +134,7 @@ regprocin(PG_FUNCTION_ARGS)
 	if (clist == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-			 errmsg("function \"%s\" does not exist", pro_name_or_oid)));
+				 errmsg("function \"%s\" does not exist", pro_name_or_oid)));
 	else if (clist->next != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
@@ -172,9 +172,9 @@ regprocout(PG_FUNCTION_ARGS)
 		char	   *proname = NameStr(procform->proname);
 
 		/*
-		 * In bootstrap mode, skip the fancy namespace stuff and just
-		 * return the proc name.  (This path is only needed for debugging
-		 * output anyway.)
+		 * In bootstrap mode, skip the fancy namespace stuff and just return
+		 * the proc name.  (This path is only needed for debugging output
+		 * anyway.)
 		 */
 		if (IsBootstrapProcessingMode())
 			result = pstrdup(proname);
@@ -258,15 +258,15 @@ regprocedurein(PG_FUNCTION_ARGS)
 		strspn(pro_name_or_oid, "0123456789") == strlen(pro_name_or_oid))
 	{
 		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-									  CStringGetDatum(pro_name_or_oid)));
+										  CStringGetDatum(pro_name_or_oid)));
 		PG_RETURN_OID(result);
 	}
 
 	/*
-	 * Else it's a name and arguments.  Parse the name and arguments, look
-	 * up potential matches in the current namespace search list, and scan
-	 * to see which one exactly matches the given argument types.  (There
-	 * will not be more than one match.)
+	 * Else it's a name and arguments.  Parse the name and arguments, look up
+	 * potential matches in the current namespace search list, and scan to see
+	 * which one exactly matches the given argument types.	(There will not be
+	 * more than one match.)
 	 *
 	 * XXX at present, this code will not work in bootstrap mode, hence this
 	 * datatype cannot be used for any system column that needs to receive
@@ -286,7 +286,7 @@ regprocedurein(PG_FUNCTION_ARGS)
 	if (clist == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-			 errmsg("function \"%s\" does not exist", pro_name_or_oid)));
+				 errmsg("function \"%s\" does not exist", pro_name_or_oid)));
 
 	result = clist->oid;
 
@@ -323,8 +323,8 @@ format_procedure(Oid procedure_oid)
 		initStringInfo(&buf);
 
 		/*
-		 * Would this proc be found (given the right args) by
-		 * regprocedurein? If not, we need to qualify it.
+		 * Would this proc be found (given the right args) by regprocedurein?
+		 * If not, we need to qualify it.
 		 */
 		if (FunctionIsVisible(procedure_oid))
 			nspname = NULL;
@@ -421,17 +421,17 @@ regoperin(PG_FUNCTION_ARGS)
 		strspn(opr_name_or_oid, "0123456789") == strlen(opr_name_or_oid))
 	{
 		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-									  CStringGetDatum(opr_name_or_oid)));
+										  CStringGetDatum(opr_name_or_oid)));
 		PG_RETURN_OID(result);
 	}
 
 	/* Else it's a name, possibly schema-qualified */
 
 	/*
-	 * In bootstrap mode we assume the given name is not schema-qualified,
-	 * and just search pg_operator for a unique match.	This is needed for
-	 * initializing other system catalogs (pg_namespace may not exist yet,
-	 * and certainly there are no schemas other than pg_catalog).
+	 * In bootstrap mode we assume the given name is not schema-qualified, and
+	 * just search pg_operator for a unique match.	This is needed for
+	 * initializing other system catalogs (pg_namespace may not exist yet, and
+	 * certainly there are no schemas other than pg_catalog).
 	 */
 	if (IsBootstrapProcessingMode())
 	{
@@ -463,7 +463,7 @@ regoperin(PG_FUNCTION_ARGS)
 		if (matches == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				errmsg("operator does not exist: %s", opr_name_or_oid)));
+					 errmsg("operator does not exist: %s", opr_name_or_oid)));
 		else if (matches > 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
@@ -474,8 +474,8 @@ regoperin(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Normal case: parse the name into components and see if it matches
-	 * any pg_operator entries in the current search path.
+	 * Normal case: parse the name into components and see if it matches any
+	 * pg_operator entries in the current search path.
 	 */
 	names = stringToQualifiedNameList(opr_name_or_oid, "regoperin");
 	clist = OpernameGetCandidates(names, '\0');
@@ -521,9 +521,9 @@ regoperout(PG_FUNCTION_ARGS)
 		char	   *oprname = NameStr(operform->oprname);
 
 		/*
-		 * In bootstrap mode, skip the fancy namespace stuff and just
-		 * return the oper name.  (This path is only needed for debugging
-		 * output anyway.)
+		 * In bootstrap mode, skip the fancy namespace stuff and just return
+		 * the oper name.  (This path is only needed for debugging output
+		 * anyway.)
 		 */
 		if (IsBootstrapProcessingMode())
 			result = pstrdup(oprname);
@@ -556,8 +556,7 @@ regoperout(PG_FUNCTION_ARGS)
 	else
 	{
 		/*
-		 * If OID doesn't match any pg_operator entry, return it
-		 * numerically
+		 * If OID doesn't match any pg_operator entry, return it numerically
 		 */
 		result = (char *) palloc(NAMEDATALEN);
 		snprintf(result, NAMEDATALEN, "%u", oprid);
@@ -616,15 +615,15 @@ regoperatorin(PG_FUNCTION_ARGS)
 		strspn(opr_name_or_oid, "0123456789") == strlen(opr_name_or_oid))
 	{
 		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-									  CStringGetDatum(opr_name_or_oid)));
+										  CStringGetDatum(opr_name_or_oid)));
 		PG_RETURN_OID(result);
 	}
 
 	/*
-	 * Else it's a name and arguments.  Parse the name and arguments, look
-	 * up potential matches in the current namespace search list, and scan
-	 * to see which one exactly matches the given argument types.  (There
-	 * will not be more than one match.)
+	 * Else it's a name and arguments.  Parse the name and arguments, look up
+	 * potential matches in the current namespace search list, and scan to see
+	 * which one exactly matches the given argument types.	(There will not be
+	 * more than one match.)
 	 *
 	 * XXX at present, this code will not work in bootstrap mode, hence this
 	 * datatype cannot be used for any system column that needs to receive
@@ -696,8 +695,8 @@ format_operator(Oid operator_oid)
 		initStringInfo(&buf);
 
 		/*
-		 * Would this oper be found (given the right args) by
-		 * regoperatorin? If not, we need to qualify it.
+		 * Would this oper be found (given the right args) by regoperatorin?
+		 * If not, we need to qualify it.
 		 */
 		if (!OperatorIsVisible(operator_oid))
 		{
@@ -727,8 +726,7 @@ format_operator(Oid operator_oid)
 	else
 	{
 		/*
-		 * If OID doesn't match any pg_operator entry, return it
-		 * numerically
+		 * If OID doesn't match any pg_operator entry, return it numerically
 		 */
 		result = (char *) palloc(NAMEDATALEN);
 		snprintf(result, NAMEDATALEN, "%u", operator_oid);
@@ -797,20 +795,20 @@ regclassin(PG_FUNCTION_ARGS)
 	/* Numeric OID? */
 	if (class_name_or_oid[0] >= '0' &&
 		class_name_or_oid[0] <= '9' &&
-	strspn(class_name_or_oid, "0123456789") == strlen(class_name_or_oid))
+		strspn(class_name_or_oid, "0123456789") == strlen(class_name_or_oid))
 	{
 		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-									CStringGetDatum(class_name_or_oid)));
+										CStringGetDatum(class_name_or_oid)));
 		PG_RETURN_OID(result);
 	}
 
 	/* Else it's a name, possibly schema-qualified */
 
 	/*
-	 * In bootstrap mode we assume the given name is not schema-qualified,
-	 * and just search pg_class for a match.  This is needed for
-	 * initializing other system catalogs (pg_namespace may not exist yet,
-	 * and certainly there are no schemas other than pg_catalog).
+	 * In bootstrap mode we assume the given name is not schema-qualified, and
+	 * just search pg_class for a match.  This is needed for initializing
+	 * other system catalogs (pg_namespace may not exist yet, and certainly
+	 * there are no schemas other than pg_catalog).
 	 */
 	if (IsBootstrapProcessingMode())
 	{
@@ -833,7 +831,7 @@ regclassin(PG_FUNCTION_ARGS)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_TABLE),
-			errmsg("relation \"%s\" does not exist", class_name_or_oid)));
+			   errmsg("relation \"%s\" does not exist", class_name_or_oid)));
 
 		/* We assume there can be only one match */
 
@@ -844,8 +842,8 @@ regclassin(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Normal case: parse the name into components and see if it matches
-	 * any pg_class entries in the current search path.
+	 * Normal case: parse the name into components and see if it matches any
+	 * pg_class entries in the current search path.
 	 */
 	names = stringToQualifiedNameList(class_name_or_oid, "regclassin");
 
@@ -880,9 +878,9 @@ regclassout(PG_FUNCTION_ARGS)
 		char	   *classname = NameStr(classform->relname);
 
 		/*
-		 * In bootstrap mode, skip the fancy namespace stuff and just
-		 * return the class name.  (This path is only needed for debugging
-		 * output anyway.)
+		 * In bootstrap mode, skip the fancy namespace stuff and just return
+		 * the class name.	(This path is only needed for debugging output
+		 * anyway.)
 		 */
 		if (IsBootstrapProcessingMode())
 			result = pstrdup(classname);
@@ -891,8 +889,7 @@ regclassout(PG_FUNCTION_ARGS)
 			char	   *nspname;
 
 			/*
-			 * Would this class be found by regclassin? If not, qualify
-			 * it.
+			 * Would this class be found by regclassin? If not, qualify it.
 			 */
 			if (RelationIsVisible(classid))
 				nspname = NULL;
@@ -966,17 +963,17 @@ regtypein(PG_FUNCTION_ARGS)
 		strspn(typ_name_or_oid, "0123456789") == strlen(typ_name_or_oid))
 	{
 		result = DatumGetObjectId(DirectFunctionCall1(oidin,
-									  CStringGetDatum(typ_name_or_oid)));
+										  CStringGetDatum(typ_name_or_oid)));
 		PG_RETURN_OID(result);
 	}
 
 	/* Else it's a type name, possibly schema-qualified or decorated */
 
 	/*
-	 * In bootstrap mode we assume the given name is not schema-qualified,
-	 * and just search pg_type for a match.  This is needed for
-	 * initializing other system catalogs (pg_namespace may not exist yet,
-	 * and certainly there are no schemas other than pg_catalog).
+	 * In bootstrap mode we assume the given name is not schema-qualified, and
+	 * just search pg_type for a match.  This is needed for initializing other
+	 * system catalogs (pg_namespace may not exist yet, and certainly there
+	 * are no schemas other than pg_catalog).
 	 */
 	if (IsBootstrapProcessingMode())
 	{
@@ -999,7 +996,7 @@ regtypein(PG_FUNCTION_ARGS)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("type \"%s\" does not exist", typ_name_or_oid)));
+					 errmsg("type \"%s\" does not exist", typ_name_or_oid)));
 
 		/* We assume there can be only one match */
 
@@ -1010,8 +1007,8 @@ regtypein(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Normal case: invoke the full parser to deal with special cases such
-	 * as array syntax.
+	 * Normal case: invoke the full parser to deal with special cases such as
+	 * array syntax.
 	 */
 	parseTypeString(typ_name_or_oid, &result, &typmod);
 
@@ -1043,9 +1040,9 @@ regtypeout(PG_FUNCTION_ARGS)
 		Form_pg_type typeform = (Form_pg_type) GETSTRUCT(typetup);
 
 		/*
-		 * In bootstrap mode, skip the fancy namespace stuff and just
-		 * return the type name.  (This path is only needed for debugging
-		 * output anyway.)
+		 * In bootstrap mode, skip the fancy namespace stuff and just return
+		 * the type name.  (This path is only needed for debugging output
+		 * anyway.)
 		 */
 		if (IsBootstrapProcessingMode())
 		{

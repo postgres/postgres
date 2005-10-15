@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.9 2005/05/06 17:24:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.10 2005/10/15 02:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,17 +54,16 @@ MultiExecBitmapIndexScan(BitmapIndexScanState *node)
 	scandesc = node->biss_ScanDesc;
 
 	/*
-	 * If we have runtime keys and they've not already been set up, do it
-	 * now.
+	 * If we have runtime keys and they've not already been set up, do it now.
 	 */
 	if (node->biss_RuntimeKeyInfo && !node->biss_RuntimeKeysReady)
 		ExecReScan((PlanState *) node, NULL);
 
 	/*
 	 * Prepare the result bitmap.  Normally we just create a new one to pass
-	 * back; however, our parent node is allowed to store a pre-made one
-	 * into node->biss_result, in which case we just OR our tuple IDs into
-	 * the existing bitmap.  (This saves needing explicit UNION steps.)
+	 * back; however, our parent node is allowed to store a pre-made one into
+	 * node->biss_result, in which case we just OR our tuple IDs into the
+	 * existing bitmap.  (This saves needing explicit UNION steps.)
 	 */
 	if (node->biss_result)
 	{
@@ -82,7 +81,7 @@ MultiExecBitmapIndexScan(BitmapIndexScanState *node)
 	 */
 	for (;;)
 	{
-		bool	more = index_getmulti(scandesc, tids, MAX_TIDS, &ntids);
+		bool		more = index_getmulti(scandesc, tids, MAX_TIDS, &ntids);
 
 		if (ntids > 0)
 		{
@@ -116,8 +115,7 @@ ExecBitmapIndexReScan(BitmapIndexScanState *node, ExprContext *exprCtxt)
 	ExprContext *econtext;
 	ExprState **runtimeKeyInfo;
 
-	econtext = node->biss_RuntimeContext;		/* context for runtime
-												 * keys */
+	econtext = node->biss_RuntimeContext;		/* context for runtime keys */
 	runtimeKeyInfo = node->biss_RuntimeKeyInfo;
 
 	if (econtext)
@@ -130,16 +128,16 @@ ExecBitmapIndexReScan(BitmapIndexScanState *node, ExprContext *exprCtxt)
 			econtext->ecxt_outertuple = exprCtxt->ecxt_outertuple;
 
 		/*
-		 * Reset the runtime-key context so we don't leak memory as each
-		 * outer tuple is scanned.	Note this assumes that we will
-		 * recalculate *all* runtime keys on each call.
+		 * Reset the runtime-key context so we don't leak memory as each outer
+		 * tuple is scanned.  Note this assumes that we will recalculate *all*
+		 * runtime keys on each call.
 		 */
 		ResetExprContext(econtext);
 	}
 
 	/*
-	 * If we are doing runtime key calculations (ie, the index keys depend
-	 * on data from an outer scan), compute the new key values
+	 * If we are doing runtime key calculations (ie, the index keys depend on
+	 * data from an outer scan), compute the new key values
 	 */
 	if (runtimeKeyInfo)
 	{
@@ -213,8 +211,8 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate)
 	/*
 	 * Miscellaneous initialization
 	 *
-	 * We do not need a standard exprcontext for this node, though we may
-	 * decide below to create a runtime-key exprcontext
+	 * We do not need a standard exprcontext for this node, though we may decide
+	 * below to create a runtime-key exprcontext
 	 */
 
 	/*
@@ -252,10 +250,10 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate)
 	indexstate->biss_NumScanKeys = numScanKeys;
 
 	/*
-	 * If we have runtime keys, we need an ExprContext to evaluate them.
-	 * We could just create a "standard" plan node exprcontext, but to
-	 * keep the code looking similar to nodeIndexscan.c, it seems better
-	 * to stick with the approach of using a separate ExprContext.
+	 * If we have runtime keys, we need an ExprContext to evaluate them. We
+	 * could just create a "standard" plan node exprcontext, but to keep the
+	 * code looking similar to nodeIndexscan.c, it seems better to stick with
+	 * the approach of using a separate ExprContext.
 	 */
 	if (have_runtime_keys)
 	{
@@ -272,17 +270,17 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate)
 
 	/*
 	 * We do not open or lock the base relation here.  We assume that an
-	 * ancestor BitmapHeapScan node is holding AccessShareLock on the
-	 * heap relation throughout the execution of the plan tree.
+	 * ancestor BitmapHeapScan node is holding AccessShareLock on the heap
+	 * relation throughout the execution of the plan tree.
 	 */
 
 	indexstate->ss.ss_currentRelation = NULL;
 	indexstate->ss.ss_currentScanDesc = NULL;
 
 	/*
-	 * open the index relation and initialize relation and scan
-	 * descriptors.  Note we acquire no locks here; the index machinery
-	 * does its own locks and unlocks.
+	 * open the index relation and initialize relation and scan descriptors.
+	 * Note we acquire no locks here; the index machinery does its own locks
+	 * and unlocks.
 	 */
 	indexstate->biss_RelationDesc = index_open(node->indexid);
 	indexstate->biss_ScanDesc =

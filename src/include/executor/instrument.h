@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/executor/instrument.h,v 1.11 2005/04/16 20:07:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/instrument.h,v 1.12 2005/10/15 02:49:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
  * gettimeofday() does not have sufficient resolution on Windows,
  * so we must use QueryPerformanceCounter() instead.  These macros
  * also give some breathing room to use other high-precision-timing APIs
- * on yet other platforms.  (The macro-ization is not complete, however;
+ * on yet other platforms.	(The macro-ization is not complete, however;
  * see subtraction code in instrument.c and explain.c.)
  */
 #ifndef WIN32
@@ -32,8 +32,7 @@ typedef struct timeval instr_time;
 #define INSTR_TIME_SET_CURRENT(t)	gettimeofday(&(t), NULL)
 #define INSTR_TIME_GET_DOUBLE(t) \
 	(((double) (t).tv_sec) + ((double) (t).tv_usec) / 1000000.0)
-
-#else  /* WIN32 */
+#else							/* WIN32 */
 
 typedef LARGE_INTEGER instr_time;
 
@@ -51,8 +50,7 @@ GetTimerFrequency(void)
 	QueryPerformanceFrequency(&f);
 	return (double) f.QuadPart;
 }
-
-#endif /* WIN32 */
+#endif   /* WIN32 */
 
 
 typedef struct Instrumentation

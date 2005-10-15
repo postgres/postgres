@@ -185,9 +185,9 @@ reset_cfg(void)
 static int
 comparecfg(const void *a, const void *b)
 {
-	if ( ((TSCfgInfo *) a)->id == ((TSCfgInfo *) b)->id )
+	if (((TSCfgInfo *) a)->id == ((TSCfgInfo *) b)->id)
 		return 0;
-	return ( ((TSCfgInfo *) a)->id < ((TSCfgInfo *) b)->id ) ? -1 : 1;
+	return (((TSCfgInfo *) a)->id < ((TSCfgInfo *) b)->id) ? -1 : 1;
 }
 
 TSCfgInfo *
@@ -289,17 +289,17 @@ parsetext_v2(TSCfgInfo * cfg, PRSTEXT * prs, char *buf, int4 buflen)
 
 	prsobj->prs = (void *) DatumGetPointer(
 										   FunctionCall2(
-												   &(prsobj->start_info),
-													PointerGetDatum(buf),
-													Int32GetDatum(buflen)
+													   &(prsobj->start_info),
+														 PointerGetDatum(buf),
+														 Int32GetDatum(buflen)
 														 )
 		);
 
 	while ((type = DatumGetInt32(FunctionCall3(
 											   &(prsobj->getlexeme_info),
-											PointerGetDatum(prsobj->prs),
+											   PointerGetDatum(prsobj->prs),
 											   PointerGetDatum(&lemm),
-									   PointerGetDatum(&lenlemm)))) != 0)
+										   PointerGetDatum(&lenlemm)))) != 0)
 	{
 
 		if (lenlemm >= MAXSTRLEN)
@@ -322,16 +322,16 @@ parsetext_v2(TSCfgInfo * cfg, PRSTEXT * prs, char *buf, int4 buflen)
 		for (i = 0; i < cfg->map[type].len; i++)
 		{
 			DictInfo   *dict = finddict(DatumGetObjectId(cfg->map[type].dict_id[i]));
-			TSLexeme	  *norms,
-					  *ptr;
+			TSLexeme   *norms,
+					   *ptr;
 
 			norms = ptr = (TSLexeme *) DatumGetPointer(
-													FunctionCall3(
-													&(dict->lexize_info),
-									   PointerGetDatum(dict->dictionary),
-												   PointerGetDatum(lemm),
-												 PointerGetDatum(lenlemm)
-																  )
+													   FunctionCall3(
+														&(dict->lexize_info),
+										   PointerGetDatum(dict->dictionary),
+													   PointerGetDatum(lemm),
+													 PointerGetDatum(lenlemm)
+																	 )
 				);
 			if (!norms)			/* dictionary doesn't know this lexem */
 				continue;
@@ -355,8 +355,7 @@ parsetext_v2(TSCfgInfo * cfg, PRSTEXT * prs, char *buf, int4 buflen)
 				prs->curwords++;
 			}
 			pfree(norms);
-			break;				/* lexem already normalized or is stop
-								 * word */
+			break;				/* lexem already normalized or is stop word */
 		}
 	}
 
@@ -425,17 +424,17 @@ hlparsetext(TSCfgInfo * cfg, HLPRSTEXT * prs, QUERYTYPE * query, char *buf, int4
 
 	prsobj->prs = (void *) DatumGetPointer(
 										   FunctionCall2(
-												   &(prsobj->start_info),
-													PointerGetDatum(buf),
-													Int32GetDatum(buflen)
+													   &(prsobj->start_info),
+														 PointerGetDatum(buf),
+														 Int32GetDatum(buflen)
 														 )
 		);
 
 	while ((type = DatumGetInt32(FunctionCall3(
 											   &(prsobj->getlexeme_info),
-											PointerGetDatum(prsobj->prs),
+											   PointerGetDatum(prsobj->prs),
 											   PointerGetDatum(&lemm),
-									   PointerGetDatum(&lenlemm)))) != 0)
+										   PointerGetDatum(&lenlemm)))) != 0)
 	{
 
 		if (lenlemm >= MAXSTRLEN)
@@ -460,16 +459,16 @@ hlparsetext(TSCfgInfo * cfg, HLPRSTEXT * prs, QUERYTYPE * query, char *buf, int4
 		for (i = 0; i < cfg->map[type].len; i++)
 		{
 			DictInfo   *dict = finddict(DatumGetObjectId(cfg->map[type].dict_id[i]));
-			TSLexeme	  *norms,
-					  *ptr;
+			TSLexeme   *norms,
+					   *ptr;
 
 			norms = ptr = (TSLexeme *) DatumGetPointer(
-													FunctionCall3(
-													&(dict->lexize_info),
-									   PointerGetDatum(dict->dictionary),
-												   PointerGetDatum(lemm),
-												 PointerGetDatum(lenlemm)
-																  )
+													   FunctionCall3(
+														&(dict->lexize_info),
+										   PointerGetDatum(dict->dictionary),
+													   PointerGetDatum(lemm),
+													 PointerGetDatum(lenlemm)
+																	 )
 				);
 			if (!norms)			/* dictionary doesn't know this lexem */
 				continue;
@@ -481,8 +480,7 @@ hlparsetext(TSCfgInfo * cfg, HLPRSTEXT * prs, QUERYTYPE * query, char *buf, int4
 				ptr++;
 			}
 			pfree(norms);
-			break;				/* lexem already normalized or is stop
-								 * word */
+			break;				/* lexem already normalized or is stop word */
 		}
 	}
 

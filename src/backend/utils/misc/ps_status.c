@@ -5,7 +5,7 @@
  * to contain some useful information. Mechanism differs wildly across
  * platforms.
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/ps_status.c,v 1.24 2005/05/24 07:16:27 neilc Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/ps_status.c,v 1.25 2005/10/15 02:49:36 momjian Exp $
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  * various details abducted from various places
@@ -85,7 +85,6 @@ extern char **environ;
 #define PS_BUFFER_SIZE 256
 static char ps_buffer[PS_BUFFER_SIZE];
 static const size_t ps_buffer_size = PS_BUFFER_SIZE;
-
 #else							/* PS_USE_CLOBBER_ARGV */
 static char *ps_buffer;			/* will point to argv area */
 static size_t ps_buffer_size;	/* space determined at run time */
@@ -98,20 +97,22 @@ static int	save_argc;
 static char **save_argv;
 
 #ifdef WIN32
-	/*
-	 * Win32 does not support showing any changed arguments. To make it
-	 * at all possible to track which backend is doing what, we create
-	 * a named object that can be viewed with for example Process Explorer
-	 */
+
+ /*
+  * Win32 does not support showing any changed arguments. To make it at all
+  * possible to track which backend is doing what, we create a named object
+  * that can be viewed with for example Process Explorer
+  */
 static HANDLE ident_handle = INVALID_HANDLE_VALUE;
-static void pgwin32_update_ident(char *ident)
+static void
+pgwin32_update_ident(char *ident)
 {
-	char name[PS_BUFFER_SIZE+32];
+	char		name[PS_BUFFER_SIZE + 32];
 
 	if (ident_handle != INVALID_HANDLE_VALUE)
 		CloseHandle(ident_handle);
 
-	sprintf(name,"pgident: %s",ident);
+	sprintf(name, "pgident: %s", ident);
 
 	ident_handle = CreateEvent(NULL,
 							   TRUE,
@@ -130,7 +131,7 @@ static void pgwin32_update_ident(char *ident)
  * environment strings may be moved, so this should be called before any code
  * that might try to hang onto a getenv() result.)
  */
-char **
+char	  **
 save_ps_display_args(int argc, char **argv)
 {
 	save_argc = argc;
@@ -139,8 +140,8 @@ save_ps_display_args(int argc, char **argv)
 #if defined(PS_USE_CLOBBER_ARGV)
 
 	/*
-	 * If we're going to overwrite the argv area, count the available
-	 * space.  Also move the environment to make additional room.
+	 * If we're going to overwrite the argv area, count the available space.
+	 * Also move the environment to make additional room.
 	 */
 	{
 		char	   *end_of_area = NULL;
@@ -193,12 +194,12 @@ save_ps_display_args(int argc, char **argv)
 	 * argument parsing purposes.
 	 *
 	 * (NB: do NOT think to remove the copying of argv[], even though
-	 * postmaster.c finishes looking at argv[] long before we ever
-	 * consider changing the ps display.  On some platforms, getopt()
-	 * keeps pointers into the argv array, and will get horribly confused
-	 * when it is re-called to analyze a subprocess' argument string if
-	 * the argv storage has been clobbered meanwhile.  Other platforms
-	 * have other dependencies on argv[].
+	 * postmaster.c finishes looking at argv[] long before we ever consider
+	 * changing the ps display.  On some platforms, getopt() keeps pointers
+	 * into the argv array, and will get horribly confused when it is
+	 * re-called to analyze a subprocess' argument string if the argv storage
+	 * has been clobbered meanwhile.  Other platforms have other dependencies
+	 * on argv[].
 	 */
 	{
 		char	  **new_argv;
@@ -220,8 +221,7 @@ save_ps_display_args(int argc, char **argv)
 
 		argv = new_argv;
 	}
-#endif   /* PS_USE_CHANGE_ARGV or
-								 * PS_USE_CLOBBER_ARGV */
+#endif   /* PS_USE_CHANGE_ARGV or PS_USE_CLOBBER_ARGV */
 
 	return argv;
 }
@@ -278,8 +278,8 @@ init_ps_display(const char *username, const char *dbname,
 #ifdef PS_USE_SETPROCTITLE
 
 	/*
-	 * apparently setproctitle() already adds a `progname:' prefix to the
-	 * ps line
+	 * apparently setproctitle() already adds a `progname:' prefix to the ps
+	 * line
 	 */
 	snprintf(ps_buffer, ps_buffer_size,
 			 "%s %s %s ",
@@ -295,7 +295,6 @@ init_ps_display(const char *username, const char *dbname,
 #ifdef WIN32
 	pgwin32_update_ident(ps_buffer);
 #endif
-
 #endif   /* not PS_USE_NONE */
 }
 
@@ -360,7 +359,6 @@ set_ps_display(const char *activity)
 #ifdef WIN32
 	pgwin32_update_ident(ps_buffer);
 #endif
-
 #endif   /* not PS_USE_NONE */
 }
 

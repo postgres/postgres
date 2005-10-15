@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.38 2005/02/22 04:43:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.39 2005/10/15 02:49:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,6 @@ validate_exec(const char *path)
 	struct passwd *pwp;
 	int			i;
 	int			in_grp = 0;
-
 #else
 	char		path_exe[MAXPGPATH + sizeof(".exe") - 1];
 #endif
@@ -96,8 +95,8 @@ validate_exec(const char *path)
 	/*
 	 * Ensure that the file exists and is a regular file.
 	 *
-	 * XXX if you have a broken system where stat() looks at the symlink
-	 * instead of the underlying file, you lose.
+	 * XXX if you have a broken system where stat() looks at the symlink instead
+	 * of the underlying file, you lose.
 	 */
 	if (stat(path, &buf) < 0)
 		return -1;
@@ -222,8 +221,8 @@ find_my_exec(const char *argv0, char *retpath)
 #endif
 
 	/*
-	 * Since no explicit path was supplied, the user must have
-	 * been relying on PATH.  We'll search the same PATH.
+	 * Since no explicit path was supplied, the user must have been relying on
+	 * PATH.  We'll search the same PATH.
 	 */
 	if ((path = getenv("PATH")) && *path)
 	{
@@ -254,7 +253,7 @@ find_my_exec(const char *argv0, char *retpath)
 
 			switch (validate_exec(retpath))
 			{
-				case 0:			/* found ok */
+				case 0: /* found ok */
 					return resolve_symlinks(retpath);
 				case -1:		/* wasn't even a candidate, keep looking */
 					break;
@@ -292,16 +291,16 @@ resolve_symlinks(char *path)
 	char	   *fname;
 
 	/*
-	 * To resolve a symlink properly, we have to chdir into its directory
-	 * and then chdir to where the symlink points; otherwise we may fail to
+	 * To resolve a symlink properly, we have to chdir into its directory and
+	 * then chdir to where the symlink points; otherwise we may fail to
 	 * resolve relative links correctly (consider cases involving mount
 	 * points, for example).  After following the final symlink, we use
 	 * getcwd() to figure out where the heck we're at.
 	 *
-	 * One might think we could skip all this if path doesn't point to a
-	 * symlink to start with, but that's wrong.  We also want to get rid
-	 * of any directory symlinks that are present in the given path.
-	 * We expect getcwd() to give us an accurate, symlink-free path.
+	 * One might think we could skip all this if path doesn't point to a symlink
+	 * to start with, but that's wrong.  We also want to get rid of any
+	 * directory symlinks that are present in the given path. We expect
+	 * getcwd() to give us an accurate, symlink-free path.
 	 */
 	if (!getcwd(orig_wd, MAXPGPATH))
 	{
@@ -312,8 +311,8 @@ resolve_symlinks(char *path)
 
 	for (;;)
 	{
-		char   *lsep;
-		int		rllen;
+		char	   *lsep;
+		int			rllen;
 
 		lsep = last_dir_separator(path);
 		if (lsep)
@@ -360,8 +359,7 @@ resolve_symlinks(char *path)
 		log_error(_("could not change directory to \"%s\""), orig_wd);
 		return -1;
 	}
-
-#endif /* HAVE_READLINK */
+#endif   /* HAVE_READLINK */
 
 	return 0;
 }
@@ -435,8 +433,7 @@ pipe_read_line(char *cmd, char *line, int maxsize)
 		return NULL;
 
 	return line;
-
-#else /* WIN32 */
+#else							/* WIN32 */
 
 	SECURITY_ATTRIBUTES sattr;
 	HANDLE		childstdoutrd,
@@ -488,31 +485,31 @@ pipe_read_line(char *cmd, char *line, int maxsize)
 					  &pi))
 	{
 		/* Successfully started the process */
-		char   *lineptr;
+		char	   *lineptr;
 
 		ZeroMemory(line, maxsize);
 
 		/* Try to read at least one line from the pipe */
 		/* This may require more than one wait/read attempt */
-		for (lineptr = line; lineptr < line+maxsize-1; )
+		for (lineptr = line; lineptr < line + maxsize - 1;)
 		{
 			DWORD		bytesread = 0;
 
 			/* Let's see if we can read */
 			if (WaitForSingleObject(childstdoutrddup, 10000) != WAIT_OBJECT_0)
-				break;		/* Timeout, but perhaps we got a line already */
+				break;			/* Timeout, but perhaps we got a line already */
 
-			if (!ReadFile(childstdoutrddup, lineptr, maxsize-(lineptr-line),
+			if (!ReadFile(childstdoutrddup, lineptr, maxsize - (lineptr - line),
 						  &bytesread, NULL))
-				break;		/* Error, but perhaps we got a line already */
+				break;			/* Error, but perhaps we got a line already */
 
 			lineptr += strlen(lineptr);
 
 			if (!bytesread)
-				break; /* EOF */
+				break;			/* EOF */
 
 			if (strchr(line, '\n'))
-				break; /* One or more lines read */
+				break;			/* One or more lines read */
 		}
 
 		if (lineptr != line)
@@ -521,18 +518,18 @@ pipe_read_line(char *cmd, char *line, int maxsize)
 			int			len;
 
 			/* If we got more than one line, cut off after the first \n */
-			lineptr = strchr(line,'\n');
+			lineptr = strchr(line, '\n');
 			if (lineptr)
-				*(lineptr+1) = '\0';
+				*(lineptr + 1) = '\0';
 
 			len = strlen(line);
 
 			/*
 			 * If EOL is \r\n, convert to just \n. Because stdout is a
 			 * text-mode stream, the \n output by the child process is
-			 * received as \r\n, so we convert it to \n.  The server
-			 * main.c sets setvbuf(stdout, NULL, _IONBF, 0) which has the
-			 * effect of disabling \n to \r\n expansion for stdout.
+			 * received as \r\n, so we convert it to \n.  The server main.c
+			 * sets setvbuf(stdout, NULL, _IONBF, 0) which has the effect of
+			 * disabling \n to \r\n expansion for stdout.
 			 */
 			if (len >= 2 && line[len - 2] == '\r' && line[len - 1] == '\n')
 			{
@@ -542,8 +539,8 @@ pipe_read_line(char *cmd, char *line, int maxsize)
 			}
 
 			/*
-			 * We emulate fgets() behaviour. So if there is no newline at
-			 * the end, we add one...
+			 * We emulate fgets() behaviour. So if there is no newline at the
+			 * end, we add one...
 			 */
 			if (len == 0 || line[len - 1] != '\n')
 				strcat(line, "\n");
@@ -559,7 +556,7 @@ pipe_read_line(char *cmd, char *line, int maxsize)
 	CloseHandle(childstdoutrddup);
 
 	return retval;
-#endif /* WIN32 */
+#endif   /* WIN32 */
 }
 
 

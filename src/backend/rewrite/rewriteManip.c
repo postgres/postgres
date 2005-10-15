@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.91 2005/06/04 19:19:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.92 2005/10/15 02:49:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,8 +53,8 @@ checkExprHasAggs(Node *node)
 	context.sublevels_up = 0;
 
 	/*
-	 * Must be prepared to start with a Query or a bare expression tree;
-	 * if it's a Query, we don't want to increment sublevels_up.
+	 * Must be prepared to start with a Query or a bare expression tree; if
+	 * it's a Query, we don't want to increment sublevels_up.
 	 */
 	return query_or_expression_tree_walker(node,
 										   checkExprHasAggs_walker,
@@ -70,8 +70,7 @@ checkExprHasAggs_walker(Node *node, checkExprHasAggs_context *context)
 	if (IsA(node, Aggref))
 	{
 		if (((Aggref *) node)->agglevelsup == context->sublevels_up)
-			return true;		/* abort the tree traversal and return
-								 * true */
+			return true;		/* abort the tree traversal and return true */
 		/* else fall through to examine argument */
 	}
 	if (IsA(node, Query))
@@ -113,8 +112,7 @@ checkExprHasSubLink_walker(Node *node, void *context)
 	if (node == NULL)
 		return false;
 	if (IsA(node, SubLink))
-		return true;			/* abort the tree traversal and return
-								 * true */
+		return true;			/* abort the tree traversal and return true */
 	return expression_tree_walker(node, checkExprHasSubLink_walker, context);
 }
 
@@ -208,8 +206,8 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
 	context.sublevels_up = sublevels_up;
 
 	/*
-	 * Must be prepared to start with a Query or a bare expression tree;
-	 * if it's a Query, go straight to query_tree_walker to make sure that
+	 * Must be prepared to start with a Query or a bare expression tree; if
+	 * it's a Query, go straight to query_tree_walker to make sure that
 	 * sublevels_up doesn't get incremented prematurely.
 	 */
 	if (node && IsA(node, Query))
@@ -217,11 +215,11 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
 		Query	   *qry = (Query *) node;
 
 		/*
-		 * If we are starting at a Query, and sublevels_up is zero, then
-		 * we must also fix rangetable indexes in the Query itself ---
-		 * namely resultRelation and rowMarks entries.	sublevels_up
-		 * cannot be zero when recursing into a subquery, so there's no
-		 * need to have the same logic inside OffsetVarNodes_walker.
+		 * If we are starting at a Query, and sublevels_up is zero, then we
+		 * must also fix rangetable indexes in the Query itself --- namely
+		 * resultRelation and rowMarks entries.  sublevels_up cannot be zero
+		 * when recursing into a subquery, so there's no need to have the same
+		 * logic inside OffsetVarNodes_walker.
 		 */
 		if (sublevels_up == 0)
 		{
@@ -349,8 +347,8 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 	context.sublevels_up = sublevels_up;
 
 	/*
-	 * Must be prepared to start with a Query or a bare expression tree;
-	 * if it's a Query, go straight to query_tree_walker to make sure that
+	 * Must be prepared to start with a Query or a bare expression tree; if
+	 * it's a Query, go straight to query_tree_walker to make sure that
 	 * sublevels_up doesn't get incremented prematurely.
 	 */
 	if (node && IsA(node, Query))
@@ -358,11 +356,11 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 		Query	   *qry = (Query *) node;
 
 		/*
-		 * If we are starting at a Query, and sublevels_up is zero, then
-		 * we must also fix rangetable indexes in the Query itself ---
-		 * namely resultRelation and rowMarks entries.	sublevels_up
-		 * cannot be zero when recursing into a subquery, so there's no
-		 * need to have the same logic inside ChangeVarNodes_walker.
+		 * If we are starting at a Query, and sublevels_up is zero, then we
+		 * must also fix rangetable indexes in the Query itself --- namely
+		 * resultRelation and rowMarks entries.  sublevels_up cannot be zero
+		 * when recursing into a subquery, so there's no need to have the same
+		 * logic inside ChangeVarNodes_walker.
 		 */
 		if (sublevels_up == 0)
 		{
@@ -473,8 +471,8 @@ IncrementVarSublevelsUp(Node *node, int delta_sublevels_up,
 	context.min_sublevels_up = min_sublevels_up;
 
 	/*
-	 * Must be prepared to start with a Query or a bare expression tree;
-	 * if it's a Query, we don't want to increment sublevels_up.
+	 * Must be prepared to start with a Query or a bare expression tree; if
+	 * it's a Query, we don't want to increment sublevels_up.
 	 */
 	query_or_expression_tree_walker(node,
 									IncrementVarSublevelsUp_walker,
@@ -562,8 +560,8 @@ rangeTableEntry_used(Node *node, int rt_index, int sublevels_up)
 	context.sublevels_up = sublevels_up;
 
 	/*
-	 * Must be prepared to start with a Query or a bare expression tree;
-	 * if it's a Query, we don't want to increment sublevels_up.
+	 * Must be prepared to start with a Query or a bare expression tree; if
+	 * it's a Query, we don't want to increment sublevels_up.
 	 */
 	return query_or_expression_tree_walker(node,
 										   rangeTableEntry_used_walker,
@@ -626,8 +624,8 @@ attribute_used(Node *node, int rt_index, int attno, int sublevels_up)
 	context.sublevels_up = sublevels_up;
 
 	/*
-	 * Must be prepared to start with a Query or a bare expression tree;
-	 * if it's a Query, we don't want to increment sublevels_up.
+	 * Must be prepared to start with a Query or a bare expression tree; if
+	 * it's a Query, we don't want to increment sublevels_up.
 	 */
 	return query_or_expression_tree_walker(node,
 										   attribute_used_walker,
@@ -671,10 +669,10 @@ getInsertSelectQuery(Query *parsetree, Query ***subquery_ptr)
 	 * they've been pushed down to the SELECT.
 	 */
 	if (list_length(parsetree->rtable) >= 2 &&
-	 strcmp(rt_fetch(PRS2_OLD_VARNO, parsetree->rtable)->eref->aliasname,
-			"*OLD*") == 0 &&
-	 strcmp(rt_fetch(PRS2_NEW_VARNO, parsetree->rtable)->eref->aliasname,
-			"*NEW*") == 0)
+		strcmp(rt_fetch(PRS2_OLD_VARNO, parsetree->rtable)->eref->aliasname,
+			   "*OLD*") == 0 &&
+		strcmp(rt_fetch(PRS2_NEW_VARNO, parsetree->rtable)->eref->aliasname,
+			   "*NEW*") == 0)
 		return parsetree;
 	Assert(parsetree->jointree && IsA(parsetree->jointree, FromExpr));
 	if (list_length(parsetree->jointree->fromlist) != 1)
@@ -687,10 +685,10 @@ getInsertSelectQuery(Query *parsetree, Query ***subquery_ptr)
 		  selectquery->commandType == CMD_SELECT))
 		elog(ERROR, "expected to find SELECT subquery");
 	if (list_length(selectquery->rtable) >= 2 &&
-	strcmp(rt_fetch(PRS2_OLD_VARNO, selectquery->rtable)->eref->aliasname,
-		   "*OLD*") == 0 &&
-	strcmp(rt_fetch(PRS2_NEW_VARNO, selectquery->rtable)->eref->aliasname,
-		   "*NEW*") == 0)
+		strcmp(rt_fetch(PRS2_OLD_VARNO, selectquery->rtable)->eref->aliasname,
+			   "*OLD*") == 0 &&
+		strcmp(rt_fetch(PRS2_NEW_VARNO, selectquery->rtable)->eref->aliasname,
+			   "*NEW*") == 0)
 	{
 		if (subquery_ptr)
 			*subquery_ptr = &(selectrte->subquery);
@@ -717,30 +715,30 @@ AddQual(Query *parsetree, Node *qual)
 		/*
 		 * There's noplace to put the qual on a utility statement.
 		 *
-		 * If it's a NOTIFY, silently ignore the qual; this means that the
-		 * NOTIFY will execute, whether or not there are any qualifying
-		 * rows. While clearly wrong, this is much more useful than
-		 * refusing to execute the rule at all, and extra NOTIFY events
-		 * are harmless for typical uses of NOTIFY.
+		 * If it's a NOTIFY, silently ignore the qual; this means that the NOTIFY
+		 * will execute, whether or not there are any qualifying rows. While
+		 * clearly wrong, this is much more useful than refusing to execute
+		 * the rule at all, and extra NOTIFY events are harmless for typical
+		 * uses of NOTIFY.
 		 *
 		 * If it isn't a NOTIFY, error out, since unconditional execution of
-		 * other utility stmts is unlikely to be wanted.  (This case is
-		 * not currently allowed anyway, but keep the test for safety.)
+		 * other utility stmts is unlikely to be wanted.  (This case is not
+		 * currently allowed anyway, but keep the test for safety.)
 		 */
 		if (parsetree->utilityStmt && IsA(parsetree->utilityStmt, NotifyStmt))
 			return;
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("conditional utility statements are not implemented")));
+			  errmsg("conditional utility statements are not implemented")));
 	}
 
 	if (parsetree->setOperations != NULL)
 	{
 		/*
-		 * There's noplace to put the qual on a setop statement, either.
-		 * (This could be fixed, but right now the planner simply ignores
-		 * any qual condition on a setop query.)
+		 * There's noplace to put the qual on a setop statement, either. (This
+		 * could be fixed, but right now the planner simply ignores any qual
+		 * condition on a setop query.)
 		 */
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -759,8 +757,8 @@ AddQual(Query *parsetree, Node *qual)
 	Assert(!checkExprHasAggs(copy));
 
 	/*
-	 * Make sure query is marked correctly if added qual has sublinks.
-	 * Need not search qual when query is already marked.
+	 * Make sure query is marked correctly if added qual has sublinks. Need
+	 * not search qual when query is already marked.
 	 */
 	if (!parsetree->hasSubLinks)
 		parsetree->hasSubLinks = checkExprHasSubLink(copy);
@@ -880,9 +878,9 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 
 				/*
 				 * If generating an expansion for a var of a named rowtype
-				 * (ie, this is a plain relation RTE), then we must
-				 * include dummy items for dropped columns.  If the var is
-				 * RECORD (ie, this is a JOIN), then omit dropped columns.
+				 * (ie, this is a plain relation RTE), then we must include
+				 * dummy items for dropped columns.  If the var is RECORD (ie,
+				 * this is a JOIN), then omit dropped columns.
 				 */
 				expandRTE(context->target_rte,
 						  this_varno, this_varlevelsup,
@@ -943,8 +941,8 @@ ResolveNew(Node *node, int target_varno, int sublevels_up,
 	context.inserted_sublink = false;
 
 	/*
-	 * Must be prepared to start with a Query or a bare expression tree;
-	 * if it's a Query, we don't want to increment sublevels_up.
+	 * Must be prepared to start with a Query or a bare expression tree; if
+	 * it's a Query, we don't want to increment sublevels_up.
 	 */
 	return query_or_expression_tree_mutator(node,
 											ResolveNew_mutator,

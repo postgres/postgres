@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.42 2005/07/04 19:05:45 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.43 2005/10/15 02:49:47 momjian Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -110,8 +110,7 @@ ECPGget_variable(va_list APREF, enum ECPGttype type, struct variable * var, bool
 			var->ind_value = var->ind_pointer;
 
 		/*
-		 * negative values are used to indicate an array without given
-		 * bounds
+		 * negative values are used to indicate an array without given bounds
 		 */
 		/* reset to zero for us */
 		if (var->ind_arrsize < 0)
@@ -120,6 +119,7 @@ ECPGget_variable(va_list APREF, enum ECPGttype type, struct variable * var, bool
 			var->ind_varcharsize = 0;
 	}
 }
+
 #undef APREF
 
 /*
@@ -267,9 +267,8 @@ ECPGis_type_an_array(int type, const struct statement * stmt, const struct varia
 	if ((stmt->connection->cache_head) == NULL)
 	{
 		/*
-		 * Text like types are not an array for ecpg, but postgres counts
-		 * them as an array. This define reminds you to not 'correct'
-		 * these values.
+		 * Text like types are not an array for ecpg, but postgres counts them
+		 * as an array. This define reminds you to not 'correct' these values.
 		 */
 #define not_an_array_in_ecpg ECPG_ARRAY_NONE
 
@@ -464,7 +463,7 @@ ECPGstore_result(const PGresult *results, int act_field,
 			int			len = strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
 
 			if (!ECPGget_data(results, act_tuple, act_field, stmt->lineno,
-						 var->type, var->ind_type, current_data_location,
+							  var->type, var->ind_type, current_data_location,
 							  var->ind_value, len, 0, var->ind_offset, isarray, stmt->compat, stmt->force_indicator))
 				status = false;
 			else
@@ -499,8 +498,8 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 	char	   *newcopy = NULL;
 
 	/*
-	 * arrays are not possible unless the attribute is an array too FIXME:
-	 * we do not know if the attribute is an array here
+	 * arrays are not possible unless the attribute is an array too FIXME: we
+	 * do not know if the attribute is an array here
 	 */
 #if 0
 	if (var->arrsize > 1 &&...)
@@ -772,8 +771,7 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 							sprintf(mallocedval + strlen(mallocedval), "%c,", (((char *) var->value)[element]) ? 't' : 'f');
 
 					/*
-					 * this is necessary since sizeof(C++'s
-					 * bool)==sizeof(int)
+					 * this is necessary since sizeof(C++'s bool)==sizeof(int)
 					 */
 					else if (var->offset == sizeof(int))
 						for (element = 0; element < var->arrsize; element++)
@@ -1064,10 +1062,9 @@ ECPGexecute(struct statement * stmt)
 	copiedquery = ECPGstrdup(stmt->command, stmt->lineno);
 
 	/*
-	 * Now, if the type is one of the fill in types then we take the
-	 * argument and enter that in the string at the first %s position.
-	 * Then if there are any more fill in types we fill in at the next and
-	 * so on.
+	 * Now, if the type is one of the fill in types then we take the argument
+	 * and enter that in the string at the first %s position. Then if there
+	 * are any more fill in types we fill in at the next and so on.
 	 */
 	var = stmt->inlist;
 
@@ -1082,14 +1079,14 @@ ECPGexecute(struct statement * stmt)
 		tobeinserted = NULL;
 
 		/*
-		 * A descriptor is a special case since it contains many variables
-		 * but is listed only once.
+		 * A descriptor is a special case since it contains many variables but
+		 * is listed only once.
 		 */
 		if (var->type == ECPGt_descriptor)
 		{
 			/*
-			 * We create an additional variable list here, so the same
-			 * logic applies.
+			 * We create an additional variable list here, so the same logic
+			 * applies.
 			 */
 			struct variable desc_inlist;
 			struct descriptor *desc;
@@ -1156,8 +1153,8 @@ ECPGexecute(struct statement * stmt)
 		if (tobeinserted)
 		{
 			/*
-			 * Now tobeinserted points to an area that is to be inserted
-			 * at the first %s
+			 * Now tobeinserted points to an area that is to be inserted at
+			 * the first %s
 			 */
 			if (!(newcopy = (char *) ECPGalloc(strlen(copiedquery) + strlen(tobeinserted) + 1, stmt->lineno)))
 				return false;
@@ -1166,8 +1163,8 @@ ECPGexecute(struct statement * stmt)
 			if ((p = next_insert(newcopy + hostvarl)) == NULL)
 			{
 				/*
-				 * We have an argument but we dont have the matched up
-				 * string in the string
+				 * We have an argument but we dont have the matched up string
+				 * in the string
 				 */
 				ECPGraise(stmt->lineno, ECPG_TOO_MANY_ARGUMENTS, ECPG_SQLSTATE_USING_CLAUSE_DOES_NOT_MATCH_PARAMETERS, NULL);
 				return false;
@@ -1178,8 +1175,8 @@ ECPGexecute(struct statement * stmt)
 				hostvarl = strlen(newcopy);
 
 				/*
-				 * The strange thing in the second argument is the rest of
-				 * the string from the old string
+				 * The strange thing in the second argument is the rest of the
+				 * string from the old string
 				 */
 				strcat(newcopy,
 					   copiedquery
@@ -1188,9 +1185,9 @@ ECPGexecute(struct statement * stmt)
 			}
 
 			/*
-			 * Now everything is safely copied to the newcopy. Lets free
-			 * the oldcopy and let the copiedquery get the var->value from
-			 * the newcopy.
+			 * Now everything is safely copied to the newcopy. Lets free the
+			 * oldcopy and let the copiedquery get the var->value from the
+			 * newcopy.
 			 */
 			if (malloced)
 			{

@@ -76,9 +76,8 @@ moddatetime(PG_FUNCTION_ARGS)
 								Int32GetDatum(-1));
 
 	/*
-	 * This gets the position in the tuple of the field we want. args[0]
-	 * being the name of the field to update, as passed in from the
-	 * trigger.
+	 * This gets the position in the tuple of the field we want. args[0] being
+	 * the name of the field to update, as passed in from the trigger.
 	 */
 	attnum = SPI_fnumber(tupdesc, args[0]);
 
@@ -100,8 +99,8 @@ moddatetime(PG_FUNCTION_ARGS)
 	if (SPI_gettypeid(tupdesc, attnum) != TIMESTAMPOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
-			  errmsg("attribute \"%s\" of \"%s\" must be type TIMESTAMP",
-					 args[0], relname)));
+				 errmsg("attribute \"%s\" of \"%s\" must be type TIMESTAMP",
+						args[0], relname)));
 
 /* 1 is the number of items in the arrays attnum and newdt.
 	attnum is the positional number of the field to be updated.

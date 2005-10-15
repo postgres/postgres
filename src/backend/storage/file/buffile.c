@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/buffile.c,v 1.21 2004/12/31 22:00:51 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/buffile.c,v 1.22 2005/10/15 02:49:25 momjian Exp $
  *
  * NOTES:
  *
@@ -59,8 +59,8 @@ struct BufFile
 	long	   *offsets;		/* palloc'd array with numFiles entries */
 
 	/*
-	 * offsets[i] is the current seek position of files[i].  We use this
-	 * to avoid making redundant FileSeek calls.
+	 * offsets[i] is the current seek position of files[i].  We use this to
+	 * avoid making redundant FileSeek calls.
 	 */
 
 	bool		isTemp;			/* can only add files if this is TRUE */
@@ -68,9 +68,8 @@ struct BufFile
 	bool		dirty;			/* does buffer need to be written? */
 
 	/*
-	 * "current pos" is position of start of buffer within the logical
-	 * file. Position as seen by user of BufFile is (curFile, curOffset +
-	 * pos).
+	 * "current pos" is position of start of buffer within the logical file.
+	 * Position as seen by user of BufFile is (curFile, curOffset + pos).
 	 */
 	int			curFile;		/* file index (0..n) part of current pos */
 	int			curOffset;		/* offset part of current pos */
@@ -125,7 +124,7 @@ extendBufFile(BufFile *file)
 	file->files = (File *) repalloc(file->files,
 									(file->numFiles + 1) * sizeof(File));
 	file->offsets = (long *) repalloc(file->offsets,
-									(file->numFiles + 1) * sizeof(long));
+									  (file->numFiles + 1) * sizeof(long));
 	file->files[file->numFiles] = pfile;
 	file->offsets[file->numFiles] = 0L;
 	file->numFiles++;
@@ -270,8 +269,8 @@ BufFileDumpBuffer(BufFile *file)
 		}
 
 		/*
-		 * Enforce per-file size limit only for temp files, else just try
-		 * to write as much as asked...
+		 * Enforce per-file size limit only for temp files, else just try to
+		 * write as much as asked...
 		 */
 		bytestowrite = file->nbytes - wpos;
 		if (file->isTemp)
@@ -302,11 +301,10 @@ BufFileDumpBuffer(BufFile *file)
 	file->dirty = false;
 
 	/*
-	 * At this point, curOffset has been advanced to the end of the
-	 * buffer, ie, its original value + nbytes.  We need to make it point
-	 * to the logical file position, ie, original value + pos, in case
-	 * that is less (as could happen due to a small backwards seek in a
-	 * dirty buffer!)
+	 * At this point, curOffset has been advanced to the end of the buffer,
+	 * ie, its original value + nbytes.  We need to make it point to the
+	 * logical file position, ie, original value + pos, in case that is less
+	 * (as could happen due to a small backwards seek in a dirty buffer!)
 	 */
 	file->curOffset -= (file->nbytes - file->pos);
 	if (file->curOffset < 0)	/* handle possible segment crossing */
@@ -317,8 +315,7 @@ BufFileDumpBuffer(BufFile *file)
 	}
 
 	/*
-	 * Now we can set the buffer empty without changing the logical
-	 * position
+	 * Now we can set the buffer empty without changing the logical position
 	 */
 	file->pos = 0;
 	file->nbytes = 0;
@@ -467,8 +464,8 @@ BufFileSeek(BufFile *file, int fileno, long offset, int whence)
 
 			/*
 			 * Relative seek considers only the signed offset, ignoring
-			 * fileno. Note that large offsets (> 1 gig) risk overflow in
-			 * this add...
+			 * fileno. Note that large offsets (> 1 gig) risk overflow in this
+			 * add...
 			 */
 			newFile = file->curFile;
 			newOffset = (file->curOffset + file->pos) + offset;
@@ -507,8 +504,8 @@ BufFileSeek(BufFile *file, int fileno, long offset, int whence)
 
 	/*
 	 * At this point and no sooner, check for seek past last segment. The
-	 * above flush could have created a new segment, so checking sooner
-	 * would not work (at least not with this code).
+	 * above flush could have created a new segment, so checking sooner would
+	 * not work (at least not with this code).
 	 */
 	if (file->isTemp)
 	{

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/security.c,v 1.8 2004/12/31 22:00:37 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/security.c,v 1.9 2005/10/15 02:49:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,8 +15,8 @@
 
 
 static BOOL pgwin32_get_dynamic_tokeninfo(HANDLE token,
-										  TOKEN_INFORMATION_CLASS class, char **InfoBuffer,
-										  char *errbuf, int errsize);
+							TOKEN_INFORMATION_CLASS class, char **InfoBuffer,
+							  char *errbuf, int errsize);
 
 /*
  * Returns nonzero if the current user has administrative privileges,
@@ -30,7 +30,7 @@ pgwin32_is_admin(void)
 {
 	HANDLE		AccessToken;
 	char	   *InfoBuffer = NULL;
-	char        errbuf[256];
+	char		errbuf[256];
 	PTOKEN_GROUPS Groups;
 	PSID		AdministratorsSid;
 	PSID		PowerUsersSid;
@@ -57,7 +57,7 @@ pgwin32_is_admin(void)
 	CloseHandle(AccessToken);
 
 	if (!AllocateAndInitializeSid(&NtAuthority, 2,
-	 SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0,
+		 SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0,
 								  0, &AdministratorsSid))
 	{
 		write_stderr("could not get SID for Administrators group: error code %d\n",
@@ -66,7 +66,7 @@ pgwin32_is_admin(void)
 	}
 
 	if (!AllocateAndInitializeSid(&NtAuthority, 2,
-								  SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_POWER_USERS, 0, 0, 0, 0, 0,
+	SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_POWER_USERS, 0, 0, 0, 0, 0,
 								  0, &PowerUsersSid))
 	{
 		write_stderr("could not get SID for PowerUsers group: error code %d\n",
@@ -114,8 +114,8 @@ pgwin32_is_service(void)
 {
 	static int	_is_service = -1;
 	HANDLE		AccessToken;
-	char       *InfoBuffer = NULL;
-	char        errbuf[256];
+	char	   *InfoBuffer = NULL;
+	char		errbuf[256];
 	PTOKEN_GROUPS Groups;
 	PTOKEN_USER User;
 	PSID		ServiceSid;
@@ -138,14 +138,14 @@ pgwin32_is_service(void)
 	if (!pgwin32_get_dynamic_tokeninfo(AccessToken, TokenUser, &InfoBuffer,
 									   errbuf, sizeof(errbuf)))
 	{
-		fprintf(stderr,errbuf);
+		fprintf(stderr, errbuf);
 		return -1;
 	}
 
 	User = (PTOKEN_USER) InfoBuffer;
 
 	if (!AllocateAndInitializeSid(&NtAuthority, 1,
-						  SECURITY_LOCAL_SYSTEM_RID, 0, 0, 0, 0, 0, 0, 0,
+							  SECURITY_LOCAL_SYSTEM_RID, 0, 0, 0, 0, 0, 0, 0,
 								  &LocalSystemSid))
 	{
 		fprintf(stderr, "could not get SID for local system account\n");
@@ -169,14 +169,14 @@ pgwin32_is_service(void)
 	if (!pgwin32_get_dynamic_tokeninfo(AccessToken, TokenGroups, &InfoBuffer,
 									   errbuf, sizeof(errbuf)))
 	{
-		fprintf(stderr,errbuf);
+		fprintf(stderr, errbuf);
 		return -1;
 	}
 
 	Groups = (PTOKEN_GROUPS) InfoBuffer;
 
 	if (!AllocateAndInitializeSid(&NtAuthority, 1,
-							   SECURITY_SERVICE_RID, 0, 0, 0, 0, 0, 0, 0,
+								  SECURITY_SERVICE_RID, 0, 0, 0, 0, 0, 0, 0,
 								  &ServiceSid))
 	{
 		fprintf(stderr, "could not get SID for service group\n");
@@ -213,17 +213,17 @@ static BOOL
 pgwin32_get_dynamic_tokeninfo(HANDLE token, TOKEN_INFORMATION_CLASS class,
 							  char **InfoBuffer, char *errbuf, int errsize)
 {
-	DWORD InfoBufferSize;
+	DWORD		InfoBufferSize;
 
 	if (GetTokenInformation(token, class, NULL, 0, &InfoBufferSize))
 	{
-		snprintf(errbuf,errsize,"could not get token information: got zero size\n");
+		snprintf(errbuf, errsize, "could not get token information: got zero size\n");
 		return FALSE;
 	}
 
 	if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
 	{
-		snprintf(errbuf,errsize,"could not get token information: error code %d\n",
+		snprintf(errbuf, errsize, "could not get token information: error code %d\n",
 				 (int) GetLastError());
 		return FALSE;
 	}
@@ -231,18 +231,18 @@ pgwin32_get_dynamic_tokeninfo(HANDLE token, TOKEN_INFORMATION_CLASS class,
 	*InfoBuffer = malloc(InfoBufferSize);
 	if (*InfoBuffer == NULL)
 	{
-		snprintf(errbuf,errsize,"could not allocate %d bytes for token information\n",
+		snprintf(errbuf, errsize, "could not allocate %d bytes for token information\n",
 				 (int) InfoBufferSize);
 		return FALSE;
 	}
 
-	if (!GetTokenInformation(token, class, *InfoBuffer, 
+	if (!GetTokenInformation(token, class, *InfoBuffer,
 							 InfoBufferSize, &InfoBufferSize))
 	{
-		snprintf(errbuf,errsize,"could not get token information: error code %d\n",
+		snprintf(errbuf, errsize, "could not get token information: error code %d\n",
 				 (int) GetLastError());
 		return FALSE;
 	}
-	
+
 	return TRUE;
 }

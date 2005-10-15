@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/sema.c,v 1.10 2004/12/31 22:00:37 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/sema.c,v 1.11 2005/10/15 02:49:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -216,8 +216,8 @@ semop(int semId, struct sembuf * sops, int nsops)
 	if (nsops != 1)
 	{
 		/*
-		 * Not supported (we return on 1st success, and don't cancel
-		 * earlier ops)
+		 * Not supported (we return on 1st success, and don't cancel earlier
+		 * ops)
 		 */
 		errno = E2BIG;
 		return -1;

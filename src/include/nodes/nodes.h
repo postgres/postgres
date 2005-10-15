@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.175 2005/08/01 20:31:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.176 2005/10/15 02:49:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,8 +141,8 @@ typedef enum NodeTag
 	/*
 	 * TAGS FOR EXPRESSION STATE NODES (execnodes.h)
 	 *
-	 * These correspond (not always one-for-one) to primitive nodes derived
-	 * from Expr.
+	 * These correspond (not always one-for-one) to primitive nodes derived from
+	 * Expr.
 	 */
 	T_ExprState = 400,
 	T_GenericExprState,
@@ -322,8 +322,8 @@ typedef enum NodeTag
 	 *
 	 * These are objects that aren't part of parse/plan/execute node tree
 	 * structures, but we give them NodeTags anyway for identification
-	 * purposes (usually because they are involved in APIs where we want
-	 * to pass multiple object types through the same pointer).
+	 * purposes (usually because they are involved in APIs where we want to
+	 * pass multiple object types through the same pointer).
 	 */
 	T_TriggerData = 900,		/* in commands/trigger.h */
 	T_ReturnSetInfo,			/* in nodes/execnodes.h */
@@ -406,8 +406,7 @@ extern bool equal(void *a, void *b);
  * These could have gone into plannodes.h or some such, but many files
  * depend on them...
  */
-typedef double Selectivity;		/* fraction of tuples a qualifier will
-								 * pass */
+typedef double Selectivity;		/* fraction of tuples a qualifier will pass */
 typedef double Cost;			/* execution cost (in page-access units) */
 
 
@@ -425,8 +424,8 @@ typedef enum CmdType
 	CMD_UPDATE,					/* update stmt (formerly replace) */
 	CMD_INSERT,					/* insert stmt (formerly append) */
 	CMD_DELETE,
-	CMD_UTILITY,				/* cmds like create, destroy, copy,
-								 * vacuum, etc. */
+	CMD_UTILITY,				/* cmds like create, destroy, copy, vacuum,
+								 * etc. */
 	CMD_NOTHING					/* dummy command for instead nothing rules
 								 * with qual */
 } CmdType;
@@ -449,22 +448,20 @@ typedef enum JoinType
 	 */
 	JOIN_INNER,					/* matching tuple pairs only */
 	JOIN_LEFT,					/* pairs + unmatched outer tuples */
-	JOIN_FULL,					/* pairs + unmatched outer + unmatched
-								 * inner */
+	JOIN_FULL,					/* pairs + unmatched outer + unmatched inner */
 	JOIN_RIGHT,					/* pairs + unmatched inner tuples */
 
 	/*
-	 * SQL92 considers UNION JOIN to be a kind of join, so list it here
-	 * for parser convenience, even though it's not implemented like a
-	 * join in the executor.  (The planner must convert it to an Append
-	 * plan.)
+	 * SQL92 considers UNION JOIN to be a kind of join, so list it here for
+	 * parser convenience, even though it's not implemented like a join in the
+	 * executor.  (The planner must convert it to an Append plan.)
 	 */
 	JOIN_UNION,
 
 	/*
 	 * These are used for queries like WHERE foo IN (SELECT bar FROM ...).
-	 * Only JOIN_IN is actually implemented in the executor; the others
-	 * are defined for internal use in the planner.
+	 * Only JOIN_IN is actually implemented in the executor; the others are
+	 * defined for internal use in the planner.
 	 */
 	JOIN_IN,					/* at most one result per outer row */
 	JOIN_REVERSE_IN,			/* at most one result per inner row */

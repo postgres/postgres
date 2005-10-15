@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.214 2005/08/20 23:45:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.215 2005/10/15 02:49:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,15 +110,14 @@ typedef enum TBlockState
  */
 typedef struct TransactionStateData
 {
-	TransactionId transactionId;		/* my XID, or Invalid if none */
+	TransactionId transactionId;	/* my XID, or Invalid if none */
 	SubTransactionId subTransactionId;	/* my subxact ID */
 	char	   *name;			/* savepoint name, if any */
 	int			savepointLevel; /* savepoint level */
 	TransState	state;			/* low-level state */
 	TBlockState blockState;		/* high-level state */
 	int			nestingLevel;	/* nest depth */
-	MemoryContext curTransactionContext;		/* my xact-lifetime
-												 * context */
+	MemoryContext curTransactionContext;		/* my xact-lifetime context */
 	ResourceOwner curTransactionOwner;	/* my query resources */
 	List	   *childXids;		/* subcommitted child XIDs */
 	Oid			currentUser;	/* subxact start current_user */
@@ -219,8 +218,8 @@ static void AtStart_Memory(void);
 static void AtStart_ResourceOwner(void);
 static void CallXactCallbacks(XactEvent event);
 static void CallSubXactCallbacks(SubXactEvent event,
-								 SubTransactionId mySubid,
-								 SubTransactionId parentSubid);
+					 SubTransactionId mySubid,
+					 SubTransactionId parentSubid);
 static void CleanupTransaction(void);
 static void CommitTransaction(void);
 static void RecordTransactionAbort(void);
@@ -349,18 +348,18 @@ AssignSubTransactionId(TransactionState s)
 	/*
 	 * Generate a new Xid and record it in PG_PROC and pg_subtrans.
 	 *
-	 * NB: we must make the subtrans entry BEFORE the Xid appears anywhere
-	 * in shared storage other than PG_PROC; because if there's no room for
-	 * it in PG_PROC, the subtrans entry is needed to ensure that other
-	 * backends see the Xid as "running".  See GetNewTransactionId.
+	 * NB: we must make the subtrans entry BEFORE the Xid appears anywhere in
+	 * shared storage other than PG_PROC; because if there's no room for it in
+	 * PG_PROC, the subtrans entry is needed to ensure that other backends see
+	 * the Xid as "running".  See GetNewTransactionId.
 	 */
 	s->transactionId = GetNewTransactionId(true);
 
 	SubTransSetParent(s->transactionId, s->parent->transactionId);
 
 	/*
-	 * Acquire lock on the transaction XID.  (We assume this cannot block.)
-	 * We have to be sure that the lock is assigned to the transaction's
+	 * Acquire lock on the transaction XID.  (We assume this cannot block.) We
+	 * have to be sure that the lock is assigned to the transaction's
 	 * ResourceOwner.
 	 */
 	currentOwner = CurrentResourceOwner;
@@ -453,22 +452,22 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 
 	/*
 	 * We always say that BootstrapTransactionId is "not my transaction ID"
-	 * even when it is (ie, during bootstrap).  Along with the fact that
+	 * even when it is (ie, during bootstrap).	Along with the fact that
 	 * transam.c always treats BootstrapTransactionId as already committed,
-	 * this causes the tqual.c routines to see all tuples as committed,
-	 * which is what we need during bootstrap.  (Bootstrap mode only inserts
-	 * tuples, it never updates or deletes them, so all tuples can be presumed
-	 * good immediately.)
+	 * this causes the tqual.c routines to see all tuples as committed, which
+	 * is what we need during bootstrap.  (Bootstrap mode only inserts tuples,
+	 * it never updates or deletes them, so all tuples can be presumed good
+	 * immediately.)
 	 */
 	if (xid == BootstrapTransactionId)
 		return false;
 
 	/*
-	 * We will return true for the Xid of the current subtransaction, any
-	 * of its subcommitted children, any of its parents, or any of their
-	 * previously subcommitted children.  However, a transaction being
-	 * aborted is no longer "current", even though it may still have an
-	 * entry on the state stack.
+	 * We will return true for the Xid of the current subtransaction, any of
+	 * its subcommitted children, any of its parents, or any of their
+	 * previously subcommitted children.  However, a transaction being aborted
+	 * is no longer "current", even though it may still have an entry on the
+	 * state stack.
 	 */
 	for (s = CurrentTransactionState; s != NULL; s = s->parent)
 	{
@@ -498,12 +497,12 @@ void
 CommandCounterIncrement(void)
 {
 	currentCommandId += 1;
-	if (currentCommandId == FirstCommandId) /* check for overflow */
+	if (currentCommandId == FirstCommandId)		/* check for overflow */
 	{
 		currentCommandId -= 1;
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("cannot have more than 2^32-1 commands in a transaction")));
+		  errmsg("cannot have more than 2^32-1 commands in a transaction")));
 	}
 
 	/* Propagate new command ID into static snapshots, if set */
@@ -607,16 +606,15 @@ AtSubStart_Memory(void)
 	Assert(CurTransactionContext != NULL);
 
 	/*
-	 * Create a CurTransactionContext, which will be used to hold data
-	 * that survives subtransaction commit but disappears on
-	 * subtransaction abort. We make it a child of the immediate parent's
-	 * CurTransactionContext.
+	 * Create a CurTransactionContext, which will be used to hold data that
+	 * survives subtransaction commit but disappears on subtransaction abort.
+	 * We make it a child of the immediate parent's CurTransactionContext.
 	 */
 	CurTransactionContext = AllocSetContextCreate(CurTransactionContext,
 												  "CurTransactionContext",
-												ALLOCSET_DEFAULT_MINSIZE,
-											   ALLOCSET_DEFAULT_INITSIZE,
-											   ALLOCSET_DEFAULT_MAXSIZE);
+												  ALLOCSET_DEFAULT_MINSIZE,
+												  ALLOCSET_DEFAULT_INITSIZE,
+												  ALLOCSET_DEFAULT_MAXSIZE);
 	s->curTransactionContext = CurTransactionContext;
 
 	/* Make the CurTransactionContext active. */
@@ -634,8 +632,8 @@ AtSubStart_ResourceOwner(void)
 	Assert(s->parent != NULL);
 
 	/*
-	 * Create a resource owner for the subtransaction.	We make it a child
-	 * of the immediate parent's resource owner.
+	 * Create a resource owner for the subtransaction.	We make it a child of
+	 * the immediate parent's resource owner.
 	 */
 	s->curTransactionOwner =
 		ResourceOwnerCreate(s->parent->curTransactionOwner,
@@ -666,11 +664,10 @@ RecordTransactionCommit(void)
 	nchildren = xactGetCommittedChildren(&children);
 
 	/*
-	 * If we made neither any XLOG entries nor any temp-rel updates, and
-	 * have no files to be deleted, we can omit recording the transaction
-	 * commit at all.  (This test includes the effects of subtransactions,
-	 * so the presence of committed subxacts need not alone force a
-	 * write.)
+	 * If we made neither any XLOG entries nor any temp-rel updates, and have
+	 * no files to be deleted, we can omit recording the transaction commit at
+	 * all.  (This test includes the effects of subtransactions, so the
+	 * presence of committed subxacts need not alone force a write.)
 	 */
 	if (MyXactMadeXLogEntry || MyXactMadeTempRelUpdate || nrels > 0)
 	{
@@ -684,18 +681,17 @@ RecordTransactionCommit(void)
 		START_CRIT_SECTION();
 
 		/*
-		 * If our transaction made any transaction-controlled XLOG
-		 * entries, we need to lock out checkpoint start between writing
-		 * our XLOG record and updating pg_clog.  Otherwise it is possible
-		 * for the checkpoint to set REDO after the XLOG record but fail
-		 * to flush the pg_clog update to disk, leading to loss of the
-		 * transaction commit if we crash a little later.  Slightly klugy
-		 * fix for problem discovered 2004-08-10.
+		 * If our transaction made any transaction-controlled XLOG entries, we
+		 * need to lock out checkpoint start between writing our XLOG record
+		 * and updating pg_clog.  Otherwise it is possible for the checkpoint
+		 * to set REDO after the XLOG record but fail to flush the pg_clog
+		 * update to disk, leading to loss of the transaction commit if we
+		 * crash a little later.  Slightly klugy fix for problem discovered
+		 * 2004-08-10.
 		 *
-		 * (If it made no transaction-controlled XLOG entries, its XID
-		 * appears nowhere in permanent storage, so no one else will ever
-		 * care if it committed; so it doesn't matter if we lose the
-		 * commit flag.)
+		 * (If it made no transaction-controlled XLOG entries, its XID appears
+		 * nowhere in permanent storage, so no one else will ever care if it
+		 * committed; so it doesn't matter if we lose the commit flag.)
 		 *
 		 * Note we only need a shared lock.
 		 */
@@ -704,8 +700,8 @@ RecordTransactionCommit(void)
 			LWLockAcquire(CheckpointStartLock, LW_SHARED);
 
 		/*
-		 * We only need to log the commit in XLOG if the transaction made
-		 * any transaction-controlled XLOG entries or will delete files.
+		 * We only need to log the commit in XLOG if the transaction made any
+		 * transaction-controlled XLOG entries or will delete files.
 		 */
 		if (madeTCentries || nrels > 0)
 		{
@@ -748,26 +744,26 @@ RecordTransactionCommit(void)
 		}
 
 		/*
-		 * We must flush our XLOG entries to disk if we made any XLOG
-		 * entries, whether in or out of transaction control.  For
-		 * example, if we reported a nextval() result to the client, this
-		 * ensures that any XLOG record generated by nextval will hit the
-		 * disk before we report the transaction committed.
+		 * We must flush our XLOG entries to disk if we made any XLOG entries,
+		 * whether in or out of transaction control.  For example, if we
+		 * reported a nextval() result to the client, this ensures that any
+		 * XLOG record generated by nextval will hit the disk before we report
+		 * the transaction committed.
 		 *
-		 * Note: if we generated a commit record above, MyXactMadeXLogEntry
-		 * will certainly be set now.
+		 * Note: if we generated a commit record above, MyXactMadeXLogEntry will
+		 * certainly be set now.
 		 */
 		if (MyXactMadeXLogEntry)
 		{
 			/*
 			 * Sleep before flush! So we can flush more than one commit
-			 * records per single fsync.  (The idea is some other backend
-			 * may do the XLogFlush while we're sleeping.  This needs work
-			 * still, because on most Unixen, the minimum select() delay
-			 * is 10msec or more, which is way too long.)
+			 * records per single fsync.  (The idea is some other backend may
+			 * do the XLogFlush while we're sleeping.  This needs work still,
+			 * because on most Unixen, the minimum select() delay is 10msec or
+			 * more, which is way too long.)
 			 *
-			 * We do not sleep if enableFsync is not turned on, nor if there
-			 * are fewer than CommitSiblings other backends with active
+			 * We do not sleep if enableFsync is not turned on, nor if there are
+			 * fewer than CommitSiblings other backends with active
 			 * transactions.
 			 */
 			if (CommitDelay > 0 && enableFsync &&
@@ -778,14 +774,13 @@ RecordTransactionCommit(void)
 		}
 
 		/*
-		 * We must mark the transaction committed in clog if its XID
-		 * appears either in permanent rels or in local temporary rels. We
-		 * test this by seeing if we made transaction-controlled entries
-		 * *OR* local-rel tuple updates.  Note that if we made only the
-		 * latter, we have not emitted an XLOG record for our commit, and
-		 * so in the event of a crash the clog update might be lost.  This
-		 * is okay because no one else will ever care whether we
-		 * committed.
+		 * We must mark the transaction committed in clog if its XID appears
+		 * either in permanent rels or in local temporary rels. We test this
+		 * by seeing if we made transaction-controlled entries *OR* local-rel
+		 * tuple updates.  Note that if we made only the latter, we have not
+		 * emitted an XLOG record for our commit, and so in the event of a
+		 * crash the clog update might be lost.  This is okay because no one
+		 * else will ever care whether we committed.
 		 */
 		if (madeTCentries || MyXactMadeTempRelUpdate)
 		{
@@ -833,9 +828,8 @@ static void
 AtCommit_Memory(void)
 {
 	/*
-	 * Now that we're "out" of a transaction, have the system allocate
-	 * things in the top memory context instead of per-transaction
-	 * contexts.
+	 * Now that we're "out" of a transaction, have the system allocate things
+	 * in the top memory context instead of per-transaction contexts.
 	 */
 	MemoryContextSwitchTo(TopMemoryContext);
 
@@ -870,9 +864,9 @@ AtSubCommit_Memory(void)
 
 	/*
 	 * Ordinarily we cannot throw away the child's CurTransactionContext,
-	 * since the data it contains will be needed at upper commit.  However,
-	 * if there isn't actually anything in it, we can throw it away.  This
-	 * avoids a small memory leak in the common case of "trivial" subxacts.
+	 * since the data it contains will be needed at upper commit.  However, if
+	 * there isn't actually anything in it, we can throw it away.  This avoids
+	 * a small memory leak in the common case of "trivial" subxacts.
 	 */
 	if (MemoryContextIsEmpty(s->curTransactionContext))
 	{
@@ -908,9 +902,10 @@ AtSubCommit_childXids(void)
 	{
 		s->parent->childXids = list_concat(s->parent->childXids,
 										   s->childXids);
+
 		/*
-		 * list_concat doesn't free the list header for the second list;
-		 * do so here to avoid memory leakage (kluge)
+		 * list_concat doesn't free the list header for the second list; do so
+		 * here to avoid memory leakage (kluge)
 		 */
 		pfree(s->childXids);
 		s->childXids = NIL;
@@ -929,14 +924,14 @@ RecordSubTransactionCommit(void)
 	 * We do not log the subcommit in XLOG; it doesn't matter until the
 	 * top-level transaction commits.
 	 *
-	 * We must mark the subtransaction subcommitted in clog if its XID
-	 * appears either in permanent rels or in local temporary rels. We
-	 * test this by seeing if we made transaction-controlled entries *OR*
-	 * local-rel tuple updates.  (The test here actually covers the entire
-	 * transaction tree so far, so it may mark subtransactions that don't
-	 * really need it, but it's probably not worth being tenser. Note that
-	 * if a prior subtransaction dirtied these variables, then
-	 * RecordTransactionCommit will have to do the full pushup anyway...)
+	 * We must mark the subtransaction subcommitted in clog if its XID appears
+	 * either in permanent rels or in local temporary rels. We test this by
+	 * seeing if we made transaction-controlled entries *OR* local-rel tuple
+	 * updates.  (The test here actually covers the entire transaction tree so
+	 * far, so it may mark subtransactions that don't really need it, but it's
+	 * probably not worth being tenser. Note that if a prior subtransaction
+	 * dirtied these variables, then RecordTransactionCommit will have to do
+	 * the full pushup anyway...)
 	 */
 	if (MyLastRecPtr.xrecoff != 0 || MyXactMadeTempRelUpdate)
 	{
@@ -974,9 +969,9 @@ RecordTransactionAbort(void)
 
 	/*
 	 * If we made neither any transaction-controlled XLOG entries nor any
-	 * temp-rel updates, and are not going to delete any files, we can
-	 * omit recording the transaction abort at all.  No one will ever care
-	 * that it aborted.  (These tests cover our whole transaction tree.)
+	 * temp-rel updates, and are not going to delete any files, we can omit
+	 * recording the transaction abort at all.	No one will ever care that it
+	 * aborted.  (These tests cover our whole transaction tree.)
 	 */
 	if (MyLastRecPtr.xrecoff != 0 || MyXactMadeTempRelUpdate || nrels > 0)
 	{
@@ -992,16 +987,16 @@ RecordTransactionAbort(void)
 		START_CRIT_SECTION();
 
 		/*
-		 * We only need to log the abort in XLOG if the transaction made
-		 * any transaction-controlled XLOG entries or will delete files.
-		 * (If it made no transaction-controlled XLOG entries, its XID
-		 * appears nowhere in permanent storage, so no one else will ever
-		 * care if it committed.)
+		 * We only need to log the abort in XLOG if the transaction made any
+		 * transaction-controlled XLOG entries or will delete files. (If it
+		 * made no transaction-controlled XLOG entries, its XID appears
+		 * nowhere in permanent storage, so no one else will ever care if it
+		 * committed.)
 		 *
-		 * We do not flush XLOG to disk unless deleting files, since the
-		 * default assumption after a crash would be that we aborted,
-		 * anyway. For the same reason, we don't need to worry about
-		 * interlocking against checkpoint start.
+		 * We do not flush XLOG to disk unless deleting files, since the default
+		 * assumption after a crash would be that we aborted, anyway. For the
+		 * same reason, we don't need to worry about interlocking against
+		 * checkpoint start.
 		 */
 		if (MyLastRecPtr.xrecoff != 0 || nrels > 0)
 		{
@@ -1047,8 +1042,8 @@ RecordTransactionAbort(void)
 		 * Mark the transaction aborted in clog.  This is not absolutely
 		 * necessary but we may as well do it while we are here.
 		 *
-		 * The ordering here isn't critical but it seems best to mark the
-		 * parent first.  This assures an atomic transition of all the
+		 * The ordering here isn't critical but it seems best to mark the parent
+		 * first.  This assures an atomic transition of all the
 		 * subtransactions to aborted state from the point of view of
 		 * concurrent TransactionIdDidAbort calls.
 		 */
@@ -1078,8 +1073,8 @@ AtAbort_Memory(void)
 {
 	/*
 	 * Make sure we are in a valid context (not a child of
-	 * TopTransactionContext...).  Note that it is possible for this code
-	 * to be called when we aren't in a transaction at all; go directly to
+	 * TopTransactionContext...).  Note that it is possible for this code to
+	 * be called when we aren't in a transaction at all; go directly to
 	 * TopMemoryContext in that case.
 	 */
 	if (TopTransactionContext != NULL)
@@ -1087,8 +1082,8 @@ AtAbort_Memory(void)
 		MemoryContextSwitchTo(TopTransactionContext);
 
 		/*
-		 * We do not want to destroy the transaction's global state yet,
-		 * so we can't free any memory here.
+		 * We do not want to destroy the transaction's global state yet, so we
+		 * can't free any memory here.
 		 */
 	}
 	else
@@ -1114,8 +1109,8 @@ static void
 AtAbort_ResourceOwner(void)
 {
 	/*
-	 * Make sure we have a valid ResourceOwner, if possible (else it
-	 * will be NULL, which is OK)
+	 * Make sure we have a valid ResourceOwner, if possible (else it will be
+	 * NULL, which is OK)
 	 */
 	CurrentResourceOwner = TopTransactionResourceOwner;
 }
@@ -1143,7 +1138,7 @@ AtSubAbort_childXids(void)
 
 	/*
 	 * We keep the child-XID lists in TopTransactionContext (see
-	 * AtSubCommit_childXids).  This means we'd better free the list
+	 * AtSubCommit_childXids).	This means we'd better free the list
 	 * explicitly at abort to avoid leakage.
 	 */
 	list_free(s->childXids);
@@ -1168,11 +1163,11 @@ RecordSubTransactionAbort(void)
 
 	/*
 	 * If we made neither any transaction-controlled XLOG entries nor any
-	 * temp-rel updates, and are not going to delete any files, we can
-	 * omit recording the transaction abort at all.  No one will ever care
-	 * that it aborted.  (These tests cover our whole transaction tree,
-	 * and therefore may mark subxacts that don't really need it, but it's
-	 * probably not worth being tenser.)
+	 * temp-rel updates, and are not going to delete any files, we can omit
+	 * recording the transaction abort at all.	No one will ever care that it
+	 * aborted.  (These tests cover our whole transaction tree, and therefore
+	 * may mark subxacts that don't really need it, but it's probably not
+	 * worth being tenser.)
 	 *
 	 * In this case we needn't worry about marking subcommitted children as
 	 * aborted, because they didn't mark themselves as subcommitted in the
@@ -1183,8 +1178,8 @@ RecordSubTransactionAbort(void)
 		START_CRIT_SECTION();
 
 		/*
-		 * We only need to log the abort in XLOG if the transaction made
-		 * any transaction-controlled XLOG entries or will delete files.
+		 * We only need to log the abort in XLOG if the transaction made any
+		 * transaction-controlled XLOG entries or will delete files.
 		 */
 		if (MyLastRecPtr.xrecoff != 0 || nrels > 0)
 		{
@@ -1238,11 +1233,10 @@ RecordSubTransactionAbort(void)
 	}
 
 	/*
-	 * We can immediately remove failed XIDs from PGPROC's cache of
-	 * running child XIDs. It's easiest to do it here while we have the
-	 * child XID array at hand, even though in the main-transaction case
-	 * the equivalent work happens just after return from
-	 * RecordTransactionAbort.
+	 * We can immediately remove failed XIDs from PGPROC's cache of running
+	 * child XIDs. It's easiest to do it here while we have the child XID
+	 * array at hand, even though in the main-transaction case the equivalent
+	 * work happens just after return from RecordTransactionAbort.
 	 */
 	XidCacheRemoveRunningXids(xid, nchildren, children);
 
@@ -1265,9 +1259,8 @@ static void
 AtCleanup_Memory(void)
 {
 	/*
-	 * Now that we're "out" of a transaction, have the system allocate
-	 * things in the top memory context instead of per-transaction
-	 * contexts.
+	 * Now that we're "out" of a transaction, have the system allocate things
+	 * in the top memory context instead of per-transaction contexts.
 	 */
 	MemoryContextSwitchTo(TopMemoryContext);
 
@@ -1304,9 +1297,9 @@ AtSubCleanup_Memory(void)
 	CurTransactionContext = s->parent->curTransactionContext;
 
 	/*
-	 * Delete the subxact local memory contexts. Its CurTransactionContext
-	 * can go too (note this also kills CurTransactionContexts from any
-	 * children of the subxact).
+	 * Delete the subxact local memory contexts. Its CurTransactionContext can
+	 * go too (note this also kills CurTransactionContexts from any children
+	 * of the subxact).
 	 */
 	if (s->curTransactionContext)
 		MemoryContextDelete(s->curTransactionContext);
@@ -1344,11 +1337,10 @@ StartTransaction(void)
 	 * start processing
 	 */
 	s->state = TRANS_START;
-	s->transactionId = InvalidTransactionId; /* until assigned */
+	s->transactionId = InvalidTransactionId;	/* until assigned */
 
 	/*
-	 * Make sure we've freed any old snapshot, and reset xact state
-	 * variables
+	 * Make sure we've freed any old snapshot, and reset xact state variables
 	 */
 	FreeXactSnapshot();
 	XactIsoLevel = DefaultXactIsoLevel;
@@ -1386,10 +1378,10 @@ StartTransaction(void)
 	s->childXids = NIL;
 
 	/*
-	 * You might expect to see "s->currentUser = GetUserId();" here, but
-	 * you won't because it doesn't work during startup; the userid isn't
-	 * set yet during a backend's first transaction start.  We only use
-	 * the currentUser field in sub-transaction state structs.
+	 * You might expect to see "s->currentUser = GetUserId();" here, but you
+	 * won't because it doesn't work during startup; the userid isn't set yet
+	 * during a backend's first transaction start.  We only use the
+	 * currentUser field in sub-transaction state structs.
 	 *
 	 * prevXactReadOnly is also valid only in sub-transactions.
 	 */
@@ -1432,13 +1424,12 @@ CommitTransaction(void)
 	Assert(s->parent == NULL);
 
 	/*
-	 * Do pre-commit processing (most of this stuff requires database
-	 * access, and in fact could still cause an error...)
+	 * Do pre-commit processing (most of this stuff requires database access,
+	 * and in fact could still cause an error...)
 	 *
-	 * It is possible for CommitHoldablePortals to invoke functions that
-	 * queue deferred triggers, and it's also possible that triggers create
-	 * holdable cursors.  So we have to loop until there's nothing left to
-	 * do.
+	 * It is possible for CommitHoldablePortals to invoke functions that queue
+	 * deferred triggers, and it's also possible that triggers create holdable
+	 * cursors.  So we have to loop until there's nothing left to do.
 	 */
 	for (;;)
 	{
@@ -1525,19 +1516,19 @@ CommitTransaction(void)
 	}
 
 	/*
-	 * This is all post-commit cleanup.  Note that if an error is raised
-	 * here, it's too late to abort the transaction.  This should be just
+	 * This is all post-commit cleanup.  Note that if an error is raised here,
+	 * it's too late to abort the transaction.  This should be just
 	 * noncritical resource releasing.
 	 *
-	 * The ordering of operations is not entirely random.  The idea is:
-	 * release resources visible to other backends (eg, files, buffer
-	 * pins); then release locks; then release backend-local resources. We
-	 * want to release locks at the point where any backend waiting for us
-	 * will see our transaction as being fully cleaned up.
+	 * The ordering of operations is not entirely random.  The idea is: release
+	 * resources visible to other backends (eg, files, buffer pins); then
+	 * release locks; then release backend-local resources. We want to release
+	 * locks at the point where any backend waiting for us will see our
+	 * transaction as being fully cleaned up.
 	 *
-	 * Resources that can be associated with individual queries are handled
-	 * by the ResourceOwner mechanism.	The other calls here are for
-	 * backend-wide state.
+	 * Resources that can be associated with individual queries are handled by
+	 * the ResourceOwner mechanism.  The other calls here are for backend-wide
+	 * state.
 	 */
 
 	CallXactCallbacks(XACT_EVENT_COMMIT);
@@ -1553,12 +1544,11 @@ CommitTransaction(void)
 	AtEOXact_RelationCache(true);
 
 	/*
-	 * Make catalog changes visible to all backends.  This has to happen
-	 * after relcache references are dropped (see comments for
-	 * AtEOXact_RelationCache), but before locks are released (if anyone
-	 * is waiting for lock on a relation we've modified, we want them to
-	 * know about the catalog change before they start using the
-	 * relation).
+	 * Make catalog changes visible to all backends.  This has to happen after
+	 * relcache references are dropped (see comments for
+	 * AtEOXact_RelationCache), but before locks are released (if anyone is
+	 * waiting for lock on a relation we've modified, we want them to know
+	 * about the catalog change before they start using the relation).
 	 */
 	AtEOXact_Inval(true);
 
@@ -1621,10 +1611,10 @@ CommitTransaction(void)
 static void
 PrepareTransaction(void)
 {
-	TransactionState	s = CurrentTransactionState;
-	TransactionId		xid = GetCurrentTransactionId();
-	GlobalTransaction	gxact;
-	TimestampTz			prepared_at;
+	TransactionState s = CurrentTransactionState;
+	TransactionId xid = GetCurrentTransactionId();
+	GlobalTransaction gxact;
+	TimestampTz prepared_at;
 
 	ShowTransactionState("PrepareTransaction");
 
@@ -1637,13 +1627,12 @@ PrepareTransaction(void)
 	Assert(s->parent == NULL);
 
 	/*
-	 * Do pre-commit processing (most of this stuff requires database
-	 * access, and in fact could still cause an error...)
+	 * Do pre-commit processing (most of this stuff requires database access,
+	 * and in fact could still cause an error...)
 	 *
-	 * It is possible for PrepareHoldablePortals to invoke functions that
-	 * queue deferred triggers, and it's also possible that triggers create
-	 * holdable cursors.  So we have to loop until there's nothing left to
-	 * do.
+	 * It is possible for PrepareHoldablePortals to invoke functions that queue
+	 * deferred triggers, and it's also possible that triggers create holdable
+	 * cursors.  So we have to loop until there's nothing left to do.
 	 */
 	for (;;)
 	{
@@ -1693,8 +1682,8 @@ PrepareTransaction(void)
 	BufmgrCommit();
 
 	/*
-	 * Reserve the GID for this transaction. This could fail if the
-	 * requested GID is invalid or already in use.
+	 * Reserve the GID for this transaction. This could fail if the requested
+	 * GID is invalid or already in use.
 	 */
 	gxact = MarkAsPreparing(xid, prepareGID, prepared_at,
 							GetUserId(), MyDatabaseId);
@@ -1707,14 +1696,14 @@ PrepareTransaction(void)
 	 * want transaction abort to be able to clean up.  (In particular, the
 	 * AtPrepare routines may error out if they find cases they cannot
 	 * handle.)  State cleanup should happen in the PostPrepare routines
-	 * below.  However, some modules can go ahead and clear state here
-	 * because they wouldn't do anything with it during abort anyway.
+	 * below.  However, some modules can go ahead and clear state here because
+	 * they wouldn't do anything with it during abort anyway.
 	 *
 	 * Note: because the 2PC state file records will be replayed in the same
-	 * order they are made, the order of these calls has to match the order
-	 * in which we want things to happen during COMMIT PREPARED or
-	 * ROLLBACK PREPARED; in particular, pay attention to whether things
-	 * should happen before or after releasing the transaction's locks.
+	 * order they are made, the order of these calls has to match the order in
+	 * which we want things to happen during COMMIT PREPARED or ROLLBACK
+	 * PREPARED; in particular, pay attention to whether things should happen
+	 * before or after releasing the transaction's locks.
 	 */
 	StartPrepare(gxact);
 
@@ -1726,15 +1715,14 @@ PrepareTransaction(void)
 	/*
 	 * Here is where we really truly prepare.
 	 *
-	 * We have to record transaction prepares even if we didn't
-	 * make any updates, because the transaction manager might
-	 * get confused if we lose a global transaction.
+	 * We have to record transaction prepares even if we didn't make any updates,
+	 * because the transaction manager might get confused if we lose a global
+	 * transaction.
 	 */
 	EndPrepare(gxact);
 
 	/*
-	 * Now we clean up backend-internal state and release internal
-	 * resources.
+	 * Now we clean up backend-internal state and release internal resources.
 	 */
 
 	/* Break the chain of back-links in the XLOG records I output */
@@ -1743,9 +1731,9 @@ PrepareTransaction(void)
 	MyXactMadeTempRelUpdate = false;
 
 	/*
-	 * Let others know about no transaction in progress by me.  This has
-	 * to be done *after* the prepared transaction has been marked valid,
-	 * else someone may think it is unlocked and recyclable.
+	 * Let others know about no transaction in progress by me.	This has to be
+	 * done *after* the prepared transaction has been marked valid, else
+	 * someone may think it is unlocked and recyclable.
 	 */
 
 	/* Lock ProcArrayLock because that's what GetSnapshotData uses. */
@@ -1762,7 +1750,7 @@ PrepareTransaction(void)
 	/*
 	 * This is all post-transaction cleanup.  Note that if an error is raised
 	 * here, it's too late to abort the transaction.  This should be just
-	 * noncritical resource releasing.  See notes in CommitTransaction.
+	 * noncritical resource releasing.	See notes in CommitTransaction.
 	 */
 
 	CallXactCallbacks(XACT_EVENT_PREPARE);
@@ -1819,8 +1807,8 @@ PrepareTransaction(void)
 	s->childXids = NIL;
 
 	/*
-	 * done with 1st phase commit processing, set current transaction
-	 * state back to default
+	 * done with 1st phase commit processing, set current transaction state
+	 * back to default
 	 */
 	s->state = TRANS_DEFAULT;
 
@@ -1842,8 +1830,8 @@ AbortTransaction(void)
 	/*
 	 * Release any LW locks we might be holding as quickly as possible.
 	 * (Regular locks, however, must be held till we finish aborting.)
-	 * Releasing LW locks is critical since we might try to grab them
-	 * again while cleaning up!
+	 * Releasing LW locks is critical since we might try to grab them again
+	 * while cleaning up!
 	 */
 	LWLockReleaseAll();
 
@@ -1852,8 +1840,8 @@ AbortTransaction(void)
 	UnlockBuffers();
 
 	/*
-	 * Also clean up any open wait for lock, since the lock manager will
-	 * choke if we try to wait for another lock before doing this.
+	 * Also clean up any open wait for lock, since the lock manager will choke
+	 * if we try to wait for another lock before doing this.
 	 */
 	LockWaitCancel();
 
@@ -1866,8 +1854,8 @@ AbortTransaction(void)
 	Assert(s->parent == NULL);
 
 	/*
-	 * set the current transaction state information appropriately during
-	 * the abort processing
+	 * set the current transaction state information appropriately during the
+	 * abort processing
 	 */
 	s->state = TRANS_ABORT;
 
@@ -1876,15 +1864,14 @@ AbortTransaction(void)
 	AtAbort_ResourceOwner();
 
 	/*
-	 * Reset user id which might have been changed transiently.  We cannot
-	 * use s->currentUser, since it may not be set yet; instead rely on
-	 * internal state of miscinit.c.
+	 * Reset user id which might have been changed transiently.  We cannot use
+	 * s->currentUser, since it may not be set yet; instead rely on internal
+	 * state of miscinit.c.
 	 *
-	 * (Note: it is not necessary to restore session authorization here
-	 * because that can only be changed via GUC, and GUC will take care of
-	 * rolling it back if need be.	However, an error within a SECURITY
-	 * DEFINER function could send control here with the wrong current
-	 * userid.)
+	 * (Note: it is not necessary to restore session authorization here because
+	 * that can only be changed via GUC, and GUC will take care of rolling it
+	 * back if need be.  However, an error within a SECURITY DEFINER function
+	 * could send control here with the wrong current userid.)
 	 */
 	AtAbort_UserId();
 
@@ -1898,15 +1885,15 @@ AbortTransaction(void)
 	AtEOXact_UpdateFlatFiles(false);
 
 	/*
-	 * Advertise the fact that we aborted in pg_clog (assuming that we
-	 * got as far as assigning an XID to advertise).
+	 * Advertise the fact that we aborted in pg_clog (assuming that we got as
+	 * far as assigning an XID to advertise).
 	 */
 	if (TransactionIdIsValid(s->transactionId))
 		RecordTransactionAbort();
 
 	/*
-	 * Let others know about no transaction in progress by me. Note that
-	 * this must be done _before_ releasing locks we hold and _after_
+	 * Let others know about no transaction in progress by me. Note that this
+	 * must be done _before_ releasing locks we hold and _after_
 	 * RecordTransactionAbort.
 	 */
 	if (MyProc != NULL)
@@ -2012,8 +1999,8 @@ StartTransactionCommand(void)
 	switch (s->blockState)
 	{
 			/*
-			 * if we aren't in a transaction block, we just do our usual
-			 * start transaction.
+			 * if we aren't in a transaction block, we just do our usual start
+			 * transaction.
 			 */
 		case TBLOCK_DEFAULT:
 			StartTransaction();
@@ -2021,23 +2008,23 @@ StartTransactionCommand(void)
 			break;
 
 			/*
-			 * We are somewhere in a transaction block or subtransaction
-			 * and about to start a new command.  For now we do nothing,
-			 * but someday we may do command-local resource initialization.
-			 * (Note that any needed CommandCounterIncrement was done by
-			 * the previous CommitTransactionCommand.)
+			 * We are somewhere in a transaction block or subtransaction and
+			 * about to start a new command.  For now we do nothing, but
+			 * someday we may do command-local resource initialization. (Note
+			 * that any needed CommandCounterIncrement was done by the
+			 * previous CommitTransactionCommand.)
 			 */
 		case TBLOCK_INPROGRESS:
 		case TBLOCK_SUBINPROGRESS:
 			break;
 
 			/*
-			 * Here we are in a failed transaction block (one of
-			 * the commands caused an abort) so we do nothing but remain in
-			 * the abort state.  Eventually we will get a ROLLBACK command
-			 * which will get us out of this state.  (It is up to other
-			 * code to ensure that no commands other than ROLLBACK will be
-			 * processed in these states.)
+			 * Here we are in a failed transaction block (one of the commands
+			 * caused an abort) so we do nothing but remain in the abort
+			 * state.  Eventually we will get a ROLLBACK command which will
+			 * get us out of this state.  (It is up to other code to ensure
+			 * that no commands other than ROLLBACK will be processed in these
+			 * states.)
 			 */
 		case TBLOCK_ABORT:
 		case TBLOCK_SUBABORT:
@@ -2099,10 +2086,10 @@ CommitTransactionCommand(void)
 			break;
 
 			/*
-			 * We are completing a "BEGIN TRANSACTION" command, so we
-			 * change to the "transaction block in progress" state and
-			 * return.  (We assume the BEGIN did nothing to the database,
-			 * so we need no CommandCounterIncrement.)
+			 * We are completing a "BEGIN TRANSACTION" command, so we change
+			 * to the "transaction block in progress" state and return.  (We
+			 * assume the BEGIN did nothing to the database, so we need no
+			 * CommandCounterIncrement.)
 			 */
 		case TBLOCK_BEGIN:
 			s->blockState = TBLOCK_INPROGRESS;
@@ -2110,8 +2097,8 @@ CommitTransactionCommand(void)
 
 			/*
 			 * This is the case when we have finished executing a command
-			 * someplace within a transaction block.  We increment the
-			 * command counter and return.
+			 * someplace within a transaction block.  We increment the command
+			 * counter and return.
 			 */
 		case TBLOCK_INPROGRESS:
 		case TBLOCK_SUBINPROGRESS:
@@ -2119,8 +2106,8 @@ CommitTransactionCommand(void)
 			break;
 
 			/*
-			 * We are completing a "COMMIT" command.  Do it and return to
-			 * the idle state.
+			 * We are completing a "COMMIT" command.  Do it and return to the
+			 * idle state.
 			 */
 		case TBLOCK_END:
 			CommitTransaction();
@@ -2128,17 +2115,17 @@ CommitTransactionCommand(void)
 			break;
 
 			/*
-			 * Here we are in the middle of a transaction block but one of
-			 * the commands caused an abort so we do nothing but remain in
-			 * the abort state.  Eventually we will get a ROLLBACK comand.
+			 * Here we are in the middle of a transaction block but one of the
+			 * commands caused an abort so we do nothing but remain in the
+			 * abort state.  Eventually we will get a ROLLBACK comand.
 			 */
 		case TBLOCK_ABORT:
 		case TBLOCK_SUBABORT:
 			break;
 
 			/*
-			 * Here we were in an aborted transaction block and we just
-			 * got the ROLLBACK command from the user, so clean up the
+			 * Here we were in an aborted transaction block and we just got
+			 * the ROLLBACK command from the user, so clean up the
 			 * already-aborted transaction and return to the idle state.
 			 */
 		case TBLOCK_ABORT_END:
@@ -2147,9 +2134,9 @@ CommitTransactionCommand(void)
 			break;
 
 			/*
-			 * Here we were in a perfectly good transaction block but the
-			 * user told us to ROLLBACK anyway.  We have to abort the
-			 * transaction and then clean up.
+			 * Here we were in a perfectly good transaction block but the user
+			 * told us to ROLLBACK anyway.	We have to abort the transaction
+			 * and then clean up.
 			 */
 		case TBLOCK_ABORT_PENDING:
 			AbortTransaction();
@@ -2169,8 +2156,8 @@ CommitTransactionCommand(void)
 			/*
 			 * We were just issued a SAVEPOINT inside a transaction block.
 			 * Start a subtransaction.	(DefineSavepoint already did
-			 * PushTransaction, so as to have someplace to put the
-			 * SUBBEGIN state.)
+			 * PushTransaction, so as to have someplace to put the SUBBEGIN
+			 * state.)
 			 */
 		case TBLOCK_SUBBEGIN:
 			StartSubTransaction();
@@ -2259,8 +2246,8 @@ CommitTransactionCommand(void)
 			break;
 
 			/*
-			 * Same as above, but the subtransaction had already failed,
-			 * so we don't need AbortSubTransaction.
+			 * Same as above, but the subtransaction had already failed, so we
+			 * don't need AbortSubTransaction.
 			 */
 		case TBLOCK_SUBABORT_RESTART:
 			{
@@ -2320,8 +2307,8 @@ AbortCurrentTransaction(void)
 			break;
 
 			/*
-			 * if we aren't in a transaction block, we just do the basic
-			 * abort & cleanup transaction.
+			 * if we aren't in a transaction block, we just do the basic abort
+			 * & cleanup transaction.
 			 */
 		case TBLOCK_STARTED:
 			AbortTransaction();
@@ -2330,11 +2317,11 @@ AbortCurrentTransaction(void)
 			break;
 
 			/*
-			 * If we are in TBLOCK_BEGIN it means something screwed up
-			 * right after reading "BEGIN TRANSACTION".  We assume that
-			 * the user will interpret the error as meaning the BEGIN
-			 * failed to get him into a transaction block, so we should
-			 * abort and return to idle state.
+			 * If we are in TBLOCK_BEGIN it means something screwed up right
+			 * after reading "BEGIN TRANSACTION".  We assume that the user
+			 * will interpret the error as meaning the BEGIN failed to get him
+			 * into a transaction block, so we should abort and return to idle
+			 * state.
 			 */
 		case TBLOCK_BEGIN:
 			AbortTransaction();
@@ -2354,9 +2341,9 @@ AbortCurrentTransaction(void)
 			break;
 
 			/*
-			 * Here, we failed while trying to COMMIT.  Clean up the
-			 * transaction and return to idle state (we do not want to
-			 * stay in the transaction).
+			 * Here, we failed while trying to COMMIT.	Clean up the
+			 * transaction and return to idle state (we do not want to stay in
+			 * the transaction).
 			 */
 		case TBLOCK_END:
 			AbortTransaction();
@@ -2365,9 +2352,9 @@ AbortCurrentTransaction(void)
 			break;
 
 			/*
-			 * Here, we are already in an aborted transaction state and
-			 * are waiting for a ROLLBACK, but for some reason we failed
-			 * again!  So we just remain in the abort state.
+			 * Here, we are already in an aborted transaction state and are
+			 * waiting for a ROLLBACK, but for some reason we failed again!
+			 * So we just remain in the abort state.
 			 */
 		case TBLOCK_ABORT:
 		case TBLOCK_SUBABORT:
@@ -2375,8 +2362,8 @@ AbortCurrentTransaction(void)
 
 			/*
 			 * We are in a failed transaction and we got the ROLLBACK command.
-			 * We have already aborted, we just need to cleanup and go to
-			 * idle state.
+			 * We have already aborted, we just need to cleanup and go to idle
+			 * state.
 			 */
 		case TBLOCK_ABORT_END:
 			CleanupTransaction();
@@ -2395,8 +2382,8 @@ AbortCurrentTransaction(void)
 
 			/*
 			 * Here, we failed while trying to PREPARE.  Clean up the
-			 * transaction and return to idle state (we do not want to
-			 * stay in the transaction).
+			 * transaction and return to idle state (we do not want to stay in
+			 * the transaction).
 			 */
 		case TBLOCK_PREPARE:
 			AbortTransaction();
@@ -2406,8 +2393,8 @@ AbortCurrentTransaction(void)
 
 			/*
 			 * We got an error inside a subtransaction.  Abort just the
-			 * subtransaction, and go to the persistent SUBABORT state
-			 * until we get ROLLBACK.
+			 * subtransaction, and go to the persistent SUBABORT state until
+			 * we get ROLLBACK.
 			 */
 		case TBLOCK_SUBINPROGRESS:
 			AbortSubTransaction();
@@ -2416,7 +2403,7 @@ AbortCurrentTransaction(void)
 
 			/*
 			 * If we failed while trying to create a subtransaction, clean up
-			 * the broken subtransaction and abort the parent.  The same
+			 * the broken subtransaction and abort the parent.	The same
 			 * applies if we get a failure while ending a subtransaction.
 			 */
 		case TBLOCK_SUBBEGIN:
@@ -2479,15 +2466,15 @@ PreventTransactionChain(void *stmtNode, const char *stmtType)
 						stmtType)));
 
 	/*
-	 * Are we inside a function call?  If the statement's parameter block
-	 * was allocated in QueryContext, assume it is an interactive command.
+	 * Are we inside a function call?  If the statement's parameter block was
+	 * allocated in QueryContext, assume it is an interactive command.
 	 * Otherwise assume it is coming from a function.
 	 */
 	if (!MemoryContextContains(QueryContext, stmtNode))
 		ereport(ERROR,
 				(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
 		/* translator: %s represents an SQL statement name */
-			 errmsg("%s cannot be executed from a function", stmtType)));
+				 errmsg("%s cannot be executed from a function", stmtType)));
 
 	/* If we got past IsTransactionBlock test, should be in default state */
 	if (CurrentTransactionState->blockState != TBLOCK_DEFAULT &&
@@ -2529,8 +2516,8 @@ RequireTransactionChain(void *stmtNode, const char *stmtType)
 		return;
 
 	/*
-	 * Are we inside a function call?  If the statement's parameter block
-	 * was allocated in QueryContext, assume it is an interactive command.
+	 * Are we inside a function call?  If the statement's parameter block was
+	 * allocated in QueryContext, assume it is an interactive command.
 	 * Otherwise assume it is coming from a function.
 	 */
 	if (!MemoryContextContains(QueryContext, stmtNode))
@@ -2556,8 +2543,8 @@ bool
 IsInTransactionChain(void *stmtNode)
 {
 	/*
-	 * Return true on same conditions that would make
-	 * PreventTransactionChain error out
+	 * Return true on same conditions that would make PreventTransactionChain
+	 * error out
 	 */
 	if (IsTransactionBlock())
 		return true;
@@ -2705,8 +2692,7 @@ BeginTransactionBlock(void)
 	switch (s->blockState)
 	{
 			/*
-			 * We are not inside a transaction block, so allow one to
-			 * begin.
+			 * We are not inside a transaction block, so allow one to begin.
 			 */
 		case TBLOCK_STARTED:
 			s->blockState = TBLOCK_BEGIN;
@@ -2721,7 +2707,7 @@ BeginTransactionBlock(void)
 		case TBLOCK_SUBABORT:
 			ereport(WARNING,
 					(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
-				  errmsg("there is already a transaction in progress")));
+					 errmsg("there is already a transaction in progress")));
 			break;
 
 			/* These cases are invalid. */
@@ -2759,7 +2745,7 @@ bool
 PrepareTransactionBlock(char *gid)
 {
 	TransactionState s;
-	bool result;
+	bool		result;
 
 	/* Set up to commit the current transaction */
 	result = EndTransactionBlock();
@@ -2832,8 +2818,8 @@ EndTransactionBlock(void)
 			break;
 
 			/*
-			 * We are in a live subtransaction block.  Set up to subcommit
-			 * all open subtransactions and then commit the main transaction.
+			 * We are in a live subtransaction block.  Set up to subcommit all
+			 * open subtransactions and then commit the main transaction.
 			 */
 		case TBLOCK_SUBINPROGRESS:
 			while (s->parent != NULL)
@@ -2854,9 +2840,9 @@ EndTransactionBlock(void)
 			break;
 
 			/*
-			 * Here we are inside an aborted subtransaction.  Treat the
-			 * COMMIT as ROLLBACK: set up to abort everything and exit
-			 * the main transaction.
+			 * Here we are inside an aborted subtransaction.  Treat the COMMIT
+			 * as ROLLBACK: set up to abort everything and exit the main
+			 * transaction.
 			 */
 		case TBLOCK_SUBABORT:
 			while (s->parent != NULL)
@@ -2927,9 +2913,9 @@ UserAbortTransactionBlock(void)
 	switch (s->blockState)
 	{
 			/*
-			 * We are inside a transaction block and we got a ROLLBACK
-			 * command from the user, so tell CommitTransactionCommand
-			 * to abort and exit the transaction block.
+			 * We are inside a transaction block and we got a ROLLBACK command
+			 * from the user, so tell CommitTransactionCommand to abort and
+			 * exit the transaction block.
 			 */
 		case TBLOCK_INPROGRESS:
 			s->blockState = TBLOCK_ABORT_PENDING;
@@ -2937,17 +2923,17 @@ UserAbortTransactionBlock(void)
 
 			/*
 			 * We are inside a failed transaction block and we got a ROLLBACK
-			 * command from the user.  Abort processing is already done,
-			 * so CommitTransactionCommand just has to cleanup and go back
-			 * to idle state.
+			 * command from the user.  Abort processing is already done, so
+			 * CommitTransactionCommand just has to cleanup and go back to
+			 * idle state.
 			 */
 		case TBLOCK_ABORT:
 			s->blockState = TBLOCK_ABORT_END;
 			break;
 
 			/*
-			 * We are inside a subtransaction.  Mark everything
-			 * up to top level as exitable.
+			 * We are inside a subtransaction.	Mark everything up to top
+			 * level as exitable.
 			 */
 		case TBLOCK_SUBINPROGRESS:
 		case TBLOCK_SUBABORT:
@@ -2972,8 +2958,8 @@ UserAbortTransactionBlock(void)
 			break;
 
 			/*
-			 * The user issued ABORT when not inside a transaction. Issue
-			 * a WARNING and go to abort state.  The upcoming call to
+			 * The user issued ABORT when not inside a transaction. Issue a
+			 * WARNING and go to abort state.  The upcoming call to
 			 * CommitTransactionCommand() will then put us back into the
 			 * default state.
 			 */
@@ -3021,8 +3007,8 @@ DefineSavepoint(char *name)
 			s = CurrentTransactionState;		/* changed by push */
 
 			/*
-			 * Savepoint names, like the TransactionState block itself,
-			 * live in TopTransactionContext.
+			 * Savepoint names, like the TransactionState block itself, live
+			 * in TopTransactionContext.
 			 */
 			if (name)
 				s->name = MemoryContextStrdup(TopTransactionContext, name);
@@ -3078,8 +3064,8 @@ ReleaseSavepoint(List *options)
 			break;
 
 			/*
-			 * We are in a non-aborted subtransaction.	This is the only
-			 * valid case.
+			 * We are in a non-aborted subtransaction.	This is the only valid
+			 * case.
 			 */
 		case TBLOCK_SUBINPROGRESS:
 			break;
@@ -3134,8 +3120,8 @@ ReleaseSavepoint(List *options)
 
 	/*
 	 * Mark "commit pending" all subtransactions up to the target
-	 * subtransaction.	The actual commits will happen when control gets
-	 * to CommitTransactionCommand.
+	 * subtransaction.	The actual commits will happen when control gets to
+	 * CommitTransactionCommand.
 	 */
 	xact = CurrentTransactionState;
 	for (;;)
@@ -3232,8 +3218,8 @@ RollbackToSavepoint(List *options)
 
 	/*
 	 * Mark "abort pending" all subtransactions up to the target
-	 * subtransaction.	The actual aborts will happen when control gets
-	 * to CommitTransactionCommand.
+	 * subtransaction.	The actual aborts will happen when control gets to
+	 * CommitTransactionCommand.
 	 */
 	xact = CurrentTransactionState;
 	for (;;)
@@ -3284,8 +3270,8 @@ BeginInternalSubTransaction(char *name)
 			s = CurrentTransactionState;		/* changed by push */
 
 			/*
-			 * Savepoint names, like the TransactionState block itself,
-			 * live in TopTransactionContext.
+			 * Savepoint names, like the TransactionState block itself, live
+			 * in TopTransactionContext.
 			 */
 			if (name)
 				s->name = MemoryContextStrdup(TopTransactionContext, name);
@@ -3333,7 +3319,7 @@ ReleaseCurrentSubTransaction(void)
 	Assert(s->state == TRANS_INPROGRESS);
 	MemoryContextSwitchTo(CurTransactionContext);
 	CommitSubTransaction();
-	s = CurrentTransactionState; /* changed by pop */
+	s = CurrentTransactionState;	/* changed by pop */
 	Assert(s->state == TRANS_INPROGRESS);
 }
 
@@ -3433,8 +3419,7 @@ AbortOutOfAnyTransaction(void)
 				break;
 
 				/*
-				 * In a subtransaction, so clean it up and abort parent
-				 * too
+				 * In a subtransaction, so clean it up and abort parent too
 				 */
 			case TBLOCK_SUBBEGIN:
 			case TBLOCK_SUBINPROGRESS:
@@ -3667,9 +3652,9 @@ CommitSubTransaction(void)
 					  s->parent->subTransactionId);
 
 	/*
-	 * We need to restore the upper transaction's read-only state, in case
-	 * the upper is read-write while the child is read-only; GUC will
-	 * incorrectly think it should leave the child state in place.
+	 * We need to restore the upper transaction's read-only state, in case the
+	 * upper is read-write while the child is read-only; GUC will incorrectly
+	 * think it should leave the child state in place.
 	 */
 	XactReadOnly = s->prevXactReadOnly;
 
@@ -3706,8 +3691,8 @@ AbortSubTransaction(void)
 	/*
 	 * Release any LW locks we might be holding as quickly as possible.
 	 * (Regular locks, however, must be held till we finish aborting.)
-	 * Releasing LW locks is critical since we might try to grab them
-	 * again while cleaning up!
+	 * Releasing LW locks is critical since we might try to grab them again
+	 * while cleaning up!
 	 *
 	 * FIXME This may be incorrect --- Are there some locks we should keep?
 	 * Buffer locks, for example?  I don't think so but I'm not sure.
@@ -3726,8 +3711,8 @@ AbortSubTransaction(void)
 	AtSubAbort_ResourceOwner();
 
 	/*
-	 * We can skip all this stuff if the subxact failed before creating
-	 * a ResourceOwner...
+	 * We can skip all this stuff if the subxact failed before creating a
+	 * ResourceOwner...
 	 */
 	if (s->curTransactionOwner)
 	{
@@ -3777,25 +3762,23 @@ AbortSubTransaction(void)
 	}
 
 	/*
-	 * Reset user id which might have been changed transiently.  Here we
-	 * want to restore to the userid that was current at subxact entry.
-	 * (As in AbortTransaction, we need not worry about the session
-	 * userid.)
+	 * Reset user id which might have been changed transiently.  Here we want
+	 * to restore to the userid that was current at subxact entry. (As in
+	 * AbortTransaction, we need not worry about the session userid.)
 	 *
-	 * Must do this after AtEOXact_GUC to handle the case where we entered
-	 * the subxact inside a SECURITY DEFINER function (hence current and
-	 * session userids were different) and then session auth was changed
-	 * inside the subxact.	GUC will reset both current and session
-	 * userids to the entry-time session userid.  This is right in every
-	 * other scenario so it seems simplest to let GUC do that and fix it
-	 * here.
+	 * Must do this after AtEOXact_GUC to handle the case where we entered the
+	 * subxact inside a SECURITY DEFINER function (hence current and session
+	 * userids were different) and then session auth was changed inside the
+	 * subxact.  GUC will reset both current and session userids to the
+	 * entry-time session userid.  This is right in every other scenario so it
+	 * seems simplest to let GUC do that and fix it here.
 	 */
 	SetUserId(s->currentUser);
 
 	/*
-	 * Restore the upper transaction's read-only state, too.  This should
-	 * be redundant with GUC's cleanup but we may as well do it for
-	 * consistency with the commit case.
+	 * Restore the upper transaction's read-only state, too.  This should be
+	 * redundant with GUC's cleanup but we may as well do it for consistency
+	 * with the commit case.
 	 */
 	XactReadOnly = s->prevXactReadOnly;
 
@@ -3846,11 +3829,11 @@ PushTransaction(void)
 {
 	TransactionState p = CurrentTransactionState;
 	TransactionState s;
-	Oid	currentUser;
+	Oid			currentUser;
 
 	/*
-	 * At present, GetUserId cannot fail, but let's not assume that.  Get
-	 * the ID before entering the critical code sequence.
+	 * At present, GetUserId cannot fail, but let's not assume that.  Get the
+	 * ID before entering the critical code sequence.
 	 */
 	currentUser = GetUserId();
 
@@ -3860,6 +3843,7 @@ PushTransaction(void)
 	s = (TransactionState)
 		MemoryContextAllocZero(TopTransactionContext,
 							   sizeof(TransactionStateData));
+
 	/*
 	 * Assign a subtransaction ID, watching out for counter wraparound.
 	 */
@@ -3872,11 +3856,12 @@ PushTransaction(void)
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("cannot have more than 2^32-1 subtransactions in a transaction")));
 	}
+
 	/*
 	 * We can now stack a minimally valid subtransaction without fear of
 	 * failure.
 	 */
-	s->transactionId = InvalidTransactionId; /* until assigned */
+	s->transactionId = InvalidTransactionId;	/* until assigned */
 	s->subTransactionId = currentSubTransactionId;
 	s->parent = p;
 	s->nestingLevel = p->nestingLevel + 1;
@@ -3889,10 +3874,10 @@ PushTransaction(void)
 	CurrentTransactionState = s;
 
 	/*
-	 * AbortSubTransaction and CleanupSubTransaction have to be able to
-	 * cope with the subtransaction from here on out; in particular they
-	 * should not assume that it necessarily has a transaction context,
-	 * resource owner, or XID.
+	 * AbortSubTransaction and CleanupSubTransaction have to be able to cope
+	 * with the subtransaction from here on out; in particular they should not
+	 * assume that it necessarily has a transaction context, resource owner,
+	 * or XID.
 	 */
 }
 
@@ -3959,7 +3944,7 @@ ShowTransactionStateRec(TransactionState s)
 	/* use ereport to suppress computation if msg will not be printed */
 	ereport(DEBUG3,
 			(errmsg_internal("name: %s; blockState: %13s; state: %7s, xid/subid/cid: %u/%u/%u, nestlvl: %d, children: %s",
-						   PointerIsValid(s->name) ? s->name : "unnamed",
+							 PointerIsValid(s->name) ? s->name : "unnamed",
 							 BlockStateAsString(s->blockState),
 							 TransStateAsString(s->state),
 							 (unsigned int) s->transactionId,
@@ -4215,7 +4200,7 @@ xact_desc_commit(char *buf, xl_xact_commit *xlrec)
 	if (xlrec->nsubxacts > 0)
 	{
 		TransactionId *xacts = (TransactionId *)
-			&xlrec->xnodes[xlrec->nrels];
+		&xlrec->xnodes[xlrec->nrels];
 
 		sprintf(buf + strlen(buf), "; subxacts:");
 		for (i = 0; i < xlrec->nsubxacts; i++)
@@ -4246,7 +4231,7 @@ xact_desc_abort(char *buf, xl_xact_abort *xlrec)
 	if (xlrec->nsubxacts > 0)
 	{
 		TransactionId *xacts = (TransactionId *)
-			&xlrec->xnodes[xlrec->nrels];
+		&xlrec->xnodes[xlrec->nrels];
 
 		sprintf(buf + strlen(buf), "; subxacts:");
 		for (i = 0; i < xlrec->nsubxacts; i++)

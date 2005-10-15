@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.10 2003/11/29 19:52:08 pgsql Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.11 2005/10/15 02:49:47 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -49,7 +49,7 @@ ECPGraise(int line, int code, const char *sqlstate, const char *str)
 
 		case ECPG_INT_FORMAT:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-			 "Not correctly formatted int type: %s line %d.", str, line);
+				 "Not correctly formatted int type: %s line %d.", str, line);
 			break;
 
 		case ECPG_UINT_FORMAT:
@@ -64,7 +64,7 @@ ECPGraise(int line, int code, const char *sqlstate, const char *str)
 
 		case ECPG_CONVERT_BOOL:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-				  "Unable to convert %s to bool on line %d.", str, line);
+					 "Unable to convert %s to bool on line %d.", str, line);
 			break;
 
 		case ECPG_EMPTY:
@@ -84,12 +84,12 @@ ECPGraise(int line, int code, const char *sqlstate, const char *str)
 
 		case ECPG_DATA_NOT_ARRAY:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-			 "Data read from backend is not an array in line %d.", line);
+				 "Data read from backend is not an array in line %d.", line);
 			break;
 
 		case ECPG_ARRAY_INSERT:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-			 "Trying to insert an array of variables in line %d.", line);
+				 "Trying to insert an array of variables in line %d.", line);
 			break;
 
 		case ECPG_NO_CONN:
@@ -129,7 +129,7 @@ ECPGraise(int line, int code, const char *sqlstate, const char *str)
 
 		case ECPG_VAR_NOT_CHAR:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-				   "Variable is not a character type in line %d.", line);
+					 "Variable is not a character type in line %d.", line);
 			break;
 
 		case ECPG_TRANS:
@@ -139,7 +139,7 @@ ECPGraise(int line, int code, const char *sqlstate, const char *str)
 
 		case ECPG_CONNECT:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-			  "Could not connect to database %s in line %d.", str, line);
+				  "Could not connect to database %s in line %d.", str, line);
 			break;
 
 		default:
@@ -192,7 +192,7 @@ ECPGraise_backend(int line, PGresult *result, PGconn *conn, int compat)
 		sqlca->sqlcode = ECPG_PGSQL;
 
 	ECPGlog("raising sqlstate %.*s in line %d, '%s'.\n",
-			sizeof(sqlca->sqlstate), sqlca->sqlstate, line, sqlca->sqlerrm.sqlerrmc);
+	sizeof(sqlca->sqlstate), sqlca->sqlstate, line, sqlca->sqlerrm.sqlerrmc);
 
 	/* free all memory we have allocated for the user */
 	ECPGfree_auto_mem();

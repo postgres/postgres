@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.46 2005/06/16 17:53:54 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.47 2005/10/15 02:49:45 momjian Exp $ */
 
 /* undefine and redefine after #include */
 #undef mkdir
@@ -39,7 +39,6 @@
 #else							/* not BUILDING_DLL */
 #define DLLIMPORT __declspec (dllimport)
 #endif
-
 #elif defined(WIN32_CLIENT_ONLY)
 
 #if defined(_DLL)
@@ -47,7 +46,6 @@
 #else							/* not _DLL */
 #define DLLIMPORT __declspec (dllimport)
 #endif
-
 #else							/* not CYGWIN, not MSVC, not MingW */
 
 #define DLLIMPORT
@@ -134,8 +132,7 @@ int			semop(int semId, struct sembuf * sops, int flag);
 #define SIGHUP				1
 #define SIGQUIT				3
 #define SIGTRAP				5
-#define SIGABRT				22	/* Set to match W32 value -- not UNIX
-								 * value */
+#define SIGABRT				22	/* Set to match W32 value -- not UNIX value */
 #define SIGKILL				9
 #define SIGPIPE				13
 #define SIGALRM				14
@@ -187,7 +184,7 @@ typedef int pid_t;
 /*
  * Supplement to <sys/stat.h>.
  */
-#define lstat(path, sb)	stat((path), (sb))
+#define lstat(path, sb) stat((path), (sb))
 
 /*
  * Supplement to <fcntl.h>.
@@ -247,7 +244,7 @@ int			pgwin32_recv(SOCKET s, char *buf, int len, int flags);
 int			pgwin32_send(SOCKET s, char *buf, int len, int flags);
 
 const char *pgwin32_socket_strerror(int err);
-int pgwin32_waitforsinglesocket(SOCKET s, int what);
+int			pgwin32_waitforsinglesocket(SOCKET s, int what);
 
 /* in backend/port/win32/security.c */
 extern int	pgwin32_is_admin(void);

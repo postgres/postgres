@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.34 2005/05/22 22:30:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.35 2005/10/15 02:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,9 +60,8 @@ FunctionNext(FunctionScanState *node)
 	tuplestorestate = node->tuplestorestate;
 
 	/*
-	 * If first time through, read all tuples from function and put them
-	 * in a tuplestore. Subsequent calls just fetch tuples from
-	 * tuplestore.
+	 * If first time through, read all tuples from function and put them in a
+	 * tuplestore. Subsequent calls just fetch tuples from tuplestore.
 	 */
 	if (tuplestorestate == NULL)
 	{
@@ -77,10 +76,10 @@ FunctionNext(FunctionScanState *node)
 
 		/*
 		 * If function provided a tupdesc, cross-check it.	We only really
-		 * need to do this for functions returning RECORD, but might as
-		 * well do it always.
+		 * need to do this for functions returning RECORD, but might as well
+		 * do it always.
 		 */
-		if (funcTupdesc) 
+		if (funcTupdesc)
 			tupledesc_match(node->tupdesc, funcTupdesc);
 	}
 
@@ -174,8 +173,8 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate)
 	Assert(rte->rtekind == RTE_FUNCTION);
 
 	/*
-	 * Now determine if the function returns a simple or composite type,
-	 * and build an appropriate tupdesc.
+	 * Now determine if the function returns a simple or composite type, and
+	 * build an appropriate tupdesc.
 	 */
 	functypclass = get_expr_result_type(rte->funcexpr,
 										&funcrettype,
@@ -213,8 +212,8 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate)
 
 	/*
 	 * For RECORD results, make sure a typmod has been assigned.  (The
-	 * function should do this for itself, but let's cover things in case
-	 * it doesn't.)
+	 * function should do this for itself, but let's cover things in case it
+	 * doesn't.)
 	 */
 	BlessTupleDesc(tupdesc);
 
@@ -329,10 +328,10 @@ ExecFunctionReScan(FunctionScanState *node, ExprContext *exprCtxt)
 		return;
 
 	/*
-	 * Here we have a choice whether to drop the tuplestore (and recompute
-	 * the function outputs) or just rescan it.  This should depend on
-	 * whether the function expression contains parameters and/or is
-	 * marked volatile.  FIXME soon.
+	 * Here we have a choice whether to drop the tuplestore (and recompute the
+	 * function outputs) or just rescan it.  This should depend on whether the
+	 * function expression contains parameters and/or is marked volatile.
+	 * FIXME soon.
 	 */
 	if (node->ss.ps.chgParam != NULL)
 	{
@@ -376,7 +375,7 @@ tupledesc_match(TupleDesc dst_tupdesc, TupleDesc src_tupdesc)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("function return row and query-specified return row do not match"),
-					 errdetail("Returned type %s at ordinal position %d, but query expects %s.", 
+					 errdetail("Returned type %s at ordinal position %d, but query expects %s.",
 							   format_type_be(sattr->atttypid),
 							   i + 1,
 							   format_type_be(dattr->atttypid))));

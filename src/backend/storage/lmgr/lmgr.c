@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.78 2005/08/01 20:31:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.79 2005/10/15 02:49:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,11 +145,11 @@ LockRelation(Relation relation, LOCKMODE lockmode)
 					  lockmode, false, false);
 
 	/*
-	 * Check to see if the relcache entry has been invalidated while we
-	 * were waiting to lock it.  If so, rebuild it, or ereport() trying.
-	 * Increment the refcount to ensure that RelationFlushRelation will
-	 * rebuild it and not just delete it.  We can skip this if the lock
-	 * was already held, however.
+	 * Check to see if the relcache entry has been invalidated while we were
+	 * waiting to lock it.	If so, rebuild it, or ereport() trying. Increment
+	 * the refcount to ensure that RelationFlushRelation will rebuild it and
+	 * not just delete it.	We can skip this if the lock was already held,
+	 * however.
 	 */
 	if (res != LOCKACQUIRE_ALREADY_HELD)
 	{
@@ -185,11 +185,11 @@ ConditionalLockRelation(Relation relation, LOCKMODE lockmode)
 		return false;
 
 	/*
-	 * Check to see if the relcache entry has been invalidated while we
-	 * were waiting to lock it.  If so, rebuild it, or ereport() trying.
-	 * Increment the refcount to ensure that RelationFlushRelation will
-	 * rebuild it and not just delete it.  We can skip this if the lock
-	 * was already held, however.
+	 * Check to see if the relcache entry has been invalidated while we were
+	 * waiting to lock it.	If so, rebuild it, or ereport() trying. Increment
+	 * the refcount to ensure that RelationFlushRelation will rebuild it and
+	 * not just delete it.	We can skip this if the lock was already held,
+	 * however.
 	 */
 	if (res != LOCKACQUIRE_ALREADY_HELD)
 	{
@@ -429,7 +429,7 @@ XactLockTableInsert(TransactionId xid)
  *
  * Delete the lock showing that the given transaction ID is running.
  * (This is never used for main transaction IDs; those locks are only
- * released implicitly at transaction end.  But we do use it for subtrans
+ * released implicitly at transaction end.	But we do use it for subtrans
  * IDs.)
  */
 void
@@ -451,7 +451,7 @@ XactLockTableDelete(TransactionId xid)
  * subtransaction, we will exit as soon as it aborts or its top parent commits.
  * It takes some extra work to ensure this, because to save on shared memory
  * the XID lock of a subtransaction is released when it ends, whether
- * successfully or unsuccessfully.  So we have to check if it's "still running"
+ * successfully or unsuccessfully.	So we have to check if it's "still running"
  * and if so wait for its parent.
  */
 void
@@ -477,8 +477,8 @@ XactLockTableWait(TransactionId xid)
 	}
 
 	/*
-	 * Transaction was committed/aborted/crashed - we have to update
-	 * pg_clog if transaction is still marked as running.
+	 * Transaction was committed/aborted/crashed - we have to update pg_clog
+	 * if transaction is still marked as running.
 	 */
 	if (!TransactionIdDidCommit(xid) && !TransactionIdDidAbort(xid))
 		TransactionIdAbort(xid);
@@ -514,8 +514,8 @@ ConditionalXactLockTableWait(TransactionId xid)
 	}
 
 	/*
-	 * Transaction was committed/aborted/crashed - we have to update
-	 * pg_clog if transaction is still marked as running.
+	 * Transaction was committed/aborted/crashed - we have to update pg_clog
+	 * if transaction is still marked as running.
 	 */
 	if (!TransactionIdDidCommit(xid) && !TransactionIdDidAbort(xid))
 		TransactionIdAbort(xid);

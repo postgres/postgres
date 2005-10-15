@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.117 2005/07/04 04:51:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.118 2005/10/15 02:49:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,9 +114,9 @@ mdinit(void)
 								  ALLOCSET_DEFAULT_MAXSIZE);
 
 	/*
-	 * Create pending-operations hashtable if we need it.  Currently, we
-	 * need it if we are standalone (not under a postmaster) OR if we are
-	 * a bootstrap-mode subprocess of a postmaster (that is, a startup or
+	 * Create pending-operations hashtable if we need it.  Currently, we need
+	 * it if we are standalone (not under a postmaster) OR if we are a
+	 * bootstrap-mode subprocess of a postmaster (that is, a startup or
 	 * bgwriter process).
 	 */
 	if (!IsUnderPostmaster || IsBootstrapProcessingMode())
@@ -131,7 +131,7 @@ mdinit(void)
 		pendingOpsTable = hash_create("Pending Ops Table",
 									  100L,
 									  &hash_ctl,
-							   HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
+								   HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
 	}
 
 	return true;
@@ -162,11 +162,10 @@ mdcreate(SMgrRelation reln, bool isRedo)
 		int			save_errno = errno;
 
 		/*
-		 * During bootstrap, there are cases where a system relation will
-		 * be accessed (by internal backend processes) before the
-		 * bootstrap script nominally creates it.  Therefore, allow the
-		 * file to exist already, even if isRedo is not set.  (See also
-		 * mdopen)
+		 * During bootstrap, there are cases where a system relation will be
+		 * accessed (by internal backend processes) before the bootstrap
+		 * script nominally creates it.  Therefore, allow the file to exist
+		 * already, even if isRedo is not set.	(See also mdopen)
 		 */
 		if (isRedo || IsBootstrapProcessingMode())
 			fd = PathNameOpenFile(path, O_RDWR | PG_BINARY, 0600);
@@ -283,13 +282,13 @@ mdextend(SMgrRelation reln, BlockNumber blocknum, char *buffer, bool isTemp)
 #endif
 
 	/*
-	 * Note: because caller obtained blocknum by calling _mdnblocks, which
-	 * did a seek(SEEK_END), this seek is often redundant and will be
-	 * optimized away by fd.c.	It's not redundant, however, if there is a
-	 * partial page at the end of the file.  In that case we want to try
-	 * to overwrite the partial page with a full page.	It's also not
-	 * redundant if bufmgr.c had to dump another buffer of the same file
-	 * to make room for the new page's buffer.
+	 * Note: because caller obtained blocknum by calling _mdnblocks, which did
+	 * a seek(SEEK_END), this seek is often redundant and will be optimized
+	 * away by fd.c.  It's not redundant, however, if there is a partial page
+	 * at the end of the file.	In that case we want to try to overwrite the
+	 * partial page with a full page.  It's also not redundant if bufmgr.c had
+	 * to dump another buffer of the same file to make room for the new page's
+	 * buffer.
 	 */
 	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
 		return false;
@@ -345,11 +344,10 @@ mdopen(SMgrRelation reln, bool allowNotFound)
 	if (fd < 0)
 	{
 		/*
-		 * During bootstrap, there are cases where a system relation will
-		 * be accessed (by internal backend processes) before the
-		 * bootstrap script nominally creates it.  Therefore, accept
-		 * mdopen() as a substitute for mdcreate() in bootstrap mode only.
-		 * (See mdcreate)
+		 * During bootstrap, there are cases where a system relation will be
+		 * accessed (by internal backend processes) before the bootstrap
+		 * script nominally creates it.  Therefore, accept mdopen() as a
+		 * substitute for mdcreate() in bootstrap mode only. (See mdcreate)
 		 */
 		if (IsBootstrapProcessingMode())
 			fd = PathNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY, 0600);
@@ -445,8 +443,8 @@ mdread(SMgrRelation reln, BlockNumber blocknum, char *buffer)
 	if ((nbytes = FileRead(v->mdfd_vfd, buffer, BLCKSZ)) != BLCKSZ)
 	{
 		/*
-		 * If we are at or past EOF, return zeroes without complaining.
-		 * Also substitute zeroes if we found a partial block at EOF.
+		 * If we are at or past EOF, return zeroes without complaining. Also
+		 * substitute zeroes if we found a partial block at EOF.
 		 *
 		 * XXX this is really ugly, bad design.  However the current
 		 * implementation of hash indexes requires it, because hash index
@@ -515,13 +513,12 @@ mdnblocks(SMgrRelation reln)
 	BlockNumber segno = 0;
 
 	/*
-	 * Skip through any segments that aren't the last one, to avoid
-	 * redundant seeks on them.  We have previously verified that these
-	 * segments are exactly RELSEG_SIZE long, and it's useless to recheck
-	 * that each time. (NOTE: this assumption could only be wrong if
-	 * another backend has truncated the relation.	We rely on higher code
-	 * levels to handle that scenario by closing and re-opening the md
-	 * fd.)
+	 * Skip through any segments that aren't the last one, to avoid redundant
+	 * seeks on them.  We have previously verified that these segments are
+	 * exactly RELSEG_SIZE long, and it's useless to recheck that each time.
+	 * (NOTE: this assumption could only be wrong if another backend has
+	 * truncated the relation.	We rely on higher code levels to handle that
+	 * scenario by closing and re-opening the md fd.)
 	 */
 	while (v->mdfd_chain != NULL)
 	{
@@ -545,11 +542,10 @@ mdnblocks(SMgrRelation reln)
 		if (v->mdfd_chain == NULL)
 		{
 			/*
-			 * Because we pass O_CREAT, we will create the next segment
-			 * (with zero length) immediately, if the last segment is of
-			 * length REL_SEGSIZE.	This is unnecessary but harmless, and
-			 * testing for the case would take more cycles than it seems
-			 * worth.
+			 * Because we pass O_CREAT, we will create the next segment (with
+			 * zero length) immediately, if the last segment is of length
+			 * REL_SEGSIZE.  This is unnecessary but harmless, and testing for
+			 * the case would take more cycles than it seems worth.
 			 */
 			v->mdfd_chain = _mdfd_openseg(reln, segno, O_CREAT);
 			if (v->mdfd_chain == NULL)
@@ -601,11 +597,11 @@ mdtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp)
 		if (priorblocks > nblocks)
 		{
 			/*
-			 * This segment is no longer wanted at all (and has already
-			 * been unlinked from the mdfd_chain). We truncate the file
-			 * before deleting it because if other backends are holding
-			 * the file open, the unlink will fail on some platforms.
-			 * Better a zero-size file gets left around than a big file...
+			 * This segment is no longer wanted at all (and has already been
+			 * unlinked from the mdfd_chain). We truncate the file before
+			 * deleting it because if other backends are holding the file
+			 * open, the unlink will fail on some platforms. Better a
+			 * zero-size file gets left around than a big file...
 			 */
 			FileTruncate(v->mdfd_vfd, 0);
 			FileUnlink(v->mdfd_vfd);
@@ -616,12 +612,12 @@ mdtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp)
 		else if (priorblocks + ((BlockNumber) RELSEG_SIZE) > nblocks)
 		{
 			/*
-			 * This is the last segment we want to keep. Truncate the file
-			 * to the right length, and clear chain link that points to
-			 * any remaining segments (which we shall zap). NOTE: if
-			 * nblocks is exactly a multiple K of RELSEG_SIZE, we will
-			 * truncate the K+1st segment to 0 length but keep it. This is
-			 * mainly so that the right thing happens if nblocks==0.
+			 * This is the last segment we want to keep. Truncate the file to
+			 * the right length, and clear chain link that points to any
+			 * remaining segments (which we shall zap). NOTE: if nblocks is
+			 * exactly a multiple K of RELSEG_SIZE, we will truncate the K+1st
+			 * segment to 0 length but keep it. This is mainly so that the
+			 * right thing happens if nblocks==0.
 			 */
 			BlockNumber lastsegblocks = nblocks - priorblocks;
 
@@ -638,8 +634,8 @@ mdtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp)
 		else
 		{
 			/*
-			 * We still need this segment and 0 or more blocks beyond it,
-			 * so nothing to do here.
+			 * We still need this segment and 0 or more blocks beyond it, so
+			 * nothing to do here.
 			 */
 			v = v->mdfd_chain;
 		}
@@ -712,9 +708,9 @@ mdsync(void)
 
 	/*
 	 * If we are in the bgwriter, the sync had better include all fsync
-	 * requests that were queued by backends before the checkpoint REDO
-	 * point was determined.  We go that a little better by accepting all
-	 * requests queued up to the point where we start fsync'ing.
+	 * requests that were queued by backends before the checkpoint REDO point
+	 * was determined.	We go that a little better by accepting all requests
+	 * queued up to the point where we start fsync'ing.
 	 */
 	AbsorbFsyncRequests();
 
@@ -722,9 +718,9 @@ mdsync(void)
 	while ((entry = (PendingOperationEntry *) hash_seq_search(&hstat)) != NULL)
 	{
 		/*
-		 * If fsync is off then we don't have to bother opening the file
-		 * at all.	(We delay checking until this point so that changing
-		 * fsync on the fly behaves sensibly.)
+		 * If fsync is off then we don't have to bother opening the file at
+		 * all.  (We delay checking until this point so that changing fsync on
+		 * the fly behaves sensibly.)
 		 */
 		if (enableFsync)
 		{
@@ -732,28 +728,28 @@ mdsync(void)
 			MdfdVec    *seg;
 
 			/*
-			 * Find or create an smgr hash entry for this relation. This
-			 * may seem a bit unclean -- md calling smgr?  But it's really
-			 * the best solution.  It ensures that the open file reference
-			 * isn't permanently leaked if we get an error here. (You may
-			 * say "but an unreferenced SMgrRelation is still a leak!" Not
-			 * really, because the only case in which a checkpoint is done
-			 * by a process that isn't about to shut down is in the
-			 * bgwriter, and it will periodically do smgrcloseall().  This
-			 * fact justifies our not closing the reln in the success path
-			 * either, which is a good thing since in non-bgwriter cases
-			 * we couldn't safely do that.)  Furthermore, in many cases
-			 * the relation will have been dirtied through this same smgr
-			 * relation, and so we can save a file open/close cycle.
+			 * Find or create an smgr hash entry for this relation. This may
+			 * seem a bit unclean -- md calling smgr?  But it's really the
+			 * best solution.  It ensures that the open file reference isn't
+			 * permanently leaked if we get an error here. (You may say "but
+			 * an unreferenced SMgrRelation is still a leak!" Not really,
+			 * because the only case in which a checkpoint is done by a
+			 * process that isn't about to shut down is in the bgwriter, and
+			 * it will periodically do smgrcloseall().	This fact justifies
+			 * our not closing the reln in the success path either, which is a
+			 * good thing since in non-bgwriter cases we couldn't safely do
+			 * that.)  Furthermore, in many cases the relation will have been
+			 * dirtied through this same smgr relation, and so we can save a
+			 * file open/close cycle.
 			 */
 			reln = smgropen(entry->rnode);
 
 			/*
-			 * It is possible that the relation has been dropped or
-			 * truncated since the fsync request was entered.  Therefore,
-			 * we have to allow file-not-found errors.	This applies both
-			 * during _mdfd_getseg() and during FileSync, since fd.c might
-			 * have closed the file behind our back.
+			 * It is possible that the relation has been dropped or truncated
+			 * since the fsync request was entered.  Therefore, we have to
+			 * allow file-not-found errors.  This applies both during
+			 * _mdfd_getseg() and during FileSync, since fd.c might have
+			 * closed the file behind our back.
 			 */
 			seg = _mdfd_getseg(reln,
 							   entry->segno * ((BlockNumber) RELSEG_SIZE),
@@ -925,26 +921,25 @@ _mdfd_getseg(SMgrRelation reln, BlockNumber blkno, bool allowNotFound)
 		{
 			/*
 			 * We will create the next segment only if the target block is
-			 * within it.  This prevents Sorcerer's Apprentice syndrome if
-			 * a bug at higher levels causes us to be handed a
-			 * ridiculously large blkno --- otherwise we could create many
-			 * thousands of empty segment files before reaching the
-			 * "target" block.	We should never need to create more than
-			 * one new segment per call, so this restriction seems
-			 * reasonable.
+			 * within it.  This prevents Sorcerer's Apprentice syndrome if a
+			 * bug at higher levels causes us to be handed a ridiculously
+			 * large blkno --- otherwise we could create many thousands of
+			 * empty segment files before reaching the "target" block.	We
+			 * should never need to create more than one new segment per call,
+			 * so this restriction seems reasonable.
 			 *
 			 * BUT: when doing WAL recovery, disable this logic and create
-			 * segments unconditionally.  In this case it seems better
-			 * to assume the given blkno is good (it presumably came from
-			 * a CRC-checked WAL record); furthermore this lets us cope
-			 * in the case where we are replaying WAL data that has a write
-			 * into a high-numbered segment of a relation that was later
-			 * deleted.  We want to go ahead and create the segments so
-			 * we can finish out the replay.
+			 * segments unconditionally.  In this case it seems better to
+			 * assume the given blkno is good (it presumably came from a
+			 * CRC-checked WAL record); furthermore this lets us cope in the
+			 * case where we are replaying WAL data that has a write into a
+			 * high-numbered segment of a relation that was later deleted.	We
+			 * want to go ahead and create the segments so we can finish out
+			 * the replay.
 			 */
 			v->mdfd_chain = _mdfd_openseg(reln,
 										  nextsegno,
-								  (segstogo == 1 || InRecovery) ? O_CREAT : 0);
+								(segstogo == 1 || InRecovery) ? O_CREAT : 0);
 			if (v->mdfd_chain == NULL)
 			{
 				if (allowNotFound && errno == ENOENT)

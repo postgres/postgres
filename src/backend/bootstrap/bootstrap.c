@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.206 2005/08/08 03:11:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.207 2005/10/15 02:49:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -379,9 +379,8 @@ BootstrapMain(int argc, char *argv[])
 	BaseInit();
 
 	/*
-	 * We aren't going to do the full InitPostgres pushups, but there
-	 * are a couple of things that need to get lit up even in a dummy
-	 * process.
+	 * We aren't going to do the full InitPostgres pushups, but there are a
+	 * couple of things that need to get lit up even in a dummy process.
 	 */
 	if (IsUnderPostmaster)
 	{
@@ -445,8 +444,8 @@ BootstrapMain(int argc, char *argv[])
 
 	/*
 	 * In NOP mode, all we really want to do is create shared memory and
-	 * semaphores (just to prove we can do it with the current GUC
-	 * settings). So, quit now.
+	 * semaphores (just to prove we can do it with the current GUC settings).
+	 * So, quit now.
 	 */
 	if (xlogop == BS_XLOG_NOP)
 		proc_exit(0);
@@ -465,8 +464,8 @@ BootstrapMain(int argc, char *argv[])
 	/*
 	 * Process bootstrap input.
 	 *
-	 * the sed script boot.sed renamed yyparse to Int_yyparse for the
-	 * bootstrap parser to avoid conflicts with the normal SQL parser
+	 * the sed script boot.sed renamed yyparse to Int_yyparse for the bootstrap
+	 * parser to avoid conflicts with the normal SQL parser
 	 */
 	Int_yyparse();
 
@@ -537,8 +536,7 @@ bootstrap_signals(void)
 		pqsignal(SIGWINCH, SIG_DFL);
 
 		/*
-		 * Unblock signals (they were blocked when the postmaster forked
-		 * us)
+		 * Unblock signals (they were blocked when the postmaster forked us)
 		 */
 		PG_SETMASK(&UnBlockSig);
 	}
@@ -733,12 +731,12 @@ DefineAttr(char *name, char *type, int attnum)
 	attrtypes[attnum]->attislocal = true;
 
 	/*
-	 * Mark as "not null" if type is fixed-width and prior columns are
-	 * too. This corresponds to case where column can be accessed directly
-	 * via C struct declaration.
+	 * Mark as "not null" if type is fixed-width and prior columns are too.
+	 * This corresponds to case where column can be accessed directly via C
+	 * struct declaration.
 	 *
-	 * oidvector and int2vector are also treated as not-nullable, even
-	 * though they are no longer fixed-width.
+	 * oidvector and int2vector are also treated as not-nullable, even though
+	 * they are no longer fixed-width.
 	 */
 #define MARKNOTNULL(att) \
 	((att)->attlen > 0 || \
@@ -1005,8 +1003,7 @@ MapArrayTypeName(char *s)
 {
 	int			i,
 				j;
-	static char newStr[NAMEDATALEN];	/* array type names < NAMEDATALEN
-										 * long */
+	static char newStr[NAMEDATALEN];	/* array type names < NAMEDATALEN long */
 
 	if (s == NULL || s[0] == '\0')
 		return s;
@@ -1095,8 +1092,8 @@ FindStr(char *str, int length, hashnode *mderef)
 	while (node != NULL)
 	{
 		/*
-		 * We must differentiate between string constants that might have
-		 * the same value as a identifier and the identifier itself.
+		 * We must differentiate between string constants that might have the
+		 * same value as a identifier and the identifier itself.
 		 */
 		if (!strcmp(str, strtable[node->strnum]))
 		{
@@ -1131,11 +1128,11 @@ AddStr(char *str, int strlength, int mderef)
 		elog(FATAL, "bootstrap string table overflow");
 
 	/*
-	 * Some of the utilites (eg, define type, create relation) assume that
-	 * the string they're passed is a NAMEDATALEN.  We get array bound
-	 * read violations from purify if we don't allocate at least
-	 * NAMEDATALEN bytes for strings of this sort.	Because we're lazy, we
-	 * allocate at least NAMEDATALEN bytes all the time.
+	 * Some of the utilites (eg, define type, create relation) assume that the
+	 * string they're passed is a NAMEDATALEN.  We get array bound read
+	 * violations from purify if we don't allocate at least NAMEDATALEN bytes
+	 * for strings of this sort.  Because we're lazy, we allocate at least
+	 * NAMEDATALEN bytes all the time.
 	 */
 
 	if ((len = strlength + 1) < NAMEDATALEN)
@@ -1191,8 +1188,8 @@ index_register(Oid heap,
 
 	/*
 	 * XXX mao 10/31/92 -- don't gc index reldescs, associated info at
-	 * bootstrap time.	we'll declare the indices now, but want to create
-	 * them later.
+	 * bootstrap time.	we'll declare the indices now, but want to create them
+	 * later.
 	 */
 
 	if (nogc == NULL)

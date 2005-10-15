@@ -82,7 +82,7 @@ ltree_in(PG_FUNCTION_ARGS)
 							 errmsg("name of level is too long"),
 							 errdetail("name length is %d, must " \
 									   "be < 256, in position %d",
-								 lptr->len, (int) (lptr->start - buf))));
+									 lptr->len, (int) (lptr->start - buf))));
 
 				totallen += MAXALIGN(lptr->len + LEVEL_HDRSIZE);
 				lptr++;
@@ -284,7 +284,7 @@ lquery_in(PG_FUNCTION_ARGS)
 							 errmsg("name of level is too long"),
 							 errdetail("name length is %d, must " \
 									   "be < 256, in position %d",
-								 lptr->len, (int) (lptr->start - buf))));
+									 lptr->len, (int) (lptr->start - buf))));
 
 				state = LQPRS_WAITVAR;
 			}
@@ -300,7 +300,7 @@ lquery_in(PG_FUNCTION_ARGS)
 							 errmsg("name of level is too long"),
 							 errdetail("name length is %d, must " \
 									   "be < 256, in position %d",
-								 lptr->len, (int) (lptr->start - buf))));
+									 lptr->len, (int) (lptr->start - buf))));
 
 				state = LQPRS_WAITLEVEL;
 				curqlevel = NEXTLEV(curqlevel);

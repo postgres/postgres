@@ -6,7 +6,7 @@
  *
  * NOTE: there is massive duplication of code in this module to
  * support both the convention that a null is marked by a bool TRUE,
- * and the convention that a null is marked by a char 'n'.  The latter
+ * and the convention that a null is marked by a char 'n'.	The latter
  * convention is deprecated but it'll probably be a long time before
  * we can get rid of it entirely.
  *
@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.99 2005/03/21 01:23:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.100 2005/10/15 02:49:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -452,8 +452,8 @@ nocachegetattr(HeapTuple tuple,
 			int			j;
 
 			/*
-			 * In for(), we test <= and not < because we want to see if we
-			 * can go past it in initializing offsets.
+			 * In for(), we test <= and not < because we want to see if we can
+			 * go past it in initializing offsets.
 			 */
 			for (j = 0; j <= attnum; j++)
 			{
@@ -467,10 +467,9 @@ nocachegetattr(HeapTuple tuple,
 	}
 
 	/*
-	 * If slow is false, and we got here, we know that we have a tuple
-	 * with no nulls or var-widths before the target attribute. If
-	 * possible, we also want to initialize the remainder of the attribute
-	 * cached offset values.
+	 * If slow is false, and we got here, we know that we have a tuple with no
+	 * nulls or var-widths before the target attribute. If possible, we also
+	 * want to initialize the remainder of the attribute cached offset values.
 	 */
 	if (!slow)
 	{
@@ -513,11 +512,11 @@ nocachegetattr(HeapTuple tuple,
 		/*
 		 * Now we know that we have to walk the tuple CAREFULLY.
 		 *
-		 * Note - This loop is a little tricky.  For each non-null attribute,
-		 * we have to first account for alignment padding before the attr,
-		 * then advance over the attr based on its length.  Nulls have no
-		 * storage and no alignment padding either.  We can use/set attcacheoff
-		 * until we pass either a null or a var-width attribute.
+		 * Note - This loop is a little tricky.  For each non-null attribute, we
+		 * have to first account for alignment padding before the attr, then
+		 * advance over the attr based on its length.  Nulls have no storage
+		 * and no alignment padding either.  We can use/set attcacheoff until
+		 * we pass either a null or a var-width attribute.
 		 */
 
 		for (i = 0; i < attnum; i++)
@@ -597,15 +596,13 @@ heap_getsysattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 			break;
 
 			/*
-			 * If the attribute number is 0, then we are supposed to
-			 * return the entire tuple as a row-type Datum.  (Using zero
-			 * for this purpose is unclean since it risks confusion with
-			 * "invalid attr" result codes, but it's not worth changing
-			 * now.)
+			 * If the attribute number is 0, then we are supposed to return
+			 * the entire tuple as a row-type Datum.  (Using zero for this
+			 * purpose is unclean since it risks confusion with "invalid attr"
+			 * result codes, but it's not worth changing now.)
 			 *
-			 * We have to make a copy of the tuple so we can safely insert
-			 * the Datum overhead fields, which are not set in on-disk
-			 * tuples.
+			 * We have to make a copy of the tuple so we can safely insert the
+			 * Datum overhead fields, which are not set in on-disk tuples.
 			 */
 		case InvalidAttrNumber:
 			{
@@ -708,15 +705,15 @@ heap_form_tuple(TupleDesc tupleDescriptor,
 						numberOfAttributes, MaxTupleAttributeNumber)));
 
 	/*
-	 * Check for nulls and embedded tuples; expand any toasted attributes
-	 * in embedded tuples.	This preserves the invariant that toasting can
-	 * only go one level deep.
+	 * Check for nulls and embedded tuples; expand any toasted attributes in
+	 * embedded tuples.  This preserves the invariant that toasting can only
+	 * go one level deep.
 	 *
 	 * We can skip calling toast_flatten_tuple_attribute() if the attribute
 	 * couldn't possibly be of composite type.  All composite datums are
-	 * varlena and have alignment 'd'; furthermore they aren't arrays.
-	 * Also, if an attribute is already toasted, it must have been sent to
-	 * disk already and so cannot contain toasted attributes.
+	 * varlena and have alignment 'd'; furthermore they aren't arrays. Also,
+	 * if an attribute is already toasted, it must have been sent to disk
+	 * already and so cannot contain toasted attributes.
 	 */
 	for (i = 0; i < numberOfAttributes; i++)
 	{
@@ -757,8 +754,8 @@ heap_form_tuple(TupleDesc tupleDescriptor,
 	tuple->t_data = td = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);
 
 	/*
-	 * And fill in the information.  Note we fill the Datum fields even
-	 * though this tuple may never become a Datum.
+	 * And fill in the information.  Note we fill the Datum fields even though
+	 * this tuple may never become a Datum.
 	 */
 	tuple->t_len = len;
 	ItemPointerSetInvalid(&(tuple->t_self));
@@ -816,15 +813,15 @@ heap_formtuple(TupleDesc tupleDescriptor,
 						numberOfAttributes, MaxTupleAttributeNumber)));
 
 	/*
-	 * Check for nulls and embedded tuples; expand any toasted attributes
-	 * in embedded tuples.	This preserves the invariant that toasting can
-	 * only go one level deep.
+	 * Check for nulls and embedded tuples; expand any toasted attributes in
+	 * embedded tuples.  This preserves the invariant that toasting can only
+	 * go one level deep.
 	 *
 	 * We can skip calling toast_flatten_tuple_attribute() if the attribute
 	 * couldn't possibly be of composite type.  All composite datums are
-	 * varlena and have alignment 'd'; furthermore they aren't arrays.
-	 * Also, if an attribute is already toasted, it must have been sent to
-	 * disk already and so cannot contain toasted attributes.
+	 * varlena and have alignment 'd'; furthermore they aren't arrays. Also,
+	 * if an attribute is already toasted, it must have been sent to disk
+	 * already and so cannot contain toasted attributes.
 	 */
 	for (i = 0; i < numberOfAttributes; i++)
 	{
@@ -865,8 +862,8 @@ heap_formtuple(TupleDesc tupleDescriptor,
 	tuple->t_data = td = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);
 
 	/*
-	 * And fill in the information.  Note we fill the Datum fields even
-	 * though this tuple may never become a Datum.
+	 * And fill in the information.  Note we fill the Datum fields even though
+	 * this tuple may never become a Datum.
 	 */
 	tuple->t_len = len;
 	ItemPointerSetInvalid(&(tuple->t_self));
@@ -917,15 +914,15 @@ heap_modify_tuple(HeapTuple tuple,
 	HeapTuple	newTuple;
 
 	/*
-	 * allocate and fill values and isnull arrays from either the tuple or
-	 * the repl information, as appropriate.
+	 * allocate and fill values and isnull arrays from either the tuple or the
+	 * repl information, as appropriate.
 	 *
 	 * NOTE: it's debatable whether to use heap_deform_tuple() here or just
-	 * heap_getattr() only the non-replaced colums.  The latter could win
-	 * if there are many replaced columns and few non-replaced ones.
-	 * However, heap_deform_tuple costs only O(N) while the heap_getattr
-	 * way would cost O(N^2) if there are many non-replaced columns, so it
-	 * seems better to err on the side of linear cost.
+	 * heap_getattr() only the non-replaced colums.  The latter could win if
+	 * there are many replaced columns and few non-replaced ones. However,
+	 * heap_deform_tuple costs only O(N) while the heap_getattr way would cost
+	 * O(N^2) if there are many non-replaced columns, so it seems better to
+	 * err on the side of linear cost.
 	 */
 	values = (Datum *) palloc(numberOfAttributes * sizeof(Datum));
 	isnull = (bool *) palloc(numberOfAttributes * sizeof(bool));
@@ -950,8 +947,8 @@ heap_modify_tuple(HeapTuple tuple,
 	pfree(isnull);
 
 	/*
-	 * copy the identification info of the old tuple: t_ctid, t_self, and
-	 * OID (if any)
+	 * copy the identification info of the old tuple: t_ctid, t_self, and OID
+	 * (if any)
 	 */
 	newTuple->t_data->t_ctid = tuple->t_data->t_ctid;
 	newTuple->t_self = tuple->t_self;
@@ -986,15 +983,15 @@ heap_modifytuple(HeapTuple tuple,
 	HeapTuple	newTuple;
 
 	/*
-	 * allocate and fill values and nulls arrays from either the tuple or
-	 * the repl information, as appropriate.
+	 * allocate and fill values and nulls arrays from either the tuple or the
+	 * repl information, as appropriate.
 	 *
 	 * NOTE: it's debatable whether to use heap_deformtuple() here or just
-	 * heap_getattr() only the non-replaced colums.  The latter could win
-	 * if there are many replaced columns and few non-replaced ones.
-	 * However, heap_deformtuple costs only O(N) while the heap_getattr
-	 * way would cost O(N^2) if there are many non-replaced columns, so it
-	 * seems better to err on the side of linear cost.
+	 * heap_getattr() only the non-replaced colums.  The latter could win if
+	 * there are many replaced columns and few non-replaced ones. However,
+	 * heap_deformtuple costs only O(N) while the heap_getattr way would cost
+	 * O(N^2) if there are many non-replaced columns, so it seems better to
+	 * err on the side of linear cost.
 	 */
 	values = (Datum *) palloc(numberOfAttributes * sizeof(Datum));
 	nulls = (char *) palloc(numberOfAttributes * sizeof(char));
@@ -1022,8 +1019,8 @@ heap_modifytuple(HeapTuple tuple,
 	pfree(nulls);
 
 	/*
-	 * copy the identification info of the old tuple: t_ctid, t_self, and
-	 * OID (if any)
+	 * copy the identification info of the old tuple: t_ctid, t_self, and OID
+	 * (if any)
 	 */
 	newTuple->t_data->t_ctid = tuple->t_data->t_ctid;
 	newTuple->t_self = tuple->t_self;
@@ -1068,9 +1065,9 @@ heap_deform_tuple(HeapTuple tuple, TupleDesc tupleDesc,
 	natts = tup->t_natts;
 
 	/*
-	 * In inheritance situations, it is possible that the given tuple
-	 * actually has more fields than the caller is expecting.  Don't run
-	 * off the end of the caller's arrays.
+	 * In inheritance situations, it is possible that the given tuple actually
+	 * has more fields than the caller is expecting.  Don't run off the end of
+	 * the caller's arrays.
 	 */
 	natts = Min(natts, tdesc_natts);
 
@@ -1161,9 +1158,9 @@ heap_deformtuple(HeapTuple tuple,
 	natts = tup->t_natts;
 
 	/*
-	 * In inheritance situations, it is possible that the given tuple
-	 * actually has more fields than the caller is expecting.  Don't run
-	 * off the end of the caller's arrays.
+	 * In inheritance situations, it is possible that the given tuple actually
+	 * has more fields than the caller is expecting.  Don't run off the end of
+	 * the caller's arrays.
 	 */
 	natts = Min(natts, tdesc_natts);
 
@@ -1228,22 +1225,22 @@ heap_deformtuple(HeapTuple tuple,
 static void
 slot_deform_tuple(TupleTableSlot *slot, int natts)
 {
-	HeapTuple		tuple = slot->tts_tuple;
-	TupleDesc		tupleDesc = slot->tts_tupleDescriptor;
+	HeapTuple	tuple = slot->tts_tuple;
+	TupleDesc	tupleDesc = slot->tts_tupleDescriptor;
 	Datum	   *values = slot->tts_values;
 	bool	   *isnull = slot->tts_isnull;
-	HeapTupleHeader	tup = tuple->t_data;
+	HeapTupleHeader tup = tuple->t_data;
 	bool		hasnulls = HeapTupleHasNulls(tuple);
 	Form_pg_attribute *att = tupleDesc->attrs;
 	int			attnum;
-	char	   *tp;					/* ptr to tuple data */
-	long		off;				/* offset in tuple data */
-	bits8	   *bp = tup->t_bits;	/* ptr to null bitmap in tuple */
-	bool		slow;				/* can we use/set attcacheoff? */
+	char	   *tp;				/* ptr to tuple data */
+	long		off;			/* offset in tuple data */
+	bits8	   *bp = tup->t_bits;		/* ptr to null bitmap in tuple */
+	bool		slow;			/* can we use/set attcacheoff? */
 
 	/*
-	 * Check whether the first call for this tuple, and initialize or
-	 * restore loop state.
+	 * Check whether the first call for this tuple, and initialize or restore
+	 * loop state.
 	 */
 	attnum = slot->tts_nvalid;
 	if (attnum == 0)
@@ -1269,7 +1266,7 @@ slot_deform_tuple(TupleTableSlot *slot, int natts)
 		{
 			values[attnum] = (Datum) 0;
 			isnull[attnum] = true;
-			slow = true;        /* can't use attcacheoff anymore */
+			slow = true;		/* can't use attcacheoff anymore */
 			continue;
 		}
 
@@ -1290,7 +1287,7 @@ slot_deform_tuple(TupleTableSlot *slot, int natts)
 		off = att_addlength(off, thisatt->attlen, tp + off);
 
 		if (thisatt->attlen <= 0)
-			slow = true;        /* can't use attcacheoff anymore */
+			slow = true;		/* can't use attcacheoff anymore */
 	}
 
 	/*
@@ -1316,9 +1313,9 @@ slot_deform_tuple(TupleTableSlot *slot, int natts)
 Datum
 slot_getattr(TupleTableSlot *slot, int attnum, bool *isnull)
 {
-	HeapTuple		tuple = slot->tts_tuple;
-	TupleDesc		tupleDesc = slot->tts_tupleDescriptor;
-	HeapTupleHeader	tup;
+	HeapTuple	tuple = slot->tts_tuple;
+	TupleDesc	tupleDesc = slot->tts_tupleDescriptor;
+	HeapTupleHeader tup;
 
 	/*
 	 * system attributes are handled by heap_getsysattr
@@ -1349,18 +1346,18 @@ slot_getattr(TupleTableSlot *slot, int attnum, bool *isnull)
 	}
 
 	/*
-	 * otherwise we had better have a physical tuple (tts_nvalid should
-	 * equal natts in all virtual-tuple cases)
+	 * otherwise we had better have a physical tuple (tts_nvalid should equal
+	 * natts in all virtual-tuple cases)
 	 */
-	if (tuple == NULL)		/* internal error */
+	if (tuple == NULL)			/* internal error */
 		elog(ERROR, "cannot extract attribute from empty tuple slot");
 
 	/*
 	 * return NULL if attnum is out of range according to the tuple
 	 *
-	 * (We have to check this separately because of various inheritance
-	 * and table-alteration scenarios: the tuple could be either longer
-	 * or shorter than the tupdesc.)
+	 * (We have to check this separately because of various inheritance and
+	 * table-alteration scenarios: the tuple could be either longer or shorter
+	 * than the tupdesc.)
 	 */
 	tup = tuple->t_data;
 	if (attnum > tup->t_natts)
@@ -1379,10 +1376,9 @@ slot_getattr(TupleTableSlot *slot, int attnum, bool *isnull)
 	}
 
 	/*
-	 * If the attribute's column has been dropped, we force a NULL
-	 * result. This case should not happen in normal use, but it could
-	 * happen if we are executing a plan cached before the column was
-	 * dropped.
+	 * If the attribute's column has been dropped, we force a NULL result.
+	 * This case should not happen in normal use, but it could happen if we
+	 * are executing a plan cached before the column was dropped.
 	 */
 	if (tupleDesc->attrs[attnum - 1]->attisdropped)
 	{
@@ -1420,11 +1416,11 @@ slot_getallattrs(TupleTableSlot *slot)
 		return;
 
 	/*
-	 * otherwise we had better have a physical tuple (tts_nvalid should
-	 * equal natts in all virtual-tuple cases)
+	 * otherwise we had better have a physical tuple (tts_nvalid should equal
+	 * natts in all virtual-tuple cases)
 	 */
 	tuple = slot->tts_tuple;
-	if (tuple == NULL)		/* internal error */
+	if (tuple == NULL)			/* internal error */
 		elog(ERROR, "cannot extract attribute from empty tuple slot");
 
 	/*
@@ -1467,11 +1463,11 @@ slot_getsomeattrs(TupleTableSlot *slot, int attnum)
 		elog(ERROR, "invalid attribute number %d", attnum);
 
 	/*
-	 * otherwise we had better have a physical tuple (tts_nvalid should
-	 * equal natts in all virtual-tuple cases)
+	 * otherwise we had better have a physical tuple (tts_nvalid should equal
+	 * natts in all virtual-tuple cases)
 	 */
 	tuple = slot->tts_tuple;
-	if (tuple == NULL)		/* internal error */
+	if (tuple == NULL)			/* internal error */
 		elog(ERROR, "cannot extract attribute from empty tuple slot");
 
 	/*
@@ -1502,8 +1498,8 @@ slot_getsomeattrs(TupleTableSlot *slot, int attnum)
 bool
 slot_attisnull(TupleTableSlot *slot, int attnum)
 {
-	HeapTuple		tuple = slot->tts_tuple;
-	TupleDesc		tupleDesc = slot->tts_tupleDescriptor;
+	HeapTuple	tuple = slot->tts_tuple;
+	TupleDesc	tupleDesc = slot->tts_tupleDescriptor;
 
 	/*
 	 * system attributes are handled by heap_attisnull
@@ -1528,10 +1524,10 @@ slot_attisnull(TupleTableSlot *slot, int attnum)
 		return true;
 
 	/*
-	 * otherwise we had better have a physical tuple (tts_nvalid should
-	 * equal natts in all virtual-tuple cases)
+	 * otherwise we had better have a physical tuple (tts_nvalid should equal
+	 * natts in all virtual-tuple cases)
 	 */
-	if (tuple == NULL)		/* internal error */
+	if (tuple == NULL)			/* internal error */
 		elog(ERROR, "cannot extract attribute from empty tuple slot");
 
 	/* and let the tuple tell it */

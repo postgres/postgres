@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/define.c,v 1.92 2004/12/31 21:59:41 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/define.c,v 1.93 2005/10/15 02:49:15 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -157,11 +157,11 @@ defGetInt64(DefElem *def)
 
 			/*
 			 * Values too large for int4 will be represented as Float
-			 * constants by the lexer.	Accept these if they are valid
-			 * int8 strings.
+			 * constants by the lexer.	Accept these if they are valid int8
+			 * strings.
 			 */
 			return DatumGetInt64(DirectFunctionCall1(int8in,
-									 CStringGetDatum(strVal(def->arg))));
+										 CStringGetDatum(strVal(def->arg))));
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),

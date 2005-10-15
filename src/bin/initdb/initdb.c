@@ -18,7 +18,7 @@
  * to produce a new database.
  *
  * For largely-historical reasons, the template1 database is the one built
- * by the basic bootstrap process.  After it is complete, template0 and
+ * by the basic bootstrap process.	After it is complete, template0 and
  * the default database, postgres, are made just by copying template1.
  *
  * To create template1, we run the postgres (backend) program in bootstrap
@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.98 2005/08/28 22:21:46 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.99 2005/10/15 02:49:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,50 +74,50 @@ int			optreset;
 /*
  * these values are passed in by makefile defines
  */
-static char	   *share_path = NULL;
+static char *share_path = NULL;
 
 /* values to be obtained from arguments */
-static char	   *pg_data = "";
-static char	   *encoding = "";
-static char	   *locale = "";
-static char	   *lc_collate = "";
-static char	   *lc_ctype = "";
-static char	   *lc_monetary = "";
-static char	   *lc_numeric = "";
-static char	   *lc_time = "";
-static char	   *lc_messages = "";
-static char	   *username = "";
-static bool		pwprompt = false;
-static char	   *pwfilename = NULL;
-static char	   *authmethod = "";
-static bool		debug = false;
-static bool		noclean = false;
-static bool		show_setting = false;
+static char *pg_data = "";
+static char *encoding = "";
+static char *locale = "";
+static char *lc_collate = "";
+static char *lc_ctype = "";
+static char *lc_monetary = "";
+static char *lc_numeric = "";
+static char *lc_time = "";
+static char *lc_messages = "";
+static char *username = "";
+static bool pwprompt = false;
+static char *pwfilename = NULL;
+static char *authmethod = "";
+static bool debug = false;
+static bool noclean = false;
+static bool show_setting = false;
 
 
 /* internal vars */
 static const char *progname;
-static char	   *encodingid = "0";
-static char	   *bki_file;
-static char	   *desc_file;
-static char	   *hba_file;
-static char	   *ident_file;
-static char	   *conf_file;
-static char	   *conversion_file;
-static char	   *info_schema_file;
-static char	   *features_file;
-static char	   *system_views_file;
-static char	   *effective_user;
-static bool		made_new_pgdata = false;
-static bool		found_existing_pgdata = false;
-static char		infoversion[100];
-static bool		caught_signal = false;
-static bool		output_failed = false;
-static int		output_errno = 0;
+static char *encodingid = "0";
+static char *bki_file;
+static char *desc_file;
+static char *hba_file;
+static char *ident_file;
+static char *conf_file;
+static char *conversion_file;
+static char *info_schema_file;
+static char *features_file;
+static char *system_views_file;
+static char *effective_user;
+static bool made_new_pgdata = false;
+static bool found_existing_pgdata = false;
+static char infoversion[100];
+static bool caught_signal = false;
+static bool output_failed = false;
+static int	output_errno = 0;
 
 /* defaults */
-static int			n_connections = 10;
-static int			n_buffers = 50;
+static int	n_connections = 10;
+static int	n_buffers = 50;
 
 /*
  * Warning messages for authentication methods
@@ -127,7 +127,7 @@ static int			n_buffers = 50;
 "# any local user to connect as any PostgreSQL user, including the database\n" \
 "# superuser. If you do not trust all your local users, use another\n" \
 "# authentication method.\n"
-static char	   *authwarning = NULL;
+static char *authwarning = NULL;
 
 /*
  * Centralized knowledge of switches to pass to backend
@@ -141,13 +141,14 @@ static const char *backend_options = "-F -O -c search_path=pg_catalog -c exit_on
 
 
 /* path to 'initdb' binary directory */
-static char	bin_path[MAXPGPATH];
-static char	backend_exec[MAXPGPATH];
+static char bin_path[MAXPGPATH];
+static char backend_exec[MAXPGPATH];
 
 static void *pg_malloc(size_t size);
 static char *xstrdup(const char *s);
 static char **replace_token(char **lines,
-							const char *token, const char *replacement);
+			  const char *token, const char *replacement);
+
 #ifndef HAVE_UNIX_SOCKETS
 static char **filter_lines_with_token(char **lines, const char *token);
 #endif
@@ -335,7 +336,9 @@ static char **
 filter_lines_with_token(char **lines, const char *token)
 {
 	int			numlines = 1;
-	int			i, src, dst;
+	int			i,
+				src,
+				dst;
 	char	  **result;
 
 	for (i = 0; lines[i]; i++)
@@ -458,7 +461,7 @@ writefile(char *path, char **lines)
 static FILE *
 popen_check(const char *command, const char *mode)
 {
-	FILE   *cmdfd;
+	FILE	   *cmdfd;
 
 	fflush(stdout);
 	fflush(stderr);
@@ -531,14 +534,13 @@ mkdir_p(char *path, mode_t omode)
 		{
 			/*
 			 * POSIX 1003.2: For each dir operand that does not name an
-			 * existing directory, effects equivalent to those caused by
-			 * the following command shall occcur:
+			 * existing directory, effects equivalent to those caused by the
+			 * following command shall occcur:
 			 *
-			 * mkdir -p -m $(umask -S),u+wx $(dirname dir) && mkdir [-m mode]
-			 * dir
+			 * mkdir -p -m $(umask -S),u+wx $(dirname dir) && mkdir [-m mode] dir
 			 *
-			 * We change the user's umask and then restore it, instead of
-			 * doing chmod's.
+			 * We change the user's umask and then restore it, instead of doing
+			 * chmod's.
 			 */
 			oumask = umask(0);
 			numask = oumask & ~(S_IWUSR | S_IXUSR);
@@ -606,7 +608,7 @@ exit_nicely(void)
 	{
 		if (made_new_pgdata || found_existing_pgdata)
 			fprintf(stderr,
-					_("%s: data directory \"%s\" not removed at user's request\n"),
+			  _("%s: data directory \"%s\" not removed at user's request\n"),
 					progname, pg_data);
 	}
 
@@ -640,7 +642,6 @@ get_id(void)
 		exit(1);
 	}
 #endif
-
 #else							/* the windows code */
 
 	struct passwd_win32
@@ -829,7 +830,7 @@ check_encodings_match(int pg_enc, const char *ctype)
 	for (i = 0; encoding_match_list[i].system_enc_name; i++)
 	{
 		if (pg_enc == encoding_match_list[i].pg_enc_code
-		 && pg_strcasecmp(sys, encoding_match_list[i].system_enc_name) == 0)
+		  && pg_strcasecmp(sys, encoding_match_list[i].system_enc_name) == 0)
 		{
 			free(sys);
 			return;
@@ -839,11 +840,11 @@ check_encodings_match(int pg_enc, const char *ctype)
 	fprintf(stderr,
 			_("%s: warning: encoding mismatch\n"), progname);
 	fprintf(stderr,
-			_("The encoding you selected (%s) and the encoding that the selected\n"
-		   "locale uses (%s) are not known to match.  This may lead to\n"
-			  "misbehavior in various character string processing functions.  To fix\n"
-	   "this situation, rerun %s and either do not specify an encoding\n"
-			  "explicitly, or choose a matching combination.\n"),
+	  _("The encoding you selected (%s) and the encoding that the selected\n"
+		"locale uses (%s) are not known to match.  This may lead to\n"
+	"misbehavior in various character string processing functions.  To fix\n"
+		"this situation, rerun %s and either do not specify an encoding\n"
+		"explicitly, or choose a matching combination.\n"),
 			pg_encoding_to_char(pg_enc), sys, progname);
 
 	free(sys);
@@ -944,9 +945,10 @@ check_data_dir(void)
 	}
 
 #ifdef WIN32
+
 	/*
-	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but
-	 * not in released version
+	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but not in
+	 * released version
 	 */
 	if (GetLastError() == ERROR_NO_MORE_FILES)
 		errno = 0;
@@ -969,7 +971,7 @@ mkdatadir(const char *subdir)
 	char	   *path;
 
 	path = pg_malloc(strlen(pg_data) + 2 +
-				   (subdir == NULL ? 0 : strlen(subdir)));
+					 (subdir == NULL ? 0 : strlen(subdir)));
 
 	if (subdir != NULL)
 		sprintf(path, "%s/%s", pg_data, subdir);
@@ -1008,7 +1010,7 @@ check_input(char *path)
 	{
 		fprintf(stderr,
 				_("%s: file \"%s\" does not exist\n"
-		   "This means you have a corrupted installation or identified\n"
+			   "This means you have a corrupted installation or identified\n"
 				  "the wrong directory with the invocation option -L.\n"),
 				progname, path);
 		exit(1);
@@ -1205,28 +1207,30 @@ setup_config(void)
 	conflines = readfile(hba_file);
 
 #ifndef HAVE_UNIX_SOCKETS
-	conflines = filter_lines_with_token(conflines,"@remove-line-for-nolocal@");
+	conflines = filter_lines_with_token(conflines, "@remove-line-for-nolocal@");
 #else
-	conflines = replace_token(conflines,"@remove-line-for-nolocal@","");
+	conflines = replace_token(conflines, "@remove-line-for-nolocal@", "");
 #endif
 
 #ifdef HAVE_IPV6
-	/* 
+
+	/*
 	 * Probe to see if there is really any platform support for IPv6, and
 	 * comment out the relevant pg_hba line if not.  This avoids runtime
 	 * warnings if getaddrinfo doesn't actually cope with IPv6.  Particularly
-	 * useful on Windows, where executables built on a machine with IPv6
-	 * may have to run on a machine without.
+	 * useful on Windows, where executables built on a machine with IPv6 may
+	 * have to run on a machine without.
 	 */
 	{
 		struct addrinfo *gai_result;
 		struct addrinfo hints;
-		int err = 0;
+		int			err = 0;
+
 #ifdef WIN32
 		/* need to call WSAStartup before calling getaddrinfo */
-		WSADATA	wsaData;
+		WSADATA		wsaData;
 
-		err = WSAStartup(MAKEWORD(2,2), &wsaData);
+		err = WSAStartup(MAKEWORD(2, 2), &wsaData);
 #endif
 
 		/* for best results, this code should match parse_hba() */
@@ -1245,12 +1249,12 @@ setup_config(void)
 									  "host    all         all         ::1",
 									  "#host    all         all         ::1");
 	}
-#else /* !HAVE_IPV6 */
+#else							/* !HAVE_IPV6 */
 	/* If we didn't compile IPV6 support at all, always comment it out */
 	conflines = replace_token(conflines,
 							  "host    all         all         ::1",
 							  "#host    all         all         ::1");
-#endif /* HAVE_IPV6 */
+#endif   /* HAVE_IPV6 */
 
 	/* Replace default authentication methods */
 	conflines = replace_token(conflines,
@@ -1259,7 +1263,7 @@ setup_config(void)
 
 	conflines = replace_token(conflines,
 							  "@authcomment@",
-				   strcmp(authmethod, "trust") ? "" : AUTHTRUST_WARNING);
+					   strcmp(authmethod, "trust") ? "" : AUTHTRUST_WARNING);
 
 	snprintf(path, sizeof(path), "%s/pg_hba.conf", pg_data);
 
@@ -1311,9 +1315,9 @@ bootstrap_template1(char *short_version)
 	if (strcmp(headerline, *bki_lines) != 0)
 	{
 		fprintf(stderr,
-			 _("%s: input file \"%s\" does not belong to PostgreSQL %s\n"
-			   "Check your installation or specify the correct path "
-			   "using the option -L.\n"),
+				_("%s: input file \"%s\" does not belong to PostgreSQL %s\n"
+				  "Check your installation or specify the correct path "
+				  "using the option -L.\n"),
 				progname, bki_file, PG_VERSION);
 		exit_nicely();
 	}
@@ -1325,8 +1329,8 @@ bootstrap_template1(char *short_version)
 	/*
 	 * Pass correct LC_xxx environment to bootstrap.
 	 *
-	 * The shell script arranged to restore the LC settings afterwards, but
-	 * there doesn't seem to be any compelling reason to do that.
+	 * The shell script arranged to restore the LC settings afterwards, but there
+	 * doesn't seem to be any compelling reason to do that.
 	 */
 	snprintf(cmd, sizeof(cmd), "LC_COLLATE=%s", lc_collate);
 	putenv(xstrdup(cmd));
@@ -1368,8 +1372,8 @@ setup_auth(void)
 	char	  **line;
 	static char *pg_authid_setup[] = {
 		/*
-		 * Create triggers to ensure manual updates to shared catalogs
-		 * will be reflected into their "flat file" copies.
+		 * Create triggers to ensure manual updates to shared catalogs will be
+		 * reflected into their "flat file" copies.
 		 */
 		"CREATE TRIGGER pg_sync_pg_database "
 		"  AFTER INSERT OR UPDATE OR DELETE ON pg_database "
@@ -1382,8 +1386,8 @@ setup_auth(void)
 		"  FOR EACH STATEMENT EXECUTE PROCEDURE flatfile_update_trigger();\n",
 
 		/*
-		 * The authid table shouldn't be readable except through views,
-		 * to ensure passwords are not publicly visible.
+		 * The authid table shouldn't be readable except through views, to
+		 * ensure passwords are not publicly visible.
 		 */
 		"REVOKE ALL on pg_authid FROM public;\n",
 		NULL
@@ -1440,9 +1444,9 @@ get_set_pwd(void)
 		 * Read password from file
 		 *
 		 * Ideally this should insist that the file not be world-readable.
-		 * However, this option is mainly intended for use on Windows
-		 * where file permissions may not exist at all, so we'll skip the
-		 * paranoia for now.
+		 * However, this option is mainly intended for use on Windows where
+		 * file permissions may not exist at all, so we'll skip the paranoia
+		 * for now.
 		 */
 		FILE	   *pwf = fopen(pwfilename, "r");
 		char		pwdbuf[MAXPGPATH];
@@ -1545,14 +1549,14 @@ setup_depend(void)
 	char	  **line;
 	static char *pg_depend_setup[] = {
 		/*
-		 * Make PIN entries in pg_depend for all objects made so far in
-		 * the tables that the dependency code handles.  This is overkill
-		 * (the system doesn't really depend on having every last weird
-		 * datatype, for instance) but generating only the minimum
-		 * required set of dependencies seems hard.
+		 * Make PIN entries in pg_depend for all objects made so far in the
+		 * tables that the dependency code handles.  This is overkill (the
+		 * system doesn't really depend on having every last weird datatype,
+		 * for instance) but generating only the minimum required set of
+		 * dependencies seems hard.
 		 *
-		 * Note that we deliberately do not pin the system views, which
-		 * haven't been created yet.
+		 * Note that we deliberately do not pin the system views, which haven't
+		 * been created yet.
 		 *
 		 * First delete any already-made entries; PINs override all else, and
 		 * must be the only entries for their objects.
@@ -1728,7 +1732,7 @@ setup_conversion(void)
 /*
  * Set up privileges
  *
- * We mark most system catalogs as world-readable.  We don't currently have
+ * We mark most system catalogs as world-readable.	We don't currently have
  * to touch functions, languages, or databases, because their default
  * permissions are OK.
  *
@@ -1815,8 +1819,7 @@ setup_schema(void)
 	lines = readfile(info_schema_file);
 
 	/*
-	 * We use -N here to avoid backslashing stuff in
-	 * information_schema.sql
+	 * We use -N here to avoid backslashing stuff in information_schema.sql
 	 */
 	snprintf(cmd, sizeof(cmd),
 			 "\"%s\" %s -N template1 >%s",
@@ -1907,8 +1910,8 @@ make_template0(void)
 
 		/*
 		 * Explicitly revoke public create-schema and create-temp-table
-		 * privileges in template1 and template0; else the latter would be
-		 * on by default
+		 * privileges in template1 and template0; else the latter would be on
+		 * by default
 		 */
 		"REVOKE CREATE,TEMPORARY ON DATABASE template1 FROM public;\n",
 		"REVOKE CREATE,TEMPORARY ON DATABASE template0 FROM public;\n",
@@ -2034,9 +2037,10 @@ static char *
 escape_quotes(const char *src)
 {
 	int			len = strlen(src),
-				i, j;
-	char		*result = pg_malloc(len * 2 + 1);
-	
+				i,
+				j;
+	char	   *result = pg_malloc(len * 2 + 1);
+
 	for (i = 0, j = 0; i < len; i++)
 	{
 		if (SQL_STR_DOUBLE(src[i]))
@@ -2102,8 +2106,7 @@ setlocales(void)
 	}
 
 	/*
-	 * override absent/invalid config settings from initdb's locale
-	 * settings
+	 * override absent/invalid config settings from initdb's locale settings
 	 */
 
 	if (strlen(lc_ctype) == 0 || !chklocale(lc_ctype))
@@ -2204,7 +2207,7 @@ main(int argc, char *argv[])
 	char	   *pgdenv;			/* PGDATA value gotten from and sent to
 								 * environment */
 	char		bin_dir[MAXPGPATH];
-	char		*pg_data_native;
+	char	   *pg_data_native;
 	static const char *subdirs[] = {
 		"global",
 		"pg_xlog",
@@ -2337,8 +2340,7 @@ main(int argc, char *argv[])
 
 	if (strcmp(authmethod, "md5") &&
 		strcmp(authmethod, "ident") &&
-		strncmp(authmethod, "ident ", 6) &&		/* ident with space =
-												 * param */
+		strncmp(authmethod, "ident ", 6) &&		/* ident with space = param */
 		strcmp(authmethod, "trust") &&
 #ifdef USE_PAM
 		strcmp(authmethod, "pam") &&
@@ -2391,10 +2393,10 @@ main(int argc, char *argv[])
 	canonicalize_path(pg_data);
 
 	/*
-	 * we have to set PGDATA for postgres rather than pass it on the
-	 * command line to avoid dumb quoting problems on Windows, and we
-	 * would especially need quotes otherwise on Windows because paths
-	 * there are most likely to have embedded spaces.
+	 * we have to set PGDATA for postgres rather than pass it on the command
+	 * line to avoid dumb quoting problems on Windows, and we would especially
+	 * need quotes otherwise on Windows because paths there are most likely to
+	 * have embedded spaces.
 	 */
 	pgdenv = pg_malloc(8 + strlen(pg_data));
 	sprintf(pgdenv, "PGDATA=%s", pg_data);
@@ -2403,7 +2405,7 @@ main(int argc, char *argv[])
 	if ((ret = find_other_exec(argv[0], "postgres", PG_VERSIONSTR,
 							   backend_exec)) < 0)
 	{
-		char full_path[MAXPGPATH];
+		char		full_path[MAXPGPATH];
 
 		if (find_my_exec(argv[0], full_path) < 0)
 			StrNCpy(full_path, progname, MAXPGPATH);
@@ -2557,8 +2559,7 @@ main(int argc, char *argv[])
 	umask(077);
 
 	/*
-	 * now we are starting to do real work, trap signals so we can clean
-	 * up
+	 * now we are starting to do real work, trap signals so we can clean up
 	 */
 
 	/* some of these are not valid on Windows */
@@ -2650,9 +2651,9 @@ main(int argc, char *argv[])
 	/*
 	 * Determine platform-specific config settings
 	 *
-	 * Use reasonable values if kernel will let us, else scale back.  Probe
-	 * for max_connections first since it is subject to more constraints
-	 * than shared_buffers.
+	 * Use reasonable values if kernel will let us, else scale back.  Probe for
+	 * max_connections first since it is subject to more constraints than
+	 * shared_buffers.
 	 */
 
 	set_null_conf();
@@ -2667,8 +2668,7 @@ main(int argc, char *argv[])
 	bootstrap_template1(short_version);
 
 	/*
-	 * Make the per-database PG_VERSION for template1 only after init'ing
-	 * it
+	 * Make the per-database PG_VERSION for template1 only after init'ing it
 	 */
 	set_short_version(short_version, "base/1");
 
@@ -2697,22 +2697,22 @@ main(int argc, char *argv[])
 	make_template0();
 
 	make_postgres();
-    
+
 	if (authwarning != NULL)
 		fprintf(stderr, "%s", authwarning);
 
 	/* Get directory specification used to start this executable */
 	strcpy(bin_dir, argv[0]);
 	get_parent_directory(bin_dir);
-	
+
 	printf(_("\nSuccess. You can now start the database server using:\n\n"
 			 "    %s%s%spostmaster%s -D %s%s%s\n"
 			 "or\n"
 			 "    %s%s%spg_ctl%s -D %s%s%s -l logfile start\n\n"),
-	  QUOTE_PATH, bin_dir, (strlen(bin_dir) > 0) ? DIR_SEP : "", QUOTE_PATH,
-	  QUOTE_PATH, pg_data_native, QUOTE_PATH,
-	  QUOTE_PATH, bin_dir, (strlen(bin_dir) > 0) ? DIR_SEP : "", QUOTE_PATH,
-	  QUOTE_PATH, pg_data_native, QUOTE_PATH);
+	   QUOTE_PATH, bin_dir, (strlen(bin_dir) > 0) ? DIR_SEP : "", QUOTE_PATH,
+		   QUOTE_PATH, pg_data_native, QUOTE_PATH,
+	   QUOTE_PATH, bin_dir, (strlen(bin_dir) > 0) ? DIR_SEP : "", QUOTE_PATH,
+		   QUOTE_PATH, pg_data_native, QUOTE_PATH);
 
 	return 0;
 }

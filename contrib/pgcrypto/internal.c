@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/internal.c,v 1.22 2005/07/18 17:12:54 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/internal.c,v 1.23 2005/10/15 02:49:06 momjian Exp $
  */
 
 #include "postgres.h"
@@ -52,7 +52,7 @@
 /*
  * The chance is x/256 that the reseed happens.
  */
-#define SYSTEM_RESEED_CHANCE		(4)	/* 256/4 * 10min ~ 10h */
+#define SYSTEM_RESEED_CHANCE		(4) /* 256/4 * 10min ~ 10h */
 
 /*
  * If this much time has passed, force reseed.
@@ -88,13 +88,13 @@ struct int_digest
 };
 
 static const struct int_digest
-int_digest_list[] = {
-	{ "md5", init_md5 },
-	{ "sha1", init_sha1 },
-	{ "sha256", init_sha256 },
-	{ "sha384", init_sha384 },
-	{ "sha512", init_sha512 },
-	{ NULL, NULL }
+			int_digest_list[] = {
+	{"md5", init_md5},
+	{"sha1", init_sha1},
+	{"sha256", init_sha256},
+	{"sha384", init_sha384},
+	{"sha512", init_sha512},
+	{NULL, NULL}
 };
 
 /* MD5 */
@@ -210,7 +210,7 @@ int_sha256_block_len(PX_MD * h)
 static void
 int_sha256_update(PX_MD * h, const uint8 *data, unsigned dlen)
 {
-	SHA256_CTX   *ctx = (SHA256_CTX *) h->p.ptr;
+	SHA256_CTX *ctx = (SHA256_CTX *) h->p.ptr;
 
 	SHA256_Update(ctx, data, dlen);
 }
@@ -218,7 +218,7 @@ int_sha256_update(PX_MD * h, const uint8 *data, unsigned dlen)
 static void
 int_sha256_reset(PX_MD * h)
 {
-	SHA256_CTX   *ctx = (SHA256_CTX *) h->p.ptr;
+	SHA256_CTX *ctx = (SHA256_CTX *) h->p.ptr;
 
 	SHA256_Init(ctx);
 }
@@ -226,7 +226,7 @@ int_sha256_reset(PX_MD * h)
 static void
 int_sha256_finish(PX_MD * h, uint8 *dst)
 {
-	SHA256_CTX   *ctx = (SHA256_CTX *) h->p.ptr;
+	SHA256_CTX *ctx = (SHA256_CTX *) h->p.ptr;
 
 	SHA256_Final(dst, ctx);
 }
@@ -234,12 +234,13 @@ int_sha256_finish(PX_MD * h, uint8 *dst)
 static void
 int_sha256_free(PX_MD * h)
 {
-	SHA256_CTX   *ctx = (SHA256_CTX *) h->p.ptr;
+	SHA256_CTX *ctx = (SHA256_CTX *) h->p.ptr;
 
 	memset(ctx, 0, sizeof(*ctx));
 	px_free(ctx);
 	px_free(h);
 }
+
 /* SHA384 */
 
 static unsigned
@@ -257,7 +258,7 @@ int_sha384_block_len(PX_MD * h)
 static void
 int_sha384_update(PX_MD * h, const uint8 *data, unsigned dlen)
 {
-	SHA384_CTX   *ctx = (SHA384_CTX *) h->p.ptr;
+	SHA384_CTX *ctx = (SHA384_CTX *) h->p.ptr;
 
 	SHA384_Update(ctx, data, dlen);
 }
@@ -265,7 +266,7 @@ int_sha384_update(PX_MD * h, const uint8 *data, unsigned dlen)
 static void
 int_sha384_reset(PX_MD * h)
 {
-	SHA384_CTX   *ctx = (SHA384_CTX *) h->p.ptr;
+	SHA384_CTX *ctx = (SHA384_CTX *) h->p.ptr;
 
 	SHA384_Init(ctx);
 }
@@ -273,7 +274,7 @@ int_sha384_reset(PX_MD * h)
 static void
 int_sha384_finish(PX_MD * h, uint8 *dst)
 {
-	SHA384_CTX   *ctx = (SHA384_CTX *) h->p.ptr;
+	SHA384_CTX *ctx = (SHA384_CTX *) h->p.ptr;
 
 	SHA384_Final(dst, ctx);
 }
@@ -281,7 +282,7 @@ int_sha384_finish(PX_MD * h, uint8 *dst)
 static void
 int_sha384_free(PX_MD * h)
 {
-	SHA384_CTX   *ctx = (SHA384_CTX *) h->p.ptr;
+	SHA384_CTX *ctx = (SHA384_CTX *) h->p.ptr;
 
 	memset(ctx, 0, sizeof(*ctx));
 	px_free(ctx);
@@ -305,7 +306,7 @@ int_sha512_block_len(PX_MD * h)
 static void
 int_sha512_update(PX_MD * h, const uint8 *data, unsigned dlen)
 {
-	SHA512_CTX   *ctx = (SHA512_CTX *) h->p.ptr;
+	SHA512_CTX *ctx = (SHA512_CTX *) h->p.ptr;
 
 	SHA512_Update(ctx, data, dlen);
 }
@@ -313,7 +314,7 @@ int_sha512_update(PX_MD * h, const uint8 *data, unsigned dlen)
 static void
 int_sha512_reset(PX_MD * h)
 {
-	SHA512_CTX   *ctx = (SHA512_CTX *) h->p.ptr;
+	SHA512_CTX *ctx = (SHA512_CTX *) h->p.ptr;
 
 	SHA512_Init(ctx);
 }
@@ -321,7 +322,7 @@ int_sha512_reset(PX_MD * h)
 static void
 int_sha512_finish(PX_MD * h, uint8 *dst)
 {
-	SHA512_CTX   *ctx = (SHA512_CTX *) h->p.ptr;
+	SHA512_CTX *ctx = (SHA512_CTX *) h->p.ptr;
 
 	SHA512_Final(dst, ctx);
 }
@@ -329,7 +330,7 @@ int_sha512_finish(PX_MD * h, uint8 *dst)
 static void
 int_sha512_free(PX_MD * h)
 {
-	SHA512_CTX   *ctx = (SHA512_CTX *) h->p.ptr;
+	SHA512_CTX *ctx = (SHA512_CTX *) h->p.ptr;
 
 	memset(ctx, 0, sizeof(*ctx));
 	px_free(ctx);
@@ -381,7 +382,7 @@ init_sha1(PX_MD * md)
 static void
 init_sha256(PX_MD * md)
 {
-	SHA256_CTX   *ctx;
+	SHA256_CTX *ctx;
 
 	ctx = px_alloc(sizeof(*ctx));
 	memset(ctx, 0, sizeof(*ctx));
@@ -401,7 +402,7 @@ init_sha256(PX_MD * md)
 static void
 init_sha384(PX_MD * md)
 {
-	SHA384_CTX   *ctx;
+	SHA384_CTX *ctx;
 
 	ctx = px_alloc(sizeof(*ctx));
 	memset(ctx, 0, sizeof(*ctx));
@@ -421,7 +422,7 @@ init_sha384(PX_MD * md)
 static void
 init_sha512(PX_MD * md)
 {
-	SHA512_CTX   *ctx;
+	SHA512_CTX *ctx;
 
 	ctx = px_alloc(sizeof(*ctx));
 	memset(ctx, 0, sizeof(*ctx));
@@ -752,12 +753,12 @@ struct int_cipher
 };
 
 static const struct int_cipher
-int_ciphers[] = {
-	{ "bf-cbc", bf_cbc_load },
-	{ "bf-ecb", bf_ecb_load },
-	{ "aes-128-cbc", rj_128_cbc },
-	{ "aes-128-ecb", rj_128_ecb },
-	{ NULL, NULL }
+			int_ciphers[] = {
+	{"bf-cbc", bf_cbc_load},
+	{"bf-ecb", bf_ecb_load},
+	{"aes-128-cbc", rj_128_cbc},
+	{"aes-128-ecb", rj_128_ecb},
+	{NULL, NULL}
 };
 
 static const PX_Alias int_aliases[] = {
@@ -828,7 +829,7 @@ px_find_cipher(const char *name, PX_Cipher ** res)
 int
 px_get_pseudo_random_bytes(uint8 *dst, unsigned count)
 {
-	int         i;
+	int			i;
 
 	for (i = 0; i < count; i++)
 		*dst++ = random();
@@ -838,12 +839,13 @@ px_get_pseudo_random_bytes(uint8 *dst, unsigned count)
 static time_t seed_time = 0;
 static time_t check_time = 0;
 
-static void system_reseed(void)
+static void
+system_reseed(void)
 {
-	uint8 buf[1024];
-	int n;
-	time_t t;
-	int skip = 1;
+	uint8		buf[1024];
+	int			n;
+	time_t		t;
+	int			skip = 1;
 
 	t = time(NULL);
 
@@ -890,4 +892,3 @@ px_add_entropy(const uint8 *data, unsigned count)
 	fortuna_add_entropy(data, count);
 	return 0;
 }
-

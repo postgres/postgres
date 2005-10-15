@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.60 2005/10/13 15:37:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.61 2005/10/15 02:49:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@
 #endif
 
 static void make_relative_path(char *ret_path, const char *target_path,
-							   const char *bin_path, const char *my_exec_path);
+				   const char *bin_path, const char *my_exec_path);
 static void trim_directory(char *path);
 static void trim_trailing_separator(char *path);
 
@@ -55,7 +55,7 @@ static void trim_trailing_separator(char *path);
 /*
  * skip_drive
  *
- * On Windows, a path may begin with "C:" or "//network/".  Advance over
+ * On Windows, a path may begin with "C:" or "//network/".	Advance over
  * this and point to the effective start of the path.
  */
 #ifdef WIN32
@@ -75,11 +75,9 @@ skip_drive(const char *path)
 	}
 	return (char *) path;
 }
-
 #else
 
 #define skip_drive(path)	(path)
-
 #endif
 
 /*
@@ -177,9 +175,10 @@ join_path_components(char *ret_path,
 {
 	if (ret_path != head)
 		StrNCpy(ret_path, head, MAXPGPATH);
+
 	/*
-	 * Remove any leading "." and ".." in the tail component,
-	 * adjusting head as needed.
+	 * Remove any leading "." and ".." in the tail component, adjusting head
+	 * as needed.
 	 */
 	for (;;)
 	{
@@ -224,16 +223,17 @@ join_path_components(char *ret_path,
 void
 canonicalize_path(char *path)
 {
-	char	   *p, *to_p;
+	char	   *p,
+			   *to_p;
 	char	   *spath;
 	bool		was_sep = false;
 	int			pending_strips;
 
 #ifdef WIN32
+
 	/*
-	 * The Windows command processor will accept suitably quoted paths
-	 * with forward slashes, but barfs badly with mixed forward and back
-	 * slashes.
+	 * The Windows command processor will accept suitably quoted paths with
+	 * forward slashes, but barfs badly with mixed forward and back slashes.
 	 */
 	for (p = path; *p; p++)
 	{
@@ -242,22 +242,22 @@ canonicalize_path(char *path)
 	}
 
 	/*
-	 * In Win32, if you do: prog.exe "a b" "\c\d\" the system will pass
-	 * \c\d" as argv[2], so trim off trailing quote.
+	 * In Win32, if you do: prog.exe "a b" "\c\d\" the system will pass \c\d"
+	 * as argv[2], so trim off trailing quote.
 	 */
 	if (p > path && *(p - 1) == '"')
 		*(p - 1) = '/';
 #endif
 
 	/*
-	 * Removing the trailing slash on a path means we never get ugly
-	 * double trailing slashes.	Also, Win32 can't stat() a directory
-	 * with a trailing slash. Don't remove a leading slash, though.
+	 * Removing the trailing slash on a path means we never get ugly double
+	 * trailing slashes. Also, Win32 can't stat() a directory with a trailing
+	 * slash. Don't remove a leading slash, though.
 	 */
 	trim_trailing_separator(path);
 
 	/*
-	 *	Remove duplicate adjacent separators
+	 * Remove duplicate adjacent separators
 	 */
 	p = path;
 #ifdef WIN32
@@ -280,12 +280,12 @@ canonicalize_path(char *path)
 	/*
 	 * Remove any trailing uses of "." and process ".." ourselves
 	 *
-	 * Note that "/../.." should reduce to just "/", while "../.." has to
-	 * be kept as-is.  In the latter case we put back mistakenly trimmed
-	 * ".." components below.  Also note that we want a Windows drive spec
-	 * to be visible to trim_directory(), but it's not part of the logic
-	 * that's looking at the name components; hence distinction between
-	 * path and spath.
+	 * Note that "/../.." should reduce to just "/", while "../.." has to be kept
+	 * as-is.  In the latter case we put back mistakenly trimmed ".."
+	 * components below.  Also note that we want a Windows drive spec to be
+	 * visible to trim_directory(), but it's not part of the logic that's
+	 * looking at the name components; hence distinction between path and
+	 * spath.
 	 */
 	spath = skip_drive(path);
 	pending_strips = 0;
@@ -324,9 +324,9 @@ canonicalize_path(char *path)
 	if (pending_strips > 0)
 	{
 		/*
-		 * We could only get here if path is now totally empty (other than
-		 * a possible drive specifier on Windows).
-		 * We have to put back one or more ".."'s that we took off.
+		 * We could only get here if path is now totally empty (other than a
+		 * possible drive specifier on Windows). We have to put back one or
+		 * more ".."'s that we took off.
 		 */
 		while (--pending_strips > 0)
 			strcat(path, "../");
@@ -345,15 +345,15 @@ canonicalize_path(char *path)
 bool
 path_contains_parent_reference(const char *path)
 {
-	int		path_len;
+	int			path_len;
 
 	path = skip_drive(path);	/* C: shouldn't affect our conclusion */
 
 	path_len = strlen(path);
 
 	/*
-	 * ".." could be the whole path; otherwise, if it's present it must
-	 * be at the beginning, in the middle, or at the end.
+	 * ".." could be the whole path; otherwise, if it's present it must be at
+	 * the beginning, in the middle, or at the end.
 	 */
 	if (strcmp(path, "..") == 0 ||
 		strncmp(path, "../", 3) == 0 ||
@@ -373,7 +373,7 @@ path_contains_parent_reference(const char *path)
 bool
 path_is_prefix_of_path(const char *path1, const char *path2)
 {
-	int path1_len = strlen(path1);
+	int			path1_len = strlen(path1);
 
 	if (strncmp(path1, path2, path1_len) == 0 &&
 		(IS_DIR_SEP(path2[path1_len]) || path2[path1_len] == '\0'))
@@ -382,7 +382,7 @@ path_is_prefix_of_path(const char *path1, const char *path2)
 }
 
 /*
- * Extracts the actual name of the program as called - 
+ * Extracts the actual name of the program as called -
  * stripped of .exe suffix if any
  */
 const char *
@@ -399,18 +399,18 @@ get_progname(const char *argv0)
 #if defined(__CYGWIN__) || defined(WIN32)
 	/* strip .exe suffix, regardless of case */
 	if (strlen(nodir_name) > sizeof(EXE) - 1 &&
-		pg_strcasecmp(nodir_name + strlen(nodir_name)-(sizeof(EXE)-1), EXE) == 0)
+		pg_strcasecmp(nodir_name + strlen(nodir_name) - (sizeof(EXE) - 1), EXE) == 0)
 	{
-		char *progname;
+		char	   *progname;
 
 		progname = strdup(nodir_name);	/* leaks memory, but called only once */
 		if (progname == NULL)
 		{
 			fprintf(stderr, "%s: out of memory\n", nodir_name);
-			exit(1);	/* This could exit the postmaster */
+			exit(1);			/* This could exit the postmaster */
 		}
 		progname[strlen(progname) - (sizeof(EXE) - 1)] = '\0';
-		nodir_name = progname; 
+		nodir_name = progname;
 	}
 #endif
 
@@ -432,10 +432,10 @@ get_progname(const char *argv0)
  * bin_path, then we build the result as my_exec_path (less the executable
  * name and last directory) joined to the non-matching part of target_path.
  * Otherwise, we return target_path as-is.
- * 
+ *
  * For example:
  *		target_path  = '/usr/local/share/postgresql'
- *		bin_path     = '/usr/local/bin'
+ *		bin_path	 = '/usr/local/bin'
  *		my_exec_path = '/opt/pgsql/bin/postmaster'
  * Given these inputs we would return '/opt/pgsql/share/postgresql'
  */
@@ -575,7 +575,6 @@ get_home_path(char *ret_path)
 		return false;
 	StrNCpy(ret_path, pwd->pw_dir, MAXPGPATH);
 	return true;
-
 #else
 	char		tmppath[MAX_PATH];
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/tqual.h,v 1.58 2005/08/20 00:40:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/tqual.h,v 1.59 2005/10/15 02:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@ typedef struct SnapshotData
 typedef SnapshotData *Snapshot;
 
 /* Special snapshot values: */
-#define InvalidSnapshot				((Snapshot) 0x0) /* same as NULL */
+#define InvalidSnapshot				((Snapshot) 0x0)	/* same as NULL */
 #define SnapshotNow					((Snapshot) 0x1)
 #define SnapshotSelf				((Snapshot) 0x2)
 #define SnapshotAny					((Snapshot) 0x3)
@@ -111,7 +111,7 @@ typedef enum
 	HEAPTUPLE_DEAD,				/* tuple is dead and deletable */
 	HEAPTUPLE_LIVE,				/* tuple is live (committed, no deleter) */
 	HEAPTUPLE_RECENTLY_DEAD,	/* tuple is dead, but not deletable yet */
-	HEAPTUPLE_INSERT_IN_PROGRESS,	/* inserting xact is still in progress */
+	HEAPTUPLE_INSERT_IN_PROGRESS,		/* inserting xact is still in progress */
 	HEAPTUPLE_DELETE_IN_PROGRESS	/* deleting xact is still in progress */
 } HTSV_Result;
 

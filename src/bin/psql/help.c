@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.105 2005/07/18 20:57:53 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.106 2005/10/15 02:49:40 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -138,7 +138,7 @@ usage(void)
 
 	puts(_(
 		   "\nFor more information, type \"\\?\" (for internal commands) or \"\\help\"\n"
-		   "(for SQL commands) from within psql, or consult the psql section in\n"
+	  "(for SQL commands) from within psql, or consult the psql section in\n"
 		   "the PostgreSQL documentation.\n\n"
 		   "Report bugs to <pgsql-bugs@postgresql.org>."));
 }
@@ -168,12 +168,12 @@ slashUsage(unsigned short int pager)
 	/* if you add/remove a line here, change the row count above */
 
 	/*
-	 * if this " is the start of the string then it ought to end there to
-	 * fit in 80 columns >> "
+	 * if this " is the start of the string then it ought to end there to fit
+	 * in 80 columns >> "
 	 */
 	fprintf(output, _("General\n"));
 	fprintf(output, _("  \\c[onnect] [DBNAME|- [USER]]\n"
-		"                 connect to new database (currently \"%s\")\n"),
+			"                 connect to new database (currently \"%s\")\n"),
 			PQdb(pset.db));
 	fprintf(output, _("  \\cd [DIR]      change the current working directory\n"));
 	fprintf(output, _("  \\copyright     show PostgreSQL usage and distribution terms\n"));
@@ -205,13 +205,13 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\i FILE        execute commands from file\n"));
 	fprintf(output, _("  \\o [FILE]      send all query results to file or |pipe\n"));
 	fprintf(output, _("  \\qecho [STRING]\n"
-	"                 write string to query output stream (see \\o)\n"));
+		"                 write string to query output stream (see \\o)\n"));
 	fprintf(output, "\n");
 
 	fprintf(output, _("Informational\n"));
 	fprintf(output, _("  \\d [NAME]      describe table, index, sequence, or view\n"));
 	fprintf(output, _("  \\d{t|i|s|v|S} [PATTERN] (add \"+\" for more detail)\n"
-					  "                 list tables/indexes/sequences/views/system tables\n"));
+	"                 list tables/indexes/sequences/views/system tables\n"));
 	fprintf(output, _("  \\da [PATTERN]  list aggregate functions\n"));
 	fprintf(output, _("  \\db [PATTERN]  list tablespaces (add \"+\" for more detail)\n"));
 	fprintf(output, _("  \\dc [PATTERN]  list conversions\n"));
@@ -239,7 +239,7 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\pset NAME [VALUE]\n"
 					  "                 set table output option\n"
 					  "                 (NAME := {format|border|expanded|fieldsep|footer|null|\n"
-	"                 numericlocale|recordsep|tuples_only|title|tableattr|pager})\n"));
+					  "                 numericlocale|recordsep|tuples_only|title|tableattr|pager})\n"));
 	fprintf(output, _("  \\t             show only rows (currently %s)\n"),
 			ON(pset.popt.topt.tuples_only));
 	fprintf(output, _("  \\T [STRING]    set HTML <table> tag attributes, or unset if none\n"));
@@ -252,7 +252,7 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\lo_export LOBOID FILE\n"
 					  "  \\lo_import FILE [COMMENT]\n"
 					  "  \\lo_list\n"
-				   "  \\lo_unlink LOBOID    large object operations\n"));
+					  "  \\lo_unlink LOBOID    large object operations\n"));
 
 	if (output != stdout)
 	{
@@ -291,7 +291,7 @@ helpSQL(const char *topic, unsigned short int pager)
 					VALUE_OR_NULL(QL_HELP[i + items_per_column].cmd));
 			if (i + 2 * items_per_column < QL_HELP_COUNT)
 				fprintf(output, "%-26s",
-				   VALUE_OR_NULL(QL_HELP[i + 2 * items_per_column].cmd));
+						VALUE_OR_NULL(QL_HELP[i + 2 * items_per_column].cmd));
 			fputc('\n', output);
 		}
 		/* Only close if we used the pager */
@@ -305,78 +305,82 @@ helpSQL(const char *topic, unsigned short int pager)
 	}
 	else
 	{
-			int			i,j,x=0;
+		int			i,
+					j,
+					x = 0;
 		bool		help_found = false;
 		FILE	   *output;
-		size_t		len, wordlen;
+		size_t		len,
+					wordlen;
 		int			nl_count = 0;
 		char	   *ch;
 
 		/* User gets two chances: exact match, then the first word */
-		
+
 		/* First pass : strip trailing spaces and semicolons */
 		len = strlen(topic);
 		while (topic[len - 1] == ' ' || topic[len - 1] == ';')
-				len--;
+			len--;
 
-		for (x=1; x<=3; x++) /* Three chances to guess that word... */
+		for (x = 1; x <= 3; x++)	/* Three chances to guess that word... */
 		{
-				if (x>1) /* Nothing on first pass - try the opening words */
+			if (x > 1)			/* Nothing on first pass - try the opening
+								 * words */
+			{
+				wordlen = j = 1;
+				while (topic[j] != ' ' && j++ < len)
+					wordlen++;
+				if (x == 2)
 				{
-						wordlen=j=1;
-						while (topic[j] != ' ' && j++<len)
-								wordlen++;
-						if (x==2)
-						{
-								j++;
-								while (topic[j] != ' ' && j++<=len)
-										wordlen++;
-						}
-						if (wordlen >= len) /* Don't try again if the same word */
-						{
-								output = PageOutput(nl_count, pager);
-								break;
-						}
-						len = wordlen;
+					j++;
+					while (topic[j] != ' ' && j++ <= len)
+						wordlen++;
 				}
+				if (wordlen >= len)		/* Don't try again if the same word */
+				{
+					output = PageOutput(nl_count, pager);
+					break;
+				}
+				len = wordlen;
+			}
 
-				/* Count newlines for pager */
-				for (i = 0; QL_HELP[i].cmd; i++)
+			/* Count newlines for pager */
+			for (i = 0; QL_HELP[i].cmd; i++)
+			{
+				if (pg_strncasecmp(topic, QL_HELP[i].cmd, len) == 0 ||
+					strcmp(topic, "*") == 0)
 				{
-						if (pg_strncasecmp(topic, QL_HELP[i].cmd, len) == 0 ||
-								strcmp(topic, "*") == 0)
-						{
-								nl_count += 5;
-								for (ch = QL_HELP[i].syntax; *ch != '\0'; ch++)
-										if (*ch == '\n')
-												nl_count++;
-								/* If we have an exact match, exit.  Fixes \h SELECT */
-								if (pg_strcasecmp(topic, QL_HELP[i].cmd) == 0)
-										break;
-						}
-				}
-				
-				output = PageOutput(nl_count, pager);
-				
-				for (i = 0; QL_HELP[i].cmd; i++)
-				{
-						if (pg_strncasecmp(topic, QL_HELP[i].cmd, len) == 0 ||
-								strcmp(topic, "*") == 0)
-						{
-								help_found = true;
-								fprintf(output, _("Command:     %s\n"
-																	"Description: %s\n"
-																	"Syntax:\n%s\n\n"),
-												QL_HELP[i].cmd,
-												_(QL_HELP[i].help),
-												_(QL_HELP[i].syntax));
-								/* If we have an exact match, exit.  Fixes \h SELECT */
-								if (pg_strcasecmp(topic, QL_HELP[i].cmd) == 0)
-										break;
-						}
-				}
-				if (help_found) /* Don't keep trying if we got a match */
+					nl_count += 5;
+					for (ch = QL_HELP[i].syntax; *ch != '\0'; ch++)
+						if (*ch == '\n')
+							nl_count++;
+					/* If we have an exact match, exit.  Fixes \h SELECT */
+					if (pg_strcasecmp(topic, QL_HELP[i].cmd) == 0)
 						break;
+				}
+			}
+
+			output = PageOutput(nl_count, pager);
+
+			for (i = 0; QL_HELP[i].cmd; i++)
+			{
+				if (pg_strncasecmp(topic, QL_HELP[i].cmd, len) == 0 ||
+					strcmp(topic, "*") == 0)
+				{
+					help_found = true;
+					fprintf(output, _("Command:     %s\n"
+									  "Description: %s\n"
+									  "Syntax:\n%s\n\n"),
+							QL_HELP[i].cmd,
+							_(QL_HELP[i].help),
+							_(QL_HELP[i].syntax));
+					/* If we have an exact match, exit.  Fixes \h SELECT */
+					if (pg_strcasecmp(topic, QL_HELP[i].cmd) == 0)
+						break;
+				}
+			}
+			if (help_found)		/* Don't keep trying if we got a match */
+				break;
 		}
 
 		if (!help_found)
@@ -403,8 +407,8 @@ print_copyright(void)
 		 "Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group\n\n"
 		 "This software is based on Postgres95, formerly known as Postgres, which\n"
 		 "contains the following notice:\n\n"
-		 "Portions Copyright(c) 1994, Regents of the University of California\n\n"
-		 "Permission to use, copy, modify, and distribute this software and its\n"
+	"Portions Copyright(c) 1994, Regents of the University of California\n\n"
+	"Permission to use, copy, modify, and distribute this software and its\n"
 		 "documentation for any purpose, without fee, and without a written agreement\n"
 		 "is hereby granted, provided that the above copyright notice and this paragraph\n"
 		 "and the following two paragraphs appear in all copies.\n\n"

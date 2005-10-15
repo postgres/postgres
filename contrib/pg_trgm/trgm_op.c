@@ -300,8 +300,8 @@ similarity_op(PG_FUNCTION_ARGS)
 {
 	float4		res = DatumGetFloat4(DirectFunctionCall2(
 														 similarity,
-													  PG_GETARG_DATUM(0),
-													   PG_GETARG_DATUM(1)
+														 PG_GETARG_DATUM(0),
+														 PG_GETARG_DATUM(1)
 														 ));
 
 	PG_RETURN_BOOL(res >= trgm_limit);

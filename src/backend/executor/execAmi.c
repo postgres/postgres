@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.84 2005/05/15 21:19:54 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.85 2005/10/15 02:49:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -251,10 +251,10 @@ ExecMarkPos(PlanState *node)
  *
  * NOTE: the semantics of this are that the first ExecProcNode following
  * the restore operation will yield the same tuple as the first one following
- * the mark operation.  It is unspecified what happens to the plan node's
+ * the mark operation.	It is unspecified what happens to the plan node's
  * result TupleTableSlot.  (In most cases the result slot is unchanged by
  * a restore, but the node may choose to clear it or to load it with the
- * restored-to tuple.)  Hence the caller should discard any previously
+ * restored-to tuple.)	Hence the caller should discard any previously
  * returned TupleTableSlot after doing a restore.
  */
 void
@@ -398,15 +398,14 @@ ExecMayReturnRawTuples(PlanState *node)
 {
 	/*
 	 * At a table scan node, we check whether ExecAssignScanProjectionInfo
-	 * decided to do projection or not.  Most non-scan nodes always
-	 * project and so we can return "false" immediately.  For nodes that
-	 * don't project but just pass up input tuples, we have to recursively
-	 * examine the input plan node.
+	 * decided to do projection or not.  Most non-scan nodes always project
+	 * and so we can return "false" immediately.  For nodes that don't project
+	 * but just pass up input tuples, we have to recursively examine the input
+	 * plan node.
 	 *
-	 * Note: Hash and Material are listed here because they sometimes return
-	 * an original input tuple, not a copy.  But Sort and SetOp never
-	 * return an original tuple, so they can be treated like projecting
-	 * nodes.
+	 * Note: Hash and Material are listed here because they sometimes return an
+	 * original input tuple, not a copy.  But Sort and SetOp never return an
+	 * original tuple, so they can be treated like projecting nodes.
 	 */
 	switch (nodeTag(node))
 	{

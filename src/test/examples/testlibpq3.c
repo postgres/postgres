@@ -51,9 +51,8 @@ main(int argc, char **argv)
 
 	/*
 	 * If the user supplies a parameter on the command line, use it as the
-	 * conninfo string; otherwise default to setting dbname=postgres and
-	 * using environment variables or defaults for all other connection
-	 * parameters.
+	 * conninfo string; otherwise default to setting dbname=postgres and using
+	 * environment variables or defaults for all other connection parameters.
 	 */
 	if (argc > 1)
 		conninfo = argv[1];
@@ -72,12 +71,11 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 * The point of this program is to illustrate use of PQexecParams()
-	 * with out-of-line parameters, as well as binary transmission of
-	 * results.  By using out-of-line parameters we can avoid a lot of
-	 * tedious mucking about with quoting and escaping.  Notice how we
-	 * don't have to do anything special with the quote mark in the
-	 * parameter value.
+	 * The point of this program is to illustrate use of PQexecParams() with
+	 * out-of-line parameters, as well as binary transmission of results.  By
+	 * using out-of-line parameters we can avoid a lot of tedious mucking
+	 * about with quoting and escaping.  Notice how we don't have to do
+	 * anything special with the quote mark in the parameter value.
 	 */
 
 	/* Here is our out-of-line parameter value */
@@ -118,19 +116,18 @@ main(int argc, char **argv)
 		bptr = PQgetvalue(res, i, b_fnum);
 
 		/*
-		 * The binary representation of INT4 is in network byte order,
-		 * which we'd better coerce to the local byte order.
+		 * The binary representation of INT4 is in network byte order, which
+		 * we'd better coerce to the local byte order.
 		 */
 		ival = ntohl(*((uint32_t *) iptr));
 
 		/*
-		 * The binary representation of TEXT is, well, text, and since
-		 * libpq was nice enough to append a zero byte to it, it'll work
-		 * just fine as a C string.
+		 * The binary representation of TEXT is, well, text, and since libpq
+		 * was nice enough to append a zero byte to it, it'll work just fine
+		 * as a C string.
 		 *
-		 * The binary representation of BYTEA is a bunch of bytes, which
-		 * could include embedded nulls so we have to pay attention to
-		 * field length.
+		 * The binary representation of BYTEA is a bunch of bytes, which could
+		 * include embedded nulls so we have to pay attention to field length.
 		 */
 		blen = PQgetlength(res, i, b_fnum);
 

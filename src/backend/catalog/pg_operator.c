@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_operator.c,v 1.93 2005/07/07 20:39:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_operator.c,v 1.94 2005/10/15 02:49:14 momjian Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -90,10 +90,10 @@ validOperatorName(const char *name)
 
 	/*
 	 * For SQL92 compatibility, '+' and '-' cannot be the last char of a
-	 * multi-char operator unless the operator contains chars that are not
-	 * in SQL92 operators. The idea is to lex '=-' as two operators, but
-	 * not to forbid operator names like '?-' that could not be sequences
-	 * of SQL92 operators.
+	 * multi-char operator unless the operator contains chars that are not in
+	 * SQL92 operators. The idea is to lex '=-' as two operators, but not to
+	 * forbid operator names like '?-' that could not be sequences of SQL92
+	 * operators.
 	 */
 	if (len > 1 &&
 		(name[len - 1] == '+' ||
@@ -228,14 +228,14 @@ OperatorShellMake(const char *operatorName,
 	}
 
 	/*
-	 * initialize values[] with the operator name and input data types.
-	 * Note that oprcode is set to InvalidOid, indicating it's a shell.
+	 * initialize values[] with the operator name and input data types. Note
+	 * that oprcode is set to InvalidOid, indicating it's a shell.
 	 */
 	i = 0;
 	namestrcpy(&oname, operatorName);
 	values[i++] = NameGetDatum(&oname); /* oprname */
 	values[i++] = ObjectIdGetDatum(operatorNamespace);	/* oprnamespace */
-	values[i++] = ObjectIdGetDatum(GetUserId());	/* oprowner */
+	values[i++] = ObjectIdGetDatum(GetUserId());		/* oprowner */
 	values[i++] = CharGetDatum(leftTypeId ? (rightTypeId ? 'b' : 'r') : 'l');	/* oprkind */
 	values[i++] = BoolGetDatum(false);	/* oprcanhash */
 	values[i++] = ObjectIdGetDatum(leftTypeId); /* oprleft */
@@ -410,7 +410,7 @@ OperatorCreate(const char *operatorName,
 	if (!OidIsValid(leftTypeId) && !OidIsValid(rightTypeId))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-		errmsg("at least one of leftarg or rightarg must be specified")));
+		   errmsg("at least one of leftarg or rightarg must be specified")));
 
 	if (!(OidIsValid(leftTypeId) && OidIsValid(rightTypeId)))
 	{
@@ -418,11 +418,11 @@ OperatorCreate(const char *operatorName,
 		if (commutatorName)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				  errmsg("only binary operators can have commutators")));
+					 errmsg("only binary operators can have commutators")));
 		if (joinName)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-			 errmsg("only binary operators can have join selectivity")));
+				 errmsg("only binary operators can have join selectivity")));
 		if (canHash)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
@@ -451,9 +451,9 @@ OperatorCreate(const char *operatorName,
 	 */
 
 	/*
-	 * Look up registered procedures -- find the return type of
-	 * procedureName to place in "result" field. Do this before shells are
-	 * created so we don't have to worry about deleting them later.
+	 * Look up registered procedures -- find the return type of procedureName
+	 * to place in "result" field. Do this before shells are created so we
+	 * don't have to worry about deleting them later.
 	 */
 	if (!OidIsValid(leftTypeId))
 	{
@@ -519,7 +519,7 @@ OperatorCreate(const char *operatorName,
 	namestrcpy(&oname, operatorName);
 	values[i++] = NameGetDatum(&oname); /* oprname */
 	values[i++] = ObjectIdGetDatum(operatorNamespace);	/* oprnamespace */
-	values[i++] = ObjectIdGetDatum(GetUserId());	/* oprowner */
+	values[i++] = ObjectIdGetDatum(GetUserId());		/* oprowner */
 	values[i++] = CharGetDatum(leftTypeId ? (rightTypeId ? 'b' : 'r') : 'l');	/* oprkind */
 	values[i++] = BoolGetDatum(canHash);		/* oprcanhash */
 	values[i++] = ObjectIdGetDatum(leftTypeId); /* oprleft */
@@ -660,14 +660,14 @@ OperatorCreate(const char *operatorName,
 
 	/*
 	 * If a commutator and/or negator link is provided, update the other
-	 * operator(s) to point at this one, if they don't already have a
-	 * link. This supports an alternate style of operator definition
-	 * wherein the user first defines one operator without giving negator
-	 * or commutator, then defines the other operator of the pair with the
-	 * proper commutator or negator attribute.	That style doesn't require
-	 * creation of a shell, and it's the only style that worked right
-	 * before Postgres version 6.5. This code also takes care of the
-	 * situation where the new operator is its own commutator.
+	 * operator(s) to point at this one, if they don't already have a link.
+	 * This supports an alternate style of operator definition wherein the
+	 * user first defines one operator without giving negator or commutator,
+	 * then defines the other operator of the pair with the proper commutator
+	 * or negator attribute.  That style doesn't require creation of a shell,
+	 * and it's the only style that worked right before Postgres version 6.5.
+	 * This code also takes care of the situation where the new operator is
+	 * its own commutator.
 	 */
 	if (selfCommutator)
 		commutatorId = operatorObjectId;
@@ -721,7 +721,7 @@ get_other_operator(List *otherOp, Oid otherLeftTypeId, Oid otherRightTypeId,
 		if (!isCommutator)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("operator cannot be its own negator or sort operator")));
+			 errmsg("operator cannot be its own negator or sort operator")));
 		return InvalidOid;
 	}
 
@@ -780,9 +780,9 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 							 0, 0, 0);
 
 	/*
-	 * if the commutator and negator are the same operator, do one update.
-	 * XXX this is probably useless code --- I doubt it ever makes sense
-	 * for commutator and negator to be the same thing...
+	 * if the commutator and negator are the same operator, do one update. XXX
+	 * this is probably useless code --- I doubt it ever makes sense for
+	 * commutator and negator to be the same thing...
 	 */
 	if (commId == negId)
 	{
@@ -931,10 +931,10 @@ makeOperatorDependencies(HeapTuple tuple)
 	 * NOTE: we do not consider the operator to depend on the associated
 	 * operators oprcom, oprnegate, oprlsortop, oprrsortop, oprltcmpop,
 	 * oprgtcmpop.	We would not want to delete this operator if those go
-	 * away, but only reset the link fields; which is not a function that
-	 * the dependency code can presently handle.  (Something could perhaps
-	 * be done with objectSubId though.)  For now, it's okay to let those
-	 * links dangle if a referenced operator is removed.
+	 * away, but only reset the link fields; which is not a function that the
+	 * dependency code can presently handle.  (Something could perhaps be done
+	 * with objectSubId though.)  For now, it's okay to let those links dangle
+	 * if a referenced operator is removed.
 	 */
 
 	/* Dependency on implementation function */

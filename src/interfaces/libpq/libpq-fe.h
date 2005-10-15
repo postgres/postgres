@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.119 2005/09/24 17:53:28 tgl Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.120 2005/10/15 02:49:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,16 +39,16 @@ typedef enum
 {
 	/*
 	 * Although it is okay to add to this list, values which become unused
-	 * should never be removed, nor should constants be redefined - that
-	 * would break compatibility with existing code.
+	 * should never be removed, nor should constants be redefined - that would
+	 * break compatibility with existing code.
 	 */
 	CONNECTION_OK,
 	CONNECTION_BAD,
 	/* Non-blocking mode only below here */
 
 	/*
-	 * The existence of these should never be relied upon - they should
-	 * only be used for user feedback or similar purposes.
+	 * The existence of these should never be relied upon - they should only
+	 * be used for user feedback or similar purposes.
 	 */
 	CONNECTION_STARTED,			/* Waiting for connection to be made.  */
 	CONNECTION_MADE,			/* Connection OK; waiting to send.	   */
@@ -78,12 +78,12 @@ typedef enum
 								 * anything was executed properly by the
 								 * backend */
 	PGRES_TUPLES_OK,			/* a query command that returns tuples was
-								 * executed properly by the backend,
-								 * PGresult contains the result tuples */
+								 * executed properly by the backend, PGresult
+								 * contains the result tuples */
 	PGRES_COPY_OUT,				/* Copy Out data transfer in progress */
 	PGRES_COPY_IN,				/* Copy In data transfer in progress */
-	PGRES_BAD_RESPONSE,			/* an unexpected response was recv'd from
-								 * the backend */
+	PGRES_BAD_RESPONSE,			/* an unexpected response was recv'd from the
+								 * backend */
 	PGRES_NONFATAL_ERROR,		/* notice or warning message */
 	PGRES_FATAL_ERROR			/* query failed */
 } ExecStatusType;
@@ -146,8 +146,7 @@ typedef char pqbool;
 
 typedef struct _PQprintOpt
 {
-	pqbool		header;			/* print output field headings and row
-								 * count */
+	pqbool		header;			/* print output field headings and row count */
 	pqbool		align;			/* fill align the fields */
 	pqbool		standard;		/* old brain dead format */
 	pqbool		html3;			/* output html tables */
@@ -156,8 +155,8 @@ typedef struct _PQprintOpt
 	char	   *fieldSep;		/* field separator */
 	char	   *tableOpt;		/* insert to HTML <table ...> */
 	char	   *caption;		/* HTML <caption> */
-	char	  **fieldName;		/* null terminated array of replacement
-								 * field names */
+	char	  **fieldName;		/* null terminated array of replacement field
+								 * names */
 } PQprintOpt;
 
 /* ----------------
@@ -175,11 +174,11 @@ typedef struct _PQconninfoOption
 	char	   *compiled;		/* Fallback compiled in default value	*/
 	char	   *val;			/* Option's current value, or NULL		 */
 	char	   *label;			/* Label for field in connect dialog	*/
-	char	   *dispchar;		/* Character to display for this field in
-								 * a connect dialog. Values are: ""
-								 * Display entered value as is "*"
-								 * Password field - hide value "D"	Debug
-								 * option - don't show by default */
+	char	   *dispchar;		/* Character to display for this field in a
+								 * connect dialog. Values are: "" Display
+								 * entered value as is "*" Password field -
+								 * hide value "D"  Debug option - don't show
+								 * by default */
 	int			dispsize;		/* Field size in characters for dialog	*/
 } PQconninfoOption;
 
@@ -321,8 +320,8 @@ extern PGresult *PQexecParams(PGconn *conn,
 			 const int *paramFormats,
 			 int resultFormat);
 extern PGresult *PQprepare(PGconn *conn, const char *stmtName,
-						   const char *query, int nParams,
-						   const Oid *paramTypes);
+		  const char *query, int nParams,
+		  const Oid *paramTypes);
 extern PGresult *PQexecPrepared(PGconn *conn,
 			   const char *stmtName,
 			   int nParams,
@@ -342,8 +341,8 @@ extern int PQsendQueryParams(PGconn *conn,
 				  const int *paramFormats,
 				  int resultFormat);
 extern int PQsendPrepare(PGconn *conn, const char *stmtName,
-						 const char *query, int nParams,
-						 const Oid *paramTypes);
+			  const char *query, int nParams,
+			  const Oid *paramTypes);
 extern int PQsendQueryPrepared(PGconn *conn,
 					const char *stmtName,
 					int nParams,
@@ -467,8 +466,7 @@ PQprintTuples(const PGresult *res,
 			  FILE *fout,		/* output stream */
 			  int printAttName, /* print attribute names */
 			  int terseOutput,	/* delimiter bars */
-			  int width);		/* width of column, if 0, use variable
-								 * width */
+			  int width);		/* width of column, if 0, use variable width */
 
 
 /* === in fe-lobj.c === */

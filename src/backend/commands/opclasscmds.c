@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.37 2005/08/23 01:41:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.38 2005/10/15 02:49:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,16 +117,16 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	ReleaseSysCache(tup);
 
 	/*
-	 * Currently, we require superuser privileges to create an opclass.
-	 * This seems necessary because we have no way to validate that the
-	 * offered set of operators and functions are consistent with the AM's
-	 * expectations.  It would be nice to provide such a check someday, if
-	 * it can be done without solving the halting problem :-(
+	 * Currently, we require superuser privileges to create an opclass. This
+	 * seems necessary because we have no way to validate that the offered set
+	 * of operators and functions are consistent with the AM's expectations.
+	 * It would be nice to provide such a check someday, if it can be done
+	 * without solving the halting problem :-(
 	 */
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			   errmsg("must be superuser to create an operator class")));
+				 errmsg("must be superuser to create an operator class")));
 
 	/* Look up the datatype */
 	typeoid = typenameTypeId(stmt->datatype);
@@ -223,7 +223,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 				if (OidIsValid(storageoid))
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					   errmsg("storage type specified more than once")));
+						   errmsg("storage type specified more than once")));
 				storageoid = typenameTypeId(item->storedtype);
 				break;
 			default:
@@ -244,8 +244,8 @@ DefineOpClass(CreateOpClassStmt *stmt)
 		{
 			/*
 			 * Currently, only GiST allows storagetype different from
-			 * datatype.  This hardcoded test should be eliminated in
-			 * favor of adding another boolean column to pg_am ...
+			 * datatype.  This hardcoded test should be eliminated in favor of
+			 * adding another boolean column to pg_am ...
 			 */
 			if (amoid != GIST_AM_OID)
 				ereport(ERROR,
@@ -258,8 +258,8 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	rel = heap_open(OperatorClassRelationId, RowExclusiveLock);
 
 	/*
-	 * Make sure there is no existing opclass of this name (this is just
-	 * to give a more friendly error message than "duplicate key").
+	 * Make sure there is no existing opclass of this name (this is just to
+	 * give a more friendly error message than "duplicate key").
 	 */
 	if (SearchSysCacheExists(CLAAMNAMENSP,
 							 ObjectIdGetDatum(amoid),
@@ -272,10 +272,9 @@ DefineOpClass(CreateOpClassStmt *stmt)
 						opcname, stmt->amname)));
 
 	/*
-	 * If we are creating a default opclass, check there isn't one
-	 * already.  (Note we do not restrict this test to visible opclasses;
-	 * this ensures that typcache.c can find unique solutions to its
-	 * questions.)
+	 * If we are creating a default opclass, check there isn't one already.
+	 * (Note we do not restrict this test to visible opclasses; this ensures
+	 * that typcache.c can find unique solutions to its questions.)
 	 */
 	if (stmt->isDefault)
 	{
@@ -300,8 +299,8 @@ DefineOpClass(CreateOpClassStmt *stmt)
 						 errmsg("could not make operator class \"%s\" be default for type %s",
 								opcname,
 								TypeNameToString(stmt->datatype)),
-				errdetail("Operator class \"%s\" already is the default.",
-						  NameStr(opclass->opcname))));
+				   errdetail("Operator class \"%s\" already is the default.",
+							 NameStr(opclass->opcname))));
 		}
 
 		systable_endscan(scan);
@@ -321,7 +320,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	namestrcpy(&opcName, opcname);
 	values[i++] = NameGetDatum(&opcName);		/* opcname */
 	values[i++] = ObjectIdGetDatum(namespaceoid);		/* opcnamespace */
-	values[i++] = ObjectIdGetDatum(GetUserId());	/* opcowner */
+	values[i++] = ObjectIdGetDatum(GetUserId());		/* opcowner */
 	values[i++] = ObjectIdGetDatum(typeoid);	/* opcintype */
 	values[i++] = BoolGetDatum(stmt->isDefault);		/* opcdefault */
 	values[i++] = ObjectIdGetDatum(storageoid); /* opckeytype */
@@ -342,8 +341,8 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	storeProcedures(opclassoid, procedures);
 
 	/*
-	 * Create dependencies.  Note: we do not create a dependency link to
-	 * the AM, because we don't currently support DROP ACCESS METHOD.
+	 * Create dependencies.  Note: we do not create a dependency link to the
+	 * AM, because we don't currently support DROP ACCESS METHOD.
 	 */
 	myself.classId = OperatorClassRelationId;
 	myself.objectId = opclassoid;
@@ -424,8 +423,8 @@ assignOperSubtype(Oid amoid, Oid typeoid, Oid operOid)
 	opform = (Form_pg_operator) GETSTRUCT(optup);
 
 	/*
-	 * btree operators must be binary ops returning boolean, and the
-	 * left-side input type must match the operator class' input type.
+	 * btree operators must be binary ops returning boolean, and the left-side
+	 * input type must match the operator class' input type.
 	 */
 	if (opform->oprkind != 'b')
 		ereport(ERROR,
@@ -438,11 +437,11 @@ assignOperSubtype(Oid amoid, Oid typeoid, Oid operOid)
 	if (opform->oprleft != typeoid)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-		  errmsg("btree operators must have index type as left input")));
+			  errmsg("btree operators must have index type as left input")));
 
 	/*
-	 * The subtype is "default" (0) if oprright matches the operator
-	 * class, otherwise it is oprright.
+	 * The subtype is "default" (0) if oprright matches the operator class,
+	 * otherwise it is oprright.
 	 */
 	if (opform->oprright == typeoid)
 		subtype = InvalidOid;
@@ -478,8 +477,8 @@ assignProcSubtype(Oid amoid, Oid typeoid, Oid procOid)
 	procform = (Form_pg_proc) GETSTRUCT(proctup);
 
 	/*
-	 * btree support procs must be 2-arg procs returning int4, and the
-	 * first input type must match the operator class' input type.
+	 * btree support procs must be 2-arg procs returning int4, and the first
+	 * input type must match the operator class' input type.
 	 */
 	if (procform->pronargs != 2)
 		ereport(ERROR,
@@ -492,11 +491,11 @@ assignProcSubtype(Oid amoid, Oid typeoid, Oid procOid)
 	if (procform->proargtypes.values[0] != typeoid)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-		errmsg("btree procedures must have index type as first input")));
+			errmsg("btree procedures must have index type as first input")));
 
 	/*
-	 * The subtype is "default" (0) if second input type matches the
-	 * operator class, otherwise it is the second input type.
+	 * The subtype is "default" (0) if second input type matches the operator
+	 * class, otherwise it is the second input type.
 	 */
 	if (procform->proargtypes.values[1] == typeoid)
 		subtype = InvalidOid;
@@ -525,13 +524,13 @@ addClassMember(List **list, OpClassMember *member, bool isProc)
 			if (isProc)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("procedure number %d appears more than once",
-							member->number)));
+						 errmsg("procedure number %d appears more than once",
+								member->number)));
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					  errmsg("operator number %d appears more than once",
-							 member->number)));
+						 errmsg("operator number %d appears more than once",
+								member->number)));
 		}
 	}
 	*list = lappend(*list, member);
@@ -688,7 +687,7 @@ RemoveOpClass(RemoveOpClassStmt *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("operator class \"%s\" does not exist for access method \"%s\"",
-					NameListToString(stmt->opclassname), stmt->amname)));
+						NameListToString(stmt->opclassname), stmt->amname)));
 
 	opcID = HeapTupleGetOid(tuple);
 
@@ -956,7 +955,7 @@ AlterOpClassOwner(List *name, const char *access_method, Oid newOwnerId)
 		if (!superuser())
 		{
 			/* Otherwise, must be owner of the existing object */
-			if (!pg_opclass_ownercheck(HeapTupleGetOid(tup),GetUserId()))
+			if (!pg_opclass_ownercheck(HeapTupleGetOid(tup), GetUserId()))
 				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPCLASS,
 							   NameListToString(name));
 
@@ -972,8 +971,7 @@ AlterOpClassOwner(List *name, const char *access_method, Oid newOwnerId)
 		}
 
 		/*
-		 * Modify the owner --- okay to scribble on tup because it's a
-		 * copy
+		 * Modify the owner --- okay to scribble on tup because it's a copy
 		 */
 		opcForm->opcowner = newOwnerId;
 

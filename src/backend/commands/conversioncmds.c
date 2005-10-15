@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.22 2005/08/22 17:38:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.23 2005/10/15 02:49:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,8 +74,8 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 						to_encoding_name)));
 
 	/*
-	 * Check the existence of the conversion function. Function name could
-	 * be a qualified name.
+	 * Check the existence of the conversion function. Function name could be
+	 * a qualified name.
 	 */
 	funcoid = LookupFuncName(func_name, sizeof(funcargs) / sizeof(Oid),
 							 funcargs, false);
@@ -87,8 +87,8 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 					   NameListToString(func_name));
 
 	/*
-	 * All seem ok, go ahead (possible failure would be a duplicate
-	 * conversion name)
+	 * All seem ok, go ahead (possible failure would be a duplicate conversion
+	 * name)
 	 */
 	ConversionCreate(conversion_name, namespaceId, GetUserId(),
 					 from_encoding, to_encoding, funcoid, stmt->def);
@@ -148,11 +148,11 @@ RenameConversion(List *name, const char *newname)
 							 0, 0))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
-			  errmsg("conversion \"%s\" already exists in schema \"%s\"",
-					 newname, get_namespace_name(namespaceOid))));
+				 errmsg("conversion \"%s\" already exists in schema \"%s\"",
+						newname, get_namespace_name(namespaceOid))));
 
 	/* must be owner */
-	if (!pg_conversion_ownercheck(conversionOid,GetUserId()))
+	if (!pg_conversion_ownercheck(conversionOid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CONVERSION,
 					   NameListToString(name));
 
@@ -210,7 +210,7 @@ AlterConversionOwner(List *name, Oid newOwnerId)
 		if (!superuser())
 		{
 			/* Otherwise, must be owner of the existing object */
-			if (!pg_conversion_ownercheck(HeapTupleGetOid(tup),GetUserId()))
+			if (!pg_conversion_ownercheck(HeapTupleGetOid(tup), GetUserId()))
 				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CONVERSION,
 							   NameListToString(name));
 
@@ -227,8 +227,7 @@ AlterConversionOwner(List *name, Oid newOwnerId)
 		}
 
 		/*
-		 * Modify the owner --- okay to scribble on tup because it's a
-		 * copy
+		 * Modify the owner --- okay to scribble on tup because it's a copy
 		 */
 		convForm->conowner = newOwnerId;
 

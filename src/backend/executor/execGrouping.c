@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execGrouping.c,v 1.15 2005/05/29 04:23:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execGrouping.c,v 1.16 2005/10/15 02:49:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,11 +66,10 @@ execTuplesMatch(TupleTableSlot *slot1,
 	oldContext = MemoryContextSwitchTo(evalContext);
 
 	/*
-	 * We cannot report a match without checking all the fields, but we
-	 * can report a non-match as soon as we find unequal fields.  So,
-	 * start comparing at the last field (least significant sort key).
-	 * That's the most likely to be different if we are dealing with
-	 * sorted input.
+	 * We cannot report a match without checking all the fields, but we can
+	 * report a non-match as soon as we find unequal fields.  So, start
+	 * comparing at the last field (least significant sort key). That's the
+	 * most likely to be different if we are dealing with sorted input.
 	 */
 	result = true;
 
@@ -137,11 +136,10 @@ execTuplesUnequal(TupleTableSlot *slot1,
 	oldContext = MemoryContextSwitchTo(evalContext);
 
 	/*
-	 * We cannot report a match without checking all the fields, but we
-	 * can report a non-match as soon as we find unequal fields.  So,
-	 * start comparing at the last field (least significant sort key).
-	 * That's the most likely to be different if we are dealing with
-	 * sorted input.
+	 * We cannot report a match without checking all the fields, but we can
+	 * report a non-match as soon as we find unequal fields.  So, start
+	 * comparing at the last field (least significant sort key). That's the
+	 * most likely to be different if we are dealing with sorted input.
 	 */
 	result = false;
 
@@ -288,7 +286,7 @@ BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 	Assert(entrysize >= sizeof(TupleHashEntryData));
 
 	hashtable = (TupleHashTable) MemoryContextAlloc(tablecxt,
-											 sizeof(TupleHashTableData));
+												 sizeof(TupleHashTableData));
 
 	hashtable->numCols = numCols;
 	hashtable->keyColIdx = keyColIdx;
@@ -297,7 +295,7 @@ BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 	hashtable->tablecxt = tablecxt;
 	hashtable->tempcxt = tempcxt;
 	hashtable->entrysize = entrysize;
-	hashtable->tableslot = NULL;		/* will be made on first lookup */
+	hashtable->tableslot = NULL;	/* will be made on first lookup */
 	hashtable->inputslot = NULL;
 
 	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
@@ -308,7 +306,7 @@ BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 	hash_ctl.hcxt = tablecxt;
 	hashtable->hashtab = hash_create("TupleHashTable", (long) nbuckets,
 									 &hash_ctl,
-				HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
+					HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
 
 	return hashtable;
 }
@@ -341,6 +339,7 @@ LookupTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
 		TupleDesc	tupdesc;
 
 		oldContext = MemoryContextSwitchTo(hashtable->tablecxt);
+
 		/*
 		 * We copy the input tuple descriptor just for safety --- we assume
 		 * all input tuples will have equivalent descriptors.
@@ -382,9 +381,9 @@ LookupTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
 			/*
 			 * created new entry
 			 *
-			 * Zero any caller-requested space in the entry.  (This zaps
-			 * the "key data" dynahash.c copied into the new entry, but we
-			 * don't care since we're about to overwrite it anyway.)
+			 * Zero any caller-requested space in the entry.  (This zaps the "key
+			 * data" dynahash.c copied into the new entry, but we don't care
+			 * since we're about to overwrite it anyway.)
 			 */
 			MemSet(entry, 0, hashtable->entrysize);
 
@@ -482,6 +481,7 @@ static int
 TupleHashTableMatch(const void *key1, const void *key2, Size keysize)
 {
 	HeapTuple	tuple1 = ((const TupleHashEntryData *) key1)->firstTuple;
+
 #ifdef USE_ASSERT_CHECKING
 	HeapTuple	tuple2 = ((const TupleHashEntryData *) key2)->firstTuple;
 #endif

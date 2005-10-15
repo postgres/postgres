@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.114 2005/04/06 23:56:07 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.115 2005/10/15 02:49:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,11 +235,11 @@ CheckFloat8Val(double val)
 	if (fabs(val) > FLOAT8_MAX)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("type \"double precision\" value out of range: overflow")));
+		  errmsg("type \"double precision\" value out of range: overflow")));
 	if (val != 0.0 && fabs(val) < FLOAT8_MIN)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("type \"double precision\" value out of range: underflow")));
+		 errmsg("type \"double precision\" value out of range: underflow")));
 }
 
 /*
@@ -258,15 +258,15 @@ float4in(PG_FUNCTION_ARGS)
 	char	   *endptr;
 
 	/*
-	 * endptr points to the first character _after_ the sequence we
-	 * recognized as a valid floating point number. orig_num points to the
-	 * original input string.
+	 * endptr points to the first character _after_ the sequence we recognized
+	 * as a valid floating point number. orig_num points to the original input
+	 * string.
 	 */
 	orig_num = num;
 
 	/*
-	 * Check for an empty-string input to begin with, to avoid the
-	 * vagaries of strtod() on different platforms.
+	 * Check for an empty-string input to begin with, to avoid the vagaries of
+	 * strtod() on different platforms.
 	 */
 	if (*num == '\0')
 		ereport(ERROR,
@@ -285,10 +285,9 @@ float4in(PG_FUNCTION_ARGS)
 	if (endptr == num || errno != 0)
 	{
 		/*
-		 * C99 requires that strtod() accept NaN and [-]Infinity, but not
-		 * all platforms support that yet (and some accept them but set
-		 * ERANGE anyway...)  Therefore, we check for these inputs
-		 * ourselves.
+		 * C99 requires that strtod() accept NaN and [-]Infinity, but not all
+		 * platforms support that yet (and some accept them but set ERANGE
+		 * anyway...)  Therefore, we check for these inputs ourselves.
 		 */
 		if (pg_strncasecmp(num, "NaN", 3) == 0)
 		{
@@ -320,9 +319,9 @@ float4in(PG_FUNCTION_ARGS)
 	else
 	{
 		/*
-		 * Many versions of Solaris have a bug wherein strtod sets endptr
-		 * to point one byte beyond the end of the string when given "inf"
-		 * or "infinity".
+		 * Many versions of Solaris have a bug wherein strtod sets endptr to
+		 * point one byte beyond the end of the string when given "inf" or
+		 * "infinity".
 		 */
 		if (endptr != num && endptr[-1] == '\0')
 			endptr--;
@@ -341,8 +340,8 @@ float4in(PG_FUNCTION_ARGS)
 						orig_num)));
 
 	/*
-	 * if we get here, we have a legal double, still need to check to see
-	 * if it's a legal float4
+	 * if we get here, we have a legal double, still need to check to see if
+	 * it's a legal float4
 	 */
 	if (!isinf(val))
 		CheckFloat4Val(val);
@@ -426,21 +425,21 @@ float8in(PG_FUNCTION_ARGS)
 	char	   *endptr;
 
 	/*
-	 * endptr points to the first character _after_ the sequence we
-	 * recognized as a valid floating point number. orig_num points to the
-	 * original input string.
+	 * endptr points to the first character _after_ the sequence we recognized
+	 * as a valid floating point number. orig_num points to the original input
+	 * string.
 	 */
 	orig_num = num;
 
 	/*
-	 * Check for an empty-string input to begin with, to avoid the
-	 * vagaries of strtod() on different platforms.
+	 * Check for an empty-string input to begin with, to avoid the vagaries of
+	 * strtod() on different platforms.
 	 */
 	if (*num == '\0')
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type double precision: \"%s\"",
-						orig_num)));
+			 errmsg("invalid input syntax for type double precision: \"%s\"",
+					orig_num)));
 
 	/* skip leading whitespace */
 	while (*num != '\0' && isspace((unsigned char) *num))
@@ -453,10 +452,9 @@ float8in(PG_FUNCTION_ARGS)
 	if (endptr == num || errno != 0)
 	{
 		/*
-		 * C99 requires that strtod() accept NaN and [-]Infinity, but not
-		 * all platforms support that yet (and some accept them but set
-		 * ERANGE anyway...)  Therefore, we check for these inputs
-		 * ourselves.
+		 * C99 requires that strtod() accept NaN and [-]Infinity, but not all
+		 * platforms support that yet (and some accept them but set ERANGE
+		 * anyway...)  Therefore, we check for these inputs ourselves.
 		 */
 		if (pg_strncasecmp(num, "NaN", 3) == 0)
 		{
@@ -476,21 +474,21 @@ float8in(PG_FUNCTION_ARGS)
 		else if (errno == ERANGE)
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-			   errmsg("\"%s\" is out of range for type double precision",
-					  orig_num)));
+				   errmsg("\"%s\" is out of range for type double precision",
+						  orig_num)));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for type double precision: \"%s\"",
-							orig_num)));
+			 errmsg("invalid input syntax for type double precision: \"%s\"",
+					orig_num)));
 	}
 #ifdef HAVE_BUGGY_SOLARIS_STRTOD
 	else
 	{
 		/*
-		 * Many versions of Solaris have a bug wherein strtod sets endptr
-		 * to point one byte beyond the end of the string when given "inf"
-		 * or "infinity".
+		 * Many versions of Solaris have a bug wherein strtod sets endptr to
+		 * point one byte beyond the end of the string when given "inf" or
+		 * "infinity".
 		 */
 		if (endptr != num && endptr[-1] == '\0')
 			endptr--;
@@ -505,8 +503,8 @@ float8in(PG_FUNCTION_ARGS)
 	if (*endptr != '\0')
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-		 errmsg("invalid input syntax for type double precision: \"%s\"",
-				orig_num)));
+			 errmsg("invalid input syntax for type double precision: \"%s\"",
+					orig_num)));
 
 	if (!isinf(val))
 		CheckFloat8Val(val);
@@ -860,9 +858,9 @@ static int
 float4_cmp_internal(float4 a, float4 b)
 {
 	/*
-	 * We consider all NANs to be equal and larger than any non-NAN. This
-	 * is somewhat arbitrary; the important thing is to have a consistent
-	 * sort order.
+	 * We consider all NANs to be equal and larger than any non-NAN. This is
+	 * somewhat arbitrary; the important thing is to have a consistent sort
+	 * order.
 	 */
 	if (isnan(a))
 	{
@@ -956,9 +954,9 @@ static int
 float8_cmp_internal(float8 a, float8 b)
 {
 	/*
-	 * We consider all NANs to be equal and larger than any non-NAN. This
-	 * is somewhat arbitrary; the important thing is to have a consistent
-	 * sort order.
+	 * We consider all NANs to be equal and larger than any non-NAN. This is
+	 * somewhat arbitrary; the important thing is to have a consistent sort
+	 * order.
 	 */
 	if (isnan(a))
 	{
@@ -1465,8 +1463,8 @@ dpow(PG_FUNCTION_ARGS)
 	float8		result;
 
 	/*
-	 * The SQL spec requires that we emit a particular SQLSTATE error code
-	 * for certain error conditions.
+	 * The SQL spec requires that we emit a particular SQLSTATE error code for
+	 * certain error conditions.
 	 */
 	if ((arg1 == 0 && arg2 < 0) ||
 		(arg1 < 0 && floor(arg2) != arg2))
@@ -1475,8 +1473,8 @@ dpow(PG_FUNCTION_ARGS)
 				 errmsg("invalid argument for power function")));
 
 	/*
-	 * We must check both for errno getting set and for a NaN result, in
-	 * order to deal with the vagaries of different platforms...
+	 * We must check both for errno getting set and for a NaN result, in order
+	 * to deal with the vagaries of different platforms...
 	 */
 	errno = 0;
 	result = pow(arg1, arg2);
@@ -1504,9 +1502,9 @@ dexp(PG_FUNCTION_ARGS)
 	float8		result;
 
 	/*
-	 * We must check both for errno getting set and for a NaN result, in
-	 * order to deal with the vagaries of different platforms. Also, a
-	 * zero result implies unreported underflow.
+	 * We must check both for errno getting set and for a NaN result, in order
+	 * to deal with the vagaries of different platforms. Also, a zero result
+	 * implies unreported underflow.
 	 */
 	errno = 0;
 	result = exp(arg1);
@@ -1534,8 +1532,8 @@ dlog1(PG_FUNCTION_ARGS)
 	float8		result;
 
 	/*
-	 * Emit particular SQLSTATE error codes for ln(). This is required by
-	 * the SQL standard.
+	 * Emit particular SQLSTATE error codes for ln(). This is required by the
+	 * SQL standard.
 	 */
 	if (arg1 == 0.0)
 		ereport(ERROR,
@@ -1563,9 +1561,9 @@ dlog10(PG_FUNCTION_ARGS)
 	float8		result;
 
 	/*
-	 * Emit particular SQLSTATE error codes for log(). The SQL spec
-	 * doesn't define log(), but it does define ln(), so it makes sense to
-	 * emit the same error code for an analogous error condition.
+	 * Emit particular SQLSTATE error codes for log(). The SQL spec doesn't
+	 * define log(), but it does define ln(), so it makes sense to emit the
+	 * same error code for an analogous error condition.
 	 */
 	if (arg1 == 0.0)
 		ereport(ERROR,
@@ -1914,9 +1912,8 @@ float8_accum(PG_FUNCTION_ARGS)
 
 	/*
 	 * If we're invoked by nodeAgg, we can cheat and modify our first
-	 * parameter in-place to reduce palloc overhead. Otherwise we
-	 * construct a new array with the updated transition data and
-	 * return it.
+	 * parameter in-place to reduce palloc overhead. Otherwise we construct a
+	 * new array with the updated transition data and return it.
 	 */
 	if (fcinfo->context && IsA(fcinfo->context, AggState))
 	{
@@ -1937,7 +1934,7 @@ float8_accum(PG_FUNCTION_ARGS)
 
 		result = construct_array(transdatums, 3,
 								 FLOAT8OID,
-								 sizeof(float8), false /* float8 byval */ , 'd');
+							 sizeof(float8), false /* float8 byval */ , 'd');
 
 		PG_RETURN_ARRAYTYPE_P(result);
 	}
@@ -1968,9 +1965,8 @@ float4_accum(PG_FUNCTION_ARGS)
 
 	/*
 	 * If we're invoked by nodeAgg, we can cheat and modify our first
-	 * parameter in-place to reduce palloc overhead. Otherwise we
-	 * construct a new array with the updated transition data and
-	 * return it.
+	 * parameter in-place to reduce palloc overhead. Otherwise we construct a
+	 * new array with the updated transition data and return it.
 	 */
 	if (fcinfo->context && IsA(fcinfo->context, AggState))
 	{
@@ -1991,7 +1987,7 @@ float4_accum(PG_FUNCTION_ARGS)
 
 		result = construct_array(transdatums, 3,
 								 FLOAT8OID,
-								 sizeof(float8), false /* float8 byval */ , 'd');
+							 sizeof(float8), false /* float8 byval */ , 'd');
 
 		PG_RETURN_ARRAYTYPE_P(result);
 	}

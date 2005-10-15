@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.81 2005/06/17 22:32:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.82 2005/10/15 02:49:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -272,8 +272,8 @@ PortalCreateHoldStore(Portal portal)
 	Assert(portal->holdStore == NULL);
 
 	/*
-	 * Create the memory context that is used for storage of the tuple
-	 * set. Note this is NOT a child of the portal's heap memory.
+	 * Create the memory context that is used for storage of the tuple set.
+	 * Note this is NOT a child of the portal's heap memory.
 	 */
 	portal->holdContext =
 		AllocSetContextCreate(PortalMemory,
@@ -305,10 +305,10 @@ PortalDrop(Portal portal, bool isTopCommit)
 		elog(ERROR, "cannot drop active portal");
 
 	/*
-	 * Remove portal from hash table.  Because we do this first, we will
-	 * not come back to try to remove the portal again if there's any
-	 * error in the subsequent steps.  Better to leak a little memory than
-	 * to get into an infinite error-recovery loop.
+	 * Remove portal from hash table.  Because we do this first, we will not
+	 * come back to try to remove the portal again if there's any error in the
+	 * subsequent steps.  Better to leak a little memory than to get into an
+	 * infinite error-recovery loop.
 	 */
 	PortalHashTableDelete(portal);
 
@@ -317,27 +317,27 @@ PortalDrop(Portal portal, bool isTopCommit)
 		(*portal->cleanup) (portal);
 
 	/*
-	 * Release any resources still attached to the portal.	There are
-	 * several cases being covered here:
+	 * Release any resources still attached to the portal.	There are several
+	 * cases being covered here:
 	 *
-	 * Top transaction commit (indicated by isTopCommit): normally we should
-	 * do nothing here and let the regular end-of-transaction resource
-	 * releasing mechanism handle these resources too.	However, if we
-	 * have a FAILED portal (eg, a cursor that got an error), we'd better
-	 * clean up its resources to avoid resource-leakage warning messages.
+	 * Top transaction commit (indicated by isTopCommit): normally we should do
+	 * nothing here and let the regular end-of-transaction resource releasing
+	 * mechanism handle these resources too.  However, if we have a FAILED
+	 * portal (eg, a cursor that got an error), we'd better clean up its
+	 * resources to avoid resource-leakage warning messages.
 	 *
-	 * Sub transaction commit: never comes here at all, since we don't kill
-	 * any portals in AtSubCommit_Portals().
+	 * Sub transaction commit: never comes here at all, since we don't kill any
+	 * portals in AtSubCommit_Portals().
 	 *
 	 * Main or sub transaction abort: we will do nothing here because
 	 * portal->resowner was already set NULL; the resources were already
 	 * cleaned up in transaction abort.
 	 *
-	 * Ordinary portal drop: must release resources.  However, if the portal
-	 * is not FAILED then we do not release its locks.	The locks become
-	 * the responsibility of the transaction's ResourceOwner (since it is
-	 * the parent of the portal's owner) and will be released when the
-	 * transaction eventually ends.
+	 * Ordinary portal drop: must release resources.  However, if the portal is
+	 * not FAILED then we do not release its locks.  The locks become the
+	 * responsibility of the transaction's ResourceOwner (since it is the
+	 * parent of the portal's owner) and will be released when the transaction
+	 * eventually ends.
 	 */
 	if (portal->resowner &&
 		(!isTopCommit || portal->status == PORTAL_FAILED))
@@ -419,7 +419,7 @@ DropDependentPortals(MemoryContext queryContext)
 bool
 CommitHoldablePortals(void)
 {
-	bool result = false;
+	bool		result = false;
 	HASH_SEQ_STATUS status;
 	PortalHashEnt *hentry;
 
@@ -435,27 +435,26 @@ CommitHoldablePortals(void)
 			portal->status == PORTAL_READY)
 		{
 			/*
-			 * We are exiting the transaction that created a holdable
-			 * cursor.	Instead of dropping the portal, prepare it for
-			 * access by later transactions.
+			 * We are exiting the transaction that created a holdable cursor.
+			 * Instead of dropping the portal, prepare it for access by later
+			 * transactions.
 			 *
-			 * Note that PersistHoldablePortal() must release all resources
-			 * used by the portal that are local to the creating
-			 * transaction.
+			 * Note that PersistHoldablePortal() must release all resources used
+			 * by the portal that are local to the creating transaction.
 			 */
 			PortalCreateHoldStore(portal);
 			PersistHoldablePortal(portal);
 
 			/*
-			 * Any resources belonging to the portal will be released in
-			 * the upcoming transaction-wide cleanup; the portal will no
-			 * longer have its own resources.
+			 * Any resources belonging to the portal will be released in the
+			 * upcoming transaction-wide cleanup; the portal will no longer
+			 * have its own resources.
 			 */
 			portal->resowner = NULL;
 
 			/*
-			 * Having successfully exported the holdable cursor, mark it
-			 * as not belonging to this transaction.
+			 * Having successfully exported the holdable cursor, mark it as
+			 * not belonging to this transaction.
 			 */
 			portal->createSubid = InvalidSubTransactionId;
 
@@ -480,7 +479,7 @@ CommitHoldablePortals(void)
 bool
 PrepareHoldablePortals(void)
 {
-	bool result = false;
+	bool		result = false;
 	HASH_SEQ_STATUS status;
 	PortalHashEnt *hentry;
 
@@ -496,8 +495,8 @@ PrepareHoldablePortals(void)
 			portal->status == PORTAL_READY)
 		{
 			/*
-			 * We are exiting the transaction that created a holdable
-			 * cursor.	Can't do PREPARE.
+			 * We are exiting the transaction that created a holdable cursor.
+			 * Can't do PREPARE.
 			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -527,8 +526,8 @@ AtCommit_Portals(void)
 		Portal		portal = hentry->portal;
 
 		/*
-		 * Do not touch active portals --- this can only happen in the
-		 * case of a multi-transaction utility command, such as VACUUM.
+		 * Do not touch active portals --- this can only happen in the case of
+		 * a multi-transaction utility command, such as VACUUM.
 		 *
 		 * Note however that any resource owner attached to such a portal is
 		 * still going to go away, so don't leave a dangling pointer.
@@ -579,8 +578,7 @@ AtAbort_Portals(void)
 			portal->status = PORTAL_FAILED;
 
 		/*
-		 * Do nothing else to cursors held over from a previous
-		 * transaction.
+		 * Do nothing else to cursors held over from a previous transaction.
 		 */
 		if (portal->createSubid == InvalidSubTransactionId)
 			continue;
@@ -594,8 +592,8 @@ AtAbort_Portals(void)
 
 		/*
 		 * Any resources belonging to the portal will be released in the
-		 * upcoming transaction-wide cleanup; they will be gone before we
-		 * run PortalDrop.
+		 * upcoming transaction-wide cleanup; they will be gone before we run
+		 * PortalDrop.
 		 */
 		portal->resowner = NULL;
 	}
@@ -686,11 +684,10 @@ AtSubAbort_Portals(SubTransactionId mySubid,
 			continue;
 
 		/*
-		 * Force any active portals of my own transaction into FAILED
-		 * state. This is mostly to ensure that a portal running a FETCH
-		 * will go FAILED if the underlying cursor fails.  (Note we do NOT
-		 * want to do this to upper-level portals, since they may be able
-		 * to continue.)
+		 * Force any active portals of my own transaction into FAILED state.
+		 * This is mostly to ensure that a portal running a FETCH will go
+		 * FAILED if the underlying cursor fails.  (Note we do NOT want to do
+		 * this to upper-level portals, since they may be able to continue.)
 		 *
 		 * This is only needed to dodge the sanity check in PortalDrop.
 		 */
@@ -701,11 +698,11 @@ AtSubAbort_Portals(SubTransactionId mySubid,
 		 * If the portal is READY then allow it to survive into the parent
 		 * transaction; otherwise shut it down.
 		 *
-		 * Currently, we can't actually support that because the portal's
-		 * query might refer to objects created or changed in the failed
-		 * subtransaction, leading to crashes if execution is resumed.
-		 * So, even READY portals are deleted.  It would be nice to detect
-		 * whether the query actually depends on any such object, instead.
+		 * Currently, we can't actually support that because the portal's query
+		 * might refer to objects created or changed in the failed
+		 * subtransaction, leading to crashes if execution is resumed. So,
+		 * even READY portals are deleted.	It would be nice to detect whether
+		 * the query actually depends on any such object, instead.
 		 */
 #ifdef NOT_USED
 		if (portal->status == PORTAL_READY)
@@ -725,9 +722,9 @@ AtSubAbort_Portals(SubTransactionId mySubid,
 			}
 
 			/*
-			 * Any resources belonging to the portal will be released in
-			 * the upcoming transaction-wide cleanup; they will be gone
-			 * before we run PortalDrop.
+			 * Any resources belonging to the portal will be released in the
+			 * upcoming transaction-wide cleanup; they will be gone before we
+			 * run PortalDrop.
 			 */
 			portal->resowner = NULL;
 		}

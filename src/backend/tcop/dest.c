@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/dest.c,v 1.65 2005/03/16 21:38:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/dest.c,v 1.66 2005/10/15 02:49:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,9 +173,8 @@ NullCommand(CommandDest dest)
 		case RemoteExecute:
 
 			/*
-			 * tell the fe that we saw an empty query string.  In
-			 * protocols before 3.0 this has a useless empty-string
-			 * message body.
+			 * tell the fe that we saw an empty query string.  In protocols
+			 * before 3.0 this has a useless empty-string message body.
 			 */
 			if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
 				pq_putemptymessage('I');

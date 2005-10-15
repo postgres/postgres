@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeUnique.c,v 1.47 2005/05/06 17:24:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeUnique.c,v 1.48 2005/10/15 02:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,10 +56,10 @@ ExecUnique(UniqueState *node)
 	 * now loop, returning only non-duplicate tuples. We assume that the
 	 * tuples arrive in sorted order so we can detect duplicates easily.
 	 *
-	 * We return the first tuple from each group of duplicates (or the last
-	 * tuple of each group, when moving backwards).  At either end of the
-	 * subplan, clear the result slot so that we correctly return the
-	 * first/last tuple when reversing direction.
+	 * We return the first tuple from each group of duplicates (or the last tuple
+	 * of each group, when moving backwards).  At either end of the subplan,
+	 * clear the result slot so that we correctly return the first/last tuple
+	 * when reversing direction.
 	 */
 	for (;;)
 	{
@@ -81,9 +81,9 @@ ExecUnique(UniqueState *node)
 			break;
 
 		/*
-		 * Else test if the new tuple and the previously returned tuple
-		 * match.  If so then we loop back and fetch another new tuple
-		 * from the subplan.
+		 * Else test if the new tuple and the previously returned tuple match.
+		 * If so then we loop back and fetch another new tuple from the
+		 * subplan.
 		 */
 		if (!execTuplesMatch(slot, resultTupleSlot,
 							 plannode->numCols, plannode->uniqColIdx,
@@ -93,10 +93,10 @@ ExecUnique(UniqueState *node)
 	}
 
 	/*
-	 * We have a new tuple different from the previous saved tuple (if
-	 * any). Save it and return it.  We must copy it because the source
-	 * subplan won't guarantee that this source tuple is still accessible
-	 * after fetching the next source tuple.
+	 * We have a new tuple different from the previous saved tuple (if any).
+	 * Save it and return it.  We must copy it because the source subplan
+	 * won't guarantee that this source tuple is still accessible after
+	 * fetching the next source tuple.
 	 */
 	return ExecCopySlot(resultTupleSlot, slot);
 }
@@ -123,9 +123,9 @@ ExecInitUnique(Unique *node, EState *estate)
 	/*
 	 * Miscellaneous initialization
 	 *
-	 * Unique nodes have no ExprContext initialization because they never
-	 * call ExecQual or ExecProject.  But they do need a per-tuple memory
-	 * context anyway for calling execTuplesMatch.
+	 * Unique nodes have no ExprContext initialization because they never call
+	 * ExecQual or ExecProject.  But they do need a per-tuple memory context
+	 * anyway for calling execTuplesMatch.
 	 */
 	uniquestate->tempContext =
 		AllocSetContextCreate(CurrentMemoryContext,
@@ -147,8 +147,8 @@ ExecInitUnique(Unique *node, EState *estate)
 	outerPlanState(uniquestate) = ExecInitNode(outerPlan(node), estate);
 
 	/*
-	 * unique nodes do no projections, so initialize projection info for
-	 * this node appropriately
+	 * unique nodes do no projections, so initialize projection info for this
+	 * node appropriately
 	 */
 	ExecAssignResultTypeFromOuterPlan(&uniquestate->ps);
 	uniquestate->ps.ps_ProjInfo = NULL;

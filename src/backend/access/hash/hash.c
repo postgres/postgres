@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.80 2005/06/06 17:01:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.81 2005/10/15 02:49:08 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -55,8 +55,8 @@ hashbuild(PG_FUNCTION_ARGS)
 	HashBuildState buildstate;
 
 	/*
-	 * We expect to be called exactly once for any index relation. If
-	 * that's not the case, big trouble's what we have.
+	 * We expect to be called exactly once for any index relation. If that's
+	 * not the case, big trouble's what we have.
 	 */
 	if (RelationGetNumberOfBlocks(index) != 0)
 		elog(ERROR, "index \"%s\" already contains data",
@@ -70,7 +70,7 @@ hashbuild(PG_FUNCTION_ARGS)
 
 	/* do the heap scan */
 	reltuples = IndexBuildHeapScan(heap, index, indexInfo,
-								hashbuildCallback, (void *) &buildstate);
+								   hashbuildCallback, (void *) &buildstate);
 
 	/* since we just counted the # of tuples, may as well update stats */
 	IndexCloseAndUpdateStats(heap, reltuples, index, buildstate.indtuples);
@@ -141,12 +141,12 @@ hashinsert(PG_FUNCTION_ARGS)
 
 	/*
 	 * If the single index key is null, we don't insert it into the index.
-	 * Hash tables support scans on '='. Relational algebra says that A =
-	 * B returns null if either A or B is null.  This means that no
-	 * qualification used in an index scan could ever return true on a
-	 * null attribute.	It also means that indices can't be used by ISNULL
-	 * or NOTNULL scans, but that's an artifact of the strategy map
-	 * architecture chosen in 1986, not of the way nulls are handled here.
+	 * Hash tables support scans on '='. Relational algebra says that A = B
+	 * returns null if either A or B is null.  This means that no
+	 * qualification used in an index scan could ever return true on a null
+	 * attribute.  It also means that indices can't be used by ISNULL or
+	 * NOTNULL scans, but that's an artifact of the strategy map architecture
+	 * chosen in 1986, not of the way nulls are handled here.
 	 */
 	if (IndexTupleHasNulls(itup))
 	{
@@ -180,16 +180,16 @@ hashgettuple(PG_FUNCTION_ARGS)
 	bool		res;
 
 	/*
-	 * We hold pin but not lock on current buffer while outside the hash
-	 * AM. Reacquire the read lock here.
+	 * We hold pin but not lock on current buffer while outside the hash AM.
+	 * Reacquire the read lock here.
 	 */
 	if (BufferIsValid(so->hashso_curbuf))
 		_hash_chgbufaccess(rel, so->hashso_curbuf, HASH_NOLOCK, HASH_READ);
 
 	/*
-	 * If we've already initialized this scan, we can just advance it in
-	 * the appropriate direction.  If we haven't done so yet, we call a
-	 * routine to get the first item in the scan.
+	 * If we've already initialized this scan, we can just advance it in the
+	 * appropriate direction.  If we haven't done so yet, we call a routine to
+	 * get the first item in the scan.
 	 */
 	if (ItemPointerIsValid(&(scan->currentItemData)))
 	{
@@ -199,17 +199,16 @@ hashgettuple(PG_FUNCTION_ARGS)
 		if (scan->kill_prior_tuple)
 		{
 			/*
-			 * Yes, so mark it by setting the LP_DELETE bit in the item
-			 * flags.
+			 * Yes, so mark it by setting the LP_DELETE bit in the item flags.
 			 */
 			offnum = ItemPointerGetOffsetNumber(&(scan->currentItemData));
 			page = BufferGetPage(so->hashso_curbuf);
 			PageGetItemId(page, offnum)->lp_flags |= LP_DELETE;
 
 			/*
-			 * Since this can be redone later if needed, it's treated the
-			 * same as a commit-hint-bit status update for heap tuples: we
-			 * mark the buffer dirty but don't make a WAL log entry.
+			 * Since this can be redone later if needed, it's treated the same
+			 * as a commit-hint-bit status update for heap tuples: we mark the
+			 * buffer dirty but don't make a WAL log entry.
 			 */
 			SetBufferCommitInfoNeedsSave(so->hashso_curbuf);
 		}
@@ -256,7 +255,7 @@ Datum
 hashgetmulti(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	ItemPointer	tids = (ItemPointer) PG_GETARG_POINTER(1);
+	ItemPointer tids = (ItemPointer) PG_GETARG_POINTER(1);
 	int32		max_tids = PG_GETARG_INT32(2);
 	int32	   *returned_tids = (int32 *) PG_GETARG_POINTER(3);
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
@@ -265,8 +264,8 @@ hashgetmulti(PG_FUNCTION_ARGS)
 	int32		ntids = 0;
 
 	/*
-	 * We hold pin but not lock on current buffer while outside the hash
-	 * AM. Reacquire the read lock here.
+	 * We hold pin but not lock on current buffer while outside the hash AM.
+	 * Reacquire the read lock here.
 	 */
 	if (BufferIsValid(so->hashso_curbuf))
 		_hash_chgbufaccess(rel, so->hashso_curbuf, HASH_NOLOCK, HASH_READ);
@@ -280,6 +279,7 @@ hashgetmulti(PG_FUNCTION_ARGS)
 			res = _hash_next(scan, ForwardScanDirection);
 		else
 			res = _hash_first(scan, ForwardScanDirection);
+
 		/*
 		 * Skip killed tuples if asked to.
 		 */
@@ -505,12 +505,12 @@ hashbulkdelete(PG_FUNCTION_ARGS)
 	num_index_tuples = 0;
 
 	/*
-	 * Read the metapage to fetch original bucket and tuple counts.  Also,
-	 * we keep a copy of the last-seen metapage so that we can use its
-	 * hashm_spares[] values to compute bucket page addresses.	This is a
-	 * bit hokey but perfectly safe, since the interesting entries in the
-	 * spares array cannot change under us; and it beats rereading the
-	 * metapage for each bucket.
+	 * Read the metapage to fetch original bucket and tuple counts.  Also, we
+	 * keep a copy of the last-seen metapage so that we can use its
+	 * hashm_spares[] values to compute bucket page addresses.	This is a bit
+	 * hokey but perfectly safe, since the interesting entries in the spares
+	 * array cannot change under us; and it beats rereading the metapage for
+	 * each bucket.
 	 */
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ);
 	metap = (HashMetaPage) BufferGetPage(metabuf);
@@ -569,7 +569,7 @@ loop_top:
 				ItemPointer htup;
 
 				hitem = (HashItem) PageGetItem(page,
-											 PageGetItemId(page, offno));
+											   PageGetItemId(page, offno));
 				htup = &(hitem->hash_itup.t_tid);
 				if (callback(htup, callback_state))
 				{
@@ -641,8 +641,7 @@ loop_top:
 	{
 		/*
 		 * Otherwise, our count is untrustworthy since we may have
-		 * double-scanned tuples in split buckets.	Proceed by
-		 * dead-reckoning.
+		 * double-scanned tuples in split buckets.	Proceed by dead-reckoning.
 		 */
 		if (metap->hashm_ntuples > tuples_removed)
 			metap->hashm_ntuples -= tuples_removed;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.69 2005/06/05 22:32:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.70 2005/10/15 02:49:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,22 +56,22 @@ transformAggregateCall(ParseState *pstate, Aggref *agg)
 
 	/*
 	 * The aggregate's level is the same as the level of the lowest-level
-	 * variable or aggregate in its argument; or if it contains no
-	 * variables at all, we presume it to be local.
+	 * variable or aggregate in its argument; or if it contains no variables
+	 * at all, we presume it to be local.
 	 */
 	min_varlevel = find_minimum_var_level((Node *) agg->target);
 
 	/*
-	 * An aggregate can't directly contain another aggregate call of the
-	 * same level (though outer aggs are okay).  We can skip this check if
-	 * we didn't find any local vars or aggs.
+	 * An aggregate can't directly contain another aggregate call of the same
+	 * level (though outer aggs are okay).	We can skip this check if we
+	 * didn't find any local vars or aggs.
 	 */
 	if (min_varlevel == 0)
 	{
 		if (checkExprHasAggs((Node *) agg->target))
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
-				  errmsg("aggregate function calls may not be nested")));
+					 errmsg("aggregate function calls may not be nested")));
 	}
 
 	if (min_varlevel < 0)
@@ -127,8 +127,8 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	/*
 	 * No aggregates allowed in GROUP BY clauses, either.
 	 *
-	 * While we are at it, build a list of the acceptable GROUP BY
-	 * expressions for use by check_ungrouped_columns().
+	 * While we are at it, build a list of the acceptable GROUP BY expressions
+	 * for use by check_ungrouped_columns().
 	 */
 	foreach(l, qry->groupClause)
 	{
@@ -141,15 +141,15 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 		if (checkExprHasAggs(expr))
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
-				   errmsg("aggregates not allowed in GROUP BY clause")));
+					 errmsg("aggregates not allowed in GROUP BY clause")));
 		groupClauses = lcons(expr, groupClauses);
 	}
 
 	/*
-	 * If there are join alias vars involved, we have to flatten them to
-	 * the underlying vars, so that aliased and unaliased vars will be
-	 * correctly taken as equal.  We can skip the expense of doing this if
-	 * no rangetable entries are RTE_JOIN kind.
+	 * If there are join alias vars involved, we have to flatten them to the
+	 * underlying vars, so that aliased and unaliased vars will be correctly
+	 * taken as equal.	We can skip the expense of doing this if no rangetable
+	 * entries are RTE_JOIN kind.
 	 */
 	hasJoinRTEs = false;
 	foreach(l, pstate->p_rtable)
@@ -165,8 +165,8 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 
 	/*
 	 * We use the planner's flatten_join_alias_vars routine to do the
-	 * flattening; it wants a PlannerInfo root node, which fortunately
-	 * can be mostly dummy.
+	 * flattening; it wants a PlannerInfo root node, which fortunately can be
+	 * mostly dummy.
 	 */
 	if (hasJoinRTEs)
 	{
@@ -175,15 +175,15 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 		root->hasJoinRTEs = true;
 
 		groupClauses = (List *) flatten_join_alias_vars(root,
-												  (Node *) groupClauses);
+													  (Node *) groupClauses);
 	}
 	else
 		root = NULL;			/* keep compiler quiet */
 
 	/*
-	 * Detect whether any of the grouping expressions aren't simple Vars;
-	 * if they're all Vars then we don't have to work so hard in the
-	 * recursive scans.  (Note we have to flatten aliases before this.)
+	 * Detect whether any of the grouping expressions aren't simple Vars; if
+	 * they're all Vars then we don't have to work so hard in the recursive
+	 * scans.  (Note we have to flatten aliases before this.)
 	 */
 	have_non_var_grouping = false;
 	foreach(l, groupClauses)
@@ -259,23 +259,23 @@ check_ungrouped_columns_walker(Node *node,
 		return false;			/* constants are always acceptable */
 
 	/*
-	 * If we find an aggregate call of the original level, do not recurse
-	 * into its arguments; ungrouped vars in the arguments are not an
-	 * error. We can also skip looking at the arguments of aggregates of
-	 * higher levels, since they could not possibly contain Vars that are
-	 * of concern to us (see transformAggregateCall).  We do need to look
-	 * into the arguments of aggregates of lower levels, however.
+	 * If we find an aggregate call of the original level, do not recurse into
+	 * its arguments; ungrouped vars in the arguments are not an error. We can
+	 * also skip looking at the arguments of aggregates of higher levels,
+	 * since they could not possibly contain Vars that are of concern to us
+	 * (see transformAggregateCall).  We do need to look into the arguments of
+	 * aggregates of lower levels, however.
 	 */
 	if (IsA(node, Aggref) &&
 		(int) ((Aggref *) node)->agglevelsup >= context->sublevels_up)
 		return false;
 
 	/*
-	 * If we have any GROUP BY items that are not simple Vars, check to
-	 * see if subexpression as a whole matches any GROUP BY item. We need
-	 * to do this at every recursion level so that we recognize GROUPed-BY
-	 * expressions before reaching variables within them. But this only
-	 * works at the outer query level, as noted above.
+	 * If we have any GROUP BY items that are not simple Vars, check to see if
+	 * subexpression as a whole matches any GROUP BY item. We need to do this
+	 * at every recursion level so that we recognize GROUPed-BY expressions
+	 * before reaching variables within them. But this only works at the outer
+	 * query level, as noted above.
 	 */
 	if (context->have_non_var_grouping && context->sublevels_up == 0)
 	{
@@ -288,10 +288,9 @@ check_ungrouped_columns_walker(Node *node,
 
 	/*
 	 * If we have an ungrouped Var of the original query level, we have a
-	 * failure.  Vars below the original query level are not a problem,
-	 * and neither are Vars from above it.	(If such Vars are ungrouped as
-	 * far as their own query level is concerned, that's someone else's
-	 * problem...)
+	 * failure.  Vars below the original query level are not a problem, and
+	 * neither are Vars from above it.	(If such Vars are ungrouped as far as
+	 * their own query level is concerned, that's someone else's problem...)
 	 */
 	if (IsA(node, Var))
 	{
@@ -321,7 +320,7 @@ check_ungrouped_columns_walker(Node *node,
 
 		/* Found an ungrouped local variable; generate error message */
 		Assert(var->varno > 0 &&
-			 (int) var->varno <= list_length(context->pstate->p_rtable));
+			   (int) var->varno <= list_length(context->pstate->p_rtable));
 		rte = rt_fetch(var->varno, context->pstate->p_rtable);
 		attname = get_rte_attribute_name(rte, var->varattno);
 		if (context->sublevels_up == 0)
@@ -390,10 +389,10 @@ build_aggregate_fnexprs(Oid agg_input_type,
 	transfn_nargs = get_func_nargs(transfn_oid);
 
 	/*
-	 * Build arg list to use in the transfn FuncExpr node. We really only
-	 * care that transfn can discover the actual argument types at runtime
-	 * using get_fn_expr_argtype(), so it's okay to use Param nodes that
-	 * don't correspond to any real Param.
+	 * Build arg list to use in the transfn FuncExpr node. We really only care
+	 * that transfn can discover the actual argument types at runtime using
+	 * get_fn_expr_argtype(), so it's okay to use Param nodes that don't
+	 * correspond to any real Param.
 	 */
 	arg0 = makeNode(Param);
 	arg0->paramkind = PARAM_EXEC;

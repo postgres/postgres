@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtget.c,v 1.36 2005/10/06 02:29:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtget.c,v 1.37 2005/10/15 02:49:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,12 +32,12 @@ rtgettuple(PG_FUNCTION_ARGS)
 	IndexScanDesc s = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ScanDirection dir = (ScanDirection) PG_GETARG_INT32(1);
 	RTreeScanOpaque so = (RTreeScanOpaque) s->opaque;
-	Page page;
+	Page		page;
 	OffsetNumber offnum;
 
 	/*
-	 * If we've already produced a tuple and the executor has informed
-	 * us that it should be marked "killed", do so now.
+	 * If we've already produced a tuple and the executor has informed us that
+	 * it should be marked "killed", do so now.
 	 */
 	if (s->kill_prior_tuple && ItemPointerIsValid(&(s->currentItemData)))
 	{
@@ -48,14 +48,13 @@ rtgettuple(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Get the next tuple that matches the search key; if asked to
-	 * skip killed tuples, find the first non-killed tuple that
-	 * matches. Return as soon as we've run out of matches or we've
-	 * found an acceptable match.
+	 * Get the next tuple that matches the search key; if asked to skip killed
+	 * tuples, find the first non-killed tuple that matches. Return as soon as
+	 * we've run out of matches or we've found an acceptable match.
 	 */
 	for (;;)
 	{
-		bool res = rtnext(s, dir);
+		bool		res = rtnext(s, dir);
 
 		if (res && s->ignore_killed_tuples)
 		{
@@ -73,7 +72,7 @@ Datum
 rtgetmulti(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc s = (IndexScanDesc) PG_GETARG_POINTER(0);
-	ItemPointer	tids = (ItemPointer) PG_GETARG_POINTER(1);
+	ItemPointer tids = (ItemPointer) PG_GETARG_POINTER(1);
 	int32		max_tids = PG_GETARG_INT32(2);
 	int32	   *returned_tids = (int32 *) PG_GETARG_POINTER(3);
 	RTreeScanOpaque so = (RTreeScanOpaque) s->opaque;
@@ -86,7 +85,7 @@ rtgetmulti(PG_FUNCTION_ARGS)
 		res = rtnext(s, ForwardScanDirection);
 		if (res && s->ignore_killed_tuples)
 		{
-			Page page;
+			Page		page;
 			OffsetNumber offnum;
 
 			offnum = ItemPointerGetOffsetNumber(&(s->currentItemData));
@@ -201,12 +200,11 @@ rtnext(IndexScanDesc s, ScanDirection dir)
 			blk = ItemPointerGetBlockNumber(&(it->t_tid));
 
 			/*
-			 * Note that we release the pin on the page as we descend
-			 * down the tree, even though there's a good chance we'll
-			 * eventually need to re-read the buffer later in this
-			 * scan. This may or may not be optimal, but it doesn't
-			 * seem likely to make a huge performance difference
-			 * either way.
+			 * Note that we release the pin on the page as we descend down the
+			 * tree, even though there's a good chance we'll eventually need
+			 * to re-read the buffer later in this scan. This may or may not
+			 * be optimal, but it doesn't seem likely to make a huge
+			 * performance difference either way.
 			 */
 			so->curbuf = ReleaseAndReadBuffer(so->curbuf, s->indexRelation, blk);
 			p = BufferGetPage(so->curbuf);
@@ -233,7 +231,7 @@ findnext(IndexScanDesc s, OffsetNumber n, ScanDirection dir)
 	IndexTuple	it;
 	RTreePageOpaque po;
 	RTreeScanOpaque so;
-	Page p;
+	Page		p;
 
 	so = (RTreeScanOpaque) s->opaque;
 	p = BufferGetPage(so->curbuf);
@@ -242,8 +240,8 @@ findnext(IndexScanDesc s, OffsetNumber n, ScanDirection dir)
 	po = (RTreePageOpaque) PageGetSpecialPointer(p);
 
 	/*
-	 * If we modified the index during the scan, we may have a pointer to
-	 * a ghost tuple, before the scan.	If this is the case, back up one.
+	 * If we modified the index during the scan, we may have a pointer to a
+	 * ghost tuple, before the scan.  If this is the case, back up one.
 	 */
 
 	if (so->s_flags & RTS_CURBEFORE)
@@ -277,7 +275,7 @@ findnext(IndexScanDesc s, OffsetNumber n, ScanDirection dir)
 	}
 
 	if (n >= FirstOffsetNumber && n <= maxoff)
-		return n;						/* found a match on this page */
+		return n;				/* found a match on this page */
 	else
 		return InvalidOffsetNumber;		/* no match, go to next page */
 }

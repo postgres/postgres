@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/random.c,v 1.15 2005/07/18 17:09:01 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/random.c,v 1.16 2005/10/15 02:49:06 momjian Exp $
  */
 
 #include "postgres.h"
@@ -95,7 +95,6 @@ try_dev_random(uint8 *dst)
 		dst += res;
 	return dst;
 }
-
 #endif
 
 /*
@@ -111,22 +110,23 @@ try_dev_random(uint8 *dst)
 
 /*
  * this function is from libtomcrypt
- * 
+ *
  * try to use Microsoft crypto API
  */
-static uint8 * try_win32_genrand(uint8 *dst)
+static uint8 *
+try_win32_genrand(uint8 *dst)
 {
-	int res;
-	HCRYPTPROV h = 0;
+	int			res;
+	HCRYPTPROV	h = 0;
 
 	res = CryptAcquireContext(&h, NULL, MS_DEF_PROV, PROV_RSA_FULL,
-				(CRYPT_VERIFYCONTEXT | CRYPT_MACHINE_KEYSET));
+							  (CRYPT_VERIFYCONTEXT | CRYPT_MACHINE_KEYSET));
 	if (!res)
 		res = CryptAcquireContext(&h, NULL, MS_DEF_PROV, PROV_RSA_FULL,
-				CRYPT_VERIFYCONTEXT | CRYPT_MACHINE_KEYSET | CRYPT_NEWKEYSET);
+			   CRYPT_VERIFYCONTEXT | CRYPT_MACHINE_KEYSET | CRYPT_NEWKEYSET);
 	if (!res)
 		return dst;
-	
+
 	res = CryptGenRandom(h, RND_BYTES, dst);
 	if (res == TRUE)
 		dst += RND_BYTES;
@@ -135,9 +135,10 @@ static uint8 * try_win32_genrand(uint8 *dst)
 	return dst;
 }
 
-static uint8 * try_win32_perfc(uint8 *dst)
+static uint8 *
+try_win32_perfc(uint8 *dst)
 {
-	int res;
+	int			res;
 	LARGE_INTEGER time;
 
 	res = QueryPerformanceCounter(&time);
@@ -147,8 +148,7 @@ static uint8 * try_win32_perfc(uint8 *dst)
 	memcpy(dst, &time, sizeof(time));
 	return dst + sizeof(time);
 }
-
-#endif /* WIN32 */
+#endif   /* WIN32 */
 
 
 /*
@@ -174,33 +174,34 @@ static uint8 * try_win32_perfc(uint8 *dst)
 static uint8 *
 try_unix_std(uint8 *dst)
 {
-	pid_t pid;
-	int x;
-	PX_MD *md;
+	pid_t		pid;
+	int			x;
+	PX_MD	   *md;
 	struct timeval tv;
-	int res;
+	int			res;
 
 	/* process id */
 	pid = getpid();
-	memcpy(dst, (uint8*)&pid, sizeof(pid));
+	memcpy(dst, (uint8 *) &pid, sizeof(pid));
 	dst += sizeof(pid);
 
 	/* time */
 	gettimeofday(&tv, NULL);
-	memcpy(dst, (uint8*)&tv, sizeof(tv));
+	memcpy(dst, (uint8 *) &tv, sizeof(tv));
 	dst += sizeof(tv);
 
 	/* pointless, but should not hurt */
 	x = random();
-	memcpy(dst, (uint8*)&x, sizeof(x));
+	memcpy(dst, (uint8 *) &x, sizeof(x));
 	dst += sizeof(x);
 
 	/* let's be desperate */
 	res = px_find_digest("sha1", &md);
-	if (res >= 0) {
-		uint8 *ptr;
-		uint8 stack[8192];
-		int alloc = 32*1024;
+	if (res >= 0)
+	{
+		uint8	   *ptr;
+		uint8		stack[8192];
+		int			alloc = 32 * 1024;
 
 		px_md_update(md, stack, sizeof(stack));
 		ptr = px_alloc(alloc);
@@ -215,7 +216,6 @@ try_unix_std(uint8 *dst)
 
 	return dst;
 }
-
 #endif
 
 /*
@@ -223,9 +223,11 @@ try_unix_std(uint8 *dst)
  *
  * dst should have room for 1024 bytes.
  */
-unsigned px_acquire_system_randomness(uint8 *dst)
+unsigned
+px_acquire_system_randomness(uint8 *dst)
 {
-	uint8 *p = dst;
+	uint8	   *p = dst;
+
 #ifdef TRY_DEV_RANDOM
 	p = try_dev_random(p);
 #endif
@@ -240,4 +242,3 @@ unsigned px_acquire_system_randomness(uint8 *dst)
 #endif
 	return p - dst;
 }
-

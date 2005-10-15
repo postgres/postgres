@@ -23,7 +23,7 @@
  * Copyright (c) 2003-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/tidbitmap.c,v 1.7 2005/09/02 19:02:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/tidbitmap.c,v 1.8 2005/10/15 02:49:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@
 /*
  * The maximum number of tuples per page is not large (typically 256 with
  * 8K pages, or 1024 with 32K pages).  So there's not much point in making
- * the per-page bitmaps variable size.  We just legislate that the size
+ * the per-page bitmaps variable size.	We just legislate that the size
  * is this:
  */
 #define MAX_TUPLES_PER_PAGE  MaxHeapTuplesPerPage
@@ -52,10 +52,10 @@
  * for that page in the page table.
  *
  * We actually store both exact pages and lossy chunks in the same hash
- * table, using identical data structures.  (This is because dynahash.c's
+ * table, using identical data structures.	(This is because dynahash.c's
  * memory management doesn't allow space to be transferred easily from one
  * hashtable to another.)  Therefore it's best if PAGES_PER_CHUNK is the
- * same as MAX_TUPLES_PER_PAGE, or at least not too different.  But we
+ * same as MAX_TUPLES_PER_PAGE, or at least not too different.	But we
  * also want PAGES_PER_CHUNK to be a power of 2 to avoid expensive integer
  * remainder operations.  So, define it like this:
  */
@@ -69,7 +69,7 @@ typedef uint32 bitmapword;		/* must be an unsigned type */
 #define BITNUM(x)	((x) % BITS_PER_BITMAPWORD)
 
 /* number of active words for an exact page: */
-#define WORDS_PER_PAGE  ((MAX_TUPLES_PER_PAGE - 1) / BITS_PER_BITMAPWORD + 1)
+#define WORDS_PER_PAGE	((MAX_TUPLES_PER_PAGE - 1) / BITS_PER_BITMAPWORD + 1)
 /* number of active words for a lossy chunk: */
 #define WORDS_PER_CHUNK  ((PAGES_PER_CHUNK - 1) / BITS_PER_BITMAPWORD + 1)
 
@@ -85,7 +85,7 @@ typedef uint32 bitmapword;		/* must be an unsigned type */
  */
 typedef struct PagetableEntry
 {
-	BlockNumber	blockno;		/* page number (hashtable key) */
+	BlockNumber blockno;		/* page number (hashtable key) */
 	bool		ischunk;		/* T = lossy storage, F = exact */
 	bitmapword	words[Max(WORDS_PER_PAGE, WORDS_PER_CHUNK)];
 } PagetableEntry;
@@ -136,9 +136,9 @@ struct TIDBitmap
 /* Local function prototypes */
 static void tbm_union_page(TIDBitmap *a, const PagetableEntry *bpage);
 static bool tbm_intersect_page(TIDBitmap *a, PagetableEntry *apage,
-							   const TIDBitmap *b);
+				   const TIDBitmap *b);
 static const PagetableEntry *tbm_find_pageentry(const TIDBitmap *tbm,
-												BlockNumber pageno);
+				   BlockNumber pageno);
 static PagetableEntry *tbm_get_pageentry(TIDBitmap *tbm, BlockNumber pageno);
 static bool tbm_page_is_lossy(const TIDBitmap *tbm, BlockNumber pageno);
 static void tbm_mark_page_lossy(TIDBitmap *tbm, BlockNumber pageno);
@@ -160,8 +160,8 @@ tbm_create(long maxbytes)
 	long		nbuckets;
 
 	/*
-	 * Create the TIDBitmap struct, with enough trailing space to serve
-	 * the needs of the TBMIterateResult sub-struct.
+	 * Create the TIDBitmap struct, with enough trailing space to serve the
+	 * needs of the TBMIterateResult sub-struct.
 	 */
 	tbm = (TIDBitmap *) palloc(sizeof(TIDBitmap) +
 							   MAX_TUPLES_PER_PAGE * sizeof(OffsetNumber));
@@ -173,17 +173,17 @@ tbm_create(long maxbytes)
 	tbm->status = TBM_EMPTY;
 
 	/*
-	 * Estimate number of hashtable entries we can have within maxbytes.
-	 * This estimates the hash overhead at MAXALIGN(sizeof(HASHELEMENT))
-	 * plus a pointer per hash entry, which is crude but good enough for
-	 * our purpose.  Also count an extra Pointer per entry for the arrays
-	 * created during iteration readout.
+	 * Estimate number of hashtable entries we can have within maxbytes. This
+	 * estimates the hash overhead at MAXALIGN(sizeof(HASHELEMENT)) plus a
+	 * pointer per hash entry, which is crude but good enough for our purpose.
+	 * Also count an extra Pointer per entry for the arrays created during
+	 * iteration readout.
 	 */
 	nbuckets = maxbytes /
 		(MAXALIGN(sizeof(HASHELEMENT)) + MAXALIGN(sizeof(PagetableEntry))
 		 + sizeof(Pointer) + sizeof(Pointer));
-	nbuckets = Min(nbuckets, INT_MAX-1);	/* safety limit */
-	nbuckets = Max(nbuckets, 16);			/* sanity limit */
+	nbuckets = Min(nbuckets, INT_MAX - 1);		/* safety limit */
+	nbuckets = Max(nbuckets, 16);		/* sanity limit */
 	tbm->maxentries = (int) nbuckets;
 
 	return tbm;
@@ -319,7 +319,7 @@ static void
 tbm_union_page(TIDBitmap *a, const PagetableEntry *bpage)
 {
 	PagetableEntry *apage;
-	int		wordnum;
+	int			wordnum;
 
 	if (bpage->ischunk)
 	{
@@ -330,7 +330,7 @@ tbm_union_page(TIDBitmap *a, const PagetableEntry *bpage)
 
 			if (w != 0)
 			{
-				BlockNumber	pg;
+				BlockNumber pg;
 
 				pg = bpage->blockno + (wordnum * BITS_PER_BITMAPWORD);
 				while (w != 0)
@@ -428,12 +428,12 @@ static bool
 tbm_intersect_page(TIDBitmap *a, PagetableEntry *apage, const TIDBitmap *b)
 {
 	const PagetableEntry *bpage;
-	int		wordnum;
+	int			wordnum;
 
 	if (apage->ischunk)
 	{
 		/* Scan each bit in chunk, try to clear */
-		bool	candelete = true;
+		bool		candelete = true;
 
 		for (wordnum = 0; wordnum < WORDS_PER_PAGE; wordnum++)
 		{
@@ -442,8 +442,8 @@ tbm_intersect_page(TIDBitmap *a, PagetableEntry *apage, const TIDBitmap *b)
 			if (w != 0)
 			{
 				bitmapword	neww = w;
-				BlockNumber	pg;
-				int		bitnum;
+				BlockNumber pg;
+				int			bitnum;
 
 				pg = apage->blockno + (wordnum * BITS_PER_BITMAPWORD);
 				bitnum = 0;
@@ -472,19 +472,19 @@ tbm_intersect_page(TIDBitmap *a, PagetableEntry *apage, const TIDBitmap *b)
 	else if (tbm_page_is_lossy(b, apage->blockno))
 	{
 		/*
-		 * When the page is lossy in b, we have to mark it lossy in a too.
-		 * We know that no bits need be set in bitmap a, but we do not know
-		 * which ones should be cleared, and we have no API for "at most
-		 * these tuples need be checked".  (Perhaps it's worth adding that?)
+		 * When the page is lossy in b, we have to mark it lossy in a too. We
+		 * know that no bits need be set in bitmap a, but we do not know which
+		 * ones should be cleared, and we have no API for "at most these
+		 * tuples need be checked".  (Perhaps it's worth adding that?)
 		 */
 		tbm_mark_page_lossy(a, apage->blockno);
 
 		/*
-		 * Note: tbm_mark_page_lossy will have removed apage from a, and
-		 * may have inserted a new lossy chunk instead.  We can continue the
-		 * same seq_search scan at the caller level, because it does not
-		 * matter whether we visit such a new chunk or not: it will have
-		 * only the bit for apage->blockno set, which is correct.
+		 * Note: tbm_mark_page_lossy will have removed apage from a, and may
+		 * have inserted a new lossy chunk instead.  We can continue the same
+		 * seq_search scan at the caller level, because it does not matter
+		 * whether we visit such a new chunk or not: it will have only the bit
+		 * for apage->blockno set, which is correct.
 		 *
 		 * We must return false here since apage was already deleted.
 		 */
@@ -492,7 +492,7 @@ tbm_intersect_page(TIDBitmap *a, PagetableEntry *apage, const TIDBitmap *b)
 	}
 	else
 	{
-		bool	candelete = true;
+		bool		candelete = true;
 
 		bpage = tbm_find_pageentry(b, apage->blockno);
 		if (bpage != NULL)
@@ -535,17 +535,20 @@ tbm_begin_iterate(TIDBitmap *tbm)
 	int			nchunks;
 
 	tbm->iterating = true;
+
 	/*
 	 * Reset iteration pointers.
 	 */
 	tbm->spageptr = 0;
 	tbm->schunkptr = 0;
 	tbm->schunkbit = 0;
+
 	/*
 	 * Nothing else to do if no entries, nor if we don't have a hashtable.
 	 */
 	if (tbm->nentries == 0 || tbm->status != TBM_HASH)
 		return;
+
 	/*
 	 * Create and fill the sorted page lists if we didn't already.
 	 */
@@ -591,6 +594,7 @@ tbm_iterate(TIDBitmap *tbm)
 	TBMIterateResult *output = &(tbm->output);
 
 	Assert(tbm->iterating);
+
 	/*
 	 * If lossy chunk pages remain, make sure we've advanced schunkptr/
 	 * schunkbit to the next set bit.
@@ -598,12 +602,12 @@ tbm_iterate(TIDBitmap *tbm)
 	while (tbm->schunkptr < tbm->nchunks)
 	{
 		PagetableEntry *chunk = tbm->schunks[tbm->schunkptr];
-		int		schunkbit = tbm->schunkbit;
+		int			schunkbit = tbm->schunkbit;
 
 		while (schunkbit < PAGES_PER_CHUNK)
 		{
-			int		wordnum = WORDNUM(schunkbit);
-			int		bitnum = BITNUM(schunkbit);
+			int			wordnum = WORDNUM(schunkbit);
+			int			bitnum = BITNUM(schunkbit);
 
 			if ((chunk->words[wordnum] & ((bitmapword) 1 << bitnum)) != 0)
 				break;
@@ -618,6 +622,7 @@ tbm_iterate(TIDBitmap *tbm)
 		tbm->schunkptr++;
 		tbm->schunkbit = 0;
 	}
+
 	/*
 	 * If both chunk and per-page data remain, must output the numerically
 	 * earlier page.
@@ -717,7 +722,7 @@ tbm_find_pageentry(const TIDBitmap *tbm, BlockNumber pageno)
  *
  * If new, the entry is marked as an exact (non-chunk) entry.
  *
- * This may cause the table to exceed the desired memory size.  It is
+ * This may cause the table to exceed the desired memory size.	It is
  * up to the caller to call tbm_lossify() at the next safe point if so.
  */
 static PagetableEntry *
@@ -785,8 +790,8 @@ tbm_page_is_lossy(const TIDBitmap *tbm, BlockNumber pageno)
 										  HASH_FIND, NULL);
 	if (page != NULL && page->ischunk)
 	{
-		int		wordnum = WORDNUM(bitno);
-		int		bitnum = BITNUM(bitno);
+		int			wordnum = WORDNUM(bitno);
+		int			bitnum = BITNUM(bitno);
 
 		if ((page->words[wordnum] & ((bitmapword) 1 << bitnum)) != 0)
 			return true;
@@ -797,7 +802,7 @@ tbm_page_is_lossy(const TIDBitmap *tbm, BlockNumber pageno)
 /*
  * tbm_mark_page_lossy - mark the page number as lossily stored
  *
- * This may cause the table to exceed the desired memory size.  It is
+ * This may cause the table to exceed the desired memory size.	It is
  * up to the caller to call tbm_lossify() at the next safe point if so.
  */
 static void
@@ -818,9 +823,8 @@ tbm_mark_page_lossy(TIDBitmap *tbm, BlockNumber pageno)
 	chunk_pageno = pageno - bitno;
 
 	/*
-	 * Remove any extant non-lossy entry for the page.  If the page is
-	 * its own chunk header, however, we skip this and handle the case
-	 * below.
+	 * Remove any extant non-lossy entry for the page.	If the page is its own
+	 * chunk header, however, we skip this and handle the case below.
 	 */
 	if (bitno != 0)
 	{
@@ -879,10 +883,9 @@ tbm_lossify(TIDBitmap *tbm)
 
 	/*
 	 * XXX Really stupid implementation: this just lossifies pages in
-	 * essentially random order.  We should be paying some attention
-	 * to the number of bits set in each page, instead.  Also it might
-	 * be a good idea to lossify more than the minimum number of pages
-	 * during each call.
+	 * essentially random order.  We should be paying some attention to the
+	 * number of bits set in each page, instead.  Also it might be a good idea
+	 * to lossify more than the minimum number of pages during each call.
 	 */
 	Assert(!tbm->iterating);
 	Assert(tbm->status == TBM_HASH);
@@ -892,9 +895,10 @@ tbm_lossify(TIDBitmap *tbm)
 	{
 		if (page->ischunk)
 			continue;			/* already a chunk header */
+
 		/*
-		 * If the page would become a chunk header, we won't save anything
-		 * by converting it to lossy, so skip it.
+		 * If the page would become a chunk header, we won't save anything by
+		 * converting it to lossy, so skip it.
 		 */
 		if ((page->blockno % PAGES_PER_CHUNK) == 0)
 			continue;
@@ -906,9 +910,9 @@ tbm_lossify(TIDBitmap *tbm)
 			return;				/* we have done enough */
 
 		/*
-		 * Note: tbm_mark_page_lossy may have inserted a lossy chunk into
-		 * the hashtable.  We can continue the same seq_search scan since
-		 * we do not care whether we visit lossy chunks or not.
+		 * Note: tbm_mark_page_lossy may have inserted a lossy chunk into the
+		 * hashtable.  We can continue the same seq_search scan since we do
+		 * not care whether we visit lossy chunks or not.
 		 */
 	}
 }

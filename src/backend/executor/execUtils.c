@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.125 2005/08/01 20:31:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.126 2005/10/15 02:49:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,8 +63,8 @@ int			NTupleReplaced;
 int			NTupleAppended;
 int			NTupleDeleted;
 int			NIndexTupleInserted;
-extern int	NIndexTupleProcessed;		/* have to be defined in the
-										 * access method level so that the
+extern int	NIndexTupleProcessed;		/* have to be defined in the access
+										 * method level so that the
 										 * cinterface.a will link ok. */
 
 
@@ -166,8 +166,8 @@ CreateExecutorState(void)
 									 ALLOCSET_DEFAULT_MAXSIZE);
 
 	/*
-	 * Make the EState node within the per-query context.  This way, we
-	 * don't need a separate pfree() operation for it at shutdown.
+	 * Make the EState node within the per-query context.  This way, we don't
+	 * need a separate pfree() operation for it at shutdown.
 	 */
 	oldcontext = MemoryContextSwitchTo(qcontext);
 
@@ -244,16 +244,16 @@ void
 FreeExecutorState(EState *estate)
 {
 	/*
-	 * Shut down and free any remaining ExprContexts.  We do this
-	 * explicitly to ensure that any remaining shutdown callbacks get
-	 * called (since they might need to release resources that aren't
-	 * simply memory within the per-query memory context).
+	 * Shut down and free any remaining ExprContexts.  We do this explicitly
+	 * to ensure that any remaining shutdown callbacks get called (since they
+	 * might need to release resources that aren't simply memory within the
+	 * per-query memory context).
 	 */
 	while (estate->es_exprcontexts)
 	{
 		/*
-		 * XXX: seems there ought to be a faster way to implement this
-		 * than repeated list_delete(), no?
+		 * XXX: seems there ought to be a faster way to implement this than
+		 * repeated list_delete(), no?
 		 */
 		FreeExprContext((ExprContext *) linitial(estate->es_exprcontexts));
 		/* FreeExprContext removed the list link for us */
@@ -324,10 +324,9 @@ CreateExprContext(EState *estate)
 	econtext->ecxt_callbacks = NULL;
 
 	/*
-	 * Link the ExprContext into the EState to ensure it is shut down when
-	 * the EState is freed.  Because we use lcons(), shutdowns will occur
-	 * in reverse order of creation, which may not be essential but can't
-	 * hurt.
+	 * Link the ExprContext into the EState to ensure it is shut down when the
+	 * EState is freed.  Because we use lcons(), shutdowns will occur in
+	 * reverse order of creation, which may not be essential but can't hurt.
 	 */
 	estate->es_exprcontexts = lcons(econtext, estate->es_exprcontexts);
 
@@ -471,9 +470,9 @@ ExecAssignResultTypeFromTL(PlanState *planstate)
 	}
 
 	/*
-	 * ExecTypeFromTL needs the parse-time representation of the tlist,
-	 * not a list of ExprStates.  This is good because some plan nodes
-	 * don't bother to set up planstate->targetlist ...
+	 * ExecTypeFromTL needs the parse-time representation of the tlist, not a
+	 * list of ExprStates.	This is good because some plan nodes don't bother
+	 * to set up planstate->targetlist ...
 	 */
 	tupDesc = ExecTypeFromTL(planstate->plan->targetlist, hasoid);
 	ExecAssignResultType(planstate, tupDesc, true);
@@ -518,8 +517,8 @@ ExecBuildProjectionInfo(List *targetList,
 
 	/*
 	 * Determine whether the target list consists entirely of simple Var
-	 * references (ie, references to non-system attributes).  If so,
-	 * we can use the simpler ExecVariableList instead of ExecTargetList.
+	 * references (ie, references to non-system attributes).  If so, we can
+	 * use the simpler ExecVariableList instead of ExecTargetList.
 	 */
 	isVarList = true;
 	foreach(tl, targetList)
@@ -545,18 +544,18 @@ ExecBuildProjectionInfo(List *targetList,
 		AttrNumber	lastOuterVar = 0;
 		AttrNumber	lastScanVar = 0;
 
-		projInfo->pi_itemIsDone = NULL;	/* not needed */
+		projInfo->pi_itemIsDone = NULL; /* not needed */
 		projInfo->pi_varSlotOffsets = varSlotOffsets = (int *)
 			palloc0(len * sizeof(int));
 		projInfo->pi_varNumbers = varNumbers = (int *)
 			palloc0(len * sizeof(int));
 
 		/*
-		 * Set up the data needed by ExecVariableList.  The slots in which
-		 * the variables can be found at runtime are denoted by the offsets
-		 * of their slot pointers within the econtext.  This rather grotty
-		 * representation is needed because the caller may not have given
-		 * us the real econtext yet (see hacks in nodeSubplan.c).
+		 * Set up the data needed by ExecVariableList.	The slots in which the
+		 * variables can be found at runtime are denoted by the offsets of
+		 * their slot pointers within the econtext.  This rather grotty
+		 * representation is needed because the caller may not have given us
+		 * the real econtext yet (see hacks in nodeSubplan.c).
 		 */
 		foreach(tl, targetList)
 		{
@@ -631,7 +630,7 @@ ExecAssignProjectionInfo(PlanState *planstate)
  *
  * However ... there is no particular need to do it during ExecEndNode,
  * because FreeExecutorState will free any remaining ExprContexts within
- * the EState.  Letting FreeExecutorState do it allows the ExprContexts to
+ * the EState.	Letting FreeExecutorState do it allows the ExprContexts to
  * be freed in reverse order of creation, rather than order of creation as
  * will happen if we delete them here, which saves O(N^2) work in the list
  * cleanup inside FreeExprContext.
@@ -641,8 +640,8 @@ void
 ExecFreeExprContext(PlanState *planstate)
 {
 	/*
-	 * Per above discussion, don't actually delete the ExprContext.
-	 * We do unlink it from the plan node, though.
+	 * Per above discussion, don't actually delete the ExprContext. We do
+	 * unlink it from the plan node, though.
 	 */
 	planstate->ps_ExprContext = NULL;
 }
@@ -774,13 +773,13 @@ ExecOpenIndices(ResultRelInfo *resultRelInfo)
 		 * to a new tablespace.
 		 *
 		 * If the index AM is not safe for concurrent updates, obtain an
-		 * exclusive lock on the index to lock out other updaters as well
-		 * as readers (index_beginscan places AccessShareLock).
+		 * exclusive lock on the index to lock out other updaters as well as
+		 * readers (index_beginscan places AccessShareLock).
 		 *
-		 * If there are multiple not-concurrent-safe indexes, all backends
-		 * must lock the indexes in the same order or we will get deadlocks
-		 * here.  This is guaranteed by RelationGetIndexList(), which promises
-		 * to return the index list in OID order.
+		 * If there are multiple not-concurrent-safe indexes, all backends must
+		 * lock the indexes in the same order or we will get deadlocks here.
+		 * This is guaranteed by RelationGetIndexList(), which promises to
+		 * return the index list in OID order.
 		 *
 		 * The locks will be released in ExecCloseIndices.
 		 */
@@ -876,9 +875,8 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 	heapRelation = resultRelInfo->ri_RelationDesc;
 
 	/*
-	 * We will use the EState's per-tuple context for evaluating
-	 * predicates and index expressions (creating it if it's not already
-	 * there).
+	 * We will use the EState's per-tuple context for evaluating predicates
+	 * and index expressions (creating it if it's not already there).
 	 */
 	econtext = GetPerTupleExprContext(estate);
 
@@ -903,8 +901,8 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 			List	   *predicate;
 
 			/*
-			 * If predicate state not set up yet, create it (in the
-			 * estate's per-query context)
+			 * If predicate state not set up yet, create it (in the estate's
+			 * per-query context)
 			 */
 			predicate = indexInfo->ii_PredicateState;
 			if (predicate == NIL)
@@ -921,8 +919,8 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 		}
 
 		/*
-		 * FormIndexDatum fills in its values and isnull parameters with
-		 * the appropriate values for the column(s) of the index.
+		 * FormIndexDatum fills in its values and isnull parameters with the
+		 * appropriate values for the column(s) of the index.
 		 */
 		FormIndexDatum(indexInfo,
 					   slot,
@@ -931,14 +929,14 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 					   isnull);
 
 		/*
-		 * The index AM does the rest.	Note we suppress unique-index
-		 * checks if we are being called from VACUUM, since VACUUM may
-		 * need to move dead tuples that have the same keys as live ones.
+		 * The index AM does the rest.	Note we suppress unique-index checks
+		 * if we are being called from VACUUM, since VACUUM may need to move
+		 * dead tuples that have the same keys as live ones.
 		 */
 		index_insert(relationDescs[i],	/* index relation */
-					 values,			/* array of index Datums */
-					 isnull,			/* null flags */
-					 tupleid,			/* tid of heap tuple */
+					 values,	/* array of index Datums */
+					 isnull,	/* null flags */
+					 tupleid,	/* tid of heap tuple */
 					 heapRelation,
 					 relationDescs[i]->rd_index->indisunique && !is_vacuum);
 
@@ -959,14 +957,14 @@ UpdateChangedParamSet(PlanState *node, Bitmapset *newchg)
 	Bitmapset  *parmset;
 
 	/*
-	 * The plan node only depends on params listed in its allParam set.
-	 * Don't include anything else into its chgParam set.
+	 * The plan node only depends on params listed in its allParam set. Don't
+	 * include anything else into its chgParam set.
 	 */
 	parmset = bms_intersect(node->plan->allParam, newchg);
 
 	/*
-	 * Keep node->chgParam == NULL if there's not actually any members;
-	 * this allows the simplest possible tests in executor node files.
+	 * Keep node->chgParam == NULL if there's not actually any members; this
+	 * allows the simplest possible tests in executor node files.
 	 */
 	if (!bms_is_empty(parmset))
 		node->chgParam = bms_join(node->chgParam, parmset);
@@ -1049,8 +1047,8 @@ ShutdownExprContext(ExprContext *econtext)
 		return;
 
 	/*
-	 * Call the callbacks in econtext's per-tuple context.  This ensures
-	 * that any memory they might leak will get cleaned up.
+	 * Call the callbacks in econtext's per-tuple context.  This ensures that
+	 * any memory they might leak will get cleaned up.
 	 */
 	oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 

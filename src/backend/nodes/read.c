@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/read.c,v 1.46 2004/12/31 21:59:55 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/read.c,v 1.47 2005/10/15 02:49:19 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -41,10 +41,10 @@ stringToNode(char *str)
 	void	   *retval;
 
 	/*
-	 * We save and restore the pre-existing state of pg_strtok. This makes
-	 * the world safe for re-entrant invocation of stringToNode, without
-	 * incurring a lot of notational overhead by having to pass the
-	 * next-character pointer around through all the readfuncs.c code.
+	 * We save and restore the pre-existing state of pg_strtok. This makes the
+	 * world safe for re-entrant invocation of stringToNode, without incurring
+	 * a lot of notational overhead by having to pass the next-character
+	 * pointer around through all the readfuncs.c code.
 	 */
 	save_strtok = pg_strtok_ptr;
 
@@ -211,13 +211,13 @@ nodeTokenType(char *token, int length)
 	if (*numptr == '+' || *numptr == '-')
 		numptr++, numlen--;
 	if ((numlen > 0 && isdigit((unsigned char) *numptr)) ||
-	(numlen > 1 && *numptr == '.' && isdigit((unsigned char) numptr[1])))
+		(numlen > 1 && *numptr == '.' && isdigit((unsigned char) numptr[1])))
 	{
 		/*
 		 * Yes.  Figure out whether it is integral or float; this requires
-		 * both a syntax check and a range check. strtol() can do both for
-		 * us. We know the token will end at a character that strtol will
-		 * stop at, so we do not need to modify the string.
+		 * both a syntax check and a range check. strtol() can do both for us.
+		 * We know the token will end at a character that strtol will stop at,
+		 * so we do not need to modify the string.
 		 */
 		long		val;
 		char	   *endptr;
@@ -386,8 +386,7 @@ nodeRead(char *token, int tok_len)
 		case T_Integer:
 
 			/*
-			 * we know that the token terminates on a char atol will stop
-			 * at
+			 * we know that the token terminates on a char atol will stop at
 			 */
 			result = (Node *) makeInteger(atol(token));
 			break;

@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/backend/port/dynloader/aix.h,v 1.12 2003/11/29 22:39:51 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/port/dynloader/aix.h,v 1.13 2005/10/15 02:49:23 momjian Exp $
  *
  * @(#)dlfcn.h	1.4 revision of 95/04/25  09:36:52
  * This is an unpublished work copyright (c) 1992 HELIOS Software GmbH
@@ -12,7 +12,6 @@
 #ifdef HAVE_DLOPEN
 
 #include <dlfcn.h>
-
 #else							/* HAVE_DLOPEN */
 
 #ifdef __cplusplus
@@ -42,7 +41,6 @@ void	   *dlopen(const char *path, int mode);
 void	   *dlsym(void *handle, const char *symbol);
 char	   *dlerror(void);
 int			dlclose(void *handle);
-
 #else
 void	   *dlopen();
 void	   *dlsym();

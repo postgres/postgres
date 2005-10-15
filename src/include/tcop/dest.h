@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/tcop/dest.h,v 1.46 2005/03/16 21:38:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tcop/dest.h,v 1.47 2005/10/15 02:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,7 +102,7 @@ struct _DestReceiver
 {
 	/* Called for each tuple to be output: */
 	void		(*receiveSlot) (TupleTableSlot *slot,
-								DestReceiver *self);
+											DestReceiver *self);
 	/* Per-executor-run initialization and shutdown: */
 	void		(*rStartup) (DestReceiver *self,
 										 int operation,

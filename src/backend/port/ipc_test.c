@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/ipc_test.c,v 1.17 2005/02/05 20:07:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/ipc_test.c,v 1.18 2005/10/15 02:49:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@ proc_exit(int code)
 	shmem_exit(code);
 	while (--on_proc_exit_index >= 0)
 		(*on_proc_exit_list[on_proc_exit_index].function) (code,
-							  on_proc_exit_list[on_proc_exit_index].arg);
+								  on_proc_exit_list[on_proc_exit_index].arg);
 	exit(code);
 }
 
@@ -84,7 +84,7 @@ shmem_exit(int code)
 {
 	while (--on_shmem_exit_index >= 0)
 		(*on_shmem_exit_list[on_shmem_exit_index].function) (code,
-							on_shmem_exit_list[on_shmem_exit_index].arg);
+								on_shmem_exit_list[on_shmem_exit_index].arg);
 	on_shmem_exit_index = 0;
 }
 

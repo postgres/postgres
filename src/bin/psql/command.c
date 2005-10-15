@@ -3,12 +3,12 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.153 2005/09/20 18:59:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.154 2005/10/15 02:49:40 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
 
-#ifdef WIN32_CLIENT_ONLY	/* needed for BCC */
+#ifdef WIN32_CLIENT_ONLY		/* needed for BCC */
 #undef mkdir
 #endif
 
@@ -96,9 +96,9 @@ HandleSlashCmds(PsqlScanState scan_state,
 	if (status == CMD_UNKNOWN && strlen(cmd) > 1)
 	{
 		/*
-		 * If the command was not recognized, try to parse it as a
-		 * one-letter command with immediately following argument (a
-		 * still-supported, but no longer encouraged, syntax).
+		 * If the command was not recognized, try to parse it as a one-letter
+		 * command with immediately following argument (a still-supported, but
+		 * no longer encouraged, syntax).
 		 */
 		char		new_cmd[2];
 
@@ -205,13 +205,13 @@ exec_command(const char *cmd,
 					opt2q;
 
 		/*
-		 * Ideally we should treat the arguments as SQL identifiers.  But
-		 * for backwards compatibility with 7.2 and older pg_dump files,
-		 * we have to take unquoted arguments verbatim (don't downcase
-		 * them). For now, double-quoted arguments may be stripped of
-		 * double quotes (as if SQL identifiers).  By 7.4 or so, pg_dump
-		 * files can be expected to double-quote all mixed-case \connect
-		 * arguments, and then we can get rid of OT_SQLIDHACK.
+		 * Ideally we should treat the arguments as SQL identifiers.  But for
+		 * backwards compatibility with 7.2 and older pg_dump files, we have
+		 * to take unquoted arguments verbatim (don't downcase them). For now,
+		 * double-quoted arguments may be stripped of double quotes (as if SQL
+		 * identifiers).  By 7.4 or so, pg_dump files can be expected to
+		 * double-quote all mixed-case \connect arguments, and then we can get
+		 * rid of OT_SQLIDHACK.
 		 */
 		opt1 = psql_scan_slash_option(scan_state,
 									  OT_SQLIDHACK, &opt1q, true);
@@ -284,7 +284,7 @@ exec_command(const char *cmd,
 	else if (pg_strcasecmp(cmd, "copy") == 0)
 	{
 		char	   *opt = psql_scan_slash_option(scan_state,
-											 OT_WHOLE_LINE, NULL, false);
+												 OT_WHOLE_LINE, NULL, false);
 
 		success = do_copy(opt);
 		free(opt);
@@ -377,8 +377,8 @@ exec_command(const char *cmd,
 
 
 	/*
-	 * \e or \edit -- edit the current query buffer (or a file and make it
-	 * the query buffer
+	 * \e or \edit -- edit the current query buffer (or a file and make it the
+	 * query buffer
 	 */
 	else if (strcmp(cmd, "e") == 0 || strcmp(cmd, "edit") == 0)
 	{
@@ -416,7 +416,7 @@ exec_command(const char *cmd,
 			fout = stdout;
 
 		while ((value = psql_scan_slash_option(scan_state,
-											 OT_NORMAL, &quoted, false)))
+											   OT_NORMAL, &quoted, false)))
 		{
 			if (!quoted && strcmp(value, "-n") == 0)
 				no_newline = true;
@@ -438,7 +438,7 @@ exec_command(const char *cmd,
 	else if (strcmp(cmd, "encoding") == 0)
 	{
 		char	   *encoding = psql_scan_slash_option(scan_state,
-												 OT_NORMAL, NULL, false);
+													  OT_NORMAL, NULL, false);
 
 		if (!encoding)
 		{
@@ -466,7 +466,7 @@ exec_command(const char *cmd,
 	else if (strcmp(cmd, "f") == 0)
 	{
 		char	   *fname = psql_scan_slash_option(scan_state,
-												 OT_NORMAL, NULL, false);
+												   OT_NORMAL, NULL, false);
 
 		success = do_pset("fieldsep", fname, &pset.popt, quiet);
 		free(fname);
@@ -476,7 +476,7 @@ exec_command(const char *cmd,
 	else if (strcmp(cmd, "g") == 0)
 	{
 		char	   *fname = psql_scan_slash_option(scan_state,
-											   OT_FILEPIPE, NULL, false);
+												   OT_FILEPIPE, NULL, false);
 
 		if (!fname)
 			pset.gfname = NULL;
@@ -493,7 +493,7 @@ exec_command(const char *cmd,
 	else if (strcmp(cmd, "h") == 0 || strcmp(cmd, "help") == 0)
 	{
 		char	   *opt = psql_scan_slash_option(scan_state,
-											 OT_WHOLE_LINE, NULL, false);
+												 OT_WHOLE_LINE, NULL, false);
 
 		helpSQL(opt, pset.popt.topt.pager);
 		free(opt);
@@ -601,7 +601,7 @@ exec_command(const char *cmd,
 	else if (strcmp(cmd, "o") == 0 || strcmp(cmd, "out") == 0)
 	{
 		char	   *fname = psql_scan_slash_option(scan_state,
-												OT_FILEPIPE, NULL, true);
+												   OT_FILEPIPE, NULL, true);
 
 		expand_tilde(&fname);
 		success = setQFout(fname);
@@ -732,7 +732,7 @@ exec_command(const char *cmd,
 	else if (strcmp(cmd, "T") == 0)
 	{
 		char	   *value = psql_scan_slash_option(scan_state,
-												 OT_NORMAL, NULL, false);
+												   OT_NORMAL, NULL, false);
 
 		success = do_pset("tableattr", value, &pset.popt, quiet);
 		free(value);
@@ -843,7 +843,7 @@ exec_command(const char *cmd,
 	else if (strcmp(cmd, "z") == 0)
 	{
 		char	   *pattern = psql_scan_slash_option(scan_state,
-												  OT_NORMAL, NULL, true);
+													 OT_NORMAL, NULL, true);
 
 		success = permissionsList(pattern);
 		if (pattern)
@@ -854,7 +854,7 @@ exec_command(const char *cmd,
 	else if (strcmp(cmd, "!") == 0)
 	{
 		char	   *opt = psql_scan_slash_option(scan_state,
-											 OT_WHOLE_LINE, NULL, false);
+												 OT_WHOLE_LINE, NULL, false);
 
 		success = do_shell(opt);
 		free(opt);
@@ -867,8 +867,7 @@ exec_command(const char *cmd,
 #if 0
 
 	/*
-	 * These commands don't do anything. I just use them to test the
-	 * parser.
+	 * These commands don't do anything. I just use them to test the parser.
 	 */
 	else if (strcmp(cmd, "void") == 0 || strcmp(cmd, "#") == 0)
 	{
@@ -912,7 +911,7 @@ do_connect(const char *new_dbname, const char *new_user)
 	const char *dbparam = NULL;
 	const char *userparam = NULL;
 	const char *pwparam = NULL;
-	char       *password_prompt = NULL;
+	char	   *password_prompt = NULL;
 	char	   *prompted_password = NULL;
 	bool		need_pass;
 	bool		success = false;
@@ -932,13 +931,13 @@ do_connect(const char *new_dbname, const char *new_user)
 	else
 		userparam = new_user;
 
-	if (userparam == NULL) 
+	if (userparam == NULL)
 		password_prompt = strdup("Password: ");
 	else
 	{
 		password_prompt = malloc(strlen("Password for user %s: ") - 2 +
 								 strlen(userparam) + 1);
-		sprintf(password_prompt,"Password for user %s: ", userparam);
+		sprintf(password_prompt, "Password for user %s: ", userparam);
 	}
 
 	/* need to prompt for password? */
@@ -946,8 +945,8 @@ do_connect(const char *new_dbname, const char *new_user)
 		pwparam = prompted_password = simple_prompt(password_prompt, 100, false);
 
 	/*
-	 * Use old password (if any) if no new one given and we are
-	 * reconnecting as same user
+	 * Use old password (if any) if no new one given and we are reconnecting
+	 * as same user
 	 */
 	if (!pwparam && oldconn && PQuser(oldconn) && userparam &&
 		strcmp(PQuser(oldconn), userparam) == 0)
@@ -975,8 +974,8 @@ do_connect(const char *new_dbname, const char *new_user)
 	free(password_prompt);
 
 	/*
-	 * If connection failed, try at least keep the old one. That's
-	 * probably more convenient than just kicking you out of the program.
+	 * If connection failed, try at least keep the old one. That's probably
+	 * more convenient than just kicking you out of the program.
 	 */
 	if (!pset.db || PQstatus(pset.db) == CONNECTION_BAD)
 	{
@@ -995,8 +994,7 @@ do_connect(const char *new_dbname, const char *new_user)
 		else
 		{
 			/*
-			 * we don't want unpredictable things to happen in scripting
-			 * mode
+			 * we don't want unpredictable things to happen in scripting mode
 			 */
 			psql_error("\\connect: %s", PQerrorMessage(pset.db));
 			PQfinish(pset.db);
@@ -1175,28 +1173,29 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 		if (!tmpdir)
 			tmpdir = "/tmp";
 #else
-		char tmpdir[MAXPGPATH];
-		int ret;
+		char		tmpdir[MAXPGPATH];
+		int			ret;
 
 		ret = GetTempPath(MAXPGPATH, tmpdir);
 		if (ret == 0 || ret > MAXPGPATH)
 		{
 			psql_error("cannot locate temporary directory: %s",
-						!ret ? strerror(errno) : "");
+					   !ret ? strerror(errno) : "");
 			return false;
 		}
+
 		/*
-		 *	No canonicalize_path() here.
-		 *	EDIT.EXE run from CMD.EXE prepends the current directory to the
-		 *	supplied path unless we use only backslashes, so we do that.
+		 * No canonicalize_path() here. EDIT.EXE run from CMD.EXE prepends the
+		 * current directory to the supplied path unless we use only
+		 * backslashes, so we do that.
 		 */
 #endif
 #ifndef WIN32
 		snprintf(fnametmp, sizeof(fnametmp), "%s%spsql.edit.%d", tmpdir,
-				"/", (int)getpid());
+				 "/", (int) getpid());
 #else
 		snprintf(fnametmp, sizeof(fnametmp), "%s%spsql.edit.%d", tmpdir,
-				"" /* trailing separator already present */, (int)getpid());
+			   "" /* trailing separator already present */ , (int) getpid());
 #endif
 
 		fname = (const char *) fnametmp;

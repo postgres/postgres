@@ -129,8 +129,8 @@ semctl(int semId, int semNum, int flag, union semun semun)
 			delete_sem(Address[2 * i + 1]);
 
 			/*
-			 * Reset to an invalid semId (in case other process try to get
-			 * the infos from a cloned area
+			 * Reset to an invalid semId (in case other process try to get the
+			 * infos from a cloned area
 			 */
 			Address[2 * i + 1] = 0;
 		}
@@ -139,9 +139,9 @@ semctl(int semId, int semNum, int flag, union semun semun)
 		Address[0] = 0;
 
 		/*
-		 * Delete the area (it might be cloned by other process. Let them
-		 * live with it, in all cases semIds are 0 so if another process
-		 * try to use it, it will fail
+		 * Delete the area (it might be cloned by other process. Let them live
+		 * with it, in all cases semIds are 0 so if another process try to use
+		 * it, it will fail
 		 */
 		delete_area(semId);
 
@@ -202,8 +202,8 @@ semget(int semKey, int semNum, int flags)
 		/* Get an area clone (in case it's not in our address space) */
 
 		/*
-		 * TODO : a check of address space might be done to avoid
-		 * duplicate areas in the same address space
+		 * TODO : a check of address space might be done to avoid duplicate
+		 * areas in the same address space
 		 */
 		parea = clone_area(Nom, &Address, B_ANY_ADDRESS, B_READ_AREA | B_WRITE_AREA, parea);
 		return parea;
@@ -218,8 +218,8 @@ semget(int semKey, int semNum, int flags)
 			long		i;
 
 			/*
-			 * Limit to 250 (8 byte per sem : 4 for the semid and 4 for
-			 * the last pid which accessed the semaphore in a pool
+			 * Limit to 250 (8 byte per sem : 4 for the semid and 4 for the
+			 * last pid which accessed the semaphore in a pool
 			 */
 			if (semNum > 250)
 			{
@@ -291,8 +291,8 @@ semop(int semId, struct sembuf * sops, int nsops)
 		if (sops[i].sem_op < 0)
 		{
 			/*
-			 * Try acquiring the semaphore till we are not interrupted by
-			 * a signal
+			 * Try acquiring the semaphore till we are not interrupted by a
+			 * signal
 			 */
 			if (sops[i].sem_flg == IPC_NOWAIT)
 			{

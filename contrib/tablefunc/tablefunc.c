@@ -184,8 +184,7 @@ normal_rand(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 
 		/*
-		 * switch to memory context appropriate for multiple function
-		 * calls
+		 * switch to memory context appropriate for multiple function calls
 		 */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
@@ -196,10 +195,10 @@ normal_rand(PG_FUNCTION_ARGS)
 		fctx = (normal_rand_fctx *) palloc(sizeof(normal_rand_fctx));
 
 		/*
-		 * Use fctx to keep track of upper and lower bounds from call to
-		 * call. It will also be used to carry over the spare value we get
-		 * from the Box-Muller algorithm so that we only actually
-		 * calculate a new value every other call.
+		 * Use fctx to keep track of upper and lower bounds from call to call.
+		 * It will also be used to carry over the spare value we get from the
+		 * Box-Muller algorithm so that we only actually calculate a new value
+		 * every other call.
 		 */
 		fctx->mean = PG_GETARG_FLOAT8(1);
 		fctx->stddev = PG_GETARG_FLOAT8(2);
@@ -254,7 +253,7 @@ normal_rand(PG_FUNCTION_ARGS)
 		SRF_RETURN_NEXT(funcctx, Float8GetDatum(result));
 	}
 	else
-	/* do when there is no more left */
+		/* do when there is no more left */
 		SRF_RETURN_DONE(funcctx);
 }
 
@@ -331,8 +330,8 @@ get_normal_pair(float8 *x1, float8 *x2)
  * 1. SQL result must be ordered by 1,2.
  * 2. The number of values columns depends on the tuple description
  *	  of the function's declared return type.  The return type's columns
- *    must match the datatypes of the SQL query's result.  The datatype
- *    of the category column can be anything, however.
+ *	  must match the datatypes of the SQL query's result.  The datatype
+ *	  of the category column can be anything, however.
  * 3. Missing values (i.e. not enough adjacent rows of same rowid to
  *	  fill the number of result values columns) are filled in with nulls.
  * 4. Extra values (i.e. too many adjacent rows of same rowid to fill
@@ -368,8 +367,7 @@ crosstab(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 
 		/*
-		 * switch to memory context appropriate for multiple function
-		 * calls
+		 * switch to memory context appropriate for multiple function calls
 		 */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
@@ -394,7 +392,7 @@ crosstab(PG_FUNCTION_ARGS)
 			 * 1. rowname
 			 *	the label or identifier for each row in the final result
 			 * 2. category
-			 *  the label or identifier for each column in the final result
+			 *	the label or identifier for each column in the final result
 			 * 3. values
 			 *	the value for each column in the final result
 			 *----------
@@ -404,7 +402,7 @@ crosstab(PG_FUNCTION_ARGS)
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("invalid source data SQL statement"),
 						 errdetail("The provided SQL must return 3 "
-							 "columns: rowid, category, and values.")));
+								   "columns: rowid, category, and values.")));
 		}
 		else
 		{
@@ -439,8 +437,8 @@ crosstab(PG_FUNCTION_ARGS)
 		tupdesc = CreateTupleDescCopy(tupdesc);
 
 		/*
-		 * Check that return tupdesc is compatible with the data we got
-		 * from SPI, at least based on number and type of attributes
+		 * Check that return tupdesc is compatible with the data we got from
+		 * SPI, at least based on number and type of attributes
 		 */
 		if (!compatCrosstabTupleDescs(tupdesc, spi_tupdesc))
 			ereport(ERROR,
@@ -449,8 +447,8 @@ crosstab(PG_FUNCTION_ARGS)
 							"incompatible")));
 
 		/*
-		 * Generate attribute metadata needed later to produce tuples from
-		 * raw C strings
+		 * Generate attribute metadata needed later to produce tuples from raw
+		 * C strings
 		 */
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;
@@ -530,11 +528,10 @@ crosstab(PG_FUNCTION_ARGS)
 				rowid = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
 
 				/*
-				 * If this is the first pass through the values for this
-				 * rowid set it, otherwise make sure it hasn't changed on
-				 * us. Also check to see if the rowid is the same as that
-				 * of the last tuple sent -- if so, skip this tuple
-				 * entirely
+				 * If this is the first pass through the values for this rowid
+				 * set it, otherwise make sure it hasn't changed on us. Also
+				 * check to see if the rowid is the same as that of the last
+				 * tuple sent -- if so, skip this tuple entirely
 				 */
 				if (i == 0)
 					values[0] = pstrdup(rowid);
@@ -550,16 +547,15 @@ crosstab(PG_FUNCTION_ARGS)
 					 * Get the next category item value, which is alway
 					 * attribute number three.
 					 *
-					 * Be careful to sssign the value to the array index
-					 * based on which category we are presently
-					 * processing.
+					 * Be careful to sssign the value to the array index based on
+					 * which category we are presently processing.
 					 */
 					values[1 + i] = SPI_getvalue(spi_tuple, spi_tupdesc, 3);
 
 					/*
-					 * increment the counter since we consume a row for
-					 * each category, but not for last pass because the
-					 * API will do that for us
+					 * increment the counter since we consume a row for each
+					 * category, but not for last pass because the API will do
+					 * that for us
 					 */
 					if (i < (num_categories - 1))
 						call_cntr = ++funcctx->call_cntr;
@@ -567,9 +563,9 @@ crosstab(PG_FUNCTION_ARGS)
 				else
 				{
 					/*
-					 * We'll fill in NULLs for the missing values, but we
-					 * need to decrement the counter since this sql result
-					 * row doesn't belong to the current output tuple.
+					 * We'll fill in NULLs for the missing values, but we need
+					 * to decrement the counter since this sql result row
+					 * doesn't belong to the current output tuple.
 					 */
 					call_cntr = --funcctx->call_cntr;
 					break;
@@ -584,8 +580,8 @@ crosstab(PG_FUNCTION_ARGS)
 			if (values[0] != NULL)
 			{
 				/*
-				 * switch to memory context appropriate for multiple
-				 * function calls
+				 * switch to memory context appropriate for multiple function
+				 * calls
 				 */
 				oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
@@ -612,8 +608,8 @@ crosstab(PG_FUNCTION_ARGS)
 			else
 			{
 				/*
-				 * Skipping this tuple entirely, but we need to advance
-				 * the counter like the API would if we had returned one.
+				 * Skipping this tuple entirely, but we need to advance the
+				 * counter like the API would if we had returned one.
 				 */
 				call_cntr = ++funcctx->call_cntr;
 
@@ -631,7 +627,7 @@ crosstab(PG_FUNCTION_ARGS)
 		}
 	}
 	else
-	/* do when there is no more left */
+		/* do when there is no more left */
 	{
 		/* release SPI related resources */
 		SPI_finish();
@@ -730,10 +726,10 @@ crosstab_hash(PG_FUNCTION_ARGS)
 
 	/*
 	 * SFRM_Materialize mode expects us to return a NULL Datum. The actual
-	 * tuples are in our tuplestore and passed back through
-	 * rsinfo->setResult. rsinfo->setDesc is set to the tuple description
-	 * that we actually used to build our tuples with, so the caller can
-	 * verify we did what it was expecting.
+	 * tuples are in our tuplestore and passed back through rsinfo->setResult.
+	 * rsinfo->setDesc is set to the tuple description that we actually used
+	 * to build our tuples with, so the caller can verify we did what it was
+	 * expecting.
 	 */
 	rsinfo->setDesc = tupdesc;
 	MemoryContextSwitchTo(oldcontext);
@@ -758,8 +754,8 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 	ctl.entrysize = sizeof(crosstab_HashEnt);
 
 	/*
-	 * use INIT_CATS, defined above as a guess of how many hash table
-	 * entries to create, initially
+	 * use INIT_CATS, defined above as a guess of how many hash table entries
+	 * to create, initially
 	 */
 	crosstab_HashTable = hash_create("crosstab hash", INIT_CATS, &ctl, HASH_ELEM);
 
@@ -780,8 +776,8 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 		int			i;
 
 		/*
-		 * The provided categories SQL query must always return one
-		 * column: category - the label or identifier for each column
+		 * The provided categories SQL query must always return one column:
+		 * category - the label or identifier for each column
 		 */
 		if (spi_tupdesc->natts != 1)
 			ereport(ERROR,
@@ -872,26 +868,24 @@ get_crosstab_tuplestore(char *sql,
 		}
 
 		/*
-		 * The provided SQL query must always return at least three
-		 * columns:
+		 * The provided SQL query must always return at least three columns:
 		 *
-		 * 1. rowname	the label for each row - column 1 in the final result
-		 * 2. category	the label for each value-column in the final
-		 * result 3. value	   the values used to populate the
-		 * value-columns
+		 * 1. rowname	the label for each row - column 1 in the final result 2.
+		 * category  the label for each value-column in the final result 3.
+		 * value	 the values used to populate the value-columns
 		 *
 		 * If there are more than three columns, the last two are taken as
-		 * "category" and "values". The first column is taken as
-		 * "rowname". Additional columns (2 thru N-2) are assumed the same
-		 * for the same "rowname", and are copied into the result tuple
-		 * from the first time we encounter a particular rowname.
+		 * "category" and "values". The first column is taken as "rowname".
+		 * Additional columns (2 thru N-2) are assumed the same for the same
+		 * "rowname", and are copied into the result tuple from the first time
+		 * we encounter a particular rowname.
 		 */
 		if (ncols < 3)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("invalid source data SQL statement"),
 					 errdetail("The provided SQL must return 3 " \
-							 " columns; rowid, category, and values.")));
+							   " columns; rowid, category, and values.")));
 
 		result_ncols = (ncols - 2) + num_categories;
 
@@ -902,7 +896,7 @@ get_crosstab_tuplestore(char *sql,
 					 errmsg("invalid return type"),
 					 errdetail("query-specified return " \
 							   "tuple has %d columns but crosstab " \
-						   "returns %d", tupdesc->natts, result_ncols)));
+							   "returns %d", tupdesc->natts, result_ncols)));
 
 		/* allocate space */
 		values = (char **) palloc(result_ncols * sizeof(char *));
@@ -933,14 +927,13 @@ get_crosstab_tuplestore(char *sql,
 			if ((lastrowid == NULL) || (strcmp(rowid, lastrowid) != 0))
 			{
 				/*
-				 * a new row means we need to flush the old one first,
-				 * unless we're on the very first row
+				 * a new row means we need to flush the old one first, unless
+				 * we're on the very first row
 				 */
 				if (lastrowid != NULL)
 				{
 					/*
-					 * switch to appropriate context while storing the
-					 * tuple
+					 * switch to appropriate context while storing the tuple
 					 */
 					SPIcontext = MemoryContextSwitchTo(per_query_ctx);
 
@@ -1103,10 +1096,10 @@ connectby_text(PG_FUNCTION_ARGS)
 
 	/*
 	 * SFRM_Materialize mode expects us to return a NULL Datum. The actual
-	 * tuples are in our tuplestore and passed back through
-	 * rsinfo->setResult. rsinfo->setDesc is set to the tuple description
-	 * that we actually used to build our tuples with, so the caller can
-	 * verify we did what it was expecting.
+	 * tuples are in our tuplestore and passed back through rsinfo->setResult.
+	 * rsinfo->setDesc is set to the tuple description that we actually used
+	 * to build our tuples with, so the caller can verify we did what it was
+	 * expecting.
 	 */
 	return (Datum) 0;
 }
@@ -1182,10 +1175,10 @@ connectby_text_serial(PG_FUNCTION_ARGS)
 
 	/*
 	 * SFRM_Materialize mode expects us to return a NULL Datum. The actual
-	 * tuples are in our tuplestore and passed back through
-	 * rsinfo->setResult. rsinfo->setDesc is set to the tuple description
-	 * that we actually used to build our tuples with, so the caller can
-	 * verify we did what it was expecting.
+	 * tuples are in our tuplestore and passed back through rsinfo->setResult.
+	 * rsinfo->setDesc is set to the tuple description that we actually used
+	 * to build our tuples with, so the caller can verify we did what it was
+	 * expecting.
 	 */
 	return (Datum) 0;
 }
@@ -1382,16 +1375,16 @@ build_tuplestore_recursively(char *key_fld,
 		{
 			/*
 			 * Check that return tupdesc is compatible with the one we got
-			 * from the query, but only at level 0 -- no need to check
-			 * more than once
+			 * from the query, but only at level 0 -- no need to check more
+			 * than once
 			 */
 
 			if (!compatConnectbyTupleDescs(tupdesc, spi_tupdesc))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("invalid return type"),
-					 errdetail("Return and SQL tuple descriptions are " \
-							   "incompatible.")));
+						 errdetail("Return and SQL tuple descriptions are " \
+								   "incompatible.")));
 		}
 
 		for (i = 0; i < proc; i++)
@@ -1576,7 +1569,7 @@ compatConnectbyTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("invalid return type"),
 				 errdetail("SQL parent key field datatype does " \
-						"not match return parent key field datatype.")));
+						   "not match return parent key field datatype.")));
 
 	/* OK, the two tupdescs are compatible for our purposes */
 	return true;
@@ -1605,9 +1598,9 @@ compatCrosstabTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 						   "return rowid datatype.")));
 
 	/*
-	 * - attribute [1] of the sql tuple is the category; no need to check
-	 * it - attribute [2] of the sql tuple should match attributes [1] to
-	 * [natts] of the return tuple
+	 * - attribute [1] of the sql tuple is the category; no need to check it -
+	 * attribute [2] of the sql tuple should match attributes [1] to [natts]
+	 * of the return tuple
 	 */
 	sql_attr = sql_tupdesc->attrs[2];
 	for (i = 1; i < ret_tupdesc->natts; i++)

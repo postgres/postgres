@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/port/inet_aton.c,v 1.7 2004/09/27 23:24:45 momjian Exp $
+/* $PostgreSQL: pgsql/src/port/inet_aton.c,v 1.8 2005/10/15 02:49:51 momjian Exp $
  *
  *	This inet_aton() function was taken from the GNU C library and
  *	incorporated into Postgres for those systems which do not have this
@@ -69,8 +69,8 @@ inet_aton(const char *cp, struct in_addr * addr)
 	for (;;)
 	{
 		/*
-		 * Collect number up to ``.''. Values are specified as for C:
-		 * 0x=hex, 0=octal, other=decimal.
+		 * Collect number up to ``.''. Values are specified as for C: 0x=hex,
+		 * 0=octal, other=decimal.
 		 */
 		val = 0;
 		base = 10;
@@ -101,8 +101,8 @@ inet_aton(const char *cp, struct in_addr * addr)
 		if (*cp == '.')
 		{
 			/*
-			 * Internet format: a.b.c.d a.b.c	(with c treated as
-			 * 16-bits) a.b		(with b treated as 24 bits)
+			 * Internet format: a.b.c.d a.b.c	(with c treated as 16-bits)
+			 * a.b	   (with b treated as 24 bits)
 			 */
 			if (pp >= parts + 3 || val > 0xff)
 				return 0;

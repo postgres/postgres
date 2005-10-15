@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/tablespace.h,v 1.10 2005/06/28 05:09:12 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/tablespace.h,v 1.11 2005/10/15 02:49:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,12 +25,12 @@ typedef struct xl_tblspc_create_rec
 {
 	Oid			ts_id;
 	char		ts_path[1];		/* VARIABLE LENGTH STRING */
-}	xl_tblspc_create_rec;
+} xl_tblspc_create_rec;
 
 typedef struct xl_tblspc_drop_rec
 {
 	Oid			ts_id;
-}	xl_tblspc_drop_rec;
+} xl_tblspc_drop_rec;
 
 
 extern void CreateTableSpace(CreateTableSpaceStmt *stmt);

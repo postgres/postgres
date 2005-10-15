@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/pqsignal.c,v 1.40 2005/02/14 23:02:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/pqsignal.c,v 1.41 2005/10/15 02:49:18 momjian Exp $
  *
  * NOTES
  *		This shouldn't be in libpq, but the monitor and some other
@@ -50,7 +50,6 @@
 sigset_t	UnBlockSig,
 			BlockSig,
 			AuthBlockSig;
-
 #else
 int			UnBlockSig,
 			BlockSig,
@@ -83,9 +82,9 @@ pqinitmask(void)
 	sigfillset(&AuthBlockSig);
 
 	/*
-	 * Unmark those signals that should never be blocked. Some of these
-	 * signal names don't exist on all platforms.  Most do, but might as
-	 * well ifdef them all for consistency...
+	 * Unmark those signals that should never be blocked. Some of these signal
+	 * names don't exist on all platforms.  Most do, but might as well ifdef
+	 * them all for consistency...
 	 */
 #ifdef SIGTRAP
 	sigdelset(&BlockSig, SIGTRAP);
@@ -135,7 +134,7 @@ pqinitmask(void)
 	UnBlockSig = 0;
 	BlockSig = sigmask(SIGQUIT) |
 		sigmask(SIGTERM) | sigmask(SIGALRM) |
-		/* common signals between two */
+	/* common signals between two */
 		sigmask(SIGHUP) |
 		sigmask(SIGINT) | sigmask(SIGUSR1) |
 		sigmask(SIGUSR2) | sigmask(SIGCHLD) |

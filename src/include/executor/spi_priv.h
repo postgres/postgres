@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/spi_priv.h,v 1.23 2005/10/01 18:43:19 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/spi_priv.h,v 1.24 2005/10/15 02:49:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@ typedef struct
 	MemoryContext procCxt;		/* procedure context */
 	MemoryContext execCxt;		/* executor context */
 	MemoryContext savedcxt;
-	SubTransactionId connectSubid;	/* ID of connecting subtransaction */
+	SubTransactionId connectSubid;		/* ID of connecting subtransaction */
 } _SPI_connection;
 
 typedef struct

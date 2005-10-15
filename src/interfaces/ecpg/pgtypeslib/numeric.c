@@ -28,7 +28,7 @@
  * ----------
  */
 static int
-apply_typmod(numeric *var, long typmod)
+apply_typmod(numeric * var, long typmod)
 {
 	int			precision;
 	int			scale;
@@ -71,10 +71,10 @@ apply_typmod(numeric *var, long typmod)
 
 	/*
 	 * Check for overflow - note we can't do this before rounding, because
-	 * rounding could raise the weight.  Also note that the var's weight
-	 * could be inflated by leading zeroes, which will be stripped before
-	 * storage but perhaps might not have been yet. In any case, we must
-	 * recognize a true zero, whose weight doesn't mean anything.
+	 * rounding could raise the weight.  Also note that the var's weight could
+	 * be inflated by leading zeroes, which will be stripped before storage
+	 * but perhaps might not have been yet. In any case, we must recognize a
+	 * true zero, whose weight doesn't mean anything.
 	 */
 	if (var->weight >= maxweight)
 	{
@@ -108,7 +108,7 @@ apply_typmod(numeric *var, long typmod)
  * ----------
  */
 static int
-alloc_var(numeric *var, int ndigits)
+alloc_var(numeric * var, int ndigits)
 {
 	digitbuf_free(var->buf);
 	var->buf = digitbuf_alloc(ndigits + 1);
@@ -141,7 +141,7 @@ PGTYPESnumeric_new(void)
  * ----------
  */
 static int
-set_var_from_str(char *str, char **ptr, numeric *dest)
+set_var_from_str(char *str, char **ptr, numeric * dest)
 {
 	bool		have_dp = FALSE;
 	int			i = 0;
@@ -271,7 +271,7 @@ set_var_from_str(char *str, char **ptr, numeric *dest)
  * ----------
  */
 static char *
-get_str_from_var(numeric *var, int dscale)
+get_str_from_var(numeric * var, int dscale)
 {
 	char	   *str;
 	char	   *cp;
@@ -334,8 +334,7 @@ get_str_from_var(numeric *var, int dscale)
 	}
 
 	/*
-	 * If requested, output a decimal point and all the digits that follow
-	 * it.
+	 * If requested, output a decimal point and all the digits that follow it.
 	 */
 	if (dscale > 0)
 	{
@@ -385,7 +384,7 @@ PGTYPESnumeric_from_asc(char *str, char **endptr)
 }
 
 char *
-PGTYPESnumeric_to_asc(numeric *num, int dscale)
+PGTYPESnumeric_to_asc(numeric * num, int dscale)
 {
 	if (dscale < 0)
 		dscale = num->dscale;
@@ -401,7 +400,7 @@ PGTYPESnumeric_to_asc(numeric *num, int dscale)
  * ----------
  */
 static void
-zero_var(numeric *var)
+zero_var(numeric * var)
 {
 	digitbuf_free(var->buf);
 	var->buf = NULL;
@@ -412,7 +411,7 @@ zero_var(numeric *var)
 }
 
 void
-PGTYPESnumeric_free(numeric *var)
+PGTYPESnumeric_free(numeric * var)
 {
 	digitbuf_free(var->buf);
 	free(var);
@@ -428,7 +427,7 @@ PGTYPESnumeric_free(numeric *var)
  * ----------
  */
 static int
-cmp_abs(numeric *var1, numeric *var2)
+cmp_abs(numeric * var1, numeric * var2)
 {
 	int			i1 = 0;
 	int			i2 = 0;
@@ -486,7 +485,7 @@ cmp_abs(numeric *var1, numeric *var2)
  * ----------
  */
 static int
-add_abs(numeric *var1, numeric *var2, numeric *result)
+add_abs(numeric * var1, numeric * var2, numeric * result)
 {
 	NumericDigit *res_buf;
 	NumericDigit *res_digits;
@@ -574,7 +573,7 @@ add_abs(numeric *var1, numeric *var2, numeric *result)
  * ----------
  */
 static int
-sub_abs(numeric *var1, numeric *var2, numeric *result)
+sub_abs(numeric * var1, numeric * var2, numeric * result)
 {
 	NumericDigit *res_buf;
 	NumericDigit *res_digits;
@@ -658,7 +657,7 @@ sub_abs(numeric *var1, numeric *var2, numeric *result)
  * ----------
  */
 int
-PGTYPESnumeric_add(numeric *var1, numeric *var2, numeric *result)
+PGTYPESnumeric_add(numeric * var1, numeric * var2, numeric * result)
 {
 	/*
 	 * Decide on the signs of the two variables what to do
@@ -677,8 +676,7 @@ PGTYPESnumeric_add(numeric *var1, numeric *var2, numeric *result)
 		else
 		{
 			/*
-			 * var1 is positive, var2 is negative Must compare absolute
-			 * values
+			 * var1 is positive, var2 is negative Must compare absolute values
 			 */
 			switch (cmp_abs(var1, var2))
 			{
@@ -787,7 +785,7 @@ PGTYPESnumeric_add(numeric *var1, numeric *var2, numeric *result)
  * ----------
  */
 int
-PGTYPESnumeric_sub(numeric *var1, numeric *var2, numeric *result)
+PGTYPESnumeric_sub(numeric * var1, numeric * var2, numeric * result)
 {
 	/*
 	 * Decide on the signs of the two variables what to do
@@ -918,7 +916,7 @@ PGTYPESnumeric_sub(numeric *var1, numeric *var2, numeric *result)
  * ----------
  */
 int
-PGTYPESnumeric_mul(numeric *var1, numeric *var2, numeric *result)
+PGTYPESnumeric_mul(numeric * var1, numeric * var2, numeric * result)
 {
 	NumericDigit *res_buf;
 	NumericDigit *res_digits;
@@ -1009,7 +1007,7 @@ PGTYPESnumeric_mul(numeric *var1, numeric *var2, numeric *result)
  * Note that this must be called before div_var.
  */
 static int
-select_div_scale(numeric *var1, numeric *var2, int *rscale)
+select_div_scale(numeric * var1, numeric * var2, int *rscale)
 {
 	int			weight1,
 				weight2,
@@ -1021,8 +1019,8 @@ select_div_scale(numeric *var1, numeric *var2, int *rscale)
 	int			res_rscale;
 
 	/*
-	 * The result scale of a division isn't specified in any SQL standard.
-	 * For PostgreSQL we select a display scale that will give at least
+	 * The result scale of a division isn't specified in any SQL standard. For
+	 * PostgreSQL we select a display scale that will give at least
 	 * NUMERIC_MIN_SIG_DIGITS significant digits, so that numeric gives a
 	 * result no less accurate than float8; but use a scale not less than
 	 * either input's display scale.
@@ -1076,7 +1074,7 @@ select_div_scale(numeric *var1, numeric *var2, int *rscale)
 }
 
 int
-PGTYPESnumeric_div(numeric *var1, numeric *var2, numeric *result)
+PGTYPESnumeric_div(numeric * var1, numeric * var2, numeric * result)
 {
 	NumericDigit *res_digits;
 	int			res_ndigits;
@@ -1165,9 +1163,9 @@ PGTYPESnumeric_div(numeric *var1, numeric *var2, numeric *result)
 	memcpy(dividend.digits, var1->digits, var1->ndigits);
 
 	/*
-	 * Setup the result. Do the allocation in a temporary buffer
-	 * first, so we don't free result->buf unless we have successfully
-	 * allocated a buffer to replace it with.
+	 * Setup the result. Do the allocation in a temporary buffer first, so we
+	 * don't free result->buf unless we have successfully allocated a buffer
+	 * to replace it with.
 	 */
 	tmp_buf = digitbuf_alloc(res_ndigits + 2);
 	if (tmp_buf == NULL)
@@ -1284,9 +1282,10 @@ PGTYPESnumeric_div(numeric *var1, numeric *var2, numeric *result)
 		result->sign = NUMERIC_POS;
 
 	result->dscale = res_dscale;
-	err = 0;	/* if we've made it this far, return success */
+	err = 0;					/* if we've made it this far, return success */
 
 done:
+
 	/*
 	 * Tidy up
 	 */
@@ -1304,7 +1303,7 @@ done:
 
 
 int
-PGTYPESnumeric_cmp(numeric *var1, numeric *var2)
+PGTYPESnumeric_cmp(numeric * var1, numeric * var2)
 {
 
 	/* use cmp_abs function to calculate the result */
@@ -1317,8 +1316,7 @@ PGTYPESnumeric_cmp(numeric *var1, numeric *var2)
 	if (var1->sign == NUMERIC_NEG && var2->sign == NUMERIC_NEG)
 	{
 		/*
-		 * instead of inverting the result, we invert the paramter
-		 * ordering
+		 * instead of inverting the result, we invert the paramter ordering
 		 */
 		return cmp_abs(var2, var1);
 	}
@@ -1335,7 +1333,7 @@ PGTYPESnumeric_cmp(numeric *var1, numeric *var2)
 }
 
 int
-PGTYPESnumeric_from_int(signed int int_val, numeric *var)
+PGTYPESnumeric_from_int(signed int int_val, numeric * var)
 {
 	/* implicit conversion */
 	signed long int long_int = int_val;
@@ -1344,14 +1342,14 @@ PGTYPESnumeric_from_int(signed int int_val, numeric *var)
 }
 
 int
-PGTYPESnumeric_from_long(signed long int long_val, numeric *var)
+PGTYPESnumeric_from_long(signed long int long_val, numeric * var)
 {
 	/* calculate the size of the long int number */
 	/* a number n needs log_10 n digits */
 
 	/*
-	 * however we multiply by 10 each time and compare instead of
-	 * calculating the logarithm
+	 * however we multiply by 10 each time and compare instead of calculating
+	 * the logarithm
 	 */
 
 	int			size = 0;
@@ -1405,8 +1403,8 @@ PGTYPESnumeric_from_long(signed long int long_val, numeric *var)
 
 		/*
 		 * we can abandon if abs_long_val reaches 0, because the memory is
-		 * initialized properly and filled with '0', so converting 10000
-		 * in only one step is no problem
+		 * initialized properly and filled with '0', so converting 10000 in
+		 * only one step is no problem
 		 */
 	} while (abs_long_val > 0);
 
@@ -1414,7 +1412,7 @@ PGTYPESnumeric_from_long(signed long int long_val, numeric *var)
 }
 
 int
-PGTYPESnumeric_copy(numeric *src, numeric *dst)
+PGTYPESnumeric_copy(numeric * src, numeric * dst)
 {
 	int			i;
 
@@ -1437,7 +1435,7 @@ PGTYPESnumeric_copy(numeric *src, numeric *dst)
 }
 
 int
-PGTYPESnumeric_from_double(double d, numeric *dst)
+PGTYPESnumeric_from_double(double d, numeric * dst)
 {
 	char		buffer[100];
 	numeric    *tmp;
@@ -1454,7 +1452,7 @@ PGTYPESnumeric_from_double(double d, numeric *dst)
 }
 
 static int
-numericvar_to_double_no_overflow(numeric *var, double *dp)
+numericvar_to_double_no_overflow(numeric * var, double *dp)
 {
 	char	   *tmp;
 	double		val;
@@ -1478,7 +1476,7 @@ numericvar_to_double_no_overflow(numeric *var, double *dp)
 }
 
 int
-PGTYPESnumeric_to_double(numeric *nv, double *dp)
+PGTYPESnumeric_to_double(numeric * nv, double *dp)
 {
 	double		tmp;
 	int			i;
@@ -1490,7 +1488,7 @@ PGTYPESnumeric_to_double(numeric *nv, double *dp)
 }
 
 int
-PGTYPESnumeric_to_int(numeric *nv, int *ip)
+PGTYPESnumeric_to_int(numeric * nv, int *ip)
 {
 	long		l;
 	int			i;
@@ -1509,7 +1507,7 @@ PGTYPESnumeric_to_int(numeric *nv, int *ip)
 }
 
 int
-PGTYPESnumeric_to_long(numeric *nv, long *lp)
+PGTYPESnumeric_to_long(numeric * nv, long *lp)
 {
 	int			i;
 	long		l = 0;
@@ -1537,7 +1535,7 @@ PGTYPESnumeric_to_long(numeric *nv, long *lp)
 }
 
 int
-PGTYPESnumeric_to_decimal(numeric *src, decimal *dst)
+PGTYPESnumeric_to_decimal(numeric * src, decimal * dst)
 {
 	int			i;
 
@@ -1560,7 +1558,7 @@ PGTYPESnumeric_to_decimal(numeric *src, decimal *dst)
 }
 
 int
-PGTYPESnumeric_from_decimal(decimal *src, numeric *dst)
+PGTYPESnumeric_from_decimal(decimal * src, numeric * dst)
 {
 	int			i;
 

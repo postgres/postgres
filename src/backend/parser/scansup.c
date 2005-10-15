@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scansup.c,v 1.29 2004/12/31 22:00:27 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scansup.c,v 1.30 2005/10/15 02:49:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,8 +53,8 @@ scanstr(const char *s)
 		if (s[i] == '\'')
 		{
 			/*
-			 * Note: if scanner is working right, unescaped quotes can
-			 * only appear in pairs, so there should be another character.
+			 * Note: if scanner is working right, unescaped quotes can only
+			 * appear in pairs, so there should be another character.
 			 */
 			i++;
 			newStr[j] = s[i];
@@ -135,13 +135,13 @@ downcase_truncate_identifier(const char *ident, int len, bool warn)
 	result = palloc(len + 1);
 
 	/*
-	 * SQL99 specifies Unicode-aware case normalization, which we don't
-	 * yet have the infrastructure for.  Instead we use tolower() to
-	 * provide a locale-aware translation.	However, there are some
-	 * locales where this is not right either (eg, Turkish may do strange
-	 * things with 'i' and 'I').  Our current compromise is to use
-	 * tolower() for characters with the high bit set, and use an
-	 * ASCII-only downcasing for 7-bit characters.
+	 * SQL99 specifies Unicode-aware case normalization, which we don't yet
+	 * have the infrastructure for.  Instead we use tolower() to provide a
+	 * locale-aware translation.  However, there are some locales where this
+	 * is not right either (eg, Turkish may do strange things with 'i' and
+	 * 'I').  Our current compromise is to use tolower() for characters with
+	 * the high bit set, and use an ASCII-only downcasing for 7-bit
+	 * characters.
 	 */
 	for (i = 0; i < len; i++)
 	{
@@ -179,8 +179,8 @@ truncate_identifier(char *ident, int len, bool warn)
 		if (warn)
 			ereport(NOTICE,
 					(errcode(ERRCODE_NAME_TOO_LONG),
-				errmsg("identifier \"%s\" will be truncated to \"%.*s\"",
-					   ident, len, ident)));
+					 errmsg("identifier \"%s\" will be truncated to \"%.*s\"",
+							ident, len, ident)));
 		ident[len] = '\0';
 	}
 }

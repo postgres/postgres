@@ -63,8 +63,8 @@ gbt_intvkey_cmp(const void *a, const void *b)
 {
 	return DatumGetInt32(
 						 DirectFunctionCall2(interval_cmp,
-									  IntervalPGetDatum(((Nsrt *) a)->t),
-									   IntervalPGetDatum(((Nsrt *) b)->t)
+										  IntervalPGetDatum(((Nsrt *) a)->t),
+										   IntervalPGetDatum(((Nsrt *) b)->t)
 											 )
 		);
 }
@@ -78,7 +78,7 @@ intr2num(const Interval *i)
 
 /*
  * INTERVALSIZE should be the actual size-on-disk of an Interval, as shown
- * in pg_type.  This might be less than sizeof(Interval) if the compiler
+ * in pg_type.	This might be less than sizeof(Interval) if the compiler
  * insists on adding alignment padding at the end of the struct.
  */
 #define INTERVALSIZE 16
@@ -202,7 +202,7 @@ gbt_intv_penalty(PG_FUNCTION_ARGS)
 	inew[0] = intr2num(&newentry->lower);
 	inew[1] = intr2num(&newentry->upper);
 
-	penalty_num(result,iorg[0],iorg[1],inew[0],inew[1]);
+	penalty_num(result, iorg[0], iorg[1], inew[0], inew[1]);
 
 	PG_RETURN_POINTER(result);
 
@@ -212,8 +212,8 @@ Datum
 gbt_intv_picksplit(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_POINTER(gbt_num_picksplit(
-								(GistEntryVector *) PG_GETARG_POINTER(0),
-								  (GIST_SPLITVEC *) PG_GETARG_POINTER(1),
+									(GistEntryVector *) PG_GETARG_POINTER(0),
+									  (GIST_SPLITVEC *) PG_GETARG_POINTER(1),
 										&tinfo
 										));
 }

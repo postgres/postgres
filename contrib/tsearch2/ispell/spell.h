@@ -7,7 +7,7 @@
 
 #include "regis.h"
 #include "dict.h"
- 
+
 struct SPNode;
 
 
@@ -55,9 +55,9 @@ typedef struct aff_struct
 				isregis:1,
 				unused:1,
 				replen:16;
-	char		*mask;
-	char		*find;
-	char		*repl;
+	char	   *mask;
+	char	   *find;
+	char	   *repl;
 	union
 	{
 		regex_t		regex;
@@ -117,7 +117,7 @@ typedef struct
 
 }	IspellDict;
 
-TSLexeme	  *NINormalizeWord(IspellDict * Conf, char *word);
+TSLexeme   *NINormalizeWord(IspellDict * Conf, char *word);
 int			NIImportAffixes(IspellDict * Conf, const char *filename);
 int			NIImportDictionary(IspellDict * Conf, const char *filename);
 

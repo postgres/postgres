@@ -58,8 +58,8 @@ find_struct_member(char *name, char *str, struct ECPGstruct_member * members, in
 					int			count;
 
 					/*
-					 * We don't care about what's inside the array braces
-					 * so just eat up the character
+					 * We don't care about what's inside the array braces so
+					 * just eat up the character
 					 */
 					for (count = 1, end = next + 1; count; end++)
 					{
@@ -81,8 +81,8 @@ find_struct_member(char *name, char *str, struct ECPGstruct_member * members, in
 
 				switch (*end)
 				{
-					case '\0':	/* found the end, but this time it has to
-								 * be an array element */
+					case '\0':	/* found the end, but this time it has to be
+								 * an array element */
 						if (members->type->type != ECPGt_array)
 							mmerror(PARSE_ERROR, ET_FATAL, "incorrectly formed variable %s", name);
 
@@ -198,8 +198,8 @@ find_variable(char *name)
 		if (*next == '[')
 		{
 			/*
-			 * We don't care about what's inside the array braces so just
-			 * eat up the characters
+			 * We don't care about what's inside the array braces so just eat
+			 * up the characters
 			 */
 			for (count = 1, end = next + 1; count; end++)
 			{
@@ -410,8 +410,8 @@ dump_variables(struct arguments * list, int mode)
 		return;
 
 	/*
-	 * The list is build up from the beginning so lets first dump the end
-	 * of the list:
+	 * The list is build up from the beginning so lets first dump the end of
+	 * the list:
 	 */
 
 	dump_variables(list->next, mode);
@@ -550,8 +550,8 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 			if (atoi(*length) < 0)
 			{
 				/*
-				 * make sure we return length = -1 for arrays without
-				 * given bounds
+				 * make sure we return length = -1 for arrays without given
+				 * bounds
 				 */
 				if (atoi(*dimension) < 0 && !type_definition)
 

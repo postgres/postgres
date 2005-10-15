@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.64 2005/08/20 23:26:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.65 2005/10/15 02:49:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,14 +115,14 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 	HASHHDR    *hctl;
 
 	/*
-	 * For shared hash tables, we have a local hash header (HTAB struct)
-	 * that we allocate in TopMemoryContext; all else is in shared memory.
+	 * For shared hash tables, we have a local hash header (HTAB struct) that
+	 * we allocate in TopMemoryContext; all else is in shared memory.
 	 *
-	 * For non-shared hash tables, everything including the hash header
-	 * is in a memory context created specially for the hash table ---
-	 * this makes hash_destroy very simple.  The memory context is made
-	 * a child of either a context specified by the caller, or
-	 * TopMemoryContext if nothing is specified.
+	 * For non-shared hash tables, everything including the hash header is in a
+	 * memory context created specially for the hash table --- this makes
+	 * hash_destroy very simple.  The memory context is made a child of either
+	 * a context specified by the caller, or TopMemoryContext if nothing is
+	 * specified.
 	 */
 	if (flags & HASH_SHARED_MEM)
 	{
@@ -144,7 +144,7 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 	}
 
 	/* Initialize the hash header, plus a copy of the table name */
-	hashp = (HTAB *) DynaHashAlloc(sizeof(HTAB) + strlen(tabname) + 1);
+	hashp = (HTAB *) DynaHashAlloc(sizeof(HTAB) + strlen(tabname) +1);
 	MemSet(hashp, 0, sizeof(HTAB));
 
 	hashp->tabname = (char *) (hashp + 1);
@@ -156,10 +156,9 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 		hashp->hash = string_hash;		/* default hash function */
 
 	/*
-	 * If you don't specify a match function, it defaults to strncmp() if
-	 * you used string_hash (either explicitly or by default) and to
-	 * memcmp() otherwise.	(Prior to PostgreSQL 7.4, memcmp() was always
-	 * used.)
+	 * If you don't specify a match function, it defaults to strncmp() if you
+	 * used string_hash (either explicitly or by default) and to memcmp()
+	 * otherwise.  (Prior to PostgreSQL 7.4, memcmp() was always used.)
 	 */
 	if (flags & HASH_COMPARE)
 		hashp->match = info->match;
@@ -186,8 +185,8 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 	if (flags & HASH_SHARED_MEM)
 	{
 		/*
-		 * ctl structure is preallocated for shared memory tables. Note
-		 * that HASH_DIRSIZE and HASH_ALLOC had better be set as well.
+		 * ctl structure is preallocated for shared memory tables. Note that
+		 * HASH_DIRSIZE and HASH_ALLOC had better be set as well.
 		 */
 		hashp->hctl = info->hctl;
 		hashp->dir = info->dir;
@@ -243,8 +242,8 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 	}
 
 	/*
-	 * hash table now allocates space for key and data but you have to say
-	 * how much space to allocate
+	 * hash table now allocates space for key and data but you have to say how
+	 * much space to allocate
 	 */
 	if (flags & HASH_ELEM)
 	{
@@ -318,8 +317,8 @@ init_htab(HTAB *hashp, long nelem)
 
 	/*
 	 * Divide number of elements by the fill factor to determine a desired
-	 * number of buckets.  Allocate space for the next greater power of
-	 * two number of buckets
+	 * number of buckets.  Allocate space for the next greater power of two
+	 * number of buckets
 	 */
 	lnbuckets = (nelem - 1) / hctl->ffactor + 1;
 
@@ -329,15 +328,14 @@ init_htab(HTAB *hashp, long nelem)
 	hctl->high_mask = (nbuckets << 1) - 1;
 
 	/*
-	 * Figure number of directory segments needed, round up to a power of
-	 * 2
+	 * Figure number of directory segments needed, round up to a power of 2
 	 */
 	nsegs = (nbuckets - 1) / hctl->ssize + 1;
 	nsegs = 1 << my_log2(nsegs);
 
 	/*
-	 * Make sure directory is big enough. If pre-allocated directory is
-	 * too small, choke (caller screwed up).
+	 * Make sure directory is big enough. If pre-allocated directory is too
+	 * small, choke (caller screwed up).
 	 */
 	if (nsegs > hctl->dsize)
 	{
@@ -418,7 +416,7 @@ hash_estimate_size(long num_entries, Size entrysize)
 	size = add_size(size, mul_size(nDirEntries, sizeof(HASHSEGMENT)));
 	/* segments */
 	size = add_size(size, mul_size(nSegments,
-								   MAXALIGN(DEF_SEGSIZE * sizeof(HASHBUCKET))));
+								MAXALIGN(DEF_SEGSIZE * sizeof(HASHBUCKET))));
 	/* elements --- allocated in groups of up to HASHELEMENT_ALLOC_MAX */
 	elementSize = MAXALIGN(sizeof(HASHELEMENT)) + MAXALIGN(entrysize);
 	elementAllocCnt = Min(num_entries, HASHELEMENT_ALLOC_MAX);
@@ -528,7 +526,7 @@ calc_bucket(HASHHDR *hctl, uint32 hash_val)
  * the result is a dangling pointer that shouldn't be dereferenced!)
  *
  * HASH_ENTER will normally ereport a generic "out of memory" error if
- * it is unable to create a new entry.  The HASH_ENTER_NULL operation is
+ * it is unable to create a new entry.	The HASH_ENTER_NULL operation is
  * the same except it will return NULL if out of memory.  Note that
  * HASH_ENTER_NULL cannot be used with the default palloc-based allocator,
  * since palloc internally ereports on out-of-memory.
@@ -623,8 +621,8 @@ hash_search(HTAB *hashp,
 
 				/*
 				 * better hope the caller is synchronizing access to this
-				 * element, because someone else is going to reuse it the
-				 * next time something is added to the table
+				 * element, because someone else is going to reuse it the next
+				 * time something is added to the table
 				 */
 				return (void *) ELEMENTKEY(currBucket);
 			}
@@ -680,9 +678,8 @@ hash_search(HTAB *hashp,
 			if (++hctl->nentries / (long) (hctl->max_bucket + 1) >= hctl->ffactor)
 			{
 				/*
-				 * NOTE: failure to expand table is not a fatal error, it
-				 * just means we have to run at higher fill factor than we
-				 * wanted.
+				 * NOTE: failure to expand table is not a fatal error, it just
+				 * means we have to run at higher fill factor than we wanted.
 				 */
 				expand_table(hashp);
 			}
@@ -731,7 +728,7 @@ hash_seq_search(HASH_SEQ_STATUS *status)
 	{
 		/* Continuing scan of curBucket... */
 		status->curEntry = curElem->link;
-		if (status->curEntry == NULL)		/* end of this bucket */
+		if (status->curEntry == NULL)	/* end of this bucket */
 			++status->curBucket;
 		return (void *) ELEMENTKEY(curElem);
 	}
@@ -746,7 +743,7 @@ hash_seq_search(HASH_SEQ_STATUS *status)
 	max_bucket = hctl->max_bucket;
 
 	if (curBucket > max_bucket)
-		return NULL;						/* search is done */
+		return NULL;			/* search is done */
 
 	/*
 	 * first find the right segment in the table directory.
@@ -768,7 +765,7 @@ hash_seq_search(HASH_SEQ_STATUS *status)
 		if (++curBucket > max_bucket)
 		{
 			status->curBucket = curBucket;
-			return NULL;					/* search is done */
+			return NULL;		/* search is done */
 		}
 		if (++segment_ndx >= ssize)
 		{
@@ -833,10 +830,9 @@ expand_table(HTAB *hashp)
 
 	/*
 	 * *Before* changing masks, find old bucket corresponding to same hash
-	 * values; values in that bucket may need to be relocated to new
-	 * bucket. Note that new_bucket is certainly larger than low_mask at
-	 * this point, so we can skip the first step of the regular hash mask
-	 * calc.
+	 * values; values in that bucket may need to be relocated to new bucket.
+	 * Note that new_bucket is certainly larger than low_mask at this point,
+	 * so we can skip the first step of the regular hash mask calc.
 	 */
 	old_bucket = (new_bucket & hctl->low_mask);
 
@@ -850,10 +846,10 @@ expand_table(HTAB *hashp)
 	}
 
 	/*
-	 * Relocate records to the new bucket.	NOTE: because of the way the
-	 * hash masking is done in calc_bucket, only one old bucket can need
-	 * to be split at this point.  With a different way of reducing the
-	 * hash value, that might not be true!
+	 * Relocate records to the new bucket.	NOTE: because of the way the hash
+	 * masking is done in calc_bucket, only one old bucket can need to be
+	 * split at this point.  With a different way of reducing the hash value,
+	 * that might not be true!
 	 */
 	old_segnum = old_bucket >> hctl->sshift;
 	old_segndx = MOD(old_bucket, hctl->ssize);

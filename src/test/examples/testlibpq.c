@@ -26,9 +26,8 @@ main(int argc, char **argv)
 
 	/*
 	 * If the user supplies a parameter on the command line, use it as the
-	 * conninfo string; otherwise default to setting dbname=postgres and
-	 * using environment variables or defaults for all other connection
-	 * parameters.
+	 * conninfo string; otherwise default to setting dbname=postgres and using
+	 * environment variables or defaults for all other connection parameters.
 	 */
 	if (argc > 1)
 		conninfo = argv[1];
@@ -47,10 +46,10 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 * Our test case here involves using a cursor, for which we must be
-	 * inside a transaction block.	We could do the whole thing with a
-	 * single PQexec() of "select * from pg_database", but that's too
-	 * trivial to make a good example.
+	 * Our test case here involves using a cursor, for which we must be inside
+	 * a transaction block.  We could do the whole thing with a single
+	 * PQexec() of "select * from pg_database", but that's too trivial to make
+	 * a good example.
 	 */
 
 	/* Start a transaction block */
@@ -63,8 +62,8 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 * Should PQclear PGresult whenever it is no longer needed to avoid
-	 * memory leaks
+	 * Should PQclear PGresult whenever it is no longer needed to avoid memory
+	 * leaks
 	 */
 	PQclear(res);
 

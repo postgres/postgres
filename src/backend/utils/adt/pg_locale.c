@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.31 2005/03/16 00:02:49 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.32 2005/10/15 02:49:29 momjian Exp $
  *
  *-----------------------------------------------------------------------
  */
@@ -124,9 +124,9 @@ const char *
 locale_messages_assign(const char *value, bool doit, GucSource source)
 {
 #ifndef WIN32
+
 	/*
-	 * LC_MESSAGES category does not exist everywhere, but accept it
-	 * anyway
+	 * LC_MESSAGES category does not exist everywhere, but accept it anyway
 	 */
 #ifdef LC_MESSAGES
 	if (doit)
@@ -138,16 +138,15 @@ locale_messages_assign(const char *value, bool doit, GucSource source)
 		value = locale_xxx_assign(LC_MESSAGES, value, false, source);
 #endif   /* LC_MESSAGES */
 	return value;
-
-#else /* WIN32 */
+#else							/* WIN32 */
 
 	/*
 	 * Win32 does not have working setlocale() for LC_MESSAGES. We can only
-	 * use environment variables to change it (per gettext FAQ).  This
-	 * means we can't actually check the supplied value, so always assume
-	 * it's good.  Also, ignore attempts to set to "", which really means
-	 * "keep using the old value".  (Actually it means "use the environment
-	 * value", but we are too lazy to try to implement that exactly.)
+	 * use environment variables to change it (per gettext FAQ).  This means
+	 * we can't actually check the supplied value, so always assume it's good.
+	 * Also, ignore attempts to set to "", which really means "keep using the
+	 * old value".  (Actually it means "use the environment value", but we are
+	 * too lazy to try to implement that exactly.)
 	 */
 	if (doit && value[0])
 	{
@@ -160,12 +159,12 @@ locale_messages_assign(const char *value, bool doit, GucSource source)
 		if (!SetEnvironmentVariable("LC_MESSAGES", value))
 			return NULL;
 
-		snprintf(env, sizeof(env)-1, "LC_MESSAGES=%s", value);
+		snprintf(env, sizeof(env) - 1, "LC_MESSAGES=%s", value);
 		if (_putenv(env))
 			return NULL;
 	}
 	return value;
-#endif /* WIN32 */
+#endif   /* WIN32 */
 }
 
 
@@ -289,8 +288,8 @@ PGLC_localeconv(void)
 	extlconv = localeconv();
 
 	/*
-	 * Must copy all values since restoring internal settings may
-	 * overwrite localeconv()'s results.
+	 * Must copy all values since restoring internal settings may overwrite
+	 * localeconv()'s results.
 	 */
 	CurrentLocaleConv = *extlconv;
 	CurrentLocaleConv.currency_symbol = strdup(extlconv->currency_symbol);

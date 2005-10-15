@@ -11,7 +11,7 @@
  *		WHERE ctid IN (tid1, tid2, ...)
  *
  * There is currently no special support for joins involving CTID; in
- * particular nothing corresponding to best_inner_indexscan().  Since it's
+ * particular nothing corresponding to best_inner_indexscan().	Since it's
  * not very useful to store TIDs of one table in another table, there
  * doesn't seem to be enough use-case to justify adding a lot of code
  * for that.
@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/tidpath.c,v 1.24 2005/08/23 20:49:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/tidpath.c,v 1.25 2005/10/15 02:49:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@ static List *TidQualFromRestrictinfo(int varno, List *restrictinfo);
  *
  * If it is, return the pseudoconstant subnode; if not, return NULL.
  *
- * We check that the CTID Var belongs to relation "varno".  That is probably
+ * We check that the CTID Var belongs to relation "varno".	That is probably
  * redundant considering this is only applied to restriction clauses, but
  * let's be safe.
  */

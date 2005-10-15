@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_main.c,v 1.50 2005/06/08 23:02:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_main.c,v 1.51 2005/10/15 02:49:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,10 +106,9 @@ geqo(PlannerInfo *root, int number_of_rels, List *initial_rels)
 	random_init_pool(pool, &evaldata);
 
 /* sort the pool according to cheapest path as fitness */
-	sort_pool(pool);			/* we have to do it only one time, since
-								 * all kids replace the worst individuals
-								 * in future (-> geqo_pool.c:spread_chromo
-								 * ) */
+	sort_pool(pool);			/* we have to do it only one time, since all
+								 * kids replace the worst individuals in
+								 * future (-> geqo_pool.c:spread_chromo ) */
 
 #ifdef GEQO_DEBUG
 	elog(DEBUG1, "GEQO selected %d pool entries, best %.2f, worst %.2f",

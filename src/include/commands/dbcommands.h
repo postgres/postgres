@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/dbcommands.h,v 1.41 2005/07/31 17:19:21 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/dbcommands.h,v 1.42 2005/10/15 02:49:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,14 +27,14 @@ typedef struct xl_dbase_create_rec_old
 	Oid			db_id;
 	char		src_path[1];	/* VARIABLE LENGTH STRING */
 	/* dst_path follows src_path */
-}	xl_dbase_create_rec_old;
+} xl_dbase_create_rec_old;
 
 typedef struct xl_dbase_drop_rec_old
 {
 	/* Records dropping of a single subdirectory incl. contents */
 	Oid			db_id;
 	char		dir_path[1];	/* VARIABLE LENGTH STRING */
-}	xl_dbase_drop_rec_old;
+} xl_dbase_drop_rec_old;
 
 typedef struct xl_dbase_create_rec
 {
@@ -43,14 +43,14 @@ typedef struct xl_dbase_create_rec
 	Oid			tablespace_id;
 	Oid			src_db_id;
 	Oid			src_tablespace_id;
-}	xl_dbase_create_rec;
+} xl_dbase_create_rec;
 
 typedef struct xl_dbase_drop_rec
 {
 	/* Records dropping of a single subdirectory incl. contents */
 	Oid			db_id;
 	Oid			tablespace_id;
-}	xl_dbase_drop_rec;
+} xl_dbase_drop_rec;
 
 extern void createdb(const CreatedbStmt *stmt);
 extern void dropdb(const char *dbname);

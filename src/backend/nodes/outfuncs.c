@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.260 2005/08/27 22:13:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.261 2005/10/15 02:49:18 momjian Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -113,9 +113,9 @@ _outToken(StringInfo str, char *s)
 	}
 
 	/*
-	 * Look for characters or patterns that are treated specially by
-	 * read.c (either in pg_strtok() or in nodeRead()), and therefore need
-	 * a protective backslash.
+	 * Look for characters or patterns that are treated specially by read.c
+	 * (either in pg_strtok() or in nodeRead()), and therefore need a
+	 * protective backslash.
 	 */
 	/* These characters only need to be quoted at the start of the string */
 	if (*s == '<' ||
@@ -151,8 +151,8 @@ _outList(StringInfo str, List *node)
 	{
 		/*
 		 * For the sake of backward compatibility, we emit a slightly
-		 * different whitespace format for lists of nodes vs. other types
-		 * of lists. XXX: is this necessary?
+		 * different whitespace format for lists of nodes vs. other types of
+		 * lists. XXX: is this necessary?
 		 */
 		if (IsA(node, List))
 		{
@@ -1444,9 +1444,9 @@ _outQuery(StringInfo str, Query *node)
 	/*
 	 * Hack to work around missing outfuncs routines for a lot of the
 	 * utility-statement node types.  (The only one we actually *need* for
-	 * rules support is NotifyStmt.)  Someday we ought to support 'em all,
-	 * but for the meantime do this to avoid getting lots of warnings when
-	 * running with debug_print_parse on.
+	 * rules support is NotifyStmt.)  Someday we ought to support 'em all, but
+	 * for the meantime do this to avoid getting lots of warnings when running
+	 * with debug_print_parse on.
 	 */
 	if (node->utilityStmt)
 	{
@@ -1616,8 +1616,8 @@ _outValue(StringInfo str, Value *value)
 		case T_Float:
 
 			/*
-			 * We assume the value is a valid numeric literal and so does
-			 * not need quoting.
+			 * We assume the value is a valid numeric literal and so does not
+			 * need quoting.
 			 */
 			appendStringInfoString(str, value->val.str);
 			break;
@@ -2099,9 +2099,8 @@ _outNode(StringInfo str, void *obj)
 			default:
 
 				/*
-				 * This should be an ERROR, but it's too useful to be able
-				 * to dump structures that _outNode only understands part
-				 * of.
+				 * This should be an ERROR, but it's too useful to be able to
+				 * dump structures that _outNode only understands part of.
 				 */
 				elog(WARNING, "could not dump unrecognized node type: %d",
 					 (int) nodeTag(obj));

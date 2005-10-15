@@ -29,7 +29,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/include/regex/regex.h,v 1.27 2005/07/10 04:54:32 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/regex/regex.h,v 1.28 2005/10/15 02:49:46 momjian Exp $
  */
 
 /*
@@ -109,8 +109,7 @@ typedef struct
 #define REG_NLANCH	000200		/* ^ matches after \n, $ before */
 #define REG_NEWLINE 000300		/* newlines are line terminators */
 #define REG_PEND	000400		/* ugh -- backward-compatibility hack */
-#define REG_EXPECT	001000		/* report details on partial/limited
-								 * matches */
+#define REG_EXPECT	001000		/* report details on partial/limited matches */
 #define REG_BOSONLY 002000		/* temporary kludge for BOS-only matches */
 #define REG_DUMP	004000		/* none of your business :-) */
 #define REG_FAKE	010000		/* none of your business :-) */
@@ -150,8 +149,7 @@ typedef struct
 #define REG_BADRPT	13			/* quantifier operand invalid */
 #define REG_ASSERT	15			/* "can't happen" -- you found a bug */
 #define REG_INVARG	16			/* invalid argument to regex function */
-#define REG_MIXED	17			/* character widths of regex and string
-								 * differ */
+#define REG_MIXED	17			/* character widths of regex and string differ */
 #define REG_BADOPT	18			/* invalid embedded option */
 /* two specials for debugging and testing */
 #define REG_ATOI	101			/* convert error-code name to number */

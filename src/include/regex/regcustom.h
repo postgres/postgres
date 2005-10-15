@@ -25,7 +25,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/include/regex/regcustom.h,v 1.4 2004/05/07 00:24:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/regex/regcustom.h,v 1.5 2005/10/15 02:49:46 momjian Exp $
  */
 
 /* headers if any */
@@ -46,13 +46,10 @@
 /* internal character type and related */
 typedef pg_wchar chr;			/* the type itself */
 typedef unsigned uchr;			/* unsigned type that will hold a chr */
-typedef int celt;				/* type to hold chr, MCCE number, or
-								 * NOCELT */
+typedef int celt;				/* type to hold chr, MCCE number, or NOCELT */
 
-#define NOCELT	(-1)			/* celt value which is not valid chr or
-								 * MCCE */
-#define CHR(c)	((unsigned char) (c))	/* turn char literal into chr
-										 * literal */
+#define NOCELT	(-1)			/* celt value which is not valid chr or MCCE */
+#define CHR(c)	((unsigned char) (c))	/* turn char literal into chr literal */
 #define DIGITVAL(c) ((c)-'0')	/* turn chr digit into its value */
 #define CHRBITS 32				/* bits in a chr; must not use sizeof */
 #define CHR_MIN 0x00000000		/* smallest and largest chr; the value */

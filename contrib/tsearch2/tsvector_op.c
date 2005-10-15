@@ -106,7 +106,7 @@ setweight(PG_FUNCTION_ARGS)
 			p = POSDATAPTR(out, entry);
 			while (j--)
 			{
-				WEP_SETWEIGHT(*p,w);
+				WEP_SETWEIGHT(*p, w);
 				p++;
 			}
 		}

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_jp_and_sjis/euc_jp_and_sjis.c,v 1.12 2005/09/24 17:53:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_jp_and_sjis/euc_jp_and_sjis.c,v 1.13 2005/10/15 02:49:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -462,7 +462,7 @@ euc_jp2sjis(unsigned char *euc, unsigned char *p, int len)
 
 	while (euc_end >= euc && (c1 = *euc++))
 	{
-		if(c1 < 0x80)
+		if (c1 < 0x80)
 		{
 			/* should be ASCII */
 			*p++ = c1;
@@ -487,7 +487,8 @@ euc_jp2sjis(unsigned char *euc, unsigned char *p, int len)
 			}
 			else
 			{
-				int			i, k2;
+				int			i,
+							k2;
 
 				/* IBM kanji */
 				for (i = 0;; i++)
@@ -508,9 +509,9 @@ euc_jp2sjis(unsigned char *euc, unsigned char *p, int len)
 					}
 				}
 			}
-		} 
+		}
 		else
-		{	
+		{
 			/* JIS X0208 kanji? */
 			c2 = *euc++;
 			k = (c1 << 8) | (c2 & 0xff);
@@ -543,7 +544,7 @@ sjis2euc_jp(unsigned char *sjis, unsigned char *p, int len)
 
 	while (sjis_end >= sjis && (c1 = *sjis++))
 	{
-		if(c1 < 0x80)
+		if (c1 < 0x80)
 		{
 			/* should be ASCII */
 			*p++ = c1;
@@ -643,4 +644,3 @@ sjis2euc_jp(unsigned char *sjis, unsigned char *p, int len)
 	}
 	*p = '\0';
 }
-

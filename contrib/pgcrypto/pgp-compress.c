@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-compress.c,v 1.4 2005/07/18 17:09:01 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-compress.c,v 1.5 2005/10/15 02:49:06 momjian Exp $
  */
 
 #include "postgres.h"
@@ -180,12 +180,12 @@ compress_free(void *priv)
 }
 
 static const PushFilterOps
-compress_filter = {
+			compress_filter = {
 	compress_init, compress_process, compress_flush, compress_free
 };
 
 int
-pgp_compress_filter(PushFilter **res, PGP_Context *ctx, PushFilter *dst)
+pgp_compress_filter(PushFilter ** res, PGP_Context * ctx, PushFilter * dst)
 {
 	return pushf_create(res, &compress_filter, ctx, dst);
 }
@@ -195,8 +195,8 @@ pgp_compress_filter(PushFilter **res, PGP_Context *ctx, PushFilter *dst)
  */
 struct DecomprData
 {
-	int			buf_len;  /* = ZIP_OUT_BUF */
-	int			buf_data; /* available data */
+	int			buf_len;		/* = ZIP_OUT_BUF */
+	int			buf_data;		/* available data */
 	uint8	   *pos;
 	z_stream	stream;
 	int			eof;
@@ -204,14 +204,14 @@ struct DecomprData
 };
 
 static int
-decompress_init(void **priv_p, void *arg, PullFilter *src)
+decompress_init(void **priv_p, void *arg, PullFilter * src)
 {
 	PGP_Context *ctx = arg;
 	struct DecomprData *dec;
-	int res;
+	int			res;
 
 	if (ctx->compress_algo != PGP_COMPR_ZLIB
-			&& ctx->compress_algo != PGP_COMPR_ZIP)
+		&& ctx->compress_algo != PGP_COMPR_ZIP)
 		return PXE_PGP_UNSUPPORTED_COMPR;
 
 	dec = px_alloc(sizeof(*dec));
@@ -232,15 +232,16 @@ decompress_init(void **priv_p, void *arg, PullFilter *src)
 		px_debug("decompress_init: inflateInit error");
 		return PXE_PGP_COMPRESSION_ERROR;
 	}
-	
+
 	return 0;
 }
 
-static int decompress_read(void *priv, PullFilter *src, int len,
-			uint8 **data_p, uint8 *buf, int buflen)
+static int
+decompress_read(void *priv, PullFilter * src, int len,
+				uint8 **data_p, uint8 *buf, int buflen)
 {
-	int res;
-	int flush;
+	int			res;
+	int			flush;
 	struct DecomprData *dec = priv;
 
 restart:
@@ -256,24 +257,26 @@ restart:
 
 	if (dec->eof)
 		return 0;
-	
-	if (dec->stream.avail_in == 0) {
-		uint8 *tmp;
+
+	if (dec->stream.avail_in == 0)
+	{
+		uint8	   *tmp;
+
 		res = pullf_read(src, 8192, &tmp);
 		if (res < 0)
 			return res;
 		dec->stream.next_in = tmp;
 		dec->stream.avail_in = res;
 	}
-	
+
 	dec->stream.next_out = dec->buf;
 	dec->stream.avail_out = dec->buf_len;
 	dec->pos = dec->buf;
 
 	/*
-	 * Z_SYNC_FLUSH is tell zlib to output as much as possible.
-	 * It should do it anyway (Z_NO_FLUSH), but seems to reserve
-	 * the right not to.  So lets follow the API.
+	 * Z_SYNC_FLUSH is tell zlib to output as much as possible. It should do
+	 * it anyway (Z_NO_FLUSH), but seems to reserve the right not to.  So lets
+	 * follow the API.
 	 */
 	flush = dec->stream.avail_in ? Z_SYNC_FLUSH : Z_FINISH;
 	res = inflate(&dec->stream, flush);
@@ -289,39 +292,38 @@ restart:
 	goto restart;
 }
 
-static void decompress_free(void *priv)
+static void
+decompress_free(void *priv)
 {
 	struct DecomprData *dec = priv;
+
 	inflateEnd(&dec->stream);
 	memset(dec, 0, sizeof(*dec));
 	px_free(dec);
 }
 
 static const PullFilterOps
-decompress_filter = {
+			decompress_filter = {
 	decompress_init, decompress_read, decompress_free
 };
 
 int
-pgp_decompress_filter(PullFilter **res, PGP_Context *ctx, PullFilter *src)
+pgp_decompress_filter(PullFilter ** res, PGP_Context * ctx, PullFilter * src)
 {
 	return pullf_create(res, &decompress_filter, ctx, src);
 }
-
-#else /* DISABLE_ZLIB */
+#else							/* DISABLE_ZLIB */
 
 int
-pgp_compress_filter(PushFilter **res, PGP_Context *ctx, PushFilter *dst)
+pgp_compress_filter(PushFilter ** res, PGP_Context * ctx, PushFilter * dst)
 {
 	return PXE_PGP_UNSUPPORTED_COMPR;
 }
 
 int
-pgp_decompress_filter(PullFilter **res, PGP_Context *ctx, PullFilter *src)
+pgp_decompress_filter(PullFilter ** res, PGP_Context * ctx, PullFilter * src)
 {
 	return PXE_PGP_UNSUPPORTED_COMPR;
 }
 
 #endif
-
-

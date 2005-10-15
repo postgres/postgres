@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-info.c,v 1.3 2005/08/13 02:06:20 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-info.c,v 1.4 2005/10/15 02:49:06 momjian Exp $
  */
 #include "postgres.h"
 
@@ -34,9 +34,10 @@
 #include "mbuf.h"
 #include "pgp.h"
 
-static int read_pubkey_keyid(PullFilter *pkt, uint8 *keyid_buf)
+static int
+read_pubkey_keyid(PullFilter * pkt, uint8 *keyid_buf)
 {
-	int res;
+	int			res;
 	PGP_PubKey *pk = NULL;
 
 	res = _pgp_read_public_key(pkt, &pk);
@@ -66,10 +67,11 @@ err:
 	return res;
 }
 
-static int read_pubenc_keyid(PullFilter *pkt, uint8 *keyid_buf)
+static int
+read_pubenc_keyid(PullFilter * pkt, uint8 *keyid_buf)
 {
-	uint8 ver;
-	int res;
+	uint8		ver;
+	int			res;
 
 	GETBYTE(pkt, ver);
 	if (ver != 3)
@@ -87,45 +89,50 @@ static const char hextbl[] = "0123456789ABCDEF";
 static int
 print_key(uint8 *keyid, char *dst)
 {
-	int i;
-	unsigned c;
-	for (i = 0; i < 8; i++) {
+	int			i;
+	unsigned	c;
+
+	for (i = 0; i < 8; i++)
+	{
 		c = keyid[i];
 		*dst++ = hextbl[(c >> 4) & 0x0F];
 		*dst++ = hextbl[c & 0x0F];
 	}
 	*dst = 0;
-	return 8*2;
+	return 8 * 2;
 }
 
-static const uint8 any_key[] = 
-{ 0, 0, 0, 0,  0, 0, 0, 0 };
+static const uint8 any_key[] =
+{0, 0, 0, 0, 0, 0, 0, 0};
 
 /*
  * dst should have room for 17 bytes
  */
 int
-pgp_get_keyid(MBuf *pgp_data, char *dst)
+pgp_get_keyid(MBuf * pgp_data, char *dst)
 {
-	int res;
+	int			res;
 	PullFilter *src;
 	PullFilter *pkt = NULL;
-	int len;
-	uint8 tag;
-	int got_pub_key=0, got_symenc_key=0, got_pubenc_key=0;
-	int got_data=0;
-	uint8 keyid_buf[8];
-	int got_main_key=0;
+	int			len;
+	uint8		tag;
+	int			got_pub_key = 0,
+				got_symenc_key = 0,
+				got_pubenc_key = 0;
+	int			got_data = 0;
+	uint8		keyid_buf[8];
+	int			got_main_key = 0;
 
 
 	res = pullf_create_mbuf_reader(&src, pgp_data);
 	if (res < 0)
 		return res;
 
-	while (1) {
+	while (1)
+	{
 		res = pgp_parse_pkt_hdr(src, &tag, &len, 0);
 		if (res <= 0)
-			break;				
+			break;
 		res = pgp_create_pkt_reader(&pkt, src, len, res, NULL);
 		if (res < 0)
 			break;
@@ -226,4 +233,3 @@ pgp_get_keyid(MBuf *pgp_data, char *dst)
 
 	return res;
 }
-

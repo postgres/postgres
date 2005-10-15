@@ -7,7 +7,7 @@
  *
  * 1999/1/15 Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_tw_and_big5/big5.c,v 1.5 2004/08/30 02:54:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_tw_and_big5/big5.c,v 1.6 2005/10/15 02:49:34 momjian Exp $
  */
 
 /* can be used in either frontend or backend */
@@ -19,7 +19,7 @@ typedef struct
 {
 	unsigned short code,
 				peer;
-} codes_t;
+}	codes_t;
 
 /* map Big5 Level 1 to CNS 11643-1992 Plane 1 */
 static codes_t big5Level1ToCnsPlane1[25] = {	/* range */
@@ -205,7 +205,7 @@ static unsigned short b2c3[][2] = {
 };
 
 static unsigned short BinarySearchRange
-			(codes_t *array, int high, unsigned short code)
+			(codes_t * array, int high, unsigned short code)
 {
 	int			low,
 				mid,
@@ -230,24 +230,24 @@ static unsigned short BinarySearchRange
 
 				/*
 				 * NOTE: big5 high_byte: 0xa1-0xfe, low_byte: 0x40-0x7e,
-				 * 0xa1-0xfe (radicals: 0x00-0x3e, 0x3f-0x9c) big5 radix
-				 * is 0x9d.						[region_low, region_high]
-				 * We should remember big5 has two different regions
-				 * (above). There is a bias for the distance between these
-				 * regions. 0xa1 - 0x7e + bias = 1 (Distance between 0xa1
-				 * and 0x7e is 1.) bias = - 0x22.
+				 * 0xa1-0xfe (radicals: 0x00-0x3e, 0x3f-0x9c) big5 radix is
+				 * 0x9d.					 [region_low, region_high] We
+				 * should remember big5 has two different regions (above).
+				 * There is a bias for the distance between these regions.
+				 * 0xa1 - 0x7e + bias = 1 (Distance between 0xa1 and 0x7e is
+				 * 1.) bias = - 0x22.
 				 */
 				distance = tmp * 0x9d + high - low +
 					(high >= 0xa1 ? (low >= 0xa1 ? 0 : -0x22)
 					 : (low >= 0xa1 ? +0x22 : 0));
 
 				/*
-				 * NOTE: we have to convert the distance into a code
-				 * point. The code point's low_byte is 0x21 plus mod_0x5e.
-				 * In the first, we extract the mod_0x5e of the starting
-				 * code point, subtracting 0x21, and add distance to it.
-				 * Then we calculate again mod_0x5e of them, and restore
-				 * the final codepoint, adding 0x21.
+				 * NOTE: we have to convert the distance into a code point.
+				 * The code point's low_byte is 0x21 plus mod_0x5e. In the
+				 * first, we extract the mod_0x5e of the starting code point,
+				 * subtracting 0x21, and add distance to it. Then we calculate
+				 * again mod_0x5e of them, and restore the final codepoint,
+				 * adding 0x21.
 				 */
 				tmp = (array[mid].peer & 0x00ff) + distance - 0x21;
 				tmp = (array[mid].peer & 0xff00) + ((tmp / 0x5e) << 8)
@@ -260,9 +260,8 @@ static unsigned short BinarySearchRange
 				tmp = ((code & 0xff00) - (array[mid].code & 0xff00)) >> 8;
 
 				/*
-				 * NOTE: ISO charsets ranges between 0x21-0xfe
-				 * (94charset). Its radix is 0x5e. But there is no
-				 * distance bias like big5.
+				 * NOTE: ISO charsets ranges between 0x21-0xfe (94charset).
+				 * Its radix is 0x5e. But there is no distance bias like big5.
 				 */
 				distance = tmp * 0x5e
 					+ ((int) (code & 0x00ff) - (int) (array[mid].code & 0x00ff));

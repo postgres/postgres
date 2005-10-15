@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.103 2005/08/12 01:35:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.104 2005/10/15 02:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace)
 	namestrcpy(&name, typeName);
 	values[i++] = NameGetDatum(&name);	/* typname */
 	values[i++] = ObjectIdGetDatum(typeNamespace);		/* typnamespace */
-	values[i++] = ObjectIdGetDatum(GetUserId());	/* typowner */
+	values[i++] = ObjectIdGetDatum(GetUserId());		/* typowner */
 	values[i++] = Int16GetDatum(0);		/* typlen */
 	values[i++] = BoolGetDatum(false);	/* typbyval */
 	values[i++] = CharGetDatum(0);		/* typtype */
@@ -180,8 +180,8 @@ TypeCreate(const char *typeName,
 	int			i;
 
 	/*
-	 * We assume that the caller validated the arguments individually, but
-	 * did not check for bad combinations.
+	 * We assume that the caller validated the arguments individually, but did
+	 * not check for bad combinations.
 	 *
 	 * Validate size specifications: either positive (fixed-length) or -1
 	 * (varlena) or -2 (cstring).  Pass-by-value types must have a fixed
@@ -198,8 +198,8 @@ TypeCreate(const char *typeName,
 		(internalSize <= 0 || internalSize > (int16) sizeof(Datum)))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-		   errmsg("internal size %d is invalid for passed-by-value type",
-				  internalSize)));
+			   errmsg("internal size %d is invalid for passed-by-value type",
+					  internalSize)));
 
 	/* Only varlena types can be toasted */
 	if (storage != 'p' && internalSize != -1)
@@ -224,7 +224,7 @@ TypeCreate(const char *typeName,
 	namestrcpy(&name, typeName);
 	values[i++] = NameGetDatum(&name);	/* typname */
 	values[i++] = ObjectIdGetDatum(typeNamespace);		/* typnamespace */
-	values[i++] = ObjectIdGetDatum(GetUserId());	/* typowner */
+	values[i++] = ObjectIdGetDatum(GetUserId());		/* typowner */
 	values[i++] = Int16GetDatum(internalSize);	/* typlen */
 	values[i++] = BoolGetDatum(passedByValue);	/* typbyval */
 	values[i++] = CharGetDatum(typeType);		/* typtype */
@@ -245,8 +245,8 @@ TypeCreate(const char *typeName,
 	values[i++] = Int32GetDatum(typNDims);		/* typndims */
 
 	/*
-	 * initialize the default binary value for this type.  Check for nulls
-	 * of course.
+	 * initialize the default binary value for this type.  Check for nulls of
+	 * course.
 	 */
 	if (defaultTypeBin)
 		values[i] = DirectFunctionCall1(textin,
@@ -260,7 +260,7 @@ TypeCreate(const char *typeName,
 	 */
 	if (defaultTypeValue)
 		values[i] = DirectFunctionCall1(textin,
-									  CStringGetDatum(defaultTypeValue));
+										CStringGetDatum(defaultTypeValue));
 	else
 		nulls[i] = 'n';
 	i++;						/* typdefault */
@@ -356,8 +356,7 @@ TypeCreate(const char *typeName,
 void
 GenerateTypeDependencies(Oid typeNamespace,
 						 Oid typeObjectId,
-						 Oid relationOid,		/* only for 'c'atalog
-												 * types */
+						 Oid relationOid,		/* only for 'c'atalog types */
 						 char relationKind,		/* ditto */
 						 Oid owner,
 						 Oid inputProcedure,
@@ -436,13 +435,12 @@ GenerateTypeDependencies(Oid typeNamespace,
 
 	/*
 	 * If the type is a rowtype for a relation, mark it as internally
-	 * dependent on the relation, *unless* it is a stand-alone composite
-	 * type relation. For the latter case, we have to reverse the
-	 * dependency.
+	 * dependent on the relation, *unless* it is a stand-alone composite type
+	 * relation. For the latter case, we have to reverse the dependency.
 	 *
 	 * In the former case, this allows the type to be auto-dropped when the
-	 * relation is, and not otherwise. And in the latter, of course we get
-	 * the opposite effect.
+	 * relation is, and not otherwise. And in the latter, of course we get the
+	 * opposite effect.
 	 */
 	if (OidIsValid(relationOid))
 	{
@@ -457,11 +455,10 @@ GenerateTypeDependencies(Oid typeNamespace,
 	}
 
 	/*
-	 * If the type is an array type, mark it auto-dependent on the base
-	 * type.  (This is a compromise between the typical case where the
-	 * array type is automatically generated and the case where it is
-	 * manually created: we'd prefer INTERNAL for the former case and
-	 * NORMAL for the latter.)
+	 * If the type is an array type, mark it auto-dependent on the base type.
+	 * (This is a compromise between the typical case where the array type is
+	 * automatically generated and the case where it is manually created: we'd
+	 * prefer INTERNAL for the former case and NORMAL for the latter.)
 	 */
 	if (OidIsValid(elementType))
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.53 2005/06/13 02:26:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.54 2005/10/15 02:49:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -328,7 +328,7 @@ lo_create(PGconn *conn, Oid lobjId)
 	if (conn->lobjfuncs->fn_lo_create == 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-		   libpq_gettext("cannot determine OID of function lo_create\n"));
+			  libpq_gettext("cannot determine OID of function lo_create\n"));
 		return InvalidOid;
 	}
 
@@ -453,8 +453,8 @@ lo_import(PGconn *conn, const char *filename)
 		char		sebuf[256];
 
 		printfPQExpBuffer(&conn->errorMessage,
-					   libpq_gettext("could not open file \"%s\": %s\n"),
-					  filename, pqStrerror(errno, sebuf, sizeof(sebuf)));
+						  libpq_gettext("could not open file \"%s\": %s\n"),
+						  filename, pqStrerror(errno, sebuf, sizeof(sebuf)));
 		return InvalidOid;
 	}
 
@@ -465,7 +465,7 @@ lo_import(PGconn *conn, const char *filename)
 	if (lobjOid == InvalidOid)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-		libpq_gettext("could not create large object for file \"%s\"\n"),
+			libpq_gettext("could not create large object for file \"%s\"\n"),
 						  filename);
 		(void) close(fd);
 		return InvalidOid;
@@ -475,7 +475,7 @@ lo_import(PGconn *conn, const char *filename)
 	if (lobj == -1)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-					   libpq_gettext("could not open large object %u\n"),
+						  libpq_gettext("could not open large object %u\n"),
 						  lobjOid);
 		(void) close(fd);
 		return InvalidOid;
@@ -490,7 +490,7 @@ lo_import(PGconn *conn, const char *filename)
 		if (tmp < nbytes)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-					  libpq_gettext("error while reading file \"%s\"\n"),
+						  libpq_gettext("error while reading file \"%s\"\n"),
 							  filename);
 			(void) close(fd);
 			(void) lo_close(conn, lobj);
@@ -525,7 +525,7 @@ lo_export(PGconn *conn, Oid lobjId, const char *filename)
 	if (lobj == -1)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-			  libpq_gettext("could not open large object %u\n"), lobjId);
+				  libpq_gettext("could not open large object %u\n"), lobjId);
 		return -1;
 	}
 
@@ -538,8 +538,8 @@ lo_export(PGconn *conn, Oid lobjId, const char *filename)
 		char		sebuf[256];
 
 		printfPQExpBuffer(&conn->errorMessage,
-					   libpq_gettext("could not open file \"%s\": %s\n"),
-					  filename, pqStrerror(errno, sebuf, sizeof(sebuf)));
+						  libpq_gettext("could not open file \"%s\": %s\n"),
+						  filename, pqStrerror(errno, sebuf, sizeof(sebuf)));
 		(void) lo_close(conn, lobj);
 		return -1;
 	}
@@ -553,7 +553,7 @@ lo_export(PGconn *conn, Oid lobjId, const char *filename)
 		if (tmp < nbytes)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-				   libpq_gettext("error while writing to file \"%s\"\n"),
+					   libpq_gettext("error while writing to file \"%s\"\n"),
 							  filename);
 			(void) lo_close(conn, lobj);
 			(void) close(fd);
@@ -566,7 +566,7 @@ lo_export(PGconn *conn, Oid lobjId, const char *filename)
 	if (close(fd))
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-				   libpq_gettext("error while writing to file \"%s\"\n"),
+					   libpq_gettext("error while writing to file \"%s\"\n"),
 						  filename);
 		return -1;
 	}
@@ -605,9 +605,8 @@ lo_initialize(PGconn *conn)
 	MemSet((char *) lobjfuncs, 0, sizeof(PGlobjfuncs));
 
 	/*
-	 * Execute the query to get all the functions at once.	In 7.3 and
-	 * later we need to be schema-safe.  lo_create only exists in 8.1
-	 * and up.
+	 * Execute the query to get all the functions at once.	In 7.3 and later
+	 * we need to be schema-safe.  lo_create only exists in 8.1 and up.
 	 */
 	if (conn->sversion >= 70300)
 		query = "select proname, oid from pg_catalog.pg_proc "
@@ -680,62 +679,62 @@ lo_initialize(PGconn *conn)
 	PQclear(res);
 
 	/*
-	 * Finally check that we really got all large object interface
-	 * functions --- except lo_create, which may not exist.
+	 * Finally check that we really got all large object interface functions
+	 * --- except lo_create, which may not exist.
 	 */
 	if (lobjfuncs->fn_lo_open == 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-			libpq_gettext("cannot determine OID of function lo_open\n"));
+				libpq_gettext("cannot determine OID of function lo_open\n"));
 		free(lobjfuncs);
 		return -1;
 	}
 	if (lobjfuncs->fn_lo_close == 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-		   libpq_gettext("cannot determine OID of function lo_close\n"));
+			   libpq_gettext("cannot determine OID of function lo_close\n"));
 		free(lobjfuncs);
 		return -1;
 	}
 	if (lobjfuncs->fn_lo_creat == 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-		   libpq_gettext("cannot determine OID of function lo_creat\n"));
+			   libpq_gettext("cannot determine OID of function lo_creat\n"));
 		free(lobjfuncs);
 		return -1;
 	}
 	if (lobjfuncs->fn_lo_unlink == 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-		  libpq_gettext("cannot determine OID of function lo_unlink\n"));
+			  libpq_gettext("cannot determine OID of function lo_unlink\n"));
 		free(lobjfuncs);
 		return -1;
 	}
 	if (lobjfuncs->fn_lo_lseek == 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-		   libpq_gettext("cannot determine OID of function lo_lseek\n"));
+			   libpq_gettext("cannot determine OID of function lo_lseek\n"));
 		free(lobjfuncs);
 		return -1;
 	}
 	if (lobjfuncs->fn_lo_tell == 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-			libpq_gettext("cannot determine OID of function lo_tell\n"));
+				libpq_gettext("cannot determine OID of function lo_tell\n"));
 		free(lobjfuncs);
 		return -1;
 	}
 	if (lobjfuncs->fn_lo_read == 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-			 libpq_gettext("cannot determine OID of function loread\n"));
+				 libpq_gettext("cannot determine OID of function loread\n"));
 		free(lobjfuncs);
 		return -1;
 	}
 	if (lobjfuncs->fn_lo_write == 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-			libpq_gettext("cannot determine OID of function lowrite\n"));
+				libpq_gettext("cannot determine OID of function lowrite\n"));
 		free(lobjfuncs);
 		return -1;
 	}

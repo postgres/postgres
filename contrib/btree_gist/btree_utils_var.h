@@ -28,7 +28,8 @@ typedef struct
 	/* Attribs */
 
 	enum gbtree_type t;			/* data type */
-	int32		eml;			/* cached pg_database_encoding_max_length (0: undefined) */
+	int32		eml;			/* cached pg_database_encoding_max_length (0:
+								 * undefined) */
 	bool		trnc;			/* truncate (=compress) key */
 
 	/* Methods */

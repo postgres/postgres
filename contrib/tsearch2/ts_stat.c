@@ -505,10 +505,10 @@ ts_stat_sql(text *txt, text *ws)
 			if (!isnull)
 			{
 				newstat = (tsstat *) DatumGetPointer(DirectFunctionCall2(
-																ts_accum,
-												   PointerGetDatum(stat),
-																	 data
-																	  ));
+																	ts_accum,
+													   PointerGetDatum(stat),
+																		 data
+																		 ));
 				if (stat != newstat && stat)
 					pfree(stat);
 				stat = newstat;

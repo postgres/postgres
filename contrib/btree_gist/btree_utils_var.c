@@ -4,14 +4,14 @@
 #include "utils/builtins.h"
 
 PG_FUNCTION_INFO_V1(gbt_var_decompress);
-Datum           gbt_var_decompress(PG_FUNCTION_ARGS);
+Datum		gbt_var_decompress(PG_FUNCTION_ARGS);
 
 
 Datum
 gbt_var_decompress(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	GBT_VARKEY   *key = (GBT_VARKEY *) DatumGetPointer(PG_DETOAST_DATUM(entry->key));
+	GBT_VARKEY *key = (GBT_VARKEY *) DatumGetPointer(PG_DETOAST_DATUM(entry->key));
 
 	if (key != (GBT_VARKEY *) DatumGetPointer(entry->key))
 	{
@@ -92,45 +92,47 @@ static int32
 gbt_var_node_cp_len(const GBT_VARKEY * node, const gbtree_vinfo * tinfo)
 {
 
-	GBT_VARKEY_R        r = gbt_var_key_readable(node);
-	int32               i = 0;
-	int32               l = 0;
-	int32           t1len = VARSIZE(r.lower) - VARHDRSZ ;
-	int32           t2len = VARSIZE(r.upper) - VARHDRSZ ;
-	int32              ml = Min(t1len, t2len);
+	GBT_VARKEY_R r = gbt_var_key_readable(node);
+	int32		i = 0;
+	int32		l = 0;
+	int32		t1len = VARSIZE(r.lower) - VARHDRSZ;
+	int32		t2len = VARSIZE(r.upper) - VARHDRSZ;
+	int32		ml = Min(t1len, t2len);
 
-	char     *p1 = VARDATA(r.lower);
-	char     *p2 = VARDATA(r.upper);
+	char	   *p1 = VARDATA(r.lower);
+	char	   *p2 = VARDATA(r.upper);
 
-	if ( ml == 0 )
-	  return 0;
+	if (ml == 0)
+		return 0;
 
-	while ( i < ml )
+	while (i < ml)
 	{
-	  if ( tinfo->eml > 1 && l == 0 )
-	  {
+		if (tinfo->eml > 1 && l == 0)
+		{
 
-	    if ( ( l = pg_mblen(p1) ) != pg_mblen(p2) )
-	    {
-	      return i;
-	    }
-	  }
-	  if (*p1 != *p2)
-	  {
-	    if( tinfo->eml > 1 )
-	    {
-	      return (i-l+1);
-	    } else {
-	      return i;
-	    }
-	  }
+			if ((l = pg_mblen(p1)) != pg_mblen(p2))
+			{
+				return i;
+			}
+		}
+		if (*p1 != *p2)
+		{
+			if (tinfo->eml > 1)
+			{
+				return (i - l + 1);
+			}
+			else
+			{
+				return i;
+			}
+		}
 
-	  p1++;
-	  p2++;
-	  l--;
-	  i++;
+		p1++;
+		p2++;
+		l--;
+		i++;
 	}
-	return (ml); /* lower == upper */
+	return (ml);				/* lower == upper */
 }
 
 
@@ -141,35 +143,37 @@ static bool
 gbt_bytea_pf_match(const bytea *pf, const bytea *query, const gbtree_vinfo * tinfo)
 {
 
-	bool    out  = FALSE;
-	int32              k = 0;
-	int32   qlen = VARSIZE(query) - VARHDRSZ ;
-	int32   nlen = VARSIZE(pf) - VARHDRSZ ;
+	bool		out = FALSE;
+	int32		k = 0;
+	int32		qlen = VARSIZE(query) - VARHDRSZ;
+	int32		nlen = VARSIZE(pf) - VARHDRSZ;
 
 	if (nlen <= qlen)
 	{
-	  char     *q = VARDATA(query);
-	  char     *n = VARDATA(pf);
+		char	   *q = VARDATA(query);
+		char	   *n = VARDATA(pf);
 
-	  if ( tinfo->eml > 1 )
-	  {
-	    out = ( varstr_cmp(q, nlen, n, nlen) == 0 );
-	  } else {
-	    out = TRUE;
-	    for (k = 0; k < nlen; k++)
-	    {
-	      if (*n != *q)
-	      {
-	        out = FALSE;
-	        break;
-	      }
-	      if (k < (nlen - 1))
-	      {
-	        q++;
-	        n++;
-	      }
-	    }
-	  }
+		if (tinfo->eml > 1)
+		{
+			out = (varstr_cmp(q, nlen, n, nlen) == 0);
+		}
+		else
+		{
+			out = TRUE;
+			for (k = 0; k < nlen; k++)
+			{
+				if (*n != *q)
+				{
+					out = FALSE;
+					break;
+				}
+				if (k < (nlen - 1))
+				{
+					q++;
+					n++;
+				}
+			}
+		}
 	}
 
 	return out;
@@ -184,10 +188,10 @@ static bool
 gbt_var_node_pf_match(const GBT_VARKEY_R * node, const bytea *query, const gbtree_vinfo * tinfo)
 {
 
-	return ( tinfo->trnc && (
-			gbt_bytea_pf_match(node->lower, query, tinfo) ||
-			gbt_bytea_pf_match(node->upper, query, tinfo)
-		) );
+	return (tinfo->trnc && (
+							gbt_bytea_pf_match(node->lower, query, tinfo) ||
+							gbt_bytea_pf_match(node->upper, query, tinfo)
+							));
 
 }
 
@@ -201,18 +205,18 @@ gbt_var_node_truncate(const GBT_VARKEY * node, int32 cpf_length, const gbtree_vi
 {
 	GBT_VARKEY *out = NULL;
 	GBT_VARKEY_R r = gbt_var_key_readable(node);
-	int32   len1 = VARSIZE(r.lower) - VARHDRSZ;
-	int32   len2 = VARSIZE(r.upper) - VARHDRSZ;
-	int32     si = 0;
+	int32		len1 = VARSIZE(r.lower) - VARHDRSZ;
+	int32		len2 = VARSIZE(r.upper) - VARHDRSZ;
+	int32		si = 0;
 
-	len1 = Min(len1,(cpf_length + 1));
-	len2 = Min(len2,(cpf_length + 1));
+	len1 = Min(len1, (cpf_length + 1));
+	len2 = Min(len2, (cpf_length + 1));
 
 	si = 2 * VARHDRSZ + INTALIGN(VARHDRSZ + len1) + len2;
 	out = (GBT_VARKEY *) palloc(si);
 	out->vl_len = si;
-	memcpy((void *) &(((char *) out)[VARHDRSZ]), (void *) r.lower, len1 + VARHDRSZ );
-	memcpy((void *) &(((char *) out)[VARHDRSZ + INTALIGN(VARHDRSZ + len1)]), (void *) r.upper, len2 + VARHDRSZ );
+	memcpy((void *) &(((char *) out)[VARHDRSZ]), (void *) r.lower, len1 + VARHDRSZ);
+	memcpy((void *) &(((char *) out)[VARHDRSZ + INTALIGN(VARHDRSZ + len1)]), (void *) r.upper, len2 + VARHDRSZ);
 
 	*((int32 *) &(((char *) out)[VARHDRSZ])) = len1 + VARHDRSZ;
 	*((int32 *) &(((char *) out)[VARHDRSZ + INTALIGN(VARHDRSZ + len1)])) = len2 + VARHDRSZ;
@@ -568,8 +572,8 @@ gbt_var_consistent(
 			else
 				retval = (
 						  (
-					(*tinfo->f_cmp) (key->lower, (bytea *) query) <= 0 &&
-						   (*tinfo->f_cmp) ((bytea *) query, (void *) key->upper) <= 0
+						(*tinfo->f_cmp) (key->lower, (bytea *) query) <= 0 &&
+				  (*tinfo->f_cmp) ((bytea *) query, (void *) key->upper) <= 0
 						   ) || gbt_var_node_pf_match(key, query, tinfo)
 					);
 			break;

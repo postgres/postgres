@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.142 2005/10/01 18:43:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.143 2005/10/15 02:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,11 +38,11 @@ static int	_SPI_curid = -1;
 static void _SPI_prepare_plan(const char *src, _SPI_plan *plan);
 
 static int _SPI_execute_plan(_SPI_plan *plan,
-							 Datum *Values, const char *Nulls,
-							 Snapshot snapshot, Snapshot crosscheck_snapshot,
-							 bool read_only, long tcount);
+				  Datum *Values, const char *Nulls,
+				  Snapshot snapshot, Snapshot crosscheck_snapshot,
+				  bool read_only, long tcount);
 
-static int _SPI_pquery(QueryDesc *queryDesc, long tcount);
+static int	_SPI_pquery(QueryDesc *queryDesc, long tcount);
 
 static void _SPI_error_callback(void *arg);
 
@@ -66,8 +66,8 @@ SPI_connect(void)
 	int			newdepth;
 
 	/*
-	 * When procedure called by Executor _SPI_curid expected to be equal
-	 * to _SPI_connected
+	 * When procedure called by Executor _SPI_curid expected to be equal to
+	 * _SPI_connected
 	 */
 	if (_SPI_curid != _SPI_connected)
 		return SPI_ERROR_CONNECT;
@@ -106,28 +106,28 @@ SPI_connect(void)
 	_SPI_current->processed = 0;
 	_SPI_current->lastoid = InvalidOid;
 	_SPI_current->tuptable = NULL;
-	_SPI_current->procCxt = NULL; /* in case we fail to create 'em */
+	_SPI_current->procCxt = NULL;		/* in case we fail to create 'em */
 	_SPI_current->execCxt = NULL;
 	_SPI_current->connectSubid = GetCurrentSubTransactionId();
 
 	/*
 	 * Create memory contexts for this procedure
 	 *
-	 * XXX it would be better to use PortalContext as the parent context, but
-	 * we may not be inside a portal (consider deferred-trigger
-	 * execution).	Perhaps CurTransactionContext would do?  For now it
-	 * doesn't matter because we clean up explicitly in AtEOSubXact_SPI().
+	 * XXX it would be better to use PortalContext as the parent context, but we
+	 * may not be inside a portal (consider deferred-trigger execution).
+	 * Perhaps CurTransactionContext would do?	For now it doesn't matter
+	 * because we clean up explicitly in AtEOSubXact_SPI().
 	 */
 	_SPI_current->procCxt = AllocSetContextCreate(TopTransactionContext,
 												  "SPI Proc",
-												ALLOCSET_DEFAULT_MINSIZE,
-											   ALLOCSET_DEFAULT_INITSIZE,
-											   ALLOCSET_DEFAULT_MAXSIZE);
+												  ALLOCSET_DEFAULT_MINSIZE,
+												  ALLOCSET_DEFAULT_INITSIZE,
+												  ALLOCSET_DEFAULT_MAXSIZE);
 	_SPI_current->execCxt = AllocSetContextCreate(TopTransactionContext,
 												  "SPI Exec",
-												ALLOCSET_DEFAULT_MINSIZE,
-											   ALLOCSET_DEFAULT_INITSIZE,
-											   ALLOCSET_DEFAULT_MAXSIZE);
+												  ALLOCSET_DEFAULT_MINSIZE,
+												  ALLOCSET_DEFAULT_INITSIZE,
+												  ALLOCSET_DEFAULT_MAXSIZE);
 	/* ... and switch to procedure's context */
 	_SPI_current->savedcxt = MemoryContextSwitchTo(_SPI_current->procCxt);
 
@@ -161,9 +161,9 @@ SPI_finish(void)
 	SPI_tuptable = NULL;
 
 	/*
-	 * After _SPI_begin_call _SPI_connected == _SPI_curid. Now we are
-	 * closing connection to SPI and returning to upper Executor and so
-	 * _SPI_connected must be equal to _SPI_curid.
+	 * After _SPI_begin_call _SPI_connected == _SPI_curid. Now we are closing
+	 * connection to SPI and returning to upper Executor and so _SPI_connected
+	 * must be equal to _SPI_curid.
 	 */
 	_SPI_connected--;
 	_SPI_curid--;
@@ -182,9 +182,9 @@ void
 AtEOXact_SPI(bool isCommit)
 {
 	/*
-	 * Note that memory contexts belonging to SPI stack entries will be
-	 * freed automatically, so we can ignore them here.  We just need to
-	 * restore our static variables to initial state.
+	 * Note that memory contexts belonging to SPI stack entries will be freed
+	 * automatically, so we can ignore them here.  We just need to restore our
+	 * static variables to initial state.
 	 */
 	if (isCommit && _SPI_connected != -1)
 		ereport(WARNING,
@@ -236,8 +236,8 @@ AtEOSubXact_SPI(bool isCommit, SubTransactionId mySubid)
 
 		/*
 		 * Pop the stack entry and reset global variables.	Unlike
-		 * SPI_finish(), we don't risk switching to memory contexts that
-		 * might be already gone.
+		 * SPI_finish(), we don't risk switching to memory contexts that might
+		 * be already gone.
 		 */
 		_SPI_connected--;
 		_SPI_curid = _SPI_connected;
@@ -560,8 +560,8 @@ SPI_modifytuple(Relation rel, HeapTuple tuple, int natts, int *attnum,
 		mtuple = heap_formtuple(rel->rd_att, v, n);
 
 		/*
-		 * copy the identification info of the old tuple: t_ctid, t_self,
-		 * and OID (if any)
+		 * copy the identification info of the old tuple: t_ctid, t_self, and
+		 * OID (if any)
 		 */
 		mtuple->t_data->t_ctid = tuple->t_data->t_ctid;
 		mtuple->t_self = tuple->t_self;
@@ -658,8 +658,8 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 	getTypeOutputInfo(typoid, &foutoid, &typisvarlena);
 
 	/*
-	 * If we have a toasted datum, forcibly detoast it here to avoid
-	 * memory leakage inside the type's output routine.
+	 * If we have a toasted datum, forcibly detoast it here to avoid memory
+	 * leakage inside the type's output routine.
 	 */
 	if (typisvarlena)
 		val = PointerGetDatum(PG_DETOAST_DATUM(origval));
@@ -755,7 +755,7 @@ SPI_getrelname(Relation rel)
 char *
 SPI_getnspname(Relation rel)
 {
-    return get_namespace_name(RelationGetNamespace(rel));
+	return get_namespace_name(RelationGetNamespace(rel));
 }
 
 void *
@@ -939,8 +939,8 @@ SPI_cursor_open(const char *name, void *plan,
 		portal->cursorOptions |= CURSOR_OPT_NO_SCROLL;
 
 	/*
-	 * Set up the snapshot to use.  (PortalStart will do CopySnapshot,
-	 * so we skip that here.)
+	 * Set up the snapshot to use.	(PortalStart will do CopySnapshot, so we
+	 * skip that here.)
 	 */
 	if (read_only)
 		snapshot = ActiveSnapshot;
@@ -1214,7 +1214,7 @@ spi_printtup(TupleTableSlot *slot, DestReceiver *self)
 		tuptable->free = 256;
 		tuptable->alloced += tuptable->free;
 		tuptable->vals = (HeapTuple *) repalloc(tuptable->vals,
-								  tuptable->alloced * sizeof(HeapTuple));
+									  tuptable->alloced * sizeof(HeapTuple));
 	}
 
 	tuptable->vals[tuptable->alloced - tuptable->free] =
@@ -1247,9 +1247,9 @@ _SPI_prepare_plan(const char *src, _SPI_plan *plan)
 	int			nargs = plan->nargs;
 
 	/*
-	 * Increment CommandCounter to see changes made by now.  We must do
-	 * this to be sure of seeing any schema changes made by a just-preceding
-	 * SPI command.  (But we don't bother advancing the snapshot, since the
+	 * Increment CommandCounter to see changes made by now.  We must do this
+	 * to be sure of seeing any schema changes made by a just-preceding SPI
+	 * command.  (But we don't bother advancing the snapshot, since the
 	 * planner generally operates under SnapshotNow rules anyway.)
 	 */
 	CommandCounterIncrement();
@@ -1270,9 +1270,9 @@ _SPI_prepare_plan(const char *src, _SPI_plan *plan)
 	/*
 	 * Do parse analysis and rule rewrite for each raw parsetree.
 	 *
-	 * We save the querytrees from each raw parsetree as a separate
-	 * sublist.  This allows _SPI_execute_plan() to know where the
-	 * boundaries between original queries fall.
+	 * We save the querytrees from each raw parsetree as a separate sublist.
+	 * This allows _SPI_execute_plan() to know where the boundaries between
+	 * original queries fall.
 	 */
 	query_list_list = NIL;
 	plan_list = NIL;
@@ -1316,7 +1316,7 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 	volatile int res = 0;
 	volatile uint32 my_processed = 0;
 	volatile Oid my_lastoid = InvalidOid;
-	SPITupleTable * volatile my_tuptable = NULL;
+	SPITupleTable *volatile my_tuptable = NULL;
 	Snapshot	saveActiveSnapshot;
 
 	/* Be sure to restore ActiveSnapshot on error exit */
@@ -1407,9 +1407,10 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 				if (read_only && !QueryIsReadOnly(queryTree))
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 /* translator: %s is a SQL statement name */
-							 errmsg("%s is not allowed in a non-volatile function",
-									CreateQueryTag(queryTree))));
+					/* translator: %s is a SQL statement name */
+					   errmsg("%s is not allowed in a non-volatile function",
+							  CreateQueryTag(queryTree))));
+
 				/*
 				 * If not read-only mode, advance the command counter before
 				 * each command.
@@ -1462,6 +1463,7 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 				}
 				FreeSnapshot(ActiveSnapshot);
 				ActiveSnapshot = NULL;
+
 				/*
 				 * The last canSetTag query sets the auxiliary values returned
 				 * to the caller.  Be careful to free any tuptables not
@@ -1520,10 +1522,10 @@ _SPI_pquery(QueryDesc *queryDesc, long tcount)
 	{
 		case CMD_SELECT:
 			res = SPI_OK_SELECT;
-			if (queryDesc->parsetree->into)			/* select into table? */
+			if (queryDesc->parsetree->into)		/* select into table? */
 			{
 				res = SPI_OK_SELINTO;
-				queryDesc->dest = None_Receiver;	/* don't output results */
+				queryDesc->dest = None_Receiver;		/* don't output results */
 			}
 			else if (queryDesc->dest->mydest != SPI)
 			{
@@ -1589,8 +1591,8 @@ _SPI_error_callback(void *arg)
 	int			syntaxerrposition;
 
 	/*
-	 * If there is a syntax error position, convert to internal syntax
-	 * error; otherwise treat the query as an item of context stack
+	 * If there is a syntax error position, convert to internal syntax error;
+	 * otherwise treat the query as an item of context stack
 	 */
 	syntaxerrposition = geterrposition();
 	if (syntaxerrposition > 0)
@@ -1635,13 +1637,12 @@ _SPI_cursor_operation(Portal portal, bool forward, long count,
 							  dest);
 
 	/*
-	 * Think not to combine this store with the preceding function call.
-	 * If the portal contains calls to functions that use SPI, then
-	 * SPI_stack is likely to move around while the portal runs.  When
-	 * control returns, _SPI_current will point to the correct stack
-	 * entry... but the pointer may be different than it was beforehand.
-	 * So we must be sure to re-fetch the pointer after the function call
-	 * completes.
+	 * Think not to combine this store with the preceding function call. If
+	 * the portal contains calls to functions that use SPI, then SPI_stack is
+	 * likely to move around while the portal runs.  When control returns,
+	 * _SPI_current will point to the correct stack entry... but the pointer
+	 * may be different than it was beforehand. So we must be sure to re-fetch
+	 * the pointer after the function call completes.
 	 */
 	_SPI_current->processed = nfetched;
 
@@ -1738,12 +1739,13 @@ _SPI_copy_plan(_SPI_plan *plan, int location)
 		parentcxt = _SPI_current->procCxt;
 	else if (location == _SPI_CPLAN_TOPCXT)
 		parentcxt = TopMemoryContext;
-	else	/* (this case not currently used) */
+	else
+		/* (this case not currently used) */
 		parentcxt = CurrentMemoryContext;
 
 	/*
-	 * Create a memory context for the plan.  We don't expect the plan to
-	 * be very large, so use smaller-than-default alloc parameters.
+	 * Create a memory context for the plan.  We don't expect the plan to be
+	 * very large, so use smaller-than-default alloc parameters.
 	 */
 	plancxt = AllocSetContextCreate(parentcxt,
 									"SPI Plan",

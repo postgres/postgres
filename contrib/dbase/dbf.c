@@ -88,10 +88,10 @@ dbf_open(char *file, int flags)
 	dbh->db_nfields = (dbh->db_hlen - sizeof(dbf_header)) / sizeof(dbf_field);
 
 	/*
-	 * dbh->db_hlen - sizeof(dbf_header) isn't the correct size, cos
-	 * dbh->hlen is in fact a little more cos of the 0x0D (and possibly
-	 * another byte, 0x4E, I have seen this somewhere). Because of
-	 * rounding everything turns out right :)
+	 * dbh->db_hlen - sizeof(dbf_header) isn't the correct size, cos dbh->hlen
+	 * is in fact a little more cos of the 0x0D (and possibly another byte,
+	 * 0x4E, I have seen this somewhere). Because of rounding everything turns
+	 * out right :)
 	 */
 
 	if ((fields = (f_descr *) calloc(dbh->db_nfields, sizeof(f_descr)))
@@ -155,8 +155,7 @@ dbf_write_head(dbhead * dbh)
 	now = time((time_t *) NULL);
 	dbf_time = localtime(&now);
 	head.dbh_year = dbf_time->tm_year;
-	head.dbh_month = dbf_time->tm_mon + 1;		/* Months since January +
-												 * 1 */
+	head.dbh_month = dbf_time->tm_mon + 1;		/* Months since January + 1 */
 	head.dbh_day = dbf_time->tm_mday;
 
 	put_long(head.dbh_records, dbh->db_records);

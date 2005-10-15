@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.26 2005/05/22 22:30:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.27 2005/10/15 02:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,13 +62,13 @@ SubqueryNext(SubqueryScanState *node)
 	direction = estate->es_direction;
 
 	/*
-	 * We need not support EvalPlanQual here, since we are not scanning a
-	 * real relation.
+	 * We need not support EvalPlanQual here, since we are not scanning a real
+	 * relation.
 	 */
 
 	/*
-	 * Get the next tuple from the sub-query.  We have to be careful to
-	 * run it in its appropriate memory context.
+	 * Get the next tuple from the sub-query.  We have to be careful to run it
+	 * in its appropriate memory context.
 	 */
 	node->sss_SubEState->es_direction = direction;
 
@@ -170,11 +170,10 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate)
 	ExecCheckRTPerms(rte->subquery->rtable);
 
 	/*
-	 * The subquery needs its own EState because it has its own
-	 * rangetable. It shares our Param ID space, however.  XXX if
-	 * rangetable access were done differently, the subquery could share
-	 * our EState, which would eliminate some thrashing about in this
-	 * module...
+	 * The subquery needs its own EState because it has its own rangetable. It
+	 * shares our Param ID space, however.	XXX if rangetable access were done
+	 * differently, the subquery could share our EState, which would eliminate
+	 * some thrashing about in this module...
 	 */
 	sp_estate = CreateExecutorState();
 	subquerystate->sss_SubEState = sp_estate;
@@ -246,7 +245,7 @@ ExecEndSubqueryScan(SubqueryScanState *node)
 	 * clean out the upper tuple table
 	 */
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
-	node->ss.ss_ScanTupleSlot = NULL;		/* not ours to clear */
+	node->ss.ss_ScanTupleSlot = NULL;	/* not ours to clear */
 
 	/*
 	 * close down subquery
@@ -278,9 +277,8 @@ ExecSubqueryReScan(SubqueryScanState *node, ExprContext *exprCtxt)
 
 	/*
 	 * ExecReScan doesn't know about my subplan, so I have to do
-	 * changed-parameter signaling myself.	This is just as well, because
-	 * the subplan has its own memory context in which its chgParam state
-	 * lives.
+	 * changed-parameter signaling myself.	This is just as well, because the
+	 * subplan has its own memory context in which its chgParam state lives.
 	 */
 	if (node->ss.ps.chgParam != NULL)
 		UpdateChangedParamSet(node->subplan, node->ss.ps.chgParam);

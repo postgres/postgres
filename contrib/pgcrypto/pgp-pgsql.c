@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pgsql.c,v 1.5 2005/09/24 19:14:04 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pgsql.c,v 1.6 2005/10/15 02:49:06 momjian Exp $
  */
 
 #include "postgres.h"
@@ -42,20 +42,20 @@
 /*
  * public functions
  */
-Datum pgp_sym_encrypt_text(PG_FUNCTION_ARGS);
-Datum pgp_sym_encrypt_bytea(PG_FUNCTION_ARGS);
-Datum pgp_sym_decrypt_text(PG_FUNCTION_ARGS);
-Datum pgp_sym_decrypt_bytea(PG_FUNCTION_ARGS);
+Datum		pgp_sym_encrypt_text(PG_FUNCTION_ARGS);
+Datum		pgp_sym_encrypt_bytea(PG_FUNCTION_ARGS);
+Datum		pgp_sym_decrypt_text(PG_FUNCTION_ARGS);
+Datum		pgp_sym_decrypt_bytea(PG_FUNCTION_ARGS);
 
-Datum pgp_pub_encrypt_text(PG_FUNCTION_ARGS);
-Datum pgp_pub_encrypt_bytea(PG_FUNCTION_ARGS);
-Datum pgp_pub_decrypt_text(PG_FUNCTION_ARGS);
-Datum pgp_pub_decrypt_bytea(PG_FUNCTION_ARGS);
+Datum		pgp_pub_encrypt_text(PG_FUNCTION_ARGS);
+Datum		pgp_pub_encrypt_bytea(PG_FUNCTION_ARGS);
+Datum		pgp_pub_decrypt_text(PG_FUNCTION_ARGS);
+Datum		pgp_pub_decrypt_bytea(PG_FUNCTION_ARGS);
 
-Datum pgp_key_id_w(PG_FUNCTION_ARGS);
+Datum		pgp_key_id_w(PG_FUNCTION_ARGS);
 
-Datum pg_armor(PG_FUNCTION_ARGS);
-Datum pg_dearmor(PG_FUNCTION_ARGS);
+Datum		pg_armor(PG_FUNCTION_ARGS);
+Datum		pg_dearmor(PG_FUNCTION_ARGS);
 
 /* function headers */
 
@@ -89,9 +89,10 @@ PG_FUNCTION_INFO_V1(pg_dearmor);
 /*
  * Mix a block of data into RNG.
  */
-static void add_block_entropy(PX_MD *md, text *data)
+static void
+add_block_entropy(PX_MD * md, text *data)
 {
-	uint8 sha1[20];
+	uint8		sha1[20];
 
 	px_md_reset(md);
 	px_md_update(md, (uint8 *) VARDATA(data), VARSIZE(data) - VARHDRSZ);
@@ -103,13 +104,14 @@ static void add_block_entropy(PX_MD *md, text *data)
 }
 
 /*
- * Mix user data into RNG.  It is for user own interests to have
+ * Mix user data into RNG.	It is for user own interests to have
  * RNG state shuffled.
  */
-static void add_entropy(text *data1,  text *data2, text *data3)
+static void
+add_entropy(text *data1, text *data2, text *data3)
 {
-	PX_MD *md;
-	uint8 rnd[3];
+	PX_MD	   *md;
+	uint8		rnd[3];
 
 	if (!data1 && !data2 && !data3)
 		return;
@@ -122,9 +124,9 @@ static void add_entropy(text *data1,  text *data2, text *data3)
 
 	/*
 	 * Try to make the feeding unpredictable.
-	 * 
-	 * Prefer data over keys, as it's rather likely
-	 * that key is same in several calls.
+	 *
+	 * Prefer data over keys, as it's rather likely that key is same in several
+	 * calls.
 	 */
 
 	/* chance: 7/8 */
@@ -146,14 +148,15 @@ static void add_entropy(text *data1,  text *data2, text *data3)
 /*
  * returns src in case of no conversion or error
  */
-static text *convert_charset(text *src, int cset_from, int cset_to)
+static text *
+convert_charset(text *src, int cset_from, int cset_to)
 {
-	int src_len = VARSIZE(src) - VARHDRSZ;
-	int dst_len;
+	int			src_len = VARSIZE(src) - VARHDRSZ;
+	int			dst_len;
 	unsigned char *dst;
 	unsigned char *csrc = (unsigned char *) VARDATA(src);
-	text *res;
-	
+	text	   *res;
+
 	dst = pg_do_encoding_conversion(csrc, src_len, cset_from, cset_to);
 	if (dst == csrc)
 		return src;
@@ -166,12 +169,14 @@ static text *convert_charset(text *src, int cset_from, int cset_to)
 	return res;
 }
 
-static text *convert_from_utf8(text *src)
+static text *
+convert_from_utf8(text *src)
 {
 	return convert_charset(src, PG_UTF8, GetDatabaseEncoding());
 }
 
-static text *convert_to_utf8(text *src)
+static text *
+convert_to_utf8(text *src)
 {
 	return convert_charset(src, GetDatabaseEncoding(), PG_UTF8);
 }
@@ -186,20 +191,22 @@ clear_and_pfree(text *p)
 /*
  * expect-* arguments storage
  */
-struct debug_expect {
-	int debug;
-	int expect;
-	int cipher_algo;
-	int s2k_mode;
-	int s2k_cipher_algo;
-	int s2k_digest_algo;
-	int compress_algo;
-	int use_sess_key;
-	int disable_mdc;
-	int unicode_mode;
+struct debug_expect
+{
+	int			debug;
+	int			expect;
+	int			cipher_algo;
+	int			s2k_mode;
+	int			s2k_cipher_algo;
+	int			s2k_digest_algo;
+	int			compress_algo;
+	int			use_sess_key;
+	int			disable_mdc;
+	int			unicode_mode;
 };
 
-static void fill_expect(struct debug_expect *ex, int text_mode)
+static void
+fill_expect(struct debug_expect * ex, int text_mode)
 {
 	ex->debug = 0;
 	ex->expect = 0;
@@ -222,7 +229,8 @@ static void fill_expect(struct debug_expect *ex, int text_mode)
 		if (ex->arg >= 0 && ex->arg != ctx->arg) EX_MSG(arg); \
 	} while (0)
 
-static void check_expect(PGP_Context *ctx, struct debug_expect *ex)
+static void
+check_expect(PGP_Context * ctx, struct debug_expect * ex)
 {
 	EX_CHECK(cipher_algo);
 	EX_CHECK(s2k_mode);
@@ -235,15 +243,18 @@ static void check_expect(PGP_Context *ctx, struct debug_expect *ex)
 	EX_CHECK(unicode_mode);
 }
 
-static void show_debug(const char *msg)
+static void
+show_debug(const char *msg)
 {
 	ereport(NOTICE, (errmsg("dbg: %s", msg)));
 }
 
-static int set_arg(PGP_Context *ctx, char *key, char*val,
-		struct debug_expect *ex)
+static int
+set_arg(PGP_Context * ctx, char *key, char *val,
+		struct debug_expect * ex)
 {
-	int res = 0;
+	int			res = 0;
+
 	if (strcmp(key, "cipher-algo") == 0)
 		res = pgp_set_cipher_algo(ctx, val);
 	else if (strcmp(key, "disable-mdc") == 0)
@@ -314,11 +325,12 @@ static int set_arg(PGP_Context *ctx, char *key, char*val,
 }
 
 /*
- * Find next word.  Handle ',' and '=' as words.  Skip whitespace.
+ * Find next word.	Handle ',' and '=' as words.  Skip whitespace.
  * Put word info into res_p, res_len.
  * Returns ptr to next word.
  */
-static char *getword(char *p, char **res_p, int *res_len)
+static char *
+getword(char *p, char **res_p, int *res_len)
 {
 	/* whitespace at start */
 	while (*p && (*p == ' ' || *p == '\t' || *p == '\n'))
@@ -330,12 +342,12 @@ static char *getword(char *p, char **res_p, int *res_len)
 		p++;
 	else
 		while (*p && !(*p == ' ' || *p == '\t' || *p == '\n'
-					|| *p == '=' || *p == ','))
+					   || *p == '=' || *p == ','))
 			p++;
 
 	/* word end */
 	*res_len = p - *res_p;
-	
+
 	/* whitespace at end */
 	while (*p && (*p == ' ' || *p == '\t' || *p == '\n'))
 		p++;
@@ -346,11 +358,15 @@ static char *getword(char *p, char **res_p, int *res_len)
 /*
  * Convert to lowercase asciiz string.
  */
-static char *downcase_convert(const uint8 *s, int len)
+static char *
+downcase_convert(const uint8 *s, int len)
 {
-	int c, i;
-	char *res = palloc(len + 1);
-	for (i = 0; i < len; i++) {
+	int			c,
+				i;
+	char	   *res = palloc(len + 1);
+
+	for (i = 0; i < len; i++)
+	{
 		c = s[i];
 		if (c >= 'A' && c <= 'Z')
 			c += 'a' - 'A';
@@ -360,14 +376,17 @@ static char *downcase_convert(const uint8 *s, int len)
 	return res;
 }
 
-static int parse_args(PGP_Context *ctx, uint8 *args, int arg_len,
-		struct debug_expect *ex)
+static int
+parse_args(PGP_Context * ctx, uint8 *args, int arg_len,
+		   struct debug_expect * ex)
 {
-	char *str = downcase_convert(args, arg_len);
-	char *key, *val;
-	int key_len, val_len;
-	int res = 0;
-	char *p = str;
+	char	   *str = downcase_convert(args, arg_len);
+	char	   *key,
+			   *val;
+	int			key_len,
+				val_len;
+	int			res = 0;
+	char	   *p = str;
 
 	while (*p)
 	{
@@ -403,10 +422,10 @@ create_mbuf_from_vardata(text *data)
 }
 
 static void
-init_work(PGP_Context **ctx_p, int is_text,
-		text *args, struct debug_expect *ex)
+init_work(PGP_Context ** ctx_p, int is_text,
+		  text *args, struct debug_expect * ex)
 {
-	int err = pgp_init(ctx_p);
+	int			err = pgp_init(ctx_p);
 
 	fill_expect(ex, is_text);
 
@@ -429,17 +448,18 @@ init_work(PGP_Context **ctx_p, int is_text,
 
 static bytea *
 encrypt_internal(int is_pubenc, int is_text,
-		text *data, text *key, text *args)
+				 text *data, text *key, text *args)
 {
-	MBuf *src, *dst;
-	uint8	tmp[VARHDRSZ];
-	uint8 *restmp;
-	bytea *res;
-	int res_len;
+	MBuf	   *src,
+			   *dst;
+	uint8		tmp[VARHDRSZ];
+	uint8	   *restmp;
+	bytea	   *res;
+	int			res_len;
 	PGP_Context *ctx;
-	int err;
+	int			err;
 	struct debug_expect ex;
-	text *tmp_data = NULL;
+	text	   *tmp_data = NULL;
 
 	/*
 	 * Add data and key info RNG.
@@ -470,15 +490,16 @@ encrypt_internal(int is_pubenc, int is_text,
 	 */
 	if (is_pubenc)
 	{
-		MBuf *kbuf = create_mbuf_from_vardata(key);
+		MBuf	   *kbuf = create_mbuf_from_vardata(key);
+
 		err = pgp_set_pubkey(ctx, kbuf,
-				NULL, 0, 0);
+							 NULL, 0, 0);
 		mbuf_free(kbuf);
 	}
 	else
 		err = pgp_set_symkey(ctx, (uint8 *) VARDATA(key),
 							 VARSIZE(key) - VARHDRSZ);
-	
+
 	/*
 	 * encrypt
 	 */
@@ -520,17 +541,18 @@ encrypt_internal(int is_pubenc, int is_text,
 
 static bytea *
 decrypt_internal(int is_pubenc, int need_text, text *data,
-		text *key, text *keypsw, text *args)
+				 text *key, text *keypsw, text *args)
 {
-	int err;
-	MBuf *src = NULL, *dst = NULL;
-	uint8	tmp[VARHDRSZ];
-	uint8 *restmp;
-	bytea *res;
-	int res_len;
+	int			err;
+	MBuf	   *src = NULL,
+			   *dst = NULL;
+	uint8		tmp[VARHDRSZ];
+	uint8	   *restmp;
+	bytea	   *res;
+	int			res_len;
 	PGP_Context *ctx = NULL;
 	struct debug_expect ex;
-	int got_unicode = 0;
+	int			got_unicode = 0;
 
 
 	init_work(&ctx, need_text, args, &ex);
@@ -543,15 +565,16 @@ decrypt_internal(int is_pubenc, int need_text, text *data,
 	 * reserve room for header
 	 */
 	mbuf_append(dst, tmp, VARHDRSZ);
-	
+
 	/*
 	 * set key
 	 */
 	if (is_pubenc)
 	{
-		uint8 *psw = NULL;
-		int psw_len = 0;
-		MBuf *kbuf;
+		uint8	   *psw = NULL;
+		int			psw_len = 0;
+		MBuf	   *kbuf;
+
 		if (keypsw)
 		{
 			psw = (uint8 *) VARDATA(keypsw);
@@ -608,7 +631,8 @@ out:
 
 	if (need_text && got_unicode)
 	{
-		text *utf = convert_from_utf8(res);
+		text	   *utf = convert_from_utf8(res);
+
 		if (utf != res)
 		{
 			clear_and_pfree(res);
@@ -927,4 +951,3 @@ pgp_key_id_w(PG_FUNCTION_ARGS)
 	PG_FREE_IF_COPY(data, 0);
 	PG_RETURN_TEXT_P(res);
 }
-

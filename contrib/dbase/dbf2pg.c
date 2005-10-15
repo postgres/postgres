@@ -169,7 +169,7 @@ usage(void)
 {
 	printf("dbf2pg\n"
 		   "usage: dbf2pg [-u | -l] [-h hostname] [-W] [-U username]\n"
-		   "              [-B transaction_size] [-F charset_from [-T charset_to]]\n"
+	"              [-B transaction_size] [-F charset_from [-T charset_to]]\n"
 		   "              [-s oldname=[newname][,oldname=[newname][...]]] [-d dbase]\n"
 		   "              [-t table] [-c | -D] [-f] [-v[v]] dbf-file\n");
 }
@@ -251,7 +251,7 @@ do_create(PGconn *conn, char *table, dbhead * dbh)
 		printf("Building CREATE-clause\n");
 
 	if (!(query = (char *) malloc(
-						   (dbh->db_nfields * 40) + 29 + strlen(table))))
+							   (dbh->db_nfields * 40) + 29 + strlen(table))))
 	{
 		fprintf(stderr, "Memory allocation error in function do_create\n");
 		PQfinish(conn);
@@ -359,9 +359,8 @@ do_inserts(PGconn *conn, char *table, dbhead * dbh)
 	}
 
 	/*
-	 * make sure we can build the COPY query, note that we don't need to
-	 * just add this value, since the COPY query is a separate query (see
-	 * below)
+	 * make sure we can build the COPY query, note that we don't need to just
+	 * add this value, since the COPY query is a separate query (see below)
 	 */
 	if (h < 17 + strlen(table))
 		h = 17 + strlen(table);
@@ -370,7 +369,7 @@ do_inserts(PGconn *conn, char *table, dbhead * dbh)
 	{
 		PQfinish(conn);
 		fprintf(stderr,
-			 "Memory allocation error in function do_inserts (query)\n");
+				"Memory allocation error in function do_inserts (query)\n");
 		close(dbh->db_fd);
 		free(dbh);
 		exit(1);
@@ -386,12 +385,10 @@ do_inserts(PGconn *conn, char *table, dbhead * dbh)
 		exit(1);
 	}
 
-	if (end == 0)				/* "end" is a user option, if not
-								 * specified, */
+	if (end == 0)				/* "end" is a user option, if not specified, */
 		end = dbh->db_records;	/* then all records are processed. */
 
-	if (t_block == 0)			/* user not specified transaction block
-								 * size */
+	if (t_block == 0)			/* user not specified transaction block size */
 		t_block = end - begin;	/* then we set it to be the full data */
 
 	for (i = begin; i < end; i++)
@@ -426,9 +423,8 @@ do_inserts(PGconn *conn, char *table, dbhead * dbh)
 			j = 0;				/* counter for fields in the output */
 			for (h = 0; h < dbh->db_nfields; h++)
 			{
-				if (!strlen(fields[h].db_name)) /* When the new fieldname
-												 * is empty, the field is
-												 * skipped */
+				if (!strlen(fields[h].db_name)) /* When the new fieldname is
+												 * empty, the field is skipped */
 					continue;
 				else
 					j++;
@@ -639,8 +635,8 @@ main(int argc, char **argv)
 				usage();
 
 				/*
-				 * FIXME: Ivan thinks this is bad: printf("unknown
-				 * argument: %s\n", argv[0]);
+				 * FIXME: Ivan thinks this is bad: printf("unknown argument:
+				 * %s\n", argv[0]);
 				 */
 				exit(1);
 				break;

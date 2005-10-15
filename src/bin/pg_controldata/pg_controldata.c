@@ -6,7 +6,7 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
- * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.26 2005/10/03 00:28:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.27 2005/10/15 02:49:37 momjian Exp $
  */
 #include "postgres.h"
 
@@ -129,11 +129,11 @@ main(int argc, char *argv[])
 	if (!EQ_CRC32(crc, ControlFile.crc))
 		printf(_("WARNING: Calculated CRC checksum does not match value stored in file.\n"
 				 "Either the file is corrupt, or it has a different layout than this program\n"
-			 "is expecting.  The results below are untrustworthy.\n\n"));
+				 "is expecting.  The results below are untrustworthy.\n\n"));
 
 	/*
-	 * Use variable for format to suppress overly-anal-retentive gcc
-	 * warning about %c
+	 * Use variable for format to suppress overly-anal-retentive gcc warning
+	 * about %c
 	 */
 	strftime(pgctime_str, sizeof(pgctime_str), strftime_fmt,
 			 localtime(&(ControlFile.time)));
@@ -141,8 +141,8 @@ main(int argc, char *argv[])
 			 localtime(&(ControlFile.checkPointCopy.time)));
 
 	/*
-	 * Format system_identifier separately to keep platform-dependent
-	 * format code out of the translatable message string.
+	 * Format system_identifier separately to keep platform-dependent format
+	 * code out of the translatable message string.
 	 */
 	snprintf(sysident_str, sizeof(sysident_str), UINT64_FORMAT,
 			 ControlFile.system_identifier);
@@ -157,7 +157,7 @@ main(int argc, char *argv[])
 	printf(_("Latest checkpoint location:           %X/%X\n"),
 		   ControlFile.checkPoint.xlogid, ControlFile.checkPoint.xrecoff);
 	printf(_("Prior checkpoint location:            %X/%X\n"),
-		   ControlFile.prevCheckPoint.xlogid, ControlFile.prevCheckPoint.xrecoff);
+	  ControlFile.prevCheckPoint.xlogid, ControlFile.prevCheckPoint.xrecoff);
 	printf(_("Latest checkpoint's REDO location:    %X/%X\n"),
 		   ControlFile.checkPointCopy.redo.xlogid, ControlFile.checkPointCopy.redo.xrecoff);
 	printf(_("Latest checkpoint's UNDO location:    %X/%X\n"),

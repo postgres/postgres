@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.71 2005/07/28 22:27:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.72 2005/10/15 02:49:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,9 +31,9 @@ typedef struct JoinHashEntry
 } JoinHashEntry;
 
 static RelOptInfo *make_reloptinfo(PlannerInfo *root, int relid,
-								   RelOptKind reloptkind);
+				RelOptKind reloptkind);
 static void build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
-								RelOptInfo *input_rel);
+					RelOptInfo *input_rel);
 static List *build_joinrel_restrictlist(PlannerInfo *root,
 						   RelOptInfo *joinrel,
 						   RelOptInfo *outer_rel,
@@ -165,8 +165,8 @@ make_reloptinfo(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	/* Add the finished struct to the base_rel_array */
 	if (relid >= root->base_rel_array_size)
 	{
-		int		oldsize = root->base_rel_array_size;
-		int		newsize;
+		int			oldsize = root->base_rel_array_size;
+		int			newsize;
 
 		newsize = Max(oldsize * 2, relid + 1);
 		root->base_rel_array = (RelOptInfo **)
@@ -225,7 +225,7 @@ build_join_rel_hash(PlannerInfo *root)
 	hashtab = hash_create("JoinRelHashTable",
 						  256L,
 						  &hash_ctl,
-						  HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
+					HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
 
 	/* Insert all the already-existing joinrels */
 	foreach(l, root->join_rel_list)
@@ -254,7 +254,7 @@ RelOptInfo *
 find_join_rel(PlannerInfo *root, Relids relids)
 {
 	/*
-	 * Switch to using hash lookup when list grows "too long".  The threshold
+	 * Switch to using hash lookup when list grows "too long".	The threshold
 	 * is arbitrary and is known only here.
 	 */
 	if (!root->join_rel_hash && list_length(root->join_rel_list) > 32)
@@ -263,10 +263,10 @@ find_join_rel(PlannerInfo *root, Relids relids)
 	/*
 	 * Use either hashtable lookup or linear search, as appropriate.
 	 *
-	 * Note: the seemingly redundant hashkey variable is used to avoid
-	 * taking the address of relids; unless the compiler is exceedingly
-	 * smart, doing so would force relids out of a register and thus
-	 * probably slow down the list-search case.
+	 * Note: the seemingly redundant hashkey variable is used to avoid taking the
+	 * address of relids; unless the compiler is exceedingly smart, doing so
+	 * would force relids out of a register and thus probably slow down the
+	 * list-search case.
 	 */
 	if (root->join_rel_hash)
 	{
@@ -331,8 +331,8 @@ build_join_rel(PlannerInfo *root,
 	if (joinrel)
 	{
 		/*
-		 * Yes, so we only need to figure the restrictlist for this
-		 * particular pair of component relations.
+		 * Yes, so we only need to figure the restrictlist for this particular
+		 * pair of component relations.
 		 */
 		if (restrictlist_ptr)
 			*restrictlist_ptr = build_joinrel_restrictlist(root,
@@ -375,21 +375,20 @@ build_join_rel(PlannerInfo *root,
 	joinrel->index_inner_paths = NIL;
 
 	/*
-	 * Create a new tlist containing just the vars that need to be output
-	 * from this join (ie, are needed for higher joinclauses or final
-	 * output).
+	 * Create a new tlist containing just the vars that need to be output from
+	 * this join (ie, are needed for higher joinclauses or final output).
 	 *
-	 * NOTE: the tlist order for a join rel will depend on which pair of
-	 * outer and inner rels we first try to build it from.  But the
-	 * contents should be the same regardless.
+	 * NOTE: the tlist order for a join rel will depend on which pair of outer
+	 * and inner rels we first try to build it from.  But the contents should
+	 * be the same regardless.
 	 */
 	build_joinrel_tlist(root, joinrel, outer_rel);
 	build_joinrel_tlist(root, joinrel, inner_rel);
 
 	/*
 	 * Construct restrict and join clause lists for the new joinrel. (The
-	 * caller might or might not need the restrictlist, but I need it
-	 * anyway for set_joinrel_size_estimates().)
+	 * caller might or might not need the restrictlist, but I need it anyway
+	 * for set_joinrel_size_estimates().)
 	 */
 	restrictlist = build_joinrel_restrictlist(root,
 											  joinrel,
@@ -407,9 +406,9 @@ build_join_rel(PlannerInfo *root,
 							   jointype, restrictlist);
 
 	/*
-	 * Add the joinrel to the query's joinrel list, and store it into
-	 * the auxiliary hashtable if there is one.  NB: GEQO requires us
-	 * to append the new joinrel to the end of the list!
+	 * Add the joinrel to the query's joinrel list, and store it into the
+	 * auxiliary hashtable if there is one.  NB: GEQO requires us to append
+	 * the new joinrel to the end of the list!
 	 */
 	root->join_rel_list = lappend(root->join_rel_list, joinrel);
 
@@ -527,18 +526,18 @@ build_joinrel_restrictlist(PlannerInfo *root,
 	 * Collect all the clauses that syntactically belong at this level.
 	 */
 	rlist = list_concat(subbuild_joinrel_restrictlist(joinrel,
-													outer_rel->joininfo),
+													  outer_rel->joininfo),
 						subbuild_joinrel_restrictlist(joinrel,
-												   inner_rel->joininfo));
+													  inner_rel->joininfo));
 
 	/*
 	 * Eliminate duplicate and redundant clauses.
 	 *
-	 * We must eliminate duplicates, since we will see many of the same
-	 * clauses arriving from both input relations.	Also, if a clause is a
-	 * mergejoinable clause, it's possible that it is redundant with
-	 * previous clauses (see optimizer/README for discussion).	We detect
-	 * that case and omit the redundant clause from the result list.
+	 * We must eliminate duplicates, since we will see many of the same clauses
+	 * arriving from both input relations.	Also, if a clause is a
+	 * mergejoinable clause, it's possible that it is redundant with previous
+	 * clauses (see optimizer/README for discussion).  We detect that case and
+	 * omit the redundant clause from the result list.
 	 */
 	result = remove_redundant_join_clauses(root, rlist,
 										   IS_OUTER_JOIN(jointype));
@@ -571,18 +570,17 @@ subbuild_joinrel_restrictlist(RelOptInfo *joinrel,
 		if (bms_is_subset(rinfo->required_relids, joinrel->relids))
 		{
 			/*
-			 * This clause becomes a restriction clause for the joinrel,
-			 * since it refers to no outside rels.  We don't bother to
-			 * check for duplicates here --- build_joinrel_restrictlist
-			 * will do that.
+			 * This clause becomes a restriction clause for the joinrel, since
+			 * it refers to no outside rels.  We don't bother to check for
+			 * duplicates here --- build_joinrel_restrictlist will do that.
 			 */
 			restrictlist = lappend(restrictlist, rinfo);
 		}
 		else
 		{
 			/*
-			 * This clause is still a join clause at this level, so we
-			 * ignore it in this routine.
+			 * This clause is still a join clause at this level, so we ignore
+			 * it in this routine.
 			 */
 		}
 	}
@@ -603,17 +601,17 @@ subbuild_joinrel_joinlist(RelOptInfo *joinrel,
 		if (bms_is_subset(rinfo->required_relids, joinrel->relids))
 		{
 			/*
-			 * This clause becomes a restriction clause for the joinrel,
-			 * since it refers to no outside rels.  So we can ignore it
-			 * in this routine.
+			 * This clause becomes a restriction clause for the joinrel, since
+			 * it refers to no outside rels.  So we can ignore it in this
+			 * routine.
 			 */
 		}
 		else
 		{
 			/*
-			 * This clause is still a join clause at this level, so add
-			 * it to the joininfo list for the joinrel, being careful to
-			 * eliminate duplicates.  (Since RestrictInfo nodes are normally
+			 * This clause is still a join clause at this level, so add it to
+			 * the joininfo list for the joinrel, being careful to eliminate
+			 * duplicates.	(Since RestrictInfo nodes are normally
 			 * multiply-linked rather than copied, pointer equality should be
 			 * a sufficient test.  If two equal() nodes should happen to sneak
 			 * in, no great harm is done --- they'll be detected by

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/typcache.h,v 1.7 2004/12/31 22:03:46 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/typcache.h,v 1.8 2005/10/15 02:49:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,8 +35,8 @@ typedef struct TypeCacheEntry
 	/*
 	 * Information obtained from opclass entries
 	 *
-	 * These will be InvalidOid if no match could be found, or if the
-	 * information hasn't yet been requested.
+	 * These will be InvalidOid if no match could be found, or if the information
+	 * hasn't yet been requested.
 	 */
 	Oid			btree_opc;		/* OID of the default btree opclass */
 	Oid			hash_opc;		/* OID of the default hash opclass */
@@ -48,9 +48,9 @@ typedef struct TypeCacheEntry
 	/*
 	 * Pre-set-up fmgr call info for the equality operator and the btree
 	 * comparison function.  These are kept in the type cache to avoid
-	 * problems with memory leaks in repeated calls to array_eq and
-	 * array_cmp. There is not currently a need to maintain call info for
-	 * the lt_opr or gt_opr.
+	 * problems with memory leaks in repeated calls to array_eq and array_cmp.
+	 * There is not currently a need to maintain call info for the lt_opr or
+	 * gt_opr.
 	 */
 	FmgrInfo	eq_opr_finfo;
 	FmgrInfo	cmp_proc_finfo;

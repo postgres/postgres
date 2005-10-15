@@ -63,8 +63,8 @@ gbt_macadkey_cmp(const void *a, const void *b)
 	return DatumGetInt32(
 						 DirectFunctionCall2(
 											 macaddr_cmp,
-									PointerGetDatum(&((Nsrt *) a)->t[0]),
-									 PointerGetDatum(&((Nsrt *) b)->t[0])
+										PointerGetDatum(&((Nsrt *) a)->t[0]),
+										 PointerGetDatum(&((Nsrt *) b)->t[0])
 											 )
 		);
 }
@@ -157,7 +157,7 @@ gbt_macad_penalty(PG_FUNCTION_ARGS)
 	inew[0] = mac_2_uint64(&newentry->lower);
 	inew[1] = mac_2_uint64(&newentry->upper);
 
-	penalty_num(result,iorg[0],iorg[1],inew[0],inew[1]);
+	penalty_num(result, iorg[0], iorg[1], inew[0], inew[1]);
 
 	PG_RETURN_POINTER(result);
 
@@ -167,8 +167,8 @@ Datum
 gbt_macad_picksplit(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_POINTER(gbt_num_picksplit(
-								(GistEntryVector *) PG_GETARG_POINTER(0),
-								  (GIST_SPLITVEC *) PG_GETARG_POINTER(1),
+									(GistEntryVector *) PG_GETARG_POINTER(0),
+									  (GIST_SPLITVEC *) PG_GETARG_POINTER(1),
 										&tinfo
 										));
 }

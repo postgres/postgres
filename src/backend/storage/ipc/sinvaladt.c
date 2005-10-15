@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.60 2005/08/20 23:26:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.61 2005/10/15 02:49:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -198,8 +198,8 @@ SIInsertDataEntry(SISeg *segP, SharedInvalidationMessage *data)
 	{
 		/*
 		 * Don't panic just yet: slowest backend might have consumed some
-		 * messages but not yet have done SIDelExpiredDataEntries() to
-		 * advance minMsgNum.  So, make sure minMsgNum is up-to-date.
+		 * messages but not yet have done SIDelExpiredDataEntries() to advance
+		 * minMsgNum.  So, make sure minMsgNum is up-to-date.
 		 */
 		SIDelExpiredDataEntries(segP);
 		numMsgs = segP->maxMsgNum - segP->minMsgNum;
@@ -213,9 +213,9 @@ SIInsertDataEntry(SISeg *segP, SharedInvalidationMessage *data)
 
 	/*
 	 * Try to prevent table overflow.  When the table is 70% full send a
-	 * WAKEN_CHILDREN request to the postmaster.  The postmaster will send
-	 * a SIGUSR1 signal to all the backends, which will cause sinval.c to
-	 * read any pending SI entries.
+	 * WAKEN_CHILDREN request to the postmaster.  The postmaster will send a
+	 * SIGUSR1 signal to all the backends, which will cause sinval.c to read
+	 * any pending SI entries.
 	 *
 	 * This should never happen if all the backends are actively executing
 	 * queries, but if a backend is sitting idle then it won't be starting
@@ -302,9 +302,9 @@ SIGetDataEntry(SISeg *segP, int backendId,
 	stateP->nextMsgNum++;
 
 	/*
-	 * There may be other backends that haven't read the message, so we
-	 * cannot delete it here. SIDelExpiredDataEntries() should be called
-	 * to remove dead messages.
+	 * There may be other backends that haven't read the message, so we cannot
+	 * delete it here. SIDelExpiredDataEntries() should be called to remove
+	 * dead messages.
 	 */
 	return 1;					/* got a message */
 }
@@ -338,8 +338,8 @@ SIDelExpiredDataEntries(SISeg *segP)
 	segP->minMsgNum = min;
 
 	/*
-	 * When minMsgNum gets really large, decrement all message counters so
-	 * as to forestall overflow of the counters.
+	 * When minMsgNum gets really large, decrement all message counters so as
+	 * to forestall overflow of the counters.
 	 */
 	if (min >= MSGNUMWRAPAROUND)
 	{

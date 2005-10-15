@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/quote.c,v 1.16 2005/07/02 17:01:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/quote.c,v 1.17 2005/10/15 02:49:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,13 +65,13 @@ quote_literal(PG_FUNCTION_ARGS)
 	cp1 = VARDATA(t);
 	cp2 = VARDATA(result);
 
-	for(; len-- > 0; cp1++)
+	for (; len-- > 0; cp1++)
 		if (*cp1 == '\\')
 		{
 			*cp2++ = ESCAPE_STRING_SYNTAX;
 			break;
 		}
-	
+
 	len = VARSIZE(t) - VARHDRSZ;
 	cp1 = VARDATA(t);
 	*cp2++ = '\'';

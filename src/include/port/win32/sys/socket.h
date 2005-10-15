@@ -14,7 +14,7 @@
 #ifdef PGERROR
 #define ERROR PGERROR
 
-/* 
+/*
  * we can't use the windows gai_strerror{AW} functions because
  * they are defined inline in the MS header files. So we'll use our
  * own

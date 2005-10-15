@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.120 2005/08/08 03:11:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.121 2005/10/15 02:49:25 momjian Exp $
  *
  * NOTES:
  *
@@ -123,7 +123,7 @@ typedef struct vfd
 {
 	signed short fd;			/* current FD, or VFD_CLOSED if none */
 	unsigned short fdstate;		/* bitflags for VFD's state */
-	SubTransactionId create_subid;	/* for TEMPORARY fds, creating subxact */
+	SubTransactionId create_subid;		/* for TEMPORARY fds, creating subxact */
 	File		nextFree;		/* link to next free VFD, if in freelist */
 	File		lruMoreRecently;	/* doubly linked recency-of-use list */
 	File		lruLessRecently;
@@ -268,7 +268,7 @@ pg_fsync_writethrough(int fd)
 #ifdef WIN32
 		return _commit(fd);
 #elif defined(__darwin__)
-		return (fcntl(fd, F_FULLFSYNC, 0) == -1) ? -1 : 0;
+	return (fcntl(fd, F_FULLFSYNC, 0) == -1) ? -1 : 0;
 #else
 		return -1;
 #endif
@@ -305,7 +305,7 @@ pg_fdatasync(int fd)
 void
 InitFileAccess(void)
 {
-	Assert(SizeVfdCache == 0);			/* call me only once */
+	Assert(SizeVfdCache == 0);	/* call me only once */
 
 	/* initialize cache header entry */
 	VfdCache = (Vfd *) malloc(sizeof(Vfd));
@@ -330,7 +330,7 @@ InitFileAccess(void)
  * We stop counting if usable_fds reaches max_to_probe.  Note: a small
  * value of max_to_probe might result in an underestimate of already_open;
  * we must fill in any "gaps" in the set of used FDs before the calculation
- * of already_open will give the right answer.  In practice, max_to_probe
+ * of already_open will give the right answer.	In practice, max_to_probe
  * of a couple of dozen should be enough to ensure good results.
  *
  * We assume stdin (FD 0) is available for dup'ing
@@ -382,9 +382,9 @@ count_usable_fds(int max_to_probe, int *usable_fds, int *already_open)
 	pfree(fd);
 
 	/*
-	 * Return results.	usable_fds is just the number of successful dups.
-	 * We assume that the system limit is highestfd+1 (remember 0 is a
-	 * legal FD number) and so already_open is highestfd+1 - usable_fds.
+	 * Return results.	usable_fds is just the number of successful dups. We
+	 * assume that the system limit is highestfd+1 (remember 0 is a legal FD
+	 * number) and so already_open is highestfd+1 - usable_fds.
 	 */
 	*usable_fds = used;
 	*already_open = highestfd + 1 - used;
@@ -466,7 +466,7 @@ tryAgain:
 
 		ereport(LOG,
 				(errcode(ERRCODE_INSUFFICIENT_RESOURCES),
-			  errmsg("out of file descriptors: %m; release and retry")));
+				 errmsg("out of file descriptors: %m; release and retry")));
 		errno = 0;
 		if (ReleaseLruFile())
 			goto tryAgain;
@@ -587,9 +587,9 @@ LruInsert(File file)
 		}
 
 		/*
-		 * The open could still fail for lack of file descriptors, eg due
-		 * to overall system file table being full.  So, be prepared to
-		 * release another FD if necessary...
+		 * The open could still fail for lack of file descriptors, eg due to
+		 * overall system file table being full.  So, be prepared to release
+		 * another FD if necessary...
 		 */
 		vfdP->fd = BasicOpenFile(vfdP->fileName, vfdP->fileFlags,
 								 vfdP->fileMode);
@@ -631,8 +631,8 @@ ReleaseLruFile(void)
 	if (nfile > 0)
 	{
 		/*
-		 * There are opened files and so there should be at least one used
-		 * vfd in the ring.
+		 * There are opened files and so there should be at least one used vfd
+		 * in the ring.
 		 */
 		Assert(VfdCache[0].lruMoreRecently != 0);
 		LruDelete(VfdCache[0].lruMoreRecently);
@@ -649,14 +649,14 @@ AllocateVfd(void)
 
 	DO_DB(elog(LOG, "AllocateVfd. Size %d", SizeVfdCache));
 
-	Assert(SizeVfdCache > 0);			/* InitFileAccess not called? */
+	Assert(SizeVfdCache > 0);	/* InitFileAccess not called? */
 
 	if (VfdCache[0].nextFree == 0)
 	{
 		/*
-		 * The free list is empty so it is time to increase the size of
-		 * the array.  We choose to double it each time this happens.
-		 * However, there's not much point in starting *real* small.
+		 * The free list is empty so it is time to increase the size of the
+		 * array.  We choose to double it each time this happens. However,
+		 * there's not much point in starting *real* small.
 		 */
 		Size		newCacheSize = SizeVfdCache * 2;
 		Vfd		   *newVfdCache;
@@ -745,9 +745,8 @@ FileAccess(File file)
 			   file, VfdCache[file].fileName));
 
 	/*
-	 * Is the file open?  If not, open it and put it at the head of the
-	 * LRU ring (possibly closing the least recently used file to get an
-	 * FD).
+	 * Is the file open?  If not, open it and put it at the head of the LRU
+	 * ring (possibly closing the least recently used file to get an FD).
 	 */
 
 	if (FileIsNotOpen(file))
@@ -759,9 +758,8 @@ FileAccess(File file)
 	else if (VfdCache[0].lruLessRecently != file)
 	{
 		/*
-		 * We now know that the file is open and that it is not the last
-		 * one accessed, so we need to move it to the head of the Lru
-		 * ring.
+		 * We now know that the file is open and that it is not the last one
+		 * accessed, so we need to move it to the head of the Lru ring.
 		 */
 
 		Delete(file);
@@ -889,8 +887,8 @@ OpenTemporaryFile(bool interXact)
 			 MyProcPid, tempFileCounter++);
 
 	/*
-	 * Open the file.  Note: we don't use O_EXCL, in case there is an
-	 * orphaned temp file that can be reused.
+	 * Open the file.  Note: we don't use O_EXCL, in case there is an orphaned
+	 * temp file that can be reused.
 	 */
 	file = FileNameOpenFile(tempfilepath,
 							O_RDWR | O_CREAT | O_TRUNC | PG_BINARY,
@@ -900,12 +898,12 @@ OpenTemporaryFile(bool interXact)
 		char	   *dirpath;
 
 		/*
-		 * We might need to create the pg_tempfiles subdirectory, if no
-		 * one has yet done so.
+		 * We might need to create the pg_tempfiles subdirectory, if no one
+		 * has yet done so.
 		 *
-		 * Don't check for error from mkdir; it could fail if someone else
-		 * just did the same thing.  If it doesn't work then we'll bomb
-		 * out on the second create attempt, instead.
+		 * Don't check for error from mkdir; it could fail if someone else just
+		 * did the same thing.	If it doesn't work then we'll bomb out on the
+		 * second create attempt, instead.
 		 */
 		dirpath = make_database_relative(PG_TEMP_FILES_DIR);
 		mkdir(dirpath, S_IRWXU);
@@ -1190,9 +1188,9 @@ AllocateFile(char *name, char *mode)
 
 	/*
 	 * The test against MAX_ALLOCATED_DESCS prevents us from overflowing
-	 * allocatedFiles[]; the test against max_safe_fds prevents
-	 * AllocateFile from hogging every one of the available FDs, which'd
-	 * lead to infinite looping.
+	 * allocatedFiles[]; the test against max_safe_fds prevents AllocateFile
+	 * from hogging every one of the available FDs, which'd lead to infinite
+	 * looping.
 	 */
 	if (numAllocatedDescs >= MAX_ALLOCATED_DESCS ||
 		numAllocatedDescs >= max_safe_fds - 1)
@@ -1216,7 +1214,7 @@ TryAgain:
 
 		ereport(LOG,
 				(errcode(ERRCODE_INSUFFICIENT_RESOURCES),
-			  errmsg("out of file descriptors: %m; release and retry")));
+				 errmsg("out of file descriptors: %m; release and retry")));
 		errno = 0;
 		if (ReleaseLruFile())
 			goto TryAgain;
@@ -1305,9 +1303,9 @@ AllocateDir(const char *dirname)
 
 	/*
 	 * The test against MAX_ALLOCATED_DESCS prevents us from overflowing
-	 * allocatedDescs[]; the test against max_safe_fds prevents
-	 * AllocateDir from hogging every one of the available FDs, which'd
-	 * lead to infinite looping.
+	 * allocatedDescs[]; the test against max_safe_fds prevents AllocateDir
+	 * from hogging every one of the available FDs, which'd lead to infinite
+	 * looping.
 	 */
 	if (numAllocatedDescs >= MAX_ALLOCATED_DESCS ||
 		numAllocatedDescs >= max_safe_fds - 1)
@@ -1331,7 +1329,7 @@ TryAgain:
 
 		ereport(LOG,
 				(errcode(ERRCODE_INSUFFICIENT_RESOURCES),
-			  errmsg("out of file descriptors: %m; release and retry")));
+				 errmsg("out of file descriptors: %m; release and retry")));
 		errno = 0;
 		if (ReleaseLruFile())
 			goto TryAgain;
@@ -1345,7 +1343,7 @@ TryAgain:
  * Read a directory opened with AllocateDir, ereport'ing any error.
  *
  * This is easier to use than raw readdir() since it takes care of some
- * otherwise rather tedious and error-prone manipulation of errno.  Also,
+ * otherwise rather tedious and error-prone manipulation of errno.	Also,
  * if you are happy with a generic error message for AllocateDir failure,
  * you can just do
  *
@@ -1378,9 +1376,10 @@ ReadDir(DIR *dir, const char *dirname)
 		return dent;
 
 #ifdef WIN32
+
 	/*
-	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but
-	 * not in released version
+	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but not in
+	 * released version
 	 */
 	if (GetLastError() == ERROR_NO_MORE_FILES)
 		errno = 0;
@@ -1542,9 +1541,9 @@ CleanupTempFiles(bool isProcExit)
 			if ((fdstate & FD_TEMPORARY) && VfdCache[i].fileName != NULL)
 			{
 				/*
-				 * If we're in the process of exiting a backend process,
-				 * close all temporary files. Otherwise, only close
-				 * temporary files local to the current transaction.
+				 * If we're in the process of exiting a backend process, close
+				 * all temporary files. Otherwise, only close temporary files
+				 * local to the current transaction.
 				 */
 				if (isProcExit || (fdstate & FD_XACT_TEMPORARY))
 					FileClose(i);
@@ -1596,8 +1595,8 @@ RemovePgTempFiles(void)
 	FreeDir(db_dir);
 
 	/*
-	 * In EXEC_BACKEND case there is a pgsql_tmp directory at the top
-	 * level of DataDir as well.
+	 * In EXEC_BACKEND case there is a pgsql_tmp directory at the top level of
+	 * DataDir as well.
 	 */
 #ifdef EXEC_BACKEND
 	RemovePgTempFilesInDir(PG_TEMP_FILES_DIR);

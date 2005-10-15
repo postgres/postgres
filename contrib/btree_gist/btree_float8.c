@@ -129,7 +129,7 @@ gbt_float8_penalty(PG_FUNCTION_ARGS)
 	float8KEY  *newentry = (float8KEY *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(1))->key);
 	float	   *result = (float *) PG_GETARG_POINTER(2);
 
-	penalty_num(result,origentry->lower,origentry->upper,newentry->lower,newentry->upper);
+	penalty_num(result, origentry->lower, origentry->upper, newentry->lower, newentry->upper);
 
 	PG_RETURN_POINTER(result);
 
@@ -139,8 +139,8 @@ Datum
 gbt_float8_picksplit(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_POINTER(gbt_num_picksplit(
-								(GistEntryVector *) PG_GETARG_POINTER(0),
-								  (GIST_SPLITVEC *) PG_GETARG_POINTER(1),
+									(GistEntryVector *) PG_GETARG_POINTER(0),
+									  (GIST_SPLITVEC *) PG_GETARG_POINTER(1),
 										&tinfo
 										));
 }

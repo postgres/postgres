@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.91 2005/06/22 17:45:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.92 2005/10/15 02:49:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,9 +78,9 @@ printtup_create_DR(CommandDest dest, Portal portal)
 	else
 	{
 		/*
-		 * In protocol 2.0 the Bind message does not exist, so there is no
-		 * way for the columns to have different print formats; it's
-		 * sufficient to look at the first one.
+		 * In protocol 2.0 the Bind message does not exist, so there is no way
+		 * for the columns to have different print formats; it's sufficient to
+		 * look at the first one.
 		 */
 		if (portal->formats && portal->formats[0] != 0)
 			self->pub.receiveSlot = printtup_internal_20;
@@ -113,8 +113,7 @@ printtup_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	if (PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
 	{
 		/*
-		 * Send portal name to frontend (obsolete cruft, gone in proto
-		 * 3.0)
+		 * Send portal name to frontend (obsolete cruft, gone in proto 3.0)
 		 *
 		 * If portal name not specified, use "blank" portal.
 		 */
@@ -127,8 +126,8 @@ printtup_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	}
 
 	/*
-	 * If this is a retrieve, and we are supposed to emit row
-	 * descriptions, then we send back the tuple descriptor of the tuples.
+	 * If this is a retrieve, and we are supposed to emit row descriptions,
+	 * then we send back the tuple descriptor of the tuples.
 	 */
 	if (operation == CMD_SELECT && myState->sendDescrip)
 		SendRowDescriptionMessage(typeinfo,
@@ -280,7 +279,7 @@ printtup_prepare_info(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
 static void
 printtup(TupleTableSlot *slot, DestReceiver *self)
 {
-	TupleDesc typeinfo = slot->tts_tupleDescriptor;
+	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
 	DR_printtup *myState = (DR_printtup *) self;
 	StringInfoData buf;
 	int			natts = typeinfo->natts;
@@ -363,7 +362,7 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 static void
 printtup_20(TupleTableSlot *slot, DestReceiver *self)
 {
-	TupleDesc typeinfo = slot->tts_tupleDescriptor;
+	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
 	DR_printtup *myState = (DR_printtup *) self;
 	StringInfoData buf;
 	int			natts = typeinfo->natts;
@@ -566,7 +565,7 @@ debugtup(TupleTableSlot *slot, DestReceiver *self)
 static void
 printtup_internal_20(TupleTableSlot *slot, DestReceiver *self)
 {
-	TupleDesc typeinfo = slot->tts_tupleDescriptor;
+	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
 	DR_printtup *myState = (DR_printtup *) self;
 	StringInfoData buf;
 	int			natts = typeinfo->natts;

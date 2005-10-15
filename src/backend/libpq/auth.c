@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.129 2005/10/13 22:55:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.130 2005/10/15 02:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ static char *recv_password_packet(Port *port);
 static int	recv_and_check_password_packet(Port *port);
 
 char	   *pg_krb_server_keyfile;
-char       *pg_krb_srvnam;
+char	   *pg_krb_srvnam;
 bool		pg_krb_caseins_users;
 char	   *pg_krb_server_hostname = NULL;
 
@@ -65,8 +65,8 @@ static struct pam_conv pam_passw_conv = {
 };
 
 static char *pam_passwd = NULL; /* Workaround for Solaris 2.6 brokenness */
-static Port *pam_port_cludge;	/* Workaround for passing "Port *port"
-								 * into pam_passwd_conv_proc */
+static Port *pam_port_cludge;	/* Workaround for passing "Port *port" into
+								 * pam_passwd_conv_proc */
 #endif   /* USE_PAM */
 
 #ifdef KRB5
@@ -119,7 +119,7 @@ static int
 pg_krb5_init(void)
 {
 	krb5_error_code retval;
-	char *khostname;
+	char	   *khostname;
 
 	if (pg_krb5_initialised)
 		return STATUS_OK;
@@ -147,8 +147,8 @@ pg_krb5_init(void)
 	}
 
 	/*
-	 * If no hostname was specified, pg_krb_server_hostname is already
-	 * NULL. If it's set to blank, force it to NULL.
+	 * If no hostname was specified, pg_krb_server_hostname is already NULL.
+	 * If it's set to blank, force it to NULL.
 	 */
 	khostname = pg_krb_server_hostname;
 	if (khostname && khostname[0] == '\0')
@@ -163,9 +163,9 @@ pg_krb5_init(void)
 	{
 		ereport(LOG,
 				(errmsg("Kerberos sname_to_principal(\"%s\", \"%s\") returned error %d",
-						khostname ? khostname : "localhost", pg_krb_srvnam, retval)));
+			   khostname ? khostname : "localhost", pg_krb_srvnam, retval)));
 		com_err("postgres", retval,
-				"while getting server principal for server \"%s\" for service \"%s\"",
+		"while getting server principal for server \"%s\" for service \"%s\"",
 				khostname ? khostname : "localhost", pg_krb_srvnam);
 		krb5_kt_close(pg_krb5_context, pg_krb5_keytab);
 		krb5_free_context(pg_krb5_context);
@@ -260,7 +260,6 @@ pg_krb5_recvauth(Port *port)
 
 	return ret;
 }
-
 #else
 
 static int
@@ -293,13 +292,13 @@ auth_failed(Port *port, int status)
 
 	/*
 	 * If we failed due to EOF from client, just quit; there's no point in
-	 * trying to send a message to the client, and not much point in
-	 * logging the failure in the postmaster log.  (Logging the failure
-	 * might be desirable, were it not for the fact that libpq closes the
-	 * connection unceremoniously if challenged for a password when it
-	 * hasn't got one to send.  We'll get a useless log entry for every
-	 * psql connection under password auth, even if it's perfectly
-	 * successful, if we log STATUS_EOF events.)
+	 * trying to send a message to the client, and not much point in logging
+	 * the failure in the postmaster log.  (Logging the failure might be
+	 * desirable, were it not for the fact that libpq closes the connection
+	 * unceremoniously if challenged for a password when it hasn't got one to
+	 * send.  We'll get a useless log entry for every psql connection under
+	 * password auth, even if it's perfectly successful, if we log STATUS_EOF
+	 * events.)
 	 */
 	if (status == STATUS_EOF)
 		proc_exit(0);
@@ -351,9 +350,9 @@ ClientAuthentication(Port *port)
 
 	/*
 	 * Get the authentication method to use for this frontend/database
-	 * combination.  Note: a failure return indicates a problem with the
-	 * hba config file, not with the request.  hba.c should have dropped
-	 * an error message into the postmaster logfile if it failed.
+	 * combination.  Note: a failure return indicates a problem with the hba
+	 * config file, not with the request.  hba.c should have dropped an error
+	 * message into the postmaster logfile if it failed.
 	 */
 	if (hba_getauthmethod(port) != STATUS_OK)
 		ereport(FATAL,
@@ -368,11 +367,11 @@ ClientAuthentication(Port *port)
 			/*
 			 * This could have come from an explicit "reject" entry in
 			 * pg_hba.conf, but more likely it means there was no matching
-			 * entry.  Take pity on the poor user and issue a helpful
-			 * error message.  NOTE: this is not a security breach,
-			 * because all the info reported here is known at the frontend
-			 * and must be assumed known to bad guys. We're merely helping
-			 * out the less clueful good guys.
+			 * entry.  Take pity on the poor user and issue a helpful error
+			 * message.  NOTE: this is not a security breach, because all the
+			 * info reported here is known at the frontend and must be assumed
+			 * known to bad guys. We're merely helping out the less clueful
+			 * good guys.
 			 */
 			{
 				char		hostinfo[NI_MAXHOST];
@@ -384,14 +383,14 @@ ClientAuthentication(Port *port)
 
 #ifdef USE_SSL
 				ereport(FATAL,
-				   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-					errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s",
-						   hostinfo, port->user_name, port->database_name,
-						   port->ssl ? _("SSL on") : _("SSL off"))));
+						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+						 errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s",
+							  hostinfo, port->user_name, port->database_name,
+								port->ssl ? _("SSL on") : _("SSL off"))));
 #else
 				ereport(FATAL,
-				   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-					errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\"",
+						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+						 errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\"",
 						   hostinfo, port->user_name, port->database_name)));
 #endif
 				break;
@@ -425,7 +424,7 @@ ClientAuthentication(Port *port)
 				if (setsockopt(port->sock, 0, LOCAL_CREDS, &on, sizeof(on)) < 0)
 					ereport(FATAL,
 							(errcode_for_socket_access(),
-					errmsg("could not enable credential reception: %m")));
+					   errmsg("could not enable credential reception: %m")));
 #endif
 
 				sendAuthRequest(port, AUTH_REQ_SCM_CREDS);
@@ -488,8 +487,8 @@ sendAuthRequest(Port *port, AuthRequest areq)
 	pq_endmessage(&buf);
 
 	/*
-	 * Flush message so client will see it, except for AUTH_REQ_OK, which
-	 * need not be sent until we are ready for queries.
+	 * Flush message so client will see it, except for AUTH_REQ_OK, which need
+	 * not be sent until we are ready for queries.
 	 */
 	if (areq != AUTH_REQ_OK)
 		pq_flush();
@@ -526,15 +525,15 @@ pam_passwd_conv_proc(int num_msg, const struct pam_message ** msg,
 	if (!appdata_ptr)
 	{
 		/*
-		 * Workaround for Solaris 2.6 where the PAM library is broken and
-		 * does not pass appdata_ptr to the conversation routine
+		 * Workaround for Solaris 2.6 where the PAM library is broken and does
+		 * not pass appdata_ptr to the conversation routine
 		 */
 		appdata_ptr = pam_passwd;
 	}
 
 	/*
-	 * Password wasn't passed to PAM the first time around - let's go ask
-	 * the client to send a password, which we then stuff into PAM.
+	 * Password wasn't passed to PAM the first time around - let's go ask the
+	 * client to send a password, which we then stuff into PAM.
 	 */
 	if (strlen(appdata_ptr) == 0)
 	{
@@ -695,15 +694,15 @@ recv_password_packet(Port *port)
 		{
 			/*
 			 * If the client just disconnects without offering a password,
-			 * don't make a log entry.  This is legal per protocol spec
-			 * and in fact commonly done by psql, so complaining just
-			 * clutters the log.
+			 * don't make a log entry.  This is legal per protocol spec and in
+			 * fact commonly done by psql, so complaining just clutters the
+			 * log.
 			 */
 			if (mtype != EOF)
 				ereport(COMMERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-				errmsg("expected password response, got message type %d",
-					   mtype)));
+					errmsg("expected password response, got message type %d",
+						   mtype)));
 			return NULL;		/* EOF or bad message type */
 		}
 	}
@@ -723,8 +722,8 @@ recv_password_packet(Port *port)
 	}
 
 	/*
-	 * Apply sanity check: password packet length should agree with length
-	 * of contained string.  Note it is safe to use strlen here because
+	 * Apply sanity check: password packet length should agree with length of
+	 * contained string.  Note it is safe to use strlen here because
 	 * StringInfo is guaranteed to have an appended '\0'.
 	 */
 	if (strlen(buf.data) + 1 != buf.len)
@@ -738,8 +737,8 @@ recv_password_packet(Port *port)
 
 	/*
 	 * Return the received string.	Note we do not attempt to do any
-	 * character-set conversion on it; since we don't yet know the
-	 * client's encoding, there wouldn't be much point.
+	 * character-set conversion on it; since we don't yet know the client's
+	 * encoding, there wouldn't be much point.
 	 */
 	return buf.data;
 }

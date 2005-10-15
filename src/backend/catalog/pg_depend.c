@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_depend.c,v 1.14 2005/08/01 04:03:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_depend.c,v 1.15 2005/10/15 02:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,8 +62,8 @@ recordMultipleDependencies(const ObjectAddress *depender,
 		return;					/* nothing to do */
 
 	/*
-	 * During bootstrap, do nothing since pg_depend may not exist yet.
-	 * initdb will fill in appropriate pg_depend entries after bootstrap.
+	 * During bootstrap, do nothing since pg_depend may not exist yet. initdb
+	 * will fill in appropriate pg_depend entries after bootstrap.
 	 */
 	if (IsBootstrapProcessingMode())
 		return;
@@ -78,9 +78,9 @@ recordMultipleDependencies(const ObjectAddress *depender,
 	for (i = 0; i < nreferenced; i++, referenced++)
 	{
 		/*
-		 * If the referenced object is pinned by the system, there's no
-		 * real need to record dependencies on it.	This saves lots of
-		 * space in pg_depend, so it's worth the time taken to check.
+		 * If the referenced object is pinned by the system, there's no real
+		 * need to record dependencies on it.  This saves lots of space in
+		 * pg_depend, so it's worth the time taken to check.
 		 */
 		if (!isObjectPinned(referenced, dependDesc))
 		{
@@ -190,11 +190,10 @@ changeDependencyFor(Oid classId, Oid objectId,
 	depRel = heap_open(DependRelationId, RowExclusiveLock);
 
 	/*
-	 * If oldRefObjectId is pinned, there won't be any dependency entries
-	 * on it --- we can't cope in that case.  (This isn't really worth
-	 * expending code to fix, in current usage; it just means you can't
-	 * rename stuff out of pg_catalog, which would likely be a bad move
-	 * anyway.)
+	 * If oldRefObjectId is pinned, there won't be any dependency entries on
+	 * it --- we can't cope in that case.  (This isn't really worth expending
+	 * code to fix, in current usage; it just means you can't rename stuff out
+	 * of pg_catalog, which would likely be a bad move anyway.)
 	 */
 	objAddr.classId = refClassId;
 	objAddr.objectId = oldRefObjectId;
@@ -203,12 +202,12 @@ changeDependencyFor(Oid classId, Oid objectId,
 	if (isObjectPinned(&objAddr, depRel))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot remove dependency on %s because it is a system object",
-						getObjectDescription(&objAddr))));
+		errmsg("cannot remove dependency on %s because it is a system object",
+			   getObjectDescription(&objAddr))));
 
 	/*
-	 * We can handle adding a dependency on something pinned, though,
-	 * since that just means deleting the dependency entry.
+	 * We can handle adding a dependency on something pinned, though, since
+	 * that just means deleting the dependency entry.
 	 */
 	objAddr.objectId = newRefObjectId;
 
@@ -293,9 +292,9 @@ isObjectPinned(const ObjectAddress *object, Relation rel)
 
 	/*
 	 * Since we won't generate additional pg_depend entries for pinned
-	 * objects, there can be at most one entry referencing a pinned
-	 * object.	Hence, it's sufficient to look at the first returned
-	 * tuple; we don't need to loop.
+	 * objects, there can be at most one entry referencing a pinned object.
+	 * Hence, it's sufficient to look at the first returned tuple; we don't
+	 * need to loop.
 	 */
 	tup = systable_getnext(scan);
 	if (HeapTupleIsValid(tup))

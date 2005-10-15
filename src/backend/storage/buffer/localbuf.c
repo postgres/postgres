@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.69 2005/08/20 23:26:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.70 2005/10/15 02:49:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@ typedef struct
 } LocalBufferLookupEnt;
 
 /* Note: this macro only works on local buffers, not shared ones! */
-#define LocalBufHdrGetBlock(bufHdr)	\
+#define LocalBufHdrGetBlock(bufHdr) \
 	LocalBufferBlockPointers[-((bufHdr)->buf_id + 2)]
 
 int			NLocBuffer = 0;		/* until buffers are initialized */
@@ -107,8 +107,8 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 #endif
 
 	/*
-	 * Need to get a new buffer.  We use a clock sweep algorithm
-	 * (essentially the same as what freelist.c does now...)
+	 * Need to get a new buffer.  We use a clock sweep algorithm (essentially
+	 * the same as what freelist.c does now...)
 	 */
 	trycounter = NLocBuffer;
 	for (;;)
@@ -140,8 +140,8 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 	}
 
 	/*
-	 * this buffer is not referenced but it might still be dirty. if
-	 * that's the case, write it out before reusing it!
+	 * this buffer is not referenced but it might still be dirty. if that's
+	 * the case, write it out before reusing it!
 	 */
 	if (bufHdr->flags & BM_DIRTY)
 	{
@@ -183,7 +183,7 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 		hresult = (LocalBufferLookupEnt *)
 			hash_search(LocalBufHash, (void *) &bufHdr->tag,
 						HASH_REMOVE, NULL);
-		if (!hresult)				/* shouldn't happen */
+		if (!hresult)			/* shouldn't happen */
 			elog(ERROR, "local buffer hash table corrupted");
 		/* mark buffer invalid just in case hash insert fails */
 		CLEAR_BUFFERTAG(bufHdr->tag);
@@ -192,7 +192,7 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 
 	hresult = (LocalBufferLookupEnt *)
 		hash_search(LocalBufHash, (void *) &newTag, HASH_ENTER, &found);
-	if (found)				/* shouldn't happen */
+	if (found)					/* shouldn't happen */
 		elog(ERROR, "local buffer hash table corrupted");
 	hresult->id = b;
 
@@ -271,10 +271,10 @@ InitLocalBuffers(void)
 		BufferDesc *buf = &LocalBufferDescriptors[i];
 
 		/*
-		 * negative to indicate local buffer. This is tricky: shared
-		 * buffers start with 0. We have to start with -2. (Note that the
-		 * routine BufferDescriptorGetBuffer adds 1 to buf_id so our first
-		 * buffer id is -1.)
+		 * negative to indicate local buffer. This is tricky: shared buffers
+		 * start with 0. We have to start with -2. (Note that the routine
+		 * BufferDescriptorGetBuffer adds 1 to buf_id so our first buffer id
+		 * is -1.)
 		 */
 		buf->buf_id = -i - 2;
 	}

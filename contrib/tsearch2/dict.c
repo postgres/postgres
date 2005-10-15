@@ -91,9 +91,9 @@ reset_dict(void)
 static int
 comparedict(const void *a, const void *b)
 {
-	if ( ((DictInfo *) a)->dict_id == ((DictInfo *) b)->dict_id )
+	if (((DictInfo *) a)->dict_id == ((DictInfo *) b)->dict_id)
 		return 0;
-	return ( ((DictInfo *) a)->dict_id < ((DictInfo *) b)->dict_id ) ? -1 : 1;
+	return (((DictInfo *) a)->dict_id < ((DictInfo *) b)->dict_id) ? -1 : 1;
 }
 
 DictInfo *
@@ -184,8 +184,8 @@ lexize(PG_FUNCTION_ARGS)
 {
 	text	   *in = PG_GETARG_TEXT_P(1);
 	DictInfo   *dict;
-	TSLexeme	  *res,
-			  *ptr;
+	TSLexeme   *res,
+			   *ptr;
 	Datum	   *da;
 	ArrayType  *a;
 
@@ -193,11 +193,11 @@ lexize(PG_FUNCTION_ARGS)
 	dict = finddict(PG_GETARG_OID(0));
 
 	ptr = res = (TSLexeme *) DatumGetPointer(
-									  FunctionCall3(&(dict->lexize_info),
-									   PointerGetDatum(dict->dictionary),
-											PointerGetDatum(VARDATA(in)),
-									Int32GetDatum(VARSIZE(in) - VARHDRSZ)
-													)
+										  FunctionCall3(&(dict->lexize_info),
+										   PointerGetDatum(dict->dictionary),
+												PointerGetDatum(VARDATA(in)),
+										Int32GetDatum(VARSIZE(in) - VARHDRSZ)
+														)
 		);
 	PG_FREE_IF_COPY(in, 1);
 	if (!res)

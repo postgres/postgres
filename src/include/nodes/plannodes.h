@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.79 2005/04/25 01:30:14 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.80 2005/10/15 02:49:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,10 +43,8 @@ typedef struct Plan
 	/*
 	 * estimated execution costs for plan (see costsize.c for more info)
 	 */
-	Cost		startup_cost;	/* cost expended before fetching any
-								 * tuples */
-	Cost		total_cost;		/* total cost (assuming all tuples
-								 * fetched) */
+	Cost		startup_cost;	/* cost expended before fetching any tuples */
+	Cost		total_cost;		/* total cost (assuming all tuples fetched) */
 
 	/*
 	 * planner's estimate of result size of this plan step
@@ -67,13 +65,13 @@ typedef struct Plan
 	/*
 	 * Information for management of parameter-change-driven rescanning
 	 *
-	 * extParam includes the paramIDs of all external PARAM_EXEC params
-	 * affecting this plan node or its children.  setParam params from the
-	 * node's initPlans are not included, but their extParams are.
+	 * extParam includes the paramIDs of all external PARAM_EXEC params affecting
+	 * this plan node or its children.	setParam params from the node's
+	 * initPlans are not included, but their extParams are.
 	 *
-	 * allParam includes all the extParam paramIDs, plus the IDs of local
-	 * params that affect the node (i.e., the setParams of its initplans).
-	 * These are _all_ the PARAM_EXEC params that affect this node.
+	 * allParam includes all the extParam paramIDs, plus the IDs of local params
+	 * that affect the node (i.e., the setParams of its initplans). These are
+	 * _all_ the PARAM_EXEC params that affect this node.
 	 */
 	Bitmapset  *extParam;
 	Bitmapset  *allParam;
@@ -83,9 +81,9 @@ typedef struct Plan
 	 * resultRelation from Query there and get rid of Query itself from
 	 * Executor. Some other stuff like below could be put there, too.
 	 */
-	int			nParamExec;		/* Number of them in entire query. This is
-								 * to get Executor know about how many
-								 * PARAM_EXEC there are in query plan. */
+	int			nParamExec;		/* Number of them in entire query. This is to
+								 * get Executor know about how many PARAM_EXEC
+								 * there are in query plan. */
 } Plan;
 
 /* ----------------
@@ -138,7 +136,7 @@ typedef struct Append
  *	 BitmapAnd node -
  *		Generate the intersection of the results of sub-plans.
  *
- * The subplans must be of types that yield tuple bitmaps.  The targetlist
+ * The subplans must be of types that yield tuple bitmaps.	The targetlist
  * and qual fields of the plan are unused and are always NIL.
  * ----------------
  */
@@ -152,7 +150,7 @@ typedef struct BitmapAnd
  *	 BitmapOr node -
  *		Generate the union of the results of sub-plans.
  *
- * The subplans must be of types that yield tuple bitmaps.  The targetlist
+ * The subplans must be of types that yield tuple bitmaps.	The targetlist
  * and qual fields of the plan are unused and are always NIL.
  * ----------------
  */
@@ -186,15 +184,15 @@ typedef Scan SeqScan;
  * in the same form it appeared in the query WHERE condition.  Each should
  * be of the form (indexkey OP comparisonval) or (comparisonval OP indexkey).
  * The indexkey is a Var or expression referencing column(s) of the index's
- * base table.  The comparisonval might be any expression, but it won't use
+ * base table.	The comparisonval might be any expression, but it won't use
  * any columns of the base table.
  *
  * indexqual has the same form, but the expressions have been commuted if
  * necessary to put the indexkeys on the left, and the indexkeys are replaced
  * by Var nodes identifying the index columns (varattno is the index column
  * position, not the base table's column, even though varno is for the base
- * table).  This is a bit hokey ... would be cleaner to use a special-purpose
- * node type that could not be mistaken for a regular Var.  But it will do
+ * table).	This is a bit hokey ... would be cleaner to use a special-purpose
+ * node type that could not be mistaken for a regular Var.	But it will do
  * for now.
  *
  * indexstrategy and indexsubtype are lists corresponding one-to-one with
@@ -205,11 +203,11 @@ typedef Scan SeqScan;
 typedef struct IndexScan
 {
 	Scan		scan;
-	Oid			indexid;			/* OID of index to scan */
-	List	   *indexqual;			/* list of index quals (OpExprs) */
-	List	   *indexqualorig;		/* the same in original form */
-	List	   *indexstrategy;		/* integer list of strategy numbers */
-	List	   *indexsubtype;		/* OID list of strategy subtypes */
+	Oid			indexid;		/* OID of index to scan */
+	List	   *indexqual;		/* list of index quals (OpExprs) */
+	List	   *indexqualorig;	/* the same in original form */
+	List	   *indexstrategy;	/* integer list of strategy numbers */
+	List	   *indexsubtype;	/* OID list of strategy subtypes */
 	ScanDirection indexorderdir;	/* forward or backward or don't care */
 } IndexScan;
 
@@ -217,7 +215,7 @@ typedef struct IndexScan
  *		bitmap index scan node
  *
  * BitmapIndexScan delivers a bitmap of potential tuple locations;
- * it does not access the heap itself.  The bitmap is used by an
+ * it does not access the heap itself.	The bitmap is used by an
  * ancestor BitmapHeapScan node, possibly after passing through
  * intermediate BitmapAnd and/or BitmapOr nodes to combine it with
  * the results of other BitmapIndexScans.
@@ -233,11 +231,11 @@ typedef struct IndexScan
 typedef struct BitmapIndexScan
 {
 	Scan		scan;
-	Oid			indexid;			/* OID of index to scan */
-	List	   *indexqual;			/* list of index quals (OpExprs) */
-	List	   *indexqualorig;		/* the same in original form */
-	List	   *indexstrategy;		/* integer list of strategy numbers */
-	List	   *indexsubtype;		/* OID list of strategy subtypes */
+	Oid			indexid;		/* OID of index to scan */
+	List	   *indexqual;		/* list of index quals (OpExprs) */
+	List	   *indexqualorig;	/* the same in original form */
+	List	   *indexstrategy;	/* integer list of strategy numbers */
+	List	   *indexsubtype;	/* OID list of strategy subtypes */
 } BitmapIndexScan;
 
 /* ----------------
@@ -252,7 +250,7 @@ typedef struct BitmapIndexScan
 typedef struct BitmapHeapScan
 {
 	Scan		scan;
-	List	   *bitmapqualorig;	/* index quals, in standard expr form */
+	List	   *bitmapqualorig; /* index quals, in standard expr form */
 } BitmapHeapScan;
 
 /* ----------------
@@ -424,8 +422,7 @@ typedef struct Agg
 typedef struct Unique
 {
 	Plan		plan;
-	int			numCols;		/* number of columns to check for
-								 * uniqueness */
+	int			numCols;		/* number of columns to check for uniqueness */
 	AttrNumber *uniqColIdx;		/* indexes into the target list */
 } Unique;
 

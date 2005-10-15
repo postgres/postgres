@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/inval.h,v 1.36 2005/06/17 22:32:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/inval.h,v 1.37 2005/10/15 02:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,6 +52,6 @@ extern void CacheRegisterRelcacheCallback(CacheCallbackFunction func,
 							  Datum arg);
 
 extern void inval_twophase_postcommit(TransactionId xid, uint16 info,
-									  void *recdata, uint32 len);
+						  void *recdata, uint32 len);
 
 #endif   /* INVAL_H */

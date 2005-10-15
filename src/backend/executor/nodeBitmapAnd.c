@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapAnd.c,v 1.3 2005/08/28 22:47:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapAnd.c,v 1.4 2005/10/15 02:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
  *		ExecInitBitmapAnd	- initialize the BitmapAnd node
  *		MultiExecBitmapAnd	- retrieve the result bitmap from the node
  *		ExecEndBitmapAnd	- shut down the BitmapAnd node
- *		ExecReScanBitmapAnd	- rescan the BitmapAnd node
+ *		ExecReScanBitmapAnd - rescan the BitmapAnd node
  *
  *	 NOTES
  *		BitmapAnd nodes don't make use of their left and right
@@ -137,7 +137,7 @@ MultiExecBitmapAnd(BitmapAndState *node)
 			elog(ERROR, "unrecognized result from subplan");
 
 		if (result == NULL)
-			result = subresult;			/* first subplan */
+			result = subresult; /* first subplan */
 		else
 		{
 			tbm_intersect(result, subresult);
@@ -145,11 +145,11 @@ MultiExecBitmapAnd(BitmapAndState *node)
 		}
 
 		/*
-		 * If at any stage we have a completely empty bitmap, we can fall
-		 * out without evaluating the remaining subplans, since ANDing them
-		 * can no longer change the result.  (Note: the fact that indxpath.c
-		 * orders the subplans by selectivity should make this case more
-		 * likely to occur.)
+		 * If at any stage we have a completely empty bitmap, we can fall out
+		 * without evaluating the remaining subplans, since ANDing them can no
+		 * longer change the result.  (Note: the fact that indxpath.c orders
+		 * the subplans by selectivity should make this case more likely to
+		 * occur.)
 		 */
 		if (tbm_is_empty(result))
 			break;
@@ -160,7 +160,7 @@ MultiExecBitmapAnd(BitmapAndState *node)
 
 	/* must provide our own instrumentation support */
 	if (node->ps.instrument)
-		InstrStopNodeMulti(node->ps.instrument, 0 /* XXX */);
+		InstrStopNodeMulti(node->ps.instrument, 0 /* XXX */ );
 
 	return (Node *) result;
 }

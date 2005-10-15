@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashsearch.c,v 1.39 2005/10/06 02:29:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashsearch.c,v 1.40 2005/10/15 02:49:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,33 +137,32 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	ItemPointerSetInvalid(current);
 
 	/*
-	 * We do not support hash scans with no index qualification, because
-	 * we would have to read the whole index rather than just one bucket.
-	 * That creates a whole raft of problems, since we haven't got a
-	 * practical way to lock all the buckets against splits or
-	 * compactions.
+	 * We do not support hash scans with no index qualification, because we
+	 * would have to read the whole index rather than just one bucket. That
+	 * creates a whole raft of problems, since we haven't got a practical way
+	 * to lock all the buckets against splits or compactions.
 	 */
 	if (scan->numberOfKeys < 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("hash indexes do not support whole-index scans")));
+				 errmsg("hash indexes do not support whole-index scans")));
 
 	/*
-	 * If the constant in the index qual is NULL, assume it cannot match
-	 * any items in the index.
+	 * If the constant in the index qual is NULL, assume it cannot match any
+	 * items in the index.
 	 */
 	if (scan->keyData[0].sk_flags & SK_ISNULL)
 		return false;
 
 	/*
-	 * Okay to compute the hash key.  We want to do this before acquiring
-	 * any locks, in case a user-defined hash function happens to be slow.
+	 * Okay to compute the hash key.  We want to do this before acquiring any
+	 * locks, in case a user-defined hash function happens to be slow.
 	 */
 	hashkey = _hash_datum2hashkey(rel, scan->keyData[0].sk_argument);
 
 	/*
-	 * Acquire shared split lock so we can compute the target bucket
-	 * safely (see README).
+	 * Acquire shared split lock so we can compute the target bucket safely
+	 * (see README).
 	 */
 	_hash_getlock(rel, 0, HASH_SHARE);
 
@@ -186,8 +185,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	_hash_relbuf(rel, metabuf);
 
 	/*
-	 * Acquire share lock on target bucket; then we can release split
-	 * lock.
+	 * Acquire share lock on target bucket; then we can release split lock.
 	 */
 	_hash_getlock(rel, blkno, HASH_SHARE);
 
@@ -263,9 +261,9 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 	bucket = opaque->hasho_bucket;
 
 	/*
-	 * If _hash_step is called from _hash_first, current will not be
-	 * valid, so we can't dereference it.  However, in that case, we
-	 * presumably want to start at the beginning/end of the page...
+	 * If _hash_step is called from _hash_first, current will not be valid, so
+	 * we can't dereference it.  However, in that case, we presumably want to
+	 * start at the beginning/end of the page...
 	 */
 	maxoff = PageGetMaxOffsetNumber(page);
 	if (ItemPointerIsValid(current))
@@ -276,8 +274,8 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 	/*
 	 * 'offnum' now points to the last tuple we have seen (if any).
 	 *
-	 * continue to step through tuples until: 1) we get to the end of the
-	 * bucket chain or 2) we find a valid tuple.
+	 * continue to step through tuples until: 1) we get to the end of the bucket
+	 * chain or 2) we find a valid tuple.
 	 */
 	do
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.82 2005/09/24 17:53:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.83 2005/10/15 02:49:26 momjian Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -103,8 +103,8 @@ GetOldFunctionMessage(StringInfo buf)
 			/* FATAL here since no hope of regaining message sync */
 			ereport(FATAL,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-			  errmsg("invalid argument size %d in function call message",
-					 argsize)));
+				  errmsg("invalid argument size %d in function call message",
+						 argsize)));
 		}
 		/* and arg contents */
 		if (argsize > 0)
@@ -204,11 +204,10 @@ fetch_fp_info(Oid func_id, struct fp_info * fip)
 	/*
 	 * Since the validity of this structure is determined by whether the
 	 * funcid is OK, we clear the funcid here.	It must not be set to the
-	 * correct value until we are about to return with a good struct
-	 * fp_info, since we can be interrupted (i.e., with an ereport(ERROR,
-	 * ...)) at any time.  [No longer really an issue since we don't save
-	 * the struct fp_info across transactions anymore, but keep it
-	 * anyway.]
+	 * correct value until we are about to return with a good struct fp_info,
+	 * since we can be interrupted (i.e., with an ereport(ERROR, ...)) at any
+	 * time.  [No longer really an issue since we don't save the struct
+	 * fp_info across transactions anymore, but keep it anyway.]
 	 */
 	MemSet(fip, 0, sizeof(struct fp_info));
 	fip->funcid = InvalidOid;
@@ -294,14 +293,14 @@ HandleFunctionRequest(StringInfo msgBuf)
 
 	/*
 	 * Now that we've eaten the input message, check to see if we actually
-	 * want to do the function call or not.  It's now safe to ereport();
-	 * we won't lose sync with the frontend.
+	 * want to do the function call or not.  It's now safe to ereport(); we
+	 * won't lose sync with the frontend.
 	 */
 	if (IsAbortedTransactionBlockState())
 		ereport(ERROR,
 				(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
 				 errmsg("current transaction is aborted, "
-					"commands ignored until end of transaction block")));
+						"commands ignored until end of transaction block")));
 
 	/*
 	 * Begin parsing the buffer contents.
@@ -440,8 +439,8 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info * fip,
 		if (argsize < 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-			  errmsg("invalid argument size %d in function call message",
-					 argsize)));
+				  errmsg("invalid argument size %d in function call message",
+						 argsize)));
 
 		/* Reset abuf to empty, and insert raw data into it */
 		abuf.len = 0;
@@ -500,8 +499,8 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info * fip,
 			if (abuf.cursor != abuf.len)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-						 errmsg("incorrect binary data format in function argument %d",
-								i + 1)));
+				errmsg("incorrect binary data format in function argument %d",
+					   i + 1)));
 		}
 		else
 			ereport(ERROR,
@@ -543,9 +542,9 @@ parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info * fip,
 	 * Copy supplied arguments into arg vector.  In protocol 2.0 these are
 	 * always assumed to be supplied in binary format.
 	 *
-	 * Note: although the original protocol 2.0 code did not have any way for
-	 * the frontend to specify a NULL argument, we now choose to interpret
-	 * length == -1 as meaning a NULL.
+	 * Note: although the original protocol 2.0 code did not have any way for the
+	 * frontend to specify a NULL argument, we now choose to interpret length
+	 * == -1 as meaning a NULL.
 	 */
 	for (i = 0; i < nargs; ++i)
 	{
@@ -563,8 +562,8 @@ parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info * fip,
 		if (argsize < 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-			  errmsg("invalid argument size %d in function call message",
-					 argsize)));
+				  errmsg("invalid argument size %d in function call message",
+						 argsize)));
 
 		/* Reset abuf to empty, and insert raw data into it */
 		abuf.len = 0;
@@ -587,8 +586,8 @@ parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info * fip,
 		if (abuf.cursor != abuf.len)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-			errmsg("incorrect binary data format in function argument %d",
-				   i + 1)));
+			   errmsg("incorrect binary data format in function argument %d",
+					  i + 1)));
 	}
 
 	/* Desired result format is always binary in protocol 2.0 */

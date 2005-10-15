@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/tuptable.h,v 1.28 2005/03/16 21:38:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/tuptable.h,v 1.29 2005/10/15 02:49:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,17 +37,17 @@
  * a lower plan node's output TupleTableSlot, or to a function result
  * constructed in a plan node's per-tuple econtext.  It is the responsibility
  * of the generating plan node to be sure these resources are not released
- * for as long as the virtual tuple needs to be valid.  We only use virtual
+ * for as long as the virtual tuple needs to be valid.	We only use virtual
  * tuples in the result slots of plan nodes --- tuples to be copied anywhere
  * else need to be "materialized" into physical tuples.  Note also that a
  * virtual tuple does not have any "system columns".
  *
  * The Datum/isnull arrays of a TupleTableSlot serve double duty.  When the
- * slot contains a virtual tuple, they are the authoritative data.  When the
+ * slot contains a virtual tuple, they are the authoritative data.	When the
  * slot contains a physical tuple, the arrays contain data extracted from
  * the tuple.  (In this state, any pass-by-reference Datums point into
  * the physical tuple.)  The extracted information is built "lazily",
- * ie, only as needed.  This serves to avoid repeated extraction of data
+ * ie, only as needed.	This serves to avoid repeated extraction of data
  * from the physical tuple.
  *
  * A TupleTableSlot can also be "empty", holding no valid data.  This is
@@ -70,7 +70,7 @@
  * buffer page.)
  *
  * tts_nvalid indicates the number of valid columns in the tts_values/isnull
- * arrays.  When the slot is holding a "virtual" tuple this must be equal
+ * arrays.	When the slot is holding a "virtual" tuple this must be equal
  * to the descriptor's natts.  When the slot is holding a physical tuple
  * this is equal to the number of columns we have extracted (we always
  * extract columns from left to right, so there are no holes).
@@ -85,8 +85,8 @@
 typedef struct TupleTableSlot
 {
 	NodeTag		type;			/* vestigial ... allows IsA tests */
-	bool		tts_isempty;			/* true = slot is empty */
-	bool		tts_shouldFree;			/* should pfree tuple? */
+	bool		tts_isempty;	/* true = slot is empty */
+	bool		tts_shouldFree; /* should pfree tuple? */
 	bool		tts_shouldFreeDesc;		/* should pfree descriptor? */
 	bool		tts_slow;		/* saved state for slot_deform_tuple */
 	HeapTuple	tts_tuple;		/* physical tuple, or NULL if none */
@@ -137,7 +137,8 @@ extern HeapTuple ExecCopySlotTuple(TupleTableSlot *slot);
 extern HeapTuple ExecFetchSlotTuple(TupleTableSlot *slot);
 extern HeapTuple ExecMaterializeSlot(TupleTableSlot *slot);
 extern TupleTableSlot *ExecCopySlot(TupleTableSlot *dstslot,
-									TupleTableSlot *srcslot);
+			 TupleTableSlot *srcslot);
+
 /* in access/common/heaptuple.c */
 extern Datum slot_getattr(TupleTableSlot *slot, int attnum, bool *isnull);
 extern void slot_getallattrs(TupleTableSlot *slot);

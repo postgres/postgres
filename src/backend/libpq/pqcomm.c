@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.180 2005/09/24 17:53:14 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.181 2005/10/15 02:49:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,12 +107,10 @@ static char sock_path[MAXPGPATH];
 #define PQ_BUFFER_SIZE 8192
 
 static char PqSendBuffer[PQ_BUFFER_SIZE];
-static int	PqSendPointer;		/* Next index to store a byte in
-								 * PqSendBuffer */
+static int	PqSendPointer;		/* Next index to store a byte in PqSendBuffer */
 
 static char PqRecvBuffer[PQ_BUFFER_SIZE];
-static int	PqRecvPointer;		/* Next index to read a byte from
-								 * PqRecvBuffer */
+static int	PqRecvPointer;		/* Next index to read a byte from PqRecvBuffer */
 static int	PqRecvLength;		/* End of data available in PqRecvBuffer */
 
 /*
@@ -126,6 +124,7 @@ static bool DoingCopyOut;
 static void pq_close(int code, Datum arg);
 static int	internal_putbytes(const char *s, size_t len);
 static int	internal_flush(void);
+
 #ifdef HAVE_UNIX_SOCKETS
 static int	Lock_AF_UNIX(unsigned short portNumber, char *unixSocketName);
 static int	Setup_AF_UNIX(void);
@@ -178,11 +177,11 @@ pq_close(int code, Datum arg)
 		secure_close(MyProcPort);
 
 		/*
-		 * Formerly we did an explicit close() here, but it seems better
-		 * to leave the socket open until the process dies.  This allows
-		 * clients to perform a "synchronous close" if they care --- wait
-		 * till the transport layer reports connection closure, and you
-		 * can be sure the backend has exited.
+		 * Formerly we did an explicit close() here, but it seems better to
+		 * leave the socket open until the process dies.  This allows clients
+		 * to perform a "synchronous close" if they care --- wait till the
+		 * transport layer reports connection closure, and you can be sure the
+		 * backend has exited.
 		 *
 		 * We do set sock to -1 to prevent any further I/O, though.
 		 */
@@ -272,8 +271,8 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 							hostName, service, gai_strerror(ret))));
 		else
 			ereport(LOG,
-			 (errmsg("could not translate service \"%s\" to address: %s",
-					 service, gai_strerror(ret))));
+				 (errmsg("could not translate service \"%s\" to address: %s",
+						 service, gai_strerror(ret))));
 		if (addrs)
 			freeaddrinfo_all(hint.ai_family, addrs);
 		return STATUS_ERROR;
@@ -284,8 +283,8 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		if (!IS_AF_UNIX(family) && IS_AF_UNIX(addr->ai_family))
 		{
 			/*
-			 * Only set up a unix domain socket when they really asked for
-			 * it.	The service/port is different in that case.
+			 * Only set up a unix domain socket when they really asked for it.
+			 * The service/port is different in that case.
 			 */
 			continue;
 		}
@@ -368,9 +367,9 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 
 		/*
 		 * Note: This might fail on some OS's, like Linux older than
-		 * 2.4.21-pre3, that don't have the IPV6_V6ONLY socket option, and
-		 * map ipv4 addresses to ipv6.	It will show ::ffff:ipv4 for all
-		 * ipv4 connections.
+		 * 2.4.21-pre3, that don't have the IPV6_V6ONLY socket option, and map
+		 * ipv4 addresses to ipv6.	It will show ::ffff:ipv4 for all ipv4
+		 * connections.
 		 */
 		err = bind(fd, addr->ai_addr, addr->ai_addrlen);
 		if (err < 0)
@@ -381,12 +380,12 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 					 errmsg("could not bind %s socket: %m",
 							familyDesc),
 					 (IS_AF_UNIX(addr->ai_family)) ?
-			  errhint("Is another postmaster already running on port %d?"
-					  " If not, remove socket file \"%s\" and retry.",
-					  (int) portNumber, sock_path) :
-			  errhint("Is another postmaster already running on port %d?"
-					  " If not, wait a few seconds and retry.",
-					  (int) portNumber)));
+				  errhint("Is another postmaster already running on port %d?"
+						  " If not, remove socket file \"%s\" and retry.",
+						  (int) portNumber, sock_path) :
+				  errhint("Is another postmaster already running on port %d?"
+						  " If not, wait a few seconds and retry.",
+						  (int) portNumber)));
 			closesocket(fd);
 			continue;
 		}
@@ -403,10 +402,9 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 #endif
 
 		/*
-		 * Select appropriate accept-queue length limit.  PG_SOMAXCONN is
-		 * only intended to provide a clamp on the request on platforms
-		 * where an overly large request provokes a kernel error (are
-		 * there any?).
+		 * Select appropriate accept-queue length limit.  PG_SOMAXCONN is only
+		 * intended to provide a clamp on the request on platforms where an
+		 * overly large request provokes a kernel error (are there any?).
 		 */
 		maxconn = MaxBackends * 2;
 		if (maxconn > PG_SOMAXCONN)
@@ -472,8 +470,8 @@ Setup_AF_UNIX(void)
 
 	/*
 	 * Fix socket ownership/permission if requested.  Note we must do this
-	 * before we listen() to avoid a window where unwanted connections
-	 * could get accepted.
+	 * before we listen() to avoid a window where unwanted connections could
+	 * get accepted.
 	 */
 	Assert(Unix_socket_group);
 	if (Unix_socket_group[0] != '\0')
@@ -596,11 +594,11 @@ StreamConnection(int server_fd, Port *port)
 		}
 
 		/*
-		 * Also apply the current keepalive parameters.  If we fail to set
-		 * a parameter, don't error out, because these aren't universally
+		 * Also apply the current keepalive parameters.  If we fail to set a
+		 * parameter, don't error out, because these aren't universally
 		 * supported.  (Note: you might think we need to reset the GUC
-		 * variables to 0 in such a case, but it's not necessary because
-		 * the show hooks for these variables report the truth anyway.)
+		 * variables to 0 in such a case, but it's not necessary because the
+		 * show hooks for these variables report the truth anyway.)
 		 */
 		(void) pq_setkeepalivesidle(tcp_keepalives_idle, port);
 		(void) pq_setkeepalivesinterval(tcp_keepalives_interval, port);
@@ -642,9 +640,9 @@ TouchSocketFile(void)
 	if (sock_path[0] != '\0')
 	{
 		/*
-		 * utime() is POSIX standard, utimes() is a common alternative. If
-		 * we have neither, there's no way to affect the mod or access
-		 * time of the socket :-(
+		 * utime() is POSIX standard, utimes() is a common alternative. If we
+		 * have neither, there's no way to affect the mod or access time of
+		 * the socket :-(
 		 *
 		 * In either path, we ignore errors; there's no point in complaining.
 		 */
@@ -705,10 +703,9 @@ pq_recvbuf(void)
 				continue;		/* Ok if interrupted */
 
 			/*
-			 * Careful: an ereport() that tries to write to the client
-			 * would cause recursion to here, leading to stack overflow
-			 * and core dump!  This message must go *only* to the
-			 * postmaster log.
+			 * Careful: an ereport() that tries to write to the client would
+			 * cause recursion to here, leading to stack overflow and core
+			 * dump!  This message must go *only* to the postmaster log.
 			 */
 			ereport(COMMERROR,
 					(errcode_for_socket_access(),
@@ -718,8 +715,8 @@ pq_recvbuf(void)
 		if (r == 0)
 		{
 			/*
-			 * EOF detected.  We used to write a log message here, but
-			 * it's better to expect the ultimate caller to do that.
+			 * EOF detected.  We used to write a log message here, but it's
+			 * better to expect the ultimate caller to do that.
 			 */
 			return EOF;
 		}
@@ -925,7 +922,7 @@ pq_getmessage(StringInfo s, int maxlen)
 	if (len > 0)
 	{
 		/*
-		 * Allocate space for message.  If we run out of room (ridiculously
+		 * Allocate space for message.	If we run out of room (ridiculously
 		 * large message), we will elog(ERROR), but we want to discard the
 		 * message body so as not to lose communication sync.
 		 */
@@ -1044,14 +1041,13 @@ internal_flush(void)
 				continue;		/* Ok if we were interrupted */
 
 			/*
-			 * Careful: an ereport() that tries to write to the client
-			 * would cause recursion to here, leading to stack overflow
-			 * and core dump!  This message must go *only* to the
-			 * postmaster log.
+			 * Careful: an ereport() that tries to write to the client would
+			 * cause recursion to here, leading to stack overflow and core
+			 * dump!  This message must go *only* to the postmaster log.
 			 *
 			 * If a client disconnects while we're in the midst of output, we
-			 * might write quite a bit of data before we get to a safe
-			 * query abort point.  So, suppress duplicate log messages.
+			 * might write quite a bit of data before we get to a safe query
+			 * abort point.  So, suppress duplicate log messages.
 			 */
 			if (errno != last_reported_send_errno)
 			{
@@ -1187,14 +1183,14 @@ pq_getkeepalivesidle(Port *port)
 
 	if (port->default_keepalives_idle == 0)
 	{
-		socklen_t size = sizeof(port->default_keepalives_idle);
+		socklen_t	size = sizeof(port->default_keepalives_idle);
 
 		if (getsockopt(port->sock, IPPROTO_TCP, TCP_KEEPIDLE,
 					   (char *) &port->default_keepalives_idle,
 					   &size) < 0)
 		{
 			elog(LOG, "getsockopt(TCP_KEEPIDLE) failed: %m");
-			port->default_keepalives_idle = -1;	/* don't know */
+			port->default_keepalives_idle = -1; /* don't know */
 		}
 	}
 
@@ -1219,7 +1215,7 @@ pq_setkeepalivesidle(int idle, Port *port)
 		if (pq_getkeepalivesidle(port) < 0)
 		{
 			if (idle == 0)
-				return STATUS_OK; /* default is set but unknown */
+				return STATUS_OK;		/* default is set but unknown */
 			else
 				return STATUS_ERROR;
 		}
@@ -1259,14 +1255,14 @@ pq_getkeepalivesinterval(Port *port)
 
 	if (port->default_keepalives_interval == 0)
 	{
-		socklen_t size = sizeof(port->default_keepalives_interval);
+		socklen_t	size = sizeof(port->default_keepalives_interval);
 
 		if (getsockopt(port->sock, IPPROTO_TCP, TCP_KEEPINTVL,
 					   (char *) &port->default_keepalives_interval,
 					   &size) < 0)
 		{
 			elog(LOG, "getsockopt(TCP_KEEPINTVL) failed: %m");
-			port->default_keepalives_interval = -1;	/* don't know */
+			port->default_keepalives_interval = -1;		/* don't know */
 		}
 	}
 
@@ -1291,7 +1287,7 @@ pq_setkeepalivesinterval(int interval, Port *port)
 		if (pq_getkeepalivesinterval(port) < 0)
 		{
 			if (interval == 0)
-				return STATUS_OK; /* default is set but unknown */
+				return STATUS_OK;		/* default is set but unknown */
 			else
 				return STATUS_ERROR;
 		}
@@ -1331,14 +1327,14 @@ pq_getkeepalivescount(Port *port)
 
 	if (port->default_keepalives_count == 0)
 	{
-		socklen_t size = sizeof(port->default_keepalives_count);
+		socklen_t	size = sizeof(port->default_keepalives_count);
 
 		if (getsockopt(port->sock, IPPROTO_TCP, TCP_KEEPCNT,
 					   (char *) &port->default_keepalives_count,
 					   &size) < 0)
 		{
 			elog(LOG, "getsockopt(TCP_KEEPCNT) failed: %m");
-			port->default_keepalives_count = -1;	/* don't know */
+			port->default_keepalives_count = -1;		/* don't know */
 		}
 	}
 
@@ -1363,7 +1359,7 @@ pq_setkeepalivescount(int count, Port *port)
 		if (pq_getkeepalivescount(port) < 0)
 		{
 			if (count == 0)
-				return STATUS_OK; /* default is set but unknown */
+				return STATUS_OK;		/* default is set but unknown */
 			else
 				return STATUS_ERROR;
 		}

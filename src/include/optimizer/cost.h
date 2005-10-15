@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.70 2005/08/22 17:35:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.71 2005/10/15 02:49:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ extern void cost_seqscan(Path *path, PlannerInfo *root, RelOptInfo *baserel);
 extern void cost_index(IndexPath *path, PlannerInfo *root, IndexOptInfo *index,
 		   List *indexQuals, bool is_injoin);
 extern void cost_bitmap_heap_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
-								  Path *bitmapqual, bool is_injoin);
+					  Path *bitmapqual, bool is_injoin);
 extern void cost_bitmap_and_node(BitmapAndPath *path, PlannerInfo *root);
 extern void cost_bitmap_or_node(BitmapOrPath *path, PlannerInfo *root);
 extern void cost_bitmap_tree_node(Path *path, Cost *cost, Selectivity *selec);

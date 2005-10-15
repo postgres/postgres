@@ -8,7 +8,7 @@
  *
  * $FreeBSD: src/lib/libcrypt/crypt-md5.c,v 1.5 1999/12/17 20:21:45 peter Exp $
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/crypt-md5.c,v 1.5 2005/09/24 19:14:04 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/crypt-md5.c,v 1.6 2005/10/15 02:49:06 momjian Exp $
  */
 
 #include "postgres.h"
@@ -24,9 +24,9 @@
 char *
 px_crypt_md5(const char *pw, const char *salt, char *passwd, unsigned dstlen)
 {
-	static char *magic = "$1$"; /* This string is magic for this
-								 * algorithm.  Having it this way, we can
-								 * get get better later on */
+	static char *magic = "$1$"; /* This string is magic for this algorithm.
+								 * Having it this way, we can get get better
+								 * later on */
 	static char *p;
 	static const char *sp,
 			   *ep;

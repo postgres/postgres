@@ -10,8 +10,8 @@
  */
 
 #define BITBYTE 8
-#define SIGLENINT  63			/* >121 => key will toast, so it will not
-								 * work !!! */
+#define SIGLENINT  63			/* >121 => key will toast, so it will not work
+								 * !!! */
 #define SIGLEN	( sizeof(int4) * SIGLENINT )
 #define SIGLENBIT (SIGLEN * BITBYTE)
 
@@ -55,7 +55,7 @@ typedef struct
 #define ISSIGNKEY(x)	( ((GISTTYPE*)(x))->flag & SIGNKEY )
 #define ISALLTRUE(x)	( ((GISTTYPE*)(x))->flag & ALLISTRUE )
 
-#define GTHDRSIZE	( sizeof(int4) * 2  )
+#define GTHDRSIZE	( sizeof(int4) * 2	)
 #define CALCGTSIZE(flag, len) ( GTHDRSIZE + ( ( (flag) & ARRKEY ) ? ((len)*sizeof(int4)) : (((flag) & ALLISTRUE) ? 0 : SIGLEN) ) )
 
 #define GETSIGN(x)	( (BITVECP)( (char*)(x)+GTHDRSIZE ) )

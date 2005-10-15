@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/sysv_sema.c,v 1.16 2004/12/31 22:00:29 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/sysv_sema.c,v 1.17 2005/10/15 02:49:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,8 +58,7 @@ typedef int IpcSemaphoreId;		/* semaphore ID returned by semget(2) */
 #define PGSemaMagic		537		/* must be less than SEMVMX */
 
 
-static IpcSemaphoreId *mySemaSets;		/* IDs of sema sets acquired so
-										 * far */
+static IpcSemaphoreId *mySemaSets;		/* IDs of sema sets acquired so far */
 static int	numSemaSets;		/* number of sema sets acquired so far */
 static int	maxSemaSets;		/* allocated size of mySemaSets array */
 static IpcSemaphoreKey nextSemaKey;		/* next key to try using */
@@ -97,11 +96,10 @@ InternalIpcSemaphoreCreate(IpcSemaphoreKey semKey, int numSems)
 	if (semId < 0)
 	{
 		/*
-		 * Fail quietly if error indicates a collision with existing set.
-		 * One would expect EEXIST, given that we said IPC_EXCL, but
-		 * perhaps we could get a permission violation instead?  Also,
-		 * EIDRM might occur if an old set is slated for destruction but
-		 * not gone yet.
+		 * Fail quietly if error indicates a collision with existing set. One
+		 * would expect EEXIST, given that we said IPC_EXCL, but perhaps we
+		 * could get a permission violation instead?  Also, EIDRM might occur
+		 * if an old set is slated for destruction but not gone yet.
 		 */
 		if (errno == EEXIST || errno == EACCES
 #ifdef EIDRM
@@ -120,13 +118,13 @@ InternalIpcSemaphoreCreate(IpcSemaphoreKey semKey, int numSems)
 						   IPC_CREAT | IPC_EXCL | IPCProtection),
 				 (errno == ENOSPC) ?
 				 errhint("This error does *not* mean that you have run out of disk space.\n"
-						 "It occurs when either the system limit for the maximum number of "
-		 "semaphore sets (SEMMNI), or the system wide maximum number of "
-		"semaphores (SEMMNS), would be exceeded.  You need to raise the "
-						 "respective kernel parameter.  Alternatively, reduce PostgreSQL's "
-						 "consumption of semaphores by reducing its max_connections parameter "
+		  "It occurs when either the system limit for the maximum number of "
+			 "semaphore sets (SEMMNI), or the system wide maximum number of "
+			"semaphores (SEMMNS), would be exceeded.  You need to raise the "
+		  "respective kernel parameter.  Alternatively, reduce PostgreSQL's "
+		"consumption of semaphores by reducing its max_connections parameter "
 						 "(currently %d).\n"
-		  "The PostgreSQL documentation contains more information about "
+			  "The PostgreSQL documentation contains more information about "
 						 "configuring your system for PostgreSQL.",
 						 MaxBackends) : 0));
 	}
@@ -149,7 +147,7 @@ IpcSemaphoreInitialize(IpcSemaphoreId semId, int semNum, int value)
 								 semId, semNum, value),
 				 (errno == ERANGE) ?
 				 errhint("You possibly need to raise your kernel's SEMVMX value to be at least "
-			  "%d.  Look into the PostgreSQL documentation for details.",
+				  "%d.  Look into the PostgreSQL documentation for details.",
 						 value) : 0));
 }
 
@@ -224,8 +222,8 @@ IpcSemaphoreCreate(int numSems)
 			continue;			/* sema belongs to a non-Postgres app */
 
 		/*
-		 * If the creator PID is my own PID or does not belong to any
-		 * extant process, it's safe to zap it.
+		 * If the creator PID is my own PID or does not belong to any extant
+		 * process, it's safe to zap it.
 		 */
 		creatorPID = IpcSemaphoreGetLastPID(semId, numSems);
 		if (creatorPID <= 0)
@@ -237,11 +235,10 @@ IpcSemaphoreCreate(int numSems)
 		}
 
 		/*
-		 * The sema set appears to be from a dead Postgres process, or
-		 * from a previous cycle of life in this same process.	Zap it, if
-		 * possible.  This probably shouldn't fail, but if it does, assume
-		 * the sema set belongs to someone else after all, and continue
-		 * quietly.
+		 * The sema set appears to be from a dead Postgres process, or from a
+		 * previous cycle of life in this same process.  Zap it, if possible.
+		 * This probably shouldn't fail, but if it does, assume the sema set
+		 * belongs to someone else after all, and continue quietly.
 		 */
 		semun.val = 0;			/* unused, but keep compiler quiet */
 		if (semctl(semId, 0, IPC_RMID, semun) < 0)
@@ -255,17 +252,17 @@ IpcSemaphoreCreate(int numSems)
 			break;				/* successful create */
 
 		/*
-		 * Can only get here if some other process managed to create the
-		 * same sema key before we did.  Let him have that one, loop
-		 * around to try next key.
+		 * Can only get here if some other process managed to create the same
+		 * sema key before we did.	Let him have that one, loop around to try
+		 * next key.
 		 */
 	}
 
 	/*
-	 * OK, we created a new sema set.  Mark it as created by this process.
-	 * We do this by setting the spare semaphore to PGSemaMagic-1 and then
-	 * incrementing it with semop().  That leaves it with value
-	 * PGSemaMagic and sempid referencing this process.
+	 * OK, we created a new sema set.  Mark it as created by this process. We
+	 * do this by setting the spare semaphore to PGSemaMagic-1 and then
+	 * incrementing it with semop().  That leaves it with value PGSemaMagic
+	 * and sempid referencing this process.
 	 */
 	IpcSemaphoreInitialize(semId, numSems, PGSemaMagic - 1);
 	mysema.semId = semId;
@@ -303,8 +300,7 @@ PGReserveSemaphores(int maxSemas, int port)
 		elog(PANIC, "out of memory");
 	numSemaSets = 0;
 	nextSemaKey = port * 1000;
-	nextSemaNumber = SEMAS_PER_SET;		/* force sema set alloc on 1st
-										 * call */
+	nextSemaNumber = SEMAS_PER_SET;		/* force sema set alloc on 1st call */
 
 	on_shmem_exit(ReleaseSemaphores, 0);
 }
@@ -378,38 +374,36 @@ PGSemaphoreLock(PGSemaphore sema, bool interruptOK)
 	sops.sem_num = sema->semNum;
 
 	/*
-	 * Note: if errStatus is -1 and errno == EINTR then it means we
-	 * returned from the operation prematurely because we were sent a
-	 * signal.	So we try and lock the semaphore again.
+	 * Note: if errStatus is -1 and errno == EINTR then it means we returned
+	 * from the operation prematurely because we were sent a signal.  So we
+	 * try and lock the semaphore again.
 	 *
-	 * Each time around the loop, we check for a cancel/die interrupt. We
-	 * assume that if such an interrupt comes in while we are waiting, it
-	 * will cause the semop() call to exit with errno == EINTR, so that we
-	 * will be able to service the interrupt (if not in a critical section
-	 * already).
+	 * Each time around the loop, we check for a cancel/die interrupt. We assume
+	 * that if such an interrupt comes in while we are waiting, it will cause
+	 * the semop() call to exit with errno == EINTR, so that we will be able
+	 * to service the interrupt (if not in a critical section already).
 	 *
 	 * Once we acquire the lock, we do NOT check for an interrupt before
-	 * returning.  The caller needs to be able to record ownership of the
-	 * lock before any interrupt can be accepted.
+	 * returning.  The caller needs to be able to record ownership of the lock
+	 * before any interrupt can be accepted.
 	 *
-	 * There is a window of a few instructions between CHECK_FOR_INTERRUPTS
-	 * and entering the semop() call.  If a cancel/die interrupt occurs in
-	 * that window, we would fail to notice it until after we acquire the
-	 * lock (or get another interrupt to escape the semop()).  We can
-	 * avoid this problem by temporarily setting ImmediateInterruptOK to
-	 * true before we do CHECK_FOR_INTERRUPTS; then, a die() interrupt in
-	 * this interval will execute directly.  However, there is a huge
-	 * pitfall: there is another window of a few instructions after the
-	 * semop() before we are able to reset ImmediateInterruptOK.  If an
-	 * interrupt occurs then, we'll lose control, which means that the
-	 * lock has been acquired but our caller did not get a chance to
-	 * record the fact. Therefore, we only set ImmediateInterruptOK if the
-	 * caller tells us it's OK to do so, ie, the caller does not need to
-	 * record acquiring the lock.  (This is currently true for lockmanager
-	 * locks, since the process that granted us the lock did all the
-	 * necessary state updates. It's not true for SysV semaphores used to
-	 * implement LW locks or emulate spinlocks --- but the wait time for
-	 * such locks should not be very long, anyway.)
+	 * There is a window of a few instructions between CHECK_FOR_INTERRUPTS and
+	 * entering the semop() call.  If a cancel/die interrupt occurs in that
+	 * window, we would fail to notice it until after we acquire the lock (or
+	 * get another interrupt to escape the semop()).  We can avoid this
+	 * problem by temporarily setting ImmediateInterruptOK to true before we
+	 * do CHECK_FOR_INTERRUPTS; then, a die() interrupt in this interval will
+	 * execute directly.  However, there is a huge pitfall: there is another
+	 * window of a few instructions after the semop() before we are able to
+	 * reset ImmediateInterruptOK.	If an interrupt occurs then, we'll lose
+	 * control, which means that the lock has been acquired but our caller did
+	 * not get a chance to record the fact. Therefore, we only set
+	 * ImmediateInterruptOK if the caller tells us it's OK to do so, ie, the
+	 * caller does not need to record acquiring the lock.  (This is currently
+	 * true for lockmanager locks, since the process that granted us the lock
+	 * did all the necessary state updates. It's not true for SysV semaphores
+	 * used to implement LW locks or emulate spinlocks --- but the wait time
+	 * for such locks should not be very long, anyway.)
 	 */
 	do
 	{
@@ -439,10 +433,10 @@ PGSemaphoreUnlock(PGSemaphore sema)
 	sops.sem_num = sema->semNum;
 
 	/*
-	 * Note: if errStatus is -1 and errno == EINTR then it means we
-	 * returned from the operation prematurely because we were sent a
-	 * signal.	So we try and unlock the semaphore again. Not clear this
-	 * can really happen, but might as well cope.
+	 * Note: if errStatus is -1 and errno == EINTR then it means we returned
+	 * from the operation prematurely because we were sent a signal.  So we
+	 * try and unlock the semaphore again. Not clear this can really happen,
+	 * but might as well cope.
 	 */
 	do
 	{
@@ -469,9 +463,9 @@ PGSemaphoreTryLock(PGSemaphore sema)
 	sops.sem_num = sema->semNum;
 
 	/*
-	 * Note: if errStatus is -1 and errno == EINTR then it means we
-	 * returned from the operation prematurely because we were sent a
-	 * signal.	So we try and lock the semaphore again.
+	 * Note: if errStatus is -1 and errno == EINTR then it means we returned
+	 * from the operation prematurely because we were sent a signal.  So we
+	 * try and lock the semaphore again.
 	 */
 	do
 	{

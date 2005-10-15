@@ -2,7 +2,7 @@
  * Encoding names and routines for work with it. All
  * in this file is shared bedween FE and BE.
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/encnames.c,v 1.25 2005/03/14 18:31:20 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/encnames.c,v 1.26 2005/10/15 02:49:33 momjian Exp $
  */
 #ifdef FRONTEND
 #include "postgres_fe.h"
@@ -45,16 +45,16 @@ pg_encname	pg_encname_tbl[] =
 	},							/* Big5; Chinese for Taiwan multibyte set */
 	{
 		"euccn", PG_EUC_CN
-	},							/* EUC-CN; Extended Unix Code for
-								 * simplified Chinese */
+	},							/* EUC-CN; Extended Unix Code for simplified
+								 * Chinese */
 	{
 		"eucjp", PG_EUC_JP
-	},							/* EUC-JP; Extended UNIX Code fixed Width
-								 * for Japanese, standard OSF */
+	},							/* EUC-JP; Extended UNIX Code fixed Width for
+								 * Japanese, standard OSF */
 	{
 		"euckr", PG_EUC_KR
-	},							/* EUC-KR; Extended Unix Code for Korean ,
-								 * KS X 1001 standard */
+	},							/* EUC-KR; Extended Unix Code for Korean , KS
+								 * X 1001 standard */
 	{
 		"euctw", PG_EUC_TW
 	},							/* EUC-TW; Extended Unix Code for
@@ -111,8 +111,8 @@ pg_encname	pg_encname_tbl[] =
 	},							/* ISO-8859-9; RFC1345,KXS2 */
 	{
 		"johab", PG_JOHAB
-	},							/* JOHAB; Extended Unix Code for
-								 * simplified Chinese */
+	},							/* JOHAB; Extended Unix Code for simplified
+								 * Chinese */
 	{
 		"koi8", PG_KOI8R
 	},							/* _dirty_ alias for KOI8-R (backward
@@ -185,8 +185,8 @@ pg_encname	pg_encname_tbl[] =
 	},							/* alias for WIN1258 */
 	{
 		"win", PG_WIN1251
-	},							/* _dirty_ alias for windows-1251
-								 * (backward compatibility) */
+	},							/* _dirty_ alias for windows-1251 (backward
+								 * compatibility) */
 	{
 		"win1250", PG_WIN1250
 	},							/* alias for Windows-1250 */

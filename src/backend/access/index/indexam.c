@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.85 2005/10/06 02:29:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.86 2005/10/15 02:49:09 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -111,7 +111,7 @@ do { \
 } while(0)
 
 static IndexScanDesc index_beginscan_internal(Relation indexRelation,
-											  int nkeys, ScanKey key);
+						 int nkeys, ScanKey key);
 
 
 /* ----------------------------------------------------------------
@@ -122,14 +122,14 @@ static IndexScanDesc index_beginscan_internal(Relation indexRelation,
 /* ----------------
  *		index_open - open an index relation by relation OID
  *
- *		Note: we acquire no lock on the index.  A lock is not needed when
+ *		Note: we acquire no lock on the index.	A lock is not needed when
  *		simply examining the index reldesc; the index's schema information
  *		is considered to be protected by the lock that the caller had better
- *		be holding on the parent relation.  Some type of lock should be
+ *		be holding on the parent relation.	Some type of lock should be
  *		obtained on the index before physically accessing it, however.
  *		This is handled automatically for most uses by index_beginscan
  *		and index_endscan for scan cases, or by ExecOpenIndices and
- *		ExecCloseIndices for update cases.  Other callers will need to
+ *		ExecCloseIndices for update cases.	Other callers will need to
  *		obtain their own locks.
  *
  *		This is a convenience routine adapted for indexscan use.
@@ -241,8 +241,8 @@ index_beginscan(Relation heapRelation,
 	scan = index_beginscan_internal(indexRelation, nkeys, key);
 
 	/*
-	 * Save additional parameters into the scandesc.  Everything else was
-	 * set up by RelationGetIndexScan.
+	 * Save additional parameters into the scandesc.  Everything else was set
+	 * up by RelationGetIndexScan.
 	 */
 	scan->is_multiscan = false;
 	scan->heapRelation = heapRelation;
@@ -267,8 +267,8 @@ index_beginscan_multi(Relation indexRelation,
 	scan = index_beginscan_internal(indexRelation, nkeys, key);
 
 	/*
-	 * Save additional parameters into the scandesc.  Everything else was
-	 * set up by RelationGetIndexScan.
+	 * Save additional parameters into the scandesc.  Everything else was set
+	 * up by RelationGetIndexScan.
 	 */
 	scan->is_multiscan = true;
 	scan->xs_snapshot = snapshot;
@@ -294,14 +294,14 @@ index_beginscan_internal(Relation indexRelation,
 	 * Acquire AccessShareLock for the duration of the scan
 	 *
 	 * Note: we could get an SI inval message here and consequently have to
-	 * rebuild the relcache entry.	The refcount increment above ensures
-	 * that we will rebuild it and not just flush it...
+	 * rebuild the relcache entry.	The refcount increment above ensures that
+	 * we will rebuild it and not just flush it...
 	 */
 	LockRelation(indexRelation, AccessShareLock);
 
 	/*
-	 * LockRelation can clean rd_aminfo structure, so fill procedure
-	 * after LockRelation 
+	 * LockRelation can clean rd_aminfo structure, so fill procedure after
+	 * LockRelation
 	 */
 
 	GET_REL_PROCEDURE(ambeginscan);
@@ -425,8 +425,8 @@ index_restrpos(IndexScanDesc scan)
 
 	/*
 	 * We do not reset got_tuple; so if the scan is actually being
-	 * short-circuited by index_getnext, the effective position
-	 * restoration is done by restoring unique_tuple_pos.
+	 * short-circuited by index_getnext, the effective position restoration is
+	 * done by restoring unique_tuple_pos.
 	 */
 	scan->unique_tuple_pos = scan->unique_tuple_mark;
 
@@ -454,19 +454,19 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 
 	/*
 	 * If we already got a tuple and it must be unique, there's no need to
-	 * make the index AM look through any additional tuples.  (This can
-	 * save a useful amount of work in scenarios where there are many dead
-	 * tuples due to heavy update activity.)
+	 * make the index AM look through any additional tuples.  (This can save a
+	 * useful amount of work in scenarios where there are many dead tuples due
+	 * to heavy update activity.)
 	 *
 	 * To do this we must keep track of the logical scan position
 	 * (before/on/after tuple).  Also, we have to be sure to release scan
-	 * resources before returning NULL; if we fail to do so then a
-	 * multi-index scan can easily run the system out of free buffers.	We
-	 * can release index-level resources fairly cheaply by calling
-	 * index_rescan.  This means there are two persistent states as far as
-	 * the index AM is concerned: on-tuple and rescanned.  If we are
-	 * actually asked to re-fetch the single tuple, we have to go through
-	 * a fresh indexscan startup, which penalizes that (infrequent) case.
+	 * resources before returning NULL; if we fail to do so then a multi-index
+	 * scan can easily run the system out of free buffers.	We can release
+	 * index-level resources fairly cheaply by calling index_rescan.  This
+	 * means there are two persistent states as far as the index AM is
+	 * concerned: on-tuple and rescanned.  If we are actually asked to
+	 * re-fetch the single tuple, we have to go through a fresh indexscan
+	 * startup, which penalizes that (infrequent) case.
 	 */
 	if (scan->keys_are_unique && scan->got_tuple)
 	{
@@ -485,19 +485,18 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 		if (new_tuple_pos == 0)
 		{
 			/*
-			 * We are moving onto the unique tuple from having been off
-			 * it. We just fall through and let the index AM do the work.
-			 * Note we should get the right answer regardless of scan
-			 * direction.
+			 * We are moving onto the unique tuple from having been off it. We
+			 * just fall through and let the index AM do the work. Note we
+			 * should get the right answer regardless of scan direction.
 			 */
 			scan->unique_tuple_pos = 0; /* need to update position */
 		}
 		else
 		{
 			/*
-			 * Moving off the tuple; must do amrescan to release
-			 * index-level pins before we return NULL.	Since index_rescan
-			 * will reset my state, must save and restore...
+			 * Moving off the tuple; must do amrescan to release index-level
+			 * pins before we return NULL.	Since index_rescan will reset my
+			 * state, must save and restore...
 			 */
 			int			unique_tuple_mark = scan->unique_tuple_mark;
 
@@ -520,8 +519,7 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 		bool		found;
 
 		/*
-		 * The AM's gettuple proc finds the next tuple matching the scan
-		 * keys.
+		 * The AM's gettuple proc finds the next tuple matching the scan keys.
 		 */
 		found = DatumGetBool(FunctionCall2(procedure,
 										   PointerGetDatum(scan),
@@ -556,9 +554,9 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 			continue;
 
 		/*
-		 * If we can't see it, maybe no one else can either.  Check to see
-		 * if the tuple is dead to all transactions.  If so, signal the
-		 * index AM to not return it on future indexscans.
+		 * If we can't see it, maybe no one else can either.  Check to see if
+		 * the tuple is dead to all transactions.  If so, signal the index AM
+		 * to not return it on future indexscans.
 		 *
 		 * We told heap_release_fetch to keep a pin on the buffer, so we can
 		 * re-access the tuple here.  But we must re-lock the buffer first.
@@ -576,8 +574,8 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 	scan->got_tuple = true;
 
 	/*
-	 * If we just fetched a known-unique tuple, then subsequent calls will
-	 * go through the short-circuit code above.  unique_tuple_pos has been
+	 * If we just fetched a known-unique tuple, then subsequent calls will go
+	 * through the short-circuit code above.  unique_tuple_pos has been
 	 * initialized to 0, which is the correct state ("on row").
 	 */
 
@@ -805,11 +803,10 @@ index_getprocinfo(Relation irel,
 		procId = loc[procindex];
 
 		/*
-		 * Complain if function was not found during
-		 * IndexSupportInitialize. This should not happen unless the
-		 * system tables contain bogus entries for the index opclass.  (If
-		 * an AM wants to allow a support function to be optional, it can
-		 * use index_getprocid.)
+		 * Complain if function was not found during IndexSupportInitialize.
+		 * This should not happen unless the system tables contain bogus
+		 * entries for the index opclass.  (If an AM wants to allow a support
+		 * function to be optional, it can use index_getprocid.)
 		 */
 		if (!RegProcedureIsValid(procId))
 			elog(ERROR, "missing support function %d for attribute %d of index \"%s\"",

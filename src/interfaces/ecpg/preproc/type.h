@@ -14,15 +14,14 @@ struct ECPGstruct_member
 struct ECPGtype
 {
 	enum ECPGttype type;
-	char	   *size;			/* For array it is the number of elements.
-								 * For varchar it is the maxsize of the
-								 * area. */
-	char	   *struct_sizeof;	/* For a struct this is the sizeof() type
-								 * as string */
+	char	   *size;			/* For array it is the number of elements. For
+								 * varchar it is the maxsize of the area. */
+	char	   *struct_sizeof;	/* For a struct this is the sizeof() type as
+								 * string */
 	union
 	{
-		struct ECPGtype *element;		/* For an array this is the type
-										 * of the element */
+		struct ECPGtype *element;		/* For an array this is the type of
+										 * the element */
 		struct ECPGstruct_member *members;		/* A pointer to a list of
 												 * members. */
 	}			u;

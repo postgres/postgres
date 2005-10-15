@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.5 2005/09/29 22:04:36 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.6 2005/10/15 02:49:28 momjian Exp $
  *
  */
 
@@ -31,22 +31,22 @@ static int64
 db_dir_size(const char *path)
 {
 	int64		dirsize = 0;
-    struct dirent *direntry;
-	DIR         *dirdesc;
-	char filename[MAXPGPATH];
+	struct dirent *direntry;
+	DIR		   *dirdesc;
+	char		filename[MAXPGPATH];
 
 	dirdesc = AllocateDir(path);
 
 	if (!dirdesc)
-	    return 0;
+		return 0;
 
 	while ((direntry = ReadDir(dirdesc, path)) != NULL)
 	{
-	    struct stat fst;
+		struct stat fst;
 
-	    if (strcmp(direntry->d_name, ".") == 0 ||
+		if (strcmp(direntry->d_name, ".") == 0 ||
 			strcmp(direntry->d_name, "..") == 0)
-		    continue;
+			continue;
 
 		snprintf(filename, MAXPGPATH, "%s/%s", path, direntry->d_name);
 
@@ -54,8 +54,8 @@ db_dir_size(const char *path)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not stat \"%s\": %m", filename)));
-        
-        dirsize += fst.st_size;
+
+		dirsize += fst.st_size;
 	}
 
 	FreeDir(dirdesc);
@@ -69,10 +69,10 @@ static int64
 calculate_database_size(Oid dbOid)
 {
 	int64		totalsize;
-	DIR         *dirdesc;
-    struct dirent *direntry;
-	char dirpath[MAXPGPATH];
-	char pathname[MAXPGPATH];
+	DIR		   *dirdesc;
+	struct dirent *direntry;
+	char		dirpath[MAXPGPATH];
+	char		pathname[MAXPGPATH];
 
 	/* Shared storage in pg_global is not counted */
 
@@ -84,16 +84,16 @@ calculate_database_size(Oid dbOid)
 	snprintf(dirpath, MAXPGPATH, "%s/pg_tblspc", DataDir);
 	dirdesc = AllocateDir(dirpath);
 	if (!dirdesc)
-	    ereport(ERROR,
+		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not open tablespace directory \"%s\": %m",
 						dirpath)));
 
 	while ((direntry = ReadDir(dirdesc, dirpath)) != NULL)
 	{
-	    if (strcmp(direntry->d_name, ".") == 0 ||
+		if (strcmp(direntry->d_name, ".") == 0 ||
 			strcmp(direntry->d_name, "..") == 0)
-		    continue;
+			continue;
 
 		snprintf(pathname, MAXPGPATH, "%s/pg_tblspc/%s/%u",
 				 DataDir, direntry->d_name, dbOid);
@@ -104,7 +104,7 @@ calculate_database_size(Oid dbOid)
 
 	/* Complain if we found no trace of the DB at all */
 	if (!totalsize)
-	    ereport(ERROR,
+		ereport(ERROR,
 				(ERRCODE_UNDEFINED_DATABASE,
 				 errmsg("database with OID %u does not exist", dbOid)));
 
@@ -114,7 +114,7 @@ calculate_database_size(Oid dbOid)
 Datum
 pg_database_size_oid(PG_FUNCTION_ARGS)
 {
-    Oid dbOid = PG_GETARG_OID(0);
+	Oid			dbOid = PG_GETARG_OID(0);
 
 	PG_RETURN_INT64(calculate_database_size(dbOid));
 }
@@ -122,8 +122,8 @@ pg_database_size_oid(PG_FUNCTION_ARGS)
 Datum
 pg_database_size_name(PG_FUNCTION_ARGS)
 {
-	Name dbName = PG_GETARG_NAME(0);
-	Oid dbOid = get_database_oid(NameStr(*dbName));
+	Name		dbName = PG_GETARG_NAME(0);
+	Oid			dbOid = get_database_oid(NameStr(*dbName));
 
 	if (!OidIsValid(dbOid))
 		ereport(ERROR,
@@ -141,16 +141,16 @@ pg_database_size_name(PG_FUNCTION_ARGS)
 static int64
 calculate_tablespace_size(Oid tblspcOid)
 {
-	char tblspcPath[MAXPGPATH];
-	char pathname[MAXPGPATH];
-	int64		totalsize=0;
-	DIR         *dirdesc;
-    struct dirent *direntry;
+	char		tblspcPath[MAXPGPATH];
+	char		pathname[MAXPGPATH];
+	int64		totalsize = 0;
+	DIR		   *dirdesc;
+	struct dirent *direntry;
 
 	if (tblspcOid == DEFAULTTABLESPACE_OID)
-	    snprintf(tblspcPath, MAXPGPATH, "%s/base", DataDir);
+		snprintf(tblspcPath, MAXPGPATH, "%s/base", DataDir);
 	else if (tblspcOid == GLOBALTABLESPACE_OID)
-	    snprintf(tblspcPath, MAXPGPATH, "%s/global", DataDir);
+		snprintf(tblspcPath, MAXPGPATH, "%s/global", DataDir);
 	else
 		snprintf(tblspcPath, MAXPGPATH, "%s/pg_tblspc/%u", DataDir, tblspcOid);
 
@@ -164,11 +164,11 @@ calculate_tablespace_size(Oid tblspcOid)
 
 	while ((direntry = ReadDir(dirdesc, tblspcPath)) != NULL)
 	{
-	    struct stat fst;
+		struct stat fst;
 
-	    if (strcmp(direntry->d_name, ".") == 0 ||
+		if (strcmp(direntry->d_name, ".") == 0 ||
 			strcmp(direntry->d_name, "..") == 0)
-		    continue;
+			continue;
 
 		snprintf(pathname, MAXPGPATH, "%s/%s", tblspcPath, direntry->d_name);
 
@@ -178,29 +178,29 @@ calculate_tablespace_size(Oid tblspcOid)
 					 errmsg("could not stat \"%s\": %m", pathname)));
 
 		if (fst.st_mode & S_IFDIR)
-		    totalsize += db_dir_size(pathname);
-        
-        totalsize += fst.st_size;
+			totalsize += db_dir_size(pathname);
+
+		totalsize += fst.st_size;
 	}
 
 	FreeDir(dirdesc);
-    
+
 	return totalsize;
 }
 
 Datum
 pg_tablespace_size_oid(PG_FUNCTION_ARGS)
 {
-    Oid tblspcOid = PG_GETARG_OID(0);
-    
+	Oid			tblspcOid = PG_GETARG_OID(0);
+
 	PG_RETURN_INT64(calculate_tablespace_size(tblspcOid));
 }
 
 Datum
 pg_tablespace_size_name(PG_FUNCTION_ARGS)
 {
-	Name tblspcName = PG_GETARG_NAME(0);
-	Oid tblspcOid = get_tablespace_oid(NameStr(*tblspcName));
+	Name		tblspcName = PG_GETARG_NAME(0);
+	Oid			tblspcOid = get_tablespace_oid(NameStr(*tblspcName));
 
 	if (!OidIsValid(tblspcOid))
 		ereport(ERROR,
@@ -226,22 +226,22 @@ calculate_relation_size(RelFileNode *rfn)
 	Assert(OidIsValid(rfn->spcNode));
 
 	if (rfn->spcNode == DEFAULTTABLESPACE_OID)
-	    snprintf(dirpath, MAXPGPATH, "%s/base/%u", DataDir, rfn->dbNode);
+		snprintf(dirpath, MAXPGPATH, "%s/base/%u", DataDir, rfn->dbNode);
 	else if (rfn->spcNode == GLOBALTABLESPACE_OID)
-	    snprintf(dirpath, MAXPGPATH, "%s/global", DataDir);
+		snprintf(dirpath, MAXPGPATH, "%s/global", DataDir);
 	else
-	    snprintf(dirpath, MAXPGPATH, "%s/pg_tblspc/%u/%u",
+		snprintf(dirpath, MAXPGPATH, "%s/pg_tblspc/%u/%u",
 				 DataDir, rfn->spcNode, rfn->dbNode);
 
-	for (segcount = 0; ; segcount++)
+	for (segcount = 0;; segcount++)
 	{
 		struct stat fst;
 
 		if (segcount == 0)
-		    snprintf(pathname, MAXPGPATH, "%s/%u",
+			snprintf(pathname, MAXPGPATH, "%s/%u",
 					 dirpath, rfn->relNode);
 		else
-		    snprintf(pathname, MAXPGPATH, "%s/%u.%u",
+			snprintf(pathname, MAXPGPATH, "%s/%u.%u",
 					 dirpath, rfn->relNode, segcount);
 
 		if (stat(pathname, &fst) < 0)
@@ -262,7 +262,7 @@ calculate_relation_size(RelFileNode *rfn)
 Datum
 pg_relation_size_oid(PG_FUNCTION_ARGS)
 {
-	Oid         relOid=PG_GETARG_OID(0);
+	Oid			relOid = PG_GETARG_OID(0);
 	Relation	rel;
 	int64		size;
 
@@ -282,12 +282,12 @@ pg_relation_size_name(PG_FUNCTION_ARGS)
 	RangeVar   *relrv;
 	Relation	rel;
 	int64		size;
-    
-	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));    
+
+	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);
-    
+
 	size = calculate_relation_size(&(rel->rd_node));
-             
+
 	relation_close(rel, AccessShareLock);
 
 	PG_RETURN_INT64(size);
@@ -295,9 +295,9 @@ pg_relation_size_name(PG_FUNCTION_ARGS)
 
 
 /*
- *  Compute the on-disk size of files for the relation according to the
- *  stat function, optionally including heap data, index data, and/or
- *  toast data.
+ *	Compute the on-disk size of files for the relation according to the
+ *	stat function, optionally including heap data, index data, and/or
+ *	toast data.
  */
 static int64
 calculate_total_relation_size(Oid Relid)
@@ -317,7 +317,7 @@ calculate_total_relation_size(Oid Relid)
 	if (heapRel->rd_rel->relhasindex)
 	{
 		/* recursively include any dependent indexes */
-		List *index_oids = RelationGetIndexList(heapRel);
+		List	   *index_oids = RelationGetIndexList(heapRel);
 
 		foreach(cell, index_oids)
 		{
@@ -344,13 +344,13 @@ calculate_total_relation_size(Oid Relid)
 }
 
 /*
- *  Compute on-disk size of files for 'relation' including 
- *  heap data, index data, and toasted data.
+ *	Compute on-disk size of files for 'relation' including
+ *	heap data, index data, and toasted data.
  */
 Datum
 pg_total_relation_size_oid(PG_FUNCTION_ARGS)
 {
-	Oid		relid = PG_GETARG_OID(0);
+	Oid			relid = PG_GETARG_OID(0);
 
 	PG_RETURN_INT64(calculate_total_relation_size(relid));
 }
@@ -361,10 +361,10 @@ pg_total_relation_size_name(PG_FUNCTION_ARGS)
 	text	   *relname = PG_GETARG_TEXT_P(0);
 	RangeVar   *relrv;
 	Oid			relid;
-    
-	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));    
+
+	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	relid = RangeVarGetRelid(relrv, false);
-    
+
 	PG_RETURN_INT64(calculate_total_relation_size(relid));
 }
 
@@ -374,35 +374,35 @@ pg_total_relation_size_name(PG_FUNCTION_ARGS)
 Datum
 pg_size_pretty(PG_FUNCTION_ARGS)
 {
-	int64	size = PG_GETARG_INT64(0);
-	char   *result = palloc(50 + VARHDRSZ);
-	int64	limit = 10 * 1024;
-	int64	mult = 1;
+	int64		size = PG_GETARG_INT64(0);
+	char	   *result = palloc(50 + VARHDRSZ);
+	int64		limit = 10 * 1024;
+	int64		mult = 1;
 
 	if (size < limit * mult)
-	    snprintf(VARDATA(result), 50, INT64_FORMAT " bytes", size);
+		snprintf(VARDATA(result), 50, INT64_FORMAT " bytes", size);
 	else
 	{
 		mult *= 1024;
 		if (size < limit * mult)
-		     snprintf(VARDATA(result), 50, INT64_FORMAT " kB",
-					  (size + mult / 2) / mult);
+			snprintf(VARDATA(result), 50, INT64_FORMAT " kB",
+					 (size + mult / 2) / mult);
 		else
 		{
 			mult *= 1024;
 			if (size < limit * mult)
-			    snprintf(VARDATA(result), 50, INT64_FORMAT " MB",
+				snprintf(VARDATA(result), 50, INT64_FORMAT " MB",
 						 (size + mult / 2) / mult);
 			else
 			{
 				mult *= 1024;
 				if (size < limit * mult)
-				    snprintf(VARDATA(result), 50, INT64_FORMAT " GB",
+					snprintf(VARDATA(result), 50, INT64_FORMAT " GB",
 							 (size + mult / 2) / mult);
 				else
 				{
-				    mult *= 1024;
-				    snprintf(VARDATA(result), 50, INT64_FORMAT " TB",
+					mult *= 1024;
+					snprintf(VARDATA(result), 50, INT64_FORMAT " TB",
 							 (size + mult / 2) / mult);
 				}
 			}

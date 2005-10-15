@@ -28,7 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/backend/regex/regc_color.c,v 1.4 2003/11/29 19:51:55 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/regex/regc_color.c,v 1.5 2005/10/15 02:49:24 momjian Exp $
  *
  *
  * Note that there are some incestuous relationships between this code and
@@ -179,7 +179,7 @@ setcolor(struct colormap * cm,
 		if (t == fillt || t == cb)
 		{						/* must allocate a new block */
 			newt = (union tree *) MALLOC((bottom) ?
-							sizeof(struct colors) : sizeof(struct ptrs));
+								sizeof(struct colors) : sizeof(struct ptrs));
 			if (newt == NULL)
 			{
 				CERR(REG_ESPACE);
@@ -256,7 +256,7 @@ newcolor(struct colormap * cm)
 		}
 		else
 			new = (struct colordesc *) REALLOC(cm->cd,
-										   n * sizeof(struct colordesc));
+											   n * sizeof(struct colordesc));
 		if (new == NULL)
 		{
 			CERR(REG_ESPACE);

@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.39 2005/06/09 18:44:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.40 2005/10/15 02:49:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,14 +40,11 @@ typedef Datum (*PGFunction) (FunctionCallInfo fcinfo);
  */
 typedef struct FmgrInfo
 {
-	PGFunction	fn_addr;		/* pointer to function or handler to be
-								 * called */
-	Oid			fn_oid;			/* OID of function (NOT of handler, if
-								 * any) */
+	PGFunction	fn_addr;		/* pointer to function or handler to be called */
+	Oid			fn_oid;			/* OID of function (NOT of handler, if any) */
 	short		fn_nargs;		/* 0..FUNC_MAX_ARGS, or -1 if variable arg
 								 * count */
-	bool		fn_strict;		/* function is "strict" (NULL in => NULL
-								 * out) */
+	bool		fn_strict;		/* function is "strict" (NULL in => NULL out) */
 	bool		fn_retset;		/* function returns a set */
 	void	   *fn_extra;		/* extra space for use by handler */
 	MemoryContext fn_mcxt;		/* memory context to store fn_extra in */
@@ -62,8 +59,7 @@ typedef struct FunctionCallInfoData
 	FmgrInfo   *flinfo;			/* ptr to lookup info used for this call */
 	fmNodePtr	context;		/* pass info about context of call */
 	fmNodePtr	resultinfo;		/* pass or return extra info about result */
-	bool		isnull;			/* function must set true if result is
-								 * NULL */
+	bool		isnull;			/* function must set true if result is NULL */
 	short		nargs;			/* # arguments actually passed */
 	Datum		arg[FUNC_MAX_ARGS];		/* Arguments passed to function */
 	bool		argnull[FUNC_MAX_ARGS]; /* T if arg[i] is actually NULL */
@@ -91,7 +87,7 @@ extern void fmgr_info_copy(FmgrInfo *dstinfo, FmgrInfo *srcinfo,
 
 /*
  * This macro initializes all the fields of a FunctionCallInfoData except
- * for the arg[] and argnull[] arrays.  Performance testing has shown that
+ * for the arg[] and argnull[] arrays.	Performance testing has shown that
  * the fastest way to set up argnull[] for small numbers of arguments is to
  * explicitly set each required element to false, so we don't try to zero
  * out the argnull[] array in the macro.
@@ -290,8 +286,7 @@ extern struct varlena *pg_detoast_datum_slice(struct varlena * datum,
 
 typedef struct
 {
-	int			api_version;	/* specifies call convention version
-								 * number */
+	int			api_version;	/* specifies call convention version number */
 	/* More fields may be added later, for version numbers > 1. */
 } Pg_finfo_record;
 

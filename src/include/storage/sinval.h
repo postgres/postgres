@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/sinval.h,v 1.42 2005/08/20 23:26:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/sinval.h,v 1.43 2005/10/15 02:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,9 +23,9 @@
  * invalidates an entry in a catcache, one that invalidates a relcache entry,
  * and one that invalidates an smgr cache entry.  More types could be added
  * if needed.  The message type is identified by the first "int16" field of
- * the message struct.  Zero or positive means a catcache inval message (and
+ * the message struct.	Zero or positive means a catcache inval message (and
  * also serves as the catcache ID field).  -1 means a relcache inval message.
- * -2 means an smgr inval message.  Other negative values are available to
+ * -2 means an smgr inval message.	Other negative values are available to
  * identify other inval message types.
  *
  * Catcache inval events are initially driven by detecting tuple inserts,
@@ -89,7 +89,7 @@ extern void InitBackendSharedInvalidationState(void);
 
 extern void SendSharedInvalidMessage(SharedInvalidationMessage *msg);
 extern void ReceiveSharedInvalidMessages(
-				  void (*invalFunction) (SharedInvalidationMessage *msg),
+					  void (*invalFunction) (SharedInvalidationMessage *msg),
 							 void (*resetFunction) (void));
 
 /* signal handler for catchup events (SIGUSR1) */

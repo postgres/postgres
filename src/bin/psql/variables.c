@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/variables.c,v 1.21 2005/01/01 05:43:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/variables.c,v 1.22 2005/10/15 02:49:41 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -55,8 +55,8 @@ GetVariableBool(VariableSpace space, const char *name)
 		return false;			/* accept "off" or "OFF" as true */
 
 	/*
-	 * for backwards compatibility, anything except "off" or "OFF" is
-	 * taken as "true"
+	 * for backwards compatibility, anything except "off" or "OFF" is taken as
+	 * "true"
 	 */
 	return true;
 }

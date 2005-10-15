@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.114 2005/10/06 19:51:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.115 2005/10/15 02:49:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@
 bool		add_missing_from;
 
 static RangeTblEntry *scanNameSpaceForRefname(ParseState *pstate,
-											  const char *refname);
+						const char *refname);
 static RangeTblEntry *scanNameSpaceForRelid(ParseState *pstate, Oid relid);
 static bool isLockedRel(ParseState *pstate, char *refname);
 static void expandRelation(Oid relid, Alias *eref,
@@ -43,9 +43,9 @@ static void expandRelation(Oid relid, Alias *eref,
 			   bool include_dropped,
 			   List **colnames, List **colvars);
 static void expandTupleDesc(TupleDesc tupdesc, Alias *eref,
-							int rtindex, int sublevels_up,
-							bool include_dropped,
-							List **colnames, List **colvars);
+				int rtindex, int sublevels_up,
+				bool include_dropped,
+				List **colnames, List **colvars);
 static int	specialAttNum(const char *attname);
 static void warnAutoRange(ParseState *pstate, RangeVar *relation);
 
@@ -297,15 +297,14 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname)
 	 * Scan the user column names (or aliases) for a match. Complain if
 	 * multiple matches.
 	 *
-	 * Note: eref->colnames may include entries for dropped columns, but
-	 * those will be empty strings that cannot match any legal SQL
-	 * identifier, so we don't bother to test for that case here.
+	 * Note: eref->colnames may include entries for dropped columns, but those
+	 * will be empty strings that cannot match any legal SQL identifier, so we
+	 * don't bother to test for that case here.
 	 *
-	 * Should this somehow go wrong and we try to access a dropped column,
-	 * we'll still catch it by virtue of the checks in
-	 * get_rte_attribute_type(), which is called by make_var().  That
-	 * routine has to do a cache lookup anyway, so the check there is
-	 * cheap.
+	 * Should this somehow go wrong and we try to access a dropped column, we'll
+	 * still catch it by virtue of the checks in get_rte_attribute_type(),
+	 * which is called by make_var().  That routine has to do a cache lookup
+	 * anyway, so the check there is cheap.
 	 */
 	foreach(c, rte->eref->colnames)
 	{
@@ -385,8 +384,8 @@ colNameToVar(ParseState *pstate, char *colname, bool localonly)
 				if (result)
 					ereport(ERROR,
 							(errcode(ERRCODE_AMBIGUOUS_COLUMN),
-						   errmsg("column reference \"%s\" is ambiguous",
-								  colname)));
+							 errmsg("column reference \"%s\" is ambiguous",
+									colname)));
 				result = newresult;
 			}
 		}
@@ -502,7 +501,7 @@ buildRelationAliases(TupleDesc tupdesc, Alias *alias, Alias *eref)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 				 errmsg("table \"%s\" has %d columns available but %d columns specified",
-				   eref->aliasname, maxattrs - numdropped, numaliases)));
+						eref->aliasname, maxattrs - numdropped, numaliases)));
 }
 
 /*
@@ -531,8 +530,8 @@ buildScalarFunctionAlias(Node *funcexpr, char *funcname,
 		if (list_length(alias->colnames) != 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					 errmsg("too many column aliases specified for function %s",
-							funcname)));
+				  errmsg("too many column aliases specified for function %s",
+						 funcname)));
 		eref->colnames = copyObject(alias->colnames);
 		return;
 	}
@@ -583,26 +582,26 @@ addRangeTableEntry(ParseState *pstate,
 	rte->alias = alias;
 
 	/*
-	 * Get the rel's OID.  This access also ensures that we have an
-	 * up-to-date relcache entry for the rel.  Since this is typically the
-	 * first access to a rel in a statement, be careful to get the right
-	 * access level depending on whether we're doing SELECT FOR UPDATE/SHARE.
+	 * Get the rel's OID.  This access also ensures that we have an up-to-date
+	 * relcache entry for the rel.	Since this is typically the first access
+	 * to a rel in a statement, be careful to get the right access level
+	 * depending on whether we're doing SELECT FOR UPDATE/SHARE.
 	 */
 	lockmode = isLockedRel(pstate, refname) ? RowShareLock : AccessShareLock;
 	rel = heap_openrv(relation, lockmode);
 	rte->relid = RelationGetRelid(rel);
 
 	/*
-	 * Build the list of effective column names using user-supplied
-	 * aliases and/or actual column names.
+	 * Build the list of effective column names using user-supplied aliases
+	 * and/or actual column names.
 	 */
 	rte->eref = makeAlias(refname, NIL);
 	buildRelationAliases(rel->rd_att, alias, rte->eref);
 
 	/*
-	 * Drop the rel refcount, but keep the access lock till end of
-	 * transaction so that the table can't be deleted or have its schema
-	 * modified underneath us.
+	 * Drop the rel refcount, but keep the access lock till end of transaction
+	 * so that the table can't be deleted or have its schema modified
+	 * underneath us.
 	 */
 	heap_close(rel, NoLock);
 
@@ -623,8 +622,8 @@ addRangeTableEntry(ParseState *pstate,
 	rte->checkAsUser = InvalidOid;		/* not set-uid by default, either */
 
 	/*
-	 * Add completed RTE to pstate's range table list, but not to join
-	 * list nor namespace --- caller must do that if appropriate.
+	 * Add completed RTE to pstate's range table list, but not to join list
+	 * nor namespace --- caller must do that if appropriate.
 	 */
 	if (pstate != NULL)
 		pstate->p_rtable = lappend(pstate->p_rtable, rte);
@@ -653,8 +652,8 @@ addRangeTableEntryForRelation(ParseState *pstate,
 	rte->relid = RelationGetRelid(rel);
 
 	/*
-	 * Build the list of effective column names using user-supplied
-	 * aliases and/or actual column names.
+	 * Build the list of effective column names using user-supplied aliases
+	 * and/or actual column names.
 	 */
 	rte->eref = makeAlias(refname, NIL);
 	buildRelationAliases(rel->rd_att, alias, rte->eref);
@@ -676,8 +675,8 @@ addRangeTableEntryForRelation(ParseState *pstate,
 	rte->checkAsUser = InvalidOid;		/* not set-uid by default, either */
 
 	/*
-	 * Add completed RTE to pstate's range table list, but not to join
-	 * list nor namespace --- caller must do that if appropriate.
+	 * Add completed RTE to pstate's range table list, but not to join list
+	 * nor namespace --- caller must do that if appropriate.
 	 */
 	if (pstate != NULL)
 		pstate->p_rtable = lappend(pstate->p_rtable, rte);
@@ -754,8 +753,8 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 	rte->checkAsUser = InvalidOid;
 
 	/*
-	 * Add completed RTE to pstate's range table list, but not to join
-	 * list nor namespace --- caller must do that if appropriate.
+	 * Add completed RTE to pstate's range table list, but not to join list
+	 * nor namespace --- caller must do that if appropriate.
 	 */
 	if (pstate != NULL)
 		pstate->p_rtable = lappend(pstate->p_rtable, rte);
@@ -801,8 +800,8 @@ addRangeTableEntryForFunction(ParseState *pstate,
 										&tupdesc);
 
 	/*
-	 * A coldeflist is required if the function returns RECORD and hasn't
-	 * got a predetermined record type, and is prohibited otherwise.
+	 * A coldeflist is required if the function returns RECORD and hasn't got
+	 * a predetermined record type, and is prohibited otherwise.
 	 */
 	if (coldeflist != NIL)
 	{
@@ -848,8 +847,8 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-			errmsg("function \"%s\" in FROM has unsupported return type %s",
-				   funcname, format_type_be(funcrettype))));
+			 errmsg("function \"%s\" in FROM has unsupported return type %s",
+					funcname, format_type_be(funcrettype))));
 
 	/*----------
 	 * Flags:
@@ -868,8 +867,8 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	rte->checkAsUser = InvalidOid;
 
 	/*
-	 * Add completed RTE to pstate's range table list, but not to join
-	 * list nor namespace --- caller must do that if appropriate.
+	 * Add completed RTE to pstate's range table list, but not to join list
+	 * nor namespace --- caller must do that if appropriate.
 	 */
 	if (pstate != NULL)
 		pstate->p_rtable = lappend(pstate->p_rtable, rte);
@@ -907,7 +906,7 @@ addRangeTableEntryForJoin(ParseState *pstate,
 	/* fill in any unspecified alias columns */
 	if (numaliases < list_length(colnames))
 		eref->colnames = list_concat(eref->colnames,
-								   list_copy_tail(colnames, numaliases));
+									 list_copy_tail(colnames, numaliases));
 
 	rte->eref = eref;
 
@@ -927,8 +926,8 @@ addRangeTableEntryForJoin(ParseState *pstate,
 	rte->checkAsUser = InvalidOid;
 
 	/*
-	 * Add completed RTE to pstate's range table list, but not to join
-	 * list nor namespace --- caller must do that if appropriate.
+	 * Add completed RTE to pstate's range table list, but not to join list
+	 * nor namespace --- caller must do that if appropriate.
 	 */
 	if (pstate != NULL)
 		pstate->p_rtable = lappend(pstate->p_rtable, rte);
@@ -983,7 +982,7 @@ addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
 {
 	if (addToJoinList)
 	{
-		int		rtindex = RTERangeTablePosn(pstate, rte, NULL);
+		int			rtindex = RTERangeTablePosn(pstate, rte, NULL);
 		RangeTblRef *rtr = makeNode(RangeTblRef);
 
 		rtr->rtindex = rtindex;
@@ -1111,7 +1110,7 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 					/* Base data type, i.e. scalar */
 					if (colnames)
 						*colnames = lappend(*colnames,
-										  linitial(rte->eref->colnames));
+											linitial(rte->eref->colnames));
 
 					if (colvars)
 					{
@@ -1184,11 +1183,11 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 
 					/*
 					 * During ordinary parsing, there will never be any
-					 * deleted columns in the join; but we have to check
-					 * since this routine is also used by the rewriter,
-					 * and joins found in stored rules might have join
-					 * columns for since-deleted columns.  This will be
-					 * signaled by a NULL Const in the alias-vars list.
+					 * deleted columns in the join; but we have to check since
+					 * this routine is also used by the rewriter, and joins
+					 * found in stored rules might have join columns for
+					 * since-deleted columns.  This will be signaled by a NULL
+					 * Const in the alias-vars list.
 					 */
 					if (IsA(avar, Const))
 					{
@@ -1274,8 +1273,8 @@ expandTupleDesc(TupleDesc tupdesc, Alias *eref,
 				if (colvars)
 				{
 					/*
-					 * can't use atttypid here, but it doesn't really
-					 * matter what type the Const claims to be.
+					 * can't use atttypid here, but it doesn't really matter
+					 * what type the Const claims to be.
 					 */
 					*colvars = lappend(*colvars, makeNullConst(INT4OID));
 				}
@@ -1342,8 +1341,7 @@ expandRelAttrs(ParseState *pstate, RangeTblEntry *rte,
 		te_list = lappend(te_list, te);
 	}
 
-	Assert(name == NULL && var == NULL);		/* lists not the same
-												 * length? */
+	Assert(name == NULL && var == NULL);		/* lists not the same length? */
 
 	return te_list;
 }
@@ -1382,8 +1380,7 @@ get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
 		return get_relid_attribute_name(rte->relid, attnum);
 
 	/*
-	 * Otherwise use the column name from eref.  There should always be
-	 * one.
+	 * Otherwise use the column name from eref.  There should always be one.
 	 */
 	if (attnum > 0 && attnum <= list_length(rte->eref->colnames))
 		return strVal(list_nth(rte->eref->colnames, attnum - 1));
@@ -1420,15 +1417,15 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 				att_tup = (Form_pg_attribute) GETSTRUCT(tp);
 
 				/*
-				 * If dropped column, pretend it ain't there.  See notes
-				 * in scanRTEForColumn.
+				 * If dropped column, pretend it ain't there.  See notes in
+				 * scanRTEForColumn.
 				 */
 				if (att_tup->attisdropped)
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_COLUMN),
-							 errmsg("column \"%s\" of relation \"%s\" does not exist",
-									NameStr(att_tup->attname),
-									get_rel_name(rte->relid))));
+					errmsg("column \"%s\" of relation \"%s\" does not exist",
+						   NameStr(att_tup->attname),
+						   get_rel_name(rte->relid))));
 				*vartype = att_tup->atttypid;
 				*vartypmod = att_tup->atttypmod;
 				ReleaseSysCache(tp);
@@ -1468,15 +1465,15 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 					if (attnum < 1 || attnum > tupdesc->natts)
 						ereport(ERROR,
 								(errcode(ERRCODE_UNDEFINED_COLUMN),
-								 errmsg("column %d of relation \"%s\" does not exist",
-										attnum,
-										rte->eref->aliasname)));
+						errmsg("column %d of relation \"%s\" does not exist",
+							   attnum,
+							   rte->eref->aliasname)));
 
 					att_tup = tupdesc->attrs[attnum - 1];
 
 					/*
-					 * If dropped column, pretend it ain't there.  See
-					 * notes in scanRTEForColumn.
+					 * If dropped column, pretend it ain't there.  See notes
+					 * in scanRTEForColumn.
 					 */
 					if (att_tup->attisdropped)
 						ereport(ERROR,
@@ -1510,8 +1507,7 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 		case RTE_JOIN:
 			{
 				/*
-				 * Join RTE --- get type info from join RTE's alias
-				 * variable
+				 * Join RTE --- get type info from join RTE's alias variable
 				 */
 				Node	   *aliasvar;
 
@@ -1540,8 +1536,7 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 		case RTE_RELATION:
 			{
 				/*
-				 * Plain relation RTE --- get the attribute's catalog
-				 * entry
+				 * Plain relation RTE --- get the attribute's catalog entry
 				 */
 				HeapTuple	tp;
 				Form_pg_attribute att_tup;
@@ -1565,12 +1560,11 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 		case RTE_JOIN:
 			{
 				/*
-				 * A join RTE would not have dropped columns when
-				 * constructed, but one in a stored rule might contain
-				 * columns that were dropped from the underlying tables,
-				 * if said columns are nowhere explicitly referenced in
-				 * the rule.  This will be signaled to us by a NULL Const
-				 * in the joinaliasvars list.
+				 * A join RTE would not have dropped columns when constructed,
+				 * but one in a stored rule might contain columns that were
+				 * dropped from the underlying tables, if said columns are
+				 * nowhere explicitly referenced in the rule.  This will be
+				 * signaled to us by a NULL Const in the joinaliasvars list.
 				 */
 				Var		   *aliasvar;
 
@@ -1766,8 +1760,8 @@ warnAutoRange(ParseState *pstate, RangeVar *relation)
 		if (pstate->parentParseState != NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_TABLE),
-					 errmsg("missing FROM-clause entry in subquery for table \"%s\"",
-							relation->relname)));
+			 errmsg("missing FROM-clause entry in subquery for table \"%s\"",
+					relation->relname)));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_TABLE),
@@ -1785,7 +1779,7 @@ warnAutoRange(ParseState *pstate, RangeVar *relation)
 		else
 			ereport(NOTICE,
 					(errcode(ERRCODE_UNDEFINED_TABLE),
-			  errmsg("adding missing FROM-clause entry for table \"%s\"",
-					 relation->relname)));
+				  errmsg("adding missing FROM-clause entry for table \"%s\"",
+						 relation->relname)));
 	}
 }

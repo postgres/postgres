@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.84 2005/10/10 18:49:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.85 2005/10/15 02:49:46 momjian Exp $
  *
  * NOTES
  *	  An ACL array is simply an array of AclItems, representing the union
@@ -79,7 +79,7 @@ typedef struct AclItem
 
 /*
  * Definitions for convenient access to Acl (array of AclItem) and IdList
- * (array of Oid).  These are standard PostgreSQL arrays, but are restricted
+ * (array of Oid).	These are standard PostgreSQL arrays, but are restricted
  * to have one dimension.  We also ignore the lower bound when reading,
  * and set it to one when writing.
  *
@@ -208,7 +208,7 @@ extern Acl *aclnewowner(const Acl *old_acl, Oid oldOwnerId, Oid newOwnerId);
 
 extern AclMode aclmask(const Acl *acl, Oid roleid, Oid ownerId,
 		AclMode mask, AclMaskHow how);
-extern int aclmembers(const Acl *acl, Oid **roleids);
+extern int	aclmembers(const Acl *acl, Oid **roleids);
 
 extern bool has_privs_of_role(Oid member, Oid role);
 extern bool is_member_of_role(Oid member, Oid role);
@@ -216,8 +216,8 @@ extern bool is_admin_of_role(Oid member, Oid role);
 extern void check_is_member_of_role(Oid member, Oid role);
 
 extern void select_best_grantor(Oid roleId, AclMode privileges,
-								const Acl *acl, Oid ownerId,
-								Oid *grantorId, AclMode *grantOptions);
+					const Acl *acl, Oid ownerId,
+					Oid *grantorId, AclMode *grantOptions);
 
 extern void initialize_acl(void);
 

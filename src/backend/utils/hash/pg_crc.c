@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/pg_crc.c,v 1.13 2005/06/02 05:55:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/pg_crc.c,v 1.14 2005/10/15 02:49:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -378,7 +378,6 @@ const uint32 pg_crc64_table1[256] = {
 	0x5DEDC41A, 0x1F1D25F1,
 	0xD80C07CD, 0x9AFCE626
 };
-
 #else							/* int64 works */
 
 const uint64 pg_crc64_table[256] = {
@@ -511,7 +510,6 @@ const uint64 pg_crc64_table[256] = {
 	UINT64CONST(0x5DEDC41A34BBEEB2), UINT64CONST(0x1F1D25F19D51D821),
 	UINT64CONST(0xD80C07CD676F8394), UINT64CONST(0x9AFCE626CE85B507)
 };
-
 #endif   /* INT64_IS_BUSTED */
 
-#endif	/* PROVIDE_64BIT_CRC */
+#endif   /* PROVIDE_64BIT_CRC */

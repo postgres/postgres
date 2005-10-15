@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.252 2005/08/01 20:31:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.253 2005/10/15 02:49:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,8 +135,7 @@ _equalConst(Const *a, Const *b)
 
 	/*
 	 * We treat all NULL constants of the same type as equal. Someday this
-	 * might need to change?  But datumIsEqual doesn't work on nulls,
-	 * so...
+	 * might need to change?  But datumIsEqual doesn't work on nulls, so...
 	 */
 	if (a->constisnull)
 		return true;
@@ -202,8 +201,8 @@ _equalFuncExpr(FuncExpr *a, FuncExpr *b)
 	COMPARE_SCALAR_FIELD(funcretset);
 
 	/*
-	 * Special-case COERCE_DONTCARE, so that planner can build coercion
-	 * nodes that are equal() to both explicit and implicit coercions.
+	 * Special-case COERCE_DONTCARE, so that planner can build coercion nodes
+	 * that are equal() to both explicit and implicit coercions.
 	 */
 	if (a->funcformat != b->funcformat &&
 		a->funcformat != COERCE_DONTCARE &&
@@ -222,9 +221,9 @@ _equalOpExpr(OpExpr *a, OpExpr *b)
 
 	/*
 	 * Special-case opfuncid: it is allowable for it to differ if one node
-	 * contains zero and the other doesn't.  This just means that the one
-	 * node isn't as far along in the parse/plan pipeline and hasn't had
-	 * the opfuncid cache filled yet.
+	 * contains zero and the other doesn't.  This just means that the one node
+	 * isn't as far along in the parse/plan pipeline and hasn't had the
+	 * opfuncid cache filled yet.
 	 */
 	if (a->opfuncid != b->opfuncid &&
 		a->opfuncid != 0 &&
@@ -245,9 +244,9 @@ _equalDistinctExpr(DistinctExpr *a, DistinctExpr *b)
 
 	/*
 	 * Special-case opfuncid: it is allowable for it to differ if one node
-	 * contains zero and the other doesn't.  This just means that the one
-	 * node isn't as far along in the parse/plan pipeline and hasn't had
-	 * the opfuncid cache filled yet.
+	 * contains zero and the other doesn't.  This just means that the one node
+	 * isn't as far along in the parse/plan pipeline and hasn't had the
+	 * opfuncid cache filled yet.
 	 */
 	if (a->opfuncid != b->opfuncid &&
 		a->opfuncid != 0 &&
@@ -268,9 +267,9 @@ _equalScalarArrayOpExpr(ScalarArrayOpExpr *a, ScalarArrayOpExpr *b)
 
 	/*
 	 * Special-case opfuncid: it is allowable for it to differ if one node
-	 * contains zero and the other doesn't.  This just means that the one
-	 * node isn't as far along in the parse/plan pipeline and hasn't had
-	 * the opfuncid cache filled yet.
+	 * contains zero and the other doesn't.  This just means that the one node
+	 * isn't as far along in the parse/plan pipeline and hasn't had the
+	 * opfuncid cache filled yet.
 	 */
 	if (a->opfuncid != b->opfuncid &&
 		a->opfuncid != 0 &&
@@ -354,8 +353,8 @@ _equalRelabelType(RelabelType *a, RelabelType *b)
 	COMPARE_SCALAR_FIELD(resulttypmod);
 
 	/*
-	 * Special-case COERCE_DONTCARE, so that planner can build coercion
-	 * nodes that are equal() to both explicit and implicit coercions.
+	 * Special-case COERCE_DONTCARE, so that planner can build coercion nodes
+	 * that are equal() to both explicit and implicit coercions.
 	 */
 	if (a->relabelformat != b->relabelformat &&
 		a->relabelformat != COERCE_DONTCARE &&
@@ -372,8 +371,8 @@ _equalConvertRowtypeExpr(ConvertRowtypeExpr *a, ConvertRowtypeExpr *b)
 	COMPARE_SCALAR_FIELD(resulttype);
 
 	/*
-	 * Special-case COERCE_DONTCARE, so that planner can build coercion
-	 * nodes that are equal() to both explicit and implicit coercions.
+	 * Special-case COERCE_DONTCARE, so that planner can build coercion nodes
+	 * that are equal() to both explicit and implicit coercions.
 	 */
 	if (a->convertformat != b->convertformat &&
 		a->convertformat != COERCE_DONTCARE &&
@@ -430,8 +429,8 @@ _equalRowExpr(RowExpr *a, RowExpr *b)
 	COMPARE_SCALAR_FIELD(row_typeid);
 
 	/*
-	 * Special-case COERCE_DONTCARE, so that planner can build coercion
-	 * nodes that are equal() to both explicit and implicit coercions.
+	 * Special-case COERCE_DONTCARE, so that planner can build coercion nodes
+	 * that are equal() to both explicit and implicit coercions.
 	 */
 	if (a->row_format != b->row_format &&
 		a->row_format != COERCE_DONTCARE &&
@@ -467,9 +466,9 @@ _equalNullIfExpr(NullIfExpr *a, NullIfExpr *b)
 
 	/*
 	 * Special-case opfuncid: it is allowable for it to differ if one node
-	 * contains zero and the other doesn't.  This just means that the one
-	 * node isn't as far along in the parse/plan pipeline and hasn't had
-	 * the opfuncid cache filled yet.
+	 * contains zero and the other doesn't.  This just means that the one node
+	 * isn't as far along in the parse/plan pipeline and hasn't had the
+	 * opfuncid cache filled yet.
 	 */
 	if (a->opfuncid != b->opfuncid &&
 		a->opfuncid != 0 &&
@@ -509,8 +508,8 @@ _equalCoerceToDomain(CoerceToDomain *a, CoerceToDomain *b)
 	COMPARE_SCALAR_FIELD(resulttypmod);
 
 	/*
-	 * Special-case COERCE_DONTCARE, so that planner can build coercion
-	 * nodes that are equal() to both explicit and implicit coercions.
+	 * Special-case COERCE_DONTCARE, so that planner can build coercion nodes
+	 * that are equal() to both explicit and implicit coercions.
 	 */
 	if (a->coercionformat != b->coercionformat &&
 		a->coercionformat != COERCE_DONTCARE &&
@@ -606,8 +605,8 @@ _equalRestrictInfo(RestrictInfo *a, RestrictInfo *b)
 	COMPARE_BITMAPSET_FIELD(required_relids);
 
 	/*
-	 * We ignore all the remaining fields, since they may not be set yet,
-	 * and should be derivable from the clause anyway.
+	 * We ignore all the remaining fields, since they may not be set yet, and
+	 * should be derivable from the clause anyway.
 	 */
 
 	return true;
@@ -1717,15 +1716,15 @@ _equalList(List *a, List *b)
 	ListCell   *item_b;
 
 	/*
-	 * Try to reject by simple scalar checks before grovelling through all
-	 * the list elements...
+	 * Try to reject by simple scalar checks before grovelling through all the
+	 * list elements...
 	 */
 	COMPARE_SCALAR_FIELD(type);
 	COMPARE_SCALAR_FIELD(length);
 
 	/*
-	 * We place the switch outside the loop for the sake of efficiency;
-	 * this may not be worth doing...
+	 * We place the switch outside the loop for the sake of efficiency; this
+	 * may not be worth doing...
 	 */
 	switch (a->type)
 	{

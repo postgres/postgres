@@ -3,7 +3,7 @@
 * geqo_recombination.c
 *	 misc recombination procedures
 *
-* $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_recombination.c,v 1.14 2004/08/29 05:06:43 momjian Exp $
+* $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_recombination.c,v 1.15 2005/10/15 02:49:19 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -62,8 +62,8 @@ init_tour(Gene *tour, int num_gene)
 	}
 
 	/*
-	 * Since geqo_eval() will reject tours where tour[0] > tour[1], we may
-	 * as well switch the two to make it a valid tour.
+	 * Since geqo_eval() will reject tours where tour[0] > tour[1], we may as
+	 * well switch the two to make it a valid tour.
 	 */
 	if (num_gene >= 2 && tour[0] > tour[1])
 	{
@@ -86,8 +86,8 @@ alloc_city_table(int num_gene)
 	City	   *city_table;
 
 	/*
-	 * palloc one extra location so that nodes numbered 1..n can be
-	 * indexed directly; 0 will not be used
+	 * palloc one extra location so that nodes numbered 1..n can be indexed
+	 * directly; 0 will not be used
 	 */
 	city_table = (City *) palloc((num_gene + 1) * sizeof(City));
 

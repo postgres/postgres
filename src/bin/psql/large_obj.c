@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/large_obj.c,v 1.39 2005/07/02 17:01:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/large_obj.c,v 1.40 2005/10/15 02:49:40 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "large_obj.h"
@@ -122,8 +122,8 @@ do_lo_export(const char *loid_arg, const char *filename_arg)
 
 	status = lo_export(pset.db, atooid(loid_arg), filename_arg);
 	if (status != 1)
-	{							/* of course this status is documented
-								 * nowhere :( */
+	{							/* of course this status is documented nowhere
+								 * :( */
 		fputs(PQerrorMessage(pset.db), stderr);
 		return fail_lo_xact("\\lo_export", own_transaction);
 	}
@@ -254,7 +254,7 @@ do_lo_list(void)
 
 	snprintf(buf, sizeof(buf),
 			 "SELECT loid as \"ID\",\n"
-			 "  pg_catalog.obj_description(loid, 'pg_largeobject') as \"%s\"\n"
+		   "  pg_catalog.obj_description(loid, 'pg_largeobject') as \"%s\"\n"
 			 "FROM (SELECT DISTINCT loid FROM pg_catalog.pg_largeobject) x\n"
 			 "ORDER BY 1",
 			 _("Description"));

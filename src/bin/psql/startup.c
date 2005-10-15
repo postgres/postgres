@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.124 2005/10/04 19:01:18 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.125 2005/10/15 02:49:40 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -19,7 +19,7 @@
 #include "getopt_long.h"
 
 #ifndef HAVE_INT_OPTRESET
-int optreset;
+int			optreset;
 #endif
 
 #include <locale.h>
@@ -107,7 +107,7 @@ main(int argc, char *argv[])
 
 	char	   *username = NULL;
 	char	   *password = NULL;
-	char       *password_prompt = NULL;
+	char	   *password_prompt = NULL;
 	bool		need_pass;
 
 	set_pglocale_pgservice(argv[0], "psql");
@@ -180,9 +180,9 @@ main(int argc, char *argv[])
 	if (options.username)
 	{
 		/*
-		 * The \001 is a hack to support the deprecated -u option which
-		 * issues a username prompt. The recommended option is -U followed
-		 * by the name on the command line.
+		 * The \001 is a hack to support the deprecated -u option which issues
+		 * a username prompt. The recommended option is -U followed by the
+		 * name on the command line.
 		 */
 		if (strcmp(options.username, "\001") == 0)
 			username = simple_prompt("User name: ", 100, true);
@@ -207,7 +207,7 @@ main(int argc, char *argv[])
 	{
 		need_pass = false;
 		pset.db = PQsetdbLogin(options.host, options.port, NULL, NULL,
-			options.action == ACT_LIST_DB ? "postgres" : options.dbname,
+				 options.action == ACT_LIST_DB ? "postgres" : options.dbname,
 							   username, password);
 
 		if (PQstatus(pset.db) == CONNECTION_BAD &&
@@ -314,12 +314,12 @@ main(int argc, char *argv[])
 
 		if (!QUIET() && !pset.notty)
 		{
-			int		client_ver = parse_version(PG_VERSION);
+			int			client_ver = parse_version(PG_VERSION);
 
 			if (pset.sversion != client_ver)
 			{
 				const char *server_version;
-				char	server_ver_str[16];
+				char		server_ver_str[16];
 
 				/* Try to get full text form, might include "devel" etc */
 				server_version = PQparameterStatus(pset.db, "server_version");
@@ -341,18 +341,18 @@ main(int argc, char *argv[])
 					   pset.progname, PG_VERSION);
 
 			printf(_("Type:  \\copyright for distribution terms\n"
-						   "       \\h for help with SQL commands\n"
-						   "       \\? for help with psql commands\n"
-			  "       \\g or terminate with semicolon to execute query\n"
-						   "       \\q to quit\n\n"));
+					 "       \\h for help with SQL commands\n"
+					 "       \\? for help with psql commands\n"
+				  "       \\g or terminate with semicolon to execute query\n"
+					 "       \\q to quit\n\n"));
 
 			if (pset.sversion / 100 != client_ver / 100)
 				printf(_("WARNING:  You are connected to a server with major version %d.%d,\n"
 						 "but your %s client is major version %d.%d.  Some backslash commands,\n"
 						 "such as \\d, might not work properly.\n\n"),
-						 pset.sversion / 10000, (pset.sversion / 100) % 100,
-						 pset.progname,
-						 client_ver / 10000, (client_ver / 100) % 100);
+					   pset.sversion / 10000, (pset.sversion / 100) % 100,
+					   pset.progname,
+					   client_ver / 10000, (client_ver / 100) % 100);
 
 #ifdef USE_SSL
 			printSSLInfo();
@@ -556,8 +556,8 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 				break;
 			case 'u':
 				pset.getPassword = true;
-				options->username = "\001";		/* hopefully nobody has
-												 * that username */
+				options->username = "\001";		/* hopefully nobody has that
+												 * username */
 				/* this option is out */
 				used_old_u_option = true;
 				break;
@@ -630,8 +630,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 	}
 
 	/*
-	 * if we still have arguments, use it as the database name and
-	 * username
+	 * if we still have arguments, use it as the database name and username
 	 */
 	while (argc - optind >= 1)
 	{
@@ -691,9 +690,9 @@ process_psqlrc_file(char *filename)
 	sprintf(psqlrc, "%s-%s", filename, PG_VERSION);
 
 	if (access(psqlrc, R_OK) == 0)
-		(void)process_file(psqlrc);
+		(void) process_file(psqlrc);
 	else if (access(filename, R_OK) == 0)
-		(void)process_file(filename);
+		(void) process_file(filename);
 	free(psqlrc);
 }
 
@@ -755,9 +754,9 @@ checkWin32Codepage(void)
 	concp = GetConsoleCP();
 	if (wincp != concp)
 	{
-			printf(_("Warning: Console code page (%u) differs from Windows code page (%u)\n"
-					   "         8-bit characters may not work correctly. See psql reference\n"
-					   "         page \"Notes for Windows users\" for details.\n\n"),
+		printf(_("Warning: Console code page (%u) differs from Windows code page (%u)\n"
+				 "         8-bit characters may not work correctly. See psql reference\n"
+			   "         page \"Notes for Windows users\" for details.\n\n"),
 			   concp, wincp);
 	}
 }

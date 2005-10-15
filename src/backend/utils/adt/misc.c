@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.48 2005/09/16 05:35:40 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.49 2005/10/15 02:49:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,16 +79,16 @@ pg_signal_backend(int pid, int sig)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-		(errmsg("must be superuser to signal other server processes"))));
+			(errmsg("must be superuser to signal other server processes"))));
 
 	if (!IsBackendPid(pid))
 	{
 		/*
-		 * This is just a warning so a loop-through-resultset will not
-		 * abort if one backend terminated on it's own during the run
+		 * This is just a warning so a loop-through-resultset will not abort
+		 * if one backend terminated on it's own during the run
 		 */
 		ereport(WARNING,
-			 (errmsg("PID %d is not a PostgreSQL server process", pid)));
+				(errmsg("PID %d is not a PostgreSQL server process", pid)));
 		return false;
 	}
 
@@ -111,7 +111,7 @@ pg_cancel_backend(PG_FUNCTION_ARGS)
 Datum
 pg_reload_conf(PG_FUNCTION_ARGS)
 {
-	if (!superuser()) 
+	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser to signal the postmaster"))));
@@ -133,7 +133,7 @@ pg_reload_conf(PG_FUNCTION_ARGS)
 Datum
 pg_rotate_logfile(PG_FUNCTION_ARGS)
 {
-	if (!superuser()) 
+	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser to rotate log files"))));
@@ -141,7 +141,7 @@ pg_rotate_logfile(PG_FUNCTION_ARGS)
 	if (!Redirect_stderr)
 	{
 		ereport(WARNING,
-				(errmsg("rotation not possible because log redirection not active")));
+		(errmsg("rotation not possible because log redirection not active")));
 		PG_RETURN_BOOL(false);
 	}
 
@@ -186,8 +186,7 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 		fctx = palloc(sizeof(ts_db_fctx));
 
 		/*
-		 * size = tablespace dirname length + dir sep
-		 * char + oid + terminator
+		 * size = tablespace dirname length + dir sep char + oid + terminator
 		 */
 		fctx->location = (char *) palloc(10 + 10 + 1);
 		if (tablespaceOid == GLOBALTABLESPACE_OID)
@@ -214,7 +213,7 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 							 errmsg("could not open directory \"%s\": %m",
 									fctx->location)));
 				ereport(WARNING,
-				  (errmsg("%u is not a tablespace OID", tablespaceOid)));
+					  (errmsg("%u is not a tablespace OID", tablespaceOid)));
 			}
 		}
 		funcctx->user_fctx = fctx;

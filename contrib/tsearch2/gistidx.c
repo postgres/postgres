@@ -65,30 +65,32 @@ gtsvector_in(PG_FUNCTION_ARGS)
 	PG_RETURN_DATUM(0);
 }
 
-#define	SINGOUTSTR	"%d true bits, %d false bits"
-#define	ARROUTSTR	"%d unique words"
+#define SINGOUTSTR	"%d true bits, %d false bits"
+#define ARROUTSTR	"%d unique words"
 #define EXTRALEN	( 2*13 )
 
-static int outbuf_maxlen = 0;
+static int	outbuf_maxlen = 0;
 
 Datum
 gtsvector_out(PG_FUNCTION_ARGS)
 {
 	GISTTYPE   *key = (GISTTYPE *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_POINTER(0)));
-	char *outbuf;
+	char	   *outbuf;
 
-	if ( outbuf_maxlen==0 )
-		outbuf_maxlen = 2*EXTRALEN + Max( strlen(SINGOUTSTR), strlen(ARROUTSTR) ) + 1;
-	outbuf = palloc( outbuf_maxlen );
+	if (outbuf_maxlen == 0)
+		outbuf_maxlen = 2 * EXTRALEN + Max(strlen(SINGOUTSTR), strlen(ARROUTSTR)) + 1;
+	outbuf = palloc(outbuf_maxlen);
 
-	if ( ISARRKEY(key) ) 
-		sprintf( outbuf, ARROUTSTR, (int) ARRNELEM(key) );  
-	else {
-		int cnttrue = ( ISALLTRUE(key) ) ? SIGLENBIT : sizebitvec(GETSIGN(key));
-		sprintf( outbuf, SINGOUTSTR, cnttrue, (int) SIGLENBIT - cnttrue ); 
-	}	
+	if (ISARRKEY(key))
+		sprintf(outbuf, ARROUTSTR, (int) ARRNELEM(key));
+	else
+	{
+		int			cnttrue = (ISALLTRUE(key)) ? SIGLENBIT : sizebitvec(GETSIGN(key));
 
-	PG_FREE_IF_COPY(key,0);
+		sprintf(outbuf, SINGOUTSTR, cnttrue, (int) SIGLENBIT - cnttrue);
+	}
+
+	PG_FREE_IF_COPY(key, 0);
 	PG_RETURN_POINTER(outbuf);
 }
 
@@ -165,8 +167,8 @@ gtsvector_compress(PG_FUNCTION_ARGS)
 		if (len != val->size)
 		{
 			/*
-			 * there is a collision of hash-function; len is always less
-			 * than val->size
+			 * there is a collision of hash-function; len is always less than
+			 * val->size
 			 */
 			len = CALCGTSIZE(ARRKEY, len);
 			res = (GISTTYPE *) repalloc((void *) res, len);
@@ -280,7 +282,7 @@ gtsvector_consistent(PG_FUNCTION_ARGS)
 {
 	QUERYTYPE  *query = (QUERYTYPE *) PG_GETARG_POINTER(1);
 	GISTTYPE   *key = (GISTTYPE *) DatumGetPointer(
-								((GISTENTRY *) PG_GETARG_POINTER(0))->key
+									((GISTENTRY *) PG_GETARG_POINTER(0))->key
 	);
 
 	if (!query->size)

@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.37 2005/10/03 00:28:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.38 2005/10/15 02:49:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,7 @@ main(int argc, char *argv[])
 	bool		noupdate = false;
 	TransactionId set_xid = 0;
 	Oid			set_oid = 0;
-	MultiXactId	set_mxid = 0;
+	MultiXactId set_mxid = 0;
 	MultiXactOffset set_mxoff = -1;
 	uint32		minXlogTli = 0,
 				minXlogId = 0,
@@ -213,11 +213,11 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
- 	/*
-	 * Don't allow pg_resetxlog to be run as root, to avoid
-	 * overwriting the ownership of files in the data directory. We
-	 * need only check for root -- any other user won't have
-	 * sufficient permissions to modify files in the data directory.
+	/*
+	 * Don't allow pg_resetxlog to be run as root, to avoid overwriting the
+	 * ownership of files in the data directory. We need only check for root
+	 * -- any other user won't have sufficient permissions to modify files in
+	 * the data directory.
 	 */
 #ifndef WIN32
 #ifndef __BEOS__				/* no root check on BeOS */
@@ -243,8 +243,7 @@ main(int argc, char *argv[])
 
 	/*
 	 * Check for a postmaster lock file --- if there is one, refuse to
-	 * proceed, on grounds we might be interfering with a live
-	 * installation.
+	 * proceed, on grounds we might be interfering with a live installation.
 	 */
 	snprintf(path, MAXPGPATH, "%s/postmaster.pid", DataDir);
 
@@ -271,8 +270,8 @@ main(int argc, char *argv[])
 		GuessControlValues();
 
 	/*
-	 * Adjust fields if required by switches.  (Do this now so that
-	 * printout, if any, includes these values.)
+	 * Adjust fields if required by switches.  (Do this now so that printout,
+	 * if any, includes these values.)
 	 */
 	if (set_xid != 0)
 		ControlFile.checkPointCopy.nextXid = set_xid;
@@ -319,8 +318,8 @@ main(int argc, char *argv[])
 	if (ControlFile.state != DB_SHUTDOWNED && !force)
 	{
 		printf(_("The database server was not shut down cleanly.\n"
-			 "Resetting the transaction log may cause data to be lost.\n"
-			 "If you want to proceed anyway, use -f to force reset.\n"));
+				 "Resetting the transaction log may cause data to be lost.\n"
+				 "If you want to proceed anyway, use -f to force reset.\n"));
 		exit(1);
 	}
 
@@ -353,9 +352,9 @@ ReadControlFile(void)
 	if ((fd = open(XLOG_CONTROL_FILE, O_RDONLY)) < 0)
 	{
 		/*
-		 * If pg_control is not there at all, or we can't read it, the
-		 * odds are we've been handed a bad DataDir path, so give up. User
-		 * can do "touch pg_control" to force us to proceed.
+		 * If pg_control is not there at all, or we can't read it, the odds
+		 * are we've been handed a bad DataDir path, so give up. User can do
+		 * "touch pg_control" to force us to proceed.
 		 */
 		fprintf(stderr, _("%s: could not open file \"%s\" for reading: %s\n"),
 				progname, XLOG_CONTROL_FILE, strerror(errno));
@@ -380,7 +379,7 @@ ReadControlFile(void)
 	close(fd);
 
 	if (len >= sizeof(ControlFileData) &&
-		((ControlFileData *) buffer)->pg_control_version == PG_CONTROL_VERSION)
+	  ((ControlFileData *) buffer)->pg_control_version == PG_CONTROL_VERSION)
 	{
 		/* Check the CRC. */
 		INIT_CRC32(crc);
@@ -431,8 +430,8 @@ GuessControlValues(void)
 	ControlFile.catalog_version_no = CATALOG_VERSION_NO;
 
 	/*
-	 * Create a new unique installation identifier, since we can no longer
-	 * use any old XLOG records.  See notes in xlog.c about the algorithm.
+	 * Create a new unique installation identifier, since we can no longer use
+	 * any old XLOG records.  See notes in xlog.c about the algorithm.
 	 */
 	gettimeofday(&tv, NULL);
 	sysidentifier = ((uint64) tv.tv_sec) << 32;
@@ -486,8 +485,8 @@ GuessControlValues(void)
 	StrNCpy(ControlFile.lc_ctype, localeptr, LOCALE_NAME_BUFLEN);
 
 	/*
-	 * XXX eventually, should try to grovel through old XLOG to develop
-	 * more accurate values for TimeLineID, nextXID, etc.
+	 * XXX eventually, should try to grovel through old XLOG to develop more
+	 * accurate values for TimeLineID, nextXID, etc.
 	 */
 }
 
@@ -509,8 +508,8 @@ PrintControlValues(bool guessed)
 		printf(_("pg_control values:\n\n"));
 
 	/*
-	 * Format system_identifier separately to keep platform-dependent
-	 * format code out of the translatable message string.
+	 * Format system_identifier separately to keep platform-dependent format
+	 * code out of the translatable message string.
 	 */
 	snprintf(sysident_str, sizeof(sysident_str), UINT64_FORMAT,
 			 ControlFile.system_identifier);
@@ -587,11 +586,11 @@ RewriteControlFile(void)
 	FIN_CRC32(ControlFile.crc);
 
 	/*
-	 * We write out BLCKSZ bytes into pg_control, zero-padding the excess
-	 * over sizeof(ControlFileData).  This reduces the odds of
-	 * premature-EOF errors when reading pg_control.  We'll still fail
-	 * when we check the contents of the file, but hopefully with a more
-	 * specific error than "couldn't read pg_control".
+	 * We write out BLCKSZ bytes into pg_control, zero-padding the excess over
+	 * sizeof(ControlFileData).  This reduces the odds of premature-EOF errors
+	 * when reading pg_control.  We'll still fail when we check the contents
+	 * of the file, but hopefully with a more specific error than "couldn't
+	 * read pg_control".
 	 */
 	if (sizeof(ControlFileData) > BLCKSZ)
 	{
@@ -674,8 +673,8 @@ KillExistingXLOG(void)
 #ifdef WIN32
 
 	/*
-	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but
-	 * not in released version
+	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but not in
+	 * released version
 	 */
 	if (GetLastError() == ERROR_NO_MORE_FILES)
 		errno = 0;

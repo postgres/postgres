@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_amop.h,v 1.65 2005/07/01 19:19:03 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_amop.h,v 1.66 2005/10/15 02:49:42 momjian Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki
@@ -46,7 +46,7 @@
  *		typedef struct FormData_pg_amop
  * ----------------
  */
-#define AccessMethodOperatorRelationId  2602
+#define AccessMethodOperatorRelationId	2602
 
 CATALOG(pg_amop,2602) BKI_WITHOUT_OIDS
 {
@@ -84,35 +84,35 @@ typedef FormData_pg_amop *Form_pg_amop;
  *	rtree box_ops
  */
 
-DATA(insert (	 425	0 1  f  493 ));
-DATA(insert (	 425	0 2  f  494 ));
-DATA(insert (	 425	0 3  f  500 ));
-DATA(insert (	 425	0 4  f  495 ));
-DATA(insert (	 425	0 5  f  496 ));
-DATA(insert (	 425	0 6  f  499 ));
-DATA(insert (	 425	0 7  f  498 ));
-DATA(insert (	 425	0 8  f  497 ));
-DATA(insert (	 425	0 9  f  2571 ));
-DATA(insert (	 425	0 10 f  2570 ));
-DATA(insert (	 425	0 11 f  2573 ));
-DATA(insert (	 425	0 12 f  2572 ));
+DATA(insert (	 425	0 1  f	493 ));
+DATA(insert (	 425	0 2  f	494 ));
+DATA(insert (	 425	0 3  f	500 ));
+DATA(insert (	 425	0 4  f	495 ));
+DATA(insert (	 425	0 5  f	496 ));
+DATA(insert (	 425	0 6  f	499 ));
+DATA(insert (	 425	0 7  f	498 ));
+DATA(insert (	 425	0 8  f	497 ));
+DATA(insert (	 425	0 9  f	2571 ));
+DATA(insert (	 425	0 10 f	2570 ));
+DATA(insert (	 425	0 11 f	2573 ));
+DATA(insert (	 425	0 12 f	2572 ));
 
 /*
  *	rtree poly_ops (supports polygons)
  */
 
-DATA(insert (	1993	0 1  f  485 ));
-DATA(insert (	1993	0 2  f  486 ));
-DATA(insert (	1993	0 3  f  492 ));
-DATA(insert (	1993	0 4  f  487 ));
-DATA(insert (	1993	0 5  f  488 ));
-DATA(insert (	1993	0 6  f  491 ));
-DATA(insert (	1993	0 7  f  490 ));
-DATA(insert (	1993	0 8  f  489 ));
-DATA(insert (	1993	0 9  f  2575 ));
-DATA(insert (	1993	0 10 f  2574 ));
-DATA(insert (	1993	0 11 f  2577 ));
-DATA(insert (	1993	0 12 f  2576 ));
+DATA(insert (	1993	0 1  f	485 ));
+DATA(insert (	1993	0 2  f	486 ));
+DATA(insert (	1993	0 3  f	492 ));
+DATA(insert (	1993	0 4  f	487 ));
+DATA(insert (	1993	0 5  f	488 ));
+DATA(insert (	1993	0 6  f	491 ));
+DATA(insert (	1993	0 7  f	490 ));
+DATA(insert (	1993	0 8  f	489 ));
+DATA(insert (	1993	0 9  f	2575 ));
+DATA(insert (	1993	0 10 f	2574 ));
+DATA(insert (	1993	0 11 f	2577 ));
+DATA(insert (	1993	0 12 f	2576 ));
 
 /*
  *	btree int2_ops
@@ -623,51 +623,51 @@ DATA(insert (	2235	0 1 f  974 ));
  *	gist box_ops
  */
 
-DATA(insert (	2593	0 1  f  493 ));
-DATA(insert (	2593	0 2  f  494 ));
-DATA(insert (	2593	0 3  f  500 ));
-DATA(insert (	2593	0 4  f  495 ));
-DATA(insert (	2593	0 5  f  496 ));
-DATA(insert (	2593	0 6  f  499 ));
-DATA(insert (	2593	0 7  f  498 ));
-DATA(insert (	2593	0 8  f  497 ));
-DATA(insert (	2593	0 9  f  2571 ));
-DATA(insert (	2593	0 10 f  2570 ));
-DATA(insert (	2593	0 11 f  2573 ));
-DATA(insert (	2593	0 12 f  2572 ));
+DATA(insert (	2593	0 1  f	493 ));
+DATA(insert (	2593	0 2  f	494 ));
+DATA(insert (	2593	0 3  f	500 ));
+DATA(insert (	2593	0 4  f	495 ));
+DATA(insert (	2593	0 5  f	496 ));
+DATA(insert (	2593	0 6  f	499 ));
+DATA(insert (	2593	0 7  f	498 ));
+DATA(insert (	2593	0 8  f	497 ));
+DATA(insert (	2593	0 9  f	2571 ));
+DATA(insert (	2593	0 10 f	2570 ));
+DATA(insert (	2593	0 11 f	2573 ));
+DATA(insert (	2593	0 12 f	2572 ));
 
 /*
  *	gist poly_ops (supports polygons)
  */
 
-DATA(insert (	2594	0 1  t  485 ));
-DATA(insert (	2594	0 2  t  486 ));
-DATA(insert (	2594	0 3  t  492 ));
-DATA(insert (	2594	0 4  t  487 ));
-DATA(insert (	2594	0 5  t  488 ));
-DATA(insert (	2594	0 6  t  491 ));
-DATA(insert (	2594	0 7  t  490 ));
-DATA(insert (	2594	0 8  t  489 ));
-DATA(insert (	2594	0 9  t  2575 ));
-DATA(insert (	2594	0 10 t  2574 ));
-DATA(insert (	2594	0 11 t  2577 ));
-DATA(insert (	2594	0 12 t  2576 ));
+DATA(insert (	2594	0 1  t	485 ));
+DATA(insert (	2594	0 2  t	486 ));
+DATA(insert (	2594	0 3  t	492 ));
+DATA(insert (	2594	0 4  t	487 ));
+DATA(insert (	2594	0 5  t	488 ));
+DATA(insert (	2594	0 6  t	491 ));
+DATA(insert (	2594	0 7  t	490 ));
+DATA(insert (	2594	0 8  t	489 ));
+DATA(insert (	2594	0 9  t	2575 ));
+DATA(insert (	2594	0 10 t	2574 ));
+DATA(insert (	2594	0 11 t	2577 ));
+DATA(insert (	2594	0 12 t	2576 ));
 
 /*
  *	gist circle_ops
  */
 
-DATA(insert (	2595	0 1  t  1506 ));
-DATA(insert (	2595	0 2  t  1507 ));
-DATA(insert (	2595	0 3  t  1513 ));
-DATA(insert (	2595	0 4  t  1508 ));
-DATA(insert (	2595	0 5  t  1509 ));
-DATA(insert (	2595	0 6  t  1512 ));
-DATA(insert (	2595	0 7  t  1511 ));
-DATA(insert (	2595	0 8  t  1510 ));
-DATA(insert (	2595	0 9  t  2589 ));
-DATA(insert (	2595	0 10 t  1515 ));
-DATA(insert (	2595	0 11 t  1514 ));
-DATA(insert (	2595	0 12 t  2590 ));
+DATA(insert (	2595	0 1  t	1506 ));
+DATA(insert (	2595	0 2  t	1507 ));
+DATA(insert (	2595	0 3  t	1513 ));
+DATA(insert (	2595	0 4  t	1508 ));
+DATA(insert (	2595	0 5  t	1509 ));
+DATA(insert (	2595	0 6  t	1512 ));
+DATA(insert (	2595	0 7  t	1511 ));
+DATA(insert (	2595	0 8  t	1510 ));
+DATA(insert (	2595	0 9  t	2589 ));
+DATA(insert (	2595	0 10 t	1515 ));
+DATA(insert (	2595	0 11 t	1514 ));
+DATA(insert (	2595	0 12 t	2590 ));
 
 #endif   /* PG_AMOP_H */

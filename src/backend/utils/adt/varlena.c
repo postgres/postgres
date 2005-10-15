@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.135 2005/09/24 17:53:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.136 2005/10/15 02:49:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,8 +147,7 @@ byteain(PG_FUNCTION_ARGS)
 		else
 		{
 			/*
-			 * We should never get here. The first pass should not allow
-			 * it.
+			 * We should never get here. The first pass should not allow it.
 			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -550,8 +549,8 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 	{
 		S1 = Max(S, 1);
 
-		if (length_not_specified)		/* special case - get length to
-										 * end of string */
+		if (length_not_specified)		/* special case - get length to end of
+										 * string */
 			L1 = -1;
 		else
 		{
@@ -559,18 +558,18 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 			int			E = S + length;
 
 			/*
-			 * A negative value for L is the only way for the end position
-			 * to be before the start. SQL99 says to throw an error.
+			 * A negative value for L is the only way for the end position to
+			 * be before the start. SQL99 says to throw an error.
 			 */
 			if (E < S)
 				ereport(ERROR,
 						(errcode(ERRCODE_SUBSTRING_ERROR),
-					   errmsg("negative substring length not allowed")));
+						 errmsg("negative substring length not allowed")));
 
 			/*
-			 * A zero or negative value for the end position can happen if
-			 * the start was negative or one. SQL99 says to return a
-			 * zero-length string.
+			 * A zero or negative value for the end position can happen if the
+			 * start was negative or one. SQL99 says to return a zero-length
+			 * string.
 			 */
 			if (E < 1)
 				return PG_STR_GET_TEXT("");
@@ -579,9 +578,9 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 		}
 
 		/*
-		 * If the start position is past the end of the string, SQL99 says
-		 * to return a zero-length string -- PG_GETARG_TEXT_P_SLICE() will
-		 * do that for us. Convert to zero-based starting position
+		 * If the start position is past the end of the string, SQL99 says to
+		 * return a zero-length string -- PG_GETARG_TEXT_P_SLICE() will do
+		 * that for us. Convert to zero-based starting position
 		 */
 		return DatumGetTextPSlice(str, S1 - 1, L1);
 	}
@@ -589,8 +588,8 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 	{
 		/*
 		 * When encoding max length is > 1, we can't get LC without
-		 * detoasting, so we'll grab a conservatively large slice now and
-		 * go back later to do the right thing
+		 * detoasting, so we'll grab a conservatively large slice now and go
+		 * back later to do the right thing
 		 */
 		int32		slice_start;
 		int32		slice_size;
@@ -603,38 +602,38 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 		text	   *ret;
 
 		/*
-		 * if S is past the end of the string, the tuple toaster will
-		 * return a zero-length string to us
+		 * if S is past the end of the string, the tuple toaster will return a
+		 * zero-length string to us
 		 */
 		S1 = Max(S, 1);
 
 		/*
-		 * We need to start at position zero because there is no way to
-		 * know in advance which byte offset corresponds to the supplied
-		 * start position.
+		 * We need to start at position zero because there is no way to know
+		 * in advance which byte offset corresponds to the supplied start
+		 * position.
 		 */
 		slice_start = 0;
 
-		if (length_not_specified)		/* special case - get length to
-										 * end of string */
+		if (length_not_specified)		/* special case - get length to end of
+										 * string */
 			slice_size = L1 = -1;
 		else
 		{
 			int			E = S + length;
 
 			/*
-			 * A negative value for L is the only way for the end position
-			 * to be before the start. SQL99 says to throw an error.
+			 * A negative value for L is the only way for the end position to
+			 * be before the start. SQL99 says to throw an error.
 			 */
 			if (E < S)
 				ereport(ERROR,
 						(errcode(ERRCODE_SUBSTRING_ERROR),
-					   errmsg("negative substring length not allowed")));
+						 errmsg("negative substring length not allowed")));
 
 			/*
-			 * A zero or negative value for the end position can happen if
-			 * the start was negative or one. SQL99 says to return a
-			 * zero-length string.
+			 * A zero or negative value for the end position can happen if the
+			 * start was negative or one. SQL99 says to return a zero-length
+			 * string.
 			 */
 			if (E < 1)
 				return PG_STR_GET_TEXT("");
@@ -646,9 +645,8 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 			L1 = E - S1;
 
 			/*
-			 * Total slice size in bytes can't be any longer than the
-			 * start position plus substring length times the encoding max
-			 * length.
+			 * Total slice size in bytes can't be any longer than the start
+			 * position plus substring length times the encoding max length.
 			 */
 			slice_size = (S1 + L1) * eml;
 		}
@@ -662,16 +660,15 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 		slice_strlen = pg_mbstrlen_with_len(VARDATA(slice), VARSIZE(slice) - VARHDRSZ);
 
 		/*
-		 * Check that the start position wasn't > slice_strlen. If so,
-		 * SQL99 says to return a zero-length string.
+		 * Check that the start position wasn't > slice_strlen. If so, SQL99
+		 * says to return a zero-length string.
 		 */
 		if (S1 > slice_strlen)
 			return PG_STR_GET_TEXT("");
 
 		/*
-		 * Adjust L1 and E1 now that we know the slice string length.
-		 * Again remember that S1 is one based, and slice_start is zero
-		 * based.
+		 * Adjust L1 and E1 now that we know the slice string length. Again
+		 * remember that S1 is one based, and slice_start is zero based.
 		 */
 		if (L1 > -1)
 			E1 = Min(S1 + L1, slice_start + 1 + slice_strlen);
@@ -679,8 +676,7 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 			E1 = slice_start + 1 + slice_strlen;
 
 		/*
-		 * Find the start position in the slice; remember S1 is not zero
-		 * based
+		 * Find the start position in the slice; remember S1 is not zero based
 		 */
 		p = VARDATA(slice);
 		for (i = 0; i < S1 - 1; i++)
@@ -834,11 +830,10 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 	int			result;
 
 	/*
-	 * Unfortunately, there is no strncoll(), so in the non-C locale case
-	 * we have to do some memory copying.  This turns out to be
-	 * significantly slower, so we optimize the case where LC_COLLATE is
-	 * C.  We also try to optimize relatively-short strings by avoiding
-	 * palloc/pfree overhead.
+	 * Unfortunately, there is no strncoll(), so in the non-C locale case we
+	 * have to do some memory copying.	This turns out to be significantly
+	 * slower, so we optimize the case where LC_COLLATE is C.  We also try to
+	 * optimize relatively-short strings by avoiding palloc/pfree overhead.
 	 */
 	if (lc_collate_is_c())
 	{
@@ -859,11 +854,11 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 		/* Win32 does not have UTF-8, so we need to map to UTF-16 */
 		if (GetDatabaseEncoding() == PG_UTF8)
 		{
-			int a1len;
-			int a2len;
-			int r;
+			int			a1len;
+			int			a2len;
+			int			r;
 
-			if (len1 >= STACKBUFLEN/2)
+			if (len1 >= STACKBUFLEN / 2)
 			{
 				a1len = len1 * 2 + 2;
 				a1p = palloc(a1len);
@@ -873,7 +868,7 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 				a1len = STACKBUFLEN;
 				a1p = a1buf;
 			}
-			if (len2 >= STACKBUFLEN/2)
+			if (len2 >= STACKBUFLEN / 2)
 			{
 				a2len = len2 * 2 + 2;
 				a2p = palloc(a2len);
@@ -890,7 +885,7 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 			else
 			{
 				r = MultiByteToWideChar(CP_UTF8, 0, arg1, len1,
-										(LPWSTR) a1p, a1len/2);
+										(LPWSTR) a1p, a1len / 2);
 				if (!r)
 					ereport(ERROR,
 							(errmsg("could not convert string to UTF16: %lu",
@@ -903,7 +898,7 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 			else
 			{
 				r = MultiByteToWideChar(CP_UTF8, 0, arg2, len2,
-										(LPWSTR) a2p, a2len/2);
+										(LPWSTR) a2p, a2len / 2);
 				if (!r)
 					ereport(ERROR,
 							(errmsg("could not convert string to UTF16: %lu",
@@ -913,7 +908,8 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 
 			errno = 0;
 			result = wcscoll((LPWSTR) a1p, (LPWSTR) a2p);
-			if (result == 2147483647) /* _NLSCMPERROR; missing from mingw headers */
+			if (result == 2147483647)	/* _NLSCMPERROR; missing from mingw
+										 * headers */
 				ereport(ERROR,
 						(errmsg("could not compare unicode strings: %d",
 								errno)));
@@ -925,7 +921,7 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 
 			return result;
 		}
-#endif /* WIN32 */
+#endif   /* WIN32 */
 
 		if (len1 >= STACKBUFLEN)
 			a1p = (char *) palloc(len1 + 1);
@@ -1349,9 +1345,8 @@ bytea_substr(PG_FUNCTION_ARGS)
 	if (fcinfo->nargs == 2)
 	{
 		/*
-		 * Not passed a length - PG_GETARG_BYTEA_P_SLICE() grabs
-		 * everything to the end of the string if we pass it a negative
-		 * value for length.
+		 * Not passed a length - PG_GETARG_BYTEA_P_SLICE() grabs everything to
+		 * the end of the string if we pass it a negative value for length.
 		 */
 		L1 = -1;
 	}
@@ -1361,8 +1356,8 @@ bytea_substr(PG_FUNCTION_ARGS)
 		int			E = S + PG_GETARG_INT32(2);
 
 		/*
-		 * A negative value for L is the only way for the end position to
-		 * be before the start. SQL99 says to throw an error.
+		 * A negative value for L is the only way for the end position to be
+		 * before the start. SQL99 says to throw an error.
 		 */
 		if (E < S)
 			ereport(ERROR,
@@ -1382,8 +1377,8 @@ bytea_substr(PG_FUNCTION_ARGS)
 
 	/*
 	 * If the start position is past the end of the string, SQL99 says to
-	 * return a zero-length string -- PG_GETARG_TEXT_P_SLICE() will do
-	 * that for us. Convert to zero-based starting position
+	 * return a zero-length string -- PG_GETARG_TEXT_P_SLICE() will do that
+	 * for us. Convert to zero-based starting position
 	 */
 	PG_RETURN_BYTEA_P(PG_GETARG_BYTEA_P_SLICE(0, S1 - 1, L1));
 }
@@ -1686,7 +1681,7 @@ textToQualifiedNameList(text *textval)
 	/* Convert to C string (handles possible detoasting). */
 	/* Note we rely on being able to modify rawname below. */
 	rawname = DatumGetCString(DirectFunctionCall1(textout,
-											  PointerGetDatum(textval)));
+												  PointerGetDatum(textval)));
 
 	if (!SplitIdentifierString(rawname, '.', &namelist))
 		ereport(ERROR,
@@ -1788,14 +1783,13 @@ SplitIdentifierString(char *rawstring, char separator,
 				return false;	/* empty unquoted name not allowed */
 
 			/*
-			 * Downcase the identifier, using same code as main lexer
-			 * does.
+			 * Downcase the identifier, using same code as main lexer does.
 			 *
 			 * XXX because we want to overwrite the input in-place, we cannot
-			 * support a downcasing transformation that increases the
-			 * string length.  This is not a problem given the current
-			 * implementation of downcase_truncate_identifier, but we'll
-			 * probably have to do something about this someday.
+			 * support a downcasing transformation that increases the string
+			 * length.	This is not a problem given the current implementation
+			 * of downcase_truncate_identifier, but we'll probably have to do
+			 * something about this someday.
 			 */
 			len = endp - curname;
 			downname = downcase_truncate_identifier(curname, len, false);
@@ -2083,12 +2077,14 @@ check_replace_text_has_escape_char(const text *replace_text)
 	if (pg_database_encoding_max_length() == 1)
 	{
 		for (; p < p_end; p++)
-			if (*p == '\\') return true;
+			if (*p == '\\')
+				return true;
 	}
 	else
 	{
 		for (; p < p_end; p += pg_mblen(p))
-			if (*p == '\\') return true;
+			if (*p == '\\')
+				return true;
 	}
 
 	return false;
@@ -2100,7 +2096,7 @@ check_replace_text_has_escape_char(const text *replace_text)
  */
 static void
 appendStringInfoRegexpSubstr(StringInfo str, text *replace_text,
-    regmatch_t *pmatch, text *src_text)
+							 regmatch_t *pmatch, text *src_text)
 {
 	const char *p = VARDATA(replace_text);
 	const char *p_end = p + (VARSIZE(replace_text) - VARHDRSZ);
@@ -2129,19 +2125,20 @@ appendStringInfoRegexpSubstr(StringInfo str, text *replace_text,
 		}
 
 		/*
-		 * Copy the text when there is a text in the left of escape char
-		 * or escape char is not found.
+		 * Copy the text when there is a text in the left of escape char or
+		 * escape char is not found.
 		 */
 		if (ch_cnt)
 		{
-			text *append_text = text_substring(PointerGetDatum(replace_text),
-									  substr_start, ch_cnt, false);
+			text	   *append_text = text_substring(PointerGetDatum(replace_text),
+												substr_start, ch_cnt, false);
+
 			appendStringInfoText(str, append_text);
 			pfree(append_text);
 		}
 		substr_start += ch_cnt + 1;
 
-		if (p >= p_end) /* When escape char is not found. */
+		if (p >= p_end)			/* When escape char is not found. */
 			break;
 
 		/* See the next character of escape char. */
@@ -2151,7 +2148,8 @@ appendStringInfoRegexpSubstr(StringInfo str, text *replace_text,
 		if (*p >= '1' && *p <= '9')
 		{
 			/* Use the back reference of regexp. */
-			int		idx = *p - '0';
+			int			idx = *p - '0';
+
 			so = pmatch[idx].rm_so;
 			eo = pmatch[idx].rm_eo;
 			p++;
@@ -2169,8 +2167,9 @@ appendStringInfoRegexpSubstr(StringInfo str, text *replace_text,
 		if (so != -1 && eo != -1)
 		{
 			/* Copy the text that is back reference of regexp. */
-			text *append_text = text_substring(PointerGetDatum(src_text),
-									  so + 1, (eo - so), false);
+			text	   *append_text = text_substring(PointerGetDatum(src_text),
+												   so + 1, (eo - so), false);
+
 			appendStringInfoText(str, append_text);
 			pfree(append_text);
 		}
@@ -2189,9 +2188,9 @@ replace_text_regexp(PG_FUNCTION_ARGS)
 	text	   *ret_text;
 	text	   *src_text = PG_GETARG_TEXT_P(0);
 	int			src_text_len = VARSIZE(src_text) - VARHDRSZ;
-	regex_t	   *re = (regex_t *)PG_GETARG_POINTER(1);
+	regex_t    *re = (regex_t *) PG_GETARG_POINTER(1);
 	text	   *replace_text = PG_GETARG_TEXT_P(2);
-	bool		global = PG_GETARG_BOOL(3);
+	bool global = PG_GETARG_BOOL(3);
 	StringInfo	str = makeStringInfo();
 	int			regexec_result;
 	regmatch_t	pmatch[REGEXP_REPLACE_BACKREF_CNT];
@@ -2214,33 +2213,34 @@ replace_text_regexp(PG_FUNCTION_ARGS)
 									data,
 									data_len,
 									search_start,
-									NULL,   /* no details */
+									NULL,		/* no details */
 									REGEXP_REPLACE_BACKREF_CNT,
 									pmatch,
 									0);
 
 		if (regexec_result != REG_OKAY && regexec_result != REG_NOMATCH)
 		{
-			char	errMsg[100];
+			char		errMsg[100];
 
 			/* re failed??? */
 			pg_regerror(regexec_result, re, errMsg, sizeof(errMsg));
 			ereport(ERROR,
-				(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
-				 errmsg("regular expression failed: %s", errMsg)));
+					(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
+					 errmsg("regular expression failed: %s", errMsg)));
 		}
 
 		if (regexec_result == REG_NOMATCH)
 			break;
 
-        /*
-         * Copy the text when there is a text in the left of matched position.
-         */
+		/*
+		 * Copy the text when there is a text in the left of matched position.
+		 */
 		if (pmatch[0].rm_so - data_pos > 0)
 		{
-			text *left_text = text_substring(PointerGetDatum(src_text),
-									   data_pos + 1,
-									   pmatch[0].rm_so - data_pos, false);
+			text	   *left_text = text_substring(PointerGetDatum(src_text),
+												   data_pos + 1,
+										  pmatch[0].rm_so - data_pos, false);
+
 			appendStringInfoText(str, left_text);
 			pfree(left_text);
 		}
@@ -2270,13 +2270,14 @@ replace_text_regexp(PG_FUNCTION_ARGS)
 	}
 
 	/*
-     * Copy the text when there is a text at the right of last matched
-	 * or regexp is not matched.
+	 * Copy the text when there is a text at the right of last matched or
+	 * regexp is not matched.
 	 */
 	if (data_pos < data_len)
 	{
-		text *right_text = text_substring(PointerGetDatum(src_text),
-								   data_pos + 1, -1, true);
+		text	   *right_text = text_substring(PointerGetDatum(src_text),
+												data_pos + 1, -1, true);
+
 		appendStringInfoText(str, right_text);
 		pfree(right_text);
 	}
@@ -2392,7 +2393,7 @@ text_to_array(PG_FUNCTION_ARGS)
 	 */
 	if (fldsep_len < 1)
 		PG_RETURN_ARRAYTYPE_P(create_singleton_array(fcinfo, TEXTOID,
-									   CStringGetDatum(inputstring), 1));
+										   CStringGetDatum(inputstring), 1));
 
 	/* start with end position holding the initial start position */
 	end_posn = 0;
@@ -2409,17 +2410,17 @@ text_to_array(PG_FUNCTION_ARGS)
 			if (fldnum == 1)
 			{
 				/*
-				 * first element return one element, 1D, array using the
-				 * input string
+				 * first element return one element, 1D, array using the input
+				 * string
 				 */
 				PG_RETURN_ARRAYTYPE_P(create_singleton_array(fcinfo, TEXTOID,
-									   CStringGetDatum(inputstring), 1));
+										   CStringGetDatum(inputstring), 1));
 			}
 			else
 			{
 				/* otherwise create array and exit */
 				PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate,
-												  CurrentMemoryContext));
+													  CurrentMemoryContext));
 			}
 		}
 		else if (start_posn == 0)
@@ -2439,7 +2440,7 @@ text_to_array(PG_FUNCTION_ARGS)
 			/* interior field requested */
 			result_text = text_substring(PointerGetDatum(inputstring),
 										 start_posn + fldsep_len,
-									  end_posn - start_posn - fldsep_len,
+										 end_posn - start_posn - fldsep_len,
 										 false);
 		}
 
@@ -2489,14 +2490,14 @@ array_to_text(PG_FUNCTION_ARGS)
 
 	/*
 	 * We arrange to look up info about element type, including its output
-	 * conversion proc, only once per series of calls, assuming the
-	 * element type doesn't change underneath us.
+	 * conversion proc, only once per series of calls, assuming the element
+	 * type doesn't change underneath us.
 	 */
 	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL)
 	{
 		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-												 sizeof(ArrayMetaState));
+													  sizeof(ArrayMetaState));
 		my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 		my_extra->element_type = InvalidOid;
 	}
@@ -2504,8 +2505,7 @@ array_to_text(PG_FUNCTION_ARGS)
 	if (my_extra->element_type != element_type)
 	{
 		/*
-		 * Get info about element type, including its output conversion
-		 * proc
+		 * Get info about element type, including its output conversion proc
 		 */
 		get_type_io_data(element_type, IOFunc_output,
 						 &my_extra->typlen, &my_extra->typbyval,
@@ -2606,7 +2606,7 @@ md5_text(PG_FUNCTION_ARGS)
 {
 	text	   *in_text = PG_GETARG_TEXT_P(0);
 	size_t		len;
-	char	    hexsum[MD5_HASH_LEN + 1];
+	char		hexsum[MD5_HASH_LEN + 1];
 	text	   *result_text;
 
 	/* Calculate the length of the buffer using varlena metadata */
@@ -2661,7 +2661,7 @@ pg_column_size(PG_FUNCTION_ARGS)
 	if (fcinfo->flinfo->fn_extra == NULL)
 	{
 		/* Lookup the datatype of the supplied argument */
-		Oid		argtypeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
+		Oid			argtypeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
 
 		typlen = get_typlen(argtypeid);
 		if (typlen == 0)		/* should not happen */

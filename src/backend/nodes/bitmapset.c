@@ -14,7 +14,7 @@
  * Copyright (c) 2003-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/bitmapset.c,v 1.9 2005/06/15 16:24:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/bitmapset.c,v 1.10 2005/10/15 02:49:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -769,7 +769,7 @@ bms_first_member(Bitmapset *a)
  *
  * Note: we must ensure that any two bitmapsets that are bms_equal() will
  * hash to the same value; in practice this means that trailing all-zero
- * words cannot affect the result.  The circular-shift-and-XOR hash method
+ * words cannot affect the result.	The circular-shift-and-XOR hash method
  * used here has this property, so long as we work from back to front.
  *
  * Note: you might wonder why we bother with the circular shift; at first
@@ -779,7 +779,7 @@ bms_first_member(Bitmapset *a)
  * multiword bitmapsets is "a JOIN b JOIN c JOIN d ...", which gives rise
  * to rangetables in which base tables and JOIN nodes alternate; so
  * bitmapsets of base table RT indexes tend to use only odd-numbered or only
- * even-numbered bits.  A straight longitudinal XOR would preserve this
+ * even-numbered bits.	A straight longitudinal XOR would preserve this
  * property, leading to a much smaller set of possible outputs than if
  * we include a shift.
  */
@@ -791,7 +791,7 @@ bms_hash_value(const Bitmapset *a)
 
 	if (a == NULL || a->nwords <= 0)
 		return 0;				/* All empty sets hash to 0 */
-	for (wordnum = a->nwords; --wordnum > 0; )
+	for (wordnum = a->nwords; --wordnum > 0;)
 	{
 		result ^= a->words[wordnum];
 		if (result & ((bitmapword) 1 << (BITS_PER_BITMAPWORD - 1)))

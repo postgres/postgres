@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pubdec.c,v 1.4 2005/08/13 02:06:20 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pubdec.c,v 1.5 2005/10/15 02:49:06 momjian Exp $
  */
 #include "postgres.h"
 
@@ -35,24 +35,25 @@
 #include "pgp.h"
 
 /*
- * padded msg = 02 || PS || 00 || M 
+ * padded msg = 02 || PS || 00 || M
  * PS - pad bytes
  * M - msg
  */
 static uint8 *
 check_eme_pkcs1_v15(uint8 *data, int len)
 {
-	uint8 *data_end = data + len;
-	uint8 *p = data;
-	int rnd = 0;
+	uint8	   *data_end = data + len;
+	uint8	   *p = data;
+	int			rnd = 0;
 
 	if (len < 1 + 8 + 1)
 		return NULL;
 
 	if (*p++ != 2)
 		return NULL;
-	
-	while (p < data_end && *p) {
+
+	while (p < data_end && *p)
+	{
 		p++;
 		rnd++;
 	}
@@ -73,8 +74,9 @@ check_eme_pkcs1_v15(uint8 *data, int len)
 static int
 control_cksum(uint8 *msg, int msglen)
 {
-	int i;
-	unsigned my_cksum, got_cksum;
+	int			i;
+	unsigned	my_cksum,
+				got_cksum;
 
 	if (msglen < 3)
 		return PXE_PGP_WRONG_KEY;
@@ -83,8 +85,9 @@ control_cksum(uint8 *msg, int msglen)
 	for (i = 1; i < msglen - 2; i++)
 		my_cksum += msg[i];
 	my_cksum &= 0xFFFF;
-	got_cksum = ((unsigned)(msg[msglen-2]) << 8) + msg[msglen-1];
-	if (my_cksum != got_cksum) {
+	got_cksum = ((unsigned) (msg[msglen - 2]) << 8) + msg[msglen - 1];
+	if (my_cksum != got_cksum)
+	{
 		px_debug("pubenc cksum failed");
 		return PXE_PGP_WRONG_KEY;
 	}
@@ -92,11 +95,11 @@ control_cksum(uint8 *msg, int msglen)
 }
 
 static int
-decrypt_elgamal(PGP_PubKey *pk, PullFilter *pkt, PGP_MPI **m_p)
+decrypt_elgamal(PGP_PubKey * pk, PullFilter * pkt, PGP_MPI ** m_p)
 {
-	int res;
-	PGP_MPI *c1 = NULL;
-	PGP_MPI *c2 = NULL;
+	int			res;
+	PGP_MPI    *c1 = NULL;
+	PGP_MPI    *c2 = NULL;
 
 	if (pk->algo != PGP_PUB_ELG_ENCRYPT)
 		return PXE_PGP_WRONG_KEY;
@@ -119,13 +122,13 @@ out:
 }
 
 static int
-decrypt_rsa(PGP_PubKey *pk, PullFilter *pkt, PGP_MPI **m_p)
+decrypt_rsa(PGP_PubKey * pk, PullFilter * pkt, PGP_MPI ** m_p)
 {
-	int res;
-	PGP_MPI *c;
+	int			res;
+	PGP_MPI    *c;
 
 	if (pk->algo != PGP_PUB_RSA_ENCRYPT
-			&& pk->algo != PGP_PUB_RSA_ENCRYPT_SIGN)
+		&& pk->algo != PGP_PUB_RSA_ENCRYPT_SIGN)
 		return PXE_PGP_WRONG_KEY;
 
 	/* read rsa encrypted data */
@@ -142,28 +145,30 @@ decrypt_rsa(PGP_PubKey *pk, PullFilter *pkt, PGP_MPI **m_p)
 
 /* key id is missing - user is expected to try all keys */
 static const uint8
-any_key[] = {0, 0, 0, 0, 0, 0, 0, 0};
+			any_key[] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 int
-pgp_parse_pubenc_sesskey(PGP_Context *ctx, PullFilter *pkt)
+pgp_parse_pubenc_sesskey(PGP_Context * ctx, PullFilter * pkt)
 {
-	int ver;
-	int algo;
-	int res;
-	uint8 key_id[8];
+	int			ver;
+	int			algo;
+	int			res;
+	uint8		key_id[8];
 	PGP_PubKey *pk;
-	uint8 *msg;
-	int msglen;
-	PGP_MPI *m;
+	uint8	   *msg;
+	int			msglen;
+	PGP_MPI    *m;
 
 	pk = ctx->pub_key;
-	if (pk == NULL) {
+	if (pk == NULL)
+	{
 		px_debug("no pubkey?");
 		return PXE_BUG;
 	}
 
 	GETBYTE(pkt, ver);
-	if (ver != 3) {
+	if (ver != 3)
+	{
 		px_debug("unknown pubenc_sesskey pkt ver=%d", ver);
 		return PXE_PGP_CORRUPT_DATA;
 	}
@@ -175,7 +180,7 @@ pgp_parse_pubenc_sesskey(PGP_Context *ctx, PullFilter *pkt)
 	if (res < 0)
 		return res;
 	if (memcmp(key_id, any_key, 8) != 0
-	 && memcmp(key_id, pk->key_id, 8) != 0)
+		&& memcmp(key_id, pk->key_id, 8) != 0)
 	{
 		px_debug("key_id's does not match");
 		return PXE_PGP_WRONG_KEY;
@@ -204,7 +209,8 @@ pgp_parse_pubenc_sesskey(PGP_Context *ctx, PullFilter *pkt)
 	 * extract message
 	 */
 	msg = check_eme_pkcs1_v15(m->data, m->bytes);
-	if (msg == NULL) {
+	if (msg == NULL)
+	{
 		px_debug("check_eme_pkcs1_v15 failed");
 		res = PXE_PGP_WRONG_KEY;
 		goto out;
@@ -228,5 +234,3 @@ out:
 		return res;
 	return pgp_expect_packet_end(pkt);
 }
-
-

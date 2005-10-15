@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.33 2005/10/12 16:55:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.34 2005/10/15 02:49:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,10 +44,10 @@ typedef struct LWLock
 
 /*
  * All the LWLock structs are allocated as an array in shared memory.
- * (LWLockIds are indexes into the array.)  We force the array stride to
+ * (LWLockIds are indexes into the array.)	We force the array stride to
  * be a power of 2, which saves a few cycles in indexing, but more
  * importantly also ensures that individual LWLocks don't cross cache line
- * boundaries.  This reduces cache contention problems, especially on AMD
+ * boundaries.	This reduces cache contention problems, especially on AMD
  * Opterons.  (Of course, we have to also ensure that the array start
  * address is suitably aligned.)
  *
@@ -101,7 +101,6 @@ LOG_LWDEBUG(const char *where, LWLockId lockid, const char *msg)
 	if (Trace_lwlocks)
 		elog(LOG, "%s(%d): %s", where, (int) lockid, msg);
 }
-
 #else							/* not LOCK_DEBUG */
 #define PRINT_LWDEBUG(a,b,c)
 #define LOG_LWDEBUG(a,b,c)
@@ -117,10 +116,10 @@ NumLWLocks(void)
 	int			numLocks;
 
 	/*
-	 * Possibly this logic should be spread out among the affected
-	 * modules, the same way that shmem space estimation is done.  But for
-	 * now, there are few enough users of LWLocks that we can get away
-	 * with just keeping the knowledge here.
+	 * Possibly this logic should be spread out among the affected modules,
+	 * the same way that shmem space estimation is done.  But for now, there
+	 * are few enough users of LWLocks that we can get away with just keeping
+	 * the knowledge here.
 	 */
 
 	/* Predefined LWLocks */
@@ -136,8 +135,8 @@ NumLWLocks(void)
 	numLocks += NUM_SLRU_BUFFERS;
 
 	/*
-	 * multixact.c needs one per MultiXact buffer, but there are
-	 * two SLRU areas for MultiXact
+	 * multixact.c needs one per MultiXact buffer, but there are two SLRU
+	 * areas for MultiXact
 	 */
 	numLocks += 2 * NUM_SLRU_BUFFERS;
 
@@ -226,6 +225,7 @@ LWLockId
 LWLockAssign(void)
 {
 	LWLockId	result;
+
 	/* use volatile pointer to prevent code rearrangement */
 	volatile int *LWLockCounter;
 
@@ -261,8 +261,8 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 
 	/*
 	 * We can't wait if we haven't got a PGPROC.  This should only occur
-	 * during bootstrap or shared memory initialization.  Put an Assert
-	 * here to catch unsafe coding practices.
+	 * during bootstrap or shared memory initialization.  Put an Assert here
+	 * to catch unsafe coding practices.
 	 */
 	Assert(!(proc == NULL && IsUnderPostmaster));
 
@@ -271,9 +271,9 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 		elog(ERROR, "too many LWLocks taken");
 
 	/*
-	 * Lock out cancel/die interrupts until we exit the code section
-	 * protected by the LWLock.  This ensures that interrupts will not
-	 * interfere with manipulations of data structures in shared memory.
+	 * Lock out cancel/die interrupts until we exit the code section protected
+	 * by the LWLock.  This ensures that interrupts will not interfere with
+	 * manipulations of data structures in shared memory.
 	 */
 	HOLD_INTERRUPTS();
 
@@ -282,17 +282,16 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 	 * LWLockRelease.
 	 *
 	 * NOTE: it might seem better to have LWLockRelease actually grant us the
-	 * lock, rather than retrying and possibly having to go back to sleep.
-	 * But in practice that is no good because it means a process swap for
-	 * every lock acquisition when two or more processes are contending
-	 * for the same lock.  Since LWLocks are normally used to protect
-	 * not-very-long sections of computation, a process needs to be able
-	 * to acquire and release the same lock many times during a single CPU
-	 * time slice, even in the presence of contention.	The efficiency of
-	 * being able to do that outweighs the inefficiency of sometimes
-	 * wasting a process dispatch cycle because the lock is not free when
-	 * a released waiter finally gets to run.  See pgsql-hackers archives
-	 * for 29-Dec-01.
+	 * lock, rather than retrying and possibly having to go back to sleep. But
+	 * in practice that is no good because it means a process swap for every
+	 * lock acquisition when two or more processes are contending for the same
+	 * lock.  Since LWLocks are normally used to protect not-very-long
+	 * sections of computation, a process needs to be able to acquire and
+	 * release the same lock many times during a single CPU time slice, even
+	 * in the presence of contention.  The efficiency of being able to do that
+	 * outweighs the inefficiency of sometimes wasting a process dispatch
+	 * cycle because the lock is not free when a released waiter finally gets
+	 * to run.	See pgsql-hackers archives for 29-Dec-01.
 	 */
 	for (;;)
 	{
@@ -334,8 +333,8 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 		 * Add myself to wait queue.
 		 *
 		 * If we don't have a PGPROC structure, there's no way to wait. This
-		 * should never occur, since MyProc should only be null during
-		 * shared memory initialization.
+		 * should never occur, since MyProc should only be null during shared
+		 * memory initialization.
 		 */
 		if (proc == NULL)
 			elog(FATAL, "cannot wait without a PGPROC structure");
@@ -356,13 +355,13 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 		 * Wait until awakened.
 		 *
 		 * Since we share the process wait semaphore with the regular lock
-		 * manager and ProcWaitForSignal, and we may need to acquire an
-		 * LWLock while one of those is pending, it is possible that we
-		 * get awakened for a reason other than being signaled by
-		 * LWLockRelease. If so, loop back and wait again.	Once we've
-		 * gotten the LWLock, re-increment the sema by the number of
-		 * additional signals received, so that the lock manager or signal
-		 * manager will see the received signal when it next waits.
+		 * manager and ProcWaitForSignal, and we may need to acquire an LWLock
+		 * while one of those is pending, it is possible that we get awakened
+		 * for a reason other than being signaled by LWLockRelease. If so,
+		 * loop back and wait again.  Once we've gotten the LWLock,
+		 * re-increment the sema by the number of additional signals received,
+		 * so that the lock manager or signal manager will see the received
+		 * signal when it next waits.
 		 */
 		LOG_LWDEBUG("LWLockAcquire", lockid, "waiting");
 
@@ -414,9 +413,9 @@ LWLockConditionalAcquire(LWLockId lockid, LWLockMode mode)
 		elog(ERROR, "too many LWLocks taken");
 
 	/*
-	 * Lock out cancel/die interrupts until we exit the code section
-	 * protected by the LWLock.  This ensures that interrupts will not
-	 * interfere with manipulations of data structures in shared memory.
+	 * Lock out cancel/die interrupts until we exit the code section protected
+	 * by the LWLock.  This ensures that interrupts will not interfere with
+	 * manipulations of data structures in shared memory.
 	 */
 	HOLD_INTERRUPTS();
 
@@ -477,8 +476,8 @@ LWLockRelease(LWLockId lockid)
 	PRINT_LWDEBUG("LWLockRelease", lockid, lock);
 
 	/*
-	 * Remove lock from list of locks held.  Usually, but not always, it
-	 * will be the latest-acquired lock; so search array backwards.
+	 * Remove lock from list of locks held.  Usually, but not always, it will
+	 * be the latest-acquired lock; so search array backwards.
 	 */
 	for (i = num_held_lwlocks; --i >= 0;)
 	{
@@ -504,10 +503,10 @@ LWLockRelease(LWLockId lockid)
 	}
 
 	/*
-	 * See if I need to awaken any waiters.  If I released a non-last
-	 * shared hold, there cannot be anything to do.  Also, do not awaken
-	 * any waiters if someone has already awakened waiters that haven't
-	 * yet acquired the lock.
+	 * See if I need to awaken any waiters.  If I released a non-last shared
+	 * hold, there cannot be anything to do.  Also, do not awaken any waiters
+	 * if someone has already awakened waiters that haven't yet acquired the
+	 * lock.
 	 */
 	head = lock->head;
 	if (head != NULL)
@@ -515,9 +514,9 @@ LWLockRelease(LWLockId lockid)
 		if (lock->exclusive == 0 && lock->shared == 0 && lock->releaseOK)
 		{
 			/*
-			 * Remove the to-be-awakened PGPROCs from the queue.  If the
-			 * front waiter wants exclusive lock, awaken him only.
-			 * Otherwise awaken as many waiters as want shared access.
+			 * Remove the to-be-awakened PGPROCs from the queue.  If the front
+			 * waiter wants exclusive lock, awaken him only. Otherwise awaken
+			 * as many waiters as want shared access.
 			 */
 			proc = head;
 			if (!proc->lwExclusive)

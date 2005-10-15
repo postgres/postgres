@@ -38,7 +38,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeResult.c,v 1.31 2005/04/24 15:32:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeResult.c,v 1.32 2005/10/15 02:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,9 +92,9 @@ ExecResult(ResultState *node)
 	}
 
 	/*
-	 * Check to see if we're still projecting out tuples from a previous
-	 * scan tuple (because there is a function-returning-set in the
-	 * projection expressions).  If so, try to project another one.
+	 * Check to see if we're still projecting out tuples from a previous scan
+	 * tuple (because there is a function-returning-set in the projection
+	 * expressions).  If so, try to project another one.
 	 */
 	if (node->ps.ps_TupFromTlist)
 	{
@@ -107,16 +107,16 @@ ExecResult(ResultState *node)
 
 	/*
 	 * Reset per-tuple memory context to free any expression evaluation
-	 * storage allocated in the previous tuple cycle.  Note this can't
-	 * happen until we're done projecting out tuples from a scan tuple.
+	 * storage allocated in the previous tuple cycle.  Note this can't happen
+	 * until we're done projecting out tuples from a scan tuple.
 	 */
 	ResetExprContext(econtext);
 
 	/*
 	 * if rs_done is true then it means that we were asked to return a
 	 * constant tuple and we already did the last time ExecResult() was
-	 * called, OR that we failed the constant qual check. Either way, now
-	 * we are through.
+	 * called, OR that we failed the constant qual check. Either way, now we
+	 * are through.
 	 */
 	while (!node->rs_done)
 	{
@@ -125,8 +125,7 @@ ExecResult(ResultState *node)
 		if (outerPlan != NULL)
 		{
 			/*
-			 * retrieve tuples from the outer plan until there are no
-			 * more.
+			 * retrieve tuples from the outer plan until there are no more.
 			 */
 			outerTupleSlot = ExecProcNode(outerPlan);
 
@@ -136,8 +135,7 @@ ExecResult(ResultState *node)
 			node->ps.ps_OuterTupleSlot = outerTupleSlot;
 
 			/*
-			 * XXX gross hack. use outer tuple as scan tuple for
-			 * projection
+			 * XXX gross hack. use outer tuple as scan tuple for projection
 			 */
 			econtext->ecxt_outertuple = outerTupleSlot;
 			econtext->ecxt_scantuple = outerTupleSlot;
@@ -145,16 +143,16 @@ ExecResult(ResultState *node)
 		else
 		{
 			/*
-			 * if we don't have an outer plan, then we are just generating
-			 * the results from a constant target list.  Do it only once.
+			 * if we don't have an outer plan, then we are just generating the
+			 * results from a constant target list.  Do it only once.
 			 */
 			node->rs_done = true;
 		}
 
 		/*
-		 * form the result tuple using ExecProject(), and return it ---
-		 * unless the projection produces an empty set, in which case we
-		 * must loop back to see if there are more outerPlan tuples.
+		 * form the result tuple using ExecProject(), and return it --- unless
+		 * the projection produces an empty set, in which case we must loop
+		 * back to see if there are more outerPlan tuples.
 		 */
 		resultSlot = ExecProject(node->ps.ps_ProjInfo, &isDone);
 

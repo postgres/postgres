@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.62 2005/09/08 20:07:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.63 2005/10/15 02:49:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ typedef struct
 } PLTemplate;
 
 static void create_proc_lang(const char *languageName,
-							 Oid handlerOid, Oid valOid, bool trusted);
+				 Oid handlerOid, Oid valOid, bool trusted);
 static PLTemplate *find_language_template(const char *languageName);
 
 
@@ -68,7 +68,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			 errmsg("must be superuser to create procedural language")));
+				 errmsg("must be superuser to create procedural language")));
 
 	/*
 	 * Translate the language name and check that this language doesn't
@@ -89,7 +89,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	 */
 	if ((pltemplate = find_language_template(languageName)) != NULL)
 	{
-		List	*funcname;
+		List	   *funcname;
 
 		/*
 		 * Give a notice if we are ignoring supplied parameters.
@@ -99,9 +99,9 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 					(errmsg("using pg_pltemplate information instead of CREATE LANGUAGE parameters")));
 
 		/*
-		 * Find or create the handler function, which we force to be in
-		 * the pg_catalog schema.  If already present, it must have the
-		 * correct return type.
+		 * Find or create the handler function, which we force to be in the
+		 * pg_catalog schema.  If already present, it must have the correct
+		 * return type.
 		 */
 		funcname = SystemFuncName(pltemplate->tmplhandler);
 		handlerOid = LookupFuncName(funcname, 0, funcargtypes, true);
@@ -111,23 +111,23 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 			if (funcrettype != LANGUAGE_HANDLEROID)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("function %s must return type \"language_handler\"",
-								NameListToString(funcname))));
+				  errmsg("function %s must return type \"language_handler\"",
+						 NameListToString(funcname))));
 		}
 		else
 		{
 			handlerOid = ProcedureCreate(pltemplate->tmplhandler,
 										 PG_CATALOG_NAMESPACE,
-										 false,		/* replace */
-										 false,		/* returnsSet */
+										 false, /* replace */
+										 false, /* returnsSet */
 										 LANGUAGE_HANDLEROID,
 										 ClanguageId,
 										 F_FMGR_C_VALIDATOR,
 										 pltemplate->tmplhandler,
 										 pltemplate->tmpllibrary,
-										 false,		/* isAgg */
-										 false,		/* security_definer */
-										 false,		/* isStrict */
+										 false, /* isAgg */
+										 false, /* security_definer */
+										 false, /* isStrict */
 										 PROVOLATILE_VOLATILE,
 										 buildoidvector(funcargtypes, 0),
 										 PointerGetDatum(NULL),
@@ -148,16 +148,16 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 			{
 				valOid = ProcedureCreate(pltemplate->tmplvalidator,
 										 PG_CATALOG_NAMESPACE,
-										 false,		/* replace */
-										 false,		/* returnsSet */
+										 false, /* replace */
+										 false, /* returnsSet */
 										 VOIDOID,
 										 ClanguageId,
 										 F_FMGR_C_VALIDATOR,
 										 pltemplate->tmplvalidator,
 										 pltemplate->tmpllibrary,
-										 false,		/* isAgg */
-										 false,		/* security_definer */
-										 false,		/* isStrict */
+										 false, /* isAgg */
+										 false, /* security_definer */
+										 false, /* isStrict */
 										 PROVOLATILE_VOLATILE,
 										 buildoidvector(funcargtypes, 1),
 										 PointerGetDatum(NULL),
@@ -175,9 +175,9 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	else
 	{
 		/*
-		 * No template, so use the provided information.  If there's
-		 * no handler clause, the user is trying to rely on a template
-		 * that we don't have, so complain accordingly.
+		 * No template, so use the provided information.  If there's no
+		 * handler clause, the user is trying to rely on a template that we
+		 * don't have, so complain accordingly.
 		 */
 		if (!stmt->plhandler)
 			ereport(ERROR,
@@ -210,8 +210,8 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("function %s must return type \"language_handler\"",
-								NameListToString(stmt->plhandler))));
+				  errmsg("function %s must return type \"language_handler\"",
+						 NameListToString(stmt->plhandler))));
 		}
 
 		/* validate the validator function */
@@ -385,7 +385,7 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			   errmsg("must be superuser to drop procedural language")));
+				 errmsg("must be superuser to drop procedural language")));
 
 	/*
 	 * Translate the language name, check that the language exists
@@ -471,7 +471,7 @@ RenameLanguage(const char *oldname, const char *newname)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			 errmsg("must be superuser to rename procedural language")));
+				 errmsg("must be superuser to rename procedural language")));
 
 	/* rename */
 	namestrcpy(&(((Form_pg_language) GETSTRUCT(tup))->lanname), newname);

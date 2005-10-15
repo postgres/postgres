@@ -344,14 +344,13 @@ typedef NVTYPE NV;
 #else
 #if defined(USE_THREADS)
 static SV  *
-newRV_noinc(SV *sv)
+newRV_noinc(SV * sv)
 {
 	SV		   *nsv = (SV *) newRV(sv);
 
 	SvREFCNT_dec(sv);
 	return nsv;
 }
-
 #else
 #define newRV_noinc(sv)    \
 		(PL_Sv=(SV*)newRV(sv), SvREFCNT_dec(sv), (SV*)PL_Sv)
@@ -367,7 +366,7 @@ newRV_noinc(SV *sv)
 #if defined(NEED_newCONSTSUB)
 static
 #else
-extern void newCONSTSUB(HV *stash, char *name, SV *sv);
+extern void newCONSTSUB(HV * stash, char *name, SV * sv);
 #endif
 
 #if defined(NEED_newCONSTSUB) || defined(NEED_newCONSTSUB_GLOBAL)
@@ -404,8 +403,8 @@ SV		   *sv;
 #endif
 
 		   newSVOP(OP_CONST, 0, newSVpv(name, 0)),
-		   newSVOP(OP_CONST, 0, &PL_sv_no),		/* SvPV(&PL_sv_no) == ""
-												 * -- GMB */
+		   newSVOP(OP_CONST, 0, &PL_sv_no),		/* SvPV(&PL_sv_no) == "" --
+												 * GMB */
 		   newSTATEOP(0, Nullch, newSVOP(OP_CONST, 0, sv))
 		);
 
@@ -484,7 +483,6 @@ SV		   *sv;
 #define aMY_CXT		my_cxtp
 #define aMY_CXT_	aMY_CXT,
 #define _aMY_CXT	,aMY_CXT
-
 #else							/* single interpreter */
 
 #define START_MY_CXT	static my_cxt_t my_cxt;
@@ -545,7 +543,7 @@ SV		   *sv;
 		  ((SvFLAGS(sv) & (SVf_POK|SVf_UTF8)) == (SVf_POK) \
 		   ? ((lp = SvCUR(sv)), SvPVX(sv)) : my_sv_2pvbyte(aTHX_ sv, &lp))
 static char *
-my_sv_2pvbyte(pTHX_ register SV *sv, STRLEN *lp)
+my_sv_2pvbyte(pTHX_ register SV * sv, STRLEN * lp)
 {
 	sv_utf8_downgrade(sv, 0);
 	return SvPV(sv, *lp);
@@ -560,7 +558,7 @@ my_sv_2pvbyte(pTHX_ register SV *sv, STRLEN *lp)
 		((SvFLAGS(sv) & (SVf_POK)) == SVf_POK \
 		 ? SvPVX(sv) : sv_2pv_nolen(sv))
 static char *
-sv_2pv_nolen(pTHX_ register SV *sv)
+sv_2pv_nolen(pTHX_ register SV * sv)
 {
 	STRLEN		n_a;
 

@@ -246,8 +246,8 @@ des_init(void)
 		}
 
 	/*
-	 * Convert the inverted S-boxes into 4 arrays of 8 bits. Each will
-	 * handle 12 bits of the S-box input.
+	 * Convert the inverted S-boxes into 4 arrays of 8 bits. Each will handle
+	 * 12 bits of the S-box input.
 	 */
 	for (b = 0; b < 4; b++)
 		for (i = 0; i < 64; i++)
@@ -267,8 +267,8 @@ des_init(void)
 	}
 
 	/*
-	 * Invert the key permutation and initialise the inverted key
-	 * compression permutation.
+	 * Invert the key permutation and initialise the inverted key compression
+	 * permutation.
 	 */
 	for (i = 0; i < 56; i++)
 	{
@@ -284,8 +284,8 @@ des_init(void)
 		inv_comp_perm[comp_perm[i] - 1] = i;
 
 	/*
-	 * Set up the OR-mask arrays for the initial and final permutations,
-	 * and for the key initial and compression permutations.
+	 * Set up the OR-mask arrays for the initial and final permutations, and
+	 * for the key initial and compression permutations.
 	 */
 	for (k = 0; k < 8; k++)
 	{
@@ -347,8 +347,8 @@ des_init(void)
 	}
 
 	/*
-	 * Invert the P-box permutation, and convert into OR-masks for
-	 * handling the output of the S-box arrays setup above.
+	 * Invert the P-box permutation, and convert into OR-masks for handling
+	 * the output of the S-box arrays setup above.
 	 */
 	for (i = 0; i < 32; i++)
 		un_pbox[pbox[i] - 1] = i;
@@ -411,9 +411,9 @@ des_setkey(const char *key)
 		&& rawkey1 == old_rawkey1)
 	{
 		/*
-		 * Already setup for this key. This optimisation fails on a zero
-		 * key (which is weak and has bad parity anyway) in order to
-		 * simplify the starting conditions.
+		 * Already setup for this key. This optimisation fails on a zero key
+		 * (which is weak and has bad parity anyway) in order to simplify the
+		 * starting conditions.
 		 */
 		return (0);
 	}
@@ -560,16 +560,16 @@ do_des(uint32 l_in, uint32 r_in, uint32 *l_out, uint32 *r_out, int count)
 				| ((r & 0x80000000) >> 31);
 
 			/*
-			 * Do salting for crypt() and friends, and XOR with the
-			 * permuted key.
+			 * Do salting for crypt() and friends, and XOR with the permuted
+			 * key.
 			 */
 			f = (r48l ^ r48r) & saltbits;
 			r48l ^= f ^ *kl++;
 			r48r ^= f ^ *kr++;
 
 			/*
-			 * Do sbox lookups (which shrink it back to 32 bits) and do
-			 * the pbox permutation at the same time.
+			 * Do sbox lookups (which shrink it back to 32 bits) and do the
+			 * pbox permutation at the same time.
 			 */
 			f = psbox[0][m_sbox[0][r48l >> 12]]
 				| psbox[1][m_sbox[1][r48l & 0xfff]]
@@ -660,8 +660,8 @@ px_crypt_des(const char *key, const char *setting)
 
 
 	/*
-	 * Copy the key, shifting each character up by one bit and padding
-	 * with zeros.
+	 * Copy the key, shifting each character up by one bit and padding with
+	 * zeros.
 	 */
 	q = (uint8 *) keybuf;
 	while (q - (uint8 *) keybuf - 8)
@@ -706,10 +706,10 @@ px_crypt_des(const char *key, const char *setting)
 		strncpy(output, setting, 9);
 
 		/*
-		 * Double check that we weren't given a short setting. If we were,
-		 * the above code will probably have created wierd values for
-		 * count and salt, but we don't really care. Just make sure the
-		 * output string doesn't have an extra NUL in it.
+		 * Double check that we weren't given a short setting. If we were, the
+		 * above code will probably have created wierd values for count and
+		 * salt, but we don't really care. Just make sure the output string
+		 * doesn't have an extra NUL in it.
 		 */
 		output[9] = '\0';
 		p = output + strlen(output);
@@ -728,9 +728,9 @@ px_crypt_des(const char *key, const char *setting)
 		output[0] = setting[0];
 
 		/*
-		 * If the encrypted password that the salt was extracted from is
-		 * only 1 character long, the salt will be corrupted.  We need to
-		 * ensure that the output string doesn't have an extra NUL in it!
+		 * If the encrypted password that the salt was extracted from is only
+		 * 1 character long, the salt will be corrupted.  We need to ensure
+		 * that the output string doesn't have an extra NUL in it!
 		 */
 		output[1] = setting[1] ? setting[1] : output[0];
 

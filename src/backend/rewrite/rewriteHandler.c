@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.157 2005/08/01 20:31:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.158 2005/10/15 02:49:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ static TargetEntry *process_matched_tle(TargetEntry *src_tle,
 					const char *attrName);
 static Node *get_assignment_input(Node *node);
 static void markQueryForLocking(Query *qry, bool forUpdate, bool noWait,
-								bool skipOldNew);
+					bool skipOldNew);
 static List *matchLocks(CmdType event, RuleLock *rulelocks,
 		   int varno, Query *parsetree);
 static Query *fireRIRrules(Query *parsetree, List *activeRIRs);
@@ -115,17 +115,17 @@ AcquireRewriteLocks(Query *parsetree)
 		switch (rte->rtekind)
 		{
 			case RTE_RELATION:
+
 				/*
-				 * Grab the appropriate lock type for the relation, and
-				 * do not release it until end of transaction. This protects
-				 * the rewriter and planner against schema changes mid-query.
+				 * Grab the appropriate lock type for the relation, and do not
+				 * release it until end of transaction. This protects the
+				 * rewriter and planner against schema changes mid-query.
 				 *
-				 * If the relation is the query's result relation, then we
-				 * need RowExclusiveLock.  Otherwise, check to see if the
-				 * relation is accessed FOR UPDATE/SHARE or not.  We can't
-				 * just grab AccessShareLock because then the executor
-				 * would be trying to upgrade the lock, leading to possible
-				 * deadlocks.
+				 * If the relation is the query's result relation, then we need
+				 * RowExclusiveLock.  Otherwise, check to see if the relation
+				 * is accessed FOR UPDATE/SHARE or not.  We can't just grab
+				 * AccessShareLock because then the executor would be trying
+				 * to upgrade the lock, leading to possible deadlocks.
 				 */
 				if (rt_index == parsetree->resultRelation)
 					lockmode = RowExclusiveLock;
@@ -139,14 +139,15 @@ AcquireRewriteLocks(Query *parsetree)
 				break;
 
 			case RTE_JOIN:
+
 				/*
-				 * Scan the join's alias var list to see if any columns
-				 * have been dropped, and if so replace those Vars with
-				 * NULL Consts.
+				 * Scan the join's alias var list to see if any columns have
+				 * been dropped, and if so replace those Vars with NULL
+				 * Consts.
 				 *
-				 * Since a join has only two inputs, we can expect to
-				 * see multiple references to the same input RTE; optimize
-				 * away multiple fetches.
+				 * Since a join has only two inputs, we can expect to see
+				 * multiple references to the same input RTE; optimize away
+				 * multiple fetches.
 				 */
 				newaliasvars = NIL;
 				curinputvarno = 0;
@@ -159,19 +160,19 @@ AcquireRewriteLocks(Query *parsetree)
 					 * If the list item isn't a simple Var, then it must
 					 * represent a merged column, ie a USING column, and so it
 					 * couldn't possibly be dropped, since it's referenced in
-					 * the join clause.  (Conceivably it could also be a
-					 * NULL constant already?  But that's OK too.)
+					 * the join clause.  (Conceivably it could also be a NULL
+					 * constant already?  But that's OK too.)
 					 */
 					if (IsA(aliasvar, Var))
 					{
 						/*
 						 * The elements of an alias list have to refer to
-						 * earlier RTEs of the same rtable, because that's
-						 * the order the planner builds things in.  So we
-						 * already processed the referenced RTE, and so it's
-						 * safe to use get_rte_attribute_is_dropped on it.
-						 * (This might not hold after rewriting or planning,
-						 * but it's OK to assume here.)
+						 * earlier RTEs of the same rtable, because that's the
+						 * order the planner builds things in.	So we already
+						 * processed the referenced RTE, and so it's safe to
+						 * use get_rte_attribute_is_dropped on it. (This might
+						 * not hold after rewriting or planning, but it's OK
+						 * to assume here.)
 						 */
 						Assert(aliasvar->varlevelsup == 0);
 						if (aliasvar->varno != curinputvarno)
@@ -200,6 +201,7 @@ AcquireRewriteLocks(Query *parsetree)
 				break;
 
 			case RTE_SUBQUERY:
+
 				/*
 				 * The subquery RTE itself is all right, but we have to
 				 * recurse to process the represented subquery.
@@ -214,8 +216,8 @@ AcquireRewriteLocks(Query *parsetree)
 	}
 
 	/*
-	 * Recurse into sublink subqueries, too.  But we already did the ones
-	 * in the rtable.
+	 * Recurse into sublink subqueries, too.  But we already did the ones in
+	 * the rtable.
 	 */
 	if (parsetree->hasSubLinks)
 		query_tree_walker(parsetree, acquireLocksOnSubLinks, NULL,
@@ -266,8 +268,8 @@ rewriteRuleAction(Query *parsetree,
 	Query	  **sub_action_ptr;
 
 	/*
-	 * Make modifiable copies of rule action and qual (what we're passed
-	 * are the stored versions in the relcache; don't touch 'em!).
+	 * Make modifiable copies of rule action and qual (what we're passed are
+	 * the stored versions in the relcache; don't touch 'em!).
 	 */
 	rule_action = (Query *) copyObject(rule_action);
 	rule_qual = (Node *) copyObject(rule_qual);
@@ -283,12 +285,12 @@ rewriteRuleAction(Query *parsetree,
 	new_varno = PRS2_NEW_VARNO + rt_length;
 
 	/*
-	 * Adjust rule action and qual to offset its varnos, so that we can
-	 * merge its rtable with the main parsetree's rtable.
+	 * Adjust rule action and qual to offset its varnos, so that we can merge
+	 * its rtable with the main parsetree's rtable.
 	 *
-	 * If the rule action is an INSERT...SELECT, the OLD/NEW rtable entries
-	 * will be in the SELECT part, and we have to modify that rather than
-	 * the top-level INSERT (kluge!).
+	 * If the rule action is an INSERT...SELECT, the OLD/NEW rtable entries will
+	 * be in the SELECT part, and we have to modify that rather than the
+	 * top-level INSERT (kluge!).
 	 */
 	sub_action = getInsertSelectQuery(rule_action, &sub_action_ptr);
 
@@ -303,50 +305,47 @@ rewriteRuleAction(Query *parsetree,
 	/*
 	 * Generate expanded rtable consisting of main parsetree's rtable plus
 	 * rule action's rtable; this becomes the complete rtable for the rule
-	 * action.	Some of the entries may be unused after we finish
-	 * rewriting, but we leave them all in place for two reasons:
+	 * action.	Some of the entries may be unused after we finish rewriting,
+	 * but we leave them all in place for two reasons:
 	 *
-	 * We'd have a much harder job to adjust the query's varnos if we
-	 * selectively removed RT entries.
+	 * We'd have a much harder job to adjust the query's varnos if we selectively
+	 * removed RT entries.
 	 *
-	 * If the rule is INSTEAD, then the original query won't be executed at
-	 * all, and so its rtable must be preserved so that the executor will
-	 * do the correct permissions checks on it.
+	 * If the rule is INSTEAD, then the original query won't be executed at all,
+	 * and so its rtable must be preserved so that the executor will do the
+	 * correct permissions checks on it.
 	 *
 	 * RT entries that are not referenced in the completed jointree will be
-	 * ignored by the planner, so they do not affect query semantics.  But
-	 * any permissions checks specified in them will be applied during
-	 * executor startup (see ExecCheckRTEPerms()).	This allows us to
-	 * check that the caller has, say, insert-permission on a view, when
-	 * the view is not semantically referenced at all in the resulting
-	 * query.
+	 * ignored by the planner, so they do not affect query semantics.  But any
+	 * permissions checks specified in them will be applied during executor
+	 * startup (see ExecCheckRTEPerms()).  This allows us to check that the
+	 * caller has, say, insert-permission on a view, when the view is not
+	 * semantically referenced at all in the resulting query.
 	 *
-	 * When a rule is not INSTEAD, the permissions checks done on its copied
-	 * RT entries will be redundant with those done during execution of
-	 * the original query, but we don't bother to treat that case
-	 * differently.
+	 * When a rule is not INSTEAD, the permissions checks done on its copied RT
+	 * entries will be redundant with those done during execution of the
+	 * original query, but we don't bother to treat that case differently.
 	 *
-	 * NOTE: because planner will destructively alter rtable, we must ensure
-	 * that rule action's rtable is separate and shares no substructure
-	 * with the main rtable.  Hence do a deep copy here.
+	 * NOTE: because planner will destructively alter rtable, we must ensure that
+	 * rule action's rtable is separate and shares no substructure with the
+	 * main rtable.  Hence do a deep copy here.
 	 */
 	sub_action->rtable = list_concat((List *) copyObject(parsetree->rtable),
 									 sub_action->rtable);
 
 	/*
 	 * Each rule action's jointree should be the main parsetree's jointree
-	 * plus that rule's jointree, but usually *without* the original
-	 * rtindex that we're replacing (if present, which it won't be for
-	 * INSERT). Note that if the rule action refers to OLD, its jointree
-	 * will add a reference to rt_index.  If the rule action doesn't refer
-	 * to OLD, but either the rule_qual or the user query quals do, then
-	 * we need to keep the original rtindex in the jointree to provide
-	 * data for the quals.	We don't want the original rtindex to be
-	 * joined twice, however, so avoid keeping it if the rule action
-	 * mentions it.
+	 * plus that rule's jointree, but usually *without* the original rtindex
+	 * that we're replacing (if present, which it won't be for INSERT). Note
+	 * that if the rule action refers to OLD, its jointree will add a
+	 * reference to rt_index.  If the rule action doesn't refer to OLD, but
+	 * either the rule_qual or the user query quals do, then we need to keep
+	 * the original rtindex in the jointree to provide data for the quals.	We
+	 * don't want the original rtindex to be joined twice, however, so avoid
+	 * keeping it if the rule action mentions it.
 	 *
-	 * As above, the action's jointree must not share substructure with the
-	 * main parsetree's.
+	 * As above, the action's jointree must not share substructure with the main
+	 * parsetree's.
 	 */
 	if (sub_action->commandType != CMD_UTILITY)
 	{
@@ -357,15 +356,15 @@ rewriteRuleAction(Query *parsetree,
 		keeporig = (!rangeTableEntry_used((Node *) sub_action->jointree,
 										  rt_index, 0)) &&
 			(rangeTableEntry_used(rule_qual, rt_index, 0) ||
-		  rangeTableEntry_used(parsetree->jointree->quals, rt_index, 0));
+			 rangeTableEntry_used(parsetree->jointree->quals, rt_index, 0));
 		newjointree = adjustJoinTreeList(parsetree, !keeporig, rt_index);
 		if (newjointree != NIL)
 		{
 			/*
-			 * If sub_action is a setop, manipulating its jointree will do
-			 * no good at all, because the jointree is dummy.  (Perhaps
-			 * someday we could push the joining and quals down to the
-			 * member statements of the setop?)
+			 * If sub_action is a setop, manipulating its jointree will do no
+			 * good at all, because the jointree is dummy.	(Perhaps someday
+			 * we could push the joining and quals down to the member
+			 * statements of the setop?)
 			 */
 			if (sub_action->setOperations != NULL)
 				ereport(ERROR,
@@ -378,9 +377,9 @@ rewriteRuleAction(Query *parsetree,
 	}
 
 	/*
-	 * Event Qualification forces copying of parsetree and splitting into
-	 * two queries one w/rule_qual, one w/NOT rule_qual. Also add user
-	 * query qual onto rule action
+	 * Event Qualification forces copying of parsetree and splitting into two
+	 * queries one w/rule_qual, one w/NOT rule_qual. Also add user query qual
+	 * onto rule action
 	 */
 	AddQual(sub_action, rule_qual);
 
@@ -390,9 +389,9 @@ rewriteRuleAction(Query *parsetree,
 	 * Rewrite new.attribute w/ right hand side of target-list entry for
 	 * appropriate field name in insert/update.
 	 *
-	 * KLUGE ALERT: since ResolveNew returns a mutated copy, we can't just
-	 * apply it to sub_action; we have to remember to update the sublink
-	 * inside rule_action, too.
+	 * KLUGE ALERT: since ResolveNew returns a mutated copy, we can't just apply
+	 * it to sub_action; we have to remember to update the sublink inside
+	 * rule_action, too.
 	 */
 	if ((event == CMD_INSERT || event == CMD_UPDATE) &&
 		sub_action->commandType != CMD_UTILITY)
@@ -440,8 +439,7 @@ adjustJoinTreeList(Query *parsetree, bool removert, int rt_index)
 				newjointree = list_delete_ptr(newjointree, rtr);
 
 				/*
-				 * foreach is safe because we exit loop after
-				 * list_delete...
+				 * foreach is safe because we exit loop after list_delete...
 				 */
 				break;
 			}
@@ -494,13 +492,13 @@ rewriteTargetList(Query *parsetree, Relation target_relation)
 	ListCell   *temp;
 
 	/*
-	 * We process the normal (non-junk) attributes by scanning the input
-	 * tlist once and transferring TLEs into an array, then scanning the
-	 * array to build an output tlist.  This avoids O(N^2) behavior for
-	 * large numbers of attributes.
+	 * We process the normal (non-junk) attributes by scanning the input tlist
+	 * once and transferring TLEs into an array, then scanning the array to
+	 * build an output tlist.  This avoids O(N^2) behavior for large numbers
+	 * of attributes.
 	 *
-	 * Junk attributes are tossed into a separate list during the same
-	 * tlist scan, then appended to the reconstructed tlist.
+	 * Junk attributes are tossed into a separate list during the same tlist
+	 * scan, then appended to the reconstructed tlist.
 	 */
 	numattrs = RelationGetNumberOfAttributes(target_relation);
 	new_tles = (TargetEntry **) palloc0(numattrs * sizeof(TargetEntry *));
@@ -531,11 +529,11 @@ rewriteTargetList(Query *parsetree, Relation target_relation)
 		else
 		{
 			/*
-			 * Copy all resjunk tlist entries to junk_tlist, and
-			 * assign them resnos above the last real resno.
+			 * Copy all resjunk tlist entries to junk_tlist, and assign them
+			 * resnos above the last real resno.
 			 *
-			 * Typical junk entries include ORDER BY or GROUP BY expressions
-			 * (are these actually possible in an INSERT or UPDATE?), system
+			 * Typical junk entries include ORDER BY or GROUP BY expressions (are
+			 * these actually possible in an INSERT or UPDATE?), system
 			 * attribute references, etc.
 			 */
 
@@ -561,9 +559,9 @@ rewriteTargetList(Query *parsetree, Relation target_relation)
 			continue;
 
 		/*
-		 * Handle the two cases where we need to insert a default
-		 * expression: it's an INSERT and there's no tlist entry for the
-		 * column, or the tlist entry is a DEFAULT placeholder node.
+		 * Handle the two cases where we need to insert a default expression:
+		 * it's an INSERT and there's no tlist entry for the column, or the
+		 * tlist entry is a DEFAULT placeholder node.
 		 */
 		if ((new_tle == NULL && commandType == CMD_INSERT) ||
 			(new_tle && new_tle->expr && IsA(new_tle->expr, SetToDefault)))
@@ -573,12 +571,11 @@ rewriteTargetList(Query *parsetree, Relation target_relation)
 			new_expr = build_column_default(target_relation, attrno);
 
 			/*
-			 * If there is no default (ie, default is effectively NULL),
-			 * we can omit the tlist entry in the INSERT case, since the
-			 * planner can insert a NULL for itself, and there's no point
-			 * in spending any more rewriter cycles on the entry.  But in
-			 * the UPDATE case we've got to explicitly set the column to
-			 * NULL.
+			 * If there is no default (ie, default is effectively NULL), we
+			 * can omit the tlist entry in the INSERT case, since the planner
+			 * can insert a NULL for itself, and there's no point in spending
+			 * any more rewriter cycles on the entry.  But in the UPDATE case
+			 * we've got to explicitly set the column to NULL.
 			 */
 			if (!new_expr)
 			{
@@ -640,8 +637,7 @@ process_matched_tle(TargetEntry *src_tle,
 	if (prior_tle == NULL)
 	{
 		/*
-		 * Normal case where this is the first assignment to the
-		 * attribute.
+		 * Normal case where this is the first assignment to the attribute.
 		 */
 		return src_tle;
 	}
@@ -682,8 +678,7 @@ process_matched_tle(TargetEntry *src_tle,
 						attrName)));
 
 	/*
-	 * Prior TLE could be a nest of assignments if we do this more than
-	 * once.
+	 * Prior TLE could be a nest of assignments if we do this more than once.
 	 */
 	priorbottom = prior_input;
 	for (;;)
@@ -713,10 +708,10 @@ process_matched_tle(TargetEntry *src_tle,
 			memcpy(fstore, prior_expr, sizeof(FieldStore));
 			fstore->newvals =
 				list_concat(list_copy(((FieldStore *) prior_expr)->newvals),
-						  list_copy(((FieldStore *) src_expr)->newvals));
+							list_copy(((FieldStore *) src_expr)->newvals));
 			fstore->fieldnums =
 				list_concat(list_copy(((FieldStore *) prior_expr)->fieldnums),
-						list_copy(((FieldStore *) src_expr)->fieldnums));
+							list_copy(((FieldStore *) src_expr)->fieldnums));
 		}
 		else
 		{
@@ -809,8 +804,7 @@ build_column_default(Relation rel, int attrno)
 	if (expr == NULL)
 	{
 		/*
-		 * No per-column default, so look for a default for the type
-		 * itself.
+		 * No per-column default, so look for a default for the type itself.
 		 */
 		expr = get_typdefault(atttype);
 	}
@@ -821,8 +815,8 @@ build_column_default(Relation rel, int attrno)
 	/*
 	 * Make sure the value is coerced to the target column type; this will
 	 * generally be true already, but there seem to be some corner cases
-	 * involving domain defaults where it might not be true. This should
-	 * match the parser's processing of non-defaulted expressions --- see
+	 * involving domain defaults where it might not be true. This should match
+	 * the parser's processing of non-defaulted expressions --- see
 	 * updateTargetListEntry().
 	 */
 	exprtype = exprType(expr);
@@ -840,7 +834,7 @@ build_column_default(Relation rel, int attrno)
 						NameStr(att_tup->attname),
 						format_type_be(atttype),
 						format_type_be(exprtype)),
-		   errhint("You will need to rewrite or cast the expression.")));
+			   errhint("You will need to rewrite or cast the expression.")));
 
 	return expr;
 }
@@ -913,8 +907,8 @@ ApplyRetrieveRule(Query *parsetree,
 		elog(ERROR, "cannot handle per-attribute ON SELECT rule");
 
 	/*
-	 * Make a modifiable copy of the view query, and acquire needed locks
-	 * on the relations it mentions.
+	 * Make a modifiable copy of the view query, and acquire needed locks on
+	 * the relations it mentions.
 	 */
 	rule_action = copyObject(linitial(rule->actions));
 
@@ -926,8 +920,8 @@ ApplyRetrieveRule(Query *parsetree,
 	rule_action = fireRIRrules(rule_action, activeRIRs);
 
 	/*
-	 * VIEWs are really easy --- just plug the view query in as a
-	 * subselect, replacing the relation's original RTE.
+	 * VIEWs are really easy --- just plug the view query in as a subselect,
+	 * replacing the relation's original RTE.
 	 */
 	rte = rt_fetch(rt_index, parsetree->rtable);
 
@@ -937,8 +931,8 @@ ApplyRetrieveRule(Query *parsetree,
 	rte->inh = false;			/* must not be set for a subquery */
 
 	/*
-	 * We move the view's permission check data down to its rangetable.
-	 * The checks will actually be done against the *OLD* entry therein.
+	 * We move the view's permission check data down to its rangetable. The
+	 * checks will actually be done against the *OLD* entry therein.
 	 */
 	subrte = rt_fetch(PRS2_OLD_VARNO, rule_action->rtable);
 	Assert(subrte->relid == relation->rd_id);
@@ -954,9 +948,9 @@ ApplyRetrieveRule(Query *parsetree,
 	if (list_member_int(parsetree->rowMarks, rt_index))
 	{
 		/*
-		 * Remove the view from the list of rels that will actually be
-		 * marked FOR UPDATE/SHARE by the executor.  It will still be access-
-		 * checked for write access, though.
+		 * Remove the view from the list of rels that will actually be marked
+		 * FOR UPDATE/SHARE by the executor.  It will still be access- checked
+		 * for write access, though.
 		 */
 		parsetree->rowMarks = list_delete_int(parsetree->rowMarks, rt_index);
 
@@ -989,7 +983,7 @@ markQueryForLocking(Query *qry, bool forUpdate, bool noWait, bool skipOldNew)
 		if (forUpdate != qry->forUpdate)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot use both FOR UPDATE and FOR SHARE in one query")));
+			errmsg("cannot use both FOR UPDATE and FOR SHARE in one query")));
 		if (noWait != qry->rowNoWait)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1052,8 +1046,8 @@ fireRIRonSubLink(Node *node, List *activeRIRs)
 	}
 
 	/*
-	 * Do NOT recurse into Query nodes, because fireRIRrules already
-	 * processed subselects of subselects for us.
+	 * Do NOT recurse into Query nodes, because fireRIRrules already processed
+	 * subselects of subselects for us.
 	 */
 	return expression_tree_walker(node, fireRIRonSubLink,
 								  (void *) activeRIRs);
@@ -1070,8 +1064,8 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 	int			rt_index;
 
 	/*
-	 * don't try to convert this into a foreach loop, because rtable list
-	 * can get changed each time through...
+	 * don't try to convert this into a foreach loop, because rtable list can
+	 * get changed each time through...
 	 */
 	rt_index = 0;
 	while (rt_index < list_length(parsetree->rtable))
@@ -1088,8 +1082,8 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 		rte = rt_fetch(rt_index, parsetree->rtable);
 
 		/*
-		 * A subquery RTE can't have associated rules, so there's nothing
-		 * to do to this level of the query, but we must recurse into the
+		 * A subquery RTE can't have associated rules, so there's nothing to
+		 * do to this level of the query, but we must recurse into the
 		 * subquery to expand any rule references in it.
 		 */
 		if (rte->rtekind == RTE_SUBQUERY)
@@ -1108,8 +1102,8 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 		 * If the table is not referenced in the query, then we ignore it.
 		 * This prevents infinite expansion loop due to new rtable entries
 		 * inserted by expansion of a rule. A table is referenced if it is
-		 * part of the join set (a source table), or is referenced by any
-		 * Var nodes, or is the result table.
+		 * part of the join set (a source table), or is referenced by any Var
+		 * nodes, or is the result table.
 		 */
 		if (rt_index != parsetree->resultRelation &&
 			!rangeTableEntry_used((Node *) parsetree, rt_index, 0))
@@ -1181,8 +1175,8 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 	}
 
 	/*
-	 * Recurse into sublink subqueries, too.  But we already did the ones
-	 * in the rtable.
+	 * Recurse into sublink subqueries, too.  But we already did the ones in
+	 * the rtable.
 	 */
 	if (parsetree->hasSubLinks)
 		query_tree_walker(parsetree, fireRIRonSubLink, (void *) activeRIRs,
@@ -1217,8 +1211,8 @@ CopyAndAddInvertedQual(Query *parsetree,
 	/*
 	 * In case there are subqueries in the qual, acquire necessary locks and
 	 * fix any deleted JOIN RTE entries.  (This is somewhat redundant with
-	 * rewriteRuleAction, but not entirely ... consider restructuring so
-	 * that we only need to process the qual this way once.)
+	 * rewriteRuleAction, but not entirely ... consider restructuring so that
+	 * we only need to process the qual this way once.)
 	 */
 	(void) acquireLocksOnSubLinks(new_qual, NULL);
 
@@ -1302,13 +1296,13 @@ fireRules(Query *parsetree,
 		if (qsrc == QSRC_QUAL_INSTEAD_RULE)
 		{
 			/*
-			 * If there are INSTEAD rules with qualifications, the
-			 * original query is still performed. But all the negated rule
-			 * qualifications of the INSTEAD rules are added so it does
-			 * its actions only in cases where the rule quals of all
-			 * INSTEAD rules are false. Think of it as the default action
-			 * in a case. We save this in *qual_product so RewriteQuery()
-			 * can add it to the query list after we mangled it up enough.
+			 * If there are INSTEAD rules with qualifications, the original
+			 * query is still performed. But all the negated rule
+			 * qualifications of the INSTEAD rules are added so it does its
+			 * actions only in cases where the rule quals of all INSTEAD rules
+			 * are false. Think of it as the default action in a case. We save
+			 * this in *qual_product so RewriteQuery() can add it to the query
+			 * list after we mangled it up enough.
 			 *
 			 * If we have already found an unqualified INSTEAD rule, then
 			 * *qual_product won't be used, so don't bother building it.
@@ -1364,9 +1358,9 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 	/*
 	 * If the statement is an update, insert or delete - fire rules on it.
 	 *
-	 * SELECT rules are handled later when we have all the queries that
-	 * should get executed.  Also, utilities aren't rewritten at all (do
-	 * we still need that check?)
+	 * SELECT rules are handled later when we have all the queries that should
+	 * get executed.  Also, utilities aren't rewritten at all (do we still
+	 * need that check?)
 	 */
 	if (event != CMD_SELECT && event != CMD_UTILITY)
 	{
@@ -1387,10 +1381,9 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 		rt_entry_relation = heap_open(rt_entry->relid, NoLock);
 
 		/*
-		 * If it's an INSERT or UPDATE, rewrite the targetlist into
-		 * standard form.  This will be needed by the planner anyway, and
-		 * doing it now ensures that any references to NEW.field will
-		 * behave sanely.
+		 * If it's an INSERT or UPDATE, rewrite the targetlist into standard
+		 * form.  This will be needed by the planner anyway, and doing it now
+		 * ensures that any references to NEW.field will behave sanely.
 		 */
 		if (event == CMD_INSERT || event == CMD_UPDATE)
 			rewriteTargetList(parsetree, rt_entry_relation);
@@ -1413,8 +1406,8 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 										&qual_product);
 
 			/*
-			 * If we got any product queries, recursively rewrite them ---
-			 * but first check for recursion!
+			 * If we got any product queries, recursively rewrite them --- but
+			 * first check for recursion!
 			 */
 			if (product_queries != NIL)
 			{
@@ -1427,9 +1420,9 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 					if (rev->relation == RelationGetRelid(rt_entry_relation) &&
 						rev->event == event)
 						ereport(ERROR,
-							 (errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-							  errmsg("infinite recursion detected in rules for relation \"%s\"",
-						   RelationGetRelationName(rt_entry_relation))));
+								(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+								 errmsg("infinite recursion detected in rules for relation \"%s\"",
+							   RelationGetRelationName(rt_entry_relation))));
 				}
 
 				rev = (rewrite_event *) palloc(sizeof(rewrite_event));
@@ -1454,13 +1447,12 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 	}
 
 	/*
-	 * For INSERTs, the original query is done first; for UPDATE/DELETE,
-	 * it is done last.  This is needed because update and delete rule
-	 * actions might not do anything if they are invoked after the update
-	 * or delete is performed. The command counter increment between the
-	 * query executions makes the deleted (and maybe the updated) tuples
-	 * disappear so the scans for them in the rule actions cannot find
-	 * them.
+	 * For INSERTs, the original query is done first; for UPDATE/DELETE, it is
+	 * done last.  This is needed because update and delete rule actions might
+	 * not do anything if they are invoked after the update or delete is
+	 * performed. The command counter increment between the query executions
+	 * makes the deleted (and maybe the updated) tuples disappear so the scans
+	 * for them in the rule actions cannot find them.
 	 *
 	 * If we found any unqualified INSTEAD, the original query is not done at
 	 * all, in any form.  Otherwise, we add the modified form if qualified
@@ -1569,19 +1561,18 @@ QueryRewrite(Query *parsetree)
 	/*
 	 * Step 3
 	 *
-	 * Determine which, if any, of the resulting queries is supposed to set
-	 * the command-result tag; and update the canSetTag fields
-	 * accordingly.
+	 * Determine which, if any, of the resulting queries is supposed to set the
+	 * command-result tag; and update the canSetTag fields accordingly.
 	 *
 	 * If the original query is still in the list, it sets the command tag.
-	 * Otherwise, the last INSTEAD query of the same kind as the original
-	 * is allowed to set the tag.  (Note these rules can leave us with no
-	 * query setting the tag.  The tcop code has to cope with this by
-	 * setting up a default tag based on the original un-rewritten query.)
+	 * Otherwise, the last INSTEAD query of the same kind as the original is
+	 * allowed to set the tag.	(Note these rules can leave us with no query
+	 * setting the tag.  The tcop code has to cope with this by setting up a
+	 * default tag based on the original un-rewritten query.)
 	 *
 	 * The Asserts verify that at most one query in the result list is marked
-	 * canSetTag.  If we aren't checking asserts, we can fall out of the
-	 * loop as soon as we find the original query.
+	 * canSetTag.  If we aren't checking asserts, we can fall out of the loop
+	 * as soon as we find the original query.
 	 */
 	origCmdType = parsetree->commandType;
 	foundOriginalQuery = false;

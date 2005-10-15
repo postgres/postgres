@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_euc_kr/utf8_and_euc_kr.c,v 1.11 2005/09/24 17:53:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_euc_kr/utf8_and_euc_kr.c,v 1.12 2005/10/15 02:49:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ euc_kr_to_utf8(PG_FUNCTION_ARGS)
 	Assert(len >= 0);
 
 	LocalToUtf(src, dest, LUmapEUC_KR,
-		  sizeof(LUmapEUC_KR) / sizeof(pg_local_to_utf), PG_EUC_KR, len);
+			   sizeof(LUmapEUC_KR) / sizeof(pg_local_to_utf), PG_EUC_KR, len);
 
 	PG_RETURN_VOID();
 }

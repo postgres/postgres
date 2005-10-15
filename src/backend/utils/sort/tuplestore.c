@@ -36,7 +36,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.22 2005/05/06 17:24:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.23 2005/10/15 02:49:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,41 +72,41 @@ struct Tuplestorestate
 	BufFile    *myfile;			/* underlying file, or NULL if none */
 
 	/*
-	 * These function pointers decouple the routines that must know what
-	 * kind of tuple we are handling from the routines that don't need to
-	 * know it. They are set up by the tuplestore_begin_xxx routines.
+	 * These function pointers decouple the routines that must know what kind
+	 * of tuple we are handling from the routines that don't need to know it.
+	 * They are set up by the tuplestore_begin_xxx routines.
 	 *
-	 * (Although tuplestore.c currently only supports heap tuples, I've
-	 * copied this part of tuplesort.c so that extension to other kinds of
-	 * objects will be easy if it's ever needed.)
+	 * (Although tuplestore.c currently only supports heap tuples, I've copied
+	 * this part of tuplesort.c so that extension to other kinds of objects
+	 * will be easy if it's ever needed.)
 	 *
 	 * Function to copy a supplied input tuple into palloc'd space. (NB: we
-	 * assume that a single pfree() is enough to release the tuple later,
-	 * so the representation must be "flat" in one palloc chunk.)
-	 * state->availMem must be decreased by the amount of space used.
+	 * assume that a single pfree() is enough to release the tuple later, so
+	 * the representation must be "flat" in one palloc chunk.) state->availMem
+	 * must be decreased by the amount of space used.
 	 */
 	void	   *(*copytup) (Tuplestorestate *state, void *tup);
 
 	/*
-	 * Function to write a stored tuple onto tape.	The representation of
-	 * the tuple on tape need not be the same as it is in memory;
-	 * requirements on the tape representation are given below.  After
-	 * writing the tuple, pfree() it, and increase state->availMem by the
-	 * amount of memory space thereby released.
+	 * Function to write a stored tuple onto tape.	The representation of the
+	 * tuple on tape need not be the same as it is in memory; requirements on
+	 * the tape representation are given below.  After writing the tuple,
+	 * pfree() it, and increase state->availMem by the amount of memory space
+	 * thereby released.
 	 */
 	void		(*writetup) (Tuplestorestate *state, void *tup);
 
 	/*
-	 * Function to read a stored tuple from tape back into memory. 'len'
-	 * is the already-read length of the stored tuple.	Create and return
-	 * a palloc'd copy, and decrease state->availMem by the amount of
-	 * memory space consumed.
+	 * Function to read a stored tuple from tape back into memory. 'len' is
+	 * the already-read length of the stored tuple.  Create and return a
+	 * palloc'd copy, and decrease state->availMem by the amount of memory
+	 * space consumed.
 	 */
 	void	   *(*readtup) (Tuplestorestate *state, unsigned int len);
 
 	/*
-	 * This array holds pointers to tuples in memory if we are in state
-	 * INMEM.	In states WRITEFILE and READFILE it's not used.
+	 * This array holds pointers to tuples in memory if we are in state INMEM.
+	 * In states WRITEFILE and READFILE it's not used.
 	 */
 	void	  **memtuples;		/* array of pointers to palloc'd tuples */
 	int			memtupcount;	/* number of tuples currently present */
@@ -115,17 +115,17 @@ struct Tuplestorestate
 	/*
 	 * These variables are used to keep track of the current position.
 	 *
-	 * In state WRITEFILE, the current file seek position is the write point,
-	 * and the read position is remembered in readpos_xxx; in state
-	 * READFILE, the current file seek position is the read point, and the
-	 * write position is remembered in writepos_xxx.  (The write position
-	 * is the same as EOF, but since BufFileSeek doesn't currently
-	 * implement SEEK_END, we have to remember it explicitly.)
+	 * In state WRITEFILE, the current file seek position is the write point, and
+	 * the read position is remembered in readpos_xxx; in state READFILE, the
+	 * current file seek position is the read point, and the write position is
+	 * remembered in writepos_xxx.	(The write position is the same as EOF,
+	 * but since BufFileSeek doesn't currently implement SEEK_END, we have to
+	 * remember it explicitly.)
 	 *
-	 * Special case: if we are in WRITEFILE state and eof_reached is true,
-	 * then the read position is implicitly equal to the write position
-	 * (and hence to the file seek position); this way we need not update
-	 * the readpos_xxx variables on each write.
+	 * Special case: if we are in WRITEFILE state and eof_reached is true, then
+	 * the read position is implicitly equal to the write position (and hence
+	 * to the file seek position); this way we need not update the readpos_xxx
+	 * variables on each write.
 	 */
 	bool		eof_reached;	/* read reached EOF (always valid) */
 	int			current;		/* next array index (valid if INMEM) */
@@ -429,7 +429,7 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 						&state->writepos_file, &state->writepos_offset);
 			if (!state->eof_reached)
 				if (BufFileSeek(state->myfile,
-							  state->readpos_file, state->readpos_offset,
+								state->readpos_file, state->readpos_offset,
 								SEEK_SET) != 0)
 					elog(ERROR, "seek failed");
 			state->status = TSS_READFILE;
@@ -454,11 +454,11 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 			/*
 			 * Backward.
 			 *
-			 * if all tuples are fetched already then we return last tuple,
-			 * else - tuple before last returned.
+			 * if all tuples are fetched already then we return last tuple, else
+			 * - tuple before last returned.
 			 *
-			 * Back up to fetch previously-returned tuple's ending length
-			 * word.  If seek fails, assume we are at start of file.
+			 * Back up to fetch previously-returned tuple's ending length word.
+			 * If seek fails, assume we are at start of file.
 			 */
 			if (BufFileSeek(state->myfile, 0, -(long) sizeof(unsigned int),
 							SEEK_CUR) != 0)
@@ -476,17 +476,17 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 				 * Back up to get ending length word of tuple before it.
 				 */
 				if (BufFileSeek(state->myfile, 0,
-							 -(long) (tuplen + 2 * sizeof(unsigned int)),
+								-(long) (tuplen + 2 * sizeof(unsigned int)),
 								SEEK_CUR) != 0)
 				{
 					/*
-					 * If that fails, presumably the prev tuple is the
-					 * first in the file.  Back up so that it becomes next
-					 * to read in forward direction (not obviously right,
-					 * but that is what in-memory case does).
+					 * If that fails, presumably the prev tuple is the first
+					 * in the file.  Back up so that it becomes next to read
+					 * in forward direction (not obviously right, but that is
+					 * what in-memory case does).
 					 */
 					if (BufFileSeek(state->myfile, 0,
-								 -(long) (tuplen + sizeof(unsigned int)),
+									-(long) (tuplen + sizeof(unsigned int)),
 									SEEK_CUR) != 0)
 						elog(ERROR, "bogus tuple length in backward scan");
 					return NULL;
@@ -495,9 +495,9 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 			}
 
 			/*
-			 * Now we have the length of the prior tuple, back up and read
-			 * it. Note: READTUP expects we are positioned after the
-			 * initial length word of the tuple, so back up to that point.
+			 * Now we have the length of the prior tuple, back up and read it.
+			 * Note: READTUP expects we are positioned after the initial
+			 * length word of the tuple, so back up to that point.
 			 */
 			if (BufFileSeek(state->myfile, 0,
 							-(long) tuplen,

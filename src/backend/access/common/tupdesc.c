@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.111 2005/04/14 22:34:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.112 2005/10/15 02:49:08 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -49,10 +49,10 @@ CreateTemplateTupleDesc(int natts, bool hasoid)
 	 * Allocate enough memory for the tuple descriptor, including the
 	 * attribute rows, and set up the attribute row pointers.
 	 *
-	 * Note: we assume that sizeof(struct tupleDesc) is a multiple of
-	 * the struct pointer alignment requirement, and hence we don't need
-	 * to insert alignment padding between the struct and the array of
-	 * attribute row pointers.
+	 * Note: we assume that sizeof(struct tupleDesc) is a multiple of the struct
+	 * pointer alignment requirement, and hence we don't need to insert
+	 * alignment padding between the struct and the array of attribute row
+	 * pointers.
 	 */
 	attroffset = sizeof(struct tupleDesc) + natts * sizeof(Form_pg_attribute);
 	attroffset = MAXALIGN(attroffset);
@@ -273,16 +273,16 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 		Form_pg_attribute attr2 = tupdesc2->attrs[i];
 
 		/*
-		 * We do not need to check every single field here: we can
-		 * disregard attrelid and attnum (which were used to place the row
-		 * in the attrs array in the first place).  It might look like we
-		 * could dispense with checking attlen/attbyval/attalign, since these
-		 * are derived from atttypid; but in the case of dropped columns
-		 * we must check them (since atttypid will be zero for all dropped
-		 * columns) and in general it seems safer to check them always.
+		 * We do not need to check every single field here: we can disregard
+		 * attrelid and attnum (which were used to place the row in the attrs
+		 * array in the first place).  It might look like we could dispense
+		 * with checking attlen/attbyval/attalign, since these are derived
+		 * from atttypid; but in the case of dropped columns we must check
+		 * them (since atttypid will be zero for all dropped columns) and in
+		 * general it seems safer to check them always.
 		 *
-		 * attcacheoff must NOT be checked since it's possibly not set
-		 * in both copies.
+		 * attcacheoff must NOT be checked since it's possibly not set in both
+		 * copies.
 		 */
 		if (strcmp(NameStr(attr1->attname), NameStr(attr2->attname)) != 0)
 			return false;
@@ -332,9 +332,9 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 			AttrDefault *defval2 = constr2->defval;
 
 			/*
-			 * We can't assume that the items are always read from the
-			 * system catalogs in the same order; so use the adnum field
-			 * to identify the matching item to compare.
+			 * We can't assume that the items are always read from the system
+			 * catalogs in the same order; so use the adnum field to identify
+			 * the matching item to compare.
 			 */
 			for (j = 0; j < n; defval2++, j++)
 			{
@@ -355,9 +355,9 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 			ConstrCheck *check2 = constr2->check;
 
 			/*
-			 * Similarly, don't assume that the checks are always read in
-			 * the same order; match them up by name and contents. (The
-			 * name *should* be unique, but...)
+			 * Similarly, don't assume that the checks are always read in the
+			 * same order; match them up by name and contents. (The name
+			 * *should* be unique, but...)
 			 */
 			for (j = 0; j < n; check2++, j++)
 			{
@@ -407,8 +407,8 @@ TupleDescInitEntry(TupleDesc desc,
 
 	/*
 	 * Note: attributeName can be NULL, because the planner doesn't always
-	 * fill in valid resname values in targetlists, particularly for
-	 * resjunk attributes.
+	 * fill in valid resname values in targetlists, particularly for resjunk
+	 * attributes.
 	 */
 	if (attributeName != NULL)
 		namestrcpy(&(att->attname), attributeName);
@@ -482,8 +482,8 @@ BuildDescForRelation(List *schema)
 		ColumnDef  *entry = lfirst(l);
 
 		/*
-		 * for each entry in the list, get the name and type information
-		 * from the list and have TupleDescInitEntry fill in the attribute
+		 * for each entry in the list, get the name and type information from
+		 * the list and have TupleDescInitEntry fill in the attribute
 		 * information we need.
 		 */
 		attnum++;
@@ -508,8 +508,8 @@ BuildDescForRelation(List *schema)
 		desc->attrs[attnum - 1]->attnotnull = entry->is_not_null;
 
 		/*
-		 * Note we copy only pre-cooked default expressions. Digestion of
-		 * raw ones is someone else's problem.
+		 * Note we copy only pre-cooked default expressions. Digestion of raw
+		 * ones is someone else's problem.
 		 */
 		if (entry->cooked_default != NULL)
 		{

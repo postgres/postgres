@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/relcache.h,v 1.51 2005/08/12 01:36:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/relcache.h,v 1.52 2005/10/15 02:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@ extern List *RelationGetIndexExpressions(Relation relation);
 extern List *RelationGetIndexPredicate(Relation relation);
 
 extern void RelationSetIndexList(Relation relation,
-								 List *indexIds, Oid oidIndex);
+					 List *indexIds, Oid oidIndex);
 
 extern void RelationInitIndexAccessInfo(Relation relation);
 
@@ -67,7 +67,7 @@ extern void RelationCacheInvalidate(void);
 
 extern void AtEOXact_RelationCache(bool isCommit);
 extern void AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
-									  SubTransactionId parentSubid);
+						  SubTransactionId parentSubid);
 
 /*
  * Routines to help manage rebuilding of relcache init file

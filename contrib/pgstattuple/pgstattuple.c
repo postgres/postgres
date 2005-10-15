@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.19 2005/05/30 23:09:06 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.20 2005/10/15 02:49:06 momjian Exp $
  *
  * Copyright (c) 2001,2002	Tatsuo Ishii
  *
@@ -123,8 +123,8 @@ pgstattuple_real(Relation rel, FunctionCallInfo fcinfo)
 	tupdesc = CreateTupleDescCopy(tupdesc);
 
 	/*
-	 * Generate attribute metadata needed later to produce tuples from raw
-	 * C strings
+	 * Generate attribute metadata needed later to produce tuples from raw C
+	 * strings
 	 */
 	attinmeta = TupleDescGetAttInMetadata(tupdesc);
 
@@ -197,9 +197,9 @@ pgstattuple_real(Relation rel, FunctionCallInfo fcinfo)
 	}
 
 	/*
-	 * Prepare a values array for constructing the tuple. This should be
-	 * an array of C strings which will be processed later by the
-	 * appropriate "in" functions.
+	 * Prepare a values array for constructing the tuple. This should be an
+	 * array of C strings which will be processed later by the appropriate
+	 * "in" functions.
 	 */
 	values = (char **) palloc(NCOLUMNS * sizeof(char *));
 	for (i = 0; i < NCOLUMNS; i++)

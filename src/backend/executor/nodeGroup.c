@@ -15,7 +15,7 @@
  *	  locate group boundaries.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeGroup.c,v 1.61 2005/03/16 21:38:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeGroup.c,v 1.62 2005/10/15 02:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,8 +61,8 @@ ExecGroup(GroupState *node)
 	 */
 
 	/*
-	 * If first time through, acquire first input tuple and determine
-	 * whether to return it or not.
+	 * If first time through, acquire first input tuple and determine whether
+	 * to return it or not.
 	 */
 	if (TupIsNull(firsttupleslot))
 	{
@@ -76,15 +76,15 @@ ExecGroup(GroupState *node)
 		/* Copy tuple, set up as input for qual test and projection */
 		ExecCopySlot(firsttupleslot, outerslot);
 		econtext->ecxt_scantuple = firsttupleslot;
+
 		/*
-		 * Check the qual (HAVING clause); if the group does not match,
-		 * ignore it and fall into scan loop.
+		 * Check the qual (HAVING clause); if the group does not match, ignore
+		 * it and fall into scan loop.
 		 */
 		if (ExecQual(node->ss.ps.qual, econtext, false))
 		{
 			/*
-			 * Form and return a projection tuple using the first input
-			 * tuple.
+			 * Form and return a projection tuple using the first input tuple.
 			 */
 			return ExecProject(node->ss.ps.ps_ProjInfo, NULL);
 		}
@@ -92,8 +92,8 @@ ExecGroup(GroupState *node)
 
 	/*
 	 * This loop iterates once per input tuple group.  At the head of the
-	 * loop, we have finished processing the first tuple of the group and
-	 * now need to scan over all the other group members.
+	 * loop, we have finished processing the first tuple of the group and now
+	 * need to scan over all the other group members.
 	 */
 	for (;;)
 	{
@@ -120,22 +120,23 @@ ExecGroup(GroupState *node)
 								 econtext->ecxt_per_tuple_memory))
 				break;
 		}
+
 		/*
-		 * We have the first tuple of the next input group.  See if we
-		 * want to return it.
+		 * We have the first tuple of the next input group.  See if we want to
+		 * return it.
 		 */
 		/* Copy tuple, set up as input for qual test and projection */
 		ExecCopySlot(firsttupleslot, outerslot);
 		econtext->ecxt_scantuple = firsttupleslot;
+
 		/*
-		 * Check the qual (HAVING clause); if the group does not match,
-		 * ignore it and loop back to scan the rest of the group.
+		 * Check the qual (HAVING clause); if the group does not match, ignore
+		 * it and loop back to scan the rest of the group.
 		 */
 		if (ExecQual(node->ss.ps.qual, econtext, false))
 		{
 			/*
-			 * Form and return a projection tuple using the first input
-			 * tuple.
+			 * Form and return a projection tuple using the first input tuple.
 			 */
 			return ExecProject(node->ss.ps.ps_ProjInfo, NULL);
 		}

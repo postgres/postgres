@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapOr.c,v 1.2 2005/04/20 15:48:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapOr.c,v 1.3 2005/10/15 02:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,13 +133,13 @@ MultiExecBitmapOr(BitmapOrState *node)
 		TIDBitmap  *subresult;
 
 		/*
-		 * We can special-case BitmapIndexScan children to avoid an
-		 * explicit tbm_union step for each child: just pass down the
-		 * current result bitmap and let the child OR directly into it.
+		 * We can special-case BitmapIndexScan children to avoid an explicit
+		 * tbm_union step for each child: just pass down the current result
+		 * bitmap and let the child OR directly into it.
 		 */
 		if (IsA(subnode, BitmapIndexScanState))
 		{
-			if (result == NULL)				/* first subplan */
+			if (result == NULL) /* first subplan */
 			{
 				/* XXX should we use less than work_mem for this? */
 				result = tbm_create(work_mem * 1024L);
@@ -161,7 +161,7 @@ MultiExecBitmapOr(BitmapOrState *node)
 				elog(ERROR, "unrecognized result from subplan");
 
 			if (result == NULL)
-				result = subresult;			/* first subplan */
+				result = subresult;		/* first subplan */
 			else
 			{
 				tbm_union(result, subresult);
@@ -176,7 +176,7 @@ MultiExecBitmapOr(BitmapOrState *node)
 
 	/* must provide our own instrumentation support */
 	if (node->ps.instrument)
-		InstrStopNodeMulti(node->ps.instrument, 0 /* XXX */);
+		InstrStopNodeMulti(node->ps.instrument, 0 /* XXX */ );
 
 	return (Node *) result;
 }

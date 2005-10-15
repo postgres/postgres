@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/date.h,v 1.31 2005/10/09 17:21:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/date.h,v 1.32 2005/10/15 02:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,6 @@ typedef int32 DateADT;
 
 #ifdef HAVE_INT64_TIMESTAMP
 typedef int64 TimeADT;
-
 #else
 typedef float8 TimeADT;
 #endif
@@ -29,11 +28,9 @@ typedef float8 TimeADT;
 typedef struct
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	int64		time;			/* all time units other than months and
-								 * years */
+	int64		time;			/* all time units other than months and years */
 #else
-	double		time;			/* all time units other than months and
-								 * years */
+	double		time;			/* all time units other than months and years */
 #endif
 	int32		zone;			/* numeric time zone, in seconds */
 } TimeTzADT;
@@ -55,7 +52,6 @@ typedef struct
 #define DateADTGetDatum(X)	  Int32GetDatum(X)
 #define TimeADTGetDatum(X)	  Int64GetDatum(X)
 #define TimeTzADTPGetDatum(X) PointerGetDatum(X)
-
 #else
 
 #define MAX_TIME_PRECISION 10
@@ -71,8 +67,7 @@ typedef struct
 #define DateADTGetDatum(X)	  Int32GetDatum(X)
 #define TimeADTGetDatum(X)	  Float8GetDatum(X)
 #define TimeTzADTPGetDatum(X) PointerGetDatum(X)
-
-#endif /* HAVE_INT64_TIMESTAMP */
+#endif   /* HAVE_INT64_TIMESTAMP */
 
 #define PG_GETARG_DATEADT(n)	 DatumGetDateADT(PG_GETARG_DATUM(n))
 #define PG_GETARG_TIMEADT(n)	 DatumGetTimeADT(PG_GETARG_DATUM(n))

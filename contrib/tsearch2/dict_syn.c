@@ -159,7 +159,7 @@ syn_lexize(PG_FUNCTION_ARGS)
 	char	   *in = (char *) PG_GETARG_POINTER(1);
 	Syn			key,
 			   *found;
-	TSLexeme	  *res = NULL;
+	TSLexeme   *res = NULL;
 
 	if (!PG_GETARG_INT32(2))
 		PG_RETURN_POINTER(NULL);
@@ -174,7 +174,7 @@ syn_lexize(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(NULL);
 
 	res = palloc(sizeof(TSLexeme) * 2);
-	memset(res,0,sizeof(TSLexeme) * 2);
+	memset(res, 0, sizeof(TSLexeme) * 2);
 	res[0].lexeme = pstrdup(found->out);
 
 	PG_RETURN_POINTER(res);

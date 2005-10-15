@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.78 2005/06/13 02:26:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.79 2005/10/15 02:49:17 momjian Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -74,7 +74,7 @@ static MemoryContext fscxt = NULL;
 										  ALLOCSET_DEFAULT_INITSIZE, \
 										  ALLOCSET_DEFAULT_MAXSIZE); \
 	} while (0)
-			 
+
 
 static int	newLOfd(LargeObjectDesc *lobjCookie);
 static void deleteLOfd(int fd);
@@ -198,8 +198,8 @@ lo_write(int fd, char *buf, int len)
 	if ((cookies[fd]->flags & IFS_WRLOCK) == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("large object descriptor %d was not opened for writing",
-						fd)));
+			  errmsg("large object descriptor %d was not opened for writing",
+					 fd)));
 
 	Assert(fscxt != NULL);
 	currentContext = MemoryContextSwitchTo(fscxt);
@@ -289,9 +289,8 @@ lo_tell(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * We assume we do not need to switch contexts for inv_tell. That is
-	 * true for now, but is probably more than this module ought to
-	 * assume...
+	 * We assume we do not need to switch contexts for inv_tell. That is true
+	 * for now, but is probably more than this module ought to assume...
 	 */
 	PG_RETURN_INT32(inv_tell(cookies[fd]));
 }
@@ -322,9 +321,9 @@ lo_unlink(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * inv_drop does not need a context switch, indeed it doesn't touch
-	 * any LO-specific data structures at all.	(Again, that's probably
-	 * more than this module ought to be assuming.)
+	 * inv_drop does not need a context switch, indeed it doesn't touch any
+	 * LO-specific data structures at all.	(Again, that's probably more than
+	 * this module ought to be assuming.)
 	 */
 	PG_RETURN_INT32(inv_drop(lobjId));
 }
@@ -388,13 +387,13 @@ lo_import(PG_FUNCTION_ARGS)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			  errmsg("must be superuser to use server-side lo_import()"),
+				 errmsg("must be superuser to use server-side lo_import()"),
 				 errhint("Anyone can use the client-side lo_import() provided by libpq.")));
 #endif
 
 	/*
-	 * We don't actually need to switch into fscxt, but create it anyway
-	 * to ensure that AtEOXact_LargeObject knows there is state to clean up
+	 * We don't actually need to switch into fscxt, but create it anyway to
+	 * ensure that AtEOXact_LargeObject knows there is state to clean up
 	 */
 	CreateFSContext();
 
@@ -462,13 +461,13 @@ lo_export(PG_FUNCTION_ARGS)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			  errmsg("must be superuser to use server-side lo_export()"),
+				 errmsg("must be superuser to use server-side lo_export()"),
 				 errhint("Anyone can use the client-side lo_export() provided by libpq.")));
 #endif
 
 	/*
-	 * We don't actually need to switch into fscxt, but create it anyway
-	 * to ensure that AtEOXact_LargeObject knows there is state to clean up
+	 * We don't actually need to switch into fscxt, but create it anyway to
+	 * ensure that AtEOXact_LargeObject knows there is state to clean up
 	 */
 	CreateFSContext();
 
@@ -480,9 +479,9 @@ lo_export(PG_FUNCTION_ARGS)
 	/*
 	 * open the file to be written to
 	 *
-	 * Note: we reduce backend's normal 077 umask to the slightly friendlier
-	 * 022.  This code used to drop it all the way to 0, but creating
-	 * world-writable export files doesn't seem wise.
+	 * Note: we reduce backend's normal 077 umask to the slightly friendlier 022.
+	 * This code used to drop it all the way to 0, but creating world-writable
+	 * export files doesn't seem wise.
 	 */
 	nbytes = VARSIZE(filename) - VARHDRSZ;
 	if (nbytes >= MAXPGPATH)
@@ -533,8 +532,8 @@ AtEOXact_LargeObject(bool isCommit)
 	currentContext = MemoryContextSwitchTo(fscxt);
 
 	/*
-	 * Close LO fds and clear cookies array so that LO fds are no longer
-	 * good. On abort we skip the close step.
+	 * Close LO fds and clear cookies array so that LO fds are no longer good.
+	 * On abort we skip the close step.
 	 */
 	for (i = 0; i < cookies_size; i++)
 	{
@@ -587,8 +586,8 @@ AtEOSubXact_LargeObject(bool isCommit, SubTransactionId mySubid,
 			else
 			{
 				/*
-				 * Make sure we do not call inv_close twice if it errors
-				 * out for some reason.  Better a leak than a crash.
+				 * Make sure we do not call inv_close twice if it errors out
+				 * for some reason.  Better a leak than a crash.
 				 */
 				deleteLOfd(i);
 				inv_close(lo);

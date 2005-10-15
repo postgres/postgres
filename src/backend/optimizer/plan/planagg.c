@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.9 2005/09/21 19:15:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.10 2005/10/15 02:49:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,12 +43,12 @@ typedef struct
 
 static bool find_minmax_aggs_walker(Node *node, List **context);
 static bool build_minmax_path(PlannerInfo *root, RelOptInfo *rel,
-							  MinMaxAggInfo *info);
+				  MinMaxAggInfo *info);
 static ScanDirection match_agg_to_index_col(MinMaxAggInfo *info,
-											IndexOptInfo *index, int indexcol);
+					   IndexOptInfo *index, int indexcol);
 static void make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info,
-							 List *constant_quals);
-static Node *replace_aggs_with_params_mutator(Node *node,  List **context);
+				 List *constant_quals);
+static Node *replace_aggs_with_params_mutator(Node *node, List **context);
 static Oid	fetch_agg_sort_op(Oid aggfnoid);
 
 
@@ -62,7 +62,7 @@ static Oid	fetch_agg_sort_op(Oid aggfnoid);
  * generic scan-all-the-rows plan.
  *
  * We are passed the preprocessed tlist, and the best path
- * devised for computing the input of a standard Agg node.  If we are able
+ * devised for computing the input of a standard Agg node.	If we are able
  * to optimize all the aggregates, and the result is estimated to be cheaper
  * than the generic aggregate method, then generate and return a Plan that
  * does it that way.  Otherwise, return NULL.
@@ -87,24 +87,24 @@ optimize_minmax_aggregates(PlannerInfo *root, List *tlist, Path *best_path)
 	if (!parse->hasAggs)
 		return NULL;
 
-	Assert(!parse->setOperations); /* shouldn't get here if a setop */
-	Assert(parse->rowMarks == NIL); /* nor if FOR UPDATE */
+	Assert(!parse->setOperations);		/* shouldn't get here if a setop */
+	Assert(parse->rowMarks == NIL);		/* nor if FOR UPDATE */
 
 	/*
 	 * Reject unoptimizable cases.
 	 *
-	 * We don't handle GROUP BY, because our current implementations of
-	 * grouping require looking at all the rows anyway, and so there's not
-	 * much point in optimizing MIN/MAX.
+	 * We don't handle GROUP BY, because our current implementations of grouping
+	 * require looking at all the rows anyway, and so there's not much point
+	 * in optimizing MIN/MAX.
 	 */
 	if (parse->groupClause)
 		return NULL;
 
 	/*
-	 * We also restrict the query to reference exactly one table, since
-	 * join conditions can't be handled reasonably.  (We could perhaps
-	 * handle a query containing cartesian-product joins, but it hardly
-	 * seems worth the trouble.)
+	 * We also restrict the query to reference exactly one table, since join
+	 * conditions can't be handled reasonably.  (We could perhaps handle a
+	 * query containing cartesian-product joins, but it hardly seems worth the
+	 * trouble.)
 	 */
 	Assert(parse->jointree != NULL && IsA(parse->jointree, FromExpr));
 	if (list_length(parse->jointree->fromlist) != 1)
@@ -118,8 +118,8 @@ optimize_minmax_aggregates(PlannerInfo *root, List *tlist, Path *best_path)
 	rel = find_base_rel(root, rtr->rtindex);
 
 	/*
-	 * Also reject cases with subplans or volatile functions in WHERE.
-	 * This may be overly paranoid, but it's not entirely clear if the
+	 * Also reject cases with subplans or volatile functions in WHERE. This
+	 * may be overly paranoid, but it's not entirely clear if the
 	 * transformation is safe then.
 	 */
 	if (contain_subplans(parse->jointree->quals) ||
@@ -127,17 +127,16 @@ optimize_minmax_aggregates(PlannerInfo *root, List *tlist, Path *best_path)
 		return NULL;
 
 	/*
-	 * Since this optimization is not applicable all that often, we want
-	 * to fall out before doing very much work if possible.  Therefore
-	 * we do the work in several passes.  The first pass scans the tlist
-	 * and HAVING qual to find all the aggregates and verify that
-	 * each of them is a MIN/MAX aggregate.  If that succeeds, the second
-	 * pass looks at each aggregate to see if it is optimizable; if so
-	 * we make an IndexPath describing how we would scan it.  (We do not
-	 * try to optimize if only some aggs are optimizable, since that means
-	 * we'll have to scan all the rows anyway.)  If that succeeds, we have
-	 * enough info to compare costs against the generic implementation.
-	 * Only if that test passes do we build a Plan.
+	 * Since this optimization is not applicable all that often, we want to
+	 * fall out before doing very much work if possible.  Therefore we do the
+	 * work in several passes.	The first pass scans the tlist and HAVING qual
+	 * to find all the aggregates and verify that each of them is a MIN/MAX
+	 * aggregate.  If that succeeds, the second pass looks at each aggregate
+	 * to see if it is optimizable; if so we make an IndexPath describing how
+	 * we would scan it.  (We do not try to optimize if only some aggs are
+	 * optimizable, since that means we'll have to scan all the rows anyway.)
+	 * If that succeeds, we have enough info to compare costs against the
+	 * generic implementation. Only if that test passes do we build a Plan.
 	 */
 
 	/* Pass 1: find all the aggregates */
@@ -161,9 +160,9 @@ optimize_minmax_aggregates(PlannerInfo *root, List *tlist, Path *best_path)
 	/*
 	 * Make the cost comparison.
 	 *
-	 * Note that we don't include evaluation cost of the tlist here;
-	 * this is OK since it isn't included in best_path's cost either,
-	 * and should be the same in either case.
+	 * Note that we don't include evaluation cost of the tlist here; this is OK
+	 * since it isn't included in best_path's cost either, and should be the
+	 * same in either case.
 	 */
 	cost_agg(&agg_p, root, AGG_PLAIN, list_length(aggs_list),
 			 0, 0,
@@ -174,13 +173,13 @@ optimize_minmax_aggregates(PlannerInfo *root, List *tlist, Path *best_path)
 		return NULL;			/* too expensive */
 
 	/*
-	 * OK, we are going to generate an optimized plan.  The first thing we
-	 * need to do is look for any non-variable WHERE clauses that query_planner
-	 * might have removed from the basic plan.  (Normal WHERE clauses will
-	 * be properly incorporated into the sub-plans by create_plan.)  If there
-	 * are any, they will be in a gating Result node atop the best_path.
-	 * They have to be incorporated into a gating Result in each sub-plan
-	 * in order to produce the semantically correct result.
+	 * OK, we are going to generate an optimized plan.	The first thing we
+	 * need to do is look for any non-variable WHERE clauses that
+	 * query_planner might have removed from the basic plan.  (Normal WHERE
+	 * clauses will be properly incorporated into the sub-plans by
+	 * create_plan.)  If there are any, they will be in a gating Result node
+	 * atop the best_path. They have to be incorporated into a gating Result
+	 * in each sub-plan in order to produce the semantically correct result.
 	 */
 	if (IsA(best_path, ResultPath))
 	{
@@ -275,8 +274,8 @@ find_minmax_aggs_walker(Node *node, List **context)
 		*context = lappend(*context, info);
 
 		/*
-		 * We need not recurse into the argument, since it can't contain
-		 * any aggregates.
+		 * We need not recurse into the argument, since it can't contain any
+		 * aggregates.
 		 */
 		return false;
 	}
@@ -325,8 +324,8 @@ build_minmax_path(PlannerInfo *root, RelOptInfo *rel, MinMaxAggInfo *info)
 
 		/*
 		 * Look for a match to one of the index columns.  (In a stupidly
-		 * designed index, there could be multiple matches, but we only
-		 * care about the first one.)
+		 * designed index, there could be multiple matches, but we only care
+		 * about the first one.)
 		 */
 		for (indexcol = 0; indexcol < index->ncolumns; indexcol++)
 		{
@@ -340,12 +339,12 @@ build_minmax_path(PlannerInfo *root, RelOptInfo *rel, MinMaxAggInfo *info)
 		/*
 		 * If the match is not at the first index column, we have to verify
 		 * that there are "x = something" restrictions on all the earlier
-		 * index columns.  Since we'll need the restrictclauses list anyway
-		 * to build the path, it's convenient to extract that first and then
-		 * look through it for the equality restrictions.
+		 * index columns.  Since we'll need the restrictclauses list anyway to
+		 * build the path, it's convenient to extract that first and then look
+		 * through it for the equality restrictions.
 		 */
 		restrictclauses = group_clauses_by_indexkey(index,
-													index->rel->baserestrictinfo,
+												index->rel->baserestrictinfo,
 													NIL,
 													NULL,
 													&found_clause);
@@ -354,8 +353,8 @@ build_minmax_path(PlannerInfo *root, RelOptInfo *rel, MinMaxAggInfo *info)
 			continue;			/* definitely haven't got enough */
 		for (prevcol = 0; prevcol < indexcol; prevcol++)
 		{
-			List   *rinfos = (List *) list_nth(restrictclauses, prevcol);
-			ListCell *ll;
+			List	   *rinfos = (List *) list_nth(restrictclauses, prevcol);
+			ListCell   *ll;
 
 			foreach(ll, rinfos)
 			{
@@ -453,9 +452,9 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info, List *constant_quals)
 	NullTest   *ntest;
 
 	/*
-	 * Generate a suitably modified query.  Much of the work here is
-	 * probably unnecessary in the normal case, but we want to make it look
-	 * good if someone tries to EXPLAIN the result.
+	 * Generate a suitably modified query.	Much of the work here is probably
+	 * unnecessary in the normal case, but we want to make it look good if
+	 * someone tries to EXPLAIN the result.
 	 */
 	memcpy(&subroot, root, sizeof(PlannerInfo));
 	subroot.parse = subparse = (Query *) copyObject(root->parse);
@@ -489,18 +488,17 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info, List *constant_quals)
 											  false, true);
 
 	/*
-	 * Generate the plan for the subquery.  We already have a Path for
-	 * the basic indexscan, but we have to convert it to a Plan and
-	 * attach a LIMIT node above it.  We might need a gating Result, too,
-	 * to handle any non-variable qual clauses.
+	 * Generate the plan for the subquery.	We already have a Path for the
+	 * basic indexscan, but we have to convert it to a Plan and attach a LIMIT
+	 * node above it.  We might need a gating Result, too, to handle any
+	 * non-variable qual clauses.
 	 *
-	 * Also we must add a "WHERE foo IS NOT NULL" restriction to the
-	 * indexscan, to be sure we don't return a NULL, which'd be contrary
-	 * to the standard behavior of MIN/MAX.  XXX ideally this should be
-	 * done earlier, so that the selectivity of the restriction could be
-	 * included in our cost estimates.  But that looks painful, and in
-	 * most cases the fraction of NULLs isn't high enough to change the
-	 * decision.
+	 * Also we must add a "WHERE foo IS NOT NULL" restriction to the indexscan,
+	 * to be sure we don't return a NULL, which'd be contrary to the standard
+	 * behavior of MIN/MAX.  XXX ideally this should be done earlier, so that
+	 * the selectivity of the restriction could be included in our cost
+	 * estimates.  But that looks painful, and in most cases the fraction of
+	 * NULLs isn't high enough to change the decision.
 	 */
 	plan = create_plan(&subroot, (Path *) info->path);
 
@@ -517,7 +515,7 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info, List *constant_quals)
 									copyObject(constant_quals),
 									plan);
 
-	plan = (Plan *) make_limit(plan, 
+	plan = (Plan *) make_limit(plan,
 							   subparse->limitOffset,
 							   subparse->limitCount,
 							   0, 1);
@@ -534,7 +532,7 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info, List *constant_quals)
  * Replace original aggregate calls with subplan output Params
  */
 static Node *
-replace_aggs_with_params_mutator(Node *node,  List **context)
+replace_aggs_with_params_mutator(Node *node, List **context)
 {
 	if (node == NULL)
 		return NULL;

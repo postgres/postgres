@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.24 2005/06/29 22:51:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.25 2005/10/15 02:49:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -354,8 +354,8 @@ pg_stat_get_backend_activity_start(PG_FUNCTION_ARGS)
 	result = beentry->activity_start_timestamp;
 
 	/*
-	 * No time recorded for start of current query -- this is the case if
-	 * the user hasn't enabled query-level stats collection.
+	 * No time recorded for start of current query -- this is the case if the
+	 * user hasn't enabled query-level stats collection.
 	 */
 	if (result == 0)
 		PG_RETURN_NULL();
@@ -366,7 +366,7 @@ pg_stat_get_backend_activity_start(PG_FUNCTION_ARGS)
 Datum
 pg_stat_get_backend_start(PG_FUNCTION_ARGS)
 {
-	int32       beid = PG_GETARG_INT32(0);
+	int32		beid = PG_GETARG_INT32(0);
 	TimestampTz result;
 	PgStat_StatBeEntry *beentry;
 
@@ -389,7 +389,7 @@ Datum
 pg_stat_get_backend_client_addr(PG_FUNCTION_ARGS)
 {
 	PgStat_StatBeEntry *beentry;
-	int32       beid;
+	int32		beid;
 	char		remote_host[NI_MAXHOST];
 	int			ret;
 
@@ -432,7 +432,7 @@ Datum
 pg_stat_get_backend_client_port(PG_FUNCTION_ARGS)
 {
 	PgStat_StatBeEntry *beentry;
-	int32       beid;
+	int32		beid;
 	char		remote_port[NI_MAXSERV];
 	int			ret;
 

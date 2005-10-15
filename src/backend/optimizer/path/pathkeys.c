@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.72 2005/08/27 22:13:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.73 2005/10/15 02:49:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,17 +33,17 @@
 
 static PathKeyItem *makePathKeyItem(Node *key, Oid sortop, bool checkType);
 static void generate_outer_join_implications(PlannerInfo *root,
-											 List *equi_key_set,
-											 Relids *relids);
+								 List *equi_key_set,
+								 Relids *relids);
 static void sub_generate_join_implications(PlannerInfo *root,
-										   List *equi_key_set, Relids *relids,
-										   Node *item1, Oid sortop1,
-										   Relids item1_relids);
+							   List *equi_key_set, Relids *relids,
+							   Node *item1, Oid sortop1,
+							   Relids item1_relids);
 static void process_implied_const_eq(PlannerInfo *root,
-									 List *equi_key_set, Relids *relids,
-									 Node *item1, Oid sortop1,
-									 Relids item1_relids,
-									 bool delete_it);
+						 List *equi_key_set, Relids *relids,
+						 Node *item1, Oid sortop1,
+						 Relids item1_relids,
+						 bool delete_it);
 static List *make_canonical_pathkey(PlannerInfo *root, PathKeyItem *item);
 static Var *find_indexkey_var(PlannerInfo *root, RelOptInfo *rel,
 				  AttrNumber varattno);
@@ -59,12 +59,11 @@ makePathKeyItem(Node *key, Oid sortop, bool checkType)
 	PathKeyItem *item = makeNode(PathKeyItem);
 
 	/*
-	 * Some callers pass expressions that are not necessarily of the same
-	 * type as the sort operator expects as input (for example when
-	 * dealing with an index that uses binary-compatible operators).  We
-	 * must relabel these with the correct type so that the key
-	 * expressions will be seen as equal() to expressions that have been
-	 * correctly labeled.
+	 * Some callers pass expressions that are not necessarily of the same type
+	 * as the sort operator expects as input (for example when dealing with an
+	 * index that uses binary-compatible operators).  We must relabel these
+	 * with the correct type so that the key expressions will be seen as
+	 * equal() to expressions that have been correctly labeled.
 	 */
 	if (checkType)
 	{
@@ -116,20 +115,19 @@ add_equijoined_keys(PlannerInfo *root, RestrictInfo *restrictinfo)
 		return;
 
 	/*
-	 * Our plan is to make a two-element set, then sweep through the
-	 * existing equijoin sets looking for matches to item1 or item2.  When
-	 * we find one, we remove that set from equi_key_list and union it
-	 * into our new set. When done, we add the new set to the front of
-	 * equi_key_list.
+	 * Our plan is to make a two-element set, then sweep through the existing
+	 * equijoin sets looking for matches to item1 or item2.  When we find one,
+	 * we remove that set from equi_key_list and union it into our new set.
+	 * When done, we add the new set to the front of equi_key_list.
 	 *
 	 * It may well be that the two items we're given are already known to be
 	 * equijoin-equivalent, in which case we don't need to change our data
 	 * structure.  If we find both of them in the same equivalence set to
 	 * start with, we can quit immediately.
 	 *
-	 * This is a standard UNION-FIND problem, for which there exist better
-	 * data structures than simple lists.  If this code ever proves to be
-	 * a bottleneck then it could be sped up --- but for now, simple is
+	 * This is a standard UNION-FIND problem, for which there exist better data
+	 * structures than simple lists.  If this code ever proves to be a
+	 * bottleneck then it could be sped up --- but for now, simple is
 	 * beautiful.
 	 */
 	newset = NIL;
@@ -148,8 +146,7 @@ add_equijoined_keys(PlannerInfo *root, RestrictInfo *restrictinfo)
 		if (item1here || item2here)
 		{
 			/*
-			 * If find both in same equivalence set, no need to do any
-			 * more
+			 * If find both in same equivalence set, no need to do any more
 			 */
 			if (item1here && item2here)
 			{
@@ -228,18 +225,18 @@ generate_implied_equalities(PlannerInfo *root)
 		int			i1;
 
 		/*
-		 * A set containing only two items cannot imply any equalities
-		 * beyond the one that created the set, so we can skip it ---
-		 * unless outer joins appear in the query.
+		 * A set containing only two items cannot imply any equalities beyond
+		 * the one that created the set, so we can skip it --- unless outer
+		 * joins appear in the query.
 		 */
 		if (nitems < 3 && !root->hasOuterJoins)
 			continue;
 
 		/*
-		 * Collect info about relids mentioned in each item.  For this
-		 * routine we only really care whether there are any at all in
-		 * each item, but process_implied_equality() needs the exact sets,
-		 * so we may as well pull them here.
+		 * Collect info about relids mentioned in each item.  For this routine
+		 * we only really care whether there are any at all in each item, but
+		 * process_implied_equality() needs the exact sets, so we may as well
+		 * pull them here.
 		 */
 		relids = (Relids *) palloc(nitems * sizeof(Relids));
 		have_consts = false;
@@ -258,9 +255,9 @@ generate_implied_equalities(PlannerInfo *root)
 		 * Match each item in the set with all that appear after it (it's
 		 * sufficient to generate A=B, need not process B=A too).
 		 *
-		 * A set containing only two items cannot imply any equalities
-		 * beyond the one that created the set, so we can skip this
-		 * processing in that case.
+		 * A set containing only two items cannot imply any equalities beyond the
+		 * one that created the set, so we can skip this processing in that
+		 * case.
 		 */
 		if (nitems >= 3)
 		{
@@ -346,7 +343,7 @@ generate_implied_equalities(PlannerInfo *root)
  * the time it gets here, the restriction will look like
  *		COALESCE(LEFTVAR, RIGHTVAR) = CONSTANT
  * and we will have a join clause LEFTVAR = RIGHTVAR that we can match the
- * COALESCE expression to.  In this situation we can push LEFTVAR = CONSTANT
+ * COALESCE expression to.	In this situation we can push LEFTVAR = CONSTANT
  * and RIGHTVAR = CONSTANT into the input relations, since any rows not
  * meeting these conditions cannot contribute to the join result.
  *
@@ -397,8 +394,8 @@ generate_outer_join_implications(PlannerInfo *root,
  */
 static void
 sub_generate_join_implications(PlannerInfo *root,
-								List *equi_key_set, Relids *relids,
-								Node *item1, Oid sortop1, Relids item1_relids)
+							   List *equi_key_set, Relids *relids,
+							   Node *item1, Oid sortop1, Relids item1_relids)
 
 {
 	ListCell   *l;
@@ -410,34 +407,36 @@ sub_generate_join_implications(PlannerInfo *root,
 	foreach(l, root->left_join_clauses)
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
-		Node   *leftop = get_leftop(rinfo->clause);
+		Node	   *leftop = get_leftop(rinfo->clause);
 
 		if (equal(leftop, item1) && rinfo->left_sortop == sortop1)
 		{
 			/*
-			 * Match, so find constant member(s) of set and generate
-			 * implied INNERVAR = CONSTANT
+			 * Match, so find constant member(s) of set and generate implied
+			 * INNERVAR = CONSTANT
 			 */
-			Node   *rightop = get_rightop(rinfo->clause);
+			Node	   *rightop = get_rightop(rinfo->clause);
 
 			process_implied_const_eq(root, equi_key_set, relids,
 									 rightop,
 									 rinfo->right_sortop,
 									 rinfo->right_relids,
 									 false);
+
 			/*
 			 * We can remove explicit tests of this outer-join qual, too,
-			 * since we now have tests forcing each of its sides
-			 * to the same value.
+			 * since we now have tests forcing each of its sides to the same
+			 * value.
 			 */
 			process_implied_equality(root,
 									 leftop, rightop,
 									 rinfo->left_sortop, rinfo->right_sortop,
 									 rinfo->left_relids, rinfo->right_relids,
 									 true);
+
 			/*
-			 * And recurse to see if we can deduce anything from
-			 * INNERVAR = CONSTANT
+			 * And recurse to see if we can deduce anything from INNERVAR =
+			 * CONSTANT
 			 */
 			sub_generate_join_implications(root, equi_key_set, relids,
 										   rightop,
@@ -450,34 +449,36 @@ sub_generate_join_implications(PlannerInfo *root,
 	foreach(l, root->right_join_clauses)
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
-		Node   *rightop = get_rightop(rinfo->clause);
+		Node	   *rightop = get_rightop(rinfo->clause);
 
 		if (equal(rightop, item1) && rinfo->right_sortop == sortop1)
 		{
 			/*
-			 * Match, so find constant member(s) of set and generate
-			 * implied INNERVAR = CONSTANT
+			 * Match, so find constant member(s) of set and generate implied
+			 * INNERVAR = CONSTANT
 			 */
-			Node   *leftop = get_leftop(rinfo->clause);
+			Node	   *leftop = get_leftop(rinfo->clause);
 
 			process_implied_const_eq(root, equi_key_set, relids,
 									 leftop,
 									 rinfo->left_sortop,
 									 rinfo->left_relids,
 									 false);
+
 			/*
 			 * We can remove explicit tests of this outer-join qual, too,
-			 * since we now have tests forcing each of its sides
-			 * to the same value.
+			 * since we now have tests forcing each of its sides to the same
+			 * value.
 			 */
 			process_implied_equality(root,
 									 leftop, rightop,
 									 rinfo->left_sortop, rinfo->right_sortop,
 									 rinfo->left_relids, rinfo->right_relids,
 									 true);
+
 			/*
-			 * And recurse to see if we can deduce anything from
-			 * INNERVAR = CONSTANT
+			 * And recurse to see if we can deduce anything from INNERVAR =
+			 * CONSTANT
 			 */
 			sub_generate_join_implications(root, equi_key_set, relids,
 										   leftop,
@@ -492,8 +493,8 @@ sub_generate_join_implications(PlannerInfo *root,
 	if (IsA(item1, CoalesceExpr))
 	{
 		CoalesceExpr *cexpr = (CoalesceExpr *) item1;
-		Node   *cfirst;
-		Node   *csecond;
+		Node	   *cfirst;
+		Node	   *csecond;
 
 		if (list_length(cexpr->args) != 2)
 			return;
@@ -501,26 +502,26 @@ sub_generate_join_implications(PlannerInfo *root,
 		csecond = (Node *) lsecond(cexpr->args);
 
 		/*
-		 * Examine each mergejoinable full-join clause, looking for a
-		 * clause of the form "x = y" matching the COALESCE(x,y) expression
+		 * Examine each mergejoinable full-join clause, looking for a clause
+		 * of the form "x = y" matching the COALESCE(x,y) expression
 		 */
 		foreach(l, root->full_join_clauses)
 		{
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
-			Node   *leftop = get_leftop(rinfo->clause);
-			Node   *rightop = get_rightop(rinfo->clause);
+			Node	   *leftop = get_leftop(rinfo->clause);
+			Node	   *rightop = get_rightop(rinfo->clause);
 
 			/*
-			 * We can assume the COALESCE() inputs are in the same order
-			 * as the join clause, since both were automatically generated
-			 * in the cases we care about.
+			 * We can assume the COALESCE() inputs are in the same order as
+			 * the join clause, since both were automatically generated in the
+			 * cases we care about.
 			 *
-			 * XXX currently this may fail to match in cross-type cases
-			 * because the COALESCE will contain typecast operations while
-			 * the join clause may not (if there is a cross-type mergejoin
-			 * operator available for the two column types).
-			 * Is it OK to strip implicit coercions from the COALESCE
-			 * arguments?  What of the sortops in such cases?
+			 * XXX currently this may fail to match in cross-type cases because
+			 * the COALESCE will contain typecast operations while the join
+			 * clause may not (if there is a cross-type mergejoin operator
+			 * available for the two column types). Is it OK to strip implicit
+			 * coercions from the COALESCE arguments?  What of the sortops in
+			 * such cases?
 			 */
 			if (equal(leftop, cfirst) &&
 				equal(rightop, csecond) &&
@@ -548,10 +549,11 @@ sub_generate_join_implications(PlannerInfo *root,
 										 sortop1,
 										 item1_relids,
 										 true);
+
 				/*
 				 * We can remove explicit tests of this outer-join qual, too,
-				 * since we now have tests forcing each of its sides
-				 * to the same value.
+				 * since we now have tests forcing each of its sides to the
+				 * same value.
 				 */
 				process_implied_equality(root,
 										 leftop, rightop,
@@ -560,9 +562,10 @@ sub_generate_join_implications(PlannerInfo *root,
 										 rinfo->left_relids,
 										 rinfo->right_relids,
 										 true);
+
 				/*
-				 * And recurse to see if we can deduce anything from
-				 * LEFTVAR = CONSTANT
+				 * And recurse to see if we can deduce anything from LEFTVAR =
+				 * CONSTANT
 				 */
 				sub_generate_join_implications(root, equi_key_set, relids,
 											   leftop,
@@ -700,19 +703,19 @@ canonicalize_pathkeys(PlannerInfo *root, List *pathkeys)
 		List	   *cpathkey;
 
 		/*
-		 * It's sufficient to look at the first entry in the sublist; if
-		 * there are more entries, they're already part of an equivalence
-		 * set by definition.
+		 * It's sufficient to look at the first entry in the sublist; if there
+		 * are more entries, they're already part of an equivalence set by
+		 * definition.
 		 */
 		Assert(pathkey != NIL);
 		item = (PathKeyItem *) linitial(pathkey);
 		cpathkey = make_canonical_pathkey(root, item);
 
 		/*
-		 * Eliminate redundant ordering requests --- ORDER BY A,A is the
-		 * same as ORDER BY A.	We want to check this only after we have
-		 * canonicalized the keys, so that equivalent-key knowledge is
-		 * used when deciding if an item is redundant.
+		 * Eliminate redundant ordering requests --- ORDER BY A,A is the same
+		 * as ORDER BY A.  We want to check this only after we have
+		 * canonicalized the keys, so that equivalent-key knowledge is used
+		 * when deciding if an item is redundant.
 		 */
 		new_pathkeys = list_append_unique_ptr(new_pathkeys, cpathkey);
 	}
@@ -769,8 +772,8 @@ compare_pathkeys(List *keys1, List *keys2)
 		List	   *subkey2 = (List *) lfirst(key2);
 
 		/*
-		 * XXX would like to check that we've been given canonicalized
-		 * input, but PlannerInfo not accessible here...
+		 * XXX would like to check that we've been given canonicalized input,
+		 * but PlannerInfo not accessible here...
 		 */
 #ifdef NOT_USED
 		Assert(list_member_ptr(root->equi_key_list, subkey1));
@@ -778,10 +781,10 @@ compare_pathkeys(List *keys1, List *keys2)
 #endif
 
 		/*
-		 * We will never have two subkeys where one is a subset of the
-		 * other, because of the canonicalization process.	Either they
-		 * are equal or they ain't.  Furthermore, we only need pointer
-		 * comparison to detect equality.
+		 * We will never have two subkeys where one is a subset of the other,
+		 * because of the canonicalization process.  Either they are equal or
+		 * they ain't.  Furthermore, we only need pointer comparison to detect
+		 * equality.
 		 */
 		if (subkey1 != subkey2)
 			return PATHKEYS_DIFFERENT;	/* no need to keep looking */
@@ -789,9 +792,9 @@ compare_pathkeys(List *keys1, List *keys2)
 
 	/*
 	 * If we reached the end of only one list, the other is longer and
-	 * therefore not a subset.	(We assume the additional sublist(s) of
-	 * the other list are not NIL --- no pathkey list should ever have a
-	 * NIL sublist.)
+	 * therefore not a subset.	(We assume the additional sublist(s) of the
+	 * other list are not NIL --- no pathkey list should ever have a NIL
+	 * sublist.)
 	 */
 	if (key1 == NULL && key2 == NULL)
 		return PATHKEYS_EQUAL;
@@ -840,8 +843,8 @@ get_cheapest_path_for_pathkeys(List *paths, List *pathkeys,
 		Path	   *path = (Path *) lfirst(l);
 
 		/*
-		 * Since cost comparison is a lot cheaper than pathkey comparison,
-		 * do that first.  (XXX is that still true?)
+		 * Since cost comparison is a lot cheaper than pathkey comparison, do
+		 * that first.	(XXX is that still true?)
 		 */
 		if (matched_path != NULL &&
 			compare_path_costs(matched_path, path, cost_criterion) <= 0)
@@ -879,11 +882,11 @@ get_cheapest_fractional_path_for_pathkeys(List *paths,
 		Path	   *path = (Path *) lfirst(l);
 
 		/*
-		 * Since cost comparison is a lot cheaper than pathkey comparison,
-		 * do that first.
+		 * Since cost comparison is a lot cheaper than pathkey comparison, do
+		 * that first.
 		 */
 		if (matched_path != NULL &&
-		compare_fractional_path_costs(matched_path, path, fraction) <= 0)
+			compare_fractional_path_costs(matched_path, path, fraction) <= 0)
 			continue;
 
 		if (pathkeys_contained_in(pathkeys, path->pathkeys))
@@ -954,8 +957,8 @@ build_index_pathkeys(PlannerInfo *root,
 		cpathkey = make_canonical_pathkey(root, item);
 
 		/*
-		 * Eliminate redundant ordering info; could happen if query is
-		 * such that index keys are equijoined...
+		 * Eliminate redundant ordering info; could happen if query is such
+		 * that index keys are equijoined...
 		 */
 		retval = list_append_unique_ptr(retval, cpathkey);
 
@@ -1003,7 +1006,7 @@ find_indexkey_var(PlannerInfo *root, RelOptInfo *rel, AttrNumber varattno)
 /*
  * convert_subquery_pathkeys
  *	  Build a pathkeys list that describes the ordering of a subquery's
- *	  result, in the terms of the outer query.  This is essentially a
+ *	  result, in the terms of the outer query.	This is essentially a
  *	  task of conversion.
  *
  * 'rel': outer query's RelOptInfo for the subquery relation.
@@ -1033,19 +1036,18 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 
 		/*
 		 * The sub_pathkey could contain multiple elements (representing
-		 * knowledge that multiple items are effectively equal).  Each
-		 * element might match none, one, or more of the output columns
-		 * that are visible to the outer query.  This means we may have
-		 * multiple possible representations of the sub_pathkey in the
-		 * context of the outer query.	Ideally we would generate them all
-		 * and put them all into a pathkey list of the outer query,
-		 * thereby propagating equality knowledge up to the outer query.
-		 * Right now we cannot do so, because the outer query's canonical
-		 * pathkey sets are already frozen when this is called.  Instead
-		 * we prefer the one that has the highest "score" (number of
-		 * canonical pathkey peers, plus one if it matches the outer
-		 * query_pathkeys). This is the most likely to be useful in the
-		 * outer query.
+		 * knowledge that multiple items are effectively equal).  Each element
+		 * might match none, one, or more of the output columns that are
+		 * visible to the outer query.	This means we may have multiple
+		 * possible representations of the sub_pathkey in the context of the
+		 * outer query.  Ideally we would generate them all and put them all
+		 * into a pathkey list of the outer query, thereby propagating
+		 * equality knowledge up to the outer query. Right now we cannot do
+		 * so, because the outer query's canonical pathkey sets are already
+		 * frozen when this is called.	Instead we prefer the one that has the
+		 * highest "score" (number of canonical pathkey peers, plus one if it
+		 * matches the outer query_pathkeys). This is the most likely to be
+		 * useful in the outer query.
 		 */
 		foreach(j, sub_pathkey)
 		{
@@ -1144,13 +1146,13 @@ build_join_pathkeys(PlannerInfo *root,
 		return NIL;
 
 	/*
-	 * This used to be quite a complex bit of code, but now that all
-	 * pathkey sublists start out life canonicalized, we don't have to do
-	 * a darn thing here!  The inner-rel vars we used to need to add are
-	 * *already* part of the outer pathkey!
+	 * This used to be quite a complex bit of code, but now that all pathkey
+	 * sublists start out life canonicalized, we don't have to do a darn thing
+	 * here!  The inner-rel vars we used to need to add are *already* part of
+	 * the outer pathkey!
 	 *
-	 * We do, however, need to truncate the pathkeys list, since it may
-	 * contain pathkeys that were useful for forming this joinrel but are
+	 * We do, however, need to truncate the pathkeys list, since it may contain
+	 * pathkeys that were useful for forming this joinrel but are
 	 * uninteresting to higher levels.
 	 */
 	return truncate_useless_pathkeys(root, joinrel, outer_pathkeys);
@@ -1289,22 +1291,20 @@ find_mergeclauses_for_pathkeys(PlannerInfo *root,
 
 		/*
 		 * We can match a pathkey against either left or right side of any
-		 * mergejoin clause.  (We examine both sides since we aren't told
-		 * if the given pathkeys are for inner or outer input path; no
-		 * confusion is possible.)	Furthermore, if there are multiple
-		 * matching clauses, take them all.  In plain inner-join scenarios
-		 * we expect only one match, because redundant-mergeclause
-		 * elimination will have removed any redundant mergeclauses from
-		 * the input list. However, in outer-join scenarios there might be
-		 * multiple matches. An example is
+		 * mergejoin clause.  (We examine both sides since we aren't told if
+		 * the given pathkeys are for inner or outer input path; no confusion
+		 * is possible.)  Furthermore, if there are multiple matching clauses,
+		 * take them all.  In plain inner-join scenarios we expect only one
+		 * match, because redundant-mergeclause elimination will have removed
+		 * any redundant mergeclauses from the input list. However, in
+		 * outer-join scenarios there might be multiple matches. An example is
 		 *
-		 * select * from a full join b on a.v1 = b.v1 and a.v2 = b.v2 and
-		 * a.v1 = b.v2;
+		 * select * from a full join b on a.v1 = b.v1 and a.v2 = b.v2 and a.v1 =
+		 * b.v2;
 		 *
 		 * Given the pathkeys ((a.v1), (a.v2)) it is okay to return all three
-		 * clauses (in the order a.v1=b.v1, a.v1=b.v2, a.v2=b.v2) and
-		 * indeed we *must* do so or we will be unable to form a valid
-		 * plan.
+		 * clauses (in the order a.v1=b.v1, a.v1=b.v2, a.v2=b.v2) and indeed
+		 * we *must* do so or we will be unable to form a valid plan.
 		 */
 		foreach(j, restrictinfos)
 		{
@@ -1325,15 +1325,15 @@ find_mergeclauses_for_pathkeys(PlannerInfo *root,
 
 		/*
 		 * If we didn't find a mergeclause, we're done --- any additional
-		 * sort-key positions in the pathkeys are useless.	(But we can
-		 * still mergejoin if we found at least one mergeclause.)
+		 * sort-key positions in the pathkeys are useless.	(But we can still
+		 * mergejoin if we found at least one mergeclause.)
 		 */
 		if (matched_restrictinfos == NIL)
 			break;
 
 		/*
-		 * If we did find usable mergeclause(s) for this sort-key
-		 * position, add them to result list.
+		 * If we did find usable mergeclause(s) for this sort-key position,
+		 * add them to result list.
 		 */
 		mergeclauses = list_concat(mergeclauses, matched_restrictinfos);
 	}
@@ -1390,14 +1390,13 @@ make_pathkeys_for_mergeclauses(PlannerInfo *root,
 		}
 
 		/*
-		 * When we are given multiple merge clauses, it's possible that
-		 * some clauses refer to the same vars as earlier clauses. There's
-		 * no reason for us to specify sort keys like (A,B,A) when (A,B)
-		 * will do --- and adding redundant sort keys makes add_path think
-		 * that this sort order is different from ones that are really the
-		 * same, so don't do it.  Since we now have a canonicalized
-		 * pathkey, a simple ptrMember test is sufficient to detect
-		 * redundant keys.
+		 * When we are given multiple merge clauses, it's possible that some
+		 * clauses refer to the same vars as earlier clauses. There's no
+		 * reason for us to specify sort keys like (A,B,A) when (A,B) will do
+		 * --- and adding redundant sort keys makes add_path think that this
+		 * sort order is different from ones that are really the same, so
+		 * don't do it.  Since we now have a canonicalized pathkey, a simple
+		 * ptrMember test is sufficient to detect redundant keys.
 		 */
 		pathkeys = list_append_unique_ptr(pathkeys, pathkey);
 	}
@@ -1447,8 +1446,8 @@ pathkeys_useful_for_merging(PlannerInfo *root, RelOptInfo *rel, List *pathkeys)
 			cache_mergeclause_pathkeys(root, restrictinfo);
 
 			/*
-			 * We can compare canonical pathkey sublists by simple
-			 * pointer equality; see compare_pathkeys.
+			 * We can compare canonical pathkey sublists by simple pointer
+			 * equality; see compare_pathkeys.
 			 */
 			if (pathkey == restrictinfo->left_pathkey ||
 				pathkey == restrictinfo->right_pathkey)
@@ -1460,8 +1459,8 @@ pathkeys_useful_for_merging(PlannerInfo *root, RelOptInfo *rel, List *pathkeys)
 
 		/*
 		 * If we didn't find a mergeclause, we're done --- any additional
-		 * sort-key positions in the pathkeys are useless.	(But we can
-		 * still mergejoin if we found at least one mergeclause.)
+		 * sort-key positions in the pathkeys are useless.	(But we can still
+		 * mergejoin if we found at least one mergeclause.)
 		 */
 		if (matched)
 			useful++;

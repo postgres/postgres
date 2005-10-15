@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.30 2005/08/01 20:31:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.31 2005/10/15 02:49:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,8 +143,8 @@ pull_up_subqueries(PlannerInfo *root, Node *jtnode, bool below_outer_join)
 		Query	   *subquery = rte->subquery;
 
 		/*
-		 * Is this a subquery RTE, and if so, is the subquery simple
-		 * enough to pull up?  (If not, do nothing at this node.)
+		 * Is this a subquery RTE, and if so, is the subquery simple enough to
+		 * pull up?  (If not, do nothing at this node.)
 		 *
 		 * If we are inside an outer join, only pull up subqueries whose
 		 * targetlists are nullable --- otherwise substituting their tlist
@@ -153,8 +153,8 @@ pull_up_subqueries(PlannerInfo *root, Node *jtnode, bool below_outer_join)
 		 *
 		 * XXX This could be improved by generating pseudo-variables for such
 		 * expressions; we'd have to figure out how to get the pseudo-
-		 * variables evaluated at the right place in the modified plan
-		 * tree. Fix it someday.
+		 * variables evaluated at the right place in the modified plan tree.
+		 * Fix it someday.
 		 */
 		if (rte->rtekind == RTE_SUBQUERY &&
 			is_simple_subquery(subquery) &&
@@ -166,53 +166,53 @@ pull_up_subqueries(PlannerInfo *root, Node *jtnode, bool below_outer_join)
 			ListCell   *rt;
 
 			/*
-			 * Need a modifiable copy of the subquery to hack on.  Even if
-			 * we didn't sometimes choose not to pull up below, we must do
-			 * this to avoid problems if the same subquery is referenced
-			 * from multiple jointree items (which can't happen normally,
-			 * but might after rule rewriting).
+			 * Need a modifiable copy of the subquery to hack on.  Even if we
+			 * didn't sometimes choose not to pull up below, we must do this
+			 * to avoid problems if the same subquery is referenced from
+			 * multiple jointree items (which can't happen normally, but might
+			 * after rule rewriting).
 			 */
 			subquery = copyObject(subquery);
 
 			/*
 			 * Create a PlannerInfo data structure for this subquery.
 			 *
-			 * NOTE: the next few steps should match the first processing
-			 * in subquery_planner().  Can we refactor to avoid code
-			 * duplication, or would that just make things uglier?
+			 * NOTE: the next few steps should match the first processing in
+			 * subquery_planner().	Can we refactor to avoid code duplication,
+			 * or would that just make things uglier?
 			 */
 			subroot = makeNode(PlannerInfo);
 			subroot->parse = subquery;
 
 			/*
-			 * Pull up any IN clauses within the subquery's WHERE, so that
-			 * we don't leave unoptimized INs behind.
+			 * Pull up any IN clauses within the subquery's WHERE, so that we
+			 * don't leave unoptimized INs behind.
 			 */
 			subroot->in_info_list = NIL;
 			if (subquery->hasSubLinks)
 				subquery->jointree->quals = pull_up_IN_clauses(subroot,
-											  subquery->jointree->quals);
+												  subquery->jointree->quals);
 
 			/*
 			 * Recursively pull up the subquery's subqueries, so that this
 			 * routine's processing is complete for its jointree and
 			 * rangetable.
 			 *
-			 * Note: 'false' is correct here even if we are within an outer
-			 * join in the upper query; the lower query starts with a
-			 * clean slate for outer-join semantics.
+			 * Note: 'false' is correct here even if we are within an outer join
+			 * in the upper query; the lower query starts with a clean slate
+			 * for outer-join semantics.
 			 */
 			subquery->jointree = (FromExpr *)
 				pull_up_subqueries(subroot, (Node *) subquery->jointree,
 								   false);
 
 			/*
-			 * Now we must recheck whether the subquery is still simple
-			 * enough to pull up.  If not, abandon processing it.
+			 * Now we must recheck whether the subquery is still simple enough
+			 * to pull up.	If not, abandon processing it.
 			 *
-			 * We don't really need to recheck all the conditions involved,
-			 * but it's easier just to keep this "if" looking the same as
-			 * the one above.
+			 * We don't really need to recheck all the conditions involved, but
+			 * it's easier just to keep this "if" looking the same as the one
+			 * above.
 			 */
 			if (is_simple_subquery(subquery) &&
 				(!below_outer_join || has_nullable_targetlist(subquery)))
@@ -224,10 +224,10 @@ pull_up_subqueries(PlannerInfo *root, Node *jtnode, bool below_outer_join)
 				/*
 				 * Give up, return unmodified RangeTblRef.
 				 *
-				 * Note: The work we just did will be redone when the
-				 * subquery gets planned on its own.  Perhaps we could
-				 * avoid that by storing the modified subquery back into
-				 * the rangetable, but I'm not gonna risk it now.
+				 * Note: The work we just did will be redone when the subquery
+				 * gets planned on its own.  Perhaps we could avoid that by
+				 * storing the modified subquery back into the rangetable, but
+				 * I'm not gonna risk it now.
 				 */
 				return jtnode;
 			}
@@ -242,8 +242,8 @@ pull_up_subqueries(PlannerInfo *root, Node *jtnode, bool below_outer_join)
 			OffsetVarNodes((Node *) subroot->in_info_list, rtoffset, 0);
 
 			/*
-			 * Upper-level vars in subquery are now one level closer to
-			 * their parent than before.
+			 * Upper-level vars in subquery are now one level closer to their
+			 * parent than before.
 			 */
 			IncrementVarSublevelsUp((Node *) subquery, -1, 1);
 			IncrementVarSublevelsUp((Node *) subroot->in_info_list, -1, 1);
@@ -251,9 +251,8 @@ pull_up_subqueries(PlannerInfo *root, Node *jtnode, bool below_outer_join)
 			/*
 			 * Replace all of the top query's references to the subquery's
 			 * outputs with copies of the adjusted subtlist items, being
-			 * careful not to replace any of the jointree structure.
-			 * (This'd be a lot cleaner if we could use
-			 * query_tree_mutator.)
+			 * careful not to replace any of the jointree structure. (This'd
+			 * be a lot cleaner if we could use query_tree_mutator.)
 			 */
 			subtlist = subquery->targetList;
 			parse->targetList = (List *)
@@ -284,9 +283,9 @@ pull_up_subqueries(PlannerInfo *root, Node *jtnode, bool below_outer_join)
 			}
 
 			/*
-			 * Now append the adjusted rtable entries to upper query. (We
-			 * hold off until after fixing the upper rtable entries; no
-			 * point in running that code on the subquery ones too.)
+			 * Now append the adjusted rtable entries to upper query. (We hold
+			 * off until after fixing the upper rtable entries; no point in
+			 * running that code on the subquery ones too.)
 			 */
 			parse->rtable = list_concat(parse->rtable, subquery->rtable);
 
@@ -295,8 +294,8 @@ pull_up_subqueries(PlannerInfo *root, Node *jtnode, bool below_outer_join)
 			 * already adjusted the marker values, so just list_concat the
 			 * list.)
 			 *
-			 * Executor can't handle multiple FOR UPDATE/SHARE/NOWAIT flags,
-			 * so complain if they are valid but different
+			 * Executor can't handle multiple FOR UPDATE/SHARE/NOWAIT flags, so
+			 * complain if they are valid but different
 			 */
 			if (parse->rowMarks && subquery->rowMarks)
 			{
@@ -307,7 +306,7 @@ pull_up_subqueries(PlannerInfo *root, Node *jtnode, bool below_outer_join)
 				if (parse->rowNoWait != subquery->rowNoWait)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("cannot use both wait and NOWAIT in one query")));
+					errmsg("cannot use both wait and NOWAIT in one query")));
 			}
 			parse->rowMarks = list_concat(parse->rowMarks, subquery->rowMarks);
 			if (subquery->rowMarks)
@@ -317,10 +316,9 @@ pull_up_subqueries(PlannerInfo *root, Node *jtnode, bool below_outer_join)
 			}
 
 			/*
-			 * We also have to fix the relid sets of any parent
-			 * InClauseInfo nodes.	(This could perhaps be done by
-			 * ResolveNew, but it would clutter that routine's API
-			 * unreasonably.)
+			 * We also have to fix the relid sets of any parent InClauseInfo
+			 * nodes.  (This could perhaps be done by ResolveNew, but it would
+			 * clutter that routine's API unreasonably.)
 			 */
 			if (root->in_info_list)
 			{
@@ -392,8 +390,8 @@ pull_up_subqueries(PlannerInfo *root, Node *jtnode, bool below_outer_join)
 			case JOIN_UNION:
 
 				/*
-				 * This is where we fail if upper levels of planner
-				 * haven't rewritten UNION JOIN as an Append ...
+				 * This is where we fail if upper levels of planner haven't
+				 * rewritten UNION JOIN as an Append ...
 				 */
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -436,8 +434,8 @@ is_simple_subquery(Query *subquery)
 		return false;
 
 	/*
-	 * Can't pull up a subquery involving grouping, aggregation, sorting,
-	 * or limiting.
+	 * Can't pull up a subquery involving grouping, aggregation, sorting, or
+	 * limiting.
 	 */
 	if (subquery->hasAggs ||
 		subquery->groupClause ||
@@ -449,21 +447,20 @@ is_simple_subquery(Query *subquery)
 		return false;
 
 	/*
-	 * Don't pull up a subquery that has any set-returning functions in
-	 * its targetlist.	Otherwise we might well wind up inserting
-	 * set-returning functions into places where they mustn't go, such as
-	 * quals of higher queries.
+	 * Don't pull up a subquery that has any set-returning functions in its
+	 * targetlist.	Otherwise we might well wind up inserting set-returning
+	 * functions into places where they mustn't go, such as quals of higher
+	 * queries.
 	 */
 	if (expression_returns_set((Node *) subquery->targetList))
 		return false;
 
 	/*
 	 * Hack: don't try to pull up a subquery with an empty jointree.
-	 * query_planner() will correctly generate a Result plan for a
-	 * jointree that's totally empty, but I don't think the right things
-	 * happen if an empty FromExpr appears lower down in a jointree. Not
-	 * worth working hard on this, just to collapse SubqueryScan/Result
-	 * into Result...
+	 * query_planner() will correctly generate a Result plan for a jointree
+	 * that's totally empty, but I don't think the right things happen if an
+	 * empty FromExpr appears lower down in a jointree. Not worth working hard
+	 * on this, just to collapse SubqueryScan/Result into Result...
 	 */
 	if (subquery->jointree->fromlist == NIL)
 		return false;
@@ -545,8 +542,8 @@ resolvenew_in_jointree(Node *jtnode, int varno,
 							  subtlist, CMD_SELECT, 0);
 
 		/*
-		 * We don't bother to update the colvars list, since it won't be
-		 * used again ...
+		 * We don't bother to update the colvars list, since it won't be used
+		 * again ...
 		 */
 	}
 	else
@@ -583,14 +580,13 @@ reduce_outer_joins(PlannerInfo *root)
 	reduce_outer_joins_state *state;
 
 	/*
-	 * To avoid doing strictness checks on more quals than necessary, we
-	 * want to stop descending the jointree as soon as there are no outer
-	 * joins below our current point.  This consideration forces a
-	 * two-pass process.  The first pass gathers information about which
-	 * base rels appear below each side of each join clause, and about
-	 * whether there are outer join(s) below each side of each join
-	 * clause. The second pass examines qual clauses and changes join
-	 * types as it descends the tree.
+	 * To avoid doing strictness checks on more quals than necessary, we want
+	 * to stop descending the jointree as soon as there are no outer joins
+	 * below our current point.  This consideration forces a two-pass process.
+	 * The first pass gathers information about which base rels appear below
+	 * each side of each join clause, and about whether there are outer
+	 * join(s) below each side of each join clause. The second pass examines
+	 * qual clauses and changes join types as it descends the tree.
 	 */
 	state = reduce_outer_joins_pass1((Node *) root->parse->jointree);
 
@@ -768,12 +764,11 @@ reduce_outer_joins_pass2(Node *jtnode,
 
 			/*
 			 * If this join is (now) inner, we can add any nonnullability
-			 * constraints its quals provide to those we got from above.
-			 * But if it is outer, we can only pass down the local
-			 * constraints into the nullable side, because an outer join
-			 * never eliminates any rows from its non-nullable side.  If
-			 * it's a FULL join then it doesn't eliminate anything from
-			 * either side.
+			 * constraints its quals provide to those we got from above. But
+			 * if it is outer, we can only pass down the local constraints
+			 * into the nullable side, because an outer join never eliminates
+			 * any rows from its non-nullable side.  If it's a FULL join then
+			 * it doesn't eliminate anything from either side.
 			 */
 			if (jointype != JOIN_FULL)
 			{
@@ -782,8 +777,7 @@ reduce_outer_joins_pass2(Node *jtnode,
 													nonnullable_rels);
 			}
 			else
-				local_nonnullable = NULL;		/* no use in calculating
-												 * it */
+				local_nonnullable = NULL;		/* no use in calculating it */
 
 			if (left_state->contains_outer)
 			{
@@ -886,8 +880,8 @@ find_nonnullable_rels(Node *node, bool top_level)
 		NullTest   *expr = (NullTest *) node;
 
 		/*
-		 * IS NOT NULL can be considered strict, but only at top level;
-		 * else we might have something like NOT (x IS NOT NULL).
+		 * IS NOT NULL can be considered strict, but only at top level; else
+		 * we might have something like NOT (x IS NOT NULL).
 		 */
 		if (top_level && expr->nulltesttype == IS_NOT_NULL)
 			result = find_nonnullable_rels((Node *) expr->arg, false);
@@ -960,10 +954,10 @@ simplify_jointree(PlannerInfo *root, Node *jtnode)
 			if (child && IsA(child, FromExpr))
 			{
 				/*
-				 * Yes, so do we want to merge it into parent?	Always do
-				 * so if child has just one element (since that doesn't
-				 * make the parent's list any longer).  Otherwise merge if
-				 * the resulting join list would be no longer than
+				 * Yes, so do we want to merge it into parent?	Always do so
+				 * if child has just one element (since that doesn't make the
+				 * parent's list any longer).  Otherwise merge if the
+				 * resulting join list would be no longer than
 				 * from_collapse_limit.
 				 */
 				FromExpr   *subf = (FromExpr *) child;
@@ -976,9 +970,9 @@ simplify_jointree(PlannerInfo *root, Node *jtnode)
 					newlist = list_concat(newlist, subf->fromlist);
 
 					/*
-					 * By now, the quals have been converted to
-					 * implicit-AND lists, so we just need to join the
-					 * lists.  NOTE: we put the pulled-up quals first.
+					 * By now, the quals have been converted to implicit-AND
+					 * lists, so we just need to join the lists.  NOTE: we put
+					 * the pulled-up quals first.
 					 */
 					f->quals = (Node *) list_concat((List *) subf->quals,
 													(List *) f->quals);
@@ -1000,8 +994,8 @@ simplify_jointree(PlannerInfo *root, Node *jtnode)
 		j->rarg = simplify_jointree(root, j->rarg);
 
 		/*
-		 * If it is an outer join, we must not flatten it.	An inner join
-		 * is semantically equivalent to a FromExpr; we convert it to one,
+		 * If it is an outer join, we must not flatten it.	An inner join is
+		 * semantically equivalent to a FromExpr; we convert it to one,
 		 * allowing it to be flattened into its parent, if the resulting
 		 * FromExpr would have no more than join_collapse_limit members.
 		 */

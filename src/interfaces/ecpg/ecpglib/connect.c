@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.25 2005/04/14 10:08:57 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.26 2005/10/15 02:49:47 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -16,7 +16,6 @@
 static pthread_mutex_t connections_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_key_t actual_connection_key;
 static pthread_once_t actual_connection_key_once = PTHREAD_ONCE_INIT;
-
 #endif
 static struct connection *actual_connection = NULL;
 static struct connection *all_connections = NULL;
@@ -38,10 +37,13 @@ ecpg_get_connection_nr(const char *connection_name)
 	{
 #ifdef ENABLE_THREAD_SAFETY
 		ret = pthread_getspecific(actual_connection_key);
-		/* if no connection in TSD for this thread, get the global default connection
-		 * and hope the user knows what they're doing (i.e. using their own mutex to
-		 * protect that connection from concurrent accesses */
-		if(NULL == ret)
+
+		/*
+		 * if no connection in TSD for this thread, get the global default
+		 * connection and hope the user knows what they're doing (i.e. using
+		 * their own mutex to protect that connection from concurrent accesses
+		 */
+		if (NULL == ret)
 		{
 			ECPGlog("no TSD connection, going for global\n");
 			ret = actual_connection;
@@ -76,13 +78,16 @@ ECPGget_connection(const char *connection_name)
 	{
 #ifdef ENABLE_THREAD_SAFETY
 		ret = pthread_getspecific(actual_connection_key);
-		/* if no connection in TSD for this thread, get the global default connection
-         * and hope the user knows what they're doing (i.e. using their own mutex to
-         * protect that connection from concurrent accesses */
-        if(NULL == ret)
+
+		/*
+		 * if no connection in TSD for this thread, get the global default
+		 * connection and hope the user knows what they're doing (i.e. using
+		 * their own mutex to protect that connection from concurrent accesses
+		 */
+		if (NULL == ret)
 		{
 			ECPGlog("no TSD connection here either, using global\n");
-            ret = actual_connection;
+			ret = actual_connection;
 		}
 		else
 			ECPGlog("got TSD connection\n");
@@ -275,8 +280,8 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 
 		/*
 		 * Informix uses an environment variable DBPATH that overrides the
-		 * connection parameters given here. We do the same with PG_DBPATH
-		 * as the syntax is different.
+		 * connection parameters given here. We do the same with PG_DBPATH as
+		 * the syntax is different.
 		 */
 		envname = getenv("PG_DBPATH");
 		if (envname)
@@ -294,20 +299,20 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 		connection_name = "DEFAULT";
 
 	if (dbname != NULL)
-	{	
+	{
 		/* get the detail information out of dbname */
 		if (strchr(dbname, '@') != NULL)
 		{
 			/* old style: dbname[@server][:port] */
 			tmp = strrchr(dbname, ':');
-			if (tmp != NULL)		/* port number given */
+			if (tmp != NULL)	/* port number given */
 			{
 				port = strdup(tmp + 1);
 				*tmp = '\0';
 			}
 
 			tmp = strrchr(dbname, '@');
-			if (tmp != NULL)		/* host name given */
+			if (tmp != NULL)	/* host name given */
 			{
 				host = strdup(tmp + 1);
 				*tmp = '\0';

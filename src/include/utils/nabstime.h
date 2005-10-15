@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/nabstime.h,v 1.47 2005/07/22 03:46:34 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/nabstime.h,v 1.48 2005/10/15 02:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,6 +162,6 @@ extern Datum timeofday(PG_FUNCTION_ARGS);
 
 /* non-fmgr-callable support routines */
 extern AbsoluteTime GetCurrentAbsoluteTime(void);
-extern void abstime2tm(AbsoluteTime time, int *tzp, struct pg_tm *tm, char **tzn);
+extern void abstime2tm(AbsoluteTime time, int *tzp, struct pg_tm * tm, char **tzn);
 
 #endif   /* NABSTIME_H */

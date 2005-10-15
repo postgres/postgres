@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/slru.h,v 1.13 2005/08/20 23:26:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/slru.h,v 1.14 2005/10/15 02:49:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,9 +42,9 @@ typedef struct SlruSharedData
 
 	/*
 	 * Info for each buffer slot.  Page number is undefined when status is
-	 * EMPTY.  lru_count is essentially the number of page switches since
-	 * last use of this page; the page with highest lru_count is the best
-	 * candidate to replace.
+	 * EMPTY.  lru_count is essentially the number of page switches since last
+	 * use of this page; the page with highest lru_count is the best candidate
+	 * to replace.
 	 */
 	char	   *page_buffer[NUM_SLRU_BUFFERS];
 	SlruPageStatus page_status[NUM_SLRU_BUFFERS];
@@ -53,9 +53,9 @@ typedef struct SlruSharedData
 	LWLockId	buffer_locks[NUM_SLRU_BUFFERS];
 
 	/*
-	 * latest_page_number is the page number of the current end of the
-	 * log; this is not critical data, since we use it only to avoid
-	 * swapping out the latest page.
+	 * latest_page_number is the page number of the current end of the log;
+	 * this is not critical data, since we use it only to avoid swapping out
+	 * the latest page.
 	 */
 	int			latest_page_number;
 } SlruSharedData;
@@ -71,21 +71,21 @@ typedef struct SlruCtlData
 	SlruShared	shared;
 
 	/*
-	 * This flag tells whether to fsync writes (true for pg_clog, false
-	 * for pg_subtrans).
+	 * This flag tells whether to fsync writes (true for pg_clog, false for
+	 * pg_subtrans).
 	 */
 	bool		do_fsync;
 
 	/*
-	 * Decide which of two page numbers is "older" for truncation
-	 * purposes. We need to use comparison of TransactionIds here in order
-	 * to do the right thing with wraparound XID arithmetic.
+	 * Decide which of two page numbers is "older" for truncation purposes. We
+	 * need to use comparison of TransactionIds here in order to do the right
+	 * thing with wraparound XID arithmetic.
 	 */
 	bool		(*PagePrecedes) (int, int);
 
 	/*
-	 * Dir is set during SimpleLruInit and does not change thereafter.
-	 * Since it's always the same, it doesn't need to be in shared memory.
+	 * Dir is set during SimpleLruInit and does not change thereafter. Since
+	 * it's always the same, it doesn't need to be in shared memory.
 	 */
 	char		Dir[64];
 } SlruCtlData;

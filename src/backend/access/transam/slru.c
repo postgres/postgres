@@ -48,7 +48,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.27 2005/08/20 23:26:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.28 2005/10/15 02:49:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,8 +186,8 @@ SimpleLruInit(SlruCtl ctl, const char *name,
 		Assert(found);
 
 	/*
-	 * Initialize the unshared control struct, including directory path.
-	 * We assume caller set PagePrecedes.
+	 * Initialize the unshared control struct, including directory path. We
+	 * assume caller set PagePrecedes.
 	 */
 	ctl->shared = shared;
 	ctl->do_fsync = true;		/* default behavior */
@@ -351,11 +351,11 @@ SimpleLruWritePage(SlruCtl ctl, int slotno, SlruFlush fdata)
 	LWLockAcquire(shared->buffer_locks[slotno], LW_EXCLUSIVE);
 
 	/*
-	 * Check to see if someone else already did the write, or took the
-	 * buffer away from us.  If so, do nothing.  NOTE: we really should
-	 * never see WRITE_IN_PROGRESS here, since that state should only
-	 * occur while the writer is holding the buffer lock.  But accept it
-	 * so that we have a recovery path if a writer aborts.
+	 * Check to see if someone else already did the write, or took the buffer
+	 * away from us.  If so, do nothing.  NOTE: we really should never see
+	 * WRITE_IN_PROGRESS here, since that state should only occur while the
+	 * writer is holding the buffer lock.  But accept it so that we have a
+	 * recovery path if a writer aborts.
 	 */
 	if (shared->page_number[slotno] != pageno ||
 		(shared->page_status[slotno] != SLRU_PAGE_DIRTY &&
@@ -368,15 +368,14 @@ SimpleLruWritePage(SlruCtl ctl, int slotno, SlruFlush fdata)
 
 	/*
 	 * Mark the slot write-busy.  After this point, a transaction status
-	 * update on this page will mark it dirty again.  NB: we are assuming
-	 * that read/write of the page status field is atomic, since we change
-	 * the state while not holding control lock.  However, we cannot set
-	 * this state any sooner, or we'd possibly fool a previous writer into
-	 * thinking he's successfully dumped the page when he hasn't.
-	 * (Scenario: other writer starts, page is redirtied, we come along
-	 * and set WRITE_IN_PROGRESS again, other writer completes and sets
-	 * CLEAN because redirty info has been lost, then we think it's clean
-	 * too.)
+	 * update on this page will mark it dirty again.  NB: we are assuming that
+	 * read/write of the page status field is atomic, since we change the
+	 * state while not holding control lock.  However, we cannot set this
+	 * state any sooner, or we'd possibly fool a previous writer into thinking
+	 * he's successfully dumped the page when he hasn't. (Scenario: other
+	 * writer starts, page is redirtied, we come along and set
+	 * WRITE_IN_PROGRESS again, other writer completes and sets CLEAN because
+	 * redirty info has been lost, then we think it's clean too.)
 	 */
 	shared->page_status[slotno] = SLRU_PAGE_WRITE_IN_PROGRESS;
 
@@ -436,8 +435,8 @@ SlruPhysicalReadPage(SlruCtl ctl, int pageno, int slotno)
 	 * In a crash-and-restart situation, it's possible for us to receive
 	 * commands to set the commit status of transactions whose bits are in
 	 * already-truncated segments of the commit log (see notes in
-	 * SlruPhysicalWritePage).	Hence, if we are InRecovery, allow the
-	 * case where the file doesn't exist, and return zeroes instead.
+	 * SlruPhysicalWritePage).	Hence, if we are InRecovery, allow the case
+	 * where the file doesn't exist, and return zeroes instead.
 	 */
 	fd = BasicOpenFile(path, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
 	if (fd < 0)
@@ -528,17 +527,16 @@ SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno, SlruFlush fdata)
 	{
 		/*
 		 * If the file doesn't already exist, we should create it.  It is
-		 * possible for this to need to happen when writing a page that's
-		 * not first in its segment; we assume the OS can cope with that.
-		 * (Note: it might seem that it'd be okay to create files only
-		 * when SimpleLruZeroPage is called for the first page of a
-		 * segment. However, if after a crash and restart the REDO logic
-		 * elects to replay the log from a checkpoint before the latest
-		 * one, then it's possible that we will get commands to set
-		 * transaction status of transactions that have already been
-		 * truncated from the commit log. Easiest way to deal with that is
-		 * to accept references to nonexistent files here and in
-		 * SlruPhysicalReadPage.)
+		 * possible for this to need to happen when writing a page that's not
+		 * first in its segment; we assume the OS can cope with that. (Note:
+		 * it might seem that it'd be okay to create files only when
+		 * SimpleLruZeroPage is called for the first page of a segment.
+		 * However, if after a crash and restart the REDO logic elects to
+		 * replay the log from a checkpoint before the latest one, then it's
+		 * possible that we will get commands to set transaction status of
+		 * transactions that have already been truncated from the commit log.
+		 * Easiest way to deal with that is to accept references to
+		 * nonexistent files here and in SlruPhysicalReadPage.)
 		 */
 		SlruFileName(ctl, path, segno);
 		fd = BasicOpenFile(path, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
@@ -635,49 +633,49 @@ SlruReportIOError(SlruCtl ctl, int pageno, TransactionId xid)
 		case SLRU_OPEN_FAILED:
 			ereport(ERROR,
 					(errcode_for_file_access(),
-				errmsg("could not access status of transaction %u", xid),
+					 errmsg("could not access status of transaction %u", xid),
 					 errdetail("could not open file \"%s\": %m",
 							   path)));
 			break;
 		case SLRU_CREATE_FAILED:
 			ereport(ERROR,
 					(errcode_for_file_access(),
-				errmsg("could not access status of transaction %u", xid),
+					 errmsg("could not access status of transaction %u", xid),
 					 errdetail("could not create file \"%s\": %m",
 							   path)));
 			break;
 		case SLRU_SEEK_FAILED:
 			ereport(ERROR,
 					(errcode_for_file_access(),
-				errmsg("could not access status of transaction %u", xid),
-			  errdetail("could not seek in file \"%s\" to offset %u: %m",
-						path, offset)));
+					 errmsg("could not access status of transaction %u", xid),
+				  errdetail("could not seek in file \"%s\" to offset %u: %m",
+							path, offset)));
 			break;
 		case SLRU_READ_FAILED:
 			ereport(ERROR,
 					(errcode_for_file_access(),
-				errmsg("could not access status of transaction %u", xid),
-			errdetail("could not read from file \"%s\" at offset %u: %m",
-					  path, offset)));
+					 errmsg("could not access status of transaction %u", xid),
+				errdetail("could not read from file \"%s\" at offset %u: %m",
+						  path, offset)));
 			break;
 		case SLRU_WRITE_FAILED:
 			ereport(ERROR,
 					(errcode_for_file_access(),
-				errmsg("could not access status of transaction %u", xid),
-			 errdetail("could not write to file \"%s\" at offset %u: %m",
-					   path, offset)));
+					 errmsg("could not access status of transaction %u", xid),
+				 errdetail("could not write to file \"%s\" at offset %u: %m",
+						   path, offset)));
 			break;
 		case SLRU_FSYNC_FAILED:
 			ereport(ERROR,
 					(errcode_for_file_access(),
-				errmsg("could not access status of transaction %u", xid),
+					 errmsg("could not access status of transaction %u", xid),
 					 errdetail("could not fsync file \"%s\": %m",
 							   path)));
 			break;
 		case SLRU_CLOSE_FAILED:
 			ereport(ERROR,
 					(errcode_for_file_access(),
-				errmsg("could not access status of transaction %u", xid),
+					 errmsg("could not access status of transaction %u", xid),
 					 errdetail("could not close file \"%s\": %m",
 							   path)));
 			break;
@@ -723,8 +721,8 @@ SlruSelectLRUPage(SlruCtl ctl, int pageno)
 		}
 
 		/*
-		 * If we find any EMPTY slot, just select that one. Else locate
-		 * the least-recently-used slot that isn't the latest page.
+		 * If we find any EMPTY slot, just select that one. Else locate the
+		 * least-recently-used slot that isn't the latest page.
 		 */
 		for (slotno = 0; slotno < NUM_SLRU_BUFFERS; slotno++)
 		{
@@ -745,10 +743,10 @@ SlruSelectLRUPage(SlruCtl ctl, int pageno)
 			return bestslot;
 
 		/*
-		 * We need to do I/O.  Normal case is that we have to write it
-		 * out, but it's possible in the worst case to have selected a
-		 * read-busy page.	In that case we use SimpleLruReadPage to wait
-		 * for the read to complete.
+		 * We need to do I/O.  Normal case is that we have to write it out,
+		 * but it's possible in the worst case to have selected a read-busy
+		 * page.  In that case we use SimpleLruReadPage to wait for the read
+		 * to complete.
 		 */
 		if (shared->page_status[bestslot] == SLRU_PAGE_READ_IN_PROGRESS)
 			(void) SimpleLruReadPage(ctl, shared->page_number[bestslot],
@@ -757,9 +755,9 @@ SlruSelectLRUPage(SlruCtl ctl, int pageno)
 			SimpleLruWritePage(ctl, bestslot, NULL);
 
 		/*
-		 * Now loop back and try again.  This is the easiest way of
-		 * dealing with corner cases such as the victim page being
-		 * re-dirtied while we wrote it.
+		 * Now loop back and try again.  This is the easiest way of dealing
+		 * with corner cases such as the victim page being re-dirtied while we
+		 * wrote it.
 		 */
 	}
 }
@@ -789,9 +787,9 @@ SimpleLruFlush(SlruCtl ctl, bool checkpoint)
 		SimpleLruWritePage(ctl, slotno, &fdata);
 
 		/*
-		 * When called during a checkpoint, we cannot assert that the slot
-		 * is clean now, since another process might have re-dirtied it
-		 * already.  That's okay.
+		 * When called during a checkpoint, we cannot assert that the slot is
+		 * clean now, since another process might have re-dirtied it already.
+		 * That's okay.
 		 */
 		Assert(checkpoint ||
 			   shared->page_status[slotno] == SLRU_PAGE_EMPTY ||
@@ -841,10 +839,10 @@ SimpleLruTruncate(SlruCtl ctl, int cutoffPage)
 	cutoffPage -= cutoffPage % SLRU_PAGES_PER_SEGMENT;
 
 	/*
-	 * Scan shared memory and remove any pages preceding the cutoff page,
-	 * to ensure we won't rewrite them later.  (Since this is normally
-	 * called in or just after a checkpoint, any dirty pages should have
-	 * been flushed already ... we're just being extra careful here.)
+	 * Scan shared memory and remove any pages preceding the cutoff page, to
+	 * ensure we won't rewrite them later.  (Since this is normally called in
+	 * or just after a checkpoint, any dirty pages should have been flushed
+	 * already ... we're just being extra careful here.)
 	 */
 	LWLockAcquire(shared->ControlLock, LW_EXCLUSIVE);
 
@@ -852,16 +850,16 @@ restart:;
 
 	/*
 	 * While we are holding the lock, make an important safety check: the
-	 * planned cutoff point must be <= the current endpoint page.
-	 * Otherwise we have already wrapped around, and proceeding with the
-	 * truncation would risk removing the current segment.
+	 * planned cutoff point must be <= the current endpoint page. Otherwise we
+	 * have already wrapped around, and proceeding with the truncation would
+	 * risk removing the current segment.
 	 */
 	if (ctl->PagePrecedes(shared->latest_page_number, cutoffPage))
 	{
 		LWLockRelease(shared->ControlLock);
 		ereport(LOG,
-				(errmsg("could not truncate directory \"%s\": apparent wraparound",
-						ctl->Dir)));
+		  (errmsg("could not truncate directory \"%s\": apparent wraparound",
+				  ctl->Dir)));
 		return;
 	}
 
@@ -882,9 +880,9 @@ restart:;
 		}
 
 		/*
-		 * Hmm, we have (or may have) I/O operations acting on the page,
-		 * so we've got to wait for them to finish and then start again.
-		 * This is the same logic as in SlruSelectLRUPage.
+		 * Hmm, we have (or may have) I/O operations acting on the page, so
+		 * we've got to wait for them to finish and then start again. This is
+		 * the same logic as in SlruSelectLRUPage.
 		 */
 		if (shared->page_status[slotno] == SLRU_PAGE_READ_IN_PROGRESS)
 			(void) SimpleLruReadPage(ctl, shared->page_number[slotno],

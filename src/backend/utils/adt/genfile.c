@@ -5,11 +5,11 @@
  *
  *
  * Copyright (c) 2004-2005, PostgreSQL Global Development Group
- * 
+ *
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.6 2005/08/29 19:39:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.7 2005/10/15 02:49:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,10 +30,10 @@
 #include "utils/memutils.h"
 
 
-typedef struct 
+typedef struct
 {
-	char	*location;
-	DIR		*dirdesc;
+	char	   *location;
+	DIR		   *dirdesc;
 } directory_fctx;
 
 
@@ -46,9 +46,9 @@ typedef struct
 static char *
 check_and_make_absolute(text *arg)
 {
-	int input_len = VARSIZE(arg) - VARHDRSZ;
-	char *filename = palloc(input_len + 1);
-	
+	int			input_len = VARSIZE(arg) - VARHDRSZ;
+	char	   *filename = palloc(input_len + 1);
+
 	memcpy(filename, VARDATA(arg), input_len);
 	filename[input_len] = '\0';
 
@@ -58,7 +58,7 @@ check_and_make_absolute(text *arg)
 	if (path_contains_parent_reference(filename))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("reference to parent directory (\"..\") not allowed"))));
+			(errmsg("reference to parent directory (\"..\") not allowed"))));
 
 	if (is_absolute_path(filename))
 	{
@@ -70,14 +70,15 @@ check_and_make_absolute(text *arg)
 			path_is_prefix_of_path(Log_directory, filename))
 			return filename;
 
-	    ereport(ERROR,
+		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("absolute path not allowed"))));
 		return NULL;			/* keep compiler quiet */
 	}
 	else
 	{
-	    char *absname = palloc(strlen(DataDir) + strlen(filename) + 2);
+		char	   *absname = palloc(strlen(DataDir) + strlen(filename) + 2);
+
 		sprintf(absname, "%s/%s", DataDir, filename);
 		pfree(filename);
 		return absname;
@@ -94,13 +95,13 @@ pg_read_file(PG_FUNCTION_ARGS)
 	text	   *filename_t = PG_GETARG_TEXT_P(0);
 	int64		seek_offset = PG_GETARG_INT64(1);
 	int64		bytes_to_read = PG_GETARG_INT64(2);
-	char 		*buf;
+	char	   *buf;
 	size_t		nbytes;
-	FILE		*file;
-	char		*filename;
+	FILE	   *file;
+	char	   *filename;
 
 	if (!superuser())
-	    ereport(ERROR,
+		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser to read files"))));
 
@@ -128,7 +129,7 @@ pg_read_file(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("requested length too large")));
-	
+
 	buf = palloc((Size) bytes_to_read + VARHDRSZ);
 
 	nbytes = fread(VARDATA(buf), 1, (size_t) bytes_to_read, file);
@@ -153,7 +154,7 @@ Datum
 pg_stat_file(PG_FUNCTION_ARGS)
 {
 	text	   *filename_t = PG_GETARG_TEXT_P(0);
-	char		*filename;
+	char	   *filename;
 	struct stat fst;
 	Datum		values[6];
 	bool		isnull[6];
@@ -161,7 +162,7 @@ pg_stat_file(PG_FUNCTION_ARGS)
 	TupleDesc	tupdesc;
 
 	if (!superuser())
-	    ereport(ERROR,
+		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser to get file information"))));
 
@@ -173,8 +174,8 @@ pg_stat_file(PG_FUNCTION_ARGS)
 				 errmsg("could not stat file \"%s\": %m", filename)));
 
 	/*
-	 * This record type had better match the output parameters declared
-	 * for me in pg_proc.h (actually, in system_views.sql at the moment).
+	 * This record type had better match the output parameters declared for me
+	 * in pg_proc.h (actually, in system_views.sql at the moment).
 	 */
 	tupdesc = CreateTemplateTupleDesc(6, false);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1,
@@ -220,12 +221,12 @@ pg_stat_file(PG_FUNCTION_ARGS)
 Datum
 pg_ls_dir(PG_FUNCTION_ARGS)
 {
-	FuncCallContext	*funcctx;
-	struct dirent	*de;
-	directory_fctx	*fctx;
+	FuncCallContext *funcctx;
+	struct dirent *de;
+	directory_fctx *fctx;
 
 	if (!superuser())
-	    ereport(ERROR,
+		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser to get directory listings"))));
 
@@ -242,7 +243,7 @@ pg_ls_dir(PG_FUNCTION_ARGS)
 		fctx->dirdesc = AllocateDir(fctx->location);
 
 		if (!fctx->dirdesc)
-		    ereport(ERROR,
+			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not open directory \"%s\": %m",
 							fctx->location)));
@@ -252,16 +253,16 @@ pg_ls_dir(PG_FUNCTION_ARGS)
 	}
 
 	funcctx = SRF_PERCALL_SETUP();
-	fctx = (directory_fctx*) funcctx->user_fctx;
+	fctx = (directory_fctx *) funcctx->user_fctx;
 
 	while ((de = ReadDir(fctx->dirdesc, fctx->location)) != NULL)
 	{
 		int			len = strlen(de->d_name);
-		text		*result;
+		text	   *result;
 
 		if (strcmp(de->d_name, ".") == 0 ||
 			strcmp(de->d_name, "..") == 0)
-		    continue;
+			continue;
 
 		result = palloc(len + VARHDRSZ);
 		VARATT_SIZEP(result) = len + VARHDRSZ;

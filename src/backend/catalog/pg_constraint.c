@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.26 2005/08/01 04:03:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.27 2005/10/15 02:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,7 +140,7 @@ CreateConstraintEntry(const char *constraintName,
 	 */
 	if (conBin)
 		values[Anum_pg_constraint_conbin - 1] = DirectFunctionCall1(textin,
-												CStringGetDatum(conBin));
+													CStringGetDatum(conBin));
 	else
 		nulls[Anum_pg_constraint_conbin - 1] = 'n';
 
@@ -149,7 +149,7 @@ CreateConstraintEntry(const char *constraintName,
 	 */
 	if (conSrc)
 		values[Anum_pg_constraint_consrc - 1] = DirectFunctionCall1(textin,
-												CStringGetDatum(conSrc));
+													CStringGetDatum(conSrc));
 	else
 		nulls[Anum_pg_constraint_consrc - 1] = 'n';
 
@@ -169,8 +169,8 @@ CreateConstraintEntry(const char *constraintName,
 	if (OidIsValid(relId))
 	{
 		/*
-		 * Register auto dependency from constraint to owning relation, or
-		 * to specific column(s) if any are mentioned.
+		 * Register auto dependency from constraint to owning relation, or to
+		 * specific column(s) if any are mentioned.
 		 */
 		ObjectAddress relobject;
 
@@ -210,8 +210,8 @@ CreateConstraintEntry(const char *constraintName,
 	if (OidIsValid(foreignRelId))
 	{
 		/*
-		 * Register normal dependency from constraint to foreign relation,
-		 * or to specific column(s) if any are mentioned.
+		 * Register normal dependency from constraint to foreign relation, or
+		 * to specific column(s) if any are mentioned.
 		 */
 		ObjectAddress relobject;
 
@@ -252,8 +252,8 @@ CreateConstraintEntry(const char *constraintName,
 	if (conExpr != NULL)
 	{
 		/*
-		 * Register dependencies from constraint to objects mentioned in
-		 * CHECK expression.
+		 * Register dependencies from constraint to objects mentioned in CHECK
+		 * expression.
 		 */
 		recordDependencyOnSingleRelExpr(&conobject, conExpr, relId,
 										DEPENDENCY_NORMAL,
@@ -450,15 +450,15 @@ RemoveConstraintById(Oid conId)
 		Relation	rel;
 
 		/*
-		 * If the constraint is for a relation, open and exclusive-lock
-		 * the relation it's for.
+		 * If the constraint is for a relation, open and exclusive-lock the
+		 * relation it's for.
 		 */
 		rel = heap_open(con->conrelid, AccessExclusiveLock);
 
 		/*
-		 * We need to update the relcheck count if it is a check
-		 * constraint being dropped.  This update will force backends to
-		 * rebuild relcache entries when we commit.
+		 * We need to update the relcheck count if it is a check constraint
+		 * being dropped.  This update will force backends to rebuild relcache
+		 * entries when we commit.
 		 */
 		if (con->contype == CONSTRAINT_CHECK)
 		{
@@ -495,11 +495,10 @@ RemoveConstraintById(Oid conId)
 	else if (OidIsValid(con->contypid))
 	{
 		/*
-		 * XXX for now, do nothing special when dropping a domain
-		 * constraint
+		 * XXX for now, do nothing special when dropping a domain constraint
 		 *
-		 * Probably there should be some form of locking on the domain type,
-		 * but we have no such concept at the moment.
+		 * Probably there should be some form of locking on the domain type, but
+		 * we have no such concept at the moment.
 		 */
 	}
 	else
@@ -531,9 +530,9 @@ GetConstraintNameForTrigger(Oid triggerId)
 	HeapTuple	tup;
 
 	/*
-	 * We must grovel through pg_depend to find the owning constraint.
-	 * Perhaps pg_trigger should have a column for the owning constraint ...
-	 * but right now this is not performance-critical code.
+	 * We must grovel through pg_depend to find the owning constraint. Perhaps
+	 * pg_trigger should have a column for the owning constraint ... but right
+	 * now this is not performance-critical code.
 	 */
 	depRel = heap_open(DependRelationId, AccessShareLock);
 
@@ -567,7 +566,7 @@ GetConstraintNameForTrigger(Oid triggerId)
 	heap_close(depRel, AccessShareLock);
 
 	if (!OidIsValid(constraintId))
-		return NULL;				/* no owning constraint found */
+		return NULL;			/* no owning constraint found */
 
 	conRel = heap_open(ConstraintRelationId, AccessShareLock);
 
@@ -611,10 +610,10 @@ void
 AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 						  Oid newNspId, bool isType)
 {
-	Relation		conRel;
-	ScanKeyData 	key[1];
-	SysScanDesc 	scan;
-	HeapTuple 		tup;
+	Relation	conRel;
+	ScanKeyData key[1];
+	SysScanDesc scan;
+	HeapTuple	tup;
 
 	conRel = heap_open(ConstraintRelationId, RowExclusiveLock);
 

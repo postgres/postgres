@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.108 2005/06/26 22:05:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.109 2005/10/15 02:49:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,8 +64,8 @@ typedef struct RangeVar
 	char	   *catalogname;	/* the catalog (database) name, or NULL */
 	char	   *schemaname;		/* the schema name, or NULL */
 	char	   *relname;		/* the relation/sequence name */
-	InhOption	inhOpt;			/* expand rel by inheritance? recursively
-								 * act on children? */
+	InhOption	inhOpt;			/* expand rel by inheritance? recursively act
+								 * on children? */
 	bool		istemp;			/* is this a temp relation/sequence? */
 	Alias	   *alias;			/* table alias & optional column aliases */
 } RangeVar;
@@ -110,19 +110,17 @@ typedef struct Expr
 typedef struct Var
 {
 	Expr		xpr;
-	Index		varno;			/* index of this var's relation in the
-								 * range table (could also be INNER or
-								 * OUTER) */
-	AttrNumber	varattno;		/* attribute number of this var, or zero
-								 * for all */
-	Oid			vartype;		/* pg_type tuple OID for the type of this
-								 * var */
+	Index		varno;			/* index of this var's relation in the range
+								 * table (could also be INNER or OUTER) */
+	AttrNumber	varattno;		/* attribute number of this var, or zero for
+								 * all */
+	Oid			vartype;		/* pg_type tuple OID for the type of this var */
 	int32		vartypmod;		/* pg_attribute typmod value */
 	Index		varlevelsup;
 
 	/*
-	 * for subquery variables referencing outer relations; 0 in a normal
-	 * var, >0 means N levels up
+	 * for subquery variables referencing outer relations; 0 in a normal var,
+	 * >0 means N levels up
 	 */
 	Index		varnoold;		/* original value of varno, for debugging */
 	AttrNumber	varoattno;		/* original value of varattno */
@@ -139,11 +137,10 @@ typedef struct Const
 	Datum		constvalue;		/* the constant's value */
 	bool		constisnull;	/* whether the constant is null (if true,
 								 * constvalue is undefined) */
-	bool		constbyval;		/* whether this datatype is passed by
-								 * value. If true, then all the
-								 * information is stored in the Datum. If
-								 * false, then the Datum contains a
-								 * pointer to the information. */
+	bool		constbyval;		/* whether this datatype is passed by value.
+								 * If true, then all the information is stored
+								 * in the Datum. If false, then the Datum
+								 * contains a pointer to the information. */
 } Const;
 
 /* ----------------
@@ -214,14 +211,14 @@ typedef struct ArrayRef
 								 * operation */
 	Oid			refarraytype;	/* type of the array proper */
 	Oid			refelemtype;	/* type of the array elements */
-	List	   *refupperindexpr;/* expressions that evaluate to upper
-								 * array indexes */
-	List	   *reflowerindexpr;/* expressions that evaluate to lower
-								 * array indexes */
-	Expr	   *refexpr;		/* the expression that evaluates to an
-								 * array value */
-	Expr	   *refassgnexpr;	/* expression for the source value, or
-								 * NULL if fetch */
+	List	   *refupperindexpr;/* expressions that evaluate to upper array
+								 * indexes */
+	List	   *reflowerindexpr;/* expressions that evaluate to lower array
+								 * indexes */
+	Expr	   *refexpr;		/* the expression that evaluates to an array
+								 * value */
+	Expr	   *refassgnexpr;	/* expression for the source value, or NULL if
+								 * fetch */
 } ArrayRef;
 
 /*
@@ -390,10 +387,9 @@ typedef struct SubLink
 {
 	Expr		xpr;
 	SubLinkType subLinkType;	/* EXISTS, ALL, ANY, MULTIEXPR, EXPR */
-	bool		useOr;			/* TRUE to combine column results with
-								 * "OR" not "AND" */
-	List	   *lefthand;		/* list of outer-query expressions on the
-								 * left */
+	bool		useOr;			/* TRUE to combine column results with "OR"
+								 * not "AND" */
+	List	   *lefthand;		/* list of outer-query expressions on the left */
 	List	   *operName;		/* originally specified operator name */
 	List	   *operOids;		/* OIDs of actual combining operators */
 	Node	   *subselect;		/* subselect as Query* or parsetree */
@@ -431,8 +427,8 @@ typedef struct SubPlan
 	Expr		xpr;
 	/* Fields copied from original SubLink: */
 	SubLinkType subLinkType;	/* EXISTS, ALL, ANY, MULTIEXPR, EXPR */
-	bool		useOr;			/* TRUE to combine column results with
-								 * "OR" not "AND" */
+	bool		useOr;			/* TRUE to combine column results with "OR"
+								 * not "AND" */
 	/* The combining operators, transformed to executable expressions: */
 	List	   *exprs;			/* list of OpExpr expression trees */
 	List	   *paramIds;		/* IDs of Params embedded in the above */
@@ -440,22 +436,21 @@ typedef struct SubPlan
 	/* The subselect, transformed to a Plan: */
 	struct Plan *plan;			/* subselect plan itself */
 	int			plan_id;		/* dummy thing because of we haven't equal
-								 * funcs for plan nodes... actually, we
-								 * could put *plan itself somewhere else
-								 * (TopPlan node ?)... */
+								 * funcs for plan nodes... actually, we could
+								 * put *plan itself somewhere else (TopPlan
+								 * node ?)... */
 	List	   *rtable;			/* range table for subselect */
 	/* Information about execution strategy: */
-	bool		useHashTable;	/* TRUE to store subselect output in a
-								 * hash table (implies we are doing "IN") */
-	bool		unknownEqFalse; /* TRUE if it's okay to return FALSE when
-								 * the spec result is UNKNOWN; this allows
-								 * much simpler handling of null values */
+	bool		useHashTable;	/* TRUE to store subselect output in a hash
+								 * table (implies we are doing "IN") */
+	bool		unknownEqFalse; /* TRUE if it's okay to return FALSE when the
+								 * spec result is UNKNOWN; this allows much
+								 * simpler handling of null values */
 	/* Information for passing params into and out of the subselect: */
 	/* setParam and parParam are lists of integers (param IDs) */
 	List	   *setParam;		/* initplan subqueries have to set these
 								 * Params for parent plan */
-	List	   *parParam;		/* indices of input Params from parent
-								 * plan */
+	List	   *parParam;		/* indices of input Params from parent plan */
 	List	   *args;			/* exprs to pass as parParam values */
 } SubPlan;
 
@@ -639,10 +634,10 @@ typedef struct RowExpr
 	Oid			row_typeid;		/* RECORDOID or a composite type's ID */
 
 	/*
-	 * Note: we deliberately do NOT store a typmod.  Although a typmod
-	 * will be associated with specific RECORD types at runtime, it will
-	 * differ for different backends, and so cannot safely be stored in
-	 * stored parsetrees.  We must assume typmod -1 for a RowExpr node.
+	 * Note: we deliberately do NOT store a typmod.  Although a typmod will be
+	 * associated with specific RECORD types at runtime, it will differ for
+	 * different backends, and so cannot safely be stored in stored
+	 * parsetrees.	We must assume typmod -1 for a RowExpr node.
 	 */
 	CoercionForm row_format;	/* how to display this node */
 } RowExpr;
@@ -837,8 +832,8 @@ typedef struct TargetEntry
 								 * clause */
 	Oid			resorigtbl;		/* OID of column's source table */
 	AttrNumber	resorigcol;		/* column's number in source table */
-	bool		resjunk;		/* set to true to eliminate the attribute
-								 * from final target list */
+	bool		resjunk;		/* set to true to eliminate the attribute from
+								 * final target list */
 } TargetEntry;
 
 

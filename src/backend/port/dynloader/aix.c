@@ -84,8 +84,8 @@ dlopen(const char *path, int mode)
 	static void *mainModule;
 
 	/*
-	 * Upon the first call register a terminate handler that will close
-	 * all libraries. Also get a reference to the main module for use with
+	 * Upon the first call register a terminate handler that will close all
+	 * libraries. Also get a reference to the main module for use with
 	 * loadbind.
 	 */
 	if (!mainModule)
@@ -121,8 +121,8 @@ dlopen(const char *path, int mode)
 	}
 
 	/*
-	 * load should be declared load(const char *...). Thus we cast the
-	 * path to a normal char *. Ugly.
+	 * load should be declared load(const char *...). Thus we cast the path to
+	 * a normal char *. Ugly.
 	 */
 	if ((mp->entry = (void *) load((char *) path, L_NOAUTODEFER, NULL)) == NULL)
 	{
@@ -134,8 +134,8 @@ dlopen(const char *path, int mode)
 		strcat(errbuf, ": ");
 
 		/*
-		 * If AIX says the file is not executable, the error can be
-		 * further described by querying the loader about the last error.
+		 * If AIX says the file is not executable, the error can be further
+		 * described by querying the loader about the last error.
 		 */
 		if (errno == ENOEXEC)
 		{
@@ -203,8 +203,8 @@ dlopen(const char *path, int mode)
 		errvalid = 0;
 
 	/*
-	 * If the shared object was compiled using xlC we will need to call
-	 * static constructors (and later on dlclose destructors).
+	 * If the shared object was compiled using xlC we will need to call static
+	 * constructors (and later on dlclose destructors).
 	 */
 	if (mp->cdtors = (CdtorPtr) dlsym(mp, "__cdtors"))
 	{
@@ -268,8 +268,8 @@ dlsym(void *handle, const char *symbol)
 	int			i;
 
 	/*
-	 * Could speed up the search, but I assume that one assigns the result
-	 * to function pointers anyways.
+	 * Could speed up the search, but I assume that one assigns the result to
+	 * function pointers anyways.
 	 */
 	for (ep = mp->exports, i = mp->nExports; i; i--, ep++)
 		if (strcmp(ep->name, symbol) == 0)
@@ -377,8 +377,8 @@ readExports(ModulePtr mp)
 		}
 
 		/*
-		 * The module might be loaded due to the LIBPATH environment
-		 * variable. Search for the loaded module using L_GETINFO.
+		 * The module might be loaded due to the LIBPATH environment variable.
+		 * Search for the loaded module using L_GETINFO.
 		 */
 		if ((buf = malloc(size)) == NULL)
 		{
@@ -409,8 +409,8 @@ readExports(ModulePtr mp)
 		}
 
 		/*
-		 * Traverse the list of loaded modules. The entry point returned
-		 * by load() does actually point to the data segment origin.
+		 * Traverse the list of loaded modules. The entry point returned by
+		 * load() does actually point to the data segment origin.
 		 */
 		lp = (struct ld_info *) buf;
 		while (lp)
@@ -445,8 +445,8 @@ readExports(ModulePtr mp)
 
 	/*
 	 * Get the padding for the data section. This is needed for AIX 4.1
-	 * compilers. This is used when building the final function pointer to
-	 * the exported symbol.
+	 * compilers. This is used when building the final function pointer to the
+	 * exported symbol.
 	 */
 	if (ldnshread(ldp, _DATA, &shdata) != SUCCESS)
 	{
@@ -466,8 +466,8 @@ readExports(ModulePtr mp)
 	}
 
 	/*
-	 * We read the complete loader section in one chunk, this makes
-	 * finding long symbol names residing in the string table easier.
+	 * We read the complete loader section in one chunk, this makes finding
+	 * long symbol names residing in the string table easier.
 	 */
 	if ((ldbuf = (char *) malloc(sh.s_size)) == NULL)
 	{
@@ -520,8 +520,8 @@ readExports(ModulePtr mp)
 	}
 
 	/*
-	 * Fill in the export table. All entries are relative to the entry
-	 * point we got from load.
+	 * Fill in the export table. All entries are relative to the entry point
+	 * we got from load.
 	 */
 	ep = mp->exports;
 	ls = (LDSYM *) (ldbuf + LDHDRSZ);
@@ -538,8 +538,8 @@ readExports(ModulePtr mp)
 		{
 			/*
 			 * The l_name member is not zero terminated, we must copy the
-			 * first SYMNMLEN chars and make sure we have a zero byte at
-			 * the end.
+			 * first SYMNMLEN chars and make sure we have a zero byte at the
+			 * end.
 			 */
 			strncpy(tmpsym, ls->l_name, SYMNMLEN);
 			tmpsym[SYMNMLEN] = '\0';
@@ -598,8 +598,8 @@ findMain(void)
 	}
 
 	/*
-	 * The first entry is the main module. The entry point returned by
-	 * load() does actually point to the data segment origin.
+	 * The first entry is the main module. The entry point returned by load()
+	 * does actually point to the data segment origin.
 	 */
 	lp = (struct ld_info *) buf;
 	ret = lp->ldinfo_dataorg;

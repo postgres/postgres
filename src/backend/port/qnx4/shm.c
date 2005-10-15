@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/qnx4/shm.c,v 1.9 2003/11/29 19:51:54 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/qnx4/shm.c,v 1.10 2005/10/15 02:49:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,8 +200,8 @@ shmctl(int shmid, int cmd, struct shmid_ds * buf)
 		case IPC_STAT:
 
 			/*
-			 * we have to open it first. stat() does no prefix tracking ->
-			 * the call would go to fsys instead of proc
+			 * we have to open it first. stat() does no prefix tracking -> the
+			 * call would go to fsys instead of proc
 			 */
 			keytoname(shmid, name);
 			fd = shm_open(name, 0, MODE);
@@ -210,8 +210,8 @@ shmctl(int shmid, int cmd, struct shmid_ds * buf)
 				result = fstat(fd, &statbuf);
 
 				/*
-				 * if the file exists, subtract 2 from linkcount : one for
-				 * our own open and one for the dir entry
+				 * if the file exists, subtract 2 from linkcount : one for our
+				 * own open and one for the dir entry
 				 */
 				if (!result)
 					buf->shm_nattch = statbuf.st_nlink - 2;
@@ -221,8 +221,8 @@ shmctl(int shmid, int cmd, struct shmid_ds * buf)
 			else
 			{
 				/*
-				 * if there's no entry for this key it doesn't matter the
-				 * next shmget() would get a different shm anyway
+				 * if there's no entry for this key it doesn't matter the next
+				 * shmget() would get a different shm anyway
 				 */
 				buf->shm_nattch = 0;
 				return 0;

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/lib/dllist.c,v 1.31 2005/01/18 22:59:32 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/lib/dllist.c,v 1.32 2005/10/15 02:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,7 +148,7 @@ DLAddHead(Dllist *l, Dlelem *e)
 	e->dle_prev = NULL;
 	l->dll_head = e;
 
-	if (l->dll_tail == NULL)		/* if this is first element added */
+	if (l->dll_tail == NULL)	/* if this is first element added */
 		l->dll_tail = e;
 }
 
@@ -163,7 +163,7 @@ DLAddTail(Dllist *l, Dlelem *e)
 	e->dle_next = NULL;
 	l->dll_tail = e;
 
-	if (l->dll_head == NULL)		/* if this is first element added */
+	if (l->dll_head == NULL)	/* if this is first element added */
 		l->dll_head = e;
 }
 

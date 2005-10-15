@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/sinvaladt.h,v 1.39 2005/08/20 23:26:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/sinvaladt.h,v 1.40 2005/10/15 02:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,8 +81,7 @@ typedef struct SISeg
 	 */
 	int			minMsgNum;		/* oldest message still needed */
 	int			maxMsgNum;		/* next message number to be assigned */
-	int			lastBackend;	/* index of last active procState entry,
-								 * +1 */
+	int			lastBackend;	/* index of last active procState entry, +1 */
 	int			maxBackends;	/* size of procState array */
 	int			freeBackends;	/* number of empty procState slots */
 
@@ -94,8 +93,8 @@ typedef struct SISeg
 	/*
 	 * Per-backend state info.
 	 *
-	 * We declare procState as 1 entry because C wants a fixed-size array,
-	 * but actually it is maxBackends entries long.
+	 * We declare procState as 1 entry because C wants a fixed-size array, but
+	 * actually it is maxBackends entries long.
 	 */
 	ProcState	procState[1];	/* reflects the invalidation state */
 } SISeg;

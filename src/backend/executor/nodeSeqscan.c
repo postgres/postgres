@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSeqscan.c,v 1.53 2005/05/15 21:19:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSeqscan.c,v 1.54 2005/10/15 02:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,11 +62,11 @@ SeqNext(SeqScanState *node)
 	slot = node->ss_ScanTupleSlot;
 
 	/*
-	 * Clear any reference to the previously returned tuple.  The idea
-	 * here is to not have the tuple slot be the last holder of a pin on
-	 * that tuple's buffer; if it is, we'll need a separate visit to the
-	 * bufmgr to release the buffer.  By clearing here, we get to have the
-	 * release done by ReleaseAndReadBuffer inside heap_getnext.
+	 * Clear any reference to the previously returned tuple.  The idea here is
+	 * to not have the tuple slot be the last holder of a pin on that tuple's
+	 * buffer; if it is, we'll need a separate visit to the bufmgr to release
+	 * the buffer.	By clearing here, we get to have the release done by
+	 * ReleaseAndReadBuffer inside heap_getnext.
 	 */
 	ExecClearTuple(slot);
 
@@ -87,8 +87,8 @@ SeqNext(SeqScanState *node)
 
 		/*
 		 * Note that unlike IndexScan, SeqScan never use keys in
-		 * heap_beginscan (and this is very bad) - so, here we do not
-		 * check are keys ok or not.
+		 * heap_beginscan (and this is very bad) - so, here we do not check
+		 * are keys ok or not.
 		 */
 
 		/* Flag for the next call that no more tuples */
@@ -102,20 +102,19 @@ SeqNext(SeqScanState *node)
 	tuple = heap_getnext(scandesc, direction);
 
 	/*
-	 * save the tuple and the buffer returned to us by the access methods
-	 * in our scan tuple slot and return the slot.	Note: we pass 'false'
-	 * because tuples returned by heap_getnext() are pointers onto disk
-	 * pages and were not created with palloc() and so should not be
-	 * pfree()'d.  Note also that ExecStoreTuple will increment the
-	 * refcount of the buffer; the refcount will not be dropped until the
-	 * tuple table slot is cleared.
+	 * save the tuple and the buffer returned to us by the access methods in
+	 * our scan tuple slot and return the slot.  Note: we pass 'false' because
+	 * tuples returned by heap_getnext() are pointers onto disk pages and were
+	 * not created with palloc() and so should not be pfree()'d.  Note also
+	 * that ExecStoreTuple will increment the refcount of the buffer; the
+	 * refcount will not be dropped until the tuple table slot is cleared.
 	 */
 	if (tuple)
-		ExecStoreTuple(tuple,					/* tuple to store */
-					   slot,					/* slot to store in */
-					   scandesc->rs_cbuf,		/* buffer associated with
-												 * this tuple */
-					   false);		/* don't pfree this pointer */
+		ExecStoreTuple(tuple,	/* tuple to store */
+					   slot,	/* slot to store in */
+					   scandesc->rs_cbuf,		/* buffer associated with this
+												 * tuple */
+					   false);	/* don't pfree this pointer */
 
 	return slot;
 }
@@ -157,8 +156,8 @@ InitScanRelation(SeqScanState *node, EState *estate)
 	HeapScanDesc currentScanDesc;
 
 	/*
-	 * get the relation object id from the relid'th entry in the range
-	 * table, open that relation and initialize the scan state.
+	 * get the relation object id from the relid'th entry in the range table,
+	 * open that relation and initialize the scan state.
 	 *
 	 * We acquire AccessShareLock for the duration of the scan.
 	 */
@@ -191,8 +190,8 @@ ExecInitSeqScan(SeqScan *node, EState *estate)
 	SeqScanState *scanstate;
 
 	/*
-	 * Once upon a time it was possible to have an outerPlan of a SeqScan,
-	 * but not any more.
+	 * Once upon a time it was possible to have an outerPlan of a SeqScan, but
+	 * not any more.
 	 */
 	Assert(outerPlan(node) == NULL);
 	Assert(innerPlan(node) == NULL);
@@ -291,9 +290,8 @@ ExecEndSeqScan(SeqScanState *node)
 	 * close the heap relation.
 	 *
 	 * Currently, we do not release the AccessShareLock acquired by
-	 * InitScanRelation.  This lock should be held till end of
-	 * transaction. (There is a faction that considers this too much
-	 * locking, however.)
+	 * InitScanRelation.  This lock should be held till end of transaction.
+	 * (There is a faction that considers this too much locking, however.)
 	 */
 	heap_close(relation, NoLock);
 }
@@ -359,10 +357,10 @@ ExecSeqRestrPos(SeqScanState *node)
 	HeapScanDesc scan = node->ss_currentScanDesc;
 
 	/*
-	 * Clear any reference to the previously returned tuple.  This is
-	 * needed because the slot is simply pointing at scan->rs_cbuf, which
-	 * heap_restrpos will change; we'd have an internally inconsistent
-	 * slot if we didn't do this.
+	 * Clear any reference to the previously returned tuple.  This is needed
+	 * because the slot is simply pointing at scan->rs_cbuf, which
+	 * heap_restrpos will change; we'd have an internally inconsistent slot if
+	 * we didn't do this.
 	 */
 	ExecClearTuple(node->ss_ScanTupleSlot);
 

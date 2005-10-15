@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/catcache.h,v 1.55 2005/08/13 22:18:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/catcache.h,v 1.56 2005/10/15 02:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,9 +56,8 @@ typedef struct catcache
 	long		cc_newloads;	/* # of successful loads of new entry */
 
 	/*
-	 * cc_searches - (cc_hits + cc_neg_hits + cc_newloads) is number of
-	 * failed searches, each of which will result in loading a negative
-	 * entry
+	 * cc_searches - (cc_hits + cc_neg_hits + cc_newloads) is number of failed
+	 * searches, each of which will result in loading a negative entry
 	 */
 	long		cc_invals;		/* # of entries invalidated from cache */
 	long		cc_discards;	/* # of entries discarded due to overflow */
@@ -77,18 +76,18 @@ typedef struct catctup
 
 	/*
 	 * Each tuple in a cache is a member of two Dllists: one lists all the
-	 * elements in all the caches in LRU order, and the other lists just
-	 * the elements in one hashbucket of one cache, also in LRU order.
+	 * elements in all the caches in LRU order, and the other lists just the
+	 * elements in one hashbucket of one cache, also in LRU order.
 	 */
 	Dlelem		lrulist_elem;	/* list member of global LRU list */
 	Dlelem		cache_elem;		/* list member of per-bucket list */
 
 	/*
 	 * The tuple may also be a member of at most one CatCList.	(If a single
-	 * catcache is list-searched with varying numbers of keys, we may have
-	 * to make multiple entries for the same tuple because of this
-	 * restriction.  Currently, that's not expected to be common, so we
-	 * accept the potential inefficiency.)
+	 * catcache is list-searched with varying numbers of keys, we may have to
+	 * make multiple entries for the same tuple because of this restriction.
+	 * Currently, that's not expected to be common, so we accept the potential
+	 * inefficiency.)
 	 */
 	struct catclist *c_list;	/* containing CatCList, or NULL if none */
 
@@ -96,13 +95,13 @@ typedef struct catctup
 	 * A tuple marked "dead" must not be returned by subsequent searches.
 	 * However, it won't be physically deleted from the cache until its
 	 * refcount goes to zero.  (If it's a member of a CatCList, the list's
-	 * refcount must go to zero, too; also, remember to mark the list dead
-	 * at the same time the tuple is marked.)
+	 * refcount must go to zero, too; also, remember to mark the list dead at
+	 * the same time the tuple is marked.)
 	 *
-	 * A negative cache entry is an assertion that there is no tuple matching
-	 * a particular key.  This is just as useful as a normal entry so far
-	 * as avoiding catalog searches is concerned.  Management of positive
-	 * and negative entries is identical.
+	 * A negative cache entry is an assertion that there is no tuple matching a
+	 * particular key.	This is just as useful as a normal entry so far as
+	 * avoiding catalog searches is concerned.	Management of positive and
+	 * negative entries is identical.
 	 */
 	int			refcount;		/* number of active references */
 	bool		dead;			/* dead but not yet removed? */
@@ -119,26 +118,26 @@ typedef struct catclist
 	CatCache   *my_cache;		/* link to owning catcache */
 
 	/*
-	 * A CatCList describes the result of a partial search, ie, a search
-	 * using only the first K key columns of an N-key cache.  We form the
-	 * keys used into a tuple (with other attributes NULL) to represent
-	 * the stored key set.	The CatCList object contains links to cache
-	 * entries for all the table rows satisfying the partial key.  (Note:
-	 * none of these will be negative cache entries.)
+	 * A CatCList describes the result of a partial search, ie, a search using
+	 * only the first K key columns of an N-key cache.	We form the keys used
+	 * into a tuple (with other attributes NULL) to represent the stored key
+	 * set.  The CatCList object contains links to cache entries for all the
+	 * table rows satisfying the partial key.  (Note: none of these will be
+	 * negative cache entries.)
 	 *
-	 * A CatCList is only a member of a per-cache list; we do not do separate
-	 * LRU management for CatCLists.  See CatalogCacheCleanup() for the
-	 * details of the management algorithm.
+	 * A CatCList is only a member of a per-cache list; we do not do separate LRU
+	 * management for CatCLists.  See CatalogCacheCleanup() for the details of
+	 * the management algorithm.
 	 *
-	 * A list marked "dead" must not be returned by subsequent searches.
-	 * However, it won't be physically deleted from the cache until its
-	 * refcount goes to zero.  (A list should be marked dead if any of its
-	 * member entries are dead.)
+	 * A list marked "dead" must not be returned by subsequent searches. However,
+	 * it won't be physically deleted from the cache until its refcount goes
+	 * to zero.  (A list should be marked dead if any of its member entries
+	 * are dead.)
 	 *
 	 * If "ordered" is true then the member tuples appear in the order of the
-	 * cache's underlying index.  This will be true in normal operation,
-	 * but might not be true during bootstrap or recovery operations.
-	 * (namespace.c is able to save some cycles when it is true.)
+	 * cache's underlying index.  This will be true in normal operation, but
+	 * might not be true during bootstrap or recovery operations. (namespace.c
+	 * is able to save some cycles when it is true.)
 	 */
 	Dlelem		cache_elem;		/* list member of per-catcache list */
 	int			refcount;		/* number of active references */
@@ -189,7 +188,7 @@ extern void CatalogCacheIdInvalidate(int cacheId, uint32 hashValue,
 						 ItemPointer pointer);
 extern void PrepareToInvalidateCacheTuple(Relation relation,
 							  HeapTuple tuple,
-					   void (*function) (int, uint32, ItemPointer, Oid));
+						   void (*function) (int, uint32, ItemPointer, Oid));
 
 extern void PrintCatCacheLeakWarning(HeapTuple tuple);
 extern void PrintCatCacheListLeakWarning(CatCList *list);

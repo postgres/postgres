@@ -33,7 +33,7 @@ TrimTrailingZeros(char *str)
  *	can be used to represent time spans.
  */
 static int
-DecodeTime(char *str, int fmask, int *tmask, struct tm *tm, fsec_t *fsec)
+DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, fsec_t *fsec)
 {
 	char	   *cp;
 
@@ -63,9 +63,8 @@ DecodeTime(char *str, int fmask, int *tmask, struct tm *tm, fsec_t *fsec)
 			char		fstr[MAXDATELEN + 1];
 
 			/*
-			 * OK, we have at most six digits to work with. Let's
-			 * construct a string and then do the conversion to an
-			 * integer.
+			 * OK, we have at most six digits to work with. Let's construct a
+			 * string and then do the conversion to an integer.
 			 */
 			strncpy(fstr, (cp + 1), 7);
 			strcpy(fstr + strlen(fstr), "000000");
@@ -107,7 +106,7 @@ DecodeTime(char *str, int fmask, int *tmask, struct tm *tm, fsec_t *fsec)
  *	preceding an hh:mm:ss field. - thomas 1998-04-30
  */
 int
-DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm *tm, fsec_t *fsec)
+DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fsec_t *fsec)
 {
 	int			is_before = FALSE;
 
@@ -149,9 +148,9 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm *tm, fsec
 				 */
 
 				/*
-				 * A single signed number ends up here, but will be
-				 * rejected by DecodeTime(). So, work this out to drop
-				 * through to DTK_NUMBER, which *can* tolerate this.
+				 * A single signed number ends up here, but will be rejected
+				 * by DecodeTime(). So, work this out to drop through to
+				 * DTK_NUMBER, which *can* tolerate this.
 				 */
 				cp = field[i] + 1;
 				while (*cp != '\0' && *cp != ':' && *cp != '.')
@@ -169,8 +168,8 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm *tm, fsec
 
 					/*
 					 * Set the next type to be a day, if units are not
-					 * specified. This handles the case of '1 +02:03'
-					 * since we are reading right to left.
+					 * specified. This handles the case of '1 +02:03' since we
+					 * are reading right to left.
 					 */
 					type = DTK_DAY;
 					tmask = DTK_M(TZ);
@@ -445,7 +444,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm *tm, fsec
  * - thomas 1998-04-30
  */
 int
-EncodeInterval(struct tm *tm, fsec_t fsec, int style, char *str)
+EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str)
 {
 	int			is_before = FALSE;
 	int			is_nonzero = FALSE;
@@ -453,9 +452,8 @@ EncodeInterval(struct tm *tm, fsec_t fsec, int style, char *str)
 
 	/*
 	 * The sign of year and month are guaranteed to match, since they are
-	 * stored internally as "month". But we'll need to check for is_before
-	 * and is_nonzero when determining the signs of hour/minute/seconds
-	 * fields.
+	 * stored internally as "month". But we'll need to check for is_before and
+	 * is_nonzero when determining the signs of hour/minute/seconds fields.
 	 */
 	switch (style)
 	{
@@ -493,7 +491,7 @@ EncodeInterval(struct tm *tm, fsec_t fsec, int style, char *str)
 				tm->tm_sec != 0 || fsec != 0)
 			{
 				int			minus = tm->tm_hour < 0 || tm->tm_min < 0 ||
-									tm->tm_sec < 0 || fsec < 0;
+				tm->tm_sec < 0 || fsec < 0;
 
 				sprintf(cp, "%s%s%02d:%02d", (is_nonzero ? " " : ""),
 						(minus ? "-" : (is_before ? "+" : "")),
@@ -511,7 +509,7 @@ EncodeInterval(struct tm *tm, fsec_t fsec, int style, char *str)
 					sprintf(cp, ".%06d", Abs(fsec));
 #else
 					fsec += tm->tm_sec;
- 					sprintf(cp, ":%012.9f", fabs(fsec));
+					sprintf(cp, ":%012.9f", fabs(fsec));
 #endif
 					TrimTrailingZeros(cp);
 					cp += strlen(cp);
@@ -670,7 +668,7 @@ EncodeInterval(struct tm *tm, fsec_t fsec, int style, char *str)
  * Convert a interval data type to a tm structure.
  */
 static int
-interval2tm(interval span, struct tm *tm, fsec_t *fsec)
+interval2tm(interval span, struct tm * tm, fsec_t *fsec)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		time;
@@ -703,9 +701,9 @@ interval2tm(interval span, struct tm *tm, fsec_t *fsec)
 	*fsec = time - (tm->tm_sec * USECS_PER_SEC);
 #else
 recalc:
-	TMODULO(time, tm->tm_mday, (double)SECS_PER_DAY);
-	TMODULO(time, tm->tm_hour, (double)SECS_PER_HOUR);
-	TMODULO(time, tm->tm_min, (double)SECS_PER_MINUTE);
+	TMODULO(time, tm->tm_mday, (double) SECS_PER_DAY);
+	TMODULO(time, tm->tm_hour, (double) SECS_PER_HOUR);
+	TMODULO(time, tm->tm_min, (double) SECS_PER_MINUTE);
 	TMODULO(time, tm->tm_sec, 1.0);
 	time = TSROUND(time);
 	/* roundoff may need to propagate to higher-order fields */
@@ -721,19 +719,19 @@ recalc:
 }	/* interval2tm() */
 
 static int
-tm2interval(struct tm *tm, fsec_t fsec, interval *span)
+tm2interval(struct tm * tm, fsec_t fsec, interval * span)
 {
 	span->month = tm->tm_year * MONTHS_PER_YEAR + tm->tm_mon;
 #ifdef HAVE_INT64_TIMESTAMP
 	span->time = (((((((tm->tm_mday * INT64CONST(24)) +
-						tm->tm_hour) * INT64CONST(60)) +
-					  	tm->tm_min) * INT64CONST(60)) +
-						tm->tm_sec) * USECS_PER_SEC) + fsec;
+					   tm->tm_hour) * INT64CONST(60)) +
+					 tm->tm_min) * INT64CONST(60)) +
+				   tm->tm_sec) * USECS_PER_SEC) + fsec;
 #else
-	span->time = (((((tm->tm_mday * (double)HOURS_PER_DAY) +
-						tm->tm_hour) * (double)MINS_PER_HOUR) +
-						tm->tm_min) * (double)SECS_PER_MINUTE) +
-						tm->tm_sec + fsec;
+	span->time = (((((tm->tm_mday * (double) HOURS_PER_DAY) +
+					 tm->tm_hour) * (double) MINS_PER_HOUR) +
+				   tm->tm_min) * (double) SECS_PER_MINUTE) +
+		tm->tm_sec + fsec;
 #endif
 
 	return 0;
@@ -797,7 +795,7 @@ PGTYPESinterval_from_asc(char *str, char **endptr)
 }
 
 char *
-PGTYPESinterval_to_asc(interval *span)
+PGTYPESinterval_to_asc(interval * span)
 {
 	struct tm	tt,
 			   *tm = &tt;
@@ -821,7 +819,7 @@ PGTYPESinterval_to_asc(interval *span)
 }
 
 int
-PGTYPESinterval_copy(interval *intvlsrc, interval *intrcldest)
+PGTYPESinterval_copy(interval * intvlsrc, interval * intrcldest)
 {
 	intrcldest->time = intvlsrc->time;
 	intrcldest->month = intvlsrc->month;

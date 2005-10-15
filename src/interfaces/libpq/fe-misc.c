@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.121 2005/09/26 17:49:09 petere Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.122 2005/10/15 02:49:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -226,7 +226,7 @@ pqGetInt(int *result, size_t bytes, PGconn *conn)
 			break;
 		default:
 			pqInternalNotice(&conn->noticeHooks,
-						 "integer of size %lu not supported by pqGetInt",
+							 "integer of size %lu not supported by pqGetInt",
 							 (unsigned long) bytes);
 			return EOF;
 	}
@@ -262,7 +262,7 @@ pqPutInt(int value, size_t bytes, PGconn *conn)
 			break;
 		default:
 			pqInternalNotice(&conn->noticeHooks,
-						 "integer of size %lu not supported by pqPutInt",
+							 "integer of size %lu not supported by pqPutInt",
 							 (unsigned long) bytes);
 			return EOF;
 	}
@@ -289,9 +289,9 @@ pqCheckOutBufferSpace(int bytes_needed, PGconn *conn)
 		return 0;
 
 	/*
-	 * If we need to enlarge the buffer, we first try to double it in
-	 * size; if that doesn't work, enlarge in multiples of 8K.  This
-	 * avoids thrashing the malloc pool by repeated small enlargements.
+	 * If we need to enlarge the buffer, we first try to double it in size; if
+	 * that doesn't work, enlarge in multiples of 8K.  This avoids thrashing
+	 * the malloc pool by repeated small enlargements.
 	 *
 	 * Note: tests for newsize > 0 are to catch integer overflow.
 	 */
@@ -352,9 +352,9 @@ pqCheckInBufferSpace(int bytes_needed, PGconn *conn)
 		return 0;
 
 	/*
-	 * If we need to enlarge the buffer, we first try to double it in
-	 * size; if that doesn't work, enlarge in multiples of 8K.  This
-	 * avoids thrashing the malloc pool by repeated small enlargements.
+	 * If we need to enlarge the buffer, we first try to double it in size; if
+	 * that doesn't work, enlarge in multiples of 8K.  This avoids thrashing
+	 * the malloc pool by repeated small enlargements.
 	 *
 	 * Note: tests for newsize > 0 are to catch integer overflow.
 	 */
@@ -565,20 +565,19 @@ pqReadData(PGconn *conn)
 	}
 
 	/*
-	 * If the buffer is fairly full, enlarge it. We need to be able to
-	 * enlarge the buffer in case a single message exceeds the initial
-	 * buffer size.  We enlarge before filling the buffer entirely so as
-	 * to avoid asking the kernel for a partial packet. The magic constant
-	 * here should be large enough for a TCP packet or Unix pipe
-	 * bufferload.	8K is the usual pipe buffer size, so...
+	 * If the buffer is fairly full, enlarge it. We need to be able to enlarge
+	 * the buffer in case a single message exceeds the initial buffer size.
+	 * We enlarge before filling the buffer entirely so as to avoid asking the
+	 * kernel for a partial packet. The magic constant here should be large
+	 * enough for a TCP packet or Unix pipe bufferload.  8K is the usual pipe
+	 * buffer size, so...
 	 */
 	if (conn->inBufSize - conn->inEnd < 8192)
 	{
 		if (pqCheckInBufferSpace(conn->inEnd + 8192, conn))
 		{
 			/*
-			 * We don't insist that the enlarge worked, but we need some
-			 * room
+			 * We don't insist that the enlarge worked, but we need some room
 			 */
 			if (conn->inBufSize - conn->inEnd < 100)
 				return -1;		/* errorMessage already set */
@@ -608,8 +607,8 @@ retry3:
 			goto definitelyFailed;
 #endif
 		printfPQExpBuffer(&conn->errorMessage,
-			   libpq_gettext("could not receive data from server: %s\n"),
-						SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+				   libpq_gettext("could not receive data from server: %s\n"),
+						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 		return -1;
 	}
 	if (nread > 0)
@@ -617,17 +616,16 @@ retry3:
 		conn->inEnd += nread;
 
 		/*
-		 * Hack to deal with the fact that some kernels will only give us
-		 * back 1 packet per recv() call, even if we asked for more and
-		 * there is more available.  If it looks like we are reading a
-		 * long message, loop back to recv() again immediately, until we
-		 * run out of data or buffer space.  Without this, the
-		 * block-and-restart behavior of libpq's higher levels leads to
-		 * O(N^2) performance on long messages.
+		 * Hack to deal with the fact that some kernels will only give us back
+		 * 1 packet per recv() call, even if we asked for more and there is
+		 * more available.	If it looks like we are reading a long message,
+		 * loop back to recv() again immediately, until we run out of data or
+		 * buffer space.  Without this, the block-and-restart behavior of
+		 * libpq's higher levels leads to O(N^2) performance on long messages.
 		 *
-		 * Since we left-justified the data above, conn->inEnd gives the
-		 * amount of data already read in the current message.	We
-		 * consider the message "long" once we have acquired 32k ...
+		 * Since we left-justified the data above, conn->inEnd gives the amount
+		 * of data already read in the current message.  We consider the
+		 * message "long" once we have acquired 32k ...
 		 */
 		if (conn->inEnd > 32768 &&
 			(conn->inBufSize - conn->inEnd) >= 8192)
@@ -642,18 +640,18 @@ retry3:
 		return 1;				/* got a zero read after successful tries */
 
 	/*
-	 * A return value of 0 could mean just that no data is now available,
-	 * or it could mean EOF --- that is, the server has closed the
-	 * connection. Since we have the socket in nonblock mode, the only way
-	 * to tell the difference is to see if select() is saying that the
-	 * file is ready. Grumble.	Fortunately, we don't expect this path to
-	 * be taken much, since in normal practice we should not be trying to
-	 * read data unless the file selected for reading already.
+	 * A return value of 0 could mean just that no data is now available, or
+	 * it could mean EOF --- that is, the server has closed the connection.
+	 * Since we have the socket in nonblock mode, the only way to tell the
+	 * difference is to see if select() is saying that the file is ready.
+	 * Grumble.  Fortunately, we don't expect this path to be taken much,
+	 * since in normal practice we should not be trying to read data unless
+	 * the file selected for reading already.
 	 *
-	 * In SSL mode it's even worse: SSL_read() could say WANT_READ and then
-	 * data could arrive before we make the pqReadReady() test.  So we
-	 * must play dumb and assume there is more data, relying on the SSL
-	 * layer to detect true EOF.
+	 * In SSL mode it's even worse: SSL_read() could say WANT_READ and then data
+	 * could arrive before we make the pqReadReady() test.	So we must play
+	 * dumb and assume there is more data, relying on the SSL layer to detect
+	 * true EOF.
 	 */
 
 #ifdef USE_SSL
@@ -699,8 +697,8 @@ retry4:
 			goto definitelyFailed;
 #endif
 		printfPQExpBuffer(&conn->errorMessage,
-			   libpq_gettext("could not receive data from server: %s\n"),
-						SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+				   libpq_gettext("could not receive data from server: %s\n"),
+						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 		return -1;
 	}
 	if (nread > 0)
@@ -710,15 +708,15 @@ retry4:
 	}
 
 	/*
-	 * OK, we are getting a zero read even though select() says ready.
-	 * This means the connection has been closed.  Cope.
+	 * OK, we are getting a zero read even though select() says ready. This
+	 * means the connection has been closed.  Cope.
 	 */
 definitelyFailed:
 	printfPQExpBuffer(&conn->errorMessage,
 					  libpq_gettext(
-							"server closed the connection unexpectedly\n"
-			   "\tThis probably means the server terminated abnormally\n"
-						 "\tbefore or while processing the request.\n"));
+								"server closed the connection unexpectedly\n"
+				   "\tThis probably means the server terminated abnormally\n"
+							 "\tbefore or while processing the request.\n"));
 	conn->status = CONNECTION_BAD;		/* No more connection to backend */
 	pqsecure_close(conn);
 	closesocket(conn->sock);
@@ -761,9 +759,9 @@ pqSendSome(PGconn *conn, int len)
 		if (sent < 0)
 		{
 			/*
-			 * Anything except EAGAIN/EWOULDBLOCK/EINTR is trouble. If
-			 * it's EPIPE or ECONNRESET, assume we've lost the backend
-			 * connection permanently.
+			 * Anything except EAGAIN/EWOULDBLOCK/EINTR is trouble. If it's
+			 * EPIPE or ECONNRESET, assume we've lost the backend connection
+			 * permanently.
 			 */
 			switch (SOCK_ERRNO)
 			{
@@ -784,25 +782,25 @@ pqSendSome(PGconn *conn, int len)
 #endif
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext(
-							"server closed the connection unexpectedly\n"
-													"\tThis probably means the server terminated abnormally\n"
-						 "\tbefore or while processing the request.\n"));
+								"server closed the connection unexpectedly\n"
+					"\tThis probably means the server terminated abnormally\n"
+							 "\tbefore or while processing the request.\n"));
 
 					/*
-					 * We used to close the socket here, but that's a bad
-					 * idea since there might be unread data waiting
-					 * (typically, a NOTICE message from the backend
-					 * telling us it's committing hara-kiri...).  Leave
-					 * the socket open until pqReadData finds no more data
-					 * can be read.  But abandon attempt to send data.
+					 * We used to close the socket here, but that's a bad idea
+					 * since there might be unread data waiting (typically, a
+					 * NOTICE message from the backend telling us it's
+					 * committing hara-kiri...).  Leave the socket open until
+					 * pqReadData finds no more data can be read.  But abandon
+					 * attempt to send data.
 					 */
 					conn->outCount = 0;
 					return -1;
 
 				default:
 					printfPQExpBuffer(&conn->errorMessage,
-					libpq_gettext("could not send data to server: %s\n"),
-						SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+						libpq_gettext("could not send data to server: %s\n"),
+							SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 					/* We don't assume it's a fatal error... */
 					conn->outCount = 0;
 					return -1;
@@ -831,16 +829,15 @@ pqSendSome(PGconn *conn, int len)
 
 			/*
 			 * There are scenarios in which we can't send data because the
-			 * communications channel is full, but we cannot expect the
-			 * server to clear the channel eventually because it's blocked
-			 * trying to send data to us.  (This can happen when we are
-			 * sending a large amount of COPY data, and the server has
-			 * generated lots of NOTICE responses.)  To avoid a deadlock
-			 * situation, we must be prepared to accept and buffer
-			 * incoming data before we try again.  Furthermore, it is
-			 * possible that such incoming data might not arrive until
-			 * after we've gone to sleep.  Therefore, we wait for either
-			 * read ready or write ready.
+			 * communications channel is full, but we cannot expect the server
+			 * to clear the channel eventually because it's blocked trying to
+			 * send data to us.  (This can happen when we are sending a large
+			 * amount of COPY data, and the server has generated lots of
+			 * NOTICE responses.)  To avoid a deadlock situation, we must be
+			 * prepared to accept and buffer incoming data before we try
+			 * again.  Furthermore, it is possible that such incoming data
+			 * might not arrive until after we've gone to sleep.  Therefore,
+			 * we wait for either read ready or write ready.
 			 */
 			if (pqReadData(conn) < 0)
 			{
@@ -990,7 +987,7 @@ pqSocketCheck(PGconn *conn, int forRead, int forWrite, time_t end_time)
 
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("select() failed: %s\n"),
-						SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 	}
 
 	return result;
@@ -1040,7 +1037,6 @@ pqSocketPoll(int sock, int forRead, int forWrite, time_t end_time)
 	}
 
 	return poll(&input_fd, 1, timeout_ms);
-
 #else							/* !HAVE_POLL */
 
 	fd_set		input_mask;
@@ -1134,9 +1130,9 @@ libpq_gettext(const char *msgid)
 	{
 		/* dgettext() preserves errno, but bindtextdomain() doesn't */
 #ifdef WIN32
-		int		save_errno = GetLastError();
+		int			save_errno = GetLastError();
 #else
-		int		save_errno = errno;    
+		int			save_errno = errno;
 #endif
 		const char *ldir;
 

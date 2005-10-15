@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_autovacuum.h,v 1.2 2005/08/11 21:11:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_autovacuum.h,v 1.3 2005/10/15 02:49:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,17 +25,17 @@
  *		typedef struct FormData_pg_autovacuum
  * ----------------
  */
-#define AutovacuumRelationId	1248 
+#define AutovacuumRelationId	1248
 CATALOG(pg_autovacuum,1248) BKI_WITHOUT_OIDS
 {
-	Oid			vacrelid;			/* OID of table */
-	bool		enabled;			/* enabled for this table? */
+	Oid			vacrelid;		/* OID of table */
+	bool		enabled;		/* enabled for this table? */
 	int4		vac_base_thresh;	/* base threshold value */
-	float4		vac_scale_factor;  	/* reltuples scaling factor */
+	float4		vac_scale_factor;		/* reltuples scaling factor */
 	int4		anl_base_thresh;	/* base threshold value */
-	float4		anl_scale_factor;	/* reltuples scaling factor */
-	int4		vac_cost_delay;		/* vacuum cost-based delay */
-	int4		vac_cost_limit;		/* vacuum cost limit */
+	float4		anl_scale_factor;		/* reltuples scaling factor */
+	int4		vac_cost_delay; /* vacuum cost-based delay */
+	int4		vac_cost_limit; /* vacuum cost limit */
 } FormData_pg_autovacuum;
 
 /* ----------------

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.133 2005/09/24 22:54:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.134 2005/10/15 02:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,9 +115,9 @@ ProcedureCreate(const char *procedureName,
 	if (allParameterTypes != PointerGetDatum(NULL))
 	{
 		/*
-		 * We expect the array to be a 1-D OID array; verify that. We
-		 * don't need to use deconstruct_array() since the array data is
-		 * just going to look like a C array of OID values.
+		 * We expect the array to be a 1-D OID array; verify that. We don't
+		 * need to use deconstruct_array() since the array data is just going
+		 * to look like a C array of OID values.
 		 */
 		allParamCount = ARR_DIMS(DatumGetPointer(allParameterTypes))[0];
 		if (ARR_NDIM(DatumGetPointer(allParameterTypes)) != 1 ||
@@ -136,8 +136,8 @@ ProcedureCreate(const char *procedureName,
 
 	/*
 	 * Do not allow return type ANYARRAY or ANYELEMENT unless at least one
-	 * input argument is ANYARRAY or ANYELEMENT.  Also, do not allow
-	 * return type INTERNAL unless at least one input argument is INTERNAL.
+	 * input argument is ANYARRAY or ANYELEMENT.  Also, do not allow return
+	 * type INTERNAL unless at least one input argument is INTERNAL.
 	 */
 	for (i = 0; i < parameterCount; i++)
 	{
@@ -158,9 +158,9 @@ ProcedureCreate(const char *procedureName,
 		for (i = 0; i < allParamCount; i++)
 		{
 			/*
-			 * We don't bother to distinguish input and output params here,
-			 * so if there is, say, just an input INTERNAL param then we will
-			 * still set internalOutParam.  This is OK since we don't really
+			 * We don't bother to distinguish input and output params here, so
+			 * if there is, say, just an input INTERNAL param then we will
+			 * still set internalOutParam.	This is OK since we don't really
 			 * care.
 			 */
 			switch (allParams[i])
@@ -240,9 +240,9 @@ ProcedureCreate(const char *procedureName,
 	else
 		nulls[Anum_pg_proc_proargnames - 1] = 'n';
 	values[Anum_pg_proc_prosrc - 1] = DirectFunctionCall1(textin,
-									  CStringGetDatum(prosrc));
+													CStringGetDatum(prosrc));
 	values[Anum_pg_proc_probin - 1] = DirectFunctionCall1(textin,
-									  CStringGetDatum(probin));
+													CStringGetDatum(probin));
 	/* start out with empty permissions */
 	nulls[Anum_pg_proc_proacl - 1] = 'n';
 
@@ -264,8 +264,8 @@ ProcedureCreate(const char *procedureName,
 		if (!replace)
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_FUNCTION),
-					 errmsg("function \"%s\" already exists with same argument types",
-							procedureName)));
+			errmsg("function \"%s\" already exists with same argument types",
+				   procedureName)));
 		if (!pg_proc_ownercheck(HeapTupleGetOid(oldtup), GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
 						   procedureName);
@@ -295,14 +295,14 @@ ProcedureCreate(const char *procedureName,
 													  parameterModes,
 													  parameterNames);
 			if (olddesc == NULL && newdesc == NULL)
-				/* ok, both are runtime-defined RECORDs */ ;
+				 /* ok, both are runtime-defined RECORDs */ ;
 			else if (olddesc == NULL || newdesc == NULL ||
 					 !equalTupleDescs(olddesc, newdesc))
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("cannot change return type of existing function"),
-					 errdetail("Row type defined by OUT parameters is different."),
-					 errhint("Use DROP FUNCTION first.")));
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					errmsg("cannot change return type of existing function"),
+				errdetail("Row type defined by OUT parameters is different."),
+						 errhint("Use DROP FUNCTION first.")));
 		}
 
 		/* Can't change aggregate status, either */
@@ -422,8 +422,8 @@ fmgr_internal_validator(PG_FUNCTION_ARGS)
 	char	   *prosrc;
 
 	/*
-	 * We do not honor check_function_bodies since it's unlikely the
-	 * function name will be found later if it isn't there now.
+	 * We do not honor check_function_bodies since it's unlikely the function
+	 * name will be found later if it isn't there now.
 	 */
 
 	tuple = SearchSysCache(PROCOID,
@@ -471,10 +471,9 @@ fmgr_c_validator(PG_FUNCTION_ARGS)
 	char	   *probin;
 
 	/*
-	 * It'd be most consistent to skip the check if
-	 * !check_function_bodies, but the purpose of that switch is to be
-	 * helpful for pg_dump loading, and for pg_dump loading it's much
-	 * better if we *do* check.
+	 * It'd be most consistent to skip the check if !check_function_bodies,
+	 * but the purpose of that switch is to be helpful for pg_dump loading,
+	 * and for pg_dump loading it's much better if we *do* check.
 	 */
 
 	tuple = SearchSysCache(PROCOID,
@@ -554,8 +553,8 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				 errmsg("SQL functions cannot have arguments of type %s",
-						format_type_be(proc->proargtypes.values[i]))));
+					 errmsg("SQL functions cannot have arguments of type %s",
+							format_type_be(proc->proargtypes.values[i]))));
 		}
 	}
 
@@ -577,13 +576,13 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 		error_context_stack = &sqlerrcontext;
 
 		/*
-		 * We can't do full prechecking of the function definition if
-		 * there are any polymorphic input types, because actual datatypes
-		 * of expression results will be unresolvable.	The check will be
-		 * done at runtime instead.
+		 * We can't do full prechecking of the function definition if there
+		 * are any polymorphic input types, because actual datatypes of
+		 * expression results will be unresolvable.  The check will be done at
+		 * runtime instead.
 		 *
-		 * We can run the text through the raw parser though; this will at
-		 * least catch silly syntactic errors.
+		 * We can run the text through the raw parser though; this will at least
+		 * catch silly syntactic errors.
 		 */
 		if (!haspolyarg)
 		{
@@ -652,8 +651,8 @@ function_parse_error_transpose(const char *prosrc)
 	 * Nothing to do unless we are dealing with a syntax error that has a
 	 * cursor position.
 	 *
-	 * Some PLs may prefer to report the error position as an internal error
-	 * to begin with, so check that too.
+	 * Some PLs may prefer to report the error position as an internal error to
+	 * begin with, so check that too.
 	 */
 	origerrposition = geterrposition();
 	if (origerrposition <= 0)
@@ -703,10 +702,10 @@ match_prosrc_to_query(const char *prosrc, const char *queryText,
 					  int cursorpos)
 {
 	/*
-	 * Rather than fully parsing the CREATE FUNCTION command, we just scan
-	 * the command looking for $prosrc$ or 'prosrc'.  This could be fooled
-	 * (though not in any very probable scenarios), so fail if we find
-	 * more than one match.
+	 * Rather than fully parsing the CREATE FUNCTION command, we just scan the
+	 * command looking for $prosrc$ or 'prosrc'.  This could be fooled (though
+	 * not in any very probable scenarios), so fail if we find more than one
+	 * match.
 	 */
 	int			prosrclen = strlen(prosrc);
 	int			querylen = strlen(queryText);
@@ -722,8 +721,8 @@ match_prosrc_to_query(const char *prosrc, const char *queryText,
 		{
 			/*
 			 * Found a $foo$ match.  Since there are no embedded quoting
-			 * characters in a dollar-quoted literal, we don't have to do
-			 * any fancy arithmetic; just offset by the starting position.
+			 * characters in a dollar-quoted literal, we don't have to do any
+			 * fancy arithmetic; just offset by the starting position.
 			 */
 			if (matchpos)
 				return 0;		/* multiple matches, fail */
@@ -735,9 +734,8 @@ match_prosrc_to_query(const char *prosrc, const char *queryText,
 										 cursorpos, &newcursorpos))
 		{
 			/*
-			 * Found a 'foo' match.  match_prosrc_to_literal() has
-			 * adjusted for any quotes or backslashes embedded in the
-			 * literal.
+			 * Found a 'foo' match.  match_prosrc_to_literal() has adjusted
+			 * for any quotes or backslashes embedded in the literal.
 			 */
 			if (matchpos)
 				return 0;		/* multiple matches, fail */
@@ -769,8 +767,8 @@ match_prosrc_to_literal(const char *prosrc, const char *literal,
 	 * string literal.	It does not handle the SQL syntax for literals
 	 * continued across line boundaries.
 	 *
-	 * We do the comparison a character at a time, not a byte at a time, so
-	 * that we can do the correct cursorpos math.
+	 * We do the comparison a character at a time, not a byte at a time, so that
+	 * we can do the correct cursorpos math.
 	 */
 	while (*prosrc)
 	{

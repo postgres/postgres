@@ -3,7 +3,7 @@
 * geqo_erx.c
 *	 edge recombination crossover [ER]
 *
-* $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_erx.c,v 1.19 2003/11/29 22:39:49 pgsql Exp $
+* $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_erx.c,v 1.20 2005/10/15 02:49:19 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -55,8 +55,8 @@ alloc_edge_table(int num_gene)
 	Edge	   *edge_table;
 
 	/*
-	 * palloc one extra location so that nodes numbered 1..n can be
-	 * indexed directly; 0 will not be used
+	 * palloc one extra location so that nodes numbered 1..n can be indexed
+	 * directly; 0 will not be used
 	 */
 
 	edge_table = (Edge *) palloc((num_gene + 1) * sizeof(Edge));
@@ -94,8 +94,7 @@ gimme_edge_table(Gene *tour1, Gene *tour2, int num_gene, Edge *edge_table)
 	int			i,
 				index1,
 				index2;
-	int			edge_total;		/* total number of unique edges in two
-								 * genes */
+	int			edge_total;		/* total number of unique edges in two genes */
 
 	/* at first clear the edge table's old data */
 	for (i = 1; i <= num_gene; i++)
@@ -111,15 +110,15 @@ gimme_edge_table(Gene *tour1, Gene *tour2, int num_gene, Edge *edge_table)
 	for (index1 = 0; index1 < num_gene; index1++)
 	{
 		/*
-		 * presume the tour is circular, i.e. 1->2, 2->3, 3->1 this
-		 * operaton maps n back to 1
+		 * presume the tour is circular, i.e. 1->2, 2->3, 3->1 this operaton
+		 * maps n back to 1
 		 */
 
 		index2 = (index1 + 1) % num_gene;
 
 		/*
-		 * edges are bidirectional, i.e. 1->2 is same as 2->1 call
-		 * gimme_edge twice per edge
+		 * edges are bidirectional, i.e. 1->2 is same as 2->1 call gimme_edge
+		 * twice per edge
 		 */
 
 		edge_total += gimme_edge(tour1[index1], tour1[index2], edge_table);
@@ -320,10 +319,10 @@ gimme_gene(Edge edge, Edge *edge_table)
 		 */
 
 		/*
-		 * The test for minimum_count can probably be removed at some
-		 * point but comments should probably indicate exactly why it is
-		 * guaranteed that the test will always succeed the first time
-		 * around.	If it can fail then the code is in error
+		 * The test for minimum_count can probably be removed at some point
+		 * but comments should probably indicate exactly why it is guaranteed
+		 * that the test will always succeed the first time around.  If it can
+		 * fail then the code is in error
 		 */
 
 
@@ -379,8 +378,8 @@ edge_failure(Gene *gene, int index, Edge *edge_table, int num_gene)
 
 
 	/*
-	 * how many edges remain? how many gene with four total (initial)
-	 * edges remain?
+	 * how many edges remain? how many gene with four total (initial) edges
+	 * remain?
 	 */
 
 	for (i = 1; i <= num_gene; i++)
@@ -395,8 +394,8 @@ edge_failure(Gene *gene, int index, Edge *edge_table, int num_gene)
 	}
 
 	/*
-	 * random decision of the gene with remaining edges and whose
-	 * total_edges == 4
+	 * random decision of the gene with remaining edges and whose total_edges
+	 * == 4
 	 */
 
 	if (four_count != 0)
@@ -444,15 +443,15 @@ edge_failure(Gene *gene, int index, Edge *edge_table, int num_gene)
 	}
 
 	/*
-	 * edge table seems to be empty; this happens sometimes on the last
-	 * point due to the fact that the first point is removed from the
-	 * table even though only one of its edges has been determined
+	 * edge table seems to be empty; this happens sometimes on the last point
+	 * due to the fact that the first point is removed from the table even
+	 * though only one of its edges has been determined
 	 */
 
 	else
-	{							/* occurs only at the last point in the
-								 * tour; simply look for the point which
-								 * is not yet used */
+	{							/* occurs only at the last point in the tour;
+								 * simply look for the point which is not yet
+								 * used */
 
 		for (i = 1; i <= num_gene; i++)
 			if (edge_table[i].unused_edges >= 0)

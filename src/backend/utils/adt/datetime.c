@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.159 2005/10/14 11:47:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.160 2005/10/15 02:49:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,16 +28,16 @@
 
 static int DecodeNumber(int flen, char *field, bool haveTextMonth,
 			 int fmask, int *tmask,
-			 struct pg_tm *tm, fsec_t *fsec, int *is2digits);
+			 struct pg_tm * tm, fsec_t *fsec, int *is2digits);
 static int DecodeNumberField(int len, char *str,
 				  int fmask, int *tmask,
-				  struct pg_tm *tm, fsec_t *fsec, int *is2digits);
+				  struct pg_tm * tm, fsec_t *fsec, int *is2digits);
 static int DecodeTime(char *str, int fmask, int *tmask,
-		   struct pg_tm *tm, fsec_t *fsec);
+		   struct pg_tm * tm, fsec_t *fsec);
 static int	DecodeTimezone(char *str, int *tzp);
 static int	DecodePosixTimezone(char *str, int *tzp);
 static datetkn *datebsearch(char *key, datetkn *base, unsigned int nel);
-static int	DecodeDate(char *str, int fmask, int *tmask, struct pg_tm *tm);
+static int	DecodeDate(char *str, int fmask, int *tmask, struct pg_tm * tm);
 static void TrimTrailingZeros(char *str);
 
 
@@ -308,8 +308,7 @@ static datetkn datetktbl[] = {
 	{"lhdt", DTZ, POS(44)},		/* Lord Howe Daylight Time, Australia */
 	{"lhst", TZ, POS(42)},		/* Lord Howe Standard Time, Australia */
 	{"ligt", TZ, POS(40)},		/* From Melbourne, Australia */
-	{"lint", TZ, POS(56)},		/* Line Islands Time (Kiribati; +14
-								 * hours!) */
+	{"lint", TZ, POS(56)},		/* Line Islands Time (Kiribati; +14 hours!) */
 	{"lkt", TZ, POS(24)},		/* Lanka Time */
 	{"m", UNITS, DTK_MONTH},	/* "month" for ISO input */
 	{"magst", DTZ, POS(48)},	/* Magadan Summer Time */
@@ -681,7 +680,7 @@ j2day(int date)
  * Get the transaction start time ("now()") broken down as a struct pg_tm.
  */
 void
-GetCurrentDateTime(struct pg_tm *tm)
+GetCurrentDateTime(struct pg_tm * tm)
 {
 	int			tz;
 	fsec_t		fsec;
@@ -698,7 +697,7 @@ GetCurrentDateTime(struct pg_tm *tm)
  * including fractional seconds and timezone offset.
  */
 void
-GetCurrentTimeUsec(struct pg_tm *tm, fsec_t *fsec, int *tzp)
+GetCurrentTimeUsec(struct pg_tm * tm, fsec_t *fsec, int *tzp)
 {
 	int			tz;
 
@@ -741,8 +740,8 @@ TrimTrailingZeros(char *str)
  *
  * timestr - the input string
  * workbuf - workspace for field string storage. This must be
- *   larger than the largest legal input for this datetime type --
- *   some additional space will be needed to NUL terminate fields.
+ *	 larger than the largest legal input for this datetime type --
+ *	 some additional space will be needed to NUL terminate fields.
  * buflen - the size of workbuf
  * field[] - pointers to field strings are returned in this array
  * ftype[] - field type indicators are returned in this array
@@ -776,10 +775,10 @@ ParseDateTime(const char *timestr, char *workbuf, size_t buflen,
 	const char *bufend = workbuf + buflen;
 
 	/*
-	 * Set the character pointed-to by "bufptr" to "newchar", and
-	 * increment "bufptr". "end" gives the end of the buffer -- we
-	 * return an error if there is no space left to append a character
-	 * to the buffer. Note that "bufptr" is evaluated twice.
+	 * Set the character pointed-to by "bufptr" to "newchar", and increment
+	 * "bufptr". "end" gives the end of the buffer -- we return an error if
+	 * there is no space left to append a character to the buffer. Note that
+	 * "bufptr" is evaluated twice.
 	 */
 #define APPEND_CHAR(bufptr, end, newchar)		\
 	do											\
@@ -835,8 +834,8 @@ ParseDateTime(const char *timestr, char *workbuf, size_t buflen,
 						APPEND_CHAR(bufp, bufend, *cp++);
 
 					/*
-					 * insist that the delimiters match to get a
-					 * three-field date.
+					 * insist that the delimiters match to get a three-field
+					 * date.
 					 */
 					if (*cp == delim)
 					{
@@ -855,8 +854,8 @@ ParseDateTime(const char *timestr, char *workbuf, size_t buflen,
 			}
 
 			/*
-			 * otherwise, number only and will determine year, month, day,
-			 * or concatenated fields later...
+			 * otherwise, number only and will determine year, month, day, or
+			 * concatenated fields later...
 			 */
 			else
 				ftype[nf] = DTK_NUMBER;
@@ -872,8 +871,7 @@ ParseDateTime(const char *timestr, char *workbuf, size_t buflen,
 		}
 
 		/*
-		 * text? then date string, month, day of week, special, or
-		 * timezone
+		 * text? then date string, month, day of week, special, or timezone
 		 */
 		else if (isalpha((unsigned char) *cp))
 		{
@@ -883,8 +881,8 @@ ParseDateTime(const char *timestr, char *workbuf, size_t buflen,
 				APPEND_CHAR(bufp, bufend, pg_tolower((unsigned char) *cp++));
 
 			/*
-			 * Full date string with leading text month? Could also be a
-			 * POSIX time zone...
+			 * Full date string with leading text month? Could also be a POSIX
+			 * time zone...
 			 */
 			if (*cp == '-' || *cp == '/' || *cp == '.')
 			{
@@ -969,13 +967,12 @@ ParseDateTime(const char *timestr, char *workbuf, size_t buflen,
  */
 int
 DecodeDateTime(char **field, int *ftype, int nf,
-			   int *dtype, struct pg_tm *tm, fsec_t *fsec, int *tzp)
+			   int *dtype, struct pg_tm * tm, fsec_t *fsec, int *tzp)
 {
 	int			fmask = 0,
 				tmask,
 				type;
-	int			ptype = 0;		/* "prefix type" for ISO y2001m02d04
-								 * format */
+	int			ptype = 0;		/* "prefix type" for ISO y2001m02d04 format */
 	int			i;
 	int			val;
 	int			dterr;
@@ -1054,8 +1051,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 
 						/*
 						 * Starts with a digit but we already have a time
-						 * field? Then we are in trouble with a date and
-						 * time already...
+						 * field? Then we are in trouble with a date and time
+						 * already...
 						 */
 						if ((fmask & DTK_TIME_M) == DTK_TIME_M)
 							return DTERR_BAD_FORMAT;
@@ -1070,8 +1067,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						*cp = '\0';
 
 						/*
-						 * Then read the rest of the field as a
-						 * concatenated time
+						 * Then read the rest of the field as a concatenated
+						 * time
 						 */
 						dterr = DecodeNumberField(strlen(field[i]), field[i],
 												  fmask,
@@ -1115,8 +1112,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				 * DecodeTime()
 				 */
 				/* test for > 24:00:00 */
-				if  (tm->tm_hour > 24 ||
-					 (tm->tm_hour == 24 && (tm->tm_min > 0 || tm->tm_sec > 0)))
+				if (tm->tm_hour > 24 ||
+					(tm->tm_hour == 24 && (tm->tm_min > 0 || tm->tm_sec > 0)))
 					return DTERR_FIELD_OVERFLOW;
 				break;
 
@@ -1132,9 +1129,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						return dterr;
 
 					/*
-					 * Already have a time zone? Then maybe this is the
-					 * second field of a POSIX time: EST+3 (equivalent to
-					 * PST)
+					 * Already have a time zone? Then maybe this is the second
+					 * field of a POSIX time: EST+3 (equivalent to PST)
 					 */
 					if (i > 0 && (fmask & DTK_M(TZ)) != 0 &&
 						ftype[i - 1] == DTK_TZ &&
@@ -1278,7 +1274,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						case DTK_TIME:
 							/* previous field was "t" for ISO time */
 							dterr = DecodeNumberField(strlen(field[i]), field[i],
-													(fmask | DTK_DATE_M),
+													  (fmask | DTK_DATE_M),
 													  &tmask, tm,
 													  fsec, &is2digits);
 							if (dterr < 0)
@@ -1316,9 +1312,9 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					else if (cp != NULL && flen - strlen(cp) > 2)
 					{
 						/*
-						 * Interpret as a concatenated date or time Set
-						 * the type field to allow decoding other fields
-						 * later. Example: 20011223 or 040506
+						 * Interpret as a concatenated date or time Set the
+						 * type field to allow decoding other fields later.
+						 * Example: 20011223 or 040506
 						 */
 						dterr = DecodeNumberField(flen, field[i], fmask,
 												  &tmask, tm,
@@ -1363,8 +1359,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						{
 							case DTK_CURRENT:
 								ereport(ERROR,
-								 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								  errmsg("date/time value \"current\" is no longer supported")));
+									 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+									  errmsg("date/time value \"current\" is no longer supported")));
 
 								return DTERR_BAD_FORMAT;
 								break;
@@ -1380,7 +1376,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 								*dtype = DTK_DATE;
 								GetCurrentDateTime(tm);
 								j2date(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - 1,
-										&tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+									&tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 								tm->tm_hour = 0;
 								tm->tm_min = 0;
 								tm->tm_sec = 0;
@@ -1400,7 +1396,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 								*dtype = DTK_DATE;
 								GetCurrentDateTime(tm);
 								j2date(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + 1,
-										&tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+									&tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 								tm->tm_hour = 0;
 								tm->tm_min = 0;
 								tm->tm_sec = 0;
@@ -1425,8 +1421,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					case MONTH:
 
 						/*
-						 * already have a (numeric) month? then see if we
-						 * can substitute...
+						 * already have a (numeric) month? then see if we can
+						 * substitute...
 						 */
 						if ((fmask & DTK_M(MONTH)) && !haveTextMonth &&
 							!(fmask & DTK_M(DAY)) && tm->tm_mon >= 1 &&
@@ -1442,8 +1438,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					case DTZMOD:
 
 						/*
-						 * daylight savings time modifier (solves "MET
-						 * DST" syntax)
+						 * daylight savings time modifier (solves "MET DST"
+						 * syntax)
 						 */
 						tmask |= DTK_M(DTZ);
 						tm->tm_isdst = 1;
@@ -1455,8 +1451,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					case DTZ:
 
 						/*
-						 * set mask for TZ here _or_ check for DTZ later
-						 * when getting default timezone
+						 * set mask for TZ here _or_ check for DTZ later when
+						 * getting default timezone
 						 */
 						tmask |= DTK_M(TZ);
 						tm->tm_isdst = 1;
@@ -1497,9 +1493,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					case ISOTIME:
 
 						/*
-						 * This is a filler field "t" indicating that the
-						 * next field is time. Try to verify that this is
-						 * sensible.
+						 * This is a filler field "t" indicating that the next
+						 * field is time. Try to verify that this is sensible.
 						 */
 						tmask = 0;
 
@@ -1546,8 +1541,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-					   errmsg("inconsistent use of year %04d and \"BC\"",
-							  tm->tm_year)));
+						 errmsg("inconsistent use of year %04d and \"BC\"",
+								tm->tm_year)));
 		}
 		else if (is2digits)
 		{
@@ -1597,9 +1592,9 @@ DecodeDateTime(char **field, int *ftype, int nf,
 		}
 
 		/*
-		 * Check for valid day of month, now that we know for sure the
-		 * month and year.	Note we don't use MD_FIELD_OVERFLOW here,
-		 * since it seems unlikely that "Feb 29" is a YMD-order error.
+		 * Check for valid day of month, now that we know for sure the month
+		 * and year.  Note we don't use MD_FIELD_OVERFLOW here, since it seems
+		 * unlikely that "Feb 29" is a YMD-order error.
 		 */
 		if (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
 			return DTERR_FIELD_OVERFLOW;
@@ -1608,8 +1603,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 		if (tzp != NULL && !(fmask & DTK_M(TZ)))
 		{
 			/*
-			 * daylight savings time modifier but no standard timezone?
-			 * then error
+			 * daylight savings time modifier but no standard timezone? then
+			 * error
 			 */
 			if (fmask & DTK_M(DTZMOD))
 				return DTERR_BAD_FORMAT;
@@ -1634,7 +1629,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
  * of mktime(), anyway.
  */
 int
-DetermineTimeZoneOffset(struct pg_tm *tm, pg_tz *tzp)
+DetermineTimeZoneOffset(struct pg_tm * tm, pg_tz *tzp)
 {
 	int			date,
 				sec;
@@ -1658,15 +1653,15 @@ DetermineTimeZoneOffset(struct pg_tm *tm, pg_tz *tzp)
 
 	/*
 	 * First, generate the pg_time_t value corresponding to the given
-	 * y/m/d/h/m/s taken as GMT time.  If this overflows, punt and decide
-	 * the timezone is GMT.  (We only need to worry about overflow on
-	 * machines where pg_time_t is 32 bits.)
+	 * y/m/d/h/m/s taken as GMT time.  If this overflows, punt and decide the
+	 * timezone is GMT.  (We only need to worry about overflow on machines
+	 * where pg_time_t is 32 bits.)
 	 */
 	if (!IS_VALID_JULIAN(tm->tm_year, tm->tm_mon, tm->tm_mday))
 		goto overflow;
 	date = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - UNIX_EPOCH_JDATE;
 
-	day = ((pg_time_t) date) *SECS_PER_DAY;
+	day = ((pg_time_t) date) * SECS_PER_DAY;
 	if (day / SECS_PER_DAY != date)
 		goto overflow;
 	sec = tm->tm_sec + (tm->tm_min + tm->tm_hour * MINS_PER_HOUR) * SECS_PER_MINUTE;
@@ -1676,10 +1671,10 @@ DetermineTimeZoneOffset(struct pg_tm *tm, pg_tz *tzp)
 		goto overflow;
 
 	/*
-	 * Find the DST time boundary just before or following the target time.
-	 * We assume that all zones have GMT offsets less than 24 hours, and
-	 * that DST boundaries can't be closer together than 48 hours, so
-	 * backing up 24 hours and finding the "next" boundary will work.
+	 * Find the DST time boundary just before or following the target time. We
+	 * assume that all zones have GMT offsets less than 24 hours, and that DST
+	 * boundaries can't be closer together than 48 hours, so backing up 24
+	 * hours and finding the "next" boundary will work.
 	 */
 	prevtime = mytime - SECS_PER_DAY;
 	if (mytime < 0 && prevtime > 0)
@@ -1689,7 +1684,7 @@ DetermineTimeZoneOffset(struct pg_tm *tm, pg_tz *tzp)
 							   &before_gmtoff, &before_isdst,
 							   &boundary,
 							   &after_gmtoff, &after_isdst,
-		                       tzp);
+							   tzp);
 	if (res < 0)
 		goto overflow;			/* failure? */
 
@@ -1697,7 +1692,7 @@ DetermineTimeZoneOffset(struct pg_tm *tm, pg_tz *tzp)
 	{
 		/* Non-DST zone, life is simple */
 		tm->tm_isdst = before_isdst;
-		return - (int) before_gmtoff;
+		return -(int) before_gmtoff;
 	}
 
 	/*
@@ -1722,24 +1717,25 @@ DetermineTimeZoneOffset(struct pg_tm *tm, pg_tz *tzp)
 	if (beforetime <= boundary && aftertime < boundary)
 	{
 		tm->tm_isdst = before_isdst;
-		return - (int) before_gmtoff;
+		return -(int) before_gmtoff;
 	}
 	if (beforetime > boundary && aftertime >= boundary)
 	{
 		tm->tm_isdst = after_isdst;
-		return - (int) after_gmtoff;
+		return -(int) after_gmtoff;
 	}
+
 	/*
-	 * It's an invalid or ambiguous time due to timezone transition.
-	 * Prefer the standard-time interpretation.
+	 * It's an invalid or ambiguous time due to timezone transition. Prefer
+	 * the standard-time interpretation.
 	 */
 	if (after_isdst == 0)
 	{
 		tm->tm_isdst = after_isdst;
-		return - (int) after_gmtoff;
+		return -(int) after_gmtoff;
 	}
 	tm->tm_isdst = before_isdst;
-	return - (int) before_gmtoff;
+	return -(int) before_gmtoff;
 
 overflow:
 	/* Given date is out of range, so assume UTC */
@@ -1762,7 +1758,7 @@ overflow:
  */
 int
 DecodeTimeOnly(char **field, int *ftype, int nf,
-			   int *dtype, struct pg_tm *tm, fsec_t *fsec, int *tzp)
+			   int *dtype, struct pg_tm * tm, fsec_t *fsec, int *tzp)
 {
 	int			fmask = 0,
 				tmask,
@@ -1792,8 +1788,8 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 			case DTK_DATE:
 
 				/*
-				 * Time zone not allowed? Then should not accept dates or
-				 * time zones no matter what else!
+				 * Time zone not allowed? Then should not accept dates or time
+				 * zones no matter what else!
 				 */
 				if (tzp == NULL)
 					return DTERR_BAD_FORMAT;
@@ -1815,15 +1811,13 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 
 						/*
 						 * Starts with a digit but we already have a time
-						 * field? Then we are in trouble with time
-						 * already...
+						 * field? Then we are in trouble with time already...
 						 */
 						if ((fmask & DTK_TIME_M) == DTK_TIME_M)
 							return DTERR_BAD_FORMAT;
 
 						/*
-						 * Should not get here and fail. Sanity check
-						 * only...
+						 * Should not get here and fail. Sanity check only...
 						 */
 						if ((cp = strchr(field[i], '-')) == NULL)
 							return DTERR_BAD_FORMAT;
@@ -1835,8 +1829,8 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						*cp = '\0';
 
 						/*
-						 * Then read the rest of the field as a
-						 * concatenated time
+						 * Then read the rest of the field as a concatenated
+						 * time
 						 */
 						dterr = DecodeNumberField(strlen(field[i]), field[i],
 												  (fmask | DTK_DATE_M),
@@ -1879,9 +1873,8 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						return dterr;
 
 					/*
-					 * Already have a time zone? Then maybe this is the
-					 * second field of a POSIX time: EST+3 (equivalent to
-					 * PST)
+					 * Already have a time zone? Then maybe this is the second
+					 * field of a POSIX time: EST+3 (equivalent to PST)
 					 */
 					if (i > 0 && (fmask & DTK_M(TZ)) != 0 &&
 						ftype[i - 1] == DTK_TZ &&
@@ -2025,10 +2018,10 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 								tmask |= DTK_TIME_M;
 #ifdef HAVE_INT64_TIMESTAMP
 								dt2time(time * USECS_PER_DAY,
-										&tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
+								&tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
 #else
 								dt2time(time * SECS_PER_DAY,
-										&tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
+								&tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
 #endif
 							}
 							break;
@@ -2036,7 +2029,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						case DTK_TIME:
 							/* previous field was "t" for ISO time */
 							dterr = DecodeNumberField(strlen(field[i]), field[i],
-													(fmask | DTK_DATE_M),
+													  (fmask | DTK_DATE_M),
 													  &tmask, tm,
 													  fsec, &is2digits);
 							if (dterr < 0)
@@ -2080,12 +2073,12 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						else if (flen - strlen(cp) > 2)
 						{
 							/*
-							 * Interpret as a concatenated date or time
-							 * Set the type field to allow decoding other
-							 * fields later. Example: 20011223 or 040506
+							 * Interpret as a concatenated date or time Set
+							 * the type field to allow decoding other fields
+							 * later. Example: 20011223 or 040506
 							 */
 							dterr = DecodeNumberField(flen, field[i],
-													(fmask | DTK_DATE_M),
+													  (fmask | DTK_DATE_M),
 													  &tmask, tm,
 													  fsec, &is2digits);
 							if (dterr < 0)
@@ -2133,8 +2126,8 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						{
 							case DTK_CURRENT:
 								ereport(ERROR,
-								 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								  errmsg("date/time value \"current\" is no longer supported")));
+									 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+									  errmsg("date/time value \"current\" is no longer supported")));
 								return DTERR_BAD_FORMAT;
 								break;
 
@@ -2162,8 +2155,8 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 					case DTZMOD:
 
 						/*
-						 * daylight savings time modifier (solves "MET
-						 * DST" syntax)
+						 * daylight savings time modifier (solves "MET DST"
+						 * syntax)
 						 */
 						tmask |= DTK_M(DTZ);
 						tm->tm_isdst = 1;
@@ -2175,8 +2168,8 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 					case DTZ:
 
 						/*
-						 * set mask for TZ here _or_ check for DTZ later
-						 * when getting default timezone
+						 * set mask for TZ here _or_ check for DTZ later when
+						 * getting default timezone
 						 */
 						tmask |= DTK_M(TZ);
 						tm->tm_isdst = 1;
@@ -2247,14 +2240,14 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 
 	if (tm->tm_hour < 0 || tm->tm_min < 0 || tm->tm_min > 59 ||
 		tm->tm_sec < 0 || tm->tm_sec > 60 || tm->tm_hour > 24 ||
-		/* test for > 24:00:00 */
-	    (tm->tm_hour == 24 && (tm->tm_min > 0 || tm->tm_sec > 0 ||
+	/* test for > 24:00:00 */
+		(tm->tm_hour == 24 && (tm->tm_min > 0 || tm->tm_sec > 0 ||
 #ifdef HAVE_INT64_TIMESTAMP
-		*fsec > INT64CONST(0))) ||
+							   *fsec > INT64CONST(0))) ||
 		*fsec < INT64CONST(0) || *fsec >= USECS_PER_SEC)
 		return DTERR_FIELD_OVERFLOW;
 #else
-		*fsec > 0)) ||
+							   *fsec > 0)) ||
 		*fsec < 0 || *fsec >= 1)
 		return DTERR_FIELD_OVERFLOW;
 #endif
@@ -2269,8 +2262,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 				   *tmp = &tt;
 
 		/*
-		 * daylight savings time modifier but no standard timezone? then
-		 * error
+		 * daylight savings time modifier but no standard timezone? then error
 		 */
 		if (fmask & DTK_M(DTZMOD))
 			return DTERR_BAD_FORMAT;
@@ -2300,7 +2292,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
  * Insist on a complete set of fields.
  */
 static int
-DecodeDate(char *str, int fmask, int *tmask, struct pg_tm *tm)
+DecodeDate(char *str, int fmask, int *tmask, struct pg_tm * tm)
 {
 	fsec_t		fsec;
 	int			nf = 0;
@@ -2458,7 +2450,7 @@ DecodeDate(char *str, int fmask, int *tmask, struct pg_tm *tm)
  *	can be used to represent time spans.
  */
 static int
-DecodeTime(char *str, int fmask, int *tmask, struct pg_tm *tm, fsec_t *fsec)
+DecodeTime(char *str, int fmask, int *tmask, struct pg_tm * tm, fsec_t *fsec)
 {
 	char	   *cp;
 
@@ -2522,7 +2514,7 @@ DecodeTime(char *str, int fmask, int *tmask, struct pg_tm *tm, fsec_t *fsec)
  */
 static int
 DecodeNumber(int flen, char *str, bool haveTextMonth, int fmask,
-			 int *tmask, struct pg_tm *tm, fsec_t *fsec, int *is2digits)
+			 int *tmask, struct pg_tm * tm, fsec_t *fsec, int *is2digits)
 {
 	int			val;
 	char	   *cp;
@@ -2539,8 +2531,8 @@ DecodeNumber(int flen, char *str, bool haveTextMonth, int fmask,
 		double		frac;
 
 		/*
-		 * More than two digits before decimal point? Then could be a date
-		 * or a run-together time: 2001.360 20011225 040506.789
+		 * More than two digits before decimal point? Then could be a date or
+		 * a run-together time: 2001.360 20011225 040506.789
 		 */
 		if (cp - str > 2)
 		{
@@ -2581,9 +2573,9 @@ DecodeNumber(int flen, char *str, bool haveTextMonth, int fmask,
 		case 0:
 
 			/*
-			 * Nothing so far; make a decision about what we think the
-			 * input is.  There used to be lots of heuristics here, but
-			 * the consensus now is to be paranoid.  It *must* be either
+			 * Nothing so far; make a decision about what we think the input
+			 * is.	There used to be lots of heuristics here, but the
+			 * consensus now is to be paranoid.  It *must* be either
 			 * YYYY-MM-DD (with a more-than-two-digit year field), or the
 			 * field order defined by DateOrder.
 			 */
@@ -2614,12 +2606,11 @@ DecodeNumber(int flen, char *str, bool haveTextMonth, int fmask,
 			if (haveTextMonth)
 			{
 				/*
-				 * We are at the first numeric field of a date that
-				 * included a textual month name.  We want to support the
-				 * variants MON-DD-YYYY, DD-MON-YYYY, and YYYY-MON-DD as
-				 * unambiguous inputs.	We will also accept MON-DD-YY or
-				 * DD-MON-YY in either DMY or MDY modes, as well as
-				 * YY-MON-DD in YMD mode.
+				 * We are at the first numeric field of a date that included a
+				 * textual month name.	We want to support the variants
+				 * MON-DD-YYYY, DD-MON-YYYY, and YYYY-MON-DD as unambiguous
+				 * inputs.	We will also accept MON-DD-YY or DD-MON-YY in
+				 * either DMY or MDY modes, as well as YY-MON-DD in YMD mode.
 				 */
 				if (flen >= 3 || DateOrder == DATEORDER_YMD)
 				{
@@ -2693,8 +2684,8 @@ DecodeNumber(int flen, char *str, bool haveTextMonth, int fmask,
 	}
 
 	/*
-	 * When processing a year field, mark it for adjustment if it's only
-	 * one or two digits.
+	 * When processing a year field, mark it for adjustment if it's only one
+	 * or two digits.
 	 */
 	if (*tmask == DTK_M(YEAR))
 		*is2digits = (flen <= 2);
@@ -2712,13 +2703,13 @@ DecodeNumber(int flen, char *str, bool haveTextMonth, int fmask,
  */
 static int
 DecodeNumberField(int len, char *str, int fmask,
-			 int *tmask, struct pg_tm *tm, fsec_t *fsec, int *is2digits)
+				  int *tmask, struct pg_tm * tm, fsec_t *fsec, int *is2digits)
 {
 	char	   *cp;
 
 	/*
-	 * Have a decimal point? Then this is a date or something with a
-	 * seconds field...
+	 * Have a decimal point? Then this is a date or something with a seconds
+	 * field...
 	 */
 	if ((cp = strchr(str, '.')) != NULL)
 	{
@@ -2970,7 +2961,7 @@ DecodeSpecial(int field, char *lowtoken, int *val)
  *	preceding an hh:mm:ss field. - thomas 1998-04-30
  */
 int
-DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm *tm, fsec_t *fsec)
+DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, fsec_t *fsec)
 {
 	int			is_before = FALSE;
 	char	   *cp;
@@ -3014,9 +3005,9 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm *tm, f
 				Assert(*field[i] == '-' || *field[i] == '+');
 
 				/*
-				 * A single signed number ends up here, but will be
-				 * rejected by DecodeTime(). So, work this out to drop
-				 * through to DTK_NUMBER, which *can* tolerate this.
+				 * A single signed number ends up here, but will be rejected
+				 * by DecodeTime(). So, work this out to drop through to
+				 * DTK_NUMBER, which *can* tolerate this.
 				 */
 				cp = field[i] + 1;
 				while (*cp != '\0' && *cp != ':' && *cp != '.')
@@ -3035,8 +3026,8 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm *tm, f
 
 					/*
 					 * Set the next type to be a day, if units are not
-					 * specified. This handles the case of '1 +02:03'
-					 * since we are reading right to left.
+					 * specified. This handles the case of '1 +02:03' since we
+					 * are reading right to left.
 					 */
 					type = DTK_DAY;
 					tmask = DTK_M(TZ);
@@ -3366,7 +3357,7 @@ DateTimeParseError(int dterr, const char *str, const char *datatype)
 					(errcode(ERRCODE_DATETIME_FIELD_OVERFLOW),
 					 errmsg("date/time field value out of range: \"%s\"",
 							str),
-					 errhint("Perhaps you need a different \"datestyle\" setting.")));
+			errhint("Perhaps you need a different \"datestyle\" setting.")));
 			break;
 		case DTERR_INTERVAL_OVERFLOW:
 			ereport(ERROR,
@@ -3376,9 +3367,9 @@ DateTimeParseError(int dterr, const char *str, const char *datatype)
 			break;
 		case DTERR_TZDISP_OVERFLOW:
 			ereport(ERROR,
-				  (errcode(ERRCODE_INVALID_TIME_ZONE_DISPLACEMENT_VALUE),
-				   errmsg("time zone displacement out of range: \"%s\"",
-						  str)));
+					(errcode(ERRCODE_INVALID_TIME_ZONE_DISPLACEMENT_VALUE),
+					 errmsg("time zone displacement out of range: \"%s\"",
+							str)));
 			break;
 		case DTERR_BAD_FORMAT:
 		default:
@@ -3424,7 +3415,7 @@ datebsearch(char *key, datetkn *base, unsigned int nel)
  * Encode date as local time.
  */
 int
-EncodeDateOnly(struct pg_tm *tm, int style, char *str)
+EncodeDateOnly(struct pg_tm * tm, int style, char *str)
 {
 	if (tm->tm_mon < 1 || tm->tm_mon > MONTHS_PER_YEAR)
 		return -1;
@@ -3438,7 +3429,7 @@ EncodeDateOnly(struct pg_tm *tm, int style, char *str)
 						tm->tm_year, tm->tm_mon, tm->tm_mday);
 			else
 				sprintf(str, "%04d-%02d-%02d %s",
-					  -(tm->tm_year - 1), tm->tm_mon, tm->tm_mday, "BC");
+						-(tm->tm_year - 1), tm->tm_mon, tm->tm_mday, "BC");
 			break;
 
 		case USE_SQL_DATES:
@@ -3484,7 +3475,7 @@ EncodeDateOnly(struct pg_tm *tm, int style, char *str)
  * Encode time fields only.
  */
 int
-EncodeTimeOnly(struct pg_tm *tm, fsec_t fsec, int *tzp, int style, char *str)
+EncodeTimeOnly(struct pg_tm * tm, fsec_t fsec, int *tzp, int style, char *str)
 {
 	if (tm->tm_hour < 0 || tm->tm_hour > HOURS_PER_DAY)
 		return -1;
@@ -3492,8 +3483,8 @@ EncodeTimeOnly(struct pg_tm *tm, fsec_t fsec, int *tzp, int style, char *str)
 	sprintf(str, "%02d:%02d", tm->tm_hour, tm->tm_min);
 
 	/*
-	 * Print fractional seconds if any.  The fractional field widths
-	 * here should be equal to the larger of MAX_TIME_PRECISION and
+	 * Print fractional seconds if any.  The fractional field widths here
+	 * should be equal to the larger of MAX_TIME_PRECISION and
 	 * MAX_TIMESTAMP_PRECISION.
 	 */
 	if (fsec != 0)
@@ -3534,15 +3525,15 @@ EncodeTimeOnly(struct pg_tm *tm, fsec_t fsec, int *tzp, int style, char *str)
  *	European - dd/mm/yyyy
  */
 int
-EncodeDateTime(struct pg_tm *tm, fsec_t fsec, int *tzp, char **tzn, int style, char *str)
+EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, char *str)
 {
 	int			day,
 				hour,
 				min;
 
 	/*
-	 * Why are we checking only the month field? Change this to an
-	 * assert... if (tm->tm_mon < 1 || tm->tm_mon > MONTHS_PER_YEAR) return -1;
+	 * Why are we checking only the month field? Change this to an assert...
+	 * if (tm->tm_mon < 1 || tm->tm_mon > MONTHS_PER_YEAR) return -1;
 	 */
 	Assert(tm->tm_mon >= 1 && tm->tm_mon <= MONTHS_PER_YEAR);
 
@@ -3556,11 +3547,11 @@ EncodeDateTime(struct pg_tm *tm, fsec_t fsec, int *tzp, char **tzn, int style, c
 					tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min);
 
 			/*
-			 * Print fractional seconds if any.  The field widths here
-			 * should be at least equal to MAX_TIMESTAMP_PRECISION.
+			 * Print fractional seconds if any.  The field widths here should
+			 * be at least equal to MAX_TIMESTAMP_PRECISION.
 			 *
-			 * In float mode, don't print fractional seconds before 1 AD,
-			 * since it's unlikely there's any precision left ...
+			 * In float mode, don't print fractional seconds before 1 AD, since
+			 * it's unlikely there's any precision left ...
 			 */
 #ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
@@ -3579,10 +3570,10 @@ EncodeDateTime(struct pg_tm *tm, fsec_t fsec, int *tzp, char **tzn, int style, c
 				sprintf(str + strlen(str), ":%02d", tm->tm_sec);
 
 			/*
-			 * tzp == NULL indicates that we don't want *any* time zone
-			 * info in the output string. *tzn != NULL indicates that we
-			 * have alpha time zone info available. tm_isdst != -1
-			 * indicates that we have a valid time zone translation.
+			 * tzp == NULL indicates that we don't want *any* time zone info
+			 * in the output string. *tzn != NULL indicates that we have alpha
+			 * time zone info available. tm_isdst != -1 indicates that we have
+			 * a valid time zone translation.
 			 */
 			if (tzp != NULL && tm->tm_isdst >= 0)
 			{
@@ -3608,11 +3599,11 @@ EncodeDateTime(struct pg_tm *tm, fsec_t fsec, int *tzp, char **tzn, int style, c
 					tm->tm_hour, tm->tm_min);
 
 			/*
-			 * Print fractional seconds if any.  The field widths here
-			 * should be at least equal to MAX_TIMESTAMP_PRECISION.
+			 * Print fractional seconds if any.  The field widths here should
+			 * be at least equal to MAX_TIMESTAMP_PRECISION.
 			 *
-			 * In float mode, don't print fractional seconds before 1 AD,
-			 * since it's unlikely there's any precision left ...
+			 * In float mode, don't print fractional seconds before 1 AD, since
+			 * it's unlikely there's any precision left ...
 			 */
 #ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
@@ -3656,11 +3647,11 @@ EncodeDateTime(struct pg_tm *tm, fsec_t fsec, int *tzp, char **tzn, int style, c
 					tm->tm_hour, tm->tm_min);
 
 			/*
-			 * Print fractional seconds if any.  The field widths here
-			 * should be at least equal to MAX_TIMESTAMP_PRECISION.
+			 * Print fractional seconds if any.  The field widths here should
+			 * be at least equal to MAX_TIMESTAMP_PRECISION.
 			 *
-			 * In float mode, don't print fractional seconds before 1 AD,
-			 * since it's unlikely there's any precision left ...
+			 * In float mode, don't print fractional seconds before 1 AD, since
+			 * it's unlikely there's any precision left ...
 			 */
 #ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
@@ -3703,7 +3694,7 @@ EncodeDateTime(struct pg_tm *tm, fsec_t fsec, int *tzp, char **tzn, int style, c
 
 			strncpy(str, days[tm->tm_wday], 3);
 			strcpy(str + 3, " ");
-			
+
 			if (DateOrder == DATEORDER_DMY)
 				sprintf(str + 4, "%02d %3s", tm->tm_mday, months[tm->tm_mon - 1]);
 			else
@@ -3712,11 +3703,11 @@ EncodeDateTime(struct pg_tm *tm, fsec_t fsec, int *tzp, char **tzn, int style, c
 			sprintf(str + 10, " %02d:%02d", tm->tm_hour, tm->tm_min);
 
 			/*
-			 * Print fractional seconds if any.  The field widths here
-			 * should be at least equal to MAX_TIMESTAMP_PRECISION.
+			 * Print fractional seconds if any.  The field widths here should
+			 * be at least equal to MAX_TIMESTAMP_PRECISION.
 			 *
-			 * In float mode, don't print fractional seconds before 1 AD,
-			 * since it's unlikely there's any precision left ...
+			 * In float mode, don't print fractional seconds before 1 AD, since
+			 * it's unlikely there's any precision left ...
 			 */
 #ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
@@ -3735,7 +3726,7 @@ EncodeDateTime(struct pg_tm *tm, fsec_t fsec, int *tzp, char **tzn, int style, c
 				sprintf(str + strlen(str), ":%02d", tm->tm_sec);
 
 			sprintf(str + strlen(str), " %04d",
-				 (tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1));
+					(tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1));
 
 			if (tzp != NULL && tm->tm_isdst >= 0)
 			{
@@ -3745,10 +3736,9 @@ EncodeDateTime(struct pg_tm *tm, fsec_t fsec, int *tzp, char **tzn, int style, c
 				{
 					/*
 					 * We have a time zone, but no string version. Use the
-					 * numeric form, but be sure to include a leading
-					 * space to avoid formatting something which would be
-					 * rejected by the date/time parser later. - thomas
-					 * 2001-10-19
+					 * numeric form, but be sure to include a leading space to
+					 * avoid formatting something which would be rejected by
+					 * the date/time parser later. - thomas 2001-10-19
 					 */
 					hour = -(*tzp / SECS_PER_HOUR);
 					min = (abs(*tzp) / MINS_PER_HOUR) % MINS_PER_HOUR;
@@ -3774,7 +3764,7 @@ EncodeDateTime(struct pg_tm *tm, fsec_t fsec, int *tzp, char **tzn, int style, c
  * - thomas 1998-04-30
  */
 int
-EncodeInterval(struct pg_tm *tm, fsec_t fsec, int style, char *str)
+EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 {
 	int			is_before = FALSE;
 	int			is_nonzero = FALSE;
@@ -3782,9 +3772,8 @@ EncodeInterval(struct pg_tm *tm, fsec_t fsec, int style, char *str)
 
 	/*
 	 * The sign of year and month are guaranteed to match, since they are
-	 * stored internally as "month". But we'll need to check for is_before
-	 * and is_nonzero when determining the signs of hour/minute/seconds
-	 * fields.
+	 * stored internally as "month". But we'll need to check for is_before and
+	 * is_nonzero when determining the signs of hour/minute/seconds fields.
 	 */
 	switch (style)
 	{

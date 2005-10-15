@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win1258/utf8_and_win1258.c,v 1.2 2005/09/24 17:53:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win1258/utf8_and_win1258.c,v 1.3 2005/10/15 02:49:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ win1258_to_utf8(PG_FUNCTION_ARGS)
 	Assert(len >= 0);
 
 	LocalToUtf(src, dest, LUmapWIN1258,
-			   sizeof(LUmapWIN1258) / sizeof(pg_local_to_utf), PG_WIN1258, len);
+			sizeof(LUmapWIN1258) / sizeof(pg_local_to_utf), PG_WIN1258, len);
 
 	PG_RETURN_VOID();
 }

@@ -19,10 +19,10 @@
 
 /*VARARGS*/
 void
-halt(const char *format, ...)
+halt(const char *format,...)
 {
 	va_list		arg_ptr;
-	const char  *pstr;
+	const char *pstr;
 	void		(*sig_func) ();
 
 	va_start(arg_ptr, format);

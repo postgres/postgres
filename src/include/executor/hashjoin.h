@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/hashjoin.h,v 1.36 2005/04/16 20:07:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/hashjoin.h,v 1.37 2005/10/15 02:49:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@
  * If nbatch > 1 then tuples that don't belong in first batch get saved
  * into inner-batch temp files. The same statements apply for the
  * first scan of the outer relation, except we write tuples to outer-batch
- * temp files.  After finishing the first scan, we do the following for
+ * temp files.	After finishing the first scan, we do the following for
  * each remaining batch:
  *	1. Read tuples from inner batch file, load into hash buckets.
  *	2. Read tuples from outer batch file, match to hash buckets and output.
@@ -63,7 +63,7 @@
 
 typedef struct HashJoinTupleData
 {
-	struct HashJoinTupleData *next;	/* link to next tuple in same bucket */
+	struct HashJoinTupleData *next;		/* link to next tuple in same bucket */
 	uint32		hashvalue;		/* tuple's hash code */
 	HeapTupleData htup;			/* tuple header */
 } HashJoinTupleData;
@@ -86,21 +86,20 @@ typedef struct HashJoinTableData
 	double		totalTuples;	/* # tuples obtained from inner plan */
 
 	/*
-	 * These arrays are allocated for the life of the hash join, but
-	 * only if nbatch > 1.  A file is opened only when we first write
-	 * a tuple into it (otherwise its pointer remains NULL).  Note that
-	 * the zero'th array elements never get used, since we will process
-	 * rather than dump out any tuples of batch zero.
+	 * These arrays are allocated for the life of the hash join, but only if
+	 * nbatch > 1.	A file is opened only when we first write a tuple into it
+	 * (otherwise its pointer remains NULL).  Note that the zero'th array
+	 * elements never get used, since we will process rather than dump out any
+	 * tuples of batch zero.
 	 */
 	BufFile   **innerBatchFile; /* buffered virtual temp file per batch */
 	BufFile   **outerBatchFile; /* buffered virtual temp file per batch */
 
 	/*
-	 * Info about the datatype-specific hash functions for the datatypes
-	 * being hashed.  We assume that the inner and outer sides of each
-	 * hashclause are the same type, or at least share the same hash
-	 * function. This is an array of the same length as the number of hash
-	 * keys.
+	 * Info about the datatype-specific hash functions for the datatypes being
+	 * hashed.	We assume that the inner and outer sides of each hashclause
+	 * are the same type, or at least share the same hash function. This is an
+	 * array of the same length as the number of hash keys.
 	 */
 	FmgrInfo   *hashfunctions;	/* lookup data for hash functions */
 

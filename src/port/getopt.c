@@ -81,8 +81,7 @@ const char *ostr;
 		!(oli = strchr(ostr, optopt)))
 	{
 		/*
-		 * if the user didn't specify '-' as an option, assume it means
-		 * -1.
+		 * if the user didn't specify '-' as an option, assume it means -1.
 		 */
 		if (optopt == (int) '-')
 			return -1;

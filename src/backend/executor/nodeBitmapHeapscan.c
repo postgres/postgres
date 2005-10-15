@@ -5,7 +5,7 @@
  *
  * NOTE: it is critical that this plan type only be used with MVCC-compliant
  * snapshots (ie, regular snapshots, not SnapshotNow or one of the other
- * special snapshots).  The reason is that since index and heap scans are
+ * special snapshots).	The reason is that since index and heap scans are
  * decoupled, there can be no assurance that the index tuple prompting a
  * visit to a particular heap TID still exists when the visit is made.
  * Therefore the tuple might not exist anymore either (which is OK because
@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.3 2005/10/06 02:29:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.4 2005/10/15 02:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,11 +76,11 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	tbmres = node->tbmres;
 
 	/*
-	 * Clear any reference to the previously returned tuple.  The idea
-	 * here is to not have the tuple slot be the last holder of a pin on
-	 * that tuple's buffer; if it is, we'll need a separate visit to the
-	 * bufmgr to release the buffer.  By clearing here, we get to have the
-	 * release done by ReleaseAndReadBuffer, below.
+	 * Clear any reference to the previously returned tuple.  The idea here is
+	 * to not have the tuple slot be the last holder of a pin on that tuple's
+	 * buffer; if it is, we'll need a separate visit to the bufmgr to release
+	 * the buffer.	By clearing here, we get to have the release done by
+	 * ReleaseAndReadBuffer, below.
 	 */
 	ExecClearTuple(slot);
 
@@ -105,7 +105,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 		ResetExprContext(econtext);
 
 		if (!ExecQual(node->bitmapqualorig, econtext, false))
-			ExecClearTuple(slot);	/* would not be returned by scan */
+			ExecClearTuple(slot);		/* would not be returned by scan */
 
 		/* Flag for the next call that no more tuples */
 		estate->es_evTupleNull[scanrelid - 1] = true;
@@ -114,8 +114,8 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	}
 
 	/*
-	 * If we haven't yet performed the underlying index scan, do it,
-	 * and prepare the bitmap to be iterated over.
+	 * If we haven't yet performed the underlying index scan, do it, and
+	 * prepare the bitmap to be iterated over.
 	 */
 	if (tbm == NULL)
 	{
@@ -145,10 +145,10 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			}
 
 			/*
-			 * Ignore any claimed entries past what we think is the end of
-			 * the relation.  (This is probably not necessary given that we
-			 * got AccessShareLock before performing any of the indexscans,
-			 * but let's be safe.)
+			 * Ignore any claimed entries past what we think is the end of the
+			 * relation.  (This is probably not necessary given that we got
+			 * AccessShareLock before performing any of the indexscans, but
+			 * let's be safe.)
 			 */
 			if (tbmres->blockno >= scandesc->rs_nblocks)
 			{
@@ -157,19 +157,18 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			}
 
 			/*
-			 * Acquire pin on the current heap page.  We'll hold the pin
-			 * until done looking at the page.  We trade in any pin we
-			 * held before.
+			 * Acquire pin on the current heap page.  We'll hold the pin until
+			 * done looking at the page.  We trade in any pin we held before.
 			 */
 			scandesc->rs_cbuf = ReleaseAndReadBuffer(scandesc->rs_cbuf,
 													 scandesc->rs_rd,
 													 tbmres->blockno);
 
 			/*
-			 * Determine how many entries we need to look at on this page.
-			 * If the bitmap is lossy then we need to look at each physical
-			 * item pointer; otherwise we just look through the offsets
-			 * listed in tbmres.
+			 * Determine how many entries we need to look at on this page. If
+			 * the bitmap is lossy then we need to look at each physical item
+			 * pointer; otherwise we just look through the offsets listed in
+			 * tbmres.
 			 */
 			if (tbmres->ntuples >= 0)
 			{
@@ -180,7 +179,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			else
 			{
 				/* lossy case */
-				Page	dp;
+				Page		dp;
 
 				LockBuffer(scandesc->rs_cbuf, BUFFER_LOCK_SHARE);
 				dp = (Page) BufferGetPage(scandesc->rs_cbuf);
@@ -230,8 +229,8 @@ BitmapHeapNext(BitmapHeapScanState *node)
 		ItemPointerSet(&scandesc->rs_ctup.t_self, tbmres->blockno, targoffset);
 
 		/*
-		 * Fetch the heap tuple and see if it matches the snapshot.
-		 * We use heap_release_fetch to avoid useless bufmgr traffic.
+		 * Fetch the heap tuple and see if it matches the snapshot. We use
+		 * heap_release_fetch to avoid useless bufmgr traffic.
 		 */
 		if (heap_release_fetch(scandesc->rs_rd,
 							   scandesc->rs_snapshot,
@@ -241,8 +240,8 @@ BitmapHeapNext(BitmapHeapScanState *node)
 							   &scandesc->rs_pgstat_info))
 		{
 			/*
-			 * Set up the result slot to point to this tuple.
-			 * Note that the slot acquires a pin on the buffer.
+			 * Set up the result slot to point to this tuple. Note that the
+			 * slot acquires a pin on the buffer.
 			 */
 			ExecStoreTuple(&scandesc->rs_ctup,
 						   slot,
@@ -338,8 +337,8 @@ ExecBitmapHeapReScan(BitmapHeapScanState *node, ExprContext *exprCtxt)
 	node->tbmres = NULL;
 
 	/*
-	 * Always rescan the input immediately, to ensure we can pass down
-	 * any outer tuple that might be used in index quals.
+	 * Always rescan the input immediately, to ensure we can pass down any
+	 * outer tuple that might be used in index quals.
 	 */
 	ExecReScan(outerPlanState(node), exprCtxt);
 }
@@ -391,9 +390,9 @@ ExecEndBitmapHeapScan(BitmapHeapScanState *node)
 	 * close the heap relation.
 	 *
 	 * Currently, we do not release the AccessShareLock acquired by
-	 * ExecInitBitmapHeapScan.  This lock should be held till end of
-	 * transaction. (There is a faction that considers this too much
-	 * locking, however.)
+	 * ExecInitBitmapHeapScan.	This lock should be held till end of
+	 * transaction. (There is a faction that considers this too much locking,
+	 * however.)
 	 */
 	heap_close(relation, NoLock);
 }
@@ -470,9 +469,9 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate)
 	scanstate->ss.ss_currentRelation = currentRelation;
 
 	/*
-	 * Even though we aren't going to do a conventional seqscan, it is
-	 * useful to create a HeapScanDesc --- this checks the relation size
-	 * and sets up statistical infrastructure for us.
+	 * Even though we aren't going to do a conventional seqscan, it is useful
+	 * to create a HeapScanDesc --- this checks the relation size and sets up
+	 * statistical infrastructure for us.
 	 */
 	scanstate->ss.ss_currentScanDesc = heap_beginscan(currentRelation,
 													  estate->es_snapshot,
@@ -482,7 +481,7 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate)
 	/*
 	 * One problem is that heap_beginscan counts a "sequential scan" start,
 	 * when we actually aren't doing any such thing.  Reverse out the added
-	 * scan count.  (Eventually we may want to count bitmap scans separately.)
+	 * scan count.	(Eventually we may want to count bitmap scans separately.)
 	 */
 	pgstat_discount_heap_scan(&scanstate->ss.ss_currentScanDesc->rs_pgstat_info);
 

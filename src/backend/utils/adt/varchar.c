@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.112 2005/07/29 12:59:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.113 2005/10/15 02:49:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,7 @@ bpchar_input(const char *s, size_t len, int32 atttypmod)
 		maxlen = len;
 	else
 	{
-		size_t		charlen;		/* number of CHARACTERS in the input */
+		size_t		charlen;	/* number of CHARACTERS in the input */
 
 		maxlen = atttypmod - VARHDRSZ;
 		charlen = pg_mbstrlen_with_len(s, len);
@@ -106,16 +106,16 @@ bpchar_input(const char *s, size_t len, int32 atttypmod)
 			}
 
 			/*
-			 * Now we set maxlen to the necessary byte length, not
-			 * the number of CHARACTERS!
+			 * Now we set maxlen to the necessary byte length, not the number
+			 * of CHARACTERS!
 			 */
 			maxlen = len = mbmaxlen;
 		}
 		else
 		{
 			/*
-			 * Now we set maxlen to the necessary byte length, not
-			 * the number of CHARACTERS!
+			 * Now we set maxlen to the necessary byte length, not the number
+			 * of CHARACTERS!
 			 */
 			maxlen = len + (maxlen - charlen);
 		}
@@ -141,6 +141,7 @@ Datum
 bpcharin(PG_FUNCTION_ARGS)
 {
 	char	   *s = PG_GETARG_CSTRING(0);
+
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
@@ -178,6 +179,7 @@ Datum
 bpcharrecv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
@@ -226,8 +228,8 @@ bpchar(PG_FUNCTION_ARGS)
 	char	   *r;
 	char	   *s;
 	int			i;
-	int			charlen;		/* number of characters in the input string
-								 * + VARHDRSZ */
+	int			charlen;		/* number of characters in the input string +
+								 * VARHDRSZ */
 
 	/* No work if typmod is invalid */
 	if (maxlen < (int32) VARHDRSZ)
@@ -254,24 +256,24 @@ bpchar(PG_FUNCTION_ARGS)
 			for (i = maxmblen - VARHDRSZ; i < len - VARHDRSZ; i++)
 				if (*(VARDATA(source) + i) != ' ')
 					ereport(ERROR,
-						  (errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
-						   errmsg("value too long for type character(%d)",
-								  maxlen - VARHDRSZ)));
+							(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+							 errmsg("value too long for type character(%d)",
+									maxlen - VARHDRSZ)));
 		}
 
 		len = maxmblen;
 
 		/*
-		 * XXX: at this point, maxlen is the necessary byte
-		 * length+VARHDRSZ, not the number of CHARACTERS!
+		 * XXX: at this point, maxlen is the necessary byte length+VARHDRSZ,
+		 * not the number of CHARACTERS!
 		 */
 		maxlen = len;
 	}
 	else
 	{
 		/*
-		 * XXX: at this point, maxlen is the necessary byte
-		 * length+VARHDRSZ, not the number of CHARACTERS!
+		 * XXX: at this point, maxlen is the necessary byte length+VARHDRSZ,
+		 * not the number of CHARACTERS!
 		 */
 		maxlen = len + (maxlen - charlen);
 	}
@@ -407,8 +409,8 @@ varchar_input(const char *s, size_t len, int32 atttypmod)
 			if (s[j] != ' ')
 				ereport(ERROR,
 						(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
-						 errmsg("value too long for type character varying(%d)",
-								(int) maxlen)));
+					  errmsg("value too long for type character varying(%d)",
+							 (int) maxlen)));
 		}
 
 		len = mbmaxlen;
@@ -429,6 +431,7 @@ Datum
 varcharin(PG_FUNCTION_ARGS)
 {
 	char	   *s = PG_GETARG_CSTRING(0);
+
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
@@ -466,11 +469,12 @@ Datum
 varcharrecv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
 	int32		atttypmod = PG_GETARG_INT32(2);
-	VarChar	   *result;
+	VarChar    *result;
 	char	   *str;
 	int			nbytes;
 
@@ -531,8 +535,8 @@ varchar(PG_FUNCTION_ARGS)
 			if (*(VARDATA(source) + i) != ' ')
 				ereport(ERROR,
 						(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
-				  errmsg("value too long for type character varying(%d)",
-						 maxlen - VARHDRSZ)));
+					  errmsg("value too long for type character varying(%d)",
+							 maxlen - VARHDRSZ)));
 	}
 
 	len = maxmblen + VARHDRSZ;

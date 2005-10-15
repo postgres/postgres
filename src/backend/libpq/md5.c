@@ -14,7 +14,7 @@
  *	Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/md5.c,v 1.28 2005/02/23 22:46:17 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/md5.c,v 1.29 2005/10/15 02:49:18 momjian Exp $
  */
 
 
@@ -329,8 +329,8 @@ EncryptMD5(const char *passwd, const char *salt, size_t salt_len,
 	bool		ret;
 
 	/*
-	 * Place salt at the end because it may be known by users trying to
-	 * crack the MD5 output.
+	 * Place salt at the end because it may be known by users trying to crack
+	 * the MD5 output.
 	 */
 	strcpy(crypt_buf, passwd);
 	memcpy(crypt_buf + passwd_len, salt, salt_len);

@@ -28,7 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/backend/regex/regc_cvec.c,v 1.4 2003/11/29 19:51:55 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/regex/regc_cvec.c,v 1.5 2005/10/15 02:49:24 momjian Exp $
  *
  */
 
@@ -52,8 +52,7 @@ newcvec(int nchrs,				/* to hold this many chrs... */
 	if (cv == NULL)
 		return NULL;
 	cv->chrspace = nchrs;
-	cv->chrs = (chr *) &cv->mcces[nmcces];		/* chrs just after MCCE
-												 * ptrs */
+	cv->chrs = (chr *) &cv->mcces[nmcces];		/* chrs just after MCCE ptrs */
 	cv->mccespace = nmcces;
 	cv->ranges = cv->chrs + nchrs + nmcces * (MAXMCCE + 1);
 	cv->rangespace = nranges;

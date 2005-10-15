@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_ops.c,v 1.90 2005/07/01 19:19:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_ops.c,v 1.91 2005/10/15 02:49:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -387,7 +387,7 @@ box_in(PG_FUNCTION_ARGS)
 		|| (*s != '\0'))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			  errmsg("invalid input syntax for type box: \"%s\"", str)));
+				 errmsg("invalid input syntax for type box: \"%s\"", str)));
 
 	/* reorder corners if necessary... */
 	if (box->high.x < box->low.x)
@@ -951,7 +951,7 @@ line_in(PG_FUNCTION_ARGS)
 		|| (*s != '\0'))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			 errmsg("invalid input syntax for type line: \"%s\"", str)));
+				 errmsg("invalid input syntax for type line: \"%s\"", str)));
 
 	line = (LINE *) palloc(sizeof(LINE));
 	line_construct_pts(line, &lseg.p[0], &lseg.p[1]);
@@ -1292,10 +1292,9 @@ line_interpt_internal(LINE *l1, LINE *l2)
 				y;
 
 	/*
-	 * NOTE: if the lines are identical then we will find they are
-	 * parallel and report "no intersection".  This is a little weird, but
-	 * since there's no *unique* intersection, maybe it's appropriate
-	 * behavior.
+	 * NOTE: if the lines are identical then we will find they are parallel
+	 * and report "no intersection".  This is a little weird, but since
+	 * there's no *unique* intersection, maybe it's appropriate behavior.
 	 */
 	if (DatumGetBool(DirectFunctionCall2(line_parallel,
 										 LinePGetDatum(l1),
@@ -1400,7 +1399,7 @@ path_in(PG_FUNCTION_ARGS)
 	if ((npts = pair_count(str, ',')) <= 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			 errmsg("invalid input syntax for type path: \"%s\"", str)));
+				 errmsg("invalid input syntax for type path: \"%s\"", str)));
 
 	s = str;
 	while (isspace((unsigned char) *s))
@@ -1420,10 +1419,10 @@ path_in(PG_FUNCTION_ARGS)
 	path->npts = npts;
 
 	if ((!path_decode(TRUE, npts, s, &isopen, &s, &(path->p[0])))
-		&& (!((depth == 0) && (*s == '\0'))) && !((depth >= 1) && (*s == RDELIM)))
+	&& (!((depth == 0) && (*s == '\0'))) && !((depth >= 1) && (*s == RDELIM)))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			 errmsg("invalid input syntax for type path: \"%s\"", str)));
+				 errmsg("invalid input syntax for type path: \"%s\"", str)));
 
 	path->closed = (!isopen);
 
@@ -1460,7 +1459,7 @@ path_recv(PG_FUNCTION_ARGS)
 	if (npts < 0 || npts >= (int32) ((INT_MAX - offsetof(PATH, p[0])) / sizeof(Point)))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-		 errmsg("invalid number of points in external \"path\" value")));
+			 errmsg("invalid number of points in external \"path\" value")));
 
 	size = offsetof(PATH, p[0]) +sizeof(path->p[0]) * npts;
 	path = (PATH *) palloc(size);
@@ -1730,7 +1729,7 @@ path_distance(PG_FUNCTION_ARGS)
 
 			tmp = DatumGetFloat8(DirectFunctionCall2(lseg_distance,
 													 LsegPGetDatum(&seg1),
-												  LsegPGetDatum(&seg2)));
+													 LsegPGetDatum(&seg2)));
 			if (!have_min || tmp < min)
 			{
 				min = tmp;
@@ -1801,7 +1800,7 @@ point_in(PG_FUNCTION_ARGS)
 	if (!pair_decode(str, &x, &y, &s) || (*s != '\0'))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			errmsg("invalid input syntax for type point: \"%s\"", str)));
+				 errmsg("invalid input syntax for type point: \"%s\"", str)));
 
 	point = (Point *) palloc(sizeof(Point));
 
@@ -1976,7 +1975,7 @@ point_dt(Point *pt1, Point *pt2)
 {
 #ifdef GEODEBUG
 	printf("point_dt- segment (%f,%f),(%f,%f) length is %f\n",
-		   pt1->x, pt1->y, pt2->x, pt2->y, HYPOT(pt1->x - pt2->x, pt1->y - pt2->y));
+	pt1->x, pt1->y, pt2->x, pt2->y, HYPOT(pt1->x - pt2->x, pt1->y - pt2->y));
 #endif
 	return HYPOT(pt1->x - pt2->x, pt1->y - pt2->y);
 }
@@ -2029,7 +2028,7 @@ lseg_in(PG_FUNCTION_ARGS)
 		|| (*s != '\0'))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			 errmsg("invalid input syntax for type lseg: \"%s\"", str)));
+				 errmsg("invalid input syntax for type lseg: \"%s\"", str)));
 
 #ifdef NOT_USED
 	lseg->m = point_sl(&lseg->p[0], &lseg->p[1]);
@@ -2374,8 +2373,8 @@ lseg_interpt(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	/*
-	 * If the line intersection point isn't within l1 (or equivalently
-	 * l2), there is no valid segment intersection point at all.
+	 * If the line intersection point isn't within l1 (or equivalently l2),
+	 * there is no valid segment intersection point at all.
 	 */
 	if (!on_ps_internal(result, l1) ||
 		!on_ps_internal(result, l2))
@@ -2393,7 +2392,7 @@ lseg_interpt(PG_FUNCTION_ARGS)
 		result->y = l1->p[0].y;
 	}
 	else if ((FPeq(l1->p[1].x, l2->p[0].x) && FPeq(l1->p[1].y, l2->p[0].y)) ||
-		  (FPeq(l1->p[1].x, l2->p[1].x) && FPeq(l1->p[1].y, l2->p[1].y)))
+			 (FPeq(l1->p[1].x, l2->p[1].x) && FPeq(l1->p[1].y, l2->p[1].y)))
 	{
 		result->x = l1->p[1].x;
 		result->y = l1->p[1].y;
@@ -2521,8 +2520,8 @@ dist_ppath(PG_FUNCTION_ARGS)
 			Assert(path->npts > 1);
 
 			/*
-			 * the distance from a point to a path is the smallest
-			 * distance from the point to any of its constituent segments.
+			 * the distance from a point to a path is the smallest distance
+			 * from the point to any of its constituent segments.
 			 */
 			for (i = 0; i < path->npts; i++)
 			{
@@ -2534,8 +2533,7 @@ dist_ppath(PG_FUNCTION_ARGS)
 				{
 					if (!path->closed)
 						continue;
-					iprev = path->npts - 1;		/* include the closure
-												 * segment */
+					iprev = path->npts - 1;		/* include the closure segment */
 				}
 
 				statlseg_construct(&lseg, &path->p[iprev], &path->p[i]);
@@ -2853,8 +2851,8 @@ close_ps(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * vert. and horiz. cases are down, now check if the closest point is
-	 * one of the end points or someplace on the lseg.
+	 * vert. and horiz. cases are down, now check if the closest point is one
+	 * of the end points or someplace on the lseg.
 	 */
 
 	invm = -1.0 / point_sl(&(lseg->p[0]), &(lseg->p[1]));
@@ -2862,8 +2860,8 @@ close_ps(PG_FUNCTION_ARGS)
 														 * "band" */
 	if (pt->y < (tmp->A * pt->x + tmp->C))
 	{							/* we are below the lower edge */
-		result = point_copy(&lseg->p[!yh]);		/* below the lseg, take
-												 * lower end pt */
+		result = point_copy(&lseg->p[!yh]);		/* below the lseg, take lower
+												 * end pt */
 #ifdef GEODEBUG
 		printf("close_ps below: tmp A %f  B %f   C %f    m %f\n",
 			   tmp->A, tmp->B, tmp->C, tmp->m);
@@ -2874,8 +2872,8 @@ close_ps(PG_FUNCTION_ARGS)
 														 * "band" */
 	if (pt->y > (tmp->A * pt->x + tmp->C))
 	{							/* we are below the lower edge */
-		result = point_copy(&lseg->p[yh]);		/* above the lseg, take
-												 * higher end pt */
+		result = point_copy(&lseg->p[yh]);		/* above the lseg, take higher
+												 * end pt */
 #ifdef GEODEBUG
 		printf("close_ps above: tmp A %f  B %f   C %f    m %f\n",
 			   tmp->A, tmp->B, tmp->C, tmp->m);
@@ -2884,8 +2882,8 @@ close_ps(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * at this point the "normal" from point will hit lseg. The closet
-	 * point will be somewhere on the lseg
+	 * at this point the "normal" from point will hit lseg. The closet point
+	 * will be somewhere on the lseg
 	 */
 	tmp = line_construct_pm(pt, invm);
 #ifdef GEODEBUG
@@ -2927,22 +2925,22 @@ close_lseg(PG_FUNCTION_ARGS)
 	if ((d = dist_ps_internal(&l2->p[0], l1)) < dist)
 	{
 		result = DatumGetPointP(DirectFunctionCall2(close_ps,
-											   PointPGetDatum(&l2->p[0]),
+													PointPGetDatum(&l2->p[0]),
 													LsegPGetDatum(l1)));
 		memcpy(&point, result, sizeof(Point));
 		result = DatumGetPointP(DirectFunctionCall2(close_ps,
-												  PointPGetDatum(&point),
+													PointPGetDatum(&point),
 													LsegPGetDatum(l2)));
 	}
 
 	if ((d = dist_ps_internal(&l2->p[1], l1)) < dist)
 	{
 		result = DatumGetPointP(DirectFunctionCall2(close_ps,
-											   PointPGetDatum(&l2->p[1]),
+													PointPGetDatum(&l2->p[1]),
 													LsegPGetDatum(l1)));
 		memcpy(&point, result, sizeof(Point));
 		result = DatumGetPointP(DirectFunctionCall2(close_ps,
-												  PointPGetDatum(&point),
+													PointPGetDatum(&point),
 													LsegPGetDatum(l2)));
 	}
 
@@ -3235,11 +3233,11 @@ on_sl(PG_FUNCTION_ARGS)
 	LINE	   *line = PG_GETARG_LINE_P(1);
 
 	PG_RETURN_BOOL(DatumGetBool(DirectFunctionCall2(on_pl,
-											 PointPGetDatum(&lseg->p[0]),
-												 LinePGetDatum(line))) &&
+												 PointPGetDatum(&lseg->p[0]),
+													LinePGetDatum(line))) &&
 				   DatumGetBool(DirectFunctionCall2(on_pl,
-											 PointPGetDatum(&lseg->p[1]),
-												  LinePGetDatum(line))));
+												 PointPGetDatum(&lseg->p[1]),
+													LinePGetDatum(line))));
 }
 
 Datum
@@ -3249,10 +3247,10 @@ on_sb(PG_FUNCTION_ARGS)
 	BOX		   *box = PG_GETARG_BOX_P(1);
 
 	PG_RETURN_BOOL(DatumGetBool(DirectFunctionCall2(on_pb,
-											 PointPGetDatum(&lseg->p[0]),
+												 PointPGetDatum(&lseg->p[0]),
 													BoxPGetDatum(box))) &&
 				   DatumGetBool(DirectFunctionCall2(on_pb,
-											 PointPGetDatum(&lseg->p[1]),
+												 PointPGetDatum(&lseg->p[1]),
 													BoxPGetDatum(box))));
 }
 
@@ -3437,7 +3435,7 @@ poly_in(PG_FUNCTION_ARGS)
 	if ((npts = pair_count(str, ',')) <= 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-		  errmsg("invalid input syntax for type polygon: \"%s\"", str)));
+			  errmsg("invalid input syntax for type polygon: \"%s\"", str)));
 
 	size = offsetof(POLYGON, p[0]) +sizeof(poly->p[0]) * npts;
 	poly = (POLYGON *) palloc0(size);	/* zero any holes */
@@ -3449,7 +3447,7 @@ poly_in(PG_FUNCTION_ARGS)
 		|| (*s != '\0'))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-		  errmsg("invalid input syntax for type polygon: \"%s\"", str)));
+			  errmsg("invalid input syntax for type polygon: \"%s\"", str)));
 
 	make_bound_box(poly);
 
@@ -3489,7 +3487,7 @@ poly_recv(PG_FUNCTION_ARGS)
 	if (npts < 0 || npts >= (int32) ((INT_MAX - offsetof(POLYGON, p[0])) / sizeof(Point)))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-				 errmsg("invalid number of points in external \"polygon\" value")));
+		  errmsg("invalid number of points in external \"polygon\" value")));
 
 	size = offsetof(POLYGON, p[0]) +sizeof(poly->p[0]) * npts;
 	poly = (POLYGON *) palloc0(size);	/* zero any holes */
@@ -3544,8 +3542,7 @@ poly_left(PG_FUNCTION_ARGS)
 	result = polya->boundbox.high.x < polyb->boundbox.low.x;
 
 	/*
-	 * Avoid leaking memory for toasted inputs ... needed for rtree
-	 * indexes
+	 * Avoid leaking memory for toasted inputs ... needed for rtree indexes
 	 */
 	PG_FREE_IF_COPY(polya, 0);
 	PG_FREE_IF_COPY(polyb, 1);
@@ -3568,8 +3565,7 @@ poly_overleft(PG_FUNCTION_ARGS)
 	result = polya->boundbox.high.x <= polyb->boundbox.high.x;
 
 	/*
-	 * Avoid leaking memory for toasted inputs ... needed for rtree
-	 * indexes
+	 * Avoid leaking memory for toasted inputs ... needed for rtree indexes
 	 */
 	PG_FREE_IF_COPY(polya, 0);
 	PG_FREE_IF_COPY(polyb, 1);
@@ -3592,8 +3588,7 @@ poly_right(PG_FUNCTION_ARGS)
 	result = polya->boundbox.low.x > polyb->boundbox.high.x;
 
 	/*
-	 * Avoid leaking memory for toasted inputs ... needed for rtree
-	 * indexes
+	 * Avoid leaking memory for toasted inputs ... needed for rtree indexes
 	 */
 	PG_FREE_IF_COPY(polya, 0);
 	PG_FREE_IF_COPY(polyb, 1);
@@ -3616,8 +3611,7 @@ poly_overright(PG_FUNCTION_ARGS)
 	result = polya->boundbox.low.x >= polyb->boundbox.low.x;
 
 	/*
-	 * Avoid leaking memory for toasted inputs ... needed for rtree
-	 * indexes
+	 * Avoid leaking memory for toasted inputs ... needed for rtree indexes
 	 */
 	PG_FREE_IF_COPY(polya, 0);
 	PG_FREE_IF_COPY(polyb, 1);
@@ -3640,8 +3634,7 @@ poly_below(PG_FUNCTION_ARGS)
 	result = polya->boundbox.high.y < polyb->boundbox.low.y;
 
 	/*
-	 * Avoid leaking memory for toasted inputs ... needed for rtree
-	 * indexes
+	 * Avoid leaking memory for toasted inputs ... needed for rtree indexes
 	 */
 	PG_FREE_IF_COPY(polya, 0);
 	PG_FREE_IF_COPY(polyb, 1);
@@ -3664,8 +3657,7 @@ poly_overbelow(PG_FUNCTION_ARGS)
 	result = polya->boundbox.high.y <= polyb->boundbox.high.y;
 
 	/*
-	 * Avoid leaking memory for toasted inputs ... needed for rtree
-	 * indexes
+	 * Avoid leaking memory for toasted inputs ... needed for rtree indexes
 	 */
 	PG_FREE_IF_COPY(polya, 0);
 	PG_FREE_IF_COPY(polyb, 1);
@@ -3688,8 +3680,7 @@ poly_above(PG_FUNCTION_ARGS)
 	result = polya->boundbox.low.y > polyb->boundbox.high.y;
 
 	/*
-	 * Avoid leaking memory for toasted inputs ... needed for rtree
-	 * indexes
+	 * Avoid leaking memory for toasted inputs ... needed for rtree indexes
 	 */
 	PG_FREE_IF_COPY(polya, 0);
 	PG_FREE_IF_COPY(polyb, 1);
@@ -3712,8 +3703,7 @@ poly_overabove(PG_FUNCTION_ARGS)
 	result = polya->boundbox.low.y >= polyb->boundbox.low.y;
 
 	/*
-	 * Avoid leaking memory for toasted inputs ... needed for rtree
-	 * indexes
+	 * Avoid leaking memory for toasted inputs ... needed for rtree indexes
 	 */
 	PG_FREE_IF_COPY(polya, 0);
 	PG_FREE_IF_COPY(polyb, 1);
@@ -3742,8 +3732,7 @@ poly_same(PG_FUNCTION_ARGS)
 		result = plist_same(polya->npts, polya->p, polyb->p);
 
 	/*
-	 * Avoid leaking memory for toasted inputs ... needed for rtree
-	 * indexes
+	 * Avoid leaking memory for toasted inputs ... needed for rtree indexes
 	 */
 	PG_FREE_IF_COPY(polya, 0);
 	PG_FREE_IF_COPY(polyb, 1);
@@ -3767,8 +3756,7 @@ poly_overlap(PG_FUNCTION_ARGS)
 	result = box_ov(&polya->boundbox, &polyb->boundbox);
 
 	/*
-	 * Avoid leaking memory for toasted inputs ... needed for rtree
-	 * indexes
+	 * Avoid leaking memory for toasted inputs ... needed for rtree indexes
 	 */
 	PG_FREE_IF_COPY(polya, 0);
 	PG_FREE_IF_COPY(polyb, 1);
@@ -3833,8 +3821,7 @@ poly_contain(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Avoid leaking memory for toasted inputs ... needed for rtree
-	 * indexes
+	 * Avoid leaking memory for toasted inputs ... needed for rtree indexes
 	 */
 	PG_FREE_IF_COPY(polya, 0);
 	PG_FREE_IF_COPY(polyb, 1);
@@ -4169,7 +4156,7 @@ path_mul_pt(PG_FUNCTION_ARGS)
 	for (i = 0; i < path->npts; i++)
 	{
 		p = DatumGetPointP(DirectFunctionCall2(point_mul,
-											 PointPGetDatum(&path->p[i]),
+											   PointPGetDatum(&path->p[i]),
 											   PointPGetDatum(point)));
 		path->p[i].x = p->x;
 		path->p[i].y = p->y;
@@ -4189,7 +4176,7 @@ path_div_pt(PG_FUNCTION_ARGS)
 	for (i = 0; i < path->npts; i++)
 	{
 		p = DatumGetPointP(DirectFunctionCall2(point_div,
-											 PointPGetDatum(&path->p[i]),
+											   PointPGetDatum(&path->p[i]),
 											   PointPGetDatum(point)));
 		path->p[i].x = p->x;
 		path->p[i].y = p->y;
@@ -4392,7 +4379,7 @@ circle_in(PG_FUNCTION_ARGS)
 	if (!pair_decode(s, &circle->center.x, &circle->center.y, &s))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-		   errmsg("invalid input syntax for type circle: \"%s\"", str)));
+			   errmsg("invalid input syntax for type circle: \"%s\"", str)));
 
 	if (*s == DELIM)
 		s++;
@@ -4402,7 +4389,7 @@ circle_in(PG_FUNCTION_ARGS)
 	if ((!single_decode(s, &circle->radius, &s)) || (circle->radius < 0))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-		   errmsg("invalid input syntax for type circle: \"%s\"", str)));
+			   errmsg("invalid input syntax for type circle: \"%s\"", str)));
 
 	while (depth > 0)
 	{
@@ -4417,13 +4404,13 @@ circle_in(PG_FUNCTION_ARGS)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			errmsg("invalid input syntax for type circle: \"%s\"", str)));
+			   errmsg("invalid input syntax for type circle: \"%s\"", str)));
 	}
 
 	if (*s != '\0')
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-		   errmsg("invalid input syntax for type circle: \"%s\"", str)));
+			   errmsg("invalid input syntax for type circle: \"%s\"", str)));
 
 	PG_RETURN_CIRCLE_P(circle);
 }
@@ -4780,7 +4767,7 @@ circle_mul_pt(PG_FUNCTION_ARGS)
 	result = circle_copy(circle);
 
 	p = DatumGetPointP(DirectFunctionCall2(point_mul,
-										 PointPGetDatum(&circle->center),
+										   PointPGetDatum(&circle->center),
 										   PointPGetDatum(point)));
 	result->center.x = p->x;
 	result->center.y = p->y;
@@ -4800,7 +4787,7 @@ circle_div_pt(PG_FUNCTION_ARGS)
 	result = circle_copy(circle);
 
 	p = DatumGetPointP(DirectFunctionCall2(point_div,
-										 PointPGetDatum(&circle->center),
+										   PointPGetDatum(&circle->center),
 										   PointPGetDatum(point)));
 	result->center.x = p->x;
 	result->center.y = p->y;
@@ -5001,7 +4988,7 @@ circle_poly(PG_FUNCTION_ARGS)
 	if (FPzero(circle->radius))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		   errmsg("cannot convert circle with radius zero to polygon")));
+			   errmsg("cannot convert circle with radius zero to polygon")));
 
 	if (npts < 2)
 		ereport(ERROR,

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/superuser.c,v 1.33 2005/08/15 02:40:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/superuser.c,v 1.34 2005/10/15 02:49:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,9 +32,9 @@
  * the status of the last requested roleid.  The cache can be flushed
  * at need by watching for cache update events on pg_authid.
  */
-static Oid		last_roleid = InvalidOid;	/* InvalidOid == cache not valid */
-static bool		last_roleid_is_super = false;
-static bool		roleid_callback_registered = false;
+static Oid	last_roleid = InvalidOid;	/* InvalidOid == cache not valid */
+static bool last_roleid_is_super = false;
+static bool roleid_callback_registered = false;
 
 static void RoleidCallback(Datum arg, Oid relid);
 

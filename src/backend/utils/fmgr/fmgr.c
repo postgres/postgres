@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.96 2005/06/28 05:09:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.97 2005/10/15 02:49:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,9 +41,9 @@
  * some warnings about int->pointer conversions...
  */
 #if (defined(__mc68000__) || (defined(__m68k__))) && defined(__ELF__)
-typedef int32  (*func_ptr) ();
+typedef int32 (*func_ptr) ();
 #else
-typedef char * (*func_ptr) ();
+typedef char *(*func_ptr) ();
 #endif
 
 /*
@@ -52,8 +52,8 @@ typedef char * (*func_ptr) ();
 typedef struct
 {
 	func_ptr	func;			/* Address of the oldstyle function */
-	bool		arg_toastable[FUNC_MAX_ARGS];	/* is n'th arg of a
-												 * toastable datatype? */
+	bool		arg_toastable[FUNC_MAX_ARGS];	/* is n'th arg of a toastable
+												 * datatype? */
 } Oldstyle_fnextra;
 
 /*
@@ -95,8 +95,8 @@ fmgr_isbuiltin(Oid id)
 	int			high = fmgr_nbuiltins - 1;
 
 	/*
-	 * Loop invariant: low is the first index that could contain target
-	 * entry, and high is the last index that could contain it.
+	 * Loop invariant: low is the first index that could contain target entry,
+	 * and high is the last index that could contain it.
 	 */
 	while (low <= high)
 	{
@@ -177,9 +177,9 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 	char	   *prosrc;
 
 	/*
-	 * fn_oid *must* be filled in last.  Some code assumes that if fn_oid
-	 * is valid, the whole struct is valid.  Some FmgrInfo struct's do
-	 * survive elogs.
+	 * fn_oid *must* be filled in last.  Some code assumes that if fn_oid is
+	 * valid, the whole struct is valid.  Some FmgrInfo struct's do survive
+	 * elogs.
 	 */
 	finfo->fn_oid = InvalidOid;
 	finfo->fn_extra = NULL;
@@ -189,8 +189,7 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 	if ((fbp = fmgr_isbuiltin(functionId)) != NULL)
 	{
 		/*
-		 * Fast path for builtin functions: don't bother consulting
-		 * pg_proc
+		 * Fast path for builtin functions: don't bother consulting pg_proc
 		 */
 		finfo->fn_nargs = fbp->nargs;
 		finfo->fn_strict = fbp->strict;
@@ -227,11 +226,11 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 			/*
 			 * For an ordinary builtin function, we should never get here
 			 * because the isbuiltin() search above will have succeeded.
-			 * However, if the user has done a CREATE FUNCTION to create
-			 * an alias for a builtin function, we can end up here.  In
-			 * that case we have to look up the function by name.  The
-			 * name of the internal function is stored in prosrc (it
-			 * doesn't have to be the same as the name of the alias!)
+			 * However, if the user has done a CREATE FUNCTION to create an
+			 * alias for a builtin function, we can end up here.  In that case
+			 * we have to look up the function by name.  The name of the
+			 * internal function is stored in prosrc (it doesn't have to be
+			 * the same as the name of the alias!)
 			 */
 			prosrcdatum = SysCacheGetAttr(PROCOID, procedureTuple,
 										  Anum_pg_proc_prosrc, &isnull);
@@ -300,8 +299,7 @@ fmgr_info_C_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 		void	   *libraryhandle;
 
 		/*
-		 * Get prosrc and probin strings (link symbol and library
-		 * filename)
+		 * Get prosrc and probin strings (link symbol and library filename)
 		 */
 		prosrcattr = SysCacheGetAttr(PROCOID, procedureTuple,
 									 Anum_pg_proc_prosrc, &isnull);
@@ -605,14 +603,13 @@ fmgr_oldstyle(PG_FUNCTION_ARGS)
 	fnextra = (Oldstyle_fnextra *) fcinfo->flinfo->fn_extra;
 
 	/*
-	 * Result is NULL if any argument is NULL, but we still call the
-	 * function (peculiar, but that's the way it worked before, and after
-	 * all this is a backwards-compatibility wrapper).	Note, however,
-	 * that we'll never get here with NULL arguments if the function is
-	 * marked strict.
+	 * Result is NULL if any argument is NULL, but we still call the function
+	 * (peculiar, but that's the way it worked before, and after all this is a
+	 * backwards-compatibility wrapper).  Note, however, that we'll never get
+	 * here with NULL arguments if the function is marked strict.
 	 *
-	 * We also need to detoast any TOAST-ed inputs, since it's unlikely that
-	 * an old-style function knows about TOASTing.
+	 * We also need to detoast any TOAST-ed inputs, since it's unlikely that an
+	 * old-style function knows about TOASTing.
 	 */
 	isnull = false;
 	for (i = 0; i < n_arguments; i++)
@@ -634,9 +631,9 @@ fmgr_oldstyle(PG_FUNCTION_ARGS)
 		case 1:
 
 			/*
-			 * nullvalue() used to use isNull to check if arg is NULL;
-			 * perhaps there are other functions still out there that also
-			 * rely on this undocumented hack?
+			 * nullvalue() used to use isNull to check if arg is NULL; perhaps
+			 * there are other functions still out there that also rely on
+			 * this undocumented hack?
 			 */
 			returnValue = (*user_fn) (fcinfo->arg[0], &fcinfo->isnull);
 			break;
@@ -744,16 +741,16 @@ fmgr_oldstyle(PG_FUNCTION_ARGS)
 		default:
 
 			/*
-			 * Increasing FUNC_MAX_ARGS doesn't automatically add cases to
-			 * the above code, so mention the actual value in this error
-			 * not FUNC_MAX_ARGS.  You could add cases to the above if you
-			 * needed to support old-style functions with many arguments,
-			 * but making 'em be new-style is probably a better idea.
+			 * Increasing FUNC_MAX_ARGS doesn't automatically add cases to the
+			 * above code, so mention the actual value in this error not
+			 * FUNC_MAX_ARGS.  You could add cases to the above if you needed
+			 * to support old-style functions with many arguments, but making
+			 * 'em be new-style is probably a better idea.
 			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-					 errmsg("function %u has too many arguments (%d, maximum is %d)",
-							fcinfo->flinfo->fn_oid, n_arguments, 16)));
+			 errmsg("function %u has too many arguments (%d, maximum is %d)",
+					fcinfo->flinfo->fn_oid, n_arguments, 16)));
 			returnValue = NULL; /* keep compiler quiet */
 			break;
 	}
@@ -769,7 +766,7 @@ fmgr_oldstyle(PG_FUNCTION_ARGS)
 struct fmgr_security_definer_cache
 {
 	FmgrInfo	flinfo;
-	Oid		userid;
+	Oid			userid;
 };
 
 /*
@@ -785,8 +782,8 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 {
 	Datum		result;
 	FmgrInfo   *save_flinfo;
-	struct fmgr_security_definer_cache * volatile fcache;
-	Oid		save_userid;
+	struct fmgr_security_definer_cache *volatile fcache;
+	Oid			save_userid;
 	HeapTuple	tuple;
 
 	if (!fcinfo->flinfo->fn_extra)
@@ -1719,8 +1716,8 @@ fmgr(Oid procedureId,...)
 		if (n_arguments > FUNC_MAX_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-					 errmsg("function %u has too many arguments (%d, maximum is %d)",
-							flinfo.fn_oid, n_arguments, FUNC_MAX_ARGS)));
+			 errmsg("function %u has too many arguments (%d, maximum is %d)",
+					flinfo.fn_oid, n_arguments, FUNC_MAX_ARGS)));
 		va_start(pvar, procedureId);
 		for (i = 0; i < n_arguments; i++)
 			fcinfo.arg[i] = (Datum) va_arg(pvar, char *);
@@ -1760,10 +1757,10 @@ Int64GetDatum(int64 X)
 #else							/* INT64_IS_BUSTED */
 
 	/*
-	 * On a machine with no 64-bit-int C datatype, sizeof(int64) will not
-	 * be 8, but we want Int64GetDatum to return an 8-byte object anyway,
-	 * with zeroes in the unused bits.	This is needed so that, for
-	 * example, hash join of int8 will behave properly.
+	 * On a machine with no 64-bit-int C datatype, sizeof(int64) will not be
+	 * 8, but we want Int64GetDatum to return an 8-byte object anyway, with
+	 * zeroes in the unused bits.  This is needed so that, for example, hash
+	 * join of int8 will behave properly.
 	 */
 	int64	   *retval = (int64 *) palloc0(Max(sizeof(int64), 8));
 
@@ -1846,8 +1843,8 @@ get_fn_expr_rettype(FmgrInfo *flinfo)
 	Node	   *expr;
 
 	/*
-	 * can't return anything useful if we have no FmgrInfo or if its
-	 * fn_expr node has not been initialized
+	 * can't return anything useful if we have no FmgrInfo or if its fn_expr
+	 * node has not been initialized
 	 */
 	if (!flinfo || !flinfo->fn_expr)
 		return InvalidOid;
@@ -1866,8 +1863,8 @@ Oid
 get_fn_expr_argtype(FmgrInfo *flinfo, int argnum)
 {
 	/*
-	 * can't return anything useful if we have no FmgrInfo or if its
-	 * fn_expr node has not been initialized
+	 * can't return anything useful if we have no FmgrInfo or if its fn_expr
+	 * node has not been initialized
 	 */
 	if (!flinfo || !flinfo->fn_expr)
 		return InvalidOid;
@@ -1909,8 +1906,8 @@ get_call_expr_argtype(Node *expr, int argnum)
 	argtype = exprType((Node *) list_nth(args, argnum));
 
 	/*
-	 * special hack for ScalarArrayOpExpr: what the underlying function
-	 * will actually get passed is the element type of the array.
+	 * special hack for ScalarArrayOpExpr: what the underlying function will
+	 * actually get passed is the element type of the array.
 	 */
 	if (IsA(expr, ScalarArrayOpExpr) &&
 		argnum == 1)

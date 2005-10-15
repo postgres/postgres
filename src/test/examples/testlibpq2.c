@@ -46,9 +46,8 @@ main(int argc, char **argv)
 
 	/*
 	 * If the user supplies a parameter on the command line, use it as the
-	 * conninfo string; otherwise default to setting dbname=postgres and
-	 * using environment variables or defaults for all other connection
-	 * parameters.
+	 * conninfo string; otherwise default to setting dbname=postgres and using
+	 * environment variables or defaults for all other connection parameters.
 	 */
 	if (argc > 1)
 		conninfo = argv[1];
@@ -67,8 +66,7 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 * Issue LISTEN command to enable notifications from the rule's
-	 * NOTIFY.
+	 * Issue LISTEN command to enable notifications from the rule's NOTIFY.
 	 */
 	res = PQexec(conn, "LISTEN TBL2");
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
@@ -79,8 +77,8 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 * should PQclear PGresult whenever it is no longer needed to avoid
-	 * memory leaks
+	 * should PQclear PGresult whenever it is no longer needed to avoid memory
+	 * leaks
 	 */
 	PQclear(res);
 
@@ -89,9 +87,9 @@ main(int argc, char **argv)
 	while (nnotifies < 4)
 	{
 		/*
-		 * Sleep until something happens on the connection.  We use
-		 * select(2) to wait for input, but you could also use poll() or
-		 * similar facilities.
+		 * Sleep until something happens on the connection.  We use select(2)
+		 * to wait for input, but you could also use poll() or similar
+		 * facilities.
 		 */
 		int			sock;
 		fd_set		input_mask;

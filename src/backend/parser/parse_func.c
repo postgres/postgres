@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.181 2005/06/22 15:19:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.182 2005/10/15 02:49:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,10 +74,10 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	FuncDetailCode fdresult;
 
 	/*
-	 * Most of the rest of the parser just assumes that functions do not
-	 * have more than FUNC_MAX_ARGS parameters.  We have to test here to
-	 * protect against array overruns, etc.  Of course, this may not be a
-	 * function, but the test doesn't hurt.
+	 * Most of the rest of the parser just assumes that functions do not have
+	 * more than FUNC_MAX_ARGS parameters.	We have to test here to protect
+	 * against array overruns, etc.  Of course, this may not be a function,
+	 * but the test doesn't hurt.
 	 */
 	if (list_length(fargs) > FUNC_MAX_ARGS)
 		ereport(ERROR,
@@ -88,11 +88,11 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	/*
 	 * Extract arg type info in preparation for function lookup.
 	 *
-	 * If any arguments are Param markers of type VOID, we discard them
-	 * from the parameter list.  This is a hack to allow the JDBC driver
-	 * to not have to distinguish "input" and "output" parameter symbols
-	 * while parsing function-call constructs.  We can't use foreach()
-	 * because we may modify the list ...
+	 * If any arguments are Param markers of type VOID, we discard them from the
+	 * parameter list.	This is a hack to allow the JDBC driver to not have to
+	 * distinguish "input" and "output" parameter symbols while parsing
+	 * function-call constructs.  We can't use foreach() because we may modify
+	 * the list ...
 	 */
 	nargs = 0;
 	for (l = list_head(fargs); l != NULL; l = nextl)
@@ -102,7 +102,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 
 		nextl = lnext(l);
 
-		if (argtype == VOIDOID && IsA(arg, Param) && !is_column)
+		if (argtype == VOIDOID && IsA(arg, Param) &&!is_column)
 		{
 			fargs = list_delete_ptr(fargs, arg);
 			continue;
@@ -119,9 +119,9 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 
 	/*
 	 * Check for column projection: if function has one argument, and that
-	 * argument is of complex type, and function name is not qualified,
-	 * then the "function call" could be a projection.	We also check that
-	 * there wasn't any aggregate decoration.
+	 * argument is of complex type, and function name is not qualified, then
+	 * the "function call" could be a projection.  We also check that there
+	 * wasn't any aggregate decoration.
 	 */
 	if (nargs == 1 && !agg_star && !agg_distinct && list_length(funcname) == 1)
 	{
@@ -136,8 +136,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 				return retval;
 
 			/*
-			 * If ParseComplexProjection doesn't recognize it as a
-			 * projection, just press on.
+			 * If ParseComplexProjection doesn't recognize it as a projection,
+			 * just press on.
 			 */
 		}
 	}
@@ -147,8 +147,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * func_get_detail looks up the function in the catalogs, does
 	 * disambiguation for polymorphic functions, handles inheritance, and
 	 * returns the funcid and type and set or singleton status of the
-	 * function's return value.  it also returns the true argument types
-	 * to the function.
+	 * function's return value.  it also returns the true argument types to
+	 * the function.
 	 */
 	fdresult = func_get_detail(funcname, fargs, nargs, actual_arg_types,
 							   &funcid, &rettype, &retset,
@@ -156,8 +156,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	if (fdresult == FUNCDETAIL_COERCION)
 	{
 		/*
-		 * We can do it as a trivial coercion. coerce_type can handle
-		 * these cases, so why duplicate code...
+		 * We can do it as a trivial coercion. coerce_type can handle these
+		 * cases, so why duplicate code...
 		 */
 		return coerce_type(pstate, linitial(fargs),
 						   actual_arg_types[0], rettype, -1,
@@ -166,28 +166,28 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	else if (fdresult == FUNCDETAIL_NORMAL)
 	{
 		/*
-		 * Normal function found; was there anything indicating it must be
-		 * an aggregate?
+		 * Normal function found; was there anything indicating it must be an
+		 * aggregate?
 		 */
 		if (agg_star)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-			errmsg("%s(*) specified, but %s is not an aggregate function",
-				   NameListToString(funcname),
-				   NameListToString(funcname))));
+			   errmsg("%s(*) specified, but %s is not an aggregate function",
+					  NameListToString(funcname),
+					  NameListToString(funcname))));
 		if (agg_distinct)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("DISTINCT specified, but %s is not an aggregate function",
-							NameListToString(funcname))));
+			errmsg("DISTINCT specified, but %s is not an aggregate function",
+				   NameListToString(funcname))));
 	}
 	else if (fdresult != FUNCDETAIL_AGGREGATE)
 	{
 		/*
 		 * Oops.  Time to die.
 		 *
-		 * If we are dealing with the attribute notation rel.function, give
-		 * an error message that is appropriate for that case.
+		 * If we are dealing with the attribute notation rel.function, give an
+		 * error message that is appropriate for that case.
 		 */
 		if (is_column)
 		{
@@ -205,22 +205,22 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 errmsg("function %s is not unique",
 							func_signature_string(funcname, nargs,
 												  actual_arg_types)),
-				   errhint("Could not choose a best candidate function. "
-						   "You may need to add explicit type casts.")));
+					 errhint("Could not choose a best candidate function. "
+							 "You may need to add explicit type casts.")));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
 					 errmsg("function %s does not exist",
 							func_signature_string(funcname, nargs,
 												  actual_arg_types)),
-					 errhint("No function matches the given name and argument types. "
-						   "You may need to add explicit type casts.")));
+			errhint("No function matches the given name and argument types. "
+					"You may need to add explicit type casts.")));
 	}
 
 	/*
-	 * enforce consistency with ANYARRAY and ANYELEMENT argument and
-	 * return types, possibly adjusting return type or declared_arg_types
-	 * (which will be used as the cast destination by make_fn_arguments)
+	 * enforce consistency with ANYARRAY and ANYELEMENT argument and return
+	 * types, possibly adjusting return type or declared_arg_types (which will
+	 * be used as the cast destination by make_fn_arguments)
 	 */
 	rettype = enforce_generic_type_consistency(actual_arg_types,
 											   declared_arg_types,
@@ -394,15 +394,14 @@ func_select_candidate(int nargs,
 						FUNC_MAX_ARGS)));
 
 	/*
-	 * If any input types are domains, reduce them to their base types.
-	 * This ensures that we will consider functions on the base type to be
-	 * "exact matches" in the exact-match heuristic; it also makes it
-	 * possible to do something useful with the type-category heuristics.
-	 * Note that this makes it difficult, but not impossible, to use
-	 * functions declared to take a domain as an input datatype.  Such a
-	 * function will be selected over the base-type function only if it is
-	 * an exact match at all argument positions, and so was already chosen
-	 * by our caller.
+	 * If any input types are domains, reduce them to their base types. This
+	 * ensures that we will consider functions on the base type to be "exact
+	 * matches" in the exact-match heuristic; it also makes it possible to do
+	 * something useful with the type-category heuristics. Note that this
+	 * makes it difficult, but not impossible, to use functions declared to
+	 * take a domain as an input datatype.	Such a function will be selected
+	 * over the base-type function only if it is an exact match at all
+	 * argument positions, and so was already chosen by our caller.
 	 */
 	for (i = 0; i < nargs; i++)
 		input_base_typeids[i] = getBaseType(input_typeids[i]);
@@ -452,12 +451,11 @@ func_select_candidate(int nargs,
 		return candidates;
 
 	/*
-	 * Still too many candidates? Now look for candidates which have
-	 * either exact matches or preferred types at the args that will
-	 * require coercion. (Restriction added in 7.4: preferred type must be
-	 * of same category as input type; give no preference to
-	 * cross-category conversions to preferred types.)	Keep all
-	 * candidates if none match.
+	 * Still too many candidates? Now look for candidates which have either
+	 * exact matches or preferred types at the args that will require
+	 * coercion. (Restriction added in 7.4: preferred type must be of same
+	 * category as input type; give no preference to cross-category
+	 * conversions to preferred types.)  Keep all candidates if none match.
 	 */
 	for (i = 0; i < nargs; i++) /* avoid multiple lookups */
 		slot_category[i] = TypeCategory(input_base_typeids[i]);
@@ -502,30 +500,28 @@ func_select_candidate(int nargs,
 		return candidates;
 
 	/*
-	 * Still too many candidates? Try assigning types for the unknown
-	 * columns.
+	 * Still too many candidates? Try assigning types for the unknown columns.
 	 *
-	 * NOTE: for a binary operator with one unknown and one non-unknown
-	 * input, we already tried the heuristic of looking for a candidate
-	 * with the known input type on both sides (see binary_oper_exact()).
-	 * That's essentially a special case of the general algorithm we try
-	 * next.
+	 * NOTE: for a binary operator with one unknown and one non-unknown input, we
+	 * already tried the heuristic of looking for a candidate with the known
+	 * input type on both sides (see binary_oper_exact()). That's essentially
+	 * a special case of the general algorithm we try next.
 	 *
-	 * We do this by examining each unknown argument position to see if we
-	 * can determine a "type category" for it.	If any candidate has an
-	 * input datatype of STRING category, use STRING category (this bias
-	 * towards STRING is appropriate since unknown-type literals look like
-	 * strings).  Otherwise, if all the candidates agree on the type
-	 * category of this argument position, use that category.  Otherwise,
-	 * fail because we cannot determine a category.
+	 * We do this by examining each unknown argument position to see if we can
+	 * determine a "type category" for it.	If any candidate has an input
+	 * datatype of STRING category, use STRING category (this bias towards
+	 * STRING is appropriate since unknown-type literals look like strings).
+	 * Otherwise, if all the candidates agree on the type category of this
+	 * argument position, use that category.  Otherwise, fail because we
+	 * cannot determine a category.
 	 *
-	 * If we are able to determine a type category, also notice whether any
-	 * of the candidates takes a preferred datatype within the category.
+	 * If we are able to determine a type category, also notice whether any of
+	 * the candidates takes a preferred datatype within the category.
 	 *
-	 * Having completed this examination, remove candidates that accept the
-	 * wrong category at any unknown position.	Also, if at least one
-	 * candidate accepted a preferred type at a position, remove
-	 * candidates that accept non-preferred types.
+	 * Having completed this examination, remove candidates that accept the wrong
+	 * category at any unknown position.  Also, if at least one candidate
+	 * accepted a preferred type at a position, remove candidates that accept
+	 * non-preferred types.
 	 *
 	 * If we are down to one candidate at the end, we win.
 	 */
@@ -573,8 +569,7 @@ func_select_candidate(int nargs,
 				else
 				{
 					/*
-					 * Remember conflict, but keep going (might find
-					 * STRING)
+					 * Remember conflict, but keep going (might find STRING)
 					 */
 					have_conflict = true;
 				}
@@ -687,8 +682,8 @@ func_get_detail(List *funcname,
 	raw_candidates = FuncnameGetCandidates(funcname, nargs);
 
 	/*
-	 * Quickly check if there is an exact match to the input datatypes
-	 * (there can be only one)
+	 * Quickly check if there is an exact match to the input datatypes (there
+	 * can be only one)
 	 */
 	for (best_candidate = raw_candidates;
 		 best_candidate != NULL;
@@ -703,32 +698,30 @@ func_get_detail(List *funcname,
 		/*
 		 * If we didn't find an exact match, next consider the possibility
 		 * that this is really a type-coercion request: a single-argument
-		 * function call where the function name is a type name.  If so,
-		 * and if we can do the coercion trivially (no run-time function
-		 * call needed), then go ahead and treat the "function call" as a
-		 * coercion.  This interpretation needs to be given higher
-		 * priority than interpretations involving a type coercion
-		 * followed by a function call, otherwise we can produce
-		 * surprising results. For example, we want "text(varchar)" to be
-		 * interpreted as a trivial coercion, not as "text(name(varchar))"
-		 * which the code below this point is entirely capable of
-		 * selecting.
+		 * function call where the function name is a type name.  If so, and
+		 * if we can do the coercion trivially (no run-time function call
+		 * needed), then go ahead and treat the "function call" as a coercion.
+		 * This interpretation needs to be given higher priority than
+		 * interpretations involving a type coercion followed by a function
+		 * call, otherwise we can produce surprising results. For example, we
+		 * want "text(varchar)" to be interpreted as a trivial coercion, not
+		 * as "text(name(varchar))" which the code below this point is
+		 * entirely capable of selecting.
 		 *
-		 * "Trivial" coercions are ones that involve binary-compatible types
-		 * and ones that are coercing a previously-unknown-type literal
-		 * constant to a specific type.
+		 * "Trivial" coercions are ones that involve binary-compatible types and
+		 * ones that are coercing a previously-unknown-type literal constant
+		 * to a specific type.
 		 *
-		 * The reason we can restrict our check to binary-compatible
-		 * coercions here is that we expect non-binary-compatible
-		 * coercions to have an implementation function named after the
-		 * target type. That function will be found by normal lookup if
-		 * appropriate.
+		 * The reason we can restrict our check to binary-compatible coercions
+		 * here is that we expect non-binary-compatible coercions to have an
+		 * implementation function named after the target type. That function
+		 * will be found by normal lookup if appropriate.
 		 *
-		 * NB: it's important that this code stays in sync with what
-		 * coerce_type can do, because the caller will try to apply
-		 * coerce_type if we return FUNCDETAIL_COERCION.  If we return
-		 * that result for something coerce_type can't handle, we'll cause
-		 * infinite recursion between this module and coerce_type!
+		 * NB: it's important that this code stays in sync with what coerce_type
+		 * can do, because the caller will try to apply coerce_type if we
+		 * return FUNCDETAIL_COERCION.	If we return that result for something
+		 * coerce_type can't handle, we'll cause infinite recursion between
+		 * this module and coerce_type!
 		 */
 		if (nargs == 1 && fargs != NIL)
 		{
@@ -761,8 +754,7 @@ func_get_detail(List *funcname,
 		}
 
 		/*
-		 * didn't find an exact match, so now try to match up
-		 * candidates...
+		 * didn't find an exact match, so now try to match up candidates...
 		 */
 		if (raw_candidates != NULL)
 		{
@@ -788,8 +780,8 @@ func_get_detail(List *funcname,
 													   current_candidates);
 
 				/*
-				 * If we were able to choose a best candidate, we're
-				 * done.  Otherwise, ambiguous function call.
+				 * If we were able to choose a best candidate, we're done.
+				 * Otherwise, ambiguous function call.
 				 */
 				if (!best_candidate)
 					return FUNCDETAIL_MULTIPLE;
@@ -853,11 +845,10 @@ typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId)
 	inhrel = heap_open(InheritsRelationId, AccessShareLock);
 
 	/*
-	 * Use queue to do a breadth-first traversal of the inheritance graph
-	 * from the relid supplied up to the root.	Notice that we append to
-	 * the queue inside the loop --- this is okay because the foreach()
-	 * macro doesn't advance queue_item until the next loop iteration
-	 * begins.
+	 * Use queue to do a breadth-first traversal of the inheritance graph from
+	 * the relid supplied up to the root.  Notice that we append to the queue
+	 * inside the loop --- this is okay because the foreach() macro doesn't
+	 * advance queue_item until the next loop iteration begins.
 	 */
 	foreach(queue_item, queue)
 	{
@@ -872,9 +863,9 @@ typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId)
 
 		/*
 		 * Okay, this is a not-yet-seen relid. Add it to the list of
-		 * already-visited OIDs, then find all the types this relid
-		 * inherits from and add them to the queue. The one exception is
-		 * we don't add the original relation to 'visited'.
+		 * already-visited OIDs, then find all the types this relid inherits
+		 * from and add them to the queue. The one exception is we don't add
+		 * the original relation to 'visited'.
 		 */
 		if (queue_item != list_head(queue))
 			visited = lappend_oid(visited, this_relid);
@@ -889,7 +880,7 @@ typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId)
 		while ((inhtup = heap_getnext(inhscan, ForwardScanDirection)) != NULL)
 		{
 			Form_pg_inherits inh = (Form_pg_inherits) GETSTRUCT(inhtup);
-			Oid		inhparent = inh->inhparent;
+			Oid			inhparent = inh->inhparent;
 
 			/* If this is the target superclass, we're done */
 			if (get_rel_type_id(inhparent) == superclassTypeId)
@@ -968,14 +959,14 @@ ParseComplexProjection(ParseState *pstate, char *funcname, Node *first_arg)
 	int			i;
 
 	/*
-	 * Special case for whole-row Vars so that we can resolve (foo.*).bar
-	 * even when foo is a reference to a subselect, join, or RECORD
-	 * function. A bonus is that we avoid generating an unnecessary
-	 * FieldSelect; our result can omit the whole-row Var and just be a
-	 * Var for the selected field.
+	 * Special case for whole-row Vars so that we can resolve (foo.*).bar even
+	 * when foo is a reference to a subselect, join, or RECORD function. A
+	 * bonus is that we avoid generating an unnecessary FieldSelect; our
+	 * result can omit the whole-row Var and just be a Var for the selected
+	 * field.
 	 *
-	 * This case could be handled by expandRecordVariable, but it's
-	 * more efficient to do it this way when possible.
+	 * This case could be handled by expandRecordVariable, but it's more
+	 * efficient to do it this way when possible.
 	 */
 	if (IsA(first_arg, Var) &&
 		((Var *) first_arg)->varattno == InvalidAttrNumber)
@@ -992,9 +983,9 @@ ParseComplexProjection(ParseState *pstate, char *funcname, Node *first_arg)
 	/*
 	 * Else do it the hard way with get_expr_result_type().
 	 *
-	 * If it's a Var of type RECORD, we have to work even harder: we have
-	 * to find what the Var refers to, and pass that to get_expr_result_type.
-	 * That task is handled by expandRecordVariable().
+	 * If it's a Var of type RECORD, we have to work even harder: we have to find
+	 * what the Var refers to, and pass that to get_expr_result_type. That
+	 * task is handled by expandRecordVariable().
 	 */
 	if (IsA(first_arg, Var) &&
 		((Var *) first_arg)->vartype == RECORDOID)
@@ -1057,8 +1048,8 @@ unknown_attribute(ParseState *pstate, Node *relref, char *attname)
 		else if (relTypeId == RECORDOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
-			errmsg("could not identify column \"%s\" in record data type",
-				   attname)));
+			   errmsg("could not identify column \"%s\" in record data type",
+					  attname)));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -1161,7 +1152,7 @@ find_aggregate_func(List *aggname, Oid basetype, bool noError)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("function %s(%s) is not an aggregate",
-				  NameListToString(aggname), format_type_be(basetype))));
+					  NameListToString(aggname), format_type_be(basetype))));
 	}
 
 	ReleaseSysCache(ftup);
@@ -1198,7 +1189,7 @@ LookupFuncName(List *funcname, int nargs, const Oid *argtypes, bool noError)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("function %s does not exist",
-					 func_signature_string(funcname, nargs, argtypes))));
+						func_signature_string(funcname, nargs, argtypes))));
 
 	return InvalidOid;
 }

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.53 2005/10/12 16:45:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.54 2005/10/15 02:49:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,11 +28,11 @@ typedef struct
 	int			nextVictimBuffer;
 
 	int			firstFreeBuffer;	/* Head of list of unused buffers */
-	int			lastFreeBuffer;		/* Tail of list of unused buffers */
+	int			lastFreeBuffer; /* Tail of list of unused buffers */
 
 	/*
-	 * NOTE: lastFreeBuffer is undefined when firstFreeBuffer is -1
-	 * (that is, when the list is empty)
+	 * NOTE: lastFreeBuffer is undefined when firstFreeBuffer is -1 (that is,
+	 * when the list is empty)
 	 */
 } BufferStrategyControl;
 
@@ -79,10 +79,10 @@ StrategyGetBuffer(void)
 		buf->freeNext = FREENEXT_NOT_IN_LIST;
 
 		/*
-		 * If the buffer is pinned or has a nonzero usage_count,
-		 * we cannot use it; discard it and retry.  (This can only happen
-		 * if VACUUM put a valid buffer in the freelist and then someone
-		 * else used it before we got to it.)
+		 * If the buffer is pinned or has a nonzero usage_count, we cannot use
+		 * it; discard it and retry.  (This can only happen if VACUUM put a
+		 * valid buffer in the freelist and then someone else used it before
+		 * we got to it.)
 		 */
 		LockBufHdr(buf);
 		if (buf->refcount == 0 && buf->usage_count == 0)
@@ -100,8 +100,8 @@ StrategyGetBuffer(void)
 			StrategyControl->nextVictimBuffer = 0;
 
 		/*
-		 * If the buffer is pinned or has a nonzero usage_count,
-		 * we cannot use it; decrement the usage_count and keep scanning.
+		 * If the buffer is pinned or has a nonzero usage_count, we cannot use
+		 * it; decrement the usage_count and keep scanning.
 		 */
 		LockBufHdr(buf);
 		if (buf->refcount == 0 && buf->usage_count == 0)
@@ -114,11 +114,11 @@ StrategyGetBuffer(void)
 		else if (--trycounter == 0)
 		{
 			/*
-			 * We've scanned all the buffers without making any state
-			 * changes, so all the buffers are pinned (or were when we
-			 * looked at them).  We could hope that someone will free
-			 * one eventually, but it's probably better to fail than to
-			 * risk getting stuck in an infinite loop.
+			 * We've scanned all the buffers without making any state changes,
+			 * so all the buffers are pinned (or were when we looked at them).
+			 * We could hope that someone will free one eventually, but it's
+			 * probably better to fail than to risk getting stuck in an
+			 * infinite loop.
 			 */
 			UnlockBufHdr(buf);
 			elog(ERROR, "no unpinned buffers available");
@@ -143,8 +143,8 @@ StrategyFreeBuffer(volatile BufferDesc *buf, bool at_head)
 	LWLockAcquire(BufFreelistLock, LW_EXCLUSIVE);
 
 	/*
-	 * It is possible that we are told to put something in the freelist
-	 * that is already in it; don't screw up the list if so.
+	 * It is possible that we are told to put something in the freelist that
+	 * is already in it; don't screw up the list if so.
 	 */
 	if (buf->freeNext == FREENEXT_NOT_IN_LIST)
 	{
@@ -181,8 +181,8 @@ StrategySyncStart(void)
 	int			result;
 
 	/*
-	 * We could probably dispense with the locking here, but just to be
-	 * safe ...
+	 * We could probably dispense with the locking here, but just to be safe
+	 * ...
 	 */
 	LWLockAcquire(BufFreelistLock, LW_EXCLUSIVE);
 	result = StrategyControl->nextVictimBuffer;

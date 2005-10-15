@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/like.c,v 1.61 2005/09/24 17:53:15 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/like.c,v 1.62 2005/10/15 02:49:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,13 +28,13 @@
 #define LIKE_ABORT						(-1)
 
 
-static int MatchText(char *t, int tlen, char *p, int plen);
-static int MatchTextIC(char *t, int tlen, char *p, int plen);
-static int MatchBytea(char *t, int tlen, char *p, int plen);
+static int	MatchText(char *t, int tlen, char *p, int plen);
+static int	MatchTextIC(char *t, int tlen, char *p, int plen);
+static int	MatchBytea(char *t, int tlen, char *p, int plen);
 static text *do_like_escape(text *, text *);
 
-static int MBMatchText(char *t, int tlen, char *p, int plen);
-static int MBMatchTextIC(char *t, int tlen, char *p, int plen);
+static int	MBMatchText(char *t, int tlen, char *p, int plen);
+static int	MBMatchTextIC(char *t, int tlen, char *p, int plen);
 static text *MB_do_like_escape(text *, text *);
 
 /*--------------------
@@ -48,7 +48,7 @@ wchareq(char *p1, char *p2)
 	int			p1_len;
 
 	/* Optimization:  quickly compare the first byte. */
-	if(*p1 != *p2)
+	if (*p1 != *p2)
 		return (0);
 
 	p1_len = pg_mblen(p1);
@@ -80,15 +80,15 @@ iwchareq(char *p1, char *p2)
 	int			l;
 
 	/*
-	 * short cut. if *p1 and *p2 is lower than CHARMAX, then we could
-	 * assume they are ASCII
+	 * short cut. if *p1 and *p2 is lower than CHARMAX, then we could assume
+	 * they are ASCII
 	 */
 	if ((unsigned char) *p1 < CHARMAX && (unsigned char) *p2 < CHARMAX)
 		return (tolower((unsigned char) *p1) == tolower((unsigned char) *p2));
 
 	/*
-	 * if one of them is an ASCII while the other is not, then they must
-	 * be different characters
+	 * if one of them is an ASCII while the other is not, then they must be
+	 * different characters
 	 */
 	else if ((unsigned char) *p1 < CHARMAX || (unsigned char) *p2 < CHARMAX)
 		return (0);
@@ -452,7 +452,7 @@ like_escape_bytea(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
 					 errmsg("invalid escape string"),
-			  errhint("Escape string must be empty or one character.")));
+				  errhint("Escape string must be empty or one character.")));
 
 		e = VARDATA(esc);
 
@@ -466,9 +466,9 @@ like_escape_bytea(PG_FUNCTION_ARGS)
 		}
 
 		/*
-		 * Otherwise, convert occurrences of the specified escape
-		 * character to '\', and double occurrences of '\' --- unless they
-		 * immediately follow an escape character!
+		 * Otherwise, convert occurrences of the specified escape character to
+		 * '\', and double occurrences of '\' --- unless they immediately
+		 * follow an escape character!
 		 */
 		afterescape = false;
 		while (plen > 0)
@@ -530,8 +530,8 @@ MatchBytea(char *t, int tlen, char *p, int plen)
 				return LIKE_TRUE;
 
 			/*
-			 * Otherwise, scan for a text position at which we can match
-			 * the rest of the pattern.
+			 * Otherwise, scan for a text position at which we can match the
+			 * rest of the pattern.
 			 */
 			while (tlen > 0)
 			{
@@ -551,16 +551,16 @@ MatchBytea(char *t, int tlen, char *p, int plen)
 			}
 
 			/*
-			 * End of text with no match, so no point in trying later
-			 * places to start matching this pattern.
+			 * End of text with no match, so no point in trying later places
+			 * to start matching this pattern.
 			 */
 			return LIKE_ABORT;
 		}
 		else if ((*p != '_') && !BYTEA_CHAREQ(t, p))
 		{
 			/*
-			 * Not the single-character wildcard and no explicit match?
-			 * Then time to quit...
+			 * Not the single-character wildcard and no explicit match? Then
+			 * time to quit...
 			 */
 			return LIKE_FALSE;
 		}
@@ -580,8 +580,8 @@ MatchBytea(char *t, int tlen, char *p, int plen)
 		return LIKE_TRUE;
 
 	/*
-	 * End of text with no match, so no point in trying later places to
-	 * start matching this pattern.
+	 * End of text with no match, so no point in trying later places to start
+	 * matching this pattern.
 	 */
 	return LIKE_ABORT;
 }	/* MatchBytea() */

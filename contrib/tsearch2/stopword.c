@@ -58,8 +58,8 @@ readstoplist(text *in, StopList * s)
 		/* if path is relative, take it as relative to share dir */
 		if (!is_absolute_path(filename))
 		{
-			char	sharepath[MAXPGPATH];
-			char   *absfn;
+			char		sharepath[MAXPGPATH];
+			char	   *absfn;
 
 			get_share_path(my_exec_path, sharepath);
 			absfn = palloc(strlen(sharepath) + strlen(filename) + 2);

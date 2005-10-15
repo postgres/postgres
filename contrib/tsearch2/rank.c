@@ -45,6 +45,7 @@ static float weights[] = {0.1, 0.2, 0.4, 1.0};
 
 static float calc_rank_or(float *w, tsvector * t, QUERYTYPE * q);
 static float calc_rank_and(float *w, tsvector * t, QUERYTYPE * q);
+
 /*
  * Returns a weight of a word collocation
  */
@@ -115,44 +116,52 @@ find_wordentry(tsvector * t, QUERYTYPE * q, ITEM * item)
 }
 
 
-static char * SortAndUniqOperand=NULL;
+static char *SortAndUniqOperand = NULL;
 
 static int
-compareITEM( const void * a, const void * b ) {
-	if (  (*(ITEM**)a)->length == (*(ITEM**)b)->length )
-		return strncmp( SortAndUniqOperand + (*(ITEM**)a)->distance,
-				SortAndUniqOperand + (*(ITEM**)b)->distance,
-				(*(ITEM**)b)->length );
+compareITEM(const void *a, const void *b)
+{
+	if ((*(ITEM **) a)->length == (*(ITEM **) b)->length)
+		return strncmp(SortAndUniqOperand + (*(ITEM **) a)->distance,
+					   SortAndUniqOperand + (*(ITEM **) b)->distance,
+					   (*(ITEM **) b)->length);
 
-	return ((*(ITEM**)a)->length > (*(ITEM**)b)->length) ? 1 : -1;
+	return ((*(ITEM **) a)->length > (*(ITEM **) b)->length) ? 1 : -1;
 }
-         
-static ITEM**
-SortAndUniqItems( char *operand, ITEM *item, int *size ) {
-	ITEM   **res, **ptr, **prevptr;
 
-	ptr = res = (ITEM**) palloc( sizeof(ITEM*) * *size );
+static ITEM **
+SortAndUniqItems(char *operand, ITEM * item, int *size)
+{
+	ITEM	  **res,
+			  **ptr,
+			  **prevptr;
 
-	while( (*size)-- ) {
-		if ( item->type == VAL ) {
+	ptr = res = (ITEM **) palloc(sizeof(ITEM *) * *size);
+
+	while ((*size)--)
+	{
+		if (item->type == VAL)
+		{
 			*ptr = item;
 			ptr++;
-		}   
+		}
 		item++;
 	}
 
-	*size = ptr-res;
-	if ( *size < 2 )
+	*size = ptr - res;
+	if (*size < 2)
 		return res;
 
-	SortAndUniqOperand=operand;
-	qsort( res, *size, sizeof(ITEM**), compareITEM );
+	SortAndUniqOperand = operand;
+	qsort(res, *size, sizeof(ITEM **), compareITEM);
 
 	ptr = res + 1;
 	prevptr = res;
 
-	while( ptr - res < *size ) {
-		if ( compareITEM( (void*) ptr, (void*) prevptr ) != 0 ) {
+	while (ptr - res < *size)
+	{
+		if (compareITEM((void *) ptr, (void *) prevptr) != 0)
+		{
 			prevptr++;
 			*prevptr = *ptr;
 		}
@@ -183,18 +192,19 @@ calc_rank_and(float *w, tsvector * t, QUERYTYPE * q)
 				lenct,
 				dist;
 	float		res = -1.0;
-	ITEM	   **item;
-	int size = q->size;
+	ITEM	  **item;
+	int			size = q->size;
 
-	item = SortAndUniqItems( GETOPERAND(q), GETQUERY(q), &size);
-	if ( size < 2 ) {
+	item = SortAndUniqItems(GETOPERAND(q), GETQUERY(q), &size);
+	if (size < 2)
+	{
 		pfree(item);
 		return calc_rank_or(w, t, q);
-	} 
+	}
 	pos = (uint16 **) palloc(sizeof(uint16 *) * q->size);
 	memset(pos, 0, sizeof(uint16 *) * q->size);
 	*(uint16 *) POSNULL = lengthof(POSNULL) - 1;
-	WEP_SETPOS(POSNULL[1], MAXENTRYPOS-1);
+	WEP_SETPOS(POSNULL[1], MAXENTRYPOS - 1);
 
 	for (i = 0; i < size; i++)
 	{
@@ -220,7 +230,7 @@ calc_rank_and(float *w, tsvector * t, QUERYTYPE * q)
 			{
 				for (p = 0; p < lenct; p++)
 				{
-					dist = Abs((int)WEP_GETPOS(post[l]) - (int)WEP_GETPOS(ct[p]));
+					dist = Abs((int) WEP_GETPOS(post[l]) - (int) WEP_GETPOS(ct[p]));
 					if (dist || (dist == 0 && (pos[i] == (uint16 *) POSNULL || pos[k] == (uint16 *) POSNULL)))
 					{
 						float		curw;
@@ -248,11 +258,11 @@ calc_rank_or(float *w, tsvector * t, QUERYTYPE * q)
 				j,
 				i;
 	float		res = -1.0;
-	ITEM	   **item;
-	int	size = q->size;
+	ITEM	  **item;
+	int			size = q->size;
 
 	*(uint16 *) POSNULL = lengthof(POSNULL) - 1;
-	item = SortAndUniqItems( GETOPERAND(q), GETQUERY(q), &size);
+	item = SortAndUniqItems(GETOPERAND(q), GETQUERY(q), &size);
 
 	for (i = 0; i < size; i++)
 	{
@@ -279,7 +289,7 @@ calc_rank_or(float *w, tsvector * t, QUERYTYPE * q)
 				res = 1.0 - (1.0 - res) * (1.0 - wpos(post[j]));
 		}
 	}
-	pfree( item );
+	pfree(item);
 	return res;
 }
 
@@ -288,7 +298,7 @@ calc_rank(float *w, tsvector * t, QUERYTYPE * q, int4 method)
 {
 	ITEM	   *item = GETQUERY(q);
 	float		res = 0.0;
-	int 	   len;
+	int			len;
 
 	if (!t->size || !q->size)
 		return 0.0;
@@ -304,11 +314,12 @@ calc_rank(float *w, tsvector * t, QUERYTYPE * q, int4 method)
 		case 0:
 			break;
 		case 1:
-			res /= log( (float)(cnt_length(t)+1) ) / log(2.0);
+			res /= log((float) (cnt_length(t) + 1)) / log(2.0);
 			break;
 		case 2:
 			len = cnt_length(t);
-			if ( len > 0 )  res /= (float)len; 
+			if (len > 0)
+				res /= (float) len;
 			break;
 		default:
 			/* internal error */
@@ -406,7 +417,7 @@ checkcondition_DR(void *checkval, ITEM * val)
 
 	while (ptr - ((ChkDocR *) checkval)->doc < ((ChkDocR *) checkval)->len)
 	{
-		if ( val == ptr->item || compareITEM( &val, &(ptr->item) ) == 0 )
+		if (val == ptr->item || compareITEM(&val, &(ptr->item)) == 0)
 			return true;
 		ptr++;
 	}
@@ -496,12 +507,11 @@ Cover(DocRepresentation * doc, int len, QUERYTYPE * query, int *pos, int *p, int
 		ch.doc = f;
 		ch.len = (doc + lastpos) - f + 1;
 		*pos = f - doc + 1;
-		SortAndUniqOperand = GETOPERAND(query); 
+		SortAndUniqOperand = GETOPERAND(query);
 		if (TS_execute(GETQUERY(query), &ch, false, checkcondition_DR))
 		{
 			/*
-			 * elog(NOTICE,"OP:%d NP:%d P:%d Q:%d", *pos, lastpos, *p,
-			 * *q);
+			 * elog(NOTICE,"OP:%d NP:%d P:%d Q:%d", *pos, lastpos, *p, *q);
 			 */
 			return true;
 		}
@@ -611,11 +621,12 @@ rank_cd(PG_FUNCTION_ARGS)
 		case 0:
 			break;
 		case 1:
-			res /= log( (float)(cnt_length(txt)+1) );
+			res /= log((float) (cnt_length(txt) + 1));
 			break;
 		case 2:
 			len = cnt_length(txt);
-			if ( len > 0 )  res /= (float)len; 
+			if (len > 0)
+				res /= (float) len;
 			break;
 		default:
 			/* internal error */
@@ -638,7 +649,7 @@ rank_cd_def(PG_FUNCTION_ARGS)
 										Int32GetDatum(-1),
 										PG_GETARG_DATUM(0),
 										PG_GETARG_DATUM(1),
-										(PG_NARGS() == 3) ? PG_GETARG_DATUM(2) : Int32GetDatum(DEF_NORM_METHOD)
+	  (PG_NARGS() == 3) ? PG_GETARG_DATUM(2) : Int32GetDatum(DEF_NORM_METHOD)
 										));
 }
 

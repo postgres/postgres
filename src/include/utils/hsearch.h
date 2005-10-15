@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/hsearch.h,v 1.40 2005/08/20 23:26:37 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/hsearch.h,v 1.41 2005/10/15 02:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,10 +27,10 @@ typedef uint32 (*HashValueFunc) (const void *key, Size keysize);
  * as key comparison functions.)
  */
 typedef int (*HashCompareFunc) (const void *key1, const void *key2,
-								Size keysize);
+											Size keysize);
 
 /*
- * Key copying functions must have this signature.  The return value is not
+ * Key copying functions must have this signature.	The return value is not
  * used.  (The definition is set up to allow memcpy() and strncpy() to be
  * used directly.)
  */
@@ -95,8 +95,7 @@ typedef struct HASHHDR
 	long		nsegs;			/* Number of allocated segments */
 	Size		keysize;		/* hash key length in bytes */
 	Size		entrysize;		/* total user element size in bytes */
-	long		max_dsize;		/* 'dsize' limit if directory is fixed
-								 * size */
+	long		max_dsize;		/* 'dsize' limit if directory is fixed size */
 	int			nelem_alloc;	/* number of entries to allocate at once */
 	HASHELEMENT *freeList;		/* linked list of free elements */
 #ifdef HASH_STATISTICS
@@ -117,8 +116,7 @@ typedef struct HTAB
 	HashCompareFunc match;		/* key comparison function */
 	HashCopyFunc keycopy;		/* key copying function */
 	HashAllocFunc alloc;		/* memory allocator */
-	MemoryContext hcxt;			/* memory context if default allocator
-								 * used */
+	MemoryContext hcxt;			/* memory context if default allocator used */
 	char	   *tabname;		/* table name (for error messages) */
 	bool		isshared;		/* true if table is in shared memory */
 } HTAB;
@@ -129,8 +127,7 @@ typedef struct HASHCTL
 {
 	long		ssize;			/* Segment Size */
 	long		dsize;			/* (initial) Directory Size */
-	long		max_dsize;		/* limit to dsize if directory size is
-								 * limited */
+	long		max_dsize;		/* limit to dsize if directory size is limited */
 	long		ffactor;		/* Fill factor */
 	Size		keysize;		/* hash key length in bytes */
 	Size		entrysize;		/* total user element size in bytes */

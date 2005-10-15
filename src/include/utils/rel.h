@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.86 2005/10/06 02:29:21 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.87 2005/10/15 02:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,9 +67,9 @@ typedef struct Trigger
 typedef struct TriggerDesc
 {
 	/*
-	 * Index data to identify which triggers are which.  Since each
-	 * trigger can appear in more than one class, for each class we
-	 * provide a list of integer indexes into the triggers array.
+	 * Index data to identify which triggers are which.  Since each trigger
+	 * can appear in more than one class, for each class we provide a list of
+	 * integer indexes into the triggers array.
 	 */
 #define TRIGGER_NUM_EVENT_CLASSES  3
 
@@ -133,16 +133,15 @@ typedef struct RelationData
 	bool		rd_istemp;		/* rel uses the local buffer mgr */
 	bool		rd_isnailed;	/* rel is nailed in cache */
 	bool		rd_isvalid;		/* relcache entry is valid */
-	char		rd_indexvalid;	/* state of rd_indexlist: 0 = not valid,
-								 * 1 = valid, 2 = temporarily forced */
+	char		rd_indexvalid;	/* state of rd_indexlist: 0 = not valid, 1 =
+								 * valid, 2 = temporarily forced */
 	SubTransactionId rd_createSubid;	/* rel was created in current xact */
 
 	/*
 	 * rd_createSubid is the ID of the highest subtransaction the rel has
-	 * survived into; or zero if the rel was not created in the current
-	 * top transaction.  This should be relied on only for optimization
-	 * purposes; it is possible for new-ness to be "forgotten" (eg, after
-	 * CLUSTER).
+	 * survived into; or zero if the rel was not created in the current top
+	 * transaction.  This should be relied on only for optimization purposes;
+	 * it is possible for new-ness to be "forgotten" (eg, after CLUSTER).
 	 */
 	Form_pg_class rd_rel;		/* RELATION tuple */
 	TupleDesc	rd_att;			/* tuple descriptor */
@@ -166,14 +165,14 @@ typedef struct RelationData
 	 *
 	 * Note: only default operators and support procs for each opclass are
 	 * cached, namely those with subtype zero.	The arrays are indexed by
-	 * strategy or support number, which is a sufficient identifier given
-	 * that restriction.
+	 * strategy or support number, which is a sufficient identifier given that
+	 * restriction.
 	 */
 	MemoryContext rd_indexcxt;	/* private memory cxt for this stuff */
 	RelationAmInfo *rd_aminfo;	/* lookup info for funcs found in pg_am */
 	Oid		   *rd_operator;	/* OIDs of index operators */
 	RegProcedure *rd_support;	/* OIDs of support procedures */
-	FmgrInfo   *rd_supportinfo;	/* lookup info for support procedures */
+	FmgrInfo   *rd_supportinfo; /* lookup info for support procedures */
 	List	   *rd_indexprs;	/* index expression trees, if any */
 	List	   *rd_indpred;		/* index predicate tree, if any */
 

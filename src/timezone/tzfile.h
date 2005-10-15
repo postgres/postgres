@@ -6,7 +6,7 @@
  * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/tzfile.h,v 1.5 2004/05/21 20:59:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/tzfile.h,v 1.6 2005/10/15 02:49:51 momjian Exp $
  */
 
 /*
@@ -34,10 +34,8 @@ struct tzhead
 {
 	char		tzh_magic[4];	/* TZ_MAGIC */
 	char		tzh_reserved[16];		/* reserved for future use */
-	char		tzh_ttisgmtcnt[4];		/* coded number of trans. time
-										 * flags */
-	char		tzh_ttisstdcnt[4];		/* coded number of trans. time
-										 * flags */
+	char		tzh_ttisgmtcnt[4];		/* coded number of trans. time flags */
+	char		tzh_ttisstdcnt[4];		/* coded number of trans. time flags */
 	char		tzh_leapcnt[4]; /* coded number of leap seconds */
 	char		tzh_timecnt[4]; /* coded number of transition times */
 	char		tzh_typecnt[4]; /* coded number of local time types */
@@ -83,15 +81,12 @@ struct tzhead
  */
 #define TZ_MAX_TIMES	370
 
-#define TZ_MAX_TYPES	256		/* Limited by what (unsigned char)'s can
-								 * hold */
+#define TZ_MAX_TYPES	256		/* Limited by what (unsigned char)'s can hold */
 
-#define TZ_MAX_CHARS	50		/* Maximum number of abbreviation
-								 * characters */
+#define TZ_MAX_CHARS	50		/* Maximum number of abbreviation characters */
  /* (limited by what unsigned chars can hold) */
 
-#define TZ_MAX_LEAPS	50		/* Maximum number of leap second
-								 * corrections */
+#define TZ_MAX_LEAPS	50		/* Maximum number of leap second corrections */
 
 #define SECSPERMIN	60
 #define MINSPERHOUR 60

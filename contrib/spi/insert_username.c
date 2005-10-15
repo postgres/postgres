@@ -65,7 +65,7 @@ insert_username(PG_FUNCTION_ARGS)
 	if (attnum < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
-			errmsg("\"%s\" has no attribute \"%s\"", relname, args[0])));
+				 errmsg("\"%s\" has no attribute \"%s\"", relname, args[0])));
 
 	if (SPI_gettypeid(tupdesc, attnum) != TEXTOID)
 		ereport(ERROR,
@@ -75,7 +75,7 @@ insert_username(PG_FUNCTION_ARGS)
 
 	/* create fields containing name */
 	newval = DirectFunctionCall1(textin,
-						CStringGetDatum(GetUserNameFromId(GetUserId())));
+							CStringGetDatum(GetUserNameFromId(GetUserId())));
 
 	/* construct new tuple */
 	rettuple = SPI_modifytuple(rel, rettuple, 1, &attnum, &newval, NULL);

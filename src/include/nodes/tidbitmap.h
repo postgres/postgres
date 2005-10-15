@@ -15,7 +15,7 @@
  *
  * Copyright (c) 2003-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/nodes/tidbitmap.h,v 1.2 2005/08/28 22:47:20 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/tidbitmap.h,v 1.3 2005/10/15 02:49:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@
 
 
 /*
- * Actual bitmap representation is private to tidbitmap.c.  Callers can
+ * Actual bitmap representation is private to tidbitmap.c.	Callers can
  * do IsA(x, TIDBitmap) on it, but nothing else.
  */
 typedef struct TIDBitmap TIDBitmap;
@@ -34,7 +34,7 @@ typedef struct TIDBitmap TIDBitmap;
 /* Result structure for tbm_iterate */
 typedef struct
 {
-	BlockNumber	blockno;		/* page number containing tuples */
+	BlockNumber blockno;		/* page number containing tuples */
 	int			ntuples;		/* -1 indicates lossy result */
 	OffsetNumber offsets[1];	/* VARIABLE LENGTH ARRAY */
 } TBMIterateResult;				/* VARIABLE LENGTH STRUCT */

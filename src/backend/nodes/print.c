@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.76 2005/05/01 18:56:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.77 2005/10/15 02:49:19 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -603,7 +603,7 @@ print_plan_recursive(Plan *p, Query *parsetree, int indentLevel, char *label)
 	if (IsA(p, BitmapAnd))
 	{
 		ListCell   *l;
-		BitmapAnd	   *bitmapandplan = (BitmapAnd *) p;
+		BitmapAnd  *bitmapandplan = (BitmapAnd *) p;
 
 		foreach(l, bitmapandplan->bitmapplans)
 		{
@@ -616,7 +616,7 @@ print_plan_recursive(Plan *p, Query *parsetree, int indentLevel, char *label)
 	if (IsA(p, BitmapOr))
 	{
 		ListCell   *l;
-		BitmapOr	   *bitmaporplan = (BitmapOr *) p;
+		BitmapOr   *bitmaporplan = (BitmapOr *) p;
 
 		foreach(l, bitmaporplan->bitmapplans)
 		{

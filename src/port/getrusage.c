@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/getrusage.c,v 1.10 2005/07/28 04:03:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/getrusage.c,v 1.11 2005/10/15 02:49:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,13 +35,13 @@ getrusage(int who, struct rusage * rusage)
 {
 #ifdef WIN32
 
-	FILETIME starttime;
-	FILETIME exittime;
-	FILETIME kerneltime;
-	FILETIME usertime;
+	FILETIME	starttime;
+	FILETIME	exittime;
+	FILETIME	kerneltime;
+	FILETIME	usertime;
 	ULARGE_INTEGER li;
 
-	if (rusage == (struct rusage *)NULL)
+	if (rusage == (struct rusage *) NULL)
 	{
 		errno = EFAULT;
 		return -1;
@@ -56,16 +56,15 @@ getrusage(int who, struct rusage * rusage)
 
 	/* Convert FILETIMEs (0.1 us) to struct timeval */
 	memcpy(&li, &kerneltime, sizeof(FILETIME));
-	li.QuadPart /= 10L; /* Convert to microseconds */
-	rusage->ru_stime.tv_sec  = li.QuadPart / 1000000L;
+	li.QuadPart /= 10L;			/* Convert to microseconds */
+	rusage->ru_stime.tv_sec = li.QuadPart / 1000000L;
 	rusage->ru_stime.tv_usec = li.QuadPart % 1000000L;
 
 	memcpy(&li, &usertime, sizeof(FILETIME));
-	li.QuadPart /= 10L; /* Convert to microseconds */
-	rusage->ru_utime.tv_sec  = li.QuadPart / 1000000L;
+	li.QuadPart /= 10L;			/* Convert to microseconds */
+	rusage->ru_utime.tv_sec = li.QuadPart / 1000000L;
 	rusage->ru_utime.tv_usec = li.QuadPart % 1000000L;
-
-#else /* all but WIN32 */
+#else							/* all but WIN32 */
 
 	struct tms	tms;
 	int			tick_rate = CLK_TCK;	/* ticks per second */
@@ -102,8 +101,7 @@ getrusage(int who, struct rusage * rusage)
 	rusage->ru_utime.tv_usec = TICK_TO_USEC(u, tick_rate);
 	rusage->ru_stime.tv_sec = TICK_TO_SEC(s, tick_rate);
 	rusage->ru_stime.tv_usec = TICK_TO_USEC(u, tick_rate);
-
-#endif /* WIN32 */
+#endif   /* WIN32 */
 
 	return 0;
 }

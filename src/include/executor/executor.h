@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.119 2005/08/20 00:40:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.120 2005/10/15 02:49:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,17 +40,17 @@ extern bool ExecMayReturnRawTuples(PlanState *node);
  * prototypes from functions in execGrouping.c
  */
 extern bool execTuplesMatch(TupleTableSlot *slot1,
-							TupleTableSlot *slot2,
-							int numCols,
-							AttrNumber *matchColIdx,
-							FmgrInfo *eqfunctions,
-							MemoryContext evalContext);
+				TupleTableSlot *slot2,
+				int numCols,
+				AttrNumber *matchColIdx,
+				FmgrInfo *eqfunctions,
+				MemoryContext evalContext);
 extern bool execTuplesUnequal(TupleTableSlot *slot1,
-							  TupleTableSlot *slot2,
-							  int numCols,
-							  AttrNumber *matchColIdx,
-							  FmgrInfo *eqfunctions,
-							  MemoryContext evalContext);
+				  TupleTableSlot *slot2,
+				  int numCols,
+				  AttrNumber *matchColIdx,
+				  FmgrInfo *eqfunctions,
+				  MemoryContext evalContext);
 extern FmgrInfo *execTuplesMatchPrepare(TupleDesc tupdesc,
 					   int numCols,
 					   AttrNumber *matchColIdx);
@@ -75,12 +75,12 @@ extern TupleHashEntry LookupTupleHashEntry(TupleHashTable hashtable,
 extern JunkFilter *ExecInitJunkFilter(List *targetList, bool hasoid,
 				   TupleTableSlot *slot);
 extern JunkFilter *ExecInitJunkFilterConversion(List *targetList,
-												TupleDesc cleanTupType,
-												TupleTableSlot *slot);
+							 TupleDesc cleanTupType,
+							 TupleTableSlot *slot);
 extern bool ExecGetJunkAttribute(JunkFilter *junkfilter, TupleTableSlot *slot,
 					 char *attrName, Datum *value, bool *isNull);
 extern TupleTableSlot *ExecFilterJunk(JunkFilter *junkfilter,
-									  TupleTableSlot *slot);
+			   TupleTableSlot *slot);
 extern HeapTuple ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot);
 
 
@@ -98,7 +98,7 @@ extern bool ExecContextForcesOids(PlanState *planstate, bool *hasoids);
 extern void ExecConstraints(ResultRelInfo *resultRelInfo,
 				TupleTableSlot *slot, EState *estate);
 extern TupleTableSlot *EvalPlanQual(EState *estate, Index rti,
-									ItemPointer tid, TransactionId priorXmax);
+			 ItemPointer tid, TransactionId priorXmax);
 
 /*
  * prototypes from functions in execProcnode.c

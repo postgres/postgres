@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.138 2005/09/25 19:37:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.139 2005/10/15 02:49:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,7 +180,7 @@ typedef struct ReturnSetInfo
  *		ExecProject() evaluates the tlist, forms a tuple, and stores it
  *		in the given slot.	Note that the result will be a "virtual" tuple
  *		unless ExecMaterializeSlot() is then called to force it to be
- *		converted to a physical tuple.  The slot must have a tupledesc
+ *		converted to a physical tuple.	The slot must have a tupledesc
  *		that matches the output of the tlist!
  *
  *		The planner very often produces tlists that consist entirely of
@@ -301,8 +301,7 @@ typedef struct EState
 	/* Info about target table for insert/update/delete queries: */
 	ResultRelInfo *es_result_relations; /* array of ResultRelInfos */
 	int			es_num_result_relations;		/* length of array */
-	ResultRelInfo *es_result_relation_info;		/* currently active array
-												 * elt */
+	ResultRelInfo *es_result_relation_info;		/* currently active array elt */
 	JunkFilter *es_junkFilter;	/* currently active junk filter */
 
 	Relation	es_into_relation_descriptor;	/* for SELECT INTO */
@@ -330,17 +329,15 @@ typedef struct EState
 	List	   *es_exprcontexts;	/* List of ExprContexts within EState */
 
 	/*
-	 * this ExprContext is for per-output-tuple operations, such as
-	 * constraint checks and index-value computations.	It will be reset
-	 * for each output tuple.  Note that it will be created only if
-	 * needed.
+	 * this ExprContext is for per-output-tuple operations, such as constraint
+	 * checks and index-value computations.  It will be reset for each output
+	 * tuple.  Note that it will be created only if needed.
 	 */
 	ExprContext *es_per_tuple_exprcontext;
 
 	/* Below is to re-evaluate plan qual in READ COMMITTED mode */
 	Plan	   *es_topPlan;		/* link to top of plan tree */
-	struct evalPlanQual *es_evalPlanQual;		/* chain of PlanQual
-												 * states */
+	struct evalPlanQual *es_evalPlanQual;		/* chain of PlanQual states */
 	bool	   *es_evTupleNull; /* local array of EPQ status */
 	HeapTuple  *es_evTuple;		/* shared array of EPQ substitute tuples */
 	bool		es_useEvalPlan; /* evaluating EPQ tuples? */
@@ -483,40 +480,39 @@ typedef struct FuncExprState
 	List	   *args;			/* states of argument expressions */
 
 	/*
-	 * Function manager's lookup info for the target function.  If
-	 * func.fn_oid is InvalidOid, we haven't initialized it yet.
+	 * Function manager's lookup info for the target function.  If func.fn_oid
+	 * is InvalidOid, we haven't initialized it yet.
 	 */
 	FmgrInfo	func;
 
 	/*
-	 * We also need to store argument values across calls when evaluating
-	 * a function-returning-set.
+	 * We also need to store argument values across calls when evaluating a
+	 * function-returning-set.
 	 *
-	 * setArgsValid is true when we are evaluating a set-valued function and
-	 * we are in the middle of a call series; we want to pass the same
-	 * argument values to the function again (and again, until it returns
+	 * setArgsValid is true when we are evaluating a set-valued function and we
+	 * are in the middle of a call series; we want to pass the same argument
+	 * values to the function again (and again, until it returns
 	 * ExprEndResult).
 	 */
 	bool		setArgsValid;
 
 	/*
 	 * Flag to remember whether we found a set-valued argument to the
-	 * function. This causes the function result to be a set as well.
-	 * Valid only when setArgsValid is true.
+	 * function. This causes the function result to be a set as well. Valid
+	 * only when setArgsValid is true.
 	 */
 	bool		setHasSetArg;	/* some argument returns a set */
 
 	/*
 	 * Flag to remember whether we have registered a shutdown callback for
 	 * this FuncExprState.	We do so only if setArgsValid has been true at
-	 * least once (since all the callback is for is to clear
-	 * setArgsValid).
+	 * least once (since all the callback is for is to clear setArgsValid).
 	 */
 	bool		shutdown_reg;	/* a shutdown callback is registered */
 
 	/*
-	 * Current argument data for a set-valued function; contains valid
-	 * data only if setArgsValid is true.
+	 * Current argument data for a set-valued function; contains valid data
+	 * only if setArgsValid is true.
 	 */
 	FunctionCallInfoData setArgs;
 } FuncExprState;
@@ -740,25 +736,24 @@ typedef struct PlanState
 
 	Plan	   *plan;			/* associated Plan node */
 
-	EState	   *state;			/* at execution time, state's of
-								 * individual nodes point to one EState
-								 * for the whole top-level plan */
+	EState	   *state;			/* at execution time, state's of individual
+								 * nodes point to one EState for the whole
+								 * top-level plan */
 
 	struct Instrumentation *instrument; /* Optional runtime stats for this
 										 * plan node */
 
 	/*
-	 * Common structural data for all Plan types.  These links to
-	 * subsidiary state trees parallel links in the associated plan tree
-	 * (except for the subPlan list, which does not exist in the plan
-	 * tree).
+	 * Common structural data for all Plan types.  These links to subsidiary
+	 * state trees parallel links in the associated plan tree (except for the
+	 * subPlan list, which does not exist in the plan tree).
 	 */
 	List	   *targetlist;		/* target list to be computed at this node */
 	List	   *qual;			/* implicitly-ANDed qual conditions */
 	struct PlanState *lefttree; /* input plan tree(s) */
 	struct PlanState *righttree;
-	List	   *initPlan;		/* Init SubPlanState nodes (un-correlated
-								 * expr subselects) */
+	List	   *initPlan;		/* Init SubPlanState nodes (un-correlated expr
+								 * subselects) */
 	List	   *subPlan;		/* SubPlanState nodes in my expressions */
 
 	/*
@@ -1065,7 +1060,7 @@ typedef struct MergeJoinState
 {
 	JoinState	js;				/* its first field is NodeTag */
 	int			mj_NumClauses;
-	MergeJoinClause mj_Clauses;	/* array of length mj_NumClauses */
+	MergeJoinClause mj_Clauses; /* array of length mj_NumClauses */
 	int			mj_JoinState;
 	bool		mj_FillOuter;
 	bool		mj_FillInner;

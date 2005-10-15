@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-decrypt.c,v 1.5 2005/09/24 19:14:04 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-decrypt.c,v 1.6 2005/10/15 02:49:06 momjian Exp $
  */
 
 #include "postgres.h"
@@ -80,7 +80,7 @@ parse_new_len(PullFilter * src, int *len_p)
 		len = 1 << (b & 0x1F);
 		pkttype = PKT_STREAM;
 	}
-	
+
 	if (len < 0 || len > MAX_CHUNK)
 	{
 		px_debug("parse_new_len: weird length");
@@ -130,7 +130,7 @@ pgp_parse_pkt_hdr(PullFilter * src, uint8 *tag, int *len_p, int allow_ctx)
 {
 	int			lentype;
 	int			res;
-	uint8		*p;
+	uint8	   *p;
 
 	/* EOF is normal here, thus we dont use GETBYTE */
 	res = pullf_read(src, 1, &p);
@@ -165,15 +165,17 @@ pgp_parse_pkt_hdr(PullFilter * src, uint8 *tag, int *len_p, int allow_ctx)
 /*
  * Packet reader
  */
-struct PktData {
-	int type;
-	int len;
+struct PktData
+{
+	int			type;
+	int			len;
 };
 
-static int pktreader_pull(void *priv, PullFilter *src, int len,
-		uint8 **data_p, uint8 *buf, int buflen)
+static int
+pktreader_pull(void *priv, PullFilter * src, int len,
+			   uint8 **data_p, uint8 *buf, int buflen)
 {
-	int res;
+	int			res;
 	struct PktData *pkt = priv;
 
 	/* PKT_CONTEXT means: whatever there is */
@@ -207,6 +209,7 @@ static void
 pktreader_free(void *priv)
 {
 	struct PktData *pkt = priv;
+
 	memset(pkt, 0, sizeof(*pkt));
 	px_free(pkt);
 }
@@ -217,11 +220,12 @@ static struct PullFilterOps pktreader_filter = {
 
 /* needs helper function to pass several parameters */
 int
-pgp_create_pkt_reader(PullFilter **pf_p, PullFilter *src, int len,
-				  int pkttype, PGP_Context *ctx)
+pgp_create_pkt_reader(PullFilter ** pf_p, PullFilter * src, int len,
+					  int pkttype, PGP_Context * ctx)
 {
-	int res;
+	int			res;
 	struct PktData *pkt = px_alloc(sizeof(*pkt));
+
 	pkt->type = pkttype;
 	pkt->len = len;
 	res = pullf_create(pf_p, &pktreader_filter, pkt, src);
@@ -234,13 +238,14 @@ pgp_create_pkt_reader(PullFilter **pf_p, PullFilter *src, int len,
  * Prefix check filter
  */
 
-static int prefix_init(void **priv_p, void *arg, PullFilter *src)
+static int
+prefix_init(void **priv_p, void *arg, PullFilter * src)
 {
 	PGP_Context *ctx = arg;
-	int len;
-	int res;
-	uint8 *buf;
-	uint8 tmpbuf[PGP_MAX_BLOCK + 2];
+	int			len;
+	int			res;
+	uint8	   *buf;
+	uint8		tmpbuf[PGP_MAX_BLOCK + 2];
 
 	len = pgp_get_cipher_block_size(ctx->cipher_algo);
 	if (len > sizeof(tmpbuf))
@@ -259,20 +264,19 @@ static int prefix_init(void **priv_p, void *arg, PullFilter *src)
 	if (buf[len - 2] != buf[len] || buf[len - 1] != buf[len + 1])
 	{
 		px_debug("prefix_init: corrupt prefix");
+
 		/*
-		 * The original purpose of the 2-byte check was
-		 * to show user a friendly "wrong key" message.
-		 * This made following possible:
+		 * The original purpose of the 2-byte check was to show user a
+		 * friendly "wrong key" message. This made following possible:
 		 *
-		 *   "An Attack on CFB Mode Encryption As Used By OpenPGP"
-		 *   by Serge Mister and Robert Zuccherato
+		 * "An Attack on CFB Mode Encryption As Used By OpenPGP" by Serge Mister
+		 * and Robert Zuccherato
 		 *
-		 * To avoid being 'oracle', we delay reporting, which
-		 * basically means we prefer to run into corrupt packet
-		 * header.
+		 * To avoid being 'oracle', we delay reporting, which basically means we
+		 * prefer to run into corrupt packet header.
 		 *
-		 * We _could_ throw PXE_PGP_CORRUPT_DATA here, but
-		 * there is possibility of attack via timing, so we don't.
+		 * We _could_ throw PXE_PGP_CORRUPT_DATA here, but there is possibility
+		 * of attack via timing, so we don't.
 		 */
 		ctx->corrupt_prefix = 1;
 	}
@@ -289,9 +293,10 @@ static struct PullFilterOps prefix_filter = {
  * Decrypt filter
  */
 
-static int decrypt_init(void **priv_p, void *arg, PullFilter *src)
+static int
+decrypt_init(void **priv_p, void *arg, PullFilter * src)
 {
-	PGP_CFB *cfb = arg;
+	PGP_CFB    *cfb = arg;
 
 	*priv_p = cfb;
 
@@ -299,15 +304,17 @@ static int decrypt_init(void **priv_p, void *arg, PullFilter *src)
 	return 4096;
 }
 
-static int decrypt_read(void *priv, PullFilter *src, int len,
-		uint8 **data_p, uint8 *buf, int buflen)
+static int
+decrypt_read(void *priv, PullFilter * src, int len,
+			 uint8 **data_p, uint8 *buf, int buflen)
 {
-	PGP_CFB *cfb = priv;
-	uint8 *tmp;
-	int res;
+	PGP_CFB    *cfb = priv;
+	uint8	   *tmp;
+	int			res;
 
 	res = pullf_read(src, len, &tmp);
-	if (res > 0) {
+	if (res > 0)
+	{
 		pgp_cfb_decrypt(cfb, tmp, res, buf);
 		*data_p = buf;
 	}
@@ -323,28 +330,33 @@ struct PullFilterOps pgp_decrypt_filter = {
  * MDC hasher filter
  */
 
-static int mdc_init(void **priv_p, void *arg, PullFilter *src)
+static int
+mdc_init(void **priv_p, void *arg, PullFilter * src)
 {
 	PGP_Context *ctx = arg;
+
 	*priv_p = ctx;
 	return pgp_load_digest(PGP_DIGEST_SHA1, &ctx->mdc_ctx);
 }
 
-static void mdc_free(void *priv)
+static void
+mdc_free(void *priv)
 {
 	PGP_Context *ctx = priv;
+
 	if (ctx->use_mdcbuf_filter)
 		return;
 	px_md_free(ctx->mdc_ctx);
 	ctx->mdc_ctx = NULL;
 }
 
-static int mdc_finish(PGP_Context *ctx, PullFilter *src,
-		int len, uint8 **data_p)
+static int
+mdc_finish(PGP_Context * ctx, PullFilter * src,
+		   int len, uint8 **data_p)
 {
-	int res;
-	uint8 hash[20];
-	uint8 tmpbuf[22];
+	int			res;
+	uint8		hash[20];
+	uint8		tmpbuf[22];
 
 	if (len + 1 > sizeof(tmpbuf))
 		return PXE_BUG;
@@ -362,7 +374,7 @@ static int mdc_finish(PGP_Context *ctx, PullFilter *src,
 		}
 		return 0;
 	}
-	
+
 	/* safety check */
 	if (ctx->in_mdc_pkt > 1)
 	{
@@ -370,14 +382,14 @@ static int mdc_finish(PGP_Context *ctx, PullFilter *src,
 		return PXE_PGP_CORRUPT_DATA;
 	}
 	ctx->in_mdc_pkt++;
-	
+
 	/* is the packet sane? */
 	if (res != 20)
 	{
 		px_debug("mdc_finish: read failed, res=%d", res);
 		return PXE_PGP_CORRUPT_DATA;
 	}
-	
+
 	/*
 	 * ok, we got the hash, now check
 	 */
@@ -394,10 +406,11 @@ static int mdc_finish(PGP_Context *ctx, PullFilter *src,
 	return len;
 }
 
-static int mdc_read(void *priv, PullFilter *src, int len,
-		uint8 **data_p, uint8 *buf, int buflen)
+static int
+mdc_read(void *priv, PullFilter * src, int len,
+		 uint8 **data_p, uint8 *buf, int buflen)
 {
-	int res;
+	int			res;
 	PGP_Context *ctx = priv;
 
 	/* skip this filter? */
@@ -434,18 +447,20 @@ static struct PullFilterOps mdc_filter = {
  * packet, which is silly.
  */
 #define MDCBUF_LEN 8192
-struct MDCBufData {
+struct MDCBufData
+{
 	PGP_Context *ctx;
-	int eof;
-	int buflen;
-	int avail;
-	uint8 *pos;
-	int mdc_avail;
-	uint8 mdc_buf[22];
-	uint8 buf[MDCBUF_LEN];
+	int			eof;
+	int			buflen;
+	int			avail;
+	uint8	   *pos;
+	int			mdc_avail;
+	uint8		mdc_buf[22];
+	uint8		buf[MDCBUF_LEN];
 };
 
-static int mdcbuf_init(void **priv_p, void *arg, PullFilter *src)
+static int
+mdcbuf_init(void **priv_p, void *arg, PullFilter * src)
 {
 	PGP_Context *ctx = arg;
 	struct MDCBufData *st;
@@ -462,10 +477,11 @@ static int mdcbuf_init(void **priv_p, void *arg, PullFilter *src)
 	return 0;
 }
 
-static int mdcbuf_finish(struct MDCBufData *st)
+static int
+mdcbuf_finish(struct MDCBufData * st)
 {
-	uint8 hash[20];
-	int res;
+	uint8		hash[20];
+	int			res;
 
 	st->eof = 1;
 
@@ -486,25 +502,29 @@ static int mdcbuf_finish(struct MDCBufData *st)
 	return res;
 }
 
-static void mdcbuf_load_data(struct MDCBufData *st, uint8 *src, int len)
+static void
+mdcbuf_load_data(struct MDCBufData * st, uint8 *src, int len)
 {
-	uint8 *dst = st->pos + st->avail;
+	uint8	   *dst = st->pos + st->avail;
+
 	memcpy(dst, src, len);
 	px_md_update(st->ctx->mdc_ctx, src, len);
 	st->avail += len;
 }
 
-static void mdcbuf_load_mdc(struct MDCBufData *st, uint8 *src, int len)
+static void
+mdcbuf_load_mdc(struct MDCBufData * st, uint8 *src, int len)
 {
 	memmove(st->mdc_buf + st->mdc_avail, src, len);
 	st->mdc_avail += len;
 }
 
-static int mdcbuf_refill(struct MDCBufData *st, PullFilter *src)
+static int
+mdcbuf_refill(struct MDCBufData * st, PullFilter * src)
 {
-	uint8 *data;
-	int res;
-	int need;
+	uint8	   *data;
+	int			res;
+	int			need;
 
 	/* put avail data in start */
 	if (st->avail > 0 && st->pos != st->buf)
@@ -530,7 +550,8 @@ static int mdcbuf_refill(struct MDCBufData *st, PullFilter *src)
 	}
 	else
 	{
-		int canmove = st->mdc_avail + res - 22;
+		int			canmove = st->mdc_avail + res - 22;
+
 		if (canmove > 0)
 		{
 			mdcbuf_load_data(st, st->mdc_buf, canmove);
@@ -542,11 +563,12 @@ static int mdcbuf_refill(struct MDCBufData *st, PullFilter *src)
 	return 0;
 }
 
-static int mdcbuf_read(void *priv, PullFilter *src, int len,
-		uint8 **data_p, uint8 *buf, int buflen)
+static int
+mdcbuf_read(void *priv, PullFilter * src, int len,
+			uint8 **data_p, uint8 *buf, int buflen)
 {
 	struct MDCBufData *st = priv;
-	int res;
+	int			res;
 
 	if (!st->eof && len > st->avail)
 	{
@@ -568,6 +590,7 @@ static void
 mdcbuf_free(void *priv)
 {
 	struct MDCBufData *st = priv;
+
 	px_md_free(st->ctx->mdc_ctx);
 	st->ctx->mdc_ctx = NULL;
 	memset(st, 0, sizeof(*st));
@@ -583,29 +606,30 @@ static struct PullFilterOps mdcbuf_filter = {
  * Decrypt separate session key
  */
 static int
-decrypt_key(PGP_Context *ctx, const uint8 *src, int len)
+decrypt_key(PGP_Context * ctx, const uint8 *src, int len)
 {
-	int res;
-	uint8 algo;
-	PGP_CFB *cfb;
-	
+	int			res;
+	uint8		algo;
+	PGP_CFB    *cfb;
+
 	res = pgp_cfb_create(&cfb, ctx->s2k_cipher_algo,
-			ctx->s2k.key, ctx->s2k.key_len, 0, NULL);
+						 ctx->s2k.key, ctx->s2k.key_len, 0, NULL);
 	if (res < 0)
 		return res;
 
 	pgp_cfb_decrypt(cfb, src, 1, &algo);
-	src ++;
-	len --;
+	src++;
+	len--;
 
 	pgp_cfb_decrypt(cfb, src, len, ctx->sess_key);
 	pgp_cfb_free(cfb);
 	ctx->sess_key_len = len;
 	ctx->cipher_algo = algo;
 
-	if (pgp_get_cipher_key_size(algo) != len) {
+	if (pgp_get_cipher_key_size(algo) != len)
+	{
 		px_debug("sesskey bad len: algo=%d, expected=%d, got=%d",
-				algo, pgp_get_cipher_key_size(algo), len);
+				 algo, pgp_get_cipher_key_size(algo), len);
 		return PXE_PGP_CORRUPT_DATA;
 	}
 	return 0;
@@ -643,7 +667,7 @@ parse_symenc_sesskey(PGP_Context * ctx, PullFilter * src)
 	 * generate key from password
 	 */
 	res = pgp_s2k_process(&ctx->s2k, ctx->s2k_cipher_algo,
-			ctx->sym_key, ctx->sym_key_len);
+						  ctx->sym_key, ctx->sym_key_len);
 	if (res < 0)
 		return res;
 
@@ -684,21 +708,23 @@ parse_symenc_sesskey(PGP_Context * ctx, PullFilter * src)
 }
 
 static int
-copy_crlf(MBuf *dst, uint8 *data, int len, int *got_cr)
+copy_crlf(MBuf * dst, uint8 *data, int len, int *got_cr)
 {
-	uint8 *data_end = data + len;
-	uint8 tmpbuf[1024];
-	uint8 *tmp_end = tmpbuf + sizeof(tmpbuf);
-	uint8 *p;
-	int res;
+	uint8	   *data_end = data + len;
+	uint8		tmpbuf[1024];
+	uint8	   *tmp_end = tmpbuf + sizeof(tmpbuf);
+	uint8	   *p;
+	int			res;
 
 	p = tmpbuf;
-	if (*got_cr) {
+	if (*got_cr)
+	{
 		if (*data != '\n')
 			*p++ = '\r';
 		*got_cr = 0;
 	}
-	while (data < data_end) {
+	while (data < data_end)
+	{
 		if (*data == '\r')
 		{
 			if (data + 1 < data_end)
@@ -779,8 +805,9 @@ parse_literal_data(PGP_Context * ctx, MBuf * dst, PullFilter * pkt)
 	ctx->unicode_mode = (type == 'u') ? 1 : 0;
 
 	/* read data */
-	while (1) {
-		res = pullf_read(pkt, 32*1024, &buf);
+	while (1)
+	{
+		res = pullf_read(pkt, 32 * 1024, &buf);
 		if (res <= 0)
 			break;
 
@@ -797,8 +824,8 @@ parse_literal_data(PGP_Context * ctx, MBuf * dst, PullFilter * pkt)
 }
 
 /* process_data_packets and parse_compressed_data call each other */
-static int	process_data_packets(PGP_Context * ctx, MBuf * dst,
-			PullFilter * src, int allow_compr, int need_mdc);
+static int process_data_packets(PGP_Context * ctx, MBuf * dst,
+					 PullFilter * src, int allow_compr, int need_mdc);
 
 static int
 parse_compressed_data(PGP_Context * ctx, MBuf * dst, PullFilter * pkt)
@@ -822,7 +849,7 @@ parse_compressed_data(PGP_Context * ctx, MBuf * dst, PullFilter * pkt)
 			if (res >= 0)
 			{
 				res = process_data_packets(ctx, dst, pf_decompr,
-											NO_COMPR, NO_MDC);
+										   NO_COMPR, NO_MDC);
 				pullf_free(pf_decompr);
 			}
 			break;
@@ -850,7 +877,7 @@ process_data_packets(PGP_Context * ctx, MBuf * dst, PullFilter * src,
 	int			got_data = 0;
 	int			got_mdc = 0;
 	PullFilter *pkt = NULL;
-	uint8 *tmp;
+	uint8	   *tmp;
 
 	while (1)
 	{
@@ -951,12 +978,12 @@ static int
 parse_symenc_data(PGP_Context * ctx, PullFilter * pkt, MBuf * dst)
 {
 	int			res;
-	PGP_CFB	*cfb = NULL;
+	PGP_CFB    *cfb = NULL;
 	PullFilter *pf_decrypt = NULL;
 	PullFilter *pf_prefix = NULL;
 
 	res = pgp_cfb_create(&cfb, ctx->cipher_algo,
-			ctx->sess_key, ctx->sess_key_len, 1, NULL);
+						 ctx->sess_key, ctx->sess_key_len, 1, NULL);
 	if (res < 0)
 		goto out;
 
@@ -985,11 +1012,11 @@ static int
 parse_symenc_mdc_data(PGP_Context * ctx, PullFilter * pkt, MBuf * dst)
 {
 	int			res;
-	PGP_CFB	*cfb = NULL;
+	PGP_CFB    *cfb = NULL;
 	PullFilter *pf_decrypt = NULL;
 	PullFilter *pf_prefix = NULL;
 	PullFilter *pf_mdc = NULL;
-	uint8 ver;
+	uint8		ver;
 
 	GETBYTE(pkt, ver);
 	if (ver != 1)
@@ -999,7 +1026,7 @@ parse_symenc_mdc_data(PGP_Context * ctx, PullFilter * pkt, MBuf * dst)
 	}
 
 	res = pgp_cfb_create(&cfb, ctx->cipher_algo,
-			ctx->sess_key, ctx->sess_key_len, 0, NULL);
+						 ctx->sess_key, ctx->sess_key_len, 0, NULL);
 	if (res < 0)
 		goto out;
 
@@ -1034,49 +1061,52 @@ out:
  * skip over packet contents
  */
 int
-pgp_skip_packet(PullFilter *pkt)
+pgp_skip_packet(PullFilter * pkt)
 {
-	int res = 1;
-	uint8 *tmp;
-  	while (res > 0)
-		res = pullf_read(pkt, 32*1024, &tmp);
-	return res < 0 ? res : 0;				 
+	int			res = 1;
+	uint8	   *tmp;
+
+	while (res > 0)
+		res = pullf_read(pkt, 32 * 1024, &tmp);
+	return res < 0 ? res : 0;
 }
 
 /*
  * expect to be at packet end, any data is error
  */
 int
-pgp_expect_packet_end(PullFilter *pkt)
+pgp_expect_packet_end(PullFilter * pkt)
 {
-	int res = 1;
-	uint8 *tmp;
-  	while (res > 0)
+	int			res = 1;
+	uint8	   *tmp;
+
+	while (res > 0)
 	{
-		res = pullf_read(pkt, 32*1024, &tmp);
+		res = pullf_read(pkt, 32 * 1024, &tmp);
 		if (res > 0)
 		{
 			px_debug("pgp_expect_packet_end: got data");
 			return PXE_PGP_CORRUPT_DATA;
 		}
 	}
-	return res < 0 ? res : 0;				 
+	return res < 0 ? res : 0;
 }
 
 int
 pgp_decrypt(PGP_Context * ctx, MBuf * msrc, MBuf * mdst)
 {
-	int res;
+	int			res;
 	PullFilter *src = NULL;
 	PullFilter *pkt = NULL;
-	uint8 tag;
-	int len;
-	int got_key = 0;
-	int got_data = 0;
+	uint8		tag;
+	int			len;
+	int			got_key = 0;
+	int			got_data = 0;
 
 	res = pullf_create_mbuf_reader(&src, msrc);
 
-	while (res >= 0) {
+	while (res >= 0)
+	{
 		res = pgp_parse_pkt_hdr(src, &tag, &len, NO_CTX_SIZE);
 		if (res <= 0)
 			break;
@@ -1086,7 +1116,8 @@ pgp_decrypt(PGP_Context * ctx, MBuf * msrc, MBuf * mdst)
 			break;
 
 		res = PXE_PGP_CORRUPT_DATA;
-		switch (tag) {
+		switch (tag)
+		{
 			case PGP_PKT_MARKER:
 				res = pgp_skip_packet(pkt);
 				break;
@@ -1097,10 +1128,11 @@ pgp_decrypt(PGP_Context * ctx, MBuf * msrc, MBuf * mdst)
 				break;
 			case PGP_PKT_SYMENCRYPTED_SESSKEY:
 				if (got_key)
-					/* Theoretically, there could be several keys,
-					 * both public and symmetric, all of which
-					 * encrypt same session key.  Decrypt should try
-					 * with each one, before failing.
+
+					/*
+					 * Theoretically, there could be several keys, both public
+					 * and symmetric, all of which encrypt same session key.
+					 * Decrypt should try with each one, before failing.
 					 */
 					px_debug("pgp_decrypt: using first of several keys");
 				else
@@ -1154,4 +1186,3 @@ pgp_decrypt(PGP_Context * ctx, MBuf * msrc, MBuf * mdst)
 
 	return res;
 }
-

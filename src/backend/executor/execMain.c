@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.255 2005/08/26 03:07:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.256 2005/10/15 02:49:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -208,8 +208,7 @@ ExecutorRun(QueryDesc *queryDesc,
 	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
 
 	/*
-	 * extract information from the query descriptor and the query
-	 * feature.
+	 * extract information from the query descriptor and the query feature.
 	 */
 	operation = queryDesc->operation;
 	dest = queryDesc->dest;
@@ -352,15 +351,15 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 {
 	AclMode		requiredPerms;
 	Oid			relOid;
-	Oid		userid;
+	Oid			userid;
 
 	/*
-	 * Only plain-relation RTEs need to be checked here.  Subquery RTEs
-	 * are checked by ExecInitSubqueryScan if the subquery is still a
-	 * separate subquery --- if it's been pulled up into our query level
-	 * then the RTEs are in our rangetable and will be checked here.
-	 * Function RTEs are checked by init_fcache when the function is
-	 * prepared for execution. Join and special RTEs need no checks.
+	 * Only plain-relation RTEs need to be checked here.  Subquery RTEs are
+	 * checked by ExecInitSubqueryScan if the subquery is still a separate
+	 * subquery --- if it's been pulled up into our query level then the RTEs
+	 * are in our rangetable and will be checked here. Function RTEs are
+	 * checked by init_fcache when the function is prepared for execution.
+	 * Join and special RTEs need no checks.
 	 */
 	if (rte->rtekind != RTE_RELATION)
 		return;
@@ -375,19 +374,17 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 	relOid = rte->relid;
 
 	/*
-	 * userid to check as: current user unless we have a setuid
-	 * indication.
+	 * userid to check as: current user unless we have a setuid indication.
 	 *
-	 * Note: GetUserId() is presently fast enough that there's no harm in
-	 * calling it separately for each RTE.	If that stops being true, we
-	 * could call it once in ExecCheckRTPerms and pass the userid down
-	 * from there.	But for now, no need for the extra clutter.
+	 * Note: GetUserId() is presently fast enough that there's no harm in calling
+	 * it separately for each RTE.	If that stops being true, we could call it
+	 * once in ExecCheckRTPerms and pass the userid down from there.  But for
+	 * now, no need for the extra clutter.
 	 */
 	userid = rte->checkAsUser ? rte->checkAsUser : GetUserId();
 
 	/*
-	 * We must have *all* the requiredPerms bits, so use aclmask not
-	 * aclcheck.
+	 * We must have *all* the requiredPerms bits, so use aclmask not aclcheck.
 	 */
 	if (pg_class_aclmask(relOid, userid, requiredPerms, ACLMASK_ALL)
 		!= requiredPerms)
@@ -515,8 +512,7 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 		else
 		{
 			/*
-			 * Single result relation identified by
-			 * parseTree->resultRelation
+			 * Single result relation identified by parseTree->resultRelation
 			 */
 			numResultRelations = 1;
 			resultRelInfos = (ResultRelInfo *) palloc(sizeof(ResultRelInfo));
@@ -544,8 +540,8 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 
 	/*
 	 * Detect whether we're doing SELECT INTO.  If so, set the es_into_oids
-	 * flag appropriately so that the plan tree will be initialized with
-	 * the correct tuple descriptors.
+	 * flag appropriately so that the plan tree will be initialized with the
+	 * correct tuple descriptors.
 	 */
 	do_select_into = false;
 
@@ -583,10 +579,10 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 	}
 
 	/*
-	 * initialize the executor "tuple" table.  We need slots for all the
-	 * plan nodes, plus possibly output slots for the junkfilter(s). At
-	 * this point we aren't sure if we need junkfilters, so just add slots
-	 * for them unconditionally.
+	 * initialize the executor "tuple" table.  We need slots for all the plan
+	 * nodes, plus possibly output slots for the junkfilter(s). At this point
+	 * we aren't sure if we need junkfilters, so just add slots for them
+	 * unconditionally.
 	 */
 	{
 		int			nSlots = ExecCountSlotsNode(plan);
@@ -606,26 +602,26 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 	estate->es_useEvalPlan = false;
 
 	/*
-	 * initialize the private state information for all the nodes in the
-	 * query tree.	This opens files, allocates storage and leaves us
-	 * ready to start processing tuples.
+	 * initialize the private state information for all the nodes in the query
+	 * tree.  This opens files, allocates storage and leaves us ready to start
+	 * processing tuples.
 	 */
 	planstate = ExecInitNode(plan, estate);
 
 	/*
-	 * Get the tuple descriptor describing the type of tuples to return.
-	 * (this is especially important if we are creating a relation with
-	 * "SELECT INTO")
+	 * Get the tuple descriptor describing the type of tuples to return. (this
+	 * is especially important if we are creating a relation with "SELECT
+	 * INTO")
 	 */
 	tupType = ExecGetResultType(planstate);
 
 	/*
-	 * Initialize the junk filter if needed.  SELECT and INSERT queries
-	 * need a filter if there are any junk attrs in the tlist.	INSERT and
-	 * SELECT INTO also need a filter if the plan may return raw disk
-	 * tuples (else heap_insert will be scribbling on the source
-	 * relation!). UPDATE and DELETE always need a filter, since there's
-	 * always a junk 'ctid' attribute present --- no need to look first.
+	 * Initialize the junk filter if needed.  SELECT and INSERT queries need a
+	 * filter if there are any junk attrs in the tlist.  INSERT and SELECT
+	 * INTO also need a filter if the plan may return raw disk tuples (else
+	 * heap_insert will be scribbling on the source relation!). UPDATE and
+	 * DELETE always need a filter, since there's always a junk 'ctid'
+	 * attribute present --- no need to look first.
 	 */
 	{
 		bool		junk_filter_needed = false;
@@ -661,10 +657,9 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 		if (junk_filter_needed)
 		{
 			/*
-			 * If there are multiple result relations, each one needs its
-			 * own junk filter.  Note this is only possible for
-			 * UPDATE/DELETE, so we can't be fooled by some needing a
-			 * filter and some not.
+			 * If there are multiple result relations, each one needs its own
+			 * junk filter.  Note this is only possible for UPDATE/DELETE, so
+			 * we can't be fooled by some needing a filter and some not.
 			 */
 			if (parseTree->resultRelations != NIL)
 			{
@@ -687,15 +682,15 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 					JunkFilter *j;
 
 					j = ExecInitJunkFilter(subplan->plan->targetlist,
-										   resultRelInfo->ri_RelationDesc->rd_att->tdhasoid,
-										   ExecAllocTableSlot(estate->es_tupleTable));
+							resultRelInfo->ri_RelationDesc->rd_att->tdhasoid,
+								  ExecAllocTableSlot(estate->es_tupleTable));
 					resultRelInfo->ri_junkFilter = j;
 					resultRelInfo++;
 				}
 
 				/*
-				 * Set active junkfilter too; at this point ExecInitAppend
-				 * has already selected an active result relation...
+				 * Set active junkfilter too; at this point ExecInitAppend has
+				 * already selected an active result relation...
 				 */
 				estate->es_junkFilter =
 					estate->es_result_relation_info->ri_junkFilter;
@@ -707,7 +702,7 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 
 				j = ExecInitJunkFilter(planstate->plan->targetlist,
 									   tupType->tdhasoid,
-							  ExecAllocTableSlot(estate->es_tupleTable));
+								  ExecAllocTableSlot(estate->es_tupleTable));
 				estate->es_junkFilter = j;
 				if (estate->es_result_relation_info)
 					estate->es_result_relation_info->ri_junkFilter = j;
@@ -777,10 +772,9 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 		CommandCounterIncrement();
 
 		/*
-		 * If necessary, create a TOAST table for the into relation. Note
-		 * that AlterTableCreateToastTable ends with
-		 * CommandCounterIncrement(), so that the TOAST table will be
-		 * visible for insertion.
+		 * If necessary, create a TOAST table for the into relation. Note that
+		 * AlterTableCreateToastTable ends with CommandCounterIncrement(), so
+		 * that the TOAST table will be visible for insertion.
 		 */
 		AlterTableCreateToastTable(intoRelationId, true);
 
@@ -795,11 +789,11 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 		/*
 		 * We can skip WAL-logging the insertions, unless PITR is in use.
 		 *
-		 * Note that for a non-temp INTO table, this is safe only because
-		 * we know that the catalog changes above will have been WAL-logged,
-		 * and so RecordTransactionCommit will think it needs to WAL-log the
-		 * eventual transaction commit.  Else the commit might be lost, even
-		 * though all the data is safely fsync'd ...
+		 * Note that for a non-temp INTO table, this is safe only because we know
+		 * that the catalog changes above will have been WAL-logged, and so
+		 * RecordTransactionCommit will think it needs to WAL-log the eventual
+		 * transaction commit.	Else the commit might be lost, even though all
+		 * the data is safely fsync'd ...
 		 */
 		estate->es_into_relation_use_wal = XLogArchivingActive();
 	}
@@ -832,19 +826,19 @@ initResultRelInfo(ResultRelInfo *resultRelInfo,
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot change sequence \"%s\"",
-						  RelationGetRelationName(resultRelationDesc))));
+							RelationGetRelationName(resultRelationDesc))));
 			break;
 		case RELKIND_TOASTVALUE:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot change TOAST relation \"%s\"",
-						  RelationGetRelationName(resultRelationDesc))));
+							RelationGetRelationName(resultRelationDesc))));
 			break;
 		case RELKIND_VIEW:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot change view \"%s\"",
-						  RelationGetRelationName(resultRelationDesc))));
+							RelationGetRelationName(resultRelationDesc))));
 			break;
 	}
 
@@ -859,7 +853,7 @@ initResultRelInfo(ResultRelInfo *resultRelInfo,
 	resultRelInfo->ri_TrigDesc = CopyTriggerDesc(resultRelationDesc->trigdesc);
 	if (resultRelInfo->ri_TrigDesc)
 	{
-		int		n = resultRelInfo->ri_TrigDesc->numtriggers;
+		int			n = resultRelInfo->ri_TrigDesc->numtriggers;
 
 		resultRelInfo->ri_TrigFunctions = (FmgrInfo *)
 			palloc0(n * sizeof(FmgrInfo));
@@ -878,9 +872,9 @@ initResultRelInfo(ResultRelInfo *resultRelInfo,
 
 	/*
 	 * If there are indices on the result relation, open them and save
-	 * descriptors in the result relation info, so that we can add new
-	 * index entries for the tuples we add/update.	We need not do this
-	 * for a DELETE, however, since deletion doesn't affect indexes.
+	 * descriptors in the result relation info, so that we can add new index
+	 * entries for the tuples we add/update.  We need not do this for a
+	 * DELETE, however, since deletion doesn't affect indexes.
 	 */
 	if (resultRelationDesc->rd_rel->relhasindex &&
 		operation != CMD_DELETE)
@@ -981,8 +975,7 @@ ExecEndPlan(PlanState *planstate, EState *estate)
 	estate->es_tupleTable = NULL;
 
 	/*
-	 * close the result relation(s) if any, but hold locks until xact
-	 * commit.
+	 * close the result relation(s) if any, but hold locks until xact commit.
 	 */
 	resultRelInfo = estate->es_result_relations;
 	for (i = estate->es_num_result_relations; i > 0; i--)
@@ -999,10 +992,10 @@ ExecEndPlan(PlanState *planstate, EState *estate)
 	if (estate->es_into_relation_descriptor != NULL)
 	{
 		/*
-		 * If we skipped using WAL, and it's not a temp relation,
-		 * we must force the relation down to disk before it's
-		 * safe to commit the transaction.  This requires forcing
-		 * out any dirty buffers and then doing a forced fsync.
+		 * If we skipped using WAL, and it's not a temp relation, we must
+		 * force the relation down to disk before it's safe to commit the
+		 * transaction.  This requires forcing out any dirty buffers and then
+		 * doing a forced fsync.
 		 */
 		if (!estate->es_into_relation_use_wal &&
 			!estate->es_into_relation_descriptor->rd_istemp)
@@ -1087,8 +1080,7 @@ ExecutePlan(EState *estate,
 	}
 
 	/*
-	 * Loop until we've processed the proper number of tuples from the
-	 * plan.
+	 * Loop until we've processed the proper number of tuples from the plan.
 	 */
 
 	for (;;)
@@ -1120,12 +1112,12 @@ lnext:	;
 		}
 
 		/*
-		 * if we have a junk filter, then project a new tuple with the
-		 * junk removed.
+		 * if we have a junk filter, then project a new tuple with the junk
+		 * removed.
 		 *
 		 * Store this new "clean" tuple in the junkfilter's resultSlot.
-		 * (Formerly, we stored it back over the "dirty" tuple, which is
-		 * WRONG because that tuple slot has the wrong descriptor.)
+		 * (Formerly, we stored it back over the "dirty" tuple, which is WRONG
+		 * because that tuple slot has the wrong descriptor.)
 		 *
 		 * Also, extract all the junk information we need.
 		 */
@@ -1151,10 +1143,10 @@ lnext:	;
 					elog(ERROR, "ctid is NULL");
 
 				tupleid = (ItemPointer) DatumGetPointer(datum);
-				tuple_ctid = *tupleid;	/* make sure we don't free the
-										 * ctid!! */
+				tuple_ctid = *tupleid;	/* make sure we don't free the ctid!! */
 				tupleid = &tuple_ctid;
 			}
+
 			/*
 			 * Process any FOR UPDATE or FOR SHARE locking requested.
 			 */
@@ -1171,8 +1163,8 @@ lnext:	;
 					ItemPointerData update_ctid;
 					TransactionId update_xmax;
 					TupleTableSlot *newSlot;
-					LockTupleMode	lockmode;
-					HTSU_Result		test;
+					LockTupleMode lockmode;
+					HTSU_Result test;
 
 					if (!ExecGetJunkAttribute(junkfilter,
 											  slot,
@@ -1210,8 +1202,8 @@ lnext:	;
 						case HeapTupleUpdated:
 							if (IsXactIsoLevelSerializable)
 								ereport(ERROR,
-										(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-										 errmsg("could not serialize access due to concurrent update")));
+								 (errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+								  errmsg("could not serialize access due to concurrent update")));
 							if (!ItemPointerEquals(&update_ctid,
 												   &tuple.t_self))
 							{
@@ -1230,8 +1222,7 @@ lnext:	;
 
 							/*
 							 * if tuple was deleted or PlanQual failed for
-							 * updated tuple - we must not return this
-							 * tuple!
+							 * updated tuple - we must not return this tuple!
 							 */
 							goto lnext;
 
@@ -1251,9 +1242,9 @@ lnext:	;
 		}
 
 		/*
-		 * now that we have a tuple, do the appropriate thing with it..
-		 * either return it to the user, add it to a relation someplace,
-		 * delete it from a relation, or modify some of its attributes.
+		 * now that we have a tuple, do the appropriate thing with it.. either
+		 * return it to the user, add it to a relation someplace, delete it
+		 * from a relation, or modify some of its attributes.
 		 */
 		switch (operation)
 		{
@@ -1287,9 +1278,9 @@ lnext:	;
 		}
 
 		/*
-		 * check our tuple count.. if we've processed the proper number
-		 * then quit, else loop again and process more tuples.	Zero
-		 * numberTuples means no limit.
+		 * check our tuple count.. if we've processed the proper number then
+		 * quit, else loop again and process more tuples.  Zero numberTuples
+		 * means no limit.
 		 */
 		current_tuple_count++;
 		if (numberTuples && numberTuples == current_tuple_count)
@@ -1383,8 +1374,8 @@ ExecInsert(TupleTableSlot *slot,
 	Oid			newId;
 
 	/*
-	 * get the heap tuple out of the tuple table slot, making sure
-	 * we have a writable copy
+	 * get the heap tuple out of the tuple table slot, making sure we have a
+	 * writable copy
 	 */
 	tuple = ExecMaterializeSlot(slot);
 
@@ -1396,7 +1387,7 @@ ExecInsert(TupleTableSlot *slot,
 
 	/* BEFORE ROW INSERT Triggers */
 	if (resultRelInfo->ri_TrigDesc &&
-	  resultRelInfo->ri_TrigDesc->n_before_row[TRIGGER_EVENT_INSERT] > 0)
+		resultRelInfo->ri_TrigDesc->n_before_row[TRIGGER_EVENT_INSERT] > 0)
 	{
 		HeapTuple	newtuple;
 
@@ -1409,9 +1400,9 @@ ExecInsert(TupleTableSlot *slot,
 		{
 			/*
 			 * Insert modified tuple into tuple table slot, replacing the
-			 * original.  We assume that it was allocated in per-tuple
-			 * memory context, and therefore will go away by itself. The
-			 * tuple table slot should not try to clear it.
+			 * original.  We assume that it was allocated in per-tuple memory
+			 * context, and therefore will go away by itself. The tuple table
+			 * slot should not try to clear it.
 			 */
 			ExecStoreTuple(newtuple, slot, InvalidBuffer, false);
 			tuple = newtuple;
@@ -1427,8 +1418,8 @@ ExecInsert(TupleTableSlot *slot,
 	/*
 	 * insert the tuple
 	 *
-	 * Note: heap_insert returns the tid (location) of the new tuple
-	 * in the t_self field.
+	 * Note: heap_insert returns the tid (location) of the new tuple in the
+	 * t_self field.
 	 */
 	newId = heap_insert(resultRelationDesc, tuple,
 						estate->es_snapshot->curcid,
@@ -1463,7 +1454,7 @@ ExecDelete(TupleTableSlot *slot,
 {
 	ResultRelInfo *resultRelInfo;
 	Relation	resultRelationDesc;
-	HTSU_Result	result;
+	HTSU_Result result;
 	ItemPointerData update_ctid;
 	TransactionId update_xmax;
 
@@ -1475,7 +1466,7 @@ ExecDelete(TupleTableSlot *slot,
 
 	/* BEFORE ROW DELETE Triggers */
 	if (resultRelInfo->ri_TrigDesc &&
-	  resultRelInfo->ri_TrigDesc->n_before_row[TRIGGER_EVENT_DELETE] > 0)
+		resultRelInfo->ri_TrigDesc->n_before_row[TRIGGER_EVENT_DELETE] > 0)
 	{
 		bool		dodelete;
 
@@ -1489,9 +1480,9 @@ ExecDelete(TupleTableSlot *slot,
 	/*
 	 * delete the tuple
 	 *
-	 * Note: if es_crosscheck_snapshot isn't InvalidSnapshot, we check that
-	 * the row to be deleted is visible to that snapshot, and throw a can't-
-	 * serialize error if not.  This is a special-case behavior needed for
+	 * Note: if es_crosscheck_snapshot isn't InvalidSnapshot, we check that the
+	 * row to be deleted is visible to that snapshot, and throw a can't-
+	 * serialize error if not.	This is a special-case behavior needed for
 	 * referential integrity updates in serializable transactions.
 	 */
 ldelete:;
@@ -1543,9 +1534,9 @@ ldelete:;
 	 * Note: Normally one would think that we have to delete index tuples
 	 * associated with the heap tuple now..
 	 *
-	 * ... but in POSTGRES, we have no need to do this because the vacuum
-	 * daemon automatically opens an index scan and deletes index tuples
-	 * when it finds deleted heap tuples. -cim 9/27/89
+	 * ... but in POSTGRES, we have no need to do this because the vacuum daemon
+	 * automatically opens an index scan and deletes index tuples when it
+	 * finds deleted heap tuples. -cim 9/27/89
 	 */
 
 	/* AFTER ROW DELETE Triggers */
@@ -1571,7 +1562,7 @@ ExecUpdate(TupleTableSlot *slot,
 	HeapTuple	tuple;
 	ResultRelInfo *resultRelInfo;
 	Relation	resultRelationDesc;
-	HTSU_Result	result;
+	HTSU_Result result;
 	ItemPointerData update_ctid;
 	TransactionId update_xmax;
 
@@ -1582,8 +1573,8 @@ ExecUpdate(TupleTableSlot *slot,
 		elog(ERROR, "cannot UPDATE during bootstrap");
 
 	/*
-	 * get the heap tuple out of the tuple table slot, making sure
-	 * we have a writable copy
+	 * get the heap tuple out of the tuple table slot, making sure we have a
+	 * writable copy
 	 */
 	tuple = ExecMaterializeSlot(slot);
 
@@ -1595,7 +1586,7 @@ ExecUpdate(TupleTableSlot *slot,
 
 	/* BEFORE ROW UPDATE Triggers */
 	if (resultRelInfo->ri_TrigDesc &&
-	  resultRelInfo->ri_TrigDesc->n_before_row[TRIGGER_EVENT_UPDATE] > 0)
+		resultRelInfo->ri_TrigDesc->n_before_row[TRIGGER_EVENT_UPDATE] > 0)
 	{
 		HeapTuple	newtuple;
 
@@ -1610,9 +1601,9 @@ ExecUpdate(TupleTableSlot *slot,
 		{
 			/*
 			 * Insert modified tuple into tuple table slot, replacing the
-			 * original.  We assume that it was allocated in per-tuple
-			 * memory context, and therefore will go away by itself. The
-			 * tuple table slot should not try to clear it.
+			 * original.  We assume that it was allocated in per-tuple memory
+			 * context, and therefore will go away by itself. The tuple table
+			 * slot should not try to clear it.
 			 */
 			ExecStoreTuple(newtuple, slot, InvalidBuffer, false);
 			tuple = newtuple;
@@ -1622,11 +1613,11 @@ ExecUpdate(TupleTableSlot *slot,
 	/*
 	 * Check the constraints of the tuple
 	 *
-	 * If we generate a new candidate tuple after EvalPlanQual testing, we
-	 * must loop back here and recheck constraints.  (We don't need to
-	 * redo triggers, however.	If there are any BEFORE triggers then
-	 * trigger.c will have done heap_lock_tuple to lock the correct tuple,
-	 * so there's no need to do them again.)
+	 * If we generate a new candidate tuple after EvalPlanQual testing, we must
+	 * loop back here and recheck constraints.	(We don't need to redo
+	 * triggers, however.  If there are any BEFORE triggers then trigger.c
+	 * will have done heap_lock_tuple to lock the correct tuple, so there's no
+	 * need to do them again.)
 	 */
 lreplace:;
 	if (resultRelationDesc->rd_att->constr)
@@ -1635,9 +1626,9 @@ lreplace:;
 	/*
 	 * replace the heap tuple
 	 *
-	 * Note: if es_crosscheck_snapshot isn't InvalidSnapshot, we check that
-	 * the row to be updated is visible to that snapshot, and throw a can't-
-	 * serialize error if not.  This is a special-case behavior needed for
+	 * Note: if es_crosscheck_snapshot isn't InvalidSnapshot, we check that the
+	 * row to be updated is visible to that snapshot, and throw a can't-
+	 * serialize error if not.	This is a special-case behavior needed for
 	 * referential integrity updates in serializable transactions.
 	 */
 	result = heap_update(resultRelationDesc, tupleid, tuple,
@@ -1687,18 +1678,18 @@ lreplace:;
 	(estate->es_processed)++;
 
 	/*
-	 * Note: instead of having to update the old index tuples associated
-	 * with the heap tuple, all we do is form and insert new index tuples.
-	 * This is because UPDATEs are actually DELETEs and INSERTs, and index
-	 * tuple deletion is done automagically by the vacuum daemon. All we
-	 * do is insert new index tuples.  -cim 9/27/89
+	 * Note: instead of having to update the old index tuples associated with
+	 * the heap tuple, all we do is form and insert new index tuples. This is
+	 * because UPDATEs are actually DELETEs and INSERTs, and index tuple
+	 * deletion is done automagically by the vacuum daemon. All we do is
+	 * insert new index tuples.  -cim 9/27/89
 	 */
 
 	/*
 	 * insert index entries for tuple
 	 *
-	 * Note: heap_update returns the tid (location) of the new tuple
-	 * in the t_self field.
+	 * Note: heap_update returns the tid (location) of the new tuple in the
+	 * t_self field.
 	 */
 	if (resultRelInfo->ri_NumIndices > 0)
 		ExecInsertIndexTuples(slot, &(tuple->t_self), estate, false);
@@ -1721,8 +1712,8 @@ ExecRelCheck(ResultRelInfo *resultRelInfo,
 
 	/*
 	 * If first time through for this result relation, build expression
-	 * nodetrees for rel's constraint expressions.  Keep them in the
-	 * per-query memory context so they'll survive throughout the query.
+	 * nodetrees for rel's constraint expressions.  Keep them in the per-query
+	 * memory context so they'll survive throughout the query.
 	 */
 	if (resultRelInfo->ri_ConstraintExprs == NULL)
 	{
@@ -1740,8 +1731,8 @@ ExecRelCheck(ResultRelInfo *resultRelInfo,
 	}
 
 	/*
-	 * We will use the EState's per-tuple context for evaluating
-	 * constraint expressions (creating it if it's not already there).
+	 * We will use the EState's per-tuple context for evaluating constraint
+	 * expressions (creating it if it's not already there).
 	 */
 	econtext = GetPerTupleExprContext(estate);
 
@@ -1787,7 +1778,7 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 				ereport(ERROR,
 						(errcode(ERRCODE_NOT_NULL_VIOLATION),
 						 errmsg("null value in column \"%s\" violates not-null constraint",
-					NameStr(rel->rd_att->attrs[attrChk - 1]->attname))));
+						NameStr(rel->rd_att->attrs[attrChk - 1]->attname))));
 		}
 	}
 
@@ -1870,9 +1861,9 @@ EvalPlanQual(EState *estate, Index rti,
 		{
 			/*
 			 * If xmin isn't what we're expecting, the slot must have been
-			 * recycled and reused for an unrelated tuple.  This implies
-			 * that the latest version of the row was deleted, so we need
-			 * do nothing.  (Should be safe to examine xmin without getting
+			 * recycled and reused for an unrelated tuple.	This implies that
+			 * the latest version of the row was deleted, so we need do
+			 * nothing.  (Should be safe to examine xmin without getting
 			 * buffer's content lock, since xmin never changes in an existing
 			 * tuple.)
 			 */
@@ -1888,8 +1879,8 @@ EvalPlanQual(EState *estate, Index rti,
 				elog(ERROR, "t_xmin is uncommitted in tuple to be updated");
 
 			/*
-			 * If tuple is being updated by other transaction then we have
-			 * to wait for its commit/abort.
+			 * If tuple is being updated by other transaction then we have to
+			 * wait for its commit/abort.
 			 */
 			if (TransactionIdIsValid(SnapshotDirty->xmax))
 			{
@@ -1907,8 +1898,8 @@ EvalPlanQual(EState *estate, Index rti,
 		}
 
 		/*
-		 * If the referenced slot was actually empty, the latest version
-		 * of the row must have been deleted, so we need do nothing.
+		 * If the referenced slot was actually empty, the latest version of
+		 * the row must have been deleted, so we need do nothing.
 		 */
 		if (tuple.t_data == NULL)
 		{
@@ -1928,15 +1919,15 @@ EvalPlanQual(EState *estate, Index rti,
 
 		/*
 		 * If we get here, the tuple was found but failed SnapshotDirty.
-		 * Assuming the xmin is either a committed xact or our own xact
-		 * (as it certainly should be if we're trying to modify the tuple),
-		 * this must mean that the row was updated or deleted by either
-		 * a committed xact or our own xact.  If it was deleted, we can
-		 * ignore it; if it was updated then chain up to the next version
-		 * and repeat the whole test.
+		 * Assuming the xmin is either a committed xact or our own xact (as it
+		 * certainly should be if we're trying to modify the tuple), this must
+		 * mean that the row was updated or deleted by either a committed xact
+		 * or our own xact.  If it was deleted, we can ignore it; if it was
+		 * updated then chain up to the next version and repeat the whole
+		 * test.
 		 *
-		 * As above, it should be safe to examine xmax and t_ctid without
-		 * the buffer content lock, because they can't be changing.
+		 * As above, it should be safe to examine xmax and t_ctid without the
+		 * buffer content lock, because they can't be changing.
 		 */
 		if (ItemPointerEquals(&tuple.t_self, &tuple.t_data->t_ctid))
 		{
@@ -1954,8 +1945,8 @@ EvalPlanQual(EState *estate, Index rti,
 	}
 
 	/*
-	 * For UPDATE/DELETE we have to return tid of actual row we're
-	 * executing PQ for.
+	 * For UPDATE/DELETE we have to return tid of actual row we're executing
+	 * PQ for.
 	 */
 	*tid = tuple.t_self;
 
@@ -1974,10 +1965,10 @@ EvalPlanQual(EState *estate, Index rti,
 	}
 
 	/*
-	 * If this is request for another RTE - Ra, - then we have to check
-	 * wasn't PlanQual requested for Ra already and if so then Ra' row was
-	 * updated again and we have to re-start old execution for Ra and
-	 * forget all what we done after Ra was suspended. Cool? -:))
+	 * If this is request for another RTE - Ra, - then we have to check wasn't
+	 * PlanQual requested for Ra already and if so then Ra' row was updated
+	 * again and we have to re-start old execution for Ra and forget all what
+	 * we done after Ra was suspended. Cool? -:))
 	 */
 	if (epq != NULL && epq->rti != rti &&
 		epq->estate->es_evTuple[rti - 1] != NULL)
@@ -1999,8 +1990,8 @@ EvalPlanQual(EState *estate, Index rti,
 	}
 
 	/*
-	 * If we are requested for another RTE then we have to suspend
-	 * execution of current PlanQual and start execution for new one.
+	 * If we are requested for another RTE then we have to suspend execution
+	 * of current PlanQual and start execution for new one.
 	 */
 	if (epq == NULL || epq->rti != rti)
 	{
@@ -2031,18 +2022,17 @@ EvalPlanQual(EState *estate, Index rti,
 	Assert(epq->rti == rti);
 
 	/*
-	 * Ok - we're requested for the same RTE.  Unfortunately we still have
-	 * to end and restart execution of the plan, because ExecReScan
-	 * wouldn't ensure that upper plan nodes would reset themselves.  We
-	 * could make that work if insertion of the target tuple were
-	 * integrated with the Param mechanism somehow, so that the upper plan
-	 * nodes know that their children's outputs have changed.
+	 * Ok - we're requested for the same RTE.  Unfortunately we still have to
+	 * end and restart execution of the plan, because ExecReScan wouldn't
+	 * ensure that upper plan nodes would reset themselves.  We could make
+	 * that work if insertion of the target tuple were integrated with the
+	 * Param mechanism somehow, so that the upper plan nodes know that their
+	 * children's outputs have changed.
 	 *
 	 * Note that the stack of free evalPlanQual nodes is quite useless at the
 	 * moment, since it only saves us from pallocing/releasing the
-	 * evalPlanQual nodes themselves.  But it will be useful once we
-	 * implement ReScan instead of end/restart for re-using PlanQual
-	 * nodes.
+	 * evalPlanQual nodes themselves.  But it will be useful once we implement
+	 * ReScan instead of end/restart for re-using PlanQual nodes.
 	 */
 	if (endNode)
 	{
@@ -2055,15 +2045,14 @@ EvalPlanQual(EState *estate, Index rti,
 	 *
 	 * Note: if we were re-using PlanQual plans via ExecReScan, we'd need to
 	 * instead copy down changeable state from the top plan (including
-	 * es_result_relation_info, es_junkFilter) and reset locally
-	 * changeable state in the epq (including es_param_exec_vals,
-	 * es_evTupleNull).
+	 * es_result_relation_info, es_junkFilter) and reset locally changeable
+	 * state in the epq (including es_param_exec_vals, es_evTupleNull).
 	 */
 	EvalPlanQualStart(epq, estate, epq->next);
 
 	/*
-	 * free old RTE' tuple, if any, and store target tuple where
-	 * relation's scan node will see it
+	 * free old RTE' tuple, if any, and store target tuple where relation's
+	 * scan node will see it
 	 */
 	epqstate = epq->estate;
 	if (epqstate->es_evTuple[rti - 1] != NULL)
@@ -2171,10 +2160,10 @@ EvalPlanQualStart(evalPlanQual *epq, EState *estate, evalPlanQual *priorepq)
 	oldcontext = MemoryContextSwitchTo(epqstate->es_query_cxt);
 
 	/*
-	 * The epqstates share the top query's copy of unchanging state such
-	 * as the snapshot, rangetable, result-rel info, and external Param
-	 * info. They need their own copies of local state, including a tuple
-	 * table, es_param_exec_vals, etc.
+	 * The epqstates share the top query's copy of unchanging state such as
+	 * the snapshot, rangetable, result-rel info, and external Param info.
+	 * They need their own copies of local state, including a tuple table,
+	 * es_param_exec_vals, etc.
 	 */
 	epqstate->es_direction = ForwardScanDirection;
 	epqstate->es_snapshot = estate->es_snapshot;
@@ -2199,9 +2188,9 @@ EvalPlanQualStart(evalPlanQual *epq, EState *estate, evalPlanQual *priorepq)
 	epqstate->es_topPlan = estate->es_topPlan;
 
 	/*
-	 * Each epqstate must have its own es_evTupleNull state, but all the
-	 * stack entries share es_evTuple state.  This allows sub-rechecks to
-	 * inherit the value being examined by an outer recheck.
+	 * Each epqstate must have its own es_evTupleNull state, but all the stack
+	 * entries share es_evTuple state.	This allows sub-rechecks to inherit
+	 * the value being examined by an outer recheck.
 	 */
 	epqstate->es_evTupleNull = (bool *) palloc0(rtsize * sizeof(bool));
 	if (priorepq == NULL)

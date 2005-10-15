@@ -15,7 +15,7 @@
  *
  * Copyright (c) 2003-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/getaddrinfo.h,v 1.16 2005/08/25 17:50:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/getaddrinfo.h,v 1.17 2005/10/15 02:49:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@
 #define EAI_SERVICE		(-8)
 #define EAI_MEMORY		(-10)
 #define EAI_SYSTEM		(-11)
-#else /* WIN32 */
+#else							/* WIN32 */
 #define EAI_AGAIN		WSATRY_AGAIN
 #define EAI_BADFLAGS	WSAEINVAL
 #define EAI_FAIL		WSANO_RECOVERY
@@ -50,9 +50,9 @@
 #define EAI_NODATA		WSANO_DATA
 #define EAI_NONAME		WSAHOST_NOT_FOUND
 #define EAI_SERVICE		WSATYPE_NOT_FOUND
-#define EAI_SOCKTYPE	WSAESOCKTNOSUPPORT 
-#endif /* !WIN32 */
-#endif /* !EAI_FAIL */
+#define EAI_SOCKTYPE	WSAESOCKTNOSUPPORT
+#endif   /* !WIN32 */
+#endif   /* !EAI_FAIL */
 
 #ifndef AI_PASSIVE
 #define AI_PASSIVE		0x0001

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.124 2005/10/02 23:50:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.125 2005/10/15 02:49:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,17 +219,17 @@ DefineSequence(CreateSeqStmt *seq)
 	/*
 	 * Two special hacks here:
 	 *
-	 * 1. Since VACUUM does not process sequences, we have to force the tuple
-	 * to have xmin = FrozenTransactionId now.	Otherwise it would become
+	 * 1. Since VACUUM does not process sequences, we have to force the tuple to
+	 * have xmin = FrozenTransactionId now.  Otherwise it would become
 	 * invisible to SELECTs after 2G transactions.	It is okay to do this
 	 * because if the current transaction aborts, no other xact will ever
 	 * examine the sequence tuple anyway.
 	 *
-	 * 2. Even though heap_insert emitted a WAL log record, we have to emit
-	 * an XLOG_SEQ_LOG record too, since (a) the heap_insert record will
-	 * not have the right xmin, and (b) REDO of the heap_insert record
-	 * would re-init page and sequence magic number would be lost.	This
-	 * means two log records instead of one :-(
+	 * 2. Even though heap_insert emitted a WAL log record, we have to emit an
+	 * XLOG_SEQ_LOG record too, since (a) the heap_insert record will not have
+	 * the right xmin, and (b) REDO of the heap_insert record would re-init
+	 * page and sequence magic number would be lost.  This means two log
+	 * records instead of one :-(
 	 */
 	LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 
@@ -237,12 +237,11 @@ DefineSequence(CreateSeqStmt *seq)
 
 	{
 		/*
-		 * Note that the "tuple" structure is still just a local tuple
-		 * record created by heap_formtuple; its t_data pointer doesn't
-		 * point at the disk buffer.  To scribble on the disk buffer we
-		 * need to fetch the item pointer.	But do the same to the local
-		 * tuple, since that will be the source for the WAL log record,
-		 * below.
+		 * Note that the "tuple" structure is still just a local tuple record
+		 * created by heap_formtuple; its t_data pointer doesn't point at the
+		 * disk buffer.  To scribble on the disk buffer we need to fetch the
+		 * item pointer.  But do the same to the local tuple, since that will
+		 * be the source for the WAL log record, below.
 		 */
 		ItemId		itemId;
 		Item		item;
@@ -334,8 +333,8 @@ AlterSequence(AlterSeqStmt *stmt)
 
 	/* Clear local cache so that we don't think we have cached numbers */
 	elm->last = new.last_value; /* last returned number */
-	elm->cached = new.last_value;		/* last cached number (forget
-										 * cached values) */
+	elm->cached = new.last_value;		/* last cached number (forget cached
+										 * values) */
 
 	START_CRIT_SECTION();
 
@@ -456,14 +455,14 @@ nextval_internal(Oid relid)
 	}
 
 	/*
-	 * Decide whether we should emit a WAL log record.	If so, force up
-	 * the fetch count to grab SEQ_LOG_VALS more values than we actually
-	 * need to cache.  (These will then be usable without logging.)
+	 * Decide whether we should emit a WAL log record.	If so, force up the
+	 * fetch count to grab SEQ_LOG_VALS more values than we actually need to
+	 * cache.  (These will then be usable without logging.)
 	 *
-	 * If this is the first nextval after a checkpoint, we must force a new
-	 * WAL record to be written anyway, else replay starting from the
-	 * checkpoint would fail to advance the sequence past the logged
-	 * values.	In this case we may as well fetch extra values.
+	 * If this is the first nextval after a checkpoint, we must force a new WAL
+	 * record to be written anyway, else replay starting from the checkpoint
+	 * would fail to advance the sequence past the logged values.  In this
+	 * case we may as well fetch extra values.
 	 */
 	if (log < fetch)
 	{
@@ -486,8 +485,8 @@ nextval_internal(Oid relid)
 	while (fetch)				/* try to fetch cache [+ log ] numbers */
 	{
 		/*
-		 * Check MAXVALUE for ascending sequences and MINVALUE for
-		 * descending sequences
+		 * Check MAXVALUE for ascending sequences and MINVALUE for descending
+		 * sequences
 		 */
 		if (incby > 0)
 		{
@@ -503,9 +502,9 @@ nextval_internal(Oid relid)
 
 					snprintf(buf, sizeof(buf), INT64_FORMAT, maxv);
 					ereport(ERROR,
-					  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					   errmsg("nextval: reached maximum value of sequence \"%s\" (%s)",
-							  RelationGetRelationName(seqrel), buf)));
+						  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						   errmsg("nextval: reached maximum value of sequence \"%s\" (%s)",
+								  RelationGetRelationName(seqrel), buf)));
 				}
 				next = minv;
 			}
@@ -526,9 +525,9 @@ nextval_internal(Oid relid)
 
 					snprintf(buf, sizeof(buf), INT64_FORMAT, minv);
 					ereport(ERROR,
-					  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					   errmsg("nextval: reached minimum value of sequence \"%s\" (%s)",
-							  RelationGetRelationName(seqrel), buf)));
+						  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						   errmsg("nextval: reached minimum value of sequence \"%s\" (%s)",
+								  RelationGetRelationName(seqrel), buf)));
 				}
 				next = maxv;
 			}
@@ -721,8 +720,7 @@ do_setval(Oid relid, int64 next, bool iscalled)
 
 	/* save info in local cache */
 	elm->last = next;			/* last returned number */
-	elm->cached = next;			/* last cached number (forget cached
-								 * values) */
+	elm->cached = next;			/* last cached number (forget cached values) */
 
 	START_CRIT_SECTION();
 
@@ -805,7 +803,7 @@ setval3_oid(PG_FUNCTION_ARGS)
 
 /*
  * If we haven't touched the sequence already in this transaction,
- * we need to acquire AccessShareLock.  We arrange for the lock to
+ * we need to acquire AccessShareLock.	We arrange for the lock to
  * be owned by the top transaction, so that we don't need to do it
  * more than once per xact.
  */
@@ -869,15 +867,15 @@ init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel)
 	/*
 	 * Allocate new seqtable entry if we didn't find one.
 	 *
-	 * NOTE: seqtable entries remain in the list for the life of a backend.
-	 * If the sequence itself is deleted then the entry becomes wasted
-	 * memory, but it's small enough that this should not matter.
+	 * NOTE: seqtable entries remain in the list for the life of a backend. If
+	 * the sequence itself is deleted then the entry becomes wasted memory,
+	 * but it's small enough that this should not matter.
 	 */
 	if (elm == NULL)
 	{
 		/*
-		 * Time to make a new seqtable entry.  These entries live as long
-		 * as the backend does, so we use plain malloc for them.
+		 * Time to make a new seqtable entry.  These entries live as long as
+		 * the backend does, so we use plain malloc for them.
 		 */
 		elm = (SeqTable) malloc(sizeof(SeqTableData));
 		if (elm == NULL)
@@ -1094,8 +1092,8 @@ init_params(List *options, Form_pg_sequence new, bool isInit)
 		snprintf(bufm, sizeof(bufm), INT64_FORMAT, new->min_value);
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			  errmsg("START value (%s) can't be less than MINVALUE (%s)",
-					 bufs, bufm)));
+				 errmsg("START value (%s) can't be less than MINVALUE (%s)",
+						bufs, bufm)));
 	}
 	if (new->last_value > new->max_value)
 	{
@@ -1106,8 +1104,8 @@ init_params(List *options, Form_pg_sequence new, bool isInit)
 		snprintf(bufm, sizeof(bufm), INT64_FORMAT, new->max_value);
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		   errmsg("START value (%s) can't be greater than MAXVALUE (%s)",
-				  bufs, bufm)));
+			   errmsg("START value (%s) can't be greater than MAXVALUE (%s)",
+					  bufs, bufm)));
 	}
 
 	/* CACHE */
@@ -1152,7 +1150,7 @@ seq_redo(XLogRecPtr lsn, XLogRecord *record)
 	buffer = XLogReadBuffer(true, reln, 0);
 	if (!BufferIsValid(buffer))
 		elog(PANIC, "seq_redo: can't read block 0 of rel %u/%u/%u",
-		   xlrec->node.spcNode, xlrec->node.dbNode, xlrec->node.relNode);
+			 xlrec->node.spcNode, xlrec->node.dbNode, xlrec->node.relNode);
 
 	page = (Page) BufferGetPage(buffer);
 

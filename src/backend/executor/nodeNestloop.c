@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeNestloop.c,v 1.38 2004/12/31 21:59:45 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeNestloop.c,v 1.39 2005/10/15 02:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,9 +85,9 @@ ExecNestLoop(NestLoopState *node)
 	econtext->ecxt_outertuple = outerTupleSlot;
 
 	/*
-	 * Check to see if we're still projecting out tuples from a previous
-	 * join tuple (because there is a function-returning-set in the
-	 * projection expressions).  If so, try to project another one.
+	 * Check to see if we're still projecting out tuples from a previous join
+	 * tuple (because there is a function-returning-set in the projection
+	 * expressions).  If so, try to project another one.
 	 */
 	if (node->js.ps.ps_TupFromTlist)
 	{
@@ -102,9 +102,9 @@ ExecNestLoop(NestLoopState *node)
 	}
 
 	/*
-	 * If we're doing an IN join, we want to return at most one row per
-	 * outer tuple; so we can stop scanning the inner scan if we matched
-	 * on the previous try.
+	 * If we're doing an IN join, we want to return at most one row per outer
+	 * tuple; so we can stop scanning the inner scan if we matched on the
+	 * previous try.
 	 */
 	if (node->js.jointype == JOIN_IN &&
 		node->nl_MatchedOuter)
@@ -112,8 +112,8 @@ ExecNestLoop(NestLoopState *node)
 
 	/*
 	 * Reset per-tuple memory context to free any expression evaluation
-	 * storage allocated in the previous tuple cycle.  Note this can't
-	 * happen until we're done projecting out tuples from a join tuple.
+	 * storage allocated in the previous tuple cycle.  Note this can't happen
+	 * until we're done projecting out tuples from a join tuple.
 	 */
 	ResetExprContext(econtext);
 
@@ -135,8 +135,7 @@ ExecNestLoop(NestLoopState *node)
 			outerTupleSlot = ExecProcNode(outerPlan);
 
 			/*
-			 * if there are no more outer tuples, then the join is
-			 * complete..
+			 * if there are no more outer tuples, then the join is complete..
 			 */
 			if (TupIsNull(outerTupleSlot))
 			{
@@ -157,8 +156,8 @@ ExecNestLoop(NestLoopState *node)
 
 			/*
 			 * The scan key of the inner plan might depend on the current
-			 * outer tuple (e.g. in index scans), that's why we pass our
-			 * expr context.
+			 * outer tuple (e.g. in index scans), that's why we pass our expr
+			 * context.
 			 */
 			ExecReScan(innerPlan, econtext);
 		}
@@ -181,10 +180,10 @@ ExecNestLoop(NestLoopState *node)
 				node->js.jointype == JOIN_LEFT)
 			{
 				/*
-				 * We are doing an outer join and there were no join
-				 * matches for this outer tuple.  Generate a fake join
-				 * tuple with nulls for the inner tuple, and return it if
-				 * it passes the non-join quals.
+				 * We are doing an outer join and there were no join matches
+				 * for this outer tuple.  Generate a fake join tuple with
+				 * nulls for the inner tuple, and return it if it passes the
+				 * non-join quals.
 				 */
 				econtext->ecxt_innertuple = node->nl_NullInnerTupleSlot;
 
@@ -193,8 +192,8 @@ ExecNestLoop(NestLoopState *node)
 				if (ExecQual(otherqual, econtext, false))
 				{
 					/*
-					 * qualification was satisfied so we project and
-					 * return the slot containing the result tuple using
+					 * qualification was satisfied so we project and return
+					 * the slot containing the result tuple using
 					 * ExecProject().
 					 */
 					TupleTableSlot *result;
@@ -220,12 +219,12 @@ ExecNestLoop(NestLoopState *node)
 		}
 
 		/*
-		 * at this point we have a new pair of inner and outer tuples so
-		 * we test the inner and outer tuples to see if they satisfy the
-		 * node's qualification.
+		 * at this point we have a new pair of inner and outer tuples so we
+		 * test the inner and outer tuples to see if they satisfy the node's
+		 * qualification.
 		 *
-		 * Only the joinquals determine MatchedOuter status, but all quals
-		 * must pass to actually return the tuple.
+		 * Only the joinquals determine MatchedOuter status, but all quals must
+		 * pass to actually return the tuple.
 		 */
 		ENL1_printf("testing qualification");
 
@@ -236,9 +235,8 @@ ExecNestLoop(NestLoopState *node)
 			if (otherqual == NIL || ExecQual(otherqual, econtext, false))
 			{
 				/*
-				 * qualification was satisfied so we project and return
-				 * the slot containing the result tuple using
-				 * ExecProject().
+				 * qualification was satisfied so we project and return the
+				 * slot containing the result tuple using ExecProject().
 				 */
 				TupleTableSlot *result;
 				ExprDoneCond isDone;
@@ -330,7 +328,7 @@ ExecInitNestLoop(NestLoop *node, EState *estate)
 		case JOIN_LEFT:
 			nlstate->nl_NullInnerTupleSlot =
 				ExecInitNullTupleSlot(estate,
-							 ExecGetResultType(innerPlanState(nlstate)));
+								 ExecGetResultType(innerPlanState(nlstate)));
 			break;
 		default:
 			elog(ERROR, "unrecognized join type: %d",
@@ -408,10 +406,9 @@ ExecReScanNestLoop(NestLoopState *node, ExprContext *exprCtxt)
 
 	/*
 	 * If outerPlan->chgParam is not null then plan will be automatically
-	 * re-scanned by first ExecProcNode. innerPlan is re-scanned for each
-	 * new outer tuple and MUST NOT be re-scanned from here or you'll get
-	 * troubles from inner index scans when outer Vars are used as
-	 * run-time keys...
+	 * re-scanned by first ExecProcNode. innerPlan is re-scanned for each new
+	 * outer tuple and MUST NOT be re-scanned from here or you'll get troubles
+	 * from inner index scans when outer Vars are used as run-time keys...
 	 */
 	if (outerPlan->chgParam == NULL)
 		ExecReScan(outerPlan, exprCtxt);

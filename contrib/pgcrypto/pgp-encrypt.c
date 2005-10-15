@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-encrypt.c,v 1.2 2005/07/11 15:07:59 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-encrypt.c,v 1.3 2005/10/15 02:49:06 momjian Exp $
  */
 
 #include "postgres.h"
@@ -65,9 +65,11 @@ render_newlen(uint8 *h, int len)
 	return h;
 }
 
-static int write_tag_only(PushFilter *dst, int tag)
+static int
+write_tag_only(PushFilter * dst, int tag)
 {
-	uint8 hdr = 0xC0 | tag;
+	uint8		hdr = 0xC0 | tag;
+
 	return pushf_write(dst, &hdr, 1);
 }
 
@@ -121,7 +123,7 @@ mdc_flush(PushFilter * dst, void *priv)
 	 * create mdc pkt
 	 */
 	pkt[0] = 0xD3;
-	pkt[1] = 0x14; /* MDC_DIGEST_LEN */
+	pkt[1] = 0x14;				/* MDC_DIGEST_LEN */
 	px_md_update(md, pkt, 2);
 	px_md_finish(md, pkt + 2);
 
@@ -150,7 +152,7 @@ static const PushFilterOps mdc_filter = {
 struct EncStat
 {
 	PGP_CFB    *ciph;
-	uint8	    buf[ENCBUF];
+	uint8		buf[ENCBUF];
 };
 
 static int
@@ -158,28 +160,29 @@ encrypt_init(PushFilter * next, void *init_arg, void **priv_p)
 {
 	struct EncStat *st;
 	PGP_Context *ctx = init_arg;
-	PGP_CFB *ciph;
-	int resync = 1;
-	int res;
+	PGP_CFB    *ciph;
+	int			resync = 1;
+	int			res;
 
 	/* should we use newer packet format? */
 	if (ctx->disable_mdc == 0)
 	{
-		uint8 ver = 1;
+		uint8		ver = 1;
+
 		resync = 0;
 		res = pushf_write(next, &ver, 1);
 		if (res < 0)
 			return res;
 	}
 	res = pgp_cfb_create(&ciph, ctx->cipher_algo,
-			ctx->sess_key, ctx->sess_key_len, resync, NULL);
+						 ctx->sess_key, ctx->sess_key_len, resync, NULL);
 	if (res < 0)
 		return res;
 
 	st = px_alloc(sizeof(*st));
 	memset(st, 0, sizeof(*st));
 	st->ciph = ciph;
-	
+
 	*priv_p = st;
 	return ENCBUF;
 }
@@ -189,11 +192,12 @@ encrypt_process(PushFilter * next, void *priv, const uint8 *data, int len)
 {
 	int			res;
 	struct EncStat *st = priv;
-	int avail = len;
+	int			avail = len;
 
 	while (avail > 0)
 	{
-		int tmplen = avail > ENCBUF ? ENCBUF : avail;
+		int			tmplen = avail > ENCBUF ? ENCBUF : avail;
+
 		res = pgp_cfb_encrypt(st->ciph, data, tmplen, st->buf);
 		if (res < 0)
 			return res;
@@ -303,9 +307,11 @@ static const PushFilterOps pkt_stream_filter = {
 	pkt_stream_init, pkt_stream_process, pkt_stream_flush, pkt_stream_free
 };
 
-int pgp_create_pkt_writer(PushFilter *dst, int tag, PushFilter **res_p)
+int
+pgp_create_pkt_writer(PushFilter * dst, int tag, PushFilter ** res_p)
 {
-	int res;
+	int			res;
+
 	res = write_tag_only(dst, tag);
 	if (res < 0)
 		return res;
@@ -320,17 +326,19 @@ int pgp_create_pkt_writer(PushFilter *dst, int tag, PushFilter **res_p)
 static int
 crlf_process(PushFilter * dst, void *priv, const uint8 *data, int len)
 {
-	const uint8 * data_end = data + len;
-	const uint8 * p2, * p1 = data;
-	int line_len;
-	static const uint8 crlf[] = { '\r', '\n' };
-	int res = 0;
+	const uint8 *data_end = data + len;
+	const uint8 *p2,
+			   *p1 = data;
+	int			line_len;
+	static const uint8 crlf[] = {'\r', '\n'};
+	int			res = 0;
+
 	while (p1 < data_end)
 	{
 		p2 = memchr(p1, '\n', data_end - p1);
 		if (p2 == NULL)
 			p2 = data_end;
-		
+
 		line_len = p2 - p1;
 
 		/* write data */
@@ -363,13 +371,13 @@ static const PushFilterOps crlf_filter = {
  * Initialize literal data packet
  */
 static int
-init_litdata_packet(PushFilter **pf_res, PGP_Context *ctx, PushFilter *dst)
+init_litdata_packet(PushFilter ** pf_res, PGP_Context * ctx, PushFilter * dst)
 {
 	int			res;
 	int			hdrlen;
 	uint8		hdr[6];
 	uint32		t;
-	PushFilter	*pkt;
+	PushFilter *pkt;
 	int			type;
 
 	/*
@@ -382,10 +390,10 @@ init_litdata_packet(PushFilter **pf_res, PGP_Context *ctx, PushFilter *dst)
 		type = 'b';
 
 	/*
-	 * Store the creation time into packet.
-	 * The goal is to have as few known bytes as possible.
+	 * Store the creation time into packet. The goal is to have as few known
+	 * bytes as possible.
 	 */
-	t = (uint32)time(NULL);
+	t = (uint32) time(NULL);
 
 	hdr[0] = type;
 	hdr[1] = 0;
@@ -418,10 +426,10 @@ init_litdata_packet(PushFilter **pf_res, PGP_Context *ctx, PushFilter *dst)
  * Initialize compression filter
  */
 static int
-init_compress(PushFilter **pf_res, PGP_Context *ctx, PushFilter *dst)
+init_compress(PushFilter ** pf_res, PGP_Context * ctx, PushFilter * dst)
 {
-	int res;
-	uint8 type = ctx->compress_algo;
+	int			res;
+	uint8		type = ctx->compress_algo;
 	PushFilter *pkt;
 
 	res = write_tag_only(dst, PGP_PKT_COMPRESSED_DATA);
@@ -446,7 +454,7 @@ init_compress(PushFilter **pf_res, PGP_Context *ctx, PushFilter *dst)
  * Initialize encdata packet
  */
 static int
-init_encdata_packet(PushFilter **pf_res, PGP_Context *ctx, PushFilter *dst)
+init_encdata_packet(PushFilter ** pf_res, PGP_Context * ctx, PushFilter * dst)
 {
 	int			res;
 	int			tag;
@@ -467,7 +475,7 @@ init_encdata_packet(PushFilter **pf_res, PGP_Context *ctx, PushFilter *dst)
  * write prefix
  */
 static int
-write_prefix(PGP_Context *ctx, PushFilter * dst)
+write_prefix(PGP_Context * ctx, PushFilter * dst)
 {
 	uint8		prefix[PGP_MAX_BLOCK + 2];
 	int			res,
@@ -491,17 +499,17 @@ write_prefix(PGP_Context *ctx, PushFilter * dst)
  */
 
 static int
-symencrypt_sesskey(PGP_Context *ctx, uint8 *dst)
+symencrypt_sesskey(PGP_Context * ctx, uint8 *dst)
 {
-	int res;
-	PGP_CFB *cfb;
-	uint8 algo = ctx->cipher_algo;
+	int			res;
+	PGP_CFB    *cfb;
+	uint8		algo = ctx->cipher_algo;
 
 	res = pgp_cfb_create(&cfb, ctx->s2k_cipher_algo,
-			ctx->s2k.key, ctx->s2k.key_len, 0, NULL);
+						 ctx->s2k.key, ctx->s2k.key_len, 0, NULL);
 	if (res < 0)
 		return res;
-	
+
 	pgp_cfb_encrypt(cfb, &algo, 1, dst);
 	pgp_cfb_encrypt(cfb, ctx->sess_key, ctx->sess_key_len, dst + 1);
 
@@ -511,12 +519,12 @@ symencrypt_sesskey(PGP_Context *ctx, uint8 *dst)
 
 /* 5.3: Symmetric-Key Encrypted Session-Key */
 static int
-write_symenc_sesskey(PGP_Context *ctx, PushFilter *dst)
+write_symenc_sesskey(PGP_Context * ctx, PushFilter * dst)
 {
 	uint8		pkt[256];
 	int			pktlen;
 	int			res;
-	uint8		*p = pkt;
+	uint8	   *p = pkt;
 
 	*p++ = 4;					/* 5.3 - version number  */
 	*p++ = ctx->s2k_cipher_algo;
@@ -564,13 +572,14 @@ init_s2k_key(PGP_Context * ctx)
 		return res;
 
 	return pgp_s2k_process(&ctx->s2k, ctx->s2k_cipher_algo,
-			ctx->sym_key, ctx->sym_key_len);
+						   ctx->sym_key, ctx->sym_key_len);
 }
 
 static int
-init_sess_key(PGP_Context *ctx)
+init_sess_key(PGP_Context * ctx)
 {
-	int res;
+	int			res;
+
 	if (ctx->use_sess_key || ctx->pub_key)
 	{
 		ctx->sess_key_len = pgp_get_cipher_key_size(ctx->cipher_algo);
@@ -596,7 +605,8 @@ pgp_encrypt(PGP_Context * ctx, MBuf * src, MBuf * dst)
 	int			res;
 	int			len;
 	uint8	   *buf;
-	PushFilter *pf, *pf_tmp;
+	PushFilter *pf,
+			   *pf_tmp;
 
 	/*
 	 * do we have any key
@@ -618,7 +628,7 @@ pgp_encrypt(PGP_Context * ctx, MBuf * src, MBuf * dst)
 		if (res < 0)
 			goto out;
 	}
-	
+
 	res = init_sess_key(ctx);
 	if (res < 0)
 		goto out;
@@ -674,7 +684,7 @@ pgp_encrypt(PGP_Context * ctx, MBuf * src, MBuf * dst)
 		goto out;
 	pf = pf_tmp;
 
-	
+
 	/* text conversion? */
 	if (ctx->text_mode && ctx->convert_crlf)
 	{
@@ -696,4 +706,3 @@ out:
 	pushf_free_all(pf);
 	return res;
 }
-

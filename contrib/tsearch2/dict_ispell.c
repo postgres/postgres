@@ -66,8 +66,8 @@ spell_init(PG_FUNCTION_ARGS)
 			{
 				freeDictISpell(d);
 				ereport(ERROR,
-					  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					   errmsg("dictionary already loaded")));
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("dictionary already loaded")));
 			}
 			if (NIImportDictionary(&(d->obj), pcfg->value))
 			{
@@ -85,8 +85,8 @@ spell_init(PG_FUNCTION_ARGS)
 			{
 				freeDictISpell(d);
 				ereport(ERROR,
-					  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					   errmsg("affixes already loaded")));
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("affixes already loaded")));
 			}
 			if (NIImportAffixes(&(d->obj), pcfg->value))
 			{
@@ -106,8 +106,8 @@ spell_init(PG_FUNCTION_ARGS)
 			{
 				freeDictISpell(d);
 				ereport(ERROR,
-					  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					   errmsg("stop words already loaded")));
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("stop words already loaded")));
 			}
 			readstoplist(tmp, &(d->stoplist));
 			sortstoplist(&(d->stoplist));
@@ -157,9 +157,9 @@ spell_lexize(PG_FUNCTION_ARGS)
 	DictISpell *d = (DictISpell *) PG_GETARG_POINTER(0);
 	char	   *in = (char *) PG_GETARG_POINTER(1);
 	char	   *txt;
-	TSLexeme	  *res;
-	TSLexeme	  *ptr,
-			  *cptr;
+	TSLexeme   *res;
+	TSLexeme   *ptr,
+			   *cptr;
 
 	if (!PG_GETARG_INT32(2))
 		PG_RETURN_POINTER(NULL);

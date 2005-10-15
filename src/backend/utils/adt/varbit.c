@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.46 2005/09/24 17:53:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.47 2005/10/15 02:49:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,8 +83,8 @@ bit_in(PG_FUNCTION_ARGS)
 	else
 	{
 		/*
-		 * Otherwise it's binary.  This allows things like cast('1001' as
-		 * bit) to work transparently.
+		 * Otherwise it's binary.  This allows things like cast('1001' as bit)
+		 * to work transparently.
 		 */
 		bit_not_hex = true;
 		sp = input_string;
@@ -98,16 +98,16 @@ bit_in(PG_FUNCTION_ARGS)
 		bitlen = slen * 4;
 
 	/*
-	 * Sometimes atttypmod is not supplied. If it is supplied we need to
-	 * make sure that the bitstring fits.
+	 * Sometimes atttypmod is not supplied. If it is supplied we need to make
+	 * sure that the bitstring fits.
 	 */
 	if (atttypmod <= 0)
 		atttypmod = bitlen;
 	else if (bitlen != atttypmod)
 		ereport(ERROR,
 				(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
-			   errmsg("bit string length %d does not match type bit(%d)",
-					  bitlen, atttypmod)));
+				 errmsg("bit string length %d does not match type bit(%d)",
+						bitlen, atttypmod)));
 
 	len = VARBITTOTALLEN(atttypmod);
 	/* set to 0 so that *r is always initialised and string is zero-padded */
@@ -204,8 +204,8 @@ bit_out(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Go back one step if we printed a hex number that was not part of
-	 * the bitstring anymore
+	 * Go back one step if we printed a hex number that was not part of the
+	 * bitstring anymore
 	 */
 	if (i > len)
 		r--;
@@ -222,6 +222,7 @@ Datum
 bit_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
@@ -239,14 +240,14 @@ bit_recv(PG_FUNCTION_ARGS)
 				 errmsg("invalid length in external bit string")));
 
 	/*
-	 * Sometimes atttypmod is not supplied. If it is supplied we need to
-	 * make sure that the bitstring fits.
+	 * Sometimes atttypmod is not supplied. If it is supplied we need to make
+	 * sure that the bitstring fits.
 	 */
 	if (atttypmod > 0 && bitlen != atttypmod)
 		ereport(ERROR,
 				(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
-			   errmsg("bit string length %d does not match type bit(%d)",
-					  bitlen, atttypmod)));
+				 errmsg("bit string length %d does not match type bit(%d)",
+						bitlen, atttypmod)));
 
 	len = VARBITTOTALLEN(bitlen);
 	result = (VarBit *) palloc(len);
@@ -301,8 +302,8 @@ bit(PG_FUNCTION_ARGS)
 	if (!isExplicit)
 		ereport(ERROR,
 				(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
-			   errmsg("bit string length %d does not match type bit(%d)",
-					  VARBITLEN(arg), len)));
+				 errmsg("bit string length %d does not match type bit(%d)",
+						VARBITLEN(arg), len)));
 
 	rlen = VARBITTOTALLEN(len);
 	/* set to 0 so that string is zero-padded */
@@ -314,9 +315,9 @@ bit(PG_FUNCTION_ARGS)
 		   Min(VARBITBYTES(result), VARBITBYTES(arg)));
 
 	/*
-	 * Make sure last byte is zero-padded if needed.  This is useless but
-	 * safe if source data was shorter than target length (we assume the
-	 * last byte of the source data was itself correctly zero-padded).
+	 * Make sure last byte is zero-padded if needed.  This is useless but safe
+	 * if source data was shorter than target length (we assume the last byte
+	 * of the source data was itself correctly zero-padded).
 	 */
 	ipad = VARBITPAD(result);
 	if (ipad > 0)
@@ -378,8 +379,8 @@ varbit_in(PG_FUNCTION_ARGS)
 		bitlen = slen * 4;
 
 	/*
-	 * Sometimes atttypmod is not supplied. If it is supplied we need to
-	 * make sure that the bitstring fits.
+	 * Sometimes atttypmod is not supplied. If it is supplied we need to make
+	 * sure that the bitstring fits.
 	 */
 	if (atttypmod <= 0)
 		atttypmod = bitlen;
@@ -500,6 +501,7 @@ Datum
 varbit_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
@@ -517,8 +519,8 @@ varbit_recv(PG_FUNCTION_ARGS)
 				 errmsg("invalid length in external bit string")));
 
 	/*
-	 * Sometimes atttypmod is not supplied. If it is supplied we need to
-	 * make sure that the bitstring fits.
+	 * Sometimes atttypmod is not supplied. If it is supplied we need to make
+	 * sure that the bitstring fits.
 	 */
 	if (atttypmod > 0 && bitlen > atttypmod)
 		ereport(ERROR,
@@ -874,8 +876,8 @@ bitsubstr(PG_FUNCTION_ARGS)
 	else
 	{
 		/*
-		 * OK, we've got a true substring starting at position s1-1 and
-		 * ending at position e1-1
+		 * OK, we've got a true substring starting at position s1-1 and ending
+		 * at position e1-1
 		 */
 		rbitlen = e1 - s1;
 		len = VARBITTOTALLEN(rbitlen);

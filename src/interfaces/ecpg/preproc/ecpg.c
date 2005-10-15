@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.92 2005/08/29 01:32:00 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.93 2005/10/15 02:49:47 momjian Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -43,7 +43,7 @@ help(const char *progname)
 	printf("  -c             automatically generate C code from embedded SQL code;\n"
 		   "                 currently this works for EXEC SQL TYPE\n");
 	printf("  -C MODE        set compatibility mode;\n"
-		   "                 MODE may be one of \"INFORMIX\", \"INFORMIX_SE\"\n");
+	  "                 MODE may be one of \"INFORMIX\", \"INFORMIX_SE\"\n");
 #ifdef YYDEBUG
 	printf("  -d             generate parser debug output\n");
 #endif
@@ -431,8 +431,8 @@ main(int argc, char *const argv[])
 					if (!(ptr->opened))
 					{
 						/*
-						 * Does not really make sense to declare a cursor
-						 * but not open it
+						 * Does not really make sense to declare a cursor but
+						 * not open it
 						 */
 						snprintf(errortext, sizeof(errortext), "cursor \"%s\" has been declared but not opened\n", ptr->name);
 						mmerror(PARSE_ERROR, ET_WARNING, errortext);

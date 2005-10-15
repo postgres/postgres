@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/settings.h,v 1.25 2005/06/14 02:57:41 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/settings.h,v 1.26 2005/10/15 02:49:40 momjian Exp $
  */
 #ifndef SETTINGS_H
 #define SETTINGS_H
@@ -39,10 +39,9 @@ typedef struct _psqlSettings
 
 	char	   *gfname;			/* one-shot file output argument for \g */
 
-	bool		notty;			/* stdin or stdout is not a tty (as
-								 * determined on startup) */
-	bool		getPassword;	/* prompt the user for a username and
-								 * password */
+	bool		notty;			/* stdin or stdout is not a tty (as determined
+								 * on startup) */
+	bool		getPassword;	/* prompt the user for a username and password */
 	FILE	   *cur_cmd_source; /* describe the status of the current main
 								 * loop */
 	bool		cur_cmd_interactive;
@@ -56,7 +55,7 @@ typedef struct _psqlSettings
 	bool		timing;			/* enable timing of all queries */
 
 	PGVerbosity verbosity;		/* current error verbosity level */
-	FILE		*logfile;	/* session log file handle */
+	FILE	   *logfile;		/* session log file handle */
 } PsqlSettings;
 
 extern PsqlSettings pset;

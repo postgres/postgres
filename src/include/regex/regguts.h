@@ -27,7 +27,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/include/regex/regguts.h,v 1.4 2005/05/25 21:40:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/regex/regguts.h,v 1.5 2005/10/15 02:49:46 momjian Exp $
  */
 
 
@@ -134,8 +134,7 @@
 #ifndef BYTBITS
 #define BYTBITS 8				/* bits in a byt */
 #endif
-#define BYTTAB	(1<<BYTBITS)	/* size of table with one entry per byt
-								 * value */
+#define BYTTAB	(1<<BYTBITS)	/* size of table with one entry per byt value */
 #define BYTMASK (BYTTAB-1)		/* bit mask for byt */
 #define NBYTS	((CHRBITS+BYTBITS-1)/BYTBITS)
 /* the definition of GETCOLOR(), below, assumes NBYTS <= 4 */
@@ -295,8 +294,7 @@ struct state
 	struct state *tmp;			/* temporary for traversal algorithms */
 	struct state *next;			/* chain for traversing all */
 	struct state *prev;			/* back chain */
-	struct arcbatch oas;		/* first arcbatch, avoid malloc in easy
-								 * case */
+	struct arcbatch oas;		/* first arcbatch, avoid malloc in easy case */
 	int			noas;			/* number of arcs used in first arcbatch */
 };
 
@@ -352,8 +350,7 @@ struct cnfa
  */
 struct subre
 {
-	char		op;				/* '|', '.' (concat), 'b' (backref), '(',
-								 * '=' */
+	char		op;				/* '|', '.' (concat), 'b' (backref), '(', '=' */
 	char		flags;
 #define  LONGER  01				/* prefers longer match */
 #define  SHORTER 02				/* prefers shorter match */
@@ -373,8 +370,7 @@ struct subre
 	int			subno;			/* subexpression number (for 'b' and '(') */
 	short		min;			/* min repetitions, for backref only */
 	short		max;			/* max repetitions, for backref only */
-	struct subre *left;			/* left child, if any (also freelist
-								 * chain) */
+	struct subre *left;			/* left child, if any (also freelist chain) */
 	struct subre *right;		/* right child, if any */
 	struct state *begin;		/* outarcs from here... */
 	struct state *end;			/* ...ending in inarcs here */

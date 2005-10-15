@@ -10,7 +10,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.63 2005/08/23 21:02:03 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.64 2005/10/15 02:49:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ static void do_field(const PQprintOpt *po, const PGresult *res,
 		 unsigned char *fieldNotNum, int *fieldMax,
 		 const int fieldMaxLen, FILE *fout);
 static char *do_header(FILE *fout, const PQprintOpt *po, const int nFields,
-	  int *fieldMax, const char **fieldNames, unsigned char *fieldNotNum,
+		  int *fieldMax, const char **fieldNames, unsigned char *fieldNotNum,
 		  const int fs_len, const PGresult *res);
 static void output_row(FILE *fout, const PQprintOpt *po, const int nFields, char **fields,
 		   unsigned char *fieldNotNum, int *fieldMax, char *border,
@@ -88,6 +88,7 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 		int			total_line_length = 0;
 		int			usePipe = 0;
 		char	   *pagerenv;
+
 #if defined(ENABLE_THREAD_SAFETY) && !defined(WIN32)
 		sigset_t	osigset;
 		bool		sigpipe_masked = false;
@@ -99,7 +100,6 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 
 #ifdef TIOCGWINSZ
 		struct winsize screen_size;
-
 #else
 		struct winsize
 		{
@@ -156,8 +156,8 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 			)
 		{
 			/*
-			 * If we think there'll be more than one screen of output, try
-			 * to pipe to the pager program.
+			 * If we think there'll be more than one screen of output, try to
+			 * pipe to the pager program.
 			 */
 #ifdef TIOCGWINSZ
 			if (ioctl(fileno(stdout), TIOCGWINSZ, &screen_size) == -1 ||
@@ -195,8 +195,8 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 						sigpipe_masked = true;
 #else
 					oldsigpipehandler = pqsignal(SIGPIPE, SIG_IGN);
-#endif /* ENABLE_THREAD_SAFETY */
-#endif /* WIN32 */
+#endif   /* ENABLE_THREAD_SAFETY */
+#endif   /* WIN32 */
 				}
 				else
 					fout = stdout;
@@ -256,7 +256,7 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 			{
 				if (po->html3)
 					fprintf(fout,
-						  "<table %s><caption align=high>%d</caption>\n",
+							"<table %s><caption align=high>%d</caption>\n",
 							po->tableOpt ? po->tableOpt : "", i);
 				else
 					fprintf(fout, libpq_gettext("-- RECORD %d --\n"), i);
@@ -276,7 +276,7 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 				{
 					if (po->caption)
 						fprintf(fout,
-						  "<table %s><caption align=high>%s</caption>\n",
+							  "<table %s><caption align=high>%s</caption>\n",
 								po->tableOpt ? po->tableOpt : "",
 								po->caption);
 					else
@@ -284,7 +284,7 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 								"<table %s><caption align=high>"
 								"Retrieved %d rows * %d fields"
 								"</caption>\n",
-						po->tableOpt ? po->tableOpt : "", nTups, nFields);
+						   po->tableOpt ? po->tableOpt : "", nTups, nFields);
 				}
 				else
 					fprintf(fout, "<table %s>", po->tableOpt ? po->tableOpt : "");
@@ -311,15 +311,15 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 			_pclose(fout);
 #else
 			pclose(fout);
-            
+
 #ifdef ENABLE_THREAD_SAFETY
 			/* we can't easily verify if EPIPE occurred, so say it did */
 			if (sigpipe_masked)
 				pq_reset_sigpipe(&osigset, sigpipe_pending, true);
 #else
 			pqsignal(SIGPIPE, oldsigpipehandler);
-#endif /* ENABLE_THREAD_SAFETY */
-#endif /* WIN32 */
+#endif   /* ENABLE_THREAD_SAFETY */
+#endif   /* WIN32 */
 		}
 		if (po->html3 && !po->expanded)
 			fputs("</table>\n", fout);
@@ -380,9 +380,9 @@ do_field(const PQprintOpt *po, const PGresult *res,
 			}
 
 			/*
-			 * Above loop will believe E in first column is numeric; also,
-			 * we insist on a digit in the last column for a numeric. This
-			 * test is still not bulletproof but it handles most cases.
+			 * Above loop will believe E in first column is numeric; also, we
+			 * insist on a digit in the last column for a numeric. This test
+			 * is still not bulletproof but it handles most cases.
 			 */
 			if (*pval == 'E' || *pval == 'e' ||
 				!(ch >= '0' && ch <= '9'))
@@ -547,7 +547,7 @@ output_row(FILE *fout, const PQprintOpt *po, const int nFields, char **fields,
 
 		if (po->html3)
 			fprintf(fout, "<td align=%s>%s</td>",
-				fieldNotNum[field_index] ? "left" : "right", p ? p : "");
+					fieldNotNum[field_index] ? "left" : "right", p ? p : "");
 		else
 		{
 			fprintf(fout,
@@ -678,8 +678,7 @@ PQprintTuples(const PGresult *res,
 			  FILE *fout,		/* output stream */
 			  int PrintAttNames,	/* print attribute names or not */
 			  int TerseOutput,	/* delimiter bars or not? */
-			  int colWidth		/* width of column, if 0, use variable
-								 * width */
+			  int colWidth		/* width of column, if 0, use variable width */
 )
 {
 	int			nFields;

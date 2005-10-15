@@ -1,9 +1,9 @@
 /*-------------------------------------------------------------------------
  *
  * pg_buffercache_pages.c
- *    display some contents of the buffer cache
+ *	  display some contents of the buffer cache
  *
- *	  $PostgreSQL: pgsql/contrib/pg_buffercache/pg_buffercache_pages.c,v 1.5 2005/10/12 16:45:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/pg_buffercache/pg_buffercache_pages.c,v 1.6 2005/10/15 02:49:05 momjian Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -17,11 +17,11 @@
 #define NUM_BUFFERCACHE_PAGES_ELEM	6
 
 #if defined(WIN32) || defined(__CYGWIN__)
-extern DLLIMPORT BufferDesc	*BufferDescriptors;
-extern DLLIMPORT volatile uint32	InterruptHoldoffCount;
+extern DLLIMPORT BufferDesc *BufferDescriptors;
+extern DLLIMPORT volatile uint32 InterruptHoldoffCount;
 #endif
 
-Datum	pg_buffercache_pages(PG_FUNCTION_ARGS);
+Datum		pg_buffercache_pages(PG_FUNCTION_ARGS);
 
 
 /*
@@ -34,24 +34,24 @@ typedef struct
 	Oid			relfilenode;
 	Oid			reltablespace;
 	Oid			reldatabase;
-	BlockNumber	blocknum;
+	BlockNumber blocknum;
 	bool		isvalid;
 	bool		isdirty;
 
-} BufferCachePagesRec;
+}	BufferCachePagesRec;
 
 
 /*
  * Function context for data persisting over repeated calls.
  */
-typedef struct 
+typedef struct
 {
 
-	AttInMetadata		*attinmeta;
-	BufferCachePagesRec	*record;
-	char				*values[NUM_BUFFERCACHE_PAGES_ELEM];
+	AttInMetadata *attinmeta;
+	BufferCachePagesRec *record;
+	char	   *values[NUM_BUFFERCACHE_PAGES_ELEM];
 
-} BufferCachePagesContext;
+}	BufferCachePagesContext;
 
 
 /*
@@ -63,44 +63,44 @@ Datum
 pg_buffercache_pages(PG_FUNCTION_ARGS)
 {
 
-	FuncCallContext		*funcctx;
-	Datum				result;
-	MemoryContext		oldcontext;
-	BufferCachePagesContext	*fctx;		/* User function context. */
-	TupleDesc			tupledesc;
-	HeapTuple			tuple;
+	FuncCallContext *funcctx;
+	Datum		result;
+	MemoryContext oldcontext;
+	BufferCachePagesContext *fctx;		/* User function context. */
+	TupleDesc	tupledesc;
+	HeapTuple	tuple;
 
 	if (SRF_IS_FIRSTCALL())
 	{
 		uint32		i;
-		volatile BufferDesc	*bufHdr;
+		volatile BufferDesc *bufHdr;
 
 		funcctx = SRF_FIRSTCALL_INIT();
 
 		/* Switch context when allocating stuff to be used in later calls */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
-		
+
 		/* Construct a tuple to return. */
 		tupledesc = CreateTemplateTupleDesc(NUM_BUFFERCACHE_PAGES_ELEM, false);
 		TupleDescInitEntry(tupledesc, (AttrNumber) 1, "bufferid",
-									INT4OID, -1, 0);
+						   INT4OID, -1, 0);
 		TupleDescInitEntry(tupledesc, (AttrNumber) 2, "relfilenode",
-									OIDOID, -1, 0);
+						   OIDOID, -1, 0);
 		TupleDescInitEntry(tupledesc, (AttrNumber) 3, "reltablespace",
-									OIDOID, -1, 0);
+						   OIDOID, -1, 0);
 		TupleDescInitEntry(tupledesc, (AttrNumber) 4, "reldatabase",
-									OIDOID, -1, 0);
+						   OIDOID, -1, 0);
 		TupleDescInitEntry(tupledesc, (AttrNumber) 5, "relblocknumber",
-									INT8OID, -1, 0);
+						   INT8OID, -1, 0);
 		TupleDescInitEntry(tupledesc, (AttrNumber) 6, "isdirty",
-									BOOLOID, -1, 0);
+						   BOOLOID, -1, 0);
 
 		/* Generate attribute metadata needed later to produce tuples */
 		funcctx->attinmeta = TupleDescGetAttInMetadata(tupledesc);
 
-		/* 
-		 * Create a function context for cross-call persistence 
-		 * and initialize the buffer counters.
+		/*
+		 * Create a function context for cross-call persistence and initialize
+		 * the buffer counters.
 		 */
 		fctx = (BufferCachePagesContext *) palloc(sizeof(BufferCachePagesContext));
 		funcctx->max_calls = NBuffers;
@@ -118,12 +118,12 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 		fctx->values[4] = (char *) palloc(3 * sizeof(uint32) + 1);
 		fctx->values[5] = (char *) palloc(2);
 
-		
+
 		/* Return to original context when allocating transient memory */
 		MemoryContextSwitchTo(oldcontext);
 
 
-		/* 
+		/*
 		 * Lock Buffer map and scan though all the buffers, saving the
 		 * relevant fields in the fctx->record structure.
 		 */
@@ -140,7 +140,7 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 			fctx->record[i].reldatabase = bufHdr->tag.rnode.dbNode;
 			fctx->record[i].blocknum = bufHdr->tag.blockNum;
 
-			if (bufHdr->flags & BM_DIRTY) 
+			if (bufHdr->flags & BM_DIRTY)
 				fctx->record[i].isdirty = true;
 			else
 				fctx->record[i].isdirty = false;
@@ -159,34 +159,34 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 	}
 
 	funcctx = SRF_PERCALL_SETUP();
-	
+
 	/* Get the saved state */
 	fctx = funcctx->user_fctx;
 
 
 	if (funcctx->call_cntr < funcctx->max_calls)
 	{
-		uint32 		i = funcctx->call_cntr;
-		char		*values[NUM_BUFFERCACHE_PAGES_ELEM];
+		uint32		i = funcctx->call_cntr;
+		char	   *values[NUM_BUFFERCACHE_PAGES_ELEM];
 		int			j;
-		
-		/* 
-		 * Use a temporary values array, initially pointing to
-		 * fctx->values, so it can be reassigned w/o losing the storage
-		 * for subsequent calls.
+
+		/*
+		 * Use a temporary values array, initially pointing to fctx->values,
+		 * so it can be reassigned w/o losing the storage for subsequent
+		 * calls.
 		 */
 		for (j = 0; j < NUM_BUFFERCACHE_PAGES_ELEM; j++)
 		{
 			values[j] = fctx->values[j];
 		}
-		
+
 
 		/*
-		 * Set all fields except the bufferid to null if the buffer is
-		 * unused or not valid.
+		 * Set all fields except the bufferid to null if the buffer is unused
+		 * or not valid.
 		 */
 		if (fctx->record[i].blocknum == InvalidBlockNumber ||
-			fctx->record[i].isvalid == false )
+			fctx->record[i].isvalid == false)
 		{
 
 			sprintf(values[0], "%u", fctx->record[i].bufferid);
@@ -205,7 +205,7 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 			sprintf(values[2], "%u", fctx->record[i].reltablespace);
 			sprintf(values[3], "%u", fctx->record[i].reldatabase);
 			sprintf(values[4], "%u", fctx->record[i].blocknum);
-			if (fctx->record[i].isdirty) 
+			if (fctx->record[i].isdirty)
 			{
 				strcpy(values[5], "t");
 			}
@@ -213,7 +213,7 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 			{
 				strcpy(values[5], "f");
 			}
-	
+
 		}
 
 
@@ -228,4 +228,3 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 		SRF_RETURN_DONE(funcctx);
 
 }
-

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_database.h,v 1.37 2005/07/31 17:19:21 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_database.h,v 1.38 2005/10/15 02:49:42 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -31,7 +31,7 @@
  *		typedef struct FormData_pg_database
  * ----------------
  */
-#define DatabaseRelationId  1262
+#define DatabaseRelationId	1262
 
 CATALOG(pg_database,1262) BKI_SHARED_RELATION
 {

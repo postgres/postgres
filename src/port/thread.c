@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/port/thread.c,v 1.30 2005/07/28 04:03:14 tgl Exp $
+ * $PostgreSQL: pgsql/src/port/thread.c,v 1.31 2005/10/15 02:49:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,12 +135,11 @@ pqGethostbyname(const char *name,
 #if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(HAVE_GETHOSTBYNAME_R)
 
 	/*
-	 * broken (well early POSIX draft) gethostbyname_r() which returns
-	 * 'struct hostent *'
+	 * broken (well early POSIX draft) gethostbyname_r() which returns 'struct
+	 * hostent *'
 	 */
 	*result = gethostbyname_r(name, resultbuf, buffer, buflen, herrno);
 	return (*result == NULL) ? -1 : 0;
-
 #else
 
 	/* no gethostbyname_r(), just use gethostbyname() */

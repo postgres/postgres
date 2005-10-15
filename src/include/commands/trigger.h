@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/trigger.h,v 1.55 2005/08/23 22:40:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/trigger.h,v 1.56 2005/10/15 02:49:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,8 +95,8 @@ typedef struct TriggerData
 #define RI_FK_RELNAME_ARGNO				1
 #define RI_PK_RELNAME_ARGNO				2
 #define RI_MATCH_TYPE_ARGNO				3
-#define RI_FIRST_ATTNAME_ARGNO			4		/* first attname pair
-												 * starts here */
+#define RI_FIRST_ATTNAME_ARGNO			4		/* first attname pair starts
+												 * here */
 
 #define RI_KEYPAIR_FK_IDX				0
 #define RI_KEYPAIR_PK_IDX				1
@@ -114,7 +114,7 @@ extern void RemoveTriggerById(Oid trigOid);
 extern void renametrig(Oid relid, const char *oldname, const char *newname);
 
 extern void EnableDisableTrigger(Relation rel, const char *tgname,
-								 bool enable, bool skip_system);
+					 bool enable, bool skip_system);
 
 extern void RelationBuildTriggers(Relation relation);
 
@@ -172,9 +172,9 @@ extern void AfterTriggerSetState(ConstraintsSetStmt *stmt);
  * in utils/adt/ri_triggers.c
  */
 extern bool RI_FKey_keyequal_upd_pk(Trigger *trigger, Relation pk_rel,
-									HeapTuple old_row, HeapTuple new_row);
+						HeapTuple old_row, HeapTuple new_row);
 extern bool RI_FKey_keyequal_upd_fk(Trigger *trigger, Relation fk_rel,
-									HeapTuple old_row, HeapTuple new_row);
+						HeapTuple old_row, HeapTuple new_row);
 extern bool RI_Initial_Check(FkConstraint *fkconstraint,
 				 Relation rel,
 				 Relation pkrel);
@@ -183,6 +183,6 @@ extern bool RI_Initial_Check(FkConstraint *fkconstraint,
 #define RI_TRIGGER_FK	2		/* is a trigger on the FK relation */
 #define RI_TRIGGER_NONE 0		/* is not an RI trigger function */
 
-extern int RI_FKey_trigger_type(Oid tgfoid);
+extern int	RI_FKey_trigger_type(Oid tgfoid);
 
 #endif   /* TRIGGER_H */

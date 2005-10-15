@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/dynloader/hpux.c,v 1.27 2004/12/31 22:00:32 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/dynloader/hpux.c,v 1.28 2005/10/15 02:49:23 momjian Exp $
  *
  *	NOTES
  *		all functions are defined here -- it's impossible to trace the
@@ -34,7 +34,7 @@ pg_dlopen(char *filename)
 	 * call the library!
 	 */
 	shl_t		handle = shl_load(filename,
-							BIND_IMMEDIATE | BIND_VERBOSE | DYNAMIC_PATH,
+								BIND_IMMEDIATE | BIND_VERBOSE | DYNAMIC_PATH,
 								  0L);
 
 	return (void *) handle;

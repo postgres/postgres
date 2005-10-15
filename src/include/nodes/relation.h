@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.118 2005/08/27 22:13:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.119 2005/10/15 02:49:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ typedef struct QualCost
  *
  * This struct is conventionally called "root" in all the planner routines.
  * It holds links to all of the planner's working state, in addition to the
- * original Query.  Note that at present the planner extensively manipulates
+ * original Query.	Note that at present the planner extensively manipulates
  * the passed-in Query data structure; someday that should stop.
  *----------
  */
@@ -64,47 +64,48 @@ typedef struct PlannerInfo
 
 	/*
 	 * base_rel_array holds pointers to "base rels" and "other rels" (see
-	 * comments for RelOptInfo for more info).  It is indexed by rangetable
-	 * index (so entry 0 is always wasted).  Entries can be NULL when
-	 * an RTE does not correspond to a base relation.  Note that the array
-	 * may be enlarged on-the-fly.
+	 * comments for RelOptInfo for more info).	It is indexed by rangetable
+	 * index (so entry 0 is always wasted).  Entries can be NULL when an RTE
+	 * does not correspond to a base relation.	Note that the array may be
+	 * enlarged on-the-fly.
 	 */
-	struct RelOptInfo **base_rel_array;	/* All one-relation RelOptInfos */
+	struct RelOptInfo **base_rel_array; /* All one-relation RelOptInfos */
 	int			base_rel_array_size;	/* current allocated array len */
 
 	/*
 	 * join_rel_list is a list of all join-relation RelOptInfos we have
-	 * considered in this planning run.  For small problems we just scan
-	 * the list to do lookups, but when there are many join relations we
-	 * build a hash table for faster lookups.  The hash table is present
-	 * and valid when join_rel_hash is not NULL.  Note that we still maintain
-	 * the list even when using the hash table for lookups; this simplifies
-	 * life for GEQO.
+	 * considered in this planning run.  For small problems we just scan the
+	 * list to do lookups, but when there are many join relations we build a
+	 * hash table for faster lookups.  The hash table is present and valid
+	 * when join_rel_hash is not NULL.	Note that we still maintain the list
+	 * even when using the hash table for lookups; this simplifies life for
+	 * GEQO.
 	 */
 	List	   *join_rel_list;	/* list of join-relation RelOptInfos */
-	struct HTAB *join_rel_hash;	/* optional hashtable for join relations */
+	struct HTAB *join_rel_hash; /* optional hashtable for join relations */
 
-	List	   *equi_key_list;	/* list of lists of equijoined
-								 * PathKeyItems */
+	List	   *equi_key_list;	/* list of lists of equijoined PathKeyItems */
 
-	List	   *left_join_clauses;	/* list of RestrictInfos for outer join
-									 * clauses w/nonnullable var on left */
+	List	   *left_join_clauses;		/* list of RestrictInfos for outer
+										 * join clauses w/nonnullable var on
+										 * left */
 
-	List	   *right_join_clauses;	/* list of RestrictInfos for outer join
-									 * clauses w/nonnullable var on right */
+	List	   *right_join_clauses;		/* list of RestrictInfos for outer
+										 * join clauses w/nonnullable var on
+										 * right */
 
-	List	   *full_join_clauses;	/* list of RestrictInfos for full outer
-									 * join clauses */
+	List	   *full_join_clauses;		/* list of RestrictInfos for full
+										 * outer join clauses */
 
 	List	   *in_info_list;	/* list of InClauseInfos */
 
-	List	   *query_pathkeys; /* desired pathkeys for query_planner(),
-								 * and actual pathkeys afterwards */
+	List	   *query_pathkeys; /* desired pathkeys for query_planner(), and
+								 * actual pathkeys afterwards */
 
 	List	   *group_pathkeys; /* groupClause pathkeys, if any */
 	List	   *sort_pathkeys;	/* sortClause pathkeys, if any */
 
-	double		tuple_fraction;	/* tuple_fraction passed to query_planner */
+	double		tuple_fraction; /* tuple_fraction passed to query_planner */
 
 	bool		hasJoinRTEs;	/* true if any RTEs are RTE_JOIN kind */
 	bool		hasOuterJoins;	/* true if any RTEs are outer joins */
@@ -268,13 +269,13 @@ typedef struct RelOptInfo
 	Relids	   *attr_needed;	/* array indexed [min_attr .. max_attr] */
 	int32	   *attr_widths;	/* array indexed [min_attr .. max_attr] */
 	List	   *indexlist;
-	BlockNumber	pages;
+	BlockNumber pages;
 	double		tuples;
 	struct Plan *subplan;		/* if subquery */
 
 	/* used by various scans and joins: */
-	List	   *baserestrictinfo;		/* RestrictInfo structures (if
-										 * base rel) */
+	List	   *baserestrictinfo;		/* RestrictInfo structures (if base
+										 * rel) */
 	QualCost	baserestrictcost;		/* cost of evaluating the above */
 	Relids		outerjoinset;	/* set of base relids */
 	List	   *joininfo;		/* RestrictInfo structures for join clauses
@@ -287,10 +288,9 @@ typedef struct RelOptInfo
 
 	/*
 	 * Inner indexscans are not in the main pathlist because they are not
-	 * usable except in specific join contexts.  We use the
-	 * index_inner_paths list just to avoid recomputing the best inner
-	 * indexscan repeatedly for similar outer relations.  See comments for
-	 * InnerIndexscanInfo.
+	 * usable except in specific join contexts.  We use the index_inner_paths
+	 * list just to avoid recomputing the best inner indexscan repeatedly for
+	 * similar outer relations.  See comments for InnerIndexscanInfo.
 	 */
 } RelOptInfo;
 
@@ -323,7 +323,7 @@ typedef struct IndexOptInfo
 	RelOptInfo *rel;			/* back-link to index's table */
 
 	/* statistics from pg_class */
-	BlockNumber	pages;			/* number of disk pages in index */
+	BlockNumber pages;			/* number of disk pages in index */
 	double		tuples;			/* number of index tuples in index */
 
 	/* index descriptor information */
@@ -335,8 +335,7 @@ typedef struct IndexOptInfo
 
 	RegProcedure amcostestimate;	/* OID of the access method's cost fcn */
 
-	List	   *indexprs;		/* expressions for non-simple index
-								 * columns */
+	List	   *indexprs;		/* expressions for non-simple index columns */
 	List	   *indpred;		/* predicate if a partial index, else NIL */
 
 	bool		predOK;			/* true if predicate matches query */
@@ -365,9 +364,9 @@ typedef struct PathKeyItem
 	Oid			sortop;			/* the ordering operator ('<' op) */
 
 	/*
-	 * key typically points to a Var node, ie a relation attribute, but it
-	 * can also point to an arbitrary expression representing the value
-	 * indexed by an index expression.
+	 * key typically points to a Var node, ie a relation attribute, but it can
+	 * also point to an arbitrary expression representing the value indexed by
+	 * an index expression.
 	 */
 } PathKeyItem;
 
@@ -390,10 +389,8 @@ typedef struct Path
 	RelOptInfo *parent;			/* the relation this path can build */
 
 	/* estimated execution costs for path (see costsize.c for more info) */
-	Cost		startup_cost;	/* cost expended before fetching any
-								 * tuples */
-	Cost		total_cost;		/* total cost (assuming all tuples
-								 * fetched) */
+	Cost		startup_cost;	/* cost expended before fetching any tuples */
+	Cost		total_cost;		/* total cost (assuming all tuples fetched) */
 
 	List	   *pathkeys;		/* sort ordering of path's output */
 	/* pathkeys is a List of Lists of PathKeyItem nodes; see above */
@@ -459,11 +456,11 @@ typedef struct IndexPath
  *
  * The individual indexscans are represented by IndexPath nodes, and any
  * logic on top of them is represented by a tree of BitmapAndPath and
- * BitmapOrPath nodes.  Notice that we can use the same IndexPath node both
+ * BitmapOrPath nodes.	Notice that we can use the same IndexPath node both
  * to represent a regular IndexScan plan, and as the child of a BitmapHeapPath
  * that represents scanning the same index using a BitmapIndexScan.  The
  * startup_cost and total_cost figures of an IndexPath always represent the
- * costs to use it as a regular IndexScan.  The costs of a BitmapIndexScan
+ * costs to use it as a regular IndexScan.	The costs of a BitmapIndexScan
  * can be computed using the IndexPath's indextotalcost and indexselectivity.
  *
  * BitmapHeapPaths can be nestloop inner indexscans.  The isjoininner and
@@ -486,7 +483,7 @@ typedef struct BitmapHeapPath
 typedef struct BitmapAndPath
 {
 	Path		path;
-	List	   *bitmapquals;		/* IndexPaths and BitmapOrPaths */
+	List	   *bitmapquals;	/* IndexPaths and BitmapOrPaths */
 	Selectivity bitmapselectivity;
 } BitmapAndPath;
 
@@ -499,7 +496,7 @@ typedef struct BitmapAndPath
 typedef struct BitmapOrPath
 {
 	Path		path;
-	List	   *bitmapquals;		/* IndexPaths and BitmapAndPaths */
+	List	   *bitmapquals;	/* IndexPaths and BitmapAndPaths */
 	Selectivity bitmapselectivity;
 } BitmapOrPath;
 
@@ -638,8 +635,7 @@ typedef JoinPath NestPath;
 typedef struct MergePath
 {
 	JoinPath	jpath;
-	List	   *path_mergeclauses;		/* join clauses to be used for
-										 * merge */
+	List	   *path_mergeclauses;		/* join clauses to be used for merge */
 	List	   *outersortkeys;	/* keys for explicit sort, if any */
 	List	   *innersortkeys;	/* keys for explicit sort, if any */
 } MergePath;
@@ -712,7 +708,7 @@ typedef struct HashPath
  * that appeared higher in the tree and were pushed down to the join rel
  * because they used no other rels.  That's what the is_pushed_down flag is
  * for; it tells us that a qual came from a point above the join of the
- * set of base rels listed in required_relids.  A clause that originally came
+ * set of base rels listed in required_relids.	A clause that originally came
  * from WHERE will *always* have its is_pushed_down flag set; a clause that
  * came from an INNER JOIN condition, but doesn't use all the rels being
  * joined, will also have is_pushed_down set because it will get attached to
@@ -745,11 +741,11 @@ typedef struct RestrictInfo
 	bool		is_pushed_down; /* TRUE if clause was pushed down in level */
 
 	/*
-	 * This flag is set true if the clause looks potentially useful as a
-	 * merge or hash join clause, that is if it is a binary opclause with
-	 * nonoverlapping sets of relids referenced in the left and right
-	 * sides. (Whether the operator is actually merge or hash joinable
-	 * isn't checked, however.)
+	 * This flag is set true if the clause looks potentially useful as a merge
+	 * or hash join clause, that is if it is a binary opclause with
+	 * nonoverlapping sets of relids referenced in the left and right sides.
+	 * (Whether the operator is actually merge or hash joinable isn't checked,
+	 * however.)
 	 */
 	bool		can_join;
 
@@ -843,8 +839,8 @@ typedef struct InClauseInfo
 	List	   *sub_targetlist; /* targetlist of original RHS subquery */
 
 	/*
-	 * Note: sub_targetlist is just a list of Vars or expressions; it does
-	 * not contain TargetEntry nodes.
+	 * Note: sub_targetlist is just a list of Vars or expressions; it does not
+	 * contain TargetEntry nodes.
 	 */
 } InClauseInfo;
 

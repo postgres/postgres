@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/signal.c,v 1.11 2004/12/31 22:00:37 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/signal.c,v 1.12 2005/10/15 02:49:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@ static pqsigfunc pg_signal_defaults[PG_SIGNAL_COUNT];
 static int	pg_signal_mask;
 
 DLLIMPORT HANDLE pgwin32_signal_event;
-HANDLE pgwin32_initial_signal_pipe = INVALID_HANDLE_VALUE;
+HANDLE		pgwin32_initial_signal_pipe = INVALID_HANDLE_VALUE;
 
 
 /* Signal handling thread function */
@@ -73,12 +73,12 @@ pgwin32_signal_initialize(void)
 	signal_thread_handle = CreateThread(NULL, 0, pg_signal_thread, NULL, 0, NULL);
 	if (signal_thread_handle == NULL)
 		ereport(FATAL,
-			(errmsg_internal("failed to create signal handler thread")));
+				(errmsg_internal("failed to create signal handler thread")));
 
 	/* Create console control handle to pick up Ctrl-C etc */
 	if (!SetConsoleCtrlHandler(pg_console_handler, TRUE))
 		ereport(FATAL,
-			 (errmsg_internal("failed to set console control handler")));
+				(errmsg_internal("failed to set console control handler")));
 }
 
 
@@ -112,9 +112,9 @@ pgwin32_dispatch_queued_signals(void)
 					LeaveCriticalSection(&pg_signal_crit_sec);
 					sig(i);
 					EnterCriticalSection(&pg_signal_crit_sec);
-					break;		/* Restart outer loop, in case signal mask
-								 * or queue has been modified inside
-								 * signal handler */
+					break;		/* Restart outer loop, in case signal mask or
+								 * queue has been modified inside signal
+								 * handler */
 				}
 			}
 		}
@@ -133,8 +133,8 @@ pqsigsetmask(int mask)
 	pg_signal_mask = mask;
 
 	/*
-	 * Dispatch any signals queued up right away, in case we have
-	 * unblocked one or more signals previously queued
+	 * Dispatch any signals queued up right away, in case we have unblocked
+	 * one or more signals previously queued
 	 */
 	pgwin32_dispatch_queued_signals();
 
@@ -165,7 +165,7 @@ pgwin32_create_signal_listener(pid_t pid)
 	wsprintf(pipename, "\\\\.\\pipe\\pgsignal_%d", (int) pid);
 
 	pipe = CreateNamedPipe(pipename, PIPE_ACCESS_DUPLEX,
-						   PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+					   PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
 						   PIPE_UNLIMITED_INSTANCES, 16, 16, 1000, NULL);
 
 	if (pipe == INVALID_HANDLE_VALUE)
@@ -218,8 +218,8 @@ pg_signal_dispatch_thread(LPVOID param)
 		CloseHandle(pipe);
 		return 0;
 	}
-	WriteFile(pipe, &sigNum, 1, &bytes, NULL);	/* Don't care if it works
-												 * or not.. */
+	WriteFile(pipe, &sigNum, 1, &bytes, NULL);	/* Don't care if it works or
+												 * not.. */
 	FlushFileBuffers(pipe);
 	DisconnectNamedPipe(pipe);
 	CloseHandle(pipe);
@@ -233,7 +233,7 @@ static DWORD WINAPI
 pg_signal_thread(LPVOID param)
 {
 	char		pipename[128];
-	HANDLE      pipe = pgwin32_initial_signal_pipe;
+	HANDLE		pipe = pgwin32_initial_signal_pipe;
 
 	wsprintf(pipename, "\\\\.\\pipe\\pgsignal_%d", GetCurrentProcessId());
 
@@ -245,8 +245,8 @@ pg_signal_thread(LPVOID param)
 		if (pipe == INVALID_HANDLE_VALUE)
 		{
 			pipe = CreateNamedPipe(pipename, PIPE_ACCESS_DUPLEX,
-								   PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
-								   PIPE_UNLIMITED_INSTANCES, 16, 16, 1000, NULL);
+					   PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+							   PIPE_UNLIMITED_INSTANCES, 16, 16, 1000, NULL);
 
 			if (pipe == INVALID_HANDLE_VALUE)
 			{
@@ -260,7 +260,7 @@ pg_signal_thread(LPVOID param)
 		if (fConnected)
 		{
 			hThread = CreateThread(NULL, 0,
-					  (LPTHREAD_START_ROUTINE) pg_signal_dispatch_thread,
+						  (LPTHREAD_START_ROUTINE) pg_signal_dispatch_thread,
 								   (LPVOID) pipe, 0, NULL);
 			if (hThread == INVALID_HANDLE_VALUE)
 				write_stderr("could not create signal dispatch thread: error code %d\n",

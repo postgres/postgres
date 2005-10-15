@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.83 2005/09/27 17:39:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.84 2005/10/15 02:49:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@ extern char *first_dir_separator(const char *filename);
 extern char *last_dir_separator(const char *filename);
 extern char *first_path_separator(const char *pathlist);
 extern void join_path_components(char *ret_path,
-								 const char *head, const char *tail);
+					 const char *head, const char *tail);
 extern void canonicalize_path(char *path);
 extern void make_native_path(char *path);
 extern bool path_contains_parent_reference(const char *path);
@@ -113,17 +113,21 @@ extern unsigned char pg_toupper(unsigned char ch);
 extern unsigned char pg_tolower(unsigned char ch);
 
 #ifdef USE_SNPRINTF
-extern int pg_vsnprintf(char *str, size_t count, const char *fmt, va_list args);
-extern int pg_snprintf(char *str, size_t count, const char *fmt,...)
+extern int	pg_vsnprintf(char *str, size_t count, const char *fmt, va_list args);
+extern int
+pg_snprintf(char *str, size_t count, const char *fmt,...)
 /* This extension allows gcc to check the format string */
 __attribute__((format(printf, 3, 4)));
-extern int pg_sprintf(char *str, const char *fmt,...)
+extern int
+pg_sprintf(char *str, const char *fmt,...)
 /* This extension allows gcc to check the format string */
 __attribute__((format(printf, 2, 3)));
-extern int pg_fprintf(FILE *stream, const char *fmt,...)
+extern int
+pg_fprintf(FILE *stream, const char *fmt,...)
 /* This extension allows gcc to check the format string */
 __attribute__((format(printf, 2, 3)));
-extern int pg_printf(const char *fmt,...)
+extern int
+pg_printf(const char *fmt,...)
 /* This extension allows gcc to check the format string */
 __attribute__((format(printf, 1, 2)));
 
@@ -133,7 +137,7 @@ __attribute__((format(printf, 1, 2)));
  *	know anything about pg_printf.
  */
 #ifdef __GNUC__
-#define	vsnprintf(...)	pg_vsnprintf(__VA_ARGS__)
+#define vsnprintf(...)	pg_vsnprintf(__VA_ARGS__)
 #define snprintf(...)	pg_snprintf(__VA_ARGS__)
 #define sprintf(...)	pg_sprintf(__VA_ARGS__)
 #define fprintf(...)	pg_fprintf(__VA_ARGS__)
@@ -189,6 +193,7 @@ extern int	pclose_check(FILE *stream);
  */
 extern int	pgrename(const char *from, const char *to);
 extern int	pgunlink(const char *path);
+
 /* Include this first so later includes don't see these defines */
 #ifdef WIN32_CLIENT_ONLY
 #include <io.h>
@@ -201,14 +206,14 @@ extern int	pgunlink(const char *path);
  *	Cygwin has its own symlinks which work on Win95/98/ME where
  *	junction points don't, so use it instead.  We have no way of
  *	knowing what type of system Cygwin binaries will be run on.
- *      Note: Some CYGWIN includes might #define WIN32.
+ *		Note: Some CYGWIN includes might #define WIN32.
  */
 #if defined(WIN32) && !defined(__CYGWIN__)
 extern int	pgsymlink(const char *oldpath, const char *newpath);
+
 #define symlink(oldpath, newpath)	pgsymlink(oldpath, newpath)
 #endif
-
-#endif /* defined(WIN32) || defined(__CYGWIN__) */
+#endif   /* defined(WIN32) || defined(__CYGWIN__) */
 
 extern void copydir(char *fromdir, char *todir, bool recurse);
 
@@ -235,15 +240,14 @@ extern void srand48(long seed);
 
 /* Last parameter not used */
 extern int	gettimeofday(struct timeval * tp, struct timezone * tzp);
-
-#else /* !WIN32 */
+#else							/* !WIN32 */
 
 /*
  *	Win32 requires a special close for sockets and pipes, while on Unix
  *	close() does them all.
  */
 #define closesocket close
-#endif /* WIN32 */
+#endif   /* WIN32 */
 
 /*
  * Default "extern" declarations or macro substitutes for library routines.

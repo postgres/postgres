@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup.h,v 1.36 2005/06/21 20:45:44 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup.h,v 1.37 2005/10/15 02:49:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,10 +54,10 @@ typedef enum _archiveFormat
 typedef struct _Archive
 {
 	int			verbose;
-	char	   *remoteVersionStr;	/* server's version string */
-	int			remoteVersion;		/* same in numeric form */
+	char	   *remoteVersionStr;		/* server's version string */
+	int			remoteVersion;	/* same in numeric form */
 
-	int			minRemoteVersion;	/* allowable range */
+	int			minRemoteVersion;		/* allowable range */
 	int			maxRemoteVersion;
 
 	/* error handling */
@@ -72,10 +72,9 @@ typedef int (*DataDumperPtr) (Archive *AH, void *userArg);
 typedef struct _restoreOptions
 {
 	int			create;			/* Issue commands to create the database */
-	int			noOwner;		/* Don't try to match original object
-								 * owner */
-	int			disable_triggers;		/* disable triggers during
-										 * data-only restore */
+	int			noOwner;		/* Don't try to match original object owner */
+	int			disable_triggers;		/* disable triggers during data-only
+										 * restore */
 	int			use_setsessauth;/* Use SET SESSION AUTHORIZATION commands
 								 * instead of OWNER TO */
 	char	   *superuser;		/* Username to use as superuser */
@@ -114,8 +113,8 @@ typedef struct _restoreOptions
 	bool		limitToList;
 	int			compression;
 
-	int			suppressDumpWarnings;	/* Suppress output of WARNING
-										 * entries to stderr */
+	int			suppressDumpWarnings;	/* Suppress output of WARNING entries
+										 * to stderr */
 } RestoreOptions;
 
 /*

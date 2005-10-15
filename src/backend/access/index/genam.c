@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.48 2005/05/27 23:31:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.49 2005/10/15 02:49:09 momjian Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -78,15 +78,15 @@ RelationGetIndexScan(Relation indexRelation,
 	scan->numberOfKeys = nkeys;
 
 	/*
-	 * We allocate the key space here, but the AM is responsible for
-	 * actually filling it from the passed key array.
+	 * We allocate the key space here, but the AM is responsible for actually
+	 * filling it from the passed key array.
 	 */
 	if (nkeys > 0)
 		scan->keyData = (ScanKey) palloc(sizeof(ScanKeyData) * nkeys);
 	else
 		scan->keyData = NULL;
 
-	scan->is_multiscan = false;			/* caller may change this */
+	scan->is_multiscan = false; /* caller may change this */
 	scan->kill_prior_tuple = false;
 	scan->ignore_killed_tuples = true;	/* default setting */
 	scan->keys_are_unique = false;		/* may be set by index AM */
@@ -203,8 +203,8 @@ systable_beginscan(Relation heapRelation,
 		/*
 		 * Change attribute numbers to be index column numbers.
 		 *
-		 * This code could be generalized to search for the index key numbers
-		 * to substitute, but for now there's no need.
+		 * This code could be generalized to search for the index key numbers to
+		 * substitute, but for now there's no need.
 		 */
 		for (i = 0; i < nkeys; i++)
 		{

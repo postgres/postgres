@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/indextuple.c,v 1.74 2005/03/27 18:38:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/indextuple.c,v 1.75 2005/10/15 02:49:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,20 +70,20 @@ index_form_tuple(TupleDesc tupleDescriptor,
 			continue;
 
 		/*
-		 * If value is stored EXTERNAL, must fetch it so we are not
-		 * depending on outside storage.  This should be improved someday.
+		 * If value is stored EXTERNAL, must fetch it so we are not depending
+		 * on outside storage.	This should be improved someday.
 		 */
 		if (VARATT_IS_EXTERNAL(values[i]))
 		{
 			untoasted_values[i] = PointerGetDatum(
-												 heap_tuple_fetch_attr(
-							   (varattrib *) DatumGetPointer(values[i])));
+												  heap_tuple_fetch_attr(
+								  (varattrib *) DatumGetPointer(values[i])));
 			untoasted_free[i] = true;
 		}
 
 		/*
-		 * If value is above size target, and is of a compressible
-		 * datatype, try to compress it in-line.
+		 * If value is above size target, and is of a compressible datatype,
+		 * try to compress it in-line.
 		 */
 		if (VARATT_SIZE(untoasted_values[i]) > TOAST_INDEX_TARGET &&
 			!VARATT_IS_EXTENDED(untoasted_values[i]) &&
@@ -149,23 +149,23 @@ index_form_tuple(TupleDesc tupleDescriptor,
 
 	/*
 	 * We do this because heap_fill_tuple wants to initialize a "tupmask"
-	 * which is used for HeapTuples, but we want an indextuple infomask.
-	 * The only relevant info is the "has variable attributes" field.
-	 * We have already set the hasnull bit above.
+	 * which is used for HeapTuples, but we want an indextuple infomask. The
+	 * only relevant info is the "has variable attributes" field. We have
+	 * already set the hasnull bit above.
 	 */
 	if (tupmask & HEAP_HASVARWIDTH)
 		infomask |= INDEX_VAR_MASK;
 
 	/*
-	 * Here we make sure that the size will fit in the field reserved for
-	 * it in t_info.
+	 * Here we make sure that the size will fit in the field reserved for it
+	 * in t_info.
 	 */
 	if ((size & INDEX_SIZE_MASK) != size)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-			  errmsg("index row requires %lu bytes, maximum size is %lu",
-					 (unsigned long) size,
-					 (unsigned long) INDEX_SIZE_MASK)));
+				 errmsg("index row requires %lu bytes, maximum size is %lu",
+						(unsigned long) size,
+						(unsigned long) INDEX_SIZE_MASK)));
 
 	infomask |= size;
 
@@ -322,10 +322,9 @@ nocache_index_getattr(IndexTuple tup,
 	}
 
 	/*
-	 * If slow is false, and we got here, we know that we have a tuple
-	 * with no nulls or var-widths before the target attribute. If
-	 * possible, we also want to initialize the remainder of the attribute
-	 * cached offset values.
+	 * If slow is false, and we got here, we know that we have a tuple with no
+	 * nulls or var-widths before the target attribute. If possible, we also
+	 * want to initialize the remainder of the attribute cached offset values.
 	 */
 	if (!slow)
 	{

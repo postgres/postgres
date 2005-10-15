@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.244 2005/10/06 21:30:36 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.245 2005/10/15 02:49:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -214,8 +214,8 @@ CheckRelationOwnership(RangeVar *rel, bool noCatalogs)
 			IsSystemClass((Form_pg_class) GETSTRUCT(tuple)))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				  errmsg("permission denied: \"%s\" is a system catalog",
-						 rel->relname)));
+					 errmsg("permission denied: \"%s\" is a system catalog",
+							rel->relname)));
 	}
 
 	ReleaseSysCache(tuple);
@@ -236,9 +236,9 @@ QueryIsReadOnly(Query *parsetree)
 	{
 		case CMD_SELECT:
 			if (parsetree->into != NULL)
-				return false;					/* SELECT INTO */
+				return false;	/* SELECT INTO */
 			else if (parsetree->rowMarks != NIL)
-				return false;					/* SELECT FOR UPDATE/SHARE */
+				return false;	/* SELECT FOR UPDATE/SHARE */
 			else
 				return true;
 		case CMD_UPDATE:
@@ -269,8 +269,8 @@ check_xact_readonly(Node *parsetree)
 		return;
 
 	/*
-	 * Note: Commands that need to do more complicated checking are
-	 * handled elsewhere.
+	 * Note: Commands that need to do more complicated checking are handled
+	 * elsewhere.
 	 */
 
 	switch (nodeTag(parsetree))
@@ -367,8 +367,8 @@ ProcessUtility(Node *parsetree,
 				switch (stmt->kind)
 				{
 						/*
-						 * START TRANSACTION, as defined by SQL99:
-						 * Identical to BEGIN.	Same code for both.
+						 * START TRANSACTION, as defined by SQL99: Identical
+						 * to BEGIN.  Same code for both.
 						 */
 					case TRANS_STMT_BEGIN:
 					case TRANS_STMT_START:
@@ -498,8 +498,8 @@ ProcessUtility(Node *parsetree,
 										RELKIND_RELATION);
 
 				/*
-				 * Let AlterTableCreateToastTable decide if this one needs
-				 * a secondary relation too.
+				 * Let AlterTableCreateToastTable decide if this one needs a
+				 * secondary relation too.
 				 */
 				CommandCounterIncrement();
 				AlterTableCreateToastTable(relOid, true);
@@ -558,8 +558,7 @@ ProcessUtility(Node *parsetree,
 						case OBJECT_DOMAIN:
 
 							/*
-							 * RemoveDomain does its own permissions
-							 * checks
+							 * RemoveDomain does its own permissions checks
 							 */
 							RemoveDomain(names, stmt->behavior);
 							break;
@@ -571,8 +570,7 @@ ProcessUtility(Node *parsetree,
 						case OBJECT_SCHEMA:
 
 							/*
-							 * RemoveSchema does its own permissions
-							 * checks
+							 * RemoveSchema does its own permissions checks
 							 */
 							RemoveSchema(names, stmt->behavior);
 							break;
@@ -584,8 +582,8 @@ ProcessUtility(Node *parsetree,
 					}
 
 					/*
-					 * We used to need to do CommandCounterIncrement()
-					 * here, but now it's done inside performDeletion().
+					 * We used to need to do CommandCounterIncrement() here,
+					 * but now it's done inside performDeletion().
 					 */
 				}
 			}
@@ -651,8 +649,8 @@ ProcessUtility(Node *parsetree,
 					case 'T':	/* ALTER DOMAIN DEFAULT */
 
 						/*
-						 * Recursively alter column default for table and,
-						 * if requested, for descendants
+						 * Recursively alter column default for table and, if
+						 * requested, for descendants
 						 */
 						AlterDomainDefault(stmt->typename,
 										   stmt->def);
@@ -691,8 +689,7 @@ ProcessUtility(Node *parsetree,
 			break;
 
 			/*
-			 * ******************************** object creation /
-			 * destruction ********************************
+			 * ******************************** object creation / destruction ********************************
 			 *
 			 */
 		case T_DefineStmt:
@@ -738,7 +735,7 @@ ProcessUtility(Node *parsetree,
 			CreateFunction((CreateFunctionStmt *) parsetree);
 			break;
 
-		case T_AlterFunctionStmt: /* ALTER FUNCTION */
+		case T_AlterFunctionStmt:		/* ALTER FUNCTION */
 			AlterFunction((AlterFunctionStmt *) parsetree);
 			break;
 
@@ -750,7 +747,7 @@ ProcessUtility(Node *parsetree,
 
 				DefineIndex(stmt->relation,		/* relation */
 							stmt->idxname,		/* index name */
-							InvalidOid,			/* no predefined OID */
+							InvalidOid, /* no predefined OID */
 							stmt->accessMethod, /* am name */
 							stmt->tableSpace,
 							stmt->indexParams,	/* parameters */
@@ -865,8 +862,8 @@ ProcessUtility(Node *parsetree,
 				VariableSetStmt *n = (VariableSetStmt *) parsetree;
 
 				/*
-				 * Special cases for special SQL syntax that effectively
-				 * sets more than one variable per statement.
+				 * Special cases for special SQL syntax that effectively sets
+				 * more than one variable per statement.
 				 */
 				if (strcmp(n->name, "TRANSACTION") == 0)
 				{
@@ -878,10 +875,10 @@ ProcessUtility(Node *parsetree,
 
 						if (strcmp(item->defname, "transaction_isolation") == 0)
 							SetPGVariable("transaction_isolation",
-									 list_make1(item->arg), n->is_local);
+										  list_make1(item->arg), n->is_local);
 						else if (strcmp(item->defname, "transaction_read_only") == 0)
 							SetPGVariable("transaction_read_only",
-									 list_make1(item->arg), n->is_local);
+										  list_make1(item->arg), n->is_local);
 					}
 				}
 				else if (strcmp(n->name, "SESSION CHARACTERISTICS") == 0)
@@ -894,10 +891,10 @@ ProcessUtility(Node *parsetree,
 
 						if (strcmp(item->defname, "transaction_isolation") == 0)
 							SetPGVariable("default_transaction_isolation",
-									 list_make1(item->arg), n->is_local);
+										  list_make1(item->arg), n->is_local);
 						else if (strcmp(item->defname, "transaction_read_only") == 0)
 							SetPGVariable("default_transaction_read_only",
-									 list_make1(item->arg), n->is_local);
+										  list_make1(item->arg), n->is_local);
 					}
 				}
 				else
@@ -1380,30 +1377,30 @@ CreateCommandTag(Node *parsetree)
 			break;
 
 		case T_AlterObjectSchemaStmt:
-		    switch (((AlterObjectSchemaStmt *) parsetree)->objectType)
-		    {
+			switch (((AlterObjectSchemaStmt *) parsetree)->objectType)
+			{
 				case OBJECT_AGGREGATE:
-				    tag = "ALTER AGGREGATE";
-				    break;
+					tag = "ALTER AGGREGATE";
+					break;
 				case OBJECT_DOMAIN:
-				    tag = "ALTER DOMAIN";
-				    break;
+					tag = "ALTER DOMAIN";
+					break;
 				case OBJECT_FUNCTION:
-				    tag = "ALTER FUNCTION";
-				    break;
+					tag = "ALTER FUNCTION";
+					break;
 				case OBJECT_SEQUENCE:
-				    tag = "ALTER SEQUENCE";
-				    break;
+					tag = "ALTER SEQUENCE";
+					break;
 				case OBJECT_TABLE:
-				    tag = "ALTER TABLE";
-				    break;
+					tag = "ALTER TABLE";
+					break;
 				case OBJECT_TYPE:
-				    tag = "ALTER TYPE";
-				    break;
+					tag = "ALTER TYPE";
+					break;
 				default:
 					tag = "???";
 					break;
-		    }
+			}
 			break;
 
 		case T_AlterOwnerStmt:
@@ -1480,7 +1477,7 @@ CreateCommandTag(Node *parsetree)
 
 		case T_GrantRoleStmt:
 			{
-				GrantRoleStmt  *stmt = (GrantRoleStmt *) parsetree;
+				GrantRoleStmt *stmt = (GrantRoleStmt *) parsetree;
 
 				tag = (stmt->is_grant) ? "GRANT ROLE" : "REVOKE ROLE";
 			}
@@ -1717,9 +1714,10 @@ CreateQueryTag(Query *parsetree)
 	switch (parsetree->commandType)
 	{
 		case CMD_SELECT:
+
 			/*
-			 * We take a little extra care here so that the result will
-			 * be useful for complaints about read-only statements
+			 * We take a little extra care here so that the result will be
+			 * useful for complaints about read-only statements
 			 */
 			if (parsetree->into != NULL)
 				tag = "SELECT INTO";

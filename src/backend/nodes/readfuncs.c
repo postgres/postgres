@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.181 2005/08/01 20:31:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.182 2005/10/15 02:49:19 momjian Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -389,12 +389,12 @@ _readOpExpr(void)
 	READ_OID_FIELD(opfuncid);
 
 	/*
-	 * The opfuncid is stored in the textual format primarily for
-	 * debugging and documentation reasons.  We want to always read it as
-	 * zero to force it to be re-looked-up in the pg_operator entry.  This
-	 * ensures that stored rules don't have hidden dependencies on
-	 * operators' functions. (We don't currently support an ALTER OPERATOR
-	 * command, but might someday.)
+	 * The opfuncid is stored in the textual format primarily for debugging
+	 * and documentation reasons.  We want to always read it as zero to force
+	 * it to be re-looked-up in the pg_operator entry.	This ensures that
+	 * stored rules don't have hidden dependencies on operators' functions.
+	 * (We don't currently support an ALTER OPERATOR command, but might
+	 * someday.)
 	 */
 	local_node->opfuncid = InvalidOid;
 
@@ -417,12 +417,12 @@ _readDistinctExpr(void)
 	READ_OID_FIELD(opfuncid);
 
 	/*
-	 * The opfuncid is stored in the textual format primarily for
-	 * debugging and documentation reasons.  We want to always read it as
-	 * zero to force it to be re-looked-up in the pg_operator entry.  This
-	 * ensures that stored rules don't have hidden dependencies on
-	 * operators' functions. (We don't currently support an ALTER OPERATOR
-	 * command, but might someday.)
+	 * The opfuncid is stored in the textual format primarily for debugging
+	 * and documentation reasons.  We want to always read it as zero to force
+	 * it to be re-looked-up in the pg_operator entry.	This ensures that
+	 * stored rules don't have hidden dependencies on operators' functions.
+	 * (We don't currently support an ALTER OPERATOR command, but might
+	 * someday.)
 	 */
 	local_node->opfuncid = InvalidOid;
 
@@ -445,12 +445,12 @@ _readScalarArrayOpExpr(void)
 	READ_OID_FIELD(opfuncid);
 
 	/*
-	 * The opfuncid is stored in the textual format primarily for
-	 * debugging and documentation reasons.  We want to always read it as
-	 * zero to force it to be re-looked-up in the pg_operator entry.  This
-	 * ensures that stored rules don't have hidden dependencies on
-	 * operators' functions. (We don't currently support an ALTER OPERATOR
-	 * command, but might someday.)
+	 * The opfuncid is stored in the textual format primarily for debugging
+	 * and documentation reasons.  We want to always read it as zero to force
+	 * it to be re-looked-up in the pg_operator entry.	This ensures that
+	 * stored rules don't have hidden dependencies on operators' functions.
+	 * (We don't currently support an ALTER OPERATOR command, but might
+	 * someday.)
 	 */
 	local_node->opfuncid = InvalidOid;
 
@@ -686,12 +686,12 @@ _readNullIfExpr(void)
 	READ_OID_FIELD(opfuncid);
 
 	/*
-	 * The opfuncid is stored in the textual format primarily for
-	 * debugging and documentation reasons.  We want to always read it as
-	 * zero to force it to be re-looked-up in the pg_operator entry.  This
-	 * ensures that stored rules don't have hidden dependencies on
-	 * operators' functions. (We don't currently support an ALTER OPERATOR
-	 * command, but might someday.)
+	 * The opfuncid is stored in the textual format primarily for debugging
+	 * and documentation reasons.  We want to always read it as zero to force
+	 * it to be re-looked-up in the pg_operator entry.	This ensures that
+	 * stored rules don't have hidden dependencies on operators' functions.
+	 * (We don't currently support an ALTER OPERATOR command, but might
+	 * someday.)
 	 */
 	local_node->opfuncid = InvalidOid;
 

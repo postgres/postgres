@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.104 2005/08/20 00:39:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.105 2005/10/15 02:49:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,6 @@
 		)															\
 	)																\
 )
-
 #else							/* defined(DISABLE_COMPLEX_MACRO) */
 
 extern Datum fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
@@ -156,19 +155,19 @@ extern void heap_get_latest_tid(Relation relation, Snapshot snapshot,
 					ItemPointer tid);
 extern void setLastTid(const ItemPointer tid);
 
-extern Oid	heap_insert(Relation relation, HeapTuple tup, CommandId cid,
-						bool use_wal, bool use_fsm);
+extern Oid heap_insert(Relation relation, HeapTuple tup, CommandId cid,
+			bool use_wal, bool use_fsm);
 extern HTSU_Result heap_delete(Relation relation, ItemPointer tid,
-							   ItemPointer ctid, TransactionId *update_xmax,
-							   CommandId cid, Snapshot crosscheck, bool wait);
+			ItemPointer ctid, TransactionId *update_xmax,
+			CommandId cid, Snapshot crosscheck, bool wait);
 extern HTSU_Result heap_update(Relation relation, ItemPointer otid,
-							   HeapTuple newtup,
-							   ItemPointer ctid, TransactionId *update_xmax,
-							   CommandId cid, Snapshot crosscheck, bool wait);
+			HeapTuple newtup,
+			ItemPointer ctid, TransactionId *update_xmax,
+			CommandId cid, Snapshot crosscheck, bool wait);
 extern HTSU_Result heap_lock_tuple(Relation relation, HeapTuple tuple,
-								   Buffer *buffer, ItemPointer ctid,
-								   TransactionId *update_xmax, CommandId cid,
-								   LockTupleMode mode, bool nowait);
+				Buffer *buffer, ItemPointer ctid,
+				TransactionId *update_xmax, CommandId cid,
+				LockTupleMode mode, bool nowait);
 
 extern Oid	simple_heap_insert(Relation relation, HeapTuple tup);
 extern void simple_heap_delete(Relation relation, ItemPointer tid);
@@ -188,10 +187,10 @@ extern XLogRecPtr log_heap_move(Relation reln, Buffer oldbuf,
 
 /* in common/heaptuple.c */
 extern Size heap_compute_data_size(TupleDesc tupleDesc,
-								   Datum *values, bool *isnull);
+					   Datum *values, bool *isnull);
 extern void heap_fill_tuple(TupleDesc tupleDesc,
-							Datum *values, bool *isnull,
-							char *data, uint16 *infomask, bits8 *bit);
+				Datum *values, bool *isnull,
+				char *data, uint16 *infomask, bits8 *bit);
 extern bool heap_attisnull(HeapTuple tup, int attnum);
 extern Datum nocachegetattr(HeapTuple tup, int attnum,
 			   TupleDesc att, bool *isnull);
@@ -200,25 +199,25 @@ extern Datum heap_getsysattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 extern HeapTuple heap_copytuple(HeapTuple tuple);
 extern void heap_copytuple_with_tuple(HeapTuple src, HeapTuple dest);
 extern HeapTuple heap_form_tuple(TupleDesc tupleDescriptor,
-			   Datum *values, bool *isnull);
+				Datum *values, bool *isnull);
 extern HeapTuple heap_formtuple(TupleDesc tupleDescriptor,
 			   Datum *values, char *nulls);
 extern HeapTuple heap_modify_tuple(HeapTuple tuple,
-				 TupleDesc tupleDesc,
-				 Datum *replValues,
-				 bool *replIsnull,
-				 bool *doReplace);
+				  TupleDesc tupleDesc,
+				  Datum *replValues,
+				  bool *replIsnull,
+				  bool *doReplace);
 extern HeapTuple heap_modifytuple(HeapTuple tuple,
 				 TupleDesc tupleDesc,
 				 Datum *replValues,
 				 char *replNulls,
 				 char *replActions);
 extern void heap_deform_tuple(HeapTuple tuple, TupleDesc tupleDesc,
-				 Datum *values, bool *isnull);
+				  Datum *values, bool *isnull);
 extern void heap_deformtuple(HeapTuple tuple, TupleDesc tupleDesc,
 				 Datum *values, char *nulls);
 extern void heap_freetuple(HeapTuple tuple);
 extern HeapTuple heap_addheader(int natts, bool withoid,
-								Size structlen, void *structure);
+			   Size structlen, void *structure);
 
 #endif   /* HEAPAM_H */

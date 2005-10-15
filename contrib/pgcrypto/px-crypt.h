@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/px-crypt.h,v 1.8 2005/08/13 02:06:20 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/px-crypt.h,v 1.9 2005/10/15 02:49:06 momjian Exp $
  */
 
 #ifndef _PX_CRYPT_H
@@ -65,13 +65,13 @@ extern char px_crypt_a64[];
 
 /* crypt-gensalt.c */
 char *_crypt_gensalt_traditional_rn(unsigned long count,
-			 const char *input, int size, char *output, int output_size);
+				 const char *input, int size, char *output, int output_size);
 char *_crypt_gensalt_extended_rn(unsigned long count,
-			 const char *input, int size, char *output, int output_size);
+				 const char *input, int size, char *output, int output_size);
 char *_crypt_gensalt_md5_rn(unsigned long count,
-			 const char *input, int size, char *output, int output_size);
+				 const char *input, int size, char *output, int output_size);
 char *_crypt_gensalt_blowfish_rn(unsigned long count,
-			 const char *input, int size, char *output, int output_size);
+				 const char *input, int size, char *output, int output_size);
 
 /* disable 'extended DES crypt' */
 /* #define DISABLE_XDES */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.95 2005/09/25 19:37:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.96 2005/10/15 02:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,11 +100,11 @@ MultiExecHash(HashState *node)
 		InstrStopNodeMulti(node->ps.instrument, hashtable->totalTuples);
 
 	/*
-	 * We do not return the hash table directly because it's not a subtype
-	 * of Node, and so would violate the MultiExecProcNode API.  Instead,
-	 * our parent Hashjoin node is expected to know how to fish it out
-	 * of our node state.  Ugly but not really worth cleaning up, since
-	 * Hashjoin knows quite a bit more about Hash besides that.
+	 * We do not return the hash table directly because it's not a subtype of
+	 * Node, and so would violate the MultiExecProcNode API.  Instead, our
+	 * parent Hashjoin node is expected to know how to fish it out of our node
+	 * state.  Ugly but not really worth cleaning up, since Hashjoin knows
+	 * quite a bit more about Hash besides that.
 	 */
 	return NULL;
 }
@@ -161,8 +161,8 @@ ExecInitHash(Hash *node, EState *estate)
 	outerPlanState(hashstate) = ExecInitNode(outerPlan(node), estate);
 
 	/*
-	 * initialize tuple type. no need to initialize projection info
-	 * because this node doesn't do projections
+	 * initialize tuple type. no need to initialize projection info because
+	 * this node doesn't do projections
 	 */
 	ExecAssignResultTypeFromOuterPlan(&hashstate->ps);
 	hashstate->ps.ps_ProjInfo = NULL;
@@ -221,9 +221,9 @@ ExecHashTableCreate(Hash *node, List *hashOperators)
 	MemoryContext oldcxt;
 
 	/*
-	 * Get information about the size of the relation to be hashed (it's
-	 * the "outer" subtree of this node, but the inner relation of the
-	 * hashjoin).  Compute the appropriate size of the hash table.
+	 * Get information about the size of the relation to be hashed (it's the
+	 * "outer" subtree of this node, but the inner relation of the hashjoin).
+	 * Compute the appropriate size of the hash table.
 	 */
 	outerNode = outerPlan(node);
 
@@ -237,8 +237,8 @@ ExecHashTableCreate(Hash *node, List *hashOperators)
 	/*
 	 * Initialize the hash table control block.
 	 *
-	 * The hashtable control block is just palloc'd from the executor's
-	 * per-query memory context.
+	 * The hashtable control block is just palloc'd from the executor's per-query
+	 * memory context.
 	 */
 	hashtable = (HashJoinTable) palloc(sizeof(HashJoinTableData));
 	hashtable->nbuckets = nbuckets;
@@ -273,8 +273,8 @@ ExecHashTableCreate(Hash *node, List *hashOperators)
 	}
 
 	/*
-	 * Create temporary memory contexts in which to keep the hashtable
-	 * working storage.  See notes in executor/hashjoin.h.
+	 * Create temporary memory contexts in which to keep the hashtable working
+	 * storage.  See notes in executor/hashjoin.h.
 	 */
 	hashtable->hashCxt = AllocSetContextCreate(CurrentMemoryContext,
 											   "HashTableContext",
@@ -353,9 +353,9 @@ ExecChooseHashTableSize(double ntuples, int tupwidth,
 		ntuples = 1000.0;
 
 	/*
-	 * Estimate tupsize based on footprint of tuple in hashtable... note
-	 * this does not allow for any palloc overhead.  The manipulations of
-	 * spaceUsed don't count palloc overhead either.
+	 * Estimate tupsize based on footprint of tuple in hashtable... note this
+	 * does not allow for any palloc overhead.	The manipulations of spaceUsed
+	 * don't count palloc overhead either.
 	 */
 	tupsize = MAXALIGN(sizeof(HashJoinTupleData)) +
 		MAXALIGN(sizeof(HeapTupleHeaderData)) +
@@ -375,16 +375,16 @@ ExecChooseHashTableSize(double ntuples, int tupwidth,
 	if (inner_rel_bytes > hash_table_bytes)
 	{
 		/* We'll need multiple batches */
-		long	lbuckets;
-		double	dbatch;
-		int		minbatch;
+		long		lbuckets;
+		double		dbatch;
+		int			minbatch;
 
 		lbuckets = (hash_table_bytes / tupsize) / NTUP_PER_BUCKET;
 		lbuckets = Min(lbuckets, INT_MAX);
 		nbuckets = (int) lbuckets;
 
 		dbatch = ceil(inner_rel_bytes / hash_table_bytes);
-		dbatch = Min(dbatch, INT_MAX/2);
+		dbatch = Min(dbatch, INT_MAX / 2);
 		minbatch = (int) dbatch;
 		nbatch = 2;
 		while (nbatch < minbatch)
@@ -393,7 +393,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth,
 	else
 	{
 		/* We expect the hashtable to fit in memory */
-		double	dbuckets;
+		double		dbuckets;
 
 		dbuckets = ceil(ntuples / NTUP_PER_BUCKET);
 		dbuckets = Min(dbuckets, INT_MAX);
@@ -406,8 +406,8 @@ ExecChooseHashTableSize(double ntuples, int tupwidth,
 	 * We want nbuckets to be prime so as to avoid having bucket and batch
 	 * numbers depend on only some bits of the hash code.  Choose the next
 	 * larger prime from the list in hprimes[].  (This also enforces that
-	 * nbuckets is not very small, by the simple expedient of not putting
-	 * any very small entries in hprimes[].)
+	 * nbuckets is not very small, by the simple expedient of not putting any
+	 * very small entries in hprimes[].)
 	 */
 	for (i = 0; i < (int) lengthof(hprimes); i++)
 	{
@@ -475,7 +475,7 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 		return;
 
 	/* safety check to avoid overflow */
-	if (oldnbatch > INT_MAX/2)
+	if (oldnbatch > INT_MAX / 2)
 		return;
 
 	nbatch = oldnbatch * 2;
@@ -514,8 +514,8 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 	hashtable->nbatch = nbatch;
 
 	/*
-	 * Scan through the existing hash table entries and dump out any
-	 * that are no longer of the current batch.
+	 * Scan through the existing hash table entries and dump out any that are
+	 * no longer of the current batch.
 	 */
 	ninmemory = nfreed = 0;
 
@@ -571,12 +571,12 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 #endif
 
 	/*
-	 * If we dumped out either all or none of the tuples in the table,
-	 * disable further expansion of nbatch.  This situation implies that
-	 * we have enough tuples of identical hashvalues to overflow spaceAllowed.
-	 * Increasing nbatch will not fix it since there's no way to subdivide
-	 * the group any more finely.
-	 * We have to just gut it out and hope the server has enough RAM.
+	 * If we dumped out either all or none of the tuples in the table, disable
+	 * further expansion of nbatch.  This situation implies that we have
+	 * enough tuples of identical hashvalues to overflow spaceAllowed.
+	 * Increasing nbatch will not fix it since there's no way to subdivide the
+	 * group any more finely. We have to just gut it out and hope the server
+	 * has enough RAM.
 	 */
 	if (nfreed == 0 || nfreed == ninmemory)
 	{
@@ -663,8 +663,8 @@ ExecHashGetHashValue(HashJoinTable hashtable,
 	MemoryContext oldContext;
 
 	/*
-	 * We reset the eval context each time to reclaim any memory leaked in
-	 * the hashkey expressions.
+	 * We reset the eval context each time to reclaim any memory leaked in the
+	 * hashkey expressions.
 	 */
 	ResetExprContext(econtext);
 
@@ -727,8 +727,8 @@ ExecHashGetBucketAndBatch(HashJoinTable hashtable,
 						  int *bucketno,
 						  int *batchno)
 {
-	uint32	nbuckets = (uint32) hashtable->nbuckets;
-	uint32	nbatch = (uint32) hashtable->nbatch;
+	uint32		nbuckets = (uint32) hashtable->nbuckets;
+	uint32		nbatch = (uint32) hashtable->nbatch;
 
 	if (nbatch > 1)
 	{
@@ -759,8 +759,8 @@ ExecScanHashBucket(HashJoinState *hjstate,
 	uint32		hashvalue = hjstate->hj_CurHashValue;
 
 	/*
-	 * hj_CurTuple is NULL to start scanning a new bucket, or the address
-	 * of the last tuple returned from the current bucket.
+	 * hj_CurTuple is NULL to start scanning a new bucket, or the address of
+	 * the last tuple returned from the current bucket.
 	 */
 	if (hashTuple == NULL)
 		hashTuple = hashtable->buckets[hjstate->hj_CurBucketNo];
@@ -812,8 +812,8 @@ ExecHashTableReset(HashJoinTable hashtable)
 	int			nbuckets = hashtable->nbuckets;
 
 	/*
-	 * Release all the hash buckets and tuples acquired in the prior pass,
-	 * and reinitialize the context for a new pass.
+	 * Release all the hash buckets and tuples acquired in the prior pass, and
+	 * reinitialize the context for a new pass.
 	 */
 	MemoryContextReset(hashtable->batchCxt);
 	oldcxt = MemoryContextSwitchTo(hashtable->batchCxt);

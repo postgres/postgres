@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.83 2005/04/14 20:03:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.84 2005/10/15 02:49:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -310,10 +310,9 @@ CommentRelation(int objtype, List *relname, char *comment)
 	tgtrel = makeRangeVarFromNameList(relname);
 
 	/*
-	 * Open the relation.  We do this mainly to acquire a lock that
-	 * ensures no one else drops the relation before we commit.  (If they
-	 * did, they'd fail to remove the entry we are about to make in
-	 * pg_description.)
+	 * Open the relation.  We do this mainly to acquire a lock that ensures no
+	 * one else drops the relation before we commit.  (If they did, they'd
+	 * fail to remove the entry we are about to make in pg_description.)
 	 */
 	relation = relation_openrv(tgtrel, AccessShareLock);
 
@@ -441,17 +440,16 @@ CommentDatabase(List *qualname, char *comment)
 	database = strVal(linitial(qualname));
 
 	/*
-	 * We cannot currently support cross-database comments (since other
-	 * DBs cannot see pg_description of this database).  So, we reject
-	 * attempts to comment on a database other than the current one.
-	 * Someday this might be improved, but it would take a redesigned
-	 * infrastructure.
+	 * We cannot currently support cross-database comments (since other DBs
+	 * cannot see pg_description of this database).  So, we reject attempts to
+	 * comment on a database other than the current one. Someday this might be
+	 * improved, but it would take a redesigned infrastructure.
 	 *
-	 * When loading a dump, we may see a COMMENT ON DATABASE for the old name
-	 * of the database.  Erroring out would prevent pg_restore from
-	 * completing (which is really pg_restore's fault, but for now we will
-	 * work around the problem here).  Consensus is that the best fix is
-	 * to treat wrong database name as a WARNING not an ERROR.
+	 * When loading a dump, we may see a COMMENT ON DATABASE for the old name of
+	 * the database.  Erroring out would prevent pg_restore from completing
+	 * (which is really pg_restore's fault, but for now we will work around
+	 * the problem here).  Consensus is that the best fix is to treat wrong
+	 * database name as a WARNING not an ERROR.
 	 */
 
 	/* First get the database OID */
@@ -467,8 +465,8 @@ CommentDatabase(List *qualname, char *comment)
 	/* Only allow comments on the current database */
 	if (oid != MyDatabaseId)
 	{
-		ereport(WARNING,		/* throw just a warning so pg_restore
-								 * doesn't fail */
+		ereport(WARNING,		/* throw just a warning so pg_restore doesn't
+								 * fail */
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("database comments may only be applied to the current database")));
 		return;
@@ -587,8 +585,8 @@ CommentRule(List *qualname, char *comment)
 												  ForwardScanDirection)))
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
-			   errmsg("there are multiple rules named \"%s\"", rulename),
-			errhint("Specify a relation name as well as a rule name.")));
+				   errmsg("there are multiple rules named \"%s\"", rulename),
+				errhint("Specify a relation name as well as a rule name.")));
 
 		heap_endscan(scanDesc);
 		heap_close(RewriteRelation, AccessShareLock);
@@ -616,8 +614,8 @@ CommentRule(List *qualname, char *comment)
 		if (!HeapTupleIsValid(tuple))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("rule \"%s\" for relation \"%s\" does not exist",
-						rulename, RelationGetRelationName(relation))));
+					 errmsg("rule \"%s\" for relation \"%s\" does not exist",
+							rulename, RelationGetRelationName(relation))));
 		Assert(reloid == ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class);
 		ruleoid = HeapTupleGetOid(tuple);
 		ReleaseSysCache(tuple);
@@ -802,8 +800,8 @@ CommentTrigger(List *qualname, char *comment)
 					   RelationGetRelationName(relation));
 
 	/*
-	 * Fetch the trigger tuple from pg_trigger.  There can be only one
-	 * because of the unique index.
+	 * Fetch the trigger tuple from pg_trigger.  There can be only one because
+	 * of the unique index.
 	 */
 	pg_trigger = heap_open(TriggerRelationId, AccessShareLock);
 	ScanKeyInit(&entry[0],
@@ -879,9 +877,9 @@ CommentConstraint(List *qualname, char *comment)
 					   RelationGetRelationName(relation));
 
 	/*
-	 * Fetch the constraint tuple from pg_constraint.  There may be more
-	 * than one match, because constraints are not required to have unique
-	 * names; if so, error out.
+	 * Fetch the constraint tuple from pg_constraint.  There may be more than
+	 * one match, because constraints are not required to have unique names;
+	 * if so, error out.
 	 */
 	pg_constraint = heap_open(ConstraintRelationId, AccessShareLock);
 
@@ -902,8 +900,8 @@ CommentConstraint(List *qualname, char *comment)
 			if (OidIsValid(conOid))
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_OBJECT),
-						 errmsg("table \"%s\" has multiple constraints named \"%s\"",
-						   RelationGetRelationName(relation), conName)));
+				 errmsg("table \"%s\" has multiple constraints named \"%s\"",
+						RelationGetRelationName(relation), conName)));
 			conOid = HeapTupleGetOid(tuple);
 		}
 	}
@@ -914,8 +912,8 @@ CommentConstraint(List *qualname, char *comment)
 	if (!OidIsValid(conOid))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-			  errmsg("constraint \"%s\" for table \"%s\" does not exist",
-					 conName, RelationGetRelationName(relation))));
+				 errmsg("constraint \"%s\" for table \"%s\" does not exist",
+						conName, RelationGetRelationName(relation))));
 
 	/* Call CreateComments() to create/drop the comments */
 	CreateComments(conOid, ConstraintRelationId, 0, comment);
@@ -988,7 +986,7 @@ CommentLanguage(List *qualname, char *comment)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-		 errmsg("must be superuser to comment on procedural language")));
+			 errmsg("must be superuser to comment on procedural language")));
 
 	/* Call CreateComments() to create/drop the comments */
 	CreateComments(oid, LanguageRelationId, 0, comment);
@@ -1111,7 +1109,7 @@ CommentLargeObject(List *qualname, char *comment)
 			 * strings.
 			 */
 			loid = DatumGetObjectId(DirectFunctionCall1(oidin,
-										 CStringGetDatum(strVal(node))));
+											 CStringGetDatum(strVal(node))));
 			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d",

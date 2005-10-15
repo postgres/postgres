@@ -26,15 +26,16 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/px.c,v 1.14 2005/08/13 02:06:20 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/px.c,v 1.15 2005/10/15 02:49:06 momjian Exp $
  */
 
 #include "postgres.h"
 
 #include "px.h"
 
-struct error_desc {
-	int err;
+struct error_desc
+{
+	int			err;
 	const char *desc;
 };
 
@@ -67,14 +68,14 @@ static const struct error_desc px_err_list[] = {
 	{PXE_PGP_UNEXPECTED_PKT, "Unexpected packet in key data"},
 	{PXE_PGP_NO_BIGNUM,
 		"public-key functions disabled - "
-		"pgcrypto needs OpenSSL for bignums"},
+	"pgcrypto needs OpenSSL for bignums"},
 	{PXE_PGP_MATH_FAILED, "Math operation failed"},
 	{PXE_PGP_SHORT_ELGAMAL_KEY, "Elgamal keys must be at least 1024 bits long"},
 	{PXE_PGP_RSA_UNSUPPORTED, "pgcrypto does not support RSA keys"},
 	{PXE_PGP_UNKNOWN_PUBALGO, "Unknown public-key encryption algorithm"},
 	{PXE_PGP_WRONG_KEY, "Wrong key"},
 	{PXE_PGP_MULTIPLE_KEYS,
-		"Several keys given - pgcrypto does not handle keyring"},
+	"Several keys given - pgcrypto does not handle keyring"},
 	{PXE_PGP_EXPECT_PUBLIC_KEY, "Refusing to encrypt with secret key"},
 	{PXE_PGP_EXPECT_SECRET_KEY, "Cannot decrypt with public key"},
 	{PXE_PGP_NOT_V4_KEYPKT, "Only V4 key packets are supported"},
@@ -87,13 +88,15 @@ static const struct error_desc px_err_list[] = {
 
 	/* fake this as PXE_PGP_CORRUPT_DATA */
 	{PXE_MBUF_SHORT_READ, "Corrupt data"},
-	
+
 	{0, NULL},
 };
 
-const char *px_strerror(int err)
+const char *
+px_strerror(int err)
 {
 	const struct error_desc *e;
+
 	for (e = px_err_list; e->desc; e++)
 		if (e->err == err)
 			return e->desc;
@@ -113,19 +116,24 @@ px_resolve_alias(const PX_Alias * list, const char *name)
 	return name;
 }
 
-static void (*debug_handler)(const char *) = NULL;
+static void (*debug_handler) (const char *) = NULL;
 
-void px_set_debug_handler(void (*handler)(const char *))
+void
+px_set_debug_handler(void (*handler) (const char *))
 {
 	debug_handler = handler;
 }
 
-void px_debug(const char *fmt, ...)
+void
+px_debug(const char *fmt,...)
 {
-	va_list ap;
+	va_list		ap;
+
 	va_start(ap, fmt);
-	if (debug_handler) {
-		char buf[512];
+	if (debug_handler)
+	{
+		char		buf[512];
+
 		vsnprintf(buf, sizeof(buf), fmt, ap);
 		debug_handler(buf);
 	}

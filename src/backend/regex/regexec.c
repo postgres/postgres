@@ -27,7 +27,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/backend/regex/regexec.c,v 1.26 2005/09/24 22:54:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/regex/regexec.c,v 1.27 2005/10/15 02:49:24 momjian Exp $
  *
  */
 
@@ -75,8 +75,7 @@ struct dfa
 	struct cnfa *cnfa;
 	struct colormap *cm;
 	chr		   *lastpost;		/* location of last cache-flushed success */
-	chr		   *lastnopr;		/* location of last cache-flushed
-								 * NOPROGRESS */
+	chr		   *lastnopr;		/* location of last cache-flushed NOPROGRESS */
 	struct sset *search;		/* replacement-search-pointer memory */
 	int			cptsmalloced;	/* were the areas individually malloced? */
 	char	   *mallocarea;		/* self, or master malloced area, or NULL */
@@ -122,8 +121,7 @@ struct vars
 #define ISERR() VISERR(v)
 #define VERR(vv,e)	(((vv)->err) ? (vv)->err : ((vv)->err = (e)))
 #define ERR(e)	VERR(v, e)		/* record an error */
-#define NOERR() {if (ISERR()) return v->err;}	/* if error seen, return
-												 * it */
+#define NOERR() {if (ISERR()) return v->err;}	/* if error seen, return it */
 #define OFF(p)	((p) - v->start)
 #define LOFF(p) ((long)OFF(p))
 
@@ -279,8 +277,7 @@ find(struct vars * v,
 	chr		   *begin;
 	chr		   *end = NULL;
 	chr		   *cold;
-	chr		   *open;			/* open and close of range of possible
-								 * starts */
+	chr		   *open;			/* open and close of range of possible starts */
 	chr		   *close;
 	int			hitend;
 	int			shorter = (v->g->tree->flags & SHORTER) ? 1 : 0;
@@ -408,8 +405,7 @@ cfindloop(struct vars * v,
 	chr		   *begin;
 	chr		   *end;
 	chr		   *cold;
-	chr		   *open;			/* open and close of range of possible
-								 * starts */
+	chr		   *open;			/* open and close of range of possible starts */
 	chr		   *close;
 	chr		   *estart;
 	chr		   *estop;
@@ -1033,8 +1029,7 @@ caltdissect(struct vars * v,
 
 #define  UNTRIED 0				/* not yet tried at all */
 #define  TRYING  1				/* top matched, trying submatches */
-#define  TRIED	 2				/* top didn't match or submatches
-								 * exhausted */
+#define  TRIED	 2				/* top didn't match or submatches exhausted */
 
 	if (t == NULL)
 		return REG_NOMATCH;

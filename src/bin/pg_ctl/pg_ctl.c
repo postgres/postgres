@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.60 2005/07/25 04:52:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.61 2005/10/15 02:49:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -326,22 +326,21 @@ static int
 start_postmaster(void)
 {
 	/*
-	 * Since there might be quotes to handle here, it is easier simply to
-	 * pass everything to a shell to process them.
+	 * Since there might be quotes to handle here, it is easier simply to pass
+	 * everything to a shell to process them.
 	 */
 	char		cmd[MAXPGPATH];
 
 	/*
 	 * Win32 needs START /B rather than "&".
 	 *
-	 * Win32 has a problem with START and quoted executable names. You must
-	 * add a "" as the title at the beginning so you can quote the
-	 * executable name:
+	 * Win32 has a problem with START and quoted executable names. You must add a
+	 * "" as the title at the beginning so you can quote the executable name:
 	 * http://www.winnetmag.com/Article/ArticleID/14589/14589.html
 	 * http://dev.remotenetworktechnology.com/cmd/cmdfaq.htm
 	 */
 	if (log_file != NULL)
-#ifndef WIN32	/* Cygwin doesn't have START */
+#ifndef WIN32					/* Cygwin doesn't have START */
 		snprintf(cmd, MAXPGPATH, "%s\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1 &%s",
 				 SYSTEMQUOTE, postgres_path, pgdata_opt, post_opts,
 				 DEVNULL, log_file, SYSTEMQUOTE);
@@ -351,7 +350,7 @@ start_postmaster(void)
 				 DEVNULL, log_file, SYSTEMQUOTE);
 #endif
 	else
-#ifndef WIN32	/* Cygwin doesn't have START */
+#ifndef WIN32					/* Cygwin doesn't have START */
 		snprintf(cmd, MAXPGPATH, "%s\"%s\" %s%s < \"%s\" 2>&1 &%s",
 				 SYSTEMQUOTE, postgres_path, pgdata_opt, post_opts,
 				 DEVNULL, SYSTEMQUOTE);
@@ -544,11 +543,11 @@ do_start(void)
 		if ((ret = find_other_exec(argv0, "postmaster", PM_VERSIONSTR,
 								   postmaster_path)) < 0)
 		{
-			char full_path[MAXPGPATH];
-	
+			char		full_path[MAXPGPATH];
+
 			if (find_my_exec(argv0, full_path) < 0)
 				StrNCpy(full_path, progname, MAXPGPATH);
-	
+
 			if (ret == -1)
 				write_stderr(_("The program \"postmaster\" is needed by %s "
 							   "but was not found in the\n"
@@ -715,20 +714,20 @@ do_restart(void)
 
 		print_msg(_("waiting for postmaster to shut down..."));
 
-	/* always wait for restart */
+		/* always wait for restart */
 
 		for (cnt = 0; cnt < wait_seconds; cnt++)
 		{
 			if ((pid = get_pgpid()) != 0)
 			{
 				print_msg(".");
-				pg_usleep(1000000); /* 1 sec */
+				pg_usleep(1000000);		/* 1 sec */
 			}
 			else
 				break;
 		}
 
-		if (pid != 0)				/* pid file still exists */
+		if (pid != 0)			/* pid file still exists */
 		{
 			print_msg(_(" failed\n"));
 
@@ -792,12 +791,12 @@ postmaster_is_alive(pid_t pid)
 	/*
 	 * Test to see if the process is still there.  Note that we do not
 	 * consider an EPERM failure to mean that the process is still there;
-	 * EPERM must mean that the given PID belongs to some other userid,
-	 * and considering the permissions on $PGDATA, that means it's not
-	 * the postmaster we are after.
+	 * EPERM must mean that the given PID belongs to some other userid, and
+	 * considering the permissions on $PGDATA, that means it's not the
+	 * postmaster we are after.
 	 *
 	 * Don't believe that our own PID or parent shell's PID is the postmaster,
-	 * either.  (Windows hasn't got getppid(), though.)
+	 * either.	(Windows hasn't got getppid(), though.)
 	 */
 	if (pid == getpid())
 		return false;
@@ -828,7 +827,8 @@ do_status(void)
 				return;
 			}
 		}
-		else					/* postmaster */
+		else
+			/* postmaster */
 		{
 			if (postmaster_is_alive((pid_t) pid))
 			{
@@ -880,6 +880,7 @@ pgwin32_CommandLine(bool registration)
 {
 	static char cmdLine[MAXPGPATH];
 	int			ret;
+
 #ifdef __CYGWIN__
 	char		buf[MAXPGPATH];
 #endif
@@ -963,10 +964,10 @@ pgwin32_doRegister(void)
 	}
 
 	if ((hService = CreateService(hSCM, register_servicename, register_servicename,
-						   SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS,
-								SERVICE_AUTO_START, SERVICE_ERROR_NORMAL,
+							   SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS,
+								  SERVICE_AUTO_START, SERVICE_ERROR_NORMAL,
 								  pgwin32_CommandLine(true),
-	NULL, NULL, "RPCSS\0", register_username, register_password)) == NULL)
+	   NULL, NULL, "RPCSS\0", register_username, register_password)) == NULL)
 	{
 		CloseServiceHandle(hSCM);
 		write_stderr(_("%s: could not register service \"%s\": error code %d\n"), progname, register_servicename, (int) GetLastError());
@@ -1036,9 +1037,9 @@ pgwin32_ServiceHandler(DWORD request)
 		case SERVICE_CONTROL_SHUTDOWN:
 
 			/*
-			 * We only need a short wait hint here as it just needs to
-			 * wait for the next checkpoint. They occur every 5 seconds
-			 * during shutdown
+			 * We only need a short wait hint here as it just needs to wait
+			 * for the next checkpoint. They occur every 5 seconds during
+			 * shutdown
 			 */
 			status.dwWaitHint = 10000;
 			pgwin32_SetServiceStatus(SERVICE_STOP_PENDING);
@@ -1294,9 +1295,8 @@ main(int argc, char **argv)
 	set_pglocale_pgservice(argv[0], "pg_ctl");
 
 	/*
-	 * save argv[0] so do_start() can look for the postmaster if
-	 * necessary. we don't look for postmaster here because in many cases
-	 * we won't need it.
+	 * save argv[0] so do_start() can look for the postmaster if necessary. we
+	 * don't look for postmaster here because in many cases we won't need it.
 	 */
 	argv0 = argv[0];
 
@@ -1337,9 +1337,9 @@ main(int argc, char **argv)
 
 	/*
 	 * 'Action' can be before or after args so loop over both. Some
-	 * getopt_long() implementations will reorder argv[] to place all
-	 * flags first (GNU?), but we don't rely on it. Our /port version
-	 * doesn't do that.
+	 * getopt_long() implementations will reorder argv[] to place all flags
+	 * first (GNU?), but we don't rely on it. Our /port version doesn't do
+	 * that.
 	 */
 	optind = 1;
 
@@ -1362,9 +1362,9 @@ main(int argc, char **argv)
 						putenv(env_var);
 
 						/*
-						 *	We could pass PGDATA just in an environment
-						 *	variable but we do -D too for clearer
-						 *	postmaster 'ps' display
+						 * We could pass PGDATA just in an environment
+						 * variable but we do -D too for clearer postmaster
+						 * 'ps' display
 						 */
 						pgdata_opt = pg_malloc(strlen(pgdata_D) + 7);
 						snprintf(pgdata_opt, strlen(pgdata_D) + 7,
@@ -1397,7 +1397,7 @@ main(int argc, char **argv)
 					if (strchr(optarg, '\\'))
 						register_username = xstrdup(optarg);
 					else
-					/* Prepend .\ for local accounts */
+						/* Prepend .\ for local accounts */
 					{
 						register_username = malloc(strlen(optarg) + 3);
 						if (!register_username)

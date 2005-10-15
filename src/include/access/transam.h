@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/transam.h,v 1.55 2005/08/12 01:36:03 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/transam.h,v 1.56 2005/10/15 02:49:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@
  *		using the OID generator.  (We start the generator at 10000.)
  *
  *		OIDs beginning at 16384 are assigned from the OID generator
- *		during normal multiuser operation.  (We force the generator up to
+ *		during normal multiuser operation.	(We force the generator up to
  *		16384 as soon as we are in normal operation.)
  *
  * The choices of 10000 and 16384 are completely arbitrary, and can be moved
@@ -87,9 +87,9 @@ typedef struct VariableCacheData
 	Oid			nextOid;		/* next OID to assign */
 	uint32		oidCount;		/* OIDs available before must do XLOG work */
 	TransactionId nextXid;		/* next XID to assign */
-	TransactionId xidWarnLimit;	/* start complaining here */
-	TransactionId xidStopLimit;	/* refuse to advance nextXid beyond here */
-	TransactionId xidWrapLimit;	/* where the world ends */
+	TransactionId xidWarnLimit; /* start complaining here */
+	TransactionId xidStopLimit; /* refuse to advance nextXid beyond here */
+	TransactionId xidWrapLimit; /* where the world ends */
 	NameData	limit_datname;	/* database that needs vacuumed first */
 } VariableCacheData;
 
@@ -124,7 +124,7 @@ extern bool TransactionIdFollowsOrEquals(TransactionId id1, TransactionId id2);
 extern TransactionId GetNewTransactionId(bool isSubXact);
 extern TransactionId ReadNewTransactionId(void);
 extern void SetTransactionIdLimit(TransactionId oldest_datfrozenxid,
-								  Name oldest_datname);
+					  Name oldest_datname);
 extern Oid	GetNewObjectId(void);
 
 #endif   /* TRAMSAM_H */

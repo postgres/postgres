@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/assert.c,v 1.30 2004/12/31 22:01:27 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/assert.c,v 1.31 2005/10/15 02:49:32 momjian Exp $
  *
  * NOTE
  *	  This should eventually work with elog()
@@ -42,8 +42,8 @@ ExceptionalCondition(char *conditionName,
 #ifdef SLEEP_ON_ASSERT
 
 	/*
-	 * It would be nice to use pg_usleep() here, but only does 2000 sec or
-	 * 33 minutes, which seems too short.
+	 * It would be nice to use pg_usleep() here, but only does 2000 sec or 33
+	 * minutes, which seems too short.
 	 */
 	sleep(1000000);
 #endif

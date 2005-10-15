@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.121 2005/10/09 17:21:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.122 2005/10/15 02:49:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
 #include <ctype.h>
 #include <limits.h>
 #include <float.h>
-#include <time.h> 
+#include <time.h>
 
 #include "access/hash.h"
 #include "libpq/pqformat.h"
@@ -38,10 +38,10 @@
 #endif
 
 
-static int	time2tm(TimeADT time, struct pg_tm *tm, fsec_t *fsec);
-static int	timetz2tm(TimeTzADT *time, struct pg_tm *tm, fsec_t *fsec, int *tzp);
-static int	tm2time(struct pg_tm *tm, fsec_t fsec, TimeADT *result);
-static int	tm2timetz(struct pg_tm *tm, fsec_t fsec, int tz, TimeTzADT *result);
+static int	time2tm(TimeADT time, struct pg_tm * tm, fsec_t *fsec);
+static int	timetz2tm(TimeTzADT *time, struct pg_tm * tm, fsec_t *fsec, int *tzp);
+static int	tm2time(struct pg_tm * tm, fsec_t fsec, TimeADT *result);
+static int	tm2timetz(struct pg_tm * tm, fsec_t fsec, int tz, TimeTzADT *result);
 static void AdjustTimeForTypmod(TimeADT *time, int32 typmod);
 
 /*****************************************************************************
@@ -56,7 +56,7 @@ Datum
 date_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
-	DateADT date;
+	DateADT		date;
 	fsec_t		fsec;
 	struct pg_tm tt,
 			   *tm = &tt;
@@ -83,7 +83,7 @@ date_in(PG_FUNCTION_ARGS)
 		case DTK_CURRENT:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("date/time value \"current\" is no longer supported")));
+			  errmsg("date/time value \"current\" is no longer supported")));
 
 			GetCurrentDateTime(tm);
 			break;
@@ -108,13 +108,13 @@ date_in(PG_FUNCTION_ARGS)
 Datum
 date_out(PG_FUNCTION_ARGS)
 {
-	DateADT date = PG_GETARG_DATEADT(0);
+	DateADT		date = PG_GETARG_DATEADT(0);
 	char	   *result;
 	struct pg_tm tt,
 			   *tm = &tt;
 	char		buf[MAXDATELEN + 1];
 
-	j2date(date +POSTGRES_EPOCH_JDATE,
+	j2date(date + POSTGRES_EPOCH_JDATE,
 		   &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
 
 	EncodeDateOnly(tm, DateStyle, buf);
@@ -140,7 +140,7 @@ date_recv(PG_FUNCTION_ARGS)
 Datum
 date_send(PG_FUNCTION_ARGS)
 {
-	DateADT date = PG_GETARG_DATEADT(0);
+	DateADT		date = PG_GETARG_DATEADT(0);
 	StringInfoData buf;
 
 	pq_begintypsend(&buf);
@@ -306,7 +306,7 @@ date2timestamptz(DateADT dateVal)
 #ifdef HAVE_INT64_TIMESTAMP
 	result = dateVal * USECS_PER_DAY + tz * USECS_PER_SEC;
 #else
-	result = dateVal * (double)SECS_PER_DAY + tz;
+	result = dateVal * (double) SECS_PER_DAY + tz;
 #endif
 
 	return result;
@@ -715,7 +715,7 @@ date_timestamp(PG_FUNCTION_ARGS)
 Datum
 timestamp_date(PG_FUNCTION_ARGS)
 {
-	Timestamp timestamp = PG_GETARG_TIMESTAMP(0);
+	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 	DateADT		result;
 	struct pg_tm tt,
 			   *tm = &tt;
@@ -797,11 +797,11 @@ abstime_date(PG_FUNCTION_ARGS)
 		case NOEND_ABSTIME:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("cannot convert reserved abstime value to date")));
+				   errmsg("cannot convert reserved abstime value to date")));
 
 			/*
-			 * pretend to drop through to make compiler think that result
-			 * will be set
+			 * pretend to drop through to make compiler think that result will
+			 * be set
 			 */
 
 		default:
@@ -821,7 +821,7 @@ Datum
 date_text(PG_FUNCTION_ARGS)
 {
 	/* Input is a Date, but may as well leave it in Datum form */
-	Datum date = PG_GETARG_DATUM(0);
+	Datum		date = PG_GETARG_DATUM(0);
 	text	   *result;
 	char	   *str;
 	int			len;
@@ -914,11 +914,11 @@ time_in(PG_FUNCTION_ARGS)
  * Convert a tm structure to a time data type.
  */
 static int
-tm2time(struct pg_tm *tm, fsec_t fsec, TimeADT *result)
+tm2time(struct pg_tm * tm, fsec_t fsec, TimeADT *result)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	*result = ((((tm->tm_hour * MINS_PER_HOUR + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec)
-				* USECS_PER_SEC) + fsec;
+			   * USECS_PER_SEC) + fsec;
 #else
 	*result = ((tm->tm_hour * MINS_PER_HOUR + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec + fsec;
 #endif
@@ -931,7 +931,7 @@ tm2time(struct pg_tm *tm, fsec_t fsec, TimeADT *result)
  *	local time zone. If out of this range, leave as GMT. - tgl 97/05/27
  */
 static int
-time2tm(TimeADT time, struct pg_tm *tm, fsec_t *fsec)
+time2tm(TimeADT time, struct pg_tm * tm, fsec_t *fsec)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	tm->tm_hour = time / USECS_PER_HOUR;
@@ -946,8 +946,8 @@ time2tm(TimeADT time, struct pg_tm *tm, fsec_t *fsec)
 
 recalc:
 	trem = time;
-	TMODULO(trem, tm->tm_hour, (double)SECS_PER_HOUR);
-	TMODULO(trem, tm->tm_min, (double)SECS_PER_MINUTE);
+	TMODULO(trem, tm->tm_hour, (double) SECS_PER_HOUR);
+	TMODULO(trem, tm->tm_min, (double) SECS_PER_MINUTE);
 	TMODULO(trem, tm->tm_sec, 1.0);
 	trem = TIMEROUND(trem);
 	/* roundoff may need to propagate to higher-order fields */
@@ -989,6 +989,7 @@ Datum
 time_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
@@ -1072,7 +1073,6 @@ AdjustTimeForTypmod(TimeADT *time, int32 typmod)
 		INT64CONST(5),
 		INT64CONST(0)
 	};
-
 #else
 	/* note MAX_TIME_PRECISION differs in this case */
 	static const double TimeScales[MAX_TIME_PRECISION + 1] = {
@@ -1093,21 +1093,21 @@ AdjustTimeForTypmod(TimeADT *time, int32 typmod)
 	if (typmod >= 0 && typmod <= MAX_TIME_PRECISION)
 	{
 		/*
-		 * Note: this round-to-nearest code is not completely consistent
-		 * about rounding values that are exactly halfway between integral
-		 * values.	On most platforms, rint() will implement
-		 * round-to-nearest-even, but the integer code always rounds up
-		 * (away from zero).  Is it worth trying to be consistent?
+		 * Note: this round-to-nearest code is not completely consistent about
+		 * rounding values that are exactly halfway between integral values.
+		 * On most platforms, rint() will implement round-to-nearest-even, but
+		 * the integer code always rounds up (away from zero).	Is it worth
+		 * trying to be consistent?
 		 */
 #ifdef HAVE_INT64_TIMESTAMP
 		if (*time >= INT64CONST(0))
 			*time = ((*time + TimeOffsets[typmod]) / TimeScales[typmod]) *
-					TimeScales[typmod];
+				TimeScales[typmod];
 		else
 			*time = -((((-*time) + TimeOffsets[typmod]) / TimeScales[typmod]) *
-					TimeScales[typmod]);
+					  TimeScales[typmod]);
 #else
-		*time = rint((double) * time * TimeScales[typmod]) / TimeScales[typmod];
+		*time = rint((double) *time * TimeScales[typmod]) / TimeScales[typmod];
 #endif
 	}
 }
@@ -1208,8 +1208,8 @@ Datum
 overlaps_time(PG_FUNCTION_ARGS)
 {
 	/*
-	 * The arguments are TimeADT, but we leave them as generic Datums to
-	 * avoid dereferencing nulls (TimeADT is pass-by-reference!)
+	 * The arguments are TimeADT, but we leave them as generic Datums to avoid
+	 * dereferencing nulls (TimeADT is pass-by-reference!)
 	 */
 	Datum		ts1 = PG_GETARG_DATUM(0);
 	Datum		te1 = PG_GETARG_DATUM(1);
@@ -1226,9 +1226,9 @@ overlaps_time(PG_FUNCTION_ARGS)
 	(DatumGetTimeADT(t1) < DatumGetTimeADT(t2))
 
 	/*
-	 * If both endpoints of interval 1 are null, the result is null
-	 * (unknown). If just one endpoint is null, take ts1 as the non-null
-	 * one. Otherwise, take ts1 as the lesser endpoint.
+	 * If both endpoints of interval 1 are null, the result is null (unknown).
+	 * If just one endpoint is null, take ts1 as the non-null one. Otherwise,
+	 * take ts1 as the lesser endpoint.
 	 */
 	if (ts1IsNull)
 	{
@@ -1276,8 +1276,8 @@ overlaps_time(PG_FUNCTION_ARGS)
 	if (TIMEADT_GT(ts1, ts2))
 	{
 		/*
-		 * This case is ts1 < te2 OR te1 < te2, which may look redundant
-		 * but in the presence of nulls it's not quite completely so.
+		 * This case is ts1 < te2 OR te1 < te2, which may look redundant but
+		 * in the presence of nulls it's not quite completely so.
 		 */
 		if (te2IsNull)
 			PG_RETURN_NULL();
@@ -1287,8 +1287,8 @@ overlaps_time(PG_FUNCTION_ARGS)
 			PG_RETURN_NULL();
 
 		/*
-		 * If te1 is not null then we had ts1 <= te1 above, and we just
-		 * found ts1 >= te2, hence te1 >= te2.
+		 * If te1 is not null then we had ts1 <= te1 above, and we just found
+		 * ts1 >= te2, hence te1 >= te2.
 		 */
 		PG_RETURN_BOOL(false);
 	}
@@ -1303,8 +1303,8 @@ overlaps_time(PG_FUNCTION_ARGS)
 			PG_RETURN_NULL();
 
 		/*
-		 * If te2 is not null then we had ts2 <= te2 above, and we just
-		 * found ts2 >= te1, hence te2 >= te1.
+		 * If te2 is not null then we had ts2 <= te2 above, and we just found
+		 * ts2 >= te1, hence te2 >= te1.
 		 */
 		PG_RETURN_BOOL(false);
 	}
@@ -1312,8 +1312,7 @@ overlaps_time(PG_FUNCTION_ARGS)
 	{
 		/*
 		 * For ts1 = ts2 the spec says te1 <> te2 OR te1 = te2, which is a
-		 * rather silly way of saying "true if both are nonnull, else
-		 * null".
+		 * rather silly way of saying "true if both are nonnull, else null".
 		 */
 		if (te1IsNull || te2IsNull)
 			PG_RETURN_NULL();
@@ -1330,7 +1329,7 @@ overlaps_time(PG_FUNCTION_ARGS)
 Datum
 timestamp_time(PG_FUNCTION_ARGS)
 {
-	Timestamp timestamp = PG_GETARG_TIMESTAMP(0);
+	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 	TimeADT		result;
 	struct pg_tm tt,
 			   *tm = &tt;
@@ -1351,7 +1350,7 @@ timestamp_time(PG_FUNCTION_ARGS)
 	 * USECS_PER_DAY) - timestamp;
 	 */
 	result = ((((tm->tm_hour * MINS_PER_HOUR + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec) *
-				USECS_PER_SEC) + fsec;
+			  USECS_PER_SEC) + fsec;
 #else
 	result = ((tm->tm_hour * MINS_PER_HOUR + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec + fsec;
 #endif
@@ -1388,7 +1387,7 @@ timestamptz_time(PG_FUNCTION_ARGS)
 	 * USECS_PER_DAY) - timestamp;
 	 */
 	result = ((((tm->tm_hour * MINS_PER_HOUR + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec) *
-				USECS_PER_SEC) + fsec;
+			  USECS_PER_SEC) + fsec;
 #else
 	result = ((tm->tm_hour * MINS_PER_HOUR + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec + fsec;
 #endif
@@ -1402,12 +1401,12 @@ timestamptz_time(PG_FUNCTION_ARGS)
 Datum
 datetime_timestamp(PG_FUNCTION_ARGS)
 {
-	DateADT date = PG_GETARG_DATEADT(0);
+	DateADT		date = PG_GETARG_DATEADT(0);
 	TimeADT		time = PG_GETARG_TIMEADT(1);
 	Timestamp	result;
 
 	result = DatumGetTimestamp(DirectFunctionCall1(date_timestamp,
-												 DateADTGetDatum(date)));
+												   DateADTGetDatum(date)));
 	result += time;
 
 	PG_RETURN_TIMESTAMP(result);
@@ -1461,8 +1460,8 @@ interval_time(PG_FUNCTION_ARGS)
 	}
 #else
 	result = span->time;
-	if (result >= (double)SECS_PER_DAY || result < 0)
-		result -= floor(result / (double)SECS_PER_DAY) * (double)SECS_PER_DAY;
+	if (result >= (double) SECS_PER_DAY || result < 0)
+		result -= floor(result / (double) SECS_PER_DAY) * (double) SECS_PER_DAY;
 #endif
 
 	PG_RETURN_TIMEADT(result);
@@ -1506,7 +1505,7 @@ time_pl_interval(PG_FUNCTION_ARGS)
 	TimeADT		time1;
 
 	result = time + span->time;
-	TMODULO(result, time1, (double)SECS_PER_DAY);
+	TMODULO(result, time1, (double) SECS_PER_DAY);
 	if (result < 0)
 		result += SECS_PER_DAY;
 #endif
@@ -1533,7 +1532,7 @@ time_mi_interval(PG_FUNCTION_ARGS)
 	TimeADT		time1;
 
 	result = time - span->time;
-	TMODULO(result, time1, (double)SECS_PER_DAY);
+	TMODULO(result, time1, (double) SECS_PER_DAY);
 	if (result < 0)
 		result += SECS_PER_DAY;
 #endif
@@ -1678,8 +1677,8 @@ time_part(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("\"time\" units \"%s\" not recognized",
-							 DatumGetCString(DirectFunctionCall1(textout,
-											 PointerGetDatum(units))))));
+								DatumGetCString(DirectFunctionCall1(textout,
+												 PointerGetDatum(units))))));
 
 				result = 0;
 		}
@@ -1698,7 +1697,7 @@ time_part(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("\"time\" units \"%s\" not recognized",
 						DatumGetCString(DirectFunctionCall1(textout,
-											 PointerGetDatum(units))))));
+												 PointerGetDatum(units))))));
 		result = 0;
 	}
 
@@ -1714,7 +1713,7 @@ time_part(PG_FUNCTION_ARGS)
  * Convert a tm structure to a time data type.
  */
 static int
-tm2timetz(struct pg_tm *tm, fsec_t fsec, int tz, TimeTzADT *result)
+tm2timetz(struct pg_tm * tm, fsec_t fsec, int tz, TimeTzADT *result)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	result->time = ((((tm->tm_hour * MINS_PER_HOUR + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec) *
@@ -1787,6 +1786,7 @@ Datum
 timetz_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
@@ -1831,7 +1831,7 @@ timetz_send(PG_FUNCTION_ARGS)
  * Convert TIME WITH TIME ZONE data type to POSIX time structure.
  */
 static int
-timetz2tm(TimeTzADT *time, struct pg_tm *tm, fsec_t *fsec, int *tzp)
+timetz2tm(TimeTzADT *time, struct pg_tm * tm, fsec_t *fsec, int *tzp)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		trem = time->time;
@@ -1846,8 +1846,8 @@ timetz2tm(TimeTzADT *time, struct pg_tm *tm, fsec_t *fsec, int *tzp)
 	double		trem = time->time;
 
 recalc:
-	TMODULO(trem, tm->tm_hour, (double)SECS_PER_HOUR);
-	TMODULO(trem, tm->tm_min, (double)SECS_PER_MINUTE);
+	TMODULO(trem, tm->tm_hour, (double) SECS_PER_HOUR);
+	TMODULO(trem, tm->tm_min, (double) SECS_PER_MINUTE);
 	TMODULO(trem, tm->tm_sec, 1.0);
 	trem = TIMEROUND(trem);
 	/* roundoff may need to propagate to higher-order fields */
@@ -1995,8 +1995,8 @@ timetz_hash(PG_FUNCTION_ARGS)
 
 	/*
 	 * Specify hash length as sizeof(double) + sizeof(int4), not as
-	 * sizeof(TimeTzADT), so that any garbage pad bytes in the structure
-	 * won't be included in the hash!
+	 * sizeof(TimeTzADT), so that any garbage pad bytes in the structure won't
+	 * be included in the hash!
 	 */
 	return hash_any((unsigned char *) key, sizeof(key->time) + sizeof(key->zone));
 }
@@ -2052,7 +2052,7 @@ timetz_pl_interval(PG_FUNCTION_ARGS)
 		result->time += USECS_PER_DAY;
 #else
 	result->time = time->time + span->time;
-	TMODULO(result->time, time1.time, (double)SECS_PER_DAY);
+	TMODULO(result->time, time1.time, (double) SECS_PER_DAY);
 	if (result->time < 0)
 		result->time += SECS_PER_DAY;
 #endif
@@ -2085,7 +2085,7 @@ timetz_mi_interval(PG_FUNCTION_ARGS)
 		result->time += USECS_PER_DAY;
 #else
 	result->time = time->time - span->time;
-	TMODULO(result->time, time1.time, (double)SECS_PER_DAY);
+	TMODULO(result->time, time1.time, (double) SECS_PER_DAY);
 	if (result->time < 0)
 		result->time += SECS_PER_DAY;
 #endif
@@ -2105,8 +2105,8 @@ Datum
 overlaps_timetz(PG_FUNCTION_ARGS)
 {
 	/*
-	 * The arguments are TimeTzADT *, but we leave them as generic Datums
-	 * for convenience of notation --- and to avoid dereferencing nulls.
+	 * The arguments are TimeTzADT *, but we leave them as generic Datums for
+	 * convenience of notation --- and to avoid dereferencing nulls.
 	 */
 	Datum		ts1 = PG_GETARG_DATUM(0);
 	Datum		te1 = PG_GETARG_DATUM(1);
@@ -2123,9 +2123,9 @@ overlaps_timetz(PG_FUNCTION_ARGS)
 	DatumGetBool(DirectFunctionCall2(timetz_lt,t1,t2))
 
 	/*
-	 * If both endpoints of interval 1 are null, the result is null
-	 * (unknown). If just one endpoint is null, take ts1 as the non-null
-	 * one. Otherwise, take ts1 as the lesser endpoint.
+	 * If both endpoints of interval 1 are null, the result is null (unknown).
+	 * If just one endpoint is null, take ts1 as the non-null one. Otherwise,
+	 * take ts1 as the lesser endpoint.
 	 */
 	if (ts1IsNull)
 	{
@@ -2173,8 +2173,8 @@ overlaps_timetz(PG_FUNCTION_ARGS)
 	if (TIMETZ_GT(ts1, ts2))
 	{
 		/*
-		 * This case is ts1 < te2 OR te1 < te2, which may look redundant
-		 * but in the presence of nulls it's not quite completely so.
+		 * This case is ts1 < te2 OR te1 < te2, which may look redundant but
+		 * in the presence of nulls it's not quite completely so.
 		 */
 		if (te2IsNull)
 			PG_RETURN_NULL();
@@ -2184,8 +2184,8 @@ overlaps_timetz(PG_FUNCTION_ARGS)
 			PG_RETURN_NULL();
 
 		/*
-		 * If te1 is not null then we had ts1 <= te1 above, and we just
-		 * found ts1 >= te2, hence te1 >= te2.
+		 * If te1 is not null then we had ts1 <= te1 above, and we just found
+		 * ts1 >= te2, hence te1 >= te2.
 		 */
 		PG_RETURN_BOOL(false);
 	}
@@ -2200,8 +2200,8 @@ overlaps_timetz(PG_FUNCTION_ARGS)
 			PG_RETURN_NULL();
 
 		/*
-		 * If te2 is not null then we had ts2 <= te2 above, and we just
-		 * found ts2 >= te1, hence te2 >= te1.
+		 * If te2 is not null then we had ts2 <= te2 above, and we just found
+		 * ts2 >= te1, hence te2 >= te1.
 		 */
 		PG_RETURN_BOOL(false);
 	}
@@ -2209,8 +2209,7 @@ overlaps_timetz(PG_FUNCTION_ARGS)
 	{
 		/*
 		 * For ts1 = ts2 the spec says te1 <> te2 OR te1 = te2, which is a
-		 * rather silly way of saying "true if both are nonnull, else
-		 * null".
+		 * rather silly way of saying "true if both are nonnull, else null".
 		 */
 		if (te1IsNull || te2IsNull)
 			PG_RETURN_NULL();
@@ -2297,14 +2296,14 @@ timestamptz_timetz(PG_FUNCTION_ARGS)
 Datum
 datetimetz_timestamptz(PG_FUNCTION_ARGS)
 {
-	DateADT date = PG_GETARG_DATEADT(0);
+	DateADT		date = PG_GETARG_DATEADT(0);
 	TimeTzADT  *time = PG_GETARG_TIMETZADT_P(1);
 	TimestampTz result;
 
 #ifdef HAVE_INT64_TIMESTAMP
 	result = date * USECS_PER_DAY + time->time + time->zone * USECS_PER_SEC;
 #else
-	result = date * (double)SECS_PER_DAY + time->time + time->zone;
+	result = date * (double) SECS_PER_DAY + time->time + time->zone;
 #endif
 
 	PG_RETURN_TIMESTAMP(result);
@@ -2355,8 +2354,8 @@ text_timetz(PG_FUNCTION_ARGS)
 	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for type time with time zone: \"%s\"",
-						VARDATA(str))));
+		  errmsg("invalid input syntax for type time with time zone: \"%s\"",
+				 VARDATA(str))));
 
 	sp = VARDATA(str);
 	dp = dstr;
@@ -2410,12 +2409,12 @@ timetz_part(PG_FUNCTION_ARGS)
 			case DTK_TZ_MINUTE:
 				result = -tz;
 				result /= SECS_PER_MINUTE;
-				FMODULO(result, dummy, (double)SECS_PER_MINUTE);
+				FMODULO(result, dummy, (double) SECS_PER_MINUTE);
 				break;
 
 			case DTK_TZ_HOUR:
 				dummy = -tz;
-				FMODULO(dummy, result, (double)SECS_PER_HOUR);
+				FMODULO(dummy, result, (double) SECS_PER_HOUR);
 				break;
 
 			case DTK_MICROSEC:
@@ -2460,9 +2459,9 @@ timetz_part(PG_FUNCTION_ARGS)
 			default:
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("\"time with time zone\" units \"%s\" not recognized",
-							 DatumGetCString(DirectFunctionCall1(textout,
-											 PointerGetDatum(units))))));
+				errmsg("\"time with time zone\" units \"%s\" not recognized",
+					   DatumGetCString(DirectFunctionCall1(textout,
+												 PointerGetDatum(units))))));
 
 				result = 0;
 		}
@@ -2479,9 +2478,9 @@ timetz_part(PG_FUNCTION_ARGS)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("\"time with time zone\" units \"%s\" not recognized",
-				   DatumGetCString(DirectFunctionCall1(textout,
-											 PointerGetDatum(units))))));
+				 errmsg("\"time with time zone\" units \"%s\" not recognized",
+						DatumGetCString(DirectFunctionCall1(textout,
+												 PointerGetDatum(units))))));
 
 		result = 0;
 	}
@@ -2500,15 +2499,15 @@ timetz_zone(PG_FUNCTION_ARGS)
 	TimeTzADT  *t = PG_GETARG_TIMETZADT_P(1);
 	TimeTzADT  *result;
 	int			tz;
-	char        tzname[TZ_STRLEN_MAX + 1];
-	int         len;
+	char		tzname[TZ_STRLEN_MAX + 1];
+	int			len;
 	pg_tz	   *tzp;
 
 	/*
-	 * Look up the requested timezone.  First we look in the timezone
-	 * database (to handle cases like "America/New_York"), and if that
-	 * fails, we look in the date token table (to handle cases like "EST").
-	 */ 
+	 * Look up the requested timezone.	First we look in the timezone database
+	 * (to handle cases like "America/New_York"), and if that fails, we look
+	 * in the date token table (to handle cases like "EST").
+	 */
 	len = Min(VARSIZE(zone) - VARHDRSZ, TZ_STRLEN_MAX);
 	memcpy(tzname, VARDATA(zone), len);
 	tzname[len] = '\0';
@@ -2516,7 +2515,7 @@ timetz_zone(PG_FUNCTION_ARGS)
 	if (tzp)
 	{
 		/* Get the offset-from-GMT that is valid today for the selected zone */
-		pg_time_t   now;
+		pg_time_t	now;
 		struct pg_tm *tm;
 
 		now = time(NULL);
@@ -2546,7 +2545,7 @@ timetz_zone(PG_FUNCTION_ARGS)
 	}
 
 	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
-	
+
 #ifdef HAVE_INT64_TIMESTAMP
 	result->time = t->time + (t->zone - tz) * USECS_PER_SEC;
 	while (result->time < INT64CONST(0))
@@ -2582,7 +2581,7 @@ timetz_izone(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("\"interval\" time zone \"%s\" not valid",
 						DatumGetCString(DirectFunctionCall1(interval_out,
-											  PointerGetDatum(zone))))));
+												  PointerGetDatum(zone))))));
 
 #ifdef HAVE_INT64_TIMESTAMP
 	tz = -(zone->time / USECS_PER_SEC);

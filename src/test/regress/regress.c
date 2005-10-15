@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/test/regress/regress.c,v 1.63 2005/07/23 14:18:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/test/regress/regress.c,v 1.64 2005/10/15 02:49:51 momjian Exp $
  */
 
 #include "postgres.h"
@@ -54,16 +54,16 @@ regress_dist_ptpath(PG_FUNCTION_ARGS)
 		default:
 
 			/*
-			 * the distance from a point to a path is the smallest
-			 * distance from the point to any of its constituent segments.
+			 * the distance from a point to a path is the smallest distance
+			 * from the point to any of its constituent segments.
 			 */
 			Assert(path->npts > 1);
 			for (i = 0; i < path->npts - 1; ++i)
 			{
 				regress_lseg_construct(&lseg, &path->p[i], &path->p[i + 1]);
 				tmp = DatumGetFloat8(DirectFunctionCall2(dist_ps,
-													  PointPGetDatum(pt),
-												  LsegPGetDatum(&lseg)));
+														 PointPGetDatum(pt),
+													  LsegPGetDatum(&lseg)));
 				if (i == 0 || tmp < result)
 					result = tmp;
 			}
@@ -100,7 +100,7 @@ regress_path_dist(PG_FUNCTION_ARGS)
 
 			tmp = DatumGetFloat8(DirectFunctionCall2(lseg_distance,
 													 LsegPGetDatum(&seg1),
-												  LsegPGetDatum(&seg2)));
+													 LsegPGetDatum(&seg2)));
 			if (!have_min || tmp < min)
 			{
 				min = tmp;
@@ -422,11 +422,11 @@ funny_dup17(PG_FUNCTION_ARGS)
 	if (SPI_processed > 0)
 	{
 		selected = DatumGetInt32(DirectFunctionCall1(int4in,
-											CStringGetDatum(SPI_getvalue(
-												   SPI_tuptable->vals[0],
-												   SPI_tuptable->tupdesc,
-																		 1
-																	))));
+												CStringGetDatum(SPI_getvalue(
+													   SPI_tuptable->vals[0],
+													   SPI_tuptable->tupdesc,
+																			 1
+																		))));
 	}
 
 	elog(DEBUG4, "funny_dup17 (fired %s) on level %3d: %d/%d tuples inserted/selected",
@@ -554,7 +554,7 @@ ttdummy(PG_FUNCTION_ARGS)
 
 	{
 		text	   *seqname = DatumGetTextP(DirectFunctionCall1(textin,
-										CStringGetDatum("ttdummy_seq")));
+											CStringGetDatum("ttdummy_seq")));
 
 		newoff = DirectFunctionCall1(nextval,
 									 PointerGetDatum(seqname));

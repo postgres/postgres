@@ -10,7 +10,7 @@
  *	Win32 (NT, Win2k, XP).	replace() doesn't work on Win95/98/Me.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.40 2005/09/18 09:48:24 petere Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.41 2005/10/15 02:49:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,8 +53,7 @@
 #define palloc(sz)		pgport_palloc(sz)
 #define pstrdup(str)	pgport_pstrdup(str)
 #endif
-
-#else /* FRONTEND */
+#else							/* FRONTEND */
 
 /*
  *	In frontend, fake palloc behavior with these
@@ -104,8 +103,7 @@ fe_repalloc(void *pointer, Size size)
 	}
 	return res;
 }
-
-#endif /* FRONTEND */
+#endif   /* FRONTEND */
 
 
 #if defined(WIN32) || defined(__CYGWIN__)
@@ -119,9 +117,9 @@ pgrename(const char *from, const char *to)
 	int			loops = 0;
 
 	/*
-	 *	We need these loops because even though PostgreSQL uses flags
-	 *	that allow rename while the file is open, other applications
-	 *	might have these files open without those flags.
+	 * We need these loops because even though PostgreSQL uses flags that
+	 * allow rename while the file is open, other applications might have
+	 * these files open without those flags.
 	 */
 #if defined(WIN32) && !defined(__CYGWIN__)
 	while (!MoveFileEx(from, to, MOVEFILE_REPLACE_EXISTING))
@@ -169,9 +167,9 @@ pgunlink(const char *path)
 	int			loops = 0;
 
 	/*
-	 *	We need these loops because even though PostgreSQL uses flags
-	 *	that allow unlink while the file is open, other applications
-	 *	might have these files open without those flags.
+	 * We need these loops because even though PostgreSQL uses flags that
+	 * allow unlink while the file is open, other applications might have
+	 * these files open without those flags.
 	 */
 	while (unlink(path))
 	{
@@ -200,7 +198,7 @@ pgunlink(const char *path)
 }
 
 
-#ifdef WIN32	/* Cygwin has its own symlinks */
+#ifdef WIN32					/* Cygwin has its own symlinks */
 
 /*
  *	pgsymlink support:
@@ -244,7 +242,7 @@ pgsymlink(const char *oldpath, const char *newpath)
 	CreateDirectory(newpath, 0);
 	dirhandle = CreateFile(newpath, GENERIC_READ | GENERIC_WRITE,
 						   0, 0, OPEN_EXISTING,
-		   FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, 0);
+			   FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, 0);
 
 	if (dirhandle == INVALID_HANDLE_VALUE)
 		return -1;
@@ -270,13 +268,13 @@ pgsymlink(const char *oldpath, const char *newpath)
 						reparseBuf->PathBuffer, MAX_PATH);
 
 	/*
-	 * FSCTL_SET_REPARSE_POINT is coded differently depending on SDK
-	 * version; we use our own definition
+	 * FSCTL_SET_REPARSE_POINT is coded differently depending on SDK version;
+	 * we use our own definition
 	 */
 	if (!DeviceIoControl(dirhandle,
-						 CTL_CODE(FILE_DEVICE_FILE_SYSTEM, 41, METHOD_BUFFERED, FILE_ANY_ACCESS),
+	 CTL_CODE(FILE_DEVICE_FILE_SYSTEM, 41, METHOD_BUFFERED, FILE_ANY_ACCESS),
 						 reparseBuf,
-						 reparseBuf->ReparseDataLength + REPARSE_JUNCTION_DATA_BUFFER_HEADER_SIZE,
+	reparseBuf->ReparseDataLength + REPARSE_JUNCTION_DATA_BUFFER_HEADER_SIZE,
 						 0, 0, &len, 0))
 	{
 		LPSTR		msg;
@@ -306,10 +304,8 @@ pgsymlink(const char *oldpath, const char *newpath)
 
 	return 0;
 }
-
-#endif /* WIN32 */
-
-#endif /* defined(WIN32) || defined(__CYGWIN__) */
+#endif   /* WIN32 */
+#endif   /* defined(WIN32) || defined(__CYGWIN__) */
 
 
 /* We undefined this above, so we redefine it */
@@ -321,7 +317,7 @@ pgsymlink(const char *oldpath, const char *newpath)
 /*
  * fnames
  *
- * return a list of the names of objects in the argument directory 
+ * return a list of the names of objects in the argument directory
  */
 static char **
 fnames(char *path)
@@ -351,7 +347,7 @@ fnames(char *path)
 	{
 		if (strcmp(file->d_name, ".") != 0 && strcmp(file->d_name, "..") != 0)
 		{
-			if (numnames+1 >= fnsize)
+			if (numnames + 1 >= fnsize)
 			{
 				fnsize *= 2;
 				filenames = (char **) repalloc(filenames,
@@ -364,8 +360,8 @@ fnames(char *path)
 #ifdef WIN32
 
 	/*
-	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but
-	 * not in released version
+	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but not in
+	 * released version
 	 */
 	if (GetLastError() == ERROR_NO_MORE_FILES)
 		errno = 0;
@@ -423,8 +419,8 @@ rmtree(char *path, bool rmtopdir)
 	struct stat statbuf;
 
 	/*
-	 * we copy all the names out of the directory before we start
-	 * modifying it.
+	 * we copy all the names out of the directory before we start modifying
+	 * it.
 	 */
 	filenames = fnames(path);
 

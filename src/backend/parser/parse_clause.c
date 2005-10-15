@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.142 2005/06/05 00:38:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.143 2005/10/15 02:49:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,10 +87,10 @@ transformFromClause(ParseState *pstate, List *frmList)
 	ListCell   *fl;
 
 	/*
-	 * The grammar will have produced a list of RangeVars,
-	 * RangeSubselects, RangeFunctions, and/or JoinExprs. Transform each
-	 * one (possibly adding entries to the rtable), check for duplicate
-	 * refnames, and then add it to the joinlist and namespaces.
+	 * The grammar will have produced a list of RangeVars, RangeSubselects,
+	 * RangeFunctions, and/or JoinExprs. Transform each one (possibly adding
+	 * entries to the rtable), check for duplicate refnames, and then add it
+	 * to the joinlist and namespaces.
 	 */
 	foreach(fl, frmList)
 	{
@@ -148,8 +148,8 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 		heap_close(pstate->p_target_relation, NoLock);
 
 	/*
-	 * Open target rel and grab suitable lock (which we will hold till end
-	 * of transaction).
+	 * Open target rel and grab suitable lock (which we will hold till end of
+	 * transaction).
 	 *
 	 * analyze.c will eventually do the corresponding heap_close(), but *not*
 	 * release the lock.
@@ -168,14 +168,13 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 	Assert(rte == rt_fetch(rtindex, pstate->p_rtable));
 
 	/*
-	 * Override addRangeTableEntry's default ACL_SELECT permissions check,
-	 * and instead mark target table as requiring exactly the specified
+	 * Override addRangeTableEntry's default ACL_SELECT permissions check, and
+	 * instead mark target table as requiring exactly the specified
 	 * permissions.
 	 *
-	 * If we find an explicit reference to the rel later during parse
-	 * analysis, scanRTEForColumn will add the ACL_SELECT bit back again.
-	 * That can't happen for INSERT but it is possible for UPDATE and
-	 * DELETE.
+	 * If we find an explicit reference to the rel later during parse analysis,
+	 * scanRTEForColumn will add the ACL_SELECT bit back again. That can't
+	 * happen for INSERT but it is possible for UPDATE and DELETE.
 	 */
 	rte->requiredPerms = requiredPerms;
 
@@ -294,10 +293,9 @@ transformJoinUsingClause(ParseState *pstate, List *leftVars, List *rightVars)
 			   *rvars;
 
 	/*
-	 * We cheat a little bit here by building an untransformed operator
-	 * tree whose leaves are the already-transformed Vars.	This is OK
-	 * because transformExpr() won't complain about already-transformed
-	 * subnodes.
+	 * We cheat a little bit here by building an untransformed operator tree
+	 * whose leaves are the already-transformed Vars.  This is OK because
+	 * transformExpr() won't complain about already-transformed subnodes.
 	 */
 	forboth(lvars, leftVars, rvars, rightVars)
 	{
@@ -319,10 +317,10 @@ transformJoinUsingClause(ParseState *pstate, List *leftVars, List *rightVars)
 	}
 
 	/*
-	 * Since the references are already Vars, and are certainly from the
-	 * input relations, we don't have to go through the same pushups that
-	 * transformJoinOnClause() does.  Just invoke transformExpr() to fix
-	 * up the operators, and we're done.
+	 * Since the references are already Vars, and are certainly from the input
+	 * relations, we don't have to go through the same pushups that
+	 * transformJoinOnClause() does.  Just invoke transformExpr() to fix up
+	 * the operators, and we're done.
 	 */
 	result = transformExpr(pstate, result);
 
@@ -349,14 +347,13 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 	int			varno;
 
 	/*
-	 * This is a tad tricky, for two reasons.  First, the namespace that
-	 * the join expression should see is just the two subtrees of the JOIN
-	 * plus any outer references from upper pstate levels.	So,
-	 * temporarily set this pstate's namespace accordingly.  (We need not
-	 * check for refname conflicts, because transformFromClauseItem()
-	 * already did.) NOTE: this code is OK only because the ON clause
-	 * can't legally alter the namespace by causing implicit relation refs
-	 * to be added.
+	 * This is a tad tricky, for two reasons.  First, the namespace that the
+	 * join expression should see is just the two subtrees of the JOIN plus
+	 * any outer references from upper pstate levels.  So, temporarily set
+	 * this pstate's namespace accordingly.  (We need not check for refname
+	 * conflicts, because transformFromClauseItem() already did.) NOTE: this
+	 * code is OK only because the ON clause can't legally alter the namespace
+	 * by causing implicit relation refs to be added.
 	 */
 	save_relnamespace = pstate->p_relnamespace;
 	save_varnamespace = pstate->p_varnamespace;
@@ -371,11 +368,10 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 
 	/*
 	 * Second, we need to check that the ON condition doesn't refer to any
-	 * rels outside the input subtrees of the JOIN.  It could do that
-	 * despite our hack on the namespace if it uses fully-qualified names.
-	 * So, grovel through the transformed clause and make sure there are
-	 * no bogus references.  (Outer references are OK, and are ignored
-	 * here.)
+	 * rels outside the input subtrees of the JOIN.  It could do that despite
+	 * our hack on the namespace if it uses fully-qualified names. So, grovel
+	 * through the transformed clause and make sure there are no bogus
+	 * references.	(Outer references are OK, and are ignored here.)
 	 */
 	clause_varnos = pull_varnos(result);
 	clause_varnos = bms_del_members(clause_varnos, containedRels);
@@ -383,8 +379,8 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-				 errmsg("JOIN/ON clause refers to \"%s\", which is not part of JOIN",
-						rt_fetch(varno, pstate->p_rtable)->eref->aliasname)));
+		 errmsg("JOIN/ON clause refers to \"%s\", which is not part of JOIN",
+				rt_fetch(varno, pstate->p_rtable)->eref->aliasname)));
 	}
 	bms_free(clause_varnos);
 
@@ -400,9 +396,9 @@ transformTableEntry(ParseState *pstate, RangeVar *r)
 	RangeTblEntry *rte;
 
 	/*
-	 * mark this entry to indicate it comes from the FROM clause. In SQL,
-	 * the target list can only refer to range variables specified in the
-	 * from clause but we follow the more powerful POSTQUEL semantics and
+	 * mark this entry to indicate it comes from the FROM clause. In SQL, the
+	 * target list can only refer to range variables specified in the from
+	 * clause but we follow the more powerful POSTQUEL semantics and
 	 * automatically generate the range variable if not specified. However
 	 * there are times we need to know whether the entries are legitimate.
 	 */
@@ -424,9 +420,9 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	RangeTblEntry *rte;
 
 	/*
-	 * We require user to supply an alias for a subselect, per SQL92. To
-	 * relax this, we'd have to be prepared to gin up a unique alias for
-	 * an unlabeled subselect.
+	 * We require user to supply an alias for a subselect, per SQL92. To relax
+	 * this, we'd have to be prepared to gin up a unique alias for an
+	 * unlabeled subselect.
 	 */
 	if (r->alias == NULL)
 		ereport(ERROR,
@@ -439,9 +435,9 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	parsetrees = parse_sub_analyze(r->subquery, pstate);
 
 	/*
-	 * Check that we got something reasonable.	Most of these conditions
-	 * are probably impossible given restrictions of the grammar, but
-	 * check 'em anyway.
+	 * Check that we got something reasonable.	Most of these conditions are
+	 * probably impossible given restrictions of the grammar, but check 'em
+	 * anyway.
 	 */
 	if (list_length(parsetrees) != 1)
 		elog(ERROR, "unexpected parse analysis result for subquery in FROM");
@@ -457,19 +453,17 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 				 errmsg("subquery in FROM may not have SELECT INTO")));
 
 	/*
-	 * The subquery cannot make use of any variables from FROM items
-	 * created earlier in the current query.  Per SQL92, the scope of a
-	 * FROM item does not include other FROM items.  Formerly we hacked
-	 * the namespace so that the other variables weren't even visible, but
-	 * it seems more useful to leave them visible and give a specific
-	 * error message.
+	 * The subquery cannot make use of any variables from FROM items created
+	 * earlier in the current query.  Per SQL92, the scope of a FROM item does
+	 * not include other FROM items.  Formerly we hacked the namespace so that
+	 * the other variables weren't even visible, but it seems more useful to
+	 * leave them visible and give a specific error message.
 	 *
 	 * XXX this will need further work to support SQL99's LATERAL() feature,
 	 * wherein such references would indeed be legal.
 	 *
-	 * We can skip groveling through the subquery if there's not anything
-	 * visible in the current query.  Also note that outer references are
-	 * OK.
+	 * We can skip groveling through the subquery if there's not anything visible
+	 * in the current query.  Also note that outer references are OK.
 	 */
 	if (pstate->p_relnamespace || pstate->p_varnamespace)
 	{
@@ -500,9 +494,9 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 
 	/*
 	 * Get function name for possible use as alias.  We use the same
-	 * transformation rules as for a SELECT output expression.  For a
-	 * FuncCall node, the result will be the function name, but it is
-	 * possible for the grammar to hand back other node types.
+	 * transformation rules as for a SELECT output expression.	For a FuncCall
+	 * node, the result will be the function name, but it is possible for the
+	 * grammar to hand back other node types.
 	 */
 	funcname = FigureColname(r->funccallnode);
 
@@ -514,8 +508,8 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 	/*
 	 * The function parameters cannot make use of any variables from other
 	 * FROM items.	(Compare to transformRangeSubselect(); the coding is
-	 * different though because we didn't parse as a sub-select with its
-	 * own level of namespace.)
+	 * different though because we didn't parse as a sub-select with its own
+	 * level of namespace.)
 	 *
 	 * XXX this will need further work to support SQL99's LATERAL() feature,
 	 * wherein such references would indeed be legal.
@@ -529,8 +523,8 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 	}
 
 	/*
-	 * Disallow aggregate functions in the expression.	(No reason to
-	 * postpone this check until parseCheckAggregates.)
+	 * Disallow aggregate functions in the expression.	(No reason to postpone
+	 * this check until parseCheckAggregates.)
 	 */
 	if (pstate->p_hasAggs)
 	{
@@ -541,8 +535,8 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 	}
 
 	/*
-	 * If a coldeflist is supplied, ensure it defines a legal set of names
-	 * (no duplicates) and datatypes (no pseudo-types, for instance).
+	 * If a coldeflist is supplied, ensure it defines a legal set of names (no
+	 * duplicates) and datatypes (no pseudo-types, for instance).
 	 */
 	if (r->coldeflist)
 	{
@@ -576,7 +570,7 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
  * (We could extract this from the function return node, but it saves cycles
  * to pass it back separately.)
  *
- * *top_rti: receives the rangetable index of top_rte.  (Ditto.)
+ * *top_rti: receives the rangetable index of top_rte.	(Ditto.)
  *
  * *relnamespace: receives a List of the RTEs exposed as relation names
  * by this item.
@@ -599,7 +593,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		/* Plain relation reference */
 		RangeTblRef *rtr;
 		RangeTblEntry *rte;
-		int		rtindex;
+		int			rtindex;
 
 		rte = transformTableEntry(pstate, (RangeVar *) n);
 		/* assume new rte is at end */
@@ -618,7 +612,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		/* sub-SELECT is like a plain relation */
 		RangeTblRef *rtr;
 		RangeTblEntry *rte;
-		int		rtindex;
+		int			rtindex;
 
 		rte = transformRangeSubselect(pstate, (RangeSubselect *) n);
 		/* assume new rte is at end */
@@ -637,7 +631,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		/* function is like a plain relation */
 		RangeTblRef *rtr;
 		RangeTblEntry *rte;
-		int		rtindex;
+		int			rtindex;
 
 		rte = transformRangeFunction(pstate, (RangeFunction *) n);
 		/* assume new rte is at end */
@@ -688,8 +682,8 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 										  &r_containedRels);
 
 		/*
-		 * Check for conflicting refnames in left and right subtrees. Must
-		 * do this because higher levels will assume I hand back a self-
+		 * Check for conflicting refnames in left and right subtrees. Must do
+		 * this because higher levels will assume I hand back a self-
 		 * consistent namespace subtree.
 		 */
 		checkNameSpaceConflicts(pstate, l_relnamespace, r_relnamespace);
@@ -715,12 +709,12 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 
 		/*
 		 * Natural join does not explicitly specify columns; must generate
-		 * columns to join. Need to run through the list of columns from
-		 * each table or join result and match up the column names. Use
-		 * the first table, and check every column in the second table for
-		 * a match.  (We'll check that the matches were unique later on.)
-		 * The result of this step is a list of column names just like an
-		 * explicitly-written USING list.
+		 * columns to join. Need to run through the list of columns from each
+		 * table or join result and match up the column names. Use the first
+		 * table, and check every column in the second table for a match.
+		 * (We'll check that the matches were unique later on.) The result of
+		 * this step is a list of column names just like an explicitly-written
+		 * USING list.
 		 */
 		if (j->isNatural)
 		{
@@ -763,9 +757,9 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		if (j->using)
 		{
 			/*
-			 * JOIN/USING (or NATURAL JOIN, as transformed above).
-			 * Transform the list into an explicit ON-condition, and
-			 * generate a list of merged result columns.
+			 * JOIN/USING (or NATURAL JOIN, as transformed above). Transform
+			 * the list into an explicit ON-condition, and generate a list of
+			 * merged result columns.
 			 */
 			List	   *ucols = j->using;
 			List	   *l_usingvars = NIL;
@@ -917,10 +911,10 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		*top_rti = j->rtindex;
 
 		/*
-		 * Prepare returned namespace list.  If the JOIN has an alias
-		 * then it hides the contained RTEs as far as the relnamespace
-		 * goes; otherwise, put the contained RTEs and *not* the JOIN
-		 * into relnamespace.
+		 * Prepare returned namespace list.  If the JOIN has an alias then it
+		 * hides the contained RTEs as far as the relnamespace goes;
+		 * otherwise, put the contained RTEs and *not* the JOIN into
+		 * relnamespace.
 		 */
 		if (j->alias)
 		{
@@ -975,10 +969,10 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 	}
 
 	/*
-	 * Insert coercion functions if needed.  Note that a difference in
-	 * typmod can only happen if input has typmod but outcoltypmod is -1.
-	 * In that case we insert a RelabelType to clearly mark that result's
-	 * typmod is not same as input.  We never need coerce_type_typmod.
+	 * Insert coercion functions if needed.  Note that a difference in typmod
+	 * can only happen if input has typmod but outcoltypmod is -1. In that
+	 * case we insert a RelabelType to clearly mark that result's typmod is
+	 * not same as input.  We never need coerce_type_typmod.
 	 */
 	if (l_colvar->vartype != outcoltype)
 		l_node = coerce_type(pstate, (Node *) l_colvar, l_colvar->vartype,
@@ -1030,8 +1024,8 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 		case JOIN_FULL:
 			{
 				/*
-				 * Here we must build a COALESCE expression to ensure that
-				 * the join output is non-null if either input is.
+				 * Here we must build a COALESCE expression to ensure that the
+				 * join output is non-null if either input is.
 				 */
 				CoalesceExpr *c = makeNode(CoalesceExpr);
 
@@ -1095,9 +1089,9 @@ transformLimitClause(ParseState *pstate, Node *clause,
 	qual = coerce_to_integer(pstate, qual, constructName);
 
 	/*
-	 * LIMIT can't refer to any vars or aggregates of the current query;
-	 * we don't allow subselects either (though that case would at least
-	 * be sensible)
+	 * LIMIT can't refer to any vars or aggregates of the current query; we
+	 * don't allow subselects either (though that case would at least be
+	 * sensible)
 	 */
 	if (contain_vars_of_level(qual, 0))
 	{
@@ -1193,20 +1187,19 @@ findTargetlistEntry(ParseState *pstate, Node *node, List **tlist, int clause)
 		{
 			/*
 			 * In GROUP BY, we must prefer a match against a FROM-clause
-			 * column to one against the targetlist.  Look to see if there
-			 * is a matching column.  If so, fall through to let
-			 * transformExpr() do the rest.  NOTE: if name could refer
-			 * ambiguously to more than one column name exposed by FROM,
-			 * colNameToVar will ereport(ERROR).  That's just what we want
-			 * here.
+			 * column to one against the targetlist.  Look to see if there is
+			 * a matching column.  If so, fall through to let transformExpr()
+			 * do the rest.  NOTE: if name could refer ambiguously to more
+			 * than one column name exposed by FROM, colNameToVar will
+			 * ereport(ERROR).	That's just what we want here.
 			 *
-			 * Small tweak for 7.4.3: ignore matches in upper query levels.
-			 * This effectively changes the search order for bare names to
-			 * (1) local FROM variables, (2) local targetlist aliases, (3)
-			 * outer FROM variables, whereas before it was (1) (3) (2).
-			 * SQL92 and SQL99 do not allow GROUPing BY an outer
-			 * reference, so this breaks no cases that are legal per spec,
-			 * and it seems a more self-consistent behavior.
+			 * Small tweak for 7.4.3: ignore matches in upper query levels. This
+			 * effectively changes the search order for bare names to (1)
+			 * local FROM variables, (2) local targetlist aliases, (3) outer
+			 * FROM variables, whereas before it was (1) (3) (2). SQL92 and
+			 * SQL99 do not allow GROUPing BY an outer reference, so this
+			 * breaks no cases that are legal per spec, and it seems a more
+			 * self-consistent behavior.
 			 */
 			if (colNameToVar(pstate, name, true) != NULL)
 				name = NULL;
@@ -1292,9 +1285,9 @@ findTargetlistEntry(ParseState *pstate, Node *node, List **tlist, int clause)
 	}
 
 	/*
-	 * If no matches, construct a new target entry which is appended to
-	 * the end of the target list.	This target is given resjunk = TRUE so
-	 * that it will not be projected into the final tuple.
+	 * If no matches, construct a new target entry which is appended to the
+	 * end of the target list.	This target is given resjunk = TRUE so that it
+	 * will not be projected into the final tuple.
 	 */
 	target_result = transformTargetEntry(pstate, node, expr, NULL, true);
 
@@ -1349,11 +1342,11 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 
 		/*
 		 * If the GROUP BY clause matches the ORDER BY clause, we want to
-		 * adopt the ordering operators from the latter rather than using
-		 * the default ops.  This allows "GROUP BY foo ORDER BY foo DESC"
-		 * to be done with only one sort step.	Note we are assuming that
-		 * any user-supplied ordering operator will bring equal values
-		 * together, which is all that GROUP BY needs.
+		 * adopt the ordering operators from the latter rather than using the
+		 * default ops.  This allows "GROUP BY foo ORDER BY foo DESC" to be
+		 * done with only one sort step.  Note we are assuming that any
+		 * user-supplied ordering operator will bring equal values together,
+		 * which is all that GROUP BY needs.
 		 */
 		if (sortItem &&
 			((SortClause *) lfirst(sortItem))->tleSortGroupRef ==
@@ -1435,11 +1428,11 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 		/* We had SELECT DISTINCT */
 
 		/*
-		 * All non-resjunk elements from target list that are not already
-		 * in the sort list should be added to it.	(We don't really care
-		 * what order the DISTINCT fields are checked in, so we can leave
-		 * the user's ORDER BY spec alone, and just add additional sort
-		 * keys to it to ensure that all targetlist items get sorted.)
+		 * All non-resjunk elements from target list that are not already in
+		 * the sort list should be added to it.  (We don't really care what
+		 * order the DISTINCT fields are checked in, so we can leave the
+		 * user's ORDER BY spec alone, and just add additional sort keys to it
+		 * to ensure that all targetlist items get sorted.)
 		 */
 		*sortClause = addAllTargetsToSortList(pstate,
 											  *sortClause,
@@ -1449,9 +1442,9 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 		/*
 		 * Now, DISTINCT list consists of all non-resjunk sortlist items.
 		 * Actually, all the sortlist items had better be non-resjunk!
-		 * Otherwise, user wrote SELECT DISTINCT with an ORDER BY item
-		 * that does not appear anywhere in the SELECT targetlist, and we
-		 * can't implement that with only one sorting pass...
+		 * Otherwise, user wrote SELECT DISTINCT with an ORDER BY item that
+		 * does not appear anywhere in the SELECT targetlist, and we can't
+		 * implement that with only one sorting pass...
 		 */
 		foreach(slitem, *sortClause)
 		{
@@ -1474,16 +1467,16 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 		 * If the user writes both DISTINCT ON and ORDER BY, then the two
 		 * expression lists must match (until one or the other runs out).
 		 * Otherwise the ORDER BY requires a different sort order than the
-		 * DISTINCT does, and we can't implement that with only one sort
-		 * pass (and if we do two passes, the results will be rather
+		 * DISTINCT does, and we can't implement that with only one sort pass
+		 * (and if we do two passes, the results will be rather
 		 * unpredictable). However, it's OK to have more DISTINCT ON
-		 * expressions than ORDER BY expressions; we can just add the
-		 * extra DISTINCT values to the sort list, much as we did above
-		 * for ordinary DISTINCT fields.
+		 * expressions than ORDER BY expressions; we can just add the extra
+		 * DISTINCT values to the sort list, much as we did above for ordinary
+		 * DISTINCT fields.
 		 *
-		 * Actually, it'd be OK for the common prefixes of the two lists to
-		 * match in any order, but implementing that check seems like more
-		 * trouble than it's worth.
+		 * Actually, it'd be OK for the common prefixes of the two lists to match
+		 * in any order, but implementing that check seems like more trouble
+		 * than it's worth.
 		 */
 		ListCell   *nextsortlist = list_head(*sortClause);
 
@@ -1508,12 +1501,12 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 			else
 			{
 				*sortClause = addTargetToSortList(pstate, tle,
-												*sortClause, *targetlist,
+												  *sortClause, *targetlist,
 												  SORTBY_ASC, NIL, true);
 
 				/*
-				 * Probably, the tle should always have been added at the
-				 * end of the sort list ... but search to be safe.
+				 * Probably, the tle should always have been added at the end
+				 * of the sort list ... but search to be safe.
 				 */
 				foreach(slitem, *sortClause)
 				{
@@ -1638,7 +1631,7 @@ assignSortGroupRef(TargetEntry *tle, List *tlist)
 	Index		maxRef;
 	ListCell   *l;
 
-	if (tle->ressortgroupref)			/* already has one? */
+	if (tle->ressortgroupref)	/* already has one? */
 		return tle->ressortgroupref;
 
 	/* easiest way to pick an unused refnumber: max used + 1 */

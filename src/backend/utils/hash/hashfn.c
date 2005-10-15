@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/hashfn.c,v 1.24 2005/06/08 23:02:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/hashfn.c,v 1.25 2005/10/15 02:49:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ uint32
 bitmap_hash(const void *key, Size keysize)
 {
 	Assert(keysize == sizeof(Bitmapset *));
-	return bms_hash_value(*((const Bitmapset * const *) key));
+	return bms_hash_value(*((const Bitmapset *const *) key));
 }
 
 /*
@@ -74,6 +74,6 @@ int
 bitmap_match(const void *key1, const void *key2, Size keysize)
 {
 	Assert(keysize == sizeof(Bitmapset *));
-	return !bms_equal(*((const Bitmapset * const *) key1),
-					  *((const Bitmapset * const *) key2));
+	return !bms_equal(*((const Bitmapset *const *) key1),
+					  *((const Bitmapset *const *) key2));
 }

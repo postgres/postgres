@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.42 2005/09/22 15:09:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.43 2005/10/15 02:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,8 +126,8 @@ TidNext(TidScanState *node)
 			return slot;		/* return empty slot */
 
 		/*
-		 * XXX shouldn't we check here to make sure tuple matches TID
-		 * list? In runtime-key case this is not certain, is it?
+		 * XXX shouldn't we check here to make sure tuple matches TID list? In
+		 * runtime-key case this is not certain, is it?
 		 */
 
 		ExecStoreTuple(estate->es_evTuple[scanrelid - 1],
@@ -150,9 +150,9 @@ TidNext(TidScanState *node)
 	tuple = &(node->tss_htup);
 
 	/*
-	 * ok, now that we have what we need, fetch an tid tuple. if scanning
-	 * this tid succeeded then return the appropriate heap tuple.. else
-	 * return NULL.
+	 * ok, now that we have what we need, fetch an tid tuple. if scanning this
+	 * tid succeeded then return the appropriate heap tuple.. else return
+	 * NULL.
 	 */
 	bBackward = ScanDirectionIsBackward(direction);
 	if (bBackward)
@@ -184,10 +184,10 @@ TidNext(TidScanState *node)
 
 			/*
 			 * store the scanned tuple in the scan tuple slot of the scan
-			 * state.  Eventually we will only do this and not return a
-			 * tuple.  Note: we pass 'false' because tuples returned by
-			 * amgetnext are pointers onto disk pages and were not created
-			 * with palloc() and so should not be pfree()'d.
+			 * state.  Eventually we will only do this and not return a tuple.
+			 * Note: we pass 'false' because tuples returned by amgetnext are
+			 * pointers onto disk pages and were not created with palloc() and
+			 * so should not be pfree()'d.
 			 */
 			ExecStoreTuple(tuple,		/* tuple to store */
 						   slot,	/* slot to store in */
@@ -196,8 +196,7 @@ TidNext(TidScanState *node)
 
 			/*
 			 * At this point we have an extra pin on the buffer, because
-			 * ExecStoreTuple incremented the pin count. Drop our local
-			 * pin.
+			 * ExecStoreTuple incremented the pin count. Drop our local pin.
 			 */
 			ReleaseBuffer(buffer);
 
@@ -229,8 +228,8 @@ TidNext(TidScanState *node)
 	}
 
 	/*
-	 * if we get here it means the tid scan failed so we are at the end of
-	 * the scan..
+	 * if we get here it means the tid scan failed so we are at the end of the
+	 * scan..
 	 */
 	return ExecClearTuple(slot);
 }
@@ -420,8 +419,8 @@ ExecInitTidScan(TidScan *node, EState *estate)
 	tidstate->tss_TidPtr = -1;
 
 	/*
-	 * get the range table and direction information from the execution
-	 * state (these are needed to open the relations).
+	 * get the range table and direction information from the execution state
+	 * (these are needed to open the relations).
 	 */
 	rangeTable = estate->es_range_table;
 

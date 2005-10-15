@@ -245,8 +245,8 @@ timetravel(PG_FUNCTION_ARGS)
 		elog(ERROR, "timetravel (%s): %s must be NOT NULL", relname, args[a_time_off]);
 
 	/*
-	 * If DELETE/UPDATE of tuple with stop_date neq INFINITY then say
-	 * upper Executor to skip operation for this tuple
+	 * If DELETE/UPDATE of tuple with stop_date neq INFINITY then say upper
+	 * Executor to skip operation for this tuple
 	 */
 	if (newtuple != NULL)
 	{							/* UPDATE */
@@ -263,8 +263,7 @@ timetravel(PG_FUNCTION_ARGS)
 				 relname, args[a_time_on], args[a_time_off]);
 	}
 	if (oldtimeoff != NOEND_ABSTIME)
-	{							/* current record is a deleted/updated
-								 * record */
+	{							/* current record is a deleted/updated record */
 		pfree(relname);
 		return PointerGetDatum(NULL);
 	}
@@ -285,8 +284,7 @@ timetravel(PG_FUNCTION_ARGS)
 	}
 
 	/* change date column(s) */
-	cvals[attnum[a_time_off] - 1] = newtimeoff; /* stop_date eq current
-												 * date */
+	cvals[attnum[a_time_off] - 1] = newtimeoff; /* stop_date eq current date */
 	cnulls[attnum[a_time_off] - 1] = ' ';
 
 	if (!newtuple)
@@ -299,8 +297,8 @@ timetravel(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Construct ident string as TriggerName $ TriggeredRelationId and try
-	 * to find prepared execution plan.
+	 * Construct ident string as TriggerName $ TriggeredRelationId and try to
+	 * find prepared execution plan.
 	 */
 	snprintf(ident, sizeof(ident), "%s$%u", trigger->tgname, rel->rd_id);
 	plan = find_plan(ident, &Plans, &nPlans);
@@ -339,9 +337,8 @@ timetravel(PG_FUNCTION_ARGS)
 			elog(ERROR, "timetravel (%s): SPI_prepare returned %d", relname, SPI_result);
 
 		/*
-		 * Remember that SPI_prepare places plan in current memory context
-		 * - so, we have to save plan in Top memory context for latter
-		 * use.
+		 * Remember that SPI_prepare places plan in current memory context -
+		 * so, we have to save plan in Top memory context for latter use.
 		 */
 		pplan = SPI_saveplan(pplan);
 		if (pplan == NULL)
@@ -398,8 +395,8 @@ timetravel(PG_FUNCTION_ARGS)
 		rettuple = SPI_modifytuple(rel, newtuple, chnattrs, chattrs, newvals, newnulls);
 
 		/*
-		 * SPI_copytuple allocates tmptuple in upper executor context -
-		 * have to free allocation using SPI_pfree
+		 * SPI_copytuple allocates tmptuple in upper executor context - have
+		 * to free allocation using SPI_pfree
 		 */
 		/* SPI_pfree(tmptuple); */
 	}

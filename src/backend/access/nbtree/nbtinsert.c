@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.126 2005/10/12 17:18:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.127 2005/10/15 02:49:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,30 +93,29 @@ top:
 
 	/*
 	 * If the page was split between the time that we surrendered our read
-	 * lock and acquired our write lock, then this page may no longer be
-	 * the right place for the key we want to insert.  In this case, we
-	 * need to move right in the tree.	See Lehman and Yao for an
-	 * excruciatingly precise description.
+	 * lock and acquired our write lock, then this page may no longer be the
+	 * right place for the key we want to insert.  In this case, we need to
+	 * move right in the tree.	See Lehman and Yao for an excruciatingly
+	 * precise description.
 	 */
 	buf = _bt_moveright(rel, buf, natts, itup_scankey, false, BT_WRITE);
 
 	/*
-	 * If we're not allowing duplicates, make sure the key isn't already
-	 * in the index.
+	 * If we're not allowing duplicates, make sure the key isn't already in
+	 * the index.
 	 *
-	 * NOTE: obviously, _bt_check_unique can only detect keys that are
-	 * already in the index; so it cannot defend against concurrent
-	 * insertions of the same key.	We protect against that by means of
-	 * holding a write lock on the target page.  Any other would-be
-	 * inserter of the same key must acquire a write lock on the same
-	 * target page, so only one would-be inserter can be making the check
-	 * at one time.  Furthermore, once we are past the check we hold write
-	 * locks continuously until we have performed our insertion, so no
-	 * later inserter can fail to see our insertion.  (This requires some
-	 * care in _bt_insertonpg.)
+	 * NOTE: obviously, _bt_check_unique can only detect keys that are already in
+	 * the index; so it cannot defend against concurrent insertions of the
+	 * same key.  We protect against that by means of holding a write lock on
+	 * the target page.  Any other would-be inserter of the same key must
+	 * acquire a write lock on the same target page, so only one would-be
+	 * inserter can be making the check at one time.  Furthermore, once we are
+	 * past the check we hold write locks continuously until we have performed
+	 * our insertion, so no later inserter can fail to see our insertion.
+	 * (This requires some care in _bt_insertonpg.)
 	 *
-	 * If we must wait for another xact, we release the lock while waiting,
-	 * and then must start over completely.
+	 * If we must wait for another xact, we release the lock while waiting, and
+	 * then must start over completely.
 	 */
 	if (index_is_unique)
 	{
@@ -167,8 +166,8 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 	maxoff = PageGetMaxOffsetNumber(page);
 
 	/*
-	 * Find first item >= proposed new item.  Note we could also get a
-	 * pointer to end-of-page here.
+	 * Find first item >= proposed new item.  Note we could also get a pointer
+	 * to end-of-page here.
 	 */
 	offset = _bt_binsrch(rel, buf, natts, itup_scankey, false);
 
@@ -194,24 +193,24 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 			/*
 			 * We can skip items that are marked killed.
 			 *
-			 * Formerly, we applied _bt_isequal() before checking the kill
-			 * flag, so as to fall out of the item loop as soon as
-			 * possible. However, in the presence of heavy update activity
-			 * an index may contain many killed items with the same key;
-			 * running _bt_isequal() on each killed item gets expensive.
-			 * Furthermore it is likely that the non-killed version of
-			 * each key appears first, so that we didn't actually get to
-			 * exit any sooner anyway. So now we just advance over killed
-			 * items as quickly as we can. We only apply _bt_isequal()
-			 * when we get to a non-killed item or the end of the page.
+			 * Formerly, we applied _bt_isequal() before checking the kill flag,
+			 * so as to fall out of the item loop as soon as possible.
+			 * However, in the presence of heavy update activity an index may
+			 * contain many killed items with the same key; running
+			 * _bt_isequal() on each killed item gets expensive. Furthermore
+			 * it is likely that the non-killed version of each key appears
+			 * first, so that we didn't actually get to exit any sooner
+			 * anyway. So now we just advance over killed items as quickly as
+			 * we can. We only apply _bt_isequal() when we get to a non-killed
+			 * item or the end of the page.
 			 */
 			if (!ItemIdDeleted(curitemid))
 			{
 				/*
-				 * _bt_compare returns 0 for (1,NULL) and (1,NULL) -
-				 * this's how we handling NULLs - and so we must not use
-				 * _bt_compare in real comparison, but only for
-				 * ordering/finding items on pages. - vadim 03/24/97
+				 * _bt_compare returns 0 for (1,NULL) and (1,NULL) - this's
+				 * how we handling NULLs - and so we must not use _bt_compare
+				 * in real comparison, but only for ordering/finding items on
+				 * pages. - vadim 03/24/97
 				 */
 				if (!_bt_isequal(itupdesc, page, offset, natts, itup_scankey))
 					break;		/* we're past all the equal tuples */
@@ -246,15 +245,15 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 					 */
 					ereport(ERROR,
 							(errcode(ERRCODE_UNIQUE_VIOLATION),
-							 errmsg("duplicate key violates unique constraint \"%s\"",
-									RelationGetRelationName(rel))));
+					errmsg("duplicate key violates unique constraint \"%s\"",
+						   RelationGetRelationName(rel))));
 				}
 				else if (htup.t_data != NULL)
 				{
 					/*
-					 * Hmm, if we can't see the tuple, maybe it can be
-					 * marked killed.  This logic should match
-					 * index_getnext and btgettuple.
+					 * Hmm, if we can't see the tuple, maybe it can be marked
+					 * killed.	This logic should match index_getnext and
+					 * btgettuple.
 					 */
 					LockBuffer(hbuffer, BUFFER_LOCK_SHARE);
 					if (HeapTupleSatisfiesVacuum(htup.t_data, RecentGlobalXmin,
@@ -377,15 +376,15 @@ _bt_insertonpg(Relation rel,
 	itemsz = IndexTupleDSize(btitem->bti_itup)
 		+ (sizeof(BTItemData) - sizeof(IndexTupleData));
 
-	itemsz = MAXALIGN(itemsz);	/* be safe, PageAddItem will do this but
-								 * we need to be consistent */
+	itemsz = MAXALIGN(itemsz);	/* be safe, PageAddItem will do this but we
+								 * need to be consistent */
 
 	/*
-	 * Check whether the item can fit on a btree page at all. (Eventually,
-	 * we ought to try to apply TOAST methods if not.) We actually need to
-	 * be able to fit three items on every page, so restrict any one item
-	 * to 1/3 the per-page available space. Note that at this point,
-	 * itemsz doesn't include the ItemId.
+	 * Check whether the item can fit on a btree page at all. (Eventually, we
+	 * ought to try to apply TOAST methods if not.) We actually need to be
+	 * able to fit three items on every page, so restrict any one item to 1/3
+	 * the per-page available space. Note that at this point, itemsz doesn't
+	 * include the ItemId.
 	 */
 	if (itemsz > BTMaxItemSize(page))
 		ereport(ERROR,
@@ -393,9 +392,9 @@ _bt_insertonpg(Relation rel,
 				 errmsg("index row size %lu exceeds btree maximum, %lu",
 						(unsigned long) itemsz,
 						(unsigned long) BTMaxItemSize(page)),
-				 errhint("Values larger than 1/3 of a buffer page cannot be indexed.\n"
-						 "Consider a function index of an MD5 hash of the value, "
-						 "or use full text indexing.")));
+		errhint("Values larger than 1/3 of a buffer page cannot be indexed.\n"
+				"Consider a function index of an MD5 hash of the value, "
+				"or use full text indexing.")));
 
 	/*
 	 * Determine exactly where new item will go.
@@ -432,11 +431,11 @@ _bt_insertonpg(Relation rel,
 			/*
 			 * step right to next non-dead page
 			 *
-			 * must write-lock that page before releasing write lock on
-			 * current page; else someone else's _bt_check_unique scan
-			 * could fail to see our insertion.  write locks on
-			 * intermediate dead pages won't do because we don't know when
-			 * they will get de-linked from the tree.
+			 * must write-lock that page before releasing write lock on current
+			 * page; else someone else's _bt_check_unique scan could fail to
+			 * see our insertion.  write locks on intermediate dead pages
+			 * won't do because we don't know when they will get de-linked
+			 * from the tree.
 			 */
 			Buffer		rbuf = InvalidBuffer;
 
@@ -459,9 +458,9 @@ _bt_insertonpg(Relation rel,
 		}
 
 		/*
-		 * Now we are on the right page, so find the insert position. If
-		 * we moved right at all, we know we should insert at the start of
-		 * the page, else must find the position by searching.
+		 * Now we are on the right page, so find the insert position. If we
+		 * moved right at all, we know we should insert at the start of the
+		 * page, else must find the position by searching.
 		 */
 		if (movedright)
 			newitemoff = P_FIRSTDATAKEY(lpageop);
@@ -472,9 +471,9 @@ _bt_insertonpg(Relation rel,
 	/*
 	 * Do we need to split the page to fit the item on it?
 	 *
-	 * Note: PageGetFreeSpace() subtracts sizeof(ItemIdData) from its result,
-	 * so this comparison is correct even though we appear to be
-	 * accounting only for the item and not for its line pointer.
+	 * Note: PageGetFreeSpace() subtracts sizeof(ItemIdData) from its result, so
+	 * this comparison is correct even though we appear to be accounting only
+	 * for the item and not for its line pointer.
 	 */
 	if (PageGetFreeSpace(page) < itemsz)
 	{
@@ -522,12 +521,11 @@ _bt_insertonpg(Relation rel,
 		itup_blkno = BufferGetBlockNumber(buf);
 
 		/*
-		 * If we are doing this insert because we split a page that was
-		 * the only one on its tree level, but was not the root, it may
-		 * have been the "fast root".  We need to ensure that the fast
-		 * root link points at or above the current page.  We can safely
-		 * acquire a lock on the metapage here --- see comments for
-		 * _bt_newroot().
+		 * If we are doing this insert because we split a page that was the
+		 * only one on its tree level, but was not the root, it may have been
+		 * the "fast root".  We need to ensure that the fast root link points
+		 * at or above the current page.  We can safely acquire a lock on the
+		 * metapage here --- see comments for _bt_newroot().
 		 */
 		if (split_only_page)
 		{
@@ -692,11 +690,11 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	lopaque->btpo.level = ropaque->btpo.level = oopaque->btpo.level;
 
 	/*
-	 * If the page we're splitting is not the rightmost page at its level
-	 * in the tree, then the first entry on the page is the high key for
-	 * the page.  We need to copy that to the right half.  Otherwise
-	 * (meaning the rightmost page case), all the items on the right half
-	 * will be user data.
+	 * If the page we're splitting is not the rightmost page at its level in
+	 * the tree, then the first entry on the page is the high key for the
+	 * page.  We need to copy that to the right half.  Otherwise (meaning the
+	 * rightmost page case), all the items on the right half will be user
+	 * data.
 	 */
 	rightoff = P_HIKEY;
 
@@ -712,9 +710,9 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	}
 
 	/*
-	 * The "high key" for the new left page will be the first key that's
-	 * going to go into the new right page.  This might be either the
-	 * existing data item at position firstright, or the incoming tuple.
+	 * The "high key" for the new left page will be the first key that's going
+	 * to go into the new right page.  This might be either the existing data
+	 * item at position firstright, or the incoming tuple.
 	 */
 	leftoff = P_HIKEY;
 	if (!newitemonleft && newitemoff == firstright)
@@ -806,8 +804,8 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	/*
 	 * We have to grab the right sibling (if any) and fix the prev pointer
 	 * there. We are guaranteed that this is deadlock-free since no other
-	 * writer will be holding a lock on that page and trying to move left,
-	 * and all readers release locks on a page before trying to fetch its
+	 * writer will be holding a lock on that page and trying to move left, and
+	 * all readers release locks on a page before trying to fetch its
 	 * neighbors.
 	 */
 
@@ -821,8 +819,8 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	}
 
 	/*
-	 * Right sibling is locked, new siblings are prepared, but original
-	 * page is not updated yet. Log changes before continuing.
+	 * Right sibling is locked, new siblings are prepared, but original page
+	 * is not updated yet. Log changes before continuing.
 	 *
 	 * NO EREPORT(ERROR) till right sibling is updated.
 	 */
@@ -850,10 +848,10 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		xlrec.level = lopaque->btpo.level;
 
 		/*
-		 * Direct access to page is not good but faster - we should
-		 * implement some new func in page API.  Note we only store the
-		 * tuples themselves, knowing that the item pointers are in the
-		 * same order and can be reconstructed by scanning the tuples.
+		 * Direct access to page is not good but faster - we should implement
+		 * some new func in page API.  Note we only store the tuples
+		 * themselves, knowing that the item pointers are in the same order
+		 * and can be reconstructed by scanning the tuples.
 		 */
 		xlrec.leftlen = ((PageHeader) leftpage)->pd_special -
 			((PageHeader) leftpage)->pd_upper;
@@ -903,13 +901,13 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	}
 
 	/*
-	 * By here, the original data page has been split into two new halves,
-	 * and these are correct.  The algorithm requires that the left page
-	 * never move during a split, so we copy the new left page back on top
-	 * of the original.  Note that this is not a waste of time, since we
-	 * also require (in the page management code) that the center of a
-	 * page always be clean, and the most efficient way to guarantee this
-	 * is just to compact the data by reinserting it into a new left page.
+	 * By here, the original data page has been split into two new halves, and
+	 * these are correct.  The algorithm requires that the left page never
+	 * move during a split, so we copy the new left page back on top of the
+	 * original.  Note that this is not a waste of time, since we also require
+	 * (in the page management code) that the center of a page always be
+	 * clean, and the most efficient way to guarantee this is just to compact
+	 * the data by reinserting it into a new left page.
 	 */
 
 	PageRestoreTempPage(leftpage, origpage);
@@ -984,13 +982,13 @@ _bt_findsplitloc(Relation rel,
 		MAXALIGN(sizeof(BTPageOpaqueData));
 
 	/*
-	 * Finding the best possible split would require checking all the
-	 * possible split points, because of the high-key and left-key special
-	 * cases. That's probably more work than it's worth; instead, stop as
-	 * soon as we find a "good-enough" split, where good-enough is defined
-	 * as an imbalance in free space of no more than pagesize/16
-	 * (arbitrary...) This should let us stop near the middle on most
-	 * pages, instead of plowing to the end.
+	 * Finding the best possible split would require checking all the possible
+	 * split points, because of the high-key and left-key special cases.
+	 * That's probably more work than it's worth; instead, stop as soon as we
+	 * find a "good-enough" split, where good-enough is defined as an
+	 * imbalance in free space of no more than pagesize/16 (arbitrary...) This
+	 * should let us stop near the middle on most pages, instead of plowing to
+	 * the end.
 	 */
 	goodenough = leftspace / 16;
 
@@ -1006,8 +1004,8 @@ _bt_findsplitloc(Relation rel,
 	dataitemtotal = rightspace - (int) PageGetFreeSpace(page);
 
 	/*
-	 * Scan through the data items and calculate space usage for a split
-	 * at each possible position.
+	 * Scan through the data items and calculate space usage for a split at
+	 * each possible position.
 	 */
 	dataitemstoleft = 0;
 	maxoff = PageGetMaxOffsetNumber(page);
@@ -1024,9 +1022,9 @@ _bt_findsplitloc(Relation rel,
 		itemsz = MAXALIGN(ItemIdGetLength(itemid)) + sizeof(ItemIdData);
 
 		/*
-		 * We have to allow for the current item becoming the high key of
-		 * the left page; therefore it counts against left space as well
-		 * as right space.
+		 * We have to allow for the current item becoming the high key of the
+		 * left page; therefore it counts against left space as well as right
+		 * space.
 		 */
 		leftfree = leftspace - dataitemstoleft - (int) itemsz;
 		rightfree = rightspace - (dataitemtotal - dataitemstoleft);
@@ -1058,8 +1056,8 @@ _bt_findsplitloc(Relation rel,
 	}
 
 	/*
-	 * I believe it is not possible to fail to find a feasible split, but
-	 * just in case ...
+	 * I believe it is not possible to fail to find a feasible split, but just
+	 * in case ...
 	 */
 	if (!state.have_split)
 		elog(ERROR, "could not find a feasible split point for \"%s\"",
@@ -1105,8 +1103,7 @@ _bt_checksplitloc(FindSplitData *state, OffsetNumber firstright,
 		{
 			/*
 			 * On a rightmost page, try to equalize right free space with
-			 * twice the left free space.  See comments for
-			 * _bt_findsplitloc.
+			 * twice the left free space.  See comments for _bt_findsplitloc.
 			 */
 			delta = (2 * leftfree) - rightfree;
 		}
@@ -1153,19 +1150,18 @@ _bt_insert_parent(Relation rel,
 				  bool is_only)
 {
 	/*
-	 * Here we have to do something Lehman and Yao don't talk about: deal
-	 * with a root split and construction of a new root.  If our stack is
-	 * empty then we have just split a node on what had been the root
-	 * level when we descended the tree.  If it was still the root then we
-	 * perform a new-root construction.  If it *wasn't* the root anymore,
-	 * search to find the next higher level that someone constructed
-	 * meanwhile, and find the right place to insert as for the normal
-	 * case.
+	 * Here we have to do something Lehman and Yao don't talk about: deal with
+	 * a root split and construction of a new root.  If our stack is empty
+	 * then we have just split a node on what had been the root level when we
+	 * descended the tree.	If it was still the root then we perform a
+	 * new-root construction.  If it *wasn't* the root anymore, search to find
+	 * the next higher level that someone constructed meanwhile, and find the
+	 * right place to insert as for the normal case.
 	 *
-	 * If we have to search for the parent level, we do so by re-descending
-	 * from the root.  This is not super-efficient, but it's rare enough
-	 * not to matter.  (This path is also taken when called from WAL
-	 * recovery --- we have no stack in that case.)
+	 * If we have to search for the parent level, we do so by re-descending from
+	 * the root.  This is not super-efficient, but it's rare enough not to
+	 * matter.	(This path is also taken when called from WAL recovery --- we
+	 * have no stack in that case.)
 	 */
 	if (is_root)
 	{
@@ -1219,9 +1215,9 @@ _bt_insert_parent(Relation rel,
 		/*
 		 * Find the parent buffer and get the parent page.
 		 *
-		 * Oops - if we were moved right then we need to change stack item!
-		 * We want to find parent pointing to where we are, right ?    -
-		 * vadim 05/27/97
+		 * Oops - if we were moved right then we need to change stack item! We
+		 * want to find parent pointing to where we are, right ?	- vadim
+		 * 05/27/97
 		 */
 		ItemPointerSet(&(stack->bts_btitem.bti_itup.t_tid),
 					   bknum, P_HIKEY);
@@ -1291,9 +1287,9 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
 			maxoff = PageGetMaxOffsetNumber(page);
 
 			/*
-			 * start = InvalidOffsetNumber means "search the whole page".
-			 * We need this test anyway due to possibility that page has a
-			 * high key now when it didn't before.
+			 * start = InvalidOffsetNumber means "search the whole page". We
+			 * need this test anyway due to possibility that page has a high
+			 * key now when it didn't before.
 			 */
 			if (start < minoff)
 				start = minoff;
@@ -1307,8 +1303,8 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
 
 			/*
 			 * These loops will check every item on the page --- but in an
-			 * order that's attuned to the probability of where it
-			 * actually is.  Scan to the right first, then to the left.
+			 * order that's attuned to the probability of where it actually
+			 * is.	Scan to the right first, then to the left.
 			 */
 			for (offnum = start;
 				 offnum <= maxoff;
@@ -1424,9 +1420,9 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	metad->btm_fastlevel = rootopaque->btpo.level;
 
 	/*
-	 * Create downlink item for left page (old root).  Since this will be
-	 * the first item in a non-leaf page, it implicitly has minus-infinity
-	 * key value, so we need not store any actual key in it.
+	 * Create downlink item for left page (old root).  Since this will be the
+	 * first item in a non-leaf page, it implicitly has minus-infinity key
+	 * value, so we need not store any actual key in it.
 	 */
 	itemsz = sizeof(BTItemData);
 	new_item = (BTItem) palloc(itemsz);
@@ -1434,17 +1430,17 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	ItemPointerSet(&(new_item->bti_itup.t_tid), lbkno, P_HIKEY);
 
 	/*
-	 * Insert the left page pointer into the new root page.  The root page
-	 * is the rightmost page on its level so there is no "high key" in it;
-	 * the two items will go into positions P_HIKEY and P_FIRSTKEY.
+	 * Insert the left page pointer into the new root page.  The root page is
+	 * the rightmost page on its level so there is no "high key" in it; the
+	 * two items will go into positions P_HIKEY and P_FIRSTKEY.
 	 */
 	if (PageAddItem(rootpage, (Item) new_item, itemsz, P_HIKEY, LP_USED) == InvalidOffsetNumber)
 		elog(PANIC, "failed to add leftkey to new root page");
 	pfree(new_item);
 
 	/*
-	 * Create downlink item for right page.  The key for it is obtained
-	 * from the "high key" position in the left page.
+	 * Create downlink item for right page.  The key for it is obtained from
+	 * the "high key" position in the left page.
 	 */
 	itemid = PageGetItemId(lpage, P_HIKEY);
 	itemsz = ItemIdGetLength(itemid);
@@ -1476,8 +1472,8 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 		rdata[0].next = &(rdata[1]);
 
 		/*
-		 * Direct access to page is not good but faster - we should
-		 * implement some new func in page API.
+		 * Direct access to page is not good but faster - we should implement
+		 * some new func in page API.
 		 */
 		rdata[1].data = (char *) rootpage + ((PageHeader) rootpage)->pd_upper;
 		rdata[1].len = ((PageHeader) rootpage)->pd_special -

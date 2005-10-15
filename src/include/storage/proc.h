@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.83 2005/10/11 20:41:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.84 2005/10/15 02:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,9 +65,9 @@ struct PGPROC
 	TransactionId xid;			/* transaction currently being executed by
 								 * this proc */
 
-	TransactionId xmin;			/* minimal running XID as it was when we
-								 * were starting our xact: vacuum must not
-								 * remove tuples deleted by xid >= xmin ! */
+	TransactionId xmin;			/* minimal running XID as it was when we were
+								 * starting our xact: vacuum must not remove
+								 * tuples deleted by xid >= xmin ! */
 
 	int			pid;			/* This backend's process id, or 0 */
 	Oid			databaseId;		/* OID of database this backend is using */
@@ -83,11 +83,11 @@ struct PGPROC
 	LOCK	   *waitLock;		/* Lock object we're sleeping on ... */
 	PROCLOCK   *waitProcLock;	/* Per-holder info for awaited lock */
 	LOCKMODE	waitLockMode;	/* type of lock we're waiting for */
-	LOCKMASK	heldLocks;		/* bitmask for lock types already held on
-								 * this lock object by this backend */
+	LOCKMASK	heldLocks;		/* bitmask for lock types already held on this
+								 * lock object by this backend */
 
-	SHM_QUEUE	procLocks;		/* list of PROCLOCK objects for locks held
-								 * or awaited by this backend */
+	SHM_QUEUE	procLocks;		/* list of PROCLOCK objects for locks held or
+								 * awaited by this backend */
 
 	struct XidCache subxids;	/* cache for subtransaction XIDs */
 };

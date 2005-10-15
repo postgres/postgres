@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.32 2005/09/24 17:53:27 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.33 2005/10/15 02:49:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,10 +151,10 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 
 	/*
 	 * zlibOutSize is the buffer size we tell zlib it can output to.  We
-	 * actually allocate one extra byte because some routines want to
-	 * append a trailing zero byte to the zlib output.	The input buffer
-	 * is expansible and is always of size ctx->inSize; zlibInSize is just
-	 * the initial default size for it.
+	 * actually allocate one extra byte because some routines want to append a
+	 * trailing zero byte to the zlib output.  The input buffer is expansible
+	 * and is always of size ctx->inSize; zlibInSize is just the initial
+	 * default size for it.
 	 */
 	ctx->zlibOut = (char *) malloc(zlibOutSize + 1);
 	ctx->zlibIn = (char *) malloc(zlibInSize);
@@ -258,8 +258,8 @@ _ReadExtraToc(ArchiveHandle *AH, TocEntry *te)
 	ctx->dataState = ReadOffset(AH, &(ctx->dataPos));
 
 	/*
-	 * Prior to V1.7 (pg7.3), we dumped the data size as an int now we
-	 * don't dump it at all.
+	 * Prior to V1.7 (pg7.3), we dumped the data size as an int now we don't
+	 * dump it at all.
 	 */
 	if (AH->version < K_VERS_1_7)
 		junk = ReadInt(AH);
@@ -439,7 +439,7 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 			if ((TocIDRequired(AH, id, ropt) & REQ_DATA) != 0)
 				die_horribly(AH, modulename,
 							 "Dumping a specific TOC data block out of order is not supported"
-				  " without ID on this input stream (fseek required)\n");
+					  " without ID on this input stream (fseek required)\n");
 
 			switch (blkType)
 			{
@@ -541,7 +541,7 @@ _PrintData(ArchiveHandle *AH)
 		cnt = fread(in, 1, blkLen, AH->FH);
 		if (cnt != blkLen)
 			die_horribly(AH, modulename,
-				  "could not read data block -- expected %lu, got %lu\n",
+					  "could not read data block -- expected %lu, got %lu\n",
 						 (unsigned long) blkLen, (unsigned long) cnt);
 
 		ctx->filePos += blkLen;
@@ -664,7 +664,7 @@ _skipData(ArchiveHandle *AH)
 		cnt = fread(in, 1, blkLen, AH->FH);
 		if (cnt != blkLen)
 			die_horribly(AH, modulename,
-				  "could not read data block -- expected %lu, got %lu\n",
+					  "could not read data block -- expected %lu, got %lu\n",
 						 (unsigned long) blkLen, (unsigned long) cnt);
 
 		ctx->filePos += blkLen;
@@ -794,10 +794,9 @@ _CloseArchive(ArchiveHandle *AH)
 		WriteDataChunks(AH);
 
 		/*
-		 * This is not an essential operation - it is really only needed
-		 * if we expect to be doing seeks to read the data back - it may
-		 * be ok to just use the existing self-consistent block
-		 * formatting.
+		 * This is not an essential operation - it is really only needed if we
+		 * expect to be doing seeks to read the data back - it may be ok to
+		 * just use the existing self-consistent block formatting.
 		 */
 		if (ctx->hasSeek)
 		{
@@ -882,7 +881,6 @@ _StartDataCompressor(ArchiveHandle *AH, TocEntry *te)
 		if (deflateInit(zp, AH->compression) != Z_OK)
 			die_horribly(AH, modulename, "could not initialize compression library: %s\n", zp->msg);
 	}
-
 #else
 
 	AH->compression = 0;
@@ -920,15 +918,14 @@ _DoDeflate(ArchiveHandle *AH, lclContext *ctx, int flush)
 			)
 		{
 			/*
-			 * Extra paranoia: avoid zero-length chunks since a zero
-			 * length chunk is the EOF marker. This should never happen
-			 * but...
+			 * Extra paranoia: avoid zero-length chunks since a zero length
+			 * chunk is the EOF marker. This should never happen but...
 			 */
 			if (zp->avail_out < zlibOutSize)
 			{
 				/*
-				 * printf("Wrote %lu byte deflated chunk\n", (unsigned
-				 * long) (zlibOutSize - zp->avail_out));
+				 * printf("Wrote %lu byte deflated chunk\n", (unsigned long)
+				 * (zlibOutSize - zp->avail_out));
 				 */
 				WriteInt(AH, zlibOutSize - zp->avail_out);
 				if (fwrite(out, 1, zlibOutSize - zp->avail_out, AH->FH) != (zlibOutSize - zp->avail_out))

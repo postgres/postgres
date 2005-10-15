@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.75 2005/07/28 22:27:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.76 2005/10/15 02:49:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,17 +49,16 @@ make_rels_by_joins(PlannerInfo *root, int level, List **joinrels)
 
 	/*
 	 * First, consider left-sided and right-sided plans, in which rels of
-	 * exactly level-1 member relations are joined against initial
-	 * relations. We prefer to join using join clauses, but if we find a
-	 * rel of level-1 members that has no join clauses, we will generate
-	 * Cartesian-product joins against all initial rels not already
-	 * contained in it.
+	 * exactly level-1 member relations are joined against initial relations.
+	 * We prefer to join using join clauses, but if we find a rel of level-1
+	 * members that has no join clauses, we will generate Cartesian-product
+	 * joins against all initial rels not already contained in it.
 	 *
-	 * In the first pass (level == 2), we try to join each initial rel to
-	 * each initial rel that appears later in joinrels[1].	(The
-	 * mirror-image joins are handled automatically by make_join_rel.)	In
-	 * later passes, we try to join rels of size level-1 from
-	 * joinrels[level-1] to each initial rel in joinrels[1].
+	 * In the first pass (level == 2), we try to join each initial rel to each
+	 * initial rel that appears later in joinrels[1].  (The mirror-image joins
+	 * are handled automatically by make_join_rel.)  In later passes, we try
+	 * to join rels of size level-1 from joinrels[level-1] to each initial rel
+	 * in joinrels[1].
 	 */
 	foreach(r, joinrels[level - 1])
 	{
@@ -76,23 +75,22 @@ make_rels_by_joins(PlannerInfo *root, int level, List **joinrels)
 		if (old_rel->joininfo != NIL)
 		{
 			/*
-			 * Note that if all available join clauses for this rel
-			 * require more than one other rel, we will fail to make any
-			 * joins against it here.  In most cases that's OK; it'll be
-			 * considered by "bushy plan" join code in a higher-level pass
-			 * where we have those other rels collected into a join rel.
+			 * Note that if all available join clauses for this rel require
+			 * more than one other rel, we will fail to make any joins against
+			 * it here.  In most cases that's OK; it'll be considered by
+			 * "bushy plan" join code in a higher-level pass where we have
+			 * those other rels collected into a join rel.
 			 */
 			new_rels = make_rels_by_clause_joins(root,
 												 old_rel,
 												 other_rels);
 
 			/*
-			 * An exception occurs when there is a clauseless join inside
-			 * an IN (sub-SELECT) construct.  Here, the members of the
-			 * subselect all have join clauses (against the stuff outside
-			 * the IN), but they *must* be joined to each other before we
-			 * can make use of those join clauses.	So do the clauseless
-			 * join bit.
+			 * An exception occurs when there is a clauseless join inside an
+			 * IN (sub-SELECT) construct.  Here, the members of the subselect
+			 * all have join clauses (against the stuff outside the IN), but
+			 * they *must* be joined to each other before we can make use of
+			 * those join clauses.	So do the clauseless join bit.
 			 *
 			 * See also the last-ditch case below.
 			 */
@@ -115,30 +113,29 @@ make_rels_by_joins(PlannerInfo *root, int level, List **joinrels)
 		/*
 		 * At levels above 2 we will generate the same joined relation in
 		 * multiple ways --- for example (a join b) join c is the same
-		 * RelOptInfo as (b join c) join a, though the second case will
-		 * add a different set of Paths to it.	To avoid making extra work
-		 * for subsequent passes, do not enter the same RelOptInfo into
-		 * our output list multiple times.
+		 * RelOptInfo as (b join c) join a, though the second case will add a
+		 * different set of Paths to it.  To avoid making extra work for
+		 * subsequent passes, do not enter the same RelOptInfo into our output
+		 * list multiple times.
 		 */
 		result_rels = list_concat_unique_ptr(result_rels, new_rels);
 	}
 
 	/*
-	 * Now, consider "bushy plans" in which relations of k initial rels
-	 * are joined to relations of level-k initial rels, for 2 <= k <=
-	 * level-2.
+	 * Now, consider "bushy plans" in which relations of k initial rels are
+	 * joined to relations of level-k initial rels, for 2 <= k <= level-2.
 	 *
 	 * We only consider bushy-plan joins for pairs of rels where there is a
-	 * suitable join clause, in order to avoid unreasonable growth of
-	 * planning time.
+	 * suitable join clause, in order to avoid unreasonable growth of planning
+	 * time.
 	 */
 	for (k = 2;; k++)
 	{
 		int			other_level = level - k;
 
 		/*
-		 * Since make_join_rel(x, y) handles both x,y and y,x cases, we
-		 * only need to go as far as the halfway point.
+		 * Since make_join_rel(x, y) handles both x,y and y,x cases, we only
+		 * need to go as far as the halfway point.
 		 */
 		if (k > other_level)
 			break;
@@ -165,8 +162,8 @@ make_rels_by_joins(PlannerInfo *root, int level, List **joinrels)
 				{
 					/*
 					 * OK, we can build a rel of the right level from this
-					 * pair of rels.  Do so if there is at least one
-					 * usable join clause.
+					 * pair of rels.  Do so if there is at least one usable
+					 * join clause.
 					 */
 					if (have_relevant_joinclause(old_rel, new_rel))
 					{
@@ -185,16 +182,16 @@ make_rels_by_joins(PlannerInfo *root, int level, List **joinrels)
 	}
 
 	/*
-	 * Last-ditch effort: if we failed to find any usable joins so far,
-	 * force a set of cartesian-product joins to be generated.	This
-	 * handles the special case where all the available rels have join
-	 * clauses but we cannot use any of the joins yet.	An example is
+	 * Last-ditch effort: if we failed to find any usable joins so far, force
+	 * a set of cartesian-product joins to be generated.  This handles the
+	 * special case where all the available rels have join clauses but we
+	 * cannot use any of the joins yet.  An example is
 	 *
 	 * SELECT * FROM a,b,c WHERE (a.f1 + b.f2 + c.f3) = 0;
 	 *
 	 * The join clause will be usable at level 3, but at level 2 we have no
-	 * choice but to make cartesian joins.	We consider only left-sided
-	 * and right-sided cartesian joins in this case (no bushy).
+	 * choice but to make cartesian joins.	We consider only left-sided and
+	 * right-sided cartesian joins in this case (no bushy).
 	 */
 	if (result_rels == NIL)
 	{
@@ -318,8 +315,8 @@ make_rels_by_clauseless_joins(PlannerInfo *root,
 			jrel = make_join_rel(root, old_rel, other_rel, JOIN_INNER);
 
 			/*
-			 * As long as given other_rels are distinct, don't need to
-			 * test to see if jrel is already part of output list.
+			 * As long as given other_rels are distinct, don't need to test to
+			 * see if jrel is already part of output list.
 			 */
 			if (jrel)
 				result = lcons(jrel, result);
@@ -393,10 +390,10 @@ make_jointree_rel(PlannerInfo *root, Node *jtnode)
 			elog(ERROR, "invalid join order");
 
 		/*
-		 * Since we are only going to consider this one way to do it,
-		 * we're done generating Paths for this joinrel and can now select
-		 * the cheapest.  In fact we *must* do so now, since next level up
-		 * will need it!
+		 * Since we are only going to consider this one way to do it, we're
+		 * done generating Paths for this joinrel and can now select the
+		 * cheapest.  In fact we *must* do so now, since next level up will
+		 * need it!
 		 */
 		set_cheapest(rel);
 
@@ -439,10 +436,10 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 	joinrelids = bms_union(rel1->relids, rel2->relids);
 
 	/*
-	 * If we are implementing IN clauses as joins, there are some joins
-	 * that are illegal.  Check to see if the proposed join is trouble. We
-	 * can skip the work if looking at an outer join, however, because
-	 * only top-level joins might be affected.
+	 * If we are implementing IN clauses as joins, there are some joins that
+	 * are illegal.  Check to see if the proposed join is trouble. We can skip
+	 * the work if looking at an outer join, however, because only top-level
+	 * joins might be affected.
 	 */
 	if (jointype == JOIN_INNER)
 	{
@@ -454,8 +451,8 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 
 			/*
 			 * This IN clause is not relevant unless its RHS overlaps the
-			 * proposed join.  (Check this first as a fast path for
-			 * dismissing most irrelevant INs quickly.)
+			 * proposed join.  (Check this first as a fast path for dismissing
+			 * most irrelevant INs quickly.)
 			 */
 			if (!bms_overlap(ininfo->righthand, joinrelids))
 				continue;
@@ -468,10 +465,10 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 				continue;
 
 			/*
-			 * Cannot join if proposed join contains rels not in the RHS
-			 * *and* contains only part of the RHS.  We must build the
-			 * complete RHS (subselect's join) before it can be joined to
-			 * rels outside the subselect.
+			 * Cannot join if proposed join contains rels not in the RHS *and*
+			 * contains only part of the RHS.  We must build the complete RHS
+			 * (subselect's join) before it can be joined to rels outside the
+			 * subselect.
 			 */
 			if (!bms_is_subset(ininfo->righthand, joinrelids))
 			{
@@ -480,13 +477,12 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			}
 
 			/*
-			 * At this point we are considering a join of the IN's RHS to
-			 * some other rel(s).
+			 * At this point we are considering a join of the IN's RHS to some
+			 * other rel(s).
 			 *
-			 * If we already joined IN's RHS to any other rels in either
-			 * input path, then this join is not constrained (the
-			 * necessary work was done at the lower level where that join
-			 * occurred).
+			 * If we already joined IN's RHS to any other rels in either input
+			 * path, then this join is not constrained (the necessary work was
+			 * done at the lower level where that join occurred).
 			 */
 			if (bms_is_subset(ininfo->righthand, rel1->relids) &&
 				!bms_equal(ininfo->righthand, rel1->relids))
@@ -500,12 +496,11 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			 * innerrel is exactly RHS; conversely JOIN_REVERSE_IN handles
 			 * RHS/LHS.
 			 *
-			 * JOIN_UNIQUE_OUTER will work if outerrel is exactly RHS;
-			 * conversely JOIN_UNIQUE_INNER will work if innerrel is
-			 * exactly RHS.
+			 * JOIN_UNIQUE_OUTER will work if outerrel is exactly RHS; conversely
+			 * JOIN_UNIQUE_INNER will work if innerrel is exactly RHS.
 			 *
-			 * But none of these will work if we already found another IN
-			 * that needs to trigger here.
+			 * But none of these will work if we already found another IN that
+			 * needs to trigger here.
 			 */
 			if (jointype != JOIN_INNER)
 			{
@@ -532,8 +527,8 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 	}
 
 	/*
-	 * Find or build the join RelOptInfo, and compute the restrictlist
-	 * that goes with this particular joining.
+	 * Find or build the join RelOptInfo, and compute the restrictlist that
+	 * goes with this particular joining.
 	 */
 	joinrel = build_join_rel(root, joinrelids, rel1, rel2, jointype,
 							 &restrictlist);

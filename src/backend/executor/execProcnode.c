@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.50 2005/04/19 22:35:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.51 2005/10/15 02:49:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -240,8 +240,8 @@ ExecInitNode(Plan *node, EState *estate)
 	}
 
 	/*
-	 * Initialize any initPlans present in this node.  The planner put
-	 * them in a separate list for us.
+	 * Initialize any initPlans present in this node.  The planner put them in
+	 * a separate list for us.
 	 */
 	subps = NIL;
 	foreach(l, node->initPlan)
@@ -258,9 +258,9 @@ ExecInitNode(Plan *node, EState *estate)
 
 	/*
 	 * Initialize any subPlans present in this node.  These were found by
-	 * ExecInitExpr during initialization of the PlanState.  Note we must
-	 * do this after initializing initPlans, in case their arguments
-	 * contain subPlans (is that actually possible? perhaps not).
+	 * ExecInitExpr during initialization of the PlanState.  Note we must do
+	 * this after initializing initPlans, in case their arguments contain
+	 * subPlans (is that actually possible? perhaps not).
 	 */
 	foreach(l, result->subPlan)
 	{
@@ -422,7 +422,7 @@ ExecProcNode(PlanState *node)
 Node *
 MultiExecProcNode(PlanState *node)
 {
-	Node *result;
+	Node	   *result;
 
 	CHECK_FOR_INTERRUPTS();
 
@@ -431,9 +431,9 @@ MultiExecProcNode(PlanState *node)
 
 	switch (nodeTag(node))
 	{
-		/*
-		 * Only node types that actually support multiexec will be listed
-		 */
+			/*
+			 * Only node types that actually support multiexec will be listed
+			 */
 
 		case T_HashState:
 			result = MultiExecHash((HashState *) node);

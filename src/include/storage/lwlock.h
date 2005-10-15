@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lwlock.h,v 1.22 2005/08/20 23:26:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lwlock.h,v 1.23 2005/10/15 02:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,8 +47,7 @@ typedef enum LWLockId
 	BgWriterCommLock,
 	TwoPhaseStateLock,
 
-	NumFixedLWLocks,			/* must be last except for
-								 * MaxDynamicLWLock */
+	NumFixedLWLocks,			/* must be last except for MaxDynamicLWLock */
 
 	MaxDynamicLWLock = 1000000000
 } LWLockId;

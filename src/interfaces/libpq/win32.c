@@ -290,7 +290,7 @@ winsock_strerror(int err, char *strerrbuf, size_t buflen)
 			dlls[i].handle = (void *) LoadLibraryEx(
 													dlls[i].dll_name,
 													0,
-											   LOAD_LIBRARY_AS_DATAFILE);
+													LOAD_LIBRARY_AS_DATAFILE);
 		}
 
 		if (dlls[i].dll_name && !dlls[i].handle)
@@ -303,7 +303,7 @@ winsock_strerror(int err, char *strerrbuf, size_t buflen)
 		success = 0 != FormatMessage(
 									 flags,
 									 dlls[i].handle, err,
-							   MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+								   MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 									 strerrbuf, buflen - 64,
 									 0
 			);

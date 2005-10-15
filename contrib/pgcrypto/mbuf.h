@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/mbuf.h,v 1.1 2005/07/10 13:46:28 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/mbuf.h,v 1.2 2005/10/15 02:49:06 momjian Exp $
  */
 
 #ifndef __PX_MBUF_H
@@ -40,32 +40,36 @@ typedef struct PullFilterOps PullFilterOps;
 
 struct PushFilterOps
 {
-	/* should return needed buffer size, 0- no buffering, <0 on error
-	 * if NULL, no buffering, and priv=init_arg
+	/*
+	 * should return needed buffer size, 0- no buffering, <0 on error if NULL,
+	 * no buffering, and priv=init_arg
 	 */
 	int			(*init) (PushFilter * next, void *init_arg, void **priv_p);
-	/* send data to next.  should consume all?
-	 * if null, it will be simply copied (in-place)
-	 * returns 0 on error
+
+	/*
+	 * send data to next.  should consume all? if null, it will be simply
+	 * copied (in-place) returns 0 on error
 	 */
 	int			(*push) (PushFilter * next, void *priv,
-							const uint8 *src, int len);
+									 const uint8 *src, int len);
 	int			(*flush) (PushFilter * next, void *priv);
 	void		(*free) (void *priv);
 };
 
 struct PullFilterOps
 {
-	/* should return needed buffer size, 0- no buffering, <0 on error
-	 * if NULL, no buffering, and priv=init_arg
+	/*
+	 * should return needed buffer size, 0- no buffering, <0 on error if NULL,
+	 * no buffering, and priv=init_arg
 	 */
 	int			(*init) (void **priv_p, void *init_arg, PullFilter * src);
-	/* request data from src, put result ptr to data_p
-	 * can use ptr from src or use buf as work area
-	 * if NULL in-place copy
+
+	/*
+	 * request data from src, put result ptr to data_p can use ptr from src or
+	 * use buf as work area if NULL in-place copy
 	 */
 	int			(*pull) (void *priv, PullFilter * src, int len,
-							uint8 **data_p, uint8 *buf, int buflen);
+									 uint8 **data_p, uint8 *buf, int buflen);
 	void		(*free) (void *priv);
 };
 
@@ -86,8 +90,8 @@ int			mbuf_free(MBuf * mbuf);
 /*
  * Push filter
  */
-int			pushf_create(PushFilter ** res, const PushFilterOps * ops, void *init_arg,
-						 PushFilter * next);
+int pushf_create(PushFilter ** res, const PushFilterOps * ops, void *init_arg,
+			 PushFilter * next);
 int			pushf_write(PushFilter * mp, const uint8 *data, int len);
 void		pushf_free_all(PushFilter * mp);
 void		pushf_free(PushFilter * mp);
@@ -98,13 +102,13 @@ int			pushf_create_mbuf_writer(PushFilter ** mp_p, MBuf * mbuf);
 /*
  * Pull filter
  */
-int			pullf_create(PullFilter ** res, const PullFilterOps * ops,
-						void *init_arg, PullFilter * src);
+int pullf_create(PullFilter ** res, const PullFilterOps * ops,
+			 void *init_arg, PullFilter * src);
 int			pullf_read(PullFilter * mp, int len, uint8 **data_p);
-int			pullf_read_max(PullFilter * mp, int len,
-						uint8 **data_p, uint8 *tmpbuf);
+int pullf_read_max(PullFilter * mp, int len,
+			   uint8 **data_p, uint8 *tmpbuf);
 void		pullf_free(PullFilter * mp);
-int			pullf_read_fixed(PullFilter *src, int len, uint8 *dst);
+int			pullf_read_fixed(PullFilter * src, int len, uint8 *dst);
 
 int			pullf_create_mbuf_reader(PullFilter ** pf_p, MBuf * mbuf);
 
@@ -118,4 +122,3 @@ int			pullf_create_mbuf_reader(PullFilter ** pf_p, MBuf * mbuf);
 	} while (0)
 
 #endif   /* __PX_MBUF_H */
-

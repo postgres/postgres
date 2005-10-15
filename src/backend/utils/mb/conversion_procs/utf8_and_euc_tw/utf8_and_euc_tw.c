@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_euc_tw/utf8_and_euc_tw.c,v 1.11 2005/09/24 17:53:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_euc_tw/utf8_and_euc_tw.c,v 1.12 2005/10/15 02:49:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ euc_tw_to_utf8(PG_FUNCTION_ARGS)
 	Assert(len >= 0);
 
 	LocalToUtf(src, dest, LUmapEUC_TW,
-		  sizeof(LUmapEUC_TW) / sizeof(pg_local_to_utf), PG_EUC_TW, len);
+			   sizeof(LUmapEUC_TW) / sizeof(pg_local_to_utf), PG_EUC_TW, len);
 
 	PG_RETURN_VOID();
 }

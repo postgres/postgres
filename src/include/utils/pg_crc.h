@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/pg_crc.h,v 1.13 2005/06/02 05:55:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/pg_crc.h,v 1.14 2005/10/15 02:49:46 momjian Exp $
  */
 #ifndef PG_CRC_H
 #define PG_CRC_H
@@ -76,7 +76,7 @@ typedef struct pg_crc64
 {
 	uint32		crc0;
 	uint32		crc1;
-} pg_crc64;
+}	pg_crc64;
 
 /* Initialize a CRC accumulator */
 #define INIT_CRC64(crc) ((crc).crc0 = 0xffffffff, (crc).crc1 = 0xffffffff)
@@ -108,13 +108,12 @@ do { \
 /* Constant table for CRC calculation */
 extern const uint32 pg_crc64_table0[];
 extern const uint32 pg_crc64_table1[];
-
 #else							/* int64 works */
 
 typedef struct pg_crc64
 {
 	uint64		crc0;
-} pg_crc64;
+}	pg_crc64;
 
 /* Initialize a CRC accumulator */
 #define INIT_CRC64(crc) ((crc).crc0 = UINT64CONST(0xffffffffffffffff))
@@ -143,7 +142,6 @@ do { \
 /* Constant table for CRC calculation */
 extern const uint64 pg_crc64_table[];
 #endif   /* INT64_IS_BUSTED */
-
-#endif	/* PROVIDE_64BIT_CRC */
+#endif   /* PROVIDE_64BIT_CRC */
 
 #endif   /* PG_CRC_H */

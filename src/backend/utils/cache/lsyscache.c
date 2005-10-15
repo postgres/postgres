@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.128 2005/10/11 17:27:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.129 2005/10/15 02:49:31 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -149,10 +149,10 @@ get_op_hash_function(Oid opno)
 	Oid			opclass = InvalidOid;
 
 	/*
-	 * Search pg_amop to see if the target operator is registered as the
-	 * "=" operator of any hash opclass.  If the operator is registered in
-	 * multiple opclasses, assume we can use the associated hash function
-	 * from any one.
+	 * Search pg_amop to see if the target operator is registered as the "="
+	 * operator of any hash opclass.  If the operator is registered in
+	 * multiple opclasses, assume we can use the associated hash function from
+	 * any one.
 	 */
 	catlist = SearchSysCacheList(AMOPOPID, 1,
 								 ObjectIdGetDatum(opno),
@@ -1223,9 +1223,9 @@ getTypeIOParam(HeapTuple typeTuple)
 	Form_pg_type typeStruct = (Form_pg_type) GETSTRUCT(typeTuple);
 
 	/*
-	 * Array types get their typelem as parameter; everybody else gets
-	 * their own type OID as parameter.  (This is a change from 8.0,
-	 * in which only composite types got their own OID as parameter.)
+	 * Array types get their typelem as parameter; everybody else gets their
+	 * own type OID as parameter.  (This is a change from 8.0, in which only
+	 * composite types got their own OID as parameter.)
 	 */
 	if (OidIsValid(typeStruct->typelem))
 		return typeStruct->typelem;
@@ -1414,7 +1414,7 @@ get_typdefault(Oid typid)
 			/* Convert C string to a value of the given type */
 			datum = OidFunctionCall3(type->typinput,
 									 CStringGetDatum(strDefaultVal),
-							 ObjectIdGetDatum(getTypeIOParam(typeTuple)),
+								 ObjectIdGetDatum(getTypeIOParam(typeTuple)),
 									 Int32GetDatum(-1));
 			/* Build a Const node containing the value */
 			expr = (Node *) makeConst(typid,
@@ -1501,8 +1501,8 @@ get_typavgwidth(Oid typid, int32 typmod)
 	{
 		/*
 		 * For BPCHAR, the max width is also the only width.  Otherwise we
-		 * need to guess about the typical data width given the max. A
-		 * sliding scale for percentage of max width seems reasonable.
+		 * need to guess about the typical data width given the max. A sliding
+		 * scale for percentage of max width seems reasonable.
 		 */
 		if (typid == BPCHAROID)
 			return maxwidth;
@@ -1513,8 +1513,8 @@ get_typavgwidth(Oid typid, int32 typmod)
 
 		/*
 		 * Beyond 1000, assume we're looking at something like
-		 * "varchar(10000)" where the limit isn't actually reached often,
-		 * and use a fixed estimate.
+		 * "varchar(10000)" where the limit isn't actually reached often, and
+		 * use a fixed estimate.
 		 */
 		return 32 + (1000 - 32) / 2;
 	}
@@ -1905,9 +1905,9 @@ get_attstatsslot(HeapTuple statstuple,
 						  values, nvalues);
 
 		/*
-		 * If the element type is pass-by-reference, we now have a bunch
-		 * of Datums that are pointers into the syscache value.  Copy them
-		 * to avoid problems if syscache decides to drop the entry.
+		 * If the element type is pass-by-reference, we now have a bunch of
+		 * Datums that are pointers into the syscache value.  Copy them to
+		 * avoid problems if syscache decides to drop the entry.
 		 */
 		if (!typeForm->typbyval)
 		{
@@ -1938,9 +1938,9 @@ get_attstatsslot(HeapTuple statstuple,
 		statarray = DatumGetArrayTypeP(val);
 
 		/*
-		 * We expect the array to be a 1-D float4 array; verify that. We
-		 * don't need to use deconstruct_array() since the array data is
-		 * just going to look like a C array of float4 values.
+		 * We expect the array to be a 1-D float4 array; verify that. We don't
+		 * need to use deconstruct_array() since the array data is just going
+		 * to look like a C array of float4 values.
 		 */
 		narrayelem = ARR_DIMS(statarray)[0];
 		if (ARR_NDIM(statarray) != 1 || narrayelem <= 0 ||
@@ -2038,7 +2038,7 @@ get_roleid(const char *rolname)
 Oid
 get_roleid_checked(const char *rolname)
 {
-	Oid		roleid;
+	Oid			roleid;
 
 	roleid = get_roleid(rolname);
 	if (!OidIsValid(roleid))

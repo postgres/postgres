@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/fmgrtab.h,v 1.24 2004/12/31 22:03:46 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/fmgrtab.h,v 1.25 2005/10/15 02:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,8 +26,7 @@ typedef struct
 {
 	Oid			foid;			/* OID of the function */
 	const char *funcName;		/* C name of the function */
-	short		nargs;			/* 0..FUNC_MAX_ARGS, or -1 if variable
-								 * count */
+	short		nargs;			/* 0..FUNC_MAX_ARGS, or -1 if variable count */
 	bool		strict;			/* T if function is "strict" */
 	bool		retset;			/* T if function returns a set */
 	PGFunction	func;			/* pointer to compiled function */

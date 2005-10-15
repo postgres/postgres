@@ -125,8 +125,7 @@ c_overpaid(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 
 	/*
-	 * Alternatively, we might prefer to do PG_RETURN_NULL() for null
-	 * salary
+	 * Alternatively, we might prefer to do PG_RETURN_NULL() for null salary
 	 */
 
 	PG_RETURN_BOOL(salary > limit);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/isinf.c,v 1.6 2004/12/31 22:03:53 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/port/isinf.c,v 1.7 2005/10/15 02:49:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,8 +17,7 @@
 #include <float.h>
 #include <math.h>
 
-#if HAVE_FPCLASS				/* this is _not_ HAVE_FP_CLASS, and not
-								 * typo */
+#if HAVE_FPCLASS				/* this is _not_ HAVE_FP_CLASS, and not typo */
 
 #if HAVE_IEEEFP_H
 #include <ieeefp.h>
@@ -38,7 +37,6 @@ isinf(double d)
 	}
 	return 0;
 }
-
 #else
 
 #if defined(HAVE_FP_CLASS) || defined(HAVE_FP_CLASS_D)
@@ -52,7 +50,6 @@ double		x;
 {
 #if HAVE_FP_CLASS
 	int			fpclass = fp_class(x);
-
 #else
 	int			fpclass = fp_class_d(x);
 #endif
@@ -63,7 +60,6 @@ double		x;
 		return -1;
 	return 0;
 }
-
 #elif defined(HAVE_CLASS)
 int
 isinf(double x)

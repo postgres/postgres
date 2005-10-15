@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.105 2005/06/28 05:08:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.106 2005/10/15 02:49:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,8 +101,8 @@ InsertRule(char *rulname,
 		if (!replace)
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("rule \"%s\" for relation \"%s\" already exists",
-						rulname, get_rel_name(eventrel_oid))));
+					 errmsg("rule \"%s\" for relation \"%s\" already exists",
+							rulname, get_rel_name(eventrel_oid))));
 
 		/*
 		 * When replacing, we don't need to replace every attribute
@@ -143,8 +143,8 @@ InsertRule(char *rulname,
 	/*
 	 * Install dependency on rule's relation to ensure it will go away on
 	 * relation deletion.  If the rule is ON SELECT, make the dependency
-	 * implicit --- this prevents deleting a view's SELECT rule.  Other
-	 * kinds of rules can be AUTO.
+	 * implicit --- this prevents deleting a view's SELECT rule.  Other kinds
+	 * of rules can be AUTO.
 	 */
 	myself.classId = RewriteRelationId;
 	myself.objectId = rewriteObjectId;
@@ -155,7 +155,7 @@ InsertRule(char *rulname,
 	referenced.objectSubId = 0;
 
 	recordDependencyOn(&myself, &referenced,
-		 (evtype == CMD_SELECT) ? DEPENDENCY_INTERNAL : DEPENDENCY_AUTO);
+			 (evtype == CMD_SELECT) ? DEPENDENCY_INTERNAL : DEPENDENCY_AUTO);
 
 	/*
 	 * Also install dependencies on objects referenced in action and qual.
@@ -199,11 +199,10 @@ DefineQueryRewrite(RuleStmt *stmt)
 
 	/*
 	 * If we are installing an ON SELECT rule, we had better grab
-	 * AccessExclusiveLock to ensure no SELECTs are currently running on
-	 * the event relation.	For other types of rules, it might be
-	 * sufficient to grab ShareLock to lock out insert/update/delete
-	 * actions.  But for now, let's just grab AccessExclusiveLock all the
-	 * time.
+	 * AccessExclusiveLock to ensure no SELECTs are currently running on the
+	 * event relation.	For other types of rules, it might be sufficient to
+	 * grab ShareLock to lock out insert/update/delete actions.  But for now,
+	 * let's just grab AccessExclusiveLock all the time.
 	 */
 	event_relation = heap_openrv(event_obj, AccessExclusiveLock);
 	ev_relid = RelationGetRelid(event_relation);
@@ -253,7 +252,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 		if (list_length(action) == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			errmsg("INSTEAD NOTHING rules on SELECT are not implemented"),
+			   errmsg("INSTEAD NOTHING rules on SELECT are not implemented"),
 					 errhint("Use views instead.")));
 
 		/*
@@ -271,7 +270,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 		if (!is_instead || query->commandType != CMD_SELECT)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("rules on SELECT must have action INSTEAD SELECT")));
+				 errmsg("rules on SELECT must have action INSTEAD SELECT")));
 
 		/*
 		 * ... there can be no rule qual, ...
@@ -299,18 +298,17 @@ DefineQueryRewrite(RuleStmt *stmt)
 			if (i > event_relation->rd_att->natts)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("SELECT rule's target list has too many entries")));
+				  errmsg("SELECT rule's target list has too many entries")));
 
 			attr = event_relation->rd_att->attrs[i - 1];
 			attname = NameStr(attr->attname);
 
 			/*
-			 * Disallow dropped columns in the relation.  This won't
-			 * happen in the cases we actually care about (namely creating
-			 * a view via CREATE TABLE then CREATE RULE).  Trying to cope
-			 * with it is much more trouble than it's worth, because we'd
-			 * have to modify the rule to insert dummy NULLs at the right
-			 * positions.
+			 * Disallow dropped columns in the relation.  This won't happen in
+			 * the cases we actually care about (namely creating a view via
+			 * CREATE TABLE then CREATE RULE).	Trying to cope with it is much
+			 * more trouble than it's worth, because we'd have to modify the
+			 * rule to insert dummy NULLs at the right positions.
 			 */
 			if (attr->attisdropped)
 				ereport(ERROR,
@@ -328,11 +326,10 @@ DefineQueryRewrite(RuleStmt *stmt)
 						 errmsg("SELECT rule's target entry %d has different type from column \"%s\"", i, attname)));
 
 			/*
-			 * Allow typmods to be different only if one of them is -1,
-			 * ie, "unspecified".  This is necessary for cases like
-			 * "numeric", where the table will have a filled-in default
-			 * length but the select rule's expression will probably have
-			 * typmod = -1.
+			 * Allow typmods to be different only if one of them is -1, ie,
+			 * "unspecified".  This is necessary for cases like "numeric",
+			 * where the table will have a filled-in default length but the
+			 * select rule's expression will probably have typmod = -1.
 			 */
 			tletypmod = exprTypmod((Node *) tle->expr);
 			if (attr->atttypmod != tletypmod &&
@@ -345,7 +342,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 		if (i != event_relation->rd_att->natts)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			   errmsg("SELECT rule's target list has too few entries")));
+				   errmsg("SELECT rule's target list has too few entries")));
 
 		/*
 		 * ... there must not be another ON SELECT rule already ...
@@ -359,9 +356,9 @@ DefineQueryRewrite(RuleStmt *stmt)
 				rule = event_relation->rd_rules->rules[i];
 				if (rule->event == CMD_SELECT)
 					ereport(ERROR,
-					  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					   errmsg("\"%s\" is already a view",
-							  RelationGetRelationName(event_relation))));
+						  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						   errmsg("\"%s\" is already a view",
+								  RelationGetRelationName(event_relation))));
 			}
 		}
 
@@ -371,30 +368,30 @@ DefineQueryRewrite(RuleStmt *stmt)
 		if (strcmp(stmt->rulename, ViewSelectRuleName) != 0)
 		{
 			/*
-			 * In versions before 7.3, the expected name was _RETviewname.
-			 * For backwards compatibility with old pg_dump output, accept
-			 * that and silently change it to _RETURN.	Since this is just
-			 * a quick backwards-compatibility hack, limit the number of
-			 * characters checked to a few less than NAMEDATALEN; this
-			 * saves having to worry about where a multibyte character
-			 * might have gotten truncated.
+			 * In versions before 7.3, the expected name was _RETviewname. For
+			 * backwards compatibility with old pg_dump output, accept that
+			 * and silently change it to _RETURN.  Since this is just a quick
+			 * backwards-compatibility hack, limit the number of characters
+			 * checked to a few less than NAMEDATALEN; this saves having to
+			 * worry about where a multibyte character might have gotten
+			 * truncated.
 			 */
 			if (strncmp(stmt->rulename, "_RET", 4) != 0 ||
 				strncmp(stmt->rulename + 4, event_obj->relname,
 						NAMEDATALEN - 4 - 4) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					  errmsg("view rule for \"%s\" must be named \"%s\"",
-							 event_obj->relname, ViewSelectRuleName)));
+						 errmsg("view rule for \"%s\" must be named \"%s\"",
+								event_obj->relname, ViewSelectRuleName)));
 			stmt->rulename = pstrdup(ViewSelectRuleName);
 		}
 
 		/*
 		 * Are we converting a relation to a view?
 		 *
-		 * If so, check that the relation is empty because the storage for
-		 * the relation is going to be deleted.  Also insist that the rel
-		 * not have any triggers, indexes, or child tables.
+		 * If so, check that the relation is empty because the storage for the
+		 * relation is going to be deleted.  Also insist that the rel not have
+		 * any triggers, indexes, or child tables.
 		 */
 		if (event_relation->rd_rel->relkind != RELKIND_VIEW)
 		{
@@ -403,29 +400,29 @@ DefineQueryRewrite(RuleStmt *stmt)
 			scanDesc = heap_beginscan(event_relation, SnapshotNow, 0, NULL);
 			if (heap_getnext(scanDesc, ForwardScanDirection) != NULL)
 				ereport(ERROR,
-					  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					   errmsg("could not convert table \"%s\" to a view because it is not empty",
-							  event_obj->relname)));
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("could not convert table \"%s\" to a view because it is not empty",
+								event_obj->relname)));
 			heap_endscan(scanDesc);
 
 			if (event_relation->rd_rel->reltriggers != 0)
 				ereport(ERROR,
-					  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					   errmsg("could not convert table \"%s\" to a view because it has triggers",
-							  event_obj->relname),
-					   errhint("In particular, the table may not be involved in any foreign key relationships.")));
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("could not convert table \"%s\" to a view because it has triggers",
+								event_obj->relname),
+						 errhint("In particular, the table may not be involved in any foreign key relationships.")));
 
 			if (event_relation->rd_rel->relhasindex)
 				ereport(ERROR,
-					  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					   errmsg("could not convert table \"%s\" to a view because it has indexes",
-							  event_obj->relname)));
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("could not convert table \"%s\" to a view because it has indexes",
+								event_obj->relname)));
 
 			if (event_relation->rd_rel->relhassubclass)
 				ereport(ERROR,
-					  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					   errmsg("could not convert table \"%s\" to a view because it has child tables",
-							  event_obj->relname)));
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("could not convert table \"%s\" to a view because it has child tables",
+								event_obj->relname)));
 
 			RelisBecomingView = true;
 		}
@@ -438,11 +435,10 @@ DefineQueryRewrite(RuleStmt *stmt)
 	event_attype = InvalidOid;
 
 	/*
-	 * We want the rule's table references to be checked as though by the
-	 * rule owner, not the user referencing the rule.  Therefore, scan
-	 * through the rule's rtables and set the checkAsUser field on all
-	 * rtable entries.	We have to look at event_qual as well, in case it
-	 * contains sublinks.
+	 * We want the rule's table references to be checked as though by the rule
+	 * owner, not the user referencing the rule.  Therefore, scan through the
+	 * rule's rtables and set the checkAsUser field on all rtable entries.  We
+	 * have to look at event_qual as well, in case it contains sublinks.
 	 */
 	foreach(l, action)
 	{
@@ -468,17 +464,15 @@ DefineQueryRewrite(RuleStmt *stmt)
 		 * appropriate, also modify the 'relkind' field to show that the
 		 * relation is now a view.
 		 *
-		 * Important side effect: an SI notice is broadcast to force all
-		 * backends (including me!) to update relcache entries with the
-		 * new rule.
+		 * Important side effect: an SI notice is broadcast to force all backends
+		 * (including me!) to update relcache entries with the new rule.
 		 */
 		SetRelationRuleStatus(ev_relid, true, RelisBecomingView);
 	}
 
 	/*
-	 * IF the relation is becoming a view, delete the storage files
-	 * associated with it.	NB: we had better have AccessExclusiveLock to
-	 * do this ...
+	 * IF the relation is becoming a view, delete the storage files associated
+	 * with it.  NB: we had better have AccessExclusiveLock to do this ...
 	 *
 	 * XXX what about getting rid of its TOAST table?  For now, we don't.
 	 */

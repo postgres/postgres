@@ -339,8 +339,8 @@ fti(PG_FUNCTION_ARGS)
 					ret = SPI_execp(*(plan->splan), values, NULL, 0);
 					if (ret != SPI_OK_INSERT)
 						ereport(ERROR,
-							(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
-							 errmsg("error executing insert")));
+								(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
+								 errmsg("error executing insert")));
 				}
 				pfree(buff);
 				pfree(data);
@@ -367,9 +367,8 @@ breakup(char *string, char *substring)
 	while (cur_pos > string)	/* don't read before start of 'string' */
 	{
 		/*
-		 * skip pieces at the end of a string that are not alfa-numeric
-		 * (ie. 'string$%^&', last_start first points to '&', and after
-		 * this to 'g'
+		 * skip pieces at the end of a string that are not alfa-numeric (ie.
+		 * 'string$%^&', last_start first points to '&', and after this to 'g'
 		 */
 		if (!isalnum((unsigned char) *last_start))
 		{
@@ -379,8 +378,7 @@ breakup(char *string, char *substring)
 			cur_pos = last_start;
 		}
 
-		cur_pos--;				/* substrings are at minimum 2 characters
-								 * long */
+		cur_pos--;				/* substrings are at minimum 2 characters long */
 
 		if (isalnum((unsigned char) *cur_pos))
 		{

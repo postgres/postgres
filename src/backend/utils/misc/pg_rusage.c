@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/pg_rusage.c,v 1.1 2005/10/03 22:52:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/pg_rusage.c,v 1.2 2005/10/15 02:49:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,9 +65,9 @@ pg_rusage_show(const PGRUsage *ru0)
 	snprintf(result, sizeof(result),
 			 "CPU %d.%02ds/%d.%02du sec elapsed %d.%02d sec",
 			 (int) (ru1.ru.ru_stime.tv_sec - ru0->ru.ru_stime.tv_sec),
-	  (int) (ru1.ru.ru_stime.tv_usec - ru0->ru.ru_stime.tv_usec) / 10000,
+		  (int) (ru1.ru.ru_stime.tv_usec - ru0->ru.ru_stime.tv_usec) / 10000,
 			 (int) (ru1.ru.ru_utime.tv_sec - ru0->ru.ru_utime.tv_sec),
-	  (int) (ru1.ru.ru_utime.tv_usec - ru0->ru.ru_utime.tv_usec) / 10000,
+		  (int) (ru1.ru.ru_utime.tv_usec - ru0->ru.ru_utime.tv_usec) / 10000,
 			 (int) (ru1.tv.tv_sec - ru0->tv.tv_sec),
 			 (int) (ru1.tv.tv_usec - ru0->tv.tv_usec) / 10000);
 

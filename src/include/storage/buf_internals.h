@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.80 2005/10/12 16:45:14 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.81 2005/10/15 02:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,13 +31,10 @@
 #define BM_DIRTY				(1 << 0)		/* data needs writing */
 #define BM_VALID				(1 << 1)		/* data is valid */
 #define BM_TAG_VALID			(1 << 2)		/* tag is assigned */
-#define BM_IO_IN_PROGRESS		(1 << 3)		/* read or write in
-												 * progress */
+#define BM_IO_IN_PROGRESS		(1 << 3)		/* read or write in progress */
 #define BM_IO_ERROR				(1 << 4)		/* previous I/O failed */
-#define BM_JUST_DIRTIED			(1 << 5)		/* dirtied since write
-												 * started */
-#define BM_PIN_COUNT_WAITER		(1 << 6)		/* have waiter for sole
-												 * pin */
+#define BM_JUST_DIRTIED			(1 << 5)		/* dirtied since write started */
+#define BM_PIN_COUNT_WAITER		(1 << 6)		/* have waiter for sole pin */
 
 typedef bits16 BufFlags;
 
@@ -94,9 +91,9 @@ typedef struct buftag
  *
  * Note: buf_hdr_lock must be held to examine or change the tag, flags,
  * usage_count, refcount, or wait_backend_pid fields.  buf_id field never
- * changes after initialization, so does not need locking.  freeNext is
+ * changes after initialization, so does not need locking.	freeNext is
  * protected by the BufFreelistLock not buf_hdr_lock.  The LWLocks can take
- * care of themselves.  The buf_hdr_lock is *not* used to control access to
+ * care of themselves.	The buf_hdr_lock is *not* used to control access to
  * the data in the buffer!
  *
  * An exception is that if we have the buffer pinned, its tag can't change
@@ -107,7 +104,7 @@ typedef struct buftag
  *
  * We can't physically remove items from a disk page if another backend has
  * the buffer pinned.  Hence, a backend may need to wait for all other pins
- * to go away.  This is signaled by storing its own PID into
+ * to go away.	This is signaled by storing its own PID into
  * wait_backend_pid and setting flag bit BM_PIN_COUNT_WAITER.  At present,
  * there can be only one such waiter per buffer.
  *
@@ -120,7 +117,7 @@ typedef struct sbufdesc
 	BufFlags	flags;			/* see bit definitions above */
 	uint16		usage_count;	/* usage counter for clock sweep code */
 	unsigned	refcount;		/* # of backends holding pins on buffer */
-	int			wait_backend_pid; /* backend PID of pin-count waiter */
+	int			wait_backend_pid;		/* backend PID of pin-count waiter */
 
 	slock_t		buf_hdr_lock;	/* protects the above fields */
 
@@ -151,13 +148,13 @@ typedef struct sbufdesc
  * ensure that the compiler doesn't rearrange accesses to the header to
  * occur before or after the spinlock is acquired/released.
  */
-#define LockBufHdr(bufHdr)  \
+#define LockBufHdr(bufHdr)	\
 	SpinLockAcquire(&(bufHdr)->buf_hdr_lock)
 #define UnlockBufHdr(bufHdr)  \
 	SpinLockRelease(&(bufHdr)->buf_hdr_lock)
 #define LockBufHdr_NoHoldoff(bufHdr)  \
 	SpinLockAcquire_NoHoldoff(&(bufHdr)->buf_hdr_lock)
-#define UnlockBufHdr_NoHoldoff(bufHdr)  \
+#define UnlockBufHdr_NoHoldoff(bufHdr)	\
 	SpinLockRelease_NoHoldoff(&(bufHdr)->buf_hdr_lock)
 
 
@@ -191,7 +188,7 @@ extern Size StrategyShmemSize(void);
 extern void StrategyInitialize(bool init);
 
 /* buf_table.c */
-extern Size	BufTableShmemSize(int size);
+extern Size BufTableShmemSize(int size);
 extern void InitBufTable(int size);
 extern int	BufTableLookup(BufferTag *tagPtr);
 extern int	BufTableInsert(BufferTag *tagPtr, int buf_id);

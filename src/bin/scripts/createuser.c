@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.20 2005/09/30 07:58:01 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.21 2005/10/15 02:49:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -313,7 +313,7 @@ help(const char *progname)
 	printf(_("  -l, --login               role can login (default)\n"));
 	printf(_("  -L, --no-login            role cannot login\n"));
 	printf(_("  -i, --inherit             role inherits privileges of roles it is a\n"
-                 "                            member of (default)\n"));
+			 "                            member of (default)\n"));
 	printf(_("  -I, --no-inherit          role does not inherit privileges\n"));
 	printf(_("  -c, --connection-limit=N  connection limit for role (default: no limit)\n"));
 	printf(_("  -P, --pwprompt            assign a password to new role\n"));
@@ -329,6 +329,6 @@ help(const char *progname)
 	printf(_("  -U, --username=USERNAME   user name to connect as (not the one to create)\n"));
 	printf(_("  -W, --password            prompt for password to connect\n"));
 	printf(_("\nIf one of -s, -S, -d, -D, -r, -R and ROLENAME is not specified, you will\n"
-		 "be prompted interactively.\n"));
+			 "be prompted interactively.\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }

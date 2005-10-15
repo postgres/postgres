@@ -173,8 +173,7 @@ get_type(enum ECPGttype type)
 		case ECPGt_NO_INDICATOR:		/* no indicator */
 			return ("ECPGt_NO_INDICATOR");
 			break;
-		case ECPGt_char_variable:		/* string that should not be
-										 * quoted */
+		case ECPGt_char_variable:		/* string that should not be quoted */
 			return ("ECPGt_char_variable");
 			break;
 		case ECPGt_const:		/* constant string quoted */
@@ -257,7 +256,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type,
 
 					ECPGdump_a_simple(o, name,
 									  type->u.element->type,
-						type->u.element->size, type->size, NULL, prefix);
+							type->u.element->size, type->size, NULL, prefix);
 
 					if (ind_type != NULL)
 					{
@@ -358,7 +357,7 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 				 */
 				if ((atoi(varcharsize) > 1 ||
 					 (atoi(arrsize) > 0) ||
-					 (atoi(varcharsize) == 0 && strcmp(varcharsize, "0") != 0) ||
+				 (atoi(varcharsize) == 0 && strcmp(varcharsize, "0") != 0) ||
 					 (atoi(arrsize) == 0 && strcmp(arrsize, "0") != 0))
 					&& siz == NULL)
 					sprintf(variable, "(%s%s)", prefix ? prefix : "", name);
@@ -386,8 +385,7 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 			case ECPGt_date:
 
 				/*
-				 * we have to use a pointer and translate the variable
-				 * type
+				 * we have to use a pointer and translate the variable type
 				 */
 				sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
 				sprintf(offset, "sizeof(date)");
@@ -395,8 +393,7 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 			case ECPGt_timestamp:
 
 				/*
-				 * we have to use a pointer and translate the variable
-				 * type
+				 * we have to use a pointer and translate the variable type
 				 */
 				sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
 				sprintf(offset, "sizeof(timestamp)");
@@ -445,9 +442,8 @@ static void
 ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, char *arrsiz, struct ECPGtype * type, struct ECPGtype * ind_type, const char *offsetarg, const char *prefix, const char *ind_prefix)
 {
 	/*
-	 * If offset is NULL, then this is the first recursive level. If not
-	 * then we are in a struct in a struct and the offset is used as
-	 * offset.
+	 * If offset is NULL, then this is the first recursive level. If not then
+	 * we are in a struct in a struct and the offset is used as offset.
 	 */
 	struct ECPGstruct_member *p,
 			   *ind_p = NULL;

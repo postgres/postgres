@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.189 2005/07/21 15:16:27 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.190 2005/10/15 02:49:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,8 +55,8 @@
 #if !defined(WIN32) && !defined(__CYGWIN__)
 #include "pg_config_os.h"		/* must be before any system header files */
 #else
-#if	defined(_MSC_VER) || defined(__BORLANDC__)
-#define	WIN32_CLIENT_ONLY
+#if defined(_MSC_VER) || defined(__BORLANDC__)
+#define WIN32_CLIENT_ONLY
 #endif
 #endif
 #include "postgres_ext.h"
@@ -84,7 +84,8 @@
 /* We have to redefine some system functions after they are included above */
 #include "pg_config_os.h"
 #else
-#include "port/win32.h"	/* We didn't run configure, but this is our port file */
+#include "port/win32.h"			/* We didn't run configure, but this is our
+								 * port file */
 #endif
 #endif
 
@@ -127,7 +128,6 @@
 
 #define CppAsString(identifier) #identifier
 #define CppConcat(x, y)			x##y
-
 #else							/* !HAVE_STRINGIZE */
 
 #define CppAsString(identifier) "identifier"
@@ -285,7 +285,6 @@ typedef long int int64;
 #ifndef HAVE_UINT64
 typedef unsigned long int uint64;
 #endif
-
 #elif defined(HAVE_LONG_LONG_INT_64)
 /* We have working support for "long long int", use that */
 
@@ -295,7 +294,6 @@ typedef long long int int64;
 #ifndef HAVE_UINT64
 typedef unsigned long long int uint64;
 #endif
-
 #else							/* not HAVE_LONG_INT_64 and not
 								 * HAVE_LONG_LONG_INT_64 */
 
@@ -434,7 +432,7 @@ typedef struct varlena VarChar; /* var-length char, ie SQL varchar(n) */
 /*
  * Specialized array types.  These are physically laid out just the same
  * as regular arrays (so that the regular array subscripting code works
- * with them).  They exist as distinct types mostly for historical reasons:
+ * with them).	They exist as distinct types mostly for historical reasons:
  * they have nonstandard I/O behavior which we don't want to change for fear
  * of breaking applications that look at the system catalogs.  There is also
  * an implementation issue for oidvector: it's part of the primary key for

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execScan.c,v 1.36 2005/05/22 22:30:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execScan.c,v 1.37 2005/10/15 02:49:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,16 +61,16 @@ ExecScan(ScanState *node,
 	projInfo = node->ps.ps_ProjInfo;
 
 	/*
-	 * If we have neither a qual to check nor a projection to do,
-	 * just skip all the overhead and return the raw scan tuple.
+	 * If we have neither a qual to check nor a projection to do, just skip
+	 * all the overhead and return the raw scan tuple.
 	 */
 	if (!qual && !projInfo)
 		return (*accessMtd) (node);
 
 	/*
-	 * Check to see if we're still projecting out tuples from a previous
-	 * scan tuple (because there is a function-returning-set in the
-	 * projection expressions).  If so, try to project another one.
+	 * Check to see if we're still projecting out tuples from a previous scan
+	 * tuple (because there is a function-returning-set in the projection
+	 * expressions).  If so, try to project another one.
 	 */
 	if (node->ps.ps_TupFromTlist)
 	{
@@ -84,15 +84,15 @@ ExecScan(ScanState *node,
 
 	/*
 	 * Reset per-tuple memory context to free any expression evaluation
-	 * storage allocated in the previous tuple cycle.  Note this can't
-	 * happen until we're done projecting out tuples from a scan tuple.
+	 * storage allocated in the previous tuple cycle.  Note this can't happen
+	 * until we're done projecting out tuples from a scan tuple.
 	 */
 	econtext = node->ps.ps_ExprContext;
 	ResetExprContext(econtext);
 
 	/*
-	 * get a tuple from the access method loop until we obtain a tuple
-	 * which passes the qualification.
+	 * get a tuple from the access method loop until we obtain a tuple which
+	 * passes the qualification.
 	 */
 	for (;;)
 	{
@@ -103,10 +103,10 @@ ExecScan(ScanState *node,
 		slot = (*accessMtd) (node);
 
 		/*
-		 * if the slot returned by the accessMtd contains NULL, then it
-		 * means there is nothing more to scan so we just return an empty
-		 * slot, being careful to use the projection result slot so it has
-		 * correct tupleDesc.
+		 * if the slot returned by the accessMtd contains NULL, then it means
+		 * there is nothing more to scan so we just return an empty slot,
+		 * being careful to use the projection result slot so it has correct
+		 * tupleDesc.
 		 */
 		if (TupIsNull(slot))
 		{
@@ -125,8 +125,8 @@ ExecScan(ScanState *node,
 		 * check that the current tuple satisfies the qual-clause
 		 *
 		 * check for non-nil qual here to avoid a function call to ExecQual()
-		 * when the qual is nil ... saves only a few cycles, but they add
-		 * up ...
+		 * when the qual is nil ... saves only a few cycles, but they add up
+		 * ...
 		 */
 		if (!qual || ExecQual(qual, econtext, false))
 		{
@@ -136,10 +136,9 @@ ExecScan(ScanState *node,
 			if (projInfo)
 			{
 				/*
-				 * Form a projection tuple, store it in the result tuple
-				 * slot and return it --- unless we find we can project no
-				 * tuples from this scan tuple, in which case continue
-				 * scan.
+				 * Form a projection tuple, store it in the result tuple slot
+				 * and return it --- unless we find we can project no tuples
+				 * from this scan tuple, in which case continue scan.
 				 */
 				resultSlot = ExecProject(projInfo, &isDone);
 				if (isDone != ExprEndResult)
@@ -226,8 +225,8 @@ tlist_matches_tupdesc(PlanState *ps, List *tlist, Index varno, TupleDesc tupdesc
 		return false;			/* tlist too long */
 
 	/*
-	 * If the plan context requires a particular hasoid setting, then that
-	 * has to match, too.
+	 * If the plan context requires a particular hasoid setting, then that has
+	 * to match, too.
 	 */
 	if (ExecContextForcesOids(ps, &hasoid) &&
 		hasoid != tupdesc->tdhasoid)

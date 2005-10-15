@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execJunk.c,v 1.49 2005/04/06 16:34:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execJunk.c,v 1.50 2005/10/15 02:49:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@
  *
  * Initialize the Junk filter.
  *
- * The source targetlist is passed in.  The output tuple descriptor is
+ * The source targetlist is passed in.	The output tuple descriptor is
  * built from the non-junk tlist entries, plus the passed specification
  * of whether to include room for an OID or not.
  * An optional resultSlot can be passed as well.
@@ -87,11 +87,11 @@ ExecInitJunkFilter(List *targetList, bool hasoid, TupleTableSlot *slot)
 	 * Now calculate the mapping between the original tuple's attributes and
 	 * the "clean" tuple's attributes.
 	 *
-	 * The "map" is an array of "cleanLength" attribute numbers, i.e. one
-	 * entry for every attribute of the "clean" tuple. The value of this
-	 * entry is the attribute number of the corresponding attribute of the
-	 * "original" tuple.  (Zero indicates a NULL output attribute, but we
-	 * do not use that feature in this routine.)
+	 * The "map" is an array of "cleanLength" attribute numbers, i.e. one entry
+	 * for every attribute of the "clean" tuple. The value of this entry is
+	 * the attribute number of the corresponding attribute of the "original"
+	 * tuple.  (Zero indicates a NULL output attribute, but we do not use that
+	 * feature in this routine.)
 	 */
 	cleanLength = cleanTupType->natts;
 	if (cleanLength > 0)
@@ -155,14 +155,14 @@ ExecInitJunkFilterConversion(List *targetList,
 		slot = MakeSingleTupleTableSlot(cleanTupType);
 
 	/*
-	 * Calculate the mapping between the original tuple's attributes and
-	 * the "clean" tuple's attributes.
+	 * Calculate the mapping between the original tuple's attributes and the
+	 * "clean" tuple's attributes.
 	 *
-	 * The "map" is an array of "cleanLength" attribute numbers, i.e. one
-	 * entry for every attribute of the "clean" tuple. The value of this
-	 * entry is the attribute number of the corresponding attribute of the
-	 * "original" tuple.  We store zero for any deleted attributes, marking
-	 * that a NULL is needed in the output tuple.
+	 * The "map" is an array of "cleanLength" attribute numbers, i.e. one entry
+	 * for every attribute of the "clean" tuple. The value of this entry is
+	 * the attribute number of the corresponding attribute of the "original"
+	 * tuple.  We store zero for any deleted attributes, marking that a NULL
+	 * is needed in the output tuple.
 	 */
 	cleanLength = cleanTupType->natts;
 	if (cleanLength > 0)
@@ -220,8 +220,8 @@ ExecGetJunkAttribute(JunkFilter *junkfilter,
 	ListCell   *t;
 
 	/*
-	 * Look in the junkfilter's target list for an attribute with
-	 * the given name
+	 * Look in the junkfilter's target list for an attribute with the given
+	 * name
 	 */
 	foreach(t, junkfilter->jf_targetList)
 	{

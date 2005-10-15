@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.40 2005/08/23 21:02:05 momjian Exp $
+ *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.41 2005/10/15 02:49:52 momjian Exp $
  *
  *	This program tests to see if your standard libc functions use
  *	pthread_setspecific()/pthread_getspecific() to be thread-safe.
@@ -51,26 +51,25 @@ typedef char bool;
 /******************************************************************
  * Windows Hacks
  *****************************************************************/
- 
+
 #ifdef WIN32
 #define MAXHOSTNAMELEN 63
 #include <winsock2.h>
 
-int mkstemp(char *template);
+int			mkstemp(char *template);
 
 int
 mkstemp(char *template)
 {
-	FILE *foo;
+	FILE	   *foo;
 
 	mktemp(template);
 	foo = fopen(template, "rw");
 	if (!foo)
 		return -1;
 	else
-		return (int)foo;
+		return (int) foo;
 }
-
 #endif
 
 /******************************************************************
@@ -80,7 +79,7 @@ mkstemp(char *template)
 
 /* Test for POSIX.1c 2-arg sigwait() and fail on single-arg version */
 #include <signal.h>
-int sigwait(const sigset_t *set, int *sig);
+int			sigwait(const sigset_t *set, int *sig);
 
 
 #if !defined(ENABLE_THREAD_SAFETY) && !defined(IN_CONFIGURE) && !(defined(WIN32))
@@ -91,14 +90,13 @@ main(int argc, char *argv[])
 	fprintf(stderr, "Perhaps rerun 'configure' using '--enable-thread-safety'.\n");
 	return 1;
 }
-
 #else
 
 /* This must be down here because this is the code that uses threads. */
 #include <pthread.h>
 
-static void		func_call_1(void);
-static void		func_call_2(void);
+static void func_call_1(void);
+static void func_call_2(void);
 
 #ifdef WIN32
 #define		TEMP_FILENAME_1 "thread_test.1.XXXXXX"
@@ -108,8 +106,8 @@ static void		func_call_2(void);
 #define		TEMP_FILENAME_2 "/tmp/thread_test.2.XXXXXX"
 #endif
 
-static char	   *temp_filename_1;
-static char	   *temp_filename_2;
+static char *temp_filename_1;
+static char *temp_filename_2;
 
 static pthread_mutex_t init_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -120,37 +118,38 @@ static volatile int errno1_set = 0;
 static volatile int errno2_set = 0;
 
 #ifndef HAVE_STRERROR_R
-static char	   *strerror_p1;
-static char	   *strerror_p2;
-static bool		strerror_threadsafe = false;
+static char *strerror_p1;
+static char *strerror_p2;
+static bool strerror_threadsafe = false;
 #endif
 
 #ifndef WIN32
 #ifndef HAVE_GETPWUID_R
 static struct passwd *passwd_p1;
 static struct passwd *passwd_p2;
-static bool		getpwuid_threadsafe = false;
+static bool getpwuid_threadsafe = false;
 #endif
 #endif
 
 #if !defined(HAVE_GETADDRINFO) && !defined(HAVE_GETHOSTBYNAME_R)
 static struct hostent *hostent_p1;
 static struct hostent *hostent_p2;
-static char		myhostname[MAXHOSTNAMELEN];
-static bool		gethostbyname_threadsafe = false;
+static char myhostname[MAXHOSTNAMELEN];
+static bool gethostbyname_threadsafe = false;
 #endif
 
-static bool		platform_is_threadsafe = true;
+static bool platform_is_threadsafe = true;
 
 int
 main(int argc, char *argv[])
 {
 	pthread_t	thread1,
-			thread2;
-	int		fd;
+				thread2;
+	int			fd;
+
 #ifdef WIN32
 	WSADATA		wsaData;
-	int		err;
+	int			err;
 #endif
 
 	if (argc > 1)
@@ -167,7 +166,8 @@ main(int argc, char *argv[])
 
 #ifdef WIN32
 	err = WSAStartup(MAKEWORD(1, 1), &wsaData);
-	if (err != 0) {
+	if (err != 0)
+	{
 		fprintf(stderr, "Cannot start the network subsystem - %d**\nexiting\n", err);
 		exit(1);
 	}
@@ -199,8 +199,7 @@ main(int argc, char *argv[])
 	pthread_create(&thread2, NULL, (void *(*) (void *)) func_call_2, NULL);
 
 	while (thread1_done == 0 || thread2_done == 0)
-		sched_yield();			/* if this is a portability problem,
-								 * remove it */
+		sched_yield();			/* if this is a portability problem, remove it */
 #ifdef WIN32
 	printf("Your GetLastError() is thread-safe.\n");
 #else
@@ -298,16 +297,16 @@ func_call_1(void)
 	void	   *p;
 #endif
 #ifdef WIN32
-    HANDLE h1;
-    HANDLE h2;
-#endif    
+	HANDLE		h1;
+	HANDLE		h2;
+#endif
 	unlink(temp_filename_1);
-    
-    
+
+
 	/* create, then try to fail on exclusive create open */
 #ifdef WIN32
-    h1 = CreateFile(temp_filename_1, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, 0, NULL);
-    h2 = CreateFile(temp_filename_1, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
+	h1 = CreateFile(temp_filename_1, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, 0, NULL);
+	h2 = CreateFile(temp_filename_1, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
 	if (h1 == INVALID_HANDLE_VALUE || GetLastError() != ERROR_FILE_EXISTS)
 #else
 	if (open(temp_filename_1, O_RDWR | O_CREAT, 0600) < 0 ||
@@ -332,16 +331,16 @@ func_call_1(void)
 	while (errno2_set == 0)
 		sched_yield();
 #ifdef WIN32
-    if (GetLastError() != ERROR_FILE_EXISTS)
+	if (GetLastError() != ERROR_FILE_EXISTS)
 #else
-	if (errno != EEXIST)    
+	if (errno != EEXIST)
 #endif
 	{
 #ifdef WIN32
-		fprintf(stderr, "GetLastError() not thread-safe **\nexiting\n");        
+		fprintf(stderr, "GetLastError() not thread-safe **\nexiting\n");
 #else
-		fprintf(stderr, "errno not thread-safe **\nexiting\n");         
-#endif    
+		fprintf(stderr, "errno not thread-safe **\nexiting\n");
+#endif
 		unlink(temp_filename_1);
 		exit(1);
 	}
@@ -351,9 +350,8 @@ func_call_1(void)
 	strerror_p1 = strerror(EACCES);
 
 	/*
-	 * If strerror() uses sys_errlist, the pointer might change for
-	 * different errno values, so we don't check to see if it varies
-	 * within the thread.
+	 * If strerror() uses sys_errlist, the pointer might change for different
+	 * errno values, so we don't check to see if it varies within the thread.
 	 */
 #endif
 
@@ -398,8 +396,8 @@ func_call_2(void)
 	unlink(temp_filename_2);
 	/* open non-existant file */
 #ifdef WIN32
-    CreateFile(temp_filename_2, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
-    if (GetLastError() != ERROR_FILE_NOT_FOUND)
+	CreateFile(temp_filename_2, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+	if (GetLastError() != ERROR_FILE_NOT_FOUND)
 #else
 	if (open(temp_filename_2, O_RDONLY, 0600) >= 0)
 #endif
@@ -416,15 +414,15 @@ func_call_2(void)
 	while (errno1_set == 0)
 		sched_yield();
 #ifdef WIN32
-    if (GetLastError() != ENOENT)
+	if (GetLastError() != ENOENT)
 #else
-	if (errno != ENOENT)    
+	if (errno != ENOENT)
 #endif
 	{
 #ifdef WIN32
-		fprintf(stderr, "GetLastError() not thread-safe **\nexiting\n");        
+		fprintf(stderr, "GetLastError() not thread-safe **\nexiting\n");
 #else
-		fprintf(stderr, "errno not thread-safe **\nexiting\n");         
+		fprintf(stderr, "errno not thread-safe **\nexiting\n");
 #endif
 		unlink(temp_filename_2);
 		exit(1);
@@ -435,9 +433,8 @@ func_call_2(void)
 	strerror_p2 = strerror(EINVAL);
 
 	/*
-	 * If strerror() uses sys_errlist, the pointer might change for
-	 * different errno values, so we don't check to see if it varies
-	 * within the thread.
+	 * If strerror() uses sys_errlist, the pointer might change for different
+	 * errno values, so we don't check to see if it varies within the thread.
 	 */
 #endif
 

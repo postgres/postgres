@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.20 2005/09/12 22:20:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.21 2005/10/15 02:49:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,11 +171,11 @@ BackgroundWriterMain(void)
 	 *
 	 * Note: we deliberately ignore SIGTERM, because during a standard Unix
 	 * system shutdown cycle, init will SIGTERM all processes at once.	We
-	 * want to wait for the backends to exit, whereupon the postmaster
-	 * will tell us it's okay to shut down (via SIGUSR2).
+	 * want to wait for the backends to exit, whereupon the postmaster will
+	 * tell us it's okay to shut down (via SIGUSR2).
 	 *
-	 * SIGUSR1 is presently unused; keep it spare in case someday we want
-	 * this process to participate in sinval messaging.
+	 * SIGUSR1 is presently unused; keep it spare in case someday we want this
+	 * process to participate in sinval messaging.
 	 */
 	pqsignal(SIGHUP, BgSigHupHandler);	/* set flag to read config file */
 	pqsignal(SIGINT, ReqCheckpointHandler);		/* request checkpoint */
@@ -203,15 +203,15 @@ BackgroundWriterMain(void)
 #endif
 
 	/*
-	 * Initialize so that first time-driven checkpoint happens at the
-	 * correct time.
+	 * Initialize so that first time-driven checkpoint happens at the correct
+	 * time.
 	 */
 	last_checkpoint_time = time(NULL);
 
 	/*
-	 * Create a memory context that we will do all our work in.  We do this
-	 * so that we can reset the context during error recovery and thereby
-	 * avoid possible memory leaks.  Formerly this code just ran in
+	 * Create a memory context that we will do all our work in.  We do this so
+	 * that we can reset the context during error recovery and thereby avoid
+	 * possible memory leaks.  Formerly this code just ran in
 	 * TopMemoryContext, but resetting that would be a really bad idea.
 	 */
 	bgwriter_context = AllocSetContextCreate(TopMemoryContext,
@@ -258,8 +258,8 @@ BackgroundWriterMain(void)
 		}
 
 		/*
-		 * Now return to normal top-level context and clear ErrorContext
-		 * for next time.
+		 * Now return to normal top-level context and clear ErrorContext for
+		 * next time.
 		 */
 		MemoryContextSwitchTo(bgwriter_context);
 		FlushErrorState();
@@ -271,9 +271,9 @@ BackgroundWriterMain(void)
 		RESUME_INTERRUPTS();
 
 		/*
-		 * Sleep at least 1 second after any error.  A write error is
-		 * likely to be repeated, and we don't want to be filling the
-		 * error logs as fast as we can.
+		 * Sleep at least 1 second after any error.  A write error is likely
+		 * to be repeated, and we don't want to be filling the error logs as
+		 * fast as we can.
 		 */
 		pg_usleep(1000000L);
 	}
@@ -329,8 +329,8 @@ BackgroundWriterMain(void)
 		}
 
 		/*
-		 * Do an unforced checkpoint if too much time has elapsed since
-		 * the last one.
+		 * Do an unforced checkpoint if too much time has elapsed since the
+		 * last one.
 		 */
 		now = time(NULL);
 		elapsed_secs = now - last_checkpoint_time;
@@ -346,8 +346,8 @@ BackgroundWriterMain(void)
 			/*
 			 * We will warn if (a) too soon since last checkpoint (whatever
 			 * caused it) and (b) somebody has set the ckpt_time_warn flag
-			 * since the last checkpoint start.  Note in particular that
-			 * this implementation will not generate warnings caused by
+			 * since the last checkpoint start.  Note in particular that this
+			 * implementation will not generate warnings caused by
 			 * CheckPointTimeout < CheckPointWarning.
 			 */
 			if (BgWriterShmem->ckpt_time_warn &&
@@ -368,8 +368,7 @@ BackgroundWriterMain(void)
 
 			/*
 			 * After any checkpoint, close all smgr files.	This is so we
-			 * won't hang onto smgr references to deleted files
-			 * indefinitely.
+			 * won't hang onto smgr references to deleted files indefinitely.
 			 */
 			smgrcloseall();
 
@@ -381,8 +380,8 @@ BackgroundWriterMain(void)
 
 			/*
 			 * Note we record the checkpoint start time not end time as
-			 * last_checkpoint_time.  This is so that time-driven
-			 * checkpoints happen at a predictable spacing.
+			 * last_checkpoint_time.  This is so that time-driven checkpoints
+			 * happen at a predictable spacing.
 			 */
 			last_checkpoint_time = now;
 		}
@@ -390,13 +389,13 @@ BackgroundWriterMain(void)
 			BgBufferSync();
 
 		/*
-		 * Nap for the configured time, or sleep for 10 seconds if there
-		 * is no bgwriter activity configured.
+		 * Nap for the configured time, or sleep for 10 seconds if there is no
+		 * bgwriter activity configured.
 		 *
-		 * On some platforms, signals won't interrupt the sleep.  To ensure
-		 * we respond reasonably promptly when someone signals us, break
-		 * down the sleep into 1-second increments, and check for
-		 * interrupts after each nap.
+		 * On some platforms, signals won't interrupt the sleep.  To ensure we
+		 * respond reasonably promptly when someone signals us, break down the
+		 * sleep into 1-second increments, and check for interrupts after each
+		 * nap.
 		 *
 		 * We absorb pending requests after each short sleep.
 		 */
@@ -437,13 +436,13 @@ bg_quickdie(SIGNAL_ARGS)
 
 	/*
 	 * DO NOT proc_exit() -- we're here because shared memory may be
-	 * corrupted, so we don't want to try to clean up our transaction.
-	 * Just nail the windows shut and get out of town.
+	 * corrupted, so we don't want to try to clean up our transaction. Just
+	 * nail the windows shut and get out of town.
 	 *
-	 * Note we do exit(1) not exit(0).	This is to force the postmaster into
-	 * a system reset cycle if some idiot DBA sends a manual SIGQUIT to a
-	 * random backend.	This is necessary precisely because we don't clean
-	 * up our shared memory state.
+	 * Note we do exit(1) not exit(0).	This is to force the postmaster into a
+	 * system reset cycle if some idiot DBA sends a manual SIGQUIT to a random
+	 * backend.  This is necessary precisely because we don't clean up our
+	 * shared memory state.
 	 */
 	exit(1);
 }
@@ -485,8 +484,8 @@ BgWriterShmemSize(void)
 	Size		size;
 
 	/*
-	 * Currently, the size of the requests[] array is arbitrarily set
-	 * equal to NBuffers.  This may prove too large or small ...
+	 * Currently, the size of the requests[] array is arbitrarily set equal to
+	 * NBuffers.  This may prove too large or small ...
 	 */
 	size = offsetof(BgWriterShmemStruct, requests);
 	size = add_size(size, mul_size(NBuffers, sizeof(BgWriterRequest)));
@@ -546,9 +545,8 @@ RequestCheckpoint(bool waitforit, bool warnontime)
 		CreateCheckPoint(false, true);
 
 		/*
-		 * After any checkpoint, close all smgr files.	This is so we
-		 * won't hang onto smgr references to deleted files
-		 * indefinitely.
+		 * After any checkpoint, close all smgr files.	This is so we won't
+		 * hang onto smgr references to deleted files indefinitely.
 		 */
 		smgrcloseall();
 
@@ -571,8 +569,8 @@ RequestCheckpoint(bool waitforit, bool warnontime)
 			 "could not signal for checkpoint: %m");
 
 	/*
-	 * If requested, wait for completion.  We detect completion according
-	 * to the algorithm given above.
+	 * If requested, wait for completion.  We detect completion according to
+	 * the algorithm given above.
 	 */
 	if (waitforit)
 	{
@@ -585,13 +583,12 @@ RequestCheckpoint(bool waitforit, bool warnontime)
 
 		/*
 		 * We are waiting for ckpt_done >= old_started, in a modulo sense.
-		 * This is a little tricky since we don't know the width or
-		 * signedness of sig_atomic_t.	We make the lowest common
-		 * denominator assumption that it is only as wide as "char".  This
-		 * means that this algorithm will cope correctly as long as we
-		 * don't sleep for more than 127 completed checkpoints.  (If we
-		 * do, we will get another chance to exit after 128 more
-		 * checkpoints...)
+		 * This is a little tricky since we don't know the width or signedness
+		 * of sig_atomic_t.  We make the lowest common denominator assumption
+		 * that it is only as wide as "char".  This means that this algorithm
+		 * will cope correctly as long as we don't sleep for more than 127
+		 * completed checkpoints.  (If we do, we will get another chance to
+		 * exit after 128 more checkpoints...)
 		 */
 		while (((signed char) (bgs->ckpt_done - old_started)) < 0)
 		{
@@ -666,17 +663,17 @@ AbsorbFsyncRequests(void)
 		return;
 
 	/*
-	 * We have to PANIC if we fail to absorb all the pending requests
-	 * (eg, because our hashtable runs out of memory).  This is because
-	 * the system cannot run safely if we are unable to fsync what we
-	 * have been told to fsync.  Fortunately, the hashtable is so small
-	 * that the problem is quite unlikely to arise in practice.
+	 * We have to PANIC if we fail to absorb all the pending requests (eg,
+	 * because our hashtable runs out of memory).  This is because the system
+	 * cannot run safely if we are unable to fsync what we have been told to
+	 * fsync.  Fortunately, the hashtable is so small that the problem is
+	 * quite unlikely to arise in practice.
 	 */
 	START_CRIT_SECTION();
 
 	/*
-	 * We try to avoid holding the lock for a long time by copying the
-	 * request array.
+	 * We try to avoid holding the lock for a long time by copying the request
+	 * array.
 	 */
 	LWLockAcquire(BgWriterCommLock, LW_EXCLUSIVE);
 

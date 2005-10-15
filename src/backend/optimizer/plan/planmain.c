@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.88 2005/09/28 21:17:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.89 2005/10/15 02:49:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@
  *				does not use grouping
  *
  * Note: the PlannerInfo node also includes a query_pathkeys field, which is
- * both an input and an output of query_planner().  The input value signals
+ * both an input and an output of query_planner().	The input value signals
  * query_planner that the indicated sort order is wanted in the final output
  * plan.  But this value has not yet been "canonicalized", since the needed
  * info does not get computed until we scan the qual clauses.  We canonicalize
@@ -99,7 +99,7 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 	if (parse->jointree->fromlist == NIL)
 	{
 		*cheapest_path = (Path *) create_result_path(NULL, NULL,
-										 (List *) parse->jointree->quals);
+											(List *) parse->jointree->quals);
 		*sorted_path = NULL;
 		return;
 	}
@@ -107,21 +107,21 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 	/*
 	 * Pull out any non-variable WHERE clauses so these can be put in a
 	 * toplevel "Result" node, where they will gate execution of the whole
-	 * plan (the Result will not invoke its descendant plan unless the
-	 * quals are true).  Note that any *really* non-variable quals will
-	 * have been optimized away by eval_const_expressions().  What we're
-	 * mostly interested in here is quals that depend only on outer-level
-	 * vars, although if the qual reduces to "WHERE FALSE" this path will
-	 * also be taken.
+	 * plan (the Result will not invoke its descendant plan unless the quals
+	 * are true).  Note that any *really* non-variable quals will have been
+	 * optimized away by eval_const_expressions().	What we're mostly
+	 * interested in here is quals that depend only on outer-level vars,
+	 * although if the qual reduces to "WHERE FALSE" this path will also be
+	 * taken.
 	 */
 	parse->jointree->quals = (Node *)
 		pull_constant_clauses((List *) parse->jointree->quals,
 							  &constant_quals);
 
 	/*
-	 * Init planner lists to empty.  We create the base_rel_array with a
-	 * size that will be sufficient if no pullups or inheritance additions
-	 * happen ... otherwise it will be enlarged as needed.
+	 * Init planner lists to empty.  We create the base_rel_array with a size
+	 * that will be sufficient if no pullups or inheritance additions happen
+	 * ... otherwise it will be enlarged as needed.
 	 *
 	 * NOTE: in_info_list was set up by subquery_planner, do not touch here
 	 */
@@ -141,33 +141,32 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 	add_base_rels_to_query(root, (Node *) parse->jointree);
 
 	/*
-	 * Examine the targetlist and qualifications, adding entries to
-	 * baserel targetlists for all referenced Vars.  Restrict and join
-	 * clauses are added to appropriate lists belonging to the mentioned
-	 * relations.  We also build lists of equijoined keys for pathkey
-	 * construction.
+	 * Examine the targetlist and qualifications, adding entries to baserel
+	 * targetlists for all referenced Vars.  Restrict and join clauses are
+	 * added to appropriate lists belonging to the mentioned relations.  We
+	 * also build lists of equijoined keys for pathkey construction.
 	 *
-	 * Note: all subplan nodes will have "flat" (var-only) tlists. This
-	 * implies that all expression evaluations are done at the root of the
-	 * plan tree.  Once upon a time there was code to try to push
-	 * expensive function calls down to lower plan nodes, but that's dead
-	 * code and has been for a long time...
+	 * Note: all subplan nodes will have "flat" (var-only) tlists. This implies
+	 * that all expression evaluations are done at the root of the plan tree.
+	 * Once upon a time there was code to try to push expensive function calls
+	 * down to lower plan nodes, but that's dead code and has been for a long
+	 * time...
 	 */
 	build_base_rel_tlists(root, tlist);
 
 	(void) distribute_quals_to_rels(root, (Node *) parse->jointree, false);
 
 	/*
-	 * Use the completed lists of equijoined keys to deduce any implied
-	 * but unstated equalities (for example, A=B and B=C imply A=C).
+	 * Use the completed lists of equijoined keys to deduce any implied but
+	 * unstated equalities (for example, A=B and B=C imply A=C).
 	 */
 	generate_implied_equalities(root);
 
 	/*
-	 * We should now have all the pathkey equivalence sets built, so it's
-	 * now possible to convert the requested query_pathkeys to canonical
-	 * form.  Also canonicalize the groupClause and sortClause pathkeys
-	 * for use later.
+	 * We should now have all the pathkey equivalence sets built, so it's now
+	 * possible to convert the requested query_pathkeys to canonical form.
+	 * Also canonicalize the groupClause and sortClause pathkeys for use
+	 * later.
 	 */
 	root->query_pathkeys = canonicalize_pathkeys(root, root->query_pathkeys);
 	root->group_pathkeys = canonicalize_pathkeys(root, root->group_pathkeys);
@@ -182,13 +181,13 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 		elog(ERROR, "failed to construct the join relation");
 
 	/*
-	 * If there's grouping going on, estimate the number of result groups.
-	 * We couldn't do this any earlier because it depends on relation size
+	 * If there's grouping going on, estimate the number of result groups. We
+	 * couldn't do this any earlier because it depends on relation size
 	 * estimates that were set up above.
 	 *
-	 * Then convert tuple_fraction to fractional form if it is absolute,
-	 * and adjust it based on the knowledge that grouping_planner will be
-	 * doing grouping or aggregation work with our result.
+	 * Then convert tuple_fraction to fractional form if it is absolute, and
+	 * adjust it based on the knowledge that grouping_planner will be doing
+	 * grouping or aggregation work with our result.
 	 *
 	 * This introduces some undesirable coupling between this code and
 	 * grouping_planner, but the alternatives seem even uglier; we couldn't
@@ -205,18 +204,18 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 										  final_rel->rows);
 
 		/*
-		 * In GROUP BY mode, an absolute LIMIT is relative to the number
-		 * of groups not the number of tuples.  If the caller gave us
-		 * a fraction, keep it as-is.  (In both cases, we are effectively
-		 * assuming that all the groups are about the same size.)
+		 * In GROUP BY mode, an absolute LIMIT is relative to the number of
+		 * groups not the number of tuples.  If the caller gave us a fraction,
+		 * keep it as-is.  (In both cases, we are effectively assuming that
+		 * all the groups are about the same size.)
 		 */
 		if (tuple_fraction >= 1.0)
 			tuple_fraction /= *num_groups;
 
 		/*
 		 * If both GROUP BY and ORDER BY are specified, we will need two
-		 * levels of sort --- and, therefore, certainly need to read all
-		 * the tuples --- unless ORDER BY is a subset of GROUP BY.
+		 * levels of sort --- and, therefore, certainly need to read all the
+		 * tuples --- unless ORDER BY is a subset of GROUP BY.
 		 */
 		if (parse->groupClause && parse->sortClause &&
 			!pathkeys_contained_in(root->sort_pathkeys, root->group_pathkeys))
@@ -225,8 +224,8 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 	else if (parse->hasAggs || root->hasHavingQual)
 	{
 		/*
-		 * Ungrouped aggregate will certainly want to read all the tuples,
-		 * and it will deliver a single result row (so leave *num_groups 1).
+		 * Ungrouped aggregate will certainly want to read all the tuples, and
+		 * it will deliver a single result row (so leave *num_groups 1).
 		 */
 		tuple_fraction = 0.0;
 	}
@@ -234,11 +233,11 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 	{
 		/*
 		 * Since there was no grouping or aggregation, it's reasonable to
-		 * assume the UNIQUE filter has effects comparable to GROUP BY.
-		 * Return the estimated number of output rows for use by caller.
-		 * (If DISTINCT is used with grouping, we ignore its effects for
-		 * rowcount estimation purposes; this amounts to assuming the grouped
-		 * rows are distinct already.)
+		 * assume the UNIQUE filter has effects comparable to GROUP BY. Return
+		 * the estimated number of output rows for use by caller. (If DISTINCT
+		 * is used with grouping, we ignore its effects for rowcount
+		 * estimation purposes; this amounts to assuming the grouped rows are
+		 * distinct already.)
 		 */
 		List	   *distinctExprs;
 
@@ -257,26 +256,26 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 	else
 	{
 		/*
-		 * Plain non-grouped, non-aggregated query: an absolute tuple
-		 * fraction can be divided by the number of tuples.
+		 * Plain non-grouped, non-aggregated query: an absolute tuple fraction
+		 * can be divided by the number of tuples.
 		 */
 		if (tuple_fraction >= 1.0)
 			tuple_fraction /= final_rel->rows;
 	}
 
 	/*
-	 * Pick out the cheapest-total path and the cheapest presorted path
-	 * for the requested pathkeys (if there is one).  We should take the
-	 * tuple fraction into account when selecting the cheapest presorted
-	 * path, but not when selecting the cheapest-total path, since if we
-	 * have to sort then we'll have to fetch all the tuples.  (But there's
-	 * a special case: if query_pathkeys is NIL, meaning order doesn't
-	 * matter, then the "cheapest presorted" path will be the cheapest
-	 * overall for the tuple fraction.)
+	 * Pick out the cheapest-total path and the cheapest presorted path for
+	 * the requested pathkeys (if there is one).  We should take the tuple
+	 * fraction into account when selecting the cheapest presorted path, but
+	 * not when selecting the cheapest-total path, since if we have to sort
+	 * then we'll have to fetch all the tuples.  (But there's a special case:
+	 * if query_pathkeys is NIL, meaning order doesn't matter, then the
+	 * "cheapest presorted" path will be the cheapest overall for the tuple
+	 * fraction.)
 	 *
-	 * The cheapest-total path is also the one to use if grouping_planner
-	 * decides to use hashed aggregation, so we return it separately even
-	 * if this routine thinks the presorted path is the winner.
+	 * The cheapest-total path is also the one to use if grouping_planner decides
+	 * to use hashed aggregation, so we return it separately even if this
+	 * routine thinks the presorted path is the winner.
 	 */
 	cheapestpath = final_rel->cheapest_total_path;
 
@@ -291,8 +290,8 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 
 	/*
 	 * Forget about the presorted path if it would be cheaper to sort the
-	 * cheapest-total path.  Here we need consider only the behavior at
-	 * the tuple fraction point.
+	 * cheapest-total path.  Here we need consider only the behavior at the
+	 * tuple fraction point.
 	 */
 	if (sortedpath)
 	{
@@ -323,8 +322,7 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 	}
 
 	/*
-	 * If we have constant quals, add a toplevel Result step to process
-	 * them.
+	 * If we have constant quals, add a toplevel Result step to process them.
 	 */
 	if (constant_quals)
 	{

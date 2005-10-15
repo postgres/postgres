@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/datetime.h,v 1.56 2005/07/23 14:25:34 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/datetime.h,v 1.57 2005/10/15 02:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,10 +175,10 @@
 #define DTK_DATE_M		(DTK_M(YEAR) | DTK_M(MONTH) | DTK_M(DAY))
 #define DTK_TIME_M		(DTK_M(HOUR) | DTK_M(MINUTE) | DTK_M(SECOND))
 
-#define MAXDATELEN		51		/* maximum possible length of an input
-								 * date string (not counting tr. null) */
-#define MAXDATEFIELDS	25		/* maximum possible number of fields in a
-								 * date string */
+#define MAXDATELEN		51		/* maximum possible length of an input date
+								 * string (not counting tr. null) */
+#define MAXDATEFIELDS	25		/* maximum possible number of fields in a date
+								 * string */
 #define TOKMAXLEN		10		/* only this many chars are stored in
 								 * datetktbl */
 
@@ -271,8 +271,8 @@ extern const int day_tab[2][13];
 #define DTERR_TZDISP_OVERFLOW	(-5)
 
 
-extern void GetCurrentDateTime(struct pg_tm *tm);
-extern void GetCurrentTimeUsec(struct pg_tm *tm, fsec_t *fsec, int *tzp);
+extern void GetCurrentDateTime(struct pg_tm * tm);
+extern void GetCurrentTimeUsec(struct pg_tm * tm, fsec_t *fsec, int *tzp);
 extern void j2date(int jd, int *year, int *month, int *day);
 extern int	date2j(int year, int month, int day);
 
@@ -281,22 +281,22 @@ extern int ParseDateTime(const char *timestr, char *workbuf, size_t buflen,
 			  int maxfields, int *numfields);
 extern int DecodeDateTime(char **field, int *ftype,
 			   int nf, int *dtype,
-			   struct pg_tm *tm, fsec_t *fsec, int *tzp);
+			   struct pg_tm * tm, fsec_t *fsec, int *tzp);
 extern int DecodeTimeOnly(char **field, int *ftype,
 			   int nf, int *dtype,
-			   struct pg_tm *tm, fsec_t *fsec, int *tzp);
+			   struct pg_tm * tm, fsec_t *fsec, int *tzp);
 extern int DecodeInterval(char **field, int *ftype,
 			   int nf, int *dtype,
-			   struct pg_tm *tm, fsec_t *fsec);
+			   struct pg_tm * tm, fsec_t *fsec);
 extern void DateTimeParseError(int dterr, const char *str,
 				   const char *datatype);
 
-extern int	DetermineTimeZoneOffset(struct pg_tm *tm, pg_tz *tzp);
+extern int	DetermineTimeZoneOffset(struct pg_tm * tm, pg_tz *tzp);
 
-extern int	EncodeDateOnly(struct pg_tm *tm, int style, char *str);
-extern int	EncodeTimeOnly(struct pg_tm *tm, fsec_t fsec, int *tzp, int style, char *str);
-extern int	EncodeDateTime(struct pg_tm *tm, fsec_t fsec, int *tzp, char **tzn, int style, char *str);
-extern int	EncodeInterval(struct pg_tm *tm, fsec_t fsec, int style, char *str);
+extern int	EncodeDateOnly(struct pg_tm * tm, int style, char *str);
+extern int	EncodeTimeOnly(struct pg_tm * tm, fsec_t fsec, int *tzp, int style, char *str);
+extern int	EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, char *str);
+extern int	EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str);
 
 extern int	DecodeSpecial(int field, char *lowtoken, int *val);
 extern int	DecodeUnits(int field, char *lowtoken, int *val);

@@ -47,7 +47,7 @@
  * permission to use and distribute the software in accordance with the
  * terms specified in this license.
  *
- * $PostgreSQL: pgsql/src/backend/regex/regc_locale.c,v 1.6 2004/05/07 00:24:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/regex/regc_locale.c,v 1.7 2005/10/15 02:49:24 momjian Exp $
  */
 
 /* ASCII character-name table */
@@ -520,10 +520,9 @@ range(struct vars * v,			/* context */
 	}
 
 	/*
-	 * When case-independent, it's hard to decide when cvec ranges are
-	 * usable, so for now at least, we won't try.  We allocate enough
-	 * space for two case variants plus a little extra for the two title
-	 * case variants.
+	 * When case-independent, it's hard to decide when cvec ranges are usable,
+	 * so for now at least, we won't try.  We allocate enough space for two
+	 * case variants plus a little extra for the two title case variants.
 	 */
 
 	nchrs = (b - a + 1) * 2 + 4;
@@ -656,8 +655,7 @@ cclass(struct vars * v,			/* context */
 	/*
 	 * Now compute the character class contents.
 	 *
-	 * For the moment, assume that only char codes < 256 can be in these
-	 * classes.
+	 * For the moment, assume that only char codes < 256 can be in these classes.
 	 */
 
 	switch ((enum classes) index)

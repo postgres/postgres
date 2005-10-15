@@ -153,7 +153,7 @@ NIImportDictionary(IspellDict * Conf, const char *filename)
 		return (1);
 	while (fgets(str, sizeof(str), dict))
 	{
-		char *s;
+		char	   *s;
 		const char *flag;
 
 		flag = NULL;
@@ -266,7 +266,7 @@ NIAddAffix(IspellDict * Conf, int flag, char flagflags, const char *mask, const 
 	{
 		Conf->Affix[Conf->naffixes].issimple = 0;
 		Conf->Affix[Conf->naffixes].isregis = 0;
-		Conf->Affix[Conf->naffixes].mask = (char*)malloc( strlen(mask) + 2 );
+		Conf->Affix[Conf->naffixes].mask = (char *) malloc(strlen(mask) + 2);
 		if (type == FF_SUFFIX)
 			sprintf(Conf->Affix[Conf->naffixes].mask, "%s$", mask);
 		else
@@ -489,8 +489,8 @@ mkSPNode(IspellDict * Conf, int low, int high, int level)
 				if (data->isword && data->affix != Conf->Spell[i].p.d.affix)
 				{
 					/*
-					 * fprintf(stderr,"Word already exists: %s (affixes:
-					 * '%s' and '%s')\n", Conf->Spell[i].word,
+					 * fprintf(stderr,"Word already exists: %s (affixes: '%s'
+					 * and '%s')\n", Conf->Spell[i].word,
 					 * Conf->AffixData[data->affix],
 					 * Conf->AffixData[Conf->Spell[i].p.d.affix] );
 					 */
@@ -806,7 +806,8 @@ CheckAffix(const char *word, size_t len, AFFIX * Affix, char flagflags, char *ne
 			pfree(mask);
 			if (err)
 			{
-				char regerrstr[ERRSTRSIZE];	
+				char		regerrstr[ERRSTRSIZE];
+
 				pg_regerror(err, &(Affix->reg.regex), regerrstr, ERRSTRSIZE);
 				elog(ERROR, "Regex error in '%s': %s", Affix->mask, regerrstr);
 			}
@@ -1037,8 +1038,7 @@ SplitToVariants(IspellDict * Conf, SPNode * snode, SplitVar * orig, char *word, 
 		while (level > startpos && (lenaff = CheckCompoundAffixes(&caff, word + level, wordlen - level)) > 0)
 		{
 			/*
-			 * there is one of compound suffixes, so check word for
-			 * existings
+			 * there is one of compound suffixes, so check word for existings
 			 */
 			char		buf[MAXNORMLEN];
 			char	  **subres;
@@ -1128,20 +1128,24 @@ TSLexeme *
 NINormalizeWord(IspellDict * Conf, char *word)
 {
 	char	  **res = NormalizeSubWord(Conf, word, 0);
-	TSLexeme *lcur=NULL, *lres=NULL;
-	uint16	  NVariant=1;
+	TSLexeme   *lcur = NULL,
+			   *lres = NULL;
+	uint16		NVariant = 1;
 
-	if (res) {
-		char **ptr = res;
-		lcur = lres = (TSLexeme*)palloc( MAX_NORM * sizeof(TSLexeme) );
-		while(*ptr) {
-			lcur->lexeme=*ptr;
-			lcur->flags=0;
+	if (res)
+	{
+		char	  **ptr = res;
+
+		lcur = lres = (TSLexeme *) palloc(MAX_NORM * sizeof(TSLexeme));
+		while (*ptr)
+		{
+			lcur->lexeme = *ptr;
+			lcur->flags = 0;
 			lcur->nvariant = NVariant++;
 			lcur++;
 			ptr++;
 		}
-		lcur->lexeme=NULL;
+		lcur->lexeme = NULL;
 		pfree(res);
 	}
 
@@ -1162,29 +1166,31 @@ NINormalizeWord(IspellDict * Conf, char *word)
 				{
 					char	  **subptr = subres;
 
-					if ( !lcur )
-						lcur = lres = (TSLexeme*)palloc( MAX_NORM * sizeof(TSLexeme) );
-		
-					while(*subptr) {
-						for(i=0;i<var->nstem-1;i++) {
-							lcur->lexeme=(subptr==subres) ? var->stem[ i ] : pstrdup(var->stem[ i ]);
-							lcur->flags=0;
+					if (!lcur)
+						lcur = lres = (TSLexeme *) palloc(MAX_NORM * sizeof(TSLexeme));
+
+					while (*subptr)
+					{
+						for (i = 0; i < var->nstem - 1; i++)
+						{
+							lcur->lexeme = (subptr == subres) ? var->stem[i] : pstrdup(var->stem[i]);
+							lcur->flags = 0;
 							lcur->nvariant = NVariant;
 							lcur++;
 						}
 
-						lcur->lexeme=*subptr;
-						lcur->flags=0;
+						lcur->lexeme = *subptr;
+						lcur->flags = 0;
 						lcur->nvariant = NVariant;
 						lcur++;
 						subptr++;
 						NVariant++;
-					}	
+					}
 
-					lcur->lexeme=NULL;
+					lcur->lexeme = NULL;
 					pfree(subres);
 					var->stem[0] = NULL;
-					pfree( var->stem[ var->nstem-1 ] );	
+					pfree(var->stem[var->nstem - 1]);
 				}
 			}
 

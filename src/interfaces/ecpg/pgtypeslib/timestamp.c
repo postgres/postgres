@@ -24,7 +24,6 @@ time2t(const int hour, const int min, const int sec, const fsec_t fsec)
 {
 	return (((((hour * MINS_PER_HOUR) + min) * SECS_PER_MINUTE) + sec) * USECS_PER_SEC) + fsec;
 }	/* time2t() */
-
 #else
 static double
 time2t(const int hour, const int min, const int sec, const fsec_t fsec)
@@ -52,12 +51,11 @@ dt2local(timestamp dt, int tz)
  * Returns -1 on failure (overflow).
  */
 int
-tm2timestamp(struct tm *tm, fsec_t fsec, int *tzp, timestamp *result)
+tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, timestamp * result)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	int			dDate;
 	int64		time;
-
 #else
 	double		dDate,
 				time;
@@ -141,7 +139,7 @@ dt2time(timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
  *	local time zone. If out of this range, leave as GMT. - tgl 97/05/27
  */
 static int
-timestamp2tm(timestamp dt, int *tzp, struct tm *tm, fsec_t *fsec, char **tzn)
+timestamp2tm(timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		dDate,
@@ -181,7 +179,7 @@ timestamp2tm(timestamp dt, int *tzp, struct tm *tm, fsec_t *fsec, char **tzn)
 	dt2time(time, &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
 #else
 	time = dt;
-	TMODULO(time, dDate, (double)SECS_PER_DAY);
+	TMODULO(time, dDate, (double) SECS_PER_DAY);
 
 	if (time < 0)
 	{
@@ -206,7 +204,7 @@ recalc_t:
 	if (*fsec >= 1.0)
 	{
 		time = ceil(time);
-		if (time >= (double)SECS_PER_DAY)
+		if (time >= (double) SECS_PER_DAY)
 		{
 			time = 0;
 			dDate += 1;
@@ -244,7 +242,7 @@ recalc_t:
 			tm->tm_gmtoff = tx->tm_gmtoff;
 			tm->tm_zone = tx->tm_zone;
 
-			*tzp = -tm->tm_gmtoff;	/* tm_gmtoff is Sun/DEC-ism */
+			*tzp = -tm->tm_gmtoff;		/* tm_gmtoff is Sun/DEC-ism */
 			if (tzn != NULL)
 				*tzn = (char *) tm->tm_zone;
 #elif defined(HAVE_INT_TIMEZONE)
@@ -252,7 +250,6 @@ recalc_t:
 			if (tzn != NULL)
 				*tzn = TZNAME_GLOBAL[(tm->tm_isdst > 0)];
 #endif
-
 #else							/* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
 			*tzp = 0;
 			/* Mark this as *no* time zone available */
@@ -367,8 +364,8 @@ PGTYPEStimestamp_from_asc(char *str, char **endptr)
 	/* AdjustTimestampForTypmod(&result, typmod); */
 
 	/*
-	 * Since it's difficult to test for noresult, make sure errno is 0 if
-	 * no error occured.
+	 * Since it's difficult to test for noresult, make sure errno is 0 if no
+	 * error occured.
 	 */
 	errno = 0;
 	return result;
@@ -382,8 +379,8 @@ PGTYPEStimestamp_to_asc(timestamp tstamp)
 	char		buf[MAXDATELEN + 1];
 	char	   *tzn = NULL;
 	fsec_t		fsec;
-	int			DateStyle = 1;	/* this defaults to ISO_DATES, shall we
-								 * make it an option? */
+	int			DateStyle = 1;	/* this defaults to ISO_DATES, shall we make
+								 * it an option? */
 
 	if (TIMESTAMP_NOT_FINITE(tstamp))
 		EncodeSpecialTimestamp(tstamp, buf);
@@ -398,7 +395,7 @@ PGTYPEStimestamp_to_asc(timestamp tstamp)
 }
 
 void
-PGTYPEStimestamp_current(timestamp *ts)
+PGTYPEStimestamp_current(timestamp * ts)
 {
 	struct tm	tm;
 
@@ -408,7 +405,7 @@ PGTYPEStimestamp_current(timestamp *ts)
 }
 
 static int
-dttofmtasc_replace(timestamp *ts, date dDate, int dow, struct tm *tm,
+dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm * tm,
 				   char *output, int *pstr_len, char *fmtstr)
 {
 	union un_fmt_comb replace_val;
@@ -457,8 +454,7 @@ dttofmtasc_replace(timestamp *ts, date dDate, int dow, struct tm *tm,
 				case 'D':
 
 					/*
-					 * ts, dDate, dow, tm is information about the
-					 * timestamp
+					 * ts, dDate, dow, tm is information about the timestamp
 					 *
 					 * q is the start of the current output buffer
 					 *
@@ -518,8 +514,8 @@ dttofmtasc_replace(timestamp *ts, date dDate, int dow, struct tm *tm,
 				case 'g':
 					/* XXX: fall back to strftime */
 					{
-						char	   *fmt = "%g"; /* Keep compiler quiet
-												 * about 2-digit year */
+						char	   *fmt = "%g"; /* Keep compiler quiet about
+												 * 2-digit year */
 
 						tm->tm_mon -= 1;
 						i = strftime(q, *pstr_len, fmt, tm);
@@ -671,8 +667,8 @@ dttofmtasc_replace(timestamp *ts, date dDate, int dow, struct tm *tm,
 				case 'x':
 					/* XXX: fall back to strftime */
 					{
-						char	   *fmt = "%x"; /* Keep compiler quiet
-												 * about 2-digit year */
+						char	   *fmt = "%x"; /* Keep compiler quiet about
+												 * 2-digit year */
 
 						tm->tm_mon -= 1;
 						i = strftime(q, *pstr_len, fmt, tm);
@@ -798,7 +794,7 @@ dttofmtasc_replace(timestamp *ts, date dDate, int dow, struct tm *tm,
 
 
 int
-PGTYPEStimestamp_fmt_asc(timestamp *ts, char *output, int str_len, char *fmtstr)
+PGTYPEStimestamp_fmt_asc(timestamp * ts, char *output, int str_len, char *fmtstr)
 {
 	struct tm	tm;
 	fsec_t		fsec;
@@ -813,7 +809,7 @@ PGTYPEStimestamp_fmt_asc(timestamp *ts, char *output, int str_len, char *fmtstr)
 }
 
 int
-PGTYPEStimestamp_sub(timestamp *ts1, timestamp *ts2, interval *iv)
+PGTYPEStimestamp_sub(timestamp * ts1, timestamp * ts2, interval * iv)
 {
 	if (TIMESTAMP_NOT_FINITE(*ts1) || TIMESTAMP_NOT_FINITE(*ts2))
 		return PGTYPES_TS_ERR_EINFTIME;
@@ -826,7 +822,7 @@ PGTYPEStimestamp_sub(timestamp *ts1, timestamp *ts2, interval *iv)
 }
 
 int
-PGTYPEStimestamp_defmt_asc(char *str, char *fmt, timestamp *d)
+PGTYPEStimestamp_defmt_asc(char *str, char *fmt, timestamp * d)
 {
 	int			year,
 				month,
@@ -870,83 +866,82 @@ PGTYPEStimestamp_defmt_asc(char *str, char *fmt, timestamp *d)
 /*
 * add an interval to a time stamp
 *
-*   *tout = tin + span
+*	*tout = tin + span
 *
-*    returns 0 if successful
-*    returns -1 if it fails
+*	 returns 0 if successful
+*	 returns -1 if it fails
 *
 */
-                                                                                                               
+
 int
-PGTYPEStimestamp_add_interval(timestamp *tin, interval *span, timestamp *tout)
+PGTYPEStimestamp_add_interval(timestamp * tin, interval * span, timestamp * tout)
 {
-                                                                                                               
-                                                                                                               
-    if (TIMESTAMP_NOT_FINITE(*tin))
-        *tout = *tin;
-                                                                                                               
-                                                                                                               
-    else
-    {
-        if (span->month != 0)
-        {
-            struct tm tt,
-                  *tm = &tt;
-            fsec_t          fsec;
-                                                                                                               
-                                                                                                               
-            if (timestamp2tm(*tin, NULL, tm, &fsec, NULL) !=0)
-                return -1;
-            tm->tm_mon += span->month;
-            if (tm->tm_mon > MONTHS_PER_YEAR)
-            {
-                tm->tm_year += (tm->tm_mon - 1) / MONTHS_PER_YEAR;
-                tm->tm_mon = (tm->tm_mon - 1) % MONTHS_PER_YEAR + 1;
-            }
-            else if (tm->tm_mon < 1)
-            {
-                tm->tm_year += tm->tm_mon / MONTHS_PER_YEAR - 1;
-                tm->tm_mon = tm->tm_mon % MONTHS_PER_YEAR + MONTHS_PER_YEAR;
-            }
-                                                                                                               
-                                                                                                               
-            /* adjust for end of month boundary problems... */
-            if (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
-                tm->tm_mday = (day_tab[isleap(tm->tm_year)][tm->tm_mon - 1]);
-                                                                                                               
-                                                                                                               
-                if (tm2timestamp(tm, fsec, NULL, tin) !=0)
-                    return -1;
-          }
-                                                                                                               
-                                                                                                               
-          *tin +=span->time;
-          *tout = *tin;
-    }
-    return 0;
-                                                                                                               
+
+
+	if (TIMESTAMP_NOT_FINITE(*tin))
+		*tout = *tin;
+
+
+	else
+	{
+		if (span->month != 0)
+		{
+			struct tm	tt,
+					   *tm = &tt;
+			fsec_t		fsec;
+
+
+			if (timestamp2tm(*tin, NULL, tm, &fsec, NULL) != 0)
+				return -1;
+			tm->tm_mon += span->month;
+			if (tm->tm_mon > MONTHS_PER_YEAR)
+			{
+				tm->tm_year += (tm->tm_mon - 1) / MONTHS_PER_YEAR;
+				tm->tm_mon = (tm->tm_mon - 1) % MONTHS_PER_YEAR + 1;
+			}
+			else if (tm->tm_mon < 1)
+			{
+				tm->tm_year += tm->tm_mon / MONTHS_PER_YEAR - 1;
+				tm->tm_mon = tm->tm_mon % MONTHS_PER_YEAR + MONTHS_PER_YEAR;
+			}
+
+
+			/* adjust for end of month boundary problems... */
+			if (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
+				tm->tm_mday = (day_tab[isleap(tm->tm_year)][tm->tm_mon - 1]);
+
+
+			if (tm2timestamp(tm, fsec, NULL, tin) != 0)
+				return -1;
+		}
+
+
+		*tin += span->time;
+		*tout = *tin;
+	}
+	return 0;
+
 }
-                                                                                                               
-                                                                                                               
+
+
 /*
 * subtract an interval from a time stamp
 *
-*   *tout = tin - span
+*	*tout = tin - span
 *
-*    returns 0 if successful
-*    returns -1 if it fails
+*	 returns 0 if successful
+*	 returns -1 if it fails
 *
 */
-                                                                                                               
-int
-PGTYPEStimestamp_sub_interval(timestamp *tin, interval *span, timestamp *tout)
-{
-    interval        tspan;
-                                                                                                               
-    tspan.month = -span->month;
-    tspan.time = -span->time;
-                                                                                                               
-                                                                                                               
-    return PGTYPEStimestamp_add_interval(tin, &tspan, tout );
-}
 
+int
+PGTYPEStimestamp_sub_interval(timestamp * tin, interval * span, timestamp * tout)
+{
+	interval	tspan;
+
+	tspan.month = -span->month;
+	tspan.time = -span->time;
+
+
+	return PGTYPEStimestamp_add_interval(tin, &tspan, tout);
+}

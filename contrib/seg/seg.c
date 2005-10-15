@@ -124,8 +124,7 @@ seg_out(SEG * seg)
 	if (seg->lower == seg->upper && seg->l_ext == seg->u_ext)
 	{
 		/*
-		 * indicates that this interval was built by seg_in off a single
-		 * point
+		 * indicates that this interval was built by seg_in off a single point
 		 */
 		p += restore(p, seg->lower, seg->l_sigd);
 	}
@@ -349,8 +348,7 @@ gseg_picksplit(GistEntryVector *entryvec,
 			size_waste = size_union - size_inter;
 
 			/*
-			 * are these a more promising split that what we've already
-			 * seen?
+			 * are these a more promising split that what we've already seen?
 			 */
 			if (size_waste > waste || firsttime)
 			{
@@ -375,24 +373,24 @@ gseg_picksplit(GistEntryVector *entryvec,
 	rt_seg_size(datum_r, &size_r);
 
 	/*
-	 * Now split up the regions between the two seeds.	An important
-	 * property of this split algorithm is that the split vector v has the
-	 * indices of items to be split in order in its left and right
-	 * vectors.  We exploit this property by doing a merge in the code
-	 * that actually splits the page.
+	 * Now split up the regions between the two seeds.	An important property
+	 * of this split algorithm is that the split vector v has the indices of
+	 * items to be split in order in its left and right vectors.  We exploit
+	 * this property by doing a merge in the code that actually splits the
+	 * page.
 	 *
-	 * For efficiency, we also place the new index tuple in this loop. This
-	 * is handled at the very end, when we have placed all the existing
-	 * tuples and i == maxoff + 1.
+	 * For efficiency, we also place the new index tuple in this loop. This is
+	 * handled at the very end, when we have placed all the existing tuples
+	 * and i == maxoff + 1.
 	 */
 
 	maxoff = OffsetNumberNext(maxoff);
 	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
 	{
 		/*
-		 * If we've already decided where to place this item, just put it
-		 * on the right list.  Otherwise, we need to figure out which page
-		 * needs the least enlargement in order to store the item.
+		 * If we've already decided where to place this item, just put it on
+		 * the right list.	Otherwise, we need to figure out which page needs
+		 * the least enlargement in order to store the item.
 		 */
 
 		if (i == seed_1)
@@ -742,8 +740,8 @@ seg_cmp(SEG * a, SEG * b)
 	 * a->lower == b->lower, so consider type of boundary.
 	 *
 	 * A '-' lower bound is < any other kind (this could only be relevant if
-	 * -HUGE_VAL is used as a regular data value). A '<' lower bound is <
-	 * any other kind except '-'. A '>' lower bound is > any other kind.
+	 * -HUGE_VAL is used as a regular data value). A '<' lower bound is < any
+	 * other kind except '-'. A '>' lower bound is > any other kind.
 	 */
 	if (a->l_ext != b->l_ext)
 	{
@@ -764,8 +762,7 @@ seg_cmp(SEG * a, SEG * b)
 	/*
 	 * For other boundary types, consider # of significant digits first.
 	 */
-	if (a->l_sigd < b->l_sigd)	/* (a) is blurred and is likely to include
-								 * (b) */
+	if (a->l_sigd < b->l_sigd)	/* (a) is blurred and is likely to include (b) */
 		return -1;
 	if (a->l_sigd > b->l_sigd)	/* (a) is less blurred and is likely to be
 								 * included in (b) */
@@ -800,8 +797,8 @@ seg_cmp(SEG * a, SEG * b)
 	 * a->upper == b->upper, so consider type of boundary.
 	 *
 	 * A '-' upper bound is > any other kind (this could only be relevant if
-	 * HUGE_VAL is used as a regular data value). A '<' upper bound is <
-	 * any other kind. A '>' upper bound is > any other kind except '-'.
+	 * HUGE_VAL is used as a regular data value). A '<' upper bound is < any
+	 * other kind. A '>' upper bound is > any other kind except '-'.
 	 */
 	if (a->u_ext != b->u_ext)
 	{
@@ -820,11 +817,10 @@ seg_cmp(SEG * a, SEG * b)
 	}
 
 	/*
-	 * For other boundary types, consider # of significant digits first.
-	 * Note result here is converse of the lower-boundary case.
+	 * For other boundary types, consider # of significant digits first. Note
+	 * result here is converse of the lower-boundary case.
 	 */
-	if (a->u_sigd < b->u_sigd)	/* (a) is blurred and is likely to include
-								 * (b) */
+	if (a->u_sigd < b->u_sigd)	/* (a) is blurred and is likely to include (b) */
 		return 1;
 	if (a->u_sigd > b->u_sigd)	/* (a) is less blurred and is likely to be
 								 * included in (b) */
@@ -908,17 +904,17 @@ restore(char *result, float val, int n)
 				sign;
 
 	/*
-	 * put a cap on the number of siugnificant digits to avoid nonsense in
-	 * the output
+	 * put a cap on the number of siugnificant digits to avoid nonsense in the
+	 * output
 	 */
 	n = Min(n, FLT_DIG);
 
 	/* remember the sign */
 	sign = (val < 0 ? 1 : 0);
 
-	efmt[5] = '0' + (n - 1) % 10;		/* makes %-15.(n-1)e -- this
-										 * format guarantees that the
-										 * exponent is always present */
+	efmt[5] = '0' + (n - 1) % 10;		/* makes %-15.(n-1)e -- this format
+										 * guarantees that the exponent is
+										 * always present */
 
 	sprintf(result, efmt, val);
 
@@ -940,8 +936,8 @@ restore(char *result, float val, int n)
 		if (Abs(exp) <= 4)
 		{
 			/*
-			 * remove the decimal point from the mantyssa and write the
-			 * digits to the buf array
+			 * remove the decimal point from the mantyssa and write the digits
+			 * to the buf array
 			 */
 			for (p = result + sign, i = 10, dp = 0; *p != 'e'; p++, i++)
 			{
@@ -960,10 +956,9 @@ restore(char *result, float val, int n)
 				if (dp - 10 + exp >= n)
 				{
 					/*
-					 * the decimal point is behind the last significant
-					 * digit; the digits in between must be converted to
-					 * the exponent and the decimal point placed after the
-					 * first digit
+					 * the decimal point is behind the last significant digit;
+					 * the digits in between must be converted to the exponent
+					 * and the decimal point placed after the first digit
 					 */
 					exp = dp - 10 + exp - n;
 					buf[10 + n] = '\0';
@@ -978,8 +973,8 @@ restore(char *result, float val, int n)
 					}
 
 					/*
-					 * adjust the exponent by the number of digits after
-					 * the decimal point
+					 * adjust the exponent by the number of digits after the
+					 * decimal point
 					 */
 					if (n > 1)
 						sprintf(&buf[11 + n], "e%d", exp + n - 1);

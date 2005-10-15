@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.107 2005/10/13 20:58:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.108 2005/10/15 02:49:40 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -48,7 +48,6 @@ typedef struct timeval TimevalStruct;
 #define DIFF_MSEC(T, U) \
 	((((int) ((T)->tv_sec - (U)->tv_sec)) * 1000000.0 + \
 	  ((int) ((T)->tv_usec - (U)->tv_usec))) / 1000.0)
-
 #else
 
 typedef struct _timeb TimevalStruct;
@@ -188,7 +187,7 @@ setQFout(const char *fname)
  *
  */
 void
-psql_error(const char *fmt, ...)
+psql_error(const char *fmt,...)
 {
 	va_list		ap;
 
@@ -233,6 +232,7 @@ NoticeProcessor(void *arg, const char *message)
  * thread is using it.
  */
 static PGcancel *cancelConn = NULL;
+
 #ifdef WIN32
 static CRITICAL_SECTION cancelConnLock;
 #endif
@@ -248,7 +248,7 @@ void
 handle_sigint(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
-	char        errbuf[256];
+	char		errbuf[256];
 
 	/* Don't muck around if prompting for a password. */
 	if (prompt_state)
@@ -268,13 +268,12 @@ handle_sigint(SIGNAL_ARGS)
 	}
 	errno = save_errno;			/* just in case the write changed it */
 }
-
-#else /* WIN32 */
+#else							/* WIN32 */
 
 static BOOL WINAPI
 consoleHandler(DWORD dwCtrlType)
 {
-	char        errbuf[256];
+	char		errbuf[256];
 
 	if (dwCtrlType == CTRL_C_EVENT ||
 		dwCtrlType == CTRL_BREAK_EVENT)
@@ -316,8 +315,7 @@ setup_cancel_handler(void)
 {
 	SetConsoleCtrlHandler(consoleHandler, TRUE);
 }
-
-#endif /* WIN32 */
+#endif   /* WIN32 */
 
 
 /* ConnectionUp
@@ -478,12 +476,12 @@ ReportSyntaxErrorPosition(const PGresult *result, const char *query)
 	initPQExpBuffer(&msg);
 
 	/*
-	 * The returned cursor position is measured in logical characters.
-	 * Each character might occupy multiple physical bytes in the string,
-	 * and in some Far Eastern character sets it might take more than one
-	 * screen column as well.  We compute the starting byte offset and
-	 * starting screen column of each logical character, and store these
-	 * in qidx[] and scridx[] respectively.
+	 * The returned cursor position is measured in logical characters. Each
+	 * character might occupy multiple physical bytes in the string, and in
+	 * some Far Eastern character sets it might take more than one screen
+	 * column as well.	We compute the starting byte offset and starting
+	 * screen column of each logical character, and store these in qidx[] and
+	 * scridx[] respectively.
 	 */
 
 	/* we need a safe allocation size... */
@@ -521,12 +519,12 @@ ReportSyntaxErrorPosition(const PGresult *result, const char *query)
 
 		/*
 		 * Replace tabs with spaces in the writable copy.  (Later we might
-		 * want to think about coping with their variable screen width,
-		 * but not today.)
+		 * want to think about coping with their variable screen width, but
+		 * not today.)
 		 *
-		 * Extract line number and begin and end indexes of line containing
-		 * error location.	There will not be any newlines or carriage
-		 * returns in the selected extract.
+		 * Extract line number and begin and end indexes of line containing error
+		 * location.  There will not be any newlines or carriage returns in
+		 * the selected extract.
 		 */
 		for (i = 0; i < clen; i++)
 		{
@@ -540,8 +538,8 @@ ReportSyntaxErrorPosition(const PGresult *result, const char *query)
 					if (i < loc)
 					{
 						/*
-						 * count lines before loc.	Each \r or \n counts
-						 * as a line except when \r \n appear together.
+						 * count lines before loc.	Each \r or \n counts as a
+						 * line except when \r \n appear together.
 						 */
 						if (wquery[qidx[i]] == '\r' ||
 							i == 0 ||
@@ -568,9 +566,9 @@ ReportSyntaxErrorPosition(const PGresult *result, const char *query)
 		if (scridx[iend] - scridx[ibeg] > DISPLAY_SIZE)
 		{
 			/*
-			 * We first truncate right if it is enough.  This code might
-			 * be off a space or so on enforcing MIN_RIGHT_CUT if there's
-			 * a wide character right there, but that should be okay.
+			 * We first truncate right if it is enough.  This code might be
+			 * off a space or so on enforcing MIN_RIGHT_CUT if there's a wide
+			 * character right there, but that should be okay.
 			 */
 			if (scridx[ibeg] + DISPLAY_SIZE >= scridx[loc] + MIN_RIGHT_CUT)
 			{
@@ -682,6 +680,7 @@ AcceptResult(const PGresult *result, const char *query)
 	if (!OK)
 	{
 		const char *error = PQerrorMessage(pset.db);
+
 		if (strlen(error))
 			psql_error("%s", error);
 
@@ -957,13 +956,15 @@ PrintQueryResults(PGresult *results)
 bool
 SendQuery(const char *query)
 {
-	PGresult 	*results;
-	TimevalStruct before, after;
-	bool OK, on_error_rollback_savepoint = false;
+	PGresult   *results;
+	TimevalStruct before,
+				after;
+	bool		OK,
+				on_error_rollback_savepoint = false;
 	PGTransactionStatusType transaction_status;
-	static bool		on_error_rollback_warning = false;
+	static bool on_error_rollback_warning = false;
 	const char *rollback_str;
-	
+
 	if (!pset.db)
 	{
 		psql_error("You are currently not connected to a database.\n");
@@ -975,8 +976,8 @@ SendQuery(const char *query)
 		char		buf[3];
 
 		printf(_("***(Single step mode: verify command)*******************************************\n"
-					   "%s\n"
-					   "***(press return to proceed or enter x and return to cancel)********************\n"),
+				 "%s\n"
+				 "***(press return to proceed or enter x and return to cancel)********************\n"),
 			   query);
 		fflush(stdout);
 		if (fgets(buf, sizeof(buf), stdin) != NULL)
@@ -1019,8 +1020,8 @@ SendQuery(const char *query)
 	}
 
 	if (transaction_status == PQTRANS_INTRANS &&
-		(rollback_str = GetVariable(pset.vars, "ON_ERROR_ROLLBACK")) != NULL &&
-		/* !off and !interactive is 'on' */
+	  (rollback_str = GetVariable(pset.vars, "ON_ERROR_ROLLBACK")) != NULL &&
+	/* !off and !interactive is 'on' */
 		pg_strcasecmp(rollback_str, "off") != 0 &&
 		(pset.cur_cmd_interactive ||
 		 pg_strcasecmp(rollback_str, "interactive") != 0))
@@ -1076,14 +1077,14 @@ SendQuery(const char *query)
 			results = NULL;
 		else
 		{
-			/* 
-			 *	Do nothing if they are messing with savepoints themselves:
-			 *	If the user did RELEASE or ROLLBACK, our savepoint is gone.
-			 *	If they issued a SAVEPOINT, releasing ours would remove theirs.
+			/*
+			 * Do nothing if they are messing with savepoints themselves: If
+			 * the user did RELEASE or ROLLBACK, our savepoint is gone. If
+			 * they issued a SAVEPOINT, releasing ours would remove theirs.
 			 */
 			if (strcmp(PQcmdStatus(results), "SAVEPOINT") == 0 ||
 				strcmp(PQcmdStatus(results), "RELEASE") == 0 ||
-				strcmp(PQcmdStatus(results), "ROLLBACK") ==0)
+				strcmp(PQcmdStatus(results), "ROLLBACK") == 0)
 				results = NULL;
 			else
 				results = PQexec(pset.db, "RELEASE pg_psql_temporary_savepoint");
@@ -1126,19 +1127,19 @@ SendQuery(const char *query)
 static const char *
 skip_white_space(const char *query)
 {
-	int			cnestlevel = 0;		/* slash-star comment nest level */
+	int			cnestlevel = 0; /* slash-star comment nest level */
 
 	while (*query)
 	{
-		int		mblen = PQmblen(query, pset.encoding);
+		int			mblen = PQmblen(query, pset.encoding);
 
 		/*
-		 * Note: we assume the encoding is a superset of ASCII, so that
-		 * for example "query[0] == '/'" is meaningful.  However, we do NOT
-		 * assume that the second and subsequent bytes of a multibyte
-		 * character couldn't look like ASCII characters; so it is critical
-		 * to advance by mblen, not 1, whenever we haven't exactly identified
-		 * the character we are skipping over.
+		 * Note: we assume the encoding is a superset of ASCII, so that for
+		 * example "query[0] == '/'" is meaningful.  However, we do NOT assume
+		 * that the second and subsequent bytes of a multibyte character
+		 * couldn't look like ASCII characters; so it is critical to advance
+		 * by mblen, not 1, whenever we haven't exactly identified the
+		 * character we are skipping over.
 		 */
 		if (isspace((unsigned char) *query))
 			query += mblen;
@@ -1155,9 +1156,10 @@ skip_white_space(const char *query)
 		else if (cnestlevel == 0 && query[0] == '-' && query[1] == '-')
 		{
 			query += 2;
+
 			/*
-			 * We have to skip to end of line since any slash-star inside
-			 * the -- comment does NOT start a slash-star comment.
+			 * We have to skip to end of line since any slash-star inside the
+			 * -- comment does NOT start a slash-star comment.
 			 */
 			while (*query)
 			{
@@ -1204,12 +1206,12 @@ command_no_begin(const char *query)
 		wordlen += PQmblen(&query[wordlen], pset.encoding);
 
 	/*
-	 * Transaction control commands.  These should include every keyword
-	 * that gives rise to a TransactionStmt in the backend grammar, except
-	 * for the savepoint-related commands.
+	 * Transaction control commands.  These should include every keyword that
+	 * gives rise to a TransactionStmt in the backend grammar, except for the
+	 * savepoint-related commands.
 	 *
-	 * (We assume that START must be START TRANSACTION, since there is 
-	 * presently no other "START foo" command.)
+	 * (We assume that START must be START TRANSACTION, since there is presently
+	 * no other "START foo" command.)
 	 */
 	if (wordlen == 5 && pg_strncasecmp(query, "abort", 5) == 0)
 		return true;
@@ -1240,12 +1242,12 @@ command_no_begin(const char *query)
 	}
 
 	/*
-	 * Commands not allowed within transactions.  The statements checked
-	 * for here should be exactly those that call PreventTransactionChain()
-	 * in the backend.
+	 * Commands not allowed within transactions.  The statements checked for
+	 * here should be exactly those that call PreventTransactionChain() in the
+	 * backend.
 	 *
-	 * Note: we are a bit sloppy about CLUSTER, which is transactional in
-	 * some variants but not others.
+	 * Note: we are a bit sloppy about CLUSTER, which is transactional in some
+	 * variants but not others.
 	 */
 	if (wordlen == 6 && pg_strncasecmp(query, "vacuum", 6) == 0)
 		return true;
@@ -1253,9 +1255,9 @@ command_no_begin(const char *query)
 		return true;
 
 	/*
-	 * Note: these tests will match CREATE SYSTEM, DROP SYSTEM, and
-	 * REINDEX TABLESPACE, which aren't really valid commands so we don't
-	 * care much.  The other six possible matches are correct.
+	 * Note: these tests will match CREATE SYSTEM, DROP SYSTEM, and REINDEX
+	 * TABLESPACE, which aren't really valid commands so we don't care much.
+	 * The other six possible matches are correct.
 	 */
 	if ((wordlen == 6 && pg_strncasecmp(query, "create", 6) == 0) ||
 		(wordlen == 4 && pg_strncasecmp(query, "drop", 4) == 0) ||
@@ -1339,9 +1341,9 @@ expand_tilde(char **filename)
 		return NULL;
 
 	/*
-	 *	WIN32 doesn't use tilde expansion for file names.
-	 *	Also, it uses tilde for short versions of long file names,
-	 *	though the tilde is usually toward the end, not at the beginning.
+	 * WIN32 doesn't use tilde expansion for file names. Also, it uses tilde
+	 * for short versions of long file names, though the tilde is usually
+	 * toward the end, not at the beginning.
 	 */
 #ifndef WIN32
 
@@ -1367,7 +1369,7 @@ expand_tilde(char **filename)
 		if (*(fn + 1) == '\0')
 			get_home_path(home);	/* ~ or ~/ only */
 		else if ((pw = getpwnam(fn + 1)) != NULL)
-			StrNCpy(home, pw->pw_dir, MAXPGPATH);	/* ~user */
+			StrNCpy(home, pw->pw_dir, MAXPGPATH);		/* ~user */
 
 		*p = oldp;
 		if (strlen(home) != 0)

@@ -132,9 +132,9 @@ main(int argc, char **argv)
 					if (col_in_tab == tab_size)
 					{
 						/*
-						 * Is the next character going to be a tab? Needed
-						 * to do tab replacement in current spot if next
-						 * char is going to be a tab, ignoring min_spaces
+						 * Is the next character going to be a tab? Needed to
+						 * do tab replacement in current spot if next char is
+						 * going to be a tab, ignoring min_spaces
 						 */
 						nxt_spaces = 0;
 						while (1)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeLimit.c,v 1.21 2005/03/16 21:38:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeLimit.c,v 1.22 2005/10/15 02:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,10 +61,9 @@ ExecLimit(LimitState *node)
 				return NULL;
 
 			/*
-			 * First call for this scan, so compute limit/offset. (We
-			 * can't do this any earlier, because parameters from upper
-			 * nodes may not be set until now.)  This also sets position =
-			 * 0.
+			 * First call for this scan, so compute limit/offset. (We can't do
+			 * this any earlier, because parameters from upper nodes may not
+			 * be set until now.)  This also sets position = 0.
 			 */
 			recompute_limits(node);
 
@@ -86,8 +85,8 @@ ExecLimit(LimitState *node)
 				if (TupIsNull(slot))
 				{
 					/*
-					 * The subplan returns too few tuples for us to
-					 * produce any output at all.
+					 * The subplan returns too few tuples for us to produce
+					 * any output at all.
 					 */
 					node->lstate = LIMIT_EMPTY;
 					return NULL;
@@ -115,11 +114,10 @@ ExecLimit(LimitState *node)
 			if (ScanDirectionIsForward(direction))
 			{
 				/*
-				 * Forwards scan, so check for stepping off end of window.
-				 * If we are at the end of the window, return NULL without
-				 * advancing the subplan or the position variable; but
-				 * change the state machine state to record having done
-				 * so.
+				 * Forwards scan, so check for stepping off end of window. If
+				 * we are at the end of the window, return NULL without
+				 * advancing the subplan or the position variable; but change
+				 * the state machine state to record having done so.
 				 */
 				if (!node->noCount &&
 					node->position >= node->offset + node->count)
@@ -143,9 +141,8 @@ ExecLimit(LimitState *node)
 			else
 			{
 				/*
-				 * Backwards scan, so check for stepping off start of
-				 * window. As above, change only state-machine status if
-				 * so.
+				 * Backwards scan, so check for stepping off start of window.
+				 * As above, change only state-machine status if so.
 				 */
 				if (node->position <= node->offset + 1)
 				{
@@ -169,9 +166,8 @@ ExecLimit(LimitState *node)
 				return NULL;
 
 			/*
-			 * Backing up from subplan EOF, so re-fetch previous tuple;
-			 * there should be one!  Note previous tuple must be in
-			 * window.
+			 * Backing up from subplan EOF, so re-fetch previous tuple; there
+			 * should be one!  Note previous tuple must be in window.
 			 */
 			slot = ExecProcNode(outerPlan);
 			if (TupIsNull(slot))
@@ -328,8 +324,8 @@ ExecInitLimit(Limit *node, EState *estate)
 	outerPlanState(limitstate) = ExecInitNode(outerPlan, estate);
 
 	/*
-	 * limit nodes do no projections, so initialize projection info for
-	 * this node appropriately
+	 * limit nodes do no projections, so initialize projection info for this
+	 * node appropriately
 	 */
 	ExecAssignResultTypeFromOuterPlan(&limitstate->ps);
 	limitstate->ps.ps_ProjInfo = NULL;

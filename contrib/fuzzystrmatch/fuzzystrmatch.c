@@ -65,10 +65,10 @@ levenshtein(PG_FUNCTION_ARGS)
 	int			j;
 
 	/*
-	 * Fetch the arguments. str_s is referred to as the "source" cols =
-	 * length of source + 1 to allow for the initialization column str_t
-	 * is referred to as the "target", rows = length of target + 1 rows =
-	 * length of target + 1 to allow for the initialization row
+	 * Fetch the arguments. str_s is referred to as the "source" cols = length
+	 * of source + 1 to allow for the initialization column str_t is referred
+	 * to as the "target", rows = length of target + 1 rows = length of target
+	 * + 1 to allow for the initialization row
 	 */
 	str_s = DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(PG_GETARG_TEXT_P(0))));
 	str_t = DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(PG_GETARG_TEXT_P(1))));
@@ -78,10 +78,9 @@ levenshtein(PG_FUNCTION_ARGS)
 
 	/*
 	 * Restrict the length of the strings being compared to something
-	 * reasonable because we will have to perform rows * cols
-	 * calculations. If longer strings need to be compared, increase
-	 * MAX_LEVENSHTEIN_STRLEN to suit (but within your tolerance for speed
-	 * and memory usage).
+	 * reasonable because we will have to perform rows * cols calculations. If
+	 * longer strings need to be compared, increase MAX_LEVENSHTEIN_STRLEN to
+	 * suit (but within your tolerance for speed and memory usage).
 	 */
 	if ((cols > MAX_LEVENSHTEIN_STRLEN + 1) || (rows > MAX_LEVENSHTEIN_STRLEN + 1))
 		ereport(ERROR,
@@ -90,9 +89,9 @@ levenshtein(PG_FUNCTION_ARGS)
 						MAX_LEVENSHTEIN_STRLEN)));
 
 	/*
-	 * If either rows or cols is 0, the answer is the other value. This
-	 * makes sense since it would take that many insertions the build a
-	 * matching string
+	 * If either rows or cols is 0, the answer is the other value. This makes
+	 * sense since it would take that many insertions the build a matching
+	 * string
 	 */
 
 	if (cols == 0)
@@ -102,9 +101,8 @@ levenshtein(PG_FUNCTION_ARGS)
 		PG_RETURN_INT32(cols);
 
 	/*
-	 * Allocate two vectors of integers. One will be used for the "upper"
-	 * row, the other for the "lower" row. Initialize the "upper" row to
-	 * 0..cols
+	 * Allocate two vectors of integers. One will be used for the "upper" row,
+	 * the other for the "lower" row. Initialize the "upper" row to 0..cols
 	 */
 	u_cells = palloc(sizeof(int) * cols);
 	for (i = 0; i < cols; i++)
@@ -119,14 +117,13 @@ levenshtein(PG_FUNCTION_ARGS)
 	str_s0 = str_s;
 
 	/*
-	 * Loop through the rows, starting at row 1. Row 0 is used for the
-	 * initial "upper" row.
+	 * Loop through the rows, starting at row 1. Row 0 is used for the initial
+	 * "upper" row.
 	 */
 	for (j = 1; j < rows; j++)
 	{
 		/*
-		 * We'll always start with col 1, and initialize lower row col 0
-		 * to j
+		 * We'll always start with col 1, and initialize lower row col 0 to j
 		 */
 		l_cells[0] = j;
 
@@ -140,8 +137,7 @@ levenshtein(PG_FUNCTION_ARGS)
 			/*
 			 * The "cost" value is 0 if the character at the current col
 			 * position in the source string, matches the character at the
-			 * current row position in the target string; cost is 1
-			 * otherwise.
+			 * current row position in the target string; cost is 1 otherwise.
 			 */
 			c = ((CHAREQ(str_s, str_t)) ? 0 : 1);
 
@@ -172,8 +168,8 @@ levenshtein(PG_FUNCTION_ARGS)
 		}
 
 		/*
-		 * Lower row now becomes the upper row, and the upper row gets
-		 * reused as the new lower row.
+		 * Lower row now becomes the upper row, and the upper row gets reused
+		 * as the new lower row.
 		 */
 		tmp = u_cells;
 		u_cells = l_cells;
@@ -301,8 +297,8 @@ Lookahead(char *word, int how_far)
 	for (idx = 0; word[idx] != '\0' && idx < how_far; idx++);
 	/* Edge forward in the string... */
 
-	letter_ahead = word[idx];	/* idx will be either == to how_far or at
-								 * the end of the string */
+	letter_ahead = word[idx];	/* idx will be either == to how_far or at the
+								 * end of the string */
 	return letter_ahead;
 }
 
@@ -453,11 +449,11 @@ _metaphone(
 
 
 		/*
-		 * THOUGHT:  It would be nice if, rather than having things
-		 * like... well, SCI.  For SCI you encode the S, then have to
-		 * remember to skip the C.	So the phonome SCI invades both S and
-		 * C.  It would be better, IMHO, to skip the C from the S part of
-		 * the encoding. Hell, I'm trying it.
+		 * THOUGHT:  It would be nice if, rather than having things like...
+		 * well, SCI.  For SCI you encode the S, then have to remember to skip
+		 * the C.  So the phonome SCI invades both S and C.  It would be
+		 * better, IMHO, to skip the C from the S part of the encoding. Hell,
+		 * I'm trying it.
 		 */
 
 		/* Ignore non-alphas */
@@ -478,9 +474,9 @@ _metaphone(
 				break;
 
 				/*
-				 * 'sh' if -CIA- or -CH, but not SCH, except SCHW. (SCHW
-				 * is handled in S) S if -CI-, -CE- or -CY- dropped if
-				 * -SCI-, SCE-, -SCY- (handed in S) else K
+				 * 'sh' if -CIA- or -CH, but not SCH, except SCHW. (SCHW is
+				 * handled in S) S if -CI-, -CE- or -CY- dropped if -SCI-,
+				 * SCE-, -SCY- (handed in S) else K
 				 */
 			case 'C':
 				if (MAKESOFT(Next_Letter))
@@ -534,8 +530,8 @@ _metaphone(
 				/*
 				 * F if in -GH and not B--GH, D--GH, -H--GH, -H---GH else
 				 * dropped if -GNED, -GN, else dropped if -DGE-, -DGI- or
-				 * -DGY- (handled in D) else J if in -GE-, -GI, -GY and
-				 * not GG else K
+				 * -DGY- (handled in D) else J if in -GE-, -GI, -GY and not GG
+				 * else K
 				 */
 			case 'G':
 				if (Next_Letter == 'H')
@@ -761,14 +757,17 @@ PG_FUNCTION_INFO_V1(difference);
 Datum
 difference(PG_FUNCTION_ARGS)
 {
-	char sndx1[SOUNDEX_LEN+1], sndx2[SOUNDEX_LEN+1];
-	int i, result;
+	char		sndx1[SOUNDEX_LEN + 1],
+				sndx2[SOUNDEX_LEN + 1];
+	int			i,
+				result;
 
 	_soundex(_textout(PG_GETARG_TEXT_P(0)), sndx1);
 	_soundex(_textout(PG_GETARG_TEXT_P(1)), sndx2);
 
 	result = 0;
-	for (i=0; i<SOUNDEX_LEN; i++) {
+	for (i = 0; i < SOUNDEX_LEN; i++)
+	{
 		if (sndx1[i] == sndx2[i])
 			result++;
 	}

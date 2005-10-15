@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.109 2005/10/06 02:29:17 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.110 2005/10/15 02:49:23 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -66,19 +66,18 @@
  * Timer definitions.
  * ----------
  */
-#define PGSTAT_STAT_INTERVAL	500		/* How often to write the status
-										 * file; in milliseconds. */
+#define PGSTAT_STAT_INTERVAL	500		/* How often to write the status file;
+										 * in milliseconds. */
 
-#define PGSTAT_DESTROY_DELAY	10000	/* How long to keep destroyed
-										 * objects known, to give delayed
-										 * UDP packets time to arrive; in
-										 * milliseconds. */
+#define PGSTAT_DESTROY_DELAY	10000	/* How long to keep destroyed objects
+										 * known, to give delayed UDP packets
+										 * time to arrive; in milliseconds. */
 
 #define PGSTAT_DESTROY_COUNT	(PGSTAT_DESTROY_DELAY / PGSTAT_STAT_INTERVAL)
 
-#define PGSTAT_RESTART_INTERVAL 60		/* How often to attempt to restart
-										 * a failed statistics collector;
-										 * in seconds. */
+#define PGSTAT_RESTART_INTERVAL 60		/* How often to attempt to restart a
+										 * failed statistics collector; in
+										 * seconds. */
 
 /* ----------
  * Amount of space reserved in pgstat_recvbuffer().
@@ -110,7 +109,7 @@ bool		pgstat_collect_blocklevel = false;
  * ----------
  */
 NON_EXEC_STATIC int pgStatSock = -1;
-NON_EXEC_STATIC int pgStatPipe[2] = {-1,-1};
+NON_EXEC_STATIC int pgStatPipe[2] = {-1, -1};
 static struct sockaddr_storage pgStatAddr;
 static pid_t pgStatCollectorPid = 0;
 
@@ -127,15 +126,15 @@ static bool pgStatRunningInCollector = FALSE;
  */
 typedef struct TabStatArray
 {
-	int		tsa_alloc;					/* num allocated */
-	int		tsa_used;					/* num actually used */
+	int			tsa_alloc;		/* num allocated */
+	int			tsa_used;		/* num actually used */
 	PgStat_MsgTabstat **tsa_messages;	/* the array itself */
 } TabStatArray;
 
 #define TABSTAT_QUANTUM		4	/* we alloc this many at a time */
 
-static TabStatArray RegularTabStat = { 0, 0, NULL };
-static TabStatArray SharedTabStat = { 0, 0, NULL }; 
+static TabStatArray RegularTabStat = {0, 0, NULL};
+static TabStatArray SharedTabStat = {0, 0, NULL};
 
 static int	pgStatXactCommit = 0;
 static int	pgStatXactRollback = 0;
@@ -266,12 +265,12 @@ pgstat_init(void)
 	}
 
 	/*
-	 * On some platforms, getaddrinfo_all() may return multiple addresses
-	 * only one of which will actually work (eg, both IPv6 and IPv4
-	 * addresses when kernel will reject IPv6).  Worse, the failure may
-	 * occur at the bind() or perhaps even connect() stage.  So we must
-	 * loop through the results till we find a working combination.  We
-	 * will generate LOG messages, but no error, for bogus combinations.
+	 * On some platforms, getaddrinfo_all() may return multiple addresses only
+	 * one of which will actually work (eg, both IPv6 and IPv4 addresses when
+	 * kernel will reject IPv6).  Worse, the failure may occur at the bind()
+	 * or perhaps even connect() stage.  So we must loop through the results
+	 * till we find a working combination.	We will generate LOG messages, but
+	 * no error, for bogus combinations.
 	 */
 	for (addr = addrs; addr; addr = addr->ai_next)
 	{
@@ -288,19 +287,19 @@ pgstat_init(void)
 		{
 			ereport(LOG,
 					(errcode_for_socket_access(),
-					 errmsg("could not create socket for statistics collector: %m")));
+			errmsg("could not create socket for statistics collector: %m")));
 			continue;
 		}
 
 		/*
-		 * Bind it to a kernel assigned port on localhost and get the
-		 * assigned port via getsockname().
+		 * Bind it to a kernel assigned port on localhost and get the assigned
+		 * port via getsockname().
 		 */
 		if (bind(pgStatSock, addr->ai_addr, addr->ai_addrlen) < 0)
 		{
 			ereport(LOG,
 					(errcode_for_socket_access(),
-					 errmsg("could not bind socket for statistics collector: %m")));
+			  errmsg("could not bind socket for statistics collector: %m")));
 			closesocket(pgStatSock);
 			pgStatSock = -1;
 			continue;
@@ -318,26 +317,26 @@ pgstat_init(void)
 		}
 
 		/*
-		 * Connect the socket to its own address.  This saves a few cycles
-		 * by not having to respecify the target address on every send.
-		 * This also provides a kernel-level check that only packets from
-		 * this same address will be received.
+		 * Connect the socket to its own address.  This saves a few cycles by
+		 * not having to respecify the target address on every send. This also
+		 * provides a kernel-level check that only packets from this same
+		 * address will be received.
 		 */
 		if (connect(pgStatSock, (struct sockaddr *) & pgStatAddr, alen) < 0)
 		{
 			ereport(LOG,
 					(errcode_for_socket_access(),
-					 errmsg("could not connect socket for statistics collector: %m")));
+			errmsg("could not connect socket for statistics collector: %m")));
 			closesocket(pgStatSock);
 			pgStatSock = -1;
 			continue;
 		}
 
 		/*
-		 * Try to send and receive a one-byte test message on the socket.
-		 * This is to catch situations where the socket can be created but
-		 * will not actually pass data (for instance, because kernel
-		 * packet filtering rules prevent it).
+		 * Try to send and receive a one-byte test message on the socket. This
+		 * is to catch situations where the socket can be created but will not
+		 * actually pass data (for instance, because kernel packet filtering
+		 * rules prevent it).
 		 */
 		test_byte = TESTBYTEVAL;
 		if (send(pgStatSock, &test_byte, 1, 0) != 1)
@@ -351,9 +350,9 @@ pgstat_init(void)
 		}
 
 		/*
-		 * There could possibly be a little delay before the message can
-		 * be received.  We arbitrarily allow up to half a second before
-		 * deciding it's broken.
+		 * There could possibly be a little delay before the message can be
+		 * received.  We arbitrarily allow up to half a second before deciding
+		 * it's broken.
 		 */
 		for (;;)				/* need a loop to handle EINTR */
 		{
@@ -369,7 +368,7 @@ pgstat_init(void)
 		{
 			ereport(LOG,
 					(errcode_for_socket_access(),
-				 errmsg("select() failed in statistics collector: %m")));
+					 errmsg("select() failed in statistics collector: %m")));
 			closesocket(pgStatSock);
 			pgStatSock = -1;
 			continue;
@@ -377,8 +376,8 @@ pgstat_init(void)
 		if (sel_res == 0 || !FD_ISSET(pgStatSock, &rset))
 		{
 			/*
-			 * This is the case we actually think is likely, so take pains
-			 * to give a specific message for it.
+			 * This is the case we actually think is likely, so take pains to
+			 * give a specific message for it.
 			 *
 			 * errno will not be set meaningfully here, so don't use it.
 			 */
@@ -421,10 +420,10 @@ pgstat_init(void)
 		goto startup_failed;
 
 	/*
-	 * Set the socket to non-blocking IO.  This ensures that if the
-	 * collector falls behind (despite the buffering process), statistics
-	 * messages will be discarded; backends won't block waiting to send
-	 * messages to the collector.
+	 * Set the socket to non-blocking IO.  This ensures that if the collector
+	 * falls behind (despite the buffering process), statistics messages will
+	 * be discarded; backends won't block waiting to send messages to the
+	 * collector.
 	 */
 	if (!pg_set_noblock(pgStatSock))
 	{
@@ -440,7 +439,7 @@ pgstat_init(void)
 
 startup_failed:
 	ereport(LOG,
-			(errmsg("disabling statistics collector for lack of working socket")));
+	  (errmsg("disabling statistics collector for lack of working socket")));
 
 	if (addrs)
 		freeaddrinfo_all(hints.ai_family, addrs);
@@ -459,7 +458,7 @@ startup_failed:
 /*
  * pgstat_reset_all() -
  *
- * Remove the stats file.  This is used on server start if the 
+ * Remove the stats file.  This is used on server start if the
  * stats_reset_on_server_start feature is enabled, or if WAL
  * recovery is needed after a crash.
  */
@@ -560,11 +559,10 @@ pgstat_start(void)
 		return 0;
 
 	/*
-	 * Do nothing if too soon since last collector start.  This is a
-	 * safety valve to protect against continuous respawn attempts if the
-	 * collector is dying immediately at launch.  Note that since we will
-	 * be re-called from the postmaster main loop, we will get another
-	 * chance later.
+	 * Do nothing if too soon since last collector start.  This is a safety
+	 * valve to protect against continuous respawn attempts if the collector
+	 * is dying immediately at launch.	Note that since we will be re-called
+	 * from the postmaster main loop, we will get another chance later.
 	 */
 	curtime = time(NULL);
 	if ((unsigned int) (curtime - last_pgstat_start_time) <
@@ -650,7 +648,7 @@ pgstat_beterm(int pid)
 /* ----------
  * pgstat_report_autovac() -
  *
- * 	Called from autovacuum.c to report startup of an autovacuum process.
+ *	Called from autovacuum.c to report startup of an autovacuum process.
  *	We are called before InitPostgres is done, so can't rely on MyDatabaseId;
  *	the db OID must be passed in, instead.
  * ----------
@@ -693,8 +691,8 @@ pgstat_bestart(void)
 
 	/*
 	 * We may not have a MyProcPort (eg, if this is the autovacuum process).
-	 * For the moment, punt and don't send BESTART --- would be better to
-	 * work out a clean way of handling "unknown clientaddr".
+	 * For the moment, punt and don't send BESTART --- would be better to work
+	 * out a clean way of handling "unknown clientaddr".
 	 */
 	if (MyProcPort)
 	{
@@ -738,7 +736,7 @@ pgstat_report_vacuum(Oid tableoid, bool shared,
 /* --------
  * pgstat_report_analyze() -
  *
- * 	Tell the collector about the table we just analyzed.
+ *	Tell the collector about the table we just analyzed.
  * --------
  */
 void
@@ -898,8 +896,8 @@ pgstat_vacuum_tabstat(void)
 		return 0;
 
 	/*
-	 * If not done for this transaction, read the statistics collector
-	 * stats file into some hash tables.
+	 * If not done for this transaction, read the statistics collector stats
+	 * file into some hash tables.
 	 */
 	backend_read_statsfile();
 
@@ -926,8 +924,8 @@ pgstat_vacuum_tabstat(void)
 	while ((tabentry = (PgStat_StatTabEntry *) hash_seq_search(&hstat)) != NULL)
 	{
 		/*
-		 * Check if this relation is still alive by looking up it's
-		 * pg_class tuple in the system catalog cache.
+		 * Check if this relation is still alive by looking up it's pg_class
+		 * tuple in the system catalog cache.
 		 */
 		reltup = SearchSysCache(RELOID,
 								ObjectIdGetDatum(tabentry->tableid),
@@ -1072,7 +1070,7 @@ pgstat_reset_counters(void)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			  errmsg("must be superuser to reset statistics counters")));
+				 errmsg("must be superuser to reset statistics counters")));
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_RESETCOUNTER);
 	msg.m_databaseid = MyDatabaseId;
@@ -1150,7 +1148,7 @@ pgstat_initstats(PgStat_Info *stats, Relation rel)
 {
 	Oid			rel_id = rel->rd_id;
 	PgStat_TableEntry *useent;
-	TabStatArray	*tsarr;
+	TabStatArray *tsarr;
 	PgStat_MsgTabstat *tsmsg;
 	int			mb;
 	int			i;
@@ -1187,8 +1185,8 @@ pgstat_initstats(PgStat_Info *stats, Relation rel)
 			continue;
 
 		/*
-		 * Not found, but found a message buffer with an empty slot
-		 * instead. Fine, let's use this one.
+		 * Not found, but found a message buffer with an empty slot instead.
+		 * Fine, let's use this one.
 		 */
 		i = tsmsg->m_nentries++;
 		useent = &tsmsg->m_entry[i];
@@ -1234,9 +1232,9 @@ pgstat_count_xact_commit(void)
 	pgStatXactCommit++;
 
 	/*
-	 * If there was no relation activity yet, just make one existing
-	 * message buffer used without slots, causing the next report to tell
-	 * new xact-counters.
+	 * If there was no relation activity yet, just make one existing message
+	 * buffer used without slots, causing the next report to tell new
+	 * xact-counters.
 	 */
 	if (RegularTabStat.tsa_alloc == 0)
 		more_tabstat_space(&RegularTabStat);
@@ -1266,9 +1264,9 @@ pgstat_count_xact_rollback(void)
 	pgStatXactRollback++;
 
 	/*
-	 * If there was no relation activity yet, just make one existing
-	 * message buffer used without slots, causing the next report to tell
-	 * new xact-counters.
+	 * If there was no relation activity yet, just make one existing message
+	 * buffer used without slots, causing the next report to tell new
+	 * xact-counters.
 	 */
 	if (RegularTabStat.tsa_alloc == 0)
 		more_tabstat_space(&RegularTabStat);
@@ -1294,8 +1292,8 @@ PgStat_StatDBEntry *
 pgstat_fetch_stat_dbentry(Oid dbid)
 {
 	/*
-	 * If not done for this transaction, read the statistics collector
-	 * stats file into some hash tables.
+	 * If not done for this transaction, read the statistics collector stats
+	 * file into some hash tables.
 	 */
 	backend_read_statsfile();
 
@@ -1325,8 +1323,8 @@ pgstat_fetch_stat_tabentry(Oid relid)
 	PgStat_StatTabEntry *tabentry;
 
 	/*
-	 * If not done for this transaction, read the statistics collector
-	 * stats file into some hash tables.
+	 * If not done for this transaction, read the statistics collector stats
+	 * file into some hash tables.
 	 */
 	backend_read_statsfile();
 
@@ -1492,21 +1490,20 @@ PgstatBufferMain(int argc, char *argv[])
 #endif
 
 	/*
-	 * Start a buffering process to read from the socket, so we have a
-	 * little more time to process incoming messages.
+	 * Start a buffering process to read from the socket, so we have a little
+	 * more time to process incoming messages.
 	 *
-	 * NOTE: the process structure is: postmaster is parent of buffer process
-	 * is parent of collector process.	This way, the buffer can detect
-	 * collector failure via SIGCHLD, whereas otherwise it wouldn't notice
-	 * collector failure until it tried to write on the pipe.  That would
-	 * mean that after the postmaster started a new collector, we'd have
-	 * two buffer processes competing to read from the UDP socket --- not
-	 * good.
+	 * NOTE: the process structure is: postmaster is parent of buffer process is
+	 * parent of collector process.  This way, the buffer can detect collector
+	 * failure via SIGCHLD, whereas otherwise it wouldn't notice collector
+	 * failure until it tried to write on the pipe.  That would mean that
+	 * after the postmaster started a new collector, we'd have two buffer
+	 * processes competing to read from the UDP socket --- not good.
 	 */
 	if (pgpipe(pgStatPipe) < 0)
 		ereport(ERROR,
 				(errcode_for_socket_access(),
-			 errmsg("could not create pipe for statistics buffer: %m")));
+				 errmsg("could not create pipe for statistics buffer: %m")));
 
 	/* child becomes collector process */
 #ifdef EXEC_BACKEND
@@ -1561,10 +1558,10 @@ PgstatCollectorMain(int argc, char *argv[])
 	MyProcPid = getpid();		/* reset MyProcPid */
 
 	/*
-	 * Reset signal handling.  With the exception of restoring default
-	 * SIGCHLD and SIGQUIT handling, this is a no-op in the
-	 * non-EXEC_BACKEND case because we'll have inherited these settings
-	 * from the buffer process; but it's not a no-op for EXEC_BACKEND.
+	 * Reset signal handling.  With the exception of restoring default SIGCHLD
+	 * and SIGQUIT handling, this is a no-op in the non-EXEC_BACKEND case
+	 * because we'll have inherited these settings from the buffer process;
+	 * but it's not a no-op for EXEC_BACKEND.
 	 */
 	pqsignal(SIGHUP, SIG_IGN);
 	pqsignal(SIGINT, SIG_IGN);
@@ -1607,8 +1604,8 @@ PgstatCollectorMain(int argc, char *argv[])
 	need_statwrite = TRUE;
 
 	/*
-	 * Read in an existing statistics stats file or initialize the stats
-	 * to zero.
+	 * Read in an existing statistics stats file or initialize the stats to
+	 * zero.
 	 */
 	pgStatRunningInCollector = TRUE;
 	pgstat_read_statsfile(&pgStatDBHash, InvalidOid, NULL, NULL);
@@ -1638,9 +1635,9 @@ PgstatCollectorMain(int argc, char *argv[])
 	for (;;)
 	{
 		/*
-		 * If we need to write the status file again (there have been
-		 * changes in the statistics since we wrote it last) calculate the
-		 * timeout until we have to do so.
+		 * If we need to write the status file again (there have been changes
+		 * in the statistics since we wrote it last) calculate the timeout
+		 * until we have to do so.
 		 */
 		if (need_statwrite)
 		{
@@ -1684,7 +1681,7 @@ PgstatCollectorMain(int argc, char *argv[])
 				continue;
 			ereport(ERROR,
 					(errcode_for_socket_access(),
-				 errmsg("select() failed in statistics collector: %m")));
+					 errmsg("select() failed in statistics collector: %m")));
 		}
 
 		/*
@@ -1706,10 +1703,10 @@ PgstatCollectorMain(int argc, char *argv[])
 		{
 			/*
 			 * We may need to issue multiple read calls in case the buffer
-			 * process didn't write the message in a single write, which
-			 * is possible since it dumps its buffer bytewise. In any
-			 * case, we'd need two reads since we don't know the message
-			 * length initially.
+			 * process didn't write the message in a single write, which is
+			 * possible since it dumps its buffer bytewise. In any case, we'd
+			 * need two reads since we don't know the message length
+			 * initially.
 			 */
 			int			nread = 0;
 			int			targetlen = sizeof(PgStat_MsgHdr);		/* initial */
@@ -1742,25 +1739,24 @@ PgstatCollectorMain(int argc, char *argv[])
 					{
 						/*
 						 * Bogus message length implies that we got out of
-						 * sync with the buffer process somehow. Abort so
-						 * that we can restart both processes.
+						 * sync with the buffer process somehow. Abort so that
+						 * we can restart both processes.
 						 */
 						ereport(ERROR,
-						  (errmsg("invalid statistics message length")));
+							  (errmsg("invalid statistics message length")));
 					}
 				}
 			}
 
 			/*
-			 * EOF on the pipe implies that the buffer process exited.
-			 * Fall out of outer loop.
+			 * EOF on the pipe implies that the buffer process exited. Fall
+			 * out of outer loop.
 			 */
 			if (pipeEOF)
 				break;
 
 			/*
-			 * Distribute the message to the specific function handling
-			 * it.
+			 * Distribute the message to the specific function handling it.
 			 */
 			switch (msg.msg_hdr.m_type)
 			{
@@ -1818,8 +1814,8 @@ PgstatCollectorMain(int argc, char *argv[])
 			pgStatNumMessages++;
 
 			/*
-			 * If this is the first message after we wrote the stats file
-			 * the last time, setup the timeout that it'd be written.
+			 * If this is the first message after we wrote the stats file the
+			 * last time, setup the timeout that it'd be written.
 			 */
 			if (!need_statwrite)
 			{
@@ -1832,20 +1828,20 @@ PgstatCollectorMain(int argc, char *argv[])
 		}
 
 		/*
-		 * Note that we do NOT check for postmaster exit inside the loop;
-		 * only EOF on the buffer pipe causes us to fall out.  This
-		 * ensures we don't exit prematurely if there are still a few
-		 * messages in the buffer or pipe at postmaster shutdown.
+		 * Note that we do NOT check for postmaster exit inside the loop; only
+		 * EOF on the buffer pipe causes us to fall out.  This ensures we
+		 * don't exit prematurely if there are still a few messages in the
+		 * buffer or pipe at postmaster shutdown.
 		 */
 	}
 
 	/*
-	 * Okay, we saw EOF on the buffer pipe, so there are no more messages
-	 * to process.	If the buffer process quit because of postmaster
-	 * shutdown, we want to save the final stats to reuse at next startup.
-	 * But if the buffer process failed, it seems best not to (there may
-	 * even now be a new collector firing up, and we don't want it to read
-	 * a partially-rewritten stats file).
+	 * Okay, we saw EOF on the buffer pipe, so there are no more messages to
+	 * process.  If the buffer process quit because of postmaster shutdown, we
+	 * want to save the final stats to reuse at next startup. But if the
+	 * buffer process failed, it seems best not to (there may even now be a
+	 * new collector firing up, and we don't want it to read a
+	 * partially-rewritten stats file).
 	 */
 	if (!PostmasterIsAlive(false))
 		pgstat_write_statsfile();
@@ -1887,18 +1883,18 @@ pgstat_recvbuffer(void)
 	set_ps_display("");
 
 	/*
-	 * We want to die if our child collector process does.	There are two
-	 * ways we might notice that it has died: receive SIGCHLD, or get a
-	 * write failure on the pipe leading to the child.	We can set SIGPIPE
-	 * to kill us here.  Our SIGCHLD handler was already set up before we
-	 * forked (must do it that way, else it's a race condition).
+	 * We want to die if our child collector process does.	There are two ways
+	 * we might notice that it has died: receive SIGCHLD, or get a write
+	 * failure on the pipe leading to the child.  We can set SIGPIPE to kill
+	 * us here.  Our SIGCHLD handler was already set up before we forked (must
+	 * do it that way, else it's a race condition).
 	 */
 	pqsignal(SIGPIPE, SIG_DFL);
 	PG_SETMASK(&UnBlockSig);
 
 	/*
-	 * Set the write pipe to nonblock mode, so that we cannot block when
-	 * the collector falls behind.
+	 * Set the write pipe to nonblock mode, so that we cannot block when the
+	 * collector falls behind.
 	 */
 	if (!pg_set_noblock(writePipe))
 		ereport(ERROR,
@@ -1951,9 +1947,9 @@ pgstat_recvbuffer(void)
 		}
 
 		/*
-		 * Wait for some work to do; but not for more than 10 seconds.
-		 * (This determines how quickly we will shut down after an
-		 * ungraceful postmaster termination; so it needn't be very fast.)
+		 * Wait for some work to do; but not for more than 10 seconds. (This
+		 * determines how quickly we will shut down after an ungraceful
+		 * postmaster termination; so it needn't be very fast.)
 		 */
 		timeout.tv_sec = 10;
 		timeout.tv_usec = 0;
@@ -1979,7 +1975,7 @@ pgstat_recvbuffer(void)
 			if (len < 0)
 				ereport(ERROR,
 						(errcode_for_socket_access(),
-					   errmsg("could not read statistics message: %m")));
+						 errmsg("could not read statistics message: %m")));
 
 			/*
 			 * We ignore messages that are smaller than our common header
@@ -2020,14 +2016,14 @@ pgstat_recvbuffer(void)
 		 * If the collector is ready to receive, write some data into his
 		 * pipe.  We may or may not be able to write all that we have.
 		 *
-		 * NOTE: if what we have is less than PIPE_BUF bytes but more than
-		 * the space available in the pipe buffer, most kernels will
-		 * refuse to write any of it, and will return EAGAIN.  This means
-		 * we will busy-loop until the situation changes (either because
-		 * the collector caught up, or because more data arrives so that
-		 * we have more than PIPE_BUF bytes buffered).	This is not good,
-		 * but is there any way around it?	We have no way to tell when
-		 * the collector has caught up...
+		 * NOTE: if what we have is less than PIPE_BUF bytes but more than the
+		 * space available in the pipe buffer, most kernels will refuse to
+		 * write any of it, and will return EAGAIN.  This means we will
+		 * busy-loop until the situation changes (either because the collector
+		 * caught up, or because more data arrives so that we have more than
+		 * PIPE_BUF bytes buffered).  This is not good, but is there any way
+		 * around it?  We have no way to tell when the collector has caught
+		 * up...
 		 */
 		if (FD_ISSET(writePipe, &wfds))
 		{
@@ -2042,7 +2038,7 @@ pgstat_recvbuffer(void)
 					continue;	/* not enough space in pipe */
 				ereport(ERROR,
 						(errcode_for_socket_access(),
-						 errmsg("could not write to statistics collector pipe: %m")));
+				errmsg("could not write to statistics collector pipe: %m")));
 			}
 			/* NB: len < xfr is okay */
 			msg_send += len;
@@ -2052,15 +2048,15 @@ pgstat_recvbuffer(void)
 		}
 
 		/*
-		 * Make sure we forwarded all messages before we check for
-		 * postmaster termination.
+		 * Make sure we forwarded all messages before we check for postmaster
+		 * termination.
 		 */
 		if (msg_have != 0 || FD_ISSET(pgStatSock, &rfds))
 			continue;
 
 		/*
-		 * If the postmaster has terminated, we die too.  (This is no
-		 * longer the normal exit path, however.)
+		 * If the postmaster has terminated, we die too.  (This is no longer
+		 * the normal exit path, however.)
 		 */
 		if (!PostmasterIsAlive(true))
 			exit(0);
@@ -2072,9 +2068,9 @@ static void
 pgstat_exit(SIGNAL_ARGS)
 {
 	/*
-	 * For now, we just nail the doors shut and get out of town.  It might
-	 * be cleaner to allow any pending messages to be sent, but that
-	 * creates a tradeoff against speed of exit.
+	 * For now, we just nail the doors shut and get out of town.  It might be
+	 * cleaner to allow any pending messages to be sent, but that creates a
+	 * tradeoff against speed of exit.
 	 */
 
 	/*
@@ -2115,7 +2111,7 @@ pgstat_add_backend(PgStat_MsgHdr *msg)
 	if (msg->m_backendid < 1 || msg->m_backendid > MaxBackends)
 	{
 		ereport(LOG,
-			 (errmsg("invalid server process ID %d", msg->m_backendid)));
+				(errmsg("invalid server process ID %d", msg->m_backendid)));
 		return -1;
 	}
 
@@ -2125,20 +2121,20 @@ pgstat_add_backend(PgStat_MsgHdr *msg)
 	beentry = &pgStatBeTable[msg->m_backendid - 1];
 
 	/*
-	 * If the slot contains the PID of this backend, everything is
-	 * fine and we have nothing to do. Note that all the slots are
-	 * zero'd out when the collector is started. We assume that a slot
-	 * is "empty" iff procpid == 0.
+	 * If the slot contains the PID of this backend, everything is fine and we
+	 * have nothing to do. Note that all the slots are zero'd out when the
+	 * collector is started. We assume that a slot is "empty" iff procpid ==
+	 * 0.
 	 */
 	if (beentry->procpid > 0 && beentry->procpid == msg->m_procpid)
 		return 0;
 
 	/*
-	 * Lookup if this backend is known to be dead. This can be caused due
-	 * to messages arriving in the wrong order - e.g. postmaster's BETERM
-	 * message might have arrived before we received all the backends
-	 * stats messages, or even a new backend with the same backendid was
-	 * faster in sending his BESTART.
+	 * Lookup if this backend is known to be dead. This can be caused due to
+	 * messages arriving in the wrong order - e.g. postmaster's BETERM message
+	 * might have arrived before we received all the backends stats messages,
+	 * or even a new backend with the same backendid was faster in sending his
+	 * BESTART.
 	 *
 	 * If the backend is known to be dead, we ignore this add.
 	 */
@@ -2149,8 +2145,8 @@ pgstat_add_backend(PgStat_MsgHdr *msg)
 		return 1;
 
 	/*
-	 * Backend isn't known to be dead. If it's slot is currently used, we
-	 * have to kick out the old backend.
+	 * Backend isn't known to be dead. If it's slot is currently used, we have
+	 * to kick out the old backend.
 	 */
 	if (beentry->procpid > 0)
 		pgstat_sub_backend(beentry->procpid);
@@ -2165,12 +2161,11 @@ pgstat_add_backend(PgStat_MsgHdr *msg)
 	beentry->activity[0] = '\0';
 
 	/*
-	 * We can't initialize the rest of the data in this slot until we
-	 * see the BESTART message. Therefore, we set the database and
-	 * user to sentinel values, to indicate "undefined". There is no
-	 * easy way to do this for the client address, so make sure to
-	 * check that the database or user are defined before accessing
-	 * the client address.
+	 * We can't initialize the rest of the data in this slot until we see the
+	 * BESTART message. Therefore, we set the database and user to sentinel
+	 * values, to indicate "undefined". There is no easy way to do this for
+	 * the client address, so make sure to check that the database or user are
+	 * defined before accessing the client address.
 	 */
 	beentry->userid = InvalidOid;
 	beentry->databaseid = InvalidOid;
@@ -2187,8 +2182,8 @@ static PgStat_StatDBEntry *
 pgstat_get_db_entry(Oid databaseid, bool create)
 {
 	PgStat_StatDBEntry *result;
-	bool found;
-	HASHACTION action = (create ? HASH_ENTER : HASH_FIND);
+	bool		found;
+	HASHACTION	action = (create ? HASH_ENTER : HASH_FIND);
 
 	/* Lookup or create the hash table entry for this database */
 	result = (PgStat_StatDBEntry *) hash_search(pgStatDBHash,
@@ -2216,9 +2211,9 @@ pgstat_get_db_entry(Oid databaseid, bool create)
 		hash_ctl.entrysize = sizeof(PgStat_StatTabEntry);
 		hash_ctl.hash = oid_hash;
 		result->tables = hash_create("Per-database table",
-									  PGSTAT_TAB_HASH_SIZE,
-									  &hash_ctl,
-									  HASH_ELEM | HASH_FUNCTION);
+									 PGSTAT_TAB_HASH_SIZE,
+									 &hash_ctl,
+									 HASH_ELEM | HASH_FUNCTION);
 	}
 
 	return result;
@@ -2238,22 +2233,21 @@ pgstat_sub_backend(int procpid)
 	bool		found;
 
 	/*
-	 * Search in the known-backends table for the slot containing this
-	 * PID.
+	 * Search in the known-backends table for the slot containing this PID.
 	 */
 	for (i = 0; i < MaxBackends; i++)
 	{
 		if (pgStatBeTable[i].procpid == procpid)
 		{
 			/*
-			 * That's him. Add an entry to the known to be dead backends.
-			 * Due to possible misorder in the arrival of UDP packets it's
-			 * possible that even if we know the backend is dead, there
-			 * could still be messages queued that arrive later. Those
-			 * messages must not cause our number of backends statistics
-			 * to get screwed up, so we remember for a couple of seconds
-			 * that this PID is dead and ignore them (only the counting of
-			 * backends, not the table access stats they sent).
+			 * That's him. Add an entry to the known to be dead backends. Due
+			 * to possible misorder in the arrival of UDP packets it's
+			 * possible that even if we know the backend is dead, there could
+			 * still be messages queued that arrive later. Those messages must
+			 * not cause our number of backends statistics to get screwed up,
+			 * so we remember for a couple of seconds that this PID is dead
+			 * and ignore them (only the counting of backends, not the table
+			 * access stats they sent).
 			 */
 			deadbe = (PgStat_StatBeDead *) hash_search(pgStatBeDead,
 													   (void *) &procpid,
@@ -2275,8 +2269,8 @@ pgstat_sub_backend(int procpid)
 	}
 
 	/*
-	 * No big problem if not found. This can happen if UDP messages arrive
-	 * out of order here.
+	 * No big problem if not found. This can happen if UDP messages arrive out
+	 * of order here.
 	 */
 }
 
@@ -2307,8 +2301,8 @@ pgstat_write_statsfile(void)
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
-			errmsg("could not open temporary statistics file \"%s\": %m",
-				   PGSTAT_STAT_TMPFILE)));
+				 errmsg("could not open temporary statistics file \"%s\": %m",
+						PGSTAT_STAT_TMPFILE)));
 		return;
 	}
 
@@ -2325,8 +2319,8 @@ pgstat_write_statsfile(void)
 	while ((dbentry = (PgStat_StatDBEntry *) hash_seq_search(&hstat)) != NULL)
 	{
 		/*
-		 * If this database is marked destroyed, count down and do so if
-		 * it reaches 0.
+		 * If this database is marked destroyed, count down and do so if it
+		 * reaches 0.
 		 */
 		if (dbentry->destroy > 0)
 		{
@@ -2362,8 +2356,8 @@ pgstat_write_statsfile(void)
 		while ((tabentry = (PgStat_StatTabEntry *) hash_seq_search(&tstat)) != NULL)
 		{
 			/*
-			 * If table entry marked for destruction, same as above for
-			 * the database entry.
+			 * If table entry marked for destruction, same as above for the
+			 * database entry.
 			 */
 			if (tabentry->destroy > 0)
 			{
@@ -2384,8 +2378,8 @@ pgstat_write_statsfile(void)
 			}
 
 			/*
-			 * At least we think this is still a live table. Print its
-			 * access stats.
+			 * At least we think this is still a live table. Print its access
+			 * stats.
 			 */
 			fputc('T', fpout);
 			fwrite(tabentry, sizeof(PgStat_StatTabEntry), 1, fpout);
@@ -2422,8 +2416,8 @@ pgstat_write_statsfile(void)
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
-		   errmsg("could not close temporary statistics file \"%s\": %m",
-				  PGSTAT_STAT_TMPFILE)));
+			   errmsg("could not close temporary statistics file \"%s\": %m",
+					  PGSTAT_STAT_TMPFILE)));
 	}
 	else
 	{
@@ -2443,8 +2437,7 @@ pgstat_write_statsfile(void)
 	while ((deadbe = (PgStat_StatBeDead *) hash_seq_search(&hstat)) != NULL)
 	{
 		/*
-		 * Count down the destroy delay and remove entries where it
-		 * reaches 0.
+		 * Count down the destroy delay and remove entries where it reaches 0.
 		 */
 		if (--(deadbe->destroy) <= 0)
 		{
@@ -2453,8 +2446,8 @@ pgstat_write_statsfile(void)
 							HASH_REMOVE, NULL) == NULL)
 			{
 				ereport(ERROR,
-					  (errmsg("dead-server-process hash table corrupted "
-							  "during cleanup --- abort")));
+						(errmsg("dead-server-process hash table corrupted "
+								"during cleanup --- abort")));
 			}
 		}
 	}
@@ -2491,7 +2484,7 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 
 	/*
 	 * If running in the collector or the autovacuum process, we use the
-	 * DynaHashCxt memory context.  If running in a backend, we use the
+	 * DynaHashCxt memory context.	If running in a backend, we use the
 	 * TopTransactionContext instead, so the caller must only know the last
 	 * XactId when this call happened to know if his tables are still valid or
 	 * already gone!
@@ -2525,8 +2518,8 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 						  HASH_ELEM | HASH_FUNCTION | mcxt_flags);
 
 	/*
-	 * Initialize the number of known backends to zero, just in case we do
-	 * a silent error return below.
+	 * Initialize the number of known backends to zero, just in case we do a
+	 * silent error return below.
 	 */
 	if (numbackends != NULL)
 		*numbackends = 0;
@@ -2534,9 +2527,9 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 		*betab = NULL;
 
 	/*
-	 * Try to open the status file. If it doesn't exist, the backends
-	 * simply return zero for anything and the collector simply starts
-	 * from scratch with empty counters.
+	 * Try to open the status file. If it doesn't exist, the backends simply
+	 * return zero for anything and the collector simply starts from scratch
+	 * with empty counters.
 	 */
 	if ((fpin = AllocateFile(PGSTAT_STAT_FILENAME, PG_BINARY_R)) == NULL)
 		return;
@@ -2562,8 +2555,8 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 		{
 				/*
 				 * 'D'	A PgStat_StatDBEntry struct describing a database
-				 * follows. Subsequently, zero to many 'T' entries will
-				 * follow until a 'd' is encountered.
+				 * follows. Subsequently, zero to many 'T' entries will follow
+				 * until a 'd' is encountered.
 				 */
 			case 'D':
 				if (fread(&dbbuf, 1, sizeof(dbbuf), fpin) != sizeof(dbbuf))
@@ -2577,7 +2570,7 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 				 * Add to the DB hash
 				 */
 				dbentry = (PgStat_StatDBEntry *) hash_search(*dbhash,
-											  (void *) &dbbuf.databaseid,
+												  (void *) &dbbuf.databaseid,
 															 HASH_ENTER,
 															 &found);
 				if (found)
@@ -2600,7 +2593,7 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 				{
 					if (dbbuf.databaseid != onlydb &&
 						dbbuf.databaseid != InvalidOid)
-					break;
+						break;
 				}
 
 				memset(&hash_ctl, 0, sizeof(hash_ctl));
@@ -2611,11 +2604,11 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 				dbentry->tables = hash_create("Per-database table",
 											  PGSTAT_TAB_HASH_SIZE,
 											  &hash_ctl,
-											  HASH_ELEM | HASH_FUNCTION | mcxt_flags);
+									 HASH_ELEM | HASH_FUNCTION | mcxt_flags);
 
 				/*
-				 * Arrange that following 'T's add entries to this
-				 * databases tables hash table.
+				 * Arrange that following 'T's add entries to this databases
+				 * tables hash table.
 				 */
 				tabhash = dbentry->tables;
 				break;
@@ -2645,8 +2638,8 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 					break;
 
 				tabentry = (PgStat_StatTabEntry *) hash_search(tabhash,
-												(void *) &tabbuf.tableid,
-													 HASH_ENTER, &found);
+													(void *) &tabbuf.tableid,
+														 HASH_ENTER, &found);
 
 				if (found)
 				{
@@ -2684,7 +2677,7 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 				else
 					*betab = (PgStat_StatBeEntry *)
 						MemoryContextAlloc(use_mcxt,
-										   sizeof(PgStat_StatBeEntry) * maxbackends);
+								   sizeof(PgStat_StatBeEntry) * maxbackends);
 				break;
 
 				/*
@@ -2811,9 +2804,9 @@ pgstat_recv_bestart(PgStat_MsgBestart *msg, int len)
 	PgStat_StatBeEntry *entry;
 
 	/*
-	 * If the backend is known dead, we ignore the message -- we don't
-	 * want to update the backend entry's state since this BESTART
-	 * message refers to an old, dead backend
+	 * If the backend is known dead, we ignore the message -- we don't want to
+	 * update the backend entry's state since this BESTART message refers to
+	 * an old, dead backend
 	 */
 	if (pgstat_add_backend(&msg->m_hdr) != 0)
 		return;
@@ -2840,7 +2833,7 @@ pgstat_recv_beterm(PgStat_MsgBeterm *msg, int len)
 /* ----------
  * pgstat_recv_autovac() -
  *
- * 	Process an autovacuum signalling message.
+ *	Process an autovacuum signalling message.
  * ----------
  */
 static void
@@ -2851,10 +2844,9 @@ pgstat_recv_autovac(PgStat_MsgAutovacStart *msg, int len)
 	/*
 	 * Lookup the database in the hashtable.  Don't create the entry if it
 	 * doesn't exist, because autovacuum may be processing a template
-	 * database.  If this isn't the case, the database is most likely to
-	 * have an entry already.  (If it doesn't, not much harm is done
-	 * anyway -- it'll get created as soon as somebody actually uses
-	 * the database.)
+	 * database.  If this isn't the case, the database is most likely to have
+	 * an entry already.  (If it doesn't, not much harm is done anyway --
+	 * it'll get created as soon as somebody actually uses the database.)
 	 */
 	dbentry = pgstat_get_db_entry(msg->m_databaseid, false);
 	if (dbentry == NULL)
@@ -2869,7 +2861,7 @@ pgstat_recv_autovac(PgStat_MsgAutovacStart *msg, int len)
 /* ----------
  * pgstat_recv_vacuum() -
  *
- * 	Process a VACUUM message.
+ *	Process a VACUUM message.
  * ----------
  */
 static void
@@ -2881,10 +2873,10 @@ pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len)
 	bool		create;
 
 	/*
-	 * If we don't know about the database, ignore the message, because it
-	 * may be autovacuum processing a template database.  But if the message
-	 * is for database InvalidOid, don't ignore it, because we are getting
-	 * a message from vacuuming a shared relation.
+	 * If we don't know about the database, ignore the message, because it may
+	 * be autovacuum processing a template database.  But if the message is
+	 * for database InvalidOid, don't ignore it, because we are getting a
+	 * message from vacuuming a shared relation.
 	 */
 	create = (msg->m_databaseid == InvalidOid);
 
@@ -2933,7 +2925,7 @@ pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len)
 /* ----------
  * pgstat_recv_analyze() -
  *
- * 	Process an ANALYZE message.
+ *	Process an ANALYZE message.
  * ----------
  */
 static void
@@ -2944,9 +2936,9 @@ pgstat_recv_analyze(PgStat_MsgAnalyze *msg, int len)
 	bool		found;
 
 	/*
-	 * Note that we do create the database entry here, as opposed to what
-	 * we do on AutovacStart and Vacuum messages.  This is because
-	 * autovacuum never executes ANALYZE on template databases.
+	 * Note that we do create the database entry here, as opposed to what we
+	 * do on AutovacStart and Vacuum messages.	This is because autovacuum
+	 * never executes ANALYZE on template databases.
 	 */
 	dbentry = pgstat_get_db_entry(msg->m_databaseid, true);
 
@@ -2995,9 +2987,8 @@ pgstat_recv_activity(PgStat_MsgActivity *msg, int len)
 	PgStat_StatBeEntry *entry;
 
 	/*
-	 * Here we check explicitly for 0 return, since we don't want to
-	 * mangle the activity of an active backend by a delayed packet from a
-	 * dead one.
+	 * Here we check explicitly for 0 return, since we don't want to mangle
+	 * the activity of an active backend by a delayed packet from a dead one.
 	 */
 	if (pgstat_add_backend(&msg->m_hdr) != 0)
 		return;
@@ -3034,8 +3025,8 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 	dbentry = pgstat_get_db_entry(msg->m_databaseid, true);
 
 	/*
-	 * If the database is marked for destroy, this is a delayed UDP packet
-	 * and not worth being counted.
+	 * If the database is marked for destroy, this is a delayed UDP packet and
+	 * not worth being counted.
 	 */
 	if (dbentry->destroy > 0)
 		return;
@@ -3049,14 +3040,14 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 	for (i = 0; i < msg->m_nentries; i++)
 	{
 		tabentry = (PgStat_StatTabEntry *) hash_search(dbentry->tables,
-											  (void *) &(tabmsg[i].t_id),
-													 HASH_ENTER, &found);
+												  (void *) &(tabmsg[i].t_id),
+													   HASH_ENTER, &found);
 
 		if (!found)
 		{
 			/*
-			 * If it's a new table entry, initialize counters to the
-			 * values we just got.
+			 * If it's a new table entry, initialize counters to the values we
+			 * just got.
 			 */
 			tabentry->numscans = tabmsg[i].t_numscans;
 			tabentry->tuples_returned = tabmsg[i].t_tuples_returned;
@@ -3064,7 +3055,7 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 			tabentry->tuples_inserted = tabmsg[i].t_tuples_inserted;
 			tabentry->tuples_updated = tabmsg[i].t_tuples_updated;
 			tabentry->tuples_deleted = tabmsg[i].t_tuples_deleted;
-			
+
 			tabentry->n_live_tuples = tabmsg[i].t_tuples_inserted;
 			tabentry->n_dead_tuples = tabmsg[i].t_tuples_updated +
 				tabmsg[i].t_tuples_deleted;
@@ -3132,8 +3123,8 @@ pgstat_recv_tabpurge(PgStat_MsgTabpurge *msg, int len)
 		return;
 
 	/*
-	 * If the database is marked for destroy, this is a delayed UDP packet
-	 * and the tables will go away at DB destruction.
+	 * If the database is marked for destroy, this is a delayed UDP packet and
+	 * the tables will go away at DB destruction.
 	 */
 	if (dbentry->destroy > 0)
 		return;
@@ -3144,7 +3135,7 @@ pgstat_recv_tabpurge(PgStat_MsgTabpurge *msg, int len)
 	for (i = 0; i < msg->m_nentries; i++)
 	{
 		tabentry = (PgStat_StatTabEntry *) hash_search(dbentry->tables,
-										   (void *) &(msg->m_tableid[i]),
+											   (void *) &(msg->m_tableid[i]),
 													   HASH_FIND, NULL);
 		if (tabentry)
 			tabentry->destroy = PGSTAT_DESTROY_COUNT;
@@ -3209,8 +3200,8 @@ pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len)
 		return;
 
 	/*
-	 * We simply throw away all the database's table entries by
-	 * recreating a new hash table for them.
+	 * We simply throw away all the database's table entries by recreating a
+	 * new hash table for them.
 	 */
 	if (dbentry->tables != NULL)
 		hash_destroy(dbentry->tables);

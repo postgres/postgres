@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.48 2005/06/22 02:00:47 neilc Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.49 2005/10/15 02:49:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,6 @@ static void _EndBlobs(ArchiveHandle *AH, TocEntry *te);
 #ifdef HAVE_LIBZ
  /* typedef gzFile	 ThingFile; */
 typedef FILE ThingFile;
-
 #else
 typedef FILE ThingFile;
 #endif
@@ -180,13 +179,13 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 
 		if (ctx->tarFH == NULL)
 			die_horribly(NULL, modulename,
-			"could not open TOC file for output: %s\n", strerror(errno));
+				"could not open TOC file for output: %s\n", strerror(errno));
 
 		ctx->tarFHpos = 0;
 
 		/*
-		 * Make unbuffered since we will dup() it, and the buffers screw
-		 * each other
+		 * Make unbuffered since we will dup() it, and the buffers screw each
+		 * other
 		 */
 		/* setvbuf(ctx->tarFH, NULL, _IONBF, 0); */
 
@@ -200,9 +199,9 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 			AH->compression = 0;
 
 		/*
-		 * We don't support compression because reading the files back is
-		 * not possible since gzdopen uses buffered IO which totally
-		 * screws file positioning.
+		 * We don't support compression because reading the files back is not
+		 * possible since gzdopen uses buffered IO which totally screws file
+		 * positioning.
 		 */
 		if (AH->compression != 0)
 			die_horribly(NULL, modulename, "compression not supported by tar output format\n");
@@ -220,8 +219,8 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 			die_horribly(NULL, modulename, "could not open TOC file for input: %s\n", strerror(errno));
 
 		/*
-		 * Make unbuffered since we will dup() it, and the buffers screw
-		 * each other
+		 * Make unbuffered since we will dup() it, and the buffers screw each
+		 * other
 		 */
 		/* setvbuf(ctx->tarFH, NULL, _IONBF, 0); */
 
@@ -336,8 +335,8 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 		tm = _tarPositionTo(AH, filename);
 		if (!tm)				/* Not found */
 		{
-			if (filename)		/* Couldn't find the requested file.
-								 * Future: DO SEEK(0) and retry. */
+			if (filename)		/* Couldn't find the requested file. Future:
+								 * DO SEEK(0) and retry. */
 				die_horribly(AH, modulename, "could not find file %s in archive\n", filename);
 			else
 				/* Any file OK, non left, so return NULL */
@@ -351,7 +350,6 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 		else
 			die_horribly(AH, modulename, "compression support is disabled in this format\n");
 		/* tm->zFH = gzdopen(dup(fileno(ctx->tarFH)), "rb"); */
-
 #else
 		tm->nFH = ctx->tarFH;
 #endif
@@ -378,7 +376,6 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 		}
 		else
 			tm->nFH = tm->tmpFH;
-
 #else
 
 		tm->nFH = tm->tmpFH;
@@ -546,7 +543,7 @@ tarWrite(const void *buf, size_t len, TAR_MEMBER *th)
 
 	if (res != len)
 		die_horribly(th->AH, modulename,
-			"could not write to tar member (wrote %lu, attempted %lu)\n",
+				"could not write to tar member (wrote %lu, attempted %lu)\n",
 					 (unsigned long) res, (unsigned long) len);
 
 	th->pos += res;
@@ -630,8 +627,8 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 			tmpCopy[i] = pg_tolower((unsigned char) tmpCopy[i]);
 
 		/*
-		 * This is very nasty; we don't know if the archive used WITH
-		 * OIDS, so we search the string for it in a paranoid sort of way.
+		 * This is very nasty; we don't know if the archive used WITH OIDS, so
+		 * we search the string for it in a paranoid sort of way.
 		 */
 		if (strncmp(tmpCopy, "copy ", 5) != 0)
 			die_horribly(AH, modulename,
@@ -784,16 +781,16 @@ _CloseArchive(ArchiveHandle *AH)
 		WriteDataChunks(AH);
 
 		/*
-		 * Now this format wants to append a script which does a full
-		 * restore if the files have been extracted.
+		 * Now this format wants to append a script which does a full restore
+		 * if the files have been extracted.
 		 */
 		th = tarOpen(AH, "restore.sql", 'w');
 		tarPrintf(AH, th, "create temporary table pgdump_restore_path(p text);\n");
 		tarPrintf(AH, th, "--\n"
 				  "-- NOTE:\n"
 				  "--\n"
-			 "-- File paths need to be edited. Search for $$PATH$$ and\n"
-			  "-- replace it with the path to the directory containing\n"
+				  "-- File paths need to be edited. Search for $$PATH$$ and\n"
+				  "-- replace it with the path to the directory containing\n"
 				  "-- the extracted data files.\n"
 				  "--\n"
 				  "-- Edit the following to match the path where the\n"
@@ -826,7 +823,7 @@ _CloseArchive(ArchiveHandle *AH)
 		{
 			if (fputc(0, ctx->tarFH) == EOF)
 				die_horribly(AH, modulename,
-				   "could not write null block at end of tar archive\n");
+					   "could not write null block at end of tar archive\n");
 		}
 	}
 
@@ -942,13 +939,13 @@ tarPrintf(ArchiveHandle *AH, TAR_MEMBER *th, const char *fmt,...)
 	int			cnt = -1;
 
 	/*
-	 * This is paranoid: deal with the possibility that vsnprintf is
-	 * willing to ignore trailing null
+	 * This is paranoid: deal with the possibility that vsnprintf is willing
+	 * to ignore trailing null
 	 */
 
 	/*
-	 * or returns > 0 even if string does not fit. It may be the case that
-	 * it returns cnt = bufsize
+	 * or returns > 0 even if string does not fit. It may be the case that it
+	 * returns cnt = bufsize
 	 */
 	while (cnt < 0 || cnt >= (bSize - 1))
 	{
@@ -1019,9 +1016,10 @@ _tarAddFile(ArchiveHandle *AH, TAR_MEMBER *th)
 	 */
 	fseeko(tmp, 0, SEEK_END);
 	th->fileLen = ftello(tmp);
+
 	/*
-	 *	Some compilers with throw a warning knowing this test can never be
-	 *	true because off_t can't exceed the compared maximum.
+	 * Some compilers with throw a warning knowing this test can never be true
+	 * because off_t can't exceed the compared maximum.
 	 */
 	if (th->fileLen > MAX_TAR_MEMBER_FILELEN)
 		die_horribly(AH, modulename, "archive member too large for tar format\n");
@@ -1108,7 +1106,11 @@ _tarPositionTo(ArchiveHandle *AH, const char *filename)
 		if (filename)
 			die_horribly(AH, modulename, "could not find header for file %s in tar archive\n", filename);
 		else
-		/* We're just scanning the archibe for the next file, so return null */
+
+			/*
+			 * We're just scanning the archibe for the next file, so return
+			 * null
+			 */
 		{
 			free(th);
 			return NULL;
@@ -1122,7 +1124,7 @@ _tarPositionTo(ArchiveHandle *AH, const char *filename)
 		id = atoi(th->targetFile);
 		if ((TocIDRequired(AH, id, AH->ropt) & REQ_DATA) != 0)
 			die_horribly(AH, modulename, "dumping data out of order is not supported in this archive format: "
-			"%s is required, but comes before %s in the archive file.\n",
+				"%s is required, but comes before %s in the archive file.\n",
 						 th->targetFile, filename);
 
 		/* Header doesn't match, so read to next header */
@@ -1168,7 +1170,7 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 			snprintf(buf1, sizeof(buf1), INT64_FORMAT, (int64) ftello(ctx->tarFH));
 			snprintf(buf2, sizeof(buf2), INT64_FORMAT, (int64) ftello(ctx->tarFHpos));
 			die_horribly(AH, modulename,
-						 "mismatch in actual vs. predicted file position (%s vs. %s)\n",
+			  "mismatch in actual vs. predicted file position (%s vs. %s)\n",
 						 buf1, buf2);
 		}
 #endif
@@ -1191,8 +1193,8 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 		sscanf(&h[148], "%8o", &sum);
 
 		/*
-		 * If the checksum failed, see if it is a null block. If so,
-		 * silently continue to the next block.
+		 * If the checksum failed, see if it is a null block. If so, silently
+		 * continue to the next block.
 		 */
 		if (chk == sum)
 			gotBlock = true;
@@ -1301,12 +1303,12 @@ _tarWriteHeader(TAR_MEMBER *th)
 
 #if 0
 	/* User 32 */
-	sprintf(&h[265], "%.31s", "");		/* How do I get username reliably?
-										 * Do I need to? */
+	sprintf(&h[265], "%.31s", "");		/* How do I get username reliably? Do
+										 * I need to? */
 
 	/* Group 32 */
-	sprintf(&h[297], "%.31s", "");		/* How do I get group reliably? Do
-										 * I need to? */
+	sprintf(&h[297], "%.31s", "");		/* How do I get group reliably? Do I
+										 * need to? */
 
 	/* Maj Dev 8 */
 	sprintf(&h[329], "%6o ", 0);

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.68 2005/10/10 22:29:48 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.69 2005/10/15 02:49:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,21 +55,22 @@ static void dumpTimestamp(char *msg);
 
 static int	runPgDump(const char *dbname);
 static PGconn *connectDatabase(const char *dbname, const char *pghost, const char *pgport,
-				const char *pguser, bool require_password, bool fail_on_error);
+			  const char *pguser, bool require_password, bool fail_on_error);
 static PGresult *executeQuery(PGconn *conn, const char *query);
 static void executeCommand(PGconn *conn, const char *query);
 
-static char		pg_dump_bin[MAXPGPATH];
+static char pg_dump_bin[MAXPGPATH];
 static PQExpBuffer pgdumpopts;
-static bool		output_clean = false;
-static bool		skip_acls = false;
-static bool		verbose = false;
-static bool		ignoreVersion = false;
+static bool output_clean = false;
+static bool skip_acls = false;
+static bool verbose = false;
+static bool ignoreVersion = false;
+
 /* flags for -X long options */
-static int		disable_dollar_quoting = 0;
-static int		disable_triggers = 0;
-static int		use_setsessauth = 0;
-static int		server_version;
+static int	disable_dollar_quoting = 0;
+static int	disable_triggers = 0;
+static int	use_setsessauth = 0;
+static int	server_version;
 
 
 int
@@ -107,8 +108,8 @@ main(int argc, char *argv[])
 		{"no-acl", no_argument, NULL, 'x'},
 
 		/*
-		 * the following options don't have an equivalent short option
-		 * letter, but are available as '-X long-name'
+		 * the following options don't have an equivalent short option letter,
+		 * but are available as '-X long-name'
 		 */
 		{"disable-dollar-quoting", no_argument, &disable_dollar_quoting, 1},
 		{"disable-triggers", no_argument, &disable_triggers, 1},
@@ -140,7 +141,7 @@ main(int argc, char *argv[])
 	if ((ret = find_other_exec(argv[0], "pg_dump", PG_VERSIONSTR,
 							   pg_dump_bin)) < 0)
 	{
-		char full_path[MAXPGPATH];
+		char		full_path[MAXPGPATH];
 
 		if (find_my_exec(argv[0], full_path) < 0)
 			StrNCpy(full_path, progname, MAXPGPATH);
@@ -190,7 +191,7 @@ main(int argc, char *argv[])
 #ifndef WIN32
 				appendPQExpBuffer(pgdumpopts, " -h '%s'", pghost);
 #else
-                                appendPQExpBuffer(pgdumpopts, " -h \"%s\"", pghost);
+				appendPQExpBuffer(pgdumpopts, " -h \"%s\"", pghost);
 #endif
 
 				break;
@@ -213,7 +214,7 @@ main(int argc, char *argv[])
 #ifndef WIN32
 				appendPQExpBuffer(pgdumpopts, " -p '%s'", pgport);
 #else
-                                appendPQExpBuffer(pgdumpopts, " -p \"%s\"", pgport);
+				appendPQExpBuffer(pgdumpopts, " -p \"%s\"", pgport);
 #endif
 				break;
 
@@ -226,7 +227,7 @@ main(int argc, char *argv[])
 #ifndef WIN32
 				appendPQExpBuffer(pgdumpopts, " -S '%s'", optarg);
 #else
-                                appendPQExpBuffer(pgdumpopts, " -S \"%s\"", optarg);
+				appendPQExpBuffer(pgdumpopts, " -S \"%s\"", optarg);
 #endif
 				break;
 
@@ -235,7 +236,7 @@ main(int argc, char *argv[])
 #ifndef WIN32
 				appendPQExpBuffer(pgdumpopts, " -U '%s'", pguser);
 #else
-                                appendPQExpBuffer(pgdumpopts, " -U \"%s\"", pguser);
+				appendPQExpBuffer(pgdumpopts, " -U \"%s\"", pguser);
 #endif
 				break;
 
@@ -473,9 +474,9 @@ dumpRoles(PGconn *conn)
 			appendPQExpBuffer(buf, "DROP ROLE %s;\n", fmtId(rolename));
 
 		/*
-		 * We dump CREATE ROLE followed by ALTER ROLE to ensure that the
-		 * role will acquire the right properties even if it already exists.
-		 * (The above DROP may therefore seem redundant, but it isn't really,
+		 * We dump CREATE ROLE followed by ALTER ROLE to ensure that the role
+		 * will acquire the right properties even if it already exists. (The
+		 * above DROP may therefore seem redundant, but it isn't really,
 		 * because this technique doesn't get rid of role memberships.)
 		 */
 		appendPQExpBuffer(buf, "CREATE ROLE %s;\n", fmtId(rolename));
@@ -614,7 +615,7 @@ dumpGroups(PGconn *conn)
 			int			j;
 
 			printfPQExpBuffer(buf,
-							  "SELECT usename FROM pg_shadow WHERE usesysid = %s",
+						 "SELECT usename FROM pg_shadow WHERE usesysid = %s",
 							  tok);
 
 			res2 = executeQuery(conn, buf->data);
@@ -729,7 +730,7 @@ dumpCreateDB(PGconn *conn)
 						   "pg_encoding_to_char(d.encoding), "
 						   "datistemplate, datacl, datconnlimit, "
 						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
-		"FROM pg_database d LEFT JOIN pg_authid u ON (datdba = u.oid) "
+			  "FROM pg_database d LEFT JOIN pg_authid u ON (datdba = u.oid) "
 						   "WHERE datallowconn ORDER BY 1");
 	else if (server_version >= 80000)
 		res = executeQuery(conn,
@@ -738,7 +739,7 @@ dumpCreateDB(PGconn *conn)
 						   "pg_encoding_to_char(d.encoding), "
 						   "datistemplate, datacl, -1 as datconnlimit, "
 						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
-		"FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
+		   "FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
 						   "WHERE datallowconn ORDER BY 1");
 	else if (server_version >= 70300)
 		res = executeQuery(conn,
@@ -747,13 +748,13 @@ dumpCreateDB(PGconn *conn)
 						   "pg_encoding_to_char(d.encoding), "
 						   "datistemplate, datacl, -1 as datconnlimit, "
 						   "'pg_default' AS dattablespace "
-		"FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
+		   "FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
 						   "WHERE datallowconn ORDER BY 1");
 	else if (server_version >= 70100)
 		res = executeQuery(conn,
 						   "SELECT datname, "
 						   "coalesce("
-				"(select usename from pg_shadow where usesysid=datdba), "
+					"(select usename from pg_shadow where usesysid=datdba), "
 						   "(select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
 						   "datistemplate, '' as datacl, -1 as datconnlimit, "
@@ -763,12 +764,12 @@ dumpCreateDB(PGconn *conn)
 	else
 	{
 		/*
-		 * Note: 7.0 fails to cope with sub-select in COALESCE, so just
-		 * deal with getting a NULL by not printing any OWNER clause.
+		 * Note: 7.0 fails to cope with sub-select in COALESCE, so just deal
+		 * with getting a NULL by not printing any OWNER clause.
 		 */
 		res = executeQuery(conn,
 						   "SELECT datname, "
-				"(select usename from pg_shadow where usesysid=datdba), "
+					"(select usename from pg_shadow where usesysid=datdba), "
 						   "pg_encoding_to_char(d.encoding), "
 						   "'f' as datistemplate, "
 						   "'' as datacl, -1 as datconnlimit, "
@@ -953,8 +954,7 @@ makeAlterConfigCommand(const char *arrayitem, const char *type, const char *name
 	appendPQExpBuffer(buf, "SET %s TO ", fmtId(mine));
 
 	/*
-	 * Some GUC variable names are 'LIST' type and hence must not be
-	 * quoted.
+	 * Some GUC variable names are 'LIST' type and hence must not be quoted.
 	 */
 	if (pg_strcasecmp(mine, "DateStyle") == 0
 		|| pg_strcasecmp(mine, "search_path") == 0)
@@ -1019,8 +1019,8 @@ runPgDump(const char *dbname)
 
 	/*
 	 * Win32 has to use double-quotes for args, rather than single quotes.
-	 * Strangely enough, this is the only place we pass a database name on
-	 * the command line, except "postgres" which doesn't need quoting.
+	 * Strangely enough, this is the only place we pass a database name on the
+	 * command line, except "postgres" which doesn't need quoting.
 	 */
 #ifndef WIN32
 	appendPQExpBuffer(cmd, "%s\"%s\" %s -Fp '", SYSTEMQUOTE, pg_dump_bin,
@@ -1087,8 +1087,8 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 		password = simple_prompt("Password: ", 100, false);
 
 	/*
-	 * Start the connection.  Loop until we have a password if requested
-	 * by backend.
+	 * Start the connection.  Loop until we have a password if requested by
+	 * backend.
 	 */
 	do
 	{
@@ -1155,7 +1155,7 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 	}
 
 	if (my_version != server_version
-		&& (server_version < 70000	/* we can handle back to 7.0 */
+		&& (server_version < 70000		/* we can handle back to 7.0 */
 			|| server_version > my_version))
 	{
 		fprintf(stderr, _("server version: %s; %s version: %s\n"),
@@ -1170,8 +1170,8 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 	}
 
 	/*
-	 * On 7.3 and later, make sure we are not fooled by non-system schemas
-	 * in the search path.
+	 * On 7.3 and later, make sure we are not fooled by non-system schemas in
+	 * the search path.
 	 */
 	if (server_version >= 70300)
 		executeCommand(conn, "SET search_path = pg_catalog");

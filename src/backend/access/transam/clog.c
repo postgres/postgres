@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.32 2005/08/20 23:26:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.33 2005/10/15 02:49:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -222,14 +222,14 @@ StartupCLOG(void)
 	/*
 	 * Zero out the remainder of the current clog page.  Under normal
 	 * circumstances it should be zeroes already, but it seems at least
-	 * theoretically possible that XLOG replay will have settled on a
-	 * nextXID value that is less than the last XID actually used and
-	 * marked by the previous database lifecycle (since subtransaction
-	 * commit writes clog but makes no WAL entry).  Let's just be safe.
-	 * (We need not worry about pages beyond the current one, since those
-	 * will be zeroed when first used.  For the same reason, there is no
-	 * need to do anything when nextXid is exactly at a page boundary; and
-	 * it's likely that the "current" page doesn't exist yet in that case.)
+	 * theoretically possible that XLOG replay will have settled on a nextXID
+	 * value that is less than the last XID actually used and marked by the
+	 * previous database lifecycle (since subtransaction commit writes clog
+	 * but makes no WAL entry).  Let's just be safe. (We need not worry about
+	 * pages beyond the current one, since those will be zeroed when first
+	 * used.  For the same reason, there is no need to do anything when
+	 * nextXid is exactly at a page boundary; and it's likely that the
+	 * "current" page doesn't exist yet in that case.)
 	 */
 	if (TransactionIdToPgIndex(xid) != 0)
 	{
@@ -325,8 +325,8 @@ TruncateCLOG(TransactionId oldestXact)
 	int			cutoffPage;
 
 	/*
-	 * The cutoff point is the start of the segment containing oldestXact.
-	 * We pass the *page* containing oldestXact to SimpleLruTruncate.
+	 * The cutoff point is the start of the segment containing oldestXact. We
+	 * pass the *page* containing oldestXact to SimpleLruTruncate.
 	 */
 	cutoffPage = TransactionIdToPage(oldestXact);
 

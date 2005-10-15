@@ -114,8 +114,8 @@ check_primary_key(PG_FUNCTION_ARGS)
 	kvals = (Datum *) palloc(nkeys * sizeof(Datum));
 
 	/*
-	 * Construct ident string as TriggerName $ TriggeredRelationId and try
-	 * to find prepared execution plan.
+	 * Construct ident string as TriggerName $ TriggeredRelationId and try to
+	 * find prepared execution plan.
 	 */
 	snprintf(ident, sizeof(ident), "%s$%u", trigger->tgname, rel->rd_id);
 	plan = find_plan(ident, &PPlans, &nPPlans);
@@ -134,16 +134,16 @@ check_primary_key(PG_FUNCTION_ARGS)
 		if (fnumber < 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
-				errmsg("there is no attribute \"%s\" in relation \"%s\"",
-					   args[i], SPI_getrelname(rel))));
+					 errmsg("there is no attribute \"%s\" in relation \"%s\"",
+							args[i], SPI_getrelname(rel))));
 
 		/* Well, get binary (in internal format) value of column */
 		kvals[i] = SPI_getbinval(tuple, tupdesc, fnumber, &isnull);
 
 		/*
-		 * If it's NULL then nothing to do! DON'T FORGET call SPI_finish
-		 * ()! DON'T FORGET return tuple! Executor inserts tuple you're
-		 * returning! If you return NULL then nothing will be inserted!
+		 * If it's NULL then nothing to do! DON'T FORGET call SPI_finish ()!
+		 * DON'T FORGET return tuple! Executor inserts tuple you're returning!
+		 * If you return NULL then nothing will be inserted!
 		 */
 		if (isnull)
 		{
@@ -164,14 +164,14 @@ check_primary_key(PG_FUNCTION_ARGS)
 		char		sql[8192];
 
 		/*
-		 * Construct query: SELECT 1 FROM _referenced_relation_ WHERE
-		 * Pkey1 = $1 [AND Pkey2 = $2 [...]]
+		 * Construct query: SELECT 1 FROM _referenced_relation_ WHERE Pkey1 =
+		 * $1 [AND Pkey2 = $2 [...]]
 		 */
 		snprintf(sql, sizeof(sql), "select 1 from %s where ", relname);
 		for (i = 0; i < nkeys; i++)
 		{
 			snprintf(sql + strlen(sql), sizeof(sql) - strlen(sql), "%s = $%d %s",
-			  args[i + nkeys + 1], i + 1, (i < nkeys - 1) ? "and " : "");
+				  args[i + nkeys + 1], i + 1, (i < nkeys - 1) ? "and " : "");
 		}
 
 		/* Prepare plan for query */
@@ -181,9 +181,8 @@ check_primary_key(PG_FUNCTION_ARGS)
 			elog(ERROR, "check_primary_key: SPI_prepare returned %d", SPI_result);
 
 		/*
-		 * Remember that SPI_prepare places plan in current memory context
-		 * - so, we have to save plan in Top memory context for latter
-		 * use.
+		 * Remember that SPI_prepare places plan in current memory context -
+		 * so, we have to save plan in Top memory context for latter use.
 		 */
 		pplan = SPI_saveplan(pplan);
 		if (pplan == NULL)
@@ -252,8 +251,7 @@ check_foreign_key(PG_FUNCTION_ARGS)
 	EPlan	   *plan;			/* prepared plan(s) */
 	Oid		   *argtypes = NULL;	/* key types to prepare execution plan */
 	bool		isnull;			/* to know is some column NULL or not */
-	bool		isequal = true; /* are keys in both tuples equal (in
-								 * UPDATE) */
+	bool		isequal = true; /* are keys in both tuples equal (in UPDATE) */
 	char		ident[2 * NAMEDATALEN]; /* to identify myself */
 	int			is_update = 0;
 	int			ret;
@@ -287,9 +285,8 @@ check_foreign_key(PG_FUNCTION_ARGS)
 	trigtuple = trigdata->tg_trigtuple;
 
 	/*
-	 * But if this is UPDATE then we have to return tg_newtuple. Also, if
-	 * key in tg_newtuple is the same as in tg_trigtuple then nothing to
-	 * do.
+	 * But if this is UPDATE then we have to return tg_newtuple. Also, if key
+	 * in tg_newtuple is the same as in tg_trigtuple then nothing to do.
 	 */
 	is_update = 0;
 	if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
@@ -337,8 +334,8 @@ check_foreign_key(PG_FUNCTION_ARGS)
 	kvals = (Datum *) palloc(nkeys * sizeof(Datum));
 
 	/*
-	 * Construct ident string as TriggerName $ TriggeredRelationId and try
-	 * to find prepared execution plan(s).
+	 * Construct ident string as TriggerName $ TriggeredRelationId and try to
+	 * find prepared execution plan(s).
 	 */
 	snprintf(ident, sizeof(ident), "%s$%u", trigger->tgname, rel->rd_id);
 	plan = find_plan(ident, &FPlans, &nFPlans);
@@ -365,16 +362,16 @@ check_foreign_key(PG_FUNCTION_ARGS)
 		if (fnumber < 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
-				errmsg("there is no attribute \"%s\" in relation \"%s\"",
-					   args[i], SPI_getrelname(rel))));
+					 errmsg("there is no attribute \"%s\" in relation \"%s\"",
+							args[i], SPI_getrelname(rel))));
 
 		/* Well, get binary (in internal format) value of column */
 		kvals[i] = SPI_getbinval(trigtuple, tupdesc, fnumber, &isnull);
 
 		/*
-		 * If it's NULL then nothing to do! DON'T FORGET call SPI_finish
-		 * ()! DON'T FORGET return tuple! Executor inserts tuple you're
-		 * returning! If you return NULL then nothing will be inserted!
+		 * If it's NULL then nothing to do! DON'T FORGET call SPI_finish ()!
+		 * DON'T FORGET return tuple! Executor inserts tuple you're returning!
+		 * If you return NULL then nothing will be inserted!
 		 */
 		if (isnull)
 		{
@@ -383,9 +380,9 @@ check_foreign_key(PG_FUNCTION_ARGS)
 		}
 
 		/*
-		 * If UPDATE then get column value from new tuple being inserted
-		 * and compare is this the same as old one. For the moment we use
-		 * string presentation of values...
+		 * If UPDATE then get column value from new tuple being inserted and
+		 * compare is this the same as old one. For the moment we use string
+		 * presentation of values...
 		 */
 		if (newtuple != NULL)
 		{
@@ -473,7 +470,7 @@ check_foreign_key(PG_FUNCTION_ARGS)
 						type = SPI_gettype(tupdesc, fn);
 
 						if ((strcmp(type, "text") && strcmp(type, "varchar") &&
-						strcmp(type, "char") && strcmp(type, "bpchar") &&
+							 strcmp(type, "char") && strcmp(type, "bpchar") &&
 							 strcmp(type, "date") && strcmp(type, "timestamp")) == 0)
 							is_char_type = 1;
 #ifdef	DEBUG_QUERY
@@ -482,8 +479,7 @@ check_foreign_key(PG_FUNCTION_ARGS)
 #endif
 
 						/*
-						 * is_char_type =1 i set ' ' for define a new
-						 * value
+						 * is_char_type =1 i set ' ' for define a new value
 						 */
 						snprintf(sql + strlen(sql), sizeof(sql) - strlen(sql),
 								 " %s = %s%s%s %s ",
@@ -503,8 +499,8 @@ check_foreign_key(PG_FUNCTION_ARGS)
 			/*
 			 * For 'S'etnull action we construct UPDATE query - UPDATE
 			 * _referencing_relation_ SET Fkey1 null [, Fkey2 null [...]]
-			 * WHERE Fkey1 = $1 [AND Fkey2 = $2 [...]] - to set key
-			 * columns in all referencing tuples to NULL.
+			 * WHERE Fkey1 = $1 [AND Fkey2 = $2 [...]] - to set key columns in
+			 * all referencing tuples to NULL.
 			 */
 			else if (action == 's')
 			{
@@ -532,9 +528,9 @@ check_foreign_key(PG_FUNCTION_ARGS)
 				elog(ERROR, "check_foreign_key: SPI_prepare returned %d", SPI_result);
 
 			/*
-			 * Remember that SPI_prepare places plan in current memory
-			 * context - so, we have to save plan in Top memory context
-			 * for latter use.
+			 * Remember that SPI_prepare places plan in current memory context
+			 * - so, we have to save plan in Top memory context for latter
+			 * use.
 			 */
 			pplan = SPI_saveplan(pplan);
 			if (pplan == NULL)
@@ -566,8 +562,8 @@ check_foreign_key(PG_FUNCTION_ARGS)
 	for (r = 0; r < nrefs; r++)
 	{
 		/*
-		 * For 'R'estrict we may to execute plan for one tuple only, for
-		 * other actions - for all tuples.
+		 * For 'R'estrict we may to execute plan for one tuple only, for other
+		 * actions - for all tuples.
 		 */
 		int			tcount = (action == 'r') ? 1 : 0;
 

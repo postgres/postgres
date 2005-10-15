@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.107 2005/08/23 21:02:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.108 2005/10/15 02:49:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,8 +39,8 @@
 #endif
 
 #ifdef WIN32_CLIENT_ONLY
-typedef int ssize_t;			/* ssize_t doesn't exist in VC (at least
-								 * not VC6) */
+typedef int ssize_t;			/* ssize_t doesn't exist in VC (at least not
+								 * VC6) */
 #endif
 
 /* include stuff common to fe and be */
@@ -92,7 +92,7 @@ typedef struct pgresAttDesc
 	Oid			typid;			/* type id */
 	int			typlen;			/* type size */
 	int			atttypmod;		/* type-specific modifier info */
-} PGresAttDesc;
+}	PGresAttDesc;
 
 /*
  * Data for a single attribute of a single tuple
@@ -117,9 +117,8 @@ typedef struct pgresAttDesc
 typedef struct pgresAttValue
 {
 	int			len;			/* length in bytes of the value */
-	char	   *value;			/* actual value, plus terminating zero
-								 * byte */
-} PGresAttValue;
+	char	   *value;			/* actual value, plus terminating zero byte */
+}	PGresAttValue;
 
 /* Typedef for message-field list entries */
 typedef struct pgMessageField
@@ -127,7 +126,7 @@ typedef struct pgMessageField
 	struct pgMessageField *next;	/* list link */
 	char		code;			/* field code */
 	char		contents[1];	/* field value (VARIABLE LENGTH) */
-} PGMessageField;
+}	PGMessageField;
 
 /* Fields needed for notice handling */
 typedef struct
@@ -136,7 +135,7 @@ typedef struct
 	void	   *noticeRecArg;
 	PQnoticeProcessor noticeProc;		/* notice message processor */
 	void	   *noticeProcArg;
-} PGNoticeHooks;
+}	PGNoticeHooks;
 
 struct pg_result
 {
@@ -147,22 +146,21 @@ struct pg_result
 								 * PGresAttValue's */
 	int			tupArrSize;		/* allocated size of tuples array */
 	ExecStatusType resultStatus;
-	char		cmdStatus[CMDSTATUS_LEN];		/* cmd status from the
-												 * query */
+	char		cmdStatus[CMDSTATUS_LEN];		/* cmd status from the query */
 	int			binary;			/* binary tuple values if binary == 1,
 								 * otherwise text */
 
 	/*
-	 * These fields are copied from the originating PGconn, so that
-	 * operations on the PGresult don't have to reference the PGconn.
+	 * These fields are copied from the originating PGconn, so that operations
+	 * on the PGresult don't have to reference the PGconn.
 	 */
 	PGNoticeHooks noticeHooks;
 	int			client_encoding;	/* encoding id */
 
 	/*
 	 * Error information (all NULL if not an error result).  errMsg is the
-	 * "overall" error message returned by PQresultErrorMessage.  If we
-	 * have per-field info then it is stored in a linked list.
+	 * "overall" error message returned by PQresultErrorMessage.  If we have
+	 * per-field info then it is stored in a linked list.
 	 */
 	char	   *errMsg;			/* error message, or NULL if no error */
 	PGMessageField *errFields;	/* message broken into fields */
@@ -171,8 +169,8 @@ struct pg_result
 	char		null_field[1];
 
 	/*
-	 * Space management information.  Note that attDescs and error stuff,
-	 * if not null, point into allocated blocks.  But tuples points to a
+	 * Space management information.  Note that attDescs and error stuff, if
+	 * not null, point into allocated blocks.  But tuples points to a
 	 * separately malloc'd block, so that we can realloc it.
 	 */
 	PGresult_data *curBlock;	/* most recently allocated block */
@@ -188,7 +186,7 @@ typedef enum
 	PGASYNC_READY,				/* result ready for PQgetResult */
 	PGASYNC_COPY_IN,			/* Copy In data transfer in progress */
 	PGASYNC_COPY_OUT			/* Copy Out data transfer in progress */
-} PGAsyncStatusType;
+}	PGAsyncStatusType;
 
 /* PGQueryClass tracks which query protocol we are now executing */
 typedef enum
@@ -196,7 +194,7 @@ typedef enum
 	PGQUERY_SIMPLE,				/* simple Query protocol (PQexec) */
 	PGQUERY_EXTENDED,			/* full Extended protocol (PQexecParams) */
 	PGQUERY_PREPARE				/* Parse only (PQprepare) */
-} PGQueryClass;
+}	PGQueryClass;
 
 /* PGSetenvStatusType defines the state of the PQSetenv state machine */
 /* (this is used only for 2.0-protocol connections) */
@@ -209,14 +207,14 @@ typedef enum
 	SETENV_STATE_QUERY2_SEND,	/* About to send a status query */
 	SETENV_STATE_QUERY2_WAIT,	/* Waiting for query to complete */
 	SETENV_STATE_IDLE
-} PGSetenvStatusType;
+}	PGSetenvStatusType;
 
 /* Typedef for the EnvironmentOptions[] array */
 typedef struct PQEnvironmentOption
 {
 	const char *envName,		/* name of an environment variable */
 			   *pgName;			/* name of corresponding SET variable */
-} PQEnvironmentOption;
+}	PQEnvironmentOption;
 
 /* Typedef for parameter-status list entries */
 typedef struct pgParameterStatus
@@ -225,7 +223,7 @@ typedef struct pgParameterStatus
 	char	   *name;			/* parameter name */
 	char	   *value;			/* parameter value */
 	/* Note: name and value are stored in same malloc block as struct is */
-} pgParameterStatus;
+}	pgParameterStatus;
 
 /* large-object-access data ... allocated only if large-object code is used. */
 typedef struct pgLobjfuncs
@@ -239,7 +237,7 @@ typedef struct pgLobjfuncs
 	Oid			fn_lo_tell;		/* OID of backend function lo_tell		*/
 	Oid			fn_lo_read;		/* OID of backend function LOread		*/
 	Oid			fn_lo_write;	/* OID of backend function LOwrite		*/
-} PGlobjfuncs;
+}	PGlobjfuncs;
 
 /*
  * PGconn stores all the state data associated with a single connection
@@ -248,16 +246,15 @@ typedef struct pgLobjfuncs
 struct pg_conn
 {
 	/* Saved values of connection options */
-	char	   *pghost;			/* the machine on which the server is
-								 * running */
-	char	   *pghostaddr;		/* the IPv4 address of the machine on
-								 * which the server is running, in IPv4
-								 * numbers-and-dots notation. Takes
-								 * precedence over above. */
+	char	   *pghost;			/* the machine on which the server is running */
+	char	   *pghostaddr;		/* the IPv4 address of the machine on which
+								 * the server is running, in IPv4
+								 * numbers-and-dots notation. Takes precedence
+								 * over above. */
 	char	   *pgport;			/* the server's communication port */
-	char	   *pgunixsocket;	/* the Unix-domain socket that the server
-								 * is listening on; if NULL, uses a
-								 * default constructed from pgport */
+	char	   *pgunixsocket;	/* the Unix-domain socket that the server is
+								 * listening on; if NULL, uses a default
+								 * constructed from pgport */
 	char	   *pgtty;			/* tty on which the backend messages is
 								 * displayed (OBSOLETE, NOT USED) */
 	char	   *connect_timeout;	/* connection timeout (numeric string) */
@@ -267,7 +264,7 @@ struct pg_conn
 	char	   *pgpass;
 	char	   *sslmode;		/* SSL mode (require,prefer,allow,disable) */
 #ifdef KRB5
-	char       *krbsrvname;     /* Kerberos service name */
+	char	   *krbsrvname;		/* Kerberos service name */
 #endif
 
 	/* Optional file to write trace info to */
@@ -282,11 +279,11 @@ struct pg_conn
 	PGTransactionStatusType xactStatus;
 	/* note: xactStatus never changes to ACTIVE */
 	PGQueryClass queryclass;
-	bool		nonblocking;	/* whether this connection is using
-								 * nonblock sending semantics */
+	bool		nonblocking;	/* whether this connection is using nonblock
+								 * sending semantics */
 	char		copy_is_binary; /* 1 = copy binary, 0 = copy text */
-	int			copy_already_done;		/* # bytes already returned in
-										 * COPY OUT */
+	int			copy_already_done;		/* # bytes already returned in COPY
+										 * OUT */
 	PGnotify   *notifyHead;		/* oldest unreported Notify msg */
 	PGnotify   *notifyTail;		/* newest unreported Notify msg */
 
@@ -312,17 +309,14 @@ struct pg_conn
 	pgParameterStatus *pstatus; /* ParameterStatus data */
 	int			client_encoding;	/* encoding id */
 	PGVerbosity verbosity;		/* error/notice message verbosity */
-	PGlobjfuncs *lobjfuncs;		/* private state for large-object access
-								 * fns */
+	PGlobjfuncs *lobjfuncs;		/* private state for large-object access fns */
 
 	/* Buffer for data received from backend and not yet processed */
 	char	   *inBuffer;		/* currently allocated buffer */
 	int			inBufSize;		/* allocated size of buffer */
-	int			inStart;		/* offset to first unconsumed data in
-								 * buffer */
+	int			inStart;		/* offset to first unconsumed data in buffer */
 	int			inCursor;		/* next byte to tentatively consume */
-	int			inEnd;			/* offset to first position after avail
-								 * data */
+	int			inEnd;			/* offset to first position after avail data */
 
 	/* Buffer for data not yet sent to backend */
 	char	   *outBuffer;		/* currently allocated buffer */
@@ -330,8 +324,8 @@ struct pg_conn
 	int			outCount;		/* number of chars waiting in buffer */
 
 	/* State for constructing messages in outBuffer */
-	int			outMsgStart;	/* offset to msg start (length word); if
-								 * -1, msg has no length word */
+	int			outMsgStart;	/* offset to msg start (length word); if -1,
+								 * msg has no length word */
 	int			outMsgEnd;		/* offset to msg end (so far) */
 
 	/* Status for asynchronous result construction */
@@ -408,10 +402,10 @@ extern void pqClearAsyncResult(PGconn *conn);
 extern void pqSaveErrorResult(PGconn *conn);
 extern PGresult *pqPrepareAsyncResult(PGconn *conn);
 extern void
-pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt, ...)
+pqInternalNotice(const PGNoticeHooks * hooks, const char *fmt,...)
 /* This lets gcc check the format string for consistency. */
 __attribute__((format(printf, 2, 3)));
-extern int	pqAddTuple(PGresult *res, PGresAttValue *tup);
+extern int	pqAddTuple(PGresult *res, PGresAttValue * tup);
 extern void pqSaveMessageField(PGresult *res, char code,
 				   const char *value);
 extern void pqSaveParameterStatus(PGconn *conn, const char *name,
@@ -423,7 +417,7 @@ extern void pqHandleSendFailure(PGconn *conn);
 extern PostgresPollingStatusType pqSetenvPoll(PGconn *conn);
 
 extern char *pqBuildStartupPacket2(PGconn *conn, int *packetlen,
-					  const PQEnvironmentOption *options);
+					  const PQEnvironmentOption * options);
 extern void pqParseInput2(PGconn *conn);
 extern int	pqGetCopyData2(PGconn *conn, char **buffer, int async);
 extern int	pqGetline2(PGconn *conn, char *s, int maxlen);
@@ -437,7 +431,7 @@ extern PGresult *pqFunctionCall2(PGconn *conn, Oid fnid,
 /* === in fe-protocol3.c === */
 
 extern char *pqBuildStartupPacket3(PGconn *conn, int *packetlen,
-					  const PQEnvironmentOption *options);
+					  const PQEnvironmentOption * options);
 extern void pqParseInput3(PGconn *conn);
 extern int	pqGetErrorNotice3(PGconn *conn, bool isError);
 extern int	pqGetCopyData3(PGconn *conn, char **buffer, int async);
@@ -452,8 +446,8 @@ extern PGresult *pqFunctionCall3(PGconn *conn, Oid fnid,
 /* === in fe-misc.c === */
 
  /*
-  * "Get" and "Put" routines return 0 if successful, EOF if not. Note that
-  * for Get, EOF merely means the buffer is exhausted, not that there is
+  * "Get" and "Put" routines return 0 if successful, EOF if not. Note that for
+  * Get, EOF merely means the buffer is exhausted, not that there is
   * necessarily any error.
   */
 extern int	pqCheckOutBufferSpace(int bytes_needed, PGconn *conn);
@@ -488,7 +482,7 @@ extern ssize_t pqsecure_write(PGconn *, const void *ptr, size_t len);
 #if defined(ENABLE_THREAD_SAFETY) && !defined(WIN32)
 extern int	pq_block_sigpipe(sigset_t *osigset, bool *sigpipe_pending);
 extern void pq_reset_sigpipe(sigset_t *osigset, bool sigpipe_pending,
-							 bool got_epipe);
+				 bool got_epipe);
 #endif
 
 /*
@@ -501,7 +495,6 @@ extern void pq_reset_sigpipe(sigset_t *osigset, bool sigpipe_pending,
 extern char *
 libpq_gettext(const char *msgid)
 __attribute__((format_arg(1)));
-
 #else
 #define libpq_gettext(x) (x)
 #endif

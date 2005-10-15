@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/tools/findoidjoins/findoidjoins.c,v 1.1 2005/06/23 02:33:28 tgl Exp $
+ * $PostgreSQL: pgsql/src/tools/findoidjoins/findoidjoins.c,v 1.2 2005/10/15 02:49:51 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -51,7 +51,7 @@ main(int argc, char **argv)
 	appendPQExpBuffer(&sql, "%s",
 					  "SET search_path = public;"
 					  "SELECT c.relname, (SELECT nspname FROM "
-	"pg_catalog.pg_namespace n WHERE n.oid = c.relnamespace) AS nspname "
+		"pg_catalog.pg_namespace n WHERE n.oid = c.relnamespace) AS nspname "
 					  "FROM pg_catalog.pg_class c "
 					  "WHERE c.relkind = 'r' "
 					  "AND c.relhasoids "
@@ -74,7 +74,7 @@ main(int argc, char **argv)
 					  "SELECT c.relname, "
 					  "(SELECT nspname FROM pg_catalog.pg_namespace n WHERE n.oid = c.relnamespace) AS nspname, "
 					  "a.attname "
-				 "FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a "
+					  "FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a "
 					  "WHERE a.attnum > 0 AND c.relkind = 'r' "
 					  "AND a.attrelid = c.oid "
 					  "AND a.atttypid IN ('pg_catalog.oid'::regtype, "
@@ -119,7 +119,7 @@ main(int argc, char **argv)
 							  "\"%s\".\"%s\" t2 "
 							  "WHERE t1.\"%s\"::pg_catalog.oid = t2.oid "
 							  "LIMIT 1",
-			 fk_nspname, fk_relname, pk_nspname, pk_relname, fk_attname);
+				 fk_nspname, fk_relname, pk_nspname, pk_relname, fk_attname);
 
 			res = PQexec(conn, sql.data);
 			if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)

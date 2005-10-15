@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashovfl.c,v 1.46 2005/05/11 01:26:01 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashovfl.c,v 1.47 2005/10/15 02:49:08 momjian Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
@@ -44,8 +44,8 @@ bitno_to_blkno(HashMetaPage metap, uint32 ovflbitnum)
 		 /* loop */ ;
 
 	/*
-	 * Convert to absolute page number by adding the number of bucket
-	 * pages that exist before this split point.
+	 * Convert to absolute page number by adding the number of bucket pages
+	 * that exist before this split point.
 	 */
 	return (BlockNumber) ((1 << i) + ovflbitnum);
 }
@@ -252,10 +252,10 @@ _hash_getovflpage(Relation rel, Buffer metabuf)
 		/*
 		 * We create the new bitmap page with all pages marked "in use".
 		 * Actually two pages in the new bitmap's range will exist
-		 * immediately: the bitmap page itself, and the following page
-		 * which is the one we return to the caller.  Both of these are
-		 * correctly marked "in use".  Subsequent pages do not exist yet,
-		 * but it is convenient to pre-mark them as "in use" too.
+		 * immediately: the bitmap page itself, and the following page which
+		 * is the one we return to the caller.	Both of these are correctly
+		 * marked "in use".  Subsequent pages do not exist yet, but it is
+		 * convenient to pre-mark them as "in use" too.
 		 */
 		_hash_initbitmap(rel, metap, bitno_to_blkno(metap, bit));
 
@@ -265,8 +265,8 @@ _hash_getovflpage(Relation rel, Buffer metabuf)
 	else
 	{
 		/*
-		 * Nothing to do here; since the page was past the last used page,
-		 * we know its bitmap bit was preinitialized to "in use".
+		 * Nothing to do here; since the page was past the last used page, we
+		 * know its bitmap bit was preinitialized to "in use".
 		 */
 	}
 
@@ -275,8 +275,7 @@ _hash_getovflpage(Relation rel, Buffer metabuf)
 
 	/*
 	 * Adjust hashm_firstfree to avoid redundant searches.	But don't risk
-	 * changing it if someone moved it while we were searching bitmap
-	 * pages.
+	 * changing it if someone moved it while we were searching bitmap pages.
 	 */
 	if (metap->hashm_firstfree == orig_firstfree)
 		metap->hashm_firstfree = bit + 1;
@@ -305,8 +304,7 @@ found:
 
 	/*
 	 * Adjust hashm_firstfree to avoid redundant searches.	But don't risk
-	 * changing it if someone moved it while we were searching bitmap
-	 * pages.
+	 * changing it if someone moved it while we were searching bitmap pages.
 	 */
 	if (metap->hashm_firstfree == orig_firstfree)
 	{
@@ -394,10 +392,10 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf)
 	_hash_wrtbuf(rel, ovflbuf);
 
 	/*
-	 * Fix up the bucket chain.  this is a doubly-linked list, so we must
-	 * fix up the bucket chain members behind and ahead of the overflow
-	 * page being deleted.	No concurrency issues since we hold exclusive
-	 * lock on the entire bucket.
+	 * Fix up the bucket chain.  this is a doubly-linked list, so we must fix
+	 * up the bucket chain members behind and ahead of the overflow page being
+	 * deleted.  No concurrency issues since we hold exclusive lock on the
+	 * entire bucket.
 	 */
 	if (BlockNumberIsValid(prevblkno))
 	{
@@ -488,12 +486,11 @@ _hash_initbitmap(Relation rel, HashMetaPage metap, BlockNumber blkno)
 
 	/*
 	 * It is okay to write-lock the new bitmap page while holding metapage
-	 * write lock, because no one else could be contending for the new
-	 * page.
+	 * write lock, because no one else could be contending for the new page.
 	 *
-	 * There is some loss of concurrency in possibly doing I/O for the new
-	 * page while holding the metapage lock, but this path is taken so
-	 * seldom that it's not worth worrying about.
+	 * There is some loss of concurrency in possibly doing I/O for the new page
+	 * while holding the metapage lock, but this path is taken so seldom that
+	 * it's not worth worrying about.
 	 */
 	buf = _hash_getbuf(rel, blkno, HASH_WRITE);
 	pg = BufferGetPage(buf);
@@ -586,8 +583,8 @@ _hash_squeezebucket(Relation rel,
 	}
 
 	/*
-	 * find the last page in the bucket chain by starting at the base
-	 * bucket page and working forward.
+	 * find the last page in the bucket chain by starting at the base bucket
+	 * page and working forward.
 	 */
 	ropaque = wopaque;
 	do
@@ -655,22 +652,21 @@ _hash_squeezebucket(Relation rel,
 
 			/*
 			 * delete the tuple from the "read" page. PageIndexTupleDelete
-			 * repacks the ItemId array, so 'roffnum' will be "advanced"
-			 * to the "next" ItemId.
+			 * repacks the ItemId array, so 'roffnum' will be "advanced" to
+			 * the "next" ItemId.
 			 */
 			PageIndexTupleDelete(rpage, roffnum);
 		}
 
 		/*
-		 * if the "read" page is now empty because of the deletion (or
-		 * because it was empty when we got to it), free it.
+		 * if the "read" page is now empty because of the deletion (or because
+		 * it was empty when we got to it), free it.
 		 *
 		 * Tricky point here: if our read and write pages are adjacent in the
 		 * bucket chain, our write lock on wbuf will conflict with
 		 * _hash_freeovflpage's attempt to update the sibling links of the
-		 * removed page.  However, in that case we are done anyway, so we
-		 * can simply drop the write lock before calling
-		 * _hash_freeovflpage.
+		 * removed page.  However, in that case we are done anyway, so we can
+		 * simply drop the write lock before calling _hash_freeovflpage.
 		 */
 		if (PageIsEmpty(rpage))
 		{

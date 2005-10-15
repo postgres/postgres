@@ -17,10 +17,10 @@
 /* an extensible array to keep track of elements to show */
 typedef struct
 {
-	char  **array;
-	int		num;
-	int		alloc;
-} eary;
+	char	  **array;
+	int			num;
+	int			alloc;
+}	eary;
 
 /* these are the opts structures for command line params */
 struct options
@@ -36,19 +36,19 @@ struct options
 	bool		extended;
 	bool		tablespaces;
 
-	char		*dbname;
-	char		*hostname;
-	char		*port;
-	char		*username;
-	char		*password;
+	char	   *dbname;
+	char	   *hostname;
+	char	   *port;
+	char	   *username;
+	char	   *password;
 };
 
 /* function prototypes */
 void		get_opts(int, char **, struct options *);
 void	   *myalloc(size_t size);
 char	   *mystrdup(const char *str);
-void		add_one_elt(char *eltname, eary *eary);
-char	   *get_comma_elts(eary *eary);
+void		add_one_elt(char *eltname, eary * eary);
+char	   *get_comma_elts(eary * eary);
 PGconn	   *sql_conn(struct options *);
 int			sql_exec(PGconn *, const char *sql, bool quiet);
 void		sql_exec_dumpalldbs(PGconn *, struct options *);
@@ -95,7 +95,7 @@ get_opts(int argc, char **argv, struct options * my_opts)
 				add_one_elt(optarg, my_opts->oids);
 				break;
 
-				/* specify one filenode to show*/
+				/* specify one filenode to show */
 			case 'f':
 				add_one_elt(optarg, my_opts->filenodes);
 				break;
@@ -149,23 +149,23 @@ get_opts(int argc, char **argv, struct options * my_opts)
 			case '?':
 			case 'h':
 				fprintf(stderr,
-"Usage: oid2name [-s|-d database] [-S][-i][-q][-x] [-t table|-o oid|-f file] ...\n"
-"        default action        show all database Oids\n"
-"        -d database           database to connect to\n"
-"        -s                    show all tablespaces\n"
-"        -S                    show system objects too\n"
-"        -i                    show indexes and sequences too\n"
-"        -x                    extended (show additional columns)\n"
-"        -q                    quiet (don't show headers)\n"
-"        -t <table>            show info for table named <table>\n"
-"        -o <oid>              show info for table with Oid <oid>\n"
-"        -f <filenode>         show info for table with filenode <filenode>\n"
-"        -H host               connect to remote host\n"
-"        -p port               host port to connect to\n"
-"        -U username           username to connect with\n"
-"        -P password           password for username\n"
-"                              (see also $PGPASSWORD and ~/.pgpass)\n"
-);
+						"Usage: oid2name [-s|-d database] [-S][-i][-q][-x] [-t table|-o oid|-f file] ...\n"
+					 "        default action        show all database Oids\n"
+					 "        -d database           database to connect to\n"
+						"        -s                    show all tablespaces\n"
+					"        -S                    show system objects too\n"
+						"        -i                    show indexes and sequences too\n"
+						"        -x                    extended (show additional columns)\n"
+				 "        -q                    quiet (don't show headers)\n"
+						"        -t <table>            show info for table named <table>\n"
+						"        -o <oid>              show info for table with Oid <oid>\n"
+						"        -f <filenode>         show info for table with filenode <filenode>\n"
+					 "        -H host               connect to remote host\n"
+					"        -p port               host port to connect to\n"
+				   "        -U username           username to connect with\n"
+					  "        -P password           password for username\n"
+						"                              (see also $PGPASSWORD and ~/.pgpass)\n"
+					);
 				exit(1);
 				break;
 		}
@@ -175,7 +175,8 @@ get_opts(int argc, char **argv, struct options * my_opts)
 void *
 myalloc(size_t size)
 {
-	void *ptr = malloc(size);
+	void	   *ptr = malloc(size);
+
 	if (!ptr)
 	{
 		fprintf(stderr, "out of memory");
@@ -187,7 +188,8 @@ myalloc(size_t size)
 char *
 mystrdup(const char *str)
 {
-	char *result = strdup(str);
+	char	   *result = strdup(str);
+
 	if (!result)
 	{
 		fprintf(stderr, "out of memory");
@@ -202,7 +204,7 @@ mystrdup(const char *str)
  * Add one element to a (possibly empty) eary struct.
  */
 void
-add_one_elt(char *eltname, eary *eary)
+add_one_elt(char *eltname, eary * eary)
 {
 	if (eary->alloc == 0)
 	{
@@ -233,11 +235,12 @@ add_one_elt(char *eltname, eary *eary)
  * SQL statement.
  */
 char *
-get_comma_elts(eary *eary)
+get_comma_elts(eary * eary)
 {
-	char *ret,
-		 *ptr;
-	int i, length = 0;
+	char	   *ret,
+			   *ptr;
+	int			i,
+				length = 0;
 
 	if (eary->num == 0)
 		return mystrdup("");
@@ -272,9 +275,9 @@ sql_conn(struct options * my_opts)
 
 	/* login */
 	conn = PQsetdbLogin(my_opts->hostname,
-			            my_opts->port,
-						NULL,  /* options */
-						NULL,  /* tty */
+						my_opts->port,
+						NULL,	/* options */
+						NULL,	/* tty */
 						my_opts->dbname,
 						my_opts->username,
 						my_opts->password);
@@ -303,7 +306,9 @@ sql_exec(PGconn *conn, const char *todo, bool quiet)
 
 	int			nfields;
 	int			nrows;
-	int			i, j, l;
+	int			i,
+				j,
+				l;
 	int		   *length;
 	char	   *pad;
 
@@ -334,7 +339,7 @@ sql_exec(PGconn *conn, const char *todo, bool quiet)
 	{
 		for (j = 0; j < nfields; j++)
 		{
-		   	l = strlen(PQgetvalue(res, i, j));
+			l = strlen(PQgetvalue(res, i, j));
 			if (l > length[j])
 				length[j] = strlen(PQgetvalue(res, i, j));
 		}
@@ -372,36 +377,36 @@ sql_exec(PGconn *conn, const char *todo, bool quiet)
 }
 
 /*
- * Dump all databases.  There are no system objects to worry about.
+ * Dump all databases.	There are no system objects to worry about.
  */
 void
-sql_exec_dumpalldbs(PGconn *conn, struct options *opts)
+sql_exec_dumpalldbs(PGconn *conn, struct options * opts)
 {
 	char		todo[1024];
 
 	/* get the oid and database name from the system pg_database table */
 	snprintf(todo, sizeof(todo),
 			 "SELECT d.oid AS \"Oid\", datname AS \"Database Name\", "
-			 "spcname AS \"Tablespace\" FROM pg_database d JOIN pg_tablespace t ON "
+	  "spcname AS \"Tablespace\" FROM pg_database d JOIN pg_tablespace t ON "
 			 "(dattablespace = t.oid) ORDER BY 2");
 
 	sql_exec(conn, todo, opts->quiet);
 }
 
-/* 
+/*
  * Dump all tables, indexes and sequences in the current database.
  */
 void
-sql_exec_dumpalltables(PGconn *conn, struct options *opts)
+sql_exec_dumpalltables(PGconn *conn, struct options * opts)
 {
 	char		todo[1024];
 	char	   *addfields = ",c.oid AS \"Oid\", nspname AS \"Schema\", spcname as \"Tablespace\" ";
 
 	snprintf(todo, sizeof(todo),
-			 "SELECT relfilenode as \"Filenode\", relname as \"Table Name\" %s "
+		  "SELECT relfilenode as \"Filenode\", relname as \"Table Name\" %s "
 			 "FROM pg_class c "
-			 "	LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace "
-			 "	LEFT JOIN pg_catalog.pg_database d ON d.datname = current_database(),"
+		   "	LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace "
+	"	LEFT JOIN pg_catalog.pg_database d ON d.datname = current_database(),"
 			 "	pg_catalog.pg_tablespace t "
 			 "WHERE relkind IN ('r'%s) AND "
 			 "	%s"
@@ -412,7 +417,7 @@ sql_exec_dumpalltables(PGconn *conn, struct options *opts)
 			 "ORDER BY relname",
 			 opts->extended ? addfields : "",
 			 opts->indexes ? ", 'i', 'S', 't'" : "",
- 			 opts->systables ? "" : "n.nspname NOT IN ('pg_catalog', 'pg_toast', 'information_schema') AND");
+			 opts->systables ? "" : "n.nspname NOT IN ('pg_catalog', 'pg_toast', 'information_schema') AND");
 
 	sql_exec(conn, todo, opts->quiet);
 }
@@ -422,11 +427,14 @@ sql_exec_dumpalltables(PGconn *conn, struct options *opts)
  * given objects in the current database.
  */
 void
-sql_exec_searchtables(PGconn *conn, struct options *opts)
+sql_exec_searchtables(PGconn *conn, struct options * opts)
 {
 	char	   *todo;
-	char	   *qualifiers, *ptr;
-	char	   *comma_oids, *comma_filenodes, *comma_tables;
+	char	   *qualifiers,
+			   *ptr;
+	char	   *comma_oids,
+			   *comma_filenodes,
+			   *comma_tables;
 	bool		written = false;
 	char	   *addfields = ",c.oid AS \"Oid\", nspname AS \"Schema\", spcname as \"Tablespace\" ";
 
@@ -465,9 +473,9 @@ sql_exec_searchtables(PGconn *conn, struct options *opts)
 	/* now build the query */
 	todo = (char *) myalloc(650 + strlen(qualifiers));
 	snprintf(todo, 650 + strlen(qualifiers),
-			 "SELECT relfilenode as \"Filenode\", relname as \"Table Name\" %s\n"
+		 "SELECT relfilenode as \"Filenode\", relname as \"Table Name\" %s\n"
 			 "FROM pg_class c \n"
-			 "	LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace \n"
+		 "	LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace \n"
 			 "	LEFT JOIN pg_catalog.pg_database d ON d.datname = current_database(),\n"
 			 "	pg_catalog.pg_tablespace t \n"
 			 "WHERE relkind IN ('r', 'i', 'S', 't') AND \n"
@@ -486,9 +494,9 @@ sql_exec_searchtables(PGconn *conn, struct options *opts)
 }
 
 void
-sql_exec_dumpalltbspc(PGconn *conn, struct options *opts)
+sql_exec_dumpalltbspc(PGconn *conn, struct options * opts)
 {
-	char	todo[1024];
+	char		todo[1024];
 
 	snprintf(todo, sizeof(todo),
 			 "SELECT oid AS \"Oid\", spcname as \"Tablespace Name\"\n"

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.81 2004/12/31 22:00:27 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.82 2005/10/15 02:49:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,16 +142,16 @@ equality_oper(Oid argtype, bool noError)
 
 	/*
 	 * Look for an "=" operator for the datatype.  We require it to be an
-	 * exact or binary-compatible match, since most callers are not
-	 * prepared to cope with adding any run-time type coercion steps.
+	 * exact or binary-compatible match, since most callers are not prepared
+	 * to cope with adding any run-time type coercion steps.
 	 */
 	typentry = lookup_type_cache(argtype, TYPECACHE_EQ_OPR);
 	oproid = typentry->eq_opr;
 
 	/*
-	 * If the datatype is an array, then we can use array_eq ... but only
-	 * if there is a suitable equality operator for the element type.
-	 * (This check is not in the raw typcache.c code ... should it be?)
+	 * If the datatype is an array, then we can use array_eq ... but only if
+	 * there is a suitable equality operator for the element type. (This check
+	 * is not in the raw typcache.c code ... should it be?)
 	 */
 	if (oproid == ARRAY_EQ_OP)
 	{
@@ -182,8 +182,8 @@ equality_oper(Oid argtype, bool noError)
 	if (!noError)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-			errmsg("could not identify an equality operator for type %s",
-				   format_type_be(argtype))));
+				 errmsg("could not identify an equality operator for type %s",
+						format_type_be(argtype))));
 	return NULL;
 }
 
@@ -200,22 +200,22 @@ ordering_oper(Oid argtype, bool noError)
 	Operator	optup;
 
 	/*
-	 * Look for a "<" operator for the datatype.  We require it to be an
-	 * exact or binary-compatible match, since most callers are not
-	 * prepared to cope with adding any run-time type coercion steps.
+	 * Look for a "<" operator for the datatype.  We require it to be an exact
+	 * or binary-compatible match, since most callers are not prepared to cope
+	 * with adding any run-time type coercion steps.
 	 *
 	 * Note: the search algorithm used by typcache.c ensures that if a "<"
 	 * operator is returned, it will be consistent with the "=" operator
-	 * returned by equality_oper.  This is critical for sorting and
-	 * grouping purposes.
+	 * returned by equality_oper.  This is critical for sorting and grouping
+	 * purposes.
 	 */
 	typentry = lookup_type_cache(argtype, TYPECACHE_LT_OPR);
 	oproid = typentry->lt_opr;
 
 	/*
-	 * If the datatype is an array, then we can use array_lt ... but only
-	 * if there is a suitable less-than operator for the element type.
-	 * (This check is not in the raw typcache.c code ... should it be?)
+	 * If the datatype is an array, then we can use array_lt ... but only if
+	 * there is a suitable less-than operator for the element type. (This
+	 * check is not in the raw typcache.c code ... should it be?)
 	 */
 	if (oproid == ARRAY_LT_OP)
 	{
@@ -246,9 +246,9 @@ ordering_oper(Oid argtype, bool noError)
 	if (!noError)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-			errmsg("could not identify an ordering operator for type %s",
-				   format_type_be(argtype)),
-				 errhint("Use an explicit ordering operator or modify the query.")));
+				 errmsg("could not identify an ordering operator for type %s",
+						format_type_be(argtype)),
+		 errhint("Use an explicit ordering operator or modify the query.")));
 	return NULL;
 }
 
@@ -265,22 +265,22 @@ reverse_ordering_oper(Oid argtype, bool noError)
 	Operator	optup;
 
 	/*
-	 * Look for a ">" operator for the datatype.  We require it to be an
-	 * exact or binary-compatible match, since most callers are not
-	 * prepared to cope with adding any run-time type coercion steps.
+	 * Look for a ">" operator for the datatype.  We require it to be an exact
+	 * or binary-compatible match, since most callers are not prepared to cope
+	 * with adding any run-time type coercion steps.
 	 *
 	 * Note: the search algorithm used by typcache.c ensures that if a ">"
 	 * operator is returned, it will be consistent with the "=" operator
-	 * returned by equality_oper.  This is critical for sorting and
-	 * grouping purposes.
+	 * returned by equality_oper.  This is critical for sorting and grouping
+	 * purposes.
 	 */
 	typentry = lookup_type_cache(argtype, TYPECACHE_GT_OPR);
 	oproid = typentry->gt_opr;
 
 	/*
-	 * If the datatype is an array, then we can use array_gt ... but only
-	 * if there is a suitable greater-than operator for the element type.
-	 * (This check is not in the raw typcache.c code ... should it be?)
+	 * If the datatype is an array, then we can use array_gt ... but only if
+	 * there is a suitable greater-than operator for the element type. (This
+	 * check is not in the raw typcache.c code ... should it be?)
 	 */
 	if (oproid == ARRAY_GT_OP)
 	{
@@ -311,9 +311,9 @@ reverse_ordering_oper(Oid argtype, bool noError)
 	if (!noError)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-			errmsg("could not identify an ordering operator for type %s",
-				   format_type_be(argtype)),
-				 errhint("Use an explicit ordering operator or modify the query.")));
+				 errmsg("could not identify an ordering operator for type %s",
+						format_type_be(argtype)),
+		 errhint("Use an explicit ordering operator or modify the query.")));
 	return NULL;
 }
 
@@ -528,8 +528,8 @@ oper(List *opname, Oid ltypeId, Oid rtypeId, bool noError)
 			 */
 
 			/*
-			 * Unspecified type for one of the arguments? then use the
-			 * other (XXX this is probably dead code?)
+			 * Unspecified type for one of the arguments? then use the other
+			 * (XXX this is probably dead code?)
 			 */
 			if (rtypeId == InvalidOid)
 				rtypeId = ltypeId;
@@ -654,9 +654,8 @@ right_oper(List *op, Oid arg, bool noError)
 		if (!OidIsValid(operOid))
 		{
 			/*
-			 * We must run oper_select_candidate even if only one
-			 * candidate, otherwise we may falsely return a
-			 * non-type-compatible operator.
+			 * We must run oper_select_candidate even if only one candidate,
+			 * otherwise we may falsely return a non-type-compatible operator.
 			 */
 			fdresult = oper_select_candidate(1, &arg, clist, &operOid);
 		}
@@ -703,9 +702,9 @@ left_oper(List *op, Oid arg, bool noError)
 		 * First, quickly check to see if there is an exactly matching
 		 * operator (there can be only one such entry in the list).
 		 *
-		 * The returned list has args in the form (0, oprright).  Move the
-		 * useful data into args[0] to keep oper_select_candidate simple.
-		 * XXX we are assuming here that we may scribble on the list!
+		 * The returned list has args in the form (0, oprright).  Move the useful
+		 * data into args[0] to keep oper_select_candidate simple. XXX we are
+		 * assuming here that we may scribble on the list!
 		 */
 		FuncCandidateList clisti;
 
@@ -722,9 +721,8 @@ left_oper(List *op, Oid arg, bool noError)
 		if (!OidIsValid(operOid))
 		{
 			/*
-			 * We must run oper_select_candidate even if only one
-			 * candidate, otherwise we may falsely return a
-			 * non-type-compatible operator.
+			 * We must run oper_select_candidate even if only one candidate,
+			 * otherwise we may falsely return a non-type-compatible operator.
 			 */
 			fdresult = oper_select_candidate(1, &arg, clist, &operOid);
 		}
@@ -784,8 +782,8 @@ op_error(List *op, char oprkind, Oid arg1, Oid arg2, FuncDetailCode fdresult)
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("operator does not exist: %s",
 						op_signature_string(op, oprkind, arg1, arg2)),
-				 errhint("No operator matches the given name and argument type(s). "
-						 "You may need to add explicit type casts.")));
+		  errhint("No operator matches the given name and argument type(s). "
+				  "You may need to add explicit type casts.")));
 }
 
 /*
@@ -862,9 +860,9 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	atypeId = exprType(rtree);
 
 	/*
-	 * The right-hand input of the operator will be the element type of
-	 * the array.  However, if we currently have just an untyped literal
-	 * on the right, stay with that and hope we can resolve the operator.
+	 * The right-hand input of the operator will be the element type of the
+	 * array.  However, if we currently have just an untyped literal on the
+	 * right, stay with that and hope we can resolve the operator.
 	 */
 	if (atypeId == UNKNOWNOID)
 		rtypeId = UNKNOWNOID;
@@ -874,7 +872,7 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 		if (!OidIsValid(rtypeId))
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-			 errmsg("op ANY/ALL (array) requires array on right side")));
+				 errmsg("op ANY/ALL (array) requires array on right side")));
 	}
 
 	/* Now resolve the operator */
@@ -888,9 +886,9 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	declared_arg_types[1] = opform->oprright;
 
 	/*
-	 * enforce consistency with ANYARRAY and ANYELEMENT argument and
-	 * return types, possibly adjusting return type or declared_arg_types
-	 * (which will be used as the cast destination by make_fn_arguments)
+	 * enforce consistency with ANYARRAY and ANYELEMENT argument and return
+	 * types, possibly adjusting return type or declared_arg_types (which will
+	 * be used as the cast destination by make_fn_arguments)
 	 */
 	rettype = enforce_generic_type_consistency(actual_arg_types,
 											   declared_arg_types,
@@ -903,11 +901,11 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	if (rettype != BOOLOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-		errmsg("op ANY/ALL (array) requires operator to yield boolean")));
+		   errmsg("op ANY/ALL (array) requires operator to yield boolean")));
 	if (get_func_retset(opform->oprcode))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("op ANY/ALL (array) requires operator not to return a set")));
+		errmsg("op ANY/ALL (array) requires operator not to return a set")));
 
 	/*
 	 * Now switch back to the array type on the right, arranging for any
@@ -985,9 +983,9 @@ make_op_expr(ParseState *pstate, Operator op,
 	}
 
 	/*
-	 * enforce consistency with ANYARRAY and ANYELEMENT argument and
-	 * return types, possibly adjusting return type or declared_arg_types
-	 * (which will be used as the cast destination by make_fn_arguments)
+	 * enforce consistency with ANYARRAY and ANYELEMENT argument and return
+	 * types, possibly adjusting return type or declared_arg_types (which will
+	 * be used as the cast destination by make_fn_arguments)
 	 */
 	rettype = enforce_generic_type_consistency(actual_arg_types,
 											   declared_arg_types,

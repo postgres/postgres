@@ -1,7 +1,7 @@
 /* ----------
  * pg_lzcompress.c -
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.19 2005/05/25 21:40:41 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.20 2005/10/15 02:49:29 momjian Exp $
  *
  *		This is an implementation of LZ compression for PostgreSQL.
  *		It uses a simple history table and generates 2-3 byte tags
@@ -219,11 +219,11 @@ static PGLZ_Strategy strategy_default_data = {
 	6144,						/* Data chunks greater equal 6K force
 								 * compression				 */
 	/* except compressed result is greater uncompressed data		*/
-	20,							/* Compression rates below 20% mean
-								 * fallback to uncompressed    */
+	20,							/* Compression rates below 20% mean fallback
+								 * to uncompressed	  */
 	/* storage except compression is forced by previous parameter	*/
-	128,						/* Stop history lookup if a match of 128
-								 * bytes is found		  */
+	128,						/* Stop history lookup if a match of 128 bytes
+								 * is found			*/
 	10							/* Lower good match size by 10% at every
 								 * lookup loop iteration. */
 };
@@ -233,10 +233,9 @@ PGLZ_Strategy *PGLZ_strategy_default = &strategy_default_data;
 static PGLZ_Strategy strategy_always_data = {
 	0,							/* Chunks of any size are compressed							*/
 	0,							/* */
-	0,							/* We want to save at least one single
-								 * byte						*/
-	128,						/* Stop history lookup if a match of 128
-								 * bytes is found		  */
+	0,							/* We want to save at least one single byte						*/
+	128,						/* Stop history lookup if a match of 128 bytes
+								 * is found			*/
 	6							/* Look harder for a good match.								*/
 };
 PGLZ_Strategy *PGLZ_strategy_always = &strategy_always_data;
@@ -246,8 +245,7 @@ static PGLZ_Strategy strategy_never_data = {
 	0,							/* */
 	0,							/* */
 	0,							/* */
-	0,							/* Zero indicates "store uncompressed
-								 * always"                  */
+	0,							/* Zero indicates "store uncompressed always"				   */
 	0							/* */
 };
 PGLZ_Strategy *PGLZ_strategy_never = &strategy_never_data;
@@ -395,8 +393,7 @@ pglz_find_match(PGLZ_HistEntry **hstart, char *input, char *end,
 	int32		off = 0;
 
 	/*
-	 * Traverse the linked history list until a good enough match is
-	 * found.
+	 * Traverse the linked history list until a good enough match is found.
 	 */
 	hent = hstart[pglz_hist_idx(input, end)];
 	while (hent)
@@ -414,12 +411,12 @@ pglz_find_match(PGLZ_HistEntry **hstart, char *input, char *end,
 			break;
 
 		/*
-		 * Determine length of match. A better match must be larger than
-		 * the best so far. And if we already have a match of 16 or more
-		 * bytes, it's worth the call overhead to use memcmp() to check if
-		 * this match is equal for the same size. After that we must
-		 * fallback to character by character comparison to know the exact
-		 * position where the diff occurred.
+		 * Determine length of match. A better match must be larger than the
+		 * best so far. And if we already have a match of 16 or more bytes,
+		 * it's worth the call overhead to use memcmp() to check if this match
+		 * is equal for the same size. After that we must fallback to
+		 * character by character comparison to know the exact position where
+		 * the diff occurred.
 		 */
 		thislen = 0;
 		if (len >= 16)
@@ -462,8 +459,8 @@ pglz_find_match(PGLZ_HistEntry **hstart, char *input, char *end,
 		hent = hent->next;
 
 		/*
-		 * Be happy with lesser good matches the more entries we visited.
-		 * But no point in doing calculation if we're at end of list.
+		 * Be happy with lesser good matches the more entries we visited. But
+		 * no point in doing calculation if we're at end of list.
 		 */
 		if (hent)
 		{
@@ -565,10 +562,10 @@ pglz_compress(char *source, int32 slen, PGLZ_Header *dest, PGLZ_Strategy *strate
 	memset((void *) hist_start, 0, sizeof(hist_start));
 
 	/*
-	 * Compute the maximum result size allowed by the strategy. If the
-	 * input size exceeds force_input_size, the max result size is the
-	 * input size itself. Otherwise, it is the input size minus the
-	 * minimum wanted compression rate.
+	 * Compute the maximum result size allowed by the strategy. If the input
+	 * size exceeds force_input_size, the max result size is the input size
+	 * itself. Otherwise, it is the input size minus the minimum wanted
+	 * compression rate.
 	 */
 	if (slen >= strategy->force_input_size)
 		result_max = slen;
@@ -588,8 +585,8 @@ pglz_compress(char *source, int32 slen, PGLZ_Header *dest, PGLZ_Strategy *strate
 	while (dp < dend)
 	{
 		/*
-		 * If we already exceeded the maximum result size, set no
-		 * compression flag and stop this. But don't check too often.
+		 * If we already exceeded the maximum result size, set no compression
+		 * flag and stop this. But don't check too often.
 		 */
 		if (bp - bstart >= result_max)
 		{
@@ -632,9 +629,9 @@ pglz_compress(char *source, int32 slen, PGLZ_Header *dest, PGLZ_Strategy *strate
 	}
 
 	/*
-	 * If we are still in compressing mode, write out the last control
-	 * byte and determine if the compression gained the rate requested by
-	 * the strategy.
+	 * If we are still in compressing mode, write out the last control byte
+	 * and determine if the compression gained the rate requested by the
+	 * strategy.
 	 */
 	if (do_compress)
 	{
@@ -647,8 +644,8 @@ pglz_compress(char *source, int32 slen, PGLZ_Header *dest, PGLZ_Strategy *strate
 
 	/*
 	 * Done - if we successfully compressed and matched the strategy's
-	 * constraints, return the compressed result. Otherwise copy the
-	 * original source over it and return the original length.
+	 * constraints, return the compressed result. Otherwise copy the original
+	 * source over it and return the original length.
 	 */
 	if (do_compress)
 	{
@@ -704,9 +701,9 @@ pglz_decompress(PGLZ_Header *source, char *dest)
 				/*
 				 * Otherwise it contains the match length minus 3 and the
 				 * upper 4 bits of the offset. The next following byte
-				 * contains the lower 8 bits of the offset. If the length
-				 * is coded as 18, another extension tag byte tells how
-				 * much longer the match really was (0-255).
+				 * contains the lower 8 bits of the offset. If the length is
+				 * coded as 18, another extension tag byte tells how much
+				 * longer the match really was (0-255).
 				 */
 				len = (dp[0] & 0x0f) + 3;
 				off = ((dp[0] & 0xf0) << 4) | dp[1];
@@ -715,10 +712,10 @@ pglz_decompress(PGLZ_Header *source, char *dest)
 					len += *dp++;
 
 				/*
-				 * Now we copy the bytes specified by the tag from OUTPUT
-				 * to OUTPUT. It is dangerous and platform dependent to
-				 * use memcpy() here, because the copied areas could
-				 * overlap extremely!
+				 * Now we copy the bytes specified by the tag from OUTPUT to
+				 * OUTPUT. It is dangerous and platform dependent to use
+				 * memcpy() here, because the copied areas could overlap
+				 * extremely!
 				 */
 				while (len--)
 				{
@@ -729,8 +726,8 @@ pglz_decompress(PGLZ_Header *source, char *dest)
 			else
 			{
 				/*
-				 * An unset control bit means LITERAL BYTE. So we just
-				 * copy one from INPUT to OUTPUT.
+				 * An unset control bit means LITERAL BYTE. So we just copy
+				 * one from INPUT to OUTPUT.
 				 */
 				*bp++ = *dp++;
 			}
@@ -764,8 +761,8 @@ pglz_get_next_decomp_char_from_lzdata(PGLZ_DecompState *dstate)
 	if (dstate->tocopy > 0)
 	{
 		/*
-		 * Copy one byte from output to output until we did it for the
-		 * length specified by the last tag. Return that byte.
+		 * Copy one byte from output to output until we did it for the length
+		 * specified by the last tag. Return that byte.
 		 */
 		dstate->tocopy--;
 		return (*(dstate->cp_out++) = *(dstate->cp_copy++));
@@ -774,21 +771,20 @@ pglz_get_next_decomp_char_from_lzdata(PGLZ_DecompState *dstate)
 	if (dstate->ctrl_count == 0)
 	{
 		/*
-		 * Get the next control byte if we need to, but check for EOF
-		 * before.
+		 * Get the next control byte if we need to, but check for EOF before.
 		 */
 		if (dstate->cp_in == dstate->cp_end)
 			return EOF;
 
 		/*
 		 * This decompression method saves time only, if we stop near the
-		 * beginning of the data (maybe because we're called by a
-		 * comparison function and a difference occurs early). Otherwise,
-		 * all the checks, needed here, cause too much overhead.
+		 * beginning of the data (maybe because we're called by a comparison
+		 * function and a difference occurs early). Otherwise, all the checks,
+		 * needed here, cause too much overhead.
 		 *
-		 * Thus we decompress the entire rest at once into the temporary
-		 * buffer and change the decomp state to return the prepared data
-		 * from the buffer by the more simple calls to
+		 * Thus we decompress the entire rest at once into the temporary buffer
+		 * and change the decomp state to return the prepared data from the
+		 * buffer by the more simple calls to
 		 * pglz_get_next_decomp_char_from_plain().
 		 */
 		if (dstate->cp_out - dstate->temp_buf >= 256)
@@ -856,8 +852,8 @@ pglz_get_next_decomp_char_from_lzdata(PGLZ_DecompState *dstate)
 	if (dstate->ctrl & 0x01)
 	{
 		/*
-		 * Bit is set, so tag is following. Setup copy information and do
-		 * the copy for the first byte as above.
+		 * Bit is set, so tag is following. Setup copy information and do the
+		 * copy for the first byte as above.
 		 */
 		int			off;
 

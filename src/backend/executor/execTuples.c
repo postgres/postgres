@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.87 2005/04/06 16:34:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.88 2005/10/15 02:49:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,7 +129,7 @@ ExecCreateTupleTable(int tableSize)
 	 * allocate the table itself
 	 */
 	newtable = (TupleTable) palloc(sizeof(TupleTableData) +
-								   (tableSize - 1) * sizeof(TupleTableSlot));
+								   (tableSize - 1) *sizeof(TupleTableSlot));
 	newtable->size = tableSize;
 	newtable->next = 0;
 
@@ -175,10 +175,9 @@ ExecDropTupleTable(TupleTable table,	/* tuple table */
 	Assert(table != NULL);
 
 	/*
-	 * first free all the valid pointers in the tuple array and drop
-	 * refcounts of any referenced buffers, if that's what the caller
-	 * wants.  (There is probably no good reason for the caller ever not
-	 * to want it!)
+	 * first free all the valid pointers in the tuple array and drop refcounts
+	 * of any referenced buffers, if that's what the caller wants.  (There is
+	 * probably no good reason for the caller ever not to want it!)
 	 */
 	if (shouldFree)
 	{
@@ -288,9 +287,9 @@ ExecAllocTableSlot(TupleTable table)
 	Assert(table != NULL);
 
 	/*
-	 * We expect that the table was made big enough to begin with.
-	 * We cannot reallocate it on the fly since previous plan nodes
-	 * have already got pointers to individual entries.
+	 * We expect that the table was made big enough to begin with. We cannot
+	 * reallocate it on the fly since previous plan nodes have already got
+	 * pointers to individual entries.
 	 */
 	if (table->next >= table->size)
 		elog(ERROR, "plan requires more slots than are available");
@@ -322,8 +321,8 @@ ExecSetSlotDescriptor(TupleTableSlot *slot,		/* slot to change */
 	ExecClearTuple(slot);
 
 	/*
-	 * Release any old descriptor.  Also release old Datum/isnull arrays
-	 * if present (we don't bother to check if they could be re-used).
+	 * Release any old descriptor.	Also release old Datum/isnull arrays if
+	 * present (we don't bother to check if they could be re-used).
 	 */
 	if (slot->tts_shouldFreeDesc)
 		FreeTupleDesc(slot->tts_tupleDescriptor);
@@ -340,9 +339,8 @@ ExecSetSlotDescriptor(TupleTableSlot *slot,		/* slot to change */
 	slot->tts_shouldFreeDesc = shouldFree;
 
 	/*
-	 * Allocate Datum/isnull arrays of the appropriate size.  These must
-	 * have the same lifetime as the slot, so allocate in the slot's own
-	 * context.
+	 * Allocate Datum/isnull arrays of the appropriate size.  These must have
+	 * the same lifetime as the slot, so allocate in the slot's own context.
 	 */
 	slot->tts_values = (Datum *)
 		MemoryContextAlloc(slot->tts_mcxt, tupdesc->natts * sizeof(Datum));
@@ -417,8 +415,8 @@ ExecStoreTuple(HeapTuple tuple,
 	slot->tts_tuple = tuple;
 
 	/*
-	 * If tuple is on a disk page, keep the page pinned as long as we hold
-	 * a pointer into it.  We assume the caller already has such a pin.
+	 * If tuple is on a disk page, keep the page pinned as long as we hold a
+	 * pointer into it.  We assume the caller already has such a pin.
 	 */
 	slot->tts_buffer = buffer;
 	if (BufferIsValid(buffer))
@@ -621,21 +619,20 @@ ExecMaterializeSlot(TupleTableSlot *slot)
 	Assert(!slot->tts_isempty);
 
 	/*
-	 * If we have a physical tuple, and it's locally palloc'd, we have
-	 * nothing to do.
+	 * If we have a physical tuple, and it's locally palloc'd, we have nothing
+	 * to do.
 	 */
 	if (slot->tts_tuple && slot->tts_shouldFree)
 		return slot->tts_tuple;
 
 	/*
 	 * Otherwise, copy or build a tuple, and then store it as the new slot
-	 * value.  (Note: tts_nvalid will be reset to zero here.  There are
-	 * cases in which this could be optimized but it's probably not worth
-	 * worrying about.)
+	 * value.  (Note: tts_nvalid will be reset to zero here.  There are cases
+	 * in which this could be optimized but it's probably not worth worrying
+	 * about.)
 	 *
-	 * We may be called in a context that is shorter-lived than the
-	 * tuple slot, but we have to ensure that the materialized tuple
-	 * will survive anyway.
+	 * We may be called in a context that is shorter-lived than the tuple slot,
+	 * but we have to ensure that the materialized tuple will survive anyway.
 	 */
 	oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
 	newTuple = ExecCopySlotTuple(slot);
@@ -663,9 +660,9 @@ ExecCopySlot(TupleTableSlot *dstslot, TupleTableSlot *srcslot)
 	MemoryContext oldContext;
 
 	/*
-	 * There might be ways to optimize this when the source is virtual,
-	 * but for now just always build a physical copy.  Make sure it is
-	 * in the right context.
+	 * There might be ways to optimize this when the source is virtual, but
+	 * for now just always build a physical copy.  Make sure it is in the
+	 * right context.
 	 */
 	oldContext = MemoryContextSwitchTo(dstslot->tts_mcxt);
 	newTuple = ExecCopySlotTuple(srcslot);
@@ -893,8 +890,7 @@ TupleDescGetAttInMetadata(TupleDesc tupdesc)
 	attinmeta->tupdesc = BlessTupleDesc(tupdesc);
 
 	/*
-	 * Gather info needed later to call the "in" function for each
-	 * attribute
+	 * Gather info needed later to call the "in" function for each attribute
 	 */
 	attinfuncinfo = (FmgrInfo *) palloc0(natts * sizeof(FmgrInfo));
 	attioparams = (Oid *) palloc0(natts * sizeof(Oid));
@@ -974,8 +970,8 @@ BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 	tuple = heap_formtuple(tupdesc, dvalues, nulls);
 
 	/*
-	 * Release locally palloc'd space.  XXX would probably be good to
-	 * pfree values of pass-by-reference datums, as well.
+	 * Release locally palloc'd space.  XXX would probably be good to pfree
+	 * values of pass-by-reference datums, as well.
 	 */
 	pfree(dvalues);
 	pfree(nulls);

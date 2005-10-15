@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createlang.c,v 1.20 2005/09/05 23:50:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createlang.c,v 1.21 2005/10/15 02:49:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,8 +131,8 @@ main(int argc, char *argv[])
 							   progname);
 
 		printfPQExpBuffer(&sql, "SELECT lanname as \"%s\", "
-						  "(CASE WHEN lanpltrusted THEN '%s' ELSE '%s' END) as \"%s\" "
-						  "FROM pg_catalog.pg_language WHERE lanispl;", 
+				"(CASE WHEN lanpltrusted THEN '%s' ELSE '%s' END) as \"%s\" "
+						  "FROM pg_catalog.pg_language WHERE lanispl;",
 						  _("Name"), _("yes"), _("no"), _("Trusted?"));
 		result = executeQuery(conn, sql.data, progname, echo);
 
@@ -163,15 +163,15 @@ main(int argc, char *argv[])
 	/*
 	 * Make sure the language isn't already installed
 	 */
-	printfPQExpBuffer(&sql, 
-					  "SELECT oid FROM pg_catalog.pg_language WHERE lanname = '%s';", 
+	printfPQExpBuffer(&sql,
+			  "SELECT oid FROM pg_catalog.pg_language WHERE lanname = '%s';",
 					  langname);
 	result = executeQuery(conn, sql.data, progname, echo);
 	if (PQntuples(result) > 0)
 	{
 		PQfinish(conn);
 		fprintf(stderr,
-				_("%s: language \"%s\" is already installed in database \"%s\"\n"),
+		  _("%s: language \"%s\" is already installed in database \"%s\"\n"),
 				progname, langname, dbname);
 		/* separate exit status for "already installed" */
 		exit(2);

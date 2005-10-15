@@ -60,10 +60,9 @@
 
 typedef struct remoteConn
 {
-	PGconn	   *conn;				/* Hold the remote connection */
-	int			autoXactCursors;	/* Indicates the number of open cursors,
-									 * non-zero means we opened the xact
-									 * ourselves */
+	PGconn	   *conn;			/* Hold the remote connection */
+	int			autoXactCursors;/* Indicates the number of open cursors,
+								 * non-zero means we opened the xact ourselves */
 }	remoteConn;
 
 /*
@@ -71,7 +70,7 @@ typedef struct remoteConn
  */
 static remoteConn *getConnectionByName(const char *name);
 static HTAB *createConnHash(void);
-static void createNewConnection(const char *name, remoteConn *rconn);
+static void createNewConnection(const char *name, remoteConn * rconn);
 static void deleteConnection(const char *name);
 static char **get_pkey_attnames(Oid relid, int16 *numatts);
 static char *get_sql_insert(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pkattvals, char **tgt_pkattvals);
@@ -224,9 +223,9 @@ dblink_connect(PG_FUNCTION_ARGS)
 			pfree(rconn);
 
 		ereport(ERROR,
-		   (errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
-			errmsg("could not establish connection"),
-			errdetail("%s", msg)));
+				(errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
+				 errmsg("could not establish connection"),
+				 errdetail("%s", msg)));
 	}
 
 	if (connname)
@@ -514,8 +513,7 @@ dblink_fetch(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 
 		/*
-		 * switch to memory context appropriate for multiple function
-		 * calls
+		 * switch to memory context appropriate for multiple function calls
 		 */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
@@ -664,8 +662,7 @@ dblink_record(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 
 		/*
-		 * switch to memory context appropriate for multiple function
-		 * calls
+		 * switch to memory context appropriate for multiple function calls
 		 */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
@@ -730,8 +727,8 @@ dblink_record(PG_FUNCTION_ARGS)
 							   TEXTOID, -1, 0);
 
 			/*
-			 * and save a copy of the command status string to return as
-			 * our result tuple
+			 * and save a copy of the command status string to return as our
+			 * result tuple
 			 */
 			sql_cmd_status = PQcmdStatus(res);
 			funcctx->max_calls = 1;
@@ -766,8 +763,8 @@ dblink_record(PG_FUNCTION_ARGS)
 					/* failed to determine actual type of RECORD */
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("function returning record called in context "
-									"that cannot accept type record")));
+						errmsg("function returning record called in context "
+							   "that cannot accept type record")));
 					break;
 				default:
 					/* result type isn't composite */
@@ -935,8 +932,8 @@ dblink_exec(PG_FUNCTION_ARGS)
 	{
 		PQclear(res);
 		ereport(ERROR,
-			  (errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
-			   errmsg("statement returning results not allowed")));
+				(errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
+				 errmsg("statement returning results not allowed")));
 	}
 
 	/* if needed, close the connection to the database and cleanup */
@@ -975,8 +972,7 @@ dblink_get_pkey(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 
 		/*
-		 * switch to memory context appropriate for multiple function
-		 * calls
+		 * switch to memory context appropriate for multiple function calls
 		 */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
@@ -989,8 +985,7 @@ dblink_get_pkey(PG_FUNCTION_ARGS)
 							GET_STR(PG_GETARG_TEXT_P(0)))));
 
 		/*
-		 * need a tuple descriptor representing one INT and one TEXT
-		 * column
+		 * need a tuple descriptor representing one INT and one TEXT column
 		 */
 		tupdesc = CreateTemplateTupleDesc(2, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "position",
@@ -999,8 +994,8 @@ dblink_get_pkey(PG_FUNCTION_ARGS)
 						   TEXTOID, -1, 0);
 
 		/*
-		 * Generate attribute metadata needed later to produce tuples from
-		 * raw C strings
+		 * Generate attribute metadata needed later to produce tuples from raw
+		 * C strings
 		 */
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;
@@ -1145,8 +1140,8 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 	tgt_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(4);
 
 	/*
-	 * Source array is made up of key values that will be used to locate
-	 * the tuple of interest from the local system.
+	 * Source array is made up of key values that will be used to locate the
+	 * tuple of interest from the local system.
 	 */
 	src_ndim = ARR_NDIM(src_pkattvals_arry);
 	src_dim = ARR_DIMS(src_pkattvals_arry);
@@ -1158,8 +1153,8 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 	if (src_nitems != pknumatts)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-			 errmsg("source key array length must match number of key " \
-					"attributes")));
+				 errmsg("source key array length must match number of key " \
+						"attributes")));
 
 	/*
 	 * get array of pointers to c-strings from the input source array
@@ -1178,8 +1173,8 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Target array is made up of key values that will be used to build
-	 * the SQL string for use on the remote system.
+	 * Target array is made up of key values that will be used to build the
+	 * SQL string for use on the remote system.
 	 */
 	tgt_ndim = ARR_NDIM(tgt_pkattvals_arry);
 	tgt_dim = ARR_DIMS(tgt_pkattvals_arry);
@@ -1191,8 +1186,8 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 	if (tgt_nitems != pknumatts)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-			 errmsg("target key array length must match number of key " \
-					"attributes")));
+				 errmsg("target key array length must match number of key " \
+						"attributes")));
 
 	/*
 	 * get array of pointers to c-strings from the input target array
@@ -1291,8 +1286,8 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 	tgt_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(3);
 
 	/*
-	 * Target array is made up of key values that will be used to build
-	 * the SQL string for use on the remote system.
+	 * Target array is made up of key values that will be used to build the
+	 * SQL string for use on the remote system.
 	 */
 	tgt_ndim = ARR_NDIM(tgt_pkattvals_arry);
 	tgt_dim = ARR_DIMS(tgt_pkattvals_arry);
@@ -1304,8 +1299,8 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 	if (tgt_nitems != pknumatts)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-			 errmsg("target key array length must match number of key " \
-					"attributes")));
+				 errmsg("target key array length must match number of key " \
+						"attributes")));
 
 	/*
 	 * get array of pointers to c-strings from the input target array
@@ -1414,8 +1409,8 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 	tgt_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(4);
 
 	/*
-	 * Source array is made up of key values that will be used to locate
-	 * the tuple of interest from the local system.
+	 * Source array is made up of key values that will be used to locate the
+	 * tuple of interest from the local system.
 	 */
 	src_ndim = ARR_NDIM(src_pkattvals_arry);
 	src_dim = ARR_DIMS(src_pkattvals_arry);
@@ -1427,8 +1422,8 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 	if (src_nitems != pknumatts)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-			 errmsg("source key array length must match number of key " \
-					"attributes")));
+				 errmsg("source key array length must match number of key " \
+						"attributes")));
 
 	/*
 	 * get array of pointers to c-strings from the input source array
@@ -1447,8 +1442,8 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Target array is made up of key values that will be used to build
-	 * the SQL string for use on the remote system.
+	 * Target array is made up of key values that will be used to build the
+	 * SQL string for use on the remote system.
 	 */
 	tgt_ndim = ARR_NDIM(tgt_pkattvals_arry);
 	tgt_dim = ARR_DIMS(tgt_pkattvals_arry);
@@ -1460,8 +1455,8 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 	if (tgt_nitems != pknumatts)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-			 errmsg("target key array length must match number of key " \
-					"attributes")));
+				 errmsg("target key array length must match number of key " \
+						"attributes")));
 
 	/*
 	 * get array of pointers to c-strings from the input target array
@@ -1610,7 +1605,7 @@ get_sql_insert(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pka
 			appendStringInfo(str, ",");
 
 		appendStringInfo(str, "%s",
-				  quote_ident_cstr(NameStr(tupdesc->attrs[i]->attname)));
+					  quote_ident_cstr(NameStr(tupdesc->attrs[i]->attname)));
 		needComma = true;
 	}
 
@@ -1688,7 +1683,7 @@ get_sql_delete(Oid relid, int2vector *pkattnums, int16 pknumatts, char **tgt_pka
 			appendStringInfo(str, " AND ");
 
 		appendStringInfo(str, "%s",
-		quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum - 1]->attname)));
+		   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum - 1]->attname)));
 
 		if (tgt_pkattvals != NULL)
 			val = pstrdup(tgt_pkattvals[i]);
@@ -1756,7 +1751,7 @@ get_sql_update(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pka
 			appendStringInfo(str, ", ");
 
 		appendStringInfo(str, "%s = ",
-				  quote_ident_cstr(NameStr(tupdesc->attrs[i]->attname)));
+					  quote_ident_cstr(NameStr(tupdesc->attrs[i]->attname)));
 
 		if (tgt_pkattvals != NULL)
 			key = get_attnum_pk_pos(pkattnums, pknumatts, i + 1);
@@ -1788,7 +1783,7 @@ get_sql_update(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pka
 			appendStringInfo(str, " AND ");
 
 		appendStringInfo(str, "%s",
-		quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum - 1]->attname)));
+		   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum - 1]->attname)));
 
 		if (tgt_pkattvals != NULL)
 			val = pstrdup(tgt_pkattvals[i]);
@@ -1894,8 +1889,8 @@ get_tuple_of_interest(Oid relid, int2vector *pkattnums, int16 pknumatts, char **
 		elog(ERROR, "SPI connect failure - returned %d", ret);
 
 	/*
-	 * Build sql statement to look up tuple of interest Use src_pkattvals
-	 * as the criteria.
+	 * Build sql statement to look up tuple of interest Use src_pkattvals as
+	 * the criteria.
 	 */
 	appendStringInfo(str, "SELECT * FROM %s WHERE ", relname);
 
@@ -1907,7 +1902,7 @@ get_tuple_of_interest(Oid relid, int2vector *pkattnums, int16 pknumatts, char **
 			appendStringInfo(str, " AND ");
 
 		appendStringInfo(str, "%s",
-		quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum - 1]->attname)));
+		   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum - 1]->attname)));
 
 		val = pstrdup(src_pkattvals[i]);
 		if (val != NULL)
@@ -2045,7 +2040,7 @@ createConnHash(void)
 }
 
 static void
-createNewConnection(const char *name, remoteConn *rconn)
+createNewConnection(const char *name, remoteConn * rconn)
 {
 	remoteConnHashEnt *hentry;
 	bool		found;

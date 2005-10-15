@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_authid.h,v 1.3 2005/07/31 17:19:21 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_authid.h,v 1.4 2005/10/15 02:49:42 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -24,7 +24,7 @@
 /*
  * The CATALOG definition has to refer to the type of rolvaliduntil as
  * "timestamptz" (lower case) so that bootstrap mode recognizes it.  But
- * the C header files define this type as TimestampTz.  Since the field is
+ * the C header files define this type as TimestampTz.	Since the field is
  * potentially-null and therefore can't be accessed directly from C code,
  * there is no particular need for the C struct definition to show the
  * field type as TimestampTz --- instead we just make it Datum.
@@ -38,7 +38,7 @@
  *		typedef struct FormData_pg_authid
  * ----------------
  */
-#define AuthIdRelationId    1260
+#define AuthIdRelationId	1260
 
 CATALOG(pg_authid,1260) BKI_SHARED_RELATION
 {
@@ -53,7 +53,7 @@ CATALOG(pg_authid,1260) BKI_SHARED_RELATION
 
 	/* remaining fields may be null; use heap_getattr to read them! */
 	text		rolpassword;	/* password, if any */
-	timestamptz	rolvaliduntil;	/* password expiration time, if any */
+	timestamptz rolvaliduntil;	/* password expiration time, if any */
 	text		rolconfig[1];	/* GUC settings to apply at login */
 } FormData_pg_authid;
 

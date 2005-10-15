@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.114 2005/09/05 18:59:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.115 2005/10/15 02:49:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@ typedef struct
 	int			num_vars;		/* number of plain Var tlist entries */
 	bool		has_non_vars;	/* are there non-plain-Var entries? */
 	/* array of num_vars entries: */
-	tlist_vinfo	vars[1];		/* VARIABLE LENGTH ARRAY */
+	tlist_vinfo vars[1];		/* VARIABLE LENGTH ARRAY */
 } indexed_tlist;				/* VARIABLE LENGTH STRUCT */
 
 typedef struct
@@ -64,28 +64,28 @@ static void fix_expr_references(Plan *plan, Node *node);
 static bool fix_expr_references_walker(Node *node, void *context);
 static void set_join_references(Join *join, List *rtable);
 static void set_inner_join_references(Plan *inner_plan,
-									  List *rtable,
-									  indexed_tlist *outer_itlist);
+						  List *rtable,
+						  indexed_tlist *outer_itlist);
 static void set_uppernode_references(Plan *plan, Index subvarno);
 static indexed_tlist *build_tlist_index(List *tlist);
 static Var *search_indexed_tlist_for_var(Var *var,
-										 indexed_tlist *itlist,
-										 Index newvarno);
+							 indexed_tlist *itlist,
+							 Index newvarno);
 static Var *search_indexed_tlist_for_non_var(Node *node,
-											 indexed_tlist *itlist,
-											 Index newvarno);
+								 indexed_tlist *itlist,
+								 Index newvarno);
 static List *join_references(List *clauses,
-							 List *rtable,
-							 indexed_tlist *outer_itlist,
-							 indexed_tlist *inner_itlist,
-							 Index acceptable_rel);
+				List *rtable,
+				indexed_tlist *outer_itlist,
+				indexed_tlist *inner_itlist,
+				Index acceptable_rel);
 static Node *join_references_mutator(Node *node,
 						join_references_context *context);
 static Node *replace_vars_with_subplan_refs(Node *node,
-											indexed_tlist *subplan_itlist,
-											Index subvarno);
+							   indexed_tlist *subplan_itlist,
+							   Index subvarno);
 static Node *replace_vars_with_subplan_refs_mutator(Node *node,
-						replace_vars_with_subplan_refs_context *context);
+							replace_vars_with_subplan_refs_context *context);
 static bool fix_opfuncids_walker(Node *node, void *context);
 static void set_sa_opfuncid(ScalarArrayOpExpr *opexpr);
 
@@ -99,7 +99,7 @@ static void set_sa_opfuncid(ScalarArrayOpExpr *opexpr);
 /*
  * set_plan_references
  *
- * This is the final processing pass of the planner/optimizer.  The plan
+ * This is the final processing pass of the planner/optimizer.	The plan
  * tree is complete; we just have to adjust some representational details
  * for the convenience of the executor.  We update Vars in upper plan nodes
  * to refer to the outputs of their subplans, and we compute regproc OIDs
@@ -150,22 +150,22 @@ set_plan_references(Plan *plan, List *rtable)
 			fix_expr_references(plan,
 								(Node *) ((IndexScan *) plan)->indexqual);
 			fix_expr_references(plan,
-							(Node *) ((IndexScan *) plan)->indexqualorig);
+								(Node *) ((IndexScan *) plan)->indexqualorig);
 			break;
 		case T_BitmapIndexScan:
 			/* no need to fix targetlist and qual */
 			Assert(plan->targetlist == NIL);
 			Assert(plan->qual == NIL);
 			fix_expr_references(plan,
-							(Node *) ((BitmapIndexScan *) plan)->indexqual);
+							 (Node *) ((BitmapIndexScan *) plan)->indexqual);
 			fix_expr_references(plan,
-						(Node *) ((BitmapIndexScan *) plan)->indexqualorig);
+						 (Node *) ((BitmapIndexScan *) plan)->indexqualorig);
 			break;
 		case T_BitmapHeapScan:
 			fix_expr_references(plan, (Node *) plan->targetlist);
 			fix_expr_references(plan, (Node *) plan->qual);
 			fix_expr_references(plan,
-						(Node *) ((BitmapHeapScan *) plan)->bitmapqualorig);
+						 (Node *) ((BitmapHeapScan *) plan)->bitmapqualorig);
 			break;
 		case T_TidScan:
 			fix_expr_references(plan, (Node *) plan->targetlist);
@@ -200,7 +200,7 @@ set_plan_references(Plan *plan, List *rtable)
 			fix_expr_references(plan, (Node *) plan->qual);
 			fix_expr_references(plan, (Node *) ((Join *) plan)->joinqual);
 			fix_expr_references(plan,
-							(Node *) ((MergeJoin *) plan)->mergeclauses);
+								(Node *) ((MergeJoin *) plan)->mergeclauses);
 			break;
 		case T_HashJoin:
 			set_join_references((Join *) plan, rtable);
@@ -208,7 +208,7 @@ set_plan_references(Plan *plan, List *rtable)
 			fix_expr_references(plan, (Node *) plan->qual);
 			fix_expr_references(plan, (Node *) ((Join *) plan)->joinqual);
 			fix_expr_references(plan,
-							  (Node *) ((HashJoin *) plan)->hashclauses);
+								(Node *) ((HashJoin *) plan)->hashclauses);
 			break;
 		case T_Hash:
 		case T_Material:
@@ -218,24 +218,24 @@ set_plan_references(Plan *plan, List *rtable)
 
 			/*
 			 * These plan types don't actually bother to evaluate their
-			 * targetlists (because they just return their unmodified
-			 * input tuples).  The optimizer is lazy about creating really
-			 * valid targetlists for them --- it tends to just put in a
-			 * pointer to the child plan node's tlist.  Hence, we leave
-			 * the tlist alone.  In particular, we do not want to process
-			 * subplans in the tlist, since we will likely end up reprocessing
-			 * subplans that also appear in lower levels of the plan tree!
+			 * targetlists (because they just return their unmodified input
+			 * tuples).  The optimizer is lazy about creating really valid
+			 * targetlists for them --- it tends to just put in a pointer to
+			 * the child plan node's tlist.  Hence, we leave the tlist alone.
+			 * In particular, we do not want to process subplans in the tlist,
+			 * since we will likely end up reprocessing subplans that also
+			 * appear in lower levels of the plan tree!
 			 *
-			 * Since these plan types don't check quals either, we should
-			 * not find any qual expression attached to them.
+			 * Since these plan types don't check quals either, we should not
+			 * find any qual expression attached to them.
 			 */
 			Assert(plan->qual == NIL);
 			break;
 		case T_Limit:
 
 			/*
-			 * Like the plan types above, Limit doesn't evaluate its tlist
-			 * or quals.  It does have live expressions for limit/offset,
+			 * Like the plan types above, Limit doesn't evaluate its tlist or
+			 * quals.  It does have live expressions for limit/offset,
 			 * however.
 			 */
 			Assert(plan->qual == NIL);
@@ -251,8 +251,8 @@ set_plan_references(Plan *plan, List *rtable)
 		case T_Result:
 
 			/*
-			 * Result may or may not have a subplan; no need to fix up
-			 * subplan references if it hasn't got one...
+			 * Result may or may not have a subplan; no need to fix up subplan
+			 * references if it hasn't got one...
 			 *
 			 * XXX why does Result use a different subvarno from Agg/Group?
 			 */
@@ -300,9 +300,9 @@ set_plan_references(Plan *plan, List *rtable)
 	 * NOTE: it is essential that we recurse into child plans AFTER we set
 	 * subplan references in this plan's tlist and quals.  If we did the
 	 * reference-adjustments bottom-up, then we would fail to match this
-	 * plan's var nodes against the already-modified nodes of the
-	 * children.  Fortunately, that consideration doesn't apply to SubPlan
-	 * nodes; else we'd need two passes over the expression trees.
+	 * plan's var nodes against the already-modified nodes of the children.
+	 * Fortunately, that consideration doesn't apply to SubPlan nodes; else
+	 * we'd need two passes over the expression trees.
 	 */
 	plan->lefttree = set_plan_references(plan->lefttree, rtable);
 	plan->righttree = set_plan_references(plan->righttree, rtable);
@@ -339,8 +339,8 @@ set_subqueryscan_references(SubqueryScan *plan, List *rtable)
 										rte->subquery->rtable);
 
 	/*
-	 * We have to process any initplans too; set_plan_references can't do
-	 * it for us because of the possibility of double-processing.
+	 * We have to process any initplans too; set_plan_references can't do it
+	 * for us because of the possibility of double-processing.
 	 */
 	foreach(l, plan->scan.plan.initPlan)
 	{
@@ -353,12 +353,12 @@ set_subqueryscan_references(SubqueryScan *plan, List *rtable)
 	if (trivial_subqueryscan(plan))
 	{
 		/*
-		 * We can omit the SubqueryScan node and just pull up the subplan.
-		 * We have to merge its rtable into the outer rtable, which means
+		 * We can omit the SubqueryScan node and just pull up the subplan. We
+		 * have to merge its rtable into the outer rtable, which means
 		 * adjusting varnos throughout the subtree.
 		 */
-		int		rtoffset = list_length(rtable);
-		List   *sub_rtable;
+		int			rtoffset = list_length(rtable);
+		List	   *sub_rtable;
 
 		sub_rtable = copyObject(rte->subquery->rtable);
 		range_table_walker(sub_rtable,
@@ -382,11 +382,11 @@ set_subqueryscan_references(SubqueryScan *plan, List *rtable)
 	else
 	{
 		/*
-		 * Keep the SubqueryScan node.  We have to do the processing that
-		 * set_plan_references would otherwise have done on it.  Notice
-		 * we do not do set_uppernode_references() here, because a
-		 * SubqueryScan will always have been created with correct
-		 * references to its subplan's outputs to begin with.
+		 * Keep the SubqueryScan node.	We have to do the processing that
+		 * set_plan_references would otherwise have done on it.  Notice we do
+		 * not do set_uppernode_references() here, because a SubqueryScan will
+		 * always have been created with correct references to its subplan's
+		 * outputs to begin with.
 		 */
 		result = (Plan *) plan;
 
@@ -532,9 +532,9 @@ adjust_plan_varnos(Plan *plan, int rtoffset)
 		case T_SetOp:
 
 			/*
-			 * Even though the targetlist won't be used by the executor,
-			 * we fix it up for possible use by EXPLAIN (not to mention
-			 * ease of debugging --- wrong varnos are very confusing).
+			 * Even though the targetlist won't be used by the executor, we
+			 * fix it up for possible use by EXPLAIN (not to mention ease of
+			 * debugging --- wrong varnos are very confusing).
 			 */
 			adjust_expr_varnos((Node *) plan->targetlist, rtoffset);
 			Assert(plan->qual == NIL);
@@ -542,8 +542,8 @@ adjust_plan_varnos(Plan *plan, int rtoffset)
 		case T_Limit:
 
 			/*
-			 * Like the plan types above, Limit doesn't evaluate its tlist
-			 * or quals.  It does have live expressions for limit/offset,
+			 * Like the plan types above, Limit doesn't evaluate its tlist or
+			 * quals.  It does have live expressions for limit/offset,
 			 * however.
 			 */
 			adjust_expr_varnos((Node *) plan->targetlist, rtoffset);
@@ -590,8 +590,8 @@ adjust_plan_varnos(Plan *plan, int rtoffset)
 	/*
 	 * Now recurse into child plans.
 	 *
-	 * We don't need to (and in fact mustn't) recurse into subqueries,
-	 * so no need to examine initPlan list.
+	 * We don't need to (and in fact mustn't) recurse into subqueries, so no need
+	 * to examine initPlan list.
 	 */
 	adjust_plan_varnos(plan->lefttree, rtoffset);
 	adjust_plan_varnos(plan->righttree, rtoffset);
@@ -603,7 +603,7 @@ adjust_plan_varnos(Plan *plan, int rtoffset)
  *
  * This is different from the rewriter's OffsetVarNodes in that it has to
  * work on an already-planned expression tree; in particular, we should not
- * disturb INNER and OUTER references.  On the other hand, we don't have to
+ * disturb INNER and OUTER references.	On the other hand, we don't have to
  * recurse into subqueries nor deal with outer-level Vars, so it's pretty
  * simple.
  */
@@ -763,10 +763,10 @@ set_inner_join_references(Plan *inner_plan,
 	if (IsA(inner_plan, IndexScan))
 	{
 		/*
-		 * An index is being used to reduce the number of tuples
-		 * scanned in the inner relation.  If there are join clauses
-		 * being used with the index, we must update their outer-rel
-		 * var nodes to refer to the outer side of the join.
+		 * An index is being used to reduce the number of tuples scanned in
+		 * the inner relation.	If there are join clauses being used with the
+		 * index, we must update their outer-rel var nodes to refer to the
+		 * outer side of the join.
 		 */
 		IndexScan  *innerscan = (IndexScan *) inner_plan;
 		List	   *indexqualorig = innerscan->indexqualorig;
@@ -789,9 +789,9 @@ set_inner_join_references(Plan *inner_plan,
 												   innerrel);
 
 			/*
-			 * We must fix the inner qpqual too, if it has join
-			 * clauses (this could happen if special operators are
-			 * involved: some indexquals may get rechecked as qpquals).
+			 * We must fix the inner qpqual too, if it has join clauses (this
+			 * could happen if special operators are involved: some indexquals
+			 * may get rechecked as qpquals).
 			 */
 			if (NumRelids((Node *) inner_plan->qual) > 1)
 				inner_plan->qual = join_references(inner_plan->qual,
@@ -832,11 +832,11 @@ set_inner_join_references(Plan *inner_plan,
 	else if (IsA(inner_plan, BitmapHeapScan))
 	{
 		/*
-		 * The inner side is a bitmap scan plan.  Fix the top node,
-		 * and recurse to get the lower nodes.
+		 * The inner side is a bitmap scan plan.  Fix the top node, and
+		 * recurse to get the lower nodes.
 		 *
-		 * Note: create_bitmap_scan_plan removes clauses from bitmapqualorig
-		 * if they are duplicated in qpqual, so must test these independently.
+		 * Note: create_bitmap_scan_plan removes clauses from bitmapqualorig if
+		 * they are duplicated in qpqual, so must test these independently.
 		 */
 		BitmapHeapScan *innerscan = (BitmapHeapScan *) inner_plan;
 		Index		innerrel = innerscan->scan.scanrelid;
@@ -851,9 +851,9 @@ set_inner_join_references(Plan *inner_plan,
 														innerrel);
 
 		/*
-		 * We must fix the inner qpqual too, if it has join
-		 * clauses (this could happen if special operators are
-		 * involved: some indexquals may get rechecked as qpquals).
+		 * We must fix the inner qpqual too, if it has join clauses (this
+		 * could happen if special operators are involved: some indexquals may
+		 * get rechecked as qpquals).
 		 */
 		if (NumRelids((Node *) inner_plan->qual) > 1)
 			inner_plan->qual = join_references(inner_plan->qual,
@@ -870,8 +870,8 @@ set_inner_join_references(Plan *inner_plan,
 	else if (IsA(inner_plan, BitmapAnd))
 	{
 		/* All we need do here is recurse */
-		BitmapAnd *innerscan = (BitmapAnd *) inner_plan;
-		ListCell *l;
+		BitmapAnd  *innerscan = (BitmapAnd *) inner_plan;
+		ListCell   *l;
 
 		foreach(l, innerscan->bitmapplans)
 		{
@@ -883,8 +883,8 @@ set_inner_join_references(Plan *inner_plan,
 	else if (IsA(inner_plan, BitmapOr))
 	{
 		/* All we need do here is recurse */
-		BitmapOr *innerscan = (BitmapOr *) inner_plan;
-		ListCell *l;
+		BitmapOr   *innerscan = (BitmapOr *) inner_plan;
+		ListCell   *l;
 
 		foreach(l, innerscan->bitmapplans)
 		{
@@ -963,7 +963,7 @@ set_uppernode_references(Plan *plan, Index subvarno)
  *
  * In most cases, subplan tlists will be "flat" tlists with only Vars,
  * so we try to optimize that case by extracting information about Vars
- * in advance.  Matching a parent tlist to a child is still an O(N^2)
+ * in advance.	Matching a parent tlist to a child is still an O(N^2)
  * operation, but at least with a much smaller constant factor than plain
  * tlist_member() searches.
  *
@@ -994,7 +994,7 @@ build_tlist_index(List *tlist)
 
 		if (tle->expr && IsA(tle->expr, Var))
 		{
-			Var	   *var = (Var *) tle->expr;
+			Var		   *var = (Var *) tle->expr;
 
 			vinfo->varno = var->varno;
 			vinfo->varattno = var->varattno;
@@ -1068,7 +1068,7 @@ search_indexed_tlist_for_non_var(Node *node,
 						 exprType((Node *) tle->expr),
 						 exprTypmod((Node *) tle->expr),
 						 0);
-		newvar->varnoold = 0;		/* wasn't ever a plain Var */
+		newvar->varnoold = 0;	/* wasn't ever a plain Var */
 		newvar->varoattno = 0;
 		return newvar;
 	}
@@ -1213,7 +1213,7 @@ replace_vars_with_subplan_refs(Node *node,
 
 static Node *
 replace_vars_with_subplan_refs_mutator(Node *node,
-						 replace_vars_with_subplan_refs_context *context)
+							 replace_vars_with_subplan_refs_context *context)
 {
 	Var		   *newvar;
 

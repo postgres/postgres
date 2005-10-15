@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.29 2005/08/22 17:38:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.30 2005/10/15 02:49:14 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -72,8 +72,8 @@ DefineAggregate(List *names, List *parameters)
 		DefElem    *defel = (DefElem *) lfirst(pl);
 
 		/*
-		 * sfunc1, stype1, and initcond1 are accepted as obsolete
-		 * spellings for sfunc, stype, initcond.
+		 * sfunc1, stype1, and initcond1 are accepted as obsolete spellings
+		 * for sfunc, stype, initcond.
 		 */
 		if (pg_strcasecmp(defel->defname, "sfunc") == 0)
 			transfuncName = defGetQualifiedName(defel);
@@ -119,11 +119,11 @@ DefineAggregate(List *names, List *parameters)
 	/*
 	 * look up the aggregate's base type (input datatype) and transtype.
 	 *
-	 * We have historically allowed the command to look like basetype = 'ANY'
-	 * so we must do a case-insensitive comparison for the name ANY.  Ugh.
+	 * We have historically allowed the command to look like basetype = 'ANY' so
+	 * we must do a case-insensitive comparison for the name ANY.  Ugh.
 	 *
-	 * basetype can be a pseudo-type, but transtype can't, since we need to
-	 * be able to store values of the transtype.  However, we can allow
+	 * basetype can be a pseudo-type, but transtype can't, since we need to be
+	 * able to store values of the transtype.  However, we can allow
 	 * polymorphic transtype in some cases (AggregateCreate will check).
 	 */
 	if (pg_strcasecmp(TypeNameToString(baseType), "ANY") == 0)
@@ -169,11 +169,11 @@ RemoveAggregate(RemoveAggrStmt *stmt)
 	ObjectAddress object;
 
 	/*
-	 * if a basetype is passed in, then attempt to find an aggregate for
-	 * that specific type.
+	 * if a basetype is passed in, then attempt to find an aggregate for that
+	 * specific type.
 	 *
-	 * else attempt to find an aggregate with a basetype of ANYOID. This
-	 * means that the aggregate is to apply to all basetypes (eg, COUNT).
+	 * else attempt to find an aggregate with a basetype of ANYOID. This means
+	 * that the aggregate is to apply to all basetypes (eg, COUNT).
 	 */
 	if (aggType)
 		basetypeID = typenameTypeId(aggType);
@@ -193,8 +193,8 @@ RemoveAggregate(RemoveAggrStmt *stmt)
 
 	/* Permission check: must own agg or its namespace */
 	if (!pg_proc_ownercheck(procOid, GetUserId()) &&
-		!pg_namespace_ownercheck(((Form_pg_proc) GETSTRUCT(tup))->pronamespace,
-								 GetUserId()))
+	  !pg_namespace_ownercheck(((Form_pg_proc) GETSTRUCT(tup))->pronamespace,
+							   GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
 					   NameListToString(aggName));
 
@@ -225,10 +225,10 @@ RenameAggregate(List *name, TypeName *basetype, const char *newname)
 	AclResult	aclresult;
 
 	/*
-	 * if a basetype is passed in, then attempt to find an aggregate for
-	 * that specific type; else attempt to find an aggregate with a
-	 * basetype of ANYOID. This means that the aggregate applies to all
-	 * basetypes (eg, COUNT).
+	 * if a basetype is passed in, then attempt to find an aggregate for that
+	 * specific type; else attempt to find an aggregate with a basetype of
+	 * ANYOID. This means that the aggregate applies to all basetypes (eg,
+	 * COUNT).
 	 */
 	if (basetype)
 		basetypeOid = typenameTypeId(basetype);
@@ -258,16 +258,16 @@ RenameAggregate(List *name, TypeName *basetype, const char *newname)
 		if (basetypeOid == ANYOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_FUNCTION),
-				 errmsg("function %s(*) already exists in schema \"%s\"",
-						newname,
-						get_namespace_name(namespaceOid))));
+					 errmsg("function %s(*) already exists in schema \"%s\"",
+							newname,
+							get_namespace_name(namespaceOid))));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_FUNCTION),
 					 errmsg("function %s already exists in schema \"%s\"",
 							funcname_signature_string(newname,
 													  procForm->pronargs,
-												  procForm->proargtypes.values),
+											   procForm->proargtypes.values),
 							get_namespace_name(namespaceOid))));
 	}
 
@@ -305,10 +305,10 @@ AlterAggregateOwner(List *name, TypeName *basetype, Oid newOwnerId)
 	AclResult	aclresult;
 
 	/*
-	 * if a basetype is passed in, then attempt to find an aggregate for
-	 * that specific type; else attempt to find an aggregate with a
-	 * basetype of ANYOID. This means that the aggregate applies to all
-	 * basetypes (eg, COUNT).
+	 * if a basetype is passed in, then attempt to find an aggregate for that
+	 * specific type; else attempt to find an aggregate with a basetype of
+	 * ANYOID. This means that the aggregate applies to all basetypes (eg,
+	 * COUNT).
 	 */
 	if (basetype)
 		basetypeOid = typenameTypeId(basetype);
@@ -353,8 +353,7 @@ AlterAggregateOwner(List *name, TypeName *basetype, Oid newOwnerId)
 		}
 
 		/*
-		 * Modify the owner --- okay to scribble on tup because it's a
-		 * copy
+		 * Modify the owner --- okay to scribble on tup because it's a copy
 		 */
 		procForm->proowner = newOwnerId;
 

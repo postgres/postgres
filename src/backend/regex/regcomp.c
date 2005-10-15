@@ -28,7 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/backend/regex/regcomp.c,v 1.43 2005/05/25 21:40:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/regex/regcomp.c,v 1.44 2005/10/15 02:49:24 momjian Exp $
  *
  */
 
@@ -208,8 +208,7 @@ struct vars
 	regex_t    *re;
 	chr		   *now;			/* scan pointer into string */
 	chr		   *stop;			/* end of string */
-	chr		   *savenow;		/* saved now and stop for "subroutine
-								 * call" */
+	chr		   *savenow;		/* saved now and stop for "subroutine call" */
 	chr		   *savestop;
 	int			err;			/* error code (0 if none) */
 	int			cflags;			/* copy of compile flags */
@@ -251,8 +250,7 @@ struct vars
 #define NOERR() {if (ISERR()) return;}	/* if error seen, return */
 #define NOERRN()	{if (ISERR()) return NULL;} /* NOERR with retval */
 #define NOERRZ()	{if (ISERR()) return 0;}	/* NOERR with retval */
-#define INSIST(c, e)	((c) ? 0 : ERR(e))		/* if condition false,
-												 * error */
+#define INSIST(c, e)	((c) ? 0 : ERR(e))		/* if condition false, error */
 #define NOTE(b) (v->re->re_info |= (b)) /* note visible condition */
 #define EMPTYARC(x, y)	newarc(v->nfa, EMPTY, 0, x, y)
 
@@ -306,7 +304,6 @@ pg_regcomp(regex_t *re,
 
 #ifdef REG_DEBUG
 	FILE	   *debug = (flags & REG_PROGRESS) ? stdout : (FILE *) NULL;
-
 #else
 	FILE	   *debug = (FILE *) NULL;
 #endif
@@ -572,11 +569,10 @@ makesearch(struct vars * v,
 	/*
 	 * Now here's the subtle part.  Because many REs have no lookback
 	 * constraints, often knowing when you were in the pre state tells you
-	 * little; it's the next state(s) that are informative.  But some of
-	 * them may have other inarcs, i.e. it may be possible to make actual
-	 * progress and then return to one of them.  We must de-optimize such
-	 * cases, splitting each such state into progress and no-progress
-	 * states.
+	 * little; it's the next state(s) that are informative.  But some of them
+	 * may have other inarcs, i.e. it may be possible to make actual progress
+	 * and then return to one of them.	We must de-optimize such cases,
+	 * splitting each such state into progress and no-progress states.
 	 */
 
 	/* first, make a list of the states */
@@ -591,8 +587,8 @@ makesearch(struct vars * v,
 		{						/* must be split */
 			if (s->tmp == NULL)
 			{					/* if not already in the list */
-								/* (fixes bugs 505048, 230589, */
-								/* 840258, 504785) */
+				/* (fixes bugs 505048, 230589, */
+				/* 840258, 504785) */
 				s->tmp = slist;
 				slist = s;
 			}
@@ -1043,9 +1039,8 @@ parseqatom(struct vars * v,
 	}
 
 	/*
-	 * hard part:  something messy That is, capturing parens, back
-	 * reference, short/long clash, or an atom with substructure
-	 * containing one of those.
+	 * hard part:  something messy That is, capturing parens, back reference,
+	 * short/long clash, or an atom with substructure containing one of those.
 	 */
 
 	/* now we'll need a subre for the contents even if they're boring */
@@ -1522,9 +1517,8 @@ brackpart(struct vars * v,
 		endc = startc;
 
 	/*
-	 * Ranges are unportable.  Actually, standard C does guarantee that
-	 * digits are contiguous, but making that an exception is just too
-	 * complicated.
+	 * Ranges are unportable.  Actually, standard C does guarantee that digits
+	 * are contiguous, but making that an exception is just too complicated.
 	 */
 	if (startc != endc)
 		NOTE(REG_UUNPORT);
@@ -1600,8 +1594,7 @@ leaders(struct vars * v,
 			assert(s != v->mccepend);
 		}
 		p++;
-		assert(*p != 0 && *(p + 1) == 0);		/* only 2-char MCCEs for
-												 * now */
+		assert(*p != 0 && *(p + 1) == 0);		/* only 2-char MCCEs for now */
 		newarc(v->nfa, PLAIN, subcolor(v->cm, *p), s, v->mccepend);
 		okcolors(v->nfa, v->cm);
 	}
@@ -2053,7 +2046,7 @@ newlacon(struct vars * v,
 	else
 	{
 		v->lacons = (struct subre *) REALLOC(v->lacons,
-								(v->nlacons + 1) * sizeof(struct subre));
+									(v->nlacons + 1) * sizeof(struct subre));
 		n = v->nlacons++;
 	}
 	if (v->lacons == NULL)

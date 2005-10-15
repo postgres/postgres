@@ -4,7 +4,7 @@
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.51 2005/09/24 17:53:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.52 2005/10/15 02:49:33 momjian Exp $
  */
 #include "postgres.h"
 
@@ -107,12 +107,11 @@ SetClientEncoding(int encoding, bool doit)
 	}
 
 	/*
-	 * If we're not inside a transaction then we can't do catalog lookups,
-	 * so fail.  After backend startup, this could only happen if we are
+	 * If we're not inside a transaction then we can't do catalog lookups, so
+	 * fail.  After backend startup, this could only happen if we are
 	 * re-reading postgresql.conf due to SIGHUP --- so basically this just
 	 * constrains the ability to change client_encoding on the fly from
-	 * postgresql.conf.  Which would probably be a stupid thing to do
-	 * anyway.
+	 * postgresql.conf.  Which would probably be a stupid thing to do anyway.
 	 */
 	if (!IsTransactionState())
 		return -1;
@@ -136,8 +135,8 @@ SetClientEncoding(int encoding, bool doit)
 		return 0;
 
 	/*
-	 * load the fmgr info into TopMemoryContext so that it survives
-	 * outside transaction.
+	 * load the fmgr info into TopMemoryContext so that it survives outside
+	 * transaction.
 	 */
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 	to_server = palloc(sizeof(FmgrInfo));
@@ -180,8 +179,8 @@ InitializeClientEncoding(void)
 	if (SetClientEncoding(pending_client_encoding, true) < 0)
 	{
 		/*
-		 * Oops, the requested conversion is not available. We couldn't
-		 * fail before, but we can now.
+		 * Oops, the requested conversion is not available. We couldn't fail
+		 * before, but we can now.
 		 */
 		ereport(FATAL,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -256,8 +255,8 @@ pg_do_encoding_conversion(unsigned char *src, int len,
 	}
 
 	/*
-	 * XXX we should avoid throwing errors in OidFunctionCall. Otherwise
-	 * we are going into infinite loop!  So we have to make sure that the
+	 * XXX we should avoid throwing errors in OidFunctionCall. Otherwise we
+	 * are going into infinite loop!  So we have to make sure that the
 	 * function exists before calling OidFunctionCall.
 	 */
 	if (!SearchSysCacheExists(PROCOID,
@@ -290,11 +289,11 @@ pg_convert(PG_FUNCTION_ARGS)
 	Datum		string = PG_GETARG_DATUM(0);
 	Datum		dest_encoding_name = PG_GETARG_DATUM(1);
 	Datum		src_encoding_name = DirectFunctionCall1(
-						namein, CStringGetDatum(DatabaseEncoding->name));
+							namein, CStringGetDatum(DatabaseEncoding->name));
 	Datum		result;
 
 	result = DirectFunctionCall3(
-			 pg_convert2, string, src_encoding_name, dest_encoding_name);
+				 pg_convert2, string, src_encoding_name, dest_encoding_name);
 
 	/* free memory allocated by namein */
 	pfree((void *) src_encoding_name);
@@ -343,8 +342,7 @@ pg_convert2(PG_FUNCTION_ARGS)
 
 	/*
 	 * build text data type structure. we cannot use textin() here, since
-	 * textin assumes that input string encoding is same as database
-	 * encoding.
+	 * textin assumes that input string encoding is same as database encoding.
 	 */
 	len = strlen((char *) result) + VARHDRSZ;
 	retval = palloc(len);
@@ -502,7 +500,7 @@ pg_mbstrlen_with_len(const char *mbstr, int limit)
 
 	while (limit > 0 && *mbstr)
 	{
-		int		l = pg_mblen(mbstr);
+		int			l = pg_mblen(mbstr);
 
 		limit -= l;
 		mbstr += l;

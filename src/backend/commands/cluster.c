@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.139 2005/08/26 03:07:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.140 2005/10/15 02:49:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,8 +144,8 @@ cluster(ClusterStmt *stmt)
 			if (!OidIsValid(indexOid))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
-				   errmsg("index \"%s\" for table \"%s\" does not exist",
-						  stmt->indexname, stmt->relation->relname)));
+					   errmsg("index \"%s\" for table \"%s\" does not exist",
+							  stmt->indexname, stmt->relation->relname)));
 		}
 
 		/* All other checks are done in cluster_rel() */
@@ -161,24 +161,24 @@ cluster(ClusterStmt *stmt)
 	else
 	{
 		/*
-		 * This is the "multi relation" case. We need to cluster all
-		 * tables that have some index with indisclustered set.
+		 * This is the "multi relation" case. We need to cluster all tables
+		 * that have some index with indisclustered set.
 		 */
 		MemoryContext cluster_context;
 		List	   *rvs;
 		ListCell   *rv;
 
 		/*
-		 * We cannot run this form of CLUSTER inside a user transaction
-		 * block; we'd be holding locks way too long.
+		 * We cannot run this form of CLUSTER inside a user transaction block;
+		 * we'd be holding locks way too long.
 		 */
 		PreventTransactionChain((void *) stmt, "CLUSTER");
 
 		/*
 		 * Create special memory context for cross-transaction storage.
 		 *
-		 * Since it is a child of PortalContext, it will go away even in case
-		 * of error.
+		 * Since it is a child of PortalContext, it will go away even in case of
+		 * error.
 		 */
 		cluster_context = AllocSetContextCreate(PortalContext,
 												"Cluster",
@@ -187,8 +187,8 @@ cluster(ClusterStmt *stmt)
 												ALLOCSET_DEFAULT_MAXSIZE);
 
 		/*
-		 * Build the list of relations to cluster.	Note that this lives
-		 * in cluster_context.
+		 * Build the list of relations to cluster.	Note that this lives in
+		 * cluster_context.
 		 */
 		rvs = get_tables_to_cluster(cluster_context);
 
@@ -239,12 +239,12 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 	CHECK_FOR_INTERRUPTS();
 
 	/*
-	 * Since we may open a new transaction for each relation, we have to
-	 * check that the relation still is what we think it is.
+	 * Since we may open a new transaction for each relation, we have to check
+	 * that the relation still is what we think it is.
 	 *
-	 * If this is a single-transaction CLUSTER, we can skip these tests. We
-	 * *must* skip the one on indisclustered since it would reject an
-	 * attempt to cluster a not-previously-clustered index.
+	 * If this is a single-transaction CLUSTER, we can skip these tests. We *must*
+	 * skip the one on indisclustered since it would reject an attempt to
+	 * cluster a not-previously-clustered index.
 	 */
 	if (recheck)
 	{
@@ -284,10 +284,10 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 	}
 
 	/*
-	 * We grab exclusive access to the target rel and index for the
-	 * duration of the transaction.  (This is redundant for the single-
-	 * transaction case, since cluster() already did it.)  The index lock
-	 * is taken inside check_index_is_clusterable.
+	 * We grab exclusive access to the target rel and index for the duration
+	 * of the transaction.	(This is redundant for the single- transaction
+	 * case, since cluster() already did it.)  The index lock is taken inside
+	 * check_index_is_clusterable.
 	 */
 	OldHeap = heap_open(rvtc->tableOid, AccessExclusiveLock);
 
@@ -328,26 +328,26 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck)
 						RelationGetRelationName(OldHeap))));
 
 	/*
-	 * Disallow clustering on incomplete indexes (those that might not
-	 * index every row of the relation).  We could relax this by making a
-	 * separate seqscan pass over the table to copy the missing rows, but
-	 * that seems expensive and tedious.
+	 * Disallow clustering on incomplete indexes (those that might not index
+	 * every row of the relation).	We could relax this by making a separate
+	 * seqscan pass over the table to copy the missing rows, but that seems
+	 * expensive and tedious.
 	 */
 	if (!heap_attisnull(OldIndex->rd_indextuple, Anum_pg_index_indpred))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot cluster on partial index \"%s\"",
 						RelationGetRelationName(OldIndex))));
-	
+
 	if (!OldIndex->rd_am->amindexnulls)
 	{
 		AttrNumber	colno;
 
 		/*
-		 * If the AM doesn't index nulls, then it's a partial index unless
-		 * we can prove all the rows are non-null.	Note we only need look
-		 * at the first column; multicolumn-capable AMs are *required* to
-		 * index nulls in columns after the first.
+		 * If the AM doesn't index nulls, then it's a partial index unless we
+		 * can prove all the rows are non-null.  Note we only need look at the
+		 * first column; multicolumn-capable AMs are *required* to index nulls
+		 * in columns after the first.
 		 */
 		colno = OldIndex->rd_index->indkey.values[0];
 		if (colno > 0)
@@ -358,11 +358,11 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck)
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("cannot cluster on index \"%s\" because access method\n"
 								"does not handle null values",
-							  RelationGetRelationName(OldIndex)),
+								RelationGetRelationName(OldIndex)),
 						 errhint("You may be able to work around this by marking column \"%s\" NOT NULL%s",
-							NameStr(OldHeap->rd_att->attrs[colno - 1]->attname),
-							recheck ? ",\nor use ALTER TABLE ... SET WITHOUT CLUSTER to remove the cluster\n"
-									"specification from the table." : ".")));
+						 NameStr(OldHeap->rd_att->attrs[colno - 1]->attname),
+								 recheck ? ",\nor use ALTER TABLE ... SET WITHOUT CLUSTER to remove the cluster\n"
+								 "specification from the table." : ".")));
 		}
 		else if (colno < 0)
 		{
@@ -374,15 +374,15 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot cluster on expressional index \"%s\" because its index access\n"
 							"method does not handle null values",
-						RelationGetRelationName(OldIndex))));
+							RelationGetRelationName(OldIndex))));
 	}
 
 	/*
-	 * Disallow clustering system relations.  This will definitely NOT
-	 * work for shared relations (we have no way to update pg_class rows
-	 * in other databases), nor for nailed-in-cache relations (the
-	 * relfilenode values for those are hardwired, see relcache.c).  It
-	 * might work for other system relations, but I ain't gonna risk it.
+	 * Disallow clustering system relations.  This will definitely NOT work
+	 * for shared relations (we have no way to update pg_class rows in other
+	 * databases), nor for nailed-in-cache relations (the relfilenode values
+	 * for those are hardwired, see relcache.c).  It might work for other
+	 * system relations, but I ain't gonna risk it.
 	 */
 	if (IsSystemRelation(OldHeap))
 		ereport(ERROR,
@@ -391,13 +391,13 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck)
 						RelationGetRelationName(OldHeap))));
 
 	/*
-	 * Don't allow cluster on temp tables of other backends ... their
-	 * local buffer manager is not going to cope.
+	 * Don't allow cluster on temp tables of other backends ... their local
+	 * buffer manager is not going to cope.
 	 */
 	if (isOtherTempNamespace(RelationGetNamespace(OldHeap)))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		   errmsg("cannot cluster temporary tables of other sessions")));
+			   errmsg("cannot cluster temporary tables of other sessions")));
 
 	/* Drop relcache refcnt on OldIndex, but keep lock */
 	index_close(OldIndex);
@@ -454,8 +454,8 @@ mark_index_clustered(Relation rel, Oid indexOid)
 		indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
 
 		/*
-		 * Unset the bit if set.  We know it's wrong because we checked
-		 * this earlier.
+		 * Unset the bit if set.  We know it's wrong because we checked this
+		 * earlier.
 		 */
 		if (indexForm->indisclustered)
 		{
@@ -503,20 +503,18 @@ rebuild_relation(Relation OldHeap, Oid indexOid)
 	heap_close(OldHeap, NoLock);
 
 	/*
-	 * Create the new heap, using a temporary name in the same namespace
-	 * as the existing table.  NOTE: there is some risk of collision with
-	 * user relnames.  Working around this seems more trouble than it's
-	 * worth; in particular, we can't create the new heap in a different
-	 * namespace from the old, or we will have problems with the TEMP
-	 * status of temp tables.
+	 * Create the new heap, using a temporary name in the same namespace as
+	 * the existing table.	NOTE: there is some risk of collision with user
+	 * relnames.  Working around this seems more trouble than it's worth; in
+	 * particular, we can't create the new heap in a different namespace from
+	 * the old, or we will have problems with the TEMP status of temp tables.
 	 */
 	snprintf(NewHeapName, sizeof(NewHeapName), "pg_temp_%u", tableOid);
 
 	OIDNewHeap = make_new_heap(tableOid, NewHeapName, tableSpace);
 
 	/*
-	 * We don't need CommandCounterIncrement() because make_new_heap did
-	 * it.
+	 * We don't need CommandCounterIncrement() because make_new_heap did it.
 	 */
 
 	/*
@@ -546,9 +544,9 @@ rebuild_relation(Relation OldHeap, Oid indexOid)
 	/* performDeletion does CommandCounterIncrement at end */
 
 	/*
-	 * Rebuild each index on the relation (but not the toast table, which
-	 * is all-new at this point).  We do not need
-	 * CommandCounterIncrement() because reindex_relation does it.
+	 * Rebuild each index on the relation (but not the toast table, which is
+	 * all-new at this point).	We do not need CommandCounterIncrement()
+	 * because reindex_relation does it.
 	 */
 	reindex_relation(tableOid, false);
 }
@@ -587,15 +585,15 @@ make_new_heap(Oid OIDOldHeap, const char *NewName, Oid NewTableSpace)
 										  allowSystemTableMods);
 
 	/*
-	 * Advance command counter so that the newly-created relation's
-	 * catalog tuples will be visible to heap_open.
+	 * Advance command counter so that the newly-created relation's catalog
+	 * tuples will be visible to heap_open.
 	 */
 	CommandCounterIncrement();
 
 	/*
 	 * If necessary, create a TOAST table for the new relation. Note that
-	 * AlterTableCreateToastTable ends with CommandCounterIncrement(), so
-	 * that the TOAST table will be visible for insertion.
+	 * AlterTableCreateToastTable ends with CommandCounterIncrement(), so that
+	 * the TOAST table will be visible for insertion.
 	 */
 	AlterTableCreateToastTable(OIDNewHeap, true);
 
@@ -629,8 +627,8 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	OldIndex = index_open(OIDOldIndex);
 
 	/*
-	 * Their tuple descriptors should be exactly alike, but here we only
-	 * need assume that they have the same number of columns.
+	 * Their tuple descriptors should be exactly alike, but here we only need
+	 * assume that they have the same number of columns.
 	 */
 	oldTupDesc = RelationGetDescr(OldHeap);
 	newTupDesc = RelationGetDescr(NewHeap);
@@ -654,15 +652,14 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 		 * We cannot simply pass the tuple to heap_insert(), for several
 		 * reasons:
 		 *
-		 * 1. heap_insert() will overwrite the commit-status fields of the
-		 * tuple it's handed.  This would trash the source relation, which is
-		 * bad news if we abort later on.  (This was a bug in releases thru
-		 * 7.0)
+		 * 1. heap_insert() will overwrite the commit-status fields of the tuple
+		 * it's handed.  This would trash the source relation, which is bad
+		 * news if we abort later on.  (This was a bug in releases thru 7.0)
 		 *
-		 * 2. We'd like to squeeze out the values of any dropped columns,
-		 * both to save space and to ensure we have no corner-case failures.
-		 * (It's possible for example that the new table hasn't got a TOAST
-		 * table and so is unable to store any large values of dropped cols.)
+		 * 2. We'd like to squeeze out the values of any dropped columns, both to
+		 * save space and to ensure we have no corner-case failures. (It's
+		 * possible for example that the new table hasn't got a TOAST table
+		 * and so is unable to store any large values of dropped cols.)
 		 *
 		 * 3. The tuple might not even be legal for the new table; this is
 		 * currently only known to happen as an after-effect of ALTER TABLE
@@ -784,19 +781,18 @@ swap_relation_files(Oid r1, Oid r2)
 	CatalogCloseIndexes(indstate);
 
 	/*
-	 * If we have toast tables associated with the relations being
-	 * swapped, change their dependency links to re-associate them with
-	 * their new owning relations.	Otherwise the wrong one will get
-	 * dropped ...
+	 * If we have toast tables associated with the relations being swapped,
+	 * change their dependency links to re-associate them with their new
+	 * owning relations.  Otherwise the wrong one will get dropped ...
 	 *
 	 * NOTE: it is possible that only one table has a toast table; this can
-	 * happen in CLUSTER if there were dropped columns in the old table,
-	 * and in ALTER TABLE when adding or changing type of columns.
+	 * happen in CLUSTER if there were dropped columns in the old table, and
+	 * in ALTER TABLE when adding or changing type of columns.
 	 *
-	 * NOTE: at present, a TOAST table's only dependency is the one on its
-	 * owning table.  If more are ever created, we'd need to use something
-	 * more selective than deleteDependencyRecordsFor() to get rid of only
-	 * the link we want.
+	 * NOTE: at present, a TOAST table's only dependency is the one on its owning
+	 * table.  If more are ever created, we'd need to use something more
+	 * selective than deleteDependencyRecordsFor() to get rid of only the link
+	 * we want.
 	 */
 	if (relform1->reltoastrelid || relform2->reltoastrelid)
 	{
@@ -845,16 +841,16 @@ swap_relation_files(Oid r1, Oid r2)
 
 	/*
 	 * Blow away the old relcache entries now.	We need this kluge because
-	 * relcache.c keeps a link to the smgr relation for the physical file,
-	 * and that will be out of date as soon as we do
-	 * CommandCounterIncrement. Whichever of the rels is the second to be
-	 * cleared during cache invalidation will have a dangling reference to
-	 * an already-deleted smgr relation.  Rather than trying to avoid this
-	 * by ordering operations just so, it's easiest to not have the
-	 * relcache entries there at all. (Fortunately, since one of the
-	 * entries is local in our transaction, it's sufficient to clear out
-	 * our own relcache this way; the problem cannot arise for other
-	 * backends when they see our update on the non-local relation.)
+	 * relcache.c keeps a link to the smgr relation for the physical file, and
+	 * that will be out of date as soon as we do CommandCounterIncrement.
+	 * Whichever of the rels is the second to be cleared during cache
+	 * invalidation will have a dangling reference to an already-deleted smgr
+	 * relation.  Rather than trying to avoid this by ordering operations just
+	 * so, it's easiest to not have the relcache entries there at all.
+	 * (Fortunately, since one of the entries is local in our transaction,
+	 * it's sufficient to clear out our own relcache this way; the problem
+	 * cannot arise for other backends when they see our update on the
+	 * non-local relation.)
 	 */
 	RelationForgetRelation(r1);
 	RelationForgetRelation(r2);
@@ -886,9 +882,9 @@ get_tables_to_cluster(MemoryContext cluster_context)
 
 	/*
 	 * Get all indexes that have indisclustered set and are owned by
-	 * appropriate user. System relations or nailed-in relations cannot
-	 * ever have indisclustered set, because CLUSTER will refuse to set it
-	 * when called with one of them as argument.
+	 * appropriate user. System relations or nailed-in relations cannot ever
+	 * have indisclustered set, because CLUSTER will refuse to set it when
+	 * called with one of them as argument.
 	 */
 	indRelation = heap_open(IndexRelationId, AccessShareLock);
 	ScanKeyInit(&entry,
@@ -904,8 +900,8 @@ get_tables_to_cluster(MemoryContext cluster_context)
 			continue;
 
 		/*
-		 * We have to build the list in a different memory context so it
-		 * will survive the cross-transaction processing
+		 * We have to build the list in a different memory context so it will
+		 * survive the cross-transaction processing
 		 */
 		old_context = MemoryContextSwitchTo(cluster_context);
 

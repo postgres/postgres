@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.37 2005/10/06 02:29:19 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.38 2005/10/15 02:49:41 momjian Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -54,7 +54,7 @@ typedef int64 PgStat_Counter;
  */
 typedef struct PgStat_MsgHdr
 {
-	StatMsgType	m_type;
+	StatMsgType m_type;
 	int			m_size;
 	int			m_backendid;
 	int			m_procpid;
@@ -113,10 +113,10 @@ typedef struct PgStat_MsgDummy
  */
 typedef struct PgStat_MsgBestart
 {
-	PgStat_MsgHdr	m_hdr;
-	Oid				m_databaseid;
-	Oid 			m_userid;
-	SockAddr		m_clientaddr;
+	PgStat_MsgHdr m_hdr;
+	Oid			m_databaseid;
+	Oid			m_userid;
+	SockAddr	m_clientaddr;
 } PgStat_MsgBestart;
 
 /* ----------
@@ -130,19 +130,19 @@ typedef struct PgStat_MsgBeterm
 
 /* ----------
  * PgStat_MsgAutovacStart		Sent by the autovacuum daemon to signal
- * 								that a database is going to be processed
+ *								that a database is going to be processed
  * ----------
  */
 typedef struct PgStat_MsgAutovacStart
 {
 	PgStat_MsgHdr m_hdr;
 	Oid			m_databaseid;
-	TimestampTz	m_start_time;
+	TimestampTz m_start_time;
 } PgStat_MsgAutovacStart;
 
 /* ----------
  * PgStat_MsgVacuum				Sent by the backend or autovacuum daemon
- * 								after VACUUM or VACUUM ANALYZE
+ *								after VACUUM or VACUUM ANALYZE
  * ----------
  */
 typedef struct PgStat_MsgVacuum
@@ -156,7 +156,7 @@ typedef struct PgStat_MsgVacuum
 
 /* ----------
  * PgStat_MsgAnalyze			Sent by the backend or autovacuum daemon
- * 								after ANALYZE
+ *								after ANALYZE
  * ----------
  */
 typedef struct PgStat_MsgAnalyze
@@ -164,8 +164,8 @@ typedef struct PgStat_MsgAnalyze
 	PgStat_MsgHdr m_hdr;
 	Oid			m_databaseid;
 	Oid			m_tableoid;
-	PgStat_Counter	m_live_tuples;
-	PgStat_Counter	m_dead_tuples;
+	PgStat_Counter m_live_tuples;
+	PgStat_Counter m_dead_tuples;
 } PgStat_MsgAnalyze;
 
 
@@ -287,7 +287,7 @@ typedef struct PgStat_StatDBEntry
 	PgStat_Counter n_blocks_fetched;
 	PgStat_Counter n_blocks_hit;
 	int			destroy;
-	TimestampTz	last_autovac_time;
+	TimestampTz last_autovac_time;
 } PgStat_StatDBEntry;
 
 
@@ -299,20 +299,19 @@ typedef struct PgStat_StatBeEntry
 {
 	/* An entry is non-empty iff procpid > 0 */
 	int			procpid;
-	TimestampTz	start_timestamp;
-	TimestampTz	activity_start_timestamp;
+	TimestampTz start_timestamp;
+	TimestampTz activity_start_timestamp;
 	char		activity[PGSTAT_ACTIVITY_SIZE];
 
 	/*
-	 * The following fields are initialized by the BESTART message. If
-	 * we have received messages from a backend before we have
-	 * received its BESTART, these fields will be uninitialized:
-	 * userid and databaseid will be InvalidOid, and clientaddr will
-	 * be undefined.
+	 * The following fields are initialized by the BESTART message. If we have
+	 * received messages from a backend before we have received its BESTART,
+	 * these fields will be uninitialized: userid and databaseid will be
+	 * InvalidOid, and clientaddr will be undefined.
 	 */
 	Oid			userid;
 	Oid			databaseid;
-	SockAddr    clientaddr;
+	SockAddr	clientaddr;
 } PgStat_StatBeEntry;
 
 
@@ -397,10 +396,10 @@ extern void pgstat_report_activity(const char *what);
 extern void pgstat_report_tabstat(void);
 extern void pgstat_report_autovac(Oid dboid);
 extern void pgstat_report_vacuum(Oid tableoid, bool shared,
-								 bool analyze, PgStat_Counter tuples);
+					 bool analyze, PgStat_Counter tuples);
 extern void pgstat_report_analyze(Oid tableoid, bool shared,
-								  PgStat_Counter livetuples,
-								  PgStat_Counter deadtuples);
+					  PgStat_Counter livetuples,
+					  PgStat_Counter deadtuples);
 extern int	pgstat_vacuum_tabstat(void);
 
 extern void pgstat_reset_counters(void);

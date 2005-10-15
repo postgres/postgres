@@ -6,7 +6,7 @@
  * Copyright (c) 2003-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.15 2005/01/01 20:44:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.16 2005/10/15 02:49:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,17 +96,17 @@ array_push(PG_FUNCTION_ARGS)
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_EXCEPTION),
-			 errmsg("argument must be empty or one-dimensional array")));
+				 errmsg("argument must be empty or one-dimensional array")));
 
 	/*
-	 * We arrange to look up info about element type only once per series
-	 * of calls, assuming the element type doesn't change underneath us.
+	 * We arrange to look up info about element type only once per series of
+	 * calls, assuming the element type doesn't change underneath us.
 	 */
 	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL)
 	{
 		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-												 sizeof(ArrayMetaState));
+													  sizeof(ArrayMetaState));
 		my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 		my_extra->element_type = InvalidOid;
 	}
@@ -194,8 +194,8 @@ array_cat(PG_FUNCTION_ARGS)
 	ndims2 = ARR_NDIM(v2);
 
 	/*
-	 * short circuit - if one input array is empty, and the other is not,
-	 * we return the non-empty one as the result
+	 * short circuit - if one input array is empty, and the other is not, we
+	 * return the non-empty one as the result
 	 *
 	 * if both are empty, return the first one
 	 */
@@ -245,8 +245,8 @@ array_cat(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 						 errmsg("cannot concatenate incompatible arrays"),
-				errdetail("Arrays with differing element dimensions are "
-						  "not compatible for concatenation.")));
+					errdetail("Arrays with differing element dimensions are "
+							  "not compatible for concatenation.")));
 
 			dims[i] = dims1[i];
 			lbs[i] = lbs1[i];
@@ -255,9 +255,8 @@ array_cat(PG_FUNCTION_ARGS)
 	else if (ndims1 == ndims2 - 1)
 	{
 		/*
-		 * resulting array has the second argument as the outer array,
-		 * with the first argument appended to the front of the outer
-		 * dimension
+		 * resulting array has the second argument as the outer array, with
+		 * the first argument appended to the front of the outer dimension
 		 */
 		ndims = ndims2;
 		dims = (int *) palloc(ndims * sizeof(int));
@@ -278,8 +277,8 @@ array_cat(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 						 errmsg("cannot concatenate incompatible arrays"),
-					errdetail("Arrays with differing dimensions are not "
-							  "compatible for concatenation.")));
+						 errdetail("Arrays with differing dimensions are not "
+								   "compatible for concatenation.")));
 		}
 	}
 	else
@@ -287,8 +286,8 @@ array_cat(PG_FUNCTION_ARGS)
 		/*
 		 * (ndims1 == ndims2 + 1)
 		 *
-		 * resulting array has the first argument as the outer array, with
-		 * the second argument appended to the end of the outer dimension
+		 * resulting array has the first argument as the outer array, with the
+		 * second argument appended to the end of the outer dimension
 		 */
 		ndims = ndims1;
 		dims = (int *) palloc(ndims * sizeof(int));
@@ -306,8 +305,8 @@ array_cat(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 						 errmsg("cannot concatenate incompatible arrays"),
-					errdetail("Arrays with differing dimensions are not "
-							  "compatible for concatenation.")));
+						 errdetail("Arrays with differing dimensions are not "
+								   "compatible for concatenation.")));
 		}
 	}
 
@@ -351,7 +350,7 @@ create_singleton_array(FunctionCallInfo fcinfo,
 	if (element_type == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("invalid array element type OID: %u", element_type)));
+				 errmsg("invalid array element type OID: %u", element_type)));
 	if (ndims < 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -371,14 +370,14 @@ create_singleton_array(FunctionCallInfo fcinfo,
 	}
 
 	/*
-	 * We arrange to look up info about element type only once per series
-	 * of calls, assuming the element type doesn't change underneath us.
+	 * We arrange to look up info about element type only once per series of
+	 * calls, assuming the element type doesn't change underneath us.
 	 */
 	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL)
 	{
 		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-												 sizeof(ArrayMetaState));
+													  sizeof(ArrayMetaState));
 		my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
 		my_extra->element_type = InvalidOid;
 	}

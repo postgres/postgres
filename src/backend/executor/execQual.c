@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.180 2005/06/26 22:05:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.181 2005/10/15 02:49:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,8 +89,8 @@ static Datum ExecEvalOr(BoolExprState *orExpr, ExprContext *econtext,
 static Datum ExecEvalAnd(BoolExprState *andExpr, ExprContext *econtext,
 			bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalConvertRowtype(ConvertRowtypeExprState *cstate,
-									ExprContext *econtext,
-									bool *isNull, ExprDoneCond *isDone);
+					   ExprContext *econtext,
+					   bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalCaseTestExpr(ExprState *exprstate,
@@ -106,8 +106,8 @@ static Datum ExecEvalCoalesce(CoalesceExprState *coalesceExpr,
 				 ExprContext *econtext,
 				 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalMinMax(MinMaxExprState *minmaxExpr,
-							ExprContext *econtext,
-							bool *isNull, ExprDoneCond *isDone);
+			   ExprContext *econtext,
+			   bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalNullIf(FuncExprState *nullIfExpr,
 			   ExprContext *econtext,
 			   bool *isNull, ExprDoneCond *isDone);
@@ -243,8 +243,8 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 									 isDone));
 
 	/*
-	 * If refexpr yields NULL, and it's a fetch, then result is NULL. In
-	 * the assignment case, we'll cons up something below.
+	 * If refexpr yields NULL, and it's a fetch, then result is NULL. In the
+	 * assignment case, we'll cons up something below.
 	 */
 	if (*isNull)
 	{
@@ -298,8 +298,7 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 														 NULL));
 
 			/*
-			 * If any index expr yields NULL, result is NULL or source
-			 * array
+			 * If any index expr yields NULL, result is NULL or source array
 			 */
 			if (eisnull)
 			{
@@ -326,13 +325,12 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 		/*
 		 * Evaluate the value to be assigned into the array.
 		 *
-		 * XXX At some point we'll need to look into making the old value of
-		 * the array element available via CaseTestExpr, as is done by
-		 * ExecEvalFieldStore.	This is not needed now but will be needed
-		 * to support arrays of composite types; in an assignment to a
-		 * field of an array member, the parser would generate a
-		 * FieldStore that expects to fetch its input tuple via
-		 * CaseTestExpr.
+		 * XXX At some point we'll need to look into making the old value of the
+		 * array element available via CaseTestExpr, as is done by
+		 * ExecEvalFieldStore.	This is not needed now but will be needed to
+		 * support arrays of composite types; in an assignment to a field of
+		 * an array member, the parser would generate a FieldStore that
+		 * expects to fetch its input tuple via CaseTestExpr.
 		 */
 		sourceData = ExecEvalExpr(astate->refassgnexpr,
 								  econtext,
@@ -340,19 +338,18 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 								  NULL);
 
 		/*
-		 * For now, can't cope with inserting NULL into an array, so make
-		 * it a no-op per discussion above...
+		 * For now, can't cope with inserting NULL into an array, so make it a
+		 * no-op per discussion above...
 		 */
 		if (eisnull)
 			return PointerGetDatum(array_source);
 
 		/*
-		 * For an assignment, if all the subscripts and the input
-		 * expression are non-null but the original array is null, then
-		 * substitute an empty (zero-dimensional) array and proceed with
-		 * the assignment. This only works for varlena arrays, though; for
-		 * fixed-length array types we punt and return the null input
-		 * array.
+		 * For an assignment, if all the subscripts and the input expression
+		 * are non-null but the original array is null, then substitute an
+		 * empty (zero-dimensional) array and proceed with the assignment.
+		 * This only works for varlena arrays, though; for fixed-length array
+		 * types we punt and return the null input array.
 		 */
 		if (*isNull)
 		{
@@ -379,7 +376,7 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 		else
 			resultArray = array_set_slice(array_source, i,
 										  upper.indx, lower.indx,
-							   (ArrayType *) DatumGetPointer(sourceData),
+								   (ArrayType *) DatumGetPointer(sourceData),
 										  astate->refattrlength,
 										  astate->refelemlength,
 										  astate->refelembyval,
@@ -451,10 +448,10 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 	/*
 	 * Get the slot and attribute number we want
 	 *
-	 * The asserts check that references to system attributes only appear at
-	 * the level of a relation scan; at higher levels, system attributes
-	 * must be treated as ordinary variables (since we no longer have
-	 * access to the original tuple).
+	 * The asserts check that references to system attributes only appear at the
+	 * level of a relation scan; at higher levels, system attributes must be
+	 * treated as ordinary variables (since we no longer have access to the
+	 * original tuple).
 	 */
 	attnum = variable->varattno;
 
@@ -477,6 +474,7 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 	}
 
 #ifdef USE_ASSERT_CHECKING
+
 	/*
 	 * Some checks that are only applied for user attribute numbers (bogus
 	 * system attnums will be caught inside slot_getattr).
@@ -491,11 +489,10 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 		Assert(attnum <= tuple_type->natts);
 
 		/*
-		 * This assert checks that the datatype the plan expects to get
-		 * (as told by our "variable" argument) is in fact the datatype of
-		 * the attribute being fetched (as seen in the current context,
-		 * identified by our "econtext" argument).	Otherwise crashes are
-		 * likely.
+		 * This assert checks that the datatype the plan expects to get (as
+		 * told by our "variable" argument) is in fact the datatype of the
+		 * attribute being fetched (as seen in the current context, identified
+		 * by our "econtext" argument).  Otherwise crashes are likely.
 		 *
 		 * Note that we can't check dropped columns, since their atttypid has
 		 * been zeroed.
@@ -503,7 +500,7 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 		Assert(variable->vartype == tuple_type->attrs[attnum - 1]->atttypid ||
 			   tuple_type->attrs[attnum - 1]->attisdropped);
 	}
-#endif /* USE_ASSERT_CHECKING */
+#endif   /* USE_ASSERT_CHECKING */
 
 	return slot_getattr(slot, attnum, isNull);
 }
@@ -559,9 +556,8 @@ ExecEvalParam(ExprState *exprstate, ExprContext *econtext,
 	if (thisParamKind == PARAM_EXEC)
 	{
 		/*
-		 * PARAM_EXEC params (internal executor parameters) are stored in
-		 * the ecxt_param_exec_vals array, and can be accessed by array
-		 * index.
+		 * PARAM_EXEC params (internal executor parameters) are stored in the
+		 * ecxt_param_exec_vals array, and can be accessed by array index.
 		 */
 		ParamExecData *prm;
 
@@ -579,8 +575,7 @@ ExecEvalParam(ExprState *exprstate, ExprContext *econtext,
 	else
 	{
 		/*
-		 * All other parameter types must be sought in
-		 * ecxt_param_list_info.
+		 * All other parameter types must be sought in ecxt_param_list_info.
 		 */
 		ParamListInfo paramInfo;
 
@@ -641,9 +636,9 @@ GetAttributeByNum(HeapTupleHeader tuple,
 	tupDesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
 
 	/*
-	 * heap_getattr needs a HeapTuple not a bare HeapTupleHeader.  We set
-	 * all the fields in the struct just in case user tries to inspect
-	 * system columns.
+	 * heap_getattr needs a HeapTuple not a bare HeapTupleHeader.  We set all
+	 * the fields in the struct just in case user tries to inspect system
+	 * columns.
 	 */
 	tmptup.t_len = HeapTupleHeaderGetDatumLength(tuple);
 	ItemPointerSetInvalid(&(tmptup.t_self));
@@ -699,9 +694,9 @@ GetAttributeByName(HeapTupleHeader tuple, const char *attname, bool *isNull)
 		elog(ERROR, "attribute \"%s\" does not exist", attname);
 
 	/*
-	 * heap_getattr needs a HeapTuple not a bare HeapTupleHeader.  We set
-	 * all the fields in the struct just in case user tries to inspect
-	 * system columns.
+	 * heap_getattr needs a HeapTuple not a bare HeapTupleHeader.  We set all
+	 * the fields in the struct just in case user tries to inspect system
+	 * columns.
 	 */
 	tmptup.t_len = HeapTupleHeaderGetDatumLength(tuple);
 	ItemPointerSetInvalid(&(tmptup.t_self));
@@ -730,9 +725,9 @@ init_fcache(Oid foid, FuncExprState *fcache, MemoryContext fcacheCxt)
 
 	/*
 	 * Safety check on nargs.  Under normal circumstances this should never
-	 * fail, as parser should check sooner.  But possibly it might fail
-	 * if server has been compiled with FUNC_MAX_ARGS smaller than some
-	 * functions declared in pg_proc?
+	 * fail, as parser should check sooner.  But possibly it might fail if
+	 * server has been compiled with FUNC_MAX_ARGS smaller than some functions
+	 * declared in pg_proc?
 	 */
 	if (list_length(fcache->args) > FUNC_MAX_ARGS)
 		ereport(ERROR,
@@ -793,10 +788,9 @@ ExecEvalFuncArgs(FunctionCallInfo fcinfo,
 		if (thisArgIsDone != ExprSingleResult)
 		{
 			/*
-			 * We allow only one argument to have a set value; we'd need
-			 * much more complexity to keep track of multiple set
-			 * arguments (cf. ExecTargetList) and it doesn't seem worth
-			 * it.
+			 * We allow only one argument to have a set value; we'd need much
+			 * more complexity to keep track of multiple set arguments (cf.
+			 * ExecTargetList) and it doesn't seem worth it.
 			 */
 			if (argIsDone != ExprSingleResult)
 				ereport(ERROR,
@@ -835,11 +829,10 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 	check_stack_depth();
 
 	/*
-	 * arguments is a list of expressions to evaluate before passing to
-	 * the function manager.  We skip the evaluation if it was already
-	 * done in the previous call (ie, we are continuing the evaluation of
-	 * a set-valued function).	Otherwise, collect the current argument
-	 * values into fcinfo.
+	 * arguments is a list of expressions to evaluate before passing to the
+	 * function manager.  We skip the evaluation if it was already done in the
+	 * previous call (ie, we are continuing the evaluation of a set-valued
+	 * function).  Otherwise, collect the current argument values into fcinfo.
 	 */
 	if (!fcache->setArgsValid)
 	{
@@ -870,8 +863,7 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 	}
 
 	/*
-	 * If function returns set, prepare a resultinfo node for
-	 * communication
+	 * If function returns set, prepare a resultinfo node for communication
 	 */
 	if (fcache->func.fn_retset)
 	{
@@ -887,14 +879,14 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 	}
 
 	/*
-	 * now return the value gotten by calling the function manager,
-	 * passing the function the evaluated parameter values.
+	 * now return the value gotten by calling the function manager, passing
+	 * the function the evaluated parameter values.
 	 */
 	if (fcache->func.fn_retset || hasSetArg)
 	{
 		/*
-		 * We need to return a set result.	Complain if caller not ready
-		 * to accept one.
+		 * We need to return a set result.	Complain if caller not ready to
+		 * accept one.
 		 */
 		if (isDone == NULL)
 			ereport(ERROR,
@@ -902,18 +894,18 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 					 errmsg("set-valued function called in context that cannot accept a set")));
 
 		/*
-		 * This loop handles the situation where we have both a set
-		 * argument and a set-valued function.	Once we have exhausted the
-		 * function's value(s) for a particular argument value, we have to
-		 * get the next argument value and start the function over again.
-		 * We might have to do it more than once, if the function produces
-		 * an empty result set for a particular input value.
+		 * This loop handles the situation where we have both a set argument
+		 * and a set-valued function.  Once we have exhausted the function's
+		 * value(s) for a particular argument value, we have to get the next
+		 * argument value and start the function over again. We might have to
+		 * do it more than once, if the function produces an empty result set
+		 * for a particular input value.
 		 */
 		for (;;)
 		{
 			/*
-			 * If function is strict, and there are any NULL arguments,
-			 * skip calling the function (at least for this set of args).
+			 * If function is strict, and there are any NULL arguments, skip
+			 * calling the function (at least for this set of args).
 			 */
 			bool		callit = true;
 
@@ -948,8 +940,8 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 			{
 				/*
 				 * Got a result from current argument.	If function itself
-				 * returns set, save the current argument values to re-use
-				 * on the next call.
+				 * returns set, save the current argument values to re-use on
+				 * the next call.
 				 */
 				if (fcache->func.fn_retset && *isDone == ExprMultipleResult)
 				{
@@ -961,7 +953,7 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 					{
 						RegisterExprContextCallback(econtext,
 													ShutdownFuncExpr,
-												PointerGetDatum(fcache));
+													PointerGetDatum(fcache));
 						fcache->shutdown_reg = true;
 					}
 				}
@@ -992,8 +984,8 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 			}
 
 			/*
-			 * If we reach here, loop around to run the function on the
-			 * new argument.
+			 * If we reach here, loop around to run the function on the new
+			 * argument.
 			 */
 		}
 	}
@@ -1003,9 +995,9 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 		 * Non-set case: much easier.
 		 *
 		 * We change the ExprState function pointer to use the simpler
-		 * ExecMakeFunctionResultNoSets on subsequent calls.  This amounts
-		 * to assuming that no argument can return a set if it didn't do
-		 * so the first time.
+		 * ExecMakeFunctionResultNoSets on subsequent calls.  This amounts to
+		 * assuming that no argument can return a set if it didn't do so the
+		 * first time.
 		 */
 		fcache->xprstate.evalfunc = (ExprStateEvalFunc) ExecMakeFunctionResultNoSets;
 
@@ -1074,8 +1066,8 @@ ExecMakeFunctionResultNoSets(FuncExprState *fcache,
 	InitFunctionCallInfoData(fcinfo, &(fcache->func), i, NULL, NULL);
 
 	/*
-	 * If function is strict, and there are any NULL arguments, skip
-	 * calling the function and return NULL.
+	 * If function is strict, and there are any NULL arguments, skip calling
+	 * the function and return NULL.
 	 */
 	if (fcache->func.fn_strict)
 	{
@@ -1100,7 +1092,7 @@ ExecMakeFunctionResultNoSets(FuncExprState *fcache,
  *		ExecMakeTableFunctionResult
  *
  * Evaluate a table function, producing a materialized result in a Tuplestore
- * object.  *returnDesc is set to the tupledesc actually returned by the
+ * object.	*returnDesc is set to the tupledesc actually returned by the
  * function, or NULL if it didn't provide one.
  */
 Tuplestorestate *
@@ -1130,11 +1122,11 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 					get_typtype(funcrettype) == 'c');
 
 	/*
-	 * Prepare a resultinfo node for communication.  We always do this
-	 * even if not expecting a set result, so that we can pass
-	 * expectedDesc.  In the generic-expression case, the expression
-	 * doesn't actually get to see the resultinfo, but set it up anyway
-	 * because we use some of the fields as our own state variables.
+	 * Prepare a resultinfo node for communication.  We always do this even if
+	 * not expecting a set result, so that we can pass expectedDesc.  In the
+	 * generic-expression case, the expression doesn't actually get to see the
+	 * resultinfo, but set it up anyway because we use some of the fields as
+	 * our own state variables.
 	 */
 	InitFunctionCallInfoData(fcinfo, NULL, 0, NULL, (Node *) &rsinfo);
 	rsinfo.type = T_ReturnSetInfo;
@@ -1147,14 +1139,14 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 	rsinfo.setDesc = NULL;
 
 	/*
-	 * Normally the passed expression tree will be a FuncExprState, since
-	 * the grammar only allows a function call at the top level of a table
-	 * function reference.	However, if the function doesn't return set
-	 * then the planner might have replaced the function call via
-	 * constant-folding or inlining.  So if we see any other kind of
-	 * expression node, execute it via the general ExecEvalExpr() code;
-	 * the only difference is that we don't get a chance to pass a special
-	 * ReturnSetInfo to any functions buried in the expression.
+	 * Normally the passed expression tree will be a FuncExprState, since the
+	 * grammar only allows a function call at the top level of a table
+	 * function reference.	However, if the function doesn't return set then
+	 * the planner might have replaced the function call via constant-folding
+	 * or inlining.  So if we see any other kind of expression node, execute
+	 * it via the general ExecEvalExpr() code; the only difference is that we
+	 * don't get a chance to pass a special ReturnSetInfo to any functions
+	 * buried in the expression.
 	 */
 	if (funcexpr && IsA(funcexpr, FuncExprState) &&
 		IsA(funcexpr->expr, FuncExpr))
@@ -1182,9 +1174,9 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 		 * Evaluate the function's argument list.
 		 *
 		 * Note: ideally, we'd do this in the per-tuple context, but then the
-		 * argument values would disappear when we reset the context in
-		 * the inner loop.	So do it in caller context.  Perhaps we should
-		 * make a separate context just to hold the evaluated arguments?
+		 * argument values would disappear when we reset the context in the
+		 * inner loop.	So do it in caller context.  Perhaps we should make a
+		 * separate context just to hold the evaluated arguments?
 		 */
 		fcinfo.flinfo = &(fcache->func);
 		argDone = ExecEvalFuncArgs(&fcinfo, fcache->args, econtext);
@@ -1217,8 +1209,7 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 	}
 
 	/*
-	 * Switch to short-lived context for calling the function or
-	 * expression.
+	 * Switch to short-lived context for calling the function or expression.
 	 */
 	MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
@@ -1232,9 +1223,9 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 		HeapTuple	tuple;
 
 		/*
-		 * reset per-tuple memory context before each call of the function
-		 * or expression. This cleans up any local memory the function may
-		 * leak when called.
+		 * reset per-tuple memory context before each call of the function or
+		 * expression. This cleans up any local memory the function may leak
+		 * when called.
 		 */
 		ResetExprContext(econtext);
 
@@ -1261,12 +1252,12 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 				break;
 
 			/*
-			 * Can't do anything very useful with NULL rowtype values.
-			 * For a function returning set, we consider this a protocol
-			 * violation (but another alternative would be to just ignore
-			 * the result and "continue" to get another row).  For a function
-			 * not returning set, we fall out of the loop; we'll cons up
-			 * an all-nulls result row below.
+			 * Can't do anything very useful with NULL rowtype values. For a
+			 * function returning set, we consider this a protocol violation
+			 * (but another alternative would be to just ignore the result and
+			 * "continue" to get another row).	For a function not returning
+			 * set, we fall out of the loop; we'll cons up an all-nulls result
+			 * row below.
 			 */
 			if (returnsTuple && fcinfo.isnull)
 			{
@@ -1278,8 +1269,7 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 			}
 
 			/*
-			 * If first time through, build tupdesc and tuplestore for
-			 * result
+			 * If first time through, build tupdesc and tuplestore for result
 			 */
 			if (first_time)
 			{
@@ -1287,15 +1277,14 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 				if (returnsTuple)
 				{
 					/*
-					 * Use the type info embedded in the rowtype Datum to
-					 * look up the needed tupdesc.	Make a copy for the
-					 * query.
+					 * Use the type info embedded in the rowtype Datum to look
+					 * up the needed tupdesc.  Make a copy for the query.
 					 */
 					HeapTupleHeader td;
 
 					td = DatumGetHeapTupleHeader(result);
 					tupdesc = lookup_rowtype_tupdesc(HeapTupleHeaderGetTypeId(td),
-										   HeapTupleHeaderGetTypMod(td));
+											   HeapTupleHeaderGetTypMod(td));
 					tupdesc = CreateTupleDescCopy(tupdesc);
 				}
 				else
@@ -1507,7 +1496,7 @@ ExecEvalDistinct(FuncExprState *fcache,
 	if (argDone != ExprSingleResult)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-			 errmsg("IS DISTINCT FROM does not support set arguments")));
+				 errmsg("IS DISTINCT FROM does not support set arguments")));
 	Assert(fcinfo.nargs == 2);
 
 	if (fcinfo.argnull[0] && fcinfo.argnull[1])
@@ -1580,12 +1569,12 @@ ExecEvalScalarArrayOp(ScalarArrayOpExprState *sstate,
 	if (argDone != ExprSingleResult)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-		   errmsg("op ANY/ALL (array) does not support set arguments")));
+			   errmsg("op ANY/ALL (array) does not support set arguments")));
 	Assert(fcinfo.nargs == 2);
 
 	/*
-	 * If the array is NULL then we return NULL --- it's not very
-	 * meaningful to do anything else, even if the operator isn't strict.
+	 * If the array is NULL then we return NULL --- it's not very meaningful
+	 * to do anything else, even if the operator isn't strict.
 	 */
 	if (fcinfo.argnull[1])
 	{
@@ -1598,18 +1587,17 @@ ExecEvalScalarArrayOp(ScalarArrayOpExprState *sstate,
 	/*
 	 * If the array is empty, we return either FALSE or TRUE per the useOr
 	 * flag.  This is correct even if the scalar is NULL; since we would
-	 * evaluate the operator zero times, it matters not whether it would
-	 * want to return NULL.
+	 * evaluate the operator zero times, it matters not whether it would want
+	 * to return NULL.
 	 */
 	nitems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
 	if (nitems <= 0)
 		return BoolGetDatum(!useOr);
 
 	/*
-	 * If the scalar is NULL, and the function is strict, return NULL.
-	 * This is just to avoid having to test for strictness inside the
-	 * loop.  (XXX but if arrays could have null elements, we'd need a
-	 * test anyway.)
+	 * If the scalar is NULL, and the function is strict, return NULL. This is
+	 * just to avoid having to test for strictness inside the loop.  (XXX but
+	 * if arrays could have null elements, we'd need a test anyway.)
 	 */
 	if (fcinfo.argnull[0] && sstate->fxprstate.func.fn_strict)
 	{
@@ -1618,9 +1606,8 @@ ExecEvalScalarArrayOp(ScalarArrayOpExprState *sstate,
 	}
 
 	/*
-	 * We arrange to look up info about the element type only once per
-	 * series of calls, assuming the element type doesn't change
-	 * underneath us.
+	 * We arrange to look up info about the element type only once per series
+	 * of calls, assuming the element type doesn't change underneath us.
 	 */
 	if (sstate->element_type != ARR_ELEMTYPE(arr))
 	{
@@ -1711,15 +1698,15 @@ ExecEvalNot(BoolExprState *notclause, ExprContext *econtext,
 	expr_value = ExecEvalExpr(clause, econtext, isNull, NULL);
 
 	/*
-	 * if the expression evaluates to null, then we just cascade the null
-	 * back to whoever called us.
+	 * if the expression evaluates to null, then we just cascade the null back
+	 * to whoever called us.
 	 */
 	if (*isNull)
 		return expr_value;
 
 	/*
-	 * evaluation of 'not' is simple.. expr is false, then return 'true'
-	 * and vice versa.
+	 * evaluation of 'not' is simple.. expr is false, then return 'true' and
+	 * vice versa.
 	 */
 	return BoolGetDatum(!DatumGetBool(expr_value));
 }
@@ -1742,18 +1729,17 @@ ExecEvalOr(BoolExprState *orExpr, ExprContext *econtext,
 	AnyNull = false;
 
 	/*
-	 * If any of the clauses is TRUE, the OR result is TRUE regardless of
-	 * the states of the rest of the clauses, so we can stop evaluating
-	 * and return TRUE immediately.  If none are TRUE and one or more is
-	 * NULL, we return NULL; otherwise we return FALSE.  This makes sense
-	 * when you interpret NULL as "don't know": if we have a TRUE then the
-	 * OR is TRUE even if we aren't sure about some of the other inputs.
-	 * If all the known inputs are FALSE, but we have one or more "don't
-	 * knows", then we have to report that we "don't know" what the OR's
-	 * result should be --- perhaps one of the "don't knows" would have
-	 * been TRUE if we'd known its value.  Only when all the inputs are
-	 * known to be FALSE can we state confidently that the OR's result is
-	 * FALSE.
+	 * If any of the clauses is TRUE, the OR result is TRUE regardless of the
+	 * states of the rest of the clauses, so we can stop evaluating and return
+	 * TRUE immediately.  If none are TRUE and one or more is NULL, we return
+	 * NULL; otherwise we return FALSE.  This makes sense when you interpret
+	 * NULL as "don't know": if we have a TRUE then the OR is TRUE even if we
+	 * aren't sure about some of the other inputs. If all the known inputs are
+	 * FALSE, but we have one or more "don't knows", then we have to report
+	 * that we "don't know" what the OR's result should be --- perhaps one of
+	 * the "don't knows" would have been TRUE if we'd known its value.  Only
+	 * when all the inputs are known to be FALSE can we state confidently that
+	 * the OR's result is FALSE.
 	 */
 	foreach(clause, clauses)
 	{
@@ -1794,12 +1780,12 @@ ExecEvalAnd(BoolExprState *andExpr, ExprContext *econtext,
 	AnyNull = false;
 
 	/*
-	 * If any of the clauses is FALSE, the AND result is FALSE regardless
-	 * of the states of the rest of the clauses, so we can stop evaluating
-	 * and return FALSE immediately.  If none are FALSE and one or more is
-	 * NULL, we return NULL; otherwise we return TRUE.	This makes sense
-	 * when you interpret NULL as "don't know", using the same sort of
-	 * reasoning as for OR, above.
+	 * If any of the clauses is FALSE, the AND result is FALSE regardless of
+	 * the states of the rest of the clauses, so we can stop evaluating and
+	 * return FALSE immediately.  If none are FALSE and one or more is NULL,
+	 * we return NULL; otherwise we return TRUE.  This makes sense when you
+	 * interpret NULL as "don't know", using the same sort of reasoning as for
+	 * OR, above.
 	 */
 
 	foreach(clause, clauses)
@@ -1826,7 +1812,7 @@ ExecEvalAnd(BoolExprState *andExpr, ExprContext *econtext,
 /* ----------------------------------------------------------------
  *		ExecEvalConvertRowtype
  *
- *		Evaluate a rowtype coercion operation.  This may require
+ *		Evaluate a rowtype coercion operation.	This may require
  *		rearranging field positions.
  * ----------------------------------------------------------------
  */
@@ -1865,10 +1851,9 @@ ExecEvalConvertRowtype(ConvertRowtypeExprState *cstate,
 	tmptup.t_data = tuple;
 
 	/*
-	 * Extract all the values of the old tuple, offsetting the arrays
-	 * so that invalues[0] is NULL and invalues[1] is the first
-	 * source attribute; this exactly matches the numbering convention
-	 * in attrMap.
+	 * Extract all the values of the old tuple, offsetting the arrays so that
+	 * invalues[0] is NULL and invalues[1] is the first source attribute; this
+	 * exactly matches the numbering convention in attrMap.
 	 */
 	heap_deform_tuple(&tmptup, cstate->indesc, invalues + 1, inisnull + 1);
 	invalues[0] = (Datum) 0;
@@ -1915,10 +1900,10 @@ ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 		*isDone = ExprSingleResult;
 
 	/*
-	 * If there's a test expression, we have to evaluate it and save the
-	 * value where the CaseTestExpr placeholders can find it. We must save
-	 * and restore prior setting of econtext's caseValue fields, in case
-	 * this node is itself within a larger CASE.
+	 * If there's a test expression, we have to evaluate it and save the value
+	 * where the CaseTestExpr placeholders can find it. We must save and
+	 * restore prior setting of econtext's caseValue fields, in case this node
+	 * is itself within a larger CASE.
 	 */
 	save_datum = econtext->caseValue_datum;
 	save_isNull = econtext->caseValue_isNull;
@@ -1927,14 +1912,14 @@ ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 	{
 		econtext->caseValue_datum = ExecEvalExpr(caseExpr->arg,
 												 econtext,
-											 &econtext->caseValue_isNull,
+												 &econtext->caseValue_isNull,
 												 NULL);
 	}
 
 	/*
-	 * we evaluate each of the WHEN clauses in turn, as soon as one is
-	 * true we return the corresponding result. If none are true then we
-	 * return the value of the default clause, or NULL if there is none.
+	 * we evaluate each of the WHEN clauses in turn, as soon as one is true we
+	 * return the corresponding result. If none are true then we return the
+	 * value of the default clause, or NULL if there is none.
 	 */
 	foreach(clause, clauses)
 	{
@@ -1947,9 +1932,9 @@ ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 									NULL);
 
 		/*
-		 * if we have a true test, then we return the result, since the
-		 * case statement is satisfied.  A NULL result from the test is
-		 * not considered true.
+		 * if we have a true test, then we return the result, since the case
+		 * statement is satisfied.	A NULL result from the test is not
+		 * considered true.
 		 */
 		if (DatumGetBool(clause_value) && !*isNull)
 		{
@@ -2098,7 +2083,7 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("cannot merge incompatible arrays"),
 						 errdetail("Array with element type %s cannot be "
-					 "included in ARRAY construct with element type %s.",
+						 "included in ARRAY construct with element type %s.",
 								   format_type_be(ARR_ELEMTYPE(array)),
 								   format_type_be(element_type))));
 
@@ -2110,8 +2095,8 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 				if (ndims <= 0 || ndims > MAXDIM)
 					ereport(ERROR,
 							(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					  errmsg("number of array dimensions (%d) exceeds " \
-							 "the maximum allowed (%d)", ndims, MAXDIM)));
+						  errmsg("number of array dimensions (%d) exceeds " \
+								 "the maximum allowed (%d)", ndims, MAXDIM)));
 
 				elem_dims = (int *) palloc(elem_ndims * sizeof(int));
 				memcpy(elem_dims, ARR_DIMS(array), elem_ndims * sizeof(int));
@@ -2130,8 +2115,8 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 						   elem_ndims * sizeof(int)) != 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-						errmsg("multidimensional arrays must have array "
-							   "expressions with matching dimensions")));
+							 errmsg("multidimensional arrays must have array "
+									"expressions with matching dimensions")));
 			}
 
 			elem_ndatabytes = ARR_SIZE(array) - ARR_OVERHEAD(elem_ndims);
@@ -2258,10 +2243,10 @@ static Datum
 ExecEvalMinMax(MinMaxExprState *minmaxExpr, ExprContext *econtext,
 			   bool *isNull, ExprDoneCond *isDone)
 {
-	Datum result = (Datum) 0;
+	Datum		result = (Datum) 0;
 	MinMaxOp	op = ((MinMaxExpr *) minmaxExpr->xprstate.expr)->op;
 	FunctionCallInfoData locfcinfo;
-	ListCell *arg;
+	ListCell   *arg;
 
 	if (isDone)
 		*isDone = ExprSingleResult;
@@ -2295,7 +2280,7 @@ ExecEvalMinMax(MinMaxExprState *minmaxExpr, ExprContext *econtext,
 			locfcinfo.arg[1] = value;
 			locfcinfo.isnull = false;
 			cmpresult = DatumGetInt32(FunctionCallInvoke(&locfcinfo));
-			if (locfcinfo.isnull) /* probably should not happen */
+			if (locfcinfo.isnull)		/* probably should not happen */
 				continue;
 			if (cmpresult > 0 && op == IS_LEAST)
 				result = value;
@@ -2531,8 +2516,8 @@ ExecEvalCoerceToDomain(CoerceToDomainState *cstate, ExprContext *econtext,
 				if (*isNull)
 					ereport(ERROR,
 							(errcode(ERRCODE_NOT_NULL_VIOLATION),
-						   errmsg("domain %s does not allow null values",
-								  format_type_be(ctest->resulttype))));
+							 errmsg("domain %s does not allow null values",
+									format_type_be(ctest->resulttype))));
 				break;
 			case DOM_CONSTRAINT_CHECK:
 				{
@@ -2545,8 +2530,7 @@ ExecEvalCoerceToDomain(CoerceToDomainState *cstate, ExprContext *econtext,
 					 * Set up value to be returned by CoerceToDomainValue
 					 * nodes. We must save and restore prior setting of
 					 * econtext's domainValue fields, in case this node is
-					 * itself within a check expression for another
-					 * domain.
+					 * itself within a check expression for another domain.
 					 */
 					save_datum = econtext->domainValue_datum;
 					save_isNull = econtext->domainValue_isNull;
@@ -2647,9 +2631,9 @@ ExecEvalFieldSelect(FieldSelectState *fstate,
 	}
 
 	/*
-	 * heap_getattr needs a HeapTuple not a bare HeapTupleHeader.  We set
-	 * all the fields in the struct just in case user tries to inspect
-	 * system columns.
+	 * heap_getattr needs a HeapTuple not a bare HeapTupleHeader.  We set all
+	 * the fields in the struct just in case user tries to inspect system
+	 * columns.
 	 */
 	tmptup.t_len = HeapTupleHeaderGetDatumLength(tuple);
 	ItemPointerSetInvalid(&(tmptup.t_self));
@@ -2715,8 +2699,8 @@ ExecEvalFieldStore(FieldStoreState *fstate,
 	if (!*isNull)
 	{
 		/*
-		 * heap_deform_tuple needs a HeapTuple not a bare HeapTupleHeader.
-		 * We set all the fields in the struct just in case.
+		 * heap_deform_tuple needs a HeapTuple not a bare HeapTupleHeader. We
+		 * set all the fields in the struct just in case.
 		 */
 		HeapTupleHeader tuphdr;
 		HeapTupleData tmptup;
@@ -2749,11 +2733,11 @@ ExecEvalFieldStore(FieldStoreState *fstate,
 		Assert(fieldnum > 0 && fieldnum <= tupDesc->natts);
 
 		/*
-		 * Use the CaseTestExpr mechanism to pass down the old value of
-		 * the field being replaced; this is useful in case we have a
-		 * nested field update situation.  It's safe to reuse the CASE
-		 * mechanism because there cannot be a CASE between here and where
-		 * the value would be needed.
+		 * Use the CaseTestExpr mechanism to pass down the old value of the
+		 * field being replaced; this is useful in case we have a nested field
+		 * update situation.  It's safe to reuse the CASE mechanism because
+		 * there cannot be a CASE between here and where the value would be
+		 * needed.
 		 */
 		econtext->caseValue_datum = values[fieldnum - 1];
 		econtext->caseValue_isNull = isnull[fieldnum - 1];
@@ -2895,8 +2879,8 @@ ExecInitExpr(Expr *node, PlanState *parent)
 					/*
 					 * Complain if the aggregate's argument contains any
 					 * aggregates; nested agg functions are semantically
-					 * nonsensical.  (This should have been caught
-					 * earlier, but we defend against it here anyway.)
+					 * nonsensical.  (This should have been caught earlier,
+					 * but we defend against it here anyway.)
 					 */
 					if (naggs != aggstate->numaggs)
 						ereport(ERROR,
@@ -3020,9 +3004,8 @@ ExecInitExpr(Expr *node, PlanState *parent)
 					elog(ERROR, "SubPlan found with no parent plan");
 
 				/*
-				 * Here we just add the SubPlanState nodes to
-				 * parent->subPlan.  The subplans will be initialized
-				 * later.
+				 * Here we just add the SubPlanState nodes to parent->subPlan.
+				 * The subplans will be initialized later.
 				 */
 				parent->subPlan = lcons(sstate, parent->subPlan);
 				sstate->sub_estate = NULL;
@@ -3073,8 +3056,8 @@ ExecInitExpr(Expr *node, PlanState *parent)
 			{
 				ConvertRowtypeExpr *convert = (ConvertRowtypeExpr *) node;
 				ConvertRowtypeExprState *cstate = makeNode(ConvertRowtypeExprState);
-				int		i;
-				int		n;
+				int			i;
+				int			n;
 
 				cstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalConvertRowtype;
 				cstate->arg = ExecInitExpr(convert->arg, parent);
@@ -3095,7 +3078,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 					int			j;
 
 					if (att->attisdropped)
-						continue;	/* attrMap[i] is already 0 */
+						continue;		/* attrMap[i] is already 0 */
 					attname = NameStr(att->attname);
 					atttypid = att->atttypid;
 					atttypmod = att->atttypmod;
@@ -3111,7 +3094,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 								elog(ERROR, "attribute \"%s\" of type %s does not match corresponding attribute of type %s",
 									 attname,
 									 format_type_be(cstate->indesc->tdtypeid),
-									 format_type_be(cstate->outdesc->tdtypeid));
+								  format_type_be(cstate->outdesc->tdtypeid));
 							cstate->attrMap[i] = (AttrNumber) (j + 1);
 							break;
 						}
@@ -3217,24 +3200,24 @@ ExecInitExpr(Expr *node, PlanState *parent)
 					if (!attrs[i]->attisdropped)
 					{
 						/*
-						 * Guard against ALTER COLUMN TYPE on rowtype
-						 * since the RowExpr was created.  XXX should we
-						 * check typmod too?  Not sure we can be sure
-						 * it'll be the same.
+						 * Guard against ALTER COLUMN TYPE on rowtype since
+						 * the RowExpr was created.  XXX should we check
+						 * typmod too?	Not sure we can be sure it'll be the
+						 * same.
 						 */
 						if (exprType((Node *) e) != attrs[i]->atttypid)
 							ereport(ERROR,
 									(errcode(ERRCODE_DATATYPE_MISMATCH),
 									 errmsg("ROW() column has type %s instead of type %s",
-									format_type_be(exprType((Node *) e)),
-								   format_type_be(attrs[i]->atttypid))));
+										format_type_be(exprType((Node *) e)),
+									   format_type_be(attrs[i]->atttypid))));
 					}
 					else
 					{
 						/*
-						 * Ignore original expression and insert a NULL.
-						 * We don't really care what type of NULL it is,
-						 * so always make an int4 NULL.
+						 * Ignore original expression and insert a NULL. We
+						 * don't really care what type of NULL it is, so
+						 * always make an int4 NULL.
 						 */
 						e = (Expr *) makeNullConst(INT4OID);
 					}
@@ -3485,16 +3468,16 @@ ExecQual(List *qual, ExprContext *econtext, bool resultForNull)
 	oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
 	/*
-	 * Evaluate the qual conditions one at a time.	If we find a FALSE
-	 * result, we can stop evaluating and return FALSE --- the AND result
-	 * must be FALSE.  Also, if we find a NULL result when resultForNull
-	 * is FALSE, we can stop and return FALSE --- the AND result must be
-	 * FALSE or NULL in that case, and the caller doesn't care which.
+	 * Evaluate the qual conditions one at a time.	If we find a FALSE result,
+	 * we can stop evaluating and return FALSE --- the AND result must be
+	 * FALSE.  Also, if we find a NULL result when resultForNull is FALSE, we
+	 * can stop and return FALSE --- the AND result must be FALSE or NULL in
+	 * that case, and the caller doesn't care which.
 	 *
-	 * If we get to the end of the list, we can return TRUE.  This will
-	 * happen when the AND result is indeed TRUE, or when the AND result
-	 * is NULL (one or more NULL subresult, with all the rest TRUE) and
-	 * the caller has specified resultForNull = TRUE.
+	 * If we get to the end of the list, we can return TRUE.  This will happen
+	 * when the AND result is indeed TRUE, or when the AND result is NULL (one
+	 * or more NULL subresult, with all the rest TRUE) and the caller has
+	 * specified resultForNull = TRUE.
 	 */
 	result = true;
 
@@ -3637,8 +3620,7 @@ ExecTargetList(List *targetlist,
 		if (*isDone == ExprSingleResult)
 		{
 			/*
-			 * all sets are done, so report that tlist expansion is
-			 * complete.
+			 * all sets are done, so report that tlist expansion is complete.
 			 */
 			*isDone = ExprEndResult;
 			MemoryContextSwitchTo(oldContext);
@@ -3647,8 +3629,8 @@ ExecTargetList(List *targetlist,
 		else
 		{
 			/*
-			 * We have some done and some undone sets.	Restart the done
-			 * ones so that we can deliver a tuple (if possible).
+			 * We have some done and some undone sets.	Restart the done ones
+			 * so that we can deliver a tuple (if possible).
 			 */
 			foreach(tl, targetlist)
 			{
@@ -3666,8 +3648,8 @@ ExecTargetList(List *targetlist,
 					if (itemIsDone[resind] == ExprEndResult)
 					{
 						/*
-						 * Oh dear, this item is returning an empty set.
-						 * Guess we can't make a tuple after all.
+						 * Oh dear, this item is returning an empty set. Guess
+						 * we can't make a tuple after all.
 						 */
 						*isDone = ExprEndResult;
 						break;
@@ -3676,9 +3658,9 @@ ExecTargetList(List *targetlist,
 			}
 
 			/*
-			 * If we cannot make a tuple because some sets are empty, we
-			 * still have to cycle the nonempty sets to completion, else
-			 * resources will not be released from subplans etc.
+			 * If we cannot make a tuple because some sets are empty, we still
+			 * have to cycle the nonempty sets to completion, else resources
+			 * will not be released from subplans etc.
 			 *
 			 * XXX is that still necessary?
 			 */
@@ -3741,8 +3723,8 @@ ExecVariableList(ProjectionInfo *projInfo,
 						  projInfo->pi_lastScanVar);
 
 	/*
-	 * Assign to result by direct extraction of fields from source
-	 * slots ... a mite ugly, but fast ...
+	 * Assign to result by direct extraction of fields from source slots ... a
+	 * mite ugly, but fast ...
 	 */
 	for (i = list_length(projInfo->pi_targetlist) - 1; i >= 0; i--)
 	{
@@ -3784,10 +3766,9 @@ ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 	slot = projInfo->pi_slot;
 
 	/*
-	 * Clear any former contents of the result slot.  This makes it
-	 * safe for us to use the slot's Datum/isnull arrays as workspace.
-	 * (Also, we can return the slot as-is if we decide no rows can
-	 * be projected.)
+	 * Clear any former contents of the result slot.  This makes it safe for
+	 * us to use the slot's Datum/isnull arrays as workspace. (Also, we can
+	 * return the slot as-is if we decide no rows can be projected.)
 	 */
 	ExecClearTuple(slot);
 

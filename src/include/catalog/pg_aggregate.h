@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_aggregate.h,v 1.51 2005/04/14 01:38:20 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_aggregate.h,v 1.52 2005/10/15 02:49:42 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -148,9 +148,9 @@ DATA(insert ( 2147	int8inc		-					0	20		0 ));
 DATA(insert ( 2148	int8_accum	numeric_variance	0	1231	"{0,0,0}" ));
 DATA(insert ( 2149	int4_accum	numeric_variance	0	1231	"{0,0,0}" ));
 DATA(insert ( 2150	int2_accum	numeric_variance	0	1231	"{0,0,0}" ));
-DATA(insert ( 2151	float4_accum	float8_variance	0	1022	"{0,0,0}" ));
-DATA(insert ( 2152	float8_accum	float8_variance	0	1022	"{0,0,0}" ));
-DATA(insert ( 2153	numeric_accum  numeric_variance	0	1231	"{0,0,0}" ));
+DATA(insert ( 2151	float4_accum	float8_variance 0	1022	"{0,0,0}" ));
+DATA(insert ( 2152	float8_accum	float8_variance 0	1022	"{0,0,0}" ));
+DATA(insert ( 2153	numeric_accum  numeric_variance 0	1231	"{0,0,0}" ));
 
 /* stddev */
 DATA(insert ( 2154	int8_accum	numeric_stddev		0	1231	"{0,0,0}" ));

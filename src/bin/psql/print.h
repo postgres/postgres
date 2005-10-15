@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.h,v 1.28 2005/07/18 20:57:53 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.h,v 1.29 2005/10/15 02:49:40 momjian Exp $
  */
 #ifndef PRINT_H
 #define PRINT_H
@@ -30,23 +30,21 @@ enum printFormat
 typedef struct _printTableOpt
 {
 	enum printFormat format;	/* one of the above */
-	bool		expanded;		/* expanded/vertical output (if supported
-								 * by output format) */
+	bool		expanded;		/* expanded/vertical output (if supported by
+								 * output format) */
 	unsigned short int pager;	/* use pager for output (if to stdout and
 								 * stdout is a tty) 0=off 1=on 2=always */
 	bool		tuples_only;	/* don't output headers, row counts, etc. */
-	unsigned short int border;	/* Print a border around the table.
-								 * 0=none, 1=dividing lines, 2=full */
+	unsigned short int border;	/* Print a border around the table. 0=none,
+								 * 1=dividing lines, 2=full */
 	char	   *fieldSep;		/* field separator for unaligned text mode */
-	char	   *recordSep;		/* record separator for unaligned text
-								 * mode */
+	char	   *recordSep;		/* record separator for unaligned text mode */
 	bool		numericLocale;	/* locale-aware numeric units separator and
-								 *  decimal marker */
+								 * decimal marker */
 	char	   *tableAttr;		/* attributes for HTML <table ...> */
 	int			encoding;		/* character encoding */
-	bool		normal_query;	/* are we presenting the results of a
-								 * "normal" query, or a slash
-								 * command? */
+	bool		normal_query;	/* are we presenting the results of a "normal"
+								 * query, or a slash command? */
 } printTableOpt;
 
 
@@ -74,8 +72,7 @@ typedef struct _printQueryOpt
 	char	   *nullPrint;		/* how to print null entities */
 	bool		quote;			/* quote all values as much as possible */
 	char	   *title;			/* override title */
-	char	  **footers;		/* override footer (default is "(xx
-								 * rows)") */
+	char	  **footers;		/* override footer (default is "(xx rows)") */
 	bool		default_footer; /* print default footer if footers==NULL */
 } printQueryOpt;
 
@@ -84,10 +81,10 @@ typedef struct _printQueryOpt
  *
  * It calls the printTable above with all the things set straight.
  */
-void		printQuery(const PGresult *result, const printQueryOpt *opt,
-					   FILE *fout, FILE *flog);
+void printQuery(const PGresult *result, const printQueryOpt *opt,
+		   FILE *fout, FILE *flog);
 
-void	setDecimalLocale(void);
+void		setDecimalLocale(void);
 
 #ifndef __CYGWIN__
 #define DEFAULT_PAGER "more"

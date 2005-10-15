@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.184 2005/06/26 22:05:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.185 2005/10/15 02:49:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -278,8 +278,8 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 
 	/*
 	 * We have to split any field-selection operations apart from
-	 * subscripting.  Adjacent A_Indices nodes have to be treated as a
-	 * single multidimensional subscript operation.
+	 * subscripting.  Adjacent A_Indices nodes have to be treated as a single
+	 * multidimensional subscript operation.
 	 */
 	foreach(i, indirection)
 	{
@@ -295,7 +295,7 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 			if (subscripts)
 				result = (Node *) transformArraySubscripts(pstate,
 														   result,
-														exprType(result),
+														   exprType(result),
 														   InvalidOid,
 														   -1,
 														   subscripts,
@@ -365,10 +365,10 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					/*
 					 * Not known as a column of any range-table entry.
 					 *
-					 * Consider the possibility that it's VALUE in a domain
-					 * check expression.  (We handle VALUE as a name, not
-					 * a keyword, to avoid breaking a lot of applications
-					 * that have used VALUE as a column name in the past.)
+					 * Consider the possibility that it's VALUE in a domain check
+					 * expression.	(We handle VALUE as a name, not a keyword,
+					 * to avoid breaking a lot of applications that have used
+					 * VALUE as a column name in the past.)
 					 */
 					if (pstate->p_value_substitute != NULL &&
 						strcmp(name, "value") == 0)
@@ -379,12 +379,12 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 
 					/*
 					 * Try to find the name as a relation.	Note that only
-					 * relations already entered into the rangetable will
-					 * be recognized.
+					 * relations already entered into the rangetable will be
+					 * recognized.
 					 *
 					 * This is a hack for backwards compatibility with
-					 * PostQUEL-inspired syntax.  The preferred form now
-					 * is "rel.*".
+					 * PostQUEL-inspired syntax.  The preferred form now is
+					 * "rel.*".
 					 */
 					if (refnameRangeTblEntry(pstate, NULL, name,
 											 &levels_up) != NULL)
@@ -414,13 +414,13 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				if (node == NULL)
 				{
 					/*
-					 * Not known as a column of any range-table entry, so
-					 * try it as a function call.  Here, we will create an
+					 * Not known as a column of any range-table entry, so try
+					 * it as a function call.  Here, we will create an
 					 * implicit RTE for tables not already entered.
 					 */
 					node = transformWholeRowRef(pstate, NULL, name1);
 					node = ParseFuncOrColumn(pstate,
-										   list_make1(makeString(name2)),
+											 list_make1(makeString(name2)),
 											 list_make1(node),
 											 false, false, true);
 				}
@@ -446,7 +446,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					/* Try it as a function call */
 					node = transformWholeRowRef(pstate, name1, name2);
 					node = ParseFuncOrColumn(pstate,
-										   list_make1(makeString(name3)),
+											 list_make1(makeString(name3)),
 											 list_make1(node),
 											 false, false, true);
 				}
@@ -482,7 +482,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					/* Try it as a function call */
 					node = transformWholeRowRef(pstate, name2, name3);
 					node = ParseFuncOrColumn(pstate,
-										   list_make1(makeString(name4)),
+											 list_make1(makeString(name4)),
 											 list_make1(node),
 											 false, false, true);
 				}
@@ -491,8 +491,8 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-			errmsg("improper qualified name (too many dotted names): %s",
-				   NameListToString(cref->fields))));
+				errmsg("improper qualified name (too many dotted names): %s",
+					   NameListToString(cref->fields))));
 			node = NULL;		/* keep compiler quiet */
 			break;
 	}
@@ -515,7 +515,7 @@ transformParamRef(ParseState *pstate, ParamRef *pref)
 		toppstate = toppstate->parentParseState;
 
 	/* Check parameter number is in range */
-	if (paramno <= 0)		/* probably can't happen? */
+	if (paramno <= 0)			/* probably can't happen? */
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_PARAMETER),
 				 errmsg("there is no parameter $%d", paramno)));
@@ -563,9 +563,9 @@ transformAExprOp(ParseState *pstate, A_Expr *a)
 	Node	   *result;
 
 	/*
-	 * Special-case "foo = NULL" and "NULL = foo" for compatibility
-	 * with standards-broken products (like Microsoft's).  Turn these
-	 * into IS NULL exprs.
+	 * Special-case "foo = NULL" and "NULL = foo" for compatibility with
+	 * standards-broken products (like Microsoft's).  Turn these into IS NULL
+	 * exprs.
 	 */
 	if (Transform_null_equals &&
 		list_length(a->name) == 1 &&
@@ -588,10 +588,9 @@ transformAExprOp(ParseState *pstate, A_Expr *a)
 			 ((SubLink *) rexpr)->subLinkType == EXPR_SUBLINK)
 	{
 		/*
-		 * Convert "row op subselect" into a MULTIEXPR sublink.
-		 * Formerly the grammar did this, but now that a row construct
-		 * is allowed anywhere in expressions, it's easier to do it
-		 * here.
+		 * Convert "row op subselect" into a MULTIEXPR sublink. Formerly the
+		 * grammar did this, but now that a row construct is allowed anywhere
+		 * in expressions, it's easier to do it here.
 		 */
 		SubLink    *s = (SubLink *) rexpr;
 
@@ -738,8 +737,8 @@ static Node *
 transformAExprOf(ParseState *pstate, A_Expr *a)
 {
 	/*
-	 * Checking an expression for match to type.  Will result in a
-	 * boolean constant node.
+	 * Checking an expression for match to type.  Will result in a boolean
+	 * constant node.
 	 */
 	ListCell   *telem;
 	A_Const    *n;
@@ -758,8 +757,8 @@ transformAExprOf(ParseState *pstate, A_Expr *a)
 	}
 
 	/*
-	 * Expect two forms: equals or not equals.  Flip the sense of the
-	 * result for not equals.
+	 * Expect two forms: equals or not equals.	Flip the sense of the result
+	 * for not equals.
 	 */
 	if (strcmp(strVal(linitial(a->name)), "!=") == 0)
 		matched = (!matched);
@@ -779,12 +778,11 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 	ListCell   *args;
 
 	/*
-	 * Transform the list of arguments.  We use a shallow list copy
-	 * and then transform-in-place to avoid O(N^2) behavior from
-	 * repeated lappend's.
+	 * Transform the list of arguments.  We use a shallow list copy and then
+	 * transform-in-place to avoid O(N^2) behavior from repeated lappend's.
 	 *
-	 * XXX: repeated lappend() would no longer result in O(n^2)
-	 * behavior; worth reconsidering this design?
+	 * XXX: repeated lappend() would no longer result in O(n^2) behavior; worth
+	 * reconsidering this design?
 	 */
 	targs = list_copy(fn->args);
 	foreach(args, targs)
@@ -826,11 +824,11 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 	if (arg)
 	{
 		/*
-		 * If test expression is an untyped literal, force it to text.
-		 * We have to do something now because we won't be able to do
-		 * this coercion on the placeholder.  This is not as flexible
-		 * as what was done in 7.4 and before, but it's good enough to
-		 * handle the sort of silly coding commonly seen.
+		 * If test expression is an untyped literal, force it to text. We have
+		 * to do something now because we won't be able to do this coercion on
+		 * the placeholder.  This is not as flexible as what was done in 7.4
+		 * and before, but it's good enough to handle the sort of silly coding
+		 * commonly seen.
 		 */
 		if (exprType(arg) == UNKNOWNOID)
 			arg = coerce_to_common_type(pstate, arg, TEXTOID, "CASE");
@@ -891,9 +889,8 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 
 	/*
 	 * Note: default result is considered the most significant type in
-	 * determining preferred type. This is how the code worked before,
-	 * but it seems a little bogus to me
-	 * --- tgl
+	 * determining preferred type. This is how the code worked before, but it
+	 * seems a little bogus to me --- tgl
 	 */
 	typeids = lcons_oid(exprType((Node *) newc->defresult), typeids);
 
@@ -947,8 +944,8 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 	if (sublink->subLinkType == EXISTS_SUBLINK)
 	{
 		/*
-		 * EXISTS needs no lefthand or combining operator.  These
-		 * fields should be NIL already, but make sure.
+		 * EXISTS needs no lefthand or combining operator.	These fields
+		 * should be NIL already, but make sure.
 		 */
 		sublink->lefthand = NIL;
 		sublink->operName = NIL;
@@ -961,8 +958,8 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		ListCell   *tlist_item = list_head(qtree->targetList);
 
 		/*
-		 * Make sure the subselect delivers a single column (ignoring
-		 * resjunk targets).
+		 * Make sure the subselect delivers a single column (ignoring resjunk
+		 * targets).
 		 */
 		if (tlist_item == NULL ||
 			((TargetEntry *) lfirst(tlist_item))->resjunk)
@@ -978,9 +975,8 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		}
 
 		/*
-		 * EXPR and ARRAY need no lefthand or combining
-		 * operator. These fields should be NIL already, but make
-		 * sure.
+		 * EXPR and ARRAY need no lefthand or combining operator. These fields
+		 * should be NIL already, but make sure.
 		 */
 		sublink->lefthand = NIL;
 		sublink->operName = NIL;
@@ -1004,9 +1000,9 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 			lfirst(l) = transformExpr(pstate, lfirst(l));
 
 		/*
-		 * If the expression is "<> ALL" (with unqualified opname)
-		 * then convert it to "NOT IN".  This is a hack to improve
-		 * efficiency of expressions output by pre-7.4 Postgres.
+		 * If the expression is "<> ALL" (with unqualified opname) then
+		 * convert it to "NOT IN".	This is a hack to improve efficiency of
+		 * expressions output by pre-7.4 Postgres.
 		 */
 		if (sublink->subLinkType == ALL_SUBLINK &&
 			list_length(op) == 1 && strcmp(opname, "<>") == 0)
@@ -1035,10 +1031,10 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 
 		/*
 		 * To build the list of combining operator OIDs, we must scan
-		 * subquery's targetlist to find values that will be matched
-		 * against lefthand values.  We need to ignore resjunk
-		 * targets, so doing the outer iteration over right_list is
-		 * easier than doing it over left_list.
+		 * subquery's targetlist to find values that will be matched against
+		 * lefthand values.  We need to ignore resjunk targets, so doing the
+		 * outer iteration over right_list is easier than doing it over
+		 * left_list.
 		 */
 		sublink->operOids = NIL;
 
@@ -1061,9 +1057,8 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 			ll_item = lnext(ll_item);
 
 			/*
-			 * It's OK to use oper() not compatible_oper() here,
-			 * because make_subplan() will insert type coercion calls
-			 * if needed.
+			 * It's OK to use oper() not compatible_oper() here, because
+			 * make_subplan() will insert type coercion calls if needed.
 			 */
 			optup = oper(op,
 						 exprType(lexpr),
@@ -1074,9 +1069,9 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 			if (opform->oprresult != BOOLOID)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("operator %s must return type boolean, not type %s",
-								opname,
-								format_type_be(opform->oprresult)),
+				  errmsg("operator %s must return type boolean, not type %s",
+						 opname,
+						 format_type_be(opform->oprresult)),
 						 errhint("The operator of a quantified predicate subquery must return type boolean.")));
 
 			if (get_func_retset(opform->oprcode))
@@ -1300,7 +1295,7 @@ transformBooleanTest(ParseState *pstate, BooleanTest *b)
 		default:
 			elog(ERROR, "unrecognized booltesttype: %d",
 				 (int) b->booltesttype);
-			clausename = NULL;		/* keep compiler quiet */
+			clausename = NULL;	/* keep compiler quiet */
 	}
 
 	b->arg = (Expr *) transformExpr(pstate, (Node *) b->arg);
@@ -1385,10 +1380,10 @@ transformWholeRowRef(ParseState *pstate, char *schemaname, char *relname)
 		default:
 
 			/*
-			 * RTE is a join or subselect.	We represent this as a
-			 * whole-row Var of RECORD type.  (Note that in most cases the
-			 * Var will be expanded to a RowExpr during planning, but that
-			 * is not our concern here.)
+			 * RTE is a join or subselect.	We represent this as a whole-row
+			 * Var of RECORD type.	(Note that in most cases the Var will be
+			 * expanded to a RowExpr during planning, but that is not our
+			 * concern here.)
 			 */
 			result = (Node *) makeVar(vnum,
 									  InvalidAttrNumber,
@@ -1469,7 +1464,7 @@ exprType(Node *expr)
 							ereport(ERROR,
 									(errcode(ERRCODE_UNDEFINED_OBJECT),
 									 errmsg("could not find array type for data type %s",
-											format_type_be(exprType((Node *) tent->expr)))));
+							format_type_be(exprType((Node *) tent->expr)))));
 					}
 				}
 				else
@@ -1482,10 +1477,9 @@ exprType(Node *expr)
 		case T_SubPlan:
 			{
 				/*
-				 * Although the parser does not ever deal with
-				 * already-planned expression trees, we support SubPlan
-				 * nodes in this routine for the convenience of
-				 * ruleutils.c.
+				 * Although the parser does not ever deal with already-planned
+				 * expression trees, we support SubPlan nodes in this routine
+				 * for the convenience of ruleutils.c.
 				 */
 				SubPlan    *subplan = (SubPlan *) expr;
 
@@ -1506,7 +1500,7 @@ exprType(Node *expr)
 							ereport(ERROR,
 									(errcode(ERRCODE_UNDEFINED_OBJECT),
 									 errmsg("could not find array type for data type %s",
-											format_type_be(exprType((Node *) tent->expr)))));
+							format_type_be(exprType((Node *) tent->expr)))));
 					}
 				}
 				else
@@ -1600,7 +1594,7 @@ exprTypmod(Node *expr)
 					case BPCHAROID:
 						if (!con->constisnull)
 						{
-							int32 len = VARSIZE(DatumGetPointer(con->constvalue)) - VARHDRSZ;
+							int32		len = VARSIZE(DatumGetPointer(con->constvalue)) - VARHDRSZ;
 
 							/* if multi-byte, take len and find # characters */
 							if (pg_database_encoding_max_length() > 1)
@@ -1629,8 +1623,8 @@ exprTypmod(Node *expr)
 		case T_CaseExpr:
 			{
 				/*
-				 * If all the alternatives agree on type/typmod, return
-				 * that typmod, else use -1
+				 * If all the alternatives agree on type/typmod, return that
+				 * typmod, else use -1
 				 */
 				CaseExpr   *cexpr = (CaseExpr *) expr;
 				Oid			casetype = cexpr->casetype;
@@ -1662,8 +1656,8 @@ exprTypmod(Node *expr)
 		case T_CoalesceExpr:
 			{
 				/*
-				 * If all the alternatives agree on type/typmod, return
-				 * that typmod, else use -1
+				 * If all the alternatives agree on type/typmod, return that
+				 * typmod, else use -1
 				 */
 				CoalesceExpr *cexpr = (CoalesceExpr *) expr;
 				Oid			coalescetype = cexpr->coalescetype;
@@ -1686,8 +1680,8 @@ exprTypmod(Node *expr)
 		case T_MinMaxExpr:
 			{
 				/*
-				 * If all the alternatives agree on type/typmod, return
-				 * that typmod, else use -1
+				 * If all the alternatives agree on type/typmod, return that
+				 * typmod, else use -1
 				 */
 				MinMaxExpr *mexpr = (MinMaxExpr *) expr;
 				Oid			minmaxtype = mexpr->minmaxtype;
@@ -1760,9 +1754,9 @@ exprIsLengthCoercion(Node *expr, int32 *coercedTypmod)
 		return false;
 
 	/*
-	 * If it's not a two-argument or three-argument function with the
-	 * second argument being an int4 constant, it can't have been created
-	 * from a length coercion (it must be a type coercion, instead).
+	 * If it's not a two-argument or three-argument function with the second
+	 * argument being an int4 constant, it can't have been created from a
+	 * length coercion (it must be a type coercion, instead).
 	 */
 	nargs = list_length(func->args);
 	if (nargs < 2 || nargs > 3)
@@ -1844,9 +1838,9 @@ make_row_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree)
 				 errmsg("unequal number of entries in row expression")));
 
 	/*
-	 * XXX it's really wrong to generate a simple AND combination for < <=
-	 * > >=.  We probably need to invent a new runtime node type to handle
-	 * those correctly.  For the moment, though, keep on doing this ...
+	 * XXX it's really wrong to generate a simple AND combination for < <= >
+	 * >=.	We probably need to invent a new runtime node type to handle those
+	 * correctly.  For the moment, though, keep on doing this ...
 	 */
 	oprname = strVal(llast(opname));
 
@@ -1862,8 +1856,8 @@ make_row_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("operator %s is not supported for row expressions",
-					  oprname)));
+				 errmsg("operator %s is not supported for row expressions",
+						oprname)));
 		boolop = 0;				/* keep compiler quiet */
 	}
 
@@ -1957,7 +1951,7 @@ make_distinct_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree)
 	if (((OpExpr *) result)->opresulttype != BOOLOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-		errmsg("IS DISTINCT FROM requires = operator to yield boolean")));
+		   errmsg("IS DISTINCT FROM requires = operator to yield boolean")));
 
 	/*
 	 * We rely on DistinctExpr and OpExpr being same struct

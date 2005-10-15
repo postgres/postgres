@@ -62,7 +62,7 @@
  * causing nasty effects.
  **************************************************************/
 
-/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.28 2005/07/28 04:03:14 tgl Exp $";*/
+/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.29 2005/10/15 02:49:51 momjian Exp $";*/
 
 static void dopr(char *buffer, const char *format, va_list args, char *end);
 
@@ -140,16 +140,16 @@ pg_printf(const char *fmt,...)
 	va_start(args, fmt);
 	len = pg_vsnprintf(buffer, (size_t) 4096, fmt, args);
 	va_end(args);
-	
+
 	for (p = buffer; *p; p++)
 		putchar(*p);
 	return len;
 }
 
-static int adjust_sign(int is_negative, int forcesign, int *signvalue);
+static int	adjust_sign(int is_negative, int forcesign, int *signvalue);
 static void adjust_padlen(int minlen, int vallen, int leftjust, int *padlen);
 static void leading_pad(int zpad, int *signvalue, int *padlen, char *end,
-				 char **output);
+			char **output);
 static void trailing_pad(int *padlen, char *end, char **output);
 
 static void fmtstr(char *value, int leftjust, int minlen, int maxwidth,
@@ -157,8 +157,8 @@ static void fmtstr(char *value, int leftjust, int minlen, int maxwidth,
 static void fmtint(int64 value, int base, int dosign, int forcesign,
 	   int leftjust, int minlen, int zpad, char *end, char **output);
 static void fmtfloat(double value, char type, int forcesign,
-	   int leftjust, int minlen, int zpad, int precision, int pointflag, char *end,
-	   char **output);
+ int leftjust, int minlen, int zpad, int precision, int pointflag, char *end,
+		 char **output);
 static void dostr(char *str, int cut, char *end, char **output);
 static void dopr_outch(int c, char *end, char **output);
 
@@ -221,9 +221,9 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 	}		   *fmtpar, **fmtparptr;
 
 	/*
-	 * Create enough structures to hold all arguments.  This overcounts,
-	 * eg not all '*' characters are necessarily arguments, but it's not
-	 * worth being exact.
+	 * Create enough structures to hold all arguments.	This overcounts, eg
+	 * not all '*' characters are necessarily arguments, but it's not worth
+	 * being exact.
 	 */
 	for (p = format; *p != '\0'; p++)
 		if (*p == '%' || *p == '*')
@@ -504,8 +504,8 @@ performpr:
 				break;
 			case FMTLEN:
 				{
-					int minlen = va_arg(args, int);
-					int leftjust = 0;
+					int			minlen = va_arg(args, int);
+					int			leftjust = 0;
 
 					if (minlen < 0)
 					{
@@ -563,10 +563,10 @@ performpr:
 						break;
 					case FMTFLOAT:
 						fmtfloat(fmtparptr[i]->fvalue, fmtparptr[i]->type,
-							   fmtparptr[i]->forcesign, fmtparptr[i]->leftjust,
-							   fmtparptr[i]->minlen, fmtparptr[i]->zpad,
-							   fmtparptr[i]->precision, fmtparptr[i]->pointflag,
-							   end, &output);
+							 fmtparptr[i]->forcesign, fmtparptr[i]->leftjust,
+								 fmtparptr[i]->minlen, fmtparptr[i]->zpad,
+							fmtparptr[i]->precision, fmtparptr[i]->pointflag,
+								 end, &output);
 						break;
 					case FMTCHAR:
 						dopr_outch(fmtparptr[i]->charvalue, end, &output);
@@ -626,7 +626,7 @@ fmtint(int64 value, int base, int dosign, int forcesign, int leftjust,
 
 	/* Handle +/- and %X (uppercase hex) */
 	if (dosign && adjust_sign((value < 0), forcesign, &signvalue))
-			value = -value;
+		value = -value;
 	if (base < 0)
 	{
 		caps = 1;
@@ -645,7 +645,7 @@ fmtint(int64 value, int base, int dosign, int forcesign, int leftjust,
 	adjust_padlen(minlen, vallen, leftjust, &padlen);
 
 	leading_pad(zpad, &signvalue, &padlen, end, output);
-	
+
 	while (vallen > 0)
 		dopr_outch(convert[--vallen], end, output);
 
@@ -670,7 +670,7 @@ fmtfloat(double value, char type, int forcesign, int leftjust,
 		sprintf(fmt, "%%%c", type);
 
 	if (adjust_sign((value < 0), forcesign, &signvalue))
-			value = -value;
+		value = -value;
 
 	vallen = sprintf(convert, fmt, value);
 
@@ -761,7 +761,7 @@ leading_pad(int zpad, int *signvalue, int *padlen, char *end, char **output)
 	{
 		dopr_outch(*signvalue, end, output);
 		if (*padlen > 0)
-			--*padlen;
+			--* padlen;
 		if (padlen < 0)
 			++padlen;
 	}
@@ -777,4 +777,3 @@ trailing_pad(int *padlen, char *end, char **output)
 		++*padlen;
 	}
 }
-

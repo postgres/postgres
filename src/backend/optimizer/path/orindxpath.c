@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.74 2005/07/28 20:26:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.75 2005/10/15 02:49:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,14 +99,14 @@ create_or_index_quals(PlannerInfo *root, RelOptInfo *rel)
 		if (restriction_is_or_clause(rinfo))
 		{
 			/*
-			 * Use the generate_bitmap_or_paths() machinery to estimate
-			 * the value of each OR clause.  We can use regular
-			 * restriction clauses along with the OR clause contents to
-			 * generate indexquals.  We pass outer_relids = NULL so that
-			 * sub-clauses that are actually joins will be ignored.
+			 * Use the generate_bitmap_or_paths() machinery to estimate the
+			 * value of each OR clause.  We can use regular restriction
+			 * clauses along with the OR clause contents to generate
+			 * indexquals.	We pass outer_relids = NULL so that sub-clauses
+			 * that are actually joins will be ignored.
 			 */
-			List *orpaths;
-			ListCell *k;
+			List	   *orpaths;
+			ListCell   *k;
 
 			orpaths = generate_bitmap_or_paths(root, rel,
 											   list_make1(rinfo),
@@ -116,7 +116,7 @@ create_or_index_quals(PlannerInfo *root, RelOptInfo *rel)
 			/* Locate the cheapest OR path */
 			foreach(k, orpaths)
 			{
-				BitmapOrPath   *path = (BitmapOrPath *) lfirst(k);
+				BitmapOrPath *path = (BitmapOrPath *) lfirst(k);
 
 				Assert(IsA(path, BitmapOrPath));
 				if (bestpath == NULL ||
@@ -134,8 +134,8 @@ create_or_index_quals(PlannerInfo *root, RelOptInfo *rel)
 		return false;
 
 	/*
-	 * Convert the path's indexclauses structure to a RestrictInfo tree.
-	 * We include any partial-index predicates so as to get a reasonable
+	 * Convert the path's indexclauses structure to a RestrictInfo tree. We
+	 * include any partial-index predicates so as to get a reasonable
 	 * representation of what the path is actually scanning.
 	 */
 	newrinfos = make_restrictinfo_from_bitmapqual((Path *) bestpath,
@@ -155,12 +155,12 @@ create_or_index_quals(PlannerInfo *root, RelOptInfo *rel)
 	rel->baserestrictinfo = list_concat(rel->baserestrictinfo, newrinfos);
 
 	/*
-	 * Adjust the original OR clause's cached selectivity to compensate
-	 * for the selectivity of the added (but redundant) lower-level qual.
-	 * This should result in the join rel getting approximately the same
-	 * rows estimate as it would have gotten without all these
-	 * shenanigans. (XXX major hack alert ... this depends on the
-	 * assumption that the selectivity will stay cached ...)
+	 * Adjust the original OR clause's cached selectivity to compensate for
+	 * the selectivity of the added (but redundant) lower-level qual. This
+	 * should result in the join rel getting approximately the same rows
+	 * estimate as it would have gotten without all these shenanigans. (XXX
+	 * major hack alert ... this depends on the assumption that the
+	 * selectivity will stay cached ...)
 	 */
 	or_selec = clause_selectivity(root, (Node *) or_rinfo,
 								  0, JOIN_INNER);

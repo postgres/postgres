@@ -87,7 +87,7 @@ gbt_text_compress(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 
-	if ( tinfo.eml == 0 )
+	if (tinfo.eml == 0)
 	{
 		tinfo.eml = pg_database_encoding_max_length();
 	}
@@ -102,7 +102,7 @@ gbt_bpchar_compress(PG_FUNCTION_ARGS)
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	GISTENTRY  *retval;
 
-	if ( tinfo.eml == 0 )
+	if (tinfo.eml == 0)
 	{
 		tinfo.eml = pg_database_encoding_max_length();
 	}
@@ -111,7 +111,7 @@ gbt_bpchar_compress(PG_FUNCTION_ARGS)
 	{
 
 		Datum		d = DirectFunctionCall1(rtrim1, entry->key);
-		GISTENTRY  	trim;
+		GISTENTRY	trim;
 
 		gistentryinit(trim, d,
 					  entry->rel, entry->page,
@@ -136,7 +136,7 @@ gbt_text_consistent(PG_FUNCTION_ARGS)
 	bool		retval = FALSE;
 	GBT_VARKEY_R r = gbt_var_key_readable(key);
 
-	if ( tinfo.eml == 0 )
+	if (tinfo.eml == 0)
 	{
 		tinfo.eml = pg_database_encoding_max_length();
 	}
@@ -158,7 +158,7 @@ gbt_bpchar_consistent(PG_FUNCTION_ARGS)
 	bool		retval;
 	GBT_VARKEY_R r = gbt_var_key_readable(key);
 
-	if ( tinfo.eml == 0 )
+	if (tinfo.eml == 0)
 	{
 		tinfo.eml = pg_database_encoding_max_length();
 	}

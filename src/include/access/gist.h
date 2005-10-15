@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/gist.h,v 1.49 2005/06/30 17:52:14 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/access/gist.h,v 1.50 2005/10/15 02:49:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,11 +45,12 @@ typedef XLogRecPtr GistNSN;
 
 typedef struct GISTPageOpaqueData
 {
-	uint32		flags; /* 29 bits are unused for now */ 
-	BlockNumber	rightlink;
+	uint32		flags;			/* 29 bits are unused for now */
+	BlockNumber rightlink;
 
-   /* the only meaning - change this value if
-      page split. */
+	/*
+	 * the only meaning - change this value if page split.
+	 */
 	GistNSN		nsn;
 } GISTPageOpaqueData;
 
@@ -99,19 +100,19 @@ typedef struct GISTENTRY
 	bool		leafkey;
 } GISTENTRY;
 
-#define	GistPageGetOpaque(page)	( (GISTPageOpaque) PageGetSpecialPointer(page) )
+#define GistPageGetOpaque(page) ( (GISTPageOpaque) PageGetSpecialPointer(page) )
 
 #define GistPageIsLeaf(page)	( GistPageGetOpaque(page)->flags & F_LEAF)
 #define GIST_LEAF(entry) (GistPageIsLeaf((entry)->page))
 #define GistPageSetLeaf(page)	( GistPageGetOpaque(page)->flags |= F_LEAF)
-#define GistPageSetNonLeaf(page) 	( GistPageGetOpaque(page)->flags &= ~F_LEAF)
+#define GistPageSetNonLeaf(page)	( GistPageGetOpaque(page)->flags &= ~F_LEAF)
 
-#define GistPageIsDeleted(page)	( GistPageGetOpaque(page)->flags & F_DELETED)
+#define GistPageIsDeleted(page) ( GistPageGetOpaque(page)->flags & F_DELETED)
 #define GistPageSetDeleted(page)	( GistPageGetOpaque(page)->flags |= F_DELETED)
-#define GistPageSetNonDeleted(page)	( GistPageGetOpaque(page)->flags &= ~F_DELETED)
+#define GistPageSetNonDeleted(page) ( GistPageGetOpaque(page)->flags &= ~F_DELETED)
 
-#define GistTuplesDeleted(page)	( GistPageGetOpaque(page)->flags & F_TUPLES_DELETED)
-#define GistMarkTuplesDeleted(page)	( GistPageGetOpaque(page)->flags |= F_TUPLES_DELETED)
+#define GistTuplesDeleted(page) ( GistPageGetOpaque(page)->flags & F_TUPLES_DELETED)
+#define GistMarkTuplesDeleted(page) ( GistPageGetOpaque(page)->flags |= F_TUPLES_DELETED)
 #define GistClearTuplesDeleted(page)	( GistPageGetOpaque(page)->flags &= ~F_TUPLES_DELETED)
 
 /*

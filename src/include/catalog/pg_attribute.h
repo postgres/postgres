@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.118 2005/06/28 05:09:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.119 2005/10/15 02:49:42 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -43,41 +43,40 @@
 
 CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS
 {
-	Oid			attrelid;		/* OID of relation containing this
-								 * attribute */
+	Oid			attrelid;		/* OID of relation containing this attribute */
 	NameData	attname;		/* name of attribute */
 
 	/*
 	 * atttypid is the OID of the instance in Catalog Class pg_type that
-	 * defines the data type of this attribute (e.g. int4).  Information
-	 * in that instance is redundant with the attlen, attbyval, and
-	 * attalign attributes of this instance, so they had better match or
-	 * Postgres will fail.
+	 * defines the data type of this attribute (e.g. int4).  Information in
+	 * that instance is redundant with the attlen, attbyval, and attalign
+	 * attributes of this instance, so they had better match or Postgres will
+	 * fail.
 	 */
 	Oid			atttypid;
 
 	/*
-	 * attstattarget is the target number of statistics datapoints to
-	 * collect during VACUUM ANALYZE of this column.  A zero here
-	 * indicates that we do not wish to collect any stats about this
-	 * column. A "-1" here indicates that no value has been explicitly set
-	 * for this column, so ANALYZE should use the default setting.
+	 * attstattarget is the target number of statistics datapoints to collect
+	 * during VACUUM ANALYZE of this column.  A zero here indicates that we do
+	 * not wish to collect any stats about this column. A "-1" here indicates
+	 * that no value has been explicitly set for this column, so ANALYZE
+	 * should use the default setting.
 	 */
 	int4		attstattarget;
 
 	/*
-	 * attlen is a copy of the typlen field from pg_type for this
-	 * attribute.  See atttypid comments above.
+	 * attlen is a copy of the typlen field from pg_type for this attribute.
+	 * See atttypid comments above.
 	 */
 	int2		attlen;
 
 	/*
 	 * attnum is the "attribute number" for the attribute:	A value that
 	 * uniquely identifies this attribute within its class. For user
-	 * attributes, Attribute numbers are greater than 0 and not greater
-	 * than the number of attributes in the class. I.e. if the Class
-	 * pg_class says that Class XYZ has 10 attributes, then the user
-	 * attribute numbers in Class pg_attribute must be 1-10.
+	 * attributes, Attribute numbers are greater than 0 and not greater than
+	 * the number of attributes in the class. I.e. if the Class pg_class says
+	 * that Class XYZ has 10 attributes, then the user attribute numbers in
+	 * Class pg_attribute must be 1-10.
 	 *
 	 * System attributes have attribute numbers less than 0 that are unique
 	 * within the class, but not constrained to any particular range.
@@ -93,20 +92,19 @@ CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS
 	int4		attndims;
 
 	/*
-	 * fastgetattr() uses attcacheoff to cache byte offsets of attributes
-	 * in heap tuples.	The value actually stored in pg_attribute (-1)
-	 * indicates no cached value.  But when we copy these tuples into a
-	 * tuple descriptor, we may then update attcacheoff in the copies.
-	 * This speeds up the attribute walking process.
+	 * fastgetattr() uses attcacheoff to cache byte offsets of attributes in
+	 * heap tuples.  The value actually stored in pg_attribute (-1) indicates
+	 * no cached value.  But when we copy these tuples into a tuple
+	 * descriptor, we may then update attcacheoff in the copies. This speeds
+	 * up the attribute walking process.
 	 */
 	int4		attcacheoff;
 
 	/*
-	 * atttypmod records type-specific data supplied at table creation
-	 * time (for example, the max length of a varchar field).  It is
-	 * passed to type-specific input and output functions as the third
-	 * argument. The value will generally be -1 for types that do not need
-	 * typmod.
+	 * atttypmod records type-specific data supplied at table creation time
+	 * (for example, the max length of a varchar field).  It is passed to
+	 * type-specific input and output functions as the third argument. The
+	 * value will generally be -1 for types that do not need typmod.
 	 */
 	int4		atttypmod;
 
@@ -296,7 +294,7 @@ DATA(insert ( 1247 tableoid			26 0  4  -7 0 -1 -1 t p i t f f t 0));
 { 1255, {"pronargs"},			21, -1, 2, 10, 0, -1, -1, true, 'p', 's', true, false, false, true, 0 }, \
 { 1255, {"prorettype"},			26, -1, 4, 11, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1255, {"proargtypes"},		30, -1, -1, 12, 1, -1, -1, false, 'p', 'i', true, false, false, true, 0 }, \
-{ 1255, {"proallargtypes"},	  1028, -1, -1, 13, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
+{ 1255, {"proallargtypes"},   1028, -1, -1, 13, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
 { 1255, {"proargmodes"},	  1002, -1, -1, 14, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
 { 1255, {"proargnames"},	  1009, -1, -1, 15, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
 { 1255, {"prosrc"},				25, -1, -1, 16, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \

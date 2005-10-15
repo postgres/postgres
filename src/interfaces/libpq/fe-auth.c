@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.104 2005/10/08 19:32:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.105 2005/10/15 02:49:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,8 @@
  */
 
 #define STARTUP_MSG		7		/* Initialise a connection */
-#define STARTUP_KRB4_MSG	10	/* krb4 session follows. Not supported any more. */
+#define STARTUP_KRB4_MSG	10	/* krb4 session follows. Not supported any
+								 * more. */
 #define STARTUP_KRB5_MSG	11	/* krb5 session follows */
 #define STARTUP_PASSWORD_MSG	14		/* Password follows */
 
@@ -139,7 +140,7 @@ pg_an_to_ln(char *aname)
 	if ((p = strchr(aname, '/')) || (p = strchr(aname, '@')))
 		*p = '\0';
 #ifdef WIN32
-	for (p = aname; *p ; p++)
+	for (p = aname; *p; p++)
 		*p = pg_tolower(*p);
 #endif
 
@@ -265,9 +266,9 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname, const char *s
 	}
 
 	/*
-	 * libpq uses a non-blocking socket. But kerberos needs a blocking
-	 * socket, and we have to block somehow to do mutual authentication
-	 * anyway. So we temporarily make it blocking.
+	 * libpq uses a non-blocking socket. But kerberos needs a blocking socket,
+	 * and we have to block somehow to do mutual authentication anyway. So we
+	 * temporarily make it blocking.
 	 */
 	if (!pg_set_block(sock))
 	{
@@ -291,11 +292,11 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname, const char *s
 		{
 #if defined(HAVE_KRB5_ERROR_TEXT_DATA)
 			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			  libpq_gettext("Kerberos 5 authentication rejected: %*s\n"),
+				  libpq_gettext("Kerberos 5 authentication rejected: %*s\n"),
 					 (int) err_ret->text.length, err_ret->text.data);
 #elif defined(HAVE_KRB5_ERROR_E_DATA)
 			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			  libpq_gettext("Kerberos 5 authentication rejected: %*s\n"),
+				  libpq_gettext("Kerberos 5 authentication rejected: %*s\n"),
 					 (int) err_ret->e_data->length,
 					 (const char *) err_ret->e_data->data);
 #else
@@ -321,7 +322,7 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname, const char *s
 		char		sebuf[256];
 
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 libpq_gettext("could not restore non-blocking mode on socket: %s\n"),
+		libpq_gettext("could not restore non-blocking mode on socket: %s\n"),
 				 pqStrerror(errno, sebuf, sizeof(sebuf)));
 		ret = STATUS_ERROR;
 	}
@@ -355,8 +356,8 @@ pg_local_sendauth(char *PQerrormsg, PGconn *conn)
 #endif
 
 	/*
-	 * The backend doesn't care what we send here, but it wants exactly
-	 * one character to force recvmsg() to block and wait for us.
+	 * The backend doesn't care what we send here, but it wants exactly one
+	 * character to force recvmsg() to block and wait for us.
 	 */
 	buf = '\0';
 	iov.iov_base = &buf;
@@ -388,7 +389,7 @@ pg_local_sendauth(char *PQerrormsg, PGconn *conn)
 	return STATUS_OK;
 #else
 	snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-		libpq_gettext("SCM_CRED authentication method not supported\n"));
+			 libpq_gettext("SCM_CRED authentication method not supported\n"));
 	return STATUS_ERROR;
 #endif
 }
@@ -473,7 +474,7 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 
 		case AUTH_REQ_KRB4:
 			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			 libpq_gettext("Kerberos 4 authentication not supported\n"));
+				 libpq_gettext("Kerberos 4 authentication not supported\n"));
 			return STATUS_ERROR;
 
 		case AUTH_REQ_KRB5:
@@ -490,7 +491,7 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 			break;
 #else
 			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			 libpq_gettext("Kerberos 5 authentication not supported\n"));
+				 libpq_gettext("Kerberos 5 authentication not supported\n"));
 			return STATUS_ERROR;
 #endif
 
@@ -506,7 +507,7 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 			if (pg_password_sendauth(conn, password, areq) != STATUS_OK)
 			{
 				(void) snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "fe_sendauth: error sending password authentication\n");
+					 "fe_sendauth: error sending password authentication\n");
 				return STATUS_ERROR;
 			}
 			break;
@@ -518,7 +519,7 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 
 		default:
 			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-					 libpq_gettext("authentication method %u not supported\n"), areq);
+			libpq_gettext("authentication method %u not supported\n"), areq);
 			return STATUS_ERROR;
 	}
 
@@ -587,6 +588,7 @@ fe_getauthname(char *PQerrormsg)
 	const char *name = NULL;
 	char	   *authn;
 	MsgType		authsvc;
+
 #ifdef WIN32
 	char		username[128];
 	DWORD		namesize = sizeof(username) - 1;
@@ -623,7 +625,7 @@ fe_getauthname(char *PQerrormsg)
 
 	if (authsvc != STARTUP_MSG && authsvc != STARTUP_KRB5_MSG)
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 libpq_gettext("fe_getauthname: invalid authentication system: %d\n"),
+		libpq_gettext("fe_getauthname: invalid authentication system: %d\n"),
 				 authsvc);
 
 	authn = name ? strdup(name) : NULL;

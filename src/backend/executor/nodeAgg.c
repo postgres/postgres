@@ -53,7 +53,7 @@
  *	  pass-by-ref inputs, but in the aggregate case we know the left input is
  *	  either the initial transition value or a previous function result, and
  *	  in either case its value need not be preserved.  See int8inc() for an
- *	  example.  Notice that advance_transition_function() is coded to avoid a
+ *	  example.	Notice that advance_transition_function() is coded to avoid a
  *	  data copy step when the previous transition value pointer is returned.
  *
  *
@@ -61,7 +61,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.134 2005/06/28 05:08:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.135 2005/10/15 02:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,8 +109,8 @@ typedef struct AggStatePerAggData
 
 	/*
 	 * fmgr lookup data for transfer functions --- only valid when
-	 * corresponding oid is not InvalidOid.  Note in particular that
-	 * fn_strict flags are kept here.
+	 * corresponding oid is not InvalidOid.  Note in particular that fn_strict
+	 * flags are kept here.
 	 */
 	FmgrInfo	transfn;
 	FmgrInfo	finalfn;
@@ -124,8 +124,8 @@ typedef struct AggStatePerAggData
 	Oid			sortOperator;
 
 	/*
-	 * fmgr lookup data for input type's equality operator --- only
-	 * set/used when aggregate has DISTINCT flag.
+	 * fmgr lookup data for input type's equality operator --- only set/used
+	 * when aggregate has DISTINCT flag.
 	 */
 	FmgrInfo	equalfn;
 
@@ -147,14 +147,14 @@ typedef struct AggStatePerAggData
 				transtypeByVal;
 
 	/*
-	 * These values are working state that is initialized at the start of
-	 * an input tuple group and updated for each input tuple.
+	 * These values are working state that is initialized at the start of an
+	 * input tuple group and updated for each input tuple.
 	 *
 	 * For a simple (non DISTINCT) aggregate, we just feed the input values
 	 * straight to the transition function.  If it's DISTINCT, we pass the
-	 * input values into a Tuplesort object; then at completion of the
-	 * input tuple group, we scan the sorted values, eliminate duplicates,
-	 * and run the transition function on the rest.
+	 * input values into a Tuplesort object; then at completion of the input
+	 * tuple group, we scan the sorted values, eliminate duplicates, and run
+	 * the transition function on the rest.
 	 */
 
 	Tuplesortstate *sortstate;	/* sort object, if a DISTINCT agg */
@@ -184,12 +184,11 @@ typedef struct AggStatePerGroupData
 	bool		noTransValue;	/* true if transValue not set yet */
 
 	/*
-	 * Note: noTransValue initially has the same value as
-	 * transValueIsNull, and if true both are cleared to false at the same
-	 * time.  They are not the same though: if transfn later returns a
-	 * NULL, we want to keep that NULL and not auto-replace it with a
-	 * later input value. Only the first non-NULL input will be
-	 * auto-substituted.
+	 * Note: noTransValue initially has the same value as transValueIsNull,
+	 * and if true both are cleared to false at the same time.	They are not
+	 * the same though: if transfn later returns a NULL, we want to keep that
+	 * NULL and not auto-replace it with a later input value. Only the first
+	 * non-NULL input will be auto-substituted.
 	 */
 } AggStatePerGroupData;
 
@@ -270,11 +269,11 @@ initialize_aggregates(AggState *aggstate,
 		}
 
 		/*
-		 * If we are reinitializing after a group boundary, we have to
-		 * free any prior transValue to avoid memory leakage.  We must
-		 * check not only the isnull flag but whether the pointer is NULL;
-		 * since pergroupstate is initialized with palloc0, the initial
-		 * condition has isnull = 0 and null pointer.
+		 * If we are reinitializing after a group boundary, we have to free
+		 * any prior transValue to avoid memory leakage.  We must check not
+		 * only the isnull flag but whether the pointer is NULL; since
+		 * pergroupstate is initialized with palloc0, the initial condition
+		 * has isnull = 0 and null pointer.
 		 */
 		if (!peraggstate->transtypeByVal &&
 			!pergroupstate->transValueIsNull &&
@@ -284,8 +283,8 @@ initialize_aggregates(AggState *aggstate,
 		/*
 		 * (Re)set transValue to the initial value.
 		 *
-		 * Note that when the initial value is pass-by-ref, we must copy it
-		 * (into the aggcontext) since we will pfree the transValue later.
+		 * Note that when the initial value is pass-by-ref, we must copy it (into
+		 * the aggcontext) since we will pfree the transValue later.
 		 */
 		if (peraggstate->initValueIsNull)
 			pergroupstate->transValue = peraggstate->initValue;
@@ -295,18 +294,18 @@ initialize_aggregates(AggState *aggstate,
 
 			oldContext = MemoryContextSwitchTo(aggstate->aggcontext);
 			pergroupstate->transValue = datumCopy(peraggstate->initValue,
-											 peraggstate->transtypeByVal,
-											  peraggstate->transtypeLen);
+												  peraggstate->transtypeByVal,
+												  peraggstate->transtypeLen);
 			MemoryContextSwitchTo(oldContext);
 		}
 		pergroupstate->transValueIsNull = peraggstate->initValueIsNull;
 
 		/*
-		 * If the initial value for the transition state doesn't exist in
-		 * the pg_aggregate table then we will let the first non-NULL
-		 * value returned from the outer procNode become the initial
-		 * value. (This is useful for aggregates like max() and min().)
-		 * The noTransValue flag signals that we still need to do this.
+		 * If the initial value for the transition state doesn't exist in the
+		 * pg_aggregate table then we will let the first non-NULL value
+		 * returned from the outer procNode become the initial value. (This is
+		 * useful for aggregates like max() and min().) The noTransValue flag
+		 * signals that we still need to do this.
 		 */
 		pergroupstate->noTransValue = peraggstate->initValueIsNull;
 	}
@@ -337,20 +336,18 @@ advance_transition_function(AggState *aggstate,
 		if (pergroupstate->noTransValue)
 		{
 			/*
-			 * transValue has not been initialized. This is the first
-			 * non-NULL input value. We use it as the initial value for
-			 * transValue. (We already checked that the agg's input type
-			 * is binary-compatible with its transtype, so straight copy
-			 * here is OK.)
+			 * transValue has not been initialized. This is the first non-NULL
+			 * input value. We use it as the initial value for transValue. (We
+			 * already checked that the agg's input type is binary-compatible
+			 * with its transtype, so straight copy here is OK.)
 			 *
-			 * We must copy the datum into aggcontext if it is pass-by-ref.
-			 * We do not need to pfree the old transValue, since it's
-			 * NULL.
+			 * We must copy the datum into aggcontext if it is pass-by-ref. We do
+			 * not need to pfree the old transValue, since it's NULL.
 			 */
 			oldContext = MemoryContextSwitchTo(aggstate->aggcontext);
 			pergroupstate->transValue = datumCopy(newVal,
-											 peraggstate->transtypeByVal,
-											  peraggstate->transtypeLen);
+												  peraggstate->transtypeByVal,
+												  peraggstate->transtypeLen);
 			pergroupstate->transValueIsNull = false;
 			pergroupstate->noTransValue = false;
 			MemoryContextSwitchTo(oldContext);
@@ -360,10 +357,9 @@ advance_transition_function(AggState *aggstate,
 		{
 			/*
 			 * Don't call a strict function with NULL inputs.  Note it is
-			 * possible to get here despite the above tests, if the
-			 * transfn is strict *and* returned a NULL on a prior cycle.
-			 * If that happens we will propagate the NULL all the way to
-			 * the end.
+			 * possible to get here despite the above tests, if the transfn is
+			 * strict *and* returned a NULL on a prior cycle. If that happens
+			 * we will propagate the NULL all the way to the end.
 			 */
 			return;
 		}
@@ -385,12 +381,12 @@ advance_transition_function(AggState *aggstate,
 	newVal = FunctionCallInvoke(&fcinfo);
 
 	/*
-	 * If pass-by-ref datatype, must copy the new value into aggcontext
-	 * and pfree the prior transValue.	But if transfn returned a pointer
-	 * to its first input, we don't need to do anything.
+	 * If pass-by-ref datatype, must copy the new value into aggcontext and
+	 * pfree the prior transValue.	But if transfn returned a pointer to its
+	 * first input, we don't need to do anything.
 	 */
 	if (!peraggstate->transtypeByVal &&
-	DatumGetPointer(newVal) != DatumGetPointer(pergroupstate->transValue))
+		DatumGetPointer(newVal) != DatumGetPointer(pergroupstate->transValue))
 	{
 		if (!fcinfo.isnull)
 		{
@@ -473,24 +469,24 @@ process_sorted_aggregate(AggState *aggstate,
 	tuplesort_performsort(peraggstate->sortstate);
 
 	/*
-	 * Note: if input type is pass-by-ref, the datums returned by the sort
-	 * are freshly palloc'd in the per-query context, so we must be
-	 * careful to pfree them when they are no longer needed.
+	 * Note: if input type is pass-by-ref, the datums returned by the sort are
+	 * freshly palloc'd in the per-query context, so we must be careful to
+	 * pfree them when they are no longer needed.
 	 */
 
 	while (tuplesort_getdatum(peraggstate->sortstate, true,
 							  &newVal, &isNull))
 	{
 		/*
-		 * DISTINCT always suppresses nulls, per SQL spec, regardless of
-		 * the transition function's strictness.
+		 * DISTINCT always suppresses nulls, per SQL spec, regardless of the
+		 * transition function's strictness.
 		 */
 		if (isNull)
 			continue;
 
 		/*
-		 * Clear and select the working context for evaluation of the
-		 * equality function and transition function.
+		 * Clear and select the working context for evaluation of the equality
+		 * function and transition function.
 		 */
 		MemoryContextReset(workcontext);
 		oldContext = MemoryContextSwitchTo(workcontext);
@@ -726,8 +722,8 @@ agg_retrieve_direct(AggState *aggstate)
 	while (!aggstate->agg_done)
 	{
 		/*
-		 * If we don't already have the first tuple of the new group,
-		 * fetch it from the outer plan.
+		 * If we don't already have the first tuple of the new group, fetch it
+		 * from the outer plan.
 		 */
 		if (aggstate->grp_firstTuple == NULL)
 		{
@@ -735,8 +731,8 @@ agg_retrieve_direct(AggState *aggstate)
 			if (!TupIsNull(outerslot))
 			{
 				/*
-				 * Make a copy of the first input tuple; we will use this
-				 * for comparisons (in group mode) and for projection.
+				 * Make a copy of the first input tuple; we will use this for
+				 * comparisons (in group mode) and for projection.
 				 */
 				aggstate->grp_firstTuple = ExecCopySlotTuple(outerslot);
 			}
@@ -764,8 +760,8 @@ agg_retrieve_direct(AggState *aggstate)
 		{
 			/*
 			 * Store the copied first input tuple in the tuple table slot
-			 * reserved for it.  The tuple will be deleted when it is
-			 * cleared from the slot.
+			 * reserved for it.  The tuple will be deleted when it is cleared
+			 * from the slot.
 			 */
 			ExecStoreTuple(aggstate->grp_firstTuple,
 						   firstSlot,
@@ -807,7 +803,7 @@ agg_retrieve_direct(AggState *aggstate)
 										 outerslot,
 										 node->numCols, node->grpColIdx,
 										 aggstate->eqfunctions,
-									  tmpcontext->ecxt_per_tuple_memory))
+										 tmpcontext->ecxt_per_tuple_memory))
 					{
 						/*
 						 * Save the first input tuple of the next group.
@@ -838,17 +834,16 @@ agg_retrieve_direct(AggState *aggstate)
 		/*
 		 * If we have no first tuple (ie, the outerPlan didn't return
 		 * anything), create a dummy all-nulls input tuple for use by
-		 * ExecQual/ExecProject. 99.44% of the time this is a waste of
-		 * cycles, because ordinarily the projected output tuple's
-		 * targetlist cannot contain any direct (non-aggregated)
-		 * references to input columns, so the dummy tuple will not be
-		 * referenced. However there are special cases where this isn't so
-		 * --- in particular an UPDATE involving an aggregate will have a
-		 * targetlist reference to ctid.  We need to return a null for
-		 * ctid in that situation, not coredump.
+		 * ExecQual/ExecProject. 99.44% of the time this is a waste of cycles,
+		 * because ordinarily the projected output tuple's targetlist cannot
+		 * contain any direct (non-aggregated) references to input columns, so
+		 * the dummy tuple will not be referenced. However there are special
+		 * cases where this isn't so --- in particular an UPDATE involving an
+		 * aggregate will have a targetlist reference to ctid.	We need to
+		 * return a null for ctid in that situation, not coredump.
 		 *
-		 * The values returned for the aggregates will be the initial values
-		 * of the transition functions.
+		 * The values returned for the aggregates will be the initial values of
+		 * the transition functions.
 		 */
 		if (TupIsNull(firstSlot))
 		{
@@ -866,15 +861,15 @@ agg_retrieve_direct(AggState *aggstate)
 		econtext->ecxt_scantuple = firstSlot;
 
 		/*
-		 * Check the qual (HAVING clause); if the group does not match,
-		 * ignore it and loop back to try to process another group.
+		 * Check the qual (HAVING clause); if the group does not match, ignore
+		 * it and loop back to try to process another group.
 		 */
 		if (ExecQual(aggstate->ss.ps.qual, econtext, false))
 		{
 			/*
-			 * Form and return a projection tuple using the aggregate
-			 * results and the representative input tuple.	Note we do not
-			 * support aggregates returning sets ...
+			 * Form and return a projection tuple using the aggregate results
+			 * and the representative input tuple.	Note we do not support
+			 * aggregates returning sets ...
 			 */
 			return ExecProject(projInfo, NULL);
 		}
@@ -903,8 +898,8 @@ agg_fill_hash_table(AggState *aggstate)
 	tmpcontext = aggstate->tmpcontext;
 
 	/*
-	 * Process each outer-plan tuple, and then fetch the next one, until
-	 * we exhaust the outer plan.
+	 * Process each outer-plan tuple, and then fetch the next one, until we
+	 * exhaust the outer plan.
 	 */
 	for (;;)
 	{
@@ -979,8 +974,8 @@ agg_retrieve_hash_table(AggState *aggstate)
 		ResetExprContext(econtext);
 
 		/*
-		 * Store the copied first input tuple in the tuple table slot
-		 * reserved for it, so that it can be used in ExecProject.
+		 * Store the copied first input tuple in the tuple table slot reserved
+		 * for it, so that it can be used in ExecProject.
 		 */
 		ExecStoreTuple(entry->shared.firstTuple,
 					   firstSlot,
@@ -1010,15 +1005,15 @@ agg_retrieve_hash_table(AggState *aggstate)
 		econtext->ecxt_scantuple = firstSlot;
 
 		/*
-		 * Check the qual (HAVING clause); if the group does not match,
-		 * ignore it and loop back to try to process another group.
+		 * Check the qual (HAVING clause); if the group does not match, ignore
+		 * it and loop back to try to process another group.
 		 */
 		if (ExecQual(aggstate->ss.ps.qual, econtext, false))
 		{
 			/*
-			 * Form and return a projection tuple using the aggregate
-			 * results and the representative input tuple.	Note we do not
-			 * support aggregates returning sets ...
+			 * Form and return a projection tuple using the aggregate results
+			 * and the representative input tuple.	Note we do not support
+			 * aggregates returning sets ...
 			 */
 			return ExecProject(projInfo, NULL);
 		}
@@ -1065,8 +1060,8 @@ ExecInitAgg(Agg *node, EState *estate)
 
 	/*
 	 * Create expression contexts.	We need two, one for per-input-tuple
-	 * processing and one for per-output-tuple processing.	We cheat a
-	 * little by using ExecAssignExprContext() to build both.
+	 * processing and one for per-output-tuple processing.	We cheat a little
+	 * by using ExecAssignExprContext() to build both.
 	 */
 	ExecAssignExprContext(estate, &aggstate->ss.ps);
 	aggstate->tmpcontext = aggstate->ss.ps.ps_ExprContext;
@@ -1074,10 +1069,10 @@ ExecInitAgg(Agg *node, EState *estate)
 
 	/*
 	 * We also need a long-lived memory context for holding hashtable data
-	 * structures and transition values.  NOTE: the details of what is
-	 * stored in aggcontext and what is stored in the regular per-query
-	 * memory context are driven by a simple decision: we want to reset
-	 * the aggcontext in ExecReScanAgg to recover no-longer-wanted space.
+	 * structures and transition values.  NOTE: the details of what is stored
+	 * in aggcontext and what is stored in the regular per-query memory
+	 * context are driven by a simple decision: we want to reset the
+	 * aggcontext in ExecReScanAgg to recover no-longer-wanted space.
 	 */
 	aggstate->aggcontext =
 		AllocSetContextCreate(CurrentMemoryContext,
@@ -1098,10 +1093,10 @@ ExecInitAgg(Agg *node, EState *estate)
 	 * initialize child expressions
 	 *
 	 * Note: ExecInitExpr finds Aggrefs for us, and also checks that no aggs
-	 * contain other agg calls in their arguments.	This would make no
-	 * sense under SQL semantics anyway (and it's forbidden by the spec).
-	 * Because that is true, we don't need to worry about evaluating the
-	 * aggs in any particular order.
+	 * contain other agg calls in their arguments.	This would make no sense
+	 * under SQL semantics anyway (and it's forbidden by the spec). Because
+	 * that is true, we don't need to worry about evaluating the aggs in any
+	 * particular order.
 	 */
 	aggstate->ss.ps.targetlist = (List *)
 		ExecInitExpr((Expr *) node->plan.targetlist,
@@ -1135,20 +1130,19 @@ ExecInitAgg(Agg *node, EState *estate)
 	if (numaggs <= 0)
 	{
 		/*
-		 * This is not an error condition: we might be using the Agg node
-		 * just to do hash-based grouping.	Even in the regular case,
-		 * constant-expression simplification could optimize away all of
-		 * the Aggrefs in the targetlist and qual.	So keep going, but
-		 * force local copy of numaggs positive so that palloc()s below
-		 * don't choke.
+		 * This is not an error condition: we might be using the Agg node just
+		 * to do hash-based grouping.  Even in the regular case,
+		 * constant-expression simplification could optimize away all of the
+		 * Aggrefs in the targetlist and qual.	So keep going, but force local
+		 * copy of numaggs positive so that palloc()s below don't choke.
 		 */
 		numaggs = 1;
 	}
 
 	/*
-	 * If we are grouping, precompute fmgr lookup data for inner loop. We
-	 * need both equality and hashing functions to do it by hashing, but
-	 * only equality if not hashing.
+	 * If we are grouping, precompute fmgr lookup data for inner loop. We need
+	 * both equality and hashing functions to do it by hashing, but only
+	 * equality if not hashing.
 	 */
 	if (node->numCols > 0)
 	{
@@ -1166,8 +1160,8 @@ ExecInitAgg(Agg *node, EState *estate)
 	}
 
 	/*
-	 * Set up aggregate-result storage in the output expr context, and
-	 * also allocate my private per-agg working storage
+	 * Set up aggregate-result storage in the output expr context, and also
+	 * allocate my private per-agg working storage
 	 */
 	econtext = aggstate->ss.ps.ps_ExprContext;
 	econtext->ecxt_aggvalues = (Datum *) palloc0(sizeof(Datum) * numaggs);
@@ -1192,10 +1186,10 @@ ExecInitAgg(Agg *node, EState *estate)
 	/*
 	 * Perform lookups of aggregate function info, and initialize the
 	 * unchanging fields of the per-agg data.  We also detect duplicate
-	 * aggregates (for example, "SELECT sum(x) ... HAVING sum(x) > 0").
-	 * When duplicates are detected, we only make an AggStatePerAgg struct
-	 * for the first one.  The clones are simply pointed at the same
-	 * result entry by giving them duplicate aggno values.
+	 * aggregates (for example, "SELECT sum(x) ... HAVING sum(x) > 0"). When
+	 * duplicates are detected, we only make an AggStatePerAgg struct for the
+	 * first one.  The clones are simply pointed at the same result entry by
+	 * giving them duplicate aggno values.
 	 */
 	aggno = -1;
 	foreach(l, aggstate->aggs)
@@ -1243,9 +1237,9 @@ ExecInitAgg(Agg *node, EState *estate)
 		peraggstate->aggref = aggref;
 
 		/*
-		 * Get actual datatype of the input.  We need this because it may
-		 * be different from the agg's declared input type, when the agg
-		 * accepts ANY (eg, COUNT(*)) or ANYARRAY or ANYELEMENT.
+		 * Get actual datatype of the input.  We need this because it may be
+		 * different from the agg's declared input type, when the agg accepts
+		 * ANY (eg, COUNT(*)) or ANYARRAY or ANYELEMENT.
 		 */
 		inputType = exprType((Node *) aggref->target);
 
@@ -1270,7 +1264,7 @@ ExecInitAgg(Agg *node, EState *estate)
 		/* Check that aggregate owner has permission to call component fns */
 		{
 			HeapTuple	procTuple;
-			Oid		aggOwner;
+			Oid			aggOwner;
 
 			procTuple = SearchSysCache(PROCOID,
 									   ObjectIdGetDatum(aggref->aggfnoid),
@@ -1339,8 +1333,8 @@ ExecInitAgg(Agg *node, EState *estate)
 						&peraggstate->transtypeByVal);
 
 		/*
-		 * initval is potentially null, so don't try to access it as a
-		 * struct field. Must do it the hard way with SysCacheGetAttr.
+		 * initval is potentially null, so don't try to access it as a struct
+		 * field. Must do it the hard way with SysCacheGetAttr.
 		 */
 		textInitVal = SysCacheGetAttr(AGGFNOID, aggTuple,
 									  Anum_pg_aggregate_agginitval,
@@ -1353,11 +1347,11 @@ ExecInitAgg(Agg *node, EState *estate)
 												   aggtranstype);
 
 		/*
-		 * If the transfn is strict and the initval is NULL, make sure
-		 * input type and transtype are the same (or at least binary-
-		 * compatible), so that it's OK to use the first input value as
-		 * the initial transValue.	This should have been checked at agg
-		 * definition time, but just in case...
+		 * If the transfn is strict and the initval is NULL, make sure input
+		 * type and transtype are the same (or at least binary- compatible),
+		 * so that it's OK to use the first input value as the initial
+		 * transValue.	This should have been checked at agg definition time,
+		 * but just in case...
 		 */
 		if (peraggstate->transfn.fn_strict && peraggstate->initValueIsNull)
 		{
@@ -1463,18 +1457,18 @@ ExecReScanAgg(AggState *node, ExprContext *exprCtxt)
 	if (((Agg *) node->ss.ps.plan)->aggstrategy == AGG_HASHED)
 	{
 		/*
-		 * In the hashed case, if we haven't yet built the hash table then
-		 * we can just return; nothing done yet, so nothing to undo. If
-		 * subnode's chgParam is not NULL then it will be re-scanned by
-		 * ExecProcNode, else no reason to re-scan it at all.
+		 * In the hashed case, if we haven't yet built the hash table then we
+		 * can just return; nothing done yet, so nothing to undo. If subnode's
+		 * chgParam is not NULL then it will be re-scanned by ExecProcNode,
+		 * else no reason to re-scan it at all.
 		 */
 		if (!node->table_filled)
 			return;
 
 		/*
 		 * If we do have the hash table and the subplan does not have any
-		 * parameter changes, then we can just rescan the existing hash
-		 * table; no need to build it again.
+		 * parameter changes, then we can just rescan the existing hash table;
+		 * no need to build it again.
 		 */
 		if (((PlanState *) node)->lefttree->chgParam == NULL)
 		{
@@ -1516,8 +1510,7 @@ ExecReScanAgg(AggState *node, ExprContext *exprCtxt)
 	else
 	{
 		/*
-		 * Reset the per-group state (in particular, mark transvalues
-		 * null)
+		 * Reset the per-group state (in particular, mark transvalues null)
 		 */
 		MemSet(node->pergroup, 0,
 			   sizeof(AggStatePerGroupData) * node->numaggs);

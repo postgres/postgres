@@ -6,7 +6,7 @@
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.19 2005/06/18 19:33:42 tgl Exp $
+ *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.20 2005/10/15 02:49:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@
 
 
 /* This must match enum LockTagType! */
-static const char * const LockTagTypeNames[] = {
+static const char *const LockTagTypeNames[] = {
 	"relation",
 	"extend",
 	"page",
@@ -57,8 +57,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 
 		/*
-		 * switch to memory context appropriate for multiple function
-		 * calls
+		 * switch to memory context appropriate for multiple function calls
 		 */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
@@ -95,8 +94,8 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
 
 		/*
-		 * Collect all the locking information that we will format and
-		 * send out as a result set.
+		 * Collect all the locking information that we will format and send
+		 * out as a result set.
 		 */
 		mystatus = (PG_Lock_Status *) palloc(sizeof(PG_Lock_Status));
 		funcctx->user_fctx = (void *) mystatus;
@@ -130,9 +129,9 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		proc = &(lockData->procs[mystatus->currIdx]);
 
 		/*
-		 * Look to see if there are any held lock modes in this PROCLOCK.
-		 * If so, report, and destructively modify lockData so we don't
-		 * report again.
+		 * Look to see if there are any held lock modes in this PROCLOCK. If
+		 * so, report, and destructively modify lockData so we don't report
+		 * again.
 		 */
 		granted = false;
 		if (proclock->holdMask)
@@ -160,16 +159,16 @@ pg_lock_status(PG_FUNCTION_ARGS)
 				mode = proc->waitLockMode;
 
 				/*
-				 * We are now done with this PROCLOCK, so advance pointer
-				 * to continue with next one on next call.
+				 * We are now done with this PROCLOCK, so advance pointer to
+				 * continue with next one on next call.
 				 */
 				mystatus->currIdx++;
 			}
 			else
 			{
 				/*
-				 * Okay, we've displayed all the locks associated with
-				 * this PROCLOCK, proceed to the next one.
+				 * Okay, we've displayed all the locks associated with this
+				 * PROCLOCK, proceed to the next one.
 				 */
 				mystatus->currIdx++;
 				continue;
@@ -191,7 +190,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 			locktypename = tnbuf;
 		}
 		values[0] = DirectFunctionCall1(textin,
-										 CStringGetDatum(locktypename));
+										CStringGetDatum(locktypename));
 
 
 		switch (lock->tag.locktag_type)
@@ -257,7 +256,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		else
 			nulls[10] = 'n';
 		values[11] = DirectFunctionCall1(textin,
-										 CStringGetDatum(GetLockmodeName(mode)));
+									 CStringGetDatum(GetLockmodeName(mode)));
 		values[12] = BoolGetDatum(granted);
 
 		tuple = heap_formtuple(funcctx->tuple_desc, values, nulls);

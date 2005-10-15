@@ -12,10 +12,10 @@
 #define PGTYPES_TYPE_DOUBLE_NF			4		/* no fractional part */
 #define PGTYPES_TYPE_INT64			5
 #define PGTYPES_TYPE_UINT			6
-#define PGTYPES_TYPE_UINT_2_LZ			7		/* 2 digits, pad with
-												 * leading zero */
-#define PGTYPES_TYPE_UINT_2_LS			8		/* 2 digits, pad with
-												 * leading space */
+#define PGTYPES_TYPE_UINT_2_LZ			7		/* 2 digits, pad with leading
+												 * zero */
+#define PGTYPES_TYPE_UINT_2_LS			8		/* 2 digits, pad with leading
+												 * space */
 #define PGTYPES_TYPE_UINT_3_LZ			9
 #define PGTYPES_TYPE_UINT_4_LZ			10
 #define PGTYPES_TYPE_UINT_LONG			11

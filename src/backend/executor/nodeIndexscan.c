@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.103 2005/05/06 17:24:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.104 2005/10/15 02:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,11 +75,11 @@ IndexNext(IndexScanState *node)
 	scanrelid = ((IndexScan *) node->ss.ps.plan)->scan.scanrelid;
 
 	/*
-	 * Clear any reference to the previously returned tuple.  The idea
-	 * here is to not have the tuple slot be the last holder of a pin on
-	 * that tuple's buffer; if it is, we'll need a separate visit to the
-	 * bufmgr to release the buffer.  By clearing here, we get to have the
-	 * release done by ReleaseAndReadBuffer inside index_getnext.
+	 * Clear any reference to the previously returned tuple.  The idea here is
+	 * to not have the tuple slot be the last holder of a pin on that tuple's
+	 * buffer; if it is, we'll need a separate visit to the bufmgr to release
+	 * the buffer.	By clearing here, we get to have the release done by
+	 * ReleaseAndReadBuffer inside index_getnext.
 	 */
 	ExecClearTuple(slot);
 
@@ -104,7 +104,7 @@ IndexNext(IndexScanState *node)
 		ResetExprContext(econtext);
 
 		if (!ExecQual(node->indexqualorig, econtext, false))
-			ExecClearTuple(slot);	/* would not be returned by scan */
+			ExecClearTuple(slot);		/* would not be returned by scan */
 
 		/* Flag for the next call that no more tuples */
 		estate->es_evTupleNull[scanrelid - 1] = true;
@@ -118,22 +118,21 @@ IndexNext(IndexScanState *node)
 	if ((tuple = index_getnext(scandesc, direction)) != NULL)
 	{
 		/*
-		 * Store the scanned tuple in the scan tuple slot of the scan
-		 * state.  Note: we pass 'false' because tuples returned by
-		 * amgetnext are pointers onto disk pages and must not be
-		 * pfree()'d.
+		 * Store the scanned tuple in the scan tuple slot of the scan state.
+		 * Note: we pass 'false' because tuples returned by amgetnext are
+		 * pointers onto disk pages and must not be pfree()'d.
 		 */
-		ExecStoreTuple(tuple,				/* tuple to store */
-					   slot,				/* slot to store in */
-					   scandesc->xs_cbuf,	/* buffer containing tuple */
-					   false);				/* don't pfree */
+		ExecStoreTuple(tuple,	/* tuple to store */
+					   slot,	/* slot to store in */
+					   scandesc->xs_cbuf,		/* buffer containing tuple */
+					   false);	/* don't pfree */
 
 		return slot;
 	}
 
 	/*
-	 * if we get here it means the index scan failed so we are at the end
-	 * of the scan..
+	 * if we get here it means the index scan failed so we are at the end of
+	 * the scan..
 	 */
 	return ExecClearTuple(slot);
 }
@@ -146,8 +145,7 @@ TupleTableSlot *
 ExecIndexScan(IndexScanState *node)
 {
 	/*
-	 * If we have runtime keys and they've not already been set up, do it
-	 * now.
+	 * If we have runtime keys and they've not already been set up, do it now.
 	 */
 	if (node->iss_RuntimeKeyInfo && !node->iss_RuntimeKeysReady)
 		ExecReScan((PlanState *) node, NULL);
@@ -179,8 +177,7 @@ ExecIndexReScan(IndexScanState *node, ExprContext *exprCtxt)
 	Index		scanrelid;
 
 	estate = node->ss.ps.state;
-	econtext = node->iss_RuntimeContext;		/* context for runtime
-												 * keys */
+	econtext = node->iss_RuntimeContext;		/* context for runtime keys */
 	scanKeys = node->iss_ScanKeys;
 	runtimeKeyInfo = node->iss_RuntimeKeyInfo;
 	numScanKeys = node->iss_NumScanKeys;
@@ -203,16 +200,16 @@ ExecIndexReScan(IndexScanState *node, ExprContext *exprCtxt)
 		}
 
 		/*
-		 * Reset the runtime-key context so we don't leak memory as each
-		 * outer tuple is scanned.	Note this assumes that we will
-		 * recalculate *all* runtime keys on each call.
+		 * Reset the runtime-key context so we don't leak memory as each outer
+		 * tuple is scanned.  Note this assumes that we will recalculate *all*
+		 * runtime keys on each call.
 		 */
 		ResetExprContext(econtext);
 	}
 
 	/*
-	 * If we are doing runtime key calculations (ie, the index keys depend
-	 * on data from an outer scan), compute the new key values
+	 * If we are doing runtime key calculations (ie, the index keys depend on
+	 * data from an outer scan), compute the new key values
 	 */
 	if (runtimeKeyInfo)
 	{
@@ -251,16 +248,16 @@ ExecIndexEvalRuntimeKeys(ExprContext *econtext,
 	for (j = 0; j < n_keys; j++)
 	{
 		/*
-		 * If we have a run-time key, then extract the run-time
-		 * expression and evaluate it with respect to the current
-		 * outer tuple.  We then stick the result into the scan key.
+		 * If we have a run-time key, then extract the run-time expression and
+		 * evaluate it with respect to the current outer tuple.  We then stick
+		 * the result into the scan key.
 		 *
-		 * Note: the result of the eval could be a pass-by-ref value
-		 * that's stored in the outer scan's tuple, not in
-		 * econtext->ecxt_per_tuple_memory.  We assume that the
-		 * outer tuple will stay put throughout our scan.  If this
-		 * is wrong, we could copy the result into our context
-		 * explicitly, but I think that's not necessary...
+		 * Note: the result of the eval could be a pass-by-ref value that's
+		 * stored in the outer scan's tuple, not in
+		 * econtext->ecxt_per_tuple_memory.  We assume that the outer tuple
+		 * will stay put throughout our scan.  If this is wrong, we could copy
+		 * the result into our context explicitly, but I think that's not
+		 * necessary...
 		 */
 		if (run_keys[j] != NULL)
 		{
@@ -323,9 +320,8 @@ ExecEndIndexScan(IndexScanState *node)
 	 * close the heap relation.
 	 *
 	 * Currently, we do not release the AccessShareLock acquired by
-	 * ExecInitIndexScan.  This lock should be held till end of
-	 * transaction. (There is a faction that considers this too much
-	 * locking, however.)
+	 * ExecInitIndexScan.  This lock should be held till end of transaction.
+	 * (There is a faction that considers this too much locking, however.)
 	 */
 	heap_close(relation, NoLock);
 }
@@ -392,11 +388,10 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	 * initialize child expressions
 	 *
 	 * Note: we don't initialize all of the indexqual expression, only the
-	 * sub-parts corresponding to runtime keys (see below).  The
-	 * indexqualorig expression is always initialized even though it will
-	 * only be used in some uncommon cases --- would be nice to improve
-	 * that.  (Problem is that any SubPlans present in the expression must
-	 * be found now...)
+	 * sub-parts corresponding to runtime keys (see below).  The indexqualorig
+	 * expression is always initialized even though it will only be used in
+	 * some uncommon cases --- would be nice to improve that.  (Problem is
+	 * that any SubPlans present in the expression must be found now...)
 	 */
 	indexstate->ss.ps.targetlist = (List *)
 		ExecInitExpr((Expr *) node->scan.plan.targetlist,
@@ -440,10 +435,10 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	indexstate->iss_NumScanKeys = numScanKeys;
 
 	/*
-	 * If we have runtime keys, we need an ExprContext to evaluate them.
-	 * The node's standard context won't do because we want to reset that
-	 * context for every tuple.  So, build another context just like the
-	 * other one... -tgl 7/11/00
+	 * If we have runtime keys, we need an ExprContext to evaluate them. The
+	 * node's standard context won't do because we want to reset that context
+	 * for every tuple.  So, build another context just like the other one...
+	 * -tgl 7/11/00
 	 */
 	if (have_runtime_keys)
 	{
@@ -476,10 +471,10 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	ExecAssignScanType(&indexstate->ss, RelationGetDescr(currentRelation), false);
 
 	/*
-	 * open the index relation and initialize relation and scan
-	 * descriptors.  Note we acquire no locks here; the index machinery
-	 * does its own locks and unlocks.	(We rely on having AccessShareLock
-	 * on the parent table to ensure the index won't go away!)
+	 * open the index relation and initialize relation and scan descriptors.
+	 * Note we acquire no locks here; the index machinery does its own locks
+	 * and unlocks.  (We rely on having AccessShareLock on the parent table to
+	 * ensure the index won't go away!)
 	 */
 	indexstate->iss_RelationDesc = index_open(node->indexid);
 	indexstate->iss_ScanDesc = index_beginscan(currentRelation,
@@ -543,8 +538,8 @@ ExecIndexBuildScanKeys(PlanState *planstate, List *quals,
 		(ExprState **) palloc(n_keys * sizeof(ExprState *));
 
 	/*
-	 * for each opclause in the given qual, convert each qual's
-	 * opclause into a single scan key
+	 * for each opclause in the given qual, convert each qual's opclause into
+	 * a single scan key
 	 */
 	qual_cell = list_head(quals);
 	strategy_cell = list_head(strategies);
@@ -552,15 +547,15 @@ ExecIndexBuildScanKeys(PlanState *planstate, List *quals,
 
 	for (j = 0; j < n_keys; j++)
 	{
-		OpExpr	   *clause;			/* one clause of index qual */
-		Expr	   *leftop;			/* expr on lhs of operator */
-		Expr	   *rightop;		/* expr on rhs ... */
+		OpExpr	   *clause;		/* one clause of index qual */
+		Expr	   *leftop;		/* expr on lhs of operator */
+		Expr	   *rightop;	/* expr on rhs ... */
 		int			flags = 0;
-		AttrNumber	varattno;		/* att number used in scan */
+		AttrNumber	varattno;	/* att number used in scan */
 		StrategyNumber strategy;	/* op's strategy number */
-		Oid			subtype;		/* op's strategy subtype */
-		RegProcedure opfuncid;		/* operator proc id used in scan */
-		Datum		scanvalue;		/* value used in scan (if const) */
+		Oid			subtype;	/* op's strategy subtype */
+		RegProcedure opfuncid;	/* operator proc id used in scan */
+		Datum		scanvalue;	/* value used in scan (if const) */
 
 		/*
 		 * extract clause information from the qualification
@@ -578,18 +573,17 @@ ExecIndexBuildScanKeys(PlanState *planstate, List *quals,
 		opfuncid = clause->opfuncid;
 
 		/*
-		 * Here we figure out the contents of the index qual. The
-		 * usual case is (var op const) which means we form a scan key
-		 * for the attribute listed in the var node and use the value
-		 * of the const as comparison data.
+		 * Here we figure out the contents of the index qual. The usual case
+		 * is (var op const) which means we form a scan key for the attribute
+		 * listed in the var node and use the value of the const as comparison
+		 * data.
 		 *
-		 * If we don't have a const node, it means our scan key is a
-		 * function of information obtained during the execution of
-		 * the plan, in which case we need to recalculate the index
-		 * scan key at run time.  Hence, we set have_runtime_keys to
-		 * true and place the appropriate subexpression in run_keys.
-		 * The corresponding scan key values are recomputed at run
-		 * time.
+		 * If we don't have a const node, it means our scan key is a function of
+		 * information obtained during the execution of the plan, in which
+		 * case we need to recalculate the index scan key at run time.	Hence,
+		 * we set have_runtime_keys to true and place the appropriate
+		 * subexpression in run_keys. The corresponding scan key values are
+		 * recomputed at run time.
 		 */
 		run_keys[j] = NULL;
 
@@ -622,8 +616,8 @@ ExecIndexBuildScanKeys(PlanState *planstate, List *quals,
 		if (IsA(rightop, Const))
 		{
 			/*
-			 * if the rightop is a const node then it means it
-			 * identifies the value to place in our scan key.
+			 * if the rightop is a const node then it means it identifies the
+			 * value to place in our scan key.
 			 */
 			scanvalue = ((Const *) rightop)->constvalue;
 			if (((Const *) rightop)->constisnull)
@@ -632,9 +626,8 @@ ExecIndexBuildScanKeys(PlanState *planstate, List *quals,
 		else
 		{
 			/*
-			 * otherwise, the rightop contains an expression evaluable
-			 * at runtime to figure out the value to place in our scan
-			 * key.
+			 * otherwise, the rightop contains an expression evaluable at
+			 * runtime to figure out the value to place in our scan key.
 			 */
 			have_runtime_keys = true;
 			run_keys[j] = ExecInitExpr(rightop, planstate);
@@ -646,11 +639,11 @@ ExecIndexBuildScanKeys(PlanState *planstate, List *quals,
 		 */
 		ScanKeyEntryInitialize(&scan_keys[j],
 							   flags,
-							   varattno,	/* attribute number to scan */
-							   strategy,	/* op's strategy */
-							   subtype,		/* strategy subtype */
-							   opfuncid,	/* reg proc to use */
-							   scanvalue);	/* constant */
+							   varattno,		/* attribute number to scan */
+							   strategy,		/* op's strategy */
+							   subtype, /* strategy subtype */
+							   opfuncid,		/* reg proc to use */
+							   scanvalue);		/* constant */
 	}
 
 	/* If no runtime keys, get rid of speculatively-allocated array */

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.22 2005/06/06 17:01:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.23 2005/10/15 02:49:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,7 +101,7 @@ _bt_restore_page(Page page, char *from, int len)
 			(sizeof(BTItemData) - sizeof(IndexTupleData));
 		itemsz = MAXALIGN(itemsz);
 		if (PageAddItem(page, (Item) from, itemsz,
-					  FirstOffsetNumber, LP_USED) == InvalidOffsetNumber)
+						FirstOffsetNumber, LP_USED) == InvalidOffsetNumber)
 			elog(PANIC, "_bt_restore_page: can't add item to page");
 		from += itemsz;
 	}
@@ -136,8 +136,8 @@ _bt_restore_meta(Relation reln, XLogRecPtr lsn,
 	pageop->btpo_flags = BTP_META;
 
 	/*
-	 * Set pd_lower just past the end of the metadata.  This is not
-	 * essential but it makes the page look compressible to xlog.c.
+	 * Set pd_lower just past the end of the metadata.	This is not essential
+	 * but it makes the page look compressible to xlog.c.
 	 */
 	((PageHeader) metapg)->pd_lower =
 		((char *) md + sizeof(BTMetaPageData)) - (char *) metapg;
@@ -181,7 +181,7 @@ btree_xlog_insert(bool isleaf, bool ismeta,
 	if (!(record->xl_info & XLR_BKP_BLOCK_1))
 	{
 		buffer = XLogReadBuffer(false, reln,
-						ItemPointerGetBlockNumber(&(xlrec->target.tid)));
+							ItemPointerGetBlockNumber(&(xlrec->target.tid)));
 		if (!BufferIsValid(buffer))
 			elog(PANIC, "btree_insert_redo: block unfound");
 		page = (Page) BufferGetPage(buffer);
@@ -217,8 +217,8 @@ btree_xlog_insert(bool isleaf, bool ismeta,
 	if (!isleaf && incomplete_splits != NIL)
 	{
 		forget_matching_split(reln, xlrec->target.node,
-						 ItemPointerGetBlockNumber(&(xlrec->target.tid)),
-						ItemPointerGetOffsetNumber(&(xlrec->target.tid)),
+							  ItemPointerGetBlockNumber(&(xlrec->target.tid)),
+							ItemPointerGetOffsetNumber(&(xlrec->target.tid)),
 							  false);
 	}
 }
@@ -325,8 +325,8 @@ btree_xlog_split(bool onleft, bool isroot,
 	if (xlrec->level > 0 && incomplete_splits != NIL)
 	{
 		forget_matching_split(reln, xlrec->target.node,
-						 ItemPointerGetBlockNumber(&(xlrec->target.tid)),
-						ItemPointerGetOffsetNumber(&(xlrec->target.tid)),
+							  ItemPointerGetBlockNumber(&(xlrec->target.tid)),
+							ItemPointerGetOffsetNumber(&(xlrec->target.tid)),
 							  false);
 	}
 
@@ -655,7 +655,7 @@ static void
 out_target(char *buf, xl_btreetid *target)
 {
 	sprintf(buf + strlen(buf), "rel %u/%u/%u; tid %u/%u",
-		 target->node.spcNode, target->node.dbNode, target->node.relNode,
+			target->node.spcNode, target->node.dbNode, target->node.relNode,
 			ItemPointerGetBlockNumber(&(target->tid)),
 			ItemPointerGetOffsetNumber(&(target->tid)));
 }

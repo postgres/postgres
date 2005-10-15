@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_node.h,v 1.45 2005/08/01 20:31:16 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_node.h,v 1.46 2005/10/15 02:49:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,14 +56,13 @@ typedef struct ParseState
 	List	   *p_rtable;		/* range table so far */
 	List	   *p_joinlist;		/* join items so far (will become FromExpr
 								 * node's fromlist) */
-	List	   *p_relnamespace;	/* current namespace for relations */
-	List	   *p_varnamespace;	/* current namespace for columns */
+	List	   *p_relnamespace; /* current namespace for relations */
+	List	   *p_varnamespace; /* current namespace for columns */
 	Oid		   *p_paramtypes;	/* OIDs of types for $n parameter symbols */
 	int			p_numparams;	/* allocated size of p_paramtypes[] */
 	int			p_next_resno;	/* next targetlist resno to assign */
 	LockingClause *p_locking_clause;	/* FOR UPDATE/FOR SHARE info */
-	Node	   *p_value_substitute;		/* what to replace VALUE with,
-										 * if any */
+	Node	   *p_value_substitute;		/* what to replace VALUE with, if any */
 	bool		p_variableparams;
 	bool		p_hasAggs;
 	bool		p_hasSubLinks;

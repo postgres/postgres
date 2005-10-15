@@ -115,7 +115,7 @@ NDBOX *
 cube(text *str)
 {
 	return cube_in(DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(str))));
+													 PointerGetDatum(str))));
 }
 
 char *
@@ -219,7 +219,7 @@ g_cube_union(GistEntryVector *entryvec, int *sizep)
 	for (i = 1; i < entryvec->n; i++)
 	{
 		out = g_cube_binary_union(tmp, (NDBOX *)
-								DatumGetPointer(entryvec->vector[i].key),
+								  DatumGetPointer(entryvec->vector[i].key),
 								  sizep);
 		tmp = out;
 	}
@@ -329,8 +329,7 @@ g_cube_picksplit(GistEntryVector *entryvec,
 			size_waste = size_union - size_inter;
 
 			/*
-			 * are these a more promising split than what we've already
-			 * seen?
+			 * are these a more promising split than what we've already seen?
 			 */
 
 			if (size_waste > waste || firsttime)
@@ -356,24 +355,24 @@ g_cube_picksplit(GistEntryVector *entryvec,
 	rt_cube_size(datum_r, &size_r);
 
 	/*
-	 * Now split up the regions between the two seeds.	An important
-	 * property of this split algorithm is that the split vector v has the
-	 * indices of items to be split in order in its left and right
-	 * vectors.  We exploit this property by doing a merge in the code
-	 * that actually splits the page.
+	 * Now split up the regions between the two seeds.	An important property
+	 * of this split algorithm is that the split vector v has the indices of
+	 * items to be split in order in its left and right vectors.  We exploit
+	 * this property by doing a merge in the code that actually splits the
+	 * page.
 	 *
-	 * For efficiency, we also place the new index tuple in this loop. This
-	 * is handled at the very end, when we have placed all the existing
-	 * tuples and i == maxoff + 1.
+	 * For efficiency, we also place the new index tuple in this loop. This is
+	 * handled at the very end, when we have placed all the existing tuples
+	 * and i == maxoff + 1.
 	 */
 
 	maxoff = OffsetNumberNext(maxoff);
 	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
 	{
 		/*
-		 * If we've already decided where to place this item, just put it
-		 * on the right list.  Otherwise, we need to figure out which page
-		 * needs the least enlargement in order to store the item.
+		 * If we've already decided where to place this item, just put it on
+		 * the right list.	Otherwise, we need to figure out which page needs
+		 * the least enlargement in order to store the item.
 		 */
 
 		if (i == seed_1)
@@ -542,8 +541,8 @@ cube_union(NDBOX * a, NDBOX * b)
 	}
 
 	/*
-	 * use the potentially smaller of the two boxes (b) to fill in the
-	 * result, padding absent dimensions with zeroes
+	 * use the potentially smaller of the two boxes (b) to fill in the result,
+	 * padding absent dimensions with zeroes
 	 */
 	for (i = 0; i < b->dim; i++)
 	{
@@ -562,7 +561,7 @@ cube_union(NDBOX * a, NDBOX * b)
 		result->x[i] =
 			Min(Min(a->x[i], a->x[i + a->dim]), result->x[i]);
 		result->x[i + a->dim] = Max(Max(a->x[i],
-							   a->x[i + a->dim]), result->x[i + a->dim]);
+								   a->x[i + a->dim]), result->x[i + a->dim]);
 	}
 
 	return (result);
@@ -620,12 +619,11 @@ cube_inter(NDBOX * a, NDBOX * b)
 		result->x[i] =
 			Max(Min(a->x[i], a->x[i + a->dim]), result->x[i]);
 		result->x[i + a->dim] = Min(Max(a->x[i],
-							   a->x[i + a->dim]), result->x[i + a->dim]);
+								   a->x[i + a->dim]), result->x[i + a->dim]);
 	}
 
 	/*
-	 * Is it OK to return a non-null intersection for non-overlapping
-	 * boxes?
+	 * Is it OK to return a non-null intersection for non-overlapping boxes?
 	 */
 	return (result);
 }
@@ -713,8 +711,8 @@ cube_cmp(NDBOX * a, NDBOX * b)
 		}
 
 		/*
-		 * if all common dimensions are equal, the cube with more
-		 * dimensions wins
+		 * if all common dimensions are equal, the cube with more dimensions
+		 * wins
 		 */
 		return 1;
 	}
@@ -736,8 +734,8 @@ cube_cmp(NDBOX * a, NDBOX * b)
 		}
 
 		/*
-		 * if all common dimensions are equal, the cube with more
-		 * dimensions wins
+		 * if all common dimensions are equal, the cube with more dimensions
+		 * wins
 		 */
 		return -1;
 	}
@@ -797,10 +795,9 @@ cube_contains(NDBOX * a, NDBOX * b)
 	if (a->dim < b->dim)
 	{
 		/*
-		 * the further comparisons will make sense if the excess
-		 * dimensions of (b) were zeroes Since both UL and UR coordinates
-		 * must be zero, we can check them all without worrying about
-		 * which is which.
+		 * the further comparisons will make sense if the excess dimensions of
+		 * (b) were zeroes Since both UL and UR coordinates must be zero, we
+		 * can check them all without worrying about which is which.
 		 */
 		for (i = a->dim; i < b->dim; i++)
 		{

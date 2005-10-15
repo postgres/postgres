@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_conversion.c,v 1.26 2005/09/24 17:53:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_conversion.c,v 1.27 2005/10/15 02:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,17 +67,17 @@ ConversionCreate(const char *conname, Oid connamespace,
 	if (def)
 	{
 		/*
-		 * make sure there is no existing default <for encoding><to
-		 * encoding> pair in this name space
+		 * make sure there is no existing default <for encoding><to encoding>
+		 * pair in this name space
 		 */
 		if (FindDefaultConversion(connamespace,
 								  conforencoding,
 								  contoencoding))
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("default conversion for %s to %s already exists",
-						pg_encoding_to_char(conforencoding),
-						pg_encoding_to_char(contoencoding))));
+					 errmsg("default conversion for %s to %s already exists",
+							pg_encoding_to_char(conforencoding),
+							pg_encoding_to_char(contoencoding))));
 	}
 
 	/* open pg_conversion */
@@ -150,7 +150,7 @@ ConversionDrop(Oid conversionOid, DropBehavior behavior)
 	if (!superuser() &&
 		((Form_pg_conversion) GETSTRUCT(tuple))->conowner != GetUserId())
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CONVERSION,
-			  NameStr(((Form_pg_conversion) GETSTRUCT(tuple))->conname));
+				  NameStr(((Form_pg_conversion) GETSTRUCT(tuple))->conname));
 
 	ReleaseSysCache(tuple);
 
@@ -330,9 +330,8 @@ pg_convert_using(PG_FUNCTION_ARGS)
 	ReleaseSysCache(tuple);
 
 	/*
-	 * build text result structure. we cannot use textin() here, since
-	 * textin assumes that input string encoding is same as database
-	 * encoding.
+	 * build text result structure. we cannot use textin() here, since textin
+	 * assumes that input string encoding is same as database encoding.
 	 */
 	len = strlen(result) + VARHDRSZ;
 	retval = palloc(len);

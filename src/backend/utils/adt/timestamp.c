@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.154 2005/10/09 17:21:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.155 2005/10/15 02:49:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,7 +116,7 @@ timestamp_in(PG_FUNCTION_ARGS)
 		case DTK_INVALID:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("date/time value \"%s\" is no longer supported", str)));
+			  errmsg("date/time value \"%s\" is no longer supported", str)));
 
 			TIMESTAMP_NOEND(result);
 			break;
@@ -138,7 +138,7 @@ timestamp_in(PG_FUNCTION_ARGS)
 Datum
 timestamp_out(PG_FUNCTION_ARGS)
 {
-	Timestamp timestamp = PG_GETARG_TIMESTAMP(0);
+	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 	char	   *result;
 	struct pg_tm tt,
 			   *tm = &tt;
@@ -169,11 +169,12 @@ Datum
 timestamp_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
 	int32		typmod = PG_GETARG_INT32(2);
-	Timestamp timestamp;
+	Timestamp	timestamp;
 	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
@@ -203,7 +204,7 @@ timestamp_recv(PG_FUNCTION_ARGS)
 Datum
 timestamp_send(PG_FUNCTION_ARGS)
 {
-	Timestamp timestamp = PG_GETARG_TIMESTAMP(0);
+	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 	StringInfoData buf;
 
 	pq_begintypsend(&buf);
@@ -223,7 +224,7 @@ timestamp_send(PG_FUNCTION_ARGS)
 Datum
 timestamp_scale(PG_FUNCTION_ARGS)
 {
-	Timestamp timestamp = PG_GETARG_TIMESTAMP(0);
+	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 	int32		typmod = PG_GETARG_INT32(1);
 	Timestamp	result;
 
@@ -257,7 +258,6 @@ AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 		INT64CONST(5),
 		INT64CONST(0)
 	};
-
 #else
 	static const double TimestampScales[MAX_TIMESTAMP_PRECISION + 1] = {
 		1,
@@ -276,21 +276,21 @@ AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 		if (typmod < 0 || typmod > MAX_TIMESTAMP_PRECISION)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			  errmsg("timestamp(%d) precision must be between %d and %d",
-					 typmod, 0, MAX_TIMESTAMP_PRECISION)));
+				  errmsg("timestamp(%d) precision must be between %d and %d",
+						 typmod, 0, MAX_TIMESTAMP_PRECISION)));
 
 		/*
-		 * Note: this round-to-nearest code is not completely consistent
-		 * about rounding values that are exactly halfway between integral
-		 * values.	On most platforms, rint() will implement
-		 * round-to-nearest-even, but the integer code always rounds up
-		 * (away from zero).  Is it worth trying to be consistent?
+		 * Note: this round-to-nearest code is not completely consistent about
+		 * rounding values that are exactly halfway between integral values.
+		 * On most platforms, rint() will implement round-to-nearest-even, but
+		 * the integer code always rounds up (away from zero).	Is it worth
+		 * trying to be consistent?
 		 */
 #ifdef HAVE_INT64_TIMESTAMP
 		if (*time >= INT64CONST(0))
 		{
 			*time = ((*time + TimestampOffsets[typmod]) / TimestampScales[typmod]) *
-					TimestampScales[typmod];
+				TimestampScales[typmod];
 		}
 		else
 		{
@@ -298,7 +298,7 @@ AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 					  * TimestampScales[typmod]);
 		}
 #else
-		*time = rint((double)*time * TimestampScales[typmod]) / TimestampScales[typmod];
+		*time = rint((double) *time * TimestampScales[typmod]) / TimestampScales[typmod];
 #endif
 	}
 }
@@ -359,7 +359,7 @@ timestamptz_in(PG_FUNCTION_ARGS)
 		case DTK_INVALID:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("date/time value \"%s\" is no longer supported", str)));
+			  errmsg("date/time value \"%s\" is no longer supported", str)));
 
 			TIMESTAMP_NOEND(result);
 			break;
@@ -413,6 +413,7 @@ Datum
 timestamptz_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
@@ -540,7 +541,7 @@ interval_in(PG_FUNCTION_ARGS)
 		case DTK_INVALID:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("date/time value \"%s\" is no longer supported", str)));
+			  errmsg("date/time value \"%s\" is no longer supported", str)));
 			break;
 
 		default:
@@ -583,6 +584,7 @@ Datum
 interval_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
@@ -643,6 +645,7 @@ interval_scale(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INTERVAL_P(result);
 }
+
 /*
  *	Adjust interval for specified precision, in both YEAR to SECOND
  *	range and sub-second precision.
@@ -670,7 +673,6 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		INT64CONST(5),
 		INT64CONST(0)
 	};
-
 #else
 	static const double IntervalScales[MAX_INTERVAL_PRECISION + 1] = {
 		1,
@@ -684,8 +686,8 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 #endif
 
 	/*
-	 * Unspecified range and precision? Then not necessary to adjust.
-	 * Setting typmod to -1 is the convention for all types.
+	 * Unspecified range and precision? Then not necessary to adjust. Setting
+	 * typmod to -1 is the convention for all types.
 	 */
 	if (typmod != -1)
 	{
@@ -727,9 +729,9 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 
 #ifdef HAVE_INT64_TIMESTAMP
 			interval->time = (interval->time / USECS_PER_HOUR) *
-								USECS_PER_HOUR;
+				USECS_PER_HOUR;
 #else
-			interval->time = ((int)(interval->time / SECS_PER_HOUR)) * (double)SECS_PER_HOUR;
+			interval->time = ((int) (interval->time / SECS_PER_HOUR)) * (double) SECS_PER_HOUR;
 #endif
 		}
 		else if (range == INTERVAL_MASK(MINUTE))
@@ -747,10 +749,10 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			hour = interval->time / USECS_PER_HOUR;
 			interval->time -= hour * USECS_PER_HOUR;
 			interval->time = (interval->time / USECS_PER_MINUTE) *
-								USECS_PER_MINUTE;
+				USECS_PER_MINUTE;
 #else
-			TMODULO(interval->time, hour, (double)SECS_PER_HOUR);
-			interval->time = ((int)(interval->time / SECS_PER_MINUTE)) * (double)SECS_PER_MINUTE;
+			TMODULO(interval->time, hour, (double) SECS_PER_HOUR);
+			interval->time = ((int) (interval->time / SECS_PER_MINUTE)) * (double) SECS_PER_MINUTE;
 #endif
 		}
 		else if (range == INTERVAL_MASK(SECOND))
@@ -768,7 +770,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			minute = interval->time / USECS_PER_MINUTE;
 			interval->time -= minute * USECS_PER_MINUTE;
 #else
-			TMODULO(interval->time, minute, (double)SECS_PER_MINUTE);
+			TMODULO(interval->time, minute, (double) SECS_PER_MINUTE);
 			/* return subseconds too */
 #endif
 		}
@@ -780,9 +782,9 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 
 #ifdef HAVE_INT64_TIMESTAMP
 			interval->time = (interval->time / USECS_PER_HOUR) *
-								USECS_PER_HOUR;
+				USECS_PER_HOUR;
 #else
-			interval->time = ((int) (interval->time / SECS_PER_HOUR)) * (double)SECS_PER_HOUR;
+			interval->time = ((int) (interval->time / SECS_PER_HOUR)) * (double) SECS_PER_HOUR;
 #endif
 		}
 		/* DAY TO MINUTE */
@@ -794,9 +796,9 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 
 #ifdef HAVE_INT64_TIMESTAMP
 			interval->time = (interval->time / USECS_PER_MINUTE) *
-								USECS_PER_MINUTE;
+				USECS_PER_MINUTE;
 #else
-			interval->time = ((int)(interval->time / SECS_PER_MINUTE)) * (double)SECS_PER_MINUTE;
+			interval->time = ((int) (interval->time / SECS_PER_MINUTE)) * (double) SECS_PER_MINUTE;
 #endif
 		}
 		/* DAY TO SECOND */
@@ -815,9 +817,9 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 
 #ifdef HAVE_INT64_TIMESTAMP
 			interval->time = (interval->time / USECS_PER_MINUTE) *
-								USECS_PER_MINUTE;
+				USECS_PER_MINUTE;
 #else
-			interval->time = ((int)(interval->time / SECS_PER_MINUTE)) * (double)SECS_PER_MINUTE;
+			interval->time = ((int) (interval->time / SECS_PER_MINUTE)) * (double) SECS_PER_MINUTE;
 #endif
 		}
 		/* HOUR TO SECOND */
@@ -835,7 +837,6 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		{
 #ifdef HAVE_INT64_TIMESTAMP
 			int64		hour;
-
 #else
 			double		hour;
 #endif
@@ -847,7 +848,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			hour = interval->time / USECS_PER_HOUR;
 			interval->time -= hour * USECS_PER_HOUR;
 #else
-			TMODULO(interval->time, hour, (double)SECS_PER_HOUR);
+			TMODULO(interval->time, hour, (double) SECS_PER_HOUR);
 #endif
 		}
 		else
@@ -859,36 +860,35 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			if (precision < 0 || precision > MAX_INTERVAL_PRECISION)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("interval(%d) precision must be between %d and %d",
-					   precision, 0, MAX_INTERVAL_PRECISION)));
+				   errmsg("interval(%d) precision must be between %d and %d",
+						  precision, 0, MAX_INTERVAL_PRECISION)));
 
 			/*
-			 * Note: this round-to-nearest code is not completely
-			 * consistent about rounding values that are exactly halfway
-			 * between integral values.  On most platforms, rint() will
-			 * implement round-to-nearest-even, but the integer code
-			 * always rounds up (away from zero).  Is it worth trying to
-			 * be consistent?
+			 * Note: this round-to-nearest code is not completely consistent
+			 * about rounding values that are exactly halfway between integral
+			 * values.	On most platforms, rint() will implement
+			 * round-to-nearest-even, but the integer code always rounds up
+			 * (away from zero).  Is it worth trying to be consistent?
 			 */
 #ifdef HAVE_INT64_TIMESTAMP
 			if (interval->time >= INT64CONST(0))
 			{
 				interval->time = ((interval->time +
-									IntervalOffsets[precision]) /
-									IntervalScales[precision]) *
-									IntervalScales[precision];
+								   IntervalOffsets[precision]) /
+								  IntervalScales[precision]) *
+					IntervalScales[precision];
 			}
 			else
 			{
 				interval->time = -(((-interval->time +
-									IntervalOffsets[precision]) /
+									 IntervalOffsets[precision]) /
 									IntervalScales[precision]) *
-									IntervalScales[precision]);
+								   IntervalScales[precision]);
 			}
 #else
 			interval->time = rint(((double) interval->time) *
-									IntervalScales[precision]) /
-									IntervalScales[precision];
+								  IntervalScales[precision]) /
+				IntervalScales[precision];
 #endif
 		}
 	}
@@ -1016,16 +1016,16 @@ dt2time(Timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
  * timezone) will be used.
  */
 int
-timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm, fsec_t *fsec, char **tzn, pg_tz *attimezone)
+timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm, fsec_t *fsec, char **tzn, pg_tz *attimezone)
 {
-	Timestamp date;
+	Timestamp	date;
 	Timestamp	time;
 	pg_time_t	utime;
 
 	/*
-	 * If HasCTZSet is true then we have a brute force time zone
-	 * specified. Go ahead and rotate to the local time zone since we will
-	 * later bypass any calls which adjust the tm fields.
+	 * If HasCTZSet is true then we have a brute force time zone specified. Go
+	 * ahead and rotate to the local time zone since we will later bypass any
+	 * calls which adjust the tm fields.
 	 */
 	if (attimezone == NULL && HasCTZSet && tzp != NULL)
 	{
@@ -1057,7 +1057,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm, fsec_t *fsec, char **tzn,
 	dt2time(time, &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
 #else
 	time = dt;
-	TMODULO(time, date, (double)SECS_PER_DAY);
+	TMODULO(time, date, (double) SECS_PER_DAY);
 
 	if (time < 0)
 	{
@@ -1082,7 +1082,7 @@ recalc_t:
 	if (*fsec >= 1.0)
 	{
 		time = ceil(time);
-		if (time >= (double)SECS_PER_DAY)
+		if (time >= (double) SECS_PER_DAY)
 		{
 			time = 0;
 			date += 1;
@@ -1104,8 +1104,8 @@ recalc_t:
 	}
 
 	/*
-	 * We have a brute force time zone per SQL99? Then use it without
-	 * change since we have already rotated to the time zone.
+	 * We have a brute force time zone per SQL99? Then use it without change
+	 * since we have already rotated to the time zone.
 	 */
 	if (attimezone == NULL && HasCTZSet)
 	{
@@ -1119,14 +1119,14 @@ recalc_t:
 	}
 
 	/*
-	 * If the time falls within the range of pg_time_t, use pg_localtime()
-	 * to rotate to the local time zone.
+	 * If the time falls within the range of pg_time_t, use pg_localtime() to
+	 * rotate to the local time zone.
 	 *
 	 * First, convert to an integral timestamp, avoiding possibly
 	 * platform-specific roundoff-in-wrong-direction errors, and adjust to
-	 * Unix epoch.	Then see if we can convert to pg_time_t without loss.
-	 * This coding avoids hardwiring any assumptions about the width of
-	 * pg_time_t, so it should behave sanely on machines without int64.
+	 * Unix epoch.	Then see if we can convert to pg_time_t without loss. This
+	 * coding avoids hardwiring any assumptions about the width of pg_time_t,
+	 * so it should behave sanely on machines without int64.
 	 */
 #ifdef HAVE_INT64_TIMESTAMP
 	dt = (dt - *fsec) / USECS_PER_SEC +
@@ -1139,7 +1139,7 @@ recalc_t:
 	if ((Timestamp) utime == dt)
 	{
 		struct pg_tm *tx = pg_localtime(&utime,
-										attimezone ? attimezone : global_timezone);
+								  attimezone ? attimezone : global_timezone);
 
 		tm->tm_year = tx->tm_year + 1900;
 		tm->tm_mon = tx->tm_mon + 1;
@@ -1180,13 +1180,13 @@ recalc_t:
  * Returns -1 on failure (value out of range).
  */
 int
-tm2timestamp(struct pg_tm *tm, fsec_t fsec, int *tzp, Timestamp *result)
+tm2timestamp(struct pg_tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	int date;
+	int			date;
 	int64		time;
 #else
-	double date,
+	double		date,
 				time;
 #endif
 
@@ -1220,7 +1220,7 @@ tm2timestamp(struct pg_tm *tm, fsec_t fsec, int *tzp, Timestamp *result)
  * Convert a interval data type to a tm structure.
  */
 int
-interval2tm(Interval span, struct pg_tm *tm, fsec_t *fsec)
+interval2tm(Interval span, struct pg_tm * tm, fsec_t *fsec)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		time;
@@ -1242,8 +1242,8 @@ interval2tm(Interval span, struct pg_tm *tm, fsec_t *fsec)
 	*fsec = time - (tm->tm_sec * USECS_PER_SEC);
 #else
 recalc:
-	TMODULO(time, tm->tm_hour, (double)SECS_PER_HOUR);
-	TMODULO(time, tm->tm_min, (double)SECS_PER_MINUTE);
+	TMODULO(time, tm->tm_hour, (double) SECS_PER_HOUR);
+	TMODULO(time, tm->tm_min, (double) SECS_PER_MINUTE);
 	TMODULO(time, tm->tm_sec, 1.0);
 	time = TSROUND(time);
 	/* roundoff may need to propagate to higher-order fields */
@@ -1259,18 +1259,18 @@ recalc:
 }
 
 int
-tm2interval(struct pg_tm *tm, fsec_t fsec, Interval *span)
+tm2interval(struct pg_tm * tm, fsec_t fsec, Interval *span)
 {
 	span->month = tm->tm_year * MONTHS_PER_YEAR + tm->tm_mon;
-	span->day   = tm->tm_mday;
+	span->day = tm->tm_mday;
 #ifdef HAVE_INT64_TIMESTAMP
 	span->time = (((((tm->tm_hour * INT64CONST(60)) +
-						tm->tm_min) * INT64CONST(60)) +
-						tm->tm_sec) * USECS_PER_SEC) + fsec;
+					 tm->tm_min) * INT64CONST(60)) +
+				   tm->tm_sec) * USECS_PER_SEC) + fsec;
 #else
-	span->time = (((tm->tm_hour * (double)MINS_PER_HOUR) +
-						tm->tm_min) * (double)SECS_PER_MINUTE) +
-						tm->tm_sec + fsec;
+	span->time = (((tm->tm_hour * (double) MINS_PER_HOUR) +
+				   tm->tm_min) * (double) SECS_PER_MINUTE) +
+		tm->tm_sec + fsec;
 #endif
 
 	return 0;
@@ -1282,7 +1282,6 @@ time2t(const int hour, const int min, const int sec, const fsec_t fsec)
 {
 	return (((((hour * MINS_PER_HOUR) + min) * SECS_PER_MINUTE) + sec) * USECS_PER_SEC) + fsec;
 }	/* time2t() */
-
 #else
 static double
 time2t(const int hour, const int min, const int sec, const fsec_t fsec)
@@ -1311,7 +1310,7 @@ dt2local(Timestamp dt, int tz)
 Datum
 timestamp_finite(PG_FUNCTION_ARGS)
 {
-	Timestamp timestamp = PG_GETARG_TIMESTAMP(0);
+	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 
 	PG_RETURN_BOOL(!TIMESTAMP_NOT_FINITE(timestamp));
 }
@@ -1328,7 +1327,7 @@ interval_finite(PG_FUNCTION_ARGS)
  *---------------------------------------------------------*/
 
 void
-GetEpochTime(struct pg_tm *tm)
+GetEpochTime(struct pg_tm * tm)
 {
 	struct pg_tm *t0;
 	pg_time_t	epoch = 0;
@@ -1379,8 +1378,8 @@ timestamp_cmp_internal(Timestamp dt1, Timestamp dt2)
 	 * When using float representation, we have to be wary of NaNs.
 	 *
 	 * We consider all NANs to be equal and larger than any non-NAN. This is
-	 * somewhat arbitrary; the important thing is to have a consistent
-	 * sort order.
+	 * somewhat arbitrary; the important thing is to have a consistent sort
+	 * order.
 	 */
 	if (isnan(dt1))
 	{
@@ -1667,10 +1666,10 @@ interval_cmp_internal(Interval *interval1, Interval *interval2)
 	span2 += interval2->month * INT64CONST(30) * USECS_PER_DAY;
 	span2 += interval2->day * INT64CONST(24) * USECS_PER_HOUR;
 #else
-	span1 += interval1->month * ((double)DAYS_PER_MONTH * SECS_PER_DAY);
-	span1 += interval1->day * ((double)HOURS_PER_DAY * SECS_PER_HOUR);
-	span2 += interval2->month * ((double)DAYS_PER_MONTH * SECS_PER_DAY);
-	span2 += interval2->day * ((double)HOURS_PER_DAY * SECS_PER_HOUR);
+	span1 += interval1->month * ((double) DAYS_PER_MONTH * SECS_PER_DAY);
+	span1 += interval1->day * ((double) HOURS_PER_DAY * SECS_PER_HOUR);
+	span2 += interval2->month * ((double) DAYS_PER_MONTH * SECS_PER_DAY);
+	span2 += interval2->day * ((double) HOURS_PER_DAY * SECS_PER_HOUR);
 #endif
 
 	return ((span1 < span2) ? -1 : (span1 > span2) ? 1 : 0);
@@ -1749,11 +1748,11 @@ interval_hash(PG_FUNCTION_ARGS)
 
 	/*
 	 * Specify hash length as sizeof(double) + sizeof(int4), not as
-	 * sizeof(Interval), so that any garbage pad bytes in the structure
-	 * won't be included in the hash!
+	 * sizeof(Interval), so that any garbage pad bytes in the structure won't
+	 * be included in the hash!
 	 */
-	return hash_any((unsigned char *) key, 
-			sizeof(key->time) + sizeof(key->day) + sizeof(key->month));
+	return hash_any((unsigned char *) key,
+				  sizeof(key->time) + sizeof(key->day) + sizeof(key->month));
 }
 
 /* overlaps_timestamp() --- implements the SQL92 OVERLAPS operator.
@@ -1766,9 +1765,9 @@ Datum
 overlaps_timestamp(PG_FUNCTION_ARGS)
 {
 	/*
-	 * The arguments are Timestamps, but we leave them as generic Datums
-	 * to avoid unnecessary conversions between value and reference forms
-	 * --- not to mention possible dereferences of null pointers.
+	 * The arguments are Timestamps, but we leave them as generic Datums to
+	 * avoid unnecessary conversions between value and reference forms --- not
+	 * to mention possible dereferences of null pointers.
 	 */
 	Datum		ts1 = PG_GETARG_DATUM(0);
 	Datum		te1 = PG_GETARG_DATUM(1);
@@ -1785,9 +1784,9 @@ overlaps_timestamp(PG_FUNCTION_ARGS)
 	DatumGetBool(DirectFunctionCall2(timestamp_lt,t1,t2))
 
 	/*
-	 * If both endpoints of interval 1 are null, the result is null
-	 * (unknown). If just one endpoint is null, take ts1 as the non-null
-	 * one. Otherwise, take ts1 as the lesser endpoint.
+	 * If both endpoints of interval 1 are null, the result is null (unknown).
+	 * If just one endpoint is null, take ts1 as the non-null one. Otherwise,
+	 * take ts1 as the lesser endpoint.
 	 */
 	if (ts1IsNull)
 	{
@@ -1835,8 +1834,8 @@ overlaps_timestamp(PG_FUNCTION_ARGS)
 	if (TIMESTAMP_GT(ts1, ts2))
 	{
 		/*
-		 * This case is ts1 < te2 OR te1 < te2, which may look redundant
-		 * but in the presence of nulls it's not quite completely so.
+		 * This case is ts1 < te2 OR te1 < te2, which may look redundant but
+		 * in the presence of nulls it's not quite completely so.
 		 */
 		if (te2IsNull)
 			PG_RETURN_NULL();
@@ -1846,8 +1845,8 @@ overlaps_timestamp(PG_FUNCTION_ARGS)
 			PG_RETURN_NULL();
 
 		/*
-		 * If te1 is not null then we had ts1 <= te1 above, and we just
-		 * found ts1 >= te2, hence te1 >= te2.
+		 * If te1 is not null then we had ts1 <= te1 above, and we just found
+		 * ts1 >= te2, hence te1 >= te2.
 		 */
 		PG_RETURN_BOOL(false);
 	}
@@ -1862,8 +1861,8 @@ overlaps_timestamp(PG_FUNCTION_ARGS)
 			PG_RETURN_NULL();
 
 		/*
-		 * If te2 is not null then we had ts2 <= te2 above, and we just
-		 * found ts2 >= te1, hence te2 >= te1.
+		 * If te2 is not null then we had ts2 <= te2 above, and we just found
+		 * ts2 >= te1, hence te2 >= te1.
 		 */
 		PG_RETURN_BOOL(false);
 	}
@@ -1871,8 +1870,7 @@ overlaps_timestamp(PG_FUNCTION_ARGS)
 	{
 		/*
 		 * For ts1 = ts2 the spec says te1 <> te2 OR te1 = te2, which is a
-		 * rather silly way of saying "true if both are nonnull, else
-		 * null".
+		 * rather silly way of saying "true if both are nonnull, else null".
 		 */
 		if (te1IsNull || te2IsNull)
 			PG_RETURN_NULL();
@@ -1938,13 +1936,13 @@ timestamp_mi(PG_FUNCTION_ARGS)
 	result->day = 0;
 
 	result = DatumGetIntervalP(DirectFunctionCall1(interval_justify_hours,
-												IntervalPGetDatum(result)));
+												 IntervalPGetDatum(result)));
 	PG_RETURN_INTERVAL_P(result);
 }
 
 /*	interval_justify_hours()
  *	Adjust interval so 'time' contains less than a whole day, and
- *	'day' contains an integral number of days.  This is useful for
+ *	'day' contains an integral number of days.	This is useful for
  *	situations (such as non-TZ) where '1 day' = '24 hours' is valid,
  *	e.g. interval subtraction and division.  The SQL standard requires
  *	such conversion in these cases, but not the conversion of days to months.
@@ -1952,8 +1950,8 @@ timestamp_mi(PG_FUNCTION_ARGS)
 Datum
 interval_justify_hours(PG_FUNCTION_ARGS)
 {
-	Interval  *span = PG_GETARG_INTERVAL_P(0);
-	Interval  *result;
+	Interval   *span = PG_GETARG_INTERVAL_P(0);
+	Interval   *result;
 
 	result = (Interval *) palloc(sizeof(Interval));
 	result->month = span->month;
@@ -1963,8 +1961,8 @@ interval_justify_hours(PG_FUNCTION_ARGS)
 	result->time += span->day * USECS_PER_DAY;
 	TMODULO(result->time, result->day, USECS_PER_DAY);
 #else
-	result->time += span->day * (double)SECS_PER_DAY;
-	TMODULO(result->time, result->day, (double)SECS_PER_DAY);
+	result->time += span->day * (double) SECS_PER_DAY;
+	TMODULO(result->time, result->day, (double) SECS_PER_DAY);
 #endif
 
 	PG_RETURN_INTERVAL_P(result);
@@ -1977,8 +1975,8 @@ interval_justify_hours(PG_FUNCTION_ARGS)
 Datum
 interval_justify_days(PG_FUNCTION_ARGS)
 {
-	Interval  *span = PG_GETARG_INTERVAL_P(0);
-	Interval  *result;
+	Interval   *span = PG_GETARG_INTERVAL_P(0);
+	Interval   *result;
 
 	result = (Interval *) palloc(sizeof(Interval));
 	result->day = span->day;
@@ -2003,7 +2001,7 @@ interval_justify_days(PG_FUNCTION_ARGS)
 Datum
 timestamp_pl_interval(PG_FUNCTION_ARGS)
 {
-	Timestamp timestamp = PG_GETARG_TIMESTAMP(0);
+	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 	Interval   *span = PG_GETARG_INTERVAL_P(1);
 	Timestamp	result;
 
@@ -2050,7 +2048,7 @@ timestamp_pl_interval(PG_FUNCTION_ARGS)
 					   *tm = &tt;
 			fsec_t		fsec;
 			int			julian;
-			
+
 			if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
@@ -2076,7 +2074,7 @@ timestamp_pl_interval(PG_FUNCTION_ARGS)
 Datum
 timestamp_mi_interval(PG_FUNCTION_ARGS)
 {
-	Timestamp timestamp = PG_GETARG_TIMESTAMP(0);
+	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 	Interval   *span = PG_GETARG_INTERVAL_P(1);
 	Interval	tspan;
 
@@ -2277,7 +2275,9 @@ interval_mul(PG_FUNCTION_ARGS)
 {
 	Interval   *span = PG_GETARG_INTERVAL_P(0);
 	float8		factor = PG_GETARG_FLOAT8(1);
-	double		month_remainder, day_remainder, month_remainder_days;
+	double		month_remainder,
+				day_remainder,
+				month_remainder_days;
 	Interval   *result;
 
 	result = (Interval *) palloc(sizeof(Interval));
@@ -2303,7 +2303,7 @@ interval_mul(PG_FUNCTION_ARGS)
 #endif
 
 	result = DatumGetIntervalP(DirectFunctionCall1(interval_justify_hours,
-												IntervalPGetDatum(result)));
+												 IntervalPGetDatum(result)));
 	PG_RETURN_INTERVAL_P(result);
 }
 
@@ -2322,7 +2322,9 @@ interval_div(PG_FUNCTION_ARGS)
 {
 	Interval   *span = PG_GETARG_INTERVAL_P(0);
 	float8		factor = PG_GETARG_FLOAT8(1);
-	double		month_remainder, day_remainder, month_remainder_days;
+	double		month_remainder,
+				day_remainder,
+				month_remainder_days;
 	Interval   *result;
 
 	result = (Interval *) palloc(sizeof(Interval));
@@ -2354,7 +2356,7 @@ interval_div(PG_FUNCTION_ARGS)
 #endif
 
 	result = DatumGetIntervalP(DirectFunctionCall1(interval_justify_hours,
-												IntervalPGetDatum(result)));
+												 IntervalPGetDatum(result)));
 	PG_RETURN_INTERVAL_P(result);
 }
 
@@ -2386,10 +2388,10 @@ interval_accum(PG_FUNCTION_ARGS)
 		elog(ERROR, "expected 2-element interval array");
 
 	/*
-	 * XXX memcpy, instead of just extracting a pointer, to work around
-	 * buggy array code: it won't ensure proper alignment of Interval
-	 * objects on machines where double requires 8-byte alignment. That
-	 * should be fixed, but in the meantime...
+	 * XXX memcpy, instead of just extracting a pointer, to work around buggy
+	 * array code: it won't ensure proper alignment of Interval objects on
+	 * machines where double requires 8-byte alignment. That should be fixed,
+	 * but in the meantime...
 	 *
 	 * Note: must use DatumGetPointer here, not DatumGetIntervalP, else some
 	 * compilers optimize into double-aligned load/store anyway.
@@ -2398,8 +2400,8 @@ interval_accum(PG_FUNCTION_ARGS)
 	memcpy((void *) &N, DatumGetPointer(transdatums[1]), sizeof(Interval));
 
 	newsum = DatumGetIntervalP(DirectFunctionCall2(interval_pl,
-												IntervalPGetDatum(&sumX),
-											 IntervalPGetDatum(newval)));
+												   IntervalPGetDatum(&sumX),
+												 IntervalPGetDatum(newval)));
 	N.time += 1;
 
 	transdatums[0] = IntervalPGetDatum(newsum);
@@ -2427,10 +2429,10 @@ interval_avg(PG_FUNCTION_ARGS)
 		elog(ERROR, "expected 2-element interval array");
 
 	/*
-	 * XXX memcpy, instead of just extracting a pointer, to work around
-	 * buggy array code: it won't ensure proper alignment of Interval
-	 * objects on machines where double requires 8-byte alignment. That
-	 * should be fixed, but in the meantime...
+	 * XXX memcpy, instead of just extracting a pointer, to work around buggy
+	 * array code: it won't ensure proper alignment of Interval objects on
+	 * machines where double requires 8-byte alignment. That should be fixed,
+	 * but in the meantime...
 	 *
 	 * Note: must use DatumGetPointer here, not DatumGetIntervalP, else some
 	 * compilers optimize into double-aligned load/store anyway.
@@ -2689,7 +2691,7 @@ Datum
 timestamp_text(PG_FUNCTION_ARGS)
 {
 	/* Input is a Timestamp, but may as well leave it in Datum form */
-	Datum timestamp = PG_GETARG_DATUM(0);
+	Datum		timestamp = PG_GETARG_DATUM(0);
 	text	   *result;
 	char	   *str;
 	int			len;
@@ -2728,7 +2730,7 @@ text_timestamp(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 				 errmsg("invalid input syntax for type timestamp: \"%s\"",
 						DatumGetCString(DirectFunctionCall1(textout,
-											   PointerGetDatum(str))))));
+												   PointerGetDatum(str))))));
 
 	sp = VARDATA(str);
 	dp = dstr;
@@ -2750,7 +2752,7 @@ Datum
 timestamptz_text(PG_FUNCTION_ARGS)
 {
 	/* Input is a Timestamp, but may as well leave it in Datum form */
-	Datum timestamp = PG_GETARG_DATUM(0);
+	Datum		timestamp = PG_GETARG_DATUM(0);
 	text	   *result;
 	char	   *str;
 	int			len;
@@ -2788,7 +2790,7 @@ text_timestamptz(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 				 errmsg("invalid input syntax for type timestamp with time zone: \"%s\"",
 						DatumGetCString(DirectFunctionCall1(textout,
-											   PointerGetDatum(str))))));
+												   PointerGetDatum(str))))));
 
 	sp = VARDATA(str);
 	dp = dstr;
@@ -2815,7 +2817,7 @@ interval_text(PG_FUNCTION_ARGS)
 	int			len;
 
 	str = DatumGetCString(DirectFunctionCall1(interval_out,
-										   IntervalPGetDatum(interval)));
+											  IntervalPGetDatum(interval)));
 
 	len = strlen(str) + VARHDRSZ;
 
@@ -2849,7 +2851,7 @@ text_interval(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 				 errmsg("invalid input syntax for type interval: \"%s\"",
 						DatumGetCString(DirectFunctionCall1(textout,
-											   PointerGetDatum(str))))));
+												   PointerGetDatum(str))))));
 
 	sp = VARDATA(str);
 	dp = dstr;
@@ -2870,7 +2872,7 @@ Datum
 timestamp_trunc(PG_FUNCTION_ARGS)
 {
 	text	   *units = PG_GETARG_TEXT_P(0);
-	Timestamp timestamp = PG_GETARG_TIMESTAMP(1);
+	Timestamp	timestamp = PG_GETARG_TIMESTAMP(1);
 	Timestamp	result;
 	int			type,
 				val;
@@ -2898,26 +2900,27 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 		switch (val)
 		{
 			case DTK_WEEK:
-			{
-				int woy;
-				
-				woy = date2isoweek(tm->tm_year, tm->tm_mon, tm->tm_mday);
-				/*
-				 *	If it is week 52/53 and the month is January,
-				 *	then the week must belong to the previous year.
-				 *	Also, some December dates belong to the next year.
-				 */
-				if (woy >= 52 && tm->tm_mon == 1)
-					--tm->tm_year;
-				if (woy <= 1 && tm->tm_mon == MONTHS_PER_YEAR)
-					++tm->tm_year;
-				isoweek2date(woy, &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
-				tm->tm_hour = 0;
-				tm->tm_min = 0;
-				tm->tm_sec = 0;
-				fsec = 0;
-				break;
-			}
+				{
+					int			woy;
+
+					woy = date2isoweek(tm->tm_year, tm->tm_mon, tm->tm_mday);
+
+					/*
+					 * If it is week 52/53 and the month is January, then the
+					 * week must belong to the previous year. Also, some
+					 * December dates belong to the next year.
+					 */
+					if (woy >= 52 && tm->tm_mon == 1)
+						--tm->tm_year;
+					if (woy <= 1 && tm->tm_mon == MONTHS_PER_YEAR)
+						++tm->tm_year;
+					isoweek2date(woy, &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
+					tm->tm_hour = 0;
+					tm->tm_min = 0;
+					tm->tm_sec = 0;
+					fsec = 0;
+					break;
+				}
 			case DTK_MILLENNIUM:
 				/* see comments in timestamptz_trunc */
 				if (tm->tm_year > 0)
@@ -3032,34 +3035,35 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 		switch (val)
 		{
 			case DTK_WEEK:
-			{
-				int woy;
-				
-				woy = date2isoweek(tm->tm_year, tm->tm_mon, tm->tm_mday);
-				/*
-				 *	If it is week 52/53 and the month is January,
-				 *	then the week must belong to the previous year.
-				 *	Also, some December dates belong to the next year.
-				 */
-				if (woy >= 52 && tm->tm_mon == 1)
-					--tm->tm_year;
-				if (woy <= 1 && tm->tm_mon == MONTHS_PER_YEAR)
-					++tm->tm_year;
-				isoweek2date(woy, &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
-				tm->tm_hour = 0;
-				tm->tm_min = 0;
-				tm->tm_sec = 0;
-				fsec = 0;
-				redotz = true;
-				break;
-			}
+				{
+					int			woy;
+
+					woy = date2isoweek(tm->tm_year, tm->tm_mon, tm->tm_mday);
+
+					/*
+					 * If it is week 52/53 and the month is January, then the
+					 * week must belong to the previous year. Also, some
+					 * December dates belong to the next year.
+					 */
+					if (woy >= 52 && tm->tm_mon == 1)
+						--tm->tm_year;
+					if (woy <= 1 && tm->tm_mon == MONTHS_PER_YEAR)
+						++tm->tm_year;
+					isoweek2date(woy, &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
+					tm->tm_hour = 0;
+					tm->tm_min = 0;
+					tm->tm_sec = 0;
+					fsec = 0;
+					redotz = true;
+					break;
+				}
 				/* one may consider DTK_THOUSAND and DTK_HUNDRED... */
 			case DTK_MILLENNIUM:
 
 				/*
 				 * truncating to the millennium? what is this supposed to
-				 * mean? let us put the first year of the millennium...
-				 * i.e. -1000, 1, 1001, 2001...
+				 * mean? let us put the first year of the millennium... i.e.
+				 * -1000, 1, 1001, 2001...
 				 */
 				if (tm->tm_year > 0)
 					tm->tm_year = ((tm->tm_year + 999) / 1000) * 1000 - 999;
@@ -3076,8 +3080,8 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 			case DTK_DECADE:
 
 				/*
-				 * truncating to the decade? first year of the decade.
-				 * must not be applied if year was truncated before!
+				 * truncating to the decade? first year of the decade. must
+				 * not be applied if year was truncated before!
 				 */
 				if (val != DTK_MILLENNIUM && val != DTK_CENTURY)
 				{
@@ -3126,8 +3130,8 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 			default:
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					  errmsg("timestamp with time zone units \"%s\" not "
-							 "supported", lowunits)));
+						 errmsg("timestamp with time zone units \"%s\" not "
+								"supported", lowunits)));
 				result = 0;
 		}
 
@@ -3143,8 +3147,8 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		   errmsg("timestamp with time zone units \"%s\" not recognized",
-				  lowunits)));
+			   errmsg("timestamp with time zone units \"%s\" not recognized",
+					  lowunits)));
 		result = 0;
 	}
 
@@ -3181,7 +3185,7 @@ interval_trunc(PG_FUNCTION_ARGS)
 		{
 			switch (val)
 			{
-				/* fall through */
+					/* fall through */
 				case DTK_MILLENNIUM:
 					/* caution: C division may have negative remainder */
 					tm->tm_year = (tm->tm_year / 1000) * 1000;
@@ -3241,7 +3245,7 @@ interval_trunc(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("interval units \"%s\" not recognized",
 						DatumGetCString(DirectFunctionCall1(textout,
-											 PointerGetDatum(units))))));
+												 PointerGetDatum(units))))));
 		*result = *interval;
 	}
 
@@ -3263,7 +3267,7 @@ isoweek2date(int woy, int *year, int *mon, int *mday)
 	if (!*year)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		errmsg("cannot calculate week number without year information")));
+		   errmsg("cannot calculate week number without year information")));
 
 	/* fourth day of current year */
 	day4 = date2j(*year, 1, 4);
@@ -3298,8 +3302,8 @@ date2isoweek(int year, int mon, int mday)
 	day0 = j2day(day4 - 1);
 
 	/*
-	 * We need the first week containing a Thursday, otherwise this day
-	 * falls into the previous year for purposes of counting weeks
+	 * We need the first week containing a Thursday, otherwise this day falls
+	 * into the previous year for purposes of counting weeks
 	 */
 	if (dayn < day4 - day0)
 	{
@@ -3312,8 +3316,8 @@ date2isoweek(int year, int mon, int mday)
 	result = (dayn - (day4 - day0)) / 7 + 1;
 
 	/*
-	 * Sometimes the last few days in a year will fall into the first week
-	 * of the next year, so check for this.
+	 * Sometimes the last few days in a year will fall into the first week of
+	 * the next year, so check for this.
 	 */
 	if (result >= 52)
 	{
@@ -3352,8 +3356,8 @@ date2isoyear(int year, int mon, int mday)
 	day0 = j2day(day4 - 1);
 
 	/*
-	 * We need the first week containing a Thursday, otherwise this day
-	 * falls into the previous year for purposes of counting weeks
+	 * We need the first week containing a Thursday, otherwise this day falls
+	 * into the previous year for purposes of counting weeks
 	 */
 	if (dayn < day4 - day0)
 	{
@@ -3368,8 +3372,8 @@ date2isoyear(int year, int mon, int mday)
 	result = (dayn - (day4 - day0)) / 7 + 1;
 
 	/*
-	 * Sometimes the last few days in a year will fall into the first week
-	 * of the next year, so check for this.
+	 * Sometimes the last few days in a year will fall into the first week of
+	 * the next year, so check for this.
 	 */
 	if (result >= 52)
 	{
@@ -3393,7 +3397,7 @@ Datum
 timestamp_part(PG_FUNCTION_ARGS)
 {
 	text	   *units = PG_GETARG_TEXT_P(0);
-	Timestamp timestamp = PG_GETARG_TIMESTAMP(1);
+	Timestamp	timestamp = PG_GETARG_TIMESTAMP(1);
 	float8		result;
 	int			type,
 				val;
@@ -3484,9 +3488,9 @@ timestamp_part(PG_FUNCTION_ARGS)
 			case DTK_DECADE:
 
 				/*
-				 * what is a decade wrt dates? let us assume that decade
-				 * 199 is 1990 thru 1999... decade 0 starts on year 1 BC,
-				 * and -1 is 11 BC thru 2 BC...
+				 * what is a decade wrt dates? let us assume that decade 199
+				 * is 1990 thru 1999... decade 0 starts on year 1 BC, and -1
+				 * is 11 BC thru 2 BC...
 				 */
 				if (tm->tm_year >= 0)
 					result = tm->tm_year / 10;
@@ -3521,10 +3525,10 @@ timestamp_part(PG_FUNCTION_ARGS)
 				result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
 #ifdef HAVE_INT64_TIMESTAMP
 				result += ((((tm->tm_hour * MINS_PER_HOUR) + tm->tm_min) * SECS_PER_MINUTE) +
-							tm->tm_sec + (fsec / 1000000.0)) / (double)SECS_PER_DAY;
+					tm->tm_sec + (fsec / 1000000.0)) / (double) SECS_PER_DAY;
 #else
 				result += ((((tm->tm_hour * MINS_PER_HOUR) + tm->tm_min) * SECS_PER_MINUTE) +
-							tm->tm_sec + fsec) / (double)SECS_PER_DAY;
+						   tm->tm_sec + fsec) / (double) SECS_PER_DAY;
 #endif
 				break;
 
@@ -3549,20 +3553,19 @@ timestamp_part(PG_FUNCTION_ARGS)
 					TimestampTz timestamptz;
 
 					/*
-					 * convert to timestamptz to produce consistent
-					 * results
+					 * convert to timestamptz to produce consistent results
 					 */
 					if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0)
 						ereport(ERROR,
-						   (errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-							errmsg("timestamp out of range")));
+								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+								 errmsg("timestamp out of range")));
 
 					tz = DetermineTimeZoneOffset(tm, global_timezone);
 
 					if (tm2timestamp(tm, fsec, &tz, &timestamptz) != 0)
 						ereport(ERROR,
-						   (errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-							errmsg("timestamp out of range")));
+								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+								 errmsg("timestamp out of range")));
 
 #ifdef HAVE_INT64_TIMESTAMP
 					result = (timestamptz - SetEpochTimestamp()) / 1000000.0;
@@ -3601,7 +3604,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			 errmsg("timestamp units \"%s\" not recognized", lowunits)));
+				 errmsg("timestamp units \"%s\" not recognized", lowunits)));
 		result = 0;
 	}
 
@@ -3657,12 +3660,12 @@ timestamptz_part(PG_FUNCTION_ARGS)
 			case DTK_TZ_MINUTE:
 				result = -tz;
 				result /= MINS_PER_HOUR;
-				FMODULO(result, dummy, (double)MINS_PER_HOUR);
+				FMODULO(result, dummy, (double) MINS_PER_HOUR);
 				break;
 
 			case DTK_TZ_HOUR:
 				dummy = -tz;
-				FMODULO(dummy, result, (double)SECS_PER_HOUR);
+				FMODULO(dummy, result, (double) SECS_PER_HOUR);
 				break;
 
 			case DTK_MICROSEC:
@@ -3749,18 +3752,18 @@ timestamptz_part(PG_FUNCTION_ARGS)
 				result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
 #ifdef HAVE_INT64_TIMESTAMP
 				result += ((((tm->tm_hour * MINS_PER_HOUR) + tm->tm_min) * SECS_PER_MINUTE) +
-							tm->tm_sec + (fsec / 1000000.0)) / (double)SECS_PER_DAY;
+					tm->tm_sec + (fsec / 1000000.0)) / (double) SECS_PER_DAY;
 #else
 				result += ((((tm->tm_hour * MINS_PER_HOUR) + tm->tm_min) * SECS_PER_MINUTE) +
-							tm->tm_sec + fsec) / (double)SECS_PER_DAY;
+						   tm->tm_sec + fsec) / (double) SECS_PER_DAY;
 #endif
 				break;
 
 			default:
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("timestamp with time zone units \"%s\" not supported",
-								lowunits)));
+				errmsg("timestamp with time zone units \"%s\" not supported",
+					   lowunits)));
 				result = 0;
 		}
 
@@ -3771,7 +3774,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 		{
 			case DTK_EPOCH:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = (timestamp - SetEpochTimestamp()) /1000000.0;
+				result = (timestamp - SetEpochTimestamp()) / 1000000.0;
 #else
 				result = timestamp - SetEpochTimestamp();
 #endif
@@ -3797,8 +3800,8 @@ timestamptz_part(PG_FUNCTION_ARGS)
 			default:
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("timestamp with time zone units \"%s\" not supported",
-								lowunits)));
+				errmsg("timestamp with time zone units \"%s\" not supported",
+					   lowunits)));
 				result = 0;
 		}
 	}
@@ -3806,8 +3809,8 @@ timestamptz_part(PG_FUNCTION_ARGS)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		   errmsg("timestamp with time zone units \"%s\" not recognized",
-				  lowunits)));
+			   errmsg("timestamp with time zone units \"%s\" not recognized",
+					  lowunits)));
 
 		result = 0;
 	}
@@ -3913,8 +3916,8 @@ interval_part(PG_FUNCTION_ARGS)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("interval units \"%s\" not supported",
-							 DatumGetCString(DirectFunctionCall1(textout,
-											 PointerGetDatum(units))))));
+								 DatumGetCString(DirectFunctionCall1(textout,
+												 PointerGetDatum(units))))));
 					result = 0;
 			}
 
@@ -3933,7 +3936,7 @@ interval_part(PG_FUNCTION_ARGS)
 		result = interval->time;
 #endif
 		result += (DAYS_PER_YEAR * SECS_PER_DAY) * (interval->month / MONTHS_PER_YEAR);
-		result += ((double)DAYS_PER_MONTH * SECS_PER_DAY) * (interval->month % MONTHS_PER_YEAR);
+		result += ((double) DAYS_PER_MONTH * SECS_PER_DAY) * (interval->month % MONTHS_PER_YEAR);
 		result += interval->day * SECS_PER_DAY;
 	}
 	else
@@ -3942,7 +3945,7 @@ interval_part(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("interval units \"%s\" not recognized",
 						DatumGetCString(DirectFunctionCall1(textout,
-											 PointerGetDatum(units))))));
+												 PointerGetDatum(units))))));
 		result = 0;
 	}
 
@@ -3950,9 +3953,9 @@ interval_part(PG_FUNCTION_ARGS)
 }
 
 
-/* 	timestamp_zone()
- * 	Encode timestamp type with specified time zone.
- * 	This function is just timestamp2timestamptz() except instead of
+/*	timestamp_zone()
+ *	Encode timestamp type with specified time zone.
+ *	This function is just timestamp2timestamptz() except instead of
  *	shifting to the global timezone, we shift to the specified timezone.
  *	This is different from the other AT TIME ZONE cases because instead
  *	of shifting to a _to_ a new time zone, it sets the time to _be_ the
@@ -3963,20 +3966,20 @@ timestamp_zone(PG_FUNCTION_ARGS)
 {
 	text	   *zone = PG_GETARG_TEXT_P(0);
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(1);
-	TimestampTz	result;
+	TimestampTz result;
 	int			tz;
-	pg_tz      *tzp;
-	char        tzname[TZ_STRLEN_MAX + 1];
-	int         len;
-	
+	pg_tz	   *tzp;
+	char		tzname[TZ_STRLEN_MAX + 1];
+	int			len;
+
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_TIMESTAMPTZ(timestamp);
 
 	/*
-	 * Look up the requested timezone.  First we look in the timezone
-	 * database (to handle cases like "America/New_York"), and if that
-	 * fails, we look in the date token table (to handle cases like "EST").
-	 */ 
+	 * Look up the requested timezone.	First we look in the timezone database
+	 * (to handle cases like "America/New_York"), and if that fails, we look
+	 * in the date token table (to handle cases like "EST").
+	 */
 	len = Min(VARSIZE(zone) - VARHDRSZ, TZ_STRLEN_MAX);
 	memcpy(tzname, VARDATA(zone), len);
 	tzname[len] = '\0';
@@ -3985,7 +3988,7 @@ timestamp_zone(PG_FUNCTION_ARGS)
 	{
 		/* Apply the timezone change */
 		struct pg_tm tm;
-		fsec_t      fsec;
+		fsec_t		fsec;
 
 		if (timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, tzp) != 0)
 			ereport(ERROR,
@@ -4032,7 +4035,7 @@ Datum
 timestamp_izone(PG_FUNCTION_ARGS)
 {
 	Interval   *zone = PG_GETARG_INTERVAL_P(0);
-	Timestamp timestamp = PG_GETARG_TIMESTAMP(1);
+	Timestamp	timestamp = PG_GETARG_TIMESTAMP(1);
 	TimestampTz result;
 	int			tz;
 
@@ -4042,9 +4045,9 @@ timestamp_izone(PG_FUNCTION_ARGS)
 	if (zone->month != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			   errmsg("interval time zone \"%s\" must not specify month",
-					  DatumGetCString(DirectFunctionCall1(interval_out,
-											  PointerGetDatum(zone))))));
+				 errmsg("interval time zone \"%s\" must not specify month",
+						DatumGetCString(DirectFunctionCall1(interval_out,
+												  PointerGetDatum(zone))))));
 
 #ifdef HAVE_INT64_TIMESTAMP
 	tz = zone->time / USECS_PER_SEC;
@@ -4063,7 +4066,7 @@ timestamp_izone(PG_FUNCTION_ARGS)
 Datum
 timestamp_timestamptz(PG_FUNCTION_ARGS)
 {
-	Timestamp timestamp = PG_GETARG_TIMESTAMP(0);
+	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 
 	PG_RETURN_TIMESTAMPTZ(timestamp2timestamptz(timestamp));
 }
@@ -4139,17 +4142,17 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 	Timestamp	result;
 	int			tz;
 	pg_tz	   *tzp;
-	char        tzname[TZ_STRLEN_MAX + 1];
-	int         len;
+	char		tzname[TZ_STRLEN_MAX + 1];
+	int			len;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_TIMESTAMP(timestamp);
 
 	/*
-	 * Look up the requested timezone.  First we look in the timezone
-	 * database (to handle cases like "America/New_York"), and if that
-	 * fails, we look in the date token table (to handle cases like "EST").
-	 */ 
+	 * Look up the requested timezone.	First we look in the timezone database
+	 * (to handle cases like "America/New_York"), and if that fails, we look
+	 * in the date token table (to handle cases like "EST").
+	 */
 	len = Min(VARSIZE(zone) - VARHDRSZ, TZ_STRLEN_MAX);
 	memcpy(tzname, VARDATA(zone), len);
 	tzname[len] = '\0';
@@ -4158,7 +4161,7 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 	{
 		/* Apply the timezone change */
 		struct pg_tm tm;
-		fsec_t      fsec;
+		fsec_t		fsec;
 
 		if (timestamp2tm(timestamp, &tz, &tm, &fsec, NULL, tzp) != 0)
 			ereport(ERROR,
@@ -4215,9 +4218,9 @@ timestamptz_izone(PG_FUNCTION_ARGS)
 	if (zone->month != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			   errmsg("interval time zone \"%s\" must not specify month",
-					  DatumGetCString(DirectFunctionCall1(interval_out,
-											  PointerGetDatum(zone))))));
+				 errmsg("interval time zone \"%s\" must not specify month",
+						DatumGetCString(DirectFunctionCall1(interval_out,
+												  PointerGetDatum(zone))))));
 
 #ifdef HAVE_INT64_TIMESTAMP
 	tz = -(zone->time / USECS_PER_SEC);

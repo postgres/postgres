@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.25 2005/07/12 20:27:42 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.26 2005/10/15 02:49:06 momjian Exp $
  */
 
 #include "postgres.h"
@@ -47,14 +47,13 @@
 #define MAX_IV		(128/8)
 
 /*
- * Does OpenSSL support AES? 
+ * Does OpenSSL support AES?
  */
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L
 
 /* Yes, it does. */
 #include <openssl/aes.h>
-
-#else	/* old OPENSSL */
+#else							/* old OPENSSL */
 
 /*
  * No, it does not.  So use included rijndael code to emulate it.
@@ -91,8 +90,7 @@
 			memcpy(iv, (src) + (len) - 16, 16); \
 		} \
 	} while (0)
-
-#endif	/* old OPENSSL */
+#endif   /* old OPENSSL */
 
 /*
  * Compatibility with older OpenSSL API for DES.
@@ -157,8 +155,8 @@ digest_finish(PX_MD * h, uint8 *dst)
 	EVP_DigestFinal(ctx, dst, NULL);
 
 	/*
-	 * Some builds of 0.9.7x clear all of ctx in EVP_DigestFinal.
-	 * Fix it by reinitializing ctx.
+	 * Some builds of 0.9.7x clear all of ctx in EVP_DigestFinal. Fix it by
+	 * reinitializing ctx.
 	 */
 	EVP_DigestInit(ctx, md);
 }
@@ -246,7 +244,9 @@ typedef struct
 		}			des;
 		struct
 		{
-			DES_key_schedule k1, k2, k3;
+			DES_key_schedule k1,
+						k2,
+						k3;
 		}			des3;
 		CAST_KEY	cast_key;
 		AES_KEY		aes_key;
@@ -597,12 +597,12 @@ ossl_aes_init(PX_Cipher * c, const uint8 *key, unsigned klen, const uint8 *iv)
 	ossldata   *od = c->ptr;
 	unsigned	bs = gen_ossl_block_size(c);
 
-	if (klen <= 128/8)
-		od->klen = 128/8;
-	else if (klen <= 192/8)
-		od->klen = 192/8;
-	else if (klen <= 256/8)
-		od->klen = 256/8;
+	if (klen <= 128 / 8)
+		od->klen = 128 / 8;
+	else if (klen <= 192 / 8)
+		od->klen = 192 / 8;
+	else if (klen <= 256 / 8)
+		od->klen = 256 / 8;
 	else
 		return PXE_KEY_TOO_BIG;
 
@@ -825,7 +825,8 @@ static int	openssl_random_init = 0;
  * OpenSSL random should re-feeded occasionally. From /dev/urandom
  * preferably.
  */
-static void init_openssl_rand(void)
+static void
+init_openssl_rand(void)
 {
 	if (RAND_get_rand_method() == NULL)
 		RAND_set_rand_method(RAND_SSLeay());
@@ -871,4 +872,3 @@ px_add_entropy(const uint8 *data, unsigned count)
 	RAND_add(data, count, 0);
 	return 0;
 }
-

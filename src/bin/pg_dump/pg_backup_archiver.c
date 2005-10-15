@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.116 2005/09/28 13:11:26 petere Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.117 2005/10/15 02:49:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ static char *modulename = gettext_noop("archiver");
 static ArchiveHandle *_allocAH(const char *FileSpec, const ArchiveFormat fmt,
 		 const int compression, ArchiveMode mode);
 static void _getObjectDescription(PQExpBuffer buf, TocEntry *te,
-								  ArchiveHandle *AH);
+					  ArchiveHandle *AH);
 static void _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData, bool acl_pass);
 
 
@@ -139,10 +139,9 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	 * Check for nonsensical option combinations.
 	 *
 	 * NB: create+dropSchema is useless because if you're creating the DB,
-	 * there's no need to drop individual items in it.  Moreover, if we
-	 * tried to do that then we'd issue the drops in the database
-	 * initially connected to, not the one we will create, which is very
-	 * bad...
+	 * there's no need to drop individual items in it.  Moreover, if we tried
+	 * to do that then we'd issue the drops in the database initially
+	 * connected to, not the one we will create, which is very bad...
 	 */
 	if (ropt->create && ropt->dropSchema)
 		die_horribly(AH, modulename, "-C and -c are incompatible options\n");
@@ -165,24 +164,24 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 						ropt->requirePassword, ropt->ignoreVersion);
 
 		/*
-		 * If we're talking to the DB directly, don't send comments since
-		 * they obscure SQL when displaying errors
+		 * If we're talking to the DB directly, don't send comments since they
+		 * obscure SQL when displaying errors
 		 */
 		AH->noTocComments = 1;
 	}
 
 	/*
-	 * Work out if we have an implied data-only restore. This can happen
-	 * if the dump was data only or if the user has used a toc list to
-	 * exclude all of the schema data. All we do is look for schema
-	 * entries - if none are found then we set the dataOnly flag.
+	 * Work out if we have an implied data-only restore. This can happen if
+	 * the dump was data only or if the user has used a toc list to exclude
+	 * all of the schema data. All we do is look for schema entries - if none
+	 * are found then we set the dataOnly flag.
 	 *
 	 * We could scan for wanted TABLE entries, but that is not the same as
 	 * dataOnly. At this stage, it seems unnecessary (6-Mar-2001).
 	 */
 	if (!ropt->dataOnly)
 	{
-		int		impliedDataOnly = 1;
+		int			impliedDataOnly = 1;
 
 		for (te = AH->toc->next; te != AH->toc; te = te->next)
 		{
@@ -227,7 +226,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		{
 			AH->currentTE = te;
 
-			reqs = _tocEntryRequired(te, ropt, false /* needn't drop ACLs */);
+			reqs = _tocEntryRequired(te, ropt, false /* needn't drop ACLs */ );
 			if (((reqs & REQ_SCHEMA) != 0) && te->dropStmt)
 			{
 				/* We want the schema */
@@ -283,10 +282,9 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		if ((reqs & REQ_DATA) != 0)
 		{
 			/*
-			 * hadDumper will be set if there is genuine data component
-			 * for this node. Otherwise, we need to check the defn field
-			 * for statements that need to be executed in data-only
-			 * restores.
+			 * hadDumper will be set if there is genuine data component for
+			 * this node. Otherwise, we need to check the defn field for
+			 * statements that need to be executed in data-only restores.
 			 */
 			if (te->hadDumper)
 			{
@@ -322,15 +320,13 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 							  te->tag);
 
 						/*
-						 * If we have a copy statement, use it. As of
-						 * V1.3, these are separate to allow easy import
-						 * from withing a database connection. Pre 1.3
-						 * archives can not use DB connections and are
-						 * sent to output only.
+						 * If we have a copy statement, use it. As of V1.3,
+						 * these are separate to allow easy import from
+						 * withing a database connection. Pre 1.3 archives can
+						 * not use DB connections and are sent to output only.
 						 *
-						 * For V1.3+, the table data MUST have a copy
-						 * statement so that we can go into appropriate
-						 * mode with libpq.
+						 * For V1.3+, the table data MUST have a copy statement
+						 * so that we can go into appropriate mode with libpq.
 						 */
 						if (te->copyStmt && strlen(te->copyStmt) > 0)
 							ahprintf(AH, "%s", te->copyStmt);
@@ -485,7 +481,7 @@ ArchiveEntry(Archive *AHX,
 			 CatalogId catalogId, DumpId dumpId,
 			 const char *tag,
 			 const char *namespace,
-			 const char *tablespace, 
+			 const char *tablespace,
 			 const char *owner, bool withOids,
 			 const char *desc, const char *defn,
 			 const char *dropStmt, const char *copyStmt,
@@ -808,9 +804,9 @@ archprintf(Archive *AH, const char *fmt,...)
 	int			cnt = -1;
 
 	/*
-	 * This is paranoid: deal with the possibility that vsnprintf is
-	 * willing to ignore trailing null or returns > 0 even if string does
-	 * not fit. It may be the case that it returns cnt = bufsize
+	 * This is paranoid: deal with the possibility that vsnprintf is willing
+	 * to ignore trailing null or returns > 0 even if string does not fit. It
+	 * may be the case that it returns cnt = bufsize
 	 */
 	while (cnt < 0 || cnt >= (bSize - 1))
 	{
@@ -918,13 +914,13 @@ ahprintf(ArchiveHandle *AH, const char *fmt,...)
 	int			cnt = -1;
 
 	/*
-	 * This is paranoid: deal with the possibility that vsnprintf is
-	 * willing to ignore trailing null
+	 * This is paranoid: deal with the possibility that vsnprintf is willing
+	 * to ignore trailing null
 	 */
 
 	/*
-	 * or returns > 0 even if string does not fit. It may be the case that
-	 * it returns cnt = bufsize
+	 * or returns > 0 even if string does not fit. It may be the case that it
+	 * returns cnt = bufsize
 	 */
 	while (cnt < 0 || cnt >= (bSize - 1))
 	{
@@ -980,13 +976,13 @@ dump_lo_buf(ArchiveHandle *AH)
 			  (unsigned long) AH->lo_buf_used, (unsigned long) res);
 		if (res != AH->lo_buf_used)
 			die_horribly(AH, modulename,
-						 "could not write to large object (result: %lu, expected: %lu)\n",
-						 (unsigned long) res, (unsigned long) AH->lo_buf_used);
+			"could not write to large object (result: %lu, expected: %lu)\n",
+					   (unsigned long) res, (unsigned long) AH->lo_buf_used);
 	}
 	else
 	{
 		unsigned char *str;
-		size_t	len;
+		size_t		len;
 
 		str = PQescapeBytea((const unsigned char *) AH->lo_buf,
 							AH->lo_buf_used, &len);
@@ -1017,7 +1013,7 @@ ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 
 	if (AH->writingBlob)
 	{
-		size_t	remaining = size * nmemb;
+		size_t		remaining = size * nmemb;
 
 		while (AH->lo_buf_used + remaining > AH->lo_buf_size)
 		{
@@ -1162,8 +1158,8 @@ warn_or_die_horribly(ArchiveHandle *AH,
 	{
 		write_msg(modulename, "Error from TOC entry %d; %u %u %s %s %s\n",
 				  AH->currentTE->dumpId,
-		 AH->currentTE->catalogId.tableoid, AH->currentTE->catalogId.oid,
-		  AH->currentTE->desc, AH->currentTE->tag, AH->currentTE->owner);
+			 AH->currentTE->catalogId.tableoid, AH->currentTE->catalogId.oid,
+			  AH->currentTE->desc, AH->currentTE->tag, AH->currentTE->owner);
 	}
 	AH->lastErrorStage = AH->stage;
 	AH->lastErrorTE = AH->currentTE;
@@ -1277,11 +1273,11 @@ ReadOffset(ArchiveHandle *AH, off_t *o)
 	}
 
 	/*
-	 * Read the flag indicating the state of the data pointer. Check if
-	 * valid and die if not.
+	 * Read the flag indicating the state of the data pointer. Check if valid
+	 * and die if not.
 	 *
-	 * This used to be handled by a negative or zero pointer, now we use an
-	 * extra byte specifically for the state.
+	 * This used to be handled by a negative or zero pointer, now we use an extra
+	 * byte specifically for the state.
 	 */
 	offsetFlg = (*AH->ReadBytePtr) (AH) & 0xFF;
 
@@ -1320,11 +1316,11 @@ WriteInt(ArchiveHandle *AH, int i)
 	int			b;
 
 	/*
-	 * This is a bit yucky, but I don't want to make the binary format
-	 * very dependent on representation, and not knowing much about it, I
-	 * write out a sign byte. If you change this, don't forget to change
-	 * the file version #, and modify readInt to read the new format AS
-	 * WELL AS the old formats.
+	 * This is a bit yucky, but I don't want to make the binary format very
+	 * dependent on representation, and not knowing much about it, I write out
+	 * a sign byte. If you change this, don't forget to change the file
+	 * version #, and modify readInt to read the new format AS WELL AS the old
+	 * formats.
 	 */
 
 	/* SIGN byte */
@@ -1513,8 +1509,8 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 	if (fseeko(fh, 0, SEEK_SET) != 0)
 	{
 		/*
-		 * NOTE: Formats that use the lookahead buffer can unset this in
-		 * their Init routine.
+		 * NOTE: Formats that use the lookahead buffer can unset this in their
+		 * Init routine.
 		 */
 		AH->readHeader = 1;
 	}
@@ -1570,15 +1566,15 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 		/*
 		 * Not used; maybe later....
 		 *
-		 * AH->workDir = strdup(FileSpec); for(i=strlen(FileSpec) ; i > 0 ;
-		 * i--) if (AH->workDir[i-1] == '/')
+		 * AH->workDir = strdup(FileSpec); for(i=strlen(FileSpec) ; i > 0 ; i--)
+		 * if (AH->workDir[i-1] == '/')
 		 */
 	}
 	else
 		AH->fSpec = NULL;
 
-	AH->currUser = strdup("");	/* So it's valid, but we can free() it
-								 * later if necessary */
+	AH->currUser = strdup("");	/* So it's valid, but we can free() it later
+								 * if necessary */
 	AH->currSchema = strdup("");	/* ditto */
 	AH->currWithOids = -1;		/* force SET */
 
@@ -1601,8 +1597,8 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 
 	/*
 	 * On Windows, we need to use binary mode to read/write non-text archive
-	 * formats.  Force stdin/stdout into binary mode if that is what
-	 * we are using.
+	 * formats.  Force stdin/stdout into binary mode if that is what we are
+	 * using.
 	 */
 #ifdef WIN32
 	if (fmt != archNull &&
@@ -1683,8 +1679,7 @@ WriteDataChunks(ArchiveHandle *AH)
 				(*startPtr) (AH, te);
 
 			/*
-			 * printf("Dumper arg for %d is %x\n", te->id,
-			 * te->dataDumperArg);
+			 * printf("Dumper arg for %d is %x\n", te->id, te->dataDumperArg);
 			 */
 
 			/*
@@ -1771,7 +1766,7 @@ ReadToc(ArchiveHandle *AH)
 		/* Sanity check */
 		if (te->dumpId <= 0)
 			die_horribly(AH, modulename,
-				   "entry ID %d out of range -- perhaps a corrupt TOC\n",
+					   "entry ID %d out of range -- perhaps a corrupt TOC\n",
 						 te->dumpId);
 
 		te->hadDumper = ReadInt(AH);
@@ -1890,7 +1885,7 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool include_acls)
 			/* If no namespace is specified, it means all. */
 			if (!te->namespace)
 				return 0;
-			if(strcmp(ropt->schemaNames, te->namespace) != 0)
+			if (strcmp(ropt->schemaNames, te->namespace) != 0)
 				return 0;
 		}
 		if ((strcmp(te->desc, "TABLE") == 0) || (strcmp(te->desc, "TABLE DATA") == 0))
@@ -1926,14 +1921,12 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool include_acls)
 	}
 
 	/*
-	 * Check if we had a dataDumper. Indicates if the entry is schema or
-	 * data
+	 * Check if we had a dataDumper. Indicates if the entry is schema or data
 	 */
 	if (!te->hadDumper)
 	{
 		/*
-		 * Special Case: If 'SEQUENCE SET' then it is considered a data
-		 * entry
+		 * Special Case: If 'SEQUENCE SET' then it is considered a data entry
 		 */
 		if (strcmp(te->desc, "SEQUENCE SET") == 0)
 			res = res & REQ_DATA;
@@ -1942,8 +1935,8 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool include_acls)
 	}
 
 	/*
-	 * Special case: <Init> type with <Max OID> tag; this is obsolete
-	 * and we always ignore it.
+	 * Special case: <Init> type with <Max OID> tag; this is obsolete and we
+	 * always ignore it.
 	 */
 	if ((strcmp(te->desc, "<Init>") == 0) && (strcmp(te->tag, "Max OID") == 0))
 		return 0;
@@ -2095,8 +2088,8 @@ _reconnectToDB(ArchiveHandle *AH, const char *dbname)
 	}
 
 	/*
-	 * NOTE: currUser keeps track of what the imaginary session user in
-	 * our script is.  It's now effectively reset to the original userID.
+	 * NOTE: currUser keeps track of what the imaginary session user in our
+	 * script is.  It's now effectively reset to the original userID.
 	 */
 	if (AH->currUser)
 		free(AH->currUser);
@@ -2130,8 +2123,8 @@ _becomeUser(ArchiveHandle *AH, const char *user)
 	_doSetSessionAuth(AH, user);
 
 	/*
-	 * NOTE: currUser keeps track of what the imaginary session user in
-	 * our script is
+	 * NOTE: currUser keeps track of what the imaginary session user in our
+	 * script is
 	 */
 	if (AH->currUser)
 		free(AH->currUser);
@@ -2195,8 +2188,8 @@ _selectOutputSchema(ArchiveHandle *AH, const char *schemaName)
 
 		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
 			warn_or_die_horribly(AH, modulename,
-							   "could not set search_path to \"%s\": %s",
-							 schemaName, PQerrorMessage(AH->connection));
+								 "could not set search_path to \"%s\": %s",
+								 schemaName, PQerrorMessage(AH->connection));
 
 		PQclear(res);
 	}
@@ -2218,7 +2211,8 @@ static void
 _selectTablespace(ArchiveHandle *AH, const char *tablespace)
 {
 	PQExpBuffer qry;
-	const char	*want, *have;
+	const char *want,
+			   *have;
 
 	have = AH->currTablespace;
 	want = tablespace;
@@ -2250,7 +2244,7 @@ _selectTablespace(ArchiveHandle *AH, const char *tablespace)
 		res = PQexec(AH->connection, qry->data);
 
 		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
-			warn_or_die_horribly(AH, modulename, 
+			warn_or_die_horribly(AH, modulename,
 								 "could not set default_tablespace to %s: %s",
 								 fmtId(want), PQerrorMessage(AH->connection));
 
@@ -2292,17 +2286,17 @@ _getObjectDescription(PQExpBuffer buf, TocEntry *te, ArchiveHandle *AH)
 		strcmp(type, "TYPE") == 0)
 	{
 		appendPQExpBuffer(buf, "%s ", type);
-		if (te->namespace && te->namespace[0])			/* is null pre-7.3 */
+		if (te->namespace && te->namespace[0])	/* is null pre-7.3 */
 			appendPQExpBuffer(buf, "%s.", fmtId(te->namespace));
+
 		/*
-		 * Pre-7.3 pg_dump would sometimes (not always) put
-		 * a fmtId'd name into te->tag for an index.
-		 * This check is heuristic, so make its scope as
-		 * narrow as possible.
+		 * Pre-7.3 pg_dump would sometimes (not always) put a fmtId'd name
+		 * into te->tag for an index. This check is heuristic, so make its
+		 * scope as narrow as possible.
 		 */
 		if (AH->version < K_VERS_1_7 &&
 			te->tag[0] == '"' &&
-			te->tag[strlen(te->tag)-1] == '"' &&
+			te->tag[strlen(te->tag) - 1] == '"' &&
 			strcmp(type, "INDEX") == 0)
 			appendPQExpBuffer(buf, "%s", te->tag);
 		else
@@ -2319,8 +2313,8 @@ _getObjectDescription(PQExpBuffer buf, TocEntry *te, ArchiveHandle *AH)
 	}
 
 	/*
-	 * These object types require additional decoration.  Fortunately,
-	 * the information needed is exactly what's in the DROP command.
+	 * These object types require additional decoration.  Fortunately, the
+	 * information needed is exactly what's in the DROP command.
 	 */
 	if (strcmp(type, "AGGREGATE") == 0 ||
 		strcmp(type, "FUNCTION") == 0 ||
@@ -2366,8 +2360,8 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 
 	/*
 	 * Avoid dumping the public schema, as it will already be created ...
-	 * unless we are using --clean mode, in which case it's been deleted
-	 * and we'd better recreate it.
+	 * unless we are using --clean mode, in which case it's been deleted and
+	 * we'd better recreate it.
 	 */
 	if (!ropt->dropSchema &&
 		strcmp(te->desc, "SCHEMA") == 0 && strcmp(te->tag, "public") == 0)
@@ -2411,11 +2405,11 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 				 pfx, te->tag, te->desc,
 				 te->namespace ? te->namespace : "-",
 				 te->owner);
-		if (te->tablespace) 
+		if (te->tablespace)
 			ahprintf(AH, "; Tablespace: %s", te->tablespace);
 		ahprintf(AH, "\n");
 
-		if (AH->PrintExtraTocPtr != NULL)
+		if (AH->PrintExtraTocPtr !=NULL)
 			(*AH->PrintExtraTocPtr) (AH, te);
 		ahprintf(AH, "--\n\n");
 	}
@@ -2423,10 +2417,9 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 	/*
 	 * Actually print the definition.
 	 *
-	 * Really crude hack for suppressing AUTHORIZATION clause that old
-	 * pg_dump versions put into CREATE SCHEMA.  We have to do this when
-	 * --no-owner mode is selected.  This is ugly, but I see
-	 * no other good way ...
+	 * Really crude hack for suppressing AUTHORIZATION clause that old pg_dump
+	 * versions put into CREATE SCHEMA.  We have to do this when --no-owner
+	 * mode is selected.  This is ugly, but I see no other good way ...
 	 */
 	if (ropt->noOwner && strcmp(te->desc, "SCHEMA") == 0)
 	{
@@ -2489,8 +2482,7 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 
 	/*
 	 * If it's an ACL entry, it might contain SET SESSION AUTHORIZATION
-	 * commands, so we can no longer assume we know the current auth
-	 * setting.
+	 * commands, so we can no longer assume we know the current auth setting.
 	 */
 	if (strncmp(te->desc, "ACL", 3) == 0)
 	{
@@ -2643,8 +2635,8 @@ checkSeek(FILE *fp)
 	else if (sizeof(off_t) > sizeof(long))
 
 		/*
-		 * At this point, off_t is too large for long, so we return based
-		 * on whether an off_t version of fseek is available.
+		 * At this point, off_t is too large for long, so we return based on
+		 * whether an off_t version of fseek is available.
 		 */
 #ifdef HAVE_FSEEKO
 		return true;

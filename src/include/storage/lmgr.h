@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lmgr.h,v 1.51 2005/08/01 20:31:16 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lmgr.h,v 1.52 2005/10/15 02:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,13 +28,12 @@
 #define RowExclusiveLock		3		/* INSERT, UPDATE, DELETE */
 #define ShareUpdateExclusiveLock 4		/* VACUUM (non-FULL) */
 #define ShareLock				5		/* CREATE INDEX */
-#define ShareRowExclusiveLock	6		/* like EXCLUSIVE MODE, but allows
-										 * ROW SHARE */
+#define ShareRowExclusiveLock	6		/* like EXCLUSIVE MODE, but allows ROW
+										 * SHARE */
 #define ExclusiveLock			7		/* blocks ROW SHARE/SELECT...FOR
 										 * UPDATE */
 #define AccessExclusiveLock		8		/* ALTER TABLE, DROP TABLE, VACUUM
-										 * FULL, and unqualified LOCK
-										 * TABLE */
+										 * FULL, and unqualified LOCK TABLE */
 
 /*
  * Note: all lock mode numbers must be less than lock.h's MAX_LOCKMODES,
@@ -50,7 +49,7 @@ extern bool ConditionalLockRelation(Relation relation, LOCKMODE lockmode);
 extern void UnlockRelation(Relation relation, LOCKMODE lockmode);
 
 extern void LockRelationForSession(LockRelId *relid, bool istemprel,
-								   LOCKMODE lockmode);
+					   LOCKMODE lockmode);
 extern void UnlockRelationForSession(LockRelId *relid, LOCKMODE lockmode);
 
 /* Lock a relation for extension */
@@ -65,7 +64,7 @@ extern void UnlockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode);
 /* Lock a tuple (see heap_lock_tuple before assuming you understand this) */
 extern void LockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode);
 extern bool ConditionalLockTuple(Relation relation, ItemPointer tid,
-								 LOCKMODE lockmode);
+					 LOCKMODE lockmode);
 extern void UnlockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode);
 
 /* Lock an XID (used to wait for a transaction to finish) */
@@ -76,14 +75,14 @@ extern bool ConditionalXactLockTableWait(TransactionId xid);
 
 /* Lock a general object (other than a relation) of the current database */
 extern void LockDatabaseObject(Oid classid, Oid objid, uint16 objsubid,
-							   LOCKMODE lockmode);
+				   LOCKMODE lockmode);
 extern void UnlockDatabaseObject(Oid classid, Oid objid, uint16 objsubid,
-								 LOCKMODE lockmode);
+					 LOCKMODE lockmode);
 
 /* Lock a shared-across-databases object (other than a relation) */
 extern void LockSharedObject(Oid classid, Oid objid, uint16 objsubid,
-							 LOCKMODE lockmode);
+				 LOCKMODE lockmode);
 extern void UnlockSharedObject(Oid classid, Oid objid, uint16 objsubid,
-							   LOCKMODE lockmode);
+				   LOCKMODE lockmode);
 
 #endif   /* LMGR_H */

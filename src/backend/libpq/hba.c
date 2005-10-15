@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.147 2005/08/11 21:11:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.148 2005/10/15 02:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,9 +80,9 @@ static List **role_sorted = NULL;		/* sorted role list, for bsearch() */
 static int	role_length;
 
 static void tokenize_file(const char *filename, FILE *file,
-						  List **lines, List **line_nums);
+			  List **lines, List **line_nums);
 static char *tokenize_inc_file(const char *outer_filename,
-							   const char *inc_filename);
+				  const char *inc_filename);
 
 /*
  * isblank() exists in the ISO C99 spec, but it's not very portable yet,
@@ -136,8 +136,8 @@ next_token(FILE *fp, char *buf, int bufsz)
 	}
 
 	/*
-	 * Build a token in buf of next characters up to EOF, EOL, unquoted
-	 * comma, or unquoted whitespace.
+	 * Build a token in buf of next characters up to EOF, EOL, unquoted comma,
+	 * or unquoted whitespace.
 	 */
 	while (c != EOF && c != '\n' &&
 		   (!pg_isblank(c) || in_quote == true))
@@ -158,8 +158,8 @@ next_token(FILE *fp, char *buf, int bufsz)
 			*buf = '\0';
 			ereport(LOG,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-			errmsg("authentication file token too long, skipping: \"%s\"",
-				   start_buf)));
+			   errmsg("authentication file token too long, skipping: \"%s\"",
+					  start_buf)));
 			/* Discard remainder of line */
 			while ((c = getc(fp)) != EOF && c != '\n')
 				;
@@ -189,8 +189,8 @@ next_token(FILE *fp, char *buf, int bufsz)
 	}
 
 	/*
-	 * Put back the char right after the token (critical in case it is
-	 * EOL, since we need to detect end-of-line at next call).
+	 * Put back the char right after the token (critical in case it is EOL,
+	 * since we need to detect end-of-line at next call).
 	 */
 	if (c != EOF)
 		ungetc(c, fp);
@@ -370,8 +370,8 @@ tokenize_inc_file(const char *outer_filename,
 
 		foreach(token, token_list)
 		{
-			int		oldlen = strlen(comma_str);
-			int		needed;
+			int			oldlen = strlen(comma_str);
+			int			needed;
 
 			needed = oldlen + strlen(lfirst(token)) + 1;
 			if (oldlen > 0)
@@ -460,7 +460,7 @@ role_bsearch_cmp(const void *role, const void *list)
 /*
  * Lookup a role name in the pg_auth file
  */
-List **
+List	  **
 get_role_line(const char *role)
 {
 	/* On some versions of Solaris, bsearch of zero items dumps core */
@@ -495,8 +495,8 @@ is_member(const char *user, const char *role)
 		return true;
 
 	/*
-	 * skip over the role name, password, valuntil, examine all the
-	 * membership entries
+	 * skip over the role name, password, valuntil, examine all the membership
+	 * entries
 	 */
 	if (list_length(*line) < 4)
 		return false;
@@ -761,9 +761,9 @@ parse_hba(List *line, int line_num, hbaPort *port,
 		{
 			ereport(LOG,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					 errmsg("invalid IP address \"%s\" in file \"%s\" line %d: %s",
-							token, HbaFileName, line_num,
-							gai_strerror(ret))));
+			   errmsg("invalid IP address \"%s\" in file \"%s\" line %d: %s",
+					  token, HbaFileName, line_num,
+					  gai_strerror(ret))));
 			if (cidr_slash)
 				*cidr_slash = '/';
 			if (gai_result)
@@ -796,9 +796,9 @@ parse_hba(List *line, int line_num, hbaPort *port,
 			{
 				ereport(LOG,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("invalid IP mask \"%s\" in file \"%s\" line %d: %s",
-								token, HbaFileName, line_num,
-								gai_strerror(ret))));
+				  errmsg("invalid IP mask \"%s\" in file \"%s\" line %d: %s",
+						 token, HbaFileName, line_num,
+						 gai_strerror(ret))));
 				if (gai_result)
 					freeaddrinfo_all(hints.ai_family, gai_result);
 				goto hba_other_error;
@@ -820,9 +820,9 @@ parse_hba(List *line, int line_num, hbaPort *port,
 		if (addr.ss_family != port->raddr.addr.ss_family)
 		{
 			/*
-			 * Wrong address family.  We allow only one case: if the file
-			 * has IPv4 and the port is IPv6, promote the file address to
-			 * IPv6 and try to match that way.
+			 * Wrong address family.  We allow only one case: if the file has
+			 * IPv4 and the port is IPv6, promote the file address to IPv6 and
+			 * try to match that way.
 			 */
 #ifdef HAVE_IPV6
 			if (addr.ss_family == AF_INET &&
@@ -869,14 +869,14 @@ hba_syntax:
 	if (line_item)
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 errmsg("invalid entry in file \"%s\" at line %d, token \"%s\"",
-						HbaFileName, line_num,
-						(char *) lfirst(line_item))));
+			  errmsg("invalid entry in file \"%s\" at line %d, token \"%s\"",
+					 HbaFileName, line_num,
+					 (char *) lfirst(line_item))));
 	else
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-			errmsg("missing field in file \"%s\" at end of line %d",
-				   HbaFileName, line_num)));
+				 errmsg("missing field in file \"%s\" at end of line %d",
+						HbaFileName, line_num)));
 
 	/* Come here if suitable message already logged */
 hba_other_error:
@@ -928,7 +928,7 @@ load_role(void)
 	/* Discard any old data */
 	if (role_lines || role_line_nums)
 		free_lines(&role_lines, &role_line_nums);
-	if (role_sorted) 
+	if (role_sorted)
 		pfree(role_sorted);
 	role_sorted = NULL;
 	role_length = 0;
@@ -957,8 +957,8 @@ load_role(void)
 	role_length = list_length(role_lines);
 	if (role_length)
 	{
-		int		i = 0;
-		ListCell	*line;
+		int			i = 0;
+		ListCell   *line;
 
 		/* We assume the flat file was written already-sorted */
 		role_sorted = palloc(role_length * sizeof(List *));
@@ -1124,7 +1124,7 @@ check_ident_usermap(const char *usermap_name,
 	{
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-		errmsg("cannot use Ident authentication without usermap field")));
+		   errmsg("cannot use Ident authentication without usermap field")));
 		found_entry = false;
 	}
 	else if (strcmp(usermap_name, "sameuser\n") == 0 ||
@@ -1191,12 +1191,10 @@ static bool
 interpret_ident_response(const char *ident_response,
 						 char *ident_user)
 {
-	const char *cursor = ident_response;		/* Cursor into
-												 * *ident_response */
+	const char *cursor = ident_response;		/* Cursor into *ident_response */
 
 	/*
-	 * Ident's response, in the telnet tradition, should end in crlf
-	 * (\r\n).
+	 * Ident's response, in the telnet tradition, should end in crlf (\r\n).
 	 */
 	if (strlen(ident_response) < 2)
 		return false;
@@ -1230,9 +1228,8 @@ interpret_ident_response(const char *ident_response,
 			else
 			{
 				/*
-				 * It's a USERID response.  Good.  "cursor" should be
-				 * pointing to the colon that precedes the operating
-				 * system type.
+				 * It's a USERID response.  Good.  "cursor" should be pointing
+				 * to the colon that precedes the operating system type.
 				 */
 				if (*cursor != ':')
 					return false;
@@ -1280,10 +1277,9 @@ ident_inet(const SockAddr remote_addr,
 		   const SockAddr local_addr,
 		   char *ident_user)
 {
-	int			sock_fd,		/* File descriptor for socket on which we
-								 * talk to Ident */
-				rc;				/* Return code from a locally called
-								 * function */
+	int			sock_fd,		/* File descriptor for socket on which we talk
+								 * to Ident */
+				rc;				/* Return code from a locally called function */
 	bool		ident_return;
 	char		remote_addr_s[NI_MAXHOST];
 	char		remote_port[NI_MAXSERV];
@@ -1297,8 +1293,8 @@ ident_inet(const SockAddr remote_addr,
 				hints;
 
 	/*
-	 * Might look a little weird to first convert it to text and then back
-	 * to sockaddr, but it's protocol independent.
+	 * Might look a little weird to first convert it to text and then back to
+	 * sockaddr, but it's protocol independent.
 	 */
 	getnameinfo_all(&remote_addr.addr, remote_addr.salen,
 					remote_addr_s, sizeof(remote_addr_s),
@@ -1348,16 +1344,15 @@ ident_inet(const SockAddr remote_addr,
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-			errmsg("could not create socket for Ident connection: %m")));
+				 errmsg("could not create socket for Ident connection: %m")));
 		ident_return = false;
 		goto ident_inet_done;
 	}
 
 	/*
-	 * Bind to the address which the client originally contacted,
-	 * otherwise the ident server won't be able to match up the right
-	 * connection. This is necessary if the PostgreSQL server is running
-	 * on an IP alias.
+	 * Bind to the address which the client originally contacted, otherwise
+	 * the ident server won't be able to match up the right connection. This
+	 * is necessary if the PostgreSQL server is running on an IP alias.
 	 */
 	rc = bind(sock_fd, la->ai_addr, la->ai_addrlen);
 	if (rc != 0)
@@ -1421,8 +1416,8 @@ ident_inet(const SockAddr remote_addr,
 	ident_return = interpret_ident_response(ident_response, ident_user);
 	if (!ident_return)
 		ereport(LOG,
-		(errmsg("invalidly formatted response from Ident server: \"%s\"",
-				ident_response)));
+			(errmsg("invalidly formatted response from Ident server: \"%s\"",
+					ident_response)));
 
 ident_inet_done:
 	if (sock_fd >= 0)
@@ -1473,7 +1468,6 @@ ident_unix(int sock, char *ident_user)
 	StrNCpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX + 1);
 
 	return true;
-
 #elif defined(SO_PEERCRED)
 	/* Linux style: use getsockopt(SO_PEERCRED) */
 	struct ucred peercred;
@@ -1504,7 +1498,6 @@ ident_unix(int sock, char *ident_user)
 	StrNCpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX + 1);
 
 	return true;
-
 #elif defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || (defined(HAVE_STRUCT_SOCKCRED) && defined(LOCAL_CREDS))
 	struct msghdr msg;
 
@@ -1543,8 +1536,8 @@ ident_unix(int sock, char *ident_user)
 
 	/*
 	 * The one character which is received here is not meaningful; its
-	 * purposes is only to make sure that recvmsg() blocks long enough for
-	 * the other side to send its credentials.
+	 * purposes is only to make sure that recvmsg() blocks long enough for the
+	 * other side to send its credentials.
 	 */
 	iov.iov_base = &buf;
 	iov.iov_len = 1;
@@ -1574,7 +1567,6 @@ ident_unix(int sock, char *ident_user)
 	StrNCpy(ident_user, pw->pw_name, IDENT_USERNAME_MAX + 1);
 
 	return true;
-
 #else
 	ereport(LOG,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),

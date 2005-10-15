@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/access/gist/gistproc.c,v 1.2 2005/09/22 20:44:36 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/access/gist/gistproc.c,v 1.3 2005/10/15 02:49:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@ typedef struct
 {
 	BOX		   *key;
 	int			pos;
-}	KBsort;
+} KBsort;
 
 static int	compare_KB(const void *a, const void *b);
 static bool gist_box_leaf_consistent(BOX *key, BOX *query,

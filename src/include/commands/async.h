@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/async.h,v 1.29 2005/10/06 21:30:39 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/commands/async.h,v 1.30 2005/10/15 02:49:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,6 @@ extern void EnableNotifyInterrupt(void);
 extern bool DisableNotifyInterrupt(void);
 
 extern void notify_twophase_postcommit(TransactionId xid, uint16 info,
-									   void *recdata, uint32 len);
+						   void *recdata, uint32 len);
 
 #endif   /* ASYNC_H */

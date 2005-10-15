@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtproc.c,v 1.42 2004/12/31 21:59:26 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtproc.c,v 1.43 2005/10/15 02:49:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,8 +146,8 @@ rt_poly_size(PG_FUNCTION_ARGS)
 				ydim;
 
 	/*
-	 * Can't just use GETARG because of possibility that input is NULL;
-	 * since POLYGON is toastable, GETARG will try to inspect its value
+	 * Can't just use GETARG because of possibility that input is NULL; since
+	 * POLYGON is toastable, GETARG will try to inspect its value
 	 */
 	if (aptr == NULL)
 	{

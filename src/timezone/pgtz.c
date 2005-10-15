@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.37 2005/09/09 02:31:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.38 2005/10/15 02:49:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@
 #include "utils/hsearch.h"
 
 /* Current global timezone */
-pg_tz *global_timezone = NULL;
+pg_tz	   *global_timezone = NULL;
 
 
 static char tzdir[MAXPGPATH];
@@ -97,7 +97,7 @@ static void scan_available_timezones(char *tzdir, char *tzdirsub,
  * Get GMT offset from a system struct tm
  */
 static int
-get_timezone_offset(struct tm *tm)
+get_timezone_offset(struct tm * tm)
 {
 #if defined(HAVE_STRUCT_TM_TM_ZONE)
 	return tm->tm_gmtoff;
@@ -128,7 +128,7 @@ build_time_t(int year, int month, int day)
  * Does a system tm value match one we computed ourselves?
  */
 static bool
-compare_tm(struct tm *s, struct pg_tm *p)
+compare_tm(struct tm * s, struct pg_tm * p)
 {
 	if (s->tm_sec != p->tm_sec ||
 		s->tm_min != p->tm_min ||
@@ -155,21 +155,25 @@ compare_tm(struct tm *s, struct pg_tm *p)
  * test time.
  */
 static int
-score_timezone(const char *tzname, struct tztry *tt)
+score_timezone(const char *tzname, struct tztry * tt)
 {
 	int			i;
 	pg_time_t	pgtt;
 	struct tm  *systm;
 	struct pg_tm *pgtm;
 	char		cbuf[TZ_STRLEN_MAX + 1];
-	pg_tz       tz;
+	pg_tz		tz;
 
 
-	/* Load timezone directly. Don't use pg_tzset, because we don't want 
-	 * all timezones loaded in the cache at startup. */
-	if (tzload(tzname, &tz.state) != 0) {
-		if (tzname[0] == ':' || tzparse(tzname, &tz.state, FALSE) != 0) {
-			return -1;          /* can't handle the TZ name at all */
+	/*
+	 * Load timezone directly. Don't use pg_tzset, because we don't want all
+	 * timezones loaded in the cache at startup.
+	 */
+	if (tzload(tzname, &tz.state) != 0)
+	{
+		if (tzname[0] == ':' || tzparse(tzname, &tz.state, FALSE) != 0)
+		{
+			return -1;			/* can't handle the TZ name at all */
 		}
 	}
 
@@ -257,20 +261,19 @@ identify_system_timezone(void)
 
 	/*
 	 * Set up the list of dates to be probed to see how well our timezone
-	 * matches the system zone.  We first probe January and July of 2004;
-	 * this serves to quickly eliminate the vast majority of the TZ
-	 * database entries.  If those dates match, we probe every week from
-	 * 2004 backwards to late 1904.  (Weekly resolution is good enough to
-	 * identify DST transition rules, since everybody switches on
-	 * Sundays.)  The further back the zone matches, the better we score
-	 * it.	This may seem like a rather random way of doing things, but
-	 * experience has shown that system-supplied timezone definitions are
-	 * likely to have DST behavior that is right for the recent past and
-	 * not so accurate further back. Scoring in this way allows us to
-	 * recognize zones that have some commonality with the zic database,
-	 * without insisting on exact match. (Note: we probe Thursdays, not
-	 * Sundays, to avoid triggering DST-transition bugs in localtime
-	 * itself.)
+	 * matches the system zone.  We first probe January and July of 2004; this
+	 * serves to quickly eliminate the vast majority of the TZ database
+	 * entries.  If those dates match, we probe every week from 2004 backwards
+	 * to late 1904.  (Weekly resolution is good enough to identify DST
+	 * transition rules, since everybody switches on Sundays.)	The further
+	 * back the zone matches, the better we score it.  This may seem like a
+	 * rather random way of doing things, but experience has shown that
+	 * system-supplied timezone definitions are likely to have DST behavior
+	 * that is right for the recent past and not so accurate further back.
+	 * Scoring in this way allows us to recognize zones that have some
+	 * commonality with the zic database, without insisting on exact match.
+	 * (Note: we probe Thursdays, not Sundays, to avoid triggering
+	 * DST-transition bugs in localtime itself.)
 	 */
 	tt.n_test_times = 0;
 	tt.test_times[tt.n_test_times++] = build_time_t(2004, 1, 15);
@@ -292,12 +295,12 @@ identify_system_timezone(void)
 		return resultbuf;
 
 	/*
-	 * Couldn't find a match in the database, so next we try constructed
-	 * zone names (like "PST8PDT").
+	 * Couldn't find a match in the database, so next we try constructed zone
+	 * names (like "PST8PDT").
 	 *
-	 * First we need to determine the names of the local standard and
-	 * daylight zones.	The idea here is to scan forward from today until
-	 * we have seen both zones, if both are in use.
+	 * First we need to determine the names of the local standard and daylight
+	 * zones.  The idea here is to scan forward from today until we have seen
+	 * both zones, if both are in use.
 	 */
 	memset(std_zone_name, 0, sizeof(std_zone_name));
 	memset(dst_zone_name, 0, sizeof(dst_zone_name));
@@ -306,15 +309,15 @@ identify_system_timezone(void)
 	tnow = time(NULL);
 
 	/*
-	 * Round back to a GMT midnight so results don't depend on local time
-	 * of day
+	 * Round back to a GMT midnight so results don't depend on local time of
+	 * day
 	 */
 	tnow -= (tnow % T_DAY);
 
 	/*
-	 * We have to look a little further ahead than one year, in case today
-	 * is just past a DST boundary that falls earlier in the year than the
-	 * next similar boundary.  Arbitrarily scan up to 14 months.
+	 * We have to look a little further ahead than one year, in case today is
+	 * just past a DST boundary that falls earlier in the year than the next
+	 * similar boundary.  Arbitrarily scan up to 14 months.
 	 */
 	for (t = tnow; t <= tnow + T_MONTH * 14; t += T_MONTH)
 	{
@@ -348,7 +351,7 @@ identify_system_timezone(void)
 	{
 		ereport(LOG,
 				(errmsg("unable to determine system timezone, defaulting to \"%s\"", "GMT"),
-				 errhint("You can specify the correct timezone in postgresql.conf.")));
+		errhint("You can specify the correct timezone in postgresql.conf.")));
 		return NULL;			/* go to GMT */
 	}
 
@@ -373,19 +376,18 @@ identify_system_timezone(void)
 		return resultbuf;
 
 	/*
-	 * Did not find the timezone.  Fallback to use a GMT zone.	Note that
-	 * the zic timezone database names the GMT-offset zones in POSIX
-	 * style: plus is west of Greenwich.  It's unfortunate that this is
-	 * opposite of SQL conventions.  Should we therefore change the names?
-	 * Probably not...
+	 * Did not find the timezone.  Fallback to use a GMT zone.	Note that the
+	 * zic timezone database names the GMT-offset zones in POSIX style: plus
+	 * is west of Greenwich.  It's unfortunate that this is opposite of SQL
+	 * conventions.  Should we therefore change the names? Probably not...
 	 */
 	snprintf(resultbuf, sizeof(resultbuf), "Etc/GMT%s%d",
 			 (-std_ofs > 0) ? "+" : "", -std_ofs / 3600);
 
 	ereport(LOG,
-	 (errmsg("could not recognize system timezone, defaulting to \"%s\"",
-			 resultbuf),
-	errhint("You can specify the correct timezone in postgresql.conf.")));
+		 (errmsg("could not recognize system timezone, defaulting to \"%s\"",
+				 resultbuf),
+	   errhint("You can specify the correct timezone in postgresql.conf.")));
 	return resultbuf;
 }
 
@@ -409,7 +411,7 @@ identify_system_timezone(void)
  * score.  bestzonename must be a buffer of length TZ_STRLEN_MAX + 1.
  */
 static void
-scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry *tt,
+scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry * tt,
 						 int *bestscore, char *bestzonename)
 {
 	int			tzdir_orig_len = strlen(tzdir);
@@ -477,7 +479,6 @@ scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry *tt,
 
 	FreeDir(dirdesc);
 }
-
 #else							/* WIN32 */
 
 static const struct
@@ -490,12 +491,11 @@ static const struct
 {
 	/*
 	 * This list was built from the contents of the registry at
-	 * HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows
-	 * NT\CurrentVersion\Time Zones on Windows XP Professional SP1
+	 * HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Time
+	 * Zones on Windows XP Professional SP1
 	 *
 	 * The zones have been matched to zic timezones by looking at the cities
-	 * listed in the win32 display name (in the comment here) in most
-	 * cases.
+	 * listed in the win32 display name (in the comment here) in most cases.
 	 */
 	{
 		"Afghanistan Standard Time", "Afghanistan Daylight Time",
@@ -560,8 +560,8 @@ static const struct
 	{
 		"Central Europe Standard Time", "Central Europe Daylight Time",
 		"Europe/Belgrade"
-	},							/* (GMT+01:00) Belgrade, Bratislava,
-								 * Budapest, Ljubljana, Prague */
+	},							/* (GMT+01:00) Belgrade, Bratislava, Budapest,
+								 * Ljubljana, Prague */
 	{
 		"Central European Standard Time", "Central European Daylight Time",
 		"Europe/Sarajevo"
@@ -579,13 +579,12 @@ static const struct
 	{
 		"China Standard Time", "China Daylight Time",
 		"Asia/Hong_Kong"
-	},							/* (GMT+08:00) Beijing, Chongqing, Hong
-								 * Kong, Urumqi */
+	},							/* (GMT+08:00) Beijing, Chongqing, Hong Kong,
+								 * Urumqi */
 	{
 		"Dateline Standard Time", "Dateline Daylight Time",
 		"Etc/GMT+12"
-	},							/* (GMT-12:00) International Date Line
-								 * West */
+	},							/* (GMT-12:00) International Date Line West */
 	{
 		"E. Africa Standard Time", "E. Africa Daylight Time",
 		"Africa/Nairobi"
@@ -617,13 +616,12 @@ static const struct
 	{
 		"Fiji Standard Time", "Fiji Daylight Time",
 		"Pacific/Fiji"
-	},							/* (GMT+12:00) Fiji, Kamchatka, Marshall
-								 * Is. */
+	},							/* (GMT+12:00) Fiji, Kamchatka, Marshall Is. */
 	{
 		"FLE Standard Time", "FLE Daylight Time",
 		"Europe/Helsinki"
-	},							/* (GMT+02:00) Helsinki, Kyiv, Riga,
-								 * Sofia, Tallinn, Vilnius */
+	},							/* (GMT+02:00) Helsinki, Kyiv, Riga, Sofia,
+								 * Tallinn, Vilnius */
 	{
 		"GMT Standard Time", "GMT Daylight Time",
 		"Europe/Dublin"
@@ -648,8 +646,8 @@ static const struct
 	{
 		"India Standard Time", "India Daylight Time",
 		"Asia/Calcutta"
-	},							/* (GMT+05:30) Chennai, Kolkata, Mumbai,
-								 * New Delhi */
+	},							/* (GMT+05:30) Chennai, Kolkata, Mumbai, New
+								 * Delhi */
 	{
 		"Iran Standard Time", "Iran Daylight Time",
 		"Asia/Tehran"
@@ -719,8 +717,8 @@ static const struct
 	{
 		"Romance Standard Time", "Romance Daylight Time",
 		"Europe/Brussels"
-	},							/* (GMT+01:00) Brussels, Copenhagen,
-								 * Madrid, Paris */
+	},							/* (GMT+01:00) Brussels, Copenhagen, Madrid,
+								 * Paris */
 	{
 		"Russian Standard Time", "Russian Daylight Time",
 		"Europe/Moscow"
@@ -791,18 +789,17 @@ static const struct
 		"Australia/Perth"
 	},							/* (GMT+08:00) Perth */
 /*	{"W. Central Africa Standard Time", "W. Central Africa Daylight Time",
-	 *	 *	""}, Could not find a match for this one. Excluded for now. *//* (
+	 *	 *	 *	""}, Could not find a match for this one. Excluded for now. *//* (
 	 * G MT+01:00) West Central Africa */
 	{
 		"W. Europe Standard Time", "W. Europe Daylight Time",
 		"CET"
-	},							/* (GMT+01:00) Amsterdam, Berlin, Bern,
-								 * Rome, Stockholm, Vienna */
+	},							/* (GMT+01:00) Amsterdam, Berlin, Bern, Rome,
+								 * Stockholm, Vienna */
 	{
 		"West Asia Standard Time", "West Asia Daylight Time",
 		"Asia/Karachi"
-	},							/* (GMT+05:00) Islamabad, Karachi,
-								 * Tashkent */
+	},							/* (GMT+05:00) Islamabad, Karachi, Tashkent */
 	{
 		"West Pacific Standard Time", "West Pacific Daylight Time",
 		"Pacific/Guam"
@@ -821,11 +818,11 @@ identify_system_timezone(void)
 {
 	int			i;
 	char		tzname[128];
-	char        localtzname[256];
+	char		localtzname[256];
 	time_t		t = time(NULL);
 	struct tm  *tm = localtime(&t);
-	HKEY        rootKey;
-	int         idx;
+	HKEY		rootKey;
+	int			idx;
 
 	if (!tm)
 	{
@@ -849,62 +846,62 @@ identify_system_timezone(void)
 	}
 
 	/*
-	 * Localized Windows versions return localized names for the
-	 * timezone. Scan the registry to find the English name,
-	 * and then try matching against our table again.
+	 * Localized Windows versions return localized names for the timezone.
+	 * Scan the registry to find the English name, and then try matching
+	 * against our table again.
 	 */
 	memset(localtzname, 0, sizeof(localtzname));
 	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,
-					 "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones",
+			   "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones",
 					 0,
 					 KEY_READ,
 					 &rootKey) != ERROR_SUCCESS)
 	{
 		ereport(WARNING,
-				(errmsg_internal("could not open registry key to identify Windows timezone: %i", (int)GetLastError())));
+				(errmsg_internal("could not open registry key to identify Windows timezone: %i", (int) GetLastError())));
 		return NULL;
 	}
-	
-	for (idx = 0; ; idx++) 
+
+	for (idx = 0;; idx++)
 	{
-		char keyname[256];
-		char zonename[256];
-		DWORD namesize;
-		FILETIME lastwrite;
-		HKEY key;
-		LONG r;
-		
+		char		keyname[256];
+		char		zonename[256];
+		DWORD		namesize;
+		FILETIME	lastwrite;
+		HKEY		key;
+		LONG		r;
+
 		memset(keyname, 0, sizeof(keyname));
 		namesize = sizeof(keyname);
-		if ((r=RegEnumKeyEx(rootKey,
-							idx,
-							keyname,
-							&namesize,
-							NULL,
-							NULL,
-							NULL,
-							&lastwrite)) != ERROR_SUCCESS)
+		if ((r = RegEnumKeyEx(rootKey,
+							  idx,
+							  keyname,
+							  &namesize,
+							  NULL,
+							  NULL,
+							  NULL,
+							  &lastwrite)) != ERROR_SUCCESS)
 		{
 			if (r == ERROR_NO_MORE_ITEMS)
 				break;
 			ereport(WARNING,
-					(errmsg_internal("could not enumerate registry subkeys to identify Windows timezone: %i", (int)r)));
+					(errmsg_internal("could not enumerate registry subkeys to identify Windows timezone: %i", (int) r)));
 			break;
 		}
 
-		if ((r=RegOpenKeyEx(rootKey,keyname,0,KEY_READ,&key)) != ERROR_SUCCESS)
+		if ((r = RegOpenKeyEx(rootKey, keyname, 0, KEY_READ, &key)) != ERROR_SUCCESS)
 		{
 			ereport(WARNING,
-					(errmsg_internal("could not open registry subkey to identify Windows timezone: %i", (int)r)));
+					(errmsg_internal("could not open registry subkey to identify Windows timezone: %i", (int) r)));
 			break;
 		}
-		
+
 		memset(zonename, 0, sizeof(zonename));
 		namesize = sizeof(zonename);
-		if ((r=RegQueryValueEx(key, "Std", NULL, NULL, zonename, &namesize)) != ERROR_SUCCESS)
+		if ((r = RegQueryValueEx(key, "Std", NULL, NULL, zonename, &namesize)) != ERROR_SUCCESS)
 		{
 			ereport(WARNING,
-					(errmsg_internal("could not query value for 'std' to identify Windows timezone: %i", (int)r)));
+					(errmsg_internal("could not query value for 'std' to identify Windows timezone: %i", (int) r)));
 			RegCloseKey(key);
 			break;
 		}
@@ -917,10 +914,10 @@ identify_system_timezone(void)
 		}
 		memset(zonename, 0, sizeof(zonename));
 		namesize = sizeof(zonename);
-		if ((r=RegQueryValueEx(key, "Dlt", NULL, NULL, zonename, &namesize)) != ERROR_SUCCESS)
+		if ((r = RegQueryValueEx(key, "Dlt", NULL, NULL, zonename, &namesize)) != ERROR_SUCCESS)
 		{
 			ereport(WARNING,
-					(errmsg_internal("could not query value for 'dlt' to identify Windows timezone: %i", (int)r)));
+					(errmsg_internal("could not query value for 'dlt' to identify Windows timezone: %i", (int) r)));
 			RegCloseKey(key);
 			break;
 		}
@@ -994,9 +991,9 @@ init_timezone_hashtable(void)
 struct pg_tz *
 pg_tzset(const char *name)
 {
-	pg_tz *tzp;
-	pg_tz tz;
-	
+	pg_tz	   *tzp;
+	pg_tz		tz;
+
 	if (strlen(name) > TZ_STRLEN_MAX)
 		return NULL;			/* not going to fit */
 
@@ -1004,10 +1001,10 @@ pg_tzset(const char *name)
 		if (!init_timezone_hashtable())
 			return NULL;
 
-	tzp = (pg_tz *)hash_search(timezone_cache,
-							  name,
-							  HASH_FIND,
-							  NULL);
+	tzp = (pg_tz *) hash_search(timezone_cache,
+								name,
+								HASH_FIND,
+								NULL);
 	if (tzp)
 	{
 		/* Timezone found in cache, nothing more to do */
@@ -1030,7 +1027,7 @@ pg_tzset(const char *name)
 					  name,
 					  HASH_ENTER,
 					  NULL);
-	
+
 	strcpy(tzp->TZname, tz.TZname);
 	memcpy(&tzp->state, &tz.state, sizeof(tz.state));
 
@@ -1055,9 +1052,9 @@ tz_acceptable(pg_tz *tz)
 	pg_time_t	time2000;
 
 	/*
-	 * To detect leap-second timekeeping, run pg_localtime for what should
-	 * be GMT midnight, 2000-01-01.  Insist that the tm_sec value be zero;
-	 * any other result has to be due to leap seconds.
+	 * To detect leap-second timekeeping, run pg_localtime for what should be
+	 * GMT midnight, 2000-01-01.  Insist that the tm_sec value be zero; any
+	 * other result has to be due to leap seconds.
 	 */
 	time2000 = (POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY;
 	tt = pg_localtime(&time2000, tz);
@@ -1074,11 +1071,11 @@ tz_acceptable(pg_tz *tz)
 static bool
 set_global_timezone(const char *tzname)
 {
-	pg_tz *tznew;
+	pg_tz	   *tznew;
 
 	if (!tzname || !tzname[0])
 		return false;
-	
+
 	tznew = pg_tzset(tzname);
 	if (!tznew)
 		return false;

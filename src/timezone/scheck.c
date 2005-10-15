@@ -3,7 +3,7 @@
  * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/scheck.c,v 1.6 2005/06/20 08:00:51 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/scheck.c,v 1.7 2005/10/15 02:49:51 momjian Exp $
  */
 
 #include "postgres.h"
@@ -14,11 +14,11 @@
 char *
 scheck(const char *string, const char *format)
 {
-	char *fbuf;
+	char	   *fbuf;
 	const char *fp;
-	char *tp;
-	int c;
-	char *result;
+	char	   *tp;
+	int			c;
+	char	   *result;
 	char		dummy;
 	static char nada;
 

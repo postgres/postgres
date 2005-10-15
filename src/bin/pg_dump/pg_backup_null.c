@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_null.c,v 1.15 2005/06/21 20:45:44 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_null.c,v 1.16 2005/10/15 02:49:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,7 +100,7 @@ _WriteBlobData(ArchiveHandle *AH, const void *data, size_t dLen)
 	if (dLen > 0)
 	{
 		unsigned char *str;
-		size_t	len;
+		size_t		len;
 
 		str = PQescapeBytea((const unsigned char *) data, dLen, &len);
 		if (!str)
@@ -161,6 +161,7 @@ static void
 _EndBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 {
 	AH->WriteDataPtr = _WriteData;
+
 	ahprintf(AH, "SELECT lo_close(0);\n\n");
 }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.137 2005/06/26 22:05:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.138 2005/10/15 02:49:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@
 
 
 static void markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
-								 Var *var, int levelsup);
+					 Var *var, int levelsup);
 static Node *transformAssignmentIndirection(ParseState *pstate,
 							   Node *basenode,
 							   const char *targetName,
@@ -73,8 +73,8 @@ transformTargetEntry(ParseState *pstate,
 	if (colname == NULL && !resjunk)
 	{
 		/*
-		 * Generate a suitable column name for a column without any
-		 * explicit 'AS ColumnName' clause.
+		 * Generate a suitable column name for a column without any explicit
+		 * 'AS ColumnName' clause.
 		 */
 		colname = FigureColname(node);
 	}
@@ -105,8 +105,8 @@ transformTargetList(ParseState *pstate, List *targetlist)
 
 		/*
 		 * Check for "something.*".  Depending on the complexity of the
-		 * "something", the star could appear as the last name in
-		 * ColumnRef, or as the last indirection item in A_Indirection.
+		 * "something", the star could appear as the last name in ColumnRef,
+		 * or as the last indirection item in A_Indirection.
 		 */
 		if (IsA(res->val, ColumnRef))
 		{
@@ -130,7 +130,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 			{
 				/* It is something.*, expand into multiple items */
 				p_target = list_concat(p_target,
-									 ExpandIndirectionStar(pstate, ind));
+									   ExpandIndirectionStar(pstate, ind));
 				continue;
 			}
 		}
@@ -271,11 +271,11 @@ updateTargetListEntry(ParseState *pstate,
 
 	/*
 	 * If the expression is a DEFAULT placeholder, insert the attribute's
-	 * type/typmod into it so that exprType will report the right things.
-	 * (We expect that the eventually substituted default expression will
-	 * in fact have this type and typmod.)	Also, reject trying to update
-	 * a subfield or array element with DEFAULT, since there can't be any
-	 * default for portions of a column.
+	 * type/typmod into it so that exprType will report the right things. (We
+	 * expect that the eventually substituted default expression will in fact
+	 * have this type and typmod.)	Also, reject trying to update a subfield
+	 * or array element with DEFAULT, since there can't be any default for
+	 * portions of a column.
 	 */
 	if (tle->expr && IsA(tle->expr, SetToDefault))
 	{
@@ -288,7 +288,7 @@ updateTargetListEntry(ParseState *pstate,
 			if (IsA(linitial(indirection), A_Indices))
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					  errmsg("cannot set an array element to DEFAULT")));
+						 errmsg("cannot set an array element to DEFAULT")));
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -301,9 +301,9 @@ updateTargetListEntry(ParseState *pstate,
 
 	/*
 	 * If there is indirection on the target column, prepare an array or
-	 * subfield assignment expression.	This will generate a new column
-	 * value that the source value has been inserted into, which can then
-	 * be placed in the new tuple constructed by INSERT or UPDATE.
+	 * subfield assignment expression.	This will generate a new column value
+	 * that the source value has been inserted into, which can then be placed
+	 * in the new tuple constructed by INSERT or UPDATE.
 	 */
 	if (indirection)
 	{
@@ -312,9 +312,9 @@ updateTargetListEntry(ParseState *pstate,
 		if (pstate->p_is_insert)
 		{
 			/*
-			 * The command is INSERT INTO table (col.something) ... so
-			 * there is not really a source value to work with. Insert a
-			 * NULL constant as the source value.
+			 * The command is INSERT INTO table (col.something) ... so there
+			 * is not really a source value to work with. Insert a NULL
+			 * constant as the source value.
 			 */
 			colVar = (Node *) makeNullConst(attrtype);
 		}
@@ -358,15 +358,14 @@ updateTargetListEntry(ParseState *pstate,
 							colname,
 							format_type_be(attrtype),
 							format_type_be(type_id)),
-			errhint("You will need to rewrite or cast the expression.")));
+			   errhint("You will need to rewrite or cast the expression.")));
 	}
 
 	/*
 	 * Set the resno to identify the target column --- the rewriter and
-	 * planner depend on this.	We also set the resname to identify the
-	 * target column, but this is only for debugging purposes; it should
-	 * not be relied on.  (In particular, it might be out of date in a
-	 * stored rule.)
+	 * planner depend on this.	We also set the resname to identify the target
+	 * column, but this is only for debugging purposes; it should not be
+	 * relied on.  (In particular, it might be out of date in a stored rule.)
 	 */
 	tle->resno = (AttrNumber) attrno;
 	tle->resname = colname;
@@ -424,8 +423,8 @@ transformAssignmentIndirection(ParseState *pstate,
 
 	/*
 	 * We have to split any field-selection operations apart from
-	 * subscripting.  Adjacent A_Indices nodes have to be treated as a
-	 * single multidimensional subscript operation.
+	 * subscripting.  Adjacent A_Indices nodes have to be treated as a single
+	 * multidimensional subscript operation.
 	 */
 	for_each_cell(i, indirection)
 	{
@@ -561,7 +560,7 @@ transformAssignmentIndirection(ParseState *pstate,
 							targetName,
 							format_type_be(targetTypeId),
 							format_type_be(exprType(rhs))),
-			errhint("You will need to rewrite or cast the expression.")));
+			   errhint("You will need to rewrite or cast the expression.")));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -570,7 +569,7 @@ transformAssignmentIndirection(ParseState *pstate,
 							targetName,
 							format_type_be(targetTypeId),
 							format_type_be(exprType(rhs))),
-			errhint("You will need to rewrite or cast the expression.")));
+			   errhint("You will need to rewrite or cast the expression.")));
 	}
 
 	return result;
@@ -631,8 +630,8 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 			attrno = attnameAttNum(pstate->p_target_relation, name, false);
 
 			/*
-			 * Check for duplicates, but only of whole columns --- we
-			 * allow  INSERT INTO foo (col.subcol1, col.subcol2)
+			 * Check for duplicates, but only of whole columns --- we allow
+			 * INSERT INTO foo (col.subcol1, col.subcol2)
 			 */
 			if (col->indirection == NIL)
 			{
@@ -641,8 +640,8 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 					bms_is_member(attrno, partialcols))
 					ereport(ERROR,
 							(errcode(ERRCODE_DUPLICATE_COLUMN),
-						 errmsg("column \"%s\" specified more than once",
-								name)));
+							 errmsg("column \"%s\" specified more than once",
+									name)));
 				wholecols = bms_add_member(wholecols, attrno);
 			}
 			else
@@ -651,8 +650,8 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 				if (bms_is_member(attrno, wholecols))
 					ereport(ERROR,
 							(errcode(ERRCODE_DUPLICATE_COLUMN),
-						 errmsg("column \"%s\" specified more than once",
-								name)));
+							 errmsg("column \"%s\" specified more than once",
+									name)));
 				partialcols = bms_add_member(partialcols, attrno);
 			}
 
@@ -727,8 +726,8 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref)
 			default:
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("improper qualified name (too many dotted names): %s",
-								NameListToString(fields))));
+				errmsg("improper qualified name (too many dotted names): %s",
+					   NameListToString(fields))));
 				schemaname = NULL;		/* keep compiler quiet */
 				relname = NULL;
 				break;
@@ -765,12 +764,12 @@ ExpandAllTables(ParseState *pstate)
 	if (!pstate->p_varnamespace)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-			  errmsg("SELECT * with no tables specified is not valid")));
+				 errmsg("SELECT * with no tables specified is not valid")));
 
 	foreach(l, pstate->p_varnamespace)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
-		int		rtindex = RTERangeTablePosn(pstate, rte, NULL);
+		int			rtindex = RTERangeTablePosn(pstate, rte, NULL);
 
 		target = list_concat(target,
 							 expandRelAttrs(pstate, rte, rtindex, 0));
@@ -804,14 +803,14 @@ ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind)
 
 	/*
 	 * Verify it's a composite type, and get the tupdesc.  We use
-	 * get_expr_result_type() because that can handle references to
-	 * functions returning anonymous record types.  If that fails,
-	 * use lookup_rowtype_tupdesc(), which will almost certainly fail
-	 * as well, but it will give an appropriate error message.
+	 * get_expr_result_type() because that can handle references to functions
+	 * returning anonymous record types.  If that fails, use
+	 * lookup_rowtype_tupdesc(), which will almost certainly fail as well, but
+	 * it will give an appropriate error message.
 	 *
-	 * If it's a Var of type RECORD, we have to work even harder: we have
-	 * to find what the Var refers to, and pass that to get_expr_result_type.
-	 * That task is handled by expandRecordVariable().
+	 * If it's a Var of type RECORD, we have to work even harder: we have to find
+	 * what the Var refers to, and pass that to get_expr_result_type. That
+	 * task is handled by expandRecordVariable().
 	 */
 	if (IsA(expr, Var) &&
 		((Var *) expr)->vartype == RECORDOID)
@@ -832,9 +831,9 @@ ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind)
 			continue;
 
 		/*
-		 * If we got a whole-row Var from the rowtype reference, we can
-		 * expand the fields as simple Vars.  Otherwise we must generate
-		 * multiple copies of the rowtype reference and do FieldSelects.
+		 * If we got a whole-row Var from the rowtype reference, we can expand
+		 * the fields as simple Vars.  Otherwise we must generate multiple
+		 * copies of the rowtype reference and do FieldSelects.
 		 */
 		if (IsA(expr, Var) &&
 			((Var *) expr)->varattno == InvalidAttrNumber)
@@ -874,7 +873,7 @@ ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind)
  *		Get the tuple descriptor for a Var of type RECORD, if possible.
  *
  * Since no actual table or view column is allowed to have type RECORD, such
- * a Var must refer to a JOIN or FUNCTION RTE or to a subquery output.  We
+ * a Var must refer to a JOIN or FUNCTION RTE or to a subquery output.	We
  * drill down to find the ultimate defining expression and attempt to infer
  * the tupdesc from it.  We ereport if we can't determine the tupdesc.
  *
@@ -934,6 +933,7 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 	{
 		case RTE_RELATION:
 		case RTE_SPECIAL:
+
 			/*
 			 * This case should not occur: a column of a table shouldn't have
 			 * type RECORD.  Fall through and fail (most likely) at the
@@ -954,7 +954,7 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 				{
 					/*
 					 * Recurse into the sub-select to see what its Var refers
-					 * to.  We have to build an additional level of ParseState
+					 * to.	We have to build an additional level of ParseState
 					 * to keep in step with varlevelsup in the subselect.
 					 */
 					ParseState	mypstate;
@@ -978,18 +978,19 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 			/* else fall through to inspect the expression */
 			break;
 		case RTE_FUNCTION:
+
 			/*
-			 * We couldn't get here unless a function is declared with one
-			 * of its result columns as RECORD, which is not allowed.
+			 * We couldn't get here unless a function is declared with one of
+			 * its result columns as RECORD, which is not allowed.
 			 */
 			break;
 	}
 
 	/*
 	 * We now have an expression we can't expand any more, so see if
-	 * get_expr_result_type() can do anything with it.  If not, pass
-	 * to lookup_rowtype_tupdesc() which will probably fail, but will
-	 * give an appropriate error message while failing.
+	 * get_expr_result_type() can do anything with it.	If not, pass to
+	 * lookup_rowtype_tupdesc() which will probably fail, but will give an
+	 * appropriate error message while failing.
 	 */
 	if (get_expr_result_type(expr, NULL, &tupleDesc) != TYPEFUNC_COMPOSITE)
 		tupleDesc = lookup_rowtype_tupdesc(exprType(expr), exprTypmod(expr));
@@ -1125,7 +1126,7 @@ FigureColnameInternal(Node *node, char **name)
 			return 2;
 		case T_MinMaxExpr:
 			/* make greatest/least act like a regular function */
-			switch (((MinMaxExpr*) node)->op)
+			switch (((MinMaxExpr *) node)->op)
 			{
 				case IS_GREATEST:
 					*name = "greatest";

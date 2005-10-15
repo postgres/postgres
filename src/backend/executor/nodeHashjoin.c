@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.73 2005/09/25 19:37:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.74 2005/10/15 02:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,8 +24,8 @@
 
 
 static TupleTableSlot *ExecHashJoinOuterGetTuple(PlanState *outerNode,
-												 HashJoinState *hjstate,
-												 uint32 *hashvalue);
+						  HashJoinState *hjstate,
+						  uint32 *hashvalue);
 static TupleTableSlot *ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 						  BufFile *file,
 						  uint32 *hashvalue,
@@ -77,9 +77,9 @@ ExecHashJoin(HashJoinState *node)
 	econtext = node->js.ps.ps_ExprContext;
 
 	/*
-	 * Check to see if we're still projecting out tuples from a previous
-	 * join tuple (because there is a function-returning-set in the
-	 * projection expressions).  If so, try to project another one.
+	 * Check to see if we're still projecting out tuples from a previous join
+	 * tuple (because there is a function-returning-set in the projection
+	 * expressions).  If so, try to project another one.
 	 */
 	if (node->js.ps.ps_TupFromTlist)
 	{
@@ -93,17 +93,17 @@ ExecHashJoin(HashJoinState *node)
 	}
 
 	/*
-	 * If we're doing an IN join, we want to return at most one row per
-	 * outer tuple; so we can stop scanning the inner scan if we matched
-	 * on the previous try.
+	 * If we're doing an IN join, we want to return at most one row per outer
+	 * tuple; so we can stop scanning the inner scan if we matched on the
+	 * previous try.
 	 */
 	if (node->js.jointype == JOIN_IN && node->hj_MatchedOuter)
 		node->hj_NeedNewOuter = true;
 
 	/*
 	 * Reset per-tuple memory context to free any expression evaluation
-	 * storage allocated in the previous tuple cycle.  Note this can't
-	 * happen until we're done projecting out tuples from a join tuple.
+	 * storage allocated in the previous tuple cycle.  Note this can't happen
+	 * until we're done projecting out tuples from a join tuple.
 	 */
 	ResetExprContext(econtext);
 
@@ -114,17 +114,17 @@ ExecHashJoin(HashJoinState *node)
 	{
 		/*
 		 * If the outer relation is completely empty, we can quit without
-		 * building the hash table.  However, for an inner join it is only
-		 * a win to check this when the outer relation's startup cost is less
-		 * than the projected cost of building the hash table.  Otherwise
-		 * it's best to build the hash table first and see if the inner
-		 * relation is empty.  (When it's an outer join, we should always
-		 * make this check, since we aren't going to be able to skip the
-		 * join on the strength of an empty inner relation anyway.)
+		 * building the hash table.  However, for an inner join it is only a
+		 * win to check this when the outer relation's startup cost is less
+		 * than the projected cost of building the hash table.	Otherwise it's
+		 * best to build the hash table first and see if the inner relation is
+		 * empty.  (When it's an outer join, we should always make this check,
+		 * since we aren't going to be able to skip the join on the strength
+		 * of an empty inner relation anyway.)
 		 *
-		 * The only way to make the check is to try to fetch a tuple from
-		 * the outer plan node.  If we succeed, we have to stash it away
-		 * for later consumption by ExecHashJoinOuterGetTuple.
+		 * The only way to make the check is to try to fetch a tuple from the
+		 * outer plan node.  If we succeed, we have to stash it away for later
+		 * consumption by ExecHashJoinOuterGetTuple.
 		 */
 		if (outerNode->plan->startup_cost < hashNode->ps.plan->total_cost ||
 			node->js.jointype == JOIN_LEFT)
@@ -150,8 +150,8 @@ ExecHashJoin(HashJoinState *node)
 		(void) MultiExecProcNode((PlanState *) hashNode);
 
 		/*
-		 * If the inner relation is completely empty, and we're not doing
-		 * an outer join, we can quit without scanning the outer relation.
+		 * If the inner relation is completely empty, and we're not doing an
+		 * outer join, we can quit without scanning the outer relation.
 		 */
 		if (hashtable->totalTuples == 0 && node->js.jointype != JOIN_LEFT)
 		{
@@ -193,8 +193,8 @@ ExecHashJoin(HashJoinState *node)
 			node->hj_MatchedOuter = false;
 
 			/*
-			 * now we have an outer tuple, find the corresponding bucket
-			 * for this tuple from the hash table
+			 * now we have an outer tuple, find the corresponding bucket for
+			 * this tuple from the hash table
 			 */
 			node->hj_CurHashValue = hashvalue;
 			ExecHashGetBucketAndBatch(hashtable, hashvalue,
@@ -202,21 +202,21 @@ ExecHashJoin(HashJoinState *node)
 			node->hj_CurTuple = NULL;
 
 			/*
-			 * Now we've got an outer tuple and the corresponding hash
-			 * bucket, but this tuple may not belong to the current batch.
+			 * Now we've got an outer tuple and the corresponding hash bucket,
+			 * but this tuple may not belong to the current batch.
 			 */
 			if (batchno != hashtable->curbatch)
 			{
 				/*
-				 * Need to postpone this outer tuple to a later batch.
-				 * Save it in the corresponding outer-batch file.
+				 * Need to postpone this outer tuple to a later batch. Save it
+				 * in the corresponding outer-batch file.
 				 */
 				Assert(batchno > hashtable->curbatch);
 				ExecHashJoinSaveTuple(ExecFetchSlotTuple(outerTupleSlot),
 									  hashvalue,
 									  &hashtable->outerBatchFile[batchno]);
 				node->hj_NeedNewOuter = true;
-				continue;	/* loop around for a new outer tuple */
+				continue;		/* loop around for a new outer tuple */
 			}
 		}
 
@@ -243,11 +243,11 @@ ExecHashJoin(HashJoinState *node)
 
 			/*
 			 * if we pass the qual, then save state for next call and have
-			 * ExecProject form the projection, store it in the tuple
-			 * table, and return the slot.
+			 * ExecProject form the projection, store it in the tuple table,
+			 * and return the slot.
 			 *
-			 * Only the joinquals determine MatchedOuter status, but all
-			 * quals must pass to actually return the tuple.
+			 * Only the joinquals determine MatchedOuter status, but all quals
+			 * must pass to actually return the tuple.
 			 */
 			if (joinqual == NIL || ExecQual(joinqual, econtext, false))
 			{
@@ -268,8 +268,7 @@ ExecHashJoin(HashJoinState *node)
 				}
 
 				/*
-				 * If we didn't return a tuple, may need to set
-				 * NeedNewOuter
+				 * If we didn't return a tuple, may need to set NeedNewOuter
 				 */
 				if (node->js.jointype == JOIN_IN)
 				{
@@ -281,8 +280,8 @@ ExecHashJoin(HashJoinState *node)
 
 		/*
 		 * Now the current outer tuple has run out of matches, so check
-		 * whether to emit a dummy outer-join tuple. If not, loop around
-		 * to get a new outer tuple.
+		 * whether to emit a dummy outer-join tuple. If not, loop around to
+		 * get a new outer tuple.
 		 */
 		node->hj_NeedNewOuter = true;
 
@@ -290,19 +289,17 @@ ExecHashJoin(HashJoinState *node)
 			node->js.jointype == JOIN_LEFT)
 		{
 			/*
-			 * We are doing an outer join and there were no join matches
-			 * for this outer tuple.  Generate a fake join tuple with
-			 * nulls for the inner tuple, and return it if it passes the
-			 * non-join quals.
+			 * We are doing an outer join and there were no join matches for
+			 * this outer tuple.  Generate a fake join tuple with nulls for
+			 * the inner tuple, and return it if it passes the non-join quals.
 			 */
 			econtext->ecxt_innertuple = node->hj_NullInnerTupleSlot;
 
 			if (ExecQual(otherqual, econtext, false))
 			{
 				/*
-				 * qualification was satisfied so we project and return
-				 * the slot containing the result tuple using
-				 * ExecProject().
+				 * qualification was satisfied so we project and return the
+				 * slot containing the result tuple using ExecProject().
 				 */
 				TupleTableSlot *result;
 
@@ -392,7 +389,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate)
 		case JOIN_LEFT:
 			hjstate->hj_NullInnerTupleSlot =
 				ExecInitNullTupleSlot(estate,
-							 ExecGetResultType(innerPlanState(hjstate)));
+								 ExecGetResultType(innerPlanState(hjstate)));
 			break;
 		default:
 			elog(ERROR, "unrecognized join type: %d",
@@ -400,11 +397,11 @@ ExecInitHashJoin(HashJoin *node, EState *estate)
 	}
 
 	/*
-	 * now for some voodoo.  our temporary tuple slot is actually the
-	 * result tuple slot of the Hash node (which is our inner plan).  we
-	 * do this because Hash nodes don't return tuples via ExecProcNode()
-	 * -- instead the hash join node uses ExecScanHashBucket() to get at
-	 * the contents of the hash table.	-cim 6/9/91
+	 * now for some voodoo.  our temporary tuple slot is actually the result
+	 * tuple slot of the Hash node (which is our inner plan).  we do this
+	 * because Hash nodes don't return tuples via ExecProcNode() -- instead
+	 * the hash join node uses ExecScanHashBucket() to get at the contents of
+	 * the hash table.	-cim 6/9/91
 	 */
 	{
 		HashState  *hashstate = (HashState *) innerPlanState(hjstate);
@@ -434,10 +431,10 @@ ExecInitHashJoin(HashJoin *node, EState *estate)
 	hjstate->hj_CurTuple = NULL;
 
 	/*
-	 * Deconstruct the hash clauses into outer and inner argument values,
-	 * so that we can evaluate those subexpressions separately.  Also make
-	 * a list of the hash operator OIDs, in preparation for looking up the
-	 * hash functions to use.
+	 * Deconstruct the hash clauses into outer and inner argument values, so
+	 * that we can evaluate those subexpressions separately.  Also make a list
+	 * of the hash operator OIDs, in preparation for looking up the hash
+	 * functions to use.
 	 */
 	lclauses = NIL;
 	rclauses = NIL;
@@ -536,6 +533,7 @@ ExecHashJoinOuterGetTuple(PlanState *outerNode,
 
 	if (curbatch == 0)
 	{							/* if it is the first pass */
+
 		/*
 		 * Check to see if first outer tuple was already fetched by
 		 * ExecHashJoin() and not used yet.
@@ -560,16 +558,16 @@ ExecHashJoinOuterGetTuple(PlanState *outerNode,
 		}
 
 		/*
-		 * We have just reached the end of the first pass. Try to switch
-		 * to a saved batch.
+		 * We have just reached the end of the first pass. Try to switch to a
+		 * saved batch.
 		 */
 		curbatch = ExecHashJoinNewBatch(hjstate);
 	}
 
 	/*
-	 * Try to read from a temp file. Loop allows us to advance to new
-	 * batches as needed.  NOTE: nbatch could increase inside
-	 * ExecHashJoinNewBatch, so don't try to optimize this loop.
+	 * Try to read from a temp file. Loop allows us to advance to new batches
+	 * as needed.  NOTE: nbatch could increase inside ExecHashJoinNewBatch, so
+	 * don't try to optimize this loop.
 	 */
 	while (curbatch < hashtable->nbatch)
 	{
@@ -623,16 +621,16 @@ start_over:
 	 * sides.  We can sometimes skip over batches that are empty on only one
 	 * side, but there are exceptions:
 	 *
-	 * 1. In a LEFT JOIN, we have to process outer batches even if the
-	 * inner batch is empty.
+	 * 1. In a LEFT JOIN, we have to process outer batches even if the inner
+	 * batch is empty.
 	 *
-	 * 2. If we have increased nbatch since the initial estimate, we have
-	 * to scan inner batches since they might contain tuples that need to
-	 * be reassigned to later inner batches.
+	 * 2. If we have increased nbatch since the initial estimate, we have to scan
+	 * inner batches since they might contain tuples that need to be
+	 * reassigned to later inner batches.
 	 *
-	 * 3. Similarly, if we have increased nbatch since starting the outer
-	 * scan, we have to rescan outer batches in case they contain tuples
-	 * that need to be reassigned.
+	 * 3. Similarly, if we have increased nbatch since starting the outer scan,
+	 * we have to rescan outer batches in case they contain tuples that need
+	 * to be reassigned.
 	 */
 	curbatch++;
 	while (curbatch < nbatch &&
@@ -676,7 +674,7 @@ start_over:
 		if (BufFileSeek(innerFile, 0, 0L, SEEK_SET))
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not rewind hash-join temporary file: %m")));
+				   errmsg("could not rewind hash-join temporary file: %m")));
 
 		while ((slot = ExecHashJoinGetSavedTuple(hjstate,
 												 innerFile,
@@ -684,8 +682,8 @@ start_over:
 												 hjstate->hj_HashTupleSlot)))
 		{
 			/*
-			 * NOTE: some tuples may be sent to future batches.  Also,
-			 * it is possible for hashtable->nbatch to be increased here!
+			 * NOTE: some tuples may be sent to future batches.  Also, it is
+			 * possible for hashtable->nbatch to be increased here!
 			 */
 			ExecHashTableInsert(hashtable,
 								ExecFetchSlotTuple(slot),
@@ -733,7 +731,7 @@ void
 ExecHashJoinSaveTuple(HeapTuple heapTuple, uint32 hashvalue,
 					  BufFile **fileptr)
 {
-	BufFile	   *file = *fileptr;
+	BufFile    *file = *fileptr;
 	size_t		written;
 
 	if (file == NULL)
@@ -764,7 +762,7 @@ ExecHashJoinSaveTuple(HeapTuple heapTuple, uint32 hashvalue,
 
 /*
  * ExecHashJoinGetSavedTuple
- *		read the next tuple from a batch file.  Return NULL if no more.
+ *		read the next tuple from a batch file.	Return NULL if no more.
  *
  * On success, *hashvalue is set to the tuple's hash value, and the tuple
  * itself is stored in the given slot.
@@ -809,18 +807,18 @@ void
 ExecReScanHashJoin(HashJoinState *node, ExprContext *exprCtxt)
 {
 	/*
-	 * If we haven't yet built the hash table then we can just return;
-	 * nothing done yet, so nothing to undo.
+	 * If we haven't yet built the hash table then we can just return; nothing
+	 * done yet, so nothing to undo.
 	 */
 	if (node->hj_HashTable == NULL)
 		return;
 
 	/*
-	 * In a multi-batch join, we currently have to do rescans the hard
-	 * way, primarily because batch temp files may have already been
-	 * released. But if it's a single-batch join, and there is no
-	 * parameter change for the inner subnode, then we can just re-use the
-	 * existing hash table without rebuilding it.
+	 * In a multi-batch join, we currently have to do rescans the hard way,
+	 * primarily because batch temp files may have already been released. But
+	 * if it's a single-batch join, and there is no parameter change for the
+	 * inner subnode, then we can just re-use the existing hash table without
+	 * rebuilding it.
 	 */
 	if (node->hj_HashTable->nbatch == 1 &&
 		((PlanState *) node)->righttree->chgParam == NULL)
@@ -835,8 +833,8 @@ ExecReScanHashJoin(HashJoinState *node, ExprContext *exprCtxt)
 		node->hj_FirstOuterTupleSlot = NULL;
 
 		/*
-		 * if chgParam of subnode is not null then plan will be re-scanned
-		 * by first ExecProcNode.
+		 * if chgParam of subnode is not null then plan will be re-scanned by
+		 * first ExecProcNode.
 		 */
 		if (((PlanState *) node)->righttree->chgParam == NULL)
 			ExecReScan(((PlanState *) node)->righttree, exprCtxt);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.77 2005/08/20 23:26:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.78 2005/10/15 02:49:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,7 +109,7 @@ SendSharedInvalidMessage(SharedInvalidationMessage *msg)
  */
 void
 ReceiveSharedInvalidMessages(
-				  void (*invalFunction) (SharedInvalidationMessage *msg),
+					  void (*invalFunction) (SharedInvalidationMessage *msg),
 							 void (*resetFunction) (void))
 {
 	SharedInvalidationMessage data;
@@ -119,20 +119,20 @@ ReceiveSharedInvalidMessages(
 	for (;;)
 	{
 		/*
-		 * We can discard any pending catchup event, since we will not
-		 * exit this loop until we're fully caught up.
+		 * We can discard any pending catchup event, since we will not exit
+		 * this loop until we're fully caught up.
 		 */
 		catchupInterruptOccurred = 0;
 
 		/*
-		 * We can run SIGetDataEntry in parallel with other backends
-		 * running SIGetDataEntry for themselves, since each instance will
-		 * modify only fields of its own backend's ProcState, and no
-		 * instance will look at fields of other backends' ProcStates.  We
-		 * express this by grabbing SInvalLock in shared mode.	Note that
-		 * this is not exactly the normal (read-only) interpretation of a
-		 * shared lock! Look closely at the interactions before allowing
-		 * SInvalLock to be grabbed in shared mode for any other reason!
+		 * We can run SIGetDataEntry in parallel with other backends running
+		 * SIGetDataEntry for themselves, since each instance will modify only
+		 * fields of its own backend's ProcState, and no instance will look at
+		 * fields of other backends' ProcStates.  We express this by grabbing
+		 * SInvalLock in shared mode.  Note that this is not exactly the
+		 * normal (read-only) interpretation of a shared lock! Look closely at
+		 * the interactions before allowing SInvalLock to be grabbed in shared
+		 * mode for any other reason!
 		 */
 		LWLockAcquire(SInvalLock, LW_SHARED);
 		getResult = SIGetDataEntry(shmInvalBuffer, MyBackendId, &data);
@@ -195,19 +195,18 @@ CatchupInterruptHandler(SIGNAL_ARGS)
 		bool		save_ImmediateInterruptOK = ImmediateInterruptOK;
 
 		/*
-		 * We may be called while ImmediateInterruptOK is true; turn it
-		 * off while messing with the catchup state.  (We would have to
-		 * save and restore it anyway, because PGSemaphore operations
-		 * inside ProcessCatchupEvent() might reset it.)
+		 * We may be called while ImmediateInterruptOK is true; turn it off
+		 * while messing with the catchup state.  (We would have to save and
+		 * restore it anyway, because PGSemaphore operations inside
+		 * ProcessCatchupEvent() might reset it.)
 		 */
 		ImmediateInterruptOK = false;
 
 		/*
 		 * I'm not sure whether some flavors of Unix might allow another
-		 * SIGUSR1 occurrence to recursively interrupt this routine. To
-		 * cope with the possibility, we do the same sort of dance that
-		 * EnableCatchupInterrupt must do --- see that routine for
-		 * comments.
+		 * SIGUSR1 occurrence to recursively interrupt this routine. To cope
+		 * with the possibility, we do the same sort of dance that
+		 * EnableCatchupInterrupt must do --- see that routine for comments.
 		 */
 		catchupInterruptEnabled = 0;	/* disable any recursive signal */
 		catchupInterruptOccurred = 1;	/* do at least one iteration */
@@ -225,8 +224,7 @@ CatchupInterruptHandler(SIGNAL_ARGS)
 		}
 
 		/*
-		 * Restore ImmediateInterruptOK, and check for interrupts if
-		 * needed.
+		 * Restore ImmediateInterruptOK, and check for interrupts if needed.
 		 */
 		ImmediateInterruptOK = save_ImmediateInterruptOK;
 		if (save_ImmediateInterruptOK)
@@ -235,8 +233,7 @@ CatchupInterruptHandler(SIGNAL_ARGS)
 	else
 	{
 		/*
-		 * In this path it is NOT SAFE to do much of anything, except
-		 * this:
+		 * In this path it is NOT SAFE to do much of anything, except this:
 		 */
 		catchupInterruptOccurred = 1;
 	}
@@ -258,27 +255,25 @@ void
 EnableCatchupInterrupt(void)
 {
 	/*
-	 * This code is tricky because we are communicating with a signal
-	 * handler that could interrupt us at any point.  If we just checked
-	 * catchupInterruptOccurred and then set catchupInterruptEnabled, we
-	 * could fail to respond promptly to a signal that happens in between
-	 * those two steps.  (A very small time window, perhaps, but Murphy's
-	 * Law says you can hit it...)	Instead, we first set the enable flag,
-	 * then test the occurred flag.  If we see an unserviced interrupt has
-	 * occurred, we re-clear the enable flag before going off to do the
-	 * service work.  (That prevents re-entrant invocation of
-	 * ProcessCatchupEvent() if another interrupt occurs.) If an interrupt
-	 * comes in between the setting and clearing of
-	 * catchupInterruptEnabled, then it will have done the service work
-	 * and left catchupInterruptOccurred zero, so we have to check again
-	 * after clearing enable.  The whole thing has to be in a loop in case
-	 * another interrupt occurs while we're servicing the first. Once we
-	 * get out of the loop, enable is set and we know there is no
+	 * This code is tricky because we are communicating with a signal handler
+	 * that could interrupt us at any point.  If we just checked
+	 * catchupInterruptOccurred and then set catchupInterruptEnabled, we could
+	 * fail to respond promptly to a signal that happens in between those two
+	 * steps.  (A very small time window, perhaps, but Murphy's Law says you
+	 * can hit it...)  Instead, we first set the enable flag, then test the
+	 * occurred flag.  If we see an unserviced interrupt has occurred, we
+	 * re-clear the enable flag before going off to do the service work.
+	 * (That prevents re-entrant invocation of ProcessCatchupEvent() if
+	 * another interrupt occurs.) If an interrupt comes in between the setting
+	 * and clearing of catchupInterruptEnabled, then it will have done the
+	 * service work and left catchupInterruptOccurred zero, so we have to
+	 * check again after clearing enable.  The whole thing has to be in a loop
+	 * in case another interrupt occurs while we're servicing the first. Once
+	 * we get out of the loop, enable is set and we know there is no
 	 * unserviced interrupt.
 	 *
-	 * NB: an overenthusiastic optimizing compiler could easily break this
-	 * code.  Hopefully, they all understand what "volatile" means these
-	 * days.
+	 * NB: an overenthusiastic optimizing compiler could easily break this code.
+	 * Hopefully, they all understand what "volatile" means these days.
 	 */
 	for (;;)
 	{
@@ -330,17 +325,17 @@ ProcessCatchupEvent(void)
 	notify_enabled = DisableNotifyInterrupt();
 
 	/*
-	 * What we need to do here is cause ReceiveSharedInvalidMessages() to
-	 * run, which will do the necessary work and also reset the
-	 * catchupInterruptOccurred flag.  If we are inside a transaction we
-	 * can just call AcceptInvalidationMessages() to do this.  If we
-	 * aren't, we start and immediately end a transaction; the call to
+	 * What we need to do here is cause ReceiveSharedInvalidMessages() to run,
+	 * which will do the necessary work and also reset the
+	 * catchupInterruptOccurred flag.  If we are inside a transaction we can
+	 * just call AcceptInvalidationMessages() to do this.  If we aren't, we
+	 * start and immediately end a transaction; the call to
 	 * AcceptInvalidationMessages() happens down inside transaction start.
 	 *
-	 * It is awfully tempting to just call AcceptInvalidationMessages()
-	 * without the rest of the xact start/stop overhead, and I think that
-	 * would actually work in the normal case; but I am not sure that
-	 * things would clean up nicely if we got an error partway through.
+	 * It is awfully tempting to just call AcceptInvalidationMessages() without
+	 * the rest of the xact start/stop overhead, and I think that would
+	 * actually work in the normal case; but I am not sure that things would
+	 * clean up nicely if we got an error partway through.
 	 */
 	if (IsTransactionOrTransactionBlock())
 	{

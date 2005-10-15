@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/subselect.h,v 1.25 2005/06/05 22:32:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/subselect.h,v 1.26 2005/10/15 02:49:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,6 @@ extern Node *SS_replace_correlation_vars(Node *expr);
 extern Node *SS_process_sublinks(Node *expr, bool isQual);
 extern void SS_finalize_plan(Plan *plan, List *rtable);
 extern Param *SS_make_initplan_from_plan(PlannerInfo *root, Plan *plan,
-										 Oid resulttype, int32 resulttypmod);
+						   Oid resulttype, int32 resulttypmod);
 
 #endif   /* SUBSELECT_H */

@@ -92,9 +92,9 @@ reset_prs(void)
 static int
 compareprs(const void *a, const void *b)
 {
-	if ( ((WParserInfo *) a)->prs_id == ((WParserInfo *) b)->prs_id )
+	if (((WParserInfo *) a)->prs_id == ((WParserInfo *) b)->prs_id)
 		return 0;
-	return ( ((WParserInfo *) a)->prs_id < ((WParserInfo *) b)->prs_id ) ? -1 : 1;
+	return (((WParserInfo *) a)->prs_id < ((WParserInfo *) b)->prs_id) ? -1 : 1;
 }
 
 WParserInfo *
@@ -194,7 +194,7 @@ setup_firstcall(FunctionCallInfo fcinfo, FuncCallContext *funcctx, Oid prsid)
 	st = (TypeStorage *) palloc(sizeof(TypeStorage));
 	st->cur = 0;
 	st->list = (LexDescr *) DatumGetPointer(
-				OidFunctionCall1(prs->lextype, PointerGetDatum(prs->prs))
+					OidFunctionCall1(prs->lextype, PointerGetDatum(prs->prs))
 		);
 	funcctx->user_fctx = (void *) st;
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
@@ -375,8 +375,8 @@ prs_setup_firstcall(FunctionCallInfo fcinfo, FuncCallContext *funcctx,
 	prs->prs = (void *) DatumGetPointer(
 										FunctionCall2(
 													  &(prs->start_info),
-										   PointerGetDatum(VARDATA(txt)),
-								   Int32GetDatum(VARSIZE(txt) - VARHDRSZ)
+											   PointerGetDatum(VARDATA(txt)),
+									   Int32GetDatum(VARSIZE(txt) - VARHDRSZ)
 													  )
 		);
 
@@ -384,7 +384,7 @@ prs_setup_firstcall(FunctionCallInfo fcinfo, FuncCallContext *funcctx,
 											   &(prs->getlexeme_info),
 											   PointerGetDatum(prs->prs),
 											   PointerGetDatum(&lex),
-										  PointerGetDatum(&llen)))) != 0)
+											   PointerGetDatum(&llen)))) != 0)
 	{
 
 		if (st->cur >= st->len)
@@ -588,7 +588,7 @@ headline_byname(PG_FUNCTION_ARGS)
 							  ObjectIdGetDatum(name2id_cfg(cfg)),
 							  PG_GETARG_DATUM(1),
 							  PG_GETARG_DATUM(2),
-			(PG_NARGS() > 3) ? PG_GETARG_DATUM(3) : PointerGetDatum(NULL)
+				(PG_NARGS() > 3) ? PG_GETARG_DATUM(3) : PointerGetDatum(NULL)
 		);
 
 	PG_FREE_IF_COPY(cfg, 0);
@@ -606,6 +606,6 @@ headline_current(PG_FUNCTION_ARGS)
 										ObjectIdGetDatum(get_currcfg()),
 										PG_GETARG_DATUM(0),
 										PG_GETARG_DATUM(1),
-			(PG_NARGS() > 2) ? PG_GETARG_DATUM(2) : PointerGetDatum(NULL)
+				(PG_NARGS() > 2) ? PG_GETARG_DATUM(2) : PointerGetDatum(NULL)
 										));
 }

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_am.h,v 1.37 2005/06/27 12:45:23 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_am.h,v 1.38 2005/10/15 02:49:42 momjian Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -34,18 +34,18 @@
  *		typedef struct FormData_pg_am
  * ----------------
  */
-#define AccessMethodRelationId  2601
+#define AccessMethodRelationId	2601
 
 CATALOG(pg_am,2601)
 {
 	NameData	amname;			/* access method name */
-	int2		amstrategies;	/* total NUMBER of strategies (operators)
-								 * by which we can traverse/search this AM */
-	int2		amsupport;		/* total NUMBER of support functions that
-								 * this AM uses */
-	int2		amorderstrategy;/* if this AM has a sort order, the
-								 * strategy number of the sort operator.
-								 * Zero if AM is not ordered. */
+	int2		amstrategies;	/* total NUMBER of strategies (operators) by
+								 * which we can traverse/search this AM */
+	int2		amsupport;		/* total NUMBER of support functions that this
+								 * AM uses */
+	int2		amorderstrategy;/* if this AM has a sort order, the strategy
+								 * number of the sort operator. Zero if AM is
+								 * not ordered. */
 	bool		amcanunique;	/* does AM support UNIQUE indexes? */
 	bool		amcanmulticol;	/* does AM support multi-column indexes? */
 	bool		amoptionalkey;	/* can query omit key for the first column? */

@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.65 2005/09/11 04:10:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.66 2005/10/15 02:49:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,7 +170,7 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 			noPwd = (strcmp(PQerrorMessage(newConn),
 							PQnoPasswordSupplied) == 0);
 			badPwd = (strncmp(PQerrorMessage(newConn),
-					"Password authentication failed for user", 39) == 0);
+						"Password authentication failed for user", 39) == 0);
 
 			if (noPwd || badPwd)
 			{
@@ -236,8 +236,8 @@ ConnectDatabase(Archive *AHX,
 		AH->requirePassword = false;
 
 	/*
-	 * Start the connection.  Loop until we have a password if requested
-	 * by backend.
+	 * Start the connection.  Loop until we have a password if requested by
+	 * backend.
 	 */
 	do
 	{
@@ -249,7 +249,7 @@ ConnectDatabase(Archive *AHX,
 			die_horribly(AH, modulename, "failed to connect to database\n");
 
 		if (PQstatus(AH->connection) == CONNECTION_BAD &&
-			strcmp(PQerrorMessage(AH->connection), PQnoPasswordSupplied) == 0 &&
+		 strcmp(PQerrorMessage(AH->connection), PQnoPasswordSupplied) == 0 &&
 			!feof(stdin))
 		{
 			PQfinish(AH->connection);
@@ -349,8 +349,8 @@ _sendCopyLine(ArchiveHandle *AH, char *qry, char *eos)
 		}
 
 		/*
-		 * fprintf(stderr, "Found cr at %d, prev char was %c, next was
-		 * %c\n", loc, qry[loc-1], qry[loc+1]);
+		 * fprintf(stderr, "Found cr at %d, prev char was %c, next was %c\n",
+		 * loc, qry[loc-1], qry[loc+1]);
 		 */
 
 		/* Count the number of preceding slashes */
@@ -361,8 +361,8 @@ _sendCopyLine(ArchiveHandle *AH, char *qry, char *eos)
 		sPos = loc - sPos;
 
 		/*
-		 * If an odd number of preceding slashes, then \n was escaped so
-		 * set the next search pos, and loop (if any left).
+		 * If an odd number of preceding slashes, then \n was escaped so set
+		 * the next search pos, and loop (if any left).
 		 */
 		if ((sPos & 1) == 1)
 		{
@@ -418,14 +418,14 @@ _sendSQLLine(ArchiveHandle *AH, char *qry, char *eos)
 {
 	/*
 	 * The following is a mini state machine to assess the end of an SQL
-	 * statement. It really only needs to parse good SQL, or at least
-	 * that's the theory... End-of-statement is assumed to be an unquoted,
+	 * statement. It really only needs to parse good SQL, or at least that's
+	 * the theory... End-of-statement is assumed to be an unquoted,
 	 * un-commented semi-colon that's not within any parentheses.
 	 *
 	 * Note: the input can be split into bufferloads at arbitrary boundaries.
 	 * Therefore all state must be kept in AH->sqlparse, not in local
-	 * variables of this routine.  We assume that AH->sqlparse was
-	 * filled with zeroes when created.
+	 * variables of this routine.  We assume that AH->sqlparse was filled with
+	 * zeroes when created.
 	 */
 	for (; qry < eos; qry++)
 	{
@@ -435,18 +435,18 @@ _sendSQLLine(ArchiveHandle *AH, char *qry, char *eos)
 				if (*qry == ';' && AH->sqlparse.braceDepth == 0)
 				{
 					/*
-					 * We've found the end of a statement. Send it and
-					 * reset the buffer.
+					 * We've found the end of a statement. Send it and reset
+					 * the buffer.
 					 */
-					appendPQExpBufferChar(AH->sqlBuf, ';'); /* inessential */
+					appendPQExpBufferChar(AH->sqlBuf, ';');		/* inessential */
 					ExecuteSqlCommand(AH, AH->sqlBuf,
 									  "could not execute query");
 					resetPQExpBuffer(AH->sqlBuf);
 					AH->sqlparse.lastChar = '\0';
 
 					/*
-					 * Remove any following newlines - so that
-					 * embedded COPY commands don't get a starting newline.
+					 * Remove any following newlines - so that embedded COPY
+					 * commands don't get a starting newline.
 					 */
 					qry++;
 					while (qry < eos && *qry == '\n')
@@ -467,11 +467,11 @@ _sendSQLLine(ArchiveHandle *AH, char *qry, char *eos)
 				{
 					AH->sqlparse.state = SQL_IN_DOUBLE_QUOTE;
 				}
+
 				/*
 				 * Look for dollar-quotes. We make the assumption that
-				 * $-quotes will not have an ident character just
-				 * before them in pg_dump output.  XXX is this
-				 * good enough?
+				 * $-quotes will not have an ident character just before them
+				 * in pg_dump output.  XXX is this good enough?
 				 */
 				else if (*qry == '$' && !_isIdentChar(AH->sqlparse.lastChar))
 				{
@@ -499,6 +499,7 @@ _sendSQLLine(ArchiveHandle *AH, char *qry, char *eos)
 				break;
 
 			case SQL_IN_EXT_COMMENT:
+
 				/*
 				 * This isn't fully correct, because we don't account for
 				 * nested slash-stars, but pg_dump never emits such.
@@ -518,13 +519,14 @@ _sendSQLLine(ArchiveHandle *AH, char *qry, char *eos)
 				break;
 
 			case SQL_IN_E_QUOTE:
+
 				/*
 				 * Eventually we will need to handle '' specially, because
 				 * after E'...''... we should still be in E_QUOTE state.
 				 *
-				 * XXX problem: how do we tell whether the dump was made
-				 * by a version that thinks backslashes aren't special
-				 * in non-E literals??
+				 * XXX problem: how do we tell whether the dump was made by a
+				 * version that thinks backslashes aren't special in non-E
+				 * literals??
 				 */
 				if (*qry == '\'' && !AH->sqlparse.backSlash)
 					AH->sqlparse.state = SQL_SCAN;
@@ -556,12 +558,12 @@ _sendSQLLine(ArchiveHandle *AH, char *qry, char *eos)
 				{
 					/*
 					 * Ooops, we're not really in a dollar-tag.  Valid tag
-					 * chars do not include the various chars we look for
-					 * in this state machine, so it's safe to just jump
-					 * from this state back to SCAN.  We have to back up
-					 * the qry pointer so that the current character gets
-					 * rescanned in SCAN state; and then "continue" so that
-					 * the bottom-of-loop actions aren't done yet.
+					 * chars do not include the various chars we look for in
+					 * this state machine, so it's safe to just jump from this
+					 * state back to SCAN.	We have to back up the qry pointer
+					 * so that the current character gets rescanned in SCAN
+					 * state; and then "continue" so that the bottom-of-loop
+					 * actions aren't done yet.
 					 */
 					AH->sqlparse.state = SQL_SCAN;
 					qry--;
@@ -570,12 +572,13 @@ _sendSQLLine(ArchiveHandle *AH, char *qry, char *eos)
 				break;
 
 			case SQL_IN_DOLLAR_QUOTE:
+
 				/*
 				 * If we are at a $, see whether what precedes it matches
-				 * tagBuf.  (Remember that the trailing $ of the tag was
-				 * not added to tagBuf.)  However, don't compare until we
-				 * have enough data to be a possible match --- this is
-				 * needed to avoid false match on '$a$a$...'
+				 * tagBuf.	(Remember that the trailing $ of the tag was not
+				 * added to tagBuf.)  However, don't compare until we have
+				 * enough data to be a possible match --- this is needed to
+				 * avoid false match on '$a$a$...'
 				 */
 				if (*qry == '$' &&
 					AH->sqlBuf->len >= AH->sqlparse.minTagEndPos &&
@@ -605,8 +608,8 @@ ExecuteSqlCommandBuf(ArchiveHandle *AH, void *qryv, size_t bufLen)
 	char	   *eos = qry + bufLen;
 
 	/*
-	 * fprintf(stderr, "\n\n*****\n
-	 * Buffer:\n\n%s\n*******************\n\n", qry);
+	 * fprintf(stderr, "\n\n*****\n Buffer:\n\n%s\n*******************\n\n",
+	 * qry);
 	 */
 
 	/* Could switch between command and COPY IN mode at each line */
@@ -653,8 +656,7 @@ _isIdentChar(unsigned char c)
 		|| (c >= '0' && c <= '9')
 		|| (c == '_')
 		|| (c == '$')
-		|| (c >= (unsigned char) '\200')		/* no need to check <=
-												 * \377 */
+		|| (c >= (unsigned char) '\200')		/* no need to check <= \377 */
 		)
 		return true;
 	else
@@ -668,8 +670,7 @@ _isDQChar(unsigned char c, bool atStart)
 		|| (c >= 'A' && c <= 'Z')
 		|| (c == '_')
 		|| (!atStart && c >= '0' && c <= '9')
-		|| (c >= (unsigned char) '\200')		/* no need to check <=
-												 * \377 */
+		|| (c >= (unsigned char) '\200')		/* no need to check <= \377 */
 		)
 		return true;
 	else

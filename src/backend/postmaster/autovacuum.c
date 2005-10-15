@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.4 2005/08/15 16:25:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.5 2005/10/15 02:49:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,17 +69,17 @@ static time_t last_autovac_start_time = 0;
 static time_t last_autovac_stop_time = 0;
 
 /* Memory context for long-lived data */
-static MemoryContext	AutovacMemCxt;
+static MemoryContext AutovacMemCxt;
 
 /* struct to keep list of candidate databases for vacuum */
 typedef struct autovac_dbase
 {
-	Oid				oid;
-	char		   *name;
-	TransactionId	frozenxid;
-	TransactionId	vacuumxid;
+	Oid			oid;
+	char	   *name;
+	TransactionId frozenxid;
+	TransactionId vacuumxid;
 	PgStat_StatDBEntry *entry;
-	int32			age;
+	int32		age;
 } autovac_dbase;
 
 /* struct to keep track of tables to vacuum and/or analyze */
@@ -102,12 +102,12 @@ static void process_whole_db(void);
 static void do_autovacuum(PgStat_StatDBEntry *dbentry);
 static List *autovac_get_database_list(void);
 static void test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
-								 Form_pg_class classForm,
-								 Form_pg_autovacuum avForm,
-								 List **vacuum_tables,
-								 List **toast_table_ids);
+					 Form_pg_class classForm,
+					 Form_pg_autovacuum avForm,
+					 List **vacuum_tables,
+					 List **toast_table_ids);
 static void autovacuum_do_vac_analyze(List *relids, bool dovacuum,
-									  bool doanalyze, bool freeze);
+						  bool doanalyze, bool freeze);
 
 
 /*
@@ -126,16 +126,16 @@ autovac_start(void)
 		return 0;
 
 	/*
-	 * Do nothing if too soon since last autovacuum exit.  This limits
-	 * how often the daemon runs.  Since the time per iteration can be
-	 * quite variable, it seems more useful to measure/control the time
-	 * since last subprocess exit than since last subprocess launch.
+	 * Do nothing if too soon since last autovacuum exit.  This limits how
+	 * often the daemon runs.  Since the time per iteration can be quite
+	 * variable, it seems more useful to measure/control the time since last
+	 * subprocess exit than since last subprocess launch.
 	 *
-	 * However, we *also* check the time since last subprocess launch;
-	 * this prevents thrashing under fork-failure conditions.
+	 * However, we *also* check the time since last subprocess launch; this
+	 * prevents thrashing under fork-failure conditions.
 	 *
-	 * Note that since we will be re-called from the postmaster main loop,
-	 * we will get another chance later if we do nothing now.
+	 * Note that since we will be re-called from the postmaster main loop, we
+	 * will get another chance later if we do nothing now.
 	 *
 	 * XXX todo: implement sleep scale factor that existed in contrib code.
 	 */
@@ -151,14 +151,14 @@ autovac_start(void)
 	last_autovac_start_time = curtime;
 
 #ifdef EXEC_BACKEND
-	switch((AutoVacPID = autovac_forkexec()))
+	switch ((AutoVacPID = autovac_forkexec()))
 #else
-	switch((AutoVacPID = fork_process()))
+	switch ((AutoVacPID = fork_process()))
 #endif
 	{
 		case -1:
 			ereport(LOG,
-				    (errmsg("could not fork autovacuum process: %m")));
+					(errmsg("could not fork autovacuum process: %m")));
 			return 0;
 
 #ifndef EXEC_BACKEND
@@ -201,14 +201,14 @@ autovac_forkexec(void)
 
 	av[ac++] = "postgres";
 	av[ac++] = "-forkautovac";
-	av[ac++] = NULL;		/* filled in by postmaster_forkexec */
+	av[ac++] = NULL;			/* filled in by postmaster_forkexec */
 	av[ac] = NULL;
 
 	Assert(ac < lengthof(av));
 
 	return postmaster_forkexec(ac, av);
 }
-#endif	/* EXEC_BACKEND */
+#endif   /* EXEC_BACKEND */
 
 /*
  * AutoVacMain
@@ -216,12 +216,12 @@ autovac_forkexec(void)
 NON_EXEC_STATIC void
 AutoVacMain(int argc, char *argv[])
 {
-	ListCell	   *cell;
-	List		   *dblist;
-	TransactionId	nextXid;
-	autovac_dbase  *db;
-	bool			whole_db;
-	sigjmp_buf		local_sigjmp_buf;
+	ListCell   *cell;
+	List	   *dblist;
+	TransactionId nextXid;
+	autovac_dbase *db;
+	bool		whole_db;
+	sigjmp_buf	local_sigjmp_buf;
 
 	/* we are a postmaster subprocess now */
 	IsUnderPostmaster = true;
@@ -240,18 +240,18 @@ AutoVacMain(int argc, char *argv[])
 	SetProcessingMode(InitProcessing);
 
 	/*
-	 * Set up signal handlers.  We operate on databases much like a
-	 * regular backend, so we use the same signal handling.  See
-	 * equivalent code in tcop/postgres.c.
+	 * Set up signal handlers.	We operate on databases much like a regular
+	 * backend, so we use the same signal handling.  See equivalent code in
+	 * tcop/postgres.c.
 	 *
-	 * Currently, we don't pay attention to postgresql.conf changes
-	 * that happen during a single daemon iteration, so we can ignore
-	 * SIGHUP.
+	 * Currently, we don't pay attention to postgresql.conf changes that happen
+	 * during a single daemon iteration, so we can ignore SIGHUP.
 	 */
 	pqsignal(SIGHUP, SIG_IGN);
+
 	/*
-	 * Presently, SIGINT will lead to autovacuum shutdown, because that's
-	 * how we handle ereport(ERROR).  It could be improved however.
+	 * Presently, SIGINT will lead to autovacuum shutdown, because that's how
+	 * we handle ereport(ERROR).  It could be improved however.
 	 */
 	pqsignal(SIGINT, StatementCancelHandler);
 	pqsignal(SIGTERM, die);
@@ -282,9 +282,9 @@ AutoVacMain(int argc, char *argv[])
 		EmitErrorReport();
 
 		/*
-		 * We can now go away.  Note that because we'll call InitProcess,
-		 * a callback will be registered to do ProcKill, which will clean
-		 * up necessary state.
+		 * We can now go away.	Note that because we'll call InitProcess, a
+		 * callback will be registered to do ProcKill, which will clean up
+		 * necessary state.
 		 */
 		proc_exit(0);
 	}
@@ -298,9 +298,8 @@ AutoVacMain(int argc, char *argv[])
 	dblist = autovac_get_database_list();
 
 	/*
-	 * Get the next Xid that was current as of the last checkpoint.
-	 * We need it to determine whether databases are about to need
-	 * database-wide vacuums.
+	 * Get the next Xid that was current as of the last checkpoint. We need it
+	 * to determine whether databases are about to need database-wide vacuums.
 	 */
 	nextXid = GetRecentNextXid();
 
@@ -309,37 +308,36 @@ AutoVacMain(int argc, char *argv[])
 	 * recently auto-vacuumed, or one that needs database-wide vacuum (to
 	 * prevent Xid wraparound-related data loss).
 	 *
-	 * Note that a database with no stats entry is not considered, except
-	 * for Xid wraparound purposes.  The theory is that if no one has ever
-	 * connected to it since the stats were last initialized, it doesn't
-	 * need vacuuming.
+	 * Note that a database with no stats entry is not considered, except for Xid
+	 * wraparound purposes.  The theory is that if no one has ever connected
+	 * to it since the stats were last initialized, it doesn't need vacuuming.
 	 *
 	 * XXX This could be improved if we had more info about whether it needs
 	 * vacuuming before connecting to it.  Perhaps look through the pgstats
 	 * data for the database's tables?  One idea is to keep track of the
 	 * number of new and dead tuples per database in pgstats.  However it
-	 * isn't clear how to construct a metric that measures that and not
-	 * cause starvation for less busy databases.
+	 * isn't clear how to construct a metric that measures that and not cause
+	 * starvation for less busy databases.
 	 */
 	db = NULL;
 	whole_db = false;
 
 	foreach(cell, dblist)
 	{
-		autovac_dbase  *tmp = lfirst(cell);
-		bool			this_whole_db;
-		int32			freeze_age,
-						vacuum_age;
+		autovac_dbase *tmp = lfirst(cell);
+		bool		this_whole_db;
+		int32		freeze_age,
+					vacuum_age;
 
 		/*
 		 * We look for the database that most urgently needs a database-wide
-		 * vacuum.  We decide that a database-wide vacuum is needed 100000
+		 * vacuum.	We decide that a database-wide vacuum is needed 100000
 		 * transactions sooner than vacuum.c's vac_truncate_clog() would
 		 * decide to start giving warnings.  If any such db is found, we
 		 * ignore all other dbs.
 		 *
-		 * Unlike vacuum.c, we also look at vacuumxid.  This is so that
-		 * pg_clog can be kept trimmed to a reasonable size.
+		 * Unlike vacuum.c, we also look at vacuumxid.	This is so that pg_clog
+		 * can be kept trimmed to a reasonable size.
 		 */
 		freeze_age = (int32) (nextXid - tmp->frozenxid);
 		vacuum_age = (int32) (nextXid - tmp->vacuumxid);
@@ -373,8 +371,8 @@ AutoVacMain(int argc, char *argv[])
 		 * modified, after the database was dropped from the pg_database
 		 * table.  (This is of course a not-very-bulletproof test, but it's
 		 * cheap to make.  If we do mistakenly choose a recently dropped
-		 * database, InitPostgres will fail and we'll drop out until the
-		 * next autovac run.)
+		 * database, InitPostgres will fail and we'll drop out until the next
+		 * autovac run.)
 		 */
 		if (tmp->entry->destroy != 0)
 			continue;
@@ -390,12 +388,12 @@ AutoVacMain(int argc, char *argv[])
 	if (db)
 	{
 		/*
-		 * Report autovac startup to the stats collector.  We deliberately
-		 * do this before InitPostgres, so that the last_autovac_time will
-		 * get updated even if the connection attempt fails.  This is to
-		 * prevent autovac from getting "stuck" repeatedly selecting an
-		 * unopenable database, rather than making any progress on stuff
-		 * it can connect to.
+		 * Report autovac startup to the stats collector.  We deliberately do
+		 * this before InitPostgres, so that the last_autovac_time will get
+		 * updated even if the connection attempt fails.  This is to prevent
+		 * autovac from getting "stuck" repeatedly selecting an unopenable
+		 * database, rather than making any progress on stuff it can connect
+		 * to.
 		 */
 		pgstat_report_autovac(db->oid);
 
@@ -431,18 +429,18 @@ AutoVacMain(int argc, char *argv[])
 /*
  * autovac_get_database_list
  *
- * 		Return a list of all databases.  Note we cannot use pg_database,
+ *		Return a list of all databases.  Note we cannot use pg_database,
  *		because we aren't connected yet; we use the flat database file.
  */
 static List *
 autovac_get_database_list(void)
 {
-	char   *filename;
-	List   *dblist = NIL;
-	char	thisname[NAMEDATALEN];
-	FILE   *db_file;
-	Oid		db_id;
-	Oid		db_tablespace;
+	char	   *filename;
+	List	   *dblist = NIL;
+	char		thisname[NAMEDATALEN];
+	FILE	   *db_file;
+	Oid			db_id;
+	Oid			db_tablespace;
 	TransactionId db_frozenxid;
 	TransactionId db_vacuumxid;
 
@@ -457,7 +455,7 @@ autovac_get_database_list(void)
 								 &db_tablespace, &db_frozenxid,
 								 &db_vacuumxid))
 	{
-		autovac_dbase	*db;
+		autovac_dbase *db;
 
 		db = (autovac_dbase *) palloc(sizeof(autovac_dbase));
 
@@ -486,12 +484,12 @@ autovac_get_database_list(void)
 static void
 process_whole_db(void)
 {
-	Relation		dbRel;
-	ScanKeyData		entry[1];
-	SysScanDesc		scan;
-	HeapTuple		tup;
+	Relation	dbRel;
+	ScanKeyData entry[1];
+	SysScanDesc scan;
+	HeapTuple	tup;
 	Form_pg_database dbForm;
-	bool			freeze;
+	bool		freeze;
 
 	/* Start a transaction so our commands have one to play into. */
 	StartTransactionCommand();
@@ -545,23 +543,22 @@ process_whole_db(void)
 static void
 do_autovacuum(PgStat_StatDBEntry *dbentry)
 {
-	Relation		classRel,
-					avRel;
-	HeapTuple		tuple;
-	HeapScanDesc	relScan;
-	List		   *vacuum_tables = NIL;
-	List		   *toast_table_ids = NIL;
-	ListCell *cell;
+	Relation	classRel,
+				avRel;
+	HeapTuple	tuple;
+	HeapScanDesc relScan;
+	List	   *vacuum_tables = NIL;
+	List	   *toast_table_ids = NIL;
+	ListCell   *cell;
 	PgStat_StatDBEntry *shared;
 
 	/* Start a transaction so our commands have one to play into. */
 	StartTransactionCommand();
 
 	/*
-	 * StartTransactionCommand and CommitTransactionCommand will
-	 * automatically switch to other contexts.  We need this one
-	 * to keep the list of relations to vacuum/analyze across
-	 * transactions.
+	 * StartTransactionCommand and CommitTransactionCommand will automatically
+	 * switch to other contexts.  We need this one to keep the list of
+	 * relations to vacuum/analyze across transactions.
 	 */
 	MemoryContextSwitchTo(AutovacMemCxt);
 
@@ -574,19 +571,19 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
 	/*
 	 * Scan pg_class and determine which tables to vacuum.
 	 *
-	 * The stats subsystem collects stats for toast tables independently
-	 * of the stats for their parent tables.  We need to check those stats
-	 * since in cases with short, wide tables there might be proportionally
-	 * much more activity in the toast table than in its parent.
+	 * The stats subsystem collects stats for toast tables independently of the
+	 * stats for their parent tables.  We need to check those stats since in
+	 * cases with short, wide tables there might be proportionally much more
+	 * activity in the toast table than in its parent.
 	 *
 	 * Since we can only issue VACUUM against the parent table, we need to
 	 * transpose a decision to vacuum a toast table into a decision to vacuum
-	 * its parent.  There's no point in considering ANALYZE on a toast table,
-	 * either.  To support this, we keep a list of OIDs of toast tables that
+	 * its parent.	There's no point in considering ANALYZE on a toast table,
+	 * either.	To support this, we keep a list of OIDs of toast tables that
 	 * need vacuuming alongside the list of regular tables.  Regular tables
 	 * will be entered into the table list even if they appear not to need
-	 * vacuuming; we go back and re-mark them after finding all the
-	 * vacuumable toast tables.
+	 * vacuuming; we go back and re-mark them after finding all the vacuumable
+	 * toast tables.
 	 */
 	relScan = heap_beginscan(classRel, SnapshotNow, 0, NULL);
 
@@ -595,9 +592,9 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
 		Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tuple);
 		Form_pg_autovacuum avForm = NULL;
 		PgStat_StatTabEntry *tabentry;
-		SysScanDesc	avScan;
+		SysScanDesc avScan;
 		HeapTuple	avTup;
-		ScanKeyData	entry[1];
+		ScanKeyData entry[1];
 		Oid			relid;
 
 		/* Consider only regular and toast tables. */
@@ -606,8 +603,8 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
 			continue;
 
 		/*
-		 * Skip temp tables (i.e. those in temp namespaces).  We cannot
-		 * safely process other backends' temp tables.
+		 * Skip temp tables (i.e. those in temp namespaces).  We cannot safely
+		 * process other backends' temp tables.
 		 */
 		if (isTempNamespace(classForm->relnamespace))
 			continue;
@@ -687,7 +684,7 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
 /*
  * test_rel_for_autovac
  *
- * Check whether a table needs to be vacuumed or analyzed.  Add it to the
+ * Check whether a table needs to be vacuumed or analyzed.	Add it to the
  * appropriate output list if so.
  *
  * A table needs to be vacuumed if the number of dead tuples exceeds a
@@ -718,33 +715,37 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 					 List **vacuum_tables,
 					 List **toast_table_ids)
 {
-	Relation		rel;
-	float4			reltuples;	/* pg_class.reltuples */
+	Relation	rel;
+	float4		reltuples;		/* pg_class.reltuples */
+
 	/* constants from pg_autovacuum or GUC variables */
-	int				vac_base_thresh,
-					anl_base_thresh;
-	float4			vac_scale_factor,
-					anl_scale_factor;
+	int			vac_base_thresh,
+				anl_base_thresh;
+	float4		vac_scale_factor,
+				anl_scale_factor;
+
 	/* thresholds calculated from above constants */
-	float4			vacthresh,
-					anlthresh;
+	float4		vacthresh,
+				anlthresh;
+
 	/* number of vacuum (resp. analyze) tuples at this time */
-	float4			vactuples,
-					anltuples;
+	float4		vactuples,
+				anltuples;
+
 	/* cost-based vacuum delay parameters */
-	int				vac_cost_limit;
-	int				vac_cost_delay;
-	bool			dovacuum;
-	bool			doanalyze;
+	int			vac_cost_limit;
+	int			vac_cost_delay;
+	bool		dovacuum;
+	bool		doanalyze;
 
 	/* User disabled it in pg_autovacuum? */
 	if (avForm && !avForm->enabled)
 		return;
 
 	/*
-	 * Skip a table not found in stat hash.  If it's not acted upon,
-	 * there's no need to vacuum it.  (Note that database-level check
-	 * will take care of Xid wraparound.)
+	 * Skip a table not found in stat hash.  If it's not acted upon, there's
+	 * no need to vacuum it.  (Note that database-level check will take care
+	 * of Xid wraparound.)
 	 */
 	if (!PointerIsValid(tabentry))
 		return;
@@ -805,9 +806,9 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 	anlthresh = (float4) anl_base_thresh + anl_scale_factor * reltuples;
 
 	/*
-	 * Note that we don't need to take special consideration for stat
-	 * reset, because if that happens, the last vacuum and analyze counts
-	 * will be reset too.
+	 * Note that we don't need to take special consideration for stat reset,
+	 * because if that happens, the last vacuum and analyze counts will be
+	 * reset too.
 	 */
 
 	elog(DEBUG3, "%s: vac: %.0f (threshold %.0f), anl: %.0f (threshold %.0f)",
@@ -863,27 +864,27 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 
 /*
  * autovacuum_do_vac_analyze
- * 		Vacuum and/or analyze a list of tables; or all tables if relids = NIL
+ *		Vacuum and/or analyze a list of tables; or all tables if relids = NIL
  */
 static void
 autovacuum_do_vac_analyze(List *relids, bool dovacuum, bool doanalyze,
 						  bool freeze)
 {
-	VacuumStmt	   *vacstmt;
-	MemoryContext	old_cxt;
-	
+	VacuumStmt *vacstmt;
+	MemoryContext old_cxt;
+
 	/*
 	 * The node must survive transaction boundaries, so make sure we create it
 	 * in a long-lived context
 	 */
 	old_cxt = MemoryContextSwitchTo(AutovacMemCxt);
-	
+
 	vacstmt = makeNode(VacuumStmt);
 
 	/*
 	 * Point QueryContext to the autovac memory context to fake out the
-	 * PreventTransactionChain check inside vacuum().  Note that this
-	 * is also why we palloc vacstmt instead of just using a local variable.
+	 * PreventTransactionChain check inside vacuum().  Note that this is also
+	 * why we palloc vacstmt instead of just using a local variable.
 	 */
 	QueryContext = CurrentMemoryContext;
 
@@ -904,8 +905,8 @@ autovacuum_do_vac_analyze(List *relids, bool dovacuum, bool doanalyze,
 
 /*
  * AutoVacuumingActive
- * 		Check GUC vars and report whether the autovacuum process should be
- * 		running.
+ *		Check GUC vars and report whether the autovacuum process should be
+ *		running.
  */
 bool
 AutoVacuumingActive(void)
@@ -918,7 +919,7 @@ AutoVacuumingActive(void)
 
 /*
  * autovac_init
- * 		This is called at postmaster initialization.
+ *		This is called at postmaster initialization.
  *
  * Annoy the user if he got it wrong.
  */
@@ -933,6 +934,7 @@ autovac_init(void)
 		ereport(WARNING,
 				(errmsg("autovacuum not started because of misconfiguration"),
 				 errhint("Enable options \"stats_start_collector\" and \"stats_row_level\".")));
+
 		/*
 		 * Set the GUC var so we don't fork autovacuum uselessly, and also to
 		 * help debugging.
@@ -943,7 +945,7 @@ autovac_init(void)
 
 /*
  * IsAutoVacuumProcess
- * 		Return whether this process is an autovacuum process.
+ *		Return whether this process is an autovacuum process.
  */
 bool
 IsAutoVacuumProcess(void)

@@ -647,9 +647,9 @@ ltree_consistent(PG_FUNCTION_ARGS)
 				res = (ltree_compare((ltree *) query, LTG_NODE(key)) == 0);
 			else
 				res = (
-				   ltree_compare((ltree *) query, LTG_GETLNODE(key)) >= 0
+					   ltree_compare((ltree *) query, LTG_GETLNODE(key)) >= 0
 					   &&
-				   ltree_compare((ltree *) query, LTG_GETRNODE(key)) <= 0
+					   ltree_compare((ltree *) query, LTG_GETRNODE(key)) <= 0
 					);
 			break;
 		case BTGreaterEqualStrategyNumber:
@@ -677,8 +677,8 @@ ltree_consistent(PG_FUNCTION_ARGS)
 		case 13:
 			if (GIST_LEAF(entry))
 				res = DatumGetBool(DirectFunctionCall2(ltq_regex,
-										  PointerGetDatum(LTG_NODE(key)),
-										PointerGetDatum((lquery *) query)
+											  PointerGetDatum(LTG_NODE(key)),
+											PointerGetDatum((lquery *) query)
 													   ));
 			else
 				res = (gist_qe(key, (lquery *) query) && gist_between(key, (lquery *) query));
@@ -687,8 +687,8 @@ ltree_consistent(PG_FUNCTION_ARGS)
 		case 15:
 			if (GIST_LEAF(entry))
 				res = DatumGetBool(DirectFunctionCall2(ltxtq_exec,
-										  PointerGetDatum(LTG_NODE(key)),
-										PointerGetDatum((lquery *) query)
+											  PointerGetDatum(LTG_NODE(key)),
+											PointerGetDatum((lquery *) query)
 													   ));
 			else
 				res = gist_qtxt(key, (ltxtquery *) query);
@@ -697,8 +697,8 @@ ltree_consistent(PG_FUNCTION_ARGS)
 		case 17:
 			if (GIST_LEAF(entry))
 				res = DatumGetBool(DirectFunctionCall2(lt_q_regex,
-										  PointerGetDatum(LTG_NODE(key)),
-									 PointerGetDatum((ArrayType *) query)
+											  PointerGetDatum(LTG_NODE(key)),
+										 PointerGetDatum((ArrayType *) query)
 													   ));
 			else
 				res = arrq_cons(key, (ArrayType *) query);

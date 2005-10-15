@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.315 2005/08/01 20:31:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.316 2005/10/15 02:49:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,7 +154,7 @@ _copyAppend(Append *from)
 static BitmapAnd *
 _copyBitmapAnd(BitmapAnd *from)
 {
-	BitmapAnd	   *newnode = makeNode(BitmapAnd);
+	BitmapAnd  *newnode = makeNode(BitmapAnd);
 
 	/*
 	 * copy node superclass fields
@@ -175,7 +175,7 @@ _copyBitmapAnd(BitmapAnd *from)
 static BitmapOr *
 _copyBitmapOr(BitmapOr *from)
 {
-	BitmapOr	   *newnode = makeNode(BitmapOr);
+	BitmapOr   *newnode = makeNode(BitmapOr);
 
 	/*
 	 * copy node superclass fields
@@ -269,7 +269,7 @@ _copyIndexScan(IndexScan *from)
 static BitmapIndexScan *
 _copyBitmapIndexScan(BitmapIndexScan *from)
 {
-	BitmapIndexScan  *newnode = makeNode(BitmapIndexScan);
+	BitmapIndexScan *newnode = makeNode(BitmapIndexScan);
 
 	/*
 	 * copy node superclass fields
@@ -294,7 +294,7 @@ _copyBitmapIndexScan(BitmapIndexScan *from)
 static BitmapHeapScan *
 _copyBitmapHeapScan(BitmapHeapScan *from)
 {
-	BitmapHeapScan  *newnode = makeNode(BitmapHeapScan);
+	BitmapHeapScan *newnode = makeNode(BitmapHeapScan);
 
 	/*
 	 * copy node superclass fields
@@ -1262,8 +1262,7 @@ _copyRestrictInfo(RestrictInfo *from)
 	COPY_SCALAR_FIELD(right_sortop);
 
 	/*
-	 * Do not copy pathkeys, since they'd not be canonical in a copied
-	 * query
+	 * Do not copy pathkeys, since they'd not be canonical in a copied query
 	 */
 	newnode->left_pathkey = NIL;
 	newnode->right_pathkey = NIL;
@@ -1791,7 +1790,7 @@ _copyFuncWithArgs(FuncWithArgs *from)
 static GrantRoleStmt *
 _copyGrantRoleStmt(GrantRoleStmt *from)
 {
-	GrantRoleStmt  *newnode = makeNode(GrantRoleStmt);
+	GrantRoleStmt *newnode = makeNode(GrantRoleStmt);
 
 	COPY_NODE_FIELD(granted_roles);
 	COPY_NODE_FIELD(grantee_roles);
@@ -2906,8 +2905,8 @@ copyObject(void *from)
 			break;
 
 			/*
-			 * Lists of integers and OIDs don't need to be deep-copied, so
-			 * we perform a shallow copy via list_copy()
+			 * Lists of integers and OIDs don't need to be deep-copied, so we
+			 * perform a shallow copy via list_copy()
 			 */
 		case T_IntList:
 		case T_OidList:

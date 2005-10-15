@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.165 2005/08/12 01:36:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.166 2005/10/15 02:49:44 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -38,7 +38,7 @@
  *		See struct FormData_pg_attribute for details.
  * ----------------
  */
-#define TypeRelationId  1247
+#define TypeRelationId	1247
 
 CATALOG(pg_type,1247) BKI_BOOTSTRAP
 {
@@ -56,28 +56,26 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP
 	int2		typlen;
 
 	/*
-	 * typbyval determines whether internal Postgres routines pass a value
-	 * of this type by value or by reference.  typbyval had better be
-	 * FALSE if the length is not 1, 2, or 4 (or 8 on 8-byte-Datum
-	 * machines). Variable-length types are always passed by reference.
-	 * Note that typbyval can be false even if the length would allow
-	 * pass-by-value; this is currently true for type float4, for example.
+	 * typbyval determines whether internal Postgres routines pass a value of
+	 * this type by value or by reference.	typbyval had better be FALSE if
+	 * the length is not 1, 2, or 4 (or 8 on 8-byte-Datum machines).
+	 * Variable-length types are always passed by reference. Note that
+	 * typbyval can be false even if the length would allow pass-by-value;
+	 * this is currently true for type float4, for example.
 	 */
 	bool		typbyval;
 
 	/*
-	 * typtype is 'b' for a basic type, 'c' for a complex type (ie a
-	 * table's rowtype), 'd' for a domain type, or 'p' for a pseudo type.
+	 * typtype is 'b' for a basic type, 'c' for a complex type (ie a table's
+	 * rowtype), 'd' for a domain type, or 'p' for a pseudo type.
 	 *
-	 * If typtype is 'c', typrelid is the OID of the class' entry in
-	 * pg_class.
+	 * If typtype is 'c', typrelid is the OID of the class' entry in pg_class.
 	 */
 	char		typtype;
 
 	/*
 	 * If typisdefined is false, the entry is only a placeholder (forward
-	 * reference).	We know the type name, but not yet anything else about
-	 * it.
+	 * reference).	We know the type name, but not yet anything else about it.
 	 */
 	bool		typisdefined;
 
@@ -87,11 +85,11 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP
 
 	/*
 	 * If typelem is not 0 then it identifies another row in pg_type. The
-	 * current type can then be subscripted like an array yielding values
-	 * of type typelem. A non-zero typelem does not guarantee this type to
-	 * be a "real" array type; some ordinary fixed-length types can also
-	 * be subscripted (e.g., name, point). Variable-length types can *not*
-	 * be turned into pseudo-arrays like that. Hence, the way to determine
+	 * current type can then be subscripted like an array yielding values of
+	 * type typelem. A non-zero typelem does not guarantee this type to be a
+	 * "real" array type; some ordinary fixed-length types can also be
+	 * subscripted (e.g., name, point). Variable-length types can *not* be
+	 * turned into pseudo-arrays like that. Hence, the way to determine
 	 * whether a type is a "true" array type is if:
 	 *
 	 * typelem != 0 and typlen == -1.
@@ -150,8 +148,8 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP
 	/*
 	 * This flag represents a "NOT NULL" constraint against this datatype.
 	 *
-	 * If true, the attnotnull column for a corresponding table column using
-	 * this datatype will always enforce the NOT NULL constraint.
+	 * If true, the attnotnull column for a corresponding table column using this
+	 * datatype will always enforce the NOT NULL constraint.
 	 *
 	 * Used primarily for domain types.
 	 */
@@ -164,23 +162,23 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP
 	Oid			typbasetype;
 
 	/*
-	 * Domains use typtypmod to record the typmod to be applied to their
-	 * base type (-1 if base type does not use a typmod).  -1 if this type
-	 * is not a domain.
+	 * Domains use typtypmod to record the typmod to be applied to their base
+	 * type (-1 if base type does not use a typmod).  -1 if this type is not a
+	 * domain.
 	 */
 	int4		typtypmod;
 
 	/*
-	 * typndims is the declared number of dimensions for an array domain
-	 * type (i.e., typbasetype is an array type; the domain's typelem will
-	 * match the base type's typelem).  Otherwise zero.
+	 * typndims is the declared number of dimensions for an array domain type
+	 * (i.e., typbasetype is an array type; the domain's typelem will match
+	 * the base type's typelem).  Otherwise zero.
 	 */
 	int4		typndims;
 
 	/*
-	 * If typdefaultbin is not NULL, it is the nodeToString representation
-	 * of a default expression for the type.  Currently this is only used
-	 * for domains.
+	 * If typdefaultbin is not NULL, it is the nodeToString representation of
+	 * a default expression for the type.  Currently this is only used for
+	 * domains.
 	 */
 	text		typdefaultbin;	/* VARIABLE LENGTH FIELD */
 
@@ -189,8 +187,8 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP
 	 * typdefaultbin is not NULL, typdefault must contain a human-readable
 	 * version of the default expression represented by typdefaultbin. If
 	 * typdefaultbin is NULL and typdefault is not, then typdefault is the
-	 * external representation of the type's default value, which may be
-	 * fed to the type's input converter to produce a constant.
+	 * external representation of the type's default value, which may be fed
+	 * to the type's input converter to produce a constant.
 	 */
 	text		typdefault;		/* VARIABLE LENGTH FIELD */
 
@@ -270,7 +268,7 @@ DATA(insert OID = 21 (	int2	   PGNSP PGUID	2 t b t \054 0	 0 int2in int2out int2
 DESCR("-32 thousand to 32 thousand, 2-byte storage");
 #define INT2OID			21
 
-DATA(insert OID = 22 (	int2vector PGNSP PGUID -1 f b t \054 0  21 int2vectorin int2vectorout int2vectorrecv int2vectorsend - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 22 (	int2vector PGNSP PGUID -1 f b t \054 0	21 int2vectorin int2vectorout int2vectorrecv int2vectorsend - i p f 0 -1 0 _null_ _null_ ));
 DESCR("array of int2, used in system tables");
 #define INT2VECTOROID	22
 
@@ -302,7 +300,7 @@ DATA(insert OID = 29 (	cid		   PGNSP PGUID	4 t b t \054 0	 0 cidin cidout cidrec
 DESCR("command identifier type, sequence in transaction id");
 #define CIDOID 29
 
-DATA(insert OID = 30 (	oidvector  PGNSP PGUID -1 f b t \054 0  26 oidvectorin oidvectorout oidvectorrecv oidvectorsend - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 30 (	oidvector  PGNSP PGUID -1 f b t \054 0	26 oidvectorin oidvectorout oidvectorrecv oidvectorsend - i p f 0 -1 0 _null_ _null_ ));
 DESCR("array of oids, used in system tables");
 #define OIDVECTOROID	30
 

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.62 2005/09/24 17:53:27 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.63 2005/10/15 02:49:45 momjian Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -92,36 +92,34 @@ typedef unsigned int pg_wchar;
 #define LC_CNS11643_1	0x95	/* CNS 11643-1992 Plane 1 */
 #define LC_CNS11643_2	0x96	/* CNS 11643-1992 Plane 2 */
 /* #define FREE		0x97	free (unused) */
-#define LC_BIG5_1	0x98		/* Plane 1 Chinese traditional (not
-								 * supported) */
-#define LC_BIG5_2	0x99		/* Plane 1 Chinese traditional (not
-								 * supported) */
+#define LC_BIG5_1	0x98		/* Plane 1 Chinese traditional (not supported) */
+#define LC_BIG5_2	0x99		/* Plane 1 Chinese traditional (not supported) */
 
 /*
  * Private single byte encodings (0xa0-0xef)
  */
 #define LC_SISHENG	0xa0		/* Chinese SiSheng characters for
 								 * PinYin/ZhuYin (not supported) */
-#define LC_IPA		0xa1		/* IPA (International Phonetic
-								 * Association) (not supported) */
+#define LC_IPA		0xa1		/* IPA (International Phonetic Association)
+								 * (not supported) */
 #define LC_VISCII_LOWER 0xa2	/* Vietnamese VISCII1.1 lower-case (not
 								 * supported) */
 #define LC_VISCII_UPPER 0xa3	/* Vietnamese VISCII1.1 upper-case (not
 								 * supported) */
 #define LC_ARABIC_DIGIT 0xa4	/* Arabic digit (not supported) */
 #define LC_ARABIC_1_COLUMN	0xa5	/* Arabic 1-column (not supported) */
-#define LC_ASCII_RIGHT_TO_LEFT	0xa6	/* ASCII (left half of ISO8859-1)
-										 * with right-to-left direction
-										 * (not supported) */
-#define LC_LAO		0xa7		/* Lao characters (ISO10646 0E80..0EDF)
-								 * (not supported) */
+#define LC_ASCII_RIGHT_TO_LEFT	0xa6	/* ASCII (left half of ISO8859-1) with
+										 * right-to-left direction (not
+										 * supported) */
+#define LC_LAO		0xa7		/* Lao characters (ISO10646 0E80..0EDF) (not
+								 * supported) */
 #define LC_ARABIC_2_COLUMN	0xa8	/* Arabic 1-column (not supported) */
 
 /*
  * Private multibyte encodings (0xf0-0xff)
  */
-#define LC_INDIAN_1_COLUMN	0xf0/* Indian charset for 1-column width
-								 * glypps (not supported) */
+#define LC_INDIAN_1_COLUMN	0xf0/* Indian charset for 1-column width glypps
+								 * (not supported) */
 #define LC_TIBETAN_1_COLUMN 0xf1	/* Tibetan 1 column glyph (not supported) */
 #define LC_ETHIOPIC 0xf5		/* Ethiopic characters (not supported) */
 #define LC_CNS11643_3	0xf6	/* CNS 11643-1992 Plane 3 */
@@ -129,8 +127,8 @@ typedef unsigned int pg_wchar;
 #define LC_CNS11643_5	0xf8	/* CNS 11643-1992 Plane 5 */
 #define LC_CNS11643_6	0xf9	/* CNS 11643-1992 Plane 6 */
 #define LC_CNS11643_7	0xfa	/* CNS 11643-1992 Plane 7 */
-#define LC_INDIAN_2_COLUMN	0xfb/* Indian charset for 2-column width
-								 * glypps (not supported) */
+#define LC_INDIAN_2_COLUMN	0xfb/* Indian charset for 2-column width glypps
+								 * (not supported) */
 #define LC_TIBETAN	0xfc		/* Tibetan (not supported) */
 /* #define FREE		0xfd	free (unused) */
 /* #define FREE		0xfe	free (unused) */
@@ -255,8 +253,8 @@ typedef struct
 	mb2wchar_with_len_converter mb2wchar_with_len;		/* convert a multibyte
 														 * string to a wchar */
 	mblen_converter mblen;		/* returns the length of a multibyte char */
-	mbdisplaylen_converter dsplen;		/* returns the lenghth of a
-										 * display length */
+	mbdisplaylen_converter dsplen;		/* returns the lenghth of a display
+										 * length */
 	int			maxmblen;		/* max bytes for a char in this charset */
 } pg_wchar_tbl;
 

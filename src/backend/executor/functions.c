@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.97 2005/04/10 18:04:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.98 2005/10/15 02:49:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,7 @@ typedef SQLFunctionCache *SQLFunctionCachePtr;
 
 /* non-export function prototypes */
 static execution_state *init_execution_state(List *queryTree_list,
-											 bool readonly_func);
+					 bool readonly_func);
 static void init_sql_fcache(FmgrInfo *finfo);
 static void postquel_start(execution_state *es, SQLFunctionCachePtr fcache);
 static TupleTableSlot *postquel_getnext(execution_state *es);
@@ -115,14 +115,14 @@ init_execution_state(List *queryTree_list, bool readonly_func)
 			IsA(queryTree->utilityStmt, TransactionStmt))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 /* translator: %s is a SQL statement name */
+			/* translator: %s is a SQL statement name */
 					 errmsg("%s is not allowed in a SQL function",
 							CreateQueryTag(queryTree))));
 
 		if (readonly_func && !QueryIsReadOnly(queryTree))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 /* translator: %s is a SQL statement name */
+			/* translator: %s is a SQL statement name */
 					 errmsg("%s is not allowed in a non-volatile function",
 							CreateQueryTag(queryTree))));
 
@@ -178,8 +178,8 @@ init_sql_fcache(FmgrInfo *finfo)
 	procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
 
 	/*
-	 * get the result type from the procedure tuple, and check for
-	 * polymorphic result type; if so, find out the actual result type.
+	 * get the result type from the procedure tuple, and check for polymorphic
+	 * result type; if so, find out the actual result type.
 	 */
 	rettype = procedureStruct->prorettype;
 
@@ -190,7 +190,7 @@ init_sql_fcache(FmgrInfo *finfo)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("could not determine actual result type for function declared to return type %s",
-						  format_type_be(procedureStruct->prorettype))));
+							format_type_be(procedureStruct->prorettype))));
 	}
 
 	fcache->rettype = rettype;
@@ -208,9 +208,9 @@ init_sql_fcache(FmgrInfo *finfo)
 	typeStruct = (Form_pg_type) GETSTRUCT(typeTuple);
 
 	/*
-	 * get the type length and by-value flag from the type tuple; also do
-	 * a preliminary check for returnsTuple (this may prove inaccurate,
-	 * see below).
+	 * get the type length and by-value flag from the type tuple; also do a
+	 * preliminary check for returnsTuple (this may prove inaccurate, see
+	 * below).
 	 */
 	fcache->typlen = typeStruct->typlen;
 	fcache->typbyval = typeStruct->typbyval;
@@ -218,8 +218,8 @@ init_sql_fcache(FmgrInfo *finfo)
 							rettype == RECORDOID);
 
 	/*
-	 * Parse and rewrite the queries.  We need the argument type info to
-	 * pass to the parser.
+	 * Parse and rewrite the queries.  We need the argument type info to pass
+	 * to the parser.
 	 */
 	nargs = procedureStruct->pronargs;
 	haspolyarg = false;
@@ -265,17 +265,17 @@ init_sql_fcache(FmgrInfo *finfo)
 	queryTree_list = pg_parse_and_rewrite(src, argOidVect, nargs);
 
 	/*
-	 * If the function has any arguments declared as polymorphic types,
-	 * then it wasn't type-checked at definition time; must do so now.
+	 * If the function has any arguments declared as polymorphic types, then
+	 * it wasn't type-checked at definition time; must do so now.
 	 *
-	 * Also, force a type-check if the declared return type is a rowtype; we
-	 * need to find out whether we are actually returning the whole tuple
-	 * result, or just regurgitating a rowtype expression result. In the
-	 * latter case we clear returnsTuple because we need not act different
-	 * from the scalar result case.
+	 * Also, force a type-check if the declared return type is a rowtype; we need
+	 * to find out whether we are actually returning the whole tuple result,
+	 * or just regurgitating a rowtype expression result. In the latter case
+	 * we clear returnsTuple because we need not act different from the scalar
+	 * result case.
 	 *
-	 * In the returnsTuple case, check_sql_fn_retval will also construct
-	 * a JunkFilter we can use to coerce the returned rowtype to the desired
+	 * In the returnsTuple case, check_sql_fn_retval will also construct a
+	 * JunkFilter we can use to coerce the returned rowtype to the desired
 	 * form.
 	 */
 	if (haspolyarg || fcache->returnsTuple)
@@ -307,9 +307,9 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 	/*
 	 * In a read-only function, use the surrounding query's snapshot;
 	 * otherwise take a new snapshot for each query.  The snapshot should
-	 * include a fresh command ID so that all work to date in this
-	 * transaction is visible.  We copy in both cases so that postquel_end
-	 * can unconditionally do FreeSnapshot.
+	 * include a fresh command ID so that all work to date in this transaction
+	 * is visible.	We copy in both cases so that postquel_end can
+	 * unconditionally do FreeSnapshot.
 	 */
 	if (fcache->readonly_func)
 		snapshot = CopySnapshot(ActiveSnapshot);
@@ -470,8 +470,8 @@ postquel_execute(execution_state *es,
 	if (TupIsNull(slot))
 	{
 		/*
-		 * We fall out here for all cases except where we have obtained
-		 * a row from a function's final SELECT.
+		 * We fall out here for all cases except where we have obtained a row
+		 * from a function's final SELECT.
 		 */
 		postquel_end(es);
 		fcinfo->isnull = true;
@@ -479,34 +479,34 @@ postquel_execute(execution_state *es,
 	}
 
 	/*
-	 * If we got a row from a command within the function it has to be
-	 * the final command.  All others shouldn't be returning anything.
+	 * If we got a row from a command within the function it has to be the
+	 * final command.  All others shouldn't be returning anything.
 	 */
 	Assert(LAST_POSTQUEL_COMMAND(es));
 
 	/*
-	 * Set up to return the function value.  For pass-by-reference
-	 * datatypes, be sure to allocate the result in resultcontext,
-	 * not the current memory context (which has query lifespan).
+	 * Set up to return the function value.  For pass-by-reference datatypes,
+	 * be sure to allocate the result in resultcontext, not the current memory
+	 * context (which has query lifespan).
 	 */
 	oldcontext = MemoryContextSwitchTo(resultcontext);
 
 	if (fcache->returnsTuple)
 	{
 		/*
-		 * We are returning the whole tuple, so filter it and apply the
-		 * proper labeling to make it a valid Datum.  There are several
-		 * reasons why we do this:
+		 * We are returning the whole tuple, so filter it and apply the proper
+		 * labeling to make it a valid Datum.  There are several reasons why
+		 * we do this:
 		 *
-		 * 1. To copy the tuple out of the child execution context and
-		 * into the desired result context.
+		 * 1. To copy the tuple out of the child execution context and into the
+		 * desired result context.
 		 *
-		 * 2. To remove any junk attributes present in the raw subselect
-		 * result.  (This is probably not absolutely necessary, but it
-		 * seems like good policy.)
+		 * 2. To remove any junk attributes present in the raw subselect result.
+		 * (This is probably not absolutely necessary, but it seems like good
+		 * policy.)
 		 *
-		 * 3. To insert dummy null columns if the declared result type
-		 * has any attisdropped columns.
+		 * 3. To insert dummy null columns if the declared result type has any
+		 * attisdropped columns.
 		 */
 		HeapTuple	newtup;
 		HeapTupleHeader dtup;
@@ -517,19 +517,18 @@ postquel_execute(execution_state *es,
 		newtup = ExecRemoveJunk(fcache->junkFilter, slot);
 
 		/*
-		 * Compress out the HeapTuple header data.  We assume that
-		 * heap_form_tuple made the tuple with header and body in one
-		 * palloc'd chunk.  We want to return a pointer to the chunk
-		 * start so that it will work if someone tries to free it.
+		 * Compress out the HeapTuple header data.	We assume that
+		 * heap_form_tuple made the tuple with header and body in one palloc'd
+		 * chunk.  We want to return a pointer to the chunk start so that it
+		 * will work if someone tries to free it.
 		 */
 		t_len = newtup->t_len;
 		dtup = (HeapTupleHeader) newtup;
 		memmove((char *) dtup, (char *) newtup->t_data, t_len);
 
 		/*
-		 * Use the declared return type if it's not RECORD; else take
-		 * the type from the computed result, making sure a typmod has
-		 * been assigned.
+		 * Use the declared return type if it's not RECORD; else take the type
+		 * from the computed result, making sure a typmod has been assigned.
 		 */
 		if (fcache->rettype != RECORDOID)
 		{
@@ -559,9 +558,8 @@ postquel_execute(execution_state *es,
 	else
 	{
 		/*
-		 * Returning a scalar, which we have to extract from the first
-		 * column of the SELECT result, and then copy into result
-		 * context if needed.
+		 * Returning a scalar, which we have to extract from the first column
+		 * of the SELECT result, and then copy into result context if needed.
 		 */
 		value = slot_getattr(slot, 1, &(fcinfo->isnull));
 
@@ -617,8 +615,8 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	es = fcache->func_state;
 
 	/*
-	 * Convert params to appropriate format if starting a fresh execution.
-	 * (If continuing execution, we can re-use prior params.)
+	 * Convert params to appropriate format if starting a fresh execution. (If
+	 * continuing execution, we can re-use prior params.)
 	 */
 	if (es && es->status == F_EXEC_START)
 		postquel_sub_params(fcache, fcinfo);
@@ -631,8 +629,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 
 	/*
 	 * Execute each command in the function one after another until we're
-	 * executing the final command and get a result or we run out of
-	 * commands.
+	 * executing the final command and get a result or we run out of commands.
 	 */
 	while (es)
 	{
@@ -691,8 +688,8 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * If we got a result from a command within the function it has to be
-	 * the final command.  All others shouldn't be returning anything.
+	 * If we got a result from a command within the function it has to be the
+	 * final command.  All others shouldn't be returning anything.
 	 */
 	Assert(LAST_POSTQUEL_COMMAND(es));
 
@@ -711,8 +708,8 @@ fmgr_sql(PG_FUNCTION_ARGS)
 					 errmsg("set-valued function called in context that cannot accept a set")));
 
 		/*
-		 * Ensure we will get shut down cleanly if the exprcontext is not
-		 * run to completion.
+		 * Ensure we will get shut down cleanly if the exprcontext is not run
+		 * to completion.
 		 */
 		if (!fcache->shutdown_reg)
 		{
@@ -754,8 +751,7 @@ sql_exec_error_callback(void *arg)
 	fn_name = NameStr(functup->proname);
 
 	/*
-	 * If there is a syntax error position, convert to internal syntax
-	 * error
+	 * If there is a syntax error position, convert to internal syntax error
 	 */
 	syntaxerrposition = geterrposition();
 	if (syntaxerrposition > 0)
@@ -776,11 +772,11 @@ sql_exec_error_callback(void *arg)
 	}
 
 	/*
-	 * Try to determine where in the function we failed.  If there is a
-	 * query with non-null QueryDesc, finger it.  (We check this rather
-	 * than looking for F_EXEC_RUN state, so that errors during
-	 * ExecutorStart or ExecutorEnd are blamed on the appropriate query;
-	 * see postquel_start and postquel_end.)
+	 * Try to determine where in the function we failed.  If there is a query
+	 * with non-null QueryDesc, finger it.	(We check this rather than looking
+	 * for F_EXEC_RUN state, so that errors during ExecutorStart or
+	 * ExecutorEnd are blamed on the appropriate query; see postquel_start and
+	 * postquel_end.)
 	 */
 	if (fcache)
 	{
@@ -888,9 +884,9 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		if (rettype != VOIDOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("return type mismatch in function declared to return %s",
-							format_type_be(rettype)),
-			 errdetail("Function's final statement must be a SELECT.")));
+			 errmsg("return type mismatch in function declared to return %s",
+					format_type_be(rettype)),
+				 errdetail("Function's final statement must be a SELECT.")));
 		return false;
 	}
 
@@ -901,17 +897,16 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	tlist = parse->targetList;
 
 	/*
-	 * The last query must be a SELECT if and only if return type isn't
-	 * VOID.
+	 * The last query must be a SELECT if and only if return type isn't VOID.
 	 */
 	if (rettype == VOIDOID)
 	{
 		if (cmd == CMD_SELECT)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("return type mismatch in function declared to return %s",
-							format_type_be(rettype)),
-					 errdetail("Function's final statement must not be a SELECT.")));
+			 errmsg("return type mismatch in function declared to return %s",
+					format_type_be(rettype)),
+			 errdetail("Function's final statement must not be a SELECT.")));
 		return false;
 	}
 
@@ -919,9 +914,9 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	if (cmd != CMD_SELECT)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-		 errmsg("return type mismatch in function declared to return %s",
-				format_type_be(rettype)),
-			 errdetail("Function's final statement must be a SELECT.")));
+			 errmsg("return type mismatch in function declared to return %s",
+					format_type_be(rettype)),
+				 errdetail("Function's final statement must be a SELECT.")));
 
 	/*
 	 * Count the non-junk entries in the result targetlist.
@@ -934,22 +929,22 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	{
 		/*
 		 * For base-type returns, the target list should have exactly one
-		 * entry, and its type should agree with what the user declared.
-		 * (As of Postgres 7.2, we accept binary-compatible types too.)
+		 * entry, and its type should agree with what the user declared. (As
+		 * of Postgres 7.2, we accept binary-compatible types too.)
 		 */
 		if (tlistlen != 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("return type mismatch in function declared to return %s",
-							format_type_be(rettype)),
-			 errdetail("Final SELECT must return exactly one column.")));
+			 errmsg("return type mismatch in function declared to return %s",
+					format_type_be(rettype)),
+				 errdetail("Final SELECT must return exactly one column.")));
 
 		restype = exprType((Node *) ((TargetEntry *) linitial(tlist))->expr);
 		if (!IsBinaryCoercible(restype, rettype))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("return type mismatch in function declared to return %s",
-							format_type_be(rettype)),
+			 errmsg("return type mismatch in function declared to return %s",
+					format_type_be(rettype)),
 					 errdetail("Actual return type is %s.",
 							   format_type_be(restype))));
 	}
@@ -957,16 +952,16 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	{
 		/* Returns a rowtype */
 		TupleDesc	tupdesc;
-		int			tupnatts;		/* physical number of columns in tuple */
-		int			tuplogcols;		/* # of nondeleted columns in tuple */
-		int			colindex;		/* physical column index */
+		int			tupnatts;	/* physical number of columns in tuple */
+		int			tuplogcols; /* # of nondeleted columns in tuple */
+		int			colindex;	/* physical column index */
 
 		/*
-		 * If the target list is of length 1, and the type of the varnode
-		 * in the target list matches the declared return type, this is
-		 * okay. This can happen, for example, where the body of the
-		 * function is 'SELECT func2()', where func2 has the same return
-		 * type as the function that's calling it.
+		 * If the target list is of length 1, and the type of the varnode in
+		 * the target list matches the declared return type, this is okay.
+		 * This can happen, for example, where the body of the function is
+		 * 'SELECT func2()', where func2 has the same return type as the
+		 * function that's calling it.
 		 */
 		if (tlistlen == 1)
 		{
@@ -979,9 +974,8 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		if (get_func_result_type(func_id, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		{
 			/*
-			 * Assume we are returning the whole tuple.
-			 * Crosschecking against what the caller expects will happen at
-			 * runtime.
+			 * Assume we are returning the whole tuple. Crosschecking against
+			 * what the caller expects will happen at runtime.
 			 */
 			if (junkFilter)
 				*junkFilter = ExecInitJunkFilter(tlist, false, NULL);
@@ -990,9 +984,9 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		Assert(tupdesc);
 
 		/*
-		 * Verify that the targetlist matches the return tuple type.
-		 * We scan the non-deleted attributes to ensure that they match the
-		 * datatypes of the non-resjunk columns.
+		 * Verify that the targetlist matches the return tuple type. We scan
+		 * the non-deleted attributes to ensure that they match the datatypes
+		 * of the non-resjunk columns.
 		 */
 		tupnatts = tupdesc->natts;
 		tuplogcols = 0;			/* we'll count nondeleted cols as we go */
@@ -1016,7 +1010,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 							 errmsg("return type mismatch in function declared to return %s",
 									format_type_be(rettype)),
-					errdetail("Final SELECT returns too many columns.")));
+					   errdetail("Final SELECT returns too many columns.")));
 				attr = tupdesc->attrs[colindex - 1];
 			} while (attr->attisdropped);
 			tuplogcols++;
@@ -1046,15 +1040,15 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		if (tlistlen != tuplogcols)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("return type mismatch in function declared to return %s",
-							format_type_be(rettype)),
+			 errmsg("return type mismatch in function declared to return %s",
+					format_type_be(rettype)),
 					 errdetail("Final SELECT returns too few columns.")));
 
 		/* Set up junk filter if needed */
 		if (junkFilter)
 			*junkFilter = ExecInitJunkFilterConversion(tlist,
-											CreateTupleDescCopy(tupdesc),
-											NULL);
+												CreateTupleDescCopy(tupdesc),
+													   NULL);
 
 		/* Report that we are returning entire tuple result */
 		return true;
@@ -1070,8 +1064,8 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-			  errmsg("return type %s is not supported for SQL functions",
-					 format_type_be(rettype))));
+				 errmsg("return type %s is not supported for SQL functions",
+						format_type_be(rettype))));
 
 	return false;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.80 2005/05/11 01:26:02 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.81 2005/10/15 02:49:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,8 +30,8 @@ typedef struct df_files
 {
 	struct df_files *next;		/* List link */
 	dev_t		device;			/* Device file is on */
-#ifndef WIN32					/* ensures we never again depend on this
-								 * under win32 */
+#ifndef WIN32					/* ensures we never again depend on this under
+								 * win32 */
 	ino_t		inode;			/* Inode number of file */
 #endif
 	void	   *handle;			/* a handle for pg_dl* functions */
@@ -200,8 +200,8 @@ load_file(char *filename)
 
 	/*
 	 * We need to do stat() in order to determine whether this is the same
-	 * file as a previously loaded file; it's also handy so as to give a
-	 * good error message if bogus file name given.
+	 * file as a previously loaded file; it's also handy so as to give a good
+	 * error message if bogus file name given.
 	 */
 	if (stat(fullname, &stat_buf) == -1)
 		ereport(ERROR,
@@ -209,8 +209,8 @@ load_file(char *filename)
 				 errmsg("could not access file \"%s\": %m", fullname)));
 
 	/*
-	 * We have to zap all entries in the list that match on either
-	 * filename or inode, else load_external_function() won't do anything.
+	 * We have to zap all entries in the list that match on either filename or
+	 * inode, else load_external_function() won't do anything.
 	 */
 	prv = NULL;
 	for (file_scanner = file_list; file_scanner != NULL; file_scanner = nxt)
@@ -351,7 +351,7 @@ substitute_libpath_macro(const char *name)
 		strncmp(name, "$libdir", strlen("$libdir")) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_NAME),
-		errmsg("invalid macro name in dynamic library path: %s", name)));
+			errmsg("invalid macro name in dynamic library path: %s", name)));
 
 	ret = palloc(strlen(pkglib_path) + strlen(sep_ptr) + 1);
 

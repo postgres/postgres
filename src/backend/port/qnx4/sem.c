@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/qnx4/sem.c,v 1.12 2003/11/29 19:51:54 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/qnx4/sem.c,v 1.13 2005/10/15 02:49:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,8 +47,7 @@ struct sem_set_info
 	int			nsems;
 	sem_t		sem[SEMMAX];	/* array of POSIX semaphores */
 	struct sem	semV[SEMMAX];	/* array of System V semaphore structures */
-	struct pending_ops pendingOps[SEMMAX];		/* array of pending
-												 * operations */
+	struct pending_ops pendingOps[SEMMAX];		/* array of pending operations */
 };
 
 struct sem_info
@@ -189,7 +188,7 @@ semget(key_t key, int nsems, int semflg)
 			fprintf(stderr,
 					"Found a pre-existing shared memory block for the semaphore memory\n"
 					"of a different size (%ld instead %ld). Make sure that all executables\n"
-					"are from the same release or remove the file \"/dev/shmem/%s\"\n"
+			"are from the same release or remove the file \"/dev/shmem/%s\"\n"
 					"left by a previous version.\n",
 					(long) statbuf.st_size,
 					(long) sem_info_size,

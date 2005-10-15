@@ -168,13 +168,12 @@ beos_startup(int argc, char **argv)
 		/* Main server loop */
 		for (;;)
 		{
-			int32 opcode = 0;
+			int32		opcode = 0;
 			char		datas[4000];
 
 			/*
-			 * Wait for a message from the backend : 1 : load a shared
-			 * object 2 : unload a shared object any other : exit support
-			 * server
+			 * Wait for a message from the backend : 1 : load a shared object
+			 * 2 : unload a shared object any other : exit support server
 			 */
 			read_port(port_in, &opcode, datas, 4000);
 
@@ -216,8 +215,8 @@ beos_startup(int argc, char **argv)
 				case 2:
 
 					/*
-					 * Unload shared object and send back the result of
-					 * the operation
+					 * Unload shared object and send back the result of the
+					 * operation
 					 */
 					write_port(port_out, unload_add_on(*((int *) (datas))), NULL, 0);
 					break;
@@ -234,10 +233,9 @@ beos_startup(int argc, char **argv)
 					if (get_image_symbol(addon, datas, B_SYMBOL_TYPE_TEXT, &fpt) == B_OK);
 					{
 						/*
-						 * Sometime the loader return B_OK for an
-						 * inexistant function with an invalid address !!!
-						 * Check that the return address is in the image
-						 * range
+						 * Sometime the loader return B_OK for an inexistant
+						 * function with an invalid address !!! Check that the
+						 * return address is in the image range
 						 */
 
 						get_image_info(addon, &info_im);

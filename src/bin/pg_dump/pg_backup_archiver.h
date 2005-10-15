@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.67 2005/09/11 04:10:25 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.68 2005/10/15 02:49:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,10 +179,10 @@ typedef struct _archiveHandle
 	char		vrev;
 	int			version;		/* Conveniently formatted version */
 
-	char	   *archiveRemoteVersion;	/* When reading an archive,
-										 * the version of the dumped DB */
-	char	   *archiveDumpVersion;		/* When reading an archive,
-										 * the version of the dumper */
+	char	   *archiveRemoteVersion;	/* When reading an archive, the
+										 * version of the dumped DB */
+	char	   *archiveDumpVersion;		/* When reading an archive, the
+										 * version of the dumper */
 
 	int			debugLevel;		/* Used for logging (currently only by
 								 * --verbose) */
@@ -200,14 +200,12 @@ typedef struct _archiveHandle
 	 * Fields used when discovering header. A format can always get the
 	 * previous read bytes from here...
 	 */
-	int			readHeader;		/* Used if file header has been read
-								 * already */
-	char	   *lookahead;		/* Buffer used when reading header to
-								 * discover format */
+	int			readHeader;		/* Used if file header has been read already */
+	char	   *lookahead;		/* Buffer used when reading header to discover
+								 * format */
 	size_t		lookaheadSize;	/* Size of allocated buffer */
 	size_t		lookaheadLen;	/* Length of data in lookahead */
-	off_t		lookaheadPos;	/* Current read position in lookahead
-								 * buffer */
+	off_t		lookaheadPos;	/* Current read position in lookahead buffer */
 
 	ArchiveEntryPtr ArchiveEntryPtr;	/* Called for each metadata object */
 	StartDataPtr StartDataPtr;	/* Called when table data is about to be
@@ -221,8 +219,8 @@ typedef struct _archiveHandle
 	ReadBufPtr ReadBufPtr;		/* Read a buffer of input from the archive */
 	ClosePtr ClosePtr;			/* Close the archive */
 	WriteExtraTocPtr WriteExtraTocPtr;	/* Write extra TOC entry data
-										 * associated with the current
-										 * archive format */
+										 * associated with the current archive
+										 * format */
 	ReadExtraTocPtr ReadExtraTocPtr;	/* Read extr info associated with
 										 * archie format */
 	PrintExtraTocPtr PrintExtraTocPtr;	/* Extra TOC info for format */
@@ -239,8 +237,8 @@ typedef struct _archiveHandle
 	char	   *archdbname;		/* DB name *read* from archive */
 	bool		requirePassword;
 	PGconn	   *connection;
-	int			connectToDB;	/* Flag to indicate if direct DB
-								 * connection is required */
+	int			connectToDB;	/* Flag to indicate if direct DB connection is
+								 * required */
 	int			pgCopyIn;		/* Currently in libpq 'COPY IN' mode. */
 	PQExpBuffer pgCopyBuf;		/* Left-over data from incomplete lines in
 								 * COPY IN */
@@ -263,13 +261,13 @@ typedef struct _archiveHandle
 	ArchiveMode mode;			/* File mode - r or w */
 	void	   *formatData;		/* Header data specific to file format */
 
-	RestoreOptions *ropt;		/* Used to check restore options in
-								 * ahwrite etc */
+	RestoreOptions *ropt;		/* Used to check restore options in ahwrite
+								 * etc */
 
 	/* these vars track state to avoid sending redundant SET commands */
 	char	   *currUser;		/* current username */
 	char	   *currSchema;		/* current schema */
-	char	   *currTablespace;	/* current tablespace */
+	char	   *currTablespace; /* current tablespace */
 	bool		currWithOids;	/* current default_with_oids setting */
 
 	void	   *lo_buf;
@@ -289,8 +287,8 @@ typedef struct _tocEntry
 	struct _tocEntry *next;
 	CatalogId	catalogId;
 	DumpId		dumpId;
-	bool		hadDumper;		/* Archiver was passed a dumper routine
-								 * (used in restore) */
+	bool		hadDumper;		/* Archiver was passed a dumper routine (used
+								 * in restore) */
 	char	   *tag;			/* index tag */
 	char	   *namespace;		/* null or empty string if not in a schema */
 	char	   *tablespace;		/* null if not in a tablespace; empty string

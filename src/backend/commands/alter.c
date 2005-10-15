@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.14 2005/08/01 04:03:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.15 2005/10/15 02:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,8 +102,8 @@ ExecRenameStmt(RenameStmt *stmt)
 						{
 							/*
 							 * RENAME TABLE requires that we (still) hold
-							 * CREATE rights on the containing namespace,
-							 * as well as ownership of the table.
+							 * CREATE rights on the containing namespace, as
+							 * well as ownership of the table.
 							 */
 							Oid			namespaceId = get_rel_namespace(relid);
 							AclResult	aclresult;
@@ -113,7 +113,7 @@ ExecRenameStmt(RenameStmt *stmt)
 															  ACL_CREATE);
 							if (aclresult != ACLCHECK_OK)
 								aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
-										get_namespace_name(namespaceId));
+											get_namespace_name(namespaceId));
 
 							renamerel(relid, stmt->newname);
 							break;
@@ -122,7 +122,7 @@ ExecRenameStmt(RenameStmt *stmt)
 						renameatt(relid,
 								  stmt->subname,		/* old att name */
 								  stmt->newname,		/* new att name */
-							  interpretInhOption(stmt->relation->inhOpt),		/* recursive? */
+								  interpretInhOption(stmt->relation->inhOpt),	/* recursive? */
 								  false);		/* recursing already? */
 						break;
 					case OBJECT_TRIGGER:
@@ -156,18 +156,18 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
 			AlterFunctionNamespace(stmt->object, stmt->objarg,
 								   stmt->newschema);
 			break;
-		    
+
 		case OBJECT_SEQUENCE:
 		case OBJECT_TABLE:
 			CheckRelationOwnership(stmt->relation, true);
 			AlterTableNamespace(stmt->relation, stmt->newschema);
 			break;
-		    
+
 		case OBJECT_TYPE:
 		case OBJECT_DOMAIN:
 			AlterTypeNamespace(stmt->object, stmt->newschema);
 			break;
-		    
+
 		default:
 			elog(ERROR, "unrecognized AlterObjectSchemaStmt type: %d",
 				 (int) stmt->objectType);
@@ -181,7 +181,7 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
 void
 ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 {
-	Oid		newowner = get_roleid_checked(stmt->newowner);
+	Oid			newowner = get_roleid_checked(stmt->newowner);
 
 	switch (stmt->objectType)
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.80 2005/08/22 17:38:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.81 2005/10/15 02:49:16 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -130,8 +130,7 @@ DefineType(List *names, List *parameters)
 
 	/*
 	 * Type names must be one character shorter than other names, allowing
-	 * room to create the corresponding array type name with prepended
-	 * "_".
+	 * room to create the corresponding array type name with prepended "_".
 	 */
 	if (strlen(typeName) > (NAMEDATALEN - 2))
 		ereport(ERROR,
@@ -183,10 +182,9 @@ DefineType(List *names, List *parameters)
 			char	   *a = defGetString(defel);
 
 			/*
-			 * Note: if argument was an unquoted identifier, parser will
-			 * have applied translations to it, so be prepared to
-			 * recognize translated type names as well as the nominal
-			 * form.
+			 * Note: if argument was an unquoted identifier, parser will have
+			 * applied translations to it, so be prepared to recognize
+			 * translated type names as well as the nominal form.
 			 */
 			if (pg_strcasecmp(a, "double") == 0 ||
 				pg_strcasecmp(a, "float8") == 0 ||
@@ -303,8 +301,8 @@ DefineType(List *names, List *parameters)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			errmsg("type output function %s must return type \"cstring\"",
-				   NameListToString(outputName))));
+			   errmsg("type output function %s must return type \"cstring\"",
+					  NameListToString(outputName))));
 	}
 	if (receiveOid)
 	{
@@ -312,8 +310,8 @@ DefineType(List *names, List *parameters)
 		if (resulttype != typoid)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				   errmsg("type receive function %s must return type %s",
-						  NameListToString(receiveName), typeName)));
+					 errmsg("type receive function %s must return type %s",
+							NameListToString(receiveName), typeName)));
 	}
 	if (sendOid)
 	{
@@ -321,14 +319,13 @@ DefineType(List *names, List *parameters)
 		if (resulttype != BYTEAOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			   errmsg("type send function %s must return type \"bytea\"",
-					  NameListToString(sendName))));
+				   errmsg("type send function %s must return type \"bytea\"",
+						  NameListToString(sendName))));
 	}
 
 	/*
-	 * Convert analysis function proc name to an OID. If no analysis
-	 * function is specified, we'll use zero to select the built-in
-	 * default algorithm.
+	 * Convert analysis function proc name to an OID. If no analysis function
+	 * is specified, we'll use zero to select the built-in default algorithm.
 	 */
 	if (analyzeName)
 		analyzeOid = findTypeAnalyzeFunction(analyzeName, typoid);
@@ -361,8 +358,8 @@ DefineType(List *names, List *parameters)
 				   false);		/* Type NOT NULL */
 
 	/*
-	 * When we create a base type (as opposed to a complex type) we need
-	 * to have an array entry for it in pg_type as well.
+	 * When we create a base type (as opposed to a complex type) we need to
+	 * have an array entry for it in pg_type as well.
 	 */
 	shadow_type = makeArrayTypeName(typeName);
 
@@ -430,8 +427,8 @@ RemoveType(List *names, DropBehavior behavior)
 
 	/* Permission check: must own type or its namespace */
 	if (!pg_type_ownercheck(typeoid, GetUserId()) &&
-		!pg_namespace_ownercheck(((Form_pg_type) GETSTRUCT(tup))->typnamespace,
-								 GetUserId()))
+	  !pg_namespace_ownercheck(((Form_pg_type) GETSTRUCT(tup))->typnamespace,
+							   GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
 					   TypeNameToString(typename));
 
@@ -522,12 +519,11 @@ DefineDomain(CreateDomainStmt *stmt)
 					   get_namespace_name(domainNamespace));
 
 	/*
-	 * Domainnames, unlike typenames don't need to account for the '_'
-	 * prefix.	So they can be one character longer.  (This test is
-	 * presently useless since the parser will have truncated the name to
-	 * fit.  But leave it here since we may someday support arrays of
-	 * domains, in which case we'll be back to needing to enforce
-	 * NAMEDATALEN-2.)
+	 * Domainnames, unlike typenames don't need to account for the '_' prefix.
+	 * So they can be one character longer.  (This test is presently useless
+	 * since the parser will have truncated the name to fit.  But leave it
+	 * here since we may someday support arrays of domains, in which case
+	 * we'll be back to needing to enforce NAMEDATALEN-2.)
 	 */
 	if (strlen(domainName) > (NAMEDATALEN - 1))
 		ereport(ERROR,
@@ -544,10 +540,9 @@ DefineDomain(CreateDomainStmt *stmt)
 	basetypeoid = HeapTupleGetOid(typeTup);
 
 	/*
-	 * Base type must be a plain base type.  Domains over pseudo types
-	 * would create a security hole.  Domains of domains might be made to
-	 * work in the future, but not today.  Ditto for domains over complex
-	 * types.
+	 * Base type must be a plain base type.  Domains over pseudo types would
+	 * create a security hole.	Domains of domains might be made to work in
+	 * the future, but not today.  Ditto for domains over complex types.
 	 */
 	typtype = baseType->typtype;
 	if (typtype != 'b')
@@ -613,7 +608,7 @@ DefineDomain(CreateDomainStmt *stmt)
 		if (IsA(newConstraint, FkConstraint))
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-			errmsg("foreign key constraints not possible for domains")));
+				errmsg("foreign key constraints not possible for domains")));
 
 		/* otherwise it should be a plain Constraint */
 		if (!IsA(newConstraint, Constraint))
@@ -627,8 +622,8 @@ DefineDomain(CreateDomainStmt *stmt)
 			case CONSTR_DEFAULT:
 
 				/*
-				 * The inherited default value may be overridden by the
-				 * user with the DEFAULT <expr> statement.
+				 * The inherited default value may be overridden by the user
+				 * with the DEFAULT <expr> statement.
 				 */
 				if (defaultExpr)
 					ereport(ERROR,
@@ -639,8 +634,8 @@ DefineDomain(CreateDomainStmt *stmt)
 				pstate = make_parsestate(NULL);
 
 				/*
-				 * Cook the constr->raw_expr into an expression. Note:
-				 * Name is strictly for error message
+				 * Cook the constr->raw_expr into an expression. Note: Name is
+				 * strictly for error message
 				 */
 				defaultExpr = cookDefault(pstate, constr->raw_expr,
 										  basetypeoid,
@@ -648,13 +643,13 @@ DefineDomain(CreateDomainStmt *stmt)
 										  domainName);
 
 				/*
-				 * Expression must be stored as a nodeToString result, but
-				 * we also require a valid textual representation (mainly
-				 * to make life easier for pg_dump).
+				 * Expression must be stored as a nodeToString result, but we
+				 * also require a valid textual representation (mainly to make
+				 * life easier for pg_dump).
 				 */
 				defaultValue = deparse_expression(defaultExpr,
-										  deparse_context_for(domainName,
-															  InvalidOid),
+											  deparse_context_for(domainName,
+																  InvalidOid),
 												  false, false);
 				defaultValueBin = nodeToString(defaultExpr);
 				break;
@@ -663,7 +658,7 @@ DefineDomain(CreateDomainStmt *stmt)
 				if (nullDefined && !typNotNull)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-					   errmsg("conflicting NULL/NOT NULL constraints")));
+						   errmsg("conflicting NULL/NOT NULL constraints")));
 				typNotNull = true;
 				nullDefined = true;
 				break;
@@ -672,7 +667,7 @@ DefineDomain(CreateDomainStmt *stmt)
 				if (nullDefined && typNotNull)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-					   errmsg("conflicting NULL/NOT NULL constraints")));
+						   errmsg("conflicting NULL/NOT NULL constraints")));
 				typNotNull = false;
 				nullDefined = true;
 				break;
@@ -691,13 +686,13 @@ DefineDomain(CreateDomainStmt *stmt)
 			case CONSTR_UNIQUE:
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("unique constraints not possible for domains")));
+					 errmsg("unique constraints not possible for domains")));
 				break;
 
 			case CONSTR_PRIMARY:
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("primary key constraints not possible for domains")));
+				errmsg("primary key constraints not possible for domains")));
 				break;
 
 			case CONSTR_ATTR_DEFERRABLE:
@@ -744,8 +739,7 @@ DefineDomain(CreateDomainStmt *stmt)
 				   typNotNull); /* Type NOT NULL */
 
 	/*
-	 * Process constraints which refer to the domain ID returned by
-	 * TypeCreate
+	 * Process constraints which refer to the domain ID returned by TypeCreate
 	 */
 	foreach(listptr, schema)
 	{
@@ -815,8 +809,8 @@ RemoveDomain(List *names, DropBehavior behavior)
 
 	/* Permission check: must own type or its namespace */
 	if (!pg_type_ownercheck(typeoid, GetUserId()) &&
-		!pg_namespace_ownercheck(((Form_pg_type) GETSTRUCT(tup))->typnamespace,
-								 GetUserId()))
+	  !pg_namespace_ownercheck(((Form_pg_type) GETSTRUCT(tup))->typnamespace,
+							   GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
 					   TypeNameToString(typename));
 
@@ -856,11 +850,11 @@ findTypeInputFunction(List *procname, Oid typeOid)
 	Oid			procOid;
 
 	/*
-	 * Input functions can take a single argument of type CSTRING, or
-	 * three arguments (string, typioparam OID, typmod).
+	 * Input functions can take a single argument of type CSTRING, or three
+	 * arguments (string, typioparam OID, typmod).
 	 *
-	 * For backwards compatibility we allow OPAQUE in place of CSTRING; if we
-	 * see this, we issue a warning and fix up the pg_proc entry.
+	 * For backwards compatibility we allow OPAQUE in place of CSTRING; if we see
+	 * this, we issue a warning and fix up the pg_proc entry.
 	 */
 	argList[0] = CSTRINGOID;
 
@@ -897,8 +891,8 @@ findTypeInputFunction(List *procname, Oid typeOid)
 		SetFunctionArgType(procOid, 0, CSTRINGOID);
 
 		/*
-		 * Need CommandCounterIncrement since DefineType will likely try
-		 * to alter the pg_proc tuple again.
+		 * Need CommandCounterIncrement since DefineType will likely try to
+		 * alter the pg_proc tuple again.
 		 */
 		CommandCounterIncrement();
 
@@ -925,9 +919,8 @@ findTypeOutputFunction(List *procname, Oid typeOid)
 	/*
 	 * Output functions can take a single argument of the type.
 	 *
-	 * For backwards compatibility we allow OPAQUE in place of the actual
-	 * type name; if we see this, we issue a warning and fix up the
-	 * pg_proc entry.
+	 * For backwards compatibility we allow OPAQUE in place of the actual type
+	 * name; if we see this, we issue a warning and fix up the pg_proc entry.
 	 */
 	argList[0] = typeOid;
 
@@ -944,13 +937,13 @@ findTypeOutputFunction(List *procname, Oid typeOid)
 	{
 		/* Found, but must complain and fix the pg_proc entry */
 		ereport(WARNING,
-				(errmsg("changing argument type of function %s from \"opaque\" to %s",
-				  NameListToString(procname), format_type_be(typeOid))));
+		(errmsg("changing argument type of function %s from \"opaque\" to %s",
+				NameListToString(procname), format_type_be(typeOid))));
 		SetFunctionArgType(procOid, 0, typeOid);
 
 		/*
-		 * Need CommandCounterIncrement since DefineType will likely try
-		 * to alter the pg_proc tuple again.
+		 * Need CommandCounterIncrement since DefineType will likely try to
+		 * alter the pg_proc tuple again.
 		 */
 		CommandCounterIncrement();
 
@@ -975,8 +968,8 @@ findTypeReceiveFunction(List *procname, Oid typeOid)
 	Oid			procOid;
 
 	/*
-	 * Receive functions can take a single argument of type INTERNAL, or
-	 * three arguments (internal, typioparam OID, typmod).
+	 * Receive functions can take a single argument of type INTERNAL, or three
+	 * arguments (internal, typioparam OID, typmod).
 	 */
 	argList[0] = INTERNALOID;
 
@@ -1029,8 +1022,7 @@ findTypeAnalyzeFunction(List *procname, Oid typeOid)
 	Oid			procOid;
 
 	/*
-	 * Analyze functions always take one INTERNAL argument and return
-	 * bool.
+	 * Analyze functions always take one INTERNAL argument and return bool.
 	 */
 	argList[0] = INTERNALOID;
 
@@ -1044,8 +1036,8 @@ findTypeAnalyzeFunction(List *procname, Oid typeOid)
 	if (get_func_rettype(procOid) != BOOLOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-		  errmsg("type analyze function %s must return type \"boolean\"",
-				 NameListToString(procname))));
+			  errmsg("type analyze function %s must return type \"boolean\"",
+					 NameListToString(procname))));
 
 	return procOid;
 }
@@ -1073,7 +1065,7 @@ DefineCompositeType(const RangeVar *typevar, List *coldeflist)
 	if (coldeflist == NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			 errmsg("composite type must have at least one attribute")));
+				 errmsg("composite type must have at least one attribute")));
 
 	/*
 	 * now set the parameters for keys/inheritance etc. All of these are
@@ -1165,28 +1157,28 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 
 		/*
 		 * Expression must be stored as a nodeToString result, but we also
-		 * require a valid textual representation (mainly to make life
-		 * easier for pg_dump).
+		 * require a valid textual representation (mainly to make life easier
+		 * for pg_dump).
 		 */
 		defaultValue = deparse_expression(defaultExpr,
-							deparse_context_for(NameStr(typTup->typname),
-												InvalidOid),
+								deparse_context_for(NameStr(typTup->typname),
+													InvalidOid),
 										  false, false);
 
 		/*
 		 * Form an updated tuple with the new default and write it back.
 		 */
 		new_record[Anum_pg_type_typdefaultbin - 1] = DirectFunctionCall1(textin,
-														 CStringGetDatum(
-											 nodeToString(defaultExpr)));
+															 CStringGetDatum(
+												 nodeToString(defaultExpr)));
 
 		new_record_repl[Anum_pg_type_typdefaultbin - 1] = 'r';
 		new_record[Anum_pg_type_typdefault - 1] = DirectFunctionCall1(textin,
-										  CStringGetDatum(defaultValue));
+											  CStringGetDatum(defaultValue));
 		new_record_repl[Anum_pg_type_typdefault - 1] = 'r';
 	}
 	else
-	/* Default is NULL, drop it */
+		/* Default is NULL, drop it */
 	{
 		new_record_nulls[Anum_pg_type_typdefaultbin - 1] = 'n';
 		new_record_repl[Anum_pg_type_typdefaultbin - 1] = 'r';
@@ -1305,8 +1297,8 @@ AlterDomainNotNull(List *names, bool notNull)
 						ereport(ERROR,
 								(errcode(ERRCODE_NOT_NULL_VIOLATION),
 								 errmsg("column \"%s\" of table \"%s\" contains null values",
-							NameStr(tupdesc->attrs[attnum - 1]->attname),
-									 RelationGetRelationName(testrel))));
+								NameStr(tupdesc->attrs[attnum - 1]->attname),
+										RelationGetRelationName(testrel))));
 				}
 			}
 			heap_endscan(scan);
@@ -1317,8 +1309,8 @@ AlterDomainNotNull(List *names, bool notNull)
 	}
 
 	/*
-	 * Okay to update pg_type row.	We can scribble on typTup because it's
-	 * a copy.
+	 * Okay to update pg_type row.	We can scribble on typTup because it's a
+	 * copy.
 	 */
 	typTup->typnotnull = notNull;
 
@@ -1467,7 +1459,7 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 	if (IsA(newConstraint, FkConstraint))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-			errmsg("foreign key constraints not possible for domains")));
+				 errmsg("foreign key constraints not possible for domains")));
 
 	/* otherwise it should be a plain Constraint */
 	if (!IsA(newConstraint, Constraint))
@@ -1485,13 +1477,13 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 		case CONSTR_UNIQUE:
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("unique constraints not possible for domains")));
+					 errmsg("unique constraints not possible for domains")));
 			break;
 
 		case CONSTR_PRIMARY:
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-			errmsg("primary key constraints not possible for domains")));
+				errmsg("primary key constraints not possible for domains")));
 			break;
 
 		case CONSTR_ATTR_DEFERRABLE:
@@ -1511,8 +1503,8 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 
 	/*
 	 * Since all other constraint types throw errors, this must be a check
-	 * constraint.	First, process the constraint expression and add an
-	 * entry to pg_constraint.
+	 * constraint.	First, process the constraint expression and add an entry
+	 * to pg_constraint.
 	 */
 
 	ccbin = domainAddConstraint(HeapTupleGetOid(tup), typTup->typnamespace,
@@ -1572,7 +1564,7 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 					ereport(ERROR,
 							(errcode(ERRCODE_CHECK_VIOLATION),
 							 errmsg("column \"%s\" of table \"%s\" contains values that violate the new constraint",
-							NameStr(tupdesc->attrs[attnum - 1]->attname),
+								NameStr(tupdesc->attrs[attnum - 1]->attname),
 									RelationGetRelationName(testrel))));
 			}
 
@@ -1626,8 +1618,8 @@ get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
 	HeapTuple	depTup;
 
 	/*
-	 * We scan pg_depend to find those things that depend on the domain.
-	 * (We assume we can ignore refobjsubid for a domain.)
+	 * We scan pg_depend to find those things that depend on the domain. (We
+	 * assume we can ignore refobjsubid for a domain.)
 	 */
 	depRel = heap_open(DependRelationId, AccessShareLock);
 
@@ -1693,10 +1685,10 @@ get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
 		}
 
 		/*
-		 * Confirm column has not been dropped, and is of the expected
-		 * type. This defends against an ALTER DROP COLUMN occuring just
-		 * before we acquired lock ... but if the whole table were
-		 * dropped, we'd still have a problem.
+		 * Confirm column has not been dropped, and is of the expected type.
+		 * This defends against an ALTER DROP COLUMN occuring just before we
+		 * acquired lock ... but if the whole table were dropped, we'd still
+		 * have a problem.
 		 */
 		if (pg_depend->objsubid > RelationGetNumberOfAttributes(rtc->rel))
 			continue;
@@ -1705,9 +1697,9 @@ get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
 			continue;
 
 		/*
-		 * Okay, add column to result.	We store the columns in
-		 * column-number order; this is just a hack to improve
-		 * predictability of regression test output ...
+		 * Okay, add column to result.	We store the columns in column-number
+		 * order; this is just a hack to improve predictability of regression
+		 * test output ...
 		 */
 		Assert(rtc->natts < RelationGetNumberOfAttributes(rtc->rel));
 
@@ -1777,8 +1769,8 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 								 constr->name))
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
-			 errmsg("constraint \"%s\" for domain \"%s\" already exists",
-					constr->name, domainName)));
+				 errmsg("constraint \"%s\" for domain \"%s\" already exists",
+						constr->name, domainName)));
 	}
 	else
 		constr->name = ChooseConstraintName(domainName,
@@ -1793,11 +1785,11 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	pstate = make_parsestate(NULL);
 
 	/*
-	 * Set up a CoerceToDomainValue to represent the occurrence of VALUE
-	 * in the expression.  Note that it will appear to have the type of
-	 * the base type, not the domain.  This seems correct since within the
-	 * check expression, we should not assume the input value can be
-	 * considered a member of the domain.
+	 * Set up a CoerceToDomainValue to represent the occurrence of VALUE in
+	 * the expression.	Note that it will appear to have the type of the base
+	 * type, not the domain.  This seems correct since within the check
+	 * expression, we should not assume the input value can be considered a
+	 * member of the domain.
 	 */
 	domVal = makeNode(CoerceToDomainValue);
 	domVal->typeId = baseTypeOid;
@@ -1818,7 +1810,7 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	if (list_length(pstate->p_rtable) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-				 errmsg("cannot use table references in domain check constraint")));
+		  errmsg("cannot use table references in domain check constraint")));
 
 	/*
 	 * Domains don't allow var clauses (this should be redundant with the
@@ -1827,7 +1819,7 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	if (contain_var_clause(expr))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-				 errmsg("cannot use table references in domain check constraint")));
+		  errmsg("cannot use table references in domain check constraint")));
 
 	/*
 	 * No subplans or aggregates, either...
@@ -1849,8 +1841,8 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	/*
 	 * Deparse it to produce text for consrc.
 	 *
-	 * Since VARNOs aren't allowed in domain constraints, relation context
-	 * isn't required as anything other than a shell.
+	 * Since VARNOs aren't allowed in domain constraints, relation context isn't
+	 * required as anything other than a shell.
 	 */
 	ccsrc = deparse_expression(expr,
 							   deparse_context_for(domainName,
@@ -1881,8 +1873,8 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 						  ccsrc);		/* Source form check constraint */
 
 	/*
-	 * Return the compiled constraint expression so the calling routine
-	 * can perform any additional required tests.
+	 * Return the compiled constraint expression so the calling routine can
+	 * perform any additional required tests.
 	 */
 	return ccbin;
 }
@@ -1956,8 +1948,7 @@ GetDomainConstraints(Oid typeOid)
 				continue;
 
 			/*
-			 * Not expecting conbin to be NULL, but we'll test for it
-			 * anyway
+			 * Not expecting conbin to be NULL, but we'll test for it anyway
 			 */
 			val = fastgetattr(conTup, Anum_pg_constraint_conbin,
 							  conRel->rd_att, &isNull);
@@ -1978,8 +1969,8 @@ GetDomainConstraints(Oid typeOid)
 			r->check_expr = ExecInitExpr(check_expr, NULL);
 
 			/*
-			 * use lcons() here because constraints of lower domains
-			 * should be applied earlier.
+			 * use lcons() here because constraints of lower domains should be
+			 * applied earlier.
 			 */
 			result = lcons(r, result);
 		}
@@ -1994,8 +1985,8 @@ GetDomainConstraints(Oid typeOid)
 	heap_close(conRel, AccessShareLock);
 
 	/*
-	 * Only need to add one NOT NULL check regardless of how many domains
-	 * in the stack request it.
+	 * Only need to add one NOT NULL check regardless of how many domains in
+	 * the stack request it.
 	 */
 	if (notNull)
 	{
@@ -2071,7 +2062,7 @@ AlterTypeOwner(List *names, Oid newOwnerId)
 		if (!superuser())
 		{
 			/* Otherwise, must be owner of the existing object */
-			if (!pg_type_ownercheck(HeapTupleGetOid(tup),GetUserId()))
+			if (!pg_type_ownercheck(HeapTupleGetOid(tup), GetUserId()))
 				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
 							   TypeNameToString(typename));
 
@@ -2088,8 +2079,7 @@ AlterTypeOwner(List *names, Oid newOwnerId)
 		}
 
 		/*
-		 * Modify the owner --- okay to scribble on typTup because it's a
-		 * copy
+		 * Modify the owner --- okay to scribble on typTup because it's a copy
 		 */
 		typTup->typowner = newOwnerId;
 
@@ -2128,8 +2118,7 @@ AlterTypeOwnerInternal(Oid typeOid, Oid newOwnerId)
 	typTup = (Form_pg_type) GETSTRUCT(tup);
 
 	/*
-	 * Modify the owner --- okay to scribble on typTup because it's a
-	 * copy
+	 * Modify the owner --- okay to scribble on typTup because it's a copy
 	 */
 	typTup->typowner = newOwnerId;
 
@@ -2150,9 +2139,9 @@ AlterTypeOwnerInternal(Oid typeOid, Oid newOwnerId)
 void
 AlterTypeNamespace(List *names, const char *newschema)
 {
-	TypeName			*typename;
-	Oid					typeOid;
-	Oid					nspOid;
+	TypeName   *typename;
+	Oid			typeOid;
+	Oid			nspOid;
 
 	/* get type OID */
 	typename = makeNode(TypeName);
@@ -2221,7 +2210,7 @@ AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 	if (isAnyTempNamespace(nspOid) || isAnyTempNamespace(oldNspOid))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot move objects into or out of temporary schemas")));
+			errmsg("cannot move objects into or out of temporary schemas")));
 
 	/* same for TOAST schema */
 	if (nspOid == PG_TOAST_NAMESPACE || oldNspOid == PG_TOAST_NAMESPACE)
@@ -2264,18 +2253,18 @@ AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 	/*
 	 * Composite types have pg_class entries.
 	 *
-	 * We need to modify the pg_class tuple as well to
-	 * reflect the change of schema.
+	 * We need to modify the pg_class tuple as well to reflect the change of
+	 * schema.
 	 */
 	if (isCompositeType)
 	{
-		Relation classRel;
+		Relation	classRel;
 
 		classRel = heap_open(RelationRelationId, RowExclusiveLock);
 
 		/*
-		 * The dependency on the schema is listed under the pg_class entry,
-		 * so tell AlterRelationNamespaceInternal to fix it.
+		 * The dependency on the schema is listed under the pg_class entry, so
+		 * tell AlterRelationNamespaceInternal to fix it.
 		 */
 		AlterRelationNamespaceInternal(classRel, typform->typrelid,
 									   oldNspOid, nspOid,
@@ -2284,8 +2273,8 @@ AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 		heap_close(classRel, RowExclusiveLock);
 
 		/*
-		 * Check for constraints associated with the composite type
-		 * (we don't currently support this, but probably will someday).
+		 * Check for constraints associated with the composite type (we don't
+		 * currently support this, but probably will someday).
 		 */
 		AlterConstraintNamespaces(typform->typrelid, oldNspOid,
 								  nspOid, false);
@@ -2297,12 +2286,12 @@ AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 			AlterConstraintNamespaces(typeOid, oldNspOid, nspOid, true);
 
 		/*
-		 * Update dependency on schema, if any --- a table rowtype has not
-		 * got one.
+		 * Update dependency on schema, if any --- a table rowtype has not got
+		 * one.
 		 */
 		if (typform->typtype != 'c')
 			if (changeDependencyFor(TypeRelationId, typeOid,
-									NamespaceRelationId, oldNspOid, nspOid) != 1)
+								NamespaceRelationId, oldNspOid, nspOid) != 1)
 				elog(ERROR, "failed to change schema dependency for type %s",
 					 format_type_be(typeOid));
 	}

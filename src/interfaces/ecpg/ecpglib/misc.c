@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.25 2005/09/12 11:57:53 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.26 2005/10/15 02:49:47 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -58,7 +58,6 @@ static struct sqlca_t sqlca_init =
 #ifdef ENABLE_THREAD_SAFETY
 static pthread_key_t sqlca_key;
 static pthread_once_t sqlca_key_once = PTHREAD_ONCE_INIT;
-
 #else
 static struct sqlca_t sqlca =
 {
@@ -122,8 +121,7 @@ static void
 ecpg_sqlca_key_destructor(void *arg)
 {
 	if (arg != NULL)
-		free(arg);				/* sqlca structure allocated in
-								 * ECPGget_sqlca */
+		free(arg);				/* sqlca structure allocated in ECPGget_sqlca */
 }
 
 static void
@@ -186,10 +184,11 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 	/* if we have no connection we just simulate the command */
 	if (con && con->connection)
 	{
-		/* If we got a transaction command but have no open transaction,
-		 * we have to start one, unless we are in autocommit, where the
-		 * developers have to take care themselves.
-		 * However, if the command is a begin statement, we just execute it once.
+		/*
+		 * If we got a transaction command but have no open transaction, we
+		 * have to start one, unless we are in autocommit, where the
+		 * developers have to take care themselves. However, if the command is
+		 * a begin statement, we just execute it once.
 		 */
 		if (con->committed && !con->autocommit && strncmp(transaction, "begin", 5) != 0 && strncmp(transaction, "start", 5) != 0)
 		{
@@ -201,7 +200,7 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 			}
 			PQclear(res);
 		}
-		
+
 		res = PQexec(con->connection, transaction);
 		if (res == NULL || PQresultStatus(res) != PGRES_COMMAND_OK)
 		{
@@ -257,7 +256,7 @@ ECPGlog(const char *format,...)
 			return;
 		}
 
-		sprintf(f, "[%d]: %s", (int)getpid(), format);
+		sprintf(f, "[%d]: %s", (int) getpid(), format);
 
 		va_start(ap, format);
 		vfprintf(debugstream, f, ap);

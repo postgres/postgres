@@ -59,8 +59,8 @@ typedef struct callContext
 #define START_NUM	8			/* initial size of arrays */
 #define PGARRAY_SIZE(n) (sizeof(PGARRAY) + (((n)-1)*sizeof(int4)))
 
-static PGARRAY *GetPGArray(PGARRAY *p, AggState *aggstate, bool fAdd);
-static PGARRAY *ShrinkPGArray(PGARRAY *p);
+static PGARRAY *GetPGArray(PGARRAY * p, AggState *aggstate, bool fAdd);
+static PGARRAY *ShrinkPGArray(PGARRAY * p);
 
 Datum		int_agg_state(PG_FUNCTION_ARGS);
 Datum		int_agg_final_array(PG_FUNCTION_ARGS);
@@ -77,7 +77,7 @@ PG_FUNCTION_INFO_V1(int_enum);
  * ie the Agg node's aggcontext.
  */
 static PGARRAY *
-GetPGArray(PGARRAY *p, AggState *aggstate, bool fAdd)
+GetPGArray(PGARRAY * p, AggState *aggstate, bool fAdd)
 {
 	if (!p)
 	{
@@ -97,7 +97,7 @@ GetPGArray(PGARRAY *p, AggState *aggstate, bool fAdd)
 		/* Ensure array has space for another item */
 		if (p->items >= p->lower)
 		{
-			PGARRAY	   *pn;
+			PGARRAY    *pn;
 			int			n = p->lower * 2;
 			int			cbNew = PGARRAY_SIZE(n);
 
@@ -117,9 +117,10 @@ GetPGArray(PGARRAY *p, AggState *aggstate, bool fAdd)
  * memory allocation context
  */
 static PGARRAY *
-ShrinkPGArray(PGARRAY *p)
+ShrinkPGArray(PGARRAY * p)
 {
 	PGARRAY    *pnew;
+
 	/* get target size */
 	int			cb = PGARRAY_SIZE(p->items);
 
@@ -158,11 +159,11 @@ int_agg_state(PG_FUNCTION_ARGS)
 
 	if (!PG_ARGISNULL(1))
 	{
-		int4	value = PG_GETARG_INT32(1);
+		int4		value = PG_GETARG_INT32(1);
 
-		if (!p)		/* internal error */
+		if (!p)					/* internal error */
 			elog(ERROR, "no aggregate storage");
-		else if (p->items >= p->lower)		/* internal error */
+		else if (p->items >= p->lower)	/* internal error */
 			elog(ERROR, "aggregate storage too small");
 		else
 			p->array[p->items++] = value;
@@ -212,7 +213,7 @@ int_enum(PG_FUNCTION_ARGS)
 	if (!rsi || !IsA(rsi, ReturnSetInfo))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		 errmsg("int_enum called in context that cannot accept a set")));
+			 errmsg("int_enum called in context that cannot accept a set")));
 
 	if (!p)
 	{
@@ -223,7 +224,7 @@ int_enum(PG_FUNCTION_ARGS)
 	if (!fcinfo->flinfo->fn_extra)
 	{
 		/* Allocate working state */
-		MemoryContext	oldcontext;
+		MemoryContext oldcontext;
 
 		oldcontext = MemoryContextSwitchTo(fcinfo->flinfo->fn_mcxt);
 
@@ -250,7 +251,8 @@ int_enum(PG_FUNCTION_ARGS)
 		fcinfo->flinfo->fn_extra = (void *) pc;
 		MemoryContextSwitchTo(oldcontext);
 	}
-	else	/* use existing working state */
+	else
+		/* use existing working state */
 		pc = (CTX *) fcinfo->flinfo->fn_extra;
 
 	/* Are we done yet? */

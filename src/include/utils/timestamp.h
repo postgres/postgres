@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.56 2005/10/09 17:21:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.57 2005/10/15 02:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,6 @@
 #ifdef HAVE_INT64_TIMESTAMP
 typedef int64 Timestamp;
 typedef int64 TimestampTz;
-
 #else
 typedef double Timestamp;
 typedef double TimestampTz;
@@ -45,15 +44,14 @@ typedef double TimestampTz;
 typedef struct
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	int64		time;			/* all time units other than days, 
-								 * months and years */
+	int64		time;			/* all time units other than days, months and
+								 * years */
 #else
-	double		time;			/* all time units other than days,
-								 * months and years */
+	double		time;			/* all time units other than days, months and
+								 * years */
 #endif
-	int32		day;		    /* days, after time for alignment */
-	int32		month;			/* months and years, after time for
-								 * alignment */
+	int32		day;			/* days, after time for alignment */
+	int32		month;			/* months and years, after time for alignment */
 } Interval;
 
 
@@ -62,12 +60,12 @@ typedef struct
 
 /* in both timestamp.h and ecpg/dt.h */
 #define DAYS_PER_YEAR	365.25	/* assumes leap year every four years */
-#define MONTHS_PER_YEAR	12
+#define MONTHS_PER_YEAR 12
 /*
  *	DAYS_PER_MONTH is very imprecise.  The more accurate value is
  *	365.2425/12 = 30.436875, or '30 days 10:29:06'.  Right now we only
  *	return an integral number of days, but someday perhaps we should
- *	also return a 'time' value to be used as well.  ISO 8601 suggests
+ *	also return a 'time' value to be used as well.	ISO 8601 suggests
  *	30 days.
  */
 #define DAYS_PER_MONTH	30		/* assumes exactly 30 days per month */
@@ -80,7 +78,7 @@ typedef struct
  */
 #define SECS_PER_YEAR	(36525 * 864)	/* avoid floating-point computation */
 #define SECS_PER_DAY	86400
-#define SECS_PER_HOUR   3600
+#define SECS_PER_HOUR	3600
 #define SECS_PER_MINUTE 60
 #define MINS_PER_HOUR	60
 
@@ -118,7 +116,6 @@ typedef struct
 
 #define DT_NOBEGIN		(-INT64CONST(0x7fffffffffffffff) - 1)
 #define DT_NOEND		(INT64CONST(0x7fffffffffffffff))
-
 #else
 
 #define DatumGetTimestamp(X)  ((Timestamp) DatumGetFloat8(X))
@@ -158,7 +155,6 @@ typedef struct
 #ifdef HAVE_INT64_TIMESTAMP
 
 typedef int32 fsec_t;
-
 #else
 
 typedef double fsec_t;
@@ -167,7 +163,6 @@ typedef double fsec_t;
 /* note: this is also used for rounding off intervals */
 #define TS_PREC_INV 1000000.0
 #define TSROUND(j) (rint(((double) (j)) * TS_PREC_INV) / TS_PREC_INV)
-
 #endif
 
 #define TIMESTAMP_MASK(b) (1 << (b))
@@ -297,16 +292,16 @@ extern TimestampTz GetCurrentTimestamp(void);
 
 extern TimestampTz time_t_to_timestamptz(time_t tm);
 
-extern int	tm2timestamp(struct pg_tm *tm, fsec_t fsec, int *tzp, Timestamp *dt);
-extern int timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm,
+extern int	tm2timestamp(struct pg_tm * tm, fsec_t fsec, int *tzp, Timestamp *dt);
+extern int timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm,
 			 fsec_t *fsec, char **tzn, pg_tz *attimezone);
 extern void dt2time(Timestamp dt, int *hour, int *min, int *sec, fsec_t *fsec);
 
-extern int	interval2tm(Interval span, struct pg_tm *tm, fsec_t *fsec);
-extern int	tm2interval(struct pg_tm *tm, fsec_t fsec, Interval *span);
+extern int	interval2tm(Interval span, struct pg_tm * tm, fsec_t *fsec);
+extern int	tm2interval(struct pg_tm * tm, fsec_t fsec, Interval *span);
 
 extern Timestamp SetEpochTimestamp(void);
-extern void GetEpochTime(struct pg_tm *tm);
+extern void GetEpochTime(struct pg_tm * tm);
 
 extern int	timestamp_cmp_internal(Timestamp dt1, Timestamp dt2);
 

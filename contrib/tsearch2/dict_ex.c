@@ -52,7 +52,7 @@ dex_lexize(PG_FUNCTION_ARGS)
 	char	   *txt = pnstrdup(in, PG_GETARG_INT32(2));
 	TSLexeme   *res = palloc(sizeof(TSLexeme) * 2);
 
-	memset(res,0,sizeof(TSLexeme) * 2);
+	memset(res, 0, sizeof(TSLexeme) * 2);
 
 	if (*txt == '\0' || searchstoplist(&(d->stoplist), txt))
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.89 2005/05/30 01:20:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.90 2005/10/15 02:49:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,8 +92,8 @@ transformArrayType(Oid arrayType)
 	if (elementType == InvalidOid)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-			errmsg("cannot subscript type %s because it is not an array",
-				   format_type_be(arrayType))));
+				 errmsg("cannot subscript type %s because it is not an array",
+						format_type_be(arrayType))));
 
 	ReleaseSysCache(type_tuple_array);
 
@@ -145,11 +145,11 @@ transformArraySubscripts(ParseState *pstate,
 
 	/*
 	 * A list containing only single subscripts refers to a single array
-	 * element.  If any of the items are double subscripts (lower:upper),
-	 * then the subscript expression means an array slice operation. In
-	 * this case, we supply a default lower bound of 1 for any items that
-	 * contain only a single subscript.  We have to prescan the
-	 * indirection list to see if there are any double subscripts.
+	 * element.  If any of the items are double subscripts (lower:upper), then
+	 * the subscript expression means an array slice operation. In this case,
+	 * we supply a default lower bound of 1 for any items that contain only a
+	 * single subscript.  We have to prescan the indirection list to see if
+	 * there are any double subscripts.
 	 */
 	foreach(idx, indirection)
 	{
@@ -163,9 +163,9 @@ transformArraySubscripts(ParseState *pstate,
 	}
 
 	/*
-	 * The type represented by the subscript expression is the element
-	 * type if we are fetching a single element, but it is the same as the
-	 * array type if we are fetching a slice or storing.
+	 * The type represented by the subscript expression is the element type if
+	 * we are fetching a single element, but it is the same as the array type
+	 * if we are fetching a slice or storing.
 	 */
 	if (isSlice || assignFrom != NULL)
 		resultType = arrayType;
@@ -188,14 +188,14 @@ transformArraySubscripts(ParseState *pstate,
 				subexpr = transformExpr(pstate, ai->lidx);
 				/* If it's not int4 already, try to coerce */
 				subexpr = coerce_to_target_type(pstate,
-											  subexpr, exprType(subexpr),
+												subexpr, exprType(subexpr),
 												INT4OID, -1,
 												COERCION_ASSIGNMENT,
 												COERCE_IMPLICIT_CAST);
 				if (subexpr == NULL)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
-					  errmsg("array subscript must have type integer")));
+						  errmsg("array subscript must have type integer")));
 			}
 			else
 			{
@@ -224,8 +224,7 @@ transformArraySubscripts(ParseState *pstate,
 
 	/*
 	 * If doing an array store, coerce the source value to the right type.
-	 * (This should agree with the coercion done by
-	 * updateTargetListEntry.)
+	 * (This should agree with the coercion done by updateTargetListEntry.)
 	 */
 	if (assignFrom != NULL)
 	{
@@ -244,7 +243,7 @@ transformArraySubscripts(ParseState *pstate,
 							" but expression is of type %s",
 							format_type_be(typeneeded),
 							format_type_be(typesource)),
-			errhint("You will need to rewrite or cast the expression.")));
+			   errhint("You will need to rewrite or cast the expression.")));
 	}
 
 	/*
@@ -308,7 +307,7 @@ make_const(Value *value)
 				 * It might actually fit in int32. Probably only INT_MIN can
 				 * occur, but we'll code the test generally just to be sure.
 				 */
-				int32	val32 = (int32) val64;
+				int32		val32 = (int32) val64;
 
 				if (val64 == (int64) val32)
 				{
@@ -324,7 +323,7 @@ make_const(Value *value)
 
 					typeid = INT8OID;
 					typelen = sizeof(int64);
-					typebyval = false;		/* XXX might change someday */
+					typebyval = false;	/* XXX might change someday */
 				}
 			}
 			else
@@ -341,6 +340,7 @@ make_const(Value *value)
 			break;
 
 		case T_String:
+
 			/*
 			 * We assume here that UNKNOWN's internal representation is the
 			 * same as CSTRING
@@ -348,7 +348,7 @@ make_const(Value *value)
 			val = CStringGetDatum(strVal(value));
 
 			typeid = UNKNOWNOID;	/* will be coerced later */
-			typelen = -2;			/* cstring-style varwidth type */
+			typelen = -2;		/* cstring-style varwidth type */
 			typebyval = false;
 			break;
 

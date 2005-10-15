@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.68 2005/08/20 23:26:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.69 2005/10/15 02:49:42 momjian Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -31,11 +31,11 @@
  * where there can be zero to three backup blocks (as signaled by xl_info flag
  * bits).  XLogRecord structs always start on MAXALIGN boundaries in the WAL
  * files, and we round up SizeOfXLogRecord so that the rmgr data is also
- * guaranteed to begin on a MAXALIGN boundary.  However, no padding is added
+ * guaranteed to begin on a MAXALIGN boundary.	However, no padding is added
  * to align BkpBlock structs or backup block data.
  *
  * NOTE: xl_len counts only the rmgr data, not the XLogRecord header,
- * and also not any backup blocks.  xl_tot_len counts everything.  Neither
+ * and also not any backup blocks.	xl_tot_len counts everything.  Neither
  * length field is rounded up to an alignment boundary.
  */
 typedef struct XLogRecord
@@ -69,8 +69,7 @@ typedef struct XLogRecord
  * record.	(Could support 4 if we cared to dedicate all the xl_info bits for
  * this purpose; currently bit 0 of xl_info is unused and available.)
  */
-#define XLR_BKP_BLOCK_MASK		0x0E	/* all info bits used for bkp
-										 * blocks */
+#define XLR_BKP_BLOCK_MASK		0x0E	/* all info bits used for bkp blocks */
 #define XLR_MAX_BKP_BLOCKS		3
 #define XLR_SET_BKP_BLOCK(iblk) (0x08 >> (iblk))
 #define XLR_BKP_BLOCK_1			XLR_SET_BKP_BLOCK(0)	/* 0x08 */
@@ -86,7 +85,7 @@ typedef struct XLogRecord
 /* Sync methods */
 #define SYNC_METHOD_FSYNC		0
 #define SYNC_METHOD_FDATASYNC	1
-#define SYNC_METHOD_OPEN		2			/* for O_SYNC and O_DSYNC */
+#define SYNC_METHOD_OPEN		2		/* for O_SYNC and O_DSYNC */
 #define SYNC_METHOD_FSYNC_WRITETHROUGH	3
 extern int	sync_method;
 
@@ -109,7 +108,7 @@ extern int	sync_method;
  * value (ignoring InvalidBuffer) appearing in the rdata chain.
  *
  * When buffer is valid, caller must set buffer_std to indicate whether the
- * page uses standard pd_lower/pd_upper header fields.  If this is true, then
+ * page uses standard pd_lower/pd_upper header fields.	If this is true, then
  * XLOG is allowed to omit the free space between pd_lower and pd_upper from
  * the backed-up page image.  Note that even when buffer_std is false, the
  * page MUST have an LSN field as its first eight bytes!

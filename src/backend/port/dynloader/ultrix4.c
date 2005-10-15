@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/dynloader/ultrix4.c,v 1.22 2004/12/31 22:00:32 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/dynloader/ultrix4.c,v 1.23 2005/10/15 02:49:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,8 +26,8 @@ pg_dlopen(char *filename)
 	void	   *handle;
 
 	/*
-	 * initializes the dynamic loader with the executable's pathname.
-	 * (only needs to do this the first time pg_dlopen is called.)
+	 * initializes the dynamic loader with the executable's pathname. (only
+	 * needs to do this the first time pg_dlopen is called.)
 	 */
 	if (!dl_initialized)
 	{
@@ -43,8 +43,8 @@ pg_dlopen(char *filename)
 	}
 
 	/*
-	 * open the file. We do the symbol resolution right away so that we
-	 * will know if there are undefined symbols. (This is in fact the same
+	 * open the file. We do the symbol resolution right away so that we will
+	 * know if there are undefined symbols. (This is in fact the same
 	 * semantics as "ld -A". ie. you cannot have undefined symbols.
 	 */
 	if ((handle = dl_open(filename, DL_NOW)) == NULL)

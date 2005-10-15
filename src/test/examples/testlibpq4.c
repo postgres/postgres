@@ -66,8 +66,8 @@ main(int argc, char **argv)
 	/*
 	 * begin, by setting the parameters for a backend connection if the
 	 * parameters are null, then the system will try to use reasonable
-	 * defaults by looking up environment variables or, failing that,
-	 * using hardwired constants
+	 * defaults by looking up environment variables or, failing that, using
+	 * hardwired constants
 	 */
 	pghost = NULL;				/* host name of the backend server */
 	pgport = NULL;				/* port of the backend server */
@@ -92,14 +92,13 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 * make sure to PQclear() a PGresult whenever it is no longer
-	 * needed to avoid memory leaks
+	 * make sure to PQclear() a PGresult whenever it is no longer needed to
+	 * avoid memory leaks
 	 */
 	PQclear(res1);
 
 	/*
-	 * fetch instances from the pg_database, the system catalog of
-	 * databases
+	 * fetch instances from the pg_database, the system catalog of databases
 	 */
 	res1 = PQexec(conn1, "DECLARE myportal CURSOR FOR select * from pg_database");
 	if (PQresultStatus(res1) != PGRES_COMMAND_OK)

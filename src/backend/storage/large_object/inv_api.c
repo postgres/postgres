@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.112 2005/08/12 01:35:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.113 2005/10/15 02:49:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,8 +82,8 @@ close_lo_relation(bool isCommit)
 	if (lo_heap_r || lo_index_r)
 	{
 		/*
-		 * Only bother to close if committing; else abort cleanup will
-		 * handle it
+		 * Only bother to close if committing; else abort cleanup will handle
+		 * it
 		 */
 		if (isCommit)
 		{
@@ -176,9 +176,9 @@ Oid
 inv_create(Oid lobjId)
 {
 	/*
-	 * Allocate an OID to be the LO's identifier, unless we were told
-	 * what to use.  We can use the index on pg_largeobject for checking
-	 * OID uniqueness, even though it has additional columns besides OID.
+	 * Allocate an OID to be the LO's identifier, unless we were told what to
+	 * use.  We can use the index on pg_largeobject for checking OID
+	 * uniqueness, even though it has additional columns besides OID.
 	 */
 	if (!OidIsValid(lobjId))
 	{
@@ -188,8 +188,8 @@ inv_create(Oid lobjId)
 	}
 
 	/*
-	 * Create the LO by writing an empty first page for it in
-	 * pg_largeobject (will fail if duplicate)
+	 * Create the LO by writing an empty first page for it in pg_largeobject
+	 * (will fail if duplicate)
 	 */
 	LargeObjectCreate(lobjId);
 
@@ -305,8 +305,8 @@ inv_getsize(LargeObjectDesc *obj_desc)
 	/*
 	 * Because the pg_largeobject index is on both loid and pageno, but we
 	 * constrain only loid, a backwards scan should visit all pages of the
-	 * large object in reverse pageno order.  So, it's sufficient to
-	 * examine the first valid tuple (== last valid page).
+	 * large object in reverse pageno order.  So, it's sufficient to examine
+	 * the first valid tuple (== last valid page).
 	 */
 	while ((tuple = index_getnext(sd, BackwardScanDirection)) != NULL)
 	{
@@ -423,8 +423,8 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 
 		/*
 		 * We assume the indexscan will deliver pages in order.  However,
-		 * there may be missing pages if the LO contains unwritten
-		 * "holes". We want missing sections to read out as zeroes.
+		 * there may be missing pages if the LO contains unwritten "holes". We
+		 * want missing sections to read out as zeroes.
 		 */
 		pageoff = ((uint32) data->pageno) * LOBLKSIZE;
 		if (pageoff > obj_desc->offset)
@@ -536,9 +536,8 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 	while (nwritten < nbytes)
 	{
 		/*
-		 * If possible, get next pre-existing page of the LO.  We assume
-		 * the indexscan will deliver these in order --- but there may be
-		 * holes.
+		 * If possible, get next pre-existing page of the LO.  We assume the
+		 * indexscan will deliver these in order --- but there may be holes.
 		 */
 		if (neednextpage)
 		{
@@ -551,8 +550,8 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 		}
 
 		/*
-		 * If we have a pre-existing page, see if it is the page we want
-		 * to write, or a later one.
+		 * If we have a pre-existing page, see if it is the page we want to
+		 * write, or a later one.
 		 */
 		if (olddata != NULL && olddata->pageno == pageno)
 		{
@@ -660,8 +659,8 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 	CatalogCloseIndexes(indstate);
 
 	/*
-	 * Advance command counter so that my tuple updates will be seen by
-	 * later large-object operations in this transaction.
+	 * Advance command counter so that my tuple updates will be seen by later
+	 * large-object operations in this transaction.
 	 */
 	CommandCounterIncrement();
 

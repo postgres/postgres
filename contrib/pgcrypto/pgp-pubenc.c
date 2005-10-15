@@ -1,6 +1,6 @@
 /*
  * pgp-pubenc.c
- *    Encrypt session key with public key.
+ *	  Encrypt session key with public key.
  *
  * Copyright (c) 2005 Marko Kreen
  * All rights reserved.
@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pubenc.c,v 1.3 2005/08/13 02:06:20 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pubenc.c,v 1.4 2005/10/15 02:49:06 momjian Exp $
  */
 #include "postgres.h"
 
@@ -40,9 +40,10 @@
 static int
 pad_eme_pkcs1_v15(uint8 *data, int data_len, int res_len, uint8 **res_p)
 {
-	int res;
-	uint8 *buf, *p;
-	int pad_len = res_len - 2 - data_len;
+	int			res;
+	uint8	   *buf,
+			   *p;
+	int			pad_len = res_len - 2 - data_len;
 
 	if (pad_len < 8)
 		return PXE_BUG;
@@ -76,7 +77,7 @@ pad_eme_pkcs1_v15(uint8 *data, int data_len, int res_len, uint8 **res_p)
 		px_free(buf);
 		return res;
 	}
-			
+
 	buf[pad_len + 1] = 0;
 	memcpy(buf + pad_len + 2, data, data_len);
 	*res_p = buf;
@@ -85,19 +86,20 @@ pad_eme_pkcs1_v15(uint8 *data, int data_len, int res_len, uint8 **res_p)
 }
 
 static int
-create_secmsg(PGP_Context *ctx, PGP_MPI **msg_p, int full_bytes)
+create_secmsg(PGP_Context * ctx, PGP_MPI ** msg_p, int full_bytes)
 {
-	uint8 *secmsg;
-	int res, i;
-	unsigned cksum = 0;
-	int klen = ctx->sess_key_len;
-	uint8 *padded = NULL;
-	PGP_MPI *m = NULL;
+	uint8	   *secmsg;
+	int			res,
+				i;
+	unsigned	cksum = 0;
+	int			klen = ctx->sess_key_len;
+	uint8	   *padded = NULL;
+	PGP_MPI    *m = NULL;
 
 	/* calc checksum */
 	for (i = 0; i < klen; i++)
 		cksum += ctx->sess_key[i];
-	
+
 	/*
 	 * create "secret message"
 	 */
@@ -114,7 +116,8 @@ create_secmsg(PGP_Context *ctx, PGP_MPI **msg_p, int full_bytes)
 	if (res >= 0)
 	{
 		/* first byte will be 0x02 */
-		int full_bits = full_bytes * 8 - 6;
+		int			full_bits = full_bytes * 8 - 6;
+
 		res = pgp_mpi_create(padded, full_bits, &m);
 	}
 
@@ -133,10 +136,12 @@ create_secmsg(PGP_Context *ctx, PGP_MPI **msg_p, int full_bytes)
 }
 
 static int
-encrypt_and_write_elgamal(PGP_Context *ctx, PGP_PubKey *pk, PushFilter *pkt)
+encrypt_and_write_elgamal(PGP_Context * ctx, PGP_PubKey * pk, PushFilter * pkt)
 {
-	int res;
-	PGP_MPI *m = NULL, *c1 = NULL, *c2 = NULL;
+	int			res;
+	PGP_MPI    *m = NULL,
+			   *c1 = NULL,
+			   *c2 = NULL;
 
 	/* create padded msg */
 	res = create_secmsg(ctx, &m, pk->pub.elg.p->bytes - 1);
@@ -162,10 +167,11 @@ err:
 }
 
 static int
-encrypt_and_write_rsa(PGP_Context *ctx, PGP_PubKey *pk, PushFilter *pkt)
+encrypt_and_write_rsa(PGP_Context * ctx, PGP_PubKey * pk, PushFilter * pkt)
 {
-	int res;
-	PGP_MPI *m = NULL, *c = NULL;
+	int			res;
+	PGP_MPI    *m = NULL,
+			   *c = NULL;
 
 	/* create padded msg */
 	res = create_secmsg(ctx, &m, pk->pub.rsa.n->bytes - 1);
@@ -186,15 +192,17 @@ err:
 	return res;
 }
 
-int pgp_write_pubenc_sesskey(PGP_Context *ctx, PushFilter *dst)
+int
+pgp_write_pubenc_sesskey(PGP_Context * ctx, PushFilter * dst)
 {
-	int res;
+	int			res;
 	PGP_PubKey *pk = ctx->pub_key;
-	uint8 ver = 3;
+	uint8		ver = 3;
 	PushFilter *pkt = NULL;
-	uint8 algo = pk->algo;
+	uint8		algo = pk->algo;
 
-	if (pk == NULL) {
+	if (pk == NULL)
+	{
 		px_debug("no pubkey?\n");
 		return PXE_BUG;
 	}
@@ -238,5 +246,3 @@ err:
 
 	return res;
 }
-
-

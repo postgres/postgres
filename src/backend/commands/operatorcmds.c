@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.25 2005/08/22 17:38:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.26 2005/10/15 02:49:15 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -69,11 +69,9 @@ DefineOperator(List *names, List *parameters)
 	TypeName   *typeName2 = NULL;		/* second type name */
 	Oid			typeId1 = InvalidOid;	/* types converted to OID */
 	Oid			typeId2 = InvalidOid;
-	List	   *commutatorName = NIL;	/* optional commutator operator
-										 * name */
+	List	   *commutatorName = NIL;	/* optional commutator operator name */
 	List	   *negatorName = NIL;		/* optional negator operator name */
-	List	   *restrictionName = NIL;	/* optional restrict. sel.
-										 * procedure */
+	List	   *restrictionName = NIL;	/* optional restrict. sel. procedure */
 	List	   *joinName = NIL; /* optional join sel. procedure */
 	List	   *leftSortName = NIL;		/* optional left sort operator */
 	List	   *rightSortName = NIL;	/* optional right sort operator */
@@ -103,7 +101,7 @@ DefineOperator(List *names, List *parameters)
 			if (typeName1->setof)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				errmsg("setof type not allowed for operator argument")));
+					errmsg("setof type not allowed for operator argument")));
 		}
 		else if (pg_strcasecmp(defel->defname, "rightarg") == 0)
 		{
@@ -111,7 +109,7 @@ DefineOperator(List *names, List *parameters)
 			if (typeName2->setof)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				errmsg("setof type not allowed for operator argument")));
+					errmsg("setof type not allowed for operator argument")));
 		}
 		else if (pg_strcasecmp(defel->defname, "procedure") == 0)
 			functionName = defGetQualifiedName(defel);
@@ -157,8 +155,8 @@ DefineOperator(List *names, List *parameters)
 		typeId2 = typenameTypeId(typeName2);
 
 	/*
-	 * If any of the mergejoin support operators were given, then canMerge
-	 * is implicit.  If canMerge is specified or implicit, fill in default
+	 * If any of the mergejoin support operators were given, then canMerge is
+	 * implicit.  If canMerge is specified or implicit, fill in default
 	 * operator names for any missing mergejoin support operators.
 	 */
 	if (leftSortName || rightSortName || ltCompareName || gtCompareName)
@@ -184,11 +182,9 @@ DefineOperator(List *names, List *parameters)
 				   typeId1,		/* left type id */
 				   typeId2,		/* right type id */
 				   functionName,	/* function for operator */
-				   commutatorName,		/* optional commutator operator
-										 * name */
+				   commutatorName,		/* optional commutator operator name */
 				   negatorName, /* optional negator operator name */
-				   restrictionName,		/* optional restrict. sel.
-										 * procedure */
+				   restrictionName,		/* optional restrict. sel. procedure */
 				   joinName,	/* optional join sel. procedure name */
 				   canHash,		/* operator hashes */
 				   leftSortName,	/* optional left sort operator */
@@ -300,7 +296,7 @@ AlterOperatorOwner(List *name, TypeName *typeName1, TypeName *typeName2,
 		if (!superuser())
 		{
 			/* Otherwise, must be owner of the existing object */
-			if (!pg_oper_ownercheck(operOid,GetUserId()))
+			if (!pg_oper_ownercheck(operOid, GetUserId()))
 				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPER,
 							   NameListToString(name));
 
@@ -317,8 +313,7 @@ AlterOperatorOwner(List *name, TypeName *typeName1, TypeName *typeName2,
 		}
 
 		/*
-		 * Modify the owner --- okay to scribble on tup because it's a
-		 * copy
+		 * Modify the owner --- okay to scribble on tup because it's a copy
 		 */
 		oprForm->oprowner = newOwnerId;
 

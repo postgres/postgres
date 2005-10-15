@@ -4,7 +4,7 @@
  *	  lexical token lookup for reserved words in postgres embedded SQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg_keywords.c,v 1.30 2004/09/27 09:59:17 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg_keywords.c,v 1.31 2005/10/15 02:49:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,8 +63,8 @@ static ScanKeyword ScanKeywords[] = {
 	{"section", SQL_SECTION},
 	{"short", SQL_SHORT},
 	{"signed", SQL_SIGNED},
-	{"sql", SQL_SQL},			/* strange thing, used for into sql
-								 * descriptor MYDESC; */
+	{"sql", SQL_SQL},			/* strange thing, used for into sql descriptor
+								 * MYDESC; */
 	{"sqlerror", SQL_SQLERROR},
 	{"sqlprint", SQL_SQLPRINT},
 	{"sqlwarning", SQL_SQLWARNING},
@@ -103,12 +103,12 @@ ScanECPGKeywordLookup(char *text)
 		return NULL;
 
 	/*
-	 * Apply an ASCII-only downcasing.	We must not use tolower() since it
-	 * may produce the wrong translation in some locales (eg, Turkish),
-	 * and we don't trust isupper() very much either.  In an ASCII-based
-	 * encoding the tests against A and Z are sufficient, but we also
-	 * check isupper() so that we will work correctly under EBCDIC.  The
-	 * actual case conversion step should work for either ASCII or EBCDIC.
+	 * Apply an ASCII-only downcasing.	We must not use tolower() since it may
+	 * produce the wrong translation in some locales (eg, Turkish), and we
+	 * don't trust isupper() very much either.  In an ASCII-based encoding the
+	 * tests against A and Z are sufficient, but we also check isupper() so
+	 * that we will work correctly under EBCDIC.  The actual case conversion
+	 * step should work for either ASCII or EBCDIC.
 	 */
 	for (i = 0; i < len; i++)
 	{

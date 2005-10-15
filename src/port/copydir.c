@@ -11,7 +11,7 @@
  *	as a service.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.14 2005/09/03 15:55:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.15 2005/10/15 02:49:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,11 +66,11 @@ copydir(char *fromdir, char *todir, bool recurse)
 
 	while ((xlde = ReadDir(xldir, fromdir)) != NULL)
 	{
-	    struct stat fst;
+		struct stat fst;
 
-	    if (strcmp(xlde->d_name, ".") == 0 ||
+		if (strcmp(xlde->d_name, ".") == 0 ||
 			strcmp(xlde->d_name, "..") == 0)
-		    continue;
+			continue;
 
 		snprintf(fromfile, MAXPGPATH, "%s/%s", fromdir, xlde->d_name);
 		snprintf(tofile, MAXPGPATH, "%s/%s", todir, xlde->d_name);

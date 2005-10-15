@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for the INET and CIDR types.
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.54 2004/10/08 01:10:31 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.55 2005/10/15 02:49:29 momjian Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -74,9 +74,9 @@ network_in(char *src, int type)
 	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
 
 	/*
-	 * First, check to see if this is an IPv6 or IPv4 address.	IPv6
-	 * addresses will have a : somewhere in them (several, in fact) so if
-	 * there is one present, assume it's V6, otherwise assume it's V4.
+	 * First, check to see if this is an IPv6 or IPv4 address.	IPv6 addresses
+	 * will have a : somewhere in them (several, in fact) so if there is one
+	 * present, assume it's V6, otherwise assume it's V4.
 	 */
 
 	if (strchr(src, ':') != NULL)
@@ -94,8 +94,7 @@ network_in(char *src, int type)
 						type ? "cidr" : "inet", src)));
 
 	/*
-	 * Error check: CIDR values must not have any bits set beyond the
-	 * masklen.
+	 * Error check: CIDR values must not have any bits set beyond the masklen.
 	 */
 	if (type)
 	{
@@ -195,7 +194,7 @@ inet_recv(PG_FUNCTION_ARGS)
 		ip_family(addr) != PGSQL_AF_INET6)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-		   errmsg("invalid address family in external \"inet\" value")));
+			   errmsg("invalid address family in external \"inet\" value")));
 	bits = pq_getmsgbyte(buf);
 	if (bits < 0 || bits > ip_maxbits(addr))
 		ereport(ERROR,
@@ -221,8 +220,7 @@ inet_recv(PG_FUNCTION_ARGS)
 		addrptr[i] = pq_getmsgbyte(buf);
 
 	/*
-	 * Error check: CIDR values must not have any bits set beyond the
-	 * masklen.
+	 * Error check: CIDR values must not have any bits set beyond the masklen.
 	 */
 	if (ip_type(addr))
 	{
@@ -457,7 +455,7 @@ network_sub(PG_FUNCTION_ARGS)
 	if (ip_family(a1) == ip_family(a2))
 	{
 		PG_RETURN_BOOL(ip_bits(a1) > ip_bits(a2)
-				 && bitncmp(ip_addr(a1), ip_addr(a2), ip_bits(a2)) == 0);
+					 && bitncmp(ip_addr(a1), ip_addr(a2), ip_bits(a2)) == 0);
 	}
 
 	PG_RETURN_BOOL(false);
@@ -472,7 +470,7 @@ network_subeq(PG_FUNCTION_ARGS)
 	if (ip_family(a1) == ip_family(a2))
 	{
 		PG_RETURN_BOOL(ip_bits(a1) >= ip_bits(a2)
-				 && bitncmp(ip_addr(a1), ip_addr(a2), ip_bits(a2)) == 0);
+					 && bitncmp(ip_addr(a1), ip_addr(a2), ip_bits(a2)) == 0);
 	}
 
 	PG_RETURN_BOOL(false);
@@ -487,7 +485,7 @@ network_sup(PG_FUNCTION_ARGS)
 	if (ip_family(a1) == ip_family(a2))
 	{
 		PG_RETURN_BOOL(ip_bits(a1) < ip_bits(a2)
-				 && bitncmp(ip_addr(a1), ip_addr(a2), ip_bits(a1)) == 0);
+					 && bitncmp(ip_addr(a1), ip_addr(a2), ip_bits(a1)) == 0);
 	}
 
 	PG_RETURN_BOOL(false);
@@ -502,7 +500,7 @@ network_supeq(PG_FUNCTION_ARGS)
 	if (ip_family(a1) == ip_family(a2))
 	{
 		PG_RETURN_BOOL(ip_bits(a1) <= ip_bits(a2)
-				 && bitncmp(ip_addr(a1), ip_addr(a2), ip_bits(a1)) == 0);
+					 && bitncmp(ip_addr(a1), ip_addr(a2), ip_bits(a1)) == 0);
 	}
 
 	PG_RETURN_BOOL(false);
@@ -870,8 +868,8 @@ convert_network_to_scalar(Datum value, Oid typid)
 	}
 
 	/*
-	 * Can't get here unless someone tries to use scalarltsel/scalargtsel
-	 * on an operator with one network and one non-network operand.
+	 * Can't get here unless someone tries to use scalarltsel/scalargtsel on
+	 * an operator with one network and one non-network operand.
 	 */
 	elog(ERROR, "unsupported type: %u", typid);
 	return 0;

@@ -16,14 +16,14 @@
  * prepared transactions.  The xid and subxids fields of these are valid,
  * as is the procLocks list.  They can be distinguished from regular backend
  * PGPROCs at need by checking for pid == 0.
- * 
+ *
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.6 2005/08/20 23:26:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.7 2005/10/15 02:49:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,8 +44,8 @@ typedef struct ProcArrayStruct
 	int			maxProcs;		/* allocated size of procs array */
 
 	/*
-	 * We declare procs[] as 1 entry because C wants a fixed-size array,
-	 * but actually it is maxProcs entries long.
+	 * We declare procs[] as 1 entry because C wants a fixed-size array, but
+	 * actually it is maxProcs entries long.
 	 */
 	PGPROC	   *procs[1];		/* VARIABLE LENGTH ARRAY */
 } ProcArrayStruct;
@@ -67,14 +67,12 @@ static long xc_slow_answer = 0;
 #define xc_slow_answer_inc()		(xc_slow_answer++)
 
 static void DisplayXidCache(void);
-
 #else							/* !XIDCACHE_DEBUG */
 
 #define xc_by_recent_xmin_inc()		((void) 0)
 #define xc_by_main_xid_inc()		((void) 0)
 #define xc_by_child_xid_inc()		((void) 0)
 #define xc_slow_answer_inc()		((void) 0)
-
 #endif   /* XIDCACHE_DEBUG */
 
 
@@ -88,7 +86,7 @@ ProcArrayShmemSize(void)
 
 	size = offsetof(ProcArrayStruct, procs);
 	size = add_size(size, mul_size(sizeof(PGPROC *),
-								   add_size(MaxBackends, max_prepared_xacts)));
+								 add_size(MaxBackends, max_prepared_xacts)));
 
 	return size;
 }
@@ -128,9 +126,9 @@ ProcArrayAdd(PGPROC *proc)
 	if (arrayP->numProcs >= arrayP->maxProcs)
 	{
 		/*
-		 * Ooops, no room.  (This really shouldn't happen, since there is
-		 * a fixed supply of PGPROC structs too, and so we should have
-		 * failed earlier.)
+		 * Ooops, no room.	(This really shouldn't happen, since there is a
+		 * fixed supply of PGPROC structs too, and so we should have failed
+		 * earlier.)
 		 */
 		LWLockRelease(ProcArrayLock);
 		ereport(FATAL,
@@ -213,8 +211,8 @@ TransactionIdIsInProgress(TransactionId xid)
 	bool		locked;
 
 	/*
-	 * Don't bother checking a transaction older than RecentXmin; it
-	 * could not possibly still be running.
+	 * Don't bother checking a transaction older than RecentXmin; it could not
+	 * possibly still be running.
 	 */
 	if (TransactionIdPrecedes(xid, RecentXmin))
 	{
@@ -249,8 +247,8 @@ TransactionIdIsInProgress(TransactionId xid)
 		}
 
 		/*
-		 * We can ignore main Xids that are younger than the target
-		 * Xid, since the target could not possibly be their child.
+		 * We can ignore main Xids that are younger than the target Xid, since
+		 * the target could not possibly be their child.
 		 */
 		if (TransactionIdPrecedes(xid, pxid))
 			continue;
@@ -272,11 +270,11 @@ TransactionIdIsInProgress(TransactionId xid)
 		}
 
 		/*
-		 * Save the main Xid for step 3.  We only need to remember
-		 * main Xids that have uncached children.  (Note: there is no
-		 * race condition here because the overflowed flag cannot be
-		 * cleared, only set, while we hold ProcArrayLock.  So we can't
-		 * miss an Xid that we need to worry about.)
+		 * Save the main Xid for step 3.  We only need to remember main Xids
+		 * that have uncached children.  (Note: there is no race condition
+		 * here because the overflowed flag cannot be cleared, only set, while
+		 * we hold ProcArrayLock.  So we can't miss an Xid that we need to
+		 * worry about.)
 		 */
 		if (proc->subxids.overflowed)
 			xids[nxids++] = pxid;
@@ -295,11 +293,10 @@ TransactionIdIsInProgress(TransactionId xid)
 	/*
 	 * Step 3: have to check pg_subtrans.
 	 *
-	 * At this point, we know it's either a subtransaction of one of the Xids
-	 * in xids[], or it's not running.  If it's an already-failed
-	 * subtransaction, we want to say "not running" even though its parent
-	 * may still be running.  So first, check pg_clog to see if it's been
-	 * aborted.
+	 * At this point, we know it's either a subtransaction of one of the Xids in
+	 * xids[], or it's not running.  If it's an already-failed subtransaction,
+	 * we want to say "not running" even though its parent may still be
+	 * running.  So first, check pg_clog to see if it's been aborted.
 	 */
 	xc_slow_answer_inc();
 
@@ -307,10 +304,9 @@ TransactionIdIsInProgress(TransactionId xid)
 		goto result_known;
 
 	/*
-	 * It isn't aborted, so check whether the transaction tree it belongs
-	 * to is still running (or, more precisely, whether it was running
-	 * when this routine started -- note that we already released
-	 * ProcArrayLock).
+	 * It isn't aborted, so check whether the transaction tree it belongs to
+	 * is still running (or, more precisely, whether it was running when this
+	 * routine started -- note that we already released ProcArrayLock).
 	 */
 	topxid = SubTransGetTopmostTransaction(xid);
 	Assert(TransactionIdIsValid(topxid));
@@ -350,8 +346,8 @@ TransactionIdIsActive(TransactionId xid)
 	int			i;
 
 	/*
-	 * Don't bother checking a transaction older than RecentXmin; it
-	 * could not possibly still be running.
+	 * Don't bother checking a transaction older than RecentXmin; it could not
+	 * possibly still be running.
 	 */
 	if (TransactionIdPrecedes(xid, RecentXmin))
 		return false;
@@ -413,9 +409,9 @@ GetOldestXmin(bool allDbs)
 	/*
 	 * Normally we start the min() calculation with our own XID.  But if
 	 * called by checkpointer, we will not be inside a transaction, so use
-	 * next XID as starting point for min() calculation.  (Note that if
-	 * there are no xacts running at all, that will be the subtrans
-	 * truncation point!)
+	 * next XID as starting point for min() calculation.  (Note that if there
+	 * are no xacts running at all, that will be the subtrans truncation
+	 * point!)
 	 */
 	if (IsTransactionState())
 		result = GetTopTransactionId();
@@ -463,7 +459,7 @@ GetOldestXmin(bool allDbs)
  * This ensures that the set of transactions seen as "running" by the
  * current xact will not change after it takes the snapshot.
  *
- * Note that only top-level XIDs are included in the snapshot.  We can
+ * Note that only top-level XIDs are included in the snapshot.	We can
  * still apply the xmin and xmax limits to subtransaction XIDs, but we
  * need to work a bit harder to see if XIDs in [xmin..xmax) are running.
  *
@@ -474,7 +470,7 @@ GetOldestXmin(bool allDbs)
  *		RecentXmin: the xmin computed for the most recent snapshot.  XIDs
  *			older than this are known not running any more.
  *		RecentGlobalXmin: the global xmin (oldest TransactionXmin across all
- *			running transactions).  This is the same computation done by
+ *			running transactions).	This is the same computation done by
  *			GetOldestXmin(TRUE).
  *----------
  */
@@ -496,14 +492,14 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 		   TransactionIdIsValid(MyProc->xmin));
 
 	/*
-	 * Allocating space for maxProcs xids is usually overkill;
-	 * numProcs would be sufficient.  But it seems better to do the
-	 * malloc while not holding the lock, so we can't look at numProcs.
+	 * Allocating space for maxProcs xids is usually overkill; numProcs would
+	 * be sufficient.  But it seems better to do the malloc while not holding
+	 * the lock, so we can't look at numProcs.
 	 *
 	 * This does open a possibility for avoiding repeated malloc/free: since
-	 * maxProcs does not change at runtime, we can simply reuse the
-	 * previous xip array if any.  (This relies on the fact that all
-	 * callers pass static SnapshotData structs.)
+	 * maxProcs does not change at runtime, we can simply reuse the previous
+	 * xip array if any.  (This relies on the fact that all callers pass
+	 * static SnapshotData structs.)
 	 */
 	if (snapshot->xip == NULL)
 	{
@@ -563,13 +559,12 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 		TransactionId xid = proc->xid;
 
 		/*
-		 * Ignore my own proc (dealt with my xid above), procs not
-		 * running a transaction, and xacts started since we read the
-		 * next transaction ID.  There's no need to store XIDs above
-		 * what we got from ReadNewTransactionId, since we'll treat
-		 * them as running anyway.	We also assume that such xacts
-		 * can't compute an xmin older than ours, so they needn't be
-		 * considered in computing globalxmin.
+		 * Ignore my own proc (dealt with my xid above), procs not running a
+		 * transaction, and xacts started since we read the next transaction
+		 * ID.	There's no need to store XIDs above what we got from
+		 * ReadNewTransactionId, since we'll treat them as running anyway.  We
+		 * also assume that such xacts can't compute an xmin older than ours,
+		 * so they needn't be considered in computing globalxmin.
 		 */
 		if (proc == MyProc ||
 			!TransactionIdIsNormal(xid) ||
@@ -594,9 +589,9 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 	LWLockRelease(ProcArrayLock);
 
 	/*
-	 * Update globalxmin to include actual process xids.  This is a
-	 * slightly different way of computing it than GetOldestXmin uses, but
-	 * should give the same result.
+	 * Update globalxmin to include actual process xids.  This is a slightly
+	 * different way of computing it than GetOldestXmin uses, but should give
+	 * the same result.
 	 */
 	if (TransactionIdPrecedes(xmin, globalxmin))
 		globalxmin = xmin;
@@ -696,14 +691,14 @@ BackendPidGetProc(int pid)
  * Returns 0 if not found or it's a prepared transaction.  Note that
  * it is up to the caller to be sure that the question remains
  * meaningful for long enough for the answer to be used ...
- * 
+ *
  * Only main transaction Ids are considered.  This function is mainly
  * useful for determining what backend owns a lock.
  */
 int
 BackendXidGetPid(TransactionId xid)
 {
-	int result = 0;
+	int			result = 0;
 	ProcArrayStruct *arrayP = procArray;
 	int			index;
 
@@ -754,9 +749,8 @@ CountActiveBackends(void)
 
 	/*
 	 * Note: for speed, we don't acquire ProcArrayLock.  This is a little bit
-	 * bogus, but since we are only testing fields for zero or nonzero,
-	 * it should be OK.  The result is only used for heuristic purposes
-	 * anyway...
+	 * bogus, but since we are only testing fields for zero or nonzero, it
+	 * should be OK.  The result is only used for heuristic purposes anyway...
 	 */
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
@@ -854,17 +848,16 @@ XidCacheRemoveRunningXids(TransactionId xid, int nxids, TransactionId *xids)
 
 	/*
 	 * We must hold ProcArrayLock exclusively in order to remove transactions
-	 * from the PGPROC array.  (See notes in GetSnapshotData.)	It's
-	 * possible this could be relaxed since we know this routine is only
-	 * used to abort subtransactions, but pending closer analysis we'd
-	 * best be conservative.
+	 * from the PGPROC array.  (See notes in GetSnapshotData.)	It's possible
+	 * this could be relaxed since we know this routine is only used to abort
+	 * subtransactions, but pending closer analysis we'd best be conservative.
 	 */
 	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 
 	/*
-	 * Under normal circumstances xid and xids[] will be in increasing
-	 * order, as will be the entries in subxids.  Scan backwards to avoid
-	 * O(N^2) behavior when removing a lot of xids.
+	 * Under normal circumstances xid and xids[] will be in increasing order,
+	 * as will be the entries in subxids.  Scan backwards to avoid O(N^2)
+	 * behavior when removing a lot of xids.
 	 */
 	for (i = nxids - 1; i >= 0; i--)
 	{
@@ -878,11 +871,13 @@ XidCacheRemoveRunningXids(TransactionId xid, int nxids, TransactionId *xids)
 				break;
 			}
 		}
+
 		/*
-		 * Ordinarily we should have found it, unless the cache has overflowed.
-		 * However it's also possible for this routine to be invoked multiple
-		 * times for the same subtransaction, in case of an error during
-		 * AbortSubTransaction.  So instead of Assert, emit a debug warning.
+		 * Ordinarily we should have found it, unless the cache has
+		 * overflowed. However it's also possible for this routine to be
+		 * invoked multiple times for the same subtransaction, in case of an
+		 * error during AbortSubTransaction.  So instead of Assert, emit a
+		 * debug warning.
 		 */
 		if (j < 0 && !MyProc->subxids.overflowed)
 			elog(WARNING, "did not find subXID %u in MyProc", anxid);

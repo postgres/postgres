@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_shdepend.h,v 1.1 2005/07/07 20:39:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_shdepend.h,v 1.2 2005/10/15 02:49:44 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -37,16 +37,16 @@ CATALOG(pg_shdepend,1214) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
 	/*
 	 * Identification of the dependent (referencing) object.
 	 *
-	 * These fields are all zeroes for a DEPENDENCY_PIN entry.  Also,
-	 * dbid can be zero to denote a shared object.
+	 * These fields are all zeroes for a DEPENDENCY_PIN entry.	Also, dbid can be
+	 * zero to denote a shared object.
 	 */
 	Oid			dbid;			/* OID of database containing object */
 	Oid			classid;		/* OID of table containing object */
 	Oid			objid;			/* OID of object itself */
 
 	/*
-	 * Identification of the independent (referenced) object.  This is
-	 * always a shared object, so we need no database ID field.
+	 * Identification of the independent (referenced) object.  This is always
+	 * a shared object, so we need no database ID field.
 	 */
 	Oid			refclassid;		/* OID of table containing object */
 	Oid			refobjid;		/* OID of object itself */
@@ -73,7 +73,7 @@ typedef FormData_pg_shdepend *Form_pg_shdepend;
 #define Anum_pg_shdepend_dbid		1
 #define Anum_pg_shdepend_classid	2
 #define Anum_pg_shdepend_objid		3
-#define Anum_pg_shdepend_refclassid	4
+#define Anum_pg_shdepend_refclassid 4
 #define Anum_pg_shdepend_refobjid	5
 #define Anum_pg_shdepend_deptype	6
 

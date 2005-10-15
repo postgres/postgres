@@ -264,7 +264,7 @@ msqlListTables(int a)
 	char		tbuf[BUFSIZ];
 
 	snprintf(tbuf, BUFSIZ,
-		"select relname from pg_class where relkind='r' and relowner=%d",
+			 "select relname from pg_class where relkind='r' and relowner=%d",
 			 geteuid());
 	if (msqlQuery(a, tbuf) > 0)
 	{
@@ -288,7 +288,7 @@ msqlListIndex(int a, char *b, char *c)
 	char		tbuf[BUFSIZ];
 
 	snprintf(tbuf, BUFSIZ,
-		"select relname from pg_class where relkind='i' and relowner=%d",
+			 "select relname from pg_class where relkind='i' and relowner=%d",
 			 geteuid());
 	if (msqlQuery(a, tbuf) > 0)
 	{

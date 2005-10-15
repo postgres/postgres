@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.95 2005/10/13 15:37:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.96 2005/10/15 02:49:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,15 +56,15 @@ main(int argc, char *argv[])
 	char	   *pw_name_persist;
 
 	/*
-	 * Place platform-specific startup hacks here.	This is the right
-	 * place to put code that must be executed early in launch of either a
-	 * postmaster, a standalone backend, or a standalone bootstrap run.
-	 * Note that this code will NOT be executed when a backend or
-	 * sub-bootstrap run is forked by the postmaster.
+	 * Place platform-specific startup hacks here.	This is the right place to
+	 * put code that must be executed early in launch of either a postmaster,
+	 * a standalone backend, or a standalone bootstrap run. Note that this
+	 * code will NOT be executed when a backend or sub-bootstrap run is forked
+	 * by the postmaster.
 	 *
-	 * XXX The need for code here is proof that the platform in question is
-	 * too brain-dead to provide a standard C execution environment
-	 * without help.  Avoid adding more here, if you can.
+	 * XXX The need for code here is proof that the platform in question is too
+	 * brain-dead to provide a standard C execution environment without help.
+	 * Avoid adding more here, if you can.
 	 */
 
 #if defined(__alpha)			/* no __alpha__ ? */
@@ -78,12 +78,11 @@ main(int argc, char *argv[])
 #endif
 
 	/*
-	 * On some platforms, unaligned memory accesses result in a kernel
-	 * trap; the default kernel behavior is to emulate the memory
-	 * access, but this results in a significant performance
-	 * penalty. We ought to fix PG not to make such unaligned memory
-	 * accesses, so this code disables the kernel emulation: unaligned
-	 * accesses will result in SIGBUS instead.
+	 * On some platforms, unaligned memory accesses result in a kernel trap;
+	 * the default kernel behavior is to emulate the memory access, but this
+	 * results in a significant performance penalty. We ought to fix PG not to
+	 * make such unaligned memory accesses, so this code disables the kernel
+	 * emulation: unaligned accesses will result in SIGBUS instead.
 	 */
 #ifdef NOFIXADE
 
@@ -125,31 +124,30 @@ main(int argc, char *argv[])
 #endif
 
 	/*
-	 * Not-quite-so-platform-specific startup environment checks. Still
-	 * best to minimize these.
+	 * Not-quite-so-platform-specific startup environment checks. Still best
+	 * to minimize these.
 	 */
 
 	/*
-	 * Remember the physical location of the initially given argv[] array
-	 * for possible use by ps display.	On some platforms, the argv[]
-	 * storage must be overwritten in order to set the process title for
-	 * ps. In such cases save_ps_display_args makes and returns a new copy
-	 * of the argv[] array.
+	 * Remember the physical location of the initially given argv[] array for
+	 * possible use by ps display.	On some platforms, the argv[] storage must
+	 * be overwritten in order to set the process title for ps. In such cases
+	 * save_ps_display_args makes and returns a new copy of the argv[] array.
 	 *
-	 * save_ps_display_args may also move the environment strings to make
-	 * extra room. Therefore this should be done as early as possible
-	 * during startup, to avoid entanglements with code that might save a
-	 * getenv() result pointer.
+	 * save_ps_display_args may also move the environment strings to make extra
+	 * room. Therefore this should be done as early as possible during
+	 * startup, to avoid entanglements with code that might save a getenv()
+	 * result pointer.
 	 */
 	argv = save_ps_display_args(argc, argv);
 
 	/*
 	 * Set up locale information from environment.	Note that LC_CTYPE and
 	 * LC_COLLATE will be overridden later from pg_control if we are in an
-	 * already-initialized database.  We set them here so that they will
-	 * be available to fill pg_control during initdb.  LC_MESSAGES will
-	 * get set later during GUC option processing, but we set it here to
-	 * allow startup error messages to be localized.
+	 * already-initialized database.  We set them here so that they will be
+	 * available to fill pg_control during initdb.	LC_MESSAGES will get set
+	 * later during GUC option processing, but we set it here to allow startup
+	 * error messages to be localized.
 	 */
 
 	set_pglocale_pgservice(argv[0], "postgres");
@@ -157,11 +155,10 @@ main(int argc, char *argv[])
 #ifdef WIN32
 
 	/*
-	 * Windows uses codepages rather than the environment, so we work
-	 * around that by querying the environment explicitly first for
-	 * LC_COLLATE and LC_CTYPE. We have to do this because initdb passes
-	 * those values in the environment. If there is nothing there we fall
-	 * back on the codepage.
+	 * Windows uses codepages rather than the environment, so we work around
+	 * that by querying the environment explicitly first for LC_COLLATE and
+	 * LC_CTYPE. We have to do this because initdb passes those values in the
+	 * environment. If there is nothing there we fall back on the codepage.
 	 */
 
 	if ((env_locale = getenv("LC_COLLATE")) != NULL)
@@ -183,17 +180,16 @@ main(int argc, char *argv[])
 #endif
 
 	/*
-	 * We keep these set to "C" always, except transiently in pg_locale.c;
-	 * see that file for explanations.
+	 * We keep these set to "C" always, except transiently in pg_locale.c; see
+	 * that file for explanations.
 	 */
 	setlocale(LC_MONETARY, "C");
 	setlocale(LC_NUMERIC, "C");
 	setlocale(LC_TIME, "C");
 
 	/*
-	 * Skip permission checks if we're just trying to do --help or
-	 * --version; otherwise root will get unhelpful failure messages from
-	 * initdb.
+	 * Skip permission checks if we're just trying to do --help or --version;
+	 * otherwise root will get unhelpful failure messages from initdb.
 	 */
 	if (!(argc > 1
 		  && (strcmp(argv[1], "--help") == 0 ||
@@ -215,19 +211,19 @@ main(int argc, char *argv[])
 			write_stderr("\"root\" execution of the PostgreSQL server is not permitted.\n"
 						 "The server must be started under an unprivileged user ID to prevent\n"
 						 "possible system security compromise.  See the documentation for\n"
-			  "more information on how to properly start the server.\n");
+				  "more information on how to properly start the server.\n");
 			exit(1);
 		}
 #endif   /* !__BEOS__ */
 
 		/*
-		 * Also make sure that real and effective uids are the same.
-		 * Executing Postgres as a setuid program from a root shell is a
-		 * security hole, since on many platforms a nefarious subroutine
-		 * could setuid back to root if real uid is root.  (Since nobody
-		 * actually uses Postgres as a setuid program, trying to actively
-		 * fix this situation seems more trouble than it's worth; we'll
-		 * just expend the effort to check for it.)
+		 * Also make sure that real and effective uids are the same. Executing
+		 * Postgres as a setuid program from a root shell is a security hole,
+		 * since on many platforms a nefarious subroutine could setuid back to
+		 * root if real uid is root.  (Since nobody actually uses Postgres as
+		 * a setuid program, trying to actively fix this situation seems more
+		 * trouble than it's worth; we'll just expend the effort to check for
+		 * it.)
 		 */
 		if (getuid() != geteuid())
 		{
@@ -242,7 +238,7 @@ main(int argc, char *argv[])
 						 "permitted.\n"
 						 "The server must be started under an unprivileged user ID to prevent\n"
 						 "possible system security compromises.  See the documentation for\n"
-			  "more information on how to properly start the server.\n");
+				  "more information on how to properly start the server.\n");
 			exit(1);
 		}
 #endif   /* !WIN32 */
@@ -250,9 +246,9 @@ main(int argc, char *argv[])
 
 	/*
 	 * Now dispatch to one of PostmasterMain, PostgresMain, GucInfoMain,
-	 * SubPostmasterMain, or BootstrapMain depending on the program name
-	 * (and possibly first argument) we were called with. The lack of
-	 * consistency here is historical.
+	 * SubPostmasterMain, or BootstrapMain depending on the program name (and
+	 * possibly first argument) we were called with. The lack of consistency
+	 * here is historical.
 	 */
 	if (strcmp(get_progname(argv[0]), "postmaster") == 0)
 	{
@@ -262,8 +258,8 @@ main(int argc, char *argv[])
 
 	/*
 	 * If the first argument begins with "-fork", then invoke
-	 * SubPostmasterMain.  This is used for forking postmaster child
-	 * processes on systems where we can't simply fork.
+	 * SubPostmasterMain.  This is used for forking postmaster child processes
+	 * on systems where we can't simply fork.
 	 */
 #ifdef EXEC_BACKEND
 	if (argc > 1 && strncmp(argv[1], "-fork", 5) == 0)
@@ -271,11 +267,12 @@ main(int argc, char *argv[])
 #endif
 
 #ifdef WIN32
+
 	/*
 	 * Start our win32 signal implementation
 	 *
-	 * SubPostmasterMain() will do this for itself, but the remaining
-	 * modes need it here
+	 * SubPostmasterMain() will do this for itself, but the remaining modes need
+	 * it here
 	 */
 	pgwin32_signal_initialize();
 #endif
@@ -295,9 +292,8 @@ main(int argc, char *argv[])
 		exit(GucInfoMain());
 
 	/*
-	 * Otherwise we're a standalone backend.  Invoke PostgresMain,
-	 * specifying current userid as the "authenticated" Postgres user
-	 * name.
+	 * Otherwise we're a standalone backend.  Invoke PostgresMain, specifying
+	 * current userid as the "authenticated" Postgres user name.
 	 */
 #ifndef WIN32
 	pw = getpwuid(geteuid());

@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSetOp.c,v 1.17 2005/05/06 17:24:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSetOp.c,v 1.18 2005/10/15 02:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,8 +58,8 @@ ExecSetOp(SetOpState *node)
 	resultTupleSlot = node->ps.ps_ResultTupleSlot;
 
 	/*
-	 * If the previously-returned tuple needs to be returned more than
-	 * once, keep returning it.
+	 * If the previously-returned tuple needs to be returned more than once,
+	 * keep returning it.
 	 */
 	if (node->numOutput > 0)
 	{
@@ -71,9 +71,9 @@ ExecSetOp(SetOpState *node)
 	ExecClearTuple(resultTupleSlot);
 
 	/*
-	 * Absorb groups of duplicate tuples, counting them, and saving the
-	 * first of each group as a possible return value. At the end of each
-	 * group, decide whether to return anything.
+	 * Absorb groups of duplicate tuples, counting them, and saving the first
+	 * of each group as a possible return value. At the end of each group,
+	 * decide whether to return anything.
 	 *
 	 * We assume that the tuples arrive in sorted order so we can detect
 	 * duplicates easily.
@@ -177,8 +177,8 @@ ExecSetOp(SetOpState *node)
 		else
 		{
 			/*
-			 * Current tuple is member of same group as resultTuple. Count
-			 * it in the appropriate counter.
+			 * Current tuple is member of same group as resultTuple. Count it
+			 * in the appropriate counter.
 			 */
 			int			flag;
 			bool		isNull;
@@ -232,8 +232,8 @@ ExecInitSetOp(SetOp *node, EState *estate)
 	 * Miscellaneous initialization
 	 *
 	 * SetOp nodes have no ExprContext initialization because they never call
-	 * ExecQual or ExecProject.  But they do need a per-tuple memory
-	 * context anyway for calling execTuplesMatch.
+	 * ExecQual or ExecProject.  But they do need a per-tuple memory context
+	 * anyway for calling execTuplesMatch.
 	 */
 	setopstate->tempContext =
 		AllocSetContextCreate(CurrentMemoryContext,
@@ -255,8 +255,8 @@ ExecInitSetOp(SetOp *node, EState *estate)
 	outerPlanState(setopstate) = ExecInitNode(outerPlan(node), estate);
 
 	/*
-	 * setop nodes do no projections, so initialize projection info for
-	 * this node appropriately
+	 * setop nodes do no projections, so initialize projection info for this
+	 * node appropriately
 	 */
 	ExecAssignResultTypeFromOuterPlan(&setopstate->ps);
 	setopstate->ps.ps_ProjInfo = NULL;

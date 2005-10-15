@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/pqexpbuffer.c,v 1.20 2004/12/31 22:03:50 pgsql Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/pqexpbuffer.c,v 1.21 2005/10/15 02:49:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,9 +135,9 @@ enlargePQExpBuffer(PQExpBuffer str, size_t needed)
 	char	   *newdata;
 
 	/*
-	 * Guard against ridiculous "needed" values, which can occur if we're
-	 * fed bogus data.	Without this, we can get an overflow or infinite
-	 * loop in the following.
+	 * Guard against ridiculous "needed" values, which can occur if we're fed
+	 * bogus data.	Without this, we can get an overflow or infinite loop in
+	 * the following.
 	 */
 	if (needed >= ((size_t) INT_MAX - str->len))
 		return 0;
@@ -150,19 +150,18 @@ enlargePQExpBuffer(PQExpBuffer str, size_t needed)
 		return 1;				/* got enough space already */
 
 	/*
-	 * We don't want to allocate just a little more space with each
-	 * append; for efficiency, double the buffer size each time it
-	 * overflows. Actually, we might need to more than double it if
-	 * 'needed' is big...
+	 * We don't want to allocate just a little more space with each append;
+	 * for efficiency, double the buffer size each time it overflows.
+	 * Actually, we might need to more than double it if 'needed' is big...
 	 */
 	newlen = (str->maxlen > 0) ? (2 * str->maxlen) : 64;
 	while (needed > newlen)
 		newlen = 2 * newlen;
 
 	/*
-	 * Clamp to INT_MAX in case we went past it.  Note we are assuming
-	 * here that INT_MAX <= UINT_MAX/2, else the above loop could
-	 * overflow.  We will still have newlen >= needed.
+	 * Clamp to INT_MAX in case we went past it.  Note we are assuming here
+	 * that INT_MAX <= UINT_MAX/2, else the above loop could overflow.	We
+	 * will still have newlen >= needed.
 	 */
 	if (newlen > (size_t) INT_MAX)
 		newlen = (size_t) INT_MAX;
@@ -197,8 +196,8 @@ printfPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 	{
 		/*
 		 * Try to format the given string into the available space; but if
-		 * there's hardly any space, don't bother trying, just fall
-		 * through to enlarge the buffer first.
+		 * there's hardly any space, don't bother trying, just fall through to
+		 * enlarge the buffer first.
 		 */
 		if (str->maxlen > str->len + 16)
 		{
@@ -245,8 +244,8 @@ appendPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 	{
 		/*
 		 * Try to format the given string into the available space; but if
-		 * there's hardly any space, don't bother trying, just fall
-		 * through to enlarge the buffer first.
+		 * there's hardly any space, don't bother trying, just fall through to
+		 * enlarge the buffer first.
 		 */
 		if (str->maxlen > str->len + 16)
 		{
@@ -321,8 +320,8 @@ appendBinaryPQExpBuffer(PQExpBuffer str, const char *data, size_t datalen)
 	str->len += datalen;
 
 	/*
-	 * Keep a trailing null in place, even though it's probably useless
-	 * for binary data...
+	 * Keep a trailing null in place, even though it's probably useless for
+	 * binary data...
 	 */
 	str->data[str->len] = '\0';
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSort.c,v 1.50 2005/03/16 21:38:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSort.c,v 1.51 2005/10/15 02:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,9 +56,8 @@ ExecSort(SortState *node)
 	tuplesortstate = (Tuplesortstate *) node->tuplesortstate;
 
 	/*
-	 * If first time through, read all tuples from outer plan and pass
-	 * them to tuplesort.c. Subsequent calls just fetch tuples from
-	 * tuplesort.
+	 * If first time through, read all tuples from outer plan and pass them to
+	 * tuplesort.c. Subsequent calls just fetch tuples from tuplesort.
 	 */
 
 	if (!node->sort_Done)
@@ -71,8 +70,8 @@ ExecSort(SortState *node)
 				   "sorting subplan");
 
 		/*
-		 * Want to scan subplan in the forward direction while creating
-		 * the sorted data.
+		 * Want to scan subplan in the forward direction while creating the
+		 * sorted data.
 		 */
 		estate->es_direction = ForwardScanDirection;
 
@@ -191,8 +190,8 @@ ExecInitSort(Sort *node, EState *estate)
 	outerPlanState(sortstate) = ExecInitNode(outerPlan(node), estate);
 
 	/*
-	 * initialize tuple type.  no need to initialize projection info
-	 * because this node doesn't do projections.
+	 * initialize tuple type.  no need to initialize projection info because
+	 * this node doesn't do projections.
 	 */
 	ExecAssignResultTypeFromOuterPlan(&sortstate->ss.ps);
 	ExecAssignScanTypeFromOuterPlan(&sortstate->ss);
@@ -286,9 +285,9 @@ void
 ExecReScanSort(SortState *node, ExprContext *exprCtxt)
 {
 	/*
-	 * If we haven't sorted yet, just return. If outerplan' chgParam is
-	 * not NULL then it will be re-scanned by ExecProcNode, else - no
-	 * reason to re-scan it at all.
+	 * If we haven't sorted yet, just return. If outerplan' chgParam is not
+	 * NULL then it will be re-scanned by ExecProcNode, else - no reason to
+	 * re-scan it at all.
 	 */
 	if (!node->sort_Done)
 		return;
@@ -296,8 +295,8 @@ ExecReScanSort(SortState *node, ExprContext *exprCtxt)
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
 
 	/*
-	 * If subnode is to be rescanned then we forget previous sort results;
-	 * we have to re-read the subplan and re-sort.
+	 * If subnode is to be rescanned then we forget previous sort results; we
+	 * have to re-read the subplan and re-sort.
 	 *
 	 * Otherwise we can just rewind and rescan the sorted output.
 	 */

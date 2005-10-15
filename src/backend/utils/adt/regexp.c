@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.58 2005/09/24 17:53:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.59 2005/10/15 02:49:29 momjian Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -85,8 +85,8 @@ static cached_re_str re_array[MAX_CACHED_RES];	/* cached re's */
  *
  * Returns regex_t
  *
- *  text_re --- the pattern, expressed as an *untoasted* TEXT object
- *  cflags --- compile options for the pattern
+ *	text_re --- the pattern, expressed as an *untoasted* TEXT object
+ *	cflags --- compile options for the pattern
  *
  * Pattern is given in the database encoding.  We internally convert to
  * array of pg_wchar which is what Spencer's regex package wants.
@@ -104,8 +104,8 @@ RE_compile_and_cache(text *text_re, int cflags)
 
 	/*
 	 * Look for a match among previously compiled REs.	Since the data
-	 * structure is self-organizing with most-used entries at the front,
-	 * our search strategy can just be to scan from the front.
+	 * structure is self-organizing with most-used entries at the front, our
+	 * search strategy can just be to scan from the front.
 	 */
 	for (i = 0; i < num_res; i++)
 	{
@@ -171,8 +171,8 @@ RE_compile_and_cache(text *text_re, int cflags)
 	re_temp.cre_flags = cflags;
 
 	/*
-	 * Okay, we have a valid new item in re_temp; insert it into the
-	 * storage array.  Discard last entry if needed.
+	 * Okay, we have a valid new item in re_temp; insert it into the storage
+	 * array.  Discard last entry if needed.
 	 */
 	if (num_res >= MAX_CACHED_RES)
 	{
@@ -213,7 +213,7 @@ RE_compile_and_execute(text *text_re, char *dat, int dat_len,
 	size_t		data_len;
 	int			regexec_result;
 	regex_t		re;
-	char        errMsg[100];
+	char		errMsg[100];
 
 	/* Convert data string to wide characters */
 	data = (pg_wchar *) palloc((dat_len + 1) * sizeof(pg_wchar));
@@ -405,10 +405,10 @@ textregexsubstr(PG_FUNCTION_ARGS)
 	regmatch_t	pmatch[2];
 
 	/*
-	 * We pass two regmatch_t structs to get info about the overall match
-	 * and the match for the first parenthesized subexpression (if any).
-	 * If there is a parenthesized subexpression, we return what it
-	 * matched; else return what the whole regexp matched.
+	 * We pass two regmatch_t structs to get info about the overall match and
+	 * the match for the first parenthesized subexpression (if any). If there
+	 * is a parenthesized subexpression, we return what it matched; else
+	 * return what the whole regexp matched.
 	 */
 	match = RE_compile_and_execute(p,
 								   VARDATA(s),
@@ -432,9 +432,9 @@ textregexsubstr(PG_FUNCTION_ARGS)
 		}
 
 		return DirectFunctionCall3(text_substr,
-									PointerGetDatum(s),
-									Int32GetDatum(so + 1),
-									Int32GetDatum(eo - so));
+								   PointerGetDatum(s),
+								   Int32GetDatum(so + 1),
+								   Int32GetDatum(eo - so));
 	}
 
 	PG_RETURN_NULL();
@@ -442,7 +442,7 @@ textregexsubstr(PG_FUNCTION_ARGS)
 
 /*
  * textregexreplace_noopt()
- *      Return a replace string matched by a regular expression.
+ *		Return a replace string matched by a regular expression.
  *		This function is a version that doesn't specify the option of
  *		textregexreplace. This is case sensitive, replace the first
  *		instance only.
@@ -458,15 +458,15 @@ textregexreplace_noopt(PG_FUNCTION_ARGS)
 	re = RE_compile_and_cache(p, regex_flavor);
 
 	return DirectFunctionCall4(replace_text_regexp,
-								PointerGetDatum(s),
-								PointerGetDatum(&re),
-								PointerGetDatum(r),
-								BoolGetDatum(false));
+							   PointerGetDatum(s),
+							   PointerGetDatum(&re),
+							   PointerGetDatum(r),
+							   BoolGetDatum(false));
 }
 
 /*
  * textregexreplace()
- *      Return a replace string matched by a regular expression.
+ *		Return a replace string matched by a regular expression.
  */
 Datum
 textregexreplace(PG_FUNCTION_ARGS)
@@ -478,7 +478,7 @@ textregexreplace(PG_FUNCTION_ARGS)
 	char	   *opt_p = VARDATA(opt);
 	int			opt_len = (VARSIZE(opt) - VARHDRSZ);
 	int			i;
-	bool		global = false;
+	bool global = false;
 	bool		ignorecase = false;
 	regex_t		re;
 
@@ -492,12 +492,13 @@ textregexreplace(PG_FUNCTION_ARGS)
 				break;
 			case 'g':
 				global = true;
+
 				break;
 			default:
 				ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("invalid option of regexp_replace: %c",
-					 opt_p[i])));
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("invalid option of regexp_replace: %c",
+								opt_p[i])));
 				break;
 		}
 	}
@@ -508,10 +509,10 @@ textregexreplace(PG_FUNCTION_ARGS)
 		re = RE_compile_and_cache(p, regex_flavor);
 
 	return DirectFunctionCall4(replace_text_regexp,
-								PointerGetDatum(s),
-								PointerGetDatum(&re),
-								PointerGetDatum(r),
-								BoolGetDatum(global));
+							   PointerGetDatum(s),
+							   PointerGetDatum(&re),
+							   PointerGetDatum(r),
+							   BoolGetDatum(global));
 }
 
 /* similar_escape()
@@ -555,7 +556,7 @@ similar_escape(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
 					 errmsg("invalid escape string"),
-			  errhint("Escape string must be empty or one character.")));
+				  errhint("Escape string must be empty or one character.")));
 	}
 
 	/* We need room for ^, $, and up to 2 output bytes per input byte */
@@ -566,7 +567,7 @@ similar_escape(PG_FUNCTION_ARGS)
 
 	while (plen > 0)
 	{
-		char	pchar = *p;
+		char		pchar = *p;
 
 		if (afterescape)
 		{

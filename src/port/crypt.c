@@ -11,18 +11,18 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ *	  notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *	  notice, this list of conditions and the following disclaimer in the
+ *	  documentation and/or other materials provided with the distribution.
  * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *	  may be used to endorse or promote products derived from this software
+ *	  without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.	IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -35,7 +35,6 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
-
 #else
 __RCSID("$NetBSD: crypt.c,v 1.18 2001/03/01 14:37:35 wiz Exp $");
 #endif
@@ -330,7 +329,7 @@ int			chars_in;
 
 /* =====  (mostly) Standard DES Tables ==================== */
 
-static const unsigned char IP[] = {	/* initial permutation */
+static const unsigned char IP[] = {		/* initial permutation */
 	58, 50, 42, 34, 26, 18, 10, 2,
 	60, 52, 44, 36, 28, 20, 12, 4,
 	62, 54, 46, 38, 30, 22, 14, 6,
@@ -383,7 +382,7 @@ static const unsigned char PC2[] = {	/* permuted choice table 2 */
 	0, 0, 46, 42, 50, 36, 29, 32,
 };
 
-static const unsigned char S[8][64] = {		/* 48->32 bit substitution tables */
+static const unsigned char S[8][64] = { /* 48->32 bit substitution tables */
 	/* S[1]			*/
 	{14, 4, 13, 1, 2, 15, 11, 8, 3, 10, 6, 12, 5, 9, 0, 7,
 		0, 15, 7, 4, 14, 2, 13, 1, 10, 6, 12, 11, 9, 5, 3, 8,
@@ -437,7 +436,7 @@ static const unsigned char P32Tr[] = {	/* 32-bit permutation function */
 	22, 11, 4, 25,
 };
 
-static const unsigned char CIFP[] = { /* compressed/interleaved permutation */
+static const unsigned char CIFP[] = {	/* compressed/interleaved permutation */
 	1, 2, 3, 4, 17, 18, 19, 20,
 	5, 6, 7, 8, 21, 22, 23, 24,
 	9, 10, 11, 12, 25, 26, 27, 28,
@@ -449,7 +448,7 @@ static const unsigned char CIFP[] = { /* compressed/interleaved permutation */
 	45, 46, 47, 48, 61, 62, 63, 64,
 };
 
-static const unsigned char itoa64[] = /* 0..63 => ascii-64 */
+static const unsigned char itoa64[] =	/* 0..63 => ascii-64 */
 "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 
@@ -523,8 +522,7 @@ const char *setting;
 			key++;
 		keyblock.b[i] = t;
 	}
-	if (des_setkey((char *) keyblock.b))		/* also initializes
-												 * "a64toi" */
+	if (des_setkey((char *) keyblock.b))		/* also initializes "a64toi" */
 		return (NULL);
 
 	encp = &cryptresult[0];
@@ -816,6 +814,7 @@ init_des()
 	int			tableno;
 	static unsigned char perm[64],
 				tmp32[32];		/* "static" for speed */
+
 /*	static volatile long init_start = 0; not used */
 
 	/*

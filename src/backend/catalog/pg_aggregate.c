@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.75 2005/04/14 20:03:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.76 2005/10/15 02:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,16 +76,16 @@ AggregateCreate(const char *aggName,
 		elog(ERROR, "aggregate must have a transition function");
 
 	/*
-	 * If transtype is polymorphic, basetype must be polymorphic also;
-	 * else we will have no way to deduce the actual transtype.
+	 * If transtype is polymorphic, basetype must be polymorphic also; else we
+	 * will have no way to deduce the actual transtype.
 	 */
 	if ((aggTransType == ANYARRAYOID || aggTransType == ANYELEMENTOID) &&
 		!(aggBaseType == ANYARRAYOID || aggBaseType == ANYELEMENTOID))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				 errmsg("cannot determine transition data type"),
-		errdetail("An aggregate using \"anyarray\" or \"anyelement\" as "
-			"transition type must have one of them as its base type.")));
+			errdetail("An aggregate using \"anyarray\" or \"anyelement\" as "
+				"transition type must have one of them as its base type.")));
 
 	/* handle transfn */
 	fnArgs[0] = aggTransType;
@@ -101,13 +101,13 @@ AggregateCreate(const char *aggName,
 
 	/*
 	 * Return type of transfn (possibly after refinement by
-	 * enforce_generic_type_consistency, if transtype isn't polymorphic)
-	 * must exactly match declared transtype.
+	 * enforce_generic_type_consistency, if transtype isn't polymorphic) must
+	 * exactly match declared transtype.
 	 *
-	 * In the non-polymorphic-transtype case, it might be okay to allow a
-	 * rettype that's binary-coercible to transtype, but I'm not quite
-	 * convinced that it's either safe or useful.  When transtype is
-	 * polymorphic we *must* demand exact equality.
+	 * In the non-polymorphic-transtype case, it might be okay to allow a rettype
+	 * that's binary-coercible to transtype, but I'm not quite convinced that
+	 * it's either safe or useful.  When transtype is polymorphic we *must*
+	 * demand exact equality.
 	 */
 	if (rettype != aggTransType)
 		ereport(ERROR,
@@ -124,10 +124,9 @@ AggregateCreate(const char *aggName,
 	proc = (Form_pg_proc) GETSTRUCT(tup);
 
 	/*
-	 * If the transfn is strict and the initval is NULL, make sure input
-	 * type and transtype are the same (or at least binary-compatible), so
-	 * that it's OK to use the first input value as the initial
-	 * transValue.
+	 * If the transfn is strict and the initval is NULL, make sure input type
+	 * and transtype are the same (or at least binary-compatible), so that
+	 * it's OK to use the first input value as the initial transValue.
 	 */
 	if (proc->proisstrict && agginitval == NULL)
 	{
@@ -155,20 +154,20 @@ AggregateCreate(const char *aggName,
 	Assert(OidIsValid(finaltype));
 
 	/*
-	 * If finaltype (i.e. aggregate return type) is polymorphic, basetype
-	 * must be polymorphic also, else parser will fail to deduce result
-	 * type.  (Note: given the previous test on transtype and basetype,
-	 * this cannot happen, unless someone has snuck a finalfn definition
-	 * into the catalogs that itself violates the rule against polymorphic
-	 * result with no polymorphic input.)
+	 * If finaltype (i.e. aggregate return type) is polymorphic, basetype must
+	 * be polymorphic also, else parser will fail to deduce result type.
+	 * (Note: given the previous test on transtype and basetype, this cannot
+	 * happen, unless someone has snuck a finalfn definition into the catalogs
+	 * that itself violates the rule against polymorphic result with no
+	 * polymorphic input.)
 	 */
 	if ((finaltype == ANYARRAYOID || finaltype == ANYELEMENTOID) &&
 		!(aggBaseType == ANYARRAYOID || aggBaseType == ANYELEMENTOID))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("cannot determine result data type"),
-		errdetail("An aggregate returning \"anyarray\" or \"anyelement\" "
-				  "must have one of them as its base type.")));
+		   errdetail("An aggregate returning \"anyarray\" or \"anyelement\" "
+					 "must have one of them as its base type.")));
 
 	/* handle sortop, if supplied */
 	if (aggsortopName)
@@ -178,8 +177,7 @@ AggregateCreate(const char *aggName,
 
 	/*
 	 * Everything looks okay.  Try to create the pg_proc entry for the
-	 * aggregate.  (This could fail if there's already a conflicting
-	 * entry.)
+	 * aggregate.  (This could fail if there's already a conflicting entry.)
 	 */
 	fnArgs[0] = aggBaseType;
 
@@ -198,7 +196,7 @@ AggregateCreate(const char *aggName,
 							  false,	/* isStrict (not needed for agg) */
 							  PROVOLATILE_IMMUTABLE,	/* volatility (not
 														 * needed for agg) */
-							  buildoidvector(fnArgs, 1),	/* paramTypes */
+							  buildoidvector(fnArgs, 1),		/* paramTypes */
 							  PointerGetDatum(NULL),	/* allParamTypes */
 							  PointerGetDatum(NULL),	/* parameterModes */
 							  PointerGetDatum(NULL));	/* parameterNames */
@@ -235,10 +233,9 @@ AggregateCreate(const char *aggName,
 	heap_close(aggdesc, RowExclusiveLock);
 
 	/*
-	 * Create dependencies for the aggregate (above and beyond those
-	 * already made by ProcedureCreate).  Note: we don't need an explicit
-	 * dependency on aggTransType since we depend on it indirectly through
-	 * transfn.
+	 * Create dependencies for the aggregate (above and beyond those already
+	 * made by ProcedureCreate).  Note: we don't need an explicit dependency
+	 * on aggTransType since we depend on it indirectly through transfn.
 	 */
 	myself.classId = ProcedureRelationId;
 	myself.objectId = procOid;
@@ -288,8 +285,8 @@ lookup_agg_function(List *fnName,
 	 * func_get_detail looks up the function in the catalogs, does
 	 * disambiguation for polymorphic functions, handles inheritance, and
 	 * returns the funcid and type and set or singleton status of the
-	 * function's return value.  it also returns the true argument types
-	 * to the function.
+	 * function's return value.  it also returns the true argument types to
+	 * the function.
 	 */
 	fdresult = func_get_detail(fnName, NIL, nargs, input_types,
 							   &fnOid, rettype, &retset,
@@ -300,21 +297,20 @@ lookup_agg_function(List *fnName,
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("function %s does not exist",
-					func_signature_string(fnName, nargs, input_types))));
+						func_signature_string(fnName, nargs, input_types))));
 	if (retset)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("function %s returns a set",
-					func_signature_string(fnName, nargs, input_types))));
+						func_signature_string(fnName, nargs, input_types))));
 
 	/*
-	 * If the given type(s) are all polymorphic, there's nothing we can
-	 * check.  Otherwise, enforce consistency, and possibly refine the
-	 * result type.
+	 * If the given type(s) are all polymorphic, there's nothing we can check.
+	 * Otherwise, enforce consistency, and possibly refine the result type.
 	 */
 	if ((input_types[0] == ANYARRAYOID || input_types[0] == ANYELEMENTOID) &&
 		(nargs == 1 ||
-	 (input_types[1] == ANYARRAYOID || input_types[1] == ANYELEMENTOID)))
+		 (input_types[1] == ANYARRAYOID || input_types[1] == ANYELEMENTOID)))
 	{
 		/* nothing to check here */
 	}
@@ -327,8 +323,8 @@ lookup_agg_function(List *fnName,
 	}
 
 	/*
-	 * func_get_detail will find functions requiring run-time argument
-	 * type coercion, but nodeAgg.c isn't prepared to deal with that
+	 * func_get_detail will find functions requiring run-time argument type
+	 * coercion, but nodeAgg.c isn't prepared to deal with that
 	 */
 	if (true_oid_array[0] != ANYARRAYOID &&
 		true_oid_array[0] != ANYELEMENTOID &&
@@ -336,7 +332,7 @@ lookup_agg_function(List *fnName,
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("function %s requires run-time type coercion",
-				 func_signature_string(fnName, nargs, true_oid_array))));
+					 func_signature_string(fnName, nargs, true_oid_array))));
 
 	if (nargs == 2 &&
 		true_oid_array[1] != ANYARRAYOID &&
@@ -345,7 +341,7 @@ lookup_agg_function(List *fnName,
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("function %s requires run-time type coercion",
-				 func_signature_string(fnName, nargs, true_oid_array))));
+					 func_signature_string(fnName, nargs, true_oid_array))));
 
 	/* Check aggregate creator has permission to call the function */
 	aclresult = pg_proc_aclcheck(fnOid, GetUserId(), ACL_EXECUTE);

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.136 2005/07/01 19:19:03 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.137 2005/10/15 02:49:42 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -36,7 +36,7 @@
  *		typedef struct FormData_pg_operator
  * ----------------
  */
-#define OperatorRelationId  2617
+#define OperatorRelationId	2617
 
 CATALOG(pg_operator,2617)
 {
@@ -568,8 +568,8 @@ DATA(insert OID = 1510 (  "@"	  PGNSP PGUID b f  718	718 16 1511    0	0	 0	 0	 0
 DATA(insert OID = 1511 (  "~"	  PGNSP PGUID b f  718	718 16 1510    0	0	 0	 0	 0 circle_contain contsel contjoinsel ));
 DATA(insert OID = 1512 (  "~="	  PGNSP PGUID b f  718	718 16 1512    0	0	 0	 0	 0 circle_same eqsel eqjoinsel ));
 DATA(insert OID = 1513 (  "&&"	  PGNSP PGUID b f  718	718 16 1513    0	0	 0	 0	 0 circle_overlap areasel areajoinsel ));
-DATA(insert OID = 1514 (  "|>>"	  PGNSP PGUID b f  718	718 16	  0    0	0	 0	 0	 0 circle_above positionsel positionjoinsel ));
-DATA(insert OID = 1515 (  "<<|"	  PGNSP PGUID b f  718	718 16	  0    0	0	 0	 0	 0 circle_below positionsel positionjoinsel ));
+DATA(insert OID = 1514 (  "|>>"   PGNSP PGUID b f  718	718 16	  0    0	0	 0	 0	 0 circle_above positionsel positionjoinsel ));
+DATA(insert OID = 1515 (  "<<|"   PGNSP PGUID b f  718	718 16	  0    0	0	 0	 0	 0 circle_below positionsel positionjoinsel ));
 
 DATA(insert OID = 1516 (  "+"	  PGNSP PGUID b f  718	600  718	  0    0	0	 0	 0	 0 circle_add_pt - - ));
 DATA(insert OID = 1517 (  "-"	  PGNSP PGUID b f  718	600  718	  0    0	0	 0	 0	 0 circle_sub_pt - - ));
@@ -866,16 +866,16 @@ DATA(insert OID = 2554 (  "+"	   PGNSP PGUID b f	1186 1184 1184 1327 0 0 0 0 0 i
 DATA(insert OID = 2555 (  "+"	   PGNSP PGUID b f	23 1082 1082 1100 0 0 0 0 0 integer_pl_date - - ));
 
 /* new operators for Y-direction rtree opclasses */
-DATA(insert OID = 2570 (  "<<|"	   PGNSP PGUID b f 603 603	16	 0	 0	 0	 0	 0	 0 box_below positionsel positionjoinsel ));
-DATA(insert OID = 2571 (  "&<|"	   PGNSP PGUID b f 603 603	16	 0	 0	 0	 0	 0	 0 box_overbelow positionsel positionjoinsel ));
-DATA(insert OID = 2572 (  "|&>"	   PGNSP PGUID b f 603 603	16	 0	 0	 0	 0	 0	 0 box_overabove positionsel positionjoinsel ));
-DATA(insert OID = 2573 (  "|>>"	   PGNSP PGUID b f 603 603	16	 0	 0	 0	 0	 0	 0 box_above positionsel positionjoinsel ));
-DATA(insert OID = 2574 (  "<<|"	   PGNSP PGUID b f 604 604	16	 0	 0	 0	 0	 0	 0 poly_below positionsel positionjoinsel ));
-DATA(insert OID = 2575 (  "&<|"	   PGNSP PGUID b f 604 604	16	 0	 0	 0	 0	 0	 0 poly_overbelow positionsel positionjoinsel ));
-DATA(insert OID = 2576 (  "|&>"	   PGNSP PGUID b f 604 604	16	 0	 0	 0	 0	 0	 0 poly_overabove positionsel positionjoinsel ));
-DATA(insert OID = 2577 (  "|>>"	   PGNSP PGUID b f 604 604	16	 0	 0	 0	 0	 0	 0 poly_above positionsel positionjoinsel ));
-DATA(insert OID = 2589 (  "&<|"	   PGNSP PGUID b f 718 718	16	 0	 0	 0	 0	 0	 0 circle_overbelow positionsel positionjoinsel ));
-DATA(insert OID = 2590 (  "|&>"	   PGNSP PGUID b f 718 718	16	 0	 0	 0	 0	 0	 0 circle_overabove positionsel positionjoinsel ));
+DATA(insert OID = 2570 (  "<<|"    PGNSP PGUID b f 603 603	16	 0	 0	 0	 0	 0	 0 box_below positionsel positionjoinsel ));
+DATA(insert OID = 2571 (  "&<|"    PGNSP PGUID b f 603 603	16	 0	 0	 0	 0	 0	 0 box_overbelow positionsel positionjoinsel ));
+DATA(insert OID = 2572 (  "|&>"    PGNSP PGUID b f 603 603	16	 0	 0	 0	 0	 0	 0 box_overabove positionsel positionjoinsel ));
+DATA(insert OID = 2573 (  "|>>"    PGNSP PGUID b f 603 603	16	 0	 0	 0	 0	 0	 0 box_above positionsel positionjoinsel ));
+DATA(insert OID = 2574 (  "<<|"    PGNSP PGUID b f 604 604	16	 0	 0	 0	 0	 0	 0 poly_below positionsel positionjoinsel ));
+DATA(insert OID = 2575 (  "&<|"    PGNSP PGUID b f 604 604	16	 0	 0	 0	 0	 0	 0 poly_overbelow positionsel positionjoinsel ));
+DATA(insert OID = 2576 (  "|&>"    PGNSP PGUID b f 604 604	16	 0	 0	 0	 0	 0	 0 poly_overabove positionsel positionjoinsel ));
+DATA(insert OID = 2577 (  "|>>"    PGNSP PGUID b f 604 604	16	 0	 0	 0	 0	 0	 0 poly_above positionsel positionjoinsel ));
+DATA(insert OID = 2589 (  "&<|"    PGNSP PGUID b f 718 718	16	 0	 0	 0	 0	 0	 0 circle_overbelow positionsel positionjoinsel ));
+DATA(insert OID = 2590 (  "|&>"    PGNSP PGUID b f 718 718	16	 0	 0	 0	 0	 0	 0 circle_overabove positionsel positionjoinsel ));
 
 
 /*

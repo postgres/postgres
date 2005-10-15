@@ -61,8 +61,7 @@ main(int argc, char *argv[])
 	if ((tmpfile = open(FSYNC_FILENAME, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR)) == -1)
 		die("can't open /var/tmp/test_fsync.out");
 	write(tmpfile, strout, WAL_FILE_SIZE);
-	fsync(tmpfile);				/* fsync so later fsync's don't have to do
-								 * it */
+	fsync(tmpfile);				/* fsync so later fsync's don't have to do it */
 	close(tmpfile);
 
 	printf("Simple write timing:\n");

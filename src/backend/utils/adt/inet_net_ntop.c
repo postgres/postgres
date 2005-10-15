@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/inet_net_ntop.c,v 1.20 2005/09/24 22:54:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/inet_net_ntop.c,v 1.21 2005/10/15 02:49:28 momjian Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -412,11 +412,11 @@ static char *
 inet_net_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 {
 	/*
-	 * Note that int32_t and int16_t need only be "at least" large enough
-	 * to contain a value of the specified size.  On some systems, like
-	 * Crays, there is no such thing as an integer variable with 16 bits.
-	 * Keep this in mind if you think this function should have been coded
-	 * to use pointer overlays.  All the world's not a VAX.
+	 * Note that int32_t and int16_t need only be "at least" large enough to
+	 * contain a value of the specified size.  On some systems, like Crays,
+	 * there is no such thing as an integer variable with 16 bits. Keep this
+	 * in mind if you think this function should have been coded to use
+	 * pointer overlays.  All the world's not a VAX.
 	 */
 	char		tmp[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255/128"];
 	char	   *tp;
@@ -435,8 +435,8 @@ inet_net_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 	}
 
 	/*
-	 * Preprocess: Copy the input (bytewise) array into a wordwise array.
-	 * Find the longest run of 0x00's in src[] for :: shorthanding.
+	 * Preprocess: Copy the input (bytewise) array into a wordwise array. Find
+	 * the longest run of 0x00's in src[] for :: shorthanding.
 	 */
 	memset(words, '\0', sizeof words);
 	for (i = 0; i < NS_IN6ADDRSZ; i++)
@@ -491,8 +491,8 @@ inet_net_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 			*tp++ = ':';
 		/* Is this address an encapsulated IPv4? */
 		if (i == 6 && best.base == 0 && (best.len == 6 ||
-								 (best.len == 7 && words[7] != 0x0001) ||
-								  (best.len == 5 && words[5] == 0xffff)))
+									 (best.len == 7 && words[7] != 0x0001) ||
+									  (best.len == 5 && words[5] == 0xffff)))
 		{
 			int			n;
 

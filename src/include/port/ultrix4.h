@@ -23,8 +23,7 @@
  * warning-free compilation.
  */
 
-#include <sys/types.h>			/* Declare various types, e.g. size_t,
-								 * fd_set */
+#include <sys/types.h>			/* Declare various types, e.g. size_t, fd_set */
 
 extern int	fp_class_d(double);
 extern long random(void);

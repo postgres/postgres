@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.42 2005/10/07 15:34:17 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.43 2005/10/15 02:49:06 momjian Exp $
  *
  * pgbench: a simple benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -55,8 +55,7 @@ extern int	optind;
 #define MAXCLIENTS 1024			/* max number of clients allowed */
 
 int			nclients = 1;		/* default number of simulated clients */
-int			nxacts = 10;		/* default number of transactions per
-								 * clients */
+int			nxacts = 10;		/* default number of transactions per clients */
 
 /*
  * scaling factor. for example, tps = 10 will make 1000000 tuples of
@@ -78,8 +77,7 @@ bool		use_log;			/* log transaction latencies to a file */
 
 int			remains;			/* number of remaining clients */
 
-int			is_connect;			/* establish connection  for each
-								 * transaction */
+int			is_connect;			/* establish connection  for each transaction */
 
 char	   *pghost = "";
 char	   *pgport = NULL;
@@ -92,8 +90,8 @@ char	   *dbName;
 /* variable definitions */
 typedef struct
 {
-	char	   *name;	/* variable name */
-	char	   *value;	/* its value */
+	char	   *name;			/* variable name */
+	char	   *value;			/* its value */
 }	Variable;
 
 /*
@@ -107,8 +105,8 @@ typedef struct
 	int			state;			/* state No. */
 	int			cnt;			/* xacts count */
 	int			ecnt;			/* error count */
-	int			listen;			/* 0 indicates that an async query has
-								 * been sent */
+	int			listen;			/* 0 indicates that an async query has been
+								 * sent */
 	Variable   *variables;		/* array of variable definitions */
 	int			nvariables;
 	struct timeval txn_begin;	/* used for measuring latencies */
@@ -124,48 +122,48 @@ typedef struct
 
 typedef struct
 {
-	int			type;	/* command type (SQL_COMMAND or META_COMMAND) */
-	int			argc;	/* number of commands */
-	char	  *argv[MAX_ARGS];	/* command list */
+	int			type;			/* command type (SQL_COMMAND or META_COMMAND) */
+	int			argc;			/* number of commands */
+	char	   *argv[MAX_ARGS]; /* command list */
 }	Command;
 
 #define MAX_FILES		128		/* max number of SQL script files allowed */
 
-Command	**sql_files[MAX_FILES];	/* SQL script files */
-int num_files;	/* its number */
+Command   **sql_files[MAX_FILES];		/* SQL script files */
+int			num_files;			/* its number */
 
 /* default scenario */
 static char *tpc_b = {
-"\\setrandom aid 1 100000\n"
-"\\setrandom bid 1 1\n"
-"\\setrandom tid 1 10\n"
-"\\setrandom delta 1 10000\n"
-"BEGIN;\n"
-"UPDATE accounts SET abalance = abalance + :delta WHERE aid = :aid;\n"
-"SELECT abalance FROM accounts WHERE aid = :aid;\n"
-"UPDATE tellers SET tbalance = tbalance + :delta WHERE tid = :tid;\n"
-"UPDATE branches SET bbalance = bbalance + :delta WHERE bid = :bid;\n"
-"INSERT INTO history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);\n"
-"END;\n"
+	"\\setrandom aid 1 100000\n"
+	"\\setrandom bid 1 1\n"
+	"\\setrandom tid 1 10\n"
+	"\\setrandom delta 1 10000\n"
+	"BEGIN;\n"
+	"UPDATE accounts SET abalance = abalance + :delta WHERE aid = :aid;\n"
+	"SELECT abalance FROM accounts WHERE aid = :aid;\n"
+	"UPDATE tellers SET tbalance = tbalance + :delta WHERE tid = :tid;\n"
+	"UPDATE branches SET bbalance = bbalance + :delta WHERE bid = :bid;\n"
+	"INSERT INTO history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);\n"
+	"END;\n"
 };
 
 /* -N case */
 static char *simple_update = {
-"\\setrandom aid 1 100000\n"
-"\\setrandom bid 1 1\n"
-"\\setrandom tid 1 10\n"
-"\\setrandom delta 1 10000\n"
-"BEGIN;\n"
-"UPDATE accounts SET abalance = abalance + :delta WHERE aid = :aid;\n"
-"SELECT abalance FROM accounts WHERE aid = :aid;\n"
-"INSERT INTO history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);\n"
-"END;\n"
+	"\\setrandom aid 1 100000\n"
+	"\\setrandom bid 1 1\n"
+	"\\setrandom tid 1 10\n"
+	"\\setrandom delta 1 10000\n"
+	"BEGIN;\n"
+	"UPDATE accounts SET abalance = abalance + :delta WHERE aid = :aid;\n"
+	"SELECT abalance FROM accounts WHERE aid = :aid;\n"
+	"INSERT INTO history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);\n"
+	"END;\n"
 };
 
 /* -S case */
 static char *select_only = {
-"\\setrandom aid 1 100000\n"
-"SELECT abalance FROM accounts WHERE aid = :aid;\n"
+	"\\setrandom aid 1 100000\n"
+	"SELECT abalance FROM accounts WHERE aid = :aid;\n"
 };
 
 static void
@@ -262,7 +260,7 @@ compareVariables(const void *v1, const void *v2)
 static char *
 getVariable(CState * st, char *name)
 {
-	Variable		key = { name }, *var;
+	Variable	key = {name}, *var;
 
 	/* On some versions of Solaris, bsearch of zero items dumps core */
 	if (st->nvariables <= 0)
@@ -282,7 +280,7 @@ getVariable(CState * st, char *name)
 static int
 putVariable(CState * st, char *name, char *value)
 {
-	Variable		key = { name }, *var;
+	Variable	key = {name}, *var;
 
 	/* On some versions of Solaris, bsearch of zero items dumps core */
 	if (st->nvariables > 0)
@@ -300,7 +298,7 @@ putVariable(CState * st, char *name, char *value)
 
 		if (st->variables)
 			newvars = (Variable *) realloc(st->variables,
-								(st->nvariables + 1) * sizeof(Variable));
+									(st->nvariables + 1) * sizeof(Variable));
 		else
 			newvars = (Variable *) malloc(sizeof(Variable));
 
@@ -341,15 +339,19 @@ putVariable(CState * st, char *name, char *value)
 static char *
 assignVariables(CState * st, char *sql)
 {
-	int			i, j;
-	char	   *p, *name, *val;
+	int			i,
+				j;
+	char	   *p,
+			   *name,
+			   *val;
 	void	   *tmp;
 
 	i = 0;
 	while ((p = strchr(&sql[i], ':')) != NULL)
 	{
 		i = j = p - sql;
-		do {
+		do
+		{
 			i++;
 		} while (isalnum((unsigned char) sql[i]) || sql[i] == '_');
 		if (i == j + 1)
@@ -403,7 +405,7 @@ doCustom(CState * state, int n, int debug)
 {
 	PGresult   *res;
 	CState	   *st = &state[n];
-	Command		**commands;
+	Command   **commands;
 
 	commands = sql_files[st->use_file];
 
@@ -414,20 +416,19 @@ doCustom(CState * state, int n, int debug)
 			if (debug)
 				fprintf(stderr, "client %d receiving\n", n);
 			if (!PQconsumeInput(st->con))
-			{						/* there's something wrong */
+			{					/* there's something wrong */
 				fprintf(stderr, "Client %d aborted in state %d. Probably the backend died while processing.\n", n, st->state);
-				remains--;			/* I've aborted */
+				remains--;		/* I've aborted */
 				PQfinish(st->con);
 				st->con = NULL;
 				return;
 			}
 			if (PQisBusy(st->con))
-				return;				/* don't have the whole result yet */
+				return;			/* don't have the whole result yet */
 		}
 
 		/*
-		 * transaction finished: record the time it took in the
-		 * log
+		 * transaction finished: record the time it took in the log
 		 */
 		if (use_log && commands[st->state + 1] == NULL)
 		{
@@ -468,7 +469,7 @@ doCustom(CState * state, int n, int debug)
 
 			if (++st->cnt >= nxacts)
 			{
-				remains--;	/* I've done */
+				remains--;		/* I've done */
 				if (st->con != NULL)
 				{
 					PQfinish(st->con);
@@ -483,7 +484,7 @@ doCustom(CState * state, int n, int debug)
 		if (commands[st->state] == NULL)
 		{
 			st->state = 0;
-			st->use_file = getrand(0, num_files-1);
+			st->use_file = getrand(0, num_files - 1);
 		}
 	}
 
@@ -525,13 +526,14 @@ doCustom(CState * state, int n, int debug)
 		}
 		else
 		{
-			st->listen = 1;			/* flags that should be listened */
+			st->listen = 1;		/* flags that should be listened */
 		}
 		free(sql);
 	}
 	else if (commands[st->state]->type == META_COMMAND)
 	{
-		int			argc = commands[st->state]->argc, i;
+		int			argc = commands[st->state]->argc,
+					i;
 		char	  **argv = commands[st->state]->argv;
 
 		if (debug)
@@ -748,28 +750,29 @@ init(void)
 	PQfinish(con);
 }
 
-static Command*
+static Command *
 process_commands(char *buf)
 {
 	const char	delim[] = " \f\n\r\t\v";
 
-	Command	  *my_commands;
+	Command    *my_commands;
 	int			j;
-	char		*p, *tok;
+	char	   *p,
+			   *tok;
 
 	if ((p = strchr(buf, '\n')) != NULL)
-	  *p = '\0';
+		*p = '\0';
 
 	p = buf;
 	while (isspace((unsigned char) *p))
-	  p++;
+		p++;
 
 	if (*p == '\0' || strncmp(p, "--", 2) == 0)
 	{
 		return NULL;
 	}
 
-	my_commands = (Command *)malloc(sizeof(Command));
+	my_commands = (Command *) malloc(sizeof(Command));
 	if (my_commands == NULL)
 	{
 		return NULL;
@@ -794,10 +797,11 @@ process_commands(char *buf)
 			j++;
 			tok = strtok(NULL, delim);
 		}
-		
+
 		if (strcasecmp(my_commands->argv[0], "setrandom") == 0)
 		{
-			int			min, max;
+			int			min,
+						max;
 
 			if (my_commands->argc < 4)
 			{
@@ -806,8 +810,8 @@ process_commands(char *buf)
 			}
 
 			for (j = 4; j < my_commands->argc; j++)
-			  fprintf(stderr, "%s: extra argument \"%s\" ignored\n",
-					  my_commands->argv[0], my_commands->argv[j]);
+				fprintf(stderr, "%s: extra argument \"%s\" ignored\n",
+						my_commands->argv[0], my_commands->argv[j]);
 
 			if ((min = atoi(my_commands->argv[2])) < 0)
 			{
@@ -825,7 +829,7 @@ process_commands(char *buf)
 		}
 		else
 		{
-			fprintf(stderr, "invalid command %s\n",	my_commands->argv[0]);
+			fprintf(stderr, "invalid command %s\n", my_commands->argv[0]);
 			return NULL;
 		}
 	}
@@ -847,11 +851,11 @@ process_file(char *filename)
 {
 #define COMMANDS_ALLOC_NUM 128
 
-	Command	  **my_commands;
+	Command   **my_commands;
 	FILE	   *fd;
 	int			lineno;
 	char		buf[BUFSIZ];
-	int	alloc_num;
+	int			alloc_num;
 
 	if (num_files >= MAX_FILES)
 	{
@@ -860,7 +864,7 @@ process_file(char *filename)
 	}
 
 	alloc_num = COMMANDS_ALLOC_NUM;
-	my_commands = (Command **)malloc(sizeof(Command **)*alloc_num);
+	my_commands = (Command **) malloc(sizeof(Command **) * alloc_num);
 	if (my_commands == NULL)
 		return false;
 
@@ -876,7 +880,7 @@ process_file(char *filename)
 
 	while (fgets(buf, sizeof(buf), fd) != NULL)
 	{
-		Command *commands;
+		Command    *commands;
 
 		commands = process_commands(buf);
 		if (commands == NULL)
@@ -913,25 +917,25 @@ process_builtin(char *tb)
 {
 #define COMMANDS_ALLOC_NUM 128
 
-	Command	  **my_commands;
+	Command   **my_commands;
 	int			lineno;
 	char		buf[BUFSIZ];
-	int	alloc_num;
+	int			alloc_num;
 
 	if (*tb == '\0')
 		return NULL;
 
 	alloc_num = COMMANDS_ALLOC_NUM;
-	my_commands = malloc(sizeof(Command **)*alloc_num);
+	my_commands = malloc(sizeof(Command **) * alloc_num);
 	if (my_commands == NULL)
 		return NULL;
 
 	lineno = 0;
 
-	for(;;)
+	for (;;)
 	{
-		char *p;
-		Command *commands;
+		char	   *p;
+		Command    *commands;
 
 		p = buf;
 		while (*tb && *tb != '\n')
@@ -1016,20 +1020,18 @@ main(int argc, char **argv)
 {
 	int			c;
 	int			is_init_mode = 0;		/* initialize mode? */
-	int			is_no_vacuum = 0;		/* no vacuum at all before
-										 * testing? */
+	int			is_no_vacuum = 0;		/* no vacuum at all before testing? */
 	int			is_full_vacuum = 0;		/* do full vacuum before testing? */
 	int			debug = 0;		/* debug flag */
-	int			ttype = 0;		/* transaction type. 0: TPC-B, 1: SELECT
-								 * only, 2: skip update of branches and
-								 * tellers */
+	int			ttype = 0;		/* transaction type. 0: TPC-B, 1: SELECT only,
+								 * 2: skip update of branches and tellers */
 	char	   *filename = NULL;
 
 	static CState *state;		/* status of clients */
 
 	struct timeval tv1;			/* start up time */
-	struct timeval tv2;			/* after establishing all connections to
-								 * the backend */
+	struct timeval tv2;			/* after establishing all connections to the
+								 * backend */
 	struct timeval tv3;			/* end time */
 
 	int			i;
@@ -1105,7 +1107,8 @@ main(int argc, char **argv)
 					fprintf(stderr, "Use limit/ulimt to increase the limit before using pgbench.\n");
 					exit(1);
 				}
-#endif   /* #if !(defined(__CYGWIN__) || defined(__MINGW32__)) */
+#endif   /* #if !(defined(__CYGWIN__) ||
+								 * defined(__MINGW32__)) */
 				break;
 			case 'C':
 				is_connect = 1;
@@ -1305,35 +1308,35 @@ main(int argc, char **argv)
 	/* process bultin SQL scripts */
 	switch (ttype)
 	{
-		char buf[128];
+			char		buf[128];
 
 		case 0:
 			sql_files[0] = process_builtin(tpc_b);
-			snprintf(buf, sizeof(buf), "%d", 100000*tps);
+			snprintf(buf, sizeof(buf), "%d", 100000 * tps);
 			sql_files[0][0]->argv[3] = strdup(buf);
-			snprintf(buf, sizeof(buf), "%d", 1*tps);
+			snprintf(buf, sizeof(buf), "%d", 1 * tps);
 			sql_files[0][1]->argv[3] = strdup(buf);
-			snprintf(buf, sizeof(buf), "%d", 10*tps);
+			snprintf(buf, sizeof(buf), "%d", 10 * tps);
 			sql_files[0][2]->argv[3] = strdup(buf);
-			snprintf(buf, sizeof(buf), "%d", 10000*tps);
+			snprintf(buf, sizeof(buf), "%d", 10000 * tps);
 			sql_files[0][3]->argv[3] = strdup(buf);
 			num_files = 1;
 			break;
 		case 1:
 			sql_files[0] = process_builtin(select_only);
-			snprintf(buf, sizeof(buf), "%d", 100000*tps);
+			snprintf(buf, sizeof(buf), "%d", 100000 * tps);
 			sql_files[0][0]->argv[3] = strdup(buf);
 			num_files = 1;
 			break;
 		case 2:
 			sql_files[0] = process_builtin(simple_update);
-			snprintf(buf, sizeof(buf), "%d", 100000*tps);
+			snprintf(buf, sizeof(buf), "%d", 100000 * tps);
 			sql_files[0][0]->argv[3] = strdup(buf);
-			snprintf(buf, sizeof(buf), "%d", 1*tps);
+			snprintf(buf, sizeof(buf), "%d", 1 * tps);
 			sql_files[0][1]->argv[3] = strdup(buf);
-			snprintf(buf, sizeof(buf), "%d", 10*tps);
+			snprintf(buf, sizeof(buf), "%d", 10 * tps);
 			sql_files[0][2]->argv[3] = strdup(buf);
-			snprintf(buf, sizeof(buf), "%d", 10000*tps);
+			snprintf(buf, sizeof(buf), "%d", 10000 * tps);
 			sql_files[0][3]->argv[3] = strdup(buf);
 			num_files = 1;
 			break;
@@ -1344,7 +1347,7 @@ main(int argc, char **argv)
 	/* send start up queries in async manner */
 	for (i = 0; i < nclients; i++)
 	{
-		state[i].use_file = getrand(0, num_files-1);
+		state[i].use_file = getrand(0, num_files - 1);
 		doCustom(state, i, debug);
 	}
 
@@ -1366,9 +1369,9 @@ main(int argc, char **argv)
 		maxsock = -1;
 		for (i = 0; i < nclients; i++)
 		{
-			Command **commands = sql_files[state[i].use_file];
+			Command   **commands = sql_files[state[i].use_file];
 
-			if (state[i].con &&	commands[state[i].state]->type != META_COMMAND)
+			if (state[i].con && commands[state[i].state]->type != META_COMMAND)
 			{
 				int			sock = PQsocket(state[i].con);
 
@@ -1396,7 +1399,7 @@ main(int argc, char **argv)
 				exit(1);
 			}
 			else if (nsocks == 0)
-			{						/* timeout */
+			{					/* timeout */
 				fprintf(stderr, "select timeout\n");
 				for (i = 0; i < nclients; i++)
 				{
@@ -1410,10 +1413,10 @@ main(int argc, char **argv)
 		/* ok, backend returns reply */
 		for (i = 0; i < nclients; i++)
 		{
-			Command **commands = sql_files[state[i].use_file];
+			Command   **commands = sql_files[state[i].use_file];
 
 			if (state[i].con && (FD_ISSET(PQsocket(state[i].con), &input_mask)
-								 || commands[state[i].state]->type == META_COMMAND))
+						  || commands[state[i].state]->type == META_COMMAND))
 			{
 				doCustom(state, i, debug);
 			}

@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.40 2005/06/22 17:45:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.41 2005/10/15 02:49:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,17 +84,17 @@ PrepareQuery(PrepareStmt *stmt)
 	}
 
 	/*
-	 * Parse analysis is already done, but we must still rewrite and plan
-	 * the query.
+	 * Parse analysis is already done, but we must still rewrite and plan the
+	 * query.
 	 */
 
 	/*
-	 * Because the planner is not cool about not scribbling on its input,
-	 * we make a preliminary copy of the source querytree.  This prevents
+	 * Because the planner is not cool about not scribbling on its input, we
+	 * make a preliminary copy of the source querytree.  This prevents
 	 * problems in the case that the PREPARE is in a portal or plpgsql
 	 * function and is executed repeatedly.  (See also the same hack in
-	 * DECLARE CURSOR and EXPLAIN.)  XXX the planner really shouldn't
-	 * modify its input ... FIXME someday.
+	 * DECLARE CURSOR and EXPLAIN.)  XXX the planner really shouldn't modify
+	 * its input ... FIXME someday.
 	 */
 	query = copyObject(stmt->query);
 
@@ -106,8 +106,8 @@ PrepareQuery(PrepareStmt *stmt)
 	plan_list = pg_plan_queries(query_list, NULL, false);
 
 	/*
-	 *	Save the results.  We don't have the query string for this PREPARE,
-	 *	but we do have the string we got from the client, so use that.
+	 * Save the results.  We don't have the query string for this PREPARE, but
+	 * we do have the string we got from the client, so use that.
 	 */
 	StorePreparedStatement(stmt->name,
 						   debug_query_string,
@@ -146,8 +146,8 @@ ExecuteQuery(ExecuteStmt *stmt, DestReceiver *dest, char *completionTag)
 	if (entry->argtype_list != NIL)
 	{
 		/*
-		 * Need an EState to evaluate parameters; must not delete it till
-		 * end of query, in case parameters are pass-by-reference.
+		 * Need an EState to evaluate parameters; must not delete it till end
+		 * of query, in case parameters are pass-by-reference.
 		 */
 		estate = CreateExecutorState();
 		paramLI = EvaluateParams(estate, stmt->params, entry->argtype_list);
@@ -159,10 +159,10 @@ ExecuteQuery(ExecuteStmt *stmt, DestReceiver *dest, char *completionTag)
 	portal = CreateNewPortal();
 
 	/*
-	 * For CREATE TABLE / AS EXECUTE, make a copy of the stored query so
-	 * that we can modify its destination (yech, but this has always been
-	 * ugly).  For regular EXECUTE we can just use the stored query where
-	 * it sits, since the executor is read-only.
+	 * For CREATE TABLE / AS EXECUTE, make a copy of the stored query so that
+	 * we can modify its destination (yech, but this has always been ugly).
+	 * For regular EXECUTE we can just use the stored query where it sits,
+	 * since the executor is read-only.
 	 */
 	if (stmt->into)
 	{
@@ -245,7 +245,7 @@ EvaluateParams(EState *estate, List *params, List *argtypes)
 		bool		isNull;
 
 		paramLI[i].value = ExecEvalExprSwitchContext(n,
-										  GetPerTupleExprContext(estate),
+											  GetPerTupleExprContext(estate),
 													 &isNull,
 													 NULL);
 		paramLI[i].kind = PARAM_NUM;
@@ -333,8 +333,8 @@ StorePreparedStatement(const char *stmt_name,
 	/*
 	 * We need to copy the data so that it is stored in the correct memory
 	 * context.  Do this before making hashtable entry, so that an
-	 * out-of-memory failure only wastes memory and doesn't leave us with
-	 * an incomplete (ie corrupt) hashtable entry.
+	 * out-of-memory failure only wastes memory and doesn't leave us with an
+	 * incomplete (ie corrupt) hashtable entry.
 	 */
 	qstring = query_string ? pstrdup(query_string) : NULL;
 	query_list = (List *) copyObject(query_list);
@@ -380,9 +380,9 @@ FetchPreparedStatement(const char *stmt_name, bool throwError)
 	if (prepared_queries)
 	{
 		/*
-		 * We can't just use the statement name as supplied by the user:
-		 * the hash package is picky enough that it needs to be
-		 * NULL-padded out to the appropriate length to work correctly.
+		 * We can't just use the statement name as supplied by the user: the
+		 * hash package is picky enough that it needs to be NULL-padded out to
+		 * the appropriate length to work correctly.
 		 */
 		StrNCpy(key, stmt_name, sizeof(key));
 
@@ -447,7 +447,7 @@ FetchPreparedStatementResultDesc(PreparedStatement *stmt)
 
 /*
  * Given a prepared statement that returns tuples, extract the query
- * targetlist.  Returns NIL if the statement doesn't have a determinable
+ * targetlist.	Returns NIL if the statement doesn't have a determinable
  * targetlist.
  *
  * Note: do not modify the result.
@@ -464,31 +464,31 @@ FetchPreparedStatementTargetList(PreparedStatement *stmt)
 		return ((Query *) linitial(stmt->query_list))->targetList;
 	if (strategy == PORTAL_UTIL_SELECT)
 	{
-		Node *utilityStmt;
+		Node	   *utilityStmt;
 
 		utilityStmt = ((Query *) linitial(stmt->query_list))->utilityStmt;
 		switch (nodeTag(utilityStmt))
 		{
 			case T_FetchStmt:
-			{
-				FetchStmt  *substmt = (FetchStmt *) utilityStmt;
-				Portal		subportal;
+				{
+					FetchStmt  *substmt = (FetchStmt *) utilityStmt;
+					Portal		subportal;
 
-				Assert(!substmt->ismove);
-				subportal = GetPortalByName(substmt->portalname);
-				Assert(PortalIsValid(subportal));
-				return FetchPortalTargetList(subportal);
-			}
+					Assert(!substmt->ismove);
+					subportal = GetPortalByName(substmt->portalname);
+					Assert(PortalIsValid(subportal));
+					return FetchPortalTargetList(subportal);
+				}
 
 			case T_ExecuteStmt:
-			{
-				ExecuteStmt *substmt = (ExecuteStmt *) utilityStmt;
-				PreparedStatement *entry;
+				{
+					ExecuteStmt *substmt = (ExecuteStmt *) utilityStmt;
+					PreparedStatement *entry;
 
-				Assert(!substmt->into);
-				entry = FetchPreparedStatement(substmt->name, true);
-				return FetchPreparedStatementTargetList(entry);
-			}
+					Assert(!substmt->into);
+					entry = FetchPreparedStatement(substmt->name, true);
+					return FetchPreparedStatementTargetList(entry);
+				}
 
 			default:
 				break;
@@ -564,8 +564,8 @@ ExplainExecuteQuery(ExplainStmt *stmt, TupOutputState *tstate)
 	if (entry->argtype_list != NIL)
 	{
 		/*
-		 * Need an EState to evaluate parameters; must not delete it till
-		 * end of query, in case parameters are pass-by-reference.
+		 * Need an EState to evaluate parameters; must not delete it till end
+		 * of query, in case parameters are pass-by-reference.
 		 */
 		estate = CreateExecutorState();
 		paramLI = EvaluateParams(estate, execstmt->params,
@@ -597,7 +597,7 @@ ExplainExecuteQuery(ExplainStmt *stmt, TupOutputState *tstate)
 				if (query->commandType != CMD_SELECT)
 					ereport(ERROR,
 							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						  errmsg("prepared statement is not a SELECT")));
+							 errmsg("prepared statement is not a SELECT")));
 
 				/* Copy the query so we can modify it */
 				query = copyObject(query);
