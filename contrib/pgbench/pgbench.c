@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.43 2005/10/15 02:49:06 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.44 2005/10/15 20:24:00 tgl Exp $
  *
  * pgbench: a simple benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -260,12 +260,14 @@ compareVariables(const void *v1, const void *v2)
 static char *
 getVariable(CState * st, char *name)
 {
-	Variable	key = {name}, *var;
+	Variable	key,
+			   *var;
 
 	/* On some versions of Solaris, bsearch of zero items dumps core */
 	if (st->nvariables <= 0)
 		return NULL;
 
+	key.name = name;
 	var = (Variable *) bsearch((void *) &key,
 							   (void *) st->variables,
 							   st->nvariables,
@@ -280,8 +282,10 @@ getVariable(CState * st, char *name)
 static int
 putVariable(CState * st, char *name, char *value)
 {
-	Variable	key = {name}, *var;
+	Variable	key,
+			   *var;
 
+	key.name = name;
 	/* On some versions of Solaris, bsearch of zero items dumps core */
 	if (st->nvariables > 0)
 		var = (Variable *) bsearch((void *) &key,
@@ -1093,11 +1097,10 @@ main(int argc, char **argv)
 #if !(defined(__CYGWIN__) || defined(__MINGW32__))
 #ifdef RLIMIT_NOFILE			/* most platform uses RLIMIT_NOFILE */
 				if (getrlimit(RLIMIT_NOFILE, &rlim) == -1)
-				{
 #else							/* but BSD doesn't ... */
 				if (getrlimit(RLIMIT_OFILE, &rlim) == -1)
+#endif   /* RLIMIT_NOFILE */
 				{
-#endif   /* HAVE_RLIMIT_NOFILE */
 					fprintf(stderr, "getrlimit failed. reason: %s\n", strerror(errno));
 					exit(1);
 				}
@@ -1107,8 +1110,7 @@ main(int argc, char **argv)
 					fprintf(stderr, "Use limit/ulimt to increase the limit before using pgbench.\n");
 					exit(1);
 				}
-#endif   /* #if !(defined(__CYGWIN__) ||
-								 * defined(__MINGW32__)) */
+#endif   /* #if !(defined(__CYGWIN__) || defined(__MINGW32__)) */
 				break;
 			case 'C':
 				is_connect = 1;
