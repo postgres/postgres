@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.106 2005/10/15 01:47:12 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.107 2005/10/15 20:12:33 neilc Exp $
 -->
 
  <sect1 id="xfunc">
@@ -1210,7 +1210,7 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
 
     <indexterm zone="xfunc-c-basetype">
      <primary>data type</primary>
-     <secondary>internal organisation</secondary>
+     <secondary>internal organization</secondary>
     </indexterm>
 
     <para>

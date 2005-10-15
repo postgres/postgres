@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.30 2005/10/15 15:29:24 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.31 2005/10/15 20:12:32 neilc Exp $
 -->
 <chapter Id="runtime-config">
   <title>Run-time Configuration</title>
@@ -2602,7 +2602,7 @@ SELECT * FROM parent WHERE key = 2400;
          Each recognized escape is replaced as outlined 
          below - anything else that looks like an escape is ignored. Other
          characters are copied straight to the log line. Some escapes are
-         only recognised by session processes, and do not apply to
+         only recognized by session processes, and do not apply to
          background processes such as the postmaster. <application>Syslog</>
          produces its own 
          time stamp and process ID information, so you probably do not want to

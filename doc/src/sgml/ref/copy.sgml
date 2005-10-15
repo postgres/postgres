@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.69 2005/10/13 14:44:58 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.70 2005/10/15 20:12:33 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -482,7 +482,7 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
     Separated Value (<literal>CSV</>) file format used by many other
     programs, such as spreadsheets. Instead of the escaping used by
     <productname>PostgreSQL</productname>'s standard text mode, it
-    produces and recognises the common CSV escaping mechanism.
+    produces and recognizes the common CSV escaping mechanism.
    </para>
 
    <para>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.11 2005/09/13 15:24:57 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.12 2005/10/15 20:12:33 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -157,7 +157,7 @@ ALTER SEQUENCE <replaceable class="parameter">name</replaceable> SET SCHEMA <rep
         specified, any calls to <function>nextval</function> after the
         sequence has reached its maximum value will return an error.
         If neither <literal>CYCLE</literal> or <literal>NO
-        CYCLE</literal> are specified, the old cycle behaviour will be
+        CYCLE</literal> are specified, the old cycle behavior will be
         maintained.
        </para>
       </listitem>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.21 2005/08/27 14:13:21 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.22 2005/10/15 20:12:32 neilc Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -3272,7 +3272,7 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>sql_language_comformance</literal></entry>
+      <entry><literal>sql_language_conformance</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>
        The standard conformance level for the language binding.  For

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.353 2005/09/12 22:11:38 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.354 2005/10/15 20:12:33 neilc Exp $
 -->
 
 <chapter Id="runtime">
@@ -747,7 +747,7 @@ options "SEMMNS=240"
        </para>
 
        <para>
-        The remaining sempahore settings are read-only as far as
+        The remaining semaphore settings are read-only as far as
         <command>sysctl</command> is concerned, but can be changed
         before boot using the <command>loader</command> prompt:
 <screen>

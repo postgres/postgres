@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.390 2005/10/11 21:17:11 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.391 2005/10/15 20:12:32 neilc Exp $
 
 Typical markup:
 
@@ -5631,7 +5631,7 @@ DROP SCHEMA information_schema CASCADE;
 <listitem><para>Fix information schema view <literal>constraint_column_usage</literal> for foreign keys (Peter)</para></listitem>
 <listitem><para>ECPG fixes (Michael)</para></listitem>
 <listitem><para>Fix bug with multiple <literal>IN</literal> subqueries and joins in the subqueries (Tom)</para></listitem>
-<listitem><para>Alllow <literal>COUNT('x')</literal> to work (Tom)</para></listitem>
+<listitem><para>Allow <literal>COUNT('x')</literal> to work (Tom)</para></listitem>
 <listitem><para>Install ECPG include files for Informix compatibility into separate directory (Peter)</para>
 <para>
   Some names of ECPG include files for Informix compatibility conflicted with operating system include files.
@@ -7262,7 +7262,7 @@ DROP SCHEMA information_schema CASCADE;
 
     <listitem>
      <para>
-      Have pg_dumpall use <command>GRANT</>/<command>REVOKE</> to dump database-level privleges (Tom)
+      Have pg_dumpall use <command>GRANT</>/<command>REVOKE</> to dump database-level privileges (Tom)
      </para>
     </listitem>
 
@@ -9782,7 +9782,7 @@ since <productname>PostgreSQL</productname> 7.1.
 
     <para>
      <programlisting>
-Remove unused WAL segements of large transactions (Tom)
+Remove unused WAL segments of large transactions (Tom)
 Multiaction rule fix (Tom)
 PL/pgSQL memory allocation fix (Jan)
 VACUUM buffer fix (Tom)
@@ -10219,7 +10219,7 @@ Fix for psql \l+ when multibyte enabled (Tatsuo)
 Allow PL/pgSQL to accept non ascii identifiers (Tatsuo)
 Make vacuum always flush buffers (Tom)
 Fix to allow cancel while waiting for a lock (Hiroshi)
-Fix for memory aloocation problem in user authentication code (Tom)
+Fix for memory allocation problem in user authentication code (Tom)
 Remove bogus use of int4out() (Tom)
 Fixes for multiple subqueries in COALESCE or BETWEEN (Tom)
 Fix for failure of triggers on heap open in certain cases (Jeroen van
@@ -10938,13 +10938,13 @@ Fix for EXPLAIN on inheritance(Tom)
 Patch to allow vacuum on multisegment tables(Hiroshi)
 R-Tree optimizer selectivity fix(Tom)
 ACL file descriptor leak fix(Atsushi Ogawa)
-New expresssion subtree code(Tom)
+New expression subtree code(Tom)
 Avoid disk writes for read-only transactions(Vadim)
 Fix for removal of temp tables if last transaction was aborted(Bruce)
 Fix to prevent too large row from being created(Bruce)
 plpgsql fixes
 Allow port numbers 32k - 64k(Bruce)
-Add ^ precidence(Bruce)
+Add ^ precedence(Bruce)
 Rename sort files called pg_temp to pg_sorttemp(Bruce)
 Fix for microseconds in time values(Tom)
 Tutorial source cleanup
@@ -11326,7 +11326,7 @@ New pg_options: pretty_plan, pretty_parse, pretty_rewritten(Jan)
 Better optimization statistics for system table access(Tom)
 Better handling of non-default block sizes(Massimo)
 Improve GEQO optimizer memory consumption(Tom)
-UNION now suppports ORDER BY of columns not in target list(Jan)
+UNION now supports ORDER BY of columns not in target list(Jan)
 Major libpq++ improvements(Vince Vielhaber)
 pg_dump now uses -z(ACL's) as default(Bruce)
 backend cache, memory speedups(Tom)
@@ -11700,7 +11700,7 @@ New UNLISTEN command(Massimo)
 psql and libpq now compile under Windows using win32.mak(Magnus)
 Lo_read no longer stores trailing NULL(Bruce)
 Identifiers are now truncated to 31 characters internally(Bruce)
-Createuser options now availble on the command line
+Createuser options now available on the command line
 Code for 64-bit integer supported added, configure tested, int8 type(Thomas)
 Prevent file descriptor leaf from failed COPY(Bruce)
 New pg_upgrade command(Bruce)
@@ -11711,7 +11711,7 @@ New DECLARE and FETCH feature(Thomas)
 libpq's internal structures now not exported(Tom)
 Allow up to 8 key indexes(Bruce)
 Remove ARCHIVE key word, that is no longer used(Thomas)
-pg_dump -n flag to supress quotes around indentifiers
+pg_dump -n flag to suppress quotes around indentifiers
 disable system columns for views(Jan)
 new INET and CIDR types for network addresses(TomH, Paul)
 no more double quotes in psql output
@@ -11740,7 +11740,7 @@ NS32K platform fixes(Phil Nelson, John Buller)
 SCO 7/UnixWare 2.x fixes(Billy,others)
 Sparc/Solaris 2.5 fixes(Ryan)
 Pgbuiltin.3 is obsolete, move to doc files(Thomas)
-Even more documention(Thomas)
+Even more documentation(Thomas)
 Nextstep support(Jacek)
 Aix support(David)
 pginterface manual page(Bruce)
@@ -12088,7 +12088,7 @@ Check boolean input literals for 'true','false','yes','no','1','0'
         and throw elog(ERROR) if unrecognized(Thomas)
 Major large objects fix
 Fix for GROUP BY showing duplicates(Vadim)
-Fix for index scans in MergeJion(Vadim)
+Fix for index scans in MergeJoin(Vadim)
 
 Enhancements
 ------------
@@ -12713,7 +12713,7 @@ because the COPY output format was improved from the 1.02 release.
      <programlisting>
 Bug Fixes
 ---------
-ALTER TABLE bug - running postgress process needs to re-read table definition
+ALTER TABLE bug - running postgres process needs to re-read table definition
 Allow vacuum to be run on one table or entire database(Bruce)
 Array fixes
 Fix array over-runs of memory writes(Kurt)
@@ -12721,7 +12721,7 @@ Fix elusive btree range/non-range bug(Dan)
 Fix for hash indexes on some types like time and date
 Fix for pg_log size explosion
 Fix permissions on lo_export()(Bruce)
-Fix unitialized reads of memory(Kurt)
+Fix uninitialized reads of memory(Kurt)
 Fixed ALTER TABLE ... char(3) bug(Bruce)
 Fixed a few small memory leaks
 Fixed EXPLAIN handling of options and changed full_path option name
@@ -12765,7 +12765,7 @@ Change default decimal constant representation from float4 to float8(Bruce)
 European date format now set when postmaster is started
 Execute lowercase function names if not found with exact case
 Fixes for aggregate/GROUP processing, allow 'select sum(func(x),sum(x+y) from z'
-Gist now included in the distrubution(Marc)
+Gist now included in the distribution(Marc)
 Idend authentication of local users(Bryan)
 Implement BETWEEN qualifier(Bruce)
 Implement IN qualifier(Bruce)
@@ -12794,7 +12794,7 @@ Vacuum now had VERBOSE option(Bruce)
 Source tree changes
 -------------------
 All functions now have prototypes that are compared against the calls
-Allow asserts to be disabled easly from Makefile.global(Bruce)
+Allow asserts to be disabled easily from Makefile.global(Bruce)
 Change oid constants used in code to #define names
 Decoupled sparc and solaris defines(Kurt)
 Gcc -Wall compiles cleanly with warnings only from unfixable constructs
@@ -12807,13 +12807,13 @@ Name change from Postgres95 to PostgreSQL
 New config.h file(Marc, Bryan)
 PG_VERSION now set to 6.0 and used by postmaster
 Portability additions, including Ultrix, DG/UX, AIX, and Solaris
-Reduced the number of #define's, centeralized #define's
+Reduced the number of #define's, centralized #define's
 Remove duplicate OIDS in system tables(Dan)
 Remove duplicate system catalog info or report mismatches(Dan)
 Removed many os-specific #define's
 Restructured object file generation/location(Bryan, Marc)
 Restructured port-specific file locations(Bryan, Marc)
-Unused/uninialized variables corrected
+Unused/uninitialized variables corrected
 </programlisting>
 </para>
 </sect2>
@@ -12953,7 +12953,7 @@ New Ports
 </programlisting>
 </para>
 <!--
-Contributors (appologies to any missed)
+Contributors (apologies to any missed)
  * Kurt J. Lidl &lt;lidl@va.pubnix.com&gt; 
         (missed in first run, but no less important)
  * Erich Stamberger &lt;eberger@gewi.kfunigraz.ac.at&gt;

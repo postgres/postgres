@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.31 2005/10/13 23:26:00 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.32 2005/10/15 20:12:33 neilc Exp $
 -->
 
 <chapter id="user-manag">
@@ -475,7 +475,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
   <para>
    Functions run inside the backend
    server process with the operating system permissions of the
-   database server daemon.  If the programmming language
+   database server daemon.  If the programming language
    used for the function allows unchecked memory accesses, it is
    possible to change the server's internal data structures.
    Hence, among many other things, such functions can circumvent any
