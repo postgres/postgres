@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.354 2005/10/15 20:12:33 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.355 2005/10/16 21:22:12 tgl Exp $
 -->
 
 <chapter Id="runtime">
@@ -879,14 +879,27 @@ sysctl -w kern.sysv.shmmni
 sysctl -w kern.sysv.shmseg
 sysctl -w kern.sysv.shmall
 </programlisting>
-        In OS X 10.3, these commands have been moved to <filename>/etc/rc</>
-        and must be edited there.  You'll need to reboot to make changes
-        take effect.  Note that <filename>/etc/rc</> is usually
-        overwritten by OS X updates (such as 10.3.6 to 10.3.7) so you
-        should expect to have to redo your editing after each update.
+        In OS X 10.3 and later, these commands have been moved to
+        <filename>/etc/rc</> and must be edited there.  Note that
+        <filename>/etc/rc</> is usually overwritten by OS X updates (such as
+        10.3.6 to 10.3.7) so you should expect to have to redo your editing
+        after each update.  In all versions, you'll need to reboot to make
+        changes take effect.  
        </para>
+
+<!--
+It might appear that we could recommend putting sysctl settings into
+/etc/sysctl.conf so that they aren't destroyed by OS version updates.
+This does not work as of OS X 10.4.2, however, because /etc/rc
+promptly overrides whatever SHM settings are read from sysctl.conf :-(
+Perhaps someday we can recommend this ...
+-->
+
        <para>
         <varname>SHMALL</> is measured in 4KB pages on this platform.
+        Also note that some releases of OS X will reject attempts to
+        set <varname>SHMMAX</> to a value that isn't an exact multiple
+        of 4096.
        </para>
       </listitem>
      </varlistentry>
