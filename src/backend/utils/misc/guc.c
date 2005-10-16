@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.293 2005/10/15 02:49:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.294 2005/10/16 18:26:00 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -502,7 +502,7 @@ static struct config_bool ConfigureNamesBool[] =
 		{"fsync", PGC_SIGHUP, WAL_SETTINGS,
 			gettext_noop("Forces synchronization of updates to disk."),
 			gettext_noop("The server will use the fsync() system call in several places to make "
-			"sure that updates are physically written to disk. This insures "
+						 "sure that updates are physically written to disk. This insures "
 						 "that a database cluster will recover to a consistent state after "
 						 "an operating system or hardware crash.")
 		},
@@ -526,8 +526,8 @@ static struct config_bool ConfigureNamesBool[] =
 		{"full_page_writes", PGC_SIGHUP, WAL_SETTINGS,
 			gettext_noop("Writes full pages to WAL when first modified after a checkpoint."),
 			gettext_noop("A page write in process during an operating system crash might be "
-						 "only partially written to disk.  During recovery, the row changes"
-			  "stored in WAL are not enough to recover.  This option writes "
+						 "only partially written to disk.  During recovery, the row changes "
+						 "stored in WAL are not enough to recover.  This option writes "
 						 "pages when first modified after a checkpoint to WAL so full recovery "
 						 "is possible.")
 		},
