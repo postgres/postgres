@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/ip.c,v 1.31 2004/12/31 21:59:50 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/ip.c,v 1.32 2005/10/17 16:24:19 tgl Exp $
  *
  * This file and the IPV6 implementation were initially provided by
  * Nigel Kukard <nkukard@lbsd.net>, Linux Based Systems Design
@@ -38,22 +38,22 @@
 #include "libpq/ip.h"
 
 
-static int rangeSockAddrAF_INET(const struct sockaddr_in * addr,
-					 const struct sockaddr_in * netaddr,
-					 const struct sockaddr_in * netmask);
+static int range_sockaddr_AF_INET(const struct sockaddr_in *addr,
+					 const struct sockaddr_in *netaddr,
+					 const struct sockaddr_in *netmask);
 
 #ifdef HAVE_IPV6
-static int rangeSockAddrAF_INET6(const struct sockaddr_in6 * addr,
-					  const struct sockaddr_in6 * netaddr,
-					  const struct sockaddr_in6 * netmask);
+static int range_sockaddr_AF_INET6(const struct sockaddr_in6 *addr,
+					  const struct sockaddr_in6 *netaddr,
+					  const struct sockaddr_in6 *netmask);
 #endif
 
 #ifdef	HAVE_UNIX_SOCKETS
 static int getaddrinfo_unix(const char *path,
-				 const struct addrinfo * hintsp,
-				 struct addrinfo ** result);
+				 const struct addrinfo *hintsp,
+				 struct addrinfo **result);
 
-static int getnameinfo_unix(const struct sockaddr_un * sa, int salen,
+static int getnameinfo_unix(const struct sockaddr_un *sa, int salen,
 				 char *node, int nodelen,
 				 char *service, int servicelen,
 				 int flags);
@@ -61,11 +61,11 @@ static int getnameinfo_unix(const struct sockaddr_un * sa, int salen,
 
 
 /*
- *	getaddrinfo_all - get address info for Unix, IPv4 and IPv6 sockets
+ *	pg_getaddrinfo_all - get address info for Unix, IPv4 and IPv6 sockets
  */
 int
-getaddrinfo_all(const char *hostname, const char *servname,
-				const struct addrinfo * hintp, struct addrinfo ** result)
+pg_getaddrinfo_all(const char *hostname, const char *servname,
+				   const struct addrinfo *hintp, struct addrinfo **result)
 {
 	/* not all versions of getaddrinfo() zero *result on failure */
 	*result = NULL;
@@ -82,7 +82,7 @@ getaddrinfo_all(const char *hostname, const char *servname,
 
 
 /*
- *	freeaddrinfo_all - free addrinfo structures for IPv4, IPv6, or Unix
+ *	pg_freeaddrinfo_all - free addrinfo structures for IPv4, IPv6, or Unix
  *
  * Note: the ai_family field of the original hint structure must be passed
  * so that we can tell whether the addrinfo struct was built by the system's
@@ -91,12 +91,12 @@ getaddrinfo_all(const char *hostname, const char *servname,
  * not safe to look at ai_family in the addrinfo itself.
  */
 void
-freeaddrinfo_all(int hint_ai_family, struct addrinfo * ai)
+pg_freeaddrinfo_all(int hint_ai_family, struct addrinfo *ai)
 {
 #ifdef HAVE_UNIX_SOCKETS
 	if (hint_ai_family == AF_UNIX)
 	{
-		/* struct was built by getaddrinfo_unix (see getaddrinfo_all) */
+		/* struct was built by getaddrinfo_unix (see pg_getaddrinfo_all) */
 		while (ai != NULL)
 		{
 			struct addrinfo *p = ai;
@@ -117,7 +117,7 @@ freeaddrinfo_all(int hint_ai_family, struct addrinfo * ai)
 
 
 /*
- *	getnameinfo_all - get name info for Unix, IPv4 and IPv6 sockets
+ *	pg_getnameinfo_all - get name info for Unix, IPv4 and IPv6 sockets
  *
  * The API of this routine differs from the standard getnameinfo() definition
  * in two ways: first, the addr parameter is declared as sockaddr_storage
@@ -125,10 +125,10 @@ freeaddrinfo_all(int hint_ai_family, struct addrinfo * ai)
  * guaranteed to be filled with something even on failure return.
  */
 int
-getnameinfo_all(const struct sockaddr_storage * addr, int salen,
-				char *node, int nodelen,
-				char *service, int servicelen,
-				int flags)
+pg_getnameinfo_all(const struct sockaddr_storage *addr, int salen,
+				   char *node, int nodelen,
+				   char *service, int servicelen,
+				   int flags)
 {
 	int			rc;
 
@@ -168,8 +168,8 @@ getnameinfo_all(const struct sockaddr_storage * addr, int salen,
  * -------
  */
 static int
-getaddrinfo_unix(const char *path, const struct addrinfo * hintsp,
-				 struct addrinfo ** result)
+getaddrinfo_unix(const char *path, const struct addrinfo *hintsp,
+				 struct addrinfo **result)
 {
 	struct addrinfo hints;
 	struct addrinfo *aip;
@@ -234,7 +234,7 @@ getaddrinfo_unix(const char *path, const struct addrinfo * hintsp,
  * Convert an address to a hostname.
  */
 static int
-getnameinfo_unix(const struct sockaddr_un * sa, int salen,
+getnameinfo_unix(const struct sockaddr_un *sa, int salen,
 				 char *node, int nodelen,
 				 char *service, int servicelen,
 				 int flags)
@@ -267,38 +267,39 @@ getnameinfo_unix(const struct sockaddr_un * sa, int salen,
 
 	return 0;
 }
+
 #endif   /* HAVE_UNIX_SOCKETS */
 
 
 /*
- * rangeSockAddr - is addr within the subnet specified by netaddr/netmask ?
+ * pg_range_sockaddr - is addr within the subnet specified by netaddr/netmask ?
  *
  * Note: caller must already have verified that all three addresses are
  * in the same address family; and AF_UNIX addresses are not supported.
  */
 int
-rangeSockAddr(const struct sockaddr_storage * addr,
-			  const struct sockaddr_storage * netaddr,
-			  const struct sockaddr_storage * netmask)
+pg_range_sockaddr(const struct sockaddr_storage *addr,
+				  const struct sockaddr_storage *netaddr,
+				  const struct sockaddr_storage *netmask)
 {
 	if (addr->ss_family == AF_INET)
-		return rangeSockAddrAF_INET((struct sockaddr_in *) addr,
-									(struct sockaddr_in *) netaddr,
-									(struct sockaddr_in *) netmask);
+		return range_sockaddr_AF_INET((struct sockaddr_in *) addr,
+									  (struct sockaddr_in *) netaddr,
+									  (struct sockaddr_in *) netmask);
 #ifdef HAVE_IPV6
 	else if (addr->ss_family == AF_INET6)
-		return rangeSockAddrAF_INET6((struct sockaddr_in6 *) addr,
-									 (struct sockaddr_in6 *) netaddr,
-									 (struct sockaddr_in6 *) netmask);
+		return range_sockaddr_AF_INET6((struct sockaddr_in6 *) addr,
+									   (struct sockaddr_in6 *) netaddr,
+									   (struct sockaddr_in6 *) netmask);
 #endif
 	else
 		return 0;
 }
 
 static int
-rangeSockAddrAF_INET(const struct sockaddr_in * addr,
-					 const struct sockaddr_in * netaddr,
-					 const struct sockaddr_in * netmask)
+range_sockaddr_AF_INET(const struct sockaddr_in *addr,
+					   const struct sockaddr_in *netaddr,
+					   const struct sockaddr_in *netmask)
 {
 	if (((addr->sin_addr.s_addr ^ netaddr->sin_addr.s_addr) &
 		 netmask->sin_addr.s_addr) == 0)
@@ -309,10 +310,11 @@ rangeSockAddrAF_INET(const struct sockaddr_in * addr,
 
 
 #ifdef HAVE_IPV6
+
 static int
-rangeSockAddrAF_INET6(const struct sockaddr_in6 * addr,
-					  const struct sockaddr_in6 * netaddr,
-					  const struct sockaddr_in6 * netmask)
+range_sockaddr_AF_INET6(const struct sockaddr_in6 *addr,
+						const struct sockaddr_in6 *netaddr,
+						const struct sockaddr_in6 *netmask)
 {
 	int			i;
 
@@ -325,10 +327,11 @@ rangeSockAddrAF_INET6(const struct sockaddr_in6 * addr,
 
 	return 1;
 }
-#endif
+
+#endif /* HAVE_IPV6 */
 
 /*
- *	SockAddr_cidr_mask - make a network mask of the appropriate family
+ *	pg_sockaddr_cidr_mask - make a network mask of the appropriate family
  *	  and required number of significant bits
  *
  * The resulting mask is placed in *mask, which had better be big enough.
@@ -336,7 +339,7 @@ rangeSockAddrAF_INET6(const struct sockaddr_in6 * addr,
  * Return value is 0 if okay, -1 if not.
  */
 int
-SockAddr_cidr_mask(struct sockaddr_storage * mask, char *numbits, int family)
+pg_sockaddr_cidr_mask(struct sockaddr_storage *mask, char *numbits, int family)
 {
 	long		bits;
 	char	   *endptr;
@@ -403,15 +406,15 @@ SockAddr_cidr_mask(struct sockaddr_storage * mask, char *numbits, int family)
 #ifdef HAVE_IPV6
 
 /*
- * promote_v4_to_v6_addr --- convert an AF_INET addr to AF_INET6, using
+ * pg_promote_v4_to_v6_addr --- convert an AF_INET addr to AF_INET6, using
  *		the standard convention for IPv4 addresses mapped into IPv6 world
  *
  * The passed addr is modified in place; be sure it is large enough to
  * hold the result!  Note that we only worry about setting the fields
- * that rangeSockAddr will look at.
+ * that pg_range_sockaddr will look at.
  */
 void
-promote_v4_to_v6_addr(struct sockaddr_storage * addr)
+pg_promote_v4_to_v6_addr(struct sockaddr_storage *addr)
 {
 	struct sockaddr_in addr4;
 	struct sockaddr_in6 addr6;
@@ -435,18 +438,18 @@ promote_v4_to_v6_addr(struct sockaddr_storage * addr)
 }
 
 /*
- * promote_v4_to_v6_mask --- convert an AF_INET netmask to AF_INET6, using
+ * pg_promote_v4_to_v6_mask --- convert an AF_INET netmask to AF_INET6, using
  *		the standard convention for IPv4 addresses mapped into IPv6 world
  *
- * This must be different from promote_v4_to_v6_addr because we want to
+ * This must be different from pg_promote_v4_to_v6_addr because we want to
  * set the high-order bits to 1's not 0's.
  *
  * The passed addr is modified in place; be sure it is large enough to
  * hold the result!  Note that we only worry about setting the fields
- * that rangeSockAddr will look at.
+ * that pg_range_sockaddr will look at.
  */
 void
-promote_v4_to_v6_mask(struct sockaddr_storage * addr)
+pg_promote_v4_to_v6_mask(struct sockaddr_storage *addr)
 {
 	struct sockaddr_in addr4;
 	struct sockaddr_in6 addr6;

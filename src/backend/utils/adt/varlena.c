@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.136 2005/10/15 02:49:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.137 2005/10/17 16:24:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2613,7 +2613,7 @@ md5_text(PG_FUNCTION_ARGS)
 	len = VARSIZE(in_text) - VARHDRSZ;
 
 	/* get the hash result */
-	if (md5_hash(VARDATA(in_text), len, hexsum) == false)
+	if (pg_md5_hash(VARDATA(in_text), len, hexsum) == false)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory")));
@@ -2636,7 +2636,7 @@ md5_bytea(PG_FUNCTION_ARGS)
 	text	   *result_text;
 
 	len = VARSIZE(in) - VARHDRSZ;
-	if (md5_hash(VARDATA(in), len, hexsum) == false)
+	if (pg_md5_hash(VARDATA(in), len, hexsum) == false)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory")));

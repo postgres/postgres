@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.131 2005/10/15 21:27:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.132 2005/10/17 16:24:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -376,10 +376,10 @@ ClientAuthentication(Port *port)
 			{
 				char		hostinfo[NI_MAXHOST];
 
-				getnameinfo_all(&port->raddr.addr, port->raddr.salen,
-								hostinfo, sizeof(hostinfo),
-								NULL, 0,
-								NI_NUMERICHOST);
+				pg_getnameinfo_all(&port->raddr.addr, port->raddr.salen,
+								   hostinfo, sizeof(hostinfo),
+								   NULL, 0,
+								   NI_NUMERICHOST);
 
 #ifdef USE_SSL
 				ereport(FATAL,

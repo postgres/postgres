@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.322 2005/10/15 02:49:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.323 2005/10/17 16:24:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,7 +98,7 @@
  *
  * The value for the username is treated specially in conninfo_parse.
  * If the Compiled-in resource is specified as a NULL value, the
- * user is determined by fe_getauthname().
+ * user is determined by pg_fe_getauthname().
  *
  * The Label and Disp-Char entries are provided for applications that
  * want to use PQconndefaults() to create a generic database connection
@@ -680,16 +680,14 @@ connectFailureMessage(PGconn *conn, int errorno)
 	{
 		char		service[NI_MAXHOST];
 
-		getnameinfo_all(&conn->raddr.addr, conn->raddr.salen,
-						NULL, 0,
-						service, sizeof(service),
-						NI_NUMERICSERV);
+		pg_getnameinfo_all(&conn->raddr.addr, conn->raddr.salen,
+						   NULL, 0,
+						   service, sizeof(service),
+						   NI_NUMERICSERV);
 		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext(
-										"could not connect to server: %s\n"
+						  libpq_gettext("could not connect to server: %s\n"
 							"\tIs the server running locally and accepting\n"
-							  "\tconnections on Unix domain socket \"%s\"?\n"
-										),
+							  "\tconnections on Unix domain socket \"%s\"?\n"),
 						  SOCK_STRERROR(errorno, sebuf, sizeof(sebuf)),
 						  service);
 	}
@@ -697,11 +695,9 @@ connectFailureMessage(PGconn *conn, int errorno)
 #endif   /* HAVE_UNIX_SOCKETS */
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext(
-										"could not connect to server: %s\n"
+						  libpq_gettext("could not connect to server: %s\n"
 					 "\tIs the server running on host \"%s\" and accepting\n"
-										"\tTCP/IP connections on port %s?\n"
-										),
+										"\tTCP/IP connections on port %s?\n"),
 						  SOCK_STRERROR(errorno, sebuf, sizeof(sebuf)),
 						  conn->pghostaddr
 						  ? conn->pghostaddr
@@ -738,7 +734,7 @@ connectDBStart(PGconn *conn)
 	conn->outCount = 0;
 
 	/*
-	 * Determine the parameters to pass to getaddrinfo_all.
+	 * Determine the parameters to pass to pg_getaddrinfo_all.
 	 */
 
 	/* Initialize hint structure */
@@ -780,8 +776,8 @@ connectDBStart(PGconn *conn)
 #endif   /* HAVE_UNIX_SOCKETS */
 	}
 
-	/* Use getaddrinfo_all() to resolve the address */
-	ret = getaddrinfo_all(node, portstr, &hint, &addrs);
+	/* Use pg_getaddrinfo_all() to resolve the address */
+	ret = pg_getaddrinfo_all(node, portstr, &hint, &addrs);
 	if (ret || !addrs)
 	{
 		if (node)
@@ -793,7 +789,7 @@ connectDBStart(PGconn *conn)
 							  libpq_gettext("could not translate Unix-domain socket path \"%s\" to address: %s\n"),
 							  portstr, gai_strerror(ret));
 		if (addrs)
-			freeaddrinfo_all(hint.ai_family, addrs);
+			pg_freeaddrinfo_all(hint.ai_family, addrs);
 		goto connect_errReturn;
 	}
 
@@ -1006,8 +1002,8 @@ keep_going:						/* We will come back to here until there is
 			{
 				/*
 				 * Try to initiate a connection to one of the addresses
-				 * returned by getaddrinfo_all().  conn->addr_cur is the next
-				 * one to try.	We fail when we run out of addresses
+				 * returned by pg_getaddrinfo_all().  conn->addr_cur is the
+				 * next one to try.	We fail when we run out of addresses
 				 * (reporting the error returned for the *last* alternative,
 				 * which may not be what users expect :-().
 				 */
@@ -1631,8 +1627,8 @@ keep_going:						/* We will come back to here until there is
 				 * XXX fe-auth.c has not been fixed to support PQExpBuffers,
 				 * so:
 				 */
-				if (fe_sendauth(areq, conn, conn->pghost, conn->pgpass,
-								conn->errorMessage.data) != STATUS_OK)
+				if (pg_fe_sendauth(areq, conn, conn->pghost, conn->pgpass,
+								   conn->errorMessage.data) != STATUS_OK)
 				{
 					conn->errorMessage.len = strlen(conn->errorMessage.data);
 					goto error_return;
@@ -1640,9 +1636,9 @@ keep_going:						/* We will come back to here until there is
 				conn->errorMessage.len = strlen(conn->errorMessage.data);
 
 				/*
-				 * Just make sure that any data sent by fe_sendauth is flushed
-				 * out.  Although this theoretically could block, it really
-				 * shouldn't since we don't send large auth responses.
+				 * Just make sure that any data sent by pg_fe_sendauth is
+				 * flushed out.  Although this theoretically could block, it
+				 * really shouldn't since we don't send large auth responses.
 				 */
 				if (pqFlush(conn))
 					goto error_return;
@@ -1707,7 +1703,7 @@ keep_going:						/* We will come back to here until there is
 				}
 
 				/* We can release the address list now. */
-				freeaddrinfo_all(conn->addrlist_family, conn->addrlist);
+				pg_freeaddrinfo_all(conn->addrlist_family, conn->addrlist);
 				conn->addrlist = NULL;
 				conn->addr_cur = NULL;
 
@@ -1910,7 +1906,7 @@ freePGconn(PGconn *conn)
 		free(conn->krbsrvname);
 #endif
 	/* Note that conn->Pfdebug is not ours to close or free */
-	freeaddrinfo_all(conn->addrlist_family, conn->addrlist);
+	pg_freeaddrinfo_all(conn->addrlist_family, conn->addrlist);
 	notify = conn->notifyHead;
 	while (notify != NULL)
 	{
@@ -1985,7 +1981,7 @@ closePGconn(PGconn *conn)
 										 * absent */
 	conn->asyncStatus = PGASYNC_IDLE;
 	pqClearAsyncResult(conn);	/* deallocate result and curTuple */
-	freeaddrinfo_all(conn->addrlist_family, conn->addrlist);
+	pg_freeaddrinfo_all(conn->addrlist_family, conn->addrlist);
 	conn->addrlist = NULL;
 	conn->addr_cur = NULL;
 	notify = conn->notifyHead;
@@ -2720,7 +2716,7 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 		 */
 		if (strcmp(option->keyword, "user") == 0)
 		{
-			option->val = fe_getauthname(errortmp);
+			option->val = pg_fe_getauthname(errortmp);
 			/* note any error message is thrown away */
 			continue;
 		}

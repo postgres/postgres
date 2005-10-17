@@ -14,7 +14,7 @@
  *	Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/md5.c,v 1.29 2005/10/15 02:49:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/md5.c,v 1.30 2005/10/17 16:24:19 tgl Exp $
  */
 
 
@@ -272,12 +272,12 @@ bytesToHex(uint8 b[16], char *s)
  */
 
 /*
- *	md5_hash
+ *	pg_md5_hash
  *
  *	Calculates the MD5 sum of the bytes in a buffer.
  *
  *	SYNOPSIS	  #include "crypt.h"
- *				  int md5_hash(const void *buff, size_t len, char *hexsum)
+ *				  int pg_md5_hash(const void *buff, size_t len, char *hexsum)
  *
  *	INPUT		  buff	  the buffer containing the bytes that you want
  *						  the MD5 sum of.
@@ -298,7 +298,7 @@ bytesToHex(uint8 b[16], char *s)
  *
  */
 bool
-md5_hash(const void *buff, size_t len, char *hexsum)
+pg_md5_hash(const void *buff, size_t len, char *hexsum)
 {
 	uint8		sum[16];
 
@@ -321,8 +321,8 @@ md5_hash(const void *buff, size_t len, char *hexsum)
  * Returns TRUE if okay, FALSE on error (out of memory).
  */
 bool
-EncryptMD5(const char *passwd, const char *salt, size_t salt_len,
-		   char *buf)
+pg_md5_encrypt(const char *passwd, const char *salt, size_t salt_len,
+			   char *buf)
 {
 	size_t		passwd_len = strlen(passwd);
 	char	   *crypt_buf = palloc(passwd_len + salt_len);
@@ -336,7 +336,7 @@ EncryptMD5(const char *passwd, const char *salt, size_t salt_len,
 	memcpy(crypt_buf + passwd_len, salt, salt_len);
 
 	strcpy(buf, "md5");
-	ret = md5_hash(crypt_buf, passwd_len + salt_len, buf + 3);
+	ret = pg_md5_hash(crypt_buf, passwd_len + salt_len, buf + 3);
 
 	pfree(crypt_buf);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.25 2005/10/15 02:49:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.26 2005/10/17 16:24:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -417,10 +417,10 @@ pg_stat_get_backend_client_addr(PG_FUNCTION_ARGS)
 	}
 
 	remote_host[0] = '\0';
-	ret = getnameinfo_all(&beentry->clientaddr.addr, beentry->clientaddr.salen,
-						  remote_host, sizeof(remote_host),
-						  NULL, 0,
-						  NI_NUMERICHOST | NI_NUMERICSERV);
+	ret = pg_getnameinfo_all(&beentry->clientaddr.addr, beentry->clientaddr.salen,
+							 remote_host, sizeof(remote_host),
+							 NULL, 0,
+							 NI_NUMERICHOST | NI_NUMERICSERV);
 	if (ret)
 		PG_RETURN_NULL();
 
@@ -462,11 +462,11 @@ pg_stat_get_backend_client_port(PG_FUNCTION_ARGS)
 	}
 
 	remote_port[0] = '\0';
-	ret = getnameinfo_all(&beentry->clientaddr.addr,
-						  beentry->clientaddr.salen,
-						  NULL, 0,
-						  remote_port, sizeof(remote_port),
-						  NI_NUMERICHOST | NI_NUMERICSERV);
+	ret = pg_getnameinfo_all(&beentry->clientaddr.addr,
+							 beentry->clientaddr.salen,
+							 NULL, 0,
+							 remote_port, sizeof(remote_port),
+							 NI_NUMERICHOST | NI_NUMERICSERV);
 	if (ret)
 		PG_RETURN_NULL();
 

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.469 2005/10/15 02:49:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.470 2005/10/17 16:24:19 tgl Exp $
  *
  * NOTES
  *
@@ -2663,20 +2663,20 @@ BackendRun(Port *port)
 	 */
 	remote_host[0] = '\0';
 	remote_port[0] = '\0';
-	if (getnameinfo_all(&port->raddr.addr, port->raddr.salen,
-						remote_host, sizeof(remote_host),
-						remote_port, sizeof(remote_port),
-						(log_hostname ? 0 : NI_NUMERICHOST) | NI_NUMERICSERV))
+	if (pg_getnameinfo_all(&port->raddr.addr, port->raddr.salen,
+						   remote_host, sizeof(remote_host),
+						   remote_port, sizeof(remote_port),
+						   (log_hostname ? 0 : NI_NUMERICHOST) | NI_NUMERICSERV))
 	{
-		int			ret = getnameinfo_all(&port->raddr.addr, port->raddr.salen,
-										  remote_host, sizeof(remote_host),
-										  remote_port, sizeof(remote_port),
-										  NI_NUMERICHOST | NI_NUMERICSERV);
+		int			ret = pg_getnameinfo_all(&port->raddr.addr, port->raddr.salen,
+											 remote_host, sizeof(remote_host),
+											 remote_port, sizeof(remote_port),
+											 NI_NUMERICHOST | NI_NUMERICSERV);
 
 		if (ret)
 			ereport(WARNING,
-					(errmsg("getnameinfo_all() failed: %s",
-							gai_strerror(ret))));
+					(errmsg_internal("pg_getnameinfo_all() failed: %s",
+									 gai_strerror(ret))));
 	}
 	snprintf(remote_ps_data, sizeof(remote_ps_data),
 			 remote_port[0] == '\0' ? "%s" : "%s(%s)",

@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.110 2005/10/15 02:49:23 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.111 2005/10/17 16:24:19 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -255,7 +255,7 @@ pgstat_init(void)
 	hints.ai_addr = NULL;
 	hints.ai_canonname = NULL;
 	hints.ai_next = NULL;
-	ret = getaddrinfo_all("localhost", NULL, &hints, &addrs);
+	ret = pg_getaddrinfo_all("localhost", NULL, &hints, &addrs);
 	if (ret || !addrs)
 	{
 		ereport(LOG,
@@ -265,12 +265,12 @@ pgstat_init(void)
 	}
 
 	/*
-	 * On some platforms, getaddrinfo_all() may return multiple addresses only
-	 * one of which will actually work (eg, both IPv6 and IPv4 addresses when
-	 * kernel will reject IPv6).  Worse, the failure may occur at the bind()
-	 * or perhaps even connect() stage.  So we must loop through the results
-	 * till we find a working combination.	We will generate LOG messages, but
-	 * no error, for bogus combinations.
+	 * On some platforms, pg_getaddrinfo_all() may return multiple addresses
+	 * only one of which will actually work (eg, both IPv6 and IPv4 addresses
+	 * when kernel will reject IPv6).  Worse, the failure may occur at the
+	 * bind() or perhaps even connect() stage.  So we must loop through the
+	 * results till we find a working combination. We will generate LOG
+	 * messages, but no error, for bogus combinations.
 	 */
 	for (addr = addrs; addr; addr = addr->ai_next)
 	{
@@ -433,7 +433,7 @@ pgstat_init(void)
 		goto startup_failed;
 	}
 
-	freeaddrinfo_all(hints.ai_family, addrs);
+	pg_freeaddrinfo_all(hints.ai_family, addrs);
 
 	return;
 
@@ -442,7 +442,7 @@ startup_failed:
 	  (errmsg("disabling statistics collector for lack of working socket")));
 
 	if (addrs)
-		freeaddrinfo_all(hints.ai_family, addrs);
+		pg_freeaddrinfo_all(hints.ai_family, addrs);
 
 	if (pgStatSock >= 0)
 		closesocket(pgStatSock);

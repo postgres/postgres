@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.148 2005/10/15 02:49:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.149 2005/10/17 16:24:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -756,7 +756,7 @@ parse_hba(List *line, int line_num, hbaPort *port,
 		hints.ai_addr = NULL;
 		hints.ai_next = NULL;
 
-		ret = getaddrinfo_all(token, NULL, &hints, &gai_result);
+		ret = pg_getaddrinfo_all(token, NULL, &hints, &gai_result);
 		if (ret || !gai_result)
 		{
 			ereport(LOG,
@@ -767,7 +767,7 @@ parse_hba(List *line, int line_num, hbaPort *port,
 			if (cidr_slash)
 				*cidr_slash = '/';
 			if (gai_result)
-				freeaddrinfo_all(hints.ai_family, gai_result);
+				pg_freeaddrinfo_all(hints.ai_family, gai_result);
 			goto hba_other_error;
 		}
 
@@ -775,12 +775,13 @@ parse_hba(List *line, int line_num, hbaPort *port,
 			*cidr_slash = '/';
 
 		memcpy(&addr, gai_result->ai_addr, gai_result->ai_addrlen);
-		freeaddrinfo_all(hints.ai_family, gai_result);
+		pg_freeaddrinfo_all(hints.ai_family, gai_result);
 
 		/* Get the netmask */
 		if (cidr_slash)
 		{
-			if (SockAddr_cidr_mask(&mask, cidr_slash + 1, addr.ss_family) < 0)
+			if (pg_sockaddr_cidr_mask(&mask, cidr_slash + 1,
+									  addr.ss_family) < 0)
 				goto hba_syntax;
 		}
 		else
@@ -791,7 +792,7 @@ parse_hba(List *line, int line_num, hbaPort *port,
 				goto hba_syntax;
 			token = lfirst(line_item);
 
-			ret = getaddrinfo_all(token, NULL, &hints, &gai_result);
+			ret = pg_getaddrinfo_all(token, NULL, &hints, &gai_result);
 			if (ret || !gai_result)
 			{
 				ereport(LOG,
@@ -800,12 +801,12 @@ parse_hba(List *line, int line_num, hbaPort *port,
 						 token, HbaFileName, line_num,
 						 gai_strerror(ret))));
 				if (gai_result)
-					freeaddrinfo_all(hints.ai_family, gai_result);
+					pg_freeaddrinfo_all(hints.ai_family, gai_result);
 				goto hba_other_error;
 			}
 
 			memcpy(&mask, gai_result->ai_addr, gai_result->ai_addrlen);
-			freeaddrinfo_all(hints.ai_family, gai_result);
+			pg_freeaddrinfo_all(hints.ai_family, gai_result);
 
 			if (addr.ss_family != mask.ss_family)
 			{
@@ -828,8 +829,8 @@ parse_hba(List *line, int line_num, hbaPort *port,
 			if (addr.ss_family == AF_INET &&
 				port->raddr.addr.ss_family == AF_INET6)
 			{
-				promote_v4_to_v6_addr(&addr);
-				promote_v4_to_v6_mask(&mask);
+				pg_promote_v4_to_v6_addr(&addr);
+				pg_promote_v4_to_v6_mask(&mask);
 			}
 			else
 #endif   /* HAVE_IPV6 */
@@ -840,7 +841,7 @@ parse_hba(List *line, int line_num, hbaPort *port,
 		}
 
 		/* Ignore line if client port is not in the matching addr range. */
-		if (!rangeSockAddr(&port->raddr.addr, &addr, &mask))
+		if (!pg_range_sockaddr(&port->raddr.addr, &addr, &mask))
 			return;
 
 		/* Read the rest of the line. */
@@ -1296,14 +1297,14 @@ ident_inet(const SockAddr remote_addr,
 	 * Might look a little weird to first convert it to text and then back to
 	 * sockaddr, but it's protocol independent.
 	 */
-	getnameinfo_all(&remote_addr.addr, remote_addr.salen,
-					remote_addr_s, sizeof(remote_addr_s),
-					remote_port, sizeof(remote_port),
-					NI_NUMERICHOST | NI_NUMERICSERV);
-	getnameinfo_all(&local_addr.addr, local_addr.salen,
-					local_addr_s, sizeof(local_addr_s),
-					local_port, sizeof(local_port),
-					NI_NUMERICHOST | NI_NUMERICSERV);
+	pg_getnameinfo_all(&remote_addr.addr, remote_addr.salen,
+					   remote_addr_s, sizeof(remote_addr_s),
+					   remote_port, sizeof(remote_port),
+					   NI_NUMERICHOST | NI_NUMERICSERV);
+	pg_getnameinfo_all(&local_addr.addr, local_addr.salen,
+					   local_addr_s, sizeof(local_addr_s),
+					   local_port, sizeof(local_port),
+					   NI_NUMERICHOST | NI_NUMERICSERV);
 
 	snprintf(ident_port, sizeof(ident_port), "%d", IDENT_PORT);
 	hints.ai_flags = AI_NUMERICHOST;
@@ -1314,11 +1315,11 @@ ident_inet(const SockAddr remote_addr,
 	hints.ai_canonname = NULL;
 	hints.ai_addr = NULL;
 	hints.ai_next = NULL;
-	rc = getaddrinfo_all(remote_addr_s, ident_port, &hints, &ident_serv);
+	rc = pg_getaddrinfo_all(remote_addr_s, ident_port, &hints, &ident_serv);
 	if (rc || !ident_serv)
 	{
 		if (ident_serv)
-			freeaddrinfo_all(hints.ai_family, ident_serv);
+			pg_freeaddrinfo_all(hints.ai_family, ident_serv);
 		return false;			/* we don't expect this to happen */
 	}
 
@@ -1330,11 +1331,11 @@ ident_inet(const SockAddr remote_addr,
 	hints.ai_canonname = NULL;
 	hints.ai_addr = NULL;
 	hints.ai_next = NULL;
-	rc = getaddrinfo_all(local_addr_s, NULL, &hints, &la);
+	rc = pg_getaddrinfo_all(local_addr_s, NULL, &hints, &la);
 	if (rc || !la)
 	{
 		if (la)
-			freeaddrinfo_all(hints.ai_family, la);
+			pg_freeaddrinfo_all(hints.ai_family, la);
 		return false;			/* we don't expect this to happen */
 	}
 
@@ -1422,8 +1423,8 @@ ident_inet(const SockAddr remote_addr,
 ident_inet_done:
 	if (sock_fd >= 0)
 		closesocket(sock_fd);
-	freeaddrinfo_all(remote_addr.addr.ss_family, ident_serv);
-	freeaddrinfo_all(local_addr.addr.ss_family, la);
+	pg_freeaddrinfo_all(remote_addr.addr.ss_family, ident_serv);
+	pg_freeaddrinfo_all(local_addr.addr.ss_family, la);
 	return ident_return;
 }
 

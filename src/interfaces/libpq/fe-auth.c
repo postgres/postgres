@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.105 2005/10/15 02:49:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.106 2005/10/17 16:24:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,14 +18,9 @@
 /*
  * INTERFACE ROUTINES
  *	   frontend (client) routines:
- *		fe_sendauth				send authentication information
- *		fe_getauthname			get user's name according to the client side
+ *		pg_fe_sendauth			send authentication information
+ *		pg_fe_getauthname		get user's name according to the client side
  *								of the authentication system
- *		fe_setauthsvc			set frontend authentication service
- *		fe_getauthsvc			get current frontend authentication service
- *
- *
- *
  */
 
 #include "postgres_fe.h"
@@ -35,7 +30,6 @@
 #else
 #include <unistd.h>
 #include <fcntl.h>
-#include <errno.h>
 #include <sys/types.h>
 #include <sys/param.h>			/* for MAXHOSTNAMELEN on most */
 #include <sys/socket.h>
@@ -58,51 +52,6 @@
 #include "fe-auth.h"
 #include "libpq/crypt.h"
 
-
-/*
- * common definitions for generic fe/be routines
- */
-
-#define STARTUP_MSG		7		/* Initialise a connection */
-#define STARTUP_KRB4_MSG	10	/* krb4 session follows. Not supported any
-								 * more. */
-#define STARTUP_KRB5_MSG	11	/* krb5 session follows */
-#define STARTUP_PASSWORD_MSG	14		/* Password follows */
-
-struct authsvc
-{
-	const char *name;			/* service nickname (for command line) */
-	MsgType		msgtype;		/* startup packet header type */
-	int			allowed;		/* initially allowed (before command line
-								 * option parsing)? */
-};
-
-/*
- * Command-line parsing routines use this structure to map nicknames
- * onto service types (and the startup packets to use with them).
- *
- * Programs receiving an authentication request use this structure to
- * decide which authentication service types are currently permitted.
- * By default, all authentication systems compiled into the system are
- * allowed.  Unauthenticated connections are disallowed unless there
- * isn't any authentication system.
- */
-static const struct authsvc authsvcs[] = {
-#ifdef KRB5
-	{"krb5", STARTUP_KRB5_MSG, 1},
-	{"kerberos", STARTUP_KRB5_MSG, 1},
-#endif   /* KRB5 */
-	{UNAUTHNAME, STARTUP_MSG,
-#ifdef KRB5
-		0
-#else							/* !KRB5 */
-		1
-#endif   /* !KRB5 */
-	},
-	{"password", STARTUP_PASSWORD_MSG, 0}
-};
-
-static const int n_authsvcs = sizeof(authsvcs) / sizeof(struct authsvc);
 
 #ifdef KRB5
 /*
@@ -329,7 +278,9 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname, const char *s
 
 	return ret;
 }
+
 #endif   /* KRB5 */
+
 
 /*
  * Respond to AUTH_REQ_SCM_CREDS challenge.
@@ -417,14 +368,14 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 				}
 
 				crypt_pwd2 = crypt_pwd + MD5_PASSWD_LEN + 1;
-				if (!EncryptMD5(password, conn->pguser,
-								strlen(conn->pguser), crypt_pwd2))
+				if (!pg_md5_encrypt(password, conn->pguser,
+									strlen(conn->pguser), crypt_pwd2))
 				{
 					free(crypt_pwd);
 					return STATUS_ERROR;
 				}
-				if (!EncryptMD5(crypt_pwd2 + strlen("md5"), conn->md5Salt,
-								sizeof(conn->md5Salt), crypt_pwd))
+				if (!pg_md5_encrypt(crypt_pwd2 + strlen("md5"), conn->md5Salt,
+									sizeof(conn->md5Salt), crypt_pwd))
 				{
 					free(crypt_pwd);
 					return STATUS_ERROR;
@@ -457,11 +408,12 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 }
 
 /*
- * fe_sendauth -- client demux routine for outgoing authentication information
+ * pg_fe_sendauth
+ *		client demux routine for outgoing authentication information
  */
 int
-fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
-			const char *password, char *PQerrormsg)
+pg_fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
+			   const char *password, char *PQerrormsg)
 {
 #ifndef KRB5
 	(void) hostname;			/* not used */
@@ -526,68 +478,18 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 	return STATUS_OK;
 }
 
-/*
- * fe_setauthsvc
- * fe_getauthsvc
- *
- * Set/return the authentication service currently selected for use by the
- * frontend. (You can only use one in the frontend, obviously.)
- *
- * NB: This is not thread-safe if different threads try to select different
- * authentication services!  It's OK for fe_getauthsvc to select the default,
- * since that will be the same for all threads, but direct application use
- * of fe_setauthsvc is not thread-safe.  However, use of fe_setauthsvc is
- * deprecated anyway...
- */
-
-static int	pg_authsvc = -1;
-
-void
-fe_setauthsvc(const char *name, char *PQerrormsg)
-{
-	int			i;
-
-	for (i = 0; i < n_authsvcs; ++i)
-		if (strcmp(name, authsvcs[i].name) == 0)
-		{
-			pg_authsvc = i;
-			break;
-		}
-	if (i == n_authsvcs)
-	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 libpq_gettext("invalid authentication service name \"%s\", ignored\n"),
-				 name);
-	}
-	return;
-}
-
-MsgType
-fe_getauthsvc(char *PQerrormsg)
-{
-	if (pg_authsvc < 0 || pg_authsvc >= n_authsvcs)
-	{
-		fe_setauthsvc(DEFAULT_CLIENT_AUTHSVC, PQerrormsg);
-		if (pg_authsvc < 0 || pg_authsvc >= n_authsvcs)
-		{
-			/* Can only get here if DEFAULT_CLIENT_AUTHSVC is misdefined */
-			return 0;
-		}
-	}
-	return authsvcs[pg_authsvc].msgtype;
-}
 
 /*
- * fe_getauthname -- returns a pointer to dynamic space containing whatever
+ * pg_fe_getauthname -- returns a pointer to dynamic space containing whatever
  *					 name the user has authenticated to the system
- * if there is an error, return the error message in PQerrormsg
+ *
+ * if there is an error, return NULL with an error message in PQerrormsg
  */
 char *
-fe_getauthname(char *PQerrormsg)
+pg_fe_getauthname(char *PQerrormsg)
 {
 	const char *name = NULL;
 	char	   *authn;
-	MsgType		authsvc;
 
 #ifdef WIN32
 	char		username[128];
@@ -598,21 +500,13 @@ fe_getauthname(char *PQerrormsg)
 	struct passwd *pw = NULL;
 #endif
 
-	authsvc = fe_getauthsvc(PQerrormsg);
-
-	/* this just guards against broken DEFAULT_CLIENT_AUTHSVC, see above */
-	if (authsvc == 0)
-		return NULL;			/* leave original error message in place */
-
 	pglock_thread();
 
 #ifdef KRB5
-	if (authsvc == STARTUP_KRB5_MSG)
-		name = pg_krb5_authname(PQerrormsg);
+	name = pg_krb5_authname(PQerrormsg);
 #endif
 
-	if (authsvc == STARTUP_MSG
-		|| (authsvc == STARTUP_KRB5_MSG && !name))
+	if (!name)
 	{
 #ifdef WIN32
 		if (GetUserName(username, &namesize))
@@ -622,11 +516,6 @@ fe_getauthname(char *PQerrormsg)
 			name = pw->pw_name;
 #endif
 	}
-
-	if (authsvc != STARTUP_MSG && authsvc != STARTUP_KRB5_MSG)
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-		libpq_gettext("fe_getauthname: invalid authentication system: %d\n"),
-				 authsvc);
 
 	authn = name ? strdup(name) : NULL;
 
