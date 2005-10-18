@@ -60,9 +60,9 @@
 
 typedef struct remoteConn
 {
-	PGconn	   *conn;			/* Hold the remote connection */
-	int			autoXactCursors;/* Indicates the number of open cursors,
-								 * non-zero means we opened the xact ourselves */
+	PGconn	   *conn;				/* Hold the remote connection */
+	int			openCursorCount;	/* The number of open cursors */
+	bool		newXactForCursor;	/* Opened a transaction for a cursor */
 }	remoteConn;
 
 /*
@@ -84,10 +84,8 @@ static Oid	get_relid_from_relname(text *relname_text);
 static char *generate_relation_name(Oid relid);
 
 /* Global */
-List	   *res_id = NIL;
-int			res_id_index = 0;
-PGconn	   *persistent_conn = NULL;
-static HTAB *remoteConnHash = NULL;
+static remoteConn	   *pconn = NULL;
+static HTAB			   *remoteConnHash = NULL;
 
 /*
  *	Following is list that holds multiple remote connections.
@@ -184,6 +182,16 @@ typedef struct remoteConnHashEnt
 			} \
 	} while (0)
 
+#define DBLINK_INIT \
+	do { \
+			if (!pconn) \
+			{ \
+				pconn = (remoteConn *) MemoryContextAlloc(TopMemoryContext, sizeof(remoteConn)); \
+				pconn->conn = NULL; \
+				pconn->openCursorCount = 0; \
+				pconn->newXactForCursor = FALSE; \
+			} \
+	} while (0)
 
 /*
  * Create a persistent connection to another database
@@ -198,6 +206,8 @@ dblink_connect(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext;
 	PGconn	   *conn = NULL;
 	remoteConn *rconn = NULL;
+
+	DBLINK_INIT;
 
 	if (PG_NARGS() == 2)
 	{
@@ -234,7 +244,7 @@ dblink_connect(PG_FUNCTION_ARGS)
 		createNewConnection(connname, rconn);
 	}
 	else
-		persistent_conn = conn;
+		pconn->conn = conn;
 
 	PG_RETURN_TEXT_P(GET_TEXT("OK"));
 }
@@ -250,6 +260,8 @@ dblink_disconnect(PG_FUNCTION_ARGS)
 	remoteConn *rconn = NULL;
 	PGconn	   *conn = NULL;
 
+	DBLINK_INIT;
+
 	if (PG_NARGS() == 1)
 	{
 		conname = GET_STR(PG_GETARG_TEXT_P(0));
@@ -258,7 +270,7 @@ dblink_disconnect(PG_FUNCTION_ARGS)
 			conn = rconn->conn;
 	}
 	else
-		conn = persistent_conn;
+		conn = pconn->conn;
 
 	if (!conn)
 		DBLINK_CONN_NOT_AVAIL;
@@ -270,7 +282,7 @@ dblink_disconnect(PG_FUNCTION_ARGS)
 		pfree(rconn);
 	}
 	else
-		persistent_conn = NULL;
+		pconn->conn = NULL;
 
 	PG_RETURN_TEXT_P(GET_TEXT("OK"));
 }
@@ -292,12 +304,14 @@ dblink_open(PG_FUNCTION_ARGS)
 	remoteConn *rconn = NULL;
 	bool		fail = true;	/* default to backward compatible behavior */
 
+	DBLINK_INIT;
+
 	if (PG_NARGS() == 2)
 	{
 		/* text,text */
 		curname = GET_STR(PG_GETARG_TEXT_P(0));
 		sql = GET_STR(PG_GETARG_TEXT_P(1));
-		conn = persistent_conn;
+		rconn = pconn;
 	}
 	else if (PG_NARGS() == 3)
 	{
@@ -307,7 +321,7 @@ dblink_open(PG_FUNCTION_ARGS)
 			curname = GET_STR(PG_GETARG_TEXT_P(0));
 			sql = GET_STR(PG_GETARG_TEXT_P(1));
 			fail = PG_GETARG_BOOL(2);
-			conn = persistent_conn;
+			rconn = pconn;
 		}
 		else
 		{
@@ -315,8 +329,6 @@ dblink_open(PG_FUNCTION_ARGS)
 			curname = GET_STR(PG_GETARG_TEXT_P(1));
 			sql = GET_STR(PG_GETARG_TEXT_P(2));
 			rconn = getConnectionByName(conname);
-			if (rconn)
-				conn = rconn->conn;
 		}
 	}
 	else if (PG_NARGS() == 4)
@@ -327,18 +339,26 @@ dblink_open(PG_FUNCTION_ARGS)
 		sql = GET_STR(PG_GETARG_TEXT_P(2));
 		fail = PG_GETARG_BOOL(3);
 		rconn = getConnectionByName(conname);
-		if (rconn)
-			conn = rconn->conn;
 	}
 
-	if (!conn)
+	if (!rconn || !rconn->conn)
 		DBLINK_CONN_NOT_AVAIL;
+	else
+		conn = rconn->conn;
 
-	res = PQexec(conn, "BEGIN");
-	if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		DBLINK_RES_INTERNALERROR("begin error");
+	/*	If we are not in a transaction, start one */
+	if (PQtransactionStatus(conn) == PQTRANS_IDLE)
+	{
+		res = PQexec(conn, "BEGIN");
+		if (PQresultStatus(res) != PGRES_COMMAND_OK)
+			DBLINK_RES_INTERNALERROR("begin error");
+		PQclear(res);
+		rconn->newXactForCursor = TRUE;
+	}
 
-	PQclear(res);
+	/* if we started a transaction, increment cursor count */
+	if (rconn->newXactForCursor)
+		(rconn->openCursorCount)++;
 
 	appendStringInfo(str, "DECLARE %s CURSOR FOR %s", curname, sql);
 	res = PQexec(conn, str->data);
@@ -373,11 +393,13 @@ dblink_close(PG_FUNCTION_ARGS)
 	remoteConn *rconn = NULL;
 	bool		fail = true;	/* default to backward compatible behavior */
 
+	DBLINK_INIT;
+
 	if (PG_NARGS() == 1)
 	{
 		/* text */
 		curname = GET_STR(PG_GETARG_TEXT_P(0));
-		conn = persistent_conn;
+		rconn = pconn;
 	}
 	else if (PG_NARGS() == 2)
 	{
@@ -386,15 +408,13 @@ dblink_close(PG_FUNCTION_ARGS)
 		{
 			curname = GET_STR(PG_GETARG_TEXT_P(0));
 			fail = PG_GETARG_BOOL(1);
-			conn = persistent_conn;
+			rconn = pconn;
 		}
 		else
 		{
 			conname = GET_STR(PG_GETARG_TEXT_P(0));
 			curname = GET_STR(PG_GETARG_TEXT_P(1));
 			rconn = getConnectionByName(conname);
-			if (rconn)
-				conn = rconn->conn;
 		}
 	}
 	if (PG_NARGS() == 3)
@@ -404,12 +424,12 @@ dblink_close(PG_FUNCTION_ARGS)
 		curname = GET_STR(PG_GETARG_TEXT_P(1));
 		fail = PG_GETARG_BOOL(2);
 		rconn = getConnectionByName(conname);
-		if (rconn)
-			conn = rconn->conn;
 	}
 
-	if (!conn)
+	if (!rconn || !rconn->conn)
 		DBLINK_CONN_NOT_AVAIL;
+	else
+		conn = rconn->conn;
 
 	appendStringInfo(str, "CLOSE %s", curname);
 
@@ -428,12 +448,22 @@ dblink_close(PG_FUNCTION_ARGS)
 
 	PQclear(res);
 
-	/* commit the transaction */
-	res = PQexec(conn, "COMMIT");
-	if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		DBLINK_RES_INTERNALERROR("commit error");
+	/* if we started a transaction, decrement cursor count */
+	if (rconn->newXactForCursor)
+	{
+		(rconn->openCursorCount)--;
 
-	PQclear(res);
+		/* if count is zero, commit the transaction */
+		if (rconn->openCursorCount == 0)
+		{
+			rconn->newXactForCursor = FALSE;
+
+			res = PQexec(conn, "COMMIT");
+			if (PQresultStatus(res) != PGRES_COMMAND_OK)
+				DBLINK_RES_INTERNALERROR("commit error");
+			PQclear(res);
+		}
+	}
 
 	PG_RETURN_TEXT_P(GET_TEXT("OK"));
 }
@@ -455,6 +485,8 @@ dblink_fetch(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext;
 	char	   *conname = NULL;
 	remoteConn *rconn = NULL;
+
+	DBLINK_INIT;
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
@@ -485,7 +517,7 @@ dblink_fetch(PG_FUNCTION_ARGS)
 				curname = GET_STR(PG_GETARG_TEXT_P(0));
 				howmany = PG_GETARG_INT32(1);
 				fail = PG_GETARG_BOOL(2);
-				conn = persistent_conn;
+				conn = pconn->conn;
 			}
 			else
 			{
@@ -503,7 +535,7 @@ dblink_fetch(PG_FUNCTION_ARGS)
 			/* text,int */
 			curname = GET_STR(PG_GETARG_TEXT_P(0));
 			howmany = PG_GETARG_INT32(1);
-			conn = persistent_conn;
+			conn = pconn->conn;
 		}
 
 		if (!conn)
@@ -648,6 +680,8 @@ dblink_record(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext;
 	bool		freeconn = false;
 
+	DBLINK_INIT;
+
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
 	{
@@ -678,7 +712,7 @@ dblink_record(PG_FUNCTION_ARGS)
 			/* text,text or text,bool */
 			if (get_fn_expr_argtype(fcinfo->flinfo, 1) == BOOLOID)
 			{
-				conn = persistent_conn;
+				conn = pconn->conn;
 				sql = GET_STR(PG_GETARG_TEXT_P(0));
 				fail = PG_GETARG_BOOL(1);
 			}
@@ -691,7 +725,7 @@ dblink_record(PG_FUNCTION_ARGS)
 		else if (PG_NARGS() == 1)
 		{
 			/* text */
-			conn = persistent_conn;
+			conn = pconn->conn;
 			sql = GET_STR(PG_GETARG_TEXT_P(0));
 		}
 		else
@@ -857,6 +891,8 @@ dblink_exec(PG_FUNCTION_ARGS)
 	bool		freeconn = false;
 	bool		fail = true;	/* default to backward compatible behavior */
 
+	DBLINK_INIT;
+
 	if (PG_NARGS() == 3)
 	{
 		/* must be text,text,bool */
@@ -869,7 +905,7 @@ dblink_exec(PG_FUNCTION_ARGS)
 		/* might be text,text or text,bool */
 		if (get_fn_expr_argtype(fcinfo->flinfo, 1) == BOOLOID)
 		{
-			conn = persistent_conn;
+			conn = pconn->conn;
 			sql = GET_STR(PG_GETARG_TEXT_P(0));
 			fail = PG_GETARG_BOOL(1);
 		}
@@ -882,7 +918,7 @@ dblink_exec(PG_FUNCTION_ARGS)
 	else if (PG_NARGS() == 1)
 	{
 		/* must be single text argument */
-		conn = persistent_conn;
+		conn = pconn->conn;
 		sql = GET_STR(PG_GETARG_TEXT_P(0));
 	}
 	else

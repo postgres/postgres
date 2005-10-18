@@ -436,6 +436,88 @@ SELECT dblink_exec('myconn','ABORT');
  ROLLBACK
 (1 row)
 
+-- test opening cursor in a transaction
+SELECT dblink_exec('myconn','BEGIN');
+ dblink_exec 
+-------------
+ BEGIN
+(1 row)
+
+-- an open transaction will prevent dblink_open() from opening its own
+SELECT dblink_open('myconn','rmt_foo_cursor','SELECT * FROM foo');
+ dblink_open 
+-------------
+ OK
+(1 row)
+
+-- this should not commit the transaction because the client opened it
+SELECT dblink_close('myconn','rmt_foo_cursor');
+ dblink_close 
+--------------
+ OK
+(1 row)
+
+-- this should succeed because we have an open transaction
+SELECT dblink_exec('myconn','DECLARE xact_test CURSOR FOR SELECT * FROM foo');
+  dblink_exec   
+----------------
+ DECLARE CURSOR
+(1 row)
+
+-- commit remote transaction
+SELECT dblink_exec('myconn','COMMIT');
+ dblink_exec 
+-------------
+ COMMIT
+(1 row)
+
+-- test automatic transactions for multiple cursor opens
+SELECT dblink_open('myconn','rmt_foo_cursor','SELECT * FROM foo');
+ dblink_open 
+-------------
+ OK
+(1 row)
+
+-- the second cursor
+SELECT dblink_open('myconn','rmt_foo_cursor2','SELECT * FROM foo');
+ dblink_open 
+-------------
+ OK
+(1 row)
+
+-- this should not commit the transaction
+SELECT dblink_close('myconn','rmt_foo_cursor2');
+ dblink_close 
+--------------
+ OK
+(1 row)
+
+-- this should succeed because we have an open transaction
+SELECT dblink_exec('myconn','DECLARE xact_test CURSOR FOR SELECT * FROM foo');
+  dblink_exec   
+----------------
+ DECLARE CURSOR
+(1 row)
+
+-- this should commit the transaction
+SELECT dblink_close('myconn','rmt_foo_cursor');
+ dblink_close 
+--------------
+ OK
+(1 row)
+
+-- this should fail because there is no open transaction
+SELECT dblink_exec('myconn','DECLARE xact_test CURSOR FOR SELECT * FROM foo');
+ERROR:  sql error
+DETAIL:  ERROR:  cursor "xact_test" already exists
+
+-- reset remote transaction state
+SELECT dblink_exec('myconn','ABORT');
+ dblink_exec 
+-------------
+ ROLLBACK
+(1 row)
+
 -- open a cursor
 SELECT dblink_open('myconn','rmt_foo_cursor','SELECT * FROM foo');
  dblink_open 

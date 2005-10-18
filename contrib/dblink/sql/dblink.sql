@@ -217,6 +217,42 @@ SELECT dblink_open('myconn','rmt_foo_cursor','SELECT * FROM foobar',false);
 -- reset remote transaction state
 SELECT dblink_exec('myconn','ABORT');
 
+-- test opening cursor in a transaction
+SELECT dblink_exec('myconn','BEGIN');
+
+-- an open transaction will prevent dblink_open() from opening its own
+SELECT dblink_open('myconn','rmt_foo_cursor','SELECT * FROM foo');
+
+-- this should not commit the transaction because the client opened it
+SELECT dblink_close('myconn','rmt_foo_cursor');
+
+-- this should succeed because we have an open transaction
+SELECT dblink_exec('myconn','DECLARE xact_test CURSOR FOR SELECT * FROM foo');
+
+-- commit remote transaction
+SELECT dblink_exec('myconn','COMMIT');
+
+-- test automatic transactions for multiple cursor opens
+SELECT dblink_open('myconn','rmt_foo_cursor','SELECT * FROM foo');
+
+-- the second cursor
+SELECT dblink_open('myconn','rmt_foo_cursor2','SELECT * FROM foo');
+
+-- this should not commit the transaction
+SELECT dblink_close('myconn','rmt_foo_cursor2');
+
+-- this should succeed because we have an open transaction
+SELECT dblink_exec('myconn','DECLARE xact_test CURSOR FOR SELECT * FROM foo');
+
+-- this should commit the transaction
+SELECT dblink_close('myconn','rmt_foo_cursor');
+
+-- this should fail because there is no open transaction
+SELECT dblink_exec('myconn','DECLARE xact_test CURSOR FOR SELECT * FROM foo');
+
+-- reset remote transaction state
+SELECT dblink_exec('myconn','ABORT');
+
 -- open a cursor
 SELECT dblink_open('myconn','rmt_foo_cursor','SELECT * FROM foo');
 
