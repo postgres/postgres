@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.95 2005/10/15 02:49:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.96 2005/10/18 01:06:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -225,7 +225,6 @@ _bt_binsrch(Relation rel,
 			ScanKey scankey,
 			bool nextkey)
 {
-	TupleDesc	itupdesc;
 	Page		page;
 	BTPageOpaque opaque;
 	OffsetNumber low,
@@ -233,7 +232,6 @@ _bt_binsrch(Relation rel,
 	int32		result,
 				cmpval;
 
-	itupdesc = RelationGetDescr(rel);
 	page = BufferGetPage(buf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 

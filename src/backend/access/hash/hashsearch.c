@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashsearch.c,v 1.40 2005/10/15 02:49:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashsearch.c,v 1.41 2005/10/18 01:06:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -247,7 +247,6 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 	HashPageOpaque opaque;
 	OffsetNumber maxoff;
 	OffsetNumber offnum;
-	Bucket		bucket;
 	BlockNumber blkno;
 	HashItem	hitem;
 	IndexTuple	itup;
@@ -258,7 +257,6 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 	page = BufferGetPage(buf);
 	_hash_checkpage(rel, page, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
-	bucket = opaque->hasho_bucket;
 
 	/*
 	 * If _hash_step is called from _hash_first, current will not be valid, so
@@ -274,8 +272,8 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 	/*
 	 * 'offnum' now points to the last tuple we have seen (if any).
 	 *
-	 * continue to step through tuples until: 1) we get to the end of the bucket
-	 * chain or 2) we find a valid tuple.
+	 * continue to step through tuples until: 1) we get to the end of the
+	 * bucket chain or 2) we find a valid tuple.
 	 */
 	do
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_conversion.c,v 1.27 2005/10/15 02:49:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_conversion.c,v 1.28 2005/10/18 01:06:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,7 +174,6 @@ void
 RemoveConversionById(Oid conversionOid)
 {
 	Relation	rel;
-	TupleDesc	tupDesc;
 	HeapTuple	tuple;
 	HeapScanDesc scan;
 	ScanKeyData scanKeyData;
@@ -186,7 +185,6 @@ RemoveConversionById(Oid conversionOid)
 
 	/* open pg_conversion */
 	rel = heap_open(ConversionRelationId, RowExclusiveLock);
-	tupDesc = rel->rd_att;
 
 	scan = heap_beginscan(rel, SnapshotNow,
 						  1, &scanKeyData);

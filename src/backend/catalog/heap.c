@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.291 2005/10/15 02:49:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.292 2005/10/18 01:06:23 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1452,7 +1452,6 @@ AddRelationRawConstraints(Relation rel,
 	TupleDesc	tupleDesc;
 	TupleConstr *oldconstr;
 	int			numoldchecks;
-	ConstrCheck *oldchecks;
 	ParseState *pstate;
 	RangeTblEntry *rte;
 	int			numchecks;
@@ -1467,15 +1466,9 @@ AddRelationRawConstraints(Relation rel,
 	tupleDesc = RelationGetDescr(rel);
 	oldconstr = tupleDesc->constr;
 	if (oldconstr)
-	{
 		numoldchecks = oldconstr->num_check;
-		oldchecks = oldconstr->check;
-	}
 	else
-	{
 		numoldchecks = 0;
-		oldchecks = NULL;
-	}
 
 	/*
 	 * Create a dummy ParseState and insert the target relation as its sole

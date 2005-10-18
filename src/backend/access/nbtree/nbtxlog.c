@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.23 2005/10/15 02:49:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.24 2005/10/18 01:06:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,7 +156,6 @@ btree_xlog_insert(bool isleaf, bool ismeta,
 	Relation	reln;
 	Buffer		buffer;
 	Page		page;
-	BTPageOpaque pageop;
 	char	   *datapos;
 	int			datalen;
 	xl_btree_metadata md;
@@ -187,7 +186,6 @@ btree_xlog_insert(bool isleaf, bool ismeta,
 		page = (Page) BufferGetPage(buffer);
 		if (PageIsNew((PageHeader) page))
 			elog(PANIC, "btree_insert_redo: uninitialized page");
-		pageop = (BTPageOpaque) PageGetSpecialPointer(page);
 
 		if (XLByteLE(lsn, PageGetLSN(page)))
 		{

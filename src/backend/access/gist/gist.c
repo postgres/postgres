@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.126 2005/09/22 20:44:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.127 2005/10/18 01:06:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -321,14 +321,12 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 		/* no space for insertion */
 		IndexTuple *itvec,
 				   *newitup;
-		int			tlen,
-					olen;
+		int			tlen;
 		SplitedPageLayout *dist = NULL,
 				   *ptr;
 
 		is_splitted = true;
 		itvec = gistextractbuffer(state->stack->buffer, &tlen);
-		olen = tlen;
 		itvec = gistjoinvector(itvec, &tlen, state->itup, state->ituplen);
 		newitup = gistSplit(state->r, state->stack->buffer, itvec, &tlen, &dist, giststate);
 

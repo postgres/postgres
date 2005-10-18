@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.74 2005/10/15 02:49:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.75 2005/10/18 01:06:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,6 @@ ExecHashJoin(HashJoinState *node)
 	HashState  *hashNode;
 	List	   *joinqual;
 	List	   *otherqual;
-	ScanDirection dir;
 	TupleTableSlot *inntuple;
 	ExprContext *econtext;
 	ExprDoneCond isDone;
@@ -68,7 +67,6 @@ ExecHashJoin(HashJoinState *node)
 	otherqual = node->js.ps.qual;
 	hashNode = (HashState *) innerPlanState(node);
 	outerNode = outerPlanState(node);
-	dir = estate->es_direction;
 
 	/*
 	 * get information from HashJoin state

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.81 2005/10/15 02:49:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.82 2005/10/18 01:06:24 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -1335,7 +1335,6 @@ AlterDomainDropConstraint(List *names, const char *constrName, DropBehavior beha
 	Oid			domainoid;
 	HeapTuple	tup;
 	Relation	rel;
-	Form_pg_type typTup;
 	Relation	conrel;
 	SysScanDesc conscan;
 	ScanKeyData key[1];
@@ -1378,8 +1377,6 @@ AlterDomainDropConstraint(List *names, const char *constrName, DropBehavior beha
 
 	conscan = systable_beginscan(conrel, ConstraintTypidIndexId, true,
 								 SnapshotNow, 1, key);
-
-	typTup = (Form_pg_type) GETSTRUCT(tup);
 
 	/*
 	 * Scan over the result set, removing any matching entries.
