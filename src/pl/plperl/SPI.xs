@@ -46,6 +46,33 @@ do_spi_elog(int level, char *message)
 	PG_END_TRY();
 }
 
+/*
+ * Interface routine to catch ereports and punt them to Perl
+ */
+static void
+do_plperl_return_next(SV *sv)
+{
+	MemoryContext oldcontext = CurrentMemoryContext;
+
+	PG_TRY();
+	{
+		plperl_return_next(sv);
+	}
+	PG_CATCH();
+	{
+		ErrorData  *edata;
+
+		/* Must reset elog.c's state */
+		MemoryContextSwitchTo(oldcontext);
+		edata = CopyErrorData();
+		FlushErrorState();
+
+		/* Punt the error to Perl */
+		croak("%s", edata->message);
+	}
+	PG_END_TRY();
+}
+
 
 MODULE = SPI PREFIX = spi_
 
@@ -101,7 +128,7 @@ void
 spi_return_next(rv)
 	SV *rv;
 	CODE:
-		plperl_return_next(rv);
+		do_plperl_return_next(rv);
 
 SV *
 spi_spi_query(query)

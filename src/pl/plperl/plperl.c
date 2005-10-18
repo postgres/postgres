@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.93 2005/10/15 02:49:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.94 2005/10/18 17:13:14 tgl Exp $
  *
  **********************************************************************/
 
@@ -119,9 +119,6 @@ Datum		plperl_call_handler(PG_FUNCTION_ARGS);
 Datum		plperl_validator(PG_FUNCTION_ARGS);
 void		plperl_init(void);
 
-HV		   *plperl_spi_exec(char *query, int limit);
-SV		   *plperl_spi_query(char *);
-
 static Datum plperl_func_handler(PG_FUNCTION_ARGS);
 
 static Datum plperl_trigger_handler(PG_FUNCTION_ARGS);
@@ -130,8 +127,6 @@ static plperl_proc_desc *compile_plperl_function(Oid fn_oid, bool is_trigger);
 static SV  *plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc);
 static void plperl_init_shared_libs(pTHX);
 static HV  *plperl_spi_execute_fetch_result(SPITupleTable *, int, int);
-
-void		plperl_return_next(SV *);
 
 /*
  * This routine is a crock, and so is everyplace that calls it.  The problem
@@ -1552,8 +1547,16 @@ plperl_spi_execute_fetch_result(SPITupleTable *tuptable, int processed,
 }
 
 
+/*
+ * Note: plperl_return_next is called both in Postgres and Perl contexts.
+ * We report any errors in Postgres fashion (via ereport).  If called in
+ * Perl context, it is SPI.xs's responsibility to catch the error and
+ * convert to a Perl error.  We assume (perhaps without adequate justification)
+ * that we need not abort the current transaction if the Perl code traps the
+ * error.
+ */
 void
-plperl_return_next(SV * sv)
+plperl_return_next(SV *sv)
 {
 	plperl_proc_desc *prodesc = plperl_current_prodesc;
 	FunctionCallInfo fcinfo = plperl_current_caller_info;
@@ -1566,20 +1569,16 @@ plperl_return_next(SV * sv)
 		return;
 
 	if (!prodesc->fn_retisset)
-	{
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("cannot use return_next in a non-SETOF function")));
-	}
 
 	if (prodesc->fn_retistuple &&
 		!(SvOK(sv) && SvTYPE(sv) == SVt_RV && SvTYPE(SvRV(sv)) == SVt_PVHV))
-	{
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("setof-composite-returning Perl function "
 						"must call return_next with reference to hash")));
-	}
 
 	cxt = MemoryContextSwitchTo(rsi->econtext->ecxt_per_query_memory);
 
@@ -1637,10 +1636,15 @@ plperl_spi_query(char *query)
 {
 	SV		   *cursor;
 
+	/*
+	 * Execute the query inside a sub-transaction, so we can cope with errors
+	 * sanely
+	 */
 	MemoryContext oldcontext = CurrentMemoryContext;
 	ResourceOwner oldowner = CurrentResourceOwner;
 
 	BeginInternalSubTransaction(NULL);
+	/* Want to run inside function's memory context */
 	MemoryContextSwitchTo(oldcontext);
 
 	PG_TRY();
@@ -1648,6 +1652,7 @@ plperl_spi_query(char *query)
 		void	   *plan;
 		Portal		portal = NULL;
 
+		/* Create a cursor for the query */
 		plan = SPI_prepare(query, 0, NULL);
 		if (plan)
 			portal = SPI_cursor_open(NULL, plan, NULL, NULL, false);
@@ -1656,25 +1661,42 @@ plperl_spi_query(char *query)
 		else
 			cursor = newSV(0);
 
+		/* Commit the inner transaction, return to outer xact context */
 		ReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
+
+		/*
+		 * AtEOSubXact_SPI() should not have popped any SPI context, but just
+		 * in case it did, make sure we remain connected.
+		 */
 		SPI_restore_connection();
 	}
 	PG_CATCH();
 	{
 		ErrorData  *edata;
 
+		/* Save error info */
 		MemoryContextSwitchTo(oldcontext);
 		edata = CopyErrorData();
 		FlushErrorState();
 
+		/* Abort the inner transaction */
 		RollbackAndReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
 
+		/*
+		 * If AtEOSubXact_SPI() popped any SPI context of the subxact, it will
+		 * have left us in a disconnected state.  We need this hack to return
+		 * to connected state.
+		 */
 		SPI_restore_connection();
+
+		/* Punt the error to Perl */
 		croak("%s", edata->message);
+
+		/* Can't get here, but keep compiler quiet */
 		return NULL;
 	}
 	PG_END_TRY();
@@ -1686,22 +1708,80 @@ plperl_spi_query(char *query)
 SV *
 plperl_spi_fetchrow(char *cursor)
 {
-	SV		   *row = newSV(0);
-	Portal		p = SPI_cursor_find(cursor);
+	SV		   *row;
 
-	if (!p)
-		return row;
+	/*
+	 * Execute the FETCH inside a sub-transaction, so we can cope with errors
+	 * sanely
+	 */
+	MemoryContext oldcontext = CurrentMemoryContext;
+	ResourceOwner oldowner = CurrentResourceOwner;
 
-	SPI_cursor_fetch(p, true, 1);
-	if (SPI_processed == 0)
+	BeginInternalSubTransaction(NULL);
+	/* Want to run inside function's memory context */
+	MemoryContextSwitchTo(oldcontext);
+
+	PG_TRY();
 	{
-		SPI_cursor_close(p);
-		return row;
-	}
+		Portal		p = SPI_cursor_find(cursor);
 
-	row = plperl_hash_from_tuple(SPI_tuptable->vals[0],
-								 SPI_tuptable->tupdesc);
-	SPI_freetuptable(SPI_tuptable);
+		if (!p)
+			row = newSV(0);
+		else
+		{
+			SPI_cursor_fetch(p, true, 1);
+			if (SPI_processed == 0)
+			{
+				SPI_cursor_close(p);
+				row = newSV(0);
+			}
+			else
+			{
+				row = plperl_hash_from_tuple(SPI_tuptable->vals[0],
+											 SPI_tuptable->tupdesc);
+			}
+			SPI_freetuptable(SPI_tuptable);
+		}
+
+		/* Commit the inner transaction, return to outer xact context */
+		ReleaseCurrentSubTransaction();
+		MemoryContextSwitchTo(oldcontext);
+		CurrentResourceOwner = oldowner;
+
+		/*
+		 * AtEOSubXact_SPI() should not have popped any SPI context, but just
+		 * in case it did, make sure we remain connected.
+		 */
+		SPI_restore_connection();
+	}
+	PG_CATCH();
+	{
+		ErrorData  *edata;
+
+		/* Save error info */
+		MemoryContextSwitchTo(oldcontext);
+		edata = CopyErrorData();
+		FlushErrorState();
+
+		/* Abort the inner transaction */
+		RollbackAndReleaseCurrentSubTransaction();
+		MemoryContextSwitchTo(oldcontext);
+		CurrentResourceOwner = oldowner;
+
+		/*
+		 * If AtEOSubXact_SPI() popped any SPI context of the subxact, it will
+		 * have left us in a disconnected state.  We need this hack to return
+		 * to connected state.
+		 */
+		SPI_restore_connection();
+
+		/* Punt the error to Perl */
+		croak("%s", edata->message);
+
+		/* Can't get here, but keep compiler quiet */
+		return NULL;
+	}
+	PG_END_TRY();
 
 	return row;
 }
