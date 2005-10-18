@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.46 2005/10/12 14:28:33 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.47 2005/10/18 22:53:54 adunstan Exp $
 -->
 
  <chapter id="plperl">
@@ -118,14 +118,14 @@ $$ LANGUAGE plperl;
 
 <programlisting>
 CREATE FUNCTION perl_max (integer, integer) RETURNS integer AS $$
-    my ($a,$b) = @_;
-    if (! defined $a) {
-        if (! defined $b) { return undef; }
-        return $b;
+    my ($x,$y) = @_;
+    if (! defined $x) {
+        if (! defined $y) { return undef; }
+        return $y;
     }
-    if (! defined $b) { return $a; }
-    if ($a &gt; $b) { return $a; }
-    return $b;
+    if (! defined $y) { return $x; }
+    if ($x &gt; $y) { return $x; }
+    return $y;
 $$ LANGUAGE plperl;
 </programlisting>
    As shown above, to return an SQL null value from a PL/Perl
