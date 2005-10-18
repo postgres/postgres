@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.48 2005/10/13 23:41:07 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.49 2005/10/18 21:43:33 tgl Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -303,6 +303,21 @@ to get rid of this issue once and for all.  The reason is that that would
 make the regression tests less useful, not more, since they'd tend
 to exercise query plan types that produce ordered results to the
 exclusion of those that don't.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Insufficient stack depth</title>
+      
+    <para>
+     If the <literal>errors</literal> test results in a server crash
+     at the <literal>select infinite_recurse()</> command, it means that
+     the platform's limit on process stack size is smaller than the
+     <xref linkend="guc-max-stack-depth"> parameter indicates.  This
+     can be fixed by running the postmaster under a higher stack
+     size limit (4MB is recommended with the default value of 
+     <varname>max_stack_depth</>).  If you are unable to do that, an
+     alternative is to reduce the value of <varname>max_stack_depth</>.
     </para>
    </sect2>
 
