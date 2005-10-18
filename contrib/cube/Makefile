@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/cube/Makefile,v 1.14 2005/09/27 17:13:00 tgl Exp $
+# $PostgreSQL: pgsql/contrib/cube/Makefile,v 1.15 2005/10/18 01:30:48 tgl Exp $
 
 MODULE_big = cube
 OBJS= cube.o cubeparse.o
@@ -8,6 +8,8 @@ DOCS = README.cube
 REGRESS = cube
 
 EXTRA_CLEAN = cubeparse.c cubeparse.h cubescan.c y.tab.c y.tab.h
+
+PG_CPPFLAGS = -I.
 
 SHLIB_LINK += $(filter -lm, $(LIBS))
 

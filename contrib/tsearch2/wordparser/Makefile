@@ -1,15 +1,16 @@
-# $PostgreSQL: pgsql/contrib/tsearch2/wordparser/Makefile,v 1.7 2005/09/27 17:13:12 tgl Exp $
+# $PostgreSQL: pgsql/contrib/tsearch2/wordparser/Makefile,v 1.8 2005/10/18 01:30:49 tgl Exp $
 
+SUBOBJS =  parser.o deflex.o
+
+EXTRA_CLEAN = SUBSYS.o $(SUBOBJS) parser.c
 
 PG_CPPFLAGS = -I$(srcdir)/..
-SUBOBJS =  parser.o deflex.o
-EXTRA_CLEAN = SUBSYS.o $(SUBOBJS) parser.c
 
 ifdef USE_PGXS
 PGXS := $(shell pg_config --pgxs)
 include $(PGXS)
 else
-subdir = contrib/tsearch2
+subdir = contrib/tsearch2/wordparser
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
