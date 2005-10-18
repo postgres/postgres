@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.52 2005/10/15 02:49:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.53 2005/10/18 22:59:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,6 +134,7 @@ struct Tuplesortstate
 	TupSortStatus status;		/* enumerated value as shown above */
 	bool		randomAccess;	/* did caller request random access? */
 	long		availMem;		/* remaining memory available, in bytes */
+	long		allowedMem;		/* total memory allowed, in bytes */
 	LogicalTapeSet *tapeset;	/* logtape.c object for tapes in a temp file */
 
 	/*
@@ -433,7 +434,8 @@ tuplesort_begin_common(int workMem, bool randomAccess)
 
 	state->status = TSS_INITIAL;
 	state->randomAccess = randomAccess;
-	state->availMem = workMem * 1024L;
+	state->allowedMem = workMem * 1024L;
+	state->availMem = state->allowedMem;
 	state->tapeset = NULL;
 
 	state->memtupcount = 0;
@@ -582,9 +584,24 @@ void
 tuplesort_end(Tuplesortstate *state)
 {
 	int			i;
+#ifdef TRACE_SORT
+	long		spaceUsed;
+#endif
 
 	if (state->tapeset)
+	{
+#ifdef TRACE_SORT
+		spaceUsed = LogicalTapeSetBlocks(state->tapeset);
+#endif
 		LogicalTapeSetClose(state->tapeset);
+	}
+	else
+	{
+#ifdef TRACE_SORT
+		spaceUsed = (state->allowedMem - state->availMem + 1023) / 1024;
+#endif
+	}
+
 	if (state->memtuples)
 	{
 		for (i = 0; i < state->memtupcount; i++)
@@ -604,8 +621,14 @@ tuplesort_end(Tuplesortstate *state)
 
 #ifdef TRACE_SORT
 	if (trace_sort)
-		elog(NOTICE, "sort ended: %s",
-			 pg_rusage_show(&state->ru_start));
+	{
+		if (state->tapeset)
+			elog(NOTICE, "external sort ended, %ld disk blocks used: %s",
+				 spaceUsed, pg_rusage_show(&state->ru_start));
+		else
+			elog(NOTICE, "internal sort ended, %ld KB used: %s",
+				 spaceUsed, pg_rusage_show(&state->ru_start));
+	}
 #endif
 
 	pfree(state);

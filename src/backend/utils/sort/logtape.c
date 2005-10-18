@@ -64,7 +64,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/logtape.c,v 1.16 2005/10/15 02:49:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/logtape.c,v 1.17 2005/10/18 22:59:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -924,4 +924,13 @@ LogicalTapeTell(LogicalTapeSet *lts, int tapenum,
 	lt = lts->tapes[tapenum];
 	*blocknum = lt->curBlockNumber;
 	*offset = lt->pos;
+}
+
+/*
+ * Obtain total disk space currently used by a LogicalTapeSet, in blocks.
+ */
+long
+LogicalTapeSetBlocks(LogicalTapeSet *lts)
+{
+	return lts->nFileBlocks;
 }

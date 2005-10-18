@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/logtape.h,v 1.12 2004/12/31 22:03:46 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/logtape.h,v 1.13 2005/10/18 22:59:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,5 +38,6 @@ extern bool LogicalTapeSeek(LogicalTapeSet *lts, int tapenum,
 				long blocknum, int offset);
 extern void LogicalTapeTell(LogicalTapeSet *lts, int tapenum,
 				long *blocknum, int *offset);
+extern long LogicalTapeSetBlocks(LogicalTapeSet *lts);
 
 #endif   /* LOGTAPE_H */
