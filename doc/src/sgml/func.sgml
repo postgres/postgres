@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.287 2005/10/02 23:50:06 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.288 2005/10/18 20:38:57 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -1194,9 +1194,6 @@ PostgreSQL documentation
     <primary>quote_literal</primary>
    </indexterm>
    <indexterm>
-    <primary>regexp_replace</primary>
-   </indexterm>
-   <indexterm>
     <primary>repeat</primary>
    </indexterm>
    <indexterm>
@@ -1417,26 +1414,6 @@ PostgreSQL documentation
        </entry>
        <entry><literal>quote_literal( 'O\'Reilly')</literal></entry>
        <entry><literal>'O''Reilly'</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal><function>regexp_replace</function>(<parameter>source</parameter> <type>text</type>,
-       <parameter>pattern</parameter> <type>text</type>,
-       <parameter>replacement</parameter> <type>text</type>
-       <optional>, <parameter>flags</parameter> <type>text</type></optional>)</literal></entry>
-       <entry><type>text</type></entry>
-       <entry>Replace string that matches the regular expression
-        <parameter>pattern</parameter> in <parameter>source</parameter> to
-        <parameter>replacement</parameter>.
-        <parameter>replacement</parameter> can use <literal>\1</>-<literal>\9</> and <literal>\&amp;</>.
-        <literal>\1</>-<literal>\9</> is a back reference to the n'th subexpression, and
-        <literal>\&amp;</> is the entire matched string.
-        <parameter>flags</parameter> can use <literal>g</>(global) and <literal>i</>(ignore case).
-        When flags is not specified, case sensitive matching is used, and it replaces
-        only the instance.
-       </entry>
-       <entry><literal>regexp_replace('1112223333', '(\\d{3})(\\d{3})(\\d{4})', '(\\1) \\2-\\3')</literal></entry>
-       <entry><literal>(111) 222-3333</literal></entry>
       </row>
 
       <row>
@@ -2821,9 +2798,11 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
    <indexterm>
     <primary>SIMILAR TO</primary>
    </indexterm>
-
    <indexterm>
     <primary>substring</primary>
+   </indexterm>
+   <indexterm>
+    <primary>regexp_replace</primary>
    </indexterm>
 
 <synopsis>
@@ -3002,7 +2981,7 @@ substring('foobar' from '#"o_b#"%' for '#')    <lineannotation>NULL</lineannotat
     <para>
      A regular expression is a character sequence that is an
      abbreviated definition of a set of strings (a <firstterm>regular
-      set</firstterm>).  A string is said to match a regular expression
+     set</firstterm>).  A string is said to match a regular expression
      if it is a member of the regular set described by the regular
      expression.  As with <function>LIKE</function>, pattern characters
      match string characters exactly unless they are special characters
@@ -3027,7 +3006,8 @@ substring('foobar' from '#"o_b#"%' for '#')    <lineannotation>NULL</lineannotat
     <para>
      The <function>substring</> function with two parameters,
      <function>substring(<replaceable>string</replaceable> from
-     <replaceable>pattern</replaceable>)</function>, provides extraction of a substring
+     <replaceable>pattern</replaceable>)</function>, provides extraction of a
+     substring
      that matches a POSIX regular expression pattern.  It returns null if
      there is no match, otherwise the portion of the text that matched the
      pattern.  But if the pattern contains any parentheses, the portion
@@ -3045,6 +3025,45 @@ substring('foobar' from '#"o_b#"%' for '#')    <lineannotation>NULL</lineannotat
 <programlisting>
 substring('foobar' from 'o.b')     <lineannotation>oob</lineannotation>
 substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
+</programlisting>
+   </para>
+
+    <para>
+     The <function>regexp_replace</> function provides substitution of
+     new text for substrings that match POSIX regular expression patterns.
+     It has the syntax
+     <function>regexp_replace</function>(<replaceable>source</>,
+     <replaceable>pattern</>, <replaceable>replacement</>
+     <optional>, <replaceable>flags</> </optional>).
+     The <replaceable>source</> string is returned unchanged if
+     there is no match to the <replaceable>pattern</>.  If there is a
+     match, the <replaceable>source</> string is returned with the
+     <replaceable>replacement</> string substituted for the matching
+     substring.  The <replaceable>replacement</> string can contain
+     <literal>\</><replaceable>n</>, where <replaceable>n</> is <literal>1</>
+     through <literal>9</>, to indicate that the source substring matching the
+     <replaceable>n</>'th parenthesized subexpression of the pattern should be
+     inserted, and it can contain <literal>\&amp;</> to indicate that the
+     substring matching the entire pattern should be inserted.  Write
+     <literal>\\</> if you need to put a literal backslash in the replacement
+     text.  (As always, remember to double backslashes written in literal
+     constant strings.)
+     The <replaceable>flags</> parameter is an optional text
+     string containing zero or more single-letter flags that change the
+     function's behavior.  Flag <literal>i</> specifies case-insensitive
+     matching, while flag <literal>g</> specifies replacement of each matching
+     substring rather than only the first one.
+    </para>
+
+   <para>
+    Some examples:
+<programlisting>
+regexp_replace('foobarbaz', 'b..', 'X')
+                                   <lineannotation>fooXbaz</lineannotation>
+regexp_replace('foobarbaz', 'b..', 'X', 'g')
+                                   <lineannotation>fooXX</lineannotation>
+regexp_replace('foobarbaz', 'b(..)', 'X\\1Y', 'g')
+                                   <lineannotation>fooXarYXazY</lineannotation>
 </programlisting>
    </para>
 

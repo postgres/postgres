@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.137 2005/10/17 16:24:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.138 2005/10/18 20:38:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,11 +24,11 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "parser/scansup.h"
+#include "regex/regex.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/pg_locale.h"
-#include "regex/regex.h"
 
 
 typedef struct varlena unknown;
@@ -2066,7 +2066,8 @@ replace_text(PG_FUNCTION_ARGS)
 
 /*
  * check_replace_text_has_escape_char
- * check whether replace_text has escape char.
+ *
+ * check whether replace_text contains escape char.
  */
 static bool
 check_replace_text_has_escape_char(const text *replace_text)
@@ -2077,14 +2078,18 @@ check_replace_text_has_escape_char(const text *replace_text)
 	if (pg_database_encoding_max_length() == 1)
 	{
 		for (; p < p_end; p++)
+		{
 			if (*p == '\\')
 				return true;
+		}
 	}
 	else
 	{
 		for (; p < p_end; p += pg_mblen(p))
+		{
 			if (*p == '\\')
 				return true;
+		}
 	}
 
 	return false;
@@ -2092,7 +2097,9 @@ check_replace_text_has_escape_char(const text *replace_text)
 
 /*
  * appendStringInfoRegexpSubstr
- * append string by using back references of regexp.
+ *
+ * Append replace_text to str, substituting regexp back references for
+ * \n escapes.
  */
 static void
 appendStringInfoRegexpSubstr(StringInfo str, text *replace_text,
@@ -2100,50 +2107,41 @@ appendStringInfoRegexpSubstr(StringInfo str, text *replace_text,
 {
 	const char *p = VARDATA(replace_text);
 	const char *p_end = p + (VARSIZE(replace_text) - VARHDRSZ);
-
 	int			eml = pg_database_encoding_max_length();
 
-	int			substr_start = 1;
-	int			ch_cnt;
-
-	int			so;
-	int			eo;
-
-	while (1)
+	for (;;)
 	{
-		/* Find escape char. */
-		ch_cnt = 0;
+		const char *chunk_start = p;
+		int			so;
+		int			eo;
+
+		/* Find next escape char. */
 		if (eml == 1)
 		{
 			for (; p < p_end && *p != '\\'; p++)
-				ch_cnt++;
+				/* nothing */ ;
 		}
 		else
 		{
 			for (; p < p_end && *p != '\\'; p += pg_mblen(p))
-				ch_cnt++;
+				/* nothing */ ;
 		}
 
-		/*
-		 * Copy the text when there is a text in the left of escape char or
-		 * escape char is not found.
-		 */
-		if (ch_cnt)
-		{
-			text	   *append_text = text_substring(PointerGetDatum(replace_text),
-												substr_start, ch_cnt, false);
+		/* Copy the text we just scanned over, if any. */
+		if (p > chunk_start)
+			appendBinaryStringInfo(str, chunk_start, p - chunk_start);
 
-			appendStringInfoText(str, append_text);
-			pfree(append_text);
-		}
-		substr_start += ch_cnt + 1;
-
-		if (p >= p_end)			/* When escape char is not found. */
+		/* Done if at end of string, else advance over escape char. */
+		if (p >= p_end)
 			break;
-
-		/* See the next character of escape char. */
 		p++;
-		so = eo = -1;
+
+		if (p >= p_end)
+		{
+			/* Escape at very end of input.  Treat same as unexpected char */
+			appendStringInfoChar(str, '\\');
+			break;
+		}
 
 		if (*p >= '1' && *p <= '9')
 		{
@@ -2153,7 +2151,6 @@ appendStringInfoRegexpSubstr(StringInfo str, text *replace_text,
 			so = pmatch[idx].rm_so;
 			eo = pmatch[idx].rm_eo;
 			p++;
-			substr_start++;
 		}
 		else if (*p == '&')
 		{
@@ -2161,15 +2158,36 @@ appendStringInfoRegexpSubstr(StringInfo str, text *replace_text,
 			so = pmatch[0].rm_so;
 			eo = pmatch[0].rm_eo;
 			p++;
-			substr_start++;
+		}
+		else if (*p == '\\')
+		{
+			/* \\ means transfer one \ to output. */
+			appendStringInfoChar(str, '\\');
+			p++;
+			continue;
+		}
+		else
+		{
+			/*
+			 * If escape char is not followed by any expected char,
+			 * just treat it as ordinary data to copy.  (XXX would it be
+			 * better to throw an error?)
+			 */
+			appendStringInfoChar(str, '\\');
+			continue;
 		}
 
 		if (so != -1 && eo != -1)
 		{
-			/* Copy the text that is back reference of regexp. */
-			text	   *append_text = text_substring(PointerGetDatum(src_text),
-												   so + 1, (eo - so), false);
+			/*
+			 * Copy the text that is back reference of regexp.  Because so and
+			 * eo are counted in characters not bytes, it's easiest to use
+			 * text_substring to pull out the correct chunk of text.
+			 */
+			text	   *append_text;
 
+			append_text = text_substring(PointerGetDatum(src_text),
+										 so + 1, (eo - so), false);
 			appendStringInfoText(str, append_text);
 			pfree(append_text);
 		}
@@ -2180,17 +2198,19 @@ appendStringInfoRegexpSubstr(StringInfo str, text *replace_text,
 
 /*
  * replace_text_regexp
+ *
  * replace text that matches to regexp in src_text to replace_text.
+ *
+ * Note: to avoid having to include regex.h in builtins.h, we declare
+ * the regexp argument as void *, but really it's regex_t *.
  */
-Datum
-replace_text_regexp(PG_FUNCTION_ARGS)
+text *
+replace_text_regexp(text *src_text, void *regexp,
+					text *replace_text, bool glob)
 {
 	text	   *ret_text;
-	text	   *src_text = PG_GETARG_TEXT_P(0);
+	regex_t    *re = (regex_t *) regexp;
 	int			src_text_len = VARSIZE(src_text) - VARHDRSZ;
-	regex_t    *re = (regex_t *) PG_GETARG_POINTER(1);
-	text	   *replace_text = PG_GETARG_TEXT_P(2);
-	bool global = PG_GETARG_BOOL(3);
 	StringInfo	str = makeStringInfo();
 	int			regexec_result;
 	regmatch_t	pmatch[REGEXP_REPLACE_BACKREF_CNT];
@@ -2233,14 +2253,18 @@ replace_text_regexp(PG_FUNCTION_ARGS)
 			break;
 
 		/*
-		 * Copy the text when there is a text in the left of matched position.
+		 * Copy the text to the left of the match position.  Because we
+		 * are working with character not byte indexes, it's easiest to
+		 * use text_substring to pull out the needed data.
 		 */
 		if (pmatch[0].rm_so - data_pos > 0)
 		{
-			text	   *left_text = text_substring(PointerGetDatum(src_text),
-												   data_pos + 1,
-										  pmatch[0].rm_so - data_pos, false);
+			text	   *left_text;
 
+			left_text = text_substring(PointerGetDatum(src_text),
+									   data_pos + 1,
+									   pmatch[0].rm_so - data_pos,
+									   false);
 			appendStringInfoText(str, left_text);
 			pfree(left_text);
 		}
@@ -2259,7 +2283,7 @@ replace_text_regexp(PG_FUNCTION_ARGS)
 		/*
 		 * When global option is off, replace the first instance only.
 		 */
-		if (!global)
+		if (!glob)
 			break;
 
 		/*
@@ -2270,14 +2294,14 @@ replace_text_regexp(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Copy the text when there is a text at the right of last matched or
-	 * regexp is not matched.
+	 * Copy the text to the right of the last match.
 	 */
 	if (data_pos < data_len)
 	{
-		text	   *right_text = text_substring(PointerGetDatum(src_text),
-												data_pos + 1, -1, true);
+		text	   *right_text;
 
+		right_text = text_substring(PointerGetDatum(src_text),
+									data_pos + 1, -1, true);
 		appendStringInfoText(str, right_text);
 		pfree(right_text);
 	}
@@ -2287,7 +2311,7 @@ replace_text_regexp(PG_FUNCTION_ARGS)
 	pfree(str);
 	pfree(data);
 
-	PG_RETURN_TEXT_P(ret_text);
+	return ret_text;
 }
 
 /*

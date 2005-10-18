@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.59 2005/10/15 02:49:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.60 2005/10/18 20:38:58 tgl Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -83,7 +83,7 @@ static cached_re_str re_array[MAX_CACHED_RES];	/* cached re's */
 /*
  * RE_compile_and_cache - compile a RE, caching if possible
  *
- * Returns regex_t
+ * Returns regex_t *
  *
  *	text_re --- the pattern, expressed as an *untoasted* TEXT object
  *	cflags --- compile options for the pattern
@@ -91,7 +91,7 @@ static cached_re_str re_array[MAX_CACHED_RES];	/* cached re's */
  * Pattern is given in the database encoding.  We internally convert to
  * array of pg_wchar which is what Spencer's regex package wants.
  */
-static regex_t
+static regex_t *
 RE_compile_and_cache(text *text_re, int cflags)
 {
 	int			text_re_len = VARSIZE(text_re);
@@ -123,7 +123,7 @@ RE_compile_and_cache(text *text_re, int cflags)
 				re_array[0] = re_temp;
 			}
 
-			return re_array[0].cre_re;
+			return &re_array[0].cre_re;
 		}
 	}
 
@@ -188,7 +188,7 @@ RE_compile_and_cache(text *text_re, int cflags)
 	re_array[0] = re_temp;
 	num_res++;
 
-	return re_array[0].cre_re;
+	return &re_array[0].cre_re;
 }
 
 /*
@@ -212,7 +212,7 @@ RE_compile_and_execute(text *text_re, char *dat, int dat_len,
 	pg_wchar   *data;
 	size_t		data_len;
 	int			regexec_result;
-	regex_t		re;
+	regex_t	   *re;
 	char		errMsg[100];
 
 	/* Convert data string to wide characters */
@@ -223,7 +223,7 @@ RE_compile_and_execute(text *text_re, char *dat, int dat_len,
 	re = RE_compile_and_cache(text_re, cflags);
 
 	/* Perform RE match and return result */
-	regexec_result = pg_regexec(&re_array[0].cre_re,
+	regexec_result = pg_regexec(re,
 								data,
 								data_len,
 								0,
@@ -237,8 +237,7 @@ RE_compile_and_execute(text *text_re, char *dat, int dat_len,
 	if (regexec_result != REG_OKAY && regexec_result != REG_NOMATCH)
 	{
 		/* re failed??? */
-		pg_regerror(regexec_result, &re_array[0].cre_re,
-					errMsg, sizeof(errMsg));
+		pg_regerror(regexec_result, re, errMsg, sizeof(errMsg));
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
 				 errmsg("regular expression failed: %s", errMsg)));
@@ -442,10 +441,10 @@ textregexsubstr(PG_FUNCTION_ARGS)
 
 /*
  * textregexreplace_noopt()
- *		Return a replace string matched by a regular expression.
- *		This function is a version that doesn't specify the option of
- *		textregexreplace. This is case sensitive, replace the first
- *		instance only.
+ *		Return a string matched by a regular expression, with replacement.
+ *
+ * This version doesn't have an option argument: we default to case
+ * sensitive match, replace the first instance only.
  */
 Datum
 textregexreplace_noopt(PG_FUNCTION_ARGS)
@@ -453,20 +452,16 @@ textregexreplace_noopt(PG_FUNCTION_ARGS)
 	text	   *s = PG_GETARG_TEXT_P(0);
 	text	   *p = PG_GETARG_TEXT_P(1);
 	text	   *r = PG_GETARG_TEXT_P(2);
-	regex_t		re;
+	regex_t	   *re;
 
 	re = RE_compile_and_cache(p, regex_flavor);
 
-	return DirectFunctionCall4(replace_text_regexp,
-							   PointerGetDatum(s),
-							   PointerGetDatum(&re),
-							   PointerGetDatum(r),
-							   BoolGetDatum(false));
+	PG_RETURN_TEXT_P(replace_text_regexp(s, (void *) re, r, false));
 }
 
 /*
  * textregexreplace()
- *		Return a replace string matched by a regular expression.
+ *		Return a string matched by a regular expression, with replacement.
  */
 Datum
 textregexreplace(PG_FUNCTION_ARGS)
@@ -478,9 +473,9 @@ textregexreplace(PG_FUNCTION_ARGS)
 	char	   *opt_p = VARDATA(opt);
 	int			opt_len = (VARSIZE(opt) - VARHDRSZ);
 	int			i;
-	bool global = false;
+	bool		glob = false;
 	bool		ignorecase = false;
-	regex_t		re;
+	regex_t	   *re;
 
 	/* parse options */
 	for (i = 0; i < opt_len; i++)
@@ -491,8 +486,7 @@ textregexreplace(PG_FUNCTION_ARGS)
 				ignorecase = true;
 				break;
 			case 'g':
-				global = true;
-
+				glob = true;
 				break;
 			default:
 				ereport(ERROR,
@@ -508,11 +502,7 @@ textregexreplace(PG_FUNCTION_ARGS)
 	else
 		re = RE_compile_and_cache(p, regex_flavor);
 
-	return DirectFunctionCall4(replace_text_regexp,
-							   PointerGetDatum(s),
-							   PointerGetDatum(&re),
-							   PointerGetDatum(r),
-							   BoolGetDatum(global));
+	PG_RETURN_TEXT_P(replace_text_regexp(s, (void *) re, r, glob));
 }
 
 /* similar_escape()
