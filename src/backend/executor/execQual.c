@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.182 2005/10/19 18:18:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.183 2005/10/19 22:30:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +63,8 @@ static Datum ExecEvalAggref(AggrefExprState *aggref,
 			   ExprContext *econtext,
 			   bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
+			bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalWholeRowVar(ExprState *exprstate, ExprContext *econtext,
 			bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalConst(ExprState *exprstate, ExprContext *econtext,
 			  bool *isNull, ExprDoneCond *isDone);
@@ -448,9 +450,9 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 	/*
 	 * Get the slot and attribute number we want
 	 *
-	 * The asserts check that references to system attributes only appear at the
-	 * level of a relation scan; at higher levels, system attributes must be
-	 * treated as ordinary variables (since we no longer have access to the
+	 * The asserts check that references to system attributes only appear at
+	 * the level of a relation scan; at higher levels, system attributes must
+	 * be treated as ordinary variables (since we no longer have access to the
 	 * original tuple).
 	 */
 	attnum = variable->varattno;
@@ -503,6 +505,77 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 #endif   /* USE_ASSERT_CHECKING */
 
 	return slot_getattr(slot, attnum, isNull);
+}
+
+/* ----------------------------------------------------------------
+ *		ExecEvalWholeRowVar
+ *
+ *		Returns a Datum for a whole-row variable.
+ *
+ *		This could be folded into ExecEvalVar, but we make it a separate
+ *		routine so as not to slow down ExecEvalVar with tests for this
+ *		uncommon case.
+ * ----------------------------------------------------------------
+ */
+static Datum
+ExecEvalWholeRowVar(ExprState *exprstate, ExprContext *econtext,
+					bool *isNull, ExprDoneCond *isDone)
+{
+	Var		   *variable = (Var *) exprstate->expr;
+	TupleTableSlot *slot;
+	HeapTuple	tuple;
+	TupleDesc	tupleDesc;
+	HeapTupleHeader dtuple;
+
+	if (isDone)
+		*isDone = ExprSingleResult;
+	*isNull = false;
+
+	Assert(variable->varattno == InvalidAttrNumber);
+
+	/*
+	 * Whole-row Vars can only appear at the level of a relation scan,
+	 * never in a join.
+	 */
+	Assert(variable->varno != INNER);
+	Assert(variable->varno != OUTER);
+	slot = econtext->ecxt_scantuple;
+
+	tuple = slot->tts_tuple;
+	tupleDesc = slot->tts_tupleDescriptor;
+
+	/*
+	 * We have to make a copy of the tuple so we can safely insert the
+	 * Datum overhead fields, which are not set in on-disk tuples.
+	 */
+	dtuple = (HeapTupleHeader) palloc(tuple->t_len);
+	memcpy((char *) dtuple, (char *) tuple->t_data, tuple->t_len);
+
+	HeapTupleHeaderSetDatumLength(dtuple, tuple->t_len);
+
+	/*
+	 * If the Var identifies a named composite type, label the tuple
+	 * with that type; otherwise use what is in the tupleDesc.
+	 *
+	 * It's likely that the slot's tupleDesc is a record type; if so,
+	 * make sure it's been "blessed", so that the Datum can be interpreted
+	 * later.
+	 */
+	if (variable->vartype != RECORDOID)
+	{
+		HeapTupleHeaderSetTypeId(dtuple, variable->vartype);
+		HeapTupleHeaderSetTypMod(dtuple, variable->vartypmod);
+	}
+	else
+	{
+		if (tupleDesc->tdtypeid == RECORDOID &&
+			tupleDesc->tdtypmod < 0)
+			assign_record_type_typmod(tupleDesc);
+		HeapTupleHeaderSetTypeId(dtuple, tupleDesc->tdtypeid);
+		HeapTupleHeaderSetTypMod(dtuple, tupleDesc->tdtypmod);
+	}
+
+	return PointerGetDatum(dtuple);
 }
 
 /* ----------------------------------------------------------------
@@ -2841,8 +2914,15 @@ ExecInitExpr(Expr *node, PlanState *parent)
 	switch (nodeTag(node))
 	{
 		case T_Var:
-			state = (ExprState *) makeNode(ExprState);
-			state->evalfunc = ExecEvalVar;
+			{
+				Var	   *var = (Var *) node;
+
+				state = (ExprState *) makeNode(ExprState);
+				if (var->varattno != InvalidAttrNumber)
+					state->evalfunc = ExecEvalVar;
+				else
+					state->evalfunc = ExecEvalWholeRowVar;
+			}
 			break;
 		case T_Const:
 			state = (ExprState *) makeNode(ExprState);

@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.101 2005/10/19 18:18:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.102 2005/10/19 22:30:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,6 @@
 #include "access/tuptoaster.h"
 #include "catalog/pg_type.h"
 #include "executor/tuptable.h"
-#include "utils/typcache.h"
 
 
 /* ----------------------------------------------------------------
@@ -595,38 +594,6 @@ heap_getsysattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 		case TableOidAttributeNumber:
 			result = ObjectIdGetDatum(tup->t_tableOid);
 			break;
-
-			/*
-			 * If the attribute number is 0, then we are supposed to return
-			 * the entire tuple as a row-type Datum.  (Using zero for this
-			 * purpose is unclean since it risks confusion with "invalid attr"
-			 * result codes, but it's not worth changing now.)
-			 *
-			 * We have to make a copy of the tuple so we can safely insert the
-			 * Datum overhead fields, which are not set in on-disk tuples.
-			 *
-			 * It's possible that the passed tupleDesc is a record type that
-			 * hasn't been "blessed" yet, so cover that case.
-			 */
-		case InvalidAttrNumber:
-			{
-				HeapTupleHeader dtup;
-
-				if (tupleDesc->tdtypeid == RECORDOID &&
-					tupleDesc->tdtypmod < 0)
-					assign_record_type_typmod(tupleDesc);
-
-				dtup = (HeapTupleHeader) palloc(tup->t_len);
-				memcpy((char *) dtup, (char *) tup->t_data, tup->t_len);
-
-				HeapTupleHeaderSetDatumLength(dtup, tup->t_len);
-				HeapTupleHeaderSetTypeId(dtup, tupleDesc->tdtypeid);
-				HeapTupleHeaderSetTypMod(dtup, tupleDesc->tdtypmod);
-
-				result = PointerGetDatum(dtup);
-			}
-			break;
-
 		default:
 			elog(ERROR, "invalid attnum: %d", attnum);
 			result = 0;			/* keep compiler quiet */
