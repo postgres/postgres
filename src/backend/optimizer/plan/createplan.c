@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.201 2005/10/15 02:49:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.202 2005/10/19 17:31:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -308,17 +308,13 @@ use_physical_tlist(RelOptInfo *rel)
 	int			i;
 
 	/*
-	 * OK for subquery and function scans; otherwise, can't do it for anything
-	 * except real relations.
+	 * We can do this for real relation scans, subquery scans, and function
+	 * scans (but not for, eg, joins).
 	 */
-	if (rel->rtekind != RTE_RELATION)
-	{
-		if (rel->rtekind == RTE_SUBQUERY)
-			return true;
-		if (rel->rtekind == RTE_FUNCTION)
-			return true;
+	if (rel->rtekind != RTE_RELATION &&
+		rel->rtekind != RTE_SUBQUERY &&
+		rel->rtekind != RTE_FUNCTION)
 		return false;
-	}
 
 	/*
 	 * Can't do it with inheritance cases either (mainly because Append
@@ -328,15 +324,16 @@ use_physical_tlist(RelOptInfo *rel)
 		return false;
 
 	/*
-	 * Can't do it if any system columns are requested, either.  (This could
-	 * possibly be fixed but would take some fragile assumptions in setrefs.c,
-	 * I think.)
+	 * Can't do it if any system columns or whole-row Vars are requested,
+	 * either.  (This could possibly be fixed but would take some fragile
+	 * assumptions in setrefs.c, I think.)
 	 */
 	for (i = rel->min_attr; i <= 0; i++)
 	{
 		if (!bms_is_empty(rel->attr_needed[i - rel->min_attr]))
 			return false;
 	}
+
 	return true;
 }
 
