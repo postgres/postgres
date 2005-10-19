@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.171 2004/12/31 21:59:45 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.171.4.1 2005/10/19 22:51:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,6 +62,8 @@ static Datum ExecEvalAggref(AggrefExprState *aggref,
 			   ExprContext *econtext,
 			   bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
+			bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalWholeRowVar(ExprState *exprstate, ExprContext *econtext,
 			bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalConst(ExprState *exprstate, ExprContext *econtext,
 			  bool *isNull, ExprDoneCond *isDone);
@@ -525,6 +527,77 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 						  isNull);		/* return: is attribute null? */
 
 	return result;
+}
+
+/* ----------------------------------------------------------------
+ *		ExecEvalWholeRowVar
+ *
+ *		Returns a Datum for a whole-row variable.
+ *
+ *		This could be folded into ExecEvalVar, but we make it a separate
+ *		routine so as not to slow down ExecEvalVar with tests for this
+ *		uncommon case.
+ * ----------------------------------------------------------------
+ */
+static Datum
+ExecEvalWholeRowVar(ExprState *exprstate, ExprContext *econtext,
+					bool *isNull, ExprDoneCond *isDone)
+{
+	Var		   *variable = (Var *) exprstate->expr;
+	TupleTableSlot *slot;
+	HeapTuple	tuple;
+	TupleDesc	tupleDesc;
+	HeapTupleHeader dtuple;
+
+	if (isDone)
+		*isDone = ExprSingleResult;
+	*isNull = false;
+
+	Assert(variable->varattno == InvalidAttrNumber);
+
+	/*
+	 * Whole-row Vars can only appear at the level of a relation scan,
+	 * never in a join.
+	 */
+	Assert(variable->varno != INNER);
+	Assert(variable->varno != OUTER);
+	slot = econtext->ecxt_scantuple;
+
+	tuple = slot->val;
+	tupleDesc = slot->ttc_tupleDescriptor;
+
+	/*
+	 * We have to make a copy of the tuple so we can safely insert the
+	 * Datum overhead fields, which are not set in on-disk tuples.
+	 */
+	dtuple = (HeapTupleHeader) palloc(tuple->t_len);
+	memcpy((char *) dtuple, (char *) tuple->t_data, tuple->t_len);
+
+	HeapTupleHeaderSetDatumLength(dtuple, tuple->t_len);
+
+	/*
+	 * If the Var identifies a named composite type, label the tuple
+	 * with that type; otherwise use what is in the tupleDesc.
+	 *
+	 * It's likely that the slot's tupleDesc is a record type; if so,
+	 * make sure it's been "blessed", so that the Datum can be interpreted
+	 * later.
+	 */
+	if (variable->vartype != RECORDOID)
+	{
+		HeapTupleHeaderSetTypeId(dtuple, variable->vartype);
+		HeapTupleHeaderSetTypMod(dtuple, variable->vartypmod);
+	}
+	else
+	{
+		if (tupleDesc->tdtypeid == RECORDOID &&
+			tupleDesc->tdtypmod < 0)
+			assign_record_type_typmod(tupleDesc);
+		HeapTupleHeaderSetTypeId(dtuple, tupleDesc->tdtypeid);
+		HeapTupleHeaderSetTypMod(dtuple, tupleDesc->tdtypmod);
+	}
+
+	return PointerGetDatum(dtuple);
 }
 
 /* ----------------------------------------------------------------
@@ -2830,8 +2903,15 @@ ExecInitExpr(Expr *node, PlanState *parent)
 	switch (nodeTag(node))
 	{
 		case T_Var:
-			state = (ExprState *) makeNode(ExprState);
-			state->evalfunc = ExecEvalVar;
+			{
+				Var	   *var = (Var *) node;
+
+				state = (ExprState *) makeNode(ExprState);
+				if (var->varattno != InvalidAttrNumber)
+					state->evalfunc = ExecEvalVar;
+				else
+					state->evalfunc = ExecEvalWholeRowVar;
+			}
 			break;
 		case T_Const:
 			state = (ExprState *) makeNode(ExprState);
@@ -3170,7 +3250,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				{
 					/* generic record, use runtime type assignment */
 					rstate->tupdesc = ExecTypeFromExprList(rowexpr->args);
-					rstate->tupdesc = BlessTupleDesc(rstate->tupdesc);
+					BlessTupleDesc(rstate->tupdesc);
 				}
 				else
 				{
