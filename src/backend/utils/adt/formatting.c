@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.100 2005/10/15 02:49:28 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.101 2005/10/20 15:59:46 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2005, PostgreSQL Global Development Group
@@ -2724,15 +2724,12 @@ static text *
 datetime_to_char_body(TmToChar *tmtc, text *fmt, bool is_interval)
 {
 	FormatNode *format;
-	struct pg_tm *tm = NULL;
 	char	   *fmt_str,
 			   *result;
 	bool		incache;
 	int			fmt_len = VARSIZE(fmt) - VARHDRSZ;
-
-	tm = tmtcTm(tmtc);
-	tm->tm_wday = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + 1) % 7;
-	tm->tm_yday = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(tm->tm_year, 1, 1) + 1;
+	int			reslen;
+	text	   *res;
 
 	/*
 	 * Convert fmt to C string
@@ -2742,9 +2739,10 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt, bool is_interval)
 	*(fmt_str + fmt_len) = '\0';
 
 	/*
-	 * Allocate result
+	 * Allocate workspace for result as C string
 	 */
 	result = palloc((fmt_len * DCH_MAX_ITEM_SIZ) + 1);
+	*result = '\0';
 
 	/*
 	 * Allocate new memory if format picture is bigger than static cache and
@@ -2790,6 +2788,7 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt, bool is_interval)
 		format = ent->format;
 	}
 
+	/* The real work is here */
 	DCH_processor(format, result, true, is_interval, (void *) tmtc);
 
 	if (!incache)
@@ -2797,26 +2796,14 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt, bool is_interval)
 
 	pfree(fmt_str);
 
-	/*
-	 * for result is allocated max memory, which current format-picture needs,
-	 * now it allocate result with real size
-	 */
-	if (result && *result)
-	{
-		int			len = strlen(result);
+	/* convert C-string result to TEXT format */
+	reslen = strlen(result);
+	res = (text *) palloc(reslen + VARHDRSZ);
+	memcpy(VARDATA(res), result, reslen);
+	VARATT_SIZEP(res) = reslen + VARHDRSZ;
 
-		if (len)
-		{
-			text	   *res = (text *) palloc(len + 1 + VARHDRSZ);
-
-			memcpy(VARDATA(res), result, len);
-			VARATT_SIZEP(res) = len + VARHDRSZ;
-			pfree(result);
-			return res;
-		}
-	}
 	pfree(result);
-	return NULL;
+	return res;
 }
 
 /****************************************************************************
@@ -2834,16 +2821,23 @@ timestamp_to_char(PG_FUNCTION_ARGS)
 	text	   *fmt = PG_GETARG_TEXT_P(1),
 			   *res;
 	TmToChar	tmtc;
+	struct pg_tm *tm;
+	int			thisdate;
 
 	if ((VARSIZE(fmt) - VARHDRSZ) <= 0 || TIMESTAMP_NOT_FINITE(dt))
 		PG_RETURN_NULL();
 
 	ZERO_tmtc(&tmtc);
+	tm = tmtcTm(&tmtc);
 
-	if (timestamp2tm(dt, NULL, tmtcTm(&tmtc), &tmtcFsec(&tmtc), NULL, NULL) != 0)
+	if (timestamp2tm(dt, NULL, tm, &tmtcFsec(&tmtc), NULL, NULL) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
+
+	thisdate = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
+	tm->tm_wday = (thisdate + 1) % 7;
+	tm->tm_yday = thisdate - date2j(tm->tm_year, 1, 1) + 1;
 
 	if (!(res = datetime_to_char_body(&tmtc, fmt, false)))
 		PG_RETURN_NULL();
@@ -2859,16 +2853,23 @@ timestamptz_to_char(PG_FUNCTION_ARGS)
 			   *res;
 	TmToChar	tmtc;
 	int			tz;
+	struct pg_tm *tm;
+	int			thisdate;
 
 	if ((VARSIZE(fmt) - VARHDRSZ) <= 0 || TIMESTAMP_NOT_FINITE(dt))
 		PG_RETURN_NULL();
 
 	ZERO_tmtc(&tmtc);
+	tm = tmtcTm(&tmtc);
 
-	if (timestamp2tm(dt, &tz, tmtcTm(&tmtc), &tmtcFsec(&tmtc), &tmtcTzn(&tmtc), NULL) != 0)
+	if (timestamp2tm(dt, &tz, tm, &tmtcFsec(&tmtc), &tmtcTzn(&tmtc), NULL) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
+
+	thisdate = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
+	tm->tm_wday = (thisdate + 1) % 7;
+	tm->tm_yday = thisdate - date2j(tm->tm_year, 1, 1) + 1;
 
 	if (!(res = datetime_to_char_body(&tmtc, fmt, false)))
 		PG_RETURN_NULL();
@@ -2888,14 +2889,19 @@ interval_to_char(PG_FUNCTION_ARGS)
 	text	   *fmt = PG_GETARG_TEXT_P(1),
 			   *res;
 	TmToChar	tmtc;
+	struct pg_tm *tm;
 
 	if ((VARSIZE(fmt) - VARHDRSZ) <= 0)
 		PG_RETURN_NULL();
 
 	ZERO_tmtc(&tmtc);
+	tm = tmtcTm(&tmtc);
 
-	if (interval2tm(*it, tmtcTm(&tmtc), &tmtcFsec(&tmtc)) != 0)
+	if (interval2tm(*it, tm, &tmtcFsec(&tmtc)) != 0)
 		PG_RETURN_NULL();
+
+	/* wday is meaningless, yday approximates the total span in days */
+	tm->tm_yday = (tm->tm_year * MONTHS_PER_YEAR + tm->tm_mon) * DAYS_PER_MONTH + tm->tm_mday;
 
 	if (!(res = datetime_to_char_body(&tmtc, fmt, true)))
 		PG_RETURN_NULL();
