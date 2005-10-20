@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.440.4.2 2005/06/02 21:03:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.440.4.3 2005/10/20 20:06:03 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2645,6 +2645,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 	{
 		if (!SelectConfigFiles(userDoption, argv[0]))
 			proc_exit(1);
+		/* If timezone is not set, determine what the OS uses */
+		pg_timezone_initialize();
 	}
 
 	/*
