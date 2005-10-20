@@ -14,24 +14,13 @@
  *	Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/md5.c,v 1.30 2005/10/17 16:24:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/md5.c,v 1.31 2005/10/20 13:54:08 tgl Exp $
  */
 
+/* This is intended to be used in both frontend and backend, so use c.h */
+#include "c.h"
 
-#if ! defined(FRONTEND)
-#include "postgres.h"
 #include "libpq/crypt.h"
-#endif
-
-#ifdef FRONTEND
-#include "postgres_fe.h"
-#include "libpq/crypt.h"
-
-#undef palloc
-#define palloc malloc
-#undef pfree
-#define pfree free
-#endif   /* FRONTEND */
 
 
 /*
@@ -325,8 +314,11 @@ pg_md5_encrypt(const char *passwd, const char *salt, size_t salt_len,
 			   char *buf)
 {
 	size_t		passwd_len = strlen(passwd);
-	char	   *crypt_buf = palloc(passwd_len + salt_len);
+	char	   *crypt_buf = malloc(passwd_len + salt_len);
 	bool		ret;
+
+	if (!crypt_buf)
+		return false;
 
 	/*
 	 * Place salt at the end because it may be known by users trying to crack
@@ -338,7 +330,7 @@ pg_md5_encrypt(const char *passwd, const char *salt, size_t salt_len,
 	strcpy(buf, "md5");
 	ret = pg_md5_hash(crypt_buf, passwd_len + salt_len, buf + 3);
 
-	pfree(crypt_buf);
+	free(crypt_buf);
 
 	return ret;
 }
