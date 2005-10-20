@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.125.2.1 2005/10/14 16:41:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.125.2.2 2005/10/20 01:31:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -244,18 +244,14 @@ errstart(int elevel, const char *filename, int lineno,
 	 * Okay, crank up a stack entry to store the info in.
 	 */
 
-	if (recursion_depth++ > 0)
+	if (recursion_depth++ > 0 && elevel >= ERROR)
 	{
 		/*
-		 * Ooops, error during error processing.  Clear ErrorContext and
-		 * force level up to ERROR or greater, as discussed at top of
-		 * file.  Adjust output decisions too.
+		 * Ooops, error during error processing.  Clear ErrorContext as
+		 * discussed at top of file.  We will not return to the original
+		 * error's reporter or handler, so we don't need it.
 		 */
 		MemoryContextReset(ErrorContext);
-		output_to_server = true;
-		if (whereToSendOutput == Remote && elevel != COMMERROR)
-			output_to_client = true;
-		elevel = Max(elevel, ERROR);
 
 		/*
 		 * If we recurse more than once, the problem might be something
