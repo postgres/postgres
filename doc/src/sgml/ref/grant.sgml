@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.49 2005/10/13 23:26:00 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.50 2005/10/20 19:18:01 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -341,6 +341,29 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...]
     such a command will appear to have been granted by the object owner.
     (For role membership, the membership appears to have been granted
     by the containing role itself.)
+   </para>
+
+   <para>
+    <command>GRANT</> and <command>REVOKE</> can also be done by a role
+    that is not the owner of the affected object, but is a member of the role
+    that owns the object, or is a member of a role that holds privileges
+    <literal>WITH GRANT OPTION</literal> on the object.  In this case the
+    privileges will be recorded as having been granted by the role that
+    actually owns the object or holds the privileges
+    <literal>WITH GRANT OPTION</literal>.  For example, if table
+    <literal>t1</> is owned by role <literal>g1</>, of which role
+    <literal>u1</> is a member, then <literal>u1</> can grant privileges
+    on <literal>t1</> to <literal>u2</>, but those privileges will appear
+    to have been granted directly by <literal>g1</>.  Any other member
+    of role <literal>g1</> could revoke them later.
+   </para>
+
+   <para>
+    If the role executing <command>GRANT</> holds the required privileges
+    indirectly via more than one role membership path, it is unspecified
+    which containing role will be recorded as having done the grant.  In such
+    cases it is best practice to use <command>SET ROLE</> to become the
+    specific role you want to do the <command>GRANT</> as.
    </para>
 
    <para>

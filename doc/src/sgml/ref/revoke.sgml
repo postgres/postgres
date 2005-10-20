@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.34 2005/07/26 23:24:02 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.35 2005/10/20 19:18:01 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -157,6 +157,31 @@ REVOKE [ ADMIN OPTION FOR ]
     from the object owner (possibly indirectly via chains of grant options),
     it is possible for a superuser to revoke all privileges, but this may
     require use of <literal>CASCADE</literal> as stated above.
+   </para>
+
+   <para>
+    <command>REVOKE</> can also be done by a role
+    that is not the owner of the affected object, but is a member of the role
+    that owns the object, or is a member of a role that holds privileges
+    <literal>WITH GRANT OPTION</literal> on the object.  In this case the
+    command is performed as though it were issued by the containing role that
+    actually owns the object or holds the privileges
+    <literal>WITH GRANT OPTION</literal>.  For example, if table
+    <literal>t1</> is owned by role <literal>g1</>, of which role
+    <literal>u1</> is a member, then <literal>u1</> can revoke privileges
+    on <literal>t1</> that are recorded as being granted by <literal>g1</>.
+    This would include grants made by <literal>u1</> as well as by other
+    members of role <literal>g1</>.
+   </para>
+
+   <para>
+    If the role executing <command>REVOKE</> holds privileges
+    indirectly via more than one role membership path, it is unspecified
+    which containing role will be used to perform the command.  In such cases
+    it is best practice to use <command>SET ROLE</> to become the specific
+    role you want to do the <command>REVOKE</> as.  Failure to do so may
+    lead to revoking privileges other than the ones you intended, or not
+    revoking anything at all.
    </para>
  </refsect1>
 
