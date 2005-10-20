@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.127 2005/10/15 02:49:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.128 2005/10/20 05:15:09 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -1036,9 +1036,8 @@ describeOneTableDetails(const char *schemaname,
 		if (tableinfo.checks)
 		{
 			printfPQExpBuffer(&buf,
-							  "SELECT "
-							  "pg_catalog.pg_get_constraintdef(r.oid, true), "
-							  "conname\n"
+							  "SELECT r.conname, "
+							  "pg_catalog.pg_get_constraintdef(r.oid, true)\n"
 							  "FROM pg_catalog.pg_constraint r\n"
 					"WHERE r.conrelid = '%s' AND r.contype = 'c' ORDER BY 1",
 							  oid);
@@ -1192,8 +1191,8 @@ describeOneTableDetails(const char *schemaname,
 			for (i = 0; i < check_count; i++)
 			{
 				printfPQExpBuffer(&buf, _("    \"%s\" %s"),
-								  PQgetvalue(result2, i, 1),
-								  PQgetvalue(result2, i, 0));
+								  PQgetvalue(result2, i, 0),
+								  PQgetvalue(result2, i, 1));
 
 				footers[count_footers++] = pg_strdup(buf.data);
 			}
