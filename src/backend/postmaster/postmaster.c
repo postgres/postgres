@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.470 2005/10/17 16:24:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.471 2005/10/20 20:05:44 tgl Exp $
  *
  * NOTES
  *
@@ -626,7 +626,8 @@ PostmasterMain(int argc, char *argv[])
 	}
 
 	/*
-	 * Other one-time internal sanity checks can go here.
+	 * Other one-time internal sanity checks can go here, if they are fast.
+	 * (Put any slow processing further down, after postmaster.pid creation.)
 	 */
 	if (!CheckDateTokenTables())
 	{
@@ -661,21 +662,6 @@ PostmasterMain(int argc, char *argv[])
 	}
 
 	/*
-	 * Initialize SSL library, if specified.
-	 */
-#ifdef USE_SSL
-	if (EnableSSL)
-		secure_initialize();
-#endif
-
-	/*
-	 * process any libraries that should be preloaded and optionally
-	 * pre-initialized
-	 */
-	if (preload_libraries_string)
-		process_preload_libraries(preload_libraries_string);
-
-	/*
 	 * Fork away from controlling terminal, if -S specified.
 	 *
 	 * Must do this before we grab any interlock files, else the interlocks will
@@ -694,6 +680,30 @@ PostmasterMain(int argc, char *argv[])
 	 * Unix socket.
 	 */
 	CreateDataDirLockFile(true);
+
+	/*
+	 * If timezone is not set, determine what the OS uses.  (In theory this
+	 * should be done during GUC initialization, but because it can take as
+	 * much as several seconds, we delay it until after we've created the
+	 * postmaster.pid file.  This prevents problems with boot scripts that
+	 * expect the pidfile to appear quickly.)
+	 */
+	pg_timezone_initialize();
+
+	/*
+	 * Initialize SSL library, if specified.
+	 */
+#ifdef USE_SSL
+	if (EnableSSL)
+		secure_initialize();
+#endif
+
+	/*
+	 * process any libraries that should be preloaded and optionally
+	 * pre-initialized
+	 */
+	if (preload_libraries_string)
+		process_preload_libraries(preload_libraries_string);
 
 	/*
 	 * Remove old temporary files.	At this point there can be no other
