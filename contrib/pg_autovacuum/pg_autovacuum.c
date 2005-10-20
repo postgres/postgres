@@ -4,7 +4,7 @@
  * Revisions by Christopher B. Browne, Liberty RMS
  * Win32 Service code added by Dave Page
  *
- * $PostgreSQL: pgsql/contrib/pg_autovacuum/pg_autovacuum.c,v 1.27.4.4 2005/05/11 17:58:32 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pg_autovacuum/pg_autovacuum.c,v 1.27.4.5 2005/10/20 16:14:39 tgl Exp $
  */
 
 #include "postgres_fe.h"
@@ -314,7 +314,7 @@ init_table_info(PGresult *res, int row, db_info * dbi)
 static void
 update_table_thresholds(db_info * dbi, tbl_info * tbl, int vacuum_type)
 {
-	PGresult   *res = NULL;
+	PGresult   *res;
 	int			disconnect = 0;
 	char		query[128];
 
@@ -328,7 +328,7 @@ update_table_thresholds(db_info * dbi, tbl_info * tbl, int vacuum_type)
 	{
 		snprintf(query, sizeof(query), PAGES_QUERY, tbl->relid);
 		res = send_query(query, dbi);
-		if (res != NULL)
+		if (res != NULL && PQntuples(res) > 0)
 		{
 			tbl->reltuples =
 				atof(PQgetvalue(res, 0, PQfnumber(res, "reltuples")));
@@ -350,8 +350,6 @@ update_table_thresholds(db_info * dbi, tbl_info * tbl, int vacuum_type)
 				(args->analyze_base_threshold + args->analyze_scaling_factor * tbl->reltuples);
 			tbl->CountAtLastAnalyze = tbl->curr_analyze_count;
 
-			PQclear(res);
-
 			/*
 			 * If the stats collector is reporting fewer updates then we
 			 * have on record then the stats were probably reset, so we
@@ -364,6 +362,8 @@ update_table_thresholds(db_info * dbi, tbl_info * tbl, int vacuum_type)
 				tbl->CountAtLastVacuum = tbl->curr_vacuum_count;
 			}
 		}
+
+		PQclear(res);
 	}
 	if (disconnect)
 		db_disconnect(dbi);
