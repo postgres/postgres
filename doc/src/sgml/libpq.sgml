@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.194 2005/10/17 16:24:18 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.195 2005/10/20 21:04:14 neilc Exp $
 -->
 
  <chapter id="libpq">
@@ -1254,12 +1254,14 @@ in a future release.
 </varlistentry>
 </variablelist>
 
-Prepared statements for use with <function>PQexecPrepared</> can also be
-created by executing SQL <command>PREPARE</> statements.  (But
-<function>PQprepare</> is more flexible since it does not require
-parameter types to be pre-specified.)  Also, although there is no
-<application>libpq</> function for deleting a prepared statement,
-the SQL <command>DEALLOCATE</> statement can be used for that purpose.
+Prepared statements for use with <function>PQexecPrepared</> can also
+be created by executing SQL <xref linkend="sql-prepare"
+endterm="sql-prepare-title"> statements.  (But <function>PQprepare</>
+is more flexible since it does not require parameter types to be
+pre-specified.)  Also, although there is no <application>libpq</>
+function for deleting a prepared statement, the SQL <xref
+linkend="sql-deallocate" endterm="sql-deallocate-title"> statement can
+be used for that purpose.
 </para>
 
 <para>
