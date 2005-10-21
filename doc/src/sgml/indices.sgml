@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.52 2005/09/12 19:17:45 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.53 2005/10/21 01:41:28 tgl Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -206,14 +206,6 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
 <synopsis>
 CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING hash (<replaceable>column</replaceable>);
 </synopsis>
-   <note>
-    <para>
-     Testing has shown <productname>PostgreSQL</productname>'s hash
-     indexes to perform no better than B-tree indexes, and the
-     index size and build time for hash indexes is much worse. For
-     these reasons, hash index use is presently discouraged.
-    </para>
-   </note>  
   </para>
 
   <para>
@@ -226,15 +218,33 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
    equivalent to the R-tree operator classes, and many other GiST operator
    classes are available in the <literal>contrib</> collection or as separate
    projects.  For more information see <xref linkend="GiST">.
-   <note>
-    <para>
-     It is likely that the R-tree index type will be retired in a future
-     release, as GiST indexes appear to do everything R-trees can do with
-     similar or better performance.  Users are encouraged to migrate
-     applications that use R-tree indexes to GiST indexes.
-    </para>
-   </note>  
   </para>
+
+  <note>
+   <para>
+    Testing has shown <productname>PostgreSQL</productname>'s hash
+    indexes to perform no better than B-tree indexes, and the
+    index size and build time for hash indexes is much worse.
+    Furthermore, hash index operations are not presently WAL-logged,
+    so hash indexes may need to be rebuilt with <command>REINDEX</>
+    after a database crash.
+    For these reasons, hash index use is presently discouraged.
+   </para>
+
+   <para>
+    Similarly, R-tree indexes do not seem to have any performance
+    advantages compared to the equivalent operations of GiST indexes.
+    Like hash indexes, they are not WAL-logged and may need
+    <command>REINDEX</>ing after a database crash.
+   </para>
+
+   <para>
+    While the problems with hash indexes may be fixed eventually,
+    it is likely that the R-tree index type will be retired in a future
+    release.  Users are encouraged to migrate applications that use R-tree
+    indexes to GiST indexes.
+   </para>
+  </note>  
  </sect1>
 
 
@@ -300,9 +310,12 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
 
   <para>
    A multicolumn GiST index can only be used when there is a query condition
-   on its leading column.  As with B-trees, conditions on additional columns
-   restrict the entries returned by the index, but do not in themselves aid
-   the index search.
+   on its leading column.  Conditions on additional columns restrict the
+   entries returned by the index, but the condition on the first column is the
+   most important one for determining how much of the index needs to be
+   scanned.  A GiST index will be relatively ineffective if its first column
+   has only a few distinct values, even if there are many distinct values in
+   additional columns.
   </para>
 
   <para>

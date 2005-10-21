@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.51 2005/06/13 02:40:05 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.52 2005/10/21 01:41:28 tgl Exp $
 -->
 
  <chapter id="mvcc">
@@ -965,26 +965,14 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
     <variablelist>
      <varlistentry>
       <term>
-       B-tree indexes
+       B-tree and <acronym>GiST</acronym> indexes
       </term>
       <listitem>
        <para>
-	Short-term share/exclusive page-level locks are used for
-	read/write access. Locks are released immediately after each
-	index row is fetched or inserted.  B-tree indexes provide
-	the highest concurrency without deadlock conditions.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       <acronym>GiST</acronym> and R-tree indexes
-      </term>
-      <listitem>
-       <para>
-	Share/exclusive index-level locks are used for read/write access.
-	Locks are released after the command is done.
+        Short-term share/exclusive page-level locks are used for
+        read/write access. Locks are released immediately after each
+        index row is fetched or inserted.  These index types provide
+        the highest concurrency without deadlock conditions.
        </para>
       </listitem>
      </varlistentry>
@@ -995,11 +983,23 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
       </term>
       <listitem>
        <para>
-	Share/exclusive hash-bucket-level locks are used for read/write
-	access.  Locks are released after the whole bucket is processed.
-	Bucket-level locks provide better concurrency than index-level
-	ones, but deadlock is possible since the locks are held longer
-	than one index operation.
+        Share/exclusive hash-bucket-level locks are used for read/write
+        access.  Locks are released after the whole bucket is processed.
+        Bucket-level locks provide better concurrency than index-level
+        ones, but deadlock is possible since the locks are held longer
+        than one index operation.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       R-tree indexes
+      </term>
+      <listitem>
+       <para>
+        Share/exclusive index-level locks are used for read/write access.
+        Locks are released after the entire command is done.
        </para>
       </listitem>
      </varlistentry>
@@ -1007,14 +1007,13 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
    </para>
 
    <para>
-    In short, B-tree indexes offer the best performance for concurrent
+    Currently, B-tree indexes offer the best performance for concurrent
     applications; since they also have more features than hash
     indexes, they are the recommended index type for concurrent
     applications that need to index scalar data. When dealing with
-    non-scalar data, B-trees obviously cannot be used; in that
-    situation, application developers should be aware of the
-    relatively poor concurrent performance of GiST and R-tree
-    indexes.
+    non-scalar data, B-trees are not useful, and GiST indexes should
+    be used instead.  R-tree indexes are deprecated and are likely
+    to disappear entirely in a future release.
    </para>
   </sect1>
  </chapter>

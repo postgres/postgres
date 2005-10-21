@@ -1,11 +1,11 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.21 2005/07/02 20:08:27 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.22 2005/10/21 01:41:28 tgl Exp $
 -->
 
 <chapter id="GiST">
 <title>GiST Indexes</title>
 
-<sect1 id="intro">
+<sect1 id="gist-intro">
  <title>Introduction</title>
 
  <para>
@@ -44,7 +44,7 @@ $PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.21 2005/07/02 20:08:27 momjian Exp
 
 </sect1>
 
-<sect1 id="extensibility">
+<sect1 id="gist-extensibility">
  <title>Extensibility</title>
 
  <para>
@@ -92,7 +92,7 @@ $PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.21 2005/07/02 20:08:27 momjian Exp
 
 </sect1>
 
-<sect1 id="implementation">
+<sect1 id="gist-implementation">
  <title>Implementation</title>
  
  <para>
@@ -180,19 +180,24 @@ $PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.21 2005/07/02 20:08:27 momjian Exp
 
 </sect1>
 
-<sect1 id="examples">
+<sect1 id="gist-examples">
  <title>Examples</title>
 
  <para>
-  To see example implementations of index methods implemented using
-  <acronym>GiST</acronym>, examine the following contrib modules:
+  The <productname>PostgreSQL</productname> source distribution includes
+  several examples of index methods implemented using
+  <acronym>GiST</acronym>.  The core system currently provides R-Tree
+  equivalent functionality for some of the built-in geometric datatypes
+  (see <filename>src/backend/access/gist/gistproc.c</>).  The following
+  <filename>contrib</> modules also contain <acronym>GiST</acronym>
+  operator classes: 
  </para>
  
  <variablelist>
   <varlistentry>
    <term>btree_gist</term>
    <listitem>
-    <para>B-Tree</para>
+    <para>B-Tree equivalent functionality for several datatypes</para>
    </listitem>
   </varlistentry>
 
@@ -213,32 +218,61 @@ $PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.21 2005/07/02 20:08:27 momjian Exp
   <varlistentry>
    <term>ltree</term>
    <listitem>
-    <para>Indexing for tree-like stuctures</para>
+    <para>Indexing for tree-like structures</para>
    </listitem>
   </varlistentry>
 
   <varlistentry>
-   <term>rtree_gist</term>
+   <term>pg_trgm</term>
    <listitem>
-    <para>R-Tree</para>
+    <para>Text similarity using trigram matching</para>
    </listitem>
   </varlistentry>
 
   <varlistentry>
    <term>seg</term>
    <listitem>
-    <para>Storage and indexed access for <quote>float ranges</quote></para>
+    <para>Indexing for <quote>float ranges</quote></para>
    </listitem>
   </varlistentry>
 
   <varlistentry>
-   <term>tsearch and tsearch2</term>
+   <term>tsearch2</term>
    <listitem>
     <para>Full text indexing</para>
    </listitem>
   </varlistentry>
  </variablelist>
 
+</sect1>
+
+<sect1 id="gist-recovery">
+ <title>Crash Recovery</title>
+
+ <para>
+  Usually, replay of the WAL log is sufficient to restore the integrity
+  of a GiST index following a database crash.  However, there are some
+  corner cases in which the index state is not fully rebuilt.  The index
+  will still be functionally correct, but there may be some performance
+  degradation.  When this occurs, the index can be repaired by
+  <command>VACUUM</>ing its table, or by rebuilding the index using
+  <command>REINDEX</>.  In some cases a plain <command>VACUUM</> is
+  not sufficient, and either <command>VACUUM FULL</> or <command>REINDEX</>
+  is needed.  The need for one of these procedures is indicated by occurrence
+  of this log message during crash recovery:
+<programlisting>
+LOG:  index NNN/NNN/NNN needs VACUUM or REINDEX to finish crash recovery
+</programlisting>
+  or this log message during routine index insertions:
+<programlisting>
+LOG:  index "FOO" needs VACUUM or REINDEX to finish crash recovery
+</programlisting>
+  If a plain <command>VACUUM</> finds itself unable to complete recovery
+  fully, it will return a notice:
+<programlisting>
+NOTICE:  index "FOO" needs VACUUM FULL or REINDEX to finish crash recovery
+</programlisting>
+ </para>
 </sect1>
 
 </chapter>
