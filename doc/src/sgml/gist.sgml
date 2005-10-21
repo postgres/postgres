@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.22 2005/10/21 01:41:28 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.23 2005/10/21 13:59:05 tgl Exp $
 -->
 
 <chapter id="GiST">
@@ -33,7 +33,7 @@ $PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.22 2005/10/21 01:41:28 tgl Exp $
     Some of the information here is derived from the University of California at
     Berkeley's GiST Indexing Project
     <ulink url="http://gist.cs.berkeley.edu/">web site</ulink> and 
-    <ulink url="http://citeseer.nj.nec.com/448594.html">
+    <ulink url="http://www.sai.msu.su/~megera/postgres/gist/papers/concurrency/access-methods-for-next-generation.pdf.gz">
     Marcel Kornacker's thesis, Access Methods for Next-Generation Database Systems</ulink>.
     The <acronym>GiST</acronym>
     implementation in <productname>PostgreSQL</productname> is primarily
