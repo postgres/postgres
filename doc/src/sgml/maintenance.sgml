@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.48 2005/09/23 02:01:34 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.49 2005/10/21 19:39:08 tgl Exp $
 -->
 
 <chapter id="maintenance">
@@ -474,9 +474,9 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
     tuples.  These checks use the row-level statistics collection facility;
     therefore, the autovacuum daemon cannot be used unless <xref
     linkend="guc-stats-start-collector"> and <xref
-    linkend="guc-stats-row-level"> are set <literal>true</literal>.  Also, it's
-    important to allow a slot for the autovacuum process when choosing the
-    value of <xref linkend="guc-superuser-reserved-connections">.
+    linkend="guc-stats-row-level"> are set to <literal>true</literal>.  Also,
+    it's important to allow a slot for the autovacuum process when choosing
+    the value of <xref linkend="guc-superuser-reserved-connections">.
    </para>
 
    <para>
@@ -487,75 +487,91 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
     database-wide <command>VACUUM</command> call, or <command>VACUUM
     FREEZE</command> if it's a template database, and then terminates.  If
     no database fulfills this criterion, the one that was least recently
-    processed by autovacuum itself is chosen.  In this mode, each table in
-    the database is checked for new and obsolete tuples, according to the
-    applicable autovacuum parameters.  If a <link linkend="catalog-pg-autovacuum">
-    <structname>pg_autovacuum</structname></link> tuple is found for this
-    table, these settings are applied; otherwise the global values in
-    <filename>postgresql.conf</filename> are used.  See <xref linkend="runtime-config-autovacuum">
-    for more details on the global settings.
+    processed by autovacuum is chosen.  In this case each table in
+    the selected database is checked, and individual <command>VACUUM</command>
+    or <command>ANALYZE</command> commands are issued as needed.
    </para>
 
    <para>
-    For each table, two conditions are used to determine which operation to
-    apply.  If the number of obsolete tuples since the last
+    For each table, two conditions are used to determine which operation(s)
+    to apply.  If the number of obsolete tuples since the last
     <command>VACUUM</command> exceeds the <quote>vacuum threshold</quote>, the
-    table is vacuumed and analyzed.  The vacuum threshold is defined as:
+    table is vacuumed.  The vacuum threshold is defined as:
 <programlisting>
 vacuum threshold = vacuum base threshold + vacuum scale factor * number of tuples
 </programlisting>
     where the vacuum base threshold is
-    <structname>pg_autovacuum</structname>.<structfield>vac_base_thresh</structfield>,
+    <xref linkend="guc-autovacuum-vacuum-threshold">,
     the vacuum scale factor is
-    <structname>pg_autovacuum</structname>.<structfield>vac_scale_factor</structfield>
+    <xref linkend="guc-autovacuum-vacuum-scale-factor">,
     and the number of tuples is
     <structname>pg_class</structname>.<structfield>reltuples</structfield>.
-    The number of obsolete tuples is taken from the statistics
-    collector, which is a semi-accurate count updated by each
+    The number of obsolete tuples is obtained from the statistics
+    collector; it is a semi-accurate count updated by each
     <command>UPDATE</command> and <command>DELETE</command> operation.  (It
     is only semi-accurate because some information may be lost under heavy
-    load.)  For analyze, a similar condition is used: the threshold, calculated
-    by an equivalent equation to that above, is compared to the number of
-    new tuples, that is, those created by the <command>INSERT</command> and
-    <command>COPY</command> commands.
+    load.)  For analyze, a similar condition is used: the threshold, defined as
+<programlisting>
+analyze threshold = analyze base threshold + analyze scale factor * number of tuples
+</programlisting>
+    is compared to the total number of tuples inserted, updated, or deleted
+    since the last <command>ANALYZE</command>.
    </para>
 
    <para>
-    Note that if any of the values in <structname>pg_autovacuum</structname>
-    are set to a negative number, or if a tuple is not present at all in
-    <structname>pg_autovacuum</structname> for any particular table, the
-    equivalent value from <filename>postgresql.conf</filename> is used.
+    The default thresholds and scale factors are taken from
+    <filename>postgresql.conf</filename>, but it is possible to override them
+    on a table-by-table basis by making entries in the system catalog
+    <link
+    linkend="catalog-pg-autovacuum"><structname>pg_autovacuum</></link>.
+    If a <structname>pg_autovacuum</structname> row exists for a particular
+    table, the settings it specifies are applied; otherwise the global
+    settings are used.  See <xref linkend="runtime-config-autovacuum"> for
+    more details on the global settings.
    </para>
 
    <para>
     Besides the base threshold values and scale factors, there are three
-    parameters that can be set for each table in <structname>pg_autovacuum</structname>. 
-    The first parameter, <structname>pg_autovacuum</>.<structfield>enabled</>,
-    can be used to instruct the autovacuum daemon to skip any particular table
-    by setting it to <literal>false</literal>.
-    The other two, the vacuum cost delay
+    more parameters that can be set for each table in
+    <structname>pg_autovacuum</structname>.
+    The first, <structname>pg_autovacuum</>.<structfield>enabled</>,
+    can be set to <literal>false</literal> to instruct the autovacuum daemon
+    to skip that particular table entirely.  In this case
+    autovacuum will only touch the table when it vacuums the entire database
+    to prevent transaction ID wraparound.
+    The other two parameters, the vacuum cost delay
     (<structname>pg_autovacuum</structname>.<structfield>vac_cost_delay</structfield>)
     and the vacuum cost limit
     (<structname>pg_autovacuum</structname>.<structfield>vac_cost_limit</structfield>), 
     are used to set table-specific values for the
     <xref linkend="runtime-config-resource-vacuum-cost" endterm="runtime-config-resource-vacuum-cost-title">
-    feature.  The above note about negative values also applies here, but
-    also note that if the <filename>postgresql.conf</filename> variables
-    <varname>autovacuum_vacuum_cost_limit</varname> and
-    <varname>autovacuum_vacuum_cost_delay</varname> are also set to negative 
-    values, the global <varname>vacuum_cost_limit</varname> and
-    <varname>vacuum_cost_delay</varname> values will be used instead.
+    feature.
    </para>
 
-   <note>
+   <para>
+    If any of the values in <structname>pg_autovacuum</structname>
+    are set to a negative number, or if a row is not present at all in
+    <structname>pg_autovacuum</structname> for any particular table, the
+    corresponding values from <filename>postgresql.conf</filename> are used.
+   </para>
+
+   <para>
+    There is not currently any support for making
+    <structname>pg_autovacuum</structname> entries, except by doing
+    manual <command>INSERT</>s into the catalog.  This feature will be
+    improved in future releases, and it is likely that the catalog
+    definition will change.
+   </para>
+
+   <caution>
     <para>
      The contents of the <structname>pg_autovacuum</structname> system
      catalog are currently not saved in database dumps created by
      the tools <command>pg_dump</command> and <command>pg_dumpall</command>.
-     If you need to preserve them across a dump/reload cycle, make sure you
+     If you want to preserve them across a dump/reload cycle, make sure you
      dump the catalog manually.
     </para>
-   </note>
+   </caution>
 
   </sect2>
  </sect1>
@@ -571,8 +587,42 @@ vacuum threshold = vacuum base threshold + vacuum scale factor * number of tuple
   <para>
    In some situations it is worthwhile to rebuild indexes periodically
    with the <command>REINDEX</> command.
-   However, <productname>PostgreSQL</> 7.4 has substantially reduced the need
-   for this activity compared to earlier releases.
+  </para>
+
+  <para>
+   In <productname>PostgreSQL</> releases before 7.4, periodic reindexing
+   was frequently necessary to avoid <quote>index bloat</>, due to lack of
+   internal space reclamation in btree indexes.  Any situation in which the
+   range of index keys changed over time &mdash; for example, an index on
+   timestamps in a table where old entries are eventually deleted &mdash;
+   would result in bloat, because index pages for no-longer-needed portions
+   of the key range were not reclaimed for re-use.  Over time, the index size
+   could become indefinitely much larger than the amount of useful data in it.
+  </para>
+
+  <para>
+   In <productname>PostgreSQL</> 7.4 and later, index pages that have become
+   completely empty are reclaimed for re-use.  There is still a possibility
+   for inefficient use of space: if all but a few index keys on a page have
+   been deleted, the page remains allocated.  So a usage pattern in which all
+   but a few keys in each range are eventually deleted will see poor use of
+   space.  The potential for bloat is not indefinite &mdash; at worst there
+   will be one key per page &mdash; but it may still be worthwhile to schedule
+   periodic reindexing for indexes that have such usage patterns.
+  </para>
+
+  <para>
+   The potential for bloat in non-btree indexes has not been well
+   characterized.  It is a good idea to keep an eye on the index's physical
+   size when using any non-btree index type.
+  </para>
+
+  <para>
+   Also, for btree indexes a freshly-constructed index is somewhat faster to
+   access than one that has been updated many times, because logically
+   adjacent pages are usually also physically adjacent in a newly built index.
+   (This consideration does not currently apply to non-btree indexes.)  It
+   might be worthwhile to reindex periodically just to improve access speed.
   </para>
  </sect1>
 
