@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/signal.c,v 1.12 2005/10/15 02:49:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/signal.c,v 1.13 2005/10/21 21:43:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,18 +15,26 @@
 
 #include <libpq/pqsignal.h>
 
+/*
+ * These are exported for use by the UNBLOCKED_SIGNAL_QUEUE() macro.
+ * pg_signal_queue must be volatile since it is changed by the signal
+ * handling thread and inspected without any lock by the main thread.
+ * pg_signal_mask is only changed by main thread so shouldn't need it.
+ */
+volatile int pg_signal_queue;
+int		pg_signal_mask;
 
-/* pg_signal_crit_sec is used to protect only pg_signal_queue. That is the only
- * variable that can be accessed from the signal sending threads! */
+HANDLE	pgwin32_signal_event;
+HANDLE	pgwin32_initial_signal_pipe = INVALID_HANDLE_VALUE;
+
+/*
+ * pg_signal_crit_sec is used to protect only pg_signal_queue. That is the only
+ * variable that can be accessed from the signal sending threads!
+ */
 static CRITICAL_SECTION pg_signal_crit_sec;
-static int	pg_signal_queue;
 
 static pqsigfunc pg_signal_array[PG_SIGNAL_COUNT];
 static pqsigfunc pg_signal_defaults[PG_SIGNAL_COUNT];
-static int	pg_signal_mask;
-
-DLLIMPORT HANDLE pgwin32_signal_event;
-HANDLE		pgwin32_initial_signal_pipe = INVALID_HANDLE_VALUE;
 
 
 /* Signal handling thread function */
@@ -81,21 +89,31 @@ pgwin32_signal_initialize(void)
 				(errmsg_internal("failed to set console control handler")));
 }
 
+/*
+ * Support routine for CHECK_FOR_INTERRUPTS() macro
+ */
+void
+pgwin32_check_queued_signals(void)
+{
+	if (WaitForSingleObjectEx(pgwin32_signal_event, 0, TRUE) == WAIT_OBJECT_0)
+		pgwin32_dispatch_queued_signals();
+}
 
-/* Dispatch all signals currently queued and not blocked
+/*
+ * Dispatch all signals currently queued and not blocked
  * Blocked signals are ignored, and will be fired at the time of
- * the sigsetmask() call. */
+ * the sigsetmask() call.
+ */
 void
 pgwin32_dispatch_queued_signals(void)
 {
 	int			i;
 
 	EnterCriticalSection(&pg_signal_crit_sec);
-	while (pg_signal_queue & ~pg_signal_mask)
+	while (UNBLOCKED_SIGNAL_QUEUE())
 	{
 		/* One or more unblocked signals queued for execution */
-
-		int			exec_mask = pg_signal_queue & ~pg_signal_mask;
+		int			exec_mask = UNBLOCKED_SIGNAL_QUEUE();
 
 		for (i = 0; i < PG_SIGNAL_COUNT; i++)
 		{
