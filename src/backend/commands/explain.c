@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.138 2005/10/15 02:49:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.139 2005/10/21 16:43:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -195,6 +195,15 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, TupOutputState *tstate)
 
 	/* plan the query */
 	plan = planner(query, isCursor, cursorOptions, NULL);
+
+	/*
+	 * Update snapshot command ID to ensure this query sees results of any
+	 * previously executed queries.  (It's a bit cheesy to modify
+	 * ActiveSnapshot without making a copy, but for the limited ways in
+	 * which EXPLAIN can be invoked, I think it's OK, because the active
+	 * snapshot shouldn't be shared with anything else anyway.)
+	 */
+	ActiveSnapshot->curcid = GetCurrentCommandId();
 
 	/* Create a QueryDesc requesting no output */
 	queryDesc = CreateQueryDesc(query, plan,

@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.41 2005/10/15 02:49:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.42 2005/10/21 16:43:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -604,6 +604,15 @@ ExplainExecuteQuery(ExplainStmt *stmt, TupOutputState *tstate)
 
 				query->into = execstmt->into;
 			}
+
+			/*
+			 * Update snapshot command ID to ensure this query sees results of
+			 * any previously executed queries.  (It's a bit cheesy to modify
+			 * ActiveSnapshot without making a copy, but for the limited ways
+			 * in which EXPLAIN can be invoked, I think it's OK, because the
+			 * active snapshot shouldn't be shared with anything else anyway.)
+			 */
+			ActiveSnapshot->curcid = GetCurrentCommandId();
 
 			/* Create a QueryDesc requesting no output */
 			qdesc = CreateQueryDesc(query, plan,
