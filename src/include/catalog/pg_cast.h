@@ -10,7 +10,7 @@
  *
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.23 2005/10/15 02:49:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.24 2005/10/21 15:45:06 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -114,9 +114,9 @@ DATA(insert (	16	23	2558 e ));
  * from OID to int4 or int8.  Similarly for each OID-alias type.  Also allow
  * implicit coercions between OID and each OID-alias type, as well as
  * regproc<->regprocedure and regoper<->regoperator.  (Other coercions
- * between alias types must pass through OID.)	Lastly, there is an implicit
- * cast from text to regclass, which exists mainly to support legacy forms
- * of nextval() and related functions.
+ * between alias types must pass through OID.)	Lastly, there are implicit
+ * casts from text and varchar to regclass, which exist mainly to support
+ * legacy forms of nextval() and related functions.
  */
 DATA(insert (	20	 26 1287 i ));
 DATA(insert (	21	 26  313 i ));
@@ -170,6 +170,7 @@ DATA(insert (	23 2206    0 i ));
 DATA(insert ( 2206	 20 1288 a ));
 DATA(insert ( 2206	 23    0 a ));
 DATA(insert (	25 2205 1079 i ));
+DATA(insert ( 1043 2205 1079 i ));
 
 /*
  * String category: this needs to be tightened up
