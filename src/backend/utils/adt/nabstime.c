@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.145 2005/10/15 02:49:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.146 2005/10/22 14:27:29 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1584,14 +1584,13 @@ Datum
 timeofday(PG_FUNCTION_ARGS)
 {
 	struct timeval tp;
-	struct timezone tpz;
 	char		templ[128];
 	char		buf[128];
 	text	   *result;
 	int			len;
 	pg_time_t	tt;
 
-	gettimeofday(&tp, &tpz);
+	gettimeofday(&tp, NULL);
 	tt = (pg_time_t) tp.tv_sec;
 	pg_strftime(templ, sizeof(templ), "%a %b %d %H:%M:%S.%%06d %Y %Z",
 				pg_localtime(&tt, global_timezone));

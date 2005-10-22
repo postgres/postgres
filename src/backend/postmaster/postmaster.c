@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.471 2005/10/20 20:05:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.472 2005/10/22 14:27:28 adunstan Exp $
  *
  * NOTES
  *
@@ -1148,9 +1148,8 @@ ServerLoop(void)
 				last_touch_time;
 	struct timeval earlier,
 				later;
-	struct timezone tz;
 
-	gettimeofday(&earlier, &tz);
+	gettimeofday(&earlier, NULL);
 	last_touch_time = time(NULL);
 
 	nSockets = initMasks(&readmask);
@@ -1207,7 +1206,7 @@ ServerLoop(void)
 			 */
 			while (random_seed == 0)
 			{
-				gettimeofday(&later, &tz);
+				gettimeofday(&later, NULL);
 
 				/*
 				 * We are not sure how much precision is in tv_usec, so we

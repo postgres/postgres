@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/pg_rusage.c,v 1.2 2005/10/15 02:49:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/pg_rusage.c,v 1.3 2005/10/22 14:27:29 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,10 +26,8 @@
 void
 pg_rusage_init(PGRUsage *ru0)
 {
-	struct timezone tz;
-
 	getrusage(RUSAGE_SELF, &ru0->ru);
-	gettimeofday(&ru0->tv, &tz);
+	gettimeofday(&ru0->tv, NULL);
 }
 
 /*
