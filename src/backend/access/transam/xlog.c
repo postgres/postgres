@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.220 2005/10/15 02:49:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.221 2005/10/22 20:27:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,13 +99,13 @@
 #define DEFAULT_SYNC_METHOD_STR "fdatasync"
 #define DEFAULT_SYNC_METHOD		SYNC_METHOD_FDATASYNC
 #define DEFAULT_SYNC_FLAGBIT	0
-#elif !defined(HAVE_FSYNC_WRITETHROUGH_ONLY)
-#define DEFAULT_SYNC_METHOD_STR "fsync"
-#define DEFAULT_SYNC_METHOD		SYNC_METHOD_FSYNC
-#define DEFAULT_SYNC_FLAGBIT	0
-#else
+#elif defined(HAVE_FSYNC_WRITETHROUGH_ONLY)
 #define DEFAULT_SYNC_METHOD_STR "fsync_writethrough"
 #define DEFAULT_SYNC_METHOD		SYNC_METHOD_FSYNC_WRITETHROUGH
+#define DEFAULT_SYNC_FLAGBIT	0
+#else
+#define DEFAULT_SYNC_METHOD_STR "fsync"
+#define DEFAULT_SYNC_METHOD		SYNC_METHOD_FSYNC
 #define DEFAULT_SYNC_FLAGBIT	0
 #endif
 
