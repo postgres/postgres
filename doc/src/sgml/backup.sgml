@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.72 2005/10/22 21:56:07 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.73 2005/10/22 22:09:49 tgl Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -674,6 +674,15 @@ SELECT pg_stop_backup();
     </para>
    </listitem>
   </orderedlist>
+   </para>
+
+   <para>
+    Some versions of GNU <application>tar</> consider it an error if a file
+    is changed while <application>tar</> is copying it.  This case is normal,
+    and not an error, when taking a base backup of an active database.
+    Since ignoring all errors from <application>tar</> would be unwise,
+    you should either manually inspect <application>tar</>'s messages or
+    else use a different backup tool that does not complain about this case.
    </para>
 
    <para>
