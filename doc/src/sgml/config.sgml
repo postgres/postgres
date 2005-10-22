@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.31 2005/10/15 20:12:32 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.32 2005/10/22 21:56:07 tgl Exp $
 -->
 <chapter Id="runtime-config">
   <title>Run-time Configuration</title>
@@ -1251,14 +1251,15 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         If this option is on, the <productname>PostgreSQL</> server
-        will use the <function>fsync()</> system call in several places
-        to make sure that updates are physically written to disk. This
-        insures that a database cluster will recover to a
+        will try to make sure that updates are physically written to
+        disk, by issuing <function>fsync()</> system calls or various
+        equivalent methods (see <xref linkend="guc-wal-sync-method">).
+        This ensures that the database cluster can recover to a
         consistent state after an operating system or hardware crash.
        </para>
 
        <para>
-        However, using <function>fsync()</function> results in a
+        However, using <varname>fsync</varname> results in a
         performance penalty: when a transaction is committed,
         <productname>PostgreSQL</productname> must wait for the
         operating system to flush the write-ahead log to disk.  When
@@ -1268,7 +1269,7 @@ SET ENABLE_SEQSCAN TO OFF;
         However, if the system crashes, the results of the last few
         committed transactions may be lost in part or whole. In the
         worst case, unrecoverable data corruption may occur.
-        (Crashes of the database server itself are <emphasis>not</>
+        (Crashes of the database software itself are <emphasis>not</>
         a risk factor here.  Only an operating-system-level crash
         creates a risk of corruption.)
        </para>
@@ -1277,8 +1278,8 @@ SET ENABLE_SEQSCAN TO OFF;
         Due to the risks involved, there is no universally correct
         setting for <varname>fsync</varname>. Some administrators
         always disable <varname>fsync</varname>, while others only
-        turn it off for bulk loads, where there is a clear restart
-        point if something goes wrong, whereas some administrators
+        turn it off during initial bulk data loads, where there is a clear
+        restart point if something goes wrong.  Others
         always leave <varname>fsync</varname> enabled. The default is
         to enable <varname>fsync</varname>, for maximum reliability.
         If you trust your operating system, your hardware, and your
@@ -1288,9 +1289,9 @@ SET ENABLE_SEQSCAN TO OFF;
 
        <para>
         This option can only be set at server start or in the
-        <filename>postgresql.conf</filename> file.  If this option
-        is <literal>off</>, consider also turning off 
-        <varname>guc-full-page-writes</>.
+        <filename>postgresql.conf</filename> file.  If you turn
+        this option off, also consider turning off 
+        <xref linkend="guc-full-page-writes">.
        </para>
       </listitem>
      </varlistentry>
@@ -1302,8 +1303,10 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-        Method used for forcing WAL updates out to disk.  Possible
-        values are:
+        Method used for forcing WAL updates out to disk.
+        If <varname>fsync</varname> is off then this setting is irrelevant,
+        since updates will not be forced out at all.
+        Possible values are:
        </para>
        <itemizedlist>
         <listitem>
@@ -1313,17 +1316,17 @@ SET ENABLE_SEQSCAN TO OFF;
         </listitem>
         <listitem>
         <para>
-         <literal>fdatasync</> (call <function>fdatasync()</> at each commit),
+         <literal>fdatasync</> (call <function>fdatasync()</> at each commit)
+        </para>
+        </listitem>
+        <listitem>
+        <para>
+         <literal>fsync_writethrough</> (call <function>fsync()</> at each commit, forcing write-through of any disk write cache)
         </para>
         </listitem>
         <listitem>
         <para>
          <literal>fsync</> (call <function>fsync()</> at each commit)
-        </para>
-        </listitem>
-        <listitem>
-        <para>
-         <literal>fsync_writethrough</> (force write-through of any disk write cache)
         </para>
         </listitem>
         <listitem>
@@ -1334,8 +1337,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </itemizedlist>
        <para>
         Not all of these choices are available on all platforms.
-        The top-most supported option is used as the default.
-        If <varname>fsync</varname> is off then this setting is irrelevant.
+        The default is the first method in the above list that is supported.
         This option can only be set at server start or in the
         <filename>postgresql.conf</filename> file.
        </para>
@@ -1349,21 +1351,37 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>full_page_writes</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        A page write in process during an operating system crash might
-        be only partially written to disk, leading to an on-disk page
-        that contains a mix of old and new data. During recovery, the
-        row changes stored in WAL are not enough to completely restore
-        the page.
+        When this option is on, the <productname>PostgreSQL</> server
+        writes the entire content of each disk page to WAL during the
+        first modification of that page after a checkpoint.
+        This is needed because
+        a page write that is in process during an operating system crash might
+        be only partially completed, leading to an on-disk page
+        that contains a mix of old and new data.  The row-level change data
+        normally stored in WAL will not be enough to completely restore
+        such a page during post-crash recovery.  Storing the full page image
+        guarantees that the page can be correctly restored, but at a price
+        in increasing the amount of data that must be written to WAL.
+        (Because WAL replay always starts from a checkpoint, it is sufficient
+        to do this during the first change of each page after a checkpoint.
+        Therefore, one way to reduce the cost of full-page writes is to
+        increase the checkpoint interval parameters.)
        </para>
 
        <para>
-        When this option is on, the <productname>PostgreSQL</> server
-        writes full pages to WAL when they are first modified after a
-        checkpoint so crash recovery is possible. Turning this option off
-        might lead to a corrupt system after an operating system crash
-        or power failure because uncorrected partial pages might contain
-        inconsistent or corrupt data. The risks are less but similar to
-        <varname>fsync</>.
+        Turning this option off speeds normal operation, but
+        might lead to a corrupt database after an operating system crash
+        or power failure. The risks are similar to turning off
+        <varname>fsync</>, though smaller.  It may be safe to turn off
+        this option if you have hardware (such as a battery-backed disk
+        controller) or filesystem software (e.g., Reiser4) that reduces
+        the risk of partial page writes to an acceptably low level.
+       </para>
+
+       <para>
+        Turning off this option does not affect use of
+        WAL archiving for point-in-time recovery (PITR)
+        (see <xref linkend="backup-online">).
        </para>
 
        <para>
@@ -1384,7 +1402,7 @@ SET ENABLE_SEQSCAN TO OFF;
         Number of disk-page buffers allocated in shared memory for WAL data.
         The default is 8.  The setting need only be large enough to hold
         the amount of WAL data generated by one typical transaction, since
-        the data is flushed to disk at every transaction commit.
+        the data is written out to disk at every transaction commit.
         This option can only be set at server start.
        </para>
 
@@ -1481,8 +1499,9 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Write a message to the server log if checkpoints caused by
         the filling of checkpoint segment files happen closer together
-        than this many seconds.  The default is 30 seconds.
-        Zero turns off the warning.
+        than this many seconds (which suggests that
+        <varname>checkpoint_segments</> ought to be raised).  The default is
+        30 seconds.  Zero disables the warning.
        </para>
       </listitem>
      </varlistentry>

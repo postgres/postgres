@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.71 2005/10/15 01:15:33 alvherre Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.72 2005/10/22 21:56:07 tgl Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -1148,21 +1148,20 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
 
    <para>
     It should also be noted that the default <acronym>WAL</acronym>
-    format is fairly bulky since it includes many disk page snapshots. The pages
-    are partially compressed, using the simple expedient of removing the
-    empty space (if any) within each block. You can significantly reduce
+    format is fairly bulky since it includes many disk page snapshots.
+    These page snapshots are designed to support crash recovery,
+    since we may need to fix partially-written disk pages.  Depending
+    on your system hardware and software, the risk of partial writes may
+    be small enough to ignore, in which case you can significantly reduce
     the total volume of archived logs by turning off page snapshots 
-    using the <xref linkend="guc-full-page-writes"> parameter, 
-    though you should read the notes and warnings in 
-    <xref linkend="reliability"> before you do so. 
-    These page snapshots are designed to allow crash recovery,
-    since we may need to fix partially-written disk pages.  It is not
-    necessary to store these page copies for PITR operations, however.
-    If you turn off <xref linkend="guc-full-page-writes">, your PITR
-    backup and recovery operations will continue to work successfully.
+    using the <xref linkend="guc-full-page-writes"> parameter.
+    (Read the notes and warnings in 
+    <xref linkend="reliability"> before you do so.)
+    Turning off page snapshots does not prevent use of the logs for PITR
+    operations.
     An area for future development is to compress archived WAL data by
-    removing unnecessary page copies when <xref linkend="guc-full-page-writes">
-    is turned on.  In the meantime, administrators
+    removing unnecessary page copies even when <varname>full_page_writes</>
+    is on.  In the meantime, administrators
     may wish to reduce the number of page snapshots included in WAL by
     increasing the checkpoint interval parameters as much as feasible.
    </para>

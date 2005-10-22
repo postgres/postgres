@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.36 2005/10/13 17:32:42 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.37 2005/10/22 21:56:07 tgl Exp $ -->
 
 <chapter id="reliability">
  <title>Reliability</title>
@@ -7,12 +7,12 @@
    Reliability is a major feature of any serious database system, and
    <productname>PostgreSQL</> does everything possible to guarantee
    reliable operation. One aspect of reliable operation is that all data
-   recorded by a transaction should be stored in a non-volatile area
+   recorded by a committed transaction should be stored in a non-volatile area
    that is safe from power loss, operating system failure, and hardware
-   failure (unrelated to the non-volatile area itself). To accomplish
-   this, <productname>PostgreSQL</> uses the magnetic platters of modern
-   disk drives for permanent storage that is immune to the failures
-   listed above. In fact, even if a computer is fatally damaged, if
+   failure (except failure of the non-volatile area itself, of course).
+   Successfully writing the data to the computer's permanent storage
+   (disk drive or equivalent) ordinarily meets this requirement.
+   In fact, even if a computer is fatally damaged, if
    the disk drives survive they can be moved to another computer with
    similar hardware and all committed transactions will remain intact.
   </para>
@@ -21,60 +21,64 @@
    While forcing data periodically to the disk platters might seem like
    a simple operation, it is not. Because disk drives are dramatically
    slower than main memory and CPUs, several layers of caching exist
-   between the computer's main memory and the disk drive platters.
-   First, there is the operating system kernel cache, which caches
-   frequently requested disk blocks and delays disk writes. Fortunately,
+   between the computer's main memory and the disk platters.
+   First, there is the operating system's buffer cache, which caches
+   frequently requested disk blocks and combines disk writes. Fortunately,
    all operating systems give applications a way to force writes from
-   the kernel cache to disk, and <productname>PostgreSQL</> uses those
-   features. In fact, the <xref linkend="guc-wal-sync-method"> parameter
-   controls how this is done.
+   the buffer cache to disk, and <productname>PostgreSQL</> uses those
+   features.  (See the <xref linkend="guc-wal-sync-method"> parameter
+   to adjust how this is done.)
   </para>
+
   <para>
-   Secondly, there is an optional disk drive controller cache,
-   particularly popular on <acronym>RAID</> controller cards. Some of
-   these caches are <literal>write-through</>, meaning writes are passed
+   Next, there may be a cache in the disk drive controller; this is
+   particularly common on <acronym>RAID</> controller cards. Some of
+   these caches are <firstterm>write-through</>, meaning writes are passed
    along to the drive as soon as they arrive. Others are
-   <literal>write-back</>, meaning data is passed on to the drive at
-   some later time. Such caches can be a reliability problem because the
-   disk controller card cache is volatile, unlike the disk driver
-   platters, unless the disk drive controller has a battery-backed
-   cache, meaning the card has a battery that maintains power to the
-   cache in case of server power loss. When the disk drives are later
-   accessible, the data is written to the drives.
+   <firstterm>write-back</>, meaning data is passed on to the drive at
+   some later time. Such caches can be a reliability hazard because the
+   memory in the disk controller cache is volatile, and will lose its
+   contents in a power failure.  Better controller cards have
+   <firstterm>battery-backed</> caches, meaning the card has a battery that
+   maintains power to the cache in case of system power loss.  After power
+   is restored the data will be written to the disk drives.
   </para>
 
   <para>
    And finally, most disk drives have caches. Some are write-through
-   (typically SCSI), and some are write-back(typically IDE), and the
+   while some are write-back, and the
    same concerns about data loss exist for write-back drive caches as
-   exist for disk controller caches. To have reliability, all
-   storage subsystems must be reliable in their storage characteristics.
-   When the operating system sends a write request to the drive platters,
-   there is little it can do to make sure the data has arrived at a
-   non-volatile store area on the system. Rather, it is the
+   exist for disk controller caches.  Consumer-grade IDE drives are
+   particularly likely to contain write-back caches that will not
+   survive a power failure.
+  </para>
+
+  <para>
+   When the operating system sends a write request to the disk hardware,
+   there is little it can do to make sure the data has arrived at a truly
+   non-volatile storage area. Rather, it is the
    administrator's responsibility to be sure that all storage components
-   have reliable characteristics.
+   ensure data integrity.  Avoid disk controllers that have non-battery-backed
+   write caches.  At the drive level, disable write-back caching if the
+   drive cannot guarantee the data will be written before shutdown.
   </para>
   
   <para>
-   One other area of potential data loss are the disk platter writes
-   themselves. Disk platters are internally made up of 512-byte sectors.
+   Another risk of data loss is posed by the disk platter write
+   operations themselves. Disk platters are divided into sectors,
+   commonly 512 bytes each.  Every physical read or write operation
+   processes a whole sector.
    When a write request arrives at the drive, it might be for 512 bytes,
    1024 bytes, or 8192 bytes, and the process of writing could fail due
    to power loss at any time, meaning some of the 512-byte sectors were
-   written, and others were not, or the first half of a 512-byte sector
-   has new data, and the remainder has the original data. Obviously, on
-   startup, <productname>PostgreSQL</> would not be able to deal with
-   these partially written cases. To guard against that,
+   written, and others were not.  To guard against such failures,
    <productname>PostgreSQL</> periodically writes full page images to
    permanent storage <emphasis>before</> modifying the actual page on
    disk. By doing this, during crash recovery <productname>PostgreSQL</> can
-   restore partially-written pages. If you have a battery-backed disk
-   controller or filesystem (e.g. Reiser4) that prevents partial page writes, 
-   you can turn off this page imaging by using the 
-   <xref linkend="guc-full-page-writes"> parameter. This parameter has no 
-   effect on the successful use of Point in Time Recovery (PITR), 
-   described in <xref linkend="backup-online">.
+   restore partially-written pages.  If you have a battery-backed disk
+   controller or filesystem software (e.g., Reiser4) that prevents partial
+   page writes,  you can turn off this page imaging by using the 
+   <xref linkend="guc-full-page-writes"> parameter.
   </para>
  
   <para>
@@ -111,11 +115,7 @@
    </para>
 
    <para>
-    WAL brings three major benefits:
-   </para>
-
-   <para>
-    The first major benefit of using <acronym>WAL</acronym> is a
+    A major benefit of using <acronym>WAL</acronym> is a
     significantly reduced number of disk writes, because only the log
     file needs to be flushed to disk at the time of transaction
     commit, rather than every data file changed by the transaction.
@@ -129,30 +129,7 @@
    </para>
 
    <para>
-    The next benefit is crash recovery protection. The truth is
-    that, before <acronym>WAL</acronym> was introduced back in release 7.1,
-    <productname>PostgreSQL</productname> was never able to guarantee
-    consistency in the case of a crash.  Now, 
-    <acronym>WAL</acronym> protects fully against the following problems:
-
-    <orderedlist>
-     <listitem>
-      <simpara>index rows pointing to nonexistent table rows</simpara>
-     </listitem>
-
-     <listitem>
-      <simpara>index rows lost in split operations</simpara>
-     </listitem>
-
-     <listitem>
-      <simpara>totally corrupted table or index page content, because
-      of partially written data pages</simpara>
-     </listitem>
-    </orderedlist>
-   </para>
-
-   <para>
-    Finally, <acronym>WAL</acronym> makes it possible to support on-line
+    <acronym>WAL</acronym> also makes it possible to support on-line
     backup and point-in-time recovery, as described in <xref
     linkend="backup-online">.  By archiving the WAL data we can support
     reverting to any time instant covered by the available WAL data:
@@ -169,7 +146,7 @@
   <title><acronym>WAL</acronym> Configuration</title>
 
   <para>
-   There are several <acronym>WAL</acronym>-related configuration parameters that
+   There are several <acronym>WAL</>-related configuration parameters that
    affect database performance. This section explains their use.
    Consult <xref linkend="runtime-config"> for general information about
    setting server configuration parameters.
@@ -178,16 +155,17 @@
   <para>
    <firstterm>Checkpoints</firstterm><indexterm><primary>checkpoint</></>
    are points in the sequence of transactions at which it is guaranteed
-   that the data files have been updated with all information logged before
+   that the data files have been updated with all information written before
    the checkpoint.  At checkpoint time, all dirty data pages are flushed to
-   disk and a special checkpoint record is written to the log file. As a
-   result, in the event of a crash, the crash recovery procedure knows from
-   what point in the log (known as the redo record) it should start the
-   REDO operation, since any changes made to data files before that point
-   are already on disk. After a checkpoint has been made, any log segments
-   written before the redo record are no longer needed and can be recycled
-   or removed. (When <acronym>WAL</acronym> archiving is being done, the
-   log segments must be archived before being recycled or removed.)
+   disk and a special checkpoint record is written to the log file.
+   In the event of a crash, the crash recovery procedure looks at the latest
+   checkpoint record to determine the point in the log (known as the redo
+   record) from which it should start the REDO operation.  Any changes made to
+   data files before that point are known to be already on disk.  Hence, after
+   a checkpoint has been made, any log segments preceding the one containing
+   the redo record are no longer needed and can be recycled or removed. (When
+   <acronym>WAL</acronym> archiving is being done, the log segments must be
+   archived before being recycled or removed.)
   </para>
 
   <para>
@@ -206,7 +184,7 @@
    more often. This allows faster after-crash recovery (since less work
    will need to be redone). However, one must balance this against the
    increased cost of flushing dirty data pages more often. If 
-   <xref linkend="guc-full-page-writes"> is set (the default), there is 
+   <xref linkend="guc-full-page-writes"> is set (as is the default), there is 
    another factor to consider. To ensure data page consistency, 
    the first modification of a data page after each checkpoint results in 
    logging the entire page content. In that case,
@@ -228,8 +206,9 @@
    <varname>checkpoint_segments</varname>.  Occasional appearance of such
    a message is not cause for alarm, but if it appears often then the
    checkpoint control parameters should be increased. Bulk operations such
-   as a COPY, INSERT SELECT etc. may cause a number of such warnings if you
-   do not set <xref linkend="guc-checkpoint-segments"> high enough.
+   as large <command>COPY</> transfers may cause a number of such warnings
+   to appear if you have not set <varname>checkpoint_segments</> high
+   enough.
   </para>
 
   <para>
@@ -273,8 +252,7 @@
    correspondingly increase shared memory usage.  When 
    <xref linkend="guc-full-page-writes"> is set and the system is very busy, 
    setting this value higher will help smooth response times during the 
-   period immediately following each checkpoint.  As a guide, a setting of 1024 
-   would be considered to be high.
+   period immediately following each checkpoint.
   </para>
 
   <para>
@@ -310,8 +288,7 @@
    (provided that <productname>PostgreSQL</productname> has been
    compiled with support for it) will result in each
    <function>LogInsert</function> and <function>LogFlush</function>
-   <acronym>WAL</acronym> call being logged to the server log. The output
-   is too verbose for use as a guide to performance tuning. This
+   <acronym>WAL</acronym> call being logged to the server log. This
    option may be replaced by a more general mechanism in the future.
   </para>
  </sect1>
@@ -338,15 +315,6 @@
    <filename>000000010000000000000000</filename>.  The numbers do not wrap, at
    present, but it should take a very very long time to exhaust the
    available stock of numbers.
-  </para>
-
-  <para>
-   The <acronym>WAL</acronym> buffers and control structure are in
-   shared memory and are handled by the server child processes; they
-   are protected by lightweight locks.  The demand on shared memory is
-   dependent on the number of buffers.  The default size of the
-   <acronym>WAL</acronym> buffers is 8 buffers of 8 kB each, or 64 kB
-   total.
   </para>
 
   <para>
