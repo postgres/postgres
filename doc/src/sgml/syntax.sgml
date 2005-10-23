@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.103 2005/08/14 22:19:50 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.104 2005/10/23 19:29:49 tgl Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -260,7 +260,7 @@ UPDATE "my_table" SET "a" = 5;
      <literal>\n</literal> is a newline, <literal>\r</literal> is a
      carriage return, <literal>\t</literal> is a tab. Also supported is
      <literal>\<replaceable>digits</replaceable></literal>, where
-     <replaceable>ddd</replaceable> represents an octal byte value, and
+     <replaceable>digits</replaceable> represents an octal byte value, and
      <literal>\x<replaceable>hexdigits</replaceable></literal>, where
      <replaceable>hexdigits</replaceable> represents a hexadecimal byte value.
      (It is your responsibility that the byte sequences you create are
@@ -543,6 +543,16 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
      <literal><replaceable>type</replaceable> '<replaceable>string</replaceable>'</literal>
      is that it does not work for array types; use <literal>::</literal>
      or <literal>CAST()</literal> to specify the type of an array constant.
+    </para>
+
+    <para>
+     The <literal>CAST()</> syntax conforms to SQL.  The
+     <literal><replaceable>type</replaceable> '<replaceable>string</replaceable>'</literal>
+     syntax is a generalization of the standard: SQL specifies this syntax only
+     for a few datatypes, but <productname>PostgreSQL</productname> allows it
+     for all types.  The syntax with
+     <literal>::</literal> is historical <productname>PostgreSQL</productname>
+     usage, as is the function-call syntax.
     </para>
    </sect3>
   </sect2>
@@ -1105,8 +1115,8 @@ CREATE FUNCTION dept(text) RETURNS dept
     LANGUAGE SQL;
 </programlisting>
 
-    Here the <literal>$1</literal> will be replaced by the first
-    function argument when the function is invoked.
+    Here the <literal>$1</literal> references the value of the first
+    function argument whenever the function is invoked.
    </para>
   </sect2>
 

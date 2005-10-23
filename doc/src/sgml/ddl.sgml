@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.44 2005/08/13 01:55:41 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.45 2005/10/23 19:29:49 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -240,7 +240,7 @@ CREATE TABLE products (
    in a table.  For many applications, however, the constraint they
    provide is too coarse.  For example, a column containing a product
    price should probably only accept positive values.  But there is no
-   data type that accepts only positive numbers.  Another issue is
+   standard data type that accepts only positive numbers.  Another issue is
    that you might want to constrain column data with respect to other
    columns or rows.  For example, in a table containing product
    information, there should only be one row for each product number.
@@ -431,7 +431,7 @@ CREATE TABLE products (
     IS NOT NULL)</literal>, but in
     <productname>PostgreSQL</productname> creating an explicit
     not-null constraint is more efficient.  The drawback is that you
-    cannot give explicit names to not-null constraints created that
+    cannot give explicit names to not-null constraints created this
     way.
    </para>
 
@@ -551,7 +551,7 @@ CREATE TABLE products (
     columns included in the constraint are equal.
     However, null values are not considered equal in this
     comparison.  That means even in the presence of a
-    unique constraint it is possible to store an unlimited number of
+    unique constraint it is possible to store duplicate
     rows that contain a null value in at least one of the constrained
     columns.  This behavior conforms to the SQL standard, but we have
     heard that other SQL databases may not follow this rule.  So be
