@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.153 2005/10/15 02:49:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.154 2005/10/24 15:10:22 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -973,6 +973,17 @@ static int
 exec_stmts(PLpgSQL_execstate * estate, List *stmts)
 {
 	ListCell   *s;
+
+	if (stmts == NIL)
+	{
+		/*
+		 * Ensure we do a CHECK_FOR_INTERRUPTS() even though there is no
+		 * statement.  This prevents hangup in a tight loop if, for instance,
+		 * there is a LOOP construct with an empty body.
+		 */
+		CHECK_FOR_INTERRUPTS();
+		return PLPGSQL_RC_OK;
+	}
 
 	foreach(s, stmts)
 	{
