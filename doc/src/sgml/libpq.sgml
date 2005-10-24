@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.196 2005/10/20 23:57:51 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.197 2005/10/24 15:38:36 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -4032,6 +4032,15 @@ however.)
    fail if the server does not present a certificate; therefore, to
    use this feature the server must also have a <filename>root.crt</> file.
   </para>
+
+  <para>
+   If you are using <acronym>SSL</> inside your application (in addition to
+   inside <application>libpq</application>), you can use <function>PQinitSSL(int)</>
+   to tell <application>libpq</application> that the <acronym>SSL</> library
+   has already been initialized by your application.
+  </para>
+
+
 </sect1>
 
 
@@ -4081,12 +4090,12 @@ are not thread-safe and should not be used in multithread programs.
 </para>
 
 <para>
-<application>libpq</application> applications that use the
-<literal>crypt</literal> authentication method rely on the
-<literal>crypt()</literal> operating system function, which is often
-not thread-safe.<indexterm><primary>crypt</><secondary>thread
-safety</></> It is better to use the <literal>md5</literal> method,
-which is thread-safe on all platforms.
+If you are using Kerberos inside your application (in addition to inside 
+<application>libpq</application>), you will need to do locking around 
+Kerberos calls because Kerberos functions are not thread-safe.  See 
+function <function>PQregisterThreadLock</> in the 
+<application>libpq</application> source code for a way to do cooperative 
+locking between <application>libpq</application> and your application.
 </para>
 
 <para>

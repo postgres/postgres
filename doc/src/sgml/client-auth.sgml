@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.83 2005/08/14 23:35:37 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.84 2005/10/24 15:38:36 momjian Exp $
 -->
 
 <chapter id="client-authentication">
@@ -337,6 +337,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
           authentication.
           Since the password is sent in clear text over the
           network, this should not be used on untrusted networks.
+          It also does not usually work with threaded client applications.
           See <xref linkend="auth-password"> for details.
          </para>
         </listitem>

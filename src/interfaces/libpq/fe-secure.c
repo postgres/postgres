@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.72 2005/10/15 02:49:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.73 2005/10/24 15:38:37 momjian Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -220,8 +220,8 @@ KWbuHn491xNO25CQWMtem80uKw+pTnisBRF/454n1Jnhub144YRBoN8CAQI=\n\
 
 
 /*
- * Exported (but as yet undocumented) function to allow application to
- * tell us it's already initialized OpenSSL.
+ *	Exported function to allow application to tell us it's already
+ *	initialized OpenSSL.
  */
 void
 PQinitSSL(int do_init)
