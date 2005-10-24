@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.84 2005/10/24 15:38:36 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.85 2005/10/24 15:49:54 momjian Exp $
 -->
 
 <chapter id="client-authentication">
@@ -319,11 +319,16 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        <varlistentry>
         <term><literal>crypt</></term>
         <listitem>
+         <note>
+         <para>
+          This option is recommended only for communicating with pre-7.2
+          clients.
+         </para>
+         </note>
          <para>
           Require the client to supply a <function>crypt()</>-encrypted
           password for authentication.
-          <literal>md5</literal> is preferred for 7.2 and later clients,
-          but pre-7.2 clients only support <literal>crypt</>.
+          <literal>md5</literal> is now recommended over <literal>crypt</>.
           See <xref linkend="auth-password"> for details.
          </para>
         </listitem>
@@ -589,8 +594,8 @@ local   db1,db2,@demodbs  all                         md5
    <para>
     If you are at all concerned about password
     <quote>sniffing</> attacks then <literal>md5</> is preferred, with
-    <literal>crypt</> a second choice if you must support pre-7.2
-    clients. Plain <literal>password</> should especially be avoided for
+    <literal>crypt</> to be used only if you must support pre-7.2
+    clients. Plain <literal>password</> should be avoided especially for
     connections over the open Internet (unless you use <acronym>SSL</acronym>,
     <acronym>SSH</>, or another
     communications security wrapper around the connection).
