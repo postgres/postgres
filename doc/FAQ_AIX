@@ -1,5 +1,5 @@
 From: Zeugswetter Andreas <ZeugswetterA@spardat.at>
-$Date: 2005/07/30 03:39:27 $
+$Date: 2005/10/24 22:30:35 $
 
 On AIX 4.3.2 PostgreSQL compiled with the native IBM compiler xlc
 (vac.C 5.0.1) passes all regression tests.  Other versions of OS and
@@ -82,6 +82,25 @@ It appears that the "final" resolution will be to alter _SS_MAXSIZE to
 
 IBM will be providing a fix in the next maintenance release (expected
 in October 2005) with an updated socket.h.
+---
+PMR29657 was resolved in APAR IY74147: INCOMPATIBILITY BETWEEN
+SOCKADDR_UN AND SOCKADDR_STORAGE STRUCT
+
+APAR information
+APAR number	IY74147
+Reported component name	AIX 5.3
+Reported component ID	5765G0300
+Reported release	530
+Status	CLOSED PER
+PE	NoPE
+HIPER	NoHIPER
+Submitted date	2005-07-18
+Closed date	2005-07-18
+Last modified date	2005-09-06
+
+If you upgrade to maintenance level 5300-03, that will include this
+fix. Use the command "oslevel -r" to determine what maintenance level
+you are at.
 ---
 From: Christopher Browne <cbbrowne@ca.afilias.info>
 Date: 2005-07-15
