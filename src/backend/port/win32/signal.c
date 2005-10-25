@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/signal.c,v 1.13 2005/10/21 21:43:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/signal.c,v 1.14 2005/10/25 15:15:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,16 +87,6 @@ pgwin32_signal_initialize(void)
 	if (!SetConsoleCtrlHandler(pg_console_handler, TRUE))
 		ereport(FATAL,
 				(errmsg_internal("failed to set console control handler")));
-}
-
-/*
- * Support routine for CHECK_FOR_INTERRUPTS() macro
- */
-void
-pgwin32_check_queued_signals(void)
-{
-	if (WaitForSingleObjectEx(pgwin32_signal_event, 0, TRUE) == WAIT_OBJECT_0)
-		pgwin32_dispatch_queued_signals();
 }
 
 /*

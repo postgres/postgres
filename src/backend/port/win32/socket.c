@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/socket.c,v 1.9 2005/10/15 02:49:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/socket.c,v 1.10 2005/10/25 15:15:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,7 @@ TranslateSocketError(void)
 static int
 pgwin32_poll_signals(void)
 {
-	if (WaitForSingleObjectEx(pgwin32_signal_event, 0, TRUE) == WAIT_OBJECT_0)
+	if (UNBLOCKED_SIGNAL_QUEUE())
 	{
 		pgwin32_dispatch_queued_signals();
 		errno = EINTR;

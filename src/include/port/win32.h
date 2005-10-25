@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.48 2005/10/21 21:43:46 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.49 2005/10/25 15:15:16 tgl Exp $ */
 
 /* undefine and redefine after #include */
 #undef mkdir
@@ -224,7 +224,6 @@ extern HANDLE pgwin32_initial_signal_pipe;
 
 void		pgwin32_signal_initialize(void);
 HANDLE		pgwin32_create_signal_listener(pid_t pid);
-void		pgwin32_check_queued_signals(void);
 void		pgwin32_dispatch_queued_signals(void);
 void		pg_queue_signal(int signum);
 
