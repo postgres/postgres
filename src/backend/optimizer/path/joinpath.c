@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.96 2005/10/15 02:49:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.97 2005/10/25 20:30:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -795,6 +795,7 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 {
 	List	   *result_list = NIL;
 	bool		isouterjoin = IS_OUTER_JOIN(jointype);
+	bool		have_nonmergeable_joinclause = false;
 	ListCell   *l;
 
 	foreach(l, restrictlist)
@@ -803,42 +804,19 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 
 		/*
 		 * If processing an outer join, only use its own join clauses in the
-		 * merge.  For inner joins we need not be so picky.
-		 *
-		 * Furthermore, if it is a right/full join then *all* the explicit join
-		 * clauses must be mergejoinable, else the executor will fail. If we
-		 * are asked for a right join then just return NIL to indicate no
-		 * mergejoin is possible (we can handle it as a left join instead). If
-		 * we are asked for a full join then emit an error, because there is
-		 * no fallback.
+		 * merge.  For inner joins we can use pushed-down clauses too.
+		 * (Note: we don't set have_nonmergeable_joinclause here because
+		 * pushed-down clauses will become otherquals not joinquals.)
 		 */
-		if (isouterjoin)
-		{
-			if (restrictinfo->is_pushed_down)
-				continue;
-			switch (jointype)
-			{
-				case JOIN_RIGHT:
-					if (!restrictinfo->can_join ||
-						restrictinfo->mergejoinoperator == InvalidOid)
-						return NIL;		/* not mergejoinable */
-					break;
-				case JOIN_FULL:
-					if (!restrictinfo->can_join ||
-						restrictinfo->mergejoinoperator == InvalidOid)
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("FULL JOIN is only supported with merge-joinable join conditions")));
-					break;
-				default:
-					/* otherwise, it's OK to have nonmergeable join quals */
-					break;
-			}
-		}
+		if (isouterjoin && restrictinfo->is_pushed_down)
+			continue;
 
 		if (!restrictinfo->can_join ||
 			restrictinfo->mergejoinoperator == InvalidOid)
+		{
+			have_nonmergeable_joinclause = true;
 			continue;			/* not mergejoinable */
+		}
 
 		/*
 		 * Check if clause is usable with these input rels.  All the vars
@@ -856,9 +834,36 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 			/* lefthand side is inner */
 		}
 		else
+		{
+			have_nonmergeable_joinclause = true;
 			continue;			/* no good for these input relations */
+		}
 
 		result_list = lcons(restrictinfo, result_list);
+	}
+
+	/*
+	 * If it is a right/full join then *all* the explicit join clauses must be
+	 * mergejoinable, else the executor will fail. If we are asked for a right
+	 * join then just return NIL to indicate no mergejoin is possible (we can
+	 * handle it as a left join instead). If we are asked for a full join then
+	 * emit an error, because there is no fallback.
+	 */
+	if (have_nonmergeable_joinclause)
+	{
+		switch (jointype)
+		{
+			case JOIN_RIGHT:
+				return NIL;		/* not mergejoinable */
+			case JOIN_FULL:
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("FULL JOIN is only supported with merge-joinable join conditions")));
+				break;
+			default:
+				/* otherwise, it's OK to have nonmergeable join quals */
+				break;
+		}
 	}
 
 	return result_list;
