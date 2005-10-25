@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.53 2005/10/18 22:59:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.54 2005/10/25 13:47:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -468,7 +468,7 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 
 #ifdef TRACE_SORT
 	if (trace_sort)
-		elog(NOTICE,
+		elog(LOG,
 			 "begin tuple sort: nkeys = %d, workMem = %d, randomAccess = %c",
 			 nkeys, workMem, randomAccess ? 't' : 'f');
 #endif
@@ -518,7 +518,7 @@ tuplesort_begin_index(Relation indexRel,
 
 #ifdef TRACE_SORT
 	if (trace_sort)
-		elog(NOTICE,
+		elog(LOG,
 			 "begin index sort: unique = %c, workMem = %d, randomAccess = %c",
 			 enforceUnique ? 't' : 'f',
 			 workMem, randomAccess ? 't' : 'f');
@@ -549,7 +549,7 @@ tuplesort_begin_datum(Oid datumType,
 
 #ifdef TRACE_SORT
 	if (trace_sort)
-		elog(NOTICE,
+		elog(LOG,
 			 "begin datum sort: workMem = %d, randomAccess = %c",
 			 workMem, randomAccess ? 't' : 'f');
 #endif
@@ -623,10 +623,10 @@ tuplesort_end(Tuplesortstate *state)
 	if (trace_sort)
 	{
 		if (state->tapeset)
-			elog(NOTICE, "external sort ended, %ld disk blocks used: %s",
+			elog(LOG, "external sort ended, %ld disk blocks used: %s",
 				 spaceUsed, pg_rusage_show(&state->ru_start));
 		else
-			elog(NOTICE, "internal sort ended, %ld KB used: %s",
+			elog(LOG, "internal sort ended, %ld KB used: %s",
 				 spaceUsed, pg_rusage_show(&state->ru_start));
 	}
 #endif
@@ -771,7 +771,7 @@ tuplesort_performsort(Tuplesortstate *state)
 {
 #ifdef TRACE_SORT
 	if (trace_sort)
-		elog(NOTICE, "performsort starting: %s",
+		elog(LOG, "performsort starting: %s",
 			 pg_rusage_show(&state->ru_start));
 #endif
 
@@ -817,7 +817,7 @@ tuplesort_performsort(Tuplesortstate *state)
 
 #ifdef TRACE_SORT
 	if (trace_sort)
-		elog(NOTICE, "performsort done%s: %s",
+		elog(LOG, "performsort done%s: %s",
 			 (state->status == TSS_FINALMERGE) ? " (except final merge)" : "",
 			 pg_rusage_show(&state->ru_start));
 #endif
@@ -1054,7 +1054,7 @@ inittapes(Tuplesortstate *state)
 
 #ifdef TRACE_SORT
 	if (trace_sort)
-		elog(NOTICE, "switching to external sort: %s",
+		elog(LOG, "switching to external sort: %s",
 			 pg_rusage_show(&state->ru_start));
 #endif
 
@@ -1316,7 +1316,7 @@ mergeonerun(Tuplesortstate *state)
 
 #ifdef TRACE_SORT
 	if (trace_sort)
-		elog(NOTICE, "finished merge step: %s",
+		elog(LOG, "finished merge step: %s",
 			 pg_rusage_show(&state->ru_start));
 #endif
 }
@@ -1533,7 +1533,7 @@ dumptuples(Tuplesortstate *state, bool alltuples)
 
 #ifdef TRACE_SORT
 			if (trace_sort)
-				elog(NOTICE, "finished writing%s run %d: %s",
+				elog(LOG, "finished writing%s run %d: %s",
 					 (state->memtupcount == 0) ? " final" : "",
 					 state->currentRun,
 					 pg_rusage_show(&state->ru_start));
