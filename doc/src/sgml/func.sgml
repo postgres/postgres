@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.288 2005/10/18 20:38:57 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.289 2005/10/25 15:47:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -5423,9 +5423,10 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
     </table>
 
    <para>
-    If you are using both <function>justify_hours</> and <function>justify_days</>,
-    it is best to use <function>justify_hours</> first so any additional days will
-    justified by <function>justify_days</>.
+    If you are using both <function>justify_hours</> and
+    <function>justify_days</>, it is best to use <function>justify_hours</>
+    first so any additional days will be included in the
+    <function>justify_days</> calculation.
    </para>
 
    <para>
