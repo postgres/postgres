@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.392 2005/10/25 15:12:22 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.393 2005/10/25 17:54:30 tgl Exp $
 
 Typical markup:
 
@@ -1147,7 +1147,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
          SELECT CURRENT_TIMESTAMP AT TIME ZONE 'Europe/London';
         </programlisting>
         In the above query, the time zone used is adjusted based on the
-        daylight savings time rules that were in effect on the supplied
+        daylight saving time rules that were in effect on the supplied
         date.
        </para>
       </listitem>
@@ -1206,21 +1206,22 @@ psql -t -f fixseq.sql db1 | psql -e db1
 
       <listitem>
        <para>
-        Add an internal day field to <type>INTERVAL</> so a one day
+        Add a separate day field to type <type>interval</> so a one day
         interval can be distinguished from a 24 hour interval (Michael
         Glaesemann)
        </para>
        <para>
-        Dates that contain a daylight savings time adjustment are not 24
-        hours, but typically 23 or 25 hours. This change allows numeric days
-        (not fixed 24-hour periods) to be added to dates which include
-        a daylight savings time adjustment period. Therefore, while in 
-        previous releases <literal>1 day</> and <literal>24 hours</> were 
-        interchangeable interval values, in this release they are treated 
-        differently, e.g.
+        Days that contain a daylight saving time adjustment are not 24
+        hours long, but typically 23 or 25 hours.  This change creates a
+        conceptual distinction between intervals of <quote>so many days</>
+        and intervals of <quote>so many hours</>.  Adding
+        <literal>1 day</> to a timestamp now gives the same local time on
+        the next day even if a daylight saving time adjustment occurs
+        between, whereas adding <literal>24 hours</> will give a different
+        local time when this happens.  For example, under US DST rules:
         <programlisting>
-         '2005-05-03 00:00:00 EST' + '1 day' = '2005-05-04 00:00:00-04'
-         '2005-05-03 00:00:00 EST' + '24 hours' = '2005-05-04 01:00:00-04'
+         '2005-04-03 00:00:00-05' + '1 day' = '2005-04-04 00:00:00-04'
+         '2005-04-03 00:00:00-05' + '24 hours' = '2005-04-04 01:00:00-04'
         </programlisting>
        </para>
       </listitem>
