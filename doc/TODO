@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Oct 24 14:08:49 EDT 2005
+Last updated:		Tue Oct 25 14:50:55 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -583,6 +583,11 @@ Clients
 
 	  It probably requires psql to output newlines in the proper
 	  column, which is already on the TODO list.
+
+	o Add auto-expanded mode so expanded output is used if the row
+	  length is wider than the screen width.  
+
+	  Consider using auto-expanded mode for backslash commands like \df+.
 
 
 * pg_dump
