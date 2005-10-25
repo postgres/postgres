@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.155 2005/10/15 02:49:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.156 2005/10/25 17:13:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1224,8 +1224,10 @@ interval2tm(Interval span, struct pg_tm * tm, fsec_t *fsec)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		time;
+	int64		tfrac;
 #else
 	double		time;
+	double		tfrac;
 #endif
 
 	tm->tm_year = span.month / MONTHS_PER_YEAR;
@@ -1234,17 +1236,23 @@ interval2tm(Interval span, struct pg_tm * tm, fsec_t *fsec)
 	time = span.time;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	tm->tm_hour = time / USECS_PER_HOUR;
-	time -= tm->tm_hour * USECS_PER_HOUR;
-	tm->tm_min = time / USECS_PER_MINUTE;
-	time -= tm->tm_min * USECS_PER_MINUTE;
-	tm->tm_sec = time / USECS_PER_SEC;
-	*fsec = time - (tm->tm_sec * USECS_PER_SEC);
+	tfrac = time / USECS_PER_HOUR;
+	time -= tfrac * USECS_PER_HOUR;
+	tm->tm_hour = tfrac;		/* could overflow ... */
+	tfrac = time / USECS_PER_MINUTE;
+	time -= tfrac * USECS_PER_MINUTE;
+	tm->tm_min = tfrac;
+	tfrac = time / USECS_PER_SEC;
+	*fsec = time - (tfrac * USECS_PER_SEC);
+	tm->tm_sec = tfrac;
 #else
 recalc:
-	TMODULO(time, tm->tm_hour, (double) SECS_PER_HOUR);
-	TMODULO(time, tm->tm_min, (double) SECS_PER_MINUTE);
-	TMODULO(time, tm->tm_sec, 1.0);
+	TMODULO(time, tfrac, (double) SECS_PER_HOUR);
+	tm->tm_hour = tfrac;		/* could overflow ... */
+	TMODULO(time, tfrac, (double) SECS_PER_MINUTE);
+	tm->tm_min = tfrac;
+	TMODULO(time, tfrac, 1.0);
+	tm->tm_sec = tfrac;
 	time = TSROUND(time);
 	/* roundoff may need to propagate to higher-order fields */
 	if (time >= 1.0)
@@ -1935,55 +1943,68 @@ timestamp_mi(PG_FUNCTION_ARGS)
 	result->month = 0;
 	result->day = 0;
 
+	/* this is wrong, but removing it breaks a lot of regression tests */
 	result = DatumGetIntervalP(DirectFunctionCall1(interval_justify_hours,
 												 IntervalPGetDatum(result)));
+
 	PG_RETURN_INTERVAL_P(result);
 }
 
-/*	interval_justify_hours()
- *	Adjust interval so 'time' contains less than a whole day, and
- *	'day' contains an integral number of days.	This is useful for
+/*
+ *	interval_justify_hours()
+ *
+ *	Adjust interval so 'time' contains less than a whole day, adding
+ *	the excess to 'day'.  This is useful for
  *	situations (such as non-TZ) where '1 day' = '24 hours' is valid,
- *	e.g. interval subtraction and division.  The SQL standard requires
- *	such conversion in these cases, but not the conversion of days to months.
+ *	e.g. interval subtraction and division.
  */
 Datum
 interval_justify_hours(PG_FUNCTION_ARGS)
 {
 	Interval   *span = PG_GETARG_INTERVAL_P(0);
 	Interval   *result;
+#ifdef HAVE_INT64_TIMESTAMP
+	int64		wholeday;
+#else
+	double		wholeday;
+#endif
 
 	result = (Interval *) palloc(sizeof(Interval));
 	result->month = span->month;
+	result->day = span->day;
 	result->time = span->time;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	result->time += span->day * USECS_PER_DAY;
-	TMODULO(result->time, result->day, USECS_PER_DAY);
+	TMODULO(result->time, wholeday, USECS_PER_DAY);
 #else
-	result->time += span->day * (double) SECS_PER_DAY;
-	TMODULO(result->time, result->day, (double) SECS_PER_DAY);
+	TMODULO(result->time, wholeday, (double) SECS_PER_DAY);
 #endif
+	result->day += wholeday;	/* could overflow... */
 
 	PG_RETURN_INTERVAL_P(result);
 }
 
-/*	interval_justify_days()
- *	Adjust interval so 'time' contains less than 30 days, and
- *	adds as months.
+/*
+ *	interval_justify_days()
+ *
+ *	Adjust interval so 'day' contains less than 30 days, adding
+ *	the excess to 'month'.
  */
 Datum
 interval_justify_days(PG_FUNCTION_ARGS)
 {
 	Interval   *span = PG_GETARG_INTERVAL_P(0);
 	Interval   *result;
+	int32		wholemonth;
 
 	result = (Interval *) palloc(sizeof(Interval));
+	result->month = span->month;
 	result->day = span->day;
 	result->time = span->time;
 
-	result->day += span->month * DAYS_PER_MONTH;
-	TMODULO(result->day, result->month, DAYS_PER_MONTH);
+	wholemonth = result->day / DAYS_PER_MONTH;
+	result->day -= wholemonth * DAYS_PER_MONTH;
+	result->month += wholemonth;
 
 	PG_RETURN_INTERVAL_P(result);
 }
@@ -2282,19 +2303,28 @@ interval_mul(PG_FUNCTION_ARGS)
 
 	result = (Interval *) palloc(sizeof(Interval));
 
-	result->month = span->month * factor;
-	result->day = span->day * factor;
+	month_remainder = span->month * factor;
+	day_remainder = span->day * factor;
+	result->month = (int32) month_remainder;
+	result->day = (int32) day_remainder;
+	month_remainder -= result->month;
+	day_remainder -= result->day;
 
-	/* Compute remainders */
-	month_remainder = span->month * factor - result->month;
-	day_remainder = span->day * factor - result->day;
+	/*
+	 * The above correctly handles the whole-number part of the month and
+	 * day products, but we have to do something with any fractional part
+	 * resulting when the factor is nonintegral.  We cascade the fractions
+	 * down to lower units using the conversion factors DAYS_PER_MONTH and
+	 * SECS_PER_DAY.  Note we do NOT cascade up, since we are not forced to
+	 * do so by the representation.  The user can choose to cascade up later,
+	 * using justify_hours and/or justify_days.
+	 */
 
-	/* Cascade fractions to lower units */
 	/* fractional months full days into days */
 	month_remainder_days = month_remainder * DAYS_PER_MONTH;
-	result->day += month_remainder_days;
+	result->day += (int32) month_remainder_days;
 	/* fractional months partial days into time */
-	day_remainder += month_remainder_days - (int) month_remainder_days;
+	day_remainder += month_remainder_days - (int32) month_remainder_days;
 
 #ifdef HAVE_INT64_TIMESTAMP
 	result->time = rint(span->time * factor + day_remainder * USECS_PER_DAY);
@@ -2302,8 +2332,6 @@ interval_mul(PG_FUNCTION_ARGS)
 	result->time = span->time * factor + day_remainder * SECS_PER_DAY;
 #endif
 
-	result = DatumGetIntervalP(DirectFunctionCall1(interval_justify_hours,
-												 IntervalPGetDatum(result)));
 	PG_RETURN_INTERVAL_P(result);
 }
 
@@ -2334,29 +2362,29 @@ interval_div(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
 
-	result->month = span->month / factor;
-	result->day = span->day / factor;
-	result->time = span->time / factor;
+	month_remainder = span->month / factor;
+	day_remainder = span->day / factor;
+	result->month = (int32) month_remainder;
+	result->day = (int32) day_remainder;
+	month_remainder -= result->month;
+	day_remainder -= result->day;
 
-	/* Compute remainders */
-	month_remainder = span->month / factor - result->month;
-	day_remainder = span->day / factor - result->day;
+	/*
+	 * Handle any fractional parts the same way as in interval_mul.
+	 */
 
-	/* Cascade fractions to lower units */
 	/* fractional months full days into days */
 	month_remainder_days = month_remainder * DAYS_PER_MONTH;
-	result->day += month_remainder_days;
+	result->day += (int32) month_remainder_days;
 	/* fractional months partial days into time */
-	day_remainder += month_remainder_days - (int) month_remainder_days;
+	day_remainder += month_remainder_days - (int32) month_remainder_days;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	result->time += rint(day_remainder * USECS_PER_DAY);
+	result->time = rint(span->time / factor + day_remainder * USECS_PER_DAY);
 #else
-	result->time += day_remainder * SECS_PER_DAY;
+	result->time = span->time / factor + day_remainder * SECS_PER_DAY;
 #endif
 
-	result = DatumGetIntervalP(DirectFunctionCall1(interval_justify_hours,
-												 IntervalPGetDatum(result)));
 	PG_RETURN_INTERVAL_P(result);
 }
 

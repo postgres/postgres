@@ -218,7 +218,7 @@ SELECT '' AS ten, * FROM INTERVAL_TBL;
 select avg(f1) from interval_tbl;
                        avg                       
 -------------------------------------------------
- @ 4 years 1 mon 10 days 4 hours 18 mins 23 secs
+ @ 4 years 1 mon 9 days 28 hours 18 mins 23 secs
 (1 row)
 
 -- test long interval input
