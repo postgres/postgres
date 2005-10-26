@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.73 2005/10/22 22:09:49 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.74 2005/10/26 20:42:35 tgl Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -677,12 +677,20 @@ SELECT pg_stop_backup();
    </para>
 
    <para>
-    Some versions of GNU <application>tar</> consider it an error if a file
-    is changed while <application>tar</> is copying it.  This case is normal,
-    and not an error, when taking a base backup of an active database.
-    Since ignoring all errors from <application>tar</> would be unwise,
-    you should either manually inspect <application>tar</>'s messages or
-    else use a different backup tool that does not complain about this case.
+    Some backup tools that you might wish to use emit warnings or errors
+    if the files they are trying to copy change while the copy proceeds.
+    This situation is normal, and not an error, when taking a base backup of
+    an active database; so you need to ensure that you can distinguish
+    complaints of this sort from real errors.  For example, some versions
+    of <application>rsync</> return a separate exit code for <quote>vanished
+    source files</>, and you can write a driver script to accept this exit
+    code as a non-error case.  Also,
+    some versions of GNU <application>tar</> consider it an error if a file
+    is changed while <application>tar</> is copying it.  There does not seem
+    to be any very convenient way to distinguish this error from other types
+    of errors, other than manual inspection of <application>tar</>'s messages.
+    GNU <application>tar</> is therefore not the best tool for making base
+    backups.
    </para>
 
    <para>
