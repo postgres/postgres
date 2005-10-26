@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.393 2005/10/25 17:54:30 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.394 2005/10/26 19:21:53 tgl Exp $
 
 Typical markup:
 
@@ -268,8 +268,18 @@ pg_[A-Za-z0-9_]                 <application>
       </para>
       <para>
        By default, we now generate an error if a table is used in a query
-       without a <command>FROM</> reference.  The old behavior is still
+       without a <literal>FROM</> reference.  The old behavior is still
        available, but the parameter must be set to 'true' to obtain it.
+      </para>
+
+      <para>
+       It may be necessary to set <varname>add_missing_from</> to true
+       in order to load an existing dump file, if the dump contains any
+       views or rules created using the implicit-<literal>FROM</> syntax.
+       This should be a one-time annoyance, because
+       <productname>PostgreSQL</productname> 8.1 will convert
+       such views and rules to standard explicit-<literal>FROM</> syntax.
+       Subsequent dumps will therefore not have the problem.
       </para>
      </listitem>
 

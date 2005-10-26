@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.115 2005/10/15 02:49:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.116 2005/10/26 19:21:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1005,7 +1005,13 @@ addImplicitRTE(ParseState *pstate, RangeVar *relation)
 {
 	RangeTblEntry *rte;
 
-	rte = addRangeTableEntry(pstate, relation, NULL, false, false);
+	/*
+	 * Note that we set inFromCl true, so that the RTE will be listed
+	 * explicitly if the parsetree is ever decompiled by ruleutils.c.
+	 * This provides a migration path for views/rules that were originally
+	 * written with implicit-RTE syntax.
+	 */
+	rte = addRangeTableEntry(pstate, relation, NULL, false, true);
 	/* Add to joinlist and relnamespace, but not varnamespace */
 	addRTEtoQuery(pstate, rte, true, true, false);
 	warnAutoRange(pstate, relation);
