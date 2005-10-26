@@ -1,8 +1,8 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.32 2005/10/22 21:56:07 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.33 2005/10/26 12:55:07 momjian Exp $
 -->
 <chapter Id="runtime-config">
-  <title>Run-time Configuration</title>
+  <title>Server Configuration</title>
 
   <indexterm>
    <primary>configuration</primary>
