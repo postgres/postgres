@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.78 2005/10/15 02:49:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.79 2005/10/27 13:34:47 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -1491,7 +1491,7 @@ printTable(const char *title,
 	 * normal (user-submitted) query, not a table we're printing for a slash
 	 * command.
 	 */
-	if (opt->expanded && opt->normal_query)
+	if (opt->expanded)
 		use_expanded = true;
 	else
 		use_expanded = false;

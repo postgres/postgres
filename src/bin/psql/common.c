@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.108 2005/10/15 02:49:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.109 2005/10/27 13:34:47 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -794,8 +794,6 @@ static bool
 PrintQueryTuples(const PGresult *results)
 {
 	printQueryOpt my_popt = pset.popt;
-
-	my_popt.topt.normal_query = true;
 
 	/* write output to \g argument, if any */
 	if (pset.gfname)

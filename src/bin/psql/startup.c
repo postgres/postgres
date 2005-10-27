@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.125 2005/10/15 02:49:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.126 2005/10/27 13:34:47 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -147,7 +147,6 @@ main(int argc, char *argv[])
 	pset.queryFout = stdout;
 	pset.popt.topt.border = 1;
 	pset.popt.topt.pager = 1;
-	pset.popt.topt.normal_query = false;
 	pset.popt.default_footer = true;
 
 	SetVariable(pset.vars, "VERSION", PG_VERSION_STR);

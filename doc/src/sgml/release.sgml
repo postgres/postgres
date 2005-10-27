@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.394 2005/10/26 19:21:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.395 2005/10/27 13:34:46 momjian Exp $
 
 Typical markup:
 
@@ -1700,7 +1700,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
       <listitem>
        <para>
         Prevent <command>\x</> (expanded mode) from affecting
-        backslash-command displays (Neil)
+        the output of <command>\d tablename<\> (Neil)
        </para>
       </listitem>
 
