@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.197 2005/10/24 15:38:36 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.198 2005/10/27 13:53:41 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -3976,12 +3976,14 @@ This file should contain lines of the following format:
 <replaceable>hostname</replaceable>:<replaceable>port</replaceable>:<replaceable>database</replaceable>:<replaceable>username</replaceable>:<replaceable>password</replaceable>
 </synopsis>
 Each of the first four fields may be a literal value, or <literal>*</literal>,
-which
-matches anything.  The password field from the first line that matches the
+which matches anything.  The password field from the first line that matches the
 current connection parameters will be used.  (Therefore, put more-specific
 entries first when you are using wildcards.)
 If an entry needs to contain <literal>:</literal> or
 <literal>\</literal>, escape this character with <literal>\</literal>.
+A hostname of <literal>localhost</> matches both <literal>host</> (TCP)
+and <literal>local</> (Unix domain socket) connections coming from the
+local machine.
 </para>
 
 <para>
