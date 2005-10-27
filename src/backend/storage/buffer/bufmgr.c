@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.197 2005/10/15 02:49:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.198 2005/10/27 17:07:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,8 @@ static volatile BufferDesc *PinCountWaitBuf = NULL;
 
 static bool PinBuffer(volatile BufferDesc *buf);
 static void PinBuffer_Locked(volatile BufferDesc *buf);
-static void UnpinBuffer(volatile BufferDesc *buf, bool fixOwner, bool trashOK);
+static void UnpinBuffer(volatile BufferDesc *buf,
+						bool fixOwner, bool normalAccess);
 static bool SyncOneBuffer(int buf_id, bool skip_pinned);
 static void WaitIO(volatile BufferDesc *buf);
 static bool StartBufferIO(volatile BufferDesc *buf, bool forInput);
@@ -780,12 +781,18 @@ PinBuffer_Locked(volatile BufferDesc *buf)
  * This should be applied only to shared buffers, never local ones.
  *
  * Most but not all callers want CurrentResourceOwner to be adjusted.
+ * Those that don't should pass fixOwner = FALSE.
+ *
+ * normalAccess indicates that we are finishing a "normal" page access,
+ * that is, one requested by something outside the buffer subsystem.
+ * Passing FALSE means it's an internal access that should not update the
+ * buffer's usage count nor cause a change in the freelist.
  *
  * If we are releasing a buffer during VACUUM, and it's not been otherwise
- * used recently, and trashOK is true, send the buffer to the freelist.
+ * used recently, and normalAccess is true, we send the buffer to the freelist.
  */
 static void
-UnpinBuffer(volatile BufferDesc *buf, bool fixOwner, bool trashOK)
+UnpinBuffer(volatile BufferDesc *buf, bool fixOwner, bool normalAccess)
 {
 	int			b = buf->buf_id;
 
@@ -797,7 +804,7 @@ UnpinBuffer(volatile BufferDesc *buf, bool fixOwner, bool trashOK)
 	PrivateRefCount[b]--;
 	if (PrivateRefCount[b] == 0)
 	{
-		bool		trash_buffer = false;
+		bool		immed_free_buffer = false;
 
 		/* I'd better not still hold any locks on the buffer */
 		Assert(!LWLockHeldByMe(buf->content_lock));
@@ -810,16 +817,21 @@ UnpinBuffer(volatile BufferDesc *buf, bool fixOwner, bool trashOK)
 		Assert(buf->refcount > 0);
 		buf->refcount--;
 
-		/* Mark the buffer recently used, unless we are in VACUUM */
-		if (!strategy_hint_vacuum)
+		/* Update buffer usage info, unless this is an internal access */
+		if (normalAccess)
 		{
-			if (buf->usage_count < BM_MAX_USAGE_COUNT)
-				buf->usage_count++;
+			if (!strategy_hint_vacuum)
+			{
+				if (buf->usage_count < BM_MAX_USAGE_COUNT)
+					buf->usage_count++;
+			}
+			else
+			{
+				/* VACUUM accesses don't bump usage count, instead... */
+				if (buf->refcount == 0 && buf->usage_count == 0)
+					immed_free_buffer = true;
+			}
 		}
-		else if (trashOK &&
-				 buf->refcount == 0 &&
-				 buf->usage_count == 0)
-			trash_buffer = true;
 
 		if ((buf->flags & BM_PIN_COUNT_WAITER) &&
 			buf->refcount == 1)
@@ -839,7 +851,7 @@ UnpinBuffer(volatile BufferDesc *buf, bool fixOwner, bool trashOK)
 		 * freelist for near-term reuse.  We put it at the tail so that it
 		 * won't be used before any invalid buffers that may exist.
 		 */
-		if (trash_buffer)
+		if (immed_free_buffer)
 			StrategyFreeBuffer(buf, false);
 	}
 }
