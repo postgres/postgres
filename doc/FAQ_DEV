@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Sep 19 21:28:08 EDT 2005
+   Last updated: Thu Oct 27 09:48:14 EDT 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -798,11 +798,13 @@ typedef struct nameData
    If the postmaster is running, start psql in one window, then find the
    PID of the postgres process used by psql using SELECT
    pg_backend_pid(). Use a debugger to attach to the postgres PID. You
-   can set breakpoints in the debugger and issue queries from psql. If
-   you are debugging postgres startup, you can set PGOPTIONS="-W n", then
-   start psql. This will cause startup to delay for n seconds so you can
-   attach to the process with the debugger, set any breakpoints, and
-   continue through the startup sequence.
+   can set breakpoints in the debugger and issue queries from the other.
+   If you are looking to find the location that is generating an error or
+   log message, set a breakpoint at errfinish. psql. If you are debugging
+   postgres startup, you can set PGOPTIONS="-W n", then start psql. This
+   will cause startup to delay for n seconds so you can attach to the
+   process with the debugger, set any breakpoints, and continue through
+   the startup sequence.
    
    You can also compile with profiling to see what functions are taking
    execution time. The backend profile files will be deposited in the
