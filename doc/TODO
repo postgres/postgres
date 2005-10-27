@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Oct 25 14:50:55 EDT 2005
+Last updated:		Wed Oct 26 22:33:29 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -196,8 +196,6 @@ Data Types
 * Dates and Times
 
 	o Allow infinite dates just like infinite timestamps
-	o Add a GUC variable to allow output of interval values in ISO8601 
-	  format
 	o Merge hardwired timezone names with the TZ database; allow either 
 	  kind everywhere a TZ name is currently taken
 	o Allow customization of the known set of TZ names (generalize the
@@ -210,6 +208,19 @@ Data Types
 
 	o Fix SELECT '0.01 years'::interval, '0.01 months'::interval
 	o Fix SELECT INTERVAL '1' MONTH
+	o Add a GUC variable to allow output of interval values in ISO8601 
+	  format
+	o Improve timestamptz subtraction to be DST-aware
+
+	  Currently, subtracting one date from another that crosses a
+	  daylight savings time adjustment can return '1 day 1 hour', but
+	  adding that back to the first date returns a time one hour in
+	  the future.  This is caused by the adjustment of '25 hours' to
+	  '1 day 1 hour', and '1 day' is the same time the next day, even
+	  if daylight savings adjustments are involved.
+
+	o Fix interval display to support values exceeding 2^31 hours
+	o Add overflow checking to timestamp and interval arithmetic	
 	o Add ISO INTERVAL handling
 		o Add support for day-time syntax, INTERVAL '1 2:03:04' DAY TO 
 		  SECOND

@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Tue Oct 25 14:50:55 EDT 2005
+Last updated:           Wed Oct 26 22:33:29 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -181,8 +181,6 @@ first.
   </li><li>Dates and Times
   <ul>
     <li>Allow infinite dates just like infinite timestamps
-    </li><li>Add a GUC variable to allow output of interval values in ISO8601 
-          format
     </li><li>Merge hardwired timezone names with the TZ database; allow either 
           kind everywhere a TZ name is currently taken
     </li><li>Allow customization of the known set of TZ names (generalize the
@@ -194,6 +192,18 @@ first.
 </p>
     </li><li>Fix SELECT '0.01 years'::interval, '0.01 months'::interval
     </li><li>Fix SELECT INTERVAL '1' MONTH
+    </li><li>Add a GUC variable to allow output of interval values in ISO8601 
+          format
+    </li><li>Improve timestamptz subtraction to be DST-aware
+<p>          Currently, subtracting one date from another that crosses a
+          daylight savings time adjustment can return '1 day 1 hour', but
+          adding that back to the first date returns a time one hour in
+          the future.  This is caused by the adjustment of '25 hours' to
+          '1 day 1 hour', and '1 day' is the same time the next day, even
+          if daylight savings adjustments are involved.
+</p>
+    </li><li>Fix interval display to support values exceeding 2^31 hours
+    </li><li>Add overflow checking to timestamp and interval arithmetic    
     </li><li>Add ISO INTERVAL handling
     <ul>
       <li>Add support for day-time syntax, INTERVAL '1 2:03:04' DAY TO 
