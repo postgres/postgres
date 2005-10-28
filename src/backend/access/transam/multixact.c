@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.10 2005/10/28 17:27:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.11 2005/10/28 19:00:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -631,20 +631,11 @@ CreateMultiXactId(int nxids, TransactionId *xids)
 	}
 
 	/*
-	 * Critical section from here until we've written the data; we don't
-	 * want to error out with a partly written MultiXact structure.
-	 * (In particular, failing to write our start offset after advancing
-	 * nextMXact would effectively corrupt the previous MultiXact.)
-	 */
-	START_CRIT_SECTION();
-
-	/*
 	 * Assign the MXID and offsets range to use, and make sure there is
-	 * space in the OFFSETs and MEMBERs files.
+	 * space in the OFFSETs and MEMBERs files.  NB: this routine does
+	 * START_CRIT_SECTION().
 	 */
 	multi = GetNewMultiXactId(nxids, &offset);
-
-	debug_elog4(DEBUG2, "Create: assigned id %u offset %u", multi, offset);
 
 	/*
 	 * Make an XLOG entry describing the new MXID.
@@ -768,6 +759,9 @@ RecordNewMultiXact(MultiXactId multi, MultiXactOffset offset,
  * files.  Unfortunately, we have to do that while holding MultiXactGenLock
  * to avoid race conditions --- the XLOG record for zeroing a page must appear
  * before any backend can possibly try to store data in that page!
+ *
+ * We start a critical section before advancing the shared counters.  The
+ * caller must end the critical section after writing SLRU data.
  */
 static MultiXactId
 GetNewMultiXactId(int nxids, MultiXactOffset *offset)
@@ -794,18 +788,7 @@ GetNewMultiXactId(int nxids, MultiXactOffset *offset)
 	ExtendMultiXactOffset(result);
 
 	/*
-	 * Advance counter.  As in GetNewTransactionId(), this must not happen
-	 * until after ExtendMultiXactOffset has succeeded!
-	 *
-	 * We don't care about MultiXactId wraparound here; it will be handled by
-	 * the next iteration.	But note that nextMXact may be InvalidMultiXactId
-	 * after this routine exits, so anyone else looking at the variable must
-	 * be prepared to deal with that.
-	 */
-	(MultiXactState->nextMXact)++;
-
-	/*
-	 * Reserve the members space.  Same considerations as above.  Also, be
+	 * Reserve the members space, similarly to above.  Also, be
 	 * careful not to return zero as the starting offset for any multixact.
 	 * See GetMultiXactIdMembers() for motivation.
 	 */
@@ -819,6 +802,27 @@ GetNewMultiXactId(int nxids, MultiXactOffset *offset)
 		*offset = nextOffset;
 
 	ExtendMultiXactMember(nextOffset, nxids);
+
+	/*
+	 * Critical section from here until caller has written the data into
+	 * the just-reserved SLRU space; we don't want to error out with a partly
+	 * written MultiXact structure.  (In particular, failing to write our
+	 * start offset after advancing nextMXact would effectively corrupt the
+	 * previous MultiXact.)
+	 */
+	START_CRIT_SECTION();
+
+	/*
+	 * Advance counters.  As in GetNewTransactionId(), this must not happen
+	 * until after file extension has succeeded!
+	 *
+	 * We don't care about MultiXactId wraparound here; it will be handled by
+	 * the next iteration.	But note that nextMXact may be InvalidMultiXactId
+	 * after this routine exits, so anyone else looking at the variable must
+	 * be prepared to deal with that.  Similarly, nextOffset may be zero,
+	 * but we won't use that as the actual start offset of the next multixact.
+	 */
+	(MultiXactState->nextMXact)++;
 
 	MultiXactState->nextOffset += nxids;
 
