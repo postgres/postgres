@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.244 2005/10/23 18:30:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.245 2005/10/28 20:01:40 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1532,8 +1532,8 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        <row>
         <entry><systemitem class="osname">BSD/OS</></entry>
         <entry><systemitem>x86</></entry>
-        <entry>8.0.0</entry>
-        <entry>Bruce Momjian (<email>pgman@candle.pha.pa.us</email>), 2004-12-07</entry>
+        <entry>8.1.0</entry>
+        <entry>Bruce Momjian (<email>pgman@candle.pha.pa.us</email>), 2005-10-26</entry>
         <entry>4.3.1</entry>
        </row>
        <row>
@@ -1838,6 +1838,13 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry>RHEL 4</entry>
        </row>
        <row>
+        <entry><systemitem class="osname">Slackware Linux</></entry>
+        <entry><systemitem>x86</></entry>
+        <entry>8.1.0</entry>
+        <entry>Sergey Koposov (<email>math@sai.msu.ru</email>), 2005-10-24</entry>
+        <entry>10.0</entry>
+       </row>
+       <row>
         <entry><systemitem class="osname">Solaris</></entry>
         <entry><systemitem>Sparc</></entry>
         <entry>8.0.0</entry>
@@ -1862,9 +1869,9 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        <row>
         <entry><systemitem class="osname">SUSE Linux</></entry>
         <entry><systemitem>AMD64</></entry>
-        <entry>8.0.0</entry>
-        <entry>Reinhard Max (<email>max@suse.de</email>), 2005-01-03</entry>
-        <entry>9.0, 9.1, 9.2, SLES 9</entry>
+        <entry>8.1.0</entry>
+        <entry>Josh Berkus (<email>josh@agliodbs.com</email>), 2005-10-23</entry>
+        <entry>SLES 9.3</entry>
        </row>
        <row>
         <entry><systemitem class="osname">SUSE Linux</></entry>
