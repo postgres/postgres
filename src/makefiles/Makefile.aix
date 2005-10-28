@@ -21,13 +21,18 @@ IMPSUFF= .imp
 
 POSTGRES_IMP= postgres$(IMPSUFF)
 
+ifdef PGXS
+BE_DLLLIBS= -Wl,-bI:$(DESTDIR)$(bindir)/postgres/$(POSTGRES_IMP)
+else
+BE_DLLLIBS= -Wl,-bI:$(top_builddir)/src/backend/$(POSTGRES_IMP)
+endif
+
 MKLDEXPORT=$(top_srcdir)/src/backend/port/aix/mkldexport.sh
 
 %$(EXPSUFF): %.o
 	$(MKLDEXPORT) $*.o > $*$(EXPSUFF)
 
 %$(DLSUFFIX): %.o %$(EXPSUFF)
-	@echo Making shared library $@ from $*.o, $*$(EXPSUFF) and postgres.imp
-	$(CC) $(LDFLAGS) $(LDFLAGS_SL) -o $@ $*.o -Wl,-bI:$(top_builddir)/src/backend/$(POSTGRES_IMP) -Wl,-bE:$*$(EXPSUFF) $(SHLIB_LINK)
+	$(CC) $(LDFLAGS) $(LDFLAGS_SL) -o $@ $*.o -Wl,-bE:$*$(EXPSUFF) $(SHLIB_LINK)
 
 sqlmansect = 7
