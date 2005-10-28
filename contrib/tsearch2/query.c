@@ -55,6 +55,7 @@ Datum		to_tsquery_current(PG_FUNCTION_ARGS);
 /* parser's states */
 #define WAITOPERAND 1
 #define WAITOPERATOR	2
+#define WAITFIRSTOPERAND 3
 
 /*
  * node of query tree, also used
@@ -137,6 +138,7 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, int2 
 	{
 		switch (state->state)
 		{
+			case WAITFIRSTOPERAND:
 			case WAITOPERAND:
 				if (*(state->buf) == '!')
 				{
@@ -159,14 +161,16 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, int2 
 				else if (*(state->buf) != ' ')
 				{
 					state->valstate.prsbuf = state->buf;
-					state->state = WAITOPERATOR;
 					if (gettoken_tsvector(&(state->valstate)))
 					{
 						*strval = state->valstate.word;
 						*lenval = state->valstate.curpos - state->valstate.word;
 						state->buf = get_weight(state->valstate.prsbuf, weight);
+						state->state = WAITOPERATOR;
 						return VAL;
 					}
+					else if ( state->state == WAITFIRSTOPERAND ) 
+						return END;
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
@@ -596,7 +600,7 @@ static QUERYTYPE *
 
 	/* init state */
 	state.buf = buf;
-	state.state = WAITOPERAND;
+	state.state = WAITFIRSTOPERAND;
 	state.count = 0;
 	state.num = 0;
 	state.str = NULL;
@@ -616,10 +620,13 @@ static QUERYTYPE *
 	/* parse query & make polish notation (postfix, but in reverse order) */
 	makepol(&state, pushval);
 	pfree(state.valstate.word);
-	if (!state.num)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("empty query")));
+	if (!state.num) {
+		elog(NOTICE, "Query doesn't contain lexem(s)");
+		query = (QUERYTYPE*)palloc( HDRSIZEQT );
+		query->len = HDRSIZEQT;
+		query->size = 0;
+		return query; 
+	}
 
 	/* make finish struct */
 	commonlen = COMPUTESIZE(state.num, state.sumlen);
@@ -905,6 +912,10 @@ to_tsquery(PG_FUNCTION_ARGS)
 	PG_FREE_IF_COPY(in, 1);
 
 	query = queryin(str, pushval_morph, PG_GETARG_INT32(0));
+	
+	if ( query->size == 0 )
+		PG_RETURN_POINTER(query);
+
 	res = clean_fakeval_v2(GETQUERY(query), &len);
 	if (!res)
 	{

@@ -746,21 +746,21 @@ select count(*) FROM test_tsvector WHERE a @@ to_tsquery('copyright');
 (1 row)
 
 select rank(' a:1 s:2C d g'::tsvector, 'a | s');
- rank 
-------
- 0.28
+   rank    
+-----------
+ 0.0911891
 (1 row)
 
 select rank(' a:1 s:2B d g'::tsvector, 'a | s');
- rank 
-------
- 0.46
+   rank   
+----------
+ 0.151982
 (1 row)
 
 select rank(' a:1 s:2 d g'::tsvector, 'a | s');
- rank 
-------
- 0.19
+   rank    
+-----------
+ 0.0607927
 (1 row)
 
 select rank(' a:1 s:2C d g'::tsvector, 'a & s');
