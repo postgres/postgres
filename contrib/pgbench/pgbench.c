@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.44 2005/10/15 20:24:00 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.45 2005/10/29 19:38:07 tgl Exp $
  *
  * pgbench: a simple benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -868,7 +868,7 @@ process_file(char *filename)
 	}
 
 	alloc_num = COMMANDS_ALLOC_NUM;
-	my_commands = (Command **) malloc(sizeof(Command **) * alloc_num);
+	my_commands = (Command **) malloc(sizeof(Command *) * alloc_num);
 	if (my_commands == NULL)
 		return false;
 
@@ -876,7 +876,7 @@ process_file(char *filename)
 		fd = stdin;
 	else if ((fd = fopen(filename, "r")) == NULL)
 	{
-		fprintf(stderr, "%s: %s\n", strerror(errno), filename);
+		fprintf(stderr, "%s: %s\n", filename, strerror(errno));
 		return false;
 	}
 
@@ -899,7 +899,7 @@ process_file(char *filename)
 		if (lineno >= alloc_num)
 		{
 			alloc_num += COMMANDS_ALLOC_NUM;
-			my_commands = realloc(my_commands, alloc_num);
+			my_commands = realloc(my_commands, sizeof(Command *) * alloc_num);
 			if (my_commands == NULL)
 			{
 				fclose(fd);
@@ -930,7 +930,7 @@ process_builtin(char *tb)
 		return NULL;
 
 	alloc_num = COMMANDS_ALLOC_NUM;
-	my_commands = malloc(sizeof(Command **) * alloc_num);
+	my_commands = (Command **) malloc(sizeof(Command *) * alloc_num);
 	if (my_commands == NULL)
 		return NULL;
 
@@ -965,7 +965,7 @@ process_builtin(char *tb)
 		if (lineno >= alloc_num)
 		{
 			alloc_num += COMMANDS_ALLOC_NUM;
-			my_commands = realloc(my_commands, alloc_num);
+			my_commands = realloc(my_commands, sizeof(Command *) * alloc_num);
 			if (my_commands == NULL)
 			{
 				return NULL;
@@ -1031,7 +1031,7 @@ main(int argc, char **argv)
 								 * 2: skip update of branches and tellers */
 	char	   *filename = NULL;
 
-	static CState *state;		/* status of clients */
+	CState	   *state;			/* status of clients */
 
 	struct timeval tv1;			/* start up time */
 	struct timeval tv2;			/* after establishing all connections to the
@@ -1101,7 +1101,7 @@ main(int argc, char **argv)
 				if (getrlimit(RLIMIT_OFILE, &rlim) == -1)
 #endif   /* RLIMIT_NOFILE */
 				{
-					fprintf(stderr, "getrlimit failed. reason: %s\n", strerror(errno));
+					fprintf(stderr, "getrlimit failed: %s\n", strerror(errno));
 					exit(1);
 				}
 				if (rlim.rlim_cur <= (nclients + 2))
@@ -1173,7 +1173,7 @@ main(int argc, char **argv)
 
 	remains = nclients;
 
-	state = (CState *) malloc(sizeof(*state) * nclients);
+	state = (CState *) malloc(sizeof(CState) * nclients);
 	if (state == NULL)
 	{
 		fprintf(stderr, "Couldn't allocate memory for state\n");
