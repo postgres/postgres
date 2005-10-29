@@ -1,7 +1,7 @@
 # German message translation file for pg_resetxlog
 # Peter Eisentraut <peter_e@gmx.net>, 2002, 2003, 2004, 2005.
 #
-# $PostgreSQL: pgsql/src/bin/pg_resetxlog/po/de.po,v 1.7 2005/10/10 19:36:34 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_resetxlog/po/de.po,v 1.8 2005/10/29 00:41:36 petere Exp $
 #
 # Use these quotes: »%s«
 #

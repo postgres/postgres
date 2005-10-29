@@ -2,7 +2,7 @@
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 # Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004, 2005.
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/sv.po,v 1.34 2005/10/10 19:36:34 petere Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/sv.po,v 1.35 2005/10/29 00:41:37 petere Exp $
 #
 # Use these quotes: "%s"
 #
@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.1\n"
 "POT-Creation-Date: 2005-10-08 01:13-0300\n"
-"PO-Revision-Date: 2005-10-08 12:31+0200\n"
+"PO-Revision-Date: 2005-10-20 07:35+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -170,11 +170,11 @@ msgstr "Utökad visning är av.\n"
 
 #: command.c:1443
 msgid "Showing locale-adjusted numeric output."
-msgstr ""
+msgstr "Visar lokal-anpassad numerisk utdata."
 
 #: command.c:1445
 msgid "Locale-adjusted numeric output is off."
-msgstr ""
+msgstr "Lokal-anpassad numerisk utdata är av."
 
 #: command.c:1458
 #, c-format
@@ -251,9 +251,9 @@ msgid "\\!: failed\n"
 msgstr "\\!: misslyckades\n"
 
 #: common.c:77
-#, fuzzy, c-format
+#, c-format
 msgid "%s: pg_strdup: cannot duplicate null pointer (internal error)\n"
-msgstr "%s: xstrdup: kan inte kopiera null-pekare (internt fel)\n"
+msgstr "%s: pg_strdup: kan inte duplicera null-pekare (internt fel)\n"
 
 #: common.c:122
 msgid "out of memory"
@@ -327,10 +327,10 @@ msgstr ""
 "***(tryck return för att fortsätta eller skriv x och return för att avbryta)*****\n"
 
 #: common.c:1027
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "The server version (%d) does not support savepoints for ON_ERROR_ROLLBACK.\n"
-msgstr "Denna serverversion (%d) stöder inte tabellutrymmen.\n"
+msgstr "Serverversionen (%d) stöder inte sparpunkter för ON_ERROR_ROLLBACK.\n"
 
 #: common.c:1100
 #, c-format
@@ -484,9 +484,8 @@ msgid "  -S              single-line mode (end of line terminates SQL command)"
 msgstr "  -S              enradsläge (slutet på raden avslutar SQL-kommando)"
 
 #: help.c:110
-#, fuzzy
 msgid "  -L FILENAME     send session log to file"
-msgstr "  -o FILNAMN      skriv frågeresultat till fil (eller |rör)"
+msgstr "  -L FILENAME     skicka sessions-logg till fil"
 
 #: help.c:112
 msgid ""
@@ -810,7 +809,6 @@ msgid "  \\H             toggle HTML output mode (currently %s)\n"
 msgstr "  \\H             slå på/av HTML-utskriftsläge (för närvarande: %s)\n"
 
 #: help.c:239
-#, fuzzy
 msgid ""
 "  \\pset NAME [VALUE]\n"
 "                 set table output option\n"
@@ -819,9 +817,9 @@ msgid ""
 "pager})\n"
 msgstr ""
 "  \\pset NAMN [VÄRDE]\n"
-"                 sätt tabellutskriftsflagga\n"
+"                 sätt tabellutskriftsval\n"
 "                 (NAMN := {format|border|expanded|fieldsep|footer|null|\n"
-"                 recordsep|tuples_only|title|tableattr|pager})\n"
+"                 numericlocale|recordsep|tuples_only|title|tableattr|pager})\n"
 
 #: help.c:243
 #, c-format
@@ -932,7 +930,7 @@ msgstr "(Inga rader)\n"
 #: print.c:1582
 #, c-format
 msgid "invalid output format (internal error): %d"
-msgstr ""
+msgstr "ogiltigt utdataformat (internt fel): %d"
 
 #: print.c:1654
 msgid "(1 row)"
@@ -962,9 +960,9 @@ msgid "Password for user %s: "
 msgstr "Lösenord för användare %s: "
 
 #: startup.c:255
-#, fuzzy, c-format
+#, c-format
 msgid "%s: could not open log file \"%s\": %s\n"
-msgstr "kunde inte öppna temporär fil \"%s\": %s\n"
+msgstr "%s: kunde inte öppna logg-fil \"%s\": %s\n"
 
 #: startup.c:336
 #, c-format
@@ -1004,9 +1002,13 @@ msgid ""
 "such as \\d, might not work properly.\n"
 "\n"
 msgstr ""
+"VARNING:  Du är uppkopplad mot en server med version %d.%d,\n"
+"men din klient %s är version %d.%d.  En del snedstreckkommandon\n"
+"så som \\d kommer eventuellt inte att fungera som de skall.\n"
+"\n"
 
 #: startup.c:532
-#, fuzzy, c-format
+#, c-format
 msgid "%s: could not set printing parameter \"%s\"\n"
 msgstr "%s: kunde inte sätta utskriftsparameter \"%s\"\n"
 
@@ -1056,6 +1058,10 @@ msgid ""
 "         page \"Notes for Windows users\" for details.\n"
 "\n"
 msgstr ""
+"Varning: Konsollens \"code page\" (%u) skiljer sig fån Windows \"code page\" (%u)\n"
+"         8-bitars tecken kommer troligen inte fungera korrekt. Se psql:s\n"
+"         referensmanual i sektionen \"Notes for Windows users\" för mer detaljer.\n"
+"\n"
 
 #: describe.c:80 describe.c:175 describe.c:246 describe.c:319 describe.c:414
 #: describe.c:468 describe.c:1467 describe.c:1574 describe.c:1623
@@ -1358,19 +1364,17 @@ msgid "Tablespace: \"%s\""
 msgstr "Tabellutrymme: \"%s\""
 
 #: describe.c:1366
-#, fuzzy, c-format
+#, c-format
 msgid "tablespace \"%s\""
-msgstr "Tabellutrymme: \"%s\""
+msgstr "tabellutrymme: \"%s\""
 
 #: describe.c:1404
-#, fuzzy
 msgid "Role name"
-msgstr "Användarnamn"
+msgstr "Rollnamn"
 
 #: describe.c:1405
-#, fuzzy
 msgid "Superuser"
-msgstr "superanvändare"
+msgstr "Superanvändare"
 
 #: describe.c:1406
 msgid "Create role"
@@ -1422,7 +1426,7 @@ msgstr "Modifierare"
 
 #: describe.c:1578
 msgid "Check"
-msgstr ""
+msgstr "Check"
 
 #: describe.c:1592
 msgid "List of domains"
@@ -1489,14 +1493,14 @@ msgid "change the definition of an aggregate function"
 msgstr "ändra definitionen av en aggregatfunktion"
 
 #: sql_help.h:30
-#, fuzzy
 msgid ""
 "ALTER AGGREGATE name ( type ) RENAME TO new_name\n"
 "ALTER AGGREGATE name ( type ) OWNER TO new_owner\n"
 "ALTER AGGREGATE name ( type ) SET SCHEMA new_schema"
 msgstr ""
 "ALTER AGGREGATE namn ( typ ) RENAME TO nytt_namn\n"
-"ALTER AGGREGATE name ( typ ) OWNER TO ny_ägare"
+"ALTER AGGREGATE name ( typ ) OWNER TO ny_ägare\n"
+"ALTER AGGREGATE namn ( typ ) SET SCHEMA nytt_schema"
 
 #: sql_help.h:33
 msgid "change the definition of a conversion"
@@ -1515,7 +1519,6 @@ msgid "change a database"
 msgstr "ändra en databas"
 
 #: sql_help.h:38
-#, fuzzy
 msgid ""
 "ALTER DATABASE name [ [ WITH ] option [ ... ] ]\n"
 "\n"
@@ -1530,6 +1533,12 @@ msgid ""
 "\n"
 "ALTER DATABASE name OWNER TO new_owner"
 msgstr ""
+"ALTER DATABASE namn [ [ WITH ] alternativ [ ... ] ]\n"
+"\n"
+"där alternativ kan vara:\n"
+"\n"
+"    CONNECTION LIMIT anslutningstak\n"
+"\n"
 "ALTER DATABASE namn SET parameter { TO | = } { värde | DEFAULT }\n"
 "ALTER DATABASE namn RESET parameter\n"
 "\n"
@@ -1542,7 +1551,6 @@ msgid "change the definition of a domain"
 msgstr "ändra definitionen av en domän"
 
 #: sql_help.h:42
-#, fuzzy
 msgid ""
 "ALTER DOMAIN name\n"
 "    { SET DEFAULT expression | DROP DEFAULT }\n"
@@ -1566,7 +1574,9 @@ msgstr ""
 "ALTER DOMAIN namn\n"
 "    DROP CONSTRAINT villkorsnamn [ RESTRICT | CASCADE ]\n"
 "ALTER DOMAIN namn\n"
-"    OWNER TO ny_ägare"
+"    OWNER TO ny_ägare\n"
+"ALTER DOMAIN namn\n"
+"    SET SCHEMA nytt_schema"
 
 #: sql_help.h:45
 msgid "change the definition of a function"
@@ -1589,10 +1599,24 @@ msgid ""
 "    IMMUTABLE | STABLE | VOLATILE\n"
 "    [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER"
 msgstr ""
+"ALTER FUNCTION namn ( [ [ arg_läge ] [ arg_namn ] arg_typ [, ...] ] )\n"
+"    aktion [, ... ] [ RESTRICT ]\n"
+"ALTER FUNCTION namn ( [ [ arg_läge ] [ arg_namn ] arg_typ [, ...] ] )\n"
+"    RENAME TO nytt_namn\n"
+"ALTER FUNCTION namn ( [ [ arg_läge ] [ arg_namn ] arg_typ [, ...] ] )\n"
+"    OWNER TO ny_ägare\n"
+"ALTER FUNCTION namn ( [ [ arg_läge ] [ arg_namn ] arg_typ [, ...] ] )\n"
+"    SET SCHEMA nytt_schema\n"
+"\n"
+"där aktion är en av:\n"
+"\n"
+"    CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT\n"
+"    IMMUTABLE | STABLE | VOLATILE\n"
+"    [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER"
 
 #: sql_help.h:49
 msgid "change role name or membership"
-msgstr ""
+msgstr "ändra rollnamn eller medlemskap"
 
 #: sql_help.h:50
 msgid ""
@@ -1611,13 +1635,12 @@ msgid "change the definition of an index"
 msgstr "ändra definitionen av ett index"
 
 #: sql_help.h:54
-#, fuzzy
 msgid ""
 "ALTER INDEX name RENAME TO new_name\n"
 "ALTER INDEX name SET TABLESPACE tablespace_name"
 msgstr ""
 "ALTER SCHEMA namn RENAME TO nytt_namn\n"
-"ALTER SCHEMA namn OWNER TO ny_ägare"
+"ALTER INDEX namn SET TABLESPACE tabellutrymmesnamn"
 
 #: sql_help.h:57
 msgid "change the definition of a procedural language"
@@ -1650,12 +1673,10 @@ msgid ""
 msgstr "ALTER OPERATOR namn ( { vänster_typ | NONE }, { höger_typ | NONE } ) OWNER TO ny_ägare"
 
 #: sql_help.h:69 sql_help.h:97
-#, fuzzy
 msgid "change a database role"
-msgstr "ändra en databas"
+msgstr "ändra databasroll"
 
 #: sql_help.h:70
-#, fuzzy
 msgid ""
 "ALTER ROLE name [ [ WITH ] option [ ... ] ]\n"
 "\n"
@@ -1676,19 +1697,24 @@ msgid ""
 "ALTER ROLE name SET parameter { TO | = } { value | DEFAULT }\n"
 "ALTER ROLE name RESET parameter"
 msgstr ""
-"ALTER USER namn [ [ WITH ] flagga [ ... ] ]\n"
+"ALTER ROLE namn [ [ WITH ] alternativ [ ... ] ]\n"
 "\n"
-"där flagga kan vara:\n"
+"där alternativ kan vara:\n"
+"    \n"
+"      SUPERUSER | NOSUPERUSER\n"
+"    | CREATEDB | NOCREATEDB\n"
+"    | CREATEROLE | NOCREATEROLE\n"
+"    | CREATEUSER | NOCREATEUSER\n"
+"    | INHERIT | NOINHERIT\n"
+"    | LOGIN | NOLOGIN\n"
+"    | CONNECTION LIMIT anslutningstak\n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'lösenord'\n"
+"    | VALID UNTIL 'tidsstämpel' \n"
 "\n"
-"    CREATEDB | NOCREATEDB\n"
-"    | CREATEUSER | NOCREATEUSER \n"
-"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'lösenord' \n"
-"    | VALID UNTIL 'absoluttid'\n"
+"ALTER ROLE namn RENAME TO nytt_namn\n"
 "\n"
-"ALTER USER namn RENAME TO nyttnamn\n"
-"\n"
-"ALTER USER namn SET parameter { TO | = } { värde | DEFAULT }\n"
-"ALTER USER namn RESET parameter"
+"ALTER ROLE namn SET parameter { TO | = } { värde | DEFAULT }\n"
+"ALTER ROLE namn RESET parameter"
 
 #: sql_help.h:73
 msgid "change the definition of a schema"
@@ -1707,7 +1733,6 @@ msgid "change the definition of a sequence generator"
 msgstr "ändra definitionen av en sekvensgenerator"
 
 #: sql_help.h:78
-#, fuzzy
 msgid ""
 "ALTER SEQUENCE name [ INCREMENT [ BY ] increment ]\n"
 "    [ MINVALUE minvalue | NO MINVALUE ] [ MAXVALUE maxvalue | NO MAXVALUE ]\n"
@@ -1716,14 +1741,14 @@ msgid ""
 msgstr ""
 "ALTER SEQUENCE namn [ INCREMENT [ BY ] ökningsvärde ]\n"
 "    [ MINVALUE minvärde | NO MINVALUE ] [ MAXVALUE maxvärde | NO MAXVALUE ]\n"
-"    [ RESTART [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]"
+"    [ RESTART [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]\n"
+"ALTER SEQUENCE namn SET SCHEMA nytt_schema"
 
 #: sql_help.h:81
 msgid "change the definition of a table"
 msgstr "ändra definitionen av en tabell"
 
 #: sql_help.h:82
-#, fuzzy
 msgid ""
 "ALTER TABLE [ ONLY ] name [ * ]\n"
 "    action [, ... ]\n"
@@ -1761,6 +1786,8 @@ msgstr ""
 "    RENAME [ COLUMN ] kolumn TO ny_kolumn\n"
 "ALTER TABLE namn\n"
 "    RENAME TO nytt_namn\n"
+"ALTER TABLE namn\n"
+"    SET SCHEMA nytt_schema\n"
 "\n"
 "där aktion är en av:\n"
 "\n"
@@ -1771,10 +1798,11 @@ msgstr ""
 "    ALTER [ COLUMN ] kolumn DROP DEFAULT\n"
 "    ALTER [ COLUMN ] kolumn { SET | DROP } NOT NULL\n"
 "    ALTER [ COLUMN ] kolumn SET STATISTICS heltal\n"
-"    ALTER [ COLUMN ] kolumn SET STORAGE { PLAIN | EXTERNAL | EXTENDED | "
-"MAIN }\n"
+"    ALTER [ COLUMN ] kolumn SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }\n"
 "    ADD tabellvillkor\n"
 "    DROP CONSTRAINT villkorsnamn [ RESTRICT | CASCADE ]\n"
+"    DISABLE TRIGGER [ utlösarnamn | ALL | USER ]\n"
+"    ENABLE TRIGGER [ utlösarnamn | ALL | USER ]\n"
 "    CLUSTER ON indexnamn\n"
 "    SET WITHOUT CLUSTER\n"
 "    SET WITHOUT OIDS\n"
@@ -1806,16 +1834,14 @@ msgid "change the definition of a type"
 msgstr "ändra definitionen av en typ"
 
 #: sql_help.h:94
-#, fuzzy
 msgid ""
 "ALTER TYPE name OWNER TO new_owner \n"
 "ALTER TYPE name SET SCHEMA new_schema"
 msgstr ""
-"ALTER TABLESPACE namn RENAME TO nytt_namn\n"
-"ALTER TABLESPACE namn OWNER TO ny_ägare"
+"ALTER TYPE namn OWNER TO ny_ägare \n"
+"ALTER TYPE namn SET SCHEMA nytt_schema"
 
 #: sql_help.h:98
-#, fuzzy
 msgid ""
 "ALTER USER name [ [ WITH ] option [ ... ] ]\n"
 "\n"
@@ -1836,16 +1862,21 @@ msgid ""
 "ALTER USER name SET parameter { TO | = } { value | DEFAULT }\n"
 "ALTER USER name RESET parameter"
 msgstr ""
-"ALTER USER namn [ [ WITH ] flagga [ ... ] ]\n"
+"ALTER USER namn [ [ WITH ] alternativ [ ... ] ]\n"
 "\n"
-"där flagga kan vara:\n"
+"där alternativ kan vara:\n"
 "\n"
-"    CREATEDB | NOCREATEDB\n"
-"    | CREATEUSER | NOCREATEUSER \n"
+"      SUPERUSER | NOSUPERUSER\n"
+"    | CREATEDB | NOCREATEDB\n"
+"    | CREATEROLE | NOCREATEROLE\n"
+"    | CREATEUSER | NOCREATEUSER\n"
+"    | INHERIT | NOINHERIT\n"
+"    | LOGIN | NOLOGIN\n"
+"    | CONNECTION LIMIT anslutningstak\n"
 "    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'lösenord' \n"
-"    | VALID UNTIL 'absoluttid'\n"
+"    | VALID UNTIL 'tidsstämpel'\n"
 "\n"
-"ALTER USER namn RENAME TO nyttnamn\n"
+"ALTER USER namn RENAME TO nytt_namn\n"
 "\n"
 "ALTER USER namn SET parameter { TO | = } { värde | DEFAULT }\n"
 "ALTER USER namn RESET parameter"
@@ -1915,7 +1946,6 @@ msgid "define or change the comment of an object"
 msgstr "definiera eller ändra en kommentar på ett objekt"
 
 #: sql_help.h:122
-#, fuzzy
 msgid ""
 "COMMENT ON\n"
 "{\n"
@@ -1951,7 +1981,7 @@ msgstr ""
 "  CONVERSION objektnamn |\n"
 "  DATABASE objektnamn |\n"
 "  DOMAIN objektnamn |\n"
-"  FUNCTION funk_namn (arg1_typ, arg2_typ, ...) |\n"
+"  FUNCTION funk_namn ( [ [ arg_läge ] [ arg_namn ] arg_typ [, ...] ] ) |\n"
 "  INDEX objektnamn |\n"
 "  LARGE OBJECT stort_objekt_oid |\n"
 "  OPERATOR op (vänster operandstyp, höger operandstyp) |\n"
@@ -1975,7 +2005,7 @@ msgstr "COMMIT [ WORK | TRANSACTION ]"
 
 #: sql_help.h:129
 msgid "commit a transaction that was earlier prepared for two-phase commit"
-msgstr ""
+msgstr "utför commit på en transaktion som tidigare förberetts för två-fas-commit"
 
 #: sql_help.h:130
 msgid "COMMIT PREPARED transaction_id"
@@ -1986,7 +2016,6 @@ msgid "copy data between a file and a table"
 msgstr "kopiera data mellan en fil och en tabell"
 
 #: sql_help.h:134
-#, fuzzy
 msgid ""
 "COPY tablename [ ( column [, ...] ) ]\n"
 "    FROM { 'filename' | STDIN }\n"
@@ -2020,18 +2049,21 @@ msgstr ""
 "          [ OIDS ]\n"
 "          [ DELIMITER [ AS ] 'avdelare' ]\n"
 "          [ NULL [ AS ] 'null-sträng' ] ]\n"
-"          [ CSV [ QUOTE [ AS ] 'citat' ]\n"
+"          [ CSV [ HEADER ]\n"
+"                [ QUOTE [ AS ] 'citat' ]\n"
 "                [ ESCAPE [ AS ] 'escape' ]\n"
-"                [ FORCE QUOTE kolumn [, ...] ]\n"
+"                [ FORCE NOT NULL kolumn [, ...] ]\n"
 "\n"
 "COPY tabellnamn [ ( kolumn [, ...] ) ]\n"
 "    TO { 'filnamn' | STDOUT }\n"
 "    [ [ WITH ] \n"
 "          [ BINARY ]\n"
+"          [ HEADER ]\n"
 "          [ OIDS ]\n"
 "          [ DELIMITER [ AS ] 'avdelare' ]\n"
 "          [ NULL [ AS ] 'null-sträng' ] ]\n"
-"          [ CSV [ QUOTE [ AS ] 'citat' ]\n"
+"          [ CSV [ HEADER ]\n"
+"                [ QUOTE [ AS ] 'citat' ]\n"
 "                [ ESCAPE [ AS ] 'escape' ]\n"
 "                [ FORCE QUOTE kolumn [, ...] ]"
 
@@ -2040,7 +2072,6 @@ msgid "define a new aggregate function"
 msgstr "definiera en ny aggregatfunktion"
 
 #: sql_help.h:138
-#, fuzzy
 msgid ""
 "CREATE AGGREGATE name (\n"
 "    BASETYPE = input_data_type,\n"
@@ -2057,6 +2088,7 @@ msgstr ""
 "    STYPE = tillståndsdatatyp\n"
 "    [ , FINALFUNC = ffunc ]\n"
 "    [ , INITCOND = startvärde ]\n"
+"    [ , SORTOP = sorteringsoperator ]\n"
 ")"
 
 #: sql_help.h:141
@@ -2098,9 +2130,8 @@ msgstr ""
 "    FOR EACH ROW EXECUTE PROCEDURE funknamn ( argument )"
 
 #: sql_help.h:149
-#, fuzzy
 msgid "define a new encoding conversion"
-msgstr "definiera en ny konvertering"
+msgstr "definiera en ny teckenkodningskonvertering"
 
 #: sql_help.h:150
 msgid ""
@@ -2115,7 +2146,6 @@ msgid "create a new database"
 msgstr "skapa en ny databas"
 
 #: sql_help.h:154
-#, fuzzy
 msgid ""
 "CREATE DATABASE name\n"
 "    [ [ WITH ] [ OWNER [=] dbowner ]\n"
@@ -2128,7 +2158,8 @@ msgstr ""
 "    [ [ WITH ] [ OWNER [=] db-ägare ]\n"
 "           [ TEMPLATE [=] mall ]\n"
 "           [ ENCODING [=] kodning ]\n"
-"           [ TABLESPACE [=] tabellutrymme ] ]"
+"           [ TABLESPACE [=] tabellutrymme ] ]\n"
+"           [ CONNECTION LIMIT [=] anslutningstak ] ]"
 
 #: sql_help.h:157
 msgid "define a new domain"
@@ -2159,7 +2190,6 @@ msgid "define a new function"
 msgstr "definiera en ny funktion"
 
 #: sql_help.h:162
-#, fuzzy
 msgid ""
 "CREATE [ OR REPLACE ] FUNCTION\n"
 "    name ( [ [ argmode ] [ argname ] argtype [, ...] ] )\n"
@@ -2173,8 +2203,9 @@ msgid ""
 "  } ...\n"
 "    [ WITH ( attribute [, ...] ) ]"
 msgstr ""
-"CREATE [ OR REPLACE ] FUNCTION namn ( [ [ argnamn ] argtyp [, ...] ] )\n"
-"    RETURNS rettyp\n"
+"CREATE [ OR REPLACE ] FUNCTION\n"
+"    namn ( [ [ arg_läge ] [ arg_namn ] arg_typ [, ...] ] )\n"
+"    [ RETURNS rettyp ]\n"
 "  { LANGUAGE språknamn\n"
 "    | IMMUTABLE | STABLE | VOLATILE\n"
 "    | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT\n"
@@ -2185,12 +2216,10 @@ msgstr ""
 "    [ WITH ( attribut [, ...] ) ]"
 
 #: sql_help.h:165 sql_help.h:185 sql_help.h:221
-#, fuzzy
 msgid "define a new database role"
-msgstr "definiera en ny tabell"
+msgstr "definiera en ny databasroll"
 
 #: sql_help.h:166
-#, fuzzy
 msgid ""
 "CREATE GROUP name [ [ WITH ] option [ ... ] ]\n"
 "\n"
@@ -2211,16 +2240,24 @@ msgid ""
 "    | USER rolename [, ...]\n"
 "    | SYSID uid"
 msgstr ""
-"CREATE USER namn [ [ WITH ] val [ ... ] ]\n"
+"CREATE GROUP namn [ [ WITH ] alternativ [ ... ] ]\n"
 "\n"
-"där val kan vara:\n"
+"där alternativ kan vara:\n"
 "    \n"
-"      SYSID uid \n"
+"      SUPERUSER | NOSUPERUSER\n"
 "    | CREATEDB | NOCREATEDB\n"
+"    | CREATEROLE | NOCREATEROLE\n"
 "    | CREATEUSER | NOCREATEUSER\n"
-"    | IN GROUP gruppnamn [, ...]\n"
+"    | INHERIT | NOINHERIT\n"
+"    | LOGIN | NOLOGIN\n"
 "    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'lösenord'\n"
-"    | VALID UNTIL 'abs-tid'"
+"    | VALID UNTIL 'tidsstämpel' \n"
+"    | IN ROLE rollnamn [, ...]\n"
+"    | IN GROUP rollnamn [, ...]\n"
+"    | ROLE rollnamn [, ...]\n"
+"    | ADMIN rollnamn [, ...]\n"
+"    | USER rollnamn [, ...]\n"
+"    | SYSID uid"
 
 #: sql_help.h:169
 msgid "define a new index"
@@ -2243,12 +2280,12 @@ msgid "define a new procedural language"
 msgstr "definiera ett nytt procedur-språk"
 
 #: sql_help.h:174
-#, fuzzy
 msgid ""
 "CREATE [ PROCEDURAL ] LANGUAGE name\n"
 "CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE name\n"
 "    HANDLER call_handler [ VALIDATOR valfunction ]"
 msgstr ""
+"CREATE [ PROCEDURAL ] LANGUAGE namn\n"
 "CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE namn\n"
 "    HANDLER anropshanterare [ VALIDATOR val-funktion ]"
 
@@ -2321,6 +2358,25 @@ msgid ""
 "    | USER rolename [, ...]\n"
 "    | SYSID uid"
 msgstr ""
+"CREATE ROLE namn [ [ WITH ] alternativ [ ... ] ]\n"
+"\n"
+"där alternativ kan vara:\n"
+"    \n"
+"      SUPERUSER | NOSUPERUSER\n"
+"    | CREATEDB | NOCREATEDB\n"
+"    | CREATEROLE | NOCREATEROLE\n"
+"    | CREATEUSER | NOCREATEUSER\n"
+"    | INHERIT | NOINHERIT\n"
+"    | LOGIN | NOLOGIN\n"
+"    | CONNECTION LIMIT anslutningstak\n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'lösenord'\n"
+"    | VALID UNTIL 'tidsstämpel' \n"
+"    | IN ROLE rollnamn [, ...]\n"
+"    | IN GROUP rollnamn [, ...]\n"
+"    | ROLE rollnamn [, ...]\n"
+"    | ADMIN rollnamn [, ...]\n"
+"    | USER rollnamn [, ...]\n"
+"    | SYSID uid"
 
 #: sql_help.h:189
 msgid "define a new rewrite rule"
@@ -2369,7 +2425,6 @@ msgid "define a new table"
 msgstr "definiera en ny tabell"
 
 #: sql_help.h:202
-#, fuzzy
 msgid ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name (\n"
 "  [ column_name data_type [ DEFAULT default_expr ] [ column_constraint "
@@ -2410,8 +2465,7 @@ msgid ""
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
 msgstr ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE tabellnamn (\n"
-"    { kolumnname datatyp [ DEFAULT default_uttryck ] [ kolumnvillkor "
-"[ ... ] ]\n"
+"    { kolumnname datatyp [ DEFAULT default_uttryck ] [ kolumnvillkor [ ... ] ]\n"
 "    | tabellvillkor\n"
 "    | LIKE föräldratabell [ { INCLUDING | EXCLUDING } DEFAULTS ] }  [, ... ]\n"
 ")\n"
@@ -2428,23 +2482,18 @@ msgstr ""
 "  UNIQUE [ USING INDEX TABLESPACE tabellutrymme ] |\n"
 "  PRIMARY KEY [ USING INDEX TABLESPACE tabellutrymme ] |\n"
 "  CHECK (uttryck) |\n"
-"  REFERENCES reftabell [ ( refkolumn ) ] [ MATCH FULL | MATCH PARTIAL | "
-"MATCH SIMPLE ]\n"
-"    [ ON DELETE action ] [ ON UPDATE action ] }\n"
-"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
-"IMMEDIATE ]\n"
+"  REFERENCES reftabell [ ( refkolumn ) ] [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]\n"
+"    [ ON DELETE aktion ] [ ON UPDATE aktion ] }\n"
+"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]\n"
 "\n"
 "och tabellvillkor är:\n"
 "\n"
 "[ CONSTRAINT villkorsnamn ]\n"
 "{ UNIQUE ( kolumnnamn [, ... ] ) [ USING INDEX TABLESPACE tabellutrymme ] |\n"
-"  PRIMARY KEY ( kolumnnamn [, ... ] ) [ USING INDEX TABLESPACE "
-"tabellutrymme ] |\n"
+"  PRIMARY KEY ( kolumnnamn [, ... ] ) [ USING INDEX TABLESPACE tabellutrymme ] |\n"
 "  CHECK ( uttryck ) |\n"
-"  FOREIGN KEY ( kolumnnamn [, ... ] ) REFERENCES reftabell [ ( refkolumn "
-"[, ... ] ) ]\n"
-"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE action ] [ ON "
-"UPDATE action ] }\n"
+"  FOREIGN KEY ( kolumnnamn [, ... ] ) REFERENCES reftabell [ ( refkolumn [, ... ] ) ]\n"
+"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE aktion ] [ ON UPDATE aktion ] }\n"
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
 
 #: sql_help.h:205 sql_help.h:413
@@ -2527,7 +2576,6 @@ msgstr ""
 ")"
 
 #: sql_help.h:222
-#, fuzzy
 msgid ""
 "CREATE USER name [ [ WITH ] option [ ... ] ]\n"
 "\n"
@@ -2549,27 +2597,35 @@ msgid ""
 "    | USER rolename [, ...]\n"
 "    | SYSID uid"
 msgstr ""
-"CREATE USER namn [ [ WITH ] val [ ... ] ]\n"
+"CREATE USER namn [ [ WITH ] alternativ [ ... ] ]\n"
 "\n"
-"där val kan vara:\n"
+"där alternativ kan vara:\n"
 "    \n"
-"      SYSID uid \n"
+"      SUPERUSER | NOSUPERUSER\n"
 "    | CREATEDB | NOCREATEDB\n"
+"    | CREATEROLE | NOCREATEROLE\n"
 "    | CREATEUSER | NOCREATEUSER\n"
-"    | IN GROUP gruppnamn [, ...]\n"
+"    | INHERIT | NOINHERIT\n"
+"    | LOGIN | NOLOGIN\n"
+"    | CONNECTION LIMIT anslutningstak\n"
 "    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'lösenord'\n"
-"    | VALID UNTIL 'abs-tid'"
+"    | VALID UNTIL 'tidsstämpel' \n"
+"    | IN ROLE rollnamn [, ...]\n"
+"    | IN GROUP rollnamn [, ...]\n"
+"    | ROLE rollnamn [, ...]\n"
+"    | ADMIN rollnamn [, ...]\n"
+"    | USER rollnamn [, ...]\n"
+"    | SYSID uid"
 
 #: sql_help.h:225
 msgid "define a new view"
 msgstr "definiera en ny vy"
 
 #: sql_help.h:226
-#, fuzzy
 msgid ""
 "CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW name [ ( column_name "
 "[, ...] ) ] AS query"
-msgstr "CREATE [ OR REPLACE ] VIEW namn [ ( kolumnnamn [, ...] ) ] AS fråga"
+msgstr "CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW namn [ ( kolumnnamn [, ...] ) ] AS fråga"
 
 #: sql_help.h:229
 msgid "deallocate a prepared statement"
@@ -2598,12 +2654,14 @@ msgid "delete rows of a table"
 msgstr "radera rader i en tabell"
 
 #: sql_help.h:238
-#, fuzzy
 msgid ""
 "DELETE FROM [ ONLY ] table\n"
 "    [ USING usinglist ]\n"
 "    [ WHERE condition ]"
-msgstr "DELETE FROM [ ONLY ] tabell [ WHERE villkor ]"
+msgstr ""
+"DELETE FROM [ ONLY ] tabell\n"
+"    [ USING using-lista ]\n"
+"    [ WHERE villkor ]"
 
 #: sql_help.h:241
 msgid "remove an aggregate function"
@@ -2650,21 +2708,20 @@ msgid "remove a function"
 msgstr "ta bort en funktion"
 
 #: sql_help.h:262
-#, fuzzy
 msgid ""
 "DROP FUNCTION name ( [ [ argmode ] [ argname ] argtype [, ...] ] )\n"
 "    [ CASCADE | RESTRICT ]"
-msgstr "DROP FUNCTION namn ( [ typ [, ...] ] ) [ CASCADE | RESTRICT ]"
+msgstr ""
+"DROP FUNCTION namn ( [ [ arg_läge ] [ arg_namn ] arg_typ [, ...] ] )\n"
+"    [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:265 sql_help.h:285 sql_help.h:317
-#, fuzzy
 msgid "remove a database role"
-msgstr "ta bort en databas"
+msgstr "ta bort en databasroll"
 
 #: sql_help.h:266
-#, fuzzy
 msgid "DROP GROUP name [, ...]"
-msgstr "DROP GROUP namn"
+msgstr "DROP GROUP namn [, ...]"
 
 #: sql_help.h:269
 msgid "remove an index"
@@ -2701,9 +2758,8 @@ msgid ""
 msgstr "DROP OPERATOR namn ( { vänster_typ | NONE } , { höger_typ | NONE } ) [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:286
-#, fuzzy
 msgid "DROP ROLE name [, ...]"
-msgstr "DROP GROUP namn"
+msgstr "DROP ROLE namn [, ...]"
 
 #: sql_help.h:289
 msgid "remove a rewrite rule"
@@ -2762,9 +2818,8 @@ msgid "DROP TYPE name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP TYPE namn [, ...] [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:318
-#, fuzzy
 msgid "DROP USER name [, ...]"
-msgstr "DROP USER namn"
+msgstr "DROP USER namn [, ...]"
 
 #: sql_help.h:321
 msgid "remove a view"
@@ -2843,7 +2898,6 @@ msgid "define access privileges"
 msgstr "definera Åtkomsträttigheter"
 
 #: sql_help.h:342
-#, fuzzy
 msgid ""
 "GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }\n"
 "    [,...] | ALL [ PRIVILEGES ] }\n"
@@ -2889,12 +2943,8 @@ msgstr ""
 "    ON DATABASE dbnamn [, ...]\n"
 "    TO { användarnamn | GROUP gruppnamn | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 "\n"
-"GRANT { CREATE | ALL [ PRIVILEGES ] }\n"
-"    ON TABLESPACE tabellutrymmesnamn [, ...]\n"
-"    TO { användarnamn | GROUP gruppnamn | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
-"\n"
 "GRANT { EXECUTE | ALL [ PRIVILEGES ] }\n"
-"    ON FUNCTION funkname ([type, ...]) [, ...]\n"
+"    ON FUNCTION funkname ( [ [ arg_läge ] [ arg_namn ] arg_typ [, ...] ] ) [, ...]\n"
 "    TO { användarnamn | GROUP gruppnamn | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 "\n"
 "GRANT { USAGE | ALL [ PRIVILEGES ] }\n"
@@ -2907,6 +2957,9 @@ msgstr ""
 "\n"
 "GRANT { CREATE | ALL [ PRIVILEGES ] }\n"
 "    ON TABLESPACE tabellutrymmesnamn [, ...]\n"
+"    TO { användarnamn | GROUP gruppnamn | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"\n"
+"GRANT roll [, ...]\n"
 "    TO { användarnamn | GROUP gruppnamn | PUBLIC } [, ...] [ WITH GRANT OPTION ]"
 
 #: sql_help.h:345
@@ -2982,22 +3035,20 @@ msgid "PREPARE plan_name [ (datatype [, ...] ) ] AS statement"
 msgstr "PREPARE plannamn [ (datatyp [, ...] ) ] AS sats"
 
 #: sql_help.h:373
-#, fuzzy
 msgid "prepare the current transaction for two-phase commit"
-msgstr "avbryt aktuell transaktion"
+msgstr "avbryt aktuell transaktion för två-fas-commit"
 
 #: sql_help.h:374
 msgid "PREPARE TRANSACTION transaction_id"
-msgstr ""
+msgstr "PREPARE TRANSACTION transaktions_id"
 
 #: sql_help.h:377
 msgid "rebuild indexes"
 msgstr "återskapa index"
 
 #: sql_help.h:378
-#, fuzzy
 msgid "REINDEX { INDEX | TABLE | DATABASE | SYSTEM } name [ FORCE ]"
-msgstr "REINDEX { DATABASE | TABLE | INDEX } namn [ FORCE ]"
+msgstr "REINDEX { INDEX | TABLE | DATABASE | SYSTEM } namn [ FORCE ]"
 
 #: sql_help.h:381
 msgid "destroy a previously defined savepoint"
@@ -3024,7 +3075,6 @@ msgid "remove access privileges"
 msgstr "ta bort Åtkomsträttigheter"
 
 #: sql_help.h:390
-#, fuzzy
 msgid ""
 "REVOKE [ GRANT OPTION FOR ]\n"
 "    { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }\n"
@@ -3083,14 +3133,8 @@ msgstr ""
 "    [ CASCADE | RESTRICT ]\n"
 "\n"
 "REVOKE [ GRANT OPTION FOR ]\n"
-"    { CREATE | ALL [ PRIVILEGES ] }\n"
-"    ON TABLESPACE tabellutrymmesnamn [, ...]\n"
-"    FROM { användarnamn | GROUP gruppnamn | PUBLIC } [, ...]\n"
-"    [ CASCADE | RESTRICT ]\n"
-"\n"
-"REVOKE [ GRANT OPTION FOR ]\n"
 "    { EXECUTE | ALL [ PRIVILEGES ] }\n"
-"    ON FUNCTION funknamn ([typ, ...]) [, ...]\n"
+"    ON FUNCTION funknamn ( [ [ arg_läge ] [ arg_namn ] arg_typ [, ...] ] ) [, ...]\n"
 "    FROM { användarnamn | GROUP gruppnamn | PUBLIC } [, ...]\n"
 "    [ CASCADE | RESTRICT ]\n"
 "\n"
@@ -3110,6 +3154,11 @@ msgstr ""
 "    { CREATE | ALL [ PRIVILEGES ] }\n"
 "    ON TABLESPACE tabellutrymmesnamn [, ...]\n"
 "    FROM { användarnamn | GROUP gruppnamn | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ ADMIN OPTION FOR ]\n"
+"    rolk [, ...]\n"
+"    FROM { användarnamn | GROUP gruppnamn | PUBLIC } [, ...]\n"
 "    [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:394
@@ -3118,11 +3167,11 @@ msgstr "ROLLBACK [ WORK | TRANSACTION ]"
 
 #: sql_help.h:397
 msgid "cancel a transaction that was earlier prepared for two-phase commit"
-msgstr ""
+msgstr "avbryt en transaktion som tidigare förberetts för två-fas-commit"
 
 #: sql_help.h:398
 msgid "ROLLBACK PREPARED transaction_id"
-msgstr ""
+msgstr "ROLLBACK PREPARED transaktions_id"
 
 #: sql_help.h:401
 msgid "roll back to a savepoint"
@@ -3145,7 +3194,6 @@ msgid "retrieve rows from a table or view"
 msgstr "hämta rader från en tabell eller vy"
 
 #: sql_help.h:410
-#, fuzzy
 msgid ""
 "SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
 "    * | expression [ AS output_name ] [, ...]\n"
@@ -3179,19 +3227,17 @@ msgstr ""
 "    [ ORDER BY uttryck [ ASC | DESC | USING operator ] [, ...] ]\n"
 "    [ LIMIT { antal | ALL } ]\n"
 "    [ OFFSET start ]\n"
-"    [ FOR UPDATE [ OF tabellnamn [, ...] ] ]\n"
+"    [ FOR { UPDATE | SHARE } [ OF tabellnamn [, ...] ] [ NOWAIT ] ]\n"
 "\n"
 "där frånval kan vara en av:\n"
 "\n"
 "    [ ONLY ] tabellnamn [ * ] [ [ AS ] alias [ ( kolumnalias [, ...] ) ] ]\n"
 "    ( select ) [ AS ] alias [ ( kolumnalias [, ...] ) ]\n"
-"    funktionsnamn ( [ argument [, ...] ] ) [ AS ] alias [ ( kolumnalias "
-"[, ...] | kolumndefinition [, ...] ) ]\n"
+"    funktionsnamn ( [ argument [, ...] ] ) [ AS ] alias [ ( kolumnalias [, ...] | kolumndefinition [, ...] ) ]\n"
 "    funktionsnamn ( [ argument [, ...] ] ) AS ( kolumndefinition [, ...] )\n"
 "    frånval [ NATURAL ] join-typ frånval [ ON join-villkor | USING ( join-kolumn [, ...] ) ]"
 
 #: sql_help.h:414
-#, fuzzy
 msgid ""
 "SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
 "    * | expression [ AS output_name ] [, ...]\n"
@@ -3217,7 +3263,7 @@ msgstr ""
 "    [ ORDER BY uttryck [ ASC | DESC | USING operator ] [, ...] ]\n"
 "    [ LIMIT { antal | ALL } ]\n"
 "    [ OFFSET start ]\n"
-"    [ FOR UPDATE [ OF tabellnamn [, ...] ] ]"
+"    [ FOR { UPDATE | SHARE } [ OF tabellnamn [, ...] ] [ NOWAIT ] ]"
 
 #: sql_help.h:417
 msgid "change a run-time parameter"
@@ -3240,20 +3286,18 @@ msgid "SET CONSTRAINTS { ALL | name [, ...] } { DEFERRED | IMMEDIATE }"
 msgstr "SET CONSTRAINTS { ALL | namn [, ...] } { DEFERRED | IMMEDIATE }"
 
 #: sql_help.h:425
-#, fuzzy
 msgid "set the current user identifier of the current session"
-msgstr "sätt sessionsanvändaridentifierare och nuvarande användaridentifierare för den aktiva sessionen"
+msgstr "sätt användare för den aktiva sessionen"
 
 #: sql_help.h:426
-#, fuzzy
 msgid ""
 "SET [ SESSION | LOCAL ] ROLE rolename\n"
 "SET [ SESSION | LOCAL ] ROLE NONE\n"
 "RESET ROLE"
 msgstr ""
-"SET [ SESSION | LOCAL ] SESSION AUTHORIZATION användarnamn\n"
-"SET [ SESSION | LOCAL ] SESSION AUTHORIZATION DEFAULT\n"
-"RESET SESSION AUTHORIZATION"
+"SET [ SESSION | LOCAL ] ROLE rollnamn\n"
+"SET [ SESSION | LOCAL ] ROLE NONE\n"
+"RESET ROLE"
 
 #: sql_help.h:429
 msgid ""
@@ -3326,14 +3370,12 @@ msgstr ""
 "    READ WRITE | READ ONLY"
 
 #: sql_help.h:445
-#, fuzzy
 msgid "empty a table or set of tables"
-msgstr "uppdatera rader i en tabell"
+msgstr "töm en eller flera tabeller"
 
 #: sql_help.h:446
-#, fuzzy
 msgid "TRUNCATE [ TABLE ] name [, ...]"
-msgstr "TRUNCATE [ TABLE ] namn"
+msgstr "TRUNCATE [ TABLE ] namn [, ...]"
 
 #: sql_help.h:449
 msgid "stop listening for a notification"
@@ -3375,19 +3417,19 @@ msgid "could not identify current directory: %s"
 msgstr "kunde inte identifiera aktuell katalog: %s"
 
 #: ../../port/exec.c:213
-#, fuzzy, c-format
+#, c-format
 msgid "invalid binary \"%s\""
-msgstr "ogiltigt kommando \\%s\n"
+msgstr "ogiltigt binär \"%s\""
 
 #: ../../port/exec.c:262
-#, fuzzy, c-format
+#, c-format
 msgid "could not read binary \"%s\""
-msgstr "kunde inte läsa symbolisk länk \"%s\""
+msgstr "kunde inte läsa binären \"%s\""
 
 #: ../../port/exec.c:269
 #, c-format
 msgid "could not find a \"%s\" to execute"
-msgstr ""
+msgstr "kunde inte hitta en \"%s\" att köra"
 
 #: ../../port/exec.c:324 ../../port/exec.c:360
 #, c-format
@@ -3414,96 +3456,3 @@ msgstr "barnprocess terminerades av signal %d"
 msgid "child process exited with unrecognized status %d"
 msgstr "barnprocess avslutade med okänd statuskod %d"
 
-#~ msgid "Warning: This syntax is deprecated.\n"
-#~ msgstr "Varning: Denna syntax är föråldrad.\n"
-
-#~ msgid "User ID"
-#~ msgstr "Användar-ID"
-
-#~ msgid "superuser, create database"
-#~ msgstr "superanvändare, skapa databas"
-
-#~ msgid "create database"
-#~ msgstr "skapa databas"
-
-#~ msgid "Attributes"
-#~ msgstr "Attribut"
-
-#~ msgid "Groups"
-#~ msgstr "Grupper"
-
-#~ msgid "List of users"
-#~ msgstr "Lista med användare"
-
-#~ msgid "Group name"
-#~ msgstr "Gruppnamn"
-
-#~ msgid "Group ID"
-#~ msgstr "Grupp-ID"
-
-#~ msgid ""
-#~ "ALTER FUNCTION name ( [ type [, ...] ] ) RENAME TO newname\n"
-#~ "ALTER FUNCTION name ( [ type [, ...] ] ) OWNER TO newowner"
-#~ msgstr ""
-#~ "ALTER FUNCTION namn ( [ typ [, ...] ] ) RENAME TO nytt_namn\n"
-#~ "ALTER FUNCTION namn ( [ typ [, ...] ] ) OWNER TO ny_ägare"
-
-#~ msgid "change a user group"
-#~ msgstr "ändra en användargrupp"
-
-#~ msgid ""
-#~ "ALTER INDEX name \n"
-#~ "    action [, ... ]\n"
-#~ "ALTER INDEX name\n"
-#~ "    RENAME TO new_name\n"
-#~ "\n"
-#~ "where action is one of:\n"
-#~ "\n"
-#~ "    OWNER TO new_owner\n"
-#~ "    SET TABLESPACE indexspace_name"
-#~ msgstr ""
-#~ "ALTER INDEX namn\n"
-#~ "    aktion [, ... ]\n"
-#~ "ALTER INDEX namn\n"
-#~ "    RENAME TO nytt_namn\n"
-#~ "\n"
-#~ "där aktion är en av:\n"
-#~ "\n"
-#~ "    OWNER TO ny_ägare\n"
-#~ "    SET TABLESPACE indexutrymmesnamn"
-
-#~ msgid "ALTER TYPE name OWNER TO new_owner"
-#~ msgstr "ALTER TYPE namn OWNER TO ny_ägare"
-
-#~ msgid "change a database user account"
-#~ msgstr "ändra ett användarkonto i databasen"
-
-#~ msgid "define a new user group"
-#~ msgstr "definiera en ny användargrupp"
-
-#~ msgid ""
-#~ "CREATE GROUP name [ [ WITH ] option [ ... ] ]\n"
-#~ "\n"
-#~ "where option can be:\n"
-#~ "\n"
-#~ "     SYSID gid\n"
-#~ "   | USER  username [, ...]"
-#~ msgstr ""
-#~ "CREATE GROUP namn [ [ WITH ] alternativ [ ... ] ]\n"
-#~ "\n"
-#~ "där alternativ kan vara:\n"
-#~ "\n"
-#~ "     SYSID gid\n"
-#~ "   | USER  användarnamn [, ...]"
-
-#~ msgid "define a new database user account"
-#~ msgstr "definiera ett nytt användarkonto i databasen"
-
-#~ msgid "remove a user group"
-#~ msgstr "ta bort en användargrupp"
-
-#~ msgid "remove a database user account"
-#~ msgstr "ta bort ett användarkonto från databasen"
-
-#~ msgid "empty a table"
-#~ msgstr "töm en tabell"

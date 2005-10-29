@@ -2,7 +2,7 @@
 # translation of pg_dump-fr.po to FR_fr
 # French message translation file for pg_dump
 #
-# $PostgreSQL: pgsql/src/bin/pg_dump/po/fr.po,v 1.9 2005/10/10 19:36:33 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_dump/po/fr.po,v 1.10 2005/10/29 00:41:36 petere Exp $
 #
 # Use these quotes: «%s»
 # Guillaume Lelarge <gleu@wanadoo.fr>, 2004, 2005.

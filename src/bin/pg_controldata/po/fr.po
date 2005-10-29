@@ -2,7 +2,7 @@
 # translation of pg_controldata-fr.po to FR_fr
 # French message translation file for pg_controldata
 #
-# $PostgreSQL: pgsql/src/bin/pg_controldata/po/fr.po,v 1.9 2005/10/10 19:36:32 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_controldata/po/fr.po,v 1.10 2005/10/29 00:41:35 petere Exp $
 #
 # Use these quotes: «%s»
 # Loïc Hennequin <loic.hennequin@wanadoo.fr>, 2002.

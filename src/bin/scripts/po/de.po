@@ -1,7 +1,7 @@
 # German message translation file for "scripts".
 # Peter Eisentraut <peter_e@gmx.net>, 2003, 2004, 2005.
 #
-# $PostgreSQL: pgsql/src/bin/scripts/po/de.po,v 1.7 2005/10/10 19:36:35 petere Exp $
+# $PostgreSQL: pgsql/src/bin/scripts/po/de.po,v 1.8 2005/10/29 00:41:37 petere Exp $
 #
 # Use these quotes: »%s«
 #

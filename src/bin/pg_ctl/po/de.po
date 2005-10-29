@@ -1,7 +1,7 @@
 # German message translation file for pg_ctl
 # Peter Eisentraut <peter_e@gmx.net>, 2004, 2005.
 #
-# $Id: de.po,v 1.5 2005/10/10 19:36:33 petere Exp $
+# $Id: de.po,v 1.6 2005/10/29 00:41:35 petere Exp $
 #
 # Use these quotes: »%s«
 #

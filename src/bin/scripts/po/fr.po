@@ -2,7 +2,7 @@
 # translation of pgscripts-fr.po to FR_fr
 # French message translation file for pgscripts
 #
-# $PostgreSQL: pgsql/src/bin/scripts/po/fr.po,v 1.8 2005/10/10 19:36:35 petere Exp $
+# $PostgreSQL: pgsql/src/bin/scripts/po/fr.po,v 1.9 2005/10/29 00:41:37 petere Exp $
 #
 # Use these quotes: «%s»
 # Guillaume Lelarge <gleu@wanadoo.fr>, 2004, 2005.
@@ -740,7 +740,7 @@ msgstr "%s: échec lors de la connexion à la base de données %s\n"
 #: common.c:133
 #, c-format
 msgid "%s: could not connect to database %s: %s"
-msgstr "%s: céchec lors de la connexion à la base de données %s: %s"
+msgstr "%s: échec lors de la connexion à la base de données %s: %s"
 
 #: common.c:157 common.c:185
 #, c-format

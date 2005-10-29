@@ -3,7 +3,7 @@
 # translation of psql-fr.po to FR_fr
 # French message translation file for psql
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/fr.po,v 1.14 2005/10/10 19:36:34 petere Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/fr.po,v 1.15 2005/10/29 00:41:36 petere Exp $
 #
 # Use these quotes: «%s»
 # Peter Eisentraut <peter_e@gmx.net>, 2001.

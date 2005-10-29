@@ -1,7 +1,7 @@
 # German message translation file for libpq
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2002, 2003, 2004.
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/po/de.po,v 1.9 2005/10/10 19:36:36 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/po/de.po,v 1.10 2005/10/29 00:41:37 petere Exp $
 #
 # Use these quotes: »%s«
 #
