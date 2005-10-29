@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.62 2005/10/15 02:49:29 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.63 2005/10/29 00:31:51 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -214,7 +214,7 @@ win32_utf8_wcstotext(const wchar_t *str)
 	if (nbytes == 0)			/* shouldn't happen */
 		ereport(ERROR,
 				(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
-				 errmsg("UTF16 to UTF8 translation failed: %lu",
+				 errmsg("UTF-16 to UTF-8 translation failed: %lu",
 						GetLastError())));
 
 	result = palloc(nbytes + VARHDRSZ);

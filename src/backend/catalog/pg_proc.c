@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.134 2005/10/15 02:49:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.135 2005/10/29 00:31:50 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,7 +186,7 @@ ProcedureCreate(const char *procedureName,
 	if ((returnType == INTERNALOID || internalOutParam) && !internalInParam)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				 errmsg("unsafe use of INTERNAL pseudo-type"),
+				 errmsg("unsafe use of pseudo-type \"internal\""),
 				 errdetail("A function returning \"internal\" must have at least one \"internal\" argument.")));
 
 	/*

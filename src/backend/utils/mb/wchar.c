@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.46 2005/10/15 02:49:33 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.47 2005/10/29 00:31:52 petere Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -894,7 +894,7 @@ pg_verifymbstr(const char *mbstr, int len, bool noError)
 					return false;
 				ereport(ERROR,
 						(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
-						 errmsg("invalid UNICODE byte sequence detected near byte 0x%02x",
+						 errmsg("invalid UTF-8 byte sequence detected near byte 0x%02x",
 								(unsigned char) *mbstr)));
 			}
 		}

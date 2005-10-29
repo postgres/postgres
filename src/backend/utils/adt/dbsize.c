@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.6 2005/10/15 02:49:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.7 2005/10/29 00:31:51 petere Exp $
  *
  */
 
@@ -53,7 +53,7 @@ db_dir_size(const char *path)
 		if (stat(filename, &fst) < 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not stat \"%s\": %m", filename)));
+					 errmsg("could not stat file \"%s\": %m", filename)));
 
 		dirsize += fst.st_size;
 	}
@@ -175,7 +175,7 @@ calculate_tablespace_size(Oid tblspcOid)
 		if (stat(pathname, &fst) < 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not stat \"%s\": %m", pathname)));
+					 errmsg("could not stat file \"%s\": %m", pathname)));
 
 		if (fst.st_mode & S_IFDIR)
 			totalsize += db_dir_size(pathname);
@@ -251,7 +251,7 @@ calculate_relation_size(RelFileNode *rfn)
 			else
 				ereport(ERROR,
 						(errcode_for_file_access(),
-						 errmsg("could not stat \"%s\": %m", pathname)));
+						 errmsg("could not stat file \"%s\": %m", pathname)));
 		}
 		totalsize += fst.st_size;
 	}

@@ -6,7 +6,7 @@
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.67 2005/10/15 02:49:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.68 2005/10/29 00:31:50 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,9 +66,9 @@ GetNewTransactionId(bool isSubXact)
 		 TransactionIdFollowsOrEquals(xid, ShmemVariableCache->xidStopLimit))
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("database is not accepting queries to avoid wraparound data loss in database \"%s\"",
+					 errmsg("database is not accepting commands to avoid wraparound data loss in database \"%s\"",
 							NameStr(ShmemVariableCache->limit_datname)),
-					 errhint("Stop the postmaster and use a standalone backend to VACUUM database \"%s\".",
+					 errhint("Stop the postmaster and use a standalone backend to vacuum database \"%s\".",
 							 NameStr(ShmemVariableCache->limit_datname))));
 		else
 			ereport(WARNING,

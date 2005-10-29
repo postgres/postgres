@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.35 2005/10/15 02:49:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.36 2005/10/29 00:31:51 petere Exp $
  *
  *	Interface:
  *
@@ -888,7 +888,7 @@ DescribeLockTag(StringInfo buf, const LOCKTAG *lock)
 			break;
 		default:
 			appendStringInfo(buf,
-							 _("unknown locktag type %d"),
+							 _("unrecognized locktag type %d"),
 							 lock->locktag_type);
 			break;
 	}

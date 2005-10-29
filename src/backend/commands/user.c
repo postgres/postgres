@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.162 2005/10/17 16:24:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.163 2005/10/29 00:31:51 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1194,7 +1194,7 @@ AddRoleMems(const char *rolename, Oid roleid,
 	if (grantorId != GetUserId() && !superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to set grantor ID")));
+				 errmsg("must be superuser to set grantor")));
 
 	/* We need only regular writer's lock on pg_auth_members */
 	pg_authmem_rel = heap_open(AuthMemRelationId, RowExclusiveLock);

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conv.c,v 1.55 2005/10/15 02:49:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conv.c,v 1.56 2005/10/29 00:31:52 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -379,7 +379,7 @@ UtfToLocal(unsigned char *utf, unsigned char *iso,
 		{
 			ereport(WARNING,
 					(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
-					 errmsg("ignoring unconvertible UTF8 character 0x%04x",
+					 errmsg("ignoring unconvertible UTF-8 character 0x%04x",
 							iutf)));
 			continue;
 		}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.138 2005/10/18 20:38:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.139 2005/10/29 00:31:51 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -888,7 +888,7 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 										(LPWSTR) a1p, a1len / 2);
 				if (!r)
 					ereport(ERROR,
-							(errmsg("could not convert string to UTF16: %lu",
+							(errmsg("could not convert string to UTF-16: error %lu",
 									GetLastError())));
 			}
 			((LPWSTR) a1p)[r] = 0;
@@ -901,7 +901,7 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 										(LPWSTR) a2p, a2len / 2);
 				if (!r)
 					ereport(ERROR,
-							(errmsg("could not convert string to UTF16: %lu",
+							(errmsg("could not convert string to UTF-16: error %lu",
 									GetLastError())));
 			}
 			((LPWSTR) a2p)[r] = 0;
@@ -911,8 +911,7 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 			if (result == 2147483647)	/* _NLSCMPERROR; missing from mingw
 										 * headers */
 				ereport(ERROR,
-						(errmsg("could not compare unicode strings: %d",
-								errno)));
+						(errmsg("could not compare Unicode strings: %m")));
 
 			if (a1p != a1buf)
 				pfree(a1p);

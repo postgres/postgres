@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.221 2005/10/22 20:27:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.222 2005/10/29 00:31:50 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1468,7 +1468,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 				ereport(PANIC,
 						(errcode_for_file_access(),
 						 errmsg("could not write to log file %u, segment %u "
-								"at offset %u length %lu: %m",
+								"at offset %u, length %lu: %m",
 								openLogId, openLogSeg,
 								openLogOff, (unsigned long) nbytes)));
 			}
@@ -3558,7 +3558,7 @@ ReadControlFile(void)
 	if (ControlFile->floatFormat != FLOATFORMAT_VALUE)
 		ereport(FATAL,
 				(errmsg("database files are incompatible with server"),
-				 errdetail("The database cluster appears to use a different floating-point format than the server executable."),
+				 errdetail("The database cluster appears to use a different floating-point number format than the server executable."),
 				 errhint("It looks like you need to initdb.")));
 	if (ControlFile->blcksz != BLCKSZ)
 		ereport(FATAL,

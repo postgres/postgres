@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.140 2005/10/15 02:49:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.141 2005/10/29 00:31:51 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -356,13 +356,13 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck)
 			if (!OldHeap->rd_att->attrs[colno - 1]->attnotnull)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot cluster on index \"%s\" because access method\n"
-								"does not handle null values",
+						 errmsg("cannot cluster on index \"%s\" because access method does not handle null values",
 								RelationGetRelationName(OldIndex)),
-						 errhint("You may be able to work around this by marking column \"%s\" NOT NULL%s",
-						 NameStr(OldHeap->rd_att->attrs[colno - 1]->attname),
-								 recheck ? ",\nor use ALTER TABLE ... SET WITHOUT CLUSTER to remove the cluster\n"
-								 "specification from the table." : ".")));
+						 recheck
+						 ? errhint("You may be able to work around this by marking column \"%s\" NOT NULL, or use ALTER TABLE ... SET WITHOUT CLUSTER to remove the cluster specification from the table.",
+								   NameStr(OldHeap->rd_att->attrs[colno - 1]->attname))
+						 : errhint("You may be able to work around this by marking column \"%s\" NOT NULL.",
+								   NameStr(OldHeap->rd_att->attrs[colno - 1]->attname))));
 		}
 		else if (colno < 0)
 		{
@@ -372,8 +372,7 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck)
 			/* index expression, lose... */
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot cluster on expressional index \"%s\" because its index access\n"
-							"method does not handle null values",
+					 errmsg("cannot cluster on expressional index \"%s\" because its index access method does not handle null values",
 							RelationGetRelationName(OldIndex))));
 	}
 
