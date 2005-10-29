@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.81 2005/10/15 02:49:29 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.82 2005/10/29 18:39:17 tgl Exp $
  *
  * ----------
  */
@@ -2407,8 +2407,8 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
  * RI_FKey_keyequal_upd_pk -
  *
  *	Check if we have a key change on an update to a PK relation. This is
- *	used by the AFTER trigger queue manager to detect "triggered data
- *	change violation".
+ *	used by the AFTER trigger queue manager to see if it can skip queuing
+ *	an instance of an RI trigger.
  * ----------
  */
 bool
@@ -2481,8 +2481,8 @@ RI_FKey_keyequal_upd_pk(Trigger *trigger, Relation pk_rel,
  * RI_FKey_keyequal_upd_fk -
  *
  *	Check if we have a key change on an update to an FK relation. This is
- *	used by the AFTER trigger queue manager to detect "triggered data
- *	change violation".
+ *	used by the AFTER trigger queue manager to see if it can skip queuing
+ *	an instance of an RI trigger.
  * ----------
  */
 bool
