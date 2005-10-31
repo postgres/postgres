@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.94 2005/08/13 02:48:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.95 2005/10/31 18:13:52 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -421,7 +421,9 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
       primary key of the <replaceable
       class="parameter">reftable</replaceable> is used.  The
       referenced columns must be the columns of a unique or primary
-      key constraint in the referenced table.
+      key constraint in the referenced table.  Note that foreign key
+      constraints may not be defined between temporary tables and
+      permanent tables.
      </para>
 
      <para>
