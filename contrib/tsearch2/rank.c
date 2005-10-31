@@ -303,7 +303,8 @@ calc_rank_or(float *w, tsvector * t, QUERYTYPE * q)
 */
                 res = res + ( wjm + resj - wjm/((jm+1)*(jm+1)))/1.64493406685; 
 	}
-	res = res /size;
+	if ( size > 0 )
+		res = res /size;
 	pfree(item);
 	return res;
 }
