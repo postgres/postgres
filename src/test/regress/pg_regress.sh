@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.53.4.1 2005/07/17 18:29:13 tgl Exp $
+# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.53.4.2 2005/11/01 15:32:52 adunstan Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -21,6 +21,7 @@ Options:
   --schedule=FILE           use test ordering schedule from FILE
                             (may be used multiple times to concatenate)
   --temp-install[=DIR]      create a temporary installation (in DIR)
+  --no-locale               use C locale
 
 Options for \`temp-install' mode:
   --top-builddir=DIR        (relative) path to top level build directory
@@ -97,6 +98,7 @@ fi
 unset mode
 unset schedule
 unset debug
+unset nolocale
 unset top_builddir
 unset temp_install
 unset multibyte
@@ -130,6 +132,9 @@ do
                 shift;;
         --multibyte=*)
                 multibyte=`expr "x$1" : "x--multibyte=\(.*\)"`
+                shift;;
+        --no-locale)
+                nolocale=yes
                 shift;;
         --temp-install)
                 temp_install=./tmp_check
@@ -408,7 +413,8 @@ then
     rm $backup
 
     message "initializing database system"
-    [ "$debug" = yes ] && initdb_options='--debug'
+    [ "$debug" = yes ] && initdb_options="--debug"
+    [ "$nolocale" = yes ] && initdb_options="$initdb_options --no-locale"
     "$bindir/initdb" -D "$PGDATA" -L "$datadir" --noclean $initdb_options >"$LOGDIR/initdb.log" 2>&1
 
     if [ $? -ne 0 ]
