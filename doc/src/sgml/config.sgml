@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.33 2005/10/26 12:55:07 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.34 2005/11/01 23:19:05 neilc Exp $
 -->
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1974,11 +1974,11 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
        </para>
 
        <para>
-        When this parameter is <literal>on</>, the planner compares query
-        conditions with table CHECK constraints, and omits scanning tables
-        where the conditions contradict the constraints.  (Presently
-        this is done only for child tables of inheritance scans.)  For
-        example:
+        When this parameter is <literal>on</>, the planner compares
+        query conditions with table <literal>CHECK</> constraints, and
+        omits scanning tables where the conditions contradict the
+        constraints.  (Presently this is done only for child tables of
+        inheritance scans.)  For example:
 
 <programlisting>
 CREATE TABLE parent(key integer, ...);
@@ -1988,23 +1988,30 @@ CREATE TABLE child2000(check (key between 2000 and 2999)) INHERITS(parent);
 SELECT * FROM parent WHERE key = 2400;
 </programlisting>
 
-        With constraint exclusion enabled, this SELECT will not scan
-        <structname>child1000</> at all.  This can improve performance when
-        inheritance is used to build partitioned tables.
+        With constraint exclusion enabled, this <command>SELECT</>
+        will not scan <structname>child1000</> at all.  This can
+        improve performance when inheritance is used to build
+        partitioned tables.
        </para>
 
        <para>
-        Currently, <varname>constraint_exclusion</> defaults to
-        <literal>off</>, because it risks incorrect results if
-        query plans are cached --- if a table constraint is changed or dropped,
-        the previously generated plan might now be wrong, and there is no
-        built-in mechanism to force re-planning.  (This deficiency will
-        probably be addressed in a future
-        <productname>PostgreSQL</productname> release.)  Another reason
-        for keeping it off is that the constraint checks are relatively
+        Currently, <varname>constraint_exclusion</> is disabled by
+        default because it risks incorrect results if query plans are
+        cached &mdash; if a table constraint is changed or dropped,
+        the previously generated plan might now be wrong, and there is
+        no built-in mechanism to force re-planning.  (This deficiency
+        will probably be addressed in a future
+        <productname>PostgreSQL</> release.)  Another reason for
+        keeping it off is that the constraint checks are relatively
         expensive, and in many circumstances will yield no savings.
-        It is recommended to turn this on only if you are actually using
-        partitioned tables designed to take advantage of the feature.
+        It is recommended to turn this on only if you are actually
+        using partitioned tables designed to take advantage of the
+        feature.
+       </para>
+
+       <para>
+        Refer to <xref linkend="ce-partitioning"> for more information
+        on using constraint exclusion and partitioning.
        </para>
       </listitem>
      </varlistentry>

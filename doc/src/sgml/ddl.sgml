@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.45 2005/10/23 19:29:49 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.46 2005/11/01 23:19:05 neilc Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -397,6 +397,13 @@ CREATE TABLE products (
     they will not prevent null values in the constrained columns.  To
     ensure that a column does not contain null values, the not-null
     constraint described in the next section can be used.
+   </para>
+
+    <para>
+     Check constraints can also be used to enhance performance with
+     very large tables, when used in conjunction with the <xref
+     linkend="guc-constraint-exclusion"> parameter.  This is discussed
+     in more detail in <xref linkend="ce-partitioning">.
    </para>
   </sect2>
 
@@ -1040,19 +1047,39 @@ CREATE TABLE order_items (
  <sect1 id="ddl-inherit">
   <title>Inheritance</title>
 
-  <remark>This section needs to be rethought.  Some of the
-  information should go into the following chapters.</remark>
+   <indexterm>
+    <primary>not-null constraint</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>constraint</primary>
+    <secondary>NOT NULL</secondary>
+   </indexterm>
 
   <para>
-   Let's create two tables. The capitals  table  contains
-   state  capitals  which  are also cities. Naturally, the
-   capitals table should inherit from cities.
+   <productname>PostgreSQL</productname> implements table inheritance
+   which can be a useful tool for database designers.  The SQL:2003
+   standard optionally defines type inheritance which differs in many
+   respects from the features described here.
+  </para>
+
+  <para>
+   Let's start with an example: suppose we are trying to build a data
+   model for cities.  Each state has many cities, but only one
+   capital. We want to be able to quickly retrieve the capital city
+   for any particular state. This can be done by creating two tables,
+   one for state capitals and one for cities that are not
+   capitals. However, what happens when we want to ask for data about
+   a city, regardless of whether it is a capital or not? The
+   inheritance feature can help to resolve this problem. We define the
+   <literal>capitals</literal> table so that it inherits from
+   <literal>cities</literal>:
 
 <programlisting>
 CREATE TABLE cities (
     name            text,
     population      float,
-    altitude        int     -- (in ft)
+    altitude        int     -- in feet
 );
 
 CREATE TABLE capitals (
@@ -1060,24 +1087,19 @@ CREATE TABLE capitals (
 ) INHERITS (cities);
 </programlisting>
 
-   In this case, a row of capitals <firstterm>inherits</firstterm> all
-   attributes (name, population, and altitude) from its parent, cities.  State
-   capitals have an extra attribute, state, that shows their state.  In
-   <productname>PostgreSQL</productname>, a table can inherit from zero or
-   more other tables, and a query can reference either all rows of a table or
-   all rows of a table plus all of its descendants.
-
-   <note>
-    <para>
-     The inheritance hierarchy is actually a directed acyclic graph.
-    </para>
-   </note>
+   In this case, a row of <literal>capitals</> <firstterm>inherits</>
+   all the columns of its parent table, <literal>cities</>. State
+   capitals have an extra attribute, <literal>state</>, that shows
+   their state.
   </para>
 
   <para>
-    For example, the  following  query finds the  names  of  all  cities,
-    including  state capitals, that are located at an altitude 
-    over 500ft:
+   In <productname>PostgreSQL</productname>, a table can inherit from
+   zero or more other tables, and a query can reference either all
+   rows of a table or all rows of a table plus all of its descendants.
+   For example, the following query finds the names of all cities,
+   including state capitals, that are located at an altitude over
+   500ft:
 
 <programlisting>
 SELECT name, altitude
@@ -1097,9 +1119,8 @@ SELECT name, altitude
   </para>
 
   <para>
-    On the other hand, the  following  query  finds
-    all  the cities that are not state capitals and
-    are situated at an altitude over 500ft:
+   On the other hand, the following query finds all the cities that
+   are not state capitals and are situated at an altitude over 500ft:
 
 <programlisting>
 SELECT name, altitude
@@ -1110,60 +1131,55 @@ SELECT name, altitude
 -----------+----------
  Las Vegas |     2174
  Mariposa  |     1953
-</programlisting>         
+</programlisting>
   </para>
 
   <para>
-   Here the <quote>ONLY</quote> before cities indicates that the query should
-   be  run over only cities and not tables below cities in the
-   inheritance hierarchy.  Many of the  commands  that  we
-   have  already discussed -- <command>SELECT</command>,
-   <command>UPDATE</command> and <command>DELETE</command> --
-   support this <quote>ONLY</quote> notation.
+   Here the <literal>ONLY</literal> keyword indicates that the query
+   should apply only to <literal>cities</literal>, and not any tables
+   below <literal>cities</literal> in the inheritance hierarchy.  Many
+   of the commands that we have already discussed &mdash;
+   <command>SELECT</command>, <command>UPDATE</command> and
+   <command>DELETE</command> &mdash; support the
+   <literal>ONLY</literal> keyword.
   </para>
 
-
-<note>
-  <title>Inheritance and Permissions</title>
-  <para>
-  Because permissions are not inherited automatically a user attempting to access
-  a parent table must either have at least the same permission for the child table
-  or must use the <quote>ONLY</quote> notation. If creating a new inheritance 
-  relationship in an existing system be careful that this does not create problems.
-  </para>
-</note>
-  
   <note>
-   <title>Deprecated</title> 
+   <title>Inheritance and Permissions</title>
    <para>
-     In previous versions of <productname>PostgreSQL</productname>, the
-     default behavior was not to include child tables in queries. This was
-     found to be error prone and is also in violation of the SQL:2003
-     standard. Under the old syntax, to get the sub-tables you append
-     <literal>*</literal> to the table name.
-     For example
-<programlisting>
-SELECT * from cities*;
-</programlisting>
-     You can still explicitly specify scanning child tables by appending
-     <literal>*</literal>, as well as explicitly specify not scanning child tables by
-     writing <quote>ONLY</quote>.  But beginning in version 7.1, the default
-     behavior for an undecorated table name is to scan its child tables
-     too, whereas before the default was not to do so.  To get the old
-     default behavior, set the configuration option
-     <literal>SQL_Inheritance</literal> to off, e.g.,
-<programlisting>
-SET SQL_Inheritance TO OFF;
-</programlisting>
-     or add a line in your <filename>postgresql.conf</filename> file.
+    Because permissions are not inherited automatically, a user
+    attempting to access a parent table must either have at least the
+    same permission for the child table or must use the
+    <quote>ONLY</quote> notation. If creating a new inheritance
+    relationship in an existing system be careful that this does not
+    create problems.
    </para>
   </note>
 
   <para>
-  In some cases you may wish to know which table a particular row
-  originated from. There is a system column called
-  <structfield>tableoid</structfield> in each table which can tell you the
-  originating table:
+   Inheritance does not automatically propogate data from
+   <command>INSERT</command> or <command>COPY</command> commands to
+   other tables in the inheritance hierarchy. In our example, the
+   following <command>INSERT</command> statement will fail:
+<programlisting>
+INSERT INTO cities
+(name, population, altitude, state)
+VALUES ('New York', NULL, NULL, 'NY');
+</programlisting>
+   We might hope that the data would be somehow routed to the
+   <literal>capitals</literal> table, though this does not happen. If
+   the child has no locally defined columns, then it is possible to
+   route data from the parent to the child using a rule, see <xref
+   linkend="rules-update">.  This is not possible with the above
+   <command>INSERT</> statement because the <literal>state</> column
+   does not exist on both parent and child tables.
+  </para>
+
+  <para>
+   In some cases you may wish to know which table a particular row
+   originated from. There is a system column called
+   <structfield>tableoid</structfield> in each table which can tell you the
+   originating table:
 
 <programlisting>
 SELECT c.tableoid, c.name, c.altitude
@@ -1200,21 +1216,64 @@ WHERE c.altitude &gt; 500 and c.tableoid = p.oid;
  cities   | Mariposa  |     1953
  capitals | Madison   |      845
 </programlisting>
-   
   </para>
 
   <para>
-   A table can inherit from more than one parent table, in which case it has
-   the union of the columns defined by the parent tables (plus any columns
-   declared specifically for the child table).
+   As shown above, a child table may locally define columns as well as
+   inheriting them from their parents.  However, a locally defined
+   column cannot override the datatype of an inherited column of the
+   same name.  A table can inherit from a table that has itself
+   inherited from other tables. A table can also inherit from more
+   than one parent table, in which case it inherits the union of the
+   columns defined by the parent tables.  Inherited columns with
+   duplicate names and datatypes will be merged so that only a single
+   column is stored.
   </para>
 
   <para>
-   A serious limitation of the inheritance feature is that indexes (including
-   unique constraints) and foreign key constraints only apply to single
-   tables, not to their inheritance children.  This is true on both the
-   referencing and referenced sides of a foreign key constraint.  Thus,
-   in the terms of the above example:
+   Table inheritance can currently only be defined using the <xref
+   linkend="sql-createtable" endterm="sql-createtable-title">
+   statement.  The related statement <literal>CREATE TABLE ... AS
+   SELECT</literal> does not allow inheritance to be specified. There
+   is no way to add an inheritance link to make an existing table into
+   a child table. Similarly, there is no way to remove an inheritance
+   link from a child table once it has been defined, other than using
+   <literal>DROP TABLE</literal>.  A parent table cannot be dropped
+   while any of its children remain. If you wish to remove a table and
+   all of its descendants, then you can do so using the
+   <literal>CASCADE</literal> option of the <xref
+   linkend="sql-droptable" endterm="sql-droptable-title"> statement.
+  </para>
+
+  <para>
+   Check constraints can be defined on tables within an inheritance
+   hierarchy. All check constraints on a parent table are
+   automatically inherited by all of their children. It is currently
+   possible to inherit mutually exclusive check constraints, but that
+   definition quickly shows itself since all attempted row inserts
+   will be rejected.
+  </para>
+
+  <para>
+   <xref linkend="sql-altertable" endterm="sql-altertable-title"> will
+   propogate any changes in data definition on columns or check
+   constraints down the inheritance hierarchy.  Again, dropping
+   columns or constraints on parent tables is only possible when using
+   the <literal>CASCADE</literal> option. <command>ALTER
+   TABLE</command> follows the same rules for duplicate column merging
+   and rejection that apply during <command>CREATE TABLE</command>.
+  </para>
+
+  <para>
+   Both parent and child tables can have primary and foreign keys, so
+   that they can take part normally on both the referencing and
+   referenced sides of a foreign key constraint. Indexes may be
+   defined on any of these columns whether or not they are inherited.
+   However, a serious current limitation of the inheritance feature is
+   that indexes (including unique constraints) and foreign key
+   constraints only apply to single tables and do not also index their
+   inheritance children.  This is true on both sides of a foreign key
+   constraint.  Thus, in the terms of the above example:
 
    <itemizedlist>
     <listitem>
@@ -1236,9 +1295,11 @@ WHERE c.altitude &gt; 500 and c.tableoid = p.oid;
       Similarly, if we were to specify that
       <structname>cities</>.<structfield>name</> <literal>REFERENCES</> some
       other table, this constraint would not automatically propagate to
-      <structname>capitals</>.  In this case you could work around it by
-      manually adding the same <literal>REFERENCES</> constraint to
-      <structname>capitals</>.
+      <structname>capitals</>.  However, it is possible to set up a
+      foreign key such as <structname>capitals</>.<structfield>name</>
+      <literal>REFERENCES</> <structname>states</>.<structfield>name</>.
+      So it is possible to workaround this restriction by manually adding
+      foreign keys to each child table.
      </para>
     </listitem>
 
@@ -1254,7 +1315,556 @@ WHERE c.altitude &gt; 500 and c.tableoid = p.oid;
    These deficiencies will probably be fixed in some future release,
    but in the meantime considerable care is needed in deciding whether
    inheritance is useful for your problem.
+
   </para>
+
+  <note>
+   <title>Deprecated</title>
+   <para>
+     In previous versions of <productname>PostgreSQL</productname>, the
+     default behavior was not to include child tables in queries. This was
+     found to be error prone and is also in violation of the SQL:2003
+     standard. Under the old syntax, to get the sub-tables you append
+     <literal>*</literal> to the table name. For example:
+<programlisting>
+SELECT * from cities*;
+</programlisting>
+     You can still explicitly specify scanning child tables by
+     appending <literal>*</literal>, as well as explicitly specify not
+     scanning child tables by writing <quote>ONLY</quote>.  But
+     beginning in version 7.1, the default behavior for an undecorated
+     table name is to scan its child tables too, whereas before the
+     default was not to do so.  To get the old default behavior,
+     disable the <xref linkend="guc-sql-inheritance"> configuration
+     option.
+   </para>
+  </note>
+
+  </sect1>
+
+  <sect1 id="ce-partitioning">
+   <title>Constraint Exclusion and Partitioning</title>
+
+   <indexterm>
+    <primary>partitioning</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>constraint exclusion</primary>
+   </indexterm>
+
+   <para>
+    <productname>PostgreSQL</productname> supports basic table
+    partitioning. This section describes why and how you can implement
+    this as part of your database design.
+   </para>
+
+   <sect2 id="ce-partitioning-overview">
+     <title>Overview</title>
+
+   <para>
+    Currently, partitioning is implemented in conjunction with table
+    inheritance only, though using fully SQL:2003 compliant syntax.
+    Table inheritance allows tables to be split into partitions, and
+    constraint exclusion allows partitions to be selectively combined
+    as needed to satisfy a particular <command>SELECT</command>
+    statement. You should be familiar with inheritance (see <xref
+    linkend="ddl-inherit">) before attempting to implement
+    partitioning.
+   </para>
+
+   <para>
+    Partitioning can provide several benefits:
+   <itemizedlist>
+    <listitem>
+     <para>
+      Query performance can be improved dramatically for certain kinds
+      of queries without the need to maintain costly indexes.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Insert performance can be improved by breaking down a large
+      index into multiple pieces. When an index no longer fits easily
+      in memory, both read and write operations on the index take
+      progressively more disk accesses.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Bulk deletes may be avoided altogether by simply removing one of the
+      partitions, if that requirement is planned into the partitioning design.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Seldom-used data can be migrated to cheaper and slower storage media.
+     </para>
+    </listitem>
+   </itemizedlist>
+
+    The benefits will normally be worthwhile only when a data table would
+    otherwise be very large. That is for you to judge, though would not
+    usually be lower than the size of physical RAM on the database server.
+   </para>
+
+   <para>
+    In <productname>PostgreSQL</productname> &version;, the following
+    partitioning types are supported:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       "Range Partitioning" where the table is partitioned along a
+       "range" defined by a single column or set of columns, with no
+       overlap between partitions. Examples might be a date range or a
+       range of identifiers for particular business objects.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       "List Partitioning" where the table is partitioned by
+       explicitly listing which values relate to each partition.
+      </para>
+     </listitem>
+    </itemizedlist>
+
+    Hash partitioning is not currently supported.
+   </para>
+   </sect2>
+
+   <sect2 id="ce-partitioning-implementation">
+     <title>Implementing Partitioning</title>
+
+    <para>
+     Partitioning a table is a straightforward process.  There
+     are a wide range of options for you to consider, so judging exactly
+     when and how to implement partitioning is a more complex topic. We
+     will address that complexity primarily through the examples in this
+     section.
+    </para>
+
+    <para>
+     To use partitioning, do the following:
+     <orderedlist spacing=compact>
+      <listitem>
+       <para>
+        Create the <quote>master</quote> table, from which all of the
+        partitions will inherit.
+       </para>
+       <para>
+        This table will contain no data.  Do not define any
+        constraints or keys on this table, unless you intend them to
+        be applied equally to all partitions.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Create several <quote>child</quote> tables that inherit from
+        the master table.
+       </para>
+
+       <para>
+        We will refer to the child tables as partitions, though they
+        are in every way just normal <productname>PostgreSQL</>
+        tables.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add table constraints to define the allowed values in each partition.
+       </para>
+       <para>
+        Only clauses of the form [COLUMN] [OPERATOR] [CONSTANT(s)] will be used
+        for constraint exclusion. Simple examples would be:
+<programlisting>
+CHECK ( x = 1 )
+CHECK ( county IN ('Oxfordshire','Buckinghamshire','Warwickshire'))
+CHECK ( outletID BETWEEN 1 AND 99 )
+</programlisting>
+
+        These can be linked together with boolean operators AND and OR to
+        form complex constraints. Note that there is no difference in syntax
+        between Range and List Partitioning mechanisms; those terms are
+        descriptive only. Ensure that the set of values in each child table
+        do not overlap.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add any other indexes you want to the partitions, bearing in
+        mind that it is always more efficient to add indexes after
+        data has been bulk loaded.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Optionally, define a rule or trigger to redirect modifications
+        of the master table to the appropriate partition.
+       </para>
+      </listitem>
+
+     </orderedlist>
+    </para>
+
+    <para>
+     For example, suppose we are constructing a database for a large
+     ice cream company. The company measures peak temperatures every
+     day as well as ice cream sales in each region. They have two
+     tables:
+
+<programlisting>
+CREATE TABLE cities (
+    id              int not null,
+    name            text not null,
+    altitude        int            -- in feet
+);
+
+CREATE TABLE measurement (
+    city_id         int not null,
+    logdate         date not null,
+    peaktemp        int,
+    unitsales       int
+);
+</programlisting>
+
+     To reduce the amount of old data that needs to be stored, we
+     decide to only keep the most recent 3 years worth of data. At the
+     beginning of each month we remove the oldest month's data.
+    </para>
+
+    <para>
+     Most queries just access the last week, month or quarter's data,
+     since we need to keep track of sales. As a result we have a large table,
+     yet only the most frequent 10% is accessed. Most of these queries
+     are online reports for various levels of management. These queries access
+     much of the table, so it is difficult to build enough indexes and at
+     the same time allow us to keep loading all of the data fast enough.
+     Yet, the reports are online so we need to respond quickly.
+    </para>
+
+    <para>
+     In this situation we can use partitioning to help us meet all of our
+     different requirements for the measurements table. Following the
+     steps outlined above, partitioning can be enabled as follows:
+    </para>
+
+    <para>
+     <orderedlist spacing=compact>
+      <listitem>
+       <para>
+        The measurement table is our master table.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Next we create one partition for each month using inheritance:
+
+<programlisting>
+CREATE TABLE measurement_yy04mm02 ( ) INHERITS (measurement);
+CREATE TABLE measurement_yy04mm03 ( ) INHERITS (measurement);
+...
+CREATE TABLE measurement_yy05mm11 ( ) INHERITS (measurement);
+CREATE TABLE measurement_yy05mm12 ( ) INHERITS (measurement);
+CREATE TABLE measurement_yy06mm01 ( ) INHERITS (measurement);
+</programlisting>
+
+        Each of the partitions are complete tables in their own right,
+        but they inherit their definition from the measurement table.
+       </para>
+
+       <para>
+        This solves one of our problems: deleting old data. Each
+        month, all we need to do is perform a <command>DROP
+        TABLE</command> on the oldest table and create a new table to
+        insert into.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        We now add non-overlapping table constraints, so that our
+        table creation script becomes:
+
+ <programlisting>
+CREATE TABLE measurement_yy04mm02 (
+    CHECK ( logdate >= DATE '2004-02-01' AND logdate < DATE '2004-03-01' )
+                                    ) INHERITS (measurement);
+CREATE TABLE measurement_yy04mm03 (
+    CHECK ( logdate >= DATE '2004-03-01' AND logdate < DATE '2004-04-01' )
+                                    ) INHERITS (measurement);
+...
+CREATE TABLE measurement_yy05mm11 (
+    CHECK ( logdate >= DATE '2005-11-01' AND logdate < DATE '2005-12-01' )
+                                    ) INHERITS (measurement);
+CREATE TABLE measurement_yy05mm12 (
+    CHECK ( logdate >= DATE '2005-12-01' AND logdate < DATE '2006-01-01' )
+                                    ) INHERITS (measurement);
+CREATE TABLE measurement_yy06mm01 (
+    CHECK ( logdate >= DATE '2006-01-01' AND logdate < DATE '2006-02-01' )
+                                    ) INHERITS (measurement);
+</programlisting>
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        We choose not to add further indexes at this time.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Data will be added each day to the latest partition. This
+        allows us to set up a very simple rule to insert data. We must
+        redefine this each month so that it always points to the
+        current partition.
+
+<programlisting>
+CREATE OR REPLACE RULE measurement_current_partition AS
+ON INSERT
+TO measurement
+DO INSTEAD
+    INSERT INTO measurement_yy06mm01 VALUES ( NEW.city_id,
+                                              NEW.logdate,
+                                              NEW.peaktemp,
+                                              NEW.unitsales );
+</programlisting>
+
+        We might want to insert data and have the server automatically
+        locate the partition into which the row should be added. We
+        could do this with a more complex set of rules as shown below.
+
+<programlisting>
+CREATE RULE measurement_insert_yy04mm02 AS
+ON INSERT
+TO measurement WHERE
+    ( logdate >= DATE '2004-02-01' AND logdate < DATE '2004-03-01' )
+DO INSTEAD
+    INSERT INTO measurement_yy04mm02 VALUES ( NEW.city_id,
+                                              NEW.logdate,
+                                              NEW.peaktemp,
+                                              NEW.unitsales );
+...
+CREATE RULE measurement_insert_yy05mm12 AS
+ON INSERT
+TO measurement WHERE
+    ( logdate >= DATE '2005-12-01' AND logdate < DATE '2006-01-01' )
+DO INSTEAD
+    INSERT INTO measurement_yy05mm12 VALUES ( NEW.city_id,
+                                              NEW.logdate,
+                                              NEW.peaktemp,
+                                              NEW.unitsales );
+CREATE RULE measurement_insert_yy06mm01 AS
+ON INSERT
+TO measurement WHERE
+    ( logdate >= DATE '2006-01-01' AND logdate < DATE '2006-02-01' )
+DO INSTEAD
+    INSERT INTO measurement_yy06mm01 VALUES ( NEW.city_id,
+                                              NEW.logdate,
+                                              NEW.peaktemp,
+                                              NEW.unitsales );
+</programlisting>
+
+        Note that the <literal>WHERE</literal> clause in each rule
+        exactly matches those used for the <literal>CHECK</literal>
+        constraints on each partition.
+       </para>
+      </listitem>
+     </orderedlist>
+    </para>
+
+    <para>
+     As we can see, a complex partitioning scheme could require a
+     substantial amount of DDL. In the above example we would be
+     creating a new partition each month, so it may be wise to write a
+     script that generates the required DDL automatically.
+    </para>
+
+   <para>
+    The following caveats apply:
+   <itemizedlist>
+    <listitem>
+     <para>
+      There is currently no way to specify that all of the
+      <literal>CHECK</literal> constraints are mutually
+      exclusive. Care is required by the database designer.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      There is currently no way to specify that rows may not be
+      inserted into the master table. A <literal>CHECK</literal>
+      constraint on the master table will be inherited by all child
+      tables, so that cannot not be used for this purpose.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      For some datatypes you must explicitly coerce the constant values
+      into the datatype of the column. The following constraint will
+      work if x is an INTEGER datatype, but not if x is BIGINT datatype.
+<programlisting>
+CHECK ( x = 1 )
+</programlisting>
+      For BIGINT we must use a constraint like:
+<programlisting>
+CHECK ( x = 1::bigint )
+</programlisting>
+      The issue is not restricted to BIGINT datatypes but can occur whenever
+      the default datatype of the constant does not match the datatype of
+      the column to which it is being compared.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Partitioning can also be arranged using a <literal>UNION
+      ALL</literal> view:
+
+<programlisting>
+CREATE VIEW measurement AS
+          SELECT * FROM measurement_yy04mm02
+UNION ALL SELECT * FROM measurement_yy04mm03
+...
+UNION ALL SELECT * FROM measurement_yy05mm11
+UNION ALL SELECT * FROM measurement_yy05mm12
+UNION ALL SELECT * FROM measurement_yy06mm01;
+</programlisting>
+
+      However, constraint exclusion is currently not supported for
+      partitioned tables defined in this manner.
+     </para>
+    </listitem>
+   </itemizedlist>
+   </para>
+   </sect2>
+
+   <sect2 id="constraint-exclusion-queries">
+    <title>Constraint Exclusion in Queries</title>
+
+   <para>
+    Partitioning can be used to improve query performance when used in
+    conjunction with constraint exclusion. As an example:
+
+<programlisting>
+SET constraint_exclusion=true;
+SELECT count(*) FROM measurement WHERE logdate >= DATE '2006-01-01';
+</programlisting>
+
+    Without constraint exclusion, the above query would scan each of
+    the partitions of the measurement table. With constraint
+    exclusion, the planner will examine each of the constraints and
+    try to prove that each of the partitions needs to be involved in
+    the query. If the planner is able to refute that for any
+    partition, it excludes the partition from the query plan.
+   </para>
+
+   <para>
+    You can use the <command>EXPLAIN</> command to show the difference
+    between a plan with <varname>constraint_exclusion</> on and a plan
+    with it off.
+
+<programlisting>
+SET constraint_exclusion=false;
+EXPLAIN SELECT count(*) FROM measurement WHERE logdate >= DATE '2006-01-01';
+
+                                          QUERY PLAN
+-----------------------------------------------------------------------------------------------
+ Aggregate  (cost=158.66..158.68 rows=1 width=0)
+   ->  Append  (cost=0.00..151.88 rows=2715 width=0)
+         ->  Seq Scan on measurement  (cost=0.00..30.38 rows=543 width=0)
+               Filter: (logdate >= '2006-01-01'::date)
+         ->  Seq Scan on measurement_yy04mm02 measurement  (cost=0.00..30.38 rows=543 width=0)
+               Filter: (logdate >= '2006-01-01'::date)
+         ->  Seq Scan on measurement_yy04mm03 measurement  (cost=0.00..30.38 rows=543 width=0)
+               Filter: (logdate >= '2006-01-01'::date)
+...
+         ->  Seq Scan on measurement_yy05mm12 measurement  (cost=0.00..30.38 rows=543 width=0)
+               Filter: (logdate >= '2006-01-01'::date)
+         ->  Seq Scan on measurement_yy06mm01 measurement  (cost=0.00..30.38 rows=543 width=0)
+               Filter: (logdate >= '2006-01-01'::date)
+</programlisting>
+
+    Now when we enable constraint exclusion, we get a significantly
+    reduced plan but the same result set:
+
+<programlisting>
+SET constraint_exclusion=true;
+EXPLAIN SELECT count(*) FROM measurement WHERE logdate >= DATE '2006-01-01';
+                                          QUERY PLAN
+-----------------------------------------------------------------------------------------------
+ Aggregate  (cost=63.47..63.48 rows=1 width=0)
+   ->  Append  (cost=0.00..60.75 rows=1086 width=0)
+         ->  Seq Scan on measurement  (cost=0.00..30.38 rows=543 width=0)
+               Filter: (logdate >= '2006-01-01'::date)
+         ->  Seq Scan on measurement_yy06mm01 measurement  (cost=0.00..30.38 rows=543 width=0)
+               Filter: (logdate >= '2006-01-01'::date)
+</programlisting>
+
+    Don't forget that you still need to run <command>ANALYZE</command>
+    on each partition individually. A command like this
+<programlisting>
+ANALYZE measurement;
+</programlisting>
+
+    only affects the master table.
+   </para>
+
+   <para>
+    No indexes are required to use constraint exclusion. The
+    partitions should be defined with appropriate <literal>CHECK</>
+    constraints. These are then compared with the predicates of the
+    <command>SELECT</> query to determine which partitions must be
+    scanned.
+   </para>
+
+   <para>
+    The following caveats apply to this release:
+   <itemizedlist>
+    <listitem>
+     <para>
+      Constraint exclusion only works when the query directly matches
+      a constant. A constant bound to a parameterised query will not
+      work in the same way since the plan is fixed and would need to
+      vary with each execution.  Also, stable constants such as
+      <literal>CURRENT_DATE</literal> may not be used, since these are
+      constant only for during the execution of a single query.  Join
+      conditions will not allow constraint exclusion to work either.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      UPDATEs and DELETEs against the master table do not perform
+      constraint exclusion.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      All constraints on all partitions of the master table are considered for
+      constraint exclusion, so large numbers of partitions are likely to
+      increase query planning time considerably.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+   </para>
+
+   </sect2>
+
  </sect1>
 
  <sect1 id="ddl-alter">
@@ -1530,7 +2140,7 @@ ALTER TABLE products RENAME TO items;
    </para>
   </sect2>
  </sect1>
- 
+
  <sect1 id="ddl-priv">
   <title>Privileges</title>
 
@@ -1953,7 +2563,7 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
     schema.  To allow that, the <literal>CREATE</literal> privilege on
     the schema needs to be granted.  Note that by default, everyone
     has <literal>CREATE</literal> and <literal>USAGE</literal> privileges on
-    the schema 
+    the schema
     <literal>public</literal>.  This allows all users that are able to
     connect to a given database to create objects in its
     <literal>public</literal> schema.  If you do
