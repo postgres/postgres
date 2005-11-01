@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.12 2005/10/15 20:12:33 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.13 2005/11/01 21:09:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -215,7 +215,8 @@ ALTER SEQUENCE serial RESTART WITH 105;
   <title>Compatibility</title>
 
   <para>
-   <command>ALTER SEQUENCE</command> conforms with <acronym>SQL:2003</acronym>,
+   <command>ALTER SEQUENCE</command> conforms to the <acronym>SQL</acronym>
+   standard,
    except for the <literal>SET SCHEMA</literal> variant, which is a
    <productname>PostgreSQL</productname> extension.
   </para>

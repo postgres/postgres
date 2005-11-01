@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/createuser.sgml,v 1.43 2005/09/30 07:13:53 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createuser.sgml,v 1.44 2005/11/01 21:09:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -92,6 +92,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         The new user will not be a superuser.
+        This is the default.
        </para>
       </listitem>
      </varlistentry>
@@ -112,6 +113,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         The new user will not be allowed to create databases.
+        This is the default.
        </para>
       </listitem>
      </varlistentry>
@@ -133,6 +135,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         The new user will not be allowed to create new roles.
+        This is the default.
        </para>
       </listitem>
      </varlistentry>

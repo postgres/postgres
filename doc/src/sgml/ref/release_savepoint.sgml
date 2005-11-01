@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/release_savepoint.sgml,v 1.4 2005/01/06 20:53:34 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/release_savepoint.sgml,v 1.5 2005/11/01 21:09:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -108,7 +108,7 @@ COMMIT;
   <title>Compatibility</title>
   
   <para>
-   This command conforms to the SQL:2003 standard.  The standard
+   This command conforms to the <acronym>SQL</> standard.  The standard
    specifies that the key word <literal>SAVEPOINT</literal> is
    mandatory, but <productname>PostgreSQL</productname> allows it to
    be omitted.

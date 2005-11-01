@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_view.sgml,v 1.30 2005/02/02 06:35:59 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_view.sgml,v 1.31 2005/11/01 21:09:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -20,8 +20,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable
-class="PARAMETER">column_name</replaceable> [, ...] ) ] AS <replaceable class="PARAMETER">query</replaceable>
+CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) ]
+    AS <replaceable class="PARAMETER">query</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -62,16 +62,14 @@ class="PARAMETER">column_name</replaceable> [, ...] ) ] AS <replaceable class="P
      <para>
       If specified, the view is created as a temporary view.
       Temporary views are automatically dropped at the end of the
-      current session. Temporary views are automatically placed in the
-      current backend's local temporary schema, so it is illegal to
-      specify a schema-qualified name for a temporary view. Existing
+      current session.  Existing
       permanent relations with the same name are not visible to the
       current session while the temporary view exists, unless they are
       referenced with schema-qualified names.
      </para>
 
      <para>
-      If any of the base tables referenced by the view are temporary,
+      If any of the tables referenced by the view are temporary,
       the view is created as a temporary view (whether
       <literal>TEMPORARY</literal> is specified or not).
      </para>
@@ -176,8 +174,8 @@ CREATE VIEW comedies AS
    The SQL standard specifies some additional capabilities for the
    <command>CREATE VIEW</command> statement:
 <synopsis>
-CREATE VIEW <replaceable class="parameter">name</replaceable> [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ]
-    AS query
+CREATE VIEW <replaceable class="parameter">name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ]
+    AS <replaceable class="PARAMETER">query</replaceable>
     [ WITH [ CASCADED | LOCAL ] CHECK OPTION ]
 </synopsis>
   </para>
@@ -224,6 +222,7 @@ CREATE VIEW <replaceable class="parameter">name</replaceable> [ ( <replaceable c
   <para>
    <command>CREATE OR REPLACE VIEW</command> is a
    <productname>PostgreSQL</productname> language extension.
+   So is the concept of a temporary view.
   </para>
  </refsect1>
 

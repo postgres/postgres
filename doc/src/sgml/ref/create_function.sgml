@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.66 2005/07/14 06:17:36 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.67 2005/11/01 21:09:50 tgl Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -228,9 +228,9 @@ CREATE [ OR REPLACE ] FUNCTION
        change even within a single table scan, so no optimizations can be
        made.  Relatively few database functions are volatile in this sense;
        some examples are <literal>random()</>, <literal>currval()</>,
-       <literal>timeofday()</>.  Note that any function that has side-effects
-       must be classified volatile, even if its result is quite predictable,
-       to prevent calls from being optimized away; an example is
+       <literal>timeofday()</>.  But note that any function that has
+       side-effects must be classified volatile, even if its result is quite
+       predictable, to prevent calls from being optimized away; an example is
        <literal>setval()</>.
       </para>
 
@@ -279,9 +279,9 @@ CREATE [ OR REPLACE ] FUNCTION
      </para>
 
      <para>
-      The key word <literal>EXTERNAL</literal> is present for SQL
-      conformance but is optional since, unlike in SQL, this feature
-      does not only apply to external functions.
+      The key word <literal>EXTERNAL</literal> is allowed for SQL
+      conformance, but it is optional since, unlike in SQL, this feature
+      applies to all functions not only external ones.
      </para>
     </listitem>
    </varlistentry>
@@ -478,7 +478,7 @@ SELECT * FROM dup(42);
   <title>Compatibility</title>
 
   <para>
-   A <command>CREATE FUNCTION</command> command is defined in SQL:2003.
+   A <command>CREATE FUNCTION</command> command is defined in SQL:1999 and later.
    The <productname>PostgreSQL</productname> version is similar but
    not fully compatible.  The attributes are not portable, neither are the
    different available languages.

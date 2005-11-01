@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.24 2005/09/23 02:01:35 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.25 2005/11/01 21:09:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -55,13 +55,17 @@ where <replaceable class="PARAMETER">constraint</replaceable> is:
    constraints individually. 
   </para>
 
-  <note>
+  <caution>
   <para>
-   Keep in mind also that declaring a function result value as a domain 
+   At present, declaring a function result value as a domain 
    is pretty dangerous, because none of the PLs enforce domain constraints 
-   on their results.
+   on their results.  You'll need to make sure that the function code itself
+   respects the constraints.  In <application>PL/pgSQL</>, one possible
+   workaround is to explicitly cast the result value to the domain type
+   when you return it.  <application>PL/pgSQL</> does not enforce domain
+   constraints for local variables within functions, either.
   </para>
-  </note>
+  </caution>
  </refsect1>
 
  <refsect1>

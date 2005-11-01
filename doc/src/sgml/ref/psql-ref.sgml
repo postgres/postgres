@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.152 2005/10/30 03:01:49 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.153 2005/11/01 21:09:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -227,8 +227,9 @@ PostgreSQL documentation
       <term><option>--log-file <replaceable class="parameter">filename</replaceable></></term>
       <listitem>
       <para>
-      Write all query output into file <replaceable
-      class="parameter">filename</replaceable> in addition to the regular output source.
+       Write all query output into file <replaceable
+       class="parameter">filename</replaceable>, in addition to the
+       normal output destination.
       </para>
       </listitem>
     </varlistentry>
@@ -601,7 +602,7 @@ testdb=&gt;
     precede it by a backslash. Anything contained in single quotes is
     furthermore subject to C-like substitutions for
     <literal>\n</literal> (new line), <literal>\t</literal> (tab),
-    <literal>\</literal><replaceable>digits</replaceable> (octal),
+    <literal>\</literal><replaceable>digits</replaceable> (octal), and
     <literal>\x</literal><replaceable>digits</replaceable> (hexadecimal).
     </para>
 
@@ -2015,12 +2016,13 @@ bar
         <listitem>
         <para>
         The filename that will be used to store the history list. The default
-        value is <filename>~/.psql_history</filename>.  For example, using:
+        value is <filename>~/.psql_history</filename>.  For example, putting
 <programlisting>
 \set HISTFILE ~/.psql_history- :DBNAME
 </programlisting>
-        in <filename>~/.psqlrc</filename> will get <application>psql</application> to
-        maintain a separate history for each database.
+        in <filename>~/.psqlrc</filename> will cause
+        <application>psql</application> to maintain a separate history for
+        each database.
         </para>
         <note>
         <para>

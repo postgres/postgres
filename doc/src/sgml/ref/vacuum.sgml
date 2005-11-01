@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.39 2005/07/30 17:15:35 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.40 2005/11/01 21:09:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -176,12 +176,10 @@ VACUUM [ FULL | FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">ta
    </para>
 
    <para>
-    During <command>VACUUM</command> execution, there can be a substantial
-    increase in I/O traffic, which cause poor performance for other active
-    sessions.  Therefore, it is sometimes advisable to use
-    the cost-based vacuum delay feature.  See <xref
-    linkend="runtime" endterm="runtime-config-resource-vacuum-cost-title"> for more
-    details.
+    <command>VACUUM</command> causes a substantial increase in I/O traffic,
+    which can cause poor performance for other active sessions.  Therefore,
+    it is sometimes advisable to use the cost-based vacuum delay feature.
+    See <xref linkend="runtime-config-resource-vacuum-cost"> for details.
    </para>
  </refsect1>
 
@@ -238,7 +236,7 @@ VACUUM
 
   <simplelist type="inline">
    <member><xref linkend="app-vacuumdb" endterm="app-vacuumdb-title"></member>
-   <member><xref linkend="runtime" endterm="runtime-config-resource-vacuum-cost-title"></member>
+   <member><xref linkend="runtime-config-resource-vacuum-cost" endterm="runtime-config-resource-vacuum-cost-title"></member>
   </simplelist>
  </refsect1>
 </refentry>

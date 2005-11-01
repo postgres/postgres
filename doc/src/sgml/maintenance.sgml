@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.49 2005/10/21 19:39:08 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.50 2005/11/01 21:09:49 tgl Exp $
 -->
 
 <chapter id="maintenance">
@@ -586,7 +586,8 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
 
   <para>
    In some situations it is worthwhile to rebuild indexes periodically
-   with the <command>REINDEX</> command.
+   with the <xref linkend="sql-reindex" endterm="sql-reindex-title">
+   command.
   </para>
 
   <para>

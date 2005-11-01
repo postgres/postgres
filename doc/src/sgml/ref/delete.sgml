@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/delete.sgml,v 1.24 2005/04/08 00:59:58 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/delete.sgml,v 1.25 2005/11/01 21:09:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -46,7 +46,7 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable>
 
   <para>
    By default, <command>DELETE</command> will delete rows in the
-   specified table and all its subtables. If you wish to delete only
+   specified table and all its child tables. If you wish to delete only
    from the specific table mentioned, you must use the
    <literal>ONLY</literal> clause.
   </para>
@@ -73,6 +73,16 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable>
 
   <variablelist>
    <varlistentry>
+    <term><literal>ONLY</></term>
+    <listitem>
+     <para>
+      If specified, delete rows from the named table only.  When not
+      specified, any tables inheriting from the named table are also processed.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><replaceable class="parameter">table</replaceable></term>
     <listitem>
      <para>
@@ -90,7 +100,9 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable>
       to the list of tables that can be specified in the <xref
       linkend="sql-from" endterm="sql-from-title"> of a
       <command>SELECT</command> statement; for example, an alias for
-      the table name can be specified.
+      the table name can be specified.  Do not repeat the target table
+      in the <replaceable class="PARAMETER">usinglist</replaceable>,
+      unless you wish to set up a self-join.
      </para>
     </listitem>
    </varlistentry>
@@ -99,8 +111,8 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable>
     <term><replaceable class="parameter">condition</replaceable></term>
     <listitem>
      <para>
-      A value expression that returns a value of type
-      <type>boolean</type> that determines the rows which are to be
+      An expression returning a value of type
+      <type>boolean</type>, which determines the rows that are to be
       deleted.
      </para>
     </listitem>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_sequence.sgml,v 1.22 2005/01/04 00:39:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_sequence.sgml,v 1.23 2005/11/01 21:09:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -82,8 +82,8 @@ DROP SEQUENCE serial;
   <title>Compatibility</title>
 
   <para>
-   <command>DROP SEQUENCE</command> conforms with
-   <acronym>SQL:2003</acronym>, except that the standard only allows one
+   <command>DROP SEQUENCE</command> conforms to the <acronym>SQL</acronym>
+   standard, except that the standard only allows one
    sequence to be dropped per command. 
   </para>
  </refsect1>

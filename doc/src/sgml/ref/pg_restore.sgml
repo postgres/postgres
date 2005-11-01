@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.55 2005/07/27 13:42:01 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.56 2005/11/01 21:09:50 tgl Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -243,9 +243,9 @@
       <term><option>--schema=<replaceable class="parameter">schema</replaceable></option></term>
       <listitem>
        <para>
-        Restore only definitions and/or data in the named schema. Not to be
-        confused with the <option>-s</option> option.  This can be combined with
-        <option>-t</option> option.
+        Restore only objects that are in the named schema.  This can be
+        combined with the <option>-t</option> option to restore just a
+        specific table.
        </para>
       </listitem>
      </varlistentry>
@@ -298,8 +298,10 @@
       <term><option>--schema-only</option></term>
       <listitem>
        <para>
-        Restore only the schema (data definitions), not the data.
-        Sequence values will be reset.
+        Restore only the schema (data definitions), not the data (table
+        contents).  Sequence current values will not be restored, either.
+        (Do not confuse this with the <option>--schema</> option, which
+        uses the word <quote>schema</> in a different meaning.)
        </para>
       </listitem>
      </varlistentry>
@@ -361,10 +363,11 @@
       <term><option>--use-set-session-authorization</option></term>
       <listitem>
        <para>
-        Output SQL standard <command>SET SESSION AUTHORIZATION</>
-        commands instead of <command>ALTER OWNER</> commands.  This
-        makes the dump more standards compatible, but depending on the
-        history of the objects in the dump, may not restore properly.
+        Output SQL-standard <command>SET SESSION AUTHORIZATION</> commands
+        instead of <command>ALTER OWNER</> commands to determine object
+        ownership.  This makes the dump more standards compatible, but
+        depending on the history of the objects in the dump, may not restore
+        properly.
        </para>
       </listitem>
      </varlistentry>

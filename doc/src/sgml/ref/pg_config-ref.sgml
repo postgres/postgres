@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.22 2005/09/27 17:39:32 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.23 2005/11/01 21:09:50 tgl Exp $ -->
 
 <refentry id="app-pgconfig">
  <refmeta>
@@ -277,7 +277,10 @@
   </para>
 
   <para>
-   The options <option>--cc</option>, <option>--cppflags</option>,
+   The options <option>--docdir</option>, <option>--pkgincludedir</option>,
+   <option>--localedir</option>, <option>--mandir</option>,
+   <option>--sharedir</option>, <option>--sysconfdir</option>,
+   <option>--cc</option>, <option>--cppflags</option>,
    <option>--cflags</option>, <option>--cflags_sl</option>,
    <option>--ldflags</option>, <option>--ldflags_sl</option>,
    and <option>--libs</option> are new in <productname>PostgreSQL</> 8.1.

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.18 2005/10/13 22:44:51 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.19 2005/11/01 21:09:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -237,7 +237,8 @@ ALTER DOMAIN zipcode SET SCHEMA customers;
   <title>Compatibility</title>
     
   <para>
-   <command>ALTER DOMAIN</command> conforms with <acronym>SQL:2003</acronym>,
+   <command>ALTER DOMAIN</command> conforms to the <acronym>SQL</acronym>
+   standard,
    except for the <literal>OWNER</> and <literal>SET SCHEMA</> variants,
    which are <productname>PostgreSQL</productname> extensions.
   </para>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_function.sgml,v 1.9 2005/10/13 22:44:51 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_function.sgml,v 1.10 2005/11/01 21:09:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -149,8 +149,9 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
        <literal>CALLED ON NULL INPUT</literal> changes the function so
        that it will be invoked when some or all of its arguments are
        null. <literal>RETURNS NULL ON NULL INPUT</literal> or
-       <literal>STRICT</literal> changes the function so that it
-       always returns null if any of its arguments are null. See <xref
+       <literal>STRICT</literal> changes the function so that it is not
+       invoked if any of its arguments are null; instead, a null result
+       is assumed automatically.  See <xref
        linkend="sql-createfunction"> for more information.
       </para>
      </listitem>
@@ -164,8 +165,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
      <listitem>
       <para>
        Change the volatility of the function to the specified
-       type. See <xref linkend="sql-createfunction"> for more
-       information about function volatility.
+       setting.  See <xref linkend="sql-createfunction"> for details.
       </para>
     </listitem>
    </varlistentry>
@@ -233,7 +233,7 @@ ALTER FUNCTION sqrt(integer) SET SCHEMA maths;
    properties of a function to be modified, but does not provide the
    ability to rename a function, make a function a security definer,
    or change the owner, schema, or volatility of a function. The standard also
-   requires the <literal>RESTRICT</> key word; it is optional in
+   requires the <literal>RESTRICT</> key word, which is optional in
    <productname>PostgreSQL</>.
   </para>
  </refsect1>

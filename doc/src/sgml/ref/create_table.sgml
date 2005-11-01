@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.95 2005/10/31 18:13:52 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.96 2005/11/01 21:09:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -20,11 +20,12 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PARAMETER">table_name</replaceable> (
-  [ <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ DEFAULT <replaceable>default_expr</> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
+CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PARAMETER">table_name</replaceable> ( [
+  { <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ DEFAULT <replaceable>default_expr</> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
     | <replaceable>table_constraint</replaceable>
-    | LIKE <replaceable>parent_table</replaceable> [ { INCLUDING | EXCLUDING } DEFAULTS ] ]  [, ... ]
-)
+    | LIKE <replaceable>parent_table</replaceable> [ { INCLUDING | EXCLUDING } DEFAULTS ] }
+    [, ... ]
+] )
 [ INHERITS ( <replaceable>parent_table</replaceable> [, ... ] ) ]
 [ WITH OIDS | WITHOUT OIDS ]
 [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
@@ -861,8 +862,8 @@ CREATE TABLE cinemas (
   <title id="SQL-CREATETABLE-compatibility-title">Compatibility</title>
 
   <para>
-   The <command>CREATE TABLE</command> command conforms to SQL-92 and
-   to a subset of SQL:2003, with exceptions listed below.
+   The <command>CREATE TABLE</command> command conforms to the
+   <acronym>SQL</acronym> standard, with exceptions listed below.
   </para>
 
   <refsect2>
@@ -940,8 +941,8 @@ CREATE TABLE cinemas (
    <para>
     Multiple inheritance via the <literal>INHERITS</literal> clause is
     a <productname>PostgreSQL</productname> language extension.
-    SQL:2003 defines single inheritance using a
-    different syntax and different semantics.  SQL:2003-style
+    SQL:1999 and later define single inheritance using a
+    different syntax and different semantics.  SQL:1999-style
     inheritance is not yet supported by
     <productname>PostgreSQL</productname>.
    </para>

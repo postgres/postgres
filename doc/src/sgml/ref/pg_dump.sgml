@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.80 2005/07/25 22:12:31 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.81 2005/11/01 21:09:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -194,17 +194,18 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
-	 <varlistentry>
-	  <term><option>-E <replaceable class="parameter">encoding</replaceable></option></term>
-	  <term><option>--encoding=<replaceable class="parameter">encoding</replaceable></option></term>
-	  <listitem>
-	   <para>
-	    Create the dump in the specified encoding. By default, the dump is
-		created in the database encoding.
-	   </para>
-	  </listitem>
+     <varlistentry>
+      <term><option>-E <replaceable class="parameter">encoding</replaceable></option></term>
+      <term><option>--encoding=<replaceable class="parameter">encoding</replaceable></option></term>
+      <listitem>
+       <para>
+        Create the dump in the specified character set encoding. By default,
+        the dump is created in the database encoding.  (Another way to get the
+        same result is to set the <envar>PGCLIENTENCODING</envar> environment
+        variable to the desired dump encoding.)
+       </para>
+      </listitem>
      </varlistentry>
-
 
      <varlistentry>
       <term><option>-f <replaceable class="parameter">file</replaceable></option></term>
@@ -474,10 +475,13 @@ PostgreSQL documentation
       <term><option>--use-set-session-authorization</></term>
       <listitem>
        <para>
-        Output SQL standard SET SESSION AUTHORIZATION commands instead of
-        ALTER OWNER commands.  This makes the dump more standards compatible,
-        but depending on the history of the objects in the dump, may not
-        restore properly.
+        Output SQL-standard <command>SET SESSION AUTHORIZATION</> commands
+        instead of <command>ALTER OWNER</> commands to determine object
+        ownership.  This makes the dump more standards compatible, but
+        depending on the history of the objects in the dump, may not restore
+        properly.  Also, a dump using <command>SET SESSION AUTHORIZATION</>
+        will certainly require superuser privileges to restore correctly,
+        whereas <command>ALTER OWNER</> requires lesser privileges.
        </para>
       </listitem>
      </varlistentry>
