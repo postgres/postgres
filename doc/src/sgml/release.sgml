@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.397 2005/11/01 21:09:49 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.398 2005/11/02 14:08:43 momjian Exp $
 
 Typical markup:
 
@@ -2052,7 +2052,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
 
       <listitem>
        <para>
-        Improve <filename>/contrib/pgbench</> (Tatsuo)
+        Improve <filename>/contrib/pgbench</> (Tomoaki Sato, Tatsuo)
        </para>
        <para>
         There is now a facility for testing with SQL command scripts given
