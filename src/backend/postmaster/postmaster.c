@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.473 2005/11/03 17:11:36 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.474 2005/11/03 20:02:50 alvherre Exp $
  *
  * NOTES
  *
@@ -3186,7 +3186,7 @@ SubPostmasterMain(int argc, char *argv[])
 
 	/* In EXEC_BACKEND case we will not have inherited these settings */
 	IsPostmasterEnvironment = true;
-	whereToSendOutput = None;
+	whereToSendOutput = DestNone;
 
 	/* Setup essential subsystems (to ensure elog() behaves sanely) */
 	MemoryContextInit();
