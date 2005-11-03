@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.115 2005/10/15 02:49:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.116 2005/11/03 17:34:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -359,6 +359,8 @@ set_subqueryscan_references(SubqueryScan *plan, List *rtable)
 		 */
 		int			rtoffset = list_length(rtable);
 		List	   *sub_rtable;
+		ListCell   *lp,
+				   *lc;
 
 		sub_rtable = copyObject(rte->subquery->rtable);
 		range_table_walker(sub_rtable,
@@ -378,6 +380,19 @@ set_subqueryscan_references(SubqueryScan *plan, List *rtable)
 
 		result->initPlan = list_concat(plan->scan.plan.initPlan,
 									   result->initPlan);
+
+		/*
+		 * we also have to transfer the SubqueryScan's result-column names
+		 * into the subplan, else columns sent to client will be improperly
+		 * labeled if this is the topmost plan level.
+		 */
+		forboth(lp, plan->scan.plan.targetlist, lc, result->targetlist)
+		{
+			TargetEntry *ptle = (TargetEntry *) lfirst(lp);
+			TargetEntry *ctle = (TargetEntry *) lfirst(lc);
+
+			ctle->resname = ptle->resname;
+		}
 	}
 	else
 	{
