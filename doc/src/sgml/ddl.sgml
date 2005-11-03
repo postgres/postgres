@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.46 2005/11/01 23:19:05 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.47 2005/11/03 00:51:43 neilc Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -1406,32 +1406,42 @@ SELECT * from cities*;
     </listitem>
    </itemizedlist>
 
-    The benefits will normally be worthwhile only when a data table would
-    otherwise be very large. That is for you to judge, though would not
-    usually be lower than the size of physical RAM on the database server.
+    The benefits will normally be worthwhile only when a table would
+    otherwise be very large. The exact point at which a table will
+    benefit from partitioning depends on the application, although the
+    size of the table should usually exceed the physical memory of the
+    database server.
    </para>
 
    <para>
-    In <productname>PostgreSQL</productname> &version;, the following
-    partitioning types are supported:
+    The following partitioning types are supported by
+    <productname>PostgreSQL</productname> &version;:
 
-    <itemizedlist>
-     <listitem>
-      <para>
-       "Range Partitioning" where the table is partitioned along a
-       "range" defined by a single column or set of columns, with no
-       overlap between partitions. Examples might be a date range or a
-       range of identifiers for particular business objects.
-      </para>
-     </listitem>
+    <variablelist>
+     <varlistentry>
+      <term>Range Partitioning</term>
 
-     <listitem>
-      <para>
-       "List Partitioning" where the table is partitioned by
-       explicitly listing which values relate to each partition.
-      </para>
-     </listitem>
-    </itemizedlist>
+      <listitem>
+       <para>
+        The table is partitioned along a <quote>range</quote> defined
+        by a single column or set of columns, with no overlap between
+        partitions. Examples might be a date range or a range of
+        identifiers for particular business objects.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>List Partitioning</term>
+
+      <listitem>
+       <para>
+        The table is partitioned by explicitly listing which values
+        relate to each partition.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
 
     Hash partitioning is not currently supported.
    </para>
@@ -1471,8 +1481,7 @@ SELECT * from cities*;
 
        <para>
         We will refer to the child tables as partitions, though they
-        are in every way just normal <productname>PostgreSQL</>
-        tables.
+        are in every way normal <productname>PostgreSQL</> tables.
        </para>
       </listitem>
 
@@ -1485,15 +1494,16 @@ SELECT * from cities*;
         for constraint exclusion. Simple examples would be:
 <programlisting>
 CHECK ( x = 1 )
-CHECK ( county IN ('Oxfordshire','Buckinghamshire','Warwickshire'))
+CHECK ( county IN ( 'Oxfordshire','Buckinghamshire','Warwickshire' ))
 CHECK ( outletID BETWEEN 1 AND 99 )
 </programlisting>
 
-        These can be linked together with boolean operators AND and OR to
-        form complex constraints. Note that there is no difference in syntax
-        between Range and List Partitioning mechanisms; those terms are
-        descriptive only. Ensure that the set of values in each child table
-        do not overlap.
+        These can be linked together with the boolean operators
+        <literal>AND</literal> and <literal>OR</literal> to form
+        complex constraints. Note that there is no difference in
+        syntax between range and list partitioning; those terms are
+        descriptive only. Ensure that the set of values in each child
+        table do not overlap.
        </para>
       </listitem>
 
@@ -1712,19 +1722,22 @@ DO INSTEAD
 
     <listitem>
      <para>
-      For some datatypes you must explicitly coerce the constant values
-      into the datatype of the column. The following constraint will
-      work if x is an INTEGER datatype, but not if x is BIGINT datatype.
+      For some datatypes you must explicitly coerce the constant
+      values into the datatype of the column. The following constraint
+      will work if <varname>x</varname> is an <type>integer</type>
+      datatype, but not if <varname>x</varname> is a
+      <type>bigint</type>:
 <programlisting>
 CHECK ( x = 1 )
 </programlisting>
-      For BIGINT we must use a constraint like:
+      For <type>bigint</type> we must use a constraint like:
 <programlisting>
 CHECK ( x = 1::bigint )
 </programlisting>
-      The issue is not restricted to BIGINT datatypes but can occur whenever
-      the default datatype of the constant does not match the datatype of
-      the column to which it is being compared.
+      The problem is not limited to the <type>bigint</type> datatype
+      &mdash; it can occur whenever the default datatype of the
+      constant does not match the datatype of the column to which it
+      is being compared.
      </para>
     </listitem>
 
@@ -2312,8 +2325,8 @@ REVOKE ALL ON accounts FROM PUBLIC;
    </indexterm>
 
    <para>
-    To create a schema, use the command <literal>CREATE
-    SCHEMA</literal>.  Give the schema a name of your choice.  For
+    To create a schema, use the command <command>CREATE
+    SCHEMA</command>.  Give the schema a name of your choice.  For
     example:
 <programlisting>
 CREATE SCHEMA myschema;
