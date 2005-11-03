@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.116 2005/11/03 17:34:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.117 2005/11/03 17:45:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -382,9 +382,10 @@ set_subqueryscan_references(SubqueryScan *plan, List *rtable)
 									   result->initPlan);
 
 		/*
-		 * we also have to transfer the SubqueryScan's result-column names
+		 * We also have to transfer the SubqueryScan's result-column names
 		 * into the subplan, else columns sent to client will be improperly
-		 * labeled if this is the topmost plan level.
+		 * labeled if this is the topmost plan level.  Copy the "source
+		 * column" information too.
 		 */
 		forboth(lp, plan->scan.plan.targetlist, lc, result->targetlist)
 		{
@@ -392,6 +393,8 @@ set_subqueryscan_references(SubqueryScan *plan, List *rtable)
 			TargetEntry *ctle = (TargetEntry *) lfirst(lc);
 
 			ctle->resname = ptle->resname;
+			ctle->resorigtbl = ptle->resorigtbl;
+			ctle->resorigcol = ptle->resorigcol;
 		}
 	}
 	else
