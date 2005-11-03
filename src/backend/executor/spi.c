@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.143 2005/10/15 02:49:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.144 2005/11/03 17:11:36 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -984,8 +984,8 @@ void
 SPI_cursor_fetch(Portal portal, bool forward, long count)
 {
 	_SPI_cursor_operation(portal, forward, count,
-						  CreateDestReceiver(SPI, NULL));
-	/* we know that the SPI receiver doesn't need a destroy call */
+						  CreateDestReceiver(DestSPI, NULL));
+	/* we know that the DestSPI receiver doesn't need a destroy call */
 }
 
 
@@ -1418,7 +1418,7 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 				if (!read_only)
 					CommandCounterIncrement();
 
-				dest = CreateDestReceiver(queryTree->canSetTag ? SPI : None,
+				dest = CreateDestReceiver(queryTree->canSetTag ? DestSPI : DestNone,
 										  NULL);
 
 				if (snapshot == InvalidSnapshot)
@@ -1527,7 +1527,7 @@ _SPI_pquery(QueryDesc *queryDesc, long tcount)
 				res = SPI_OK_SELINTO;
 				queryDesc->dest = None_Receiver;		/* don't output results */
 			}
-			else if (queryDesc->dest->mydest != SPI)
+			else if (queryDesc->dest->mydest != DestSPI)
 			{
 				/* Don't return SPI_OK_SELECT if we're discarding result */
 				res = SPI_OK_UTILITY;
@@ -1560,7 +1560,7 @@ _SPI_pquery(QueryDesc *queryDesc, long tcount)
 	_SPI_current->processed = queryDesc->estate->es_processed;
 	_SPI_current->lastoid = queryDesc->estate->es_lastoid;
 
-	if (operation == CMD_SELECT && queryDesc->dest->mydest == SPI)
+	if (operation == CMD_SELECT && queryDesc->dest->mydest == DestSPI)
 	{
 		if (_SPI_checktuples())
 			elog(ERROR, "consistency check on SPI tuple count failed");
@@ -1646,7 +1646,7 @@ _SPI_cursor_operation(Portal portal, bool forward, long count,
 	 */
 	_SPI_current->processed = nfetched;
 
-	if (dest->mydest == SPI && _SPI_checktuples())
+	if (dest->mydest == DestSPI && _SPI_checktuples())
 		elog(ERROR, "consistency check on SPI tuple count failed");
 
 	/* Put the result into place for access by caller */

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.43 2005/10/15 02:49:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.44 2005/11/03 17:11:35 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,7 +190,7 @@ PerformPortalFetch(FetchStmt *stmt,
 		return;					/* keep compiler happy */
 	}
 
-	/* Adjust dest if needed.  MOVE wants destination None */
+	/* Adjust dest if needed.  MOVE wants destination DestNone */
 	if (stmt->ismove)
 		dest = None_Receiver;
 
@@ -369,7 +369,7 @@ PersistHoldablePortal(Portal portal)
 		ExecutorRewind(queryDesc);
 
 		/* Change the destination to output to the tuplestore */
-		queryDesc->dest = CreateDestReceiver(Tuplestore, portal);
+		queryDesc->dest = CreateDestReceiver(DestTuplestore, portal);
 
 		/* Fetch the result set into the tuplestore */
 		ExecutorRun(queryDesc, ForwardScanDirection, 0L);

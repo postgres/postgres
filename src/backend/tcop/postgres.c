@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.467 2005/10/20 20:05:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.468 2005/11/03 17:11:38 alvherre Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -74,7 +74,7 @@ extern char *optarg;
 const char *debug_query_string; /* for pgmonitor and log_min_error_statement */
 
 /* Note: whereToSendOutput is initialized for the bootstrap/standalone case */
-CommandDest whereToSendOutput = Debug;
+CommandDest whereToSendOutput = DestDebug;
 
 /* flag for logging end of session */
 bool		Log_disconnections = false;
@@ -404,7 +404,7 @@ ReadCommand(StringInfo inBuf)
 {
 	int			result;
 
-	if (whereToSendOutput == Remote)
+	if (whereToSendOutput == DestRemote)
 		result = SocketBackend(inBuf);
 	else
 		result = InteractiveBackend(inBuf);
@@ -1364,7 +1364,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 	/*
 	 * Send ParseComplete.
 	 */
-	if (whereToSendOutput == Remote)
+	if (whereToSendOutput == DestRemote)
 		pq_putemptymessage('1');
 
 	if (save_log_statement_stats)
@@ -1650,7 +1650,7 @@ exec_bind_message(StringInfo input_message)
 	/*
 	 * Send BindComplete.
 	 */
-	if (whereToSendOutput == Remote)
+	if (whereToSendOutput == DestRemote)
 		pq_putemptymessage('2');
 }
 
@@ -1678,8 +1678,8 @@ exec_execute_message(const char *portal_name, long max_rows)
 
 	/* Adjust destination to tell printtup.c what to do */
 	dest = whereToSendOutput;
-	if (dest == Remote)
-		dest = RemoteExecute;
+	if (dest == DestRemote)
+		dest = DestRemoteExecute;
 
 	portal = GetPortalByName(portal_name);
 	if (!PortalIsValid(portal))
@@ -1835,7 +1835,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 	else
 	{
 		/* Portal run not complete, so send PortalSuspended */
-		if (whereToSendOutput == Remote)
+		if (whereToSendOutput == DestRemote)
 			pq_putemptymessage('s');
 	}
 
@@ -1913,7 +1913,7 @@ exec_describe_statement_message(const char *stmt_name)
 					 errmsg("unnamed prepared statement does not exist")));
 	}
 
-	if (whereToSendOutput != Remote)
+	if (whereToSendOutput != DestRemote)
 		return;					/* can't actually do anything... */
 
 	/*
@@ -1959,7 +1959,7 @@ exec_describe_portal_message(const char *portal_name)
 				(errcode(ERRCODE_UNDEFINED_CURSOR),
 				 errmsg("portal \"%s\" does not exist", portal_name)));
 
-	if (whereToSendOutput != Remote)
+	if (whereToSendOutput != DestRemote)
 		return;					/* can't actually do anything... */
 
 	if (portal->tupDesc)
@@ -2938,7 +2938,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	/*
 	 * Send this backend's cancellation info to the frontend.
 	 */
-	if (whereToSendOutput == Remote &&
+	if (whereToSendOutput == DestRemote &&
 		PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
 	{
 		StringInfoData buf;
@@ -2951,7 +2951,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	}
 
 	/* Welcome banner for standalone case */
-	if (whereToSendOutput == Debug)
+	if (whereToSendOutput == DestDebug)
 		printf("\nPostgreSQL stand-alone backend %s\n", PG_VERSION);
 
 	/*
@@ -3239,8 +3239,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 					 * Reset whereToSendOutput to prevent ereport from
 					 * attempting to send any more messages to client.
 					 */
-					if (whereToSendOutput == Remote)
-						whereToSendOutput = None;
+					if (whereToSendOutput == DestRemote)
+						whereToSendOutput = DestNone;
 
 					proc_exit(0);
 				}
@@ -3294,7 +3294,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 							break;
 					}
 
-					if (whereToSendOutput == Remote)
+					if (whereToSendOutput == DestRemote)
 						pq_putemptymessage('3');		/* CloseComplete */
 				}
 				break;
@@ -3328,7 +3328,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 			case 'H':			/* flush */
 				pq_getmsgend(&input_message);
-				if (whereToSendOutput == Remote)
+				if (whereToSendOutput == DestRemote)
 					pq_flush();
 				break;
 
@@ -3350,8 +3350,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 				 * Reset whereToSendOutput to prevent ereport from attempting
 				 * to send any more messages to client.
 				 */
-				if (whereToSendOutput == Remote)
-					whereToSendOutput = None;
+				if (whereToSendOutput == DestRemote)
+					whereToSendOutput = DestNone;
 
 				/*
 				 * NOTE: if you are tempted to add more code here, DON'T!

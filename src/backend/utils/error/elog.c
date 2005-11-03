@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.165 2005/10/15 02:49:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.166 2005/11/03 17:11:39 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,7 +223,7 @@ errstart(int elevel, const char *filename, int lineno,
 	}
 
 	/* Determine whether message is enabled for client output */
-	if (whereToSendOutput == Remote && elevel != COMMERROR)
+	if (whereToSendOutput == DestRemote && elevel != COMMERROR)
 	{
 		/*
 		 * client_min_messages is honored only after we complete the
@@ -374,7 +374,7 @@ errfinish(int dummy,...)
 	 * we must do this even if client is fool enough to have set
 	 * client_min_messages above FATAL, so don't look at output_to_client.
 	 */
-	if (elevel >= FATAL && whereToSendOutput == Remote)
+	if (elevel >= FATAL && whereToSendOutput == DestRemote)
 		pq_endcopyout(true);
 
 	/* Emit the message to the right places */
@@ -412,8 +412,8 @@ errfinish(int dummy,...)
 		 * If we just reported a startup failure, the client will disconnect
 		 * on receiving it, so don't send any more to the client.
 		 */
-		if (PG_exception_stack == NULL && whereToSendOutput == Remote)
-			whereToSendOutput = None;
+		if (PG_exception_stack == NULL && whereToSendOutput == DestRemote)
+			whereToSendOutput = DestNone;
 
 		/*
 		 * fflush here is just to improve the odds that we get to see the
@@ -1684,7 +1684,7 @@ send_message_to_server_log(ErrorData *edata)
 #endif   /* WIN32 */
 
 	/* Write to stderr, if enabled */
-	if ((Log_destination & LOG_DESTINATION_STDERR) || whereToSendOutput == Debug)
+	if ((Log_destination & LOG_DESTINATION_STDERR) || whereToSendOutput == DestDebug)
 	{
 #ifdef WIN32
 

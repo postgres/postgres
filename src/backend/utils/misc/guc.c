@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.296 2005/10/29 00:31:52 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.297 2005/11/03 17:11:39 alvherre Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -3323,7 +3323,7 @@ BeginReportingGUCOptions(void)
 	 * Don't do anything unless talking to an interactive frontend of protocol
 	 * 3.0 or later.
 	 */
-	if (whereToSendOutput != Remote ||
+	if (whereToSendOutput != DestRemote ||
 		PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
 		return;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.253 2005/10/15 02:49:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.254 2005/11/03 17:11:34 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -966,7 +966,7 @@ DoCopy(const CopyStmt *stmt)
 		}
 		if (pipe)
 		{
-			if (whereToSendOutput == Remote)
+			if (whereToSendOutput == DestRemote)
 				ReceiveCopyBegin(cstate);
 			else
 				cstate->copy_file = stdin;
@@ -1017,7 +1017,7 @@ DoCopy(const CopyStmt *stmt)
 		}
 		if (pipe)
 		{
-			if (whereToSendOutput == Remote)
+			if (whereToSendOutput == DestRemote)
 				cstate->fe_copy = true;
 			else
 				cstate->copy_file = stdout;

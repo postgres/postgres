@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.95 2005/10/15 02:49:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.96 2005/11/03 17:11:38 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -471,8 +471,8 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot)
  *		Select the format codes for a portal's output.
  *
  * This must be run after PortalStart for a portal that will be read by
- * a Remote or RemoteExecute destination.  It is not presently needed for
- * other destination types.
+ * a DestRemote or DestRemoteExecute destination.  It is not presently needed
+ * for other destination types.
  *
  * formats[] is the client format request, as per Bind message conventions.
  */
@@ -633,7 +633,7 @@ PortalRun(Portal portal, long count,
 					DestReceiver *treceiver;
 
 					PortalCreateHoldStore(portal);
-					treceiver = CreateDestReceiver(Tuplestore, portal);
+					treceiver = CreateDestReceiver(DestTuplestore, portal);
 					PortalRunUtility(portal, linitial(portal->parseTrees),
 									 treceiver, NULL);
 					(*treceiver->rDestroy) (treceiver);
@@ -1015,18 +1015,18 @@ PortalRunMulti(Portal portal,
 	ListCell   *planlist_item;
 
 	/*
-	 * If the destination is RemoteExecute, change to None.  The reason is
-	 * that the client won't be expecting any tuples, and indeed has no way to
-	 * know what they are, since there is no provision for Describe to send a
-	 * RowDescription message when this portal execution strategy is in
+	 * If the destination is DestRemoteExecute, change to DestNone.  The reason
+	 * is that the client won't be expecting any tuples, and indeed has no way
+	 * to know what they are, since there is no provision for Describe to send
+	 * a RowDescription message when this portal execution strategy is in
 	 * effect.	This presently will only affect SELECT commands added to
 	 * non-SELECT queries by rewrite rules: such commands will be executed,
 	 * but the results will be discarded unless you use "simple Query"
 	 * protocol.
 	 */
-	if (dest->mydest == RemoteExecute)
+	if (dest->mydest == DestRemoteExecute)
 		dest = None_Receiver;
-	if (altdest->mydest == RemoteExecute)
+	if (altdest->mydest == DestRemoteExecute)
 		altdest = None_Receiver;
 
 	/*
@@ -1184,7 +1184,7 @@ PortalRunFetch(Portal portal,
 					DestReceiver *treceiver;
 
 					PortalCreateHoldStore(portal);
-					treceiver = CreateDestReceiver(Tuplestore, portal);
+					treceiver = CreateDestReceiver(DestTuplestore, portal);
 					PortalRunUtility(portal, linitial(portal->parseTrees),
 									 treceiver, NULL);
 					(*treceiver->rDestroy) (treceiver);
@@ -1371,7 +1371,7 @@ DoPortalRunFetch(Portal portal,
 		/* Are we sitting on a row? */
 		on_row = (!portal->atStart && !portal->atEnd);
 
-		if (dest->mydest == None)
+		if (dest->mydest == DestNone)
 		{
 			/* MOVE 0 returns 0/1 based on if FETCH 0 would return a row */
 			return on_row ? 1L : 0L;
@@ -1398,7 +1398,7 @@ DoPortalRunFetch(Portal portal,
 	/*
 	 * Optimize MOVE BACKWARD ALL into a Rewind.
 	 */
-	if (!forward && count == FETCH_ALL && dest->mydest == None)
+	if (!forward && count == FETCH_ALL && dest->mydest == DestNone)
 	{
 		long		result = portal->portalPos;
 

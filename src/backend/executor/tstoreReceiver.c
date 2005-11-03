@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/tstoreReceiver.c,v 1.14 2005/03/16 21:38:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/tstoreReceiver.c,v 1.15 2005/11/03 17:11:36 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,7 @@ CreateTuplestoreDestReceiver(Tuplestorestate *tStore,
 	self->pub.rStartup = tstoreStartupReceiver;
 	self->pub.rShutdown = tstoreShutdownReceiver;
 	self->pub.rDestroy = tstoreDestroyReceiver;
-	self->pub.mydest = Tuplestore;
+	self->pub.mydest = DestTuplestore;
 
 	self->tstore = tStore;
 	self->cxt = tContext;

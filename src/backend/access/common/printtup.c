@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.92 2005/10/15 02:49:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.93 2005/11/03 17:11:30 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,8 +94,11 @@ printtup_create_DR(CommandDest dest, Portal portal)
 
 	self->portal = portal;
 
-	/* Send T message automatically if Remote, but not if RemoteExecute */
-	self->sendDescrip = (dest == Remote);
+	/*
+	 * Send T message automatically if DestRemote, but not if
+	 * DestRemoteExecute
+	 */
+	self->sendDescrip = (dest == DestRemote);
 
 	self->attrinfo = NULL;
 	self->nattrs = 0;
