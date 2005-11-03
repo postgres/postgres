@@ -1,7 +1,8 @@
-
 pgcrypto - cryptographic functions for PostgreSQL
 =================================================
 Marko Kreen <marko@l-t.ee>
+
+// Note: this document is in asciidoc format.
 
 
 1.  Installation
@@ -16,6 +17,13 @@ Run following commands:
 The `make installcheck` command is important.  It runs regression tests
 for the module.  They make sure the functions here produce correct
 results.
+
+Next, to put the functions into a particular database, run the commands in
+file pgcrypto.sql, which has been installed into the shared files directory.
+
+Example using psql:
+
+    psql -d DBNAME -f pgcrypto.sql
 
 
 2.  Notes
@@ -71,7 +79,7 @@ are NULL.  This may create security risks on careless usage.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The `digest_exists()`, `hmac_exists()` and `cipher_exists()` functions
-are deprecated.  The plan is to remove those in PostgreSQL 8.2.
+are deprecated.  The plan is to remove them in PostgreSQL 8.2.
 
 
 2.4.  Security
@@ -140,7 +148,7 @@ MD5 or SHA1 in following respects:
 1. They are slow.  As the amount of data is so small, this is only
    way to make brute-forcing passwords hard.
 2. Include random 'salt' with result, so that users having same
-   password would have different crypted passwords.  This also
+   password would have different crypted passwords.  This is also
    additional defense against reversing the algorithm.
 3. Include algorithm type in the result, so passwords hashed with
    different algorithms can co-exist.
@@ -198,7 +206,7 @@ Accepted types are: `des`, `xdes`, `md5` and `bf`.
 
 Same as above, but lets user specify iteration count for some
 algorithms.  The higher the count, the more time it takes to hash
-ti password and therefore the more time to break it.  Although with
+the password and therefore the more time to break it.  Although with
 too high count the time to calculate a hash may be several years
 - which is somewhat impractical.
 
@@ -217,9 +225,9 @@ a odd number.
 Notes:
 
 - Original DES crypt was designed to have the speed of 4 hashes per
-  second on the hardware that time.
-- Slower that 4 hashes per second would probably damper usability.
-- Faster that 100 hashes per second is probably too fast.
+  second on the hardware of that time.
+- Slower than 4 hashes per second would probably dampen usability.
+- Faster than 100 hashes per second is probably too fast.
 - See next section about possible values for `crypt-bf`.
 
 
@@ -230,7 +238,7 @@ Here is a table that should give overview of relative slowness
 of different hashing algorithms.
 
 * The goal is to crack a 8-character password, which consists:
-  1.  Only from lowercase letters
+  1.  Only of lowercase letters
   2.  Numbers, lower- and uppercase letters.
 * The table below shows how much time it would take to try all
   combinations of characters.
@@ -248,7 +256,6 @@ crypt-md5           2681     2.6 years           2625 years
 crypt-des         362837        7 days             19 years
 sha1              590223        4 days             12 years
 md5              2345086         1 day              3 years
-password       143781000       25 mins              18 days
 ------------------------------------------------------------
 
 * The machine used is 1.5GHz Pentium 4.
@@ -256,8 +263,6 @@ password       143781000       25 mins              18 days
   John the Ripper v1.6.38 `-test` output.
 * MD5 numbers are from mdcrack 1.2.
 * SHA1 numbers are from lcrack-20031130-beta.
-* MySQL password() numbers are from my own tests.
-  (http://grue.l-t.ee/~marko/src/mypass/)
 * `crypt-bf` numbers are taken using simple program that loops
   over 1000 8-character passwords.  That way I can show the speed with
   different number of rounds.  For reference: `john -test` shows 213
@@ -265,12 +270,12 @@ password       143781000       25 mins              18 days
   accordance to the fact that the `crypt-bf` implementation in pgcrypto
   is same one that is used in John the Ripper.)
 
-Note that the "try all combinations" is not a realistic exercise.
+Note that "try all combinations" is not a realistic exercise.
 Usually password cracking is done with the help of dictionaries, which
 contain both regular words and various mutations of them.  So, even
-somewhat word-like passwords will be cracked much faster than the above
+somewhat word-like passwords could be cracked much faster than the above
 numbers suggest, and a 6-character non-word like password may escape
-cracking.  Or may not.
+cracking.  Or not.
 
 
 5.  PGP encryption
@@ -292,7 +297,7 @@ When encrypting with password:
 
 1. Given password is hashed using String2Key (S2K) algorithm.  This
    is rather similar to `crypt()` algorithm - purposefully slow
-   and with random salt - but is produces a full-length binary key.
+   and with random salt - but it produces a full-length binary key.
 2. If separate session key is requested, new random key will be
    generated.  Otherwise S2K key will be used directly as session key.
 3. If S2K key is to be used directly, then only S2K settings will be put
@@ -378,10 +383,10 @@ Options are described in section 5.7.
   pgp_key_id(key or msg bytea) RETURNS text
 
 It shows you either key ID if given PGP public or secret key.  Or it
-gives the key ID what was used for encrypting the data, if given
+gives the key ID that was used for encrypting the data, if given
 encrypted message.
 
-It can return 2 special key ID's:
+It can return 2 special key IDs:
 
 SYMKEY::
    The data is encrypted with symmetric key.
@@ -410,8 +415,8 @@ with CRC and additional formatting.
 5.8.  Options for PGP functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Option are named to be similar to GnuPG.  Values should be given after
-equal sign, different options from each other with commas.  Example:
+Options are named to be similar to GnuPG.  Values should be given after
+an equal sign; separate options from each other with commas.  Example:
 
   pgp_sym_encrypt(data, psw, 'compress-also=1, cipher-algo=aes256')
 
@@ -458,7 +463,7 @@ convert-crlf::
   Applies: pgp_sym_encrypt, pgp_pub_encrypt, pgp_sym_decrypt, pgp_pub_decrypt
 
 disable-mdc::
-  Do not protect data with SHA-1.  Only good reason to use is this
+  Do not protect data with SHA-1.  Only good reason to use this
   option is to achieve compatibility with ancient PGP products, as the
   SHA-1 protected packet is from upcoming update to RFC2440.  (Currently
   at version RFC2440bis-14.) Recent gnupg.org and pgp.com software
@@ -481,7 +486,7 @@ s2k-mode::
   Which S2K algorithm to use.
 
   Values:
-    0 - Dangerous!  Without salt.
+    0 - Without salt.  Dangerous!
     1 - With salt but with fixed iteration count.
     3 - Variable iteration count.
   Default: 3
@@ -536,7 +541,7 @@ Export ascii-armored secret key:
 
     gpg -a --export-secret-keys KEYID > secret.key
 
-You need to use `dearmor()` on them before giving giving them to
+You need to use `dearmor()` on them before giving them to
 pgp_pub_* functions.  Or if you can handle binary data, you can drop
 "-a" from gpg.
 
@@ -596,7 +601,7 @@ Supported algorithms:
 Modes:
 
 * `cbc` - next block depends on previous. (default)
-* `ecb` - each block in encrypted separately.
+* `ecb` - each block is encrypted separately.
           (for testing only)
 
 Padding:
@@ -694,5 +699,4 @@ http://www.cs.ut.ee/~helger/crypto/[]::
 	Collection of cryptology pointers.
 
 
-// $PostgreSQL: pgsql/contrib/pgcrypto/README.pgcrypto,v 1.13 2005/08/13 02:06:20 momjian Exp $
-
+// $PostgreSQL: pgsql/contrib/pgcrypto/README.pgcrypto,v 1.14 2005/11/03 02:54:07 tgl Exp $
