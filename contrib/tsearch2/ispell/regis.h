@@ -13,7 +13,7 @@ typedef struct RegisNode
 	unsigned char data[1];
 }	RegisNode;
 
-#define  RNHDRSZ	(sizeof(uint32)+sizeof(void*))
+#define  RNHDRSZ	(offsetof(RegisNode,data))
 
 #define RSF_ONEOF	1
 #define RSF_NONEOF	2
