@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.163 2005/10/29 00:31:51 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.164 2005/11/04 17:25:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1214,9 +1214,10 @@ AddRoleMems(const char *rolename, Oid roleid,
 		 * Refuse creation of membership loops, including the trivial case
 		 * where a role is made a member of itself.  We do this by checking to
 		 * see if the target role is already a member of the proposed member
-		 * role.
+		 * role.  We have to ignore possible superuserness, however, else we
+		 * could never grant membership in a superuser-privileged role.
 		 */
-		if (is_member_of_role(roleid, memberid))
+		if (is_member_of_role_nosuper(roleid, memberid))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_GRANT_OPERATION),
 					 (errmsg("role \"%s\" is a member of role \"%s\"",

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.126 2005/10/15 02:49:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.127 2005/11/04 17:25:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3065,6 +3065,26 @@ check_is_member_of_role(Oid member, Oid role)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be member of role \"%s\"",
 						GetUserNameFromId(role))));
+}
+
+/*
+ * Is member a member of role, not considering superuserness?
+ *
+ * This is identical to is_member_of_role except we ignore superuser
+ * status.
+ */
+bool
+is_member_of_role_nosuper(Oid member, Oid role)
+{
+	/* Fast path for simple case */
+	if (member == role)
+		return true;
+
+	/*
+	 * Find all the roles that member is a member of, including multi-level
+	 * recursion, then see if target role is any one of them.
+	 */
+	return list_member_oid(roles_is_member_of(member), role);
 }
 
 
