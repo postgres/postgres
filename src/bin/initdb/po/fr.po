@@ -2,7 +2,7 @@
 # translation of initdb-fr.po to FR_fr
 # French message translation file for initdb
 #
-# $PostgreSQL: pgsql/src/bin/initdb/po/fr.po,v 1.8 2005/10/29 00:41:35 petere Exp $
+# $PostgreSQL: pgsql/src/bin/initdb/po/fr.po,v 1.9 2005/11/04 23:31:10 petere Exp $
 #
 # Use these quotes: «%s»
 # Guillaume Lelarge <gleu@wanadoo.fr>, 2004, 2005.

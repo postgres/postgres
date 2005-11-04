@@ -359,7 +359,7 @@ msgid ""
 msgstr ""
 "***(Modo paso a paso: verifique comando)****************************************\n"
 "%s\n"
-"***(presione «enter» para continuar, o «x <enter>» para cancelar)***************\n"
+"***(presione enter para continuar, o x y enter para cancelar)*******************\n"
 
 #: common.c:1031
 #, c-format
@@ -441,10 +441,8 @@ msgstr "Opciones generales:"
 
 #: help.c:92
 #, c-format
-msgid ""
-"  -d DBNAME       specify database name to connect to (default: \"%s\")\n"
-msgstr ""
-"  -d BASE-DE-DATOS nombre de base de datos a conectarse (por omisión: «%s»)\n"
+msgid "  -d DBNAME       specify database name to connect to (default: \"%s\")\n"
+msgstr "  -d BASE-DE-DATOS nombre de base de datos a conectarse (por omisión: \"%s\")\n"
 
 #: help.c:93
 msgid "  -c COMMAND      run only single command (SQL or internal) and exit"
@@ -528,7 +526,7 @@ msgstr ""
 
 #: help.c:113
 msgid "  -A              unaligned table output mode (-P format=unaligned)"
-msgstr "  -A               modo de salida desalineado (-P format=unaligned)"
+msgstr "  -A               modo de salida desalineado"
 
 #: help.c:114
 msgid "  -H              HTML table output mode (-P format=html)"
@@ -589,14 +587,12 @@ msgstr "socket local"
 #: help.c:130
 #, c-format
 msgid "  -p PORT         database server port (default: \"%s\")\n"
-msgstr ""
-"  -p PORT          puerto del servidor de bases de datos (por omisión: «%s»)\n"
+msgstr "  -p PORT          puerto del servidor de bases de datos (por omisión: \"%s\")\n"
 
 #: help.c:136
 #, c-format
 msgid "  -U NAME         database user name (default: \"%s\")\n"
-msgstr ""
-"  -U NOMBRE        nombre de usuario de la base de datos (por omisión: «%s»)\n"
+msgstr "  -U NOMBRE        nombre de usuario de la base de datos (por omisión: \"%s\")\n"
 
 #: help.c:137
 msgid "  -W              prompt for password (should happen automatically)"
@@ -612,7 +608,7 @@ msgid ""
 "Report bugs to <pgsql-bugs@postgresql.org>."
 msgstr ""
 "\n"
-"Para obtener más ayuda, digite «\\?» (para comandos internos) o «\\help»\n"
+"Para obtener más ayuda, digite \"\\?« (para comandos internos) o »\\help\"\n"
 "(para comandos SQL) dentro de psql, o consulte la sección de psql\n"
 "en la documentación de PostgreSQL.\n"
 "\n"
@@ -957,7 +953,7 @@ msgstr "Objetos grandes"
 #: mainloop.c:172
 #, c-format
 msgid "Use \"\\q\" to leave %s.\n"
-msgstr "Use «\\q» para salir de %s.\n"
+msgstr "Use \"\\q\" para salir de %s.\n"
 
 #: print.c:574
 msgid "(No rows)\n"

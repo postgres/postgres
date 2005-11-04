@@ -2,7 +2,7 @@
 # translation of pgscripts-fr.po to FR_fr
 # French message translation file for pgscripts
 #
-# $PostgreSQL: pgsql/src/bin/scripts/po/fr.po,v 1.9 2005/10/29 00:41:37 petere Exp $
+# $PostgreSQL: pgsql/src/bin/scripts/po/fr.po,v 1.10 2005/11/04 23:31:12 petere Exp $
 #
 # Use these quotes: «%s»
 # Guillaume Lelarge <gleu@wanadoo.fr>, 2004, 2005.
