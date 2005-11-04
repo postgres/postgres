@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.298 2005/11/04 22:18:26 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.299 2005/11/04 23:50:30 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -464,9 +464,9 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"constraint_exclusion", PGC_USERSET, QUERY_TUNING_OTHER,
-			gettext_noop("Enables the planner to use constraints to limit table access."),
-			gettext_noop("This prevents table access if the table constraints "
-						 "guarantee that table access is not necessary.")
+			gettext_noop("Enables the planner to use constraints to optimize queries."),
+			gettext_noop("Child table scans will be skipped if their "
+						 "constraints guarantee that no rows match the query.")
 		},
 		&constraint_exclusion,
 		false, NULL, NULL
