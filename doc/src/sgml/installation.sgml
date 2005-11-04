@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.247 2005/10/31 21:12:35 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.248 2005/11/04 16:15:20 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1779,7 +1779,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry><systemitem>Sparc64</></entry>
         <entry>8.1.0</entry>
         <entry>Build farm <systemitem
-	class="systemname">spoonbill</systemitem> (3.6, gcc 3.3.2)</entry>
+        class="systemname">spoonbill</systemitem> (3.6, gcc 3.3.2)</entry>
         <entry>compiler bug affects <filename>contrib/seg</></entry>
        </row>
        <row>
@@ -1849,22 +1849,20 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry><systemitem class="osname">Solaris</></entry>
         <entry><systemitem>Sparc</></entry>
         <entry>8.1.0</entry>
-        <entry>Kenneth Marshall (<email>ktm@is.rice.edu</email>), 2005-10-28</entry>
-        <entry>Solaris 8, gcc 3.4.3; see <filename>doc/FAQ_Solaris</filename></entry>
+        <entry>Build farm <systemitem class="systemname">buzzard</systemitem>
+        (Solaris 10, gcc 3.3.2);
+        Robert Lor (<email>Robert.Lor@sun.com</email>), 2005-11-04
+        (Solaris 9);
+        Kenneth Marshall (<email>ktm@is.rice.edu</email>), 2005-10-28
+        (Solaris 8, gcc 3.4.3)</entry>
+        <entry>see <filename>doc/FAQ_Solaris</filename></entry>
        </row>
        <row>
         <entry><systemitem class="osname">Solaris</></entry>
         <entry><systemitem>x86</></entry>
-        <entry>8.0.0</entry>
-        <entry>Build farm <systemitem class="systemname">kudu</systemitem>, snapshot 2004-12-10 02:30:04 (<command>cc</command>);
-          <systemitem class="systemname">dragonfly</systemitem>, snapshot 2004-12-09 04:30:00 (<command>gcc</command>)</entry>
-        <entry>Solaris 9; see <filename>doc/FAQ_Solaris</filename></entry>
-       </row>
-       <row>
-        <entry><systemitem class="osname">Solaris</></entry>
-        <entry><systemitem>Sparc</></entry>
         <entry>8.1.0</entry>
-        <entry>Build farm <systemitem class="systemname">buzzard</systemitem> (Solaris 10, gcc 3.3.2)</entry>
+        <entry>Robert Lor (<email>Robert.Lor@sun.com</email>), 2005-11-04
+        (Solaris 10)</entry>
         <entry>see <filename>doc/FAQ_Solaris</filename></entry>
        </row>
        <row>
