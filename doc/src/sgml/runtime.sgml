@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.356 2005/10/26 12:55:07 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.357 2005/11/04 23:14:01 petere Exp $
 -->
 
 <chapter Id="runtime">
@@ -854,7 +854,7 @@ options        SEMMAP=256
        <para>
         Older distributions may not have the <command>sysctl</command> program,
         but equivalent changes can be made by manipulating the 
-        <filename>/proc</filename> filesystem:
+        <filename>/proc</filename> file system:
 <screen>
 <prompt>$</prompt> <userinput>echo 134217728 &gt;/proc/sys/kernel/shmmax</userinput>
 <prompt>$</prompt> <userinput>echo 2097152 &gt;/proc/sys/kernel/shmall</userinput>
@@ -1357,19 +1357,19 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
 
    <listitem>
     <para>
-     On Linux, encryption can be layered on top of a filesystem mount
+     On Linux, encryption can be layered on top of a file system mount
      using a <quote>loopback device</quote>. This allows an entire
-     filesystem partition be encrypted on disk, and decrypted by the
+     file system partition be encrypted on disk, and decrypted by the
      operating system. On FreeBSD, the equivalent facility is called
      GEOM Based Disk Encryption, or <acronym>gbde</acronym>.
     </para>
 
     <para>
-     This mechanism prevents unecrypted data from being read from the
+     This mechanism prevents unencrypted data from being read from the
      drives if the drives or the entire computer is stolen. This does
-     not protect against attacks while the filesystem is mounted,
+     not protect against attacks while the file system is mounted,
      because when mounted, the operating system provides an unencrypted
-     view of the data. However, to mount the filesystem, you need some
+     view of the data. However, to mount the file system, you need some
      way for the encryption key to be passed to the operating system,
      and sometimes the key is stored somewhere on the host that mounts
      the disk.

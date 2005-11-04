@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xoper.sgml,v 1.33 2005/01/23 00:30:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xoper.sgml,v 1.34 2005/11/04 23:14:02 petere Exp $
 -->
 
  <sect1 id="xoper">
@@ -347,7 +347,7 @@ table1.column1 OP table2.column2
      in a hash index operator class.  This is not enforced when you create
      the operator, since of course the referencing operator class couldn't
      exist yet.  But attempts to use the operator in hash joins will fail
-     at runtime if no such operator class exists.  The system needs the
+     at run time if no such operator class exists.  The system needs the
      operator class to find the data-type-specific hash function for the
      operator's input data type.  Of course, you must also supply a suitable
      hash function before you can create the operator class.
@@ -479,7 +479,7 @@ table1.column1 OP table2.column2
 
       <listitem>
        <para>
-        Bizarre results will ensue at runtime if the four comparison
+        Bizarre results will ensue at run time if the four comparison
 	operators you name do not sort the data values compatibly.
        </para>
       </listitem>

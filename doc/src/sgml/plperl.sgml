@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.48 2005/10/24 15:39:50 adunstan Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.49 2005/11/04 23:14:00 petere Exp $
 -->
 
  <chapter id="plperl">
@@ -313,7 +313,7 @@ BEGIN { strict->import(); }
      <listitem>
       <para>
        <literal>spi_exec_query</literal> executes an SQL command and
-returns the entire rowset as a reference to an array of hash
+returns the entire row set as a reference to an array of hash
 references.  <emphasis>You should only use this command when you know
 that the result set will be relatively small.</emphasis>  Here is an
 example of a query (<command>SELECT</command> command) with the
@@ -384,7 +384,7 @@ SELECT * FROM test_munge();
     </para>
     <para>
     <literal>spi_query</literal> and <literal>spi_fetchrow</literal>
-    work together as a pair for rowsets which may be large, or for cases
+    work together as a pair for row sets which may be large, or for cases
     where you wish to return rows as they arrive.
     <literal>spi_fetchrow</literal> works <emphasis>only</emphasis> with
     <literal>spi_query</literal>. The following example illustrates how
@@ -687,7 +687,7 @@ $$ LANGUAGE plperl;
      <term><literal>@{$_TD-&gt;{args}}</literal></term>
      <listitem>
       <para>
-       Arguments of the trigger function.  Does not exist if $_TD-&gt;{argc} is 0.
+       Arguments of the trigger function.  Does not exist if <literal>$_TD-&gt;{argc}</literal> is 0.
       </para>
      </listitem>
     </varlistentry>
@@ -787,7 +787,7 @@ CREATE TRIGGER test_valid_id_trig
      </para>
      <para>
         A similar problem occurs if a set-returning function passes a
-        large set of rows back to postgres via <literal>return</literal>. You
+        large set of rows back to PostgreSQL via <literal>return</literal>. You
         can avoid this problem too by instead using
         <literal>return_next</literal> for each row returned, as shown
         previously.

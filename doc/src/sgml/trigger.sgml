@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.44 2005/10/13 21:09:38 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.45 2005/11/04 23:14:02 petere Exp $
 -->
 
  <chapter id="triggers">
@@ -141,7 +141,7 @@ $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.44 2005/10/13 21:09:38 tgl Exp 
     Typically, row before triggers are used for checking or
     modifying the data that will be inserted or updated.  For example,
     a before trigger might be used to insert the current time into a
-    timestamp column, or to check that two elements of the row are
+    <type>timestamp</type> column, or to check that two elements of the row are
     consistent. Row after triggers are most sensibly
     used to propagate the updates to other tables, or make consistency
     checks against other tables.  The reason for this division of labor is

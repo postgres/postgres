@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.45 2005/11/04 02:56:30 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.46 2005/11/04 23:13:59 petere Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -59,7 +59,7 @@ CREATE TABLE tictactoe (
   all considered to be of the same type, regardless of size or number
   of dimensions.  So, declaring number of dimensions or sizes in
   <command>CREATE TABLE</command> is simply documentation, it does not
-  affect runtime behavior.
+  affect run-time behavior.
  </para>
 
  <para>

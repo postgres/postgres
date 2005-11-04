@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.114 2005/09/13 01:51:18 alvherre Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.115 2005/11/04 23:13:59 petere Exp $
  -->
 
 <chapter id="catalogs">
@@ -5416,7 +5416,7 @@
    and <structfield>histogram_bounds</> arrays can be set on a
    column-by-column basis using the <command>ALTER TABLE SET STATISTICS</>
    command, or globally by setting the
-   <xref linkend="guc-default-statistics-target"> runtime parameter.
+   <xref linkend="guc-default-statistics-target"> run-time parameter.
   </para>
 
  </sect1>

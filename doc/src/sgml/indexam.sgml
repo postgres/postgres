@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.6 2005/06/13 23:14:47 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.7 2005/11/04 23:14:00 petere Exp $
 -->
 
 <chapter id="indexam">
@@ -56,7 +56,7 @@ $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.6 2005/06/13 23:14:47 tgl Exp $
    functions supplied by the access method.  The APIs for these functions
    are defined later in this chapter.  In addition, the
    <structname>pg_am</structname> row specifies a few fixed properties of
-   the access method, such as whether it can support multi-column indexes.
+   the access method, such as whether it can support multicolumn indexes.
    There is not currently any special support
    for creating or deleting <structname>pg_am</structname> entries;
    anyone able to write a new access method is expected to be competent
@@ -99,7 +99,7 @@ $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.6 2005/06/13 23:14:47 tgl Exp $
    are discussed in <xref linkend="index-unique-checks">, and those of
    <structfield>amconcurrent</structfield> in <xref linkend="index-locking">.
    The <structfield>amcanmulticol</structfield> flag asserts that the
-   access method supports multi-column indexes, while
+   access method supports multicolumn indexes, while
    <structfield>amoptionalkey</structfield> asserts that it allows scans
    where no indexable restriction clause is given for the first index column.
    When <structfield>amcanmulticol</structfield> is false,
@@ -113,7 +113,7 @@ $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.6 2005/06/13 23:14:47 tgl Exp $
    <structfield>amindexnulls</structfield> asserts that index entries are
    created for NULL key values.  Since most indexable operators are
    strict and hence cannot return TRUE for NULL inputs,
-   it is at first sight attractive to not store index entries for NULLs:
+   it is at first sight attractive to not store index entries for null values:
    they could never be returned by an index scan anyway.  However, this
    argument fails when an index scan has no restriction clause for a given
    index column.  In practice this means that
@@ -242,7 +242,7 @@ ambeginscan (Relation indexRelation,
    <emphasis>must</> create this struct by calling
    <function>RelationGetIndexScan()</>.  In most cases
    <function>ambeginscan</> itself does little beyond making that call;
-   the interesting parts of indexscan startup are in <function>amrescan</>.
+   the interesting parts of index-scan startup are in <function>amrescan</>.
   </para>
 
   <para>
@@ -291,11 +291,11 @@ amrescan (IndexScanDesc scan,
    Restart the given scan, possibly with new scan keys (to continue using
    the old keys, NULL is passed for <literal>key</>).  Note that it is not
    possible for the number of keys to be changed.  In practice the restart
-   feature is used when a new outer tuple is selected by a nestloop join
+   feature is used when a new outer tuple is selected by a nested-loop join
    and so a new key comparison value is needed, but the scan key structure
    remains the same.  This function is also called by
    <function>RelationGetIndexScan()</>, so it is used for initial setup
-   of an indexscan as well as rescanning.
+   of an index scan as well as rescanning.
   </para>
 
   <para>
@@ -377,7 +377,7 @@ amcostestimate (PlannerInfo *root,
    The operator class may indicate that the index is <firstterm>lossy</> for a
    particular operator; this implies that the index scan will return all the
    entries that pass the scan key, plus possibly additional entries that do
-   not.  The core system's indexscan machinery will then apply that operator
+   not.  The core system's index-scan machinery will then apply that operator
    again to the heap tuple to verify whether or not it really should be
    selected.  For non-lossy operators, the index scan must return exactly the
    set of matching entries, as there is no recheck.
@@ -524,7 +524,7 @@ amcostestimate (PlannerInfo *root,
      </listitem>
      <listitem>
       <para>
-       For concurrent index types, an indexscan must maintain a pin
+       For concurrent index types, an index scan must maintain a pin
        on the index page holding the item last returned by
        <function>amgettuple</>, and <function>ambulkdelete</> cannot delete
        entries from pages that are pinned by other backends.  The need
@@ -553,7 +553,7 @@ amcostestimate (PlannerInfo *root,
    may still be <quote>in flight</> from the index entry to the matching
    heap entry.  Making <function>ambulkdelete</> block on such a pin ensures
    that <command>VACUUM</> cannot delete the heap entry before the reader
-   is done with it.  This solution costs little in runtime, and adds blocking
+   is done with it.  This solution costs little in run time, and adds blocking
    overhead only in the rare cases where there actually is a conflict.
   </para>
 

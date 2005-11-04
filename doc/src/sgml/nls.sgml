@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/nls.sgml,v 1.12 2005/04/09 03:52:43 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/nls.sgml,v 1.13 2005/11/04 23:14:00 petere Exp $
 -->
 
 <chapter id="nls">
@@ -458,7 +458,7 @@ printf("Files were %s.\n", flag ? "copied" : "removed");
       fragment, the fragments may not translate well separately.  It's
       better to duplicate a little code so that each message to be
       translated is a coherent whole.  Only numbers, file names, and
-      such-like run-time variables should be inserted at runtime into
+      such-like run-time variables should be inserted at run time into
       a message text.
      </para>
     </listitem>

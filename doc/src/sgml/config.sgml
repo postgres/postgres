@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.34 2005/11/01 23:19:05 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.35 2005/11/04 23:13:59 petere Exp $
 -->
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -21,7 +21,7 @@ $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.34 2005/11/01 23:19:05 neilc Exp
 
    <para>
     All parameter names are case-insensitive. Every parameter takes a
-    value of one of four types: boolean, integer, floating point,
+    value of one of four types: Boolean, integer, floating point,
     or string. Boolean values may be written as <literal>ON</literal>,
     <literal>OFF</literal>, <literal>TRUE</literal>,
     <literal>FALSE</literal>, <literal>YES</literal>,
@@ -456,9 +456,9 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-        On systems that support the TCP_KEEPIDLE socket option, specifies the
+        On systems that support the <symbol>TCP_KEEPIDLE</symbol> socket option, specifies the
         number of seconds between sending keepalives on an otherwise idle
-        connection. A value of 0 uses the system default. If TCP_KEEPIDLE is
+        connection. A value of 0 uses the system default. If <symbol>TCP_KEEPIDLE</symbol> is
         not supported, this parameter must be 0. This option is ignored for
         connections made via a Unix-domain socket.
        </para>
@@ -472,9 +472,9 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-        On systems that support the TCP_KEEPINTVL socket option, specifies how
+        On systems that support the <symbol>TCP_KEEPINTVL</symbol> socket option, specifies how
         long, in seconds, to wait for a response to a keepalive before
-        retransmitting. A value of 0 uses the system default. If TCP_KEEPINTVL
+        retransmitting. A value of 0 uses the system default. If <symbol>TCP_KEEPINTVL</symbol>
         is not supported, this parameter must be 0. This option is ignored
         for connections made via a Unix-domain socket.
        </para>
@@ -488,9 +488,9 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-        On systems that support the TCP_KEEPCNT socket option, specifies how
+        On systems that support the <symbol>TCP_KEEPCNT</symbol> socket option, specifies how
         many keepalives may be lost before the connection is considered dead. 
-        A value of 0 uses the system default. If TCP_KEEPCNT is not
+        A value of 0 uses the system default. If <symbol>TCP_KEEPCNT</symbol> is not
         supported, this parameter must be 0. This option is ignored
         for connections made via a Unix-domain socket.
        </para>
@@ -590,13 +590,13 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-        Sets the hostname part of the service principal.
+        Sets the host name part of the service principal.
         This, combined with <varname>krb_srvname</>, is used to generate
         the complete service principal, that is
         <varname>krb_srvname</><literal>/</><varname>krb_server_hostname</><literal>@</>REALM.
        </para>
        <para>
-        If not set, the default is the server hostname.  See <xref linkend="kerberos-auth">
+        If not set, the default is the server host name.  See <xref linkend="kerberos-auth">
         for details.  This parameter can only be set at server start.
        </para>
       </listitem>
@@ -609,7 +609,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-        Sets whether Kerberos usernames should be treated case-insensitively.
+        Sets whether Kerberos user names should be treated case-insensitively.
         The default is <literal>off</> (case sensitive). This parameter
         can only be set at server start.
        </para>
@@ -2258,8 +2258,8 @@ SELECT * FROM parent WHERE key = 2400;
         <varname>log_rotation_age</varname> to <literal>60</literal>, and 
         <varname>log_rotation_size</varname> to <literal>1000000</literal>.
         Including <literal>%M</> in <varname>log_filename</varname> allows
-        any size-driven rotations that may occur to select a filename
-        different from the hour's initial filename.
+        any size-driven rotations that may occur to select a file name
+        different from the hour's initial file name.
        </para>
       </listitem>
      </varlistentry>
@@ -2663,7 +2663,7 @@ SELECT * FROM parent WHERE key = 2400;
             </row>
             <row>
              <entry><literal>%h</literal></entry>
-             <entry>Remote Hostname or IP address</entry>
+             <entry>Remote host name or IP address</entry>
              <entry>yes</entry>
             </row>
             <row>
@@ -2794,7 +2794,7 @@ SELECT * FROM parent WHERE key = 2400;
    </sect1>
 
    <sect1 id="runtime-config-statistics">
-    <title>Runtime Statistics</title>
+    <title>Run-Time Statistics</title>
 
     <sect2 id="runtime-config-statistics-monitor">
      <title>Statistics Monitoring</title>

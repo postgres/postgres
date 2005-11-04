@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.50 2005/11/01 21:09:49 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.51 2005/11/04 23:14:00 petere Exp $
 -->
 
 <chapter id="maintenance">
@@ -593,7 +593,7 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
   <para>
    In <productname>PostgreSQL</> releases before 7.4, periodic reindexing
    was frequently necessary to avoid <quote>index bloat</>, due to lack of
-   internal space reclamation in btree indexes.  Any situation in which the
+   internal space reclamation in B-tree indexes.  Any situation in which the
    range of index keys changed over time &mdash; for example, an index on
    timestamps in a table where old entries are eventually deleted &mdash;
    would result in bloat, because index pages for no-longer-needed portions
@@ -613,16 +613,16 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
   </para>
 
   <para>
-   The potential for bloat in non-btree indexes has not been well
+   The potential for bloat in non-B-tree indexes has not been well
    characterized.  It is a good idea to keep an eye on the index's physical
-   size when using any non-btree index type.
+   size when using any non-B-tree index type.
   </para>
 
   <para>
-   Also, for btree indexes a freshly-constructed index is somewhat faster to
+   Also, for B-tree indexes a freshly-constructed index is somewhat faster to
    access than one that has been updated many times, because logically
    adjacent pages are usually also physically adjacent in a newly built index.
-   (This consideration does not currently apply to non-btree indexes.)  It
+   (This consideration does not currently apply to non-B-tree indexes.)  It
    might be worthwhile to reindex periodically just to improve access speed.
   </para>
  </sect1>

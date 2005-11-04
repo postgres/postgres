@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.79 2005/10/21 05:11:23 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.80 2005/11/04 23:14:00 petere Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -986,7 +986,7 @@ $$ LANGUAGE plpgsql;
      <application>PL/pgSQL</application> interpreter casts this
      string to the <type>timestamp</type> type by calling the
      <function>text_out</function> and <function>timestamp_in</function>
-     functions for the conversion.  So, the computed timestamp is updated
+     functions for the conversion.  So, the computed time stamp is updated
      on each execution as the programmer expects.
     </para>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.399 2005/11/04 22:21:33 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400 2005/11/04 23:14:00 petere Exp $
 
 Typical markup:
 
@@ -285,7 +285,8 @@ pg_[A-Za-z0-9_]                 <application>
 
      <listitem>
       <para>
-       Cause input of a zero-length string ('') for float4/float8/oid
+       Cause input of a zero-length string (<literal>''</literal>) for
+       <type>float4</type>/<type>float8</type>/<type>oid</type>
        to throw an error, rather than treating it as a zero (Neil)
       </para>
       <para>
@@ -321,7 +322,7 @@ pg_[A-Za-z0-9_]                 <application>
        backslash in a string literal as introducing a special escape sequence,
        e.g. <literal>\n</> or <literal>\010</>.
        While this allows easy entry of special values, it is
-       non-standard and makes porting of applications from other
+       nonstandard and makes porting of applications from other
        databases more difficult. For this reason, the
        <productname>PostgreSQL</productname> project is planning to
        remove the special meaning of backslashes in strings. For
@@ -538,7 +539,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
 
       <listitem>
        <para>
-        Improve GiST and rtree index performance (Neil)
+        Improve GiST and R-tree index performance (Neil)
        </para>
       </listitem>
 
@@ -579,7 +580,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
 
       <listitem>
        <para>
-        Allow non-consecutive index columns to be used in a multi-column
+        Allow nonconsecutive index columns to be used in a multicolumn
         index (Tom)
        </para>
        <para>
@@ -733,7 +734,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
       <listitem>
        <para>
         Add configuration parameter <varname>krb_server_hostname</> so
-        that the server hostname can be specified as part of service
+        that the server host name can be specified as part of service
         principal (Todd Kover)
        </para>
        <para>
@@ -1639,7 +1640,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
 
       <listitem>
        <para>
-        Allow Perl non-fatal warnings to generate <command>NOTICE</>
+        Allow Perl nonfatal warnings to generate <command>NOTICE</>
         messages (Andrew)
        </para>
       </listitem>
@@ -1962,7 +1963,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
 
       <listitem>
        <para>
-        Allow IPv6 connections to be used on Win32 (Andrew)
+        Allow IPv6 connections to be used on Windows (Andrew)
        </para>
       </listitem>
 
@@ -2711,7 +2712,7 @@ typedefs (Michael)</para></listitem>
        <para>
         <command>COPY</command> can now read and write
         comma-separated-value files. It has the flexibility to
-        interpret non-standard quoting and separation characters too.
+        interpret nonstandard quoting and separation characters too.
        </para>
       </listitem>
      </varlistentry>
@@ -2756,7 +2757,7 @@ typedefs (Michael)</para></listitem>
 
      <listitem>
       <para>
-       Non-deferred <option>AFTER</> triggers are now fired immediately
+       Nondeferred <option>AFTER</> triggers are now fired immediately
        after completion of the triggering query, rather than upon
        finishing the current interactive command. This makes a
        difference when the triggering query occurred within a function:
@@ -2838,7 +2839,7 @@ typedefs (Michael)</para></listitem>
     <listitem>
      <para>
       Updating an element or slice of a NULL array value now produces
-      a non-NULL array result, namely an array containing
+      a nonnull array result, namely an array containing
       just the assigned-to positions.
      </para>
     </listitem>
@@ -2881,7 +2882,7 @@ typedefs (Michael)</para></listitem>
 
     <listitem>
      <para>
-      <type>CIDR</> values now must have their non-masked bits be zero.
+      <type>CIDR</> values now must have their nonmasked bits be zero.
       For example, we no longer allow
       <literal>204.248.199.1/31</literal> as a <type>CIDR</> value. Such
       values should never have been accepted by
@@ -3168,7 +3169,7 @@ typedefs (Michael)</para></listitem>
        </para>
        <para>
         This feature allows more flexibility in generating statistics
-        for non-standard data types.
+        for nonstandard data types.
        </para>
       </listitem>
   
@@ -3920,7 +3921,7 @@ typedefs (Michael)</para></listitem>
   
       <listitem>
        <para>
-        Reject non-rectangular array values as erroneous (Joe)
+        Reject nonrectangular array values as erroneous (Joe)
        </para>
        <para>
         Formerly, <function>array_in</> would silently build a
@@ -4182,7 +4183,7 @@ typedefs (Michael)</para></listitem>
   
       <listitem>
        <para>
-        Require <type>CIDR</> values to have all non-masked bits be zero
+        Require <type>CIDR</> values to have all nonmasked bits be zero
         (Kevin Brintnall)
        </para>
       </listitem>
@@ -4219,13 +4220,13 @@ typedefs (Michael)</para></listitem>
   
       <listitem>
        <para>
-        Non-deferred <option>AFTER</> triggers are now fired immediately
+        Nondeferred <option>AFTER</> triggers are now fired immediately
         after completion of the triggering query, rather than upon
         finishing the current interactive command. This makes a difference
         when the triggering query occurred within a function: the trigger
         is invoked before the function proceeds to its next operation. For
         example, if a function inserts a new row into a table, any
-        non-deferred foreign key checks occur before proceeding with the
+        nondeferred foreign key checks occur before proceeding with the
         function.
        </para>
       </listitem>
@@ -4758,7 +4759,7 @@ typedefs (Michael)</para></listitem>
         backend executables too (Bruce)
        </para>
        <para>
-        Unixware cannot mix threaded and non-threaded object files in the
+        Unixware cannot mix threaded and nonthreaded object files in the
         same executable, so everything must be compiled as threaded.
        </para>
       </listitem>

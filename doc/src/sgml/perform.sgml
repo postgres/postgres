@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.53 2005/09/02 03:19:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.54 2005/11/04 23:14:00 petere Exp $
 -->
 
  <chapter id="performance-tips">
@@ -826,7 +826,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     Just as with indexes, a foreign key constraint can be checked
     <quote>in bulk</> more efficiently than row-by-row.  So it may be
     useful to drop foreign key constraints, load data, and re-create
-    the constraints.  Again, there is a tradeoff between data load
+    the constraints.  Again, there is a trade-off between data load
     speed and loss of error checking while the constraint is missing.
    </para>
   </sect2>

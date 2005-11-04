@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.74 2005/10/13 21:43:43 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.75 2005/11/04 23:13:59 petere Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -504,7 +504,7 @@ initdb --locale=sv_SE
         <row>
          <entry><literal>MULE_INTERNAL</literal></entry>
          <entry>Mule internal code</entry>
-         <entry>Multi-lingual Emacs</entry>
+         <entry>Multilingual Emacs</entry>
          <entry>1-4</entry>
          <entry></entry>
         </row>

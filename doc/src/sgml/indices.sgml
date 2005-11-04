@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.53 2005/10/21 01:41:28 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.54 2005/11/04 23:14:00 petere Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -235,7 +235,7 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
     Similarly, R-tree indexes do not seem to have any performance
     advantages compared to the equivalent operations of GiST indexes.
     Like hash indexes, they are not WAL-logged and may need
-    <command>REINDEX</>ing after a database crash.
+    reindexing after a database crash.
    </para>
 
    <para>
@@ -389,7 +389,7 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
   <para>
    In all but the simplest applications, there are various combinations of
    indexes that may be useful, and the database developer must make
-   tradeoffs to decide which indexes to provide.  Sometimes multicolumn
+   trade-offs to decide which indexes to provide.  Sometimes multicolumn
    indexes are best, but sometimes it's better to create separate indexes
    and rely on the index-combination feature.  For example, if your
    workload includes a mix of queries that sometimes involve only column

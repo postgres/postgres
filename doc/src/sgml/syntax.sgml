@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.104 2005/10/23 19:29:49 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.105 2005/11/04 23:14:02 petere Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -549,7 +549,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
      The <literal>CAST()</> syntax conforms to SQL.  The
      <literal><replaceable>type</replaceable> '<replaceable>string</replaceable>'</literal>
      syntax is a generalization of the standard: SQL specifies this syntax only
-     for a few datatypes, but <productname>PostgreSQL</productname> allows it
+     for a few data types, but <productname>PostgreSQL</productname> allows it
      for all types.  The syntax with
      <literal>::</literal> is historical <productname>PostgreSQL</productname>
      usage, as is the function-call syntax.
@@ -1148,7 +1148,7 @@ CREATE FUNCTION dept(text) RETURNS dept
     parenthesized, but the parentheses may be omitted when the expression
     to be subscripted is just a column reference or positional parameter.
     Also, multiple subscripts can be concatenated when the original array
-    is multi-dimensional.
+    is multidimensional.
     For example,
 
 <programlisting>

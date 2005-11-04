@@ -1,20 +1,29 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.37 2005/10/22 21:56:07 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.38 2005/11/04 23:14:02 petere Exp $ -->
 
-<chapter id="reliability">
- <title>Reliability</title>
+<chapter id="wal">
+ <title>Reliability and the Write-Ahead Log</title>
+
+ <para>
+  This chapter explain how the Write-Ahead Log is used to obtain
+  efficient, reliable operation.
+ </para>
+
+ <sect1 id="wal-reliability">
+  <title>Reliability</title>
 
   <para>
-   Reliability is a major feature of any serious database system, and
-   <productname>PostgreSQL</> does everything possible to guarantee
-   reliable operation. One aspect of reliable operation is that all data
-   recorded by a committed transaction should be stored in a non-volatile area
-   that is safe from power loss, operating system failure, and hardware
-   failure (except failure of the non-volatile area itself, of course).
-   Successfully writing the data to the computer's permanent storage
-   (disk drive or equivalent) ordinarily meets this requirement.
-   In fact, even if a computer is fatally damaged, if
-   the disk drives survive they can be moved to another computer with
-   similar hardware and all committed transactions will remain intact.
+   Reliability is an important property of any serious database
+   system, and <productname>PostgreSQL</> does everything possible to
+   guarantee reliable operation. One aspect of reliable operation is
+   that all data recorded by a committed transaction should be stored
+   in a nonvolatile area that is safe from power loss, operating
+   system failure, and hardware failure (except failure of the
+   nonvolatile area itself, of course).  Successfully writing the data
+   to the computer's permanent storage (disk drive or equivalent)
+   ordinarily meets this requirement.  In fact, even if a computer is
+   fatally damaged, if the disk drives survive they can be moved to
+   another computer with similar hardware and all committed
+   transactions will remain intact.
   </para>
 
   <para>
@@ -76,17 +85,13 @@
    permanent storage <emphasis>before</> modifying the actual page on
    disk. By doing this, during crash recovery <productname>PostgreSQL</> can
    restore partially-written pages.  If you have a battery-backed disk
-   controller or filesystem software (e.g., Reiser4) that prevents partial
+   controller or file-system software (e.g., Reiser4) that prevents partial
    page writes,  you can turn off this page imaging by using the 
    <xref linkend="guc-full-page-writes"> parameter.
   </para>
+ </sect1>
  
-  <para>
-   The following sections explain how the Write-Ahead Log is used to 
-   obtain efficient, reliable operation.
-  </para>
-
-  <sect1 id="wal">
+  <sect1 id="wal-intro">
    <title>Write-Ahead Logging (<acronym>WAL</acronym>)</title>
 
    <indexterm zone="wal">

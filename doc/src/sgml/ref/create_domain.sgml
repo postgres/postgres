@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.25 2005/11/01 21:09:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.26 2005/11/04 23:14:02 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -58,7 +58,7 @@ where <replaceable class="PARAMETER">constraint</replaceable> is:
   <caution>
   <para>
    At present, declaring a function result value as a domain 
-   is pretty dangerous, because none of the PLs enforce domain constraints 
+   is pretty dangerous, because none of the procedural languages enforce domain constraints 
    on their results.  You'll need to make sure that the function code itself
    respects the constraints.  In <application>PL/pgSQL</>, one possible
    workaround is to explicitly cast the result value to the domain type

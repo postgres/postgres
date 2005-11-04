@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.74 2005/10/26 20:42:35 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.75 2005/11/04 23:13:59 petere Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -598,7 +598,7 @@ archive_command = 'test ! -f .../%f &amp;&amp; cp %p .../%f'
    </para>
 
    <para>
-    In writing your archive command, you should assume that the filenames to
+    In writing your archive command, you should assume that the file names to
     be archived may be up to 64 characters long and may contain any
     combination of ASCII letters, digits, and dots.  It is not necessary to
     remember the original full path (<literal>%p</>) but it is necessary to
@@ -1173,7 +1173,7 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
     the total volume of archived logs by turning off page snapshots 
     using the <xref linkend="guc-full-page-writes"> parameter.
     (Read the notes and warnings in 
-    <xref linkend="reliability"> before you do so.)
+    <xref linkend="wal"> before you do so.)
     Turning off page snapshots does not prevent use of the logs for PITR
     operations.
     An area for future development is to compress archived WAL data by

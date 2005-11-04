@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.70 2005/11/04 02:56:30 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.71 2005/11/04 23:13:59 petere Exp $
 -->
 
 <chapter id="ecpg">
@@ -1609,11 +1609,11 @@ ECPG = ecpg
     </para>
     <note>
     <para>
-    On Win32, if the <application>ecpg</> libraries and an application are
+    On Windows, if the <application>ecpg</> libraries and an application are
     compiled with different flags, this function call will crash the 
     application because the internal representation of the 
     <literal>FILE</> pointers differ.  Specifically,
-    multi-threaded/single-threaded, release/debug, and static/dynamic 
+    multithreaded/single-threaded, release/debug, and static/dynamic 
     flags should be the same for the library and all applications using
     that library.
     </para>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.48 2005/11/04 02:56:30 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.49 2005/11/04 23:13:59 petere Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -202,7 +202,7 @@ CREATE TABLE products (
    The default value may be an expression, which will be
    evaluated whenever the default value is inserted
    (<emphasis>not</emphasis> when the table is created).  A common example
-   is that a timestamp column may have a default of <literal>now()</>,
+   is that a <type>timestamp</type> column may have a default of <literal>now()</>,
    so that it gets set to the time of row insertion.  Another common
    example is generating a <quote>serial number</> for each row.
    In <productname>PostgreSQL</productname> this is typically done by
@@ -1157,7 +1157,7 @@ SELECT name, altitude
   </note>
 
   <para>
-   Inheritance does not automatically propogate data from
+   Inheritance does not automatically propagate data from
    <command>INSERT</command> or <command>COPY</command> commands to
    other tables in the inheritance hierarchy. In our example, the
    following <command>INSERT</command> statement will fail:
@@ -1221,12 +1221,12 @@ WHERE c.altitude &gt; 500 and c.tableoid = p.oid;
   <para>
    As shown above, a child table may locally define columns as well as
    inheriting them from their parents.  However, a locally defined
-   column cannot override the datatype of an inherited column of the
+   column cannot override the data type of an inherited column of the
    same name.  A table can inherit from a table that has itself
    inherited from other tables. A table can also inherit from more
    than one parent table, in which case it inherits the union of the
    columns defined by the parent tables.  Inherited columns with
-   duplicate names and datatypes will be merged so that only a single
+   duplicate names and data types will be merged so that only a single
    column is stored.
   </para>
 
@@ -1498,7 +1498,7 @@ CHECK ( county IN ( 'Oxfordshire','Buckinghamshire','Warwickshire' ))
 CHECK ( outletID BETWEEN 1 AND 99 )
 </programlisting>
 
-        These can be linked together with the boolean operators
+        These can be linked together with the Boolean operators
         <literal>AND</literal> and <literal>OR</literal> to form
         complex constraints. Note that there is no difference in
         syntax between range and list partitioning; those terms are
@@ -1722,10 +1722,10 @@ DO INSTEAD
 
     <listitem>
      <para>
-      For some datatypes you must explicitly coerce the constant
-      values into the datatype of the column. The following constraint
+      For some data types you must explicitly coerce the constant
+      values into the data type of the column. The following constraint
       will work if <varname>x</varname> is an <type>integer</type>
-      datatype, but not if <varname>x</varname> is a
+      data type, but not if <varname>x</varname> is a
       <type>bigint</type>:
 <programlisting>
 CHECK ( x = 1 )
@@ -1734,9 +1734,9 @@ CHECK ( x = 1 )
 <programlisting>
 CHECK ( x = 1::bigint )
 </programlisting>
-      The problem is not limited to the <type>bigint</type> datatype
-      &mdash; it can occur whenever the default datatype of the
-      constant does not match the datatype of the column to which it
+      The problem is not limited to the <type>bigint</type> data type
+      &mdash; it can occur whenever the default data type of the
+      constant does not match the data type of the column to which it
       is being compared.
      </para>
     </listitem>
@@ -1849,7 +1849,7 @@ ANALYZE measurement;
     <listitem>
      <para>
       Constraint exclusion only works when the query directly matches
-      a constant. A constant bound to a parameterised query will not
+      a constant. A constant bound to a parameterized query will not
       work in the same way since the plan is fixed and would need to
       vary with each execution.  Also, stable constants such as
       <literal>CURRENT_DATE</literal> may not be used, since these are
@@ -1860,8 +1860,8 @@ ANALYZE measurement;
 
     <listitem>
      <para>
-      UPDATEs and DELETEs against the master table do not perform
-      constraint exclusion.
+      <command>UPDATE</command> and <command>DELETE</command> commands
+      against the master table do not perform constraint exclusion.
      </para>
     </listitem>
 

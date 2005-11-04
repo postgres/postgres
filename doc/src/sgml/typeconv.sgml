@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.44 2005/06/26 22:05:36 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.45 2005/11/04 23:14:02 petere Exp $
 -->
 
 <chapter Id="typeconv">
@@ -738,7 +738,7 @@ into the destination column.  The implementation function for such a cast
 always takes an extra parameter of type <type>integer</type>, which receives
 the destination column's declared length (actually, its
 <structfield>atttypmod</> value; the interpretation of
-<structfield>atttypmod</> varies for different datatypes).  The cast function
+<structfield>atttypmod</> varies for different data types).  The cast function
 is responsible for applying any length-dependent semantics such as size
 checking or truncation.
 </para>

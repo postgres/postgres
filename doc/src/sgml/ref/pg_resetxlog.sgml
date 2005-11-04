@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.11 2005/06/08 15:50:21 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.12 2005/11/04 23:14:02 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -61,7 +61,7 @@ PostgreSQL documentation
    by specifying the <literal>-f</> (force) switch.  In this case plausible
    values will be substituted for the missing data.  Most of the fields can be
    expected to match, but manual assistance may be needed for the next OID,
-   next transaction ID, next multi-transaction ID and offset,
+   next transaction ID, next multitransaction ID and offset,
    WAL starting address, and database locale fields.
    The first five of these can be set using the switches discussed below.
    <command>pg_resetxlog</command>'s own environment is the source for its
@@ -78,8 +78,8 @@ PostgreSQL documentation
   <para>
    The <literal>-o</>, <literal>-x</>, <literal>-m</>, <literal>-O</>,
    and <literal>-l</>
-   switches allow the next OID, next transaction ID, next multi-transaction
-   ID, next multi-transaction offset, and WAL starting address values to
+   switches allow the next OID, next transaction ID, next multitransaction
+   ID, next multitransaction offset, and WAL starting address values to
    be set manually.  These are only needed when
    <command>pg_resetxlog</command> is unable to determine appropriate values
    by reading <filename>pg_control</>.  Safe values may be determined as
@@ -102,7 +102,7 @@ PostgreSQL documentation
 
     <listitem>
      <para>
-      A safe value for the next multi-transaction ID (<literal>-m</>)
+      A safe value for the next multitransaction ID (<literal>-m</>)
       may be determined by looking for the numerically largest
       file name in the directory <filename>pg_multixact/offsets</> under the
       data directory, adding one, and then multiplying by 65536.  As above,
@@ -113,7 +113,7 @@ PostgreSQL documentation
 
     <listitem>
      <para>
-      A safe value for the next multi-transaction offset (<literal>-O</>)
+      A safe value for the next multitransaction offset (<literal>-O</>)
       may be determined by looking for the numerically largest
       file name in the directory <filename>pg_multixact/members</> under the
       data directory, adding one, and then multiplying by 65536.  As above,

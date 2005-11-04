@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.7 2005/09/01 20:01:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.8 2005/11/04 23:14:02 petere Exp $
 -->
 
 <chapter id="storage">
@@ -75,7 +75,7 @@ Item
 
 <row>
  <entry><filename>pg_multixact</></entry>
- <entry>Subdirectory containing multi-transaction status data
+ <entry>Subdirectory containing multitransaction status data
   (used for shared row locks)</entry> 
 </row>
 
@@ -331,7 +331,7 @@ more often be done entirely in memory. A little test showed that a table
 containing typical HTML pages and their URLs was stored in about half of the
 raw data size including the <acronym>TOAST</> table, and that the main table
 contained only about 10% of the entire data (the URLs and some small HTML
-pages). There was no runtime difference compared to an un-<acronym>TOAST</>ed
+pages). There was no run time difference compared to an un-<acronym>TOAST</>ed
 comparison table, in which all the HTML pages were cut down to 7Kb to fit.
 </para>
 
@@ -663,7 +663,7 @@ data. Empty in ordinary tables.</entry>
   <structfield>attlen</structfield> and <structfield>attalign</structfield>.
   There is no way to directly get a
   particular attribute, except when there are only fixed width fields and no
-  NULLs. All this trickery is wrapped up in the functions
+  null values. All this trickery is wrapped up in the functions
   <firstterm>heap_getattr</firstterm>, <firstterm>fastgetattr</firstterm>
   and <firstterm>heap_getsysattr</firstterm>.
   

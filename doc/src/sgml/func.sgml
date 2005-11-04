@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.290 2005/11/04 02:56:30 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.291 2005/11/04 23:13:59 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -3430,7 +3430,7 @@ regexp_replace('foobarbaz', 'b(..)', 'X\\1Y', 'g')
 
    <note>
     <para>
-     <productname>PostgreSQL</> currently has no multi-character collating
+     <productname>PostgreSQL</> currently has no multicharacter collating
      elements. This information describes possible future behavior.
     </para>
    </note>
@@ -3820,7 +3820,7 @@ regexp_replace('foobarbaz', 'b(..)', 'X\\1Y', 'g')
      A leading zero always indicates an octal escape.
      A single non-zero digit, not followed by another digit,
      is always taken as a back reference.
-     A multi-digit sequence not starting with a zero is taken as a back 
+     A multidigit sequence not starting with a zero is taken as a back 
      reference if it comes after a suitable subexpression
      (i.e. the number is in the legal range for a back reference),
      and otherwise is taken as octal.
@@ -3970,7 +3970,7 @@ regexp_replace('foobarbaz', 'b(..)', 'X\\1Y', 'g')
      </listitem>
      <listitem>
       <para>
-       white space and comments cannot appear within multi-character symbols,
+       white space and comments cannot appear within multicharacter symbols,
        such as <literal>(?:</>
       </para>
      </listitem>
@@ -3986,7 +3986,7 @@ regexp_replace('foobarbaz', 'b(..)', 'X\\1Y', 'g')
     (where <replaceable>ttt</> is any text not containing a <literal>)</>)
     is a comment, completely ignored.
     Again, this is not allowed between the characters of
-    multi-character symbols, like <literal>(?:</>.
+    multicharacter symbols, like <literal>(?:</>.
     Such comments are more a historical artifact than a useful facility,
     and their use is deprecated; use the expanded syntax instead.
    </para>
@@ -5954,7 +5954,7 @@ SELECT date_trunc('year', TIMESTAMP '2001-02-16 20:38:40');
          <literal><type>timestamp without time zone</type> AT TIME ZONE <replaceable>zone</></literal>
         </entry>
         <entry><type>timestamp with time zone</type></entry>
-        <entry>Treat given timestamp <emphasis>without time zone</> as located in the specified time zone</entry>
+        <entry>Treat given time stamp <emphasis>without time zone</> as located in the specified time zone</entry>
        </row>
 
        <row>
@@ -5962,7 +5962,7 @@ SELECT date_trunc('year', TIMESTAMP '2001-02-16 20:38:40');
          <literal><type>timestamp with time zone</type> AT TIME ZONE <replaceable>zone</></literal>
         </entry>
         <entry><type>timestamp without time zone</type></entry>
-        <entry>Convert given timestamp <emphasis>with time zone</> to the new time zone</entry>
+        <entry>Convert given time stamp <emphasis>with time zone</> to the new time zone</entry>
        </row>
 
        <row>
@@ -6568,7 +6568,7 @@ SELECT TIMESTAMP 'now';  -- incorrect for use with DEFAULT
        <row>
         <entry><literal><function>point</function>(<type>lseg</type>)</literal></entry>
         <entry><type>point</type></entry>
-        <entry>center of lseg</entry>
+        <entry>center of line segment</entry>
         <entry><literal>point(lseg '((-1,0),(1,0))')</literal></entry>
        </row>
        <row>
@@ -6929,7 +6929,7 @@ SELECT TIMESTAMP 'now';  -- incorrect for use with DEFAULT
    The sequence to be operated on by a sequence-function call is specified by
    a <type>regclass</> argument, which is just the OID of the sequence in the
    <structname>pg_class</> system catalog.  You do not have to look up the
-   OID by hand, however, since the <type>regclass</> datatype's input
+   OID by hand, however, since the <type>regclass</> data type's input
    converter will do the work for you.  Just write the sequence name enclosed
    in single quotes, so that it looks like a literal constant.  To
    achieve some compatibility with the handling of ordinary
@@ -6955,7 +6955,7 @@ nextval('foo')              <lineannotation>searches search path for <literal>fo
     Before <productname>PostgreSQL</productname> 8.1, the arguments of the
     sequence functions were of type <type>text</>, not <type>regclass</>, and
     the above-described conversion from a text string to an OID value would
-    happen at runtime during each call.  For backwards compatibility, this
+    happen at run time during each call.  For backwards compatibility, this
     facility still exists, but internally it is now handled as an implicit
     coercion from <type>text</> to <type>regclass</> before the function is
     invoked.
@@ -6969,7 +6969,7 @@ nextval('foo')              <lineannotation>searches search path for <literal>fo
     etc.  This <quote>early binding</> behavior is usually desirable for
     sequence references in column defaults and views.  But sometimes you will
     want <quote>late binding</> where the sequence reference is resolved
-    at runtime.  To get late-binding behavior, force the constant to be
+    at run time.  To get late-binding behavior, force the constant to be
     stored as a <type>text</> constant instead of <type>regclass</>:
 <programlisting>
 nextval('foo'::text)      <lineannotation><literal>foo</literal> is looked up at runtime</>
@@ -9444,7 +9444,7 @@ SELECT set_config('log_statement_stats', 'off', false);
         <literal><function>pg_rotate_logfile</function>()</literal>
         </entry>
        <entry><type>boolean</type></entry>
-       <entry>Rotate server's logfile</entry>
+       <entry>Rotate server's log file</entry>
       </row>
      </tbody>
     </tgroup>
@@ -9472,10 +9472,10 @@ SELECT set_config('log_statement_stats', 'off', false);
    </para>
 
    <para>
-    <function>pg_rotate_logfile</> signals the logfile manager to switch
+    <function>pg_rotate_logfile</> signals the log-file manager to switch
     to a new output file immediately.  This works only when
     <varname>redirect_stderr</> is used for logging, since otherwise there
-    is no logfile manager subprocess.
+    is no log-file manager subprocess.
    </para>
 
    <indexterm zone="functions-admin">
@@ -9757,9 +9757,9 @@ SELECT set_config('log_statement_stats', 'off', false);
    </indexterm>
    <para>
     <function>pg_stat_file</> returns a record containing the file
-    size, last accessed timestamp, last modified timestamp, 
-    last file status change timestamp (Unix platforms only), 
-    file creation timestamp (Win32 only), and a boolean indicating 
+    size, last accessed time stamp, last modified time stamp, 
+    last file status change time stamp (Unix platforms only), 
+    file creation timestamp (Windows only), and a <type>boolean</type> indicating 
     if it is a directory.  Typical usages include:
 <programlisting>
 SELECT * FROM pg_stat_file('filename');

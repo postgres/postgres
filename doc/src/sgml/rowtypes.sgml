@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/rowtypes.sgml,v 2.5 2005/01/22 22:56:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/rowtypes.sgml,v 2.6 2005/11/04 23:14:01 petere Exp $ -->
 
 <sect1 id="rowtypes">
  <title>Composite Types</title>
@@ -175,7 +175,7 @@ SELECT item.name FROM on_hand WHERE item.price &gt; 9.99;
 SELECT (item).name FROM on_hand WHERE (item).price &gt; 9.99;
 </programlisting>
 
-  or if you need to use the table name as well (for instance in a multi-table
+  or if you need to use the table name as well (for instance in a multitable
   query), like this:
 
 <programlisting>

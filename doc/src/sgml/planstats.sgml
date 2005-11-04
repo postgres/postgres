@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/planstats.sgml,v 1.4 2005/10/15 20:12:32 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/planstats.sgml,v 1.5 2005/11/04 23:14:00 petere Exp $
 -->
 
 <chapter id="planner-stats-details">
@@ -327,7 +327,7 @@ selectivity = (1 - null_frac1) * (1 - null_frac2) * min(1/num_distinct1, 1/num_d
    This is, subtract the null fraction from one for each of the relations, 
    and divide by the maximum  of the two distinct values. The number of rows 
    that the join is likely to emit is calculated as the cardinality of 
-   cartesian product of the two nodes in the nested-loop, multiplied by the 
+   Cartesian product of the two nodes in the nested-loop, multiplied by the 
    selectivity:
 
 <programlisting>
