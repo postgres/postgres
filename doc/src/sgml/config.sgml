@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.35 2005/11/04 23:13:59 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.36 2005/11/04 23:53:18 tgl Exp $
 -->
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1970,13 +1970,13 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       <listitem>
        <para>
         Enables or disables the query planner's use of table constraints to
-        limit table access.  The default is <literal>off</>.
+        optimize queries.  The default is <literal>off</>.
        </para>
 
        <para>
         When this parameter is <literal>on</>, the planner compares
         query conditions with table <literal>CHECK</> constraints, and
-        omits scanning tables where the conditions contradict the
+        omits scanning tables for which the conditions contradict the
         constraints.  (Presently this is done only for child tables of
         inheritance scans.)  For example:
 
@@ -2010,7 +2010,7 @@ SELECT * FROM parent WHERE key = 2400;
        </para>
 
        <para>
-        Refer to <xref linkend="ce-partitioning"> for more information
+        Refer to <xref linkend="ddl-partitioning"> for more information
         on using constraint exclusion and partitioning.
        </para>
       </listitem>
