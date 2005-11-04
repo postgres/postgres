@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.95 2005/01/01 05:43:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.95.4.1 2005/11/04 18:35:51 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -315,7 +315,14 @@ setup_win32_locks(void)
 void
 setup_cancel_handler(void)
 {
-	SetConsoleCtrlHandler(consoleHandler, TRUE);
+	static bool done = false;
+
+	/* only need one handler per process */
+	if (!done)
+	{
+		SetConsoleCtrlHandler(consoleHandler, TRUE);
+		done = true;
+	}
 }
 
 #endif /* WIN32 */
