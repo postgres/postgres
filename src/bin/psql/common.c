@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.109 2005/10/27 13:34:47 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.110 2005/11/04 18:35:40 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -268,6 +268,7 @@ handle_sigint(SIGNAL_ARGS)
 	}
 	errno = save_errno;			/* just in case the write changed it */
 }
+
 #else							/* WIN32 */
 
 static BOOL WINAPI
@@ -313,8 +314,16 @@ setup_win32_locks(void)
 void
 setup_cancel_handler(void)
 {
-	SetConsoleCtrlHandler(consoleHandler, TRUE);
+	static bool done = false;
+
+	/* only need one handler per process */
+	if (!done)
+	{
+		SetConsoleCtrlHandler(consoleHandler, TRUE);
+		done = true;
+	}
 }
+
 #endif   /* WIN32 */
 
 
