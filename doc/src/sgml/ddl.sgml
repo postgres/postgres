@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.47 2005/11/03 00:51:43 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.48 2005/11/04 02:56:30 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -1058,8 +1058,8 @@ CREATE TABLE order_items (
 
   <para>
    <productname>PostgreSQL</productname> implements table inheritance
-   which can be a useful tool for database designers.  The SQL:2003
-   standard optionally defines type inheritance which differs in many
+   which can be a useful tool for database designers.  SQL:1999 and
+   later define a type inheritance feature, which differs in many
    respects from the features described here.
   </para>
 
@@ -1323,7 +1323,7 @@ WHERE c.altitude &gt; 500 and c.tableoid = p.oid;
    <para>
      In previous versions of <productname>PostgreSQL</productname>, the
      default behavior was not to include child tables in queries. This was
-     found to be error prone and is also in violation of the SQL:2003
+     found to be error prone and is also in violation of the SQL
      standard. Under the old syntax, to get the sub-tables you append
      <literal>*</literal> to the table name. For example:
 <programlisting>
@@ -1364,7 +1364,7 @@ SELECT * from cities*;
 
    <para>
     Currently, partitioning is implemented in conjunction with table
-    inheritance only, though using fully SQL:2003 compliant syntax.
+    inheritance only, though using fully SQL compliant syntax.
     Table inheritance allows tables to be split into partitions, and
     constraint exclusion allows partitions to be selectively combined
     as needed to satisfy a particular <command>SELECT</command>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.289 2005/10/25 15:47:51 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.290 2005/11/04 02:56:30 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -2675,8 +2675,9 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
     There are three separate approaches to pattern matching provided
     by <productname>PostgreSQL</productname>: the traditional
     <acronym>SQL</acronym> <function>LIKE</function> operator, the
-    more recent <function>SIMILAR TO</function> operator (part of 
-    SQL:2003), and <acronym>POSIX</acronym>-style regular expressions.
+    more recent <function>SIMILAR TO</function> operator (added in
+    SQL:1999), and <acronym>POSIX</acronym>-style regular
+    expressions.
     Additionally, a pattern matching function,
     <function>substring</function>, is available, using either
     <function>SIMILAR TO</function>-style or POSIX-style regular
