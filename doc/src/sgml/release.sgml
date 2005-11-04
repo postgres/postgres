@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.398 2005/11/02 14:08:43 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.399 2005/11/04 22:21:33 momjian Exp $
 
 Typical markup:
 
@@ -20,7 +20,7 @@ pg_[A-Za-z0-9_]                 <application>
 
    <note>
     <title>Release date</title>
-    <simpara>2005-1?-??, Current as of 2005-10-11</simpara>
+    <simpara>2005-11-08</simpara>
    </note>
 
    <sect2>
@@ -1963,6 +1963,13 @@ psql -t -f fixseq.sql db1 | psql -e db1
       <listitem>
        <para>
         Allow IPv6 connections to be used on Win32 (Andrew)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add Server Administration documentation about I/O subsystem
+        reliability (Bruce)
        </para>
       </listitem>
 
