@@ -1,5 +1,5 @@
 From: Zeugswetter Andreas <ZeugswetterA@spardat.at>
-$Date: 2005/10/24 22:30:35 $
+$Date: 2005/11/04 18:16:50 $
 
 On AIX 4.3.2 PostgreSQL compiled with the native IBM compiler xlc
 (vac.C 5.0.1) passes all regression tests.  Other versions of OS and
@@ -99,7 +99,7 @@ Closed date	2005-07-18
 Last modified date	2005-09-06
 
 If you upgrade to maintenance level 5300-03, that will include this
-fix. Use the command "oslevel -r" to determine what maintenance level
+fix.  Use the command "oslevel -r" to determine what maintenance level
 you are at.
 ---
 From: Christopher Browne <cbbrowne@ca.afilias.info>
@@ -113,3 +113,63 @@ libraries, the following URLs may help you...
 http://www.faqs.org/faqs/aix-faq/part4/section-22.html
 
 http://www.han.de/~jum/aix/ldd.c
+---
+From: Christopher Browne <cbbrowne@ca.afilias.info>
+Date: 2005-11-02
+
+On AIX 5.3 ML3 (e.g. maintenance level 5300-03), there is some problem
+with the handling of the pointer to memcpy.  It is speculated that
+this relates to some linker bug that may have been introduced between
+5300-02 and 5300-03, but we have so far been unable to track down the
+cause.
+
+At any rate, the following patch, which "unwraps" the function
+reference, has been observed to allow PG 8.1 pre-releases to pass
+regression tests.
+
+The same behaviour (albeit with varying underlying functions to
+"blame") has been observed when compiling with either GCC 4.0 or IBM
+XLC.
+
+------------ per Seneca Cunningham -------------------
+
+The following patch works on the AIX 5.3 ML3 box here and didn't cause
+any problems with postgres on the x86 desktop.  It's just a cleaner
+version of what I tried earlier.
+
+*** dynahash.c.orig Tue Nov  1 19:41:42 2005
+--- dynahash.c  Tue Nov  1 20:30:33 2005
+***************
+*** 670,676 ****
+
+
+            /* copy key into record */
+            currBucket->hashvalue = hashvalue;
+!           hashp->keycopy(ELEMENTKEY(currBucket), keyPtr, keysize);
+
+
+            /* caller is expected to fill the data field on return */
+
+
+--- 670,687 ----
+
+
+            /* copy key into record */
+            currBucket->hashvalue = hashvalue;
+!           if (hashp->keycopy == memcpy)
+!           {
+!               memcpy(ELEMENTKEY(currBucket), keyPtr, keysize);
+!           }
+!           else if (hashp->keycopy == strncpy)
+!           {
+!               strncpy(ELEMENTKEY(currBucket), keyPtr, keysize);
+!           }
+!           else
+!           {
+!               hashp->keycopy(ELEMENTKEY(currBucket), keyPtr, keysize);
+!           }
+
+
+            /* caller is expected to fill the data field on return */
+
+------------ per Seneca Cunningham -------------------
