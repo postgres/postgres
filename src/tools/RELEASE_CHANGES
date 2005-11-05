@@ -15,6 +15,7 @@
 		- src/interfaces/libpq/libpq.rc.in (major and minor releases)
 		- src/include/pg_config.h.win32 (major and minor releases)
 		- src/port/win32ver.rc (major and minor releases)
+	o update doc/FAQ and doc/src/FAQ/FAQ.html
 
 * Release notes
 	o scan cvs logs, use pgcvslog and flags in comments
