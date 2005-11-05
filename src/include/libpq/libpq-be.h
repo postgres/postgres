@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.49 2004/12/31 22:03:32 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.49.4.1 2005/11/05 03:05:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,6 @@ typedef struct Port
 	 * database_name and other members of this struct, we may as well keep
 	 * it here.
 	 */
-	const char *commandTag;		/* current command tag */
 	struct timeval session_start;		/* for session duration logging */
 
 	/*

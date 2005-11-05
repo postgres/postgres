@@ -4,7 +4,7 @@
  *
  * Declarations for backend/utils/misc/ps_status.c
  *
- * $PostgreSQL: pgsql/src/include/utils/ps_status.h,v 1.25 2004/02/22 21:26:54 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/ps_status.h,v 1.25.4.1 2005/11/05 03:05:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,6 @@ extern void init_ps_display(const char *username, const char *dbname,
 
 extern void set_ps_display(const char *activity);
 
-extern const char *get_ps_display(void);
+extern const char *get_ps_display(int *displen);
 
 #endif   /* PS_STATUS_H */
