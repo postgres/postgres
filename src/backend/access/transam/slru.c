@@ -14,35 +14,30 @@
  * out the latest page (since we know it's going to be hit again eventually).
  *
  * We use a control LWLock to protect the shared data structures, plus
- * per-buffer LWLocks that synchronize I/O for each buffer.  A process
- * that is reading in or writing out a page buffer does not hold the control
- * lock, only the per-buffer lock for the buffer it is working on.
+ * per-buffer LWLocks that synchronize I/O for each buffer.  The control lock
+ * must be held to examine or modify any shared state.  A process that is
+ * reading in or writing out a page buffer does not hold the control lock,
+ * only the per-buffer lock for the buffer it is working on.
  *
- * To change the page number or state of a buffer, one must hold
- * the control lock.  If the buffer's state is neither EMPTY nor
- * CLEAN, then there may be processes doing (or waiting to do) I/O on the
- * buffer, so the page number may not be changed, and the only allowed state
- * transition is to change WRITE_IN_PROGRESS to DIRTY after dirtying the page.
- * To do any other state transition involving a buffer with potential I/O
- * processes, one must hold both the per-buffer lock and the control lock.
- * (Note the control lock must be acquired second; do not wait on a buffer
- * lock while holding the control lock.)  A process wishing to read a page
- * marks the buffer state as READ_IN_PROGRESS, then drops the control lock,
- * acquires the per-buffer lock, and rechecks the state before proceeding.
- * This recheck takes care of the possibility that someone else already did
- * the read, while the early marking prevents someone else from trying to
- * read the same page into a different buffer.
+ * When initiating I/O on a buffer, we acquire the per-buffer lock exclusively
+ * before releasing the control lock.  The per-buffer lock is released after
+ * completing the I/O, re-acquiring the control lock, and updating the shared
+ * state.  (Deadlock is not possible here, because we never try to initiate
+ * I/O when someone else is already doing I/O on the same buffer.)
+ * To wait for I/O to complete, release the control lock, acquire the
+ * per-buffer lock in shared mode, immediately release the per-buffer lock,
+ * reacquire the control lock, and then recheck state (since arbitrary things
+ * could have happened while we didn't have the lock).
  *
  * As with the regular buffer manager, it is possible for another process
  * to re-dirty a page that is currently being written out.	This is handled
- * by setting the page's state from WRITE_IN_PROGRESS to DIRTY.  The writing
- * process must notice this and not mark the page CLEAN when it's done.
+ * by re-setting the page's page_dirty flag.
  *
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.29 2005/11/03 00:23:36 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.30 2005/11/05 21:19:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -169,6 +164,7 @@ SimpleLruInit(SlruCtl ctl, const char *name,
 		{
 			shared->page_buffer[slotno] = bufptr;
 			shared->page_status[slotno] = SLRU_PAGE_EMPTY;
+			shared->page_dirty[slotno] = false;
 			shared->page_lru_count[slotno] = 1;
 			shared->buffer_locks[slotno] = LWLockAssign();
 			bufptr += BLCKSZ;
@@ -205,12 +201,14 @@ SimpleLruZeroPage(SlruCtl ctl, int pageno)
 	/* Find a suitable buffer slot for the page */
 	slotno = SlruSelectLRUPage(ctl, pageno);
 	Assert(shared->page_status[slotno] == SLRU_PAGE_EMPTY ||
-		   shared->page_status[slotno] == SLRU_PAGE_CLEAN ||
+		   (shared->page_status[slotno] == SLRU_PAGE_VALID &&
+			!shared->page_dirty[slotno]) ||
 		   shared->page_number[slotno] == pageno);
 
 	/* Mark the slot as containing this page */
 	shared->page_number[slotno] = pageno;
-	shared->page_status[slotno] = SLRU_PAGE_DIRTY;
+	shared->page_status[slotno] = SLRU_PAGE_VALID;
+	shared->page_dirty[slotno] = true;
 	SlruRecentlyUsed(shared, slotno);
 
 	/* Set the buffer to zeroes */
@@ -220,6 +218,48 @@ SimpleLruZeroPage(SlruCtl ctl, int pageno)
 	shared->latest_page_number = pageno;
 
 	return slotno;
+}
+
+/*
+ * Wait for any active I/O on a page slot to finish.  (This does not
+ * guarantee that new I/O hasn't been started before we return, though.)
+ *
+ * Control lock must be held at entry, and will be held at exit.
+ */
+static void
+SimpleLruWaitIO(SlruCtl ctl, int slotno)
+{
+	SlruShared	shared = ctl->shared;
+
+	/* See notes at top of file */
+	LWLockRelease(shared->ControlLock);
+	LWLockAcquire(shared->buffer_locks[slotno], LW_SHARED);
+	LWLockRelease(shared->buffer_locks[slotno]);
+	LWLockAcquire(shared->ControlLock, LW_EXCLUSIVE);
+	/*
+	 * If the slot is still in an io-in-progress state, then either someone
+	 * already started a new I/O on the slot, or a previous I/O failed and
+	 * neglected to reset the page state.  That shouldn't happen, really,
+	 * but it seems worth a few extra cycles to check and recover from it.
+	 * We can cheaply test for failure by seeing if the buffer lock is still
+	 * held (we assume that transaction abort would release the lock).
+	 */
+	if (shared->page_status[slotno] == SLRU_PAGE_READ_IN_PROGRESS ||
+		shared->page_status[slotno] == SLRU_PAGE_WRITE_IN_PROGRESS)
+	{
+		if (LWLockConditionalAcquire(shared->buffer_locks[slotno], LW_SHARED))
+		{
+			/* indeed, the I/O must have failed */
+			if (shared->page_status[slotno] == SLRU_PAGE_READ_IN_PROGRESS)
+				shared->page_status[slotno] = SLRU_PAGE_EMPTY;
+			else				/* write_in_progress */
+			{
+				shared->page_status[slotno] = SLRU_PAGE_VALID;
+				shared->page_dirty[slotno] = true;
+			}
+			LWLockRelease(shared->buffer_locks[slotno]);
+		}
+	}
 }
 
 /*
@@ -239,7 +279,7 @@ SimpleLruReadPage(SlruCtl ctl, int pageno, TransactionId xid)
 {
 	SlruShared	shared = ctl->shared;
 
-	/* Outer loop handles restart if we lose the buffer to someone else */
+	/* Outer loop handles restart if we must wait for someone else's I/O */
 	for (;;)
 	{
 		int			slotno;
@@ -252,24 +292,30 @@ SimpleLruReadPage(SlruCtl ctl, int pageno, TransactionId xid)
 		if (shared->page_number[slotno] == pageno &&
 			shared->page_status[slotno] != SLRU_PAGE_EMPTY)
 		{
-			/* If page is still being read in, we cannot use it yet */
-			if (shared->page_status[slotno] != SLRU_PAGE_READ_IN_PROGRESS)
+			/* If page is still being read in, we must wait for I/O */
+			if (shared->page_status[slotno] == SLRU_PAGE_READ_IN_PROGRESS)
 			{
-				/* otherwise, it's ready to use */
-				SlruRecentlyUsed(shared, slotno);
-				return slotno;
+				SimpleLruWaitIO(ctl, slotno);
+				/* Now we must recheck state from the top */
+				continue;
 			}
-		}
-		else
-		{
-			/* We found no match; assert we selected a freeable slot */
-			Assert(shared->page_status[slotno] == SLRU_PAGE_EMPTY ||
-				   shared->page_status[slotno] == SLRU_PAGE_CLEAN);
+			/* Otherwise, it's ready to use */
+			SlruRecentlyUsed(shared, slotno);
+			return slotno;
 		}
 
-		/* Mark the slot read-busy (no-op if it already was) */
+		/* We found no match; assert we selected a freeable slot */
+		Assert(shared->page_status[slotno] == SLRU_PAGE_EMPTY ||
+			   (shared->page_status[slotno] == SLRU_PAGE_VALID &&
+				!shared->page_dirty[slotno]));
+
+		/* Mark the slot read-busy */
 		shared->page_number[slotno] = pageno;
 		shared->page_status[slotno] = SLRU_PAGE_READ_IN_PROGRESS;
+		shared->page_dirty[slotno] = false;
+
+		/* Acquire per-buffer lock (cannot deadlock, see notes at top) */
+		LWLockAcquire(shared->buffer_locks[slotno], LW_EXCLUSIVE);
 
 		/*
 		 * Temporarily mark page as recently-used to discourage
@@ -277,43 +323,20 @@ SimpleLruReadPage(SlruCtl ctl, int pageno, TransactionId xid)
 		 */
 		SlruRecentlyUsed(shared, slotno);
 
-		/*
-		 * We must grab the per-buffer lock to do I/O.  To avoid deadlock,
-		 * must release ControlLock while waiting for per-buffer lock.
-		 * Fortunately, most of the time the per-buffer lock shouldn't be
-		 * already held, so we can do this:
-		 */
-		if (!LWLockConditionalAcquire(shared->buffer_locks[slotno],
-									  LW_EXCLUSIVE))
-		{
-			LWLockRelease(shared->ControlLock);
-			LWLockAcquire(shared->buffer_locks[slotno], LW_EXCLUSIVE);
-			LWLockAcquire(shared->ControlLock, LW_EXCLUSIVE);
-		}
-
-		/*
-		 * Check to see if someone else already did the read, or took the
-		 * buffer away from us.  If so, restart from the top.
-		 */
-		if (shared->page_number[slotno] != pageno ||
-			shared->page_status[slotno] != SLRU_PAGE_READ_IN_PROGRESS)
-		{
-			LWLockRelease(shared->buffer_locks[slotno]);
-			continue;
-		}
-
-		/* Okay, release control lock and do the read */
+		/* Release control lock while doing I/O */
 		LWLockRelease(shared->ControlLock);
 
+		/* Do the read */
 		ok = SlruPhysicalReadPage(ctl, pageno, slotno);
 
-		/* Re-acquire shared control lock and update page state */
+		/* Re-acquire control lock and update page state */
 		LWLockAcquire(shared->ControlLock, LW_EXCLUSIVE);
 
 		Assert(shared->page_number[slotno] == pageno &&
-			   shared->page_status[slotno] == SLRU_PAGE_READ_IN_PROGRESS);
+			   shared->page_status[slotno] == SLRU_PAGE_READ_IN_PROGRESS &&
+			   !shared->page_dirty[slotno]);
 
-		shared->page_status[slotno] = ok ? SLRU_PAGE_CLEAN : SLRU_PAGE_EMPTY;
+		shared->page_status[slotno] = ok ? SLRU_PAGE_VALID : SLRU_PAGE_EMPTY;
 
 		LWLockRelease(shared->buffer_locks[slotno]);
 
@@ -341,54 +364,39 @@ void
 SimpleLruWritePage(SlruCtl ctl, int slotno, SlruFlush fdata)
 {
 	SlruShared	shared = ctl->shared;
-	int			pageno;
+	int			pageno = shared->page_number[slotno];
 	bool		ok;
 
-	/* Do nothing if page does not need writing */
-	if (shared->page_status[slotno] != SLRU_PAGE_DIRTY &&
-		shared->page_status[slotno] != SLRU_PAGE_WRITE_IN_PROGRESS)
-		return;
-
-	pageno = shared->page_number[slotno];
-
-	/*
-	 * We must grab the per-buffer lock to do I/O.  To avoid deadlock,
-	 * must release ControlLock while waiting for per-buffer lock.
-	 * Fortunately, most of the time the per-buffer lock shouldn't be
-	 * already held, so we can do this:
-	 */
-	if (!LWLockConditionalAcquire(shared->buffer_locks[slotno],
-								  LW_EXCLUSIVE))
+	/* If a write is in progress, wait for it to finish */
+	while (shared->page_status[slotno] == SLRU_PAGE_WRITE_IN_PROGRESS &&
+		   shared->page_number[slotno] == pageno)
 	{
-		LWLockRelease(shared->ControlLock);
-		LWLockAcquire(shared->buffer_locks[slotno], LW_EXCLUSIVE);
-		LWLockAcquire(shared->ControlLock, LW_EXCLUSIVE);
+		SimpleLruWaitIO(ctl, slotno);
 	}
 
 	/*
-	 * Check to see if someone else already did the write, or took the buffer
-	 * away from us.  If so, do nothing.  NOTE: we really should never see
-	 * WRITE_IN_PROGRESS here, since that state should only occur while the
-	 * writer is holding the buffer lock.  But accept it so that we have a
-	 * recovery path if a writer aborts.
+	 * Do nothing if page is not dirty, or if buffer no longer contains
+	 * the same page we were called for.
 	 */
-	if (shared->page_number[slotno] != pageno ||
-		(shared->page_status[slotno] != SLRU_PAGE_DIRTY &&
-		 shared->page_status[slotno] != SLRU_PAGE_WRITE_IN_PROGRESS))
-	{
-		LWLockRelease(shared->buffer_locks[slotno]);
+	if (!shared->page_dirty[slotno] ||
+		shared->page_status[slotno] != SLRU_PAGE_VALID ||
+		shared->page_number[slotno] != pageno)
 		return;
-	}
 
 	/*
-	 * Mark the slot write-busy.  After this point, a transaction status
-	 * update on this page will mark it dirty again.
+	 * Mark the slot write-busy, and clear the dirtybit.  After this point,
+	 * a transaction status update on this page will mark it dirty again.
 	 */
 	shared->page_status[slotno] = SLRU_PAGE_WRITE_IN_PROGRESS;
+	shared->page_dirty[slotno] = false;
 
-	/* Okay, release the control lock and do the write */
+	/* Acquire per-buffer lock (cannot deadlock, see notes at top) */
+	LWLockAcquire(shared->buffer_locks[slotno], LW_EXCLUSIVE);
+
+	/* Release control lock while doing I/O */
 	LWLockRelease(shared->ControlLock);
 
+	/* Do the write */
 	ok = SlruPhysicalWritePage(ctl, pageno, slotno, fdata);
 
 	/* If we failed, and we're in a flush, better close the files */
@@ -400,16 +408,17 @@ SimpleLruWritePage(SlruCtl ctl, int slotno, SlruFlush fdata)
 			close(fdata->fd[i]);
 	}
 
-	/* Re-acquire shared control lock and update page state */
+	/* Re-acquire control lock and update page state */
 	LWLockAcquire(shared->ControlLock, LW_EXCLUSIVE);
 
 	Assert(shared->page_number[slotno] == pageno &&
-		   (shared->page_status[slotno] == SLRU_PAGE_WRITE_IN_PROGRESS ||
-			shared->page_status[slotno] == SLRU_PAGE_DIRTY));
+		   shared->page_status[slotno] == SLRU_PAGE_WRITE_IN_PROGRESS);
 
-	/* Cannot set CLEAN if someone re-dirtied page since write started */
-	if (shared->page_status[slotno] == SLRU_PAGE_WRITE_IN_PROGRESS)
-		shared->page_status[slotno] = ok ? SLRU_PAGE_CLEAN : SLRU_PAGE_DIRTY;
+	/* If we failed to write, mark the page dirty again */
+	if (!ok)
+		shared->page_dirty[slotno] = true;
+
+	shared->page_status[slotno] = SLRU_PAGE_VALID;
 
 	LWLockRelease(shared->buffer_locks[slotno]);
 
@@ -748,24 +757,20 @@ SlruSelectLRUPage(SlruCtl ctl, int pageno)
 		/*
 		 * If the selected page is clean, we're set.
 		 */
-		if (shared->page_status[bestslot] == SLRU_PAGE_CLEAN)
+		if (shared->page_status[bestslot] == SLRU_PAGE_VALID &&
+			!shared->page_dirty[bestslot])
 			return bestslot;
 
 		/*
-		 * We need to do I/O.  Normal case is that we have to write it out,
-		 * but it's possible in the worst case to have selected a read-busy
-		 * page.  In that case we just wait for someone else to complete
-		 * the I/O, which we can do by waiting for the per-buffer lock.
+		 * We need to wait for I/O.  Normal case is that it's dirty and we
+		 * must initiate a write, but it's possible that the page is already
+		 * write-busy, or in the worst case still read-busy.  In those cases
+		 * we wait for the existing I/O to complete.
 		 */
-		if (shared->page_status[bestslot] == SLRU_PAGE_READ_IN_PROGRESS)
-		{
-			LWLockRelease(shared->ControlLock);
-			LWLockAcquire(shared->buffer_locks[bestslot], LW_SHARED);
-			LWLockRelease(shared->buffer_locks[bestslot]);
-			LWLockAcquire(shared->ControlLock, LW_EXCLUSIVE);
-		}
-		else
+		if (shared->page_status[bestslot] == SLRU_PAGE_VALID)
 			SimpleLruWritePage(ctl, bestslot, NULL);
+		else
+			SimpleLruWaitIO(ctl, bestslot);
 
 		/*
 		 * Now loop back and try again.  This is the easiest way of dealing
@@ -806,7 +811,8 @@ SimpleLruFlush(SlruCtl ctl, bool checkpoint)
 		 */
 		Assert(checkpoint ||
 			   shared->page_status[slotno] == SLRU_PAGE_EMPTY ||
-			   shared->page_status[slotno] == SLRU_PAGE_CLEAN);
+			   (shared->page_status[slotno] == SLRU_PAGE_VALID &&
+				!shared->page_dirty[slotno]));
 	}
 
 	LWLockRelease(shared->ControlLock);
@@ -884,9 +890,10 @@ restart:;
 			continue;
 
 		/*
-		 * If page is CLEAN, just change state to EMPTY (expected case).
+		 * If page is clean, just change state to EMPTY (expected case).
 		 */
-		if (shared->page_status[slotno] == SLRU_PAGE_CLEAN)
+		if (shared->page_status[slotno] == SLRU_PAGE_VALID &&
+			!shared->page_dirty[slotno])
 		{
 			shared->page_status[slotno] = SLRU_PAGE_EMPTY;
 			continue;
@@ -895,17 +902,14 @@ restart:;
 		/*
 		 * Hmm, we have (or may have) I/O operations acting on the page, so
 		 * we've got to wait for them to finish and then start again. This is
-		 * the same logic as in SlruSelectLRUPage.
+		 * the same logic as in SlruSelectLRUPage.  (XXX if page is dirty,
+		 * wouldn't it be OK to just discard it without writing it?  For now,
+		 * keep the logic the same as it was.)
 		 */
-		if (shared->page_status[slotno] == SLRU_PAGE_READ_IN_PROGRESS)
-		{
-			LWLockRelease(shared->ControlLock);
-			LWLockAcquire(shared->buffer_locks[slotno], LW_SHARED);
-			LWLockRelease(shared->buffer_locks[slotno]);
-			LWLockAcquire(shared->ControlLock, LW_EXCLUSIVE);
-		}
-		else
+		if (shared->page_status[slotno] == SLRU_PAGE_VALID)
 			SimpleLruWritePage(ctl, slotno, NULL);
+		else
+			SimpleLruWaitIO(ctl, slotno);
 		goto restart;
 	}
 

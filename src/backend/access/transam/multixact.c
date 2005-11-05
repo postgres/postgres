@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.11 2005/10/28 19:00:19 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.12 2005/11/05 21:19:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -714,7 +714,7 @@ RecordNewMultiXact(MultiXactId multi, MultiXactOffset offset,
 
 	*offptr = offset;
 
-	MultiXactOffsetCtl->shared->page_status[slotno] = SLRU_PAGE_DIRTY;
+	MultiXactOffsetCtl->shared->page_dirty[slotno] = true;
 
 	/* Exchange our lock */
 	LWLockRelease(MultiXactOffsetControlLock);
@@ -742,7 +742,7 @@ RecordNewMultiXact(MultiXactId multi, MultiXactOffset offset,
 
 		*memberptr = xids[i];
 
-		MultiXactMemberCtl->shared->page_status[slotno] = SLRU_PAGE_DIRTY;
+		MultiXactMemberCtl->shared->page_dirty[slotno] = true;
 	}
 
 	LWLockRelease(MultiXactMemberControlLock);
@@ -1308,7 +1308,7 @@ BootStrapMultiXact(void)
 
 	/* Make sure it's written out */
 	SimpleLruWritePage(MultiXactOffsetCtl, slotno, NULL);
-	Assert(MultiXactOffsetCtl->shared->page_status[slotno] == SLRU_PAGE_CLEAN);
+	Assert(!MultiXactOffsetCtl->shared->page_dirty[slotno]);
 
 	LWLockRelease(MultiXactOffsetControlLock);
 
@@ -1319,7 +1319,7 @@ BootStrapMultiXact(void)
 
 	/* Make sure it's written out */
 	SimpleLruWritePage(MultiXactMemberCtl, slotno, NULL);
-	Assert(MultiXactMemberCtl->shared->page_status[slotno] == SLRU_PAGE_CLEAN);
+	Assert(!MultiXactMemberCtl->shared->page_dirty[slotno]);
 
 	LWLockRelease(MultiXactMemberControlLock);
 }
@@ -1405,7 +1405,7 @@ StartupMultiXact(void)
 
 		MemSet(offptr, 0, BLCKSZ - (entryno * sizeof(MultiXactOffset)));
 
-		MultiXactOffsetCtl->shared->page_status[slotno] = SLRU_PAGE_DIRTY;
+		MultiXactOffsetCtl->shared->page_dirty[slotno] = true;
 	}
 
 	LWLockRelease(MultiXactOffsetControlLock);
@@ -1435,7 +1435,7 @@ StartupMultiXact(void)
 
 		MemSet(xidptr, 0, BLCKSZ - (entryno * sizeof(TransactionId)));
 
-		MultiXactMemberCtl->shared->page_status[slotno] = SLRU_PAGE_DIRTY;
+		MultiXactMemberCtl->shared->page_dirty[slotno] = true;
 	}
 
 	LWLockRelease(MultiXactMemberControlLock);
@@ -1829,7 +1829,7 @@ multixact_redo(XLogRecPtr lsn, XLogRecord *record)
 
 		slotno = ZeroMultiXactOffsetPage(pageno, false);
 		SimpleLruWritePage(MultiXactOffsetCtl, slotno, NULL);
-		Assert(MultiXactOffsetCtl->shared->page_status[slotno] == SLRU_PAGE_CLEAN);
+		Assert(!MultiXactOffsetCtl->shared->page_dirty[slotno]);
 
 		LWLockRelease(MultiXactOffsetControlLock);
 	}
@@ -1844,7 +1844,7 @@ multixact_redo(XLogRecPtr lsn, XLogRecord *record)
 
 		slotno = ZeroMultiXactMemberPage(pageno, false);
 		SimpleLruWritePage(MultiXactMemberCtl, slotno, NULL);
-		Assert(MultiXactMemberCtl->shared->page_status[slotno] == SLRU_PAGE_CLEAN);
+		Assert(!MultiXactMemberCtl->shared->page_dirty[slotno]);
 
 		LWLockRelease(MultiXactMemberControlLock);
 	}

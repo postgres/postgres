@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/slru.h,v 1.14 2005/10/15 02:49:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/slru.h,v 1.15 2005/11/05 21:19:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,13 +23,17 @@
  */
 #define NUM_SLRU_BUFFERS	8
 
-/* Page status codes */
+/*
+ * Page status codes.  Note that these do not include the "dirty" bit.
+ * page_dirty can be TRUE only in the VALID or WRITE_IN_PROGRESS states;
+ * in the latter case it implies that the page has been re-dirtied since
+ * the write started.
+ */
 typedef enum
 {
 	SLRU_PAGE_EMPTY,			/* buffer is not in use */
 	SLRU_PAGE_READ_IN_PROGRESS, /* page is being read in */
-	SLRU_PAGE_CLEAN,			/* page is valid and not dirty */
-	SLRU_PAGE_DIRTY,			/* page is valid but needs write */
+	SLRU_PAGE_VALID,			/* page is valid and not being written */
 	SLRU_PAGE_WRITE_IN_PROGRESS /* page is being written out */
 } SlruPageStatus;
 
@@ -48,6 +52,7 @@ typedef struct SlruSharedData
 	 */
 	char	   *page_buffer[NUM_SLRU_BUFFERS];
 	SlruPageStatus page_status[NUM_SLRU_BUFFERS];
+	bool		page_dirty[NUM_SLRU_BUFFERS];
 	int			page_number[NUM_SLRU_BUFFERS];
 	unsigned int page_lru_count[NUM_SLRU_BUFFERS];
 	LWLockId	buffer_locks[NUM_SLRU_BUFFERS];
