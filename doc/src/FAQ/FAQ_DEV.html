@@ -13,7 +13,7 @@
     <H1>Developer's Frequently Asked Questions (FAQ) for
     PostgreSQL</H1>
 
-    <P>Last updated: Mon Sep 19 21:28:08 EDT 2005</P>
+    <P>Last updated: Thu Oct 27 09:48:14 EDT 2005</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -982,7 +982,9 @@
     window, then find the <SMALL>PID</SMALL> of the <I>postgres</I>
     process used by <I>psql</I> using <CODE>SELECT pg_backend_pid()</CODE>.
     Use a debugger to attach to the <I>postgres</I> <SMALL>PID</SMALL>.
-    You can set breakpoints in the debugger and issue queries from
+    You can set breakpoints in the debugger and issue queries from the
+    other.  If you are looking to find the location that is generating
+    an error or log message, set a breakpoint at <I>errfinish</>.
 
     <I>psql</I>. If you are debugging <I>postgres</I> startup, you can
     set PGOPTIONS="-W n", then start <I>psql</I>. This will cause startup
