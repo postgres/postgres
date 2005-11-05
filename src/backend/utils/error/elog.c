@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.166 2005/11/03 17:11:39 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.167 2005/11/05 03:04:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +67,7 @@
 #include "tcop/tcopprot.h"
 #include "utils/memutils.h"
 #include "utils/guc.h"
+#include "utils/ps_status.h"
 
 
 /* Global variables */
@@ -1484,19 +1485,26 @@ log_line_prefix(StringInfo buf)
 				break;
 			case 'i':
 				if (MyProcPort)
-					appendStringInfo(buf, "%s", MyProcPort->commandTag);
+				{
+					const char *psdisp;
+					int		displen;
+
+					psdisp = get_ps_display(&displen);
+					appendStringInfo(buf, "%.*s", displen, psdisp);
+				}
 				break;
 			case 'r':
-				if (MyProcPort)
+				if (MyProcPort && MyProcPort->remote_host)
 				{
 					appendStringInfo(buf, "%s", MyProcPort->remote_host);
-					if (strlen(MyProcPort->remote_port) > 0)
+					if (MyProcPort->remote_port &&
+						MyProcPort->remote_port[0] != '\0')
 						appendStringInfo(buf, "(%s)",
 										 MyProcPort->remote_port);
 				}
 				break;
 			case 'h':
-				if (MyProcPort)
+				if (MyProcPort && MyProcPort->remote_host)
 					appendStringInfo(buf, "%s", MyProcPort->remote_host);
 				break;
 			case 'q':

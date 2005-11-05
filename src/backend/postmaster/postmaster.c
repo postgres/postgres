@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.474 2005/11/03 20:02:50 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.475 2005/11/05 03:04:52 tgl Exp $
  *
  * NOTES
  *
@@ -2647,7 +2647,6 @@ BackendRun(Port *port)
 	/* set these to empty in case they are needed before we set them up */
 	port->remote_host = "";
 	port->remote_port = "";
-	port->commandTag = "";
 
 	/*
 	 * Initialize libpq and enable reporting of ereport errors to the client.

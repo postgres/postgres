@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.158 2005/10/15 02:49:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.159 2005/11/05 03:04:52 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -1049,21 +1049,21 @@ WaitOnLock(LOCKMETHODID lockmethodid, LOCALLOCK *locallock,
 		   ResourceOwner owner)
 {
 	LockMethod	lockMethodTable = LockMethods[lockmethodid];
-	char	   *new_status,
-			   *old_status;
-	size_t		len;
+	const char *old_status;
+	char	   *new_status;
+	int			len;
 
 	Assert(lockmethodid < NumLockMethods);
 
 	LOCK_PRINT("WaitOnLock: sleeping on lock",
 			   locallock->lock, locallock->tag.mode);
 
-	old_status = pstrdup(get_ps_display());
-	len = strlen(old_status);
+	old_status = get_ps_display(&len);
 	new_status = (char *) palloc(len + 8 + 1);
 	memcpy(new_status, old_status, len);
 	strcpy(new_status + len, " waiting");
 	set_ps_display(new_status);
+	new_status[len] = '\0';		/* truncate off " waiting" */
 
 	awaitedLock = locallock;
 	awaitedOwner = owner;
@@ -1104,8 +1104,7 @@ WaitOnLock(LOCKMETHODID lockmethodid, LOCALLOCK *locallock,
 
 	awaitedLock = NULL;
 
-	set_ps_display(old_status);
-	pfree(old_status);
+	set_ps_display(new_status);
 	pfree(new_status);
 
 	LOCK_PRINT("WaitOnLock: wakeup on lock",

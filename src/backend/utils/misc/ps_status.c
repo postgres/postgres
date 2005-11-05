@@ -5,7 +5,7 @@
  * to contain some useful information. Mechanism differs wildly across
  * platforms.
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/ps_status.c,v 1.25 2005/10/15 02:49:36 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/ps_status.c,v 1.26 2005/11/05 03:04:52 tgl Exp $
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  * various details abducted from various places
@@ -307,10 +307,6 @@ init_ps_display(const char *username, const char *dbname,
 void
 set_ps_display(const char *activity)
 {
-	/* save tag for possible use by elog.c */
-	if (MyProcPort)
-		MyProcPort->commandTag = activity;
-
 #ifndef PS_USE_NONE
 	/* no ps display for stand-alone backend */
 	if (!IsUnderPostmaster)
@@ -365,15 +361,31 @@ set_ps_display(const char *activity)
 
 /*
  * Returns what's currently in the ps display, in case someone needs
- * it.	Note that only the activity part is returned.
+ * it.	Note that only the activity part is returned.  On some platforms
+ * the string will not be null-terminated, so return the effective
+ * length into *displen.
  */
 const char *
-get_ps_display(void)
+get_ps_display(int *displen)
 {
 #ifdef PS_USE_CLOBBER_ARGV
+	size_t		offset;
+
 	/* If ps_buffer is a pointer, it might still be null */
 	if (!ps_buffer)
+	{
+		*displen = 0;
 		return "";
+	}
+
+	/* Remove any trailing spaces to offset the effect of PS_PADDING */
+	offset = ps_buffer_size;
+	while (offset > ps_buffer_fixed_size && ps_buffer[offset-1] == PS_PADDING)
+		offset--;
+
+	*displen = offset - ps_buffer_fixed_size;
+#else
+	*displen = strlen(ps_buffer + ps_buffer_fixed_size);
 #endif
 
 	return ps_buffer + ps_buffer_fixed_size;
