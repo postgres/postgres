@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.248 2005/11/04 16:15:20 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.249 2005/11/05 00:04:04 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1520,7 +1520,8 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry>Build farm
          <systemitem class="systemname">kookaburra</systemitem> (5.2, cc 6.0); 
          <systemitem class="systemname">asp</systemitem> (5.2, gcc 3.3.2)</entry>
-        <entry>see <filename>doc/FAQ_AIX</filename></entry>
+        <entry>see <filename>doc/FAQ_AIX</filename>,
+         particularly if using AIX 5.3 ML3</entry>
        </row>
        <row>
         <entry><systemitem class="osname">AIX</></entry>
@@ -1718,9 +1719,9 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        <row>
         <entry><systemitem class="osname">IRIX</></entry>
         <entry><systemitem>MIPS</></entry>
-        <entry>7.4</entry>
-        <entry>Robert E. Bruccoleri (<email>bruc@stone.congenomics.com</email>), 2003-11-12</entry>
-        <entry>6.5.20, <command>cc</command> only</entry>
+        <entry>8.1.0</entry>
+        <entry>Kenneth Marshall (<email>ktm@is.rice.edu</email>), 2005-11-04</entry>
+        <entry>6.5, <command>cc</command> only</entry>
        </row>
        <row>
         <entry><systemitem class="osname">Mac OS X</></entry>
