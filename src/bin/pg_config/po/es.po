@@ -1,20 +1,26 @@
 # pg_config spanish translation
 # This file is put in the public domain.
-# Alvaro Herrera <alvherre@dcc.uchile.cl>, 2004
+# Alvaro Herrera <alvherre@alvh.no-ip.org>, 2004, 2005
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_config 8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-01-17 10:17-0300\n"
+"POT-Creation-Date: 2005-11-05 23:36-0300\n"
 "PO-Revision-Date: 2004-11-02 23:30 CLST\n"
-"Last-Translator: Alvaro Herrera <alvherre@dcc.uchile.cl>\n"
+"Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: es <pgsql-es-ayuda@postgresql.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=iso-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: pg_config.c:36
+#: pg_config.c:241 pg_config.c:257 pg_config.c:273 pg_config.c:289
+#: pg_config.c:305 pg_config.c:321 pg_config.c:337 pg_config.c:353
+#, c-format
+msgid "not recorded\n"
+msgstr "no registrado\n"
+
+#: pg_config.c:408
 #, c-format
 msgid ""
 "\n"
@@ -25,32 +31,38 @@ msgstr ""
 "%s provee información sobre la versión instalada de PostgreSQL.\n"
 "\n"
 
-#: pg_config.c:37
+#: pg_config.c:409
 #, c-format
 msgid "Usage:\n"
 msgstr "Empleo:\n"
 
-#: pg_config.c:38
+#: pg_config.c:410
 #, c-format
 msgid ""
-"  %s OPTION...\n"
+"  %s [ OPTION ... ]\n"
 "\n"
 msgstr ""
-"  %s OPCIÓN...\n"
+"  %s [ OPCIÓN... ]\n"
 "\n"
 
-#: pg_config.c:39
+#: pg_config.c:411
 #, c-format
 msgid "Options:\n"
 msgstr "Opciones:\n"
 
-#: pg_config.c:40
+#: pg_config.c:412
 #, c-format
 msgid "  --bindir              show location of user executables\n"
 msgstr ""
 "  --bindir              muestra la ubicación de ejecutables de usuario\n"
 
-#: pg_config.c:41
+#: pg_config.c:413
+#, c-format
+msgid "  --docdir              show location of documentation files\n"
+msgstr ""
+"  --docdir              muestra la ubicación de archivos de documentación\n"
+
+#: pg_config.c:414
 #, c-format
 msgid ""
 "  --includedir          show location of C header files of the client\n"
@@ -59,7 +71,14 @@ msgstr ""
 "  --includedir          muestra la ubicación de archivos de encabezados C\n"
 "                        de las interfaces cliente\n"
 
-#: pg_config.c:43
+#: pg_config.c:416
+#, c-format
+msgid "  --pkgincludedir       show location of other C header files\n"
+msgstr ""
+"  --pkgincludedir       muestra la ubicación de otros archivos de\n"
+"                        encabezados C\n"
+
+#: pg_config.c:417
 #, c-format
 msgid ""
 "  --includedir-server   show location of C header files for the server\n"
@@ -67,27 +86,57 @@ msgstr ""
 "  --includedir-server   muestra la ubicación de archivos de encabezados C\n"
 "                        del servidor\n"
 
-#: pg_config.c:44
+#: pg_config.c:418
 #, c-format
 msgid "  --libdir              show location of object code libraries\n"
 msgstr ""
 "  --libdir              muestra la ubicación de bibliotecas\n"
 "                        de código objeto\n"
 
-#: pg_config.c:45
+#: pg_config.c:419
 #, c-format
 msgid "  --pkglibdir           show location of dynamically loadable modules\n"
 msgstr ""
 "  --pkglibdir           muestra la ubicación de módulos para carga dinámica\n"
 
-#: pg_config.c:46
+#: pg_config.c:420
+#, c-format
+msgid "  --localedir           show location of locale support files\n"
+msgstr ""
+"  --localedir           muestra la ubicación de archivos de soporte de\n"
+"                        configuraciones locales\n"
+
+#: pg_config.c:421
+#, c-format
+msgid "  --mandir              show location of manual pages\n"
+msgstr ""
+"  --mandir              muestra la ubicación de páginas de manual\n"
+
+#: pg_config.c:422
+#, c-format
+msgid ""
+"  --sharedir            show location of architecture-independent support "
+"files\n"
+msgstr ""
+"  --sharedir            muestra la ubicación de archivos de soporte\n"
+"                        independientes de arquitectura\n"
+
+#: pg_config.c:423
+#, c-format
+msgid ""
+"  --sysconfdir          show location of system-wide configuration files\n"
+msgstr ""
+"  --sysconfdir          muestra la ubicación de archivos de configuración\n"
+"                        global del sistema\n"
+
+#: pg_config.c:424
 #, c-format
 msgid "  --pgxs                show location of extension makefile\n"
 msgstr ""
 "  --pgxs                muestra la ubicación del archivo makefile\n"
 "                        para extensiones\n"
 
-#: pg_config.c:47
+#: pg_config.c:425
 #, c-format
 msgid ""
 "  --configure           show options given to \"configure\" script when\n"
@@ -96,90 +145,145 @@ msgstr ""
 "  --configure           muestra las opciones que se dieron a «configure»\n"
 "                        cuando PostgreSQL fue construido\n"
 
-#: pg_config.c:49
+#: pg_config.c:427
 #, c-format
-msgid "  --version             show the PostgreSQL version, then exit\n"
-msgstr "  --version             muestra la versión de PostgreSQL y termina\n"
+msgid "  --cc                  show CC value used when PostgreSQL was built\n"
+msgstr ""
+"  --cc                  muestra el valor de CC cuando PostgreSQL fue construido\n"
 
-#: pg_config.c:50
+#: pg_config.c:428
 #, c-format
 msgid ""
-"  --help                show this help, then exit\n"
-"\n"
+"  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
+msgstr ""
+"  --cppflags            muestra el valor de CPPFLAGS cuando PostgreSQL fue\n"
+"                        construido\n"
+
+#: pg_config.c:429
+#, c-format
+msgid ""
+"  --cflags              show CFLAGS value used when PostgreSQL was built\n"
+msgstr ""
+"  --cppflags            muestra el valor de CFLAGS cuando PostgreSQL fue\n"
+"                        construido\n"
+
+#: pg_config.c:430
+#, c-format
+msgid ""
+"  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
+msgstr ""
+"  --cflags_sl           muestra el valor de CFLAGS_SL cuando PostgreSQL fue\n"
+"                        construido\n"
+
+#: pg_config.c:431
+#, c-format
+msgid ""
+"  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
+msgstr ""
+"  --ldflags             muestra el valor de LDFLAGS cuando PostgreSQL fue\n"
+"                        construido\n"
+
+#: pg_config.c:432
+#, c-format
+msgid ""
+"  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was "
+"built\n"
+msgstr ""
+"  --ldflags_sl          muestra el valor de LDFLAGS_SL cuando PostgreSQL fue\n"
+"                        construido\n"
+
+#: pg_config.c:433
+#, c-format
+msgid ""
+"  --libs                show LIBS value used when PostgreSQL was built\n"
+msgstr ""
+"  --libds               muestra el valor de LIBS cuando PostgreSQL fue\n"
+"                        construido\n"
+
+#: pg_config.c:434
+#, c-format
+msgid "  --version             show the PostgreSQL version\n"
+msgstr "  --version             muestra la versión de PostgreSQL\n"
+
+#: pg_config.c:435
+#, c-format
+msgid "  --help                show this help, then exit\n"
 msgstr ""
 "  --help                muestra esta ayuda y termina\n"
+
+#: pg_config.c:436
+#, c-format
+msgid ""
+"\n"
+"With no arguments, all known items are shown.\n"
+"\n"
+msgstr ""
+"\n"
+"Si no se pasa ningún argumento, se muestra toda la información conocida\n"
 "\n"
 
-#: pg_config.c:51
+#: pg_config.c:437
 #, c-format
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr "Reporte errores a <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_config.c:57
+#: pg_config.c:443
 #, c-format
-msgid ""
-"\n"
-"Try \"%s --help\" for more information\n"
+msgid "Try \"%s --help\" for more information.\n"
 msgstr ""
-"\n"
-"Use «%s --help» para mayor información\n"
+"Use «%s --help» para mayor información.\n"
 
-#: pg_config.c:75
-#, c-format
-msgid "%s: argument required\n"
-msgstr "%s: se requiere un argumento\n"
-
-#: pg_config.c:104
-#, c-format
-msgid "%s: invalid argument: %s\n"
-msgstr "%s: el argumento no es válido: %s\n"
-
-#: pg_config.c:113
+#: pg_config.c:482
 #, c-format
 msgid "%s: could not find own executable\n"
 msgstr "%s: no se pudo encontrar el propio ejecutable\n"
 
-#: ../../port/exec.c:194 ../../port/exec.c:308 ../../port/exec.c:351
+#: pg_config.c:505
+#, c-format
+msgid "%s: invalid argument: %s\n"
+msgstr "%s: el argumento no es válido: %s\n"
+
+#: ../../port/exec.c:193 ../../port/exec.c:307 ../../port/exec.c:350
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "no se pudo identificar el directorio actual: %s"
 
-#: ../../port/exec.c:213
+#: ../../port/exec.c:212
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "el binario «%s» no es válido"
 
-#: ../../port/exec.c:262
+#: ../../port/exec.c:261
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "no se pudo leer el binario «%s»"
 
-#: ../../port/exec.c:269
+#: ../../port/exec.c:268
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "no se pudo encontrar un «%s» para ejecutar"
 
-#: ../../port/exec.c:324 ../../port/exec.c:360
+#: ../../port/exec.c:323 ../../port/exec.c:359
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "no se pudo cambiar el directorio a «%s»"
 
-#: ../../port/exec.c:339
+#: ../../port/exec.c:338
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "no se pudo leer el enlace simbólico «%s»"
 
-#: ../../port/exec.c:587
+#: ../../port/exec.c:584
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "el proceso hijo terminó con código de salida %d"
 
-#: ../../port/exec.c:590
+#: ../../port/exec.c:587
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "el proceso hijo fue terminado por una señal %d"
 
-#: ../../port/exec.c:593
+#: ../../port/exec.c:590
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "el proceso hijo terminó con código no reconocido %d"
