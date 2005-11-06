@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.52 2005/10/15 02:49:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.53 2005/11/06 19:29:00 tgl Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -103,9 +103,11 @@ _hash_droplock(Relation rel, BlockNumber whichlock, int access)
  *		(ie, the buffer is "locked and pinned").
  *
  *		XXX P_NEW is not used because, unlike the tree structures, we
- *		need the bucket blocks to be at certain block numbers.	we must
- *		depend on the caller to call _hash_pageinit on the block if it
- *		knows that this is a new block.
+ *		need the bucket blocks to be at certain block numbers.
+ *
+ *		All call sites should call either _hash_pageinit or _hash_checkpage
+ *		on the returned page, depending on whether the block is expected
+ *		to be new or not.
  */
 Buffer
 _hash_getbuf(Relation rel, BlockNumber blkno, int access)
@@ -380,8 +382,8 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	/* Write-lock the meta page */
 	_hash_chgbufaccess(rel, metabuf, HASH_NOLOCK, HASH_WRITE);
 
+	_hash_checkpage(rel, metabuf, LH_META_PAGE);
 	metap = (HashMetaPage) BufferGetPage(metabuf);
-	_hash_checkpage(rel, (Page) metap, LH_META_PAGE);
 
 	/*
 	 * Check to see if split is still needed; someone else might have already
@@ -555,14 +557,14 @@ _hash_splitbucket(Relation rel,
 	 * either bucket.
 	 */
 	oblkno = start_oblkno;
-	nblkno = start_nblkno;
 	obuf = _hash_getbuf(rel, oblkno, HASH_WRITE);
-	nbuf = _hash_getbuf(rel, nblkno, HASH_WRITE);
+	_hash_checkpage(rel, obuf, LH_BUCKET_PAGE);
 	opage = BufferGetPage(obuf);
-	npage = BufferGetPage(nbuf);
-
-	_hash_checkpage(rel, opage, LH_BUCKET_PAGE);
 	oopaque = (HashPageOpaque) PageGetSpecialPointer(opage);
+
+	nblkno = start_nblkno;
+	nbuf = _hash_getbuf(rel, nblkno, HASH_WRITE);
+	npage = BufferGetPage(nbuf);
 
 	/* initialize the new bucket's primary page */
 	_hash_pageinit(npage, BufferGetPageSize(nbuf));
@@ -602,8 +604,8 @@ _hash_splitbucket(Relation rel,
 			_hash_wrtbuf(rel, obuf);
 
 			obuf = _hash_getbuf(rel, oblkno, HASH_WRITE);
+			_hash_checkpage(rel, obuf, LH_OVERFLOW_PAGE);
 			opage = BufferGetPage(obuf);
-			_hash_checkpage(rel, opage, LH_OVERFLOW_PAGE);
 			oopaque = (HashPageOpaque) PageGetSpecialPointer(opage);
 			ooffnum = FirstOffsetNumber;
 			omaxoffnum = PageGetMaxOffsetNumber(opage);
@@ -642,8 +644,8 @@ _hash_splitbucket(Relation rel,
 				_hash_chgbufaccess(rel, nbuf, HASH_WRITE, HASH_NOLOCK);
 				/* chain to a new overflow page */
 				nbuf = _hash_addovflpage(rel, metabuf, nbuf);
+				_hash_checkpage(rel, nbuf, LH_OVERFLOW_PAGE);
 				npage = BufferGetPage(nbuf);
-				_hash_checkpage(rel, npage, LH_OVERFLOW_PAGE);
 				/* we don't need nopaque within the loop */
 			}
 

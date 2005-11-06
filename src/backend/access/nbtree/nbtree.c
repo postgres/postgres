@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.132 2005/10/15 02:49:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.133 2005/11/06 19:29:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -734,8 +734,8 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 	 * buffer and it will be fully initialized before we can examine it.  (See
 	 * also vacuumlazy.c, which has the same issue.)
 	 *
-	 * We can skip locking for new or temp relations, however, since no one else
-	 * could be accessing them.
+	 * We can skip locking for new or temp relations, however, since no one
+	 * else could be accessing them.
 	 */
 	needLock = !RELATION_IS_LOCAL(rel);
 
@@ -772,9 +772,17 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 		Page		page;
 		BTPageOpaque opaque;
 
-		buf = _bt_getbuf(rel, blkno, BT_READ);
+		/*
+		 * We can't use _bt_getbuf() here because it always applies
+		 * _bt_checkpage(), which will barf on an all-zero page.
+		 * We want to recycle all-zero pages, not fail.
+		 */
+		buf = ReadBuffer(rel, blkno);
+		LockBuffer(buf, BT_READ);
 		page = BufferGetPage(buf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+		if (!PageIsNew(page))
+			_bt_checkpage(rel, buf);
 		if (_bt_page_recyclable(page))
 		{
 			/* Okay to recycle this page */

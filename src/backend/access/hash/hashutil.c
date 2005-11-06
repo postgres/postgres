@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashutil.c,v 1.42 2005/05/11 01:26:01 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashutil.c,v 1.43 2005/11/06 19:29:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,12 +110,50 @@ _hash_log2(uint32 num)
  * _hash_checkpage -- sanity checks on the format of all hash pages
  */
 void
-_hash_checkpage(Relation rel, Page page, int flags)
+_hash_checkpage(Relation rel, Buffer buf, int flags)
 {
-	Assert(page);
+	Page		page = BufferGetPage(buf);
 
 	/*
-	 * When checking the metapage, always verify magic number and version.
+	 * ReadBuffer verifies that every newly-read page passes PageHeaderIsValid,
+	 * which means it either contains a reasonably sane page header or is
+	 * all-zero.  We have to defend against the all-zero case, however.
+	 */
+	if (PageIsNew(page))
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg("index \"%s\" contains unexpected zero page at block %u",
+						RelationGetRelationName(rel),
+						BufferGetBlockNumber(buf)),
+				 errhint("Please REINDEX it.")));
+
+	/*
+	 * Additionally check that the special area looks sane.
+	 */
+	if (((PageHeader) (page))->pd_special !=
+		   (BLCKSZ - MAXALIGN(sizeof(HashPageOpaqueData))))
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg("index \"%s\" contains corrupted page at block %u",
+						RelationGetRelationName(rel),
+						BufferGetBlockNumber(buf)),
+				 errhint("Please REINDEX it.")));
+
+	if (flags)
+	{
+		HashPageOpaque opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+
+		if ((opaque->hasho_flag & flags) == 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INDEX_CORRUPTED),
+					 errmsg("index \"%s\" contains corrupted page at block %u",
+							RelationGetRelationName(rel),
+							BufferGetBlockNumber(buf)),
+					 errhint("Please REINDEX it.")));
+	}
+
+	/*
+	 * When checking the metapage, also verify magic number and version.
 	 */
 	if (flags == LH_META_PAGE)
 	{
@@ -130,25 +168,8 @@ _hash_checkpage(Relation rel, Page page, int flags)
 		if (metap->hashm_version != HASH_VERSION)
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
-					 errmsg("index \"%s\" has wrong hash version", RelationGetRelationName(rel)),
+					 errmsg("index \"%s\" has wrong hash version",
+							RelationGetRelationName(rel)),
 					 errhint("Please REINDEX it.")));
 	}
-
-	/*
-	 * These other checks are for debugging purposes only.
-	 */
-#ifdef USE_ASSERT_CHECKING
-	Assert(((PageHeader) (page))->pd_lower >= SizeOfPageHeaderData);
-	Assert(((PageHeader) (page))->pd_upper <=
-		   (BLCKSZ - MAXALIGN(sizeof(HashPageOpaqueData))));
-	Assert(((PageHeader) (page))->pd_special ==
-		   (BLCKSZ - MAXALIGN(sizeof(HashPageOpaqueData))));
-	Assert(PageGetPageSize(page) == BLCKSZ);
-	if (flags)
-	{
-		HashPageOpaque opaque = (HashPageOpaque) PageGetSpecialPointer(page);
-
-		Assert(opaque->hasho_flag & flags);
-	}
-#endif   /* USE_ASSERT_CHECKING */
 }

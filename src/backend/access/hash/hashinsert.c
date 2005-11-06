@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashinsert.c,v 1.39 2005/10/18 01:06:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashinsert.c,v 1.40 2005/11/06 19:29:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,8 +73,8 @@ _hash_doinsert(Relation rel, HashItem hitem)
 
 	/* Read the metapage */
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ);
+	_hash_checkpage(rel, metabuf, LH_META_PAGE);
 	metap = (HashMetaPage) BufferGetPage(metabuf);
-	_hash_checkpage(rel, (Page) metap, LH_META_PAGE);
 
 	/*
 	 * Check whether the item can fit on a hash page at all. (Eventually, we
@@ -111,8 +111,8 @@ _hash_doinsert(Relation rel, HashItem hitem)
 
 	/* Fetch the primary bucket page for the bucket */
 	buf = _hash_getbuf(rel, blkno, HASH_WRITE);
+	_hash_checkpage(rel, buf, LH_BUCKET_PAGE);
 	page = BufferGetPage(buf);
-	_hash_checkpage(rel, page, LH_BUCKET_PAGE);
 	pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
 	Assert(pageopaque->hasho_bucket == bucket);
 
@@ -151,7 +151,7 @@ _hash_doinsert(Relation rel, HashItem hitem)
 			/* should fit now, given test above */
 			Assert(PageGetFreeSpace(page) >= itemsz);
 		}
-		_hash_checkpage(rel, page, LH_OVERFLOW_PAGE);
+		_hash_checkpage(rel, buf, LH_OVERFLOW_PAGE);
 		pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
 		Assert(pageopaque->hasho_bucket == bucket);
 	}
@@ -204,8 +204,8 @@ _hash_pgaddtup(Relation rel,
 	OffsetNumber itup_off;
 	Page		page;
 
+	_hash_checkpage(rel, buf, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 	page = BufferGetPage(buf);
-	_hash_checkpage(rel, page, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 
 	itup_off = OffsetNumberNext(PageGetMaxOffsetNumber(page));
 	if (PageAddItem(page, (Item) hitem, itemsize, itup_off, LP_USED)

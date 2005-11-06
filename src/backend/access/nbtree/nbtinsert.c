@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.127 2005/10/15 02:49:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.128 2005/11/06 19:29:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -672,7 +672,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	rightpage = BufferGetPage(rbuf);
 
 	_bt_pageinit(leftpage, BufferGetPageSize(buf));
-	_bt_pageinit(rightpage, BufferGetPageSize(rbuf));
+	/* rightpage was already initialized by _bt_getbuf */
 
 	/* init btree private data */
 	oopaque = (BTPageOpaque) PageGetSpecialPointer(origpage);

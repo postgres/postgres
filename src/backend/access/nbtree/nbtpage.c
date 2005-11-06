@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.88 2005/10/15 02:49:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.89 2005/11/06 19:29:00 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -222,8 +222,6 @@ _bt_getroot(Relation rel, int access)
 		rootbuf = _bt_getbuf(rel, P_NEW, BT_WRITE);
 		rootblkno = BufferGetBlockNumber(rootbuf);
 		rootpage = BufferGetPage(rootbuf);
-
-		_bt_pageinit(rootpage, BufferGetPageSize(rootbuf));
 		rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
 		rootopaque->btpo_prev = rootopaque->btpo_next = P_NONE;
 		rootopaque->btpo_flags = (BTP_LEAF | BTP_ROOT);
@@ -406,13 +404,49 @@ _bt_gettrueroot(Relation rel)
 }
 
 /*
+ *	_bt_checkpage() -- Verify that a freshly-read page looks sane.
+ */
+void
+_bt_checkpage(Relation rel, Buffer buf)
+{
+	Page		page = BufferGetPage(buf);
+
+	/*
+	 * ReadBuffer verifies that every newly-read page passes PageHeaderIsValid,
+	 * which means it either contains a reasonably sane page header or is
+	 * all-zero.  We have to defend against the all-zero case, however.
+	 */
+	if (PageIsNew(page))
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg("index \"%s\" contains unexpected zero page at block %u",
+						RelationGetRelationName(rel),
+						BufferGetBlockNumber(buf)),
+				 errhint("Please REINDEX it.")));
+
+	/*
+	 * Additionally check that the special area looks sane.
+	 */
+	if (((PageHeader) (page))->pd_special !=
+		(BLCKSZ - MAXALIGN(sizeof(BTPageOpaqueData))))
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg("index \"%s\" contains corrupted page at block %u",
+						RelationGetRelationName(rel),
+						BufferGetBlockNumber(buf)),
+				 errhint("Please REINDEX it.")));
+}
+
+/*
  *	_bt_getbuf() -- Get a buffer by block number for read or write.
  *
- *		blkno == P_NEW means to get an unallocated index page.
+ *		blkno == P_NEW means to get an unallocated index page.  The page
+ *		will be initialized before returning it.
  *
  *		When this routine returns, the appropriate lock is set on the
  *		requested buffer and its reference count has been incremented
- *		(ie, the buffer is "locked and pinned").
+ *		(ie, the buffer is "locked and pinned").  Also, we apply
+ *		_bt_checkpage to sanity-check the page (except in P_NEW case).
  */
 Buffer
 _bt_getbuf(Relation rel, BlockNumber blkno, int access)
@@ -424,6 +458,7 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 		/* Read an existing block of the relation */
 		buf = ReadBuffer(rel, blkno);
 		LockBuffer(buf, access);
+		_bt_checkpage(rel, buf);
 	}
 	else
 	{
@@ -538,6 +573,7 @@ _bt_relandgetbuf(Relation rel, Buffer obuf, BlockNumber blkno, int access)
 		LockBuffer(obuf, BUFFER_LOCK_UNLOCK);
 	buf = ReleaseAndReadBuffer(obuf, rel, blkno);
 	LockBuffer(buf, access);
+	_bt_checkpage(rel, buf);
 	return buf;
 }
 
