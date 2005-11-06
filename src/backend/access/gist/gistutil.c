@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.7 2005/09/22 20:44:36 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.8 2005/11/06 22:39:20 tgl Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -799,23 +799,6 @@ gistpenalty(GISTSTATE *giststate, int attno,
 }
 
 void
-GISTInitBuffer(Buffer b, uint32 f)
-{
-	GISTPageOpaque opaque;
-	Page		page;
-	Size		pageSize;
-
-	pageSize = BufferGetPageSize(b);
-	page = BufferGetPage(b);
-	PageInit(page, pageSize, sizeof(GISTPageOpaqueData));
-
-	opaque = GistPageGetOpaque(page);
-	opaque->flags = f;
-	opaque->rightlink = InvalidBlockNumber;
-	memset(&(opaque->nsn), 0, sizeof(GistNSN));
-}
-
-void
 gistUserPicksplit(Relation r, GistEntryVector *entryvec, GIST_SPLITVEC *v,
 				  IndexTuple *itup, int len, GISTSTATE *giststate)
 {
@@ -864,36 +847,108 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, GIST_SPLITVEC *v,
 	}
 }
 
+/*
+ * Initialize a new index page
+ */
+void
+GISTInitBuffer(Buffer b, uint32 f)
+{
+	GISTPageOpaque opaque;
+	Page		page;
+	Size		pageSize;
+
+	pageSize = BufferGetPageSize(b);
+	page = BufferGetPage(b);
+	PageInit(page, pageSize, sizeof(GISTPageOpaqueData));
+
+	opaque = GistPageGetOpaque(page);
+	opaque->flags = f;
+	opaque->rightlink = InvalidBlockNumber;
+	/* page was already zeroed by PageInit, so this is not needed: */
+	/* memset(&(opaque->nsn), 0, sizeof(GistNSN)); */
+}
+
+/*
+ * Verify that a freshly-read page looks sane.
+ */
+void
+gistcheckpage(Relation rel, Buffer buf)
+{
+	Page		page = BufferGetPage(buf);
+
+	/*
+	 * ReadBuffer verifies that every newly-read page passes PageHeaderIsValid,
+	 * which means it either contains a reasonably sane page header or is
+	 * all-zero.  We have to defend against the all-zero case, however.
+	 */
+	if (PageIsNew(page))
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg("index \"%s\" contains unexpected zero page at block %u",
+						RelationGetRelationName(rel),
+						BufferGetBlockNumber(buf)),
+				 errhint("Please REINDEX it.")));
+
+	/*
+	 * Additionally check that the special area looks sane.
+	 */
+	if (((PageHeader) (page))->pd_special !=
+		(BLCKSZ - MAXALIGN(sizeof(GISTPageOpaqueData))))
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg("index \"%s\" contains corrupted page at block %u",
+						RelationGetRelationName(rel),
+						BufferGetBlockNumber(buf)),
+				 errhint("Please REINDEX it.")));
+}
+
+
+/*
+ * Allocate a new page (either by recycling, or by extending the index file)
+ *
+ * The returned buffer is already pinned and exclusive-locked
+ *
+ * Caller is responsible for initializing the page by calling GISTInitBuffer
+ */
 Buffer
 gistNewBuffer(Relation r)
 {
-	Buffer		buffer = InvalidBuffer;
+	Buffer		buffer;
 	bool		needLock;
 
-	while (true)
+	/* First, try to get a page from FSM */
+	for (;;)
 	{
 		BlockNumber blkno = GetFreeIndexPage(&r->rd_node);
 
 		if (blkno == InvalidBlockNumber)
-			break;
+			break;				/* nothing left in FSM */
 
 		buffer = ReadBuffer(r, blkno);
+		/*
+		 * We have to guard against the possibility that someone else already
+		 * recycled this page; the buffer may be locked if so.
+		 */
 		if (ConditionalLockBuffer(buffer))
 		{
 			Page		page = BufferGetPage(buffer);
 
+			if (PageIsNew(page))
+				return buffer;	/* OK to use, if never initialized */
+
+			gistcheckpage(r, buffer);
+
 			if (GistPageIsDeleted(page))
-			{
-				GistPageSetNonDeleted(page);
-				return buffer;
-			}
-			else
-				LockBuffer(buffer, GIST_UNLOCK);
+				return buffer;	/* OK to use */
+
+			LockBuffer(buffer, GIST_UNLOCK);
 		}
 
+		/* Can't use it, so release buffer and try again */
 		ReleaseBuffer(buffer);
 	}
 
+	/* Must extend the file */
 	needLock = !RELATION_IS_LOCAL(r);
 
 	if (needLock)

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.9 2005/09/22 20:44:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.10 2005/11/06 22:39:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,6 +65,11 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 				lencompleted = 16;
 
 	buffer = ReadBuffer(gv->index, blkno);
+	/*
+	 * This is only used during VACUUM FULL, so we need not bother to lock
+	 * individual index pages
+	 */
+	gistcheckpage(gv->index, buffer);
 	page = (Page) BufferGetPage(buffer);
 	maxoff = PageGetMaxOffsetNumber(page);
 
@@ -378,9 +383,10 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 
 	needFullVacuum = false;
 
-	needLock = !RELATION_IS_LOCAL(rel);
 	if (info->vacuum_full)
 		needLock = false;		/* relation locked with AccessExclusiveLock */
+	else
+		needLock = !RELATION_IS_LOCAL(rel);
 
 	/* try to find deleted pages */
 	if (needLock)
@@ -403,7 +409,7 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 		LockBuffer(buffer, GIST_SHARE);
 		page = (Page) BufferGetPage(buffer);
 
-		if (GistPageIsDeleted(page))
+		if (PageIsNew(page) || GistPageIsDeleted(page))
 		{
 			if (nFreePages < maxFreePages)
 			{
@@ -513,6 +519,7 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 		ItemId		iid;
 
 		LockBuffer(buffer, GIST_SHARE);
+		gistcheckpage(rel, buffer);
 		page = (Page) BufferGetPage(buffer);
 
 		if (GistPageIsLeaf(page))

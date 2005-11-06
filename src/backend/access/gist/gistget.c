@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.52 2005/10/06 02:29:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.53 2005/11/06 22:39:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,7 @@ killtuple(Relation r, GISTScanOpaque so, ItemPointer iptr)
 					maxoff;
 
 		LockBuffer(buffer, GIST_SHARE);
+		gistcheckpage(r, buffer);
 		p = (Page) BufferGetPage(buffer);
 
 		if (buffer == so->curbuf && XLByteEQ(so->stack->lsn, PageGetLSN(p)))
@@ -176,6 +177,7 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids, int maxtids, b
 		/* First of all, we need lock buffer */
 		Assert(so->curbuf != InvalidBuffer);
 		LockBuffer(so->curbuf, GIST_SHARE);
+		gistcheckpage(scan->indexRelation, so->curbuf);
 		p = BufferGetPage(so->curbuf);
 		opaque = GistPageGetOpaque(p);
 		resetoffset = false;
@@ -224,7 +226,8 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids, int maxtids, b
 			continue;
 		}
 
-		if (!GistPageIsLeaf(p) || resetoffset || ItemPointerIsValid(&scan->currentItemData) == false)
+		if (!GistPageIsLeaf(p) || resetoffset ||
+			!ItemPointerIsValid(&scan->currentItemData))
 		{
 			if (ScanDirectionIsBackward(dir))
 				n = PageGetMaxOffsetNumber(p);
@@ -268,7 +271,8 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids, int maxtids, b
 					return ntids;
 				}
 
-				so->curbuf = ReleaseAndReadBuffer(so->curbuf, scan->indexRelation,
+				so->curbuf = ReleaseAndReadBuffer(so->curbuf,
+												  scan->indexRelation,
 												  stk->block);
 				/* XXX	go up */
 				break;

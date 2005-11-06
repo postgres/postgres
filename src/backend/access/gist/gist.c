@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.127 2005/10/18 01:06:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.128 2005/11/06 22:39:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -529,12 +529,12 @@ gistfindleaf(GISTInsertState *state, GISTSTATE *giststate)
 	 * ready to recheck path in a bad case... We remember, that page->lsn
 	 * should never be invalid.
 	 */
-	while (true)
+	for (;;)
 	{
-
 		if (XLogRecPtrIsInvalid(state->stack->lsn))
 			state->stack->buffer = ReadBuffer(state->r, state->stack->blkno);
 		LockBuffer(state->stack->buffer, GIST_SHARE);
+		gistcheckpage(state->r, state->stack->buffer);
 
 		state->stack->page = (Page) BufferGetPage(state->stack->buffer);
 		opaque = GistPageGetOpaque(state->stack->page);
@@ -554,7 +554,6 @@ gistfindleaf(GISTInsertState *state, GISTSTATE *giststate)
 			state->stack = state->stack->parent;
 			continue;
 		}
-
 
 		if (!GistPageIsLeaf(state->stack->page))
 		{
@@ -649,14 +648,18 @@ gistReadAndLockBuffer(Relation r, BlockNumber blkno)
 }
 
 /*
- * Traverse the tree to find path from root page,
- * to prevent deadlocks, it should lock only one page simultaneously.
- * Function uses in recovery and usial mode, so should work with different
- * read functions (gistReadAndLockBuffer and XLogReadBuffer)
+ * Traverse the tree to find path from root page.
+ *
  * returns from the begining of closest parent;
+ *
+ * Function is used in both regular and recovery mode, so must work with
+ * different read functions (gistReadAndLockBuffer and XLogReadBuffer)
+ *
+ * To prevent deadlocks, this should lock only one page simultaneously.
  */
 GISTInsertStack *
-gistFindPath(Relation r, BlockNumber child, Buffer (*myReadBuffer) (Relation, BlockNumber))
+gistFindPath(Relation r, BlockNumber child,
+			 Buffer (*myReadBuffer) (Relation, BlockNumber))
 {
 	Page		page;
 	Buffer		buffer;
@@ -674,7 +677,8 @@ gistFindPath(Relation r, BlockNumber child, Buffer (*myReadBuffer) (Relation, Bl
 
 	while (top && top->blkno != child)
 	{
-		buffer = myReadBuffer(r, top->blkno);	/* buffer locked */
+		buffer = myReadBuffer(r, top->blkno);	/* locks buffer */
+		gistcheckpage(r, buffer);
 		page = (Page) BufferGetPage(buffer);
 
 		if (GistPageIsLeaf(page))
@@ -771,8 +775,8 @@ gistFindCorrectParent(Relation r, GISTInsertStack *child)
 	GISTInsertStack *parent = child->parent;
 
 	LockBuffer(parent->buffer, GIST_EXCLUSIVE);
+	gistcheckpage(r, parent->buffer);
 	parent->page = (Page) BufferGetPage(parent->buffer);
-
 
 	/* here we don't need to distinguish between split and page update */
 	if (parent->childoffnum == InvalidOffsetNumber || !XLByteEQ(parent->lsn, PageGetLSN(parent->page)))
@@ -811,6 +815,7 @@ gistFindCorrectParent(Relation r, GISTInsertStack *child)
 				break;
 			parent->buffer = ReadBuffer(r, parent->blkno);
 			LockBuffer(parent->buffer, GIST_EXCLUSIVE);
+			gistcheckpage(r, parent->buffer);
 			parent->page = (Page) BufferGetPage(parent->buffer);
 		}
 
@@ -831,7 +836,8 @@ gistFindCorrectParent(Relation r, GISTInsertStack *child)
 		ptr = parent = gistFindPath(r, child->blkno, gistReadAndLockBuffer);
 		Assert(ptr != NULL);
 
-		/* read all buffers as supposed in caller */
+		/* read all buffers as expected by caller */
+		/* note we don't lock them or gistcheckpage them here! */
 		while (ptr)
 		{
 			ptr->buffer = ReadBuffer(r, ptr->blkno);
