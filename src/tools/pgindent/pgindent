@@ -104,7 +104,9 @@ do
 	sed 's;^CATALOG(.*$;/*&*/;' >/tmp/$$a
 
 # We get the list of typedef's from /src/tools/find_typedef
-	indent -bad -bap -bc -bl -d0 -cdb -nce -nfc1 -di12 -i4 -l78 \
+# BSD indent sometimes goes 1-3 characters after the -l length
+# so we have to set it a little lower than the value we want
+	indent -bad -bap -bc -bl -d0 -cdb -nce -nfc1 -di12 -i4 -l77 \
 		-lp -nip -npro -bbb $EXTRA_OPTS \
 -TAES_KEY \
 -TASN1_BIT_STRING \
