@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts 8.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-11-02 12:44-0500\n"
+"POT-Creation-Date: 2005-11-06 23:07-0300\n"
 "PO-Revision-Date: 2004-12-06 18:46-0300\n"
 "Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: Castellano <pgsql-es-ayuda@postgresql.org>\n"
@@ -13,17 +13,17 @@ msgstr ""
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: clusterdb.c:95 clusterdb.c:110 createdb.c:102 createdb.c:121
-#: createlang.c:86 createlang.c:107 createlang.c:153 createuser.c:150
-#: createuser.c:165 dropdb.c:84 dropdb.c:93 dropdb.c:101 droplang.c:96
-#: droplang.c:117 droplang.c:164 dropuser.c:84 dropuser.c:99 reindexdb.c:111
-#: reindexdb.c:125 vacuumdb.c:112 vacuumdb.c:127
+#: createdb.c:102 createdb.c:121 createlang.c:86 createlang.c:107
+#: createlang.c:153 createuser.c:150 createuser.c:165 dropdb.c:84 dropdb.c:93
+#: dropdb.c:101 droplang.c:96 droplang.c:117 droplang.c:164 dropuser.c:84
+#: dropuser.c:99 clusterdb.c:95 clusterdb.c:110 vacuumdb.c:112 vacuumdb.c:127
+#: reindexdb.c:111 reindexdb.c:125
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Use «%s --help» para mayor información.\n"
 
-#: clusterdb.c:108 createdb.c:119 createlang.c:105 createuser.c:163
-#: dropdb.c:99 droplang.c:115 dropuser.c:97 reindexdb.c:124 vacuumdb.c:125
+#: createdb.c:119 createlang.c:105 createuser.c:163 dropdb.c:99 droplang.c:115
+#: dropuser.c:97 clusterdb.c:108 vacuumdb.c:125 reindexdb.c:124
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: demasiados argumentos (el primero es «%s»)\n"
@@ -56,8 +56,9 @@ msgstr ""
 "%s crea una base de datos PostgreSQL.\n"
 "\n"
 
-#: clusterdb.c:234 createdb.c:219 createlang.c:204 createuser.c:304
-#: dropdb.c:148 droplang.c:321 dropuser.c:147 reindexdb.c:332 vacuumdb.c:260
+#: createdb.c:219 createlang.c:204 createuser.c:304 dropdb.c:148
+#: droplang.c:321 dropuser.c:147 clusterdb.c:234 vacuumdb.c:260
+#: reindexdb.c:332
 #, c-format
 msgid "Usage:\n"
 msgstr "Empleo:\n"
@@ -67,8 +68,9 @@ msgstr "Empleo:\n"
 msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
 msgstr "  %s [OPCIÓN]... [NOMBRE] [DESCRIPCIÓN]\n"
 
-#: clusterdb.c:236 createdb.c:221 createlang.c:206 createuser.c:306
-#: dropdb.c:150 droplang.c:323 dropuser.c:149 reindexdb.c:334 vacuumdb.c:262
+#: createdb.c:221 createlang.c:206 createuser.c:306 dropdb.c:150
+#: droplang.c:323 dropuser.c:149 clusterdb.c:236 vacuumdb.c:262
+#: reindexdb.c:334
 #, c-format
 msgid ""
 "\n"
@@ -123,8 +125,8 @@ msgstr "  --help                    mostrar esta ayuda y salir\n"
 msgid "  --version                    output version information, then exit\n"
 msgstr "  --version                 mostrar el número de versión y salir\n"
 
-#: clusterdb.c:244 createdb.c:230 createuser.c:326 reindexdb.c:344
-#: vacuumdb.c:273
+#: createdb.c:230 createuser.c:326 clusterdb.c:244 vacuumdb.c:273
+#: reindexdb.c:344
 #, c-format
 msgid ""
 "\n"
@@ -165,8 +167,9 @@ msgstr ""
 "Si no se especifica, se creará una base de datos con el mismo nombre que\n"
 "el usuario actual.\n"
 
-#: clusterdb.c:250 createdb.c:236 createlang.c:216 createuser.c:333
-#: dropdb.c:160 droplang.c:333 dropuser.c:159 reindexdb.c:350 vacuumdb.c:279
+#: createdb.c:236 createlang.c:216 createuser.c:333 dropdb.c:160
+#: droplang.c:333 dropuser.c:159 clusterdb.c:250 vacuumdb.c:279
+#: reindexdb.c:350
 #, c-format
 msgid ""
 "\n"
@@ -221,7 +224,7 @@ msgstr ""
 "%s instala un lenguaje procedural en una base de datos PostgreSQL.\n"
 "\n"
 
-#: createlang.c:300 droplang.c:281
+#: createlang.c:205 droplang.c:322
 #, c-format
 msgid "  %s [OPTION]... LANGNAME [DBNAME]\n"
 msgstr "  %s [OPCIÓN]... LENGUAJE [BASE-DE-DATOS]\n"
@@ -232,8 +235,8 @@ msgid "  -d, --dbname=DBNAME       database to install language in\n"
 msgstr ""
 "  -d, --dbname=BASE         base de datos en que instalar el lenguaje\n"
 
-#: clusterdb.c:240 createlang.c:208 createuser.c:322 dropdb.c:151
-#: droplang.c:325 dropuser.c:150 reindexdb.c:340
+#: createlang.c:208 createuser.c:322 dropdb.c:151 droplang.c:325
+#: dropuser.c:150 clusterdb.c:240 reindexdb.c:340
 #, c-format
 msgid ""
 "  -e, --echo                show the commands being sent to the server\n"
@@ -247,39 +250,39 @@ msgid ""
 msgstr ""
 "  -l, --list                listar los lenguajes instalados actualmente\n"
 
-#: clusterdb.c:245 createlang.c:210 createuser.c:327 dropdb.c:154
-#: droplang.c:327 dropuser.c:153 reindexdb.c:345 vacuumdb.c:274
+#: createlang.c:210 createuser.c:327 dropdb.c:154 droplang.c:327
+#: dropuser.c:153 clusterdb.c:245 vacuumdb.c:274 reindexdb.c:345
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr ""
 "  -h, --host=ANFITRIÓN      nombre del servidor o directorio del socket\n"
 
-#: clusterdb.c:246 createlang.c:211 createuser.c:328 dropdb.c:155
-#: droplang.c:328 dropuser.c:154 reindexdb.c:346 vacuumdb.c:275
+#: createlang.c:211 createuser.c:328 dropdb.c:155 droplang.c:328
+#: dropuser.c:154 clusterdb.c:246 vacuumdb.c:275 reindexdb.c:346
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=PUERTO         puerto del servidor\n"
 
-#: clusterdb.c:247 createlang.c:212 dropdb.c:156 droplang.c:329
-#: reindexdb.c:347 vacuumdb.c:276
+#: createlang.c:212 dropdb.c:156 droplang.c:329 clusterdb.c:247 vacuumdb.c:276
+#: reindexdb.c:347
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=USUARIO    nombre de usuario para la conexión\n"
 
-#: clusterdb.c:248 createlang.c:213 dropdb.c:157 droplang.c:330
-#: reindexdb.c:348 vacuumdb.c:277
+#: createlang.c:213 dropdb.c:157 droplang.c:330 clusterdb.c:248 vacuumdb.c:277
+#: reindexdb.c:348
 #, c-format
 msgid "  -W, --password            prompt for password\n"
 msgstr "  -W, --password            preguntar la contraseña\n"
 
-#: clusterdb.c:242 createlang.c:214 createuser.c:324 dropdb.c:158
-#: droplang.c:331 dropuser.c:157 reindexdb.c:342
+#: createlang.c:214 createuser.c:324 dropdb.c:158 droplang.c:331
+#: dropuser.c:157 clusterdb.c:242 reindexdb.c:342
 #, c-format
 msgid "  --help                    show this help, then exit\n"
 msgstr "  --help                    desplegar esta ayuda y salir\n"
 
-#: clusterdb.c:243 createlang.c:215 createuser.c:325 dropdb.c:159
-#: droplang.c:332 dropuser.c:158 reindexdb.c:343
+#: createlang.c:215 createuser.c:325 dropdb.c:159 droplang.c:332
+#: dropuser.c:158 clusterdb.c:243 reindexdb.c:343
 #, c-format
 msgid "  --version                 output version information, then exit\n"
 msgstr "  --version                 desplegar información de versión y salir\n"
@@ -309,7 +312,7 @@ msgstr "¿Será el nuevo rol un superusuario? (s/n) "
 msgid "Shall the new role be allowed to create databases? (y/n) "
 msgstr "¿Debe permitírsele al rol la creación de bases de datos? (s/n) "
 
-#: createuser.c:181
+#: createuser.c:221
 msgid "Shall the new role be allowed to create more new roles? (y/n) "
 msgstr "¿Debe permitírsele al rol la creación de otros roles? (s/n) "
 
@@ -335,10 +338,12 @@ msgid "  %s [OPTION]... [ROLENAME]\n"
 msgstr "  %s [OPCIÓN]... [ROL]\n"
 
 #: createuser.c:307
+#, c-format
 msgid "  -s, --superuser           role will be superuser\n"
 msgstr "  -s, --superuser           el rol será un superusuario\n"
 
 #: createuser.c:308
+#, c-format
 msgid "  -S, --no-superuser        role will not be superuser\n"
 msgstr "  -S, --no-superuser        el rol no será un superusuario\n"
 
@@ -363,14 +368,17 @@ msgid "  -R, --no-createrole       role cannot create roles\n"
 msgstr "  -R, --no-createrole       el rol no podrá crear otros roles\n"
 
 #: createuser.c:313
+#, c-format
 msgid "  -l, --login               role can login (default)\n"
 msgstr "  -l, --login               el rol podrá conectarse (predeterminado)\n"
 
 #: createuser.c:314
+#, c-format
 msgid "  -L, --no-login            role cannot login\n"
 msgstr "  -L, --no-login            el rol no podrá conectarse\n"
 
 #: createuser.c:315
+#, c-format
 msgid ""
 "  -i, --inherit             role inherits privileges of roles it is a\n"
 "                            member of (default)\n"
@@ -379,10 +387,12 @@ msgstr ""
 "                            los cuales es miembro (predeterminado)\n"
 
 #: createuser.c:317
+#, c-format
 msgid "  -I, --no-inherit          role does not inherit privileges\n"
 msgstr "  -I, --no-inherit          rol no heredará privilegios\n"
 
 #: createuser.c:318
+#, c-format
 msgid ""
 "  -c, --connection-limit=N  connection limit for role (default: no limit)\n"
 msgstr ""
@@ -404,7 +414,7 @@ msgstr "  -E, --encrypted           almacenar la constraseña cifrada\n"
 msgid "  -N, --unencrypted         do not encrypt stored password\n"
 msgstr "  -N, --unencrypted         almacenar la contraseña sin cifrar\n"
 
-#: clusterdb.c:241 createuser.c:323 dropdb.c:153 dropuser.c:152
+#: createuser.c:323 dropdb.c:153 dropuser.c:152 clusterdb.c:241
 #: reindexdb.c:341
 #, c-format
 msgid "  -q, --quiet               don't write any messages\n"
@@ -540,118 +550,6 @@ msgstr ""
 "  -U, --username=USUARIO    nombre del usuario con el cual conectarse\n"
 "                            (no el usuario a eliminar)\n"
 
-#: reindexdb.c:133
-#, c-format
-msgid "%s: cannot reindex all databases and a specific one at the same time\n"
-msgstr ""
-"%s: no se pueden reindexar todas las bases de datos y una de ellas\n"
-"en particular simultáneamente\n"
-
-#: reindexdb.c:138
-#, c-format
-msgid "%s: cannot reindex all databases and system catalogs at the same time\n"
-msgstr ""
-"%s: no se pueden reindexar todas las bases de datos y los catálogos\n"
-"del sistema simultáneamente\n"
-
-#: reindexdb.c:143
-#, c-format
-msgid "%s: cannot reindex a specific table in all databases\n"
-msgstr ""
-"%s: no se puede reindexar una tabla específica en todas las bases de datos\n"
-
-#: reindexdb.c:148
-#, c-format
-msgid "%s: cannot reindex a specific index in all databases\n"
-msgstr ""
-"%s: no se puede reindexar un índice específico en todas las bases de datos\n"
-
-#: reindexdb.c:159
-#, c-format
-msgid ""
-"%s: cannot reindex a specific table and system catalogs at the same time\n"
-msgstr ""
-"%s: no se puede reindexar una tabla específica y los catálogos\n"
-"del sistema simultáneamente\n"
-
-#: reindexdb.c:164
-#, c-format
-msgid ""
-"%s: cannot reindex a specific index and system catalogs at the same time\n"
-msgstr ""
-"%s: no se puede reindexar un índice específico y los catálogos\n"
-"del sistema simultáneamente\n"
-
-#: reindexdb.c:239
-#, c-format
-msgid "%s: reindexing of table \"%s\" in database \"%s\" failed: %s"
-msgstr ""
-"%s: falló la reindexación de la tabla «%s» en la base de datos «%s»: %s"
-
-#: reindexdb.c:242
-#, c-format
-msgid "%s: reindexing of index \"%s\" in database \"%s\" failed: %s"
-msgstr ""
-"%s: falló la reindexación del índice «%s» en la base de datos «%s»: %s"
-
-#: reindexdb.c:245
-#, c-format
-msgid "%s: reindexing of database \"%s\" failed: %s"
-msgstr "%s: falló la reindexación de la base de datos «%s»: %s"
-
-#: reindexdb.c:280
-#, c-format
-msgid "%s: reindexing database \"%s\"\n"
-msgstr "%s: reindexando la base de datos «%s»\n"
-
-#: reindexdb.c:311
-#, c-format
-msgid "%s: reindexing of system catalogs failed: %s"
-msgstr "%s: falló la reindexación de los catálogos del sistema: %s"
-
-#: reindexdb.c:331
-#, c-format
-msgid ""
-"%s reindexes a PostgreSQL database.\n"
-"\n"
-msgstr ""
-"%s reindexa una base de datos PostgreSQL.\n"
-"\n"
-
-#: clusterdb.c:235 reindexdb.c:333 vacuumdb.c:261
-#, c-format
-msgid "  %s [OPTION]... [DBNAME]\n"
-msgstr "  %s [OPCIÓN]... [BASE-DE-DATOS]\n"
-
-#: reindexdb.c:335
-msgid "  -a, --all                 reindex all databases\n"
-msgstr "  -a, --all                 reindexa todas las bases de datos\n"
-
-#: reindexdb.c:336
-msgid "  -s, --system              reindex system catalogs\n"
-msgstr "  -s, --system              reindexa los catálogos del sistema\n"
-
-#: reindexdb.c:337
-msgid "  -d, --dbname=DBNAME       database to reindex\n"
-msgstr "  -d, --dbname=DBNAME       base de datos a reindexar\n"
-
-#: reindexdb.c:338
-msgid "  -t, --table=TABLE         reindex specific table only\n"
-msgstr "  -t, --table=TABLE         reindexar sólo esta tabla\n"
-
-#: reindexdb.c:339
-msgid "  -i, --index=INDEX         recreate specific index only\n"
-msgstr "  -i, --index=INDEX         recrear sólo este índice\n"
-
-#: reindexdb.c:349
-msgid ""
-"\n"
-"Read the description of the SQL command REINDEX for details.\n"
-msgstr ""
-"\n"
-"Lea la descripción del comando REINDEX de SQL para obtener mayores "
-"detalles.\n"
-
 #: clusterdb.c:118
 #, c-format
 msgid "%s: cannot cluster all databases and a specific one at the same time\n"
@@ -695,6 +593,11 @@ msgstr ""
 "%s reordena todas las tablas previamente reordenadas\n"
 "en una base de datos.\n"
 "\n"
+
+#: clusterdb.c:235 vacuumdb.c:261 reindexdb.c:333
+#, c-format
+msgid "  %s [OPTION]... [DBNAME]\n"
+msgstr "  %s [OPCIÓN]... [BASE-DE-DATOS]\n"
 
 #: clusterdb.c:237
 #, c-format
@@ -825,6 +728,118 @@ msgid ""
 msgstr ""
 "\n"
 "Lea la descripción del comando VACUUM de SQL para obtener mayores detalles.\n"
+
+#: reindexdb.c:133
+#, c-format
+msgid "%s: cannot reindex all databases and a specific one at the same time\n"
+msgstr ""
+"%s: no se pueden reindexar todas las bases de datos y una de ellas\n"
+"en particular simultáneamente\n"
+
+#: reindexdb.c:138
+#, c-format
+msgid "%s: cannot reindex all databases and system catalogs at the same time\n"
+msgstr ""
+"%s: no se pueden reindexar todas las bases de datos y los catálogos\n"
+"del sistema simultáneamente\n"
+
+#: reindexdb.c:143
+#, c-format
+msgid "%s: cannot reindex a specific table in all databases\n"
+msgstr ""
+"%s: no se puede reindexar una tabla específica en todas las bases de datos\n"
+
+#: reindexdb.c:148
+#, c-format
+msgid "%s: cannot reindex a specific index in all databases\n"
+msgstr ""
+"%s: no se puede reindexar un índice específico en todas las bases de datos\n"
+
+#: reindexdb.c:159
+#, c-format
+msgid ""
+"%s: cannot reindex a specific table and system catalogs at the same time\n"
+msgstr ""
+"%s: no se puede reindexar una tabla específica y los catálogos\n"
+"del sistema simultáneamente\n"
+
+#: reindexdb.c:164
+#, c-format
+msgid ""
+"%s: cannot reindex a specific index and system catalogs at the same time\n"
+msgstr ""
+"%s: no se puede reindexar un índice específico y los catálogos\n"
+"del sistema simultáneamente\n"
+
+#: reindexdb.c:239
+#, c-format
+msgid "%s: reindexing of table \"%s\" in database \"%s\" failed: %s"
+msgstr ""
+"%s: falló la reindexación de la tabla «%s» en la base de datos «%s»: %s"
+
+#: reindexdb.c:242
+#, c-format
+msgid "%s: reindexing of index \"%s\" in database \"%s\" failed: %s"
+msgstr "%s: falló la reindexación del índice «%s» en la base de datos «%s»: %s"
+
+#: reindexdb.c:245
+#, c-format
+msgid "%s: reindexing of database \"%s\" failed: %s"
+msgstr "%s: falló la reindexación de la base de datos «%s»: %s"
+
+#: reindexdb.c:280
+#, c-format
+msgid "%s: reindexing database \"%s\"\n"
+msgstr "%s: reindexando la base de datos «%s»\n"
+
+#: reindexdb.c:311
+#, c-format
+msgid "%s: reindexing of system catalogs failed: %s"
+msgstr "%s: falló la reindexación de los catálogos del sistema: %s"
+
+#: reindexdb.c:331
+#, c-format
+msgid ""
+"%s reindexes a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s reindexa una base de datos PostgreSQL.\n"
+"\n"
+
+#: reindexdb.c:335
+#, c-format
+msgid "  -a, --all                 reindex all databases\n"
+msgstr "  -a, --all                 reindexa todas las bases de datos\n"
+
+#: reindexdb.c:336
+#, c-format
+msgid "  -s, --system              reindex system catalogs\n"
+msgstr "  -s, --system              reindexa los catálogos del sistema\n"
+
+#: reindexdb.c:337
+#, c-format
+msgid "  -d, --dbname=DBNAME       database to reindex\n"
+msgstr "  -d, --dbname=DBNAME       base de datos a reindexar\n"
+
+#: reindexdb.c:338
+#, c-format
+msgid "  -t, --table=TABLE         reindex specific table only\n"
+msgstr "  -t, --table=TABLE         reindexar sólo esta tabla\n"
+
+#: reindexdb.c:339
+#, c-format
+msgid "  -i, --index=INDEX         recreate specific index only\n"
+msgstr "  -i, --index=INDEX         recrear sólo este índice\n"
+
+#: reindexdb.c:349
+#, c-format
+msgid ""
+"\n"
+"Read the description of the SQL command REINDEX for details.\n"
+msgstr ""
+"\n"
+"Lea la descripción del comando REINDEX de SQL para obtener mayores "
+"detalles.\n"
 
 #: common.c:39
 #, c-format
