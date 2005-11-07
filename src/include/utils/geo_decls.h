@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/geo_decls.h,v 1.48 2005/07/01 19:19:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/geo_decls.h,v 1.49 2005/11/07 17:36:47 tgl Exp $
  *
  * NOTE
  *	  These routines do *not* use the float types from adt/.
@@ -405,14 +405,6 @@ extern Datum circle_box(PG_FUNCTION_ARGS);
 extern Datum poly_circle(PG_FUNCTION_ARGS);
 extern Datum circle_poly(PG_FUNCTION_ARGS);
 extern Datum circle_area(PG_FUNCTION_ARGS);
-
-/* support routines for the rtree access method (access/rtree/rtproc.c) */
-extern Datum rt_box_union(PG_FUNCTION_ARGS);
-extern Datum rt_box_inter(PG_FUNCTION_ARGS);
-extern Datum rt_box_size(PG_FUNCTION_ARGS);
-extern Datum rt_poly_size(PG_FUNCTION_ARGS);
-extern Datum rt_poly_union(PG_FUNCTION_ARGS);
-extern Datum rt_poly_inter(PG_FUNCTION_ARGS);
 
 /* support routines for the GiST access method (access/gist/gistproc.c) */
 extern Datum gist_box_compress(PG_FUNCTION_ARGS);

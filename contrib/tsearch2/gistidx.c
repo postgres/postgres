@@ -4,11 +4,10 @@
 
 #include "access/gist.h"
 #include "access/itup.h"
-#include "access/rtree.h"
+#include "access/tuptoaster.h"
+#include "storage/bufpage.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
-#include "storage/bufpage.h"
-#include "access/tuptoaster.h"
 
 #include "tsvector.h"
 #include "query.h"

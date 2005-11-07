@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.75 2005/11/04 23:13:59 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.76 2005/11/07 17:36:44 tgl Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -1129,8 +1129,8 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
   <itemizedlist>
    <listitem>
     <para>
-     Operations on hash and R-tree indexes are
-     not presently WAL-logged, so replay will not update these index types.
+     Operations on hash indexes are
+     not presently WAL-logged, so replay will not update these indexes.
      The recommended workaround is to manually <command>REINDEX</> each
      such index after completing a recovery operation.
     </para>

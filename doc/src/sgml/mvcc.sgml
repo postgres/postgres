@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.52 2005/10/21 01:41:28 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.53 2005/11/07 17:36:44 tgl Exp $
 -->
 
  <chapter id="mvcc">
@@ -991,18 +991,6 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
        </para>
       </listitem>
      </varlistentry>
-
-     <varlistentry>
-      <term>
-       R-tree indexes
-      </term>
-      <listitem>
-       <para>
-        Share/exclusive index-level locks are used for read/write access.
-        Locks are released after the entire command is done.
-       </para>
-      </listitem>
-     </varlistentry>
     </variablelist>
    </para>
 
@@ -1012,8 +1000,7 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
     indexes, they are the recommended index type for concurrent
     applications that need to index scalar data. When dealing with
     non-scalar data, B-trees are not useful, and GiST indexes should
-    be used instead.  R-tree indexes are deprecated and are likely
-    to disappear entirely in a future release.
+    be used instead.
    </para>
   </sect1>
  </chapter>

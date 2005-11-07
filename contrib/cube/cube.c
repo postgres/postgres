@@ -10,7 +10,7 @@
 #include <math.h>
 
 #include "access/gist.h"
-#include "access/rtree.h"
+#include "access/skey.h"
 #include "lib/stringinfo.h"
 #include "utils/builtins.h"
 

@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_amproc.h,v 1.54 2005/07/01 19:19:03 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_amproc.h,v 1.55 2005/11/07 17:36:46 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -73,15 +73,6 @@ typedef FormData_pg_amproc *Form_pg_amproc;
  *		initial contents of pg_amproc
  * ----------------
  */
-
-/* rtree */
-DATA(insert (	 425	0 1 193 ));
-DATA(insert (	 425	0 2 194 ));
-DATA(insert (	 425	0 3 195 ));
-DATA(insert (	1993	0 1 197 ));
-DATA(insert (	1993	0 2 198 ));
-DATA(insert (	1993	0 3 199 ));
-
 
 /* btree */
 DATA(insert (	 397	0 1 382 ));

@@ -9,7 +9,7 @@
 #include <float.h>
 
 #include "access/gist.h"
-#include "access/rtree.h"
+#include "access/skey.h"
 #include "utils/builtins.h"
 
 #include "segdata.h"
@@ -53,7 +53,7 @@ bool	   *gseg_same(SEG * b1, SEG * b2, bool *result);
 
 
 /*
-** R-tree suport functions
+** R-tree support functions
 */
 bool		seg_same(SEG * a, SEG * b);
 bool		seg_contains_int(SEG * a, int *b);

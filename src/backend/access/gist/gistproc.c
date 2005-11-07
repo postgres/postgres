@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/access/gist/gistproc.c,v 1.3 2005/10/15 02:49:08 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/access/gist/gistproc.c,v 1.4 2005/11/07 17:36:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
 
 #include "access/gist.h"
 #include "access/itup.h"
-#include "access/rtree.h"
+#include "access/skey.h"
 #include "utils/geo_decls.h"
 
 
@@ -39,6 +39,47 @@ static bool rtree_internal_consistent(BOX *key, BOX *query,
 /**************************************************
  * Box ops
  **************************************************/
+
+static Datum
+rt_box_union(PG_FUNCTION_ARGS)
+{
+	BOX		   *a = PG_GETARG_BOX_P(0);
+	BOX		   *b = PG_GETARG_BOX_P(1);
+	BOX		   *n;
+
+	n = (BOX *) palloc(sizeof(BOX));
+
+	n->high.x = Max(a->high.x, b->high.x);
+	n->high.y = Max(a->high.y, b->high.y);
+	n->low.x = Min(a->low.x, b->low.x);
+	n->low.y = Min(a->low.y, b->low.y);
+
+	PG_RETURN_BOX_P(n);
+}
+
+static Datum
+rt_box_inter(PG_FUNCTION_ARGS)
+{
+	BOX		   *a = PG_GETARG_BOX_P(0);
+	BOX		   *b = PG_GETARG_BOX_P(1);
+	BOX		   *n;
+
+	n = (BOX *) palloc(sizeof(BOX));
+
+	n->high.x = Min(a->high.x, b->high.x);
+	n->high.y = Min(a->high.y, b->high.y);
+	n->low.x = Max(a->low.x, b->low.x);
+	n->low.y = Max(a->low.y, b->low.y);
+
+	if (n->high.x < n->low.x || n->high.y < n->low.y)
+	{
+		pfree(n);
+		/* Indicate "no intersection" by returning NULL pointer */
+		n = NULL;
+	}
+
+	PG_RETURN_BOX_P(n);
+}
 
 /*
  * The GiST Consistent method for boxes
@@ -493,8 +534,6 @@ size_box(Datum dbox)
  *
  * We can use the same function since all types use bounding boxes as the
  * internal-page representation.
- *
- * This implements the same logic as the rtree internal-page strategy map.
  */
 static bool
 rtree_internal_consistent(BOX *key, BOX *query, StrategyNumber strategy)

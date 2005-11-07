@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_amop.h,v 1.66 2005/10/15 02:49:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_amop.h,v 1.67 2005/11/07 17:36:46 tgl Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki
@@ -79,40 +79,6 @@ typedef FormData_pg_amop *Form_pg_amop;
  *		initial contents of pg_amop
  * ----------------
  */
-
-/*
- *	rtree box_ops
- */
-
-DATA(insert (	 425	0 1  f	493 ));
-DATA(insert (	 425	0 2  f	494 ));
-DATA(insert (	 425	0 3  f	500 ));
-DATA(insert (	 425	0 4  f	495 ));
-DATA(insert (	 425	0 5  f	496 ));
-DATA(insert (	 425	0 6  f	499 ));
-DATA(insert (	 425	0 7  f	498 ));
-DATA(insert (	 425	0 8  f	497 ));
-DATA(insert (	 425	0 9  f	2571 ));
-DATA(insert (	 425	0 10 f	2570 ));
-DATA(insert (	 425	0 11 f	2573 ));
-DATA(insert (	 425	0 12 f	2572 ));
-
-/*
- *	rtree poly_ops (supports polygons)
- */
-
-DATA(insert (	1993	0 1  f	485 ));
-DATA(insert (	1993	0 2  f	486 ));
-DATA(insert (	1993	0 3  f	492 ));
-DATA(insert (	1993	0 4  f	487 ));
-DATA(insert (	1993	0 5  f	488 ));
-DATA(insert (	1993	0 6  f	491 ));
-DATA(insert (	1993	0 7  f	490 ));
-DATA(insert (	1993	0 8  f	489 ));
-DATA(insert (	1993	0 9  f	2575 ));
-DATA(insert (	1993	0 10 f	2574 ));
-DATA(insert (	1993	0 11 f	2577 ));
-DATA(insert (	1993	0 12 f	2576 ));
 
 /*
  *	btree int2_ops

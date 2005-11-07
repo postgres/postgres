@@ -9,18 +9,18 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/gist.h,v 1.50 2005/10/15 02:49:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/gist.h,v 1.51 2005/11/07 17:36:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef GIST_H
 #define GIST_H
 
+#include "access/xlog.h"
+#include "access/xlogdefs.h"
 #include "storage/bufpage.h"
 #include "storage/off.h"
 #include "utils/rel.h"
-#include "access/xlog.h"
-#include "access/xlogdefs.h"
 
 /*
  * amproc indexes for GiST indexes.
@@ -33,6 +33,23 @@
 #define GIST_PICKSPLIT_PROC				6
 #define GIST_EQUAL_PROC					7
 #define GISTNProcs						7
+
+/*
+ * strategy numbers for GiST opclasses that want to implement the old
+ * RTREE behavior.
+ */
+#define RTLeftStrategyNumber			1
+#define RTOverLeftStrategyNumber		2
+#define RTOverlapStrategyNumber			3
+#define RTOverRightStrategyNumber		4
+#define RTRightStrategyNumber			5
+#define RTSameStrategyNumber			6
+#define RTContainsStrategyNumber		7
+#define RTContainedByStrategyNumber		8
+#define RTOverBelowStrategyNumber		9
+#define RTBelowStrategyNumber			10
+#define RTAboveStrategyNumber			11
+#define RTOverAboveStrategyNumber		12
 
 /*
  * Page opaque data in a GiST index page.

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/geqo.sgml,v 1.33 2005/10/25 13:38:09 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/geqo.sgml,v 1.34 2005/11/07 17:36:44 tgl Exp $
 Genetic Optimizer
 -->
 
@@ -51,8 +51,8 @@ Genetic Optimizer
     caused by the support of a variety of <firstterm>join
     methods</firstterm> (e.g., nested loop, hash join, merge join in
     <productname>PostgreSQL</productname>) to process individual joins
-    and a diversity of <firstterm>indexes</firstterm> (e.g., R-tree,
-    B-tree, hash in <productname>PostgreSQL</productname>) as access
+    and a diversity of <firstterm>indexes</firstterm> (e.g.,
+    B-tree, hash, GiST in <productname>PostgreSQL</productname>) as access
     paths for relations.
    </para>
 

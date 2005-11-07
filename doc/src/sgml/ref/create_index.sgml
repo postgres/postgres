@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.51 2005/01/04 00:39:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.52 2005/11/07 17:36:44 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -34,7 +34,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
    <command>CREATE INDEX</command> constructs an index <replaceable
    class="parameter">index_name</replaceable> on the specified table.
    Indexes are primarily used to enhance database performance (though
-   inappropriate use will result in slower performance).
+   inappropriate use can result in slower performance).
   </para>
 
   <para>
@@ -55,11 +55,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
 
   <para>
    <productname>PostgreSQL</productname> provides the index methods
-   B-tree, R-tree, hash, and GiST. The B-tree index method is an
-   implementation of Lehman-Yao high-concurrency B-trees. The R-tree
-   index method implements standard R-trees using Guttman's quadratic
-   split algorithm. The hash index method is an implementation of
-   Litwin's linear hashing.  Users can also define their own index
+   B-tree, hash, and GiST.  Users can also define their own index
    methods, but that is fairly complicated.
   </para>
 
@@ -137,9 +133,9 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
       <term><replaceable class="parameter">method</replaceable></term>
       <listitem>
        <para>
-        The name of the method to be used for the index.  Choices are
+        The name of the index method to be used.  Choices are
         <literal>btree</literal>, <literal>hash</literal>,
-        <literal>rtree</literal>, and <literal>gist</literal>.  The
+        and <literal>gist</literal>.  The
         default method is <literal>btree</literal>.
        </para>
       </listitem>
@@ -243,6 +239,15 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
    The best way to use indexes in such cases is to create a partial index
    using an <literal>IS NULL</> predicate.
   </para>
+
+  <para>
+   Prior releases of <productname>PostgreSQL</productname> also had an
+   R-tree index method.  This method has been removed because
+   it had no significant advantages over the GiST method.
+   If <literal>USING rtree</> is specified, <command>CREATE INDEX</>
+   will interpret it as <literal>USING gist</>, to simplify conversion
+   of old databases to GiST.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -270,13 +275,13 @@ CREATE INDEX code_idx ON films(code) TABLESPACE indexspace;
 Is this example correct?
 </comment>
   <para>
-   To create a R-tree index on a point attribute so that we
+   To create a GiST index on a point attribute so that we
    can efficiently use box operators on the result of the
    conversion function:
   </para>
   <programlisting>
 CREATE INDEX pointloc
-    ON points USING RTREE (point2box(location) box_ops);
+    ON points USING GIST (point2box(location) box_ops);
 SELECT * FROM points
     WHERE point2box(points.pointloc) = boxes.box;
   </programlisting>

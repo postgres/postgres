@@ -4,7 +4,7 @@
 
 #include "access/gist.h"
 #include "access/itup.h"
-#include "access/rtree.h"
+#include "access/skey.h"
 #include "catalog/pg_type.h"
 #include "utils/array.h"
 #include "utils/builtins.h"

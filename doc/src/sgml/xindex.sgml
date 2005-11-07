@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.41 2005/07/19 01:27:59 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.42 2005/11/07 17:36:44 tgl Exp $
 -->
 
 <sect1 id="xindex">
@@ -170,8 +170,12 @@ $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.41 2005/07/19 01:27:59 neilc Exp
    </table>
 
   <para>
-   R-tree indexes express relationships in two-dimensional space.
-   They use twelve strategies, shown in
+   GiST indexes are even more flexible: they do not have a fixed set of
+   strategies at all.  Instead, the <quote>consistency</> support routine
+   of each particular GiST operator class interprets the strategy numbers
+   however it likes.  As an example, several of the built-in GiST index
+   operator classes index two-dimensional geometric objects, providing
+   the <quote>R-tree</> strategies shown in
    <xref linkend="xindex-rtree-strat-table">.  Four of these are true
    two-dimensional tests (overlaps, same, contains, contained by);
    four of them consider only the X direction; and the other four
@@ -179,7 +183,7 @@ $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.41 2005/07/19 01:27:59 neilc Exp
   </para>
 
    <table tocentry="1" id="xindex-rtree-strat-table">
-    <title>R-tree Strategies</title>
+    <title>GiST Two-Dimensional <quote>R-tree</> Strategies</title>
     <tgroup cols="2">
      <thead>
       <row>
@@ -241,13 +245,6 @@ $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.41 2005/07/19 01:27:59 neilc Exp
    </table>
 
   <para>
-   GiST indexes are even more flexible: they do not have a fixed set of
-   strategies at all.  Instead, the <quote>consistency</> support routine
-   of each particular GiST operator class interprets the strategy numbers
-   however it likes.
-  </para>
-
-  <para>
    Note that all strategy operators return Boolean values.  In
    practice, all operators defined as index method strategies must
    return type <type>boolean</type>, since they must appear at the top
@@ -274,9 +271,8 @@ $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.41 2005/07/19 01:27:59 neilc Exp
    additional support routines in order to work. For example, the B-tree
    index method must be able to compare two keys and determine whether one
    is greater than, equal to, or less than the other.  Similarly, the
-   R-tree index method must be able to compute
-   intersections,  unions, and sizes of rectangles.  These
-   operations do not correspond to operators used in qualifications in
+   hash index method must be able to compute hash codes for key values.
+   These operations do not correspond to operators used in qualifications in
    SQL commands;  they are administrative routines used by
    the index methods, internally.
   </para>
@@ -334,37 +330,6 @@ $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.41 2005/07/19 01:27:59 neilc Exp
       <row>
        <entry>Compute the hash value for a key</entry>
        <entry>1</entry>
-      </row>
-     </tbody>
-    </tgroup>
-   </table>
-
-  <para>
-   R-tree indexes require three support functions,
-   shown in <xref linkend="xindex-rtree-support-table">.
-  </para>
-
-   <table tocentry="1" id="xindex-rtree-support-table">
-    <title>R-tree Support Functions</title>
-    <tgroup cols="2">
-     <thead>
-      <row>
-       <entry>Function</entry>
-       <entry>Support Number</entry>
-      </row>
-     </thead>
-     <tbody>
-      <row>
-       <entry>union</entry>
-       <entry>1</entry>
-      </row>
-      <row>
-       <entry>intersection</entry>
-       <entry>2</entry>
-      </row>
-      <row>
-       <entry>size</entry>
-       <entry>3</entry>
       </row>
      </tbody>
     </tgroup>
@@ -746,7 +711,7 @@ SELECT * FROM table WHERE integer_column &lt; 4;
 </programlisting>
    can be satisfied exactly by a B-tree index on the integer column.
    But there are cases where an index is useful as an inexact guide to
-   the matching rows.  For example, if an R-tree index stores only
+   the matching rows.  For example, if a GiST index stores only
    bounding boxes for objects, then it cannot exactly satisfy a <literal>WHERE</>
    condition that tests overlap between nonrectangular objects such as
    polygons.  Yet we could use the index to find objects whose bounding

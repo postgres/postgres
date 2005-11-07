@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.14 2005/10/15 02:49:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.15 2005/11/07 17:36:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,6 @@
 #include "utils/resowner.h"
 #include "access/gistscan.h"
 #include "access/hash.h"
-#include "access/rtree.h"
 #include "storage/bufmgr.h"
 #include "storage/proc.h"
 #include "utils/memutils.h"
@@ -280,7 +279,6 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 		/* Clean up index scans too */
 		ReleaseResources_gist();
 		ReleaseResources_hash();
-		ReleaseResources_rtree();
 	}
 
 	/* Let add-on modules get a chance too */

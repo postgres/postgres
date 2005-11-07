@@ -2,13 +2,10 @@
 
 #include "access/gist.h"
 #include "access/itup.h"
-#include "access/rtree.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
+#include "access/tuptoaster.h"
+#include "storage/bufpage.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
-#include "storage/bufpage.h"
-#include "access/tuptoaster.h"
 
 PG_FUNCTION_INFO_V1(gtrgm_in);
 Datum		gtrgm_in(PG_FUNCTION_ARGS);

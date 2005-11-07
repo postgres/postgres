@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.54 2005/11/04 23:14:00 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.55 2005/11/07 17:36:44 tgl Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -104,7 +104,7 @@ CREATE INDEX test1_id_index ON test1 (id);
 
   <para>
    <productname>PostgreSQL</productname> provides several index types:
-   B-tree, R-tree, Hash, and GiST.  Each index type uses a different
+   B-tree, Hash, and GiST.  Each index type uses a different
    algorithm that is best suited to different types of queries.
    By default, the <command>CREATE INDEX</command> command will create a
    B-tree index, which fits the most common situations.
@@ -155,20 +155,51 @@ CREATE INDEX test1_id_index ON test1 (id);
   <para>
    <indexterm>
     <primary>index</primary>
-    <secondary>R-tree</secondary>
+    <secondary>hash</secondary>
    </indexterm>
    <indexterm>
-    <primary>R-tree</primary>
+    <primary>hash</primary>
     <see>index</see>
    </indexterm>
-   R-tree indexes are suited for queries on two-dimensional spatial data.
-   To create an R-tree index, use a command of the form
+   Hash indexes can only handle simple equality comparisons.
+   The query planner will consider using a hash index whenever an
+   indexed column is involved in a comparison using the
+   <literal>=</literal> operator.  The following command is used to
+   create a hash index:
 <synopsis>
-CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING rtree (<replaceable>column</replaceable>);
+CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING hash (<replaceable>column</replaceable>);
 </synopsis>
-   The <productname>PostgreSQL</productname> query planner will
-   consider using an R-tree index whenever an indexed column is
-   involved in a comparison using one of these operators:
+  </para>
+
+  <note>
+   <para>
+    Testing has shown <productname>PostgreSQL</productname>'s hash
+    indexes to perform no better than B-tree indexes, and the
+    index size and build time for hash indexes is much worse.
+    Furthermore, hash index operations are not presently WAL-logged,
+    so hash indexes may need to be rebuilt with <command>REINDEX</>
+    after a database crash.
+    For these reasons, hash index use is presently discouraged.
+   </para>
+  </note>  
+
+  <para>
+   <indexterm>
+    <primary>index</primary>
+    <secondary>GiST</secondary>
+   </indexterm>
+   <indexterm>
+    <primary>GiST</primary>
+    <see>index</see>
+   </indexterm>
+   GiST indexes are not a single kind of index, but rather an infrastructure
+   within which many different indexing strategies can be implemented.
+   Accordingly, the particular operators with which a GiST index can be
+   used vary depending on the indexing strategy (the <firstterm>operator
+   class</>).  As an example, the standard distribution of
+   <productname>PostgreSQL</productname> includes GiST operator classes
+   for several two-dimensional geometric data types, which support indexed
+   queries using these operators:
 
    <simplelist>
     <member><literal>&lt;&lt;</literal></member>
@@ -187,64 +218,10 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
 
    (See <xref linkend="functions-geometry"> for the meaning of
    these operators.)
-  </para>
-
-  <para>
-   <indexterm>
-    <primary>index</primary>
-    <secondary>hash</secondary>
-   </indexterm>
-   <indexterm>
-    <primary>hash</primary>
-    <see>index</see>
-   </indexterm>
-   Hash indexes can only handle simple equality comparisons.
-   The query planner will consider using a hash index whenever an
-   indexed column is involved in a comparison using the
-   <literal>=</literal> operator.  The following command is used to
-   create a hash index:
-<synopsis>
-CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING hash (<replaceable>column</replaceable>);
-</synopsis>
-  </para>
-
-  <para>
-   GiST indexes are not a single kind of index, but rather an infrastructure
-   within which many different indexing strategies can be implemented.
-   Accordingly, the particular operators with which a GiST index can be
-   used vary depending on the indexing strategy (the <firstterm>operator
-   class</>).  The standard distribution of
-   <productname>PostgreSQL</productname> includes GiST operator classes
-   equivalent to the R-tree operator classes, and many other GiST operator
+   Many other GiST operator
    classes are available in the <literal>contrib</> collection or as separate
    projects.  For more information see <xref linkend="GiST">.
   </para>
-
-  <note>
-   <para>
-    Testing has shown <productname>PostgreSQL</productname>'s hash
-    indexes to perform no better than B-tree indexes, and the
-    index size and build time for hash indexes is much worse.
-    Furthermore, hash index operations are not presently WAL-logged,
-    so hash indexes may need to be rebuilt with <command>REINDEX</>
-    after a database crash.
-    For these reasons, hash index use is presently discouraged.
-   </para>
-
-   <para>
-    Similarly, R-tree indexes do not seem to have any performance
-    advantages compared to the equivalent operations of GiST indexes.
-    Like hash indexes, they are not WAL-logged and may need
-    reindexing after a database crash.
-   </para>
-
-   <para>
-    While the problems with hash indexes may be fixed eventually,
-    it is likely that the R-tree index type will be retired in a future
-    release.  Users are encouraged to migrate applications that use R-tree
-    indexes to GiST indexes.
-   </para>
-  </note>  
  </sect1>
 
 

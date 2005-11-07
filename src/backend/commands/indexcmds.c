@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.134 2005/10/15 02:49:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.135 2005/11/07 17:36:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -226,10 +226,27 @@ DefineIndex(RangeVar *heapRelation,
 						   PointerGetDatum(accessMethodName),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("access method \"%s\" does not exist",
-						accessMethodName)));
+	{
+		/*
+		 * Hack to provide more-or-less-transparent updating of old RTREE
+		 * indexes to GIST: if RTREE is requested and not found, use GIST.
+		 */
+		if (strcmp(accessMethodName, "rtree") == 0)
+		{
+			ereport(NOTICE,
+					(errmsg("substituting access method \"gist\" for obsolete method \"rtree\"")));
+			accessMethodName = "gist";
+			tuple = SearchSysCache(AMNAME,
+								   PointerGetDatum(accessMethodName),
+								   0, 0, 0);
+		}
+
+		if (!HeapTupleIsValid(tuple))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("access method \"%s\" does not exist",
+							accessMethodName)));
+	}
 	accessMethodId = HeapTupleGetOid(tuple);
 	accessMethodForm = (Form_pg_am) GETSTRUCT(tuple);
 

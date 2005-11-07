@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_am.h,v 1.38 2005/10/15 02:49:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_am.h,v 1.39 2005/11/07 17:36:46 tgl Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -104,8 +104,6 @@ typedef FormData_pg_am *Form_pg_am;
  * ----------------
  */
 
-DATA(insert OID = 402 (  rtree 12 3 0 f f f f f rtinsert rtbeginscan rtgettuple rtgetmulti rtrescan rtendscan rtmarkpos rtrestrpos rtbuild rtbulkdelete - rtcostestimate ));
-DESCR("r-tree index access method");
 DATA(insert OID = 403 (  btree	5 1 1 t t t t t btinsert btbeginscan btgettuple btgetmulti btrescan btendscan btmarkpos btrestrpos btbuild btbulkdelete btvacuumcleanup btcostestimate ));
 DESCR("b-tree index access method");
 #define BTREE_AM_OID 403

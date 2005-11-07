@@ -1,25 +1,22 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.24 2005/11/04 23:14:00 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.25 2005/11/07 17:36:44 tgl Exp $
 -->
 
 <chapter id="GiST">
 <title>GiST Indexes</title>
 
-<sect1 id="gist-intro">
- <title>Introduction</title>
-
- <para>
    <indexterm>
     <primary>index</primary>
     <secondary>GiST</secondary>
    </indexterm>
-   <indexterm>
-    <primary>GiST</primary>
-    <see>index</see>
-   </indexterm>
+
+<sect1 id="gist-intro">
+ <title>Introduction</title>
+
+ <para>
    <acronym>GiST</acronym> stands for Generalized Search Tree.  It is a
    balanced, tree-structured access method, that acts as a base template in
-   which to implement arbitrary indexing schemes. B+-trees, R-trees and many
+   which to implement arbitrary indexing schemes. B-trees, R-trees and many
    other indexing schemes can be implemented in <acronym>GiST</acronym>.
  </para>
 
@@ -60,17 +57,17 @@ $PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.24 2005/11/04 23:14:00 petere Exp 
  <para>
    This extensibility should not be confused with the extensibility of the
    other standard search trees in terms of the data they can handle.  For
-   example, <productname>PostgreSQL</productname> supports extensible B+-trees
-   and R-trees. That means that you can use
-   <productname>PostgreSQL</productname> to build a B+-tree or R-tree over any
-   data type you want. But B+-trees only support range predicates
+   example, <productname>PostgreSQL</productname> supports extensible B-trees
+   and hash indexes. That means that you can use
+   <productname>PostgreSQL</productname> to build a B-tree or hash over any
+   data type you want. But B-trees only support range predicates
    (<literal>&lt;</literal>, <literal>=</literal>, <literal>&gt;</literal>),
-   and R-trees only support n-D range queries (contains, contained, equals).
+   and hash indexes only support equality queries.
  </para>
  
  <para>
    So if you index, say, an image collection with a
-   <productname>PostgreSQL</productname> B+-tree, you can only issue queries
+   <productname>PostgreSQL</productname> B-tree, you can only issue queries
    such as <quote>is imagex equal to imagey</quote>, <quote>is imagex less
    than imagey</quote> and <quote>is imagex greater than imagey</quote>?
    Depending on how you define <quote>equals</quote>, <quote>less than</quote>
@@ -84,7 +81,7 @@ $PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.24 2005/11/04 23:14:00 petere Exp 
    All it takes to get a <acronym>GiST</acronym> access method up and running
    is to implement seven user-defined methods, which define the behavior of
    keys in the tree. Of course these methods have to be pretty fancy to
-   support fancy queries, but for all the standard queries (B+-trees,
+   support fancy queries, but for all the standard queries (B-trees,
    R-trees, etc.) they're relatively straightforward. In short,
    <acronym>GiST</acronym> combines extensibility along with generality, code
    reuse, and a clean interface.

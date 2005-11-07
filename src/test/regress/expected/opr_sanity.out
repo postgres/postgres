@@ -798,18 +798,6 @@ FROM pg_amop p1 LEFT JOIN pg_opclass p2 ON amopclaid = p2.oid
 ORDER BY 1, 2, 3;
  opcamid | amopstrategy | oprname 
 ---------+--------------+---------
-     402 |            1 | <<
-     402 |            2 | &<
-     402 |            3 | &&
-     402 |            4 | &>
-     402 |            5 | >>
-     402 |            6 | ~=
-     402 |            7 | ~
-     402 |            8 | @
-     402 |            9 | &<|
-     402 |           10 | <<|
-     402 |           11 | |>>
-     402 |           12 | |&>
      403 |            1 | <
      403 |            1 | ~<~
      403 |            2 | <=
@@ -834,7 +822,7 @@ ORDER BY 1, 2, 3;
      783 |           10 | <<|
      783 |           11 | |>>
      783 |           12 | |&>
-(36 rows)
+(24 rows)
 
 -- Check that all operators linked to by opclass entries have selectivity
 -- estimators.  This is not absolutely required, but it seems a reasonable

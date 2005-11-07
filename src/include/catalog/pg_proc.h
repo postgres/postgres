@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.387 2005/10/15 02:49:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.388 2005/11/07 17:36:46 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -394,18 +394,6 @@ DATA(insert OID = 191 (  box_right		   PGNSP PGUID 12 f f t f i 2 16 "603 603" _
 DESCR("is right of");
 DATA(insert OID = 192 (  box_contained	   PGNSP PGUID 12 f f t f i 2 16 "603 603" _null_ _null_ _null_ box_contained - _null_ ));
 DESCR("contained in?");
-DATA(insert OID = 193 (  rt_box_union	   PGNSP PGUID 12 f f t f i 2 603 "603 603" _null_ _null_ _null_	rt_box_union - _null_ ));
-DESCR("r-tree");
-DATA(insert OID = 194 (  rt_box_inter	   PGNSP PGUID 12 f f t f i 2 2278 "603 603" _null_ _null_ _null_  rt_box_inter - _null_ ));
-DESCR("r-tree");
-DATA(insert OID = 195 (  rt_box_size	   PGNSP PGUID 12 f f t f i 2 2278 "603 2281" _null_ _null_ _null_	rt_box_size - _null_ ));
-DESCR("r-tree");
-DATA(insert OID = 197 (  rt_poly_union	   PGNSP PGUID 12 f f t f i 2 604 "604 604" _null_ _null_ _null_	rt_poly_union - _null_ ));
-DESCR("r-tree");
-DATA(insert OID = 198 (  rt_poly_inter	   PGNSP PGUID 12 f f t f i 2 2278 "604 604" _null_ _null_ _null_  rt_poly_inter - _null_ ));
-DESCR("r-tree");
-DATA(insert OID = 199 (  rt_poly_size	   PGNSP PGUID 12 f f t f i 2 2278 "604 2281" _null_ _null_ _null_	rt_poly_size - _null_ ));
-DESCR("r-tree");
 
 /* OIDS 200 - 299 */
 
@@ -667,29 +655,6 @@ DATA(insert OID = 318 (  float4			   PGNSP PGUID 12 f f t f i 1 700  "23" _null_
 DESCR("convert int4 to float4");
 DATA(insert OID = 319 (  int4			   PGNSP PGUID 12 f f t f i 1  23 "700" _null_ _null_ _null_	ftoi4 - _null_ ));
 DESCR("convert float4 to int4");
-
-DATA(insert OID = 320 (  rtinsert		   PGNSP PGUID 12 f f t f v 6 16 "2281 2281 2281 2281 2281 2281" _null_ _null_ _null_	rtinsert - _null_ ));
-DESCR("r-tree(internal)");
-DATA(insert OID = 322 (  rtgettuple		   PGNSP PGUID 12 f f t f v 2 16 "2281 2281" _null_ _null_ _null_  rtgettuple - _null_ ));
-DESCR("r-tree(internal)");
-DATA(insert OID = 635 (  rtgetmulti		   PGNSP PGUID 12 f f t f v 4 16 "2281 2281 2281 2281" _null_ _null_ _null_  rtgetmulti - _null_ ));
-DESCR("r-tree(internal)");
-DATA(insert OID = 323 (  rtbuild		   PGNSP PGUID 12 f f t f v 3 2278 "2281 2281 2281" _null_ _null_ _null_ rtbuild - _null_ ));
-DESCR("r-tree(internal)");
-DATA(insert OID = 324 (  rtbeginscan	   PGNSP PGUID 12 f f t f v 3 2281 "2281 2281 2281" _null_ _null_ _null_	rtbeginscan - _null_ ));
-DESCR("r-tree(internal)");
-DATA(insert OID = 325 (  rtendscan		   PGNSP PGUID 12 f f t f v 1 2278 "2281" _null_ _null_ _null_	rtendscan - _null_ ));
-DESCR("r-tree(internal)");
-DATA(insert OID = 326 (  rtmarkpos		   PGNSP PGUID 12 f f t f v 1 2278 "2281" _null_ _null_ _null_	rtmarkpos - _null_ ));
-DESCR("r-tree(internal)");
-DATA(insert OID = 327 (  rtrestrpos		   PGNSP PGUID 12 f f t f v 1 2278 "2281" _null_ _null_ _null_	rtrestrpos - _null_ ));
-DESCR("r-tree(internal)");
-DATA(insert OID = 328 (  rtrescan		   PGNSP PGUID 12 f f t f v 2 2278 "2281 2281" _null_ _null_ _null_ rtrescan - _null_ ));
-DESCR("r-tree(internal)");
-DATA(insert OID = 321 (  rtbulkdelete	   PGNSP PGUID 12 f f t f v 3 2281 "2281 2281 2281" _null_ _null_ _null_ rtbulkdelete - _null_ ));
-DESCR("r-tree(internal)");
-DATA(insert OID = 1265 (  rtcostestimate   PGNSP PGUID 12 f f t f v 7 2278 "2281 2281 2281 2281 2281 2281 2281" _null_ _null_ _null_  rtcostestimate - _null_ ));
-DESCR("r-tree(internal)");
 
 DATA(insert OID = 330 (  btgettuple		   PGNSP PGUID 12 f f t f v 2 16 "2281 2281" _null_ _null_ _null_  btgettuple - _null_ ));
 DESCR("btree(internal)");

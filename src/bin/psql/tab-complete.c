@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.138 2005/10/15 02:49:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.139 2005/11/07 17:36:45 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -1025,7 +1025,7 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev_wd, "USING") == 0)
 	{
 		static const char *const index_mth[] =
-		{"BTREE", "RTREE", "HASH", "GIST", NULL};
+		{"BTREE", "HASH", "GIST", NULL};
 
 		COMPLETE_WITH_LIST(index_mth);
 	}
