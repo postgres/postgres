@@ -407,7 +407,9 @@ rank_def(PG_FUNCTION_ARGS)
 
 typedef struct
 {
-	ITEM	   *item;
+	ITEM	   **item;
+	int16		nitem;
+	bool		needfree;
 	int32		pos;
 }	DocRepresentation;
 
@@ -419,123 +421,80 @@ compareDocR(const void *a, const void *b)
 	return (((DocRepresentation *) a)->pos > ((DocRepresentation *) b)->pos) ? 1 : -1;
 }
 
-
-typedef struct
-{
-	DocRepresentation *doc;
-	int			len;
-}	ChkDocR;
-
 static bool
-checkcondition_DR(void *checkval, ITEM * val)
-{
-	DocRepresentation *ptr = ((ChkDocR *) checkval)->doc;
-
-	while (ptr - ((ChkDocR *) checkval)->doc < ((ChkDocR *) checkval)->len)
-	{
-		if (val == ptr->item || compareITEM(&val, &(ptr->item)) == 0)
-			return true;
-		ptr++;
-	}
-
-	return false;
+checkcondition_ITEM(void *checkval, ITEM * val) {
+	return (bool)(val->istrue);
 }
 
+static void
+reset_istrue_flag(QUERYTYPE *query) {
+	ITEM       *item = GETQUERY(query);
+	int i;
 
+	/* reset istrue flag */
+	for(i = 0; i < query->size; i++) { 
+		if ( item->type == VAL ) 
+			item->istrue = 0;
+		item++;
+	}
+}
+		
 static bool
 Cover(DocRepresentation * doc, int len, QUERYTYPE * query, int *pos, int *p, int *q)
 {
-	int			i;
-	DocRepresentation *ptr,
-			   *f = (DocRepresentation *) 0xffffffff;
-	ITEM	   *item = GETQUERY(query);
+	DocRepresentation *ptr;
 	int			lastpos = *pos;
-	int			oldq = *q;
+	int i;
+	bool	found=false;
 
+	reset_istrue_flag(query);
+	
 	*p = 0x7fffffff;
 	*q = 0;
+	ptr = doc + *pos;
 
-	for (i = 0; i < query->size; i++)
-	{
-		if (item->type != VAL)
-		{
-			item++;
-			continue;
+	/* find upper bound of cover from current position, move up */
+	while (ptr - doc < len) {
+		for(i=0;i<ptr->nitem;i++)
+			ptr->item[i]->istrue = 1;
+		if ( TS_execute(GETQUERY(query), NULL, false, checkcondition_ITEM) ) {
+			if (ptr->pos > *q) {
+				*q = ptr->pos;
+				lastpos = ptr - doc;
+				found = true;
+			} 
+			break;
 		}
-		ptr = doc + *pos;
-
-		while (ptr - doc < len)
-		{
-			if (ptr->item == item)
-			{
-				if (ptr->pos > *q)
-				{
-					*q = ptr->pos;
-					lastpos = ptr - doc;
-				}
-				break;
-			}
-			ptr++;
-		}
-
-		item++;
+		ptr++;
 	}
 
-	if (*q == 0)
+	if (!found) 
 		return false;
 
-	if (*q == oldq)
-	{							/* already check this pos */
-		(*pos)++;
-		return Cover(doc, len, query, pos, p, q);
+	reset_istrue_flag(query);
+
+	ptr = doc + lastpos;
+
+	/* find lower bound of cover from founded upper bound, move down */
+	while (ptr >= doc ) {
+		for(i=0;i<ptr->nitem;i++)
+			ptr->item[i]->istrue = 1;
+		if ( TS_execute(GETQUERY(query), NULL, true, checkcondition_ITEM) ) {
+			if (ptr->pos < *p) 
+				*p = ptr->pos;
+			break;
+		}
+		ptr--;
 	}
 
-	item = GETQUERY(query);
-	for (i = 0; i < query->size; i++)
-	{
-		if (item->type != VAL)
-		{
-			item++;
-			continue;
-		}
-		ptr = doc + lastpos;
-
-		while (ptr >= doc + *pos)
-		{
-			if (ptr->item == item)
-			{
-				if (ptr->pos < *p)
-				{
-					*p = ptr->pos;
-					f = ptr;
-				}
-				break;
-			}
-			ptr--;
-		}
-		item++;
+	if ( *p <= *q ) {
+		/* set position for next try to next lexeme after begining of founded cover */
+		*pos= (ptr-doc) + 1;
+		return true;
 	}
 
-	if (*p <= *q)
-	{
-		ChkDocR		ch;
-
-		ch.doc = f;
-		ch.len = (doc + lastpos) - f + 1;
-		*pos = f - doc + 1;
-		SortAndUniqOperand = GETOPERAND(query);
-		if (TS_execute(GETQUERY(query), &ch, false, checkcondition_DR))
-		{
-			/*
-			 * elog(NOTICE,"OP:%d NP:%d P:%d Q:%d", *pos, lastpos, *p, *q);
-			 */
-			return true;
-		}
-		else
-			return Cover(doc, len, query, pos, p, q);
-	}
-
-	return false;
+	(*pos)++;
+	return Cover( doc, len, query, pos, p, q );
 }
 
 static DocRepresentation *
@@ -553,9 +512,12 @@ get_docrep(tsvector * txt, QUERYTYPE * query, int *doclen)
 
 	*(uint16 *) POSNULL = lengthof(POSNULL) - 1;
 	doc = (DocRepresentation *) palloc(sizeof(DocRepresentation) * len);
+	SortAndUniqOperand = GETOPERAND(query);
+	reset_istrue_flag(query);
+
 	for (i = 0; i < query->size; i++)
 	{
-		if (item[i].type != VAL)
+		if (item[i].type != VAL || item[i].istrue)
 			continue;
 
 		entry = find_wordentry(txt, query, &(item[i]));
@@ -581,7 +543,27 @@ get_docrep(tsvector * txt, QUERYTYPE * query, int *doclen)
 
 		for (j = 0; j < dimt; j++)
 		{
-			doc[cur].item = &(item[i]);
+			if ( j == 0 ) {
+				ITEM *kptr, *iptr = item+i;
+				int k;
+ 
+				doc[cur].needfree = false;
+				doc[cur].nitem = 0;
+				doc[cur].item = (ITEM**)palloc( sizeof(ITEM*) * query->size );
+
+				for(k=0; k < query->size; k++) {
+					kptr = item+k;
+					if ( k==i || ( item[k].type == VAL && compareITEM( &kptr, &iptr ) == 0 ) ) {
+						doc[cur].item[ doc[cur].nitem ] = item+k;
+						doc[cur].nitem++;
+						kptr->istrue = 1;
+					}
+				} 
+			} else {
+				doc[cur].needfree = false;
+				doc[cur].nitem = doc[cur-1].nitem;
+				doc[cur].item  = doc[cur-1].item;
+			}
 			doc[cur].pos = WEP_GETPOS(post[j]);
 			cur++;
 		}
@@ -606,16 +588,18 @@ rank_cd(PG_FUNCTION_ARGS)
 {
 	int			K = PG_GETARG_INT32(0);
 	tsvector   *txt = (tsvector *) PG_DETOAST_DATUM(PG_GETARG_DATUM(1));
-	QUERYTYPE  *query = (QUERYTYPE *) PG_DETOAST_DATUM(PG_GETARG_DATUM(2));
+	QUERYTYPE  *query = (QUERYTYPE *) PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(2));
 	int			method = DEF_NORM_METHOD;
 	DocRepresentation *doc;
 	float		res = 0.0;
 	int			p = 0,
 				q = 0,
 				len,
-				cur;
+				cur,
+				i,
+				doclen=0;
 
-	doc = get_docrep(txt, query, &len);
+	doc = get_docrep(txt, query, &doclen);
 	if (!doc)
 	{
 		PG_FREE_IF_COPY(txt, 1);
@@ -626,7 +610,7 @@ rank_cd(PG_FUNCTION_ARGS)
 	cur = 0;
 	if (K <= 0)
 		K = 4;
-	while (Cover(doc, len, query, &cur, &p, &q))
+	while (Cover(doc, doclen, query, &cur, &p, &q))
 		res += (q - p + 1 > K) ? ((float) K) / ((float) (q - p + 1)) : 1.0;
 
 	if (PG_NARGS() == 4)
@@ -649,6 +633,9 @@ rank_cd(PG_FUNCTION_ARGS)
 			elog(ERROR, "unrecognized normalization method: %d", method);
 	}
 
+	for(i=0;i<doclen;i++)
+		if ( doc[i].needfree )
+			pfree( doc[i].item );
 	pfree(doc);
 	PG_FREE_IF_COPY(txt, 1);
 	PG_FREE_IF_COPY(query, 2);
@@ -693,7 +680,7 @@ Datum
 get_covers(PG_FUNCTION_ARGS)
 {
 	tsvector   *txt = (tsvector *) PG_DETOAST_DATUM(PG_GETARG_DATUM(0));
-	QUERYTYPE  *query = (QUERYTYPE *) PG_DETOAST_DATUM(PG_GETARG_DATUM(1));
+	QUERYTYPE  *query = (QUERYTYPE *) PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(1));
 	WordEntry  *pptr = ARRPTR(txt);
 	int			i,
 				dlen = 0,
@@ -790,6 +777,9 @@ get_covers(PG_FUNCTION_ARGS)
 	VARATT_SIZEP(out) = cptr - ((char *) out);
 
 	pfree(dw);
+	for(i=0;i<rlen;i++)
+		if ( doc[i].needfree )
+			pfree( doc[i].item );
 	pfree(doc);
 
 	PG_FREE_IF_COPY(txt, 0);

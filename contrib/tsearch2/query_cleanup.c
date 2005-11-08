@@ -7,14 +7,10 @@
 
 #include <float.h>
 
-#include "access/gist.h"
-#include "access/itup.h"
-#include "storage/bufpage.h"
-#include "utils/array.h"
 #include "utils/builtins.h"
 
 #include "query.h"
-#include "rewrite.h"
+#include "query_cleanup.h"
 
 typedef struct NODE
 {

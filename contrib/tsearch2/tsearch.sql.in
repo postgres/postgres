@@ -813,6 +813,249 @@ CREATE OPERATOR CLASS tsvector_ops
         OPERATOR        5       > ,
         FUNCTION        1       tsvector_cmp(tsvector, tsvector);
 
+----------------Compare functions and operators for tsquery
+CREATE OR REPLACE FUNCTION tsquery_cmp(tsquery,tsquery)
+RETURNS int4
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isstrict,iscachable);
+
+CREATE OR REPLACE FUNCTION tsquery_lt(tsquery,tsquery)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isstrict,iscachable);
+
+CREATE OR REPLACE FUNCTION tsquery_le(tsquery,tsquery)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isstrict,iscachable);
+
+CREATE OR REPLACE FUNCTION tsquery_eq(tsquery,tsquery)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isstrict,iscachable);
+
+CREATE OR REPLACE FUNCTION tsquery_ge(tsquery,tsquery)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isstrict,iscachable);
+
+CREATE OR REPLACE FUNCTION tsquery_gt(tsquery,tsquery)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isstrict,iscachable);
+
+CREATE OR REPLACE FUNCTION tsquery_ne(tsquery,tsquery)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isstrict,iscachable);
+
+
+CREATE OPERATOR < (
+        LEFTARG = tsquery,
+        RIGHTARG = tsquery,
+        PROCEDURE = tsquery_lt,
+        COMMUTATOR = '>',
+        NEGATOR = '>=',
+        RESTRICT = contsel,
+        JOIN = contjoinsel
+);
+
+CREATE OPERATOR <= (
+        LEFTARG = tsquery,
+        RIGHTARG = tsquery,
+        PROCEDURE = tsquery_le,
+        COMMUTATOR = '>=',
+        NEGATOR = '>',
+        RESTRICT = contsel,
+        JOIN = contjoinsel
+);
+
+CREATE OPERATOR >= (
+        LEFTARG = tsquery,
+        RIGHTARG = tsquery,
+        PROCEDURE = tsquery_ge,
+        COMMUTATOR = '<=',
+        NEGATOR = '<',
+        RESTRICT = contsel,
+        JOIN = contjoinsel
+);
+
+CREATE OPERATOR > (
+        LEFTARG = tsquery,
+        RIGHTARG = tsquery,
+        PROCEDURE = tsquery_gt,
+        COMMUTATOR = '<',
+        NEGATOR = '<=',
+        RESTRICT = contsel,
+        JOIN = contjoinsel
+);
+
+
+CREATE OPERATOR = (
+        LEFTARG = tsquery,
+        RIGHTARG = tsquery,
+        PROCEDURE = tsquery_eq,
+        COMMUTATOR = '=',
+        NEGATOR = '<>',
+        RESTRICT = eqsel,
+        JOIN = eqjoinsel,
+        SORT1 = '<',
+        SORT2 = '<'
+);
+
+CREATE OPERATOR <> (
+        LEFTARG = tsquery,
+        RIGHTARG = tsquery,
+        PROCEDURE = tsquery_ne,
+        COMMUTATOR = '<>',
+        NEGATOR = '=',
+        RESTRICT = neqsel,
+        JOIN = neqjoinsel
+);
+
+CREATE OPERATOR CLASS tsquery_ops
+    DEFAULT FOR TYPE tsquery USING btree AS
+        OPERATOR        1       < ,
+        OPERATOR        2       <= ,
+        OPERATOR        3       = ,
+        OPERATOR        4       >= ,
+        OPERATOR        5       > ,
+        FUNCTION        1       tsquery_cmp(tsquery, tsquery);
+
+CREATE OR REPLACE FUNCTION numnode(tsquery)
+        returns int4
+        as 'MODULE_PATHNAME', 'tsquery_numnode'
+        language 'C'
+        with (isstrict,iscachable);
+
+--------------rewrite subsystem
+
+CREATE OR REPLACE FUNCTION rewrite(tsquery, text)
+        returns tsquery
+        as 'MODULE_PATHNAME', 'tsquery_rewrite'
+        language 'C'
+        with (isstrict,iscachable);
+
+CREATE OR REPLACE FUNCTION rewrite(tsquery, tsquery, tsquery)
+        returns tsquery
+        as 'MODULE_PATHNAME', 'tsquery_rewrite_query'
+        language 'C'
+        with (isstrict,iscachable);
+
+CREATE OR REPLACE FUNCTION rewrite_accum(tsquery,tsquery[])
+        RETURNS tsquery
+        AS 'MODULE_PATHNAME'
+        LANGUAGE 'C';
+
+CREATE OR REPLACE FUNCTION rewrite_finish(tsquery)
+      returns tsquery
+      as 'MODULE_PATHNAME'
+      language 'C';
+
+CREATE AGGREGATE rewrite (
+      BASETYPE=tsquery[],
+      SFUNC=rewrite_accum,
+      STYPE=tsquery,
+      FINALFUNC = rewrite_finish
+);
+
+CREATE OR REPLACE FUNCTION tsq_mcontains(tsquery, tsquery)
+        returns bool
+        as 'MODULE_PATHNAME'
+        language 'C'
+        with (isstrict,iscachable);
+
+CREATE OR REPLACE FUNCTION tsq_mcontained(tsquery, tsquery)
+        returns bool
+        as 'MODULE_PATHNAME'
+        language 'C'
+        with (isstrict,iscachable);
+
+CREATE OPERATOR @ (
+        LEFTARG = tsquery,
+        RIGHTARG = tsquery,
+        PROCEDURE = tsq_mcontains,
+        COMMUTATOR = '~',
+        RESTRICT = contsel,
+        JOIN = contjoinsel
+);
+
+CREATE OPERATOR ~ (
+        LEFTARG = tsquery,
+        RIGHTARG = tsquery,
+        PROCEDURE = tsq_mcontained,
+        COMMUTATOR = '@',
+        RESTRICT = contsel,
+        JOIN = contjoinsel
+);
+
+-----------gist support of rewrite------------------
+
+CREATE FUNCTION gtsq_in(cstring)
+RETURNS gtsq
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' with (isstrict);
+
+CREATE FUNCTION gtsq_out(gtsq)
+RETURNS cstring
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' with (isstrict);
+
+CREATE TYPE gtsq (
+        INTERNALLENGTH = 8,
+        INPUT = gtsq_in,
+        OUTPUT = gtsq_out
+);
+
+CREATE FUNCTION gtsq_consistent(gtsq,internal,int4)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
+CREATE FUNCTION gtsq_compress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
+CREATE FUNCTION gtsq_decompress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
+CREATE FUNCTION gtsq_penalty(internal,internal,internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' with (isstrict);
+
+CREATE FUNCTION gtsq_picksplit(internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
+CREATE FUNCTION gtsq_union(bytea, internal)
+RETURNS _int4
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
+CREATE FUNCTION gtsq_same(gtsq, gtsq, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
+CREATE OPERATOR CLASS gist_tp_tsquery_ops
+DEFAULT FOR TYPE tsquery USING gist
+AS
+        OPERATOR        1       @ (tsquery, tsquery) RECHECK,
+        OPERATOR        2       ~ (tsquery, tsquery) RECHECK,
+        FUNCTION        1       gtsq_consistent (gtsq, internal, int4),
+        FUNCTION        2       gtsq_union (bytea, internal),
+        FUNCTION        3       gtsq_compress (internal),
+        FUNCTION        4       gtsq_decompress (internal),
+        FUNCTION        5       gtsq_penalty (internal, internal, internal),
+        FUNCTION        6       gtsq_picksplit (internal, internal),
+        FUNCTION        7       gtsq_same (gtsq, gtsq, internal),
+        STORAGE         gtsq;
+
 --example of ISpell dictionary
 --update pg_ts_dict set dict_initoption='DictFile="/usr/local/share/ispell/russian.dict" ,AffFile ="/usr/local/share/ispell/russian.aff", StopFile="/usr/local/share/ispell/russian.stop"' where dict_name='ispell_template';
 --example of synonym dict

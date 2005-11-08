@@ -65,6 +65,88 @@ SELECT '1&(2&(4&(5|!6)))'::tsquery;
 SELECT E'1&(''2''&('' 4''&(\\|5 | ''6 \\'' !|&'')))'::tsquery;
 SELECT '''the wether'':dc & '' sKies '':BC & a:d b:a';
 
+select 'a' < 'b & c'::tsquery;
+select 'a' > 'b & c'::tsquery;
+select 'a | f' < 'b & c'::tsquery;
+select 'a | ff' < 'b & c'::tsquery;
+select 'a | f | g' < 'b & c'::tsquery;
+
+select numnode( 'new'::tsquery );
+select numnode( 'new & york'::tsquery );
+select numnode( 'new & york | qwery'::tsquery );
+
+create table test_tsquery (txtkeyword text, txtsample text);
+\set ECHO none
+\copy test_tsquery from stdin
+'New York'	new & york | big & apple | nyc
+Moscow	moskva | moscow
+'Sanct Peter'	Peterburg | peter | 'Sanct Peterburg'
+'foo bar qq'	foo & (bar | qq) & city
+\.
+\set ECHO all
+
+alter table test_tsquery add column keyword tsquery;
+update test_tsquery set keyword = to_tsquery('default', txtkeyword);
+alter table test_tsquery add column sample tsquery;
+update test_tsquery set sample = to_tsquery('default', txtsample::text);
+
+create unique index bt_tsq on test_tsquery (keyword);
+
+select count(*) from test_tsquery where keyword <  'new & york';
+select count(*) from test_tsquery where keyword <= 'new & york';
+select count(*) from test_tsquery where keyword = 'new & york';
+select count(*) from test_tsquery where keyword >= 'new & york';
+select count(*) from test_tsquery where keyword >  'new & york';
+
+set enable_seqscan=off;
+
+select count(*) from test_tsquery where keyword <  'new & york';
+select count(*) from test_tsquery where keyword <= 'new & york';
+select count(*) from test_tsquery where keyword = 'new & york';
+select count(*) from test_tsquery where keyword >= 'new & york';
+select count(*) from test_tsquery where keyword >  'new & york';
+
+set enable_seqscan=on;
+
+select rewrite('foo & bar & qq & new & york',  'new & york'::tsquery, 'big & apple | nyc | new & york & city');
+
+select rewrite('moscow', 'select keyword, sample from test_tsquery'::text );
+select rewrite('moscow & hotel', 'select keyword, sample from test_tsquery'::text );
+select rewrite('bar &  new & qq & foo & york', 'select keyword, sample from test_tsquery'::text );
+
+select rewrite( ARRAY['moscow', keyword, sample] ) from test_tsquery;
+select rewrite( ARRAY['moscow & hotel', keyword, sample] ) from test_tsquery;
+select rewrite( ARRAY['bar &  new & qq & foo & york', keyword, sample] ) from test_tsquery;
+
+
+select keyword from test_tsquery where keyword @ 'new';
+select keyword from test_tsquery where keyword @ 'moscow';
+select keyword from test_tsquery where keyword ~ 'new';
+select keyword from test_tsquery where keyword ~ 'moscow';
+select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'moscow') as query where keyword ~ query;
+select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'moscow & hotel') as query where keyword ~ query;
+select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'bar &  new & qq & foo & york') as query where keyword ~ query;
+select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'moscow') as query where query @ keyword;
+select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'moscow & hotel') as query where query @ keyword;
+select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'bar &  new & qq & foo & york') as query where query @ keyword;
+
+create index qq on test_tsquery using gist (keyword gist_tp_tsquery_ops);
+set enable_seqscan='off';
+
+select keyword from test_tsquery where keyword @ 'new';
+select keyword from test_tsquery where keyword @ 'moscow';
+select keyword from test_tsquery where keyword ~ 'new';
+select keyword from test_tsquery where keyword ~ 'moscow';
+select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'moscow') as query where keyword ~ query;
+select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'moscow & hotel') as query where keyword ~ query;
+select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'bar &  new & qq & foo & york') as query where keyword ~ query;
+select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'moscow') as query where query @ keyword;
+select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'moscow & hotel') as query where query @ keyword;
+select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'bar &  new & qq & foo & york') as query where query @ keyword;
+set enable_seqscan='on';
+
+
+
 select lexize('simple', 'ASD56 hsdkf');
 select lexize('en_stem', 'SKIES Problems identity');
 

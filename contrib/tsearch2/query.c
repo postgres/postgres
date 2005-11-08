@@ -23,7 +23,7 @@
 #include "tsvector.h"
 #include "crc32.h"
 #include "query.h"
-#include "rewrite.h"
+#include "query_cleanup.h"
 #include "common.h"
 
 
