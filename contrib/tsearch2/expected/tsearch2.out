@@ -13,12 +13,12 @@ psql:tsearch2.sql:342: NOTICE:  argument type tsvector is only a shell
 psql:tsearch2.sql:396: NOTICE:  type "tsquery" is not yet defined
 DETAIL:  Creating a shell type definition.
 psql:tsearch2.sql:401: NOTICE:  argument type tsquery is only a shell
-psql:tsearch2.sql:543: NOTICE:  type "gtsvector" is not yet defined
+psql:tsearch2.sql:544: NOTICE:  type "gtsvector" is not yet defined
 DETAIL:  Creating a shell type definition.
-psql:tsearch2.sql:548: NOTICE:  argument type gtsvector is only a shell
-psql:tsearch2.sql:997: NOTICE:  type "gtsq" is not yet defined
+psql:tsearch2.sql:549: NOTICE:  argument type gtsvector is only a shell
+psql:tsearch2.sql:998: NOTICE:  type "gtsq" is not yet defined
 DETAIL:  Creating a shell type definition.
-psql:tsearch2.sql:1002: NOTICE:  argument type gtsq is only a shell
+psql:tsearch2.sql:1003: NOTICE:  argument type gtsq is only a shell
 --tsvector
 SELECT '1'::tsvector;
  tsvector 

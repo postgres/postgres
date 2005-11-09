@@ -201,6 +201,8 @@ rewrite_accum(PG_FUNCTION_ARGS) {
 	QUERYTYPE	*q;
 	QTNode		*qex, *subs = NULL, *acctree;
 	bool isfind = false;
+	Datum		*elemsp;
+	int		nelemsp;
 
 	AggregateContext = ((AggState *) fcinfo->context)->aggcontext;
 	
@@ -230,14 +232,19 @@ rewrite_accum(PG_FUNCTION_ARGS) {
 	if (ARR_ELEMTYPE(qa) != tsqOid)
 		elog(ERROR, "array should contain tsquery type");
 
-	q = (QUERYTYPE*)ARR_DATA_PTR(qa);
-	if ( q->size == 0 ) 
+	deconstruct_array(qa, tsqOid, -1, false, 'i', &elemsp, &nelemsp); 
+
+	q = (QUERYTYPE*)DatumGetPointer( elemsp[0] );
+	if ( q->size == 0 ) {
+		pfree( elemsp ); 
 		PG_RETURN_POINTER( acc );
+	}
 	
 	if ( !acc->size ) {
-		if ( acc->len > HDRSIZEQT )
+		if ( acc->len > HDRSIZEQT ) {
+			pfree( elemsp ); 
 			PG_RETURN_POINTER( acc );	
-		else
+		} else
 			acctree = QT2QTN( GETQUERY(q), GETOPERAND(q) );
 	} else 
 		acctree = QT2QTN( GETQUERY(acc), GETOPERAND(acc) );
@@ -245,14 +252,16 @@ rewrite_accum(PG_FUNCTION_ARGS) {
 	QTNTernary( acctree );
 	QTNSort( acctree );
 
-	q = (QUERYTYPE*)( ((char*)ARR_DATA_PTR(qa)) + MAXALIGN( q->len ) );
-	if ( q->size == 0 ) 
+	q = (QUERYTYPE*)DatumGetPointer( elemsp[1] );
+	if ( q->size == 0 ) { 
+		pfree( elemsp ); 
 		PG_RETURN_POINTER( acc );
+	}
 	qex = QT2QTN( GETQUERY(q), GETOPERAND(q) );
 	QTNTernary( qex );
 	QTNSort( qex );
 	
-	q = (QUERYTYPE*)( ((char*)q) + MAXALIGN( q->len ) );
+	q = (QUERYTYPE*)DatumGetPointer( elemsp[2] );
 	if ( q->size ) 
 		subs = QT2QTN( GETQUERY(q), GETOPERAND(q) );
 
@@ -270,6 +279,7 @@ rewrite_accum(PG_FUNCTION_ARGS) {
 		}
 	}
 
+	pfree( elemsp ); 
 	QTNFree( qex );	
 	QTNFree( subs );
 	QTNFree( acctree );

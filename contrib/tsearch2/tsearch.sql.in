@@ -402,6 +402,7 @@ LANGUAGE 'C' with (isstrict);
 
 CREATE TYPE tsquery (
         INTERNALLENGTH = -1,
+        ALIGNMENT = int4,
         INPUT = tsquery_in,
         OUTPUT = tsquery_out
 );
