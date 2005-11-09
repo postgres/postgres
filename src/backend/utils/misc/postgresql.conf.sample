@@ -21,7 +21,7 @@
 # This file is read on postmaster startup and when the postmaster
 # receives a SIGHUP. If you edit the file on a running system, you have 
 # to SIGHUP the postmaster for the changes to take effect, or use 
-# "pg_ctl reload". Some settings, such as listen_address, require
+# "pg_ctl reload". Some settings, such as listen_addresses, require
 # a postmaster shutdown and restart to take effect.
 
 
