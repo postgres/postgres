@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.468 2005/11/03 17:11:38 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.469 2005/11/10 00:31:34 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -159,6 +159,9 @@ static bool log_after_parse(List *raw_parsetree_list,
 static List *pg_rewrite_queries(List *querytree_list);
 static void start_xact_command(void);
 static void finish_xact_command(void);
+static bool IsTransactionExitStmt(Node *parsetree);
+static bool IsTransactionExitStmtList(List *parseTrees);
+static bool IsTransactionStmtList(List *parseTrees);
 static void SigHupHandler(SIGNAL_ARGS);
 static void log_disconnections(int code, Datum arg);
 
@@ -915,27 +918,12 @@ exec_simple_query(const char *query_string)
 		 * might be safe to allow some additional utility commands in this
 		 * state, but not many...)
 		 */
-		if (IsAbortedTransactionBlockState())
-		{
-			bool		allowit = false;
-
-			if (IsA(parsetree, TransactionStmt))
-			{
-				TransactionStmt *stmt = (TransactionStmt *) parsetree;
-
-				if (stmt->kind == TRANS_STMT_COMMIT ||
-					stmt->kind == TRANS_STMT_PREPARE ||
-					stmt->kind == TRANS_STMT_ROLLBACK ||
-					stmt->kind == TRANS_STMT_ROLLBACK_TO)
-					allowit = true;
-			}
-
-			if (!allowit)
-				ereport(ERROR,
-						(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
-						 errmsg("current transaction is aborted, "
+		if (IsAbortedTransactionBlockState() &&
+			!IsTransactionExitStmt(parsetree))
+			ereport(ERROR,
+					(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
+					 errmsg("current transaction is aborted, "
 						"commands ignored until end of transaction block")));
-		}
 
 		/* Make sure we are in a transaction command */
 		start_xact_command();
@@ -1244,27 +1232,12 @@ exec_parse_message(const char *query_string,	/* string to execute */
 		 * (It might be safe to allow some additional utility commands in this
 		 * state, but not many...)
 		 */
-		if (IsAbortedTransactionBlockState())
-		{
-			bool		allowit = false;
-
-			if (IsA(parsetree, TransactionStmt))
-			{
-				TransactionStmt *stmt = (TransactionStmt *) parsetree;
-
-				if (stmt->kind == TRANS_STMT_COMMIT ||
-					stmt->kind == TRANS_STMT_PREPARE ||
-					stmt->kind == TRANS_STMT_ROLLBACK ||
-					stmt->kind == TRANS_STMT_ROLLBACK_TO)
-					allowit = true;
-			}
-
-			if (!allowit)
-				ereport(ERROR,
-						(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
-						 errmsg("current transaction is aborted, "
+		if (IsAbortedTransactionBlockState() &&
+			!IsTransactionExitStmt(parsetree))
+			ereport(ERROR,
+					(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
+					 errmsg("current transaction is aborted, "
 						"commands ignored until end of transaction block")));
-		}
 
 		/*
 		 * OK to analyze, rewrite, and plan this query.  Note that the
@@ -1392,7 +1365,6 @@ exec_bind_message(StringInfo input_message)
 	PreparedStatement *pstmt;
 	Portal		portal;
 	ParamListInfo params;
-	bool		isaborted = IsAbortedTransactionBlockState();
 
 	pgstat_report_activity("<BIND>");
 
@@ -1450,6 +1422,22 @@ exec_bind_message(StringInfo input_message)
 				   numParams, stmt_name, list_length(pstmt->argtype_list))));
 
 	/*
+	 * If we are in aborted transaction state, the only portals we can
+	 * actually run are those containing COMMIT or ROLLBACK commands.
+	 * We disallow binding anything else to avoid problems with infrastructure
+	 * that expects to run inside a valid transaction.  We also disallow
+	 * binding any parameters, since we can't risk calling user-defined
+	 * I/O functions.
+	 */
+	if (IsAbortedTransactionBlockState() &&
+		(!IsTransactionExitStmtList(pstmt->query_list) ||
+		 numParams != 0))
+		ereport(ERROR,
+				(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
+				 errmsg("current transaction is aborted, "
+						"commands ignored until end of transaction block")));
+
+	/*
 	 * Create the portal.  Allow silent replacement of an existing portal only
 	 * if the unnamed portal is specified.
 	 */
@@ -1465,10 +1453,6 @@ exec_bind_message(StringInfo input_message)
 
 	/*
 	 * Fetch parameters, if any, and store in the portal's memory context.
-	 *
-	 * In an aborted transaction, we can't risk calling user-defined functions,
-	 * but we can't fail to Bind either, so bind all parameters to null
-	 * values.
 	 */
 	if (numParams > 0)
 	{
@@ -1493,98 +1477,89 @@ exec_bind_message(StringInfo input_message)
 			if (!isNull)
 			{
 				const char *pvalue = pq_getmsgbytes(input_message, plength);
+				int16		pformat;
+				StringInfoData pbuf;
+				char		csave;
 
-				if (isaborted)
+				if (numPFormats > 1)
+					pformat = pformats[i];
+				else if (numPFormats > 0)
+					pformat = pformats[0];
+				else
+					pformat = 0;	/* default = text */
+
+				/*
+				 * Rather than copying data around, we just set up a phony
+				 * StringInfo pointing to the correct portion of the
+				 * message buffer.	We assume we can scribble on the
+				 * message buffer so as to maintain the convention that
+				 * StringInfos have a trailing null.  This is grotty but
+				 * is a big win when dealing with very large parameter
+				 * strings.
+				 */
+				pbuf.data = (char *) pvalue;
+				pbuf.maxlen = plength + 1;
+				pbuf.len = plength;
+				pbuf.cursor = 0;
+
+				csave = pbuf.data[plength];
+				pbuf.data[plength] = '\0';
+
+				if (pformat == 0)
 				{
-					/* We don't bother to check the format in this case */
-					isNull = true;
+					Oid			typinput;
+					Oid			typioparam;
+					char	   *pstring;
+
+					getTypeInputInfo(ptype, &typinput, &typioparam);
+
+					/*
+					 * We have to do encoding conversion before calling
+					 * the typinput routine.
+					 */
+					pstring = pg_client_to_server(pbuf.data, plength);
+					params[i].value =
+						OidFunctionCall3(typinput,
+										 CStringGetDatum(pstring),
+										 ObjectIdGetDatum(typioparam),
+										 Int32GetDatum(-1));
+					/* Free result of encoding conversion, if any */
+					if (pstring != pbuf.data)
+						pfree(pstring);
+				}
+				else if (pformat == 1)
+				{
+					Oid			typreceive;
+					Oid			typioparam;
+
+					/*
+					 * Call the parameter type's binary input converter
+					 */
+					getTypeBinaryInputInfo(ptype, &typreceive, &typioparam);
+
+					params[i].value =
+						OidFunctionCall3(typreceive,
+										 PointerGetDatum(&pbuf),
+										 ObjectIdGetDatum(typioparam),
+										 Int32GetDatum(-1));
+
+					/* Trouble if it didn't eat the whole buffer */
+					if (pbuf.cursor != pbuf.len)
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+								 errmsg("incorrect binary data format in bind parameter %d",
+										i + 1)));
 				}
 				else
 				{
-					int16		pformat;
-					StringInfoData pbuf;
-					char		csave;
-
-					if (numPFormats > 1)
-						pformat = pformats[i];
-					else if (numPFormats > 0)
-						pformat = pformats[0];
-					else
-						pformat = 0;	/* default = text */
-
-					/*
-					 * Rather than copying data around, we just set up a phony
-					 * StringInfo pointing to the correct portion of the
-					 * message buffer.	We assume we can scribble on the
-					 * message buffer so as to maintain the convention that
-					 * StringInfos have a trailing null.  This is grotty but
-					 * is a big win when dealing with very large parameter
-					 * strings.
-					 */
-					pbuf.data = (char *) pvalue;
-					pbuf.maxlen = plength + 1;
-					pbuf.len = plength;
-					pbuf.cursor = 0;
-
-					csave = pbuf.data[plength];
-					pbuf.data[plength] = '\0';
-
-					if (pformat == 0)
-					{
-						Oid			typinput;
-						Oid			typioparam;
-						char	   *pstring;
-
-						getTypeInputInfo(ptype, &typinput, &typioparam);
-
-						/*
-						 * We have to do encoding conversion before calling
-						 * the typinput routine.
-						 */
-						pstring = pg_client_to_server(pbuf.data, plength);
-						params[i].value =
-							OidFunctionCall3(typinput,
-											 CStringGetDatum(pstring),
-											 ObjectIdGetDatum(typioparam),
-											 Int32GetDatum(-1));
-						/* Free result of encoding conversion, if any */
-						if (pstring != pbuf.data)
-							pfree(pstring);
-					}
-					else if (pformat == 1)
-					{
-						Oid			typreceive;
-						Oid			typioparam;
-
-						/*
-						 * Call the parameter type's binary input converter
-						 */
-						getTypeBinaryInputInfo(ptype, &typreceive, &typioparam);
-
-						params[i].value =
-							OidFunctionCall3(typreceive,
-											 PointerGetDatum(&pbuf),
-											 ObjectIdGetDatum(typioparam),
-											 Int32GetDatum(-1));
-
-						/* Trouble if it didn't eat the whole buffer */
-						if (pbuf.cursor != pbuf.len)
-							ereport(ERROR,
-							 (errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-							  errmsg("incorrect binary data format in bind parameter %d",
-									 i + 1)));
-					}
-					else
-					{
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("unsupported format code: %d",
-										pformat)));
-					}
-
-					/* Restore message buffer contents */
-					pbuf.data[plength] = csave;
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							 errmsg("unsupported format code: %d",
+									pformat)));
 				}
+
+				/* Restore message buffer contents */
+				pbuf.data[plength] = csave;
 			}
 
 			params[i].kind = PARAM_NUM;
@@ -1621,8 +1596,7 @@ exec_bind_message(StringInfo input_message)
 	 * statement context for planning is correct (see notes in
 	 * exec_parse_message).
 	 */
-	if (pstmt->plan_list == NIL && pstmt->query_list != NIL &&
-		!isaborted)
+	if (pstmt->plan_list == NIL && pstmt->query_list != NIL)
 	{
 		MemoryContext oldContext = MemoryContextSwitchTo(pstmt->context);
 
@@ -1665,8 +1639,6 @@ exec_execute_message(const char *portal_name, long max_rows)
 	CommandDest dest;
 	DestReceiver *receiver;
 	Portal		portal;
-	bool		is_trans_stmt = false;
-	bool		is_trans_exit = false;
 	bool		completed;
 	char		completionTag[COMPLETION_TAG_BUFSIZE];
 	struct timeval start_t,
@@ -1748,26 +1720,6 @@ exec_execute_message(const char *portal_name, long max_rows)
 
 	BeginCommand(portal->commandTag, dest);
 
-	/* Check for transaction-control commands */
-	if (list_length(portal->parseTrees) == 1)
-	{
-		Query	   *query = (Query *) linitial(portal->parseTrees);
-
-		if (query->commandType == CMD_UTILITY &&
-			query->utilityStmt != NULL &&
-			IsA(query->utilityStmt, TransactionStmt))
-		{
-			TransactionStmt *stmt = (TransactionStmt *) query->utilityStmt;
-
-			is_trans_stmt = true;
-			if (stmt->kind == TRANS_STMT_COMMIT ||
-				stmt->kind == TRANS_STMT_PREPARE ||
-				stmt->kind == TRANS_STMT_ROLLBACK ||
-				stmt->kind == TRANS_STMT_ROLLBACK_TO)
-				is_trans_exit = true;
-		}
-	}
-
 	/*
 	 * Create dest receiver in MessageContext (we don't want it in transaction
 	 * context, because that may get deleted if portal contains VACUUM).
@@ -1784,14 +1736,12 @@ exec_execute_message(const char *portal_name, long max_rows)
 	 * If we are in aborted transaction state, the only portals we can
 	 * actually run are those containing COMMIT or ROLLBACK commands.
 	 */
-	if (IsAbortedTransactionBlockState())
-	{
-		if (!is_trans_exit)
-			ereport(ERROR,
-					(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
-					 errmsg("current transaction is aborted, "
+	if (IsAbortedTransactionBlockState() &&
+		!IsTransactionExitStmtList(portal->parseTrees))
+		ereport(ERROR,
+				(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
+				 errmsg("current transaction is aborted, "
 						"commands ignored until end of transaction block")));
-	}
 
 	/* Check for cancel signal before we start execution */
 	CHECK_FOR_INTERRUPTS();
@@ -1812,7 +1762,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 
 	if (completed)
 	{
-		if (is_trans_stmt)
+		if (IsTransactionStmtList(portal->parseTrees))
 		{
 			/*
 			 * If this was a transaction control statement, commit it.	We
@@ -2021,6 +1971,56 @@ finish_xact_command(void)
 
 		xact_started = false;
 	}
+}
+
+
+/*
+ * Convenience routines for checking whether a statement is one of the
+ * ones that we allow in transaction-aborted state.
+ */
+
+static bool
+IsTransactionExitStmt(Node *parsetree)
+{
+	if (parsetree && IsA(parsetree, TransactionStmt))
+	{
+		TransactionStmt *stmt = (TransactionStmt *) parsetree;
+
+		if (stmt->kind == TRANS_STMT_COMMIT ||
+			stmt->kind == TRANS_STMT_PREPARE ||
+			stmt->kind == TRANS_STMT_ROLLBACK ||
+			stmt->kind == TRANS_STMT_ROLLBACK_TO)
+			return true;
+	}
+	return false;
+}
+
+static bool
+IsTransactionExitStmtList(List *parseTrees)
+{
+	if (list_length(parseTrees) == 1)
+	{
+		Query	   *query = (Query *) linitial(parseTrees);
+
+		if (query->commandType == CMD_UTILITY &&
+			IsTransactionExitStmt(query->utilityStmt))
+			return true;
+	}
+	return false;
+}
+
+static bool
+IsTransactionStmtList(List *parseTrees)
+{
+	if (list_length(parseTrees) == 1)
+	{
+		Query	   *query = (Query *) linitial(parseTrees);
+
+		if (query->commandType == CMD_UTILITY &&
+			query->utilityStmt && IsA(query->utilityStmt, TransactionStmt))
+			return true;
+	}
+	return false;
 }
 
 
