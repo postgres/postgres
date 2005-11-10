@@ -34,7 +34,7 @@
 
 #data_directory = 'ConfigDir'		# use data in another directory
 #hba_file = 'ConfigDir/pg_hba.conf'	# host-based authentication file
-#ident_file = 'ConfigDir/pg_ident.conf	# IDENT configuration file
+#ident_file = 'ConfigDir/pg_ident.conf'	# IDENT configuration file
 
 # If external_pid_file is not explicitly set, no extra pid file is written.
 #external_pid_file = '(none)'		# write an extra pid file
