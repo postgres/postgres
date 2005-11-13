@@ -4,7 +4,7 @@ files.
 Get the list of typedef's included in pgindent by running this on the
 pgsql/bin and pgsql/lib directories:
 
-	/src/tools/find_typedef
+	/src/tools/find_typedef /usr/local/pgsql/bin /usr/local/pgsql/lib
 
 and update the list in pgindent.  This requires the binaries have debug 
 symbols.
