@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.511 2005/09/23 22:25:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.512 2005/11/13 19:11:28 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -7579,9 +7579,10 @@ position_list:
  * SQL9x defines a specific syntax for arguments to SUBSTRING():
  * o substring(text from int for int)
  * o substring(text from int) get entire string from starting point "int"
- * o substring(text from pattern) get entire string matching pattern
  * o substring(text for int) get first "int" characters of string
- * We also want to implement generic substring functions which accept
+ * o substring(text from pattern) get entire string matching pattern
+ * o substring(text from pattern for escape) same with specified escape char
+ * We also want to support generic substring functions which accept
  * the usual generic list of arguments. So we will accept both styles
  * here, and convert the SQL9x style to the generic list for further
  * processing. - thomas 2000-11-28
@@ -7593,6 +7594,7 @@ substr_list:
 				}
 			| a_expr substr_for substr_from
 				{
+					/* not legal per SQL99, but might as well allow it */
 					$$ = list_make3($1, $3, $2);
 				}
 			| a_expr substr_from
@@ -7601,10 +7603,18 @@ substr_list:
 				}
 			| a_expr substr_for
 				{
+					/*
+					 * Since there are no cases where this syntax allows
+					 * a textual FOR value, we forcibly cast the argument
+					 * to int4.  This is a kluge to avoid surprising results
+					 * when the argument is, say, int8.  It'd be better if
+					 * there were not an implicit cast from int8 to text ...
+					 */
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_Integer;
 					n->val.val.ival = 1;
-					$$ = list_make3($1, (Node *)n, $2);
+					$$ = list_make3($1, (Node *) n,
+									makeTypeCast($2, SystemTypeName("int4")));
 				}
 			| expr_list
 				{
