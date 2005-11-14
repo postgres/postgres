@@ -7,6 +7,8 @@
 #include "query.h"
 
 typedef uint64 TPQTGist;
+#define	SIGLEN	(sizeof(TPQTGist)*BITS_PER_BYTE)
+
 
 #define GETENTRY(vec,pos) ((TPQTGist *) DatumGetPointer((vec)->vector[(pos)].key))
 
@@ -24,7 +26,7 @@ makesign(QUERYTYPE* a) {
 
         for (i = 0; i < a->size; i++) {
 		if ( ptr->type == VAL )
-			sign |= 1 << (ptr->val % 64);
+			sign |= 1 << (ptr->val % SIGLEN);
 		ptr++;
 	}
 		 
@@ -198,7 +200,7 @@ static int
 sizebitvec(TPQTGist sign) {
 	int size=0,i;
 
-	for(i=0;i<64;i++) 
+	for(i=0;i<SIGLEN;i++) 
 		size += 0x01 & (sign>>i);
 
 	return size;

@@ -9,11 +9,10 @@
  * signature defines
  */
 
-#define BITBYTE 8
 #define SIGLENINT  63			/* >121 => key will toast, so it will not work
 								 * !!! */
 #define SIGLEN	( sizeof(int4) * SIGLENINT )
-#define SIGLENBIT (SIGLEN * BITBYTE)
+#define SIGLENBIT (SIGLEN * BITS_PER_BYTE)
 
 typedef char BITVEC[SIGLEN];
 typedef char *BITVECP;
@@ -27,11 +26,11 @@ typedef char *BITVECP;
 								a;\
 				}
 
-#define GETBYTE(x,i) ( *( (BITVECP)(x) + (int)( (i) / BITBYTE ) ) )
+#define GETBYTE(x,i) ( *( (BITVECP)(x) + (int)( (i) / BITS_PER_BYTE ) ) )
 #define GETBITBYTE(x,i) ( ((char)(x)) >> (i) & 0x01 )
-#define CLRBIT(x,i)   GETBYTE(x,i) &= ~( 0x01 << ( (i) % BITBYTE ) )
-#define SETBIT(x,i)   GETBYTE(x,i) |=  ( 0x01 << ( (i) % BITBYTE ) )
-#define GETBIT(x,i) ( (GETBYTE(x,i) >> ( (i) % BITBYTE )) & 0x01 )
+#define CLRBIT(x,i)   GETBYTE(x,i) &= ~( 0x01 << ( (i) % BITS_PER_BYTE ) )
+#define SETBIT(x,i)   GETBYTE(x,i) |=  ( 0x01 << ( (i) % BITS_PER_BYTE ) )
+#define GETBIT(x,i) ( (GETBYTE(x,i) >> ( (i) % BITS_PER_BYTE )) & 0x01 )
 
 #define HASHVAL(val) (((unsigned int)(val)) % SIGLENBIT)
 #define HASH(sign, val) SETBIT((sign), HASHVAL(val))
