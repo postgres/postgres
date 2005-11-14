@@ -39,7 +39,7 @@ g_int_consistent(PG_FUNCTION_ARGS)
 	if (strategy == BooleanSearchStrategy)
 		PG_RETURN_BOOL(execconsistent((QUERYTYPE *) query,
 								   (ArrayType *) DatumGetPointer(entry->key),
-					  ISLEAFKEY((ArrayType *) DatumGetPointer(entry->key))));
+					  GIST_LEAF(entry)));
 
 	/* XXX are we sure it's safe to scribble on the query object here? */
 	/* XXX what about toasted input? */
@@ -131,7 +131,11 @@ g_int_compress(PG_FUNCTION_ARGS)
 	{
 		r = (ArrayType *) PG_DETOAST_DATUM_COPY(entry->key);
 		PREPAREARR(r);
-		r->flags |= LEAFKEY;
+
+		if (ARRNELEMS(r)>= 2 * MAXNUMRANGE)
+			elog(NOTICE,"Input array is too big (%d maximum allowed, %d current), use gist__intbig_ops opclass instead",
+				2 * MAXNUMRANGE - 1, ARRNELEMS(r)); 
+			
 		retval = palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(r),
 				  entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
@@ -139,8 +143,11 @@ g_int_compress(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(retval);
 	}
 
+	/* leaf entries never compress one more time, only when entry->leafkey ==true,
+           so now we work only with internal keys  */
+
 	r = (ArrayType *) PG_DETOAST_DATUM(entry->key);
-	if (ISLEAFKEY(r) || ARRISVOID(r))
+	if (ARRISVOID(r)) 
 	{
 		if (r != (ArrayType *) DatumGetPointer(entry->key))
 			pfree(r);
@@ -205,7 +212,7 @@ g_int_decompress(PG_FUNCTION_ARGS)
 
 	lenin = ARRNELEMS(in);
 
-	if (lenin < 2 * MAXNUMRANGE || ISLEAFKEY(in))
+	if (lenin < 2 * MAXNUMRANGE)
 	{							/* not compressed value */
 		if (in != (ArrayType *) DatumGetPointer(entry->key))
 		{
@@ -498,8 +505,6 @@ g_int_picksplit(PG_FUNCTION_ARGS)
 	pfree(costvector);
 	*right = *left = FirstOffsetNumber;
 
-	datum_l->flags &= ~LEAFKEY;
-	datum_r->flags &= ~LEAFKEY;
 	v->spl_ldatum = PointerGetDatum(datum_l);
 	v->spl_rdatum = PointerGetDatum(datum_r);
 

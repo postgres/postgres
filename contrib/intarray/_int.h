@@ -17,13 +17,6 @@
 /* dimension of array */
 #define NDIM 1
 
-/*
- * flags for gist__int_ops, use ArrayType->flags
- * which is unused (see array.h)
- */
-#define LEAFKEY		(1<<31)
-#define ISLEAFKEY(x)	( ((ArrayType*)(x))->flags & LEAFKEY )
-
 /* useful macros for accessing int4 arrays */
 #define ARRPTR(x)  ( (int4 *) ARR_DATA_PTR(x) )
 #define ARRNELEMS(x)  ArrayGetNItems( ARR_NDIM(x), ARR_DIMS(x))
@@ -52,10 +45,9 @@
 
 
 /* bigint defines */
-#define BITBYTE 8
 #define SIGLENINT  63			/* >122 => key will toast, so very slow!!! */
 #define SIGLEN	( sizeof(int)*SIGLENINT )
-#define SIGLENBIT (SIGLEN*BITBYTE)
+#define SIGLENBIT (SIGLEN*BITS_PER_BYTE)
 
 typedef char BITVEC[SIGLEN];
 typedef char *BITVECP;
@@ -74,11 +66,11 @@ typedef char *BITVECP;
 		}
 
 /* beware of multiple evaluation of arguments to these macros! */
-#define GETBYTE(x,i) ( *( (BITVECP)(x) + (int)( (i) / BITBYTE ) ) )
+#define GETBYTE(x,i) ( *( (BITVECP)(x) + (int)( (i) / BITS_PER_BYTE ) ) )
 #define GETBITBYTE(x,i) ( (*((char*)(x)) >> (i)) & 0x01 )
-#define CLRBIT(x,i)   GETBYTE(x,i) &= ~( 0x01 << ( (i) % BITBYTE ) )
-#define SETBIT(x,i)   GETBYTE(x,i) |=  ( 0x01 << ( (i) % BITBYTE ) )
-#define GETBIT(x,i) ( (GETBYTE(x,i) >> ( (i) % BITBYTE )) & 0x01 )
+#define CLRBIT(x,i)   GETBYTE(x,i) &= ~( 0x01 << ( (i) % BITS_PER_BYTE ) )
+#define SETBIT(x,i)   GETBYTE(x,i) |=  ( 0x01 << ( (i) % BITS_PER_BYTE ) )
+#define GETBIT(x,i) ( (GETBYTE(x,i) >> ( (i) % BITS_PER_BYTE )) & 0x01 )
 #define HASHVAL(val) (((unsigned int)(val)) % SIGLENBIT)
 #define HASH(sign, val) SETBIT((sign), HASHVAL(val))
 

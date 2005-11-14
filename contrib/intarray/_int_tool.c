@@ -215,7 +215,6 @@ new_intArrayType(int num)
 	ARR_SIZE(r) = nbytes;
 	ARR_NDIM(r) = NDIM;
 	ARR_ELEMTYPE(r) = INT4OID;
-	r->flags &= ~LEAFKEY;
 	*((int *) ARR_DIMS(r)) = num;
 	*((int *) ARR_LBOUND(r)) = 1;
 
