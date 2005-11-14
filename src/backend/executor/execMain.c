@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.256 2005/10/15 02:49:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.256.2.1 2005/11/14 17:43:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -582,7 +582,8 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 	 * initialize the executor "tuple" table.  We need slots for all the plan
 	 * nodes, plus possibly output slots for the junkfilter(s). At this point
 	 * we aren't sure if we need junkfilters, so just add slots for them
-	 * unconditionally.
+	 * unconditionally.  Also, if it's not a SELECT, set up a slot for use
+	 * for trigger output tuples.
 	 */
 	{
 		int			nSlots = ExecCountSlotsNode(plan);
@@ -591,7 +592,14 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 			nSlots += list_length(parseTree->resultRelations);
 		else
 			nSlots += 1;
+		if (operation != CMD_SELECT)
+			nSlots++;
+
 		estate->es_tupleTable = ExecCreateTupleTable(nSlots);
+
+		if (operation != CMD_SELECT)
+			estate->es_trig_tuple_slot =
+				ExecAllocTableSlot(estate->es_tupleTable);
 	}
 
 	/* mark EvalPlanQual not active */
@@ -1399,12 +1407,19 @@ ExecInsert(TupleTableSlot *slot,
 		if (newtuple != tuple)	/* modified by Trigger(s) */
 		{
 			/*
-			 * Insert modified tuple into tuple table slot, replacing the
-			 * original.  We assume that it was allocated in per-tuple memory
+			 * Put the modified tuple into a slot for convenience of routines
+			 * below.  We assume the tuple was allocated in per-tuple memory
 			 * context, and therefore will go away by itself. The tuple table
 			 * slot should not try to clear it.
 			 */
-			ExecStoreTuple(newtuple, slot, InvalidBuffer, false);
+			TupleTableSlot *newslot = estate->es_trig_tuple_slot;
+
+			if (newslot->tts_tupleDescriptor != slot->tts_tupleDescriptor)
+				ExecSetSlotDescriptor(newslot,
+									  slot->tts_tupleDescriptor,
+									  false);
+			ExecStoreTuple(newtuple, newslot, InvalidBuffer, false);
+			slot = newslot;
 			tuple = newtuple;
 		}
 	}
@@ -1600,12 +1615,19 @@ ExecUpdate(TupleTableSlot *slot,
 		if (newtuple != tuple)	/* modified by Trigger(s) */
 		{
 			/*
-			 * Insert modified tuple into tuple table slot, replacing the
-			 * original.  We assume that it was allocated in per-tuple memory
+			 * Put the modified tuple into a slot for convenience of routines
+			 * below.  We assume the tuple was allocated in per-tuple memory
 			 * context, and therefore will go away by itself. The tuple table
 			 * slot should not try to clear it.
 			 */
-			ExecStoreTuple(newtuple, slot, InvalidBuffer, false);
+			TupleTableSlot *newslot = estate->es_trig_tuple_slot;
+
+			if (newslot->tts_tupleDescriptor != slot->tts_tupleDescriptor)
+				ExecSetSlotDescriptor(newslot,
+									  slot->tts_tupleDescriptor,
+									  false);
+			ExecStoreTuple(newtuple, newslot, InvalidBuffer, false);
+			slot = newslot;
 			tuple = newtuple;
 		}
 	}
