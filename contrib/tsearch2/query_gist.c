@@ -200,6 +200,8 @@ sizebitvec(TPQTGist sign) {
 
 	for(i=0;i<64;i++) 
 		size += 0x01 & (sign>>i);
+
+	return size;
 }
 
 static int
