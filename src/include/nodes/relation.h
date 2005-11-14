@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.119 2005/10/15 02:49:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.120 2005/11/14 23:54:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -714,6 +714,11 @@ typedef struct HashPath
  * joined, will also have is_pushed_down set because it will get attached to
  * some lower joinrel.
  *
+ * When application of a qual must be delayed by outer join, we also mark it
+ * with outerjoin_delayed = true.  This isn't redundant with required_relids
+ * because that might equal clause_relids whether or not it's an outer-join
+ * clause.
+ *
  * In general, the referenced clause might be arbitrarily complex.	The
  * kinds of clauses we can handle as indexscan quals, mergejoin clauses,
  * or hashjoin clauses are fairly limited --- the code for each kind of
@@ -739,6 +744,8 @@ typedef struct RestrictInfo
 	Expr	   *clause;			/* the represented clause of WHERE or JOIN */
 
 	bool		is_pushed_down; /* TRUE if clause was pushed down in level */
+
+	bool		outerjoin_delayed;		/* TRUE if delayed by outer join */
 
 	/*
 	 * This flag is set true if the clause looks potentially useful as a merge
