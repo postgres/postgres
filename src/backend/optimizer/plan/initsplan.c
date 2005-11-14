@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.110 2005/10/15 02:49:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.110.2.1 2005/11/14 23:54:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -409,6 +409,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 						Relids qualscope)
 {
 	Relids		relids;
+	bool		outerjoin_delayed;
 	bool		maybe_equijoin;
 	bool		maybe_outer_join;
 	RestrictInfo *restrictinfo;
@@ -451,6 +452,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		 */
 		Assert(bms_equal(relids, qualscope));
 		/* Needn't feed it back for more deductions */
+		outerjoin_delayed = false;
 		maybe_equijoin = false;
 		maybe_outer_join = false;
 	}
@@ -470,6 +472,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		 * except for not setting maybe_equijoin (see below).
 		 */
 		relids = qualscope;
+		outerjoin_delayed = true;
 
 		/*
 		 * We can't use such a clause to deduce equijoin (the left and right
@@ -499,13 +502,17 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		Relids		tmprelids;
 		int			relno;
 
+		outerjoin_delayed = false;
 		tmprelids = bms_copy(relids);
 		while ((relno = bms_first_member(tmprelids)) >= 0)
 		{
 			RelOptInfo *rel = find_base_rel(root, relno);
 
 			if (rel->outerjoinset != NULL)
+			{
 				addrelids = bms_add_members(addrelids, rel->outerjoinset);
+				outerjoin_delayed = true;
+			}
 		}
 		bms_free(tmprelids);
 
@@ -555,6 +562,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	 */
 	restrictinfo = make_restrictinfo((Expr *) clause,
 									 is_pushed_down,
+									 outerjoin_delayed,
 									 relids);
 
 	/*

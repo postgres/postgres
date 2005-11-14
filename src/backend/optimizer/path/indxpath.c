@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.191 2005/10/15 02:49:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.191.2.1 2005/11/14 23:54:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1917,6 +1917,7 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 					resultquals = lappend(resultquals,
 										  make_restrictinfo(boolqual,
 															true,
+															false,
 															NULL));
 					continue;
 				}
@@ -2166,7 +2167,7 @@ prefix_quals(Node *leftop, Oid opclass,
 			elog(ERROR, "no = operator for opclass %u", opclass);
 		expr = make_opclause(oproid, BOOLOID, false,
 							 (Expr *) leftop, (Expr *) prefix_const);
-		result = list_make1(make_restrictinfo(expr, true, NULL));
+		result = list_make1(make_restrictinfo(expr, true, false, NULL));
 		return result;
 	}
 
@@ -2181,7 +2182,7 @@ prefix_quals(Node *leftop, Oid opclass,
 		elog(ERROR, "no >= operator for opclass %u", opclass);
 	expr = make_opclause(oproid, BOOLOID, false,
 						 (Expr *) leftop, (Expr *) prefix_const);
-	result = list_make1(make_restrictinfo(expr, true, NULL));
+	result = list_make1(make_restrictinfo(expr, true, false, NULL));
 
 	/*-------
 	 * If we can create a string larger than the prefix, we can say
@@ -2197,7 +2198,7 @@ prefix_quals(Node *leftop, Oid opclass,
 			elog(ERROR, "no < operator for opclass %u", opclass);
 		expr = make_opclause(oproid, BOOLOID, false,
 							 (Expr *) leftop, (Expr *) greaterstr);
-		result = lappend(result, make_restrictinfo(expr, true, NULL));
+		result = lappend(result, make_restrictinfo(expr, true, false, NULL));
 	}
 
 	return result;
@@ -2268,7 +2269,7 @@ network_prefix_quals(Node *leftop, Oid expr_op, Oid opclass, Datum rightop)
 						 (Expr *) leftop,
 						 (Expr *) makeConst(datatype, -1, opr1right,
 											false, false));
-	result = list_make1(make_restrictinfo(expr, true, NULL));
+	result = list_make1(make_restrictinfo(expr, true, false, NULL));
 
 	/* create clause "key <= network_scan_last( rightop )" */
 
@@ -2283,7 +2284,7 @@ network_prefix_quals(Node *leftop, Oid expr_op, Oid opclass, Datum rightop)
 						 (Expr *) leftop,
 						 (Expr *) makeConst(datatype, -1, opr2right,
 											false, false));
-	result = lappend(result, make_restrictinfo(expr, true, NULL));
+	result = lappend(result, make_restrictinfo(expr, true, false, NULL));
 
 	return result;
 }
