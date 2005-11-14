@@ -6962,8 +6962,8 @@ msgstr "base de datos «%s» debe ser limpiada dentro de %u transacciones"
 #, c-format
 msgid "To avoid a database shutdown, execute a full-database VACUUM in \"%s\"."
 msgstr ""
-"Para evitar que la base de datos se apage, ejecute VACUUM em toda la base de "
-"datos «%s»"
+"Para evitar que la base de datos se desactive, ejecute VACUUM en toda la "
+"base de datos «%s»"
 
 #: /pg/source/81_rel/src/backend/access/transam/varsup.c:233
 #, c-format
