@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400 2005/11/04 23:14:00 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.401 2005/11/15 22:16:03 momjian Exp $
 
 Typical markup:
 
@@ -10,6 +10,9 @@ PostgreSQL                      <productname>
 pg_[A-Za-z0-9_]                 <application>
 [A-Z][A-Z]                      <type>, <envar>, <literal>
 &<>                             use &
+
+For new features, add links to the documentation sections.
+
 -->
 
 <appendix id="release">
