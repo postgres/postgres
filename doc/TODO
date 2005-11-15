@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Oct 27 10:15:56 EDT 2005
+Last updated:		Tue Nov 15 18:08:23 EST 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -371,6 +371,10 @@ SQL Commands
 * Add a GUC variable to warn about non-standard SQL usage in queries
 * Add MERGE command that does UPDATE/DELETE, or on failure, INSERT (rules,
   triggers?)
+
+  To implement this cleanly requires that the table have a unique index
+  so duplicate checking can be easily performed.
+
 * Add NOVICE output level for helpful messages like automatic sequence/index
   creation
 * %Add COMMENT ON for all cluster global objects (roles, databases
