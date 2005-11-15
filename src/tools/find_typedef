@@ -28,4 +28,7 @@ do
 done |
 sort |
 uniq |
+# these are used both for typedefs and variable names
+# so do not include them
+egrep -v '^(date|interval|timestamp|ANY)$' |
 sed 's/\(.*\)/-T\1 \\/'

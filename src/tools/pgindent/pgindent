@@ -109,7 +109,6 @@ do
 -TAES_KEY \
 -TAMT \
 -TAMTS \
--TANY \
 -TASN1_BIT_STRING \
 -TASN1_BMPSTRING \
 -TASN1_BOOLEAN \
@@ -1548,7 +1547,6 @@ do
 -Tcontain_var_reference_context \
 -Tcv_flags_t \
 -Tdaddr_t \
--Tdate \
 -Tdatetkn \
 -Tdecimal \
 -Tdeparse_context \
@@ -1620,7 +1618,6 @@ do
 -Tint8 \
 -Tint8_t \
 -Tint8m_t \
--Tinterval \
 -Tintf \
 -TitemIdSort \
 -TitemIdSortData \
@@ -1737,7 +1734,6 @@ do
 -TteReqs \
 -Ttext \
 -Ttime_t \
--Ttimestamp \
 -Ttlist_vinfo \
 -Tts_db_fctx \
 -TuInt \
