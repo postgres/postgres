@@ -12,16 +12,20 @@
 # Remember, debugging symbols are your friends.
 #
 
-if [ "$#" -ne 1 -o ! -d "$1" ]
-then	echo "Usage:  $0 postgres_binary_directory" 1>&2
+if [ "$#" -eq 0 -o ! -d "$1" ]
+then	echo "Usage:  $0 postgres_binary_directory [...]" 1>&2
 	exit 1
 fi
 
-objdump --stabs "$1"/* |
-grep "LSYM" |
-awk '{print $7}' |
-grep ':t' |
-sed 's/^\([^:]*\).*$/\1/' |
-grep -v ' ' | # some typedefs have spaces, remove them
+for DIR
+do
+	objdump --stabs "$DIR"/* |
+	grep "LSYM" |
+	awk '{print $7}' |
+	grep ':t' |
+	sed 's/^\([^:]*\).*$/\1/' |
+	grep -v ' ' # some typedefs have spaces, remove them
+done |
 sort |
-uniq
+uniq |
+sed 's/\(.*\)/-T\1 \\/'
