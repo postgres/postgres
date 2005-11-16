@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Nov 15 18:08:23 EST 2005
+Last updated:		Wed Nov 16 11:33:25 EST 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -553,13 +553,6 @@ SQL Commands
 Clients
 =======
 
-* Add a libpq function to support Parse/DescribeStatement capability
-* Add PQescapeIdentifier() to libpq
-* Prevent PQfnumber() from lowercasing unquoted the column name
-
-  PQfnumber() should never have been doing lowercasing, but historically
-  it has so we need a way to prevent it
-
 * Have initdb set the input DateStyle (MDY or DMY) based on locale?
 * Have pg_ctl look at PGHOST in case it is a socket directory?
 * Allow pg_ctl to work properly with configuration files located outside
@@ -646,6 +639,26 @@ Clients
 	o Make SET CONNECTION thread-aware, non-standard?
 	o Allow multidimensional arrays
 	o Add internationalized message strings
+
+
+libpq
+
+	o Add a function to support Parse/DescribeStatement capability
+	o Add PQescapeIdentifier()
+	o Prevent PQfnumber() from lowercasing unquoted the column name
+
+	  PQfnumber() should never have been doing lowercasing, but 
+	  historically it has so we need a way to prevent it
+
+	o Allow query results to be automatically batched to the client
+
+	  Currently, all query results are transfered to the libpq
+	  client before libpq makes the results available to the 
+	  application.  This feature would allow the application to make
+	  use of the first result rows while the rest are transfered, or
+	  held on the server waiting for them to be requested by libpq.
+	  One complexity is that a query like SELECT 1/col could error
+	  out mid-way through the result set.
 
 
 Referential Integrity

@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Tue Nov 15 18:08:23 EST 2005
+Last updated:           Wed Nov 16 11:33:25 EST 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -505,13 +505,7 @@ first.
 <h1><a name="section_9">Clients</a></h1>
 
 <ul>
-  <li>Add a libpq function to support Parse/DescribeStatement capability
-  </li><li>Add PQescapeIdentifier() to libpq
-  </li><li>Prevent PQfnumber() from lowercasing unquoted the column name
-<p>  PQfnumber() should never have been doing lowercasing, but historically
-  it has so we need a way to prevent it
-</p>
-  </li><li>Have initdb set the input DateStyle (MDY or DMY) based on locale?
+  <li>Have initdb set the input DateStyle (MDY or DMY) based on locale?
   </li><li>Have pg_ctl look at PGHOST in case it is a socket directory?
   </li><li>Allow pg_ctl to work properly with configuration files located outside
   the PGDATA directory
@@ -589,6 +583,25 @@ first.
     </li><li>Allow multidimensional arrays
     </li><li>Add internationalized message strings
   </li></ul>
+</li></ul>
+<p>libpq
+</p>
+<ul>
+  <li>Add a function to support Parse/DescribeStatement capability
+  </li><li>Add PQescapeIdentifier()
+  </li><li>Prevent PQfnumber() from lowercasing unquoted the column name
+<p>          PQfnumber() should never have been doing lowercasing, but 
+          historically it has so we need a way to prevent it
+</p>
+  </li><li>Allow query results to be automatically batched to the client
+<p>          Currently, all query results are transfered to the libpq
+          client before libpq makes the results available to the 
+          application.  This feature would allow the application to make
+          use of the first result rows while the rest are transfered, or
+          held on the server waiting for them to be requested by libpq.
+          One complexity is that a query like SELECT 1/col could error
+          out mid-way through the result set.
+</p>
 </li></ul>
 <h1><a name="section_10">Referential Integrity</a></h1>
 
