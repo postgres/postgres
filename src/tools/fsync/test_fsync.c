@@ -59,7 +59,7 @@ main(int argc, char *argv[])
 		strout[i] = 'a';
 
 	if ((tmpfile = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR)) == -1)
-		die("can't open /var/tmp/test_fsync.out");
+		die("Cannot open output file.");
 	write(tmpfile, strout, WAL_FILE_SIZE);
 	fsync(tmpfile);				/* fsync so later fsync's don't have to do it */
 	close(tmpfile);
@@ -70,7 +70,7 @@ main(int argc, char *argv[])
 	for (i = 0; i < loops; i++)
 	{
 		if ((tmpfile = open(filename, O_RDWR)) == -1)
-			die("can't open /var/tmp/test_fsync.out");
+			die("Cannot open output file.");
 		write(tmpfile, strout, 8192);
 		close(tmpfile);
 	}
@@ -87,12 +87,12 @@ main(int argc, char *argv[])
 	for (i = 0; i < loops; i++)
 	{
 		if ((tmpfile = open(filename, O_RDWR)) == -1)
-			die("can't open /var/tmp/test_fsync.out");
+			die("Cannot open output file.");
 		write(tmpfile, strout, 8192);
 		fsync(tmpfile);
 		close(tmpfile);
 		if ((tmpfile = open(filename, O_RDWR)) == -1)
-			die("can't open /var/tmp/test_fsync.out");
+			die("Cannot open output file.");
 		/* do nothing but the open/close the tests are consistent. */
 		close(tmpfile);
 	}
@@ -106,12 +106,12 @@ main(int argc, char *argv[])
 	for (i = 0; i < loops; i++)
 	{
 		if ((tmpfile = open(filename, O_RDWR)) == -1)
-			die("can't open /var/tmp/test_fsync.out");
+			die("Cannot open output file.");
 		write(tmpfile, strout, 8192);
 		close(tmpfile);
 		/* reopen file */
 		if ((tmpfile = open(filename, O_RDWR)) == -1)
-			die("can't open /var/tmp/test_fsync.out");
+			die("Cannot open output file.");
 		fsync(tmpfile);
 		close(tmpfile);
 	}
@@ -124,7 +124,7 @@ main(int argc, char *argv[])
 
 	/* 16k o_sync write */
 	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG)) == -1)
-		die("can't open /var/tmp/test_fsync.out");
+		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 		write(tmpfile, strout, 16384);
@@ -136,7 +136,7 @@ main(int argc, char *argv[])
 
 	/* 2*8k o_sync writes */
 	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG)) == -1)
-		die("can't open /var/tmp/test_fsync.out");
+		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 	{
@@ -154,7 +154,7 @@ main(int argc, char *argv[])
 #ifdef OPEN_DATASYNC_FLAG
 	/* open_dsync, write */
 	if ((tmpfile = open(filename, O_RDWR | O_DSYNC)) == -1)
-		die("can't open /var/tmp/test_fsync.out");
+		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 		write(tmpfile, strout, 8192);
@@ -169,7 +169,7 @@ main(int argc, char *argv[])
 
 	/* open_fsync, write */
 	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG)) == -1)
-		die("can't open /var/tmp/test_fsync.out");
+		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 		write(tmpfile, strout, 8192);
@@ -182,7 +182,7 @@ main(int argc, char *argv[])
 #ifdef HAVE_FDATASYNC
 	/* write, fdatasync */
 	if ((tmpfile = open(filename, O_RDWR)) == -1)
-		die("can't open /var/tmp/test_fsync.out");
+		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 	{
@@ -200,7 +200,7 @@ main(int argc, char *argv[])
 
 	/* write, fsync, close */
 	if ((tmpfile = open(filename, O_RDWR)) == -1)
-		die("can't open /var/tmp/test_fsync.out");
+		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 	{
@@ -218,7 +218,7 @@ main(int argc, char *argv[])
 #ifdef OPEN_DATASYNC_FLAG
 	/* open_dsync, write */
 	if ((tmpfile = open(filename, O_RDWR | O_DSYNC)) == -1)
-		die("can't open /var/tmp/test_fsync.out");
+		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 	{
@@ -236,7 +236,7 @@ main(int argc, char *argv[])
 
 	/* open_fsync, write */
 	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG)) == -1)
-		die("can't open /var/tmp/test_fsync.out");
+		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 	{
@@ -252,7 +252,7 @@ main(int argc, char *argv[])
 #ifdef HAVE_FDATASYNC
 	/* write, fdatasync */
 	if ((tmpfile = open(filename, O_RDWR)) == -1)
-		die("can't open /var/tmp/test_fsync.out");
+		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 	{
@@ -271,7 +271,7 @@ main(int argc, char *argv[])
 
 	/* write, fsync, close */
 	if ((tmpfile = open(filename, O_RDWR)) == -1)
-		die("can't open /var/tmp/test_fsync.out");
+		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 	{
@@ -306,6 +306,6 @@ print_elapse(struct timeval start_t, struct timeval elapse_t)
 void
 die(char *str)
 {
-	fprintf(stderr, "%s", str);
+	fprintf(stderr, "%s\n", str);
 	exit(1);
 }
