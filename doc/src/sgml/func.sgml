@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.291 2005/11/04 23:13:59 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.292 2005/11/16 03:56:16 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1483,7 +1483,7 @@ PostgreSQL documentation
 
       <row>
        <entry><literal><function>strpos</function>(<parameter>string</parameter>, <parameter>substring</parameter>)</literal></entry>
-       <entry><type>text</type></entry>
+       <entry><type>int</type></entry>
        <entry>
         Location of specified substring (same as
         <literal>position(<parameter>substring</parameter> in
