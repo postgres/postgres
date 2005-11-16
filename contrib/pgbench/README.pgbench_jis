@@ -82,10 +82,15 @@ pgbench にはいろいろなオプションがあります．
 -n		このオプションを指定すると，ベンチマーク開始前に vacuum と
 		history のクリアを行ないません．
 
--v		このオプションを指定すると，ベンチマーク開始前に vacuum と
-		history のクリアを行ないます．-v と -n を省略すると，
-		最小限の vacuum などを行います．すなわち，history の削除，
-		と history, branches, history の vacuum を行います．
+-v              このオプションを指定すると，デフォルトの事前クリーンアッ
+                プ処理に加え，accountsをVACUUM ANALYZEします．
+
+		-v -n の両方を省略した場合のデフォルト事前クリーンアッ
+                プ処理は，以下の処理を行います．
+
+		- historyからの全行削除
+		- branches, tellers, historyのVACUUM
+
 		これは，vacuum の時間を最小限にしながら，パフォーマンスに
 		影響するゴミ掃除を効果的に行います．通常は -v と -n を
 		省略することをおすすめします．
