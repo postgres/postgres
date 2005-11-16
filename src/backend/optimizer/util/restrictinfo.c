@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.42 2005/11/14 23:54:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.43 2005/11/16 17:08:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,8 @@ static RestrictInfo *make_restrictinfo_internal(Expr *clause,
 						   Relids required_relids);
 static Expr *make_sub_restrictinfos(Expr *clause,
 					   bool is_pushed_down,
-					   bool outerjoin_delayed);
+					   bool outerjoin_delayed,
+					   Relids required_relids);
 static RestrictInfo *join_clause_is_redundant(PlannerInfo *root,
 						 RestrictInfo *rinfo,
 						 List *reference_list,
@@ -62,7 +63,8 @@ make_restrictinfo(Expr *clause,
 	if (or_clause((Node *) clause))
 		return (RestrictInfo *) make_sub_restrictinfos(clause,
 													   is_pushed_down,
-													   outerjoin_delayed);
+													   outerjoin_delayed,
+													   required_relids);
 
 	/* Shouldn't be an AND clause, else AND/OR flattening messed up */
 	Assert(!and_clause((Node *) clause));
@@ -312,10 +314,15 @@ make_restrictinfo_internal(Expr *clause, Expr *orclause,
  * This may seem odd but it is closely related to the fact that we use
  * implicit-AND lists at top level of RestrictInfo lists.  Only ORs and
  * simple clauses are valid RestrictInfos.
+ *
+ * The given required_relids are attached to our top-level output,
+ * but any OR-clause constituents are allowed to default to just the
+ * contained rels.
  */
 static Expr *
 make_sub_restrictinfos(Expr *clause,
-					   bool is_pushed_down, bool outerjoin_delayed)
+					   bool is_pushed_down, bool outerjoin_delayed,
+					   Relids required_relids)
 {
 	if (or_clause((Node *) clause))
 	{
@@ -326,12 +333,13 @@ make_sub_restrictinfos(Expr *clause,
 			orlist = lappend(orlist,
 							 make_sub_restrictinfos(lfirst(temp),
 													is_pushed_down,
-													outerjoin_delayed));
+													outerjoin_delayed,
+													NULL));
 		return (Expr *) make_restrictinfo_internal(clause,
 												   make_orclause(orlist),
 												   is_pushed_down,
 												   outerjoin_delayed,
-												   NULL);
+												   required_relids);
 	}
 	else if (and_clause((Node *) clause))
 	{
@@ -342,7 +350,8 @@ make_sub_restrictinfos(Expr *clause,
 			andlist = lappend(andlist,
 							  make_sub_restrictinfos(lfirst(temp),
 													 is_pushed_down,
-													 outerjoin_delayed));
+													 outerjoin_delayed,
+													 required_relids));
 		return make_andclause(andlist);
 	}
 	else
@@ -350,7 +359,7 @@ make_sub_restrictinfos(Expr *clause,
 												   NULL,
 												   is_pushed_down,
 												   outerjoin_delayed,
-												   NULL);
+												   required_relids);
 }
 
 /*
