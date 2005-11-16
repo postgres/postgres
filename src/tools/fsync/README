@@ -2,4 +2,5 @@ This program tests fsync.  The tests are described as part of the program output
 
 	Usage:	test_fsync [-f filename] [loops]
 
-Loops defaults to 1000.
+Loops defaults to 1000.  The default output file is /var/tmp/test_fsync.out.
+Consider that /tmp or /var/tmp might be memory-based file systems.
