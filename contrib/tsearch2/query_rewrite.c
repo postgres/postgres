@@ -232,7 +232,7 @@ rewrite_accum(PG_FUNCTION_ARGS) {
 	if (ARR_ELEMTYPE(qa) != tsqOid)
 		elog(ERROR, "array should contain tsquery type");
 
-	deconstruct_array(qa, tsqOid, -1, false, 'i', &elemsp, &nelemsp); 
+	deconstruct_array(qa, tsqOid, -1, false, 'i', &elemsp, NULL, &nelemsp); 
 
 	q = (QUERYTYPE*)DatumGetPointer( elemsp[0] );
 	if ( q->size == 0 ) {

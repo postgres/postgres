@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.46 2005/11/04 23:13:59 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.47 2005/11/17 22:14:50 tgl Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -111,6 +111,13 @@ CREATE TABLE tictactoe (
   </para>
 
   <para>
+   To set an element of an array constant to NULL, write <literal>NULL</>
+   for the element value.  (Any upper- or lower-case variant of
+   <literal>NULL</> will do.)  If you want an actual string value
+   <quote>NULL</>, you must put double quotes around it.
+  </para>
+
+  <para>
    (These kinds of array constants are actually only a special case of
    the generic type constants discussed in <xref
    linkend="sql-syntax-constants-generic">.  The constant is initially
@@ -125,17 +132,6 @@ CREATE TABLE tictactoe (
 INSERT INTO sal_emp
     VALUES ('Bill',
     '{10000, 10000, 10000, 10000}',
-    '{{"meeting", "lunch"}, {"meeting"}}');
-ERROR:  multidimensional arrays must have array expressions with matching dimensions
-</programlisting>
-
-  Note that multidimensional arrays must have matching extents for each
-  dimension. A mismatch causes an error report.
-
-<programlisting>
-INSERT INTO sal_emp
-    VALUES ('Bill',
-    '{10000, 10000, 10000, 10000}',
     '{{"meeting", "lunch"}, {"training", "presentation"}}');
 
 INSERT INTO sal_emp
@@ -145,15 +141,9 @@ INSERT INTO sal_emp
 </programlisting>
   </para>
 
-  <para>
-   A limitation of the present array implementation is that individual
-   elements of an array cannot be SQL null values.  The entire array
-   can be set to null, but you can't have an array with some elements
-   null and some not.  (This is likely to change in the future.)
-  </para>
-
  <para>
   The result of the previous two inserts looks like this:
+
 <programlisting>
 SELECT * FROM sal_emp;
  name  |      pay_by_quarter       |                 schedule
@@ -182,6 +172,19 @@ INSERT INTO sal_emp
   double quoted as they would be in an array literal.  The <literal>ARRAY</>
   constructor syntax is discussed in more detail in
   <xref linkend="sql-syntax-array-constructors">.
+ </para>
+
+ <para>
+  Multidimensional arrays must have matching extents for each
+  dimension. A mismatch causes an error report, for example:
+
+<programlisting>
+INSERT INTO sal_emp
+    VALUES ('Bill',
+    '{10000, 10000, 10000, 10000}',
+    '{{"meeting", "lunch"}, {"meeting"}}');
+ERROR:  multidimensional arrays must have array expressions with matching dimensions
+</programlisting>
  </para>
  </sect2>
 
@@ -262,14 +265,22 @@ SELECT schedule[1:2][2] FROM sal_emp WHERE name = 'Bill';
  </para>
 
  <para>
-  Fetching from outside the current bounds of an array yields a
-  SQL null value, not an error.  For example, if <literal>schedule</>
+  An array subscript expression will return null if either the array itself or
+  any of the subscript expressions are null.  Also, null is returned if a
+  subscript is outside the array bounds (this case does not raise an error).
+  For example, if <literal>schedule</>
   currently has the dimensions <literal>[1:3][1:2]</> then referencing
   <literal>schedule[3][3]</> yields NULL.  Similarly, an array reference
   with the wrong number of subscripts yields a null rather than an error.
-  Fetching an array slice that
-  is completely outside the current bounds likewise yields a null array;
-  but if the requested slice partially overlaps the array bounds, then it
+ </para>
+
+ <para>
+  An array slice expression likewise yields null if the array itself or
+  any of the subscript expressions are null.  However, in other corner
+  cases such as selecting an array slice that
+  is completely outside the current array bounds, a slice expression
+  yields an empty (zero-dimensional) array instead of null.
+  If the requested slice partially overlaps the array bounds, then it
   is silently reduced to just the overlapping region.
  </para>
 
@@ -349,7 +360,7 @@ UPDATE sal_emp SET pay_by_quarter[1:2] = '{27000,27000}'
  </para>
 
  <para>
-  Array slice assignment allows creation of arrays that do not use one-based
+  Subscripted assignment allows creation of arrays that do not use one-based
   subscripts.  For example one might assign to <literal>myarray[-2:7]</> to
   create an array with subscript values running from -2 to 7.
  </para>
@@ -442,7 +453,7 @@ SELECT array_dims(ARRAY[1,2] || ARRAY[[3,4],[5,6]]);
   arrays, but <function>array_cat</function> supports multidimensional arrays.
 
   Note that the concatenation operator discussed above is preferred over
-  direct use of these functions. In fact, the functions are primarily for use
+  direct use of these functions. In fact, the functions exist primarily for use
   in implementing the concatenation operator. However, they may be directly
   useful in the creation of user-defined aggregates. Some examples:
 
@@ -544,8 +555,9 @@ SELECT * FROM sal_emp WHERE 10000 = ALL (pay_by_quarter);
 
   <para>
    The array output routine will put double quotes around element values
-   if they are empty strings or contain curly braces, delimiter characters,
-   double quotes, backslashes, or white space.  Double quotes and backslashes
+   if they are empty strings, contain curly braces, delimiter characters,
+   double quotes, backslashes, or white space, or match the word
+   <literal>NULL</>.  Double quotes and backslashes
    embedded in element values will be backslash-escaped.  For numeric
    data types it is safe to assume that double quotes will never appear, but
    for textual data types one should be prepared to cope with either presence
@@ -555,34 +567,14 @@ SELECT * FROM sal_emp WHERE 10000 = ALL (pay_by_quarter);
 
   <para>
    By default, the lower bound index value of an array's dimensions is
-   set to one. If any of an array's dimensions has a lower bound index not
-   equal to one, an additional decoration that indicates the actual
-   array dimensions will precede the array structure decoration.
+   set to one.  To represent arrays with other lower bounds, the array
+   subscript ranges can be specified explicitly before writing the
+   array contents.
    This decoration consists of square brackets (<literal>[]</>)
    around each array dimension's lower and upper bounds, with
    a colon (<literal>:</>) delimiter character in between. The
    array dimension decoration is followed by an equal sign (<literal>=</>).
    For example:
-<programlisting>
-SELECT 1 || ARRAY[2,3] AS array;
-
-     array
----------------
- [0:2]={1,2,3}
-(1 row)
-
-SELECT ARRAY[1,2] || ARRAY[[3,4]] AS array;
-
-          array
---------------------------
- [0:1][1:2]={{1,2},{3,4}}
-(1 row)
-</programlisting>
-  </para>
-
-  <para>
-   This syntax can also be used to specify non-default array subscripts
-   in an array literal. For example:
 <programlisting>
 SELECT f1[1][-2][3] AS e1, f1[1][-1][5] AS e2
  FROM (SELECT '[1:1][-2:-1][3:5]={{{1,2,3},{4,5,6}}}'::int[] AS f1) AS ss;
@@ -592,6 +584,18 @@ SELECT f1[1][-2][3] AS e1, f1[1][-1][5] AS e2
   1 |  6
 (1 row)
 </programlisting>
+   The array output routine will include explicit dimensions in its result
+   only when there are one or more lower bounds different from one.
+  </para>
+
+  <para>
+   If the value written for an element is <literal>NULL</> (in any case
+   variant), the element is taken to be NULL.  The presence of any quotes
+   or backslashes disables this and allows the literal string value
+   <quote>NULL</> to be entered.  Also, for backwards compatibility with
+   pre-8.2 versions of <productname>PostgreSQL</>, the <xref
+   linkend="guc-array-nulls"> configuration parameter may be turned
+   <literal>off</> to suppress recognition of <literal>NULL</> as a NULL.
   </para>
 
   <para>
@@ -600,7 +604,9 @@ SELECT f1[1][-2][3] AS e1, f1[1][-1][5] AS e2
    if the element value would otherwise confuse the array-value parser.
    For example, elements containing curly braces, commas (or whatever the
    delimiter character is), double quotes, backslashes, or leading or trailing
-   whitespace must be double-quoted.  To put a double quote or backslash in a
+   whitespace must be double-quoted.  Empty strings and strings matching the
+   word <literal>NULL</> must be quoted, too.  To put a double quote or
+   backslash in a
    quoted array element value, precede it with a backslash. Alternatively, you
    can use backslash-escaping to protect all data characters that would
    otherwise be taken as array syntax.

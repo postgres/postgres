@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.190 2005/10/15 02:49:41 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.191 2005/11/17 22:14:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -442,8 +442,8 @@ typedef struct varlena VarChar; /* var-length char, ie SQL varchar(n) */
 typedef struct
 {
 	int32		size;			/* these fields must match ArrayType! */
-	int			ndim;
-	int			flags;
+	int			ndim;			/* always 1 for int2vector */
+	int32		dataoffset;		/* always 0 for int2vector */
 	Oid			elemtype;
 	int			dim1;
 	int			lbound1;
@@ -453,8 +453,8 @@ typedef struct
 typedef struct
 {
 	int32		size;			/* these fields must match ArrayType! */
-	int			ndim;
-	int			flags;
+	int			ndim;			/* always 1 for oidvector */
+	int32		dataoffset;		/* always 0 for oidvector */
 	Oid			elemtype;
 	int			dim1;
 	int			lbound1;

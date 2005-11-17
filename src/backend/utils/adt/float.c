@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.115 2005/10/15 02:49:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.116 2005/11/17 22:14:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1886,6 +1886,7 @@ check_float8_array(ArrayType *transarray, const char *caller)
 	 */
 	if (ARR_NDIM(transarray) != 1 ||
 		ARR_DIMS(transarray)[0] != 3 ||
+		ARR_HASNULL(transarray) ||
 		ARR_ELEMTYPE(transarray) != FLOAT8OID)
 		elog(ERROR, "%s: expected 3-element float8 array", caller);
 	return (float8 *) ARR_DATA_PTR(transarray);

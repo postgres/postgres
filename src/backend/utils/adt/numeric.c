@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.86 2005/10/15 02:49:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.87 2005/11/17 22:14:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2070,7 +2070,7 @@ do_numeric_accum(ArrayType *transarray, Numeric newval)
 	/* We assume the input is array of numeric */
 	deconstruct_array(transarray,
 					  NUMERICOID, -1, false, 'i',
-					  &transdatums, &ndatums);
+					  &transdatums, NULL, &ndatums);
 	if (ndatums != 3)
 		elog(ERROR, "expected 3-element numeric array");
 	N = transdatums[0];
@@ -2161,7 +2161,7 @@ numeric_avg(PG_FUNCTION_ARGS)
 	/* We assume the input is array of numeric */
 	deconstruct_array(transarray,
 					  NUMERICOID, -1, false, 'i',
-					  &transdatums, &ndatums);
+					  &transdatums, NULL, &ndatums);
 	if (ndatums != 3)
 		elog(ERROR, "expected 3-element numeric array");
 	N = DatumGetNumeric(transdatums[0]);
@@ -2197,7 +2197,7 @@ numeric_variance(PG_FUNCTION_ARGS)
 	/* We assume the input is array of numeric */
 	deconstruct_array(transarray,
 					  NUMERICOID, -1, false, 'i',
-					  &transdatums, &ndatums);
+					  &transdatums, NULL, &ndatums);
 	if (ndatums != 3)
 		elog(ERROR, "expected 3-element numeric array");
 	N = DatumGetNumeric(transdatums[0]);
@@ -2273,7 +2273,7 @@ numeric_stddev(PG_FUNCTION_ARGS)
 	/* We assume the input is array of numeric */
 	deconstruct_array(transarray,
 					  NUMERICOID, -1, false, 'i',
-					  &transdatums, &ndatums);
+					  &transdatums, NULL, &ndatums);
 	if (ndatums != 3)
 		elog(ERROR, "expected 3-element numeric array");
 	N = DatumGetNumeric(transdatums[0]);
@@ -2511,7 +2511,8 @@ int2_avg_accum(PG_FUNCTION_ARGS)
 	else
 		transarray = PG_GETARG_ARRAYTYPE_P_COPY(0);
 
-	if (ARR_SIZE(transarray) != ARR_OVERHEAD(1) + sizeof(Int8TransTypeData))
+	if (ARR_HASNULL(transarray) ||
+		ARR_SIZE(transarray) != ARR_OVERHEAD_NONULLS(1) + sizeof(Int8TransTypeData))
 		elog(ERROR, "expected 2-element int8 array");
 
 	transdata = (Int8TransTypeData *) ARR_DATA_PTR(transarray);
@@ -2538,7 +2539,8 @@ int4_avg_accum(PG_FUNCTION_ARGS)
 	else
 		transarray = PG_GETARG_ARRAYTYPE_P_COPY(0);
 
-	if (ARR_SIZE(transarray) != ARR_OVERHEAD(1) + sizeof(Int8TransTypeData))
+	if (ARR_HASNULL(transarray) ||
+		ARR_SIZE(transarray) != ARR_OVERHEAD_NONULLS(1) + sizeof(Int8TransTypeData))
 		elog(ERROR, "expected 2-element int8 array");
 
 	transdata = (Int8TransTypeData *) ARR_DATA_PTR(transarray);
@@ -2556,7 +2558,8 @@ int8_avg(PG_FUNCTION_ARGS)
 	Datum		countd,
 				sumd;
 
-	if (ARR_SIZE(transarray) != ARR_OVERHEAD(1) + sizeof(Int8TransTypeData))
+	if (ARR_HASNULL(transarray) ||
+		ARR_SIZE(transarray) != ARR_OVERHEAD_NONULLS(1) + sizeof(Int8TransTypeData))
 		elog(ERROR, "expected 2-element int8 array");
 	transdata = (Int8TransTypeData *) ARR_DATA_PTR(transarray);
 

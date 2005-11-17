@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.36 2005/11/04 23:53:18 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.37 2005/11/17 22:14:50 tgl Exp $
 -->
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3614,6 +3614,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
 
     <sect2 id="runtime-config-compatible-version">
      <title>Previous PostgreSQL Versions</title>
+
      <variablelist>
 
      <varlistentry id="guc-add-missing-from" xreflabel="add_missing_from">
@@ -3647,40 +3648,27 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-regex-flavor" xreflabel="regex_flavor">
-      <term><varname>regex_flavor</varname> (<type>string</type>)</term>
-      <indexterm><primary>regular expressions</></>
+     <varlistentry id="guc-array-nulls" xreflabel="array_nulls">
+      <term><varname>array_nulls</varname> (<type>boolean</type>)</term>
       <indexterm>
-       <primary><varname>regex_flavor</> configuration parameter</primary>
+       <primary><varname>array_nulls</> configuration parameter</primary>
       </indexterm>
       <listitem>
        <para>
-        The regular expression <quote>flavor</> can be set to
-        <literal>advanced</>, <literal>extended</>, or <literal>basic</>.
-        The default is <literal>advanced</>.  The <literal>extended</>
-        setting may be useful for exact backwards compatibility with
-        pre-7.4 releases of <productname>PostgreSQL</>.  See
-        <xref linkend="posix-syntax-details"> for details.
+        This controls whether the array input parser recognizes
+        unquoted <literal>NULL</> as specifying a NULL array element.
+        By default, this is <literal>on</>, allowing array values containing
+        NULLs to be entered.  However, <productname>PostgreSQL</> versions
+        before 8.2 did not support NULLs in arrays, and therefore would
+        treat <literal>NULL</> as specifying a normal array element with
+        the string value <quote>NULL</>.  For backwards compatibility with
+        applications that require the old behavior, this variable can be
+        turned <literal>off</>.
        </para>
-      </listitem>
-     </varlistentry>
 
-     <varlistentry id="guc-sql-inheritance" xreflabel="sql_inheritance">
-      <term><varname>sql_inheritance</varname> (<type>boolean</type>)</term>
-      <indexterm>
-       <primary><varname>sql_inheritance</> configuration parameter</primary>
-      </indexterm>
-      <indexterm><primary>inheritance</></>
-      <listitem>
        <para>
-        This controls the inheritance semantics, in particular whether
-        subtables are included by various commands by default. They were
-        not included in versions prior to 7.1. If you need the old
-        behavior you can set this variable to <literal>off</>, but in
-        the long run you are encouraged to change your applications to
-        use the <literal>ONLY</literal> key word to exclude subtables.
-        See <xref linkend="ddl-inherit"> for more information about
-        inheritance.
+        Note that it is possible to create array values containing NULLs
+        even when this variable is <literal>off</>.
        </para>
       </listitem>
      </varlistentry>
@@ -3736,8 +3724,47 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-regex-flavor" xreflabel="regex_flavor">
+      <term><varname>regex_flavor</varname> (<type>string</type>)</term>
+      <indexterm><primary>regular expressions</></>
+      <indexterm>
+       <primary><varname>regex_flavor</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        The regular expression <quote>flavor</> can be set to
+        <literal>advanced</>, <literal>extended</>, or <literal>basic</>.
+        The default is <literal>advanced</>.  The <literal>extended</>
+        setting may be useful for exact backwards compatibility with
+        pre-7.4 releases of <productname>PostgreSQL</>.  See
+        <xref linkend="posix-syntax-details"> for details.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-sql-inheritance" xreflabel="sql_inheritance">
+      <term><varname>sql_inheritance</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>sql_inheritance</> configuration parameter</primary>
+      </indexterm>
+      <indexterm><primary>inheritance</></>
+      <listitem>
+       <para>
+        This controls the inheritance semantics, in particular whether
+        subtables are included by various commands by default. They were
+        not included in versions prior to 7.1. If you need the old
+        behavior you can set this variable to <literal>off</>, but in
+        the long run you are encouraged to change your applications to
+        use the <literal>ONLY</literal> key word to exclude subtables.
+        See <xref linkend="ddl-inherit"> for more information about
+        inheritance.
+       </para>
+      </listitem>
+     </varlistentry>
+
      </variablelist>
     </sect2>
+
     <sect2 id="runtime-config-compatible-clients">
      <title>Platform and Client Compatibility</title>
      <variablelist>

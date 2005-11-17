@@ -7,7 +7,7 @@
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.26 2005/10/15 02:49:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.27 2005/11/17 22:14:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -686,16 +686,18 @@ get_func_result_name(Oid functionId)
 		numargs = ARR_DIMS(arr)[0];
 		if (ARR_NDIM(arr) != 1 ||
 			numargs < 0 ||
+			ARR_HASNULL(arr) ||
 			ARR_ELEMTYPE(arr) != CHAROID)
 			elog(ERROR, "proargmodes is not a 1-D char array");
 		argmodes = (char *) ARR_DATA_PTR(arr);
 		arr = DatumGetArrayTypeP(proargnames);	/* ensure not toasted */
 		if (ARR_NDIM(arr) != 1 ||
 			ARR_DIMS(arr)[0] != numargs ||
+			ARR_HASNULL(arr) ||
 			ARR_ELEMTYPE(arr) != TEXTOID)
 			elog(ERROR, "proargnames is not a 1-D text array");
 		deconstruct_array(arr, TEXTOID, -1, false, 'i',
-						  &argnames, &nargnames);
+						  &argnames, NULL, &nargnames);
 		Assert(nargnames == numargs);
 
 		/* scan for output argument(s) */
@@ -818,12 +820,14 @@ build_function_result_tupdesc_d(Datum proallargtypes,
 	numargs = ARR_DIMS(arr)[0];
 	if (ARR_NDIM(arr) != 1 ||
 		numargs < 0 ||
+		ARR_HASNULL(arr) ||
 		ARR_ELEMTYPE(arr) != OIDOID)
 		elog(ERROR, "proallargtypes is not a 1-D Oid array");
 	argtypes = (Oid *) ARR_DATA_PTR(arr);
 	arr = DatumGetArrayTypeP(proargmodes);		/* ensure not toasted */
 	if (ARR_NDIM(arr) != 1 ||
 		ARR_DIMS(arr)[0] != numargs ||
+		ARR_HASNULL(arr) ||
 		ARR_ELEMTYPE(arr) != CHAROID)
 		elog(ERROR, "proargmodes is not a 1-D char array");
 	argmodes = (char *) ARR_DATA_PTR(arr);
@@ -832,10 +836,11 @@ build_function_result_tupdesc_d(Datum proallargtypes,
 		arr = DatumGetArrayTypeP(proargnames);	/* ensure not toasted */
 		if (ARR_NDIM(arr) != 1 ||
 			ARR_DIMS(arr)[0] != numargs ||
+			ARR_HASNULL(arr) ||
 			ARR_ELEMTYPE(arr) != TEXTOID)
 			elog(ERROR, "proargnames is not a 1-D text array");
 		deconstruct_array(arr, TEXTOID, -1, false, 'i',
-						  &argnames, &nargnames);
+						  &argnames, NULL, &nargnames);
 		Assert(nargnames == numargs);
 	}
 

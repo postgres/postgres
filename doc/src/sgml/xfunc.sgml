@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.107 2005/10/15 20:12:33 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.108 2005/11/17 22:14:50 tgl Exp $
 -->
 
  <sect1 id="xfunc">
@@ -2790,6 +2790,7 @@ make_array(PG_FUNCTION_ARGS)
     ArrayType  *result;
     Oid         element_type = get_fn_expr_argtype(fcinfo-&gt;flinfo, 0);
     Datum       element;
+    bool        isnull;
     int16       typlen;
     bool        typbyval;
     char        typalign;
@@ -2800,8 +2801,12 @@ make_array(PG_FUNCTION_ARGS)
     if (!OidIsValid(element_type))
         elog(ERROR, "could not determine data type of input");
 
-    /* get the provided element */
-    element = PG_GETARG_DATUM(0);
+    /* get the provided element, being careful in case it's NULL */
+    isnull = PG_ARGISNULL(0);
+    if (isnull)
+        element = (Datum) 0;
+    else
+        element = PG_GETARG_DATUM(0);
 
     /* we have one dimension */
     ndims = 1;
@@ -2814,7 +2819,7 @@ make_array(PG_FUNCTION_ARGS)
     get_typlenbyvalalign(element_type, &amp;typlen, &amp;typbyval, &amp;typalign);
 
     /* now build the array */
-    result = construct_md_array(&amp;element, ndims, dims, lbs,
+    result = construct_md_array(&amp;element, &amp;isnull, ndims, dims, lbs,
                                 element_type, typlen, typbyval, typalign);
 
     PG_RETURN_ARRAYTYPE_P(result);
@@ -2829,11 +2834,8 @@ make_array(PG_FUNCTION_ARGS)
 <programlisting>
 CREATE FUNCTION make_array(anyelement) RETURNS anyarray
     AS '<replaceable>DIRECTORY</replaceable>/funcs', 'make_array'
-    LANGUAGE C STRICT;
+    LANGUAGE C IMMUTABLE;
 </programlisting>
-
-     Note the use of <literal>STRICT</literal>; this is essential
-     since the code is not bothering to test for a null input.
     </para>
    </sect2>
   </sect1>

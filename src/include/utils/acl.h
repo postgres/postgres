@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.86 2005/11/04 17:25:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.87 2005/11/17 22:14:55 tgl Exp $
  *
  * NOTES
  *	  An ACL array is simply an array of AclItems, representing the union
@@ -97,7 +97,7 @@ typedef ArrayType Acl;
 
 #define ACL_NUM(ACL)			(ARR_DIMS(ACL)[0])
 #define ACL_DAT(ACL)			((AclItem *) ARR_DATA_PTR(ACL))
-#define ACL_N_SIZE(N)			(ARR_OVERHEAD(1) + ((N) * sizeof(AclItem)))
+#define ACL_N_SIZE(N)			(ARR_OVERHEAD_NONULLS(1) + ((N) * sizeof(AclItem)))
 #define ACL_SIZE(ACL)			ARR_SIZE(ACL)
 
 /*
@@ -107,7 +107,7 @@ typedef ArrayType IdList;
 
 #define IDLIST_NUM(IDL)			(ARR_DIMS(IDL)[0])
 #define IDLIST_DAT(IDL)			((Oid *) ARR_DATA_PTR(IDL))
-#define IDLIST_N_SIZE(N)		(ARR_OVERHEAD(1) + ((N) * sizeof(Oid)))
+#define IDLIST_N_SIZE(N)		(ARR_OVERHEAD_NONULLS(1) + ((N) * sizeof(Oid)))
 #define IDLIST_SIZE(IDL)		ARR_SIZE(IDL)
 
 /*

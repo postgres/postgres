@@ -208,12 +208,13 @@ ArrayType *
 new_intArrayType(int num)
 {
 	ArrayType  *r;
-	int			nbytes = ARR_OVERHEAD(NDIM) + sizeof(int) * num;
+	int			nbytes = ARR_OVERHEAD_NONULLS(NDIM) + sizeof(int) * num;
 
 	r = (ArrayType *) palloc0(nbytes);
 
 	ARR_SIZE(r) = nbytes;
 	ARR_NDIM(r) = NDIM;
+	r->dataoffset = 0;			/* marker for no null bitmap */
 	ARR_ELEMTYPE(r) = INT4OID;
 	*((int *) ARR_DIMS(r)) = num;
 	*((int *) ARR_LBOUND(r)) = 1;
@@ -224,7 +225,7 @@ new_intArrayType(int num)
 ArrayType *
 resize_intArrayType(ArrayType *a, int num)
 {
-	int			nbytes = ARR_OVERHEAD(NDIM) + sizeof(int) * num;
+	int			nbytes = ARR_OVERHEAD_NONULLS(NDIM) + sizeof(int) * num;
 
 	if (num == ARRNELEMS(a))
 		return a;

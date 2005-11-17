@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.129 2005/10/15 02:49:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.130 2005/11/17 22:14:53 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -1896,13 +1896,13 @@ get_attstatsslot(HeapTuple statstuple,
 			elog(ERROR, "cache lookup failed for type %u", atttype);
 		typeForm = (Form_pg_type) GETSTRUCT(typeTuple);
 
-		/* Deconstruct array into Datum elements */
+		/* Deconstruct array into Datum elements; NULLs not expected */
 		deconstruct_array(statarray,
 						  atttype,
 						  typeForm->typlen,
 						  typeForm->typbyval,
 						  typeForm->typalign,
-						  values, nvalues);
+						  values, NULL, nvalues);
 
 		/*
 		 * If the element type is pass-by-reference, we now have a bunch of
@@ -1944,6 +1944,7 @@ get_attstatsslot(HeapTuple statstuple,
 		 */
 		narrayelem = ARR_DIMS(statarray)[0];
 		if (ARR_NDIM(statarray) != 1 || narrayelem <= 0 ||
+			ARR_HASNULL(statarray) ||
 			ARR_ELEMTYPE(statarray) != FLOAT4OID)
 			elog(ERROR, "stanumbers is not a 1-D float4 array");
 		*numbers = (float4 *) palloc(narrayelem * sizeof(float4));

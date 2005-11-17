@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.292 2005/11/16 03:56:16 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.293 2005/11/17 22:14:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -8324,6 +8324,18 @@ AND
   </para>
 
   <para>
+   If the array expression yields a null array, the result of
+   <token>ANY</token> will be null.  If the left-hand expression yields null,
+   the result of <token>ANY</token> is ordinarily null (though a non-strict
+   comparison operator could possibly yield a different result).
+   Also, if the right-hand array contains any null elements and no true
+   comparison result is obtained, the result of <token>ANY</token>
+   will be null, not false (again, assuming a strict comparison operator).
+   This is in accordance with SQL's normal rules for Boolean combinations
+   of null values.
+  </para>
+
+  <para>
    <token>SOME</token> is a synonym for <token>ANY</token>.
   </para>
   </sect2>
@@ -8345,6 +8357,18 @@ AND
    The result of <token>ALL</token> is <quote>true</> if all comparisons yield true
    (including the special case where the array has zero elements).
    The result is <quote>false</> if any false result is found.
+  </para>
+
+  <para>
+   If the array expression yields a null array, the result of
+   <token>ALL</token> will be null.  If the left-hand expression yields null,
+   the result of <token>ALL</token> is ordinarily null (though a non-strict
+   comparison operator could possibly yield a different result).
+   Also, if the right-hand array contains any null elements and no false
+   comparison result is obtained, the result of <token>ALL</token>
+   will be null, not true (again, assuming a strict comparison operator).
+   This is in accordance with SQL's normal rules for Boolean combinations
+   of null values.
   </para>
   </sect2>
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayutils.c,v 1.18 2004/12/31 22:01:21 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayutils.c,v 1.19 2005/11/17 22:14:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,11 +16,17 @@
 #include "postgres.h"
 
 #include "utils/array.h"
+#include "utils/memutils.h"
 
 
-/* Convert subscript list into linear element number (from 0) */
+/*
+ * Convert subscript list into linear element number (from 0)
+ *
+ * We assume caller has already range-checked the dimensions and subscripts,
+ * so no overflow is possible.
+ */
 int
-ArrayGetOffset(int n, int *dim, int *lb, int *indx)
+ArrayGetOffset(int n, const int *dim, const int *lb, const int *indx)
 {
 	int			i,
 				scale = 1,
@@ -34,11 +40,12 @@ ArrayGetOffset(int n, int *dim, int *lb, int *indx)
 	return offset;
 }
 
-/* Same, but subscripts are assumed 0-based, and use a scale array
+/*
+ * Same, but subscripts are assumed 0-based, and use a scale array
  * instead of raw dimension data (see mda_get_prod to create scale array)
  */
 int
-ArrayGetOffset0(int n, int *tup, int *scale)
+ArrayGetOffset0(int n, const int *tup, const int *scale)
 {
 	int			i,
 				lin = 0;
@@ -48,24 +55,66 @@ ArrayGetOffset0(int n, int *tup, int *scale)
 	return lin;
 }
 
-/* Convert array dimensions into number of elements */
+/*
+ * Convert array dimensions into number of elements
+ *
+ * This must do overflow checking, since it is used to validate that a user
+ * dimensionality request doesn't overflow what we can handle.
+ *
+ * We limit array sizes to at most about a quarter billion elements,
+ * so that it's not necessary to check for overflow in quite so many
+ * places --- for instance when palloc'ing Datum arrays.
+ *
+ * The multiplication overflow check only works on machines that have int64
+ * arithmetic, but that is nearly all platforms these days, and doing check
+ * divides for those that don't seems way too expensive.
+ */
 int
-ArrayGetNItems(int ndim, int *dims)
+ArrayGetNItems(int ndim, const int *dims)
 {
-	int			i,
-				ret;
+	int32		ret;
+	int			i;
+
+#define MaxArraySize ((Size) (MaxAllocSize / sizeof(Datum)))
 
 	if (ndim <= 0)
 		return 0;
 	ret = 1;
 	for (i = 0; i < ndim; i++)
-		ret *= dims[i];
-	return ret;
+	{
+		int64	prod;
+
+		/* A negative dimension implies that UB-LB overflowed ... */
+		if (dims[i] < 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("array size exceeds the maximum allowed (%d)",
+							(int) MaxArraySize)));
+
+		prod = (int64) ret * (int64) dims[i];
+		ret = (int32) prod;
+		if ((int64) ret != prod)
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("array size exceeds the maximum allowed (%d)",
+							(int) MaxArraySize)));
+	}
+	Assert(ret >= 0);
+	if ((Size) ret > MaxArraySize)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("array size exceeds the maximum allowed (%d)",
+						(int) MaxArraySize)));
+	return (int) ret;
 }
 
-/* Compute ranges (sub-array dimensions) for an array slice */
+/*
+ * Compute ranges (sub-array dimensions) for an array slice
+ *
+ * We assume caller has validated slice endpoints, so overflow is impossible
+ */
 void
-mda_get_range(int n, int *span, int *st, int *endp)
+mda_get_range(int n, int *span, const int *st, const int *endp)
 {
 	int			i;
 
@@ -73,9 +122,13 @@ mda_get_range(int n, int *span, int *st, int *endp)
 		span[i] = endp[i] - st[i] + 1;
 }
 
-/* Compute products of array dimensions, ie, scale factors for subscripts */
+/*
+ * Compute products of array dimensions, ie, scale factors for subscripts
+ *
+ * We assume caller has validated dimensions, so overflow is impossible
+ */
 void
-mda_get_prod(int n, int *range, int *prod)
+mda_get_prod(int n, const int *range, int *prod)
 {
 	int			i;
 
@@ -84,11 +137,14 @@ mda_get_prod(int n, int *range, int *prod)
 		prod[i] = prod[i + 1] * range[i + 1];
 }
 
-/* From products of whole-array dimensions and spans of a sub-array,
+/*
+ * From products of whole-array dimensions and spans of a sub-array,
  * compute offset distances needed to step through subarray within array
+ *
+ * We assume caller has validated dimensions, so overflow is impossible
  */
 void
-mda_get_offset_values(int n, int *dist, int *prod, int *span)
+mda_get_offset_values(int n, int *dist, const int *prod, const int *span)
 {
 	int			i,
 				j;
@@ -102,16 +158,18 @@ mda_get_offset_values(int n, int *dist, int *prod, int *span)
 	}
 }
 
-/*-----------------------------------------------------------------------------
-  generates the tuple that is lexicographically one greater than the current
-  n-tuple in "curr", with the restriction that the i-th element of "curr" is
-  less than the i-th element of "span".
-  Returns -1 if no next tuple exists, else the subscript position (0..n-1)
-  corresponding to the dimension to advance along.
-  -----------------------------------------------------------------------------
-*/
+/*
+ * Generates the tuple that is lexicographically one greater than the current
+ * n-tuple in "curr", with the restriction that the i-th element of "curr" is
+ * less than the i-th element of "span".
+ *
+ * Returns -1 if no next tuple exists, else the subscript position (0..n-1)
+ * corresponding to the dimension to advance along.
+ *
+ * We assume caller has validated dimensions, so overflow is impossible
+ */
 int
-mda_next_tuple(int n, int *curr, int *span)
+mda_next_tuple(int n, int *curr, const int *span)
 {
 	int			i;
 

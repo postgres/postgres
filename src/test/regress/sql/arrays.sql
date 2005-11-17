@@ -83,6 +83,13 @@ SELECT a[1:3],
           d[1:1][2:2]
    FROM arrtest;
 
+INSERT INTO arrtest(a) VALUES('{1,null,3}');
+SELECT a FROM arrtest;
+UPDATE arrtest SET a[4] = NULL WHERE a[2] IS NULL;
+SELECT a FROM arrtest WHERE a[2] IS NULL;
+DELETE FROM arrtest WHERE a[2] IS NULL AND b IS NULL;
+SELECT a,b,c FROM arrtest;
+
 --
 -- array expressions and operators
 --
@@ -128,6 +135,10 @@ SELECT ARRAY[[[[[['hello'],['world']]]]]];
 SELECT ARRAY[ARRAY['hello'],ARRAY['world']];
 SELECT ARRAY(select f2 from arrtest_f order by f2) AS "ARRAY";
 
+-- with nulls
+SELECT '{1,null,3}'::int[];
+SELECT ARRAY[1,NULL,3];
+
 -- functions
 SELECT array_append(array[42], 6) AS "{42,6}";
 SELECT array_prepend(6, array[42]) AS "{6,42}";
@@ -168,6 +179,15 @@ select 33.4 > all (array[1,2,3]);
 -- errors
 select 33 * any ('{1,2,3}');
 select 33 * any (44);
+-- nulls
+select 33 = any (null::int[]);
+select null::int = any ('{1,2,3}');
+select 33 = any ('{1,null,3}');
+select 33 = any ('{1,null,33}');
+select 33 = all (null::int[]);
+select null::int = all ('{1,2,3}');
+select 33 = all ('{1,null,3}');
+select 33 = all ('{33,null,33}');
 
 -- test indexes on arrays
 create temp table arr_tbl (f1 int[] unique);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.157 2005/10/27 02:45:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.158 2005/11/17 22:14:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2434,7 +2434,7 @@ interval_accum(PG_FUNCTION_ARGS)
 
 	deconstruct_array(transarray,
 					  INTERVALOID, sizeof(Interval), false, 'd',
-					  &transdatums, &ndatums);
+					  &transdatums, NULL, &ndatums);
 	if (ndatums != 2)
 		elog(ERROR, "expected 2-element interval array");
 
@@ -2475,7 +2475,7 @@ interval_avg(PG_FUNCTION_ARGS)
 
 	deconstruct_array(transarray,
 					  INTERVALOID, sizeof(Interval), false, 'd',
-					  &transdatums, &ndatums);
+					  &transdatums, NULL, &ndatums);
 	if (ndatums != 2)
 		elog(ERROR, "expected 2-element interval array");
 

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.94 2005/10/15 02:49:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.95 2005/11/17 22:14:55 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -787,6 +787,7 @@ fetchArgInfo(HeapTuple procTup, Oid **p_argtypes, char ***p_argnames,
 		numargs = ARR_DIMS(arr)[0];
 		if (ARR_NDIM(arr) != 1 ||
 			numargs < 0 ||
+			ARR_HASNULL(arr) ||
 			ARR_ELEMTYPE(arr) != OIDOID)
 			elog(ERROR, "proallargtypes is not a 1-D Oid array");
 		Assert(numargs >= procStruct->pronargs);
@@ -814,7 +815,7 @@ fetchArgInfo(HeapTuple procTup, Oid **p_argtypes, char ***p_argnames,
 	{
 		deconstruct_array(DatumGetArrayTypeP(proargnames),
 						  TEXTOID, -1, false, 'i',
-						  &elems, &nelems);
+						  &elems, NULL, &nelems);
 		if (nelems != numargs)	/* should not happen */
 			elog(ERROR, "proargnames must have the same number of elements as the function has arguments");
 		*p_argnames = (char **) palloc(sizeof(char *) * numargs);
@@ -834,6 +835,7 @@ fetchArgInfo(HeapTuple procTup, Oid **p_argtypes, char ***p_argnames,
 		arr = DatumGetArrayTypeP(proargmodes);	/* ensure not toasted */
 		if (ARR_NDIM(arr) != 1 ||
 			ARR_DIMS(arr)[0] != numargs ||
+			ARR_HASNULL(arr) ||
 			ARR_ELEMTYPE(arr) != CHAROID)
 			elog(ERROR, "proargmodes is not a 1-D char array");
 		*p_argmodes = (char *) palloc(numargs * sizeof(char));

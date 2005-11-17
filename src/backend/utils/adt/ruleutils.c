@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.207 2005/10/15 02:49:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.208 2005/11/17 22:14:53 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1107,7 +1107,7 @@ decompile_column_index_array(Datum column_index_array, Oid relId,
 	/* Extract data from array of int16 */
 	deconstruct_array(DatumGetArrayTypeP(column_index_array),
 					  INT2OID, 2, true, 's',
-					  &keys, &nKeys);
+					  &keys, NULL, &nKeys);
 
 	for (j = 0; j < nKeys; j++)
 	{

@@ -6,7 +6,7 @@
  * Copyright (c) 2003-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.16 2005/10/15 02:49:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.17 2005/11/17 22:14:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
+
 /*-----------------------------------------------------------------------------
  * array_push :
  *		push an element onto either end of a one-dimensional array
@@ -29,11 +30,11 @@ array_push(PG_FUNCTION_ARGS)
 {
 	ArrayType  *v;
 	Datum		newelem;
+	bool		isNull;
 	int		   *dimv,
 			   *lb;
 	ArrayType  *result;
 	int			indx;
-	bool		isNull;
 	Oid			element_type;
 	int16		typlen;
 	bool		typbyval;
@@ -54,15 +55,27 @@ array_push(PG_FUNCTION_ARGS)
 
 	if (arg0_elemid != InvalidOid)
 	{
-		v = PG_GETARG_ARRAYTYPE_P(0);
-		element_type = ARR_ELEMTYPE(v);
-		newelem = PG_GETARG_DATUM(1);
+		if (PG_ARGISNULL(0))
+			v = construct_empty_array(arg0_elemid);
+		else
+			v = PG_GETARG_ARRAYTYPE_P(0);
+		isNull = PG_ARGISNULL(1);
+		if (isNull)
+			newelem = (Datum) 0;
+		else
+			newelem = PG_GETARG_DATUM(1);
 	}
 	else if (arg1_elemid != InvalidOid)
 	{
-		v = PG_GETARG_ARRAYTYPE_P(1);
-		element_type = ARR_ELEMTYPE(v);
-		newelem = PG_GETARG_DATUM(0);
+		if (PG_ARGISNULL(1))
+			v = construct_empty_array(arg1_elemid);
+		else
+			v = PG_GETARG_ARRAYTYPE_P(1);
+		isNull = PG_ARGISNULL(0);
+		if (isNull)
+			newelem = (Datum) 0;
+		else
+			newelem = PG_GETARG_DATUM(0);
 	}
 	else
 	{
@@ -72,6 +85,8 @@ array_push(PG_FUNCTION_ARGS)
 				 errmsg("neither input type is an array")));
 		PG_RETURN_NULL();		/* keep compiler quiet */
 	}
+
+	element_type = ARR_ELEMTYPE(v);
 
 	if (ARR_NDIM(v) == 1)
 	{
@@ -84,11 +99,21 @@ array_push(PG_FUNCTION_ARGS)
 			int			ub = dimv[0] + lb[0] - 1;
 
 			indx = ub + 1;
+			/* overflow? */
+			if (indx < ub)
+				ereport(ERROR,
+						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						 errmsg("integer out of range")));
 		}
 		else
 		{
 			/* prepend newelem */
 			indx = lb[0] - 1;
+			/* overflow? */
+			if (indx > lb[0])
+				ereport(ERROR,
+						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						 errmsg("integer out of range")));
 		}
 	}
 	else if (ARR_NDIM(v) == 0)
@@ -108,7 +133,7 @@ array_push(PG_FUNCTION_ARGS)
 		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
 													  sizeof(ArrayMetaState));
 		my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
-		my_extra->element_type = InvalidOid;
+		my_extra->element_type = ~element_type;
 	}
 
 	if (my_extra->element_type != element_type)
@@ -124,8 +149,8 @@ array_push(PG_FUNCTION_ARGS)
 	typbyval = my_extra->typbyval;
 	typalign = my_extra->typalign;
 
-	result = array_set(v, 1, &indx, newelem, -1,
-					   typlen, typbyval, typalign, &isNull);
+	result = array_set(v, 1, &indx, newelem, isNull,
+					   -1, typlen, typbyval, typalign);
 
 	PG_RETURN_ARRAYTYPE_P(result);
 }
@@ -141,26 +166,46 @@ array_cat(PG_FUNCTION_ARGS)
 {
 	ArrayType  *v1,
 			   *v2;
+	ArrayType  *result;
 	int		   *dims,
 			   *lbs,
 				ndims,
+				nitems,
 				ndatabytes,
 				nbytes;
 	int		   *dims1,
 			   *lbs1,
 				ndims1,
+				nitems1,
 				ndatabytes1;
 	int		   *dims2,
 			   *lbs2,
 				ndims2,
+				nitems2,
 				ndatabytes2;
 	int			i;
 	char	   *dat1,
 			   *dat2;
+	bits8	   *bitmap1,
+			   *bitmap2;
 	Oid			element_type;
 	Oid			element_type1;
 	Oid			element_type2;
-	ArrayType  *result;
+	int32		dataoffset;
+
+	/* Concatenating a null array is a no-op, just return the other input */
+	if (PG_ARGISNULL(0))
+	{
+		if (PG_ARGISNULL(1))
+			PG_RETURN_NULL();
+		result = PG_GETARG_ARRAYTYPE_P(1);
+		PG_RETURN_ARRAYTYPE_P(result);
+	}
+	if (PG_ARGISNULL(1))
+	{
+		result = PG_GETARG_ARRAYTYPE_P(0);
+		PG_RETURN_ARRAYTYPE_P(result);
+	}
 
 	v1 = PG_GETARG_ARRAYTYPE_P(0);
 	v2 = PG_GETARG_ARRAYTYPE_P(1);
@@ -223,8 +268,12 @@ array_cat(PG_FUNCTION_ARGS)
 	dims2 = ARR_DIMS(v2);
 	dat1 = ARR_DATA_PTR(v1);
 	dat2 = ARR_DATA_PTR(v2);
-	ndatabytes1 = ARR_SIZE(v1) - ARR_OVERHEAD(ndims1);
-	ndatabytes2 = ARR_SIZE(v2) - ARR_OVERHEAD(ndims2);
+	bitmap1 = ARR_NULLBITMAP(v1);
+	bitmap2 = ARR_NULLBITMAP(v2);
+	nitems1 = ArrayGetNItems(ndims1, dims1);
+	nitems2 = ArrayGetNItems(ndims2, dims2);
+	ndatabytes1 = ARR_SIZE(v1) - ARR_DATA_OFFSET(v1);
+	ndatabytes2 = ARR_SIZE(v2) - ARR_DATA_OFFSET(v2);
 
 	if (ndims1 == ndims2)
 	{
@@ -310,20 +359,41 @@ array_cat(PG_FUNCTION_ARGS)
 		}
 	}
 
+	/* Do this mainly for overflow checking */
+	nitems = ArrayGetNItems(ndims, dims);
+
 	/* build the result array */
 	ndatabytes = ndatabytes1 + ndatabytes2;
-	nbytes = ndatabytes + ARR_OVERHEAD(ndims);
+	if (ARR_HASNULL(v1) || ARR_HASNULL(v2))
+	{
+		dataoffset = ARR_OVERHEAD_WITHNULLS(ndims, nitems);
+		nbytes = ndatabytes + dataoffset;
+	}
+	else
+	{
+		dataoffset = 0;			/* marker for no null bitmap */
+		nbytes = ndatabytes + ARR_OVERHEAD_NONULLS(ndims);
+	}
 	result = (ArrayType *) palloc(nbytes);
-
 	result->size = nbytes;
 	result->ndim = ndims;
-	result->flags = 0;
+	result->dataoffset = dataoffset;
 	result->elemtype = element_type;
 	memcpy(ARR_DIMS(result), dims, ndims * sizeof(int));
 	memcpy(ARR_LBOUND(result), lbs, ndims * sizeof(int));
 	/* data area is arg1 then arg2 */
 	memcpy(ARR_DATA_PTR(result), dat1, ndatabytes1);
 	memcpy(ARR_DATA_PTR(result) + ndatabytes1, dat2, ndatabytes2);
+	/* handle the null bitmap if needed */
+	if (ARR_HASNULL(result))
+	{
+		array_bitmap_copy(ARR_NULLBITMAP(result), 0,
+						  bitmap1, 0,
+						  nitems1);
+		array_bitmap_copy(ARR_NULLBITMAP(result), nitems1,
+						  bitmap2, 0,
+						  nitems2);
+	}
 
 	PG_RETURN_ARRAYTYPE_P(result);
 }
@@ -347,10 +417,6 @@ create_singleton_array(FunctionCallInfo fcinfo,
 	int			i;
 	ArrayMetaState *my_extra;
 
-	if (element_type == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("invalid array element type OID: %u", element_type)));
 	if (ndims < 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -379,7 +445,7 @@ create_singleton_array(FunctionCallInfo fcinfo,
 		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
 													  sizeof(ArrayMetaState));
 		my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
-		my_extra->element_type = InvalidOid;
+		my_extra->element_type = ~element_type;
 	}
 
 	if (my_extra->element_type != element_type)
@@ -395,6 +461,6 @@ create_singleton_array(FunctionCallInfo fcinfo,
 	typbyval = my_extra->typbyval;
 	typalign = my_extra->typalign;
 
-	return construct_md_array(dvalues, ndims, dims, lbs, element_type,
+	return construct_md_array(dvalues, NULL, ndims, dims, lbs, element_type,
 							  typlen, typbyval, typalign);
 }

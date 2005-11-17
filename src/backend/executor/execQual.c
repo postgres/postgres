@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.183 2005/10/19 22:30:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.184 2005/11/17 22:14:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -202,16 +202,8 @@ static Datum ExecEvalRelabelType(GenericExprState *exprstate,
  *	   if it's a simple reference, or the modified array value if it's
  *	   an array assignment (i.e., array element or slice insertion).
  *
- * NOTE: if we get a NULL result from a subexpression, we return NULL when
- * it's an array reference, or the unmodified source array when it's an
- * array assignment.  This may seem peculiar, but if we return NULL (as was
- * done in versions up through 7.0) then an assignment like
- *			UPDATE table SET arrayfield[4] = NULL
- * will result in setting the whole array to NULL, which is certainly not
- * very desirable.	By returning the source array we make the assignment
- * into a no-op, instead.  (Eventually we need to redesign arrays so that
- * individual elements can be NULL, but for now, let's try to protect users
- * from shooting themselves in the foot.)
+ * NOTE: if we get a NULL result from a subscript expression, we return NULL
+ * when it's an array reference, or raise an error when it's an assignment.
  *
  * NOTE: we deliberately refrain from applying DatumGetArrayTypeP() here,
  * even though that might seem natural, because this code needs to support
@@ -270,15 +262,15 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 													 econtext,
 													 &eisnull,
 													 NULL));
-		/* If any index expr yields NULL, result is NULL or source array */
+		/* If any index expr yields NULL, result is NULL or error */
 		if (eisnull)
 		{
-			if (!isAssignment)
-			{
-				*isNull = true;
-				return (Datum) NULL;
-			}
-			return PointerGetDatum(array_source);
+			if (isAssignment)
+				ereport(ERROR,
+						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+						 errmsg("array subscript in assignment must not be NULL")));
+			*isNull = true;
+			return (Datum) NULL;
 		}
 	}
 
@@ -298,18 +290,15 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 														 econtext,
 														 &eisnull,
 														 NULL));
-
-			/*
-			 * If any index expr yields NULL, result is NULL or source array
-			 */
+			/* If any index expr yields NULL, result is NULL or error */
 			if (eisnull)
 			{
-				if (!isAssignment)
-				{
-					*isNull = true;
-					return (Datum) NULL;
-				}
-				return PointerGetDatum(array_source);
+				if (isAssignment)
+					ereport(ERROR,
+							(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+							 errmsg("array subscript in assignment must not be NULL")));
+				*isNull = true;
+				return (Datum) NULL;
 			}
 		}
 		/* this can't happen unless parser messed up */
@@ -327,8 +316,8 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 		/*
 		 * Evaluate the value to be assigned into the array.
 		 *
-		 * XXX At some point we'll need to look into making the old value of the
-		 * array element available via CaseTestExpr, as is done by
+		 * XXX At some point we'll need to look into making the old value of
+		 * the array element available via CaseTestExpr, as is done by
 		 * ExecEvalFieldStore.	This is not needed now but will be needed to
 		 * support arrays of composite types; in an assignment to a field of
 		 * an array member, the parser would generate a FieldStore that
@@ -340,29 +329,23 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 								  NULL);
 
 		/*
-		 * For now, can't cope with inserting NULL into an array, so make it a
-		 * no-op per discussion above...
+		 * For an assignment to a fixed-length array type, both the original
+		 * array and the value to be assigned into it must be non-NULL, else
+		 * we punt and return the original array.
 		 */
-		if (eisnull)
-			return PointerGetDatum(array_source);
+		if (astate->refattrlength > 0)		/* fixed-length array? */
+			if (eisnull || *isNull)
+				return PointerGetDatum(array_source);
 
 		/*
-		 * For an assignment, if all the subscripts and the input expression
-		 * are non-null but the original array is null, then substitute an
-		 * empty (zero-dimensional) array and proceed with the assignment.
-		 * This only works for varlena arrays, though; for fixed-length array
-		 * types we punt and return the null input array.
+		 * For assignment to varlena arrays, we handle a NULL original array
+		 * by substituting an empty (zero-dimensional) array; insertion of
+		 * the new element will result in a singleton array value.  It does
+		 * not matter whether the new element is NULL.
 		 */
 		if (*isNull)
 		{
-			if (astate->refattrlength > 0)		/* fixed-length array? */
-				return PointerGetDatum(array_source);
-
-			array_source = construct_md_array(NULL, 0, NULL, NULL,
-											  arrayRef->refelemtype,
-											  astate->refelemlength,
-											  astate->refelembyval,
-											  astate->refelemalign);
+			array_source = construct_empty_array(arrayRef->refelemtype);
 			*isNull = false;
 		}
 
@@ -370,20 +353,20 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 			resultArray = array_set(array_source, i,
 									upper.indx,
 									sourceData,
+									eisnull,
 									astate->refattrlength,
 									astate->refelemlength,
 									astate->refelembyval,
-									astate->refelemalign,
-									isNull);
+									astate->refelemalign);
 		else
 			resultArray = array_set_slice(array_source, i,
 										  upper.indx, lower.indx,
 								   (ArrayType *) DatumGetPointer(sourceData),
+										  eisnull,
 										  astate->refattrlength,
 										  astate->refelemlength,
 										  astate->refelembyval,
-										  astate->refelemalign,
-										  isNull);
+										  astate->refelemalign);
 		return PointerGetDatum(resultArray);
 	}
 
@@ -401,8 +384,7 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 									  astate->refattrlength,
 									  astate->refelemlength,
 									  astate->refelembyval,
-									  astate->refelemalign,
-									  isNull);
+									  astate->refelemalign);
 		return PointerGetDatum(resultArray);
 	}
 }
@@ -1620,6 +1602,8 @@ ExecEvalScalarArrayOp(ScalarArrayOpExprState *sstate,
 	bool		typbyval;
 	char		typalign;
 	char	   *s;
+	bits8	   *bitmap;
+	int			bitmask;
 
 	/* Set default values for result flags: non-null, not a set result */
 	*isNull = false;
@@ -1668,9 +1652,8 @@ ExecEvalScalarArrayOp(ScalarArrayOpExprState *sstate,
 		return BoolGetDatum(!useOr);
 
 	/*
-	 * If the scalar is NULL, and the function is strict, return NULL. This is
-	 * just to avoid having to test for strictness inside the loop.  (XXX but
-	 * if arrays could have null elements, we'd need a test anyway.)
+	 * If the scalar is NULL, and the function is strict, return NULL;
+	 * no point in iterating the loop.
 	 */
 	if (fcinfo.argnull[0] && sstate->fxprstate.func.fn_strict)
 	{
@@ -1699,22 +1682,40 @@ ExecEvalScalarArrayOp(ScalarArrayOpExprState *sstate,
 
 	/* Loop over the array elements */
 	s = (char *) ARR_DATA_PTR(arr);
+	bitmap = ARR_NULLBITMAP(arr);
+	bitmask = 1;
+
 	for (i = 0; i < nitems; i++)
 	{
 		Datum		elt;
 		Datum		thisresult;
 
-		/* Get array element */
-		elt = fetch_att(s, typbyval, typlen);
-
-		s = att_addlength(s, typlen, PointerGetDatum(s));
-		s = (char *) att_align(s, typalign);
+		/* Get array element, checking for NULL */
+		if (bitmap && (*bitmap & bitmask) == 0)
+		{
+			fcinfo.arg[1] = (Datum) 0;
+			fcinfo.argnull[1] = true;
+		}
+		else
+		{
+			elt = fetch_att(s, typbyval, typlen);
+			s = att_addlength(s, typlen, PointerGetDatum(s));
+			s = (char *) att_align(s, typalign);
+			fcinfo.arg[1] = elt;
+			fcinfo.argnull[1] = false;
+		}
 
 		/* Call comparison function */
-		fcinfo.arg[1] = elt;
-		fcinfo.argnull[1] = false;
-		fcinfo.isnull = false;
-		thisresult = FunctionCallInvoke(&fcinfo);
+		if (fcinfo.argnull[1] && sstate->fxprstate.func.fn_strict)
+		{
+			fcinfo.isnull = true;
+			thisresult = (Datum) 0;
+		}
+		else
+		{
+			fcinfo.isnull = false;
+			thisresult = FunctionCallInvoke(&fcinfo);
+		}
 
 		/* Combine results per OR or AND semantics */
 		if (fcinfo.isnull)
@@ -1735,6 +1736,17 @@ ExecEvalScalarArrayOp(ScalarArrayOpExprState *sstate,
 				result = BoolGetDatum(false);
 				resultnull = false;
 				break;			/* needn't look at any more elements */
+			}
+		}
+
+		/* advance bitmap pointer if any */
+		if (bitmap)
+		{
+			bitmask <<= 1;
+			if (bitmask == 0x100)
+			{
+				bitmap++;
+				bitmask = 1;
 			}
 		}
 	}
@@ -2053,10 +2065,6 @@ ExecEvalCaseTestExpr(ExprState *exprstate,
 
 /* ----------------------------------------------------------------
  *		ExecEvalArray - ARRAY[] expressions
- *
- * NOTE: currently, if any input value is NULL then we return a NULL array,
- * so the ARRAY[] construct can be considered strict.  Eventually this will
- * change; when it does, be sure to fix contain_nonstrict_functions().
  * ----------------------------------------------------------------
  */
 static Datum
@@ -2081,39 +2089,33 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 		/* Elements are presumably of scalar type */
 		int			nelems;
 		Datum	   *dvalues;
+		bool	   *dnulls;
 		int			i = 0;
 
 		ndims = 1;
 		nelems = list_length(astate->elements);
 
-		/* Shouldn't happen here, but if length is 0, return NULL */
+		/* Shouldn't happen here, but if length is 0, return empty array */
 		if (nelems == 0)
-		{
-			*isNull = true;
-			return (Datum) 0;
-		}
+			return PointerGetDatum(construct_empty_array(element_type));
 
 		dvalues = (Datum *) palloc(nelems * sizeof(Datum));
+		dnulls = (bool *) palloc(nelems * sizeof(bool));
 
 		/* loop through and build array of datums */
 		foreach(element, astate->elements)
 		{
 			ExprState  *e = (ExprState *) lfirst(element);
-			bool		eisnull;
 
-			dvalues[i++] = ExecEvalExpr(e, econtext, &eisnull, NULL);
-			if (eisnull)
-			{
-				*isNull = true;
-				return (Datum) 0;
-			}
+			dvalues[i] = ExecEvalExpr(e, econtext, &dnulls[i], NULL);
+			i++;
 		}
 
 		/* setup for 1-D array of the given length */
 		dims[0] = nelems;
 		lbs[0] = 1;
 
-		result = construct_md_array(dvalues, ndims, dims, lbs,
+		result = construct_md_array(dvalues, dnulls, ndims, dims, lbs,
 									element_type,
 									astate->elemlength,
 									astate->elembyval,
@@ -2122,15 +2124,28 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 	else
 	{
 		/* Must be nested array expressions */
-		char	   *dat = NULL;
-		Size		ndatabytes = 0;
-		int			nbytes;
-		int			outer_nelems = list_length(astate->elements);
+		int			nbytes = 0;
+		int			nitems = 0;
+		int			outer_nelems = 0;
 		int			elem_ndims = 0;
 		int		   *elem_dims = NULL;
 		int		   *elem_lbs = NULL;
 		bool		firstone = true;
+		bool		havenulls = false;
+		char	  **subdata;
+		bits8	  **subbitmaps;
+		int		   *subbytes;
+		int		   *subnitems;
 		int			i;
+		int32		dataoffset;
+		char	   *dat;
+		int			iitem;
+
+		i = list_length(astate->elements);
+		subdata = (char **) palloc(i * sizeof(char *));
+		subbitmaps = (bits8 **) palloc(i * sizeof(bits8 *));
+		subbytes = (int *) palloc(i * sizeof(int));
+		subnitems = (int *) palloc(i * sizeof(int));
 
 		/* loop through and get data area from each element */
 		foreach(element, astate->elements)
@@ -2139,14 +2154,11 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 			bool		eisnull;
 			Datum		arraydatum;
 			ArrayType  *array;
-			int			elem_ndatabytes;
 
 			arraydatum = ExecEvalExpr(e, econtext, &eisnull, NULL);
+			/* ignore null subarrays */
 			if (eisnull)
-			{
-				*isNull = true;
-				return (Datum) 0;
-			}
+				continue;
 
 			array = DatumGetArrayTypeP(arraydatum);
 
@@ -2192,16 +2204,15 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 									"expressions with matching dimensions")));
 			}
 
-			elem_ndatabytes = ARR_SIZE(array) - ARR_OVERHEAD(elem_ndims);
-			ndatabytes += elem_ndatabytes;
-			if (dat == NULL)
-				dat = (char *) palloc(ndatabytes);
-			else
-				dat = (char *) repalloc(dat, ndatabytes);
-
-			memcpy(dat + (ndatabytes - elem_ndatabytes),
-				   ARR_DATA_PTR(array),
-				   elem_ndatabytes);
+			subdata[outer_nelems] = ARR_DATA_PTR(array);
+			subbitmaps[outer_nelems] = ARR_NULLBITMAP(array);
+			subbytes[outer_nelems] = ARR_SIZE(array) - ARR_DATA_OFFSET(array);
+			nbytes += subbytes[outer_nelems];
+			subnitems[outer_nelems] = ArrayGetNItems(ARR_NDIM(array),
+													 ARR_DIMS(array));
+			nitems += subnitems[outer_nelems];
+			havenulls |= ARR_HASNULL(array);
+			outer_nelems++;
 		}
 
 		/* setup for multi-D array */
@@ -2213,20 +2224,37 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 			lbs[i] = elem_lbs[i - 1];
 		}
 
-		nbytes = ndatabytes + ARR_OVERHEAD(ndims);
-		result = (ArrayType *) palloc(nbytes);
+		if (havenulls)
+		{
+			dataoffset = ARR_OVERHEAD_WITHNULLS(ndims, nitems);
+			nbytes += dataoffset;
+		}
+		else
+		{
+			dataoffset = 0;			/* marker for no null bitmap */
+			nbytes += ARR_OVERHEAD_NONULLS(ndims);
+		}
 
+		result = (ArrayType *) palloc(nbytes);
 		result->size = nbytes;
 		result->ndim = ndims;
-		result->flags = 0;
+		result->dataoffset = dataoffset;
 		result->elemtype = element_type;
 		memcpy(ARR_DIMS(result), dims, ndims * sizeof(int));
 		memcpy(ARR_LBOUND(result), lbs, ndims * sizeof(int));
-		if (ndatabytes > 0)
-			memcpy(ARR_DATA_PTR(result), dat, ndatabytes);
 
-		if (dat != NULL)
-			pfree(dat);
+		dat = ARR_DATA_PTR(result);
+		iitem = 0;
+		for (i = 0; i < outer_nelems; i++)
+		{
+			memcpy(dat, subdata[i], subbytes[i]);
+			dat += subbytes[i];
+			if (havenulls)
+				array_bitmap_copy(ARR_NULLBITMAP(result), iitem,
+								  subbitmaps[i], 0,
+								  subnitems[i]);
+			iitem += subnitems[i];
+		}
 	}
 
 	return PointerGetDatum(result);

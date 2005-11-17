@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.64 2005/10/15 02:49:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.65 2005/11/17 22:14:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,7 +176,7 @@ buildoidvector(const Oid *oids, int n)
 	 */
 	result->size = OidVectorSize(n);
 	result->ndim = 1;
-	result->flags = 0;
+	result->dataoffset = 0;		/* never any nulls */
 	result->elemtype = OIDOID;
 	result->dim1 = n;
 	result->lbound1 = 0;
@@ -213,7 +213,7 @@ oidvectorin(PG_FUNCTION_ARGS)
 
 	result->size = OidVectorSize(n);
 	result->ndim = 1;
-	result->flags = 0;
+	result->dataoffset = 0;		/* never any nulls */
 	result->elemtype = OIDOID;
 	result->dim1 = n;
 	result->lbound1 = 0;
@@ -262,9 +262,9 @@ oidvectorrecv(PG_FUNCTION_ARGS)
 											ObjectIdGetDatum(OIDOID),
 											Int32GetDatum(-1)));
 	/* sanity checks: oidvector must be 1-D, no nulls */
-	if (result->ndim != 1 ||
-		result->flags != 0 ||
-		result->elemtype != OIDOID)
+	if (ARR_NDIM(result) != 1 ||
+		ARR_HASNULL(result) ||
+		ARR_ELEMTYPE(result) != OIDOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 				 errmsg("invalid oidvector data")));

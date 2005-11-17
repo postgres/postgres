@@ -91,7 +91,7 @@ select testint4arr[1], testtextarr[2:2] from domarrtest;
  testint4arr | testtextarr 
 -------------+-------------
            2 | {{c,d}}
-             | 
+             | {}
            2 | {{c,d}}
            2 | {{c}}
              | {{d,e,f}}

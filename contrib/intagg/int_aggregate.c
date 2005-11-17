@@ -87,7 +87,7 @@ GetPGArray(PGARRAY * p, AggState *aggstate, bool fAdd)
 		p = (PGARRAY *) MemoryContextAlloc(aggstate->aggcontext, cb);
 		p->a.size = cb;
 		p->a.ndim = 1;
-		p->a.flags = 0;
+		p->a.dataoffset = 0;	/* we don't support nulls, for now */
 		p->a.elemtype = INT4OID;
 		p->items = 0;
 		p->lower = START_NUM;

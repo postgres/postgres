@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.388 2005/11/07 17:36:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.389 2005/11/17 22:14:54 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -995,11 +995,11 @@ DATA(insert OID = 2091 (  array_lower	   PGNSP PGUID 12 f f t f i 2 23 "2277 23"
 DESCR("array lower dimension");
 DATA(insert OID = 2092 (  array_upper	   PGNSP PGUID 12 f f t f i 2 23 "2277 23" _null_ _null_ _null_ array_upper - _null_ ));
 DESCR("array upper dimension");
-DATA(insert OID = 378 (  array_append	   PGNSP PGUID 12 f f t f i 2 2277 "2277 2283" _null_ _null_ _null_ array_push - _null_ ));
+DATA(insert OID = 378 (  array_append	   PGNSP PGUID 12 f f f f i 2 2277 "2277 2283" _null_ _null_ _null_ array_push - _null_ ));
 DESCR("append element onto end of array");
-DATA(insert OID = 379 (  array_prepend	   PGNSP PGUID 12 f f t f i 2 2277 "2283 2277" _null_ _null_ _null_ array_push - _null_ ));
+DATA(insert OID = 379 (  array_prepend	   PGNSP PGUID 12 f f f f i 2 2277 "2283 2277" _null_ _null_ _null_ array_push - _null_ ));
 DESCR("prepend element onto front of array");
-DATA(insert OID = 383 (  array_cat		   PGNSP PGUID 12 f f t f i 2 2277 "2277 2277" _null_ _null_ _null_ array_cat - _null_ ));
+DATA(insert OID = 383 (  array_cat		   PGNSP PGUID 12 f f f f i 2 2277 "2277 2277" _null_ _null_ _null_ array_cat - _null_ ));
 DESCR("concatenate two arrays");
 DATA(insert OID = 384  (  array_coerce	   PGNSP PGUID 12 f f t f s 1 2277 "2277" _null_ _null_ _null_ array_type_coerce - _null_ ));
 DESCR("coerce array to another array type");
