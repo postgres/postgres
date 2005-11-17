@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.198 2005/10/27 17:07:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.198.2.1 2005/11/17 17:42:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1384,34 +1384,17 @@ DropRelFileNodeBuffers(RelFileNode rnode, bool istemp,
 					   BlockNumber firstDelBlock)
 {
 	int			i;
-	volatile BufferDesc *bufHdr;
 
 	if (istemp)
 	{
-		for (i = 0; i < NLocBuffer; i++)
-		{
-			bufHdr = &LocalBufferDescriptors[i];
-			if (RelFileNodeEquals(bufHdr->tag.rnode, rnode) &&
-				bufHdr->tag.blockNum >= firstDelBlock)
-			{
-				if (LocalRefCount[i] != 0)
-					elog(ERROR, "block %u of %u/%u/%u is still referenced (local %u)",
-						 bufHdr->tag.blockNum,
-						 bufHdr->tag.rnode.spcNode,
-						 bufHdr->tag.rnode.dbNode,
-						 bufHdr->tag.rnode.relNode,
-						 LocalRefCount[i]);
-				CLEAR_BUFFERTAG(bufHdr->tag);
-				bufHdr->flags = 0;
-				bufHdr->usage_count = 0;
-			}
-		}
+		DropRelFileNodeLocalBuffers(rnode, firstDelBlock);
 		return;
 	}
 
 	for (i = 0; i < NBuffers; i++)
 	{
-		bufHdr = &BufferDescriptors[i];
+		volatile BufferDesc *bufHdr = &BufferDescriptors[i];
+
 		LockBufHdr(bufHdr);
 		if (RelFileNodeEquals(bufHdr->tag.rnode, rnode) &&
 			bufHdr->tag.blockNum >= firstDelBlock)
