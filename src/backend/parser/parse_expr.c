@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.179.4.2 2005/05/25 02:17:55 ishii Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.179.4.3 2005/11/18 23:08:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1562,8 +1562,12 @@ exprTypmod(Node *expr)
 				int32		typmod;
 				ListCell   *arg;
 
+				if (exprType((Node *) linitial(cexpr->args)) != coalescetype)
+					return -1;
 				typmod = exprTypmod((Node *) linitial(cexpr->args));
-				foreach(arg, cexpr->args)
+				if (typmod < 0)
+					return -1;	/* no point in trying harder */
+				for_each_cell(arg, lnext(list_head(cexpr->args)))
 				{
 					Node	   *e = (Node *) lfirst(arg);
 
