@@ -297,7 +297,7 @@ SELECT * FROM recurse(3);
 ---
 CREATE OR REPLACE FUNCTION  array_of_text() RETURNS TEXT[][] 
 LANGUAGE plperl as $$ 
-    return [['a"b','c,d'],['e\\f','g']]; 
+    return [['a"b',undef,'c,d'],['e\\f',undef,'g']]; 
 $$;
 
 SELECT array_of_text(); 
