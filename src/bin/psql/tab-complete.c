@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.140 2005/11/14 17:48:43 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.141 2005/11/18 16:31:11 alvherre Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -1597,6 +1597,10 @@ psql_completion(char *text, int start, int end)
 			 && pg_strcasecmp(prev2_wd, "SESSION") == 0
 			 && pg_strcasecmp(prev_wd, "AUTHORIZATION") == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
+	/* Complete RESET SESSION with AUTHORIZATION */
+	else if (pg_strcasecmp(prev2_wd, "RESET") == 0 &&
+			 pg_strcasecmp(prev_wd, "SESSION") == 0)
+		COMPLETE_WITH_CONST("AUTHORIZATION");
 	/* Complete SET <var> with "TO" */
 	else if (pg_strcasecmp(prev2_wd, "SET") == 0 &&
 			 pg_strcasecmp(prev4_wd, "UPDATE") != 0 &&
