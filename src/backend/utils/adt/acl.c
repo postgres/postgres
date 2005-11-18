@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.128 2005/11/17 22:14:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.129 2005/11/18 02:38:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +67,7 @@ static List *cached_membership_roles = NIL;
 static const char *getid(const char *s, char *n);
 static void putid(char *p, const char *s);
 static Acl *allocacl(int n);
+static void check_acl(const Acl *acl);
 static const char *aclparse(const char *s, AclItem *aip);
 static bool aclitem_match(const AclItem *a1, const AclItem *a2);
 static void check_circularity(const Acl *old_acl, const AclItem *mod_aip,
@@ -360,6 +361,26 @@ allocacl(int n)
 }
 
 /*
+ * Verify that an ACL array is acceptable (one-dimensional and has no nulls)
+ */
+static void
+check_acl(const Acl *acl)
+{
+	if (ARR_ELEMTYPE(acl) != ACLITEMOID)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("ACL array contains wrong datatype")));
+	if (ARR_NDIM(acl) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("ACL arrays must be one-dimensional")));
+	if (ARR_HASNULL(acl))
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("ACL arrays must not contain nulls")));
+}
+
+/*
  * aclitemin
  *		Allocates storage for, and fills in, a new AclItem given a string
  *		's' that contains an ACL specification.  See aclparse for details.
@@ -612,15 +633,8 @@ aclupdate(const Acl *old_acl, const AclItem *mod_aip,
 	int			dst,
 				num;
 
-	/* These checks for null input are probably dead code, but... */
-	if (!old_acl || ACL_NUM(old_acl) < 0)
-		old_acl = allocacl(0);
-	if (!mod_aip)
-	{
-		new_acl = allocacl(ACL_NUM(old_acl));
-		memcpy(new_acl, old_acl, ACL_SIZE(old_acl));
-		return new_acl;
-	}
+	/* Caller probably already checked old_acl, but be safe */
+	check_acl(old_acl);
 
 	/* If granting grant options, check for circularity */
 	if (modechg != ACL_MODECHG_DEL &&
@@ -740,6 +754,8 @@ aclnewowner(const Acl *old_acl, Oid oldOwnerId, Oid newOwnerId)
 				targ,
 				num;
 
+	check_acl(old_acl);
+
 	/*
 	 * Make a copy of the given ACL, substituting new owner ID for old
 	 * wherever it appears as either grantor or grantee.  Also note if the new
@@ -836,6 +852,8 @@ check_circularity(const Acl *old_acl, const AclItem *mod_aip,
 				num;
 	AclMode		own_privs;
 
+	check_acl(old_acl);
+
 	/*
 	 * For now, grant options can only be granted to roles, not PUBLIC.
 	 * Otherwise we'd have to work a bit harder here.
@@ -915,6 +933,8 @@ recursive_revoke(Acl *acl,
 	AclItem    *aip;
 	int			i,
 				num;
+
+	check_acl(acl);
 
 	/* The owner can never truly lose grant options, so short-circuit */
 	if (grantee == ownerId)
@@ -1005,6 +1025,8 @@ aclmask(const Acl *acl, Oid roleid, Oid ownerId,
 	if (acl == NULL)
 		elog(ERROR, "null ACL");
 
+	check_acl(acl);
+
 	/* Quick exit for mask == 0 */
 	if (mask == 0)
 		return 0;
@@ -1091,6 +1113,8 @@ aclmask_direct(const Acl *acl, Oid roleid, Oid ownerId,
 	if (acl == NULL)
 		elog(ERROR, "null ACL");
 
+	check_acl(acl);
+
 	/* Quick exit for mask == 0 */
 	if (mask == 0)
 		return 0;
@@ -1150,6 +1174,8 @@ aclmembers(const Acl *acl, Oid **roleids)
 		*roleids = NULL;
 		return 0;
 	}
+
+	check_acl(acl);
 
 	/* Allocate the worst-case space requirement */
 	list = palloc(ACL_NUM(acl) * 2 * sizeof(Oid));
@@ -1240,6 +1266,7 @@ aclcontains(PG_FUNCTION_ARGS)
 	int			i,
 				num;
 
+	check_acl(acl);
 	num = ACL_NUM(acl);
 	aidat = ACL_DAT(acl);
 	for (i = 0; i < num; ++i)

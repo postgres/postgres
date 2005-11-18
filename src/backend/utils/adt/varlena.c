@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.139 2005/10/29 00:31:51 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.140 2005/11/18 02:38:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2491,16 +2491,18 @@ array_to_text(PG_FUNCTION_ARGS)
 	int			nitems,
 			   *dims,
 				ndims;
-	char	   *p;
 	Oid			element_type;
 	int			typlen;
 	bool		typbyval;
 	char		typalign;
 	StringInfo	result_str = makeStringInfo();
+	bool		printed = false;
+	char	   *p;
+	bits8	   *bitmap;
+	int			bitmask;
 	int			i;
 	ArrayMetaState *my_extra;
 
-	p = ARR_DATA_PTR(v);
 	ndims = ARR_NDIM(v);
 	dims = ARR_DIMS(v);
 	nitems = ArrayGetNItems(ndims, dims);
@@ -2522,7 +2524,7 @@ array_to_text(PG_FUNCTION_ARGS)
 		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
 													  sizeof(ArrayMetaState));
 		my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
-		my_extra->element_type = InvalidOid;
+		my_extra->element_type = ~element_type;
 	}
 
 	if (my_extra->element_type != element_type)
@@ -2542,23 +2544,47 @@ array_to_text(PG_FUNCTION_ARGS)
 	typbyval = my_extra->typbyval;
 	typalign = my_extra->typalign;
 
+	p = ARR_DATA_PTR(v);
+	bitmap = ARR_NULLBITMAP(v);
+	bitmask = 1;
+
 	for (i = 0; i < nitems; i++)
 	{
 		Datum		itemvalue;
 		char	   *value;
 
-		itemvalue = fetch_att(p, typbyval, typlen);
-
-		value = DatumGetCString(FunctionCall1(&my_extra->proc,
-											  itemvalue));
-
-		if (i > 0)
-			appendStringInfo(result_str, "%s%s", fldsep, value);
+		/* Get source element, checking for NULL */
+		if (bitmap && (*bitmap & bitmask) == 0)
+		{
+			/* we ignore nulls */
+		}
 		else
-			appendStringInfoString(result_str, value);
+		{
+			itemvalue = fetch_att(p, typbyval, typlen);
 
-		p = att_addlength(p, typlen, PointerGetDatum(p));
-		p = (char *) att_align(p, typalign);
+			value = DatumGetCString(FunctionCall1(&my_extra->proc,
+												  itemvalue));
+
+			if (printed)
+				appendStringInfo(result_str, "%s%s", fldsep, value);
+			else
+				appendStringInfoString(result_str, value);
+			printed = true;
+
+			p = att_addlength(p, typlen, PointerGetDatum(p));
+			p = (char *) att_align(p, typalign);
+		}
+
+		/* advance bitmap pointer if any */
+		if (bitmap)
+		{
+			bitmask <<= 1;
+			if (bitmask == 0x100)
+			{
+				bitmap++;
+				bitmask = 1;
+			}
+		}
 	}
 
 	PG_RETURN_TEXT_P(PG_STR_GET_TEXT(result_str->data));

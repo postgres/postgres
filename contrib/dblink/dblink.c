@@ -73,6 +73,7 @@ static HTAB *createConnHash(void);
 static void createNewConnection(const char *name, remoteConn * rconn);
 static void deleteConnection(const char *name);
 static char **get_pkey_attnames(Oid relid, int16 *numatts);
+static char **get_text_array_contents(ArrayType *array, int *numitems);
 static char *get_sql_insert(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pkattvals, char **tgt_pkattvals);
 static char *get_sql_delete(Oid relid, int2vector *pkattnums, int16 pknumatts, char **tgt_pkattvals);
 static char *get_sql_update(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pkattvals, char **tgt_pkattvals);
@@ -1120,29 +1121,18 @@ PG_FUNCTION_INFO_V1(dblink_build_sql_insert);
 Datum
 dblink_build_sql_insert(PG_FUNCTION_ARGS)
 {
+	text	   *relname_text = PG_GETARG_TEXT_P(0);
+	int2vector *pkattnums = (int2vector *) PG_GETARG_POINTER(1);
+	int32		pknumatts_tmp = PG_GETARG_INT32(2);
+	ArrayType  *src_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(3);
+	ArrayType  *tgt_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(4);
 	Oid			relid;
-	text	   *relname_text;
-	int2vector *pkattnums;
-	int			pknumatts_tmp;
 	int16		pknumatts = 0;
 	char	  **src_pkattvals;
 	char	  **tgt_pkattvals;
-	ArrayType  *src_pkattvals_arry;
-	ArrayType  *tgt_pkattvals_arry;
-	int			src_ndim;
-	int		   *src_dim;
 	int			src_nitems;
-	int			tgt_ndim;
-	int		   *tgt_dim;
 	int			tgt_nitems;
-	int			i;
-	char	   *ptr;
 	char	   *sql;
-	int16		typlen;
-	bool		typbyval;
-	char		typalign;
-
-	relname_text = PG_GETARG_TEXT_P(0);
 
 	/*
 	 * Convert relname to rel OID.
@@ -1154,8 +1144,14 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 				 errmsg("relation \"%s\" does not exist",
 						GET_STR(relname_text))));
 
-	pkattnums = (int2vector *) PG_GETARG_POINTER(1);
-	pknumatts_tmp = PG_GETARG_INT32(2);
+	/*
+	 * There should be at least one key attribute
+	 */
+	if (pknumatts_tmp <= 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("number of key attributes must be > 0")));
+
 	if (pknumatts_tmp <= SHRT_MAX)
 		pknumatts = pknumatts_tmp;
 	else
@@ -1165,23 +1161,10 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 						"attributes too large")));
 
 	/*
-	 * There should be at least one key attribute
-	 */
-	if (pknumatts == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("number of key attributes must be > 0")));
-
-	src_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(3);
-	tgt_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(4);
-
-	/*
 	 * Source array is made up of key values that will be used to locate the
 	 * tuple of interest from the local system.
 	 */
-	src_ndim = ARR_NDIM(src_pkattvals_arry);
-	src_dim = ARR_DIMS(src_pkattvals_arry);
-	src_nitems = ArrayGetNItems(src_ndim, src_dim);
+	src_pkattvals = get_text_array_contents(src_pkattvals_arry, &src_nitems);
 
 	/*
 	 * There should be one source array key value for each key attnum
@@ -1193,28 +1176,10 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 						"attributes")));
 
 	/*
-	 * get array of pointers to c-strings from the input source array
-	 */
-	Assert(ARR_ELEMTYPE(src_pkattvals_arry) == TEXTOID);
-	get_typlenbyvalalign(ARR_ELEMTYPE(src_pkattvals_arry),
-						 &typlen, &typbyval, &typalign);
-
-	src_pkattvals = (char **) palloc(src_nitems * sizeof(char *));
-	ptr = ARR_DATA_PTR(src_pkattvals_arry);
-	for (i = 0; i < src_nitems; i++)
-	{
-		src_pkattvals[i] = DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(ptr)));
-		ptr = att_addlength(ptr, typlen, PointerGetDatum(ptr));
-		ptr = (char *) att_align(ptr, typalign);
-	}
-
-	/*
 	 * Target array is made up of key values that will be used to build the
 	 * SQL string for use on the remote system.
 	 */
-	tgt_ndim = ARR_NDIM(tgt_pkattvals_arry);
-	tgt_dim = ARR_DIMS(tgt_pkattvals_arry);
-	tgt_nitems = ArrayGetNItems(tgt_ndim, tgt_dim);
+	tgt_pkattvals = get_text_array_contents(tgt_pkattvals_arry, &tgt_nitems);
 
 	/*
 	 * There should be one target array key value for each key attnum
@@ -1224,22 +1189,6 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("target key array length must match number of key " \
 						"attributes")));
-
-	/*
-	 * get array of pointers to c-strings from the input target array
-	 */
-	Assert(ARR_ELEMTYPE(tgt_pkattvals_arry) == TEXTOID);
-	get_typlenbyvalalign(ARR_ELEMTYPE(tgt_pkattvals_arry),
-						 &typlen, &typbyval, &typalign);
-
-	tgt_pkattvals = (char **) palloc(tgt_nitems * sizeof(char *));
-	ptr = ARR_DATA_PTR(tgt_pkattvals_arry);
-	for (i = 0; i < tgt_nitems; i++)
-	{
-		tgt_pkattvals[i] = DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(ptr)));
-		ptr = att_addlength(ptr, typlen, PointerGetDatum(ptr));
-		ptr = (char *) att_align(ptr, typalign);
-	}
 
 	/*
 	 * Prep work is finally done. Go get the SQL string.
@@ -1272,24 +1221,15 @@ PG_FUNCTION_INFO_V1(dblink_build_sql_delete);
 Datum
 dblink_build_sql_delete(PG_FUNCTION_ARGS)
 {
+	text	   *relname_text = PG_GETARG_TEXT_P(0);
+	int2vector *pkattnums = (int2vector *) PG_GETARG_POINTER(1);
+	int32		pknumatts_tmp = PG_GETARG_INT32(2);
+	ArrayType  *tgt_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(3);
 	Oid			relid;
-	text	   *relname_text;
-	int2vector *pkattnums;
-	int			pknumatts_tmp;
 	int16		pknumatts = 0;
 	char	  **tgt_pkattvals;
-	ArrayType  *tgt_pkattvals_arry;
-	int			tgt_ndim;
-	int		   *tgt_dim;
 	int			tgt_nitems;
-	int			i;
-	char	   *ptr;
 	char	   *sql;
-	int16		typlen;
-	bool		typbyval;
-	char		typalign;
-
-	relname_text = PG_GETARG_TEXT_P(0);
 
 	/*
 	 * Convert relname to rel OID.
@@ -1301,8 +1241,14 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 				 errmsg("relation \"%s\" does not exist",
 						GET_STR(relname_text))));
 
-	pkattnums = (int2vector *) PG_GETARG_POINTER(1);
-	pknumatts_tmp = PG_GETARG_INT32(2);
+	/*
+	 * There should be at least one key attribute
+	 */
+	if (pknumatts_tmp <= 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("number of key attributes must be > 0")));
+
 	if (pknumatts_tmp <= SHRT_MAX)
 		pknumatts = pknumatts_tmp;
 	else
@@ -1312,22 +1258,10 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 						"attributes too large")));
 
 	/*
-	 * There should be at least one key attribute
-	 */
-	if (pknumatts == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("number of key attributes must be > 0")));
-
-	tgt_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(3);
-
-	/*
 	 * Target array is made up of key values that will be used to build the
 	 * SQL string for use on the remote system.
 	 */
-	tgt_ndim = ARR_NDIM(tgt_pkattvals_arry);
-	tgt_dim = ARR_DIMS(tgt_pkattvals_arry);
-	tgt_nitems = ArrayGetNItems(tgt_ndim, tgt_dim);
+	tgt_pkattvals = get_text_array_contents(tgt_pkattvals_arry, &tgt_nitems);
 
 	/*
 	 * There should be one target array key value for each key attnum
@@ -1337,22 +1271,6 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("target key array length must match number of key " \
 						"attributes")));
-
-	/*
-	 * get array of pointers to c-strings from the input target array
-	 */
-	Assert(ARR_ELEMTYPE(tgt_pkattvals_arry) == TEXTOID);
-	get_typlenbyvalalign(ARR_ELEMTYPE(tgt_pkattvals_arry),
-						 &typlen, &typbyval, &typalign);
-
-	tgt_pkattvals = (char **) palloc(tgt_nitems * sizeof(char *));
-	ptr = ARR_DATA_PTR(tgt_pkattvals_arry);
-	for (i = 0; i < tgt_nitems; i++)
-	{
-		tgt_pkattvals[i] = DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(ptr)));
-		ptr = att_addlength(ptr, typlen, PointerGetDatum(ptr));
-		ptr = (char *) att_align(ptr, typalign);
-	}
 
 	/*
 	 * Prep work is finally done. Go get the SQL string.
@@ -1389,29 +1307,18 @@ PG_FUNCTION_INFO_V1(dblink_build_sql_update);
 Datum
 dblink_build_sql_update(PG_FUNCTION_ARGS)
 {
+	text	   *relname_text = PG_GETARG_TEXT_P(0);
+	int2vector *pkattnums = (int2vector *) PG_GETARG_POINTER(1);
+	int32		pknumatts_tmp = PG_GETARG_INT32(2);
+	ArrayType  *src_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(3);
+	ArrayType  *tgt_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(4);
 	Oid			relid;
-	text	   *relname_text;
-	int2vector *pkattnums;
-	int			pknumatts_tmp;
 	int16		pknumatts = 0;
 	char	  **src_pkattvals;
 	char	  **tgt_pkattvals;
-	ArrayType  *src_pkattvals_arry;
-	ArrayType  *tgt_pkattvals_arry;
-	int			src_ndim;
-	int		   *src_dim;
 	int			src_nitems;
-	int			tgt_ndim;
-	int		   *tgt_dim;
 	int			tgt_nitems;
-	int			i;
-	char	   *ptr;
 	char	   *sql;
-	int16		typlen;
-	bool		typbyval;
-	char		typalign;
-
-	relname_text = PG_GETARG_TEXT_P(0);
 
 	/*
 	 * Convert relname to rel OID.
@@ -1423,8 +1330,14 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 				 errmsg("relation \"%s\" does not exist",
 						GET_STR(relname_text))));
 
-	pkattnums = (int2vector *) PG_GETARG_POINTER(1);
-	pknumatts_tmp = PG_GETARG_INT32(2);
+	/*
+	 * There should be one source array key values for each key attnum
+	 */
+	if (pknumatts_tmp <= 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("number of key attributes must be > 0")));
+
 	if (pknumatts_tmp <= SHRT_MAX)
 		pknumatts = pknumatts_tmp;
 	else
@@ -1434,23 +1347,10 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 						"attributes too large")));
 
 	/*
-	 * There should be one source array key values for each key attnum
-	 */
-	if (pknumatts == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("number of key attributes must be > 0")));
-
-	src_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(3);
-	tgt_pkattvals_arry = PG_GETARG_ARRAYTYPE_P(4);
-
-	/*
 	 * Source array is made up of key values that will be used to locate the
 	 * tuple of interest from the local system.
 	 */
-	src_ndim = ARR_NDIM(src_pkattvals_arry);
-	src_dim = ARR_DIMS(src_pkattvals_arry);
-	src_nitems = ArrayGetNItems(src_ndim, src_dim);
+	src_pkattvals = get_text_array_contents(src_pkattvals_arry, &src_nitems);
 
 	/*
 	 * There should be one source array key value for each key attnum
@@ -1462,28 +1362,10 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 						"attributes")));
 
 	/*
-	 * get array of pointers to c-strings from the input source array
-	 */
-	Assert(ARR_ELEMTYPE(src_pkattvals_arry) == TEXTOID);
-	get_typlenbyvalalign(ARR_ELEMTYPE(src_pkattvals_arry),
-						 &typlen, &typbyval, &typalign);
-
-	src_pkattvals = (char **) palloc(src_nitems * sizeof(char *));
-	ptr = ARR_DATA_PTR(src_pkattvals_arry);
-	for (i = 0; i < src_nitems; i++)
-	{
-		src_pkattvals[i] = DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(ptr)));
-		ptr = att_addlength(ptr, typlen, PointerGetDatum(ptr));
-		ptr = (char *) att_align(ptr, typalign);
-	}
-
-	/*
 	 * Target array is made up of key values that will be used to build the
 	 * SQL string for use on the remote system.
 	 */
-	tgt_ndim = ARR_NDIM(tgt_pkattvals_arry);
-	tgt_dim = ARR_DIMS(tgt_pkattvals_arry);
-	tgt_nitems = ArrayGetNItems(tgt_ndim, tgt_dim);
+	tgt_pkattvals = get_text_array_contents(tgt_pkattvals_arry, &tgt_nitems);
 
 	/*
 	 * There should be one target array key value for each key attnum
@@ -1493,22 +1375,6 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("target key array length must match number of key " \
 						"attributes")));
-
-	/*
-	 * get array of pointers to c-strings from the input target array
-	 */
-	Assert(ARR_ELEMTYPE(tgt_pkattvals_arry) == TEXTOID);
-	get_typlenbyvalalign(ARR_ELEMTYPE(tgt_pkattvals_arry),
-						 &typlen, &typbyval, &typalign);
-
-	tgt_pkattvals = (char **) palloc(tgt_nitems * sizeof(char *));
-	ptr = ARR_DATA_PTR(tgt_pkattvals_arry);
-	for (i = 0; i < tgt_nitems; i++)
-	{
-		tgt_pkattvals[i] = DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(ptr)));
-		ptr = att_addlength(ptr, typlen, PointerGetDatum(ptr));
-		ptr = (char *) att_align(ptr, typalign);
-	}
 
 	/*
 	 * Prep work is finally done. Go get the SQL string.
@@ -1598,6 +1464,67 @@ get_pkey_attnames(Oid relid, int16 *numatts)
 	return result;
 }
 
+/*
+ * Deconstruct a text[] into C-strings (note any NULL elements will be
+ * returned as NULL pointers)
+ */
+static char **
+get_text_array_contents(ArrayType *array, int *numitems)
+{
+	int			ndim = ARR_NDIM(array);
+	int		   *dims = ARR_DIMS(array);
+	int			nitems;
+	int16		typlen;
+	bool		typbyval;
+	char		typalign;
+	char	  **values;
+	char	   *ptr;
+	bits8	   *bitmap;
+	int			bitmask;
+	int			i;
+
+	Assert(ARR_ELEMTYPE(array) == TEXTOID);
+
+	*numitems = nitems = ArrayGetNItems(ndim, dims);
+
+	get_typlenbyvalalign(ARR_ELEMTYPE(array),
+						 &typlen, &typbyval, &typalign);
+
+	values = (char **) palloc(nitems * sizeof(char *));
+
+	ptr = ARR_DATA_PTR(array);
+	bitmap = ARR_NULLBITMAP(array);
+	bitmask = 1;
+
+	for (i = 0; i < nitems; i++)
+	{
+		if (bitmap && (*bitmap & bitmask) == 0)
+		{
+			values[i] = NULL;
+		}
+		else
+		{
+			values[i] = DatumGetCString(DirectFunctionCall1(textout,
+														PointerGetDatum(ptr)));
+			ptr = att_addlength(ptr, typlen, PointerGetDatum(ptr));
+			ptr = (char *) att_align(ptr, typalign);
+		}
+
+		/* advance bitmap pointer if any */
+		if (bitmap)
+		{
+			bitmask <<= 1;
+			if (bitmask == 0x100)
+			{
+				bitmap++;
+				bitmask = 1;
+			}
+		}
+	}
+
+	return values;
+}
+
 static char *
 get_sql_insert(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pkattvals, char **tgt_pkattvals)
 {
@@ -1665,7 +1592,7 @@ get_sql_insert(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pka
 			key = -1;
 
 		if (key > -1)
-			val = pstrdup(tgt_pkattvals[key]);
+			val = tgt_pkattvals[key] ? pstrdup(tgt_pkattvals[key]) : NULL;
 		else
 			val = SPI_getvalue(tuple, tupdesc, i + 1);
 
@@ -1697,7 +1624,6 @@ get_sql_delete(Oid relid, int2vector *pkattnums, int16 pknumatts, char **tgt_pka
 	int			natts;
 	StringInfo	str = makeStringInfo();
 	char	   *sql;
-	char	   *val = NULL;
 	int			i;
 
 	/* get relation name including any needed schema prefix and quoting */
@@ -1721,17 +1647,13 @@ get_sql_delete(Oid relid, int2vector *pkattnums, int16 pknumatts, char **tgt_pka
 		appendStringInfo(str, "%s",
 		   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum - 1]->attname)));
 
-		if (tgt_pkattvals != NULL)
-			val = pstrdup(tgt_pkattvals[i]);
-		else
+		if (tgt_pkattvals == NULL)
 			/* internal error */
 			elog(ERROR, "target key array must not be NULL");
 
-		if (val != NULL)
-		{
-			appendStringInfo(str, " = %s", quote_literal_cstr(val));
-			pfree(val);
-		}
+		if (tgt_pkattvals[i] != NULL)
+			appendStringInfo(str, " = %s",
+							 quote_literal_cstr(tgt_pkattvals[i]));
 		else
 			appendStringInfo(str, " IS NULL");
 	}
@@ -1795,7 +1717,7 @@ get_sql_update(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pka
 			key = -1;
 
 		if (key > -1)
-			val = pstrdup(tgt_pkattvals[key]);
+			val = tgt_pkattvals[key] ?  pstrdup(tgt_pkattvals[key]) : NULL;
 		else
 			val = SPI_getvalue(tuple, tupdesc, i + 1);
 
@@ -1822,7 +1744,7 @@ get_sql_update(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pka
 		   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum - 1]->attname)));
 
 		if (tgt_pkattvals != NULL)
-			val = pstrdup(tgt_pkattvals[i]);
+			val = tgt_pkattvals[i] ?  pstrdup(tgt_pkattvals[i]) : NULL;
 		else
 			val = SPI_getvalue(tuple, tupdesc, pkattnum);
 
@@ -1905,7 +1827,6 @@ get_tuple_of_interest(Oid relid, int2vector *pkattnums, int16 pknumatts, char **
 	int			ret;
 	HeapTuple	tuple;
 	int			i;
-	char	   *val = NULL;
 
 	/* get relation name including any needed schema prefix and quoting */
 	relname = generate_relation_name(relid);
@@ -1940,12 +1861,9 @@ get_tuple_of_interest(Oid relid, int2vector *pkattnums, int16 pknumatts, char **
 		appendStringInfo(str, "%s",
 		   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum - 1]->attname)));
 
-		val = pstrdup(src_pkattvals[i]);
-		if (val != NULL)
-		{
-			appendStringInfo(str, " = %s", quote_literal_cstr(val));
-			pfree(val);
-		}
+		if (src_pkattvals[i] != NULL)
+			appendStringInfo(str, " = %s",
+							 quote_literal_cstr(src_pkattvals[i]));
 		else
 			appendStringInfo(str, " IS NULL");
 	}

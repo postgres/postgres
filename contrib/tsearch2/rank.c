@@ -3,20 +3,20 @@
  * Teodor Sigaev <teodor@sigaev.ru>
  */
 #include "postgres.h"
+
 #include <math.h>
 
 #include "access/gist.h"
 #include "access/itup.h"
-#include "utils/builtins.h"
+#include "catalog/namespace.h"
+#include "commands/trigger.h"
+#include "executor/spi.h"
 #include "fmgr.h"
 #include "funcapi.h"
-#include "storage/bufpage.h"
-#include "executor/spi.h"
-#include "commands/trigger.h"
 #include "nodes/pg_list.h"
-#include "catalog/namespace.h"
-
+#include "storage/bufpage.h"
 #include "utils/array.h"
+#include "utils/builtins.h"
 
 #include "tsvector.h"
 #include "query.h"
@@ -354,6 +354,7 @@ rank(PG_FUNCTION_ARGS)
 	int			method = DEF_NORM_METHOD;
 	float		res = 0.0;
 	float		ws[lengthof(weights)];
+	float4	   *arrdata;
 	int			i;
 
 	if (ARR_NDIM(win) != 1)
@@ -366,9 +367,15 @@ rank(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("array of weight is too short")));
 
+	if (ARR_HASNULL(win))
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("array of weight must not contain nulls")));
+
+	arrdata = (float4 *) ARR_DATA_PTR(win);
 	for (i = 0; i < lengthof(weights); i++)
 	{
-		ws[i] = (((float4 *) ARR_DATA_PTR(win))[i] >= 0) ? ((float4 *) ARR_DATA_PTR(win))[i] : weights[i];
+		ws[i] = (arrdata[i] >= 0) ? arrdata[i] : weights[i];
 		if (ws[i] > 1.0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),

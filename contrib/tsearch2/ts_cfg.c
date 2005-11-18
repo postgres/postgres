@@ -113,6 +113,8 @@ init_cfg(Oid id, TSCfgInfo * cfg)
 			ts_error(ERROR, "Wrong dimension");
 		if (ARRNELEMS(a) < 1)
 			continue;
+		if (ARR_HASNULL(a))
+			ts_error(ERROR, "Array must not contain nulls");
 
 		cfg->map[lexid].len = ARRNELEMS(a);
 		cfg->map[lexid].dict_id = (Datum *) malloc(sizeof(Datum) * cfg->map[lexid].len);
