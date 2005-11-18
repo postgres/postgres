@@ -9,7 +9,7 @@
 <div id="pgContentWrap">
 
 <h1>PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)</h1>
-<p>原文最終更新日:		Wed Sep 28 07:45:42 EDT 2005</p>
+<p>原文最終更新日:		Fri Nov  4 20:35:04 EST 2005</p>
 <p>現在の維持管理者:	Bruce Momjian (<A
 href="mailto:pgman at candle.pha.pa.us">pgman at candle.pha.pa.us</a>)<br />
 Maintainer of Japanese Translation:	Jun Kuwamura (<A
@@ -30,7 +30,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 [訳注：
 	日本語版の製作については、この文書の最後をごらんください。
 
-						2005年10月05日    桑村 潤
+						2005年11月17日    桑村 潤
 ]
 </pre></small>
 </p>
@@ -208,7 +208,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 	pgInstaller の入手はFTPミラーサイトの win32 ディレクトリからも可能です。
 	    http://www.postgresql.org/mirrors-ftp.html
 
-	詳しくは、次の Windwos版に関するFAQの和訳をごらんください。
+	詳しくは、次の Windows版に関するFAQの和訳をごらんください。
 	http://www.postgresql.jp/wg/jpugdoc/FAQ_windows.ja.html
     ]
     </pre></small>
@@ -291,7 +291,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 
 <h4><a name="1.7">1.7</a>) 最新版はどれですか</h4>
 
-    <p>PostgreSQL の最新版はバージョン 8.0.4 です。</p>
+    <p>PostgreSQL の最新版はバージョン 8.1 です。</p>
     <p>我々は、1年毎にメジャーリリースを行ない、数ヵ月ごとのマイナーリリー
     スを計画しています。</p>
 
@@ -616,6 +616,16 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
     </dd>
     </dl>
 
+
+    <small><pre>
+    [訳注:
+      JPUG理事長の片岡裕生氏による、「今すぐできるPostgreSQLチューニング」
+      というコーナーが ThinkIT サイトにあり、参考になります。
+    	http://www.thinkit.co.jp/free/tech/10/1/1.html
+    ]
+    </pre></small>
+
+
 <h4><a name="3.4">3.4</a>) どのようなデバグ機能が使えますか？</h4>
 
     <p>サーバ構成変数には多くの <code>log_*</code> があり、クエリとプロ
@@ -795,7 +805,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 
     <p>インデックスを使うかを決定するために、PostgreSQL はテーブルについ
     ての統計情報を持たなければなりません。この統計情報は、
-    <small>VACUUMANALYZE</small>または、単に <small>ANALYZE</small> を使っ
+    <small>VACUUM ANALYZE</small>または、単に <small>ANALYZE</small> を使っ
     て収集することができます。統計情報を使ってオプティマイザはテーブルの
     中にあるロウ数を知り、インデックスを使うべきかの決定をより正しくでき
     ます。統計情報は最適な結合順や結合方法を決める上でも貴重なものもあり
@@ -821,7 +831,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 
     <p>もし、オプティマイザが間違ってシーケンシャルスキャンを選択したこ
     とに疑いがなければ、<CODE>SET enable_seqscan TO 'off'</CODE>に設定し
-    て、クエリをもう一度実行視、インデックススキャンがまちがいなく速くなっ
+    て、クエリをもう一度実行し、インデックススキャンがまちがいなく速くなっ
     ているかどうかをみてください。</p> 
 
     <p> <small>LIKE</small> あるいは <i>~</i> のようなワイルドカード演算
@@ -1122,7 +1132,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
     <p>マスタ／スレーブのレプリケーションは、読み／書きのクエリを受け取
     るシングルマスタが可能で、スレーブでは 読み／<small>SELECT</small>の
     問い合わせだけを受け付けることができます。最も人気がある、フリーで利
-    用できる、マスタ−スレーブのPosrgreSQLレプリケーションソリューション
+    用できる、マスタ−スレーブのPostgreSQLレプリケーションソリューション
     は、<a 
     href="http://gborg.postgresql.org/project/slony1/projdisplay.php">
     Slony-I</a> です。</p>
@@ -1131,7 +1141,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
     り、複数のレプリケートさせるコンピュータに送ることができます。この機
     能は、サーバ間の変更の同期が必要なため、性能に重大な衝撃を与えます。
     <a href="http://pgfoundry.org/projects/pgcluster/">Pgcluster</a> は、
-    このようなソリューションとしてPosrgreSQLのためにフリーで利用できるも
+    このようなソリューションとしてPostgreSQLのためにフリーで利用できるも
     のとして、最も人気があります。</p>
 
     <p>この他にも、商用やハードウェア−ベースのレプリケーションソリュー
@@ -1139,15 +1149,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
   
 <h3><a name="4.21">4.21</a>)テーブルとカラムの名前がクエリーの中で認識されないのはなぜですか？</h3>
 
-    <p>The most common cause is the use of double-quotes around table or
-+    column names during table creation. When double-quotes are used,
-+    table and column names (called identifiers) are stored <a href="http://www.postgresql.org/docs/8.0/static/sql-syntax.html#SQL-
-+    SYNTAX-IDENTIFIERS">case-sensitive</a>, meaning you must use
-+    double-quotes when referencing the names in a query. Some interfaces,
-+    like pgAdmin, automatically double-quote identifiers during table
-+    creation. So, for identifiers to be recognized, you must either:
-
-    もっとも一般的な原因は、テーブルを作成する際に、テーブルやカラムを囲
+    <p>もっとも一般的な原因は、テーブルを作成する際に、テーブルやカラムを囲
     う二重引用符の使用です。二重引用符を使うと、テーブルとカラムの名前
     （識別子と呼びます）は<a
     href="http://www.postgresql.org/docs/8.0/static/sql-syntax.html#SQL-SYNTAX-IDENTIFIERS">大文字と小文字の区別</a>
@@ -1158,7 +1160,6 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 
     <ul>
     <li>テーブルを作成するときに二重引用符で識別子を囲うことを避ける</li>
-    <li>Use only lowercase characters in identifiers</li>
     <li>識別子には小文字だけを使う</li>
     <li>クエリの中で参照するときは二重引用譜で識別子を囲う</li>
     </ul>
@@ -1168,7 +1169,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:	2005年10月05日
+  最終更新日:	2005年11月17日
   翻訳者:	桑村 潤 (<a href="mailto:juk at PostgreSQL.jp">Jun Kuwamura &lt;juk at PostgreSQL.jp&gt;</a>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
