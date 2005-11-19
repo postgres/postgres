@@ -19,13 +19,24 @@
 
 /* useful macros for accessing int4 arrays */
 #define ARRPTR(x)  ( (int4 *) ARR_DATA_PTR(x) )
-#define ARRNELEMS(x)  ArrayGetNItems( ARR_NDIM(x), ARR_DIMS(x))
+#define ARRNELEMS(x)  ArrayGetNItems(ARR_NDIM(x), ARR_DIMS(x))
 
-#define ARRISVOID(x) ( (x) ? ( ( ARR_NDIM(x) == NDIM ) ? ( ( ARRNELEMS( x ) ) ? 0 : 1 ) : ( ( ARR_NDIM(x) ) ? ( \
-	ereport(ERROR, \
-			(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR), \
-			 errmsg("array must be one-dimensional, not %d dimensions", ARRNELEMS( x )))) \
-	,1) : 0 )  ) : 0 )
+/* reject arrays we can't handle; but allow a NULL or empty array */
+#define CHECKARRVALID(x) \
+	do { \
+		if (x) { \
+			if (ARR_NDIM(x) != NDIM && ARR_NDIM(x) != 0) \
+				ereport(ERROR, \
+						(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR), \
+						 errmsg("array must be one-dimensional"))); \
+			if (ARR_HASNULL(x)) \
+				ereport(ERROR, \
+						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED), \
+						 errmsg("array must not contain nulls"))); \
+		} \
+	} while(0)
+
+#define ARRISVOID(x)  ((x) == NULL || ARRNELEMS(x) == 0)
 
 #define SORT(x) \
 	do { \
@@ -51,9 +62,6 @@
 
 typedef char BITVEC[SIGLEN];
 typedef char *BITVECP;
-
-#define SIGPTR(x)  ( (BITVECP) ARR_DATA_PTR(x) )
-
 
 #define LOOPBYTE(a) \
 		for(i=0;i<SIGLEN;i++) {\

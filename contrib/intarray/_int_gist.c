@@ -44,6 +44,7 @@ g_int_consistent(PG_FUNCTION_ARGS)
 	/* XXX are we sure it's safe to scribble on the query object here? */
 	/* XXX what about toasted input? */
 	/* sort query for fast search, key is already sorted */
+	CHECKARRVALID(query);
 	if (ARRISVOID(query))
 		PG_RETURN_BOOL(false);
 	PREPAREARR(query);
@@ -89,21 +90,30 @@ g_int_union(PG_FUNCTION_ARGS)
 {
 	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	int		   *size = (int *) PG_GETARG_POINTER(1);
-	int4		i;
-	ArrayType  *res;
-	int			totlen = 0,
+	int4		i,
 			   *ptr;
+	ArrayType  *res;
+	int			totlen = 0;
 
 	for (i = 0; i < entryvec->n; i++)
-		totlen += ARRNELEMS(GETENTRY(entryvec, i));
+	{
+		ArrayType *ent = GETENTRY(entryvec, i);
+
+		CHECKARRVALID(ent);
+		totlen += ARRNELEMS(ent);
+	}
 
 	res = new_intArrayType(totlen);
 	ptr = ARRPTR(res);
 
 	for (i = 0; i < entryvec->n; i++)
 	{
-		memcpy(ptr, ARRPTR(GETENTRY(entryvec, i)), ARRNELEMS(GETENTRY(entryvec, i)) * sizeof(int4));
-		ptr += ARRNELEMS(GETENTRY(entryvec, i));
+		ArrayType *ent = GETENTRY(entryvec, i);
+		int nel;
+
+		nel = ARRNELEMS(ent);
+		memcpy(ptr, ARRPTR(ent), nel * sizeof(int4));
+		ptr += nel;
 	}
 
 	QSORT(res, 1);
@@ -130,6 +140,7 @@ g_int_compress(PG_FUNCTION_ARGS)
 	if (entry->leafkey)
 	{
 		r = (ArrayType *) PG_DETOAST_DATUM_COPY(entry->key);
+		CHECKARRVALID(r);
 		PREPAREARR(r);
 
 		if (ARRNELEMS(r)>= 2 * MAXNUMRANGE)
@@ -147,6 +158,7 @@ g_int_compress(PG_FUNCTION_ARGS)
            so now we work only with internal keys  */
 
 	r = (ArrayType *) PG_DETOAST_DATUM(entry->key);
+	CHECKARRVALID(r);
 	if (ARRISVOID(r)) 
 	{
 		if (r != (ArrayType *) DatumGetPointer(entry->key))
@@ -207,6 +219,7 @@ g_int_decompress(PG_FUNCTION_ARGS)
 
 	in = (ArrayType *) PG_DETOAST_DATUM(entry->key);
 
+	CHECKARRVALID(in);
 	if (ARRISVOID(in))
 		PG_RETURN_POINTER(entry);
 
@@ -279,6 +292,9 @@ g_int_same(PG_FUNCTION_ARGS)
 	int4		n = ARRNELEMS(a);
 	int4	   *da,
 			   *db;
+
+	CHECKARRVALID(a);
+	CHECKARRVALID(b);
 
 	if (n != ARRNELEMS(b))
 	{

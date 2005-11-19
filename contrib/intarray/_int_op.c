@@ -37,6 +37,8 @@ _int_contains(PG_FUNCTION_ARGS)
 	ArrayType  *b = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(1)));
 	bool		res;
 
+	CHECKARRVALID(a);
+	CHECKARRVALID(b);
 	if (ARRISVOID(a) || ARRISVOID(b))
 		return FALSE;
 
@@ -71,9 +73,13 @@ _int_same(PG_FUNCTION_ARGS)
 	int		   *da,
 			   *db;
 	bool		result;
-	bool		avoid = ARRISVOID(a);
-	bool		bvoid = ARRISVOID(b);
+	bool		avoid;
+	bool		bvoid;
 
+	CHECKARRVALID(a);
+	CHECKARRVALID(b);
+	avoid = ARRISVOID(a);
+	bvoid = ARRISVOID(b);
 	if (avoid || bvoid)
 		return (avoid && bvoid) ? TRUE : FALSE;
 
@@ -112,6 +118,8 @@ _int_overlap(PG_FUNCTION_ARGS)
 	ArrayType  *b = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(1)));
 	bool		result;
 
+	CHECKARRVALID(a);
+	CHECKARRVALID(b);
 	if (ARRISVOID(a) || ARRISVOID(b))
 		return FALSE;
 
@@ -132,6 +140,9 @@ _int_union(PG_FUNCTION_ARGS)
 	ArrayType  *a = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(0)));
 	ArrayType  *b = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(1)));
 	ArrayType  *result;
+
+	CHECKARRVALID(a);
+	CHECKARRVALID(b);
 
 	if (!ARRISVOID(a))
 		SORT(a);
@@ -155,6 +166,8 @@ _int_inter(PG_FUNCTION_ARGS)
 	ArrayType  *b = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(1)));
 	ArrayType  *result;
 
+	CHECKARRVALID(a);
+	CHECKARRVALID(b);
 	if (ARRISVOID(a) || ARRISVOID(b))
 		PG_RETURN_POINTER(new_intArrayType(0));
 
@@ -197,12 +210,6 @@ Datum		intarray_del_elem(PG_FUNCTION_ARGS);
 Datum		intset_union_elem(PG_FUNCTION_ARGS);
 Datum		intset_subtract(PG_FUNCTION_ARGS);
 
-#define QSORT(a, direction)						\
-if (ARRNELEMS(a) > 1)						\
-	qsort((void*)ARRPTR(a), ARRNELEMS(a),sizeof(int4),	\
-		(direction) ? compASC : compDESC )
-
-
 Datum
 intset(PG_FUNCTION_ARGS)
 {
@@ -213,7 +220,7 @@ Datum
 icount(PG_FUNCTION_ARGS)
 {
 	ArrayType  *a = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
-	int32		count = (ARRISVOID(a)) ? 0 : ARRNELEMS(a);
+	int32		count = ARRNELEMS(a);
 
 	PG_FREE_IF_COPY(a, 0);
 	PG_RETURN_INT32(count);
@@ -228,6 +235,7 @@ sort(PG_FUNCTION_ARGS)
 	char	   *d = (dirstr) ? VARDATA(dirstr) : NULL;
 	int			dir = -1;
 
+	CHECKARRVALID(a);
 	if (ARRISVOID(a) || ARRNELEMS(a) < 2)
 		PG_RETURN_POINTER(a);
 
@@ -255,6 +263,7 @@ sort_asc(PG_FUNCTION_ARGS)
 {
 	ArrayType  *a = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(0)));
 
+	CHECKARRVALID(a);
 	if (ARRISVOID(a))
 		PG_RETURN_POINTER(a);
 	QSORT(a, 1);
@@ -266,6 +275,7 @@ sort_desc(PG_FUNCTION_ARGS)
 {
 	ArrayType  *a = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(0)));
 
+	CHECKARRVALID(a);
 	if (ARRISVOID(a))
 		PG_RETURN_POINTER(a);
 	QSORT(a, 0);
@@ -277,6 +287,7 @@ uniq(PG_FUNCTION_ARGS)
 {
 	ArrayType  *a = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(0)));
 
+	CHECKARRVALID(a);
 	if (ARRISVOID(a) || ARRNELEMS(a) < 2)
 		PG_RETURN_POINTER(a);
 	a = _int_unique(a);
@@ -287,8 +298,10 @@ Datum
 idx(PG_FUNCTION_ARGS)
 {
 	ArrayType  *a = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
-	int32		result = (ARRISVOID(a)) ? 0 : ARRNELEMS(a);
+	int32		result;
 
+	CHECKARRVALID(a);
+	result = (ARRISVOID(a)) ? 0 : ARRNELEMS(a);
 	if (result)
 		result = intarray_match_first(a, PG_GETARG_INT32(1));
 	PG_FREE_IF_COPY(a, 0);
@@ -305,6 +318,7 @@ subarray(PG_FUNCTION_ARGS)
 	int32		end = 0;
 	int32		c;
 
+	CHECKARRVALID(a);
 	if (ARRISVOID(a))
 	{
 		PG_FREE_IF_COPY(a, 0);
@@ -371,22 +385,29 @@ Datum
 intarray_del_elem(PG_FUNCTION_ARGS)
 {
 	ArrayType  *a = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(0)));
-	int32		c = (ARRISVOID(a)) ? 0 : ARRNELEMS(a);
-	int32	   *aa = ARRPTR(a);
+	int32		elem = PG_GETARG_INT32(1);
+	int32		c;
+	int32	   *aa;
 	int32		n = 0,
 				i;
-	int32		elem = PG_GETARG_INT32(1);
 
-	for (i = 0; i < c; i++)
-		if (aa[i] != elem)
+	CHECKARRVALID(a);
+	if (!ARRISVOID(a))
+	{
+		c = ARRNELEMS(a);
+		aa = ARRPTR(a);
+		for (i = 0; i < c; i++)
 		{
-			if (i > n)
-				aa[n++] = aa[i];
-			else
-				n++;
+			if (aa[i] != elem)
+			{
+				if (i > n)
+					aa[n++] = aa[i];
+				else
+					n++;
+			}
 		}
-	if (c > 0)
 		a = resize_intArrayType(a, n);
+	}
 	PG_RETURN_POINTER(a);
 }
 
@@ -408,14 +429,17 @@ intset_subtract(PG_FUNCTION_ARGS)
 	ArrayType  *a = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(0)));
 	ArrayType  *b = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(1)));
 	ArrayType  *result;
-	int32		ca = ARRISVOID(a);
-	int32		cb = ARRISVOID(b);
+	int32		ca;
+	int32		cb;
 	int32	   *aa,
 			   *bb,
 			   *r;
 	int32		n = 0,
 				i = 0,
 				k = 0;
+
+	CHECKARRVALID(a);
+	CHECKARRVALID(b);
 
 	QSORT(a, 1);
 	a = _int_unique(a);

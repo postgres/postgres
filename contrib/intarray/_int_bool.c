@@ -309,6 +309,7 @@ execconsistent(QUERYTYPE * query, ArrayType *array, bool calcnot)
 {
 	CHKVAL		chkval;
 
+	CHECKARRVALID(array);
 	chkval.arrb = ARRPTR(array);
 	chkval.arre = chkval.arrb + ARRNELEMS(array);
 	return execute(
@@ -339,6 +340,7 @@ boolop(PG_FUNCTION_ARGS)
 	CHKVAL		chkval;
 	bool		result;
 
+	CHECKARRVALID(val);
 	if (ARRISVOID(val))
 	{
 		pfree(val);

@@ -12,6 +12,9 @@ inner_int_contains(ArrayType *a, ArrayType *b)
 	int		   *da,
 			   *db;
 
+	CHECKARRVALID(a);
+	CHECKARRVALID(b);
+
 	if (ARRISVOID(a) || ARRISVOID(b))
 		return FALSE;
 
@@ -46,6 +49,9 @@ inner_int_overlap(ArrayType *a, ArrayType *b)
 	int		   *da,
 			   *db;
 
+	CHECKARRVALID(a);
+	CHECKARRVALID(b);
+
 	if (ARRISVOID(a) || ARRISVOID(b))
 		return FALSE;
 
@@ -77,6 +83,9 @@ inner_int_union(ArrayType *a, ArrayType *b)
 			   *dr;
 	int			i,
 				j;
+
+	CHECKARRVALID(a);
+	CHECKARRVALID(b);
 
 	if (ARRISVOID(a) && ARRISVOID(b))
 		return new_intArrayType(0);
@@ -129,6 +138,9 @@ inner_int_inter(ArrayType *a, ArrayType *b)
 			   *dr;
 	int			i,
 				j;
+
+	CHECKARRVALID(a);
+	CHECKARRVALID(b);
 
 	if (ARRISVOID(a) || ARRISVOID(b))
 		return new_intArrayType(0);
@@ -243,7 +255,7 @@ copy_intArrayType(ArrayType *a)
 	ArrayType  *r;
 
 	r = new_intArrayType(ARRNELEMS(a));
-	memmove(r, a, VARSIZE(a));
+	memmove(r, a, VARSIZE(r));
 	return r;
 }
 
@@ -269,6 +281,8 @@ _int_unique(ArrayType *r)
 			   *dr,
 			   *data;
 	int			num = ARRNELEMS(r);
+
+	CHECKARRVALID(r);
 
 	if (num < 2)
 		return r;
@@ -302,7 +316,10 @@ intarray_match_first(ArrayType *a, int32 elem)
 				c,
 				i;
 
-	c = (ARRISVOID(a)) ? 0 : ARRNELEMS(a);
+	CHECKARRVALID(a);
+	if (ARRISVOID(a))
+		return 0;
+	c = ARRNELEMS(a);
 	aa = ARRPTR(a);
 	for (i = 0; i < c; i++)
 		if (aa[i] == elem)
@@ -315,8 +332,10 @@ intarray_add_elem(ArrayType *a, int32 elem)
 {
 	ArrayType  *result;
 	int32	   *r;
-	int32		c = (ARRISVOID(a)) ? 0 : ARRNELEMS(a);
+	int32		c;
 
+	CHECKARRVALID(a);
+	c = (ARRISVOID(a)) ? 0 : ARRNELEMS(a);
 	result = new_intArrayType(c + 1);
 	r = ARRPTR(result);
 	if (c > 0)
@@ -332,6 +351,8 @@ intarray_concat_arrays(ArrayType *a, ArrayType *b)
 	int32		ac = (ARRISVOID(a)) ? 0 : ARRNELEMS(a);
 	int32		bc = (ARRISVOID(b)) ? 0 : ARRNELEMS(b);
 
+	CHECKARRVALID(a);
+	CHECKARRVALID(b);
 	result = new_intArrayType(ac + bc);
 	if (ac)
 		memcpy(ARRPTR(result), ARRPTR(a), ac * sizeof(int32));

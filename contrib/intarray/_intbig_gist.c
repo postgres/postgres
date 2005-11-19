@@ -66,6 +66,8 @@ _intbig_overlap(GISTTYPE * a, ArrayType *b)
 	int			num = ARRNELEMS(b);
 	int4	   *ptr = ARRPTR(b);
 
+	CHECKARRVALID(b);
+
 	while (num--)
 	{
 		if (GETBIT(GETSIGN(a), HASHVAL(*ptr)))
@@ -81,6 +83,8 @@ _intbig_contains(GISTTYPE * a, ArrayType *b)
 {
 	int			num = ARRNELEMS(b);
 	int4	   *ptr = ARRPTR(b);
+
+	CHECKARRVALID(b);
 
 	while (num--)
 	{
@@ -136,10 +140,17 @@ g_intbig_compress(PG_FUNCTION_ARGS)
 		int			num;
 		GISTTYPE   *res = (GISTTYPE *) palloc(CALCGTSIZE(0));
 
-		ARRISVOID(in);
-
-		ptr = ARRPTR(in);
-		num = ARRNELEMS(in);
+		CHECKARRVALID(in);
+		if (ARRISVOID(in))
+		{
+			ptr = NULL;
+			num = 0;
+		}
+		else
+		{
+			ptr = ARRPTR(in);
+			num = ARRNELEMS(in);
+		}
 		memset(res, 0, CALCGTSIZE(0));
 		res->len = CALCGTSIZE(0);
 
@@ -492,6 +503,7 @@ g_intbig_consistent(PG_FUNCTION_ARGS)
 	}
 
 	/* XXX what about toasted input? */
+	CHECKARRVALID(query);
 	if (ARRISVOID(query))
 		return FALSE;
 
@@ -509,6 +521,8 @@ g_intbig_consistent(PG_FUNCTION_ARGS)
 				BITVEC		qp;
 				BITVECP		dq,
 							de;
+
+				CHECKARRVALID(query);
 
 				memset(qp, 0, sizeof(BITVEC));
 
@@ -545,6 +559,8 @@ g_intbig_consistent(PG_FUNCTION_ARGS)
 				BITVEC		qp;
 				BITVECP		dq,
 							de;
+
+				CHECKARRVALID(query);
 
 				memset(qp, 0, sizeof(BITVEC));
 
