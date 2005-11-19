@@ -607,6 +607,10 @@ arrq_cons(ltree_gist * key, ArrayType *_query)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("array must be one-dimensional")));
+	if (ARR_HASNULL(_query))
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("array must not contain nulls")));
 
 	while (num > 0)
 	{

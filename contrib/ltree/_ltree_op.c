@@ -47,6 +47,10 @@ array_iterator(ArrayType *la, PGCALL2 callback, void *param, ltree ** found)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("array must be one-dimensional")));
+	if (ARR_HASNULL(la))
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("array must not contain nulls")));
 
 	if (found)
 		*found = NULL;
@@ -143,6 +147,10 @@ _lt_q_regex(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("array must be one-dimensional")));
+	if (ARR_HASNULL(_query))
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("array must not contain nulls")));
 
 	while (num > 0)
 	{
@@ -292,6 +300,15 @@ _lca(PG_FUNCTION_ARGS)
 	ltree	   *item = (ltree *) ARR_DATA_PTR(la);
 	ltree	  **a,
 			   *res;
+
+	if (ARR_NDIM(la) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				 errmsg("array must be one-dimensional")));
+	if (ARR_HASNULL(la))
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("array must not contain nulls")));
 
 	a = (ltree **) palloc(sizeof(ltree *) * num);
 	while (num > 0)
