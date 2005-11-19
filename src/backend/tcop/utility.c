@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.245 2005/10/15 02:49:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.246 2005/11/19 17:39:45 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +67,7 @@ struct msgstrings
 	char		kind;
 	int			nonexistent_code;
 	const char *nonexistent_msg;
+	const char *skipping_msg;
 	const char *nota_msg;
 	const char *drophint_msg;
 };
@@ -75,26 +76,31 @@ static const struct msgstrings msgstringarray[] = {
 	{RELKIND_RELATION,
 		ERRCODE_UNDEFINED_TABLE,
 		gettext_noop("table \"%s\" does not exist"),
+		gettext_noop("table \"%s\" does not exist, skipping"),
 		gettext_noop("\"%s\" is not a table"),
 	gettext_noop("Use DROP TABLE to remove a table.")},
 	{RELKIND_SEQUENCE,
 		ERRCODE_UNDEFINED_TABLE,
 		gettext_noop("sequence \"%s\" does not exist"),
+		gettext_noop("sequence \"%s\" does not exist, skipping"),
 		gettext_noop("\"%s\" is not a sequence"),
 	gettext_noop("Use DROP SEQUENCE to remove a sequence.")},
 	{RELKIND_VIEW,
 		ERRCODE_UNDEFINED_TABLE,
 		gettext_noop("view \"%s\" does not exist"),
+		gettext_noop("view \"%s\" does not exist, skipping"),
 		gettext_noop("\"%s\" is not a view"),
 	gettext_noop("Use DROP VIEW to remove a view.")},
 	{RELKIND_INDEX,
 		ERRCODE_UNDEFINED_OBJECT,
 		gettext_noop("index \"%s\" does not exist"),
+		gettext_noop("index \"%s\" does not exist, skipping"),
 		gettext_noop("\"%s\" is not an index"),
 	gettext_noop("Use DROP INDEX to remove an index.")},
 	{RELKIND_COMPOSITE_TYPE,
 		ERRCODE_UNDEFINED_OBJECT,
 		gettext_noop("type \"%s\" does not exist"),
+		gettext_noop("type \"%s\" does not exist, skipping"),
 		gettext_noop("\"%s\" is not a type"),
 	gettext_noop("Use DROP TYPE to remove a type.")},
 	{'\0', 0, NULL, NULL, NULL}
@@ -132,23 +138,40 @@ DropErrorMsgWrongType(char *relname, char wrongkind, char rightkind)
  * non-existent relation
  */
 static void
-DropErrorMsgNonExistent(RangeVar *rel, char rightkind)
+DropErrorMsgNonExistent(RangeVar *rel, char rightkind, bool missing_ok)
 {
 	const struct msgstrings *rentry;
 
 	for (rentry = msgstringarray; rentry->kind != '\0'; rentry++)
 	{
 		if (rentry->kind == rightkind)
-			ereport(ERROR,
-					(errcode(rentry->nonexistent_code),
-					 errmsg(rentry->nonexistent_msg, rel->relname)));
+		{
+			if (! missing_ok)
+			{
+				ereport(ERROR,
+						(errcode(rentry->nonexistent_code),
+						 errmsg(rentry->nonexistent_msg, rel->relname)));
+			}
+			else
+			{
+				ereport(NOTICE, (errmsg(rentry->skipping_msg, rel->relname)));
+				break;
+			}
+		}
 	}
 
-	Assert(false);				/* Should be impossible */
+	Assert(rentry->kind != '\0');	   /* Should be impossible */
 }
 
-static void
-CheckDropPermissions(RangeVar *rel, char rightkind)
+/*
+ * returns false if missing_ok is true and the object does not exist,
+ * true if object exists and permissions are OK,
+ * errors otherwise
+ *
+ */
+
+static bool
+CheckDropPermissions(RangeVar *rel, char rightkind, bool missing_ok)
 {
 	Oid			relOid;
 	HeapTuple	tuple;
@@ -156,7 +179,10 @@ CheckDropPermissions(RangeVar *rel, char rightkind)
 
 	relOid = RangeVarGetRelid(rel, true);
 	if (!OidIsValid(relOid))
-		DropErrorMsgNonExistent(rel, rightkind);
+	{
+		DropErrorMsgNonExistent(rel, rightkind, missing_ok);
+		return false;
+	}
 
 	tuple = SearchSysCache(RELOID,
 						   ObjectIdGetDatum(relOid),
@@ -183,6 +209,8 @@ CheckDropPermissions(RangeVar *rel, char rightkind)
 						rel->relname)));
 
 	ReleaseSysCache(tuple);
+
+	return true;
 }
 
 /*
@@ -528,31 +556,36 @@ ProcessUtility(Node *parsetree,
 					{
 						case OBJECT_TABLE:
 							rel = makeRangeVarFromNameList(names);
-							CheckDropPermissions(rel, RELKIND_RELATION);
-							RemoveRelation(rel, stmt->behavior);
+							if (CheckDropPermissions(rel, RELKIND_RELATION,
+													 stmt->missing_ok))
+								RemoveRelation(rel, stmt->behavior);
 							break;
 
 						case OBJECT_SEQUENCE:
 							rel = makeRangeVarFromNameList(names);
-							CheckDropPermissions(rel, RELKIND_SEQUENCE);
-							RemoveRelation(rel, stmt->behavior);
+							if (CheckDropPermissions(rel, RELKIND_SEQUENCE,
+													 stmt->missing_ok))
+								RemoveRelation(rel, stmt->behavior);
 							break;
 
 						case OBJECT_VIEW:
 							rel = makeRangeVarFromNameList(names);
-							CheckDropPermissions(rel, RELKIND_VIEW);
-							RemoveView(rel, stmt->behavior);
+							if (CheckDropPermissions(rel, RELKIND_VIEW,
+													 stmt->missing_ok))
+								RemoveView(rel, stmt->behavior);
 							break;
 
 						case OBJECT_INDEX:
 							rel = makeRangeVarFromNameList(names);
-							CheckDropPermissions(rel, RELKIND_INDEX);
-							RemoveIndex(rel, stmt->behavior);
+							if (CheckDropPermissions(rel, RELKIND_INDEX,
+													 stmt->missing_ok))
+								RemoveIndex(rel, stmt->behavior);
 							break;
 
 						case OBJECT_TYPE:
 							/* RemoveType does its own permissions checks */
-							RemoveType(names, stmt->behavior);
+							RemoveType(names, stmt->behavior, 
+									   stmt->missing_ok);
 							break;
 
 						case OBJECT_DOMAIN:
@@ -560,11 +593,13 @@ ProcessUtility(Node *parsetree,
 							/*
 							 * RemoveDomain does its own permissions checks
 							 */
-							RemoveDomain(names, stmt->behavior);
+							RemoveDomain(names, stmt->behavior, 
+										 stmt->missing_ok);
 							break;
 
 						case OBJECT_CONVERSION:
-							DropConversionCommand(names, stmt->behavior);
+							DropConversionCommand(names, stmt->behavior,
+												  stmt->missing_ok);
 							break;
 
 						case OBJECT_SCHEMA:
@@ -572,7 +607,8 @@ ProcessUtility(Node *parsetree,
 							/*
 							 * RemoveSchema does its own permissions checks
 							 */
-							RemoveSchema(names, stmt->behavior);
+							RemoveSchema(names, stmt->behavior,
+										 stmt->missing_ok);
 							break;
 
 						default:

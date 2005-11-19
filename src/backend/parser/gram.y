@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.512 2005/11/13 19:11:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.513 2005/11/19 17:39:44 adunstan Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -173,7 +173,7 @@ static void doNegateFloat(Value *v);
 %type <ival>	opt_lock lock_type cast_context
 %type <boolean>	opt_force opt_or_replace
 				opt_grant_grant_option opt_grant_admin_option
-				opt_nowait
+				opt_nowait 
 
 %type <boolean>	like_including_defaults
 
@@ -362,7 +362,7 @@ static void doNegateFloat(Value *v);
 
 	HANDLER HAVING HEADER HOLD HOUR_P
 
-	ILIKE IMMEDIATE IMMUTABLE IMPLICIT_P IN_P INCLUDING INCREMENT
+	IF_P ILIKE IMMEDIATE IMMUTABLE IMPLICIT_P IN_P INCLUDING INCREMENT
 	INDEX INHERIT INHERITS INITIALLY INNER_P INOUT INPUT_P
 	INSENSITIVE INSERT INSTEAD INT_P INTEGER INTERSECT
 	INTERVAL INTO INVOKER IS ISNULL ISOLATION
@@ -2818,19 +2818,31 @@ DropOpClassStmt:
  *
  *		QUERY:
  *
- *		DROP itemtype itemname [, itemname ...] [ RESTRICT | CASCADE ]
+ *		DROP itemtype [ IF EXISTS ] itemname [, itemname ...] 
+ *           [ RESTRICT | CASCADE ]
  *
  *****************************************************************************/
 
-DropStmt:	DROP drop_type any_name_list opt_drop_behavior
+DropStmt:	DROP drop_type IF_P EXISTS any_name_list opt_drop_behavior
 				{
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = $2;
+					n->missing_ok = TRUE;
+					n->objects = $5;
+					n->behavior = $6;
+					$$ = (Node *)n;
+				}
+			| DROP drop_type any_name_list opt_drop_behavior
+				{
+					DropStmt *n = makeNode(DropStmt);
+					n->removeType = $2;
+					n->missing_ok = FALSE;
 					n->objects = $3;
 					n->behavior = $4;
 					$$ = (Node *)n;
 				}
 		;
+
 
 drop_type:	TABLE									{ $$ = OBJECT_TABLE; }
 			| SEQUENCE								{ $$ = OBJECT_SEQUENCE; }
@@ -8159,6 +8171,7 @@ unreserved_keyword:
 			| HEADER
 			| HOLD
 			| HOUR_P
+			| IF_P
 			| IMMEDIATE
 			| IMMUTABLE
 			| IMPLICIT_P

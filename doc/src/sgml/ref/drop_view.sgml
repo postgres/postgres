@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_view.sgml,v 1.21 2005/01/04 00:39:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_view.sgml,v 1.22 2005/11/19 17:39:44 adunstan Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP VIEW <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
+DROP VIEW [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -37,6 +37,16 @@ DROP VIEW <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | 
   <title>Parameters</title>
 
   <variablelist>
+   <varlistentry>
+    <term><literal>IF EXISTS</literal></term>
+    <listitem>
+     <para>
+      Do not throw an error if the view does not exist. A notice is issued 
+      in this case.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry>
     <term><replaceable class="PARAMETER">name</replaceable></term>
     <listitem>
@@ -84,7 +94,9 @@ DROP VIEW kinds;
 
   <para>
    This command conforms to the SQL standard, except that the standard only
-   allows one view to be dropped per command. 
+   allows one view to be dropped per command, and apart from the 
+   <literal>IF EXISTS</> option, which is a <productname>PostgreSQL</> 
+   extension. 
   </para>
  </refsect1>
 

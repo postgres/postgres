@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.23 2005/10/15 02:49:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.24 2005/11/19 17:39:44 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,16 +98,29 @@ CreateConversionCommand(CreateConversionStmt *stmt)
  * DROP CONVERSION
  */
 void
-DropConversionCommand(List *name, DropBehavior behavior)
+DropConversionCommand(List *name, DropBehavior behavior, bool missing_ok)
 {
 	Oid			conversionOid;
 
 	conversionOid = FindConversionByName(name);
 	if (!OidIsValid(conversionOid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("conversion \"%s\" does not exist",
-						NameListToString(name))));
+	{
+		if (! missing_ok)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("conversion \"%s\" does not exist",
+							NameListToString(name))));
+		}
+		else
+		{
+			ereport(NOTICE,
+					 (errmsg("conversion \"%s\" does not exist, skipping",
+							NameListToString(name))));
+		}
+
+		return;
+	}
 
 	ConversionDrop(conversionOid, behavior);
 }

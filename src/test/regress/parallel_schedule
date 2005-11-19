@@ -38,7 +38,7 @@ test: copy
 # ----------
 # The third group of parallel test
 # ----------
-test: constraints triggers create_misc create_aggregate create_operator inherit vacuum
+test: constraints triggers create_misc create_aggregate create_operator inherit vacuum drop_if_exists
 
 # Depends on the above
 test: create_index create_view

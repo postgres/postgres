@@ -1,0 +1,67 @@
+-- 
+-- IF EXISTS tests
+-- 
+-- table (will be really dropped at the end)
+DROP TABLE test_exists;
+ERROR:  table "test_exists" does not exist
+DROP TABLE IF EXISTS test_exists;
+NOTICE:  table "test_exists" does not exist, skipping
+CREATE TABLE test_exists (a int, b text);
+-- view
+DROP VIEW test_view_exists;
+ERROR:  view "test_view_exists" does not exist
+DROP VIEW IF EXISTS test_view_exists;
+NOTICE:  view "test_view_exists" does not exist, skipping
+CREATE VIEW test_view_exists AS select * from test_exists;
+DROP VIEW IF EXISTS test_view_exists;
+DROP VIEW test_view_exists;
+ERROR:  view "test_view_exists" does not exist
+-- index
+DROP INDEX test_index_exists;
+ERROR:  index "test_index_exists" does not exist
+DROP INDEX IF EXISTS test_index_exists;
+NOTICE:  index "test_index_exists" does not exist, skipping
+CREATE INDEX test_index_exists on test_exists(a);
+DROP INDEX IF EXISTS test_index_exists;
+DROP INDEX test_index_exists;
+ERROR:  index "test_index_exists" does not exist
+-- sequence
+DROP SEQUENCE test_sequence_exists;
+ERROR:  sequence "test_sequence_exists" does not exist
+DROP SEQUENCE IF EXISTS test_sequence_exists;
+NOTICE:  sequence "test_sequence_exists" does not exist, skipping
+CREATE SEQUENCE test_sequence_exists;
+DROP SEQUENCE IF EXISTS test_sequence_exists;
+DROP SEQUENCE test_sequence_exists;
+ERROR:  sequence "test_sequence_exists" does not exist
+-- schema
+DROP SCHEMA test_schema_exists;
+ERROR:  schema "test_schema_exists" does not exist
+DROP SCHEMA IF EXISTS test_schema_exists;
+NOTICE:  schema "test_schema_exists" does not exist, skipping
+CREATE SCHEMA test_schema_exists;
+DROP SCHEMA IF EXISTS test_schema_exists;
+DROP SCHEMA test_schema_exists;
+ERROR:  schema "test_schema_exists" does not exist
+-- type
+DROP TYPE test_type_exists;
+ERROR:  type "test_type_exists" does not exist
+DROP TYPE IF EXISTS test_type_exists;
+NOTICE:  type "test_type_exists" does not exist, skipping
+CREATE type test_type_exists as (a int, b text);
+DROP TYPE IF EXISTS test_type_exists;
+DROP TYPE test_type_exists;
+ERROR:  type "test_type_exists" does not exist
+-- domain
+DROP DOMAIN test_domain_exists;
+ERROR:  type "test_domain_exists" does not exist
+DROP DOMAIN IF EXISTS test_domain_exists;
+NOTICE:  type "test_domain_exists" does not exist, skipping
+CREATE domain test_domain_exists as int not null check (value > 0);
+DROP DOMAIN IF EXISTS test_domain_exists;
+DROP DOMAIN test_domain_exists;
+ERROR:  type "test_domain_exists" does not exist
+-- drop the table
+DROP TABLE IF EXISTS test_exists;
+DROP TABLE test_exists;
+ERROR:  table "test_exists" does not exist

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_domain.sgml,v 1.15 2005/05/02 01:52:50 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_domain.sgml,v 1.16 2005/11/19 17:39:44 adunstan Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP DOMAIN <replaceable class="PARAMETER">name</replaceable> [, ...]  [ CASCADE | RESTRICT ]
+DROP DOMAIN [IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...]  [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -37,6 +37,16 @@ DROP DOMAIN <replaceable class="PARAMETER">name</replaceable> [, ...]  [ CASCADE
   <title>Parameters</title>
 
   <variablelist>
+   <varlistentry>
+    <term><literal>IF EXISTS</literal></term>
+    <listitem>
+     <para>
+      Do not throw an error if the domain does not exist. A notice is issued 
+      in this case.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry>
     <term><replaceable class="PARAMETER">name</replaceable></term>
     <listitem>
@@ -84,7 +94,9 @@ DROP DOMAIN box;
   <title>Compatibility</title>
   
   <para>
-   This command conforms to the SQL standard.
+   This command conforms to the SQL standard, except for the
+   <literal>IF EXISTS</> option, which is a <productname>PostgreSQL</> 
+   extension.
   </para>
  </refsect1>
 

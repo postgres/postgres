@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/drop_conversion.sgml,v 1.8 2003/11/29 19:51:38 pgsql Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/drop_conversion.sgml,v 1.9 2005/11/19 17:39:44 adunstan Exp $ -->
 
 <refentry id="SQL-DROPCONVERSION">
  <refmeta>
@@ -17,7 +17,7 @@
 
  <refsynopsisdiv>
 <synopsis>
-DROP CONVERSION <replaceable>name</replaceable> [ CASCADE | RESTRICT ]
+DROP CONVERSION [ IF EXISTS ] <replaceable>name</replaceable> [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
   
@@ -34,6 +34,16 @@ DROP CONVERSION <replaceable>name</replaceable> [ CASCADE | RESTRICT ]
   <title>Parameters</title>
 
    <variablelist>
+    <varlistentry>
+     <term><literal>IF EXISTS</literal></term>
+     <listitem>
+      <para>
+       Do not throw an error if the conversion does not exist. 
+       A notice is issued in this case.
+      </para>
+     </listitem>
+    </varlistentry>
+
     <varlistentry>
      <term><replaceable>name</replaceable></term>
 

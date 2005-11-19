@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.292 2005/10/26 19:21:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.293 2005/11/19 17:39:45 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1278,6 +1278,7 @@ typedef struct DropStmt
 	List	   *objects;		/* list of sublists of names (as Values) */
 	ObjectType	removeType;		/* object type */
 	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
+	bool         missing_ok;    /* skip error if object is missing? */
 } DropStmt;
 
 /* ----------------------

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.35 2005/10/15 02:49:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.36 2005/11/19 17:39:44 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,7 +147,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
  *		Removes a schema.
  */
 void
-RemoveSchema(List *names, DropBehavior behavior)
+RemoveSchema(List *names, DropBehavior behavior, bool missing_ok)
 {
 	char	   *namespaceName;
 	Oid			namespaceId;
@@ -163,9 +163,22 @@ RemoveSchema(List *names, DropBehavior behavior)
 								 CStringGetDatum(namespaceName),
 								 0, 0, 0);
 	if (!OidIsValid(namespaceId))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_SCHEMA),
-				 errmsg("schema \"%s\" does not exist", namespaceName)));
+	{
+		if (!missing_ok)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_SCHEMA),
+					 errmsg("schema \"%s\" does not exist", namespaceName)));
+		}
+		else
+		{
+			ereport(NOTICE,
+					 (errmsg("schema \"%s\" does not exist, skipping", 
+							namespaceName)));
+		}
+
+		return;
+	}
 
 	/* Permission check */
 	if (!pg_namespace_ownercheck(namespaceId, GetUserId()))

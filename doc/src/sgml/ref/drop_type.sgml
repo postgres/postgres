@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.26 2004/06/25 21:55:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.27 2005/11/19 17:39:44 adunstan Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP TYPE <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
+DROP TYPE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -37,6 +37,16 @@ DROP TYPE <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | 
   <title>Parameters</title>
 
   <variablelist>
+   <varlistentry>
+    <term><literal>IF EXISTS</literal></term>
+    <listitem>
+     <para>
+      Do not throw an error if the type does not exist. A notice is issued 
+      in this case.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry>
     <term><replaceable class="PARAMETER">name</replaceable></term>
     <listitem>
@@ -84,7 +94,9 @@ DROP TYPE box;
 
   <para>
    This command is similar to the corresponding command in the SQL
-   standard, but note that the <command>CREATE TYPE</command> command
+   standard, aapart from the <literal>IF EXISTS</>
+   option, which is a <productname>PostgreSQL</> extension.
+   But note that the <command>CREATE TYPE</command> command
    and the data type extension mechanisms in
    <productname>PostgreSQL</productname> differ from the SQL standard.
   </para>

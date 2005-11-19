@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.82 2005/10/18 01:06:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.83 2005/11/19 17:39:44 adunstan Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -398,7 +398,7 @@ DefineType(List *names, List *parameters)
  *		Removes a datatype.
  */
 void
-RemoveType(List *names, DropBehavior behavior)
+RemoveType(List *names, DropBehavior behavior, bool missing_ok)
 {
 	TypeName   *typename;
 	Oid			typeoid;
@@ -414,10 +414,23 @@ RemoveType(List *names, DropBehavior behavior)
 	/* Use LookupTypeName here so that shell types can be removed. */
 	typeoid = LookupTypeName(typename);
 	if (!OidIsValid(typeoid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("type \"%s\" does not exist",
-						TypeNameToString(typename))));
+	{
+		if (!missing_ok)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("type \"%s\" does not exist",
+							TypeNameToString(typename))));
+		}
+		else
+		{
+			ereport(NOTICE,
+					 (errmsg("type \"%s\" does not exist, skipping",
+							TypeNameToString(typename))));
+		}
+
+		return;
+	}
 
 	tup = SearchSysCache(TYPEOID,
 						 ObjectIdGetDatum(typeoid),
@@ -779,7 +792,7 @@ DefineDomain(CreateDomainStmt *stmt)
  * This is identical to RemoveType except we insist it be a domain.
  */
 void
-RemoveDomain(List *names, DropBehavior behavior)
+RemoveDomain(List *names, DropBehavior behavior, bool missing_ok)
 {
 	TypeName   *typename;
 	Oid			typeoid;
@@ -796,10 +809,23 @@ RemoveDomain(List *names, DropBehavior behavior)
 	/* Use LookupTypeName here so that shell types can be removed. */
 	typeoid = LookupTypeName(typename);
 	if (!OidIsValid(typeoid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("type \"%s\" does not exist",
-						TypeNameToString(typename))));
+	{
+		if (!missing_ok)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("type \"%s\" does not exist",
+							TypeNameToString(typename))));
+		}
+		else
+		{
+			ereport(NOTICE,
+					 (errmsg("type \"%s\" does not exist, skipping",
+							TypeNameToString(typename))));
+		}
+
+		return;
+	}
 
 	tup = SearchSysCache(TYPEOID,
 						 ObjectIdGetDatum(typeoid),

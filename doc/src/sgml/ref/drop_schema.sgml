@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_schema.sgml,v 1.6 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_schema.sgml,v 1.7 2005/11/19 17:39:44 adunstan Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP SCHEMA <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
+DROP SCHEMA [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -42,6 +42,16 @@ DROP SCHEMA <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE 
   <title>Parameters</title>
 
   <variablelist>
+   <varlistentry>
+    <term><literal>IF EXISTS</literal></term>
+    <listitem>
+     <para>
+      Do not throw an error if the schema does not exist. A notice is issued 
+      in this case.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry>
     <term><replaceable class="PARAMETER">name</replaceable></term>
     <listitem>
@@ -92,7 +102,9 @@ DROP SCHEMA mystuff CASCADE;
   <para>
    <command>DROP SCHEMA</command> is fully conforming with the SQL
    standard, except that the standard only allows one schema to be
-   dropped per command.
+   dropped per command, and apart from the 
+   <literal>IF EXISTS</> option, which is a <productname>PostgreSQL</> 
+   extension.
   </para>
  </refsect1>
 

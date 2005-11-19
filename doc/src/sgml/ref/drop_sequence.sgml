@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_sequence.sgml,v 1.23 2005/11/01 21:09:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_sequence.sgml,v 1.24 2005/11/19 17:39:44 adunstan Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP SEQUENCE <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
+DROP SEQUENCE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -36,6 +36,16 @@ DROP SEQUENCE <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCAD
   <title>Parameters</title>
 
   <variablelist>
+   <varlistentry>
+    <term><literal>IF EXISTS</literal></term>
+    <listitem>
+     <para>
+      Do not throw an error if the sequence does not exist. A notice is issued 
+      in this case.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry>
     <term><replaceable class="PARAMETER">name</replaceable></term>
     <listitem>
@@ -84,7 +94,9 @@ DROP SEQUENCE serial;
   <para>
    <command>DROP SEQUENCE</command> conforms to the <acronym>SQL</acronym>
    standard, except that the standard only allows one
-   sequence to be dropped per command. 
+   sequence to be dropped per command, and apart from the 
+   <literal>IF EXISTS</> option, which is a <productname>PostgreSQL</> 
+   extension. 
   </para>
  </refsect1>
 
