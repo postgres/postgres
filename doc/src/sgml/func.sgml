@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.293 2005/11/17 22:14:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.294 2005/11/19 01:50:08 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -7484,7 +7484,7 @@ SELECT NULLIF(value, '(none)') ...
     </entry>
         <entry><type>int</type></entry>
         <entry>returns lower bound of the requested array dimension</entry>
-        <entry><literal>array_lower(array_prepend(0, ARRAY[1,2,3]), 1)</literal></entry>
+        <entry><literal>array_lower('[0:2]={1,2,3}'::int[], 1)</literal></entry>
         <entry><literal>0</literal></entry>
        </row>
        <row>

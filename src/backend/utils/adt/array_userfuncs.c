@@ -6,7 +6,7 @@
  * Copyright (c) 2003-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.17 2005/11/17 22:14:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.18 2005/11/19 01:50:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,6 +151,13 @@ array_push(PG_FUNCTION_ARGS)
 
 	result = array_set(v, 1, &indx, newelem, isNull,
 					   -1, typlen, typbyval, typalign);
+
+	/*
+	 * Readjust result's LB to match the input's.  This does nothing in the
+	 * append case, but it's the simplest way to implement the prepend case.
+	 */
+	if (ARR_NDIM(v) == 1)
+		ARR_LBOUND(result)[0] = ARR_LBOUND(v)[0];
 
 	PG_RETURN_ARRAYTYPE_P(result);
 }
@@ -305,7 +312,7 @@ array_cat(PG_FUNCTION_ARGS)
 	{
 		/*
 		 * resulting array has the second argument as the outer array, with
-		 * the first argument appended to the front of the outer dimension
+		 * the first argument inserted at the front of the outer dimension
 		 */
 		ndims = ndims2;
 		dims = (int *) palloc(ndims * sizeof(int));
@@ -315,9 +322,6 @@ array_cat(PG_FUNCTION_ARGS)
 
 		/* increment number of elements in outer array */
 		dims[0] += 1;
-
-		/* decrement outer array lower bound */
-		lbs[0] -= 1;
 
 		/* make sure the added element matches our existing elements */
 		for (i = 0; i < ndims1; i++)
