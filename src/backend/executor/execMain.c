@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.258 2005/11/18 12:26:20 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.259 2005/11/19 20:57:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1446,6 +1446,16 @@ ExecInsert(TupleTableSlot *slot,
 	setLastTid(&(tuple->t_self));
 
 	/*
+	 * KLUGE SOLUTION for bug found post 8.1 release: if the tuple toaster
+	 * fired on the tuple then it changed the physical tuple inside the
+	 * tuple slot, leaving any extracted information invalid.  Mark the
+	 * extracted state invalid just in case.  Need to fix things so that
+	 * the toaster gets to run against the tuple before we materialize it,
+	 * but that's way too invasive for a stable branch.
+	 */
+	slot->tts_nvalid = 0;
+
+	/*
 	 * insert index entries for tuple
 	 */
 	if (resultRelInfo->ri_NumIndices > 0)
@@ -1547,11 +1557,11 @@ ldelete:;
 
 	/*
 	 * Note: Normally one would think that we have to delete index tuples
-	 * associated with the heap tuple now..
+	 * associated with the heap tuple now...
 	 *
-	 * ... but in POSTGRES, we have no need to do this because the vacuum daemon
-	 * automatically opens an index scan and deletes index tuples when it
-	 * finds deleted heap tuples. -cim 9/27/89
+	 * ... but in POSTGRES, we have no need to do this because VACUUM will
+	 * take care of it later.  We can't delete index tuples immediately
+	 * anyway, since the tuple is still visible to other transactions.
 	 */
 
 	/* AFTER ROW DELETE Triggers */
@@ -1700,11 +1710,21 @@ lreplace:;
 	(estate->es_processed)++;
 
 	/*
+	 * KLUGE SOLUTION for bug found post 8.1 release: if the tuple toaster
+	 * fired on the tuple then it changed the physical tuple inside the
+	 * tuple slot, leaving any extracted information invalid.  Mark the
+	 * extracted state invalid just in case.  Need to fix things so that
+	 * the toaster gets to run against the tuple before we materialize it,
+	 * but that's way too invasive for a stable branch.
+	 */
+	slot->tts_nvalid = 0;
+
+	/*
 	 * Note: instead of having to update the old index tuples associated with
 	 * the heap tuple, all we do is form and insert new index tuples. This is
 	 * because UPDATEs are actually DELETEs and INSERTs, and index tuple
-	 * deletion is done automagically by the vacuum daemon. All we do is
-	 * insert new index tuples.  -cim 9/27/89
+	 * deletion is done later by VACUUM (see notes in ExecDelete).  All we do
+	 * here is insert new index tuples.  -cim 9/27/89
 	 */
 
 	/*
