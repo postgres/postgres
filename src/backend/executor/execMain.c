@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.256.2.1 2005/11/14 17:43:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.256.2.2 2005/11/19 20:58:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1446,6 +1446,16 @@ ExecInsert(TupleTableSlot *slot,
 	setLastTid(&(tuple->t_self));
 
 	/*
+	 * KLUGE SOLUTION for bug found post 8.1 release: if the tuple toaster
+	 * fired on the tuple then it changed the physical tuple inside the
+	 * tuple slot, leaving any extracted information invalid.  Mark the
+	 * extracted state invalid just in case.  Need to fix things so that
+	 * the toaster gets to run against the tuple before we materialize it,
+	 * but that's way too invasive for a stable branch.
+	 */
+	slot->tts_nvalid = 0;
+
+	/*
 	 * insert index entries for tuple
 	 */
 	if (resultRelInfo->ri_NumIndices > 0)
@@ -1698,6 +1708,16 @@ lreplace:;
 
 	IncrReplaced();
 	(estate->es_processed)++;
+
+	/*
+	 * KLUGE SOLUTION for bug found post 8.1 release: if the tuple toaster
+	 * fired on the tuple then it changed the physical tuple inside the
+	 * tuple slot, leaving any extracted information invalid.  Mark the
+	 * extracted state invalid just in case.  Need to fix things so that
+	 * the toaster gets to run against the tuple before we materialize it,
+	 * but that's way too invasive for a stable branch.
+	 */
+	slot->tts_nvalid = 0;
 
 	/*
 	 * Note: instead of having to update the old index tuples associated with
