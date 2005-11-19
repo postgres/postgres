@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.124 2005/11/17 22:14:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.125 2005/11/19 19:44:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2965,10 +2965,9 @@ array_eq(PG_FUNCTION_ARGS)
 	int			ndims2 = ARR_NDIM(array2);
 	int		   *dims1 = ARR_DIMS(array1);
 	int		   *dims2 = ARR_DIMS(array2);
-	int			nitems1 = ArrayGetNItems(ndims1, dims1);
-	int			nitems2 = ArrayGetNItems(ndims2, dims2);
 	Oid			element_type = ARR_ELEMTYPE(array1);
 	bool		result = true;
+	int			nitems;
 	TypeCacheEntry *typentry;
 	int			typlen;
 	bool		typbyval;
@@ -2986,8 +2985,9 @@ array_eq(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("cannot compare arrays of different element types")));
 
-	/* fast path if the arrays do not have the same number of elements */
-	if (nitems1 != nitems2)
+	/* fast path if the arrays do not have the same dimensionality */
+	if (ndims1 != ndims2 ||
+		memcmp(dims1, dims2, 2 * ndims1 * sizeof(int)) != 0)
 		result = false;
 	else
 	{
@@ -3021,13 +3021,14 @@ array_eq(PG_FUNCTION_ARGS)
 								 NULL, NULL);
 
 		/* Loop over source data */
+		nitems = ArrayGetNItems(ndims1, dims1);
 		ptr1 = ARR_DATA_PTR(array1);
 		ptr2 = ARR_DATA_PTR(array2);
 		bitmap1 = ARR_NULLBITMAP(array1);
 		bitmap2 = ARR_NULLBITMAP(array2);
 		bitmask = 1;			/* use same bitmask for both arrays */
 
-		for (i = 0; i < nitems1; i++)
+		for (i = 0; i < nitems; i++)
 		{
 			Datum		elt1;
 			Datum		elt2;
@@ -3221,13 +3222,13 @@ array_cmp(FunctionCallInfo fcinfo)
 							 NULL, NULL);
 
 	/* Loop over source data */
+	min_nitems = Min(nitems1, nitems2);
 	ptr1 = ARR_DATA_PTR(array1);
 	ptr2 = ARR_DATA_PTR(array2);
 	bitmap1 = ARR_NULLBITMAP(array1);
 	bitmap2 = ARR_NULLBITMAP(array2);
 	bitmask = 1;				/* use same bitmask for both arrays */
 
-	min_nitems = Min(nitems1, nitems2);
 	for (i = 0; i < min_nitems; i++)
 	{
 		Datum		elt1;
@@ -3317,8 +3318,31 @@ array_cmp(FunctionCallInfo fcinfo)
 		}
 	}
 
-	if ((result == 0) && (nitems1 != nitems2))
-		result = (nitems1 < nitems2) ? -1 : 1;
+	/*
+	 * If arrays contain same data (up to end of shorter one), apply additional
+	 * rules to sort by dimensionality.  The relative significance of the
+	 * different bits of information is historical; mainly we just care that
+	 * we don't say "equal" for arrays of different dimensionality.
+	 */
+	if (result == 0)
+	{
+		if (nitems1 != nitems2)
+			result = (nitems1 < nitems2) ? -1 : 1;
+		else if (ndims1 != ndims2)
+			result = (ndims1 < ndims2) ? -1 : 1;
+		else
+		{
+			/* this relies on LB array immediately following DIMS array */
+			for (i = 0; i < ndims1 * 2; i++)
+			{
+				if (dims1[i] != dims2[i])
+				{
+					result = (dims1[i] < dims2[i]) ? -1 : 1;
+					break;
+				}
+			}
+		}
+	}
 
 	/* Avoid leaking memory when handed toasted input. */
 	PG_FREE_IF_COPY(array1, 0);

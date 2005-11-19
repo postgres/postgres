@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.294 2005/11/19 01:50:08 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.295 2005/11/19 19:44:54 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -7402,6 +7402,19 @@ SELECT NULLIF(value, '(none)') ...
       </tbody>
      </tgroup>
     </table>
+
+  <para>
+   Array comparisons compare the array contents element-by-element,
+   using the default btree comparison function for the element data type.
+   In multidimensional arrays the elements are visited in row-major order
+   (last subscript varies most rapidly).
+   If the contents of two arrays are equal but the dimensionality is
+   different, the first difference in the dimensionality information
+   determines the sort order.  (This is a change from versions of
+   <productname>PostgreSQL</> prior to 8.2: older versions would claim
+   that two arrays with the same contents were equal, even if the
+   number of dimensions or subscript ranges were different.)
+  </para>
 
   <para>
    See <xref linkend="arrays"> for more details about array operator
