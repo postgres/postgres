@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.23 2005/07/06 19:02:53 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.24 2005/11/20 18:38:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,19 +66,21 @@
 
 
 /* ----------
- * heap_tuple_toast_attrs() -
+ * toast_insert_or_update -
  *
- *		Called by heap_insert(), heap_update() and heap_delete().
- *		Outdates any no-longer-needed toast entries referenced
- *		by oldtup and creates new ones until newtup is no more than
- *		TOAST_TUPLE_TARGET (or we run out of toastable values).
- *		Possibly modifies newtup by replacing the t_data part!
- *
- *		oldtup is NULL if insert, newtup is NULL if delete.
+ *	Called by heap_insert() and heap_update().
  * ----------
  */
-extern void heap_tuple_toast_attrs(Relation rel,
-					   HeapTuple newtup, HeapTuple oldtup);
+extern HeapTuple toast_insert_or_update(Relation rel,
+										HeapTuple newtup, HeapTuple oldtup);
+
+/* ----------
+ * toast_delete -
+ *
+ *	Called by heap_delete().
+ * ----------
+ */
+extern void toast_delete(Relation rel, HeapTuple oldtup);
 
 /* ----------
  * heap_tuple_fetch_attr() -
