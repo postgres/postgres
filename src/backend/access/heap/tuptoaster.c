@@ -8,13 +8,16 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.53 2005/10/15 02:49:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.53.2.1 2005/11/20 18:38:42 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
- *		heap_tuple_toast_attrs -
+ *		toast_insert_or_update -
  *			Try to make a given tuple fit into one page by compressing
  *			or moving off attributes
+ *
+ *		toast_delete -
+ *			Reclaim toast storage when a tuple is deleted
  *
  *		heap_tuple_untoast_attr -
  *			Fetch back a given value from the "secondary" relation
@@ -40,32 +43,11 @@
 
 #undef TOAST_DEBUG
 
-static void toast_delete(Relation rel, HeapTuple oldtup);
 static void toast_delete_datum(Relation rel, Datum value);
-static void toast_insert_or_update(Relation rel, HeapTuple newtup,
-					   HeapTuple oldtup);
 static Datum toast_save_datum(Relation rel, Datum value);
 static varattrib *toast_fetch_datum(varattrib *attr);
 static varattrib *toast_fetch_datum_slice(varattrib *attr,
 						int32 sliceoffset, int32 length);
-
-
-/* ----------
- * heap_tuple_toast_attrs -
- *
- *	This is the central public entry point for toasting from heapam.
- *
- *	Calls the appropriate event specific action.
- * ----------
- */
-void
-heap_tuple_toast_attrs(Relation rel, HeapTuple newtup, HeapTuple oldtup)
-{
-	if (newtup == NULL)
-		toast_delete(rel, oldtup);
-	else
-		toast_insert_or_update(rel, newtup, oldtup);
-}
 
 
 /* ----------
@@ -305,7 +287,7 @@ toast_datum_size(Datum value)
  *	Cascaded delete toast-entries on DELETE
  * ----------
  */
-static void
+void
 toast_delete(Relation rel, HeapTuple oldtup)
 {
 	TupleDesc	tupleDesc;
@@ -355,11 +337,22 @@ toast_delete(Relation rel, HeapTuple oldtup)
  *
  *	Delete no-longer-used toast-entries and create new ones to
  *	make the new tuple fit on INSERT or UPDATE
+ *
+ * Inputs:
+ *	newtup: the candidate new tuple to be inserted
+ *	oldtup: the old row version for UPDATE, or NULL for INSERT
+ * Result:
+ *	either newtup if no toasting is needed, or a palloc'd modified tuple
+ *	that is what should actually get stored
+ *
+ * NOTE: neither newtup nor oldtup will be modified.  This is a change
+ * from the pre-8.1 API of this routine.
  * ----------
  */
-static void
+HeapTuple
 toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 {
+	HeapTuple	result_tuple;
 	TupleDesc	tupleDesc;
 	Form_pg_attribute *att;
 	int			numAttrs;
@@ -757,7 +750,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 	if (need_change)
 	{
 		HeapTupleHeader olddata = newtup->t_data;
-		char	   *new_data;
+		HeapTupleHeader new_data;
 		int32		new_len;
 
 		/*
@@ -775,14 +768,18 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 										  toast_values, toast_isnull);
 
 		/*
-		 * Allocate new tuple in same context as old one.
+		 * Allocate and zero the space needed, and fill HeapTupleData fields.
 		 */
-		new_data = (char *) MemoryContextAlloc(newtup->t_datamcxt, new_len);
-		newtup->t_data = (HeapTupleHeader) new_data;
-		newtup->t_len = new_len;
+		result_tuple = (HeapTuple) palloc0(HEAPTUPLESIZE + new_len);
+		result_tuple->t_len = new_len;
+		result_tuple->t_self = newtup->t_self;
+		result_tuple->t_tableOid = newtup->t_tableOid;
+		result_tuple->t_datamcxt = CurrentMemoryContext;
+		new_data = (HeapTupleHeader) ((char *) result_tuple + HEAPTUPLESIZE);
+		result_tuple->t_data = new_data;
 
 		/*
-		 * Put the tuple header and the changed values into place
+		 * Put the existing tuple header and the changed values into place
 		 */
 		memcpy(new_data, olddata, olddata->t_hoff);
 
@@ -790,16 +787,11 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 						toast_values,
 						toast_isnull,
 						(char *) new_data + olddata->t_hoff,
-						&(newtup->t_data->t_infomask),
-						has_nulls ? newtup->t_data->t_bits : NULL);
-
-		/*
-		 * In the case we modified a previously modified tuple again, free the
-		 * memory from the previous run
-		 */
-		if ((char *) olddata != ((char *) newtup + HEAPTUPLESIZE))
-			pfree(olddata);
+						&(new_data->t_infomask),
+						has_nulls ? new_data->t_bits : NULL);
 	}
+	else
+		result_tuple = newtup;
 
 	/*
 	 * Free allocated temp values
@@ -816,6 +808,8 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		for (i = 0; i < numAttrs; i++)
 			if (toast_delold[i])
 				toast_delete_datum(rel, toast_oldvalues[i]);
+
+	return result_tuple;
 }
 
 

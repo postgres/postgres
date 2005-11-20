@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.200 2005/10/15 02:49:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.200.2.1 2005/11/20 18:38:42 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1085,12 +1085,19 @@ heap_get_latest_tid(Relation relation,
  *
  * use_fsm is passed directly to RelationGetBufferForTuple, which see for
  * more info.
+ *
+ * The return value is the OID assigned to the tuple (either here or by the
+ * caller), or InvalidOid if no OID.  The header fields of *tup are updated
+ * to match the stored tuple; in particular tup->t_self receives the actual
+ * TID where the tuple was stored.  But note that any toasting of fields
+ * within the tuple data is NOT reflected into *tup.
  */
 Oid
 heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 			bool use_wal, bool use_fsm)
 {
 	TransactionId xid = GetCurrentTransactionId();
+	HeapTuple	heaptup;
 	Buffer		buffer;
 
 	if (relation->rd_rel->relhasoids)
@@ -1128,19 +1135,24 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	/*
 	 * If the new tuple is too big for storage or contains already toasted
 	 * out-of-line attributes from some other relation, invoke the toaster.
+	 *
+	 * Note: below this point, heaptup is the data we actually intend to
+	 * store into the relation; tup is the caller's original untoasted data.
 	 */
 	if (HeapTupleHasExternal(tup) ||
 		(MAXALIGN(tup->t_len) > TOAST_TUPLE_THRESHOLD))
-		heap_tuple_toast_attrs(relation, tup, NULL);
+		heaptup = toast_insert_or_update(relation, tup, NULL);
+	else
+		heaptup = tup;
 
 	/* Find buffer to insert this tuple into */
-	buffer = RelationGetBufferForTuple(relation, tup->t_len,
+	buffer = RelationGetBufferForTuple(relation, heaptup->t_len,
 									   InvalidBuffer, use_fsm);
 
 	/* NO EREPORT(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();
 
-	RelationPutHeapTuple(relation, buffer, tup);
+	RelationPutHeapTuple(relation, buffer, heaptup);
 
 	/* XLOG stuff */
 	if (relation->rd_istemp)
@@ -1158,15 +1170,15 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 		uint8		info = XLOG_HEAP_INSERT;
 
 		xlrec.target.node = relation->rd_node;
-		xlrec.target.tid = tup->t_self;
+		xlrec.target.tid = heaptup->t_self;
 		rdata[0].data = (char *) &xlrec;
 		rdata[0].len = SizeOfHeapInsert;
 		rdata[0].buffer = InvalidBuffer;
 		rdata[0].next = &(rdata[1]);
 
-		xlhdr.t_natts = tup->t_data->t_natts;
-		xlhdr.t_infomask = tup->t_data->t_infomask;
-		xlhdr.t_hoff = tup->t_data->t_hoff;
+		xlhdr.t_natts = heaptup->t_data->t_natts;
+		xlhdr.t_infomask = heaptup->t_data->t_infomask;
+		xlhdr.t_hoff = heaptup->t_data->t_hoff;
 
 		/*
 		 * note we mark rdata[1] as belonging to buffer; if XLogInsert decides
@@ -1180,8 +1192,8 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 		rdata[1].next = &(rdata[2]);
 
 		/* PG73FORMAT: write bitmap [+ padding] [+ oid] + data */
-		rdata[2].data = (char *) tup->t_data + offsetof(HeapTupleHeaderData, t_bits);
-		rdata[2].len = tup->t_len - offsetof(HeapTupleHeaderData, t_bits);
+		rdata[2].data = (char *) heaptup->t_data + offsetof(HeapTupleHeaderData, t_bits);
+		rdata[2].len = heaptup->t_len - offsetof(HeapTupleHeaderData, t_bits);
 		rdata[2].buffer = buffer;
 		rdata[2].buffer_std = true;
 		rdata[2].next = NULL;
@@ -1191,7 +1203,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 		 * page instead of restoring the whole thing.  Set flag, and hide
 		 * buffer references from XLogInsert.
 		 */
-		if (ItemPointerGetOffsetNumber(&(tup->t_self)) == FirstOffsetNumber &&
+		if (ItemPointerGetOffsetNumber(&(heaptup->t_self)) == FirstOffsetNumber &&
 			PageGetMaxOffsetNumber(page) == FirstOffsetNumber)
 		{
 			info |= XLOG_HEAP_INIT_PAGE;
@@ -1212,12 +1224,22 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	/*
 	 * If tuple is cachable, mark it for invalidation from the caches in case
 	 * we abort.  Note it is OK to do this after WriteBuffer releases the
-	 * buffer, because the "tup" data structure is all in local memory, not in
-	 * the shared buffer.
+	 * buffer, because the heaptup data structure is all in local memory,
+	 * not in the shared buffer.
 	 */
-	CacheInvalidateHeapTuple(relation, tup);
+	CacheInvalidateHeapTuple(relation, heaptup);
 
 	pgstat_count_heap_insert(&relation->pgstat_info);
+
+	/*
+	 * If heaptup is a private copy, release it.  Don't forget to copy t_self
+	 * back to the caller's image, too.
+	 */
+	if (heaptup != tup)
+	{
+		tup->t_self = heaptup->t_self;
+		heap_freetuple(heaptup);
+	}
 
 	return HeapTupleGetOid(tup);
 }
@@ -1469,7 +1491,7 @@ l1:
 	 * context lock on the buffer first.
 	 */
 	if (HeapTupleHasExternal(&tp))
-		heap_tuple_toast_attrs(relation, NULL, &tp);
+		toast_delete(relation, &tp);
 
 	/*
 	 * Mark tuple for invalidation from system caches at next command
@@ -1553,8 +1575,10 @@ simple_heap_delete(Relation relation, ItemPointer tid)
  * HeapTupleSelfUpdated, HeapTupleUpdated, or HeapTupleBeingUpdated
  * (the last only possible if wait == false).
  *
- * On success, newtup->t_self is set to the TID where the new tuple
- * was inserted.
+ * On success, the header fields of *newtup are updated to match the new
+ * stored tuple; in particular, newtup->t_self is set to the TID where the
+ * new tuple was inserted.  However, any TOAST changes in the new tuple's
+ * data are not reflected into *newtup.
  *
  * In the failure cases, the routine returns the tuple's t_ctid and t_xmax.
  * If t_ctid is the same as otid, the tuple was deleted; if different, the
@@ -1570,6 +1594,7 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	TransactionId xid = GetCurrentTransactionId();
 	ItemId		lp;
 	HeapTupleData oldtup;
+	HeapTuple	heaptup;
 	PageHeader	dp;
 	Buffer		buffer,
 				newbuf;
@@ -1760,11 +1785,12 @@ l2:
 	 * We need to invoke the toaster if there are already any out-of-line toasted
 	 * values present, or if the new tuple is over-threshold.
 	 */
+	newtupsize = MAXALIGN(newtup->t_len);
+
 	need_toast = (HeapTupleHasExternal(&oldtup) ||
 				  HeapTupleHasExternal(newtup) ||
-				  (MAXALIGN(newtup->t_len) > TOAST_TUPLE_THRESHOLD));
+				  newtupsize > TOAST_TUPLE_THRESHOLD);
 
-	newtupsize = MAXALIGN(newtup->t_len);
 	pagefree = PageGetFreeSpace((Page) dp);
 
 	if (need_toast || newtupsize > pagefree)
@@ -1776,15 +1802,25 @@ l2:
 									   HEAP_MOVED);
 		HeapTupleHeaderSetXmax(oldtup.t_data, xid);
 		HeapTupleHeaderSetCmax(oldtup.t_data, cid);
+		/* temporarily make it look not-updated */
+		oldtup.t_data->t_ctid = oldtup.t_self;
 		already_marked = true;
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
-		/* Let the toaster do its thing */
+		/*
+		 * Let the toaster do its thing, if needed.
+		 *
+		 * Note: below this point, heaptup is the data we actually intend to
+		 * store into the relation; newtup is the caller's original untoasted
+		 * data.
+		 */
 		if (need_toast)
 		{
-			heap_tuple_toast_attrs(relation, newtup, &oldtup);
-			newtupsize = MAXALIGN(newtup->t_len);
+			heaptup = toast_insert_or_update(relation, newtup, &oldtup);
+			newtupsize = MAXALIGN(heaptup->t_len);
 		}
+		else
+			heaptup = newtup;
 
 		/*
 		 * Now, do we need a new page for the tuple, or not?  This is a bit
@@ -1805,8 +1841,8 @@ l2:
 		 */
 		if (newtupsize > pagefree)
 		{
-			/* Assume there's no chance to put newtup on same page. */
-			newbuf = RelationGetBufferForTuple(relation, newtup->t_len,
+			/* Assume there's no chance to put heaptup on same page. */
+			newbuf = RelationGetBufferForTuple(relation, heaptup->t_len,
 											   buffer, true);
 		}
 		else
@@ -1823,7 +1859,7 @@ l2:
 				 * seldom be taken.
 				 */
 				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-				newbuf = RelationGetBufferForTuple(relation, newtup->t_len,
+				newbuf = RelationGetBufferForTuple(relation, heaptup->t_len,
 												   buffer, true);
 			}
 			else
@@ -1838,6 +1874,7 @@ l2:
 		/* No TOAST work needed, and it'll fit on same page */
 		already_marked = false;
 		newbuf = buffer;
+		heaptup = newtup;
 	}
 
 	/*
@@ -1849,7 +1886,7 @@ l2:
 	/* NO EREPORT(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();
 
-	RelationPutHeapTuple(relation, newbuf, newtup);		/* insert new tuple */
+	RelationPutHeapTuple(relation, newbuf, heaptup); /* insert new tuple */
 
 	if (!already_marked)
 	{
@@ -1863,13 +1900,13 @@ l2:
 	}
 
 	/* record address of new tuple in t_ctid of old one */
-	oldtup.t_data->t_ctid = newtup->t_self;
+	oldtup.t_data->t_ctid = heaptup->t_self;
 
 	/* XLOG stuff */
 	if (!relation->rd_istemp)
 	{
 		XLogRecPtr	recptr = log_heap_update(relation, buffer, oldtup.t_self,
-											 newbuf, newtup, false);
+											 newbuf, heaptup, false);
 
 		if (newbuf != buffer)
 		{
@@ -1905,10 +1942,10 @@ l2:
 	/*
 	 * If new tuple is cachable, mark it for invalidation from the caches in
 	 * case we abort.  Note it is OK to do this after WriteBuffer releases the
-	 * buffer, because the "newtup" data structure is all in local memory, not
+	 * buffer, because the heaptup data structure is all in local memory, not
 	 * in the shared buffer.
 	 */
-	CacheInvalidateHeapTuple(relation, newtup);
+	CacheInvalidateHeapTuple(relation, heaptup);
 
 	/*
 	 * Release the lmgr tuple lock, if we had it.
@@ -1917,6 +1954,16 @@ l2:
 		UnlockTuple(relation, &(oldtup.t_self), ExclusiveLock);
 
 	pgstat_count_heap_update(&relation->pgstat_info);
+
+	/*
+	 * If heaptup is a private copy, release it.  Don't forget to copy t_self
+	 * back to the caller's image, too.
+	 */
+	if (heaptup != newtup)
+	{
+		newtup->t_self = heaptup->t_self;
+		heap_freetuple(heaptup);
+	}
 
 	return HeapTupleMayBeUpdated;
 }
