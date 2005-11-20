@@ -36,7 +36,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.23 2005/10/15 02:49:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.24 2005/11/20 19:49:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -707,7 +707,6 @@ readtup_heap(Tuplestorestate *state, unsigned int len)
 	/* reconstruct the HeapTupleData portion */
 	tuple->t_len = len - sizeof(unsigned int);
 	ItemPointerSetInvalid(&(tuple->t_self));
-	tuple->t_datamcxt = CurrentMemoryContext;
 	tuple->t_data = (HeapTupleHeader) (((char *) tuple) + HEAPTUPLESIZE);
 	/* read in the tuple proper */
 	if (BufFileRead(state->myfile, (void *) tuple->t_data,

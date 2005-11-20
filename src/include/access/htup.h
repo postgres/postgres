@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.78 2005/10/15 02:49:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.79 2005/11/20 19:49:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -361,20 +361,20 @@ do { \
  *
  * * Pointer to a tuple in a disk buffer: t_data points directly into the
  *	 buffer (which the code had better be holding a pin on, but this is not
- *	 reflected in HeapTupleData itself).  t_datamcxt must be NULL.
+ *	 reflected in HeapTupleData itself).
  *
- * * Pointer to nothing: t_data and t_datamcxt are NULL.  This is used as
- *	 a failure indication in some functions.
+ * * Pointer to nothing: t_data is NULL.  This is used as a failure indication
+ *	 in some functions.
  *
  * * Part of a palloc'd tuple: the HeapTupleData itself and the tuple
  *	 form a single palloc'd chunk.  t_data points to the memory location
- *	 immediately following the HeapTupleData struct (at offset HEAPTUPLESIZE),
- *	 and t_datamcxt is the containing context.	This is used as the output
- *	 format of heap_form_tuple and related routines.
+ *	 immediately following the HeapTupleData struct (at offset HEAPTUPLESIZE).
+ *	 This is the output format of heap_form_tuple and related routines.
  *
  * * Separately allocated tuple: t_data points to a palloc'd chunk that
- *	 is not adjacent to the HeapTupleData, and t_datamcxt is the context
- *	 containing that chunk.
+ *	 is not adjacent to the HeapTupleData.  (This case is deprecated since
+ *	 it's difficult to tell apart from case #1.  It should be used only in
+ *	 limited contexts where the code knows that case #1 will never apply.)
  *
  * t_len should always be valid, except in the pointer-to-nothing case.
  * t_self and t_tableOid should be valid if the HeapTupleData points to
@@ -386,7 +386,6 @@ typedef struct HeapTupleData
 	uint32		t_len;			/* length of *t_data */
 	ItemPointerData t_self;		/* SelfItemPointer */
 	Oid			t_tableOid;		/* table the tuple came from */
-	MemoryContext t_datamcxt;	/* memory context of allocation */
 	HeapTupleHeader t_data;		/* -> tuple header and data */
 } HeapTupleData;
 

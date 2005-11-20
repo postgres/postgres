@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.96 2005/10/15 02:49:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.97 2005/11/20 19:49:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -621,7 +621,6 @@ ExecHashTableInsert(HashJoinTable hashtable,
 		memcpy((char *) &hashTuple->htup,
 			   (char *) tuple,
 			   sizeof(hashTuple->htup));
-		hashTuple->htup.t_datamcxt = hashtable->batchCxt;
 		hashTuple->htup.t_data = (HeapTupleHeader)
 			(((char *) hashTuple) + MAXALIGN(sizeof(HashJoinTupleData)));
 		memcpy((char *) hashTuple->htup.t_data,

@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.102 2005/10/19 22:30:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.103 2005/11/20 19:49:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -623,7 +623,6 @@ heap_copytuple(HeapTuple tuple)
 	newTuple->t_len = tuple->t_len;
 	newTuple->t_self = tuple->t_self;
 	newTuple->t_tableOid = tuple->t_tableOid;
-	newTuple->t_datamcxt = CurrentMemoryContext;
 	newTuple->t_data = (HeapTupleHeader) ((char *) newTuple + HEAPTUPLESIZE);
 	memcpy((char *) newTuple->t_data, (char *) tuple->t_data, tuple->t_len);
 	return newTuple;
@@ -647,7 +646,6 @@ heap_copytuple_with_tuple(HeapTuple src, HeapTuple dest)
 	dest->t_len = src->t_len;
 	dest->t_self = src->t_self;
 	dest->t_tableOid = src->t_tableOid;
-	dest->t_datamcxt = CurrentMemoryContext;
 	dest->t_data = (HeapTupleHeader) palloc(src->t_len);
 	memcpy((char *) dest->t_data, (char *) src->t_data, src->t_len);
 }
@@ -725,7 +723,6 @@ heap_form_tuple(TupleDesc tupleDescriptor,
 	 * HeapTupleData management structure are allocated in one chunk.
 	 */
 	tuple = (HeapTuple) palloc0(HEAPTUPLESIZE + len);
-	tuple->t_datamcxt = CurrentMemoryContext;
 	tuple->t_data = td = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);
 
 	/*
@@ -833,7 +830,6 @@ heap_formtuple(TupleDesc tupleDescriptor,
 	 * HeapTupleData management structure are allocated in one chunk.
 	 */
 	tuple = (HeapTuple) palloc0(HEAPTUPLESIZE + len);
-	tuple->t_datamcxt = CurrentMemoryContext;
 	tuple->t_data = td = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);
 
 	/*
@@ -1516,11 +1512,6 @@ slot_attisnull(TupleTableSlot *slot, int attnum)
 void
 heap_freetuple(HeapTuple htup)
 {
-	if (htup->t_data != NULL)
-		if (htup->t_datamcxt != NULL && (char *) (htup->t_data) !=
-			((char *) htup + HEAPTUPLESIZE))
-			pfree(htup->t_data);
-
 	pfree(htup);
 }
 
@@ -1559,7 +1550,6 @@ heap_addheader(int natts,		/* max domain index */
 	len = hoff + structlen;
 
 	tuple = (HeapTuple) palloc0(HEAPTUPLESIZE + len);
-	tuple->t_datamcxt = CurrentMemoryContext;
 	tuple->t_data = td = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);
 
 	tuple->t_len = len;

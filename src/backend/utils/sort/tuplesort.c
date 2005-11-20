@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.54 2005/10/25 13:47:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.55 2005/11/20 19:49:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2071,7 +2071,6 @@ readtup_heap(Tuplesortstate *state, int tapenum, unsigned int len)
 	/* reconstruct the HeapTupleData portion */
 	tuple->t_len = len - sizeof(unsigned int);
 	ItemPointerSetInvalid(&(tuple->t_self));
-	tuple->t_datamcxt = CurrentMemoryContext;
 	tuple->t_data = (HeapTupleHeader) (((char *) tuple) + HEAPTUPLESIZE);
 	/* read in the tuple proper */
 	if (LogicalTapeRead(state->tapeset, tapenum, (void *) tuple->t_data,

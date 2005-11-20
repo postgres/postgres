@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.201 2005/11/20 18:38:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.202 2005/11/20 19:49:07 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -78,7 +78,6 @@ initscan(HeapScanDesc scan, ScanKey key)
 	 */
 	scan->rs_nblocks = RelationGetNumberOfBlocks(scan->rs_rd);
 
-	scan->rs_ctup.t_datamcxt = NULL;
 	scan->rs_ctup.t_data = NULL;
 	scan->rs_cbuf = InvalidBuffer;
 
@@ -129,8 +128,9 @@ heapgettup(Relation relation,
 	/*
 	 * debugging stuff
 	 *
-	 * check validity of arguments, here and for other functions too Note: no
-	 * locking manipulations needed--this is a local function
+	 * check validity of arguments, here and for other functions too
+	 *
+	 * Note: no locking manipulations needed--this is a local function
 	 */
 #ifdef	HEAPDEBUGALL
 	if (ItemPointerIsValid(tid))
@@ -164,7 +164,6 @@ heapgettup(Relation relation,
 		if (BufferIsValid(*buffer))
 			ReleaseBuffer(*buffer);
 		*buffer = InvalidBuffer;
-		tuple->t_datamcxt = NULL;
 		tuple->t_data = NULL;
 		return;
 	}
@@ -182,7 +181,6 @@ heapgettup(Relation relation,
 			if (BufferIsValid(*buffer))
 				ReleaseBuffer(*buffer);
 			*buffer = InvalidBuffer;
-			tuple->t_datamcxt = NULL;
 			tuple->t_data = NULL;
 			return;
 		}
@@ -197,7 +195,6 @@ heapgettup(Relation relation,
 		lineoff = ItemPointerGetOffsetNumber(tid);
 		lpp = PageGetItemId(dp, lineoff);
 
-		tuple->t_datamcxt = NULL;
 		tuple->t_data = (HeapTupleHeader) PageGetItem((Page) dp, lpp);
 		tuple->t_len = ItemIdGetLength(lpp);
 		LockBuffer(*buffer, BUFFER_LOCK_UNLOCK);
@@ -293,7 +290,6 @@ heapgettup(Relation relation,
 			{
 				bool		valid;
 
-				tuple->t_datamcxt = NULL;
 				tuple->t_data = (HeapTupleHeader) PageGetItem((Page) dp, lpp);
 				tuple->t_len = ItemIdGetLength(lpp);
 				ItemPointerSet(&(tuple->t_self), page, lineoff);
@@ -340,7 +336,6 @@ heapgettup(Relation relation,
 			if (BufferIsValid(*buffer))
 				ReleaseBuffer(*buffer);
 			*buffer = InvalidBuffer;
-			tuple->t_datamcxt = NULL;
 			tuple->t_data = NULL;
 			return;
 		}
@@ -872,7 +867,6 @@ heap_release_fetch(Relation relation,
 			ReleaseBuffer(buffer);
 			*userbuf = InvalidBuffer;
 		}
-		tuple->t_datamcxt = NULL;
 		tuple->t_data = NULL;
 		return false;
 	}
@@ -895,7 +889,6 @@ heap_release_fetch(Relation relation,
 			ReleaseBuffer(buffer);
 			*userbuf = InvalidBuffer;
 		}
-		tuple->t_datamcxt = NULL;
 		tuple->t_data = NULL;
 		return false;
 	}
@@ -903,7 +896,6 @@ heap_release_fetch(Relation relation,
 	/*
 	 * fill in *tuple fields
 	 */
-	tuple->t_datamcxt = NULL;
 	tuple->t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
 	tuple->t_len = ItemIdGetLength(lp);
 	tuple->t_tableOid = RelationGetRelid(relation);
@@ -1027,7 +1019,6 @@ heap_get_latest_tid(Relation relation,
 
 		/* OK to access the tuple */
 		tp.t_self = ctid;
-		tp.t_datamcxt = NULL;
 		tp.t_data = (HeapTupleHeader) PageGetItem(dp, lp);
 		tp.t_len = ItemIdGetLength(lp);
 
@@ -1303,7 +1294,6 @@ heap_delete(Relation relation, ItemPointer tid,
 	dp = (PageHeader) BufferGetPage(buffer);
 	lp = PageGetItemId(dp, ItemPointerGetOffsetNumber(tid));
 
-	tp.t_datamcxt = NULL;
 	tp.t_data = (HeapTupleHeader) PageGetItem(dp, lp);
 	tp.t_len = ItemIdGetLength(lp);
 	tp.t_self = *tid;
@@ -1612,7 +1602,6 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	dp = (PageHeader) BufferGetPage(buffer);
 	lp = PageGetItemId(dp, ItemPointerGetOffsetNumber(otid));
 
-	oldtup.t_datamcxt = NULL;
 	oldtup.t_data = (HeapTupleHeader) PageGetItem(dp, lp);
 	oldtup.t_len = ItemIdGetLength(lp);
 	oldtup.t_self = *otid;
@@ -2093,7 +2082,6 @@ heap_lock_tuple(Relation relation, HeapTuple tuple, Buffer *buffer,
 	lp = PageGetItemId(dp, ItemPointerGetOffsetNumber(tid));
 	Assert(ItemIdIsUsed(lp));
 
-	tuple->t_datamcxt = NULL;
 	tuple->t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
 	tuple->t_len = ItemIdGetLength(lp);
 	tuple->t_tableOid = RelationGetRelid(relation);
@@ -2476,13 +2464,11 @@ heap_restrpos(HeapScanDesc scan)
 
 	if (!ItemPointerIsValid(&scan->rs_mctid))
 	{
-		scan->rs_ctup.t_datamcxt = NULL;
 		scan->rs_ctup.t_data = NULL;
 	}
 	else
 	{
 		scan->rs_ctup.t_self = scan->rs_mctid;
-		scan->rs_ctup.t_datamcxt = NULL;
 		scan->rs_ctup.t_data = (HeapTupleHeader) 0x1;	/* for heapgettup */
 		heapgettup(scan->rs_rd,
 				   0,

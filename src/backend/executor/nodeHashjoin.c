@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.75 2005/10/18 01:06:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.76 2005/11/20 19:49:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -789,7 +789,6 @@ ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 				 errmsg("could not read from hash-join temporary file: %m")));
 	heapTuple = palloc(HEAPTUPLESIZE + htup.t_len);
 	memcpy((char *) heapTuple, (char *) &htup, sizeof(HeapTupleData));
-	heapTuple->t_datamcxt = CurrentMemoryContext;
 	heapTuple->t_data = (HeapTupleHeader)
 		((char *) heapTuple + HEAPTUPLESIZE);
 	nread = BufFileRead(file, (void *) heapTuple->t_data, htup.t_len);

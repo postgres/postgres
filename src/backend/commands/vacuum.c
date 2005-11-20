@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.317 2005/10/15 02:49:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.318 2005/11/20 19:49:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1338,7 +1338,6 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 				continue;
 			}
 
-			tuple.t_datamcxt = NULL;
 			tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
 			tuple.t_len = ItemIdGetLength(itemid);
 			ItemPointerSet(&(tuple.t_self), blkno, offnum);
@@ -1758,7 +1757,6 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			if (!ItemIdIsUsed(itemid))
 				continue;
 
-			tuple.t_datamcxt = NULL;
 			tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
 			tuple_len = tuple.t_len = ItemIdGetLength(itemid);
 			ItemPointerSet(&(tuple.t_self), blkno, offnum);
@@ -1937,7 +1935,6 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						break;
 					}
 					/* OK, switch our attention to the next tuple in chain */
-					tp.t_datamcxt = NULL;
 					tp.t_data = nextTdata;
 					tp.t_self = nextTid;
 					tlen = tp.t_len = ItemIdGetLength(nextItemid);
@@ -2064,7 +2061,6 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						chain_move_failed = true;
 						break;	/* out of check-all-items loop */
 					}
-					tp.t_datamcxt = NULL;
 					tp.t_data = PTdata;
 					tlen = tp.t_len = ItemIdGetLength(Pitemid);
 					if (freeCbuf)
@@ -2122,7 +2118,6 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 					Citemid = PageGetItemId(Cpage,
 								ItemPointerGetOffsetNumber(&(tuple.t_self)));
-					tuple.t_datamcxt = NULL;
 					tuple.t_data = (HeapTupleHeader) PageGetItem(Cpage, Citemid);
 					tuple_len = tuple.t_len = ItemIdGetLength(Citemid);
 
@@ -2582,7 +2577,6 @@ move_chain_tuple(Relation rel,
 	newitemid = PageGetItemId(dst_page, newoff);
 	/* drop temporary copy, and point to the version on the dest page */
 	pfree(newtup.t_data);
-	newtup.t_datamcxt = NULL;
 	newtup.t_data = (HeapTupleHeader) PageGetItem(dst_page, newitemid);
 
 	ItemPointerSet(&(newtup.t_self), dst_vacpage->blkno, newoff);
@@ -2692,7 +2686,6 @@ move_plain_tuple(Relation rel,
 			 dst_vacpage->offsets_used, dst_vacpage->offsets_free);
 	newitemid = PageGetItemId(dst_page, newoff);
 	pfree(newtup.t_data);
-	newtup.t_datamcxt = NULL;
 	newtup.t_data = (HeapTupleHeader) PageGetItem(dst_page, newitemid);
 	ItemPointerSet(&(newtup.t_data->t_ctid), dst_vacpage->blkno, newoff);
 	newtup.t_self = newtup.t_data->t_ctid;

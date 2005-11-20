@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.49 2005/10/15 02:49:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.50 2005/11/20 19:49:07 tgl Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -98,7 +98,6 @@ RelationGetIndexScan(Relation indexRelation,
 	ItemPointerSetInvalid(&scan->currentMarkData);
 
 	ItemPointerSetInvalid(&scan->xs_ctup.t_self);
-	scan->xs_ctup.t_datamcxt = NULL;
 	scan->xs_ctup.t_data = NULL;
 	scan->xs_cbuf = InvalidBuffer;
 
