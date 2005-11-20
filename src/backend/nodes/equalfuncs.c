@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.254 2005/11/14 23:54:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.255 2005/11/20 23:24:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -882,6 +882,7 @@ _equalDropStmt(DropStmt *a, DropStmt *b)
 	COMPARE_NODE_FIELD(objects);
 	COMPARE_SCALAR_FIELD(removeType);
 	COMPARE_SCALAR_FIELD(behavior);
+	COMPARE_SCALAR_FIELD(missing_ok);
 
 	return true;
 }
