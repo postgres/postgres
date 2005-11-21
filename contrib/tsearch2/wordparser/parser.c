@@ -550,8 +550,6 @@ static TParserStateActionItem actionTPS_InHostFirstDomen[] = {
 	{p_isEOF, 	0, 	A_POP, 		TPS_Null,		0,		NULL}, 
 	{p_islatin,	0, 	A_NEXT, 	TPS_InHostDomenSecond,	0,		NULL}, 
 	{p_isdigit,	0, 	A_NEXT, 	TPS_InHost,		0,		NULL}, 
-	//{p_iseqC,	'-', 	A_POP, 		TPS_InHostFirstAN,	0,		NULL}, 
-	//{p_iseqC,	'.', 	A_POP, 		TPS_InHostFirstDomen,	0,		NULL}, 
 	{NULL, 		0, 	A_POP, 		TPS_Null, 		0,		NULL}
 };
 
