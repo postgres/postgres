@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.167 2005/11/19 17:39:44 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.168 2005/11/21 12:49:32 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -252,6 +252,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"outer", OUTER_P},
 	{"overlaps", OVERLAPS},
 	{"overlay", OVERLAY},
+	{"owned", OWNED},
 	{"owner", OWNER},
 	{"partial", PARTIAL},
 	{"password", PASSWORD},
@@ -269,6 +270,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"quote", QUOTE},
 	{"read", READ},
 	{"real", REAL},
+	{"reassign", REASSIGN},
 	{"recheck", RECHECK},
 	{"references", REFERENCES},
 	{"reindex", REINDEX},

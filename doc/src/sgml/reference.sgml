@@ -1,5 +1,5 @@
 <!-- reference.sgml
-$PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.56 2005/07/29 15:13:11 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.57 2005/11/21 12:49:30 alvherre Exp $
 
 PostgreSQL Reference Manual
 -->
@@ -102,6 +102,7 @@ PostgreSQL Reference Manual
    &dropLanguage;
    &dropOperator;
    &dropOperatorClass;
+   &dropOwned;
    &dropRole;
    &dropRule;
    &dropSchema;
@@ -125,6 +126,7 @@ PostgreSQL Reference Manual
    &notify;
    &prepare;
    &prepareTransaction;
+   &reassignOwned;
    &reindex;
    &releaseSavepoint;
    &reset;

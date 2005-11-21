@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/schemacmds.h,v 1.11 2005/11/19 17:39:45 adunstan Exp $
+ * $PostgreSQL: pgsql/src/include/commands/schemacmds.h,v 1.12 2005/11/21 12:49:32 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,5 +24,6 @@ extern void RemoveSchemaById(Oid schemaOid);
 
 extern void RenameSchema(const char *oldname, const char *newname);
 extern void AlterSchemaOwner(const char *name, Oid newOwnerId);
+extern void AlterSchemaOwner_oid(const Oid schemaOid, Oid newOwnerId);
 
 #endif   /* SCHEMACMDS_H */

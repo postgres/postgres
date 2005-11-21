@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.318 2005/11/20 23:24:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.319 2005/11/21 12:49:31 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2595,6 +2595,27 @@ _copyDeallocateStmt(DeallocateStmt *from)
 	return newnode;
 }
 
+static DropOwnedStmt *
+_copyDropOwnedStmt(DropOwnedStmt *from)
+{
+	DropOwnedStmt *newnode = makeNode(DropOwnedStmt);
+
+	COPY_NODE_FIELD(roles);
+	COPY_SCALAR_FIELD(behavior);
+	
+	return newnode;
+}
+
+static ReassignOwnedStmt *
+_copyReassignOwnedStmt(ReassignOwnedStmt *from)
+{
+	ReassignOwnedStmt *newnode = makeNode(ReassignOwnedStmt);
+
+	COPY_NODE_FIELD(roles);
+	COPY_SCALAR_FIELD(newrole);
+
+	return newnode;
+}
 
 /* ****************************************************************
  *					pg_list.h copy functions
@@ -3145,6 +3166,12 @@ copyObject(void *from)
 			break;
 		case T_DeallocateStmt:
 			retval = _copyDeallocateStmt(from);
+			break;
+		case T_DropOwnedStmt:
+			retval = _copyDropOwnedStmt(from);
+			break;
+		case T_ReassignOwnedStmt:
+			retval = _copyReassignOwnedStmt(from);
 			break;
 
 		case T_A_Expr:

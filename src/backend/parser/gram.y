@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.513 2005/11/19 17:39:44 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.514 2005/11/21 12:49:31 alvherre Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -153,6 +153,7 @@ static void doNegateFloat(Value *v);
 		VariableResetStmt VariableSetStmt VariableShowStmt
 		ViewStmt CheckPointStmt CreateConversionStmt
 		DeallocateStmt PrepareStmt ExecuteStmt
+		DropOwnedStmt ReassignOwnedStmt
 
 %type <node>	select_no_parens select_with_parens select_clause
 				simple_select
@@ -382,7 +383,7 @@ static void doNegateFloat(Value *v);
 	NOT NOTHING NOTIFY NOTNULL NOWAIT NULL_P NULLIF NUMERIC
 
 	OBJECT_P OF OFF OFFSET OIDS OLD ON ONLY OPERATOR OPTION OR
-	ORDER OUT_P OUTER_P OVERLAPS OVERLAY OWNER
+	ORDER OUT_P OUTER_P OVERLAPS OVERLAY OWNED OWNER
 
 	PARTIAL PASSWORD PLACING POSITION
 	PRECISION PRESERVE PREPARE PREPARED PRIMARY
@@ -390,7 +391,7 @@ static void doNegateFloat(Value *v);
 
 	QUOTE
 
-	READ REAL RECHECK REFERENCES REINDEX RELATIVE_P RELEASE RENAME
+	READ REAL REASSIGN RECHECK REFERENCES REINDEX RELATIVE_P RELEASE RENAME
 	REPEATABLE REPLACE RESET RESTART RESTRICT RETURNS REVOKE RIGHT
 	ROLE ROLLBACK ROW ROWS RULE
 
@@ -533,6 +534,7 @@ stmt :
 			| DropCastStmt
 			| DropGroupStmt
 			| DropOpClassStmt
+			| DropOwnedStmt
 			| DropPLangStmt
 			| DropRuleStmt
 			| DropStmt
@@ -553,6 +555,7 @@ stmt :
 			| LockStmt
 			| NotifyStmt
 			| PrepareStmt
+			| ReassignOwnedStmt
 			| ReindexStmt
 			| RemoveAggrStmt
 			| RemoveFuncStmt
@@ -2813,6 +2816,33 @@ DropOpClassStmt:
 				}
 		;
 
+/*****************************************************************************
+ *
+ *		QUERY:
+ *
+ *		DROP OWNED BY username [, username ...] [ RESTRICT | CASCADE ]
+ *		REASSIGN OWNED BY username [, username ...] TO username
+ *
+ *****************************************************************************/
+DropOwnedStmt:
+			DROP OWNED BY name_list opt_drop_behavior
+			 	{
+					DropOwnedStmt *n = makeNode(DropOwnedStmt);
+					n->roles = $4;
+					n->behavior = $5;
+					$$ = (Node *)n;
+				}
+		;
+
+ReassignOwnedStmt:
+			REASSIGN OWNED BY name_list TO name
+				{
+					ReassignOwnedStmt *n = makeNode(ReassignOwnedStmt);
+					n->roles = $4;
+					n->newrole = $6;
+					$$ = (Node *)n;
+				}
+		;
 
 /*****************************************************************************
  *
@@ -8222,6 +8252,7 @@ unreserved_keyword:
 			| OIDS
 			| OPERATOR
 			| OPTION
+			| OWNED
 			| OWNER
 			| PARTIAL
 			| PASSWORD
@@ -8234,6 +8265,7 @@ unreserved_keyword:
 			| PROCEDURE
 			| QUOTE
 			| READ
+			| REASSIGN
 			| RECHECK
 			| REINDEX
 			| RELATIVE_P

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.24 2005/11/19 17:39:44 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.25 2005/11/21 12:49:30 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,8 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
+static void AlterConversionOwner_internal(Relation rel, Oid conversionOid,
+									 Oid newOwnerId);
 
 /*
  * CREATE CONVERSION
@@ -185,16 +187,13 @@ RenameConversion(List *name, const char *newname)
 }
 
 /*
- * Change conversion owner
+ * Change conversion owner, by name
  */
 void
 AlterConversionOwner(List *name, Oid newOwnerId)
 {
 	Oid			conversionOid;
-	HeapTuple	tup;
 	Relation	rel;
-	Form_pg_conversion convForm;
-	AclResult	aclresult;
 
 	rel = heap_open(ConversionRelationId, RowExclusiveLock);
 
@@ -204,6 +203,40 @@ AlterConversionOwner(List *name, Oid newOwnerId)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("conversion \"%s\" does not exist",
 						NameListToString(name))));
+
+	AlterConversionOwner_internal(rel, conversionOid, newOwnerId);
+
+	heap_close(rel, NoLock);
+}
+
+/*
+ * Change conversion owner, by oid
+ */
+void
+AlterConversionOwner_oid(Oid conversionOid, Oid newOwnerId)
+{
+	Relation	rel;
+
+	rel = heap_open(ConversionRelationId, RowExclusiveLock);
+	
+	AlterConversionOwner_internal(rel, conversionOid, newOwnerId);
+
+	heap_close(rel, NoLock);
+}
+
+/*
+ * AlterConversionOwner_internal
+ *
+ * Internal routine for changing the owner.  rel must be pg_conversion, already
+ * open and suitably locked; it will not be closed.
+ */
+static void
+AlterConversionOwner_internal(Relation rel, Oid conversionOid, Oid newOwnerId)
+{
+	Form_pg_conversion convForm;
+	HeapTuple		tup;
+
+	Assert(RelationGetRelid(rel) == ConversionRelationId);
 
 	tup = SearchSysCacheCopy(CONOID,
 							 ObjectIdGetDatum(conversionOid),
@@ -219,13 +252,15 @@ AlterConversionOwner(List *name, Oid newOwnerId)
 	 */
 	if (convForm->conowner != newOwnerId)
 	{
+		AclResult	aclresult;
+
 		/* Superusers can always do it */
 		if (!superuser())
 		{
 			/* Otherwise, must be owner of the existing object */
 			if (!pg_conversion_ownercheck(HeapTupleGetOid(tup), GetUserId()))
 				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CONVERSION,
-							   NameListToString(name));
+							   NameStr(convForm->conname));
 
 			/* Must be able to become new owner */
 			check_is_member_of_role(GetUserId(), newOwnerId);
@@ -253,6 +288,5 @@ AlterConversionOwner(List *name, Oid newOwnerId)
 								newOwnerId);
 	}
 
-	heap_close(rel, NoLock);
 	heap_freetuple(tup);
 }

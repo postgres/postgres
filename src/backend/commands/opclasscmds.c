@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.38 2005/10/15 02:49:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.39 2005/11/21 12:49:31 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,8 @@ static Oid	assignProcSubtype(Oid amoid, Oid typeoid, Oid procOid);
 static void addClassMember(List **list, OpClassMember *member, bool isProc);
 static void storeOperators(Oid opclassoid, List *operators);
 static void storeProcedures(Oid opclassoid, List *procedures);
+static void AlterOpClassOwner_internal(Relation rel, HeapTuple tuple,
+								  Oid newOwnerId);
 
 
 /*
@@ -879,20 +881,39 @@ RenameOpClass(List *name, const char *access_method, const char *newname)
 }
 
 /*
- * Change opclass owner
+ * Change opclass owner by oid
+ */
+void
+AlterOpClassOwner_oid(Oid opcOid, Oid newOwnerId)
+{
+	Relation	rel;
+	HeapTuple	tup;
+
+	rel = heap_open(OperatorClassRelationId, RowExclusiveLock);
+
+	tup = SearchSysCacheCopy(CLAOID,
+							 ObjectIdGetDatum(opcOid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(tup))		/* shouldn't happen */
+		elog(ERROR, "cache lookup failed for opclass %u", opcOid);
+
+	AlterOpClassOwner_internal(rel, tup, newOwnerId);
+
+	heap_freetuple(tup);
+	heap_close(rel, NoLock);
+}
+
+/*
+ * Change opclass owner by name
  */
 void
 AlterOpClassOwner(List *name, const char *access_method, Oid newOwnerId)
 {
-	Oid			opcOid;
 	Oid			amOid;
-	Oid			namespaceOid;
-	char	   *schemaname;
-	char	   *opcname;
-	HeapTuple	tup;
 	Relation	rel;
-	AclResult	aclresult;
-	Form_pg_opclass opcForm;
+	HeapTuple	tup;
+	char	   *opcname;
+	char	   *schemaname;
 
 	amOid = GetSysCacheOid(AMNAME,
 						   CStringGetDatum(access_method),
@@ -912,6 +933,8 @@ AlterOpClassOwner(List *name, const char *access_method, Oid newOwnerId)
 
 	if (schemaname)
 	{
+		Oid		namespaceOid;
+
 		namespaceOid = LookupExplicitNamespace(schemaname);
 
 		tup = SearchSysCacheCopy(CLAAMNAMENSP,
@@ -924,11 +947,11 @@ AlterOpClassOwner(List *name, const char *access_method, Oid newOwnerId)
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("operator class \"%s\" does not exist for access method \"%s\"",
 							opcname, access_method)));
-
-		opcOid = HeapTupleGetOid(tup);
 	}
 	else
 	{
+		Oid		opcOid;
+
 		opcOid = OpclassnameGetOpcid(amOid, opcname);
 		if (!OidIsValid(opcOid))
 			ereport(ERROR,
@@ -941,9 +964,31 @@ AlterOpClassOwner(List *name, const char *access_method, Oid newOwnerId)
 								 0, 0, 0);
 		if (!HeapTupleIsValid(tup))		/* should not happen */
 			elog(ERROR, "cache lookup failed for opclass %u", opcOid);
-		namespaceOid = ((Form_pg_opclass) GETSTRUCT(tup))->opcnamespace;
 	}
+
+	AlterOpClassOwner_internal(rel, tup, newOwnerId);
+
+	heap_freetuple(tup);
+	heap_close(rel, NoLock);
+}
+
+/*
+ * The first parameter is pg_opclass, opened and suitably locked.  The second
+ * parameter is the tuple from pg_opclass we want to modify.
+ */
+static void
+AlterOpClassOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
+{
+	Oid			namespaceOid;
+	AclResult	aclresult;
+	Form_pg_opclass opcForm;
+
+	Assert(tup->t_tableOid == OperatorClassRelationId);
+	Assert(RelationGetRelid(rel) == OperatorClassRelationId);
+
 	opcForm = (Form_pg_opclass) GETSTRUCT(tup);
+
+	namespaceOid = opcForm->opcnamespace;
 
 	/*
 	 * If the new owner is the same as the existing owner, consider the
@@ -957,7 +1002,7 @@ AlterOpClassOwner(List *name, const char *access_method, Oid newOwnerId)
 			/* Otherwise, must be owner of the existing object */
 			if (!pg_opclass_ownercheck(HeapTupleGetOid(tup), GetUserId()))
 				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPCLASS,
-							   NameListToString(name));
+							   NameStr(opcForm->opcname));
 
 			/* Must be able to become new owner */
 			check_is_member_of_role(GetUserId(), newOwnerId);
@@ -980,9 +1025,7 @@ AlterOpClassOwner(List *name, const char *access_method, Oid newOwnerId)
 		CatalogUpdateIndexes(rel, tup);
 
 		/* Update owner dependency reference */
-		changeDependencyOnOwner(OperatorClassRelationId, opcOid, newOwnerId);
+		changeDependencyOnOwner(OperatorClassRelationId, HeapTupleGetOid(tup),
+								newOwnerId);
 	}
-
-	heap_close(rel, NoLock);
-	heap_freetuple(tup);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.174 2005/10/15 02:49:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.175 2005/11/21 12:49:31 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,7 +236,6 @@ static void ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 					  const char *colName, TypeName *typename);
 static void ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab);
 static void ATPostAlterTypeParse(char *cmd, List **wqueue);
-static void ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing);
 static void change_owner_recurse_to_sequences(Oid relationOid,
 								  Oid newOwnerId);
 static void ATExecClusterOn(Relation rel, const char *indexName);
@@ -5264,7 +5263,7 @@ ATPostAlterTypeParse(char *cmd, List **wqueue)
  * checks (this is necessary not just an optimization, else we'd fail to
  * handle toast tables properly).
  */
-static void
+void
 ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing)
 {
 	Relation	target_rel;

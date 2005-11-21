@@ -39,6 +39,55 @@ DROP USER regression_user2;
 ALTER TABLE deptest OWNER TO regression_user3;
 DROP USER regression_user3;
 
+\set VERBOSITY default
 -- if we drop the object, we can drop the user too
 DROP TABLE deptest;
 DROP USER regression_user3;
+
+-- Test DROP OWNED
+CREATE USER regression_user0;
+CREATE USER regression_user1;
+CREATE USER regression_user2;
+SET SESSION AUTHORIZATION regression_user0;
+-- permission denied
+DROP OWNED BY regression_user1;
+DROP OWNED BY regression_user0, regression_user2;
+REASSIGN OWNED BY regression_user0 TO regression_user1;
+REASSIGN OWNED BY regression_user1 TO regression_user0;
+-- this one is allowed
+DROP OWNED BY regression_user0;
+
+CREATE TABLE deptest1 ();
+GRANT ALL ON deptest1 TO regression_user1 WITH GRANT OPTION;
+
+SET SESSION AUTHORIZATION regression_user1;
+CREATE TABLE deptest (a serial primary key, b text);
+GRANT ALL ON deptest1 TO regression_user2;
+RESET SESSION AUTHORIZATION;
+\z deptest1
+
+DROP OWNED BY regression_user1;
+-- all grants revoked
+\z deptest1
+-- table was dropped
+\d deptest
+
+-- Test REASSIGN OWNED
+GRANT ALL ON deptest1 TO regression_user1;
+
+SET SESSION AUTHORIZATION regression_user1;
+CREATE TABLE deptest (a serial primary key, b text);
+RESET SESSION AUTHORIZATION;
+
+REASSIGN OWNED BY regression_user1 TO regression_user2;
+\dt deptest
+-- doesn't work: grant still exists
+DROP USER regression_user1;
+DROP OWNED BY regression_user1;
+DROP USER regression_user1;
+
+\set VERBOSITY terse
+DROP USER regression_user2;
+DROP OWNED BY regression_user2, regression_user0;
+DROP USER regression_user2;
+DROP USER regression_user0;

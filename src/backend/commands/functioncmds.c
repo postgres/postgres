@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.69 2005/10/15 02:49:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.70 2005/11/21 12:49:31 alvherre Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -55,6 +55,7 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
+static void AlterFunctionOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId);
 
 /*
  *	 Examine the RETURNS clause of the CREATE FUNCTION statement
@@ -853,16 +854,14 @@ RenameFunction(List *name, List *argtypes, const char *newname)
 }
 
 /*
- * Change function owner
+ * Change function owner by name and args
  */
 void
 AlterFunctionOwner(List *name, List *argtypes, Oid newOwnerId)
 {
+	Relation	rel;
 	Oid			procOid;
 	HeapTuple	tup;
-	Form_pg_proc procForm;
-	Relation	rel;
-	AclResult	aclresult;
 
 	rel = heap_open(ProcedureRelationId, RowExclusiveLock);
 
@@ -873,14 +872,52 @@ AlterFunctionOwner(List *name, List *argtypes, Oid newOwnerId)
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup)) /* should not happen */
 		elog(ERROR, "cache lookup failed for function %u", procOid);
-	procForm = (Form_pg_proc) GETSTRUCT(tup);
 
-	if (procForm->proisagg)
+	if (((Form_pg_proc) GETSTRUCT(tup))->proisagg)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is an aggregate function",
 						NameListToString(name)),
 				 errhint("Use ALTER AGGREGATE to change owner of aggregate functions.")));
+
+	AlterFunctionOwner_internal(rel, tup, newOwnerId);
+
+	heap_close(rel, NoLock);
+}
+
+/*
+ * Change function owner by Oid
+ */
+void
+AlterFunctionOwner_oid(Oid procOid, Oid newOwnerId)
+{
+	Relation	rel;
+	HeapTuple	tup;
+
+	rel = heap_open(ProcedureRelationId, RowExclusiveLock);
+
+	tup = SearchSysCache(PROCOID,
+						 ObjectIdGetDatum(procOid),
+						 0, 0, 0);
+	if (!HeapTupleIsValid(tup)) /* should not happen */
+		elog(ERROR, "cache lookup failed for function %u", procOid);
+	AlterFunctionOwner_internal(rel, tup, newOwnerId);
+
+	heap_close(rel, NoLock);
+}
+
+static void
+AlterFunctionOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
+{
+	Form_pg_proc procForm;
+	AclResult	aclresult;
+	Oid			procOid;
+
+	Assert(RelationGetRelid(rel) == ProcedureRelationId);
+	Assert(tup->t_tableOid == ProcedureRelationId);
+
+	procForm = (Form_pg_proc) GETSTRUCT(tup);
+	procOid = HeapTupleGetOid(tup);
 
 	/*
 	 * If the new owner is the same as the existing owner, consider the
@@ -902,7 +939,7 @@ AlterFunctionOwner(List *name, List *argtypes, Oid newOwnerId)
 			/* Otherwise, must be owner of the existing object */
 			if (!pg_proc_ownercheck(procOid, GetUserId()))
 				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
-							   NameListToString(name));
+							   NameStr(procForm->proname));
 
 			/* Must be able to become new owner */
 			check_is_member_of_role(GetUserId(), newOwnerId);
@@ -937,7 +974,8 @@ AlterFunctionOwner(List *name, List *argtypes, Oid newOwnerId)
 			repl_val[Anum_pg_proc_proacl - 1] = PointerGetDatum(newAcl);
 		}
 
-		newtuple = heap_modifytuple(tup, RelationGetDescr(rel), repl_val, repl_null, repl_repl);
+		newtuple = heap_modifytuple(tup, RelationGetDescr(rel), repl_val,
+									repl_null, repl_repl);
 
 		simple_heap_update(rel, &newtuple->t_self, newtuple);
 		CatalogUpdateIndexes(rel, newtuple);
@@ -949,7 +987,6 @@ AlterFunctionOwner(List *name, List *argtypes, Oid newOwnerId)
 	}
 
 	ReleaseSysCache(tup);
-	heap_close(rel, NoLock);
 }
 
 /*

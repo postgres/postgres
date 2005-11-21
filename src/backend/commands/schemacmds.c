@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.36 2005/11/19 17:39:44 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.37 2005/11/21 12:49:31 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,8 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
+
+static void AlterSchemaOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerId);
 
 /*
  * CREATE SCHEMA
@@ -277,6 +279,28 @@ RenameSchema(const char *oldname, const char *newname)
 	heap_freetuple(tup);
 }
 
+void
+AlterSchemaOwner_oid(Oid oid, Oid newOwnerId)
+{
+	HeapTuple	tup;
+	Relation	rel;
+
+	rel = heap_open(NamespaceRelationId, RowExclusiveLock);
+
+	tup = SearchSysCache(NAMESPACEOID,
+						 ObjectIdGetDatum(oid),
+						 0, 0, 0);
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "cache lookup failed for schema %u", oid);
+
+	AlterSchemaOwner_internal(tup, rel, newOwnerId);
+
+	ReleaseSysCache(tup);
+
+	heap_close(rel, RowExclusiveLock);
+}
+
+
 /*
  * Change schema owner
  */
@@ -285,7 +309,6 @@ AlterSchemaOwner(const char *name, Oid newOwnerId)
 {
 	HeapTuple	tup;
 	Relation	rel;
-	Form_pg_namespace nspForm;
 
 	rel = heap_open(NamespaceRelationId, RowExclusiveLock);
 
@@ -296,6 +319,22 @@ AlterSchemaOwner(const char *name, Oid newOwnerId)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_SCHEMA),
 				 errmsg("schema \"%s\" does not exist", name)));
+
+	AlterSchemaOwner_internal(tup, rel, newOwnerId);
+
+	ReleaseSysCache(tup);
+
+	heap_close(rel, RowExclusiveLock);
+}
+
+static void
+AlterSchemaOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerId)
+{
+	Form_pg_namespace nspForm;
+
+	Assert(tup->t_tableOid == NamespaceRelationId);
+	Assert(RelationGetRelid(rel) == NamespaceRelationId);
+
 	nspForm = (Form_pg_namespace) GETSTRUCT(tup);
 
 	/*
@@ -316,7 +355,7 @@ AlterSchemaOwner(const char *name, Oid newOwnerId)
 		/* Otherwise, must be owner of the existing object */
 		if (!pg_namespace_ownercheck(HeapTupleGetOid(tup), GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_NAMESPACE,
-						   name);
+						   NameStr(nspForm->nspname));
 
 		/* Must be able to become new owner */
 		check_is_member_of_role(GetUserId(), newOwnerId);
@@ -369,6 +408,4 @@ AlterSchemaOwner(const char *name, Oid newOwnerId)
 								newOwnerId);
 	}
 
-	ReleaseSysCache(tup);
-	heap_close(rel, NoLock);
 }

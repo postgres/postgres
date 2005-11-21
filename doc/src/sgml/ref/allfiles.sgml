@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.66 2005/07/29 15:13:11 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.67 2005/11/21 12:49:30 alvherre Exp $
 PostgreSQL documentation
 Complete list of usable sgml source files in this directory.
 -->
@@ -70,6 +70,7 @@ Complete list of usable sgml source files in this directory.
 <!entity dropLanguage       system "drop_language.sgml">
 <!entity dropOperator       system "drop_operator.sgml">
 <!entity dropOperatorClass  system "drop_opclass.sgml">
+<!entity dropOwned          system "drop_owned.sgml">
 <!entity dropRole           system "drop_role.sgml">
 <!entity dropRule           system "drop_rule.sgml">
 <!entity dropSchema         system "drop_schema.sgml">
@@ -93,6 +94,7 @@ Complete list of usable sgml source files in this directory.
 <!entity notify             system "notify.sgml">
 <!entity prepare            system "prepare.sgml">
 <!entity prepareTransaction system "prepare_transaction.sgml">
+<!entity reassignOwned      system "reassign_owned.sgml">
 <!entity reindex            system "reindex.sgml">
 <!entity releaseSavepoint   system "release_savepoint.sgml">
 <!entity reset              system "reset.sgml">

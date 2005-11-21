@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.88 2005/11/18 02:38:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.89 2005/11/21 12:49:33 alvherre Exp $
  *
  * NOTES
  *	  An ACL array is simply an array of AclItems, representing the union
@@ -221,6 +221,9 @@ extern Datum hash_aclitem(PG_FUNCTION_ARGS);
  * prototypes for functions in aclchk.c
  */
 extern void ExecuteGrantStmt(GrantStmt *stmt);
+extern void ExecGrantStmt_oids(bool is_grant, GrantObjectType objtype,
+				   List *objects, bool all_privs, AclMode privileges,
+				   List *grantees, bool grant_option, DropBehavior behavior);
 
 extern AclMode pg_class_aclmask(Oid table_oid, Oid roleid,
 				 AclMode mask, AclMaskHow how);

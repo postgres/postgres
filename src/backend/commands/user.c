@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.164 2005/11/04 17:25:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.165 2005/11/21 12:49:31 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1116,6 +1116,67 @@ GrantRole(GrantRoleStmt *stmt)
 	 * Set flag to update flat auth file at commit.
 	 */
 	auth_file_update_needed();
+}
+
+/*
+ * DropOwnedObjects
+ *
+ * Drop the objects owned by a given list of roles.
+ */
+void
+DropOwnedObjects(DropOwnedStmt *stmt)
+{
+	List	*role_ids = roleNamesToIds(stmt->roles);
+	ListCell *cell;
+
+	/* Check privileges */
+	foreach (cell, role_ids)
+	{
+		Oid	roleid = lfirst_oid(cell);
+
+		if (!has_privs_of_role(GetUserId(), roleid))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("permission denied to drop objects")));
+	}
+
+	/* Ok, do it */
+	shdepDropOwned(role_ids, stmt->behavior);
+}
+
+/*
+ * ReassignOwnedObjects
+ *
+ * Give the objects owned by a given list of roles away to another user.
+ */
+void
+ReassignOwnedObjects(ReassignOwnedStmt *stmt)
+{
+	List	   *role_ids = roleNamesToIds(stmt->roles);
+	ListCell   *cell;
+	Oid			newrole;
+
+	/* Check privileges */
+	foreach (cell, role_ids)
+	{
+		Oid	roleid = lfirst_oid(cell);
+
+		if (!has_privs_of_role(GetUserId(), roleid))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("permission denied to reassign objects")));
+	}
+
+	/* Must have privileges on the receiving side too */
+	newrole = get_roleid_checked(stmt->newrole);
+
+	if (!has_privs_of_role(GetUserId(), newrole))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("permission denied to reassign objects")));
+
+	/* Ok, do it */
+	shdepReassignOwned(role_ids, newrole);
 }
 
 /*
