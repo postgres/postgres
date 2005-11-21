@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Nov 4 20:35:04 EST 2005
+   Last updated: Mon Nov 21 15:44:03 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -20,9 +20,9 @@
    1.4) Where can I get PostgreSQL?
    1.5) Where can I get support?
    1.6) How do I submit a bug report?
-   1.7) What is the latest release?
-   1.8) What documentation is available?
-   1.9) How do I find out about known bugs or missing features?
+   1.7) How do I find out about known bugs or missing features?
+   1.8) What is the latest release?
+   1.9) What documentation is available?
    1.10) How can I learn SQL?
    1.11) How do I join the development team?
    1.12) How does PostgreSQL compare to other DBMSs?
@@ -180,14 +180,14 @@
    Also check out our ftp site ftp://ftp.PostgreSQL.org/pub/ to see if
    there is a more recent PostgreSQL version.
    
-  1.7) What is the latest release?
+  1.8) What is the latest release?
   
    The latest release of PostgreSQL is version 8.1.
    
    We plan to have a major release every year, with minor releases every
    few months.
    
-  1.8) What documentation is available?
+  1.9) What documentation is available?
   
    PostgreSQL includes extensive documentation, including a large manual,
    manual pages, and some test examples. See the /doc directory. You can
@@ -208,7 +208,7 @@
    
    Our web site contains even more documentation.
    
-  1.9) How do I find out about known bugs or missing features?
+  1.7) How do I find out about known bugs or missing features?
   
    PostgreSQL supports an extended subset of SQL:2003. See our TODO list
    for known bugs, missing features, and future plans.
