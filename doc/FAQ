@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Nov 21 15:51:32 EST 2005
+   Last updated: Mon Nov 21 15:54:10 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -18,10 +18,10 @@
    1.2) What is the copyright of PostgreSQL?
    1.3) What platforms does PostgreSQL support?
    1.4) Where can I get PostgreSQL?
-   1.5) Where can I get support?
-   1.6) How do I submit a bug report?
-   1.7) How do I find out about known bugs or missing features?
-   1.8) What is the latest release?
+   1.5) What is the latest release?
+   1.6) Where can I get support?
+   1.7) How do I submit a bug report?
+   1.8) How do I find out about known bugs or missing features?
    1.9) What documentation is available?
    1.10) How can I learn SQL?
    1.11) How do I join the development team?
@@ -157,7 +157,7 @@
    Via web browser, use http://www.postgresql.org/ftp/, and via ftp, use
    ftp://ftp.PostgreSQL.org/pub/.
    
-  1.5) Where can I get support?
+  1.6) Where can I get support?
   
    The PostgreSQL community provides assistance to many of its users via
    email. The main web site to subscribe to the email lists is
@@ -173,7 +173,7 @@
    A list of commercial support companies is available at
    http://techdocs.postgresql.org/companies.php.
    
-  1.6) How do I submit a bug report?
+  1.7) How do I submit a bug report?
   
    Visit the PostgreSQL bug form at
    http://www.postgresql.org/support/submitbug.
@@ -181,7 +181,7 @@
    Also check out our ftp site ftp://ftp.PostgreSQL.org/pub/ to see if
    there is a more recent PostgreSQL version.
    
-  1.8) What is the latest release?
+  1.5) What is the latest release?
   
    The latest release of PostgreSQL is version 8.1.
    
@@ -209,7 +209,7 @@
    
    Our web site contains even more documentation.
    
-  1.7) How do I find out about known bugs or missing features?
+  1.8) How do I find out about known bugs or missing features?
   
    PostgreSQL supports an extended subset of SQL:2003. See our TODO list
    for known bugs, missing features, and future plans.
@@ -267,7 +267,7 @@
           community, manuals, and the source code often make PostgreSQL
           support superior to other DBMSs. There is commercial
           per-incident support available for those who need it. (See FAQ
-          section 1.5.)
+          section 1.6.)
           
    Price
           We are free for all use, both commercial and non-commercial.
