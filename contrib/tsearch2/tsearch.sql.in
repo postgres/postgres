@@ -427,6 +427,21 @@ RETURNS tsquery
 AS 'MODULE_PATHNAME','to_tsquery_current'
 LANGUAGE 'c' with (isstrict,iscachable);
 
+CREATE FUNCTION plainto_tsquery(oid, text)
+RETURNS tsquery
+AS 'MODULE_PATHNAME'
+LANGUAGE 'c' with (isstrict,iscachable);
+
+CREATE FUNCTION plainto_tsquery(text, text)
+RETURNS tsquery
+AS 'MODULE_PATHNAME','plainto_tsquery_name'
+LANGUAGE 'c' with (isstrict,iscachable);
+
+CREATE FUNCTION plainto_tsquery(text)
+RETURNS tsquery
+AS 'MODULE_PATHNAME','plainto_tsquery_current'
+LANGUAGE 'c' with (isstrict,iscachable);
+
 --operations
 CREATE FUNCTION exectsq(tsvector, tsquery)
 RETURNS bool
@@ -928,6 +943,47 @@ CREATE OR REPLACE FUNCTION numnode(tsquery)
         as 'MODULE_PATHNAME', 'tsquery_numnode'
         language 'C'
         with (isstrict,iscachable);
+
+CREATE OR REPLACE FUNCTION tsquery_and(tsquery,tsquery)
+        returns tsquery
+        as 'MODULE_PATHNAME', 'tsquery_and'
+        language 'C'
+        with (isstrict,iscachable);
+
+CREATE OPERATOR && (
+        LEFTARG = tsquery,
+        RIGHTARG = tsquery,
+        PROCEDURE = tsquery_and,
+        COMMUTATOR = '&&',
+        RESTRICT = contsel,
+        JOIN = contjoinsel
+);
+
+CREATE OR REPLACE FUNCTION tsquery_or(tsquery,tsquery)
+        returns tsquery
+        as 'MODULE_PATHNAME', 'tsquery_or'
+        language 'C'
+        with (isstrict,iscachable);
+
+CREATE OPERATOR || (
+        LEFTARG = tsquery,
+        RIGHTARG = tsquery,
+        PROCEDURE = tsquery_or,
+        COMMUTATOR = '||',
+        RESTRICT = contsel,
+        JOIN = contjoinsel
+);
+
+CREATE OR REPLACE FUNCTION tsquery_not(tsquery)
+        returns tsquery
+        as 'MODULE_PATHNAME', 'tsquery_not'
+        language 'C'
+        with (isstrict,iscachable);
+
+CREATE OPERATOR !! (
+        RIGHTARG = tsquery,
+        PROCEDURE = tsquery_not
+);
 
 --------------rewrite subsystem
 

@@ -39,8 +39,7 @@ Datum		prsd_start(PG_FUNCTION_ARGS);
 Datum
 prsd_start(PG_FUNCTION_ARGS)
 {
-	tsearch2_start_parse_str((char *) PG_GETARG_POINTER(0), PG_GETARG_INT32(1));
-	PG_RETURN_POINTER(NULL);
+	PG_RETURN_POINTER(TParserInit( (char *) PG_GETARG_POINTER(0), PG_GETARG_INT32(1)));
 }
 
 PG_FUNCTION_INFO_V1(prsd_getlexeme);
@@ -48,14 +47,17 @@ Datum		prsd_getlexeme(PG_FUNCTION_ARGS);
 Datum
 prsd_getlexeme(PG_FUNCTION_ARGS)
 {
-	/* ParserState *p=(ParserState*)PG_GETARG_POINTER(0); */
+	TParser *p=(TParser*)PG_GETARG_POINTER(0); 
 	char	  **t = (char **) PG_GETARG_POINTER(1);
 	int		   *tlen = (int *) PG_GETARG_POINTER(2);
-	int			type = tsearch2_yylex();
 
-	*t = token;
-	*tlen = tokenlen;
-	PG_RETURN_INT32(type);
+	if ( !TParserGet(p) ) 
+		PG_RETURN_INT32(0);
+
+	*t = p->lexeme; 
+	*tlen = p->lenbytelexeme;
+
+	PG_RETURN_INT32(p->type);
 }
 
 PG_FUNCTION_INFO_V1(prsd_end);
@@ -63,8 +65,8 @@ Datum		prsd_end(PG_FUNCTION_ARGS);
 Datum
 prsd_end(PG_FUNCTION_ARGS)
 {
-	/* ParserState *p=(ParserState*)PG_GETARG_POINTER(0); */
-	tsearch2_end_parse();
+	TParser *p=(TParser*)PG_GETARG_POINTER(0);
+	TParserClose(p); 
 	PG_RETURN_VOID();
 }
 

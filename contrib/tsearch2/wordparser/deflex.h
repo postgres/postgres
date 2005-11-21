@@ -17,7 +17,7 @@
 #define LATPARTHYPHENWORD	11
 #define SPACE		12
 #define TAG			13
-#define HTTP		14
+#define PROTOCOL		14
 #define HYPHENWORD	15
 #define LATHYPHENWORD	16
 #define CYRHYPHENWORD	17

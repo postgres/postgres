@@ -1,8 +1,8 @@
-# $PostgreSQL: pgsql/contrib/tsearch2/wordparser/Makefile,v 1.8 2005/10/18 01:30:49 tgl Exp $
+# $PostgreSQL: pgsql/contrib/tsearch2/wordparser/Makefile,v 1.9 2005/11/21 12:27:57 teodor Exp $
 
 SUBOBJS =  parser.o deflex.o
 
-EXTRA_CLEAN = SUBSYS.o $(SUBOBJS) parser.c
+EXTRA_CLEAN = SUBSYS.o $(SUBOBJS)
 
 PG_CPPFLAGS = -I$(srcdir)/..
 
@@ -19,13 +19,6 @@ endif
 override CFLAGS += $(CFLAGS_SL)
 
 all: SUBSYS.o
-
-parser.c: parser.l
-ifdef FLEX
-	$(FLEX) $(FLEXFLAGS) -8 -Ptsearch2_yy -o'$@' $<
-else
-	@$(missing) flex $< $@
-endif
 
 SUBSYS.o: $(SUBOBJS)
 	$(LD) $(LDREL) $(LDOUT) $@ $^

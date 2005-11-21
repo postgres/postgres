@@ -51,10 +51,20 @@ Datum		to_tsquery_name(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(to_tsquery_current);
 Datum		to_tsquery_current(PG_FUNCTION_ARGS);
 
+PG_FUNCTION_INFO_V1(plainto_tsquery);
+Datum		plainto_tsquery(PG_FUNCTION_ARGS);
+
+PG_FUNCTION_INFO_V1(plainto_tsquery_name);
+Datum		plainto_tsquery_name(PG_FUNCTION_ARGS);
+
+PG_FUNCTION_INFO_V1(plainto_tsquery_current);
+Datum		plainto_tsquery_current(PG_FUNCTION_ARGS);
+
 /* parser's states */
 #define WAITOPERAND 1
 #define WAITOPERATOR	2
 #define WAITFIRSTOPERAND 3
+#define WAITSINGLEOPERAND 4
 
 /*
  * node of query tree, also used
@@ -195,6 +205,14 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, int2 
 				else if (*(state->buf) != ' ')
 					return ERR;
 				break;
+			case WAITSINGLEOPERAND:
+				if ( *(state->buf) == '\0' ) 
+					return END;
+				*strval = state->buf;
+				*lenval = strlen( state->buf );
+				state->buf += strlen( state->buf );
+				state->count++;
+				return VAL;	
 			default:
 				return ERR;
 				break;
@@ -582,7 +600,7 @@ findoprnd(ITEM * ptr, int4 *pos)
  * input
  */
 static QUERYTYPE *
-			queryin(char *buf, void (*pushval) (QPRS_STATE *, int, char *, int, int2), int cfg_id)
+queryin(char *buf, void (*pushval) (QPRS_STATE *, int, char *, int, int2), int cfg_id, bool isplain)
 {
 	QPRS_STATE	state;
 	int4		i;
@@ -599,7 +617,7 @@ static QUERYTYPE *
 
 	/* init state */
 	state.buf = buf;
-	state.state = WAITFIRSTOPERAND;
+	state.state = (isplain) ? WAITSINGLEOPERAND : WAITFIRSTOPERAND;
 	state.count = 0;
 	state.num = 0;
 	state.str = NULL;
@@ -679,7 +697,7 @@ Datum
 tsquery_in(PG_FUNCTION_ARGS)
 {
 	SET_FUNCOID();
-	PG_RETURN_POINTER(queryin((char *) PG_GETARG_POINTER(0), pushval_asis, 0));
+	PG_RETURN_POINTER(queryin((char *) PG_GETARG_POINTER(0), pushval_asis, 0, false));
 }
 
 /*
@@ -910,7 +928,7 @@ to_tsquery(PG_FUNCTION_ARGS)
 	str = text2char(in);
 	PG_FREE_IF_COPY(in, 1);
 
-	query = queryin(str, pushval_morph, PG_GETARG_INT32(0));
+	query = queryin(str, pushval_morph, PG_GETARG_INT32(0),false);
 	
 	if ( query->size == 0 )
 		PG_RETURN_POINTER(query);
@@ -950,3 +968,59 @@ to_tsquery_current(PG_FUNCTION_ARGS)
 										Int32GetDatum(get_currcfg()),
 										PG_GETARG_DATUM(0)));
 }
+
+Datum
+plainto_tsquery(PG_FUNCTION_ARGS)
+{
+	text	   *in = PG_GETARG_TEXT_P(1);
+	char	   *str;
+	QUERYTYPE  *query;
+	ITEM	   *res;
+	int4		len;
+
+	SET_FUNCOID();
+
+	str = text2char(in);
+	PG_FREE_IF_COPY(in, 1);
+
+	query = queryin(str, pushval_morph, PG_GETARG_INT32(0), true);
+	
+	if ( query->size == 0 )
+		PG_RETURN_POINTER(query);
+
+	res = clean_fakeval_v2(GETQUERY(query), &len);
+	if (!res)
+	{
+		query->len = HDRSIZEQT;
+		query->size = 0;
+		PG_RETURN_POINTER(query);
+	}
+	memcpy((void *) GETQUERY(query), (void *) res, len * sizeof(ITEM));
+	pfree(res);
+	PG_RETURN_POINTER(query);
+}
+
+Datum
+plainto_tsquery_name(PG_FUNCTION_ARGS)
+{
+	text	   *name = PG_GETARG_TEXT_P(0);
+	Datum		res;
+
+	SET_FUNCOID();
+	res = DirectFunctionCall2(plainto_tsquery,
+							  Int32GetDatum(name2id_cfg(name)),
+							  PG_GETARG_DATUM(1));
+
+	PG_FREE_IF_COPY(name, 0);
+	PG_RETURN_DATUM(res);
+}
+
+Datum
+plainto_tsquery_current(PG_FUNCTION_ARGS)
+{
+	SET_FUNCOID();
+	PG_RETURN_DATUM(DirectFunctionCall2(plainto_tsquery,
+										Int32GetDatum(get_currcfg()),
+										PG_GETARG_DATUM(0)));
+}
+

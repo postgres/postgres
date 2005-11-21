@@ -13,12 +13,12 @@ psql:tsearch2.sql:342: NOTICE:  argument type tsvector is only a shell
 psql:tsearch2.sql:396: NOTICE:  type "tsquery" is not yet defined
 DETAIL:  Creating a shell type definition.
 psql:tsearch2.sql:401: NOTICE:  argument type tsquery is only a shell
-psql:tsearch2.sql:544: NOTICE:  type "gtsvector" is not yet defined
+psql:tsearch2.sql:559: NOTICE:  type "gtsvector" is not yet defined
 DETAIL:  Creating a shell type definition.
-psql:tsearch2.sql:549: NOTICE:  argument type gtsvector is only a shell
-psql:tsearch2.sql:998: NOTICE:  type "gtsq" is not yet defined
+psql:tsearch2.sql:564: NOTICE:  argument type gtsvector is only a shell
+psql:tsearch2.sql:1054: NOTICE:  type "gtsq" is not yet defined
 DETAIL:  Creating a shell type definition.
-psql:tsearch2.sql:1003: NOTICE:  argument type gtsq is only a shell
+psql:tsearch2.sql:1059: NOTICE:  argument type gtsq is only a shell
 --tsvector
 SELECT '1'::tsvector;
  tsvector 
@@ -653,7 +653,7 @@ select * from token_type('default');
     11 | lpart_hword  | Latin part of hyphenated word
     12 | blank        | Space symbols
     13 | tag          | HTML Tag
-    14 | http         | HTTP head
+    14 | protocol     | Protocol head
     15 | hword        | Hyphenated word
     16 | lhword       | Latin hyphenated word
     17 | nlhword      | Non-latin hyphenated word
@@ -672,14 +672,13 @@ select * from parse('default', '345 qwe@efd.r '' http://www.com/ http://aew.werc
 -------+--------------------------------------
     22 | 345
     12 |  
-     4 | qwe@efd.r
-    12 |  
-    12 | '
-    12 |  
+     1 | qwe
+    12 | @
+    19 | efd.r
+    12 |  ' 
     14 | http://
      6 | www.com
-    12 | /
-    12 |  
+    12 | / 
     14 | http://
      5 | aew.werc.ewr/?ad=qwe&dw
      6 | aew.werc.ewr
@@ -700,10 +699,8 @@ select * from parse('default', '345 qwe@efd.r '' http://www.com/ http://aew.werc
      6 | 4aew.werc.ewr
     12 |  
     14 | http://
-     5 | 5aew.werc.ewr:8100/?
-     6 | 5aew.werc.ewr
-    18 | :8100/?
-    12 |   
+     6 | 5aew.werc.ewr:8100
+    12 | /?  
      1 | ad
     12 | =
      1 | qwe
@@ -711,12 +708,12 @@ select * from parse('default', '345 qwe@efd.r '' http://www.com/ http://aew.werc
      1 | dw
     12 |  
      5 | 6aew.werc.ewr:8100/?ad=qwe&dw
-     6 | 6aew.werc.ewr
-    18 | :8100/?ad=qwe&dw
+     6 | 6aew.werc.ewr:8100
+    18 | /?ad=qwe&dw
     12 |  
      5 | 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32
-     6 | 7aew.werc.ewr
-    18 | :8100/?ad=qwe&dw=%20%32
+     6 | 7aew.werc.ewr:8100
+    18 | /?ad=qwe&dw=%20%32
     12 |  
      7 | +4.0e-10
     12 |  
@@ -747,11 +744,15 @@ select * from parse('default', '345 qwe@efd.r '' http://www.com/ http://aew.werc
      1 | jf
     12 |  
      1 | sdjk
-    13 | <we hjwer <werrwe>
+    12 | <
+     1 | we
+    12 |  
+     1 | hjwer
+    12 |  
+    13 | <werrwe>
     12 |  
      3 | ewr1
-    12 | >
-    12 |  
+    12 | > 
      3 | ewri2
     12 |  
     13 | <a href="qwe<qwe>">
@@ -767,57 +768,53 @@ select * from parse('default', '345 qwe@efd.r '' http://www.com/ http://aew.werc
     12 |  
     19 | /wqe-324/ewr
     12 |  
-     6 | gist.h
+    19 | gist.h
     12 |  
-     6 | gist.h.c
+    19 | gist.h.c
     12 |  
-     6 | gist.c
-    12 | .
-    12 |  
+    19 | gist.c
+    12 | . 
      1 | readline
     12 |  
     20 | 4.2
     12 |  
     20 | 4.2
-    12 | .
-    12 |  
+    12 | . 
     20 | 4.2
-    12 | ,
-    12 |  
-    15 | readline-4
+    12 | , 
+    15 | readline-4.2
     11 | readline
     12 | -
     20 | 4.2
     12 |  
-    15 | readline-4
+    15 | readline-4.2
     11 | readline
     12 | -
     20 | 4.2
-    12 | .
-    12 |  
+    12 | . 
     22 | 234
     12 |  
 
-    13 | <i <b>
+    12 | <
+     1 | i
+    12 |  
+    13 | <b>
     12 |  
      1 | wow
     12 |   
-    12 | <
-    12 |  
+    12 | < 
      1 | jqw
     12 |  
-    12 | <
-    12 | >
-    12 |  
+    12 | <> 
      1 | qwerty
-(138 rows)
+(135 rows)
 
 SELECT to_tsvector('default', '345 qwe@efd.r '' http://www.com/ http://aew.werc.ewr/?ad=qwe&dw 1aew.werc.ewr/?ad=qwe&dw 2aew.werc.ewr http://3aew.werc.ewr/?ad=qwe&dw http://4aew.werc.ewr http://5aew.werc.ewr:8100/?  ad=qwe&dw 6aew.werc.ewr:8100/?ad=qwe&dw 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32 +4.0e-10 qwe qwe qwqwe 234.435 455 5.005 teodor@stack.net qwe-wer asdf <fr>qwer jf sdjk<we hjwer <werrwe> ewr1> ewri2 <a href="qwe<qwe>">
 /usr/local/fff /awdf/dwqe/4325 rewt/ewr wefjn /wqe-324/ewr gist.h gist.h.c gist.c. readline 4.2 4.2. 4.2, readline-4.2 readline-4.2. 234 
 <i <b> wow  < jqw <> qwerty');
-                                                                                                                                                                                                                                                                                                                                                                                                                                               to_tsvector                                                                                                                                                                                                                                                                                                                                                                                                                                                
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- 'ad':18 'dw':20 'jf':40 '234':62 '345':1 '4.2':53,54,55,58,61 '455':32 'jqw':64 'qwe':19,28,29,36 'wer':37 'wow':63 'asdf':38 'ewr1':42 'qwer':39 'sdjk':41 '5.005':33 'ewri2':43 'qwqwe':30 'wefjn':47 'gist.c':51 'gist.h':49 'qwerti':65 '234.435':31 ':8100/?':17 'qwe-wer':35 'readlin':52,57,60 'www.com':3 '+4.0e-10':27 'gist.h.c':50 'rewt/ewr':46 'qwe@efd.r':2 'readline-4':56,59 '/?ad=qwe&dw':6,9,13 '/wqe-324/ewr':48 'aew.werc.ewr':5 '1aew.werc.ewr':8 '2aew.werc.ewr':10 '3aew.werc.ewr':12 '4aew.werc.ewr':14 '5aew.werc.ewr':16 '6aew.werc.ewr':22 '7aew.werc.ewr':25 '/usr/local/fff':44 '/awdf/dwqe/4325':45 ':8100/?ad=qwe&dw':23 'teodor@stack.net':34 '5aew.werc.ewr:8100/?':15 ':8100/?ad=qwe&dw=%20%32':26 'aew.werc.ewr/?ad=qwe&dw':4 '1aew.werc.ewr/?ad=qwe&dw':7 '3aew.werc.ewr/?ad=qwe&dw':11 '6aew.werc.ewr:8100/?ad=qwe&dw':21 '7aew.werc.ewr:8100/?ad=qwe&dw=%20%32':24
+                                                                                                                                                                                                                                                                                                                                                                                                                             to_tsvector                                                                                                                                                                                                                                                                                                                                                                                                                              
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ 'ad':17 'dw':19 'jf':39 '234':63 '345':1 '4.2':54,55,56,59,62 '455':31 'jqw':66 'qwe':2,18,27,28,35 'wer':36 'wow':65 'asdf':37 'ewr1':43 'qwer':38 'sdjk':40 '5.005':32 'efd.r':3 'ewri2':44 'hjwer':42 'qwqwe':29 'wefjn':48 'gist.c':52 'gist.h':50 'qwerti':67 '234.435':30 'qwe-wer':34 'readlin':53,58,61 'www.com':4 '+4.0e-10':26 'gist.h.c':51 'rewt/ewr':47 '/?ad=qwe&dw':7,10,14,22 '/wqe-324/ewr':49 'aew.werc.ewr':6 'readline-4.2':57,60 '1aew.werc.ewr':9 '2aew.werc.ewr':11 '3aew.werc.ewr':13 '4aew.werc.ewr':15 '/usr/local/fff':45 '/awdf/dwqe/4325':46 'teodor@stack.net':33 '/?ad=qwe&dw=%20%32':25 '5aew.werc.ewr:8100':16 '6aew.werc.ewr:8100':21 '7aew.werc.ewr:8100':24 'aew.werc.ewr/?ad=qwe&dw':5 '1aew.werc.ewr/?ad=qwe&dw':8 '3aew.werc.ewr/?ad=qwe&dw':12 '6aew.werc.ewr:8100/?ad=qwe&dw':20 '7aew.werc.ewr:8100/?ad=qwe&dw=%20%32':23
 (1 row)
 
 SELECT length(to_tsvector('default', '345 qw'));
@@ -831,7 +828,7 @@ SELECT length(to_tsvector('default', '345 qwe@efd.r '' http://www.com/ http://ae
 <i <b> wow  < jqw <> qwerty'));
  length 
 --------
-     53
+     51
 (1 row)
 
 select to_tsquery('default', 'qwe & sKies '); 
@@ -874,6 +871,36 @@ select to_tsquery('default', '(the|and&(i&1))&fghj');
   to_tsquery  
 --------------
  '1' & 'fghj'
+(1 row)
+
+select plainto_tsquery('default', 'the and z 1))& fghj');
+  plainto_tsquery   
+--------------------
+ 'z' & '1' & 'fghj'
+(1 row)
+
+select plainto_tsquery('default', 'foo bar') && plainto_tsquery('default', 'asd');
+       ?column?        
+-----------------------
+ 'foo' & 'bar' & 'asd'
+(1 row)
+
+select plainto_tsquery('default', 'foo bar') || plainto_tsquery('default', 'asd fg');
+           ?column?           
+------------------------------
+ 'foo' & 'bar' | 'asd' & 'fg'
+(1 row)
+
+select plainto_tsquery('default', 'foo bar') || !!plainto_tsquery('default', 'asd fg');
+             ?column?              
+-----------------------------------
+ 'foo' & 'bar' | !( 'asd' & 'fg' )
+(1 row)
+
+select plainto_tsquery('default', 'foo bar') && 'asd | fg';
+             ?column?             
+----------------------------------
+ 'foo' & 'bar' & ( 'asd' | 'fg' )
 (1 row)
 
 select 'a b:89  ca:23A,64b d:34c'::tsvector @@ 'd:AC & ca';

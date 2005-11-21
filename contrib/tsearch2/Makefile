@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/tsearch2/Makefile,v 1.11 2005/11/08 17:08:46 teodor Exp $
+# $PostgreSQL: pgsql/contrib/tsearch2/Makefile,v 1.12 2005/11/21 12:27:57 teodor Exp $
 
 MODULE_big = tsearch2
 OBJS = dict_ex.o dict.o snmap.o stopword.o common.o prs_dcfg.o \
@@ -6,7 +6,8 @@ OBJS = dict_ex.o dict.o snmap.o stopword.o common.o prs_dcfg.o \
        wparser.o wparser_def.o \
        ts_cfg.o tsvector.o query_cleanup.o crc32.o query.o gistidx.o \
        tsvector_op.o rank.o ts_stat.o \
-       query_util.o query_support.o query_rewrite.o query_gist.o
+       query_util.o query_support.o query_rewrite.o query_gist.o \
+       ts_locale.o
 
 SUBDIRS     := snowball ispell wordparser
 SUBDIROBJS  := $(SUBDIRS:%=%/SUBSYS.o)

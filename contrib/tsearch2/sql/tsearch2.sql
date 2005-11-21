@@ -173,6 +173,13 @@ select to_tsquery('default', 'asd&(and|fghj)');
 select to_tsquery('default', '(asd&and)|fghj');
 select to_tsquery('default', '(asd&!and)|fghj');
 select to_tsquery('default', '(the|and&(i&1))&fghj');
+
+select plainto_tsquery('default', 'the and z 1))& fghj');
+select plainto_tsquery('default', 'foo bar') && plainto_tsquery('default', 'asd');
+select plainto_tsquery('default', 'foo bar') || plainto_tsquery('default', 'asd fg');
+select plainto_tsquery('default', 'foo bar') || !!plainto_tsquery('default', 'asd fg');
+select plainto_tsquery('default', 'foo bar') && 'asd | fg';
+
 select 'a b:89  ca:23A,64b d:34c'::tsvector @@ 'd:AC & ca';
 select 'a b:89  ca:23A,64b d:34c'::tsvector @@ 'd:AC & ca:B';
 select 'a b:89  ca:23A,64b d:34c'::tsvector @@ 'd:AC & ca:A';
