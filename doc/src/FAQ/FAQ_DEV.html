@@ -13,7 +13,7 @@
     <H1>Developer's Frequently Asked Questions (FAQ) for
     PostgreSQL</H1>
 
-    <P>Last updated: Tue Nov 22 10:13:04 EST 2005</P>
+    <P>Last updated: Tue Nov 22 10:17:05 EST 2005</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -27,51 +27,51 @@
      
 
       <H2>General Questions</H2>
-    <A href="#1.1">1.1</A>) How do I get involved in PostgreSQL
+    <A href="#item1.1">1.1</A>) How do I get involved in PostgreSQL
     development?<BR>
-     <A href="#1.2">1.2</A>) What development environment is required
+     <A href="#item1.2">1.2</A>) What development environment is required
     to develop code?<BR>
-     <A href="#1.3">1.3</A>) What areas need work?<BR>
-     <A href="#1.4">1.4</A>) What do I do after choosing an item to
+     <A href="#item1.3">1.3</A>) What areas need work?<BR>
+     <A href="#item1.4">1.4</A>) What do I do after choosing an item to
     work on?<BR>
-     <A href="#1.5">1.5</A>) I've developed a patch, what next?<BR>
-     <A href="#1.6">1.6</A>) Where can I learn more about the code?<BR>
-     <A href="#1.7">1.7</A>) How do I download/update the current
+     <A href="#item1.5">1.5</A>) I've developed a patch, what next?<BR>
+     <A href="#item1.6">1.6</A>) Where can I learn more about the code?<BR>
+     <A href="#item1.7">1.7</A>) How do I download/update the current
     source tree?<BR>
-     <A href="#1.8">1.8</A>) How do I test my changes?<BR>
-     <A href="#1.9">1.9</A>) What tools are available for
+     <A href="#item1.8">1.8</A>) How do I test my changes?<BR>
+     <A href="#item1.9">1.9</A>) What tools are available for
     developers?<BR>
-     <A href="#1.10">1.10</A>) What books are good for developers?<BR>
-     <A href="#1.11">1.11</A>) What is configure all about?<BR>
-     <A href="#1.12">1.12</A>) How do I add a new port?<BR>
-     <A href="#1.13">1.13</A>) Why don't you use threads, raw
+     <A href="#item1.10">1.10</A>) What books are good for developers?<BR>
+     <A href="#item1.11">1.11</A>) What is configure all about?<BR>
+     <A href="#item1.12">1.12</A>) How do I add a new port?<BR>
+     <A href="#item1.13">1.13</A>) Why don't you use threads, raw
     devices, async-I/O, &lt;insert your favorite wizz-bang feature
     here&gt;?<BR>
-     <A href="#1.14">1.14</A>) How are RPM's packaged?<BR>
-     <A href="#1.15">1.15</A>) How are CVS branches handled?<BR>
-     <A href="#1.16">1.16</A>) Where can I get a copy of the SQL
+     <A href="#item1.14">1.14</A>) How are RPM's packaged?<BR>
+     <A href="#item1.15">1.15</A>) How are CVS branches handled?<BR>
+     <A href="#item1.16">1.16</A>) Where can I get a copy of the SQL
     standards?<BR>
-     <A href="#1.17">1.17</A>) Where can I get technical
+     <A href="#item1.17">1.17</A>) Where can I get technical
     assistance?<BR>
-     <A href="#1.18">1.18</A>) How do I get involved in PostgreSQL web
+     <A href="#item1.18">1.18</A>) How do I get involved in PostgreSQL web
     site development?<BR>
      
 
       <H2>Technical Questions</H2>
-    <A href="#2.1">2.1</A>) How do I efficiently access information in
+    <A href="#item2.1">2.1</A>) How do I efficiently access information in
     tables from the backend code?<BR>
-     <A href="#2.2">2.2</A>) Why are table, column, type, function,
+     <A href="#item2.2">2.2</A>) Why are table, column, type, function,
     view names sometimes referenced as <I>Name</I> or <I>NameData,</I>
     and sometimes as <I>char *?</I><BR>
-     <A href="#2.3">2.3</A>) Why do we use <I>Node</I> and <I>List</I>
+     <A href="#item2.3">2.3</A>) Why do we use <I>Node</I> and <I>List</I>
     to make data structures?<BR>
-     <A href="#2.4">2.4</A>) I just added a field to a structure. What
+     <A href="#item2.4">2.4</A>) I just added a field to a structure. What
     else should I do?<BR>
-     <A href="#2.5">2.5</A>) Why do we use <I>palloc</I>() and
+     <A href="#item2.5">2.5</A>) Why do we use <I>palloc</I>() and
     <I>pfree</I>() to allocate memory?<BR>
-     <A href="#2.6">2.6</A>) What is ereport()?<BR>
-     <A href="#2.7">2.7</A>) What is CommandCounterIncrement()?<BR>
-     <A href="#2.8">2.8</A>) What debugging features are available?<BR>
+     <A href="#item2.6">2.6</A>) What is ereport()?<BR>
+     <A href="#item2.7">2.7</A>) What is CommandCounterIncrement()?<BR>
+     <A href="#item2.8">2.8</A>) What debugging features are available?<BR>
 
      <BR>
      
@@ -79,7 +79,7 @@
 
     <H2>General Questions</H2>
 
-    <H3 ID="1.1">1.1) How do I get involved in PostgreSQL
+    <H3 id="item1.1">1.1) How do I get involved in PostgreSQL
     development?</H3>
 
     <P>Download the code and have a look around. See <A href=
@@ -91,7 +91,7 @@
     contributors and core members of the project discuss
     development.</P>
 
-    <H3 ID="1.2">1.2) What development environment is required
+    <H3 id="item1.2">1.2) What development environment is required
     to develop code?</H3>
 
     <P>PostgreSQL is developed mostly in the C programming language. It
@@ -123,7 +123,7 @@
     when you make a modification to a C header file, all files depend
     upon that file are also rebuilt.</P>
 
-    <H3 ID="1.3">1.3) What areas need work?</H3>
+    <H3 id="item1.3">1.3) What areas need work?</H3>
     Outstanding features are detailed in the TODO list. This is located
     in <I>doc/TODO</I> in the source distribution or at <A href=
     "http://www.postgresql.org/docs/faqs.TODO.html">
@@ -134,7 +134,7 @@
     archives, the SQL standards and the recommend texts (see <A href=
     "#1.10">1.10</A>).</P>
 
-    <H3 ID="1.4">1.4) What do I do after choosing an item to
+    <H3 id="item1.4">1.4) What do I do after choosing an item to
     work on?</H3>
 
     <P>Send an email to pgsql-hackers with a proposal for what you want
@@ -154,7 +154,7 @@
     <a href="http://momjian.postgresql.org/cgi-bin/pgpatches_hold">
     http://momjian.postgresql.org/cgi-bin/pgpatches2</a>.</P>
     
-    <H3 ID="1.5">1.5) I've developed a patch, what next?</H3>
+    <H3 id="item1.5">1.5) I've developed a patch, what next?</H3>
 
     <P>Generate the patch in contextual diff format. If you are
     unfamiliar with this, you might find the script
@@ -174,7 +174,7 @@
     that, let us know and we will manually update the documentation when
     the patch is applied.</P>
 
-    <H3 ID="1.6">1.6) Where can I learn more about the
+    <H3 id="item1.6">1.6) Where can I learn more about the
     code?</H3>
 
     <P>Other than documentation in the source tree itself, you can find
@@ -182,7 +182,7 @@
     "http://www.postgresql.org/developer">
     http://www.postgresql.org/developer</A>.</P>
 
-    <H3 ID="1.7">1.7) How do I download/update the current
+    <H3 id="item1.7">1.7) How do I download/update the current
     source tree?</H3>
 
     <P>There are several ways to obtain the source tree. Occasional
@@ -197,7 +197,7 @@
     "http://developer.postgresql.org/docs/postgres/cvs.html">
     http://developer.postgresql.org/docs/postgres/cvs.html</A>.</P>
 
-    <H3 ID="1.8">1.8) How do I test my changes?</H3>
+    <H3 id="item1.8">1.8) How do I test my changes?</H3>
 
     <P><B>Basic system testing</B></P>
 
@@ -245,7 +245,7 @@
     you can use the <I>--enable-depend</I> option of <I>configure</I>
     to have the compiler compute the dependencies automatically.</P>
 
-    <H3 ID="1.9">1.9) What tools are available for
+    <H3 id="item1.9">1.9) What tools are available for
     developers?</H3>
 
     <P>First, all the files in the <I>src/tools</I> directory are
@@ -380,7 +380,7 @@
     There is also a script called <I>unused_oids</I> in
     <I>pgsql/src/include/catalog</I> that shows the unused oids.</P>
 
-    <H3 ID="1.10">1.10) What books are good for
+    <H3 id="item1.10">1.10) What books are good for
     developers?</H3>
 
     <P>I have four good books, <I>An Introduction to Database
@@ -394,7 +394,7 @@
     on-line written by Jim Gray at <A href=
     "http://www.benchmarkresources.com">http://www.benchmarkresources.com.</A>.</P>
 
-    <H3 ID="1.11">1.11) What is configure all about?</H3>
+    <H3 id="item1.11">1.11) What is configure all about?</H3>
 
     <P>The files <I>configure</I> and <I>configure.in</I> are part of
     the GNU <I>autoconf</I> package. Configure allows us to test for
@@ -418,7 +418,7 @@
     all files derived by configure are removed, so you see only the
     file contained in the source distribution.</P>
 
-    <H3 ID="1.12">1.12) How do I add a new port?</H3>
+    <H3 id="item1.12">1.12) How do I add a new port?</H3>
 
     <P>There are a variety of places that need to be modified to add a
     new port. First, start in the <I>src/template</I> directory. Add an
@@ -437,7 +437,7 @@
     handling. There is a <I>backend/port</I> directory if you need
     special files for your OS.</P>
 
-    <H3 ID="1.13">1.13) Why don't you use threads, raw
+    <H3 id="item1.13">1.13) Why don't you use threads, raw
     devices, async-I/O, &lt;insert your favorite wizz-bang feature
     here&gt;?</H3>
 
@@ -471,7 +471,7 @@
     cautious about their adoption. The TODO list often contains links
     to discussions showing our reasoning in these areas.</P>
 
-    <H3 ID="1.14">1.14) How are RPMs packaged?</H3>
+    <H3 id="item1.14">1.14) How are RPMs packaged?</H3>
 
     <P>This was written by Lamar Owen:</P>
 
@@ -576,7 +576,7 @@
     <P>Of course, there are many projects that DO include all the files
     necessary to build RPMs from their Official Tarball (TM).</P>
 
-    <H3 ID="1.15">1.15) How are CVS branches managed?</H3>
+    <H3 id="item1.15">1.15) How are CVS branches managed?</H3>
 
     <P>This was written by Tom Lane:</P>
 
@@ -646,7 +646,7 @@
     dot-release or two, so that we won't have to double-patch the first
     wave of fixes.</P>
 
-    <H3 ID="1.16">1.16) Where can I get a copy of the SQL
+    <H3 id="item1.16">1.16) Where can I get a copy of the SQL
     standards?</H3>
 
     <P>There are three versions of the SQL standard: SQL-92, SQL:1999,
@@ -683,7 +683,7 @@
       (paper)</LI>
     </UL>
 
-    <H3 ID="1.17">1.17) Where can I get technical
+    <H3 id="item1.17">1.17) Where can I get technical
     assistance?</H3>
 
     <P>Many technical questions held by those new to the code have been
@@ -698,7 +698,7 @@
     questions about development of new features, on IRC at
     irc.freenode.net in the #postgresql channel.</P>
 
-    <H3 ID="1.18">1.18) How do I get involved in PostgreSQL
+    <H3 id="item1.18">1.18) How do I get involved in PostgreSQL
     web site development?</H3>
 
     <P>PostgreSQL website development is discussed on the
@@ -714,7 +714,7 @@
 
       <H2>Technical Questions</H2>
 
-    <H3 ID="2.1">2.1) How do I efficiently access information
+    <H3 id="item2.1">2.1) How do I efficiently access information
     in tables from the backend code?</H3>
 
     <P>You first need to find the tuples(rows) you are interested in.
@@ -782,7 +782,7 @@
     <I>ReleaseBuffer()</I>, in the <I>heap_fetch()</I> case. Or it may
     be a palloc'ed tuple, that you must <I>pfree()</I> when finished. 
 
-    <H3 ID="2.2">2.2) Why are table, column, type, function,
+    <H3 id="item2.2">2.2) Why are table, column, type, function,
     view names sometimes referenced as <I>Name</I> or <I>NameData,</I>
     and sometimes as <I>char *?</I></H3>
 
@@ -809,7 +809,7 @@
     names(char *), there are many cases where Name and char * are used
     interchangeably.</P>
 
-    <H3 ID="2.3">2.3) Why do we use <I>Node</I> and
+    <H3 id="item2.3">2.3) Why do we use <I>Node</I> and
     <I>List</I> to make data structures?</H3>
 
     <P>We do this because this allows a consistent way to pass data
@@ -902,7 +902,7 @@
     The output appears in the postmaster log file, or on your screen if
     you are running a backend directly without a postmaster. 
 
-    <H3 ID="2.4">2.4) I just added a field to a structure.
+    <H3 id="item2.4">2.4) I just added a field to a structure.
     What else should I do?</H3>
 
     <P>The structures passing around from the parser, rewrite,
@@ -912,9 +912,9 @@
     the files <I>copyfuncs.c</I> and <I>equalfuncs.c</I>. Make sure you
     add support for your new field to these files. Find any other
     places the structure might need code for your new field. <I>mkid</I>
-    is helpful with this (see <A href="#1.9">1.9</A>).</P>
+    is helpful with this (see <A href="#item1.9">1.9</A>).</P>
 
-    <H3 ID="2.5">2.5) Why do we use <I>palloc</I>() and
+    <H3 id="item2.5">2.5) Why do we use <I>palloc</I>() and
     <I>pfree</I>() to allocate memory?</H3>
 
     <P><I>palloc()</I> and <I>pfree()</I> are used in place of malloc()
@@ -925,7 +925,7 @@
     memory can be allocated in. These affect when the allocated memory
     is freed by the backend.</P>
 
-    <H3 ID="2.6">2.6) What is ereport()?</H3>
+    <H3 id="item2.6">2.6) What is ereport()?</H3>
 
     <P><I>ereport()</I> is used to send messages to the front-end, and
     optionally terminate the current query being processed. The first
@@ -944,7 +944,7 @@
     descriptors so you don't need to clean these up before the
     call.</P>
 
-    <H3 ID="2.7">2.7) What is CommandCounterIncrement()?</H3>
+    <H3 id="item2.7">2.7) What is CommandCounterIncrement()?</H3>
 
     <P>Normally, transactions can not see the rows they modify. This
     allows <CODE>UPDATE foo SET x = x + 1</CODE> to work correctly.</P>
@@ -957,7 +957,7 @@
     increments the Command Counter, creating a new part of the
     transaction.</P>
 
-    <H3 ID="2.8">2.8) What debugging features are
+    <H3 id="item2.8">2.8) What debugging features are
     available?</H3>
 
     <P>First, try running <I>configure</I> with the --enable-cassert
