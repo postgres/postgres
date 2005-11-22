@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.294 2005/11/21 12:49:32 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.295 2005/11/22 15:24:18 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1672,6 +1672,7 @@ typedef struct DropdbStmt
 {
 	NodeTag		type;
 	char	   *dbname;			/* database to drop */
+	bool        missing_ok;     /* skip error if db is missing? */
 } DropdbStmt;
 
 /* ----------------------

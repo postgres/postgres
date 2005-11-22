@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_database.sgml,v 1.20 2005/06/21 04:02:31 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_database.sgml,v 1.21 2005/11/22 15:24:17 adunstan Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP DATABASE <replaceable class="PARAMETER">name</replaceable>
+DROP DATABASE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
 </synopsis>
  </refsynopsisdiv>
  
@@ -45,6 +45,16 @@ DROP DATABASE <replaceable class="PARAMETER">name</replaceable>
   <title>Parameters</title>
 
   <variablelist>
+   <varlistentry>
+    <term><literal>IF EXISTS</literal></term>
+    <listitem>
+     <para>
+      Do not throw an error if the database does not exist. A notice is issued 
+      in this case.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry>
     <term><replaceable class="PARAMETER">name</replaceable></term>
     <listitem>

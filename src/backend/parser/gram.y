@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.514 2005/11/21 12:49:31 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.515 2005/11/22 15:24:17 adunstan Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4698,7 +4698,7 @@ alterdb_opt_item:
 
 /*****************************************************************************
  *
- *		DROP DATABASE
+ *		DROP DATABASE [ IF EXISTS ]
  *
  * This is implicitly CASCADE, no need for drop behavior
  *****************************************************************************/
@@ -4707,6 +4707,14 @@ DropdbStmt: DROP DATABASE database_name
 				{
 					DropdbStmt *n = makeNode(DropdbStmt);
 					n->dbname = $3;
+					n->missing_ok = FALSE;
+					$$ = (Node *)n;
+				}
+			| DROP DATABASE IF_P EXISTS database_name
+				{
+					DropdbStmt *n = makeNode(DropdbStmt);
+					n->dbname = $5;
+					n->missing_ok = TRUE;
 					$$ = (Node *)n;
 				}
 		;

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.173 2005/10/15 02:49:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.174 2005/11/22 15:24:17 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -551,7 +551,7 @@ createdb(const CreatedbStmt *stmt)
  * DROP DATABASE
  */
 void
-dropdb(const char *dbname)
+dropdb(const char *dbname, bool missing_ok)
 {
 	Oid			db_id;
 	bool		db_istemplate;
@@ -585,9 +585,25 @@ dropdb(const char *dbname)
 
 	if (!get_db_info(dbname, &db_id, NULL, NULL,
 					 &db_istemplate, NULL, NULL, NULL, NULL, NULL))
-		ereport(ERROR,
+	{
+		if (! missing_ok)
+		{
+			ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", dbname)));
+		}
+		else
+		{
+			
+			/* Close pg_database, release the lock, since we changed nothing */
+			heap_close(pgdbrel, ExclusiveLock);
+			ereport(NOTICE, 
+					(errmsg("database \"%s\" does not exist, skipping", 
+							dbname)));
+
+			return;
+		}
+	}
 
 	if (!pg_database_ownercheck(db_id, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,

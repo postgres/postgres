@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.256 2005/11/21 12:49:31 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.257 2005/11/22 15:24:17 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1188,6 +1188,7 @@ static bool
 _equalDropdbStmt(DropdbStmt *a, DropdbStmt *b)
 {
 	COMPARE_STRING_FIELD(dbname);
+	COMPARE_SCALAR_FIELD(missing_ok);
 
 	return true;
 }
