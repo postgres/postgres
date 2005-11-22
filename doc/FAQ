@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Nov 22 10:16:48 EST 2005
+   Last updated: Tue Nov 22 10:21:51 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -194,15 +194,14 @@
   1.8) How do I submit a bug report?
   
    Visit the PostgreSQL bug form at
-   http://www.postgresql.org/support/submitbug.
-   
-   Also check out our ftp site ftp://ftp.PostgreSQL.org/pub/ to see if
-   there is a more recent PostgreSQL version.
+   http://www.postgresql.org/support/submitbug. Also check out our ftp
+   site ftp://ftp.PostgreSQL.org/pub/ to see if there is a more recent
+   PostgreSQL version.
    
    Bugs submitted using the bug form or posted to any PostgreSQL mailing
    list typically generates one of the following replies:
      * It is not a bug, and why
-     * It is a known bug and is known already on the TODO list
+     * It is a known bug and is already on the TODO list
      * The bug has been fixed in the current release
      * The bug has been fixed but is not packaged yet in an official
        release
