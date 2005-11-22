@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Nov 22 17:53:39 EST 2005
+Last updated:		Tue Nov 22 18:22:37 EST 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -239,7 +239,7 @@ Data Types
 
 * Arrays
 
-	o Allow NULLs in arrays
+	o -Allow NULLs in arrays
 	o Delay resolution of array expression's data type so assignment
 	  coercion can be performed on empty array expressions
 
