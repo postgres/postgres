@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.107 2005/10/24 15:38:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.108 2005/11/22 18:17:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -278,7 +278,6 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname, const char *s
 
 	return ret;
 }
-
 #endif   /* KRB5 */
 
 
@@ -501,14 +500,13 @@ pg_fe_getauthname(char *PQerrormsg)
 #endif
 
 	/*
-	 *	pglock_thread() really only needs to be called around
-	 *	pg_krb5_authname(), but some users are using configure
-	 *	--enable-thread-safety-force, so we might as well do
-	 *	the locking within our library to protect pqGetpwuid().
-	 *	In fact, application developers can use getpwuid()
-	 *	in their application if they use the locking call we
-	 *	provide, or install their own locking function using
-	 *	PQregisterThreadLock().
+	 * pglock_thread() really only needs to be called around
+	 * pg_krb5_authname(), but some users are using configure
+	 * --enable-thread-safety-force, so we might as well do the locking within
+	 * our library to protect pqGetpwuid(). In fact, application developers
+	 * can use getpwuid() in their application if they use the locking call we
+	 * provide, or install their own locking function using
+	 * PQregisterThreadLock().
 	 */
 	pglock_thread();
 

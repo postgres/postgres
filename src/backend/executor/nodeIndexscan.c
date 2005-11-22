@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.104 2005/10/15 02:49:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.105 2005/11/22 18:17:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -578,8 +578,8 @@ ExecIndexBuildScanKeys(PlanState *planstate, List *quals,
 		 * listed in the var node and use the value of the const as comparison
 		 * data.
 		 *
-		 * If we don't have a const node, it means our scan key is a function of
-		 * information obtained during the execution of the plan, in which
+		 * If we don't have a const node, it means our scan key is a function
+		 * of information obtained during the execution of the plan, in which
 		 * case we need to recalculate the index scan key at run time.	Hence,
 		 * we set have_runtime_keys to true and place the appropriate
 		 * subexpression in run_keys. The corresponding scan key values are

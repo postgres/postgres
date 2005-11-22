@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.137 2005/10/15 02:49:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.138 2005/11/22 18:17:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -440,8 +440,8 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 * Restrictions on individual clauses are checked by
 	 * qual_is_pushdown_safe().
 	 *
-	 * Non-pushed-down clauses will get evaluated as qpquals of the SubqueryScan
-	 * node.
+	 * Non-pushed-down clauses will get evaluated as qpquals of the
+	 * SubqueryScan node.
 	 *
 	 * XXX Are there any cases where we want to make a policy decision not to
 	 * push down a pushable qual, because it'd result in a worse plan?

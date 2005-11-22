@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.143 2005/10/15 02:49:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.144 2005/11/22 18:17:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,9 +172,9 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 	 * instead mark target table as requiring exactly the specified
 	 * permissions.
 	 *
-	 * If we find an explicit reference to the rel later during parse analysis,
-	 * scanRTEForColumn will add the ACL_SELECT bit back again. That can't
-	 * happen for INSERT but it is possible for UPDATE and DELETE.
+	 * If we find an explicit reference to the rel later during parse
+	 * analysis, scanRTEForColumn will add the ACL_SELECT bit back again. That
+	 * can't happen for INSERT but it is possible for UPDATE and DELETE.
 	 */
 	rte->requiredPerms = requiredPerms;
 
@@ -462,8 +462,8 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	 * XXX this will need further work to support SQL99's LATERAL() feature,
 	 * wherein such references would indeed be legal.
 	 *
-	 * We can skip groveling through the subquery if there's not anything visible
-	 * in the current query.  Also note that outer references are OK.
+	 * We can skip groveling through the subquery if there's not anything
+	 * visible in the current query.  Also note that outer references are OK.
 	 */
 	if (pstate->p_relnamespace || pstate->p_varnamespace)
 	{
@@ -1193,8 +1193,8 @@ findTargetlistEntry(ParseState *pstate, Node *node, List **tlist, int clause)
 			 * than one column name exposed by FROM, colNameToVar will
 			 * ereport(ERROR).	That's just what we want here.
 			 *
-			 * Small tweak for 7.4.3: ignore matches in upper query levels. This
-			 * effectively changes the search order for bare names to (1)
+			 * Small tweak for 7.4.3: ignore matches in upper query levels.
+			 * This effectively changes the search order for bare names to (1)
 			 * local FROM variables, (2) local targetlist aliases, (3) outer
 			 * FROM variables, whereas before it was (1) (3) (2). SQL92 and
 			 * SQL99 do not allow GROUPing BY an outer reference, so this
@@ -1474,9 +1474,9 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 		 * DISTINCT values to the sort list, much as we did above for ordinary
 		 * DISTINCT fields.
 		 *
-		 * Actually, it'd be OK for the common prefixes of the two lists to match
-		 * in any order, but implementing that check seems like more trouble
-		 * than it's worth.
+		 * Actually, it'd be OK for the common prefixes of the two lists to
+		 * match in any order, but implementing that check seems like more
+		 * trouble than it's worth.
 		 */
 		ListCell   *nextsortlist = list_head(*sortClause);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.292 2005/10/18 01:06:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.293 2005/11/22 18:17:08 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -697,8 +697,8 @@ heap_create_with_catalog(const char *relname,
 	/*
 	 * Allocate an OID for the relation, unless we were told what to use.
 	 *
-	 * The OID will be the relfilenode as well, so make sure it doesn't collide
-	 * with either pg_class OIDs or existing physical files.
+	 * The OID will be the relfilenode as well, so make sure it doesn't
+	 * collide with either pg_class OIDs or existing physical files.
 	 */
 	if (!OidIsValid(relid))
 		relid = GetNewRelFileNode(reltablespace, shared_relation,
@@ -724,8 +724,8 @@ heap_create_with_catalog(const char *relname,
 	 * since defining a relation also defines a complex type, we add a new
 	 * system type corresponding to the new relation.
 	 *
-	 * NOTE: we could get a unique-index failure here, in case the same name has
-	 * already been used for a type.
+	 * NOTE: we could get a unique-index failure here, in case the same name
+	 * has already been used for a type.
 	 */
 	new_type_oid = AddNewRelationType(relname,
 									  relnamespace,
@@ -778,9 +778,9 @@ heap_create_with_catalog(const char *relname,
 	/*
 	 * store constraints and defaults passed in the tupdesc, if any.
 	 *
-	 * NB: this may do a CommandCounterIncrement and rebuild the relcache entry,
-	 * so the relation must be valid and self-consistent at this point. In
-	 * particular, there are not yet constraints and defaults anywhere.
+	 * NB: this may do a CommandCounterIncrement and rebuild the relcache
+	 * entry, so the relation must be valid and self-consistent at this point.
+	 * In particular, there are not yet constraints and defaults anywhere.
 	 */
 	StoreConstraints(new_rel_desc, tupdesc);
 
@@ -1329,8 +1329,9 @@ StoreRelCheck(Relation rel, char *ccname, char *ccbin)
 	/*
 	 * Find columns of rel that are used in ccbin
 	 *
-	 * NB: pull_var_clause is okay here only because we don't allow subselects in
-	 * check constraints; it would fail to examine the contents of subselects.
+	 * NB: pull_var_clause is okay here only because we don't allow subselects
+	 * in check constraints; it would fail to examine the contents of
+	 * subselects.
 	 */
 	varList = pull_var_clause(expr, false);
 	keycount = list_length(varList);

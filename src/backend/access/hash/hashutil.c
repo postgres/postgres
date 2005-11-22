@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashutil.c,v 1.43 2005/11/06 19:29:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashutil.c,v 1.44 2005/11/22 18:17:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,23 +115,24 @@ _hash_checkpage(Relation rel, Buffer buf, int flags)
 	Page		page = BufferGetPage(buf);
 
 	/*
-	 * ReadBuffer verifies that every newly-read page passes PageHeaderIsValid,
-	 * which means it either contains a reasonably sane page header or is
-	 * all-zero.  We have to defend against the all-zero case, however.
+	 * ReadBuffer verifies that every newly-read page passes
+	 * PageHeaderIsValid, which means it either contains a reasonably sane
+	 * page header or is all-zero.	We have to defend against the all-zero
+	 * case, however.
 	 */
 	if (PageIsNew(page))
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
-				 errmsg("index \"%s\" contains unexpected zero page at block %u",
-						RelationGetRelationName(rel),
-						BufferGetBlockNumber(buf)),
+			 errmsg("index \"%s\" contains unexpected zero page at block %u",
+					RelationGetRelationName(rel),
+					BufferGetBlockNumber(buf)),
 				 errhint("Please REINDEX it.")));
 
 	/*
 	 * Additionally check that the special area looks sane.
 	 */
 	if (((PageHeader) (page))->pd_special !=
-		   (BLCKSZ - MAXALIGN(sizeof(HashPageOpaqueData))))
+		(BLCKSZ - MAXALIGN(sizeof(HashPageOpaqueData))))
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
 				 errmsg("index \"%s\" contains corrupted page at block %u",
@@ -146,9 +147,9 @@ _hash_checkpage(Relation rel, Buffer buf, int flags)
 		if ((opaque->hasho_flag & flags) == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
-					 errmsg("index \"%s\" contains corrupted page at block %u",
-							RelationGetRelationName(rel),
-							BufferGetBlockNumber(buf)),
+				   errmsg("index \"%s\" contains corrupted page at block %u",
+						  RelationGetRelationName(rel),
+						  BufferGetBlockNumber(buf)),
 					 errhint("Please REINDEX it.")));
 	}
 

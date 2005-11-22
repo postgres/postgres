@@ -547,8 +547,8 @@ crosstab(PG_FUNCTION_ARGS)
 					 * Get the next category item value, which is alway
 					 * attribute number three.
 					 *
-					 * Be careful to sssign the value to the array index based on
-					 * which category we are presently processing.
+					 * Be careful to sssign the value to the array index based
+					 * on which category we are presently processing.
 					 */
 					values[1 + i] = SPI_getvalue(spi_tuple, spi_tupdesc, 3);
 
@@ -870,8 +870,8 @@ get_crosstab_tuplestore(char *sql,
 		/*
 		 * The provided SQL query must always return at least three columns:
 		 *
-		 * 1. rowname	the label for each row - column 1 in the final result 2.
-		 * category  the label for each value-column in the final result 3.
+		 * 1. rowname	the label for each row - column 1 in the final result
+		 * 2. category	the label for each value-column in the final result 3.
 		 * value	 the values used to populate the value-columns
 		 *
 		 * If there are more than three columns, the last two are taken as

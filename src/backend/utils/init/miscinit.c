@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.150 2005/10/15 02:49:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.151 2005/11/22 18:17:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -695,8 +695,8 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		/*
 		 * Try to create the lock file --- O_EXCL makes this atomic.
 		 *
-		 * Think not to make the file protection weaker than 0600.	See comments
-		 * below.
+		 * Think not to make the file protection weaker than 0600.	See
+		 * comments below.
 		 */
 		fd = open(filename, O_RDWR | O_CREAT | O_EXCL, 0600);
 		if (fd >= 0)
@@ -757,26 +757,27 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		 * carefully then all but the immediate parent shell will be
 		 * root-owned processes and so the kill test will fail with EPERM.
 		 *
-		 * We can treat the EPERM-error case as okay because that error implies
-		 * that the existing process has a different userid than we do, which
-		 * means it cannot be a competing postmaster.  A postmaster cannot
-		 * successfully attach to a data directory owned by a userid other
-		 * than its own.  (This is now checked directly in checkDataDir(), but
-		 * has been true for a long time because of the restriction that the
-		 * data directory isn't group- or world-accessible.)  Also, since we
-		 * create the lockfiles mode 600, we'd have failed above if the
-		 * lockfile belonged to another userid --- which means that whatever
-		 * process kill() is reporting about isn't the one that made the
-		 * lockfile.  (NOTE: this last consideration is the only one that
-		 * keeps us from blowing away a Unix socket file belonging to an
-		 * instance of Postgres being run by someone else, at least on
-		 * machines where /tmp hasn't got a stickybit.)
+		 * We can treat the EPERM-error case as okay because that error
+		 * implies that the existing process has a different userid than we
+		 * do, which means it cannot be a competing postmaster.  A postmaster
+		 * cannot successfully attach to a data directory owned by a userid
+		 * other than its own.	(This is now checked directly in
+		 * checkDataDir(), but has been true for a long time because of the
+		 * restriction that the data directory isn't group- or
+		 * world-accessible.)  Also, since we create the lockfiles mode 600,
+		 * we'd have failed above if the lockfile belonged to another userid
+		 * --- which means that whatever process kill() is reporting about
+		 * isn't the one that made the lockfile.  (NOTE: this last
+		 * consideration is the only one that keeps us from blowing away a
+		 * Unix socket file belonging to an instance of Postgres being run by
+		 * someone else, at least on machines where /tmp hasn't got a
+		 * stickybit.)
 		 *
-		 * Windows hasn't got getppid(), but doesn't need it since it's not using
-		 * real kill() either...
+		 * Windows hasn't got getppid(), but doesn't need it since it's not
+		 * using real kill() either...
 		 *
-		 * Normally kill() will fail with ESRCH if the given PID doesn't exist.
-		 * BeOS returns EINVAL for some silly reason, however.
+		 * Normally kill() will fail with ESRCH if the given PID doesn't
+		 * exist. BeOS returns EINVAL for some silly reason, however.
 		 */
 		if (other_pid != my_pid
 #ifndef WIN32

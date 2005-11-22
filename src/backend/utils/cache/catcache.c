@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.125 2005/10/15 02:49:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.126 2005/11/22 18:17:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1426,8 +1426,8 @@ SearchCatCacheList(CatCache *cache,
 	 * relation.  For each matching tuple found in the relation, use an
 	 * existing cache entry if possible, else build a new one.
 	 *
-	 * We have to bump the member refcounts temporarily to ensure they won't get
-	 * dropped from the cache while loading other members. We use a PG_TRY
+	 * We have to bump the member refcounts temporarily to ensure they won't
+	 * get dropped from the cache while loading other members. We use a PG_TRY
 	 * block to ensure we can undo those refcounts if we get an error before
 	 * we finish constructing the CatCList.
 	 */

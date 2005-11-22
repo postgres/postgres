@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.50 2005/11/20 19:49:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.51 2005/11/22 18:17:06 momjian Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -202,8 +202,8 @@ systable_beginscan(Relation heapRelation,
 		/*
 		 * Change attribute numbers to be index column numbers.
 		 *
-		 * This code could be generalized to search for the index key numbers to
-		 * substitute, but for now there's no need.
+		 * This code could be generalized to search for the index key numbers
+		 * to substitute, but for now there's no need.
 		 */
 		for (i = 0; i < nkeys; i++)
 		{

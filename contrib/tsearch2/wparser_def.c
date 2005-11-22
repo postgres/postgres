@@ -39,7 +39,7 @@ Datum		prsd_start(PG_FUNCTION_ARGS);
 Datum
 prsd_start(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_POINTER(TParserInit( (char *) PG_GETARG_POINTER(0), PG_GETARG_INT32(1)));
+	PG_RETURN_POINTER(TParserInit((char *) PG_GETARG_POINTER(0), PG_GETARG_INT32(1)));
 }
 
 PG_FUNCTION_INFO_V1(prsd_getlexeme);
@@ -47,14 +47,14 @@ Datum		prsd_getlexeme(PG_FUNCTION_ARGS);
 Datum
 prsd_getlexeme(PG_FUNCTION_ARGS)
 {
-	TParser *p=(TParser*)PG_GETARG_POINTER(0); 
+	TParser    *p = (TParser *) PG_GETARG_POINTER(0);
 	char	  **t = (char **) PG_GETARG_POINTER(1);
 	int		   *tlen = (int *) PG_GETARG_POINTER(2);
 
-	if ( !TParserGet(p) ) 
+	if (!TParserGet(p))
 		PG_RETURN_INT32(0);
 
-	*t = p->lexeme; 
+	*t = p->lexeme;
 	*tlen = p->lenbytelexeme;
 
 	PG_RETURN_INT32(p->type);
@@ -65,8 +65,9 @@ Datum		prsd_end(PG_FUNCTION_ARGS);
 Datum
 prsd_end(PG_FUNCTION_ARGS)
 {
-	TParser *p=(TParser*)PG_GETARG_POINTER(0);
-	TParserClose(p); 
+	TParser    *p = (TParser *) PG_GETARG_POINTER(0);
+
+	TParserClose(p);
 	PG_RETURN_VOID();
 }
 

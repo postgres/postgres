@@ -266,8 +266,10 @@ calc_rank_or(float *w, tsvector * t, QUERYTYPE * q)
 
 	for (i = 0; i < size; i++)
 	{
-		float resj,wjm;
-		int4  jm;
+		float		resj,
+					wjm;
+		int4		jm;
+
 		entry = find_wordentry(t, q, item[i]);
 		if (!entry)
 			continue;
@@ -283,28 +285,29 @@ calc_rank_or(float *w, tsvector * t, QUERYTYPE * q)
 			post = POSNULL + 1;
 		}
 
-                resj = 0.0;
-                wjm = -1.0;
-                jm = 0;
-                for (j = 0; j < dimt; j++)
-                {
-                        resj = resj + wpos(post[j])/((j+1)*(j+1));
-                        if ( wpos(post[j]) > wjm ) {
-                                wjm = wpos(post[j]);
-                                jm  = j;
-                        }
-                }
-/* 
-        limit (sum(i/i^2),i->inf) = pi^2/6
-        resj = sum(wi/i^2),i=1,noccurence,
-        wi - should be sorted desc, 
-        don't sort for now, just choose maximum weight. This should be corrected
+		resj = 0.0;
+		wjm = -1.0;
+		jm = 0;
+		for (j = 0; j < dimt; j++)
+		{
+			resj = resj + wpos(post[j]) / ((j + 1) * (j + 1));
+			if (wpos(post[j]) > wjm)
+			{
+				wjm = wpos(post[j]);
+				jm = j;
+			}
+		}
+/*
+		limit (sum(i/i^2),i->inf) = pi^2/6
+		resj = sum(wi/i^2),i=1,noccurence,
+		wi - should be sorted desc,
+		don't sort for now, just choose maximum weight. This should be corrected
 		Oleg Bartunov
 */
-                res = res + ( wjm + resj - wjm/((jm+1)*(jm+1)))/1.64493406685; 
+		res = res + (wjm + resj - wjm / ((jm + 1) * (jm + 1))) / 1.64493406685;
 	}
-	if ( size > 0 )
-		res = res /size;
+	if (size > 0)
+		res = res / size;
 	pfree(item);
 	return res;
 }
@@ -414,7 +417,7 @@ rank_def(PG_FUNCTION_ARGS)
 
 typedef struct
 {
-	ITEM	   **item;
+	ITEM	  **item;
 	int16		nitem;
 	bool		needfree;
 	int32		pos;
@@ -429,53 +432,59 @@ compareDocR(const void *a, const void *b)
 }
 
 static bool
-checkcondition_ITEM(void *checkval, ITEM * val) {
-	return (bool)(val->istrue);
+checkcondition_ITEM(void *checkval, ITEM * val)
+{
+	return (bool) (val->istrue);
 }
 
 static void
-reset_istrue_flag(QUERYTYPE *query) {
-	ITEM       *item = GETQUERY(query);
-	int i;
+reset_istrue_flag(QUERYTYPE * query)
+{
+	ITEM	   *item = GETQUERY(query);
+	int			i;
 
 	/* reset istrue flag */
-	for(i = 0; i < query->size; i++) { 
-		if ( item->type == VAL ) 
+	for (i = 0; i < query->size; i++)
+	{
+		if (item->type == VAL)
 			item->istrue = 0;
 		item++;
 	}
 }
-		
+
 static bool
 Cover(DocRepresentation * doc, int len, QUERYTYPE * query, int *pos, int *p, int *q)
 {
 	DocRepresentation *ptr;
 	int			lastpos = *pos;
-	int i;
-	bool	found=false;
+	int			i;
+	bool		found = false;
 
 	reset_istrue_flag(query);
-	
+
 	*p = 0x7fffffff;
 	*q = 0;
 	ptr = doc + *pos;
 
 	/* find upper bound of cover from current position, move up */
-	while (ptr - doc < len) {
-		for(i=0;i<ptr->nitem;i++)
+	while (ptr - doc < len)
+	{
+		for (i = 0; i < ptr->nitem; i++)
 			ptr->item[i]->istrue = 1;
-		if ( TS_execute(GETQUERY(query), NULL, false, checkcondition_ITEM) ) {
-			if (ptr->pos > *q) {
+		if (TS_execute(GETQUERY(query), NULL, false, checkcondition_ITEM))
+		{
+			if (ptr->pos > *q)
+			{
 				*q = ptr->pos;
 				lastpos = ptr - doc;
 				found = true;
-			} 
+			}
 			break;
 		}
 		ptr++;
 	}
 
-	if (!found) 
+	if (!found)
 		return false;
 
 	reset_istrue_flag(query);
@@ -483,25 +492,31 @@ Cover(DocRepresentation * doc, int len, QUERYTYPE * query, int *pos, int *p, int
 	ptr = doc + lastpos;
 
 	/* find lower bound of cover from founded upper bound, move down */
-	while (ptr >= doc ) {
-		for(i=0;i<ptr->nitem;i++)
+	while (ptr >= doc)
+	{
+		for (i = 0; i < ptr->nitem; i++)
 			ptr->item[i]->istrue = 1;
-		if ( TS_execute(GETQUERY(query), NULL, true, checkcondition_ITEM) ) {
-			if (ptr->pos < *p) 
+		if (TS_execute(GETQUERY(query), NULL, true, checkcondition_ITEM))
+		{
+			if (ptr->pos < *p)
 				*p = ptr->pos;
 			break;
 		}
 		ptr--;
 	}
 
-	if ( *p <= *q ) {
-		/* set position for next try to next lexeme after begining of founded cover */
-		*pos= (ptr-doc) + 1;
+	if (*p <= *q)
+	{
+		/*
+		 * set position for next try to next lexeme after begining of founded
+		 * cover
+		 */
+		*pos = (ptr - doc) + 1;
 		return true;
 	}
 
 	(*pos)++;
-	return Cover( doc, len, query, pos, p, q );
+	return Cover(doc, len, query, pos, p, q);
 }
 
 static DocRepresentation *
@@ -550,26 +565,32 @@ get_docrep(tsvector * txt, QUERYTYPE * query, int *doclen)
 
 		for (j = 0; j < dimt; j++)
 		{
-			if ( j == 0 ) {
-				ITEM *kptr, *iptr = item+i;
-				int k;
- 
+			if (j == 0)
+			{
+				ITEM	   *kptr,
+						   *iptr = item + i;
+				int			k;
+
 				doc[cur].needfree = false;
 				doc[cur].nitem = 0;
-				doc[cur].item = (ITEM**)palloc( sizeof(ITEM*) * query->size );
+				doc[cur].item = (ITEM **) palloc(sizeof(ITEM *) * query->size);
 
-				for(k=0; k < query->size; k++) {
-					kptr = item+k;
-					if ( k==i || ( item[k].type == VAL && compareITEM( &kptr, &iptr ) == 0 ) ) {
-						doc[cur].item[ doc[cur].nitem ] = item+k;
+				for (k = 0; k < query->size; k++)
+				{
+					kptr = item + k;
+					if (k == i || (item[k].type == VAL && compareITEM(&kptr, &iptr) == 0))
+					{
+						doc[cur].item[doc[cur].nitem] = item + k;
 						doc[cur].nitem++;
 						kptr->istrue = 1;
 					}
-				} 
-			} else {
+				}
+			}
+			else
+			{
 				doc[cur].needfree = false;
-				doc[cur].nitem = doc[cur-1].nitem;
-				doc[cur].item  = doc[cur-1].item;
+				doc[cur].nitem = doc[cur - 1].nitem;
+				doc[cur].item = doc[cur - 1].item;
 			}
 			doc[cur].pos = WEP_GETPOS(post[j]);
 			cur++;
@@ -604,7 +625,7 @@ rank_cd(PG_FUNCTION_ARGS)
 				len,
 				cur,
 				i,
-				doclen=0;
+				doclen = 0;
 
 	doc = get_docrep(txt, query, &doclen);
 	if (!doc)
@@ -640,9 +661,9 @@ rank_cd(PG_FUNCTION_ARGS)
 			elog(ERROR, "unrecognized normalization method: %d", method);
 	}
 
-	for(i=0;i<doclen;i++)
-		if ( doc[i].needfree )
-			pfree( doc[i].item );
+	for (i = 0; i < doclen; i++)
+		if (doc[i].needfree)
+			pfree(doc[i].item);
 	pfree(doc);
 	PG_FREE_IF_COPY(txt, 1);
 	PG_FREE_IF_COPY(query, 2);
@@ -784,9 +805,9 @@ get_covers(PG_FUNCTION_ARGS)
 	VARATT_SIZEP(out) = cptr - ((char *) out);
 
 	pfree(dw);
-	for(i=0;i<rlen;i++)
-		if ( doc[i].needfree )
-			pfree( doc[i].item );
+	for (i = 0; i < rlen; i++)
+		if (doc[i].needfree)
+			pfree(doc[i].item);
 	pfree(doc);
 
 	PG_FREE_IF_COPY(txt, 0);

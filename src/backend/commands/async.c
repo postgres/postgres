@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.127 2005/11/03 17:11:34 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.128 2005/11/22 18:17:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -820,18 +820,18 @@ EnableNotifyInterrupt(void)
 	 * steps.  (A very small time window, perhaps, but Murphy's Law says you
 	 * can hit it...)  Instead, we first set the enable flag, then test the
 	 * occurred flag.  If we see an unserviced interrupt has occurred, we
-	 * re-clear the enable flag before going off to do the service work.
-	 * (That prevents re-entrant invocation of ProcessIncomingNotify() if
-	 * another interrupt occurs.) If an interrupt comes in between the setting
-	 * and clearing of notifyInterruptEnabled, then it will have done the
-	 * service work and left notifyInterruptOccurred zero, so we have to check
-	 * again after clearing enable.  The whole thing has to be in a loop in
-	 * case another interrupt occurs while we're servicing the first. Once we
-	 * get out of the loop, enable is set and we know there is no unserviced
+	 * re-clear the enable flag before going off to do the service work. (That
+	 * prevents re-entrant invocation of ProcessIncomingNotify() if another
+	 * interrupt occurs.) If an interrupt comes in between the setting and
+	 * clearing of notifyInterruptEnabled, then it will have done the service
+	 * work and left notifyInterruptOccurred zero, so we have to check again
+	 * after clearing enable.  The whole thing has to be in a loop in case
+	 * another interrupt occurs while we're servicing the first. Once we get
+	 * out of the loop, enable is set and we know there is no unserviced
 	 * interrupt.
 	 *
-	 * NB: an overenthusiastic optimizing compiler could easily break this code.
-	 * Hopefully, they all understand what "volatile" means these days.
+	 * NB: an overenthusiastic optimizing compiler could easily break this
+	 * code. Hopefully, they all understand what "volatile" means these days.
 	 */
 	for (;;)
 	{

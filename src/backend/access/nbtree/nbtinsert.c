@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.128 2005/11/06 19:29:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.129 2005/11/22 18:17:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,8 +104,8 @@ top:
 	 * If we're not allowing duplicates, make sure the key isn't already in
 	 * the index.
 	 *
-	 * NOTE: obviously, _bt_check_unique can only detect keys that are already in
-	 * the index; so it cannot defend against concurrent insertions of the
+	 * NOTE: obviously, _bt_check_unique can only detect keys that are already
+	 * in the index; so it cannot defend against concurrent insertions of the
 	 * same key.  We protect against that by means of holding a write lock on
 	 * the target page.  Any other would-be inserter of the same key must
 	 * acquire a write lock on the same target page, so only one would-be
@@ -114,8 +114,8 @@ top:
 	 * our insertion, so no later inserter can fail to see our insertion.
 	 * (This requires some care in _bt_insertonpg.)
 	 *
-	 * If we must wait for another xact, we release the lock while waiting, and
-	 * then must start over completely.
+	 * If we must wait for another xact, we release the lock while waiting,
+	 * and then must start over completely.
 	 */
 	if (index_is_unique)
 	{
@@ -193,8 +193,8 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 			/*
 			 * We can skip items that are marked killed.
 			 *
-			 * Formerly, we applied _bt_isequal() before checking the kill flag,
-			 * so as to fall out of the item loop as soon as possible.
+			 * Formerly, we applied _bt_isequal() before checking the kill
+			 * flag, so as to fall out of the item loop as soon as possible.
 			 * However, in the presence of heavy update activity an index may
 			 * contain many killed items with the same key; running
 			 * _bt_isequal() on each killed item gets expensive. Furthermore
@@ -431,11 +431,11 @@ _bt_insertonpg(Relation rel,
 			/*
 			 * step right to next non-dead page
 			 *
-			 * must write-lock that page before releasing write lock on current
-			 * page; else someone else's _bt_check_unique scan could fail to
-			 * see our insertion.  write locks on intermediate dead pages
-			 * won't do because we don't know when they will get de-linked
-			 * from the tree.
+			 * must write-lock that page before releasing write lock on
+			 * current page; else someone else's _bt_check_unique scan could
+			 * fail to see our insertion.  write locks on intermediate dead
+			 * pages won't do because we don't know when they will get
+			 * de-linked from the tree.
 			 */
 			Buffer		rbuf = InvalidBuffer;
 
@@ -471,9 +471,9 @@ _bt_insertonpg(Relation rel,
 	/*
 	 * Do we need to split the page to fit the item on it?
 	 *
-	 * Note: PageGetFreeSpace() subtracts sizeof(ItemIdData) from its result, so
-	 * this comparison is correct even though we appear to be accounting only
-	 * for the item and not for its line pointer.
+	 * Note: PageGetFreeSpace() subtracts sizeof(ItemIdData) from its result,
+	 * so this comparison is correct even though we appear to be accounting
+	 * only for the item and not for its line pointer.
 	 */
 	if (PageGetFreeSpace(page) < itemsz)
 	{
@@ -1158,10 +1158,10 @@ _bt_insert_parent(Relation rel,
 	 * the next higher level that someone constructed meanwhile, and find the
 	 * right place to insert as for the normal case.
 	 *
-	 * If we have to search for the parent level, we do so by re-descending from
-	 * the root.  This is not super-efficient, but it's rare enough not to
-	 * matter.	(This path is also taken when called from WAL recovery --- we
-	 * have no stack in that case.)
+	 * If we have to search for the parent level, we do so by re-descending
+	 * from the root.  This is not super-efficient, but it's rare enough not
+	 * to matter.  (This path is also taken when called from WAL recovery ---
+	 * we have no stack in that case.)
 	 */
 	if (is_root)
 	{

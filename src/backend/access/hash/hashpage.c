@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.53 2005/11/06 19:29:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.54 2005/11/22 18:17:05 momjian Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -402,8 +402,8 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	 * The lock protects us against other backends, but not against our own
 	 * backend.  Must check for active scans separately.
 	 *
-	 * Ideally we would lock the new bucket too before proceeding, but if we are
-	 * about to cross a splitpoint then the BUCKET_TO_BLKNO mapping isn't
+	 * Ideally we would lock the new bucket too before proceeding, but if we
+	 * are about to cross a splitpoint then the BUCKET_TO_BLKNO mapping isn't
 	 * correct yet.  For simplicity we update the metapage first and then
 	 * lock.  This should be okay because no one else should be trying to lock
 	 * the new bucket yet...
@@ -422,11 +422,11 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	/*
 	 * Okay to proceed with split.	Update the metapage bucket mapping info.
 	 *
-	 * Since we are scribbling on the metapage data right in the shared buffer,
-	 * any failure in this next little bit leaves us with a big problem: the
-	 * metapage is effectively corrupt but could get written back to disk.	We
-	 * don't really expect any failure, but just to be sure, establish a
-	 * critical section.
+	 * Since we are scribbling on the metapage data right in the shared
+	 * buffer, any failure in this next little bit leaves us with a big
+	 * problem: the metapage is effectively corrupt but could get written back
+	 * to disk.  We don't really expect any failure, but just to be sure,
+	 * establish a critical section.
 	 */
 	START_CRIT_SECTION();
 

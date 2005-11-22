@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.99 2005/10/15 02:49:37 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.100 2005/11/22 18:17:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -537,10 +537,11 @@ mkdir_p(char *path, mode_t omode)
 			 * existing directory, effects equivalent to those caused by the
 			 * following command shall occcur:
 			 *
-			 * mkdir -p -m $(umask -S),u+wx $(dirname dir) && mkdir [-m mode] dir
+			 * mkdir -p -m $(umask -S),u+wx $(dirname dir) && mkdir [-m mode]
+			 * dir
 			 *
-			 * We change the user's umask and then restore it, instead of doing
-			 * chmod's.
+			 * We change the user's umask and then restore it, instead of
+			 * doing chmod's.
 			 */
 			oumask = umask(0);
 			numask = oumask & ~(S_IWUSR | S_IXUSR);
@@ -1329,8 +1330,8 @@ bootstrap_template1(char *short_version)
 	/*
 	 * Pass correct LC_xxx environment to bootstrap.
 	 *
-	 * The shell script arranged to restore the LC settings afterwards, but there
-	 * doesn't seem to be any compelling reason to do that.
+	 * The shell script arranged to restore the LC settings afterwards, but
+	 * there doesn't seem to be any compelling reason to do that.
 	 */
 	snprintf(cmd, sizeof(cmd), "LC_COLLATE=%s", lc_collate);
 	putenv(xstrdup(cmd));
@@ -1555,8 +1556,8 @@ setup_depend(void)
 		 * for instance) but generating only the minimum required set of
 		 * dependencies seems hard.
 		 *
-		 * Note that we deliberately do not pin the system views, which haven't
-		 * been created yet.
+		 * Note that we deliberately do not pin the system views, which
+		 * haven't been created yet.
 		 *
 		 * First delete any already-made entries; PINs override all else, and
 		 * must be the only entries for their objects.
@@ -2651,8 +2652,8 @@ main(int argc, char *argv[])
 	/*
 	 * Determine platform-specific config settings
 	 *
-	 * Use reasonable values if kernel will let us, else scale back.  Probe for
-	 * max_connections first since it is subject to more constraints than
+	 * Use reasonable values if kernel will let us, else scale back.  Probe
+	 * for max_connections first since it is subject to more constraints than
 	 * shared_buffers.
 	 */
 

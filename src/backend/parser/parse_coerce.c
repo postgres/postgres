@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.132 2005/10/15 02:49:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.133 2005/11/22 18:17:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,9 +180,9 @@ coerce_type(ParseState *pstate, Node *node,
 			 * length checks, which is not always what we want here. Any
 			 * length constraint will be applied later by our caller.
 			 *
-			 * Note that we call stringTypeDatum using the domain's pg_type row,
-			 * if it's a domain.  This works because the domain row has the
-			 * same typinput and typelem as the base type --- ugly...
+			 * Note that we call stringTypeDatum using the domain's pg_type
+			 * row, if it's a domain.  This works because the domain row has
+			 * the same typinput and typelem as the base type --- ugly...
 			 */
 			newcon->constvalue = stringTypeDatum(targetType, val, -1);
 		}
@@ -1670,12 +1670,12 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 		 * array types.  If so, and if the element types have a suitable cast,
 		 * use array_type_coerce() or array_type_length_coerce().
 		 *
-		 * Hack: disallow coercions to oidvector and int2vector, which otherwise
-		 * tend to capture coercions that should go to "real" array types.	We
-		 * want those types to be considered "real" arrays for many purposes,
-		 * but not this one.  (Also, array_type_coerce isn't guaranteed to
-		 * produce an output that meets the restrictions of these datatypes,
-		 * such as being 1-dimensional.)
+		 * Hack: disallow coercions to oidvector and int2vector, which
+		 * otherwise tend to capture coercions that should go to "real" array
+		 * types.  We want those types to be considered "real" arrays for many
+		 * purposes, but not this one.	(Also, array_type_coerce isn't
+		 * guaranteed to produce an output that meets the restrictions of
+		 * these datatypes, such as being 1-dimensional.)
 		 */
 		Oid			targetElemType;
 		Oid			sourceElemType;

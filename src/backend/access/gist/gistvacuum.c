@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.10 2005/11/06 22:39:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.11 2005/11/22 18:17:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,6 +65,7 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 				lencompleted = 16;
 
 	buffer = ReadBuffer(gv->index, blkno);
+
 	/*
 	 * This is only used during VACUUM FULL, so we need not bother to lock
 	 * individual index pages

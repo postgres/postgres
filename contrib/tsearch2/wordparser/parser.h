@@ -5,7 +5,8 @@
 #include <limits.h>
 #include "ts_locale.h"
 
-typedef enum {
+typedef enum
+{
 	TPS_Base = 0,
 	TPS_InUWord,
 	TPS_InLatWord,
@@ -78,70 +79,76 @@ typedef enum {
 	TPS_InHDecimalPart,
 	TPS_InHVersionPartFirst,
 	TPS_InHVersionPart,
-	TPS_Null  /* last state (fake value) */
-} TParserState;
+	TPS_Null					/* last state (fake value) */
+}	TParserState;
 
 /* forward declaration */
 struct TParser;
 
 
-typedef int (*TParserCharTest)(struct TParser*);  /* any p_is* functions except p_iseq */
-typedef void (*TParserSpecial)(struct TParser*);  /* special handler for special cases... */
+typedef int (*TParserCharTest) (struct TParser *);		/* any p_is* functions
+														 * except p_iseq */
+typedef void (*TParserSpecial) (struct TParser *);		/* special handler for
+														 * special cases... */
 
-typedef struct {
-        TParserCharTest isclass;
-        char            c;
-        uint16          flags;
-        TParserState    tostate;
-        int             type;
-        TParserSpecial  special;
-} TParserStateActionItem;
+typedef struct
+{
+	TParserCharTest isclass;
+	char		c;
+	uint16		flags;
+	TParserState tostate;
+	int			type;
+	TParserSpecial special;
+}	TParserStateActionItem;
 
-typedef struct {
-        TParserState            state;
-        TParserStateActionItem  *action;
-} TParserStateAction;
+typedef struct
+{
+	TParserState state;
+	TParserStateActionItem *action;
+}	TParserStateAction;
 
-typedef struct TParserPosition {
-	int		posbyte; /* position of parser in bytes */
-	int		poschar; /* osition of parser in characters */
-	int		charlen; /* length of current char */
-	int 		lenbytelexeme;
-	int 		lencharlexeme;
-	TParserState	state;
-	struct TParserPosition	*prev;
-	int		flags;
-	TParserStateActionItem	*pushedAtAction;
-} TParserPosition;
+typedef struct TParserPosition
+{
+	int			posbyte;		/* position of parser in bytes */
+	int			poschar;		/* osition of parser in characters */
+	int			charlen;		/* length of current char */
+	int			lenbytelexeme;
+	int			lencharlexeme;
+	TParserState state;
+	struct TParserPosition *prev;
+	int			flags;
+	TParserStateActionItem *pushedAtAction;
+}	TParserPosition;
 
-typedef struct TParser {
+typedef struct TParser
+{
 	/* string and position information */
-	char 		*str;  /* multibyte string */
-	int		lenstr; /* length of mbstring */
-	wchar_t		*wstr;  /* wide character string */ 
-	int		lenwstr; /* length of wsting */
+	char	   *str;			/* multibyte string */
+	int			lenstr;			/* length of mbstring */
+	wchar_t    *wstr;			/* wide character string */
+	int			lenwstr;		/* length of wsting */
 
 	/* State of parse */
-	int		charmaxlen;
+	int			charmaxlen;
 	bool		usewide;
-	TParserPosition	*state;
+	TParserPosition *state;
 	bool		ignore;
 	bool		wanthost;
 
 	/* silly char */
-	char c;
+	char		c;
 
 	/* out */
-	char	 	*lexeme;
-	int 		lenbytelexeme;
-	int 		lencharlexeme;
-	int 		type;
-	
-} TParser;
+	char	   *lexeme;
+	int			lenbytelexeme;
+	int			lencharlexeme;
+	int			type;
+
+}	TParser;
 
 
-TParser* TParserInit( char *, int );
-bool	TParserGet( TParser* );
-void	TParserClose( TParser* );
+TParser    *TParserInit(char *, int);
+bool		TParserGet(TParser *);
+void		TParserClose(TParser *);
 
 #endif

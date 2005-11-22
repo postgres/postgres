@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.89 2005/10/15 02:49:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.90 2005/11/22 18:17:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -891,9 +891,9 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 	 * If we didn't find as many tuples as we wanted then we're done. No sort
 	 * is needed, since they're already in order.
 	 *
-	 * Otherwise we need to sort the collected tuples by position (itempointer).
-	 * It's not worth worrying about corner cases where the tuples are already
-	 * sorted.
+	 * Otherwise we need to sort the collected tuples by position
+	 * (itempointer). It's not worth worrying about corner cases where the
+	 * tuples are already sorted.
 	 */
 	if (numrows == targrows)
 		qsort((void *) rows, numrows, sizeof(HeapTuple), compare_rows);
@@ -1849,9 +1849,9 @@ compute_scalar_stats(VacAttrStatsP stats,
 		 * Now scan the values in order, find the most common ones, and also
 		 * accumulate ordering-correlation statistics.
 		 *
-		 * To determine which are most common, we first have to count the number
-		 * of duplicates of each value.  The duplicates are adjacent in the
-		 * sorted list, so a brute-force approach is to compare successive
+		 * To determine which are most common, we first have to count the
+		 * number of duplicates of each value.	The duplicates are adjacent in
+		 * the sorted list, so a brute-force approach is to compare successive
 		 * datum values until we find two that are not equal. However, that
 		 * requires N-1 invocations of the datum comparison routine, which are
 		 * completely redundant with work that was done during the sort.  (The

@@ -10,7 +10,7 @@
  *	  <elemtype>	- element type OID
  *	  <dimensions>	- length of each array axis (C array of int)
  *	  <lower bnds>	- lower boundary of each dimension (C array of int)
- *	  <null bitmap>	- bitmap showing locations of nulls (OPTIONAL)
+ *	  <null bitmap> - bitmap showing locations of nulls (OPTIONAL)
  *	  <actual data> - whatever is the stored data
  *
  * The <dimensions> and <lower bnds> arrays each have ndim elements.
@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/array.h,v 1.56 2005/11/17 22:14:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/array.h,v 1.57 2005/11/22 18:17:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -220,8 +220,8 @@ extern Datum array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType,
 		  ArrayMapState *amstate);
 
 extern void array_bitmap_copy(bits8 *destbitmap, int destoffset,
-							  const bits8 *srcbitmap, int srcoffset,
-							  int nitems);
+				  const bits8 *srcbitmap, int srcoffset,
+				  int nitems);
 
 extern ArrayType *construct_array(Datum *elems, int nelems,
 				Oid elmtype,

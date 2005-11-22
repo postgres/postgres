@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.114 2005/10/15 02:49:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.115 2005/11/22 18:17:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,10 +132,10 @@ get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 			/*
 			 * Extract info from the relation descriptor for the index.
 			 *
-			 * Note that we take no lock on the index; we assume our lock on the
-			 * parent table will protect the index's schema information. When
-			 * and if the executor actually uses the index, it will take a
-			 * lock as needed to protect the access to the index contents.
+			 * Note that we take no lock on the index; we assume our lock on
+			 * the parent table will protect the index's schema information.
+			 * When and if the executor actually uses the index, it will take
+			 * a lock as needed to protect the access to the index contents.
 			 */
 			indexRelation = index_open(indexoid);
 			index = indexRelation->rd_index;
@@ -265,11 +265,11 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 			 * infrastructure for redoing cached plans at all, so we have to
 			 * kluge things here instead.
 			 *
-			 * We approximate "never vacuumed" by "has relpages = 0", which means
-			 * this will also fire on genuinely empty relations.  Not great,
-			 * but fortunately that's a seldom-seen case in the real world,
-			 * and it shouldn't degrade the quality of the plan too much
-			 * anyway to err in this direction.
+			 * We approximate "never vacuumed" by "has relpages = 0", which
+			 * means this will also fire on genuinely empty relations.	Not
+			 * great, but fortunately that's a seldom-seen case in the real
+			 * world, and it shouldn't degrade the quality of the plan too
+			 * much anyway to err in this direction.
 			 */
 			if (curpages < 10 && rel->rd_rel->relpages == 0)
 				curpages = 10;

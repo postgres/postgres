@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.53 2005/11/05 03:04:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.54 2005/11/22 18:17:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,9 +85,9 @@ typedef struct Port
 	/*
 	 * TCP keepalive settings.
 	 *
-	 * default values are 0 if AF_UNIX or not yet known; current values are 0 if
-	 * AF_UNIX or using the default. Also, -1 in a default value means we were
-	 * unable to find out the default (getsockopt failed).
+	 * default values are 0 if AF_UNIX or not yet known; current values are 0
+	 * if AF_UNIX or using the default. Also, -1 in a default value means we
+	 * were unable to find out the default (getsockopt failed).
 	 */
 	int			default_keepalives_idle;
 	int			default_keepalives_interval;

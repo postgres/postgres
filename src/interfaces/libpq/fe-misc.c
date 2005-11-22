@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.122 2005/10/15 02:49:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.123 2005/11/22 18:17:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -566,8 +566,8 @@ pqReadData(PGconn *conn)
 
 	/*
 	 * If the buffer is fairly full, enlarge it. We need to be able to enlarge
-	 * the buffer in case a single message exceeds the initial buffer size.
-	 * We enlarge before filling the buffer entirely so as to avoid asking the
+	 * the buffer in case a single message exceeds the initial buffer size. We
+	 * enlarge before filling the buffer entirely so as to avoid asking the
 	 * kernel for a partial packet. The magic constant here should be large
 	 * enough for a TCP packet or Unix pipe bufferload.  8K is the usual pipe
 	 * buffer size, so...
@@ -623,9 +623,9 @@ retry3:
 		 * buffer space.  Without this, the block-and-restart behavior of
 		 * libpq's higher levels leads to O(N^2) performance on long messages.
 		 *
-		 * Since we left-justified the data above, conn->inEnd gives the amount
-		 * of data already read in the current message.  We consider the
-		 * message "long" once we have acquired 32k ...
+		 * Since we left-justified the data above, conn->inEnd gives the
+		 * amount of data already read in the current message.	We consider
+		 * the message "long" once we have acquired 32k ...
 		 */
 		if (conn->inEnd > 32768 &&
 			(conn->inBufSize - conn->inEnd) >= 8192)
@@ -648,10 +648,10 @@ retry3:
 	 * since in normal practice we should not be trying to read data unless
 	 * the file selected for reading already.
 	 *
-	 * In SSL mode it's even worse: SSL_read() could say WANT_READ and then data
-	 * could arrive before we make the pqReadReady() test.	So we must play
-	 * dumb and assume there is more data, relying on the SSL layer to detect
-	 * true EOF.
+	 * In SSL mode it's even worse: SSL_read() could say WANT_READ and then
+	 * data could arrive before we make the pqReadReady() test.  So we must
+	 * play dumb and assume there is more data, relying on the SSL layer to
+	 * detect true EOF.
 	 */
 
 #ifdef USE_SSL

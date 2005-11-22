@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.91 2005/10/15 02:49:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.92 2005/11/22 18:17:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,10 +100,11 @@ proc_exit(int code)
 	/*
 	 * call all the callbacks registered before calling exit().
 	 *
-	 * Note that since we decrement on_proc_exit_index each time, if a callback
-	 * calls ereport(ERROR) or ereport(FATAL) then it won't be invoked again
-	 * when control comes back here (nor will the previously-completed
-	 * callbacks).	So, an infinite loop should not be possible.
+	 * Note that since we decrement on_proc_exit_index each time, if a
+	 * callback calls ereport(ERROR) or ereport(FATAL) then it won't be
+	 * invoked again when control comes back here (nor will the
+	 * previously-completed callbacks).  So, an infinite loop should not be
+	 * possible.
 	 */
 	while (--on_proc_exit_index >= 0)
 		(*on_proc_exit_list[on_proc_exit_index].function) (code,
@@ -127,8 +128,8 @@ shmem_exit(int code)
 	/*
 	 * call all the registered callbacks.
 	 *
-	 * As with proc_exit(), we remove each callback from the list before calling
-	 * it, to avoid infinite loop in case of error.
+	 * As with proc_exit(), we remove each callback from the list before
+	 * calling it, to avoid infinite loop in case of error.
 	 */
 	while (--on_shmem_exit_index >= 0)
 		(*on_shmem_exit_list[on_shmem_exit_index].function) (code,

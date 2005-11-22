@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.257 2005/11/22 15:24:17 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.258 2005/11/22 18:17:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1471,7 +1471,7 @@ _equalDeallocateStmt(DeallocateStmt *a, DeallocateStmt *b)
 }
 
 static bool
-_equalDropOwnedStmt(DropOwnedStmt *a, DropOwnedStmt *b)
+_equalDropOwnedStmt(DropOwnedStmt * a, DropOwnedStmt * b)
 {
 	COMPARE_NODE_FIELD(roles);
 	COMPARE_SCALAR_FIELD(behavior);
@@ -1480,7 +1480,7 @@ _equalDropOwnedStmt(DropOwnedStmt *a, DropOwnedStmt *b)
 }
 
 static bool
-_equalReassignOwnedStmt(ReassignOwnedStmt *a, ReassignOwnedStmt *b)
+_equalReassignOwnedStmt(ReassignOwnedStmt * a, ReassignOwnedStmt * b)
 {
 	COMPARE_NODE_FIELD(roles);
 	COMPARE_NODE_FIELD(newrole);

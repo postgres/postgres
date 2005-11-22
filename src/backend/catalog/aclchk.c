@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.121 2005/11/21 12:49:30 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.122 2005/11/22 18:17:07 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -110,10 +110,10 @@ merge_acl_with_grant(Acl *old_acl, bool is_grant,
 
 	foreach(j, grantees)
 	{
-		AclItem		aclitem;
+		AclItem aclitem;
 		Acl		   *newer_acl;
 
-		aclitem.ai_grantee = lfirst_oid(j);
+		aclitem.	ai_grantee = lfirst_oid(j);
 
 		/*
 		 * Grant options can only be granted to individual roles, not PUBLIC.
@@ -165,15 +165,15 @@ ExecuteGrantStmt(GrantStmt *stmt)
 	AclMode		privileges;
 	ListCell   *cell;
 	bool		all_privs;
-	AclMode all_privileges = (AclMode) 0;
-	char	*errormsg = NULL;
+	AclMode		all_privileges = (AclMode) 0;
+	char	   *errormsg = NULL;
 
 	/*
 	 * Convert the PrivGrantee list into an Oid list.  Note that at this point
 	 * we insert an ACL_ID_PUBLIC into the list if an empty role name is
 	 * detected (which is what the grammar uses if PUBLIC is found), so
-	 * downstream there shouldn't be any additional work needed to support this
-	 * case.
+	 * downstream there shouldn't be any additional work needed to support
+	 * this case.
 	 */
 	foreach(cell, stmt->grantees)
 	{
@@ -256,7 +256,7 @@ ExecuteGrantStmt(GrantStmt *stmt)
 /*
  * ExecGrantStmt_oids
  *
- * "Internal" entrypoint for granting and revoking privileges.  The arguments
+ * "Internal" entrypoint for granting and revoking privileges.	The arguments
  * it receives are lists of Oids or have been otherwise converted from text
  * format to internal format.
  */
@@ -307,8 +307,8 @@ ExecGrantStmt_oids(bool is_grant, GrantObjectType objtype, List *objects,
 static List *
 objectNamesToOids(GrantObjectType objtype, List *objnames)
 {
-	List	 *objects = NIL;
-	ListCell *cell;
+	List	   *objects = NIL;
+	ListCell   *cell;
 
 	Assert(objnames != NIL);
 
@@ -328,7 +328,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 			foreach(cell, objnames)
 			{
 				char	   *dbname = strVal(lfirst(cell));
-				ScanKeyData	entry[1];
+				ScanKeyData entry[1];
 				HeapScanDesc scan;
 				HeapTuple	tuple;
 				Relation	relation;
@@ -336,8 +336,8 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 				relation = heap_open(DatabaseRelationId, AccessShareLock);
 
 				/*
-				 * There's no syscache for pg_database, so we must
-				 * look the hard way.
+				 * There's no syscache for pg_database, so we must look the
+				 * hard way.
 				 */
 				ScanKeyInit(&entry[0],
 							Anum_pg_database_datname,
@@ -348,7 +348,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 				if (!HeapTupleIsValid(tuple))
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_DATABASE),
-							 errmsg("database \"%s\" does not exist", dbname)));
+						  errmsg("database \"%s\" does not exist", dbname)));
 				objects = lappend_oid(objects, HeapTupleGetOid(tuple));
 
 				heap_close(relation, AccessShareLock);
@@ -370,8 +370,8 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 		case ACL_OBJECT_LANGUAGE:
 			foreach(cell, objnames)
 			{
-				char	*langname = strVal(lfirst(cell));
-				HeapTuple tuple;
+				char	   *langname = strVal(lfirst(cell));
+				HeapTuple	tuple;
 
 				tuple = SearchSysCache(LANGNAME,
 									   PointerGetDatum(langname),
@@ -379,7 +379,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 				if (!HeapTupleIsValid(tuple))
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_OBJECT),
-							 errmsg("language \"%s\" does not exist", langname)));
+						errmsg("language \"%s\" does not exist", langname)));
 
 				objects = lappend_oid(objects, HeapTupleGetOid(tuple));
 
@@ -387,7 +387,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 			}
 			break;
 		case ACL_OBJECT_NAMESPACE:
-			foreach (cell, objnames)
+			foreach(cell, objnames)
 			{
 				char	   *nspname = strVal(lfirst(cell));
 				HeapTuple	tuple;
@@ -398,7 +398,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 				if (!HeapTupleIsValid(tuple))
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_SCHEMA),
-							 errmsg("schema \"%s\" does not exist", nspname)));
+						   errmsg("schema \"%s\" does not exist", nspname)));
 
 				objects = lappend_oid(objects, HeapTupleGetOid(tuple));
 
@@ -406,13 +406,13 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 			}
 			break;
 		case ACL_OBJECT_TABLESPACE:
-			foreach (cell, objnames)
+			foreach(cell, objnames)
 			{
-				char		   *spcname = strVal(lfirst(cell));
-				ScanKeyData		entry[1];
-				HeapScanDesc	scan;
-				HeapTuple		tuple;
-				Relation		relation;
+				char	   *spcname = strVal(lfirst(cell));
+				ScanKeyData entry[1];
+				HeapScanDesc scan;
+				HeapTuple	tuple;
+				Relation	relation;
 
 				relation = heap_open(TableSpaceRelationId, AccessShareLock);
 
@@ -426,7 +426,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 				if (!HeapTupleIsValid(tuple))
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_OBJECT),
-							 errmsg("tablespace \"%s\" does not exist", spcname)));
+					   errmsg("tablespace \"%s\" does not exist", spcname)));
 
 				objects = lappend_oid(objects, HeapTupleGetOid(tuple));
 
@@ -456,7 +456,7 @@ ExecGrant_Relation(bool is_grant, List *objects, bool all_privs,
 
 	relation = heap_open(RelationRelationId, RowExclusiveLock);
 
-	foreach (cell, objects)
+	foreach(cell, objects)
 	{
 		Oid			relOid = lfirst_oid(cell);
 		Datum		aclDatum;
@@ -498,6 +498,7 @@ ExecGrant_Relation(bool is_grant, List *objects, bool all_privs,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("\"%s\" is a composite type",
 							NameStr(pg_class_tuple->relname))));
+
 		/*
 		 * Get owner ID and working copy of existing ACL. If there's no ACL,
 		 * substitute the proper default.
@@ -622,7 +623,7 @@ ExecGrant_Database(bool is_grant, List *objects, bool all_privs,
 
 	relation = heap_open(DatabaseRelationId, RowExclusiveLock);
 
-	foreach (cell, objects)
+	foreach(cell, objects)
 	{
 		Oid			datId = lfirst_oid(cell);
 		Form_pg_database pg_database_tuple;
@@ -786,7 +787,7 @@ ExecGrant_Function(bool is_grant, List *objects, bool all_privs,
 
 	relation = heap_open(ProcedureRelationId, RowExclusiveLock);
 
-	foreach (cell, objects)
+	foreach(cell, objects)
 	{
 		Oid			funcId = lfirst_oid(cell);
 		Form_pg_proc pg_proc_tuple;
@@ -912,7 +913,7 @@ ExecGrant_Function(bool is_grant, List *objects, bool all_privs,
 		CatalogUpdateIndexes(relation, newtuple);
 
 		/* Update the shared dependency ACL info */
-		updateAclDependencies(ProcedureRelationId, funcId,	
+		updateAclDependencies(ProcedureRelationId, funcId,
 							  ownerId, is_grant,
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
@@ -941,7 +942,7 @@ ExecGrant_Language(bool is_grant, List *objects, bool all_privs,
 
 	relation = heap_open(LanguageRelationId, RowExclusiveLock);
 
-	foreach (cell, objects)
+	foreach(cell, objects)
 	{
 		Oid			langid = lfirst_oid(cell);
 		Form_pg_language pg_language_tuple;
@@ -976,14 +977,14 @@ ExecGrant_Language(bool is_grant, List *objects, bool all_privs,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("language \"%s\" is not trusted",
 							NameStr(pg_language_tuple->lanname)),
-					 errhint("Only superusers may use untrusted languages.")));
+				   errhint("Only superusers may use untrusted languages.")));
 
 		/*
 		 * Get owner ID and working copy of existing ACL. If there's no ACL,
 		 * substitute the proper default.
 		 *
-		 * Note: for now, languages are treated as owned by the bootstrap user.
-		 * We should add an owner column to pg_language instead.
+		 * Note: for now, languages are treated as owned by the bootstrap
+		 * user. We should add an owner column to pg_language instead.
 		 */
 		ownerId = BOOTSTRAP_SUPERUSERID;
 		aclDatum = SysCacheGetAttr(LANGNAME, tuple, Anum_pg_language_lanacl,
@@ -1095,8 +1096,8 @@ ExecGrant_Language(bool is_grant, List *objects, bool all_privs,
 
 static void
 ExecGrant_Namespace(bool is_grant, List *objects, bool all_privs,
- 					AclMode privileges, List *grantees, bool grant_option,
- 					DropBehavior behavior)
+					AclMode privileges, List *grantees, bool grant_option,
+					DropBehavior behavior)
 {
 	Relation	relation;
 	ListCell   *cell;
@@ -1282,7 +1283,7 @@ ExecGrant_Tablespace(bool is_grant, List *objects, bool all_privs,
 		int			nnewmembers;
 		Oid		   *oldmembers;
 		Oid		   *newmembers;
-		ScanKeyData	entry[1];
+		ScanKeyData entry[1];
 		SysScanDesc scan;
 		HeapTuple	tuple;
 
@@ -1691,7 +1692,7 @@ pg_database_aclmask(Oid db_oid, Oid roleid,
 	AclMode		result;
 	Relation	pg_database;
 	ScanKeyData entry[1];
-	SysScanDesc	scan;
+	SysScanDesc scan;
 	HeapTuple	tuple;
 	Datum		aclDatum;
 	bool		isNull;
@@ -1887,8 +1888,8 @@ pg_namespace_aclmask(Oid nsp_oid, Oid roleid,
 	 * the namespace.  If we don't have CREATE TEMP, act as though we have
 	 * only USAGE (and not CREATE) rights.
 	 *
-	 * This may seem redundant given the check in InitTempTableNamespace, but it
-	 * really isn't since current user ID may have changed since then. The
+	 * This may seem redundant given the check in InitTempTableNamespace, but
+	 * it really isn't since current user ID may have changed since then. The
 	 * upshot of this behavior is that a SECURITY DEFINER function can create
 	 * temp tables that can then be accessed (if permission is granted) by
 	 * code in the same session that doesn't have permissions to create temp
@@ -1956,7 +1957,7 @@ pg_tablespace_aclmask(Oid spc_oid, Oid roleid,
 	AclMode		result;
 	Relation	pg_tablespace;
 	ScanKeyData entry[1];
-	SysScanDesc	scan;
+	SysScanDesc scan;
 	HeapTuple	tuple;
 	Datum		aclDatum;
 	bool		isNull;
@@ -2247,7 +2248,7 @@ pg_tablespace_ownercheck(Oid spc_oid, Oid roleid)
 {
 	Relation	pg_tablespace;
 	ScanKeyData entry[1];
-	SysScanDesc	scan;
+	SysScanDesc scan;
 	HeapTuple	spctuple;
 	Oid			spcowner;
 
@@ -2316,7 +2317,7 @@ pg_database_ownercheck(Oid db_oid, Oid roleid)
 {
 	Relation	pg_database;
 	ScanKeyData entry[1];
-	SysScanDesc	scan;
+	SysScanDesc scan;
 	HeapTuple	dbtuple;
 	Oid			dba;
 

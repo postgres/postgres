@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_selfuncs.c,v 1.25 2005/11/07 17:36:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_selfuncs.c,v 1.26 2005/11/22 18:17:23 momjian Exp $
  *
  *	XXX These are totally bogus.  Perhaps someone will make them do
  *	something reasonable, someday.
@@ -22,7 +22,7 @@
 
 
 /*
- *	Selectivity functions for geometric operators.  These are bogus -- unless
+ *	Selectivity functions for geometric operators.	These are bogus -- unless
  *	we know the actual key distribution in the index, we can't make a good
  *	prediction of the selectivity of these operators.
  *

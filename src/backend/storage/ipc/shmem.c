@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.87 2005/10/15 02:49:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.88 2005/11/22 18:17:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -350,8 +350,8 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 			 * If the shmem index doesn't exist, we are bootstrapping: we must
 			 * be trying to init the shmem index itself.
 			 *
-			 * Notice that the ShmemIndexLock is held until the shmem index has
-			 * been completely initialized.
+			 * Notice that the ShmemIndexLock is held until the shmem index
+			 * has been completely initialized.
 			 */
 			*foundPtr = FALSE;
 			ShmemIndexAlloc = ShmemAlloc(size);

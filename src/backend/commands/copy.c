@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.254 2005/11/03 17:11:34 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.255 2005/11/22 18:17:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,8 +127,8 @@ typedef struct CopyStateData
 	/*
 	 * These variables are used to reduce overhead in textual COPY FROM.
 	 *
-	 * attribute_buf holds the separated, de-escaped text for each field of the
-	 * current line.  The CopyReadAttributes functions return arrays of
+	 * attribute_buf holds the separated, de-escaped text for each field of
+	 * the current line.  The CopyReadAttributes functions return arrays of
 	 * pointers into this buffer.  We avoid palloc/pfree overhead by re-using
 	 * the buffer on each cycle.
 	 */
@@ -2085,8 +2085,8 @@ CopyReadLineText(CopyState cstate)
 	 * examine; any characters from raw_buf_index to raw_buf_ptr have been
 	 * determined to be part of the line, but not yet transferred to line_buf.
 	 *
-	 * For a little extra speed within the loop, we copy raw_buf and raw_buf_len
-	 * into local variables.
+	 * For a little extra speed within the loop, we copy raw_buf and
+	 * raw_buf_len into local variables.
 	 */
 	copy_raw_buf = cstate->raw_buf;
 	raw_buf_ptr = cstate->raw_buf_index;
@@ -2148,8 +2148,8 @@ CopyReadLineText(CopyState cstate)
 				/*
 				 * If need more data, go back to loop top to load it.
 				 *
-				 * Note that if we are at EOF, c will wind up as '\0' because of
-				 * the guaranteed pad of raw_buf.
+				 * Note that if we are at EOF, c will wind up as '\0' because
+				 * of the guaranteed pad of raw_buf.
 				 */
 				if (raw_buf_ptr >= copy_buf_len && !hit_eof)
 				{
@@ -2283,8 +2283,8 @@ CopyReadLineText(CopyState cstate)
 		 * Do we need to be careful about trailing bytes of multibyte
 		 * characters?	(See note above about client_only_encoding)
 		 *
-		 * We assume here that pg_encoding_mblen only looks at the first byte of
-		 * the character!
+		 * We assume here that pg_encoding_mblen only looks at the first byte
+		 * of the character!
 		 */
 		if (cstate->client_only_encoding)
 		{
@@ -2369,8 +2369,8 @@ CopyReadLineCSV(CopyState cstate)
 	 * examine; any characters from raw_buf_index to raw_buf_ptr have been
 	 * determined to be part of the line, but not yet transferred to line_buf.
 	 *
-	 * For a little extra speed within the loop, we copy raw_buf and raw_buf_len
-	 * into local variables.
+	 * For a little extra speed within the loop, we copy raw_buf and
+	 * raw_buf_len into local variables.
 	 */
 	copy_raw_buf = cstate->raw_buf;
 	raw_buf_ptr = cstate->raw_buf_index;
@@ -2475,8 +2475,8 @@ CopyReadLineCSV(CopyState cstate)
 				/*
 				 * If need more data, go back to loop top to load it.
 				 *
-				 * Note that if we are at EOF, c will wind up as '\0' because of
-				 * the guaranteed pad of raw_buf.
+				 * Note that if we are at EOF, c will wind up as '\0' because
+				 * of the guaranteed pad of raw_buf.
 				 */
 				if (raw_buf_ptr >= copy_buf_len && !hit_eof)
 				{
@@ -2621,8 +2621,8 @@ CopyReadLineCSV(CopyState cstate)
 		 * Do we need to be careful about trailing bytes of multibyte
 		 * characters?	(See note above about client_only_encoding)
 		 *
-		 * We assume here that pg_encoding_mblen only looks at the first byte of
-		 * the character!
+		 * We assume here that pg_encoding_mblen only looks at the first byte
+		 * of the character!
 		 */
 		if (cstate->client_only_encoding)
 		{

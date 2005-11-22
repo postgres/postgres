@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.117 2005/10/15 02:49:38 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.118 2005/11/22 18:17:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -325,8 +325,9 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 						 * withing a database connection. Pre 1.3 archives can
 						 * not use DB connections and are sent to output only.
 						 *
-						 * For V1.3+, the table data MUST have a copy statement
-						 * so that we can go into appropriate mode with libpq.
+						 * For V1.3+, the table data MUST have a copy
+						 * statement so that we can go into appropriate mode
+						 * with libpq.
 						 */
 						if (te->copyStmt && strlen(te->copyStmt) > 0)
 							ahprintf(AH, "%s", te->copyStmt);
@@ -1276,8 +1277,8 @@ ReadOffset(ArchiveHandle *AH, off_t *o)
 	 * Read the flag indicating the state of the data pointer. Check if valid
 	 * and die if not.
 	 *
-	 * This used to be handled by a negative or zero pointer, now we use an extra
-	 * byte specifically for the state.
+	 * This used to be handled by a negative or zero pointer, now we use an
+	 * extra byte specifically for the state.
 	 */
 	offsetFlg = (*AH->ReadBytePtr) (AH) & 0xFF;
 
@@ -1566,8 +1567,8 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 		/*
 		 * Not used; maybe later....
 		 *
-		 * AH->workDir = strdup(FileSpec); for(i=strlen(FileSpec) ; i > 0 ; i--)
-		 * if (AH->workDir[i-1] == '/')
+		 * AH->workDir = strdup(FileSpec); for(i=strlen(FileSpec) ; i > 0 ;
+		 * i--) if (AH->workDir[i-1] == '/')
 		 */
 	}
 	else

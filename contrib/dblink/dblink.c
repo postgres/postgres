@@ -60,9 +60,9 @@
 
 typedef struct remoteConn
 {
-	PGconn	   *conn;				/* Hold the remote connection */
+	PGconn	   *conn;			/* Hold the remote connection */
 	int			openCursorCount;	/* The number of open cursors */
-	bool		newXactForCursor;	/* Opened a transaction for a cursor */
+	bool		newXactForCursor;		/* Opened a transaction for a cursor */
 }	remoteConn;
 
 /*
@@ -85,8 +85,8 @@ static Oid	get_relid_from_relname(text *relname_text);
 static char *generate_relation_name(Oid relid);
 
 /* Global */
-static remoteConn	   *pconn = NULL;
-static HTAB			   *remoteConnHash = NULL;
+static remoteConn *pconn = NULL;
+static HTAB *remoteConnHash = NULL;
 
 /*
  *	Following is list that holds multiple remote connections.
@@ -347,7 +347,7 @@ dblink_open(PG_FUNCTION_ARGS)
 	else
 		conn = rconn->conn;
 
-	/*	If we are not in a transaction, start one */
+	/* If we are not in a transaction, start one */
 	if (PQtransactionStatus(conn) == PQTRANS_IDLE)
 	{
 		res = PQexec(conn, "BEGIN");
@@ -1505,7 +1505,7 @@ get_text_array_contents(ArrayType *array, int *numitems)
 		else
 		{
 			values[i] = DatumGetCString(DirectFunctionCall1(textout,
-														PointerGetDatum(ptr)));
+													  PointerGetDatum(ptr)));
 			ptr = att_addlength(ptr, typlen, PointerGetDatum(ptr));
 			ptr = (char *) att_align(ptr, typalign);
 		}
@@ -1717,7 +1717,7 @@ get_sql_update(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pka
 			key = -1;
 
 		if (key > -1)
-			val = tgt_pkattvals[key] ?  pstrdup(tgt_pkattvals[key]) : NULL;
+			val = tgt_pkattvals[key] ? pstrdup(tgt_pkattvals[key]) : NULL;
 		else
 			val = SPI_getvalue(tuple, tupdesc, i + 1);
 
@@ -1744,7 +1744,7 @@ get_sql_update(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pka
 		   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum - 1]->attname)));
 
 		if (tgt_pkattvals != NULL)
-			val = tgt_pkattvals[i] ?  pstrdup(tgt_pkattvals[i]) : NULL;
+			val = tgt_pkattvals[i] ? pstrdup(tgt_pkattvals[i]) : NULL;
 		else
 			val = SPI_getvalue(tuple, tupdesc, pkattnum);
 

@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.260 2005/11/20 18:38:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.261 2005/11/22 18:17:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -376,10 +376,10 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 	/*
 	 * userid to check as: current user unless we have a setuid indication.
 	 *
-	 * Note: GetUserId() is presently fast enough that there's no harm in calling
-	 * it separately for each RTE.	If that stops being true, we could call it
-	 * once in ExecCheckRTPerms and pass the userid down from there.  But for
-	 * now, no need for the extra clutter.
+	 * Note: GetUserId() is presently fast enough that there's no harm in
+	 * calling it separately for each RTE.	If that stops being true, we could
+	 * call it once in ExecCheckRTPerms and pass the userid down from there.
+	 * But for now, no need for the extra clutter.
 	 */
 	userid = rte->checkAsUser ? rte->checkAsUser : GetUserId();
 
@@ -582,8 +582,8 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 	 * initialize the executor "tuple" table.  We need slots for all the plan
 	 * nodes, plus possibly output slots for the junkfilter(s). At this point
 	 * we aren't sure if we need junkfilters, so just add slots for them
-	 * unconditionally.  Also, if it's not a SELECT, set up a slot for use
-	 * for trigger output tuples.
+	 * unconditionally.  Also, if it's not a SELECT, set up a slot for use for
+	 * trigger output tuples.
 	 */
 	{
 		int			nSlots = ExecCountSlotsNode(plan);
@@ -797,11 +797,11 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 		/*
 		 * We can skip WAL-logging the insertions, unless PITR is in use.
 		 *
-		 * Note that for a non-temp INTO table, this is safe only because we know
-		 * that the catalog changes above will have been WAL-logged, and so
-		 * RecordTransactionCommit will think it needs to WAL-log the eventual
-		 * transaction commit.	Else the commit might be lost, even though all
-		 * the data is safely fsync'd ...
+		 * Note that for a non-temp INTO table, this is safe only because we
+		 * know that the catalog changes above will have been WAL-logged, and
+		 * so RecordTransactionCommit will think it needs to WAL-log the
+		 * eventual transaction commit.  Else the commit might be lost, even
+		 * though all the data is safely fsync'd ...
 		 */
 		estate->es_into_relation_use_wal = XLogArchivingActive();
 	}
@@ -1495,8 +1495,8 @@ ExecDelete(TupleTableSlot *slot,
 	/*
 	 * delete the tuple
 	 *
-	 * Note: if es_crosscheck_snapshot isn't InvalidSnapshot, we check that the
-	 * row to be deleted is visible to that snapshot, and throw a can't-
+	 * Note: if es_crosscheck_snapshot isn't InvalidSnapshot, we check that
+	 * the row to be deleted is visible to that snapshot, and throw a can't-
 	 * serialize error if not.	This is a special-case behavior needed for
 	 * referential integrity updates in serializable transactions.
 	 */
@@ -1635,8 +1635,8 @@ ExecUpdate(TupleTableSlot *slot,
 	/*
 	 * Check the constraints of the tuple
 	 *
-	 * If we generate a new candidate tuple after EvalPlanQual testing, we must
-	 * loop back here and recheck constraints.	(We don't need to redo
+	 * If we generate a new candidate tuple after EvalPlanQual testing, we
+	 * must loop back here and recheck constraints.  (We don't need to redo
 	 * triggers, however.  If there are any BEFORE triggers then trigger.c
 	 * will have done heap_lock_tuple to lock the correct tuple, so there's no
 	 * need to do them again.)
@@ -1648,8 +1648,8 @@ lreplace:;
 	/*
 	 * replace the heap tuple
 	 *
-	 * Note: if es_crosscheck_snapshot isn't InvalidSnapshot, we check that the
-	 * row to be updated is visible to that snapshot, and throw a can't-
+	 * Note: if es_crosscheck_snapshot isn't InvalidSnapshot, we check that
+	 * the row to be updated is visible to that snapshot, and throw a can't-
 	 * serialize error if not.	This is a special-case behavior needed for
 	 * referential integrity updates in serializable transactions.
 	 */
@@ -1703,7 +1703,7 @@ lreplace:;
 	 * Note: instead of having to update the old index tuples associated with
 	 * the heap tuple, all we do is form and insert new index tuples. This is
 	 * because UPDATEs are actually DELETEs and INSERTs, and index tuple
-	 * deletion is done later by VACUUM (see notes in ExecDelete).  All we do
+	 * deletion is done later by VACUUM (see notes in ExecDelete).	All we do
 	 * here is insert new index tuples.  -cim 9/27/89
 	 */
 

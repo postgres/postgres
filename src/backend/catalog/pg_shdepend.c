@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.4 2005/11/21 12:49:30 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.5 2005/11/22 18:17:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -415,8 +415,8 @@ updateAclDependencies(Oid classId, Oid objectId, Oid ownerId, bool isGrant,
 
 			/*
 			 * Skip the owner: he has an OWNER shdep entry instead. (This is
-			 * not just a space optimization; it makes ALTER OWNER easier.
-			 * See notes in changeDependencyOnOwner.)
+			 * not just a space optimization; it makes ALTER OWNER easier. See
+			 * notes in changeDependencyOnOwner.)
 			 */
 			if (roleid == ownerId)
 				continue;
@@ -585,8 +585,8 @@ checkSharedDependencies(Oid classId, Oid objectId)
 		/*
 		 * Report seems unreasonably long, so reduce it to per-database info
 		 *
-		 * Note: we don't ever suppress per-database totals, which should be OK
-		 * as long as there aren't too many databases ...
+		 * Note: we don't ever suppress per-database totals, which should be
+		 * OK as long as there aren't too many databases ...
 		 */
 		descs.len = 0;			/* reset to empty */
 		descs.data[0] = '\0';
@@ -1059,7 +1059,7 @@ isSharedObjectPinned(Oid classId, Oid objectId, Relation sdepRel)
 /*
  * shdepDropOwned
  *
- * Drop the objects owned by any one of the given RoleIds.  If a role has
+ * Drop the objects owned by any one of the given RoleIds.	If a role has
  * access to an object, the grant will be removed as well (but the object
  * will not, of course.)
  */
@@ -1078,8 +1078,8 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 	foreach(cell, roleids)
 	{
 		Oid			roleid = lfirst_oid(cell);
-		ScanKeyData	key[2];
-		SysScanDesc	scan;
+		ScanKeyData key[2];
+		SysScanDesc scan;
 		HeapTuple	tuple;
 
 		/* Doesn't work for pinned objects */
@@ -1093,9 +1093,9 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 
 			ereport(ERROR,
 					(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
-					 errmsg("cannot drop objects owned by %s because they are "
-							"required by the database system",
-							getObjectDescription(&obj))));
+				   errmsg("cannot drop objects owned by %s because they are "
+						  "required by the database system",
+						  getObjectDescription(&obj))));
 		}
 
 		ScanKeyInit(&key[0],
@@ -1120,10 +1120,10 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 
 			switch (sdepForm->deptype)
 			{
-				ObjectAddress	obj;
-				GrantObjectType	objtype;
+					ObjectAddress obj;
+					GrantObjectType objtype;
 
-				/* Shouldn't happen */
+					/* Shouldn't happen */
 				case SHARED_DEPENDENCY_PIN:
 				case SHARED_DEPENDENCY_INVALID:
 					elog(ERROR, "unexpected dependency type");
@@ -1163,10 +1163,11 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 									   false, DROP_CASCADE);
 					break;
 				case SHARED_DEPENDENCY_OWNER:
+
 					/*
 					 * If there's a regular (non-shared) dependency on this
 					 * object marked with DEPENDENCY_INTERNAL, skip this
-					 * object.  We will drop the referencer object instead.
+					 * object.	We will drop the referencer object instead.
 					 */
 					if (objectIsInternalDependency(sdepForm->classid, sdepForm->objid))
 						continue;
@@ -1195,8 +1196,8 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 void
 shdepReassignOwned(List *roleids, Oid newrole)
 {
-	Relation sdepRel;
-	ListCell *cell;
+	Relation	sdepRel;
+	ListCell   *cell;
 
 	sdepRel = heap_open(SharedDependRelationId, AccessShareLock);
 
@@ -1218,9 +1219,10 @@ shdepReassignOwned(List *roleids, Oid newrole)
 
 			ereport(ERROR,
 					(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
-					 errmsg("cannot drop objects owned by %s because they are "
-							"required by the database system",
-							getObjectDescription(&obj))));
+				   errmsg("cannot drop objects owned by %s because they are "
+						  "required by the database system",
+						  getObjectDescription(&obj))));
+
 			/*
 			 * There's no need to tell the whole truth, which is that we
 			 * didn't track these dependencies at all ...
@@ -1235,7 +1237,7 @@ shdepReassignOwned(List *roleids, Oid newrole)
 					Anum_pg_shdepend_refobjid,
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(roleid));
-		
+
 		scan = systable_beginscan(sdepRel, SharedDependReferenceIndexId, true,
 								  SnapshotNow, 2, key);
 
@@ -1256,9 +1258,9 @@ shdepReassignOwned(List *roleids, Oid newrole)
 				continue;
 
 			/*
-			 * If there's a regular (non-shared) dependency on this
-			 * object marked with DEPENDENCY_INTERNAL, skip this
-			 * object.  We will alter the referencer object instead.
+			 * If there's a regular (non-shared) dependency on this object
+			 * marked with DEPENDENCY_INTERNAL, skip this object.  We will
+			 * alter the referencer object instead.
 			 */
 			if (objectIsInternalDependency(sdepForm->classid, sdepForm->objid))
 				continue;

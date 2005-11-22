@@ -39,7 +39,7 @@ g_int_consistent(PG_FUNCTION_ARGS)
 	if (strategy == BooleanSearchStrategy)
 		PG_RETURN_BOOL(execconsistent((QUERYTYPE *) query,
 								   (ArrayType *) DatumGetPointer(entry->key),
-					  GIST_LEAF(entry)));
+									  GIST_LEAF(entry)));
 
 	/* XXX are we sure it's safe to scribble on the query object here? */
 	/* XXX what about toasted input? */
@@ -97,7 +97,7 @@ g_int_union(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < entryvec->n; i++)
 	{
-		ArrayType *ent = GETENTRY(entryvec, i);
+		ArrayType  *ent = GETENTRY(entryvec, i);
 
 		CHECKARRVALID(ent);
 		totlen += ARRNELEMS(ent);
@@ -108,8 +108,8 @@ g_int_union(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < entryvec->n; i++)
 	{
-		ArrayType *ent = GETENTRY(entryvec, i);
-		int nel;
+		ArrayType  *ent = GETENTRY(entryvec, i);
+		int			nel;
 
 		nel = ARRNELEMS(ent);
 		memcpy(ptr, ARRPTR(ent), nel * sizeof(int4));
@@ -143,10 +143,10 @@ g_int_compress(PG_FUNCTION_ARGS)
 		CHECKARRVALID(r);
 		PREPAREARR(r);
 
-		if (ARRNELEMS(r)>= 2 * MAXNUMRANGE)
-			elog(NOTICE,"Input array is too big (%d maximum allowed, %d current), use gist__intbig_ops opclass instead",
-				2 * MAXNUMRANGE - 1, ARRNELEMS(r)); 
-			
+		if (ARRNELEMS(r) >= 2 * MAXNUMRANGE)
+			elog(NOTICE, "Input array is too big (%d maximum allowed, %d current), use gist__intbig_ops opclass instead",
+				 2 * MAXNUMRANGE - 1, ARRNELEMS(r));
+
 		retval = palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(r),
 				  entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
@@ -154,12 +154,14 @@ g_int_compress(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(retval);
 	}
 
-	/* leaf entries never compress one more time, only when entry->leafkey ==true,
-           so now we work only with internal keys  */
+	/*
+	 * leaf entries never compress one more time, only when entry->leafkey
+	 * ==true, so now we work only with internal keys
+	 */
 
 	r = (ArrayType *) PG_DETOAST_DATUM(entry->key);
 	CHECKARRVALID(r);
-	if (ARRISVOID(r)) 
+	if (ARRISVOID(r))
 	{
 		if (r != (ArrayType *) DatumGetPointer(entry->key))
 			pfree(r);

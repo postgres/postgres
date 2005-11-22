@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.136 2005/11/17 22:14:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.137 2005/11/22 18:17:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,7 +119,7 @@ ProcedureCreate(const char *procedureName,
 		 * need to use deconstruct_array() since the array data is just going
 		 * to look like a C array of OID values.
 		 */
-		ArrayType *allParamArray = (ArrayType *) DatumGetPointer(allParameterTypes);
+		ArrayType  *allParamArray = (ArrayType *) DatumGetPointer(allParameterTypes);
 
 		allParamCount = ARR_DIMS(allParamArray)[0];
 		if (ARR_NDIM(allParamArray) != 1 ||
@@ -584,8 +584,8 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 		 * expression results will be unresolvable.  The check will be done at
 		 * runtime instead.
 		 *
-		 * We can run the text through the raw parser though; this will at least
-		 * catch silly syntactic errors.
+		 * We can run the text through the raw parser though; this will at
+		 * least catch silly syntactic errors.
 		 */
 		if (!haspolyarg)
 		{
@@ -654,8 +654,8 @@ function_parse_error_transpose(const char *prosrc)
 	 * Nothing to do unless we are dealing with a syntax error that has a
 	 * cursor position.
 	 *
-	 * Some PLs may prefer to report the error position as an internal error to
-	 * begin with, so check that too.
+	 * Some PLs may prefer to report the error position as an internal error
+	 * to begin with, so check that too.
 	 */
 	origerrposition = geterrposition();
 	if (origerrposition <= 0)
@@ -770,8 +770,8 @@ match_prosrc_to_literal(const char *prosrc, const char *literal,
 	 * string literal.	It does not handle the SQL syntax for literals
 	 * continued across line boundaries.
 	 *
-	 * We do the comparison a character at a time, not a byte at a time, so that
-	 * we can do the correct cursorpos math.
+	 * We do the comparison a character at a time, not a byte at a time, so
+	 * that we can do the correct cursorpos math.
 	 */
 	while (*prosrc)
 	{

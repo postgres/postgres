@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.127 2005/11/14 17:42:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.128 2005/11/22 18:17:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -769,19 +769,19 @@ ExecOpenIndices(ResultRelInfo *resultRelInfo)
 		/*
 		 * Open and lock the index relation
 		 *
-		 * If the index AM supports concurrent updates, obtain RowExclusiveLock
-		 * to signify that we are updating the index.  This locks out only
-		 * operations that need exclusive access, such as relocating the index
-		 * to a new tablespace.
+		 * If the index AM supports concurrent updates, obtain
+		 * RowExclusiveLock to signify that we are updating the index.	This
+		 * locks out only operations that need exclusive access, such as
+		 * relocating the index to a new tablespace.
 		 *
 		 * If the index AM is not safe for concurrent updates, obtain an
 		 * exclusive lock on the index to lock out other updaters as well as
 		 * readers (index_beginscan places AccessShareLock).
 		 *
-		 * If there are multiple not-concurrent-safe indexes, all backends must
-		 * lock the indexes in the same order or we will get deadlocks here.
-		 * This is guaranteed by RelationGetIndexList(), which promises to
-		 * return the index list in OID order.
+		 * If there are multiple not-concurrent-safe indexes, all backends
+		 * must lock the indexes in the same order or we will get deadlocks
+		 * here. This is guaranteed by RelationGetIndexList(), which promises
+		 * to return the index list in OID order.
 		 *
 		 * The locks will be released in ExecCloseIndices.
 		 */

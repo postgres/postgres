@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.82 2005/10/15 02:49:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.83 2005/11/22 18:17:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -702,9 +702,9 @@ left_oper(List *op, Oid arg, bool noError)
 		 * First, quickly check to see if there is an exactly matching
 		 * operator (there can be only one such entry in the list).
 		 *
-		 * The returned list has args in the form (0, oprright).  Move the useful
-		 * data into args[0] to keep oper_select_candidate simple. XXX we are
-		 * assuming here that we may scribble on the list!
+		 * The returned list has args in the form (0, oprright).  Move the
+		 * useful data into args[0] to keep oper_select_candidate simple. XXX
+		 * we are assuming here that we may scribble on the list!
 		 */
 		FuncCandidateList clisti;
 

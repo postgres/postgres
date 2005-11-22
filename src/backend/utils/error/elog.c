@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.167 2005/11/05 03:04:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.168 2005/11/22 18:17:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1158,8 +1158,8 @@ set_syslog_parameters(const char *ident, int facility)
 	 * the connection until needed, since this routine will get called whether
 	 * or not Log_destination actually mentions syslog.
 	 *
-	 * Note that we make our own copy of the ident string rather than relying on
-	 * guc.c's.  This may be overly paranoid, but it ensures that we cannot
+	 * Note that we make our own copy of the ident string rather than relying
+	 * on guc.c's.  This may be overly paranoid, but it ensures that we cannot
 	 * accidentally free a string that syslog is still using.
 	 */
 	if (syslog_ident == NULL || strcmp(syslog_ident, ident) != 0 ||
@@ -1487,7 +1487,7 @@ log_line_prefix(StringInfo buf)
 				if (MyProcPort)
 				{
 					const char *psdisp;
-					int		displen;
+					int			displen;
 
 					psdisp = get_ps_display(&displen);
 					appendStringInfo(buf, "%.*s", displen, psdisp);

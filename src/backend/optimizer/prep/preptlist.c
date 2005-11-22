@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.78 2005/10/15 02:49:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.79 2005/11/22 18:17:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,8 +64,8 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 
 	/*
 	 * for heap_formtuple to work, the targetlist must match the exact order
-	 * of the attributes. We also need to fill in any missing attributes.
-	 * -ay 10/94
+	 * of the attributes. We also need to fill in any missing attributes. -ay
+	 * 10/94
 	 */
 	if (command_type == CMD_INSERT || command_type == CMD_UPDATE)
 		tlist = expand_targetlist(tlist, command_type,
@@ -185,10 +185,10 @@ expand_targetlist(List *tlist, int command_type,
 	 * The rewriter should have already ensured that the TLEs are in correct
 	 * order; but we have to insert TLEs for any missing attributes.
 	 *
-	 * Scan the tuple description in the relation's relcache entry to make sure
-	 * we have all the user attributes in the right order.	We assume that the
-	 * rewriter already acquired at least AccessShareLock on the relation, so
-	 * we need no lock here.
+	 * Scan the tuple description in the relation's relcache entry to make
+	 * sure we have all the user attributes in the right order.  We assume
+	 * that the rewriter already acquired at least AccessShareLock on the
+	 * relation, so we need no lock here.
 	 */
 	rel = heap_open(getrelid(result_relation, range_table), NoLock);
 
@@ -220,18 +220,19 @@ expand_targetlist(List *tlist, int command_type,
 			 * column isn't dropped, apply any domain constraints that might
 			 * exist --- this is to catch domain NOT NULL.
 			 *
-			 * For UPDATE, generate a Var reference to the existing value of the
-			 * attribute, so that it gets copied to the new tuple. But
+			 * For UPDATE, generate a Var reference to the existing value of
+			 * the attribute, so that it gets copied to the new tuple. But
 			 * generate a NULL for dropped columns (we want to drop any old
 			 * values).
 			 *
-			 * When generating a NULL constant for a dropped column, we label it
-			 * INT4 (any other guaranteed-to-exist datatype would do as well).
-			 * We can't label it with the dropped column's datatype since that
-			 * might not exist anymore.  It does not really matter what we
-			 * claim the type is, since NULL is NULL --- its representation is
-			 * datatype-independent.  This could perhaps confuse code
-			 * comparing the finished plan to the target relation, however.
+			 * When generating a NULL constant for a dropped column, we label
+			 * it INT4 (any other guaranteed-to-exist datatype would do as
+			 * well). We can't label it with the dropped column's datatype
+			 * since that might not exist anymore.	It does not really matter
+			 * what we claim the type is, since NULL is NULL --- its
+			 * representation is datatype-independent.	This could perhaps
+			 * confuse code comparing the finished plan to the target
+			 * relation, however.
 			 */
 			Oid			atttype = att_tup->atttypid;
 			int32		atttypmod = att_tup->atttypmod;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.92 2005/10/15 02:49:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.93 2005/11/22 18:17:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -715,11 +715,11 @@ AddQual(Query *parsetree, Node *qual)
 		/*
 		 * There's noplace to put the qual on a utility statement.
 		 *
-		 * If it's a NOTIFY, silently ignore the qual; this means that the NOTIFY
-		 * will execute, whether or not there are any qualifying rows. While
-		 * clearly wrong, this is much more useful than refusing to execute
-		 * the rule at all, and extra NOTIFY events are harmless for typical
-		 * uses of NOTIFY.
+		 * If it's a NOTIFY, silently ignore the qual; this means that the
+		 * NOTIFY will execute, whether or not there are any qualifying rows.
+		 * While clearly wrong, this is much more useful than refusing to
+		 * execute the rule at all, and extra NOTIFY events are harmless for
+		 * typical uses of NOTIFY.
 		 *
 		 * If it isn't a NOTIFY, error out, since unconditional execution of
 		 * other utility stmts is unlikely to be wanted.  (This case is not

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.116 2005/10/26 19:21:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.117 2005/11/22 18:17:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -301,10 +301,10 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname)
 	 * will be empty strings that cannot match any legal SQL identifier, so we
 	 * don't bother to test for that case here.
 	 *
-	 * Should this somehow go wrong and we try to access a dropped column, we'll
-	 * still catch it by virtue of the checks in get_rte_attribute_type(),
-	 * which is called by make_var().  That routine has to do a cache lookup
-	 * anyway, so the check there is cheap.
+	 * Should this somehow go wrong and we try to access a dropped column,
+	 * we'll still catch it by virtue of the checks in
+	 * get_rte_attribute_type(), which is called by make_var().  That routine
+	 * has to do a cache lookup anyway, so the check there is cheap.
 	 */
 	foreach(c, rte->eref->colnames)
 	{
@@ -1007,9 +1007,9 @@ addImplicitRTE(ParseState *pstate, RangeVar *relation)
 
 	/*
 	 * Note that we set inFromCl true, so that the RTE will be listed
-	 * explicitly if the parsetree is ever decompiled by ruleutils.c.
-	 * This provides a migration path for views/rules that were originally
-	 * written with implicit-RTE syntax.
+	 * explicitly if the parsetree is ever decompiled by ruleutils.c. This
+	 * provides a migration path for views/rules that were originally written
+	 * with implicit-RTE syntax.
 	 */
 	rte = addRangeTableEntry(pstate, relation, NULL, false, true);
 	/* Add to joinlist and relnamespace, but not varnamespace */

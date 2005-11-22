@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.160 2005/10/15 02:49:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.161 2005/11/22 18:17:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3550,8 +3550,8 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 			 * Print fractional seconds if any.  The field widths here should
 			 * be at least equal to MAX_TIMESTAMP_PRECISION.
 			 *
-			 * In float mode, don't print fractional seconds before 1 AD, since
-			 * it's unlikely there's any precision left ...
+			 * In float mode, don't print fractional seconds before 1 AD,
+			 * since it's unlikely there's any precision left ...
 			 */
 #ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
@@ -3602,8 +3602,8 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 			 * Print fractional seconds if any.  The field widths here should
 			 * be at least equal to MAX_TIMESTAMP_PRECISION.
 			 *
-			 * In float mode, don't print fractional seconds before 1 AD, since
-			 * it's unlikely there's any precision left ...
+			 * In float mode, don't print fractional seconds before 1 AD,
+			 * since it's unlikely there's any precision left ...
 			 */
 #ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
@@ -3650,8 +3650,8 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 			 * Print fractional seconds if any.  The field widths here should
 			 * be at least equal to MAX_TIMESTAMP_PRECISION.
 			 *
-			 * In float mode, don't print fractional seconds before 1 AD, since
-			 * it's unlikely there's any precision left ...
+			 * In float mode, don't print fractional seconds before 1 AD,
+			 * since it's unlikely there's any precision left ...
 			 */
 #ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
@@ -3706,8 +3706,8 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 			 * Print fractional seconds if any.  The field widths here should
 			 * be at least equal to MAX_TIMESTAMP_PRECISION.
 			 *
-			 * In float mode, don't print fractional seconds before 1 AD, since
-			 * it's unlikely there's any precision left ...
+			 * In float mode, don't print fractional seconds before 1 AD,
+			 * since it's unlikely there's any precision left ...
 			 */
 #ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)

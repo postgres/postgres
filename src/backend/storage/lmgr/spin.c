@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/spin.c,v 1.17 2005/10/15 02:49:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/spin.c,v 1.18 2005/11/22 18:17:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,8 +54,8 @@ SpinlockSemas(void)
 	 * It would be cleaner to distribute this logic into the affected modules,
 	 * similar to the way shmem space estimation is handled.
 	 *
-	 * For now, though, we just need a few spinlocks (10 should be plenty) plus
-	 * one for each LWLock.
+	 * For now, though, we just need a few spinlocks (10 should be plenty)
+	 * plus one for each LWLock.
 	 */
 	return NumLWLocks() + 10;
 }

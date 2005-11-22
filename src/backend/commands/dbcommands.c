@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.174 2005/11/22 15:24:17 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.175 2005/11/22 18:17:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -346,8 +346,8 @@ createdb(const CreatedbStmt *stmt)
 		src_vacuumxid = src_frozenxid = GetCurrentTransactionId();
 
 	/*
-	 * Preassign OID for pg_database tuple, so that we can compute db path.
-	 * We have to open pg_database to do this, but we don't want to take
+	 * Preassign OID for pg_database tuple, so that we can compute db path. We
+	 * have to open pg_database to do this, but we don't want to take
 	 * ExclusiveLock yet, so just do it and close again.
 	 */
 	pg_database_rel = heap_open(DatabaseRelationId, AccessShareLock);
@@ -512,14 +512,14 @@ createdb(const CreatedbStmt *stmt)
 		 *
 		 * (Both of these were real bugs in releases 8.0 through 8.0.3.)
 		 *
-		 * In PITR replay, the first of these isn't an issue, and the second is
-		 * only a risk if the CREATE DATABASE and subsequent template database
-		 * change both occur while a base backup is being taken. There doesn't
-		 * seem to be much we can do about that except document it as a
-		 * limitation.
+		 * In PITR replay, the first of these isn't an issue, and the second
+		 * is only a risk if the CREATE DATABASE and subsequent template
+		 * database change both occur while a base backup is being taken.
+		 * There doesn't seem to be much we can do about that except document
+		 * it as a limitation.
 		 *
-		 * Perhaps if we ever implement CREATE DATABASE in a less cheesy way, we
-		 * can avoid this.
+		 * Perhaps if we ever implement CREATE DATABASE in a less cheesy way,
+		 * we can avoid this.
 		 */
 		RequestCheckpoint(true, false);
 
@@ -586,19 +586,19 @@ dropdb(const char *dbname, bool missing_ok)
 	if (!get_db_info(dbname, &db_id, NULL, NULL,
 					 &db_istemplate, NULL, NULL, NULL, NULL, NULL))
 	{
-		if (! missing_ok)
+		if (!missing_ok)
 		{
 			ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_DATABASE),
-				 errmsg("database \"%s\" does not exist", dbname)));
+					(errcode(ERRCODE_UNDEFINED_DATABASE),
+					 errmsg("database \"%s\" does not exist", dbname)));
 		}
 		else
 		{
-			
+
 			/* Close pg_database, release the lock, since we changed nothing */
 			heap_close(pgdbrel, ExclusiveLock);
-			ereport(NOTICE, 
-					(errmsg("database \"%s\" does not exist, skipping", 
+			ereport(NOTICE,
+					(errmsg("database \"%s\" does not exist, skipping",
 							dbname)));
 
 			return;
@@ -658,8 +658,8 @@ dropdb(const char *dbname, bool missing_ok)
 	/*
 	 * Delete any comments associated with the database
 	 *
-	 * NOTE: this is probably dead code since any such comments should have been
-	 * in that database, not mine.
+	 * NOTE: this is probably dead code since any such comments should have
+	 * been in that database, not mine.
 	 */
 	DeleteComments(db_id, DatabaseRelationId, 0);
 

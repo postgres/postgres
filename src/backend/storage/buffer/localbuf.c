@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.71 2005/11/17 17:42:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.72 2005/11/22 18:17:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -277,7 +277,7 @@ DropRelFileNodeLocalBuffers(RelFileNode rnode, BlockNumber firstDelBlock)
 			hresult = (LocalBufferLookupEnt *)
 				hash_search(LocalBufHash, (void *) &bufHdr->tag,
 							HASH_REMOVE, NULL);
-			if (!hresult)			/* shouldn't happen */
+			if (!hresult)		/* shouldn't happen */
 				elog(ERROR, "local buffer hash table corrupted");
 			/* Mark buffer invalid */
 			CLEAR_BUFFERTAG(bufHdr->tag);

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.95 2005/11/17 22:14:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.96 2005/11/22 18:17:33 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -95,7 +95,7 @@ typedef struct plpgsql_hashent
 {
 	PLpgSQL_func_hashkey key;
 	PLpgSQL_function *function;
-}	plpgsql_HashEnt;
+} plpgsql_HashEnt;
 
 #define FUNCS_PER_USER		128 /* initial table size */
 
@@ -107,7 +107,7 @@ typedef struct
 {
 	const char *label;
 	int			sqlerrstate;
-}	ExceptionLabelMap;
+} ExceptionLabelMap;
 
 static const ExceptionLabelMap exception_label_map[] = {
 #include "plerrcodes.h"
@@ -121,27 +121,27 @@ static const ExceptionLabelMap exception_label_map[] = {
  */
 static PLpgSQL_function *do_compile(FunctionCallInfo fcinfo,
 		   HeapTuple procTup,
-		   PLpgSQL_func_hashkey * hashkey,
+		   PLpgSQL_func_hashkey *hashkey,
 		   bool forValidator);
 static int fetchArgInfo(HeapTuple procTup,
 			 Oid **p_argtypes, char ***p_argnames,
 			 char **p_argmodes);
 static PLpgSQL_row *build_row_from_class(Oid classOid);
-static PLpgSQL_row *build_row_from_vars(PLpgSQL_variable ** vars, int numvars);
+static PLpgSQL_row *build_row_from_vars(PLpgSQL_variable **vars, int numvars);
 static PLpgSQL_type *build_datatype(HeapTuple typeTup, int32 typmod);
 static void compute_function_hashkey(FunctionCallInfo fcinfo,
 						 Form_pg_proc procStruct,
-						 PLpgSQL_func_hashkey * hashkey,
+						 PLpgSQL_func_hashkey *hashkey,
 						 bool forValidator);
 static void plpgsql_resolve_polymorphic_argtypes(int numargs,
 									 Oid *argtypes, char *argmodes,
 									 Node *call_expr, bool forValidator,
 									 const char *proname);
-static PLpgSQL_function *plpgsql_HashTableLookup(PLpgSQL_func_hashkey * func_key);
-static void plpgsql_HashTableInsert(PLpgSQL_function * function,
-						PLpgSQL_func_hashkey * func_key);
-static void plpgsql_HashTableDelete(PLpgSQL_function * function);
-static void delete_function(PLpgSQL_function * func);
+static PLpgSQL_function *plpgsql_HashTableLookup(PLpgSQL_func_hashkey *func_key);
+static void plpgsql_HashTableInsert(PLpgSQL_function *function,
+						PLpgSQL_func_hashkey *func_key);
+static void plpgsql_HashTableDelete(PLpgSQL_function *function);
+static void delete_function(PLpgSQL_function *func);
 
 /* ----------
  * plpgsql_compile		Make an execution tree for a PL/pgSQL function.
@@ -252,7 +252,7 @@ plpgsql_compile(FunctionCallInfo fcinfo, bool forValidator)
 static PLpgSQL_function *
 do_compile(FunctionCallInfo fcinfo,
 		   HeapTuple procTup,
-		   PLpgSQL_func_hashkey * hashkey,
+		   PLpgSQL_func_hashkey *hashkey,
 		   bool forValidator)
 {
 	Form_pg_proc procStruct = (Form_pg_proc) GETSTRUCT(procTup);
@@ -352,8 +352,8 @@ do_compile(FunctionCallInfo fcinfo,
 			 * Fetch info about the procedure's parameters. Allocations aren't
 			 * needed permanently, so make them in tmp cxt.
 			 *
-			 * We also need to resolve any polymorphic input or output argument
-			 * types.  In validation mode we won't be able to, so we
+			 * We also need to resolve any polymorphic input or output
+			 * argument types.	In validation mode we won't be able to, so we
 			 * arbitrarily assume we are dealing with integers.
 			 */
 			MemoryContextSwitchTo(compile_tmp_cxt);
@@ -1560,7 +1560,7 @@ plpgsql_parse_dblwordrowtype(char *word)
  * array, and optionally to the current namespace.
  */
 PLpgSQL_variable *
-plpgsql_build_variable(const char *refname, int lineno, PLpgSQL_type * dtype,
+plpgsql_build_variable(const char *refname, int lineno, PLpgSQL_type *dtype,
 					   bool add2namespace)
 {
 	PLpgSQL_variable *result;
@@ -1707,12 +1707,12 @@ build_row_from_class(Oid classOid)
 			/*
 			 * Create the internal variable for the field
 			 *
-			 * We know if the table definitions contain a default value or if the
-			 * field is declared in the table as NOT NULL. But it's possible
-			 * to create a table field as NOT NULL without a default value and
-			 * that would lead to problems later when initializing the
-			 * variables due to entering a block at execution time. Thus we
-			 * ignore this information for now.
+			 * We know if the table definitions contain a default value or if
+			 * the field is declared in the table as NOT NULL. But it's
+			 * possible to create a table field as NOT NULL without a default
+			 * value and that would lead to problems later when initializing
+			 * the variables due to entering a block at execution time. Thus
+			 * we ignore this information for now.
 			 */
 			var = plpgsql_build_variable(refname, 0,
 								 plpgsql_build_datatype(attrStruct->atttypid,
@@ -1740,7 +1740,7 @@ build_row_from_class(Oid classOid)
  * Build a row-variable data structure given the component variables.
  */
 static PLpgSQL_row *
-build_row_from_vars(PLpgSQL_variable ** vars, int numvars)
+build_row_from_vars(PLpgSQL_variable **vars, int numvars)
 {
 	PLpgSQL_row *row;
 	int			i;
@@ -1944,7 +1944,7 @@ plpgsql_parse_err_condition(char *condname)
  * ----------
  */
 void
-plpgsql_adddatum(PLpgSQL_datum * new)
+plpgsql_adddatum(PLpgSQL_datum *new)
 {
 	if (plpgsql_nDatums == datums_alloc)
 	{
@@ -2020,7 +2020,7 @@ plpgsql_add_initdatums(int **varnos)
 static void
 compute_function_hashkey(FunctionCallInfo fcinfo,
 						 Form_pg_proc procStruct,
-						 PLpgSQL_func_hashkey * hashkey,
+						 PLpgSQL_func_hashkey *hashkey,
 						 bool forValidator)
 {
 	/* Make sure any unused bytes of the struct are zero */
@@ -2103,7 +2103,7 @@ plpgsql_resolve_polymorphic_argtypes(int numargs,
 }
 
 static void
-delete_function(PLpgSQL_function * func)
+delete_function(PLpgSQL_function *func)
 {
 	/* remove function from hash table */
 	plpgsql_HashTableDelete(func);
@@ -2137,7 +2137,7 @@ plpgsql_HashTableInit(void)
 }
 
 static PLpgSQL_function *
-plpgsql_HashTableLookup(PLpgSQL_func_hashkey * func_key)
+plpgsql_HashTableLookup(PLpgSQL_func_hashkey *func_key)
 {
 	plpgsql_HashEnt *hentry;
 
@@ -2152,8 +2152,8 @@ plpgsql_HashTableLookup(PLpgSQL_func_hashkey * func_key)
 }
 
 static void
-plpgsql_HashTableInsert(PLpgSQL_function * function,
-						PLpgSQL_func_hashkey * func_key)
+plpgsql_HashTableInsert(PLpgSQL_function *function,
+						PLpgSQL_func_hashkey *func_key)
 {
 	plpgsql_HashEnt *hentry;
 	bool		found;
@@ -2171,7 +2171,7 @@ plpgsql_HashTableInsert(PLpgSQL_function * function,
 }
 
 static void
-plpgsql_HashTableDelete(PLpgSQL_function * function)
+plpgsql_HashTableDelete(PLpgSQL_function *function)
 {
 	plpgsql_HashEnt *hentry;
 

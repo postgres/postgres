@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.75 2005/10/15 02:49:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.76 2005/11/22 18:17:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -239,8 +239,8 @@ MJExamineQuals(List *qualList, PlanState *parent)
 		 * much like SelectSortFunction except we insist on matching all the
 		 * operators provided, and it can be a cross-type opclass.
 		 *
-		 * XXX for now, insist on forward sort so that NULLs can be counted on to
-		 * be high.
+		 * XXX for now, insist on forward sort so that NULLs can be counted on
+		 * to be high.
 		 */
 		catlist = SearchSysCacheList(AMOPOPID, 1,
 									 ObjectIdGetDatum(qual->opno),
@@ -1121,13 +1121,13 @@ ExecMergeJoin(MergeJoinState *node)
 					 * scan position to the first mark, and go join that tuple
 					 * (and any following ones) to the new outer.
 					 *
-					 * NOTE: we do not need to worry about the MatchedInner state
-					 * for the rescanned inner tuples.	We know all of them
-					 * will match this new outer tuple and therefore won't be
-					 * emitted as fill tuples.	This works *only* because we
-					 * require the extra joinquals to be nil when doing a
-					 * right or full join --- otherwise some of the rescanned
-					 * tuples might fail the extra joinquals.
+					 * NOTE: we do not need to worry about the MatchedInner
+					 * state for the rescanned inner tuples.  We know all of
+					 * them will match this new outer tuple and therefore
+					 * won't be emitted as fill tuples.  This works *only*
+					 * because we require the extra joinquals to be nil when
+					 * doing a right or full join --- otherwise some of the
+					 * rescanned tuples might fail the extra joinquals.
 					 */
 					ExecRestrPos(innerPlan);
 

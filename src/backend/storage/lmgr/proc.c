@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.167 2005/10/15 02:49:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.168 2005/11/22 18:17:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -640,15 +640,15 @@ ProcSleep(LockMethod lockMethodTable,
 	/*
 	 * Determine where to add myself in the wait queue.
 	 *
-	 * Normally I should go at the end of the queue.  However, if I already hold
-	 * locks that conflict with the request of any previous waiter, put myself
-	 * in the queue just in front of the first such waiter. This is not a
-	 * necessary step, since deadlock detection would move me to before that
+	 * Normally I should go at the end of the queue.  However, if I already
+	 * hold locks that conflict with the request of any previous waiter, put
+	 * myself in the queue just in front of the first such waiter. This is not
+	 * a necessary step, since deadlock detection would move me to before that
 	 * waiter anyway; but it's relatively cheap to detect such a conflict
 	 * immediately, and avoid delaying till deadlock timeout.
 	 *
-	 * Special case: if I find I should go in front of some waiter, check to see
-	 * if I conflict with already-held locks or the requests before that
+	 * Special case: if I find I should go in front of some waiter, check to
+	 * see if I conflict with already-held locks or the requests before that
 	 * waiter.	If not, then just grant myself the requested lock immediately.
 	 * This is the same as the test for immediate grant in LockAcquire, except
 	 * we are only considering the part of the wait queue before my insertion
@@ -755,8 +755,8 @@ ProcSleep(LockMethod lockMethodTable,
 	 * sets MyProc->waitStatus = STATUS_ERROR, allowing us to know that we
 	 * must report failure rather than success.
 	 *
-	 * By delaying the check until we've waited for a bit, we can avoid running
-	 * the rather expensive deadlock-check code in most cases.
+	 * By delaying the check until we've waited for a bit, we can avoid
+	 * running the rather expensive deadlock-check code in most cases.
 	 */
 	if (!enable_sig_alarm(DeadlockTimeout, false))
 		elog(FATAL, "could not set timer for process wakeup");
@@ -768,13 +768,13 @@ ProcSleep(LockMethod lockMethodTable,
 	 * not detect a deadlock, PGSemaphoreLock() will continue to wait.	There
 	 * used to be a loop here, but it was useless code...
 	 *
-	 * We pass interruptOK = true, which eliminates a window in which cancel/die
-	 * interrupts would be held off undesirably.  This is a promise that we
-	 * don't mind losing control to a cancel/die interrupt here.  We don't,
-	 * because we have no shared-state-change work to do after being granted
-	 * the lock (the grantor did it all).  We do have to worry about updating
-	 * the locallock table, but if we lose control to an error, LockWaitCancel
-	 * will fix that up.
+	 * We pass interruptOK = true, which eliminates a window in which
+	 * cancel/die interrupts would be held off undesirably.  This is a promise
+	 * that we don't mind losing control to a cancel/die interrupt here.  We
+	 * don't, because we have no shared-state-change work to do after being
+	 * granted the lock (the grantor did it all).  We do have to worry about
+	 * updating the locallock table, but if we lose control to an error,
+	 * LockWaitCancel will fix that up.
 	 */
 	PGSemaphoreLock(&MyProc->sem, true);
 
@@ -931,9 +931,9 @@ CheckDeadLock(void)
 	/*
 	 * Check to see if we've been awoken by anyone in the interim.
 	 *
-	 * If we have we can return and resume our transaction -- happy day. Before
-	 * we are awoken the process releasing the lock grants it to us so we know
-	 * that we don't have to wait anymore.
+	 * If we have we can return and resume our transaction -- happy day.
+	 * Before we are awoken the process releasing the lock grants it to us so
+	 * we know that we don't have to wait anymore.
 	 *
 	 * We check by looking to see if we've been unlinked from the wait queue.
 	 * This is quicker than checking our semaphore's state, since no kernel
@@ -1085,10 +1085,10 @@ enable_sig_alarm(int delayms, bool is_statement_timeout)
 		/*
 		 * Begin deadlock timeout with statement-level timeout active
 		 *
-		 * Here, we want to interrupt at the closer of the two timeout times. If
-		 * fin_time >= statement_fin_time then we need not touch the existing
-		 * timer setting; else set up to interrupt at the deadlock timeout
-		 * time.
+		 * Here, we want to interrupt at the closer of the two timeout times.
+		 * If fin_time >= statement_fin_time then we need not touch the
+		 * existing timer setting; else set up to interrupt at the deadlock
+		 * timeout time.
 		 *
 		 * NOTE: in this case it is possible that this routine will be
 		 * interrupted by the previously-set timer alarm.  This is okay

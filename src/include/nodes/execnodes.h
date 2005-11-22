@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.140 2005/11/14 17:42:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.141 2005/11/22 18:17:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -304,7 +304,7 @@ typedef struct EState
 	ResultRelInfo *es_result_relation_info;		/* currently active array elt */
 	JunkFilter *es_junkFilter;	/* currently active junk filter */
 
-	TupleTableSlot *es_trig_tuple_slot;			/* for trigger output tuples */
+	TupleTableSlot *es_trig_tuple_slot; /* for trigger output tuples */
 
 	Relation	es_into_relation_descriptor;	/* for SELECT INTO */
 	bool		es_into_relation_use_wal;
@@ -491,9 +491,9 @@ typedef struct FuncExprState
 	 * We also need to store argument values across calls when evaluating a
 	 * function-returning-set.
 	 *
-	 * setArgsValid is true when we are evaluating a set-valued function and we
-	 * are in the middle of a call series; we want to pass the same argument
-	 * values to the function again (and again, until it returns
+	 * setArgsValid is true when we are evaluating a set-valued function and
+	 * we are in the middle of a call series; we want to pass the same
+	 * argument values to the function again (and again, until it returns
 	 * ExprEndResult).
 	 */
 	bool		setArgsValid;

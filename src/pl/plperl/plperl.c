@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.95 2005/11/18 17:00:28 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.96 2005/11/22 18:17:33 momjian Exp $
  *
  **********************************************************************/
 
@@ -90,7 +90,7 @@ typedef struct plperl_proc_desc
 	FmgrInfo	arg_out_func[FUNC_MAX_ARGS];
 	bool		arg_is_rowtype[FUNC_MAX_ARGS];
 	SV		   *reference;
-}	plperl_proc_desc;
+} plperl_proc_desc;
 
 
 /**********************************************************************
@@ -319,7 +319,7 @@ strip_trailing_ws(const char *msg)
 /* Build a tuple from a hash. */
 
 static HeapTuple
-plperl_build_tuple_result(HV * perlhash, AttInMetadata *attinmeta)
+plperl_build_tuple_result(HV *perlhash, AttInMetadata *attinmeta)
 {
 	TupleDesc	td = attinmeta->tupdesc;
 	char	  **values;
@@ -354,7 +354,7 @@ plperl_build_tuple_result(HV * perlhash, AttInMetadata *attinmeta)
  * convert perl array to postgres string representation
  */
 static SV  *
-plperl_convert_to_pg_array(SV * src)
+plperl_convert_to_pg_array(SV *src)
 {
 	SV		   *rv;
 	int			count;
@@ -478,7 +478,7 @@ plperl_trigger_build_args(FunctionCallInfo fcinfo)
 /* Set up the new tuple returned from a trigger. */
 
 static HeapTuple
-plperl_modify_tuple(HV * hvTD, TriggerData *tdata, HeapTuple otup)
+plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 {
 	SV		  **svp;
 	HV		   *hvNew;
@@ -747,8 +747,8 @@ plperl_create_sub(char *s, bool trusted)
  *
  **********************************************************************/
 
-EXTERN_C void boot_DynaLoader(pTHX_ CV * cv);
-EXTERN_C void boot_SPI(pTHX_ CV * cv);
+EXTERN_C void boot_DynaLoader(pTHX_ CV *cv);
+EXTERN_C void boot_SPI(pTHX_ CV *cv);
 
 static void
 plperl_init_shared_libs(pTHX)
@@ -761,7 +761,7 @@ plperl_init_shared_libs(pTHX)
 
 
 static SV  *
-plperl_call_perl_func(plperl_proc_desc * desc, FunctionCallInfo fcinfo)
+plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 {
 	dSP;
 	SV		   *retval;
@@ -854,8 +854,8 @@ plperl_call_perl_func(plperl_proc_desc * desc, FunctionCallInfo fcinfo)
 
 
 static SV  *
-plperl_call_perl_trigger_func(plperl_proc_desc * desc, FunctionCallInfo fcinfo,
-							  SV * td)
+plperl_call_perl_trigger_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo,
+							  SV *td)
 {
 	dSP;
 	SV		   *retval;
@@ -1553,7 +1553,7 @@ plperl_spi_execute_fetch_result(SPITupleTable *tuptable, int processed,
 
 /*
  * Note: plperl_return_next is called both in Postgres and Perl contexts.
- * We report any errors in Postgres fashion (via ereport).  If called in
+ * We report any errors in Postgres fashion (via ereport).	If called in
  * Perl context, it is SPI.xs's responsibility to catch the error and
  * convert to a Perl error.  We assume (perhaps without adequate justification)
  * that we need not abort the current transaction if the Perl code traps the

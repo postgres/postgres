@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.182 2005/10/15 02:49:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.183 2005/11/22 18:17:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,11 +88,11 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	/*
 	 * Extract arg type info in preparation for function lookup.
 	 *
-	 * If any arguments are Param markers of type VOID, we discard them from the
-	 * parameter list.	This is a hack to allow the JDBC driver to not have to
-	 * distinguish "input" and "output" parameter symbols while parsing
-	 * function-call constructs.  We can't use foreach() because we may modify
-	 * the list ...
+	 * If any arguments are Param markers of type VOID, we discard them from
+	 * the parameter list.	This is a hack to allow the JDBC driver to not
+	 * have to distinguish "input" and "output" parameter symbols while
+	 * parsing function-call constructs.  We can't use foreach() because we
+	 * may modify the list ...
 	 */
 	nargs = 0;
 	for (l = list_head(fargs); l != NULL; l = nextl)
@@ -502,10 +502,10 @@ func_select_candidate(int nargs,
 	/*
 	 * Still too many candidates? Try assigning types for the unknown columns.
 	 *
-	 * NOTE: for a binary operator with one unknown and one non-unknown input, we
-	 * already tried the heuristic of looking for a candidate with the known
-	 * input type on both sides (see binary_oper_exact()). That's essentially
-	 * a special case of the general algorithm we try next.
+	 * NOTE: for a binary operator with one unknown and one non-unknown input,
+	 * we already tried the heuristic of looking for a candidate with the
+	 * known input type on both sides (see binary_oper_exact()). That's
+	 * essentially a special case of the general algorithm we try next.
 	 *
 	 * We do this by examining each unknown argument position to see if we can
 	 * determine a "type category" for it.	If any candidate has an input
@@ -518,10 +518,10 @@ func_select_candidate(int nargs,
 	 * If we are able to determine a type category, also notice whether any of
 	 * the candidates takes a preferred datatype within the category.
 	 *
-	 * Having completed this examination, remove candidates that accept the wrong
-	 * category at any unknown position.  Also, if at least one candidate
-	 * accepted a preferred type at a position, remove candidates that accept
-	 * non-preferred types.
+	 * Having completed this examination, remove candidates that accept the
+	 * wrong category at any unknown position.	Also, if at least one
+	 * candidate accepted a preferred type at a position, remove candidates
+	 * that accept non-preferred types.
 	 *
 	 * If we are down to one candidate at the end, we win.
 	 */
@@ -708,20 +708,20 @@ func_get_detail(List *funcname,
 		 * as "text(name(varchar))" which the code below this point is
 		 * entirely capable of selecting.
 		 *
-		 * "Trivial" coercions are ones that involve binary-compatible types and
-		 * ones that are coercing a previously-unknown-type literal constant
-		 * to a specific type.
+		 * "Trivial" coercions are ones that involve binary-compatible types
+		 * and ones that are coercing a previously-unknown-type literal
+		 * constant to a specific type.
 		 *
 		 * The reason we can restrict our check to binary-compatible coercions
 		 * here is that we expect non-binary-compatible coercions to have an
 		 * implementation function named after the target type. That function
 		 * will be found by normal lookup if appropriate.
 		 *
-		 * NB: it's important that this code stays in sync with what coerce_type
-		 * can do, because the caller will try to apply coerce_type if we
-		 * return FUNCDETAIL_COERCION.	If we return that result for something
-		 * coerce_type can't handle, we'll cause infinite recursion between
-		 * this module and coerce_type!
+		 * NB: it's important that this code stays in sync with what
+		 * coerce_type can do, because the caller will try to apply
+		 * coerce_type if we return FUNCDETAIL_COERCION.  If we return that
+		 * result for something coerce_type can't handle, we'll cause infinite
+		 * recursion between this module and coerce_type!
 		 */
 		if (nargs == 1 && fargs != NIL)
 		{
@@ -983,9 +983,9 @@ ParseComplexProjection(ParseState *pstate, char *funcname, Node *first_arg)
 	/*
 	 * Else do it the hard way with get_expr_result_type().
 	 *
-	 * If it's a Var of type RECORD, we have to work even harder: we have to find
-	 * what the Var refers to, and pass that to get_expr_result_type. That
-	 * task is handled by expandRecordVariable().
+	 * If it's a Var of type RECORD, we have to work even harder: we have to
+	 * find what the Var refers to, and pass that to get_expr_result_type.
+	 * That task is handled by expandRecordVariable().
 	 */
 	if (IsA(first_arg, Var) &&
 		((Var *) first_arg)->vartype == RECORDOID)

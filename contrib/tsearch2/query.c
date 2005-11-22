@@ -178,7 +178,7 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, int2 
 						state->state = WAITOPERATOR;
 						return VAL;
 					}
-					else if ( state->state == WAITFIRSTOPERAND ) 
+					else if (state->state == WAITFIRSTOPERAND)
 						return END;
 					else
 						ereport(ERROR,
@@ -206,13 +206,13 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, int2 
 					return ERR;
 				break;
 			case WAITSINGLEOPERAND:
-				if ( *(state->buf) == '\0' ) 
+				if (*(state->buf) == '\0')
 					return END;
 				*strval = state->buf;
-				*lenval = strlen( state->buf );
-				state->buf += strlen( state->buf );
+				*lenval = strlen(state->buf);
+				state->buf += strlen(state->buf);
 				state->count++;
-				return VAL;	
+				return VAL;
 			default:
 				return ERR;
 				break;
@@ -600,7 +600,7 @@ findoprnd(ITEM * ptr, int4 *pos)
  * input
  */
 static QUERYTYPE *
-queryin(char *buf, void (*pushval) (QPRS_STATE *, int, char *, int, int2), int cfg_id, bool isplain)
+			queryin(char *buf, void (*pushval) (QPRS_STATE *, int, char *, int, int2), int cfg_id, bool isplain)
 {
 	QPRS_STATE	state;
 	int4		i;
@@ -637,12 +637,13 @@ queryin(char *buf, void (*pushval) (QPRS_STATE *, int, char *, int, int2), int c
 	/* parse query & make polish notation (postfix, but in reverse order) */
 	makepol(&state, pushval);
 	pfree(state.valstate.word);
-	if (!state.num) {
+	if (!state.num)
+	{
 		elog(NOTICE, "Query doesn't contain lexem(s)");
-		query = (QUERYTYPE*)palloc( HDRSIZEQT );
+		query = (QUERYTYPE *) palloc(HDRSIZEQT);
 		query->len = HDRSIZEQT;
 		query->size = 0;
-		return query; 
+		return query;
 	}
 
 	/* make finish struct */
@@ -928,9 +929,9 @@ to_tsquery(PG_FUNCTION_ARGS)
 	str = text2char(in);
 	PG_FREE_IF_COPY(in, 1);
 
-	query = queryin(str, pushval_morph, PG_GETARG_INT32(0),false);
-	
-	if ( query->size == 0 )
+	query = queryin(str, pushval_morph, PG_GETARG_INT32(0), false);
+
+	if (query->size == 0)
 		PG_RETURN_POINTER(query);
 
 	res = clean_fakeval_v2(GETQUERY(query), &len);
@@ -984,8 +985,8 @@ plainto_tsquery(PG_FUNCTION_ARGS)
 	PG_FREE_IF_COPY(in, 1);
 
 	query = queryin(str, pushval_morph, PG_GETARG_INT32(0), true);
-	
-	if ( query->size == 0 )
+
+	if (query->size == 0)
 		PG_RETURN_POINTER(query);
 
 	res = clean_fakeval_v2(GETQUERY(query), &len);
@@ -1023,4 +1024,3 @@ plainto_tsquery_current(PG_FUNCTION_ARGS)
 										Int32GetDatum(get_currcfg()),
 										PG_GETARG_DATUM(0)));
 }
-

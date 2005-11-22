@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.125 2005/11/19 19:44:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.126 2005/11/22 18:17:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
 /*
  * GUC parameter
  */
-bool	Array_nulls = true;
+bool		Array_nulls = true;
 
 /*
  * Local definitions
@@ -68,9 +68,9 @@ static void ReadArrayBinary(StringInfo buf, int nitems,
 				Datum *values, bool *nulls,
 				bool *hasnulls, int32 *nbytes);
 static void CopyArrayEls(ArrayType *array,
-						 Datum *values, bool *nulls, int nitems,
-						 int typlen, bool typbyval, char typalign,
-						 bool freedata);
+			 Datum *values, bool *nulls, int nitems,
+			 int typlen, bool typbyval, char typalign,
+			 bool freedata);
 static bool array_get_isnull(const bits8 *nullbitmap, int offset);
 static void array_set_isnull(bits8 *nullbitmap, int offset, bool isNull);
 static Datum ArrayCast(char *value, bool byval, int len);
@@ -78,26 +78,26 @@ static int ArrayCastAndSet(Datum src,
 				int typlen, bool typbyval, char typalign,
 				char *dest);
 static char *array_seek(char *ptr, int offset, bits8 *nullbitmap, int nitems,
-						int typlen, bool typbyval, char typalign);
-static int	array_nelems_size(char *ptr, int offset, bits8 *nullbitmap,
-						int nitems, int typlen, bool typbyval, char typalign);
-static int	array_copy(char *destptr, int nitems,
-					   char *srcptr, int offset, bits8 *nullbitmap,
-					   int typlen, bool typbyval, char typalign);
+		   int typlen, bool typbyval, char typalign);
+static int array_nelems_size(char *ptr, int offset, bits8 *nullbitmap,
+				  int nitems, int typlen, bool typbyval, char typalign);
+static int array_copy(char *destptr, int nitems,
+		   char *srcptr, int offset, bits8 *nullbitmap,
+		   int typlen, bool typbyval, char typalign);
 static int array_slice_size(char *arraydataptr, bits8 *arraynullsptr,
-							int ndim, int *dim, int *lb,
-							int *st, int *endp,
-							int typlen, bool typbyval, char typalign);
+				 int ndim, int *dim, int *lb,
+				 int *st, int *endp,
+				 int typlen, bool typbyval, char typalign);
 static void array_extract_slice(ArrayType *newarray,
-								int ndim, int *dim, int *lb,
-								char *arraydataptr, bits8 *arraynullsptr,
-								int *st, int *endp,
-								int typlen, bool typbyval, char typalign);
+					int ndim, int *dim, int *lb,
+					char *arraydataptr, bits8 *arraynullsptr,
+					int *st, int *endp,
+					int typlen, bool typbyval, char typalign);
 static void array_insert_slice(ArrayType *destArray, ArrayType *origArray,
-							   ArrayType *srcArray,
-							   int ndim, int *dim, int *lb,
-							   int *st, int *endp,
-							   int typlen, bool typbyval, char typalign);
+				   ArrayType *srcArray,
+				   int ndim, int *dim, int *lb,
+				   int *st, int *endp,
+				   int typlen, bool typbyval, char typalign);
 static int	array_cmp(FunctionCallInfo fcinfo);
 static Datum array_type_length_coerce_internal(ArrayType *src,
 								  int32 desttypmod,
@@ -181,8 +181,8 @@ array_in(PG_FUNCTION_ARGS)
 	 * Otherwise, we require the input to be in curly-brace style, and we
 	 * prescan the input to determine dimensions.
 	 *
-	 * Dimension info takes the form of one or more [n] or [m:n] items.
-	 * The outer loop iterates once per dimension item.
+	 * Dimension info takes the form of one or more [n] or [m:n] items. The
+	 * outer loop iterates once per dimension item.
 	 */
 	p = string_save;
 	ndim = 0;
@@ -644,9 +644,9 @@ ReadArrayStr(char *arrayStr,
 	 * in-place within arrayStr to do this.  srcptr is the current scan point,
 	 * and dstptr is where we are copying to.
 	 *
-	 * We also want to suppress leading and trailing unquoted whitespace.
-	 * We use the leadingspace flag to suppress leading space.  Trailing space
-	 * is tracked by using dstendptr to point to the last significant output
+	 * We also want to suppress leading and trailing unquoted whitespace. We
+	 * use the leadingspace flag to suppress leading space.  Trailing space is
+	 * tracked by using dstendptr to point to the last significant output
 	 * character.
 	 *
 	 * The error checking in this routine is mostly pro-forma, since we expect
@@ -688,7 +688,7 @@ ReadArrayStr(char *arrayStr,
 					/* Treat the escaped character as non-whitespace */
 					leadingspace = false;
 					dstendptr = dstptr;
-					hasquoting = true;			/* can't be a NULL marker */
+					hasquoting = true;	/* can't be a NULL marker */
 					break;
 				case '\"':
 					in_quotes = !in_quotes;
@@ -703,7 +703,7 @@ ReadArrayStr(char *arrayStr,
 						 */
 						dstendptr = dstptr;
 					}
-					hasquoting = true;			/* can't be a NULL marker */
+					hasquoting = true;	/* can't be a NULL marker */
 					srcptr++;
 					break;
 				case '{':
@@ -783,7 +783,7 @@ ReadArrayStr(char *arrayStr,
 					 errmsg("malformed array literal: \"%s\"",
 							origStr)));
 
-		if (Array_nulls && !hasquoting && 
+		if (Array_nulls && !hasquoting &&
 			pg_strcasecmp(itemstart, "NULL") == 0)
 		{
 			/* it's a NULL item */
@@ -866,7 +866,7 @@ CopyArrayEls(ArrayType *array,
 	{
 		if (nulls && nulls[i])
 		{
-			if (!bitmap)			/* shouldn't happen */
+			if (!bitmap)		/* shouldn't happen */
 				elog(ERROR, "null array element where not supported");
 			/* bitmap bit stays 0 */
 		}
@@ -912,6 +912,7 @@ array_out(PG_FUNCTION_ARGS)
 			   *retval,
 			  **values,
 				dims_str[(MAXDIM * 33) + 2];
+
 	/*
 	 * 33 per dim since we assume 15 digits per number + ':' +'[]'
 	 *
@@ -1024,9 +1025,9 @@ array_out(PG_FUNCTION_ARGS)
 
 			/* count data plus backslashes; detect chars needing quotes */
 			if (values[i][0] == '\0')
-				needquote = true;	/* force quotes for empty string */
+				needquote = true;		/* force quotes for empty string */
 			else if (pg_strcasecmp(values[i], "NULL") == 0)
-				needquote = true;	/* force quotes for literal NULL */
+				needquote = true;		/* force quotes for literal NULL */
 			else
 				needquote = false;
 
@@ -2158,12 +2159,12 @@ array_set(ArrayType *array,
 	/*
 	 * Fill in nulls bitmap if needed
 	 *
-	 * Note: it's possible we just replaced the last NULL with a non-NULL,
-	 * and could get rid of the bitmap.  Seems not worth testing for though.
+	 * Note: it's possible we just replaced the last NULL with a non-NULL, and
+	 * could get rid of the bitmap.  Seems not worth testing for though.
 	 */
 	if (newhasnulls)
 	{
-		bits8  *newnullbitmap = ARR_NULLBITMAP(newarray);
+		bits8	   *newnullbitmap = ARR_NULLBITMAP(newarray);
 
 		array_set_isnull(newnullbitmap, offset, isNull);
 		if (extendbefore)
@@ -2176,8 +2177,8 @@ array_set(ArrayType *array,
 							  oldnullbitmap, 0,
 							  offset);
 			if (!extendafter)
-				array_bitmap_copy(newnullbitmap, offset+1,
-								  oldnullbitmap, offset+1,
+				array_bitmap_copy(newnullbitmap, offset + 1,
+								  oldnullbitmap, offset + 1,
 								  oldnitems - offset - 1);
 		}
 	}
@@ -2471,8 +2472,8 @@ array_set_slice(ArrayType *array,
 		/* fill in nulls bitmap if needed */
 		if (newhasnulls)
 		{
-			bits8  *newnullbitmap = ARR_NULLBITMAP(newarray);
-			bits8  *oldnullbitmap = ARR_NULLBITMAP(array);
+			bits8	   *newnullbitmap = ARR_NULLBITMAP(newarray);
+			bits8	   *oldnullbitmap = ARR_NULLBITMAP(array);
 
 			array_bitmap_copy(newnullbitmap, 0,
 							  oldnullbitmap, 0,
@@ -2480,8 +2481,8 @@ array_set_slice(ArrayType *array,
 			array_bitmap_copy(newnullbitmap, itemsbefore,
 							  ARR_NULLBITMAP(srcArray), 0,
 							  nsrcitems);
-			array_bitmap_copy(newnullbitmap, itemsbefore+nsrcitems,
-							  oldnullbitmap, itemsbefore+nolditems,
+			array_bitmap_copy(newnullbitmap, itemsbefore + nsrcitems,
+							  oldnullbitmap, itemsbefore + nolditems,
 							  itemsafter);
 		}
 	}
@@ -2632,7 +2633,7 @@ array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType,
 		 */
 		if (fcinfo->flinfo->fn_strict)
 		{
-			int		j;
+			int			j;
 
 			for (j = 0; j < fcinfo->nargs; j++)
 			{
@@ -2922,7 +2923,7 @@ deconstruct_array(ArrayType *array,
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-						 errmsg("NULL array element not allowed in this context")));
+				  errmsg("NULL array element not allowed in this context")));
 		}
 		else
 		{
@@ -3319,10 +3320,10 @@ array_cmp(FunctionCallInfo fcinfo)
 	}
 
 	/*
-	 * If arrays contain same data (up to end of shorter one), apply additional
-	 * rules to sort by dimensionality.  The relative significance of the
-	 * different bits of information is historical; mainly we just care that
-	 * we don't say "equal" for arrays of different dimensionality.
+	 * If arrays contain same data (up to end of shorter one), apply
+	 * additional rules to sort by dimensionality.	The relative significance
+	 * of the different bits of information is historical; mainly we just care
+	 * that we don't say "equal" for arrays of different dimensionality.
 	 */
 	if (result == 0)
 	{
@@ -3545,7 +3546,7 @@ array_copy(char *destptr, int nitems,
  *
  * Note: this could certainly be optimized using standard bitblt methods.
  * However, it's not clear that the typical Postgres array has enough elements
- * to make it worth worrying too much.  For the moment, KISS.
+ * to make it worth worrying too much.	For the moment, KISS.
  */
 void
 array_bitmap_copy(bits8 *destbitmap, int destoffset,
@@ -3706,7 +3707,7 @@ array_extract_slice(ArrayType *newarray,
 
 	src_offset = ArrayGetOffset(ndim, dim, lb, st);
 	srcdataptr = array_seek(arraydataptr, 0, arraynullsptr, src_offset,
-						typlen, typbyval, typalign);
+							typlen, typbyval, typalign);
 	mda_get_prod(ndim, dim, prod);
 	mda_get_range(ndim, span, st, endp);
 	mda_get_offset_values(ndim, dist, prod, span);
@@ -3742,7 +3743,7 @@ array_extract_slice(ArrayType *newarray,
  * Insert a slice into an array.
  *
  * ndim/dim[]/lb[] are dimensions of the original array.  A new array with
- * those same dimensions is to be constructed.  destArray must already
+ * those same dimensions is to be constructed.	destArray must already
  * have been allocated and its header initialized.
  *
  * st[]/endp[] identify the slice to be replaced.  Elements within the slice
@@ -3969,8 +3970,8 @@ array_type_length_coerce_internal(ArrayType *src,
 	/*
 	 * Use array_map to apply the function to each array element.
 	 *
-	 * We pass on the desttypmod and isExplicit flags whether or not the function
-	 * wants them.
+	 * We pass on the desttypmod and isExplicit flags whether or not the
+	 * function wants them.
 	 */
 	InitFunctionCallInfoData(locfcinfo, &my_extra->coerce_finfo, 3,
 							 NULL, NULL);
@@ -4112,7 +4113,7 @@ accumArrayResult(ArrayBuildState *astate,
 				   (astate->nelems + ARRAY_ELEMS_CHUNKSIZE) * sizeof(Datum));
 			astate->dnulls = (bool *)
 				repalloc(astate->dnulls,
-				   (astate->nelems + ARRAY_ELEMS_CHUNKSIZE) * sizeof(bool));
+					(astate->nelems + ARRAY_ELEMS_CHUNKSIZE) * sizeof(bool));
 		}
 	}
 

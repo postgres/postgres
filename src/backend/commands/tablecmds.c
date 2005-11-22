@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.175 2005/11/21 12:49:31 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.176 2005/11/22 18:17:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -907,9 +907,9 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				 * If default expr could contain any vars, we'd need to fix
 				 * 'em, but it can't; so default is ready to apply to child.
 				 *
-				 * If we already had a default from some prior parent, check to
-				 * see if they are the same.  If so, no problem; if not, mark
-				 * the column as having a bogus default. Below, we will
+				 * If we already had a default from some prior parent, check
+				 * to see if they are the same.  If so, no problem; if not,
+				 * mark the column as having a bogus default. Below, we will
 				 * complain if the bogus default isn't overridden by the child
 				 * schema.
 				 */
@@ -1124,9 +1124,9 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 	 * Also enter dependencies on the direct ancestors, and make sure they are
 	 * marked with relhassubclass = true.
 	 *
-	 * (Once upon a time, both direct and indirect ancestors were found here and
-	 * then entered into pg_ipl.  Since that catalog doesn't exist anymore,
-	 * there's no need to look for indirect ancestors.)
+	 * (Once upon a time, both direct and indirect ancestors were found here
+	 * and then entered into pg_ipl.  Since that catalog doesn't exist
+	 * anymore, there's no need to look for indirect ancestors.)
 	 */
 	relation = heap_open(InheritsRelationId, RowExclusiveLock);
 	desc = RelationGetDescr(relation);
@@ -1216,8 +1216,8 @@ setRelhassubclassInRelation(Oid relationId, bool relhassubclass)
 	/*
 	 * Fetch a modifiable copy of the tuple, modify it, update pg_class.
 	 *
-	 * If the tuple already has the right relhassubclass setting, we don't need
-	 * to update it, but we still need to issue an SI inval message.
+	 * If the tuple already has the right relhassubclass setting, we don't
+	 * need to update it, but we still need to issue an SI inval message.
 	 */
 	relationRelation = heap_open(RelationRelationId, RowExclusiveLock);
 	tuple = SearchSysCacheCopy(RELOID,
@@ -1301,8 +1301,8 @@ renameatt(Oid myrelid,
 	 * attribute in all classes that inherit from 'relname' (as well as in
 	 * 'relname').
 	 *
-	 * any permissions or problems with duplicate attributes will cause the whole
-	 * transaction to abort, which is what we want -- all or nothing.
+	 * any permissions or problems with duplicate attributes will cause the
+	 * whole transaction to abort, which is what we want -- all or nothing.
 	 */
 	if (recurse)
 	{
@@ -1632,8 +1632,8 @@ update_ri_trigger_args(Oid relid,
 		/*
 		 * It is an RI trigger, so parse the tgargs bytea.
 		 *
-		 * NB: we assume the field will never be compressed or moved out of line;
-		 * so does trigger.c ...
+		 * NB: we assume the field will never be compressed or moved out of
+		 * line; so does trigger.c ...
 		 */
 		tgnargs = pg_trigger->tgnargs;
 		val = (bytea *)
@@ -2392,9 +2392,9 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 	 * If we need to rewrite the table, the operation has to be propagated to
 	 * tables that use this table's rowtype as a column type.
 	 *
-	 * (Eventually this will probably become true for scans as well, but at the
-	 * moment a composite type does not enforce any constraints, so it's not
-	 * necessary/appropriate to enforce them just during ALTER.)
+	 * (Eventually this will probably become true for scans as well, but at
+	 * the moment a composite type does not enforce any constraints, so it's
+	 * not necessary/appropriate to enforce them just during ALTER.)
 	 */
 	if (newrel)
 		find_composite_type_dependencies(oldrel->rd_rel->reltype,
@@ -2836,9 +2836,9 @@ ATPrepAddColumn(List **wqueue, Relation rel, bool recurse,
 	/*
 	 * Recurse to add the column to child classes, if requested.
 	 *
-	 * We must recurse one level at a time, so that multiply-inheriting children
-	 * are visited the right number of times and end up with the right
-	 * attinhcount.
+	 * We must recurse one level at a time, so that multiply-inheriting
+	 * children are visited the right number of times and end up with the
+	 * right attinhcount.
 	 */
 	if (recurse)
 	{
@@ -3038,8 +3038,8 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	/*
 	 * Tell Phase 3 to fill in the default expression, if there is one.
 	 *
-	 * If there is no default, Phase 3 doesn't have to do anything, because that
-	 * effectively means that the default is NULL.	The heap tuple access
+	 * If there is no default, Phase 3 doesn't have to do anything, because
+	 * that effectively means that the default is NULL.  The heap tuple access
 	 * routines always check for attnum > # of attributes in tuple, and return
 	 * NULL if so, so without any modification of the tuple data we will get
 	 * the effect of NULL values in the new column.
@@ -3832,8 +3832,8 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 	/*
 	 * Validity and permissions checks
 	 *
-	 * Note: REFERENCES permissions checks are redundant with CREATE TRIGGER, but
-	 * we may as well error out sooner instead of later.
+	 * Note: REFERENCES permissions checks are redundant with CREATE TRIGGER,
+	 * but we may as well error out sooner instead of later.
 	 */
 	if (pkrel->rd_rel->relkind != RELKIND_RELATION)
 		ereport(ERROR,
@@ -3931,9 +3931,9 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 		 * pktypoid[i] is the primary key table's i'th key's type fktypoid[i]
 		 * is the foreign key table's i'th key's type
 		 *
-		 * Note that we look for an operator with the PK type on the left; when
-		 * the types are different this is critical because the PK index will
-		 * need operators with the indexkey on the left. (Ordinarily both
+		 * Note that we look for an operator with the PK type on the left;
+		 * when the types are different this is critical because the PK index
+		 * will need operators with the indexkey on the left. (Ordinarily both
 		 * commutator operators will exist if either does, but we won't get
 		 * the right answer from the test below on opclass membership unless
 		 * we select the proper operator.)
@@ -4861,10 +4861,10 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	 * the column type, because build_column_default itself will try to
 	 * coerce, and will not issue the error message we want if it fails.)
 	 *
-	 * We remove any implicit coercion steps at the top level of the old default
-	 * expression; this has been agreed to satisfy the principle of least
-	 * surprise.  (The conversion to the new column type should act like it
-	 * started from what the user sees as the stored expression, and the
+	 * We remove any implicit coercion steps at the top level of the old
+	 * default expression; this has been agreed to satisfy the principle of
+	 * least surprise.	(The conversion to the new column type should act like
+	 * it started from what the user sees as the stored expression, and the
 	 * implicit coercions aren't going to be shown.)
 	 */
 	if (attTup->atthasdef)
@@ -4895,8 +4895,8 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	 * the info before executing ALTER TYPE, though, else the deparser will
 	 * get confused.
 	 *
-	 * There could be multiple entries for the same object, so we must check to
-	 * ensure we process each one only once.  Note: we assume that an index
+	 * There could be multiple entries for the same object, so we must check
+	 * to ensure we process each one only once.  Note: we assume that an index
 	 * that implements a constraint will not show a direct dependency on the
 	 * column.
 	 */
@@ -5781,9 +5781,9 @@ copy_relation_data(Relation rel, SMgrRelation dst)
 	 * to commit the transaction.  (For a temp rel we don't care since the rel
 	 * will be uninteresting after a crash anyway.)
 	 *
-	 * It's obvious that we must do this when not WAL-logging the copy. It's less
-	 * obvious that we have to do it even if we did WAL-log the copied pages.
-	 * The reason is that since we're copying outside shared buffers, a
+	 * It's obvious that we must do this when not WAL-logging the copy. It's
+	 * less obvious that we have to do it even if we did WAL-log the copied
+	 * pages. The reason is that since we're copying outside shared buffers, a
 	 * CHECKPOINT occurring during the copy has no way to flush the previously
 	 * written data to disk (indeed it won't know the new rel even exists).  A
 	 * crash later on would replay WAL from the checkpoint, therefore it
@@ -5841,12 +5841,12 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	/*
 	 * Toast table is shared if and only if its parent is.
 	 *
-	 * We cannot allow toasting a shared relation after initdb (because there's
-	 * no way to mark it toasted in other databases' pg_class). Unfortunately
-	 * we can't distinguish initdb from a manually started standalone backend
-	 * (toasting happens after the bootstrap phase, so checking
-	 * IsBootstrapProcessingMode() won't work).  However, we can at least
-	 * prevent this mistake under normal multi-user operation.
+	 * We cannot allow toasting a shared relation after initdb (because
+	 * there's no way to mark it toasted in other databases' pg_class).
+	 * Unfortunately we can't distinguish initdb from a manually started
+	 * standalone backend (toasting happens after the bootstrap phase, so
+	 * checking IsBootstrapProcessingMode() won't work).  However, we can at
+	 * least prevent this mistake under normal multi-user operation.
 	 */
 	shared_relation = rel->rd_rel->relisshared;
 	if (shared_relation && IsUnderPostmaster)

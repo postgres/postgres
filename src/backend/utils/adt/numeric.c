@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.87 2005/11/17 22:14:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.88 2005/11/22 18:17:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -348,8 +348,8 @@ numeric_out(PG_FUNCTION_ARGS)
 	/*
 	 * Get the number in the variable format.
 	 *
-	 * Even if we didn't need to change format, we'd still need to copy the value
-	 * to have a modifiable copy for rounding.	set_var_from_num() also
+	 * Even if we didn't need to change format, we'd still need to copy the
+	 * value to have a modifiable copy for rounding.  set_var_from_num() also
 	 * guarantees there is extra digit space in case we produce a carry out
 	 * from rounding.
 	 */
@@ -459,7 +459,7 @@ numeric_send(PG_FUNCTION_ARGS)
  *	scale of the attribute have to be applied on the value.
  */
 Datum
-numeric(PG_FUNCTION_ARGS)
+numeric		(PG_FUNCTION_ARGS)
 {
 	Numeric		num = PG_GETARG_NUMERIC(0);
 	int32		typmod = PG_GETARG_INT32(1);
@@ -2961,10 +2961,10 @@ get_str_from_var(NumericVar *var, int dscale)
 	/*
 	 * Allocate space for the result.
 	 *
-	 * i is set to to # of decimal digits before decimal point. dscale is the #
-	 * of decimal digits we will print after decimal point. We may generate as
-	 * many as DEC_DIGITS-1 excess digits at the end, and in addition we need
-	 * room for sign, decimal point, null terminator.
+	 * i is set to to # of decimal digits before decimal point. dscale is the
+	 * # of decimal digits we will print after decimal point. We may generate
+	 * as many as DEC_DIGITS-1 excess digits at the end, and in addition we
+	 * need room for sign, decimal point, null terminator.
 	 */
 	i = (var->weight + 1) * DEC_DIGITS;
 	if (i <= 0)
@@ -3901,12 +3901,12 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result,
 	 * INT_MAX is noticeably larger than NBASE*NBASE, this gives us headroom
 	 * to avoid normalizing carries immediately.
 	 *
-	 * We start with div[] containing one zero digit followed by the dividend's
-	 * digits (plus appended zeroes to reach the desired precision including
-	 * guard digits).  Each step of the main loop computes an (approximate)
-	 * quotient digit and stores it into div[], removing one position of
-	 * dividend space.	A final pass of carry propagation takes care of any
-	 * mistaken quotient digits.
+	 * We start with div[] containing one zero digit followed by the
+	 * dividend's digits (plus appended zeroes to reach the desired precision
+	 * including guard digits).  Each step of the main loop computes an
+	 * (approximate) quotient digit and stores it into div[], removing one
+	 * position of dividend space.	A final pass of carry propagation takes
+	 * care of any mistaken quotient digits.
 	 */
 	div = (int *) palloc0((div_ndigits + 1) * sizeof(int));
 	for (i = 0; i < var1ndigits; i++)
@@ -4433,8 +4433,8 @@ exp_var_internal(NumericVar *arg, NumericVar *result, int rscale)
 	 *
 	 * exp(x) = 1 + x + x^2/2! + x^3/3! + ...
 	 *
-	 * Given the limited range of x, this should converge reasonably quickly. We
-	 * run the series until the terms fall below the local_rscale limit.
+	 * Given the limited range of x, this should converge reasonably quickly.
+	 * We run the series until the terms fall below the local_rscale limit.
 	 */
 	add_var(&const_one, &x, result);
 	set_var_from_var(&x, &xpow);
@@ -4522,11 +4522,11 @@ ln_var(NumericVar *arg, NumericVar *result, int rscale)
 	 *
 	 * z + z^3/3 + z^5/5 + ...
 	 *
-	 * where z = (x-1)/(x+1) is in the range (approximately) -0.053 .. 0.048 due
-	 * to the above range-reduction of x.
+	 * where z = (x-1)/(x+1) is in the range (approximately) -0.053 .. 0.048
+	 * due to the above range-reduction of x.
 	 *
-	 * The convergence of this is not as fast as one would like, but is tolerable
-	 * given that z is small.
+	 * The convergence of this is not as fast as one would like, but is
+	 * tolerable given that z is small.
 	 */
 	sub_var(&x, &const_one, result);
 	add_var(&x, &const_one, &elem);

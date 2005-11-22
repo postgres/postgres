@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.158 2005/10/15 02:49:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.159 2005/11/22 18:17:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,11 +121,12 @@ AcquireRewriteLocks(Query *parsetree)
 				 * release it until end of transaction. This protects the
 				 * rewriter and planner against schema changes mid-query.
 				 *
-				 * If the relation is the query's result relation, then we need
-				 * RowExclusiveLock.  Otherwise, check to see if the relation
-				 * is accessed FOR UPDATE/SHARE or not.  We can't just grab
-				 * AccessShareLock because then the executor would be trying
-				 * to upgrade the lock, leading to possible deadlocks.
+				 * If the relation is the query's result relation, then we
+				 * need RowExclusiveLock.  Otherwise, check to see if the
+				 * relation is accessed FOR UPDATE/SHARE or not.  We can't
+				 * just grab AccessShareLock because then the executor would
+				 * be trying to upgrade the lock, leading to possible
+				 * deadlocks.
 				 */
 				if (rt_index == parsetree->resultRelation)
 					lockmode = RowExclusiveLock;
@@ -288,8 +289,8 @@ rewriteRuleAction(Query *parsetree,
 	 * Adjust rule action and qual to offset its varnos, so that we can merge
 	 * its rtable with the main parsetree's rtable.
 	 *
-	 * If the rule action is an INSERT...SELECT, the OLD/NEW rtable entries will
-	 * be in the SELECT part, and we have to modify that rather than the
+	 * If the rule action is an INSERT...SELECT, the OLD/NEW rtable entries
+	 * will be in the SELECT part, and we have to modify that rather than the
 	 * top-level INSERT (kluge!).
 	 */
 	sub_action = getInsertSelectQuery(rule_action, &sub_action_ptr);
@@ -308,12 +309,12 @@ rewriteRuleAction(Query *parsetree,
 	 * action.	Some of the entries may be unused after we finish rewriting,
 	 * but we leave them all in place for two reasons:
 	 *
-	 * We'd have a much harder job to adjust the query's varnos if we selectively
-	 * removed RT entries.
+	 * We'd have a much harder job to adjust the query's varnos if we
+	 * selectively removed RT entries.
 	 *
-	 * If the rule is INSTEAD, then the original query won't be executed at all,
-	 * and so its rtable must be preserved so that the executor will do the
-	 * correct permissions checks on it.
+	 * If the rule is INSTEAD, then the original query won't be executed at
+	 * all, and so its rtable must be preserved so that the executor will do
+	 * the correct permissions checks on it.
 	 *
 	 * RT entries that are not referenced in the completed jointree will be
 	 * ignored by the planner, so they do not affect query semantics.  But any
@@ -322,13 +323,13 @@ rewriteRuleAction(Query *parsetree,
 	 * caller has, say, insert-permission on a view, when the view is not
 	 * semantically referenced at all in the resulting query.
 	 *
-	 * When a rule is not INSTEAD, the permissions checks done on its copied RT
-	 * entries will be redundant with those done during execution of the
+	 * When a rule is not INSTEAD, the permissions checks done on its copied
+	 * RT entries will be redundant with those done during execution of the
 	 * original query, but we don't bother to treat that case differently.
 	 *
-	 * NOTE: because planner will destructively alter rtable, we must ensure that
-	 * rule action's rtable is separate and shares no substructure with the
-	 * main rtable.  Hence do a deep copy here.
+	 * NOTE: because planner will destructively alter rtable, we must ensure
+	 * that rule action's rtable is separate and shares no substructure with
+	 * the main rtable.  Hence do a deep copy here.
 	 */
 	sub_action->rtable = list_concat((List *) copyObject(parsetree->rtable),
 									 sub_action->rtable);
@@ -344,8 +345,8 @@ rewriteRuleAction(Query *parsetree,
 	 * don't want the original rtindex to be joined twice, however, so avoid
 	 * keeping it if the rule action mentions it.
 	 *
-	 * As above, the action's jointree must not share substructure with the main
-	 * parsetree's.
+	 * As above, the action's jointree must not share substructure with the
+	 * main parsetree's.
 	 */
 	if (sub_action->commandType != CMD_UTILITY)
 	{
@@ -389,9 +390,9 @@ rewriteRuleAction(Query *parsetree,
 	 * Rewrite new.attribute w/ right hand side of target-list entry for
 	 * appropriate field name in insert/update.
 	 *
-	 * KLUGE ALERT: since ResolveNew returns a mutated copy, we can't just apply
-	 * it to sub_action; we have to remember to update the sublink inside
-	 * rule_action, too.
+	 * KLUGE ALERT: since ResolveNew returns a mutated copy, we can't just
+	 * apply it to sub_action; we have to remember to update the sublink
+	 * inside rule_action, too.
 	 */
 	if ((event == CMD_INSERT || event == CMD_UPDATE) &&
 		sub_action->commandType != CMD_UTILITY)
@@ -532,8 +533,8 @@ rewriteTargetList(Query *parsetree, Relation target_relation)
 			 * Copy all resjunk tlist entries to junk_tlist, and assign them
 			 * resnos above the last real resno.
 			 *
-			 * Typical junk entries include ORDER BY or GROUP BY expressions (are
-			 * these actually possible in an INSERT or UPDATE?), system
+			 * Typical junk entries include ORDER BY or GROUP BY expressions
+			 * (are these actually possible in an INSERT or UPDATE?), system
 			 * attribute references, etc.
 			 */
 
@@ -1561,8 +1562,8 @@ QueryRewrite(Query *parsetree)
 	/*
 	 * Step 3
 	 *
-	 * Determine which, if any, of the resulting queries is supposed to set the
-	 * command-result tag; and update the canSetTag fields accordingly.
+	 * Determine which, if any, of the resulting queries is supposed to set
+	 * the command-result tag; and update the canSetTag fields accordingly.
 	 *
 	 * If the original query is still in the list, it sets the command tag.
 	 * Otherwise, the last INSTEAD query of the same kind as the original is

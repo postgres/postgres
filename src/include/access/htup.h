@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.79 2005/11/20 19:49:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.80 2005/11/22 18:17:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -372,7 +372,7 @@ do { \
  *	 This is the output format of heap_form_tuple and related routines.
  *
  * * Separately allocated tuple: t_data points to a palloc'd chunk that
- *	 is not adjacent to the HeapTupleData.  (This case is deprecated since
+ *	 is not adjacent to the HeapTupleData.	(This case is deprecated since
  *	 it's difficult to tell apart from case #1.  It should be used only in
  *	 limited contexts where the code knows that case #1 will never apply.)
  *

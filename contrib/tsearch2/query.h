@@ -17,7 +17,7 @@ typedef struct ITEM
 	int4		val;
 	/* user-friendly value, must correlate with WordEntry */
 	uint32
-				istrue:1, /* use for ranking in Cover */
+				istrue:1,		/* use for ranking in Cover */
 				length:11,
 				distance:20;
 }	ITEM;

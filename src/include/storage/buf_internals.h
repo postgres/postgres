@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.82 2005/11/17 17:42:02 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.83 2005/11/22 18:17:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -199,7 +199,7 @@ extern BufferDesc *LocalBufferAlloc(Relation reln, BlockNumber blockNum,
 				 bool *foundPtr);
 extern void WriteLocalBuffer(Buffer buffer, bool release);
 extern void DropRelFileNodeLocalBuffers(RelFileNode rnode,
-										BlockNumber firstDelBlock);
+							BlockNumber firstDelBlock);
 extern void AtEOXact_LocalBuffers(bool isCommit);
 
 #endif   /* BUFMGR_INTERNALS_H */

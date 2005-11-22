@@ -22,17 +22,15 @@
 
 #ifdef WIN32
 
-size_t wchar2char( char *to, const wchar_t *from, size_t len );
-size_t char2wchar( wchar_t *to, const char *from, size_t len );
-
-#else /* WIN32 */
+size_t		wchar2char(char *to, const wchar_t *from, size_t len);
+size_t		char2wchar(wchar_t *to, const char *from, size_t len);
+#else							/* WIN32 */
 
 /* correct mbstowcs */
 #define char2wchar mbstowcs
 #define wchar2char wcstombs
+#endif   /* WIN32 */
+#endif   /* defined(HAVE_WCSTOMBS) &&
+								 * defined(HAVE_TOWLOWER) */
 
-#endif /* WIN32 */
- 
-#endif /* defined(HAVE_WCSTOMBS) && defined(HAVE_TOWLOWER) */ 
-
-#endif  /* __TSLOCALE_H__ */
+#endif   /* __TSLOCALE_H__ */

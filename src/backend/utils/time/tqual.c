@@ -32,7 +32,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.91 2005/10/15 02:49:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.92 2005/11/22 18:17:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -941,12 +941,12 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot,
 	 * By here, the inserting transaction has committed - have to check
 	 * when...
 	 *
-	 * Note that the provided snapshot contains only top-level XIDs, so we have
-	 * to convert a subxact XID to its parent for comparison. However, we can
-	 * make first-pass range checks with the given XID, because a subxact with
-	 * XID < xmin has surely also got a parent with XID < xmin, while one with
-	 * XID >= xmax must belong to a parent that was not yet committed at the
-	 * time of this snapshot.
+	 * Note that the provided snapshot contains only top-level XIDs, so we
+	 * have to convert a subxact XID to its parent for comparison. However, we
+	 * can make first-pass range checks with the given XID, because a subxact
+	 * with XID < xmin has surely also got a parent with XID < xmin, while one
+	 * with XID >= xmax must belong to a parent that was not yet committed at
+	 * the time of this snapshot.
 	 */
 	if (TransactionIdFollowsOrEquals(HeapTupleHeaderGetXmin(tuple),
 									 snapshot->xmin))
@@ -1070,8 +1070,8 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin,
 	/*
 	 * Has inserting transaction committed?
 	 *
-	 * If the inserting transaction aborted, then the tuple was never visible to
-	 * any other transaction, so we can delete it immediately.
+	 * If the inserting transaction aborted, then the tuple was never visible
+	 * to any other transaction, so we can delete it immediately.
 	 */
 	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
 	{

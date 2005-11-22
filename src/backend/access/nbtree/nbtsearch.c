@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.96 2005/10/18 01:06:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.97 2005/11/22 18:17:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,10 +164,11 @@ _bt_moveright(Relation rel,
 	 *
 	 * When nextkey = true: move right if the scan key is >= page's high key.
 	 *
-	 * The page could even have split more than once, so scan as far as needed.
+	 * The page could even have split more than once, so scan as far as
+	 * needed.
 	 *
-	 * We also have to move right if we followed a link that brought us to a dead
-	 * page.
+	 * We also have to move right if we followed a link that brought us to a
+	 * dead page.
 	 */
 	cmpval = nextkey ? 0 : 1;
 
@@ -255,8 +256,8 @@ _bt_binsrch(Relation rel,
 	 * For nextkey=false (cmpval=1), the loop invariant is: all slots before
 	 * 'low' are < scan key, all slots at or after 'high' are >= scan key.
 	 *
-	 * For nextkey=true (cmpval=0), the loop invariant is: all slots before 'low'
-	 * are <= scan key, all slots at or after 'high' are > scan key.
+	 * For nextkey=true (cmpval=0), the loop invariant is: all slots before
+	 * 'low' are <= scan key, all slots at or after 'high' are > scan key.
 	 *
 	 * We can fall out when high == low.
 	 */
@@ -282,8 +283,8 @@ _bt_binsrch(Relation rel,
 	 * At this point we have high == low, but be careful: they could point
 	 * past the last slot on the page.
 	 *
-	 * On a leaf page, we always return the first key >= scan key (resp. > scan
-	 * key), which could be the last slot + 1.
+	 * On a leaf page, we always return the first key >= scan key (resp. >
+	 * scan key), which could be the last slot + 1.
 	 */
 	if (P_ISLEAF(opaque))
 		return low;
@@ -350,8 +351,8 @@ _bt_compare(Relation rel,
 	 * you think about how multi-key ordering works, you'll understand why
 	 * this is.
 	 *
-	 * We don't test for violation of this condition here, however.  The initial
-	 * setup for the index scan had better have gotten it right (see
+	 * We don't test for violation of this condition here, however.  The
+	 * initial setup for the index scan had better have gotten it right (see
 	 * _bt_first).
 	 */
 
@@ -692,9 +693,9 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 * where we need to start the scan, and set flag variables to control the
 	 * code below.
 	 *
-	 * If nextkey = false, _bt_search and _bt_binsrch will locate the first item
-	 * >= scan key.  If nextkey = true, they will locate the first item > scan
-	 * key.
+	 * If nextkey = false, _bt_search and _bt_binsrch will locate the first
+	 * item >= scan key.  If nextkey = true, they will locate the first item >
+	 * scan key.
 	 *
 	 * If goback = true, we will then step back one item, while if goback =
 	 * false, we will start the scan on the located item.
@@ -819,9 +820,9 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 * than or equal to the scan key and we know that everything on later
 	 * pages is greater than scan key.
 	 *
-	 * The actually desired starting point is either this item or the prior one,
-	 * or in the end-of-page case it's the first item on the next page or the
-	 * last item on this page.	We apply _bt_step if needed to get to the
+	 * The actually desired starting point is either this item or the prior
+	 * one, or in the end-of-page case it's the first item on the next page or
+	 * the last item on this page.	We apply _bt_step if needed to get to the
 	 * right place.
 	 *
 	 * If _bt_step fails (meaning we fell off the end of the index in one
@@ -1044,9 +1045,9 @@ _bt_walk_left(Relation rel, Buffer buf)
 		 * the original page got deleted and isn't in the sibling chain at all
 		 * anymore, not that its left sibling got split more than four times.
 		 *
-		 * Note that it is correct to test P_ISDELETED not P_IGNORE here, because
-		 * half-dead pages are still in the sibling chain.	Caller must reject
-		 * half-dead pages if wanted.
+		 * Note that it is correct to test P_ISDELETED not P_IGNORE here,
+		 * because half-dead pages are still in the sibling chain.	Caller
+		 * must reject half-dead pages if wanted.
 		 */
 		tries = 0;
 		for (;;)

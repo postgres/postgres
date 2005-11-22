@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.39 2005/11/21 12:49:31 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.40 2005/11/22 18:17:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ static void addClassMember(List **list, OpClassMember *member, bool isProc);
 static void storeOperators(Oid opclassoid, List *operators);
 static void storeProcedures(Oid opclassoid, List *procedures);
 static void AlterOpClassOwner_internal(Relation rel, HeapTuple tuple,
-								  Oid newOwnerId);
+						   Oid newOwnerId);
 
 
 /*
@@ -894,7 +894,7 @@ AlterOpClassOwner_oid(Oid opcOid, Oid newOwnerId)
 	tup = SearchSysCacheCopy(CLAOID,
 							 ObjectIdGetDatum(opcOid),
 							 0, 0, 0);
-	if (!HeapTupleIsValid(tup))		/* shouldn't happen */
+	if (!HeapTupleIsValid(tup)) /* shouldn't happen */
 		elog(ERROR, "cache lookup failed for opclass %u", opcOid);
 
 	AlterOpClassOwner_internal(rel, tup, newOwnerId);
@@ -933,7 +933,7 @@ AlterOpClassOwner(List *name, const char *access_method, Oid newOwnerId)
 
 	if (schemaname)
 	{
-		Oid		namespaceOid;
+		Oid			namespaceOid;
 
 		namespaceOid = LookupExplicitNamespace(schemaname);
 
@@ -950,7 +950,7 @@ AlterOpClassOwner(List *name, const char *access_method, Oid newOwnerId)
 	}
 	else
 	{
-		Oid		opcOid;
+		Oid			opcOid;
 
 		opcOid = OpclassnameGetOpcid(amOid, opcname);
 		if (!OidIsValid(opcOid))

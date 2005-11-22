@@ -1,7 +1,7 @@
 /* ----------
  * pg_lzcompress.c -
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.20 2005/10/15 02:49:29 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.21 2005/11/22 18:17:23 momjian Exp $
  *
  *		This is an implementation of LZ compression for PostgreSQL.
  *		It uses a simple history table and generates 2-3 byte tags
@@ -782,9 +782,9 @@ pglz_get_next_decomp_char_from_lzdata(PGLZ_DecompState *dstate)
 		 * function and a difference occurs early). Otherwise, all the checks,
 		 * needed here, cause too much overhead.
 		 *
-		 * Thus we decompress the entire rest at once into the temporary buffer
-		 * and change the decomp state to return the prepared data from the
-		 * buffer by the more simple calls to
+		 * Thus we decompress the entire rest at once into the temporary
+		 * buffer and change the decomp state to return the prepared data from
+		 * the buffer by the more simple calls to
 		 * pglz_get_next_decomp_char_from_plain().
 		 */
 		if (dstate->cp_out - dstate->temp_buf >= 256)

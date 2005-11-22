@@ -3,15 +3,15 @@
  * timer.c
  *	  Microsoft Windows Win32 Timer Implementation
  *
- *    Limitations of this implementation:
+ *	  Limitations of this implementation:
  *
- *    - Does not support interval timer (value->it_interval)
- *    - Only supports ITIMER_REAL
+ *	  - Does not support interval timer (value->it_interval)
+ *	  - Only supports ITIMER_REAL
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/timer.c,v 1.6 2005/10/25 15:15:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/timer.c,v 1.7 2005/11/22 18:17:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,11 +22,12 @@
 
 
 /* Communication area for inter-thread communication */
-typedef struct timerCA {
+typedef struct timerCA
+{
 	struct itimerval value;
-	HANDLE event;
+	HANDLE		event;
 	CRITICAL_SECTION crit_sec;
-} timerCA;
+}	timerCA;
 
 static timerCA timerCommArea;
 static HANDLE timerThreadHandle = INVALID_HANDLE_VALUE;
@@ -36,7 +37,7 @@ static HANDLE timerThreadHandle = INVALID_HANDLE_VALUE;
 static DWORD WINAPI
 pg_timer_thread(LPVOID param)
 {
-	DWORD waittime;
+	DWORD		waittime;
 
 	Assert(param == NULL);
 
@@ -44,7 +45,7 @@ pg_timer_thread(LPVOID param)
 
 	for (;;)
 	{
-		int r;
+		int			r;
 
 		r = WaitForSingleObjectEx(timerCommArea.event, waittime, FALSE);
 		if (r == WAIT_OBJECT_0)
@@ -53,7 +54,7 @@ pg_timer_thread(LPVOID param)
 			EnterCriticalSection(&timerCommArea.crit_sec);
 			if (timerCommArea.value.it_value.tv_sec == 0 &&
 				timerCommArea.value.it_value.tv_usec == 0)
-				waittime = INFINITE; /* Cancel the interrupt */
+				waittime = INFINITE;	/* Cancel the interrupt */
 			else
 				waittime = timerCommArea.value.it_value.tv_usec / 10 + timerCommArea.value.it_value.tv_sec * 1000;
 			ResetEvent(timerCommArea.event);

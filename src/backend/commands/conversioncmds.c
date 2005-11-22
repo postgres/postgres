@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.25 2005/11/21 12:49:30 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.26 2005/11/22 18:17:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
 #include "utils/syscache.h"
 
 static void AlterConversionOwner_internal(Relation rel, Oid conversionOid,
-									 Oid newOwnerId);
+							  Oid newOwnerId);
 
 /*
  * CREATE CONVERSION
@@ -107,7 +107,7 @@ DropConversionCommand(List *name, DropBehavior behavior, bool missing_ok)
 	conversionOid = FindConversionByName(name);
 	if (!OidIsValid(conversionOid))
 	{
-		if (! missing_ok)
+		if (!missing_ok)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -117,7 +117,7 @@ DropConversionCommand(List *name, DropBehavior behavior, bool missing_ok)
 		else
 		{
 			ereport(NOTICE,
-					 (errmsg("conversion \"%s\" does not exist, skipping",
+					(errmsg("conversion \"%s\" does not exist, skipping",
 							NameListToString(name))));
 		}
 
@@ -218,7 +218,7 @@ AlterConversionOwner_oid(Oid conversionOid, Oid newOwnerId)
 	Relation	rel;
 
 	rel = heap_open(ConversionRelationId, RowExclusiveLock);
-	
+
 	AlterConversionOwner_internal(rel, conversionOid, newOwnerId);
 
 	heap_close(rel, NoLock);
@@ -234,7 +234,7 @@ static void
 AlterConversionOwner_internal(Relation rel, Oid conversionOid, Oid newOwnerId)
 {
 	Form_pg_conversion convForm;
-	HeapTuple		tup;
+	HeapTuple	tup;
 
 	Assert(RelationGetRelid(rel) == ConversionRelationId);
 

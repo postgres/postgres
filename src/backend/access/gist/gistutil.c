@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.8 2005/11/06 22:39:20 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.9 2005/11/22 18:17:05 momjian Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -877,16 +877,17 @@ gistcheckpage(Relation rel, Buffer buf)
 	Page		page = BufferGetPage(buf);
 
 	/*
-	 * ReadBuffer verifies that every newly-read page passes PageHeaderIsValid,
-	 * which means it either contains a reasonably sane page header or is
-	 * all-zero.  We have to defend against the all-zero case, however.
+	 * ReadBuffer verifies that every newly-read page passes
+	 * PageHeaderIsValid, which means it either contains a reasonably sane
+	 * page header or is all-zero.	We have to defend against the all-zero
+	 * case, however.
 	 */
 	if (PageIsNew(page))
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
-				 errmsg("index \"%s\" contains unexpected zero page at block %u",
-						RelationGetRelationName(rel),
-						BufferGetBlockNumber(buf)),
+			 errmsg("index \"%s\" contains unexpected zero page at block %u",
+					RelationGetRelationName(rel),
+					BufferGetBlockNumber(buf)),
 				 errhint("Please REINDEX it.")));
 
 	/*
@@ -925,6 +926,7 @@ gistNewBuffer(Relation r)
 			break;				/* nothing left in FSM */
 
 		buffer = ReadBuffer(r, blkno);
+
 		/*
 		 * We have to guard against the possibility that someone else already
 		 * recycled this page; the buffer may be locked if so.

@@ -36,7 +36,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/typcache.c,v 1.15 2005/10/15 02:49:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/typcache.c,v 1.16 2005/11/22 18:17:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -238,9 +238,9 @@ lookup_type_cache(Oid type_id, int flags)
 	/*
 	 * Set up fmgr lookup info as requested
 	 *
-	 * Note: we tell fmgr the finfo structures live in CacheMemoryContext, which
-	 * is not quite right (they're really in DynaHashContext) but this will do
-	 * for our purposes.
+	 * Note: we tell fmgr the finfo structures live in CacheMemoryContext,
+	 * which is not quite right (they're really in DynaHashContext) but this
+	 * will do for our purposes.
 	 */
 	if ((flags & TYPECACHE_EQ_OPR_FINFO) &&
 		typentry->eq_opr_finfo.fn_oid == InvalidOid &&
@@ -319,8 +319,8 @@ lookup_default_opclass(Oid type_id, Oid am_id)
 	 * require the user to specify which one he wants.	If we find more than
 	 * one exact match, then someone put bogus entries in pg_opclass.
 	 *
-	 * This is the same logic as GetDefaultOpClass() in indexcmds.c, except that
-	 * we consider all opclasses, regardless of the current search path.
+	 * This is the same logic as GetDefaultOpClass() in indexcmds.c, except
+	 * that we consider all opclasses, regardless of the current search path.
 	 */
 	rel = heap_open(OperatorClassRelationId, AccessShareLock);
 

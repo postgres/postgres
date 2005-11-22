@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/signal.c,v 1.14 2005/10/25 15:15:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/signal.c,v 1.15 2005/11/22 18:17:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,10 +22,10 @@
  * pg_signal_mask is only changed by main thread so shouldn't need it.
  */
 volatile int pg_signal_queue;
-int		pg_signal_mask;
+int			pg_signal_mask;
 
-HANDLE	pgwin32_signal_event;
-HANDLE	pgwin32_initial_signal_pipe = INVALID_HANDLE_VALUE;
+HANDLE		pgwin32_signal_event;
+HANDLE		pgwin32_initial_signal_pipe = INVALID_HANDLE_VALUE;
 
 /*
  * pg_signal_crit_sec is used to protect only pg_signal_queue. That is the only

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.159 2005/11/05 03:04:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.160 2005/11/22 18:17:21 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -322,10 +322,10 @@ LockMethodTableInit(const char *tabName,
 	 * allocate a non-shared hash table for LOCALLOCK structs.	This is used
 	 * to store lock counts and resource owner information.
 	 *
-	 * The non-shared table could already exist in this process (this occurs when
-	 * the postmaster is recreating shared memory after a backend crash). If
-	 * so, delete and recreate it.	(We could simply leave it, since it ought
-	 * to be empty in the postmaster, but for safety let's zap it.)
+	 * The non-shared table could already exist in this process (this occurs
+	 * when the postmaster is recreating shared memory after a backend crash).
+	 * If so, delete and recreate it.  (We could simply leave it, since it
+	 * ought to be empty in the postmaster, but for safety let's zap it.)
 	 */
 	if (LockMethodLocalHash[lockmethodid])
 		hash_destroy(LockMethodLocalHash[lockmethodid]);
@@ -534,8 +534,8 @@ LockAcquire(LOCKMETHODID lockmethodid,
 	/*
 	 * Find or create a lock with this tag.
 	 *
-	 * Note: if the locallock object already existed, it might have a pointer to
-	 * the lock already ... but we probably should not assume that that
+	 * Note: if the locallock object already existed, it might have a pointer
+	 * to the lock already ... but we probably should not assume that that
 	 * pointer is valid, since a lock object with no locks can go away
 	 * anytime.
 	 */
@@ -818,10 +818,10 @@ LockCheckConflicts(LockMethod lockMethodTable,
 	 * first check for global conflicts: If no locks conflict with my request,
 	 * then I get the lock.
 	 *
-	 * Checking for conflict: lock->grantMask represents the types of currently
-	 * held locks.	conflictTable[lockmode] has a bit set for each type of
-	 * lock that conflicts with request.   Bitwise compare tells if there is a
-	 * conflict.
+	 * Checking for conflict: lock->grantMask represents the types of
+	 * currently held locks.  conflictTable[lockmode] has a bit set for each
+	 * type of lock that conflicts with request.   Bitwise compare tells if
+	 * there is a conflict.
 	 */
 	if (!(lockMethodTable->conflictTab[lockmode] & lock->grantMask))
 	{
@@ -1875,8 +1875,8 @@ LockShmemSize(void)
 	 * Note we count only one pair of hash tables, since the userlocks table
 	 * actually overlays the main one.
 	 *
-	 * Since the lockHash entry count above is only an estimate, add 10% safety
-	 * margin.
+	 * Since the lockHash entry count above is only an estimate, add 10%
+	 * safety margin.
 	 */
 	size = add_size(size, size / 10);
 

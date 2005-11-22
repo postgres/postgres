@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.73 2005/10/15 02:49:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.74 2005/11/22 18:17:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,8 +125,8 @@ add_equijoined_keys(PlannerInfo *root, RestrictInfo *restrictinfo)
 	 * structure.  If we find both of them in the same equivalence set to
 	 * start with, we can quit immediately.
 	 *
-	 * This is a standard UNION-FIND problem, for which there exist better data
-	 * structures than simple lists.  If this code ever proves to be a
+	 * This is a standard UNION-FIND problem, for which there exist better
+	 * data structures than simple lists.  If this code ever proves to be a
 	 * bottleneck then it could be sped up --- but for now, simple is
 	 * beautiful.
 	 */
@@ -255,9 +255,9 @@ generate_implied_equalities(PlannerInfo *root)
 		 * Match each item in the set with all that appear after it (it's
 		 * sufficient to generate A=B, need not process B=A too).
 		 *
-		 * A set containing only two items cannot imply any equalities beyond the
-		 * one that created the set, so we can skip this processing in that
-		 * case.
+		 * A set containing only two items cannot imply any equalities beyond
+		 * the one that created the set, so we can skip this processing in
+		 * that case.
 		 */
 		if (nitems >= 3)
 		{
@@ -516,12 +516,12 @@ sub_generate_join_implications(PlannerInfo *root,
 			 * the join clause, since both were automatically generated in the
 			 * cases we care about.
 			 *
-			 * XXX currently this may fail to match in cross-type cases because
-			 * the COALESCE will contain typecast operations while the join
-			 * clause may not (if there is a cross-type mergejoin operator
-			 * available for the two column types). Is it OK to strip implicit
-			 * coercions from the COALESCE arguments?  What of the sortops in
-			 * such cases?
+			 * XXX currently this may fail to match in cross-type cases
+			 * because the COALESCE will contain typecast operations while the
+			 * join clause may not (if there is a cross-type mergejoin
+			 * operator available for the two column types). Is it OK to strip
+			 * implicit coercions from the COALESCE arguments?	What of the
+			 * sortops in such cases?
 			 */
 			if (equal(leftop, cfirst) &&
 				equal(rightop, csecond) &&
@@ -1151,8 +1151,8 @@ build_join_pathkeys(PlannerInfo *root,
 	 * here!  The inner-rel vars we used to need to add are *already* part of
 	 * the outer pathkey!
 	 *
-	 * We do, however, need to truncate the pathkeys list, since it may contain
-	 * pathkeys that were useful for forming this joinrel but are
+	 * We do, however, need to truncate the pathkeys list, since it may
+	 * contain pathkeys that were useful for forming this joinrel but are
 	 * uninteresting to higher levels.
 	 */
 	return truncate_useless_pathkeys(root, joinrel, outer_pathkeys);
@@ -1299,8 +1299,8 @@ find_mergeclauses_for_pathkeys(PlannerInfo *root,
 		 * any redundant mergeclauses from the input list. However, in
 		 * outer-join scenarios there might be multiple matches. An example is
 		 *
-		 * select * from a full join b on a.v1 = b.v1 and a.v2 = b.v2 and a.v1 =
-		 * b.v2;
+		 * select * from a full join b on a.v1 = b.v1 and a.v2 = b.v2 and a.v1
+		 * = b.v2;
 		 *
 		 * Given the pathkeys ((a.v1), (a.v2)) it is okay to return all three
 		 * clauses (in the order a.v1=b.v1, a.v1=b.v2, a.v2=b.v2) and indeed

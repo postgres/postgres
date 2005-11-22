@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.84 2005/11/21 12:49:31 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.85 2005/11/22 18:17:09 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -425,7 +425,7 @@ RemoveType(List *names, DropBehavior behavior, bool missing_ok)
 		else
 		{
 			ereport(NOTICE,
-					 (errmsg("type \"%s\" does not exist, skipping",
+					(errmsg("type \"%s\" does not exist, skipping",
 							TypeNameToString(typename))));
 		}
 
@@ -820,7 +820,7 @@ RemoveDomain(List *names, DropBehavior behavior, bool missing_ok)
 		else
 		{
 			ereport(NOTICE,
-					 (errmsg("type \"%s\" does not exist, skipping",
+					(errmsg("type \"%s\" does not exist, skipping",
 							TypeNameToString(typename))));
 		}
 
@@ -879,8 +879,8 @@ findTypeInputFunction(List *procname, Oid typeOid)
 	 * Input functions can take a single argument of type CSTRING, or three
 	 * arguments (string, typioparam OID, typmod).
 	 *
-	 * For backwards compatibility we allow OPAQUE in place of CSTRING; if we see
-	 * this, we issue a warning and fix up the pg_proc entry.
+	 * For backwards compatibility we allow OPAQUE in place of CSTRING; if we
+	 * see this, we issue a warning and fix up the pg_proc entry.
 	 */
 	argList[0] = CSTRINGOID;
 
@@ -1864,8 +1864,8 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	/*
 	 * Deparse it to produce text for consrc.
 	 *
-	 * Since VARNOs aren't allowed in domain constraints, relation context isn't
-	 * required as anything other than a shell.
+	 * Since VARNOs aren't allowed in domain constraints, relation context
+	 * isn't required as anything other than a shell.
 	 */
 	ccsrc = deparse_expression(expr,
 							   deparse_context_for(domainName,

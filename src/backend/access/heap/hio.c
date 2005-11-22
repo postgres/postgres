@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/hio.c,v 1.58 2005/10/15 02:49:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/hio.c,v 1.59 2005/11/22 18:17:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -296,11 +296,11 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	/*
 	 * Remember the new page as our target for future insertions.
 	 *
-	 * XXX should we enter the new page into the free space map immediately, or
-	 * just keep it for this backend's exclusive use in the short run (until
-	 * VACUUM sees it)?  Seems to depend on whether you expect the current
-	 * backend to make more insertions or not, which is probably a good bet
-	 * most of the time.  So for now, don't add it to FSM yet.
+	 * XXX should we enter the new page into the free space map immediately,
+	 * or just keep it for this backend's exclusive use in the short run
+	 * (until VACUUM sees it)?	Seems to depend on whether you expect the
+	 * current backend to make more insertions or not, which is probably a
+	 * good bet most of the time.  So for now, don't add it to FSM yet.
 	 */
 	relation->rd_targblock = BufferGetBlockNumber(buffer);
 

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/catcache.h,v 1.56 2005/10/15 02:49:46 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/catcache.h,v 1.57 2005/11/22 18:17:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,8 +98,8 @@ typedef struct catctup
 	 * refcount must go to zero, too; also, remember to mark the list dead at
 	 * the same time the tuple is marked.)
 	 *
-	 * A negative cache entry is an assertion that there is no tuple matching a
-	 * particular key.	This is just as useful as a normal entry so far as
+	 * A negative cache entry is an assertion that there is no tuple matching
+	 * a particular key.  This is just as useful as a normal entry so far as
 	 * avoiding catalog searches is concerned.	Management of positive and
 	 * negative entries is identical.
 	 */
@@ -125,14 +125,14 @@ typedef struct catclist
 	 * table rows satisfying the partial key.  (Note: none of these will be
 	 * negative cache entries.)
 	 *
-	 * A CatCList is only a member of a per-cache list; we do not do separate LRU
-	 * management for CatCLists.  See CatalogCacheCleanup() for the details of
-	 * the management algorithm.
+	 * A CatCList is only a member of a per-cache list; we do not do separate
+	 * LRU management for CatCLists.  See CatalogCacheCleanup() for the
+	 * details of the management algorithm.
 	 *
-	 * A list marked "dead" must not be returned by subsequent searches. However,
-	 * it won't be physically deleted from the cache until its refcount goes
-	 * to zero.  (A list should be marked dead if any of its member entries
-	 * are dead.)
+	 * A list marked "dead" must not be returned by subsequent searches.
+	 * However, it won't be physically deleted from the cache until its
+	 * refcount goes to zero.  (A list should be marked dead if any of its
+	 * member entries are dead.)
 	 *
 	 * If "ordered" is true then the member tuples appear in the order of the
 	 * cache's underlying index.  This will be true in normal operation, but

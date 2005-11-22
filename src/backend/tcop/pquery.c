@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.97 2005/11/03 21:35:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.98 2005/11/22 18:17:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -757,8 +757,8 @@ PortalRunSelect(Portal portal,
 
 	/*
 	 * Force the queryDesc destination to the right thing.	This supports
-	 * MOVE, for example, which will pass in dest = DestNone.  This is okay
-	 * to change as long as we do it on every fetch.  (The Executor must not
+	 * MOVE, for example, which will pass in dest = DestNone.  This is okay to
+	 * change as long as we do it on every fetch.  (The Executor must not
 	 * assume that dest never changes.)
 	 */
 	if (queryDesc)
@@ -962,8 +962,8 @@ PortalRunUtility(Portal portal, Query *query,
 	 * say, it has to update an index with expressions that invoke
 	 * user-defined functions, then it had better have a snapshot.
 	 *
-	 * Note we assume that caller will take care of restoring ActiveSnapshot on
-	 * exit/error.
+	 * Note we assume that caller will take care of restoring ActiveSnapshot
+	 * on exit/error.
 	 */
 	if (!(IsA(utilityStmt, TransactionStmt) ||
 		  IsA(utilityStmt, LockStmt) ||
@@ -1015,11 +1015,11 @@ PortalRunMulti(Portal portal,
 	ListCell   *planlist_item;
 
 	/*
-	 * If the destination is DestRemoteExecute, change to DestNone.  The reason
-	 * is that the client won't be expecting any tuples, and indeed has no way
-	 * to know what they are, since there is no provision for Describe to send
-	 * a RowDescription message when this portal execution strategy is in
-	 * effect.	This presently will only affect SELECT commands added to
+	 * If the destination is DestRemoteExecute, change to DestNone.  The
+	 * reason is that the client won't be expecting any tuples, and indeed has
+	 * no way to know what they are, since there is no provision for Describe
+	 * to send a RowDescription message when this portal execution strategy is
+	 * in effect.  This presently will only affect SELECT commands added to
 	 * non-SELECT queries by rewrite rules: such commands will be executed,
 	 * but the results will be discarded unless you use "simple Query"
 	 * protocol.
@@ -1101,9 +1101,9 @@ PortalRunMulti(Portal portal,
 	 * If a command completion tag was supplied, use it.  Otherwise use the
 	 * portal's commandTag as the default completion tag.
 	 *
-	 * Exception: clients will expect INSERT/UPDATE/DELETE tags to have counts,
-	 * so fake something up if necessary.  (This could happen if the original
-	 * query was replaced by a DO INSTEAD rule.)
+	 * Exception: clients will expect INSERT/UPDATE/DELETE tags to have
+	 * counts, so fake something up if necessary.  (This could happen if the
+	 * original query was replaced by a DO INSTEAD rule.)
 	 */
 	if (completionTag && completionTag[0] == '\0')
 	{

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.85 2005/10/15 02:49:16 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.86 2005/11/22 18:17:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -403,9 +403,9 @@ ExecMayReturnRawTuples(PlanState *node)
 	 * but just pass up input tuples, we have to recursively examine the input
 	 * plan node.
 	 *
-	 * Note: Hash and Material are listed here because they sometimes return an
-	 * original input tuple, not a copy.  But Sort and SetOp never return an
-	 * original tuple, so they can be treated like projecting nodes.
+	 * Note: Hash and Material are listed here because they sometimes return
+	 * an original input tuple, not a copy.  But Sort and SetOp never return
+	 * an original tuple, so they can be treated like projecting nodes.
 	 */
 	switch (nodeTag(node))
 	{

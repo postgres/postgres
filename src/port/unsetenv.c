@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/unsetenv.c,v 1.5 2005/10/15 02:49:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/unsetenv.c,v 1.6 2005/11/22 18:17:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,8 +33,8 @@ unsetenv(const char *name)
 	 * presented string.  This method fails on such platforms.	Hopefully all
 	 * such platforms have unsetenv() and thus won't be using this hack.
 	 *
-	 * Note that repeatedly setting and unsetting a var using this code will leak
-	 * memory.
+	 * Note that repeatedly setting and unsetting a var using this code will
+	 * leak memory.
 	 */
 
 	envstr = (char *) malloc(strlen(name) + 2);

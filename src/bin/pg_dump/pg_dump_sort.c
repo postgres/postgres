@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.11 2005/10/15 02:49:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.12 2005/11/22 18:17:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -305,10 +305,10 @@ TopoSort(DumpableObject **objs,
 	 * Now initialize the heap of items-ready-to-output by filling it with the
 	 * indexes of items that already have beforeConstraints[id] == 0.
 	 *
-	 * The essential property of a heap is heap[(j-1)/2] >= heap[j] for each j in
-	 * the range 1..heapLength-1 (note we are using 0-based subscripts here,
-	 * while the discussion in Knuth assumes 1-based subscripts). So, if we
-	 * simply enter the indexes into pendingHeap[] in decreasing order, we
+	 * The essential property of a heap is heap[(j-1)/2] >= heap[j] for each j
+	 * in the range 1..heapLength-1 (note we are using 0-based subscripts
+	 * here, while the discussion in Knuth assumes 1-based subscripts). So, if
+	 * we simply enter the indexes into pendingHeap[] in decreasing order, we
 	 * a-fortiori have the heap invariant satisfied at completion of this
 	 * loop, and don't need to do any sift-up comparisons.
 	 */
@@ -469,8 +469,8 @@ findDependencyLoops(DumpableObject **objs, int nObjs, int totObjs)
 	 * representation.	After we identify and process a loop, we can add it to
 	 * the initial part of the workspace just by moving the boundary pointer.
 	 *
-	 * When we determine that an object is not part of any interesting loop, we
-	 * also add it to the initial part of the workspace.  This is not
+	 * When we determine that an object is not part of any interesting loop,
+	 * we also add it to the initial part of the workspace.  This is not
 	 * necessary for correctness, but saves later invocations of findLoop()
 	 * from uselessly chasing references to such an object.
 	 *

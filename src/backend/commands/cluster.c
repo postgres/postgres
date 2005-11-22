@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.141 2005/10/29 00:31:51 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.142 2005/11/22 18:17:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,8 +177,8 @@ cluster(ClusterStmt *stmt)
 		/*
 		 * Create special memory context for cross-transaction storage.
 		 *
-		 * Since it is a child of PortalContext, it will go away even in case of
-		 * error.
+		 * Since it is a child of PortalContext, it will go away even in case
+		 * of error.
 		 */
 		cluster_context = AllocSetContextCreate(PortalContext,
 												"Cluster",
@@ -242,9 +242,9 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 	 * Since we may open a new transaction for each relation, we have to check
 	 * that the relation still is what we think it is.
 	 *
-	 * If this is a single-transaction CLUSTER, we can skip these tests. We *must*
-	 * skip the one on indisclustered since it would reject an attempt to
-	 * cluster a not-previously-clustered index.
+	 * If this is a single-transaction CLUSTER, we can skip these tests. We
+	 * *must* skip the one on indisclustered since it would reject an attempt
+	 * to cluster a not-previously-clustered index.
 	 */
 	if (recheck)
 	{
@@ -360,9 +360,9 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck)
 								RelationGetRelationName(OldIndex)),
 						 recheck
 						 ? errhint("You may be able to work around this by marking column \"%s\" NOT NULL, or use ALTER TABLE ... SET WITHOUT CLUSTER to remove the cluster specification from the table.",
-								   NameStr(OldHeap->rd_att->attrs[colno - 1]->attname))
+						 NameStr(OldHeap->rd_att->attrs[colno - 1]->attname))
 						 : errhint("You may be able to work around this by marking column \"%s\" NOT NULL.",
-								   NameStr(OldHeap->rd_att->attrs[colno - 1]->attname))));
+					  NameStr(OldHeap->rd_att->attrs[colno - 1]->attname))));
 		}
 		else if (colno < 0)
 		{
@@ -651,12 +651,13 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 		 * We cannot simply pass the tuple to heap_insert(), for several
 		 * reasons:
 		 *
-		 * 1. heap_insert() will overwrite the commit-status fields of the tuple
-		 * it's handed.  This would trash the source relation, which is bad
-		 * news if we abort later on.  (This was a bug in releases thru 7.0)
+		 * 1. heap_insert() will overwrite the commit-status fields of the
+		 * tuple it's handed.  This would trash the source relation, which is
+		 * bad news if we abort later on.  (This was a bug in releases thru
+		 * 7.0)
 		 *
-		 * 2. We'd like to squeeze out the values of any dropped columns, both to
-		 * save space and to ensure we have no corner-case failures. (It's
+		 * 2. We'd like to squeeze out the values of any dropped columns, both
+		 * to save space and to ensure we have no corner-case failures. (It's
 		 * possible for example that the new table hasn't got a TOAST table
 		 * and so is unable to store any large values of dropped cols.)
 		 *
@@ -788,10 +789,10 @@ swap_relation_files(Oid r1, Oid r2)
 	 * happen in CLUSTER if there were dropped columns in the old table, and
 	 * in ALTER TABLE when adding or changing type of columns.
 	 *
-	 * NOTE: at present, a TOAST table's only dependency is the one on its owning
-	 * table.  If more are ever created, we'd need to use something more
-	 * selective than deleteDependencyRecordsFor() to get rid of only the link
-	 * we want.
+	 * NOTE: at present, a TOAST table's only dependency is the one on its
+	 * owning table.  If more are ever created, we'd need to use something
+	 * more selective than deleteDependencyRecordsFor() to get rid of only the
+	 * link we want.
 	 */
 	if (relform1->reltoastrelid || relform2->reltoastrelid)
 	{

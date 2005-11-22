@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeUnique.c,v 1.48 2005/10/15 02:49:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeUnique.c,v 1.49 2005/11/22 18:17:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,10 +56,10 @@ ExecUnique(UniqueState *node)
 	 * now loop, returning only non-duplicate tuples. We assume that the
 	 * tuples arrive in sorted order so we can detect duplicates easily.
 	 *
-	 * We return the first tuple from each group of duplicates (or the last tuple
-	 * of each group, when moving backwards).  At either end of the subplan,
-	 * clear the result slot so that we correctly return the first/last tuple
-	 * when reversing direction.
+	 * We return the first tuple from each group of duplicates (or the last
+	 * tuple of each group, when moving backwards).  At either end of the
+	 * subplan, clear the result slot so that we correctly return the
+	 * first/last tuple when reversing direction.
 	 */
 	for (;;)
 	{

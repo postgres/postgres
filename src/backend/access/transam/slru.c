@@ -15,7 +15,7 @@
  *
  * We use a control LWLock to protect the shared data structures, plus
  * per-buffer LWLocks that synchronize I/O for each buffer.  The control lock
- * must be held to examine or modify any shared state.  A process that is
+ * must be held to examine or modify any shared state.	A process that is
  * reading in or writing out a page buffer does not hold the control lock,
  * only the per-buffer lock for the buffer it is working on.
  *
@@ -37,7 +37,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.30 2005/11/05 21:19:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.31 2005/11/22 18:17:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,13 +236,14 @@ SimpleLruWaitIO(SlruCtl ctl, int slotno)
 	LWLockAcquire(shared->buffer_locks[slotno], LW_SHARED);
 	LWLockRelease(shared->buffer_locks[slotno]);
 	LWLockAcquire(shared->ControlLock, LW_EXCLUSIVE);
+
 	/*
 	 * If the slot is still in an io-in-progress state, then either someone
 	 * already started a new I/O on the slot, or a previous I/O failed and
-	 * neglected to reset the page state.  That shouldn't happen, really,
-	 * but it seems worth a few extra cycles to check and recover from it.
-	 * We can cheaply test for failure by seeing if the buffer lock is still
-	 * held (we assume that transaction abort would release the lock).
+	 * neglected to reset the page state.  That shouldn't happen, really, but
+	 * it seems worth a few extra cycles to check and recover from it. We can
+	 * cheaply test for failure by seeing if the buffer lock is still held (we
+	 * assume that transaction abort would release the lock).
 	 */
 	if (shared->page_status[slotno] == SLRU_PAGE_READ_IN_PROGRESS ||
 		shared->page_status[slotno] == SLRU_PAGE_WRITE_IN_PROGRESS)
@@ -252,7 +253,8 @@ SimpleLruWaitIO(SlruCtl ctl, int slotno)
 			/* indeed, the I/O must have failed */
 			if (shared->page_status[slotno] == SLRU_PAGE_READ_IN_PROGRESS)
 				shared->page_status[slotno] = SLRU_PAGE_EMPTY;
-			else				/* write_in_progress */
+			else
+				/* write_in_progress */
 			{
 				shared->page_status[slotno] = SLRU_PAGE_VALID;
 				shared->page_dirty[slotno] = true;
@@ -375,8 +377,8 @@ SimpleLruWritePage(SlruCtl ctl, int slotno, SlruFlush fdata)
 	}
 
 	/*
-	 * Do nothing if page is not dirty, or if buffer no longer contains
-	 * the same page we were called for.
+	 * Do nothing if page is not dirty, or if buffer no longer contains the
+	 * same page we were called for.
 	 */
 	if (!shared->page_dirty[slotno] ||
 		shared->page_status[slotno] != SLRU_PAGE_VALID ||
@@ -384,8 +386,8 @@ SimpleLruWritePage(SlruCtl ctl, int slotno, SlruFlush fdata)
 		return;
 
 	/*
-	 * Mark the slot write-busy, and clear the dirtybit.  After this point,
-	 * a transaction status update on this page will mark it dirty again.
+	 * Mark the slot write-busy, and clear the dirtybit.  After this point, a
+	 * transaction status update on this page will mark it dirty again.
 	 */
 	shared->page_status[slotno] = SLRU_PAGE_WRITE_IN_PROGRESS;
 	shared->page_dirty[slotno] = false;
@@ -902,7 +904,7 @@ restart:;
 		/*
 		 * Hmm, we have (or may have) I/O operations acting on the page, so
 		 * we've got to wait for them to finish and then start again. This is
-		 * the same logic as in SlruSelectLRUPage.  (XXX if page is dirty,
+		 * the same logic as in SlruSelectLRUPage.	(XXX if page is dirty,
 		 * wouldn't it be OK to just discard it without writing it?  For now,
 		 * keep the logic the same as it was.)
 		 */

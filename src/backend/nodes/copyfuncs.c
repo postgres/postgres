@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.320 2005/11/22 15:24:17 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.321 2005/11/22 18:17:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2597,18 +2597,18 @@ _copyDeallocateStmt(DeallocateStmt *from)
 }
 
 static DropOwnedStmt *
-_copyDropOwnedStmt(DropOwnedStmt *from)
+_copyDropOwnedStmt(DropOwnedStmt * from)
 {
 	DropOwnedStmt *newnode = makeNode(DropOwnedStmt);
 
 	COPY_NODE_FIELD(roles);
 	COPY_SCALAR_FIELD(behavior);
-	
+
 	return newnode;
 }
 
 static ReassignOwnedStmt *
-_copyReassignOwnedStmt(ReassignOwnedStmt *from)
+_copyReassignOwnedStmt(ReassignOwnedStmt * from)
 {
 	ReassignOwnedStmt *newnode = makeNode(ReassignOwnedStmt);
 

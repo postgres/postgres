@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.101 2005/10/20 15:59:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.102 2005/11/22 18:17:22 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2005, PostgreSQL Global Development Group
@@ -1326,8 +1326,8 @@ DCH_processor(FormatNode *node, char *inout, bool is_to_char,
 			 * The input string is shorter than format picture, so it's good
 			 * time to break this loop...
 			 *
-			 * Note: this isn't relevant for TO_CHAR mode, beacuse it use 'inout'
-			 * allocated by format picture length.
+			 * Note: this isn't relevant for TO_CHAR mode, beacuse it use
+			 * 'inout' allocated by format picture length.
 			 */
 			break;
 
@@ -3752,8 +3752,8 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 	 * We need sign detection because determine exact position of post-sign is
 	 * difficult:
 	 *
-	 * FM9999.9999999S	   -> 123.001- 9.9S			   -> .5- FM9.999999MI
-	 * -> 5.01-
+	 * FM9999.9999999S	   -> 123.001- 9.9S			   -> .5- FM9.999999MI ->
+	 * 5.01-
 	 */
 	if (*Np->number == ' ' && Np->read_pre + Np->read_post > 0)
 	{
@@ -3797,8 +3797,9 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 		 *
 		 * FM9.999999MI			   -> 5.01-
 		 *
-		 * if (.... && IS_LSIGN(Np->Num)==FALSE) prevents read wrong formats like
-		 * to_number('1 -', '9S') where sign is not anchored to last number.
+		 * if (.... && IS_LSIGN(Np->Num)==FALSE) prevents read wrong formats
+		 * like to_number('1 -', '9S') where sign is not anchored to last
+		 * number.
 		 */
 		else if (isread == FALSE && IS_LSIGN(Np->Num) == FALSE &&
 				 (IS_PLUS(Np->Num) || IS_MINUS(Np->Num)))

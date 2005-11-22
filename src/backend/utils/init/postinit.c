@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.158 2005/10/15 02:49:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.159 2005/11/22 18:17:26 momjian Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -325,8 +325,8 @@ InitPostgres(const char *dbname, const char *username)
 	/*
 	 * Set up the global variables holding database id and path.
 	 *
-	 * We take a shortcut in the bootstrap case, otherwise we have to look up the
-	 * db name in pg_database.
+	 * We take a shortcut in the bootstrap case, otherwise we have to look up
+	 * the db name in pg_database.
 	 */
 	if (bootstrap)
 	{

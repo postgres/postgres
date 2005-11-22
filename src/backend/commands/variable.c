@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.114 2005/10/15 02:49:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.115 2005/11/22 18:17:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,8 +134,8 @@ assign_datestyle(const char *value, bool doit, GucSource source)
 			 * Easiest way to get the current DEFAULT state is to fetch the
 			 * DEFAULT string from guc.c and recursively parse it.
 			 *
-			 * We can't simply "return assign_datestyle(...)" because we need to
-			 * handle constructs like "DEFAULT, ISO".
+			 * We can't simply "return assign_datestyle(...)" because we need
+			 * to handle constructs like "DEFAULT, ISO".
 			 */
 			int			saveDateStyle = DateStyle;
 			int			saveDateOrder = DateOrder;
@@ -339,8 +339,8 @@ assign_timezone(const char *value, bool doit, GucSource source)
 			 * timezone setting, we will return that name rather than UNKNOWN
 			 * as the canonical spelling.
 			 *
-			 * During GUC initialization, since the timezone library isn't set up
-			 * yet, pg_get_timezone_name will return NULL and we will leave
+			 * During GUC initialization, since the timezone library isn't set
+			 * up yet, pg_get_timezone_name will return NULL and we will leave
 			 * the setting as UNKNOWN.	If this isn't overridden from the
 			 * config file then pg_timezone_initialize() will eventually
 			 * select a default value from the environment.

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.37 2005/11/21 12:49:31 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.38 2005/11/22 18:17:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,7 +175,7 @@ RemoveSchema(List *names, DropBehavior behavior, bool missing_ok)
 		else
 		{
 			ereport(NOTICE,
-					 (errmsg("schema \"%s\" does not exist, skipping", 
+					(errmsg("schema \"%s\" does not exist, skipping",
 							namespaceName)));
 		}
 

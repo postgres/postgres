@@ -36,7 +36,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.24 2005/11/20 19:49:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.25 2005/11/22 18:17:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,17 +115,17 @@ struct Tuplestorestate
 	/*
 	 * These variables are used to keep track of the current position.
 	 *
-	 * In state WRITEFILE, the current file seek position is the write point, and
-	 * the read position is remembered in readpos_xxx; in state READFILE, the
-	 * current file seek position is the read point, and the write position is
-	 * remembered in writepos_xxx.	(The write position is the same as EOF,
-	 * but since BufFileSeek doesn't currently implement SEEK_END, we have to
-	 * remember it explicitly.)
+	 * In state WRITEFILE, the current file seek position is the write point,
+	 * and the read position is remembered in readpos_xxx; in state READFILE,
+	 * the current file seek position is the read point, and the write
+	 * position is remembered in writepos_xxx.	(The write position is the
+	 * same as EOF, but since BufFileSeek doesn't currently implement
+	 * SEEK_END, we have to remember it explicitly.)
 	 *
-	 * Special case: if we are in WRITEFILE state and eof_reached is true, then
-	 * the read position is implicitly equal to the write position (and hence
-	 * to the file seek position); this way we need not update the readpos_xxx
-	 * variables on each write.
+	 * Special case: if we are in WRITEFILE state and eof_reached is true,
+	 * then the read position is implicitly equal to the write position (and
+	 * hence to the file seek position); this way we need not update the
+	 * readpos_xxx variables on each write.
 	 */
 	bool		eof_reached;	/* read reached EOF (always valid) */
 	int			current;		/* next array index (valid if INMEM) */
@@ -454,11 +454,11 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 			/*
 			 * Backward.
 			 *
-			 * if all tuples are fetched already then we return last tuple, else
-			 * - tuple before last returned.
+			 * if all tuples are fetched already then we return last tuple,
+			 * else - tuple before last returned.
 			 *
-			 * Back up to fetch previously-returned tuple's ending length word.
-			 * If seek fails, assume we are at start of file.
+			 * Back up to fetch previously-returned tuple's ending length
+			 * word. If seek fails, assume we are at start of file.
 			 */
 			if (BufFileSeek(state->myfile, 0, -(long) sizeof(unsigned int),
 							SEEK_CUR) != 0)

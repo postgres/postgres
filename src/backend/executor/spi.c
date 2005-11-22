@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.144 2005/11/03 17:11:36 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.145 2005/11/22 18:17:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,8 +113,8 @@ SPI_connect(void)
 	/*
 	 * Create memory contexts for this procedure
 	 *
-	 * XXX it would be better to use PortalContext as the parent context, but we
-	 * may not be inside a portal (consider deferred-trigger execution).
+	 * XXX it would be better to use PortalContext as the parent context, but
+	 * we may not be inside a portal (consider deferred-trigger execution).
 	 * Perhaps CurTransactionContext would do?	For now it doesn't matter
 	 * because we clean up explicitly in AtEOSubXact_SPI().
 	 */

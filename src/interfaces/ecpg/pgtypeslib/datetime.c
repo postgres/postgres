@@ -633,11 +633,11 @@ PGTYPESdate_defmt_asc(date * d, char *fmt, char *str)
 		 * here we found a month. token[token_count] and
 		 * token_values[token_count] reflect the month's details.
 		 *
-		 * only the month can be specified with a literal. Here we can do a quick
-		 * check if the month is at the right position according to the format
-		 * string because we can check if the token that we expect to be the
-		 * month is at the position of the only token that already has a
-		 * value. If we wouldn't check here we could say "December 4 1990"
+		 * only the month can be specified with a literal. Here we can do a
+		 * quick check if the month is at the right position according to the
+		 * format string because we can check if the token that we expect to
+		 * be the month is at the position of the only token that already has
+		 * a value. If we wouldn't check here we could say "December 4 1990"
 		 * with a fmt string of "dd mm yy" for 12 April 1990.
 		 */
 		if (fmt_token_order[token_count] != 'm')

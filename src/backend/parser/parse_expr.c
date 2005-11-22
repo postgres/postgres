@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.186 2005/11/18 23:08:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.187 2005/11/22 18:17:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -365,10 +365,10 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					/*
 					 * Not known as a column of any range-table entry.
 					 *
-					 * Consider the possibility that it's VALUE in a domain check
-					 * expression.	(We handle VALUE as a name, not a keyword,
-					 * to avoid breaking a lot of applications that have used
-					 * VALUE as a column name in the past.)
+					 * Consider the possibility that it's VALUE in a domain
+					 * check expression.  (We handle VALUE as a name, not a
+					 * keyword, to avoid breaking a lot of applications that
+					 * have used VALUE as a column name in the past.)
 					 */
 					if (pstate->p_value_substitute != NULL &&
 						strcmp(name, "value") == 0)
@@ -781,8 +781,8 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 	 * Transform the list of arguments.  We use a shallow list copy and then
 	 * transform-in-place to avoid O(N^2) behavior from repeated lappend's.
 	 *
-	 * XXX: repeated lappend() would no longer result in O(n^2) behavior; worth
-	 * reconsidering this design?
+	 * XXX: repeated lappend() would no longer result in O(n^2) behavior;
+	 * worth reconsidering this design?
 	 */
 	targs = list_copy(fn->args);
 	foreach(args, targs)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.202 2005/11/17 22:14:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.203 2005/11/22 18:17:14 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1804,8 +1804,8 @@ eval_const_expressions_mutator(Node *node,
 		 * simplifying functions.)	Also, we can optimize field selection from
 		 * a RowExpr construct.
 		 *
-		 * We must however check that the declared type of the field is still the
-		 * same as when the FieldSelect was created --- this can change if
+		 * We must however check that the declared type of the field is still
+		 * the same as when the FieldSelect was created --- this can change if
 		 * someone did ALTER COLUMN TYPE on the rowtype.
 		 */
 		FieldSelect *fselect = (FieldSelect *) node;
@@ -2639,10 +2639,10 @@ evaluate_expr(Expr *expr, Oid result_type)
 	/*
 	 * And evaluate it.
 	 *
-	 * It is OK to use a default econtext because none of the ExecEvalExpr() code
-	 * used in this situation will use econtext.  That might seem fortuitous,
-	 * but it's not so unreasonable --- a constant expression does not depend
-	 * on context, by definition, n'est ce pas?
+	 * It is OK to use a default econtext because none of the ExecEvalExpr()
+	 * code used in this situation will use econtext.  That might seem
+	 * fortuitous, but it's not so unreasonable --- a constant expression does
+	 * not depend on context, by definition, n'est ce pas?
 	 */
 	const_val = ExecEvalExprSwitchContext(exprstate,
 										  GetPerTupleExprContext(estate),
@@ -2775,9 +2775,9 @@ expression_tree_walker(Node *node,
 	 * The walker has already visited the current node, and so we need only
 	 * recurse into any sub-nodes it has.
 	 *
-	 * We assume that the walker is not interested in List nodes per se, so when
-	 * we expect a List we just recurse directly to self without bothering to
-	 * call the walker.
+	 * We assume that the walker is not interested in List nodes per se, so
+	 * when we expect a List we just recurse directly to self without
+	 * bothering to call the walker.
 	 */
 	if (node == NULL)
 		return false;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.72 2005/10/15 02:49:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.73 2005/11/22 18:17:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -263,9 +263,9 @@ find_join_rel(PlannerInfo *root, Relids relids)
 	/*
 	 * Use either hashtable lookup or linear search, as appropriate.
 	 *
-	 * Note: the seemingly redundant hashkey variable is used to avoid taking the
-	 * address of relids; unless the compiler is exceedingly smart, doing so
-	 * would force relids out of a register and thus probably slow down the
+	 * Note: the seemingly redundant hashkey variable is used to avoid taking
+	 * the address of relids; unless the compiler is exceedingly smart, doing
+	 * so would force relids out of a register and thus probably slow down the
 	 * list-search case.
 	 */
 	if (root->join_rel_hash)
@@ -533,8 +533,8 @@ build_joinrel_restrictlist(PlannerInfo *root,
 	/*
 	 * Eliminate duplicate and redundant clauses.
 	 *
-	 * We must eliminate duplicates, since we will see many of the same clauses
-	 * arriving from both input relations.	Also, if a clause is a
+	 * We must eliminate duplicates, since we will see many of the same
+	 * clauses arriving from both input relations.	Also, if a clause is a
 	 * mergejoinable clause, it's possible that it is redundant with previous
 	 * clauses (see optimizer/README for discussion).  We detect that case and
 	 * omit the redundant clause from the result list.

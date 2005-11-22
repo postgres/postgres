@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.112 2005/10/15 02:49:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.113 2005/11/22 18:17:05 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -49,8 +49,8 @@ CreateTemplateTupleDesc(int natts, bool hasoid)
 	 * Allocate enough memory for the tuple descriptor, including the
 	 * attribute rows, and set up the attribute row pointers.
 	 *
-	 * Note: we assume that sizeof(struct tupleDesc) is a multiple of the struct
-	 * pointer alignment requirement, and hence we don't need to insert
+	 * Note: we assume that sizeof(struct tupleDesc) is a multiple of the
+	 * struct pointer alignment requirement, and hence we don't need to insert
 	 * alignment padding between the struct and the array of attribute row
 	 * pointers.
 	 */

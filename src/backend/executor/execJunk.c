@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execJunk.c,v 1.50 2005/10/15 02:49:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execJunk.c,v 1.51 2005/11/22 18:17:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,11 +87,11 @@ ExecInitJunkFilter(List *targetList, bool hasoid, TupleTableSlot *slot)
 	 * Now calculate the mapping between the original tuple's attributes and
 	 * the "clean" tuple's attributes.
 	 *
-	 * The "map" is an array of "cleanLength" attribute numbers, i.e. one entry
-	 * for every attribute of the "clean" tuple. The value of this entry is
-	 * the attribute number of the corresponding attribute of the "original"
-	 * tuple.  (Zero indicates a NULL output attribute, but we do not use that
-	 * feature in this routine.)
+	 * The "map" is an array of "cleanLength" attribute numbers, i.e. one
+	 * entry for every attribute of the "clean" tuple. The value of this entry
+	 * is the attribute number of the corresponding attribute of the
+	 * "original" tuple.  (Zero indicates a NULL output attribute, but we do
+	 * not use that feature in this routine.)
 	 */
 	cleanLength = cleanTupType->natts;
 	if (cleanLength > 0)
@@ -158,11 +158,11 @@ ExecInitJunkFilterConversion(List *targetList,
 	 * Calculate the mapping between the original tuple's attributes and the
 	 * "clean" tuple's attributes.
 	 *
-	 * The "map" is an array of "cleanLength" attribute numbers, i.e. one entry
-	 * for every attribute of the "clean" tuple. The value of this entry is
-	 * the attribute number of the corresponding attribute of the "original"
-	 * tuple.  We store zero for any deleted attributes, marking that a NULL
-	 * is needed in the output tuple.
+	 * The "map" is an array of "cleanLength" attribute numbers, i.e. one
+	 * entry for every attribute of the "clean" tuple. The value of this entry
+	 * is the attribute number of the corresponding attribute of the
+	 * "original" tuple.  We store zero for any deleted attributes, marking
+	 * that a NULL is needed in the output tuple.
 	 */
 	cleanLength = cleanTupType->natts;
 	if (cleanLength > 0)

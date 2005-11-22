@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_depend.c,v 1.16 2005/11/21 12:49:30 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_depend.c,v 1.17 2005/11/22 18:17:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,8 +176,8 @@ bool
 objectIsInternalDependency(Oid classId, Oid objectId)
 {
 	Relation	depRel;
-	ScanKeyData	key[2];
-	SysScanDesc	scan;
+	ScanKeyData key[2];
+	SysScanDesc scan;
 	HeapTuple	tup;
 	bool		isdep = false;
 

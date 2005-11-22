@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.184 2005/11/17 22:14:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.185 2005/11/22 18:17:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@ static Datum ExecEvalAggref(AggrefExprState *aggref,
 static Datum ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 			bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalWholeRowVar(ExprState *exprstate, ExprContext *econtext,
-			bool *isNull, ExprDoneCond *isDone);
+					bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalConst(ExprState *exprstate, ExprContext *econtext,
 			  bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalParam(ExprState *exprstate, ExprContext *econtext,
@@ -268,7 +268,7 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 			if (isAssignment)
 				ereport(ERROR,
 						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-						 errmsg("array subscript in assignment must not be NULL")));
+				  errmsg("array subscript in assignment must not be NULL")));
 			*isNull = true;
 			return (Datum) NULL;
 		}
@@ -333,15 +333,15 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 		 * array and the value to be assigned into it must be non-NULL, else
 		 * we punt and return the original array.
 		 */
-		if (astate->refattrlength > 0)		/* fixed-length array? */
+		if (astate->refattrlength > 0)	/* fixed-length array? */
 			if (eisnull || *isNull)
 				return PointerGetDatum(array_source);
 
 		/*
 		 * For assignment to varlena arrays, we handle a NULL original array
-		 * by substituting an empty (zero-dimensional) array; insertion of
-		 * the new element will result in a singleton array value.  It does
-		 * not matter whether the new element is NULL.
+		 * by substituting an empty (zero-dimensional) array; insertion of the
+		 * new element will result in a singleton array value.	It does not
+		 * matter whether the new element is NULL.
 		 */
 		if (*isNull)
 		{
@@ -516,8 +516,8 @@ ExecEvalWholeRowVar(ExprState *exprstate, ExprContext *econtext,
 	Assert(variable->varattno == InvalidAttrNumber);
 
 	/*
-	 * Whole-row Vars can only appear at the level of a relation scan,
-	 * never in a join.
+	 * Whole-row Vars can only appear at the level of a relation scan, never
+	 * in a join.
 	 */
 	Assert(variable->varno != INNER);
 	Assert(variable->varno != OUTER);
@@ -527,8 +527,8 @@ ExecEvalWholeRowVar(ExprState *exprstate, ExprContext *econtext,
 	tupleDesc = slot->tts_tupleDescriptor;
 
 	/*
-	 * We have to make a copy of the tuple so we can safely insert the
-	 * Datum overhead fields, which are not set in on-disk tuples.
+	 * We have to make a copy of the tuple so we can safely insert the Datum
+	 * overhead fields, which are not set in on-disk tuples.
 	 */
 	dtuple = (HeapTupleHeader) palloc(tuple->t_len);
 	memcpy((char *) dtuple, (char *) tuple->t_data, tuple->t_len);
@@ -536,12 +536,11 @@ ExecEvalWholeRowVar(ExprState *exprstate, ExprContext *econtext,
 	HeapTupleHeaderSetDatumLength(dtuple, tuple->t_len);
 
 	/*
-	 * If the Var identifies a named composite type, label the tuple
-	 * with that type; otherwise use what is in the tupleDesc.
+	 * If the Var identifies a named composite type, label the tuple with that
+	 * type; otherwise use what is in the tupleDesc.
 	 *
-	 * It's likely that the slot's tupleDesc is a record type; if so,
-	 * make sure it's been "blessed", so that the Datum can be interpreted
-	 * later.
+	 * It's likely that the slot's tupleDesc is a record type; if so, make
+	 * sure it's been "blessed", so that the Datum can be interpreted later.
 	 */
 	if (variable->vartype != RECORDOID)
 	{
@@ -1652,8 +1651,8 @@ ExecEvalScalarArrayOp(ScalarArrayOpExprState *sstate,
 		return BoolGetDatum(!useOr);
 
 	/*
-	 * If the scalar is NULL, and the function is strict, return NULL;
-	 * no point in iterating the loop.
+	 * If the scalar is NULL, and the function is strict, return NULL; no
+	 * point in iterating the loop.
 	 */
 	if (fcinfo.argnull[0] && sstate->fxprstate.func.fn_strict)
 	{
@@ -2231,7 +2230,7 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 		}
 		else
 		{
-			dataoffset = 0;			/* marker for no null bitmap */
+			dataoffset = 0;		/* marker for no null bitmap */
 			nbytes += ARR_OVERHEAD_NONULLS(ndims);
 		}
 
@@ -2943,7 +2942,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 	{
 		case T_Var:
 			{
-				Var	   *var = (Var *) node;
+				Var		   *var = (Var *) node;
 
 				state = (ExprState *) makeNode(ExprState);
 				if (var->varattno != InvalidAttrNumber)

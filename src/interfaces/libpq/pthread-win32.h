@@ -13,7 +13,7 @@ void	   *pthread_getspecific(pthread_key_t);
 void		pthread_mutex_init(pthread_mutex_t *, void *attr);
 void		pthread_mutex_lock(pthread_mutex_t *);
 
-//blocking
+/* blocking */
 void		pthread_mutex_unlock(pthread_mutex_t *);
 
 #endif
