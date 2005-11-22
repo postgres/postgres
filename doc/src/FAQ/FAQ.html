@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Mon Nov 21 16:01:05 EST 2005</P>
+    <P>Last updated: Tue Nov 22 10:04:06 EST 2005</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)
@@ -145,6 +145,18 @@
     http://www.postgresql.org/files/documentation/faqs/FAQ_DEV.html</A>
     </P>
 
+    <H3><A name="1.2">1.2</A>) Who controls PostgreSQL?<BR></H3>
+
+    <P>If you are looking for a PostgreSQL gatekeeper, central committee,
+    or controlling company, give up --- there isn't one.  We do have a
+    core committee and CVS committers, but these groups are more for
+    administrative purposes than control.  The project is directed by
+    the community of developers and users, which anyone can join.  All
+    you need to do is subscribe to the mailing lists and participate in the
+    discussions.   (See the <a href="http://www.postgresql.org/docs/faqs.FAQ_DEV.html">
+    Developer's FAQ</A> for information on how to get involved in PostgreSQL
+    development.)</P>
+
     <H3><A name="1.3">1.3</A>) What is the copyright of
     PostgreSQL?</H3>
 
@@ -205,6 +217,13 @@
     <A href="ftp://ftp.PostgreSQL.org/pub/">
     ftp://ftp.PostgreSQL.org/pub/</A>.</P>
 
+    <H3><A name="1.6">1.6</A>) What is the latest release?</H3>
+
+    <P>The latest release of PostgreSQL is version 8.1.1</P>
+
+    <P>We plan to have a major release every year, with minor releases
+    every few months.</P>
+
     <H3><A name="1.7">1.7</A>) Where can I get support?</H3>
 
     <P>The PostgreSQL community provides assistance to many of its users
@@ -234,13 +253,65 @@
     "ftp://ftp.PostgreSQL.org/pub/">ftp://ftp.PostgreSQL.org/pub/</A> to
     see if there is a more recent PostgreSQL version.</P>
 
-    <H3><A name="1.6">1.6</A>) What is the latest release?</H3>
+    <P>Bugs submitted using the bug form or posted to any PostgreSQL mailing
+    list typically generates one of the following replies:</P>
+    <ul>
+    <li>It is not a bug, and why</li>
+    <li>It is a known bug and is known already on the TODO list</li>
+    <li>The bug has been fixed in the current release</li>
+    <li>The bug has been fixed but is not packaged yet in an official 
+    release</li>
+    <li>A request is made for more detailed information:
+        <ul>
+	<li>Operating system</li>
+	<li>PostgreSQL version</li>
+	<li>Reproducible test case</li>
+	<li>Debugging information</li>
+	<li>Debugger backtrace output</li>
+	</ul>
+    </li>
+    <li>The bug is new.  The following might happen:
+        <ul>
+	<li>A patch has been created and will be included in the next major 
+	or minor release</li>
+	<li>The bug cannot be fixed immediately and is added
+	to the TODO list</li>
+	</ul>
+    </li>
+    </ul>
+	
+    <H3><A name="1.9">1.9</A>) How do I find out about known bugs or
+    missing features?</H3>
 
-    <P>The latest release of PostgreSQL is version 8.1.1</P>
+    <P>PostgreSQL supports an extended subset of <SMALL>SQL:2003</SMALL>.
+    See our <A href="http://www.postgresql.org/docs/faqs.TODO.html">TODO</A>
+    list for known bugs, missing features, and future plans.</P>
 
-    <P>We plan to have a major release every year, with minor releases
-    every few months.</P>
-
+    <P>A feature request usually results in one of the following
+    replies:</P>
+    <ul>
+    <li>The feature is already on the TODO list</li>
+    <li>The feature is not desired because:
+        <ul>
+        <li>It duplicates existing functionality that already
+        follows the SQL standard</li>
+        <li>The feature would increase code complexity but add little
+        benefit</li>
+        <li>The feature would be insecure or unreliable</li>
+        </ul>
+    </li>
+    <li>The new feature is added to the TODO list</li>
+    </ul>
+    
+    <P>PostgreSQL does not use a bug tracking system because we find
+    it more efficient to respond directly to email and keep the TODO
+    list up-to-date. In practice, bugs don't last very long in the
+    software, and bugs that affect a large number of users are fixed
+    rapidly. The only single place to find all changes, improvements,
+    and fixes in a PostgreSQL release is to read our CVS logs messages.
+    Even the release notes do not contain every change made to the
+    software.</P>
+    
     <H3><A name="1.10">1.10</A>) What documentation is available?</H3>
 
     <P>PostgreSQL includes extensive documentation, including a large
@@ -266,13 +337,6 @@
     display the available commands.</P>
 
     <P>Our web site contains even more documentation.</P>
-
-    <H3><A name="1.9">1.9</A>) How do I find out about known bugs or
-    missing features?</H3>
-
-    <P>PostgreSQL supports an extended subset of <SMALL>SQL:2003</SMALL>.
-    See our <A href="http://www.postgresql.org/docs/faqs.TODO.html">TODO</A>
-    list for known bugs, missing features, and future plans.</P>
 
     <H3><A name="1.11">1.11</A>) How can I learn
     <SMALL>SQL</SMALL>?</H3>
@@ -358,18 +422,6 @@
       <BR>
       </DD>
     </DL>
-
-    <H3><A name="1.2">1.2</A>) Who controls PostgreSQL?<BR>
-
-    <P>If you are looking for a PostgreSQL gatekeeper, central committee,
-    or controlling company, give up --- there isn't one.  We do have a
-    core committee and CVS committers, but these groups are more for
-    administrative purposes than control.  The project is directed by
-    the community of developers and users, which anyone can join.  All
-    you need to do is subscribe to the mailing lists and participate in the
-    discussions.   (See the <a href="http://www.postgresql.org/docs/faqs.FAQ_DEV.html">
-    Developer's FAQ</A> for information on how to get involved in PostgreSQL
-    development.)</P>
 
     <HR>
 
@@ -1023,11 +1075,11 @@ length</TD></TR>
     <P>The most common cause is the use of double-quotes around table or
     column names during table creation. When double-quotes are used,
     table and column names (called identifiers) are stored <a
-    href="http://www.postgresql.org/docs/8.0/static/sql-syntax.html#SQL-
-    SYNTAX-IDENTIFIERS">case-sensitive</a>, meaning you must use
-    double-quotes when referencing the names in a query. Some interfaces,
-    like pgAdmin, automatically double-quote identifiers during table
-    creation. So, for identifiers to be recognized, you must either:
+    href="http://www.postgresql.org/docs/8.0/static/sql-syntax.html#SQL-SYNTAX-IDENTIFIERS"> 
+    case-sensitive</a>, meaning you must use double-quotes when
+    referencing the names in a query. Some interfaces, like pgAdmin,
+    automatically double-quote identifiers during table creation. So,
+    for identifiers to be recognized, you must either:
     <UL>
     <LI>Avoid double-quoting identifiers when creating tables</LI>
     <LI>Use only lowercase characters in identifiers</LI>
