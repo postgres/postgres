@@ -8,23 +8,29 @@
 #if defined(TS_USE_WIDE) && defined(WIN32)
 
 size_t
-wchar2char( const char *to, const wchar_t *from, size_t len ) {
+wchar2char( char *to, const wchar_t *from, size_t len ) {
 	if (GetDatabaseEncoding() == PG_UTF8) {
-		int	r;
+		int	r, nbytes;
 
 		if (len==0)
 			return 0;
 
-		r = WideCharToMultiByte(CP_UTF8, 0, from, len, to, nbytes,
-				NULL, NULL);
-
-		
-		if ( r==0 )
+		/* in any case, *to should be allocated with enough space */
+		nbytes = WideCharToMultiByte(CP_UTF8, 0, from, len, NULL, 0, NULL, NULL);
+		if ( nbytes==0 )
 			ereport(ERROR,
 				(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
 				 	errmsg("UTF-16 to UTF-8 translation failed: %lu",
 						GetLastError())));
 
+		r = WideCharToMultiByte(CP_UTF8, 0, from, len, to, nbytes,
+				NULL, NULL);
+
+		if ( r==0 )
+			ereport(ERROR,
+				(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
+				 	errmsg("UTF-16 to UTF-8 translation failed: %lu",
+						GetLastError())));
 		return r;
 	}
 
@@ -32,15 +38,14 @@ wchar2char( const char *to, const wchar_t *from, size_t len ) {
 }
 
 size_t 
-char2wchar( const wchar_t *to, const char *from, size_t len ) {
+char2wchar( wchar_t *to, const char *from, size_t len ) {
 	if (GetDatabaseEncoding() == PG_UTF8) {
 		int	r;
 
 		if (len==0)
 			return 0;
 
-		r = MultiByteToWideChar(CP_UTF8, 0, from, len,
-			to, len);
+		r = MultiByteToWideChar(CP_UTF8, 0, from, len, to, len);
 
 		if (!r) {
 			pg_verifymbstr(from, len, false);
@@ -50,7 +55,7 @@ char2wchar( const wchar_t *to, const char *from, size_t len ) {
 				errhint("The server's LC_CTYPE locale is probably incompatible with the database encoding.")));
 		}
 
-		Assert(r <= nbytes);
+		Assert( r <= len );
 
 		return r;
 	}

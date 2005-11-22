@@ -79,7 +79,7 @@ TParserClose( TParser* prs ) {
 static int											\
 p_is##type(TParser *prs) {									\
 	Assert( prs->state );									\
-	return ( ( prs->usewide ) ? isw##type( (wint_t)*( prs->wstr + prs->state->poschar ) ) : \
+	return ( ( prs->usewide ) ? isw##type( (wint_t)*( prs->wstr + prs->state->poschar ) ) :	\
 		is##type( (unsigned char)*( prs->str + prs->state->posbyte ) ) );		\
 }												\
 												\
@@ -104,7 +104,7 @@ p_iseq(TParser *prs, char c) {
 static int											\
 p_is##type(TParser *prs) {									\
 	Assert( prs->state );									\
-	return is##type( (unsigned char)*( prs->str + prs->state->posbyte ) ) );		\
+	return is##type( (unsigned char)*( prs->str + prs->state->posbyte ) );			\
 }												\
 												\
 static int											\
@@ -116,7 +116,7 @@ p_isnot##type(TParser *prs) {									\
 static int
 p_iseq(TParser *prs, char c) {
 	Assert( prs->state );
-	return ( *( prs->str + prs->state->posbyte ) == c ) ) ? 1 : 0;
+	return ( *( prs->str + prs->state->posbyte ) == c ) ? 1 : 0;
 }
 
 #endif /* TS_USE_WIDE */
