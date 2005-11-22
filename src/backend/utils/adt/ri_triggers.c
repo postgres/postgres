@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.82 2005/10/29 18:39:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.82.2.1 2005/11/22 18:23:21 momjian Exp $
  *
  * ----------
  */
@@ -995,8 +995,8 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 	/*
 	 * Get the relation descriptors of the FK and PK tables and the old tuple.
 	 *
-	 * fk_rel is opened in RowExclusiveLock mode since that's what our eventual
-	 * DELETE will get on it.
+	 * fk_rel is opened in RowExclusiveLock mode since that's what our
+	 * eventual DELETE will get on it.
 	 */
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;
@@ -1156,8 +1156,8 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 	 * Get the relation descriptors of the FK and PK tables and the new and
 	 * old tuple.
 	 *
-	 * fk_rel is opened in RowExclusiveLock mode since that's what our eventual
-	 * UPDATE will get on it.
+	 * fk_rel is opened in RowExclusiveLock mode since that's what our
+	 * eventual UPDATE will get on it.
 	 */
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;
@@ -1680,8 +1680,8 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 	/*
 	 * Get the relation descriptors of the FK and PK tables and the old tuple.
 	 *
-	 * fk_rel is opened in RowExclusiveLock mode since that's what our eventual
-	 * UPDATE will get on it.
+	 * fk_rel is opened in RowExclusiveLock mode since that's what our
+	 * eventual UPDATE will get on it.
 	 */
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;
@@ -1849,8 +1849,8 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 	/*
 	 * Get the relation descriptors of the FK and PK tables and the old tuple.
 	 *
-	 * fk_rel is opened in RowExclusiveLock mode since that's what our eventual
-	 * UPDATE will get on it.
+	 * fk_rel is opened in RowExclusiveLock mode since that's what our
+	 * eventual UPDATE will get on it.
 	 */
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;
@@ -2059,8 +2059,8 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 	/*
 	 * Get the relation descriptors of the FK and PK tables and the old tuple.
 	 *
-	 * fk_rel is opened in RowExclusiveLock mode since that's what our eventual
-	 * UPDATE will get on it.
+	 * fk_rel is opened in RowExclusiveLock mode since that's what our
+	 * eventual UPDATE will get on it.
 	 */
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;
@@ -2238,8 +2238,8 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 	/*
 	 * Get the relation descriptors of the FK and PK tables and the old tuple.
 	 *
-	 * fk_rel is opened in RowExclusiveLock mode since that's what our eventual
-	 * UPDATE will get on it.
+	 * fk_rel is opened in RowExclusiveLock mode since that's what our
+	 * eventual UPDATE will get on it.
 	 */
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;

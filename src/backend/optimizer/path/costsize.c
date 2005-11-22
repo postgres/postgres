@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.149 2005/10/15 02:49:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.149.2.1 2005/11/22 18:23:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,8 +155,8 @@ cost_seqscan(Path *path, PlannerInfo *root,
 	/*
 	 * disk costs
 	 *
-	 * The cost of reading a page sequentially is 1.0, by definition. Note that
-	 * the Unix kernel will typically do some amount of read-ahead
+	 * The cost of reading a page sequentially is 1.0, by definition. Note
+	 * that the Unix kernel will typically do some amount of read-ahead
 	 * optimization, so that this cost is less than the true cost of reading a
 	 * page from disk.	We ignore that issue here, but must take it into
 	 * account when estimating the cost of non-sequential accesses!
@@ -480,8 +480,8 @@ cost_bitmap_heap_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 	/*
 	 * Estimate CPU costs per tuple.
 	 *
-	 * Often the indexquals don't need to be rechecked at each tuple ... but not
-	 * always, especially not if there are enough tuples involved that the
+	 * Often the indexquals don't need to be rechecked at each tuple ... but
+	 * not always, especially not if there are enough tuples involved that the
 	 * bitmaps become lossy.  For the moment, just assume they will be
 	 * rechecked always.
 	 */
@@ -869,13 +869,14 @@ cost_agg(Path *path, PlannerInfo *root,
 	 * We will produce a single output tuple if not grouping, and a tuple per
 	 * group otherwise.  We charge cpu_tuple_cost for each output tuple.
 	 *
-	 * Note: in this cost model, AGG_SORTED and AGG_HASHED have exactly the same
-	 * total CPU cost, but AGG_SORTED has lower startup cost.  If the input
-	 * path is already sorted appropriately, AGG_SORTED should be preferred
-	 * (since it has no risk of memory overflow).  This will happen as long as
-	 * the computed total costs are indeed exactly equal --- but if there's
-	 * roundoff error we might do the wrong thing.	So be sure that the
-	 * computations below form the same intermediate values in the same order.
+	 * Note: in this cost model, AGG_SORTED and AGG_HASHED have exactly the
+	 * same total CPU cost, but AGG_SORTED has lower startup cost.	If the
+	 * input path is already sorted appropriately, AGG_SORTED should be
+	 * preferred (since it has no risk of memory overflow).  This will happen
+	 * as long as the computed total costs are indeed exactly equal --- but if
+	 * there's roundoff error we might do the wrong thing.  So be sure that
+	 * the computations below form the same intermediate values in the same
+	 * order.
 	 */
 	if (aggstrategy == AGG_PLAIN)
 	{
@@ -1074,8 +1075,8 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
 	 * restriction clauses) separately.  We use approx_selectivity here for
 	 * speed --- in most cases, any errors won't affect the result much.
 	 *
-	 * Note: it's probably bogus to use the normal selectivity calculation here
-	 * when either the outer or inner path is a UniquePath.
+	 * Note: it's probably bogus to use the normal selectivity calculation
+	 * here when either the outer or inner path is a UniquePath.
 	 */
 	merge_selec = approx_selectivity(root, mergeclauses,
 									 path->jpath.jointype);
@@ -1095,22 +1096,22 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
 	 * but on the other hand we ignore the bookkeeping costs of mark/restore.
 	 * Not clear if it's worth developing a more refined model.
 	 *
-	 * The number of re-fetches can be estimated approximately as size of merge
-	 * join output minus size of inner relation.  Assume that the distinct key
-	 * values are 1, 2, ..., and denote the number of values of each key in
-	 * the outer relation as m1, m2, ...; in the inner relation, n1, n2, ...
-	 * Then we have
+	 * The number of re-fetches can be estimated approximately as size of
+	 * merge join output minus size of inner relation.	Assume that the
+	 * distinct key values are 1, 2, ..., and denote the number of values of
+	 * each key in the outer relation as m1, m2, ...; in the inner relation,
+	 * n1, n2, ... Then we have
 	 *
 	 * size of join = m1 * n1 + m2 * n2 + ...
 	 *
-	 * number of rescanned tuples = (m1 - 1) * n1 + (m2 - 1) * n2 + ... = m1 * n1
-	 * + m2 * n2 + ... - (n1 + n2 + ...) = size of join - size of inner
+	 * number of rescanned tuples = (m1 - 1) * n1 + (m2 - 1) * n2 + ... = m1 *
+	 * n1 + m2 * n2 + ... - (n1 + n2 + ...) = size of join - size of inner
 	 * relation
 	 *
-	 * This equation works correctly for outer tuples having no inner match (nk =
-	 * 0), but not for inner tuples having no outer match (mk = 0); we are
-	 * effectively subtracting those from the number of rescanned tuples, when
-	 * we should not.  Can we do better without expensive selectivity
+	 * This equation works correctly for outer tuples having no inner match
+	 * (nk = 0), but not for inner tuples having no outer match (mk = 0); we
+	 * are effectively subtracting those from the number of rescanned tuples,
+	 * when we should not.	Can we do better without expensive selectivity
 	 * computations?
 	 */
 	if (IsA(outer_path, UniquePath))
@@ -1132,9 +1133,9 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
 	 * inputs that will actually need to be scanned. We use only the first
 	 * (most significant) merge clause for this purpose.
 	 *
-	 * Since this calculation is somewhat expensive, and will be the same for all
-	 * mergejoin paths associated with the merge clause, we cache the results
-	 * in the RestrictInfo node.
+	 * Since this calculation is somewhat expensive, and will be the same for
+	 * all mergejoin paths associated with the merge clause, we cache the
+	 * results in the RestrictInfo node.
 	 */
 	if (mergeclauses && path->jpath.jointype != JOIN_FULL)
 	{
@@ -1300,8 +1301,8 @@ cost_hashjoin(HashPath *path, PlannerInfo *root)
 	 * restriction clauses) separately.  We use approx_selectivity here for
 	 * speed --- in most cases, any errors won't affect the result much.
 	 *
-	 * Note: it's probably bogus to use the normal selectivity calculation here
-	 * when either the outer or inner path is a UniquePath.
+	 * Note: it's probably bogus to use the normal selectivity calculation
+	 * here when either the outer or inner path is a UniquePath.
 	 */
 	hash_selec = approx_selectivity(root, hashclauses,
 									path->jpath.jointype);
@@ -1341,8 +1342,8 @@ cost_hashjoin(HashPath *path, PlannerInfo *root)
 	 * bucketsize estimated for any individual hashclause; this is undoubtedly
 	 * conservative.
 	 *
-	 * BUT: if inner relation has been unique-ified, we can assume it's good for
-	 * hashing.  This is important both because it's the right answer, and
+	 * BUT: if inner relation has been unique-ified, we can assume it's good
+	 * for hashing.  This is important both because it's the right answer, and
 	 * because we avoid contaminating the cache with a value that's wrong for
 	 * non-unique-ified paths.
 	 */
@@ -1538,8 +1539,8 @@ cost_qual_eval_walker(Node *node, QualCost *total)
 	 * and so are boolean operators (AND, OR, NOT). Simplistic, but a lot
 	 * better than no model at all.
 	 *
-	 * Should we try to account for the possibility of short-circuit evaluation
-	 * of AND/OR?
+	 * Should we try to account for the possibility of short-circuit
+	 * evaluation of AND/OR?
 	 */
 	if (IsA(node, FuncExpr) ||
 		IsA(node, OpExpr) ||
@@ -1564,8 +1565,8 @@ cost_qual_eval_walker(Node *node, QualCost *total)
 		 * (Sub-selects that can be executed as InitPlans have already been
 		 * removed from the expression.)
 		 *
-		 * An exception occurs when we have decided we can implement the subplan
-		 * by hashing.
+		 * An exception occurs when we have decided we can implement the
+		 * subplan by hashing.
 		 *
 		 */
 		SubPlan    *subplan = (SubPlan *) node;
@@ -1760,12 +1761,12 @@ set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 	/*
 	 * Basically, we multiply size of Cartesian product by selectivity.
 	 *
-	 * If we are doing an outer join, take that into account: the output must be
-	 * at least as large as the non-nullable input.  (Is there any chance of
-	 * being even smarter?)
+	 * If we are doing an outer join, take that into account: the output must
+	 * be at least as large as the non-nullable input.	(Is there any chance
+	 * of being even smarter?)
 	 *
-	 * For JOIN_IN and variants, the Cartesian product is figured with respect to
-	 * a unique-ified input, and then we can clamp to the size of the other
+	 * For JOIN_IN and variants, the Cartesian product is figured with respect
+	 * to a unique-ified input, and then we can clamp to the size of the other
 	 * input.
 	 */
 	switch (jointype)
@@ -1893,8 +1894,8 @@ set_function_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 	/*
 	 * Estimate number of rows the function itself will return.
 	 *
-	 * XXX no idea how to do this yet; but we can at least check whether function
-	 * returns set or not...
+	 * XXX no idea how to do this yet; but we can at least check whether
+	 * function returns set or not...
 	 */
 	if (expression_returns_set(rte->funcexpr))
 		rel->tuples = 1000;

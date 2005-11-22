@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.261 2005/10/15 02:49:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.261.2.1 2005/11/22 18:23:06 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -524,8 +524,8 @@ index_create(Oid heapRelationId,
 	/*
 	 * Allocate an OID for the index, unless we were told what to use.
 	 *
-	 * The OID will be the relfilenode as well, so make sure it doesn't collide
-	 * with either pg_class OIDs or existing physical files.
+	 * The OID will be the relfilenode as well, so make sure it doesn't
+	 * collide with either pg_class OIDs or existing physical files.
 	 */
 	if (!OidIsValid(indexRelationId))
 		indexRelationId = GetNewRelFileNode(tableSpaceId, shared_relation,
@@ -600,16 +600,16 @@ index_create(Oid heapRelationId,
 	/*
 	 * Register constraint and dependencies for the index.
 	 *
-	 * If the index is from a CONSTRAINT clause, construct a pg_constraint entry.
-	 * The index is then linked to the constraint, which in turn is linked to
-	 * the table.  If it's not a CONSTRAINT, make the dependency directly on
-	 * the table.
+	 * If the index is from a CONSTRAINT clause, construct a pg_constraint
+	 * entry. The index is then linked to the constraint, which in turn is
+	 * linked to the table.  If it's not a CONSTRAINT, make the dependency
+	 * directly on the table.
 	 *
 	 * We don't need a dependency on the namespace, because there'll be an
 	 * indirect dependency via our parent table.
 	 *
-	 * During bootstrap we can't register any dependencies, and we don't try to
-	 * make a constraint either.
+	 * During bootstrap we can't register any dependencies, and we don't try
+	 * to make a constraint either.
 	 */
 	if (!IsBootstrapProcessingMode())
 	{
@@ -737,8 +737,8 @@ index_create(Oid heapRelationId,
 	 * delayed till later (ALTER TABLE can save work in some cases with this).
 	 * Otherwise, we call the AM routine that constructs the index.
 	 *
-	 * In normal processing mode, the heap and index relations are closed, but we
-	 * continue to hold the ShareLock on the heap and the exclusive lock on
+	 * In normal processing mode, the heap and index relations are closed, but
+	 * we continue to hold the ShareLock on the heap and the exclusive lock on
 	 * the index that we acquired above, until end of transaction.
 	 */
 	if (IsBootstrapProcessingMode())
@@ -1243,8 +1243,8 @@ UpdateStats(Oid relid, double reltuples)
 	 * tuple in-place.	(Note: as of PG 8.0 this isn't called during
 	 * bootstrap, but leave the code here for possible future use.)
 	 *
-	 * We also must cheat if reindexing pg_class itself, because the target index
-	 * may presently not be part of the set of indexes that
+	 * We also must cheat if reindexing pg_class itself, because the target
+	 * index may presently not be part of the set of indexes that
 	 * CatalogUpdateIndexes would update (see reindex_relation).  In this case
 	 * the stats updates will not be WAL-logged and so could be lost in a
 	 * crash.  This seems OK considering VACUUM does the same thing.
@@ -1745,9 +1745,10 @@ reindex_relation(Oid relid, bool toast_too)
 	 * entry for its own pg_class row because we do setNewRelfilenode() before
 	 * we do index_build().
 	 *
-	 * Note that we also clear pg_class's rd_oidindex until the loop is done, so
-	 * that that index can't be accessed either.  This means we cannot safely
-	 * generate new relation OIDs while in the loop; shouldn't be a problem.
+	 * Note that we also clear pg_class's rd_oidindex until the loop is done,
+	 * so that that index can't be accessed either.  This means we cannot
+	 * safely generate new relation OIDs while in the loop; shouldn't be a
+	 * problem.
 	 */
 	is_pg_class = (RelationGetRelid(rel) == RelationRelationId);
 	doneIndexes = NIL;

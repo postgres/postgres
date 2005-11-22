@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.120 2005/10/15 02:49:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.120.2.1 2005/11/22 18:23:06 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -794,8 +794,8 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 		 * Get owner ID and working copy of existing ACL. If there's no ACL,
 		 * substitute the proper default.
 		 *
-		 * Note: for now, languages are treated as owned by the bootstrap user.
-		 * We should add an owner column to pg_language instead.
+		 * Note: for now, languages are treated as owned by the bootstrap
+		 * user. We should add an owner column to pg_language instead.
 		 */
 		ownerId = BOOTSTRAP_SUPERUSERID;
 		aclDatum = SysCacheGetAttr(LANGNAME, tuple, Anum_pg_language_lanacl,
@@ -1732,8 +1732,8 @@ pg_namespace_aclmask(Oid nsp_oid, Oid roleid,
 	 * the namespace.  If we don't have CREATE TEMP, act as though we have
 	 * only USAGE (and not CREATE) rights.
 	 *
-	 * This may seem redundant given the check in InitTempTableNamespace, but it
-	 * really isn't since current user ID may have changed since then. The
+	 * This may seem redundant given the check in InitTempTableNamespace, but
+	 * it really isn't since current user ID may have changed since then. The
 	 * upshot of this behavior is that a SECURITY DEFINER function can create
 	 * temp tables that can then be accessed (if permission is granted) by
 	 * code in the same session that doesn't have permissions to create temp

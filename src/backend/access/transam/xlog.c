@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.222 2005/10/29 00:31:50 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.222.2.1 2005/11/22 18:23:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -571,11 +571,11 @@ XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata)
 	 * the whole record in the order "rdata, then backup blocks, then record
 	 * header".
 	 *
-	 * We may have to loop back to here if a race condition is detected below. We
-	 * could prevent the race by doing all this work while holding the insert
-	 * lock, but it seems better to avoid doing CRC calculations while holding
-	 * the lock.  This means we have to be careful about modifying the rdata
-	 * chain until we know we aren't going to loop back again.  The only
+	 * We may have to loop back to here if a race condition is detected below.
+	 * We could prevent the race by doing all this work while holding the
+	 * insert lock, but it seems better to avoid doing CRC calculations while
+	 * holding the lock.  This means we have to be careful about modifying the
+	 * rdata chain until we know we aren't going to loop back again.  The only
 	 * change we allow ourselves to make earlier is to set rdt->data = NULL in
 	 * chain items we have decided we will have to back up the whole buffer
 	 * for.  This is OK because we will certainly decide the same thing again
@@ -763,9 +763,9 @@ begin:;
 	 * now irrevocably changed the input rdata chain.  At the exit of this
 	 * loop, write_len includes the backup block data.
 	 *
-	 * Also set the appropriate info bits to show which buffers were backed up.
-	 * The i'th XLR_SET_BKP_BLOCK bit corresponds to the i'th distinct buffer
-	 * value (ignoring InvalidBuffer) appearing in the rdata chain.
+	 * Also set the appropriate info bits to show which buffers were backed
+	 * up. The i'th XLR_SET_BKP_BLOCK bit corresponds to the i'th distinct
+	 * buffer value (ignoring InvalidBuffer) appearing in the rdata chain.
 	 */
 	write_len = len;
 	for (i = 0; i < XLR_MAX_BKP_BLOCKS; i++)
@@ -1666,20 +1666,20 @@ XLogFlush(XLogRecPtr record)
 	 * problem; most likely, the requested flush point is past end of XLOG.
 	 * This has been seen to occur when a disk page has a corrupted LSN.
 	 *
-	 * Formerly we treated this as a PANIC condition, but that hurts the system's
-	 * robustness rather than helping it: we do not want to take down the
-	 * whole system due to corruption on one data page.  In particular, if the
-	 * bad page is encountered again during recovery then we would be unable
-	 * to restart the database at all!	(This scenario has actually happened
-	 * in the field several times with 7.1 releases. Note that we cannot get
-	 * here while InRedo is true, but if the bad page is brought in and marked
-	 * dirty during recovery then CreateCheckPoint will try to flush it at the
-	 * end of recovery.)
+	 * Formerly we treated this as a PANIC condition, but that hurts the
+	 * system's robustness rather than helping it: we do not want to take down
+	 * the whole system due to corruption on one data page.  In particular, if
+	 * the bad page is encountered again during recovery then we would be
+	 * unable to restart the database at all!  (This scenario has actually
+	 * happened in the field several times with 7.1 releases. Note that we
+	 * cannot get here while InRedo is true, but if the bad page is brought in
+	 * and marked dirty during recovery then CreateCheckPoint will try to
+	 * flush it at the end of recovery.)
 	 *
-	 * The current approach is to ERROR under normal conditions, but only WARNING
-	 * during recovery, so that the system can be brought up even if there's a
-	 * corrupt LSN.  Note that for calls from xact.c, the ERROR will be
-	 * promoted to PANIC since xact.c calls this routine inside a critical
+	 * The current approach is to ERROR under normal conditions, but only
+	 * WARNING during recovery, so that the system can be brought up even if
+	 * there's a corrupt LSN.  Note that for calls from xact.c, the ERROR will
+	 * be promoted to PANIC since xact.c calls this routine inside a critical
 	 * section.  However, calls from bufmgr.c are not within critical sections
 	 * and so we will not force a restart for a bad LSN on a data page.
 	 */
@@ -2152,14 +2152,14 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	 * preserved correctly when we copied to archive. Our aim is robustness,
 	 * so we elect not to do this.
 	 *
-	 * If we cannot obtain the log file from the archive, however, we will try to
-	 * use the XLOGDIR file if it exists.  This is so that we can make use of
-	 * log segments that weren't yet transferred to the archive.
+	 * If we cannot obtain the log file from the archive, however, we will try
+	 * to use the XLOGDIR file if it exists.  This is so that we can make use
+	 * of log segments that weren't yet transferred to the archive.
 	 *
-	 * Notice that we don't actually overwrite any files when we copy back from
-	 * archive because the recoveryRestoreCommand may inadvertently restore
-	 * inappropriate xlogs, or they may be corrupt, so we may wish to fallback
-	 * to the segments remaining in current XLOGDIR later. The
+	 * Notice that we don't actually overwrite any files when we copy back
+	 * from archive because the recoveryRestoreCommand may inadvertently
+	 * restore inappropriate xlogs, or they may be corrupt, so we may wish to
+	 * fallback to the segments remaining in current XLOGDIR later. The
 	 * copy-from-archive filename is always the same, ensuring that we don't
 	 * run out of disk space on long recoveries.
 	 */
@@ -2246,11 +2246,11 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 		 * command apparently succeeded, but let's make sure the file is
 		 * really there now and has the correct size.
 		 *
-		 * XXX I made wrong-size a fatal error to ensure the DBA would notice it,
-		 * but is that too strong?	We could try to plow ahead with a local
-		 * copy of the file ... but the problem is that there probably isn't
-		 * one, and we'd incorrectly conclude we've reached the end of WAL and
-		 * we're done recovering ...
+		 * XXX I made wrong-size a fatal error to ensure the DBA would notice
+		 * it, but is that too strong?	We could try to plow ahead with a
+		 * local copy of the file ... but the problem is that there probably
+		 * isn't one, and we'd incorrectly conclude we've reached the end of
+		 * WAL and we're done recovering ...
 		 */
 		if (stat(xlogpath, &stat_buf) == 0)
 		{
@@ -3533,8 +3533,8 @@ ReadControlFile(void)
 	/*
 	 * Do compatibility checking immediately.  We do this here for 2 reasons:
 	 *
-	 * (1) if the database isn't compatible with the backend executable, we want
-	 * to abort before we can possibly do any damage;
+	 * (1) if the database isn't compatible with the backend executable, we
+	 * want to abort before we can possibly do any damage;
 	 *
 	 * (2) this code is executed in the postmaster, so the setlocale() will
 	 * propagate to forked backends, which aren't going to read this file for
@@ -4148,9 +4148,9 @@ exitArchiveRecovery(TimeLineID endTLI, uint32 endLogId, uint32 endLogSeg)
 	 * descriptive of what our current database state is, because that is what
 	 * we replayed from.
 	 *
-	 * Note that if we are establishing a new timeline, ThisTimeLineID is already
-	 * set to the new value, and so we will create a new file instead of
-	 * overwriting any existing file.
+	 * Note that if we are establishing a new timeline, ThisTimeLineID is
+	 * already set to the new value, and so we will create a new file instead
+	 * of overwriting any existing file.
 	 */
 	snprintf(recoveryPath, MAXPGPATH, XLOGDIR "/RECOVERYXLOG");
 	XLogFilePath(xlogpath, ThisTimeLineID, endLogId, endLogSeg);
@@ -4341,8 +4341,8 @@ StartupXLOG(void)
 	/*
 	 * Read control file and check XLOG status looks valid.
 	 *
-	 * Note: in most control paths, *ControlFile is already valid and we need not
-	 * do ReadControlFile() here, but might as well do it to be sure.
+	 * Note: in most control paths, *ControlFile is already valid and we need
+	 * not do ReadControlFile() here, but might as well do it to be sure.
 	 */
 	ReadControlFile();
 
@@ -4766,14 +4766,14 @@ StartupXLOG(void)
 		/*
 		 * Perform a new checkpoint to update our recovery activity to disk.
 		 *
-		 * Note that we write a shutdown checkpoint rather than an on-line one.
-		 * This is not particularly critical, but since we may be assigning a
-		 * new TLI, using a shutdown checkpoint allows us to have the rule
-		 * that TLI only changes in shutdown checkpoints, which allows some
-		 * extra error checking in xlog_redo.
+		 * Note that we write a shutdown checkpoint rather than an on-line
+		 * one. This is not particularly critical, but since we may be
+		 * assigning a new TLI, using a shutdown checkpoint allows us to have
+		 * the rule that TLI only changes in shutdown checkpoints, which
+		 * allows some extra error checking in xlog_redo.
 		 *
-		 * In case we had to use the secondary checkpoint, make sure that it will
-		 * still be shown as the secondary checkpoint after this
+		 * In case we had to use the secondary checkpoint, make sure that it
+		 * will still be shown as the secondary checkpoint after this
 		 * CreateCheckPoint operation; we don't want the broken primary
 		 * checkpoint to become prevCheckPoint...
 		 */
@@ -5106,10 +5106,10 @@ CreateCheckPoint(bool shutdown, bool force)
 	 * (Perhaps it'd make even more sense to checkpoint only when the previous
 	 * checkpoint record is in a different xlog page?)
 	 *
-	 * We have to make two tests to determine that nothing has happened since the
-	 * start of the last checkpoint: current insertion point must match the
-	 * end of the last checkpoint record, and its redo pointer must point to
-	 * itself.
+	 * We have to make two tests to determine that nothing has happened since
+	 * the start of the last checkpoint: current insertion point must match
+	 * the end of the last checkpoint record, and its redo pointer must point
+	 * to itself.
 	 */
 	if (!shutdown && !force)
 	{
@@ -5198,11 +5198,11 @@ CreateCheckPoint(bool shutdown, bool force)
 	 * Having constructed the checkpoint record, ensure all shmem disk buffers
 	 * and commit-log buffers are flushed to disk.
 	 *
-	 * This I/O could fail for various reasons.  If so, we will fail to complete
-	 * the checkpoint, but there is no reason to force a system panic.
-	 * Accordingly, exit critical section while doing it.  (If we are doing a
-	 * shutdown checkpoint, we probably *should* panic --- but that will
-	 * happen anyway because we'll still be inside the critical section
+	 * This I/O could fail for various reasons.  If so, we will fail to
+	 * complete the checkpoint, but there is no reason to force a system
+	 * panic. Accordingly, exit critical section while doing it.  (If we are
+	 * doing a shutdown checkpoint, we probably *should* panic --- but that
+	 * will happen anyway because we'll still be inside the critical section
 	 * established by ShutdownXLOG.)
 	 */
 	END_CRIT_SECTION();

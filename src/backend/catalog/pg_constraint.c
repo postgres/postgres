@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.27 2005/10/15 02:49:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.27.2.1 2005/11/22 18:23:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -497,8 +497,8 @@ RemoveConstraintById(Oid conId)
 		/*
 		 * XXX for now, do nothing special when dropping a domain constraint
 		 *
-		 * Probably there should be some form of locking on the domain type, but
-		 * we have no such concept at the moment.
+		 * Probably there should be some form of locking on the domain type,
+		 * but we have no such concept at the moment.
 		 */
 	}
 	else

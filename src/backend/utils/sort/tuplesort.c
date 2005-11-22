@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.54 2005/10/25 13:47:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.54.2.1 2005/11/22 18:23:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -584,6 +584,7 @@ void
 tuplesort_end(Tuplesortstate *state)
 {
 	int			i;
+
 #ifdef TRACE_SORT
 	long		spaceUsed;
 #endif
@@ -743,8 +744,8 @@ puttuple_common(Tuplesortstate *state, void *tuple)
 			 * and it's simplest to let writetup free each tuple as soon as
 			 * it's written.)
 			 *
-			 * Note there will always be at least one tuple in the heap at this
-			 * point; see dumptuples.
+			 * Note there will always be at least one tuple in the heap at
+			 * this point; see dumptuples.
 			 */
 			Assert(state->memtupcount > 0);
 			if (COMPARETUP(state, tuple, state->memtuples[0]) >= 0)
@@ -890,8 +891,8 @@ tuplesort_gettuple(Tuplesortstate *state, bool forward,
 			/*
 			 * Backward.
 			 *
-			 * if all tuples are fetched already then we return last tuple, else
-			 * - tuple before last returned.
+			 * if all tuples are fetched already then we return last tuple,
+			 * else - tuple before last returned.
 			 */
 			if (state->eof_reached)
 			{

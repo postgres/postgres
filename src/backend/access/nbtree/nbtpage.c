@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.88 2005/10/15 02:49:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.88.2.1 2005/11/22 18:23:04 momjian Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -440,21 +440,21 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 		 * have been re-used between the time the last VACUUM scanned it and
 		 * the time the VACUUM made its FSM updates.)
 		 *
-		 * In fact, it's worse than that: we can't even assume that it's safe to
-		 * take a lock on the reported page.  If somebody else has a lock on
-		 * it, or even worse our own caller does, we could deadlock.  (The
+		 * In fact, it's worse than that: we can't even assume that it's safe
+		 * to take a lock on the reported page.  If somebody else has a lock
+		 * on it, or even worse our own caller does, we could deadlock.  (The
 		 * own-caller scenario is actually not improbable. Consider an index
 		 * on a serial or timestamp column.  Nearly all splits will be at the
 		 * rightmost page, so it's entirely likely that _bt_split will call us
-		 * while holding a lock on the page most recently acquired from FSM.
-		 * A VACUUM running concurrently with the previous split could well
-		 * have placed that page back in FSM.)
+		 * while holding a lock on the page most recently acquired from FSM. A
+		 * VACUUM running concurrently with the previous split could well have
+		 * placed that page back in FSM.)
 		 *
-		 * To get around that, we ask for only a conditional lock on the reported
-		 * page.  If we fail, then someone else is using the page, and we may
-		 * reasonably assume it's not free.  (If we happen to be wrong, the
-		 * worst consequence is the page will be lost to use till the next
-		 * VACUUM, which is no big problem.)
+		 * To get around that, we ask for only a conditional lock on the
+		 * reported page.  If we fail, then someone else is using the page,
+		 * and we may reasonably assume it's not free.  (If we happen to be
+		 * wrong, the worst consequence is the page will be lost to use till
+		 * the next VACUUM, which is no big problem.)
 		 */
 		for (;;)
 		{
@@ -803,12 +803,12 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 	 * We have to lock the pages we need to modify in the standard order:
 	 * moving right, then up.  Else we will deadlock against other writers.
 	 *
-	 * So, we need to find and write-lock the current left sibling of the target
-	 * page.  The sibling that was current a moment ago could have split, so
-	 * we may have to move right.  This search could fail if either the
-	 * sibling or the target page was deleted by someone else meanwhile; if
-	 * so, give up.  (Right now, that should never happen, since page deletion
-	 * is only done in VACUUM and there shouldn't be multiple VACUUMs
+	 * So, we need to find and write-lock the current left sibling of the
+	 * target page.  The sibling that was current a moment ago could have
+	 * split, so we may have to move right.  This search could fail if either
+	 * the sibling or the target page was deleted by someone else meanwhile;
+	 * if so, give up.	(Right now, that should never happen, since page
+	 * deletion is only done in VACUUM and there shouldn't be multiple VACUUMs
 	 * concurrently on the same table.)
 	 */
 	if (leftsib != P_NONE)

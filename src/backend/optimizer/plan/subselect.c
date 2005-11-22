@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.100 2005/10/15 02:49:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.100.2.1 2005/11/22 18:23:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,10 +118,10 @@ replace_outer_var(Var *var)
 	 * this sort of aliasing will cause no trouble. The correct field should
 	 * get stored into the Param slot at execution in each part of the tree.
 	 *
-	 * We also need to demand a match on vartypmod.  This does not matter for the
-	 * Param itself, since those are not typmod-dependent, but it does matter
-	 * when make_subplan() instantiates a modified copy of the Var for a
-	 * subplan's args list.
+	 * We also need to demand a match on vartypmod.  This does not matter for
+	 * the Param itself, since those are not typmod-dependent, but it does
+	 * matter when make_subplan() instantiates a modified copy of the Var for
+	 * a subplan's args list.
 	 */
 	i = 0;
 	foreach(ppl, PlannerParamList)
@@ -267,8 +267,8 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 	 * 50% retrieval.  For EXPR and MULTIEXPR subplans, use default behavior
 	 * (we're only expecting one row out, anyway).
 	 *
-	 * NOTE: if you change these numbers, also change cost_qual_eval_walker() in
-	 * path/costsize.c.
+	 * NOTE: if you change these numbers, also change cost_qual_eval_walker()
+	 * in path/costsize.c.
 	 *
 	 * XXX If an ALL/ANY subplan is uncorrelated, we may decide to hash or
 	 * materialize its result below.  In that case it would've been better to
@@ -698,10 +698,10 @@ convert_IN_to_join(PlannerInfo *root, SubLink *sublink)
 	/*
 	 * Okay, pull up the sub-select into top range table and jointree.
 	 *
-	 * We rely here on the assumption that the outer query has no references to
-	 * the inner (necessarily true, other than the Vars that we build below).
-	 * Therefore this is a lot easier than what pull_up_subqueries has to go
-	 * through.
+	 * We rely here on the assumption that the outer query has no references
+	 * to the inner (necessarily true, other than the Vars that we build
+	 * below). Therefore this is a lot easier than what pull_up_subqueries has
+	 * to go through.
 	 */
 	rte = addRangeTableEntryForSubquery(NULL,
 										subselect,
@@ -938,9 +938,9 @@ SS_finalize_plan(Plan *plan, List *rtable)
 	 * Finally, attach any initPlans to the topmost plan node, and add their
 	 * extParams to the topmost node's, too.
 	 *
-	 * We also add the total_cost of each initPlan to the startup cost of the top
-	 * node.  This is a conservative overestimate, since in fact each initPlan
-	 * might be executed later than plan startup, or even not at all.
+	 * We also add the total_cost of each initPlan to the startup cost of the
+	 * top node.  This is a conservative overestimate, since in fact each
+	 * initPlan might be executed later than plan startup, or even not at all.
 	 */
 	plan->initPlan = PlannerInitPlan;
 	PlannerInitPlan = NIL;		/* make sure they're not attached twice */

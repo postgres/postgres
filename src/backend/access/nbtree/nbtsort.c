@@ -56,7 +56,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.95 2005/10/15 02:49:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.95.2.1 2005/11/22 18:23:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -487,9 +487,9 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, BTItem bti)
 	 * the per-page available space. Note that at this point, btisz doesn't
 	 * include the ItemId.
 	 *
-	 * NOTE: similar code appears in _bt_insertonpg() to defend against oversize
-	 * items being inserted into an already-existing index. But during
-	 * creation of an index, we don't go through there.
+	 * NOTE: similar code appears in _bt_insertonpg() to defend against
+	 * oversize items being inserted into an already-existing index. But
+	 * during creation of an index, we don't go through there.
 	 */
 	if (btisz > BTMaxItemSize(npage))
 		ereport(ERROR,

@@ -80,7 +80,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.73 2005/10/15 02:49:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.73.2.1 2005/11/22 18:23:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -564,8 +564,8 @@ PrepareForTupleInvalidation(Relation relation, HeapTuple tuple)
 		 * is needed because other backends might possibly possess smgr cache
 		 * but not relcache entries for the target relation.
 		 *
-		 * Note: during a pg_class row update that assigns a new relfilenode or
-		 * reltablespace value, we will be called on both the old and new
+		 * Note: during a pg_class row update that assigns a new relfilenode
+		 * or reltablespace value, we will be called on both the old and new
 		 * tuples, and thus will broadcast invalidation messages showing both
 		 * the old and new RelFileNode values.	This ensures that other
 		 * backends will close smgr references to the old file.

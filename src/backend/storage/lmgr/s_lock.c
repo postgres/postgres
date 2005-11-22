@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/s_lock.c,v 1.40 2005/10/15 02:49:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/s_lock.c,v 1.40.2.1 2005/11/22 18:23:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,27 +58,27 @@ s_lock(volatile slock_t *lock, const char *file, int line)
 	 * longer than to call the kernel, so we try to adapt the spin loop count
 	 * depending on whether we seem to be in a uniprocessor or multiprocessor.
 	 *
-	 * Note: you might think MIN_SPINS_PER_DELAY should be just 1, but you'd be
-	 * wrong; there are platforms where that can result in a "stuck spinlock"
-	 * failure.  This has been seen particularly on Alphas; it seems that the
-	 * first TAS after returning from kernel space will always fail on that
-	 * hardware.
+	 * Note: you might think MIN_SPINS_PER_DELAY should be just 1, but you'd
+	 * be wrong; there are platforms where that can result in a "stuck
+	 * spinlock" failure.  This has been seen particularly on Alphas; it seems
+	 * that the first TAS after returning from kernel space will always fail
+	 * on that hardware.
 	 *
-	 * Once we do decide to block, we use randomly increasing pg_usleep() delays.
-	 * The first delay is 1 msec, then the delay randomly increases to about
-	 * one second, after which we reset to 1 msec and start again.	The idea
-	 * here is that in the presence of heavy contention we need to increase
-	 * the delay, else the spinlock holder may never get to run and release
-	 * the lock.  (Consider situation where spinlock holder has been nice'd
-	 * down in priority by the scheduler --- it will not get scheduled until
-	 * all would-be acquirers are sleeping, so if we always use a 1-msec
+	 * Once we do decide to block, we use randomly increasing pg_usleep()
+	 * delays. The first delay is 1 msec, then the delay randomly increases to
+	 * about one second, after which we reset to 1 msec and start again.  The
+	 * idea here is that in the presence of heavy contention we need to
+	 * increase the delay, else the spinlock holder may never get to run and
+	 * release the lock.  (Consider situation where spinlock holder has been
+	 * nice'd down in priority by the scheduler --- it will not get scheduled
+	 * until all would-be acquirers are sleeping, so if we always use a 1-msec
 	 * sleep, there is a real possibility of starvation.)  But we can't just
 	 * clamp the delay to an upper bound, else it would take a long time to
 	 * make a reasonable number of tries.
 	 *
-	 * We time out and declare error after NUM_DELAYS delays (thus, exactly that
-	 * many tries).  With the given settings, this will usually take 2 or so
-	 * minutes.  It seems better to fix the total number of tries (and thus
+	 * We time out and declare error after NUM_DELAYS delays (thus, exactly
+	 * that many tries).  With the given settings, this will usually take 2 or
+	 * so minutes.	It seems better to fix the total number of tries (and thus
 	 * the probability of unintended failure) than to fix the total time
 	 * spent.
 	 *
@@ -251,7 +251,6 @@ _success:						\n\
 	);
 }
 #endif   /* __m68k__ && !__linux__ */
-
 #else							/* not __GNUC__ */
 
 /*

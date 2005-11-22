@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.88 2005/10/15 02:49:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.88.2.1 2005/11/22 18:23:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -631,8 +631,9 @@ ExecMaterializeSlot(TupleTableSlot *slot)
 	 * in which this could be optimized but it's probably not worth worrying
 	 * about.)
 	 *
-	 * We may be called in a context that is shorter-lived than the tuple slot,
-	 * but we have to ensure that the materialized tuple will survive anyway.
+	 * We may be called in a context that is shorter-lived than the tuple
+	 * slot, but we have to ensure that the materialized tuple will survive
+	 * anyway.
 	 */
 	oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
 	newTuple = ExecCopySlotTuple(slot);

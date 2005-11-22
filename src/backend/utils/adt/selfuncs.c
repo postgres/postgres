@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.191 2005/10/15 02:49:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.191.2.1 2005/11/22 18:23:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1396,11 +1396,11 @@ eqjoinsel(PG_FUNCTION_ARGS)
 		 * the righthand relation are unique (ie, act as if it's been
 		 * DISTINCT'd).
 		 *
-		 * NOTE: it might seem that we should unique-ify the lefthand input when
-		 * considering JOIN_REVERSE_IN.  But this is not so, because the join
-		 * clause we've been handed has not been commuted from the way the
-		 * parser originally wrote it.	We know that the unique side of the IN
-		 * clause is *always* on the right.
+		 * NOTE: it might seem that we should unique-ify the lefthand input
+		 * when considering JOIN_REVERSE_IN.  But this is not so, because the
+		 * join clause we've been handed has not been commuted from the way
+		 * the parser originally wrote it.	We know that the unique side of
+		 * the IN clause is *always* on the right.
 		 *
 		 * NOTE: it would be dangerous to try to be smart about JOIN_LEFT or
 		 * JOIN_RIGHT here, because we do not have enough information to
@@ -2190,8 +2190,8 @@ estimate_hash_bucketsize(PlannerInfo *root, Node *hashkey, double nbuckets)
 	 * assuming that the data distribution is affected uniformly by the
 	 * restriction clauses!
 	 *
-	 * XXX Possibly better way, but much more expensive: multiply by selectivity
-	 * of rel's restriction clauses that mention the target Var.
+	 * XXX Possibly better way, but much more expensive: multiply by
+	 * selectivity of rel's restriction clauses that mention the target Var.
 	 */
 	if (vardata.rel)
 		ndistinct *= vardata.rel->rows / vardata.rel->tuples;
@@ -2296,10 +2296,10 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 	 * declared input type(s) of the operator we are invoked for, so we just
 	 * error out if either is not recognized.
 	 *
-	 * XXX The histogram we are interpolating between points of could belong to a
-	 * column that's only binary-compatible with the declared type. In essence
-	 * we are assuming that the semantics of binary-compatible types are
-	 * enough alike that we can use a histogram generated with one type's
+	 * XXX The histogram we are interpolating between points of could belong
+	 * to a column that's only binary-compatible with the declared type. In
+	 * essence we are assuming that the semantics of binary-compatible types
+	 * are enough alike that we can use a histogram generated with one type's
 	 * operators to estimate selectivity for the other's.  This is outright
 	 * wrong in some cases --- in particular signed versus unsigned
 	 * interpretation could trip us up.  But it's useful enough in the
@@ -2636,10 +2636,10 @@ convert_string_datum(Datum value, Oid typid)
 		 * that can write past the specified buffer length in that scenario.
 		 * So, do it the dumb way for portability.
 		 *
-		 * Yet other systems (e.g., glibc) sometimes return a smaller value from
-		 * the second call than the first; thus the Assert must be <= not ==
-		 * as you'd expect.  Can't any of these people program their way out
-		 * of a paper bag?
+		 * Yet other systems (e.g., glibc) sometimes return a smaller value
+		 * from the second call than the first; thus the Assert must be <= not
+		 * == as you'd expect.  Can't any of these people program their way
+		 * out of a paper bag?
 		 */
 		xfrmlen = strxfrm(NULL, val, 0);
 		xfrmstr = (char *) palloc(xfrmlen + 1);
@@ -3150,7 +3150,8 @@ get_variable_numdistinct(VariableStatData *vardata)
 		/*
 		 * Special-case boolean columns: presumably, two distinct values.
 		 *
-		 * Are there any other datatypes we should wire in special estimates for?
+		 * Are there any other datatypes we should wire in special estimates
+		 * for?
 		 */
 		stadistinct = 2.0;
 	}
@@ -3265,8 +3266,9 @@ get_variable_maximum(PlannerInfo *root, VariableStatData *vardata,
 	/*
 	 * If there is a histogram, grab the last or first value as appropriate.
 	 *
-	 * If there is a histogram that is sorted with some other operator than the
-	 * one we want, fail --- this suggests that there is data we can't use.
+	 * If there is a histogram that is sorted with some other operator than
+	 * the one we want, fail --- this suggests that there is data we can't
+	 * use.
 	 */
 	if (get_attstatsslot(vardata->statsTuple,
 						 vardata->atttype, vardata->atttypmod,
@@ -4214,8 +4216,8 @@ genericcostestimate(PlannerInfo *root,
 	 * system in favor of using partial indexes where possible, which is not
 	 * necessarily a bad thing. But it'd be nice to do better someday.
 	 *
-	 * Note that index->indpred and indexQuals are both in implicit-AND form, so
-	 * ANDing them together just takes merging the lists.  However,
+	 * Note that index->indpred and indexQuals are both in implicit-AND form,
+	 * so ANDing them together just takes merging the lists.  However,
 	 * eliminating duplicates is a bit trickier because indexQuals contains
 	 * RestrictInfo nodes and the indpred does not.  It is okay to pass a
 	 * mixed list to clauselist_selectivity, but we have to work a bit to
@@ -4261,8 +4263,8 @@ genericcostestimate(PlannerInfo *root,
 	/*
 	 * Estimate the number of index pages that will be retrieved.
 	 *
-	 * For all currently-supported index types, the first page of the index is a
-	 * metadata page, and we should figure on fetching that plus a pro-rated
+	 * For all currently-supported index types, the first page of the index is
+	 * a metadata page, and we should figure on fetching that plus a pro-rated
 	 * fraction of the remaining pages.
 	 */
 	if (index->pages > 1 && index->tuples > 0)
@@ -4289,9 +4291,9 @@ genericcostestimate(PlannerInfo *root,
 	 * CPU costs as cpu_index_tuple_cost plus one cpu_operator_cost per
 	 * indexqual operator.
 	 *
-	 * Note: this neglects the possible costs of rechecking lossy operators and
-	 * OR-clause expressions.  Detecting that that might be needed seems more
-	 * expensive than it's worth, though, considering all the other
+	 * Note: this neglects the possible costs of rechecking lossy operators
+	 * and OR-clause expressions.  Detecting that that might be needed seems
+	 * more expensive than it's worth, though, considering all the other
 	 * inaccuracies here ...
 	 */
 	cost_qual_eval(&index_qual_cost, indexQuals);

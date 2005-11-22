@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.61 2005/10/15 02:49:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.61.2.1 2005/11/22 18:23:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -286,21 +286,21 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			 * relation but crashes before initializing the page. Reclaim such
 			 * pages for use.
 			 *
-			 * We have to be careful here because we could be looking at a page
-			 * that someone has just added to the relation and not yet been
-			 * able to initialize (see RelationGetBufferForTuple). To
+			 * We have to be careful here because we could be looking at a
+			 * page that someone has just added to the relation and not yet
+			 * been able to initialize (see RelationGetBufferForTuple). To
 			 * interlock against that, release the buffer read lock (which we
 			 * must do anyway) and grab the relation extension lock before
 			 * re-locking in exclusive mode.  If the page is still
 			 * uninitialized by then, it must be left over from a crashed
 			 * backend, and we can initialize it.
 			 *
-			 * We don't really need the relation lock when this is a new or temp
-			 * relation, but it's probably not worth the code space to check
-			 * that, since this surely isn't a critical path.
+			 * We don't really need the relation lock when this is a new or
+			 * temp relation, but it's probably not worth the code space to
+			 * check that, since this surely isn't a critical path.
 			 *
-			 * Note: the comparable code in vacuum.c need not worry because it's
-			 * got exclusive lock on the whole relation.
+			 * Note: the comparable code in vacuum.c need not worry because
+			 * it's got exclusive lock on the whole relation.
 			 */
 			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 			LockRelationForExtension(onerel, ExclusiveLock);
@@ -367,12 +367,12 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 					 * Tuple is good.  Consider whether to replace its xmin
 					 * value with FrozenTransactionId.
 					 *
-					 * NB: Since we hold only a shared buffer lock here, we are
-					 * assuming that TransactionId read/write is atomic.  This
-					 * is not the only place that makes such an assumption.
-					 * It'd be possible to avoid the assumption by momentarily
-					 * acquiring exclusive lock, but for the moment I see no
-					 * need to.
+					 * NB: Since we hold only a shared buffer lock here, we
+					 * are assuming that TransactionId read/write is atomic.
+					 * This is not the only place that makes such an
+					 * assumption. It'd be possible to avoid the assumption by
+					 * momentarily acquiring exclusive lock, but for the
+					 * moment I see no need to.
 					 */
 					if (TransactionIdIsNormal(HeapTupleHeaderGetXmin(tuple.t_data)) &&
 						TransactionIdPrecedes(HeapTupleHeaderGetXmin(tuple.t_data),

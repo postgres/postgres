@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.20 2005/10/15 02:49:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.20.2.1 2005/11/22 18:23:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -388,13 +388,13 @@ SysLogger_Start(void)
 	 * If first time through, create the pipe which will receive stderr
 	 * output.
 	 *
-	 * If the syslogger crashes and needs to be restarted, we continue to use the
-	 * same pipe (indeed must do so, since extant backends will be writing
+	 * If the syslogger crashes and needs to be restarted, we continue to use
+	 * the same pipe (indeed must do so, since extant backends will be writing
 	 * into that pipe).
 	 *
-	 * This means the postmaster must continue to hold the read end of the pipe
-	 * open, so we can pass it down to the reincarnated syslogger. This is a
-	 * bit klugy but we have little choice.
+	 * This means the postmaster must continue to hold the read end of the
+	 * pipe open, so we can pass it down to the reincarnated syslogger. This
+	 * is a bit klugy but we have little choice.
 	 */
 #ifndef WIN32
 	if (syslogPipe[0] < 0)

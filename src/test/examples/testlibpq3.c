@@ -18,9 +18,9 @@
  *	b = (5 bytes) \000\001\002\003\004
  *
  * tuple 0: got
- *  i = (4 bytes) 2
- *  t = (8 bytes) 'ho there'
- *  b = (5 bytes) \004\003\002\001\000
+ *	i = (4 bytes) 2
+ *	t = (8 bytes) 'ho there'
+ *	b = (5 bytes) \004\003\002\001\000
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -137,10 +137,10 @@ main(int argc, char **argv)
 	 * out-of-line parameters, as well as binary transmission of data.
 	 *
 	 * This first example transmits the parameters as text, but receives the
-	 * results in binary format.  By using out-of-line parameters we can
-	 * avoid a lot of tedious mucking about with quoting and escaping, even
-	 * though the data is text.  Notice how we don't have to do anything
-	 * special with the quote mark in the parameter value.
+	 * results in binary format.  By using out-of-line parameters we can avoid
+	 * a lot of tedious mucking about with quoting and escaping, even though
+	 * the data is text.  Notice how we don't have to do anything special with
+	 * the quote mark in the parameter value.
 	 */
 
 	/* Here is our out-of-line parameter value */
@@ -167,8 +167,8 @@ main(int argc, char **argv)
 	PQclear(res);
 
 	/*
-	 * In this second example we transmit an integer parameter in binary
-	 * form, and again retrieve the results in binary form.
+	 * In this second example we transmit an integer parameter in binary form,
+	 * and again retrieve the results in binary form.
 	 *
 	 * Although we tell PQexecParams we are letting the backend deduce
 	 * parameter type, we really force the decision by casting the parameter

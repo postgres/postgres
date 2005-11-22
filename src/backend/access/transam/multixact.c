@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.11 2005/10/28 19:00:19 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.11.2.1 2005/11/22 18:23:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,22 +129,23 @@ typedef struct MultiXactStateData
 	 * member of a MultiXact, and that MultiXact would have to be created
 	 * during or after the lock acquisition.)
 	 *
-	 * OldestVisibleMXactId[k] is the oldest MultiXactId each backend's current
-	 * transaction(s) think is potentially live, or InvalidMultiXactId when
-	 * not in a transaction or not in a transaction that's paid any attention
-	 * to MultiXacts yet.  This is computed when first needed in a given
-	 * transaction, and cleared at transaction end.  We can compute it as the
-	 * minimum of the valid OldestMemberMXactId[] entries at the time we
-	 * compute it (using nextMXact if none are valid).	Each backend is
+	 * OldestVisibleMXactId[k] is the oldest MultiXactId each backend's
+	 * current transaction(s) think is potentially live, or InvalidMultiXactId
+	 * when not in a transaction or not in a transaction that's paid any
+	 * attention to MultiXacts yet.  This is computed when first needed in a
+	 * given transaction, and cleared at transaction end.  We can compute it
+	 * as the minimum of the valid OldestMemberMXactId[] entries at the time
+	 * we compute it (using nextMXact if none are valid).  Each backend is
 	 * required not to attempt to access any SLRU data for MultiXactIds older
 	 * than its own OldestVisibleMXactId[] setting; this is necessary because
 	 * the checkpointer could truncate away such data at any instant.
 	 *
-	 * The checkpointer can compute the safe truncation point as the oldest valid
-	 * value among all the OldestMemberMXactId[] and OldestVisibleMXactId[]
-	 * entries, or nextMXact if none are valid. Clearly, it is not possible
-	 * for any later-computed OldestVisibleMXactId value to be older than
-	 * this, and so there is no risk of truncating data that is still needed.
+	 * The checkpointer can compute the safe truncation point as the oldest
+	 * valid value among all the OldestMemberMXactId[] and
+	 * OldestVisibleMXactId[] entries, or nextMXact if none are valid.
+	 * Clearly, it is not possible for any later-computed OldestVisibleMXactId
+	 * value to be older than this, and so there is no risk of truncating data
+	 * that is still needed.
 	 */
 	MultiXactId perBackendXactIds[1];	/* VARIABLE LENGTH ARRAY */
 } MultiXactStateData;
@@ -631,8 +632,8 @@ CreateMultiXactId(int nxids, TransactionId *xids)
 	}
 
 	/*
-	 * Assign the MXID and offsets range to use, and make sure there is
-	 * space in the OFFSETs and MEMBERs files.  NB: this routine does
+	 * Assign the MXID and offsets range to use, and make sure there is space
+	 * in the OFFSETs and MEMBERs files.  NB: this routine does
 	 * START_CRIT_SECTION().
 	 */
 	multi = GetNewMultiXactId(nxids, &offset);
@@ -788,9 +789,9 @@ GetNewMultiXactId(int nxids, MultiXactOffset *offset)
 	ExtendMultiXactOffset(result);
 
 	/*
-	 * Reserve the members space, similarly to above.  Also, be
-	 * careful not to return zero as the starting offset for any multixact.
-	 * See GetMultiXactIdMembers() for motivation.
+	 * Reserve the members space, similarly to above.  Also, be careful not to
+	 * return zero as the starting offset for any multixact. See
+	 * GetMultiXactIdMembers() for motivation.
 	 */
 	nextOffset = MultiXactState->nextOffset;
 	if (nextOffset == 0)
@@ -804,8 +805,8 @@ GetNewMultiXactId(int nxids, MultiXactOffset *offset)
 	ExtendMultiXactMember(nextOffset, nxids);
 
 	/*
-	 * Critical section from here until caller has written the data into
-	 * the just-reserved SLRU space; we don't want to error out with a partly
+	 * Critical section from here until caller has written the data into the
+	 * just-reserved SLRU space; we don't want to error out with a partly
 	 * written MultiXact structure.  (In particular, failing to write our
 	 * start offset after advancing nextMXact would effectively corrupt the
 	 * previous MultiXact.)
@@ -819,8 +820,8 @@ GetNewMultiXactId(int nxids, MultiXactOffset *offset)
 	 * We don't care about MultiXactId wraparound here; it will be handled by
 	 * the next iteration.	But note that nextMXact may be InvalidMultiXactId
 	 * after this routine exits, so anyone else looking at the variable must
-	 * be prepared to deal with that.  Similarly, nextOffset may be zero,
-	 * but we won't use that as the actual start offset of the next multixact.
+	 * be prepared to deal with that.  Similarly, nextOffset may be zero, but
+	 * we won't use that as the actual start offset of the next multixact.
 	 */
 	(MultiXactState->nextMXact)++;
 
@@ -881,7 +882,7 @@ GetMultiXactIdMembers(MultiXactId multi, TransactionId **xids)
 	 * SLRU data if we did try to examine it.
 	 *
 	 * Conversely, an ID >= nextMXact shouldn't ever be seen here; if it is
-	 * seen, it implies undetected ID wraparound has occurred.  We just
+	 * seen, it implies undetected ID wraparound has occurred.	We just
 	 * silently assume that such an ID is no longer running.
 	 *
 	 * Shared lock is enough here since we aren't modifying any global state.
@@ -897,7 +898,7 @@ GetMultiXactIdMembers(MultiXactId multi, TransactionId **xids)
 
 	/*
 	 * Acquire the shared lock just long enough to grab the current counter
-	 * values.  We may need both nextMXact and nextOffset; see below.
+	 * values.	We may need both nextMXact and nextOffset; see below.
 	 */
 	LWLockAcquire(MultiXactGenLock, LW_SHARED);
 
@@ -915,27 +916,27 @@ GetMultiXactIdMembers(MultiXactId multi, TransactionId **xids)
 
 	/*
 	 * Find out the offset at which we need to start reading MultiXactMembers
-	 * and the number of members in the multixact.  We determine the latter
-	 * as the difference between this multixact's starting offset and the
-	 * next one's.  However, there are some corner cases to worry about:
+	 * and the number of members in the multixact.	We determine the latter as
+	 * the difference between this multixact's starting offset and the next
+	 * one's.  However, there are some corner cases to worry about:
 	 *
-	 * 1. This multixact may be the latest one created, in which case there
-	 * is no next one to look at.  In this case the nextOffset value we just
+	 * 1. This multixact may be the latest one created, in which case there is
+	 * no next one to look at.	In this case the nextOffset value we just
 	 * saved is the correct endpoint.
 	 *
-	 * 2. The next multixact may still be in process of being filled in:
-	 * that is, another process may have done GetNewMultiXactId but not yet
-	 * written the offset entry for that ID.  In that scenario, it is
-	 * guaranteed that the offset entry for that multixact exists (because
-	 * GetNewMultiXactId won't release MultiXactGenLock until it does)
-	 * but contains zero (because we are careful to pre-zero offset pages).
-	 * Because GetNewMultiXactId will never return zero as the starting offset
-	 * for a multixact, when we read zero as the next multixact's offset, we
-	 * know we have this case.  We sleep for a bit and try again.
+	 * 2. The next multixact may still be in process of being filled in: that
+	 * is, another process may have done GetNewMultiXactId but not yet written
+	 * the offset entry for that ID.  In that scenario, it is guaranteed that
+	 * the offset entry for that multixact exists (because GetNewMultiXactId
+	 * won't release MultiXactGenLock until it does) but contains zero
+	 * (because we are careful to pre-zero offset pages). Because
+	 * GetNewMultiXactId will never return zero as the starting offset for a
+	 * multixact, when we read zero as the next multixact's offset, we know we
+	 * have this case.	We sleep for a bit and try again.
 	 *
-	 * 3. Because GetNewMultiXactId increments offset zero to offset one
-	 * to handle case #2, there is an ambiguity near the point of offset
-	 * wraparound.  If we see next multixact's offset is one, is that our
+	 * 3. Because GetNewMultiXactId increments offset zero to offset one to
+	 * handle case #2, there is an ambiguity near the point of offset
+	 * wraparound.	If we see next multixact's offset is one, is that our
 	 * multixact's actual endpoint, or did it end at zero with a subsequent
 	 * increment?  We handle this using the knowledge that if the zero'th
 	 * member slot wasn't filled, it'll contain zero, and zero isn't a valid

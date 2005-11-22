@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/posix_sema.c,v 1.14 2005/10/15 02:49:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/posix_sema.c,v 1.14.2.1 2005/11/22 18:23:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -246,19 +246,20 @@ PGSemaphoreLock(PGSemaphore sema, bool interruptOK)
 	 * from the operation prematurely because we were sent a signal.  So we
 	 * try and lock the semaphore again.
 	 *
-	 * Each time around the loop, we check for a cancel/die interrupt. We assume
-	 * that if such an interrupt comes in while we are waiting, it will cause
-	 * the sem_wait() call to exit with errno == EINTR, so that we will be
-	 * able to service the interrupt (if not in a critical section already).
+	 * Each time around the loop, we check for a cancel/die interrupt. We
+	 * assume that if such an interrupt comes in while we are waiting, it will
+	 * cause the sem_wait() call to exit with errno == EINTR, so that we will
+	 * be able to service the interrupt (if not in a critical section
+	 * already).
 	 *
 	 * Once we acquire the lock, we do NOT check for an interrupt before
 	 * returning.  The caller needs to be able to record ownership of the lock
 	 * before any interrupt can be accepted.
 	 *
-	 * There is a window of a few instructions between CHECK_FOR_INTERRUPTS and
-	 * entering the sem_wait() call.  If a cancel/die interrupt occurs in that
-	 * window, we would fail to notice it until after we acquire the lock (or
-	 * get another interrupt to escape the sem_wait()).  We can avoid this
+	 * There is a window of a few instructions between CHECK_FOR_INTERRUPTS
+	 * and entering the sem_wait() call.  If a cancel/die interrupt occurs in
+	 * that window, we would fail to notice it until after we acquire the lock
+	 * (or get another interrupt to escape the sem_wait()).  We can avoid this
 	 * problem by temporarily setting ImmediateInterruptOK to true before we
 	 * do CHECK_FOR_INTERRUPTS; then, a die() interrupt in this interval will
 	 * execute directly.  However, there is a huge pitfall: there is another

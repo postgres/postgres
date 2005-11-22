@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.97 2005/10/15 02:49:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.97.2.1 2005/11/22 18:23:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -608,8 +608,8 @@ fmgr_oldstyle(PG_FUNCTION_ARGS)
 	 * backwards-compatibility wrapper).  Note, however, that we'll never get
 	 * here with NULL arguments if the function is marked strict.
 	 *
-	 * We also need to detoast any TOAST-ed inputs, since it's unlikely that an
-	 * old-style function knows about TOASTing.
+	 * We also need to detoast any TOAST-ed inputs, since it's unlikely that
+	 * an old-style function knows about TOASTing.
 	 */
 	isnull = false;
 	for (i = 0; i < n_arguments; i++)

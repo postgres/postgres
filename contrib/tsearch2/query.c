@@ -169,7 +169,7 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, int2 
 						state->state = WAITOPERATOR;
 						return VAL;
 					}
-					else if ( state->state == WAITFIRSTOPERAND ) 
+					else if (state->state == WAITFIRSTOPERAND)
 						return END;
 					else
 						ereport(ERROR,
@@ -620,12 +620,13 @@ static QUERYTYPE *
 	/* parse query & make polish notation (postfix, but in reverse order) */
 	makepol(&state, pushval);
 	pfree(state.valstate.word);
-	if (!state.num) {
+	if (!state.num)
+	{
 		elog(NOTICE, "Query doesn't contain lexem(s)");
-		query = (QUERYTYPE*)palloc( HDRSIZEQT );
+		query = (QUERYTYPE *) palloc(HDRSIZEQT);
 		query->len = HDRSIZEQT;
 		query->size = 0;
-		return query; 
+		return query;
 	}
 
 	/* make finish struct */
@@ -912,8 +913,8 @@ to_tsquery(PG_FUNCTION_ARGS)
 	PG_FREE_IF_COPY(in, 1);
 
 	query = queryin(str, pushval_morph, PG_GETARG_INT32(0));
-	
-	if ( query->size == 0 )
+
+	if (query->size == 0)
 		PG_RETURN_POINTER(query);
 
 	res = clean_fakeval_v2(GETQUERY(query), &len);

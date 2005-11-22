@@ -784,8 +784,8 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 			 * Print fractional seconds if any.  The field widths here should
 			 * be at least equal to MAX_TIMESTAMP_PRECISION.
 			 *
-			 * In float mode, don't print fractional seconds before 1 AD, since
-			 * it's unlikely there's any precision left ...
+			 * In float mode, don't print fractional seconds before 1 AD,
+			 * since it's unlikely there's any precision left ...
 			 */
 #ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
@@ -834,8 +834,8 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 			 * Print fractional seconds if any.  The field widths here should
 			 * be at least equal to MAX_TIMESTAMP_PRECISION.
 			 *
-			 * In float mode, don't print fractional seconds before 1 AD, since
-			 * it's unlikely there's any precision left ...
+			 * In float mode, don't print fractional seconds before 1 AD,
+			 * since it's unlikely there's any precision left ...
 			 */
 #ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
@@ -880,8 +880,8 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 			 * Print fractional seconds if any.  The field widths here should
 			 * be at least equal to MAX_TIMESTAMP_PRECISION.
 			 *
-			 * In float mode, don't print fractional seconds before 1 AD, since
-			 * it's unlikely there's any precision left ...
+			 * In float mode, don't print fractional seconds before 1 AD,
+			 * since it's unlikely there's any precision left ...
 			 */
 #ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
@@ -934,8 +934,8 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 			 * Print fractional seconds if any.  The field widths here should
 			 * be at least equal to MAX_TIMESTAMP_PRECISION.
 			 *
-			 * In float mode, don't print fractional seconds before 1 AD, since
-			 * it's unlikely there's any precision left ...
+			 * In float mode, don't print fractional seconds before 1 AD,
+			 * since it's unlikely there's any precision left ...
 			 */
 #ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
@@ -1182,8 +1182,8 @@ DetermineLocalTimeZone(struct tm * tm)
 			 * localtime() call and delta calculation.	We may have to do it
 			 * twice before we have a trustworthy delta.
 			 *
-			 * Note: think not to put a loop here, since if we've been given an
-			 * "impossible" local time (in the gap during a spring-forward
+			 * Note: think not to put a loop here, since if we've been given
+			 * an "impossible" local time (in the gap during a spring-forward
 			 * transition) we'd never get out of the loop. Twice is enough to
 			 * give the behavior we want, which is that "impossible" times are
 			 * taken as standard time, while at a fall-back boundary ambiguous
@@ -2542,12 +2542,13 @@ find_end_token(char *str, char *fmt)
 	 * functions gets called as find_end_token("28the day12the hour", "the
 	 * day%hthehour")
 	 *
-	 * fmt points to "the day%hthehour", next_percent points to %hthehour and we
-	 * have to find a match for everything between these positions ("the
+	 * fmt points to "the day%hthehour", next_percent points to %hthehour and
+	 * we have to find a match for everything between these positions ("the
 	 * day"). We look for "the day" in str and know that the pattern we are
 	 * about to scan ends where this string starts (right after the "28")
 	 *
-	 * At the end, *fmt is '\0' and *str isn't. end_position then is unchanged.
+	 * At the end, *fmt is '\0' and *str isn't. end_position then is
+	 * unchanged.
 	 */
 	char	   *end_position = NULL;
 	char	   *next_percent,
@@ -2627,8 +2628,8 @@ find_end_token(char *str, char *fmt)
 		 *
 		 * and have set fmt to " " because overwrote the % sign with a NULL
 		 *
-		 * In this case where we would have to match a space but can't find it,
-		 * set end_position to the end of the string
+		 * In this case where we would have to match a space but can't find
+		 * it, set end_position to the end of the string
 		 */
 		if ((fmt + scan_offset)[0] == ' ' && fmt + scan_offset + 1 == subst_location)
 			end_position = str + strlen(str);

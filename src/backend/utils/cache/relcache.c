@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.230 2005/10/15 02:49:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.230.2.1 2005/11/22 18:23:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -303,11 +303,11 @@ AllocateRelationDesc(Relation relation, Form_pg_class relp)
 	/*
 	 * Copy the relation tuple form
 	 *
-	 * We only allocate space for the fixed fields, ie, CLASS_TUPLE_SIZE. relacl
-	 * is NOT stored in the relcache --- there'd be little point in it, since
-	 * we don't copy the tuple's nullvalues bitmap and hence wouldn't know if
-	 * the value is valid ... bottom line is that relacl *cannot* be retrieved
-	 * from the relcache.  Get it from the syscache if you need it.
+	 * We only allocate space for the fixed fields, ie, CLASS_TUPLE_SIZE.
+	 * relacl is NOT stored in the relcache --- there'd be little point in it,
+	 * since we don't copy the tuple's nullvalues bitmap and hence wouldn't
+	 * know if the value is valid ... bottom line is that relacl *cannot* be
+	 * retrieved from the relcache.  Get it from the syscache if you need it.
 	 */
 	relationForm = (Form_pg_class) palloc(CLASS_TUPLE_SIZE);
 
@@ -549,8 +549,8 @@ RelationBuildRuleLock(Relation relation)
 	/*
 	 * open pg_rewrite and begin a scan
 	 *
-	 * Note: since we scan the rules using RewriteRelRulenameIndexId, we will be
-	 * reading the rules in name order, except possibly during
+	 * Note: since we scan the rules using RewriteRelRulenameIndexId, we will
+	 * be reading the rules in name order, except possibly during
 	 * emergency-recovery operations (ie, IsIgnoringSystemIndexes). This in
 	 * turn ensures that rules will be fired in name order.
 	 */
@@ -1199,9 +1199,9 @@ formrdesc(const char *relationName, Oid relationReltype,
 	/*
 	 * initialize relation tuple form
 	 *
-	 * The data we insert here is pretty incomplete/bogus, but it'll serve to get
-	 * us launched.  RelationCacheInitializePhase2() will read the real data
-	 * from pg_class and replace what we've done here.
+	 * The data we insert here is pretty incomplete/bogus, but it'll serve to
+	 * get us launched.  RelationCacheInitializePhase2() will read the real
+	 * data from pg_class and replace what we've done here.
 	 */
 	relation->rd_rel = (Form_pg_class) palloc0(CLASS_TUPLE_SIZE);
 
@@ -1453,8 +1453,8 @@ RelationReloadClassinfo(Relation relation)
 	/*
 	 * Read the pg_class row
 	 *
-	 * Don't try to use an indexscan of pg_class_oid_index to reload the info for
-	 * pg_class_oid_index ...
+	 * Don't try to use an indexscan of pg_class_oid_index to reload the info
+	 * for pg_class_oid_index ...
 	 */
 	indexOK = (RelationGetRelid(relation) != ClassOidIndexId);
 	pg_class_tuple = ScanPgRelation(RelationGetRelid(relation), indexOK);
@@ -1501,9 +1501,9 @@ RelationClearRelation(Relation relation, bool rebuild)
 	 * got called because of a relation cache flush that was triggered by
 	 * VACUUM.
 	 *
-	 * If it's a nailed index, then we need to re-read the pg_class row to see if
-	 * its relfilenode changed.  We can't necessarily do that here, because we
-	 * might be in a failed transaction.  We assume it's okay to do it if
+	 * If it's a nailed index, then we need to re-read the pg_class row to see
+	 * if its relfilenode changed.	We can't necessarily do that here, because
+	 * we might be in a failed transaction.  We assume it's okay to do it if
 	 * there are open references to the relcache entry (cf notes for
 	 * AtEOXact_RelationCache).  Otherwise just mark the entry as possibly
 	 * invalid, and it'll be fixed when next opened.
@@ -1574,8 +1574,8 @@ RelationClearRelation(Relation relation, bool rebuild)
 		 * rd_createSubid state.  Also attempt to preserve the tupledesc and
 		 * rewrite-rule substructures in place.
 		 *
-		 * Note that this process does not touch CurrentResourceOwner; which is
-		 * good because whatever ref counts the entry may have do not
+		 * Note that this process does not touch CurrentResourceOwner; which
+		 * is good because whatever ref counts the entry may have do not
 		 * necessarily belong to that resource owner.
 		 */
 		Oid			save_relid = RelationGetRelid(relation);
@@ -1934,8 +1934,8 @@ AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
 		/*
 		 * Is it a relation created in the current subtransaction?
 		 *
-		 * During subcommit, mark it as belonging to the parent, instead. During
-		 * subabort, simply delete the relcache entry.
+		 * During subcommit, mark it as belonging to the parent, instead.
+		 * During subabort, simply delete the relcache entry.
 		 */
 		if (relation->rd_createSubid == mySubid)
 		{
@@ -3077,8 +3077,8 @@ load_relcache_init_file(void)
 		 * Rules and triggers are not saved (mainly because the internal
 		 * format is complex and subject to change).  They must be rebuilt if
 		 * needed by RelationCacheInitializePhase2.  This is not expected to
-		 * be a big performance hit since few system catalogs have such.
-		 * Ditto for index expressions and predicates.
+		 * be a big performance hit since few system catalogs have such. Ditto
+		 * for index expressions and predicates.
 		 */
 		rel->rd_rules = NULL;
 		rel->rd_rulescxt = NULL;
@@ -3321,10 +3321,10 @@ write_relcache_init_file(void)
 		 * OK, rename the temp file to its final name, deleting any
 		 * previously-existing init file.
 		 *
-		 * Note: a failure here is possible under Cygwin, if some other backend
-		 * is holding open an unlinked-but-not-yet-gone init file. So treat
-		 * this as a noncritical failure; just remove the useless temp file on
-		 * failure.
+		 * Note: a failure here is possible under Cygwin, if some other
+		 * backend is holding open an unlinked-but-not-yet-gone init file. So
+		 * treat this as a noncritical failure; just remove the useless temp
+		 * file on failure.
 		 */
 		if (rename(tempfilename, finalfilename) < 0)
 			unlink(tempfilename);

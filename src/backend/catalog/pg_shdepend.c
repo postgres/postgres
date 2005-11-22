@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.3 2005/10/15 02:49:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.3.2.1 2005/11/22 18:23:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -402,8 +402,8 @@ updateAclDependencies(Oid classId, Oid objectId, Oid ownerId, bool isGrant,
 
 			/*
 			 * Skip the owner: he has an OWNER shdep entry instead. (This is
-			 * not just a space optimization; it makes ALTER OWNER easier.
-			 * See notes in changeDependencyOnOwner.)
+			 * not just a space optimization; it makes ALTER OWNER easier. See
+			 * notes in changeDependencyOnOwner.)
 			 */
 			if (roleid == ownerId)
 				continue;
@@ -572,8 +572,8 @@ checkSharedDependencies(Oid classId, Oid objectId)
 		/*
 		 * Report seems unreasonably long, so reduce it to per-database info
 		 *
-		 * Note: we don't ever suppress per-database totals, which should be OK
-		 * as long as there aren't too many databases ...
+		 * Note: we don't ever suppress per-database totals, which should be
+		 * OK as long as there aren't too many databases ...
 		 */
 		descs.len = 0;			/* reset to empty */
 		descs.data[0] = '\0';

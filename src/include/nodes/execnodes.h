@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.139.2.1 2005/11/14 17:43:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.139.2.2 2005/11/22 18:23:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -343,10 +343,10 @@ typedef struct EState
 	bool		es_useEvalPlan; /* evaluating EPQ tuples? */
 
 	/*
-	 * this field added at end of struct to avoid post-release ABI breakage
-	 * in 8.1 series.  It'll be in a more logical place in 8.2.
+	 * this field added at end of struct to avoid post-release ABI breakage in
+	 * 8.1 series.	It'll be in a more logical place in 8.2.
 	 */
-	TupleTableSlot *es_trig_tuple_slot;			/* for trigger output tuples */
+	TupleTableSlot *es_trig_tuple_slot; /* for trigger output tuples */
 } EState;
 
 
@@ -495,9 +495,9 @@ typedef struct FuncExprState
 	 * We also need to store argument values across calls when evaluating a
 	 * function-returning-set.
 	 *
-	 * setArgsValid is true when we are evaluating a set-valued function and we
-	 * are in the middle of a call series; we want to pass the same argument
-	 * values to the function again (and again, until it returns
+	 * setArgsValid is true when we are evaluating a set-valued function and
+	 * we are in the middle of a call series; we want to pass the same
+	 * argument values to the function again (and again, until it returns
 	 * ExprEndResult).
 	 */
 	bool		setArgsValid;

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.52 2005/10/06 02:29:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.52.2.1 2005/11/22 18:23:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -392,8 +392,8 @@ gistindex_keytest(IndexTuple tuple,
 		 * are the index datum (as a GISTENTRY*), the comparison datum, and
 		 * the comparison operator's strategy number and subtype from pg_amop.
 		 *
-		 * (Presently there's no need to pass the subtype since it'll always be
-		 * zero, but might as well pass it for possible future use.)
+		 * (Presently there's no need to pass the subtype since it'll always
+		 * be zero, but might as well pass it for possible future use.)
 		 */
 		test = FunctionCall4(&key->sk_func,
 							 PointerGetDatum(&de),

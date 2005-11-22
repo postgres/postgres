@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.111 2005/10/17 16:24:19 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.111.2.1 2005/11/22 18:23:15 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -268,7 +268,7 @@ pgstat_init(void)
 	 * On some platforms, pg_getaddrinfo_all() may return multiple addresses
 	 * only one of which will actually work (eg, both IPv6 and IPv4 addresses
 	 * when kernel will reject IPv6).  Worse, the failure may occur at the
-	 * bind() or perhaps even connect() stage.  So we must loop through the
+	 * bind() or perhaps even connect() stage.	So we must loop through the
 	 * results till we find a working combination. We will generate LOG
 	 * messages, but no error, for bogus combinations.
 	 */
@@ -1493,11 +1493,11 @@ PgstatBufferMain(int argc, char *argv[])
 	 * Start a buffering process to read from the socket, so we have a little
 	 * more time to process incoming messages.
 	 *
-	 * NOTE: the process structure is: postmaster is parent of buffer process is
-	 * parent of collector process.  This way, the buffer can detect collector
-	 * failure via SIGCHLD, whereas otherwise it wouldn't notice collector
-	 * failure until it tried to write on the pipe.  That would mean that
-	 * after the postmaster started a new collector, we'd have two buffer
+	 * NOTE: the process structure is: postmaster is parent of buffer process
+	 * is parent of collector process.	This way, the buffer can detect
+	 * collector failure via SIGCHLD, whereas otherwise it wouldn't notice
+	 * collector failure until it tried to write on the pipe.  That would mean
+	 * that after the postmaster started a new collector, we'd have two buffer
 	 * processes competing to read from the UDP socket --- not good.
 	 */
 	if (pgpipe(pgStatPipe) < 0)

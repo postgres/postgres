@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.125 2005/10/15 02:49:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.125.2.1 2005/11/22 18:23:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,8 +219,8 @@ DefineSequence(CreateSeqStmt *seq)
 	/*
 	 * Two special hacks here:
 	 *
-	 * 1. Since VACUUM does not process sequences, we have to force the tuple to
-	 * have xmin = FrozenTransactionId now.  Otherwise it would become
+	 * 1. Since VACUUM does not process sequences, we have to force the tuple
+	 * to have xmin = FrozenTransactionId now.	Otherwise it would become
 	 * invisible to SELECTs after 2G transactions.	It is okay to do this
 	 * because if the current transaction aborts, no other xact will ever
 	 * examine the sequence tuple anyway.
@@ -459,10 +459,10 @@ nextval_internal(Oid relid)
 	 * fetch count to grab SEQ_LOG_VALS more values than we actually need to
 	 * cache.  (These will then be usable without logging.)
 	 *
-	 * If this is the first nextval after a checkpoint, we must force a new WAL
-	 * record to be written anyway, else replay starting from the checkpoint
-	 * would fail to advance the sequence past the logged values.  In this
-	 * case we may as well fetch extra values.
+	 * If this is the first nextval after a checkpoint, we must force a new
+	 * WAL record to be written anyway, else replay starting from the
+	 * checkpoint would fail to advance the sequence past the logged values.
+	 * In this case we may as well fetch extra values.
 	 */
 	if (log < fetch)
 	{

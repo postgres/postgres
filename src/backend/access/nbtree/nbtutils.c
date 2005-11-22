@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.65 2005/10/18 01:06:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.65.2.1 2005/11/22 18:23:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -549,8 +549,8 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple,
 			 * able to conclude no further tuples will pass, either. We have
 			 * to look at the scan direction and the qual type.
 			 *
-			 * Note: the only case in which we would keep going after failing a
-			 * required qual is if there are partially-redundant quals that
+			 * Note: the only case in which we would keep going after failing
+			 * a required qual is if there are partially-redundant quals that
 			 * _bt_preprocess_keys() was unable to eliminate.  For example,
 			 * given "x > 4 AND x > 10" where both are cross-type comparisons
 			 * and so not removable, we might start the scan at the x = 4

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.110 2005/11/04 18:35:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.110.2.1 2005/11/22 18:23:27 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -268,7 +268,6 @@ handle_sigint(SIGNAL_ARGS)
 	}
 	errno = save_errno;			/* just in case the write changed it */
 }
-
 #else							/* WIN32 */
 
 static BOOL WINAPI
@@ -323,7 +322,6 @@ setup_cancel_handler(void)
 		done = true;
 	}
 }
-
 #endif   /* WIN32 */
 
 
@@ -531,9 +529,9 @@ ReportSyntaxErrorPosition(const PGresult *result, const char *query)
 		 * want to think about coping with their variable screen width, but
 		 * not today.)
 		 *
-		 * Extract line number and begin and end indexes of line containing error
-		 * location.  There will not be any newlines or carriage returns in
-		 * the selected extract.
+		 * Extract line number and begin and end indexes of line containing
+		 * error location.	There will not be any newlines or carriage returns
+		 * in the selected extract.
 		 */
 		for (i = 0; i < clen; i++)
 		{
@@ -1217,8 +1215,8 @@ command_no_begin(const char *query)
 	 * gives rise to a TransactionStmt in the backend grammar, except for the
 	 * savepoint-related commands.
 	 *
-	 * (We assume that START must be START TRANSACTION, since there is presently
-	 * no other "START foo" command.)
+	 * (We assume that START must be START TRANSACTION, since there is
+	 * presently no other "START foo" command.)
 	 */
 	if (wordlen == 5 && pg_strncasecmp(query, "abort", 5) == 0)
 		return true;

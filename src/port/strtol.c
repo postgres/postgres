@@ -103,7 +103,8 @@ int			base;
 	 * digit is > 7 (or 8), the number is too big, and we will return a range
 	 * error.
 	 *
-	 * Set any if any `digits' consumed; make it negative to indicate overflow.
+	 * Set any if any `digits' consumed; make it negative to indicate
+	 * overflow.
 	 */
 	cutoff = neg ? -(unsigned long) LONG_MIN : LONG_MAX;
 	cutlim = cutoff % (unsigned long) base;

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.132 2005/10/15 02:49:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.132.2.1 2005/11/22 18:23:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -307,8 +307,8 @@ btgettuple(PG_FUNCTION_ARGS)
 	 * Save heap TID to use it in _bt_restscan.  Then release the read lock on
 	 * the buffer so that we aren't blocking other backends.
 	 *
-	 * NOTE: we do keep the pin on the buffer!	This is essential to ensure that
-	 * someone else doesn't delete the index entry we are stopped on.
+	 * NOTE: we do keep the pin on the buffer!	This is essential to ensure
+	 * that someone else doesn't delete the index entry we are stopped on.
 	 */
 	if (res)
 	{
@@ -734,8 +734,8 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 	 * buffer and it will be fully initialized before we can examine it.  (See
 	 * also vacuumlazy.c, which has the same issue.)
 	 *
-	 * We can skip locking for new or temp relations, however, since no one else
-	 * could be accessing them.
+	 * We can skip locking for new or temp relations, however, since no one
+	 * else could be accessing them.
 	 */
 	needLock = !RELATION_IS_LOCAL(rel);
 

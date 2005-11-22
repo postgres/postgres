@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.79 2005/10/15 02:49:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.79.2.1 2005/11/22 18:23:09 momjian Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -479,9 +479,9 @@ lo_export(PG_FUNCTION_ARGS)
 	/*
 	 * open the file to be written to
 	 *
-	 * Note: we reduce backend's normal 077 umask to the slightly friendlier 022.
-	 * This code used to drop it all the way to 0, but creating world-writable
-	 * export files doesn't seem wise.
+	 * Note: we reduce backend's normal 077 umask to the slightly friendlier
+	 * 022. This code used to drop it all the way to 0, but creating
+	 * world-writable export files doesn't seem wise.
 	 */
 	nbytes = VARSIZE(filename) - VARHDRSZ;
 	if (nbytes >= MAXPGPATH)

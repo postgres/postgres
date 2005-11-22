@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtree.c,v 1.92 2005/10/15 02:49:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtree.c,v 1.92.2.1 2005/11/22 18:23:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -527,9 +527,9 @@ rtdosplit(Relation r,
 	 * the left page, we expect it to get smaller.	This happens in the
 	 * internal insertion routine.
 	 *
-	 * 3)  Insert a pointer to the right page in the parent.  This may cause the
-	 * parent to split.  If it does, we need to repeat steps one and two for
-	 * each split node in the tree.
+	 * 3)  Insert a pointer to the right page in the parent.  This may cause
+	 * the parent to split.  If it does, we need to repeat steps one and two
+	 * for each split node in the tree.
 	 */
 
 	/* adjust active scans */
@@ -834,8 +834,8 @@ rtpicksplit(Relation r,
 	/*
 	 * Now split up the regions between the two seeds.
 	 *
-	 * The cost_vector array will contain hints for determining where each tuple
-	 * should go.  Each record in the array will contain a boolean,
+	 * The cost_vector array will contain hints for determining where each
+	 * tuple should go.  Each record in the array will contain a boolean,
 	 * choose_left, that indicates which node the tuple prefers to be on, and
 	 * the absolute difference in cost between putting the tuple in its
 	 * favored node and in the other node.
@@ -848,9 +848,9 @@ rtpicksplit(Relation r,
 	 * First, build the cost_vector array.	The new index tuple will also be
 	 * handled in this loop, and represented in the array, with i==newitemoff.
 	 *
-	 * In the case of variable size tuples it is possible that we only have the
-	 * two seeds and no other tuples, in which case we don't do any of this
-	 * cost_vector stuff.
+	 * In the case of variable size tuples it is possible that we only have
+	 * the two seeds and no other tuples, in which case we don't do any of
+	 * this cost_vector stuff.
 	 */
 
 	/* to keep compiler quiet */
@@ -966,11 +966,11 @@ rtpicksplit(Relation r,
 		 * need not worry about any other problem than failing to fit the new
 		 * item.)
 		 *
-		 * Guttman's algorithm actually has two factors to consider (in order):
-		 * 1. if one node has so many tuples already assigned to it that the
-		 * other needs all the rest in order to satisfy the condition that
-		 * neither node has fewer than m tuples, then that is decisive; 2.
-		 * otherwise, choose the page that shows the smaller enlargement of
+		 * Guttman's algorithm actually has two factors to consider (in
+		 * order): 1. if one node has so many tuples already assigned to it
+		 * that the other needs all the rest in order to satisfy the condition
+		 * that neither node has fewer than m tuples, then that is decisive;
+		 * 2. otherwise, choose the page that shows the smaller enlargement of
 		 * its union area.
 		 *
 		 * I have chosen m = M/2, where M is the maximum number of tuples on a
@@ -979,8 +979,8 @@ rtpicksplit(Relation r,
 		 * tuple on a page, if it is really big.  But even with variable size
 		 * tuples we still try to get m as close as possible to M/2.)
 		 *
-		 * The question of which page shows the smaller enlargement of its union
-		 * area has already been answered, and the answer stored in the
+		 * The question of which page shows the smaller enlargement of its
+		 * union area has already been answered, and the answer stored in the
 		 * choose_left field of the SPLITCOST record.
 		 */
 		left_feasible = (left_avail_space >= item_1_sz &&

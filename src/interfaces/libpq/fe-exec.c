@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.176 2005/10/15 02:49:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.176.2.1 2005/11/22 18:23:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -454,7 +454,7 @@ pqPrepareAsyncResult(PGconn *conn)
  * a trailing newline, and should not be more than one line).
  */
 void
-pqInternalNotice(const PGNoticeHooks * hooks, const char *fmt,...)
+pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt,...)
 {
 	char		msgBuf[1024];
 	va_list		args;
@@ -505,20 +505,20 @@ pqInternalNotice(const PGNoticeHooks * hooks, const char *fmt,...)
  *	  Returns TRUE if OK, FALSE if not enough memory to add the row
  */
 int
-pqAddTuple(PGresult *res, PGresAttValue * tup)
+pqAddTuple(PGresult *res, PGresAttValue *tup)
 {
 	if (res->ntups >= res->tupArrSize)
 	{
 		/*
 		 * Try to grow the array.
 		 *
-		 * We can use realloc because shallow copying of the structure is okay.
-		 * Note that the first time through, res->tuples is NULL. While ANSI
-		 * says that realloc() should act like malloc() in that case, some old
-		 * C libraries (like SunOS 4.1.x) coredump instead. On failure realloc
-		 * is supposed to return NULL without damaging the existing
-		 * allocation. Note that the positions beyond res->ntups are garbage,
-		 * not necessarily NULL.
+		 * We can use realloc because shallow copying of the structure is
+		 * okay. Note that the first time through, res->tuples is NULL. While
+		 * ANSI says that realloc() should act like malloc() in that case,
+		 * some old C libraries (like SunOS 4.1.x) coredump instead. On
+		 * failure realloc is supposed to return NULL without damaging the
+		 * existing allocation. Note that the positions beyond res->ntups are
+		 * garbage, not necessarily NULL.
 		 */
 		int			newSize = (res->tupArrSize > 0) ? res->tupArrSize * 2 : 128;
 		PGresAttValue **newTuples;
@@ -594,7 +594,7 @@ pqSaveParameterStatus(PGconn *conn, const char *name, const char *value)
 	 * Store new info as a single malloc block
 	 */
 	pstatus = (pgParameterStatus *) malloc(sizeof(pgParameterStatus) +
-										   strlen(name) + strlen(value) + 2);
+										   strlen(name) +strlen(value) + 2);
 	if (pstatus)
 	{
 		char	   *ptr;

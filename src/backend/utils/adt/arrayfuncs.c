@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.123 2005/10/15 02:49:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.123.2.1 2005/11/22 18:23:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,8 +189,8 @@ array_in(PG_FUNCTION_ARGS)
 	 * Otherwise, we require the input to be in curly-brace style, and we
 	 * prescan the input to determine dimensions.
 	 *
-	 * Dimension info takes the form of one or more [n] or [m:n] items. The outer
-	 * loop iterates once per dimension item.
+	 * Dimension info takes the form of one or more [n] or [m:n] items. The
+	 * outer loop iterates once per dimension item.
 	 */
 	p = string_save;
 	ndim = 0;
@@ -640,8 +640,8 @@ ReadArrayStr(char *arrayStr,
 	 * in-place within arrayStr to do this.  srcptr is the current scan point,
 	 * and dstptr is where we are copying to.
 	 *
-	 * We also want to suppress leading and trailing unquoted whitespace. We use
-	 * the leadingspace flag to suppress leading space.  Trailing space is
+	 * We also want to suppress leading and trailing unquoted whitespace. We
+	 * use the leadingspace flag to suppress leading space.  Trailing space is
 	 * tracked by using dstendptr to point to the last significant output
 	 * character.
 	 *
@@ -2290,8 +2290,8 @@ array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType,
 		/*
 		 * Apply the given function to source elt and extra args.
 		 *
-		 * We assume the extra args are non-NULL, so need not check whether fn()
-		 * is strict.  Would need to do more work here to support arrays
+		 * We assume the extra args are non-NULL, so need not check whether
+		 * fn() is strict.	Would need to do more work here to support arrays
 		 * containing nulls, too.
 		 */
 		fcinfo->arg[0] = elt;
@@ -3158,8 +3158,8 @@ array_type_length_coerce_internal(ArrayType *src,
 	/*
 	 * Use array_map to apply the function to each array element.
 	 *
-	 * We pass on the desttypmod and isExplicit flags whether or not the function
-	 * wants them.
+	 * We pass on the desttypmod and isExplicit flags whether or not the
+	 * function wants them.
 	 */
 	InitFunctionCallInfoData(locfcinfo, &my_extra->coerce_finfo, 3,
 							 NULL, NULL);

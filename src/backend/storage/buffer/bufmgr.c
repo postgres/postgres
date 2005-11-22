@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.198.2.1 2005/11/17 17:42:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.198.2.2 2005/11/22 18:23:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,7 +86,7 @@ static volatile BufferDesc *PinCountWaitBuf = NULL;
 static bool PinBuffer(volatile BufferDesc *buf);
 static void PinBuffer_Locked(volatile BufferDesc *buf);
 static void UnpinBuffer(volatile BufferDesc *buf,
-						bool fixOwner, bool normalAccess);
+			bool fixOwner, bool normalAccess);
 static bool SyncOneBuffer(int buf_id, bool skip_pinned);
 static void WaitIO(volatile BufferDesc *buf);
 static bool StartBufferIO(volatile BufferDesc *buf, bool forInput);
@@ -178,11 +178,12 @@ ReadBuffer(Relation reln, BlockNumber blockNum)
 	 * page but its contents are not yet valid.  IO_IN_PROGRESS is set for it,
 	 * if it's a shared buffer.
 	 *
-	 * Note: if smgrextend fails, we will end up with a buffer that is allocated
-	 * but not marked BM_VALID.  P_NEW will still select the same block number
-	 * (because the relation didn't get any longer on disk) and so future
-	 * attempts to extend the relation will find the same buffer (if it's not
-	 * been recycled) but come right back here to try smgrextend again.
+	 * Note: if smgrextend fails, we will end up with a buffer that is
+	 * allocated but not marked BM_VALID.  P_NEW will still select the same
+	 * block number (because the relation didn't get any longer on disk) and
+	 * so future attempts to extend the relation will find the same buffer (if
+	 * it's not been recycled) but come right back here to try smgrextend
+	 * again.
 	 */
 	Assert(!(bufHdr->flags & BM_VALID));		/* spinlock not needed */
 
@@ -982,8 +983,8 @@ SyncOneBuffer(int buf_id, bool skip_pinned)
 	/*
 	 * Check whether buffer needs writing.
 	 *
-	 * We can make this check without taking the buffer content lock so long as
-	 * we mark pages dirty in access methods *before* logging changes with
+	 * We can make this check without taking the buffer content lock so long
+	 * as we mark pages dirty in access methods *before* logging changes with
 	 * XLogInsert(): if someone marks the buffer dirty just after our check we
 	 * don't worry because our checkpoint.redo points before log record for
 	 * upcoming changes and so we are not required to write such dirty buffer.
@@ -1871,8 +1872,9 @@ WaitIO(volatile BufferDesc *buf)
 	/*
 	 * Changed to wait until there's no IO - Inoue 01/13/2000
 	 *
-	 * Note this is *necessary* because an error abort in the process doing I/O
-	 * could release the io_in_progress_lock prematurely. See AbortBufferIO.
+	 * Note this is *necessary* because an error abort in the process doing
+	 * I/O could release the io_in_progress_lock prematurely. See
+	 * AbortBufferIO.
 	 */
 	for (;;)
 	{

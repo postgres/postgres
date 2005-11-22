@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.47 2005/10/15 02:49:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.47.2.1 2005/11/22 18:23:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -276,8 +276,8 @@ findAutoDeletableObjects(const ObjectAddress *object,
 	 * that depend on it.  For each one that is AUTO or INTERNAL, visit the
 	 * referencing object.
 	 *
-	 * When dropping a whole object (subId = 0), find pg_depend records for its
-	 * sub-objects too.
+	 * When dropping a whole object (subId = 0), find pg_depend records for
+	 * its sub-objects too.
 	 */
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_refclassid,
@@ -411,8 +411,8 @@ recursiveDeletion(const ObjectAddress *object,
 	 * avoid infinite recursion in the case of cycles. Also, some dependency
 	 * types require extra processing here.
 	 *
-	 * When dropping a whole object (subId = 0), remove all pg_depend records for
-	 * its sub-objects too.
+	 * When dropping a whole object (subId = 0), remove all pg_depend records
+	 * for its sub-objects too.
 	 */
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_classid,

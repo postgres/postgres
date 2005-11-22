@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.93 2005/10/15 02:49:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.93.2.1 2005/11/22 18:23:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -344,8 +344,8 @@ smgrcreate(SMgrRelation reln, bool isTemp, bool isRedo)
 	 * We may be using the target table space for the first time in this
 	 * database, so create a per-database subdirectory if needed.
 	 *
-	 * XXX this is a fairly ugly violation of module layering, but this seems to
-	 * be the best place to put the check.	Maybe TablespaceCreateDbspace
+	 * XXX this is a fairly ugly violation of module layering, but this seems
+	 * to be the best place to put the check.  Maybe TablespaceCreateDbspace
 	 * should be here and not in commands/tablespace.c?  But that would imply
 	 * importing a lot of stuff that smgr.c oughtn't know, either.
 	 */
@@ -472,8 +472,8 @@ smgr_internal_unlink(RelFileNode rnode, int which, bool isTemp, bool isRedo)
 	/*
 	 * And delete the physical files.
 	 *
-	 * Note: we treat deletion failure as a WARNING, not an error, because we've
-	 * already decided to commit or abort the current xact.
+	 * Note: we treat deletion failure as a WARNING, not an error, because
+	 * we've already decided to commit or abort the current xact.
 	 */
 	if (!(*(smgrsw[which].smgr_unlink)) (rnode, isRedo))
 		ereport(WARNING,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.200.2.1 2005/11/20 18:38:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.200.2.2 2005/11/22 18:23:03 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1089,7 +1089,7 @@ heap_get_latest_tid(Relation relation,
  * The return value is the OID assigned to the tuple (either here or by the
  * caller), or InvalidOid if no OID.  The header fields of *tup are updated
  * to match the stored tuple; in particular tup->t_self receives the actual
- * TID where the tuple was stored.  But note that any toasting of fields
+ * TID where the tuple was stored.	But note that any toasting of fields
  * within the tuple data is NOT reflected into *tup.
  */
 Oid
@@ -1136,8 +1136,8 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	 * If the new tuple is too big for storage or contains already toasted
 	 * out-of-line attributes from some other relation, invoke the toaster.
 	 *
-	 * Note: below this point, heaptup is the data we actually intend to
-	 * store into the relation; tup is the caller's original untoasted data.
+	 * Note: below this point, heaptup is the data we actually intend to store
+	 * into the relation; tup is the caller's original untoasted data.
 	 */
 	if (HeapTupleHasExternal(tup) ||
 		(MAXALIGN(tup->t_len) > TOAST_TUPLE_THRESHOLD))
@@ -1224,8 +1224,8 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	/*
 	 * If tuple is cachable, mark it for invalidation from the caches in case
 	 * we abort.  Note it is OK to do this after WriteBuffer releases the
-	 * buffer, because the heaptup data structure is all in local memory,
-	 * not in the shared buffer.
+	 * buffer, because the heaptup data structure is all in local memory, not
+	 * in the shared buffer.
 	 */
 	CacheInvalidateHeapTuple(relation, heaptup);
 
@@ -1333,8 +1333,8 @@ l1:
 		 * heap_lock_tuple).  LockTuple will release us when we are
 		 * next-in-line for the tuple.
 		 *
-		 * If we are forced to "start over" below, we keep the tuple lock; this
-		 * arranges that we stay at the head of the line while rechecking
+		 * If we are forced to "start over" below, we keep the tuple lock;
+		 * this arranges that we stay at the head of the line while rechecking
 		 * tuple state.
 		 */
 		if (!have_tuple_lock)
@@ -1577,7 +1577,7 @@ simple_heap_delete(Relation relation, ItemPointer tid)
  *
  * On success, the header fields of *newtup are updated to match the new
  * stored tuple; in particular, newtup->t_self is set to the TID where the
- * new tuple was inserted.  However, any TOAST changes in the new tuple's
+ * new tuple was inserted.	However, any TOAST changes in the new tuple's
  * data are not reflected into *newtup.
  *
  * In the failure cases, the routine returns the tuple's t_ctid and t_xmax.
@@ -1649,8 +1649,8 @@ l2:
 		 * heap_lock_tuple).  LockTuple will release us when we are
 		 * next-in-line for the tuple.
 		 *
-		 * If we are forced to "start over" below, we keep the tuple lock; this
-		 * arranges that we stay at the head of the line while rechecking
+		 * If we are forced to "start over" below, we keep the tuple lock;
+		 * this arranges that we stay at the head of the line while rechecking
 		 * tuple state.
 		 */
 		if (!have_tuple_lock)
@@ -1782,8 +1782,8 @@ l2:
 	 * show that it's already being updated, else other processes may try to
 	 * update it themselves.
 	 *
-	 * We need to invoke the toaster if there are already any out-of-line toasted
-	 * values present, or if the new tuple is over-threshold.
+	 * We need to invoke the toaster if there are already any out-of-line
+	 * toasted values present, or if the new tuple is over-threshold.
 	 */
 	newtupsize = MAXALIGN(newtup->t_len);
 
@@ -1886,7 +1886,7 @@ l2:
 	/* NO EREPORT(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();
 
-	RelationPutHeapTuple(relation, newbuf, heaptup); /* insert new tuple */
+	RelationPutHeapTuple(relation, newbuf, heaptup);	/* insert new tuple */
 
 	if (!already_marked)
 	{
@@ -2123,8 +2123,8 @@ l3:
 		 * LockTuple will release us when we are next-in-line for the tuple.
 		 * We must do this even if we are share-locking.
 		 *
-		 * If we are forced to "start over" below, we keep the tuple lock; this
-		 * arranges that we stay at the head of the line while rechecking
+		 * If we are forced to "start over" below, we keep the tuple lock;
+		 * this arranges that we stay at the head of the line while rechecking
 		 * tuple state.
 		 */
 		if (!have_tuple_lock)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.75 2005/10/18 01:06:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.75.2.1 2005/11/22 18:23:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -622,13 +622,13 @@ start_over:
 	 * 1. In a LEFT JOIN, we have to process outer batches even if the inner
 	 * batch is empty.
 	 *
-	 * 2. If we have increased nbatch since the initial estimate, we have to scan
-	 * inner batches since they might contain tuples that need to be
+	 * 2. If we have increased nbatch since the initial estimate, we have to
+	 * scan inner batches since they might contain tuples that need to be
 	 * reassigned to later inner batches.
 	 *
-	 * 3. Similarly, if we have increased nbatch since starting the outer scan,
-	 * we have to rescan outer batches in case they contain tuples that need
-	 * to be reassigned.
+	 * 3. Similarly, if we have increased nbatch since starting the outer
+	 * scan, we have to rescan outer batches in case they contain tuples that
+	 * need to be reassigned.
 	 */
 	curbatch++;
 	while (curbatch < nbatch &&

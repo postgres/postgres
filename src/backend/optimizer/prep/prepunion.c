@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.127 2005/10/15 02:49:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.127.2.1 2005/11/22 18:23:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -439,8 +439,8 @@ recurse_union_children(Node *setOp, PlannerInfo *root,
 	/*
 	 * Not same, so plan this child separately.
 	 *
-	 * Note we disallow any resjunk columns in child results.  This is necessary
-	 * since the Append node that implements the union won't do any
+	 * Note we disallow any resjunk columns in child results.  This is
+	 * necessary since the Append node that implements the union won't do any
 	 * projection, and upper levels will get confused if some of our output
 	 * tuples have junk and some don't.  This case only arises when we have an
 	 * EXCEPT or INTERSECT as child, else there won't be resjunk anyway.
@@ -495,9 +495,9 @@ generate_setop_tlist(List *colTypes, int flag,
 		 * data types and column names.  Insert datatype coercions where
 		 * necessary.
 		 *
-		 * HACK: constants in the input's targetlist are copied up as-is rather
-		 * than being referenced as subquery outputs.  This is mainly to
-		 * ensure that when we try to coerce them to the output column's
+		 * HACK: constants in the input's targetlist are copied up as-is
+		 * rather than being referenced as subquery outputs.  This is mainly
+		 * to ensure that when we try to coerce them to the output column's
 		 * datatype, the right things happen for UNKNOWN constants.  But do
 		 * this only at the first level of subquery-scan plans; we don't want
 		 * phony constants appearing in the output tlists of upper-level

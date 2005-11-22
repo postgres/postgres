@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.108 2005/10/15 02:49:49 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.108.2.1 2005/11/22 18:23:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,7 +92,7 @@ typedef struct pgresAttDesc
 	Oid			typid;			/* type id */
 	int			typlen;			/* type size */
 	int			atttypmod;		/* type-specific modifier info */
-}	PGresAttDesc;
+} PGresAttDesc;
 
 /*
  * Data for a single attribute of a single tuple
@@ -118,7 +118,7 @@ typedef struct pgresAttValue
 {
 	int			len;			/* length in bytes of the value */
 	char	   *value;			/* actual value, plus terminating zero byte */
-}	PGresAttValue;
+} PGresAttValue;
 
 /* Typedef for message-field list entries */
 typedef struct pgMessageField
@@ -126,7 +126,7 @@ typedef struct pgMessageField
 	struct pgMessageField *next;	/* list link */
 	char		code;			/* field code */
 	char		contents[1];	/* field value (VARIABLE LENGTH) */
-}	PGMessageField;
+} PGMessageField;
 
 /* Fields needed for notice handling */
 typedef struct
@@ -135,7 +135,7 @@ typedef struct
 	void	   *noticeRecArg;
 	PQnoticeProcessor noticeProc;		/* notice message processor */
 	void	   *noticeProcArg;
-}	PGNoticeHooks;
+} PGNoticeHooks;
 
 struct pg_result
 {
@@ -186,7 +186,7 @@ typedef enum
 	PGASYNC_READY,				/* result ready for PQgetResult */
 	PGASYNC_COPY_IN,			/* Copy In data transfer in progress */
 	PGASYNC_COPY_OUT			/* Copy Out data transfer in progress */
-}	PGAsyncStatusType;
+} PGAsyncStatusType;
 
 /* PGQueryClass tracks which query protocol we are now executing */
 typedef enum
@@ -194,7 +194,7 @@ typedef enum
 	PGQUERY_SIMPLE,				/* simple Query protocol (PQexec) */
 	PGQUERY_EXTENDED,			/* full Extended protocol (PQexecParams) */
 	PGQUERY_PREPARE				/* Parse only (PQprepare) */
-}	PGQueryClass;
+} PGQueryClass;
 
 /* PGSetenvStatusType defines the state of the PQSetenv state machine */
 /* (this is used only for 2.0-protocol connections) */
@@ -207,14 +207,14 @@ typedef enum
 	SETENV_STATE_QUERY2_SEND,	/* About to send a status query */
 	SETENV_STATE_QUERY2_WAIT,	/* Waiting for query to complete */
 	SETENV_STATE_IDLE
-}	PGSetenvStatusType;
+} PGSetenvStatusType;
 
 /* Typedef for the EnvironmentOptions[] array */
 typedef struct PQEnvironmentOption
 {
 	const char *envName,		/* name of an environment variable */
 			   *pgName;			/* name of corresponding SET variable */
-}	PQEnvironmentOption;
+} PQEnvironmentOption;
 
 /* Typedef for parameter-status list entries */
 typedef struct pgParameterStatus
@@ -223,7 +223,7 @@ typedef struct pgParameterStatus
 	char	   *name;			/* parameter name */
 	char	   *value;			/* parameter value */
 	/* Note: name and value are stored in same malloc block as struct is */
-}	pgParameterStatus;
+} pgParameterStatus;
 
 /* large-object-access data ... allocated only if large-object code is used. */
 typedef struct pgLobjfuncs
@@ -237,7 +237,7 @@ typedef struct pgLobjfuncs
 	Oid			fn_lo_tell;		/* OID of backend function lo_tell		*/
 	Oid			fn_lo_read;		/* OID of backend function LOread		*/
 	Oid			fn_lo_write;	/* OID of backend function LOwrite		*/
-}	PGlobjfuncs;
+} PGlobjfuncs;
 
 /*
  * PGconn stores all the state data associated with a single connection
@@ -402,10 +402,10 @@ extern void pqClearAsyncResult(PGconn *conn);
 extern void pqSaveErrorResult(PGconn *conn);
 extern PGresult *pqPrepareAsyncResult(PGconn *conn);
 extern void
-pqInternalNotice(const PGNoticeHooks * hooks, const char *fmt,...)
+pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt,...)
 /* This lets gcc check the format string for consistency. */
 __attribute__((format(printf, 2, 3)));
-extern int	pqAddTuple(PGresult *res, PGresAttValue * tup);
+extern int	pqAddTuple(PGresult *res, PGresAttValue *tup);
 extern void pqSaveMessageField(PGresult *res, char code,
 				   const char *value);
 extern void pqSaveParameterStatus(PGconn *conn, const char *name,
@@ -417,7 +417,7 @@ extern void pqHandleSendFailure(PGconn *conn);
 extern PostgresPollingStatusType pqSetenvPoll(PGconn *conn);
 
 extern char *pqBuildStartupPacket2(PGconn *conn, int *packetlen,
-					  const PQEnvironmentOption * options);
+					  const PQEnvironmentOption *options);
 extern void pqParseInput2(PGconn *conn);
 extern int	pqGetCopyData2(PGconn *conn, char **buffer, int async);
 extern int	pqGetline2(PGconn *conn, char *s, int maxlen);
@@ -431,7 +431,7 @@ extern PGresult *pqFunctionCall2(PGconn *conn, Oid fnid,
 /* === in fe-protocol3.c === */
 
 extern char *pqBuildStartupPacket3(PGconn *conn, int *packetlen,
-					  const PQEnvironmentOption * options);
+					  const PQEnvironmentOption *options);
 extern void pqParseInput3(PGconn *conn);
 extern int	pqGetErrorNotice3(PGconn *conn, bool isError);
 extern int	pqGetCopyData3(PGconn *conn, char **buffer, int async);

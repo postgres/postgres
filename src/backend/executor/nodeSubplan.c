@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.70 2005/10/15 02:49:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.70.2.1 2005/11/22 18:23:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,8 +128,8 @@ ExecHashSubPlan(SubPlanState *node,
 	 * unequal to the LHS; if so, the result is UNKNOWN.  (We skip that part
 	 * if we don't care about UNKNOWN.) Otherwise, the result is FALSE.
 	 *
-	 * Note: the reason we can avoid a full scan of the main hash table is that
-	 * the combining operators are assumed never to yield NULL when both
+	 * Note: the reason we can avoid a full scan of the main hash table is
+	 * that the combining operators are assumed never to yield NULL when both
 	 * inputs are non-null.  If they were to do so, we might need to produce
 	 * UNKNOWN instead of FALSE because of an UNKNOWN result in comparing the
 	 * LHS to some main-table entry --- which is a comparison we will not even
@@ -255,9 +255,9 @@ ExecScanSubPlan(SubPlanState *node,
 	 * FALSE for ANY_SUBLINK, TRUE for ALL_SUBLINK, NULL for
 	 * MULTIEXPR_SUBLINK.
 	 *
-	 * For EXPR_SUBLINK we require the subplan to produce no more than one tuple,
-	 * else an error is raised. For ARRAY_SUBLINK we allow the subplan to
-	 * produce more than one tuple. In either case, if zero tuples are
+	 * For EXPR_SUBLINK we require the subplan to produce no more than one
+	 * tuple, else an error is raised. For ARRAY_SUBLINK we allow the subplan
+	 * to produce more than one tuple. In either case, if zero tuples are
 	 * produced, we return NULL. Assuming we get a tuple, we just use its
 	 * first column (there can be only one non-junk column in this case).
 	 */
@@ -480,13 +480,13 @@ buildSubPlanHash(SubPlanState *node)
 	 * If we need to distinguish accurately between FALSE and UNKNOWN (i.e.,
 	 * NULL) results of the IN operation, then we have to store subplan output
 	 * rows that are partly or wholly NULL.  We store such rows in a separate
-	 * hash table that we expect will be much smaller than the main table.
-	 * (We can use hashing to eliminate partly-null rows that are not
-	 * distinct.  We keep them separate to minimize the cost of the inevitable
-	 * full-table searches; see findPartialMatch.)
+	 * hash table that we expect will be much smaller than the main table. (We
+	 * can use hashing to eliminate partly-null rows that are not distinct.
+	 * We keep them separate to minimize the cost of the inevitable full-table
+	 * searches; see findPartialMatch.)
 	 *
-	 * If it's not necessary to distinguish FALSE and UNKNOWN, then we don't need
-	 * to store subplan output rows that contain NULL.
+	 * If it's not necessary to distinguish FALSE and UNKNOWN, then we don't
+	 * need to store subplan output rows that contain NULL.
 	 */
 	MemoryContextReset(node->tablecxt);
 	node->hashtable = NULL;
@@ -796,8 +796,8 @@ ExecInitSubPlan(SubPlanState *node, EState *estate)
 		 * righthand sides.  We need both the ExprState list (for ExecProject)
 		 * and the underlying parse Exprs (for ExecTypeFromTL).
 		 *
-		 * We also extract the combining operators themselves to initialize the
-		 * equality and hashing functions for the hash tables.
+		 * We also extract the combining operators themselves to initialize
+		 * the equality and hashing functions for the hash tables.
 		 */
 		lefttlist = righttlist = NIL;
 		leftptlist = rightptlist = NIL;

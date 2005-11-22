@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-decrypt.c,v 1.6 2005/10/15 02:49:06 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-decrypt.c,v 1.6.2.1 2005/11/22 18:23:01 momjian Exp $
  */
 
 #include "postgres.h"
@@ -269,14 +269,14 @@ prefix_init(void **priv_p, void *arg, PullFilter * src)
 		 * The original purpose of the 2-byte check was to show user a
 		 * friendly "wrong key" message. This made following possible:
 		 *
-		 * "An Attack on CFB Mode Encryption As Used By OpenPGP" by Serge Mister
-		 * and Robert Zuccherato
+		 * "An Attack on CFB Mode Encryption As Used By OpenPGP" by Serge
+		 * Mister and Robert Zuccherato
 		 *
-		 * To avoid being 'oracle', we delay reporting, which basically means we
-		 * prefer to run into corrupt packet header.
+		 * To avoid being 'oracle', we delay reporting, which basically means
+		 * we prefer to run into corrupt packet header.
 		 *
-		 * We _could_ throw PXE_PGP_CORRUPT_DATA here, but there is possibility
-		 * of attack via timing, so we don't.
+		 * We _could_ throw PXE_PGP_CORRUPT_DATA here, but there is
+		 * possibility of attack via timing, so we don't.
 		 */
 		ctx->corrupt_prefix = 1;
 	}

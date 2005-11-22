@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.194 2005/10/15 02:49:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.194.2.1 2005/11/22 18:23:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,9 +99,9 @@ planner(Query *parse, bool isCursor, int cursorOptions,
 	 * multiple sub-queries. Also, boundParams is explicitly info from outside
 	 * the query, and so is likewise better handled as a global variable.
 	 *
-	 * Note we do NOT save and restore PlannerPlanId: it exists to assign unique
-	 * IDs to SubPlan nodes, and we want those IDs to be unique for the life
-	 * of a backend.  Also, PlannerInitPlan is saved/restored in
+	 * Note we do NOT save and restore PlannerPlanId: it exists to assign
+	 * unique IDs to SubPlan nodes, and we want those IDs to be unique for the
+	 * life of a backend.  Also, PlannerInitPlan is saved/restored in
 	 * subquery_planner, not here.
 	 */
 	save_PlannerQueryLevel = PlannerQueryLevel;
@@ -302,14 +302,14 @@ subquery_planner(Query *parse, double tuple_fraction,
 	 * HAVING clause into WHERE, in hopes of eliminating tuples before
 	 * aggregation instead of after.
 	 *
-	 * If the query has explicit grouping then we can simply move such a clause
-	 * into WHERE; any group that fails the clause will not be in the output
-	 * because none of its tuples will reach the grouping or aggregation
-	 * stage.  Otherwise we must have a degenerate (variable-free) HAVING
-	 * clause, which we put in WHERE so that query_planner() can use it in a
-	 * gating Result node, but also keep in HAVING to ensure that we don't
-	 * emit a bogus aggregated row. (This could be done better, but it seems
-	 * not worth optimizing.)
+	 * If the query has explicit grouping then we can simply move such a
+	 * clause into WHERE; any group that fails the clause will not be in the
+	 * output because none of its tuples will reach the grouping or
+	 * aggregation stage.  Otherwise we must have a degenerate (variable-free)
+	 * HAVING clause, which we put in WHERE so that query_planner() can use it
+	 * in a gating Result node, but also keep in HAVING to ensure that we
+	 * don't emit a bogus aggregated row. (This could be done better, but it
+	 * seems not worth optimizing.)
 	 *
 	 * Note that both havingQual and parse->jointree->quals are in
 	 * implicitly-ANDed-list form at this point, even though they are declared
@@ -426,8 +426,8 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 	 * careful to maintain AND/OR flatness --- that is, do not generate a tree
 	 * with AND directly under AND, nor OR directly under OR.
 	 *
-	 * Because this is a relatively expensive process, we skip it when the query
-	 * is trivial, such as "SELECT 2+2;" or "INSERT ... VALUES()". The
+	 * Because this is a relatively expensive process, we skip it when the
+	 * query is trivial, such as "SELECT 2+2;" or "INSERT ... VALUES()". The
 	 * expression will only be evaluated once anyway, so no point in
 	 * pre-simplifying; we can't execute it any faster than the executor can,
 	 * and we will waste cycles copying the tree.  Notice however that we
@@ -577,13 +577,13 @@ inheritance_planner(PlannerInfo *root, List *inheritlist)
 		 * XXX my goodness this next bit is ugly.  Really need to think about
 		 * ways to rein in planner's habit of scribbling on its input.
 		 *
-		 * Planning of the subquery might have modified the rangetable, either by
-		 * addition of RTEs due to expansion of inherited source tables, or by
-		 * changes of the Query structures inside subquery RTEs.  We have to
-		 * ensure that this gets propagated back to the master copy.  However,
-		 * if we aren't done planning yet, we also need to ensure that
-		 * subsequent calls to grouping_planner have virgin sub-Queries to
-		 * work from.  So, if we are at the last list entry, just copy the
+		 * Planning of the subquery might have modified the rangetable, either
+		 * by addition of RTEs due to expansion of inherited source tables, or
+		 * by changes of the Query structures inside subquery RTEs.  We have
+		 * to ensure that this gets propagated back to the master copy.
+		 * However, if we aren't done planning yet, we also need to ensure
+		 * that subsequent calls to grouping_planner have virgin sub-Queries
+		 * to work from.  So, if we are at the last list entry, just copy the
 		 * subquery rangetable back to the master copy; if we are not, then
 		 * extend the master copy by adding whatever the subquery added.  (We
 		 * assume these added entries will go untouched by the future
@@ -759,8 +759,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 * Note: we do not attempt to detect duplicate aggregates here; a
 		 * somewhat-overestimated count is okay for our present purposes.
 		 *
-		 * Note: think not that we can turn off hasAggs if we find no aggs. It is
-		 * possible for constant-expression simplification to remove all
+		 * Note: think not that we can turn off hasAggs if we find no aggs. It
+		 * is possible for constant-expression simplification to remove all
 		 * explicit references to aggs, but we still have to follow the
 		 * aggregate semantics (eg, producing only one output row).
 		 */
@@ -980,8 +980,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				 * GROUP BY without aggregation, so insert a group node (plus
 				 * the appropriate sort node, if necessary).
 				 *
-				 * Add an explicit sort if we couldn't make the path come out the
-				 * way the GROUP node needs it.
+				 * Add an explicit sort if we couldn't make the path come out
+				 * the way the GROUP node needs it.
 				 */
 				if (!pathkeys_contained_in(group_pathkeys, current_pathkeys))
 				{
@@ -1329,14 +1329,15 @@ choose_hashed_grouping(PlannerInfo *root, double tuple_fraction,
 	 * output won't be sorted may be a loss; so we need to do an actual cost
 	 * comparison.
 	 *
-	 * We need to consider cheapest_path + hashagg [+ final sort] versus either
-	 * cheapest_path [+ sort] + group or agg [+ final sort] or presorted_path
-	 * + group or agg [+ final sort] where brackets indicate a step that may
-	 * not be needed. We assume query_planner() will have returned a presorted
-	 * path only if it's a winner compared to cheapest_path for this purpose.
+	 * We need to consider cheapest_path + hashagg [+ final sort] versus
+	 * either cheapest_path [+ sort] + group or agg [+ final sort] or
+	 * presorted_path + group or agg [+ final sort] where brackets indicate a
+	 * step that may not be needed. We assume query_planner() will have
+	 * returned a presorted path only if it's a winner compared to
+	 * cheapest_path for this purpose.
 	 *
-	 * These path variables are dummies that just hold cost fields; we don't make
-	 * actual Paths for these steps.
+	 * These path variables are dummies that just hold cost fields; we don't
+	 * make actual Paths for these steps.
 	 */
 	cost_agg(&hashed_p, root, AGG_HASHED, agg_counts->numAggs,
 			 numGroupCols, dNumGroups,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.10 2005/10/15 02:49:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.10.2.1 2005/11/22 18:23:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -211,8 +211,8 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate)
 	/*
 	 * Miscellaneous initialization
 	 *
-	 * We do not need a standard exprcontext for this node, though we may decide
-	 * below to create a runtime-key exprcontext
+	 * We do not need a standard exprcontext for this node, though we may
+	 * decide below to create a runtime-key exprcontext
 	 */
 
 	/*

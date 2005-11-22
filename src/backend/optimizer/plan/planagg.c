@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.10 2005/10/15 02:49:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.10.2.1 2005/11/22 18:23:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,9 +93,9 @@ optimize_minmax_aggregates(PlannerInfo *root, List *tlist, Path *best_path)
 	/*
 	 * Reject unoptimizable cases.
 	 *
-	 * We don't handle GROUP BY, because our current implementations of grouping
-	 * require looking at all the rows anyway, and so there's not much point
-	 * in optimizing MIN/MAX.
+	 * We don't handle GROUP BY, because our current implementations of
+	 * grouping require looking at all the rows anyway, and so there's not
+	 * much point in optimizing MIN/MAX.
 	 */
 	if (parse->groupClause)
 		return NULL;
@@ -160,9 +160,9 @@ optimize_minmax_aggregates(PlannerInfo *root, List *tlist, Path *best_path)
 	/*
 	 * Make the cost comparison.
 	 *
-	 * Note that we don't include evaluation cost of the tlist here; this is OK
-	 * since it isn't included in best_path's cost either, and should be the
-	 * same in either case.
+	 * Note that we don't include evaluation cost of the tlist here; this is
+	 * OK since it isn't included in best_path's cost either, and should be
+	 * the same in either case.
 	 */
 	cost_agg(&agg_p, root, AGG_PLAIN, list_length(aggs_list),
 			 0, 0,
@@ -493,12 +493,12 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info, List *constant_quals)
 	 * node above it.  We might need a gating Result, too, to handle any
 	 * non-variable qual clauses.
 	 *
-	 * Also we must add a "WHERE foo IS NOT NULL" restriction to the indexscan,
-	 * to be sure we don't return a NULL, which'd be contrary to the standard
-	 * behavior of MIN/MAX.  XXX ideally this should be done earlier, so that
-	 * the selectivity of the restriction could be included in our cost
-	 * estimates.  But that looks painful, and in most cases the fraction of
-	 * NULLs isn't high enough to change the decision.
+	 * Also we must add a "WHERE foo IS NOT NULL" restriction to the
+	 * indexscan, to be sure we don't return a NULL, which'd be contrary to
+	 * the standard behavior of MIN/MAX.  XXX ideally this should be done
+	 * earlier, so that the selectivity of the restriction could be included
+	 * in our cost estimates.  But that looks painful, and in most cases the
+	 * fraction of NULLs isn't high enough to change the decision.
 	 */
 	plan = create_plan(&subroot, (Path *) info->path);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.64 2005/10/15 02:49:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.64.2.1 2005/11/22 18:23:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,12 +92,12 @@ oidin_subr(const char *funcname, const char *s, char **endloc)
 	 * case strtoul will not raise an error for some values that are out of
 	 * the range of Oid.
 	 *
-	 * For backwards compatibility, we want to accept inputs that are given with
-	 * a minus sign, so allow the input value if it matches after either
+	 * For backwards compatibility, we want to accept inputs that are given
+	 * with a minus sign, so allow the input value if it matches after either
 	 * signed or unsigned extension to long.
 	 *
-	 * To ensure consistent results on 32-bit and 64-bit platforms, make sure the
-	 * error message is the same as if strtoul() had returned ERANGE.
+	 * To ensure consistent results on 32-bit and 64-bit platforms, make sure
+	 * the error message is the same as if strtoul() had returned ERANGE.
 	 */
 #if OID_MAX != ULONG_MAX
 	if (cvt != (unsigned long) result &&

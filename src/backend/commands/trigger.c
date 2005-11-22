@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.195 2005/10/15 02:49:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.195.2.1 2005/11/22 18:23:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -566,8 +566,8 @@ RemoveTriggerById(Oid trigOid)
 	 * (and this one too!) are sent SI message to make them rebuild relcache
 	 * entries.
 	 *
-	 * Note this is OK only because we have AccessExclusiveLock on the rel, so no
-	 * one else is creating/deleting triggers on this rel at the same time.
+	 * Note this is OK only because we have AccessExclusiveLock on the rel, so
+	 * no one else is creating/deleting triggers on this rel at the same time.
 	 */
 	pgrel = heap_open(RelationRelationId, RowExclusiveLock);
 	tuple = SearchSysCacheCopy(RELOID,
@@ -1182,8 +1182,8 @@ equalTriggerDescs(TriggerDesc *trigdesc1, TriggerDesc *trigdesc2)
 	 * we have the same triggers with the same types, the derived index data
 	 * should match.
 	 *
-	 * As of 7.3 we assume trigger set ordering is significant in the comparison;
-	 * so we just compare corresponding slots of the two sets.
+	 * As of 7.3 we assume trigger set ordering is significant in the
+	 * comparison; so we just compare corresponding slots of the two sets.
 	 */
 	if (trigdesc1 != NULL)
 	{
@@ -2534,13 +2534,14 @@ AfterTriggerEndQuery(EState *estate)
 	 * Process all immediate-mode triggers queued by the query, and move the
 	 * deferred ones to the main list of deferred events.
 	 *
-	 * Notice that we decide which ones will be fired, and put the deferred ones
-	 * on the main list, before anything is actually fired.  This ensures
+	 * Notice that we decide which ones will be fired, and put the deferred
+	 * ones on the main list, before anything is actually fired.  This ensures
 	 * reasonably sane behavior if a trigger function does SET CONSTRAINTS ...
 	 * IMMEDIATE: all events we have decided to defer will be available for it
 	 * to fire.
 	 *
-	 * If we find no firable events, we don't have to increment firing_counter.
+	 * If we find no firable events, we don't have to increment
+	 * firing_counter.
 	 */
 	events = &afterTriggers->query_stack[afterTriggers->query_depth];
 	if (afterTriggerMarkEvents(events, &afterTriggers->events, true))
@@ -3027,8 +3028,8 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 	 * list of previously deferred events to fire any that have now become
 	 * immediate.
 	 *
-	 * Obviously, if this was SET ... DEFERRED then it can't have converted any
-	 * unfired events to immediate, so we need do nothing in that case.
+	 * Obviously, if this was SET ... DEFERRED then it can't have converted
+	 * any unfired events to immediate, so we need do nothing in that case.
 	 */
 	if (!stmt->deferred)
 	{

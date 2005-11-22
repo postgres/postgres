@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.5 2005/10/15 02:49:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.5.2.1 2005/11/22 18:23:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -244,8 +244,8 @@ AutoVacMain(int argc, char *argv[])
 	 * backend, so we use the same signal handling.  See equivalent code in
 	 * tcop/postgres.c.
 	 *
-	 * Currently, we don't pay attention to postgresql.conf changes that happen
-	 * during a single daemon iteration, so we can ignore SIGHUP.
+	 * Currently, we don't pay attention to postgresql.conf changes that
+	 * happen during a single daemon iteration, so we can ignore SIGHUP.
 	 */
 	pqsignal(SIGHUP, SIG_IGN);
 
@@ -308,9 +308,10 @@ AutoVacMain(int argc, char *argv[])
 	 * recently auto-vacuumed, or one that needs database-wide vacuum (to
 	 * prevent Xid wraparound-related data loss).
 	 *
-	 * Note that a database with no stats entry is not considered, except for Xid
-	 * wraparound purposes.  The theory is that if no one has ever connected
-	 * to it since the stats were last initialized, it doesn't need vacuuming.
+	 * Note that a database with no stats entry is not considered, except for
+	 * Xid wraparound purposes.  The theory is that if no one has ever
+	 * connected to it since the stats were last initialized, it doesn't need
+	 * vacuuming.
 	 *
 	 * XXX This could be improved if we had more info about whether it needs
 	 * vacuuming before connecting to it.  Perhaps look through the pgstats
@@ -336,8 +337,8 @@ AutoVacMain(int argc, char *argv[])
 		 * decide to start giving warnings.  If any such db is found, we
 		 * ignore all other dbs.
 		 *
-		 * Unlike vacuum.c, we also look at vacuumxid.	This is so that pg_clog
-		 * can be kept trimmed to a reasonable size.
+		 * Unlike vacuum.c, we also look at vacuumxid.	This is so that
+		 * pg_clog can be kept trimmed to a reasonable size.
 		 */
 		freeze_age = (int32) (nextXid - tmp->frozenxid);
 		vacuum_age = (int32) (nextXid - tmp->vacuumxid);
@@ -571,10 +572,10 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
 	/*
 	 * Scan pg_class and determine which tables to vacuum.
 	 *
-	 * The stats subsystem collects stats for toast tables independently of the
-	 * stats for their parent tables.  We need to check those stats since in
-	 * cases with short, wide tables there might be proportionally much more
-	 * activity in the toast table than in its parent.
+	 * The stats subsystem collects stats for toast tables independently of
+	 * the stats for their parent tables.  We need to check those stats since
+	 * in cases with short, wide tables there might be proportionally much
+	 * more activity in the toast table than in its parent.
 	 *
 	 * Since we can only issue VACUUM against the parent table, we need to
 	 * transpose a decision to vacuum a toast table into a decision to vacuum

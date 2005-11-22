@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.16 2005/10/29 00:31:50 petere Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.16.2.1 2005/11/22 18:23:05 momjian Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -851,10 +851,10 @@ EndPrepare(GlobalTransaction gxact)
 	/*
 	 * Create the 2PC state file.
 	 *
-	 * Note: because we use BasicOpenFile(), we are responsible for ensuring the
-	 * FD gets closed in any error exit path.  Once we get into the critical
-	 * section, though, it doesn't matter since any failure causes PANIC
-	 * anyway.
+	 * Note: because we use BasicOpenFile(), we are responsible for ensuring
+	 * the FD gets closed in any error exit path.  Once we get into the
+	 * critical section, though, it doesn't matter since any failure causes
+	 * PANIC anyway.
 	 */
 	TwoPhaseFilePath(path, xid);
 
@@ -911,8 +911,8 @@ EndPrepare(GlobalTransaction gxact)
 	 * The state file isn't valid yet, because we haven't written the correct
 	 * CRC yet.  Before we do that, insert entry in WAL and flush it to disk.
 	 *
-	 * Between the time we have written the WAL entry and the time we write out
-	 * the correct state file CRC, we have an inconsistency: the xact is
+	 * Between the time we have written the WAL entry and the time we write
+	 * out the correct state file CRC, we have an inconsistency: the xact is
 	 * prepared according to WAL but not according to our on-disk state. We
 	 * use a critical section to force a PANIC if we are unable to complete
 	 * the write --- then, WAL replay should repair the inconsistency.	The
@@ -1344,11 +1344,11 @@ CheckPointTwoPhase(XLogRecPtr redo_horizon)
 	 * it just long enough to make a list of the XIDs that require fsyncing,
 	 * and then do the I/O afterwards.
 	 *
-	 * This approach creates a race condition: someone else could delete a GXACT
-	 * between the time we release TwoPhaseStateLock and the time we try to
-	 * open its state file.  We handle this by special-casing ENOENT failures:
-	 * if we see that, we verify that the GXACT is no longer valid, and if so
-	 * ignore the failure.
+	 * This approach creates a race condition: someone else could delete a
+	 * GXACT between the time we release TwoPhaseStateLock and the time we try
+	 * to open its state file.	We handle this by special-casing ENOENT
+	 * failures: if we see that, we verify that the GXACT is no longer valid,
+	 * and if so ignore the failure.
 	 */
 	if (max_prepared_xacts <= 0)
 		return;					/* nothing to do */

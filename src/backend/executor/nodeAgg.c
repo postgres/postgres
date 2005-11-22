@@ -61,7 +61,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.135 2005/10/15 02:49:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.135.2.1 2005/11/22 18:23:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -283,8 +283,8 @@ initialize_aggregates(AggState *aggstate,
 		/*
 		 * (Re)set transValue to the initial value.
 		 *
-		 * Note that when the initial value is pass-by-ref, we must copy it (into
-		 * the aggcontext) since we will pfree the transValue later.
+		 * Note that when the initial value is pass-by-ref, we must copy it
+		 * (into the aggcontext) since we will pfree the transValue later.
 		 */
 		if (peraggstate->initValueIsNull)
 			pergroupstate->transValue = peraggstate->initValue;
@@ -341,8 +341,8 @@ advance_transition_function(AggState *aggstate,
 			 * already checked that the agg's input type is binary-compatible
 			 * with its transtype, so straight copy here is OK.)
 			 *
-			 * We must copy the datum into aggcontext if it is pass-by-ref. We do
-			 * not need to pfree the old transValue, since it's NULL.
+			 * We must copy the datum into aggcontext if it is pass-by-ref. We
+			 * do not need to pfree the old transValue, since it's NULL.
 			 */
 			oldContext = MemoryContextSwitchTo(aggstate->aggcontext);
 			pergroupstate->transValue = datumCopy(newVal,
@@ -842,8 +842,8 @@ agg_retrieve_direct(AggState *aggstate)
 		 * aggregate will have a targetlist reference to ctid.	We need to
 		 * return a null for ctid in that situation, not coredump.
 		 *
-		 * The values returned for the aggregates will be the initial values of
-		 * the transition functions.
+		 * The values returned for the aggregates will be the initial values
+		 * of the transition functions.
 		 */
 		if (TupIsNull(firstSlot))
 		{

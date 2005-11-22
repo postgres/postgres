@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashovfl.c,v 1.47 2005/10/15 02:49:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashovfl.c,v 1.47.2.1 2005/11/22 18:23:03 momjian Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
@@ -488,9 +488,9 @@ _hash_initbitmap(Relation rel, HashMetaPage metap, BlockNumber blkno)
 	 * It is okay to write-lock the new bitmap page while holding metapage
 	 * write lock, because no one else could be contending for the new page.
 	 *
-	 * There is some loss of concurrency in possibly doing I/O for the new page
-	 * while holding the metapage lock, but this path is taken so seldom that
-	 * it's not worth worrying about.
+	 * There is some loss of concurrency in possibly doing I/O for the new
+	 * page while holding the metapage lock, but this path is taken so seldom
+	 * that it's not worth worrying about.
 	 */
 	buf = _hash_getbuf(rel, blkno, HASH_WRITE);
 	pg = BufferGetPage(buf);

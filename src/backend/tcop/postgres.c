@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.468.2.1 2005/11/10 00:31:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.468.2.2 2005/11/22 18:23:20 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -301,8 +301,8 @@ SocketBackend(StringInfo inBuf)
 	 * sync, better to say "command unknown" than to run out of memory because
 	 * we used garbage as a length word.
 	 *
-	 * This also gives us a place to set the doing_extended_query_message flag as
-	 * soon as possible.
+	 * This also gives us a place to set the doing_extended_query_message flag
+	 * as soon as possible.
 	 */
 	switch (qtype)
 	{
@@ -1423,11 +1423,11 @@ exec_bind_message(StringInfo input_message)
 
 	/*
 	 * If we are in aborted transaction state, the only portals we can
-	 * actually run are those containing COMMIT or ROLLBACK commands.
-	 * We disallow binding anything else to avoid problems with infrastructure
-	 * that expects to run inside a valid transaction.  We also disallow
-	 * binding any parameters, since we can't risk calling user-defined
-	 * I/O functions.
+	 * actually run are those containing COMMIT or ROLLBACK commands. We
+	 * disallow binding anything else to avoid problems with infrastructure
+	 * that expects to run inside a valid transaction.	We also disallow
+	 * binding any parameters, since we can't risk calling user-defined I/O
+	 * functions.
 	 */
 	if (IsAbortedTransactionBlockState() &&
 		(!IsTransactionExitStmtList(pstmt->query_list) ||
@@ -1490,12 +1490,11 @@ exec_bind_message(StringInfo input_message)
 
 				/*
 				 * Rather than copying data around, we just set up a phony
-				 * StringInfo pointing to the correct portion of the
-				 * message buffer.	We assume we can scribble on the
-				 * message buffer so as to maintain the convention that
-				 * StringInfos have a trailing null.  This is grotty but
-				 * is a big win when dealing with very large parameter
-				 * strings.
+				 * StringInfo pointing to the correct portion of the message
+				 * buffer.	We assume we can scribble on the message buffer so
+				 * as to maintain the convention that StringInfos have a
+				 * trailing null.  This is grotty but is a big win when
+				 * dealing with very large parameter strings.
 				 */
 				pbuf.data = (char *) pvalue;
 				pbuf.maxlen = plength + 1;
@@ -1514,8 +1513,8 @@ exec_bind_message(StringInfo input_message)
 					getTypeInputInfo(ptype, &typinput, &typioparam);
 
 					/*
-					 * We have to do encoding conversion before calling
-					 * the typinput routine.
+					 * We have to do encoding conversion before calling the
+					 * typinput routine.
 					 */
 					pstring = pg_client_to_server(pbuf.data, plength);
 					params[i].value =
@@ -1546,9 +1545,9 @@ exec_bind_message(StringInfo input_message)
 					/* Trouble if it didn't eat the whole buffer */
 					if (pbuf.cursor != pbuf.len)
 						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-								 errmsg("incorrect binary data format in bind parameter %d",
-										i + 1)));
+							 (errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+							  errmsg("incorrect binary data format in bind parameter %d",
+									 i + 1)));
 				}
 				else
 				{
@@ -2259,9 +2258,10 @@ check_stack_depth(void)
 	/*
 	 * Trouble?
 	 *
-	 * The test on stack_base_ptr prevents us from erroring out if called during
-	 * process setup or in a non-backend process.  Logically it should be done
-	 * first, but putting it here avoids wasting cycles during normal cases.
+	 * The test on stack_base_ptr prevents us from erroring out if called
+	 * during process setup or in a non-backend process.  Logically it should
+	 * be done first, but putting it here avoids wasting cycles during normal
+	 * cases.
 	 */
 	if (stack_depth > max_stack_depth_bytes &&
 		stack_base_ptr != NULL)
@@ -2582,9 +2582,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 				/*
 				 * ignore system indexes
 				 *
-				 * As of PG 7.4 this is safe to allow from the client, since it
-				 * only disables reading the system indexes, not writing them.
-				 * Worst case consequence is slowness.
+				 * As of PG 7.4 this is safe to allow from the client, since
+				 * it only disables reading the system indexes, not writing
+				 * them. Worst case consequence is slowness.
 				 */
 				IgnoreSystemIndexes(true);
 				break;
@@ -2627,8 +2627,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 				/*
 				 * s - report usage statistics (timings) after each query
 				 *
-				 * Since log options are SUSET, we need to postpone unless still
-				 * in secure context
+				 * Since log options are SUSET, we need to postpone unless
+				 * still in secure context
 				 */
 				if (ctx == PGC_BACKEND)
 					PendingConfigOption("log_statement_stats", "true");
@@ -2767,9 +2767,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 	/*
 	 * Set up signal handlers and masks.
 	 *
-	 * Note that postmaster blocked all signals before forking child process, so
-	 * there is no race condition whereby we might receive a signal before we
-	 * have set up the handler.
+	 * Note that postmaster blocked all signals before forking child process,
+	 * so there is no race condition whereby we might receive a signal before
+	 * we have set up the handler.
 	 *
 	 * Also note: it's best not to use any signals that are SIG_IGNored in the
 	 * postmaster.	If such a signal arrives before we are able to change the
@@ -2887,9 +2887,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 	/*
 	 * General initialization.
 	 *
-	 * NOTE: if you are tempted to add code in this vicinity, consider putting it
-	 * inside InitPostgres() instead.  In particular, anything that involves
-	 * database access should be there, not here.
+	 * NOTE: if you are tempted to add code in this vicinity, consider putting
+	 * it inside InitPostgres() instead.  In particular, anything that
+	 * involves database access should be there, not here.
 	 */
 	ereport(DEBUG3,
 			(errmsg_internal("InitPostgres")));
@@ -2978,13 +2978,13 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 * If an exception is encountered, processing resumes here so we abort the
 	 * current transaction and start a new one.
 	 *
-	 * You might wonder why this isn't coded as an infinite loop around a PG_TRY
-	 * construct.  The reason is that this is the bottom of the exception
-	 * stack, and so with PG_TRY there would be no exception handler in force
-	 * at all during the CATCH part.  By leaving the outermost setjmp always
-	 * active, we have at least some chance of recovering from an error during
-	 * error recovery.	(If we get into an infinite loop thereby, it will soon
-	 * be stopped by overflow of elog.c's internal state stack.)
+	 * You might wonder why this isn't coded as an infinite loop around a
+	 * PG_TRY construct.  The reason is that this is the bottom of the
+	 * exception stack, and so with PG_TRY there would be no exception handler
+	 * in force at all during the CATCH part.  By leaving the outermost setjmp
+	 * always active, we have at least some chance of recovering from an error
+	 * during error recovery.  (If we get into an infinite loop thereby, it
+	 * will soon be stopped by overflow of elog.c's internal state stack.)
 	 */
 
 	if (sigsetjmp(local_sigjmp_buf, 1) != 0)

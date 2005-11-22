@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.139 2005/10/29 00:31:51 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.139.2.1 2005/11/22 18:23:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -888,8 +888,8 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 										(LPWSTR) a1p, a1len / 2);
 				if (!r)
 					ereport(ERROR,
-							(errmsg("could not convert string to UTF-16: error %lu",
-									GetLastError())));
+					 (errmsg("could not convert string to UTF-16: error %lu",
+							 GetLastError())));
 			}
 			((LPWSTR) a1p)[r] = 0;
 
@@ -901,8 +901,8 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 										(LPWSTR) a2p, a2len / 2);
 				if (!r)
 					ereport(ERROR,
-							(errmsg("could not convert string to UTF-16: error %lu",
-									GetLastError())));
+					 (errmsg("could not convert string to UTF-16: error %lu",
+							 GetLastError())));
 			}
 			((LPWSTR) a2p)[r] = 0;
 
@@ -2118,12 +2118,12 @@ appendStringInfoRegexpSubstr(StringInfo str, text *replace_text,
 		if (eml == 1)
 		{
 			for (; p < p_end && *p != '\\'; p++)
-				/* nothing */ ;
+				 /* nothing */ ;
 		}
 		else
 		{
 			for (; p < p_end && *p != '\\'; p += pg_mblen(p))
-				/* nothing */ ;
+				 /* nothing */ ;
 		}
 
 		/* Copy the text we just scanned over, if any. */
@@ -2168,9 +2168,9 @@ appendStringInfoRegexpSubstr(StringInfo str, text *replace_text,
 		else
 		{
 			/*
-			 * If escape char is not followed by any expected char,
-			 * just treat it as ordinary data to copy.  (XXX would it be
-			 * better to throw an error?)
+			 * If escape char is not followed by any expected char, just treat
+			 * it as ordinary data to copy.  (XXX would it be better to throw
+			 * an error?)
 			 */
 			appendStringInfoChar(str, '\\');
 			continue;
@@ -2179,7 +2179,7 @@ appendStringInfoRegexpSubstr(StringInfo str, text *replace_text,
 		if (so != -1 && eo != -1)
 		{
 			/*
-			 * Copy the text that is back reference of regexp.  Because so and
+			 * Copy the text that is back reference of regexp.	Because so and
 			 * eo are counted in characters not bytes, it's easiest to use
 			 * text_substring to pull out the correct chunk of text.
 			 */
@@ -2252,9 +2252,9 @@ replace_text_regexp(text *src_text, void *regexp,
 			break;
 
 		/*
-		 * Copy the text to the left of the match position.  Because we
-		 * are working with character not byte indexes, it's easiest to
-		 * use text_substring to pull out the needed data.
+		 * Copy the text to the left of the match position.  Because we are
+		 * working with character not byte indexes, it's easiest to use
+		 * text_substring to pull out the needed data.
 		 */
 		if (pmatch[0].rm_so - data_pos > 0)
 		{

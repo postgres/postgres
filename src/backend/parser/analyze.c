@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.326 2005/10/15 02:49:21 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.326.2.1 2005/11/22 18:23:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1108,8 +1108,8 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 		/*
 		 * Create a new inherited column.
 		 *
-		 * For constraints, ONLY the NOT NULL constraint is inherited by the new
-		 * column definition per SQL99.
+		 * For constraints, ONLY the NOT NULL constraint is inherited by the
+		 * new column definition per SQL99.
 		 */
 		def = makeNode(ColumnDef);
 		def->colname = pstrdup(attributeName);
@@ -1353,8 +1353,8 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 	 * strict reading of SQL92 would suggest raising an error instead, but
 	 * that strikes me as too anal-retentive. - tgl 2001-02-14
 	 *
-	 * XXX in ALTER TABLE case, it'd be nice to look for duplicate pre-existing
-	 * indexes, too.
+	 * XXX in ALTER TABLE case, it'd be nice to look for duplicate
+	 * pre-existing indexes, too.
 	 */
 	cxt->alist = NIL;
 	if (cxt->pkey != NULL)
@@ -1744,8 +1744,8 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 			 * For efficiency's sake, add OLD to the rule action's jointree
 			 * only if it was actually referenced in the statement or qual.
 			 *
-			 * For INSERT, NEW is not really a relation (only a reference to the
-			 * to-be-inserted tuple) and should never be added to the
+			 * For INSERT, NEW is not really a relation (only a reference to
+			 * the to-be-inserted tuple) and should never be added to the
 			 * jointree.
 			 *
 			 * For UPDATE, we treat NEW as being another kind of reference to
@@ -1967,10 +1967,10 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	 * make lists of the dummy vars and their names for use in parsing ORDER
 	 * BY.
 	 *
-	 * Note: we use leftmostRTI as the varno of the dummy variables. It shouldn't
-	 * matter too much which RT index they have, as long as they have one that
-	 * corresponds to a real RT entry; else funny things may happen when the
-	 * tree is mashed by rule rewriting.
+	 * Note: we use leftmostRTI as the varno of the dummy variables. It
+	 * shouldn't matter too much which RT index they have, as long as they
+	 * have one that corresponds to a real RT entry; else funny things may
+	 * happen when the tree is mashed by rule rewriting.
 	 */
 	qry->targetList = NIL;
 	targetvars = NIL;
@@ -2005,9 +2005,9 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	/*
 	 * Handle SELECT INTO/CREATE TABLE AS.
 	 *
-	 * Any column names from CREATE TABLE AS need to be attached to both the top
-	 * level and the leftmost subquery.  We do not do this earlier because we
-	 * do *not* want the targetnames list to be affected.
+	 * Any column names from CREATE TABLE AS need to be attached to both the
+	 * top level and the leftmost subquery.  We do not do this earlier because
+	 * we do *not* want the targetnames list to be affected.
 	 */
 	qry->into = into;
 	if (intoColNames)
@@ -2022,9 +2022,9 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	 * output columns visible.	A Join RTE node is handy for this, since we
 	 * can easily control the Vars generated upon matches.
 	 *
-	 * Note: we don't yet do anything useful with such cases, but at least "ORDER
-	 * BY upper(foo)" will draw the right error message rather than "foo not
-	 * found".
+	 * Note: we don't yet do anything useful with such cases, but at least
+	 * "ORDER BY upper(foo)" will draw the right error message rather than
+	 * "foo not found".
 	 */
 	jrte = addRangeTableEntryForJoin(NULL,
 									 targetnames,
@@ -2140,8 +2140,8 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 		/*
 		 * Transform SelectStmt into a Query.
 		 *
-		 * Note: previously transformed sub-queries don't affect the parsing of
-		 * this sub-query, because they are not in the toplevel pstate's
+		 * Note: previously transformed sub-queries don't affect the parsing
+		 * of this sub-query, because they are not in the toplevel pstate's
 		 * namespace list.
 		 */
 		selectList = parse_sub_analyze((Node *) stmt, pstate);

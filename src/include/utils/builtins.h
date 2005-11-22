@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.267 2005/10/18 20:38:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.267.2.1 2005/11/22 18:23:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -594,7 +594,7 @@ extern bool SplitIdentifierString(char *rawstring, char separator,
 					  List **namelist);
 extern Datum replace_text(PG_FUNCTION_ARGS);
 extern text *replace_text_regexp(text *src_text, void *regexp,
-								 text *replace_text, bool glob);
+					text *replace_text, bool glob);
 extern Datum split_text(PG_FUNCTION_ARGS);
 extern Datum text_to_array(PG_FUNCTION_ARGS);
 extern Datum array_to_text(PG_FUNCTION_ARGS);
@@ -753,7 +753,7 @@ extern Datum numeric_in(PG_FUNCTION_ARGS);
 extern Datum numeric_out(PG_FUNCTION_ARGS);
 extern Datum numeric_recv(PG_FUNCTION_ARGS);
 extern Datum numeric_send(PG_FUNCTION_ARGS);
-extern Datum numeric(PG_FUNCTION_ARGS);
+extern Datum numeric (PG_FUNCTION_ARGS);
 extern Datum numeric_abs(PG_FUNCTION_ARGS);
 extern Datum numeric_uminus(PG_FUNCTION_ARGS);
 extern Datum numeric_uplus(PG_FUNCTION_ARGS);

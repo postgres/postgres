@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.323 2005/10/17 16:24:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.323.2.1 2005/11/22 18:23:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -370,8 +370,8 @@ connectOptions1(PGconn *conn, const char *conninfo)
 	/*
 	 * Move option values into conn structure
 	 *
-	 * Don't put anything cute here --- intelligence should be in connectOptions2
-	 * ...
+	 * Don't put anything cute here --- intelligence should be in
+	 * connectOptions2 ...
 	 *
 	 * XXX: probably worth checking strdup() return value here...
 	 */
@@ -687,7 +687,7 @@ connectFailureMessage(PGconn *conn, int errorno)
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("could not connect to server: %s\n"
 							"\tIs the server running locally and accepting\n"
-							  "\tconnections on Unix domain socket \"%s\"?\n"),
+							"\tconnections on Unix domain socket \"%s\"?\n"),
 						  SOCK_STRERROR(errorno, sebuf, sizeof(sebuf)),
 						  service);
 	}
@@ -1003,7 +1003,7 @@ keep_going:						/* We will come back to here until there is
 				/*
 				 * Try to initiate a connection to one of the addresses
 				 * returned by pg_getaddrinfo_all().  conn->addr_cur is the
-				 * next one to try.	We fail when we run out of addresses
+				 * next one to try. We fail when we run out of addresses
 				 * (reporting the error returned for the *last* alternative,
 				 * which may not be what users expect :-().
 				 */
@@ -1226,8 +1226,9 @@ keep_going:						/* We will come back to here until there is
 					/*
 					 * Send the SSL request packet.
 					 *
-					 * Theoretically, this could block, but it really shouldn't
-					 * since we only got here if the socket is write-ready.
+					 * Theoretically, this could block, but it really
+					 * shouldn't since we only got here if the socket is
+					 * write-ready.
 					 */
 					pv = htonl(NEGOTIATE_SSL_CODE);
 					if (pqPacketSend(conn, 0, &pv, sizeof(pv)) != STATUS_OK)
@@ -1262,8 +1263,8 @@ keep_going:						/* We will come back to here until there is
 				/*
 				 * Send the startup packet.
 				 *
-				 * Theoretically, this could block, but it really shouldn't since
-				 * we only got here if the socket is write-ready.
+				 * Theoretically, this could block, but it really shouldn't
+				 * since we only got here if the socket is write-ready.
 				 */
 				if (pqPacketSend(conn, 0, startpacket, packetlen) != STATUS_OK)
 				{
@@ -1500,8 +1501,8 @@ keep_going:						/* We will come back to here until there is
 				/*
 				 * Can't process if message body isn't all here yet.
 				 *
-				 * (In protocol 2.0 case, we are assuming messages carry at least
-				 * 4 bytes of data.)
+				 * (In protocol 2.0 case, we are assuming messages carry at
+				 * least 4 bytes of data.)
 				 */
 				msgLength -= 4;
 				avail = conn->inEnd - conn->inCursor;
@@ -1829,8 +1830,8 @@ makeEmptyPGconn(void)
 	 * bufferloads.  The output buffer is initially made 16K in size, and we
 	 * try to dump it after accumulating 8K.
 	 *
-	 * With the same goal of minimizing context swaps, the input buffer will be
-	 * enlarged anytime it has less than 8K free, so we initially allocate
+	 * With the same goal of minimizing context swaps, the input buffer will
+	 * be enlarged anytime it has less than 8K free, so we initially allocate
 	 * twice that.
 	 */
 	conn->inBufSize = 16 * 1024;

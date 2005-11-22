@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.98 2005/10/15 02:49:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.98.2.1 2005/11/22 18:23:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -268,11 +268,11 @@ init_sql_fcache(FmgrInfo *finfo)
 	 * If the function has any arguments declared as polymorphic types, then
 	 * it wasn't type-checked at definition time; must do so now.
 	 *
-	 * Also, force a type-check if the declared return type is a rowtype; we need
-	 * to find out whether we are actually returning the whole tuple result,
-	 * or just regurgitating a rowtype expression result. In the latter case
-	 * we clear returnsTuple because we need not act different from the scalar
-	 * result case.
+	 * Also, force a type-check if the declared return type is a rowtype; we
+	 * need to find out whether we are actually returning the whole tuple
+	 * result, or just regurgitating a rowtype expression result. In the
+	 * latter case we clear returnsTuple because we need not act different
+	 * from the scalar result case.
 	 *
 	 * In the returnsTuple case, check_sql_fn_retval will also construct a
 	 * JunkFilter we can use to coerce the returned rowtype to the desired
@@ -498,12 +498,12 @@ postquel_execute(execution_state *es,
 		 * labeling to make it a valid Datum.  There are several reasons why
 		 * we do this:
 		 *
-		 * 1. To copy the tuple out of the child execution context and into the
-		 * desired result context.
+		 * 1. To copy the tuple out of the child execution context and into
+		 * the desired result context.
 		 *
-		 * 2. To remove any junk attributes present in the raw subselect result.
-		 * (This is probably not absolutely necessary, but it seems like good
-		 * policy.)
+		 * 2. To remove any junk attributes present in the raw subselect
+		 * result. (This is probably not absolutely necessary, but it seems
+		 * like good policy.)
 		 *
 		 * 3. To insert dummy null columns if the declared result type has any
 		 * attisdropped columns.

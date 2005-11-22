@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.135 2005/10/29 00:31:50 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.135.2.1 2005/11/22 18:23:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -581,8 +581,8 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 		 * expression results will be unresolvable.  The check will be done at
 		 * runtime instead.
 		 *
-		 * We can run the text through the raw parser though; this will at least
-		 * catch silly syntactic errors.
+		 * We can run the text through the raw parser though; this will at
+		 * least catch silly syntactic errors.
 		 */
 		if (!haspolyarg)
 		{
@@ -651,8 +651,8 @@ function_parse_error_transpose(const char *prosrc)
 	 * Nothing to do unless we are dealing with a syntax error that has a
 	 * cursor position.
 	 *
-	 * Some PLs may prefer to report the error position as an internal error to
-	 * begin with, so check that too.
+	 * Some PLs may prefer to report the error position as an internal error
+	 * to begin with, so check that too.
 	 */
 	origerrposition = geterrposition();
 	if (origerrposition <= 0)
@@ -767,8 +767,8 @@ match_prosrc_to_literal(const char *prosrc, const char *literal,
 	 * string literal.	It does not handle the SQL syntax for literals
 	 * continued across line boundaries.
 	 *
-	 * We do the comparison a character at a time, not a byte at a time, so that
-	 * we can do the correct cursorpos math.
+	 * We do the comparison a character at a time, not a byte at a time, so
+	 * that we can do the correct cursorpos math.
 	 */
 	while (*prosrc)
 	{

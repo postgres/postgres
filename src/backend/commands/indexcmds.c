@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.134 2005/10/15 02:49:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.134.2.1 2005/11/22 18:23:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -341,10 +341,10 @@ DefineIndex(RangeVar *heapRelation,
 		 * we don't cascade the notnull constraint(s) either; but this is
 		 * pretty debatable.
 		 *
-		 * XXX: possible future improvement: when being called from ALTER TABLE,
-		 * it would be more efficient to merge this with the outer ALTER
-		 * TABLE, so as to avoid two scans.  But that seems to complicate
-		 * DefineIndex's API unduly.
+		 * XXX: possible future improvement: when being called from ALTER
+		 * TABLE, it would be more efficient to merge this with the outer
+		 * ALTER TABLE, so as to avoid two scans.  But that seems to
+		 * complicate DefineIndex's API unduly.
 		 */
 		if (cmds)
 			AlterTableInternal(relationId, cmds, false);
@@ -551,8 +551,8 @@ GetIndexOpClass(List *opclass, Oid attrType,
 	 * Release 7.1 removes lztext_ops, so suppress that too for a while.  tgl
 	 * 2000/07/30
 	 *
-	 * Release 7.2 renames timestamp_ops to timestamptz_ops, so suppress that too
-	 * for awhile.	I'm starting to think we need a better approach. tgl
+	 * Release 7.2 renames timestamp_ops to timestamptz_ops, so suppress that
+	 * too for awhile.	I'm starting to think we need a better approach. tgl
 	 * 2000/10/01
 	 *
 	 * Release 8.0 removes bigbox_ops (which was dead code for a long while

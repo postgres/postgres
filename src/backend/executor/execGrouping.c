@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execGrouping.c,v 1.16 2005/10/15 02:49:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execGrouping.c,v 1.16.2.1 2005/11/22 18:23:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -381,9 +381,9 @@ LookupTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
 			/*
 			 * created new entry
 			 *
-			 * Zero any caller-requested space in the entry.  (This zaps the "key
-			 * data" dynahash.c copied into the new entry, but we don't care
-			 * since we're about to overwrite it anyway.)
+			 * Zero any caller-requested space in the entry.  (This zaps the
+			 * "key data" dynahash.c copied into the new entry, but we don't
+			 * care since we're about to overwrite it anyway.)
 			 */
 			MemSet(entry, 0, hashtable->entrysize);
 

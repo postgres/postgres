@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.31 2005/10/15 02:49:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.31.2.1 2005/11/22 18:23:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -198,9 +198,9 @@ pull_up_subqueries(PlannerInfo *root, Node *jtnode, bool below_outer_join)
 			 * routine's processing is complete for its jointree and
 			 * rangetable.
 			 *
-			 * Note: 'false' is correct here even if we are within an outer join
-			 * in the upper query; the lower query starts with a clean slate
-			 * for outer-join semantics.
+			 * Note: 'false' is correct here even if we are within an outer
+			 * join in the upper query; the lower query starts with a clean
+			 * slate for outer-join semantics.
 			 */
 			subquery->jointree = (FromExpr *)
 				pull_up_subqueries(subroot, (Node *) subquery->jointree,
@@ -210,9 +210,9 @@ pull_up_subqueries(PlannerInfo *root, Node *jtnode, bool below_outer_join)
 			 * Now we must recheck whether the subquery is still simple enough
 			 * to pull up.	If not, abandon processing it.
 			 *
-			 * We don't really need to recheck all the conditions involved, but
-			 * it's easier just to keep this "if" looking the same as the one
-			 * above.
+			 * We don't really need to recheck all the conditions involved,
+			 * but it's easier just to keep this "if" looking the same as the
+			 * one above.
 			 */
 			if (is_simple_subquery(subquery) &&
 				(!below_outer_join || has_nullable_targetlist(subquery)))
@@ -294,8 +294,8 @@ pull_up_subqueries(PlannerInfo *root, Node *jtnode, bool below_outer_join)
 			 * already adjusted the marker values, so just list_concat the
 			 * list.)
 			 *
-			 * Executor can't handle multiple FOR UPDATE/SHARE/NOWAIT flags, so
-			 * complain if they are valid but different
+			 * Executor can't handle multiple FOR UPDATE/SHARE/NOWAIT flags,
+			 * so complain if they are valid but different
 			 */
 			if (parse->rowMarks && subquery->rowMarks)
 			{

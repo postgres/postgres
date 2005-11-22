@@ -60,9 +60,9 @@
 
 typedef struct remoteConn
 {
-	PGconn	   *conn;				/* Hold the remote connection */
+	PGconn	   *conn;			/* Hold the remote connection */
 	int			openCursorCount;	/* The number of open cursors */
-	bool		newXactForCursor;	/* Opened a transaction for a cursor */
+	bool		newXactForCursor;		/* Opened a transaction for a cursor */
 }	remoteConn;
 
 /*
@@ -84,8 +84,8 @@ static Oid	get_relid_from_relname(text *relname_text);
 static char *generate_relation_name(Oid relid);
 
 /* Global */
-static remoteConn	   *pconn = NULL;
-static HTAB			   *remoteConnHash = NULL;
+static remoteConn *pconn = NULL;
+static HTAB *remoteConnHash = NULL;
 
 /*
  *	Following is list that holds multiple remote connections.
@@ -346,7 +346,7 @@ dblink_open(PG_FUNCTION_ARGS)
 	else
 		conn = rconn->conn;
 
-	/*	If we are not in a transaction, start one */
+	/* If we are not in a transaction, start one */
 	if (PQtransactionStatus(conn) == PQTRANS_IDLE)
 	{
 		res = PQexec(conn, "BEGIN");

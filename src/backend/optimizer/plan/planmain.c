@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.89 2005/10/15 02:49:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.89.2.1 2005/11/22 18:23:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,11 +146,11 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 	 * added to appropriate lists belonging to the mentioned relations.  We
 	 * also build lists of equijoined keys for pathkey construction.
 	 *
-	 * Note: all subplan nodes will have "flat" (var-only) tlists. This implies
-	 * that all expression evaluations are done at the root of the plan tree.
-	 * Once upon a time there was code to try to push expensive function calls
-	 * down to lower plan nodes, but that's dead code and has been for a long
-	 * time...
+	 * Note: all subplan nodes will have "flat" (var-only) tlists. This
+	 * implies that all expression evaluations are done at the root of the
+	 * plan tree. Once upon a time there was code to try to push expensive
+	 * function calls down to lower plan nodes, but that's dead code and has
+	 * been for a long time...
 	 */
 	build_base_rel_tlists(root, tlist);
 
@@ -273,9 +273,9 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 	 * "cheapest presorted" path will be the cheapest overall for the tuple
 	 * fraction.)
 	 *
-	 * The cheapest-total path is also the one to use if grouping_planner decides
-	 * to use hashed aggregation, so we return it separately even if this
-	 * routine thinks the presorted path is the winner.
+	 * The cheapest-total path is also the one to use if grouping_planner
+	 * decides to use hashed aggregation, so we return it separately even if
+	 * this routine thinks the presorted path is the winner.
 	 */
 	cheapestpath = final_rel->cheapest_total_path;
 

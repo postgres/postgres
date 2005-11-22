@@ -266,8 +266,10 @@ calc_rank_or(float *w, tsvector * t, QUERYTYPE * q)
 
 	for (i = 0; i < size; i++)
 	{
-		float resj,wjm;
-		int4  jm;
+		float		resj,
+					wjm;
+		int4		jm;
+
 		entry = find_wordentry(t, q, item[i]);
 		if (!entry)
 			continue;
@@ -283,28 +285,29 @@ calc_rank_or(float *w, tsvector * t, QUERYTYPE * q)
 			post = POSNULL + 1;
 		}
 
-                resj = 0.0;
-                wjm = -1.0;
-                jm = 0;
-                for (j = 0; j < dimt; j++)
-                {
-                        resj = resj + wpos(post[j])/((j+1)*(j+1));
-                        if ( wpos(post[j]) > wjm ) {
-                                wjm = wpos(post[j]);
-                                jm  = j;
-                        }
-                }
-/* 
-        limit (sum(i/i^2),i->inf) = pi^2/6
-        resj = sum(wi/i^2),i=1,noccurence,
-        wi - should be sorted desc, 
-        don't sort for now, just choose maximum weight. This should be corrected
+		resj = 0.0;
+		wjm = -1.0;
+		jm = 0;
+		for (j = 0; j < dimt; j++)
+		{
+			resj = resj + wpos(post[j]) / ((j + 1) * (j + 1));
+			if (wpos(post[j]) > wjm)
+			{
+				wjm = wpos(post[j]);
+				jm = j;
+			}
+		}
+/*
+		limit (sum(i/i^2),i->inf) = pi^2/6
+		resj = sum(wi/i^2),i=1,noccurence,
+		wi - should be sorted desc,
+		don't sort for now, just choose maximum weight. This should be corrected
 		Oleg Bartunov
 */
-                res = res + ( wjm + resj - wjm/((jm+1)*(jm+1)))/1.64493406685; 
+		res = res + (wjm + resj - wjm / ((jm + 1) * (jm + 1))) / 1.64493406685;
 	}
-	if ( size > 0 )
-		res = res /size;
+	if (size > 0)
+		res = res / size;
 	pfree(item);
 	return res;
 }

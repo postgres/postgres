@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.299 2005/11/04 23:50:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.299.2.1 2005/11/22 18:23:24 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -466,7 +466,7 @@ static struct config_bool ConfigureNamesBool[] =
 		{"constraint_exclusion", PGC_USERSET, QUERY_TUNING_OTHER,
 			gettext_noop("Enables the planner to use constraints to optimize queries."),
 			gettext_noop("Child table scans will be skipped if their "
-						 "constraints guarantee that no rows match the query.")
+					   "constraints guarantee that no rows match the query.")
 		},
 		&constraint_exclusion,
 		false, NULL, NULL
@@ -502,7 +502,7 @@ static struct config_bool ConfigureNamesBool[] =
 		{"fsync", PGC_SIGHUP, WAL_SETTINGS,
 			gettext_noop("Forces synchronization of updates to disk."),
 			gettext_noop("The server will use the fsync() system call in several places to make "
-						 "sure that updates are physically written to disk. This insures "
+			"sure that updates are physically written to disk. This insures "
 						 "that a database cluster will recover to a consistent state after "
 						 "an operating system or hardware crash.")
 		},
@@ -527,7 +527,7 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Writes full pages to WAL when first modified after a checkpoint."),
 			gettext_noop("A page write in process during an operating system crash might be "
 						 "only partially written to disk.  During recovery, the row changes "
-						 "stored in WAL are not enough to recover.  This option writes "
+			  "stored in WAL are not enough to recover.  This option writes "
 						 "pages when first modified after a checkpoint to WAL so full recovery "
 						 "is possible.")
 		},
@@ -2771,8 +2771,8 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	 * If the data_directory GUC variable has been set, use that as DataDir;
 	 * otherwise use configdir if set; else punt.
 	 *
-	 * Note: SetDataDir will copy and absolute-ize its argument, so we don't have
-	 * to.
+	 * Note: SetDataDir will copy and absolute-ize its argument, so we don't
+	 * have to.
 	 */
 	if (data_directory)
 		SetDataDir(data_directory);
@@ -3103,8 +3103,8 @@ AtEOXact_GUC(bool isCommit, bool isSubXact)
 		/*
 		 * We have two cases:
 		 *
-		 * If commit and HAVE_TENTATIVE, set actual value to tentative (this is
-		 * to override a SET LOCAL if one occurred later than SET). We keep
+		 * If commit and HAVE_TENTATIVE, set actual value to tentative (this
+		 * is to override a SET LOCAL if one occurred later than SET). We keep
 		 * the tentative value and propagate HAVE_TENTATIVE to the parent
 		 * status, allowing the SET's effect to percolate up. (But if we're
 		 * exiting the outermost transaction, we'll drop the HAVE_TENTATIVE
@@ -3258,7 +3258,8 @@ AtEOXact_GUC(bool isCommit, bool isSubXact)
 								 * If newval should now be freed, it'll be
 								 * taken care of below.
 								 *
-								 * See notes in set_config_option about casting
+								 * See notes in set_config_option about
+								 * casting
 								 */
 								newval = (char *) newstr;
 							}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.157 2005/10/27 02:45:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.157.2.1 2005/11/22 18:23:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1944,30 +1944,22 @@ timestamp_mi(PG_FUNCTION_ARGS)
 	result->day = 0;
 
 	/*
-	 *	This is wrong, but removing it breaks a lot of regression tests.
-	 *	For example:
+	 * This is wrong, but removing it breaks a lot of regression tests. For
+	 * example:
 	 *
-	 *	test=> SET timezone = 'EST5EDT';
-	 *	test=> SELECT
-	 *	test-> ('2005-10-30 13:22:00-05'::timestamptz -
-	 *	test(>  '2005-10-29 13:22:00-04'::timestamptz);
-	 *	?column?
-	 *	----------------
-	 *	 1 day 01:00:00
-	 *	 (1 row)
+	 * test=> SET timezone = 'EST5EDT'; test=> SELECT test-> ('2005-10-30
+	 * 13:22:00-05'::timestamptz - test(>  '2005-10-29
+	 * 13:22:00-04'::timestamptz); ?column? ---------------- 1 day 01:00:00 (1
+	 * row)
 	 *
-	 *	so adding that to the first timestamp gets:
+	 * so adding that to the first timestamp gets:
 	 *
-	 *	 test=> SELECT
-	 *	 test-> ('2005-10-29 13:22:00-04'::timestamptz +
-	 *	 test(> ('2005-10-30 13:22:00-05'::timestamptz -
-	 *	 test(>  '2005-10-29 13:22:00-04'::timestamptz)) at time zone 'EST';
-	 *	    timezone
-	 *	--------------------
-	 *	2005-10-30 14:22:00
-	 *	(1 row)
+	 * test=> SELECT test-> ('2005-10-29 13:22:00-04'::timestamptz + test(>
+	 * ('2005-10-30 13:22:00-05'::timestamptz - test(>	'2005-10-29
+	 * 13:22:00-04'::timestamptz)) at time zone 'EST'; timezone
+	 * -------------------- 2005-10-30 14:22:00 (1 row)
 	 */
- 	result = DatumGetIntervalP(DirectFunctionCall1(interval_justify_hours,
+	result = DatumGetIntervalP(DirectFunctionCall1(interval_justify_hours,
 												 IntervalPGetDatum(result)));
 
 	PG_RETURN_INTERVAL_P(result);
@@ -1986,6 +1978,7 @@ interval_justify_hours(PG_FUNCTION_ARGS)
 {
 	Interval   *span = PG_GETARG_INTERVAL_P(0);
 	Interval   *result;
+
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		wholeday;
 #else
@@ -2334,12 +2327,12 @@ interval_mul(PG_FUNCTION_ARGS)
 	day_remainder -= result->day;
 
 	/*
-	 * The above correctly handles the whole-number part of the month and
-	 * day products, but we have to do something with any fractional part
+	 * The above correctly handles the whole-number part of the month and day
+	 * products, but we have to do something with any fractional part
 	 * resulting when the factor is nonintegral.  We cascade the fractions
 	 * down to lower units using the conversion factors DAYS_PER_MONTH and
-	 * SECS_PER_DAY.  Note we do NOT cascade up, since we are not forced to
-	 * do so by the representation.  The user can choose to cascade up later,
+	 * SECS_PER_DAY.  Note we do NOT cascade up, since we are not forced to do
+	 * so by the representation.  The user can choose to cascade up later,
 	 * using justify_hours and/or justify_days.
 	 */
 

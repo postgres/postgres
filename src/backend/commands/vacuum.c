@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.317 2005/10/15 02:49:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.317.2.1 2005/11/22 18:23:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -313,8 +313,8 @@ vacuum(VacuumStmt *vacstmt, List *relids)
 	 * compared to telling people to use two operations.  See pgsql-hackers
 	 * discussion of 27-Nov-2004, and comments below for update_hint_bits().
 	 *
-	 * Note: this is enforced here, and not in the grammar, since (a) we can give
-	 * a better error message, and (b) we might want to allow it again
+	 * Note: this is enforced here, and not in the grammar, since (a) we can
+	 * give a better error message, and (b) we might want to allow it again
 	 * someday.
 	 */
 	if (vacstmt->vacuum && vacstmt->full && vacstmt->freeze)
@@ -332,8 +332,8 @@ vacuum(VacuumStmt *vacstmt, List *relids)
 	/*
 	 * Create special memory context for cross-transaction storage.
 	 *
-	 * Since it is a child of PortalContext, it will go away eventually even if
-	 * we suffer an error; there's no need for special abort cleanup logic.
+	 * Since it is a child of PortalContext, it will go away eventually even
+	 * if we suffer an error; there's no need for special abort cleanup logic.
 	 */
 	vac_context = AllocSetContextCreate(PortalContext,
 										"Vacuum",
@@ -355,14 +355,14 @@ vacuum(VacuumStmt *vacstmt, List *relids)
 		/*
 		 * It's a database-wide VACUUM.
 		 *
-		 * Compute the initially applicable OldestXmin and FreezeLimit XIDs, so
-		 * that we can record these values at the end of the VACUUM. Note that
-		 * individual tables may well be processed with newer values, but we
-		 * can guarantee that no (non-shared) relations are processed with
+		 * Compute the initially applicable OldestXmin and FreezeLimit XIDs,
+		 * so that we can record these values at the end of the VACUUM. Note
+		 * that individual tables may well be processed with newer values, but
+		 * we can guarantee that no (non-shared) relations are processed with
 		 * older ones.
 		 *
-		 * It is okay to record non-shared values in pg_database, even though we
-		 * may vacuum shared relations with older cutoffs, because only the
+		 * It is okay to record non-shared values in pg_database, even though
+		 * we may vacuum shared relations with older cutoffs, because only the
 		 * minimum of the values present in pg_database matters.  We can be
 		 * sure that shared relations have at some time been vacuumed with
 		 * cutoffs no worse than the global minimum; for, if there is a
@@ -379,8 +379,8 @@ vacuum(VacuumStmt *vacstmt, List *relids)
 	/*
 	 * Decide whether we need to start/commit our own transactions.
 	 *
-	 * For VACUUM (with or without ANALYZE): always do so, so that we can release
-	 * locks as soon as possible.  (We could possibly use the outer
+	 * For VACUUM (with or without ANALYZE): always do so, so that we can
+	 * release locks as soon as possible.  (We could possibly use the outer
 	 * transaction for a one-table VACUUM, but handling TOAST tables would be
 	 * problematic.)
 	 *
@@ -981,21 +981,20 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 
 	/*
 	 * Determine the type of lock we want --- hard exclusive lock for a FULL
-	 * vacuum, but just ShareUpdateExclusiveLock for concurrent vacuum.
-	 * Either way, we can be sure that no other backend is vacuuming the same
-	 * table.
+	 * vacuum, but just ShareUpdateExclusiveLock for concurrent vacuum. Either
+	 * way, we can be sure that no other backend is vacuuming the same table.
 	 */
 	lmode = vacstmt->full ? AccessExclusiveLock : ShareUpdateExclusiveLock;
 
 	/*
 	 * Open the class, get an appropriate lock on it, and check permissions.
 	 *
-	 * We allow the user to vacuum a table if he is superuser, the table owner,
-	 * or the database owner (but in the latter case, only if it's not a
-	 * shared relation).  pg_class_ownercheck includes the superuser case.
+	 * We allow the user to vacuum a table if he is superuser, the table
+	 * owner, or the database owner (but in the latter case, only if it's not
+	 * a shared relation).	pg_class_ownercheck includes the superuser case.
 	 *
-	 * Note we choose to treat permissions failure as a WARNING and keep trying
-	 * to vacuum the rest of the DB --- is this appropriate?
+	 * Note we choose to treat permissions failure as a WARNING and keep
+	 * trying to vacuum the rest of the DB --- is this appropriate?
 	 */
 	onerel = relation_open(relid, lmode);
 
@@ -1661,8 +1660,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 	 * find a page we cannot completely empty (this last condition is handled
 	 * by "break" statements within the loop).
 	 *
-	 * NB: this code depends on the vacuum_pages and fraged_pages lists being in
-	 * order by blkno.
+	 * NB: this code depends on the vacuum_pages and fraged_pages lists being
+	 * in order by blkno.
 	 */
 	nblocks = vacrelstats->rel_pages;
 	for (blkno = nblocks - vacuum_pages->empty_end_pages - 1;
@@ -1685,9 +1684,9 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 		 * since we stop the outer loop at last_move_dest_block, pages removed
 		 * here cannot have had anything moved onto them already.
 		 *
-		 * Also note that we don't change the stored fraged_pages list, only our
-		 * local variable num_fraged_pages; so the forgotten pages are still
-		 * available to be loaded into the free space map later.
+		 * Also note that we don't change the stored fraged_pages list, only
+		 * our local variable num_fraged_pages; so the forgotten pages are
+		 * still available to be loaded into the free space map later.
 		 */
 		while (num_fraged_pages > 0 &&
 			   fraged_pages->pagedesc[num_fraged_pages - 1]->blkno >= blkno)
@@ -1841,17 +1840,17 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			 * --- it must be recently obsoleted, else scan_heap would have
 			 * deemed it removable.)
 			 *
-			 * NOTE: this test is not 100% accurate: it is possible for a tuple
-			 * to be an updated one with recent xmin, and yet not match any
-			 * new_tid entry in the vtlinks list.  Presumably there was once a
-			 * parent tuple with xmax matching the xmin, but it's possible
-			 * that that tuple has been removed --- for example, if it had
-			 * xmin = xmax and wasn't itself an updated version, then
+			 * NOTE: this test is not 100% accurate: it is possible for a
+			 * tuple to be an updated one with recent xmin, and yet not match
+			 * any new_tid entry in the vtlinks list.  Presumably there was
+			 * once a parent tuple with xmax matching the xmin, but it's
+			 * possible that that tuple has been removed --- for example, if
+			 * it had xmin = xmax and wasn't itself an updated version, then
 			 * HeapTupleSatisfiesVacuum would deem it removable as soon as the
 			 * xmin xact completes.
 			 *
-			 * To be on the safe side, we abandon the repair_frag process if we
-			 * cannot find the parent tuple in vtlinks.  This may be overly
+			 * To be on the safe side, we abandon the repair_frag process if
+			 * we cannot find the parent tuple in vtlinks.	This may be overly
 			 * conservative; AFAICS it would be safe to move the chain.
 			 */
 			if (((tuple.t_data->t_infomask & HEAP_UPDATED) &&
@@ -2393,8 +2392,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 		/*
 		 * Clean moved-off tuples from last page in Nvacpagelist list.
 		 *
-		 * We need only do this in this one page, because higher-numbered pages
-		 * are going to be truncated from the relation entirely. But see
+		 * We need only do this in this one page, because higher-numbered
+		 * pages are going to be truncated from the relation entirely. But see
 		 * comments for update_hint_bits().
 		 */
 		if (vacpage->blkno == (blkno - 1) &&
@@ -2549,8 +2548,8 @@ move_chain_tuple(Relation rel,
 	 * Therefore we must do everything that uses old_tup->t_data BEFORE this
 	 * step!!
 	 *
-	 * This path is different from the other callers of vacuum_page, because we
-	 * have already incremented the vacpage's offsets_used field to account
+	 * This path is different from the other callers of vacuum_page, because
+	 * we have already incremented the vacpage's offsets_used field to account
 	 * for the tuple(s) we expect to move onto the page. Therefore
 	 * vacuum_page's check for offsets_used == 0 is wrong. But since that's a
 	 * good debugging check for all other callers, we work around it here

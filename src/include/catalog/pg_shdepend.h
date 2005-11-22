@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_shdepend.h,v 1.2 2005/10/15 02:49:44 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_shdepend.h,v 1.2.2.1 2005/11/22 18:23:27 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -37,8 +37,8 @@ CATALOG(pg_shdepend,1214) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
 	/*
 	 * Identification of the dependent (referencing) object.
 	 *
-	 * These fields are all zeroes for a DEPENDENCY_PIN entry.	Also, dbid can be
-	 * zero to denote a shared object.
+	 * These fields are all zeroes for a DEPENDENCY_PIN entry.	Also, dbid can
+	 * be zero to denote a shared object.
 	 */
 	Oid			dbid;			/* OID of database containing object */
 	Oid			classid;		/* OID of table containing object */

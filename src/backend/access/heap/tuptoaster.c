@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.53.2.1 2005/11/20 18:38:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.53.2.2 2005/11/22 18:23:04 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1075,8 +1075,8 @@ toast_save_datum(Relation rel, Datum value)
 		 * FormIndexDatum: this relies on the knowledge that the index columns
 		 * are the same as the initial columns of the table.
 		 *
-		 * Note also that there had better not be any user-created index on the
-		 * TOAST table, since we don't bother to update anything else.
+		 * Note also that there had better not be any user-created index on
+		 * the TOAST table, since we don't bother to update anything else.
 		 */
 		index_insert(toastidx, t_values, t_isnull,
 					 &(toasttup->t_self),
@@ -1214,9 +1214,9 @@ toast_fetch_datum(varattrib *attr)
 	/*
 	 * Read the chunks by index
 	 *
-	 * Note that because the index is actually on (valueid, chunkidx) we will see
-	 * the chunks in chunkidx order, even though we didn't explicitly ask for
-	 * it.
+	 * Note that because the index is actually on (valueid, chunkidx) we will
+	 * see the chunks in chunkidx order, even though we didn't explicitly ask
+	 * for it.
 	 */
 	nextidx = 0;
 

@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.84 2005/10/15 02:49:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.84.2.1 2005/11/22 18:23:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -445,8 +445,8 @@ CommentDatabase(List *qualname, char *comment)
 	 * comment on a database other than the current one. Someday this might be
 	 * improved, but it would take a redesigned infrastructure.
 	 *
-	 * When loading a dump, we may see a COMMENT ON DATABASE for the old name of
-	 * the database.  Erroring out would prevent pg_restore from completing
+	 * When loading a dump, we may see a COMMENT ON DATABASE for the old name
+	 * of the database.  Erroring out would prevent pg_restore from completing
 	 * (which is really pg_restore's fault, but for now we will work around
 	 * the problem here).  Consensus is that the best fix is to treat wrong
 	 * database name as a WARNING not an ERROR.

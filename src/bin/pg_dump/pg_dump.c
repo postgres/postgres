@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.422 2005/10/15 02:49:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.422.2.1 2005/11/22 18:23:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -865,26 +865,26 @@ dumpTableData_copy(Archive *fout, void *dcontext)
 		/*
 		 * THROTTLE:
 		 *
-		 * There was considerable discussion in late July, 2000 regarding slowing
-		 * down pg_dump when backing up large tables. Users with both slow &
-		 * fast (muti-processor) machines experienced performance degradation
-		 * when doing a backup.
+		 * There was considerable discussion in late July, 2000 regarding
+		 * slowing down pg_dump when backing up large tables. Users with both
+		 * slow & fast (muti-processor) machines experienced performance
+		 * degradation when doing a backup.
 		 *
-		 * Initial attempts based on sleeping for a number of ms for each ms of
-		 * work were deemed too complex, then a simple 'sleep in each loop'
+		 * Initial attempts based on sleeping for a number of ms for each ms
+		 * of work were deemed too complex, then a simple 'sleep in each loop'
 		 * implementation was suggested. The latter failed because the loop
 		 * was too tight. Finally, the following was implemented:
 		 *
-		 * If throttle is non-zero, then See how long since the last sleep. Work
-		 * out how long to sleep (based on ratio). If sleep is more than
+		 * If throttle is non-zero, then See how long since the last sleep.
+		 * Work out how long to sleep (based on ratio). If sleep is more than
 		 * 100ms, then sleep reset timer EndIf EndIf
 		 *
-		 * where the throttle value was the number of ms to sleep per ms of work.
-		 * The calculation was done in each loop.
+		 * where the throttle value was the number of ms to sleep per ms of
+		 * work. The calculation was done in each loop.
 		 *
-		 * Most of the hard work is done in the backend, and this solution still
-		 * did not work particularly well: on slow machines, the ratio was
-		 * 50:1, and on medium paced machines, 1:1, and on fast
+		 * Most of the hard work is done in the backend, and this solution
+		 * still did not work particularly well: on slow machines, the ratio
+		 * was 50:1, and on medium paced machines, 1:1, and on fast
 		 * multi-processor machines, it had little or no effect, for reasons
 		 * that were unclear.
 		 *
@@ -1015,9 +1015,9 @@ dumpTableData_insert(Archive *fout, void *dcontext)
 							 * strtod() and friends might accept NaN, so we
 							 * can't use that to test.
 							 *
-							 * In reality we only need to defend against infinity
-							 * and NaN, so we need not get too crazy about
-							 * pattern matching here.
+							 * In reality we only need to defend against
+							 * infinity and NaN, so we need not get too crazy
+							 * about pattern matching here.
 							 */
 							const char *s = PQgetvalue(res, tuple, field);
 
@@ -2435,21 +2435,21 @@ getTables(int *numTables)
 	/*
 	 * Find all the tables (including views and sequences).
 	 *
-	 * We include system catalogs, so that we can work if a user table is defined
-	 * to inherit from a system catalog (pretty weird, but...)
+	 * We include system catalogs, so that we can work if a user table is
+	 * defined to inherit from a system catalog (pretty weird, but...)
 	 *
 	 * We ignore tables that are not type 'r' (ordinary relation), 'S'
 	 * (sequence), 'v' (view), or 'c' (composite type).
 	 *
-	 * Composite-type table entries won't be dumped as such, but we have to make
-	 * a DumpableObject for them so that we can track dependencies of the
+	 * Composite-type table entries won't be dumped as such, but we have to
+	 * make a DumpableObject for them so that we can track dependencies of the
 	 * composite type (pg_depend entries for columns of the composite type
 	 * link to the pg_class entry not the pg_type entry).
 	 *
-	 * Note: in this phase we should collect only a minimal amount of information
-	 * about each table, basically just enough to decide if it is interesting.
-	 * We must fetch all tables in this phase because otherwise we cannot
-	 * correctly identify inherited columns, serial columns, etc.
+	 * Note: in this phase we should collect only a minimal amount of
+	 * information about each table, basically just enough to decide if it is
+	 * interesting. We must fetch all tables in this phase because otherwise
+	 * we cannot correctly identify inherited columns, serial columns, etc.
 	 */
 
 	if (g_fout->remoteVersion >= 80000)
@@ -6907,8 +6907,8 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				/*
 				 * Not Null constraint --- suppress if inherited
 				 *
-				 * Note: we could suppress this for serial columns since SERIAL
-				 * implies NOT NULL.  We choose not to for forward
+				 * Note: we could suppress this for serial columns since
+				 * SERIAL implies NOT NULL.  We choose not to for forward
 				 * compatibility, since there has been some talk of making
 				 * SERIAL not imply NOT NULL, in which case the explicit
 				 * specification would be needed.
@@ -7575,12 +7575,12 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 	/*
 	 * The logic we use for restoring sequences is as follows:
 	 *
-	 * Add a basic CREATE SEQUENCE statement (use last_val for start if called is
-	 * false, else use min_val for start_val).	Skip this if the sequence came
-	 * from a SERIAL column.
+	 * Add a basic CREATE SEQUENCE statement (use last_val for start if called
+	 * is false, else use min_val for start_val).  Skip this if the sequence
+	 * came from a SERIAL column.
 	 *
-	 * Add a 'SETVAL(seq, last_val, iscalled)' at restore-time iff we load data.
-	 * We do this for serial sequences too.
+	 * Add a 'SETVAL(seq, last_val, iscalled)' at restore-time iff we load
+	 * data. We do this for serial sequences too.
 	 */
 
 	if (!dataOnly && !OidIsValid(tbinfo->owning_tab))

@@ -6,7 +6,7 @@
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.68 2005/10/29 00:31:50 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.68.2.1 2005/11/22 18:23:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,8 +56,8 @@ GetNewTransactionId(bool isSubXact)
 	 * (which gives an escape hatch to the DBA who ignored all those
 	 * warnings).
 	 *
-	 * Test is coded to fall out as fast as possible during normal operation, ie,
-	 * when the warn limit is set and we haven't violated it.
+	 * Test is coded to fall out as fast as possible during normal operation,
+	 * ie, when the warn limit is set and we haven't violated it.
 	 */
 	if (TransactionIdFollowsOrEquals(xid, ShmemVariableCache->xidWarnLimit) &&
 		TransactionIdIsValid(ShmemVariableCache->xidWarnLimit))
@@ -268,8 +268,8 @@ GetNewObjectId(void)
 	 * right after a wrap occurs, so as to avoid a possibly large number of
 	 * iterations in GetNewOid.)  Note we are relying on unsigned comparison.
 	 *
-	 * During initdb, we start the OID generator at FirstBootstrapObjectId, so we
-	 * only enforce wrapping to that point when in bootstrap or standalone
+	 * During initdb, we start the OID generator at FirstBootstrapObjectId, so
+	 * we only enforce wrapping to that point when in bootstrap or standalone
 	 * mode.  The first time through this routine after normal postmaster
 	 * start, the counter will be forced up to FirstNormalObjectId. This
 	 * mechanism leaves the OIDs between FirstBootstrapObjectId and

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.59 2005/10/15 02:49:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.59.2.1 2005/11/22 18:23:09 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -747,10 +747,10 @@ initialize_SSL(void)
 		/*
 		 * Require no public access to key file.
 		 *
-		 * XXX temporarily suppress check when on Windows, because there may not
-		 * be proper support for Unix-y file permissions.  Need to think of a
-		 * reasonable check to apply on Windows.  (See also the data directory
-		 * permission check in postmaster.c)
+		 * XXX temporarily suppress check when on Windows, because there may
+		 * not be proper support for Unix-y file permissions.  Need to think
+		 * of a reasonable check to apply on Windows.  (See also the data
+		 * directory permission check in postmaster.c)
 		 */
 #if !defined(WIN32) && !defined(__CYGWIN__)
 		if (!S_ISREG(buf.st_mode) || (buf.st_mode & (S_IRWXG | S_IRWXO)) ||

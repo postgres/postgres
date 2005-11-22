@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.77 2005/10/15 02:49:19 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.77.2.1 2005/11/22 18:23:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,10 +89,10 @@ geqo_eval(Gene *tour, int num_gene, GeqoEvalData *evaldata)
 	 * truncating the list to its original length.	NOTE this assumes that any
 	 * added entries are appended at the end!
 	 *
-	 * We also must take care not to mess up the outer join_rel_hash, if there is
-	 * one.  We can do this by just temporarily setting the link to NULL.  (If
-	 * we are dealing with enough join rels, which we very likely are, a new
-	 * hash table will get built and used locally.)
+	 * We also must take care not to mess up the outer join_rel_hash, if there
+	 * is one.	We can do this by just temporarily setting the link to NULL.
+	 * (If we are dealing with enough join rels, which we very likely are, a
+	 * new hash table will get built and used locally.)
 	 */
 	savelength = list_length(evaldata->root->join_rel_list);
 	savehash = evaldata->root->join_rel_hash;
@@ -182,9 +182,9 @@ gimme_tree(Gene *tour, int num_gene, GeqoEvalData *evaldata)
 	 * tour other than the one given.  To the extent that the heuristics are
 	 * helpful, however, this will be a better plan than the raw tour.
 	 *
-	 * Also, when a join attempt fails (because of IN-clause constraints), we may
-	 * be able to recover and produce a workable plan, where the old code just
-	 * had to give up.	This case acts the same as a false result from
+	 * Also, when a join attempt fails (because of IN-clause constraints), we
+	 * may be able to recover and produce a workable plan, where the old code
+	 * just had to give up.  This case acts the same as a false result from
 	 * desirable_join().
 	 */
 	for (rel_count = 0; rel_count < num_gene; rel_count++)

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.166 2005/10/15 02:49:44 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.166.2.1 2005/11/22 18:23:27 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -148,8 +148,8 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP
 	/*
 	 * This flag represents a "NOT NULL" constraint against this datatype.
 	 *
-	 * If true, the attnotnull column for a corresponding table column using this
-	 * datatype will always enforce the NOT NULL constraint.
+	 * If true, the attnotnull column for a corresponding table column using
+	 * this datatype will always enforce the NOT NULL constraint.
 	 *
 	 * Used primarily for domain types.
 	 */

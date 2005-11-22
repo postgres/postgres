@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeNestloop.c,v 1.39 2005/10/15 02:49:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeNestloop.c,v 1.39.2.1 2005/11/22 18:23:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,8 +223,8 @@ ExecNestLoop(NestLoopState *node)
 		 * test the inner and outer tuples to see if they satisfy the node's
 		 * qualification.
 		 *
-		 * Only the joinquals determine MatchedOuter status, but all quals must
-		 * pass to actually return the tuple.
+		 * Only the joinquals determine MatchedOuter status, but all quals
+		 * must pass to actually return the tuple.
 		 */
 		ENL1_printf("testing qualification");
 

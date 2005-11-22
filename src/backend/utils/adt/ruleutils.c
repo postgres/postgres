@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.207 2005/10/15 02:49:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.207.2.1 2005/11/22 18:23:22 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -3845,8 +3845,8 @@ get_const_expr(Const *constval, deparse_context *context)
 				 * 'NaN').	Note that strtod() and friends might accept NaN,
 				 * so we can't use that to test.
 				 *
-				 * In reality we only need to defend against infinity and NaN, so
-				 * we need not get too crazy about pattern matching here.
+				 * In reality we only need to defend against infinity and NaN,
+				 * so we need not get too crazy about pattern matching here.
 				 */
 				if (strspn(extval, "0123456789+-eE.") == strlen(extval))
 				{
@@ -4579,8 +4579,8 @@ quote_identifier(const char *ident)
 		 * parser doesn't provide any easy way to test for whether an
 		 * identifier is safe or not... so be safe not sorry.
 		 *
-		 * Note: ScanKeywordLookup() does case-insensitive comparison, but that's
-		 * fine, since we already know we have all-lower-case.
+		 * Note: ScanKeywordLookup() does case-insensitive comparison, but
+		 * that's fine, since we already know we have all-lower-case.
 		 */
 		if (ScanKeywordLookup(ident) != NULL)
 			safe = false;

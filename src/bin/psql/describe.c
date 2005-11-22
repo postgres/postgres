@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.129 2005/10/27 13:34:47 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.129.2.1 2005/11/22 18:23:27 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -1843,8 +1843,8 @@ processNamePattern(PQExpBuffer buf, const char *pattern,
 			/*
 			 * Ordinary data character, transfer to pattern
 			 *
-			 * Inside double quotes, or at all times if parsing an operator name,
-			 * quote regexp special characters with a backslash to avoid
+			 * Inside double quotes, or at all times if parsing an operator
+			 * name, quote regexp special characters with a backslash to avoid
 			 * regexp errors.  Outside quotes, however, let them pass through
 			 * as-is; this lets knowledgeable users build regexp expressions
 			 * that are more powerful than shell-style patterns.

@@ -9,7 +9,7 @@
  *
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/funcapi.h,v 1.20 2005/10/15 02:49:41 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/funcapi.h,v 1.20.2.1 2005/11/22 18:23:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,9 +67,9 @@ typedef struct FuncCallContext
 	/*
 	 * OPTIONAL maximum number of calls
 	 *
-	 * max_calls is here for convenience only and setting it is optional. If not
-	 * set, you must provide alternative means to know when the function is
-	 * done.
+	 * max_calls is here for convenience only and setting it is optional. If
+	 * not set, you must provide alternative means to know when the function
+	 * is done.
 	 */
 	uint32		max_calls;
 
@@ -84,25 +84,25 @@ typedef struct FuncCallContext
 	/*
 	 * OPTIONAL pointer to miscellaneous user-provided context information
 	 *
-	 * user_fctx is for use as a pointer to your own struct to retain arbitrary
-	 * context information between calls of your function.
+	 * user_fctx is for use as a pointer to your own struct to retain
+	 * arbitrary context information between calls of your function.
 	 */
 	void	   *user_fctx;
 
 	/*
 	 * OPTIONAL pointer to struct containing attribute type input metadata
 	 *
-	 * attinmeta is for use when returning tuples (i.e. composite data types) and
-	 * is not used when returning base data types. It is only needed if you
-	 * intend to use BuildTupleFromCStrings() to create the return tuple.
+	 * attinmeta is for use when returning tuples (i.e. composite data types)
+	 * and is not used when returning base data types. It is only needed if
+	 * you intend to use BuildTupleFromCStrings() to create the return tuple.
 	 */
 	AttInMetadata *attinmeta;
 
 	/*
 	 * memory context used for structures that must live for multiple calls
 	 *
-	 * multi_call_memory_ctx is set by SRF_FIRSTCALL_INIT() for you, and used by
-	 * SRF_RETURN_DONE() for cleanup. It is the most appropriate memory
+	 * multi_call_memory_ctx is set by SRF_FIRSTCALL_INIT() for you, and used
+	 * by SRF_RETURN_DONE() for cleanup. It is the most appropriate memory
 	 * context for any memory that is to be reused across multiple calls of
 	 * the SRF.
 	 */

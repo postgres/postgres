@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.102 2005/10/19 22:30:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.102.2.1 2005/11/22 18:23:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -512,11 +512,11 @@ nocachegetattr(HeapTuple tuple,
 		/*
 		 * Now we know that we have to walk the tuple CAREFULLY.
 		 *
-		 * Note - This loop is a little tricky.  For each non-null attribute, we
-		 * have to first account for alignment padding before the attr, then
-		 * advance over the attr based on its length.  Nulls have no storage
-		 * and no alignment padding either.  We can use/set attcacheoff until
-		 * we pass either a null or a var-width attribute.
+		 * Note - This loop is a little tricky.  For each non-null attribute,
+		 * we have to first account for alignment padding before the attr,
+		 * then advance over the attr based on its length.	Nulls have no
+		 * storage and no alignment padding either.  We can use/set
+		 * attcacheoff until we pass either a null or a var-width attribute.
 		 */
 
 		for (i = 0; i < attnum; i++)

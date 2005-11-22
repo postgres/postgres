@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.96 2005/10/15 02:49:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.96.2.1 2005/11/22 18:23:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,9 +62,9 @@ main(int argc, char *argv[])
 	 * code will NOT be executed when a backend or sub-bootstrap run is forked
 	 * by the postmaster.
 	 *
-	 * XXX The need for code here is proof that the platform in question is too
-	 * brain-dead to provide a standard C execution environment without help.
-	 * Avoid adding more here, if you can.
+	 * XXX The need for code here is proof that the platform in question is
+	 * too brain-dead to provide a standard C execution environment without
+	 * help. Avoid adding more here, if you can.
 	 */
 
 #if defined(__alpha)			/* no __alpha__ ? */
@@ -134,8 +134,8 @@ main(int argc, char *argv[])
 	 * be overwritten in order to set the process title for ps. In such cases
 	 * save_ps_display_args makes and returns a new copy of the argv[] array.
 	 *
-	 * save_ps_display_args may also move the environment strings to make extra
-	 * room. Therefore this should be done as early as possible during
+	 * save_ps_display_args may also move the environment strings to make
+	 * extra room. Therefore this should be done as early as possible during
 	 * startup, to avoid entanglements with code that might save a getenv()
 	 * result pointer.
 	 */
@@ -271,8 +271,8 @@ main(int argc, char *argv[])
 	/*
 	 * Start our win32 signal implementation
 	 *
-	 * SubPostmasterMain() will do this for itself, but the remaining modes need
-	 * it here
+	 * SubPostmasterMain() will do this for itself, but the remaining modes
+	 * need it here
 	 */
 	pgwin32_signal_initialize();
 #endif

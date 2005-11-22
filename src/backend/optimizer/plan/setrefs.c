@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.117 2005/11/03 17:45:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.117.2.1 2005/11/22 18:23:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -608,8 +608,8 @@ adjust_plan_varnos(Plan *plan, int rtoffset)
 	/*
 	 * Now recurse into child plans.
 	 *
-	 * We don't need to (and in fact mustn't) recurse into subqueries, so no need
-	 * to examine initPlan list.
+	 * We don't need to (and in fact mustn't) recurse into subqueries, so no
+	 * need to examine initPlan list.
 	 */
 	adjust_plan_varnos(plan->lefttree, rtoffset);
 	adjust_plan_varnos(plan->righttree, rtoffset);
@@ -853,8 +853,8 @@ set_inner_join_references(Plan *inner_plan,
 		 * The inner side is a bitmap scan plan.  Fix the top node, and
 		 * recurse to get the lower nodes.
 		 *
-		 * Note: create_bitmap_scan_plan removes clauses from bitmapqualorig if
-		 * they are duplicated in qpqual, so must test these independently.
+		 * Note: create_bitmap_scan_plan removes clauses from bitmapqualorig
+		 * if they are duplicated in qpqual, so must test these independently.
 		 */
 		BitmapHeapScan *innerscan = (BitmapHeapScan *) inner_plan;
 		Index		innerrel = innerscan->scan.scanrelid;

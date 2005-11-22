@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.83 2005/10/15 02:49:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.83.2.1 2005/11/22 18:23:20 momjian Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -542,9 +542,9 @@ parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info * fip,
 	 * Copy supplied arguments into arg vector.  In protocol 2.0 these are
 	 * always assumed to be supplied in binary format.
 	 *
-	 * Note: although the original protocol 2.0 code did not have any way for the
-	 * frontend to specify a NULL argument, we now choose to interpret length
-	 * == -1 as meaning a NULL.
+	 * Note: although the original protocol 2.0 code did not have any way for
+	 * the frontend to specify a NULL argument, we now choose to interpret
+	 * length == -1 as meaning a NULL.
 	 */
 	for (i = 0; i < nargs; ++i)
 	{

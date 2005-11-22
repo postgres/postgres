@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.67 2005/10/15 02:49:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.67.2.1 2005/11/22 18:23:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,8 +184,8 @@ PageAddItem(Page page,
 	/*
 	 * Compute new lower and upper pointers for page, see if it'll fit.
 	 *
-	 * Note: do arithmetic as signed ints, to avoid mistakes if, say, alignedSize
-	 * > pd_upper.
+	 * Note: do arithmetic as signed ints, to avoid mistakes if, say,
+	 * alignedSize > pd_upper.
 	 */
 	if (offsetNumber == limit || needshuffle)
 		lower = phdr->pd_lower + sizeof(ItemIdData);
@@ -524,8 +524,8 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
 	/*
 	 * Finally, we need to adjust the linp entries that remain.
 	 *
-	 * Anything that used to be before the deleted tuple's data was moved forward
-	 * by the size of the deleted tuple.
+	 * Anything that used to be before the deleted tuple's data was moved
+	 * forward by the size of the deleted tuple.
 	 */
 	if (!PageIsEmpty(page))
 	{

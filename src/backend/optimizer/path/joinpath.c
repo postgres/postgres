@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.97 2005/10/25 20:30:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.97.2.1 2005/11/22 18:23:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,8 +176,8 @@ sort_inner_and_outer(PlannerInfo *root,
 	 * cheapest-startup-cost input paths later, and only if they don't need a
 	 * sort.
 	 *
-	 * If unique-ification is requested, do it and then handle as a plain inner
-	 * join.
+	 * If unique-ification is requested, do it and then handle as a plain
+	 * inner join.
 	 */
 	outer_path = outerrel->cheapest_total_path;
 	inner_path = innerrel->cheapest_total_path;
@@ -512,8 +512,8 @@ match_unsorted_outer(PlannerInfo *root,
 
 		/*
 		 * Generate a mergejoin on the basis of sorting the cheapest inner.
-		 * Since a sort will be needed, only cheapest total cost matters.
-		 * (But create_mergejoin_path will do the right thing if
+		 * Since a sort will be needed, only cheapest total cost matters. (But
+		 * create_mergejoin_path will do the right thing if
 		 * inner_cheapest_total is already correctly sorted.)
 		 */
 		add_path(joinrel, (Path *)
@@ -804,9 +804,9 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 
 		/*
 		 * If processing an outer join, only use its own join clauses in the
-		 * merge.  For inner joins we can use pushed-down clauses too.
-		 * (Note: we don't set have_nonmergeable_joinclause here because
-		 * pushed-down clauses will become otherquals not joinquals.)
+		 * merge.  For inner joins we can use pushed-down clauses too. (Note:
+		 * we don't set have_nonmergeable_joinclause here because pushed-down
+		 * clauses will become otherquals not joinquals.)
 		 */
 		if (isouterjoin && restrictinfo->is_pushed_down)
 			continue;
