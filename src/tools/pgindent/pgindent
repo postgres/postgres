@@ -1993,6 +1993,14 @@ do
 		}
 		else	print $0;
 	}' |
+# fix indenting of typedef caused by __cplusplus in libpq-fe.h
+	(
+		if echo "$FILE" | grep -q 'libpq-fe.h$'
+		then	sed 's/^[	]*typedef enum/typedef enum/'
+		else	cat
+		fi
+	) |
+# end
 	cat >/tmp/$$ && cat /tmp/$$ >"$FILE"
 done
 

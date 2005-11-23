@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.46 2005/11/22 18:17:04 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.47 2005/11/23 04:23:28 momjian Exp $
  *
  * pgbench: a simple benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -1110,8 +1110,7 @@ main(int argc, char **argv)
 					fprintf(stderr, "Use limit/ulimt to increase the limit before using pgbench.\n");
 					exit(1);
 				}
-#endif   /* #if !(defined(__CYGWIN__) ||
-								 * defined(__MINGW32__)) */
+#endif
 				break;
 			case 'C':
 				is_connect = 1;

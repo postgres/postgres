@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.121 2005/11/22 18:17:33 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.122 2005/11/23 04:23:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@ extern		"C"
 
 /* Application-visible enum types */
 
-			typedef enum
+typedef enum
 {
 	/*
 	 * Although it is okay to add to this list, values which become unused
