@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.159 2005/11/22 18:17:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.160 2005/11/23 17:21:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -374,6 +374,14 @@ rewriteRuleAction(Query *parsetree,
 
 			sub_action->jointree->fromlist =
 				list_concat(newjointree, sub_action->jointree->fromlist);
+
+			/*
+			 * There could have been some SubLinks in newjointree, in which
+			 * case we'd better mark the sub_action correctly.
+			 */
+			if (parsetree->hasSubLinks && !sub_action->hasSubLinks)
+				sub_action->hasSubLinks =
+					checkExprHasSubLink((Node *) newjointree);
 		}
 	}
 
