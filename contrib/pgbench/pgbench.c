@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.47 2005/11/23 04:23:28 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.48 2005/11/23 12:19:12 ishii Exp $
  *
  * pgbench: a simple benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -886,11 +886,17 @@ process_file(char *filename)
 	{
 		Command    *commands;
 
-		commands = process_commands(buf);
-		if (commands == NULL)
-		{
-			fclose(fd);
-			return false;
+
+		if (strncmp(buf, "\n", 1) != 0) {
+			commands = process_commands(buf);
+			if (commands == NULL)
+			{
+				fclose(fd);
+				return false;
+			}
+		} else {
+			lineno++;
+			continue;
 		}
 
 		my_commands[lineno] = commands;
