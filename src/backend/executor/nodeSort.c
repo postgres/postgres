@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSort.c,v 1.51 2005/10/15 02:49:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSort.c,v 1.52 2005/11/23 20:27:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,7 +193,7 @@ ExecInitSort(Sort *node, EState *estate)
 	 * initialize tuple type.  no need to initialize projection info because
 	 * this node doesn't do projections.
 	 */
-	ExecAssignResultTypeFromOuterPlan(&sortstate->ss.ps);
+	ExecAssignResultTypeFromTL(&sortstate->ss.ps);
 	ExecAssignScanTypeFromOuterPlan(&sortstate->ss);
 	sortstate->ss.ps.ps_ProjInfo = NULL;
 

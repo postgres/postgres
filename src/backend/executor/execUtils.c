@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.128 2005/11/22 18:17:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.129 2005/11/23 20:27:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -433,22 +433,6 @@ ExecAssignResultType(PlanState *planstate,
 	TupleTableSlot *slot = planstate->ps_ResultTupleSlot;
 
 	ExecSetSlotDescriptor(slot, tupDesc, shouldFree);
-}
-
-/* ----------------
- *		ExecAssignResultTypeFromOuterPlan
- * ----------------
- */
-void
-ExecAssignResultTypeFromOuterPlan(PlanState *planstate)
-{
-	PlanState  *outerPlan;
-	TupleDesc	tupDesc;
-
-	outerPlan = outerPlanState(planstate);
-	tupDesc = ExecGetResultType(outerPlan);
-
-	ExecAssignResultType(planstate, tupDesc, false);
 }
 
 /* ----------------

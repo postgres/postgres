@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeUnique.c,v 1.49 2005/11/22 18:17:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeUnique.c,v 1.50 2005/11/23 20:27:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,7 +150,7 @@ ExecInitUnique(Unique *node, EState *estate)
 	 * unique nodes do no projections, so initialize projection info for this
 	 * node appropriately
 	 */
-	ExecAssignResultTypeFromOuterPlan(&uniquestate->ps);
+	ExecAssignResultTypeFromTL(&uniquestate->ps);
 	uniquestate->ps.ps_ProjInfo = NULL;
 
 	/*

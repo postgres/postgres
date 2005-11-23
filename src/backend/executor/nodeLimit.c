@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeLimit.c,v 1.22 2005/10/15 02:49:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeLimit.c,v 1.23 2005/11/23 20:27:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -327,7 +327,7 @@ ExecInitLimit(Limit *node, EState *estate)
 	 * limit nodes do no projections, so initialize projection info for this
 	 * node appropriately
 	 */
-	ExecAssignResultTypeFromOuterPlan(&limitstate->ps);
+	ExecAssignResultTypeFromTL(&limitstate->ps);
 	limitstate->ps.ps_ProjInfo = NULL;
 
 	return limitstate;
