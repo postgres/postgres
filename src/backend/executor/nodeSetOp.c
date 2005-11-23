@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSetOp.c,v 1.18 2005/10/15 02:49:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSetOp.c,v 1.18.2.1 2005/11/23 20:28:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,7 +258,7 @@ ExecInitSetOp(SetOp *node, EState *estate)
 	 * setop nodes do no projections, so initialize projection info for this
 	 * node appropriately
 	 */
-	ExecAssignResultTypeFromOuterPlan(&setopstate->ps);
+	ExecAssignResultTypeFromTL(&setopstate->ps);
 	setopstate->ps.ps_ProjInfo = NULL;
 
 	/*

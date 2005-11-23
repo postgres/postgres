@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.50 2005/10/15 02:49:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.50.2.1 2005/11/23 20:28:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -195,7 +195,7 @@ ExecInitMaterial(Material *node, EState *estate)
 	 * initialize tuple type.  no need to initialize projection info because
 	 * this node doesn't do projections.
 	 */
-	ExecAssignResultTypeFromOuterPlan(&matstate->ss.ps);
+	ExecAssignResultTypeFromTL(&matstate->ss.ps);
 	ExecAssignScanTypeFromOuterPlan(&matstate->ss);
 	matstate->ss.ps.ps_ProjInfo = NULL;
 

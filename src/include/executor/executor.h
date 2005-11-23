@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.120 2005/10/15 02:49:44 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.120.2.1 2005/11/23 20:28:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,7 +218,6 @@ extern ExprContext *MakePerTupleExprContext(EState *estate);
 extern void ExecAssignExprContext(EState *estate, PlanState *planstate);
 extern void ExecAssignResultType(PlanState *planstate,
 					 TupleDesc tupDesc, bool shouldFree);
-extern void ExecAssignResultTypeFromOuterPlan(PlanState *planstate);
 extern void ExecAssignResultTypeFromTL(PlanState *planstate);
 extern TupleDesc ExecGetResultType(PlanState *planstate);
 extern ProjectionInfo *ExecBuildProjectionInfo(List *targetList,
