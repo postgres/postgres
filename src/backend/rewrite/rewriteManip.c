@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.92.2.1 2005/11/22 18:23:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.92.2.2 2005/11/23 17:21:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -930,6 +930,7 @@ ResolveNew(Node *node, int target_varno, int sublevels_up,
 		   RangeTblEntry *target_rte,
 		   List *targetlist, int event, int update_varno)
 {
+	Node	   *result;
 	ResolveNew_context context;
 
 	context.target_varno = target_varno;
@@ -944,8 +945,21 @@ ResolveNew(Node *node, int target_varno, int sublevels_up,
 	 * Must be prepared to start with a Query or a bare expression tree; if
 	 * it's a Query, we don't want to increment sublevels_up.
 	 */
-	return query_or_expression_tree_mutator(node,
-											ResolveNew_mutator,
-											(void *) &context,
-											0);
+	result = query_or_expression_tree_mutator(node,
+											  ResolveNew_mutator,
+											  (void *) &context,
+											  0);
+
+	if (context.inserted_sublink)
+	{
+		if (IsA(result, Query))
+			((Query *) result)->hasSubLinks = true;
+		/*
+		 * Note: if we're called on a non-Query node then it's the caller's
+		 * responsibility to update hasSubLinks in the ancestor Query.
+		 * This is pretty fragile and perhaps should be rethought ...
+		 */
+	}
+
+	return result;
 }

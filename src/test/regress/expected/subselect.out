@@ -334,3 +334,55 @@ SELECT * FROM orders_view;
 DROP TABLE orderstest cascade;
 NOTICE:  drop cascades to rule _RETURN on view orders_view
 NOTICE:  drop cascades to view orders_view
+--
+-- Test cases to catch situations where rule rewriter fails to propagate
+-- hasSubLinks flag correctly.  Per example from Kyle Bateman.
+--
+create temp table parts (
+    partnum     text,
+    cost        float8
+);
+create temp table shipped (
+    ttype       char(2),
+    ordnum      int4,
+    partnum     text,
+    value       float8
+);
+create temp view shipped_view as
+    select * from shipped where ttype = 'wt';
+create rule shipped_view_insert as on insert to shipped_view do instead
+    insert into shipped values('wt', new.ordnum, new.partnum, new.value);
+insert into parts (partnum, cost) values (1, 1234.56);
+insert into shipped_view (ordnum, partnum, value)
+    values (0, 1, (select cost from parts where partnum = 1));
+select * from shipped_view;
+ ttype | ordnum | partnum |  value  
+-------+--------+---------+---------
+ wt    |      0 | 1       | 1234.56
+(1 row)
+
+create rule shipped_view_update as on update to shipped_view do instead
+    update shipped set partnum = new.partnum, value = new.value
+        where ttype = new.ttype and ordnum = new.ordnum;
+update shipped_view set value = 11
+    from int4_tbl a join int4_tbl b
+      on (a.f1 = (select f1 from int4_tbl c where c.f1=b.f1))
+    where ordnum = a.f1;
+select * from shipped_view;
+ ttype | ordnum | partnum | value 
+-------+--------+---------+-------
+ wt    |      0 | 1       |    11
+(1 row)
+
+select f1, ss1 as relabel from
+    (select *, (select sum(f1) from int4_tbl b where f1 >= a.f1) as ss1
+     from int4_tbl a) ss;
+     f1      |  relabel   
+-------------+------------
+           0 | 2147607103
+      123456 | 2147607103
+     -123456 | 2147483647
+  2147483647 | 2147483647
+ -2147483647 |          0
+(5 rows)
+
