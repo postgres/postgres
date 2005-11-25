@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.43 2005/10/15 02:49:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.44 2005/11/25 04:24:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,13 +107,6 @@ TidNext(TidScanState *node)
 	scanrelid = ((TidScan *) node->ss.ps.plan)->scan.scanrelid;
 
 	/*
-	 * Clear any reference to the previously returned tuple.  This doesn't
-	 * offer any great performance benefit, but it keeps this code in sync
-	 * with SeqNext and IndexNext.
-	 */
-	ExecClearTuple(slot);
-
-	/*
 	 * Check if we are evaluating PlanQual for tuple of this relation.
 	 * Additional checking is not good, but no other way for now. We could
 	 * introduce new nodes for this case and handle TidScan --> NewNode
@@ -123,7 +116,7 @@ TidNext(TidScanState *node)
 		estate->es_evTuple[scanrelid - 1] != NULL)
 	{
 		if (estate->es_evTupleNull[scanrelid - 1])
-			return slot;		/* return empty slot */
+			return ExecClearTuple(slot);
 
 		/*
 		 * XXX shouldn't we check here to make sure tuple matches TID list? In
@@ -135,7 +128,7 @@ TidNext(TidScanState *node)
 
 		/* Flag for the next call that no more tuples */
 		estate->es_evTupleNull[scanrelid - 1] = true;
-		return (slot);
+		return slot;
 	}
 
 	/*

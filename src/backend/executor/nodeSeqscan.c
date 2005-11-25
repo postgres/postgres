@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSeqscan.c,v 1.54 2005/10/15 02:49:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSeqscan.c,v 1.55 2005/11/25 04:24:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,15 +62,6 @@ SeqNext(SeqScanState *node)
 	slot = node->ss_ScanTupleSlot;
 
 	/*
-	 * Clear any reference to the previously returned tuple.  The idea here is
-	 * to not have the tuple slot be the last holder of a pin on that tuple's
-	 * buffer; if it is, we'll need a separate visit to the bufmgr to release
-	 * the buffer.	By clearing here, we get to have the release done by
-	 * ReleaseAndReadBuffer inside heap_getnext.
-	 */
-	ExecClearTuple(slot);
-
-	/*
 	 * Check if we are evaluating PlanQual for tuple of this relation.
 	 * Additional checking is not good, but no other way for now. We could
 	 * introduce new nodes for this case and handle SeqScan --> NewNode
@@ -80,7 +71,7 @@ SeqNext(SeqScanState *node)
 		estate->es_evTuple[scanrelid - 1] != NULL)
 	{
 		if (estate->es_evTupleNull[scanrelid - 1])
-			return slot;		/* return empty slot */
+			return ExecClearTuple(slot);
 
 		ExecStoreTuple(estate->es_evTuple[scanrelid - 1],
 					   slot, InvalidBuffer, false);
@@ -93,7 +84,7 @@ SeqNext(SeqScanState *node)
 
 		/* Flag for the next call that no more tuples */
 		estate->es_evTupleNull[scanrelid - 1] = true;
-		return (slot);
+		return slot;
 	}
 
 	/*
@@ -115,6 +106,8 @@ SeqNext(SeqScanState *node)
 					   scandesc->rs_cbuf,		/* buffer associated with this
 												 * tuple */
 					   false);	/* don't pfree this pointer */
+	else
+		ExecClearTuple(slot);
 
 	return slot;
 }
