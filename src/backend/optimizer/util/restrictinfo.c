@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.44 2005/11/22 18:17:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.45 2005/11/25 19:47:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,7 +171,7 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 
 		/*
 		 * Avoid generating one-element ORs, which could happen due to
-		 * redundancy elimination.
+		 * redundancy elimination or ScalarArrayOpExpr quals.
 		 */
 		if (list_length(withris) <= 1)
 			result = withris;

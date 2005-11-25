@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.203 2005/11/22 18:17:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.204 2005/11/25 19:47:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1069,17 +1069,28 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 				subindexquals = lappend(subindexquals,
 										make_ands_explicit(subindexqual));
 		}
-		plan = (Plan *) make_bitmap_or(subplans);
-		plan->startup_cost = opath->path.startup_cost;
-		plan->total_cost = opath->path.total_cost;
-		plan->plan_rows =
-			clamp_row_est(opath->bitmapselectivity * opath->path.parent->tuples);
-		plan->plan_width = 0;	/* meaningless */
+		/*
+		 * In the presence of ScalarArrayOpExpr quals, we might have built
+		 * BitmapOrPaths with just one subpath; don't add an OR step.
+		 */
+		if (list_length(subplans) == 1)
+		{
+			plan = (Plan *) linitial(subplans);
+		}
+		else
+		{
+			plan = (Plan *) make_bitmap_or(subplans);
+			plan->startup_cost = opath->path.startup_cost;
+			plan->total_cost = opath->path.total_cost;
+			plan->plan_rows =
+				clamp_row_est(opath->bitmapselectivity * opath->path.parent->tuples);
+			plan->plan_width = 0;	/* meaningless */
+		}
 
 		/*
 		 * If there were constant-TRUE subquals, the OR reduces to constant
 		 * TRUE.  Also, avoid generating one-element ORs, which could happen
-		 * due to redundancy elimination.
+		 * due to redundancy elimination or ScalarArrayOpExpr quals.
 		 */
 		if (const_true_subqual)
 			*qual = NIL;
@@ -1531,18 +1542,14 @@ fix_indexqual_references(List *indexquals, IndexPath *index_path,
 	foreach(l, indexquals)
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
-		OpExpr	   *clause;
-		OpExpr	   *newclause;
+		Expr	   *clause;
+		Oid			clause_op;
 		Oid			opclass;
 		int			stratno;
 		Oid			stratsubtype;
 		bool		recheck;
 
 		Assert(IsA(rinfo, RestrictInfo));
-		clause = (OpExpr *) rinfo->clause;
-		if (!IsA(clause, OpExpr) ||
-			list_length(clause->args) != 2)
-			elog(ERROR, "indexqual clause is not binary opclause");
 
 		/*
 		 * Make a copy that will become the fixed clause.
@@ -1551,33 +1558,62 @@ fix_indexqual_references(List *indexquals, IndexPath *index_path,
 		 * is a subplan in the arguments of the opclause.  So just do a full
 		 * copy.
 		 */
-		newclause = (OpExpr *) copyObject((Node *) clause);
+		clause = (Expr *) copyObject((Node *) rinfo->clause);
 
-		/*
-		 * Check to see if the indexkey is on the right; if so, commute the
-		 * clause.	The indexkey should be the side that refers to (only) the
-		 * base relation.
-		 */
-		if (!bms_equal(rinfo->left_relids, index->rel->relids))
-			CommuteClause(newclause);
+		if (IsA(clause, OpExpr))
+		{
+			OpExpr *op = (OpExpr *) clause;
 
-		/*
-		 * Now, determine which index attribute this is, change the indexkey
-		 * operand as needed, and get the index opclass.
-		 */
-		linitial(newclause->args) =
-			fix_indexqual_operand(linitial(newclause->args),
-								  index,
-								  &opclass);
+			if (list_length(op->args) != 2)
+				elog(ERROR, "indexqual clause is not binary opclause");
 
-		*fixed_indexquals = lappend(*fixed_indexquals, newclause);
+			/*
+			 * Check to see if the indexkey is on the right; if so, commute
+			 * the clause. The indexkey should be the side that refers to
+			 * (only) the base relation.
+			 */
+			if (!bms_equal(rinfo->left_relids, index->rel->relids))
+				CommuteClause(op);
+
+			/*
+			 * Now, determine which index attribute this is, change the
+			 * indexkey operand as needed, and get the index opclass.
+			 */
+			linitial(op->args) = fix_indexqual_operand(linitial(op->args),
+													   index,
+													   &opclass);
+			clause_op = op->opno;
+		}
+		else if (IsA(clause, ScalarArrayOpExpr))
+		{
+			ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
+
+			/* Never need to commute... */
+
+			/*
+			 * Now, determine which index attribute this is, change the
+			 * indexkey operand as needed, and get the index opclass.
+			 */
+			linitial(saop->args) = fix_indexqual_operand(linitial(saop->args),
+														 index,
+														 &opclass);
+			clause_op = saop->opno;
+		}
+		else
+		{
+			elog(ERROR, "unsupported indexqual type: %d",
+				 (int) nodeTag(clause));
+			continue;			/* keep compiler quiet */
+		}
+
+		*fixed_indexquals = lappend(*fixed_indexquals, clause);
 
 		/*
 		 * Look up the (possibly commuted) operator in the operator class to
 		 * get its strategy numbers and the recheck indicator.	This also
 		 * double-checks that we found an operator matching the index.
 		 */
-		get_op_opclass_properties(newclause->opno, opclass,
+		get_op_opclass_properties(clause_op, opclass,
 								  &stratno, &stratsubtype, &recheck);
 
 		*indexstrategy = lappend_int(*indexstrategy, stratno);

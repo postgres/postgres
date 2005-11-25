@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.193 2005/11/22 18:17:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.194 2005/11/25 19:47:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1297,6 +1297,173 @@ nulltestsel(PlannerInfo *root, NullTestType nulltesttype,
 	CLAMP_PROBABILITY(selec);
 
 	return (Selectivity) selec;
+}
+
+/*
+ *		scalararraysel		- Selectivity of ScalarArrayOpExpr Node.
+ */
+Selectivity
+scalararraysel(PlannerInfo *root,
+			   ScalarArrayOpExpr *clause,
+			   bool is_join_clause,
+			   int varRelid, JoinType jointype)
+{
+	Oid			operator = clause->opno;
+	bool		useOr = clause->useOr;
+	Node	   *leftop;
+	Node	   *rightop;
+	RegProcedure oprsel;
+	FmgrInfo	oprselproc;
+	Datum		selarg4;
+	Selectivity	s1;
+
+	/*
+	 * First, look up the underlying operator's selectivity estimator.
+	 * Punt if it hasn't got one.
+	 */
+	if (is_join_clause)
+	{
+		oprsel = get_oprjoin(operator);
+		selarg4 = Int16GetDatum(jointype);
+
+	}
+	else
+	{
+		oprsel = get_oprrest(operator);
+		selarg4 = Int32GetDatum(varRelid);
+	}
+	if (!oprsel)
+		return (Selectivity) 0.5;
+	fmgr_info(oprsel, &oprselproc);
+
+	/*
+	 * We consider three cases:
+	 *
+	 * 1. rightop is an Array constant: deconstruct the array, apply the
+	 * operator's selectivity function for each array element, and merge
+	 * the results in the same way that clausesel.c does for AND/OR
+	 * combinations.
+	 *
+	 * 2. rightop is an ARRAY[] construct: apply the operator's selectivity
+	 * function for each element of the ARRAY[] construct, and merge.
+	 *
+	 * 3. otherwise, make a guess ...
+	 */
+	Assert(list_length(clause->args) == 2);
+	leftop = (Node *) linitial(clause->args);
+	rightop = (Node *) lsecond(clause->args);
+
+	if (rightop && IsA(rightop, Const))
+	{
+		Datum		arraydatum = ((Const *) rightop)->constvalue;
+		bool		arrayisnull = ((Const *) rightop)->constisnull;
+		ArrayType  *arrayval;
+		int16		elmlen;
+		bool		elmbyval;
+		char		elmalign;
+		int			num_elems;
+		Datum	   *elem_values;
+		bool	   *elem_nulls;
+		int			i;
+
+		if (arrayisnull)		/* qual can't succeed if null array */
+			return (Selectivity) 0.0;
+		arrayval = DatumGetArrayTypeP(arraydatum);
+		get_typlenbyvalalign(ARR_ELEMTYPE(arrayval),
+							 &elmlen, &elmbyval, &elmalign);
+		deconstruct_array(arrayval,
+						  ARR_ELEMTYPE(arrayval),
+						  elmlen, elmbyval, elmalign,
+						  &elem_values, &elem_nulls, &num_elems);
+		s1 = useOr ? 0.0 : 1.0;
+		for (i = 0; i < num_elems; i++)
+		{
+			List	*args;
+			Selectivity s2;
+
+			args = list_make2(leftop,
+							  makeConst(ARR_ELEMTYPE(arrayval),
+										elmlen,
+										elem_values[i],
+										elem_nulls[i],
+										elmbyval));
+			s2 = DatumGetFloat8(FunctionCall4(&oprselproc,
+											  PointerGetDatum(root),
+											  ObjectIdGetDatum(operator),
+											  PointerGetDatum(args),
+											  selarg4));
+			if (useOr)
+				s1 = s1 + s2 - s1 * s2;
+			else
+				s1 = s1 * s2;
+		}
+	}
+	else if (rightop && IsA(rightop, ArrayExpr) &&
+			 !((ArrayExpr *) rightop)->multidims)
+	{
+		ArrayExpr  *arrayexpr = (ArrayExpr *) rightop;
+		int16		elmlen;
+		bool		elmbyval;
+		ListCell   *l;
+
+		get_typlenbyval(arrayexpr->element_typeid,
+						&elmlen, &elmbyval);
+		s1 = useOr ? 0.0 : 1.0;
+		foreach(l, arrayexpr->elements)
+		{
+			List	*args;
+			Selectivity s2;
+
+			args = list_make2(leftop, lfirst(l));
+			s2 = DatumGetFloat8(FunctionCall4(&oprselproc,
+											  PointerGetDatum(root),
+											  ObjectIdGetDatum(operator),
+											  PointerGetDatum(args),
+											  selarg4));
+			if (useOr)
+				s1 = s1 + s2 - s1 * s2;
+			else
+				s1 = s1 * s2;
+		}
+	}
+	else
+	{
+		CaseTestExpr *dummyexpr;
+		List	*args;
+		Selectivity s2;
+		int		i;
+
+		/*
+		 * We need a dummy rightop to pass to the operator selectivity
+		 * routine.  It can be pretty much anything that doesn't look like
+		 * a constant; CaseTestExpr is a convenient choice.
+		 */
+		dummyexpr = makeNode(CaseTestExpr);
+		dummyexpr->typeId = get_element_type(exprType(rightop));
+		dummyexpr->typeMod = -1;
+		args = list_make2(leftop, dummyexpr);
+		s2 = DatumGetFloat8(FunctionCall4(&oprselproc,
+										  PointerGetDatum(root),
+										  ObjectIdGetDatum(operator),
+										  PointerGetDatum(args),
+										  selarg4));
+		s1 = useOr ? 0.0 : 1.0;
+		/*
+		 * Arbitrarily assume 10 elements in the eventual array value
+		 */
+		for (i = 0; i < 10; i++)
+		{
+			if (useOr)
+				s1 = s1 + s2 - s1 * s2;
+			else
+				s1 = s1 * s2;
+		}
+	}
+
+	/* result should be in range, but make sure... */
+	CLAMP_PROBABILITY(s1);
+
+	return s1;
 }
 
 /*
@@ -4330,6 +4497,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 	List	   *indexBoundQuals;
 	int			indexcol;
 	bool		eqQualHere;
+	bool		found_saop;
 	ListCell   *l;
 
 	/*
@@ -4341,26 +4509,52 @@ btcostestimate(PG_FUNCTION_ARGS)
 	 * for estimating numIndexTuples.  So we must examine the given indexQuals
 	 * to find out which ones count as boundary quals.	We rely on the
 	 * knowledge that they are given in index column order.
+	 *
+	 * If there's a ScalarArrayOpExpr in the quals, we'll actually perform
+	 * N index scans not one, but the ScalarArrayOpExpr's operator can be
+	 * considered to act the same as it normally does.
 	 */
 	indexBoundQuals = NIL;
 	indexcol = 0;
 	eqQualHere = false;
+	found_saop = false;
 	foreach(l, indexQuals)
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 		Expr	   *clause;
+		Node	   *leftop,
+				   *rightop;
 		Oid			clause_op;
 		int			op_strategy;
 
 		Assert(IsA(rinfo, RestrictInfo));
 		clause = rinfo->clause;
-		Assert(IsA(clause, OpExpr));
-		clause_op = ((OpExpr *) clause)->opno;
-		if (match_index_to_operand(get_leftop(clause), indexcol, index))
+		if (IsA(clause, OpExpr))
+		{
+			leftop = get_leftop(clause);
+			rightop = get_rightop(clause);
+			clause_op = ((OpExpr *) clause)->opno;
+		}
+		else if (IsA(clause, ScalarArrayOpExpr))
+		{
+			ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
+
+			leftop = (Node *) linitial(saop->args);
+			rightop = (Node *) lsecond(saop->args);
+			clause_op = saop->opno;
+			found_saop = true;
+		}
+		else
+		{
+			elog(ERROR, "unsupported indexqual type: %d",
+				 (int) nodeTag(clause));
+			continue;			/* keep compiler quiet */
+		}
+		if (match_index_to_operand(leftop, indexcol, index))
 		{
 			/* clause_op is correct */
 		}
-		else if (match_index_to_operand(get_rightop(clause), indexcol, index))
+		else if (match_index_to_operand(rightop, indexcol, index))
 		{
 			/* Must flip operator to get the opclass member */
 			clause_op = get_commutator(clause_op);
@@ -4372,12 +4566,11 @@ btcostestimate(PG_FUNCTION_ARGS)
 				break;			/* done if no '=' qual for indexcol */
 			indexcol++;
 			eqQualHere = false;
-			if (match_index_to_operand(get_leftop(clause), indexcol, index))
+			if (match_index_to_operand(leftop, indexcol, index))
 			{
 				/* clause_op is correct */
 			}
-			else if (match_index_to_operand(get_rightop(clause),
-											indexcol, index))
+			else if (match_index_to_operand(rightop, indexcol, index))
 			{
 				/* Must flip operator to get the opclass member */
 				clause_op = get_commutator(clause_op);
@@ -4401,7 +4594,10 @@ btcostestimate(PG_FUNCTION_ARGS)
 	 * just assume numIndexTuples = 1 and skip the expensive
 	 * clauselist_selectivity calculations.
 	 */
-	if (index->unique && indexcol == index->ncolumns - 1 && eqQualHere)
+	if (index->unique &&
+		indexcol == index->ncolumns - 1 &&
+		eqQualHere &&
+		!found_saop)
 		numIndexTuples = 1.0;
 	else
 	{
@@ -4424,7 +4620,14 @@ btcostestimate(PG_FUNCTION_ARGS)
 	 * is that multiple columns dilute the importance of the first column's
 	 * ordering, but don't negate it entirely.  Before 8.0 we divided the
 	 * correlation by the number of columns, but that seems too strong.)
+	 *
+	 * We can skip all this if we found a ScalarArrayOpExpr, because then
+	 * the call must be for a bitmap index scan, and the caller isn't going
+	 * to care what the index correlation is.
 	 */
+	if (found_saop)
+		PG_RETURN_VOID();
+
 	if (index->indexkeys[0] != 0)
 	{
 		/* Simple variable --- look to stats for the underlying table */

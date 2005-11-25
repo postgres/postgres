@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.75 2005/10/15 02:49:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.76 2005/11/25 19:47:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -624,11 +624,44 @@ clause_selectivity(PlannerInfo *root,
 		 */
 		s1 = (Selectivity) 0.5;
 	}
-	else if (IsA(clause, DistinctExpr) ||
-			 IsA(clause, ScalarArrayOpExpr))
+	else if (IsA(clause, DistinctExpr))
 	{
 		/* can we do better? */
 		s1 = (Selectivity) 0.5;
+	}
+	else if (IsA(clause, ScalarArrayOpExpr))
+	{
+		/* First, decide if it's a join clause, same as for OpExpr */
+		bool		is_join_clause;
+
+		if (varRelid != 0)
+		{
+			/*
+			 * If we are considering a nestloop join then all clauses are
+			 * restriction clauses, since we are only interested in the one
+			 * relation.
+			 */
+			is_join_clause = false;
+		}
+		else
+		{
+			/*
+			 * Otherwise, it's a join if there's more than one relation used.
+			 * We can optimize this calculation if an rinfo was passed.
+			 */
+			if (rinfo)
+				is_join_clause = (bms_membership(rinfo->clause_relids) ==
+								  BMS_MULTIPLE);
+			else
+				is_join_clause = (NumRelids(clause) > 1);
+		}
+
+		/* Use node specific selectivity calculation function */
+		s1 = scalararraysel(root,
+							(ScalarArrayOpExpr *) clause,
+							is_join_clause,
+							varRelid,
+							jointype);
 	}
 	else if (IsA(clause, NullTest))
 	{

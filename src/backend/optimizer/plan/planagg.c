@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.11 2005/11/22 18:17:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.12 2005/11/25 19:47:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -347,6 +347,7 @@ build_minmax_path(PlannerInfo *root, RelOptInfo *rel, MinMaxAggInfo *info)
 												index->rel->baserestrictinfo,
 													NIL,
 													NULL,
+													SAOP_FORBID,
 													&found_clause);
 
 		if (list_length(restrictclauses) < indexcol)
