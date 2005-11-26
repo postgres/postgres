@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.142 2005/11/25 19:47:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.143 2005/11/26 03:03:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -958,9 +958,6 @@ typedef struct BitmapIndexScanState
  *		bitmapqualorig	   execution state for bitmapqualorig expressions
  *		tbm				   bitmap obtained from child index scan(s)
  *		tbmres			   current-page data
- *		curslot			   current tbmres index or tuple offset on page
- *		minslot			   lowest tbmres index or tuple offset to try
- *		maxslot			   highest tbmres index or tuple offset to try
  * ----------------
  */
 typedef struct BitmapHeapScanState
@@ -969,9 +966,6 @@ typedef struct BitmapHeapScanState
 	List	   *bitmapqualorig;
 	TIDBitmap  *tbm;
 	TBMIterateResult *tbmres;
-	int			curslot;
-	int			minslot;
-	int			maxslot;
 } BitmapHeapScanState;
 
 /* ----------------

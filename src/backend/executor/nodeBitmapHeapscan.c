@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.5 2005/11/25 04:24:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.6 2005/11/26 03:03:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@
 
 
 static TupleTableSlot *BitmapHeapNext(BitmapHeapScanState *node);
+static void bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres);
 
 
 /* ----------------------------------------------------------------
@@ -57,7 +58,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 {
 	EState	   *estate;
 	ExprContext *econtext;
-	HeapScanDesc scandesc;
+	HeapScanDesc scan;
 	Index		scanrelid;
 	TIDBitmap  *tbm;
 	TBMIterateResult *tbmres;
@@ -70,7 +71,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	estate = node->ss.ps.state;
 	econtext = node->ss.ps.ps_ExprContext;
 	slot = node->ss.ss_ScanTupleSlot;
-	scandesc = node->ss.ss_currentScanDesc;
+	scan = node->ss.ss_currentScanDesc;
 	scanrelid = ((BitmapHeapScan *) node->ss.ps.plan)->scan.scanrelid;
 	tbm = node->tbm;
 	tbmres = node->tbmres;
@@ -123,6 +124,9 @@ BitmapHeapNext(BitmapHeapScanState *node)
 
 	for (;;)
 	{
+		Page		dp;
+		ItemId		lp;
+
 		/*
 		 * Get next page of results if needed
 		 */
@@ -141,134 +145,199 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			 * AccessShareLock before performing any of the indexscans, but
 			 * let's be safe.)
 			 */
-			if (tbmres->blockno >= scandesc->rs_nblocks)
+			if (tbmres->blockno >= scan->rs_nblocks)
 			{
 				node->tbmres = tbmres = NULL;
 				continue;
 			}
 
 			/*
-			 * Acquire pin on the current heap page.  We'll hold the pin until
-			 * done looking at the page.  We trade in any pin we held before.
+			 * Fetch the current heap page and identify candidate tuples.
 			 */
-			scandesc->rs_cbuf = ReleaseAndReadBuffer(scandesc->rs_cbuf,
-													 scandesc->rs_rd,
-													 tbmres->blockno);
+			bitgetpage(scan, tbmres);
 
 			/*
-			 * Determine how many entries we need to look at on this page. If
-			 * the bitmap is lossy then we need to look at each physical item
-			 * pointer; otherwise we just look through the offsets listed in
-			 * tbmres.
+			 * Set rs_cindex to first slot to examine
 			 */
-			if (tbmres->ntuples >= 0)
-			{
-				/* non-lossy case */
-				node->minslot = 0;
-				node->maxslot = tbmres->ntuples - 1;
-			}
-			else
-			{
-				/* lossy case */
-				Page		dp;
-
-				LockBuffer(scandesc->rs_cbuf, BUFFER_LOCK_SHARE);
-				dp = (Page) BufferGetPage(scandesc->rs_cbuf);
-
-				node->minslot = FirstOffsetNumber;
-				node->maxslot = PageGetMaxOffsetNumber(dp);
-
-				LockBuffer(scandesc->rs_cbuf, BUFFER_LOCK_UNLOCK);
-			}
-
-			/*
-			 * Set curslot to first slot to examine
-			 */
-			node->curslot = node->minslot;
+			scan->rs_cindex = 0;
 		}
 		else
 		{
 			/*
-			 * Continuing in previously obtained page; advance curslot
+			 * Continuing in previously obtained page; advance rs_cindex
 			 */
-			node->curslot++;
+			scan->rs_cindex++;
 		}
 
 		/*
 		 * Out of range?  If so, nothing more to look at on this page
 		 */
-		if (node->curslot < node->minslot || node->curslot > node->maxslot)
+		if (scan->rs_cindex < 0 || scan->rs_cindex >= scan->rs_ntuples)
 		{
 			node->tbmres = tbmres = NULL;
 			continue;
 		}
 
 		/*
-		 * Okay to try to fetch the tuple
+		 * Okay to fetch the tuple
 		 */
-		if (tbmres->ntuples >= 0)
-		{
-			/* non-lossy case */
-			targoffset = tbmres->offsets[node->curslot];
-		}
-		else
-		{
-			/* lossy case */
-			targoffset = (OffsetNumber) node->curslot;
-		}
+		targoffset = scan->rs_vistuples[scan->rs_cindex];
+		dp = (Page) BufferGetPage(scan->rs_cbuf);
+		lp = PageGetItemId(dp, targoffset);
+		Assert(ItemIdIsUsed(lp));
 
-		ItemPointerSet(&scandesc->rs_ctup.t_self, tbmres->blockno, targoffset);
+		scan->rs_ctup.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
+		scan->rs_ctup.t_len = ItemIdGetLength(lp);
+		ItemPointerSet(&scan->rs_ctup.t_self, tbmres->blockno, targoffset);
+
+		pgstat_count_heap_fetch(&scan->rs_pgstat_info);
 
 		/*
-		 * Fetch the heap tuple and see if it matches the snapshot. We use
-		 * heap_release_fetch to avoid useless bufmgr traffic.
+		 * Set up the result slot to point to this tuple. Note that the
+		 * slot acquires a pin on the buffer.
 		 */
-		if (heap_release_fetch(scandesc->rs_rd,
-							   scandesc->rs_snapshot,
-							   &scandesc->rs_ctup,
-							   &scandesc->rs_cbuf,
-							   true,
-							   &scandesc->rs_pgstat_info))
-		{
-			/*
-			 * Set up the result slot to point to this tuple. Note that the
-			 * slot acquires a pin on the buffer.
-			 */
-			ExecStoreTuple(&scandesc->rs_ctup,
-						   slot,
-						   scandesc->rs_cbuf,
-						   false);
+		ExecStoreTuple(&scan->rs_ctup,
+					   slot,
+					   scan->rs_cbuf,
+					   false);
 
-			/*
-			 * If we are using lossy info, we have to recheck the qual
-			 * conditions at every tuple.
-			 */
-			if (tbmres->ntuples < 0)
+		/*
+		 * If we are using lossy info, we have to recheck the qual
+		 * conditions at every tuple.
+		 */
+		if (tbmres->ntuples < 0)
+		{
+			econtext->ecxt_scantuple = slot;
+			ResetExprContext(econtext);
+
+			if (!ExecQual(node->bitmapqualorig, econtext, false))
 			{
-				econtext->ecxt_scantuple = slot;
-				ResetExprContext(econtext);
-
-				if (!ExecQual(node->bitmapqualorig, econtext, false))
-				{
-					/* Fails recheck, so drop it and loop back for another */
-					ExecClearTuple(slot);
-					continue;
-				}
+				/* Fails recheck, so drop it and loop back for another */
+				ExecClearTuple(slot);
+				continue;
 			}
-
-			/* OK to return this tuple */
-			return slot;
 		}
 
-		/*
-		 * Failed the snap, so loop back and try again.
-		 */
+		/* OK to return this tuple */
+		return slot;
 	}
 
 	/*
 	 * if we get here it means we are at the end of the scan..
 	 */
 	return ExecClearTuple(slot);
+}
+
+/*
+ * bitgetpage - subroutine for BitmapHeapNext()
+ *
+ * This routine reads and pins the specified page of the relation, then
+ * builds an array indicating which tuples on the page are both potentially
+ * interesting according to the bitmap, and visible according to the snapshot.
+ */
+static void
+bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres)
+{
+	BlockNumber	page = tbmres->blockno;
+	Buffer		buffer;
+	Snapshot	snapshot;
+	Page		dp;
+	int			ntup;
+	int			curslot;
+	int			minslot;
+	int			maxslot;
+	int			maxoff;
+
+	/*
+	 * Acquire pin on the target heap page, trading in any pin we held before.
+	 */
+	Assert(page < scan->rs_nblocks);
+
+	scan->rs_cbuf = ReleaseAndReadBuffer(scan->rs_cbuf,
+										 scan->rs_rd,
+										 page);
+	buffer = scan->rs_cbuf;
+	snapshot = scan->rs_snapshot;
+
+	/*
+	 * We must hold share lock on the buffer content while examining
+	 * tuple visibility.  Afterwards, however, the tuples we have found
+	 * to be visible are guaranteed good as long as we hold the buffer pin.
+	 */
+	LockBuffer(buffer, BUFFER_LOCK_SHARE);
+
+	dp = (Page) BufferGetPage(buffer);
+	maxoff = PageGetMaxOffsetNumber(dp);
+
+	/*
+	 * Determine how many entries we need to look at on this page. If
+	 * the bitmap is lossy then we need to look at each physical item
+	 * pointer; otherwise we just look through the offsets listed in
+	 * tbmres.
+	 */
+	if (tbmres->ntuples >= 0)
+	{
+		/* non-lossy case */
+		minslot = 0;
+		maxslot = tbmres->ntuples - 1;
+	}
+	else
+	{
+		/* lossy case */
+		minslot = FirstOffsetNumber;
+		maxslot = maxoff;
+	}
+
+	ntup = 0;
+	for (curslot = minslot; curslot <= maxslot; curslot++)
+	{
+		OffsetNumber targoffset;
+		ItemId		lp;
+		HeapTupleData loctup;
+		bool		valid;
+
+		if (tbmres->ntuples >= 0)
+		{
+			/* non-lossy case */
+			targoffset = tbmres->offsets[curslot];
+		}
+		else
+		{
+			/* lossy case */
+			targoffset = (OffsetNumber) curslot;
+		}
+
+		/*
+		 * We'd better check for out-of-range offnum in case of VACUUM since
+		 * the TID was obtained.
+		 */
+		if (targoffset < FirstOffsetNumber || targoffset > maxoff)
+			continue;
+
+		lp = PageGetItemId(dp, targoffset);
+
+		/*
+		 * Must check for deleted tuple.
+		 */
+		if (!ItemIdIsUsed(lp))
+			continue;
+
+		/*
+		 * check time qualification of tuple, remember it if valid
+		 */
+		loctup.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
+		loctup.t_len = ItemIdGetLength(lp);
+		ItemPointerSet(&(loctup.t_self), page, targoffset);
+
+		valid = HeapTupleSatisfiesVisibility(&loctup, snapshot, buffer);
+		if (valid)
+			scan->rs_vistuples[ntup++] = targoffset;
+	}
+
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+
+	Assert(ntup <= MaxHeapTuplesPerPage);
+	scan->rs_ntuples = ntup;
 }
 
 /* ----------------------------------------------------------------
@@ -402,6 +471,12 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate)
 	Index		relid;
 	Oid			reloid;
 	Relation	currentRelation;
+
+	/*
+	 * Assert caller didn't ask for an unsafe snapshot --- see comments
+	 * at head of file.
+	 */
+	Assert(IsMVCCSnapshot(estate->es_snapshot));
 
 	/*
 	 * create state structure
