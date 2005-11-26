@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.204 2005/11/26 03:03:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.205 2005/11/26 05:03:06 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -194,9 +194,7 @@ heapgettup(HeapScanDesc scan,
 		   ScanKey key)
 {
 	HeapTuple	tuple = &(scan->rs_ctup);
-	ItemPointer tid = &(tuple->t_self);
 	Snapshot	snapshot = scan->rs_snapshot;
-	BlockNumber	pages = scan->rs_nblocks;
 	BlockNumber page;
 	Page		dp;
 	int			lines;
@@ -204,28 +202,91 @@ heapgettup(HeapScanDesc scan,
 	int			linesleft;
 	ItemId		lpp;
 
-	if (!scan->rs_inited)
-	{
-		/*
-		 * return null immediately if relation is empty
-		 */
-		if (pages == 0)
-		{
-			Assert(!BufferIsValid(scan->rs_cbuf));
-			tuple->t_data = NULL;
-			return;
-		}
-	}
-	else
-	{
-		/* resuming scan from tuple indicated by scan->rs_ctup.t_self */
-		Assert(ItemPointerIsValid(tid));
-	}
-
 	/*
 	 * calculate next starting lineoff, given scan direction
 	 */
-	if (dir == 0)
+	if (dir > 0)
+	{
+		/*
+		 * forward scan direction
+		 */
+		if (!scan->rs_inited)
+		{
+			/*
+			 * return null immediately if relation is empty
+			 */
+			if (scan->rs_nblocks == 0)
+			{
+				Assert(!BufferIsValid(scan->rs_cbuf));
+				tuple->t_data = NULL;
+				return;
+			}
+			page = 0;							/* first page */
+			heapgetpage(scan, page);
+			lineoff = FirstOffsetNumber;		/* first offnum */
+			scan->rs_inited = true;
+		}
+		else
+		{
+			/* continue from previously returned page/tuple */
+			page = scan->rs_cblock;				/* current page */
+			lineoff =							/* next offnum */
+				OffsetNumberNext(ItemPointerGetOffsetNumber(&(tuple->t_self)));
+		}
+
+		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
+
+		dp = (Page) BufferGetPage(scan->rs_cbuf);
+		lines = PageGetMaxOffsetNumber(dp);
+		/* page and lineoff now reference the physically next tid */
+
+		linesleft = lines - lineoff + 1;
+	}
+	else if (dir < 0)
+	{
+		/*
+		 * reverse scan direction
+		 */
+		if (!scan->rs_inited)
+		{
+			/*
+			 * return null immediately if relation is empty
+			 */
+			if (scan->rs_nblocks == 0)
+			{
+				Assert(!BufferIsValid(scan->rs_cbuf));
+				tuple->t_data = NULL;
+				return;
+			}
+			page = scan->rs_nblocks - 1;		/* final page */
+			heapgetpage(scan, page);
+		}
+		else
+		{
+			/* continue from previously returned page/tuple */
+			page = scan->rs_cblock;				/* current page */
+		}
+
+		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
+
+		dp = (Page) BufferGetPage(scan->rs_cbuf);
+		lines = PageGetMaxOffsetNumber(dp);
+
+		if (!scan->rs_inited)
+		{
+			lineoff = lines;					/* final offnum */
+			scan->rs_inited = true;
+		}
+		else
+		{
+			lineoff =							/* previous offnum */
+				OffsetNumberPrev(ItemPointerGetOffsetNumber(&(tuple->t_self)));
+		}
+		/* page and lineoff now reference the physically previous tid */
+
+		linesleft = lineoff;
+	}
+	else
 	{
 		/*
 		 * ``no movement'' scan direction: refetch prior tuple
@@ -237,13 +298,13 @@ heapgettup(HeapScanDesc scan,
 			return;
 		}
 
-		page = ItemPointerGetBlockNumber(tid);
+		page = ItemPointerGetBlockNumber(&(tuple->t_self));
 		if (page != scan->rs_cblock)
 			heapgetpage(scan, page);
 
 		/* Since the tuple was previously fetched, needn't lock page here */
 		dp = (Page) BufferGetPage(scan->rs_cbuf);
-		lineoff = ItemPointerGetOffsetNumber(tid);
+		lineoff = ItemPointerGetOffsetNumber(&(tuple->t_self));
 		lpp = PageGetItemId(dp, lineoff);
 
 		tuple->t_data = (HeapTupleHeader) PageGetItem((Page) dp, lpp);
@@ -251,73 +312,6 @@ heapgettup(HeapScanDesc scan,
 
 		return;
 	}
-	else if (dir < 0)
-	{
-		/*
-		 * reverse scan direction
-		 */
-		if (!scan->rs_inited)
-			page = pages - 1;	/* final page */
-		else
-			page = ItemPointerGetBlockNumber(tid);		/* current page */
-
-		if (page != scan->rs_cblock)
-			heapgetpage(scan, page);
-
-		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
-
-		dp = (Page) BufferGetPage(scan->rs_cbuf);
-		lines = PageGetMaxOffsetNumber(dp);
-
-		if (!scan->rs_inited)
-		{
-			lineoff = lines;	/* final offnum */
-			scan->rs_inited = true;
-		}
-		else
-		{
-			lineoff =			/* previous offnum */
-				OffsetNumberPrev(ItemPointerGetOffsetNumber(tid));
-		}
-		/* page and lineoff now reference the physically previous tid */
-	}
-	else
-	{
-		/*
-		 * forward scan direction
-		 */
-		if (!scan->rs_inited)
-		{
-			page = 0;			/* first page */
-			lineoff = FirstOffsetNumber;		/* first offnum */
-			scan->rs_inited = true;
-		}
-		else
-		{
-			page = ItemPointerGetBlockNumber(tid);		/* current page */
-			lineoff =			/* next offnum */
-				OffsetNumberNext(ItemPointerGetOffsetNumber(tid));
-		}
-
-		if (page != scan->rs_cblock)
-			heapgetpage(scan, page);
-
-		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
-
-		dp = (Page) BufferGetPage(scan->rs_cbuf);
-		lines = PageGetMaxOffsetNumber(dp);
-		/* page and lineoff now reference the physically next tid */
-	}
-
-	/* 'dir' is now non-zero */
-
-	/*
-	 * calculate number of remaining items to check on this page
-	 */
-	if (dir < 0)
-		linesleft = lineoff;
-	else
-		linesleft = lines - lineoff + 1;
 
 	/*
 	 * advance the scan until we find a qualifying tuple or run out of stuff
@@ -379,7 +373,7 @@ heapgettup(HeapScanDesc scan,
 		/*
 		 * return NULL if we've exhausted all the pages
 		 */
-		if ((dir < 0) ? (page == 0) : (page + 1 >= pages))
+		if ((dir < 0) ? (page == 0) : (page + 1 >= scan->rs_nblocks))
 		{
 			if (BufferIsValid(scan->rs_cbuf))
 				ReleaseBuffer(scan->rs_cbuf);
@@ -432,8 +426,6 @@ heapgettup_pagemode(HeapScanDesc scan,
 					ScanKey key)
 {
 	HeapTuple	tuple = &(scan->rs_ctup);
-	ItemPointer tid = &(tuple->t_self);
-	BlockNumber	pages = scan->rs_nblocks;
 	BlockNumber page;
 	Page		dp;
 	int			lines;
@@ -442,56 +434,42 @@ heapgettup_pagemode(HeapScanDesc scan,
 	int			linesleft;
 	ItemId		lpp;
 
-	if (!scan->rs_inited)
-	{
-		/*
-		 * return null immediately if relation is empty
-		 */
-		if (pages == 0)
-		{
-			Assert(!BufferIsValid(scan->rs_cbuf));
-			tuple->t_data = NULL;
-			return;
-		}
-	}
-	else
-	{
-		/* resuming scan from tuple indicated by scan->rs_ctup.t_self */
-		Assert(ItemPointerIsValid(tid));
-	}
-
 	/*
 	 * calculate next starting lineindex, given scan direction
 	 */
-	if (dir == 0)
+	if (dir > 0)
 	{
 		/*
-		 * ``no movement'' scan direction: refetch prior tuple
+		 * forward scan direction
 		 */
 		if (!scan->rs_inited)
 		{
-			Assert(!BufferIsValid(scan->rs_cbuf));
-			tuple->t_data = NULL;
-			return;
+			/*
+			 * return null immediately if relation is empty
+			 */
+			if (scan->rs_nblocks == 0)
+			{
+				Assert(!BufferIsValid(scan->rs_cbuf));
+				tuple->t_data = NULL;
+				return;
+			}
+			page = 0;							/* first page */
+			heapgetpage(scan, page);
+			lineindex = 0;
+			scan->rs_inited = true;
+		}
+		else
+		{
+			/* continue from previously returned page/tuple */
+			page = scan->rs_cblock;				/* current page */
+			lineindex = scan->rs_cindex + 1;
 		}
 
-		page = ItemPointerGetBlockNumber(tid);
-		if (page != scan->rs_cblock)
-			heapgetpage(scan, page);
-
-		/* Since the tuple was previously fetched, needn't lock page here */
 		dp = (Page) BufferGetPage(scan->rs_cbuf);
-		lineoff = ItemPointerGetOffsetNumber(tid);
-		lpp = PageGetItemId(dp, lineoff);
+		lines = scan->rs_ntuples;
+		/* page and lineindex now reference the next visible tid */
 
-		tuple->t_data = (HeapTupleHeader) PageGetItem((Page) dp, lpp);
-		tuple->t_len = ItemIdGetLength(lpp);
-
-		/* check that rs_cindex is in sync */
-		Assert(scan->rs_cindex < scan->rs_ntuples);
-		Assert(lineoff == scan->rs_vistuples[scan->rs_cindex]);
-
-		return;
+		linesleft = lines - lineindex;
 	}
 	else if (dir < 0)
 	{
@@ -499,12 +477,24 @@ heapgettup_pagemode(HeapScanDesc scan,
 		 * reverse scan direction
 		 */
 		if (!scan->rs_inited)
-			page = pages - 1;	/* final page */
-		else
-			page = ItemPointerGetBlockNumber(tid);		/* current page */
-
-		if (page != scan->rs_cblock)
+		{
+			/*
+			 * return null immediately if relation is empty
+			 */
+			if (scan->rs_nblocks == 0)
+			{
+				Assert(!BufferIsValid(scan->rs_cbuf));
+				tuple->t_data = NULL;
+				return;
+			}
+			page = scan->rs_nblocks - 1;		/* final page */
 			heapgetpage(scan, page);
+		}
+		else
+		{
+			/* continue from previously returned page/tuple */
+			page = scan->rs_cblock;				/* current page */
+		}
 
 		dp = (Page) BufferGetPage(scan->rs_cbuf);
 		lines = scan->rs_ntuples;
@@ -519,41 +509,39 @@ heapgettup_pagemode(HeapScanDesc scan,
 			lineindex = scan->rs_cindex - 1;
 		}
 		/* page and lineindex now reference the previous visible tid */
+
+		linesleft = lineindex + 1;
 	}
 	else
 	{
 		/*
-		 * forward scan direction
+		 * ``no movement'' scan direction: refetch prior tuple
 		 */
 		if (!scan->rs_inited)
 		{
-			page = 0;			/* first page */
-			lineindex = 0;
-			scan->rs_inited = true;
-		}
-		else
-		{
-			page = ItemPointerGetBlockNumber(tid);		/* current page */
-			lineindex = scan->rs_cindex + 1;
+			Assert(!BufferIsValid(scan->rs_cbuf));
+			tuple->t_data = NULL;
+			return;
 		}
 
+		page = ItemPointerGetBlockNumber(&(tuple->t_self));
 		if (page != scan->rs_cblock)
 			heapgetpage(scan, page);
 
+		/* Since the tuple was previously fetched, needn't lock page here */
 		dp = (Page) BufferGetPage(scan->rs_cbuf);
-		lines = scan->rs_ntuples;
-		/* page and lineindex now reference the next visible tid */
+		lineoff = ItemPointerGetOffsetNumber(&(tuple->t_self));
+		lpp = PageGetItemId(dp, lineoff);
+
+		tuple->t_data = (HeapTupleHeader) PageGetItem((Page) dp, lpp);
+		tuple->t_len = ItemIdGetLength(lpp);
+
+		/* check that rs_cindex is in sync */
+		Assert(scan->rs_cindex < scan->rs_ntuples);
+		Assert(lineoff == scan->rs_vistuples[scan->rs_cindex]);
+
+		return;
 	}
-
-	/* 'dir' is now non-zero */
-
-	/*
-	 * calculate number of remaining items to check on this page
-	 */
-	if (dir < 0)
-		linesleft = lineindex + 1;
-	else
-		linesleft = lines - lineindex;
 
 	/*
 	 * advance the scan until we find a qualifying tuple or run out of stuff
@@ -614,7 +602,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 		/*
 		 * return NULL if we've exhausted all the pages
 		 */
-		if ((dir < 0) ? (page == 0) : (page + 1 >= pages))
+		if ((dir < 0) ? (page == 0) : (page + 1 >= scan->rs_nblocks))
 		{
 			if (BufferIsValid(scan->rs_cbuf))
 				ReleaseBuffer(scan->rs_cbuf);
@@ -2743,6 +2731,7 @@ heap_restrpos(HeapScanDesc scan)
 			ReleaseBuffer(scan->rs_cbuf);
 		scan->rs_cbuf = InvalidBuffer;
 		scan->rs_cblock = InvalidBlockNumber;
+		scan->rs_inited = false;
 	}
 	else
 	{
