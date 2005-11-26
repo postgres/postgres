@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.262 2005/11/14 23:54:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.263 2005/11/26 22:14:56 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -390,7 +390,7 @@ _outTidScan(StringInfo str, TidScan *node)
 
 	_outScanInfo(str, (Scan *) node);
 
-	WRITE_NODE_FIELD(tideval);
+	WRITE_NODE_FIELD(tidquals);
 }
 
 static void
@@ -1079,7 +1079,7 @@ _outTidPath(StringInfo str, TidPath *node)
 
 	_outPathInfo(str, (Path *) node);
 
-	WRITE_NODE_FIELD(tideval);
+	WRITE_NODE_FIELD(tidquals);
 }
 
 static void

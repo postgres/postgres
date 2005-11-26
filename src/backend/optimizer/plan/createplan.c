@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.204 2005/11/25 19:47:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.205 2005/11/26 22:14:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,7 +92,7 @@ static BitmapHeapScan *make_bitmap_heapscan(List *qptlist,
 					 List *bitmapqualorig,
 					 Index scanrelid);
 static TidScan *make_tidscan(List *qptlist, List *qpqual, Index scanrelid,
-			 List *tideval);
+			 List *tidquals);
 static FunctionScan *make_functionscan(List *qptlist, List *qpqual,
 				  Index scanrelid);
 static BitmapAnd *make_bitmap_and(List *bitmapplans);
@@ -1149,6 +1149,7 @@ create_tidscan_plan(PlannerInfo *root, TidPath *best_path,
 {
 	TidScan    *scan_plan;
 	Index		scan_relid = best_path->path.parent->relid;
+	List	   *ortidquals;
 
 	/* it should be a base rel... */
 	Assert(scan_relid > 0);
@@ -1157,13 +1158,22 @@ create_tidscan_plan(PlannerInfo *root, TidPath *best_path,
 	/* Reduce RestrictInfo list to bare expressions */
 	scan_clauses = get_actual_clauses(scan_clauses);
 
+	/*
+	 * Remove any clauses that are TID quals.  This is a bit tricky since
+	 * the tidquals list has implicit OR semantics.
+	 */
+	ortidquals = best_path->tidquals;
+	if (list_length(ortidquals) > 1)
+		ortidquals = list_make1(make_orclause(ortidquals));
+	scan_clauses = list_difference(scan_clauses, ortidquals);
+
 	/* Sort clauses into best execution order */
 	scan_clauses = order_qual_clauses(root, scan_clauses);
 
 	scan_plan = make_tidscan(tlist,
 							 scan_clauses,
 							 scan_relid,
-							 best_path->tideval);
+							 best_path->tidquals);
 
 	copy_path_costsize(&scan_plan->scan.plan, &best_path->path);
 
@@ -1939,7 +1949,7 @@ static TidScan *
 make_tidscan(List *qptlist,
 			 List *qpqual,
 			 Index scanrelid,
-			 List *tideval)
+			 List *tidquals)
 {
 	TidScan    *node = makeNode(TidScan);
 	Plan	   *plan = &node->scan.plan;
@@ -1950,7 +1960,7 @@ make_tidscan(List *qptlist,
 	plan->lefttree = NULL;
 	plan->righttree = NULL;
 	node->scan.scanrelid = scanrelid;
-	node->tideval = tideval;
+	node->tidquals = tidquals;
 
 	return node;
 }

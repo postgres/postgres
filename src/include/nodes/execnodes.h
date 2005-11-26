@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.143 2005/11/26 03:03:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.144 2005/11/26 22:14:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -972,14 +972,14 @@ typedef struct BitmapHeapScanState
  *	 TidScanState information
  *
  *		NumTids		   number of tids in this scan
- *		TidPtr		   current tid in use
- *		TidList		   evaluated item pointers
+ *		TidPtr		   index of currently fetched tid
+ *		TidList		   evaluated item pointers (array of size NumTids)
  * ----------------
  */
 typedef struct TidScanState
 {
 	ScanState	ss;				/* its first field is NodeTag */
-	List	   *tss_tideval;	/* list of ExprState nodes */
+	List	   *tss_tidquals;	/* list of ExprState nodes */
 	int			tss_NumTids;
 	int			tss_TidPtr;
 	int			tss_MarkTidPtr;

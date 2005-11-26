@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.125 2005/10/15 02:49:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.126 2005/11/26 22:14:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -613,11 +613,10 @@ create_bitmap_or_path(PlannerInfo *root,
 
 /*
  * create_tidscan_path
- *	  Creates a path corresponding to a tid_direct scan, returning the
- *	  pathnode.
+ *	  Creates a path corresponding to a scan by TID, returning the pathnode.
  */
 TidPath *
-create_tidscan_path(PlannerInfo *root, RelOptInfo *rel, List *tideval)
+create_tidscan_path(PlannerInfo *root, RelOptInfo *rel, List *tidquals)
 {
 	TidPath    *pathnode = makeNode(TidPath);
 
@@ -625,14 +624,9 @@ create_tidscan_path(PlannerInfo *root, RelOptInfo *rel, List *tideval)
 	pathnode->path.parent = rel;
 	pathnode->path.pathkeys = NIL;
 
-	pathnode->tideval = tideval;
+	pathnode->tidquals = tidquals;
 
-	cost_tidscan(&pathnode->path, root, rel, tideval);
-
-	/*
-	 * divide selectivity for each clause to get an equal selectivity as
-	 * IndexScan does OK ?
-	 */
+	cost_tidscan(&pathnode->path, root, rel, tidquals);
 
 	return pathnode;
 }

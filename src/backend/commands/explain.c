@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.140 2005/11/22 18:17:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.141 2005/11/26 22:14:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -724,7 +724,6 @@ explain_outNode(StringInfo str,
 						   str, indent, es);
 			/* FALL THRU */
 		case T_SeqScan:
-		case T_TidScan:
 		case T_SubqueryScan:
 		case T_FunctionScan:
 			show_scan_qual(plan->qual,
@@ -732,6 +731,28 @@ explain_outNode(StringInfo str,
 						   ((Scan *) plan)->scanrelid,
 						   outer_plan,
 						   str, indent, es);
+			break;
+		case T_TidScan:
+			{
+				/*
+				 * The tidquals list has OR semantics, so be sure to show it
+				 * as an OR condition.
+				 */
+				List *tidquals = ((TidScan *) plan)->tidquals;
+
+				if (list_length(tidquals) > 1)
+					tidquals = list_make1(make_orclause(tidquals));
+				show_scan_qual(tidquals,
+							   "TID Cond",
+							   ((Scan *) plan)->scanrelid,
+							   outer_plan,
+							   str, indent, es);
+				show_scan_qual(plan->qual,
+							   "Filter",
+							   ((Scan *) plan)->scanrelid,
+							   outer_plan,
+							   str, indent, es);
+			}
 			break;
 		case T_NestLoop:
 			show_upper_qual(((NestLoop *) plan)->join.joinqual,

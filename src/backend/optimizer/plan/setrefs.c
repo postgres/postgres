@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.118 2005/11/22 18:17:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.119 2005/11/26 22:14:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,8 +170,7 @@ set_plan_references(Plan *plan, List *rtable)
 		case T_TidScan:
 			fix_expr_references(plan, (Node *) plan->targetlist);
 			fix_expr_references(plan, (Node *) plan->qual);
-			fix_expr_references(plan,
-								(Node *) ((TidScan *) plan)->tideval);
+			fix_expr_references(plan, (Node *) ((TidScan *) plan)->tidquals);
 			break;
 		case T_SubqueryScan:
 			/* Needs special treatment, see comments below */
@@ -509,7 +508,7 @@ adjust_plan_varnos(Plan *plan, int rtoffset)
 			((TidScan *) plan)->scan.scanrelid += rtoffset;
 			adjust_expr_varnos((Node *) plan->targetlist, rtoffset);
 			adjust_expr_varnos((Node *) plan->qual, rtoffset);
-			adjust_expr_varnos((Node *) ((TidScan *) plan)->tideval,
+			adjust_expr_varnos((Node *) ((TidScan *) plan)->tidquals,
 							   rtoffset);
 			break;
 		case T_SubqueryScan:
@@ -916,11 +915,11 @@ set_inner_join_references(Plan *inner_plan,
 		TidScan    *innerscan = (TidScan *) inner_plan;
 		Index		innerrel = innerscan->scan.scanrelid;
 
-		innerscan->tideval = join_references(innerscan->tideval,
-											 rtable,
-											 outer_itlist,
-											 NULL,
-											 innerrel);
+		innerscan->tidquals = join_references(innerscan->tidquals,
+											  rtable,
+											  outer_itlist,
+											  NULL,
+											  innerrel);
 	}
 }
 

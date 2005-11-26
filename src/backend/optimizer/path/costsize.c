@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.150 2005/11/22 18:17:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.151 2005/11/26 22:14:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,6 +66,7 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/plancat.h"
 #include "parser/parsetree.h"
+#include "utils/array.h"
 #include "utils/selfuncs.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -104,6 +105,7 @@ bool		enable_hashjoin = true;
 
 
 static bool cost_qual_eval_walker(Node *node, QualCost *total);
+static int	estimate_array_length(Node *arrayexpr);
 static Selectivity approx_selectivity(PlannerInfo *root, List *quals,
 				   JoinType jointype);
 static Selectivity join_in_selectivity(JoinPath *path, PlannerInfo *root);
@@ -617,12 +619,13 @@ cost_bitmap_or_node(BitmapOrPath *path, PlannerInfo *root)
  */
 void
 cost_tidscan(Path *path, PlannerInfo *root,
-			 RelOptInfo *baserel, List *tideval)
+			 RelOptInfo *baserel, List *tidquals)
 {
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
 	Cost		cpu_per_tuple;
-	int			ntuples = list_length(tideval);
+	int			ntuples;
+	ListCell   *l;
 
 	/* Should only be applied to base relations */
 	Assert(baserel->relid > 0);
@@ -630,6 +633,25 @@ cost_tidscan(Path *path, PlannerInfo *root,
 
 	if (!enable_tidscan)
 		startup_cost += disable_cost;
+
+	/* Count how many tuples we expect to retrieve */
+	ntuples = 0;
+	foreach(l, tidquals)
+	{
+		if (IsA(lfirst(l), ScalarArrayOpExpr))
+		{
+			/* Each element of the array yields 1 tuple */
+			ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) lfirst(l);
+			Node *arraynode = (Node *) lsecond(saop->args);
+
+			ntuples += estimate_array_length(arraynode);
+		}
+		else
+		{
+			/* It's just CTID = something, count 1 tuple */
+			ntuples++;
+		}
+	}
 
 	/* disk costs --- assume each tuple on a different page */
 	run_cost += random_page_cost * ntuples;
@@ -641,6 +663,34 @@ cost_tidscan(Path *path, PlannerInfo *root,
 
 	path->startup_cost = startup_cost;
 	path->total_cost = startup_cost + run_cost;
+}
+
+/*
+ * Estimate number of elements in the array yielded by an expression.
+ */
+static int
+estimate_array_length(Node *arrayexpr)
+{
+	if (arrayexpr && IsA(arrayexpr, Const))
+	{
+		Datum		arraydatum = ((Const *) arrayexpr)->constvalue;
+		bool		arrayisnull = ((Const *) arrayexpr)->constisnull;
+		ArrayType  *arrayval;
+
+		if (arrayisnull)
+			return 0;
+		arrayval = DatumGetArrayTypeP(arraydatum);
+		return ArrayGetNItems(ARR_NDIM(arrayval), ARR_DIMS(arrayval));
+	}
+	else if (arrayexpr && IsA(arrayexpr, ArrayExpr))
+	{
+		return list_length(((ArrayExpr *) arrayexpr)->elements);
+	}
+	else
+	{
+		/* default guess */
+		return 10;
+	}
 }
 
 /*
@@ -1549,8 +1599,15 @@ cost_qual_eval_walker(Node *node, QualCost *total)
 		total->per_tuple += cpu_operator_cost;
 	else if (IsA(node, ScalarArrayOpExpr))
 	{
-		/* should charge more than 1 op cost, but how many? */
-		total->per_tuple += cpu_operator_cost * 10;
+		/*
+		 * Estimate that the operator will be applied to about half of the
+		 * array elements before the answer is determined.
+		 */
+		ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) node;
+		Node *arraynode = (Node *) lsecond(saop->args);
+
+		total->per_tuple +=
+			cpu_operator_cost * estimate_array_length(arraynode) * 0.5;
 	}
 	else if (IsA(node, SubLink))
 	{
