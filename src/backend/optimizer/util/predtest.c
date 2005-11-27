@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.4 2005/10/15 02:49:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.5 2005/11/27 22:15:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,13 +21,65 @@
 #include "executor/executor.h"
 #include "optimizer/clauses.h"
 #include "optimizer/predtest.h"
+#include "utils/array.h"
 #include "utils/catcache.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
+/*
+ * To avoid redundant coding in predicate_implied_by_recurse and
+ * predicate_refuted_by_recurse, we need to abstract out the notion of
+ * iterating over the components of an expression that is logically an AND
+ * or OR structure.  There are multiple sorts of expression nodes that can
+ * be treated as ANDs or ORs, and we don't want to code each one separately.
+ * Hence, these types and support routines.
+ */
+typedef enum
+{
+	CLASS_ATOM,					/* expression that's not AND or OR */
+	CLASS_AND,					/* expression with AND semantics */
+	CLASS_OR					/* expression with OR semantics */
+} PredClass;
+
+typedef struct PredIterInfoData *PredIterInfo;
+
+typedef struct PredIterInfoData
+{
+	/* node-type-specific iteration state */
+	void	   *state;
+	/* initialize to do the iteration */
+	void		(*startup_fn) (Node *clause, PredIterInfo info);
+	/* next-component iteration function */
+	Node	   *(*next_fn) (PredIterInfo info);
+	/* release resources when done with iteration */
+	void		(*cleanup_fn) (PredIterInfo info);
+} PredIterInfoData;
+
+#define iterate_begin(item, clause, info)	\
+	do { \
+		Node   *item; \
+		(info).startup_fn((clause), &(info)); \
+		while ((item = (info).next_fn(&(info))) != NULL)
+
+#define iterate_end(info)	\
+		(info).cleanup_fn(&(info)); \
+	} while (0)
+
+
 static bool predicate_implied_by_recurse(Node *clause, Node *predicate);
 static bool predicate_refuted_by_recurse(Node *clause, Node *predicate);
+static PredClass predicate_classify(Node *clause, PredIterInfo info);
+static void list_startup_fn(Node *clause, PredIterInfo info);
+static Node *list_next_fn(PredIterInfo info);
+static void list_cleanup_fn(PredIterInfo info);
+static void boolexpr_startup_fn(Node *clause, PredIterInfo info);
+static void arrayconst_startup_fn(Node *clause, PredIterInfo info);
+static Node *arrayconst_next_fn(PredIterInfo info);
+static void arrayconst_cleanup_fn(PredIterInfo info);
+static void arrayexpr_startup_fn(Node *clause, PredIterInfo info);
+static Node *arrayexpr_next_fn(PredIterInfo info);
+static void arrayexpr_cleanup_fn(PredIterInfo info);
 static bool predicate_implied_by_simple_clause(Expr *predicate, Node *clause);
 static bool predicate_refuted_by_simple_clause(Expr *predicate, Node *clause);
 static bool btree_predicate_proof(Expr *predicate, Node *clause,
@@ -56,29 +108,14 @@ static bool btree_predicate_proof(Expr *predicate, Node *clause,
 bool
 predicate_implied_by(List *predicate_list, List *restrictinfo_list)
 {
-	ListCell   *item;
-
 	if (predicate_list == NIL)
 		return true;			/* no predicate: implication is vacuous */
 	if (restrictinfo_list == NIL)
 		return false;			/* no restriction: implication must fail */
 
-	/*
-	 * In all cases where the predicate is an AND-clause,
-	 * predicate_implied_by_recurse() will prefer to iterate over the
-	 * predicate's components.  So we can just do that to start with here, and
-	 * eliminate the need for predicate_implied_by_recurse() to handle a bare
-	 * List on the predicate side.
-	 *
-	 * Logic is: restriction must imply each of the AND'ed predicate items.
-	 */
-	foreach(item, predicate_list)
-	{
-		if (!predicate_implied_by_recurse((Node *) restrictinfo_list,
-										  lfirst(item)))
-			return false;
-	}
-	return true;
+	/* Otherwise, away we go ... */
+	return predicate_implied_by_recurse((Node *) restrictinfo_list,
+										(Node *) predicate_list);
 }
 
 /*
@@ -109,13 +146,7 @@ predicate_refuted_by(List *predicate_list, List *restrictinfo_list)
 	if (restrictinfo_list == NIL)
 		return false;			/* no restriction: refutation must fail */
 
-	/*
-	 * Unlike the implication case, predicate_refuted_by_recurse needs to be
-	 * able to see the top-level AND structure on both sides --- otherwise it
-	 * will fail to handle the case where one restriction clause is an OR that
-	 * can refute the predicate AND as a whole, but not each predicate clause
-	 * separately.
-	 */
+	/* Otherwise, away we go ... */
 	return predicate_refuted_by_recurse((Node *) restrictinfo_list,
 										(Node *) predicate_list);
 }
@@ -151,11 +182,6 @@ predicate_refuted_by(List *predicate_list, List *restrictinfo_list)
  * This is still not an exhaustive test, but it handles most normal cases
  * under the assumption that both inputs have been AND/OR flattened.
  *
- * A bare List node on the restriction side is interpreted as an AND clause,
- * in order to handle the top-level restriction List properly.	However we
- * need not consider a List on the predicate side since predicate_implied_by()
- * already expanded it.
- *
  * We have to be prepared to handle RestrictInfo nodes in the restrictinfo
  * tree, though not in the predicate tree.
  *----------
@@ -163,130 +189,192 @@ predicate_refuted_by(List *predicate_list, List *restrictinfo_list)
 static bool
 predicate_implied_by_recurse(Node *clause, Node *predicate)
 {
-	ListCell   *item;
+	PredIterInfoData clause_info;
+	PredIterInfoData pred_info;
+	PredClass	pclass;
+	bool		result;
 
-	Assert(clause != NULL);
 	/* skip through RestrictInfo */
+	Assert(clause != NULL);
 	if (IsA(clause, RestrictInfo))
-	{
 		clause = (Node *) ((RestrictInfo *) clause)->clause;
-		Assert(clause != NULL);
-		Assert(!IsA(clause, RestrictInfo));
-	}
-	Assert(predicate != NULL);
 
-	/*
-	 * Since a restriction List clause is handled the same as an AND clause,
-	 * we can avoid duplicate code like this:
-	 */
-	if (and_clause(clause))
-		clause = (Node *) ((BoolExpr *) clause)->args;
+	pclass = predicate_classify(predicate, &pred_info);
 
-	if (IsA(clause, List))
+	switch (predicate_classify(clause, &clause_info))
 	{
-		if (and_clause(predicate))
-		{
-			/* AND-clause => AND-clause if A implies each of B's items */
-			foreach(item, ((BoolExpr *) predicate)->args)
+		case CLASS_AND:
+			switch (pclass)
 			{
-				if (!predicate_implied_by_recurse(clause, lfirst(item)))
-					return false;
-			}
-			return true;
-		}
-		else if (or_clause(predicate))
-		{
-			/* AND-clause => OR-clause if A implies any of B's items */
-			/* Needed to handle (x AND y) => ((x AND y) OR z) */
-			foreach(item, ((BoolExpr *) predicate)->args)
-			{
-				if (predicate_implied_by_recurse(clause, lfirst(item)))
-					return true;
-			}
-			/* Also check if any of A's items implies B */
-			/* Needed to handle ((x OR y) AND z) => (x OR y) */
-			foreach(item, (List *) clause)
-			{
-				if (predicate_implied_by_recurse(lfirst(item), predicate))
-					return true;
-			}
-			return false;
-		}
-		else
-		{
-			/* AND-clause => atom if any of A's items implies B */
-			foreach(item, (List *) clause)
-			{
-				if (predicate_implied_by_recurse(lfirst(item), predicate))
-					return true;
-			}
-			return false;
-		}
-	}
-	else if (or_clause(clause))
-	{
-		if (or_clause(predicate))
-		{
-			/*
-			 * OR-clause => OR-clause if each of A's items implies any of B's
-			 * items.  Messy but can't do it any more simply.
-			 */
-			foreach(item, ((BoolExpr *) clause)->args)
-			{
-				Node	   *citem = lfirst(item);
-				ListCell   *item2;
+				case CLASS_AND:
+					/*
+					 * AND-clause => AND-clause if A implies each of B's items
+					 */
+					result = true;
+					iterate_begin(pitem, predicate, pred_info)
+					{
+						if (!predicate_implied_by_recurse(clause, pitem))
+						{
+							result = false;
+							break;
+						}
+					}
+					iterate_end(pred_info);
+					return result;
 
-				foreach(item2, ((BoolExpr *) predicate)->args)
-				{
-					if (predicate_implied_by_recurse(citem, lfirst(item2)))
-						break;
-				}
-				if (item2 == NULL)
-					return false;		/* doesn't imply any of B's */
+				case CLASS_OR:
+					/*
+					 * AND-clause => OR-clause if A implies any of B's items
+					 *
+					 * Needed to handle (x AND y) => ((x AND y) OR z)
+					 */
+					result = false;
+					iterate_begin(pitem, predicate, pred_info)
+					{
+						if (predicate_implied_by_recurse(clause, pitem))
+						{
+							result = true;
+							break;
+						}
+					}
+					iterate_end(pred_info);
+					if (result)
+						return result;
+					/*
+					 * Also check if any of A's items implies B
+					 *
+					 * Needed to handle ((x OR y) AND z) => (x OR y)
+					 */
+					iterate_begin(citem, clause, clause_info)
+					{
+						if (predicate_implied_by_recurse(citem, predicate))
+						{
+							result = true;
+							break;
+						}
+					}
+					iterate_end(clause_info);
+					return result;
+
+				case CLASS_ATOM:
+					/*
+					 * AND-clause => atom if any of A's items implies B
+					 */
+					result = false;
+					iterate_begin(citem, clause, clause_info)
+					{
+						if (predicate_implied_by_recurse(citem, predicate))
+						{
+							result = true;
+							break;
+						}
+					}
+					iterate_end(clause_info);
+					return result;
 			}
-			return true;
-		}
-		else
-		{
-			/* OR-clause => AND-clause if each of A's items implies B */
-			/* OR-clause => atom if each of A's items implies B */
-			foreach(item, ((BoolExpr *) clause)->args)
+			break;
+
+		case CLASS_OR:
+			switch (pclass)
 			{
-				if (!predicate_implied_by_recurse(lfirst(item), predicate))
-					return false;
+				case CLASS_OR:
+					/*
+					 * OR-clause => OR-clause if each of A's items implies any
+					 * of B's items.  Messy but can't do it any more simply.
+					 */
+					result = true;
+					iterate_begin(citem, clause, clause_info)
+					{
+						bool	presult = false;
+
+						iterate_begin(pitem, predicate, pred_info)
+						{
+							if (predicate_implied_by_recurse(citem, pitem))
+							{
+								presult = true;
+								break;
+							}
+						}
+						iterate_end(pred_info);
+						if (!presult)
+						{
+							result = false;		/* doesn't imply any of B's */
+							break;
+						}
+					}
+					iterate_end(clause_info);
+					return result;
+
+				case CLASS_AND:
+				case CLASS_ATOM:
+					/*
+					 * OR-clause => AND-clause if each of A's items implies B
+					 *
+					 * OR-clause => atom if each of A's items implies B
+					 */
+					result = true;
+					iterate_begin(citem, clause, clause_info)
+					{
+						if (!predicate_implied_by_recurse(citem, predicate))
+						{
+							result = false;
+							break;
+						}
+					}
+					iterate_end(clause_info);
+					return result;
 			}
-			return true;
-		}
+			break;
+
+		case CLASS_ATOM:
+			switch (pclass)
+			{
+				case CLASS_AND:
+					/*
+					 * atom => AND-clause if A implies each of B's items
+					 */
+					result = true;
+					iterate_begin(pitem, predicate, pred_info)
+					{
+						if (!predicate_implied_by_recurse(clause, pitem))
+						{
+							result = false;
+							break;
+						}
+					}
+					iterate_end(pred_info);
+					return result;
+
+				case CLASS_OR:
+					/*
+					 * atom => OR-clause if A implies any of B's items
+					 */
+					result = false;
+					iterate_begin(pitem, predicate, pred_info)
+					{
+						if (predicate_implied_by_recurse(clause, pitem))
+						{
+							result = true;
+							break;
+						}
+					}
+					iterate_end(pred_info);
+					return result;
+
+				case CLASS_ATOM:
+					/*
+					 * atom => atom is the base case
+					 */
+					return
+						predicate_implied_by_simple_clause((Expr *) predicate,
+														   clause);
+			}
+			break;
 	}
-	else
-	{
-		if (and_clause(predicate))
-		{
-			/* atom => AND-clause if A implies each of B's items */
-			foreach(item, ((BoolExpr *) predicate)->args)
-			{
-				if (!predicate_implied_by_recurse(clause, lfirst(item)))
-					return false;
-			}
-			return true;
-		}
-		else if (or_clause(predicate))
-		{
-			/* atom => OR-clause if A implies any of B's items */
-			foreach(item, ((BoolExpr *) predicate)->args)
-			{
-				if (predicate_implied_by_recurse(clause, lfirst(item)))
-					return true;
-			}
-			return false;
-		}
-		else
-		{
-			/* atom => atom is the base case */
-			return predicate_implied_by_simple_clause((Expr *) predicate,
-													  clause);
-		}
-	}
+
+	/* can't get here */
+	elog(ERROR, "predicate_classify returned a bogus value");
+	return false;
 }
 
 /*----------
@@ -306,150 +394,465 @@ predicate_implied_by_recurse(Node *clause, Node *predicate)
  *	OR-expr A R=> AND-expr B iff:	each of A's components R=> any of B's
  *	OR-expr A R=> OR-expr B iff:	A R=> each of B's components
  *
- * Other comments are as for predicate_implied_by_recurse(), except that
- * we have to handle a top-level AND list on both sides.
+ * Other comments are as for predicate_implied_by_recurse().
  *----------
  */
 static bool
 predicate_refuted_by_recurse(Node *clause, Node *predicate)
 {
-	ListCell   *item;
+	PredIterInfoData clause_info;
+	PredIterInfoData pred_info;
+	PredClass	pclass;
+	bool		result;
 
-	Assert(clause != NULL);
 	/* skip through RestrictInfo */
+	Assert(clause != NULL);
 	if (IsA(clause, RestrictInfo))
-	{
 		clause = (Node *) ((RestrictInfo *) clause)->clause;
-		Assert(clause != NULL);
-		Assert(!IsA(clause, RestrictInfo));
+
+	pclass = predicate_classify(predicate, &pred_info);
+
+	switch (predicate_classify(clause, &clause_info))
+	{
+		case CLASS_AND:
+			switch (pclass)
+			{
+				case CLASS_AND:
+					/*
+					 * AND-clause R=> AND-clause if A refutes any of B's items
+					 *
+					 * Needed to handle (x AND y) R=> ((!x OR !y) AND z)
+					 */
+					result = false;
+					iterate_begin(pitem, predicate, pred_info)
+					{
+						if (predicate_refuted_by_recurse(clause, pitem))
+						{
+							result = true;
+							break;
+						}
+					}
+					iterate_end(pred_info);
+					if (result)
+						return result;
+					/*
+					 * Also check if any of A's items refutes B
+					 *
+					 * Needed to handle ((x OR y) AND z) R=> (!x AND !y)
+					 */
+					iterate_begin(citem, clause, clause_info)
+					{
+						if (predicate_refuted_by_recurse(citem, predicate))
+						{
+							result = true;
+							break;
+						}
+					}
+					iterate_end(clause_info);
+					return result;
+
+				case CLASS_OR:
+					/*
+					 * AND-clause R=> OR-clause if A refutes each of B's items
+					 */
+					result = true;
+					iterate_begin(pitem, predicate, pred_info)
+					{
+						if (!predicate_refuted_by_recurse(clause, pitem))
+						{
+							result = false;
+							break;
+						}
+					}
+					iterate_end(pred_info);
+					return result;
+
+				case CLASS_ATOM:
+					/*
+					 * AND-clause R=> atom if any of A's items refutes B
+					 */
+					result = false;
+					iterate_begin(citem, clause, clause_info)
+					{
+						if (predicate_refuted_by_recurse(citem, predicate))
+						{
+							result = true;
+							break;
+						}
+					}
+					iterate_end(clause_info);
+					return result;
+			}
+			break;
+
+		case CLASS_OR:
+			switch (pclass)
+			{
+				case CLASS_OR:
+					/*
+					 * OR-clause R=> OR-clause if A refutes each of B's items
+					 */
+					result = true;
+					iterate_begin(pitem, predicate, pred_info)
+					{
+						if (!predicate_refuted_by_recurse(clause, pitem))
+						{
+							result = false;
+							break;
+						}
+					}
+					iterate_end(pred_info);
+					return result;
+
+				case CLASS_AND:
+					/*
+					 * OR-clause R=> AND-clause if each of A's items refutes
+					 * any of B's items.
+					 */
+					result = true;
+					iterate_begin(citem, clause, clause_info)
+					{
+						bool	presult = false;
+
+						iterate_begin(pitem, predicate, pred_info)
+						{
+							if (predicate_refuted_by_recurse(citem, pitem))
+							{
+								presult = true;
+								break;
+							}
+						}
+						iterate_end(pred_info);
+						if (!presult)
+						{
+							result = false;		/* citem refutes nothing */
+							break;
+						}
+					}
+					iterate_end(clause_info);
+					return result;
+
+				case CLASS_ATOM:
+					/*
+					 * OR-clause R=> atom if each of A's items refutes B
+					 */
+					result = true;
+					iterate_begin(citem, clause, clause_info)
+					{
+						if (!predicate_refuted_by_recurse(citem, predicate))
+						{
+							result = false;
+							break;
+						}
+					}
+					iterate_end(clause_info);
+					return result;
+			}
+			break;
+
+		case CLASS_ATOM:
+			switch (pclass)
+			{
+				case CLASS_AND:
+					/*
+					 * atom R=> AND-clause if A refutes any of B's items
+					 */
+					result = false;
+					iterate_begin(pitem, predicate, pred_info)
+					{
+						if (predicate_refuted_by_recurse(clause, pitem))
+						{
+							result = true;
+							break;
+						}
+					}
+					iterate_end(pred_info);
+					return result;
+
+				case CLASS_OR:
+					/*
+					 * atom R=> OR-clause if A refutes each of B's items
+					 */
+					result = true;
+					iterate_begin(pitem, predicate, pred_info)
+					{
+						if (!predicate_refuted_by_recurse(clause, pitem))
+						{
+							result = false;
+							break;
+						}
+					}
+					iterate_end(pred_info);
+					return result;
+
+				case CLASS_ATOM:
+					/*
+					 * atom R=> atom is the base case
+					 */
+					return
+						predicate_refuted_by_simple_clause((Expr *) predicate,
+														   clause);
+			}
+			break;
 	}
-	Assert(predicate != NULL);
+
+	/* can't get here */
+	elog(ERROR, "predicate_classify returned a bogus value");
+	return false;
+}
+
+
+/*
+ * predicate_classify
+ *	  Classify an expression node as AND-type, OR-type, or neither (an atom).
+ *
+ * If the expression is classified as AND- or OR-type, then *info is filled
+ * in with the functions needed to iterate over its components.
+ */
+static PredClass
+predicate_classify(Node *clause, PredIterInfo info)
+{
+	/* Caller should not pass us NULL, nor a RestrictInfo clause */
+	Assert(clause != NULL);
+	Assert(!IsA(clause, RestrictInfo));
 
 	/*
-	 * Since a restriction List clause is handled the same as an AND clause,
-	 * we can avoid duplicate code like this:
+	 * If we see a List, assume it's an implicit-AND list; this is the
+	 * correct semantics for lists of RestrictInfo nodes.
 	 */
-	if (and_clause(clause))
-		clause = (Node *) ((BoolExpr *) clause)->args;
-
-	/* Ditto for predicate AND-clause and List */
-	if (and_clause(predicate))
-		predicate = (Node *) ((BoolExpr *) predicate)->args;
-
 	if (IsA(clause, List))
 	{
-		if (IsA(predicate, List))
-		{
-			/* AND-clause R=> AND-clause if A refutes any of B's items */
-			/* Needed to handle (x AND y) R=> ((!x OR !y) AND z) */
-			foreach(item, (List *) predicate)
-			{
-				if (predicate_refuted_by_recurse(clause, lfirst(item)))
-					return true;
-			}
-			/* Also check if any of A's items refutes B */
-			/* Needed to handle ((x OR y) AND z) R=> (!x AND !y) */
-			foreach(item, (List *) clause)
-			{
-				if (predicate_refuted_by_recurse(lfirst(item), predicate))
-					return true;
-			}
-			return false;
-		}
-		else if (or_clause(predicate))
-		{
-			/* AND-clause R=> OR-clause if A refutes each of B's items */
-			foreach(item, ((BoolExpr *) predicate)->args)
-			{
-				if (!predicate_refuted_by_recurse(clause, lfirst(item)))
-					return false;
-			}
-			return true;
-		}
-		else
-		{
-			/* AND-clause R=> atom if any of A's items refutes B */
-			foreach(item, (List *) clause)
-			{
-				if (predicate_refuted_by_recurse(lfirst(item), predicate))
-					return true;
-			}
-			return false;
-		}
+		info->startup_fn = list_startup_fn;
+		info->next_fn = list_next_fn;
+		info->cleanup_fn = list_cleanup_fn;
+		return CLASS_AND;
 	}
-	else if (or_clause(clause))
-	{
-		if (or_clause(predicate))
-		{
-			/* OR-clause R=> OR-clause if A refutes each of B's items */
-			foreach(item, ((BoolExpr *) predicate)->args)
-			{
-				if (!predicate_refuted_by_recurse(clause, lfirst(item)))
-					return false;
-			}
-			return true;
-		}
-		else if (IsA(predicate, List))
-		{
-			/*
-			 * OR-clause R=> AND-clause if each of A's items refutes any of
-			 * B's items.
-			 */
-			foreach(item, ((BoolExpr *) clause)->args)
-			{
-				Node	   *citem = lfirst(item);
-				ListCell   *item2;
 
-				foreach(item2, (List *) predicate)
-				{
-					if (predicate_refuted_by_recurse(citem, lfirst(item2)))
-						break;
-				}
-				if (item2 == NULL)
-					return false;		/* citem refutes nothing */
-			}
-			return true;
-		}
-		else
-		{
-			/* OR-clause R=> atom if each of A's items refutes B */
-			foreach(item, ((BoolExpr *) clause)->args)
-			{
-				if (!predicate_refuted_by_recurse(lfirst(item), predicate))
-					return false;
-			}
-			return true;
-		}
-	}
-	else
+	/* Handle normal AND and OR boolean clauses */
+	if (and_clause(clause))
 	{
-		if (IsA(predicate, List))
+		info->startup_fn = boolexpr_startup_fn;
+		info->next_fn = list_next_fn;
+		info->cleanup_fn = list_cleanup_fn;
+		return CLASS_AND;
+	}
+	if (or_clause(clause))
+	{
+		info->startup_fn = boolexpr_startup_fn;
+		info->next_fn = list_next_fn;
+		info->cleanup_fn = list_cleanup_fn;
+		return CLASS_OR;
+	}
+
+	/* Handle ScalarArrayOpExpr */
+	if (IsA(clause, ScalarArrayOpExpr))
+	{
+		ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
+		Node   *arraynode = (Node *) lsecond(saop->args);
+
+		/*
+		 * We can break this down into an AND or OR structure, but only if
+		 * we know how to iterate through expressions for the array's
+		 * elements.  We can do that if the array operand is a non-null
+		 * constant or a simple ArrayExpr.
+		 */
+		if (arraynode && IsA(arraynode, Const) &&
+			!((Const *) arraynode)->constisnull)
 		{
-			/* atom R=> AND-clause if A refutes any of B's items */
-			foreach(item, (List *) predicate)
-			{
-				if (predicate_refuted_by_recurse(clause, lfirst(item)))
-					return true;
-			}
-			return false;
+			info->startup_fn = arrayconst_startup_fn;
+			info->next_fn = arrayconst_next_fn;
+			info->cleanup_fn = arrayconst_cleanup_fn;
+			return saop->useOr ? CLASS_OR : CLASS_AND;
 		}
-		else if (or_clause(predicate))
+		if (arraynode && IsA(arraynode, ArrayExpr) &&
+			!((ArrayExpr *) arraynode)->multidims)
 		{
-			/* atom R=> OR-clause if A refutes each of B's items */
-			foreach(item, ((BoolExpr *) predicate)->args)
-			{
-				if (!predicate_refuted_by_recurse(clause, lfirst(item)))
-					return false;
-			}
-			return true;
-		}
-		else
-		{
-			/* atom R=> atom is the base case */
-			return predicate_refuted_by_simple_clause((Expr *) predicate,
-													  clause);
+			info->startup_fn = arrayexpr_startup_fn;
+			info->next_fn = arrayexpr_next_fn;
+			info->cleanup_fn = arrayexpr_cleanup_fn;
+			return saop->useOr ? CLASS_OR : CLASS_AND;
 		}
 	}
+
+	/* None of the above, so it's an atom */
+	return CLASS_ATOM;
+}
+
+/*
+ * PredIterInfo routines for iterating over regular Lists.  The iteration
+ * state variable is the next ListCell to visit.
+ */
+static void
+list_startup_fn(Node *clause, PredIterInfo info)
+{
+	info->state = (void *) list_head((List *) clause);
+}
+
+static Node *
+list_next_fn(PredIterInfo info)
+{
+	ListCell   *l = (ListCell *) info->state;
+	Node	   *n;
+
+	if (l == NULL)
+		return NULL;
+	n = lfirst(l);
+	info->state = (void *) lnext(l);
+	return n;
+}
+
+static void
+list_cleanup_fn(PredIterInfo info)
+{
+	/* Nothing to clean up */
+}
+
+/*
+ * BoolExpr needs its own startup function, but can use list_next_fn and
+ * list_cleanup_fn.
+ */
+static void
+boolexpr_startup_fn(Node *clause, PredIterInfo info)
+{
+	info->state = (void *) list_head(((BoolExpr *) clause)->args);
+}
+
+/*
+ * PredIterInfo routines for iterating over a ScalarArrayOpExpr with a
+ * constant array operand.
+ */
+typedef struct
+{
+	OpExpr		opexpr;
+	Const		constexpr;
+	int			next_elem;
+	int			num_elems;
+	Datum	   *elem_values;
+	bool	   *elem_nulls;
+} ArrayConstIterState;
+
+static void
+arrayconst_startup_fn(Node *clause, PredIterInfo info)
+{
+	ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
+	ArrayConstIterState *state;
+	Const	   *arrayconst;
+	ArrayType  *arrayval;
+	int16		elmlen;
+	bool		elmbyval;
+	char		elmalign;
+
+	/* Create working state struct */
+	state = (ArrayConstIterState *) palloc(sizeof(ArrayConstIterState));
+	info->state = (void *) state;
+
+	/* Deconstruct the array literal */
+	arrayconst = (Const *) lsecond(saop->args);
+	arrayval = DatumGetArrayTypeP(arrayconst->constvalue);
+	get_typlenbyvalalign(ARR_ELEMTYPE(arrayval),
+						 &elmlen, &elmbyval, &elmalign);
+	deconstruct_array(arrayval,
+					  ARR_ELEMTYPE(arrayval),
+					  elmlen, elmbyval, elmalign,
+					  &state->elem_values, &state->elem_nulls,
+					  &state->num_elems);
+
+	/* Set up a dummy OpExpr to return as the per-item node */
+	state->opexpr.xpr.type = T_OpExpr;
+	state->opexpr.opno = saop->opno;
+	state->opexpr.opfuncid = saop->opfuncid;
+	state->opexpr.opresulttype = BOOLOID;
+	state->opexpr.opretset = false;
+	state->opexpr.args = list_copy(saop->args);
+
+	/* Set up a dummy Const node to hold the per-element values */
+	state->constexpr.xpr.type = T_Const;
+	state->constexpr.consttype = ARR_ELEMTYPE(arrayval);
+	state->constexpr.constlen = elmlen;
+	state->constexpr.constbyval = elmbyval;
+	lsecond(state->opexpr.args) = &state->constexpr;
+
+	/* Initialize iteration state */
+	state->next_elem = 0;
+}
+
+static Node *
+arrayconst_next_fn(PredIterInfo info)
+{
+	ArrayConstIterState *state = (ArrayConstIterState *) info->state;
+
+	if (state->next_elem >= state->num_elems)
+		return NULL;
+	state->constexpr.constvalue = state->elem_values[state->next_elem];
+	state->constexpr.constisnull = state->elem_nulls[state->next_elem];
+	state->next_elem++;
+	return (Node *) &(state->opexpr);
+}
+
+static void
+arrayconst_cleanup_fn(PredIterInfo info)
+{
+	ArrayConstIterState *state = (ArrayConstIterState *) info->state;
+
+	pfree(state->elem_values);
+	pfree(state->elem_nulls);
+	list_free(state->opexpr.args);
+	pfree(state);
+}
+
+/*
+ * PredIterInfo routines for iterating over a ScalarArrayOpExpr with a
+ * one-dimensional ArrayExpr array operand.
+ */
+typedef struct
+{
+	OpExpr		opexpr;
+	ListCell   *next;
+} ArrayExprIterState;
+
+static void
+arrayexpr_startup_fn(Node *clause, PredIterInfo info)
+{
+	ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
+	ArrayExprIterState *state;
+	ArrayExpr *arrayexpr;
+
+	/* Create working state struct */
+	state = (ArrayExprIterState *) palloc(sizeof(ArrayExprIterState));
+	info->state = (void *) state;
+
+	/* Set up a dummy OpExpr to return as the per-item node */
+	state->opexpr.xpr.type = T_OpExpr;
+	state->opexpr.opno = saop->opno;
+	state->opexpr.opfuncid = saop->opfuncid;
+	state->opexpr.opresulttype = BOOLOID;
+	state->opexpr.opretset = false;
+	state->opexpr.args = list_copy(saop->args);
+
+	/* Initialize iteration variable to first member of ArrayExpr */
+	arrayexpr = (ArrayExpr *) lsecond(saop->args);
+	state->next = list_head(arrayexpr->elements);
+}
+
+static Node *
+arrayexpr_next_fn(PredIterInfo info)
+{
+	ArrayExprIterState *state = (ArrayExprIterState *) info->state;
+
+	if (state->next == NULL)
+		return NULL;
+	lsecond(state->opexpr.args) = lfirst(state->next);
+	state->next = lnext(state->next);
+	return (Node *) &(state->opexpr);
+}
+
+static void
+arrayexpr_cleanup_fn(PredIterInfo info)
+{
+	ArrayExprIterState *state = (ArrayExprIterState *) info->state;
+
+	list_free(state->opexpr.args);
+	pfree(state);
 }
 
 
