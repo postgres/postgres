@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.110 2005/10/27 20:45:29 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.111 2005/11/28 22:06:39 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,6 +23,9 @@ OBJS := $(SUBSYSOBJS) $(top_builddir)/src/port/libpgport_srv.a
 
 # We put libpgport into OBJS, so remove it from LIBS
 LIBS := $(patsubst -lpgport, , $(LIBS))
+
+# The backend doesn't need everything that's in LIBS, however
+LIBS := $(filter-out -lreadline -ledit -ltermcap -lncurses -lcurses, $(LIBS))
 
 ifeq ($(PORTNAME), qnx4)
 # This file crashes qnx4's wlink and is therefore not in
