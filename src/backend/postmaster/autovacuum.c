@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.6 2005/11/22 18:17:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.7 2005/11/28 13:35:09 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -897,6 +897,14 @@ autovacuum_do_vac_analyze(List *relids, bool dovacuum, bool doanalyze,
 	vacstmt->verbose = false;
 	vacstmt->relation = NULL;	/* all tables, or not used if relids != NIL */
 	vacstmt->va_cols = NIL;
+
+	/*
+	 * Functions in indexes may want a snapshot set.  Note we only need
+	 * to do this in limited cases, because it'll be done in vacuum()
+	 * otherwise.
+	 */
+	if (doanalyze && !dovacuum && relids != NIL)
+		ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
 
 	vacuum(vacstmt, relids);
 
