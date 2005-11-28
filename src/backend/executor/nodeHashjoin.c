@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.78 2005/11/28 17:14:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.79 2005/11/28 23:46:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,16 +120,28 @@ ExecHashJoin(HashJoinState *node)
 		 * since we aren't going to be able to skip the join on the strength
 		 * of an empty inner relation anyway.)
 		 *
+		 * If we are rescanning the join, we make use of information gained
+		 * on the previous scan: don't bother to try the prefetch if the
+		 * previous scan found the outer relation nonempty.  This is not
+		 * 100% reliable since with new parameters the outer relation might
+		 * yield different results, but it's a good heuristic.
+		 *
 		 * The only way to make the check is to try to fetch a tuple from the
 		 * outer plan node.  If we succeed, we have to stash it away for later
 		 * consumption by ExecHashJoinOuterGetTuple.
 		 */
-		if (outerNode->plan->startup_cost < hashNode->ps.plan->total_cost ||
-			node->js.jointype == JOIN_LEFT)
+		if (node->js.jointype == JOIN_LEFT ||
+			(outerNode->plan->startup_cost < hashNode->ps.plan->total_cost &&
+			 !node->hj_OuterNotEmpty))
 		{
 			node->hj_FirstOuterTupleSlot = ExecProcNode(outerNode);
 			if (TupIsNull(node->hj_FirstOuterTupleSlot))
+			{
+				node->hj_OuterNotEmpty = false;
 				return NULL;
+			}
+			else
+				node->hj_OuterNotEmpty = true;
 		}
 		else
 			node->hj_FirstOuterTupleSlot = NULL;
@@ -159,6 +171,13 @@ ExecHashJoin(HashJoinState *node)
 		 * scanning the outer relation
 		 */
 		hashtable->nbatch_outstart = hashtable->nbatch;
+
+		/*
+		 * Reset OuterNotEmpty for scan.  (It's OK if we fetched a tuple
+		 * above, because ExecHashJoinOuterGetTuple will immediately
+		 * set it again.)
+		 */
+		node->hj_OuterNotEmpty = false;
 	}
 
 	/*
@@ -454,6 +473,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate)
 	hjstate->js.ps.ps_TupFromTlist = false;
 	hjstate->hj_NeedNewOuter = true;
 	hjstate->hj_MatchedOuter = false;
+	hjstate->hj_OuterNotEmpty = false;
 
 	return hjstate;
 }
@@ -545,6 +565,9 @@ ExecHashJoinOuterGetTuple(PlanState *outerNode,
 			econtext->ecxt_outertuple = slot;
 			*hashvalue = ExecHashGetHashValue(hashtable, econtext,
 											  hjstate->hj_OuterHashKeys);
+
+			/* remember outer relation is not empty for possible rescan */
+			hjstate->hj_OuterNotEmpty = true;
 
 			return slot;
 		}
@@ -809,7 +832,19 @@ ExecReScanHashJoin(HashJoinState *node, ExprContext *exprCtxt)
 		if (node->hj_HashTable->nbatch == 1 &&
 			((PlanState *) node)->righttree->chgParam == NULL)
 		{
-			/* okay to reuse the hash table; needn't rescan inner, either */
+			/*
+			 * okay to reuse the hash table; needn't rescan inner, either.
+			 *
+			 * What we do need to do is reset our state about the emptiness
+			 * of the outer relation, so that the new scan of the outer will
+			 * update it correctly if it turns out to be empty this time.
+			 * (There's no harm in clearing it now because ExecHashJoin won't
+			 * need the info.  In the other cases, where the hash table
+			 * doesn't exist or we are destroying it, we leave this state
+			 * alone because ExecHashJoin will need it the first time
+			 * through.)
+			 */
+			node->hj_OuterNotEmpty = false;
 		}
 		else
 		{
