@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.77 2005/11/22 18:17:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.78 2005/11/28 17:14:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,12 +152,7 @@ ExecHashJoin(HashJoinState *node)
 		 * outer join, we can quit without scanning the outer relation.
 		 */
 		if (hashtable->totalTuples == 0 && node->js.jointype != JOIN_LEFT)
-		{
-			ExecHashTableDestroy(hashtable);
-			node->hj_HashTable = NULL;
-			node->hj_FirstOuterTupleSlot = NULL;
 			return NULL;
-		}
 
 		/*
 		 * need to remember whether nbatch has increased since we began
@@ -487,7 +482,6 @@ ExecEndHashJoin(HashJoinState *node)
 	{
 		ExecHashTableDestroy(node->hj_HashTable);
 		node->hj_HashTable = NULL;
-		node->hj_FirstOuterTupleSlot = NULL;
 	}
 
 	/*
@@ -804,37 +798,32 @@ void
 ExecReScanHashJoin(HashJoinState *node, ExprContext *exprCtxt)
 {
 	/*
-	 * If we haven't yet built the hash table then we can just return; nothing
-	 * done yet, so nothing to undo.
-	 */
-	if (node->hj_HashTable == NULL)
-		return;
-
-	/*
 	 * In a multi-batch join, we currently have to do rescans the hard way,
 	 * primarily because batch temp files may have already been released. But
 	 * if it's a single-batch join, and there is no parameter change for the
 	 * inner subnode, then we can just re-use the existing hash table without
 	 * rebuilding it.
 	 */
-	if (node->hj_HashTable->nbatch == 1 &&
-		((PlanState *) node)->righttree->chgParam == NULL)
+	if (node->hj_HashTable != NULL)
 	{
-		/* okay to reuse the hash table; needn't rescan inner, either */
-	}
-	else
-	{
-		/* must destroy and rebuild hash table */
-		ExecHashTableDestroy(node->hj_HashTable);
-		node->hj_HashTable = NULL;
-		node->hj_FirstOuterTupleSlot = NULL;
+		if (node->hj_HashTable->nbatch == 1 &&
+			((PlanState *) node)->righttree->chgParam == NULL)
+		{
+			/* okay to reuse the hash table; needn't rescan inner, either */
+		}
+		else
+		{
+			/* must destroy and rebuild hash table */
+			ExecHashTableDestroy(node->hj_HashTable);
+			node->hj_HashTable = NULL;
 
-		/*
-		 * if chgParam of subnode is not null then plan will be re-scanned by
-		 * first ExecProcNode.
-		 */
-		if (((PlanState *) node)->righttree->chgParam == NULL)
-			ExecReScan(((PlanState *) node)->righttree, exprCtxt);
+			/*
+			 * if chgParam of subnode is not null then plan will be re-scanned
+			 * by first ExecProcNode.
+			 */
+			if (((PlanState *) node)->righttree->chgParam == NULL)
+				ExecReScan(((PlanState *) node)->righttree, exprCtxt);
+		}
 	}
 
 	/* Always reset intra-tuple state */
@@ -846,6 +835,7 @@ ExecReScanHashJoin(HashJoinState *node, ExprContext *exprCtxt)
 	node->js.ps.ps_TupFromTlist = false;
 	node->hj_NeedNewOuter = true;
 	node->hj_MatchedOuter = false;
+	node->hj_FirstOuterTupleSlot = NULL;
 
 	/*
 	 * if chgParam of subnode is not null then plan will be re-scanned by
