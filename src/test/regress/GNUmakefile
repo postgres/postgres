@@ -6,7 +6,7 @@
 # Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.53 2005/11/01 15:09:11 adunstan Exp $
+# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.54 2005/11/28 12:03:56 alvherre Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -54,6 +54,12 @@ pg_regress: pg_regress.sh GNUmakefile $(top_builddir)/src/Makefile.global
 	    -e 's/@GCC@/$(GCC)/g' \
 	  $< >$@
 	chmod a+x $@
+
+install: pg_regress
+	$(INSTALL_SCRIPT) pg_regress $(DESTDIR)$(pgxsdir)/$(subdir)/pg_regress
+
+uninstall:
+	rm -f $(DESTDIR)$(pgxsdir)/$(subdir)/pg_regress
 
 
 # Build dynamically-loaded object file for CREATE FUNCTION ... LANGUAGE 'C'.
