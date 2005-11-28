@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.263 2005/11/26 22:14:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.264 2005/11/28 04:35:30 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1597,6 +1597,10 @@ _outAExpr(StringInfo str, A_Expr *node)
 			appendStringInfo(str, " OF ");
 			WRITE_NODE_FIELD(name);
 			break;
+		case AEXPR_IN:
+			appendStringInfo(str, " IN ");
+			WRITE_NODE_FIELD(name);
+			break;
 		default:
 			appendStringInfo(str, " ??");
 			break;
@@ -1658,6 +1662,7 @@ _outAConst(StringInfo str, A_Const *node)
 {
 	WRITE_NODE_TYPE("A_CONST");
 
+	appendStringInfo(str, " :val ");
 	_outValue(str, &(node->val));
 	WRITE_NODE_FIELD(typename);
 }

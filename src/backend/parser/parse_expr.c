@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.187 2005/11/22 18:17:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.188 2005/11/28 04:35:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,7 @@ static Node *transformAExprOpAll(ParseState *pstate, A_Expr *a);
 static Node *transformAExprDistinct(ParseState *pstate, A_Expr *a);
 static Node *transformAExprNullIf(ParseState *pstate, A_Expr *a);
 static Node *transformAExprOf(ParseState *pstate, A_Expr *a);
+static Node *transformAExprIn(ParseState *pstate, A_Expr *a);
 static Node *transformFuncCall(ParseState *pstate, FuncCall *fn);
 static Node *transformCaseExpr(ParseState *pstate, CaseExpr *c);
 static Node *transformSubLink(ParseState *pstate, SubLink *sublink);
@@ -64,9 +65,9 @@ static Node *transformIndirection(ParseState *pstate, Node *basenode,
 static Node *typecast_expression(ParseState *pstate, Node *expr,
 					TypeName *typename);
 static Node *make_row_op(ParseState *pstate, List *opname,
-			Node *ltree, Node *rtree);
+			RowExpr *lrow, RowExpr *rrow);
 static Node *make_row_distinct_op(ParseState *pstate, List *opname,
-					 Node *ltree, Node *rtree);
+					 RowExpr *lrow, RowExpr *rrow);
 static Expr *make_distinct_op(ParseState *pstate, List *opname,
 				 Node *ltree, Node *rtree);
 
@@ -179,6 +180,9 @@ transformExpr(ParseState *pstate, Node *expr)
 						break;
 					case AEXPR_OF:
 						result = transformAExprOf(pstate, a);
+						break;
+					case AEXPR_IN:
+						result = transformAExprIn(pstate, a);
 						break;
 					default:
 						elog(ERROR, "unrecognized A_Expr kind: %d", a->kind);
@@ -603,7 +607,15 @@ transformAExprOp(ParseState *pstate, A_Expr *a)
 			 rexpr && IsA(rexpr, RowExpr))
 	{
 		/* "row op row" */
-		result = make_row_op(pstate, a->name, lexpr, rexpr);
+		lexpr = transformExpr(pstate, lexpr);
+		rexpr = transformExpr(pstate, rexpr);
+		Assert(IsA(lexpr, RowExpr));
+		Assert(IsA(rexpr, RowExpr));
+
+		result = make_row_op(pstate,
+							 a->name,
+							 (RowExpr *) lexpr,
+							 (RowExpr *) rexpr);
 	}
 	else
 	{
@@ -686,22 +698,20 @@ transformAExprOpAll(ParseState *pstate, A_Expr *a)
 static Node *
 transformAExprDistinct(ParseState *pstate, A_Expr *a)
 {
-	Node	   *lexpr = a->lexpr;
-	Node	   *rexpr = a->rexpr;
+	Node	   *lexpr = transformExpr(pstate, a->lexpr);
+	Node	   *rexpr = transformExpr(pstate, a->rexpr);
 
 	if (lexpr && IsA(lexpr, RowExpr) &&
 		rexpr && IsA(rexpr, RowExpr))
 	{
 		/* "row op row" */
 		return make_row_distinct_op(pstate, a->name,
-									lexpr, rexpr);
+									(RowExpr *) lexpr,
+									(RowExpr *) rexpr);
 	}
 	else
 	{
 		/* Ordinary scalar operator */
-		lexpr = transformExpr(pstate, lexpr);
-		rexpr = transformExpr(pstate, rexpr);
-
 		return (Node *) make_distinct_op(pstate,
 										 a->name,
 										 lexpr,
@@ -737,15 +747,14 @@ static Node *
 transformAExprOf(ParseState *pstate, A_Expr *a)
 {
 	/*
-	 * Checking an expression for match to type.  Will result in a boolean
-	 * constant node.
+	 * Checking an expression for match to a list of type names.
+	 * Will result in a boolean constant node.
 	 */
+	Node	   *lexpr = transformExpr(pstate, a->lexpr);
 	ListCell   *telem;
-	A_Const    *n;
 	Oid			ltype,
 				rtype;
 	bool		matched = false;
-	Node	   *lexpr = transformExpr(pstate, a->lexpr);
 
 	ltype = exprType(lexpr);
 	foreach(telem, (List *) a->rexpr)
@@ -757,18 +766,145 @@ transformAExprOf(ParseState *pstate, A_Expr *a)
 	}
 
 	/*
-	 * Expect two forms: equals or not equals.	Flip the sense of the result
+	 * We have two forms: equals or not equals.	Flip the sense of the result
 	 * for not equals.
 	 */
-	if (strcmp(strVal(linitial(a->name)), "!=") == 0)
+	if (strcmp(strVal(linitial(a->name)), "<>") == 0)
 		matched = (!matched);
 
-	n = makeNode(A_Const);
-	n->val.type = T_String;
-	n->val.val.str = (matched ? "t" : "f");
-	n->typename = SystemTypeName("bool");
+	return makeBoolConst(matched, false);
+}
 
-	return transformExpr(pstate, (Node *) n);
+static Node *
+transformAExprIn(ParseState *pstate, A_Expr *a)
+{
+	Node	   *lexpr;
+	List	   *rexprs;
+	List	   *typeids;
+	bool		useOr;
+	bool		haveRowExpr;
+	Node	   *result;
+	ListCell   *l;
+
+	/*
+	 * If the operator is <>, combine with AND not OR.
+	 */
+	if (strcmp(strVal(linitial(a->name)), "<>") == 0)
+		useOr = false;
+	else
+		useOr = true;
+
+	/*
+	 * We try to generate a ScalarArrayOpExpr from IN/NOT IN, but this is
+	 * only possible if the inputs are all scalars (no RowExprs) and there
+	 * is a suitable array type available.  If not, we fall back to a
+	 * boolean condition tree with multiple copies of the lefthand expression.
+	 *
+	 * First step: transform all the inputs, and detect whether any are
+	 * RowExprs.
+	 */
+	lexpr = transformExpr(pstate, a->lexpr);
+	haveRowExpr = (lexpr && IsA(lexpr, RowExpr));
+	typeids = list_make1_oid(exprType(lexpr));
+	rexprs = NIL;
+	foreach(l, (List *) a->rexpr)
+	{
+		Node   *rexpr = transformExpr(pstate, lfirst(l));
+
+		haveRowExpr |= (rexpr && IsA(rexpr, RowExpr));
+		rexprs = lappend(rexprs, rexpr);
+		typeids = lappend_oid(typeids, exprType(rexpr));
+	}
+
+	/*
+	 * If not forced by presence of RowExpr, try to resolve a common
+	 * scalar type for all the expressions, and see if it has an array type.
+	 * (But if there's only one righthand expression, we may as well just
+	 * fall through and generate a simple = comparison.)
+	 */
+	if (!haveRowExpr && list_length(rexprs) != 1)
+	{
+		Oid			scalar_type;
+		Oid			array_type;
+
+		/*
+		 * Select a common type for the array elements.  Note that since
+		 * the LHS' type is first in the list, it will be preferred when
+		 * there is doubt (eg, when all the RHS items are unknown literals).
+		 */
+		scalar_type = select_common_type(typeids, "IN");
+
+		/* Do we have an array type to use? */
+		array_type = get_array_type(scalar_type);
+		if (array_type != InvalidOid)
+		{
+			/*
+			 * OK: coerce all the right-hand inputs to the common type
+			 * and build an ArrayExpr for them.
+			 */
+			List	   *aexprs;
+			ArrayExpr  *newa;
+
+			aexprs = NIL;
+			foreach(l, rexprs)
+			{
+				Node	   *rexpr = (Node *) lfirst(l);
+
+				rexpr = coerce_to_common_type(pstate, rexpr,
+											  scalar_type,
+											  "IN");
+				aexprs = lappend(aexprs, rexpr);
+			}
+			newa = makeNode(ArrayExpr);
+			newa->array_typeid = array_type;
+			newa->element_typeid = scalar_type;
+			newa->elements = aexprs;
+			newa->multidims = false;
+
+			return (Node *) make_scalar_array_op(pstate,
+												 a->name,
+												 useOr,
+												 lexpr,
+												 (Node *) newa);
+		}
+	}
+
+	/*
+	 * Must do it the hard way, ie, with a boolean expression tree.
+	 */
+	result = NULL;
+	foreach(l, rexprs)
+	{
+		Node	   *rexpr = (Node *) lfirst(l);
+		Node	   *cmp;
+
+		if (haveRowExpr)
+		{
+			if (!IsA(lexpr, RowExpr) ||
+				!IsA(rexpr, RowExpr))
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("arguments of row IN must all be row expressions")));
+			cmp = make_row_op(pstate,
+							  a->name,
+							  (RowExpr *) copyObject(lexpr),
+							  (RowExpr *) rexpr);
+		}
+		else
+			cmp = (Node *) make_op(pstate,
+								   a->name,
+								   copyObject(lexpr),
+								   rexpr);
+
+		cmp = coerce_to_boolean(pstate, cmp, "IN");
+		if (result == NULL)
+			result = cmp;
+		else
+			result = (Node *) makeBoolExpr(useOr ? OR_EXPR : AND_EXPR,
+										   list_make2(result, cmp));
+	}
+
+	return result;
 }
 
 static Node *
@@ -1818,32 +1954,25 @@ typecast_expression(ParseState *pstate, Node *expr, TypeName *typename)
 
 /*
  * Transform a "row op row" construct
+ *
+ * The input RowExprs are already transformed
  */
 static Node *
-make_row_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree)
+make_row_op(ParseState *pstate, List *opname,
+			RowExpr *lrow, RowExpr *rrow)
 {
 	Node	   *result = NULL;
-	RowExpr    *lrow,
-			   *rrow;
-	List	   *largs,
-			   *rargs;
+	List	   *largs = lrow->args;
+	List	   *rargs = rrow->args;
 	ListCell   *l,
 			   *r;
 	char	   *oprname;
 	BoolExprType boolop;
 
-	/* Inputs are untransformed RowExprs */
-	lrow = (RowExpr *) transformExpr(pstate, ltree);
-	rrow = (RowExpr *) transformExpr(pstate, rtree);
-	Assert(IsA(lrow, RowExpr));
-	Assert(IsA(rrow, RowExpr));
-	largs = lrow->args;
-	rargs = rrow->args;
-
 	if (list_length(largs) != list_length(rargs))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("unequal number of entries in row expression")));
+				 errmsg("unequal number of entries in row expressions")));
 
 	/*
 	 * XXX it's really wrong to generate a simple AND combination for < <= >
@@ -1898,31 +2027,23 @@ make_row_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree)
 
 /*
  * Transform a "row IS DISTINCT FROM row" construct
+ *
+ * The input RowExprs are already transformed
  */
 static Node *
 make_row_distinct_op(ParseState *pstate, List *opname,
-					 Node *ltree, Node *rtree)
+					 RowExpr *lrow, RowExpr *rrow)
 {
 	Node	   *result = NULL;
-	RowExpr    *lrow,
-			   *rrow;
-	List	   *largs,
-			   *rargs;
+	List	   *largs = lrow->args;
+	List	   *rargs = rrow->args;
 	ListCell   *l,
 			   *r;
-
-	/* Inputs are untransformed RowExprs */
-	lrow = (RowExpr *) transformExpr(pstate, ltree);
-	rrow = (RowExpr *) transformExpr(pstate, rtree);
-	Assert(IsA(lrow, RowExpr));
-	Assert(IsA(rrow, RowExpr));
-	largs = lrow->args;
-	rargs = rrow->args;
 
 	if (list_length(largs) != list_length(rargs))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("unequal number of entries in row expression")));
+				 errmsg("unequal number of entries in row expressions")));
 
 	forboth(l, largs, r, rargs)
 	{

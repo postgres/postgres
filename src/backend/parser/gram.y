@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.515 2005/11/22 15:24:17 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.516 2005/11/28 04:35:31 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -6721,7 +6721,7 @@ a_expr:		c_expr									{ $$ = $1; }
 				}
 			| a_expr IS NOT OF '(' type_list ')'		%prec IS
 				{
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_OF, "!=", $1, (Node *) $6);
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_OF, "<>", $1, (Node *) $6);
 				}
 			| a_expr BETWEEN opt_asymmetric b_expr AND b_expr		%prec BETWEEN
 				{
@@ -6760,29 +6760,20 @@ a_expr:		c_expr									{ $$ = $1; }
 					/* in_expr returns a SubLink or a list of a_exprs */
 					if (IsA($3, SubLink))
 					{
-							SubLink *n = (SubLink *)$3;
-							n->subLinkType = ANY_SUBLINK;
-							if (IsA($1, RowExpr))
-								n->lefthand = ((RowExpr *) $1)->args;
-							else
-								n->lefthand = list_make1($1);
-							n->operName = list_make1(makeString("="));
-							$$ = (Node *)n;
+						/* generate foo = ANY (subquery) */
+						SubLink *n = (SubLink *) $3;
+						n->subLinkType = ANY_SUBLINK;
+						if (IsA($1, RowExpr))
+							n->lefthand = ((RowExpr *) $1)->args;
+						else
+							n->lefthand = list_make1($1);
+						n->operName = list_make1(makeString("="));
+						$$ = (Node *)n;
 					}
 					else
 					{
-						Node *n = NULL;
-						ListCell *l;
-						foreach(l, (List *) $3)
-						{
-							Node *cmp;
-							cmp = (Node *) makeSimpleA_Expr(AEXPR_OP, "=", $1, lfirst(l));
-							if (n == NULL)
-								n = cmp;
-							else
-								n = (Node *) makeA_Expr(AEXPR_OR, NIL, n, cmp);
-						}
-						$$ = n;
+						/* generate scalar IN expression */
+						$$ = (Node *) makeSimpleA_Expr(AEXPR_IN, "=", $1, $3);
 					}
 				}
 			| a_expr NOT IN_P in_expr
@@ -6790,8 +6781,9 @@ a_expr:		c_expr									{ $$ = $1; }
 					/* in_expr returns a SubLink or a list of a_exprs */
 					if (IsA($4, SubLink))
 					{
-						/* Make an IN node */
-						SubLink *n = (SubLink *)$4;
+						/* generate NOT (foo = ANY (subquery)) */
+						/* Make an = ANY node */
+						SubLink *n = (SubLink *) $4;
 						n->subLinkType = ANY_SUBLINK;
 						if (IsA($1, RowExpr))
 							n->lefthand = ((RowExpr *) $1)->args;
@@ -6803,18 +6795,8 @@ a_expr:		c_expr									{ $$ = $1; }
 					}
 					else
 					{
-						Node *n = NULL;
-						ListCell *l;
-						foreach(l, (List *) $4)
-						{
-							Node *cmp;
-							cmp = (Node *) makeSimpleA_Expr(AEXPR_OP, "<>", $1, lfirst(l));
-							if (n == NULL)
-								n = cmp;
-							else
-								n = (Node *) makeA_Expr(AEXPR_AND, NIL, n, cmp);
-						}
-						$$ = n;
+						/* generate scalar NOT IN expression */
+						$$ = (Node *) makeSimpleA_Expr(AEXPR_IN, "<>", $1, $4);
 					}
 				}
 			| a_expr subquery_Op sub_type select_with_parens %prec Op
@@ -6904,7 +6886,7 @@ b_expr:		c_expr
 				}
 			| b_expr IS NOT OF '(' type_list ')'	%prec IS
 				{
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_OF, "!=", $1, (Node *) $6);
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_OF, "<>", $1, (Node *) $6);
 				}
 		;
 
