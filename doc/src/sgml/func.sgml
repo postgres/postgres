@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.291.2.1 2005/11/16 03:56:33 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.291.2.2 2005/11/28 23:19:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -7227,6 +7227,14 @@ SELECT ... WHERE CASE WHEN x &lt;&gt; 0 THEN y/x &gt; 1.5 ELSE false END;
    <primary>COALESCE</primary>
   </indexterm>
 
+  <indexterm>
+   <primary>NVL</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>IFNULL</primary>
+  </indexterm>
+
 <synopsis>
 <function>COALESCE</function>(<replaceable>value</replaceable> <optional>, ...</optional>)
 </synopsis>
@@ -7234,9 +7242,8 @@ SELECT ... WHERE CASE WHEN x &lt;&gt; 0 THEN y/x &gt; 1.5 ELSE false END;
   <para>
    The <function>COALESCE</function> function returns the first of its
    arguments that is not null.  Null is returned only if all arguments
-   are null.  This is often useful to substitute a
-   default value for null values when data is retrieved for display,
-   for example:
+   are null.  It is often used to substitute a default value for 
+   null values when data is retrieved for display, for example:
 <programlisting>
 SELECT COALESCE(description, short_description, '(none)') ...
 </programlisting>
@@ -7246,7 +7253,9 @@ SELECT COALESCE(description, short_description, '(none)') ...
     Like a <token>CASE</token> expression, <function>COALESCE</function> will
     not evaluate arguments that are not needed to determine the result;
     that is, arguments to the right of the first non-null argument are
-    not evaluated.
+    not evaluated.  This SQL-standard function provides capabilities similar
+    to <function>NVL</> and <function>IFNULL</>, which are used in some other
+    database systems.
    </para>
   </sect2>
 
@@ -7262,15 +7271,18 @@ SELECT COALESCE(description, short_description, '(none)') ...
 </synopsis>
 
   <para>
-   The <function>NULLIF</function> function returns a null value if and only
-   if <replaceable>value1</replaceable> and
-   <replaceable>value2</replaceable> are equal.  Otherwise it returns
-   <replaceable>value1</replaceable>.  This can be used to perform the
-   inverse operation of the <function>COALESCE</function> example
-   given above:
+   The <function>NULLIF</function> function returns a null value if
+   <replaceable>value1</replaceable> and <replaceable>value2</replaceable>
+   are equal;  otherwise it returns <replaceable>value1</replaceable>.
+   This can be used to perform the inverse operation of the
+   <function>COALESCE</function> example given above:
 <programlisting>
 SELECT NULLIF(value, '(none)') ...
 </programlisting>
+  </para>
+  <para>
+   If <replaceable>value1</replaceable> is <literal>(none)</>, return a null,
+   otherwise return <replaceable>value1</replaceable>.
   </para>
 
   </sect2>
