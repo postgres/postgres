@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.108 2005/11/17 22:14:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.109 2005/11/29 01:46:54 alvherre Exp $
 -->
 
  <sect1 id="xfunc">
@@ -2106,7 +2106,7 @@ include $(PGXS)
       <term><varname>REGRESS</varname></term>
       <listitem>
        <para>
-        list of regression test cases (without suffix)
+        list of regression test cases (without suffix), see below
        </para>
       </listitem>
      </varlistentry>
@@ -2186,6 +2186,36 @@ include $(PGXS)
     corresponds to the first <command>pg_config</command> command
     found in your path.
    </para>
+
+   <para>
+    The scripts listed in the <varname>REGRESS</> variable are used for
+    regression testing of your module, just like <literal>make
+    installcheck</literal> is used for the main
+    <productname>PostgreSQL</productname> server.  For this to work you need
+    to have a subdirectory named <literal>sql/</literal> in your extension's
+    directory, within which you put one file for each group of tests you want
+    to run.  The files should have extension <literal>.sql</literal>, which
+    should not be included in the <varname>REGRESS</varname> list in the
+    makefile.  For each test there should be a file containing the expected
+    result in a subdirectory named <literal>expected/</literal>, with extension
+    <literal>.out</literal>.  The tests are run by executing <literal>make
+    installcheck</literal>, and the resulting output will be compared to the
+    expected files.  The differences will be written to the file
+    <literal>regression.diffs</literal> in <command>diff -c</command> format.
+    Note that trying to run a test which is missing the expected file will be
+    reported as <quote>trouble</quote>, so make sure you have all expected
+    files.
+   </para>
+
+   <tip>
+    <para>
+     The easiest way of creating the expected files is creating empty files,
+     then carefully inspecting the result files after a test run (to be found
+     in the <literal>results/</literal> directory), and copying them to
+     <literal>expected/</literal> if they match what you want from the test.
+    </para>
+   
+   </tip>
   </sect2>
 
 
