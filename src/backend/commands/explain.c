@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.141 2005/11/26 22:14:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.142 2005/11/29 01:25:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ typedef struct ExplainState
 } ExplainState;
 
 static void ExplainOneQuery(Query *query, ExplainStmt *stmt,
-				TupOutputState *tstate);
+							ParamListInfo params, TupOutputState *tstate);
 static double elapsed_time(instr_time *starttime);
 static void explain_outNode(StringInfo str,
 				Plan *plan, PlanState *planstate,
@@ -67,7 +67,7 @@ static void show_sort_keys(List *tlist, int nkeys, AttrNumber *keycols,
  *	  execute an EXPLAIN command
  */
 void
-ExplainQuery(ExplainStmt *stmt, DestReceiver *dest)
+ExplainQuery(ExplainStmt *stmt, ParamListInfo params, DestReceiver *dest)
 {
 	Query	   *query = stmt->query;
 	TupOutputState *tstate;
@@ -91,9 +91,9 @@ ExplainQuery(ExplainStmt *stmt, DestReceiver *dest)
 	{
 		/* Rewriter will not cope with utility statements */
 		if (query->utilityStmt && IsA(query->utilityStmt, DeclareCursorStmt))
-			ExplainOneQuery(query, stmt, tstate);
+			ExplainOneQuery(query, stmt, params, tstate);
 		else if (query->utilityStmt && IsA(query->utilityStmt, ExecuteStmt))
-			ExplainExecuteQuery(stmt, tstate);
+			ExplainExecuteQuery(stmt, params, tstate);
 		else
 			do_text_output_oneline(tstate, "Utility statements have no plan structure");
 	}
@@ -118,7 +118,7 @@ ExplainQuery(ExplainStmt *stmt, DestReceiver *dest)
 			/* Explain every plan */
 			foreach(l, rewritten)
 			{
-				ExplainOneQuery(lfirst(l), stmt, tstate);
+				ExplainOneQuery(lfirst(l), stmt, params, tstate);
 				/* put a blank line between plans */
 				if (lnext(l) != NULL)
 					do_text_output_oneline(tstate, "");
@@ -150,7 +150,8 @@ ExplainResultDesc(ExplainStmt *stmt)
  *	  print out the execution plan for one query
  */
 static void
-ExplainOneQuery(Query *query, ExplainStmt *stmt, TupOutputState *tstate)
+ExplainOneQuery(Query *query, ExplainStmt *stmt, ParamListInfo params,
+				TupOutputState *tstate)
 {
 	Plan	   *plan;
 	QueryDesc  *queryDesc;
@@ -208,7 +209,7 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, TupOutputState *tstate)
 	/* Create a QueryDesc requesting no output */
 	queryDesc = CreateQueryDesc(query, plan,
 								ActiveSnapshot, InvalidSnapshot,
-								None_Receiver, NULL,
+								None_Receiver, params,
 								stmt->analyze);
 
 	ExplainOnePlan(queryDesc, stmt, tstate);
