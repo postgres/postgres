@@ -1,6 +1,6 @@
 /* dynamic SQL support routines
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.12 2004/08/29 05:06:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.13 2005/11/30 12:49:49 meskes Exp $
  */
 
 #define POSTGRES_ECPG_INTERNAL
@@ -49,7 +49,7 @@ ECPGDynamicType_DDT(Oid type)
 }
 
 bool
-ECPGget_desc_header(int lineno, char *desc_name, int *count)
+ECPGget_desc_header(int lineno, const char *desc_name, int *count)
 {
 	PGresult   *ECPGresult;
 	struct sqlca_t *sqlca = ECPGget_sqlca();
@@ -188,7 +188,7 @@ get_char_item(int lineno, void *var, enum ECPGttype vartype, char *value, int va
 }
 
 bool
-ECPGget_desc(int lineno, char *desc_name, int index,...)
+ECPGget_desc(int lineno, const char *desc_name, int index,...)
 {
 	va_list		args;
 	PGresult   *ECPGresult;
@@ -383,7 +383,7 @@ ECPGget_desc(int lineno, char *desc_name, int index,...)
 
 		/* Make sure we do NOT honor the locale for numeric input */
 		/* since the database gives the standard decimal point */
-		oldlocale = strdup(setlocale(LC_NUMERIC, NULL));
+		oldlocale = ECPGstrdup(setlocale(LC_NUMERIC, NULL), lineno);
 		setlocale(LC_NUMERIC, "C");
 
 		memset(&stmt, 0, sizeof stmt);
@@ -431,7 +431,7 @@ ECPGget_desc(int lineno, char *desc_name, int index,...)
 }
 
 bool
-ECPGset_desc_header(int lineno, char *desc_name, int count)
+ECPGset_desc_header(int lineno, const char *desc_name, int count)
 {
 	struct descriptor *desc;
 
@@ -452,7 +452,7 @@ ECPGset_desc_header(int lineno, char *desc_name, int count)
 }
 
 bool
-ECPGset_desc(int lineno, char *desc_name, int index,...)
+ECPGset_desc(int lineno, const char *desc_name, int index,...)
 {
 	va_list		args;
 	struct descriptor *desc;
