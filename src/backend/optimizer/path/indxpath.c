@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.194 2005/11/25 19:47:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.195 2005/11/30 17:10:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,7 @@ static List *find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 static Path *choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel, List *paths);
 static int	bitmap_path_comparator(const void *a, const void *b);
 static Cost bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel, List *paths);
+static bool lists_intersect_ptr(List *list1, List *list2);
 static bool match_clause_to_indexcol(IndexOptInfo *index,
 						 int indexcol, Oid opclass,
 						 RestrictInfo *rinfo,
@@ -562,7 +563,7 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel, List *paths)
 	 * In theory we should consider every nonempty subset of the given paths.
 	 * In practice that seems like overkill, given the crude nature of the
 	 * estimates, not to mention the possible effects of higher-level AND and
-	 * OR clauses.	As a compromise, we sort the paths by selectivity. We
+	 * OR clauses.	As a compromise, we sort the paths by selectivity.  We
 	 * always take the first, and sequentially add on paths that result in a
 	 * lower estimated cost.
 	 *
@@ -570,11 +571,19 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel, List *paths)
 	 * can happen if there are multiple possibly usable indexes.  For this we
 	 * look only at plain IndexPath and single-element BitmapOrPath inputs
 	 * (the latter can arise in the presence of ScalarArrayOpExpr quals).  We
-	 * consider an index redundant if all its index conditions were already
+	 * consider an index redundant if any of its index conditions were already
 	 * used by earlier indexes.  (We could use predicate_implied_by to have a
 	 * more intelligent, but much more expensive, check --- but in most cases
 	 * simple pointer equality should suffice, since after all the index
 	 * conditions are all coming from the same RestrictInfo lists.)
+	 *
+	 * You might think the condition for redundancy should be "all index
+	 * conditions already used", not "any", but this turns out to be wrong.
+	 * For example, if we use an index on A, and then come to an index with
+	 * conditions on A and B, the only way that the second index can be later
+	 * in the selectivity-order sort is if the condition on B is completely
+	 * non-selective.  In any case, we'd surely be drastically misestimating
+	 * the selectivity if we count the same condition twice.
 	 *
 	 * XXX is there any risk of throwing away a useful partial index here
 	 * because we don't explicitly look at indpred?  At least in simple cases,
@@ -620,7 +629,7 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel, List *paths)
 		if (IsA(newpath, IndexPath))
 		{
 			newqual = ((IndexPath *) newpath)->indexclauses;
-			if (list_difference_ptr(newqual, qualsofar) == NIL)
+			if (lists_intersect_ptr(newqual, qualsofar))
 				continue;		/* redundant */
 		}
 		else if (IsA(newpath, BitmapOrPath))
@@ -630,7 +639,7 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel, List *paths)
 			if (list_length(orquals) == 1 &&
 				IsA(linitial(orquals), IndexPath))
 				newqual = ((IndexPath *) linitial(orquals))->indexclauses;
-			if (list_difference_ptr(newqual, qualsofar) == NIL)
+			if (lists_intersect_ptr(newqual, qualsofar))
 				continue;		/* redundant */
 		}
 
@@ -665,19 +674,27 @@ bitmap_path_comparator(const void *a, const void *b)
 	Cost		bcost;
 	Selectivity aselec;
 	Selectivity bselec;
+	Selectivity diff;
 
 	cost_bitmap_tree_node(pa, &acost, &aselec);
 	cost_bitmap_tree_node(pb, &bcost, &bselec);
 
-	if (aselec < bselec)
+	/*
+	 * Since selectivities are often pretty crude, don't put blind faith
+	 * in them; if the selectivities are within 1% of being the same, treat
+	 * them as equal and sort by cost instead.
+	 */
+	diff = aselec - bselec;
+	if (diff < -0.01)
 		return -1;
-	if (aselec > bselec)
+	if (diff > 0.01)
 		return 1;
-	/* if identical selectivity, sort by cost */
+
 	if (acost < bcost)
 		return -1;
 	if (acost > bcost)
 		return 1;
+
 	return 0;
 }
 
@@ -701,6 +718,35 @@ bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel, List *paths)
 	cost_bitmap_heap_scan(&bpath, root, rel, (Path *) &apath, false);
 
 	return bpath.total_cost;
+}
+
+
+/*
+ * lists_intersect_ptr
+ *		Detect whether two lists have a nonempty intersection,
+ *		using pointer equality to compare members.
+ *
+ * This possibly should go into list.c, but it doesn't yet have any use
+ * except in choose_bitmap_and.
+ */
+static bool
+lists_intersect_ptr(List *list1, List *list2)
+{
+	ListCell   *cell1;
+
+	foreach(cell1, list1)
+	{
+		void   *datum1 = lfirst(cell1);
+		ListCell   *cell2;
+
+		foreach(cell2, list2)
+		{
+			if (lfirst(cell2) == datum1)
+				return true;
+		}
+	}
+
+	return false;
 }
 
 
