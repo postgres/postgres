@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.38.4.2 2005/06/02 12:37:25 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.38.4.3 2005/11/30 12:51:06 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -148,7 +148,7 @@ ECPGget_variable(va_list APREF, enum ECPGttype type, struct variable * var, bool
  * ind_offset - indicator offset
  */
 static bool
-create_statement(int lineno, int compat, int force_indicator, struct connection * connection, struct statement ** stmt, char *query, va_list ap)
+create_statement(int lineno, int compat, int force_indicator, struct connection * connection, struct statement ** stmt, const char *query, va_list ap)
 {
 	struct variable **list = &((*stmt)->inlist);
 	enum ECPGttype type;
@@ -156,7 +156,7 @@ create_statement(int lineno, int compat, int force_indicator, struct connection 
 	if (!(*stmt = (struct statement *) ECPGalloc(sizeof(struct statement), lineno)))
 		return false;
 
-	(*stmt)->command = query;
+	(*stmt)->command = ECPGstrdup(query, lineno);
 	(*stmt)->connection = connection;
 	(*stmt)->lineno = lineno;
 	(*stmt)->compat = compat;
@@ -231,6 +231,7 @@ free_statement(struct statement * stmt)
 		return;
 	free_variable(stmt->inlist);
 	free_variable(stmt->outlist);
+	ECPGfree(stmt->command);
 	ECPGfree(stmt);
 }
 
@@ -1369,7 +1370,7 @@ ECPGexecute(struct statement * stmt)
 }
 
 bool
-ECPGdo(int lineno, int compat, int force_indicator, const char *connection_name, char *query,...)
+ECPGdo(int lineno, int compat, int force_indicator, const char *connection_name, const char *query,...)
 {
 	va_list		args;
 	struct statement *stmt;
@@ -1379,7 +1380,7 @@ ECPGdo(int lineno, int compat, int force_indicator, const char *connection_name,
 
 	/* Make sure we do NOT honor the locale for numeric input/output */
 	/* since the database wants the standard decimal point */
-	oldlocale = strdup(setlocale(LC_NUMERIC, NULL));
+	oldlocale = ECPGstrdup(setlocale(LC_NUMERIC, NULL), lineno);
 	setlocale(LC_NUMERIC, "C");
 
 	if (!ECPGinit(con, connection_name, lineno))

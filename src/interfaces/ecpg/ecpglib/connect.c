@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.24.4.1 2005/04/14 10:09:20 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.24.4.2 2005/11/30 12:51:06 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -260,7 +260,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 	enum COMPAT_MODE compat = c;
 	struct connection *this;
-	char	   *dbname = name ? strdup(name) : NULL,
+	char	   *dbname = name ? ECPGstrdup(name, lineno) : NULL,
 			   *host = NULL,
 			   *tmp,
 			   *port = NULL,
@@ -282,7 +282,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 		if (envname)
 		{
 			ECPGfree(dbname);
-			dbname = strdup(envname);
+			dbname = ECPGstrdup(envname, lineno);
 		}
 
 	}
@@ -302,17 +302,17 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 			tmp = strrchr(dbname, ':');
 			if (tmp != NULL)		/* port number given */
 			{
-				port = strdup(tmp + 1);
+				port = ECPGstrdup(tmp + 1, lineno);
 				*tmp = '\0';
 			}
 
 			tmp = strrchr(dbname, '@');
 			if (tmp != NULL)		/* host name given */
 			{
-				host = strdup(tmp + 1);
+				host = ECPGstrdup(tmp + 1, lineno);
 				*tmp = '\0';
 			}
-			realname = strdup(dbname);
+			realname = ECPGstrdup(dbname, lineno);
 		}
 		else if (strncmp(dbname, "tcp:", 4) == 0 || strncmp(dbname, "unix:", 5) == 0)
 		{
@@ -340,14 +340,14 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 				tmp = strrchr(dbname + offset, '?');
 				if (tmp != NULL)	/* options given */
 				{
-					options = strdup(tmp + 1);
+					options = ECPGstrdup(tmp + 1, lineno);
 					*tmp = '\0';
 				}
 
 				tmp = last_dir_separator(dbname + offset);
 				if (tmp != NULL)	/* database name given */
 				{
-					realname = strdup(tmp + 1);
+					realname = ECPGstrdup(tmp + 1, lineno);
 					*tmp = '\0';
 				}
 
@@ -360,7 +360,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 					if ((tmp2 = strchr(tmp + 1, ':')) != NULL)
 					{
 						*tmp2 = '\0';
-						host = strdup(tmp + 1);
+						host = ECPGstrdup(tmp + 1, lineno);
 						if (strncmp(dbname, "unix:", 5) != 0)
 						{
 							ECPGlog("connect: socketname %s given for TCP connection in line %d\n", host, lineno);
@@ -379,7 +379,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 						}
 					}
 					else
-						port = strdup(tmp + 1);
+						port = ECPGstrdup(tmp + 1, lineno);
 				}
 
 				if (strncmp(dbname, "unix:", 5) == 0)
@@ -402,14 +402,14 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 					}
 				}
 				else
-					host = strdup(dbname + offset);
+					host = ECPGstrdup(dbname + offset, lineno);
 
 			}
 			else
-				realname = strdup(dbname);
+				realname = ECPGstrdup(dbname, lineno);
 		}
 		else
-			realname = strdup(dbname);
+			realname = ECPGstrdup(dbname, lineno);
 	}
 	else
 		realname = NULL;
