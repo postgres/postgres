@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.122 2005/11/22 18:17:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.123 2005/12/01 20:24:18 tgl Exp $
  *
  * NOTES:
  *
@@ -1009,11 +1009,41 @@ FileRead(File file, char *buffer, int amount)
 	if (returnCode < 0)
 		return returnCode;
 
+retry:
 	returnCode = read(VfdCache[file].fd, buffer, amount);
-	if (returnCode > 0)
+
+	if (returnCode >= 0)
 		VfdCache[file].seekPos += returnCode;
 	else
+	{
+		/*
+		 * Windows may run out of kernel buffers and return "Insufficient
+		 * system resources" error.  Wait a bit and retry to solve it.
+		 *
+		 * It is rumored that EINTR is also possible on some Unix filesystems,
+		 * in which case immediate retry is indicated.
+		 */
+#ifdef WIN32
+		DWORD error = GetLastError();
+
+		switch (error)
+		{
+			case ERROR_NO_SYSTEM_RESOURCES:
+				pg_usleep(1000L);
+				errno = EINTR;
+				break;
+			default:
+				_dosmaperr(error);
+				break;
+		}
+#endif
+		/* OK to retry if interrupted */
+		if (errno == EINTR)
+			goto retry;
+
+		/* Trouble, so assume we don't know the file position anymore */
 		VfdCache[file].seekPos = FileUnknownPos;
+	}
 
 	return returnCode;
 }
@@ -1033,6 +1063,7 @@ FileWrite(File file, char *buffer, int amount)
 	if (returnCode < 0)
 		return returnCode;
 
+retry:
 	errno = 0;
 	returnCode = write(VfdCache[file].fd, buffer, amount);
 
@@ -1040,10 +1071,34 @@ FileWrite(File file, char *buffer, int amount)
 	if (returnCode != amount && errno == 0)
 		errno = ENOSPC;
 
-	if (returnCode > 0)
+	if (returnCode >= 0)
 		VfdCache[file].seekPos += returnCode;
 	else
+	{
+		/*
+		 * See comments in FileRead()
+		 */
+#ifdef WIN32
+		DWORD error = GetLastError();
+
+		switch (error)
+		{
+			case ERROR_NO_SYSTEM_RESOURCES:
+				pg_usleep(1000L);
+				errno = EINTR;
+				break;
+			default:
+				_dosmaperr(error);
+				break;
+		}
+#endif
+		/* OK to retry if interrupted */
+		if (errno == EINTR)
+			goto retry;
+
+		/* Trouble, so assume we don't know the file position anymore */
 		VfdCache[file].seekPos = FileUnknownPos;
+	}
 
 	return returnCode;
 }
