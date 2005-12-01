@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.117 2005/12/01 20:06:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.118 2005/12/01 21:11:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -278,7 +278,7 @@ float4in(PG_FUNCTION_ARGS)
 	while (*num != '\0' && isspace((unsigned char) *num))
 		num++;
 
-	errno = 0;	/* avoid checking HUGE_VAL */
+	errno = 0;	/* avoid having to check the result for failure */
 	val = strtod(num, &endptr);
 
 	/* did we not see anything that looks like a double? */
@@ -445,7 +445,7 @@ float8in(PG_FUNCTION_ARGS)
 	while (*num != '\0' && isspace((unsigned char) *num))
 		num++;
 
-	errno = 0;	/* avoid checking HUGE_VAL */
+	errno = 0;	/* avoid having to check the result for failure */
 	val = strtod(num, &endptr);
 
 	/* did we not see anything that looks like a double? */
@@ -1476,7 +1476,7 @@ dpow(PG_FUNCTION_ARGS)
 	 * We must check both for errno getting set and for a NaN result, in order
 	 * to deal with the vagaries of different platforms...
 	 */
-	errno = 0;	/* avoid checking result for failure */
+	errno = 0;	/* avoid having to check the result for failure */
 	result = pow(arg1, arg2);
 	if (errno != 0
 #ifdef HAVE_FINITE
@@ -1506,7 +1506,7 @@ dexp(PG_FUNCTION_ARGS)
 	 * to deal with the vagaries of different platforms. Also, a zero result
 	 * implies unreported underflow.
 	 */
-	errno = 0;	/* avoid checking result for failure */
+	errno = 0;	/* avoid having to check the result for failure */
 	result = exp(arg1);
 	if (errno != 0 || result == 0.0
 #ifdef HAVE_FINITE
@@ -1590,7 +1590,7 @@ dacos(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		result;
 
-	errno = 0;	/* avoid checking result for failure */
+	errno = 0;	/* avoid having to check the result for failure */
 	result = acos(arg1);
 	if (errno != 0
 #ifdef HAVE_FINITE
@@ -1615,7 +1615,7 @@ dasin(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		result;
 
-	errno = 0;	/* avoid checking result for failure */
+	errno = 0;	/* avoid having to check the result for failure */
 	result = asin(arg1);
 	if (errno != 0
 #ifdef HAVE_FINITE
@@ -1640,7 +1640,7 @@ datan(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		result;
 
-	errno = 0;	/* avoid checking result for failure */
+	errno = 0;	/* avoid having to check the result for failure */
 	result = atan(arg1);
 	if (errno != 0
 #ifdef HAVE_FINITE
@@ -1666,7 +1666,7 @@ datan2(PG_FUNCTION_ARGS)
 	float8		arg2 = PG_GETARG_FLOAT8(1);
 	float8		result;
 
-	errno = 0;	/* avoid checking result for failure */
+	errno = 0;	/* avoid having to check the result for failure */
 	result = atan2(arg1, arg2);
 	if (errno != 0
 #ifdef HAVE_FINITE
@@ -1691,7 +1691,7 @@ dcos(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		result;
 
-	errno = 0;	/* avoid checking result for failure */
+	errno = 0;	/* avoid having to check the result for failure */
 	result = cos(arg1);
 	if (errno != 0
 #ifdef HAVE_FINITE
@@ -1716,7 +1716,7 @@ dcot(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		result;
 
-	errno = 0;	/* avoid checking result for failure */
+	errno = 0;	/* avoid having to check the result for failure */
 	result = tan(arg1);
 	if (errno != 0 || result == 0.0
 #ifdef HAVE_FINITE
@@ -1742,7 +1742,7 @@ dsin(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		result;
 
-	errno = 0;	/* avoid checking result for failure */
+	errno = 0;	/* avoid having to check the result for failure */
 	result = sin(arg1);
 	if (errno != 0
 #ifdef HAVE_FINITE
@@ -1767,7 +1767,7 @@ dtan(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		result;
 
-	errno = 0;	/* avoid checking result for failure */
+	errno = 0;	/* avoid having to check the result for failure */
 	result = tan(arg1);
 	if (errno != 0
 #ifdef HAVE_FINITE
