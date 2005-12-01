@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.80 2005/11/04 23:14:00 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.80.2.1 2005/12/01 10:38:09 neilc Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1964,7 +1964,7 @@ END LOOP;
 <optional> &lt;&lt;<replaceable>label</replaceable>&gt;&gt; </optional>
 FOR <replaceable>name</replaceable> IN <optional> REVERSE </optional> <replaceable>expression</replaceable> .. <replaceable>expression</replaceable> LOOP
     <replaceable>statements</replaceable>
-END LOOP <optional> <replaceable>labal</replaceable> </optional>;
+END LOOP <optional> <replaceable>label</replaceable> </optional>;
 </synopsis>
 
        <para>
