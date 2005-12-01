@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Dec  1 17:07:44 EST 2005
+Last updated:		Thu Dec  1 17:12:27 EST 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -370,12 +370,14 @@ SQL Commands
 
 * Add a GUC variable to warn about non-standard SQL usage in queries
 * Add SQL-standard MERGE command, typically used to merge two tables
+  [merge]
 
   This is similar to UPDATE, then for unmatched rows, INSERT.
   Whether concurrent access allows modifications which could cause
   row loss is implementation independent.
 
 * Add REPLACE or UPSERT command that does UPDATE, or on failure, INSERT
+  [merge]
 
   To implement this cleanly requires that the table have a unique index
   so duplicate checking can be easily performed.  It is possible to
