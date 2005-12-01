@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.122 2005/11/22 18:17:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.123 2005/12/01 02:03:00 alvherre Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -42,28 +42,22 @@
 #include "utils/syscache.h"
 
 
-static void ExecGrant_Relation(bool is_grant, List *objects, bool all_privs,
-				   AclMode privileges, List *grantees, bool grant_option,
-				   DropBehavior behavior);
-static void ExecGrant_Database(bool is_grant, List *objects, bool all_privs,
-				   AclMode privileges, List *grantees, bool grant_option,
-				   DropBehavior behavior);
-static void ExecGrant_Function(bool is_grant, List *objects, bool all_privs,
-				   AclMode privileges, List *grantees, bool grant_option,
-				   DropBehavior behavior);
-static void ExecGrant_Language(bool is_grant, List *objects, bool all_privs,
-				   AclMode privileges, List *grantees, bool grant_option,
-				   DropBehavior behavior);
-static void ExecGrant_Namespace(bool is_grant, List *objects, bool all_privs,
-					AclMode privileges, List *grantees, bool grant_option,
-					DropBehavior behavior);
-static void ExecGrant_Tablespace(bool is_grant, List *objects, bool all_privs,
-					 AclMode privileges, List *grantees, bool grant_option,
-					 DropBehavior behavior);
-static List *objectNamesToOids(GrantObjectType objtype, List *objnames);
+static void ExecGrant_Relation(InternalGrant *grantStmt);
+static void ExecGrant_Database(InternalGrant *grantStmt);
+static void ExecGrant_Function(InternalGrant *grantStmt);
+static void ExecGrant_Language(InternalGrant *grantStmt);
+static void ExecGrant_Namespace(InternalGrant *grantStmt);
+static void ExecGrant_Tablespace(InternalGrant *grantStmt);
 
+static List *objectNamesToOids(GrantObjectType objtype, List *objnames);
 static AclMode string_to_privilege(const char *privname);
 static const char *privilege_to_string(AclMode privilege);
+static AclMode restrict_and_check_grant(bool is_grant, AclMode avail_goptions,
+										bool all_privs, AclMode privileges,
+										Oid objectId, Oid grantorId,
+										AclObjectKind objkind, char *objname);
+static AclMode pg_aclmask(AclObjectKind objkind, Oid table_oid, Oid roleid,
+		   AclMode mask, AclMaskHow how);
 
 
 #ifdef ACLDEBUG
@@ -153,6 +147,91 @@ merge_acl_with_grant(Acl *old_acl, bool is_grant,
 	return new_acl;
 }
 
+/*
+ * Restrict the privileges to what we can actually grant, and emit
+ * the standards-mandated warning and error messages.
+ */
+static AclMode
+restrict_and_check_grant(bool is_grant, AclMode avail_goptions, bool all_privs,
+						 AclMode privileges, Oid objectId, Oid grantorId,
+						 AclObjectKind objkind, char *objname)
+{
+	AclMode	this_privileges;
+	AclMode whole_mask;
+
+	switch (objkind)
+	{
+		case ACL_KIND_CLASS:
+			whole_mask = ACL_ALL_RIGHTS_RELATION;
+			break;
+		case ACL_KIND_DATABASE:
+			whole_mask = ACL_ALL_RIGHTS_DATABASE;
+			break;
+		case ACL_KIND_PROC:
+			whole_mask = ACL_ALL_RIGHTS_FUNCTION;
+			break;
+		case ACL_KIND_LANGUAGE:
+			whole_mask = ACL_ALL_RIGHTS_LANGUAGE;
+			break;
+		case ACL_KIND_NAMESPACE:
+			whole_mask = ACL_ALL_RIGHTS_NAMESPACE;
+			break;
+		case ACL_KIND_TABLESPACE:
+			whole_mask = ACL_ALL_RIGHTS_TABLESPACE;
+			break;
+		default:
+			elog(ERROR, "unrecognized object kind: %d", objkind);
+			/* not reached, but keep compiler quiet */
+			return ACL_NO_RIGHTS;
+	}
+
+	/*
+	 * If we found no grant options, consider whether to issue a hard
+	 * error.  Per spec, having any privilege at all on the object will
+	 * get you by here.
+	 */
+	if (avail_goptions == ACL_NO_RIGHTS)
+	{
+		if (pg_aclmask(objkind, objectId, grantorId,
+					   whole_mask | ACL_GRANT_OPTION_FOR(whole_mask),
+					   ACLMASK_ANY) == ACL_NO_RIGHTS)
+			aclcheck_error(ACLCHECK_NO_PRIV, objkind, objname);
+	}
+
+	/*
+	 * Restrict the operation to what we can actually grant or revoke, and
+	 * issue a warning if appropriate.	(For REVOKE this isn't quite what
+	 * the spec says to do: the spec seems to want a warning only if no
+	 * privilege bits actually change in the ACL. In practice that
+	 * behavior seems much too noisy, as well as inconsistent with the
+	 * GRANT case.)
+	 */
+	this_privileges = privileges & ACL_OPTION_TO_PRIVS(avail_goptions);
+	if (is_grant)
+	{
+		if (this_privileges == 0)
+			ereport(WARNING,
+					(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
+					 errmsg("no privileges were granted")));
+		else if (!all_privs && this_privileges != privileges)
+			ereport(WARNING,
+					(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
+					 errmsg("not all privileges were granted")));
+	}
+	else
+	{
+		if (this_privileges == 0)
+			ereport(WARNING,
+					(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
+					 errmsg("no privileges could be revoked")));
+		else if (!all_privs && this_privileges != privileges)
+			ereport(WARNING,
+					(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
+					 errmsg("not all privileges could be revoked")));
+	}
+
+	return this_privileges;
+}
 
 /*
  * Called to execute the utility commands GRANT and REVOKE
@@ -160,13 +239,24 @@ merge_acl_with_grant(Acl *old_acl, bool is_grant,
 void
 ExecuteGrantStmt(GrantStmt *stmt)
 {
-	List	   *objects;
-	List	   *grantees = NIL;
-	AclMode		privileges;
+	InternalGrant istmt;
 	ListCell   *cell;
-	bool		all_privs;
-	AclMode		all_privileges = (AclMode) 0;
-	char	   *errormsg = NULL;
+	char	   *errormsg;
+	AclMode		all_privileges;
+
+	/*
+	 * Turn the regular GrantStmt into the InternalGrant form.
+	 */
+	istmt.is_grant = stmt->is_grant;
+	istmt.objtype = stmt->objtype;
+	istmt.objects = objectNamesToOids(stmt->objtype, stmt->objects);
+	/* all_privs to be filled below */
+	/* privileges to be filled below */
+	istmt.grantees = NIL;
+	/* filled below */
+	istmt.grant_option = stmt->grant_option;
+	istmt.behavior = stmt->behavior;
+
 
 	/*
 	 * Convert the PrivGrantee list into an Oid list.  Note that at this point
@@ -180,15 +270,15 @@ ExecuteGrantStmt(GrantStmt *stmt)
 		PrivGrantee *grantee = (PrivGrantee *) lfirst(cell);
 
 		if (grantee->rolname == NULL)
-			grantees = lappend_oid(grantees, ACL_ID_PUBLIC);
+			istmt.grantees = lappend_oid(istmt.grantees, ACL_ID_PUBLIC);
 		else
-			grantees = lappend_oid(grantees,
-								   get_roleid_checked(grantee->rolname));
+			istmt.grantees =
+				lappend_oid(istmt.grantees,
+							get_roleid_checked(grantee->rolname));
 	}
 
 	/*
-	 * Convert stmt->privileges, a textual list, into an AclMode bitmask
-	 * appropiate for the given object class.
+	 * Convert stmt->privileges, a textual list, into an AclMode bitmask.
 	 */
 	switch (stmt->objtype)
 	{
@@ -217,19 +307,26 @@ ExecuteGrantStmt(GrantStmt *stmt)
 			errormsg = _("invalid privilege type %s for tablespace");
 			break;
 		default:
+			/* keep compiler quiet */
+			all_privileges = ACL_NO_RIGHTS;
+			errormsg = NULL;
 			elog(ERROR, "unrecognized GrantStmt.objtype: %d",
 				 (int) stmt->objtype);
 	}
 
 	if (stmt->privileges == NIL)
 	{
-		all_privs = true;
-		privileges = all_privileges;
+		istmt.all_privs = true;
+		/*
+		 * will be turned into ACL_ALL_RIGHTS_* by the internal routines
+		 * depending on the object type
+		 */
+		istmt.privileges = ACL_NO_RIGHTS;
 	}
 	else
 	{
-		all_privs = false;
-		privileges = ACL_NO_RIGHTS;
+		istmt.all_privs = false;
+		istmt.privileges = ACL_NO_RIGHTS;
 		foreach(cell, stmt->privileges)
 		{
 			char	   *privname = strVal(lfirst(cell));
@@ -241,61 +338,44 @@ ExecuteGrantStmt(GrantStmt *stmt)
 						 errmsg(errormsg,
 								privilege_to_string(priv))));
 
-			privileges |= priv;
+			istmt.privileges |= priv;
 		}
 	}
 
-	/* Turn the list of object names into an Oid list */
-	objects = objectNamesToOids(stmt->objtype, stmt->objects);
-
-	ExecGrantStmt_oids(stmt->is_grant, stmt->objtype, objects, all_privs,
-					   privileges, grantees, stmt->grant_option,
-					   stmt->behavior);
+	ExecGrantStmt_oids(&istmt);
 }
 
 /*
  * ExecGrantStmt_oids
  *
- * "Internal" entrypoint for granting and revoking privileges.	The arguments
- * it receives are lists of Oids or have been otherwise converted from text
- * format to internal format.
+ * "Internal" entrypoint for granting and revoking privileges.
  */
 void
-ExecGrantStmt_oids(bool is_grant, GrantObjectType objtype, List *objects,
-				   bool all_privs, AclMode privileges, List *grantees,
-				   bool grant_option, DropBehavior behavior)
+ExecGrantStmt_oids(InternalGrant *istmt)
 {
-	switch (objtype)
+	switch (istmt->objtype)
 	{
 		case ACL_OBJECT_RELATION:
-			ExecGrant_Relation(is_grant, objects, all_privs, privileges,
-							   grantees, grant_option, behavior);
+			ExecGrant_Relation(istmt);
 			break;
 		case ACL_OBJECT_DATABASE:
-			ExecGrant_Database(is_grant, objects, all_privs, privileges,
-							   grantees, grant_option, behavior);
+			ExecGrant_Database(istmt);
 			break;
 		case ACL_OBJECT_FUNCTION:
-			ExecGrant_Function(is_grant, objects, all_privs, privileges,
-							   grantees, grant_option, behavior);
+			ExecGrant_Function(istmt);
 			break;
 		case ACL_OBJECT_LANGUAGE:
-			ExecGrant_Language(is_grant, objects, all_privs, privileges,
-							   grantees, grant_option, behavior);
+			ExecGrant_Language(istmt);
 			break;
 		case ACL_OBJECT_NAMESPACE:
-			ExecGrant_Namespace(is_grant, objects, all_privs,
-								privileges, grantees, grant_option,
-								behavior);
+			ExecGrant_Namespace(istmt);
 			break;
 		case ACL_OBJECT_TABLESPACE:
-			ExecGrant_Tablespace(is_grant, objects, all_privs,
-								 privileges, grantees, grant_option,
-								 behavior);
+			ExecGrant_Tablespace(istmt);
 			break;
 		default:
 			elog(ERROR, "unrecognized GrantStmt.objtype: %d",
-				 (int) objtype);
+				 (int) istmt->objtype);
 	}
 }
 
@@ -444,19 +524,17 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 }
 
 static void
-ExecGrant_Relation(bool is_grant, List *objects, bool all_privs,
-				   AclMode privileges, List *grantees, bool grant_option,
-				   DropBehavior behavior)
+ExecGrant_Relation(InternalGrant *istmt)
 {
 	Relation	relation;
 	ListCell   *cell;
 
-	if (all_privs && privileges == ACL_NO_RIGHTS)
-		privileges = ACL_ALL_RIGHTS_RELATION;
+	if (istmt->all_privs && istmt->privileges == ACL_NO_RIGHTS)
+		istmt->privileges = ACL_ALL_RIGHTS_RELATION;
 
 	relation = heap_open(RelationRelationId, RowExclusiveLock);
 
-	foreach(cell, objects)
+	foreach(cell, istmt->objects)
 	{
 		Oid			relOid = lfirst_oid(cell);
 		Datum		aclDatum;
@@ -512,56 +590,19 @@ ExecGrant_Relation(bool is_grant, List *objects, bool all_privs,
 			old_acl = DatumGetAclPCopy(aclDatum);
 
 		/* Determine ID to do the grant as, and available grant options */
-		select_best_grantor(GetUserId(), privileges,
+		select_best_grantor(GetUserId(), istmt->privileges,
 							old_acl, ownerId,
 							&grantorId, &avail_goptions);
 
 		/*
-		 * If we found no grant options, consider whether to issue a hard
-		 * error.  Per spec, having any privilege at all on the object will
-		 * get you by here.
+		 * Restrict the privileges to what we can actually grant, and emit
+		 * the standards-mandated warning and error messages.
 		 */
-		if (avail_goptions == ACL_NO_RIGHTS)
-		{
-			if (pg_class_aclmask(relOid,
-								 grantorId,
-								 ACL_ALL_RIGHTS_RELATION | ACL_GRANT_OPTION_FOR(ACL_ALL_RIGHTS_RELATION),
-								 ACLMASK_ANY) == ACL_NO_RIGHTS)
-				aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
-							   NameStr(pg_class_tuple->relname));
-		}
-
-		/*
-		 * Restrict the operation to what we can actually grant or revoke, and
-		 * issue a warning if appropriate.	(For REVOKE this isn't quite what
-		 * the spec says to do: the spec seems to want a warning only if no
-		 * privilege bits actually change in the ACL. In practice that
-		 * behavior seems much too noisy, as well as inconsistent with the
-		 * GRANT case.)
-		 */
-		this_privileges = privileges & ACL_OPTION_TO_PRIVS(avail_goptions);
-		if (is_grant)
-		{
-			if (this_privileges == 0)
-				ereport(WARNING,
-						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
-						 errmsg("no privileges were granted")));
-			else if (!all_privs && this_privileges != privileges)
-				ereport(WARNING,
-						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
-						 errmsg("not all privileges were granted")));
-		}
-		else
-		{
-			if (this_privileges == 0)
-				ereport(WARNING,
-						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
-						 errmsg("no privileges could be revoked")));
-			else if (!all_privs && this_privileges != privileges)
-				ereport(WARNING,
-						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
-						 errmsg("not all privileges could be revoked")));
-		}
+		this_privileges =
+			restrict_and_check_grant(istmt->is_grant, avail_goptions,
+									 istmt->all_privs, istmt->privileges,
+									 relOid, grantorId, ACL_KIND_CLASS,
+									 NameStr(pg_class_tuple->relname));
 
 		/*
 		 * Generate new ACL.
@@ -571,9 +612,9 @@ ExecGrant_Relation(bool is_grant, List *objects, bool all_privs,
 		 */
 		noldmembers = aclmembers(old_acl, &oldmembers);
 
-		new_acl = merge_acl_with_grant(old_acl, is_grant,
-									   grant_option, behavior,
-									   grantees, this_privileges,
+		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
+									   istmt->grant_option, istmt->behavior,
+									   istmt->grantees, this_privileges,
 									   grantorId, ownerId);
 
 		nnewmembers = aclmembers(new_acl, &newmembers);
@@ -595,7 +636,7 @@ ExecGrant_Relation(bool is_grant, List *objects, bool all_privs,
 
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(RelationRelationId, relOid,
-							  ownerId, is_grant,
+							  ownerId, istmt->is_grant,
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
 
@@ -611,19 +652,17 @@ ExecGrant_Relation(bool is_grant, List *objects, bool all_privs,
 }
 
 static void
-ExecGrant_Database(bool is_grant, List *objects, bool all_privs,
-				   AclMode privileges, List *grantees, bool grant_option,
-				   DropBehavior behavior)
+ExecGrant_Database(InternalGrant *istmt)
 {
 	Relation	relation;
 	ListCell   *cell;
 
-	if (all_privs && privileges == ACL_NO_RIGHTS)
-		privileges = ACL_ALL_RIGHTS_DATABASE;
+	if (istmt->all_privs && istmt->privileges == ACL_NO_RIGHTS)
+		istmt->privileges = ACL_ALL_RIGHTS_DATABASE;
 
 	relation = heap_open(DatabaseRelationId, RowExclusiveLock);
 
-	foreach(cell, objects)
+	foreach(cell, istmt->objects)
 	{
 		Oid			datId = lfirst_oid(cell);
 		Form_pg_database pg_database_tuple;
@@ -675,56 +714,19 @@ ExecGrant_Database(bool is_grant, List *objects, bool all_privs,
 			old_acl = DatumGetAclPCopy(aclDatum);
 
 		/* Determine ID to do the grant as, and available grant options */
-		select_best_grantor(GetUserId(), privileges,
+		select_best_grantor(GetUserId(), istmt->privileges,
 							old_acl, ownerId,
 							&grantorId, &avail_goptions);
 
 		/*
-		 * If we found no grant options, consider whether to issue a hard
-		 * error.  Per spec, having any privilege at all on the object will
-		 * get you by here.
+		 * Restrict the privileges to what we can actually grant, and emit
+		 * the standards-mandated warning and error messages.
 		 */
-		if (avail_goptions == ACL_NO_RIGHTS)
-		{
-			if (pg_database_aclmask(HeapTupleGetOid(tuple),
-									grantorId,
-									ACL_ALL_RIGHTS_DATABASE | ACL_GRANT_OPTION_FOR(ACL_ALL_RIGHTS_DATABASE),
-									ACLMASK_ANY) == ACL_NO_RIGHTS)
-				aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_DATABASE,
-							   NameStr(pg_database_tuple->datname));
-		}
-
-		/*
-		 * Restrict the operation to what we can actually grant or revoke, and
-		 * issue a warning if appropriate.	(For REVOKE this isn't quite what
-		 * the spec says to do: the spec seems to want a warning only if no
-		 * privilege bits actually change in the ACL. In practice that
-		 * behavior seems much too noisy, as well as inconsistent with the
-		 * GRANT case.)
-		 */
-		this_privileges = privileges & ACL_OPTION_TO_PRIVS(avail_goptions);
-		if (is_grant)
-		{
-			if (this_privileges == 0)
-				ereport(WARNING,
-						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
-						 errmsg("no privileges were granted")));
-			else if (!all_privs && this_privileges != privileges)
-				ereport(WARNING,
-						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
-						 errmsg("not all privileges were granted")));
-		}
-		else
-		{
-			if (this_privileges == 0)
-				ereport(WARNING,
-						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
-						 errmsg("no privileges could be revoked")));
-			else if (!all_privs && this_privileges != privileges)
-				ereport(WARNING,
-						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
-						 errmsg("not all privileges could be revoked")));
-		}
+		this_privileges =
+			restrict_and_check_grant(istmt->is_grant, avail_goptions,
+									 istmt->all_privs, istmt->privileges,
+									 datId, grantorId, ACL_KIND_DATABASE,
+									 NameStr(pg_database_tuple->datname));
 
 		/*
 		 * Generate new ACL.
@@ -734,9 +736,9 @@ ExecGrant_Database(bool is_grant, List *objects, bool all_privs,
 		 */
 		noldmembers = aclmembers(old_acl, &oldmembers);
 
-		new_acl = merge_acl_with_grant(old_acl, is_grant,
-									   grant_option, behavior,
-									   grantees, this_privileges,
+		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
+									   istmt->grant_option, istmt->behavior,
+									   istmt->grantees, this_privileges,
 									   grantorId, ownerId);
 
 		nnewmembers = aclmembers(new_acl, &newmembers);
@@ -759,7 +761,7 @@ ExecGrant_Database(bool is_grant, List *objects, bool all_privs,
 
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(DatabaseRelationId, HeapTupleGetOid(tuple),
-							  ownerId, is_grant,
+							  ownerId, istmt->is_grant,
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
 
@@ -775,19 +777,17 @@ ExecGrant_Database(bool is_grant, List *objects, bool all_privs,
 }
 
 static void
-ExecGrant_Function(bool is_grant, List *objects, bool all_privs,
-				   AclMode privileges, List *grantees, bool grant_option,
-				   DropBehavior behavior)
+ExecGrant_Function(InternalGrant *istmt)
 {
 	Relation	relation;
 	ListCell   *cell;
 
-	if (all_privs && privileges == ACL_NO_RIGHTS)
-		privileges = ACL_ALL_RIGHTS_FUNCTION;
+	if (istmt->all_privs && istmt->privileges == ACL_NO_RIGHTS)
+		istmt->privileges = ACL_ALL_RIGHTS_FUNCTION;
 
 	relation = heap_open(ProcedureRelationId, RowExclusiveLock);
 
-	foreach(cell, objects)
+	foreach(cell, istmt->objects)
 	{
 		Oid			funcId = lfirst_oid(cell);
 		Form_pg_proc pg_proc_tuple;
@@ -830,56 +830,19 @@ ExecGrant_Function(bool is_grant, List *objects, bool all_privs,
 			old_acl = DatumGetAclPCopy(aclDatum);
 
 		/* Determine ID to do the grant as, and available grant options */
-		select_best_grantor(GetUserId(), privileges,
+		select_best_grantor(GetUserId(), istmt->privileges,
 							old_acl, ownerId,
 							&grantorId, &avail_goptions);
 
 		/*
-		 * If we found no grant options, consider whether to issue a hard
-		 * error.  Per spec, having any privilege at all on the object will
-		 * get you by here.
+		 * Restrict the privileges to what we can actually grant, and emit
+		 * the standards-mandated warning and error messages.
 		 */
-		if (avail_goptions == ACL_NO_RIGHTS)
-		{
-			if (pg_proc_aclmask(funcId,
-								grantorId,
-								ACL_ALL_RIGHTS_FUNCTION | ACL_GRANT_OPTION_FOR(ACL_ALL_RIGHTS_FUNCTION),
-								ACLMASK_ANY) == ACL_NO_RIGHTS)
-				aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_PROC,
-							   NameStr(pg_proc_tuple->proname));
-		}
-
-		/*
-		 * Restrict the operation to what we can actually grant or revoke, and
-		 * issue a warning if appropriate.	(For REVOKE this isn't quite what
-		 * the spec says to do: the spec seems to want a warning only if no
-		 * privilege bits actually change in the ACL. In practice that
-		 * behavior seems much too noisy, as well as inconsistent with the
-		 * GRANT case.)
-		 */
-		this_privileges = privileges & ACL_OPTION_TO_PRIVS(avail_goptions);
-		if (is_grant)
-		{
-			if (this_privileges == 0)
-				ereport(WARNING,
-						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
-						 errmsg("no privileges were granted")));
-			else if (!all_privs && this_privileges != privileges)
-				ereport(WARNING,
-						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
-						 errmsg("not all privileges were granted")));
-		}
-		else
-		{
-			if (this_privileges == 0)
-				ereport(WARNING,
-						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
-						 errmsg("no privileges could be revoked")));
-			else if (!all_privs && this_privileges != privileges)
-				ereport(WARNING,
-						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
-						 errmsg("not all privileges could be revoked")));
-		}
+		this_privileges =
+			restrict_and_check_grant(istmt->is_grant, avail_goptions,
+									 istmt->all_privs, istmt->privileges,
+									 funcId, grantorId, ACL_KIND_PROC,
+									 NameStr(pg_proc_tuple->proname));
 
 		/*
 		 * Generate new ACL.
@@ -889,9 +852,9 @@ ExecGrant_Function(bool is_grant, List *objects, bool all_privs,
 		 */
 		noldmembers = aclmembers(old_acl, &oldmembers);
 
-		new_acl = merge_acl_with_grant(old_acl, is_grant,
-									   grant_option, behavior,
-									   grantees, this_privileges,
+		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
+									   istmt->grant_option, istmt->behavior,
+									   istmt->grantees, this_privileges,
 									   grantorId, ownerId);
 
 		nnewmembers = aclmembers(new_acl, &newmembers);
@@ -914,7 +877,7 @@ ExecGrant_Function(bool is_grant, List *objects, bool all_privs,
 
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(ProcedureRelationId, funcId,
-							  ownerId, is_grant,
+							  ownerId, istmt->is_grant,
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
 
@@ -930,21 +893,19 @@ ExecGrant_Function(bool is_grant, List *objects, bool all_privs,
 }
 
 static void
-ExecGrant_Language(bool is_grant, List *objects, bool all_privs,
-				   AclMode privileges, List *grantees, bool grant_option,
-				   DropBehavior behavior)
+ExecGrant_Language(InternalGrant *istmt)
 {
 	Relation	relation;
 	ListCell   *cell;
 
-	if (all_privs && privileges == ACL_NO_RIGHTS)
-		privileges = ACL_ALL_RIGHTS_LANGUAGE;
+	if (istmt->all_privs && istmt->privileges == ACL_NO_RIGHTS)
+		istmt->privileges = ACL_ALL_RIGHTS_LANGUAGE;
 
 	relation = heap_open(LanguageRelationId, RowExclusiveLock);
 
-	foreach(cell, objects)
+	foreach(cell, istmt->objects)
 	{
-		Oid			langid = lfirst_oid(cell);
+		Oid			langId = lfirst_oid(cell);
 		Form_pg_language pg_language_tuple;
 		Datum		aclDatum;
 		bool		isNull;
@@ -965,10 +926,10 @@ ExecGrant_Language(bool is_grant, List *objects, bool all_privs,
 		Oid		   *newmembers;
 
 		tuple = SearchSysCache(LANGOID,
-							   ObjectIdGetDatum(langid),
+							   ObjectIdGetDatum(langId),
 							   0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "cache lookup failed for language %u", langid);
+			elog(ERROR, "cache lookup failed for language %u", langId);
 
 		pg_language_tuple = (Form_pg_language) GETSTRUCT(tuple);
 
@@ -995,56 +956,19 @@ ExecGrant_Language(bool is_grant, List *objects, bool all_privs,
 			old_acl = DatumGetAclPCopy(aclDatum);
 
 		/* Determine ID to do the grant as, and available grant options */
-		select_best_grantor(GetUserId(), privileges,
+		select_best_grantor(GetUserId(), istmt->privileges,
 							old_acl, ownerId,
 							&grantorId, &avail_goptions);
 
 		/*
-		 * If we found no grant options, consider whether to issue a hard
-		 * error.  Per spec, having any privilege at all on the object will
-		 * get you by here.
+		 * Restrict the privileges to what we can actually grant, and emit
+		 * the standards-mandated warning and error messages.
 		 */
-		if (avail_goptions == ACL_NO_RIGHTS)
-		{
-			if (pg_language_aclmask(HeapTupleGetOid(tuple),
-									grantorId,
-									ACL_ALL_RIGHTS_LANGUAGE | ACL_GRANT_OPTION_FOR(ACL_ALL_RIGHTS_LANGUAGE),
-									ACLMASK_ANY) == ACL_NO_RIGHTS)
-				aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_LANGUAGE,
-							   NameStr(pg_language_tuple->lanname));
-		}
-
-		/*
-		 * Restrict the operation to what we can actually grant or revoke, and
-		 * issue a warning if appropriate.	(For REVOKE this isn't quite what
-		 * the spec says to do: the spec seems to want a warning only if no
-		 * privilege bits actually change in the ACL. In practice that
-		 * behavior seems much too noisy, as well as inconsistent with the
-		 * GRANT case.)
-		 */
-		this_privileges = privileges & ACL_OPTION_TO_PRIVS(avail_goptions);
-		if (is_grant)
-		{
-			if (this_privileges == 0)
-				ereport(WARNING,
-						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
-						 errmsg("no privileges were granted")));
-			else if (!all_privs && this_privileges != privileges)
-				ereport(WARNING,
-						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
-						 errmsg("not all privileges were granted")));
-		}
-		else
-		{
-			if (this_privileges == 0)
-				ereport(WARNING,
-						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
-						 errmsg("no privileges could be revoked")));
-			else if (!all_privs && this_privileges != privileges)
-				ereport(WARNING,
-						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
-						 errmsg("not all privileges could be revoked")));
-		}
+		this_privileges =
+			restrict_and_check_grant(istmt->is_grant, avail_goptions,
+									 istmt->all_privs, istmt->privileges,
+									 langId, grantorId, ACL_KIND_LANGUAGE,
+									 NameStr(pg_language_tuple->lanname));
 
 		/*
 		 * Generate new ACL.
@@ -1054,9 +978,9 @@ ExecGrant_Language(bool is_grant, List *objects, bool all_privs,
 		 */
 		noldmembers = aclmembers(old_acl, &oldmembers);
 
-		new_acl = merge_acl_with_grant(old_acl, is_grant,
-									   grant_option, behavior,
-									   grantees, this_privileges,
+		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
+									   istmt->grant_option, istmt->behavior,
+									   istmt->grantees, this_privileges,
 									   grantorId, ownerId);
 
 		nnewmembers = aclmembers(new_acl, &newmembers);
@@ -1079,7 +1003,7 @@ ExecGrant_Language(bool is_grant, List *objects, bool all_privs,
 
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(LanguageRelationId, HeapTupleGetOid(tuple),
-							  ownerId, is_grant,
+							  ownerId, istmt->is_grant,
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
 
@@ -1095,19 +1019,17 @@ ExecGrant_Language(bool is_grant, List *objects, bool all_privs,
 }
 
 static void
-ExecGrant_Namespace(bool is_grant, List *objects, bool all_privs,
-					AclMode privileges, List *grantees, bool grant_option,
-					DropBehavior behavior)
+ExecGrant_Namespace(InternalGrant *istmt)
 {
 	Relation	relation;
 	ListCell   *cell;
 
-	if (all_privs && privileges == ACL_NO_RIGHTS)
-		privileges = ACL_ALL_RIGHTS_NAMESPACE;
+	if (istmt->all_privs && istmt->privileges == ACL_NO_RIGHTS)
+		istmt->privileges = ACL_ALL_RIGHTS_NAMESPACE;
 
 	relation = heap_open(NamespaceRelationId, RowExclusiveLock);
 
-	foreach(cell, objects)
+	foreach(cell, istmt->objects)
 	{
 		Oid			nspid = lfirst_oid(cell);
 		Form_pg_namespace pg_namespace_tuple;
@@ -1151,56 +1073,19 @@ ExecGrant_Namespace(bool is_grant, List *objects, bool all_privs,
 			old_acl = DatumGetAclPCopy(aclDatum);
 
 		/* Determine ID to do the grant as, and available grant options */
-		select_best_grantor(GetUserId(), privileges,
+		select_best_grantor(GetUserId(), istmt->privileges,
 							old_acl, ownerId,
 							&grantorId, &avail_goptions);
 
 		/*
-		 * If we found no grant options, consider whether to issue a hard
-		 * error.  Per spec, having any privilege at all on the object will
-		 * get you by here.
+		 * Restrict the privileges to what we can actually grant, and emit
+		 * the standards-mandated warning and error messages.
 		 */
-		if (avail_goptions == ACL_NO_RIGHTS)
-		{
-			if (pg_namespace_aclmask(HeapTupleGetOid(tuple),
-									 grantorId,
-									 ACL_ALL_RIGHTS_NAMESPACE | ACL_GRANT_OPTION_FOR(ACL_ALL_RIGHTS_NAMESPACE),
-									 ACLMASK_ANY) == ACL_NO_RIGHTS)
-				aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_NAMESPACE,
-							   NameStr(pg_namespace_tuple->nspname));
-		}
-
-		/*
-		 * Restrict the operation to what we can actually grant or revoke, and
-		 * issue a warning if appropriate.	(For REVOKE this isn't quite what
-		 * the spec says to do: the spec seems to want a warning only if no
-		 * privilege bits actually change in the ACL. In practice that
-		 * behavior seems much too noisy, as well as inconsistent with the
-		 * GRANT case.)
-		 */
-		this_privileges = privileges & ACL_OPTION_TO_PRIVS(avail_goptions);
-		if (is_grant)
-		{
-			if (this_privileges == 0)
-				ereport(WARNING,
-						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
-						 errmsg("no privileges were granted")));
-			else if (!all_privs && this_privileges != privileges)
-				ereport(WARNING,
-						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
-						 errmsg("not all privileges were granted")));
-		}
-		else
-		{
-			if (this_privileges == 0)
-				ereport(WARNING,
-						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
-						 errmsg("no privileges could be revoked")));
-			else if (!all_privs && this_privileges != privileges)
-				ereport(WARNING,
-						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
-						 errmsg("not all privileges could be revoked")));
-		}
+		this_privileges =
+			restrict_and_check_grant(istmt->is_grant, avail_goptions,
+									 istmt->all_privs, istmt->privileges,
+									 nspid, grantorId, ACL_KIND_NAMESPACE,
+									 NameStr(pg_namespace_tuple->nspname));
 
 		/*
 		 * Generate new ACL.
@@ -1210,9 +1095,9 @@ ExecGrant_Namespace(bool is_grant, List *objects, bool all_privs,
 		 */
 		noldmembers = aclmembers(old_acl, &oldmembers);
 
-		new_acl = merge_acl_with_grant(old_acl, is_grant,
-									   grant_option, behavior,
-									   grantees, this_privileges,
+		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
+									   istmt->grant_option, istmt->behavior,
+									   istmt->grantees, this_privileges,
 									   grantorId, ownerId);
 
 		nnewmembers = aclmembers(new_acl, &newmembers);
@@ -1235,7 +1120,7 @@ ExecGrant_Namespace(bool is_grant, List *objects, bool all_privs,
 
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(NamespaceRelationId, HeapTupleGetOid(tuple),
-							  ownerId, is_grant,
+							  ownerId, istmt->is_grant,
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
 
@@ -1251,19 +1136,17 @@ ExecGrant_Namespace(bool is_grant, List *objects, bool all_privs,
 }
 
 static void
-ExecGrant_Tablespace(bool is_grant, List *objects, bool all_privs,
-					 AclMode privileges, List *grantees, bool grant_option,
-					 DropBehavior behavior)
+ExecGrant_Tablespace(InternalGrant *istmt)
 {
 	Relation	relation;
 	ListCell   *cell;
 
-	if (all_privs && privileges == ACL_NO_RIGHTS)
-		privileges = ACL_ALL_RIGHTS_TABLESPACE;
+	if (istmt->all_privs && istmt->privileges == ACL_NO_RIGHTS)
+		istmt->privileges = ACL_ALL_RIGHTS_TABLESPACE;
 
 	relation = heap_open(TableSpaceRelationId, RowExclusiveLock);
 
-	foreach(cell, objects)
+	foreach(cell, istmt->objects)
 	{
 		Oid			tblId = lfirst_oid(cell);
 		Form_pg_tablespace pg_tablespace_tuple;
@@ -1313,56 +1196,19 @@ ExecGrant_Tablespace(bool is_grant, List *objects, bool all_privs,
 			old_acl = DatumGetAclPCopy(aclDatum);
 
 		/* Determine ID to do the grant as, and available grant options */
-		select_best_grantor(GetUserId(), privileges,
+		select_best_grantor(GetUserId(), istmt->privileges,
 							old_acl, ownerId,
 							&grantorId, &avail_goptions);
 
 		/*
-		 * If we found no grant options, consider whether to issue a hard
-		 * error.  Per spec, having any privilege at all on the object will
-		 * get you by here.
+		 * Restrict the privileges to what we can actually grant, and emit
+		 * the standards-mandated warning and error messages.
 		 */
-		if (avail_goptions == ACL_NO_RIGHTS)
-		{
-			if (pg_tablespace_aclmask(HeapTupleGetOid(tuple),
-									  grantorId,
-									  ACL_ALL_RIGHTS_TABLESPACE | ACL_GRANT_OPTION_FOR(ACL_ALL_RIGHTS_TABLESPACE),
-									  ACLMASK_ANY) == ACL_NO_RIGHTS)
-				aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_TABLESPACE,
-							   NameStr(pg_tablespace_tuple->spcname));
-		}
-
-		/*
-		 * Restrict the operation to what we can actually grant or revoke, and
-		 * issue a warning if appropriate.	(For REVOKE this isn't quite what
-		 * the spec says to do: the spec seems to want a warning only if no
-		 * privilege bits actually change in the ACL. In practice that
-		 * behavior seems much too noisy, as well as inconsistent with the
-		 * GRANT case.)
-		 */
-		this_privileges = privileges & ACL_OPTION_TO_PRIVS(avail_goptions);
-		if (is_grant)
-		{
-			if (this_privileges == 0)
-				ereport(WARNING,
-						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
-						 errmsg("no privileges were granted")));
-			else if (!all_privs && this_privileges != privileges)
-				ereport(WARNING,
-						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
-						 errmsg("not all privileges were granted")));
-		}
-		else
-		{
-			if (this_privileges == 0)
-				ereport(WARNING,
-						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
-						 errmsg("no privileges could be revoked")));
-			else if (!all_privs && this_privileges != privileges)
-				ereport(WARNING,
-						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
-						 errmsg("not all privileges could be revoked")));
-		}
+		this_privileges =
+			restrict_and_check_grant(istmt->is_grant, avail_goptions,
+									 istmt->all_privs, istmt->privileges,
+									 tblId, grantorId, ACL_KIND_TABLESPACE,
+									 NameStr(pg_tablespace_tuple->spcname));
 
 		/*
 		 * Generate new ACL.
@@ -1372,9 +1218,9 @@ ExecGrant_Tablespace(bool is_grant, List *objects, bool all_privs,
 		 */
 		noldmembers = aclmembers(old_acl, &oldmembers);
 
-		new_acl = merge_acl_with_grant(old_acl, is_grant,
-									   grant_option, behavior,
-									   grantees, this_privileges,
+		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
+									   istmt->grant_option, istmt->behavior,
+									   istmt->grantees, this_privileges,
 									   grantorId, ownerId);
 
 		nnewmembers = aclmembers(new_acl, &newmembers);
@@ -1397,7 +1243,7 @@ ExecGrant_Tablespace(bool is_grant, List *objects, bool all_privs,
 
 		/* Update the shared dependency ACL info */
 		updateAclDependencies(TableSpaceRelationId, tblId,
-							  ownerId, is_grant,
+							  ownerId, istmt->is_grant,
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
 
@@ -1583,6 +1429,34 @@ has_rolcatupdate(Oid roleid)
 	return rolcatupdate;
 }
 
+/*
+ * Relay for the various pg_*_mask routines depending on object kind
+ */
+static AclMode
+pg_aclmask(AclObjectKind objkind, Oid table_oid, Oid roleid,
+		   AclMode mask, AclMaskHow how)
+{
+	switch (objkind)
+	{
+		case ACL_KIND_CLASS:
+			return pg_class_aclmask(table_oid, roleid, mask, how);
+		case ACL_KIND_DATABASE:
+			return pg_database_aclmask(table_oid, roleid, mask, how);
+		case ACL_KIND_PROC:
+			return pg_proc_aclmask(table_oid, roleid, mask, how);
+		case ACL_KIND_LANGUAGE:
+			return pg_language_aclmask(table_oid, roleid, mask, how);
+		case ACL_KIND_NAMESPACE:
+			return pg_namespace_aclmask(table_oid, roleid, mask, how);
+		case ACL_KIND_TABLESPACE:
+			return pg_tablespace_aclmask(table_oid, roleid, mask, how);
+		default:
+			elog(ERROR, "unrecognized objkind: %d",
+				 (int) objkind);
+			/* not reached, but keep compiler quiet */
+			return ACL_NO_RIGHTS;
+	}
+}
 
 /*
  * Exported routine for examining a user's privileges for a table

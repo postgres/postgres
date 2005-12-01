@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.5 2005/11/22 18:17:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.6 2005/12/01 02:03:00 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1122,6 +1122,7 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 			{
 					ObjectAddress obj;
 					GrantObjectType objtype;
+					InternalGrant istmt;
 
 					/* Shouldn't happen */
 				case SHARED_DEPENDENCY_PIN:
@@ -1132,22 +1133,22 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 					switch (sdepForm->classid)
 					{
 						case RelationRelationId:
-							objtype = ACL_OBJECT_RELATION;
+							istmt.objtype = ACL_OBJECT_RELATION;
 							break;
 						case DatabaseRelationId:
-							objtype = ACL_OBJECT_DATABASE;
+							istmt.objtype = ACL_OBJECT_DATABASE;
 							break;
 						case ProcedureRelationId:
-							objtype = ACL_OBJECT_FUNCTION;
+							istmt.objtype = ACL_OBJECT_FUNCTION;
 							break;
 						case LanguageRelationId:
-							objtype = ACL_OBJECT_LANGUAGE;
+							istmt.objtype = ACL_OBJECT_LANGUAGE;
 							break;
 						case NamespaceRelationId:
-							objtype = ACL_OBJECT_NAMESPACE;
+							istmt.objtype = ACL_OBJECT_NAMESPACE;
 							break;
 						case TableSpaceRelationId:
-							objtype = ACL_OBJECT_TABLESPACE;
+							istmt.objtype = ACL_OBJECT_TABLESPACE;
 							break;
 						default:
 							elog(ERROR, "unexpected object type %d",
@@ -1156,11 +1157,15 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 							objtype = (GrantObjectType) 0;
 							break;
 					}
+					istmt.is_grant = false;
+					istmt.objects = list_make1_oid(sdepForm->objid);
+					istmt.all_privs = true;
+					istmt.privileges = ACL_NO_RIGHTS;
+					istmt.grantees = list_make1_oid(roleid);
+					istmt.grant_option = false;
+					istmt.behavior = DROP_CASCADE;
 
-					ExecGrantStmt_oids(false, objtype,
-									   list_make1_oid(sdepForm->objid), true,
-									   ACL_NO_RIGHTS, list_make1_oid(roleid),
-									   false, DROP_CASCADE);
+					ExecGrantStmt_oids(&istmt);
 					break;
 				case SHARED_DEPENDENCY_OWNER:
 
