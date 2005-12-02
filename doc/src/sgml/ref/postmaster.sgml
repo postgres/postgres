@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.53 2004/10/08 01:36:32 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.54 2005/12/02 23:13:46 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -181,7 +181,7 @@ PostgreSQL documentation
         Specifies the IP host name or address on which the
         <command>postmaster</command> is to listen for TCP/IP
         connections from client applications.  The value can also be a
-        space-separated list of addresses, or <literal>*</> to specify
+        comma-separated list of addresses, or <literal>*</> to specify
         listening on all available interfaces.  An empty value
         specifies not listening on any IP addresses, in which case
         only Unix-domain sockets can be used to connect to the
