@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.6 2005/11/26 03:03:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.7 2005/12/02 01:29:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -508,11 +508,6 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate)
 		ExecInitExpr((Expr *) node->bitmapqualorig,
 					 (PlanState *) scanstate);
 
-	/*
-	 * initialize child nodes
-	 */
-	outerPlanState(scanstate) = ExecInitNode(outerPlan(node), estate);
-
 #define BITMAPHEAPSCAN_NSLOTS 2
 
 	/*
@@ -561,6 +556,15 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate)
 	 */
 	ExecAssignResultTypeFromTL(&scanstate->ss.ps);
 	ExecAssignScanProjectionInfo(&scanstate->ss);
+
+	/*
+	 * initialize child nodes
+	 *
+	 * We do this last because the child nodes will open indexscans on our
+	 * relation's indexes, and we want to be sure we have acquired a lock
+	 * on the relation first.
+	 */
+	outerPlanState(scanstate) = ExecInitNode(outerPlan(node), estate);
 
 	/*
 	 * all done.
