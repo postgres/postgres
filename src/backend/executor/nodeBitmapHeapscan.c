@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.7 2005/12/02 01:29:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.8 2005/12/02 20:03:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,9 +141,9 @@ BitmapHeapNext(BitmapHeapScanState *node)
 
 			/*
 			 * Ignore any claimed entries past what we think is the end of the
-			 * relation.  (This is probably not necessary given that we got
-			 * AccessShareLock before performing any of the indexscans, but
-			 * let's be safe.)
+			 * relation.  (This is probably not necessary given that we got at
+			 * least AccessShareLock on the table before performing any of the
+			 * indexscans, but let's be safe.)
 			 */
 			if (tbmres->blockno >= scan->rs_nblocks)
 			{
@@ -448,13 +448,8 @@ ExecEndBitmapHeapScan(BitmapHeapScanState *node)
 
 	/*
 	 * close the heap relation.
-	 *
-	 * Currently, we do not release the AccessShareLock acquired by
-	 * ExecInitBitmapHeapScan.	This lock should be held till end of
-	 * transaction. (There is a faction that considers this too much locking,
-	 * however.)
 	 */
-	heap_close(relation, NoLock);
+	ExecCloseScanRelation(relation);
 }
 
 /* ----------------------------------------------------------------
@@ -467,9 +462,6 @@ BitmapHeapScanState *
 ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate)
 {
 	BitmapHeapScanState *scanstate;
-	RangeTblEntry *rtentry;
-	Index		relid;
-	Oid			reloid;
 	Relation	currentRelation;
 
 	/*
@@ -519,13 +511,9 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate)
 	CXT1_printf("ExecInitBitmapHeapScan: context is %d\n", CurrentMemoryContext);
 
 	/*
-	 * open the base relation and acquire AccessShareLock on it.
+	 * open the base relation and acquire appropriate lock on it.
 	 */
-	relid = node->scan.scanrelid;
-	rtentry = rt_fetch(relid, estate->es_range_table);
-	reloid = rtentry->relid;
-
-	currentRelation = heap_open(reloid, AccessShareLock);
+	currentRelation = ExecOpenScanRelation(estate, node->scan.scanrelid);
 
 	scanstate->ss.ss_currentRelation = currentRelation;
 

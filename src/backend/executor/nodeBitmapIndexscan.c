@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.12 2005/11/25 19:47:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.13 2005/12/02 20:03:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -286,8 +286,8 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate)
 
 	/*
 	 * We do not open or lock the base relation here.  We assume that an
-	 * ancestor BitmapHeapScan node is holding AccessShareLock on the heap
-	 * relation throughout the execution of the plan tree.
+	 * ancestor BitmapHeapScan node is holding AccessShareLock (or better)
+	 * on the heap relation throughout the execution of the plan tree.
 	 */
 
 	indexstate->ss.ss_currentRelation = NULL;

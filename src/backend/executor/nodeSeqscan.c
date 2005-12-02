@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSeqscan.c,v 1.55 2005/11/25 04:24:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSeqscan.c,v 1.56 2005/12/02 20:03:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,25 +141,15 @@ ExecSeqScan(SeqScanState *node)
 static void
 InitScanRelation(SeqScanState *node, EState *estate)
 {
-	Index		relid;
-	List	   *rangeTable;
-	RangeTblEntry *rtentry;
-	Oid			reloid;
 	Relation	currentRelation;
 	HeapScanDesc currentScanDesc;
 
 	/*
 	 * get the relation object id from the relid'th entry in the range table,
-	 * open that relation and initialize the scan state.
-	 *
-	 * We acquire AccessShareLock for the duration of the scan.
+	 * open that relation and acquire appropriate lock on it.
 	 */
-	relid = ((SeqScan *) node->ps.plan)->scanrelid;
-	rangeTable = estate->es_range_table;
-	rtentry = rt_fetch(relid, rangeTable);
-	reloid = rtentry->relid;
-
-	currentRelation = heap_open(reloid, AccessShareLock);
+	currentRelation = ExecOpenScanRelation(estate,
+										   ((SeqScan *) node->ps.plan)->scanrelid);
 
 	currentScanDesc = heap_beginscan(currentRelation,
 									 estate->es_snapshot,
@@ -281,12 +271,8 @@ ExecEndSeqScan(SeqScanState *node)
 
 	/*
 	 * close the heap relation.
-	 *
-	 * Currently, we do not release the AccessShareLock acquired by
-	 * InitScanRelation.  This lock should be held till end of transaction.
-	 * (There is a faction that considers this too much locking, however.)
 	 */
-	heap_close(relation, NoLock);
+	ExecCloseScanRelation(relation);
 }
 
 /* ----------------------------------------------------------------

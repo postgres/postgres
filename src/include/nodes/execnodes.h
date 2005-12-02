@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.145 2005/11/28 23:46:03 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.146 2005/12/02 20:03:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -344,6 +344,15 @@ typedef struct EState
 	HeapTuple  *es_evTuple;		/* shared array of EPQ substitute tuples */
 	bool		es_useEvalPlan; /* evaluating EPQ tuples? */
 } EState;
+
+
+/* es_rowMarks is a list of these structs: */
+typedef struct ExecRowMark
+{
+	Relation	relation;		/* opened and RowShareLock'd relation */
+	Index		rti;			/* its range table index */
+	char		resname[32];	/* name for its ctid junk attribute */
+} ExecRowMark;
 
 
 /* ----------------------------------------------------------------

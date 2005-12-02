@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.45 2005/11/26 22:14:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.46 2005/12/02 20:03:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -421,12 +421,8 @@ ExecEndTidScan(TidScanState *node)
 
 	/*
 	 * close the heap relation.
-	 *
-	 * Currently, we do not release the AccessShareLock acquired by
-	 * ExecInitTidScan.  This lock should be held till end of transaction.
-	 * (There is a faction that considers this too much locking, however.)
 	 */
-	heap_close(node->ss.ss_currentRelation, NoLock);
+	ExecCloseScanRelation(node->ss.ss_currentRelation);
 }
 
 /* ----------------------------------------------------------------
@@ -472,9 +468,6 @@ TidScanState *
 ExecInitTidScan(TidScan *node, EState *estate)
 {
 	TidScanState *tidstate;
-	RangeTblEntry *rtentry;
-	Oid			relid;
-	Oid			reloid;
 	Relation	currentRelation;
 
 	/*
@@ -521,15 +514,9 @@ ExecInitTidScan(TidScan *node, EState *estate)
 	tidstate->tss_TidPtr = -1;
 
 	/*
-	 * open the base relation
-	 *
-	 * We acquire AccessShareLock for the duration of the scan.
+	 * open the base relation and acquire appropriate lock on it.
 	 */
-	relid = node->scan.scanrelid;
-	rtentry = rt_fetch(relid, estate->es_range_table);
-	reloid = rtentry->relid;
-
-	currentRelation = heap_open(reloid, AccessShareLock);
+	currentRelation = ExecOpenScanRelation(estate, node->scan.scanrelid);
 
 	tidstate->ss.ss_currentRelation = currentRelation;
 	tidstate->ss.ss_currentScanDesc = NULL;		/* no heap scan here */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.129 2005/11/23 20:27:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.130 2005/12/02 20:03:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,9 @@
  *		ExecAssignExprContext	Common code for plan node init routines.
  *		ExecAssignResultType
  *		etc
+ *
+ *		ExecOpenScanRelation	Common code for scan node init routines.
+ *		ExecCloseScanRelation
  *
  *		ExecOpenIndices			\
  *		ExecCloseIndices		 | referenced by InitPlan, EndPlan,
@@ -45,6 +48,7 @@
 #include "catalog/pg_index.h"
 #include "executor/execdebug.h"
 #include "miscadmin.h"
+#include "parser/parsetree.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/memutils.h"
@@ -685,6 +689,90 @@ ExecAssignScanTypeFromOuterPlan(ScanState *scanstate)
 
 
 /* ----------------------------------------------------------------
+ *				  Scan node support
+ * ----------------------------------------------------------------
+ */
+
+/* ----------------------------------------------------------------
+ *		ExecOpenScanRelation
+ *
+ *		Open the heap relation to be scanned by a base-level scan plan node.
+ *		This should be called during the node's ExecInit routine.
+ *
+ * By default, this acquires AccessShareLock on the relation.  However,
+ * if the relation was already locked by InitPlan, we don't need to acquire
+ * any additional lock.  This saves trips to the shared lock manager.
+ * ----------------------------------------------------------------
+ */
+Relation
+ExecOpenScanRelation(EState *estate, Index scanrelid)
+{
+	RangeTblEntry *rtentry;
+	Oid			reloid;
+	LOCKMODE	lockmode;
+	ResultRelInfo *resultRelInfos;
+	int			i;
+
+	/*
+	 * First determine the lock type we need.  Scan to see if target relation
+	 * is either a result relation or a FOR UPDATE/FOR SHARE relation.
+	 */
+	lockmode = AccessShareLock;
+	resultRelInfos = estate->es_result_relations;
+	for (i = 0; i < estate->es_num_result_relations; i++)
+	{
+		if (resultRelInfos[i].ri_RangeTableIndex == scanrelid)
+		{
+			lockmode = NoLock;
+			break;
+		}
+	}
+
+	if (lockmode == AccessShareLock)
+	{
+		ListCell   *l;
+
+		foreach(l, estate->es_rowMarks)
+		{
+			ExecRowMark *erm = lfirst(l);
+
+			if (erm->rti == scanrelid)
+			{
+				lockmode = NoLock;
+				break;
+			}
+		}
+	}
+
+	/* OK, open the relation and acquire lock as needed */
+	rtentry = rt_fetch(scanrelid, estate->es_range_table);
+	reloid = rtentry->relid;
+
+	return heap_open(reloid, lockmode);
+}
+
+/* ----------------------------------------------------------------
+ *		ExecCloseScanRelation
+ *
+ *		Close the heap relation scanned by a base-level scan plan node.
+ *		This should be called during the node's ExecEnd routine.
+ *
+ * Currently, we do not release the lock acquired by ExecOpenScanRelation.
+ * This lock should be held till end of transaction.  (There is a faction
+ * that considers this too much locking, however.)
+ *
+ * If we did want to release the lock, we'd have to repeat the logic in
+ * ExecOpenScanRelation in order to figure out what to release.
+ * ----------------------------------------------------------------
+ */
+void
+ExecCloseScanRelation(Relation scanrel)
+{
+	heap_close(scanrel, NoLock);
+}
+
+
+/* ----------------------------------------------------------------
  *				  ExecInsertIndexTuples support
  * ----------------------------------------------------------------
  */
@@ -760,7 +848,7 @@ ExecOpenIndices(ResultRelInfo *resultRelInfo)
 		 *
 		 * If the index AM is not safe for concurrent updates, obtain an
 		 * exclusive lock on the index to lock out other updaters as well as
-		 * readers (index_beginscan places AccessShareLock).
+		 * readers (index_beginscan places AccessShareLock on the index).
 		 *
 		 * If there are multiple not-concurrent-safe indexes, all backends
 		 * must lock the indexes in the same order or we will get deadlocks

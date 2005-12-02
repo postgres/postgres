@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.107 2005/11/25 19:47:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.108 2005/12/02 20:03:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -421,12 +421,8 @@ ExecEndIndexScan(IndexScanState *node)
 
 	/*
 	 * close the heap relation.
-	 *
-	 * Currently, we do not release the AccessShareLock acquired by
-	 * ExecInitIndexScan.  This lock should be held till end of transaction.
-	 * (There is a faction that considers this too much locking, however.)
 	 */
-	heap_close(relation, NoLock);
+	ExecCloseScanRelation(relation);
 }
 
 /* ----------------------------------------------------------------
@@ -464,9 +460,6 @@ IndexScanState *
 ExecInitIndexScan(IndexScan *node, EState *estate)
 {
 	IndexScanState *indexstate;
-	RangeTblEntry *rtentry;
-	Index		relid;
-	Oid			reloid;
 	Relation	currentRelation;
 
 	/*
@@ -551,13 +544,9 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	}
 
 	/*
-	 * open the base relation and acquire AccessShareLock on it.
+	 * open the base relation and acquire appropriate lock on it.
 	 */
-	relid = node->scan.scanrelid;
-	rtentry = rt_fetch(relid, estate->es_range_table);
-	reloid = rtentry->relid;
-
-	currentRelation = heap_open(reloid, AccessShareLock);
+	currentRelation = ExecOpenScanRelation(estate, node->scan.scanrelid);
 
 	indexstate->ss.ss_currentRelation = currentRelation;
 	indexstate->ss.ss_currentScanDesc = NULL;	/* no heap scan here */
@@ -570,7 +559,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	/*
 	 * open the index relation and initialize relation and scan descriptors.
 	 * Note we acquire no locks here; the index machinery does its own locks
-	 * and unlocks.  (We rely on having AccessShareLock on the parent table to
+	 * and unlocks.  (We rely on having a lock on the parent table to
 	 * ensure the index won't go away!)
 	 */
 	indexstate->iss_RelationDesc = index_open(node->indexid);
