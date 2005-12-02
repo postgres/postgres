@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.164 2005/12/01 21:11:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.165 2005/12/02 02:49:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1013,7 +1013,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					if (tzp == NULL)
 						return DTERR_BAD_FORMAT;
 
-					errno = 0;	/* avoid having to check the result for failure */
+					errno = 0;
 					val = strtol(field[i], &cp, 10);
 					if (errno == ERANGE)
 						return DTERR_FIELD_OVERFLOW;
@@ -1161,7 +1161,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					char	   *cp;
 					int			val;
 
-					errno = 0;	/* avoid having to check the result for failure */
+					errno = 0;
 					val = strtol(field[i], &cp, 10);
 					if (errno == ERANGE)
 						return DTERR_FIELD_OVERFLOW;
@@ -1921,7 +1921,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 							break;
 					}
 
-					errno = 0;	/* avoid having to check the result for failure */
+					errno = 0;
 					val = strtol(field[i], &cp, 10);
 					if (errno == ERANGE)
 						return DTERR_FIELD_OVERFLOW;
@@ -2465,14 +2465,14 @@ DecodeTime(char *str, int fmask, int *tmask, struct pg_tm * tm, fsec_t *fsec)
 
 	*tmask = DTK_TIME_M;
 
-	errno = 0;	/* avoid having to check the result for failure */
+	errno = 0;
 	tm->tm_hour = strtol(str, &cp, 10);
 	if (errno == ERANGE)
 		return DTERR_FIELD_OVERFLOW;
 	if (*cp != ':')
 		return DTERR_BAD_FORMAT;
 	str = cp + 1;
-	errno = 0;	/* avoid having to check the result for failure */
+	errno = 0;
 	tm->tm_min = strtol(str, &cp, 10);
 	if (errno == ERANGE)
 		return DTERR_FIELD_OVERFLOW;
@@ -2486,7 +2486,7 @@ DecodeTime(char *str, int fmask, int *tmask, struct pg_tm * tm, fsec_t *fsec)
 	else
 	{
 		str = cp + 1;
-		errno = 0;	/* avoid having to check the result for failure */
+		errno = 0;
 		tm->tm_sec = strtol(str, &cp, 10);
 		if (errno == ERANGE)
 			return DTERR_FIELD_OVERFLOW;
@@ -2540,7 +2540,7 @@ DecodeNumber(int flen, char *str, bool haveTextMonth, int fmask,
 
 	*tmask = 0;
 
-	errno = 0;	/* avoid having to check the result for failure */
+	errno = 0;
 	val = strtol(str, &cp, 10);
 	if (errno == ERANGE)
 		return DTERR_FIELD_OVERFLOW;
@@ -2830,7 +2830,7 @@ DecodeTimezone(char *str, int *tzp)
 	if (*str != '+' && *str != '-')
 		return DTERR_BAD_FORMAT;
 
-	errno = 0;	/* avoid having to check the result for failure */
+	errno = 0;
 	hr = strtol(str + 1, &cp, 10);
 	if (errno == ERANGE)
 		return DTERR_TZDISP_OVERFLOW;
@@ -2838,7 +2838,7 @@ DecodeTimezone(char *str, int *tzp)
 	/* explicit delimiter? */
 	if (*cp == ':')
 	{
-		errno = 0;	/* avoid having to check the result for failure */
+		errno = 0;
 		min = strtol(cp + 1, &cp, 10);
 		if (errno == ERANGE)
 			return DTERR_TZDISP_OVERFLOW;
@@ -3085,7 +3085,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 
 			case DTK_DATE:
 			case DTK_NUMBER:
-				errno = 0;	/* avoid having to check the result for failure */
+				errno = 0;
 				val = strtol(field[i], &cp, 10);
 				if (errno == ERANGE)
 					return DTERR_FIELD_OVERFLOW;
