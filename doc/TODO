@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Dec  1 17:30:23 EST 2005
+Last updated:		Thu Dec  1 23:28:03 EST 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -862,11 +862,14 @@ Cache Usage
   the heap.  One way to allow this is to set a bit on index tuples 
   to indicate if a tuple is currently visible to all transactions 
   when the first valid heap lookup happens.  This bit would have to 
-  be cleared when a heap tuple is expired.  Another idea is to maintain
-  a bitmap of heap pages where all rows are visible to all backends,
-  and allow index lookups to reference that bitmap to avoid heap
-  lookups, perhaps the same bitmap we might add someday to determine 
-  which heap pages need vacuuming.
+  be cleared when a heap tuple is expired.  
+
+  Another idea is to maintain a bitmap of heap pages where all rows
+  are visible to all backends, and allow index lookups to reference 
+  that bitmap to avoid heap lookups, perhaps the same bitmap we might
+  add someday to determine which heap pages need vacuuming.  Frequently
+  accessed bitmaps would have to be stored in shared memory.  One 8k
+  page of bitmaps could track 512MB of heap pages.
 
 * Consider automatic caching of queries at various levels:
 
