@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.21 2005/11/22 18:17:28 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.22 2005/12/02 22:06:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -326,7 +326,7 @@ parsePGArray(const char *atext, char ***itemarray, int *nitems)
  *
  *	name: the object name, in the form to use in the commands (already quoted)
  *	type: the object type (as seen in GRANT command: must be one of
- *		TABLE, FUNCTION, LANGUAGE, or SCHEMA, or DATABASE)
+ *		TABLE, FUNCTION, LANGUAGE, SCHEMA, DATABASE, or TABLESPACE)
  *	acls: the ACL string fetched from the database
  *	owner: username of object owner (will be passed through fmtId), or NULL
  *	remoteVersion: version of database
