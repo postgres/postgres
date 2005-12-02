@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.311.2.1 2005/11/27 01:22:36 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.311.2.2 2005/12/02 15:04:48 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -324,7 +324,7 @@ add_additional_variables(char *name, bool insert)
 
 /* special embedded SQL token */
 %token	SQL_ALLOCATE SQL_AUTOCOMMIT SQL_BOOL SQL_BREAK
-		SQL_CALL SQL_CARDINALITY SQL_CONNECT SQL_CONNECTION
+		SQL_CALL SQL_CARDINALITY SQL_CONNECT 
 		SQL_CONTINUE SQL_COUNT SQL_CURRENT SQL_DATA 
 		SQL_DATETIME_INTERVAL_CODE
 		SQL_DATETIME_INTERVAL_PRECISION SQL_DESCRIBE
@@ -506,7 +506,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	opt_instead event RuleActionList opt_using CreateAssertStmt
 %type  <str>	RuleActionStmtOrEmpty RuleActionMulti func_as reindex_type
 %type  <str>	RuleStmt opt_column oper_argtypes NumConst var_name
-%type  <str>	MathOp RemoveFuncStmt aggr_argtype 
+%type  <str>	MathOp RemoveFuncStmt aggr_argtype ECPGunreserved_con
 %type  <str>	RemoveAggrStmt opt_procedural select_no_parens CreateCastStmt
 %type  <str>	RemoveOperStmt RenameStmt all_Op opt_trusted opt_lancompiler
 %type  <str>	VariableSetStmt var_value zone_value VariableShowStmt
@@ -537,7 +537,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	CreateGroupStmt AlterGroupStmt DropGroupStmt key_delete
 %type  <str>	opt_force key_update CreateSchemaStmt PosIntStringConst
 %type  <str>	IntConst PosIntConst grantee_list func_type opt_or_replace
-%type  <str>	select_limit CheckPointStmt
+%type  <str>	select_limit CheckPointStmt ECPGColId
 %type  <str>	OptSchemaName OptSchemaEltList schema_stmt opt_drop_behavior
 %type  <str>	handler_name any_name_list any_name opt_as insert_column_list
 %type  <str>	columnref function_name insert_target_el AllConstVar
@@ -1117,7 +1117,7 @@ set_rest:	var_name TO var_list_or_default
 			{ $$ = make_str("session authorization default"); }
 		;
 
-var_name:	ColId			{ $$ = $1; }
+var_name:	ECPGColId		{ $$ = $1; }
 		| var_name '.' ColId	{ $$ = cat_str(3, $1, make_str("."), $3); }
 		;
 		
@@ -5649,9 +5649,9 @@ on_off: ON				{ $$ = make_str("on"); }
  * set the actual connection, this needs a differnet handling as the other
  * set commands
  */
-ECPGSetConnection:	SET SQL_CONNECTION TO connection_object { $$ = $4; }
-		| SET SQL_CONNECTION '=' connection_object { $$ = $4; }
-		| SET SQL_CONNECTION  connection_object { $$ = $3; }
+ECPGSetConnection:	SET CONNECTION TO connection_object { $$ = $4; }
+		| SET CONNECTION '=' connection_object { $$ = $4; }
+		| SET CONNECTION  connection_object { $$ = $3; }
 		;
 
 /*
@@ -5936,6 +5936,14 @@ symbol: ColLabel				{ $$ = $1; }
  * is chosen in part to make keywords acceptable as names wherever possible.
  */
 
+ECPGColId:ident						{ $$ = $1; }
+		| ECPGunreserved_interval		{ $$ = $1; }
+		| ECPGunreserved_con			{ $$ = $1; }
+		| col_name_keyword			{ $$ = $1; }
+		| ECPGKeywords				{ $$ = $1; }
+		| ECPGCKeywords				{ $$ = $1; }
+		| CHAR_P				{ $$ = make_str("char"); }
+		;
 /* Column identifier --- names that can be column, table, etc names.
  */
 ColId:	ident						{ $$ = $1; }
@@ -6016,7 +6024,7 @@ ECPGCKeywords: S_AUTO			{ $$ = make_str("auto"); }
  */
 unreserved_keyword: ECPGunreserved_interval | ECPGunreserved;
 
-ECPGunreserved_interval: DAY_P				{ $$ = make_str("day"); }
+ECPGunreserved_interval: DAY_P			{ $$ = make_str("day"); }
 		| HOUR_P			{ $$ = make_str("hour"); }
 		| MINUTE_P			{ $$ = make_str("minute"); }
 		| MONTH_P			{ $$ = make_str("month"); }
@@ -6024,7 +6032,15 @@ ECPGunreserved_interval: DAY_P				{ $$ = make_str("day"); }
 		| YEAR_P			{ $$ = make_str("year"); }
 		;
 		
-ECPGunreserved:	  ABORT_P			{ $$ = make_str("abort"); }
+/* The following symbol must be excluded from var_name but still included in ColId
+   to enable ecpg special postgresql variables with this name:
+   CONNECTION
+ */
+ECPGunreserved:	ECPGunreserved_con		{ $$ = $1; }
+		| CONNECTION			{ $$ = make_str("connection"); }
+		;
+	
+ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| ABSOLUTE_P			{ $$ = make_str("absolute"); }
 		| ACCESS			{ $$ = make_str("access"); }
 		| ACTION			{ $$ = make_str("action"); }
@@ -6052,7 +6068,7 @@ ECPGunreserved:	  ABORT_P			{ $$ = make_str("abort"); }
 		| COMMENT			{ $$ = make_str("comment"); }
 		| COMMIT			{ $$ = make_str("commit"); }
 		| COMMITTED			{ $$ = make_str("committed"); }
-		| CONNECTION			{ $$ = make_str("connection"); }
+/*		| CONNECTION			{ $$ = make_str("connection"); }*/
 		| CONSTRAINTS			{ $$ = make_str("constraints"); }
 		| CONVERSION_P			{ $$ = make_str("conversion"); }
 		| COPY				{ $$ = make_str("copy"); }
