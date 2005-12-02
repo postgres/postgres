@@ -1957,6 +1957,11 @@ Wed Nov 30 12:49:13 CET 2005
 	- Made several variables "const char *" instead of "char *" as
 	  proposed by Qingqing Zhou <zhouqq@cs.toronto.edu>.
 	- Replaced all strdup() calls by ECPGstrdup().
+
+Fri Dec  2 16:00:10 CET 2005
+
+	- Added special handling of CONNECTION variable that is used by ECPG
+	  instead of given to the backend.
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.
 
