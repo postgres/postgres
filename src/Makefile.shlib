@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.72.2.1 2005/07/17 04:06:04 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.72.2.2 2005/12/03 20:17:00 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -67,6 +67,9 @@ ifeq ($(enable_shared), yes)
 
 # Insert -L from LDFLAGS after any -L already present in SHLIB_LINK
 SHLIB_LINK := $(filter -L%, $(SHLIB_LINK)) $(filter -L%, $(LDFLAGS)) $(filter-out -L%, $(SHLIB_LINK))
+
+# Need a -L-free version of LDFLAGS to use in combination with SHLIB_LINK
+LDFLAGS_NO_L := $(filter-out -L%, $(LDFLAGS))
 
 # For each platform we support shared libraries on, set shlib to the
 # name of the library, LINK.shared to the command to link the library,
@@ -271,7 +274,7 @@ else # PORTNAME == aix
 # AIX case
 $(shlib): lib$(NAME).a
 	$(MKLDEXPORT) lib$(NAME).a > lib$(NAME)$(EXPSUFF)
-	$(COMPILER) $(LDFLAGS_SL) -o $@ $< $(LDFLAGS) $(SHLIB_LINK) -Wl,-bI:$(top_builddir)/src/backend/$(POSTGRES_IMP) -Wl,-bE:lib$(NAME)$(EXPSUFF)
+	$(COMPILER) $(LDFLAGS_SL) -o $@ $< $(LDFLAGS_NO_L) $(SHLIB_LINK) -Wl,-bI:$(top_builddir)/src/backend/$(POSTGRES_IMP) -Wl,-bE:lib$(NAME)$(EXPSUFF)
 	
 endif # PORTNAME == aix
 
