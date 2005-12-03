@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.291.2.2 2005/11/28 23:19:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.291.2.3 2005/12/03 16:45:22 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -4749,6 +4749,14 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
         <function>extract</function> function.
       </para>
      </listitem>
+
+     <listitem>
+      <para><function>to_char(interval)</function> formats <literal>HH</> and 
+        <literal>HH12</> as hours in a single day, while <literal>HH24</>
+        can output hours exceeding a single day, e.g. &gt;24.
+      </para>
+     </listitem>
+
     </itemizedlist>
    </para>
 
