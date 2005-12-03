@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.98 2005/10/28 17:32:22 tgl Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.99 2005/12/03 20:16:31 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -75,6 +75,9 @@ ifeq ($(enable_shared), yes)
 
 # Insert -L from LDFLAGS after any -L already present in SHLIB_LINK
 SHLIB_LINK := $(filter -L%, $(SHLIB_LINK)) $(filter -L%, $(LDFLAGS)) $(filter-out -L%, $(SHLIB_LINK))
+
+# Need a -L-free version of LDFLAGS to use in combination with SHLIB_LINK
+LDFLAGS_NO_L := $(filter-out -L%, $(LDFLAGS))
 
 # Default shlib naming convention used by the majority of platforms
 shlib		= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
@@ -154,7 +157,7 @@ endif
 ifeq ($(PORTNAME), hpux)
   shlib			= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
   ifeq ($(with_gnu_ld), yes)
-    LINK.shared		= $(CC) $(LDFLAGS) -shared -Wl,-h -Wl,$(soname)
+    LINK.shared		= $(CC) $(LDFLAGS_NO_L) -shared -Wl,-h -Wl,$(soname)
   else
     # can't use the CC-syntax rpath pattern here
     rpath =
@@ -309,7 +312,7 @@ else # PORTNAME == aix
 # AIX case
 $(shlib): lib$(NAME).a
 	$(MKLDEXPORT) lib$(NAME).a > lib$(NAME)$(EXPSUFF)
-	$(COMPILER) $(LDFLAGS) $(LDFLAGS_SL) -o $@ $< -Wl,-bE:lib$(NAME)$(EXPSUFF) $(SHLIB_LINK)
+	$(COMPILER) $(LDFLAGS_NO_L) $(LDFLAGS_SL) -o $@ $< -Wl,-bE:lib$(NAME)$(EXPSUFF) $(SHLIB_LINK)
 	
 endif # PORTNAME == aix
 
