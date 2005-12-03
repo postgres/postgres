@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.142 2005/11/22 18:17:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.143 2005/12/03 05:51:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -643,7 +643,8 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	 * Scan through the OldHeap on the OldIndex and copy each tuple into the
 	 * NewHeap.
 	 */
-	scan = index_beginscan(OldHeap, OldIndex, SnapshotNow, 0, (ScanKey) NULL);
+	scan = index_beginscan(OldHeap, OldIndex, true,
+						   SnapshotNow, 0, (ScanKey) NULL);
 
 	while ((tuple = index_getnext(scan, ForwardScanDirection)) != NULL)
 	{

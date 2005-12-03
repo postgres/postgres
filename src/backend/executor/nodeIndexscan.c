@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.108 2005/12/02 20:03:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.109 2005/12/03 05:51:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -461,6 +461,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 {
 	IndexScanState *indexstate;
 	Relation	currentRelation;
+	bool		relistarget;
 
 	/*
 	 * create state structure
@@ -557,14 +558,19 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	ExecAssignScanType(&indexstate->ss, RelationGetDescr(currentRelation), false);
 
 	/*
-	 * open the index relation and initialize relation and scan descriptors.
+	 * Open the index relation and initialize relation and scan descriptors.
 	 * Note we acquire no locks here; the index machinery does its own locks
 	 * and unlocks.  (We rely on having a lock on the parent table to
-	 * ensure the index won't go away!)
+	 * ensure the index won't go away!)  Furthermore, if the parent table
+	 * is one of the target relations of the query, then InitPlan already
+	 * opened and write-locked the index, so we can tell the index machinery
+	 * not to bother getting an extra lock.
 	 */
 	indexstate->iss_RelationDesc = index_open(node->indexid);
+	relistarget = ExecRelationIsTargetRelation(estate, node->scan.scanrelid);
 	indexstate->iss_ScanDesc = index_beginscan(currentRelation,
 											   indexstate->iss_RelationDesc,
+											   !relistarget,
 											   estate->es_snapshot,
 											   indexstate->iss_NumScanKeys,
 											   indexstate->iss_ScanKeys);

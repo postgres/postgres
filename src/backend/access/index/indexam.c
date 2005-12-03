@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.86 2005/10/15 02:49:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.87 2005/12/03 05:51:00 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -111,6 +111,7 @@ do { \
 } while(0)
 
 static IndexScanDesc index_beginscan_internal(Relation indexRelation,
+						 bool need_index_lock,
 						 int nkeys, ScanKey key);
 
 
@@ -229,16 +230,23 @@ index_insert(Relation indexRelation,
  * heapRelation link (nor the snapshot).  However, the caller had better
  * be holding some kind of lock on the heap relation in any case, to ensure
  * no one deletes it (or the index) out from under us.
+ *
+ * Most callers should pass need_index_lock = true to cause the index code
+ * to take AccessShareLock on the index for the duration of the scan.  But
+ * if it is known that a lock is already held on the index, pass false to
+ * skip taking an unnecessary lock.
  */
 IndexScanDesc
 index_beginscan(Relation heapRelation,
 				Relation indexRelation,
+				bool need_index_lock,
 				Snapshot snapshot,
 				int nkeys, ScanKey key)
 {
 	IndexScanDesc scan;
 
-	scan = index_beginscan_internal(indexRelation, nkeys, key);
+	scan = index_beginscan_internal(indexRelation, need_index_lock,
+									nkeys, key);
 
 	/*
 	 * Save additional parameters into the scandesc.  Everything else was set
@@ -259,12 +267,14 @@ index_beginscan(Relation heapRelation,
  */
 IndexScanDesc
 index_beginscan_multi(Relation indexRelation,
+					  bool need_index_lock,
 					  Snapshot snapshot,
 					  int nkeys, ScanKey key)
 {
 	IndexScanDesc scan;
 
-	scan = index_beginscan_internal(indexRelation, nkeys, key);
+	scan = index_beginscan_internal(indexRelation, need_index_lock,
+									nkeys, key);
 
 	/*
 	 * Save additional parameters into the scandesc.  Everything else was set
@@ -281,6 +291,7 @@ index_beginscan_multi(Relation indexRelation,
  */
 static IndexScanDesc
 index_beginscan_internal(Relation indexRelation,
+						 bool need_index_lock,
 						 int nkeys, ScanKey key)
 {
 	IndexScanDesc scan;
@@ -291,13 +302,15 @@ index_beginscan_internal(Relation indexRelation,
 	RelationIncrementReferenceCount(indexRelation);
 
 	/*
-	 * Acquire AccessShareLock for the duration of the scan
+	 * Acquire AccessShareLock for the duration of the scan, unless caller
+	 * says it already has lock on the index.
 	 *
 	 * Note: we could get an SI inval message here and consequently have to
 	 * rebuild the relcache entry.	The refcount increment above ensures that
 	 * we will rebuild it and not just flush it...
 	 */
-	LockRelation(indexRelation, AccessShareLock);
+	if (need_index_lock)
+		LockRelation(indexRelation, AccessShareLock);
 
 	/*
 	 * LockRelation can clean rd_aminfo structure, so fill procedure after
@@ -314,6 +327,9 @@ index_beginscan_internal(Relation indexRelation,
 									  PointerGetDatum(indexRelation),
 									  Int32GetDatum(nkeys),
 									  PointerGetDatum(key)));
+
+	/* Save flag to tell index_endscan whether to release lock */
+	scan->have_lock = need_index_lock;
 
 	return scan;
 }
@@ -380,7 +396,8 @@ index_endscan(IndexScanDesc scan)
 
 	/* Release index lock and refcount acquired by index_beginscan */
 
-	UnlockRelation(scan->indexRelation, AccessShareLock);
+	if (scan->have_lock)
+		UnlockRelation(scan->indexRelation, AccessShareLock);
 
 	RelationDecrementReferenceCount(scan->indexRelation);
 

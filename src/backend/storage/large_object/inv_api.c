@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.113 2005/10/15 02:49:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.114 2005/12/03 05:51:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -299,7 +299,7 @@ inv_getsize(LargeObjectDesc *obj_desc)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(obj_desc->id));
 
-	sd = index_beginscan(lo_heap_r, lo_index_r,
+	sd = index_beginscan(lo_heap_r, lo_index_r, true,
 						 obj_desc->snapshot, 1, skey);
 
 	/*
@@ -410,7 +410,7 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 				BTGreaterEqualStrategyNumber, F_INT4GE,
 				Int32GetDatum(pageno));
 
-	sd = index_beginscan(lo_heap_r, lo_index_r,
+	sd = index_beginscan(lo_heap_r, lo_index_r, true,
 						 obj_desc->snapshot, 2, skey);
 
 	while ((tuple = index_getnext(sd, ForwardScanDirection)) != NULL)
@@ -526,7 +526,7 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 				BTGreaterEqualStrategyNumber, F_INT4GE,
 				Int32GetDatum(pageno));
 
-	sd = index_beginscan(lo_heap_r, lo_index_r,
+	sd = index_beginscan(lo_heap_r, lo_index_r, false /* got lock */,
 						 obj_desc->snapshot, 2, skey);
 
 	oldtuple = NULL;

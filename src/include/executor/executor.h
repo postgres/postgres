@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.122 2005/12/02 20:03:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.123 2005/12/03 05:51:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -229,6 +229,8 @@ extern TupleDesc ExecGetScanType(ScanState *scanstate);
 extern void ExecAssignScanType(ScanState *scanstate,
 				   TupleDesc tupDesc, bool shouldFree);
 extern void ExecAssignScanTypeFromOuterPlan(ScanState *scanstate);
+
+extern bool ExecRelationIsTargetRelation(EState *estate, Index scanrelid);
 
 extern Relation ExecOpenScanRelation(EState *estate, Index scanrelid);
 extern void ExecCloseScanRelation(Relation scanrel);

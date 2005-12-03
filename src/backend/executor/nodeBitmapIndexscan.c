@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.13 2005/12/02 20:03:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.14 2005/12/03 05:51:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -214,6 +214,7 @@ BitmapIndexScanState *
 ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate)
 {
 	BitmapIndexScanState *indexstate;
+	bool		relistarget;
 
 	/*
 	 * create state structure
@@ -294,13 +295,19 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate)
 	indexstate->ss.ss_currentScanDesc = NULL;
 
 	/*
-	 * open the index relation and initialize relation and scan descriptors.
+	 * Open the index relation and initialize relation and scan descriptors.
 	 * Note we acquire no locks here; the index machinery does its own locks
-	 * and unlocks.
+	 * and unlocks.  (We rely on having a lock on the parent table to
+	 * ensure the index won't go away!)  Furthermore, if the parent table
+	 * is one of the target relations of the query, then InitPlan already
+	 * opened and write-locked the index, so we can tell the index machinery
+	 * not to bother getting an extra lock.
 	 */
 	indexstate->biss_RelationDesc = index_open(node->indexid);
+	relistarget = ExecRelationIsTargetRelation(estate, node->scan.scanrelid);
 	indexstate->biss_ScanDesc =
 		index_beginscan_multi(indexstate->biss_RelationDesc,
+							  !relistarget,
 							  estate->es_snapshot,
 							  indexstate->biss_NumScanKeys,
 							  indexstate->biss_ScanKeys);
