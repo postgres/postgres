@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Dec  2 12:39:33 EST 2005
+Last updated:		Sat Dec  3 08:03:38 EST 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1105,7 +1105,6 @@ Source Code
 
 * Fix sgmltools so PDFs can be generated with bookmarks
 * %Clean up compiler warnings (especially with gcc version 4)
-* Add function to return the thread safety status of libpq and ecpg
 * Use UTF8 encoding for NLS messages so all server encodings can
   read them properly
 * Update Bonjour to work with newer cross-platform SDK
