@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.22 2005/12/02 22:06:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.23 2005/12/03 21:06:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -328,7 +328,8 @@ parsePGArray(const char *atext, char ***itemarray, int *nitems)
  *	type: the object type (as seen in GRANT command: must be one of
  *		TABLE, FUNCTION, LANGUAGE, SCHEMA, DATABASE, or TABLESPACE)
  *	acls: the ACL string fetched from the database
- *	owner: username of object owner (will be passed through fmtId), or NULL
+ *	owner: username of object owner (will be passed through fmtId); can be
+ *		NULL or empty string to indicate "no owner known"
  *	remoteVersion: version of database
  *
  * Returns TRUE if okay, FALSE if could not parse the acl string.
@@ -356,6 +357,10 @@ buildACLCommands(const char *name, const char *type,
 
 	if (strlen(acls) == 0)
 		return true;			/* object has default permissions */
+
+	/* treat empty-string owner same as NULL */
+	if (owner && *owner == '\0')
+		owner = NULL;
 
 	if (!parsePGArray(acls, &aclitems, &naclitems))
 	{

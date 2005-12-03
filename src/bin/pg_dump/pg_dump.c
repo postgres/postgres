@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.423 2005/11/22 18:17:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.424 2005/12/03 21:06:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3493,14 +3493,36 @@ getProcLangs(int *numProcLangs)
 	int			i_lanname;
 	int			i_lanpltrusted;
 	int			i_lanplcallfoid;
-	int			i_lanvalidator = -1;
-	int			i_lanacl = -1;
+	int			i_lanvalidator;
+	int			i_lanacl;
+	int			i_lanowner;
 
 	/* Make sure we are in proper schema */
 	selectSourceSchema("pg_catalog");
 
-	if (g_fout->remoteVersion >= 70100)
+	if (g_fout->remoteVersion >= 80100)
 	{
+		/* Languages are owned by the bootstrap superuser, OID 10 */
+		appendPQExpBuffer(query, "SELECT tableoid, oid, *, "
+						  "(%s '10') as lanowner "
+						  "FROM pg_language "
+						  "WHERE lanispl "
+						  "ORDER BY oid",
+						  username_subquery);
+	}
+	else if (g_fout->remoteVersion >= 70400)
+	{
+		/* Languages are owned by the bootstrap superuser, sysid 1 */
+		appendPQExpBuffer(query, "SELECT tableoid, oid, *, "
+						  "(%s '1') as lanowner "
+						  "FROM pg_language "
+						  "WHERE lanispl "
+						  "ORDER BY oid",
+						  username_subquery);
+	}
+	else if (g_fout->remoteVersion >= 70100)
+	{
+		/* No clear notion of an owner at all before 7.4 ... */
 		appendPQExpBuffer(query, "SELECT tableoid, oid, * FROM pg_language "
 						  "WHERE lanispl "
 						  "ORDER BY oid");
@@ -3528,11 +3550,10 @@ getProcLangs(int *numProcLangs)
 	i_lanname = PQfnumber(res, "lanname");
 	i_lanpltrusted = PQfnumber(res, "lanpltrusted");
 	i_lanplcallfoid = PQfnumber(res, "lanplcallfoid");
-	if (g_fout->remoteVersion >= 70300)
-	{
-		i_lanvalidator = PQfnumber(res, "lanvalidator");
-		i_lanacl = PQfnumber(res, "lanacl");
-	}
+	/* these may fail and return -1: */
+	i_lanvalidator = PQfnumber(res, "lanvalidator");
+	i_lanacl = PQfnumber(res, "lanacl");
+	i_lanowner = PQfnumber(res, "lanowner");
 
 	for (i = 0; i < ntups; i++)
 	{
@@ -3544,24 +3565,28 @@ getProcLangs(int *numProcLangs)
 		planginfo[i].dobj.name = strdup(PQgetvalue(res, i, i_lanname));
 		planginfo[i].lanpltrusted = *(PQgetvalue(res, i, i_lanpltrusted)) == 't';
 		planginfo[i].lanplcallfoid = atooid(PQgetvalue(res, i, i_lanplcallfoid));
-		if (g_fout->remoteVersion >= 70300)
-		{
+		if (i_lanvalidator >= 0)
 			planginfo[i].lanvalidator = atooid(PQgetvalue(res, i, i_lanvalidator));
-			planginfo[i].lanacl = strdup(PQgetvalue(res, i, i_lanacl));
-		}
 		else
-		{
-			FuncInfo   *funcInfo;
-
 			planginfo[i].lanvalidator = InvalidOid;
+		if (i_lanacl >= 0)
+			planginfo[i].lanacl = strdup(PQgetvalue(res, i, i_lanacl));
+		else
 			planginfo[i].lanacl = strdup("{=U}");
+		if (i_lanowner >= 0)
+			planginfo[i].lanowner = strdup(PQgetvalue(res, i, i_lanowner));
+		else
+			planginfo[i].lanowner = strdup("");
 
+		if (g_fout->remoteVersion < 70300)
+		{
 			/*
 			 * We need to make a dependency to ensure the function will be
 			 * dumped first.  (In 7.3 and later the regular dependency
 			 * mechanism will handle this for us.)
 			 */
-			funcInfo = findFuncByOid(planginfo[i].lanplcallfoid);
+			FuncInfo   *funcInfo = findFuncByOid(planginfo[i].lanplcallfoid);
+
 			if (funcInfo)
 				addObjectDependency(&planginfo[i].dobj,
 									funcInfo->dobj.dumpId);
@@ -5171,7 +5196,7 @@ dumpProcLang(Archive *fout, ProcLangInfo *plang)
 
 	ArchiveEntry(fout, plang->dobj.catId, plang->dobj.dumpId,
 				 plang->dobj.name,
-				 lanschema, NULL, "",
+				 lanschema, NULL, plang->lanowner,
 				 false, "PROCEDURAL LANGUAGE",
 				 defqry->data, delqry->data, NULL,
 				 plang->dobj.dependencies, plang->dobj.nDeps,
@@ -5188,7 +5213,7 @@ dumpProcLang(Archive *fout, ProcLangInfo *plang)
 		dumpACL(fout, plang->dobj.catId, plang->dobj.dumpId, "LANGUAGE",
 				qlanname, plang->dobj.name,
 				lanschema,
-				NULL, plang->lanacl);
+				plang->lanowner, plang->lanacl);
 
 	free(qlanname);
 
@@ -6689,7 +6714,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
  *
  * 'objCatId' is the catalog ID of the underlying object.
  * 'objDumpId' is the dump ID of the underlying object.
- * 'type' must be TABLE, FUNCTION, LANGUAGE, or SCHEMA.
+ * 'type' must be TABLE, FUNCTION, LANGUAGE, SCHEMA, DATABASE, or TABLESPACE.
  * 'name' is the formatted name of the object.	Must be quoted etc. already.
  * 'tag' is the tag for the archive entry (typ. unquoted name of object).
  * 'nspname' is the namespace the object is in (NULL if none).
