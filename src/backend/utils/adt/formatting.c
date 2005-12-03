@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.102 2005/11/22 18:17:22 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.103 2005/12/03 16:45:06 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2005, PostgreSQL Global Development Group
@@ -434,6 +434,10 @@ do { \
 	tmtcTzn(_X) = NULL; \
 } while(0)
 
+/*
+ *	to_char(time) appears to to_char() as an interval, so this check
+ *	is really for interval and time data types.
+ */
 #define INVALID_FOR_INTERVAL  \
 do { \
 	if (is_interval) \
@@ -1722,11 +1726,10 @@ dch_time(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 	{
 		case DCH_A_M:
 		case DCH_P_M:
-			INVALID_FOR_INTERVAL;
 			if (is_to_char)
 			{
-				strcpy(inout, ((tm->tm_hour > 11
-					   && tm->tm_hour < HOURS_PER_DAY) ? P_M_STR : A_M_STR));
+				strcpy(inout, (tm->tm_hour % HOURS_PER_DAY >= HOURS_PER_DAY / 2)
+					   ? P_M_STR : A_M_STR);
 				return strlen(p_inout);
 			}
 			else
@@ -1742,11 +1745,10 @@ dch_time(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			break;
 		case DCH_AM:
 		case DCH_PM:
-			INVALID_FOR_INTERVAL;
 			if (is_to_char)
 			{
-				strcpy(inout, ((tm->tm_hour > 11
-						 && tm->tm_hour < HOURS_PER_DAY) ? PM_STR : AM_STR));
+				strcpy(inout, (tm->tm_hour % HOURS_PER_DAY >= HOURS_PER_DAY / 2)
+					   ? PM_STR : AM_STR);
 				return strlen(p_inout);
 			}
 			else
@@ -1762,11 +1764,10 @@ dch_time(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			break;
 		case DCH_a_m:
 		case DCH_p_m:
-			INVALID_FOR_INTERVAL;
 			if (is_to_char)
 			{
-				strcpy(inout, ((tm->tm_hour > 11
-					   && tm->tm_hour < HOURS_PER_DAY) ? p_m_STR : a_m_STR));
+				strcpy(inout, (tm->tm_hour % HOURS_PER_DAY >= HOURS_PER_DAY / 2)
+					   ? p_m_STR : a_m_STR);
 				return strlen(p_inout);
 			}
 			else
@@ -1782,11 +1783,10 @@ dch_time(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			break;
 		case DCH_am:
 		case DCH_pm:
-			INVALID_FOR_INTERVAL;
 			if (is_to_char)
 			{
-				strcpy(inout, ((tm->tm_hour > 11
-						 && tm->tm_hour < HOURS_PER_DAY) ? pm_STR : am_STR));
+				strcpy(inout, (tm->tm_hour % HOURS_PER_DAY >= HOURS_PER_DAY / 2)
+					   ? pm_STR : am_STR);
 				return strlen(p_inout);
 			}
 			else
@@ -1804,12 +1804,9 @@ dch_time(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 		case DCH_HH12:
 			if (is_to_char)
 			{
-				if (is_interval)
-					sprintf(inout, "%0*d", S_FM(suf) ? 0 : 2, tm->tm_hour);
-				else
-					sprintf(inout, "%0*d", S_FM(suf) ? 0 : 2,
-							tm->tm_hour == 0 ? 12 :
-						  tm->tm_hour < 13 ? tm->tm_hour : tm->tm_hour - 12);
+				sprintf(inout, "%0*d", S_FM(suf) ? 0 : 2,
+						tm->tm_hour % (HOURS_PER_DAY / 2) == 0 ? 12 :
+					    tm->tm_hour % (HOURS_PER_DAY / 2));
 				if (S_THth(suf))
 					str_numth(p_inout, inout, 0);
 				return strlen(p_inout);
@@ -2312,7 +2309,6 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			}
 			break;
 		case DCH_D:
-			INVALID_FOR_INTERVAL;
 			if (is_to_char)
 			{
 				sprintf(inout, "%d", tm->tm_wday + 1);
