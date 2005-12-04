@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Sat Dec  3 23:14:39 EST 2005
+Last updated:           Sat Dec  3 23:33:12 EST 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -1022,6 +1022,11 @@ first.
     </li><li>Fix problem with shared memory on the Win32 Terminal Server
     </li><li>Improve signal handling,
           <a href="http://archives.postgresql.org/pgsql-patches/2005-06/msg00027.php">http://archives.postgresql.org/pgsql-patches/2005-06/msg00027.php</a>
+    </li><li>Add long file support for binary pg_dump output
+<p>          While Win32 supports 64-bit files, the MinGW API does not,
+          meaning we have to build an fseeko replacement on top of the
+          Win32 API, and we have to make sure MinGW handles it.
+</p>
   </li></ul>
   </li><li>Wire Protocol Changes
   <ul>
