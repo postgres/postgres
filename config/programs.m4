@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/config/programs.m4,v 1.18 2004/12/02 20:04:19 tgl Exp $
+# $PostgreSQL: pgsql/config/programs.m4,v 1.19 2005/12/04 03:52:28 momjian Exp $
 
 
 # PGAC_PATH_FLEX
@@ -78,12 +78,16 @@ AC_SUBST(FLEXFLAGS)
 
 AC_DEFUN([PGAC_CHECK_READLINE],
 [AC_REQUIRE([AC_CANONICAL_HOST])
-AC_MSG_CHECKING([for readline])
 
 AC_CACHE_VAL([pgac_cv_check_readline],
 [pgac_cv_check_readline=no
 pgac_save_LIBS=$LIBS
-for pgac_rllib in -lreadline -ledit ; do
+if test x"$with_libedit_preferred" != x"yes"
+then	READLINE_ORDER="-lreadline -ledit"
+else	READLINE_ORDER="-ledit -lreadline"
+fi
+for pgac_rllib in $READLINE_ORDER ; do
+  AC_MSG_CHECKING([for ${pgac_rllib}])
   for pgac_lib in "" " -ltermcap" " -lncurses" " -lcurses" ; do
     LIBS="${pgac_rllib}${pgac_lib} $pgac_save_LIBS"
     AC_TRY_LINK_FUNC([readline], [[
@@ -98,20 +102,25 @@ for pgac_rllib in -lreadline -ledit ; do
       esac
 
       pgac_cv_check_readline="${pgac_rllib}${pgac_lib}"
-      break 2
+      break
     ]])
   done
+  if test "$pgac_cv_check_readline" != no ; then
+    AC_MSG_RESULT([yes ($pgac_cv_check_readline)])
+    break
+  else
+    AC_MSG_RESULT(no)
+  fi
 done
 LIBS=$pgac_save_LIBS
 ])[]dnl AC_CACHE_VAL
 
 if test "$pgac_cv_check_readline" != no ; then
-  AC_DEFINE(HAVE_LIBREADLINE, 1, [Define if you have a function readline library])
   LIBS="$pgac_cv_check_readline $LIBS"
-  AC_MSG_RESULT([yes ($pgac_cv_check_readline)])
-else
-  AC_MSG_RESULT(no)
-fi])# PGAC_CHECK_READLINE
+  AC_DEFINE(HAVE_LIBREADLINE, 1, [Define if you have a function readline library])
+fi
+
+])# PGAC_CHECK_READLINE
 
 
 

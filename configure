@@ -890,7 +890,8 @@ Optional Packages:
   --with-pam              build with PAM support
   --with-bonjour          build with Bonjour support
   --with-openssl          build with OpenSSL support
-  --without-readline      do not use Readline
+  --with-libedit-preferred  prefer BSD Libedit over GNU Readline
+  --without-readline      do not use GNU Readline / BSD Libedit line editing
   --without-zlib          do not use Zlib
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
 
@@ -3772,6 +3773,37 @@ echo "${ECHO_T}$with_openssl" >&6
 
 
 #
+# Prefer libedit
+#
+
+
+
+# Check whether --with-libedit-preferred or --without-libedit-preferred was given.
+if test "${with_libedit_preferred+set}" = set; then
+  withval="$with_libedit_preferred"
+
+  case $withval in
+    yes)
+      :
+      ;;
+    no)
+      :
+      ;;
+    *)
+      { { echo "$as_me:$LINENO: error: no argument expected for --with-libedit-preferred option" >&5
+echo "$as_me: error: no argument expected for --with-libedit-preferred option" >&2;}
+   { (exit 1); exit 1; }; }
+      ;;
+  esac
+
+else
+  with_libedit_preferred=no
+
+fi;
+
+
+
+#
 # Readline
 #
 
@@ -6490,15 +6522,19 @@ fi
 
 if test "$with_readline" = yes; then
 
-echo "$as_me:$LINENO: checking for readline" >&5
-echo $ECHO_N "checking for readline... $ECHO_C" >&6
 
 if test "${pgac_cv_check_readline+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   pgac_cv_check_readline=no
 pgac_save_LIBS=$LIBS
-for pgac_rllib in -lreadline -ledit ; do
+if test x"$with_libedit_preferred" != x"yes"
+then	READLINE_ORDER="-lreadline -ledit"
+else	READLINE_ORDER="-ledit -lreadline"
+fi
+for pgac_rllib in $READLINE_ORDER ; do
+  echo "$as_me:$LINENO: checking for ${pgac_rllib}" >&5
+echo $ECHO_N "checking for ${pgac_rllib}... $ECHO_C" >&6
   for pgac_lib in "" " -ltermcap" " -lncurses" " -lcurses" ; do
     LIBS="${pgac_rllib}${pgac_lib} $pgac_save_LIBS"
     cat >conftest.$ac_ext <<_ACEOF
@@ -6557,7 +6593,7 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
       esac
 
       pgac_cv_check_readline="${pgac_rllib}${pgac_lib}"
-      break 2
+      break
 
 else
   echo "$as_me: failed program was:" >&5
@@ -6567,24 +6603,29 @@ fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
   done
+  if test "$pgac_cv_check_readline" != no ; then
+    echo "$as_me:$LINENO: result: yes ($pgac_cv_check_readline)" >&5
+echo "${ECHO_T}yes ($pgac_cv_check_readline)" >&6
+    break
+  else
+    echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+  fi
 done
 LIBS=$pgac_save_LIBS
 
 fi
 
 if test "$pgac_cv_check_readline" != no ; then
+  LIBS="$pgac_cv_check_readline $LIBS"
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_LIBREADLINE 1
 _ACEOF
 
-  LIBS="$pgac_cv_check_readline $LIBS"
-  echo "$as_me:$LINENO: result: yes ($pgac_cv_check_readline)" >&5
-echo "${ECHO_T}yes ($pgac_cv_check_readline)" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
 fi
+
+
   if test x"$pgac_cv_check_readline" = x"no"; then
     { { echo "$as_me:$LINENO: error: readline library not found
 If you have readline already installed, see config.log for details on the

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.249 2005/11/05 00:04:04 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.250 2005/12/04 03:52:29 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -50,7 +50,7 @@ su - postgres
   <para>
    In general, a modern Unix-compatible platform should be able to run
    <productname>PostgreSQL</>.
-    The platforms that had received specific testing at the
+   The platforms that had received specific testing at the
    time of release are listed in <xref linkend="supported-platforms">
    below. In the <filename>doc</> subdirectory of the distribution
    there are several platform-specific <acronym>FAQ</> documents you
@@ -107,16 +107,20 @@ su - postgres
       </indexterm>
 
       The <acronym>GNU</> <productname>Readline</> library (for
-      comfortable line editing and command history retrieval) will be
-      used by default.  If you don't want to use it then you must
-      specify the <option>--without-readline</option> option for
-      <filename>configure</>.  (On <productname>NetBSD</productname>,
-      the <filename>libedit</filename> library is
-      <productname>Readline</productname>-compatible and is used if
-      <filename>libreadline</filename> is not found.)  If you are using
-      a package-based Linux distribution, be aware that you need both
-      the <literal>readline</> and <literal>readline-devel</> packages,
-      if those are separate in your distribution.
+      simple line editing and command history retrieval) is
+      used by default. If you don't want to use it then you must specify
+      the <option>--without-readline</option> option for
+      <filename>configure</>. As an alternative, you can often use the
+      BSD-licensed <filename>libedit</filename> library, originally
+      developed on <productname>NetBSD</productname>. The
+      <filename>libedit</filename> library is
+      GNU <productname>Readline</productname>-compatible and is used if
+      <filename>libreadline</filename> is not found, or if
+      <option>--with-libedit-preferred</option> is used as an 
+      option to <filename>configure</>. If you are using a package-based
+      Linux distribution, be aware that you need both the 
+      <literal>readline</> and <literal>readline-devel</> packages, if 
+      those are separate in your distribution.
      </para>
     </listitem>
 
@@ -853,6 +857,16 @@ su - postgres
         <para>
          Build with <acronym>PAM</><indexterm><primary>PAM</></>
          (Pluggable Authentication Modules) support.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>--with-libedit-preferred</option></term>
+       <listitem>
+        <para>
+         Favors the use of the BSD-licensed <application>libedit</> library
+         rather than GPL-licensed <application>Readline</>.
         </para>
        </listitem>
       </varlistentry>
