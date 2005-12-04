@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Dec  3 23:02:48 EST 2005
+Last updated:		Sat Dec  3 23:14:39 EST 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -289,6 +289,7 @@ Functions
 * Add sleep() function, remove from regress.c
 * Allow user-defined functions retuning a domain value to enforce domain
   constraints
+* Add SPI_gettypmod() to return the typemod for a TupleDesc
 
 
 Multi-Language Support
