@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Dec  3 08:03:38 EST 2005
+Last updated:		Sat Dec  3 23:02:48 EST 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -924,6 +924,7 @@ Vacuum
 	  empty?
 	o Improve xid wraparound detection by recording per-table rather
 	  than per-database
+	o Consider logging activity either to the logs or a system view
 
 
 Locking
