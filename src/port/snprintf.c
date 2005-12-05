@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/port/snprintf.c,v 1.30 2005/12/05 02:39:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/port/snprintf.c,v 1.31 2005/12/05 21:57:00 tgl Exp $
  */
 
 #include "c.h"
@@ -51,9 +51,8 @@
  *	SNPRINTF, VSNPRINTF and friends
  *
  * These versions have been grabbed off the net.  They have been
- * cleaned up to compile properly and support for most of the Single
- * Unix Specification has been added.  Remaining unimplemented features
- * are:
+ * cleaned up to compile properly and support for most of the Single Unix
+ * Specification has been added.  Remaining unimplemented features are:
  *
  * 1. No locale support: the radix character is always '.' and the '
  * (single quote) format flag is ignored.
@@ -65,6 +64,27 @@
  * 4. No support for "long double" ("Lf" and related formats).
  *
  * 5. Space and '#' flags are not implemented.
+ *
+ *
+ * The result values of these functions are not the same across different
+ * platforms.  This implementation is compatible with the Single Unix Spec:
+ *
+ * 1. -1 is returned only if processing is abandoned due to an invalid
+ * parameter, such as incorrect format string.  (Although not required by
+ * the spec, this happens only when no characters have yet been transmitted
+ * to the destination.)
+ *
+ * 2. For snprintf and sprintf, 0 is returned if str == NULL or count == 0;
+ * no data has been stored.
+ *
+ * 3. Otherwise, the number of bytes actually transmitted to the destination
+ * is returned (excluding the trailing '\0' for snprintf and sprintf).
+ *
+ * For snprintf with nonzero count, the result cannot be more than count-1
+ * (a trailing '\0' is always stored); it is not possible to distinguish
+ * buffer overrun from exact fit.  This is unlike some implementations that
+ * return the number of bytes that would have been needed for the complete
+ * result string.
  */
 
 /**************************************************************
