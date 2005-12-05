@@ -327,6 +327,7 @@ static TParserStateActionItem actionTPS_Base[] = {
 	{p_iseqC, '+', A_PUSH, TPS_InSignedIntFirst, 0, NULL},
 	{p_iseqC, '&', A_PUSH, TPS_InHTMLEntityFirst, 0, NULL},
 	{p_iseqC, '/', A_PUSH, TPS_InFileFirst, 0, NULL},
+	{p_iseqC, '.', A_PUSH, TPS_InPathFirst, 0, NULL},
 	{NULL, 0, A_NEXT, TPS_InSpace, 0, NULL}
 };
 
@@ -336,6 +337,7 @@ static TParserStateActionItem actionTPS_InUWord[] = {
 	{p_isalnum, 0, A_NEXT, TPS_InUWord, 0, NULL},
 	{p_iseqC, '@', A_PUSH, TPS_InEmail, 0, NULL},
 	{p_iseqC, '/', A_PUSH, TPS_InFileFirst, 0, NULL},
+	{p_iseqC, '.', A_PUSH, TPS_InFileNext, 0, NULL},
 	{p_iseqC, '-', A_PUSH, TPS_InHyphenUWordFirst, 0, NULL},
 	{NULL, 0, A_BINGO, TPS_Base, UWORD, NULL}
 };
@@ -343,8 +345,8 @@ static TParserStateActionItem actionTPS_InUWord[] = {
 static TParserStateActionItem actionTPS_InLatWord[] = {
 	{p_isEOF, 0, A_BINGO, TPS_Base, LATWORD, NULL},
 	{p_islatin, 0, A_NEXT, TPS_Null, 0, NULL},
-	{p_iseqC, '.', A_PUSH, TPS_InHostFirstDomen, 0, NULL},
-	{p_iseqC, '.', A_PUSH, TPS_InFileFirst, 0, NULL},
+	{p_iseqC, '.', A_PUSH, TPS_InHostFirstDomain, 0, NULL},
+	{p_iseqC, '.', A_PUSH, TPS_InFileNext, 0, NULL},
 	{p_iseqC, '-', A_PUSH, TPS_InHostFirstAN, 0, NULL},
 	{p_iseqC, '-', A_PUSH, TPS_InHyphenLatWordFirst, 0, NULL},
 	{p_iseqC, '@', A_PUSH, TPS_InEmail, 0, NULL},
@@ -366,7 +368,7 @@ static TParserStateActionItem actionTPS_InCyrWord[] = {
 static TParserStateActionItem actionTPS_InUnsignedInt[] = {
 	{p_isEOF, 0, A_BINGO, TPS_Base, UNSIGNEDINT, NULL},
 	{p_isdigit, 0, A_NEXT, TPS_Null, 0, NULL},
-	{p_iseqC, '.', A_PUSH, TPS_InHostFirstDomen, 0, NULL},
+	{p_iseqC, '.', A_PUSH, TPS_InHostFirstDomain, 0, NULL},
 	{p_iseqC, '.', A_PUSH, TPS_InUDecimalFirst, 0, NULL},
 	{p_iseqC, 'e', A_PUSH, TPS_InMantissaFirst, 0, NULL},
 	{p_iseqC, 'E', A_PUSH, TPS_InMantissaFirst, 0, NULL},
@@ -500,7 +502,16 @@ static TParserStateActionItem actionTPS_InTagFirst[] = {
 	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
 	{p_iseqC, '/', A_PUSH, TPS_InTagCloseFirst, 0, NULL},
 	{p_iseqC, '!', A_PUSH, TPS_InCommentFirst, 0, NULL},
+	{p_iseqC, '?', A_PUSH, TPS_InXMLBegin, 0, NULL},
 	{p_islatin, 0, A_PUSH, TPS_InTag, 0, NULL},
+	{NULL, 0, A_POP, TPS_Null, 0, NULL}
+};
+
+static TParserStateActionItem actionTPS_InXMLBegin[] = {
+	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
+	/* <?xml ... */
+	{p_iseqC, 'x', A_NEXT, TPS_InTag, 0, NULL},
+	{p_iseqC, 'X', A_NEXT, TPS_InTag, 0, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
 
@@ -520,6 +531,11 @@ static TParserStateActionItem actionTPS_InTag[] = {
 	{p_iseqC, '=', A_NEXT, TPS_Null, 0, NULL},
 	{p_iseqC, '-', A_NEXT, TPS_Null, 0, NULL},
 	{p_iseqC, '#', A_NEXT, TPS_Null, 0, NULL},
+	{p_iseqC, '/', A_NEXT, TPS_Null, 0, NULL},
+	{p_iseqC, ':', A_NEXT, TPS_Null, 0, NULL},
+	{p_iseqC, '.', A_NEXT, TPS_Null, 0, NULL},
+	{p_iseqC, '&', A_NEXT, TPS_Null, 0, NULL},
+	{p_iseqC, '?', A_NEXT, TPS_Null, 0, NULL},
 	{p_iseqC, '%', A_NEXT, TPS_Null, 0, NULL},
 	{p_isspace, 0, A_NEXT, TPS_Null, 0, SpecialTags},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
@@ -551,6 +567,9 @@ static TParserStateActionItem actionTPS_InTagEnd[] = {
 static TParserStateActionItem actionTPS_InCommentFirst[] = {
 	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
 	{p_iseqC, '-', A_NEXT, TPS_InCommentLast, 0, NULL},
+	/* <!DOCTYPE ...>*/
+	{p_iseqC, 'D', A_NEXT, TPS_InTag, 0, NULL},
+	{p_iseqC, 'd', A_NEXT, TPS_InTag, 0, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
 
@@ -583,30 +602,30 @@ static TParserStateActionItem actionTPS_InCommentEnd[] = {
 	{NULL, 0, A_BINGO | A_CLRALL, TPS_Base, TAG, NULL}
 };
 
-static TParserStateActionItem actionTPS_InHostFirstDomen[] = {
+static TParserStateActionItem actionTPS_InHostFirstDomain[] = {
 	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
-	{p_islatin, 0, A_NEXT, TPS_InHostDomenSecond, 0, NULL},
+	{p_islatin, 0, A_NEXT, TPS_InHostDomainSecond, 0, NULL},
 	{p_isdigit, 0, A_NEXT, TPS_InHost, 0, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
 
-static TParserStateActionItem actionTPS_InHostDomenSecond[] = {
+static TParserStateActionItem actionTPS_InHostDomainSecond[] = {
 	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
-	{p_islatin, 0, A_NEXT, TPS_InHostDomen, 0, NULL},
+	{p_islatin, 0, A_NEXT, TPS_InHostDomain, 0, NULL},
 	{p_isdigit, 0, A_PUSH, TPS_InHost, 0, NULL},
 	{p_iseqC, '-', A_PUSH, TPS_InHostFirstAN, 0, NULL},
-	{p_iseqC, '.', A_PUSH, TPS_InHostFirstDomen, 0, NULL},
+	{p_iseqC, '.', A_PUSH, TPS_InHostFirstDomain, 0, NULL},
 	{p_iseqC, '@', A_PUSH, TPS_InEmail, 0, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
 
-static TParserStateActionItem actionTPS_InHostDomen[] = {
+static TParserStateActionItem actionTPS_InHostDomain[] = {
 	{p_isEOF, 0, A_BINGO | A_CLRALL, TPS_Base, HOST, NULL},
-	{p_islatin, 0, A_NEXT, TPS_InHostDomen, 0, NULL},
+	{p_islatin, 0, A_NEXT, TPS_InHostDomain, 0, NULL},
 	{p_isdigit, 0, A_PUSH, TPS_InHost, 0, NULL},
 	{p_iseqC, ':', A_PUSH, TPS_InPortFirst, 0, NULL},
 	{p_iseqC, '-', A_PUSH, TPS_InHostFirstAN, 0, NULL},
-	{p_iseqC, '.', A_PUSH, TPS_InHostFirstDomen, 0, NULL},
+	{p_iseqC, '.', A_PUSH, TPS_InHostFirstDomain, 0, NULL},
 	{p_iseqC, '@', A_PUSH, TPS_InEmail, 0, NULL},
 	{p_isdigit, 0, A_POP, TPS_Null, 0, NULL},
 	{p_isstophost, 0, A_BINGO | A_CLRALL, TPS_InURIStart, HOST, NULL},
@@ -640,7 +659,7 @@ static TParserStateActionItem actionTPS_InHost[] = {
 	{p_isdigit, 0, A_NEXT, TPS_InHost, 0, NULL},
 	{p_islatin, 0, A_NEXT, TPS_InHost, 0, NULL},
 	{p_iseqC, '@', A_PUSH, TPS_InEmail, 0, NULL},
-	{p_iseqC, '.', A_PUSH, TPS_InHostFirstDomen, 0, NULL},
+	{p_iseqC, '.', A_PUSH, TPS_InHostFirstDomain, 0, NULL},
 	{p_iseqC, '-', A_PUSH, TPS_InHostFirstAN, 0, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
@@ -652,11 +671,29 @@ static TParserStateActionItem actionTPS_InEmail[] = {
 
 static TParserStateActionItem actionTPS_InFileFirst[] = {
 	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
-	{p_islatin, 0, A_CLEAR, TPS_InFile, 0, NULL},
-	{p_isdigit, 0, A_CLEAR, TPS_InFile, 0, NULL},
-	{p_iseqC, '.', A_CLEAR, TPS_InFile, 0, NULL},
-	{p_iseqC, '_', A_CLEAR, TPS_InFile, 0, NULL},
+	{p_islatin, 0, A_NEXT, TPS_InFile, 0, NULL},
+	{p_isdigit, 0, A_NEXT, TPS_InFile, 0, NULL},
+	{p_iseqC, '.', A_NEXT, TPS_InPathFirst, 0, NULL},
+	{p_iseqC, '_', A_NEXT, TPS_InFile, 0, NULL},
 	{p_iseqC, '?', A_PUSH, TPS_InURIFirst, 0, NULL},
+	{NULL, 0, A_POP, TPS_Null, 0, NULL}
+};
+
+static TParserStateActionItem actionTPS_InPathFirst[] = {
+	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
+	{p_islatin, 0, A_NEXT, TPS_InFile, 0, NULL},
+	{p_isdigit, 0, A_NEXT, TPS_InFile, 0, NULL},
+	{p_iseqC, '_', A_NEXT, TPS_InFile, 0, NULL},
+	{p_iseqC, '.', A_NEXT, TPS_InPathSecond, 0, NULL},
+	{p_iseqC, '/', A_NEXT, TPS_InFileFirst, 0, NULL},
+	{NULL, 0, A_POP, TPS_Null, 0, NULL}
+};
+
+static TParserStateActionItem actionTPS_InPathSecond[] = {
+	{p_isEOF, 0, A_BINGO|A_CLEAR, TPS_Base, FILEPATH, NULL},
+	{p_iseqC, '/', A_NEXT|A_PUSH, TPS_InFileFirst, 0, NULL},
+	{p_iseqC, '/', A_BINGO|A_CLEAR, TPS_Base, FILEPATH, NULL},
+	{p_isspace, 0, A_BINGO|A_CLEAR, TPS_Base, FILEPATH, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
 
@@ -894,6 +931,7 @@ static const TParserStateAction Actions[] = {
 	{TPS_InHTMLEntityNum, actionTPS_InHTMLEntityNum},
 	{TPS_InHTMLEntityEnd, actionTPS_InHTMLEntityEnd},
 	{TPS_InTagFirst, actionTPS_InTagFirst},
+	{TPS_InXMLBegin, actionTPS_InXMLBegin},
 	{TPS_InTagCloseFirst, actionTPS_InTagCloseFirst},
 	{TPS_InTag, actionTPS_InTag},
 	{TPS_InTagEscapeK, actionTPS_InTagEscapeK},
@@ -906,15 +944,17 @@ static const TParserStateAction Actions[] = {
 	{TPS_InCloseCommentFirst, actionTPS_InCloseCommentFirst},
 	{TPS_InCloseCommentLast, actionTPS_InCloseCommentLast},
 	{TPS_InCommentEnd, actionTPS_InCommentEnd},
-	{TPS_InHostFirstDomen, actionTPS_InHostFirstDomen},
-	{TPS_InHostDomenSecond, actionTPS_InHostDomenSecond},
-	{TPS_InHostDomen, actionTPS_InHostDomen},
+	{TPS_InHostFirstDomain, actionTPS_InHostFirstDomain},
+	{TPS_InHostDomainSecond, actionTPS_InHostDomainSecond},
+	{TPS_InHostDomain, actionTPS_InHostDomain},
 	{TPS_InPortFirst, actionTPS_InPortFirst},
 	{TPS_InPort, actionTPS_InPort},
 	{TPS_InHostFirstAN, actionTPS_InHostFirstAN},
 	{TPS_InHost, actionTPS_InHost},
 	{TPS_InEmail, actionTPS_InEmail},
 	{TPS_InFileFirst, actionTPS_InFileFirst},
+	{TPS_InPathFirst, actionTPS_InPathFirst},
+	{TPS_InPathSecond, actionTPS_InPathSecond},
 	{TPS_InFile, actionTPS_InFile},
 	{TPS_InFileNext, actionTPS_InFileNext},
 	{TPS_InURIFirst, actionTPS_InURIFirst},
