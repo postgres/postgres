@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.191.2.3 2005/11/30 17:10:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.191.2.4 2005/12/06 16:50:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1258,26 +1258,8 @@ find_clauses_for_join(PlannerInfo *root, RelOptInfo *rel,
 					  Relids outer_relids, bool isouterjoin)
 {
 	List	   *clause_list = NIL;
-	bool		jfound = false;
 	Relids		join_relids;
 	ListCell   *l;
-
-	/*
-	 * We can always use plain restriction clauses for the rel.  We scan these
-	 * first because we want them first in the clause list for the convenience
-	 * of remove_redundant_join_clauses, which can never remove non-join
-	 * clauses and hence won't be able to get rid of a non-join clause if it
-	 * appears after a join clause it is redundant with.
-	 */
-	foreach(l, rel->baserestrictinfo)
-	{
-		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
-
-		/* Can't use pushed-down clauses in outer join */
-		if (isouterjoin && rinfo->is_pushed_down)
-			continue;
-		clause_list = lappend(clause_list, rinfo);
-	}
 
 	/* Look for joinclauses that are usable with given outer_relids */
 	join_relids = bms_union(rel->relids, outer_relids);
@@ -1286,21 +1268,29 @@ find_clauses_for_join(PlannerInfo *root, RelOptInfo *rel,
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 
-		/* Can't use pushed-down clauses in outer join */
+		/* Can't use pushed-down join clauses in outer join */
 		if (isouterjoin && rinfo->is_pushed_down)
 			continue;
 		if (!bms_is_subset(rinfo->required_relids, join_relids))
 			continue;
 
 		clause_list = lappend(clause_list, rinfo);
-		jfound = true;
 	}
 
 	bms_free(join_relids);
 
 	/* if no join clause was matched then forget it, per comments above */
-	if (!jfound)
+	if (clause_list == NIL)
 		return NIL;
+
+	/*
+	 * We can also use any plain restriction clauses for the rel.  We put
+	 * these at the front of the clause list for the convenience of
+	 * remove_redundant_join_clauses, which can never remove non-join clauses
+	 * and hence won't be able to get rid of a non-join clause if it appears
+	 * after a join clause it is redundant with.
+	 */
+	clause_list = list_concat(list_copy(rel->baserestrictinfo), clause_list);
 
 	/*
 	 * We may now have clauses that are known redundant.  Get rid of 'em.
