@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.84.2.2 2005/12/06 05:13:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.84.2.3 2005/12/06 18:35:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,8 +115,9 @@ extern unsigned char pg_tolower(unsigned char ch);
 #ifdef USE_REPL_SNPRINTF
 
 /*
- * Some versions of libintl try to replace printf and friends with macros;
- * if we are doing likewise, make sure our versions win.
+ * Versions of libintl >= 0.13 try to replace printf() and friends with
+ * macros to their own versions that understand the %$ format.  We do the
+ * same, so disable their macros, if they exist.
  */
 #ifdef vsnprintf
 #undef vsnprintf
