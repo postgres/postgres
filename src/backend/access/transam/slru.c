@@ -41,7 +41,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.32 2005/12/06 18:10:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.33 2005/12/06 23:08:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,11 +87,13 @@
  * until control returns to SimpleLruFlush().  This data structure remembers
  * which files are open.
  */
+#define MAX_FLUSH_BUFFERS	16
+
 typedef struct SlruFlushData
 {
-	int			num_files;		/* # files actually open */
-	int			fd[NUM_SLRU_BUFFERS];	/* their FD's */
-	int			segno[NUM_SLRU_BUFFERS];		/* their log seg#s */
+	int			num_files;						/* # files actually open */
+	int			fd[MAX_FLUSH_BUFFERS];			/* their FD's */
+	int			segno[MAX_FLUSH_BUFFERS];		/* their log seg#s */
 } SlruFlushData;
 
 /*
@@ -150,25 +152,38 @@ static int	SlruSelectLRUPage(SlruCtl ctl, int pageno);
  */
 
 Size
-SimpleLruShmemSize(void)
+SimpleLruShmemSize(int nslots)
 {
-	/* we assume NUM_SLRU_BUFFERS isn't so large as to risk overflow */
-	return BUFFERALIGN(sizeof(SlruSharedData)) + BLCKSZ * NUM_SLRU_BUFFERS;
+	Size		sz;
+
+	/* we assume nslots isn't so large as to risk overflow */
+	sz = MAXALIGN(sizeof(SlruSharedData));
+	sz += MAXALIGN(nslots * sizeof(char *));			/* page_buffer[] */
+	sz += MAXALIGN(nslots * sizeof(SlruPageStatus));	/* page_status[] */
+	sz += MAXALIGN(nslots * sizeof(bool));				/* page_dirty[] */
+	sz += MAXALIGN(nslots * sizeof(int));				/* page_number[] */
+	sz += MAXALIGN(nslots * sizeof(int));				/* page_lru_count[] */
+	sz += MAXALIGN(nslots * sizeof(LWLockId));			/* buffer_locks[] */
+	
+	return BUFFERALIGN(sz) + BLCKSZ * nslots;
 }
 
 void
-SimpleLruInit(SlruCtl ctl, const char *name,
+SimpleLruInit(SlruCtl ctl, const char *name, int nslots,
 			  LWLockId ctllock, const char *subdir)
 {
 	SlruShared	shared;
 	bool		found;
 
-	shared = (SlruShared) ShmemInitStruct(name, SimpleLruShmemSize(), &found);
+	shared = (SlruShared) ShmemInitStruct(name,
+										  SimpleLruShmemSize(nslots),
+										  &found);
 
 	if (!IsUnderPostmaster)
 	{
 		/* Initialize locks and shared memory area */
-		char	   *bufptr;
+		char	   *ptr;
+		Size		offset;
 		int			slotno;
 
 		Assert(!found);
@@ -177,19 +192,37 @@ SimpleLruInit(SlruCtl ctl, const char *name,
 
 		shared->ControlLock = ctllock;
 
-		bufptr = (char *) shared + BUFFERALIGN(sizeof(SlruSharedData));
+		shared->num_slots = nslots;
 
-		for (slotno = 0; slotno < NUM_SLRU_BUFFERS; slotno++)
+		shared->cur_lru_count = 0;
+
+		/* shared->latest_page_number will be set later */
+
+		ptr = (char *) shared;
+		offset = MAXALIGN(sizeof(SlruSharedData));
+		shared->page_buffer = (char **) (ptr + offset);
+		offset += MAXALIGN(nslots * sizeof(char *));
+		shared->page_status = (SlruPageStatus *) (ptr + offset);
+		offset += MAXALIGN(nslots * sizeof(SlruPageStatus));
+		shared->page_dirty = (bool *) (ptr + offset);
+		offset += MAXALIGN(nslots * sizeof(bool));
+		shared->page_number = (int *) (ptr + offset);
+		offset += MAXALIGN(nslots * sizeof(int));
+		shared->page_lru_count = (int *) (ptr + offset);
+		offset += MAXALIGN(nslots * sizeof(int));
+		shared->buffer_locks = (LWLockId *) (ptr + offset);
+		offset += MAXALIGN(nslots * sizeof(LWLockId));
+		ptr += BUFFERALIGN(offset);
+
+		for (slotno = 0; slotno < nslots; slotno++)
 		{
-			shared->page_buffer[slotno] = bufptr;
+			shared->page_buffer[slotno] = ptr;
 			shared->page_status[slotno] = SLRU_PAGE_EMPTY;
 			shared->page_dirty[slotno] = false;
 			shared->page_lru_count[slotno] = 0;
 			shared->buffer_locks[slotno] = LWLockAssign();
-			bufptr += BLCKSZ;
+			ptr += BLCKSZ;
 		}
-
-		/* shared->latest_page_number will be set later */
 	}
 	else
 		Assert(found);
@@ -394,7 +427,7 @@ SimpleLruReadPage_ReadOnly(SlruCtl ctl, int pageno, TransactionId xid)
 	LWLockAcquire(shared->ControlLock, LW_SHARED);
 
 	/* See if page is already in a buffer */
-	for (slotno = 0; slotno < NUM_SLRU_BUFFERS; slotno++)
+	for (slotno = 0; slotno < shared->num_slots; slotno++)
 	{
 		if (shared->page_number[slotno] == pageno &&
 			shared->page_status[slotno] != SLRU_PAGE_EMPTY &&
@@ -643,9 +676,20 @@ SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno, SlruFlush fdata)
 
 		if (fdata)
 		{
-			fdata->fd[fdata->num_files] = fd;
-			fdata->segno[fdata->num_files] = segno;
-			fdata->num_files++;
+			if (fdata->num_files < MAX_FLUSH_BUFFERS)
+			{
+				fdata->fd[fdata->num_files] = fd;
+				fdata->segno[fdata->num_files] = segno;
+				fdata->num_files++;
+			}
+			else
+			{
+				/*
+				 * In the unlikely event that we exceed MAX_FLUSH_BUFFERS,
+				 * fall back to treating it as a standalone write.
+				 */
+				fdata = NULL;
+			}
 		}
 	}
 
@@ -797,7 +841,7 @@ SlruSelectLRUPage(SlruCtl ctl, int pageno)
 		int			best_page_number;
 
 		/* See if page already has a buffer assigned */
-		for (slotno = 0; slotno < NUM_SLRU_BUFFERS; slotno++)
+		for (slotno = 0; slotno < shared->num_slots; slotno++)
 		{
 			if (shared->page_number[slotno] == pageno &&
 				shared->page_status[slotno] != SLRU_PAGE_EMPTY)
@@ -830,7 +874,7 @@ SlruSelectLRUPage(SlruCtl ctl, int pageno)
 		best_delta = -1;
 		bestslot = 0;			/* no-op, just keeps compiler quiet */
 		best_page_number = 0;	/* ditto */
-		for (slotno = 0; slotno < NUM_SLRU_BUFFERS; slotno++)
+		for (slotno = 0; slotno < shared->num_slots; slotno++)
 		{
 			int			this_delta;
 			int			this_page_number;
@@ -908,7 +952,7 @@ SimpleLruFlush(SlruCtl ctl, bool checkpoint)
 
 	LWLockAcquire(shared->ControlLock, LW_EXCLUSIVE);
 
-	for (slotno = 0; slotno < NUM_SLRU_BUFFERS; slotno++)
+	for (slotno = 0; slotno < shared->num_slots; slotno++)
 	{
 		SimpleLruWritePage(ctl, slotno, &fdata);
 
@@ -990,7 +1034,7 @@ restart:;
 		return;
 	}
 
-	for (slotno = 0; slotno < NUM_SLRU_BUFFERS; slotno++)
+	for (slotno = 0; slotno < shared->num_slots; slotno++)
 	{
 		if (shared->page_status[slotno] == SLRU_PAGE_EMPTY)
 			continue;

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/slru.h,v 1.16 2005/12/06 18:10:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/slru.h,v 1.17 2005/12/06 23:08:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,13 +15,6 @@
 
 #include "storage/lwlock.h"
 
-
-/*
- * Number of page buffers.	Ideally this could be different for CLOG and
- * SUBTRANS, but the benefit doesn't seem to be worth any additional
- * notational cruft.
- */
-#define NUM_SLRU_BUFFERS	8
 
 /*
  * Page status codes.  Note that these do not include the "dirty" bit.
@@ -44,16 +37,19 @@ typedef struct SlruSharedData
 {
 	LWLockId	ControlLock;
 
+	/* Number of buffers managed by this SLRU structure */
+	int			num_slots;
+
 	/*
-	 * Info for each buffer slot.  Page number is undefined when status is
-	 * EMPTY.
+	 * Arrays holding info for each buffer slot.  Page number is undefined
+	 * when status is EMPTY, as is page_lru_count.
 	 */
-	char	   *page_buffer[NUM_SLRU_BUFFERS];
-	SlruPageStatus page_status[NUM_SLRU_BUFFERS];
-	bool		page_dirty[NUM_SLRU_BUFFERS];
-	int			page_number[NUM_SLRU_BUFFERS];
-	int			page_lru_count[NUM_SLRU_BUFFERS];
-	LWLockId	buffer_locks[NUM_SLRU_BUFFERS];
+	char	  **page_buffer;
+	SlruPageStatus *page_status;
+	bool	   *page_dirty;
+	int		   *page_number;
+	int		   *page_lru_count;
+	LWLockId   *buffer_locks;
 
 	/*----------
 	 * We mark a page "most recently used" by setting
@@ -110,8 +106,8 @@ typedef SlruCtlData *SlruCtl;
 typedef struct SlruFlushData *SlruFlush;
 
 
-extern Size SimpleLruShmemSize(void);
-extern void SimpleLruInit(SlruCtl ctl, const char *name,
+extern Size SimpleLruShmemSize(int nslots);
+extern void SimpleLruInit(SlruCtl ctl, const char *name, int nslots,
 			  LWLockId ctllock, const char *subdir);
 extern int	SimpleLruZeroPage(SlruCtl ctl, int pageno);
 extern int	SimpleLruReadPage(SlruCtl ctl, int pageno, TransactionId xid);

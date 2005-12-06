@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/clog.h,v 1.14 2005/08/20 23:26:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/clog.h,v 1.15 2005/12/06 23:08:34 tgl Exp $
  */
 #ifndef CLOG_H
 #define CLOG_H
@@ -26,6 +26,10 @@ typedef int XidStatus;
 #define TRANSACTION_STATUS_COMMITTED		0x01
 #define TRANSACTION_STATUS_ABORTED			0x02
 #define TRANSACTION_STATUS_SUB_COMMITTED	0x03
+
+
+/* Number of SLRU buffers to use for clog */
+#define NUM_CLOG_BUFFERS	8
 
 
 extern void TransactionIdSetStatus(TransactionId xid, XidStatus status);
