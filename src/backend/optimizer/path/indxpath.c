@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.167.4.2 2005/04/20 21:48:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.167.4.3 2005/12/06 16:50:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -331,10 +331,6 @@ group_clauses_by_indexkey_for_join(Query *root,
 		foreach(l, rel->baserestrictinfo)
 		{
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
-
-			/* Can't use pushed-down clauses in outer join */
-			if (isouterjoin && rinfo->is_pushed_down)
-				continue;
 
 			if (match_clause_to_indexcol(rel,
 										 index,
