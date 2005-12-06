@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400 2005/11/04 23:14:00 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.1 2005/12/06 18:43:40 momjian Exp $
 
 Typical markup:
 
@@ -1118,7 +1118,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
 
       <listitem>
        <para>
-        Add a function <function>lastval()</>(Dennis Björklund)
+        Add a function <function>lastval()</> (Dennis Bj&ouml;rklund)
        </para>
        <para>
         <function>lastval()</> is a simplified version of
@@ -4233,7 +4233,7 @@ typedefs (Michael)</para></listitem>
   
       <listitem>
        <para>
-        Allow function parameters to be declared with names (Dennis Bjorklund)
+        Allow function parameters to be declared with names (Dennis Bj&ouml;rklund)
        </para>
        <para>
         This allows better documentation of functions.  Whether the names
@@ -4244,7 +4244,7 @@ typedefs (Michael)</para></listitem>
   
       <listitem>
        <para>
-        Allow PL/pgSQL parameter names to be referenced in the function (Dennis Bjorklund)
+        Allow PL/pgSQL parameter names to be referenced in the function (Dennis Bj&ouml;rklund)
        </para>
        <para>
         This basically creates an automatic alias for each named parameter.
@@ -4421,7 +4421,7 @@ typedefs (Michael)</para></listitem>
       <listitem>
        <para>
         Have <command>\dn+</> show permissions and description for schemas (Dennis
-        Bjorklund)
+        Bj&ouml;rklund)
        </para>
       </listitem>
   
