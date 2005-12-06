@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.33 2005/03/14 17:27:50 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.33.2.1 2005/12/06 02:29:26 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,11 +21,12 @@ override CPPFLAGS := -DFRONTEND -I$(top_srcdir)/src/interfaces/ecpg/include \
 	-I$(libpq_srcdir) -I$(top_builddir)/src/port $(CPPFLAGS)
 override CFLAGS += $(PTHREAD_CFLAGS)
 
-# Need to recomple any libpgport object files
-LIBS := $(patsubst -lpgport,, $(LIBS))
+# Need to recompile any libpgport object files
+LIBS := $(filter-out -lpgport, $(LIBS))
 
 OBJS= execute.o typename.o descriptor.o data.o error.o prepare.o memory.o \
-	connect.o misc.o path.o exec.o
+	connect.o misc.o path.o exec.o \
+	$(filter snprintf.o, $(LIBOBJS))
 
 SHLIB_LINK = -L../pgtypeslib -lpgtypes $(libpq) \
 	$(filter -lintl -lssl -lcrypto -lkrb5 -lcrypt -lm, $(LIBS)) $(PTHREAD_LIBS)
@@ -45,10 +46,7 @@ include $(top_srcdir)/src/Makefile.shlib
 # necessarily use the same object files as the backend uses. Instead,
 # symlink the source files in here and build our own object file.
 
-path.c: % : $(top_srcdir)/src/port/%
-	rm -f $@ && $(LN_S) $< .
-
-exec.c: % : $(top_srcdir)/src/port/%
+path.c exec.c snprintf.c: % : $(top_srcdir)/src/port/%
 	rm -f $@ && $(LN_S) $< .
 
 path.o: path.c $(top_builddir)/src/port/pg_config_paths.h
@@ -64,7 +62,7 @@ installdirs:
 uninstall: uninstall-lib
 
 clean distclean maintainer-clean: clean-lib
-	rm -f $(OBJS) path.c exec.c
+	rm -f $(OBJS) path.c exec.c snprintf.c
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

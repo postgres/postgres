@@ -640,7 +640,7 @@
 #undef USE_PAM
 
 /* Use replacement snprintf() functions. */
-#undef USE_SNPRINTF
+#undef USE_REPL_SNPRINTF
 
 /* Define to build with (Open)SSL support. (--with-openssl) */
 #undef USE_SSL

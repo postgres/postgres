@@ -16,9 +16,6 @@
 #define write(a,b,c) _write(a,b,c)
 #endif
 
-#define vsnprintf(a,b,c,d) _vsnprintf(a,b,c,d)
-#define snprintf _snprintf
-
 #undef EAGAIN					/* doesn't apply on sockets */
 #undef EINTR
 #define EINTR WSAEINTR
