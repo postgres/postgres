@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.402 2005/12/06 18:43:26 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.403 2005/12/06 18:45:18 momjian Exp $
 
 Typical markup:
 
@@ -10,6 +10,7 @@ PostgreSQL                      <productname>
 pg_[A-Za-z0-9_]                 <application>
 [A-Z][A-Z]                      <type>, <envar>, <literal>
 &<>                             use &
+non-ascii			convert to & escapes
 
 For new features, add links to the documentation sections.
 
