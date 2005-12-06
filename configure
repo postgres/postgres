@@ -13893,7 +13893,11 @@ fi
 # also decide to use snprintf.c if snprintf() is present but does not
 # have all the features we need --- see below.
 
-pgac_need_repl_snprintf=no
+if test "$PORTNAME" = "win32"; then
+  # Win32 gets this built unconditionally
+  pgac_need_repl_snprintf=yes
+else
+  pgac_need_repl_snprintf=no
 
 for ac_func in snprintf
 do
@@ -14102,6 +14106,7 @@ else
 fi
 done
 
+fi
 
 
 # Check whether <stdio.h> declares snprintf() and vsnprintf(); if not,
@@ -17151,14 +17156,8 @@ fi
 
 
 # Force use of our snprintf if system's doesn't do arg control
-# This feature is used by NLS
-if test "$enable_nls" = yes &&
-   test $pgac_need_repl_snprintf = no &&
-# On Win32, libintl replaces snprintf() with its own version that
-# understands arg control, so we don't need our own.  In fact, it
-# also uses macros that conflict with ours, so we _can't_ use
-# our own.
-   test "$PORTNAME" != "win32"; then
+# This feature is needed by NLS
+if test "$enable_nls" = yes -a "$pgac_need_repl_snprintf" = no; then
   echo "$as_me:$LINENO: checking whether printf supports argument control" >&5
 echo $ECHO_N "checking whether printf supports argument control... $ECHO_C" >&6
 if test "${pgac_cv_printf_arg_control+set}" = set; then
@@ -17645,7 +17644,7 @@ _ACEOF
 if test $pgac_need_repl_snprintf = yes; then
 
 cat >>confdefs.h <<\_ACEOF
-#define USE_SNPRINTF 1
+#define USE_REPL_SNPRINTF 1
 _ACEOF
 
   case $LIBOBJS in
