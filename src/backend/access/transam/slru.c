@@ -19,6 +19,10 @@
  * reading in or writing out a page buffer does not hold the control lock,
  * only the per-buffer lock for the buffer it is working on.
  *
+ * "Holding the control lock" means exclusive lock in all cases except for
+ * SimpleLruReadPage_ReadOnly(); see comments for SlruRecentlyUsed() for
+ * the implications of that.
+ *
  * When initiating I/O on a buffer, we acquire the per-buffer lock exclusively
  * before releasing the control lock.  The per-buffer lock is released after
  * completing the I/O, re-acquiring the control lock, and updating the shared
@@ -37,7 +41,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.31 2005/11/22 18:17:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.32 2005/12/06 18:10:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,15 +95,30 @@ typedef struct SlruFlushData
 } SlruFlushData;
 
 /*
- * Macro to mark a buffer slot "most recently used".
+ * Macro to mark a buffer slot "most recently used".  Note multiple evaluation
+ * of arguments!
+ *
+ * The reason for the if-test is that there are often many consecutive
+ * accesses to the same page (particularly the latest page).  By suppressing
+ * useless increments of cur_lru_count, we reduce the probability that old
+ * pages' counts will "wrap around" and make them appear recently used.
+ *
+ * We allow this code to be executed concurrently by multiple processes within
+ * SimpleLruReadPage_ReadOnly().  As long as int reads and writes are atomic,
+ * this should not cause any completely-bogus values to enter the computation.
+ * However, it is possible for either cur_lru_count or individual
+ * page_lru_count entries to be "reset" to lower values than they should have,
+ * in case a process is delayed while it executes this macro.  With care in
+ * SlruSelectLRUPage(), this does little harm, and in any case the absolute
+ * worst possible consequence is a nonoptimal choice of page to evict.  The
+ * gain from allowing concurrent reads of SLRU pages seems worth it.
  */
 #define SlruRecentlyUsed(shared, slotno)	\
 	do { \
-		if ((shared)->page_lru_count[slotno] != 0) { \
-			int		iilru; \
-			for (iilru = 0; iilru < NUM_SLRU_BUFFERS; iilru++) \
-				(shared)->page_lru_count[iilru]++; \
-			(shared)->page_lru_count[slotno] = 0; \
+		int		new_lru_count = (shared)->cur_lru_count; \
+		if (new_lru_count != (shared)->page_lru_count[slotno]) { \
+			(shared)->cur_lru_count = ++new_lru_count; \
+			(shared)->page_lru_count[slotno] = new_lru_count; \
 		} \
 	} while (0)
 
@@ -165,7 +184,7 @@ SimpleLruInit(SlruCtl ctl, const char *name,
 			shared->page_buffer[slotno] = bufptr;
 			shared->page_status[slotno] = SLRU_PAGE_EMPTY;
 			shared->page_dirty[slotno] = false;
-			shared->page_lru_count[slotno] = 1;
+			shared->page_lru_count[slotno] = 0;
 			shared->buffer_locks[slotno] = LWLockAssign();
 			bufptr += BLCKSZ;
 		}
@@ -349,6 +368,49 @@ SimpleLruReadPage(SlruCtl ctl, int pageno, TransactionId xid)
 		SlruRecentlyUsed(shared, slotno);
 		return slotno;
 	}
+}
+
+/*
+ * Find a page in a shared buffer, reading it in if necessary.
+ * The page number must correspond to an already-initialized page.
+ * The caller must intend only read-only access to the page.
+ *
+ * The passed-in xid is used only for error reporting, and may be
+ * InvalidTransactionId if no specific xid is associated with the action.
+ *
+ * Return value is the shared-buffer slot number now holding the page.
+ * The buffer's LRU access info is updated.
+ *
+ * Control lock must NOT be held at entry, but will be held at exit.
+ * It is unspecified whether the lock will be shared or exclusive.
+ */
+int
+SimpleLruReadPage_ReadOnly(SlruCtl ctl, int pageno, TransactionId xid)
+{
+	SlruShared	shared = ctl->shared;
+	int			slotno;
+
+	/* Try to find the page while holding only shared lock */
+	LWLockAcquire(shared->ControlLock, LW_SHARED);
+
+	/* See if page is already in a buffer */
+	for (slotno = 0; slotno < NUM_SLRU_BUFFERS; slotno++)
+	{
+		if (shared->page_number[slotno] == pageno &&
+			shared->page_status[slotno] != SLRU_PAGE_EMPTY &&
+			shared->page_status[slotno] != SLRU_PAGE_READ_IN_PROGRESS)
+		{
+			/* See comments for SlruRecentlyUsed macro */
+			SlruRecentlyUsed(shared, slotno);
+			return slotno;
+		}
+	}
+
+	/* No luck, so switch to normal exclusive lock and do regular read */
+	LWLockRelease(shared->ControlLock);
+	LWLockAcquire(shared->ControlLock, LW_EXCLUSIVE);
+
+	return SimpleLruReadPage(ctl, pageno, xid);
 }
 
 /*
@@ -729,8 +791,10 @@ SlruSelectLRUPage(SlruCtl ctl, int pageno)
 	for (;;)
 	{
 		int			slotno;
-		int			bestslot = 0;
-		unsigned int bestcount = 0;
+		int			cur_count;
+		int			bestslot;
+		int			best_delta;
+		int			best_page_number;
 
 		/* See if page already has a buffer assigned */
 		for (slotno = 0; slotno < NUM_SLRU_BUFFERS; slotno++)
@@ -742,17 +806,59 @@ SlruSelectLRUPage(SlruCtl ctl, int pageno)
 
 		/*
 		 * If we find any EMPTY slot, just select that one. Else locate the
-		 * least-recently-used slot that isn't the latest page.
+		 * least-recently-used slot to replace.
+		 *
+		 * Normally the page_lru_count values will all be different and so
+		 * there will be a well-defined LRU page.  But since we allow
+		 * concurrent execution of SlruRecentlyUsed() within
+		 * SimpleLruReadPage_ReadOnly(), it is possible that multiple pages
+		 * acquire the same lru_count values.  In that case we break ties by
+		 * choosing the furthest-back page.
+		 *
+		 * In no case will we select the slot containing latest_page_number
+		 * for replacement, even if it appears least recently used.
+		 *
+		 * Notice that this next line forcibly advances cur_lru_count to a
+		 * value that is certainly beyond any value that will be in the
+		 * page_lru_count array after the loop finishes.  This ensures that
+		 * the next execution of SlruRecentlyUsed will mark the page newly
+		 * used, even if it's for a page that has the current counter value.
+		 * That gets us back on the path to having good data when there are
+		 * multiple pages with the same lru_count.
 		 */
+		cur_count = (shared->cur_lru_count)++;
+		best_delta = -1;
+		bestslot = 0;			/* no-op, just keeps compiler quiet */
+		best_page_number = 0;	/* ditto */
 		for (slotno = 0; slotno < NUM_SLRU_BUFFERS; slotno++)
 		{
+			int			this_delta;
+			int			this_page_number;
+
 			if (shared->page_status[slotno] == SLRU_PAGE_EMPTY)
 				return slotno;
-			if (shared->page_lru_count[slotno] > bestcount &&
-				shared->page_number[slotno] != shared->latest_page_number)
+			this_delta = cur_count - shared->page_lru_count[slotno];
+			if (this_delta < 0)
+			{
+				/*
+				 * Clean up in case shared updates have caused cur_count
+				 * increments to get "lost".  We back off the page counts,
+				 * rather than trying to increase cur_count, to avoid any
+				 * question of infinite loops or failure in the presence of
+				 * wrapped-around counts.
+				 */
+				shared->page_lru_count[slotno] = cur_count;
+				this_delta = 0;
+			}
+			this_page_number = shared->page_number[slotno];
+			if ((this_delta > best_delta ||
+				 (this_delta == best_delta &&
+				  ctl->PagePrecedes(this_page_number, best_page_number))) &&
+				this_page_number != shared->latest_page_number)
 			{
 				bestslot = slotno;
-				bestcount = shared->page_lru_count[slotno];
+				best_delta = this_delta;
+				best_page_number = this_page_number;
 			}
 		}
 

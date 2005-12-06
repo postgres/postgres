@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.34 2005/11/05 21:19:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.35 2005/12/06 18:10:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,9 +128,9 @@ TransactionIdGetStatus(TransactionId xid)
 	char	   *byteptr;
 	XidStatus	status;
 
-	LWLockAcquire(CLogControlLock, LW_EXCLUSIVE);
+	/* lock is acquired by SimpleLruReadPage_ReadOnly */
 
-	slotno = SimpleLruReadPage(ClogCtl, pageno, xid);
+	slotno = SimpleLruReadPage_ReadOnly(ClogCtl, pageno, xid);
 	byteptr = ClogCtl->shared->page_buffer[slotno] + byteno;
 
 	status = (*byteptr >> bshift) & CLOG_XACT_BITMASK;

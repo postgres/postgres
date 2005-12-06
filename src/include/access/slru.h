@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/slru.h,v 1.15 2005/11/05 21:19:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/slru.h,v 1.16 2005/12/06 18:10:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,16 +46,25 @@ typedef struct SlruSharedData
 
 	/*
 	 * Info for each buffer slot.  Page number is undefined when status is
-	 * EMPTY.  lru_count is essentially the number of page switches since last
-	 * use of this page; the page with highest lru_count is the best candidate
-	 * to replace.
+	 * EMPTY.
 	 */
 	char	   *page_buffer[NUM_SLRU_BUFFERS];
 	SlruPageStatus page_status[NUM_SLRU_BUFFERS];
 	bool		page_dirty[NUM_SLRU_BUFFERS];
 	int			page_number[NUM_SLRU_BUFFERS];
-	unsigned int page_lru_count[NUM_SLRU_BUFFERS];
+	int			page_lru_count[NUM_SLRU_BUFFERS];
 	LWLockId	buffer_locks[NUM_SLRU_BUFFERS];
+
+	/*----------
+	 * We mark a page "most recently used" by setting
+	 *		page_lru_count[slotno] = ++cur_lru_count;
+	 * The oldest page is therefore the one with the highest value of
+	 *		cur_lru_count - page_lru_count[slotno]
+	 * The counts will eventually wrap around, but this calculation still
+	 * works as long as no page's age exceeds INT_MAX counts.
+	 *----------
+	 */
+	int			cur_lru_count;
 
 	/*
 	 * latest_page_number is the page number of the current end of the log;
@@ -106,6 +115,8 @@ extern void SimpleLruInit(SlruCtl ctl, const char *name,
 			  LWLockId ctllock, const char *subdir);
 extern int	SimpleLruZeroPage(SlruCtl ctl, int pageno);
 extern int	SimpleLruReadPage(SlruCtl ctl, int pageno, TransactionId xid);
+extern int	SimpleLruReadPage_ReadOnly(SlruCtl ctl, int pageno,
+									   TransactionId xid);
 extern void SimpleLruWritePage(SlruCtl ctl, int slotno, SlruFlush fdata);
 extern void SimpleLruFlush(SlruCtl ctl, bool checkpoint);
 extern void SimpleLruTruncate(SlruCtl ctl, int cutoffPage);

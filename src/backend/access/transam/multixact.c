@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.13 2005/11/22 18:17:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.14 2005/12/06 18:10:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1690,12 +1690,12 @@ TruncateMultiXact(void)
 		int			entryno;
 		MultiXactOffset *offptr;
 
-		LWLockAcquire(MultiXactOffsetControlLock, LW_EXCLUSIVE);
+		/* lock is acquired by SimpleLruReadPage_ReadOnly */
 
 		pageno = MultiXactIdToOffsetPage(oldestMXact);
 		entryno = MultiXactIdToOffsetEntry(oldestMXact);
 
-		slotno = SimpleLruReadPage(MultiXactOffsetCtl, pageno, oldestMXact);
+		slotno = SimpleLruReadPage_ReadOnly(MultiXactOffsetCtl, pageno, oldestMXact);
 		offptr = (MultiXactOffset *) MultiXactOffsetCtl->shared->page_buffer[slotno];
 		offptr += entryno;
 		oldestOffset = *offptr;
