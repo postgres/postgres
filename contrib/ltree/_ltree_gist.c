@@ -82,7 +82,7 @@ _ltree_compress(PG_FUNCTION_ARGS)
 		key->len = len;
 		key->flag = 0;
 
-		MemSet(LTG_SIGN(key), 0, sizeof(ASIGLEN));
+		MemSet(LTG_SIGN(key), 0, ASIGLEN);
 		while (num > 0)
 		{
 			hashing(LTG_SIGN(key), item);
