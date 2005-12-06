@@ -13854,6 +13854,10 @@ fi
 
 if test "$PORTNAME" = "win32"; then
   # Win32 gets this built unconditionally
+  # libintl versions prior to 0.13 use the native *printf functions.
+  # Win32 *printf does not understand %$, so on Win32 using pre-0.13 libintl
+  # it is necessary to use the pg versions of *printf to properly process
+  # NLS strings that use the %$ format.
   pgac_need_repl_snprintf=yes
 else
   pgac_need_repl_snprintf=no
