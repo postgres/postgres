@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.3 2005/12/06 20:19:38 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.4 2005/12/06 20:26:02 momjian Exp $
 
 Typical markup:
 
@@ -532,10 +532,12 @@ psql -t -f fixseq.sql db1 | psql -e db1
        8.1.X.  This is because previous versions allowed invalid <literal>UTF8</>
        sequences to be entered into the database, and this release
        properly accepts only valid <literal>UTF8</> sequences.  One
-       way to correct a dumpfile is to use <command>iconv -c -f UTF-8 -t UTF-8</>.
-       This will remove invalid character sequences. <command>iconv</>
-       reads the entire input file into memory so it might be necessary to
-       <command>split</> the dump into multiple smaller files for processing.
+       way to correct a dumpfile is to use <command>iconv -c -f UTF-8 -t UTF-8
+       -o cleanfile.sql dumpfile.sql</>.  The <literal>-c</> option removes
+       invalid character sequences.  A diff of the two files will show the
+       sequences that are invalid.  <command>iconv</> reads the entire input 
+       file into memory so it might be necessary to <command>split</> the dump 
+       into multiple smaller files for processing.
       </para>
      </listitem>
 
