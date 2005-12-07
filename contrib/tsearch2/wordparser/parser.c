@@ -453,7 +453,7 @@ static TParserStateActionItem actionTPS_InVerVersion[] = {
 
 static TParserStateActionItem actionTPS_InSVerVersion[] = {
 	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
-	{p_isdigit, 0, A_BINGO, TPS_InUnsignedInt, SPACE, NULL},
+	{p_isdigit, 0, A_BINGO|A_CLRALL, TPS_InUnsignedInt, SPACE, NULL},
 	{NULL, 0, A_NEXT, TPS_Null, 0, NULL}
 };
 
