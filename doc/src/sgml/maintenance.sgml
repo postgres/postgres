@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.51.2.1 2005/12/07 05:36:08 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.51.2.2 2005/12/07 14:36:08 momjian Exp $
 -->
 
 <chapter id="maintenance">
@@ -142,8 +142,8 @@ $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.51.2.1 2005/12/07 05:36:08 
     just <command>VACUUM</command>, marks expired data in tables and
     indexes for future reuse; it does <emphasis>not</emphasis> attempt
     to reclaim the space used by this expired data unless the space is
-    at the end of the table and an exclusive lock can be obtained easily
-    on the table. Unused space at the start or middle of the file does
+    at the end of the table and an exclusive table lock can be easily 
+    obtained. Unused space at the start or middle of the file does
     not result in the file being shortened and space returned to the
     operating system. This variant of <command>VACUUM</command> can be
     run concurrently with normal database operations.
