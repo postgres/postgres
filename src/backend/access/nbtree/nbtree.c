@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.134 2005/11/22 18:17:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.135 2005/12/07 19:37:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -289,21 +289,6 @@ btgettuple(PG_FUNCTION_ARGS)
 		res = _bt_first(scan, dir);
 
 	/*
-	 * Skip killed tuples if asked to.
-	 */
-	if (scan->ignore_killed_tuples)
-	{
-		while (res)
-		{
-			offnum = ItemPointerGetOffsetNumber(&(scan->currentItemData));
-			page = BufferGetPage(so->btso_curbuf);
-			if (!ItemIdDeleted(PageGetItemId(page, offnum)))
-				break;
-			res = _bt_next(scan, dir);
-		}
-	}
-
-	/*
 	 * Save heap TID to use it in _bt_restscan.  Then release the read lock on
 	 * the buffer so that we aren't blocking other backends.
 	 *
@@ -353,25 +338,6 @@ btgetmulti(PG_FUNCTION_ARGS)
 			res = _bt_next(scan, ForwardScanDirection);
 		else
 			res = _bt_first(scan, ForwardScanDirection);
-
-		/*
-		 * Skip killed tuples if asked to.
-		 */
-		if (scan->ignore_killed_tuples)
-		{
-			while (res)
-			{
-				Page		page;
-				OffsetNumber offnum;
-
-				offnum = ItemPointerGetOffsetNumber(&(scan->currentItemData));
-				page = BufferGetPage(so->btso_curbuf);
-				if (!ItemIdDeleted(PageGetItemId(page, offnum)))
-					break;
-				res = _bt_next(scan, ForwardScanDirection);
-			}
-		}
-
 		if (!res)
 			break;
 		/* Save tuple ID, and continue scanning */
@@ -385,9 +351,8 @@ btgetmulti(PG_FUNCTION_ARGS)
 	 */
 	if (res)
 	{
-		((BTScanOpaque) scan->opaque)->curHeapIptr = scan->xs_ctup.t_self;
-		LockBuffer(((BTScanOpaque) scan->opaque)->btso_curbuf,
-				   BUFFER_LOCK_UNLOCK);
+		so->curHeapIptr = scan->xs_ctup.t_self;
+		LockBuffer(so->btso_curbuf, BUFFER_LOCK_UNLOCK);
 	}
 
 	*returned_tids = ntids;

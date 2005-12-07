@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.98 2005/12/07 18:03:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.99 2005/12/07 19:37:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -423,8 +423,6 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 	Page		page;
 	OffsetNumber offnum;
 	ItemPointer current;
-	BTItem		btitem;
-	IndexTuple	itup;
 	BTScanOpaque so;
 	bool		continuescan;
 
@@ -445,13 +443,10 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 		/* current is the next candidate tuple to return */
 		offnum = ItemPointerGetOffsetNumber(current);
 		page = BufferGetPage(buf);
-		btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
-		itup = &btitem->bti_itup;
 
-		if (_bt_checkkeys(scan, itup, dir, &continuescan))
+		if (_bt_checkkeys(scan, page, offnum, dir, &continuescan))
 		{
 			/* tuple passes all scan key conditions, so return it */
-			scan->xs_ctup.t_self = itup->t_tid;
 			return true;
 		}
 
@@ -485,8 +480,6 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	Page		page;
 	BTStack		stack;
 	OffsetNumber offnum;
-	BTItem		btitem;
-	IndexTuple	itup;
 	ItemPointer current;
 	BlockNumber blkno;
 	StrategyNumber strat;
@@ -848,14 +841,11 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	/* okay, current item pointer for the scan is right */
 	offnum = ItemPointerGetOffsetNumber(current);
 	page = BufferGetPage(buf);
-	btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
-	itup = &btitem->bti_itup;
 
 	/* is the first item actually acceptable? */
-	if (_bt_checkkeys(scan, itup, dir, &continuescan))
+	if (_bt_checkkeys(scan, page, offnum, dir, &continuescan))
 	{
 		/* yes, return it */
-		scan->xs_ctup.t_self = itup->t_tid;
 		res = true;
 	}
 	else if (continuescan)
@@ -1215,8 +1205,6 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	OffsetNumber maxoff;
 	OffsetNumber start;
 	BlockNumber blkno;
-	BTItem		btitem;
-	IndexTuple	itup;
 	BTScanOpaque so;
 	bool		res;
 	bool		continuescan;
@@ -1284,16 +1272,12 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 		page = BufferGetPage(buf);
 	}
 
-	btitem = (BTItem) PageGetItem(page, PageGetItemId(page, start));
-	itup = &(btitem->bti_itup);
-
 	/*
 	 * Okay, we are on the first or last tuple.  Does it pass all the quals?
 	 */
-	if (_bt_checkkeys(scan, itup, dir, &continuescan))
+	if (_bt_checkkeys(scan, page, start, dir, &continuescan))
 	{
 		/* yes, return it */
-		scan->xs_ctup.t_self = itup->t_tid;
 		res = true;
 	}
 	else if (continuescan)

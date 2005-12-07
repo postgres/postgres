@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.66 2005/11/22 18:17:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.67 2005/12/07 19:37:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -477,30 +477,77 @@ _bt_preprocess_keys(IndexScanDesc scan)
 /*
  * Test whether an indextuple satisfies all the scankey conditions.
  *
+ * If so, copy its TID into scan->xs_ctup.t_self, and return TRUE.
+ * If not, return FALSE (xs_ctup is not changed).
+ *
  * If the tuple fails to pass the qual, we also determine whether there's
  * any need to continue the scan beyond this tuple, and set *continuescan
  * accordingly.  See comments for _bt_preprocess_keys(), above, about how
  * this is done.
+ *
+ * scan: index scan descriptor
+ * page: buffer page containing index tuple
+ * offnum: offset number of index tuple (must be a valid item!)
+ * dir: direction we are scanning in
+ * continuescan: output parameter (will be set correctly in all cases)
  */
 bool
-_bt_checkkeys(IndexScanDesc scan, IndexTuple tuple,
+_bt_checkkeys(IndexScanDesc scan,
+			  Page page, OffsetNumber offnum,
 			  ScanDirection dir, bool *continuescan)
 {
-	BTScanOpaque so = (BTScanOpaque) scan->opaque;
-	int			keysz = so->numberOfKeys;
-	int			ikey;
+	ItemId		iid = PageGetItemId(page, offnum);
+	bool		tuple_valid;
+	BTItem		btitem;
+	IndexTuple	tuple;
 	TupleDesc	tupdesc;
+	BTScanOpaque so;
+	int			keysz;
+	int			ikey;
 	ScanKey		key;
 
-	*continuescan = true;
+	*continuescan = true;		/* default assumption */
 
-	/* If no keys, always scan the whole index */
-	if (keysz == 0)
-		return true;
+	/*
+	 * If the scan specifies not to return killed tuples, then we treat
+	 * a killed tuple as not passing the qual.  Most of the time, it's a
+	 * win to not bother examining the tuple's index keys, but just return
+	 * immediately with continuescan = true to proceed to the next tuple.
+	 * However, if this is the last tuple on the page, we should check
+	 * the index keys to prevent uselessly advancing to the next page.
+	 */
+	if (scan->ignore_killed_tuples && ItemIdDeleted(iid))
+	{
+		/* return immediately if there are more tuples on the page */
+		if (ScanDirectionIsForward(dir))
+		{
+			if (offnum < PageGetMaxOffsetNumber(page))
+				return false;
+		}
+		else
+		{
+			BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+
+			if (offnum > P_FIRSTDATAKEY(opaque))
+				return false;
+		}
+		/*
+		 * OK, we want to check the keys, but we'll return FALSE even
+		 * if the tuple passes the key tests.
+		 */
+		tuple_valid = false;
+	}
+	else
+		tuple_valid = true;
+
+	btitem = (BTItem) PageGetItem(page, iid);
+	tuple = &btitem->bti_itup;
 
 	IncrIndexProcessed();
 
 	tupdesc = RelationGetDescr(scan->indexRelation);
+	so = (BTScanOpaque) scan->opaque;
+	keysz = so->numberOfKeys;
 
 	for (key = so->keyData, ikey = 0; ikey < keysz; key++, ikey++)
 	{
@@ -592,6 +639,9 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple,
 		}
 	}
 
-	/* If we get here, the tuple passes all quals. */
-	return true;
+	/* If we get here, the tuple passes all index quals. */
+	if (tuple_valid)
+		scan->xs_ctup.t_self = tuple->t_tid;
+
+	return tuple_valid;
 }
