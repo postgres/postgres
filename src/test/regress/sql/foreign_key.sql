@@ -599,7 +599,7 @@ drop table pktable_base;
 --		(right now, only FOREIGN KEY constraints can be deferred)
 --
 
--- deferrable, explicitely deferred
+-- deferrable, explicitly deferred
 CREATE TABLE pktable (
 	id		INT4 PRIMARY KEY,
 	other	INT4
@@ -613,7 +613,7 @@ CREATE TABLE fktable (
 -- default to immediate: should fail
 INSERT INTO fktable VALUES (5, 10);
 
--- explicitely defer the constraint
+-- explicitly defer the constraint
 BEGIN;
 
 SET CONSTRAINTS ALL DEFERRED;
@@ -644,7 +644,7 @@ INSERT INTO pktable VALUES (200, 500); -- make the FK insert valid
 
 COMMIT;
 
--- default to deferred, explicitely make immediate
+-- default to deferred, explicitly make immediate
 BEGIN;
 
 SET CONSTRAINTS ALL IMMEDIATE;

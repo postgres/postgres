@@ -970,7 +970,7 @@ drop table pktable_base;
 -- Deferrable constraints
 --		(right now, only FOREIGN KEY constraints can be deferred)
 --
--- deferrable, explicitely deferred
+-- deferrable, explicitly deferred
 CREATE TABLE pktable (
 	id		INT4 PRIMARY KEY,
 	other	INT4
@@ -985,7 +985,7 @@ NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "fktable_pkey" fo
 INSERT INTO fktable VALUES (5, 10);
 ERROR:  insert or update on table "fktable" violates foreign key constraint "fktable_fk_fkey"
 DETAIL:  Key (fk)=(10) is not present in table "pktable".
--- explicitely defer the constraint
+-- explicitly defer the constraint
 BEGIN;
 SET CONSTRAINTS ALL DEFERRED;
 INSERT INTO fktable VALUES (10, 15);
@@ -1008,7 +1008,7 @@ BEGIN;
 INSERT INTO fktable VALUES (100, 200);
 INSERT INTO pktable VALUES (200, 500); -- make the FK insert valid
 COMMIT;
--- default to deferred, explicitely make immediate
+-- default to deferred, explicitly make immediate
 BEGIN;
 SET CONSTRAINTS ALL IMMEDIATE;
 -- should fail
