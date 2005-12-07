@@ -243,6 +243,15 @@ SpecialHyphen(TParser * prs)
 	prs->state->poschar -= prs->state->lencharlexeme;
 }
 
+static void
+SpecialVerVersion(TParser * prs)
+{
+	prs->state->posbyte -= prs->state->lenbytelexeme;
+	prs->state->poschar -= prs->state->lencharlexeme;
+	prs->state->lenbytelexeme = 0;
+	prs->state->lencharlexeme = 0;
+}
+
 static int
 p_isstophost(TParser * prs)
 {
@@ -326,8 +335,9 @@ static TParserStateActionItem actionTPS_Base[] = {
 	{p_iseqC, '-', A_PUSH, TPS_InSignedIntFirst, 0, NULL},
 	{p_iseqC, '+', A_PUSH, TPS_InSignedIntFirst, 0, NULL},
 	{p_iseqC, '&', A_PUSH, TPS_InHTMLEntityFirst, 0, NULL},
+	{p_iseqC, '~', A_PUSH, TPS_InFileTwiddle, 0, NULL},
 	{p_iseqC, '/', A_PUSH, TPS_InFileFirst, 0, NULL},
-	{p_iseqC, '.', A_PUSH, TPS_InPathFirst, 0, NULL},
+	{p_iseqC, '.', A_PUSH, TPS_InPathFirstFirst, 0, NULL},
 	{NULL, 0, A_NEXT, TPS_InSpace, 0, NULL}
 };
 
@@ -429,10 +439,24 @@ static TParserStateActionItem actionTPS_InDecimalFirst[] = {
 static TParserStateActionItem actionTPS_InDecimal[] = {
 	{p_isEOF, 0, A_BINGO, TPS_Base, DECIMAL, NULL},
 	{p_isdigit, 0, A_NEXT, TPS_InDecimal, 0, NULL},
+	{p_iseqC, '.', A_PUSH, TPS_InVerVersion, 0, NULL},
 	{p_iseqC, 'e', A_PUSH, TPS_InMantissaFirst, 0, NULL},
 	{p_iseqC, 'E', A_PUSH, TPS_InMantissaFirst, 0, NULL},
 	{NULL, 0, A_BINGO, TPS_Base, DECIMAL, NULL}
 };
+
+static TParserStateActionItem actionTPS_InVerVersion[] = {
+	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
+	{p_isdigit, 0, A_RERUN, TPS_InSVerVersion, 0, SpecialVerVersion},
+	{NULL, 0, A_POP, TPS_Null, 0, NULL}
+};
+
+static TParserStateActionItem actionTPS_InSVerVersion[] = {
+	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
+	{p_isdigit, 0, A_BINGO, TPS_InUnsignedInt, SPACE, NULL},
+	{NULL, 0, A_NEXT, TPS_Null, 0, NULL}
+};
+
 
 static TParserStateActionItem actionTPS_InVersionFirst[] = {
 	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
@@ -537,6 +561,7 @@ static TParserStateActionItem actionTPS_InTag[] = {
 	{p_iseqC, '&', A_NEXT, TPS_Null, 0, NULL},
 	{p_iseqC, '?', A_NEXT, TPS_Null, 0, NULL},
 	{p_iseqC, '%', A_NEXT, TPS_Null, 0, NULL},
+	{p_iseqC, '~', A_NEXT, TPS_Null, 0, NULL},
 	{p_isspace, 0, A_NEXT, TPS_Null, 0, SpecialTags},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
@@ -676,6 +701,16 @@ static TParserStateActionItem actionTPS_InFileFirst[] = {
 	{p_iseqC, '.', A_NEXT, TPS_InPathFirst, 0, NULL},
 	{p_iseqC, '_', A_NEXT, TPS_InFile, 0, NULL},
 	{p_iseqC, '?', A_PUSH, TPS_InURIFirst, 0, NULL},
+	{p_iseqC, '~', A_PUSH, TPS_InFileTwiddle, 0, NULL},
+	{NULL, 0, A_POP, TPS_Null, 0, NULL}
+};
+
+static TParserStateActionItem actionTPS_InFileTwiddle[] = {
+	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
+	{p_islatin, 0, A_NEXT, TPS_InFile, 0, NULL},
+	{p_isdigit, 0, A_NEXT, TPS_InFile, 0, NULL},
+	{p_iseqC, '_', A_NEXT, TPS_InFile, 0, NULL},
+	{p_iseqC, '/', A_NEXT, TPS_InFileFirst, 0, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
 
@@ -684,6 +719,13 @@ static TParserStateActionItem actionTPS_InPathFirst[] = {
 	{p_islatin, 0, A_NEXT, TPS_InFile, 0, NULL},
 	{p_isdigit, 0, A_NEXT, TPS_InFile, 0, NULL},
 	{p_iseqC, '_', A_NEXT, TPS_InFile, 0, NULL},
+	{p_iseqC, '.', A_NEXT, TPS_InPathSecond, 0, NULL},
+	{p_iseqC, '/', A_NEXT, TPS_InFileFirst, 0, NULL},
+	{NULL, 0, A_POP, TPS_Null, 0, NULL}
+};
+
+static TParserStateActionItem actionTPS_InPathFirstFirst[] = {
+	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
 	{p_iseqC, '.', A_NEXT, TPS_InPathSecond, 0, NULL},
 	{p_iseqC, '/', A_NEXT, TPS_InFileFirst, 0, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
@@ -920,6 +962,8 @@ static const TParserStateAction Actions[] = {
 	{TPS_InUDecimal, actionTPS_InUDecimal},
 	{TPS_InDecimalFirst, actionTPS_InDecimalFirst},
 	{TPS_InDecimal, actionTPS_InDecimal},
+	{TPS_InVerVersion, actionTPS_InVerVersion},
+	{TPS_InSVerVersion, actionTPS_InSVerVersion},
 	{TPS_InVersionFirst, actionTPS_InVersionFirst},
 	{TPS_InVersion, actionTPS_InVersion},
 	{TPS_InMantissaFirst, actionTPS_InMantissaFirst},
@@ -953,7 +997,9 @@ static const TParserStateAction Actions[] = {
 	{TPS_InHost, actionTPS_InHost},
 	{TPS_InEmail, actionTPS_InEmail},
 	{TPS_InFileFirst, actionTPS_InFileFirst},
+	{TPS_InFileTwiddle, actionTPS_InFileTwiddle},
 	{TPS_InPathFirst, actionTPS_InPathFirst},
+	{TPS_InPathFirstFirst, actionTPS_InPathFirstFirst},
 	{TPS_InPathSecond, actionTPS_InPathSecond},
 	{TPS_InFile, actionTPS_InFile},
 	{TPS_InFileNext, actionTPS_InFileNext},
