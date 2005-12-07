@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Tue Dec  6 15:46:51 EST 2005
+Last updated:           Wed Dec  7 12:29:08 EST 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -751,7 +751,8 @@ first.
   <li>Improve commit_delay handling to reduce fsync()
   </li><li>Determine optimal fdatasync/fsync, O_SYNC/O_DSYNC options
 <p>  Ideally this requires a separate test program that can be run
-  at initdb time or optionally later.
+  at initdb time or optionally later.  Consider O_SYNC when
+  O_DIRECT exists.
 </p>
   </li><li>%Add an option to sync() before fsync()'ing checkpoint files
   </li><li>Add program to test if fsync has a delay compared to non-fsync

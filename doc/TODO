@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Dec  6 15:46:51 EST 2005
+Last updated:		Wed Dec  7 12:29:08 EST 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -827,7 +827,8 @@ Fsync
 * Determine optimal fdatasync/fsync, O_SYNC/O_DSYNC options
 
   Ideally this requires a separate test program that can be run
-  at initdb time or optionally later.
+  at initdb time or optionally later.  Consider O_SYNC when
+  O_DIRECT exists.
 
 * %Add an option to sync() before fsync()'ing checkpoint files
 * Add program to test if fsync has a delay compared to non-fsync
