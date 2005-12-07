@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.90 2005/11/25 04:24:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.91 2005/12/07 15:27:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@
  *		ExecTypeFromTL			- form a TupleDesc from a target list
  *
  *	 EXAMPLE OF HOW TABLE ROUTINES WORK
- *		Suppose we have a query such as retrieve (EMP.name) and we have
+ *		Suppose we have a query such as SELECT emp.name FROM emp and we have
  *		a single SeqScan node in the query plan.
  *
  *		At ExecutorStart()
