@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.97 2005/11/22 18:17:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.98 2005/12/07 18:03:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -889,9 +889,9 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 bool
 _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 {
-	Relation	rel = scan->indexRelation;
 	ItemPointer current = &(scan->currentItemData);
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
+	Relation	rel;
 	Page		page;
 	BTPageOpaque opaque;
 	OffsetNumber offnum,
@@ -905,16 +905,17 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 	offnum = current->ip_posid;
 
 	page = BufferGetPage(*bufP);
-	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	maxoff = PageGetMaxOffsetNumber(page);
 
 	if (ScanDirectionIsForward(dir))
 	{
-		if (!PageIsEmpty(page) && offnum < maxoff)
+		if (offnum < maxoff)
 			offnum = OffsetNumberNext(offnum);
 		else
 		{
 			/* Walk right to the next page with data */
+			rel = scan->indexRelation;
+			opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 			for (;;)
 			{
 				/* if we're at end of scan, release the buffer and return */
@@ -932,10 +933,10 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 				opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 				if (!P_IGNORE(opaque))
 				{
-					maxoff = PageGetMaxOffsetNumber(page);
 					/* done if it's not empty */
+					maxoff = PageGetMaxOffsetNumber(page);
 					offnum = P_FIRSTDATAKEY(opaque);
-					if (!PageIsEmpty(page) && offnum <= maxoff)
+					if (offnum <= maxoff)
 						break;
 				}
 			}
@@ -944,6 +945,7 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 	else
 	{
 		/* backwards scan */
+		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 		if (offnum > P_FIRSTDATAKEY(opaque))
 			offnum = OffsetNumberPrev(offnum);
 		else
@@ -955,6 +957,7 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 			 * plus the possibility that the page we were on gets deleted
 			 * after we leave it.  See nbtree/README for details.
 			 */
+			rel = scan->indexRelation;
 			for (;;)
 			{
 				*bufP = _bt_walk_left(rel, *bufP);
@@ -978,8 +981,7 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 				{
 					maxoff = PageGetMaxOffsetNumber(page);
 					offnum = maxoff;
-					if (!PageIsEmpty(page) &&
-						maxoff >= P_FIRSTDATAKEY(opaque))
+					if (maxoff >= P_FIRSTDATAKEY(opaque))
 						break;
 				}
 			}
