@@ -618,10 +618,14 @@ main(int argc, char **argv)
 			case 'U':
 				username = (char *) strdup(optarg);
 				break;
-#ifdef HAVE_ICONV_H
 			case 'F':
+#ifdef HAVE_ICONV_H
 				charset_from = (char *) strdup(optarg);
+#else
+				printf("WARNING: dbf2pg was compiled without iconv support, ignoring -F option\n");
+#endif
 				break;
+#ifdef HAVE_ICONV_H
 			case 'T':
 				charset_to = (char *) strdup(optarg);
 				break;
