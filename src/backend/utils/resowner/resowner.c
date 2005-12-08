@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.16 2005/11/22 18:17:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.17 2005/12/08 19:19:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -437,7 +437,7 @@ UnregisterResourceReleaseCallback(ResourceReleaseCallback callback, void *arg)
  * of memory, it's critical to do so *before* acquiring the resource.
  *
  * We allow the case owner == NULL because the bufmgr is sometimes invoked
- * outside any transaction (for example, in the bgwriter).
+ * outside any transaction (for example, during WAL recovery).
  */
 void
 ResourceOwnerEnlargeBuffers(ResourceOwner owner)
@@ -470,7 +470,7 @@ ResourceOwnerEnlargeBuffers(ResourceOwner owner)
  * Caller must have previously done ResourceOwnerEnlargeBuffers()
  *
  * We allow the case owner == NULL because the bufmgr is sometimes invoked
- * outside any transaction (for example, in the bgwriter).
+ * outside any transaction (for example, during WAL recovery).
  */
 void
 ResourceOwnerRememberBuffer(ResourceOwner owner, Buffer buffer)
@@ -487,7 +487,7 @@ ResourceOwnerRememberBuffer(ResourceOwner owner, Buffer buffer)
  * Forget that a buffer pin is owned by a ResourceOwner
  *
  * We allow the case owner == NULL because the bufmgr is sometimes invoked
- * outside any transaction (for example, in the bgwriter).
+ * outside any transaction (for example, during WAL recovery).
  */
 void
 ResourceOwnerForgetBuffer(ResourceOwner owner, Buffer buffer)
