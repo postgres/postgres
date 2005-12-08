@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Wed Dec  7 12:29:08 EST 2005
+Last updated:		Thu Dec  8 17:08:17 EST 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1158,12 +1158,10 @@ Developers who have claimed items are:
 * Bruce is Bruce Momjian <pgman@candle.pha.pa.us> of Software Research Assoc.
 * Christopher is Christopher Kings-Lynne <chriskl@familyhealth.com.au> of
     Family Health Network
-* Claudio is Claudio Natoli <claudio.natoli@memetrics.com>
 * D'Arcy is D'Arcy J.M. Cain <darcy@druid.net> of The Cain Gang Ltd.
 * Fabien is Fabien Coelho <coelho@cri.ensmp.fr>
 * Gavin is Gavin Sherry <swm@linuxworld.com.au> of Alcove Systems Engineering
 * Greg is Greg Sabino Mullane <greg@turnstep.com>
-* Hiroshi is Hiroshi Inoue <Inoue@tpf.co.jp>
 * Jan is Jan Wieck <JanWieck@Yahoo.com> of Afilias, Inc.
 * Joe is Joe Conway <mail@joeconway.com>
 * Karel is Karel Zak <zakkr@zf.jcu.cz>
