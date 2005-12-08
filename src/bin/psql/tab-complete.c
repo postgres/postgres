@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.141 2005/11/18 16:31:11 alvherre Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.142 2005/12/08 21:33:58 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -475,6 +475,8 @@ static char *complete_from_list(const char *text, int state);
 static PGresult *exec_query(const char *query);
 
 static char *previous_word(int point, int skip);
+
+static int find_open_parenthesis(int end);
 
 #if 0
 static char *quote_file_name(char *text, int match_type, char *quote_pointer);
@@ -1016,7 +1018,16 @@ psql_completion(char *text, int start, int end)
 	 */
 	else if (pg_strcasecmp(prev4_wd, "INDEX") == 0 &&
 			 pg_strcasecmp(prev2_wd, "ON") == 0)
-		COMPLETE_WITH_ATTR(prev_wd);
+	{
+		if (find_open_parenthesis(end))
+			COMPLETE_WITH_ATTR(prev_wd);
+		else
+			COMPLETE_WITH_CONST("(");      
+	}
+	else if (pg_strcasecmp(prev5_wd, "INDEX") == 0 &&
+			pg_strcasecmp(prev3_wd, "ON") == 0 &&
+			pg_strcasecmp(prev_wd, "(") == 0)
+		COMPLETE_WITH_ATTR(prev2_wd);
 	/* same if you put in USING */
 	else if (pg_strcasecmp(prev4_wd, "ON") == 0 &&
 			 pg_strcasecmp(prev2_wd, "USING") == 0)
@@ -1222,11 +1233,42 @@ psql_completion(char *text, int start, int end)
 			  pg_strcasecmp(prev3_wd, "AGGREGATE") == 0 &&
 			  prev_wd[strlen(prev_wd) - 1] == ')'))
 	{
-		static const char *const list_DROPCR[] =
-		{"CASCADE", "RESTRICT", NULL};
-
-		COMPLETE_WITH_LIST(list_DROPCR);
+		
+		if ((pg_strcasecmp(prev3_wd, "DROP") == 0) && (pg_strcasecmp(prev2_wd, "FUNCTION") == 0))
+                {
+                        if (find_open_parenthesis(end))
+			{
+				static const char func_args_query[] = "select pg_catalog.oidvectortypes(proargtypes)||')' from pg_proc where proname='%s'";
+                        	char *tmp_buf = malloc(strlen(func_args_query) + strlen(prev_wd));
+                        	sprintf(tmp_buf, func_args_query, prev_wd);
+                        	COMPLETE_WITH_QUERY(tmp_buf);
+                        	free(tmp_buf);
+			}
+			else
+			{
+                        	COMPLETE_WITH_CONST("(");
+			}
+                }
+                else
+		{
+			static const char *const list_DROPCR[] =
+			{"CASCADE", "RESTRICT", NULL};
+		
+			COMPLETE_WITH_LIST(list_DROPCR);
+		}
 	}
+	else if (pg_strcasecmp(prev4_wd, "DROP") == 0 &&
+			pg_strcasecmp(prev3_wd, "FUNCTION") == 0 &&
+			pg_strcasecmp(prev_wd, "(") == 0 )
+	{
+		static const char func_args_query[] = "select pg_catalog.oidvectortypes(proargtypes)||')' from pg_proc where proname='%s'";
+		char *tmp_buf = malloc(strlen(func_args_query) + strlen(prev2_wd));
+		sprintf(tmp_buf, func_args_query, prev2_wd);
+		COMPLETE_WITH_QUERY(tmp_buf);
+		free(tmp_buf);
+	}
+
+
 
 /* EXPLAIN */
 
@@ -2247,7 +2289,29 @@ previous_word(int point, int skip)
 	return s;
 }
 
+/* Find the parenthesis after the last word */
 
+
+static int find_open_parenthesis(int end)
+{
+	int i = end-1;
+	
+	while((rl_line_buffer[i]!=' ')&&(i>=0))
+	{
+		if (rl_line_buffer[i]=='(') return 1;
+		i--;
+	}
+	while((rl_line_buffer[i]==' ')&&(i>=0))
+	{
+		i--;
+	}
+	if (rl_line_buffer[i]=='(')
+	{
+		return 1;       
+	}
+	return 0;
+
+}
 
 #if 0
 
