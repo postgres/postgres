@@ -34,6 +34,8 @@ typedef enum
 	TPS_InTagFirst,
 	TPS_InXMLBegin,
 	TPS_InTagCloseFirst,
+	TPS_InTagName,
+	TPS_InTagBeginEnd,
 	TPS_InTag,
 	TPS_InTagEscapeK,
 	TPS_InTagEscapeKK,

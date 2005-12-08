@@ -527,7 +527,7 @@ static TParserStateActionItem actionTPS_InTagFirst[] = {
 	{p_iseqC, '/', A_PUSH, TPS_InTagCloseFirst, 0, NULL},
 	{p_iseqC, '!', A_PUSH, TPS_InCommentFirst, 0, NULL},
 	{p_iseqC, '?', A_PUSH, TPS_InXMLBegin, 0, NULL},
-	{p_islatin, 0, A_PUSH, TPS_InTag, 0, NULL},
+	{p_islatin, 0, A_PUSH, TPS_InTagName, 0, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
 
@@ -541,7 +541,23 @@ static TParserStateActionItem actionTPS_InXMLBegin[] = {
 
 static TParserStateActionItem actionTPS_InTagCloseFirst[] = {
 	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
-	{p_islatin, 0, A_NEXT, TPS_InTag, 0, NULL},
+	{p_islatin, 0, A_NEXT, TPS_InTagName, 0, NULL},
+	{NULL, 0, A_POP, TPS_Null, 0, NULL}
+};
+
+static TParserStateActionItem actionTPS_InTagName[] = {
+	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
+	/* <br/> case */
+	{p_iseqC, '/', A_NEXT, TPS_InTagBeginEnd, 0, NULL},
+	{p_iseqC, '>', A_NEXT, TPS_InTagEnd, 0, SpecialTags},
+	{p_isspace, 0, A_NEXT, TPS_InTag, 0, SpecialTags},
+	{p_islatin, 0, A_NEXT, TPS_Null, 0, NULL},
+	{NULL, 0, A_POP, TPS_Null, 0, NULL}
+};
+
+static TParserStateActionItem actionTPS_InTagBeginEnd[] = {
+	{p_isEOF, 0, A_POP, TPS_Null, 0, NULL},
+	{p_iseqC, '>', A_NEXT, TPS_InTagEnd, 0, NULL},
 	{NULL, 0, A_POP, TPS_Null, 0, NULL}
 };
 
@@ -977,6 +993,8 @@ static const TParserStateAction Actions[] = {
 	{TPS_InTagFirst, actionTPS_InTagFirst},
 	{TPS_InXMLBegin, actionTPS_InXMLBegin},
 	{TPS_InTagCloseFirst, actionTPS_InTagCloseFirst},
+	{TPS_InTagName, actionTPS_InTagName},
+	{TPS_InTagBeginEnd, actionTPS_InTagBeginEnd},
 	{TPS_InTag, actionTPS_InTag},
 	{TPS_InTagEscapeK, actionTPS_InTagEscapeK},
 	{TPS_InTagEscapeKK, actionTPS_InTagEscapeKK},
