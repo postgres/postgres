@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.154 2005/10/15 02:49:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.155 2005/12/08 21:18:22 petere Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -935,9 +935,9 @@ do_connect(const char *new_dbname, const char *new_user)
 		password_prompt = strdup("Password: ");
 	else
 	{
-		password_prompt = malloc(strlen("Password for user %s: ") - 2 +
+		password_prompt = malloc(strlen(_("Password for user %s: ")) - 2 +
 								 strlen(userparam) + 1);
-		sprintf(password_prompt, "Password for user %s: ", userparam);
+		sprintf(password_prompt, _("Password for user %s: "), userparam);
 	}
 
 	/* need to prompt for password? */
