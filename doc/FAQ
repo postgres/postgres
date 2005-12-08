@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Nov 4 20:35:04 EST 2005
+   Last updated: Tue Nov 22 11:26:48 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -15,18 +15,18 @@
                              General Questions
                                       
    1.1) What is PostgreSQL? How is it pronounced?
-   1.2) What is the copyright of PostgreSQL?
-   1.3) What platforms does PostgreSQL support?
-   1.4) Where can I get PostgreSQL?
-   1.5) Where can I get support?
-   1.6) How do I submit a bug report?
-   1.7) What is the latest release?
-   1.8) What documentation is available?
+   1.2) Who controls PostgreSQL?
+   1.3) What is the copyright of PostgreSQL?
+   1.4) What platforms does PostgreSQL support?
+   1.5) Where can I get PostgreSQL?
+   1.6) What is the latest release?
+   1.7) Where can I get support?
+   1.8) How do I submit a bug report?
    1.9) How do I find out about known bugs or missing features?
-   1.10) How can I learn SQL?
-   1.11) How do I join the development team?
-   1.12) How does PostgreSQL compare to other DBMSs?
-   1.13) Who controls PostgreSQL?
+   1.10) What documentation is available?
+   1.11) How can I learn SQL?
+   1.12) How do I join the development team?
+   1.13) How does PostgreSQL compare to other DBMSs?
    
                            User Client Questions
                                       
@@ -101,13 +101,25 @@
    company. To get involved, see the developer's FAQ at
    http://www.postgresql.org/files/documentation/faqs/FAQ_DEV.html
    
-  1.2) What is the copyright of PostgreSQL?
+  1.2) Who controls PostgreSQL?
   
-   PostgreSQL is distributed under the classic BSD license. It has no
-   restrictions on how the source code can be used. We like it and have
-   no intention of changing it.
+   If you are looking for a PostgreSQL gatekeeper, central committee, or
+   controlling company, give up --- there isn't one. We do have a core
+   committee and CVS committers, but these groups are more for
+   administrative purposes than control. The project is directed by the
+   community of developers and users, which anyone can join. All you need
+   to do is subscribe to the mailing lists and participate in the
+   discussions. (See the Developer's FAQ for information on how to get
+   involved in PostgreSQL development.)
    
-   This is the BSD license we use:
+  1.3) What is the copyright of PostgreSQL?
+  
+   PostgreSQL is distributed under the classic BSD license. Basically, it
+   allows users to do anything they want with the code, including
+   reselling binaries without the source code. The only restriction is
+   that you not hold us legally liable for problems with the software.
+   There is also the requirement that this copyright appear in all copies
+   of the software. Here is the actual BSD license we use:
    
    PostgreSQL Data Base Management System
    
@@ -134,7 +146,7 @@
    CALIFORNIA HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE, SUPPORT,
    UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
    
-  1.3) What platforms does PostgreSQL support?
+  1.4) What platforms does PostgreSQL support?
   
    In general, any modern Unix-compatible platform should be able to run
    PostgreSQL. The platforms that had received explicit testing at the
@@ -151,12 +163,19 @@
    http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&button=Search&key=postgre
    SQL&stype=all&sort=type&dir=%2F.
    
-  1.4) Where can I get PostgreSQL?
+  1.5) Where can I get PostgreSQL?
   
    Via web browser, use http://www.postgresql.org/ftp/, and via ftp, use
    ftp://ftp.PostgreSQL.org/pub/.
    
-  1.5) Where can I get support?
+  1.6) What is the latest release?
+  
+   The latest release of PostgreSQL is version 8.1.
+   
+   We plan to have a major release every year, with minor releases every
+   few months.
+   
+  1.7) Where can I get support?
   
    The PostgreSQL community provides assistance to many of its users via
    email. The main web site to subscribe to the email lists is
@@ -172,22 +191,56 @@
    A list of commercial support companies is available at
    http://techdocs.postgresql.org/companies.php.
    
-  1.6) How do I submit a bug report?
+  1.8) How do I submit a bug report?
   
    Visit the PostgreSQL bug form at
-   http://www.postgresql.org/support/submitbug.
+   http://www.postgresql.org/support/submitbug. Also check out our ftp
+   site ftp://ftp.PostgreSQL.org/pub/ to see if there is a more recent
+   PostgreSQL version.
    
-   Also check out our ftp site ftp://ftp.PostgreSQL.org/pub/ to see if
-   there is a more recent PostgreSQL version.
-   
-  1.7) What is the latest release?
+   Bugs submitted using the bug form or posted to any PostgreSQL mailing
+   list typically generates one of the following replies:
+     * It is not a bug, and why
+     * It is a known bug and is already on the TODO list
+     * The bug has been fixed in the current release
+     * The bug has been fixed but is not packaged yet in an official
+       release
+     * A request is made for more detailed information:
+          + Operating system
+          + PostgreSQL version
+          + Reproducible test case
+          + Debugging information
+          + Debugger backtrace output
+     * The bug is new. The following might happen:
+          + A patch is created and will be included in the next major or
+            minor release
+          + The bug cannot be fixed immediately and is added to the TODO
+            list
+       
+  1.9) How do I find out about known bugs or missing features?
   
-   The latest release of PostgreSQL is version 8.1.
+   PostgreSQL supports an extended subset of SQL:2003. See our TODO list
+   for known bugs, missing features, and future plans.
    
-   We plan to have a major release every year, with minor releases every
-   few months.
+   A feature request usually results in one of the following replies:
+     * The feature is already on the TODO list
+     * The feature is not desired because:
+          + It duplicates existing functionality that already follows the
+            SQL standard
+          + The feature would increase code complexity but add little
+            benefit
+          + The feature would be insecure or unreliable
+     * The new feature is added to the TODO list
+       
+   PostgreSQL does not use a bug tracking system because we find it more
+   efficient to respond directly to email and keep the TODO list
+   up-to-date. In practice, bugs don't last very long in the software,
+   and bugs that affect a large number of users are fixed rapidly. The
+   only place to find all changes, improvements, and fixes in a
+   PostgreSQL release is to read the CVS log messages. Even the release
+   notes do not list every change made to the software.
    
-  1.8) What documentation is available?
+  1.10) What documentation is available?
   
    PostgreSQL includes extensive documentation, including a large manual,
    manual pages, and some test examples. See the /doc directory. You can
@@ -208,12 +261,7 @@
    
    Our web site contains even more documentation.
    
-  1.9) How do I find out about known bugs or missing features?
-  
-   PostgreSQL supports an extended subset of SQL:2003. See our TODO list
-   for known bugs, missing features, and future plans.
-   
-  1.10) How can I learn SQL?
+  1.11) How can I learn SQL?
   
    First, consider the PostgreSQL-specific books mentioned above. Another
    one is "Teach Yourself SQL in 21 Days, Second Edition" at
@@ -227,11 +275,11 @@
    http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM,
    and at http://sqlcourse.com.
    
-  1.11) How do I join the development team?
+  1.12) How do I join the development team?
   
    See the Developer's FAQ.
    
-  1.12) How does PostgreSQL compare to other DBMSs?
+  1.13) How does PostgreSQL compare to other DBMSs?
   
    There are several ways of measuring software: features, performance,
    reliability, support, and price.
@@ -266,23 +314,12 @@
           community, manuals, and the source code often make PostgreSQL
           support superior to other DBMSs. There is commercial
           per-incident support available for those who need it. (See FAQ
-          section 1.5.)
+          section 1.7.)
           
    Price
           We are free for all use, both commercial and non-commercial.
           You can add our code to your product with no limitations,
           except those outlined in our BSD-style license stated above.
-          
-  1.13) Who controls PostgreSQL?
-  
-   If you are looking for a PostgreSQL gatekeeper, central committee, or
-   controlling company, give up --- there isn't one. We do have a core
-   committee and CVS committers, but these groups are more for
-   administrative purposes than control. The project is directed by the
-   community of developers and users, which anyone can join. All you need
-   to do is subscribe to the mailing lists and participate in the
-   discussions. (See the Developer's FAQ for information on how to get
-   involved in PostgreSQL development.)
      _________________________________________________________________
    
                            User Client Questions
