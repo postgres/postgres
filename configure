@@ -880,7 +880,7 @@ Optional Packages:
   --with-includes=DIRS    look for additional header files in DIRS
   --with-libraries=DIRS   look for additional libraries in DIRS
   --with-libs=DIRS        alternative spelling of --with-libraries
-  --with-pgport=PORTNUM   change default port number 5432
+  --with-pgport=PORTNUM   change default port number [5432]
   --with-tcl              build Tcl modules (PL/Tcl)
   --with-tclconfig=DIR    tclConfig.sh is in DIR
   --with-perl             build Perl modules (PL/Perl)
