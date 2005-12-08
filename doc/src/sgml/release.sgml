@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.6 2005/12/07 14:36:08 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.7 2005/12/08 22:22:27 momjian Exp $
 
 Typical markup:
 
@@ -19,6 +19,64 @@ For new features, add links to the documentation sections.
 <appendix id="release">
  <title>Release Notes</title>
 
+  <sect1 id="release-8-1-1">
+   <title>Release 8.1.1</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2005-12-12</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 8.1.0.
+   </para>
+
+   <sect2>
+    <title>Migration to version 8.1.1</title>
+
+    <para>
+     A dump/restore is not required for those running 8.1.X.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Optimizer fixes (Tom)</para></listitem>
+
+<listitem><para>Allow <function>to_char(interval)</> and
+<function>to_char(time)</> to use <literal>AM</>/<literal>PM</>
+specifications (Bruce)</para></listitem>
+
+<listitem><para>Allow <function>to_char(interval)</> and
+<function>to_char(time)</> to use <literal>HH</>, <literal>HH12</>, and 
+<literal>D</> format specifiers.  (<function>to_char(interval)</> should
+probably use <literal>HH24</>.)</para></listitem>
+
+<listitem><para>Fix bgwriter problem on exit failure
+(Tom)</para></listitem>
+
+<listitem><para><filename>/contrib/tsearch2</> fixes
+(Teodor)</para></listitem>
+
+<listitem><para>Fix Win32 error message translation problem with
+languages that require word reordering, like Turkish (Andrew,
+Tom)</para></listitem>
+
+<listitem><para>Allow MS C to compile <application>pg_config</> (Hiroshi
+Saito)</para></listitem>
+
+<listitem><para>AIX and HPUX compile fixes (Tom)</para></listitem>
+
+<listitem><para>Add 8.1.0 release note item on how to migrate invalid
+<literal>UTF-8</> byte sequences  (Paul Lindner)</para></listitem>
+
+</itemizedlist>
+
+   </sect2>
+  </sect1>
+ 
   <sect1 id="release-8-1">
    <title>Release 8.1</title>
 
