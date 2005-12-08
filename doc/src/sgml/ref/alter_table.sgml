@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.81 2005/08/24 17:24:19 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.82 2005/12/08 21:35:36 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -183,10 +183,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
     <term><literal>DROP CONSTRAINT</literal></term>
     <listitem>
      <para>
-      This form drops constraints on a table.
-      Currently, constraints on tables are not required to have unique
-      names, so there may be more than one constraint matching the specified
-      name.  All matching constraints will be dropped.
+      This form drops the specified constraint on a table.
      </para>
     </listitem>
    </varlistentry>
