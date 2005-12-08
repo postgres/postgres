@@ -1,5 +1,5 @@
 From: Zeugswetter Andreas <ZeugswetterA@spardat.at>
-$Date: 2005/11/04 18:16:50 $
+$Date: 2005/12/08 21:36:50 $
 
 On AIX 4.3.2 PostgreSQL compiled with the native IBM compiler xlc
 (vac.C 5.0.1) passes all regression tests.  Other versions of OS and
@@ -114,62 +114,68 @@ http://www.faqs.org/faqs/aix-faq/part4/section-22.html
 
 http://www.han.de/~jum/aix/ldd.c
 ---
-From: Christopher Browne <cbbrowne@ca.afilias.info>
-Date: 2005-11-02
 
-On AIX 5.3 ML3 (e.g. maintenance level 5300-03), there is some problem
-with the handling of the pointer to memcpy.  It is speculated that
-this relates to some linker bug that may have been introduced between
-5300-02 and 5300-03, but we have so far been unable to track down the
-cause.
+AIX, readline, and postgres 8.1.x:
+----------------------------------
 
-At any rate, the following patch, which "unwraps" the function
-reference, has been observed to allow PG 8.1 pre-releases to pass
-regression tests.
+If make check doesn't work on AIX with initdb going into an infinite
+loop or failing with child processes terminated with signal 11, the 
+problem could be the installed copy of readline.  Previously a patch to 
+dynahash.c was suggested to get around this, don't use it, better ways
+to get postgres working exist.
 
-The same behaviour (albeit with varying underlying functions to
-"blame") has been observed when compiling with either GCC 4.0 or IBM
-XLC.
+See <http://archives.postgresql.org/pgsql-patches/2005-11/msg00139.php>
+for details about the problem.
 
------------- per Seneca Cunningham -------------------
+Working around the problem:
+---------------------------
+1) Use the new 8.2devel backend Makefile:
+After the matter of readline's export list and the problems that were
+occurring on AIX because of it being linked to the backend, a filter
+to exclude unneeded libraries from being linked against the backend was
+added.  Get revision 1.112 of src/backend/Makefile from CVS and replace
+the copy that came with postgres with it.  Build normally.
 
-The following patch works on the AIX 5.3 ML3 box here and didn't cause
-any problems with postgres on the x86 desktop.  It's just a cleaner
-version of what I tried earlier.
+2) Use libedit:
+There are a few libedit ports available online.  Build and install the
+desired port.  If libreadline.a can be found in /lib, /usr/lib, or in
+any location passed to postgres' configure via "--with-libraries=",
+readline will be detected and used by postgres.  IBM's rpm of readline
+creates a symlink to /opt/freeware/lib/libreadline.a in /lib, so merely 
+excluding /opt/freeware/lib from the passed library path does not stop
+readline from being used.  
 
-*** dynahash.c.orig Tue Nov  1 19:41:42 2005
---- dynahash.c  Tue Nov  1 20:30:33 2005
-***************
-*** 670,676 ****
+If the linker cannot avoid finding libreadline.a, use revision 1.433 
+configure.in and 1.19 config/programs.m4 from CVS, change 8.2devel to 
+the appropriate 8.1.x in configure.in and run autoconf.  Add the 
+configure flag "--with-libedit-preferred".
 
+If the version of libedit used calls its "history.h" something other
+than history.h, place a symlink called history.h to it somewhere that
+the C preprocessor will check.
 
-            /* copy key into record */
-            currBucket->hashvalue = hashvalue;
-!           hashp->keycopy(ELEMENTKEY(currBucket), keyPtr, keysize);
+3) Configure with "--without-readline":
+postgres can be configured with the option "--without-readline".  When
+this is enabled, postgres will not link against libreadline or libedit.
+psql will not have history, tab completion, or any of the other niceties
+that readline and libedit bring, but external readline wrappers exist
+that add that functionality.
 
+4) Use readline 5.0:
+Readline 5.0 does not induce the problems, however it does export
+memcpy and strncpy when built using the easy method of "-bexpall".  Like
+4.3, it is possible to do a build that does not export these symbols,
+but it does take considerable manual effort and the creation of export
+files.
 
-            /* caller is expected to fill the data field on return */
-
-
---- 670,687 ----
-
-
-            /* copy key into record */
-            currBucket->hashvalue = hashvalue;
-!           if (hashp->keycopy == memcpy)
-!           {
-!               memcpy(ELEMENTKEY(currBucket), keyPtr, keysize);
-!           }
-!           else if (hashp->keycopy == strncpy)
-!           {
-!               strncpy(ELEMENTKEY(currBucket), keyPtr, keysize);
-!           }
-!           else
-!           {
-!               hashp->keycopy(ELEMENTKEY(currBucket), keyPtr, keysize);
-!           }
-
-
-            /* caller is expected to fill the data field on return */
-
------------- per Seneca Cunningham -------------------
+References
+----------
+"AIX 5L Porting Guide"
+  IBM Redbook
+  http://www.redbooks.ibm.com/redbooks/pdfs/sg246034.pdf
+  http://www.redbooks.ibm.com/abstracts/sg246034.html?Open
+  
+"Developing and Porting C and C++ Applications on AIX"
+  IBM Redbook
+  http://www.redbooks.ibm.com/redbooks/pdfs/sg245674.pdf
+  http://www.redbooks.ibm.com/abstracts/sg245674.html?Open
