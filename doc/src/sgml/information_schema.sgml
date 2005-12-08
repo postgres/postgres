@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.22 2005/10/15 20:12:32 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.22.2.1 2005/12/08 20:46:54 petere Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -3822,7 +3822,7 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>event_object_name</literal></entry>
+      <entry><literal>event_object_table</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the table that the trigger is defined on</entry>
      </row>
@@ -3901,7 +3901,7 @@ ORDER BY c.ordinal_position;
    event.  As a consequence of these two issues, the primary key of
    the view <literal>triggers</literal> is really
    <literal>(trigger_catalog, trigger_schema, trigger_name,
-   event_object_name, event_manipulation)</literal> instead of
+   event_object_table, event_manipulation)</literal> instead of
    <literal>(trigger_catalog, trigger_schema, trigger_name)</literal>,
    which is what the SQL standard specifies.  Nonetheless, if you
    define your triggers in a manner that conforms with the SQL
