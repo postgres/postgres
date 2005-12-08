@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.81 2005/12/01 10:36:57 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.82 2005/12/08 18:02:04 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -3096,6 +3096,15 @@ AFTER INSERT OR UPDATE OR DELETE ON sales_fact
 
      <listitem>
       <para>
+       You cannot use parameter names that are the same as columns
+       that are referenced in the function. Oracle allows you to do this
+       if you qualify the parameter name using
+       <literal>function_name.paramater_name</>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        You can overload function names in <productname>PostgreSQL</>. This is
        often used to work around the lack of default parameters.
       </para>
@@ -3111,7 +3120,7 @@ AFTER INSERT OR UPDATE OR DELETE ON sales_fact
 
      <listitem>
       <para>
-       In <productname>PostgreSQL</> the function body has to be written as
+       In <productname>PostgreSQL</> the function body must be written as
        a string literal.  Therefore you need to use dollar quoting or escape
        single quotes in the function body. See <xref
        linkend="plpgsql-quote-tips">.
@@ -3128,10 +3137,11 @@ AFTER INSERT OR UPDATE OR DELETE ON sales_fact
      <listitem>
       <para>
        Since there are no packages, there are no package-level variables
-       either. This is somewhat annoying.  You may be able to keep per-session
-       state in temporary tables, instead.
+       either. This is somewhat annoying.  You can keep per-session state 
+       in temporary tables instead.
       </para>
      </listitem>
+
     </itemizedlist>
    </para>
 
