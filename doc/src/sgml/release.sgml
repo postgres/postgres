@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.410 2005/12/08 22:44:55 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.411 2005/12/08 23:22:20 momjian Exp $
 
 Typical markup:
 
@@ -45,12 +45,12 @@ For new features, add links to the documentation sections.
 <itemizedlist>
 <listitem><para>Optimizer fixes (Tom)</para></listitem>
 
-<listitem><para>Allow <function>to_char(interval)</> and
-<function>to_char(time)</> to use <literal>AM</>/<literal>PM</>
+<listitem><para>Re-enable <function>to_char(time)</> and
+<function>to_char(interval)</> to use <literal>AM</>/<literal>PM</>
 specifications (Bruce)</para></listitem>
 
-<listitem><para>Allow <function>to_char(interval)</> and
-<function>to_char(time)</> to use <literal>HH</>, <literal>HH12</>, and 
+<listitem><para>Re-enable <function>to_char(time)</> and
+<function>to_char(interval)</> to use <literal>HH</>, <literal>HH12</>, and 
 <literal>D</> format specifiers.  (<function>to_char(interval)</> should
 probably use <literal>HH24</>.)</para></listitem>
 
@@ -64,10 +64,8 @@ probably use <literal>HH24</>.)</para></listitem>
 languages that require word reordering, like Turkish (Andrew,
 Tom)</para></listitem>
 
-<listitem><para>Allow MS C to compile <application>pg_config</> (Hiroshi
+<listitem><para>AIX, HPUX, and MC C compile fixes (Tom, Hiroshi 
 Saito)</para></listitem>
-
-<listitem><para>AIX and HPUX compile fixes (Tom)</para></listitem>
 
 <listitem><para>Add 8.1.0 release note item on how to migrate invalid
 <literal>UTF-8</> byte sequences  (Paul Lindner)</para></listitem>
@@ -595,7 +593,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
        removes invalid character sequences. A diff of the two files will
        show the sequences that are invalid. <command>iconv</> reads the
        entire input file into memory so it might be necessary to use
-       <command>split</> to break up the dump into multiple smaller
+       <application>split</> to break up the dump into multiple smaller
        files for processing.
       </para>
      </listitem>
