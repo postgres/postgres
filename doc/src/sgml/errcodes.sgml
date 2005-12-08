@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.15.2.1 2005/12/08 21:01:55 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.15.2.2 2005/12/08 21:23:13 momjian Exp $ -->
 
 <appendix id="errcodes-appendix">
  <title><productname>PostgreSQL</productname> Error Codes</title>
@@ -139,7 +139,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 02&mdash; No Data (this is also a warning class per the SQL standard)</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -156,7 +155,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 03&mdash; SQL Statement Not Yet Complete</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -167,7 +165,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 08&mdash; Connection Exception</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -214,7 +211,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 09&mdash; Triggered Action Exception</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -225,7 +221,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 0A&mdash; Feature Not Supported</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -236,7 +231,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 0B&mdash; Invalid Transaction Initiation</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -247,7 +241,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 0F&mdash; Locator Exception</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -264,7 +257,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 0L&mdash; Invalid Grantor</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -281,7 +273,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 0P&mdash; Invalid Role Specification</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -292,7 +283,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 21&mdash; Cardinality Violation</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -303,7 +293,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 22&mdash; Data Exception</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -542,7 +531,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 23&mdash; Integrity Constraint Violation</></entry>
-<entry></entry>
 
 </row>
 <row>
@@ -583,7 +571,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 24&mdash; Invalid Cursor State</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -594,7 +581,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 25&mdash; Invalid Transaction State</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -665,7 +651,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 26&mdash; Invalid SQL Statement Name</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -676,7 +661,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 27&mdash; Triggered Data Change Violation</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -687,7 +671,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 28&mdash; Invalid Authorization Specification</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -698,7 +681,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 2B&mdash; Dependent Privilege Descriptors Still Exist</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -715,7 +697,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 2D&mdash; Invalid Transaction Termination</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -726,7 +707,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 2F&mdash; SQL Routine Exception</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -761,7 +741,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 34&mdash; Invalid Cursor Name</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -772,7 +751,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 38&mdash; External Routine Exception</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -807,7 +785,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 39&mdash; External Routine Invocation Exception</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -842,7 +819,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 3B&mdash; Savepoint Exception</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -859,7 +835,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 3D&mdash; Invalid Catalog Name</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -870,7 +845,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 3F&mdash; Invalid Schema Name</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -881,7 +855,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 40&mdash; Transaction Rollback</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -916,7 +889,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 42&mdash; Syntax Error or Access Rule Violation</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -1155,7 +1127,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 44&mdash; WITH CHECK OPTION Violation</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -1166,7 +1137,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 53&mdash; Insufficient Resources</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -1195,7 +1165,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 54&mdash; Program Limit Exceeded</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -1224,7 +1193,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 55&mdash; Object Not In Prerequisite State</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -1253,7 +1221,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 57&mdash; Operator Intervention</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -1288,7 +1255,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 58&mdash; System Error (errors external to PostgreSQL itself)</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -1311,7 +1277,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class F0&mdash; Configuration File Error</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -1328,7 +1293,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class P0&mdash; PL/pgSQL Error</></entry>
-<entry></entry>
 </row>
 
 <row>
@@ -1345,7 +1309,6 @@
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class XX&mdash; Internal Error</entry>
-<entry></entry>
 </row>
 
 <row>
