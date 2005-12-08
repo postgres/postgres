@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.13.4.2 2005/09/12 22:20:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.13.4.3 2005/12/08 19:19:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,7 @@
 #include "miscadmin.h"
 #include "postmaster/bgwriter.h"
 #include "storage/bufmgr.h"
+#include "storage/fd.h"
 #include "storage/freespace.h"
 #include "storage/ipc.h"
 #include "storage/pmsignal.h"
@@ -58,6 +59,7 @@
 #include "tcop/tcopprot.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
+#include "utils/resowner.h"
 
 
 /*----------
@@ -204,6 +206,12 @@ BackgroundWriterMain(void)
 	last_checkpoint_time = time(NULL);
 
 	/*
+	 * Create a resource owner to keep track of our resources (currently
+	 * only buffer pins).
+	 */
+	CurrentResourceOwner = ResourceOwnerCreate(NULL, "Background Writer");
+
+	/*
 	 * Create a memory context that we will do all our work in.  We do this
 	 * so that we can reset the context during error recovery and thereby
 	 * avoid possible memory leaks.  Formerly this code just ran in
@@ -235,11 +243,18 @@ BackgroundWriterMain(void)
 		/*
 		 * These operations are really just a minimal subset of
 		 * AbortTransaction().	We don't have very many resources to worry
-		 * about in bgwriter, but we do have LWLocks and buffers.
+		 * about in bgwriter, but we do have LWLocks, buffers, and temp files.
 		 */
 		LWLockReleaseAll();
 		AbortBufferIO();
 		UnlockBuffers();
+		/* buffer pins are released here: */
+		ResourceOwnerRelease(CurrentResourceOwner,
+							 RESOURCE_RELEASE_BEFORE_LOCKS,
+							 false, true);
+		/* we needn't bother with the other ResourceOwnerRelease phases */
+		AtEOXact_Buffers(false);
+		AtEOXact_Files();
 
 		/* Warn any waiting backends that the checkpoint failed. */
 		if (ckpt_active)
