@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.408 2005/12/08 22:21:26 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.409 2005/12/08 22:35:44 momjian Exp $
 
 Typical markup:
 
@@ -60,7 +60,7 @@ probably use <literal>HH24</>.)</para></listitem>
 <listitem><para><filename>/contrib/tsearch2</> fixes
 (Teodor)</para></listitem>
 
-<listitem><para>Fix Win32 error message translation problem with
+<listitem><para>Fix problem with Win32 translated error messages in
 languages that require word reordering, like Turkish (Andrew,
 Tom)</para></listitem>
 
