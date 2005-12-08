@@ -55,7 +55,7 @@ CPP_SBRS=.
 
 LINK32=link.exe
 LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
- advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib\
+ advapi32.lib shell32.lib shfolder.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib\
  odbccp32.lib wsock32.lib /nologo /subsystem:console /incremental:no\
  /pdb:"$(OUTDIR)\pg_config.pdb" /machine:I386 $(LOPT) /out:"$(OUTDIR)\pg_config.exe" 
 LINK32_OBJS= \
