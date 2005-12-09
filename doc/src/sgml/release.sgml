@@ -1,9 +1,89 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.14 2005/10/03 23:43:27 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.15 2005/12/09 20:40:38 tgl Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
+ 
+  <sect1 id="release-8-0-5">
+   <title>Release 8.0.5</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2005-12-12</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 8.0.4.
+   </para>
+
+   <sect2>
+    <title>Migration to version 8.0.5</title>
+
+    <para>
+     A dump/restore is not required for those running 8.0.X.  However,
+     if you are upgrading from a version earlier than 8.0.3, see the release
+     notes for 8.0.3.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+  
+<itemizedlist>
+
+<listitem><para>Fix race condition in transaction log management</para>
+<para>There was a narrow window in which an I/O operation could be initiated
+for the wrong page, leading to an Assert failure or data
+corruption.</para>
+</listitem>
+
+<listitem><para>Fix bgwriter problems after recovering from errors
+(Tom)</para>
+<para>
+The background writer was found to leak buffer pins after write errors.
+While not fatal in itself, this might lead to mysterious blockages of
+later VACUUM commands.
+</para>
+</listitem>
+
+<listitem><para>Prevent failure if client sends Bind protocol message
+when current transaction is already aborted</para></listitem>
+
+<listitem><para><filename>/contrib/ltree</> fixes (Teodor)</para></listitem>
+
+<listitem><para>AIX and HPUX compile fixes (Tom)</para></listitem>
+
+<listitem><para>Retry file reads and writes after Windows
+NO_SYSTEM_RESOURCES error (Qingqing Zhou)</para></listitem>
+
+<listitem><para>Fix intermittent failure when <varname>log_line_prefix</>
+includes <literal>%i</></para></listitem>
+
+<listitem><para>Fix <application>psql</> performance issue with long scripts
+on Windows (Merlin Moncure)</para></listitem>
+
+<listitem><para>Fix missing updates of <filename>pg_group</> flat
+file</para></listitem>
+
+<listitem><para>Fix longstanding planning error for outer joins</para>
+<para>This bug sometimes caused a bogus error <quote>RIGHT JOIN is
+only supported with merge-joinable join conditions</>.</para></listitem>
+
+<listitem><para>Postpone timezone initialization until after
+<filename>postmaster.pid</> is created</para>
+<para>This avoids confusing startup scripts that expect the pid file to appear
+quickly.</para></listitem>
+
+<listitem><para>Prevent core dump in <application>pg_autovacuum</> when a
+table has been dropped</para></listitem>
+
+<listitem><para>Fix problems with whole-row references (<literal>foo.*</>)
+to subquery results</para></listitem>
+</itemizedlist>
+
+   </sect2>
+  </sect1>
  
   <sect1 id="release-8-0-4">
    <title>Release 8.0.4</title>
@@ -2786,6 +2866,57 @@ typedefs (Michael)</para></listitem>
    </sect2>
   </sect1>
  
+  <sect1 id="release-7-4-10">
+   <title>Release 7.4.10</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2005-12-12</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.4.9.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.4.10</title>
+
+    <para>
+     A dump/restore is not required for those running 7.4.X.  However,
+     if you are upgrading from a version earlier than 7.4.8, see the release
+     notes for 7.4.8.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+  
+<itemizedlist>
+
+<listitem><para>Fix race condition in transaction log management</para>
+<para>There was a narrow window in which an I/O operation could be initiated
+for the wrong page, leading to an Assert failure or data
+corruption.</para>
+</listitem>
+
+<listitem><para>Prevent failure if client sends Bind protocol message
+when current transaction is already aborted</para></listitem>
+
+<listitem><para><filename>/contrib/ltree</> fixes (Teodor)</para></listitem>
+
+<listitem><para>AIX and HPUX compile fixes (Tom)</para></listitem>
+
+<listitem><para>Fix longstanding planning error for outer joins</para>
+<para>This bug sometimes caused a bogus error <quote>RIGHT JOIN is
+only supported with merge-joinable join conditions</>.</para></listitem>
+
+<listitem><para>Prevent core dump in <application>pg_autovacuum</> when a
+table has been dropped</para></listitem>
+</itemizedlist>
+
+   </sect2>
+  </sect1>
+ 
   <sect1 id="release-7-4-9">
    <title>Release 7.4.9</title>
 
@@ -3539,7 +3670,7 @@ DROP SCHEMA information_schema CASCADE;
 <listitem><para>Fix information schema view <literal>constraint_column_usage</literal> for foreign keys (Peter)</para></listitem>
 <listitem><para>ECPG fixes (Michael)</para></listitem>
 <listitem><para>Fix bug with multiple <literal>IN</literal> subqueries and joins in the subqueries (Tom)</para></listitem>
-<listitem><para>Alllow <literal>COUNT('x')</literal> to work (Tom)</para></listitem>
+<listitem><para>Allow <literal>COUNT('x')</literal> to work (Tom)</para></listitem>
 <listitem><para>Install ECPG include files for Informix compatibility into separate directory (Peter)</para>
 <para>
   Some names of ECPG include files for Informix compatibility conflicted with operating system include files.
@@ -5417,6 +5548,52 @@ DROP SCHEMA information_schema CASCADE;
   </sect3>
   </sect2>
  </sect1>
+ 
+  <sect1 id="release-7-3-12">
+   <title>Release 7.3.12</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2005-12-12</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.3.11.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.3.12</title>
+
+    <para>
+     A dump/restore is not required for those running 7.3.X.  However,
+     if you are upgrading from a version earlier than 7.3.10, see the release
+     notes for 7.3.10.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+  
+<itemizedlist>
+
+<listitem><para>Fix race condition in transaction log management</para>
+<para>There was a narrow window in which an I/O operation could be initiated
+for the wrong page, leading to an Assert failure or data
+corruption.</para>
+</listitem>
+
+<listitem><para><filename>/contrib/ltree</> fixes (Teodor)</para></listitem>
+
+<listitem><para>Fix longstanding planning error for outer joins</para>
+<para>This bug sometimes caused a bogus error <quote>RIGHT JOIN is
+only supported with merge-joinable join conditions</>.</para></listitem>
+
+<listitem><para>Prevent core dump in <application>pg_autovacuum</> when a
+table has been dropped</para></listitem>
+</itemizedlist>
+
+   </sect2>
+  </sect1>
  
   <sect1 id="release-7-3-11">
    <title>Release 7.3.11</title>
