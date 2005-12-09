@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.100 2005/11/22 18:17:28 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.101 2005/12/09 15:51:14 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,11 +57,13 @@
 #ifdef HAVE_LANGINFO_H
 #include <langinfo.h>
 #endif
+#include <time.h>
 
 #include "libpq/pqsignal.h"
 #include "mb/pg_wchar.h"
 #include "getaddrinfo.h"
 #include "getopt_long.h"
+#include "miscadmin.h"
 
 #ifndef HAVE_INT_OPTRESET
 int			optreset;
@@ -186,6 +188,7 @@ static void make_postgres(void);
 static void trapsig(int signum);
 static void check_ok(void);
 static char *escape_quotes(const char *src);
+static int	locale_date_order(const char *locale);
 static bool chklocale(const char *locale);
 static void setlocales(void);
 static void usage(const char *progname);
@@ -1195,6 +1198,20 @@ setup_config(void)
 	snprintf(repltok, sizeof(repltok), "lc_time = '%s'", lc_time);
 	conflines = replace_token(conflines, "#lc_time = 'C'", repltok);
 
+	switch (locale_date_order(lc_time)) {
+		case DATEORDER_YMD:
+			strcpy(repltok, "datestyle = 'iso, ymd'");
+			break;
+		case DATEORDER_DMY:
+			strcpy(repltok, "datestyle = 'iso, dmy'");
+			break;
+		case DATEORDER_MDY:
+		default:
+			strcpy(repltok, "datestyle = 'iso, mdy'");
+			break;
+	}
+	conflines = replace_token(conflines, "#datestyle = 'iso, mdy'", repltok);
+
 	snprintf(path, sizeof(path), "%s/postgresql.conf", pg_data);
 
 	writefile(path, conflines);
@@ -2049,6 +2066,60 @@ escape_quotes(const char *src)
 		result[j++] = src[i];
 	}
 	result[j] = '\0';
+	return result;
+}
+
+/*
+ * Determine likely date order from locale
+ */
+static int
+locale_date_order(const char *locale)
+{
+	struct tm	testtime;
+	char		buf[128];
+	char	   *posD;
+	char	   *posM;
+	char	   *posY;
+	char	   *save;
+	size_t		res;
+	int			result;
+
+	result = DATEORDER_MDY;		/* default */
+
+	save = setlocale(LC_TIME, NULL);
+	if (!save)
+		return result;
+	save = xstrdup(save);
+
+	setlocale(LC_TIME, locale);
+
+	memset(&testtime, 0, sizeof(testtime));
+	testtime.tm_mday = 22;
+	testtime.tm_mon = 10;		/* November, should come out as "11" */
+	testtime.tm_year = 133;		/* 2033 */
+
+	res = strftime(buf, sizeof(buf), "%x", &testtime);
+
+	setlocale(LC_TIME, save);
+	free(save);
+
+	if (res == 0)
+		return result;
+
+	posM = strstr(buf, "11");
+	posD = strstr(buf, "22");
+	posY = strstr(buf, "33");
+
+	if (!posM || !posD || !posY)
+		return result;
+
+	if (posY < posM && posM < posD)
+		result = DATEORDER_YMD;
+	else if (posD < posM)
+		result = DATEORDER_DMY;
+	else
+		result = DATEORDER_MDY;
+
 	return result;
 }
 

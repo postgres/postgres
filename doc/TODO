@@ -566,7 +566,7 @@ SQL Commands
 Clients
 =======
 
-* Have initdb set the input DateStyle (MDY or DMY) based on locale?
+* -Have initdb set the input DateStyle (MDY or DMY) based on locale
 * Have pg_ctl look at PGHOST in case it is a socket directory?
 * Allow pg_ctl to work properly with configuration files located outside
   the PGDATA directory

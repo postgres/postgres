@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.37 2005/11/17 22:14:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.38 2005/12/09 15:51:13 petere Exp $
 -->
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -32,7 +32,7 @@ $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.37 2005/11/17 22:14:50 tgl Exp $
    <para>
     One way to set these parameters is to edit the file
     <filename>postgresql.conf</><indexterm><primary>postgresql.conf</></>,
-    which is normally kept in the data directory. (<command>initdb</>
+    which is normally kept in the data directory. (<application>initdb</>
     installs a default copy there.) An example of what this file might look
     like is:
 <programlisting>
@@ -3300,7 +3300,10 @@ SELECT * FROM parent WHERE key = 2400;
         keywords <literal>US</>, <literal>NonEuro</>, and
         <literal>NonEuropean</> are synonyms for <literal>MDY</>. See
         <xref linkend="datatype-datetime"> for more information. The
-        default is <literal>ISO, MDY</>.
+        built-in default is <literal>ISO, MDY</>, but
+        <application>initdb</application> will initialize the
+        configuration file with a setting that corresponds to the
+        behavior of the chosen <varname>lc_time</varname> locale.
        </para>
       </listitem>
      </varlistentry>
