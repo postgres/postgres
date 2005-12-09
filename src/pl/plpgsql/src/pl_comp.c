@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.94.2.1 2005/11/22 18:23:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.94.2.2 2005/12/09 17:09:00 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1314,11 +1314,11 @@ plpgsql_parse_dblwordtype(char *word)
 							  0, 0, 0);
 	if (!HeapTupleIsValid(classtup))
 		goto done;
+	classStruct = (Form_pg_class) GETSTRUCT(classtup);
 
 	/*
 	 * It must be a relation, sequence, view, or type
 	 */
-	classStruct = (Form_pg_class) GETSTRUCT(classtup);
 	if (classStruct->relkind != RELKIND_RELATION &&
 		classStruct->relkind != RELKIND_SEQUENCE &&
 		classStruct->relkind != RELKIND_VIEW &&
@@ -1326,13 +1326,13 @@ plpgsql_parse_dblwordtype(char *word)
 		goto done;
 
 	/*
-	 * Fetch the named table field and it's type
+	 * Fetch the named table field and its type
 	 */
 	attrtup = SearchSysCacheAttName(classOid, cp[1]);
 	if (!HeapTupleIsValid(attrtup))
 		goto done;
-
 	attrStruct = (Form_pg_attribute) GETSTRUCT(attrtup);
+
 	typetup = SearchSysCache(TYPEOID,
 							 ObjectIdGetDatum(attrStruct->atttypid),
 							 0, 0, 0);
@@ -1371,10 +1371,10 @@ plpgsql_parse_tripwordtype(char *word)
 {
 	Oid			classOid;
 	HeapTuple	classtup = NULL;
-	Form_pg_class classStruct;
 	HeapTuple	attrtup = NULL;
-	Form_pg_attribute attrStruct;
 	HeapTuple	typetup = NULL;
+	Form_pg_class classStruct;
+	Form_pg_attribute attrStruct;
 	char	   *cp[2];
 	char	   *colname[1];
 	int			qualified_att_len;
@@ -1419,11 +1419,11 @@ plpgsql_parse_tripwordtype(char *word)
 							  0, 0, 0);
 	if (!HeapTupleIsValid(classtup))
 		goto done;
+	classStruct = (Form_pg_class) GETSTRUCT(classtup);
 
 	/*
 	 * It must be a relation, sequence, view, or type
 	 */
-	classStruct = (Form_pg_class) GETSTRUCT(classtup);
 	if (classStruct->relkind != RELKIND_RELATION &&
 		classStruct->relkind != RELKIND_SEQUENCE &&
 		classStruct->relkind != RELKIND_VIEW &&
@@ -1431,14 +1431,14 @@ plpgsql_parse_tripwordtype(char *word)
 		goto done;
 
 	/*
-	 * Fetch the named table field and it's type
+	 * Fetch the named table field and its type
 	 */
 	plpgsql_convert_ident(cp[1], colname, 1);
 	attrtup = SearchSysCacheAttName(classOid, colname[0]);
 	if (!HeapTupleIsValid(attrtup))
 		goto done;
-
 	attrStruct = (Form_pg_attribute) GETSTRUCT(attrtup);
+
 	typetup = SearchSysCache(TYPEOID,
 							 ObjectIdGetDatum(attrStruct->atttypid),
 							 0, 0, 0);
@@ -1457,7 +1457,7 @@ plpgsql_parse_tripwordtype(char *word)
 done:
 	if (HeapTupleIsValid(classtup))
 		ReleaseSysCache(classtup);
-	if (HeapTupleIsValid(classtup))
+	if (HeapTupleIsValid(attrtup))
 		ReleaseSysCache(attrtup);
 	if (HeapTupleIsValid(typetup))
 		ReleaseSysCache(typetup);
