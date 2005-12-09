@@ -14,7 +14,7 @@ endif
 
 ifeq ($(DLSUFFIX), .so)
 CFLAGS_SL = -fpic
-rpath = -Wl,-rpath,$(rpathdir)
+rpath = -Wl,-rpath,'$(rpathdir)'
 export_dynamic = -Wl,-export-dynamic
 else
 CFLAGS_SL =

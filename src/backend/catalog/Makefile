@@ -2,7 +2,7 @@
 #
 # Makefile for backend/catalog
 #
-# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.57 2005/09/08 20:07:41 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.58 2005/12/09 21:19:35 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -49,18 +49,18 @@ postgres.bki: genbki.sh $(POSTGRES_BKI_SRCS) \
 
 .PHONY: install-data
 install-data: $(BKIFILES) installdirs
-	$(INSTALL_DATA) postgres.bki         $(DESTDIR)$(datadir)/postgres.bki
-	$(INSTALL_DATA) postgres.description $(DESTDIR)$(datadir)/postgres.description
-	$(INSTALL_DATA) $(srcdir)/system_views.sql $(DESTDIR)$(datadir)/system_views.sql
-	$(INSTALL_DATA) $(srcdir)/information_schema.sql $(DESTDIR)$(datadir)/information_schema.sql
-	$(INSTALL_DATA) $(srcdir)/sql_features.txt $(DESTDIR)$(datadir)/sql_features.txt
+	$(INSTALL_DATA) postgres.bki         '$(DESTDIR)$(datadir)/postgres.bki'
+	$(INSTALL_DATA) postgres.description '$(DESTDIR)$(datadir)/postgres.description'
+	$(INSTALL_DATA) $(srcdir)/system_views.sql '$(DESTDIR)$(datadir)/system_views.sql'
+	$(INSTALL_DATA) $(srcdir)/information_schema.sql '$(DESTDIR)$(datadir)/information_schema.sql'
+	$(INSTALL_DATA) $(srcdir)/sql_features.txt '$(DESTDIR)$(datadir)/sql_features.txt'
 
 installdirs:
-	$(mkinstalldirs) $(DESTDIR)$(datadir)
+	$(mkinstalldirs) '$(DESTDIR)$(datadir)'
 
 .PHONY: uninstall-data
 uninstall-data:
-	rm -f $(addprefix $(DESTDIR)$(datadir)/, $(BKIFILES) system_views.sql information_schema.sql sql_features.txt)
+	rm -f $(addprefix '$(DESTDIR)$(datadir)'/, $(BKIFILES) system_views.sql information_schema.sql sql_features.txt)
 
 clean:
 	rm -f SUBSYS.o $(OBJS) $(BKIFILES)

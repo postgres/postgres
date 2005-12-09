@@ -1,15 +1,15 @@
 AROPT = crs
 ifeq ($(with_gnu_ld), yes)
-	export_dynamic = -Wl,-E
+    export_dynamic = -Wl,-E
 else
-	export_dynamic = -Wl,-Bexport
+    export_dynamic = -Wl,-Bexport
 endif
 
 ifeq ($(ld_R_works), yes)
 ifeq ($(with_gnu_ld), yes)
-	rpath = -Wl,-rpath,$(rpathdir)
+    rpath = -Wl,-rpath,'$(rpathdir)'
 else
-	rpath = -Wl,-R$(rpathdir)
+    rpath = -Wl,-R'$(rpathdir)'
 endif
 endif
 

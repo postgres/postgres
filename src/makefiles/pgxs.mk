@@ -1,6 +1,6 @@
 # PGXS: PostgreSQL extensions makefile
 
-# $PostgreSQL: pgsql/src/makefiles/pgxs.mk,v 1.6 2005/09/27 17:43:31 tgl Exp $ 
+# $PostgreSQL: pgsql/src/makefiles/pgxs.mk,v 1.7 2005/12/09 21:19:36 petere Exp $ 
 
 # This file contains generic rules to build many kinds of simple
 # extension modules.  You only need to set a few variables and include
@@ -89,82 +89,82 @@ endif # MODULE_big
 install: all installdirs
 ifneq (,$(DATA)$(DATA_built))
 	@for file in $(addprefix $(srcdir)/, $(DATA)) $(DATA_built); do \
-	  echo "$(INSTALL_DATA) $$file $(DESTDIR)$(datadir)/contrib"; \
-	  $(INSTALL_DATA) $$file $(DESTDIR)$(datadir)/contrib; \
+	  echo "$(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/contrib'"; \
+	  $(INSTALL_DATA) $$file '$(DESTDIR)$(datadir)/contrib'; \
 	done
 endif # DATA
 ifdef MODULES
 	@for file in $(addsuffix $(DLSUFFIX), $(MODULES)); do \
-	  echo "$(INSTALL_SHLIB) $$file $(DESTDIR)$(pkglibdir)"; \
-	  $(INSTALL_SHLIB) $$file $(DESTDIR)$(pkglibdir); \
+	  echo "$(INSTALL_SHLIB) $$file '$(DESTDIR)$(pkglibdir)'"; \
+	  $(INSTALL_SHLIB) $$file '$(DESTDIR)$(pkglibdir)'; \
 	done
 endif # MODULES
 ifdef DOCS
 ifdef docdir
 	@for file in $(addprefix $(srcdir)/, $(DOCS)); do \
-	  echo "$(INSTALL_DATA) $$file $(DESTDIR)$(docdir)/contrib"; \
-	  $(INSTALL_DATA) $$file $(DESTDIR)$(docdir)/contrib; \
+	  echo "$(INSTALL_DATA) $$file '$(DESTDIR)$(docdir)/contrib'"; \
+	  $(INSTALL_DATA) $$file '$(DESTDIR)$(docdir)/contrib'; \
 	done
 endif # docdir
 endif # DOCS
 ifdef PROGRAM
-	$(INSTALL_PROGRAM) $(PROGRAM)$(X) $(DESTDIR)$(bindir)
+	$(INSTALL_PROGRAM) $(PROGRAM)$(X) '$(DESTDIR)$(bindir)'
 endif # PROGRAM
 ifdef MODULE_big
-	$(INSTALL_SHLIB) $(shlib) $(DESTDIR)$(pkglibdir)/$(MODULE_big)$(DLSUFFIX)
+	$(INSTALL_SHLIB) $(shlib) '$(DESTDIR)$(pkglibdir)/$(MODULE_big)$(DLSUFFIX)'
 endif # MODULE_big
 ifdef SCRIPTS
 	@for file in $(addprefix $(srcdir)/, $(SCRIPTS)); do \
-	  echo "$(INSTALL_SCRIPT) $$file $(DESTDIR)$(bindir)"; \
-	  $(INSTALL_SCRIPT) $$file $(DESTDIR)$(bindir); \
+	  echo "$(INSTALL_SCRIPT) $$file '$(DESTDIR)$(bindir)'"; \
+	  $(INSTALL_SCRIPT) $$file '$(DESTDIR)$(bindir)'; \
 	done
 endif # SCRIPTS
 ifdef SCRIPTS_built
 	@for file in $(SCRIPTS_built); do \
-	  echo "$(INSTALL_SCRIPT) $$file $(DESTDIR)$(bindir)"; \
-	  $(INSTALL_SCRIPT) $$file $(DESTDIR)$(bindir); \
+	  echo "$(INSTALL_SCRIPT) $$file '$(DESTDIR)$(bindir)'"; \
+	  $(INSTALL_SCRIPT) $$file '$(DESTDIR)$(bindir)'; \
 	done
 endif # SCRIPTS_built
 
 
 installdirs:
 ifneq (,$(DATA)$(DATA_built))
-	$(mkinstalldirs) $(DESTDIR)$(datadir)/contrib
+	$(mkinstalldirs) '$(DESTDIR)$(datadir)/contrib'
 endif
 ifneq (,$(MODULES)$(MODULE_big))
-	$(mkinstalldirs) $(DESTDIR)$(pkglibdir)
+	$(mkinstalldirs) '$(DESTDIR)$(pkglibdir)'
 endif
 ifdef DOCS
 ifdef docdir
-	$(mkinstalldirs) $(DESTDIR)$(docdir)/contrib
+	$(mkinstalldirs) '$(DESTDIR)$(docdir)/contrib'
 endif # docdir
 endif # DOCS
 ifneq (,$(PROGRAM)$(SCRIPTS)$(SCRIPTS_built))
-	$(mkinstalldirs) $(DESTDIR)$(bindir)
+	$(mkinstalldirs) '$(DESTDIR)$(bindir)'
 endif
 
 
 uninstall:
 ifneq (,$(DATA)$(DATA_built))
-	rm -f $(addprefix $(DESTDIR)$(datadir)/contrib/, $(notdir $(DATA) $(DATA_built)))
+	rm -f $(addprefix '$(DESTDIR)$(datadir)'/contrib/, $(notdir $(DATA) $(DATA_built)))
 endif
 ifdef MODULES
-	rm -f $(addprefix $(DESTDIR)$(pkglibdir)/, $(addsuffix $(DLSUFFIX), $(MODULES)))
+	rm -f $(addprefix '$(DESTDIR)$(pkglibdir)'/, $(addsuffix $(DLSUFFIX), $(MODULES)))
 endif
 ifdef DOCS
-	rm -f $(addprefix $(DESTDIR)$(docdir)/contrib/, $(DOCS))
+	rm -f $(addprefix '$(DESTDIR)$(docdir)'/contrib/, $(DOCS))
 endif
 ifdef PROGRAM
-	rm -f $(DESTDIR)$(bindir)/$(PROGRAM)$(X)
+	rm -f '$(DESTDIR)$(bindir)/$(PROGRAM)$(X)'
 endif
 ifdef MODULE_big
-	rm -f $(DESTDIR)$(pkglibdir)/$(MODULE_big)$(DLSUFFIX)
+	rm -f '$(DESTDIR)$(pkglibdir)/$(MODULE_big)$(DLSUFFIX)'
 endif
 ifdef SCRIPTS
-	rm -f $(addprefix $(DESTDIR)$(bindir)/, $(SCRIPTS))
+	rm -f $(addprefix '$(DESTDIR)$(bindir)'/, $(SCRIPTS))
 endif
 ifdef SCRIPTS_built
-	rm -f $(addprefix $(DESTDIR)$(bindir)/, $(SCRIPTS_built))
+	rm -f $(addprefix '$(DESTDIR)$(bindir)'/, $(SCRIPTS_built))
 endif
 
 

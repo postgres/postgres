@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/bin/scripts/Makefile,v 1.34 2005/07/29 15:13:11 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/scripts/Makefile,v 1.35 2005/12/09 21:19:35 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -45,21 +45,21 @@ submake-backend:
 
 
 install: all installdirs
-	$(INSTALL_PROGRAM) createdb$(X)   $(DESTDIR)$(bindir)/createdb$(X)
-	$(INSTALL_PROGRAM) dropdb$(X)     $(DESTDIR)$(bindir)/dropdb$(X)
-	$(INSTALL_PROGRAM) createlang$(X) $(DESTDIR)$(bindir)/createlang$(X)
-	$(INSTALL_PROGRAM) droplang$(X)   $(DESTDIR)$(bindir)/droplang$(X)
-	$(INSTALL_PROGRAM) createuser$(X) $(DESTDIR)$(bindir)/createuser$(X)
-	$(INSTALL_PROGRAM) dropuser$(X)   $(DESTDIR)$(bindir)/dropuser$(X)
-	$(INSTALL_PROGRAM) clusterdb$(X)  $(DESTDIR)$(bindir)/clusterdb$(X)
-	$(INSTALL_PROGRAM) vacuumdb$(X)   $(DESTDIR)$(bindir)/vacuumdb$(X)
-	$(INSTALL_PROGRAM) reindexdb$(X)  $(DESTDIR)$(bindir)/reindexdb$(X)
+	$(INSTALL_PROGRAM) createdb$(X)   '$(DESTDIR)$(bindir)'/createdb$(X)
+	$(INSTALL_PROGRAM) dropdb$(X)     '$(DESTDIR)$(bindir)'/dropdb$(X)
+	$(INSTALL_PROGRAM) createlang$(X) '$(DESTDIR)$(bindir)'/createlang$(X)
+	$(INSTALL_PROGRAM) droplang$(X)   '$(DESTDIR)$(bindir)'/droplang$(X)
+	$(INSTALL_PROGRAM) createuser$(X) '$(DESTDIR)$(bindir)'/createuser$(X)
+	$(INSTALL_PROGRAM) dropuser$(X)   '$(DESTDIR)$(bindir)'/dropuser$(X)
+	$(INSTALL_PROGRAM) clusterdb$(X)  '$(DESTDIR)$(bindir)'/clusterdb$(X)
+	$(INSTALL_PROGRAM) vacuumdb$(X)   '$(DESTDIR)$(bindir)'/vacuumdb$(X)
+	$(INSTALL_PROGRAM) reindexdb$(X)  '$(DESTDIR)$(bindir)'/reindexdb$(X)
 
 installdirs:
-	$(mkinstalldirs) $(DESTDIR)$(bindir)
+	$(mkinstalldirs) '$(DESTDIR)$(bindir)'
 
 uninstall:
-	rm -f $(addprefix $(DESTDIR)$(bindir)/, $(addsuffix $(X), $(PROGRAMS)))
+	rm -f $(addprefix '$(DESTDIR)$(bindir)'/, $(addsuffix $(X), $(PROGRAMS)))
 
 
 clean distclean maintainer-clean:

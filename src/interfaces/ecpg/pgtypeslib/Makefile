@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/Makefile,v 1.28 2005/12/09 02:49:09 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/Makefile,v 1.29 2005/12/09 21:19:36 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -46,7 +46,7 @@ pgstrcasecmp.c rint.c snprintf.c: % : $(top_srcdir)/src/port/%
 install: all installdirs install-lib
 
 installdirs:
-	$(mkinstalldirs) $(DESTDIR)$(libdir)
+	$(mkinstalldirs) '$(DESTDIR)$(libdir)'
 
 uninstall: uninstall-lib
 

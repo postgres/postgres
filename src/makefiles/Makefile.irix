@@ -1,6 +1,6 @@
 MK_NO_LORDER= true
 AROPT = crs
-rpath = -Wl,-rpath,$(rpathdir)
+rpath = -Wl,-rpath,'$(rpathdir)'
 
 DLSUFFIX = .so
 # PIC is default

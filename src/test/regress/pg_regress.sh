@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.61 2005/11/01 15:09:11 adunstan Exp $
+# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.62 2005/12/09 21:19:36 petere Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -507,7 +507,7 @@ fi
 # Set up SQL shell for the test.
 # ----------
 
-PSQL="$bindir/psql -a -q -X $psql_options"
+psql_test_options="-a -q -X $psql_options"
 
 
 # ----------
@@ -635,7 +635,7 @@ do
         # Run a single test
         formatted=`echo $1 | awk '{printf "%-20.20s", $1;}'`
         $ECHO_N "test $formatted ... $ECHO_C"
-        ( $PSQL -d "$dbname" <"$inputdir/sql/$1.sql" >"$outputdir/results/$1.out" 2>&1 )&
+        ( "$bindir/psql" $psql_test_options -d "$dbname" <"$inputdir/sql/$1.sql" >"$outputdir/results/$1.out" 2>&1 )&
         wait
     else
         # Start a parallel group
@@ -646,7 +646,7 @@ do
         fi
         for name do
             ( 
-              $PSQL -d "$dbname" <"$inputdir/sql/$name.sql" >"$outputdir/results/$name.out" 2>&1
+              "$bindir/psql" $psql_test_options -d "$dbname" <"$inputdir/sql/$name.sql" >"$outputdir/results/$name.out" 2>&1
               $ECHO_N " $name$ECHO_C"
             ) &
             if [ $maxconnections -gt 0 ] ; then

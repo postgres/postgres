@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.112 2005/11/28 22:43:30 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.113 2005/12/09 21:19:34 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -159,73 +159,73 @@ distprep:
 install: all installdirs install-bin
 ifeq ($(PORTNAME), cygwin)
 ifeq ($(MAKE_DLL), true)
-	$(INSTALL_DATA) libpostgres.a $(DESTDIR)$(libdir)/libpostgres.a
+	$(INSTALL_DATA) libpostgres.a '$(DESTDIR)$(libdir)/libpostgres.a'
 endif
 endif
 ifeq ($(PORTNAME), win32)
 ifeq ($(MAKE_DLL), true)
-	$(INSTALL_DATA) libpostgres.a $(DESTDIR)$(libdir)/libpostgres.a
+	$(INSTALL_DATA) libpostgres.a '$(DESTDIR)$(libdir)/libpostgres.a'
 endif
 endif
 	$(MAKE) -C catalog install-data
-	$(INSTALL_DATA) $(srcdir)/libpq/pg_hba.conf.sample $(DESTDIR)$(datadir)/pg_hba.conf.sample
-	$(INSTALL_DATA) $(srcdir)/libpq/pg_ident.conf.sample $(DESTDIR)$(datadir)/pg_ident.conf.sample
-	$(INSTALL_DATA) $(srcdir)/utils/misc/postgresql.conf.sample $(DESTDIR)$(datadir)/postgresql.conf.sample
-	$(INSTALL_DATA) $(srcdir)/access/transam/recovery.conf.sample $(DESTDIR)$(datadir)/recovery.conf.sample
+	$(INSTALL_DATA) $(srcdir)/libpq/pg_hba.conf.sample '$(DESTDIR)$(datadir)/pg_hba.conf.sample'
+	$(INSTALL_DATA) $(srcdir)/libpq/pg_ident.conf.sample '$(DESTDIR)$(datadir)/pg_ident.conf.sample'
+	$(INSTALL_DATA) $(srcdir)/utils/misc/postgresql.conf.sample '$(DESTDIR)$(datadir)/postgresql.conf.sample'
+	$(INSTALL_DATA) $(srcdir)/access/transam/recovery.conf.sample '$(DESTDIR)$(datadir)/recovery.conf.sample'
 
 install-bin: postgres $(POSTGRES_IMP) installdirs
-	$(INSTALL_PROGRAM) postgres$(X) $(DESTDIR)$(bindir)/postgres$(X)
+	$(INSTALL_PROGRAM) postgres$(X) '$(DESTDIR)$(bindir)/postgres$(X)'
 ifneq ($(PORTNAME), win32)
-	@rm -f $(DESTDIR)$(bindir)/postmaster$(X)
-	ln -s postgres$(X) $(DESTDIR)$(bindir)/postmaster$(X)
+	@rm -f '$(DESTDIR)$(bindir)/postmaster$(X)'
+	ln -s postgres$(X) '$(DESTDIR)$(bindir)/postmaster$(X)'
 else
-	$(INSTALL_PROGRAM) postgres$(X) $(DESTDIR)$(bindir)/postmaster$(X)
+	$(INSTALL_PROGRAM) postgres$(X) '$(DESTDIR)$(bindir)/postmaster$(X)'
 endif
 ifeq ($(MAKE_EXPORTS), true)
-	$(INSTALL_DATA) $(POSTGRES_IMP) $(DESTDIR)$(pkglibdir)/$(POSTGRES_IMP)
+	$(INSTALL_DATA) $(POSTGRES_IMP) '$(DESTDIR)$(pkglibdir)/$(POSTGRES_IMP)'
 endif
 
 .PHONY: install-bin
 
 installdirs:
-	$(mkinstalldirs) $(DESTDIR)$(bindir) $(DESTDIR)$(datadir)
+	$(mkinstalldirs) '$(DESTDIR)$(bindir)' '$(DESTDIR)$(datadir)'
 ifeq ($(PORTNAME), cygwin)
 ifeq ($(MAKE_DLL), true)
-	$(mkinstalldirs) $(DESTDIR)$(libdir)
+	$(mkinstalldirs) '$(DESTDIR)$(libdir)'
 endif
 endif
 ifeq ($(PORTNAME), win32)
 ifeq ($(MAKE_DLL), true)
-	$(mkinstalldirs) $(DESTDIR)$(libdir)
+	$(mkinstalldirs) '$(DESTDIR)$(libdir)'
 endif
 endif
 ifeq ($(MAKE_EXPORTS), true)
-	$(mkinstalldirs) $(DESTDIR)$(pkglibdir)
+	$(mkinstalldirs) '$(DESTDIR)$(pkglibdir)'
 endif
 
 
 ##########################################################################
 
 uninstall:
-	rm -f $(DESTDIR)$(bindir)/postgres$(X) $(DESTDIR)$(bindir)/postmaster
+	rm -f '$(DESTDIR)$(bindir)/postgres$(X)' '$(DESTDIR)$(bindir)/postmaster'
 ifeq ($(MAKE_EXPORTS), true)
-	rm -f $(DESTDIR)$(pkglibdir)/$(POSTGRES_IMP)
+	rm -f '$(DESTDIR)$(pkglibdir)/$(POSTGRES_IMP)'
 endif
 ifeq ($(PORTNAME), cygwin)
 ifeq ($(MAKE_DLL), true)
-	rm -f $(DESTDIR)$(libdir)/libpostgres.a
+	rm -f '$(DESTDIR)$(libdir)/libpostgres.a'
 endif
 endif
 ifeq ($(PORTNAME), win32)
 ifeq ($(MAKE_DLL), true)
-	rm -f $(DESTDIR)$(libdir)/libpostgres.a
+	rm -f '$(DESTDIR)$(libdir)/libpostgres.a'
 endif
 endif
 	$(MAKE) -C catalog uninstall-data
-	rm -f $(DESTDIR)$(datadir)/pg_hba.conf.sample \
-	      $(DESTDIR)$(datadir)/pg_service.conf.sample \
-	      $(DESTDIR)$(datadir)/pg_ident.conf.sample \
-              $(DESTDIR)$(datadir)/postgresql.conf.sample
+	rm -f '$(DESTDIR)$(datadir)/pg_hba.conf.sample' \
+	      '$(DESTDIR)$(datadir)/pg_ident.conf.sample' \
+              '$(DESTDIR)$(datadir)/postgresql.conf.sample' \
+	      '$(DESTDIR)$(datadir)/recovery.conf.sample'
 
 
 ##########################################################################

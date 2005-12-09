@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/pl/plpython/Makefile,v 1.23 2005/08/12 21:44:51 momjian Exp $
+# $PostgreSQL: pgsql/src/pl/plpython/Makefile,v 1.24 2005/12/09 21:19:36 petere Exp $
 
 subdir = src/pl/plpython
 top_builddir = ../../..
@@ -89,7 +89,7 @@ endif
 
 install: all installdirs
 ifeq ($(enable_shared), yes)
-	$(INSTALL_SHLIB) $(shlib) $(DESTDIR)$(pkglibdir)/plpython$(DLSUFFIX)
+	$(INSTALL_SHLIB) $(shlib) '$(DESTDIR)$(pkglibdir)/plpython$(DLSUFFIX)'
 else
 	@echo "*****"; \
 	 echo "* PL/Python was not installed due to lack of shared library support."; \
@@ -97,10 +97,10 @@ else
 endif
 
 installdirs:
-	$(mkinstalldirs) $(DESTDIR)$(pkglibdir)
+	$(mkinstalldirs) '$(DESTDIR)$(pkglibdir)'
 
 uninstall:
-	rm -f $(DESTDIR)$(pkglibdir)/plpython$(DLSUFFIX)
+	rm -f '$(DESTDIR)$(pkglibdir)/plpython$(DLSUFFIX)'
 
 installcheck: submake
 	$(SHELL) $(top_builddir)/src/test/regress/pg_regress $(REGRESS_OPTS) $(REGRESS)

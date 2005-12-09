@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2005, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/bin/pg_controldata/Makefile,v 1.12 2005/01/01 20:44:22 tgl Exp $
+# $PostgreSQL: pgsql/src/bin/pg_controldata/Makefile,v 1.13 2005/12/09 21:19:35 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -26,13 +26,13 @@ pg_crc.c: $(top_srcdir)/src/backend/utils/hash/pg_crc.c
 	rm -f $@ && $(LN_S) $< .
 
 install: all installdirs
-	$(INSTALL_PROGRAM) pg_controldata$(X) $(DESTDIR)$(bindir)/pg_controldata$(X)
+	$(INSTALL_PROGRAM) pg_controldata$(X) '$(DESTDIR)$(bindir)/pg_controldata$(X)'
 
 installdirs:
-	$(mkinstalldirs) $(DESTDIR)$(bindir)
+	$(mkinstalldirs) '$(DESTDIR)$(bindir)'
 
 uninstall:
-	rm -f $(DESTDIR)$(bindir)/pg_controldata$(X)
+	rm -f '$(DESTDIR)$(bindir)/pg_controldata$(X)'
 
 clean distclean maintainer-clean:
 	rm -f pg_controldata$(X) $(OBJS) pg_crc.c

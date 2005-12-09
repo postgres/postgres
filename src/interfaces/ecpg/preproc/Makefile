@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2005, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.116 2005/12/09 02:49:09 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.117 2005/12/09 21:19:36 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -62,13 +62,13 @@ c_keywords.o ecpg_keywords.o keywords.o preproc.o: preproc.h
 distprep: $(srcdir)/preproc.c $(srcdir)/preproc.h $(srcdir)/pgc.c
 
 install: all installdirs
-	$(INSTALL_PROGRAM) ecpg$(X) $(DESTDIR)$(bindir)
+	$(INSTALL_PROGRAM) ecpg$(X) '$(DESTDIR)$(bindir)'
 
 installdirs:
-	$(mkinstalldirs) $(DESTDIR)$(bindir)
+	$(mkinstalldirs) '$(DESTDIR)$(bindir)'
 
 uninstall:
-	rm -f $(DESTDIR)$(bindir)/ecpg$(X)
+	rm -f '$(DESTDIR)$(bindir)/ecpg$(X)'
 
 clean distclean:
 	rm -f *.o ecpg$(X)

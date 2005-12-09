@@ -1,12 +1,12 @@
-# $PostgreSQL: pgsql/src/makefiles/Makefile.solaris,v 1.12 2004/12/21 18:47:42 tgl Exp $
+# $PostgreSQL: pgsql/src/makefiles/Makefile.solaris,v 1.13 2005/12/09 21:19:36 petere Exp $
 
 AROPT = crs
 
 ifeq ($(with_gnu_ld), yes)
 export_dynamic = -Wl,-E
-rpath = -Wl,-rpath,$(rpathdir)
+rpath = -Wl,-rpath,'$(rpathdir)'
 else
-rpath = -Wl,-R$(rpathdir)
+rpath = -Wl,-R'$(rpathdir)'
 endif
 
 DLSUFFIX = .so

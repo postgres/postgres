@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/pl/tcl/modules/Makefile,v 1.3 2003/11/29 19:52:13 pgsql Exp $
+# $PostgreSQL: pgsql/src/pl/tcl/modules/Makefile,v 1.4 2005/12/09 21:19:36 petere Exp $
 
 subdir = src/pl/tcl/modules
 top_builddir = ../../../..
@@ -13,16 +13,16 @@ $(MODULES): %: %.in $(top_builddir)/src/Makefile.global
 	chmod a+x $@
 
 install: all installdirs
-	$(INSTALL_SCRIPT) pltcl_loadmod $(DESTDIR)$(bindir)/pltcl_loadmod
-	$(INSTALL_SCRIPT) pltcl_delmod 	$(DESTDIR)$(bindir)/pltcl_delmod
-	$(INSTALL_SCRIPT) pltcl_listmod $(DESTDIR)$(bindir)/pltcl_listmod
-	$(INSTALL_DATA) $(srcdir)/unknown.pltcl $(DESTDIR)$(datadir)/unknown.pltcl
+	$(INSTALL_SCRIPT) pltcl_loadmod '$(DESTDIR)$(bindir)/pltcl_loadmod'
+	$(INSTALL_SCRIPT) pltcl_delmod 	'$(DESTDIR)$(bindir)/pltcl_delmod'
+	$(INSTALL_SCRIPT) pltcl_listmod '$(DESTDIR)$(bindir)/pltcl_listmod'
+	$(INSTALL_DATA) $(srcdir)/unknown.pltcl '$(DESTDIR)$(datadir)/unknown.pltcl'
 
 installdirs:
-	$(mkinstalldirs) $(DESTDIR)$(bindir) $(DESTDIR)$(datadir)
+	$(mkinstalldirs) '$(DESTDIR)$(bindir)' '$(DESTDIR)$(datadir)'
 
 uninstall:
-	rm -f $(DESTDIR)$(bindir)/pltcl_loadmod $(DESTDIR)$(bindir)/pltcl_delmod $(DESTDIR)$(bindir)/pltcl_listmod $(DESTDIR)$(datadir)/unknown.pltcl
+	rm -f '$(DESTDIR)$(bindir)/pltcl_loadmod' '$(DESTDIR)$(bindir)/pltcl_delmod' '$(DESTDIR)$(bindir)/pltcl_listmod' '$(DESTDIR)$(datadir)/unknown.pltcl'
 
 clean distclean maintainer-clean:
 	rm -f $(MODULES)

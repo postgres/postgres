@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.99 2005/12/03 20:16:31 tgl Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.100 2005/12/09 21:19:34 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -162,7 +162,7 @@ ifeq ($(PORTNAME), hpux)
     # can't use the CC-syntax rpath pattern here
     rpath =
     ifeq ($(enable_rpath), yes)
-      LINK.shared	= $(LD) +h $(soname) -b +b $(rpathdir)
+      LINK.shared	= $(LD) +h $(soname) -b +b '$(rpathdir)'
     else
       LINK.shared	= $(LD) +h $(soname) -b
     endif
@@ -366,24 +366,24 @@ endif # enable_shared
 install-lib: install-lib-static install-lib-shared
 
 install-lib-static: lib$(NAME).a
-	$(INSTALL_STLIB) $< $(DESTDIR)$(libdir)/lib$(NAME).a
+	$(INSTALL_STLIB) $< '$(DESTDIR)$(libdir)/lib$(NAME).a'
 ifeq ($(PORTNAME), darwin)
-	cd $(DESTDIR)$(libdir) && \
+	cd '$(DESTDIR)$(libdir)' && \
 	ranlib lib$(NAME).a
 endif
 
 ifeq ($(enable_shared), yes)
 install-lib-shared: $(shlib)
-	$(INSTALL_SHLIB) $< $(DESTDIR)$(libdir)/$(shlib)
+	$(INSTALL_SHLIB) $< '$(DESTDIR)$(libdir)/$(shlib)'
 ifneq ($(PORTNAME), cygwin)
 ifneq ($(PORTNAME), win32)
 ifneq ($(shlib), $(shlib_major))
-	cd $(DESTDIR)$(libdir) && \
+	cd '$(DESTDIR)$(libdir)' && \
 	rm -f $(shlib_major) && \
 	$(LN_S) $(shlib) $(shlib_major)
 endif
 ifneq ($(shlib), $(shlib_bare))
-	cd $(DESTDIR)$(libdir) && \
+	cd '$(DESTDIR)$(libdir)' && \
 	rm -f $(shlib_bare) && \
 	$(LN_S) $(shlib) $(shlib_bare)
 endif
@@ -398,11 +398,11 @@ endif # enable_shared
 
 .PHONY: uninstall-lib
 uninstall-lib:
-	rm -f $(DESTDIR)$(libdir)/lib$(NAME).a
+	rm -f '$(DESTDIR)$(libdir)/lib$(NAME).a'
 ifeq ($(enable_shared), yes)
-	rm -f $(DESTDIR)$(libdir)/$(shlib_bare) \
-	  $(DESTDIR)$(libdir)/$(shlib_major) \
-	  $(DESTDIR)$(libdir)/$(shlib)
+	rm -f '$(DESTDIR)$(libdir)/$(shlib_bare)' \
+	  '$(DESTDIR)$(libdir)/$(shlib_major)' \
+	  '$(DESTDIR)$(libdir)/$(shlib)'
 endif # enable_shared
 
 

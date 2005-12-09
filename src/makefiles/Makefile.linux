@@ -1,6 +1,6 @@
 AROPT = crs
 export_dynamic = -Wl,-E
-rpath = -Wl,-rpath,$(rpathdir)
+rpath = -Wl,-rpath,'$(rpathdir)'
 allow_nonpic_in_shlib = yes
 DLSUFFIX = .so
 

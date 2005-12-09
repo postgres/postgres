@@ -1,5 +1,5 @@
 #
-# $PostgreSQL: pgsql/contrib/mSQL-interface/Makefile,v 1.10 2005/09/27 17:13:05 tgl Exp $
+# $PostgreSQL: pgsql/contrib/mSQL-interface/Makefile,v 1.11 2005/12/09 21:19:34 petere Exp $
 #
 
 NAME	= mpgsql
@@ -22,13 +22,13 @@ endif
 all: all-lib
 
 install: all installdirs install-lib
-	$(INSTALL_DATA) README.$(NAME) $(docdir)/contrib
+	$(INSTALL_DATA) $(srcdir)/README.$(NAME) '$(DESTDIR)$(docdir)/contrib'
 
 installdirs:
-	$(mkinstalldirs) $(libdir) $(docdir)/contrib
+	$(mkinstalldirs) $(libdir) '$(DESTDIR)$(docdir)/contrib'
 
 uninstall: uninstall-lib
-	rm -f $(docdir)/contrib/README.$(NAME)
+	rm -f '$(DESTDIR)$(docdir)/contrib/README.$(NAME)'
 
 clean distclean maintainer-clean: clean-lib
 	rm -f $(OBJS)

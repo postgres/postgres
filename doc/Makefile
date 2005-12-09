@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/doc/Makefile,v 1.27 2003/11/29 19:51:36 pgsql Exp $
+# $PostgreSQL: pgsql/doc/Makefile,v 1.28 2005/12/09 21:19:34 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -83,10 +83,10 @@ endif
 
 installdirs:
 ifdef found_html
-	$(mkinstalldirs) $(DESTDIR)$(docdir)/html
+	$(mkinstalldirs) '$(DESTDIR)$(docdir)'/html
 endif
 ifdef found_man
-	$(mkinstalldirs) $(addprefix $(DESTDIR)$(mandir)/man, 1 $(sqlmansectnum))
+	$(mkinstalldirs) $(addprefix '$(DESTDIR)$(mandir)'/man, 1 $(sqlmansectnum))
 endif
 
 

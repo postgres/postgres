@@ -28,10 +28,10 @@ pgmsgevent.o: pgmsgevent.rc win32ver.rc
 all-lib: $(NAME)
 
 install-lib: $(NAME)
-	$(INSTALL_STLIB) $< $(DESTDIR)$(libdir)/$<
+	$(INSTALL_STLIB) $< '$(DESTDIR)$(libdir)/$<'
 
 uninstall-lib:
-	rm -f $(DESTDIR)$(libdir)/$(NAME)
+	rm -f '$(DESTDIR)$(libdir)/$(NAME)'
 
 clean distclean:
 	rm -f $(OBJS) $(NAME) win32ver.rc

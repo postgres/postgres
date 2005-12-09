@@ -4,7 +4,7 @@
 #    Makefile for utils/mb/conversion_procs
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/Makefile,v 1.14 2005/05/03 19:17:59 tgl Exp $
+#    $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/Makefile,v 1.15 2005/12/09 21:19:35 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -184,14 +184,14 @@ $(REGRESSION_SCRIPT): Makefile
 	cat regress_epilogue >> $@;
 
 install: $(SQLSCRIPT) installdirs
-	$(INSTALL_DATA) $(SQLSCRIPT) $(DESTDIR)$(datadir)
+	$(INSTALL_DATA) $(SQLSCRIPT) '$(DESTDIR)$(datadir)'
 	@for dir in $(DIRS); do $(MAKE) -C $$dir $@ || exit; done
 
 installdirs:
-	$(mkinstalldirs) $(DESTDIR)$(datadir) $(DESTDIR)$(pkglibdir)
+	$(mkinstalldirs) '$(DESTDIR)$(datadir)' '$(DESTDIR)$(pkglibdir)'
 
 uninstall:
-	rm -f $(DESTDIR)$(datadir)/$(SQLSCRIPT)
+	rm -f '$(DESTDIR)$(datadir)/$(SQLSCRIPT)'
 	@for dir in $(DIRS); do $(MAKE) -C $$dir $@ || exit; done
 
 clean distclean maintainer-clean:

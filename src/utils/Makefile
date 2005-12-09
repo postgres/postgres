@@ -2,7 +2,7 @@
 #
 # Makefile for utils
 #
-# $PostgreSQL: pgsql/src/utils/Makefile,v 1.21 2004/07/30 12:26:40 petere Exp $
+# $PostgreSQL: pgsql/src/utils/Makefile,v 1.22 2005/12/09 21:19:36 petere Exp $
 #
 # dllinit.o is only built on Win32 platform.
 #
@@ -21,7 +21,7 @@ install: all installdirs
 	$(INSTALL_DATA) dllinit.o $(DESTDIR)$(pgxsdir)/$(subdir)/
 
 installdirs:
-	$(mkinstalldirs) $(DESTDIR)$(pgxsdir)/$(subdir)
+	$(mkinstalldirs) '$(DESTDIR)$(pgxsdir)/$(subdir)'
 
 uninstall:
 	rm -f $(DESTDIR)$(pgxsdir)/$(subdir)/dllinit.o

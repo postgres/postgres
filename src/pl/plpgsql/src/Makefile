@@ -2,7 +2,7 @@
 #
 # Makefile for the plpgsql shared object
 #
-# $PostgreSQL: pgsql/src/pl/plpgsql/src/Makefile,v 1.26 2004/06/03 19:21:31 tgl Exp $
+# $PostgreSQL: pgsql/src/pl/plpgsql/src/Makefile,v 1.27 2005/12/09 21:19:36 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -42,7 +42,7 @@ include $(top_srcdir)/src/Makefile.shlib
 
 install: installdirs all
 ifeq ($(enable_shared), yes)
-	$(INSTALL_SHLIB) $(shlib) $(DESTDIR)$(pkglibdir)/plpgsql$(DLSUFFIX)
+	$(INSTALL_SHLIB) $(shlib) '$(DESTDIR)$(pkglibdir)/plpgsql$(DLSUFFIX)'
 else
 	@echo "*****"; \
 	 echo "* PL/pgSQL was not installed due to lack of shared library support."; \
@@ -50,10 +50,10 @@ else
 endif
 
 installdirs:
-	$(mkinstalldirs) $(DESTDIR)$(pkglibdir)
+	$(mkinstalldirs) '$(DESTDIR)$(pkglibdir)'
 
 uninstall:
-	rm -f $(DESTDIR)$(pkglibdir)/plpgsql$(DLSUFFIX)
+	rm -f '$(DESTDIR)$(pkglibdir)/plpgsql$(DLSUFFIX)'
 
 pl_gram.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o: plpgsql.h $(srcdir)/pl.tab.h
 

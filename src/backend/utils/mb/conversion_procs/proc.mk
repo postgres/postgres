@@ -11,13 +11,16 @@ all: all-shared-lib
 
 include $(top_srcdir)/src/Makefile.shlib
 
-install: all
+install: all installdirs
 ifeq ($(enable_shared), yes)
-	$(INSTALL_SHLIB) $(shlib) $(DESTDIR)$(pkglibdir)/$(NAME)$(DLSUFFIX)
+	$(INSTALL_SHLIB) $(shlib) '$(DESTDIR)$(pkglibdir)/$(NAME)$(DLSUFFIX)'
 endif
 
+installdirs:
+	$(mkinstalldirs) '$(DESTDIR)$(pkglibdir)'
+
 uninstall:
-	rm -f $(DESTDIR)$(pkglibdir)/$(NAME)$(DLSUFFIX)
+	rm -f '$(DESTDIR)$(pkglibdir)/$(NAME)$(DLSUFFIX)'
 
 clean distclean maintainer-clean: clean-lib
 	rm -f $(OBJS)
