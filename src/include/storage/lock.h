@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.91 2005/10/15 02:49:46 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.92 2005/12/09 01:22:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,50 +55,68 @@ typedef int LOCKMODE;
 #define LOCKBIT_ON(lockmode) (1 << (lockmode))
 #define LOCKBIT_OFF(lockmode) (~(1 << (lockmode)))
 
+
 /*
- * There is normally only one lock method, the default one.
- * If user locks are enabled, an additional lock method is present.
+ * This data structure defines the locking semantics associated with a
+ * "lock method".  The semantics specify the meaning of each lock mode
+ * (by defining which lock modes it conflicts with), and also whether locks
+ * of this method are transactional (ie, are released at transaction end).
+ * All of this data is constant and is kept in const tables.
+ *
+ * numLockModes -- number of lock modes (READ,WRITE,etc) that
+ *		are defined in this lock method.  Must be less than MAX_LOCKMODES.
+ *
+ * transactional -- TRUE if locks are released automatically at xact end.
+ *
+ * conflictTab -- this is an array of bitmasks showing lock
+ *		mode conflicts.  conflictTab[i] is a mask with the j-th bit
+ *		turned on if lock modes i and j conflict.  Lock modes are
+ *		numbered 1..numLockModes; conflictTab[0] is unused.
+ *
+ * lockModeNames -- ID strings for debug printouts.
+ *
+ * trace_flag -- pointer to GUC trace flag for this lock method.
+ */
+typedef struct LockMethodData
+{
+	int			numLockModes;
+	bool		transactional;
+	const LOCKMASK *conflictTab;
+	const char * const *lockModeNames;
+	const bool *trace_flag;
+} LockMethodData;
+
+typedef const LockMethodData *LockMethod;
+
+/*
  * Lock methods are identified by LOCKMETHODID.  (Despite the declaration as
  * uint16, we are constrained to 256 lockmethods by the layout of LOCKTAG.)
  */
 typedef uint16 LOCKMETHODID;
 
-/* MAX_LOCK_METHODS is the number of distinct lock control tables allowed */
-#define MAX_LOCK_METHODS	3
-
-#define INVALID_LOCKMETHOD	0
+/* These identify the known lock methods */
 #define DEFAULT_LOCKMETHOD	1
 #define USER_LOCKMETHOD		2
 
-#define LockMethodIsValid(lockmethodid) ((lockmethodid) != INVALID_LOCKMETHOD)
-
-extern int	NumLockMethods;
-
-
 /*
- * This is the control structure for a lock table. It lives in shared
- * memory.	Currently, none of these fields change after startup.  In addition
- * to the LockMethodData, a lock table has a shared "lockHash" table holding
- * per-locked-object lock information, and a shared "proclockHash" table
- * holding per-lock-holder/waiter lock information.
- *
- * masterLock -- LWLock used to synchronize access to the table
- *
- * numLockModes -- number of lock types (READ,WRITE,etc) that
- *		are defined on this lock table
- *
- * conflictTab -- this is an array of bitmasks showing lock
- *		type conflicts. conflictTab[i] is a mask with the j-th bit
- *		turned on if lock types i and j conflict.
+ * These are the valid values of type LOCKMODE for all the standard lock
+ * methods (both DEFAULT and USER).
  */
-typedef struct LockMethodData
-{
-	LWLockId	masterLock;
-	int			numLockModes;
-	LOCKMASK	conflictTab[MAX_LOCKMODES];
-} LockMethodData;
 
-typedef LockMethodData *LockMethod;
+/* NoLock is not a lock mode, but a flag value meaning "don't get a lock" */
+#define NoLock					0
+
+#define AccessShareLock			1		/* SELECT */
+#define RowShareLock			2		/* SELECT FOR UPDATE/FOR SHARE */
+#define RowExclusiveLock		3		/* INSERT, UPDATE, DELETE */
+#define ShareUpdateExclusiveLock 4		/* VACUUM (non-FULL) */
+#define ShareLock				5		/* CREATE INDEX */
+#define ShareRowExclusiveLock	6		/* like EXCLUSIVE MODE, but allows ROW
+										 * SHARE */
+#define ExclusiveLock			7		/* blocks ROW SHARE/SELECT...FOR
+										 * UPDATE */
+#define AccessExclusiveLock		8		/* ALTER TABLE, DROP TABLE, VACUUM
+										 * FULL, and unqualified LOCK TABLE */
 
 
 /*
@@ -138,9 +156,7 @@ typedef enum LockTagType
  * to widen Oid, BlockNumber, or TransactionId to more than 32 bits.
  *
  * We include lockmethodid in the locktag so that a single hash table in
- * shared memory can store locks of different lockmethods.	For largely
- * historical reasons, it's passed to the lock.c routines as a separate
- * argument and then stored into the locktag.
+ * shared memory can store locks of different lockmethods.
  */
 typedef struct LOCKTAG
 {
@@ -162,42 +178,48 @@ typedef struct LOCKTAG
 	 (locktag).locktag_field2 = (reloid), \
 	 (locktag).locktag_field3 = 0, \
 	 (locktag).locktag_field4 = 0, \
-	 (locktag).locktag_type = LOCKTAG_RELATION)
+	 (locktag).locktag_type = LOCKTAG_RELATION, \
+	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
 #define SET_LOCKTAG_RELATION_EXTEND(locktag,dboid,reloid) \
 	((locktag).locktag_field1 = (dboid), \
 	 (locktag).locktag_field2 = (reloid), \
 	 (locktag).locktag_field3 = 0, \
 	 (locktag).locktag_field4 = 0, \
-	 (locktag).locktag_type = LOCKTAG_RELATION_EXTEND)
+	 (locktag).locktag_type = LOCKTAG_RELATION_EXTEND, \
+	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
 #define SET_LOCKTAG_PAGE(locktag,dboid,reloid,blocknum) \
 	((locktag).locktag_field1 = (dboid), \
 	 (locktag).locktag_field2 = (reloid), \
 	 (locktag).locktag_field3 = (blocknum), \
 	 (locktag).locktag_field4 = 0, \
-	 (locktag).locktag_type = LOCKTAG_PAGE)
+	 (locktag).locktag_type = LOCKTAG_PAGE, \
+	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
 #define SET_LOCKTAG_TUPLE(locktag,dboid,reloid,blocknum,offnum) \
 	((locktag).locktag_field1 = (dboid), \
 	 (locktag).locktag_field2 = (reloid), \
 	 (locktag).locktag_field3 = (blocknum), \
 	 (locktag).locktag_field4 = (offnum), \
-	 (locktag).locktag_type = LOCKTAG_TUPLE)
+	 (locktag).locktag_type = LOCKTAG_TUPLE, \
+	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
 #define SET_LOCKTAG_TRANSACTION(locktag,xid) \
 	((locktag).locktag_field1 = (xid), \
 	 (locktag).locktag_field2 = 0, \
 	 (locktag).locktag_field3 = 0, \
 	 (locktag).locktag_field4 = 0, \
-	 (locktag).locktag_type = LOCKTAG_TRANSACTION)
+	 (locktag).locktag_type = LOCKTAG_TRANSACTION, \
+	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
 #define SET_LOCKTAG_OBJECT(locktag,dboid,classoid,objoid,objsubid) \
 	((locktag).locktag_field1 = (dboid), \
 	 (locktag).locktag_field2 = (classoid), \
 	 (locktag).locktag_field3 = (objoid), \
 	 (locktag).locktag_field4 = (objsubid), \
-	 (locktag).locktag_type = LOCKTAG_OBJECT)
+	 (locktag).locktag_type = LOCKTAG_OBJECT, \
+	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
 
 /*
@@ -366,18 +388,13 @@ typedef enum
  * function prototypes
  */
 extern void InitLocks(void);
-extern LockMethod GetLocksMethodTable(LOCK *lock);
-extern LOCKMETHODID LockMethodTableInit(const char *tabName,
-					const LOCKMASK *conflictsP,
-					int numModes);
-extern LOCKMETHODID LockMethodTableRename(LOCKMETHODID lockmethodid);
-extern LockAcquireResult LockAcquire(LOCKMETHODID lockmethodid,
-			LOCKTAG *locktag,
+extern LockMethod GetLocksMethodTable(const LOCK *lock);
+extern LockAcquireResult LockAcquire(const LOCKTAG *locktag,
 			bool isTempObject,
 			LOCKMODE lockmode,
 			bool sessionLock,
 			bool dontWait);
-extern bool LockRelease(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
+extern bool LockRelease(const LOCKTAG *locktag,
 			LOCKMODE lockmode, bool sessionLock);
 extern void LockReleaseAll(LOCKMETHODID lockmethodid, bool allLocks);
 extern void LockReleaseCurrentOwner(void);
@@ -399,7 +416,7 @@ extern void RememberSimpleDeadLock(PGPROC *proc1,
 					   PGPROC *proc2);
 extern void InitDeadLockChecking(void);
 extern LockData *GetLockStatusData(void);
-extern const char *GetLockmodeName(LOCKMODE mode);
+extern const char *GetLockmodeName(LOCKMETHODID lockmethodid, LOCKMODE mode);
 
 extern void lock_twophase_recover(TransactionId xid, uint16 info,
 					  void *recdata, uint32 len);

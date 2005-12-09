@@ -128,31 +128,16 @@ Block</a> - data/index buffer cache block</li>
 addresses using table name and block number( <a
 href="../../include/storage/buf_internals.h">BufferTag</a>)</li>
 
-<li>MultiLevelLockTable (ctl) - control structure for each locking
-method. Currently, only multi-level locking is used(<a
-href="../../include/storage/lock.h">LOCKMETHODCTL</a>).</li>
-
-<li>MultiLevelLockTable (lock hash) - the <a
+<li>Lock Manager Tables (lock hash) - the <a
 href="../../include/storage/lock.h">LOCK</a> structure, looked up
-using relation, database object ids(<a
-href="../../include/storage/lock.h">LOCKTAG)</a>. The lock table
-structure contains the lock modes(read/write or shared/exclusive)
-and circular linked list of backends (<a
-href="../../include/storage/proc.h">PROC</a> structure pointers)
-waiting on the lock.</li>
+using a <a href="../../include/storage/lock.h">LOCKTAG</a>.
+A LOCK structure exists for each lockable object that is currently
+locked by any backend.  Also, there is a subsidiary <a
+href="../../include/storage/lock.h">PROCLOCK</a> structure for each
+backend currently interested in a given LOCK</li>
 
-<li>MultiLevelLockTable (xid hash) - lookup of LOCK structure
-address using transaction id, LOCK address. It is used to quickly
-check if the current transaction already has any locks on a table,
-rather than having to search through all the held locks. It also
-stores the modes (read/write) of the locks held by the current
-transaction. The returned <a
-href="../../include/storage/lock.h">XIDLookupEnt</a> structure also
-contains a pointer to the backend's PROC.lockQueue.</li>
-
-<li><a href="../../include/storage/proc.h">Proc Header</a> -
-information about each backend, including locks held/waiting,
-indexed by process id</li>
+<li><a href="../../include/storage/proc.h">PGPROC Structures</a> -
+information about each backend, including locks held/waiting</li>
 </ul>
 
 <p>Each data structure is created by calling <a

@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/storage/lmgr/README,v 1.17 2005/06/14 22:15:32 tgl Exp $
+$PostgreSQL: pgsql/src/backend/storage/lmgr/README,v 1.18 2005/12/09 01:22:04 tgl Exp $
 
 
 LOCKING OVERVIEW
@@ -151,7 +151,7 @@ tag -
         SHMEM offset of the LOCK object this PROCLOCK is for.
 
     tag.proc
-        SHMEM offset of PROC of backend process that owns this PROCLOCK.
+        SHMEM offset of PGPROC of backend process that owns this PROCLOCK.
 
 holdMask -
     A bitmask for the lock types successfully acquired by this PROCLOCK.
@@ -415,3 +415,26 @@ seems a safer approach than trying to allocate workspace on the fly; we
 don't want to risk having the deadlock detector run out of memory, else
 we really have no guarantees at all that deadlock will be detected.
 
+
+USER LOCKS
+
+User locks are handled totally on the application side as long term
+cooperative locks which extend beyond the normal transaction boundaries.
+Their purpose is to indicate to an application that someone is `working'
+on an item.  So it is possible to put an user lock on a tuple's oid,
+retrieve the tuple, work on it for an hour and then update it and remove
+the lock.  While the lock is active other clients can still read and write
+the tuple but they can be aware that it has been locked at the application
+level by someone.
+
+User locks and normal locks are completely orthogonal and they don't
+interfere with each other.
+
+User locks are always non blocking, therefore they are never acquired if
+already held by another process.  They must be released explicitly by the
+application but they are released automatically when a backend terminates.
+
+The lockmode parameter can have the same values as for normal locks although
+probably only ExclusiveLock can have some practical use.
+
+	DZ - 22 Nov 1997

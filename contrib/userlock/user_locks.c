@@ -23,7 +23,8 @@
 	 (locktag).locktag_field2 = (id1), \
 	 (locktag).locktag_field3 = (id2), \
 	 (locktag).locktag_field4 = 0, \
-	 (locktag).locktag_type = LOCKTAG_USERLOCK)
+	 (locktag).locktag_type = LOCKTAG_USERLOCK, \
+	 (locktag).locktag_lockmethodid = USER_LOCKMETHOD)
 
 
 int
@@ -33,7 +34,7 @@ user_lock(uint32 id1, uint32 id2, LOCKMODE lockmode)
 
 	SET_LOCKTAG_USERLOCK(tag, id1, id2);
 
-	return (LockAcquire(USER_LOCKMETHOD, &tag, false,
+	return (LockAcquire(&tag, false,
 						lockmode, true, true) != LOCKACQUIRE_NOT_AVAIL);
 }
 
@@ -44,7 +45,7 @@ user_unlock(uint32 id1, uint32 id2, LOCKMODE lockmode)
 
 	SET_LOCKTAG_USERLOCK(tag, id1, id2);
 
-	return LockRelease(USER_LOCKMETHOD, &tag, lockmode, true);
+	return LockRelease(&tag, lockmode, true);
 }
 
 int

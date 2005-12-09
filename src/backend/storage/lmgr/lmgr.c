@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.79 2005/10/15 02:49:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.80 2005/12/09 01:22:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,95 +18,11 @@
 #include "access/subtrans.h"
 #include "access/transam.h"
 #include "access/xact.h"
-#include "catalog/catalog.h"
 #include "miscadmin.h"
 #include "storage/lmgr.h"
 #include "storage/procarray.h"
 #include "utils/inval.h"
 
-
-/*
- * This conflict table defines the semantics of the various lock modes.
- */
-static const LOCKMASK LockConflicts[] = {
-	0,
-
-	/* AccessShareLock */
-	(1 << AccessExclusiveLock),
-
-	/* RowShareLock */
-	(1 << ExclusiveLock) | (1 << AccessExclusiveLock),
-
-	/* RowExclusiveLock */
-	(1 << ShareLock) | (1 << ShareRowExclusiveLock) |
-	(1 << ExclusiveLock) | (1 << AccessExclusiveLock),
-
-	/* ShareUpdateExclusiveLock */
-	(1 << ShareUpdateExclusiveLock) |
-	(1 << ShareLock) | (1 << ShareRowExclusiveLock) |
-	(1 << ExclusiveLock) | (1 << AccessExclusiveLock),
-
-	/* ShareLock */
-	(1 << RowExclusiveLock) | (1 << ShareUpdateExclusiveLock) |
-	(1 << ShareRowExclusiveLock) |
-	(1 << ExclusiveLock) | (1 << AccessExclusiveLock),
-
-	/* ShareRowExclusiveLock */
-	(1 << RowExclusiveLock) | (1 << ShareUpdateExclusiveLock) |
-	(1 << ShareLock) | (1 << ShareRowExclusiveLock) |
-	(1 << ExclusiveLock) | (1 << AccessExclusiveLock),
-
-	/* ExclusiveLock */
-	(1 << RowShareLock) |
-	(1 << RowExclusiveLock) | (1 << ShareUpdateExclusiveLock) |
-	(1 << ShareLock) | (1 << ShareRowExclusiveLock) |
-	(1 << ExclusiveLock) | (1 << AccessExclusiveLock),
-
-	/* AccessExclusiveLock */
-	(1 << AccessShareLock) | (1 << RowShareLock) |
-	(1 << RowExclusiveLock) | (1 << ShareUpdateExclusiveLock) |
-	(1 << ShareLock) | (1 << ShareRowExclusiveLock) |
-	(1 << ExclusiveLock) | (1 << AccessExclusiveLock)
-
-};
-
-static LOCKMETHODID LockTableId = INVALID_LOCKMETHOD;
-
-
-/*
- * Create the lock table described by LockConflicts
- */
-void
-InitLockTable(void)
-{
-	LOCKMETHODID LongTermTableId;
-
-	/* there's no zero-th table */
-	NumLockMethods = 1;
-
-	/*
-	 * Create the default lock method table
-	 */
-
-	/* number of lock modes is lengthof()-1 because of dummy zero */
-	LockTableId = LockMethodTableInit("LockTable",
-									  LockConflicts,
-									  lengthof(LockConflicts) - 1);
-	if (!LockMethodIsValid(LockTableId))
-		elog(ERROR, "could not initialize lock table");
-	Assert(LockTableId == DEFAULT_LOCKMETHOD);
-
-#ifdef USER_LOCKS
-
-	/*
-	 * Allocate another tableId for user locks (same shared hashtable though)
-	 */
-	LongTermTableId = LockMethodTableRename(LockTableId);
-	if (!LockMethodIsValid(LongTermTableId))
-		elog(ERROR, "could not rename user lock table");
-	Assert(LongTermTableId == USER_LOCKMETHOD);
-#endif
-}
 
 /*
  * RelationInitLockInfo
@@ -141,8 +57,7 @@ LockRelation(Relation relation, LOCKMODE lockmode)
 						 relation->rd_lockInfo.lockRelId.dbId,
 						 relation->rd_lockInfo.lockRelId.relId);
 
-	res = LockAcquire(LockTableId, &tag, relation->rd_istemp,
-					  lockmode, false, false);
+	res = LockAcquire(&tag, relation->rd_istemp, lockmode, false, false);
 
 	/*
 	 * Check to see if the relcache entry has been invalidated while we were
@@ -178,8 +93,7 @@ ConditionalLockRelation(Relation relation, LOCKMODE lockmode)
 						 relation->rd_lockInfo.lockRelId.dbId,
 						 relation->rd_lockInfo.lockRelId.relId);
 
-	res = LockAcquire(LockTableId, &tag, relation->rd_istemp,
-					  lockmode, false, true);
+	res = LockAcquire(&tag, relation->rd_istemp, lockmode, false, true);
 
 	if (res == LOCKACQUIRE_NOT_AVAIL)
 		return false;
@@ -213,7 +127,7 @@ UnlockRelation(Relation relation, LOCKMODE lockmode)
 						 relation->rd_lockInfo.lockRelId.dbId,
 						 relation->rd_lockInfo.lockRelId.relId);
 
-	LockRelease(LockTableId, &tag, lockmode, false);
+	LockRelease(&tag, lockmode, false);
 }
 
 /*
@@ -235,8 +149,7 @@ LockRelationForSession(LockRelId *relid, bool istemprel, LOCKMODE lockmode)
 
 	SET_LOCKTAG_RELATION(tag, relid->dbId, relid->relId);
 
-	(void) LockAcquire(LockTableId, &tag, istemprel,
-					   lockmode, true, false);
+	(void) LockAcquire(&tag, istemprel, lockmode, true, false);
 }
 
 /*
@@ -249,7 +162,7 @@ UnlockRelationForSession(LockRelId *relid, LOCKMODE lockmode)
 
 	SET_LOCKTAG_RELATION(tag, relid->dbId, relid->relId);
 
-	LockRelease(LockTableId, &tag, lockmode, true);
+	LockRelease(&tag, lockmode, true);
 }
 
 /*
@@ -271,8 +184,7 @@ LockRelationForExtension(Relation relation, LOCKMODE lockmode)
 								relation->rd_lockInfo.lockRelId.dbId,
 								relation->rd_lockInfo.lockRelId.relId);
 
-	(void) LockAcquire(LockTableId, &tag, relation->rd_istemp,
-					   lockmode, false, false);
+	(void) LockAcquire(&tag, relation->rd_istemp, lockmode, false, false);
 }
 
 /*
@@ -287,7 +199,7 @@ UnlockRelationForExtension(Relation relation, LOCKMODE lockmode)
 								relation->rd_lockInfo.lockRelId.dbId,
 								relation->rd_lockInfo.lockRelId.relId);
 
-	LockRelease(LockTableId, &tag, lockmode, false);
+	LockRelease(&tag, lockmode, false);
 }
 
 /*
@@ -306,8 +218,7 @@ LockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 					 relation->rd_lockInfo.lockRelId.relId,
 					 blkno);
 
-	(void) LockAcquire(LockTableId, &tag, relation->rd_istemp,
-					   lockmode, false, false);
+	(void) LockAcquire(&tag, relation->rd_istemp, lockmode, false, false);
 }
 
 /*
@@ -326,7 +237,7 @@ ConditionalLockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 					 relation->rd_lockInfo.lockRelId.relId,
 					 blkno);
 
-	return (LockAcquire(LockTableId, &tag, relation->rd_istemp,
+	return (LockAcquire(&tag, relation->rd_istemp,
 						lockmode, false, true) != LOCKACQUIRE_NOT_AVAIL);
 }
 
@@ -343,7 +254,7 @@ UnlockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 					 relation->rd_lockInfo.lockRelId.relId,
 					 blkno);
 
-	LockRelease(LockTableId, &tag, lockmode, false);
+	LockRelease(&tag, lockmode, false);
 }
 
 /*
@@ -364,8 +275,7 @@ LockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode)
 					  ItemPointerGetBlockNumber(tid),
 					  ItemPointerGetOffsetNumber(tid));
 
-	(void) LockAcquire(LockTableId, &tag, relation->rd_istemp,
-					   lockmode, false, false);
+	(void) LockAcquire(&tag, relation->rd_istemp, lockmode, false, false);
 }
 
 /*
@@ -385,7 +295,7 @@ ConditionalLockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode)
 					  ItemPointerGetBlockNumber(tid),
 					  ItemPointerGetOffsetNumber(tid));
 
-	return (LockAcquire(LockTableId, &tag, relation->rd_istemp,
+	return (LockAcquire(&tag, relation->rd_istemp,
 						lockmode, false, true) != LOCKACQUIRE_NOT_AVAIL);
 }
 
@@ -403,7 +313,7 @@ UnlockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode)
 					  ItemPointerGetBlockNumber(tid),
 					  ItemPointerGetOffsetNumber(tid));
 
-	LockRelease(LockTableId, &tag, lockmode, false);
+	LockRelease(&tag, lockmode, false);
 }
 
 /*
@@ -420,8 +330,7 @@ XactLockTableInsert(TransactionId xid)
 
 	SET_LOCKTAG_TRANSACTION(tag, xid);
 
-	(void) LockAcquire(LockTableId, &tag, false,
-					   ExclusiveLock, false, false);
+	(void) LockAcquire(&tag, false, ExclusiveLock, false, false);
 }
 
 /*
@@ -439,7 +348,7 @@ XactLockTableDelete(TransactionId xid)
 
 	SET_LOCKTAG_TRANSACTION(tag, xid);
 
-	LockRelease(LockTableId, &tag, ExclusiveLock, false);
+	LockRelease(&tag, ExclusiveLock, false);
 }
 
 /*
@@ -466,10 +375,9 @@ XactLockTableWait(TransactionId xid)
 
 		SET_LOCKTAG_TRANSACTION(tag, xid);
 
-		(void) LockAcquire(LockTableId, &tag, false,
-						   ShareLock, false, false);
+		(void) LockAcquire(&tag, false, ShareLock, false, false);
 
-		LockRelease(LockTableId, &tag, ShareLock, false);
+		LockRelease(&tag, ShareLock, false);
 
 		if (!TransactionIdIsInProgress(xid))
 			break;
@@ -502,11 +410,11 @@ ConditionalXactLockTableWait(TransactionId xid)
 
 		SET_LOCKTAG_TRANSACTION(tag, xid);
 
-		if (LockAcquire(LockTableId, &tag, false,
+		if (LockAcquire(&tag, false,
 						ShareLock, false, true) == LOCKACQUIRE_NOT_AVAIL)
 			return false;
 
-		LockRelease(LockTableId, &tag, ShareLock, false);
+		LockRelease(&tag, ShareLock, false);
 
 		if (!TransactionIdIsInProgress(xid))
 			break;
@@ -545,8 +453,7 @@ LockDatabaseObject(Oid classid, Oid objid, uint16 objsubid,
 					   objid,
 					   objsubid);
 
-	(void) LockAcquire(LockTableId, &tag, false,
-					   lockmode, false, false);
+	(void) LockAcquire(&tag, false, lockmode, false, false);
 }
 
 /*
@@ -564,7 +471,7 @@ UnlockDatabaseObject(Oid classid, Oid objid, uint16 objsubid,
 					   objid,
 					   objsubid);
 
-	LockRelease(LockTableId, &tag, lockmode, false);
+	LockRelease(&tag, lockmode, false);
 }
 
 /*
@@ -584,8 +491,7 @@ LockSharedObject(Oid classid, Oid objid, uint16 objsubid,
 					   objid,
 					   objsubid);
 
-	(void) LockAcquire(LockTableId, &tag, false,
-					   lockmode, false, false);
+	(void) LockAcquire(&tag, false, lockmode, false, false);
 }
 
 /*
@@ -603,5 +509,5 @@ UnlockSharedObject(Oid classid, Oid objid, uint16 objsubid,
 					   objid,
 					   objsubid);
 
-	LockRelease(LockTableId, &tag, lockmode, false);
+	LockRelease(&tag, lockmode, false);
 }

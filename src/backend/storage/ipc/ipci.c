@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.79 2005/10/15 02:49:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.80 2005/12/09 01:22:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@
 #include "storage/bufmgr.h"
 #include "storage/freespace.h"
 #include "storage/ipc.h"
-#include "storage/lmgr.h"
+#include "storage/lock.h"
 #include "storage/lwlock.h"
 #include "storage/pg_sema.h"
 #include "storage/pg_shmem.h"
@@ -159,7 +159,6 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	 * Set up lock manager
 	 */
 	InitLocks();
-	InitLockTable();
 
 	/*
 	 * Set up process table

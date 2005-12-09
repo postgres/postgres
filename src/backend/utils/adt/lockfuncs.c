@@ -6,7 +6,7 @@
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.20 2005/10/15 02:49:28 momjian Exp $
+ *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.21 2005/12/09 01:22:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -256,7 +256,8 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		else
 			nulls[10] = 'n';
 		values[11] = DirectFunctionCall1(textin,
-									 CStringGetDatum(GetLockmodeName(mode)));
+									 CStringGetDatum(GetLockmodeName(LOCK_LOCKMETHOD(*lock),
+																	 mode)));
 		values[12] = BoolGetDatum(granted);
 
 		tuple = heap_formtuple(funcctx->tuple_desc, values, nulls);

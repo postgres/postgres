@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.36 2005/10/29 00:31:51 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.37 2005/12/09 01:22:04 tgl Exp $
  *
  *	Interface:
  *
@@ -930,7 +930,8 @@ DeadLockReport(void)
 		appendStringInfo(&buf,
 				  _("Process %d waits for %s on %s; blocked by process %d."),
 						 info->pid,
-						 GetLockmodeName(info->lockmode),
+						 GetLockmodeName(info->locktag.locktag_lockmethodid,
+										 info->lockmode),
 						 buf2.data,
 						 nextpid);
 	}

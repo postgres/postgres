@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lmgr.h,v 1.52 2005/10/15 02:49:46 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lmgr.h,v 1.53 2005/12/09 01:22:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,29 +18,6 @@
 #include "utils/rel.h"
 
 
-/* These are the valid values of type LOCKMODE: */
-
-/* NoLock is not a lock mode, but a flag value meaning "don't get a lock" */
-#define NoLock					0
-
-#define AccessShareLock			1		/* SELECT */
-#define RowShareLock			2		/* SELECT FOR UPDATE/FOR SHARE */
-#define RowExclusiveLock		3		/* INSERT, UPDATE, DELETE */
-#define ShareUpdateExclusiveLock 4		/* VACUUM (non-FULL) */
-#define ShareLock				5		/* CREATE INDEX */
-#define ShareRowExclusiveLock	6		/* like EXCLUSIVE MODE, but allows ROW
-										 * SHARE */
-#define ExclusiveLock			7		/* blocks ROW SHARE/SELECT...FOR
-										 * UPDATE */
-#define AccessExclusiveLock		8		/* ALTER TABLE, DROP TABLE, VACUUM
-										 * FULL, and unqualified LOCK TABLE */
-
-/*
- * Note: all lock mode numbers must be less than lock.h's MAX_LOCKMODES,
- * so increase that if you want to add more modes.
- */
-
-extern void InitLockTable(void);
 extern void RelationInitLockInfo(Relation relation);
 
 /* Lock a relation */
