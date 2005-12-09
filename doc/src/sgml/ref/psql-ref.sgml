@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.154 2005/11/04 23:14:02 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.155 2005/12/09 19:19:17 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1644,15 +1644,6 @@ lo_import 152801
         if <application>psql</application> is configured to use the
         <acronym>GNU</acronym> <application>Readline</application> library.
         </para>
-
-        <note>
-        <para>
-        In the current version, it is no longer necessary to save the
-        command history, since that will be done automatically on
-        program termination. The history is also loaded automatically
-        every time <application>psql</application> starts up.
-        </para>
-        </note>
         </listitem>
       </varlistentry>
 
