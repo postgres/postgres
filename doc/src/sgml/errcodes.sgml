@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.17 2005/12/08 21:23:09 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.18 2005/12/09 18:07:49 tgl Exp $ -->
 
 <appendix id="errcodes-appendix">
  <title><productname>PostgreSQL</productname> Error Codes</title>
@@ -1308,7 +1308,7 @@
 </row>
 
 <row>
-<entry spanname="span13"><emphasis role="bold">Class XX&mdash; Internal Error</entry>
+<entry spanname="span13"><emphasis role="bold">Class XX&mdash; Internal Error</></entry>
 </row>
 
 <row>
