@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Dec  9 11:18:48 EST 2005
+Last updated:		Fri Dec  9 16:45:59 EST 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1101,7 +1101,7 @@ Source Code
   This is probably not possible because 'gmake' and other compiler tools
   do not fully support quoting of paths with spaces.
 
-* Allow installing to directories containing spaces
+* -Allow installing to directories containing spaces
 
   This is possible if proper quoting is added to the makefiles for the
   install targets.  Because PostgreSQL supports relocatable installs, it
