@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.42 2005/11/01 21:09:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.43 2005/12/09 19:39:41 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -241,13 +241,25 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
       function that executes the desired commands.
      </para>
     </listitem>
+
    </itemizedlist>
   </para>
 
   <para>
    SQL specifies that multiple triggers should be fired in
    time-of-creation order.  <productname>PostgreSQL</productname> uses
-   name order, which was judged more convenient to work with.
+   name order, which was judged to be more convenient.
+  </para>
+
+  <para>
+   SQL specifies that <literal>BEFORE DELETE</literal> triggers on cascaded
+   deletes fire <emphasis>after</> the cascaded <literal>DELETE</> completes.
+   The <productname>PostgreSQL</productname> behavior is for <literal>BEFORE
+   DELETE</literal> to always fire before the delete action, even a cascading
+   one.  This is considered more consistent.  There is also unpredictable
+   behavior when <literal>BEFORE</literal> triggers modify rows that are later
+   to be modified by referential actions.  This can lead to contraint violations
+   or stored data that does not honor the referential constraint.
   </para>
 
   <para>
