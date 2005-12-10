@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.48 2005/11/23 12:19:12 ishii Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.49 2005/12/10 01:09:07 tgl Exp $
  *
  * pgbench: a simple benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -411,6 +411,7 @@ doCustom(CState * state, int n, int debug)
 	CState	   *st = &state[n];
 	Command   **commands;
 
+top:
 	commands = sql_files[st->use_file];
 
 	if (st->listen)
@@ -489,6 +490,7 @@ doCustom(CState * state, int n, int debug)
 		{
 			st->state = 0;
 			st->use_file = getrand(0, num_files - 1);
+			commands = sql_files[st->use_file];
 		}
 	}
 
@@ -572,6 +574,8 @@ doCustom(CState * state, int n, int debug)
 			free(val);
 			st->listen = 1;
 		}
+
+		goto top;
 	}
 }
 
@@ -894,10 +898,8 @@ process_file(char *filename)
 				fclose(fd);
 				return false;
 			}
-		} else {
-			lineno++;
+		} else
 			continue;
-		}
 
 		my_commands[lineno] = commands;
 		lineno++;
