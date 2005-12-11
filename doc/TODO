@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Dec  9 16:45:59 EST 2005
+Last updated:		Sat Dec 10 21:16:26 EST 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -48,8 +48,6 @@ Administration
   in subtables that are partitioned based on the primary key or a WHERE
   clause
 * Add function to report the time of the most recent server reload
-* Add GUC variable to run a command on database panic or
-  smart/fast/immediate shutdown
 
 
 * Improve replication solutions
