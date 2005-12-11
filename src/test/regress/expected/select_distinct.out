@@ -195,3 +195,28 @@ SELECT null IS DISTINCT FROM null as "no";
  f
 (1 row)
 
+-- ANSI SQL 2003 form
+SELECT 1 IS NOT DISTINCT FROM 2 as "no";
+ no 
+----
+ f
+(1 row)
+
+SELECT 2 IS NOT DISTINCT FROM 2 as "yes";
+ yes 
+-----
+ t
+(1 row)
+
+SELECT 2 IS NOT DISTINCT FROM null as "no";
+ no 
+----
+ f
+(1 row)
+
+SELECT null IS NOT DISTINCT FROM null as "yes";
+ yes 
+-----
+ t
+(1 row)
+

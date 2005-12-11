@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.297 2005/12/03 16:45:05 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.298 2005/12/11 10:54:27 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -345,16 +345,24 @@ PostgreSQL documentation
     <indexterm>
      <primary>IS DISTINCT FROM</primary>
     </indexterm>
+    <indexterm>
+     <primary>IS NOT DISTINCT FROM</primary>
+    </indexterm>
     The ordinary comparison operators yield null (signifying <quote>unknown</>)
     when either input is null.  Another way to do comparisons is with the
     <literal>IS DISTINCT FROM</literal> construct:
 <synopsis>
 <replaceable>expression</replaceable> IS DISTINCT FROM <replaceable>expression</replaceable>
+<replaceable>expression</replaceable> IS NOT DISTINCT FROM <replaceable>expression</replaceable>
 </synopsis>
-    For non-null inputs this is the same as the <literal>&lt;&gt;</> operator.
-    However, when both inputs are null it will return false, and when just
-    one input is null it will return true.  Thus it effectively acts as though
-    null were a normal data value, rather than <quote>unknown</>.
+    For non-null inputs, <literal>IS DISTINCT FROM</literal> this is
+    the same as the <literal>&lt;&gt;</> operator.  However, when both
+    inputs are null it will return false, and when just one input is
+    null it will return true.  Similarly, <literal>IS NOT DISTINCT
+    FROM</literal> is identical to <literal>=</literal> for non-null
+    inputs, returns true when both inputs are null, and false
+    otherwise. Thus, these constructs effectively act as though null
+    were a normal data value, rather than <quote>unknown</>.
    </para>
 
    <para>
