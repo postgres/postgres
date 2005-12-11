@@ -14,8 +14,8 @@
  *
  * The process array now also includes PGPROC structures representing
  * prepared transactions.  The xid and subxids fields of these are valid,
- * as is the procLocks list.  They can be distinguished from regular backend
- * PGPROCs at need by checking for pid == 0.
+ * as are the myProcLocks lists.  They can be distinguished from regular
+ * backend PGPROCs at need by checking for pid == 0.
  *
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
@@ -23,7 +23,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.8 2005/11/22 18:17:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.9 2005/12/11 21:02:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */

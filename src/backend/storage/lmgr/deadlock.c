@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.37 2005/12/09 01:22:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.38 2005/12/11 21:02:18 tgl Exp $
  *
  *	Interface:
  *
@@ -53,9 +53,9 @@ typedef struct
  * Information saved about each edge in a detected deadlock cycle.	This
  * is used to print a diagnostic message upon failure.
  *
- * Note: because we want to examine this info after releasing the LockMgrLock,
- * we can't just store LOCK and PGPROC pointers; we must extract out all the
- * info we want to be able to print.
+ * Note: because we want to examine this info after releasing the lock
+ * manager's partition locks, we can't just store LOCK and PGPROC pointers;
+ * we must extract out all the info we want to be able to print.
  */
 typedef struct
 {
@@ -188,19 +188,11 @@ InitDeadLockChecking(void)
  * deadlock.  If resolution is impossible, return TRUE --- the caller
  * is then expected to abort the given proc's transaction.
  *
- * We can't block on user locks, so no sense testing for deadlock
- * because there is no blocking, and no timer for the block.  So,
- * only look at regular locks.
- *
- * We must have already locked the master lock before being called.
- * NOTE: although the lockmethod structure appears to allow each lock
- * table to have a different masterLock, all locks that can block had
- * better use the same LWLock, else this code will not be adequately
- * interlocked!
+ * Caller must already have locked all partitions of the lock tables.
  *
  * On failure, deadlock details are recorded in deadlockDetails[] for
  * subsequent printing by DeadLockReport().  That activity is separate
- * because we don't want to do it while holding the master lock.
+ * because we don't want to do it while holding all those LWLocks.
  */
 bool
 DeadLockCheck(PGPROC *proc)

@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/storage/lmgr/README,v 1.18 2005/12/09 01:22:04 tgl Exp $
+$PostgreSQL: pgsql/src/backend/storage/lmgr/README,v 1.19 2005/12/11 21:02:18 tgl Exp $
 
 
 LOCKING OVERVIEW
@@ -50,9 +50,12 @@ LOCK DATA STRUCTURES
 Lock methods describe the overall locking behavior.  Currently there are
 two lock methods: DEFAULT and USER.  (USER locks are non-blocking.)
 
-Lock modes describe the type of the lock (read/write or shared/exclusive). 
-See src/tools/backend/index.html and src/include/storage/lock.h for more
-details.
+Lock modes describe the type of the lock (read/write or shared/exclusive).
+In principle, each lock method can have its own set of lock modes with
+different conflict rules, but currently DEFAULT and USER methods use
+identical lock mode sets.  See src/tools/backend/index.html and
+src/include/storage/lock.h for more details.  (Lock modes are also called
+lock types in some places in the code and documentation.)
 
 There are two fundamental lock structures in shared memory: the
 per-lockable-object LOCK struct, and the per-lock-and-requestor PROCLOCK
@@ -67,7 +70,7 @@ be made per lockable object/lock mode/backend.  Internally to a backend,
 however, the same lock may be requested and perhaps released multiple times
 in a transaction, and it can also be held both transactionally and session-
 wide.  The internal request counts are held in LOCALLOCK so that the shared
-LockMgrLock need not be obtained to alter them.
+data structures need not be accessed to alter them.
 
 ---------------------------------------------------------------------------
 
@@ -103,10 +106,10 @@ procLocks -
     be waiting for more!).
 
 waitProcs -
-    This is a shared memory queue of all process structures corresponding to
-    a backend that is waiting (sleeping) until another backend releases this
+    This is a shared memory queue of all PGPROC structures corresponding to
+    backends that are waiting (sleeping) until another backend releases this
     lock.  The process structure holds the information needed to determine
-    if it should be woken up when this lock is released.
+    if it should be woken up when the lock is released.
 
 nRequested -
     Keeps a count of how many times this lock has been attempted to be
@@ -131,12 +134,12 @@ nGranted -
 granted -
     Keeps count of how many locks of each type are currently held.  Once again
     only elements 1 through MAX_LOCKMODES-1 are used (0 is not).  Also, like
-    requested, summing the values of granted should total to the value
+    requested[], summing the values of granted[] should total to the value
     of nGranted.
 
 We should always have 0 <= nGranted <= nRequested, and
-0 <= granted[i] <= requested[i] for each i.  If the request counts go to
-zero, the lock object is no longer needed and can be freed.
+0 <= granted[i] <= requested[i] for each i.  When all the request counts
+go to zero, the LOCK object is no longer needed and can be freed.
 
 ---------------------------------------------------------------------------
 
@@ -154,15 +157,16 @@ tag -
         SHMEM offset of PGPROC of backend process that owns this PROCLOCK.
 
 holdMask -
-    A bitmask for the lock types successfully acquired by this PROCLOCK.
+    A bitmask for the lock modes successfully acquired by this PROCLOCK.
     This should be a subset of the LOCK object's grantMask, and also a
-    subset of the PGPROC object's heldLocks mask.
+    subset of the PGPROC object's heldLocks mask (if the PGPROC is
+    currently waiting for another lock mode on this lock).
 
 releaseMask -
-    A bitmask for the lock types due to be released during LockReleaseAll.
+    A bitmask for the lock modes due to be released during LockReleaseAll.
     This must be a subset of the holdMask.  Note that it is modified without
-    taking the LockMgrLock, and therefore it is unsafe for any backend except
-    the one owning the PROCLOCK to examine/change it.
+    taking the partition LWLock, and therefore it is unsafe for any
+    backend except the one owning the PROCLOCK to examine/change it.
 
 lockLink -
     List link for shared memory queue of all the PROCLOCK objects for the
@@ -174,7 +178,60 @@ procLink -
 
 ---------------------------------------------------------------------------
 
-The deadlock detection algorithm:
+
+LOCK MANAGER INTERNAL LOCKING
+
+Before PostgreSQL 8.2, all of the shared-memory data structures used by
+the lock manager were protected by a single LWLock, the LockMgrLock;
+any operation involving these data structures had to exclusively lock
+LockMgrLock.  Not too surprisingly, this became a contention bottleneck.
+To reduce contention, the lock manager's data structures have been split
+into multiple "partitions", each protected by an independent LWLock.
+Most operations only need to lock the single partition they are working in.
+Here are the details:
+
+* Each possible lock is assigned to one partition according to a hash of
+its LOCKTAG value (see LockTagToPartition()).  The partition's LWLock is
+considered to protect all the LOCK objects of that partition as well as
+their subsidiary PROCLOCKs.  The shared-memory hash tables for LOCKs and
+PROCLOCKs are divided into separate hash tables for each partition, and
+operations on each hash table are likewise protected by the partition
+lock.
+
+* Formerly, each PGPROC had a single list of PROCLOCKs belonging to it.
+This has now been split into per-partition lists, so that access to a
+particular PROCLOCK list can be protected by the associated partition's
+LWLock.  (This is not strictly necessary at the moment, because at this
+writing a PGPROC's PROCLOCK list is only accessed by the owning backend
+anyway.  But it seems forward-looking to maintain a convention for how
+other backends could access it.  In any case LockReleaseAll needs to be
+able to quickly determine which partition each LOCK belongs to, and
+for the currently contemplated number of partitions, this way takes less
+shared memory than explicitly storing a partition number in LOCK structs
+would require.)
+
+* The other lock-related fields of a PGPROC are only interesting when
+the PGPROC is waiting for a lock, so we consider that they are protected
+by the partition LWLock of the awaited lock.
+
+For normal lock acquisition and release, it is sufficient to lock the
+partition containing the desired lock.  Deadlock checking needs to touch
+multiple partitions in general; for simplicity, we just make it lock all
+the partitions in partition-number order.  (To prevent LWLock deadlock,
+we establish the rule that any backend needing to lock more than one
+partition at once must lock them in partition-number order.)  It's
+possible that deadlock checking could be done without touching every
+partition in typical cases, but since in a properly functioning system
+deadlock checking should not occur often enough to be performance-critical,
+trying to make this work does not seem a productive use of effort.
+
+A backend's internal LOCALLOCK hash table is not partitioned.  We do store
+the partition number in LOCALLOCK table entries, but this is a straight
+speed-for-space tradeoff: we could instead recalculate the partition
+number from the LOCKTAG when needed.
+
+
+THE DEADLOCK DETECTION ALGORITHM
 
 Since we allow user transactions to request locks in any order, deadlock
 is possible.  We use a deadlock detection/breaking algorithm that is

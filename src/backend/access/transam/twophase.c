@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.17 2005/11/22 18:17:07 momjian Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.18 2005/12/11 21:02:17 tgl Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -284,7 +284,8 @@ MarkAsPreparing(TransactionId xid, const char *gid,
 	gxact->proc.lwWaitLink = NULL;
 	gxact->proc.waitLock = NULL;
 	gxact->proc.waitProcLock = NULL;
-	SHMQueueInit(&(gxact->proc.procLocks));
+	for (i = 0; i < NUM_LOCK_PARTITIONS; i++)
+		SHMQueueInit(&(gxact->proc.myProcLocks[i]));
 	/* subxid data must be filled later by GXactLoadSubxactData */
 	gxact->proc.subxids.overflowed = false;
 	gxact->proc.subxids.nxids = 0;

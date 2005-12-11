@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.169 2005/12/09 01:22:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.170 2005/12/11 21:02:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,9 +18,8 @@
  *		ProcQueueAlloc() -- create a shm queue for sleeping processes
  *		ProcQueueInit() -- create a queue without allocing memory
  *
- * Locking and waiting for buffers can cause the backend to be
- * put to sleep.  Whoever releases the lock, etc. wakes the
- * process up again (and gives it an error code so it knows
+ * Waiting for a lock causes the backend to be put to sleep.  Whoever releases
+ * the lock wakes the process up again (and gives it an error code so it knows
  * whether it was awoken on an error condition).
  *
  * Interface (b):
@@ -28,7 +27,7 @@
  * ProcReleaseLocks -- frees the locks associated with current transaction
  *
  * ProcKill -- destroys the shared memory state (and locks)
- *		associated with the process.
+ * associated with the process.
  */
 #include "postgres.h"
 
@@ -65,7 +64,8 @@ NON_EXEC_STATIC slock_t *ProcStructLock = NULL;
 static PROC_HDR *ProcGlobal = NULL;
 static PGPROC *DummyProcs = NULL;
 
-static bool waitingForLock = false;
+/* If we are waiting for a lock, this points to the associated LOCALLOCK */
+static LOCALLOCK *lockAwaited = NULL;
 
 /* Mark these volatile because they can be changed by signal handler */
 static volatile bool statement_timeout_active = false;
@@ -200,10 +200,10 @@ InitProcGlobal(void)
 void
 InitProcess(void)
 {
-	SHMEM_OFFSET myOffset;
-
 	/* use volatile pointer to prevent code rearrangement */
 	volatile PROC_HDR *procglobal = ProcGlobal;
+	SHMEM_OFFSET myOffset;
+	int			i;
 
 	/*
 	 * ProcGlobal should be set by a previous call to InitProcGlobal (if we
@@ -264,7 +264,8 @@ InitProcess(void)
 	MyProc->lwWaitLink = NULL;
 	MyProc->waitLock = NULL;
 	MyProc->waitProcLock = NULL;
-	SHMQueueInit(&(MyProc->procLocks));
+	for (i = 0; i < NUM_LOCK_PARTITIONS; i++)
+		SHMQueueInit(&(MyProc->myProcLocks[i]));
 
 	/*
 	 * Add our PGPROC to the PGPROC array in shared memory.
@@ -304,6 +305,7 @@ void
 InitDummyProcess(int proctype)
 {
 	PGPROC	   *dummyproc;
+	int			i;
 
 	/*
 	 * ProcGlobal should be set by a previous call to InitProcGlobal (we
@@ -360,7 +362,8 @@ InitDummyProcess(int proctype)
 	MyProc->lwWaitLink = NULL;
 	MyProc->waitLock = NULL;
 	MyProc->waitProcLock = NULL;
-	SHMQueueInit(&(MyProc->procLocks));
+	for (i = 0; i < NUM_LOCK_PARTITIONS; i++)
+		SHMQueueInit(&(MyProc->myProcLocks[i]));
 
 	/*
 	 * Arrange to clean up at process exit.
@@ -416,21 +419,24 @@ HaveNFreeProcs(int n)
 bool
 LockWaitCancel(void)
 {
+	LWLockId	partitionLock;
+
 	/* Nothing to do if we weren't waiting for a lock */
-	if (!waitingForLock)
+	if (lockAwaited == NULL)
 		return false;
 
 	/* Turn off the deadlock timer, if it's still running (see ProcSleep) */
 	disable_sig_alarm(false);
 
 	/* Unlink myself from the wait queue, if on it (might not be anymore!) */
-	LWLockAcquire(LockMgrLock, LW_EXCLUSIVE);
+	partitionLock = FirstLockMgrLock + lockAwaited->partition;
+	LWLockAcquire(partitionLock, LW_EXCLUSIVE);
 
 	if (MyProc->links.next != INVALID_OFFSET)
 	{
 		/* We could not have been granted the lock yet */
 		Assert(MyProc->waitStatus == STATUS_ERROR);
-		RemoveFromWaitQueue(MyProc);
+		RemoveFromWaitQueue(MyProc, lockAwaited->partition);
 	}
 	else
 	{
@@ -444,9 +450,9 @@ LockWaitCancel(void)
 			GrantAwaitedLock();
 	}
 
-	waitingForLock = false;
+	lockAwaited = NULL;
 
-	LWLockRelease(LockMgrLock);
+	LWLockRelease(partitionLock);
 
 	/*
 	 * Reset the proc wait semaphore to zero.  This is necessary in the
@@ -606,18 +612,18 @@ ProcQueueInit(PROC_QUEUE *queue)
 
 
 /*
- * ProcSleep -- put a process to sleep
+ * ProcSleep -- put a process to sleep on the specified lock
  *
  * Caller must have set MyProc->heldLocks to reflect locks already held
  * on the lockable object by this process (under all XIDs).
  *
- * Locktable's masterLock must be held at entry, and will be held
+ * The lock table's partition lock must be held at entry, and will be held
  * at exit.
  *
  * Result: STATUS_OK if we acquired the lock, STATUS_ERROR if not (deadlock).
  *
  * ASSUME: that no one will fiddle with the queue until after
- *		we release the masterLock.
+ *		we release the partition lock.
  *
  * NOTES: The process queue is now a priority queue for locking.
  *
@@ -625,12 +631,13 @@ ProcQueueInit(PROC_QUEUE *queue)
  * semaphore is normally zero, so when we try to acquire it, we sleep.
  */
 int
-ProcSleep(LockMethod lockMethodTable,
-		  LOCKMODE lockmode,
-		  LOCK *lock,
-		  PROCLOCK *proclock)
+ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 {
-	LWLockId	masterLock = LockMgrLock;
+	LOCKMODE	lockmode = locallock->tag.mode;
+	LOCK	   *lock = locallock->lock;
+	PROCLOCK   *proclock = locallock->proclock;
+	int			partition = locallock->partition;
+	LWLockId	partitionLock = FirstLockMgrLock + partition;
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
 	LOCKMASK	myHeldLocks = MyProc->heldLocks;
 	bool		early_deadlock = false;
@@ -732,22 +739,22 @@ ProcSleep(LockMethod lockMethodTable,
 	 */
 	if (early_deadlock)
 	{
-		RemoveFromWaitQueue(MyProc);
+		RemoveFromWaitQueue(MyProc, partition);
 		return STATUS_ERROR;
 	}
 
 	/* mark that we are waiting for a lock */
-	waitingForLock = true;
+	lockAwaited = locallock;
 
 	/*
-	 * Release the locktable's masterLock.
+	 * Release the lock table's partition lock.
 	 *
 	 * NOTE: this may also cause us to exit critical-section state, possibly
 	 * allowing a cancel/die interrupt to be accepted. This is OK because we
 	 * have recorded the fact that we are waiting for a lock, and so
 	 * LockWaitCancel will clean up if cancel/die happens.
 	 */
-	LWLockRelease(masterLock);
+	LWLockRelease(partitionLock);
 
 	/*
 	 * Set timer so we can wake up after awhile and check for a deadlock. If a
@@ -785,16 +792,16 @@ ProcSleep(LockMethod lockMethodTable,
 		elog(FATAL, "could not disable timer for process wakeup");
 
 	/*
-	 * Re-acquire the locktable's masterLock.  We have to do this to hold off
-	 * cancel/die interrupts before we can mess with waitingForLock (else we
-	 * might have a missed or duplicated locallock update).
+	 * Re-acquire the lock table's partition lock.  We have to do this to
+	 * hold off cancel/die interrupts before we can mess with lockAwaited
+	 * (else we might have a missed or duplicated locallock update).
 	 */
-	LWLockAcquire(masterLock, LW_EXCLUSIVE);
+	LWLockAcquire(partitionLock, LW_EXCLUSIVE);
 
 	/*
 	 * We no longer want LockWaitCancel to do anything.
 	 */
-	waitingForLock = false;
+	lockAwaited = NULL;
 
 	/*
 	 * If we got the lock, be sure to remember it in the locallock table.
@@ -816,6 +823,8 @@ ProcSleep(LockMethod lockMethodTable,
  *	 Also remove the process from the wait queue and set its links invalid.
  *	 RETURN: the next process in the wait queue.
  *
+ * The appropriate lock partition lock must be held by caller.
+ *
  * XXX: presently, this code is only used for the "success" case, and only
  * works correctly for that case.  To clean up in failure case, would need
  * to twiddle the lock's request counts too --- see RemoveFromWaitQueue.
@@ -824,8 +833,6 @@ PGPROC *
 ProcWakeup(PGPROC *proc, int waitStatus)
 {
 	PGPROC	   *retProc;
-
-	/* assume that masterLock has been acquired */
 
 	/* Proc should be sleeping ... */
 	if (proc->links.prev == INVALID_OFFSET ||
@@ -854,6 +861,8 @@ ProcWakeup(PGPROC *proc, int waitStatus)
  * ProcLockWakeup -- routine for waking up processes when a lock is
  *		released (or a prior waiter is aborted).  Scan all waiters
  *		for lock, waken any that are no longer blocked.
+ *
+ * The appropriate lock partition lock must be held by caller.
  */
 void
 ProcLockWakeup(LockMethod lockMethodTable, LOCK *lock)
@@ -908,25 +917,32 @@ ProcLockWakeup(LockMethod lockMethodTable, LOCK *lock)
 	Assert(waitQueue->size >= 0);
 }
 
-/* --------------------
+/*
+ * CheckDeadLock
+ *
  * We only get to this routine if we got SIGALRM after DeadlockTimeout
  * while waiting for a lock to be released by some other process.  Look
  * to see if there's a deadlock; if not, just return and continue waiting.
  * If we have a real deadlock, remove ourselves from the lock's wait queue
  * and signal an error to ProcSleep.
- * --------------------
  */
 static void
 CheckDeadLock(void)
 {
+	int			i;
+
 	/*
-	 * Acquire locktable lock.	Note that the deadlock check interrupt had
-	 * better not be enabled anywhere that this process itself holds the
-	 * locktable lock, else this will wait forever.  Also note that
-	 * LWLockAcquire creates a critical section, so that this routine cannot
-	 * be interrupted by cancel/die interrupts.
+	 * Acquire exclusive lock on the entire shared lock data structures.
+	 * Must grab LWLocks in partition-number order to avoid LWLock deadlock.
+	 *
+	 * Note that the deadlock check interrupt had better not be enabled
+	 * anywhere that this process itself holds lock partition locks, else this
+	 * will wait forever.  Also note that LWLockAcquire creates a critical
+	 * section, so that this routine cannot be interrupted by cancel/die
+	 * interrupts.
 	 */
-	LWLockAcquire(LockMgrLock, LW_EXCLUSIVE);
+	for (i = 0; i < NUM_LOCK_PARTITIONS; i++)
+		LWLockAcquire(FirstLockMgrLock + i, LW_EXCLUSIVE);
 
 	/*
 	 * Check to see if we've been awoken by anyone in the interim.
@@ -937,14 +953,11 @@ CheckDeadLock(void)
 	 *
 	 * We check by looking to see if we've been unlinked from the wait queue.
 	 * This is quicker than checking our semaphore's state, since no kernel
-	 * call is needed, and it is safe because we hold the locktable lock.
+	 * call is needed, and it is safe because we hold the lock partition lock.
 	 */
 	if (MyProc->links.prev == INVALID_OFFSET ||
 		MyProc->links.next == INVALID_OFFSET)
-	{
-		LWLockRelease(LockMgrLock);
-		return;
-	}
+		goto check_done;
 
 #ifdef LOCK_DEBUG
 	if (Debug_deadlocks)
@@ -954,16 +967,19 @@ CheckDeadLock(void)
 	if (!DeadLockCheck(MyProc))
 	{
 		/* No deadlock, so keep waiting */
-		LWLockRelease(LockMgrLock);
-		return;
+		goto check_done;
 	}
 
 	/*
 	 * Oops.  We have a deadlock.
 	 *
-	 * Get this process out of wait state.
+	 * Get this process out of wait state.  (Note: we could do this more
+	 * efficiently by relying on lockAwaited, but use this coding to preserve
+	 * the flexibility to kill some other transaction than the one detecting
+	 * the deadlock.)
 	 */
-	RemoveFromWaitQueue(MyProc);
+	Assert(MyProc->waitLock != NULL);
+	RemoveFromWaitQueue(MyProc, LockTagToPartition(&(MyProc->waitLock->tag)));
 
 	/*
 	 * Set MyProc->waitStatus to STATUS_ERROR so that ProcSleep will report an
@@ -987,7 +1003,15 @@ CheckDeadLock(void)
 	 * them anymore.  However, RemoveFromWaitQueue took care of waking up any
 	 * such processes.
 	 */
-	LWLockRelease(LockMgrLock);
+
+	/*
+	 * Release locks acquired at head of routine.  Order is not critical,
+	 * so do it back-to-front to avoid waking another CheckDeadLock instance
+	 * before it can get all the locks.
+	 */
+check_done:
+	for (i = NUM_LOCK_PARTITIONS; --i >= 0; )
+		LWLockRelease(FirstLockMgrLock + i);
 }
 
 
