@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Dec 10 21:16:26 EST 2005
+Last updated:		Mon Dec 12 08:36:28 EST 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -22,10 +22,10 @@ Administration
 
 * %Remove behavior of postmaster -o after making postmaster/postgres
   flags unique
-* %Allow pooled connections to list all prepared queries
+* %Allow pooled connections to list all prepared statements
 
   This would allow an application inheriting a pooled connection to know
-  the queries prepared in the current session.
+  the statements prepared in the current session.
 
 * Allow major upgrades without dump/reload, perhaps using pg_upgrade 
   [pg_upgrade]
@@ -140,7 +140,7 @@ Administration
 
 	  o %Create dump tool for write-ahead logs for use in determining
 	    transaction id for point-in-time recovery
-	  o Allow a warm standby system to also allow read-only queries
+	  o Allow a warm standby system to also allow read-only statements
 	    [pitr]
 
 	    This is useful for checking PITR recovery.
@@ -401,7 +401,7 @@ SQL Commands
   is for this to be a protocol-only feature.  Another approach is to 
   notify the protocol when a RESET CONNECTION command is used.
 
-* Add GUC to issue notice about queries that use unjoined tables
+* Add GUC to issue notice about statements that use unjoined tables
 * Allow EXPLAIN to identify tables that were skipped because of 
   constraint_exclusion
 * Allow EXPLAIN output to be more easily processed by scripts
@@ -487,7 +487,7 @@ SQL Commands
 
 	o Allow COPY to output from views
 
-	  Another idea would be to allow actual SELECT queries in a COPY.
+	  Another idea would be to allow actual SELECT statements in a COPY.
 
 
 * GRANT/REVOKE
@@ -551,7 +551,7 @@ SQL Commands
 	o Add table function support to pltcl, plpython
 	o Add capability to create and call PROCEDURES
 	o Allow PL/pgSQL to handle %TYPE arrays, e.g. tab.col%TYPE[]
-	o Allow function argument names to be queries from PL/PgSQL
+	o Allow function argument names to be statements from PL/PgSQL
 	o Add MOVE to PL/pgSQL
 	o Add support for polymorphic arguments and return types to
 	  languages other than PL/PgSQL
@@ -588,10 +588,10 @@ Clients
 	o Allow psql \pset boolean variables to set to fixed values, rather
 	  than toggle
 	o Consistently display privilege information for all objects in psql
-	o Improve psql's handling of multi-line queries
+	o Improve psql's handling of multi-line statements
 
-	  Currently, while \e saves a single query as one entry, interactive
-	  queries are saved one line at a time.  Ideally all queries
+	  Currently, while \e saves a single statement as one entry, interactive
+	  statements are saved one line at a time.  Ideally all statements
 	  whould be saved like \e does.
 
 	o Allow multi-line column values to align in the proper columns
@@ -662,14 +662,14 @@ libpq
 	  PQfnumber() should never have been doing lowercasing, but 
 	  historically it has so we need a way to prevent it
 
-	o Allow query results to be automatically batched to the client
+	o Allow statement results to be automatically batched to the client
 
-	  Currently, all query results are transfered to the libpq
+	  Currently, all statement results are transfered to the libpq
 	  client before libpq makes the results available to the 
 	  application.  This feature would allow the application to make
 	  use of the first result rows while the rest are transfered, or
 	  held on the server waiting for them to be requested by libpq.
-	  One complexity is that a query like SELECT 1/col could error
+	  One complexity is that a statement like SELECT 1/col could error
 	  out mid-way through the result set.
 
 
@@ -736,7 +736,7 @@ Exotic Features
 * Allow plug-in modules to emulate features from other databases
 * SQL*Net listener that makes PostgreSQL appear as an Oracle database
   to clients
-* Allow queries across databases or servers with transaction
+* Allow statements across databases or servers with transaction
   semantics
 
   This can be done using dblink and two-phase commit.
@@ -784,8 +784,8 @@ Indexes
 * Add fillfactor to control reserved free space during index creation
 * Allow the creation of indexes with mixed ascending/descending specifiers
 * Allow constraint_exclusion to work for UNIONs like it does for
-  inheritance, allow it to work for UPDATE and DELETE queries, and allow
-  it to be used for all queries with little performance impact
+  inheritance, allow it to work for UPDATE and DELETE statements, and allow
+  it to be used for all statements with little performance impact
 * Allow CREATE INDEX to take an additional parameter for use with
   special index types
 * Consider compressing indexes by storing key values duplicated in
@@ -873,7 +873,7 @@ Cache Usage
   accessed bitmaps would have to be stored in shared memory.  One 8k
   page of bitmaps could track 512MB of heap pages.
 
-* Consider automatic caching of queries at various levels:
+* Consider automatic caching of statements at various levels:
 
 	o Parsed query tree
 	o Query execute plan
@@ -944,7 +944,7 @@ Startup Time Improvements
   operating systems have trivial process creation time compared to
   database startup overhead, but a few operating systems (WIn32,
   Solaris) might benefit from threading.  Also explore the idea of
-  a single session using multiple threads to execute a query faster.
+  a single session using multiple threads to execute a statement faster.
 
 * Add connection pooling
 
@@ -1022,7 +1022,7 @@ Optimizer / Executor
   This would be beneficial when there are few distinct values.  This is
   already used by GROUP BY.
 
-* Log queries where the optimizer row estimates were dramatically
+* Log statements where the optimizer row estimates were dramatically
   different from the number of rows actually found?
 
 
@@ -1143,7 +1143,7 @@ Source Code
 	o Add decoded type, length, precision
 	o Use compression?
 	o Update clients to use data types, typmod, schema.table.column names
-	  of result sets using new query protocol
+	  of result sets using new statement protocol
 
 
 ---------------------------------------------------------------------------

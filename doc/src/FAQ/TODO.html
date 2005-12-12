@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Sat Dec 10 21:16:26 EST 2005
+Last updated:           Mon Dec 12 08:36:28 EST 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -27,9 +27,9 @@ first.
 <ul>
   <li>%Remove behavior of postmaster -o after making postmaster/postgres
   flags unique
-  </li><li>%Allow pooled connections to list all prepared queries
+  </li><li>%Allow pooled connections to list all prepared statements
 <p>  This would allow an application inheriting a pooled connection to know
-  the queries prepared in the current session.
+  the statements prepared in the current session.
 </p>
   </li><li>Allow major upgrades without dump/reload, perhaps using pg_upgrade 
   [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?pg_upgrade">pg_upgrade</a>]
@@ -130,7 +130,7 @@ first.
 </p>
     </li><li>%Create dump tool for write-ahead logs for use in determining
             transaction id for point-in-time recovery
-    </li><li>Allow a warm standby system to also allow read-only queries
+    </li><li>Allow a warm standby system to also allow read-only statements
             [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?pitr">pitr</a>]
 <p>            This is useful for checking PITR recovery.
 </p>
@@ -368,7 +368,7 @@ first.
   is for this to be a protocol-only feature.  Another approach is to 
   notify the protocol when a RESET CONNECTION command is used.
 </p>
-  </li><li>Add GUC to issue notice about queries that use unjoined tables
+  </li><li>Add GUC to issue notice about statements that use unjoined tables
   </li><li>Allow EXPLAIN to identify tables that were skipped because of 
   constraint_exclusion
   </li><li>Allow EXPLAIN output to be more easily processed by scripts
@@ -443,7 +443,7 @@ first.
           currently allowed.
 </p>
     </li><li>Allow COPY to output from views
-<p>          Another idea would be to allow actual SELECT queries in a COPY.
+<p>          Another idea would be to allow actual SELECT statements in a COPY.
 </p>
   </li></ul>
   </li><li>GRANT/REVOKE
@@ -502,7 +502,7 @@ first.
     </li><li>Add table function support to pltcl, plpython
     </li><li>Add capability to create and call PROCEDURES
     </li><li>Allow PL/pgSQL to handle %TYPE arrays, e.g. tab.col%TYPE[<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?"></a>]
-    </li><li>Allow function argument names to be queries from PL/PgSQL
+    </li><li>Allow function argument names to be statements from PL/PgSQL
     </li><li>Add MOVE to PL/pgSQL
     </li><li>Add support for polymorphic arguments and return types to
           languages other than PL/PgSQL
@@ -536,9 +536,9 @@ first.
     </li><li>Allow psql \pset boolean variables to set to fixed values, rather
           than toggle
     </li><li>Consistently display privilege information for all objects in psql
-    </li><li>Improve psql's handling of multi-line queries
-<p>          Currently, while \e saves a single query as one entry, interactive
-          queries are saved one line at a time.  Ideally all queries
+    </li><li>Improve psql's handling of multi-line statements
+<p>          Currently, while \e saves a single statement as one entry, interactive
+          statements are saved one line at a time.  Ideally all statements
           whould be saved like \e does.
 </p>
     </li><li>Allow multi-line column values to align in the proper columns
@@ -604,13 +604,13 @@ first.
 <p>          PQfnumber() should never have been doing lowercasing, but 
           historically it has so we need a way to prevent it
 </p>
-  </li><li>Allow query results to be automatically batched to the client
-<p>          Currently, all query results are transfered to the libpq
+  </li><li>Allow statement results to be automatically batched to the client
+<p>          Currently, all statement results are transfered to the libpq
           client before libpq makes the results available to the 
           application.  This feature would allow the application to make
           use of the first result rows while the rest are transfered, or
           held on the server waiting for them to be requested by libpq.
-          One complexity is that a query like SELECT 1/col could error
+          One complexity is that a statement like SELECT 1/col could error
           out mid-way through the result set.
 </p>
 </li></ul>
@@ -671,7 +671,7 @@ first.
   </li><li>Allow plug-in modules to emulate features from other databases
   </li><li>SQL*Net listener that makes PostgreSQL appear as an Oracle database
   to clients
-  </li><li>Allow queries across databases or servers with transaction
+  </li><li>Allow statements across databases or servers with transaction
   semantics
 <p>  This can be done using dblink and two-phase commit.
 </p>
@@ -714,8 +714,8 @@ first.
   </li><li>Add fillfactor to control reserved free space during index creation
   </li><li>Allow the creation of indexes with mixed ascending/descending specifiers
   </li><li>Allow constraint_exclusion to work for UNIONs like it does for
-  inheritance, allow it to work for UPDATE and DELETE queries, and allow
-  it to be used for all queries with little performance impact
+  inheritance, allow it to work for UPDATE and DELETE statements, and allow
+  it to be used for all statements with little performance impact
   </li><li>Allow CREATE INDEX to take an additional parameter for use with
   special index types
   </li><li>Consider compressing indexes by storing key values duplicated in
@@ -792,7 +792,7 @@ first.
   accessed bitmaps would have to be stored in shared memory.  One 8k
   page of bitmaps could track 512MB of heap pages.
 </p>
-  </li><li>Consider automatic caching of queries at various levels:
+  </li><li>Consider automatic caching of statements at various levels:
   <ul>
     <li>Parsed query tree
     </li><li>Query execute plan
@@ -855,7 +855,7 @@ first.
   operating systems have trivial process creation time compared to
   database startup overhead, but a few operating systems (WIn32,
   Solaris) might benefit from threading.  Also explore the idea of
-  a single session using multiple threads to execute a query faster.
+  a single session using multiple threads to execute a statement faster.
 </p>
   </li><li>Add connection pooling
 <p>  It is unclear if this should be done inside the backend code or done
@@ -927,7 +927,7 @@ first.
 <p>  This would be beneficial when there are few distinct values.  This is
   already used by GROUP BY.
 </p>
-  </li><li>Log queries where the optimizer row estimates were dramatically
+  </li><li>Log statements where the optimizer row estimates were dramatically
   different from the number of rows actually found?
 </li></ul>
 <h1><a name="section_21">Miscellaneous Performance</a></h1>
@@ -1037,7 +1037,7 @@ first.
     </li><li>Add decoded type, length, precision
     </li><li>Use compression?
     </li><li>Update clients to use data types, typmod, <a href="http://schema.table.column">schema.table.column</a>/ names
-          of result sets using new query protocol
+          of result sets using new statement protocol
   </li></ul>
 </li></ul>
 <hr/>
