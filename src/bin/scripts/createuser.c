@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.21 2005/10/15 02:49:41 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.22 2005/12/12 15:41:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,15 +59,19 @@ main(int argc, char *argv[])
 	bool		password = false;
 	bool		echo = false;
 	bool		quiet = false;
+	char	   *conn_limit = NULL;
+	bool		pwprompt = false;
+	char	   *newpassword = NULL;
+	/*
+	 *	Tri-valued variables.   -1 is "NO", +1 is enable and 0 uses the
+	 *	server default.
+	 */
 	int			createdb = 0;
 	int			superuser = 0;
 	int			createrole = 0;
 	int			inherit = 0;
 	int			login = 0;
-	char	   *conn_limit = NULL;
-	bool		pwprompt = false;
-	int			encrypted = 0;	/* 0 uses server default */
-	char	   *newpassword = NULL;
+	int			encrypted = 0;
 
 	PQExpBufferData sql;
 
