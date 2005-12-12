@@ -8,6 +8,7 @@
 #include "catalog/pg_type.h"
 #include "executor/spi.h"
 #include "common.h"
+#include "ts_locale.h"
 
 PG_FUNCTION_INFO_V1(tsstat_in);
 Datum		tsstat_in(PG_FUNCTION_ARGS);
@@ -476,24 +477,30 @@ ts_stat_sql(text *txt, text *ws)
 		buf = VARDATA(ws);
 		while (buf - VARDATA(ws) < VARSIZE(ws) - VARHDRSZ)
 		{
-			switch (tolower(*buf))
-			{
-				case 'a':
-					stat->weight |= 1 << 3;
-					break;
-				case 'b':
-					stat->weight |= 1 << 2;
-					break;
-				case 'c':
-					stat->weight |= 1 << 1;
-					break;
-				case 'd':
-					stat->weight |= 1;
-					break;
-				default:
-					stat->weight |= 0;
+			if ( pg_mblen(buf) == 1 ) {
+				switch (*buf)
+				{
+					case 'A':
+					case 'a':
+						stat->weight |= 1 << 3;
+						break;
+					case 'B':
+					case 'b':
+						stat->weight |= 1 << 2;
+						break;
+					case 'C':
+					case 'c':
+						stat->weight |= 1 << 1;
+						break;
+					case 'D':
+					case 'd':
+						stat->weight |= 1;
+						break;
+					default:
+						stat->weight |= 0;
+				}
 			}
-			buf++;
+			buf+=pg_mblen(buf);
 		}
 	}
 

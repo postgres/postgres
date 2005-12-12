@@ -14,7 +14,6 @@ void		sortstoplist(StopList * s);
 void		freestoplist(StopList * s);
 void		readstoplist(text *in, StopList * s);
 bool		searchstoplist(StopList * s, char *key);
-char	   *lowerstr(char *str);
 
 typedef struct
 {

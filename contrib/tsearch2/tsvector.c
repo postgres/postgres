@@ -16,8 +16,9 @@
 #include "catalog/namespace.h"
 
 #include "utils/pg_locale.h"
+#include "mb/pg_wchar.h"
 
-#include <ctype.h>				/* tolower */
+#include <ctype.h>
 #include "tsvector.h"
 #include "query.h"
 #include "ts_cfg.h"
@@ -173,7 +174,7 @@ uniqueentry(WordEntryIN * a, int4 l, char *buf, int4 *outbuflen)
 
 #define RESIZEPRSBUF \
 do { \
-	if ( state->curpos - state->word + 1 >= state->len ) \
+	if ( state->curpos - state->word + pg_database_encoding_max_length() >= state->len ) \
 	{ \
 		int4 clen = state->curpos - state->word; \
 		state->len *= 2; \
@@ -181,6 +182,7 @@ do { \
 		state->curpos = state->word + clen; \
 	} \
 } while (0)
+
 
 int4
 gettoken_tsvector(TI_IN_STATE * state)
@@ -197,21 +199,21 @@ gettoken_tsvector(TI_IN_STATE * state)
 		{
 			if (*(state->prsbuf) == '\0')
 				return 0;
-			else if (*(state->prsbuf) == '\'')
+			else if ( t_iseq(state->prsbuf, '\'') )
 				state->state = WAITENDCMPLX;
-			else if (*(state->prsbuf) == '\\')
+			else if ( t_iseq(state->prsbuf, '\\') )
 			{
 				state->state = WAITNEXTCHAR;
 				oldstate = WAITENDWORD;
 			}
-			else if (state->oprisdelim && ISOPERATOR(*(state->prsbuf)))
+			else if (state->oprisdelim && ISOPERATOR(state->prsbuf))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("syntax error")));
-			else if (*(state->prsbuf) != ' ')
+			else if (!t_isspace(state->prsbuf))
 			{
-				*(state->curpos) = *(state->prsbuf);
-				state->curpos++;
+				COPYCHAR(state->curpos, state->prsbuf);
+				state->curpos+=pg_mblen(state->prsbuf);
 				state->state = WAITENDWORD;
 			}
 		}
@@ -224,20 +226,20 @@ gettoken_tsvector(TI_IN_STATE * state)
 			else
 			{
 				RESIZEPRSBUF;
-				*(state->curpos) = *(state->prsbuf);
-				state->curpos++;
+				COPYCHAR(state->curpos, state->prsbuf);
+				state->curpos+=pg_mblen(state->prsbuf);
 				state->state = oldstate;
 			}
 		}
 		else if (state->state == WAITENDWORD)
 		{
-			if (*(state->prsbuf) == '\\')
+			if ( t_iseq(state->prsbuf, '\\') )
 			{
 				state->state = WAITNEXTCHAR;
 				oldstate = WAITENDWORD;
 			}
-			else if (*(state->prsbuf) == ' ' || *(state->prsbuf) == '\0' ||
-					 (state->oprisdelim && ISOPERATOR(*(state->prsbuf))))
+			else if ( t_isspace(state->prsbuf) || *(state->prsbuf) == '\0' ||
+					 (state->oprisdelim && ISOPERATOR(state->prsbuf)))
 			{
 				RESIZEPRSBUF;
 				if (state->curpos == state->word)
@@ -247,7 +249,7 @@ gettoken_tsvector(TI_IN_STATE * state)
 				*(state->curpos) = '\0';
 				return 1;
 			}
-			else if (*(state->prsbuf) == ':')
+			else if ( t_iseq(state->prsbuf,':') )
 			{
 				if (state->curpos == state->word)
 					ereport(ERROR,
@@ -262,13 +264,13 @@ gettoken_tsvector(TI_IN_STATE * state)
 			else
 			{
 				RESIZEPRSBUF;
-				*(state->curpos) = *(state->prsbuf);
-				state->curpos++;
+				COPYCHAR(state->curpos, state->prsbuf);
+				state->curpos+=pg_mblen(state->prsbuf);
 			}
 		}
 		else if (state->state == WAITENDCMPLX)
 		{
-			if (*(state->prsbuf) == '\'')
+			if ( t_iseq(state->prsbuf, '\'') )
 			{
 				RESIZEPRSBUF;
 				*(state->curpos) = '\0';
@@ -278,13 +280,13 @@ gettoken_tsvector(TI_IN_STATE * state)
 							 errmsg("syntax error")));
 				if (state->oprisdelim)
 				{
-					state->prsbuf++;
+					state->prsbuf+=pg_mblen(state->prsbuf);
 					return 1;
 				}
 				else
 					state->state = WAITPOSINFO;
 			}
-			else if (*(state->prsbuf) == '\\')
+			else if ( t_iseq(state->prsbuf, '\\') )
 			{
 				state->state = WAITNEXTCHAR;
 				oldstate = WAITENDCMPLX;
@@ -296,20 +298,20 @@ gettoken_tsvector(TI_IN_STATE * state)
 			else
 			{
 				RESIZEPRSBUF;
-				*(state->curpos) = *(state->prsbuf);
-				state->curpos++;
+				COPYCHAR(state->curpos, state->prsbuf);
+				state->curpos+=pg_mblen(state->prsbuf);
 			}
 		}
 		else if (state->state == WAITPOSINFO)
 		{
-			if (*(state->prsbuf) == ':')
+			if ( t_iseq(state->prsbuf, ':') )
 				state->state = INPOSINFO;
 			else
 				return 1;
 		}
 		else if (state->state == INPOSINFO)
 		{
-			if (isdigit((unsigned char) *(state->prsbuf)))
+			if (t_isdigit(state->prsbuf))
 			{
 				if (state->alen == 0)
 				{
@@ -338,9 +340,9 @@ gettoken_tsvector(TI_IN_STATE * state)
 		}
 		else if (state->state == WAITPOSDELIM)
 		{
-			if (*(state->prsbuf) == ',')
+			if ( t_iseq(state->prsbuf, ',') )
 				state->state = INPOSINFO;
-			else if (tolower(*(state->prsbuf)) == 'a' || *(state->prsbuf) == '*')
+			else if ( t_iseq(state->prsbuf, 'a') || t_iseq(state->prsbuf, 'A') || t_iseq(state->prsbuf, '*') )
 			{
 				if (WEP_GETWEIGHT(state->pos[*(uint16 *) (state->pos)]))
 					ereport(ERROR,
@@ -348,7 +350,7 @@ gettoken_tsvector(TI_IN_STATE * state)
 							 errmsg("syntax error")));
 				WEP_SETWEIGHT(state->pos[*(uint16 *) (state->pos)], 3);
 			}
-			else if (tolower(*(state->prsbuf)) == 'b')
+			else if ( t_iseq(state->prsbuf, 'b') || t_iseq(state->prsbuf, 'B') )
 			{
 				if (WEP_GETWEIGHT(state->pos[*(uint16 *) (state->pos)]))
 					ereport(ERROR,
@@ -356,7 +358,7 @@ gettoken_tsvector(TI_IN_STATE * state)
 							 errmsg("syntax error")));
 				WEP_SETWEIGHT(state->pos[*(uint16 *) (state->pos)], 2);
 			}
-			else if (tolower(*(state->prsbuf)) == 'c')
+			else if ( t_iseq(state->prsbuf, 'c') || t_iseq(state->prsbuf, 'C') )
 			{
 				if (WEP_GETWEIGHT(state->pos[*(uint16 *) (state->pos)]))
 					ereport(ERROR,
@@ -364,7 +366,7 @@ gettoken_tsvector(TI_IN_STATE * state)
 							 errmsg("syntax error")));
 				WEP_SETWEIGHT(state->pos[*(uint16 *) (state->pos)], 1);
 			}
-			else if (tolower(*(state->prsbuf)) == 'd')
+			else if ( t_iseq(state->prsbuf, 'd') || t_iseq(state->prsbuf, 'D') )
 			{
 				if (WEP_GETWEIGHT(state->pos[*(uint16 *) (state->pos)]))
 					ereport(ERROR,
@@ -372,10 +374,10 @@ gettoken_tsvector(TI_IN_STATE * state)
 							 errmsg("syntax error")));
 				WEP_SETWEIGHT(state->pos[*(uint16 *) (state->pos)], 0);
 			}
-			else if (isspace((unsigned char) *(state->prsbuf)) ||
+			else if (t_isspace(state->prsbuf) ||
 					 *(state->prsbuf) == '\0')
 				return 1;
-			else if (!isdigit((unsigned char) *(state->prsbuf)))
+			else if (!t_isdigit(state->prsbuf))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("syntax error")));
@@ -383,7 +385,7 @@ gettoken_tsvector(TI_IN_STATE * state)
 		else
 			/* internal error */
 			elog(ERROR, "internal error");
-		state->prsbuf++;
+		state->prsbuf+=pg_mblen(state->prsbuf);
 	}
 
 	return 0;
@@ -405,6 +407,8 @@ tsvector_in(PG_FUNCTION_ARGS)
 				buflen = 256;
 
 	SET_FUNCOID();
+
+	pg_verifymbstr( buf, strlen(buf), false );
 	state.prsbuf = buf;
 	state.len = 32;
 	state.word = (char *) palloc(state.len);
@@ -495,17 +499,16 @@ tsvector_out(PG_FUNCTION_ARGS)
 	tsvector   *out = (tsvector *) PG_DETOAST_DATUM(PG_GETARG_DATUM(0));
 	char	   *outbuf;
 	int4		i,
-				j,
 				lenbuf = 0,
 				pp;
 	WordEntry  *ptr = ARRPTR(out);
-	char	   *curin,
+	char	   *curbegin, *curin,
 			   *curout;
 
 	lenbuf = out->size * 2 /* '' */ + out->size - 1 /* space */ + 2 /* \0 */ ;
 	for (i = 0; i < out->size; i++)
 	{
-		lenbuf += ptr[i].len * 2 /* for escape */ ;
+		lenbuf += ptr[i].len * 2 * pg_database_encoding_max_length()/* for escape */ ;
 		if (ptr[i].haspos)
 			lenbuf += 7 * POSDATALEN(out, &(ptr[i]));
 	}
@@ -513,14 +516,14 @@ tsvector_out(PG_FUNCTION_ARGS)
 	curout = outbuf = (char *) palloc(lenbuf);
 	for (i = 0; i < out->size; i++)
 	{
-		curin = STRPTR(out) + ptr->pos;
+		curbegin = curin = STRPTR(out) + ptr->pos;
 		if (i != 0)
 			*curout++ = ' ';
 		*curout++ = '\'';
-		j = ptr->len;
-		while (j--)
+		while ( curin-curbegin < ptr->len )
 		{
-			if (*curin == '\'')
+			int len = pg_mblen(curin);
+			if ( t_iseq(curin, '\'') )
 			{
 				int4		pos = curout - outbuf;
 
@@ -528,7 +531,8 @@ tsvector_out(PG_FUNCTION_ARGS)
 				curout = outbuf + pos;
 				*curout++ = '\\';
 			}
-			*curout++ = *curin++;
+			while(len--)
+				*curout++ = *curin++;
 		}
 		*curout++ = '\'';
 		if ((pp = POSDATALEN(out, ptr)) != 0)

@@ -134,8 +134,10 @@ typedef struct TParser
 	/* string and position information */
 	char	   *str;			/* multibyte string */
 	int			lenstr;			/* length of mbstring */
+#ifdef TS_USE_WIDE
 	wchar_t    *wstr;			/* wide character string */
 	int			lenwstr;		/* length of wsting */
+#endif
 
 	/* State of parse */
 	int			charmaxlen;

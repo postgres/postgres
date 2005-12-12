@@ -9,6 +9,7 @@
 #include "dict.h"
 #include "common.h"
 #include "ispell/spell.h"
+#include "ts_locale.h"
 
 typedef struct
 {

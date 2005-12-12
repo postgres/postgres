@@ -10,21 +10,9 @@
 
 #include "common.h"
 #include "dict.h"
+#include "ts_locale.h"
 
 #define STOPBUFLEN	4096
-
-char *
-lowerstr(char *str)
-{
-	char	   *ptr = str;
-
-	while (*ptr)
-	{
-		*ptr = tolower(*(unsigned char *) ptr);
-		ptr++;
-	}
-	return str;
-}
 
 void
 freestoplist(StopList * s)
@@ -60,10 +48,16 @@ readstoplist(text *in, StopList * s)
 		{
 			char		sharepath[MAXPGPATH];
 			char	   *absfn;
+#ifdef	WIN32
+			char	delim = '\\';
+#else
+			char 	delim = '/';
+#endif
 
 			get_share_path(my_exec_path, sharepath);
 			absfn = palloc(strlen(sharepath) + strlen(filename) + 2);
-			sprintf(absfn, "%s/%s", sharepath, filename);
+			sprintf(absfn, "%s%c%s", sharepath, delim, filename);
+
 			pfree(filename);
 			filename = absfn;
 		}

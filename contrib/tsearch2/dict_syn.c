@@ -8,6 +8,7 @@
 
 #include "dict.h"
 #include "common.h"
+#include "ts_locale.h"
 
 #define SYNBUFLEN	4096
 typedef struct

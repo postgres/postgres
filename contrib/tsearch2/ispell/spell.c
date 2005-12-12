@@ -6,6 +6,7 @@
 #include "postgres.h"
 
 #include "spell.h"
+#include "ts_locale.h"
 
 #define MAX_NORM 1024
 #define MAXNORMLEN 256
@@ -28,18 +29,6 @@ static int
 cmpspellaffix(const void *s1, const void *s2)
 {
 	return (strcmp(((const SPELL *) s1)->p.flag, ((const SPELL *) s2)->p.flag));
-}
-
-static void
-strlower(char *str)
-{
-	unsigned char *ptr = (unsigned char *) str;
-
-	while (*ptr)
-	{
-		*ptr = tolower(*ptr);
-		ptr++;
-	}
 }
 
 static char *
@@ -175,7 +164,7 @@ NIImportDictionary(IspellDict * Conf, const char *filename)
 		}
 		else
 			flag = "";
-		strlower(str);
+		lowerstr(str);
 		/* Dont load words if first letter is not required */
 		/* It allows to optimize loading at  search time   */
 		s = str;
@@ -385,7 +374,7 @@ NIImportAffixes(IspellDict * Conf, const char *filename)
 			*s = 0;
 		if (!*str)
 			continue;
-		strlower(str);
+		lowerstr(str);
 		strcpy(mask, "");
 		strcpy(find, "");
 		strcpy(repl, "");
@@ -851,7 +840,7 @@ NormalizeSubWord(IspellDict * Conf, char *word, char flag)
 
 	if (wrdlen > MAXNORMLEN)
 		return NULL;
-	strlower(word);
+	lowerstr(word);
 	cur = forms = (char **) palloc(MAX_NORM * sizeof(char *));
 	*cur = NULL;
 

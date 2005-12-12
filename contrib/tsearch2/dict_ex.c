@@ -6,6 +6,7 @@
 
 #include "dict.h"
 #include "common.h"
+#include "ts_locale.h"
 
 typedef struct
 {

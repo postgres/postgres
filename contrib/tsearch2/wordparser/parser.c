@@ -71,8 +71,11 @@ TParserClose(TParser * prs)
 		prs->state = ptr;
 	}
 
+#ifdef TS_USE_WIDE
 	if (prs->wstr)
 		pfree(prs->wstr);
+#endif
+
 	pfree(prs);
 }
 

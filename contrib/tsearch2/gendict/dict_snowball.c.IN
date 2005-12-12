@@ -12,6 +12,7 @@
 #include "common.h"
 #include "snowball/header.h"
 #include "subinclude.h"
+#include "ts_locale.h"
 
 typedef struct {
 	struct SN_env *z;

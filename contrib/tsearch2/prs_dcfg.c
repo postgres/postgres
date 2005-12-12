@@ -8,6 +8,7 @@
 
 #include "dict.h"
 #include "common.h"
+#include "ts_locale.h"
 
 #define CS_WAITKEY	0
 #define CS_INKEY	1
@@ -30,11 +31,11 @@ nstrdup(char *ptr, int len)
 	cptr = ptr = res;
 	while (*ptr)
 	{
-		if (*ptr == '\\')
+		if (t_iseq(ptr, '\\'))
 			ptr++;
-		*cptr = *ptr;
-		ptr++;
-		cptr++;
+		COPYCHAR( cptr, ptr );
+		cptr+=pg_mblen(ptr);
+		ptr+=pg_mblen(ptr);
 	}
 	*cptr = '\0';
 
@@ -52,9 +53,9 @@ parse_cfgdict(text *in, Map ** m)
 
 	while (ptr - VARDATA(in) < VARSIZE(in) - VARHDRSZ)
 	{
-		if (*ptr == ',')
+		if ( t_iseq(ptr, ',') )
 			num++;
-		ptr++;
+		ptr+=pg_mblen(ptr);
 	}
 
 	*m = mptr = (Map *) palloc(sizeof(Map) * (num + 2));
@@ -64,56 +65,56 @@ parse_cfgdict(text *in, Map ** m)
 	{
 		if (state == CS_WAITKEY)
 		{
-			if (isalpha((unsigned char) *ptr))
+			if (t_isalpha(ptr))
 			{
 				begin = ptr;
 				state = CS_INKEY;
 			}
-			else if (!isspace((unsigned char) *ptr))
+			else if (!t_isspace(ptr))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("syntax error"),
-						 errdetail("Syntax error in position %d near \"%c\"",
-								   (int) (ptr - VARDATA(in)), *ptr)));
+						 errdetail("Syntax error in position %d",
+								   (int) (ptr - VARDATA(in)))));
 		}
 		else if (state == CS_INKEY)
 		{
-			if (isspace((unsigned char) *ptr))
+			if (t_isspace(ptr))
 			{
 				mptr->key = nstrdup(begin, ptr - begin);
 				state = CS_WAITEQ;
 			}
-			else if (*ptr == '=')
+			else if (t_iseq(ptr,'='))
 			{
 				mptr->key = nstrdup(begin, ptr - begin);
 				state = CS_WAITVALUE;
 			}
-			else if (!isalpha((unsigned char) *ptr))
+			else if (!t_isalpha(ptr))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("syntax error"),
-						 errdetail("Syntax error in position %d near \"%c\"",
-								   (int) (ptr - VARDATA(in)), *ptr)));
+						 errdetail("Syntax error in position %d",
+								   (int) (ptr - VARDATA(in)))));
 		}
 		else if (state == CS_WAITEQ)
 		{
-			if (*ptr == '=')
+			if (t_iseq(ptr, '='))
 				state = CS_WAITVALUE;
-			else if (!isspace((unsigned char) *ptr))
+			else if (!t_isspace(ptr))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("syntax error"),
-						 errdetail("Syntax error in position %d near \"%c\"",
-								   (int) (ptr - VARDATA(in)), *ptr)));
+						 errdetail("Syntax error in position %d",
+								   (int) (ptr - VARDATA(in)))));
 		}
 		else if (state == CS_WAITVALUE)
 		{
-			if (*ptr == '"')
+			if (t_iseq(ptr, '"'))
 			{
 				begin = ptr + 1;
 				state = CS_INVALUE;
 			}
-			else if (!isspace((unsigned char) *ptr))
+			else if (!t_isspace(ptr))
 			{
 				begin = ptr;
 				state = CS_IN2VALUE;
@@ -121,36 +122,36 @@ parse_cfgdict(text *in, Map ** m)
 		}
 		else if (state == CS_INVALUE)
 		{
-			if (*ptr == '"')
+			if (t_iseq(ptr, '"'))
 			{
 				mptr->value = nstrdup(begin, ptr - begin);
 				mptr++;
 				state = CS_WAITDELIM;
 			}
-			else if (*ptr == '\\')
+			else if (t_iseq(ptr, '\\'))
 				state = CS_INESC;
 		}
 		else if (state == CS_IN2VALUE)
 		{
-			if (isspace((unsigned char) *ptr) || *ptr == ',')
+			if (t_isspace(ptr) || t_iseq(ptr, ','))
 			{
 				mptr->value = nstrdup(begin, ptr - begin);
 				mptr++;
-				state = (*ptr == ',') ? CS_WAITKEY : CS_WAITDELIM;
+				state = (t_iseq(ptr, ',')) ? CS_WAITKEY : CS_WAITDELIM;
 			}
-			else if (*ptr == '\\')
+			else if (t_iseq(ptr, '\\'))
 				state = CS_INESC;
 		}
 		else if (state == CS_WAITDELIM)
 		{
-			if (*ptr == ',')
+			if (t_iseq(ptr, ','))
 				state = CS_WAITKEY;
-			else if (!isspace((unsigned char) *ptr))
+			else if (!t_isspace(ptr))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("syntax error"),
-						 errdetail("Syntax error in position %d near \"%c\"",
-								   (int) (ptr - VARDATA(in)), *ptr)));
+						 errdetail("Syntax error in position %d",
+								   (int) (ptr - VARDATA(in)))));
 		}
 		else if (state == CS_INESC)
 			state = CS_INVALUE;
@@ -160,9 +161,9 @@ parse_cfgdict(text *in, Map ** m)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("bad parser state"),
-					 errdetail("%d at position %d near \"%c\"",
-							   state, (int) (ptr - VARDATA(in)), *ptr)));
-		ptr++;
+					 errdetail("%d at position %d",
+							   state, (int) (ptr - VARDATA(in)))));
+		ptr+=pg_mblen(ptr);
 	}
 
 	if (state == CS_IN2VALUE)

@@ -10,6 +10,7 @@
 #include "snowball/header.h"
 #include "snowball/english_stem.h"
 #include "snowball/russian_stem.h"
+#include "ts_locale.h"
 
 typedef struct
 {

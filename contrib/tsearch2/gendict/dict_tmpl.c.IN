@@ -12,6 +12,7 @@
 #include "common.h"
 
 #include "subinclude.h"
+#include "ts_locale.h"
 
 HASINIT typedef struct {
 HASINIT 	StopList	stoplist;

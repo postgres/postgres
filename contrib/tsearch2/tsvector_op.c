@@ -15,7 +15,6 @@
 
 #include "utils/pg_locale.h"
 
-#include <ctype.h>				/* tolower */
 #include "tsvector.h"
 #include "query.h"
 #include "ts_cfg.h"
@@ -76,17 +75,21 @@ setweight(PG_FUNCTION_ARGS)
 	WordEntryPos *p;
 	int			w = 0;
 
-	switch (tolower(cw))
+	switch (cw)
 	{
+		case 'A':
 		case 'a':
 			w = 3;
 			break;
+		case 'B':
 		case 'b':
 			w = 2;
 			break;
+		case 'C':
 		case 'c':
 			w = 1;
 			break;
+		case 'D':
 		case 'd':
 			w = 0;
 			break;
