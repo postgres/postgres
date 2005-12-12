@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.22 2005/12/12 15:41:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.23 2005/12/12 15:48:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,11 @@
 
 static void help(const char *progname);
 
+enum trivalue {
+	TRI_DEFAULT,
+	TRI_NO,
+	TRI_YES
+};
 
 int
 main(int argc, char *argv[])
@@ -51,7 +56,6 @@ main(int argc, char *argv[])
 	const char *progname;
 	int			optindex;
 	int			c;
-
 	char	   *newuser = NULL;
 	char	   *host = NULL;
 	char	   *port = NULL;
@@ -62,16 +66,13 @@ main(int argc, char *argv[])
 	char	   *conn_limit = NULL;
 	bool		pwprompt = false;
 	char	   *newpassword = NULL;
-	/*
-	 *	Tri-valued variables.   -1 is "NO", +1 is enable and 0 uses the
-	 *	server default.
-	 */
-	int			createdb = 0;
-	int			superuser = 0;
-	int			createrole = 0;
-	int			inherit = 0;
-	int			login = 0;
-	int			encrypted = 0;
+	/*	Tri-valued variables.  */
+	enum trivalue	createdb = TRI_DEFAULT,
+					superuser = TRI_DEFAULT,
+					createrole = TRI_DEFAULT,
+					inherit = TRI_DEFAULT,
+					login = TRI_DEFAULT,
+					encrypted = TRI_DEFAULT;
 
 	PQExpBufferData sql;
 
@@ -107,36 +108,36 @@ main(int argc, char *argv[])
 				quiet = true;
 				break;
 			case 'd':
-				createdb = +1;
+				createdb = TRI_YES;
 				break;
 			case 'D':
-				createdb = -1;
+				createdb = TRI_NO;
 				break;
 			case 's':
 			case 'a':
-				superuser = +1;
+				superuser = TRI_YES;
 				break;
 			case 'S':
 			case 'A':
-				superuser = -1;
+				superuser = TRI_NO;
 				break;
 			case 'r':
-				createrole = +1;
+				createrole = TRI_YES;
 				break;
 			case 'R':
-				createrole = -1;
+				createrole = TRI_NO;
 				break;
 			case 'i':
-				inherit = +1;
+				inherit = TRI_YES;
 				break;
 			case 'I':
-				inherit = -1;
+				inherit = TRI_NO;
 				break;
 			case 'l':
-				login = +1;
+				login = TRI_YES;
 				break;
 			case 'L':
-				login = -1;
+				login = TRI_NO;
 				break;
 			case 'c':
 				conn_limit = optarg;
@@ -145,10 +146,10 @@ main(int argc, char *argv[])
 				pwprompt = true;
 				break;
 			case 'E':
-				encrypted = +1;
+				encrypted = TRI_YES;
 				break;
 			case 'N':
-				encrypted = -1;
+				encrypted = TRI_NO;
 				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
@@ -195,16 +196,16 @@ main(int argc, char *argv[])
 
 		reply = simple_prompt("Shall the new role be a superuser? (y/n) ", 1, true);
 		if (check_yesno_response(reply) == 1)
-			superuser = +1;
+			superuser = TRI_YES;
 		else
-			superuser = -1;
+			superuser = TRI_NO;
 	}
 
-	if (superuser == +1)
+	if (superuser == TRI_YES)
 	{
 		/* Not much point in trying to restrict a superuser */
-		createdb = +1;
-		createrole = +1;
+		createdb = TRI_YES;
+		createrole = TRI_YES;
 	}
 
 	if (createdb == 0)
@@ -213,9 +214,9 @@ main(int argc, char *argv[])
 
 		reply = simple_prompt("Shall the new role be allowed to create databases? (y/n) ", 1, true);
 		if (check_yesno_response(reply) == 1)
-			createdb = +1;
+			createdb = TRI_YES;
 		else
-			createdb = -1;
+			createdb = TRI_NO;
 	}
 
 	if (createrole == 0)
@@ -224,54 +225,48 @@ main(int argc, char *argv[])
 
 		reply = simple_prompt("Shall the new role be allowed to create more new roles? (y/n) ", 1, true);
 		if (check_yesno_response(reply) == 1)
-			createrole = +1;
+			createrole = TRI_YES;
 		else
-			createrole = -1;
+			createrole = TRI_NO;
 	}
 
 	if (inherit == 0)
-	{
-		/* silently default to YES */
-		inherit = +1;
-	}
+		inherit = TRI_YES;
 
 	if (login == 0)
-	{
-		/* silently default to YES */
-		login = +1;
-	}
+		login = TRI_YES;
 
 	initPQExpBuffer(&sql);
 
 	printfPQExpBuffer(&sql, "CREATE ROLE %s", fmtId(newuser));
 	if (newpassword)
 	{
-		if (encrypted == +1)
+		if (encrypted == TRI_YES)
 			appendPQExpBuffer(&sql, " ENCRYPTED");
-		if (encrypted == -1)
+		if (encrypted == TRI_NO)
 			appendPQExpBuffer(&sql, " UNENCRYPTED");
 		appendPQExpBuffer(&sql, " PASSWORD ");
 		appendStringLiteral(&sql, newpassword, false);
 	}
-	if (superuser == +1)
+	if (superuser == TRI_YES)
 		appendPQExpBuffer(&sql, " SUPERUSER");
-	if (superuser == -1)
+	if (superuser == TRI_NO)
 		appendPQExpBuffer(&sql, " NOSUPERUSER");
-	if (createdb == +1)
+	if (createdb == TRI_YES)
 		appendPQExpBuffer(&sql, " CREATEDB");
-	if (createdb == -1)
+	if (createdb == TRI_NO)
 		appendPQExpBuffer(&sql, " NOCREATEDB");
-	if (createrole == +1)
+	if (createrole == TRI_YES)
 		appendPQExpBuffer(&sql, " CREATEROLE");
-	if (createrole == -1)
+	if (createrole == TRI_NO)
 		appendPQExpBuffer(&sql, " NOCREATEROLE");
-	if (inherit == +1)
+	if (inherit == TRI_YES)
 		appendPQExpBuffer(&sql, " INHERIT");
-	if (inherit == -1)
+	if (inherit == TRI_NO)
 		appendPQExpBuffer(&sql, " NOINHERIT");
-	if (login == +1)
+	if (login == TRI_YES)
 		appendPQExpBuffer(&sql, " LOGIN");
-	if (login == -1)
+	if (login == TRI_NO)
 		appendPQExpBuffer(&sql, " NOLOGIN");
 	if (conn_limit != NULL)
 		appendPQExpBuffer(&sql, " CONNECTION LIMIT %s", conn_limit);
