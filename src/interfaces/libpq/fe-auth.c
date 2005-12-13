@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.71 2002/09/04 20:31:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.71.2.1 2005/12/13 03:36:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -457,13 +457,6 @@ pg_local_sendauth(char *PQerrormsg, PGconn *conn)
 #ifdef HAVE_STRUCT_CMSGCRED
 	/* Prevent padding */
 	char		cmsgmem[sizeof(struct cmsghdr) + sizeof(struct cmsgcred)];
-
-	/* Point to start of first structure */
-	struct cmsghdr *cmsg = (struct cmsghdr *) cmsgmem;
-#endif
-#ifdef HAVE_STRUCT_SOCKCRED
-	/* Prevent padding */
-	char		cmsgmem[sizeof(struct cmsghdr) + sizeof(struct sockcred)];
 
 	/* Point to start of first structure */
 	struct cmsghdr *cmsg = (struct cmsghdr *) cmsgmem;
