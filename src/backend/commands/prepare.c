@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.23.4.2 2004/12/13 00:17:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.23.4.3 2005/12/14 17:06:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -440,6 +440,30 @@ FetchPreparedStatementResultDesc(PreparedStatement *stmt)
 			break;
 	}
 	return NULL;
+}
+
+/*
+ * Given a prepared statement, determine whether it will return tuples.
+ *
+ * Note: this is used rather than just testing the result of
+ * FetchPreparedStatementResultDesc() because that routine can fail if
+ * invoked in an aborted transaction.  This one is safe to use in any
+ * context.  Be sure to keep the two routines in sync!
+ */
+bool
+PreparedStatementReturnsTuples(PreparedStatement *stmt)
+{
+	switch (ChoosePortalStrategy(stmt->query_list))
+	{
+		case PORTAL_ONE_SELECT:
+		case PORTAL_UTIL_SELECT:
+			return true;
+
+		case PORTAL_MULTI_QUERY:
+			/* will not return tuples */
+			break;
+	}
+	return false;
 }
 
 /*
