@@ -431,3 +431,24 @@ SELECT p.name, p.age FROM person* p ORDER BY age using >, name;
  mary    |   8
 (58 rows)
 
+--
+-- Test some cases involving whole-row Var referencing a subquery
+--
+select foo from (select 1) as foo;
+ foo 
+-----
+ (1)
+(1 row)
+
+select foo from (select null) as foo;
+ foo 
+-----
+ ()
+(1 row)
+
+select foo from (select 'xyzzy',1,null) as foo;
+    foo     
+------------
+ (xyzzy,1,)
+(1 row)
+

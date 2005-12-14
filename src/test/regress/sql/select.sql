@@ -104,3 +104,9 @@ SELECT p.name, p.age FROM person* p;
 --
 SELECT p.name, p.age FROM person* p ORDER BY age using >, name;
 
+--
+-- Test some cases involving whole-row Var referencing a subquery
+--
+select foo from (select 1) as foo;
+select foo from (select null) as foo;
+select foo from (select 'xyzzy',1,null) as foo;
