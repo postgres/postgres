@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.185 2005/11/22 18:17:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.186 2005/12/14 16:28:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -523,7 +523,7 @@ ExecEvalWholeRowVar(ExprState *exprstate, ExprContext *econtext,
 	Assert(variable->varno != OUTER);
 	slot = econtext->ecxt_scantuple;
 
-	tuple = slot->tts_tuple;
+	tuple = ExecFetchSlotTuple(slot);
 	tupleDesc = slot->tts_tupleDescriptor;
 
 	/*
