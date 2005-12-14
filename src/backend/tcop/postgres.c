@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.470 2005/11/22 18:17:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.471 2005/12/14 17:06:27 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1849,6 +1849,15 @@ exec_describe_statement_message(const char *stmt_name)
 	ListCell   *l;
 	StringInfoData buf;
 
+	/*
+	 * Start up a transaction command. (Note that this will normally change
+	 * current memory context.) Nothing happens if we are already in one.
+	 */
+	start_xact_command();
+
+	/* Switch back to message context */
+	MemoryContextSwitchTo(MessageContext);
+
 	/* Find prepared statement */
 	if (stmt_name[0] != '\0')
 		pstmt = FetchPreparedStatement(stmt_name, true);
@@ -1861,6 +1870,22 @@ exec_describe_statement_message(const char *stmt_name)
 					(errcode(ERRCODE_UNDEFINED_PSTATEMENT),
 					 errmsg("unnamed prepared statement does not exist")));
 	}
+
+	/*
+	 * If we are in aborted transaction state, we can't safely create a result
+	 * tupledesc, because that needs catalog accesses.  Hence, refuse to
+	 * Describe statements that return data.  (We shouldn't just refuse all
+	 * Describes, since that might break the ability of some clients to issue
+	 * COMMIT or ROLLBACK commands, if they use code that blindly Describes
+	 * whatever it does.)  We can Describe parameters without doing anything
+	 * dangerous, so we don't restrict that.
+	 */
+	if (IsAbortedTransactionBlockState() &&
+		PreparedStatementReturnsTuples(pstmt))
+		ereport(ERROR,
+				(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
+				 errmsg("current transaction is aborted, "
+						"commands ignored until end of transaction block")));
 
 	if (whereToSendOutput != DestRemote)
 		return;					/* can't actually do anything... */
@@ -1902,11 +1927,35 @@ exec_describe_portal_message(const char *portal_name)
 {
 	Portal		portal;
 
+	/*
+	 * Start up a transaction command. (Note that this will normally change
+	 * current memory context.) Nothing happens if we are already in one.
+	 */
+	start_xact_command();
+
+	/* Switch back to message context */
+	MemoryContextSwitchTo(MessageContext);
+
 	portal = GetPortalByName(portal_name);
 	if (!PortalIsValid(portal))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_CURSOR),
 				 errmsg("portal \"%s\" does not exist", portal_name)));
+
+	/*
+	 * If we are in aborted transaction state, we can't run
+	 * SendRowDescriptionMessage(), because that needs catalog accesses.
+	 * Hence, refuse to Describe portals that return data.  (We shouldn't just
+	 * refuse all Describes, since that might break the ability of some
+	 * clients to issue COMMIT or ROLLBACK commands, if they use code that
+	 * blindly Describes whatever it does.)
+	 */
+	if (IsAbortedTransactionBlockState() &&
+		portal->tupDesc)
+		ereport(ERROR,
+				(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
+				 errmsg("current transaction is aborted, "
+						"commands ignored until end of transaction block")));
 
 	if (whereToSendOutput != DestRemote)
 		return;					/* can't actually do anything... */
