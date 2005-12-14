@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.129 2005/01/13 17:19:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.129.4.1 2005/12/14 16:30:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,8 +209,9 @@ markTargetListOrigin(ParseState *pstate, Resdom *res, Var *var, int levelsup)
 			res->resorigcol = attnum;
 			break;
 		case RTE_SUBQUERY:
+			/* Subselect-in-FROM: copy up from the subselect */
+			if (attnum != InvalidAttrNumber)
 			{
-				/* Subselect-in-FROM: copy up from the subselect */
 				TargetEntry *te = get_tle_by_resno(rte->subquery->targetList,
 												   attnum);
 
@@ -222,8 +223,9 @@ markTargetListOrigin(ParseState *pstate, Resdom *res, Var *var, int levelsup)
 			}
 			break;
 		case RTE_JOIN:
+			/* Join RTE --- recursively inspect the alias variable */
+			if (attnum != InvalidAttrNumber)
 			{
-				/* Join RTE --- recursively inspect the alias variable */
 				Var		   *aliasvar;
 
 				Assert(attnum > 0 && attnum <= list_length(rte->joinaliasvars));
