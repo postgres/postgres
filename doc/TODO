@@ -135,7 +135,7 @@ Administration
 	    pg_stop_backup() is called or the server is stopped
 
 	    Doing this will allow administrators to know more easily when
-	    the archive contins all the files needed for point-in-time
+	    the archive contains all the files needed for point-in-time
 	    recovery.
 
 	  o %Create dump tool for write-ahead logs for use in determining
@@ -185,7 +185,7 @@ Data Types
 * Fix data types where equality comparison isn't intuitive, e.g. box
 * %Prevent INET cast to CIDR if the unmasked bits are not zero, or
   zero the bits
-* %Prevent INET cast to CIDR from droping netmask, SELECT '1.1.1.1'::inet::cidr
+* %Prevent INET cast to CIDR from dropping netmask, SELECT '1.1.1.1'::inet::cidr
 * Allow INET + INT4 to increment the host part of the address, or
   throw an error on overflow
 * %Add 'tid != tid ' operator for use in corruption recovery
@@ -457,7 +457,7 @@ SQL Commands
 
 	  This might require some background daemon to maintain clustering
 	  during periods of low usage. It might also require tables to be only
-	  paritally filled for easier reorganization.  Another idea would
+	  partially filled for easier reorganization.  Another idea would
           be to create a merged heap/index data file so an index lookup would
 	  automatically access the heap data too.  A third idea would be to
 	  store heap rows in hashed groups, perhaps using a user-supplied
@@ -592,7 +592,7 @@ Clients
 
 	  Currently, while \e saves a single statement as one entry, interactive
 	  statements are saved one line at a time.  Ideally all statements
-	  whould be saved like \e does.
+	  would be saved like \e does.
 
 	o Allow multi-line column values to align in the proper columns
 
@@ -664,10 +664,10 @@ libpq
 
 	o Allow statement results to be automatically batched to the client
 
-	  Currently, all statement results are transfered to the libpq
+	  Currently, all statement results are transferred to the libpq
 	  client before libpq makes the results available to the 
 	  application.  This feature would allow the application to make
-	  use of the first result rows while the rest are transfered, or
+	  use of the first result rows while the rest are transferred, or
 	  held on the server waiting for them to be requested by libpq.
 	  One complexity is that a statement like SELECT 1/col could error
 	  out mid-way through the result set.
@@ -743,7 +743,7 @@ Exotic Features
 
 * Add the features of packages
 
-	o  Make private objects accessable only to objects in the same schema
+	o  Make private objects accessible only to objects in the same schema
 	o  Allow current_schema.objname to access current schema objects
 	o  Add session variables
 	o  Allow nested schemas
@@ -854,7 +854,7 @@ Cache Usage
 
 * Add estimated_count(*) to return an estimate of COUNT(*)
 
-  This would use the planner ANALYZE statistatics to return an estimated
+  This would use the planner ANALYZE statistics to return an estimated
   count.
 
 * Allow data to be pulled directly from indexes
@@ -880,7 +880,7 @@ Cache Usage
 	o Query results
 
 * Allow sequential scans to take advantage of other concurrent
-  sequentiqal scans, also called "Synchronised Scanning"
+  sequential scans, also called "Synchronised Scanning"
 
   One possible implementation is to start sequential scans from the lowest
   numbered buffer in the shared cache, and when reaching the end wrap
@@ -893,7 +893,7 @@ Vacuum
 
 * Improve speed with indexes
 
-  For large table adjustements during VACUUM FULL, it is faster to 
+  For large table adjustments during VACUUM FULL, it is faster to 
   reindex rather than update the index.
 
 * Reduce lock time during VACUUM FULL by moving tuples with read lock,
@@ -942,7 +942,7 @@ Startup Time Improvements
 
   This would prevent the overhead associated with process creation. Most
   operating systems have trivial process creation time compared to
-  database startup overhead, but a few operating systems (WIn32,
+  database startup overhead, but a few operating systems (Win32,
   Solaris) might benefit from threading.  Also explore the idea of
   a single session using multiple threads to execute a statement faster.
 
