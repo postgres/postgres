@@ -23,7 +23,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.9 2005/12/11 21:02:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.10 2005/12/16 04:03:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -730,6 +730,42 @@ bool
 IsBackendPid(int pid)
 {
 	return (BackendPidGetProc(pid) != NULL);
+}
+
+/*
+ * GetAllBackendPids -- get an array of all current backends' PIDs
+ *
+ * The result is a palloc'd array with the number of active backends in
+ * entry [0], their PIDs in entries [1] .. [n].  The caller must bear in
+ * mind that the result may already be obsolete when returned.
+ */
+int *
+GetAllBackendPids(void)
+{
+	int		   *result;
+	int			npids;
+	ProcArrayStruct *arrayP = procArray;
+	int			index;
+
+	result = (int *) palloc((MaxBackends + 1) * sizeof(int));
+	npids = 0;
+
+	LWLockAcquire(ProcArrayLock, LW_SHARED);
+
+	for (index = 0; index < arrayP->numProcs; index++)
+	{
+		PGPROC	   *proc = arrayP->procs[index];
+
+		if (proc->pid != 0)		/* ignore dummy procs */
+			result[++npids] = proc->pid;
+	}
+
+	LWLockRelease(ProcArrayLock);
+
+	Assert(npids <= MaxBackends);
+
+	result[0] = npids;
+	return result;
 }
 
 /*

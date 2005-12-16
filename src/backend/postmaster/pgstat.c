@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.112 2005/11/22 18:17:17 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.113 2005/12/16 04:03:40 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -2453,6 +2453,16 @@ pgstat_write_statsfile(void)
 	}
 }
 
+/*
+ * qsort/bsearch comparison routine for PIDs
+ *
+ * We assume PIDs are nonnegative, so there's no overflow risk
+ */
+static int
+comparePids(const void *v1, const void *v2)
+{
+	return *((const int *) v1) - *((const int *) v2);
+}
 
 /* ----------
  * pgstat_read_statsfile() -
@@ -2478,7 +2488,7 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 	int			maxbackends = 0;
 	int			havebackends = 0;
 	bool		found;
-	bool		check_pids;
+	int		   *live_pids;
 	MemoryContext use_mcxt;
 	int			mcxt_flags;
 
@@ -2497,13 +2507,17 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 	{
 		use_mcxt = NULL;
 		mcxt_flags = 0;
-		check_pids = false;
+		live_pids = NULL;
 	}
 	else
 	{
 		use_mcxt = TopTransactionContext;
 		mcxt_flags = HASH_CONTEXT;
-		check_pids = true;
+		live_pids = GetAllBackendPids();
+		/* Sort the PID array so we can use bsearch */
+		if (live_pids[0] > 1)
+			qsort((void *) &live_pids[1], live_pids[0], sizeof(int),
+				  comparePids);
 	}
 
 	/*
@@ -2706,7 +2720,13 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 				/*
 				 * If possible, check PID to verify still running
 				 */
-				if (check_pids && !IsBackendPid(beentry->procpid))
+				if (live_pids &&
+					(live_pids[0] == 0 ||
+					 bsearch((void *) &beentry->procpid,
+							 (void *) &live_pids[1],
+							 live_pids[0],
+							 sizeof(int),
+							 comparePids) == NULL))
 				{
 					/*
 					 * Note: we could send a BETERM message to tell the
