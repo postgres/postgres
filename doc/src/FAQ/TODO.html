@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Mon Dec 12 08:36:28 EST 2005
+Last updated:           Fri Dec 16 13:56:52 EST 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -125,7 +125,7 @@ first.
     </li><li>Automatically force archiving of partially-filled WAL files when
             pg_stop_backup() is called or the server is stopped
 <p>            Doing this will allow administrators to know more easily when
-            the archive contins all the files needed for point-in-time
+            the archive contains all the files needed for point-in-time
             recovery.
 </p>
     </li><li>%Create dump tool for write-ahead logs for use in determining
@@ -172,7 +172,7 @@ first.
   </li><li>Fix data types where equality comparison isn't intuitive, e.g. box
   </li><li>%Prevent INET cast to CIDR if the unmasked bits are not zero, or
   zero the bits
-  </li><li>%Prevent INET cast to CIDR from droping netmask, SELECT '<a href="telnet://1.1.1.1">1.1.1.1</a>'::inet::cidr
+  </li><li>%Prevent INET cast to CIDR from dropping netmask, SELECT '<a href="telnet://1.1.1.1">1.1.1.1</a>'::inet::cidr
   </li><li>Allow INET + INT4 to increment the host part of the address, or
   throw an error on overflow
   </li><li>%Add 'tid != tid ' operator for use in corruption recovery
@@ -417,7 +417,7 @@ first.
     <li>Automatically maintain clustering on a table
 <p>          This might require some background daemon to maintain clustering
           during periods of low usage. It might also require tables to be only
-          paritally filled for easier reorganization.  Another idea would
+          partially filled for easier reorganization.  Another idea would
           be to create a merged heap/index data file so an index lookup would
           automatically access the heap data too.  A third idea would be to
           store heap rows in hashed groups, perhaps using a user-supplied
@@ -539,7 +539,7 @@ first.
     </li><li>Improve psql's handling of multi-line statements
 <p>          Currently, while \e saves a single statement as one entry, interactive
           statements are saved one line at a time.  Ideally all statements
-          whould be saved like \e does.
+          would be saved like \e does.
 </p>
     </li><li>Allow multi-line column values to align in the proper columns
 <p>          If the second output column value is 'a\nb', the 'b' should appear
@@ -605,10 +605,10 @@ first.
           historically it has so we need a way to prevent it
 </p>
   </li><li>Allow statement results to be automatically batched to the client
-<p>          Currently, all statement results are transfered to the libpq
+<p>          Currently, all statement results are transferred to the libpq
           client before libpq makes the results available to the 
           application.  This feature would allow the application to make
-          use of the first result rows while the rest are transfered, or
+          use of the first result rows while the rest are transferred, or
           held on the server waiting for them to be requested by libpq.
           One complexity is that a statement like SELECT 1/col could error
           out mid-way through the result set.
@@ -677,7 +677,7 @@ first.
 </p>
   </li><li>Add the features of packages
   <ul>
-    <li>Make private objects accessable only to objects in the same schema
+    <li>Make private objects accessible only to objects in the same schema
     </li><li>Allow current_schema.objname to access current schema objects
     </li><li>Add session variables
     </li><li>Allow nested schemas
@@ -774,7 +774,7 @@ first.
   to obtain tuple visibility information.
 </p>
   </li><li>Add estimated_count(*) to return an estimate of COUNT(*)
-<p>  This would use the planner ANALYZE statistatics to return an estimated
+<p>  This would use the planner ANALYZE statistics to return an estimated
   count.
 </p>
   </li><li>Allow data to be pulled directly from indexes
@@ -799,7 +799,7 @@ first.
     </li><li>Query results
   </li></ul>
   </li><li>Allow sequential scans to take advantage of other concurrent
-  sequentiqal scans, also called "Synchronised Scanning"
+  sequential scans, also called "Synchronised Scanning"
 <p>  One possible implementation is to start sequential scans from the lowest
   numbered buffer in the shared cache, and when reaching the end wrap
   around to the beginning, rather than always starting sequential scans
@@ -810,7 +810,7 @@ first.
 
 <ul>
   <li>Improve speed with indexes
-<p>  For large table adjustements during VACUUM FULL, it is faster to 
+<p>  For large table adjustments during VACUUM FULL, it is faster to 
   reindex rather than update the index.
 </p>
   </li><li>Reduce lock time during VACUUM FULL by moving tuples with read lock,
@@ -853,7 +853,7 @@ first.
   <li>Experiment with multi-threaded backend [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?thread">thread</a>]
 <p>  This would prevent the overhead associated with process creation. Most
   operating systems have trivial process creation time compared to
-  database startup overhead, but a few operating systems (WIn32,
+  database startup overhead, but a few operating systems (Win32,
   Solaris) might benefit from threading.  Also explore the idea of
   a single session using multiple threads to execute a statement faster.
 </p>
