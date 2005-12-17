@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Fri Dec 16 13:56:52 EST 2005
+Last updated:           Fri Dec 16 20:48:38 EST 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -375,6 +375,8 @@ first.
   </li><li>Eventually enable escape_string<u>warning and standard</u>conforming_strings
   </li><li>Simplify dropping roles that have objects in several databases
   </li><li>Allow COMMENT ON to accept an expression rather than just a string
+  </li><li>Allow the count returned by SELECT, etc to be to represent as an int64
+  to allow a higher range of values
   </li><li>CREATE
   <ul>
     <li>Allow CREATE TABLE AS to determine column lengths for complex

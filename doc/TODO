@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Dec 16 13:56:52 EST 2005
+Last updated:		Fri Dec 16 20:48:38 EST 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -408,6 +408,8 @@ SQL Commands
 * Eventually enable escape_string_warning and standard_conforming_strings
 * Simplify dropping roles that have objects in several databases
 * Allow COMMENT ON to accept an expression rather than just a string
+* Allow the count returned by SELECT, etc to be to represent as an int64
+  to allow a higher range of values
 
 
 * CREATE
