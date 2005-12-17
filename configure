@@ -14849,6 +14849,8 @@ ac_cv_func_fseeko=yes
 esac
 
 # Solaris has a very slow qsort in certain cases, so we replace it.
+# Supposedly it is fixed in Solaris, but not sure which version, and
+# no confirmed testing.  2005-12-16
 if test "$PORTNAME" = "solaris"; then
 case $LIBOBJS in
     "qsort.$ac_objext"   | \
