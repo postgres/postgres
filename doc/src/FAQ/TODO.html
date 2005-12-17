@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Sat Dec 17 09:18:30 EST 2005
+Last updated:           Sat Dec 17 11:43:02 EST 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -933,6 +933,15 @@ first.
 </p>
   </li><li>Log statements where the optimizer row estimates were dramatically
   different from the number of rows actually found?
+  </li><li>Allow star join optimizations
+<p>  While our bitmap scan allows multiple indexes to be joined to get
+  to heap rows, a star joins allows multiple dimension _tables_ to 
+  be joined to index into a larger main fact table.  The join is
+  usually performed by either creating a cartesian product of all
+  the dimmension tables and doing a single join on that product or
+  using subselects to create bitmaps of each dimmension table match
+  and merge the bitmaps to perform the join on the fact table.
+</p>
 </li></ul>
 <h1><a name="section_21">Miscellaneous Performance</a></h1>
 

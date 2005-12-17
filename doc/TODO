@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Dec 17 09:18:30 EST 2005
+Last updated:		Sat Dec 17 11:43:02 EST 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1028,6 +1028,15 @@ Optimizer / Executor
 
 * Log statements where the optimizer row estimates were dramatically
   different from the number of rows actually found?
+* Allow star join optimizations
+
+  While our bitmap scan allows multiple indexes to be joined to get
+  to heap rows, a star joins allows multiple dimension _tables_ to 
+  be joined to index into a larger main fact table.  The join is
+  usually performed by either creating a cartesian product of all
+  the dimmension tables and doing a single join on that product or
+  using subselects to create bitmaps of each dimmension table match
+  and merge the bitmaps to perform the join on the fact table.
 
 
 Miscellaneous Performance
