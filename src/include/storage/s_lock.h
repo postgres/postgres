@@ -66,7 +66,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.142 2005/10/11 20:41:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.143 2005/12/17 20:15:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,7 +108,7 @@
  */
 
 
-#ifdef __i386__
+#ifdef __i386__		/* 32-bit i386 */
 #define HAS_TEST_AND_SET
 
 typedef unsigned char slock_t;
@@ -214,8 +214,7 @@ spin_delay(void)
 #endif	 /* __x86_64__ */
 
 
-#if defined(__ia64__) || defined(__ia64)
-/* Intel Itanium */
+#if defined(__ia64__) || defined(__ia64)	/* Intel Itanium */
 #define HAS_TEST_AND_SET
 
 typedef unsigned int slock_t;
@@ -276,8 +275,8 @@ tas(volatile slock_t *lock)
 #endif	 /* __arm__ */
 
 
-#if defined(__s390__) || defined(__s390x__)
 /* S/390 and S/390x Linux (32- and 64-bit zSeries) */
+#if defined(__s390__) || defined(__s390x__)
 #define HAS_TEST_AND_SET
 
 typedef unsigned int slock_t;
@@ -300,7 +299,7 @@ tas(volatile slock_t *lock)
 #endif	 /* __s390__ || __s390x__ */
 
 
-#if defined(__sparc__)
+#if defined(__sparc__)		/* Sparc */
 #define HAS_TEST_AND_SET
 
 typedef unsigned char slock_t;
@@ -323,6 +322,7 @@ tas(volatile slock_t *lock)
 #endif	 /* __sparc__ */
 
 
+/* PowerPC */
 #if defined(__ppc__) || defined(__powerpc__) || defined(__powerpc64__)
 #define HAS_TEST_AND_SET
 
@@ -366,7 +366,7 @@ tas(volatile slock_t *lock)
 /* PowerPC S_UNLOCK is almost standard but requires a "sync" instruction */
 #define S_UNLOCK(lock)	\
 do \
-{\
+{ \
 	__asm__ __volatile__ ("	sync \n"); \
 	*((volatile slock_t *) (lock)) = 0; \
 } while (0)
@@ -374,6 +374,7 @@ do \
 #endif /* powerpc */
 
 
+/* Linux Motorola 68k */
 #if (defined(__mc68000__) || defined(__m68k__)) && defined(__linux__)
 #define HAS_TEST_AND_SET
 
@@ -399,11 +400,11 @@ tas(volatile slock_t *lock)
 #endif	 /* (__mc68000__ || __m68k__) && __linux__ */
 
 
-#if defined(__vax__)
 /*
  * VAXen -- even multiprocessor ones
  * (thanks to Tom Ivar Helbekkmo)
  */
+#if defined(__vax__)
 #define HAS_TEST_AND_SET
 
 typedef unsigned char slock_t;
@@ -429,7 +430,7 @@ tas(volatile slock_t *lock)
 #endif	 /* __vax__ */
 
 
-#if defined(__ns32k__)
+#if defined(__ns32k__)		/* National Semiconductor 32K */
 #define HAS_TEST_AND_SET
 
 typedef unsigned char slock_t;
@@ -453,7 +454,7 @@ tas(volatile slock_t *lock)
 #endif	 /* __ns32k__ */
 
 
-#if defined(__alpha) || defined(__alpha__)
+#if defined(__alpha) || defined(__alpha__)	/* Alpha */
 /*
  * Correct multi-processor locking methods are explained in section 5.5.3
  * of the Alpha AXP Architecture Handbook, which at this writing can be
@@ -499,7 +500,7 @@ do \
 #endif /* __alpha || __alpha__ */
 
 
-#if defined(__mips__) && !defined(__sgi)
+#if defined(__mips__) && !defined(__sgi)	/* non-SGI MIPS */
 /* Note: on SGI we use the OS' mutex ABI, see below */
 /* Note: R10000 processors require a separate SYNC */
 #define HAS_TEST_AND_SET
@@ -553,7 +554,7 @@ do \
 /* These live in s_lock.c, but only for gcc */
 
 
-#if defined(__m68k__) && !defined(__linux__)
+#if defined(__m68k__) && !defined(__linux__)	/* non-Linux Motorola 68k */
 #define HAS_TEST_AND_SET
 
 typedef unsigned char slock_t;
