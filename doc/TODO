@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Dec 16 20:48:38 EST 2005
+Last updated:		Fri Dec 16 23:10:20 EST 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -714,7 +714,8 @@ Referential Integrity
 Dependency Checking
 ===================
 
-* Flush cached query plans when the dependent objects change
+* Flush cached query plans when the dependent objects change or
+  when the cardinality of parameters changes dramatically
 * Track dependencies in function bodies and recompile/invalidate
 
   This is particularly important for references to temporary tables
