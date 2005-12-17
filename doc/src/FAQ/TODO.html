@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Sat Dec 17 12:03:45 EST 2005
+Last updated:           Sat Dec 17 13:06:57 EST 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -652,8 +652,9 @@ first.
 <h1><a name="section_11">Dependency Checking</a></h1>
 
 <ul>
-  <li>Flush cached query plans when the dependent objects change or
-  when the cardinality of parameters changes dramatically
+  <li>Flush cached query plans when the dependent objects change,
+  when the cardinality of parameters changes dramatically, or
+  when new ANALYZE statistics are available
   </li><li>Track dependencies in function bodies and recompile/invalidate
 <p>  This is particularly important for references to temporary tables
   in PL/PgSQL because PL/PgSQL caches query plans.  The only workaround
