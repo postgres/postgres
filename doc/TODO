@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Dec 16 23:10:20 EST 2005
+Last updated:		Sat Dec 17 09:18:30 EST 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -269,7 +269,8 @@ Functions
   make time reporting more consistent and will allow reporting of
   the statement start time.
 
-* %Add pg_get_acldef(), pg_get_typedefault(), and pg_get_attrdef()
+* %Add pg_get_acldef(), pg_get_typedefault(), pg_get_attrdef(),
+  pg_get_tabledef(), pg_get_domaindef(), pg_get_functiondef()
 * Allow to_char() to print localized month names
 * Allow functions to have a schema search path specified at creation time
 * Allow substring/replace() to get/set bit values
