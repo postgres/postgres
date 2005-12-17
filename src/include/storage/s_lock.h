@@ -66,7 +66,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.143 2005/12/17 20:15:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.144 2005/12/17 20:39:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -565,14 +565,16 @@ typedef unsigned char slock_t;
 
 
 
-/***************************************************************************
+/*
+ * ---------------------------------------------------------------------
  * Platforms that use non-gcc inline assembly:
+ * ---------------------------------------------------------------------
  */
 
 #if !defined(HAS_TEST_AND_SET)	/* We didn't trigger above, let's try here */
 
 
-#if defined(USE_UNIVEL_CC)
+#if defined(USE_UNIVEL_CC)		/* Unixware compiler */
 #define HAS_TEST_AND_SET
 
 typedef unsigned char slock_t;
@@ -595,7 +597,7 @@ tas(volatile slock_t *s_lock)
 #endif	 /* defined(USE_UNIVEL_CC) */
 
 
-#if defined(__alpha) || defined(__alpha__)
+#if defined(__alpha) || defined(__alpha__)	/* Tru64 Unix Alpha compiler */
 /*
  * The Tru64 compiler doesn't support gcc-style inline asm, but it does
  * have some builtin functions that accomplish much the same results.
@@ -616,7 +618,7 @@ typedef unsigned long slock_t;
 #endif	 /* __alpha || __alpha__ */
 
 
-#if defined(__hppa) || defined(__hppa__)
+#if defined(__hppa) || defined(__hppa__)	/* HP PA-RISC, GCC and HP compilers */
 /*
  * HP's PA-RISC
  *
@@ -682,7 +684,7 @@ typedef unsigned int slock_t;
 #endif	/* HPUX on IA64, non gcc */
 
 
-#if defined(__QNX__) && defined(__WATCOMC__)
+#if defined(__QNX__) && defined(__WATCOMC__)	/* QNX */
 /*
  * QNX 4 using WATCOM C
  */
@@ -701,7 +703,7 @@ extern slock_t wc_tas(volatile slock_t *lock);
 #endif	 /* __QNX__ and __WATCOMC__*/
 
 
-#if defined(__sgi)
+#if defined(__sgi)	/* SGI compiler */
 /*
  * SGI IRIX 5
  * slock_t is defined as a unsigned long. We use the standard SGI
@@ -726,7 +728,7 @@ typedef unsigned long slock_t;
 #endif	 /* __sgi */
 
 
-#if defined(sinix)
+#if defined(sinix)		/* Sinux */
 /*
  * SINIX / Reliant UNIX
  * slock_t is defined as a struct abilock_t, which has a single unsigned long
@@ -744,7 +746,7 @@ typedef abilock_t slock_t;
 #endif	 /* sinix */
 
 
-#if defined(_AIX)
+#if defined(_AIX)	/* AIX */
 /*
  * AIX (POWER)
  */
@@ -757,7 +759,7 @@ typedef unsigned int slock_t;
 #endif	 /* _AIX */
 
 
-#if defined (nextstep)
+#if defined (nextstep)		/* Nextstep */
 #define HAS_TEST_AND_SET
 
 typedef struct mutex slock_t;
@@ -773,7 +775,7 @@ typedef struct mutex slock_t;
 /* These are in s_lock.c */
 
 
-#if defined(sun3)
+#if defined(sun3)		/* Sun3 */
 #define HAS_TEST_AND_SET
 
 typedef unsigned char slock_t;
@@ -789,7 +791,7 @@ typedef unsigned char slock_t;
 
 /* out-of-line assembler from src/backend/port/tas/foo.s */
 
-#if defined(__sun) && defined(__i386)
+#if defined(__sun) && defined(__i386)	/* i386 using Sun compiler */
 /*
  * Solaris/386 (we only get here for non-gcc case)
  */
