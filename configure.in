@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.438 2005/12/17 00:33:33 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.439 2005/12/17 00:35:50 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -943,7 +943,8 @@ case $host_os in bsdi*|netbsd*)
 ac_cv_func_fseeko=yes
 esac
 
-# Solaris has a very slow qsort in certain cases, so we replace it.
+# Solaris has a very slow qsort in certain cases, so we replace it:
+#   http://forum.sun.com/thread.jspa?forumID=4&threadID=7231
 # Supposedly it is fixed in Solaris, but not sure which version, and
 # no confirmed testing.  2005-12-16
 if test "$PORTNAME" = "solaris"; then
