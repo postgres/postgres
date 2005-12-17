@@ -27,9 +27,12 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 <p><small><pre>
 (以下、訳者による注釈を [訳注： と ] とで囲んで記します。)
 [訳注：
-	日本語版の製作については、この文書の最後をごらんください。
+	日本語版のFAQは、
+		http://www.postgresql.org/docs/faqs.FAQ_japanese.html
+	にあります。
+	最新の日本語版については、この文書の最後にある<a
+	href="#item-japanese">「日本語版について」</a>をごらんください。
 
-						2005年12月13日    桑村 潤
 ]
 </pre></small></p>
 
@@ -272,13 +275,6 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
     のであれば <i>general</i> または、<i>bugs</i> といったリストがよいで
     しょう。</p>
 
-    <p>The major IRC channel is <i>#postgresql</i> on Freenode
-    (<i>irc.freenode.net</i>).  To connect you can use the Unix
-    program <code>irc -c '#postgresql' "$USER" irc.freenode.net</code>
-    or use any other IRC clients.  A Spanish one also exists
-    on the same network, (<i>#postgresql-es</i>), and a French one,
-    (<i>#postgresqlfr</i>).  There is also a PostgreSQL channel on EFNet.</p>
-
     <p>メジャーなIRC チャンネルは、Freenode (<i>irc.freenode.net</i>)の
     <i>#postgresql</i> というチャンネルです。UNIX コマンドでは、
     <code>irc -c '#PostgreSQL' "$USER" irc.freenode.net</code> を使って
@@ -421,8 +417,9 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 
     <p><small><pre>
     [訳注:
-	 石井達夫氏による日本語の参考文献の紹介ページ
-		<a href="http://www.SRA.co.jp/people/t-ishii/PostgreSQL/doc-jp/index.html">http://www.SRA.co.jp/people/t-ishii/PostgreSQL/doc-jp/index.html</a>
+	 日本PostgreSQLユーザ会の日本語の参考文献の紹介ページ
+		<a href="http://www.postgresql.jp/PostgreSQL/references.html">
+http://www.postgresql.jp/PostgreSQL/references.html</a>
 	があります。
 	 近藤直文氏の「初心者向のＤＢ設計入門・ＳＱＬ入門参考書紹介」のコーナー
 		<a href="http://www.shonan.ne.jp/~nkon/ipsql/books_SQL.html">http://www.shonan.ne.jp/~nkon/ipsql/books_SQL.html</a>
@@ -708,7 +705,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
     <p><i>pg_</i> で始まるシステムテーブルでもこれらを記述することができ
     ます。</p>
     
-    <p><i>psql -l</i>を使うと全てのデータベースをリスとします。</p>
+    <p><i>psql -l</i>を使うと全てのデータベースをリストします。</p>
 
     <p>それと、<i>pgsql/src/tutorial/syscat.source</i> を試してみてくだ
     さい。そこには、データベースのシステムテーブルから情報を得るために必
@@ -818,7 +815,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
     て収集することができます。統計情報を使ってオプティマイザはテーブルの
     中にあるロウ数を知り、インデックスを使うべきかの決定をより正しくでき
     ます。統計情報は最適な結合順や結合方法を決める上でも貴重なものもあり
-    ます。統計情報の収集は、テーブルの内容がかわると毎に繰返しなされるべ
+    ます。統計情報の収集は、テーブルの内容が変わる毎に繰返しなされるべ
     きです。</p>
 
     <p> インデックスは、通常 <small>ORDER BY</small> や結合を行なうため
@@ -1139,7 +1136,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
     り直しされるようになります。</p>
 
 <h4 id="item4.20">4.20</a>) どのようなレプリケーションのソリューションがありますか？</h4>
-    <p>「レプリケーション」と一言で言いますすが、レプリケーションをする
+    <p>「レプリケーション」と一言でいいますが、レプリケーションをする
     ための技術はいくつかあり、それぞれ、利点と欠点があります。</p>
 
     <p>マスタ／スレーブのレプリケーションは、読み／書きのクエリを受け取
@@ -1162,28 +1159,29 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
   
 <h3 id="item4.21">4.21</a>)テーブルとカラムの名前がクエリーの中で認識されないのはなぜですか？</h3>
 
-    <p>もっとも一般的な原因は、テーブルを作成する際に、テーブルやカラムを囲
-    う二重引用符の使用です。二重引用符を使うと、テーブルとカラムの名前
+    <p>もっとも一般的な原因は、テーブルを作成する際に、テーブルやカラムを
+    囲う二重引用符の使用です。二重引用符を使うと、テーブルとカラムの名前
     （識別子と呼びます）は<a
     href="http://www.postgresql.org/docs/8.0/static/sql-syntax.html#SQL-SYNTAX-IDENTIFIERS">大文字と小文字の区別</a>
-    をして格納されす。したがって、pgAdminのようにテーブル作成のときに自
-    動的に二重引用符を使うものはクエリの中でそれらの名前を使うときに二
-    重引用符を付けなくてはならないことを意味します。このため、識別子を
-    認識させるためには以下のいずれかを心がけます。
+    をして格納されます。したがって、pgAdminのようにテーブル作成のときに
+    自動的に二重引用符を使うものはクエリの中でそれらの名前を使うときに
+    二重引用符を付けなくてはならないことを意味します。このため、識別子
+    を認識させるためには以下のいずれかを心がけます。
 
     <ul>
     <li>テーブルを作成するときに二重引用符で識別子を囲うことを避ける</li>
     <li>識別子には小文字だけを使う</li>
-    <li>クエリの中で参照するときは二重引用譜で識別子を囲う</li>
+    <li>クエリの中で参照するときは二重引用符で識別子を囲う</li>
     </ul>
 
 <hr />
 
+<h4 id="item-japanese">「日本語版について」</h4>
 <p><small><pre>
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:	2005年12月13日
+  最終更新日:	2005年12月14日
   翻訳者:	桑村 潤 (<a href="mailto:juk at PostgreSQL.jp">Jun Kuwamura &lt;juk at PostgreSQL.jp&gt;</a>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
@@ -1207,17 +1205,23 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 
   をはじめ、ポストグレスに関する話題豊富な日本語PostgreSQLメーリングリスト、
   和訳のきっかけを作ってくれたり、いつもチェックをしてくれる
-   <a href="http://jf.linux.or.jp/">JF(Linux Japanese FAQ)プロジェクト</a>、
-  FreeBSD ドキュメンテーションプロジェクト、 その他、直接あるいは間接的に
-  かかわっているすべてのオープンソースコミュニティーのみなさまに感謝します。
+   <a href="http://jf.linux.or.jp/">JF(Linux Japanese FAQ)プロジェクト</a>、FreeBSD ドキュメンテーションプロジェクト
+  の方々、それから、直接あるいは間接的にかかわってくださるすべてのオープンソース
+  コミュニティのみなさまに感謝いたします。
 
-  日本語版のこの文書は <a href="http://www.postgresql.org/docs/faq/">本家 "Frequently Asked Questions" </a> のページに "Japanese FAQ" という見出であります。
+
+  この翻訳文書は <a href="http://www.postgresql.org/docs/faq/">本家 "Frequently Asked Questions" </a> のページに "Japanese FAQ" 
+  という項目であります。
+  
   また、最新版は以下のサイトにあります。
-	<a href="http://www.PostgreSQL.jp/wg/jpugdoc/">http://www.PostgreSQL.jp/wg/jpugdoc/</a>JPUG文書・書籍関連分科会
-	<a href="http://www.linux.or.jp/JF/">http://www.linux.or.jp/JF/</a>Linux JFプロジェクト
-	<a href="http://www.rccm.co.jp/~juk/pgsql/">http://www.rccm.co.jp/~juk/pgsql/</a>(FAQ和訳 PostgreSQL についてよくある質問)
+	<a
+  href="http://www.PostgreSQL.jp/wg/jpugdoc/">http://www.PostgreSQL.jp/wg/jpugdoc/</a> 「JPUG文書・書籍関連分科会」
+	<a href="http://www.linux.or.jp/JF/JFdocs/INDEX-database.html">http://www.linux.or.jp/JF/JFdocs/INDEX-database.html</a> 「Linux JFプロジェクト」
+	<a   href="http://www.rccm.co.jp/~juk/pgsql/">http://www.rccm.co.jp/~juk/pgsql/</a> 「PostgreSQL Notes for Japanese」（翻訳者ページ）
 
-  なお、この和訳に関するご意見・ご質問は(<a href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)までお寄せください。
+  なお、この和訳に関するご意見・ご質問は(<a href="mailto:juk at
+  PostgreSQL.jp">juk at PostgreSQL.jp</a>)までお寄せください。
+  （※ メールアドレスの " at " は適切に直してください。半角の "@" です。）
 ]
 </pre></small></p>
 
