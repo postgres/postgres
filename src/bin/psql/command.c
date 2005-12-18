@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.155 2005/12/08 21:18:22 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.156 2005/12/18 02:17:16 petere Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -35,6 +35,8 @@
 
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"
+#include "libpq/crypt.h"
+#include "dumputils.h"
 
 #include "common.h"
 #include "copy.h"
@@ -81,7 +83,7 @@ backslashResult
 HandleSlashCmds(PsqlScanState scan_state,
 				PQExpBuffer query_buf)
 {
-	backslashResult status = CMD_SKIP_LINE;
+	backslashResult status = PSQL_CMD_SKIP_LINE;
 	char	   *cmd;
 	char	   *arg;
 
@@ -93,7 +95,7 @@ HandleSlashCmds(PsqlScanState scan_state,
 	/* And try to execute it */
 	status = exec_command(cmd, scan_state, query_buf);
 
-	if (status == CMD_UNKNOWN && strlen(cmd) > 1)
+	if (status == PSQL_CMD_UNKNOWN && strlen(cmd) > 1)
 	{
 		/*
 		 * If the command was not recognized, try to parse it as a one-letter
@@ -110,23 +112,23 @@ HandleSlashCmds(PsqlScanState scan_state,
 
 		status = exec_command(new_cmd, scan_state, query_buf);
 
-		if (status != CMD_UNKNOWN)
+		if (status != PSQL_CMD_UNKNOWN)
 		{
 			/* adjust cmd for possible messages below */
 			cmd[1] = '\0';
 		}
 	}
 
-	if (status == CMD_UNKNOWN)
+	if (status == PSQL_CMD_UNKNOWN)
 	{
 		if (pset.cur_cmd_interactive)
 			fprintf(stderr, _("Invalid command \\%s. Try \\? for help.\n"), cmd);
 		else
 			psql_error("invalid command \\%s\n", cmd);
-		status = CMD_ERROR;
+		status = PSQL_CMD_ERROR;
 	}
 
-	if (status != CMD_ERROR)
+	if (status != PSQL_CMD_ERROR)
 	{
 		/* eat any remaining arguments after a valid command */
 		/* note we suppress evaluation of backticks here */
@@ -164,7 +166,7 @@ exec_command(const char *cmd,
 	bool		success = true; /* indicate here if the command ran ok or
 								 * failed */
 	bool		quiet = QUIET();
-	backslashResult status = CMD_SKIP_LINE;
+	backslashResult status = PSQL_CMD_SKIP_LINE;
 
 	/*
 	 * \a -- toggle field alignment This makes little sense but we keep it
@@ -368,7 +370,7 @@ exec_command(const char *cmd,
 				break;
 
 			default:
-				status = CMD_UNKNOWN;
+				status = PSQL_CMD_UNKNOWN;
 		}
 
 		if (pattern)
@@ -387,7 +389,7 @@ exec_command(const char *cmd,
 		if (!query_buf)
 		{
 			psql_error("no query buffer\n");
-			status = CMD_ERROR;
+			status = PSQL_CMD_ERROR;
 		}
 		else
 		{
@@ -396,7 +398,7 @@ exec_command(const char *cmd,
 			expand_tilde(&fname);
 			if (fname)
 				canonicalize_path(fname);
-			status = do_edit(fname, query_buf) ? CMD_NEWEDIT : CMD_ERROR;
+			status = do_edit(fname, query_buf) ? PSQL_CMD_NEWEDIT : PSQL_CMD_ERROR;
 			free(fname);
 		}
 	}
@@ -486,7 +488,7 @@ exec_command(const char *cmd,
 			pset.gfname = pg_strdup(fname);
 		}
 		free(fname);
-		status = CMD_SEND;
+		status = PSQL_CMD_SEND;
 	}
 
 	/* help */
@@ -590,7 +592,7 @@ exec_command(const char *cmd,
 		}
 
 		else
-			status = CMD_UNKNOWN;
+			status = PSQL_CMD_UNKNOWN;
 
 		free(opt1);
 		free(opt2);
@@ -618,6 +620,57 @@ exec_command(const char *cmd,
 		fflush(stdout);
 	}
 
+	/* \password -- set user password */
+	else if (strcmp(cmd, "password") == 0)
+	{
+		char	   *pw1;
+		char	   *pw2;
+
+		pw1 = simple_prompt("Enter new password: ", 100, false);
+		pw2 = simple_prompt("Enter it again: ", 100, false);
+
+		if (strcmp(pw1, pw2) != 0)
+		{
+			fprintf(stderr, _("Passwords didn't match.\n"));
+			success = false;
+		}
+		else
+		{
+			char	   *opt0 = psql_scan_slash_option(scan_state, OT_SQLID, NULL, true);
+			char	   *user;
+			char		encrypted_password[MD5_PASSWD_LEN + 1];
+
+			if (opt0)
+				user = opt0;
+			else
+				user = PQuser(pset.db);
+
+			if (!pg_md5_encrypt(pw1, user, strlen(user), encrypted_password))
+			{
+				fprintf(stderr, _("Password encryption failed.\n"));
+				success = false;
+			}
+			else
+			{
+				PQExpBufferData buf;
+				PGresult   *res;
+
+				initPQExpBuffer(&buf);
+				printfPQExpBuffer(&buf, "ALTER ROLE %s PASSWORD '%s';",
+								  fmtId(user), encrypted_password);
+				res = PSQLexec(buf.data, false);
+				termPQExpBuffer(&buf);
+				if (!res)
+					success = false;
+				else
+					PQclear(res);
+			}
+		}
+
+		free(pw1);
+		free(pw2);
+	}
+
 	/* \pset -- set printing parameters */
 	else if (strcmp(cmd, "pset") == 0)
 	{
@@ -640,7 +693,7 @@ exec_command(const char *cmd,
 
 	/* \q or \quit */
 	else if (strcmp(cmd, "q") == 0 || strcmp(cmd, "quit") == 0)
-		status = CMD_TERMINATE;
+		status = PSQL_CMD_TERMINATE;
 
 	/* reset(clear) the buffer */
 	else if (strcmp(cmd, "r") == 0 || strcmp(cmd, "reset") == 0)
@@ -780,7 +833,7 @@ exec_command(const char *cmd,
 		if (!query_buf)
 		{
 			psql_error("no query buffer\n");
-			status = CMD_ERROR;
+			status = PSQL_CMD_ERROR;
 		}
 		else
 		{
@@ -884,10 +937,10 @@ exec_command(const char *cmd,
 #endif
 
 	else
-		status = CMD_UNKNOWN;
+		status = PSQL_CMD_UNKNOWN;
 
 	if (!success)
-		status = CMD_ERROR;
+		status = PSQL_CMD_ERROR;
 
 	return status;
 }

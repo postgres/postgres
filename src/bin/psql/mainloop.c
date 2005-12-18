@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.68 2005/10/15 02:49:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.69 2005/12/18 02:17:16 petere Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -41,7 +41,7 @@ MainLoop(FILE *source)
 	int			added_nl_pos;
 	bool		success;
 	volatile int successResult = EXIT_SUCCESS;
-	volatile backslashResult slashCmdStatus = CMD_UNKNOWN;
+	volatile backslashResult slashCmdStatus = PSQL_CMD_UNKNOWN;
 	volatile promptStatus_t prompt_status = PROMPT_READY;
 	volatile int count_eof = 0;
 	volatile bool die_on_error = false;
@@ -104,7 +104,7 @@ MainLoop(FILE *source)
 			psql_scan_finish(scan_state);
 			psql_scan_reset(scan_state);
 			count_eof = 0;
-			slashCmdStatus = CMD_UNKNOWN;
+			slashCmdStatus = PSQL_CMD_UNKNOWN;
 			prompt_status = PROMPT_READY;
 
 			if (pset.cur_cmd_interactive)
@@ -126,7 +126,7 @@ MainLoop(FILE *source)
 
 		fflush(stdout);
 
-		if (slashCmdStatus == CMD_NEWEDIT)
+		if (slashCmdStatus == PSQL_CMD_NEWEDIT)
 		{
 			/*
 			 * just returned from editing the line? then just copy to the
@@ -136,7 +136,7 @@ MainLoop(FILE *source)
 			/* reset parsing state since we are rescanning whole line */
 			resetPQExpBuffer(query_buf);
 			psql_scan_reset(scan_state);
-			slashCmdStatus = CMD_UNKNOWN;
+			slashCmdStatus = PSQL_CMD_UNKNOWN;
 			prompt_status = PROMPT_READY;
 		}
 
@@ -231,7 +231,7 @@ MainLoop(FILE *source)
 			{
 				/* execute query */
 				success = SendQuery(query_buf->data);
-				slashCmdStatus = success ? CMD_SEND : CMD_ERROR;
+				slashCmdStatus = success ? PSQL_CMD_SEND : PSQL_CMD_ERROR;
 
 				resetPQExpBuffer(previous_buf);
 				appendPQExpBufferStr(previous_buf, query_buf->data);
@@ -257,16 +257,16 @@ MainLoop(FILE *source)
 												 query_buf->len > 0 ?
 												 query_buf : previous_buf);
 
-				success = slashCmdStatus != CMD_ERROR;
+				success = slashCmdStatus != PSQL_CMD_ERROR;
 
-				if ((slashCmdStatus == CMD_SEND || slashCmdStatus == CMD_NEWEDIT) &&
+				if ((slashCmdStatus == PSQL_CMD_SEND || slashCmdStatus == PSQL_CMD_NEWEDIT) &&
 					query_buf->len == 0)
 				{
 					/* copy previous buffer to current for handling */
 					appendPQExpBufferStr(query_buf, previous_buf->data);
 				}
 
-				if (slashCmdStatus == CMD_SEND)
+				if (slashCmdStatus == PSQL_CMD_SEND)
 				{
 					success = SendQuery(query_buf->data);
 
@@ -278,7 +278,7 @@ MainLoop(FILE *source)
 					psql_scan_reset(scan_state);
 				}
 
-				if (slashCmdStatus == CMD_TERMINATE)
+				if (slashCmdStatus == PSQL_CMD_TERMINATE)
 					break;
 			}
 
@@ -291,7 +291,7 @@ MainLoop(FILE *source)
 		psql_scan_finish(scan_state);
 		free(line);
 
-		if (slashCmdStatus == CMD_TERMINATE)
+		if (slashCmdStatus == PSQL_CMD_TERMINATE)
 		{
 			successResult = EXIT_SUCCESS;
 			break;

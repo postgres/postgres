@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_role.sgml,v 1.4 2005/11/03 00:51:43 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_role.sgml,v 1.5 2005/12/18 02:17:16 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -356,6 +356,18 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
    if two new sessions start at about the same time when just one
    connection <quote>slot</> remains for the role, it is possible that
    both will fail.  Also, the limit is never enforced for superusers.
+  </para>
+
+  <para>
+   Caution must be exercised when specifying an unencrypted password
+   with this command.  The password will be transmitted to the server
+   in cleartext, and it might also be logged in the client's command
+   history or the server log.  The command <xref
+   linkend="APP-CREATEUSER" endterm="APP-CREATEUSER-title">, however, transmits
+   the password encrypted.  Also, <xref linkend="app-psql"
+   endterm="app-psql-title"> contains a command
+   <command>\password</command> that can be used to safely change the
+   password later.
   </para>
  </refsect1>
 

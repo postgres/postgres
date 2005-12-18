@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.155 2005/12/09 19:19:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.156 2005/12/18 02:17:16 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -1378,6 +1378,19 @@ lo_import 152801
         </listitem>
       </varlistentry>
 
+
+      <varlistentry>
+        <term><literal>\password [ <replaceable class=parameter>username</replaceable> ]</literal>
+        <listitem>
+        <para>
+        Changes the password of the specified user or by default the
+        current user.  This command prompts for the new password,
+        encrypts it, and sends it to the server.  This makes sure that
+        the new password does not appear in the command history, the
+        server log, or elsewhere in cleartext.
+        </para>
+        </listitem>
+      </varlistentry>
 
       <varlistentry>
         <term><literal>\pset <replaceable class="parameter">parameter</replaceable> [ <replaceable class="parameter">value</replaceable> ]</literal></term>
