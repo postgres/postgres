@@ -8,7 +8,6 @@
  *		pull_up_subqueries
  *		do expression preprocessing (including flattening JOIN alias vars)
  *		reduce_outer_joins
- *		simplify_jointree
  *
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
@@ -16,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.32 2005/11/22 18:17:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.33 2005/12/20 02:30:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,11 +28,6 @@
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/lsyscache.h"
-
-
-/* These parameters are set by GUC */
-int			from_collapse_limit;
-int			join_collapse_limit;
 
 
 typedef struct reduce_outer_joins_state
@@ -52,7 +46,6 @@ static void reduce_outer_joins_pass2(Node *jtnode,
 						 reduce_outer_joins_state *state,
 						 PlannerInfo *root,
 						 Relids nonnullable_rels);
-static Relids find_nonnullable_rels(Node *node, bool top_level);
 static void fix_in_clause_relids(List *in_info_list, int varno,
 					 Relids subrelids);
 static Node *find_jointree_node_for_rel(Node *jtnode, int relid);
@@ -333,6 +326,13 @@ pull_up_subqueries(PlannerInfo *root, Node *jtnode, bool below_outer_join)
 			 */
 			root->in_info_list = list_concat(root->in_info_list,
 											 subroot->in_info_list);
+
+			/*
+			 * We don't have to do the equivalent bookkeeping for outer-join
+			 * info, because that hasn't been set up yet.
+			 */
+			Assert(root->oj_info_list == NIL);
+			Assert(subroot->oj_info_list == NIL);
 
 			/*
 			 * Miscellaneous housekeeping.
@@ -695,7 +695,7 @@ reduce_outer_joins_pass2(Node *jtnode,
 		Relids		pass_nonnullable;
 
 		/* Scan quals to see if we can add any nonnullability constraints */
-		pass_nonnullable = find_nonnullable_rels(f->quals, true);
+		pass_nonnullable = find_nonnullable_rels(f->quals);
 		pass_nonnullable = bms_add_members(pass_nonnullable,
 										   nonnullable_rels);
 		/* And recurse --- but only into interesting subtrees */
@@ -772,7 +772,7 @@ reduce_outer_joins_pass2(Node *jtnode,
 			 */
 			if (jointype != JOIN_FULL)
 			{
-				local_nonnullable = find_nonnullable_rels(j->quals, true);
+				local_nonnullable = find_nonnullable_rels(j->quals);
 				local_nonnullable = bms_add_members(local_nonnullable,
 													nonnullable_rels);
 			}
@@ -803,256 +803,6 @@ reduce_outer_joins_pass2(Node *jtnode,
 	else
 		elog(ERROR, "unrecognized node type: %d",
 			 (int) nodeTag(jtnode));
-}
-
-/*
- * find_nonnullable_rels
- *		Determine which base rels are forced nonnullable by given quals
- *
- * We don't use expression_tree_walker here because we don't want to
- * descend through very many kinds of nodes; only the ones we can be sure
- * are strict.	We can descend through the top level of implicit AND'ing,
- * but not through any explicit ANDs (or ORs) below that, since those are not
- * strict constructs.  The List case handles the top-level implicit AND list
- * as well as lists of arguments to strict operators/functions.
- */
-static Relids
-find_nonnullable_rels(Node *node, bool top_level)
-{
-	Relids		result = NULL;
-
-	if (node == NULL)
-		return NULL;
-	if (IsA(node, Var))
-	{
-		Var		   *var = (Var *) node;
-
-		if (var->varlevelsup == 0)
-			result = bms_make_singleton(var->varno);
-	}
-	else if (IsA(node, List))
-	{
-		ListCell   *l;
-
-		foreach(l, (List *) node)
-		{
-			result = bms_join(result, find_nonnullable_rels(lfirst(l),
-															top_level));
-		}
-	}
-	else if (IsA(node, FuncExpr))
-	{
-		FuncExpr   *expr = (FuncExpr *) node;
-
-		if (func_strict(expr->funcid))
-			result = find_nonnullable_rels((Node *) expr->args, false);
-	}
-	else if (IsA(node, OpExpr))
-	{
-		OpExpr	   *expr = (OpExpr *) node;
-
-		if (op_strict(expr->opno))
-			result = find_nonnullable_rels((Node *) expr->args, false);
-	}
-	else if (IsA(node, BoolExpr))
-	{
-		BoolExpr   *expr = (BoolExpr *) node;
-
-		/* NOT is strict, others are not */
-		if (expr->boolop == NOT_EXPR)
-			result = find_nonnullable_rels((Node *) expr->args, false);
-	}
-	else if (IsA(node, RelabelType))
-	{
-		RelabelType *expr = (RelabelType *) node;
-
-		result = find_nonnullable_rels((Node *) expr->arg, top_level);
-	}
-	else if (IsA(node, ConvertRowtypeExpr))
-	{
-		/* not clear this is useful, but it can't hurt */
-		ConvertRowtypeExpr *expr = (ConvertRowtypeExpr *) node;
-
-		result = find_nonnullable_rels((Node *) expr->arg, top_level);
-	}
-	else if (IsA(node, NullTest))
-	{
-		NullTest   *expr = (NullTest *) node;
-
-		/*
-		 * IS NOT NULL can be considered strict, but only at top level; else
-		 * we might have something like NOT (x IS NOT NULL).
-		 */
-		if (top_level && expr->nulltesttype == IS_NOT_NULL)
-			result = find_nonnullable_rels((Node *) expr->arg, false);
-	}
-	else if (IsA(node, BooleanTest))
-	{
-		BooleanTest *expr = (BooleanTest *) node;
-
-		/*
-		 * Appropriate boolean tests are strict at top level.
-		 */
-		if (top_level &&
-			(expr->booltesttype == IS_TRUE ||
-			 expr->booltesttype == IS_FALSE ||
-			 expr->booltesttype == IS_NOT_UNKNOWN))
-			result = find_nonnullable_rels((Node *) expr->arg, false);
-	}
-	return result;
-}
-
-/*
- * simplify_jointree
- *		Attempt to simplify a query's jointree.
- *
- * If we succeed in pulling up a subquery then we might form a jointree
- * in which a FromExpr is a direct child of another FromExpr.  In that
- * case we can consider collapsing the two FromExprs into one.	This is
- * an optional conversion, since the planner will work correctly either
- * way.  But we may find a better plan (at the cost of more planning time)
- * if we merge the two nodes, creating a single join search space out of
- * two.  To allow the user to trade off planning time against plan quality,
- * we provide a control parameter from_collapse_limit that limits the size
- * of the join search space that can be created this way.
- *
- * We also consider flattening explicit inner JOINs into FromExprs (which
- * will in turn allow them to be merged into parent FromExprs).  The tradeoffs
- * here are the same as for flattening FromExprs, but we use a different
- * control parameter so that the user can use explicit JOINs to control the
- * join order even when they are inner JOINs.
- *
- * NOTE: don't try to do this in the same jointree scan that does subquery
- * pullup!	Since we're changing the jointree structure here, that wouldn't
- * work reliably --- see comments for pull_up_subqueries().
- */
-Node *
-simplify_jointree(PlannerInfo *root, Node *jtnode)
-{
-	if (jtnode == NULL)
-		return NULL;
-	if (IsA(jtnode, RangeTblRef))
-	{
-		/* nothing to do here... */
-	}
-	else if (IsA(jtnode, FromExpr))
-	{
-		FromExpr   *f = (FromExpr *) jtnode;
-		List	   *newlist = NIL;
-		int			children_remaining;
-		ListCell   *l;
-
-		children_remaining = list_length(f->fromlist);
-		foreach(l, f->fromlist)
-		{
-			Node	   *child = (Node *) lfirst(l);
-
-			children_remaining--;
-			/* Recursively simplify this child... */
-			child = simplify_jointree(root, child);
-			/* Now, is it a FromExpr? */
-			if (child && IsA(child, FromExpr))
-			{
-				/*
-				 * Yes, so do we want to merge it into parent?	Always do so
-				 * if child has just one element (since that doesn't make the
-				 * parent's list any longer).  Otherwise merge if the
-				 * resulting join list would be no longer than
-				 * from_collapse_limit.
-				 */
-				FromExpr   *subf = (FromExpr *) child;
-				int			childlen = list_length(subf->fromlist);
-				int			myothers = list_length(newlist) + children_remaining;
-
-				if (childlen <= 1 ||
-					(childlen + myothers) <= from_collapse_limit)
-				{
-					newlist = list_concat(newlist, subf->fromlist);
-
-					/*
-					 * By now, the quals have been converted to implicit-AND
-					 * lists, so we just need to join the lists.  NOTE: we put
-					 * the pulled-up quals first.
-					 */
-					f->quals = (Node *) list_concat((List *) subf->quals,
-													(List *) f->quals);
-				}
-				else
-					newlist = lappend(newlist, child);
-			}
-			else
-				newlist = lappend(newlist, child);
-		}
-		f->fromlist = newlist;
-	}
-	else if (IsA(jtnode, JoinExpr))
-	{
-		JoinExpr   *j = (JoinExpr *) jtnode;
-
-		/* Recursively simplify the children... */
-		j->larg = simplify_jointree(root, j->larg);
-		j->rarg = simplify_jointree(root, j->rarg);
-
-		/*
-		 * If it is an outer join, we must not flatten it.	An inner join is
-		 * semantically equivalent to a FromExpr; we convert it to one,
-		 * allowing it to be flattened into its parent, if the resulting
-		 * FromExpr would have no more than join_collapse_limit members.
-		 */
-		if (j->jointype == JOIN_INNER && join_collapse_limit > 1)
-		{
-			int			leftlen,
-						rightlen;
-
-			if (j->larg && IsA(j->larg, FromExpr))
-				leftlen = list_length(((FromExpr *) j->larg)->fromlist);
-			else
-				leftlen = 1;
-			if (j->rarg && IsA(j->rarg, FromExpr))
-				rightlen = list_length(((FromExpr *) j->rarg)->fromlist);
-			else
-				rightlen = 1;
-			if ((leftlen + rightlen) <= join_collapse_limit)
-			{
-				FromExpr   *f = makeNode(FromExpr);
-
-				f->fromlist = NIL;
-				f->quals = NULL;
-
-				if (j->larg && IsA(j->larg, FromExpr))
-				{
-					FromExpr   *subf = (FromExpr *) j->larg;
-
-					f->fromlist = subf->fromlist;
-					f->quals = subf->quals;
-				}
-				else
-					f->fromlist = list_make1(j->larg);
-
-				if (j->rarg && IsA(j->rarg, FromExpr))
-				{
-					FromExpr   *subf = (FromExpr *) j->rarg;
-
-					f->fromlist = list_concat(f->fromlist,
-											  subf->fromlist);
-					f->quals = (Node *) list_concat((List *) f->quals,
-													(List *) subf->quals);
-				}
-				else
-					f->fromlist = lappend(f->fromlist, j->rarg);
-
-				/* pulled-up quals first */
-				f->quals = (Node *) list_concat((List *) f->quals,
-												(List *) j->quals);
-
-				return (Node *) f;
-			}
-		}
-	}
-	else
-		elog(ERROR, "unrecognized node type: %d",
-			 (int) nodeTag(jtnode));
-	return jtnode;
 }
 
 /*
@@ -1128,9 +878,6 @@ get_relids_in_jointree(Node *jtnode)
 
 /*
  * get_relids_for_join: get set of base RT indexes making up a join
- *
- * NB: this will not work reliably after simplify_jointree() is run,
- * since that may eliminate join nodes from the jointree.
  */
 Relids
 get_relids_for_join(PlannerInfo *root, int joinrelid)

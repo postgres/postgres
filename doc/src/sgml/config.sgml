@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.38 2005/12/09 15:51:13 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.39 2005/12/20 02:30:35 tgl Exp $
 -->
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -2028,6 +2028,7 @@ SELECT * FROM parent WHERE key = 2400;
         this many items.  Smaller values reduce planning time but may
         yield inferior query plans.  The default is 8.  It is usually
         wise to keep this less than <xref linkend="guc-geqo-threshold">.
+        For more information see <xref linkend="explicit-joins">.
        </para>
       </listitem>
      </varlistentry>
@@ -2039,48 +2040,24 @@ SELECT * FROM parent WHERE key = 2400;
       </indexterm>
       <listitem>
        <para>
-        The planner will rewrite explicit inner <literal>JOIN</>
-        constructs into lists of <literal>FROM</> items whenever a
-        list of no more than this many items in total would
-        result. Prior to <productname>PostgreSQL</> 7.4, joins
-        specified via the <literal>JOIN</literal> construct would
-        never be reordered by the query planner. The query planner has
-        subsequently been improved so that inner joins written in this
-        form can be reordered; this configuration parameter controls
-        the extent to which this reordering is performed.
-        <note>
-         <para>
-          At present, the order of outer joins specified via the
-          <literal>JOIN</> construct is never adjusted by the query
-          planner; therefore, <varname>join_collapse_limit</> has no
-          effect on this behavior. The planner may be improved to
-          reorder some classes of outer joins in a future release of
-          <productname>PostgreSQL</productname>.
-         </para>
-        </note>
+        The planner will rewrite explicit <literal>JOIN</>
+        constructs (except <literal>FULL JOIN</>s) into lists of
+        <literal>FROM</> items whenever a list of no more than this many items
+        would result.  Smaller values reduce planning time but may
+        yield inferior query plans.
        </para>
 
        <para>
         By default, this variable is set the same as
         <varname>from_collapse_limit</varname>, which is appropriate
         for most uses. Setting it to 1 prevents any reordering of
-        inner <literal>JOIN</>s. Thus, the explicit join order
+        explicit <literal>JOIN</>s. Thus, the explicit join order
         specified in the query will be the actual order in which the
         relations are joined. The query planner does not always choose
         the optimal join order; advanced users may elect to
         temporarily set this variable to 1, and then specify the join
-        order they desire explicitly. Another consequence of setting
-        this variable to 1 is that the query planner will behave more
-        like the <productname>PostgreSQL</productname> 7.3 query
-        planner, which some users might find useful for backward
-        compatibility reasons.
-       </para>
-
-       <para>
-        Setting this variable to a value between 1 and
-        <varname>from_collapse_limit</varname> might be useful to
-        trade off planning time against the quality of the chosen plan
-        (higher values produce better plans).
+        order they desire explicitly.
+        For more information see <xref linkend="explicit-joins">.
        </para>
       </listitem>
      </varlistentry>

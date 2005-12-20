@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.78 2005/11/22 18:17:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.79 2005/12/20 02:30:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -216,12 +216,11 @@ gimme_tree(Gene *tour, int num_gene, GeqoEvalData *evaldata)
 
 			/*
 			 * Construct a RelOptInfo representing the join of these two input
-			 * relations.  These are always inner joins. Note that we expect
-			 * the joinrel not to exist in root->join_rel_list yet, and so the
-			 * paths constructed for it will only include the ones we want.
+			 * relations.  Note that we expect the joinrel not to exist in
+			 * root->join_rel_list yet, and so the paths constructed for it
+			 * will only include the ones we want.
 			 */
-			joinrel = make_join_rel(evaldata->root, outer_rel, inner_rel,
-									JOIN_INNER);
+			joinrel = make_join_rel(evaldata->root, outer_rel, inner_rel);
 
 			/* Can't pop stack here if join order is not valid */
 			if (!joinrel)
@@ -261,6 +260,20 @@ desirable_join(PlannerInfo *root,
 	 */
 	if (have_relevant_joinclause(outer_rel, inner_rel))
 		return true;
+
+	/*
+	 * Join if the rels are members of the same outer-join RHS. This is needed
+	 * to improve the odds that we will find a valid solution in a case where
+	 * an OJ RHS has a clauseless join.
+	 */
+	foreach(l, root->oj_info_list)
+	{
+		OuterJoinInfo *ojinfo = (OuterJoinInfo *) lfirst(l);
+
+		if (bms_is_subset(outer_rel->relids, ojinfo->min_righthand) &&
+			bms_is_subset(inner_rel->relids, ojinfo->min_righthand))
+			return true;
+	}
 
 	/*
 	 * Join if the rels are members of the same IN sub-select.	This is needed

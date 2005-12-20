@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.264 2005/11/28 04:35:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.265 2005/12/20 02:30:35 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1167,6 +1167,7 @@ _outPlannerInfo(StringInfo str, PlannerInfo *node)
 	WRITE_NODE_FIELD(left_join_clauses);
 	WRITE_NODE_FIELD(right_join_clauses);
 	WRITE_NODE_FIELD(full_join_clauses);
+	WRITE_NODE_FIELD(oj_info_list);
 	WRITE_NODE_FIELD(in_info_list);
 	WRITE_NODE_FIELD(query_pathkeys);
 	WRITE_NODE_FIELD(group_pathkeys);
@@ -1201,7 +1202,6 @@ _outRelOptInfo(StringInfo str, RelOptInfo *node)
 	WRITE_FLOAT_FIELD(tuples, "%.0f");
 	WRITE_NODE_FIELD(subplan);
 	WRITE_NODE_FIELD(baserestrictinfo);
-	WRITE_BITMAPSET_FIELD(outerjoinset);
 	WRITE_NODE_FIELD(joininfo);
 	WRITE_BITMAPSET_FIELD(index_outer_relids);
 	WRITE_NODE_FIELD(index_inner_paths);
@@ -1263,6 +1263,17 @@ _outInnerIndexscanInfo(StringInfo str, InnerIndexscanInfo *node)
 	WRITE_BITMAPSET_FIELD(other_relids);
 	WRITE_BOOL_FIELD(isouterjoin);
 	WRITE_NODE_FIELD(best_innerpath);
+}
+
+static void
+_outOuterJoinInfo(StringInfo str, OuterJoinInfo *node)
+{
+	WRITE_NODE_TYPE("OUTERJOININFO");
+
+	WRITE_BITMAPSET_FIELD(min_lefthand);
+	WRITE_BITMAPSET_FIELD(min_righthand);
+	WRITE_BOOL_FIELD(is_full_join);
+	WRITE_BOOL_FIELD(lhs_strict);
 }
 
 static void
@@ -2018,6 +2029,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_InnerIndexscanInfo:
 				_outInnerIndexscanInfo(str, obj);
+				break;
+			case T_OuterJoinInfo:
+				_outOuterJoinInfo(str, obj);
 				break;
 			case T_InClauseInfo:
 				_outInClauseInfo(str, obj);

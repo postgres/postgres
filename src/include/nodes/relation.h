@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.121 2005/11/26 22:14:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.122 2005/12/20 02:30:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,6 +96,8 @@ typedef struct PlannerInfo
 
 	List	   *full_join_clauses;		/* list of RestrictInfos for full
 										 * outer join clauses */
+
+	List	   *oj_info_list;	/* list of OuterJoinInfos */
 
 	List	   *in_info_list;	/* list of InClauseInfos */
 
@@ -201,10 +203,6 @@ typedef struct PlannerInfo
  *					participates (only used for base rels)
  *		baserestrictcost - Estimated cost of evaluating the baserestrictinfo
  *					clauses at a single tuple (only used for base rels)
- *		outerjoinset - For a base rel: if the rel appears within the nullable
- *					side of an outer join, the set of all relids
- *					participating in the highest such outer join; else NULL.
- *					Otherwise, unused.
  *		joininfo  - List of RestrictInfo nodes, containing info about each
  *					join clause in which this relation participates
  *		index_outer_relids - only used for base rels; set of outer relids
@@ -228,10 +226,6 @@ typedef struct PlannerInfo
  * We store baserestrictcost in the RelOptInfo (for base relations) because
  * we know we will need it at least once (to price the sequential scan)
  * and may need it multiple times to price index scans.
- *
- * outerjoinset is used to ensure correct placement of WHERE clauses that
- * apply to outer-joined relations; we must not apply such WHERE clauses
- * until after the outer join is performed.
  *----------
  */
 typedef enum RelOptKind
@@ -277,7 +271,6 @@ typedef struct RelOptInfo
 	List	   *baserestrictinfo;		/* RestrictInfo structures (if base
 										 * rel) */
 	QualCost	baserestrictcost;		/* cost of evaluating the above */
-	Relids		outerjoinset;	/* set of base relids */
 	List	   *joininfo;		/* RestrictInfo structures for join clauses
 								 * involving this rel */
 
@@ -829,6 +822,40 @@ typedef struct InnerIndexscanInfo
 	/* Best path for this lookup key: */
 	Path	   *best_innerpath; /* best inner indexscan, or NULL if none */
 } InnerIndexscanInfo;
+
+/*
+ * Outer join info.
+ *
+ * One-sided outer joins constrain the order of joining partially but not
+ * completely.  We flatten such joins into the planner's top-level list of
+ * relations to join, but record information about each outer join in an
+ * OuterJoinInfo struct.  These structs are kept in the PlannerInfo node's
+ * oj_info_list.
+ *
+ * min_lefthand and min_righthand are the sets of base relids that must be
+ * available on each side when performing the outer join.  lhs_strict is
+ * true if the outer join's condition cannot succeed when the LHS variables
+ * are all NULL (this means that the outer join can commute with upper-level
+ * outer joins even if it appears in their RHS).  We don't bother to set
+ * lhs_strict for FULL JOINs, however.
+ *
+ * It is not valid for either min_lefthand or min_righthand to be empty sets;
+ * if they were, this would break the logic that enforces join order.
+ *
+ * Note: OuterJoinInfo directly represents only LEFT JOIN and FULL JOIN;
+ * RIGHT JOIN is handled by switching the inputs to make it a LEFT JOIN.
+ * We make an OuterJoinInfo for FULL JOINs even though there is no flexibility
+ * of planning for them, because this simplifies make_join_rel()'s API.
+ */
+
+typedef struct OuterJoinInfo
+{
+	NodeTag		type;
+	Relids		min_lefthand;	/* base relids in minimum LHS for join */
+	Relids		min_righthand;	/* base relids in minimum RHS for join */
+	bool		is_full_join;	/* it's a FULL OUTER JOIN */
+	bool		lhs_strict;		/* joinclause is strict for some LHS rel */
+} OuterJoinInfo;
 
 /*
  * IN clause info.

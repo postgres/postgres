@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.195 2005/11/22 18:17:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.196 2005/12/20 02:30:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -353,17 +353,6 @@ subquery_planner(Query *parse, double tuple_fraction,
 		reduce_outer_joins(root);
 
 	/*
-	 * See if we can simplify the jointree; opportunities for this may come
-	 * from having pulled up subqueries, or from flattening explicit JOIN
-	 * syntax.	We must do this after flattening JOIN alias variables, since
-	 * eliminating explicit JOIN nodes from the jointree will cause
-	 * get_relids_for_join() to fail.  But it should happen after
-	 * reduce_outer_joins, anyway.
-	 */
-	parse->jointree = (FromExpr *)
-		simplify_jointree(root, (Node *) parse->jointree);
-
-	/*
 	 * Do the main planning.  If we have an inherited target relation, that
 	 * needs special processing, else go straight to grouping_planner.
 	 */
@@ -567,6 +556,8 @@ inheritance_planner(PlannerInfo *root, List *inheritlist)
 			adjust_inherited_attrs((Node *) root->in_info_list,
 								   parentRTindex, parentOID,
 								   childRTindex, childOID);
+		/* There shouldn't be any OJ info to translate, though */
+		Assert(subroot.oj_info_list == NIL);
 
 		/* Generate plan */
 		subplan = grouping_planner(&subroot, 0.0 /* retrieve all tuples */ );

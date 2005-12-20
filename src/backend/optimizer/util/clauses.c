@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.203 2005/11/22 18:17:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.204 2005/12/20 02:30:36 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -69,6 +69,7 @@ static bool contain_subplans_walker(Node *node, void *context);
 static bool contain_mutable_functions_walker(Node *node, void *context);
 static bool contain_volatile_functions_walker(Node *node, void *context);
 static bool contain_nonstrict_functions_walker(Node *node, void *context);
+static Relids find_nonnullable_rels_walker(Node *node, bool top_level);
 static bool set_coercionform_dontcare_walker(Node *node, void *context);
 static Node *eval_const_expressions_mutator(Node *node,
 							   eval_const_expressions_context *context);
@@ -858,6 +859,131 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 		return true;
 	return expression_tree_walker(node, contain_nonstrict_functions_walker,
 								  context);
+}
+
+
+/*
+ * find_nonnullable_rels
+ *		Determine which base rels are forced nonnullable by given clause.
+ *
+ * Returns the set of all Relids that are referenced in the clause in such
+ * a way that the clause cannot possibly return TRUE if any of these Relids
+ * is an all-NULL row.  (It is OK to err on the side of conservatism; hence
+ * the analysis here is simplistic.)
+ *
+ * The semantics here are subtly different from contain_nonstrict_functions:
+ * that function is concerned with NULL results from arbitrary expressions,
+ * but here we assume that the input is a Boolean expression, and wish to
+ * see if NULL inputs will provably cause a FALSE-or-NULL result.  We expect
+ * the expression to have been AND/OR flattened and converted to implicit-AND
+ * format.
+ *
+ * We don't use expression_tree_walker here because we don't want to
+ * descend through very many kinds of nodes; only the ones we can be sure
+ * are strict.	We can descend through the top level of implicit AND'ing,
+ * but not through any explicit ANDs (or ORs) below that, since those are not
+ * strict constructs.  The List case handles the top-level implicit AND list
+ * as well as lists of arguments to strict operators/functions.
+ */
+Relids
+find_nonnullable_rels(Node *clause)
+{
+	return find_nonnullable_rels_walker(clause, true);
+}
+
+static Relids
+find_nonnullable_rels_walker(Node *node, bool top_level)
+{
+	Relids		result = NULL;
+
+	if (node == NULL)
+		return NULL;
+	if (IsA(node, Var))
+	{
+		Var		   *var = (Var *) node;
+
+		if (var->varlevelsup == 0)
+			result = bms_make_singleton(var->varno);
+	}
+	else if (IsA(node, List))
+	{
+		ListCell   *l;
+
+		foreach(l, (List *) node)
+		{
+			result = bms_join(result,
+							  find_nonnullable_rels_walker(lfirst(l),
+														   top_level));
+		}
+	}
+	else if (IsA(node, FuncExpr))
+	{
+		FuncExpr   *expr = (FuncExpr *) node;
+
+		if (func_strict(expr->funcid))
+			result = find_nonnullable_rels_walker((Node *) expr->args, false);
+	}
+	else if (IsA(node, OpExpr))
+	{
+		OpExpr	   *expr = (OpExpr *) node;
+
+		if (op_strict(expr->opno))
+			result = find_nonnullable_rels_walker((Node *) expr->args, false);
+	}
+	else if (IsA(node, ScalarArrayOpExpr))
+	{
+		/* Strict if it's "foo op ANY array" and op is strict */
+		ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
+
+		if (expr->useOr && op_strict(expr->opno))
+			result = find_nonnullable_rels_walker((Node *) expr->args, false);
+	}
+	else if (IsA(node, BoolExpr))
+	{
+		BoolExpr   *expr = (BoolExpr *) node;
+
+		/* NOT is strict, others are not */
+		if (expr->boolop == NOT_EXPR)
+			result = find_nonnullable_rels_walker((Node *) expr->args, false);
+	}
+	else if (IsA(node, RelabelType))
+	{
+		RelabelType *expr = (RelabelType *) node;
+
+		result = find_nonnullable_rels_walker((Node *) expr->arg, top_level);
+	}
+	else if (IsA(node, ConvertRowtypeExpr))
+	{
+		/* not clear this is useful, but it can't hurt */
+		ConvertRowtypeExpr *expr = (ConvertRowtypeExpr *) node;
+
+		result = find_nonnullable_rels_walker((Node *) expr->arg, top_level);
+	}
+	else if (IsA(node, NullTest))
+	{
+		NullTest   *expr = (NullTest *) node;
+
+		/*
+		 * IS NOT NULL can be considered strict, but only at top level; else
+		 * we might have something like NOT (x IS NOT NULL).
+		 */
+		if (top_level && expr->nulltesttype == IS_NOT_NULL)
+			result = find_nonnullable_rels_walker((Node *) expr->arg, false);
+	}
+	else if (IsA(node, BooleanTest))
+	{
+		BooleanTest *expr = (BooleanTest *) node;
+
+		/*
+		 * Appropriate boolean tests are strict at top level.
+		 */
+		if (top_level &&
+			(expr->booltesttype == IS_TRUE ||
+			 expr->booltesttype == IS_FALSE ||
+			 expr->booltesttype == IS_NOT_UNKNOWN))
+			result = find_nonnullable_rels_walker((Node *) expr->arg, false);
+	}
+	return result;
 }
 
 
@@ -2794,7 +2920,8 @@ expression_tree_walker(Node *node,
 		case T_CaseTestExpr:
 		case T_SetToDefault:
 		case T_RangeTblRef:
-			/* primitive node types with no subnodes */
+		case T_OuterJoinInfo:
+			/* primitive node types with no expression subnodes */
 			break;
 		case T_Aggref:
 			return walker(((Aggref *) node)->target, context);
@@ -3191,7 +3318,8 @@ expression_tree_mutator(Node *node,
 		case T_CaseTestExpr:
 		case T_SetToDefault:
 		case T_RangeTblRef:
-			/* primitive node types with no subnodes */
+		case T_OuterJoinInfo:
+			/* primitive node types with no expression subnodes */
 			return (Node *) copyObject(node);
 		case T_Aggref:
 			{

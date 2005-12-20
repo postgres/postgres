@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/paths.h,v 1.89 2005/11/25 19:47:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/paths.h,v 1.90 2005/12/20 02:30:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,8 +23,7 @@
 extern bool enable_geqo;
 extern int	geqo_threshold;
 
-extern RelOptInfo *make_one_rel(PlannerInfo *root);
-extern RelOptInfo *make_fromexpr_rel(PlannerInfo *root, FromExpr *from);
+extern RelOptInfo *make_one_rel(PlannerInfo *root, List *joinlist);
 
 #ifdef OPTIMIZER_DEBUG
 extern void debug_print_rel(PlannerInfo *root, RelOptInfo *rel);
@@ -88,10 +87,8 @@ extern void add_paths_to_joinrel(PlannerInfo *root, RelOptInfo *joinrel,
  *	  routines to determine which relations to join
  */
 extern List *make_rels_by_joins(PlannerInfo *root, int level, List **joinrels);
-extern RelOptInfo *make_jointree_rel(PlannerInfo *root, Node *jtnode);
 extern RelOptInfo *make_join_rel(PlannerInfo *root,
-			  RelOptInfo *rel1, RelOptInfo *rel2,
-			  JoinType jointype);
+			  RelOptInfo *rel1, RelOptInfo *rel2);
 
 /*
  * pathkeys.c

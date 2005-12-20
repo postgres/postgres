@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.301 2005/11/22 18:17:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.302 2005/12/20 02:30:36 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@
 #include "optimizer/cost.h"
 #include "optimizer/geqo.h"
 #include "optimizer/paths.h"
-#include "optimizer/prep.h"
+#include "optimizer/planmain.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
 #include "postmaster/autovacuum.h"
@@ -1010,7 +1010,7 @@ static struct config_int ConfigureNamesInt[] =
 		{"join_collapse_limit", PGC_USERSET, QUERY_TUNING_OTHER,
 			gettext_noop("Sets the FROM-list size beyond which JOIN constructs are not "
 						 "flattened."),
-			gettext_noop("The planner will flatten explicit inner JOIN "
+			gettext_noop("The planner will flatten explicit JOIN "
 			"constructs into lists of FROM items whenever a list of no more "
 						 "than this many items would result.")
 		},

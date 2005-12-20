@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.138 2005/11/22 18:17:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.139 2005/12/20 02:30:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,7 @@ static void set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					  Index rti, RangeTblEntry *rte);
 static void set_function_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					  RangeTblEntry *rte);
+static RelOptInfo *make_rel_from_joinlist(PlannerInfo *root, List *joinlist);
 static RelOptInfo *make_one_rel_by_joins(PlannerInfo *root, int levels_needed,
 					  List *initial_rels);
 static bool subquery_is_pushdown_safe(Query *subquery, Query *topquery,
@@ -73,7 +74,7 @@ static void recurse_push_qual(Node *setOp, Query *topquery,
  *	  single rel that represents the join of all base rels in the query.
  */
 RelOptInfo *
-make_one_rel(PlannerInfo *root)
+make_one_rel(PlannerInfo *root, List *joinlist)
 {
 	RelOptInfo *rel;
 
@@ -85,10 +86,7 @@ make_one_rel(PlannerInfo *root)
 	/*
 	 * Generate access paths for the entire join tree.
 	 */
-	Assert(root->parse->jointree != NULL &&
-		   IsA(root->parse->jointree, FromExpr));
-
-	rel = make_fromexpr_rel(root, root->parse->jointree);
+	rel = make_rel_from_joinlist(root, joinlist);
 
 	/*
 	 * The result should join all and only the query's base rels.
@@ -528,43 +526,65 @@ set_function_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 }
 
 /*
- * make_fromexpr_rel
- *	  Build access paths for a FromExpr jointree node.
+ * make_rel_from_joinlist
+ *	  Build access paths using a "joinlist" to guide the join path search.
+ *
+ * See comments for deconstruct_jointree() for definition of the joinlist
+ * data structure.
  */
-RelOptInfo *
-make_fromexpr_rel(PlannerInfo *root, FromExpr *from)
+static RelOptInfo *
+make_rel_from_joinlist(PlannerInfo *root, List *joinlist)
 {
 	int			levels_needed;
-	List	   *initial_rels = NIL;
-	ListCell   *jt;
+	List	   *initial_rels;
+	ListCell   *jl;
 
 	/*
-	 * Count the number of child jointree nodes.  This is the depth of the
+	 * Count the number of child joinlist nodes.  This is the depth of the
 	 * dynamic-programming algorithm we must employ to consider all ways of
 	 * joining the child nodes.
 	 */
-	levels_needed = list_length(from->fromlist);
+	levels_needed = list_length(joinlist);
 
 	if (levels_needed <= 0)
 		return NULL;			/* nothing to do? */
 
 	/*
-	 * Construct a list of rels corresponding to the child jointree nodes.
+	 * Construct a list of rels corresponding to the child joinlist nodes.
 	 * This may contain both base rels and rels constructed according to
-	 * explicit JOIN directives.
+	 * sub-joinlists.
 	 */
-	foreach(jt, from->fromlist)
+	initial_rels = NIL;
+	foreach(jl, joinlist)
 	{
-		Node	   *jtnode = (Node *) lfirst(jt);
+		Node	   *jlnode = (Node *) lfirst(jl);
+		RelOptInfo *thisrel;
 
-		initial_rels = lappend(initial_rels,
-							   make_jointree_rel(root, jtnode));
+		if (IsA(jlnode, RangeTblRef))
+		{
+			int			varno = ((RangeTblRef *) jlnode)->rtindex;
+
+			thisrel = find_base_rel(root, varno);
+		}
+		else if (IsA(jlnode, List))
+		{
+			/* Recurse to handle subproblem */
+			thisrel = make_rel_from_joinlist(root, (List *) jlnode);
+		}
+		else
+		{
+			elog(ERROR, "unrecognized joinlist node type: %d",
+				 (int) nodeTag(jlnode));
+			thisrel = NULL;		/* keep compiler quiet */
+		}
+
+		initial_rels = lappend(initial_rels, thisrel);
 	}
 
 	if (levels_needed == 1)
 	{
 		/*
-		 * Single jointree node, so we're done.
+		 * Single joinlist node, so we're done.
 		 */
 		return (RelOptInfo *) linitial(initial_rels);
 	}

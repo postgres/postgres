@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.258 2005/11/22 18:17:11 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.259 2005/12/20 02:30:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -609,6 +609,17 @@ _equalRestrictInfo(RestrictInfo *a, RestrictInfo *b)
 	 * We ignore all the remaining fields, since they may not be set yet, and
 	 * should be derivable from the clause anyway.
 	 */
+
+	return true;
+}
+
+static bool
+_equalOuterJoinInfo(OuterJoinInfo *a, OuterJoinInfo *b)
+{
+	COMPARE_BITMAPSET_FIELD(min_lefthand);
+	COMPARE_BITMAPSET_FIELD(min_righthand);
+	COMPARE_SCALAR_FIELD(is_full_join);
+	COMPARE_SCALAR_FIELD(lhs_strict);
 
 	return true;
 }
@@ -1953,6 +1964,9 @@ equal(void *a, void *b)
 			break;
 		case T_RestrictInfo:
 			retval = _equalRestrictInfo(a, b);
+			break;
+		case T_OuterJoinInfo:
+			retval = _equalOuterJoinInfo(a, b);
 			break;
 		case T_InClauseInfo:
 			retval = _equalInClauseInfo(a, b);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/clauses.h,v 1.80 2005/10/15 02:49:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/clauses.h,v 1.81 2005/12/20 02:30:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,6 +57,7 @@ extern bool contain_subplans(Node *clause);
 extern bool contain_mutable_functions(Node *clause);
 extern bool contain_volatile_functions(Node *clause);
 extern bool contain_nonstrict_functions(Node *clause);
+extern Relids find_nonnullable_rels(Node *clause);
 
 extern bool is_pseudo_constant_clause(Node *clause);
 extern bool is_pseudo_constant_clause_relids(Node *clause, Relids relids);

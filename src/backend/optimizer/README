@@ -40,10 +40,11 @@ is derived from the cheapest Path for the RelOptInfo that includes all the
 base rels of the query.
 
 Possible Paths for a primitive table relation include plain old sequential
-scan, plus index scans for any indexes that exist on the table.  A subquery
-base relation just has one Path, a "SubqueryScan" path (which links to the
-subplan that was built by a recursive invocation of the planner).  Likewise
-a function-RTE base relation has only one possible Path.
+scan, plus index scans for any indexes that exist on the table, plus bitmap
+index scans using one or more indexes.  A subquery base relation just has
+one Path, a "SubqueryScan" path (which links to the subplan that was built
+by a recursive invocation of the planner).  Likewise a function-RTE base
+relation has only one possible Path.
 
 Joins always occur using two RelOptInfos.  One is outer, the other inner.
 Outers drive lookups of values in the inner.  In a nested loop, lookups of
@@ -84,20 +85,26 @@ If we have only a single base relation in the query, we are done.
 Otherwise we have to figure out how to join the base relations into a
 single join relation.
 
-2) If the query's FROM clause contains explicit JOIN clauses, we join
-those pairs of relations in exactly the tree structure indicated by the
-JOIN clauses.  (This is absolutely necessary when dealing with outer JOINs.
-For inner JOINs we have more flexibility in theory, but don't currently
-exploit it in practice.)  For each such join pair, we generate a Path
-for each feasible join method, and select the cheapest Path.  Note that
-the JOIN clause structure determines the join Path structure, but it
-doesn't constrain the join implementation method at each join (nestloop,
-merge, hash), nor does it say which rel is considered outer or inner at
-each join.  We consider all these possibilities in building Paths.
+2) Normally, any explicit JOIN clauses are "flattened" so that we just
+have a list of relations to join.  However, FULL OUTER JOIN clauses are
+never flattened, and other kinds of JOIN might not be either, if the
+flattening process is stopped by join_collapse_limit or from_collapse_limit
+restrictions.  Therefore, we end up with a planning problem that contains
+both lists of relations to be joined in any order, and JOIN nodes that
+force a particular join order.  For each un-flattened JOIN node, we join
+exactly that pair of relations (after recursively planning their inputs,
+if the inputs aren't single base relations).  We generate a Path for each
+feasible join method, and select the cheapest Path.  Note that the JOIN
+clause structure determines the join Path structure, but it doesn't
+constrain the join implementation method at each join (nestloop, merge,
+hash), nor does it say which rel is considered outer or inner at each
+join.  We consider all these possibilities in building Paths.
 
 3) At the top level of the FROM clause we will have a list of relations
-that are either base rels or joinrels constructed per JOIN directives.
-We can join these rels together in any order the planner sees fit.
+that are either base rels or joinrels constructed per un-flattened JOIN
+directives.  (This is also the situation, recursively, when we can flatten
+sub-joins underneath an un-flattenable JOIN into a list of relations to
+join.)  We can join these rels together in any order the planner sees fit.
 The standard (non-GEQO) planner does this as follows:
 
 Consider joining each RelOptInfo to each other RelOptInfo specified in its
@@ -156,11 +163,75 @@ joining {1 2 3} to {4} (left-handed), {4} to {1 2 3} (right-handed), and
 scanning code produces these potential join combinations one at a time,
 all the ways to produce the same set of joined base rels will share the
 same RelOptInfo, so the paths produced from different join combinations
-that produce equivalent joinrels will compete in add_path.
+that produce equivalent joinrels will compete in add_path().
 
 Once we have built the final join rel, we use either the cheapest path
 for it or the cheapest path with the desired ordering (if that's cheaper
 than applying a sort to the cheapest other path).
+
+If the query contains one-sided outer joins (LEFT or RIGHT joins), or
+"IN (sub-select)" WHERE clauses that were converted to joins, then some of
+the possible join orders may be illegal.  These are excluded by having
+make_join_rel consult side lists of outer joins and IN joins to see
+whether a proposed join is illegal.  (The same consultation allows it
+to see which join style should be applied for a valid join, ie,
+JOIN_INNER, JOIN_LEFT, etc.)
+
+
+Valid OUTER JOIN optimizations
+------------------------------
+
+The planner's treatment of outer join reordering is based on the following
+identities:
+
+1.	(A leftjoin B on (Pab)) innerjoin C on (Pac)
+	= (A innerjoin C on (Pac)) leftjoin B on (Pab)
+
+where Pac is a predicate referencing A and C, etc (in this case, clearly
+Pac cannot reference B, or the transformation is nonsensical).
+
+2.	(A leftjoin B on (Pab)) leftjoin C on (Pac)
+	= (A leftjoin C on (Pac)) leftjoin B on (Pab)
+
+3.	(A leftjoin B on (Pab)) leftjoin C on (Pbc)
+	= A leftjoin (B leftjoin C on (Pbc)) on (Pab)
+
+Identity 3 only holds if predicate Pbc must fail for all-null B rows
+(that is, Pbc is strict for at least one column of B).  If Pbc is not
+strict, the first form might produce some rows with nonnull C columns
+where the second form would make those entries null.
+
+RIGHT JOIN is equivalent to LEFT JOIN after switching the two input
+tables, so the same identities work for right joins.  Only FULL JOIN
+cannot be re-ordered at all.
+
+An example of a case that does *not* work is moving an innerjoin into or
+out of the nullable side of an outer join:
+
+	A leftjoin (B join C on (Pbc)) on (Pab)
+	!= (A leftjoin B on (Pab)) join C on (Pbc)
+
+FULL JOIN ordering is enforced by not collapsing FULL JOIN nodes when
+translating the jointree to "joinlist" representation.  LEFT and RIGHT
+JOIN nodes are normally collapsed so that they participate fully in the
+join order search.  To avoid generating illegal join orders, the planner
+creates an OuterJoinInfo node for each outer join, and make_join_rel
+checks this list to decide if a proposed join is legal.
+
+What we store in OuterJoinInfo nodes are the minimum sets of Relids
+required on each side of the join to form the outer join.  Note that
+these are minimums; there's no explicit maximum, since joining other
+rels to the OJ's syntactic rels may be legal.  Per identities 1 and 2,
+non-FULL joins can be freely associated into the lefthand side of an
+OJ, but in general they can't be associated into the righthand side.
+So the restriction enforced by make_join_rel is that a proposed join
+can't join across a RHS boundary (ie, join anything inside the RHS
+to anything else) unless the join validly implements some outer join.
+(To support use of identity 3, we have to allow cases where an apparent
+violation of a lower OJ's RHS is committed while forming an upper OJ.
+If this wouldn't in fact be legal, the upper OJ's minimum LHS or RHS
+set must be expanded to include the whole of the lower OJ, thereby
+preventing it from being formed before the lower OJ is.)
 
 
 Pulling up subqueries
@@ -180,13 +251,13 @@ of the join tree.  Each FROM-list is planned using the dynamic-programming
 search method described above.
 
 If pulling up a subquery produces a FROM-list as a direct child of another
-FROM-list (with no explicit JOIN directives between), then we can merge the
-two FROM-lists together.  Once that's done, the subquery is an absolutely
-integral part of the outer query and will not constrain the join tree
-search space at all.  However, that could result in unpleasant growth of
-planning time, since the dynamic-programming search has runtime exponential
-in the number of FROM-items considered.  Therefore, we don't merge
-FROM-lists if the result would have too many FROM-items in one list.
+FROM-list, then we can merge the two FROM-lists together.  Once that's
+done, the subquery is an absolutely integral part of the outer query and
+will not constrain the join tree search space at all.  However, that could
+result in unpleasant growth of planning time, since the dynamic-programming
+search has runtime exponential in the number of FROM-items considered.
+Therefore, we don't merge FROM-lists if the result would have too many
+FROM-items in one list.
 
 
 Optimizer Functions

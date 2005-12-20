@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.54 2005/11/04 23:14:00 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.55 2005/12/20 02:30:35 tgl Exp $
 -->
 
  <chapter id="performance-tips">
@@ -627,7 +627,7 @@ SELECT * FROM a, b, c WHERE a.id = b.id AND b.ref = c.id;
   </para>
 
   <para>
-   When the query involves outer joins, the planner has much less freedom
+   When the query involves outer joins, the planner has less freedom
    than it does for plain (inner) joins. For example, consider
 <programlisting>
 SELECT * FROM a LEFT JOIN (b JOIN c ON (b.ref = c.id)) ON (a.id = b.id);
@@ -637,16 +637,30 @@ SELECT * FROM a LEFT JOIN (b JOIN c ON (b.ref = c.id)) ON (a.id = b.id);
    emitted for each row of A that has no matching row in the join of B and C.
    Therefore the planner has no choice of join order here: it must join
    B to C and then join A to that result.  Accordingly, this query takes
-   less time to plan than the previous query.
+   less time to plan than the previous query.  In other cases, the planner
+   may be able to determine that more than one join order is safe.
+   For example, given
+<programlisting>
+SELECT * FROM a LEFT JOIN b ON (a.bid = b.id) LEFT JOIN c ON (a.cid = c.id);
+</programlisting>
+   it is valid to join A to either B or C first.  Currently, only
+   <literal>FULL JOIN</> completely constrains the join order.  Most
+   practical cases involving <literal>LEFT JOIN</> or <literal>RIGHT JOIN</>
+   can be rearranged to some extent.
   </para>
 
   <para>
    Explicit inner join syntax (<literal>INNER JOIN</>, <literal>CROSS
    JOIN</>, or unadorned <literal>JOIN</>) is semantically the same as
-   listing the input relations in <literal>FROM</>, so it does not need to
-   constrain the join order.  But it is possible to instruct the
-   <productname>PostgreSQL</productname> query planner to treat
-   explicit inner <literal>JOIN</>s as constraining the join order anyway.
+   listing the input relations in <literal>FROM</>, so it does not
+   constrain the join order.
+  </para>
+
+  <para>
+   Even though most kinds of <literal>JOIN</> don't completely constrain
+   the join order, it is possible to instruct the
+   <productname>PostgreSQL</productname> query planner to treat all
+   <literal>JOIN</> clauses as constraining the join order anyway.
    For example, these three queries are logically equivalent:
 <programlisting>
 SELECT * FROM a, b, c WHERE a.id = b.id AND b.ref = c.id;
@@ -660,7 +674,8 @@ SELECT * FROM a JOIN (b JOIN c ON (b.ref = c.id)) ON (a.id = b.id);
   </para>
 
   <para>
-   To force the planner to follow the <literal>JOIN</> order for inner joins,
+   To force the planner to follow the join order laid out by explicit
+   <literal>JOIN</>s,
    set the <xref linkend="guc-join-collapse-limit"> run-time parameter to 1.
    (Other possible values are discussed below.)
   </para>
@@ -697,9 +712,9 @@ FROM x, y,
 WHERE somethingelse;
 </programlisting>
    This situation might arise from use of a view that contains a join;
-   the view's <literal>SELECT</> rule will be inserted in place of the view reference,
-   yielding a query much like the above.  Normally, the planner will try
-   to collapse the subquery into the parent, yielding
+   the view's <literal>SELECT</> rule will be inserted in place of the view
+   reference, yielding a query much like the above.  Normally, the planner
+   will try to collapse the subquery into the parent, yielding
 <programlisting>
 SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
 </programlisting>
@@ -722,12 +737,12 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
    linkend="guc-join-collapse-limit">
    are similarly named because they do almost the same thing: one controls
    when the planner will <quote>flatten out</> subselects, and the
-   other controls when it will flatten out explicit inner joins.  Typically
+   other controls when it will flatten out explicit joins.  Typically
    you would either set <varname>join_collapse_limit</> equal to
    <varname>from_collapse_limit</> (so that explicit joins and subselects
    act similarly) or set <varname>join_collapse_limit</> to 1 (if you want
    to control join order with explicit joins).  But you might set them
-   differently if you are trying to fine-tune the trade off between planning
+   differently if you are trying to fine-tune the trade-off between planning
    time and run time.
   </para>
  </sect1>
