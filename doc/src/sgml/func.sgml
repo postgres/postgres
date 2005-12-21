@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.299 2005/12/21 16:02:24 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.300 2005/12/21 23:22:55 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -5205,6 +5205,12 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
         <entry> <literal>*</literal> </entry>
         <entry><literal>900 * interval '1 second'</literal></entry>
         <entry><literal>interval '00:15:00'</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>*</literal> </entry>
+        <entry><literal>21 * interval '1 day'</literal></entry>
+        <entry><literal>interval '21 days'</literal></entry>
        </row>
 
        <row>
