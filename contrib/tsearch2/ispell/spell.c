@@ -819,7 +819,7 @@ CheckAffix(const char *word, size_t len, AFFIX * Affix, char flagflags, char *ne
 		data = (pg_wchar *) palloc((dat_len + 1) * sizeof(pg_wchar));
 		data_len = pg_mb2wchar_with_len(newword, data, dat_len);
 
-		if (!(err = pg_regexec(&(Affix->reg.regex), data, dat_len, 0, NULL, 1, subs, 0)))
+		if (!(err = pg_regexec(&(Affix->reg.regex), data, data_len, 0, NULL, 1, subs, 0)))
 		{
 			pfree(data);
 			return newword;
