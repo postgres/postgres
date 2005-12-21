@@ -6,6 +6,7 @@
 #include "postgres.h"
 
 #include "spell.h"
+#include "common.h"
 #include "ts_locale.h"
 
 #define MAX_NORM 1024
@@ -13,7 +14,7 @@
 
 #define ERRSTRSIZE	1024
 
-#define STRNCASECMP(x,y)		pg_strncasecmp(x, y, strlen(y))
+#define STRNCMP(s,p)	strncmp( (s), (p), strlen(p) )
 #define GETWCHAR(W,L,N,T) ( ((uint8*)(W))[ ((T)==FF_PREFIX) ? (N) : ( (L) - 1 - (N) ) ] )
 #define GETCHAR(A,N,T)	  GETWCHAR( (A)->repl, (A)->replen, N, T )
 
@@ -40,6 +41,18 @@ strnduplicate(char *s, int len)
 	d[len] = '\0';
 	return d;
 }
+
+static char *
+findchar(char *str, int c) {
+	while( *str ) {
+		if ( t_iseq(str, c) ) 
+			return str;
+		str+=pg_mblen(str);
+	}
+
+	return NULL;
+}
+		
 
 /* backward string compare for suffix tree operations */
 static int
@@ -145,15 +158,17 @@ NIImportDictionary(IspellDict * Conf, const char *filename)
 		char	   *s;
 		const char *flag;
 
+		pg_verifymbstr( str, strlen(str), false);
+
 		flag = NULL;
-		if ((s = strchr(str, '/')))
+		if ((s = findchar(str, '/')))
 		{
 			*s++ = '\0';
 			flag = s;
 			while (*s)
 			{
-				if (isprint((unsigned char) *s) &&
-					!isspace((unsigned char) *s))
+				/* we allow only single encoded flags for faster works */
+				if (pg_mblen(s) == 1 && t_isprint(s) && !t_isspace(s))
 					s++;
 				else
 				{
@@ -164,16 +179,19 @@ NIImportDictionary(IspellDict * Conf, const char *filename)
 		}
 		else
 			flag = "";
-		lowerstr(str);
-		/* Dont load words if first letter is not required */
-		/* It allows to optimize loading at  search time   */
+
+
 		s = str;
 		while (*s)
 		{
-			if (*s == '\r' || *s == '\n')
+			if (t_isspace(s)) {
 				*s = '\0';
-			s++;
+				break;
+			}
+			s+=pg_mblen(s);
 		}
+		lowerstr(str);
+
 		NIAddSpell(Conf, str, flag);
 	}
 	fclose(dict);
@@ -253,11 +271,12 @@ NIAddAffix(IspellDict * Conf, int flag, char flagflags, const char *mask, const 
 	}
 	else
 	{
+		int masklen = strlen(mask);
 		Conf->Affix[Conf->naffixes].issimple = 0;
 		Conf->Affix[Conf->naffixes].isregis = 0;
-		Conf->Affix[Conf->naffixes].mask = (char *) malloc(strlen(mask) + 2);
-		if (type == FF_SUFFIX)
-			sprintf(Conf->Affix[Conf->naffixes].mask, "%s$", mask);
+		Conf->Affix[Conf->naffixes].mask = (char *) malloc(masklen + 2);
+		if (type == FF_SUFFIX) 
+			sprintf(Conf->Affix[Conf->naffixes].mask, "%s$", mask); 
 		else
 			sprintf(Conf->Affix[Conf->naffixes].mask, "^%s", mask);
 	}
@@ -277,37 +296,93 @@ NIAddAffix(IspellDict * Conf, int flag, char flagflags, const char *mask, const 
 	return (0);
 }
 
-static char *
-remove_spaces(char *dist, char *src)
-{
-	char	   *d,
-			   *s;
+#define PAE_WAIT_MASK	0
+#define PAE_INMASK 	1
+#define PAE_WAIT_FIND 	2
+#define PAE_INFIND 	3
+#define PAE_WAIT_REPL 	4
+#define PAE_INREPL 	5
 
-	d = dist;
-	s = src;
-	while (*s)
-	{
-		if (*s != ' ' && *s != '-' && *s != '\t')
-		{
-			*d = *s;
-			d++;
-		}
-		s++;
+static bool
+parse_affentry( char *str, char *mask, char *find, char *repl ) {
+	int state = PAE_WAIT_MASK;
+	char 	*pmask=mask, *pfind=find, *prepl=repl;
+
+	*mask = *find = *repl = '\0';
+
+	while(*str) {
+		if ( state == PAE_WAIT_MASK ) {
+			if ( t_iseq(str,'#') ) 
+				return false;
+			else if (!t_isspace(str)) {
+				COPYCHAR(pmask, str);
+				pmask += pg_mblen(str);
+				state = PAE_INMASK;
+			}
+		} else if ( state == PAE_INMASK ) {
+			if ( t_iseq(str,'>') ) {
+				*pmask='\0';
+				state = PAE_WAIT_FIND;
+			} else if (!t_isspace(str)) {
+				COPYCHAR(pmask, str);
+				pmask += pg_mblen(str);
+			}
+		} else if ( state == PAE_WAIT_FIND ) {
+			if ( t_iseq(str,'-') ) {
+				state = PAE_INFIND;
+			} else if (t_isalpha(str)) {
+				COPYCHAR(prepl,str);
+				prepl += pg_mblen(str);
+				state = PAE_INREPL;
+			} else if (!t_isspace(str))
+				ts_error(ERROR, "Affix parse error");
+		} else if ( state == PAE_INFIND ) {
+			if ( t_iseq(str,',') ) {
+				*pfind='\0';
+				state = PAE_WAIT_REPL;
+			} else if (t_isalpha(str)) {
+				COPYCHAR(pfind,str);
+				pfind += pg_mblen(str);
+			} else if (!t_isspace(str))
+				ts_error(ERROR, "Affix parse error");
+		} else if ( state == PAE_WAIT_REPL ) {
+			if ( t_iseq(str,'-') ) {
+				break; /* void repl */
+			} else if ( t_isalpha(str) ) {
+				COPYCHAR(prepl,str);
+				prepl += pg_mblen(str);
+				state = PAE_INREPL;
+			} else if (!t_isspace(str))
+				ts_error(ERROR, "Affix parse error");
+		} else if ( state == PAE_INREPL ) {
+			if ( t_iseq(str,'#') ) {
+				*prepl = '\0';
+				break;
+			} else if ( t_isalpha(str) ) { 
+				COPYCHAR(prepl,str);
+				prepl += pg_mblen(str);
+			} else if (!t_isspace(str))
+				ts_error(ERROR, "Affix parse error");
+		} else
+			ts_error(ERROR, "Unknown state in parse_affentry: %d", state);
+
+		str += pg_mblen(str);
 	}
-	*d = 0;
-	return (dist);
-}
 
+	*pmask = *pfind = *prepl = '\0';
+
+	return ( *mask && ( *find || *repl) ) ? true : false;
+} 
 
 int
 NIImportAffixes(IspellDict * Conf, const char *filename)
 {
 	char		str[BUFSIZ];
+	char		tmpstr[BUFSIZ];
 	char		mask[BUFSIZ];
 	char		find[BUFSIZ];
 	char		repl[BUFSIZ];
 	char	   *s;
-	int			i;
 	int			suffixes = 0;
 	int			prefixes = 0;
 	int			flag = 0;
@@ -320,37 +395,45 @@ NIImportAffixes(IspellDict * Conf, const char *filename)
 
 	while (fgets(str, sizeof(str), affix))
 	{
-		if (STRNCASECMP(str, "compoundwords") == 0)
+		pg_verifymbstr( str, strlen(str), false);
+		memcpy(tmpstr, str, 32); /* compoundwords... */
+		tmpstr[32]='\0';
+		lowerstr(tmpstr);
+		if (STRNCMP(tmpstr, "compoundwords") == 0)
 		{
-			s = strchr(str, 'l');
+			s = findchar(str, 'l');
 			if (s)
 			{
-				while (*s != ' ')
-					s++;
-				while (*s == ' ')
-					s++;
-				Conf->compoundcontrol = *s;
+				while (*s && !t_isspace(s)) s++;
+				while (*s && t_isspace(s)) s++;
+				if ( *s && pg_mblen(s) == 1 ) 
+					Conf->compoundcontrol = *s;
 				continue;
 			}
 		}
-		if (STRNCASECMP(str, "suffixes") == 0)
+		if (STRNCMP(tmpstr, "suffixes") == 0)
 		{
 			suffixes = 1;
 			prefixes = 0;
 			continue;
 		}
-		if (STRNCASECMP(str, "prefixes") == 0)
+		if (STRNCMP(tmpstr, "prefixes") == 0)
 		{
 			suffixes = 0;
 			prefixes = 1;
 			continue;
 		}
-		if (STRNCASECMP(str, "flag ") == 0)
+		if (STRNCMP(tmpstr, "flag") == 0)
 		{
-			s = str + 5;
+			s = str + 4;
 			flagflags = 0;
-			while (*s == ' ')
-				s++;
+
+			while (*s && t_isspace(s)) s++;
+
+			/* allow only single-encoded flags */
+			if ( pg_mblen(s) != 1 )
+				continue;			
+
 			if (*s == '*')
 			{
 				flagflags |= FF_CROSSPRODUCT;
@@ -365,43 +448,23 @@ NIImportAffixes(IspellDict * Conf, const char *filename)
 			if (*s == '\\')
 				s++;
 
+			/* allow only single-encoded flags */
+			if ( pg_mblen(s) != 1 ) {
+				flagflags = 0;
+				continue;
+			}
+
 			flag = (unsigned char) *s;
 			continue;
 		}
 		if ((!suffixes) && (!prefixes))
 			continue;
-		if ((s = strchr(str, '#')))
-			*s = 0;
-		if (!*str)
-			continue;
+
 		lowerstr(str);
-		strcpy(mask, "");
-		strcpy(find, "");
-		strcpy(repl, "");
-		i = sscanf(str, "%[^>\n]>%[^,\n],%[^\n]", mask, find, repl);
-		remove_spaces(str, repl);
-		strcpy(repl, str);
-		remove_spaces(str, find);
-		strcpy(find, str);
-		remove_spaces(str, mask);
-		strcpy(mask, str);
-		switch (i)
-		{
-			case 3:
-				break;
-			case 2:
-				if (*find != '\0')
-				{
-					strcpy(repl, find);
-					strcpy(find, "");
-				}
-				break;
-			default:
-				continue;
-		}
+		if ( !parse_affentry(str, mask, find, repl) )
+			continue;
 
 		NIAddAffix(Conf, flag, flagflags, mask, find, repl, suffixes ? FF_SUFFIX : FF_PREFIX);
-
 	}
 	fclose(affix);
 
@@ -768,30 +831,28 @@ CheckAffix(const char *word, size_t len, AFFIX * Affix, char flagflags, char *ne
 	{
 		if (Affix->compile)
 		{
-			RS_compile(&(Affix->reg.regis), (Affix->type == FF_SUFFIX) ? 1 : 0, Affix->mask);
+			RS_compile(&(Affix->reg.regis), (Affix->type == FF_SUFFIX) ? true : false, Affix->mask);
 			Affix->compile = 0;
 		}
-		if (RS_execute(&(Affix->reg.regis), newword, -1))
+		if (RS_execute(&(Affix->reg.regis), newword))
 			return newword;
 	}
 	else
 	{
-		regmatch_t	subs[2];	/* workaround for apache&linux */
 		int			err;
 		pg_wchar   *data;
 		size_t		data_len;
-		int			dat_len;
+		int			newword_len;
 
 		if (Affix->compile)
 		{
 			int			wmasklen,
 						masklen = strlen(Affix->mask);
 			pg_wchar   *mask;
-
 			mask = (pg_wchar *) palloc((masklen + 1) * sizeof(pg_wchar));
 			wmasklen = pg_mb2wchar_with_len(Affix->mask, mask, masklen);
 
-			err = pg_regcomp(&(Affix->reg.regex), mask, wmasklen, REG_EXTENDED | REG_ICASE | REG_NOSUB);
+			err = pg_regcomp(&(Affix->reg.regex), mask, wmasklen, REG_ADVANCED | REG_NOSUB);
 			pfree(mask);
 			if (err)
 			{
@@ -804,11 +865,11 @@ CheckAffix(const char *word, size_t len, AFFIX * Affix, char flagflags, char *ne
 		}
 
 		/* Convert data string to wide characters */
-		dat_len = strlen(newword);
-		data = (pg_wchar *) palloc((dat_len + 1) * sizeof(pg_wchar));
-		data_len = pg_mb2wchar_with_len(newword, data, dat_len);
+		newword_len = strlen(newword);
+		data = (pg_wchar *) palloc((newword_len + 1) * sizeof(pg_wchar));
+		data_len = pg_mb2wchar_with_len(newword, data, newword_len);
 
-		if (!(err = pg_regexec(&(Affix->reg.regex), data, dat_len, 0, NULL, 1, subs, 0)))
+		if (!(err = pg_regexec(&(Affix->reg.regex), data, data_len, 0, NULL, 0, NULL, 0)))
 		{
 			pfree(data);
 			return newword;

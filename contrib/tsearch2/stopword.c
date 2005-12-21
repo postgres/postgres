@@ -4,8 +4,6 @@
  */
 #include "postgres.h"
 
-#include <ctype.h>
-
 #include "miscadmin.h"
 
 #include "common.h"
@@ -71,6 +69,8 @@ readstoplist(text *in, StopList * s)
 		while (fgets(buf, STOPBUFLEN, hin))
 		{
 			buf[strlen(buf) - 1] = '\0';
+			pg_verifymbstr( buf, strlen(buf), false );	
+			lowerstr(buf);
 			if (*buf == '\0')
 				continue;
 

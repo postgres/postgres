@@ -27,12 +27,12 @@ typedef struct Regis
 				unused:15;
 }	Regis;
 
-int			RS_isRegis(const char *str);
+bool			RS_isRegis(const char *str);
 
-int			RS_compile(Regis * r, int issuffix, const char *str);
+void			RS_compile(Regis * r, bool issuffix, char *str);
 void		RS_free(Regis * r);
 
-/*возвращает 1 если матчится */
-int			RS_execute(Regis * r, const char *str, int len);
+/*returns true if matches */
+bool			RS_execute(Regis * r, char *str);
 
 #endif

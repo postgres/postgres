@@ -57,7 +57,7 @@ int _t_isprint( char *ptr );
 	int lll = pg_mblen( s );			\
 							\
 	while( lll-- ) 					\
-		TOUCHAR(d+lll) = TOUCHAR(s+lll);	\
+		TOUCHAR((d)+lll) = TOUCHAR((s)+lll);	\
 } while(0)
 
 		
