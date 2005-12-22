@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Dec 17 14:03:20 EST 2005
+Last updated:		Thu Dec 22 18:05:31 EST 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -718,6 +718,10 @@ Dependency Checking
 * Flush cached query plans when the dependent objects change,
   when the cardinality of parameters changes dramatically, or
   when new ANALYZE statistics are available
+
+  A more complex solution would be to save multiple plans for different
+  cardinality and use the appropriate plan based on the EXECUTE values.
+
 * Track dependencies in function bodies and recompile/invalidate
 
   This is particularly important for references to temporary tables
