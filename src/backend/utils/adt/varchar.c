@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.102 2003/08/04 04:03:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.102.4.1 2005/12/22 22:50:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -549,11 +549,14 @@ bpchareq(PG_FUNCTION_ARGS)
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	/* fast path for different-length inputs */
+	/*
+	 * Since we only care about equality or not-equality, we can avoid all
+	 * the expense of strcoll() here, and just do bitwise comparison.
+	 */
 	if (len1 != len2)
 		result = false;
 	else
-		result = (varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2) == 0);
+		result = (strncmp(VARDATA(arg1), VARDATA(arg2), len1) == 0);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -573,11 +576,14 @@ bpcharne(PG_FUNCTION_ARGS)
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	/* fast path for different-length inputs */
+	/*
+	 * Since we only care about equality or not-equality, we can avoid all
+	 * the expense of strcoll() here, and just do bitwise comparison.
+	 */
 	if (len1 != len2)
 		result = true;
 	else
-		result = (varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2) != 0);
+		result = (strncmp(VARDATA(arg1), VARDATA(arg2), len1) != 0);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -690,7 +696,9 @@ bpcharcmp(PG_FUNCTION_ARGS)
  * bpchar needs a specialized hash function because we want to ignore
  * trailing blanks in comparisons.
  *
- * XXX is there any need for locale-specific behavior here?
+ * Note: currently there is no need for locale-specific behavior here,
+ * but if we ever change the semantics of bpchar comparison to trust
+ * strcoll() completely, we'd need to do something different in non-C locales.
  */
 Datum
 hashbpchar(PG_FUNCTION_ARGS)
