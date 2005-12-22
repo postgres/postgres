@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.92.2.3 2004/02/01 04:05:13 joe Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.92.2.4 2005/12/22 22:50:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -759,6 +759,15 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 		*(a2p + len2) = '\0';
 
 		result = strcoll(a1p, a2p);
+
+		/*
+		 * In some locales strcoll() can claim that nonidentical strings are
+		 * equal.  Believing that would be bad news for a number of reasons,
+		 * so we follow Perl's lead and sort "equal" strings according to
+		 * strcmp().
+		 */
+		if (result == 0)
+			result = strcmp(a1p, a2p);
 
 		pfree(a1p);
 		pfree(a2p);
