@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.139.2.1 2005/11/22 18:23:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.139.2.2 2005/12/22 22:50:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -938,6 +938,15 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 
 		result = strcoll(a1p, a2p);
 
+		/*
+		 * In some locales strcoll() can claim that nonidentical strings are
+		 * equal.  Believing that would be bad news for a number of reasons,
+		 * so we follow Perl's lead and sort "equal" strings according to
+		 * strcmp().
+		 */
+		if (result == 0)
+			result = strcmp(a1p, a2p);
+
 		if (a1p != a1buf)
 			pfree(a1p);
 		if (a2p != a2buf)
@@ -984,11 +993,15 @@ texteq(PG_FUNCTION_ARGS)
 	text	   *arg2 = PG_GETARG_TEXT_P(1);
 	bool		result;
 
-	/* fast path for different-length inputs */
+	/*
+	 * Since we only care about equality or not-equality, we can avoid all
+	 * the expense of strcoll() here, and just do bitwise comparison.
+	 */
 	if (VARSIZE(arg1) != VARSIZE(arg2))
 		result = false;
 	else
-		result = (text_cmp(arg1, arg2) == 0);
+		result = (strncmp(VARDATA(arg1), VARDATA(arg2),
+						  VARSIZE(arg1) - VARHDRSZ) == 0);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -1003,11 +1016,15 @@ textne(PG_FUNCTION_ARGS)
 	text	   *arg2 = PG_GETARG_TEXT_P(1);
 	bool		result;
 
-	/* fast path for different-length inputs */
+	/*
+	 * Since we only care about equality or not-equality, we can avoid all
+	 * the expense of strcoll() here, and just do bitwise comparison.
+	 */
 	if (VARSIZE(arg1) != VARSIZE(arg2))
 		result = true;
 	else
-		result = (text_cmp(arg1, arg2) != 0);
+		result = (strncmp(VARDATA(arg1), VARDATA(arg2),
+						  VARSIZE(arg1) - VARHDRSZ) != 0);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
