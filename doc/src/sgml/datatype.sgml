@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.163 2005/10/22 19:33:57 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.164 2005/12/22 21:45:19 momjian Exp $
 -->
 
  <chapter id="datatype">
@@ -1841,9 +1841,20 @@ January 8 04:05:06 1999 PST
      </para>
 
      <para>
-      The optional precision
-      <replaceable>p</replaceable> should be between 0 and 6, and
-      defaults to the precision of the input literal.
+      The optional subsecond precision <replaceable>p</replaceable> should 
+      be between 0 and 6, and defaults to the precision of the input literal.
+     </para>
+
+     <para>
+      Internally <type>interval</> values are stored as months, days,
+      and seconds. This is done because the number of days in a month
+      varies, and a day can have 23 or 25 hours if a daylight savings
+      time adjustment is involved. Because intervals are usually created
+      from constant strings or <type>timestamp</> subtraction, this
+      storage method works well in most cases. Functions
+      <function>justify_days</> and <function>justify_hours</> are
+      available for adjusting days and hours that overflow their normal
+      periods.
      </para>
     </sect3>
 
@@ -1936,7 +1947,7 @@ January 8 04:05:06 1999 PST
       <literal>CURRENT_DATE</literal>, <literal>CURRENT_TIME</literal>, 
       <literal>CURRENT_TIMESTAMP</literal>, <literal>LOCALTIME</literal>, 
       <literal>LOCALTIMESTAMP</literal>.  The latter four accept an 
-      optional precision specification.  (See <xref 
+      optional subsecond precision specification.  (See <xref 
       linkend="functions-datetime-current">.)  Note however that these are
       SQL functions and are <emphasis>not</> recognized as data input strings.
      </para>
