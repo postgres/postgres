@@ -401,7 +401,7 @@
 
 #deadlock_timeout = 1000		# in milliseconds
 #max_locks_per_transaction = 64		# min 10
-# note: each lock table slot uses ~220 bytes of shared memory, and there are
+# note: each lock table slot uses ~270 bytes of shared memory, and there are
 # max_locks_per_transaction * (max_connections + max_prepared_transactions)
 # lock table slots.
 
