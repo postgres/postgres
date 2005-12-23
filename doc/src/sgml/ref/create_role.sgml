@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_role.sgml,v 1.5 2005/12/18 02:17:16 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_role.sgml,v 1.6 2005/12/23 16:46:39 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -188,10 +188,13 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
       <listitem>
        <para>
         Sets the role's password.  (A password is only of use for
-        roles having the <literal>LOGIN</literal> attribute, but you can
-        nonetheless define one for roles without it.)
-        If you do not plan to use password
-        authentication you can omit this option.
+        roles having the <literal>LOGIN</literal> attribute, but you
+        can nonetheless define one for roles without it.)  If you do
+        not plan to use password authentication you can omit this
+        option.  If no password is specified, the password will be set
+        to null and password authentication will always fail for that
+        user.  A null password can optionally be written explicitly as
+        <literal>PASSWORD NULL</literal>.
        </para>
       </listitem>
      </varlistentry>

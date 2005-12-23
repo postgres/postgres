@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.517 2005/12/11 10:54:27 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.518 2005/12/23 16:46:39 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -615,6 +615,10 @@ OptRoleElem:
 				{
 					$$ = makeDefElem("password",
 									 (Node *)makeString($2));
+				}
+			| PASSWORD NULL_P
+				{
+					$$ = makeDefElem("password", NULL);
 				}
 			| ENCRYPTED PASSWORD Sconst
 				{

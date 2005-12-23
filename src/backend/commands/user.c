@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.166 2005/11/22 18:17:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.167 2005/12/23 16:46:39 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -225,7 +225,7 @@ CreateRole(CreateRoleStmt *stmt)
 				 defel->defname);
 	}
 
-	if (dpassword)
+	if (dpassword && dpassword->arg)
 		password = strVal(dpassword->arg);
 	if (dissuper)
 		issuper = intVal(dissuper->arg) != 0;
@@ -517,7 +517,7 @@ AlterRole(AlterRoleStmt *stmt)
 				 defel->defname);
 	}
 
-	if (dpassword)
+	if (dpassword && dpassword->arg)
 		password = strVal(dpassword->arg);
 	if (dissuper)
 		issuper = intVal(dissuper->arg);
@@ -573,7 +573,7 @@ AlterRole(AlterRoleStmt *stmt)
 			  !dconnlimit &&
 			  !rolemembers &&
 			  !validUntil &&
-			  password &&
+			  dpassword &&
 			  roleid == GetUserId()))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
@@ -649,6 +649,13 @@ AlterRole(AlterRoleStmt *stmt)
 				DirectFunctionCall1(textin, CStringGetDatum(encrypted_password));
 		}
 		new_record_repl[Anum_pg_authid_rolpassword - 1] = 'r';
+	}
+
+	/* unset password */
+	if (dpassword && dpassword->arg == NULL)
+	{
+		new_record_repl[Anum_pg_authid_rolpassword - 1] = 'r';
+		new_record_nulls[Anum_pg_authid_rolpassword - 1] = 'n';
 	}
 
 	/* valid until */
