@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.156 2005/12/18 02:17:16 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.157 2005/12/23 01:16:38 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -12,7 +12,6 @@
 #undef mkdir
 #endif
 
-#include <errno.h>
 #include <ctype.h>
 #ifdef HAVE_PWD_H
 #include <pwd.h>
@@ -35,7 +34,6 @@
 
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"
-#include "libpq/crypt.h"
 #include "dumputils.h"
 
 #include "common.h"
@@ -638,14 +636,16 @@ exec_command(const char *cmd,
 		{
 			char	   *opt0 = psql_scan_slash_option(scan_state, OT_SQLID, NULL, true);
 			char	   *user;
-			char		encrypted_password[MD5_PASSWD_LEN + 1];
+			char	   *encrypted_password;
 
 			if (opt0)
 				user = opt0;
 			else
 				user = PQuser(pset.db);
 
-			if (!pg_md5_encrypt(pw1, user, strlen(user), encrypted_password))
+			encrypted_password = pg_make_encrypted_password(pw1, user);
+
+			if (!encrypted_password)
 			{
 				fprintf(stderr, _("Password encryption failed.\n"));
 				success = false;
@@ -656,7 +656,7 @@ exec_command(const char *cmd,
 				PGresult   *res;
 
 				initPQExpBuffer(&buf);
-				printfPQExpBuffer(&buf, "ALTER ROLE %s PASSWORD '%s';",
+				printfPQExpBuffer(&buf, "ALTER USER %s PASSWORD '%s';",
 								  fmtId(user), encrypted_password);
 				res = PSQLexec(buf.data, false);
 				termPQExpBuffer(&buf);
@@ -664,6 +664,7 @@ exec_command(const char *cmd,
 					success = false;
 				else
 					PQclear(res);
+				PQfreemem(encrypted_password);
 			}
 		}
 

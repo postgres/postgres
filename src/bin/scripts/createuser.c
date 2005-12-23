@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.24 2005/12/18 02:17:16 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.25 2005/12/23 01:16:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -13,7 +13,6 @@
 #include "postgres_fe.h"
 #include "common.h"
 #include "dumputils.h"
-#include "libpq/crypt.h"
 
 
 static void help(const char *progname);
@@ -250,14 +249,17 @@ main(int argc, char *argv[])
 
 		if (encrypted != TRI_NO)
 		{
-			char		encrypted_password[MD5_PASSWD_LEN + 1];
+			char	   *encrypted_password;
 
-			if (!pg_md5_encrypt(newpassword, newuser, strlen(newuser), encrypted_password))
+			encrypted_password = pg_make_encrypted_password(newpassword,
+															newuser);
+			if (!encrypted_password)
 			{
 				fprintf(stderr, _("Password encryption failed.\n"));
 				exit(1);
 			}
 			appendStringLiteral(&sql, encrypted_password, false);
+			PQfreemem(encrypted_password);
 		}
 		else
 			appendStringLiteral(&sql, newpassword, false);

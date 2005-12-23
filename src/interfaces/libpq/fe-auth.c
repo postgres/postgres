@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.108 2005/11/22 18:17:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.109 2005/12/23 01:16:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -530,4 +530,41 @@ pg_fe_getauthname(char *PQerrormsg)
 	pgunlock_thread();
 
 	return authn;
+}
+
+
+/*
+ * pg_make_encrypted_password -- exported routine to encrypt a password
+ *
+ * This is intended to be used by client applications that wish to send
+ * commands like ALTER USER joe PASSWORD 'pwd'.  The password need not
+ * be sent in cleartext if it is encrypted on the client side.  This is
+ * good because it ensures the cleartext password won't end up in logs,
+ * pg_stat displays, etc.  We export the function so that clients won't
+ * be dependent on low-level details like whether the enceyption is MD5
+ * or something else.
+ *
+ * Arguments are the cleartext password, and the SQL name of the user it
+ * is for.
+ *
+ * Return value is a malloc'd string, or NULL if out-of-memory.  The client
+ * may assume the string doesn't contain any weird characters that would
+ * require escaping.
+ */
+char *
+pg_make_encrypted_password(const char *passwd, const char *user)
+{
+	char	   *crypt_pwd;
+
+	crypt_pwd = malloc(MD5_PASSWD_LEN + 1);
+	if (!crypt_pwd)
+		return NULL;
+
+	if (!pg_md5_encrypt(passwd, user, strlen(user), crypt_pwd))
+	{
+		free(crypt_pwd);
+		return NULL;
+	}
+
+	return crypt_pwd;
 }
