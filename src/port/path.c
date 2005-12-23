@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.50.4.1 2005/01/26 19:24:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.50.4.2 2005/12/23 22:34:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -333,6 +333,27 @@ get_progname(const char *argv0)
 
 
 /*
+ * dir_strcmp: strcmp except any two DIR_SEP characters are considered equal
+ */
+static int
+dir_strcmp(const char *s1, const char *s2)
+{
+	while (*s1 && *s2)
+	{
+		if (*s1 != *s2 &&
+			!(IS_DIR_SEP(*s1) && IS_DIR_SEP(*s2)))
+			return (int) *s1 - (int) *s2;
+		s1++, s2++;
+	}
+	if (*s1)
+		return 1;				/* s1 longer */
+	if (*s2)
+		return -1;				/* s2 longer */
+	return 0;
+}
+
+
+/*
  * make_relative_path - make a path relative to the actual binary location
  *
  * This function exists to support relocation of installation trees.
@@ -342,37 +363,67 @@ get_progname(const char *argv0)
  *	bin_path is the compiled-in path to the directory of executables
  *	my_exec_path is the actual location of my executable
  *
- * If target_path matches bin_path up to the last directory component of
- * bin_path, then we build the result as my_exec_path (less the executable
- * name and last directory) joined to the non-matching part of target_path.
- * Otherwise, we return target_path as-is.
- * 
+ * We determine the common prefix of target_path and bin_path, then compare
+ * the remainder of bin_path to the last directory component(s) of
+ * my_exec_path.  If they match, build the result as the part of my_exec_path
+ * preceding the match, joined to the remainder of target_path.  If no match,
+ * return target_path as-is.
+ *
  * For example:
  *		target_path  = '/usr/local/share/postgresql'
- *		bin_path     = '/usr/local/bin'
+ *		bin_path	 = '/usr/local/bin'
  *		my_exec_path = '/opt/pgsql/bin/postmaster'
- * Given these inputs we would return '/opt/pgsql/share/postgresql'
+ * Given these inputs, the common prefix is '/usr/local/', the tail of
+ * bin_path is 'bin' which does match the last directory component of
+ * my_exec_path, so we would return '/opt/pgsql/share/postgresql'
  */
 static void
 make_relative_path(char *ret_path, const char *target_path,
 				   const char *bin_path, const char *my_exec_path)
 {
-	const char *bin_end;
 	int			prefix_len;
+	int			tail_start;
+	int			tail_len;
+	int			i;
 
-	bin_end = last_dir_separator(bin_path);
-	if (!bin_end)
-		goto no_match;
-	prefix_len = bin_end - bin_path + 1;
-	if (strncmp(target_path, bin_path, prefix_len) != 0)
-		goto no_match;
+	/*
+	 * Determine the common prefix --- note we require it to end on a
+	 * directory separator, consider eg '/usr/lib' and '/usr/libexec'.
+	 */
+	prefix_len = 0;
+	for (i = 0; target_path[i] && bin_path[i]; i++)
+	{
+		if (IS_DIR_SEP(target_path[i]) && IS_DIR_SEP(bin_path[i]))
+			prefix_len = i + 1;
+		else if (target_path[i] != bin_path[i])
+			break;
+	}
+	if (prefix_len == 0)
+		goto no_match;			/* no common prefix? */
+	tail_len = strlen(bin_path) - prefix_len;
 
+	/*
+	 * Set up my_exec_path without the actual executable name, and
+	 * canonicalize to simplify comparison to bin_path.
+	 */
 	StrNCpy(ret_path, my_exec_path, MAXPGPATH);
 	trim_directory(ret_path);	/* remove my executable name */
-	trim_directory(ret_path);	/* remove last directory component (/bin) */
-	join_path_components(ret_path, ret_path, target_path + prefix_len);
 	canonicalize_path(ret_path);
-	return;
+
+	/*
+	 * Tail match?
+	 */
+	tail_start = (int) strlen(ret_path) - tail_len;
+	if (tail_start > 0 &&
+		IS_DIR_SEP(ret_path[tail_start-1]) &&
+		dir_strcmp(ret_path + tail_start, bin_path + prefix_len) == 0)
+	{
+		ret_path[tail_start] = '\0';
+		trim_trailing_separator(ret_path);
+		join_path_components(ret_path, ret_path, target_path + prefix_len);
+		canonicalize_path(ret_path);
+		return;
+	}
 
 no_match:
 	StrNCpy(ret_path, target_path, MAXPGPATH);
