@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.302 2005/12/20 02:30:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.303 2005/12/23 00:38:04 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1902,7 +1902,7 @@ static struct config_string ConfigureNamesString[] =
 			GUC_LIST_INPUT | GUC_LIST_QUOTE
 		},
 		&namespace_search_path,
-		"$user,public", assign_search_path, NULL
+		"\"$user\",public", assign_search_path, NULL
 	},
 
 	{
