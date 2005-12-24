@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Dec 24 13:36:54 EST 2005
+   Last updated: Sat Dec 24 14:29:33 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -111,7 +111,7 @@ General Questions
    Generate the patch in contextual diff format. If you are unfamiliar
    with this, you might find the script src/tools/makediff/difforig
    useful. Unified diffs are only preferrable if the file changes are
-   single-line changes and do not rely on the surrouding lines.
+   single-line changes and do not rely on the surrounding lines.
    
    Ensure that your patch is generated against the most recent version of
    the code. If it is a patch adding new functionality, the most recent
