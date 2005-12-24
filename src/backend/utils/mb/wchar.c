@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.48 2005/12/24 09:35:36 ishii Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.49 2005/12/24 16:49:48 momjian Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -28,7 +28,8 @@
 /*
  * SQL/ASCII
  */
-static int	pg_ascii2wchar_with_len
+static int
+pg_ascii2wchar_with_len
 			(const unsigned char *from, pg_wchar *to, int len)
 {
 	int			cnt = 0;
@@ -40,19 +41,19 @@ static int	pg_ascii2wchar_with_len
 		cnt++;
 	}
 	*to = 0;
-	return (cnt);
+	return cnt;
 }
 
 static int
 pg_ascii_mblen(const unsigned char *s)
 {
-	return (1);
+	return 1;
 }
 
 static int
 pg_ascii_dsplen(const unsigned char *s)
 {
-	return (1);
+	return 1;
 }
 
 /*
@@ -93,7 +94,7 @@ static int	pg_euc2wchar_with_len
 		cnt++;
 	}
 	*to = 0;
-	return (cnt);
+	return cnt;
 }
 
 static int
@@ -109,7 +110,7 @@ pg_euc_mblen(const unsigned char *s)
 		len = 2;
 	else
 		len = 1;
-	return (len);
+	return len;
 }
 
 static int
@@ -125,7 +126,7 @@ pg_euc_dsplen(const unsigned char *s)
 		len = 2;
 	else
 		len = 1;
-	return (len);
+	return len;
 }
 
 /*
@@ -134,13 +135,13 @@ pg_euc_dsplen(const unsigned char *s)
 static int	pg_eucjp2wchar_with_len
 			(const unsigned char *from, pg_wchar *to, int len)
 {
-	return (pg_euc2wchar_with_len(from, to, len));
+	return pg_euc2wchar_with_len(from, to, len);
 }
 
 static int
 pg_eucjp_mblen(const unsigned char *s)
 {
-	return (pg_euc_mblen(s));
+	return pg_euc_mblen(s);
 }
 
 static int
@@ -156,7 +157,7 @@ pg_eucjp_dsplen(const unsigned char *s)
 		len = 2;
 	else
 		len = 1;
-	return (len);
+	return len;
 }
 
 /*
@@ -165,19 +166,19 @@ pg_eucjp_dsplen(const unsigned char *s)
 static int	pg_euckr2wchar_with_len
 			(const unsigned char *from, pg_wchar *to, int len)
 {
-	return (pg_euc2wchar_with_len(from, to, len));
+	return pg_euc2wchar_with_len(from, to, len);
 }
 
 static int
 pg_euckr_mblen(const unsigned char *s)
 {
-	return (pg_euc_mblen(s));
+	return pg_euc_mblen(s);
 }
 
 static int
 pg_euckr_dsplen(const unsigned char *s)
 {
-	return (pg_euc_dsplen(s));
+	return pg_euc_dsplen(s);
 }
 
 /*
@@ -220,7 +221,7 @@ static int	pg_euccn2wchar_with_len
 		cnt++;
 	}
 	*to = 0;
-	return (cnt);
+	return cnt;
 }
 
 static int
@@ -232,7 +233,7 @@ pg_euccn_mblen(const unsigned char *s)
 		len = 2;
 	else
 		len = 1;
-	return (len);
+	return len;
 }
 
 static int
@@ -244,7 +245,7 @@ pg_euccn_dsplen(const unsigned char *s)
 		len = 2;
 	else
 		len = 1;
-	return (len);
+	return len;
 }
 
 /*
@@ -288,7 +289,7 @@ static int	pg_euctw2wchar_with_len
 		cnt++;
 	}
 	*to = 0;
-	return (cnt);
+	return cnt;
 }
 
 static int
@@ -304,7 +305,7 @@ pg_euctw_mblen(const unsigned char *s)
 		len = 2;
 	else
 		len = 1;
-	return (len);
+	return len;
 }
 
 static int
@@ -320,7 +321,7 @@ pg_euctw_dsplen(const unsigned char *s)
 		len = 2;
 	else
 		len = 1;
-	return (len);
+	return len;
 }
 
 /*
@@ -329,19 +330,19 @@ pg_euctw_dsplen(const unsigned char *s)
 static int
 pg_johab2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 {
-	return (pg_euc2wchar_with_len(from, to, len));
+	return pg_euc2wchar_with_len(from, to, len);
 }
 
 static int
 pg_johab_mblen(const unsigned char *s)
 {
-	return (pg_euc_mblen(s));
+	return pg_euc_mblen(s);
 }
 
 static int
 pg_johab_dsplen(const unsigned char *s)
 {
-	return (pg_euc_dsplen(s));
+	return pg_euc_dsplen(s);
 }
 
 /*
@@ -392,7 +393,7 @@ pg_utf2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 		cnt++;
 	}
 	*to = 0;
-	return (cnt);
+	return cnt;
 }
 
 /*
@@ -415,7 +416,7 @@ pg_utf_mblen(const unsigned char *s)
 		len = 5;
 	else if ((*s & 0xfe) == 0xfc)
 		len = 6;
-	return (len);
+	return len;
 }
 
 static int
@@ -474,7 +475,7 @@ pg_mule2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 		cnt++;
 	}
 	*to = 0;
-	return (cnt);
+	return cnt;
 }
 
 int
@@ -494,7 +495,7 @@ pg_mule_mblen(const unsigned char *s)
 	{							/* assume ASCII */
 		len = 1;
 	}
-	return (len);
+	return len;
 }
 
 static int
@@ -518,19 +519,19 @@ pg_latin12wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 		cnt++;
 	}
 	*to = 0;
-	return (cnt);
+	return cnt;
 }
 
 static int
 pg_latin1_mblen(const unsigned char *s)
 {
-	return (1);
+	return 1;
 }
 
 static int
 pg_latin1_dsplen(const unsigned char *s)
 {
-	return (1);
+	return 1;
 }
 
 /*
@@ -553,7 +554,7 @@ pg_sjis_mblen(const unsigned char *s)
 	{							/* should be ASCII */
 		len = 1;
 	}
-	return (len);
+	return len;
 }
 
 static int
@@ -573,7 +574,7 @@ pg_sjis_dsplen(const unsigned char *s)
 	{							/* should be ASCII */
 		len = 1;
 	}
-	return (len);
+	return len;
 }
 
 /*
@@ -592,7 +593,7 @@ pg_big5_mblen(const unsigned char *s)
 	{							/* should be ASCII */
 		len = 1;
 	}
-	return (len);
+	return len;
 }
 
 static int
@@ -608,7 +609,7 @@ pg_big5_dsplen(const unsigned char *s)
 	{							/* should be ASCII */
 		len = 1;
 	}
-	return (len);
+	return len;
 }
 
 /*
@@ -627,7 +628,7 @@ pg_gbk_mblen(const unsigned char *s)
 	{							/* should be ASCII */
 		len = 1;
 	}
-	return (len);
+	return len;
 }
 
 static int
@@ -643,7 +644,7 @@ pg_gbk_dsplen(const unsigned char *s)
 	{							/* should be ASCII */
 		len = 1;
 	}
-	return (len);
+	return len;
 }
 
 /*
@@ -662,7 +663,7 @@ pg_uhc_mblen(const unsigned char *s)
 	{							/* should be ASCII */
 		len = 1;
 	}
-	return (len);
+	return len;
 }
 
 static int
@@ -678,7 +679,7 @@ pg_uhc_dsplen(const unsigned char *s)
 	{							/* should be ASCII */
 		len = 1;
 	}
-	return (len);
+	return len;
 }
 
 /*
@@ -703,7 +704,7 @@ pg_gb18030_mblen(const unsigned char *s)
 		else
 			len = 2;
 	}
-	return (len);
+	return len;
 }
 
 static int
@@ -717,7 +718,7 @@ pg_gb18030_dsplen(const unsigned char *s)
 	}
 	else
 		len = 2;
-	return (len);
+	return len;
 }
 
 
@@ -763,7 +764,7 @@ pg_wchar_tbl pg_wchar_table[] = {
 int
 pg_mic_mblen(const unsigned char *mbstr)
 {
-	return (pg_mule_mblen(mbstr));
+	return pg_mule_mblen(mbstr);
 }
 
 /*
