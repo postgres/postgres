@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.63 2005/10/15 02:49:45 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.64 2005/12/24 18:11:30 momjian Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -54,64 +54,64 @@ typedef unsigned int pg_wchar;
 /*
  * Official single byte encodings (0x81-0x8e)
  */
-#define LC_ISO8859_1	0x81	/* ISO8859 Latin 1 */
-#define LC_ISO8859_2	0x82	/* ISO8859 Latin 2 */
-#define LC_ISO8859_3	0x83	/* ISO8859 Latin 3 */
-#define LC_ISO8859_4	0x84	/* ISO8859 Latin 4 */
-#define LC_TIS620	0x85		/* Thai (not supported yet) */
-#define LC_ISO8859_7	0x86	/* Greek (not supported yet) */
-#define LC_ISO8859_6	0x87	/* Arabic (not supported yet) */
-#define LC_ISO8859_8	0x88	/* Hebrew (not supported yet) */
-#define LC_JISX0201K	0x89	/* Japanese 1 byte kana */
-#define LC_JISX0201R	0x8a	/* Japanese 1 byte Roman */
+#define LC_ISO8859_1		0x81	/* ISO8859 Latin 1 */
+#define LC_ISO8859_2		0x82	/* ISO8859 Latin 2 */
+#define LC_ISO8859_3		0x83	/* ISO8859 Latin 3 */
+#define LC_ISO8859_4		0x84	/* ISO8859 Latin 4 */
+#define LC_TIS620			0x85	/* Thai (not supported yet) */
+#define LC_ISO8859_7		0x86	/* Greek (not supported yet) */
+#define LC_ISO8859_6		0x87	/* Arabic (not supported yet) */
+#define LC_ISO8859_8		0x88	/* Hebrew (not supported yet) */
+#define LC_JISX0201K		0x89	/* Japanese 1 byte kana */
+#define LC_JISX0201R		0x8a	/* Japanese 1 byte Roman */
 /* Note that 0x8b seems to be unused in as of Emacs 20.7.
  * However, there might be a chance that 0x8b could be used
  * in later version of Emacs.
  */
-#define LC_KOI8_R	0x8b		/* Cyrillic KOI8-R */
-#define LC_KOI8_U	0x8b		/* Cyrillic KOI8-U */
-#define LC_ISO8859_5	0x8c	/* ISO8859 Cyrillic */
-#define LC_ISO8859_9	0x8d	/* ISO8859 Latin 5 (not supported yet) */
-/* #define FREE		0x8e	free (unused) */
+#define LC_KOI8_R			0x8b	/* Cyrillic KOI8-R */
+#define LC_KOI8_U			0x8b	/* Cyrillic KOI8-U */
+#define LC_ISO8859_5		0x8c	/* ISO8859 Cyrillic */
+#define LC_ISO8859_9		0x8d	/* ISO8859 Latin 5 (not supported yet) */
+/* #define FREE				0x8e	free (unused) */
 
 /*
  * Unused
  */
-#define CONTROL_1	0x8f		/* control characters (unused) */
+#define CONTROL_1			0x8f	/* control characters (unused) */
 
 /*
  * Official multibyte byte encodings (0x90-0x99)
  * 0x9a-0x9d are free. 0x9e and 0x9f are reserved.
  */
 #define LC_JISX0208_1978	0x90	/* Japanese Kanji, old JIS (not supported) */
-/* #define FREE		0x90	free (unused) */
-#define LC_GB2312_80	0x91	/* Chinese */
-#define LC_JISX0208 0x92		/* Japanese Kanji (JIS X 0208) */
-#define LC_KS5601	0x93		/* Korean */
-#define LC_JISX0212 0x94		/* Japanese Kanji (JIS X 0212) */
-#define LC_CNS11643_1	0x95	/* CNS 11643-1992 Plane 1 */
-#define LC_CNS11643_2	0x96	/* CNS 11643-1992 Plane 2 */
-/* #define FREE		0x97	free (unused) */
-#define LC_BIG5_1	0x98		/* Plane 1 Chinese traditional (not supported) */
-#define LC_BIG5_2	0x99		/* Plane 1 Chinese traditional (not supported) */
+/* #define FREE				0x90	free (unused) */
+#define LC_GB2312_80		0x91	/* Chinese */
+#define LC_JISX0208 		0x92		/* Japanese Kanji (JIS X 0208) */
+#define LC_KS5601			0x93		/* Korean */
+#define LC_JISX0212 		0x94		/* Japanese Kanji (JIS X 0212) */
+#define LC_CNS11643_1		0x95	/* CNS 11643-1992 Plane 1 */
+#define LC_CNS11643_2		0x96	/* CNS 11643-1992 Plane 2 */
+/* #define FREE				0x97	free (unused) */
+#define LC_BIG5_1			0x98		/* Plane 1 Chinese traditional (not supported) */
+#define LC_BIG5_2			0x99		/* Plane 1 Chinese traditional (not supported) */
 
 /*
  * Private single byte encodings (0xa0-0xef)
  */
-#define LC_SISHENG	0xa0		/* Chinese SiSheng characters for
+#define LC_SISHENG			0xa0		/* Chinese SiSheng characters for
 								 * PinYin/ZhuYin (not supported) */
-#define LC_IPA		0xa1		/* IPA (International Phonetic Association)
+#define LC_IPA				0xa1		/* IPA (International Phonetic Association)
 								 * (not supported) */
-#define LC_VISCII_LOWER 0xa2	/* Vietnamese VISCII1.1 lower-case (not
+#define LC_VISCII_LOWER 	0xa2	/* Vietnamese VISCII1.1 lower-case (not
 								 * supported) */
-#define LC_VISCII_UPPER 0xa3	/* Vietnamese VISCII1.1 upper-case (not
+#define LC_VISCII_UPPER 	0xa3	/* Vietnamese VISCII1.1 upper-case (not
 								 * supported) */
-#define LC_ARABIC_DIGIT 0xa4	/* Arabic digit (not supported) */
+#define LC_ARABIC_DIGIT 	0xa4	/* Arabic digit (not supported) */
 #define LC_ARABIC_1_COLUMN	0xa5	/* Arabic 1-column (not supported) */
 #define LC_ASCII_RIGHT_TO_LEFT	0xa6	/* ASCII (left half of ISO8859-1) with
 										 * right-to-left direction (not
 										 * supported) */
-#define LC_LAO		0xa7		/* Lao characters (ISO10646 0E80..0EDF) (not
+#define LC_LAO				0xa7		/* Lao characters (ISO10646 0E80..0EDF) (not
 								 * supported) */
 #define LC_ARABIC_2_COLUMN	0xa8	/* Arabic 1-column (not supported) */
 
@@ -121,18 +121,18 @@ typedef unsigned int pg_wchar;
 #define LC_INDIAN_1_COLUMN	0xf0/* Indian charset for 1-column width glypps
 								 * (not supported) */
 #define LC_TIBETAN_1_COLUMN 0xf1	/* Tibetan 1 column glyph (not supported) */
-#define LC_ETHIOPIC 0xf5		/* Ethiopic characters (not supported) */
-#define LC_CNS11643_3	0xf6	/* CNS 11643-1992 Plane 3 */
-#define LC_CNS11643_4	0xf7	/* CNS 11643-1992 Plane 4 */
-#define LC_CNS11643_5	0xf8	/* CNS 11643-1992 Plane 5 */
-#define LC_CNS11643_6	0xf9	/* CNS 11643-1992 Plane 6 */
-#define LC_CNS11643_7	0xfa	/* CNS 11643-1992 Plane 7 */
+#define LC_ETHIOPIC 		0xf5		/* Ethiopic characters (not supported) */
+#define LC_CNS11643_3		0xf6	/* CNS 11643-1992 Plane 3 */
+#define LC_CNS11643_4		0xf7	/* CNS 11643-1992 Plane 4 */
+#define LC_CNS11643_5		0xf8	/* CNS 11643-1992 Plane 5 */
+#define LC_CNS11643_6		0xf9	/* CNS 11643-1992 Plane 6 */
+#define LC_CNS11643_7		0xfa	/* CNS 11643-1992 Plane 7 */
 #define LC_INDIAN_2_COLUMN	0xfb/* Indian charset for 2-column width glypps
 								 * (not supported) */
-#define LC_TIBETAN	0xfc		/* Tibetan (not supported) */
-/* #define FREE		0xfd	free (unused) */
-/* #define FREE		0xfe	free (unused) */
-/* #define FREE		0xff	free (unused) */
+#define LC_TIBETAN			0xfc		/* Tibetan (not supported) */
+/* #define FREE				0xfd	free (unused) */
+/* #define FREE				0xfe	free (unused) */
+/* #define FREE				0xff	free (unused) */
 
 /*
  * Encoding numeral identificators
