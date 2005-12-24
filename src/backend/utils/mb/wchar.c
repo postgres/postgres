@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.40 2004/12/03 01:20:20 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.40.4.1 2005/12/24 10:11:32 ishii Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -58,7 +58,6 @@ pg_ascii_dsplen(const unsigned char *s)
 /*
  * EUC
  */
-
 static int	pg_euc2wchar_with_len
 			(const unsigned char *from, pg_wchar *to, int len)
 {
@@ -66,26 +65,26 @@ static int	pg_euc2wchar_with_len
 
 	while (len > 0 && *from)
 	{
-		if (*from == SS2 && len >= 2)
+		if (*from == SS2 && len >= 2)	/* JIS X 0201 (so called "1 byte KANA") */
 		{
 			from++;
-			*to = 0xff & *from++;
+			*to = (SS2 << 8) | *from++;
 			len -= 2;
 		}
-		else if (*from == SS3 && len >= 3)
+		else if (*from == SS3 && len >= 3)		/* JIS X 0212 KANJI */
 		{
 			from++;
-			*to = *from++ << 8;
-			*to |= 0x3f & *from++;
+			*to = (SS3 << 16) | (*from++ << 8);
+			*to |= *from++;
 			len -= 3;
 		}
-		else if ((*from & 0x80) && len >= 2)
+		else if ((*from & 0x80) && len >= 2)	/* JIS X 0208 KANJI */
 		{
 			*to = *from++ << 8;
 			*to |= *from++;
 			len -= 2;
 		}
-		else
+		else	/* must be ASCII */
 		{
 			*to = *from++;
 			len--;
@@ -183,6 +182,7 @@ pg_euckr_dsplen(const unsigned char *s)
 
 /*
  * EUC_CN
+ *
  */
 static int	pg_euccn2wchar_with_len
 			(const unsigned char *from, pg_wchar *to, int len)
@@ -191,21 +191,21 @@ static int	pg_euccn2wchar_with_len
 
 	while (len > 0 && *from)
 	{
-		if (*from == SS2 && len >= 3)
+		if (*from == SS2 && len >= 3)	/* code set 2 (unused?) */
 		{
 			from++;
-			*to = 0x3f00 & (*from++ << 8);
-			*to = *from++;
+			*to = (SS2 << 16) | (*from++ << 8);
+			*to |= *from++;
 			len -= 3;
 		}
-		else if (*from == SS3 && len >= 3)
+		else if (*from == SS3 && len >= 3)		/* code set 3 (unsed ?) */
 		{
 			from++;
-			*to = *from++ << 8;
-			*to |= 0x3f & *from++;
+			*to = (SS3 << 16) | (*from++ << 8);
+			*to |= *from++;
 			len -= 3;
 		}
-		else if ((*from & 0x80) && len >= 2)
+		else if ((*from & 0x80) && len >= 2)	/* code set 1 */
 		{
 			*to = *from++ << 8;
 			*to |= *from++;
@@ -249,6 +249,7 @@ pg_euccn_dsplen(const unsigned char *s)
 
 /*
  * EUC_TW
+ *
  */
 static int	pg_euctw2wchar_with_len
 			(const unsigned char *from, pg_wchar *to, int len)
@@ -257,22 +258,22 @@ static int	pg_euctw2wchar_with_len
 
 	while (len > 0 && *from)
 	{
-		if (*from == SS2 && len >= 4)
+		if (*from == SS2 && len >= 4)	/* code set 2 */
 		{
 			from++;
-			*to = *from++ << 16;
+			*to = (SS2 << 24) | (*from++ << 16) ;
 			*to |= *from++ << 8;
 			*to |= *from++;
 			len -= 4;
 		}
-		else if (*from == SS3 && len >= 3)
+		else if (*from == SS3 && len >= 3)		/* code set 3 (unused?) */
 		{
 			from++;
-			*to = *from++ << 8;
-			*to |= 0x3f & *from++;
+			*to = (SS3 << 16) | (*from++ << 8);
+			*to |= *from++;
 			len -= 3;
 		}
-		else if ((*from & 0x80) && len >= 2)
+		else if ((*from & 0x80) && len >= 2)	/* code set 2 */
 		{
 			*to = *from++ << 8;
 			*to |= *from++;
