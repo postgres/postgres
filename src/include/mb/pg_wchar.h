@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.65 2005/12/24 18:21:34 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.66 2005/12/24 18:23:02 momjian Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -143,7 +143,7 @@ typedef unsigned int pg_wchar;
  *			If you add some encoding don'y forget check
  *			PG_ENCODING_[BE|FE]_LAST macros.
  *
- *		The PG_SQL_ASCII is default encoding and must be = 0.
+ * The PG_SQL_ASCII is default encoding and must be = 0.
  */
 typedef enum pg_enc
 {
