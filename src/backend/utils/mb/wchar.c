@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $Id: wchar.c,v 1.30.2.1 2003/01/11 06:59:30 ishii Exp $
+ * $Id: wchar.c,v 1.30.2.2 2005/12/24 12:08:10 ishii Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -70,7 +70,7 @@ static int	pg_euc2wchar_with_len
 		{
 			from++;
 			*to = *from++ << 8;
-			*to |= 0x3f & *from++;
+			*to |= 0x7f & *from++;
 			len -= 3;
 		}
 		else if ((*from & 0x80) && len >= 2)
@@ -150,7 +150,7 @@ static int	pg_euccn2wchar_with_len
 		if (*from == SS2 && len >= 3)
 		{
 			from++;
-			*to = 0x3f00 & (*from++ << 8);
+			*to = 0x7f00 & (*from++ << 8);
 			*to = *from++;
 			len -= 3;
 		}
@@ -158,7 +158,7 @@ static int	pg_euccn2wchar_with_len
 		{
 			from++;
 			*to = *from++ << 8;
-			*to |= 0x3f & *from++;
+			*to |= 0x7f & *from++;
 			len -= 3;
 		}
 		else if ((*from & 0x80) && len >= 2)
@@ -213,7 +213,7 @@ static int	pg_euctw2wchar_with_len
 		{
 			from++;
 			*to = *from++ << 8;
-			*to |= 0x3f & *from++;
+			*to |= 0x7f & *from++;
 			len -= 3;
 		}
 		else if ((*from & 0x80) && len >= 2)
