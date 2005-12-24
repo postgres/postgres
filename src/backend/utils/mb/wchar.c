@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.49 2005/12/24 16:49:48 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.50 2005/12/24 17:19:40 momjian Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -492,9 +492,7 @@ pg_mule_mblen(const unsigned char *s)
 	else if (IS_LCPRV2(*s))
 		len = 4;
 	else
-	{							/* assume ASCII */
-		len = 1;
-	}
+		len = 1;	/* assume ASCII */
 	return len;
 }
 
@@ -543,17 +541,11 @@ pg_sjis_mblen(const unsigned char *s)
 	int			len;
 
 	if (*s >= 0xa1 && *s <= 0xdf)
-	{							/* 1 byte kana? */
-		len = 1;
-	}
+		len = 1;	/* 1 byte kana? */
 	else if (*s > 0x7f)
-	{							/* kanji? */
-		len = 2;
-	}
+		len = 2;	/* kanji? */
 	else
-	{							/* should be ASCII */
-		len = 1;
-	}
+		len = 1;	/* should be ASCII */
 	return len;
 }
 
@@ -563,17 +555,11 @@ pg_sjis_dsplen(const unsigned char *s)
 	int			len;
 
 	if (*s >= 0xa1 && *s <= 0xdf)
-	{							/* 1 byte kana? */
-		len = 1;
-	}
+		len = 1;	/* 1 byte kana? */
 	else if (*s > 0x7f)
-	{							/* kanji? */
-		len = 2;
-	}
+		len = 2;	/* kanji? */
 	else
-	{							/* should be ASCII */
-		len = 1;
-	}
+		len = 1;	/* should be ASCII */
 	return len;
 }
 
@@ -586,13 +572,9 @@ pg_big5_mblen(const unsigned char *s)
 	int			len;
 
 	if (*s > 0x7f)
-	{							/* kanji? */
-		len = 2;
-	}
+		len = 2;	/* kanji? */
 	else
-	{							/* should be ASCII */
-		len = 1;
-	}
+		len = 1;	/* should be ASCII */
 	return len;
 }
 
@@ -602,13 +584,9 @@ pg_big5_dsplen(const unsigned char *s)
 	int			len;
 
 	if (*s > 0x7f)
-	{							/* kanji? */
-		len = 2;
-	}
+		len = 2;	/* kanji? */
 	else
-	{							/* should be ASCII */
-		len = 1;
-	}
+		len = 1;	/* should be ASCII */
 	return len;
 }
 
@@ -621,13 +599,9 @@ pg_gbk_mblen(const unsigned char *s)
 	int			len;
 
 	if (*s > 0x7f)
-	{							/* kanji? */
-		len = 2;
-	}
+		len = 2;	/* kanji? */
 	else
-	{							/* should be ASCII */
-		len = 1;
-	}
+		len = 1;	/* should be ASCII */
 	return len;
 }
 
@@ -637,13 +611,9 @@ pg_gbk_dsplen(const unsigned char *s)
 	int			len;
 
 	if (*s > 0x7f)
-	{							/* kanji? */
-		len = 2;
-	}
+		len = 2;	/* kanji? */
 	else
-	{							/* should be ASCII */
-		len = 1;
-	}
+		len = 1;	/* should be ASCII */
 	return len;
 }
 
@@ -656,13 +626,9 @@ pg_uhc_mblen(const unsigned char *s)
 	int			len;
 
 	if (*s > 0x7f)
-	{							/* 2byte? */
-		len = 2;
-	}
+		len = 2;	/* 2byte? */
 	else
-	{							/* should be ASCII */
-		len = 1;
-	}
+		len = 1;	/* should be ASCII */
 	return len;
 }
 
@@ -672,13 +638,9 @@ pg_uhc_dsplen(const unsigned char *s)
 	int			len;
 
 	if (*s > 0x7f)
-	{							/* 2byte? */
-		len = 2;
-	}
+		len = 2;	/* 2byte? */
 	else
-	{							/* should be ASCII */
-		len = 1;
-	}
+		len = 1;	/* should be ASCII */
 	return len;
 }
 
@@ -692,9 +654,7 @@ pg_gb18030_mblen(const unsigned char *s)
 	int			len;
 
 	if (*s <= 0x7f)
-	{							/* ASCII */
-		len = 1;
-	}
+		len = 1;	/* ASCII */
 	else
 	{
 		if ((*(s + 1) >= 0x40 && *(s + 1) <= 0x7e) || (*(s + 1) >= 0x80 && *(s + 1) <= 0xfe))
@@ -713,9 +673,7 @@ pg_gb18030_dsplen(const unsigned char *s)
 	int			len;
 
 	if (*s <= 0x7f)
-	{							/* ASCII */
-		len = 1;
-	}
+		len = 1;	/* ASCII */
 	else
 		len = 2;
 	return len;
