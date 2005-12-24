@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859/utf8_and_iso8859.c,v 1.15.2.1 2005/11/22 18:23:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859/utf8_and_iso8859.c,v 1.15.2.2 2005/12/24 00:49:18 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,15 +68,6 @@ typedef struct
 } pg_conv_map;
 
 static pg_conv_map maps[] = {
-	{PG_SQL_ASCII},				/* SQL/ASCII */
-	{PG_EUC_JP},				/* EUC for Japanese */
-	{PG_EUC_CN},				/* EUC for Chinese */
-	{PG_EUC_KR},				/* EUC for Korean */
-	{PG_EUC_TW},				/* EUC for Taiwan */
-	{PG_JOHAB},					/* EUC for Korean JOHAB */
-	{PG_UTF8},					/* Unicode UTF8 */
-	{PG_MULE_INTERNAL},			/* Mule internal code */
-	{PG_LATIN1},				/* ISO-8859-1 Latin 1 */
 	{PG_LATIN2, LUmapISO8859_2, ULmapISO8859_2,
 		sizeof(LUmapISO8859_2) / sizeof(pg_local_to_utf),
 	sizeof(ULmapISO8859_2) / sizeof(pg_utf_to_local)},	/* ISO-8859-2 Latin 2 */
@@ -104,12 +95,6 @@ static pg_conv_map maps[] = {
 	{PG_LATIN10, LUmapISO8859_16, ULmapISO8859_16,
 		sizeof(LUmapISO8859_16) / sizeof(pg_local_to_utf),
 	sizeof(ULmapISO8859_16) / sizeof(pg_utf_to_local)}, /* ISO-8859-16 Latin 10 */
-	{PG_WIN1256},				/* windows-1256 */
-	{PG_WIN1258},				/* Windows-1258 */
-	{PG_WIN874},				/* windows-874 */
-	{PG_KOI8R},					/* KOI8-R */
-	{PG_WIN1251},				/* windows-1251 */
-	{PG_WIN866},				/* (MS-DOS CP866) */
 	{PG_ISO_8859_5, LUmapISO8859_5, ULmapISO8859_5,
 		sizeof(LUmapISO8859_5) / sizeof(pg_local_to_utf),
 	sizeof(ULmapISO8859_5) / sizeof(pg_utf_to_local)},	/* ISO-8859-5 */
@@ -131,11 +116,23 @@ iso8859_to_utf8(PG_FUNCTION_ARGS)
 	unsigned char *src = (unsigned char *) PG_GETARG_CSTRING(2);
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
+	int	i;
 
 	Assert(PG_GETARG_INT32(1) == PG_UTF8);
 	Assert(len >= 0);
 
-	LocalToUtf(src, dest, maps[encoding].map1, maps[encoding].size1, encoding, len);
+	for (i=0;i<sizeof(maps)/sizeof(pg_conv_map);i++)
+	{
+		if (encoding == maps[i].encoding)
+		{
+			LocalToUtf(src, dest, maps[i].map1, maps[i].size1, encoding, len);
+			PG_RETURN_VOID();
+		}
+	}
+
+	ereport(ERROR,
+			(errcode(ERRCODE_INTERNAL_ERROR),
+			 errmsg("unexpected encoding id %d for ISO-8859 charsets", encoding)));
 
 	PG_RETURN_VOID();
 }
@@ -147,11 +144,23 @@ utf8_to_iso8859(PG_FUNCTION_ARGS)
 	unsigned char *src = (unsigned char *) PG_GETARG_CSTRING(2);
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
+	int	i;
 
 	Assert(PG_GETARG_INT32(0) == PG_UTF8);
 	Assert(len >= 0);
 
-	UtfToLocal(src, dest, maps[encoding].map2, maps[encoding].size2, len);
+	for (i=0;i<sizeof(maps)/sizeof(pg_conv_map);i++)
+	{
+		if (encoding == maps[i].encoding)
+		{
+			UtfToLocal(src, dest, maps[i].map2, maps[i].size2, len);
+			PG_RETURN_VOID();
+		}
+	}
+
+	ereport(ERROR,
+			(errcode(ERRCODE_INTERNAL_ERROR),
+			 errmsg("unexpected encoding id %d for ISO-8859 charsets", encoding)));
 
 	PG_RETURN_VOID();
 }
