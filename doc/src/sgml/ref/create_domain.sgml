@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.26 2005/11/04 23:14:02 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.27 2005/12/25 01:41:15 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE DOMAIN <replaceable class="parameter">name</replaceable> [AS] <replaceable class="parameter">data_type</replaceable>
+CREATE DOMAIN <replaceable class="parameter">name</replaceable> [ AS ] <replaceable class="parameter">data_type</replaceable>
     [ DEFAULT <replaceable>expression</> ]
     [ <replaceable class="PARAMETER">constraint</replaceable> [ ... ] ]
 
@@ -185,7 +185,7 @@ OR VALUE ~ '^\\d{5}-\\d{4}$'
 );
 
 CREATE TABLE us_snail_addy (
-  address_id SERIAL NOT NULL PRIMARY KEY
+  address_id SERIAL PRIMARY KEY
 , street1 TEXT NOT NULL
 , street2 TEXT
 , street3 TEXT
