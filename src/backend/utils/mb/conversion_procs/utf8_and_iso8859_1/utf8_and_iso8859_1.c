@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859_1/utf8_and_iso8859_1.c,v 1.12 2005/09/24 17:53:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859_1/utf8_and_iso8859_1.c,v 1.13 2005/12/25 02:14:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,12 +46,12 @@ iso8859_1_to_utf8(PG_FUNCTION_ARGS)
 
 	while (len-- > 0 && (c = *src++))
 	{
-		if (c < 0x80)
+		if (!IS_HIGHBIT_SET(c))
 			*dest++ = c;
 		else
 		{
 			*dest++ = (c >> 6) | 0xc0;
-			*dest++ = (c & 0x003f) | 0x80;
+			*dest++ = (c & 0x003f) | HIGHBIT;
 		}
 	}
 	*dest = '\0';

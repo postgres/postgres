@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.192 2005/12/06 02:29:03 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.193 2005/12/25 02:14:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -704,7 +704,8 @@ typedef NameData *Name;
  */
 
 /* msb for char */
-#define CSIGNBIT (0x80)
+#define HIGHBIT					(0x80)
+#define IS_HIGHBIT_SET(ch)		((unsigned char)(ch) & HIGHBIT)
 
 #define STATUS_OK				(0)
 #define STATUS_ERROR			(-1)

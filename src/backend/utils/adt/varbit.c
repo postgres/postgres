@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.47 2005/10/15 02:49:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.48 2005/12/25 02:14:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,7 +120,7 @@ bit_in(PG_FUNCTION_ARGS)
 	{
 		/* Parse the bit representation of the string */
 		/* We know it fits, as bitlen was compared to atttypmod */
-		x = BITHIGH;
+		x = HIGHBIT;
 		for (; *sp; sp++)
 		{
 			if (*sp == '1')
@@ -134,7 +134,7 @@ bit_in(PG_FUNCTION_ARGS)
 			x >>= 1;
 			if (x == 0)
 			{
-				x = BITHIGH;
+				x = HIGHBIT;
 				r++;
 			}
 		}
@@ -401,7 +401,7 @@ varbit_in(PG_FUNCTION_ARGS)
 	{
 		/* Parse the bit representation of the string */
 		/* We know it fits, as bitlen was compared to atttypmod */
-		x = BITHIGH;
+		x = HIGHBIT;
 		for (; *sp; sp++)
 		{
 			if (*sp == '1')
@@ -415,7 +415,7 @@ varbit_in(PG_FUNCTION_ARGS)
 			x >>= 1;
 			if (x == 0)
 			{
-				x = BITHIGH;
+				x = HIGHBIT;
 				r++;
 			}
 		}
@@ -477,14 +477,14 @@ varbit_out(PG_FUNCTION_ARGS)
 		x = *sp;
 		for (k = 0; k < BITS_PER_BYTE; k++)
 		{
-			*r++ = (x & BITHIGH) ? '1' : '0';
+			*r++ = IS_HIGHBIT_SET(x) ? '1' : '0';
 			x <<= 1;
 		}
 	}
 	x = *sp;
 	for (k = i; k < len; k++)
 	{
-		*r++ = (x & BITHIGH) ? '1' : '0';
+		*r++ = IS_HIGHBIT_SET(x) ? '1' : '0';
 		x <<= 1;
 	}
 	*r = '\0';

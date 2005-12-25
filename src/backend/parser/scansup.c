@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scansup.c,v 1.30 2005/10/15 02:49:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scansup.c,v 1.31 2005/12/25 02:14:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,7 +149,7 @@ downcase_truncate_identifier(const char *ident, int len, bool warn)
 
 		if (ch >= 'A' && ch <= 'Z')
 			ch += 'a' - 'A';
-		else if (ch >= 0x80 && isupper(ch))
+		else if (IS_HIGHBIT_SET(ch) && isupper(ch))
 			ch = tolower(ch);
 		result[i] = (char) ch;
 	}

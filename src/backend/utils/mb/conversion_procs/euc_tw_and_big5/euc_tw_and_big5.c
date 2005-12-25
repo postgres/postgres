@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_tw_and_big5/euc_tw_and_big5.c,v 1.10 2005/09/24 17:53:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_tw_and_big5/euc_tw_and_big5.c,v 1.11 2005/12/25 02:14:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,7 +177,7 @@ euc_tw2mic(unsigned char *euc, unsigned char *p, int len)
 			*p++ = *euc++;
 			*p++ = *euc++;
 		}
-		else if (c1 & 0x80)
+		else if (IS_HIGHBIT_SET(c1))
 		{						/* CNS11643-1 */
 			len -= 2;
 			*p++ = LC_CNS11643_1;

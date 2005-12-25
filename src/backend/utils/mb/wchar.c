@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.50 2005/12/24 17:19:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.51 2005/12/25 02:14:18 momjian Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -79,7 +79,7 @@ static int	pg_euc2wchar_with_len
 			*to |= *from++;
 			len -= 3;
 		}
-		else if ((*from & 0x80) && len >= 2)	/* JIS X 0208 KANJI */
+		else if (IS_HIGHBIT_SET(*from) && len >= 2)	/* JIS X 0208 KANJI */
 		{
 			*to = *from++ << 8;
 			*to |= *from++;
@@ -106,7 +106,7 @@ pg_euc_mblen(const unsigned char *s)
 		len = 2;
 	else if (*s == SS3)
 		len = 3;
-	else if (*s & 0x80)
+	else if (IS_HIGHBIT_SET(*s))
 		len = 2;
 	else
 		len = 1;
@@ -122,7 +122,7 @@ pg_euc_dsplen(const unsigned char *s)
 		len = 2;
 	else if (*s == SS3)
 		len = 2;
-	else if (*s & 0x80)
+	else if (IS_HIGHBIT_SET(*s))
 		len = 2;
 	else
 		len = 1;
@@ -153,7 +153,7 @@ pg_eucjp_dsplen(const unsigned char *s)
 		len = 1;
 	else if (*s == SS3)
 		len = 2;
-	else if (*s & 0x80)
+	else if (IS_HIGHBIT_SET(*s))
 		len = 2;
 	else
 		len = 1;
@@ -206,7 +206,7 @@ static int	pg_euccn2wchar_with_len
 			*to |= *from++;
 			len -= 3;
 		}
-		else if ((*from & 0x80) && len >= 2)	/* code set 1 */
+		else if (IS_HIGHBIT_SET(*from) && len >= 2)	/* code set 1 */
 		{
 			*to = *from++ << 8;
 			*to |= *from++;
@@ -229,7 +229,7 @@ pg_euccn_mblen(const unsigned char *s)
 {
 	int			len;
 
-	if (*s & 0x80)
+	if (IS_HIGHBIT_SET(*s))
 		len = 2;
 	else
 		len = 1;
@@ -241,7 +241,7 @@ pg_euccn_dsplen(const unsigned char *s)
 {
 	int			len;
 
-	if (*s & 0x80)
+	if (IS_HIGHBIT_SET(*s))
 		len = 2;
 	else
 		len = 1;
@@ -274,7 +274,7 @@ static int	pg_euctw2wchar_with_len
 			*to |= *from++;
 			len -= 3;
 		}
-		else if ((*from & 0x80) && len >= 2)	/* code set 2 */
+		else if (IS_HIGHBIT_SET(*from) && len >= 2)	/* code set 2 */
 		{
 			*to = *from++ << 8;
 			*to |= *from++;
@@ -301,7 +301,7 @@ pg_euctw_mblen(const unsigned char *s)
 		len = 4;
 	else if (*s == SS3)
 		len = 3;
-	else if (*s & 0x80)
+	else if (IS_HIGHBIT_SET(*s))
 		len = 2;
 	else
 		len = 1;
@@ -317,7 +317,7 @@ pg_euctw_dsplen(const unsigned char *s)
 		len = 2;
 	else if (*s == SS3)
 		len = 2;
-	else if (*s & 0x80)
+	else if (IS_HIGHBIT_SET(*s))
 		len = 2;
 	else
 		len = 1;
@@ -361,7 +361,7 @@ pg_utf2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 
 	while (len > 0 && *from)
 	{
-		if ((*from & 0x80) == 0)
+		if (!IS_HIGHBIT_SET(*from))
 		{
 			*to = *from++;
 			len--;
@@ -866,7 +866,7 @@ pg_verifymbstr(const char *mbstr, int len, bool noError)
 				 * we expect that every multibyte char consists of bytes
 				 * having the 8th bit set
 				 */
-				if (i >= len || (mbstr[i] & 0x80) == 0)
+				if (i >= len || !IS_HIGHBIT_SET(mbstr[i]))
 				{
 					char		buf[8 * 2 + 1];
 					char	   *p = buf;
