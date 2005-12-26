@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.66 2005/10/15 02:49:50 momjian Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.67 2005/12/26 04:28:48 neilc Exp $
  *
  *********************************************************************
  */
@@ -161,7 +161,7 @@ typedef struct PLyResultObject
 {
 	PyObject_HEAD
 	/* HeapTuple *tuples; */
-	PyObject * nrows;			/* number of rows returned by query */
+	PyObject   *nrows;			/* number of rows returned by query */
 	PyObject   *rows;			/* data rows, or None if no data returned */
 	PyObject   *status;			/* query status, SPI_OK_*, or SPI_ERR_* */
 }	PLyResultObject;
@@ -209,6 +209,7 @@ static char *PLy_printf(const char *fmt,...);
 
 static void *PLy_malloc(size_t);
 static void *PLy_realloc(void *, size_t);
+static char *PLy_strdup(const char *);
 static void PLy_free(void *);
 
 /* sub handlers for functions and triggers
@@ -256,7 +257,7 @@ static PyObject *PLyString_FromString(const char *);
 
 /* global data
  */
-static int	PLy_first_call = 1;
+static bool	PLy_first_call = true;
 
 /*
  * Currently active plpython function
@@ -420,8 +421,8 @@ PLy_trigger_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 			{
 				TriggerData *tdata = (TriggerData *) fcinfo->context;
 
-				if ((TRIGGER_FIRED_BY_INSERT(tdata->tg_event)) ||
-					(TRIGGER_FIRED_BY_UPDATE(tdata->tg_event)))
+				if (TRIGGER_FIRED_BY_INSERT(tdata->tg_event) ||
+					TRIGGER_FIRED_BY_UPDATE(tdata->tg_event))
 					rv = PLy_modify_tuple(proc, plargs, tdata, rv);
 				else
 					elog(WARNING, "ignoring modified tuple in DELETE trigger");
@@ -781,7 +782,7 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 			plrv_sc = PyString_AsString(plrv_so);
 			rv = FunctionCall3(&proc->result.out.d.typfunc,
 							   PointerGetDatum(plrv_sc),
-							 ObjectIdGetDatum(proc->result.out.d.typioparam),
+							   ObjectIdGetDatum(proc->result.out.d.typioparam),
 							   Int32GetDatum(-1));
 		}
 
@@ -824,7 +825,7 @@ PLy_procedure_call(PLyProcedure * proc, char *kargs, PyObject * vargs)
 		ReThrowError(edata);
 	}
 
-	if ((rv == NULL) || (PyErr_Occurred()))
+	if (rv == NULL || PyErr_Occurred())
 	{
 		Py_XDECREF(rv);
 		PLy_elog(ERROR, "function \"%s\" failed", proc->proname);
@@ -945,7 +946,7 @@ PLy_procedure_get(FunctionCallInfo fcinfo, Oid tgreloid)
 		elog(ERROR, "cache lookup failed for function %u", fn_oid);
 
 	rv = snprintf(key, sizeof(key), "%u_%u", fn_oid, tgreloid);
-	if ((rv >= sizeof(key)) || (rv < 0))
+	if (rv >= sizeof(key) || rv < 0)
 		elog(ERROR, "key too long");
 
 	plproc = PyDict_GetItemString(PLy_procedure_cache, key);
@@ -1002,14 +1003,12 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 					  "__plpython_procedure_%s_%u",
 					  NameStr(procStruct->proname),
 					  fcinfo->flinfo->fn_oid);
-	if ((rv >= sizeof(procName)) || (rv < 0))
+	if (rv >= sizeof(procName) || rv < 0)
 		elog(ERROR, "procedure name would overrun buffer");
 
 	proc = PLy_malloc(sizeof(PLyProcedure));
-	proc->proname = PLy_malloc(strlen(NameStr(procStruct->proname)) + 1);
-	strcpy(proc->proname, NameStr(procStruct->proname));
-	proc->pyname = PLy_malloc(strlen(procName) + 1);
-	strcpy(proc->pyname, procName);
+	proc->proname = PLy_strdup(NameStr(procStruct->proname));
+	proc->pyname = PLy_strdup(procName);
 	proc->fn_xmin = HeapTupleHeaderGetXmin(procTup->t_data);
 	proc->fn_cmin = HeapTupleHeaderGetCmin(procTup->t_data);
 	/* Remember if function is STABLE/IMMUTABLE */
@@ -1164,7 +1163,7 @@ PLy_procedure_compile(PLyProcedure * proc, const char *src)
 	crv = PyRun_String(msrc, Py_file_input, proc->globals, NULL);
 	free(msrc);
 
-	if ((crv != NULL) && (!PyErr_Occurred()))
+	if (crv != NULL && (!PyErr_Occurred()))
 	{
 		int			clen;
 		char		call[NAMEDATALEN + 256];
@@ -1175,10 +1174,10 @@ PLy_procedure_compile(PLyProcedure * proc, const char *src)
 		 * compile a call to the function
 		 */
 		clen = snprintf(call, sizeof(call), "%s()", proc->pyname);
-		if ((clen < 0) || (clen >= sizeof(call)))
+		if (clen < 0 || clen >= sizeof(call))
 			elog(ERROR, "string would overflow buffer");
 		proc->code = Py_CompileString(call, "<string>", Py_eval_input);
-		if ((proc->code != NULL) && (!PyErr_Occurred()))
+		if (proc->code != NULL && (!PyErr_Occurred()))
 			return;
 	}
 	else
@@ -1268,7 +1267,7 @@ PLy_input_tuple_funcs(PLyTypeInfo * arg, TupleDesc desc)
 
 	arg->is_rowtype = 1;
 	arg->in.r.natts = desc->natts;
-	arg->in.r.atts = malloc(desc->natts * sizeof(PLyDatumToOb));
+	arg->in.r.atts = PLy_malloc(desc->natts * sizeof(PLyDatumToOb));
 
 	for (i = 0; i < desc->natts; i++)
 	{
@@ -1302,7 +1301,7 @@ PLy_output_tuple_funcs(PLyTypeInfo * arg, TupleDesc desc)
 
 	arg->is_rowtype = 1;
 	arg->out.r.natts = desc->natts;
-	arg->out.r.atts = malloc(desc->natts * sizeof(PLyDatumToOb));
+	arg->out.r.atts = PLy_malloc(desc->natts * sizeof(PLyDatumToOb));
 
 	for (i = 0; i < desc->natts; i++)
 	{
@@ -1425,7 +1424,7 @@ PLyFloat_FromString(const char *src)
 
 	errno = 0;
 	v = strtod(src, &eptr);
-	if ((*eptr != '\0') || (errno))
+	if (*eptr != '\0' || errno)
 		return NULL;
 	return PyFloat_FromDouble(v);
 }
@@ -1438,7 +1437,7 @@ PLyInt_FromString(const char *src)
 
 	errno = 0;
 	v = strtol(src, &eptr, 0);
-	if ((*eptr != '\0') || (errno))
+	if (*eptr != '\0' || errno)
 		return NULL;
 	return PyInt_FromLong(v);
 }
@@ -1485,7 +1484,7 @@ PLyDict_FromTuple(PLyTypeInfo * info, HeapTuple tuple, TupleDesc desc)
 			key = NameStr(desc->attrs[i]->attname);
 			vattr = heap_getattr(tuple, (i + 1), desc, &is_null);
 
-			if ((is_null) || (info->in.r.atts[i].func == NULL))
+			if (is_null || info->in.r.atts[i].func == NULL)
 				PyDict_SetItemString(dict, key, Py_None);
 			else
 			{
@@ -1860,7 +1859,7 @@ PLy_spi_prepare(PyObject * self, PyObject * args)
 		return NULL;
 	}
 
-	if ((list) && (!PySequence_Check(list)))
+	if (list && (!PySequence_Check(list)))
 	{
 		PyErr_SetString(PLy_exc_spi_error,
 					 "Second argument in plpy.prepare() must be a sequence");
@@ -1982,8 +1981,8 @@ PLy_spi_execute(PyObject * self, PyObject * args)
 
 	PyErr_Clear();
 
-	if ((PyArg_ParseTuple(args, "O|Ol", &plan, &list, &limit)) &&
-		(is_PLyPlanObject(plan)))
+	if (PyArg_ParseTuple(args, "O|Ol", &plan, &list, &limit) &&
+		is_PLyPlanObject(plan))
 		return PLy_spi_execute_plan(plan, list, limit);
 
 	PyErr_SetString(PLy_exc_error, "Expected a query or plan.");
@@ -2002,7 +2001,7 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 
 	if (list != NULL)
 	{
-		if ((!PySequence_Check(list)) || (PyString_Check(list)))
+		if (!PySequence_Check(list) || PyString_Check(list))
 		{
 			char	   *msg = "plpy.execute() takes a sequence as its second argument";
 
@@ -2251,7 +2250,7 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, int rows, int status)
 void
 plpython_init(void)
 {
-	static volatile int init_active = 0;
+	static volatile bool init_active = false;
 
 	/* Do initialization only once */
 	if (!PLy_first_call)
@@ -2259,7 +2258,7 @@ plpython_init(void)
 
 	if (init_active)
 		elog(FATAL, "initialization of language module failed");
-	init_active = 1;
+	init_active = true;
 
 	Py_Initialize();
 	PLy_init_interp();
@@ -2270,7 +2269,7 @@ plpython_init(void)
 	if (PLy_procedure_cache == NULL)
 		PLy_elog(ERROR, "could not create procedure cache");
 
-	PLy_first_call = 0;
+	PLy_first_call = false;
 }
 
 static void
@@ -2284,7 +2283,6 @@ PLy_init_all(void)
 	 * Any other initialization that must be done each time a new backend
 	 * starts -- currently none
 	 */
-
 }
 
 static void
@@ -2293,14 +2291,14 @@ PLy_init_interp(void)
 	PyObject   *mainmod;
 
 	mainmod = PyImport_AddModule("__main__");
-	if ((mainmod == NULL) || (PyErr_Occurred()))
+	if (mainmod == NULL || PyErr_Occurred())
 		PLy_elog(ERROR, "could not import \"__main__\" module.");
 	Py_INCREF(mainmod);
 	PLy_interp_globals = PyModule_GetDict(mainmod);
 	PLy_interp_safe_globals = PyDict_New();
 	PyDict_SetItemString(PLy_interp_globals, "GD", PLy_interp_safe_globals);
 	Py_DECREF(mainmod);
-	if ((PLy_interp_globals == NULL) || (PyErr_Occurred()))
+	if (PLy_interp_globals == NULL || PyErr_Occurred())
 		PLy_elog(ERROR, "could not initialize globals");
 }
 
@@ -2396,7 +2394,7 @@ PLy_output(volatile int level, PyObject * self, PyObject * args)
 	MemoryContext oldcontext;
 
 	so = PyObject_Str(args);
-	if ((so == NULL) || ((sv = PyString_AsString(so)) == NULL))
+	if (so == NULL || ((sv = PyString_AsString(so)) == NULL))
 	{
 		level = ERROR;
 		sv = "Unable to parse error message in `plpy.elog'";
@@ -2439,7 +2437,7 @@ PLy_output(volatile int level, PyObject * self, PyObject * args)
  * If a plpython procedure call calls the backend and the backend calls
  * another plpython procedure )
  *
- * NB: this returns SQL name, not the internal Python procedure name
+ * NB: this returns the SQL name, not the internal Python procedure name
  */
 
 static char *
@@ -2533,7 +2531,7 @@ PLy_traceback(int *xlevel)
 	PyErr_NormalizeException(&e, &v, &tb);
 
 	eob = PyObject_Str(e);
-	if ((v) && ((vob = PyObject_Str(v)) != NULL))
+	if (v && ((vob = PyObject_Str(v)) != NULL))
 		vstr = PyString_AsString(vob);
 	else
 		vstr = "Unknown";
@@ -2553,9 +2551,9 @@ PLy_traceback(int *xlevel)
 	/*
 	 * intuit an appropriate error level for based on the exception type
 	 */
-	if ((PLy_exc_error) && (PyErr_GivenExceptionMatches(e, PLy_exc_error)))
+	if (PLy_exc_error && PyErr_GivenExceptionMatches(e, PLy_exc_error))
 		*xlevel = ERROR;
-	else if ((PLy_exc_fatal) && (PyErr_GivenExceptionMatches(e, PLy_exc_fatal)))
+	else if (PLy_exc_fatal && PyErr_GivenExceptionMatches(e, PLy_exc_fatal))
 		*xlevel = FATAL;
 	else
 		*xlevel = ERROR;
@@ -2591,7 +2589,7 @@ PLy_vprintf(const char *fmt, va_list ap)
 	while (1)
 	{
 		bchar = vsnprintf(buf, blen, fmt, ap);
-		if ((bchar > 0) && (bchar < blen))
+		if (bchar > 0 && bchar < blen)
 			return buf;
 		if (tries-- <= 0)
 			break;
@@ -2634,6 +2632,19 @@ PLy_realloc(void *optr, size_t bytes)
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory")));
 	return nptr;
+}
+
+static char *
+PLy_strdup(const char *str)
+{
+	char	   *result;
+	size_t		len;
+
+	len = strlen(str) + 1;
+	result = PLy_malloc(len);
+	memcpy(result, str, len);
+
+	return result;
 }
 
 /* define this away
