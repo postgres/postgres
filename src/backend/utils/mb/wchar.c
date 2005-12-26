@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.51 2005/12/25 02:14:18 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.52 2005/12/26 19:30:44 momjian Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -542,7 +542,7 @@ pg_sjis_mblen(const unsigned char *s)
 
 	if (*s >= 0xa1 && *s <= 0xdf)
 		len = 1;	/* 1 byte kana? */
-	else if (*s > 0x7f)
+	else if (IS_HIGHBIT_SET(*s))
 		len = 2;	/* kanji? */
 	else
 		len = 1;	/* should be ASCII */
@@ -556,7 +556,7 @@ pg_sjis_dsplen(const unsigned char *s)
 
 	if (*s >= 0xa1 && *s <= 0xdf)
 		len = 1;	/* 1 byte kana? */
-	else if (*s > 0x7f)
+	else if (IS_HIGHBIT_SET(*s))
 		len = 2;	/* kanji? */
 	else
 		len = 1;	/* should be ASCII */
@@ -571,7 +571,7 @@ pg_big5_mblen(const unsigned char *s)
 {
 	int			len;
 
-	if (*s > 0x7f)
+	if (IS_HIGHBIT_SET(*s))
 		len = 2;	/* kanji? */
 	else
 		len = 1;	/* should be ASCII */
@@ -583,7 +583,7 @@ pg_big5_dsplen(const unsigned char *s)
 {
 	int			len;
 
-	if (*s > 0x7f)
+	if (IS_HIGHBIT_SET(*s))
 		len = 2;	/* kanji? */
 	else
 		len = 1;	/* should be ASCII */
@@ -598,7 +598,7 @@ pg_gbk_mblen(const unsigned char *s)
 {
 	int			len;
 
-	if (*s > 0x7f)
+	if (IS_HIGHBIT_SET(*s))
 		len = 2;	/* kanji? */
 	else
 		len = 1;	/* should be ASCII */
@@ -610,7 +610,7 @@ pg_gbk_dsplen(const unsigned char *s)
 {
 	int			len;
 
-	if (*s > 0x7f)
+	if (IS_HIGHBIT_SET(*s))
 		len = 2;	/* kanji? */
 	else
 		len = 1;	/* should be ASCII */
@@ -625,7 +625,7 @@ pg_uhc_mblen(const unsigned char *s)
 {
 	int			len;
 
-	if (*s > 0x7f)
+	if (IS_HIGHBIT_SET(*s))
 		len = 2;	/* 2byte? */
 	else
 		len = 1;	/* should be ASCII */
@@ -637,7 +637,7 @@ pg_uhc_dsplen(const unsigned char *s)
 {
 	int			len;
 
-	if (*s > 0x7f)
+	if (IS_HIGHBIT_SET(*s))
 		len = 2;	/* 2byte? */
 	else
 		len = 1;	/* should be ASCII */
@@ -653,7 +653,7 @@ pg_gb18030_mblen(const unsigned char *s)
 {
 	int			len;
 
-	if (*s <= 0x7f)
+	if (!IS_HIGHBIT_SET(*s))
 		len = 1;	/* ASCII */
 	else
 	{
@@ -672,7 +672,7 @@ pg_gb18030_dsplen(const unsigned char *s)
 {
 	int			len;
 
-	if (*s <= 0x7f)
+	if (!IS_HIGHBIT_SET(*s))
 		len = 1;	/* ASCII */
 	else
 		len = 2;

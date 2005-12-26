@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_cn_and_mic/euc_cn_and_mic.c,v 1.11 2005/12/25 02:14:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_cn_and_mic/euc_cn_and_mic.c,v 1.12 2005/12/26 19:30:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,15 +110,13 @@ mic2euc_cn(unsigned char *mic, unsigned char *p, int len)
 			*p++ = *mic++;
 			*p++ = *mic++;
 		}
-		else if (c1 > 0x7f)
+		else if (IS_HIGHBIT_SET(c1))
 		{						/* cannot convert to EUC_CN! */
 			mic--;
 			pg_print_bogus_char(&mic, &p);
 		}
 		else
-		{						/* should be ASCII */
-			*p++ = c1;
-		}
+			*p++ = c1;		/* should be ASCII */
 	}
 	*p = '\0';
 }

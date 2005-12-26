@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_jp_and_sjis/euc_jp_and_sjis.c,v 1.13 2005/10/15 02:49:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_jp_and_sjis/euc_jp_and_sjis.c,v 1.14 2005/12/26 19:30:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,7 +180,7 @@ sjis2mic(unsigned char *sjis, unsigned char *p, int len)
 			*p++ = LC_JISX0201K;
 			*p++ = c1;
 		}
-		else if (c1 > 0x7f)
+		else if (IS_HIGHBIT_SET(c1))
 		{
 			/*
 			 * JIS X0208, X0212, user defined extended characters
@@ -355,16 +355,14 @@ mic2sjis(unsigned char *mic, unsigned char *p, int len)
 				}
 			}
 		}
-		else if (c1 > 0x7f)
+		else if (IS_HIGHBIT_SET(c1))
 		{
 			/* cannot convert to SJIS! */
 			*p++ = PGSJISALTCODE >> 8;
 			*p++ = PGSJISALTCODE & 0xff;
 		}
 		else
-		{						/* should be ASCII */
-			*p++ = c1;
-		}
+			*p++ = c1;		/* should be ASCII */
 	}
 	*p = '\0';
 }
@@ -436,15 +434,13 @@ mic2euc_jp(unsigned char *mic, unsigned char *p, int len)
 			*p++ = *mic++;
 			*p++ = *mic++;
 		}
-		else if (c1 > 0x7f)
+		else if (IS_HIGHBIT_SET(c1))
 		{						/* cannot convert to EUC_JP! */
 			mic--;
 			pg_print_bogus_char(&mic, &p);
 		}
 		else
-		{						/* should be ASCII */
-			*p++ = c1;
-		}
+			*p++ = c1;		/* should be ASCII */
 	}
 	*p = '\0';
 }

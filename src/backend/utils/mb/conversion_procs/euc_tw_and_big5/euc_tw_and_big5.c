@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_tw_and_big5/euc_tw_and_big5.c,v 1.11 2005/12/25 02:14:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_tw_and_big5/euc_tw_and_big5.c,v 1.12 2005/12/26 19:30:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -224,15 +224,13 @@ mic2euc_tw(unsigned char *mic, unsigned char *p, int len)
 			*p++ = *mic++;
 			*p++ = *mic++;
 		}
-		else if (c1 > 0x7f)
+		else if (IS_HIGHBIT_SET(c1))
 		{						/* cannot convert to EUC_TW! */
 			mic--;
 			pg_print_bogus_char(&mic, &p);
 		}
 		else
-		{						/* should be ASCII */
-			*p++ = c1;
-		}
+			*p++ = c1;		/* should be ASCII */
 	}
 	*p = '\0';
 }
@@ -252,7 +250,7 @@ big52mic(unsigned char *big5, unsigned char *p, int len)
 
 	while (len >= 0 && (c1 = *big5++))
 	{
-		if (c1 <= 0x7fU)
+		if (!IS_HIGHBIT_SET(c1))
 		{						/* ASCII */
 			len--;
 			*p++ = c1;
@@ -328,7 +326,7 @@ mic2big5(unsigned char *mic, unsigned char *p, int len)
 				*p++ = big5buf & 0x00ff;
 			}
 		}
-		else if (c1 <= 0x7f)	/* ASCII */
+		else if (!IS_HIGHBIT_SET(c1))	/* ASCII */
 			*p++ = c1;
 		else
 		{						/* cannot convert to Big5! */
