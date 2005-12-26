@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Dec 22 18:05:31 EST 2005
+Last updated:		Mon Dec 26 00:14:46 EST 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -391,6 +391,11 @@ SQL Commands
 * %Add COMMENT ON for all cluster global objects (roles, databases
   and tablespaces)
 * %Make row-wise comparisons work per SQL spec
+
+  Right now, '(a, b) < (1, 2)' is processed as 'a < 1 and b < 2', but
+  the SQL standard requires it to be processed as a column-by-column
+  comparison, so the proper comparison is '(a < 1) OR (a = 1 AND b < 2)'.
+
 * Add RESET CONNECTION command to reset all session state
 
   This would include resetting of all variables (RESET ALL), dropping of

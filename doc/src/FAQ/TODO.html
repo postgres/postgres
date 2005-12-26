@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Thu Dec 22 18:05:31 EST 2005
+Last updated:           Mon Dec 26 00:14:46 EST 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -359,6 +359,10 @@ first.
   </li><li>%Add COMMENT ON for all cluster global objects (roles, databases
   and tablespaces)
   </li><li>%Make row-wise comparisons work per SQL spec
+<p>  Right now, '(a, b) &lt; (1, 2)' is processed as 'a &lt; 1 and b &lt; 2', but
+  the SQL standard requires it to be processed as a column-by-column
+  comparison, so the proper comparison is '(a &lt; 1) OR (a = 1 AND b &lt; 2)'.
+</p>
   </li><li>Add RESET CONNECTION command to reset all session state
 <p>  This would include resetting of all variables (RESET ALL), dropping of
   temporary tables, removing any NOTIFYs, cursors, open transactions,
