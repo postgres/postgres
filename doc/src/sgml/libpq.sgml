@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.200 2005/12/23 01:16:37 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.201 2005/12/26 14:58:04 petere Exp $
 -->
 
  <chapter id="libpq">
@@ -3574,14 +3574,14 @@ As always, there are some functions that just don't fit anywhere.
 
 <variablelist>
 <varlistentry>
-<term><function>pg_make_encrypted_password</function><indexterm><primary>pg_make_encrypted_password</></></term>
+<term><function>PQencryptPassword</function><indexterm><primary>PQencryptPassword</></></term>
 <listitem>
 <para>
 Prepares the encrypted form of a <productname>PostgreSQL</> password.
 <synopsis>
-char *pg_make_encrypted_password(const char *passwd, const char *user);
+char * PQencryptPassword(const char *passwd, const char *user);
 </synopsis>
-<function>pg_make_encrypted_password</> is intended to be used by client
+This function is intended to be used by client
 applications that wish to send commands like
 <literal>ALTER USER joe PASSWORD 'pwd'</>.
 It is good practice not to send the original cleartext password in such a
@@ -3589,7 +3589,7 @@ command, because it might be exposed in command logs, activity displays,
 and so on.  Instead, use this function to convert the password to encrypted
 form before it is sent.  The arguments are the cleartext password, and the SQL
 name of the user it is for.  The return value is a malloc'd string, or NULL if
-out-of-memory.  The caller may assume the string doesn't contain any weird
+out-of-memory.  The caller may assume the string doesn't contain any special
 characters that would require escaping.  Use <function>PQfreemem</> to free
 the result when done with it.
 </para>

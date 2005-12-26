@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.157 2005/12/23 01:16:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.158 2005/12/26 14:58:04 petere Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -643,7 +643,7 @@ exec_command(const char *cmd,
 			else
 				user = PQuser(pset.db);
 
-			encrypted_password = pg_make_encrypted_password(pw1, user);
+			encrypted_password = PQencryptPassword(pw1, user);
 
 			if (!encrypted_password)
 			{

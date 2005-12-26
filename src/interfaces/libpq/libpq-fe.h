@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.123 2005/12/23 01:16:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.124 2005/12/26 14:58:06 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -497,7 +497,7 @@ extern int	PQenv2encoding(void);
 
 /* === in fe-auth.c === */
 
-extern char *pg_make_encrypted_password(const char *passwd, const char *user);
+extern char *PQencryptPassword(const char *passwd, const char *user);
 
 #ifdef __cplusplus
 }
