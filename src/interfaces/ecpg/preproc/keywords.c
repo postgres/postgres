@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.70 2005/10/15 02:49:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.71 2005/12/27 04:00:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"absolute", ABSOLUTE_P},
 	{"access", ACCESS},
 	{"action", ACTION},
-	{"add", ADD},
+	{"add", ADD_P},
 	{"admin", ADMIN},
 	{"after", AFTER},
 	{"aggregate", AGGREGATE},
@@ -155,7 +155,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"group", GROUP_P},
 	{"handler", HANDLER},
 	{"having", HAVING},
-	{"header", HEADER},
+	{"header", HEADER_P},
 	{"hold", HOLD},
 	{"hour", HOUR_P},
 	{"ilike", ILIKE},

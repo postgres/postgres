@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.313 2005/12/02 15:03:57 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.314 2005/12/27 04:00:08 momjian Exp $ */
 
 /* Copyright comment */
 %{
@@ -349,7 +349,7 @@ add_additional_variables(char *name, bool insert)
 %token	TYPECAST
 
 /* ordinary key words in alphabetical order */
-%token <keyword> ABORT_P ABSOLUTE_P ACCESS ACTION ADD ADMIN AFTER
+%token <keyword> ABORT_P ABSOLUTE_P ACCESS ACTION ADD_P ADMIN AFTER
         AGGREGATE ALL ALSO ALTER ANALYSE ANALYZE AND ANY ARRAY AS ASC
 	ASSERTION ASSIGNMENT ASYMMETRIC AT AUTHORIZATION
 
@@ -375,7 +375,7 @@ add_additional_variables(char *name, bool insert)
 
 	GET GLOBAL GRANT GRANTED GREATEST GROUP_P
 
-	HANDLER HAVING HEADER HOLD HOUR_P
+	HANDLER HAVING HEADER_P HOLD HOUR_P
 
 	ILIKE IMMEDIATE IMMUTABLE IMPLICIT_P IN_P INCLUDING INCREMENT
 	INDEX INHERIT INHERITS INITIALLY INNER_P INOUT INPUT_P
@@ -1032,7 +1032,7 @@ AlterGroupStmt: ALTER GROUP_P RoleId add_drop USER name_list
 			{ $$ = cat_str(5, make_str("alter group"), $3, $4, make_str("user"), $6); }
 		;
 
-add_drop: ADD		{ $$ = make_str("add"); } 
+add_drop: ADD_P		{ $$ = make_str("add"); } 
 	| DROP 		{ $$ = make_str("drop"); } 
 	;
 	
@@ -1244,8 +1244,8 @@ alter_table_cmds:
 		;
 
 alter_table_cmd:
-		ADD opt_column columnDef
-/* ALTER TABLE <relation> ADD [COLUMN] <coldef> */
+		ADD_P opt_column columnDef
+/* ALTER TABLE <relation> ADD_P [COLUMN] <coldef> */
 			{ $$ = cat_str(3, make_str("add"), $2, $3); }
 /* ALTER TABLE <relation> ALTER [COLUMN] <colname> {SET DEFAULT <expr>|DROP DEFAULT} */
 		| ALTER opt_column ColId alter_column_default
@@ -1268,8 +1268,8 @@ alter_table_cmd:
 /* ALTER TABLE <relation> ALTER [COLUMN] <colname> TYPE <typename> [ USING <expression> ] */
 		| ALTER opt_column ColId TYPE_P Typename alter_using
 			{ $$ = cat_str(6, make_str("alter"), $2, $3, make_str("type"), $5, $6); }
-/* ALTER TABLE <relation> ADD CONSTRAINT ... */
-		| ADD TableConstraint
+/* ALTER TABLE <relation> ADD_P CONSTRAINT ... */
+		| ADD_P TableConstraint
 			{ $$ = cat_str(2, make_str("add"), $2); }
 /* ALTER TABLE <relation> DROP CONSTRAINT ... */
 		| DROP CONSTRAINT name opt_drop_behavior
@@ -1385,7 +1385,7 @@ copy_opt_item:	BINARY		{ $$ = make_str("binary"); }
 		| NULL_P opt_as StringConst
 			{ $$ = cat_str(3, make_str("null"), $2, $3); }
 		| CSV		{ $$ = make_str("csv"); }
-		| HEADER	{ $$ = make_str("header"); }
+		| HEADER_P	{ $$ = make_str("header"); }
 		| QUOTE opt_as Sconst
 			{ $$ = cat_str(3, make_str("quote"), $2, $3); }
 		| ESCAPE opt_as Sconst
@@ -2847,7 +2847,7 @@ AlterDomainStmt:
 		{ $$ = cat_str(3, make_str("alter domain"), $3, make_str("drop not null")); }
 	| ALTER DOMAIN_P any_name SET NOT NULL_P
 		{ $$ = cat_str(3, make_str("alter domain"), $3, make_str("set not null")); }
-	| ALTER DOMAIN_P any_name ADD TableConstraint
+	| ALTER DOMAIN_P any_name ADD_P TableConstraint
 		{ $$ = cat_str(4, make_str("alter domain"), $3, make_str("add"), $5); }
 	| ALTER DOMAIN_P any_name DROP CONSTRAINT name opt_drop_behavior
 		{ $$ = cat_str(5, make_str("alter domain"), $3, make_str("drop constraint"), $6, $7); }
@@ -6044,7 +6044,7 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| ABSOLUTE_P			{ $$ = make_str("absolute"); }
 		| ACCESS			{ $$ = make_str("access"); }
 		| ACTION			{ $$ = make_str("action"); }
-		| ADD				{ $$ = make_str("add"); }
+		| ADD_P				{ $$ = make_str("add"); }
 		| ADMIN				{ $$ = make_str("admin"); }
 		| AFTER				{ $$ = make_str("after"); }
 		| AGGREGATE			{ $$ = make_str("aggregate"); }
@@ -6108,7 +6108,7 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| GLOBAL			{ $$ = make_str("global"); }
 		| GRANTED			{ $$ = make_str("granted"); }
 		| HANDLER			{ $$ = make_str("handler"); }
-		| HEADER			{ $$ = make_str("header"); }
+		| HEADER_P			{ $$ = make_str("header"); }
 		| HOLD				{ $$ = make_str("hold"); }
 /*		| HOUR_P			{ $$ = make_str("hour"); }*/
 		| IMMEDIATE			{ $$ = make_str("immediate"); }

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.518 2005/12/23 16:46:39 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.519 2005/12/27 04:00:07 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -335,7 +335,7 @@ static void doNegateFloat(Value *v);
  */
 
 /* ordinary key words in alphabetical order */
-%token <keyword> ABORT_P ABSOLUTE_P ACCESS ACTION ADD ADMIN AFTER
+%token <keyword> ABORT_P ABSOLUTE_P ACCESS ACTION ADD_P ADMIN AFTER
 	AGGREGATE ALL ALSO ALTER ANALYSE ANALYZE AND ANY ARRAY AS ASC
 	ASSERTION ASSIGNMENT ASYMMETRIC AT AUTHORIZATION
 
@@ -361,7 +361,7 @@ static void doNegateFloat(Value *v);
 
 	GLOBAL GRANT GRANTED GREATEST GROUP_P
 
-	HANDLER HAVING HEADER HOLD HOUR_P
+	HANDLER HAVING HEADER_P HOLD HOUR_P
 
 	IF_P ILIKE IMMEDIATE IMMUTABLE IMPLICIT_P IN_P INCLUDING INCREMENT
 	INDEX INHERIT INHERITS INITIALLY INNER_P INOUT INPUT_P
@@ -882,7 +882,7 @@ AlterGroupStmt:
 				}
 		;
 
-add_drop:	ADD										{ $$ = +1; }
+add_drop:	ADD_P										{ $$ = +1; }
 			| DROP									{ $$ = -1; }
 		;
 
@@ -1304,8 +1304,8 @@ alter_table_cmds:
 
 /* Subcommands that are for ALTER TABLE only */
 alter_table_cmd:
-			/* ALTER TABLE <relation> ADD [COLUMN] <coldef> */
-			ADD opt_column columnDef
+			/* ALTER TABLE <relation> ADD_P [COLUMN] <coldef> */
+			ADD_P opt_column columnDef
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_AddColumn;
@@ -1377,8 +1377,8 @@ alter_table_cmd:
 					n->transform = $6;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <relation> ADD CONSTRAINT ... */
-			| ADD TableConstraint
+			/* ALTER TABLE <relation> ADD_P CONSTRAINT ... */
+			| ADD_P TableConstraint
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_AddConstraint;
@@ -1619,7 +1619,7 @@ copy_opt_item:
 				{
 					$$ = makeDefElem("csv", (Node *)makeInteger(TRUE));
 				}
-			| HEADER
+			| HEADER_P
 				{
 					$$ = makeDefElem("header", (Node *)makeInteger(TRUE));
 				}
@@ -4767,8 +4767,8 @@ AlterDomainStmt:
 					n->typename = $3;
 					$$ = (Node *)n;
 				}
-			/* ALTER DOMAIN <domain> ADD CONSTRAINT ... */
-			| ALTER DOMAIN_P any_name ADD TableConstraint
+			/* ALTER DOMAIN <domain> ADD_P CONSTRAINT ... */
+			| ALTER DOMAIN_P any_name ADD_P TableConstraint
 				{
 					AlterDomainStmt *n = makeNode(AlterDomainStmt);
 					n->subtype = 'C';
@@ -8137,7 +8137,7 @@ unreserved_keyword:
 			| ABSOLUTE_P
 			| ACCESS
 			| ACTION
-			| ADD
+			| ADD_P
 			| ADMIN
 			| AFTER
 			| AGGREGATE
@@ -8204,7 +8204,7 @@ unreserved_keyword:
 			| GLOBAL
 			| GRANTED
 			| HANDLER
-			| HEADER
+			| HEADER_P
 			| HOLD
 			| HOUR_P
 			| IF_P

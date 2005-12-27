@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.169 2005/11/22 18:17:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.170 2005/12/27 04:00:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"absolute", ABSOLUTE_P},
 	{"access", ACCESS},
 	{"action", ACTION},
-	{"add", ADD},
+	{"add", ADD_P},
 	{"admin", ADMIN},
 	{"after", AFTER},
 	{"aggregate", AGGREGATE},
@@ -157,7 +157,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"group", GROUP_P},
 	{"handler", HANDLER},
 	{"having", HAVING},
-	{"header", HEADER},
+	{"header", HEADER_P},
 	{"hold", HOLD},
 	{"hour", HOUR_P},
 	{"if", IF_P},
