@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.254.2.1 2005/11/22 18:23:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.254.2.2 2005/12/27 18:10:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2338,6 +2338,7 @@ CopyReadLineCSV(CopyState cstate)
 	bool		need_data;
 	bool		hit_eof;
 	char		s[2];
+	bool        first_char_in_line = true;
 	bool		in_quote = false,
 				last_was_esc = false;
 	char		quotec = cstate->quote[0];
@@ -2531,7 +2532,7 @@ CopyReadLineCSV(CopyState cstate)
 		/*
 		 * In CSV mode, we only recognize \. at start of line
 		 */
-		if (c == '\\' && cstate->line_buf.len == 0)
+		if (c == '\\' && first_char_in_line)
 		{
 			char		c2;
 
@@ -2577,13 +2578,15 @@ CopyReadLineCSV(CopyState cstate)
 					/* if hit_eof, c2 will become '\0' */
 					c2 = copy_raw_buf[raw_buf_ptr++];
 					if (c2 == '\n')
-						ereport(ERROR,
-								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-								 errmsg("end-of-copy marker does not match previous newline style")));
+					{
+						raw_buf_ptr = prev_raw_ptr + 1;
+						goto not_end_of_copy;
+					}
 					if (c2 != '\r')
-						ereport(ERROR,
-								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-								 errmsg("end-of-copy marker corrupt")));
+					{
+						raw_buf_ptr = prev_raw_ptr + 1;
+						goto not_end_of_copy;
+					}
 				}
 				if (raw_buf_ptr >= copy_buf_len && !hit_eof)
 				{
@@ -2594,16 +2597,16 @@ CopyReadLineCSV(CopyState cstate)
 				/* if hit_eof, c2 will become '\0' */
 				c2 = copy_raw_buf[raw_buf_ptr++];
 				if (c2 != '\r' && c2 != '\n')
-					ereport(ERROR,
-							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-							 errmsg("end-of-copy marker corrupt")));
+				{
+					raw_buf_ptr = prev_raw_ptr + 1;
+					goto not_end_of_copy;
+				}
 				if ((cstate->eol_type == EOL_NL && c2 != '\n') ||
 					(cstate->eol_type == EOL_CRNL && c2 != '\n') ||
 					(cstate->eol_type == EOL_CR && c2 != '\r'))
 					ereport(ERROR,
 							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 							 errmsg("end-of-copy marker does not match previous newline style")));
-
 				/*
 				 * Transfer only the data before the \. into line_buf, then
 				 * discard the data and the \. sequence.
@@ -2618,11 +2621,15 @@ CopyReadLineCSV(CopyState cstate)
 		}
 
 		/*
-		 * Do we need to be careful about trailing bytes of multibyte
-		 * characters?	(See note above about client_only_encoding)
-		 *
-		 * We assume here that pg_encoding_mblen only looks at the first byte
-		 * of the character!
+		 * This label is for CSV cases where \. appears at the start of a line,
+		 * but there is more text after it, meaning it was a data value.
+		 * We are more strict for \. in CSV mode because \. could be a data
+		 * value, while in non-CSV mode, \. cannot be a data value.
+		 */
+not_end_of_copy:
+
+		/*
+		 * Process all bytes of a multi-byte character as a group.
 		 */
 		if (cstate->client_only_encoding)
 		{
@@ -2645,6 +2652,7 @@ CopyReadLineCSV(CopyState cstate)
 			}
 			raw_buf_ptr += mblen - 1;
 		}
+		first_char_in_line = false;
 	}							/* end of outer loop */
 
 	/*
