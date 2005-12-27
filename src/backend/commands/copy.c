@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.255 2005/11/22 18:17:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.256 2005/12/27 18:10:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,19 +76,19 @@ typedef enum EolType
 
 /*
  * This struct contains all the state variables used throughout a COPY
- * operation.  For simplicity, we use the same struct for all variants
- * of COPY, even though some fields are used in only some cases.
+ * operation. For simplicity, we use the same struct for all variants of COPY,
+ * even though some fields are used in only some cases.
  *
- * A word about encoding considerations: encodings that are only supported on
- * the client side are those where multibyte characters may have second or
- * later bytes with the high bit not set.  When scanning data in such an
- * encoding to look for a match to a single-byte (ie ASCII) character,
- * we must use the full pg_encoding_mblen() machinery to skip over
- * multibyte characters, else we might find a false match to a trailing
- * byte.  In supported server encodings, there is no possibility of
- * a false match, and it's faster to make useless comparisons to trailing
- * bytes than it is to invoke pg_encoding_mblen() to skip over them.
- * client_only_encoding is TRUE when we have to do it the hard way.
+ * Multi-byte encodings: all supported client-side encodings encode multi-byte
+ * characters by having the first byte's high bit set. Subsequent bytes of the
+ * character can have the high bit not set. When scanning data in such an
+ * encoding to look for a match to a single-byte (ie ASCII) character, we must
+ * use the full pg_encoding_mblen() machinery to skip over multibyte
+ * characters, else we might find a false match to a trailing byte. In
+ * supported server encodings, there is no possibility of a false match, and
+ * it's faster to make useless comparisons to trailing bytes than it is to
+ * invoke pg_encoding_mblen() to skip over them. encoding_embeds_ascii is TRUE
+ * when we have to do it the hard way.
  */
 typedef struct CopyStateData
 {
@@ -101,7 +101,7 @@ typedef struct CopyStateData
 	EolType		eol_type;		/* EOL type of input */
 	int			client_encoding;	/* remote side's character encoding */
 	bool		need_transcoding;		/* client encoding diff from server? */
-	bool		client_only_encoding;	/* encoding not valid on server? */
+	bool		encoding_embeds_ascii;	/* ASCII can be non-first byte? */
 
 	/* parameters from the COPY command */
 	Relation	rel;			/* relation to copy to or from */
@@ -160,6 +160,71 @@ typedef struct CopyStateData
 typedef CopyStateData *CopyState;
 
 
+/*
+ * These macros centralize code used to process line_buf and raw_buf buffers.
+ * They are macros because they often do continue/break control and to avoid
+ * function call overhead in tight COPY loops.
+ *
+ * We must use "if (1)" because "do {} while(0)" overrides the continue/break
+ * processing.  See http://www.cit.gu.edu.au/~anthony/info/C/C.macros.
+ */
+
+/*
+ * This keeps the character read at the top of the loop in the buffer
+ * even if there is more than one read-ahead.
+ */
+#define IF_NEED_REFILL_AND_NOT_EOF_CONTINUE(extralen) \
+if (1) \
+{ \
+	if (raw_buf_ptr + (extralen) >= copy_buf_len && !hit_eof) \
+	{ \
+		raw_buf_ptr = prev_raw_ptr; /* undo fetch */ \
+		need_data = true; \
+		continue; \
+	} \
+} else
+
+
+/* This consumes the remainder of the buffer and breaks */
+#define IF_NEED_REFILL_AND_EOF_BREAK(extralen) \
+if (1) \
+{ \
+	if (raw_buf_ptr + (extralen) >= copy_buf_len && hit_eof) \
+	{ \
+		if (extralen) \
+			raw_buf_ptr = copy_buf_len; /* consume the partial character */ \
+		/* backslash just before EOF, treat as data char */ \
+		result = true; \
+		break; \
+	} \
+} else
+
+
+/*
+ * Transfer any approved data to line_buf; must do this to be sure
+ * there is some room in raw_buf.
+ */
+#define REFILL_LINEBUF \
+if (1) \
+{ \
+	if (raw_buf_ptr > cstate->raw_buf_index) \
+	{ \
+		appendBinaryStringInfo(&cstate->line_buf, \
+							 cstate->raw_buf + cstate->raw_buf_index, \
+							   raw_buf_ptr - cstate->raw_buf_index); \
+		cstate->raw_buf_index = raw_buf_ptr; \
+	} \
+} else
+
+/* Undo any read-ahead and jump out of the block. */
+#define NO_END_OF_COPY_GOTO \
+if (1) \
+{ \
+	raw_buf_ptr = prev_raw_ptr + 1; \
+	goto not_end_of_copy; \
+} else
+
+
 static const char BinarySignature[11] = "PGCOPY\n\377\r\n\0";
 
 
@@ -169,7 +234,6 @@ static void CopyTo(CopyState cstate);
 static void CopyFrom(CopyState cstate);
 static bool CopyReadLine(CopyState cstate);
 static bool CopyReadLineText(CopyState cstate);
-static bool CopyReadLineCSV(CopyState cstate);
 static int CopyReadAttributesText(CopyState cstate, int maxfields,
 					   char **fieldvals);
 static int CopyReadAttributesCSV(CopyState cstate, int maxfields,
@@ -940,7 +1004,8 @@ DoCopy(const CopyStmt *stmt)
 	/* Set up encoding conversion info */
 	cstate->client_encoding = pg_get_client_encoding();
 	cstate->need_transcoding = (cstate->client_encoding != GetDatabaseEncoding());
-	cstate->client_only_encoding = PG_ENCODING_IS_CLIENT_ONLY(cstate->client_encoding);
+	/* See Multibyte encoding comment above */
+	cstate->encoding_embeds_ascii = PG_ENCODING_IS_CLIENT_ONLY(cstate->client_encoding);
 
 	cstate->copy_dest = COPY_FILE;		/* default */
 
@@ -1970,10 +2035,7 @@ CopyReadLine(CopyState cstate)
 	cstate->line_buf_converted = false;
 
 	/* Parse data and transfer into line_buf */
-	if (cstate->csv_mode)
-		result = CopyReadLineCSV(cstate);
-	else
-		result = CopyReadLineText(cstate);
+	result = CopyReadLineText(cstate);
 
 	if (result)
 	{
@@ -2048,309 +2110,35 @@ CopyReadLine(CopyState cstate)
 }
 
 /*
- * CopyReadLineText - inner loop of CopyReadLine for non-CSV mode
- *
- * If you need to change this, better look at CopyReadLineCSV too
+ * CopyReadLineText - inner loop of CopyReadLine for text mode
  */
 static bool
 CopyReadLineText(CopyState cstate)
 {
-	bool		result;
 	char	   *copy_raw_buf;
 	int			raw_buf_ptr;
 	int			copy_buf_len;
-	bool		need_data;
-	bool		hit_eof;
-	char		s[2];
-
-	s[1] = 0;
-
-	/* set default status */
-	result = false;
-
-	/*
-	 * The objective of this loop is to transfer the entire next input line
-	 * into line_buf.  Hence, we only care for detecting newlines (\r and/or
-	 * \n) and the end-of-copy marker (\.).
-	 *
-	 * For backwards compatibility we allow backslashes to escape newline
-	 * characters.	Backslashes other than the end marker get put into the
-	 * line_buf, since CopyReadAttributesText does its own escape processing.
-	 *
-	 * These four characters, and only these four, are assumed the same in
-	 * frontend and backend encodings.
-	 *
-	 * For speed, we try to move data to line_buf in chunks rather than one
-	 * character at a time.  raw_buf_ptr points to the next character to
-	 * examine; any characters from raw_buf_index to raw_buf_ptr have been
-	 * determined to be part of the line, but not yet transferred to line_buf.
-	 *
-	 * For a little extra speed within the loop, we copy raw_buf and
-	 * raw_buf_len into local variables.
-	 */
-	copy_raw_buf = cstate->raw_buf;
-	raw_buf_ptr = cstate->raw_buf_index;
-	copy_buf_len = cstate->raw_buf_len;
-	need_data = false;			/* flag to force reading more data */
-	hit_eof = false;			/* flag indicating no more data available */
-
-	for (;;)
-	{
-		int			prev_raw_ptr;
-		char		c;
-
-		/* Load more data if needed */
-		if (raw_buf_ptr >= copy_buf_len || need_data)
-		{
-			/*
-			 * Transfer any approved data to line_buf; must do this to be sure
-			 * there is some room in raw_buf.
-			 */
-			if (raw_buf_ptr > cstate->raw_buf_index)
-			{
-				appendBinaryStringInfo(&cstate->line_buf,
-									 cstate->raw_buf + cstate->raw_buf_index,
-									   raw_buf_ptr - cstate->raw_buf_index);
-				cstate->raw_buf_index = raw_buf_ptr;
-			}
-
-			/*
-			 * Try to read some more data.	This will certainly reset
-			 * raw_buf_index to zero, and raw_buf_ptr must go with it.
-			 */
-			if (!CopyLoadRawBuf(cstate))
-				hit_eof = true;
-			raw_buf_ptr = 0;
-			copy_buf_len = cstate->raw_buf_len;
-
-			/*
-			 * If we are completely out of data, break out of the loop,
-			 * reporting EOF.
-			 */
-			if (copy_buf_len <= 0)
-			{
-				result = true;
-				break;
-			}
-			need_data = false;
-		}
-
-		/* OK to fetch a character */
-		prev_raw_ptr = raw_buf_ptr;
-		c = copy_raw_buf[raw_buf_ptr++];
-
-		if (c == '\r')
-		{
-			/* Check for \r\n on first line, _and_ handle \r\n. */
-			if (cstate->eol_type == EOL_UNKNOWN ||
-				cstate->eol_type == EOL_CRNL)
-			{
-				/*
-				 * If need more data, go back to loop top to load it.
-				 *
-				 * Note that if we are at EOF, c will wind up as '\0' because
-				 * of the guaranteed pad of raw_buf.
-				 */
-				if (raw_buf_ptr >= copy_buf_len && !hit_eof)
-				{
-					raw_buf_ptr = prev_raw_ptr; /* undo fetch */
-					need_data = true;
-					continue;
-				}
-				c = copy_raw_buf[raw_buf_ptr];
-
-				if (c == '\n')
-				{
-					raw_buf_ptr++;		/* eat newline */
-					cstate->eol_type = EOL_CRNL;		/* in case not set yet */
-				}
-				else
-				{
-					/* found \r, but no \n */
-					if (cstate->eol_type == EOL_CRNL)
-						ereport(ERROR,
-								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-							 errmsg("literal carriage return found in data"),
-								 errhint("Use \"\\r\" to represent carriage return.")));
-
-					/*
-					 * if we got here, it is the first line and we didn't find
-					 * \n, so don't consume the peeked character
-					 */
-					cstate->eol_type = EOL_CR;
-				}
-			}
-			else if (cstate->eol_type == EOL_NL)
-				ereport(ERROR,
-						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-						 errmsg("literal carriage return found in data"),
-					  errhint("Use \"\\r\" to represent carriage return.")));
-			/* If reach here, we have found the line terminator */
-			break;
-		}
-
-		if (c == '\n')
-		{
-			if (cstate->eol_type == EOL_CR || cstate->eol_type == EOL_CRNL)
-				ereport(ERROR,
-						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-						 errmsg("literal newline found in data"),
-						 errhint("Use \"\\n\" to represent newline.")));
-			cstate->eol_type = EOL_NL;	/* in case not set yet */
-			/* If reach here, we have found the line terminator */
-			break;
-		}
-
-		if (c == '\\')
-		{
-			/*
-			 * If need more data, go back to loop top to load it.
-			 */
-			if (raw_buf_ptr >= copy_buf_len)
-			{
-				if (hit_eof)
-				{
-					/* backslash just before EOF, treat as data char */
-					result = true;
-					break;
-				}
-				raw_buf_ptr = prev_raw_ptr;		/* undo fetch */
-				need_data = true;
-				continue;
-			}
-
-			/*
-			 * In non-CSV mode, backslash quotes the following character even
-			 * if it's a newline, so we always advance to next character
-			 */
-			c = copy_raw_buf[raw_buf_ptr++];
-
-			if (c == '.')
-			{
-				if (cstate->eol_type == EOL_CRNL)
-				{
-					if (raw_buf_ptr >= copy_buf_len && !hit_eof)
-					{
-						raw_buf_ptr = prev_raw_ptr;		/* undo fetch */
-						need_data = true;
-						continue;
-					}
-					/* if hit_eof, c will become '\0' */
-					c = copy_raw_buf[raw_buf_ptr++];
-					if (c == '\n')
-						ereport(ERROR,
-								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-								 errmsg("end-of-copy marker does not match previous newline style")));
-					if (c != '\r')
-						ereport(ERROR,
-								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-								 errmsg("end-of-copy marker corrupt")));
-				}
-				if (raw_buf_ptr >= copy_buf_len && !hit_eof)
-				{
-					raw_buf_ptr = prev_raw_ptr; /* undo fetch */
-					need_data = true;
-					continue;
-				}
-				/* if hit_eof, c will become '\0' */
-				c = copy_raw_buf[raw_buf_ptr++];
-				if (c != '\r' && c != '\n')
-					ereport(ERROR,
-							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-							 errmsg("end-of-copy marker corrupt")));
-				if ((cstate->eol_type == EOL_NL && c != '\n') ||
-					(cstate->eol_type == EOL_CRNL && c != '\n') ||
-					(cstate->eol_type == EOL_CR && c != '\r'))
-					ereport(ERROR,
-							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-							 errmsg("end-of-copy marker does not match previous newline style")));
-
-				/*
-				 * Transfer only the data before the \. into line_buf, then
-				 * discard the data and the \. sequence.
-				 */
-				if (prev_raw_ptr > cstate->raw_buf_index)
-					appendBinaryStringInfo(&cstate->line_buf,
-									 cstate->raw_buf + cstate->raw_buf_index,
-									   prev_raw_ptr - cstate->raw_buf_index);
-				cstate->raw_buf_index = raw_buf_ptr;
-				result = true;	/* report EOF */
-				break;
-			}
-		}
-
-		/*
-		 * Do we need to be careful about trailing bytes of multibyte
-		 * characters?	(See note above about client_only_encoding)
-		 *
-		 * We assume here that pg_encoding_mblen only looks at the first byte
-		 * of the character!
-		 */
-		if (cstate->client_only_encoding)
-		{
-			int			mblen;
-
-			s[0] = c;
-			mblen = pg_encoding_mblen(cstate->client_encoding, s);
-			if (raw_buf_ptr + (mblen - 1) > copy_buf_len)
-			{
-				if (hit_eof)
-				{
-					/* consume the partial character (conversion will fail) */
-					raw_buf_ptr = copy_buf_len;
-					result = true;
-					break;
-				}
-				raw_buf_ptr = prev_raw_ptr;		/* undo fetch */
-				need_data = true;
-				continue;
-			}
-			raw_buf_ptr += mblen - 1;
-		}
-	}							/* end of outer loop */
-
-	/*
-	 * Transfer any still-uncopied data to line_buf.
-	 */
-	if (raw_buf_ptr > cstate->raw_buf_index)
-	{
-		appendBinaryStringInfo(&cstate->line_buf,
-							   cstate->raw_buf + cstate->raw_buf_index,
-							   raw_buf_ptr - cstate->raw_buf_index);
-		cstate->raw_buf_index = raw_buf_ptr;
-	}
-
-	return result;
-}
-
-/*
- * CopyReadLineCSV - inner loop of CopyReadLine for CSV mode
- *
- * If you need to change this, better look at CopyReadLineText too
- */
-static bool
-CopyReadLineCSV(CopyState cstate)
-{
-	bool		result;
-	char	   *copy_raw_buf;
-	int			raw_buf_ptr;
-	int			copy_buf_len;
-	bool		need_data;
-	bool		hit_eof;
-	char		s[2];
+	bool		need_data = false;
+	bool		hit_eof = false;
+	bool		result = false;
+	char		mblen_str[2];
+	/* CSV variables */
+	bool		first_char_in_line = true;
 	bool		in_quote = false,
 				last_was_esc = false;
-	char		quotec = cstate->quote[0];
-	char		escapec = cstate->escape[0];
+	char		quotec = '\0';
+	char		escapec = '\0';
 
-	/* ignore special escape processing if it's the same as quotec */
-	if (quotec == escapec)
-		escapec = '\0';
+	if (cstate->csv_mode)
+	{
+		quotec = cstate->quote[0];
+		escapec = cstate->escape[0];
+		/* ignore special escape processing if it's the same as quotec */
+		if (quotec == escapec)
+			escapec = '\0';
+	}
 
-	s[1] = 0;
-
-	/* set default status */
-	result = false;
+	mblen_str[1] = '\0';
 
 	/*
 	 * The objective of this loop is to transfer the entire next input line
@@ -2364,10 +2152,11 @@ CopyReadLineCSV(CopyState cstate)
 	 * These four characters, and the CSV escape and quote characters, are
 	 * assumed the same in frontend and backend encodings.
 	 *
-	 * For speed, we try to move data to line_buf in chunks rather than one
-	 * character at a time.  raw_buf_ptr points to the next character to
-	 * examine; any characters from raw_buf_index to raw_buf_ptr have been
-	 * determined to be part of the line, but not yet transferred to line_buf.
+	 * For speed, we try to move data from raw_buf to line_buf in chunks
+     * rather than one character at a time.  raw_buf_ptr points to the next
+	 * character to examine; any characters from raw_buf_index to raw_buf_ptr
+	 * have been determined to be part of the line, but not yet transferred
+	 * to line_buf.
 	 *
 	 * For a little extra speed within the loop, we copy raw_buf and
 	 * raw_buf_len into local variables.
@@ -2375,28 +2164,25 @@ CopyReadLineCSV(CopyState cstate)
 	copy_raw_buf = cstate->raw_buf;
 	raw_buf_ptr = cstate->raw_buf_index;
 	copy_buf_len = cstate->raw_buf_len;
-	need_data = false;			/* flag to force reading more data */
-	hit_eof = false;			/* flag indicating no more data available */
 
 	for (;;)
 	{
 		int			prev_raw_ptr;
 		char		c;
 
-		/* Load more data if needed */
+		/*
+		 *	Load more data if needed.  Ideally we would just force four bytes
+		 *	of read-ahead and avoid the many calls to
+		 *	IF_NEED_REFILL_AND_NOT_EOF_CONTINUE(), but the COPY_OLD_FE
+		 *	protocol does not allow us to read too far ahead or we might
+		 *	read into the next data, so we read-ahead only as far we know
+		 *	we can.  One optimization would be to read-ahead four byte here
+		 *	if cstate->copy_dest != COPY_OLD_FE, but it hardly seems worth it,
+		 *	considering the size of the buffer.
+		 */
 		if (raw_buf_ptr >= copy_buf_len || need_data)
 		{
-			/*
-			 * Transfer any approved data to line_buf; must do this to be sure
-			 * there is some room in raw_buf.
-			 */
-			if (raw_buf_ptr > cstate->raw_buf_index)
-			{
-				appendBinaryStringInfo(&cstate->line_buf,
-									 cstate->raw_buf + cstate->raw_buf_index,
-									   raw_buf_ptr - cstate->raw_buf_index);
-				cstate->raw_buf_index = raw_buf_ptr;
-			}
+			REFILL_LINEBUF;
 
 			/*
 			 * Try to read some more data.	This will certainly reset
@@ -2423,50 +2209,49 @@ CopyReadLineCSV(CopyState cstate)
 		prev_raw_ptr = raw_buf_ptr;
 		c = copy_raw_buf[raw_buf_ptr++];
 
-		/*
-		 * If character is '\\' or '\r', we may need to look ahead below.
-		 * Force fetch of the next character if we don't already have it. We
-		 * need to do this before changing CSV state, in case one of these
-		 * characters is also the quote or escape character.
-		 *
-		 * Note: old-protocol does not like forced prefetch, but it's OK here
-		 * since we cannot validly be at EOF.
-		 */
-		if (c == '\\' || c == '\r')
+		if (cstate->csv_mode)
 		{
-			if (raw_buf_ptr >= copy_buf_len && !hit_eof)
+			/*
+			 * If character is '\\' or '\r', we may need to look ahead below.
+			 * Force fetch of the next character if we don't already have it. We
+			 * need to do this before changing CSV state, in case one of these
+			 * characters is also the quote or escape character.
+			 *
+			 * Note: old-protocol does not like forced prefetch, but it's OK here
+			 * since we cannot validly be at EOF.
+			 */
+			if (c == '\\' || c == '\r')
 			{
-				raw_buf_ptr = prev_raw_ptr;		/* undo fetch */
-				need_data = true;
-				continue;
+				IF_NEED_REFILL_AND_NOT_EOF_CONTINUE(0);
 			}
+
+			/*
+			 * Dealing with quotes and escapes here is mildly tricky. If the quote
+			 * char is also the escape char, there's no problem - we  just use the
+			 * char as a toggle. If they are different, we need to ensure that we
+			 * only take account of an escape inside a quoted field and
+			 * immediately preceding a quote char, and not the second in a
+			 * escape-escape sequence.
+			 */
+			if (in_quote && c == escapec)
+				last_was_esc = !last_was_esc;
+			if (c == quotec && !last_was_esc)
+				in_quote = !in_quote;
+			if (c != escapec)
+				last_was_esc = false;
+
+			/*
+			 * Updating the line count for embedded CR and/or LF chars is
+			 * necessarily a little fragile - this test is probably about the best
+			 * we can do.  (XXX it's arguable whether we should do this at all ---
+			 * is cur_lineno a physical or logical count?)
+			 */
+			if (in_quote && c == (cstate->eol_type == EOL_NL ? '\n' : '\r'))
+				cstate->cur_lineno++;
 		}
 
-		/*
-		 * Dealing with quotes and escapes here is mildly tricky. If the quote
-		 * char is also the escape char, there's no problem - we  just use the
-		 * char as a toggle. If they are different, we need to ensure that we
-		 * only take account of an escape inside a quoted field and
-		 * immediately preceding a quote char, and not the second in a
-		 * escape-escape sequence.
-		 */
-		if (in_quote && c == escapec)
-			last_was_esc = !last_was_esc;
-		if (c == quotec && !last_was_esc)
-			in_quote = !in_quote;
-		if (c != escapec)
-			last_was_esc = false;
-
-		/*
-		 * Updating the line count for embedded CR and/or LF chars is
-		 * necessarily a little fragile - this test is probably about the best
-		 * we can do.  (XXX it's arguable whether we should do this at all ---
-		 * is cur_lineno a physical or logical count?)
-		 */
-		if (in_quote && c == (cstate->eol_type == EOL_NL ? '\n' : '\r'))
-			cstate->cur_lineno++;
-
-		if (c == '\r' && !in_quote)
+		/* Process \r */
+		if (c == '\r' && (!cstate->csv_mode || !in_quote))
 		{
 			/* Check for \r\n on first line, _and_ handle \r\n. */
 			if (cstate->eol_type == EOL_UNKNOWN ||
@@ -2478,12 +2263,9 @@ CopyReadLineCSV(CopyState cstate)
 				 * Note that if we are at EOF, c will wind up as '\0' because
 				 * of the guaranteed pad of raw_buf.
 				 */
-				if (raw_buf_ptr >= copy_buf_len && !hit_eof)
-				{
-					raw_buf_ptr = prev_raw_ptr; /* undo fetch */
-					need_data = true;
-					continue;
-				}
+				IF_NEED_REFILL_AND_NOT_EOF_CONTINUE(0);
+
+				/* get next char */
 				c = copy_raw_buf[raw_buf_ptr];
 
 				if (c == '\n')
@@ -2497,9 +2279,12 @@ CopyReadLineCSV(CopyState cstate)
 					if (cstate->eol_type == EOL_CRNL)
 						ereport(ERROR,
 								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-							errmsg("unquoted carriage return found in data"),
-								 errhint("Use quoted CSV field to represent carriage return.")));
-
+							 errmsg(!cstate->csv_mode ?
+									"literal carriage return found in data" :
+									"unquoted carriage return found in data"),
+								 errhint(!cstate->csv_mode ?
+										"Use \"\\r\" to represent carriage return." :
+										"Use quoted CSV field to represent carriage return.")));
 					/*
 					 * if we got here, it is the first line and we didn't find
 					 * \n, so don't consume the peeked character
@@ -2510,50 +2295,49 @@ CopyReadLineCSV(CopyState cstate)
 			else if (cstate->eol_type == EOL_NL)
 				ereport(ERROR,
 						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-						 errmsg("unquoted carriage return found in CSV data"),
-						 errhint("Use quoted CSV field to represent carriage return.")));
+					 errmsg(!cstate->csv_mode ?
+								"literal carriage return found in data" :
+								"unquoted carriage return found in data"),
+						 errhint(!cstate->csv_mode ?
+								"Use \"\\r\" to represent carriage return." :
+								"Use quoted CSV field to represent carriage return.")));
 			/* If reach here, we have found the line terminator */
 			break;
 		}
 
-		if (c == '\n' && !in_quote)
+		/* Process \n */
+		if (c == '\n' && (!cstate->csv_mode || !in_quote))
 		{
 			if (cstate->eol_type == EOL_CR || cstate->eol_type == EOL_CRNL)
 				ereport(ERROR,
 						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-						 errmsg("unquoted newline found in data"),
-					 errhint("Use quoted CSV field to represent newline.")));
+						 errmsg(!cstate->csv_mode ?
+								"literal newline found in data" :
+								"unquoted newline found in data"),
+						 errhint(!cstate->csv_mode ?
+								 "Use \"\\n\" to represent newline." :
+								 "Use quoted CSV field to represent newline.")));
 			cstate->eol_type = EOL_NL;	/* in case not set yet */
 			/* If reach here, we have found the line terminator */
 			break;
 		}
 
 		/*
-		 * In CSV mode, we only recognize \. at start of line
+		 *	In CSV mode, we only recognize \. alone on a line.  This is
+		 *	because \. is a valid CSV data value.
 		 */
-		if (c == '\\' && cstate->line_buf.len == 0)
+		if (c == '\\' && (!cstate->csv_mode || first_char_in_line))
 		{
 			char		c2;
 
-			/*
-			 * If need more data, go back to loop top to load it.
-			 */
-			if (raw_buf_ptr >= copy_buf_len)
-			{
-				if (hit_eof)
-				{
-					/* backslash just before EOF, treat as data char */
-					result = true;
-					break;
-				}
-				raw_buf_ptr = prev_raw_ptr;		/* undo fetch */
-				need_data = true;
-				continue;
-			}
+			IF_NEED_REFILL_AND_NOT_EOF_CONTINUE(0);
+			IF_NEED_REFILL_AND_EOF_BREAK(0);
 
-			/*
-			 * Note: we do not change c here since we aren't treating \ as
-			 * escaping the next character.
+			/* -----
+			 * get next character
+			 * Note: we do not change c so if it isn't \., we can fall
+			 * through and continue processing for client encoding.
+			 * -----
 			 */
 			c2 = copy_raw_buf[raw_buf_ptr];
 
@@ -2568,95 +2352,115 @@ CopyReadLineCSV(CopyState cstate)
 				 */
 				if (cstate->eol_type == EOL_CRNL)
 				{
-					if (raw_buf_ptr >= copy_buf_len && !hit_eof)
-					{
-						raw_buf_ptr = prev_raw_ptr;		/* undo fetch */
-						need_data = true;
-						continue;
-					}
+					/* Get the next character */
+					IF_NEED_REFILL_AND_NOT_EOF_CONTINUE(0);
 					/* if hit_eof, c2 will become '\0' */
 					c2 = copy_raw_buf[raw_buf_ptr++];
+
 					if (c2 == '\n')
-						ereport(ERROR,
-								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-								 errmsg("end-of-copy marker does not match previous newline style")));
-					if (c2 != '\r')
+					{
+						if (!cstate->csv_mode)
+							ereport(ERROR,
+									(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+									 errmsg("end-of-copy marker does not match previous newline style")));
+						else
+							NO_END_OF_COPY_GOTO;
+					}
+					else if (c2 != '\r')
+					{
+						if (!cstate->csv_mode)
+							ereport(ERROR,
+									(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+									 errmsg("end-of-copy marker corrupt")));
+						else
+							NO_END_OF_COPY_GOTO;
+					}
+				}
+
+				/* Get the next character */
+				IF_NEED_REFILL_AND_NOT_EOF_CONTINUE(0);
+				/* if hit_eof, c2 will become '\0' */
+				c2 = copy_raw_buf[raw_buf_ptr++];
+
+				if (c2 != '\r' && c2 != '\n')
+				{
+					if (!cstate->csv_mode)
 						ereport(ERROR,
 								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 								 errmsg("end-of-copy marker corrupt")));
+					else
+						NO_END_OF_COPY_GOTO;
 				}
-				if (raw_buf_ptr >= copy_buf_len && !hit_eof)
-				{
-					raw_buf_ptr = prev_raw_ptr; /* undo fetch */
-					need_data = true;
-					continue;
-				}
-				/* if hit_eof, c2 will become '\0' */
-				c2 = copy_raw_buf[raw_buf_ptr++];
-				if (c2 != '\r' && c2 != '\n')
-					ereport(ERROR,
-							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-							 errmsg("end-of-copy marker corrupt")));
+
 				if ((cstate->eol_type == EOL_NL && c2 != '\n') ||
 					(cstate->eol_type == EOL_CRNL && c2 != '\n') ||
 					(cstate->eol_type == EOL_CR && c2 != '\r'))
+				{
 					ereport(ERROR,
 							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 							 errmsg("end-of-copy marker does not match previous newline style")));
+				}
 
 				/*
 				 * Transfer only the data before the \. into line_buf, then
 				 * discard the data and the \. sequence.
 				 */
 				if (prev_raw_ptr > cstate->raw_buf_index)
-					appendBinaryStringInfo(&cstate->line_buf, cstate->raw_buf + cstate->raw_buf_index,
+					appendBinaryStringInfo(&cstate->line_buf,
+									 cstate->raw_buf + cstate->raw_buf_index,
 									   prev_raw_ptr - cstate->raw_buf_index);
 				cstate->raw_buf_index = raw_buf_ptr;
 				result = true;	/* report EOF */
 				break;
 			}
+			else if (!cstate->csv_mode)
+				/*
+				 *	If we are here, it means we found a backslash followed by
+				 *	something other than a period.  In non-CSV mode, anything
+				 *	after a backslash is special, so we skip over that second
+				 *	character too.  If we didn't do that \\. would be
+				 *	considered an eof-of copy, while in non-CVS mode it is a
+				 *	literal backslash followed by a period.  In CSV mode,
+				 *	backslashes are not special, so we want to process the
+				 *	character after the backslash just like a normal character,
+				 *	so we don't increment in those cases.
+				 */
+				raw_buf_ptr++;
 		}
 
 		/*
-		 * Do we need to be careful about trailing bytes of multibyte
-		 * characters?	(See note above about client_only_encoding)
-		 *
-		 * We assume here that pg_encoding_mblen only looks at the first byte
-		 * of the character!
+		 * This label is for CSV cases where \. appears at the start of a line,
+		 * but there is more text after it, meaning it was a data value.
+		 * We are more strict for \. in CSV mode because \. could be a data
+		 * value, while in non-CSV mode, \. cannot be a data value.
 		 */
-		if (cstate->client_only_encoding)
+not_end_of_copy:
+
+		/*
+		 * Process all bytes of a multi-byte character as a group.
+		 *
+		 * We only support multi-byte sequences where the first byte
+		 * has the high-bit set, so as an optimization we can avoid
+		 * this block entirely if it is not set.
+		 */
+		if (cstate->encoding_embeds_ascii && IS_HIGHBIT_SET(c))
 		{
 			int			mblen;
 
-			s[0] = c;
-			mblen = pg_encoding_mblen(cstate->client_encoding, s);
-			if (raw_buf_ptr + (mblen - 1) > copy_buf_len)
-			{
-				if (hit_eof)
-				{
-					/* consume the partial character (will fail below) */
-					raw_buf_ptr = copy_buf_len;
-					result = true;
-					break;
-				}
-				raw_buf_ptr = prev_raw_ptr;		/* undo fetch */
-				need_data = true;
-				continue;
-			}
+			mblen_str[0] = c;
+			/* All our encodings only read the first byte to get the length */
+			mblen = pg_encoding_mblen(cstate->client_encoding, mblen_str);
+			IF_NEED_REFILL_AND_NOT_EOF_CONTINUE(mblen - 1);
+			IF_NEED_REFILL_AND_EOF_BREAK(mblen - 1);
 			raw_buf_ptr += mblen - 1;
 		}
+		first_char_in_line = false;
 	}							/* end of outer loop */
 
 	/*
 	 * Transfer any still-uncopied data to line_buf.
 	 */
-	if (raw_buf_ptr > cstate->raw_buf_index)
-	{
-		appendBinaryStringInfo(&cstate->line_buf,
-							   cstate->raw_buf + cstate->raw_buf_index,
-							   raw_buf_ptr - cstate->raw_buf_index);
-		cstate->raw_buf_index = raw_buf_ptr;
-	}
+	REFILL_LINEBUF;
 
 	return result;
 }
@@ -3150,7 +2954,7 @@ CopyAttributeOutText(CopyState cstate, char *server_string)
 				 * safe, because in valid backend encodings, extra bytes of a
 				 * multibyte character never look like ASCII.
 				 */
-				if (cstate->client_only_encoding)
+				if (cstate->encoding_embeds_ascii && IS_HIGHBIT_SET(c))
 					mblen = pg_encoding_mblen(cstate->client_encoding, string);
 				CopySendData(cstate, string, mblen);
 				break;
@@ -3196,7 +3000,7 @@ CopyAttributeOutCSV(CopyState cstate, char *server_string,
 				use_quote = true;
 				break;
 			}
-			if (cstate->client_only_encoding)
+			if (cstate->encoding_embeds_ascii && IS_HIGHBIT_SET(c))
 				mblen = pg_encoding_mblen(cstate->client_encoding, tstring);
 			else
 				mblen = 1;
@@ -3210,7 +3014,7 @@ CopyAttributeOutCSV(CopyState cstate, char *server_string,
 	{
 		if (use_quote && (c == quotec || c == escapec))
 			CopySendChar(cstate, escapec);
-		if (cstate->client_only_encoding)
+		if (cstate->encoding_embeds_ascii && IS_HIGHBIT_SET(c))
 			mblen = pg_encoding_mblen(cstate->client_encoding, string);
 		else
 			mblen = 1;
