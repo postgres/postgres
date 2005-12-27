@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.40 2005/12/23 00:38:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.41 2005/12/27 23:54:01 adunstan Exp $
 -->
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -672,7 +672,7 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Sets the number of shared memory buffers used by the database
-        server. The default is typically 1000, but may be less if your
+        server. The default is typically 4000, but may be less if your
         kernel settings will not support it (as determined during
         <application>initdb</>).  Each buffer is 8192 bytes, unless a
         different value of <symbol>BLCKSZ</symbol> was chosen when building
@@ -867,8 +867,10 @@ SET ENABLE_SEQSCAN TO OFF;
         Sets the maximum number of disk pages for which free space will
         be tracked in the shared free-space map.  Six bytes of shared memory
         are consumed for each page slot.  This setting must be more than
-        16 * <varname>max_fsm_relations</varname>.  The default is 20000.
-        This option can only be set at server start.
+        16 * <varname>max_fsm_relations</varname>.  The default is 20000,
+		but <application>initdb</> will try to set it as close as possible 
+		to 200000, depending on the amount of available memory.
+		This option can only be set at server start.
        </para>
       </listitem>
      </varlistentry>

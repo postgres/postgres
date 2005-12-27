@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.101 2005/12/09 15:51:14 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.102 2005/12/27 23:54:01 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,6 +120,7 @@ static int	output_errno = 0;
 /* defaults */
 static int	n_connections = 10;
 static int	n_buffers = 50;
+static int  n_fsm_pages = 20000; 
 
 /*
  * Warning messages for authentication methods
@@ -1084,6 +1085,13 @@ set_null_conf(void)
 }
 
 /*
+ * max_fsm_pages setting used in both the shared_buffers and max_connections
+ * tests. 
+ */
+
+#define TEST_FSM(x) ( (x) > 1000 ? 50 * (x) : 20000 )
+
+/*
  * check how many connections we can sustain
  */
 static void
@@ -1100,12 +1108,17 @@ test_connections(void)
 
 	for (i = 0; i < len; i++)
 	{
+		int test_buffs = conns[i] * 5;
+		int test_max_fsm =  TEST_FSM(test_buffs);
+
 		snprintf(cmd, sizeof(cmd),
 				 "%s\"%s\" -boot -x0 %s "
+				 "-c max_fsm_pages=%d "
 				 "-c shared_buffers=%d -c max_connections=%d template1 "
 				 "< \"%s\" > \"%s\" 2>&1%s",
 				 SYSTEMQUOTE, backend_exec, boot_options,
-				 conns[i] * 5, conns[i],
+				 test_max_fsm,
+				 test_buffs, conns[i],
 				 DEVNULL, DEVNULL, SYSTEMQUOTE);
 		status = system(cmd);
 		if (status == 0)
@@ -1125,22 +1138,30 @@ static void
 test_buffers(void)
 {
 	char		cmd[MAXPGPATH];
-	static const int bufs[] = {1000, 900, 800, 700, 600, 500,
-	400, 300, 200, 100, 50};
+	static const int bufs[] = {
+	  4000, 3500, 3000, 2500, 2000, 1500,
+	  1000, 900, 800, 700, 600, 500,
+	  400, 300, 200, 100, 50
+	};
 	static const int len = sizeof(bufs) / sizeof(int);
 	int			i,
-				status;
+				status,
+	            test_max_fsm_pages;
 
-	printf(_("selecting default shared_buffers ... "));
+	printf(_("selecting default shared_buffers/max_fsm_pages ... "));
 	fflush(stdout);
 
 	for (i = 0; i < len; i++)
 	{
+		test_max_fsm_pages = TEST_FSM(bufs[i]);
+
 		snprintf(cmd, sizeof(cmd),
 				 "%s\"%s\" -boot -x0 %s "
+				 "-c max_fsm_pages=%d "
 				 "-c shared_buffers=%d -c max_connections=%d template1 "
 				 "< \"%s\" > \"%s\" 2>&1%s",
 				 SYSTEMQUOTE, backend_exec, boot_options,
+				 test_max_fsm_pages,
 				 bufs[i], n_connections,
 				 DEVNULL, DEVNULL, SYSTEMQUOTE);
 		status = system(cmd);
@@ -1150,8 +1171,9 @@ test_buffers(void)
 	if (i >= len)
 		i = len - 1;
 	n_buffers = bufs[i];
+	n_fsm_pages = test_max_fsm_pages;
 
-	printf("%d\n", n_buffers);
+	printf("%d/%d\n", n_buffers, n_fsm_pages);
 }
 
 /*
@@ -1176,6 +1198,9 @@ setup_config(void)
 
 	snprintf(repltok, sizeof(repltok), "shared_buffers = %d", n_buffers);
 	conflines = replace_token(conflines, "#shared_buffers = 1000", repltok);
+
+	snprintf(repltok, sizeof(repltok), "max_fsm_pages = %d", n_fsm_pages);
+	conflines = replace_token(conflines, "#max_fsm_pages = 20000", repltok);
 
 #if DEF_PGPORT != 5432
 	snprintf(repltok, sizeof(repltok), "#port = %d", DEF_PGPORT);
