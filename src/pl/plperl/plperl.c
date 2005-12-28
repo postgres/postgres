@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.96 2005/11/22 18:17:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.97 2005/12/28 18:34:16 tgl Exp $
  *
  **********************************************************************/
 
@@ -68,6 +68,8 @@
 #define pTHX_
 #define pTHX void
 #endif
+
+extern DLLIMPORT bool check_function_bodies;
 
 
 /**********************************************************************
@@ -622,10 +624,13 @@ plperl_validator(PG_FUNCTION_ARGS)
 	Oid			funcoid = PG_GETARG_OID(0);
 	HeapTuple	tuple;
 	Form_pg_proc proc;
+	char		functyptype;
+	int			numargs;
+	Oid		   *argtypes;
+	char	  **argnames;
+	char	   *argmodes;
 	bool		istrigger = false;
-	plperl_proc_desc *prodesc;
-
-	plperl_init_all();
+	int			i;
 
 	/* Get the new function's pg_proc entry */
 	tuple = SearchSysCache(PROCOID,
@@ -635,14 +640,47 @@ plperl_validator(PG_FUNCTION_ARGS)
 		elog(ERROR, "cache lookup failed for function %u", funcoid);
 	proc = (Form_pg_proc) GETSTRUCT(tuple);
 
-	/* we assume OPAQUE with no arguments means a trigger */
-	if (proc->prorettype == TRIGGEROID ||
-		(proc->prorettype == OPAQUEOID && proc->pronargs == 0))
-		istrigger = true;
+	functyptype = get_typtype(proc->prorettype);
+
+	/* Disallow pseudotype result */
+	/* except for TRIGGER, RECORD, or VOID */
+	if (functyptype == 'p')
+	{
+		/* we assume OPAQUE with no arguments means a trigger */
+		if (proc->prorettype == TRIGGEROID ||
+			(proc->prorettype == OPAQUEOID && proc->pronargs == 0))
+			istrigger = true;
+		else if (proc->prorettype != RECORDOID &&
+				 proc->prorettype != VOIDOID)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("plperl functions cannot return type %s",
+							format_type_be(proc->prorettype))));
+	}
+
+	/* Disallow pseudotypes in arguments (either IN or OUT) */
+	numargs = get_func_arg_info(tuple,
+								&argtypes, &argnames, &argmodes);
+	for (i = 0; i < numargs; i++)
+	{
+		if (get_typtype(argtypes[i]) == 'p')
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("plperl functions cannot take type %s",
+							format_type_be(argtypes[i]))));
+	}
 
 	ReleaseSysCache(tuple);
 
-	prodesc = compile_plperl_function(funcoid, istrigger);
+	/* Postpone body checks if !check_function_bodies */
+	if (check_function_bodies)
+	{
+		plperl_proc_desc *prodesc;
+
+		plperl_init_all();
+
+		prodesc = compile_plperl_function(funcoid, istrigger);
+	}
 
 	/* the result of a validator is ignored */
 	PG_RETURN_VOID();
