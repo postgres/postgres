@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.256 2005/12/27 18:10:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.257 2005/12/28 03:25:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -244,7 +244,7 @@ static Datum CopyReadBinaryAttribute(CopyState cstate,
 						bool *isnull);
 static void CopyAttributeOutText(CopyState cstate, char *server_string);
 static void CopyAttributeOutCSV(CopyState cstate, char *server_string,
-					bool use_quote);
+					bool use_quote, bool single_attr);
 static List *CopyGetAttnums(Relation rel, List *attnamelist);
 static char *limit_printout_length(const char *str);
 
@@ -1284,7 +1284,8 @@ CopyTo(CopyState cstate)
 
 				colname = NameStr(attr[attnum - 1]->attname);
 
-				CopyAttributeOutCSV(cstate, colname, false);
+				CopyAttributeOutCSV(cstate, colname, false,
+									list_length(cstate->attnumlist) == 1);
 			}
 
 			CopySendEndOfRow(cstate);
@@ -1359,7 +1360,8 @@ CopyTo(CopyState cstate)
 														   value));
 					if (cstate->csv_mode)
 						CopyAttributeOutCSV(cstate, string,
-											force_quote[attnum - 1]);
+											force_quote[attnum - 1],
+											list_length(cstate->attnumlist) == 1);
 					else
 						CopyAttributeOutText(cstate, string);
 				}
@@ -2968,7 +2970,7 @@ CopyAttributeOutText(CopyState cstate, char *server_string)
  */
 static void
 CopyAttributeOutCSV(CopyState cstate, char *server_string,
-					bool use_quote)
+					bool use_quote, bool single_attr)
 {
 	char	   *string;
 	char		c;
@@ -2993,17 +2995,27 @@ CopyAttributeOutCSV(CopyState cstate, char *server_string,
 	 */
 	if (!use_quote)
 	{
-		for (tstring = string; (c = *tstring) != '\0'; tstring += mblen)
-		{
-			if (c == delimc || c == quotec || c == '\n' || c == '\r')
+		/*
+		 *	Because '\.' can be a data value, quote it if it appears
+		 *	alone on a line so it is not interpreted as the end-of-data
+		 *	marker.
+		 */
+		if (single_attr && strcmp(string, "\\.") == 0)
+ 			use_quote = true;
+ 		else
+ 		{
+			for (tstring = string; (c = *tstring) != '\0'; tstring += mblen)
 			{
-				use_quote = true;
-				break;
+				if (c == delimc || c == quotec || c == '\n' || c == '\r')
+				{
+					use_quote = true;
+					break;
+				}
+				if (cstate->encoding_embeds_ascii && IS_HIGHBIT_SET(c))
+					mblen = pg_encoding_mblen(cstate->client_encoding, tstring);
+				else
+					mblen = 1;
 			}
-			if (cstate->encoding_embeds_ascii && IS_HIGHBIT_SET(c))
-				mblen = pg_encoding_mblen(cstate->client_encoding, tstring);
-			else
-				mblen = 1;
 		}
 	}
 

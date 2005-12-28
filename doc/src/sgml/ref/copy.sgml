@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.70 2005/10/15 20:12:33 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.71 2005/12/28 03:25:32 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -511,17 +511,28 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
     comparisons for specific columns.
    </para>
 
+   <para> 
+    Because backslash is not a special character in the <literal>CSV</>
+    format, <literal>\.</>, the end-of-data marker, could also appear
+    as a data value.  To avoid any misinterpretation, a <literal>\.</>
+    data value appearing as a lone entry on a line is automatically 
+    quoted on output, and on input, if quoted, is not interpreted as the 
+    end-of-data marker.  If you are loading a single-column table that
+    might have a column value of <literal>\.</>, you might need to quote
+    that value in the input file.
+   </para>
+
    <note>
-	<para>
-	 In <literal>CSV</> mode, all characters are significant. A quoted value 
-	 surrounded by white space, or any characters other than 
-	 <literal>DELIMITER</>, will include those characters. This can cause 
-	 errors if  you import data from a system that pads <literal>CSV</> 
-	 lines with white space out to some fixed width. If such a situation 
-	 arises you might need to preprocess the <literal>CSV</> file to remove 
-	 the trailing white space, before importing the data into 
-	 <productname>PostgreSQL</>. 
-	</para>
+    <para>
+     In <literal>CSV</> mode, all characters are significant. A quoted value 
+     surrounded by white space, or any characters other than 
+     <literal>DELIMITER</>, will include those characters. This can cause 
+     errors if  you import data from a system that pads <literal>CSV</> 
+     lines with white space out to some fixed width. If such a situation 
+     arises you might need to preprocess the <literal>CSV</> file to remove 
+     the trailing white space, before importing the data into 
+     <productname>PostgreSQL</>. 
+    </para>
    </note>
 
    <note>

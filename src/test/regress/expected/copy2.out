@@ -194,6 +194,9 @@ COPY y TO stdout WITH CSV FORCE QUOTE col2 ESCAPE E'\\';
 --test that we read consecutive LFs properly
 CREATE TEMP TABLE testnl (a int, b text, c int);
 COPY testnl FROM stdin CSV;
+-- test end of copy marker
+CREATE TEMP TABLE testeoc (a text);
+COPY testeoc FROM stdin CSV;
 DROP TABLE x, y;
 DROP FUNCTION fn_x_before();
 DROP FUNCTION fn_x_after();
