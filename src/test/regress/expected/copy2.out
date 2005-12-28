@@ -197,6 +197,11 @@ COPY testnl FROM stdin CSV;
 -- test end of copy marker
 CREATE TEMP TABLE testeoc (a text);
 COPY testeoc FROM stdin CSV;
+COPY testeoc TO stdout CSV;
+a\.
+\.b
+c\.d
+"\."
 DROP TABLE x, y;
 DROP FUNCTION fn_x_before();
 DROP FUNCTION fn_x_after();
