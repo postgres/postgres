@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.26 2005/10/15 02:49:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.27 2005/12/28 18:11:25 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -41,6 +41,7 @@
 #include "access/heapam.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "funcapi.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -147,9 +148,11 @@ plpgsql_validator(PG_FUNCTION_ARGS)
 	HeapTuple	tuple;
 	Form_pg_proc proc;
 	char		functyptype;
+	int			numargs;
+	Oid		   *argtypes;
+	char	  **argnames;
+	char	   *argmodes;
 	bool		istrigger = false;
-	bool		haspolyresult;
-	bool		haspolyarg;
 	int			i;
 
 	/* perform initialization */
@@ -173,32 +176,30 @@ plpgsql_validator(PG_FUNCTION_ARGS)
 		if (proc->prorettype == TRIGGEROID ||
 			(proc->prorettype == OPAQUEOID && proc->pronargs == 0))
 			istrigger = true;
-		else if (proc->prorettype == ANYARRAYOID ||
-				 proc->prorettype == ANYELEMENTOID)
-			haspolyresult = true;
 		else if (proc->prorettype != RECORDOID &&
-				 proc->prorettype != VOIDOID)
+				 proc->prorettype != VOIDOID &&
+				 proc->prorettype != ANYARRAYOID &&
+				 proc->prorettype != ANYELEMENTOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("plpgsql functions cannot return type %s",
 							format_type_be(proc->prorettype))));
 	}
 
-	/* Disallow pseudotypes in arguments */
+	/* Disallow pseudotypes in arguments (either IN or OUT) */
 	/* except for ANYARRAY or ANYELEMENT */
-	haspolyarg = false;
-	for (i = 0; i < proc->pronargs; i++)
+	numargs = get_func_arg_info(tuple,
+								&argtypes, &argnames, &argmodes);
+	for (i = 0; i < numargs; i++)
 	{
-		if (get_typtype(proc->proargtypes.values[i]) == 'p')
+		if (get_typtype(argtypes[i]) == 'p')
 		{
-			if (proc->proargtypes.values[i] == ANYARRAYOID ||
-				proc->proargtypes.values[i] == ANYELEMENTOID)
-				haspolyarg = true;
-			else
+			if (argtypes[i] != ANYARRAYOID &&
+				argtypes[i] != ANYELEMENTOID)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("plpgsql functions cannot take type %s",
-							  format_type_be(proc->proargtypes.values[i]))));
+							  format_type_be(argtypes[i]))));
 		}
 	}
 

@@ -9,7 +9,7 @@
  *
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/funcapi.h,v 1.21 2005/11/22 18:17:29 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/funcapi.h,v 1.22 2005/12/28 18:11:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,11 +165,15 @@ extern TypeFuncClass get_func_result_type(Oid functionId,
 					 Oid *resultTypeId,
 					 TupleDesc *resultTupleDesc);
 
-extern char *get_func_result_name(Oid functionId);
-
 extern bool resolve_polymorphic_argtypes(int numargs, Oid *argtypes,
 							 char *argmodes,
 							 Node *call_expr);
+
+extern int	get_func_arg_info(HeapTuple procTup,
+							  Oid **p_argtypes, char ***p_argnames,
+							  char **p_argmodes);
+
+extern char *get_func_result_name(Oid functionId);
 
 extern TupleDesc build_function_result_tupdesc_d(Datum proallargtypes,
 								Datum proargmodes,

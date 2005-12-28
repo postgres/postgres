@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.97 2005/12/09 17:08:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.98 2005/12/28 18:11:25 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -123,9 +123,6 @@ static PLpgSQL_function *do_compile(FunctionCallInfo fcinfo,
 		   HeapTuple procTup,
 		   PLpgSQL_func_hashkey *hashkey,
 		   bool forValidator);
-static int fetchArgInfo(HeapTuple procTup,
-			 Oid **p_argtypes, char ***p_argnames,
-			 char **p_argmodes);
 static PLpgSQL_row *build_row_from_class(Oid classOid);
 static PLpgSQL_row *build_row_from_vars(PLpgSQL_variable **vars, int numvars);
 static PLpgSQL_type *build_datatype(HeapTuple typeTup, int32 typmod);
@@ -358,7 +355,8 @@ do_compile(FunctionCallInfo fcinfo,
 			 */
 			MemoryContextSwitchTo(compile_tmp_cxt);
 
-			numargs = fetchArgInfo(procTup, &argtypes, &argnames, &argmodes);
+			numargs = get_func_arg_info(procTup,
+										&argtypes, &argnames, &argmodes);
 
 			plpgsql_resolve_polymorphic_argtypes(numargs, argtypes, argmodes,
 												 fcinfo->flinfo->fn_expr,
@@ -748,102 +746,6 @@ plpgsql_compile_error_callback(void *arg)
 	if (plpgsql_error_funcname)
 		errcontext("compile of PL/pgSQL function \"%s\" near line %d",
 				   plpgsql_error_funcname, plpgsql_error_lineno);
-}
-
-
-/*
- * Fetch info about the argument types, names, and IN/OUT modes from the
- * pg_proc tuple.  Return value is the number of arguments.
- * Other results are palloc'd.
- */
-static int
-fetchArgInfo(HeapTuple procTup, Oid **p_argtypes, char ***p_argnames,
-			 char **p_argmodes)
-{
-	Form_pg_proc procStruct = (Form_pg_proc) GETSTRUCT(procTup);
-	Datum		proallargtypes;
-	Datum		proargmodes;
-	Datum		proargnames;
-	bool		isNull;
-	ArrayType  *arr;
-	int			numargs;
-	Datum	   *elems;
-	int			nelems;
-	int			i;
-
-	/* First discover the total number of parameters and get their types */
-	proallargtypes = SysCacheGetAttr(PROCOID, procTup,
-									 Anum_pg_proc_proallargtypes,
-									 &isNull);
-	if (!isNull)
-	{
-		/*
-		 * We expect the arrays to be 1-D arrays of the right types; verify
-		 * that.  For the OID and char arrays, we don't need to use
-		 * deconstruct_array() since the array data is just going to look like
-		 * a C array of values.
-		 */
-		arr = DatumGetArrayTypeP(proallargtypes);		/* ensure not toasted */
-		numargs = ARR_DIMS(arr)[0];
-		if (ARR_NDIM(arr) != 1 ||
-			numargs < 0 ||
-			ARR_HASNULL(arr) ||
-			ARR_ELEMTYPE(arr) != OIDOID)
-			elog(ERROR, "proallargtypes is not a 1-D Oid array");
-		Assert(numargs >= procStruct->pronargs);
-		*p_argtypes = (Oid *) palloc(numargs * sizeof(Oid));
-		memcpy(*p_argtypes, ARR_DATA_PTR(arr),
-			   numargs * sizeof(Oid));
-	}
-	else
-	{
-		/* If no proallargtypes, use proargtypes */
-		numargs = procStruct->proargtypes.dim1;
-		Assert(numargs == procStruct->pronargs);
-		*p_argtypes = (Oid *) palloc(numargs * sizeof(Oid));
-		memcpy(*p_argtypes, procStruct->proargtypes.values,
-			   numargs * sizeof(Oid));
-	}
-
-	/* Get argument names, if available */
-	proargnames = SysCacheGetAttr(PROCOID, procTup,
-								  Anum_pg_proc_proargnames,
-								  &isNull);
-	if (isNull)
-		*p_argnames = NULL;
-	else
-	{
-		deconstruct_array(DatumGetArrayTypeP(proargnames),
-						  TEXTOID, -1, false, 'i',
-						  &elems, NULL, &nelems);
-		if (nelems != numargs)	/* should not happen */
-			elog(ERROR, "proargnames must have the same number of elements as the function has arguments");
-		*p_argnames = (char **) palloc(sizeof(char *) * numargs);
-		for (i = 0; i < numargs; i++)
-			(*p_argnames)[i] = DatumGetCString(DirectFunctionCall1(textout,
-																   elems[i]));
-	}
-
-	/* Get argument modes, if available */
-	proargmodes = SysCacheGetAttr(PROCOID, procTup,
-								  Anum_pg_proc_proargmodes,
-								  &isNull);
-	if (isNull)
-		*p_argmodes = NULL;
-	else
-	{
-		arr = DatumGetArrayTypeP(proargmodes);	/* ensure not toasted */
-		if (ARR_NDIM(arr) != 1 ||
-			ARR_DIMS(arr)[0] != numargs ||
-			ARR_HASNULL(arr) ||
-			ARR_ELEMTYPE(arr) != CHAROID)
-			elog(ERROR, "proargmodes is not a 1-D char array");
-		*p_argmodes = (char *) palloc(numargs * sizeof(char));
-		memcpy(*p_argmodes, ARR_DATA_PTR(arr),
-			   numargs * sizeof(char));
-	}
-
-	return numargs;
 }
 
 
