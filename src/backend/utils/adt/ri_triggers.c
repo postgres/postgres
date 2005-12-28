@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.83 2005/11/22 18:17:23 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.84 2005/12/28 16:47:21 momjian Exp $
  *
  * ----------
  */
@@ -3294,7 +3294,7 @@ ri_ReportViolation(RI_QueryKey *qkey, const char *constrname,
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_FOREIGN_KEY_VIOLATION),
-				 errmsg("update or delete on \"%s\" violates foreign key constraint \"%s\" on \"%s\"",
+				 errmsg("update or delete on table \"%s\" violates foreign key constraint \"%s\" on table \"%s\"",
 						RelationGetRelationName(pk_rel),
 						constrname, RelationGetRelationName(fk_rel)),
 			errdetail("Key (%s)=(%s) is still referenced from table \"%s\".",
