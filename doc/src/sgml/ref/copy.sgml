@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.70.2.1 2005/12/28 05:38:26 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.70.2.2 2005/12/28 14:38:43 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -517,9 +517,10 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
     as a data value.  To avoid any misinterpretation, a <literal>\.</>
     data value appearing as a lone entry on a line is automatically 
     quoted on output, and on input, if quoted, is not interpreted as the 
-    end-of-data marker.  If you are loading a single-column table that
-    might have a column value of <literal>\.</>, you might need to quote
-    that value in the input file.
+    end-of-data marker.  If you are loading a file created by another
+    application that has a single unquoted column and might have a 
+    value of <literal>\.</>, you might need to quote that value in the 
+    input file.
    </para>
 
    <note>
