@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.146 2005/12/02 20:03:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.147 2005/12/28 01:30:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -563,7 +563,7 @@ typedef struct SubPlanState
 	ExprState	xprstate;
 	EState	   *sub_estate;		/* subselect plan has its own EState */
 	struct PlanState *planstate;	/* subselect plan's state tree */
-	List	   *exprs;			/* states of combining expression(s) */
+	ExprState  *testexpr;		/* state of combining expression */
 	List	   *args;			/* states of argument expression(s) */
 	bool		needShutdown;	/* TRUE = need to shutdown subplan */
 	HeapTuple	curTuple;		/* copy of most recent tuple from subplan */
@@ -670,6 +670,18 @@ typedef struct RowExprState
 	List	   *args;			/* the arguments */
 	TupleDesc	tupdesc;		/* descriptor for result tuples */
 } RowExprState;
+
+/* ----------------
+ *		RowCompareExprState node
+ * ----------------
+ */
+typedef struct RowCompareExprState
+{
+	ExprState	xprstate;
+	List	   *largs;			/* the left-hand input arguments */
+	List	   *rargs;			/* the right-hand input arguments */
+	FmgrInfo   *funcs;			/* array of comparison function info */
+} RowCompareExprState;
 
 /* ----------------
  *		CoalesceExprState node

@@ -8,21 +8,20 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.188 2005/11/28 04:35:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.189 2005/12/28 01:30:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "catalog/pg_operator.h"
-#include "catalog/pg_proc.h"
 #include "commands/dbcommands.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/params.h"
 #include "nodes/plannodes.h"
+#include "optimizer/clauses.h"
 #include "parser/analyze.h"
 #include "parser/gramparse.h"
 #include "parser/parse_coerce.h"
@@ -33,7 +32,7 @@
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
-#include "utils/syscache.h"
+
 
 bool		Transform_null_equals = false;
 
@@ -64,8 +63,8 @@ static Node *transformIndirection(ParseState *pstate, Node *basenode,
 					 List *indirection);
 static Node *typecast_expression(ParseState *pstate, Node *expr,
 					TypeName *typename);
-static Node *make_row_op(ParseState *pstate, List *opname,
-			RowExpr *lrow, RowExpr *rrow);
+static Node *make_row_comparison_op(ParseState *pstate, List *opname,
+									List *largs, List *rargs);
 static Node *make_row_distinct_op(ParseState *pstate, List *opname,
 					 RowExpr *lrow, RowExpr *rrow);
 static Expr *make_distinct_op(ParseState *pstate, List *opname,
@@ -592,14 +591,14 @@ transformAExprOp(ParseState *pstate, A_Expr *a)
 			 ((SubLink *) rexpr)->subLinkType == EXPR_SUBLINK)
 	{
 		/*
-		 * Convert "row op subselect" into a MULTIEXPR sublink. Formerly the
+		 * Convert "row op subselect" into a ROWCOMPARE sublink. Formerly the
 		 * grammar did this, but now that a row construct is allowed anywhere
 		 * in expressions, it's easier to do it here.
 		 */
 		SubLink    *s = (SubLink *) rexpr;
 
-		s->subLinkType = MULTIEXPR_SUBLINK;
-		s->lefthand = ((RowExpr *) lexpr)->args;
+		s->subLinkType = ROWCOMPARE_SUBLINK;
+		s->testexpr = lexpr;
 		s->operName = a->name;
 		result = transformExpr(pstate, (Node *) s);
 	}
@@ -612,10 +611,10 @@ transformAExprOp(ParseState *pstate, A_Expr *a)
 		Assert(IsA(lexpr, RowExpr));
 		Assert(IsA(rexpr, RowExpr));
 
-		result = make_row_op(pstate,
-							 a->name,
-							 (RowExpr *) lexpr,
-							 (RowExpr *) rexpr);
+		result = make_row_comparison_op(pstate,
+										a->name,
+										((RowExpr *) lexpr)->args,
+										((RowExpr *) rexpr)->args);
 	}
 	else
 	{
@@ -885,10 +884,10 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("arguments of row IN must all be row expressions")));
-			cmp = make_row_op(pstate,
-							  a->name,
-							  (RowExpr *) copyObject(lexpr),
-							  (RowExpr *) rexpr);
+			cmp = make_row_comparison_op(pstate,
+										 a->name,
+										 (List *) copyObject(((RowExpr *) lexpr)->args),
+										 ((RowExpr *) rexpr)->args);
 		}
 		else
 			cmp = (Node *) make_op(pstate,
@@ -1080,13 +1079,11 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 	if (sublink->subLinkType == EXISTS_SUBLINK)
 	{
 		/*
-		 * EXISTS needs no lefthand or combining operator.	These fields
-		 * should be NIL already, but make sure.
+		 * EXISTS needs no test expression or combining operator.
+		 * These fields should be null already, but make sure.
 		 */
-		sublink->lefthand = NIL;
+		sublink->testexpr = NULL;
 		sublink->operName = NIL;
-		sublink->operOids = NIL;
-		sublink->useOr = FALSE;
 	}
 	else if (sublink->subLinkType == EXPR_SUBLINK ||
 			 sublink->subLinkType == ARRAY_SUBLINK)
@@ -1111,128 +1108,72 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		}
 
 		/*
-		 * EXPR and ARRAY need no lefthand or combining operator. These fields
-		 * should be NIL already, but make sure.
+		 * EXPR and ARRAY need no test expression or combining operator.
+		 * These fields should be null already, but make sure.
 		 */
-		sublink->lefthand = NIL;
+		sublink->testexpr = NULL;
 		sublink->operName = NIL;
-		sublink->operOids = NIL;
-		sublink->useOr = FALSE;
 	}
 	else
 	{
-		/* ALL, ANY, or MULTIEXPR: generate operator list */
-		List	   *left_list = sublink->lefthand;
-		List	   *right_list = qtree->targetList;
-		int			row_length = list_length(left_list);
-		bool		needNot = false;
-		List	   *op = sublink->operName;
-		char	   *opname = strVal(llast(op));
+		/* ALL, ANY, or ROWCOMPARE: generate row-comparing expression */
+		Node	   *lefthand;
+		List	   *left_list;
+		List	   *right_list;
 		ListCell   *l;
-		ListCell   *ll_item;
-
-		/* transform lefthand expressions */
-		foreach(l, left_list)
-			lfirst(l) = transformExpr(pstate, lfirst(l));
 
 		/*
-		 * If the expression is "<> ALL" (with unqualified opname) then
-		 * convert it to "NOT IN".	This is a hack to improve efficiency of
-		 * expressions output by pre-7.4 Postgres.
+		 * Transform lefthand expression, and convert to a list
 		 */
-		if (sublink->subLinkType == ALL_SUBLINK &&
-			list_length(op) == 1 && strcmp(opname, "<>") == 0)
-		{
-			sublink->subLinkType = ANY_SUBLINK;
-			opname = pstrdup("=");
-			op = list_make1(makeString(opname));
-			sublink->operName = op;
-			needNot = true;
-		}
-
-		/* Set useOr if op is "<>" (possibly qualified) */
-		if (strcmp(opname, "<>") == 0)
-			sublink->useOr = TRUE;
+		lefthand = transformExpr(pstate, sublink->testexpr);
+		if (lefthand && IsA(lefthand, RowExpr))
+			left_list = ((RowExpr *) lefthand)->args;
 		else
-			sublink->useOr = FALSE;
-
-		/* Combining operators other than =/<> is dubious... */
-		if (row_length != 1 &&
-			strcmp(opname, "=") != 0 &&
-			strcmp(opname, "<>") != 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("row comparison cannot use operator %s",
-							opname)));
+			left_list = list_make1(lefthand);
 
 		/*
-		 * To build the list of combining operator OIDs, we must scan
-		 * subquery's targetlist to find values that will be matched against
-		 * lefthand values.  We need to ignore resjunk targets, so doing the
-		 * outer iteration over right_list is easier than doing it over
-		 * left_list.
+		 * Build a list of PARAM_SUBLINK nodes representing the
+		 * output columns of the subquery.
 		 */
-		sublink->operOids = NIL;
-
-		ll_item = list_head(left_list);
-		foreach(l, right_list)
+		right_list = NIL;
+		foreach(l, qtree->targetList)
 		{
 			TargetEntry *tent = (TargetEntry *) lfirst(l);
-			Node	   *lexpr;
-			Operator	optup;
-			Form_pg_operator opform;
+			Param	   *param;
 
 			if (tent->resjunk)
 				continue;
 
-			if (ll_item == NULL)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("subquery has too many columns")));
-			lexpr = lfirst(ll_item);
-			ll_item = lnext(ll_item);
+			param = makeNode(Param);
+			param->paramkind = PARAM_SUBLINK;
+			param->paramid = (AttrNumber) tent->resno;
+			param->paramtype = exprType((Node *) tent->expr);
 
-			/*
-			 * It's OK to use oper() not compatible_oper() here, because
-			 * make_subplan() will insert type coercion calls if needed.
-			 */
-			optup = oper(op,
-						 exprType(lexpr),
-						 exprType((Node *) tent->expr),
-						 false);
-			opform = (Form_pg_operator) GETSTRUCT(optup);
-
-			if (opform->oprresult != BOOLOID)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-				  errmsg("operator %s must return type boolean, not type %s",
-						 opname,
-						 format_type_be(opform->oprresult)),
-						 errhint("The operator of a quantified predicate subquery must return type boolean.")));
-
-			if (get_func_retset(opform->oprcode))
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("operator %s must not return a set",
-								opname),
-						 errhint("The operator of a quantified predicate subquery must return type boolean.")));
-
-			sublink->operOids = lappend_oid(sublink->operOids,
-											oprid(optup));
-
-			ReleaseSysCache(optup);
+			right_list = lappend(right_list, param);
 		}
-		if (ll_item != NULL)
+
+		/*
+		 * We could rely on make_row_comparison_op to complain if the
+		 * list lengths differ, but we prefer to generate a more specific
+		 * error message.
+		 */
+		if (list_length(left_list) < list_length(right_list))
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("subquery has too many columns")));
+		if (list_length(left_list) > list_length(right_list))
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("subquery has too few columns")));
 
-		if (needNot)
-		{
-			result = coerce_to_boolean(pstate, result, "NOT");
-			result = (Node *) makeBoolExpr(NOT_EXPR,
-										   list_make1(result));
-		}
+		/*
+		 * Identify the combining operator(s) and generate a suitable
+		 * row-comparison expression.
+		 */
+		sublink->testexpr = make_row_comparison_op(pstate,
+												   sublink->operName,
+												   left_list,
+												   right_list);
 	}
 
 	return result;
@@ -1673,6 +1614,9 @@ exprType(Node *expr)
 		case T_RowExpr:
 			type = ((RowExpr *) expr)->row_typeid;
 			break;
+		case T_RowCompareExpr:
+			type = BOOLOID;
+			break;
 		case T_CoalesceExpr:
 			type = ((CoalesceExpr *) expr)->coalescetype;
 			break;
@@ -1953,76 +1897,258 @@ typecast_expression(ParseState *pstate, Node *expr, TypeName *typename)
 }
 
 /*
- * Transform a "row op row" construct
+ * Transform a "row compare-op row" construct
  *
- * The input RowExprs are already transformed
+ * The inputs are lists of already-transformed expressions.
+ * As with coerce_type, pstate may be NULL if no special unknown-Param
+ * processing is wanted.
+ *
+ * The output may be a single OpExpr, an AND or OR combination of OpExprs,
+ * or a RowCompareExpr.  In all cases it is guaranteed to return boolean.
+ * The AND, OR, and RowCompareExpr cases further imply things about the
+ * behavior of the operators (ie, they behave as =, <>, or < <= > >=).
  */
 static Node *
-make_row_op(ParseState *pstate, List *opname,
-			RowExpr *lrow, RowExpr *rrow)
+make_row_comparison_op(ParseState *pstate, List *opname,
+					   List *largs, List *rargs)
 {
-	Node	   *result = NULL;
-	List	   *largs = lrow->args;
-	List	   *rargs = rrow->args;
+	RowCompareExpr *rcexpr;
+	RowCompareType rctype;
+	List	   *opexprs;
+	List	   *opnos;
+	List	   *opclasses;
 	ListCell   *l,
 			   *r;
-	char	   *oprname;
-	BoolExprType boolop;
+	List	  **opclass_lists;
+	List	  **opstrat_lists;
+	Bitmapset  *strats;
+	int			nopers;
+	int			i;
 
-	if (list_length(largs) != list_length(rargs))
+	nopers = list_length(largs);
+	if (nopers != list_length(rargs))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("unequal number of entries in row expressions")));
 
 	/*
-	 * XXX it's really wrong to generate a simple AND combination for < <= >
-	 * >=.	We probably need to invent a new runtime node type to handle those
-	 * correctly.  For the moment, though, keep on doing this ...
+	 * We can't compare zero-length rows because there is no principled
+	 * basis for figuring out what the operator is.
 	 */
-	oprname = strVal(llast(opname));
-
-	if ((strcmp(oprname, "=") == 0) ||
-		(strcmp(oprname, "<") == 0) ||
-		(strcmp(oprname, "<=") == 0) ||
-		(strcmp(oprname, ">") == 0) ||
-		(strcmp(oprname, ">=") == 0))
-		boolop = AND_EXPR;
-	else if (strcmp(oprname, "<>") == 0)
-		boolop = OR_EXPR;
-	else
-	{
+	if (nopers == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("operator %s is not supported for row expressions",
-						oprname)));
-		boolop = 0;				/* keep compiler quiet */
-	}
+				 errmsg("cannot compare rows of zero length")));
 
+	/*
+	 * Identify all the pairwise operators, using make_op so that
+	 * behavior is the same as in the simple scalar case.
+	 */
+	opexprs = NIL;
 	forboth(l, largs, r, rargs)
 	{
 		Node	   *larg = (Node *) lfirst(l);
 		Node	   *rarg = (Node *) lfirst(r);
-		Node	   *cmp;
+		OpExpr	   *cmp;
 
-		cmp = (Node *) make_op(pstate, opname, larg, rarg);
-		cmp = coerce_to_boolean(pstate, cmp, "row comparison");
-		if (result == NULL)
-			result = cmp;
-		else
-			result = (Node *) makeBoolExpr(boolop,
-										   list_make2(result, cmp));
+		cmp = (OpExpr *) make_op(pstate, opname, larg, rarg);
+		Assert(IsA(cmp, OpExpr));
+
+		/*
+		 * We don't use coerce_to_boolean here because we insist on the
+		 * operator yielding boolean directly, not via coercion.  If it
+		 * doesn't yield bool it won't be in any index opclasses...
+		 */
+		if (cmp->opresulttype != BOOLOID)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("row comparison operator must yield type boolean, "
+							"not type %s",
+							format_type_be(cmp->opresulttype))));
+		if (expression_returns_set((Node *) cmp))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("row comparison operator must not return a set")));
+		opexprs = lappend(opexprs, cmp);
 	}
 
-	if (result == NULL)
+	/*
+	 * If rows are length 1, just return the single operator.  In this
+	 * case we don't insist on identifying btree semantics for the operator
+	 * (but we still require it to return boolean).
+	 */
+	if (nopers == 1)
+		return (Node *) linitial(opexprs);
+
+	/*
+	 * Now we must determine which row comparison semantics (= <> < <= > >=)
+	 * apply to this set of operators.  We look for btree opclasses containing
+	 * the operators, and see which interpretations (strategy numbers) exist
+	 * for each operator.
+	 */
+	opclass_lists = (List **) palloc(nopers * sizeof(List *));
+	opstrat_lists = (List **) palloc(nopers * sizeof(List *));
+	strats = NULL;
+	i = 0;
+	foreach(l, opexprs)
 	{
-		/* zero-length rows?  Generate constant TRUE or FALSE */
-		if (boolop == AND_EXPR)
-			result = makeBoolConst(true, false);
+		Bitmapset *this_strats;
+		ListCell   *j;
+
+		get_op_btree_interpretation(((OpExpr *) lfirst(l))->opno,
+									&opclass_lists[i], &opstrat_lists[i]);
+		/*
+		 * convert strategy number list to a Bitmapset to make the intersection
+		 * calculation easy.
+		 */
+		this_strats = NULL;
+		foreach(j, opstrat_lists[i])
+		{
+			this_strats = bms_add_member(this_strats, lfirst_int(j));
+		}
+		if (i == 0)
+			strats = this_strats;
 		else
-			result = makeBoolConst(false, false);
+			strats = bms_int_members(strats, this_strats);
+		i++;
 	}
 
-	return result;
+	switch (bms_membership(strats))
+	{
+		case BMS_EMPTY_SET:
+			/* No common interpretation, so fail */
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("could not determine interpretation of row comparison operator %s",
+							strVal(llast(opname))),
+					 errhint("Row comparison operators must be associated with btree operator classes.")));
+			rctype = 0;			/* keep compiler quiet */
+			break;
+		case BMS_SINGLETON:
+			/* Simple case: just one possible interpretation */
+			rctype = bms_singleton_member(strats);
+			break;
+		case BMS_MULTIPLE:
+		default:				/* keep compiler quiet */
+			{
+				/*
+				 * Prefer the interpretation with the most default opclasses.
+				 */
+				int		best_defaults = 0;
+				bool	multiple_best = false;
+				int		this_rctype;
+
+				rctype = 0;		/* keep compiler quiet */
+				while ((this_rctype = bms_first_member(strats)) >= 0)
+				{
+					int		ndefaults = 0;
+
+					for (i = 0; i < nopers; i++)
+					{
+						forboth(l, opclass_lists[i], r, opstrat_lists[i])
+						{
+							Oid		opclass = lfirst_oid(l);
+							int		opstrat = lfirst_int(r);
+
+							if (opstrat == this_rctype &&
+								opclass_is_default(opclass))
+								ndefaults++;
+						}
+					}
+					if (ndefaults > best_defaults)
+					{
+						best_defaults = ndefaults;
+						rctype = this_rctype;
+						multiple_best = false;
+					}
+					else if (ndefaults == best_defaults)
+						multiple_best = true;
+				}
+				if (best_defaults == 0 || multiple_best)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("could not determine interpretation of row comparison operator %s",
+									strVal(llast(opname))),
+							 errdetail("There are multiple equally-plausible candidates.")));
+				break;
+			}
+	}
+
+	/*
+	 * For = and <> cases, we just combine the pairwise operators with
+	 * AND or OR respectively.
+	 *
+	 * Note: this is presently the only place where the parser generates
+	 * BoolExpr with more than two arguments.  Should be OK since the
+	 * rest of the system thinks BoolExpr is N-argument anyway.
+	 */
+	if (rctype == ROWCOMPARE_EQ)
+		return (Node *) makeBoolExpr(AND_EXPR, opexprs);
+	if (rctype == ROWCOMPARE_NE)
+		return (Node *) makeBoolExpr(OR_EXPR, opexprs);
+
+	/*
+	 * Otherwise we need to determine exactly which opclass to associate
+	 * with each operator.
+	 */
+	opclasses = NIL;
+	for (i = 0; i < nopers; i++)
+	{
+		Oid		best_opclass = 0;
+		int		ndefault = 0;
+		int		nmatch = 0;
+
+		forboth(l, opclass_lists[i], r, opstrat_lists[i])
+		{
+			Oid		opclass = lfirst_oid(l);
+			int		opstrat = lfirst_int(r);
+
+			if (opstrat == rctype)
+			{
+				if (ndefault == 0)
+					best_opclass = opclass;
+				if (opclass_is_default(opclass))
+					ndefault++;
+				else
+					nmatch++;
+			}
+		}
+		if (ndefault == 1 || (ndefault == 0 && nmatch == 1))
+			opclasses = lappend_oid(opclasses, best_opclass);
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("could not determine interpretation of row comparison operator %s",
+							strVal(llast(opname))),
+					 errdetail("There are multiple equally-plausible candidates.")));
+	}
+
+	/*
+	 * Now deconstruct the OpExprs and create a RowCompareExpr.
+	 *
+	 * Note: can't just reuse the passed largs/rargs lists, because of
+	 * possibility that make_op inserted coercion operations.
+	 */
+	opnos = NIL;
+	largs = NIL;
+	rargs = NIL;
+	foreach(l, opexprs)
+	{
+		OpExpr	   *cmp = (OpExpr *) lfirst(l);
+
+		opnos = lappend_oid(opnos, cmp->opno);
+		largs = lappend(largs, linitial(cmp->args));
+		rargs = lappend(rargs, lsecond(cmp->args));
+	}
+
+	rcexpr = makeNode(RowCompareExpr);
+	rcexpr->rctype = rctype;
+	rcexpr->opnos = opnos;
+	rcexpr->opclasses = opclasses;
+	rcexpr->largs = largs;
+	rcexpr->rargs = rargs;
+
+	return (Node *) rcexpr;
 }
 
 /*

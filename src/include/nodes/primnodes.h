@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.110 2005/12/20 02:30:36 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.111 2005/12/28 01:30:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,6 +158,11 @@ typedef struct Const
  *
  *		PARAM_EXEC:  The parameter is an internal executor parameter.
  *				It has a number contained in the `paramid' field.
+ *
+ *		PARAM_SUBLINK:  The parameter represents an output column of a SubLink
+ *				node's sub-select.  The column number is contained in the
+ *				`paramid' field.  (This type of Param is converted to
+ *				PARAM_EXEC during planning.)
  * ----------------
  */
 typedef struct Param
@@ -329,7 +334,7 @@ typedef struct BoolExpr
 	List	   *args;			/* arguments to this expression */
 } BoolExpr;
 
-/* ----------------
+/*
  * SubLink
  *
  * A SubLink represents a subselect appearing in an expression, and in some
@@ -338,46 +343,42 @@ typedef struct BoolExpr
  *	EXISTS_SUBLINK		EXISTS(SELECT ...)
  *	ALL_SUBLINK			(lefthand) op ALL (SELECT ...)
  *	ANY_SUBLINK			(lefthand) op ANY (SELECT ...)
- *	MULTIEXPR_SUBLINK	(lefthand) op (SELECT ...)
+ *	ROWCOMPARE_SUBLINK	(lefthand) op (SELECT ...)
  *	EXPR_SUBLINK		(SELECT with single targetlist item ...)
  *	ARRAY_SUBLINK		ARRAY(SELECT with single targetlist item ...)
- * For ALL, ANY, and MULTIEXPR, the lefthand is a list of expressions of the
- * same length as the subselect's targetlist.  MULTIEXPR will *always* have
+ * For ALL, ANY, and ROWCOMPARE, the lefthand is a list of expressions of the
+ * same length as the subselect's targetlist.  ROWCOMPARE will *always* have
  * a list with more than one entry; if the subselect has just one target
  * then the parser will create an EXPR_SUBLINK instead (and any operator
  * above the subselect will be represented separately).  Note that both
- * MULTIEXPR and EXPR require the subselect to deliver only one row.
+ * ROWCOMPARE and EXPR require the subselect to deliver only one row.
+ * ALL, ANY, and ROWCOMPARE require the combining operators to deliver boolean
+ * results.  ALL and ANY combine the per-row results using AND and OR
+ * semantics respectively.
  * ARRAY requires just one target column, and creates an array of the target
  * column's type using one or more rows resulting from the subselect.
- * ALL, ANY, and MULTIEXPR require the combining operators to deliver boolean
- * results.  These are reduced to one result per row using OR or AND semantics
- * depending on the "useOr" flag.  ALL and ANY combine the per-row results
- * using AND and OR semantics respectively.
  *
  * SubLink is classed as an Expr node, but it is not actually executable;
  * it must be replaced in the expression tree by a SubPlan node during
  * planning.
  *
- * NOTE: in the raw output of gram.y, lefthand contains a list of raw
- * expressions; useOr and operOids are not filled in yet.  Also, subselect
- * is a raw parsetree.	During parse analysis, the parser transforms the
- * lefthand expression list using normal expression transformation rules.
- * It fills operOids with the OIDs representing the specific operator(s)
- * to apply to each pair of lefthand and targetlist expressions.
- * And subselect is transformed to a Query.  This is the representation
- * seen in saved rules and in the rewriter.
+ * NOTE: in the raw output of gram.y, testexpr contains just the raw form
+ * of the lefthand expression (if any), and operName is the String name of
+ * the combining operator.  Also, subselect is a raw parsetree.  During parse
+ * analysis, the parser transforms testexpr into a complete boolean expression
+ * that compares the lefthand value(s) to PARAM_SUBLINK nodes representing the
+ * output columns of the subselect.  And subselect is transformed to a Query.
+ * This is the representation seen in saved rules and in the rewriter.
  *
- * In EXISTS, EXPR, and ARRAY SubLinks, lefthand, operName, and operOids are
- * unused and are always NIL.  useOr is not significant either for these
- * sublink types.
- * ----------------
+ * In EXISTS, EXPR, and ARRAY SubLinks, testexpr and operName are unused and
+ * are always null.
  */
 typedef enum SubLinkType
 {
 	EXISTS_SUBLINK,
 	ALL_SUBLINK,
 	ANY_SUBLINK,
-	MULTIEXPR_SUBLINK,
+	ROWCOMPARE_SUBLINK,
 	EXPR_SUBLINK,
 	ARRAY_SUBLINK
 } SubLinkType;
@@ -386,12 +387,9 @@ typedef enum SubLinkType
 typedef struct SubLink
 {
 	Expr		xpr;
-	SubLinkType subLinkType;	/* EXISTS, ALL, ANY, MULTIEXPR, EXPR */
-	bool		useOr;			/* TRUE to combine column results with "OR"
-								 * not "AND" */
-	List	   *lefthand;		/* list of outer-query expressions on the left */
+	SubLinkType subLinkType;	/* see above */
+	Node	   *testexpr;		/* outer-query test for ALL/ANY/ROWCOMPARE */
 	List	   *operName;		/* originally specified operator name */
-	List	   *operOids;		/* OIDs of actual combining operators */
 	Node	   *subselect;		/* subselect as Query* or parsetree */
 } SubLink;
 
@@ -402,14 +400,18 @@ typedef struct SubLink
  * nodes after it has finished planning the subquery.  SubPlan contains
  * a sub-plantree and rtable instead of a sub-Query.
  *
- * In an ordinary subplan, "exprs" points to a list of executable expressions
- * (OpExpr trees) for the combining operators; their left-hand arguments are
- * the original lefthand expressions, and their right-hand arguments are
- * PARAM_EXEC Param nodes representing the outputs of the sub-select.
- * (NOTE: runtime coercion functions may be inserted as well.)	But if the
- * sub-select becomes an initplan rather than a subplan, these executable
- * expressions are part of the outer plan's expression tree (and the SubPlan
- * node itself is not).  In this case "exprs" is NIL to avoid duplication.
+ * In an ordinary subplan, testexpr points to an executable expression
+ * (OpExpr, an AND/OR tree of OpExprs, or RowCompareExpr) for the combining
+ * operator(s); the left-hand arguments are the original lefthand expressions,
+ * and the right-hand arguments are PARAM_EXEC Param nodes representing the
+ * outputs of the sub-select.  (NOTE: runtime coercion functions may be
+ * inserted as well.)  This is just the same expression tree as testexpr in
+ * the original SubLink node, but the PARAM_SUBLINK nodes are replaced by
+ * suitably numbered PARAM_EXEC nodes.
+ *
+ * If the sub-select becomes an initplan rather than a subplan, the executable
+ * expression is part of the outer plan's expression tree (and the SubPlan
+ * node itself is not).  In this case testexpr is NULL to avoid duplication.
  *
  * The planner also derives lists of the values that need to be passed into
  * and out of the subplan.	Input values are represented as a list "args" of
@@ -426,13 +428,10 @@ typedef struct SubPlan
 {
 	Expr		xpr;
 	/* Fields copied from original SubLink: */
-	SubLinkType subLinkType;	/* EXISTS, ALL, ANY, MULTIEXPR, EXPR */
-	bool		useOr;			/* TRUE to combine column results with "OR"
-								 * not "AND" */
-	/* The combining operators, transformed to executable expressions: */
-	List	   *exprs;			/* list of OpExpr expression trees */
+	SubLinkType subLinkType;	/* see above */
+	/* The combining operators, transformed to an executable expression: */
+	Node	   *testexpr;		/* OpExpr or RowCompareExpr expression tree */
 	List	   *paramIds;		/* IDs of Params embedded in the above */
-	/* Note: paramIds has a one-to-one correspondence to the exprs list */
 	/* The subselect, transformed to a Plan: */
 	struct Plan *plan;			/* subselect plan itself */
 	int			plan_id;		/* dummy thing because of we haven't equal
@@ -641,6 +640,41 @@ typedef struct RowExpr
 	 */
 	CoercionForm row_format;	/* how to display this node */
 } RowExpr;
+
+/*
+ * RowCompareExpr - row-wise comparison, such as (a, b) <= (1, 2)
+ *
+ * We support row comparison for any operator that can be determined to
+ * act like =, <>, <, <=, >, or >= (we determine this by looking for the
+ * operator in btree opclasses).  Note that the same operator name might
+ * map to a different operator for each pair of row elements, since the
+ * element datatypes can vary.
+ *
+ * A RowCompareExpr node is only generated for the < <= > >= cases;
+ * the = and <> cases are translated to simple AND or OR combinations
+ * of the pairwise comparisons.  However, we include = and <> in the
+ * RowCompareType enum for the convenience of parser logic.
+ */
+typedef enum RowCompareType
+{
+	/* Values of this enum are chosen to match btree strategy numbers */
+	ROWCOMPARE_LT = 1,			/* BTLessStrategyNumber */
+	ROWCOMPARE_LE = 2,			/* BTLessEqualStrategyNumber */
+	ROWCOMPARE_EQ = 3,			/* BTEqualStrategyNumber */
+	ROWCOMPARE_GE = 4,			/* BTGreaterEqualStrategyNumber */
+	ROWCOMPARE_GT = 5,			/* BTGreaterStrategyNumber */
+	ROWCOMPARE_NE = 6			/* no such btree strategy */
+} RowCompareType;
+
+typedef struct RowCompareExpr
+{
+	Expr		xpr;
+	RowCompareType rctype;		/* LT LE GE or GT, never EQ or NE */
+	List	   *opnos;			/* OID list of pairwise comparison ops */
+	List	   *opclasses;		/* OID list of containing operator classes */
+	List	   *largs;			/* the left-hand input arguments */
+	List	   *rargs;			/* the right-hand input arguments */
+} RowCompareExpr;
 
 /*
  * CoalesceExpr - a COALESCE expression

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.204 2005/12/20 02:30:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.205 2005/12/28 01:30:00 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -540,6 +540,8 @@ expression_returns_set_walker(Node *node, void *context)
 		return false;
 	if (IsA(node, RowExpr))
 		return false;
+	if (IsA(node, RowCompareExpr))
+		return false;
 	if (IsA(node, CoalesceExpr))
 		return false;
 	if (IsA(node, MinMaxExpr))
@@ -651,12 +653,12 @@ contain_mutable_functions_walker(Node *node, void *context)
 			return true;
 		/* else fall through to check args */
 	}
-	if (IsA(node, SubLink))
+	if (IsA(node, RowCompareExpr))
 	{
-		SubLink    *sublink = (SubLink *) node;
+		RowCompareExpr *rcexpr = (RowCompareExpr *) node;
 		ListCell   *opid;
 
-		foreach(opid, sublink->operOids)
+		foreach(opid, rcexpr->opnos)
 		{
 			if (op_volatile(lfirst_oid(opid)) != PROVOLATILE_IMMUTABLE)
 				return true;
@@ -734,12 +736,13 @@ contain_volatile_functions_walker(Node *node, void *context)
 			return true;
 		/* else fall through to check args */
 	}
-	if (IsA(node, SubLink))
+	if (IsA(node, RowCompareExpr))
 	{
-		SubLink    *sublink = (SubLink *) node;
+		/* RowCompare probably can't have volatile ops, but check anyway */
+		RowCompareExpr *rcexpr = (RowCompareExpr *) node;
 		ListCell   *opid;
 
-		foreach(opid, sublink->operOids)
+		foreach(opid, rcexpr->opnos)
 		{
 			if (op_volatile(lfirst_oid(opid)) == PROVOLATILE_VOLATILE)
 				return true;
@@ -846,6 +849,8 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 	if (IsA(node, ArrayExpr))
 		return true;
 	if (IsA(node, RowExpr))
+		return true;
+	if (IsA(node, RowCompareExpr))
 		return true;
 	if (IsA(node, CoalesceExpr))
 		return true;
@@ -2857,8 +2862,8 @@ evaluate_expr(Expr *expr, Oid result_type)
  * FromExpr, JoinExpr, and SetOperationStmt nodes are handled, so that query
  * jointrees and setOperation trees can be processed without additional code.
  *
- * expression_tree_walker will handle SubLink nodes by recursing normally into
- * the "lefthand" arguments (which are expressions belonging to the outer
+ * expression_tree_walker will handle SubLink nodes by recursing normally
+ * into the "testexpr" subtree (which is an expression belonging to the outer
  * plan).  It will also call the walker on the sub-Query node; however, when
  * expression_tree_walker itself is called on a Query node, it does nothing
  * and returns "false".  The net effect is that unless the walker does
@@ -2882,7 +2887,7 @@ evaluate_expr(Expr *expr, Oid result_type)
  * walker on all the expression subtrees of the given Query node.
  *
  * expression_tree_walker will handle SubPlan nodes by recursing normally
- * into the "exprs" and "args" lists (which are expressions belonging to
+ * into the "testexpr" and the "args" list (which are expressions belonging to
  * the outer plan).  It will not touch the completed subplan, however.	Since
  * there is no link to the original Query, it is not possible to recurse into
  * subselects of an already-planned expression tree.  This is OK for current
@@ -2992,7 +2997,7 @@ expression_tree_walker(Node *node,
 			{
 				SubLink    *sublink = (SubLink *) node;
 
-				if (expression_tree_walker((Node *) sublink->lefthand,
+				if (expression_tree_walker(sublink->testexpr,
 										   walker, context))
 					return true;
 
@@ -3007,8 +3012,8 @@ expression_tree_walker(Node *node,
 			{
 				SubPlan    *subplan = (SubPlan *) node;
 
-				/* recurse into the exprs list, but not into the Plan */
-				if (expression_tree_walker((Node *) subplan->exprs,
+				/* recurse into the testexpr, but not into the Plan */
+				if (expression_tree_walker(subplan->testexpr,
 										   walker, context))
 					return true;
 				/* also examine args list */
@@ -3058,6 +3063,16 @@ expression_tree_walker(Node *node,
 			return walker(((ArrayExpr *) node)->elements, context);
 		case T_RowExpr:
 			return walker(((RowExpr *) node)->args, context);
+		case T_RowCompareExpr:
+			{
+				RowCompareExpr *rcexpr = (RowCompareExpr *) node;
+
+				if (walker(rcexpr->largs, context))
+					return true;
+				if (walker(rcexpr->rargs, context))
+					return true;
+			}
+			break;
 		case T_CoalesceExpr:
 			return walker(((CoalesceExpr *) node)->args, context);
 		case T_MinMaxExpr:
@@ -3263,7 +3278,7 @@ range_table_walker(List *rtable,
  * and qualifier clauses during the planning stage.
  *
  * expression_tree_mutator will handle SubLink nodes by recursing normally
- * into the "lefthand" arguments (which are expressions belonging to the outer
+ * into the "testexpr" subtree (which is an expression belonging to the outer
  * plan).  It will also call the mutator on the sub-Query node; however, when
  * expression_tree_mutator itself is called on a Query node, it does nothing
  * and returns the unmodified Query node.  The net effect is that unless the
@@ -3272,8 +3287,8 @@ range_table_walker(List *rtable,
  * SubLink node.  Mutators that want to descend into sub-selects will usually
  * do so by recognizing Query nodes and calling query_tree_mutator (below).
  *
- * expression_tree_mutator will handle a SubPlan node by recursing into
- * the "exprs" and "args" lists (which belong to the outer plan), but it
+ * expression_tree_mutator will handle a SubPlan node by recursing into the
+ * "testexpr" and the "args" list (which belong to the outer plan), but it
  * will simply copy the link to the inner plan, since that's typically what
  * expression tree mutators want.  A mutator that wants to modify the subplan
  * can force appropriate behavior by recognizing SubPlan expression nodes
@@ -3404,7 +3419,7 @@ expression_tree_mutator(Node *node,
 				SubLink    *newnode;
 
 				FLATCOPY(newnode, sublink, SubLink);
-				MUTATE(newnode->lefthand, sublink->lefthand, List *);
+				MUTATE(newnode->testexpr, sublink->testexpr, Node *);
 
 				/*
 				 * Also invoke the mutator on the sublink's Query node, so it
@@ -3420,8 +3435,8 @@ expression_tree_mutator(Node *node,
 				SubPlan    *newnode;
 
 				FLATCOPY(newnode, subplan, SubPlan);
-				/* transform exprs list */
-				MUTATE(newnode->exprs, subplan->exprs, List *);
+				/* transform testexpr */
+				MUTATE(newnode->testexpr, subplan->testexpr, Node *);
 				/* transform args list (params to be passed to subplan) */
 				MUTATE(newnode->args, subplan->args, List *);
 				/* but not the sub-Plan itself, which is referenced as-is */
@@ -3510,6 +3525,17 @@ expression_tree_mutator(Node *node,
 
 				FLATCOPY(newnode, rowexpr, RowExpr);
 				MUTATE(newnode->args, rowexpr->args, List *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_RowCompareExpr:
+			{
+				RowCompareExpr    *rcexpr = (RowCompareExpr *) node;
+				RowCompareExpr    *newnode;
+
+				FLATCOPY(newnode, rcexpr, RowCompareExpr);
+				MUTATE(newnode->largs, rcexpr->largs, List *);
+				MUTATE(newnode->rargs, rcexpr->rargs, List *);
 				return (Node *) newnode;
 			}
 			break;

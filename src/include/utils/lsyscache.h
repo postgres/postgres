@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.101 2005/10/15 02:49:46 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.102 2005/12/28 01:30:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,8 @@ extern void get_op_opclass_properties(Oid opno, Oid opclass,
 						  bool *recheck);
 extern Oid	get_opclass_member(Oid opclass, Oid subtype, int16 strategy);
 extern Oid	get_op_hash_function(Oid opno);
+extern void get_op_btree_interpretation(Oid opno,
+										List **opclasses, List **opstrats);
 extern Oid	get_opclass_proc(Oid opclass, Oid subtype, int16 procnum);
 extern char *get_attname(Oid relid, AttrNumber attnum);
 extern char *get_relid_attribute_name(Oid relid, AttrNumber attnum);
@@ -41,6 +43,8 @@ extern void get_atttypetypmod(Oid relid, AttrNumber attnum,
 				  Oid *typid, int32 *typmod);
 extern bool opclass_is_btree(Oid opclass);
 extern bool opclass_is_hash(Oid opclass);
+extern bool opclass_is_default(Oid opclass);
+extern Oid	get_opclass_input_type(Oid opclass);
 extern RegProcedure get_opcode(Oid opno);
 extern char *get_opname(Oid opno);
 extern void op_input_types(Oid opno, Oid *lefttype, Oid *righttype);

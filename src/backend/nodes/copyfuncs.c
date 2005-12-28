@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.323 2005/12/20 02:30:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.324 2005/12/28 01:29:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -862,10 +862,8 @@ _copySubLink(SubLink *from)
 	SubLink    *newnode = makeNode(SubLink);
 
 	COPY_SCALAR_FIELD(subLinkType);
-	COPY_SCALAR_FIELD(useOr);
-	COPY_NODE_FIELD(lefthand);
+	COPY_NODE_FIELD(testexpr);
 	COPY_NODE_FIELD(operName);
-	COPY_NODE_FIELD(operOids);
 	COPY_NODE_FIELD(subselect);
 
 	return newnode;
@@ -880,8 +878,7 @@ _copySubPlan(SubPlan *from)
 	SubPlan    *newnode = makeNode(SubPlan);
 
 	COPY_SCALAR_FIELD(subLinkType);
-	COPY_SCALAR_FIELD(useOr);
-	COPY_NODE_FIELD(exprs);
+	COPY_NODE_FIELD(testexpr);
 	COPY_NODE_FIELD(paramIds);
 	COPY_NODE_FIELD(plan);
 	COPY_SCALAR_FIELD(plan_id);
@@ -1029,6 +1026,23 @@ _copyRowExpr(RowExpr *from)
 	COPY_NODE_FIELD(args);
 	COPY_SCALAR_FIELD(row_typeid);
 	COPY_SCALAR_FIELD(row_format);
+
+	return newnode;
+}
+
+/*
+ * _copyRowCompareExpr
+ */
+static RowCompareExpr *
+_copyRowCompareExpr(RowCompareExpr *from)
+{
+	RowCompareExpr    *newnode = makeNode(RowCompareExpr);
+
+	COPY_SCALAR_FIELD(rctype);
+	COPY_NODE_FIELD(opnos);
+	COPY_NODE_FIELD(opclasses);
+	COPY_NODE_FIELD(largs);
+	COPY_NODE_FIELD(rargs);
 
 	return newnode;
 }
@@ -2875,6 +2889,9 @@ copyObject(void *from)
 			break;
 		case T_RowExpr:
 			retval = _copyRowExpr(from);
+			break;
+		case T_RowCompareExpr:
+			retval = _copyRowCompareExpr(from);
 			break;
 		case T_CoalesceExpr:
 			retval = _copyCoalesceExpr(from);

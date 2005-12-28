@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.210 2005/12/10 19:21:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.211 2005/12/28 01:30:00 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -215,7 +215,6 @@ static void printSubscripts(ArrayRef *aref, deparse_context *context);
 static char *generate_relation_name(Oid relid);
 static char *generate_function_name(Oid funcid, int nargs, Oid *argtypes);
 static char *generate_operator_name(Oid operid, Oid arg1, Oid arg2);
-static void print_operator_name(StringInfo buf, List *opname);
 static text *string_to_text(char *str);
 
 #define only_marker(rte)  ((rte)->inh ? "" : "ONLY ")
@@ -3106,6 +3105,7 @@ get_rule_expr(Node *node, deparse_context *context,
 						break;
 					case PARAM_NUM:
 					case PARAM_EXEC:
+					case PARAM_SUBLINK:
 						appendStringInfo(buf, "$%d", param->paramid);
 						break;
 					default:
@@ -3511,6 +3511,50 @@ get_rule_expr(Node *node, deparse_context *context,
 				if (rowexpr->row_format == COERCE_EXPLICIT_CAST)
 					appendStringInfo(buf, "::%s",
 						  format_type_with_typemod(rowexpr->row_typeid, -1));
+			}
+			break;
+
+		case T_RowCompareExpr:
+			{
+				RowCompareExpr *rcexpr = (RowCompareExpr *) node;
+				ListCell   *arg;
+				char	   *sep;
+
+				/*
+				 * SQL99 allows "ROW" to be omitted when there is more than
+				 * one column, but for simplicity we always print it.
+				 */
+				appendStringInfo(buf, "(ROW(");
+				sep = "";
+				foreach(arg, rcexpr->largs)
+				{
+					Node	   *e = (Node *) lfirst(arg);
+
+					appendStringInfoString(buf, sep);
+					get_rule_expr(e, context, true);
+					sep = ", ";
+				}
+				/*
+				 * We assume that the name of the first-column operator
+				 * will do for all the rest too.  This is definitely
+				 * open to failure, eg if some but not all operators
+				 * were renamed since the construct was parsed, but there
+				 * seems no way to be perfect.
+				 */
+				appendStringInfo(buf, ") %s ROW(",
+						 generate_operator_name(linitial_oid(rcexpr->opnos),
+										exprType(linitial(rcexpr->largs)),
+										exprType(linitial(rcexpr->rargs))));
+				sep = "";
+				foreach(arg, rcexpr->rargs)
+				{
+					Node	   *e = (Node *) lfirst(arg);
+
+					appendStringInfoString(buf, sep);
+					get_rule_expr(e, context, true);
+					sep = ", ";
+				}
+				appendStringInfo(buf, "))");
 			}
 			break;
 
@@ -3967,6 +4011,7 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
 	Query	   *query = (Query *) (sublink->subselect);
+	char	   *opname = NULL;
 	bool		need_paren;
 
 	if (sublink->subLinkType == ARRAY_SUBLINK)
@@ -3974,25 +4019,67 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 	else
 		appendStringInfoChar(buf, '(');
 
-	if (sublink->lefthand != NIL)
+	/*
+	 * Note that we print the name of only the first operator, when there
+	 * are multiple combining operators.  This is an approximation that
+	 * could go wrong in various scenarios (operators in different schemas,
+	 * renamed operators, etc) but there is not a whole lot we can do about
+	 * it, since the syntax allows only one operator to be shown.
+	 */
+	if (sublink->testexpr)
 	{
-		need_paren = (list_length(sublink->lefthand) > 1);
-		if (need_paren)
+		if (IsA(sublink->testexpr, OpExpr))
+		{
+			/* single combining operator */
+			OpExpr   *opexpr = (OpExpr *) sublink->testexpr;
+
+			get_rule_expr(linitial(opexpr->args), context, true);
+			opname = generate_operator_name(opexpr->opno,
+											exprType(linitial(opexpr->args)),
+											exprType(lsecond(opexpr->args)));
+		}
+		else if (IsA(sublink->testexpr, BoolExpr))
+		{
+			/* multiple combining operators, = or <> cases */
+			char	   *sep;
+			ListCell   *l;
+
 			appendStringInfoChar(buf, '(');
-		get_rule_expr((Node *) sublink->lefthand, context, true);
-		if (need_paren)
+			sep = "";
+			foreach(l, ((BoolExpr *) sublink->testexpr)->args)
+			{
+				OpExpr   *opexpr = (OpExpr *) lfirst(l);
+
+				Assert(IsA(opexpr, OpExpr));
+				appendStringInfoString(buf, sep);
+				get_rule_expr(linitial(opexpr->args), context, true);
+				if (!opname)
+					opname = generate_operator_name(opexpr->opno,
+											exprType(linitial(opexpr->args)),
+											exprType(lsecond(opexpr->args)));
+				sep = ", ";
+			}
 			appendStringInfoChar(buf, ')');
-		appendStringInfoChar(buf, ' ');
+		}
+		else if (IsA(sublink->testexpr, RowCompareExpr))
+		{
+			/* multiple combining operators, < <= > >= cases */
+			RowCompareExpr *rcexpr = (RowCompareExpr *) sublink->testexpr;
+
+			appendStringInfoChar(buf, '(');
+			get_rule_expr((Node *) rcexpr->largs, context, true);
+			opname = generate_operator_name(linitial_oid(rcexpr->opnos),
+											exprType(linitial(rcexpr->largs)),
+											exprType(linitial(rcexpr->rargs)));
+			appendStringInfoChar(buf, ')');
+		}
+		else
+			elog(ERROR, "unrecognized testexpr type: %d",
+				 (int) nodeTag(sublink->testexpr));
 	}
 
 	need_paren = true;
 
-	/*
-	 * XXX we regurgitate the originally given operator name, with or without
-	 * schema qualification.  This is not necessarily 100% right but it's the
-	 * best we can do, since the operators actually used might not all be in
-	 * the same schema.
-	 */
 	switch (sublink->subLinkType)
 	{
 		case EXISTS_SUBLINK:
@@ -4000,27 +4087,18 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 			break;
 
 		case ANY_SUBLINK:
-			if (list_length(sublink->operName) == 1 &&
-				strcmp(strVal(linitial(sublink->operName)), "=") == 0)
-			{
-				/* Represent = ANY as IN */
-				appendStringInfo(buf, "IN ");
-			}
+			if (strcmp(opname, "=") == 0)		/* Represent = ANY as IN */
+				appendStringInfo(buf, " IN ");
 			else
-			{
-				print_operator_name(buf, sublink->operName);
-				appendStringInfo(buf, " ANY ");
-			}
+				appendStringInfo(buf, " %s ANY ", opname);
 			break;
 
 		case ALL_SUBLINK:
-			print_operator_name(buf, sublink->operName);
-			appendStringInfo(buf, " ALL ");
+			appendStringInfo(buf, " %s ALL ", opname);
 			break;
 
-		case MULTIEXPR_SUBLINK:
-			print_operator_name(buf, sublink->operName);
-			appendStringInfoChar(buf, ' ');
+		case ROWCOMPARE_SUBLINK:
+			appendStringInfo(buf, " %s ", opname);
 			break;
 
 		case EXPR_SUBLINK:
@@ -4810,30 +4888,6 @@ generate_operator_name(Oid operid, Oid arg1, Oid arg2)
 	ReleaseSysCache(opertup);
 
 	return buf.data;
-}
-
-/*
- * Print out a possibly-qualified operator name
- */
-static void
-print_operator_name(StringInfo buf, List *opname)
-{
-	ListCell   *op = list_head(opname);
-	int			nnames = list_length(opname);
-
-	if (nnames == 1)
-		appendStringInfoString(buf, strVal(lfirst(op)));
-	else
-	{
-		appendStringInfo(buf, "OPERATOR(");
-		while (nnames-- > 1)
-		{
-			appendStringInfo(buf, "%s.",
-							 quote_identifier(strVal(lfirst(op))));
-			op = lnext(op);
-		}
-		appendStringInfo(buf, "%s)", strVal(lfirst(op)));
-	}
 }
 
 /*

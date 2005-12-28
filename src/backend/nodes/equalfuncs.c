@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.259 2005/12/20 02:30:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.260 2005/12/28 01:29:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,6 +156,7 @@ _equalParam(Param *a, Param *b)
 			break;
 		case PARAM_NUM:
 		case PARAM_EXEC:
+		case PARAM_SUBLINK:
 			COMPARE_SCALAR_FIELD(paramid);
 			break;
 		default:
@@ -295,10 +296,8 @@ static bool
 _equalSubLink(SubLink *a, SubLink *b)
 {
 	COMPARE_SCALAR_FIELD(subLinkType);
-	COMPARE_SCALAR_FIELD(useOr);
-	COMPARE_NODE_FIELD(lefthand);
+	COMPARE_NODE_FIELD(testexpr);
 	COMPARE_NODE_FIELD(operName);
-	COMPARE_NODE_FIELD(operOids);
 	COMPARE_NODE_FIELD(subselect);
 
 	return true;
@@ -308,8 +307,7 @@ static bool
 _equalSubPlan(SubPlan *a, SubPlan *b)
 {
 	COMPARE_SCALAR_FIELD(subLinkType);
-	COMPARE_SCALAR_FIELD(useOr);
-	COMPARE_NODE_FIELD(exprs);
+	COMPARE_NODE_FIELD(testexpr);
 	COMPARE_NODE_FIELD(paramIds);
 	/* should compare plans, but have to settle for comparing plan IDs */
 	COMPARE_SCALAR_FIELD(plan_id);
@@ -436,6 +434,18 @@ _equalRowExpr(RowExpr *a, RowExpr *b)
 		a->row_format != COERCE_DONTCARE &&
 		b->row_format != COERCE_DONTCARE)
 		return false;
+
+	return true;
+}
+
+static bool
+_equalRowCompareExpr(RowCompareExpr *a, RowCompareExpr *b)
+{
+	COMPARE_SCALAR_FIELD(rctype);
+	COMPARE_NODE_FIELD(opnos);
+	COMPARE_NODE_FIELD(opclasses);
+	COMPARE_NODE_FIELD(largs);
+	COMPARE_NODE_FIELD(rargs);
 
 	return true;
 }
@@ -1918,6 +1928,9 @@ equal(void *a, void *b)
 			break;
 		case T_RowExpr:
 			retval = _equalRowExpr(a, b);
+			break;
+		case T_RowCompareExpr:
+			retval = _equalRowCompareExpr(a, b);
 			break;
 		case T_CoalesceExpr:
 			retval = _equalCoalesceExpr(a, b);

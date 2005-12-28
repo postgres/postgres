@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.83 2005/11/22 18:17:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.84 2005/12/28 01:30:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,9 @@ static const char *op_signature_string(List *op, char oprkind,
 					Oid arg1, Oid arg2);
 static void op_error(List *op, char oprkind, Oid arg1, Oid arg2,
 		 FuncDetailCode fdresult);
+static Expr *make_op_expr(ParseState *pstate, Operator op,
+			 Node *ltree, Node *rtree,
+			 Oid ltypeId, Oid rtypeId);
 
 
 /*
@@ -942,7 +945,7 @@ make_scalar_array_op(ParseState *pstate, List *opname,
  * As with coerce_type, pstate may be NULL if no special unknown-Param
  * processing is wanted.
  */
-Expr *
+static Expr *
 make_op_expr(ParseState *pstate, Operator op,
 			 Node *ltree, Node *rtree,
 			 Oid ltypeId, Oid rtypeId)

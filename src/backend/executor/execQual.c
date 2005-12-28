@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.186 2005/12/14 16:28:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.187 2005/12/28 01:29:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "access/nbtree.h"
 #include "catalog/pg_type.h"
 #include "commands/typecmds.h"
 #include "executor/execdebug.h"
@@ -102,6 +103,9 @@ static Datum ExecEvalArray(ArrayExprState *astate,
 			  ExprContext *econtext,
 			  bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalRow(RowExprState *rstate,
+			ExprContext *econtext,
+			bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalRowCompare(RowCompareExprState *rstate,
 			ExprContext *econtext,
 			bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalCoalesce(CoalesceExprState *coalesceExpr,
@@ -2307,6 +2311,76 @@ ExecEvalRow(RowExprState *rstate,
 }
 
 /* ----------------------------------------------------------------
+ *		ExecEvalRowCompare - ROW() comparison-op ROW()
+ * ----------------------------------------------------------------
+ */
+static Datum
+ExecEvalRowCompare(RowCompareExprState *rstate,
+				   ExprContext *econtext,
+				   bool *isNull, ExprDoneCond *isDone)
+{
+	bool		result;
+	RowCompareType rctype = ((RowCompareExpr *) rstate->xprstate.expr)->rctype;
+	int32		cmpresult = 0;
+	ListCell   *l;
+	ListCell   *r;
+	int			i;
+
+	if (isDone)
+		*isDone = ExprSingleResult;
+	*isNull = true;				/* until we get a result */
+
+	i = 0;
+	forboth(l, rstate->largs, r, rstate->rargs)
+	{
+		ExprState  *le = (ExprState *) lfirst(l);
+		ExprState  *re = (ExprState *) lfirst(r);
+		FunctionCallInfoData locfcinfo;
+
+		InitFunctionCallInfoData(locfcinfo, &(rstate->funcs[i]), 2,
+								 NULL, NULL);
+		locfcinfo.arg[0] = ExecEvalExpr(le, econtext,
+										&locfcinfo.argnull[0], NULL);
+		locfcinfo.arg[1] = ExecEvalExpr(re, econtext,
+										&locfcinfo.argnull[1], NULL);
+		if (rstate->funcs[i].fn_strict &&
+			(locfcinfo.argnull[0] || locfcinfo.argnull[1]))
+			return (Datum) 0;	/* force NULL result */
+		locfcinfo.isnull = false;
+		cmpresult = DatumGetInt32(FunctionCallInvoke(&locfcinfo));
+		if (locfcinfo.isnull)
+			return (Datum) 0;	/* force NULL result */
+		if (cmpresult != 0)
+			break;				/* no need to compare remaining columns */
+		i++;
+	}
+
+	switch (rctype)
+	{
+		/* EQ and NE cases aren't allowed here */
+		case ROWCOMPARE_LT:
+			result = (cmpresult < 0);
+			break;
+		case ROWCOMPARE_LE:
+			result = (cmpresult <= 0);
+			break;
+		case ROWCOMPARE_GE:
+			result = (cmpresult >= 0);
+			break;
+		case ROWCOMPARE_GT:
+			result = (cmpresult > 0);
+			break;
+		default:
+			elog(ERROR, "unrecognized RowCompareType: %d", (int) rctype);
+			result = 0;			/* keep compiler quiet */
+			break;
+	}
+
+	*isNull = false;
+	return BoolGetDatum(result);
+}
+
+/* ----------------------------------------------------------------
  *		ExecEvalCoalesce
  * ----------------------------------------------------------------
  */
@@ -3118,8 +3192,8 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				sstate->sub_estate = NULL;
 				sstate->planstate = NULL;
 
-				sstate->exprs = (List *)
-					ExecInitExpr((Expr *) subplan->exprs, parent);
+				sstate->testexpr =
+					ExecInitExpr((Expr *) subplan->testexpr, parent);
 				sstate->args = (List *)
 					ExecInitExpr((Expr *) subplan->args, parent);
 
@@ -3336,6 +3410,66 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				state = (ExprState *) rstate;
 			}
 			break;
+		case T_RowCompareExpr:
+			{
+				RowCompareExpr *rcexpr = (RowCompareExpr *) node;
+				RowCompareExprState *rstate = makeNode(RowCompareExprState);
+				int			nopers = list_length(rcexpr->opnos);
+				List	   *outlist;
+				ListCell   *l;
+				ListCell   *l2;
+				int			i;
+
+				rstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalRowCompare;
+				Assert(list_length(rcexpr->largs) == nopers);
+				outlist = NIL;
+				foreach(l, rcexpr->largs)
+				{
+					Expr	   *e = (Expr *) lfirst(l);
+					ExprState  *estate;
+
+					estate = ExecInitExpr(e, parent);
+					outlist = lappend(outlist, estate);
+				}
+				rstate->largs = outlist;
+				Assert(list_length(rcexpr->rargs) == nopers);
+				outlist = NIL;
+				foreach(l, rcexpr->rargs)
+				{
+					Expr	   *e = (Expr *) lfirst(l);
+					ExprState  *estate;
+
+					estate = ExecInitExpr(e, parent);
+					outlist = lappend(outlist, estate);
+				}
+				rstate->rargs = outlist;
+				Assert(list_length(rcexpr->opclasses) == nopers);
+				rstate->funcs = (FmgrInfo *) palloc(nopers * sizeof(FmgrInfo));
+				i = 0;
+				forboth(l, rcexpr->opnos, l2, rcexpr->opclasses)
+				{
+					Oid		opno = lfirst_oid(l);
+					Oid		opclass = lfirst_oid(l2);
+					int		strategy;
+					Oid		subtype;
+					bool	recheck;
+					Oid		proc;
+
+					get_op_opclass_properties(opno, opclass,
+											  &strategy, &subtype, &recheck);
+					proc = get_opclass_proc(opclass, subtype, BTORDER_PROC);
+					/*
+					 * If we enforced permissions checks on index support
+					 * functions, we'd need to make a check here.  But the
+					 * index support machinery doesn't do that, and neither
+					 * does this code.
+					 */
+					fmgr_info(proc, &(rstate->funcs[i]));
+					i++;
+				}
+				state = (ExprState *) rstate;
+			}
+			break;
 		case T_CoalesceExpr:
 			{
 				CoalesceExpr *coalesceexpr = (CoalesceExpr *) node;
@@ -3382,6 +3516,12 @@ ExecInitExpr(Expr *node, PlanState *parent)
 							(errcode(ERRCODE_UNDEFINED_FUNCTION),
 							 errmsg("could not identify a comparison function for type %s",
 									format_type_be(minmaxexpr->minmaxtype))));
+				/*
+				 * If we enforced permissions checks on index support
+				 * functions, we'd need to make a check here.  But the
+				 * index support machinery doesn't do that, and neither
+				 * does this code.
+				 */
 				fmgr_info(typentry->cmp_proc, &(mstate->cfunc));
 				state = (ExprState *) mstate;
 			}
@@ -3484,7 +3624,7 @@ ExecInitExprInitPlan(SubPlan *node, PlanState *parent)
 	sstate->sub_estate = NULL;
 	sstate->planstate = NULL;
 
-	sstate->exprs = (List *) ExecInitExpr((Expr *) node->exprs, parent);
+	sstate->testexpr = ExecInitExpr((Expr *) node->testexpr, parent);
 	sstate->args = (List *) ExecInitExpr((Expr *) node->args, parent);
 
 	sstate->xprstate.expr = (Expr *) node;

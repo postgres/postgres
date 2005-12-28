@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.130 2005/11/17 22:14:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.131 2005/12/28 01:30:01 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -181,6 +181,99 @@ get_op_hash_function(Oid opno)
 
 	/* Didn't find a match... */
 	return InvalidOid;
+}
+
+/*
+ * get_op_btree_interpretation
+ *		Given an operator's OID, find out which btree opclasses it belongs to,
+ *		and what strategy number it has within each one.  The results are
+ *		returned as an OID list and a parallel integer list.
+ *
+ * In addition to the normal btree operators, we consider a <> operator to be
+ * a "member" of an opclass if its negator is the opclass' equality operator.
+ * ROWCOMPARE_NE is returned as the strategy number for this case.
+ */
+void
+get_op_btree_interpretation(Oid opno, List **opclasses, List **opstrats)
+{
+	Oid			lefttype,
+				righttype;
+	CatCList   *catlist;
+	bool		op_negated;
+	int			i;
+
+	*opclasses = NIL;
+	*opstrats = NIL;
+
+	/*
+	 * Get the nominal left-hand input type of the operator; we will ignore
+	 * opclasses that don't have that as the expected input datatype.  This
+	 * is a kluge to avoid being confused by binary-compatible opclasses
+	 * (such as text_ops and varchar_ops, which share the same operators).
+	 */
+	op_input_types(opno, &lefttype, &righttype);
+	Assert(OidIsValid(lefttype));
+
+	/*
+	 * Find all the pg_amop entries containing the operator.
+	 */
+	catlist = SearchSysCacheList(AMOPOPID, 1,
+								 ObjectIdGetDatum(opno),
+								 0, 0, 0);
+	/*
+	 * If we can't find any opclass containing the op, perhaps it is a
+	 * <> operator.  See if it has a negator that is in an opclass.
+	 */
+	op_negated = false;
+	if (catlist->n_members == 0)
+	{
+		Oid		op_negator = get_negator(opno);
+
+		if (OidIsValid(op_negator))
+		{
+			op_negated = true;
+			ReleaseSysCacheList(catlist);
+			catlist = SearchSysCacheList(AMOPOPID, 1,
+										 ObjectIdGetDatum(op_negator),
+										 0, 0, 0);
+		}
+	}
+
+	/* Now search the opclasses */
+	for (i = 0; i < catlist->n_members; i++)
+	{
+		HeapTuple	op_tuple = &catlist->members[i]->tuple;
+		Form_pg_amop op_form = (Form_pg_amop) GETSTRUCT(op_tuple);
+		Oid			opclass_id;
+		StrategyNumber op_strategy;
+
+		opclass_id = op_form->amopclaid;
+
+		/* must be btree */
+		if (!opclass_is_btree(opclass_id))
+			continue;
+
+		/* must match operator input type exactly */
+		if (get_opclass_input_type(opclass_id) != lefttype)
+			continue;
+
+		/* Get the operator's btree strategy number */
+		op_strategy = (StrategyNumber) op_form->amopstrategy;
+		Assert(op_strategy >= 1 && op_strategy <= 5);
+
+		if (op_negated)
+		{
+			/* Only consider negators that are = */
+			if (op_strategy != BTEqualStrategyNumber)
+				continue;
+			op_strategy = ROWCOMPARE_NE;
+		}
+
+		*opclasses = lappend_oid(*opclasses, opclass_id);
+		*opstrats = lappend_int(*opstrats, op_strategy);
+	}
+
+	ReleaseSysCacheList(catlist);
 }
 
 
@@ -429,6 +522,55 @@ opclass_is_hash(Oid opclass)
 	cla_tup = (Form_pg_opclass) GETSTRUCT(tp);
 
 	result = (cla_tup->opcamid == HASH_AM_OID);
+	ReleaseSysCache(tp);
+	return result;
+}
+
+/*
+ * opclass_is_default
+ *
+ *		Returns TRUE iff the specified opclass is the default for its
+ *		index access method and input data type.
+ */
+bool
+opclass_is_default(Oid opclass)
+{
+	HeapTuple	tp;
+	Form_pg_opclass cla_tup;
+	bool		result;
+
+	tp = SearchSysCache(CLAOID,
+						ObjectIdGetDatum(opclass),
+						0, 0, 0);
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for opclass %u", opclass);
+	cla_tup = (Form_pg_opclass) GETSTRUCT(tp);
+
+	result = cla_tup->opcdefault;
+	ReleaseSysCache(tp);
+	return result;
+}
+
+/*
+ * get_opclass_input_type
+ *
+ *		Returns the OID of the datatype the opclass indexes.
+ */
+Oid
+get_opclass_input_type(Oid opclass)
+{
+	HeapTuple	tp;
+	Form_pg_opclass cla_tup;
+	Oid			result;
+
+	tp = SearchSysCache(CLAOID,
+						ObjectIdGetDatum(opclass),
+						0, 0, 0);
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for opclass %u", opclass);
+	cla_tup = (Form_pg_opclass) GETSTRUCT(tp);
+
+	result = cla_tup->opcintype;
 	ReleaseSysCache(tp);
 	return result;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.182 2005/10/15 02:49:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.183 2005/12/28 01:29:59 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -494,10 +494,8 @@ _readSubLink(void)
 	READ_LOCALS(SubLink);
 
 	READ_ENUM_FIELD(subLinkType, SubLinkType);
-	READ_BOOL_FIELD(useOr);
-	READ_NODE_FIELD(lefthand);
+	READ_NODE_FIELD(testexpr);
 	READ_NODE_FIELD(operName);
-	READ_NODE_FIELD(operOids);
 	READ_NODE_FIELD(subselect);
 
 	READ_DONE();
@@ -641,6 +639,23 @@ _readRowExpr(void)
 	READ_NODE_FIELD(args);
 	READ_OID_FIELD(row_typeid);
 	READ_ENUM_FIELD(row_format, CoercionForm);
+
+	READ_DONE();
+}
+
+/*
+ * _readRowCompareExpr
+ */
+static RowCompareExpr *
+_readRowCompareExpr(void)
+{
+	READ_LOCALS(RowCompareExpr);
+
+	READ_ENUM_FIELD(rctype, RowCompareType);
+	READ_NODE_FIELD(opnos);
+	READ_NODE_FIELD(opclasses);
+	READ_NODE_FIELD(largs);
+	READ_NODE_FIELD(rargs);
 
 	READ_DONE();
 }
@@ -996,6 +1011,8 @@ parseNodeString(void)
 		return_value = _readArrayExpr();
 	else if (MATCH("ROW", 3))
 		return_value = _readRowExpr();
+	else if (MATCH("ROWCOMPARE", 10))
+		return_value = _readRowCompareExpr();
 	else if (MATCH("COALESCE", 8))
 		return_value = _readCoalesceExpr();
 	else if (MATCH("MINMAX", 6))

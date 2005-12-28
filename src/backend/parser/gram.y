@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.519 2005/12/27 04:00:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.520 2005/12/28 01:30:00 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -6774,10 +6774,7 @@ a_expr:		c_expr									{ $$ = $1; }
 						/* generate foo = ANY (subquery) */
 						SubLink *n = (SubLink *) $3;
 						n->subLinkType = ANY_SUBLINK;
-						if (IsA($1, RowExpr))
-							n->lefthand = ((RowExpr *) $1)->args;
-						else
-							n->lefthand = list_make1($1);
+						n->testexpr = $1;
 						n->operName = list_make1(makeString("="));
 						$$ = (Node *)n;
 					}
@@ -6796,10 +6793,7 @@ a_expr:		c_expr									{ $$ = $1; }
 						/* Make an = ANY node */
 						SubLink *n = (SubLink *) $4;
 						n->subLinkType = ANY_SUBLINK;
-						if (IsA($1, RowExpr))
-							n->lefthand = ((RowExpr *) $1)->args;
-						else
-							n->lefthand = list_make1($1);
+						n->testexpr = $1;
 						n->operName = list_make1(makeString("="));
 						/* Stick a NOT on top */
 						$$ = (Node *) makeA_Expr(AEXPR_NOT, NIL, NULL, (Node *) n);
@@ -6814,10 +6808,7 @@ a_expr:		c_expr									{ $$ = $1; }
 				{
 					SubLink *n = makeNode(SubLink);
 					n->subLinkType = $3;
-					if (IsA($1, RowExpr))
-						n->lefthand = ((RowExpr *) $1)->args;
-					else
-						n->lefthand = list_make1($1);
+					n->testexpr = $1;
 					n->operName = $2;
 					n->subselect = $4;
 					$$ = (Node *)n;
@@ -6950,7 +6941,7 @@ c_expr:		columnref								{ $$ = $1; }
 				{
 					SubLink *n = makeNode(SubLink);
 					n->subLinkType = EXPR_SUBLINK;
-					n->lefthand = NIL;
+					n->testexpr = NULL;
 					n->operName = NIL;
 					n->subselect = $1;
 					$$ = (Node *)n;
@@ -6959,7 +6950,7 @@ c_expr:		columnref								{ $$ = $1; }
 				{
 					SubLink *n = makeNode(SubLink);
 					n->subLinkType = EXISTS_SUBLINK;
-					n->lefthand = NIL;
+					n->testexpr = NULL;
 					n->operName = NIL;
 					n->subselect = $2;
 					$$ = (Node *)n;
@@ -6968,7 +6959,7 @@ c_expr:		columnref								{ $$ = $1; }
 				{
 					SubLink *n = makeNode(SubLink);
 					n->subLinkType = ARRAY_SUBLINK;
-					n->lefthand = NIL;
+					n->testexpr = NULL;
 					n->operName = NIL;
 					n->subselect = $2;
 					$$ = (Node *)n;

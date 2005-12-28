@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.151 2005/11/26 22:14:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.152 2005/12/28 01:29:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1609,6 +1609,13 @@ cost_qual_eval_walker(Node *node, QualCost *total)
 		total->per_tuple +=
 			cpu_operator_cost * estimate_array_length(arraynode) * 0.5;
 	}
+	else if (IsA(node, RowCompareExpr))
+	{
+		/* Conservatively assume we will check all the columns */
+		RowCompareExpr *rcexpr = (RowCompareExpr *) node;
+
+		total->per_tuple += cpu_operator_cost * list_length(rcexpr->opnos);
+	}
 	else if (IsA(node, SubLink))
 	{
 		/* This routine should not be applied to un-planned expressions */
@@ -1624,7 +1631,6 @@ cost_qual_eval_walker(Node *node, QualCost *total)
 		 *
 		 * An exception occurs when we have decided we can implement the
 		 * subplan by hashing.
-		 *
 		 */
 		SubPlan    *subplan = (SubPlan *) node;
 		Plan	   *plan = subplan->plan;
@@ -1643,7 +1649,7 @@ cost_qual_eval_walker(Node *node, QualCost *total)
 			/*
 			 * The per-tuple costs include the cost of evaluating the lefthand
 			 * expressions, plus the cost of probing the hashtable. Recursion
-			 * into the exprs list will handle the lefthand expressions
+			 * into the testexpr will handle the lefthand expressions
 			 * properly, and will count one cpu_operator_cost for each
 			 * comparison operator.  That is probably too low for the probing
 			 * cost, but it's hard to make a better estimate, so live with it
