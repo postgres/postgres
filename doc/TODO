@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Dec 26 00:14:46 EST 2005
+Last updated:		Tue Dec 27 21:12:26 EST 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -390,7 +390,7 @@ SQL Commands
   creation
 * %Add COMMENT ON for all cluster global objects (roles, databases
   and tablespaces)
-* %Make row-wise comparisons work per SQL spec
+* -Make row-wise comparisons work per SQL spec
 
   Right now, '(a, b) < (1, 2)' is processed as 'a < 1 and b < 2', but
   the SQL standard requires it to be processed as a column-by-column
