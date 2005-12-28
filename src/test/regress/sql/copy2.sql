@@ -149,6 +149,7 @@ c\.d
 "\."
 \.
 
+COPY testeoc TO stdout CSV;
 
 DROP TABLE x, y;
 DROP FUNCTION fn_x_before();
