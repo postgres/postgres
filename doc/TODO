@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Dec 27 22:59:37 EST 2005
+Last updated:		Thu Dec 29 11:45:08 EST 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1018,7 +1018,7 @@ Write-Ahead Log
 Optimizer / Executor
 ====================
 
-* Add missing rtree optimizer selectivity
+* Improve selectivity functions for geometric operators
 * Allow ORDER BY ... LIMIT # to select high/low value without sort or
   index using a sequential scan for highest/lowest values
 
