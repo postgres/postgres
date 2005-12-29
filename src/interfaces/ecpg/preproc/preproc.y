@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.314 2005/12/27 04:00:08 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.315 2005/12/29 04:53:18 neilc Exp $ */
 
 /* Copyright comment */
 %{
@@ -1245,7 +1245,7 @@ alter_table_cmds:
 
 alter_table_cmd:
 		ADD_P opt_column columnDef
-/* ALTER TABLE <relation> ADD_P [COLUMN] <coldef> */
+/* ALTER TABLE <relation> ADD [COLUMN] <coldef> */
 			{ $$ = cat_str(3, make_str("add"), $2, $3); }
 /* ALTER TABLE <relation> ALTER [COLUMN] <colname> {SET DEFAULT <expr>|DROP DEFAULT} */
 		| ALTER opt_column ColId alter_column_default
@@ -1268,7 +1268,7 @@ alter_table_cmd:
 /* ALTER TABLE <relation> ALTER [COLUMN] <colname> TYPE <typename> [ USING <expression> ] */
 		| ALTER opt_column ColId TYPE_P Typename alter_using
 			{ $$ = cat_str(6, make_str("alter"), $2, $3, make_str("type"), $5, $6); }
-/* ALTER TABLE <relation> ADD_P CONSTRAINT ... */
+/* ALTER TABLE <relation> ADD CONSTRAINT ... */
 		| ADD_P TableConstraint
 			{ $$ = cat_str(2, make_str("add"), $2); }
 /* ALTER TABLE <relation> DROP CONSTRAINT ... */
