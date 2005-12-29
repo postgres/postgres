@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.200 2005/11/22 18:17:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.201 2005/12/29 18:08:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -442,7 +442,7 @@ BufferAlloc(Relation reln,
 		/*
 		 * Need to lock the buffer header too in order to change its tag.
 		 */
-		LockBufHdr_NoHoldoff(buf);
+		LockBufHdr(buf);
 
 		/*
 		 * Somebody could have pinned or re-dirtied the buffer while we were
@@ -453,7 +453,7 @@ BufferAlloc(Relation reln,
 		if (buf->refcount == 1 && !(buf->flags & BM_DIRTY))
 			break;
 
-		UnlockBufHdr_NoHoldoff(buf);
+		UnlockBufHdr(buf);
 		BufTableDelete(&newTag);
 		LWLockRelease(BufMappingLock);
 		UnpinBuffer(buf, true, false /* evidently recently used */ );
@@ -473,7 +473,7 @@ BufferAlloc(Relation reln,
 	buf->flags |= BM_TAG_VALID;
 	buf->usage_count = 0;
 
-	UnlockBufHdr_NoHoldoff(buf);
+	UnlockBufHdr(buf);
 
 	if (oldFlags & BM_TAG_VALID)
 		BufTableDelete(&oldTag);
@@ -529,13 +529,13 @@ retry:
 	 */
 	LWLockAcquire(BufMappingLock, LW_EXCLUSIVE);
 
-	/* Re-lock the buffer header (NoHoldoff since we have an LWLock) */
-	LockBufHdr_NoHoldoff(buf);
+	/* Re-lock the buffer header */
+	LockBufHdr(buf);
 
 	/* If it's changed while we were waiting for lock, do nothing */
 	if (!BUFFERTAGS_EQUAL(buf->tag, oldTag))
 	{
-		UnlockBufHdr_NoHoldoff(buf);
+		UnlockBufHdr(buf);
 		LWLockRelease(BufMappingLock);
 		return;
 	}
@@ -551,7 +551,7 @@ retry:
 	 */
 	if (buf->refcount != 0)
 	{
-		UnlockBufHdr_NoHoldoff(buf);
+		UnlockBufHdr(buf);
 		LWLockRelease(BufMappingLock);
 		/* safety check: should definitely not be our *own* pin */
 		if (PrivateRefCount[buf->buf_id] != 0)
@@ -569,7 +569,7 @@ retry:
 	buf->flags = 0;
 	buf->usage_count = 0;
 
-	UnlockBufHdr_NoHoldoff(buf);
+	UnlockBufHdr(buf);
 
 	/*
 	 * Remove the buffer from the lookup hashtable, if it was in there.
@@ -729,15 +729,10 @@ PinBuffer(volatile BufferDesc *buf)
 
 	if (PrivateRefCount[b] == 0)
 	{
-		/*
-		 * Use NoHoldoff here because we don't want the unlock to be a
-		 * potential place to honor a QueryCancel request. (The caller should
-		 * be holding off interrupts anyway.)
-		 */
-		LockBufHdr_NoHoldoff(buf);
+		LockBufHdr(buf);
 		buf->refcount++;
 		result = (buf->flags & BM_VALID) != 0;
-		UnlockBufHdr_NoHoldoff(buf);
+		UnlockBufHdr(buf);
 	}
 	else
 	{
@@ -766,14 +761,11 @@ PinBuffer_Locked(volatile BufferDesc *buf)
 
 	if (PrivateRefCount[b] == 0)
 		buf->refcount++;
-	/* NoHoldoff since we mustn't accept cancel interrupt here */
-	UnlockBufHdr_NoHoldoff(buf);
+	UnlockBufHdr(buf);
 	PrivateRefCount[b]++;
 	Assert(PrivateRefCount[b] > 0);
 	ResourceOwnerRememberBuffer(CurrentResourceOwner,
 								BufferDescriptorGetBuffer(buf));
-	/* Now we can accept cancel */
-	RESUME_INTERRUPTS();
 }
 
 /*
@@ -811,8 +803,7 @@ UnpinBuffer(volatile BufferDesc *buf, bool fixOwner, bool normalAccess)
 		Assert(!LWLockHeldByMe(buf->content_lock));
 		Assert(!LWLockHeldByMe(buf->io_in_progress_lock));
 
-		/* NoHoldoff ensures we don't lose control before sending signal */
-		LockBufHdr_NoHoldoff(buf);
+		LockBufHdr(buf);
 
 		/* Decrement the shared reference count */
 		Assert(buf->refcount > 0);
@@ -841,11 +832,11 @@ UnpinBuffer(volatile BufferDesc *buf, bool fixOwner, bool normalAccess)
 			int			wait_backend_pid = buf->wait_backend_pid;
 
 			buf->flags &= ~BM_PIN_COUNT_WAITER;
-			UnlockBufHdr_NoHoldoff(buf);
+			UnlockBufHdr(buf);
 			ProcSendSignal(wait_backend_pid);
 		}
 		else
-			UnlockBufHdr_NoHoldoff(buf);
+			UnlockBufHdr(buf);
 
 		/*
 		 * If VACUUM is releasing an otherwise-unused buffer, send it to the
@@ -1300,9 +1291,9 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 	 */
 
 	/* To check if block content changes while flushing. - vadim 01/17/97 */
-	LockBufHdr_NoHoldoff(buf);
+	LockBufHdr(buf);
 	buf->flags &= ~BM_JUST_DIRTIED;
-	UnlockBufHdr_NoHoldoff(buf);
+	UnlockBufHdr(buf);
 
 	smgrwrite(reln,
 			  buf->tag.blockNum,
@@ -1693,7 +1684,7 @@ UnlockBuffers(void)
 	{
 		HOLD_INTERRUPTS();		/* don't want to die() partway through... */
 
-		LockBufHdr_NoHoldoff(buf);
+		LockBufHdr(buf);
 
 		/*
 		 * Don't complain if flag bit not set; it could have been reset but we
@@ -1703,7 +1694,7 @@ UnlockBuffers(void)
 			buf->wait_backend_pid == MyProcPid)
 			buf->flags &= ~BM_PIN_COUNT_WAITER;
 
-		UnlockBufHdr_NoHoldoff(buf);
+		UnlockBufHdr(buf);
 
 		ProcCancelWaitForSignal();
 
@@ -1741,9 +1732,9 @@ LockBuffer(Buffer buffer, int mode)
 		 * that it's critical to set dirty bit *before* logging changes with
 		 * XLogInsert() - see comments in SyncOneBuffer().
 		 */
-		LockBufHdr_NoHoldoff(buf);
+		LockBufHdr(buf);
 		buf->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
-		UnlockBufHdr_NoHoldoff(buf);
+		UnlockBufHdr(buf);
 	}
 	else
 		elog(ERROR, "unrecognized buffer lock mode: %d", mode);
@@ -1773,9 +1764,9 @@ ConditionalLockBuffer(Buffer buffer)
 		 * that it's critical to set dirty bit *before* logging changes with
 		 * XLogInsert() - see comments in SyncOneBuffer().
 		 */
-		LockBufHdr_NoHoldoff(buf);
+		LockBufHdr(buf);
 		buf->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
-		UnlockBufHdr_NoHoldoff(buf);
+		UnlockBufHdr(buf);
 
 		return true;
 	}
@@ -1827,25 +1818,25 @@ LockBufferForCleanup(Buffer buffer)
 	{
 		/* Try to acquire lock */
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-		LockBufHdr_NoHoldoff(bufHdr);
+		LockBufHdr(bufHdr);
 		Assert(bufHdr->refcount > 0);
 		if (bufHdr->refcount == 1)
 		{
 			/* Successfully acquired exclusive lock with pincount 1 */
-			UnlockBufHdr_NoHoldoff(bufHdr);
+			UnlockBufHdr(bufHdr);
 			return;
 		}
 		/* Failed, so mark myself as waiting for pincount 1 */
 		if (bufHdr->flags & BM_PIN_COUNT_WAITER)
 		{
-			UnlockBufHdr_NoHoldoff(bufHdr);
+			UnlockBufHdr(bufHdr);
 			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 			elog(ERROR, "multiple backends attempting to wait for pincount 1");
 		}
 		bufHdr->wait_backend_pid = MyProcPid;
 		bufHdr->flags |= BM_PIN_COUNT_WAITER;
 		PinCountWaitBuf = bufHdr;
-		UnlockBufHdr_NoHoldoff(bufHdr);
+		UnlockBufHdr(bufHdr);
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		/* Wait to be signaled by UnpinBuffer() */
 		ProcWaitForSignal();
@@ -1926,8 +1917,7 @@ StartBufferIO(volatile BufferDesc *buf, bool forInput)
 		 */
 		LWLockAcquire(buf->io_in_progress_lock, LW_EXCLUSIVE);
 
-		/* NoHoldoff is OK since we now have an LWLock */
-		LockBufHdr_NoHoldoff(buf);
+		LockBufHdr(buf);
 
 		if (!(buf->flags & BM_IO_IN_PROGRESS))
 			break;
@@ -1938,7 +1928,7 @@ StartBufferIO(volatile BufferDesc *buf, bool forInput)
 		 * an error (see AbortBufferIO).  If that's the case, we must wait for
 		 * him to get unwedged.
 		 */
-		UnlockBufHdr_NoHoldoff(buf);
+		UnlockBufHdr(buf);
 		LWLockRelease(buf->io_in_progress_lock);
 		WaitIO(buf);
 	}
@@ -1948,14 +1938,14 @@ StartBufferIO(volatile BufferDesc *buf, bool forInput)
 	if (forInput ? (buf->flags & BM_VALID) : !(buf->flags & BM_DIRTY))
 	{
 		/* someone else already did the I/O */
-		UnlockBufHdr_NoHoldoff(buf);
+		UnlockBufHdr(buf);
 		LWLockRelease(buf->io_in_progress_lock);
 		return false;
 	}
 
 	buf->flags |= BM_IO_IN_PROGRESS;
 
-	UnlockBufHdr_NoHoldoff(buf);
+	UnlockBufHdr(buf);
 
 	InProgressBuf = buf;
 	IsForInput = forInput;
@@ -1986,8 +1976,7 @@ TerminateBufferIO(volatile BufferDesc *buf, bool clear_dirty,
 {
 	Assert(buf == InProgressBuf);
 
-	/* NoHoldoff is OK since we must have an LWLock */
-	LockBufHdr_NoHoldoff(buf);
+	LockBufHdr(buf);
 
 	Assert(buf->flags & BM_IO_IN_PROGRESS);
 	buf->flags &= ~(BM_IO_IN_PROGRESS | BM_IO_ERROR);
@@ -1995,7 +1984,7 @@ TerminateBufferIO(volatile BufferDesc *buf, bool clear_dirty,
 		buf->flags &= ~BM_DIRTY;
 	buf->flags |= set_flag_bits;
 
-	UnlockBufHdr_NoHoldoff(buf);
+	UnlockBufHdr(buf);
 
 	InProgressBuf = NULL;
 
@@ -2026,15 +2015,14 @@ AbortBufferIO(void)
 		 */
 		LWLockAcquire(buf->io_in_progress_lock, LW_EXCLUSIVE);
 
-		/* NoHoldoff is OK since we now have an LWLock */
-		LockBufHdr_NoHoldoff(buf);
+		LockBufHdr(buf);
 		Assert(buf->flags & BM_IO_IN_PROGRESS);
 		if (IsForInput)
 		{
 			Assert(!(buf->flags & BM_DIRTY));
 			/* We'd better not think buffer is valid yet */
 			Assert(!(buf->flags & BM_VALID));
-			UnlockBufHdr_NoHoldoff(buf);
+			UnlockBufHdr(buf);
 		}
 		else
 		{
@@ -2042,7 +2030,7 @@ AbortBufferIO(void)
 
 			sv_flags = buf->flags;
 			Assert(sv_flags & BM_DIRTY);
-			UnlockBufHdr_NoHoldoff(buf);
+			UnlockBufHdr(buf);
 			/* Issue notice if this is not the first failure... */
 			if (sv_flags & BM_IO_ERROR)
 			{

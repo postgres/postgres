@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.224 2005/12/28 23:22:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.225 2005/12/29 18:08:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -695,10 +695,10 @@ begin:;
 		/* use volatile pointer to prevent code rearrangement */
 		volatile XLogCtlData *xlogctl = XLogCtl;
 
-		SpinLockAcquire_NoHoldoff(&xlogctl->info_lck);
+		SpinLockAcquire(&xlogctl->info_lck);
 		LogwrtRqst = xlogctl->LogwrtRqst;
 		LogwrtResult = xlogctl->LogwrtResult;
-		SpinLockRelease_NoHoldoff(&xlogctl->info_lck);
+		SpinLockRelease(&xlogctl->info_lck);
 	}
 
 	/*
@@ -940,13 +940,13 @@ begin:;
 		/* use volatile pointer to prevent code rearrangement */
 		volatile XLogCtlData *xlogctl = XLogCtl;
 
-		SpinLockAcquire_NoHoldoff(&xlogctl->info_lck);
+		SpinLockAcquire(&xlogctl->info_lck);
 		/* advance global request to include new block(s) */
 		if (XLByteLT(xlogctl->LogwrtRqst.Write, WriteRqst))
 			xlogctl->LogwrtRqst.Write = WriteRqst;
 		/* update local result copy while I have the chance */
 		LogwrtResult = xlogctl->LogwrtResult;
-		SpinLockRelease_NoHoldoff(&xlogctl->info_lck);
+		SpinLockRelease(&xlogctl->info_lck);
 	}
 
 	ProcLastRecEnd = RecPtr;
@@ -1175,11 +1175,11 @@ AdvanceXLInsertBuffer(void)
 			/* use volatile pointer to prevent code rearrangement */
 			volatile XLogCtlData *xlogctl = XLogCtl;
 
-			SpinLockAcquire_NoHoldoff(&xlogctl->info_lck);
+			SpinLockAcquire(&xlogctl->info_lck);
 			if (XLByteLT(xlogctl->LogwrtRqst.Write, FinishedPageRqstPtr))
 				xlogctl->LogwrtRqst.Write = FinishedPageRqstPtr;
 			LogwrtResult = xlogctl->LogwrtResult;
-			SpinLockRelease_NoHoldoff(&xlogctl->info_lck);
+			SpinLockRelease(&xlogctl->info_lck);
 		}
 
 		update_needed = false;	/* Did the shared-request update */
@@ -1560,13 +1560,13 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 		/* use volatile pointer to prevent code rearrangement */
 		volatile XLogCtlData *xlogctl = XLogCtl;
 
-		SpinLockAcquire_NoHoldoff(&xlogctl->info_lck);
+		SpinLockAcquire(&xlogctl->info_lck);
 		xlogctl->LogwrtResult = LogwrtResult;
 		if (XLByteLT(xlogctl->LogwrtRqst.Write, LogwrtResult.Write))
 			xlogctl->LogwrtRqst.Write = LogwrtResult.Write;
 		if (XLByteLT(xlogctl->LogwrtRqst.Flush, LogwrtResult.Flush))
 			xlogctl->LogwrtRqst.Flush = LogwrtResult.Flush;
-		SpinLockRelease_NoHoldoff(&xlogctl->info_lck);
+		SpinLockRelease(&xlogctl->info_lck);
 	}
 
 	Write->LogwrtResult = LogwrtResult;
@@ -1618,11 +1618,11 @@ XLogFlush(XLogRecPtr record)
 		/* use volatile pointer to prevent code rearrangement */
 		volatile XLogCtlData *xlogctl = XLogCtl;
 
-		SpinLockAcquire_NoHoldoff(&xlogctl->info_lck);
+		SpinLockAcquire(&xlogctl->info_lck);
 		if (XLByteLT(WriteRqstPtr, xlogctl->LogwrtRqst.Write))
 			WriteRqstPtr = xlogctl->LogwrtRqst.Write;
 		LogwrtResult = xlogctl->LogwrtResult;
-		SpinLockRelease_NoHoldoff(&xlogctl->info_lck);
+		SpinLockRelease(&xlogctl->info_lck);
 	}
 
 	/* done already? */
@@ -4984,10 +4984,10 @@ GetRedoRecPtr(void)
 	/* use volatile pointer to prevent code rearrangement */
 	volatile XLogCtlData *xlogctl = XLogCtl;
 
-	SpinLockAcquire_NoHoldoff(&xlogctl->info_lck);
+	SpinLockAcquire(&xlogctl->info_lck);
 	Assert(XLByteLE(RedoRecPtr, xlogctl->Insert.RedoRecPtr));
 	RedoRecPtr = xlogctl->Insert.RedoRecPtr;
-	SpinLockRelease_NoHoldoff(&xlogctl->info_lck);
+	SpinLockRelease(&xlogctl->info_lck);
 
 	return RedoRecPtr;
 }
@@ -5165,9 +5165,9 @@ CreateCheckPoint(bool shutdown, bool force)
 		/* use volatile pointer to prevent code rearrangement */
 		volatile XLogCtlData *xlogctl = XLogCtl;
 
-		SpinLockAcquire_NoHoldoff(&xlogctl->info_lck);
+		SpinLockAcquire(&xlogctl->info_lck);
 		RedoRecPtr = xlogctl->Insert.RedoRecPtr = checkPoint.redo;
-		SpinLockRelease_NoHoldoff(&xlogctl->info_lck);
+		SpinLockRelease(&xlogctl->info_lck);
 	}
 
 	/*

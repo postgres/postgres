@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.36 2005/12/11 21:02:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.37 2005/12/29 18:08:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "access/clog.h"
 #include "access/multixact.h"
 #include "access/subtrans.h"
+#include "miscadmin.h"
 #include "storage/lwlock.h"
 #include "storage/proc.h"
 #include "storage/spin.h"
@@ -301,7 +302,7 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 		bool		mustwait;
 
 		/* Acquire mutex.  Time spent holding mutex should be short! */
-		SpinLockAcquire_NoHoldoff(&lock->mutex);
+		SpinLockAcquire(&lock->mutex);
 
 		/* If retrying, allow LWLockRelease to release waiters again */
 		if (retry)
@@ -340,7 +341,7 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 		 * memory initialization.
 		 */
 		if (proc == NULL)
-			elog(FATAL, "cannot wait without a PGPROC structure");
+			elog(PANIC, "cannot wait without a PGPROC structure");
 
 		proc->lwWaiting = true;
 		proc->lwExclusive = (mode == LW_EXCLUSIVE);
@@ -352,7 +353,7 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 		lock->tail = proc;
 
 		/* Can release the mutex now */
-		SpinLockRelease_NoHoldoff(&lock->mutex);
+		SpinLockRelease(&lock->mutex);
 
 		/*
 		 * Wait until awakened.
@@ -384,7 +385,7 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 	}
 
 	/* We are done updating shared state of the lock itself. */
-	SpinLockRelease_NoHoldoff(&lock->mutex);
+	SpinLockRelease(&lock->mutex);
 
 	/* Add lock to list of locks held by this backend */
 	held_lwlocks[num_held_lwlocks++] = lockid;
@@ -423,7 +424,7 @@ LWLockConditionalAcquire(LWLockId lockid, LWLockMode mode)
 	HOLD_INTERRUPTS();
 
 	/* Acquire mutex.  Time spent holding mutex should be short! */
-	SpinLockAcquire_NoHoldoff(&lock->mutex);
+	SpinLockAcquire(&lock->mutex);
 
 	/* If I can get the lock, do so quickly. */
 	if (mode == LW_EXCLUSIVE)
@@ -448,7 +449,7 @@ LWLockConditionalAcquire(LWLockId lockid, LWLockMode mode)
 	}
 
 	/* We are done updating shared state of the lock itself. */
-	SpinLockRelease_NoHoldoff(&lock->mutex);
+	SpinLockRelease(&lock->mutex);
 
 	if (mustwait)
 	{
@@ -494,7 +495,7 @@ LWLockRelease(LWLockId lockid)
 		held_lwlocks[i] = held_lwlocks[i + 1];
 
 	/* Acquire mutex.  Time spent holding mutex should be short! */
-	SpinLockAcquire_NoHoldoff(&lock->mutex);
+	SpinLockAcquire(&lock->mutex);
 
 	/* Release my hold on lock */
 	if (lock->exclusive > 0)
@@ -542,7 +543,7 @@ LWLockRelease(LWLockId lockid)
 	}
 
 	/* We are done updating shared state of the lock itself. */
-	SpinLockRelease_NoHoldoff(&lock->mutex);
+	SpinLockRelease(&lock->mutex);
 
 	/*
 	 * Awaken any waiters I removed from the queue.

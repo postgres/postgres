@@ -14,17 +14,9 @@
  *		Acquire a spinlock, waiting if necessary.
  *		Time out and abort() if unable to acquire the lock in a
  *		"reasonable" amount of time --- typically ~ 1 minute.
- *		Cancel/die interrupts are held off until the lock is released.
  *
  *	void SpinLockRelease(volatile slock_t *lock)
  *		Unlock a previously acquired lock.
- *		Release the cancel/die interrupt holdoff.
- *
- *	void SpinLockAcquire_NoHoldoff(volatile slock_t *lock)
- *	void SpinLockRelease_NoHoldoff(volatile slock_t *lock)
- *		Same as above, except no interrupt holdoff processing is done.
- *		This pair of macros may be used when there is a surrounding
- *		interrupt holdoff.
  *
  *	bool SpinLockFree(slock_t *lock)
  *		Tests if the lock is free. Returns TRUE if free, FALSE if locked.
@@ -43,14 +35,21 @@
  *	protects shared data with a spinlock MUST reference that shared
  *	data through a volatile pointer.
  *
+ *	Keep in mind the coding rule that spinlocks must not be held for more
+ *	than a few instructions.  In particular, we assume it is not possible
+ *	for a CHECK_FOR_INTERRUPTS() to occur while holding a spinlock, and so
+ *	it is not necessary to do HOLD/RESUME_INTERRUPTS() in these macros.
+ *
  *	These macros are implemented in terms of hardware-dependent macros
- *	supplied by s_lock.h.
+ *	supplied by s_lock.h.  There is not currently any extra functionality
+ *	added by this header, but there has been in the past and may someday
+ *	be again.
  *
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/spin.h,v 1.26 2005/10/13 06:17:34 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/storage/spin.h,v 1.27 2005/12/29 18:08:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,26 +57,13 @@
 #define SPIN_H
 
 #include "storage/s_lock.h"
-#include "miscadmin.h"
 
 
 #define SpinLockInit(lock)	S_INIT_LOCK(lock)
 
-#define SpinLockAcquire(lock) \
-	do { \
-		HOLD_INTERRUPTS(); \
-		S_LOCK(lock); \
-	} while (0)
+#define SpinLockAcquire(lock) S_LOCK(lock)
 
-#define SpinLockAcquire_NoHoldoff(lock) S_LOCK(lock)
-
-#define SpinLockRelease(lock) \
-	do { \
-		S_UNLOCK(lock); \
-		RESUME_INTERRUPTS(); \
-	} while (0)
-
-#define SpinLockRelease_NoHoldoff(lock) S_UNLOCK(lock)
+#define SpinLockRelease(lock) S_UNLOCK(lock)
 
 #define SpinLockFree(lock)	S_LOCK_FREE(lock)
 

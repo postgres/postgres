@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.83 2005/11/22 18:17:31 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.84 2005/12/29 18:08:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,24 +138,16 @@ typedef struct sbufdesc
 #define FREENEXT_NOT_IN_LIST	(-2)
 
 /*
- * Macros for acquiring/releasing a buffer header's spinlock.  The
- * NoHoldoff cases may be used when we know that we hold some LWLock
- * and therefore interrupts are already held off.  Do not apply these
- * to local buffers!
+ * Macros for acquiring/releasing a shared buffer header's spinlock.
+ * Do not apply these to local buffers!
  *
  * Note: as a general coding rule, if you are using these then you probably
- * want to be using a volatile-qualified pointer to the buffer header, to
+ * need to be using a volatile-qualified pointer to the buffer header, to
  * ensure that the compiler doesn't rearrange accesses to the header to
  * occur before or after the spinlock is acquired/released.
  */
-#define LockBufHdr(bufHdr)	\
-	SpinLockAcquire(&(bufHdr)->buf_hdr_lock)
-#define UnlockBufHdr(bufHdr)  \
-	SpinLockRelease(&(bufHdr)->buf_hdr_lock)
-#define LockBufHdr_NoHoldoff(bufHdr)  \
-	SpinLockAcquire_NoHoldoff(&(bufHdr)->buf_hdr_lock)
-#define UnlockBufHdr_NoHoldoff(bufHdr)	\
-	SpinLockRelease_NoHoldoff(&(bufHdr)->buf_hdr_lock)
+#define LockBufHdr(bufHdr)		SpinLockAcquire(&(bufHdr)->buf_hdr_lock)
+#define UnlockBufHdr(bufHdr)	SpinLockRelease(&(bufHdr)->buf_hdr_lock)
 
 
 /* in buf_init.c */
