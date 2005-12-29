@@ -2,7 +2,7 @@
  * plpython.c - python as a procedural language for PostgreSQL
  *
  * This software is copyright by Andrew Bosma
- * but is really shameless cribbed from pltcl.c by Jan Weick, and
+ * but is really shamelessly cribbed from pltcl.c by Jan Wieck, and
  * plperl.c by Mark Hollomon.
  *
  * The author hereby grants permission to use, copy, modify,
@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.66 2005/10/15 02:49:50 momjian Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.66.2.1 2005/12/29 21:47:40 neilc Exp $
  *
  *********************************************************************
  */
@@ -1997,7 +1997,6 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 	int			i,
 				rv;
 	PLyPlanObject *plan;
-	char	   *nulls;
 	MemoryContext oldcontext;
 
 	if (list != NULL)
@@ -2019,7 +2018,6 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 	if (nargs != plan->nargs)
 	{
 		char	   *sv;
-
 		PyObject   *so = PyObject_Str(list);
 
 		if (!so)
@@ -2037,13 +2035,12 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 	oldcontext = CurrentMemoryContext;
 	PG_TRY();
 	{
-		nulls = palloc(nargs * sizeof(char));
+		char	   *nulls = palloc(nargs * sizeof(char));
 
 		for (i = 0; i < nargs; i++)
 		{
 			PyObject   *elem,
 					   *so;
-			char	   *sv;
 
 			elem = PySequence_GetItem(list, i);
 			if (elem != Py_None)
@@ -2052,20 +2049,26 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 				if (!so)
 					PLy_elog(ERROR, "function \"%s\" could not execute plan",
 							 PLy_procedure_name(PLy_curr_procedure));
-				sv = PyString_AsString(so);
-
-				/*
-				 * FIXME -- if this elogs, we have Python reference leak
-				 */
-				plan->values[i] =
-					FunctionCall3(&(plan->args[i].out.d.typfunc),
-								  CStringGetDatum(sv),
-							ObjectIdGetDatum(plan->args[i].out.d.typioparam),
-								  Int32GetDatum(-1));
-
-				Py_DECREF(so);
 				Py_DECREF(elem);
 
+				PG_TRY();
+				{
+					char *sv = PyString_AsString(so);
+
+					plan->values[i] =
+						FunctionCall3(&(plan->args[i].out.d.typfunc),
+									  CStringGetDatum(sv),
+								ObjectIdGetDatum(plan->args[i].out.d.typioparam),
+									  Int32GetDatum(-1));
+				}
+				PG_CATCH();
+				{
+					Py_DECREF(so);
+					PG_RE_THROW();
+				}
+				PG_END_TRY();
+
+				Py_DECREF(so);
 				nulls[i] = ' ';
 			}
 			else
