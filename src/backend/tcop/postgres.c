@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.471 2005/12/14 17:06:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.472 2005/12/30 22:55:20 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1146,7 +1146,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 
 	if (log_statement == LOGSTMT_ALL)
 		ereport(LOG,
-				(errmsg("statement: PREPARE %s AS %s",
+				(errmsg("statement: [client] PREPARE %s AS %s",
 						(*stmt_name != '\0') ? stmt_name : "<unnamed>",
 						query_string)));
 
@@ -1449,7 +1449,7 @@ exec_bind_message(StringInfo input_message)
 	/* We need to output the parameter values someday */
 	if (log_statement == LOGSTMT_ALL)
 		ereport(LOG,
-				(errmsg("statement: <BIND> %s", portal_name)));
+				(errmsg("statement: [client] <BIND> %s", portal_name)));
 
 	/*
 	 * Fetch parameters, if any, and store in the portal's memory context.
@@ -1712,7 +1712,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 	if (log_statement == LOGSTMT_ALL)
 		/* We have the portal, so output the source query. */
 		ereport(LOG,
-				(errmsg("statement: %sEXECUTE %s  [PREPARE:  %s]",
+				(errmsg("statement: [client] %sEXECUTE %s  [PREPARE:  %s]",
 						(execute_is_fetch) ? "FETCH from " : "",
 						(*portal_name != '\0') ? portal_name : "<unnamed>",
 						portal->sourceText ? portal->sourceText : "")));
@@ -1821,7 +1821,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 			(save_log_min_duration_statement > 0 &&
 			 usecs >= save_log_min_duration_statement * 1000))
 			ereport(LOG,
-					(errmsg("duration: %ld.%03ld ms  statement: %sEXECUTE %s  [PREPARE:  %s]",
+					(errmsg("duration: %ld.%03ld ms  statement: [client] %sEXECUTE %s  [PREPARE:  %s]",
 							(long) ((stop_t.tv_sec - start_t.tv_sec) * 1000 +
 								  (stop_t.tv_usec - start_t.tv_usec) / 1000),
 							(long) (stop_t.tv_usec - start_t.tv_usec) % 1000,
