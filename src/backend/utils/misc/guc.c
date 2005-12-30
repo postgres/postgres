@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.304 2005/12/28 16:38:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.305 2005/12/30 00:13:50 petere Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -130,6 +130,7 @@ static const char *show_num_temp_buffers(void);
 static bool assign_phony_autocommit(bool newval, bool doit, GucSource source);
 static const char *assign_custom_variable_classes(const char *newval, bool doit,
 							   GucSource source);
+static bool assign_ssl(bool newval, bool doit, GucSource source);
 static bool assign_stage_log_stats(bool newval, bool doit, GucSource source);
 static bool assign_log_stats(bool newval, bool doit, GucSource source);
 static bool assign_transaction_read_only(bool newval, bool doit, GucSource source);
@@ -496,7 +497,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&EnableSSL,
-		false, NULL, NULL
+		false, assign_ssl, NULL
 	},
 	{
 		{"fsync", PGC_SIGHUP, WAL_SETTINGS,
@@ -5862,6 +5863,18 @@ assign_custom_variable_classes(const char *newval, bool doit, GucSource source)
 
 	pfree(buf.data);
 	return newval;
+}
+
+static bool
+assign_ssl(bool newval, bool doit, GucSource source)
+{
+#ifndef USE_SSL
+	if (newval)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("SSL is not supported by this build")));
+#endif
+	return true;
 }
 
 static bool
