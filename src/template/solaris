@@ -17,8 +17,15 @@ case $host in
     ;;
   i?86-*-solaris*)
 	if test "$GCC" != yes ; then
-		need_tas=yes
-		tas_file=solaris_i386.s
+		soarch=`isainfo`
+		if isainfo | grep amd64
+		then
+			need_tas=yes
+			tas_file=solaris_x86_64.s
+		else
+			need_tas=yes
+			tas_file=solaris_i386.s
+		fi
 	fi
     ;;
 esac

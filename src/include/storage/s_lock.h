@@ -66,7 +66,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.145 2005/12/17 21:08:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.146 2005/12/30 21:43:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -791,7 +791,8 @@ typedef unsigned char slock_t;
 
 /* out-of-line assembler from src/backend/port/tas/foo.s */
 
-#if defined(__sun) && defined(__i386)	/* i386 using Sun compiler */
+/* i386/X86_64 using Sun compiler */
+#if defined(__sun) && (defined(__i386) || defined(__x86_64__)) 
 /*
  * Solaris/386 (we only get here for non-gcc case)
  */
