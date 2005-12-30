@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.207.2.2 2005/12/10 19:21:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.207.2.3 2005/12/30 18:34:27 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1526,8 +1526,15 @@ deparse_context_for_subplan(const char *name, List *tlist,
 		attrs = lappend(attrs, makeString(pstrdup(buf)));
 	}
 
-	rte->rtekind = RTE_SPECIAL; /* XXX */
+	/*
+	 * We create an RTE_SPECIAL RangeTblEntry, and store the given tlist
+	 * in its coldeflist field.  This is a hack to make the tlist available
+	 * to get_name_for_var_field().  RTE_SPECIAL nodes shouldn't appear in
+	 * deparse contexts otherwise.
+	 */
+	rte->rtekind = RTE_SPECIAL;
 	rte->relid = InvalidOid;
+	rte->coldeflist = tlist;
 	rte->eref = makeAlias(name, attrs);
 	rte->inh = false;
 	rte->inFromCl = true;
@@ -2572,7 +2579,8 @@ get_names_for_var(Var *var, int levelsup, deparse_context *context,
  * Note: this has essentially the same logic as the parser's
  * expandRecordVariable() function, but we are dealing with a different
  * representation of the input context, and we only need one field name not
- * a TupleDesc.
+ * a TupleDesc.  Also, we have a special case for RTE_SPECIAL so that we can
+ * deal with displaying RECORD-returning functions in subplan targetlists.
  */
 static const char *
 get_name_for_var_field(Var *var, int fieldno,
@@ -2603,7 +2611,6 @@ get_name_for_var_field(Var *var, int fieldno,
 	switch (rte->rtekind)
 	{
 		case RTE_RELATION:
-		case RTE_SPECIAL:
 
 			/*
 			 * This case should not occur: a column of a table shouldn't have
@@ -2663,6 +2670,21 @@ get_name_for_var_field(Var *var, int fieldno,
 			 * We couldn't get here unless a function is declared with one of
 			 * its result columns as RECORD, which is not allowed.
 			 */
+			break;
+		case RTE_SPECIAL:
+			/*
+			 * This case occurs during EXPLAIN when we are looking at a
+			 * deparse context node set up by deparse_context_for_subplan().
+			 * Look into the subplan's target list to get the referenced
+			 * expression, and then pass it to get_expr_result_type().
+			 */
+			if (rte->coldeflist)
+			{
+				TargetEntry *ste = get_tle_by_resno(rte->coldeflist, attnum);
+
+				if (ste != NULL)
+					expr = (Node *) ste->expr;
+			}
 			break;
 	}
 
