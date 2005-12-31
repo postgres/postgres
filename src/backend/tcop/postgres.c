@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.473 2005/12/30 23:49:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.474 2005/12/31 16:50:44 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -589,8 +589,8 @@ log_after_parse(List *raw_parsetree_list, const char *query_string,
 				entry->query_string)
 			{
 				*prepare_string = palloc(strlen(entry->query_string) +
-									  strlen("  [client PREPARE:  %s]") - 1);
-				sprintf(*prepare_string, "  [client PREPARE:  %s]",
+									  strlen("  [protocol PREPARE:  %s]") - 1);
+				sprintf(*prepare_string, "  [protocol PREPARE:  %s]",
 						entry->query_string);
 			}
 		}
@@ -1146,7 +1146,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 
 	if (log_statement == LOGSTMT_ALL)
 		ereport(LOG,
-				(errmsg("statement: [client] PREPARE %s AS %s",
+				(errmsg("statement: [protocol] PREPARE %s AS %s",
 						(*stmt_name != '\0') ? stmt_name : "<unnamed>",
 						query_string)));
 
@@ -1449,7 +1449,7 @@ exec_bind_message(StringInfo input_message)
 	/* We need to output the parameter values someday */
 	if (log_statement == LOGSTMT_ALL)
 		ereport(LOG,
-				(errmsg("statement: [client] <BIND> %s", portal_name)));
+				(errmsg("statement: [protocol] <BIND> %s", portal_name)));
 
 	/*
 	 * Fetch parameters, if any, and store in the portal's memory context.
@@ -1712,7 +1712,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 	if (log_statement == LOGSTMT_ALL)
 		/* We have the portal, so output the source query. */
 		ereport(LOG,
-				(errmsg("statement: [client] %sEXECUTE %s  [PREPARE:  %s]",
+				(errmsg("statement: [protocol] %sEXECUTE %s  [PREPARE:  %s]",
 						(execute_is_fetch) ? "FETCH from " : "",
 						(*portal_name != '\0') ? portal_name : "<unnamed>",
 						portal->sourceText ? portal->sourceText : "")));
@@ -1821,7 +1821,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 			(save_log_min_duration_statement > 0 &&
 			 usecs >= save_log_min_duration_statement * 1000))
 			ereport(LOG,
-					(errmsg("duration: %ld.%03ld ms  statement: [client] %sEXECUTE %s  [PREPARE:  %s]",
+					(errmsg("duration: %ld.%03ld ms  statement: [protocol] %sEXECUTE %s  [PREPARE:  %s]",
 							(long) ((stop_t.tv_sec - start_t.tv_sec) * 1000 +
 								  (stop_t.tv_usec - start_t.tv_usec) / 1000),
 							(long) (stop_t.tv_usec - start_t.tv_usec) % 1000,
