@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.102 2005/12/27 23:54:01 adunstan Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.103 2005/12/31 23:50:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -169,8 +169,7 @@ static void set_input(char **dest, char *filename);
 static void check_input(char *path);
 static void set_short_version(char *short_version, char *extrapath);
 static void set_null_conf(void);
-static void test_connections(void);
-static void test_buffers(void);
+static void test_config_settings(void);
 static void setup_config(void);
 static void bootstrap_template1(char *short_version);
 static void setup_auth(void);
@@ -1059,7 +1058,8 @@ set_short_version(char *short_version, char *extrapath)
 }
 
 /*
- * set up an empty config file so we can check buffers and connections
+ * set up an empty config file so we can check config settings by launching
+ * a test backend
  */
 static void
 set_null_conf(void)
@@ -1085,93 +1085,98 @@ set_null_conf(void)
 }
 
 /*
- * max_fsm_pages setting used in both the shared_buffers and max_connections
- * tests. 
- */
-
-#define TEST_FSM(x) ( (x) > 1000 ? 50 * (x) : 20000 )
-
-/*
- * check how many connections we can sustain
+ * Determine platform-specific config settings
+ *
+ * Use reasonable values if kernel will let us, else scale back.  Probe
+ * for max_connections first since it is subject to more constraints than
+ * shared_buffers.
  */
 static void
-test_connections(void)
+test_config_settings(void)
 {
+	/*
+	 * These macros define the minimum shared_buffers we want for a given
+	 * max_connections value, and the max_fsm_pages setting to be used for
+	 * a given shared_buffers value.  The arrays show the settings to try.
+	 *
+	 * Make sure the trial_bufs[] list includes the MIN_BUFS_FOR_CONNS()
+	 * value for each trial_conns[] entry, else we may end up setting
+	 * shared_buffers lower than it could be.
+	 */
+#define MIN_BUFS_FOR_CONNS(nconns)  ((nconns) * 10)
+#define FSM_FOR_BUFS(nbuffers)  ((nbuffers) > 1000 ? 50 * (nbuffers) : 20000)
+
+	static const int trial_conns[] = {
+		100, 50, 40, 30, 20, 10
+	};
+	static const int trial_bufs[] = {
+		4000, 3500, 3000, 2500, 2000, 1500,
+		1000, 900, 800, 700, 600, 500,
+		400, 300, 200, 100, 50
+	};
+
 	char		cmd[MAXPGPATH];
-	static const int conns[] = {100, 50, 40, 30, 20, 10};
-	static const int len = sizeof(conns) / sizeof(int);
+	const int connslen = sizeof(trial_conns) / sizeof(int);
+	const int bufslen = sizeof(trial_bufs) / sizeof(int);
 	int			i,
-				status;
+				status,
+				test_conns,
+				test_buffs,
+				test_max_fsm;
 
 	printf(_("selecting default max_connections ... "));
 	fflush(stdout);
 
-	for (i = 0; i < len; i++)
+	for (i = 0; i < connslen; i++)
 	{
-		int test_buffs = conns[i] * 5;
-		int test_max_fsm =  TEST_FSM(test_buffs);
+		test_conns = trial_conns[i];
+		test_buffs = MIN_BUFS_FOR_CONNS(test_conns);
+		test_max_fsm = FSM_FOR_BUFS(test_buffs);
 
 		snprintf(cmd, sizeof(cmd),
 				 "%s\"%s\" -boot -x0 %s "
+				 "-c max_connections=%d "
+				 "-c shared_buffers=%d "
 				 "-c max_fsm_pages=%d "
-				 "-c shared_buffers=%d -c max_connections=%d template1 "
-				 "< \"%s\" > \"%s\" 2>&1%s",
+				 "template1 < \"%s\" > \"%s\" 2>&1%s",
 				 SYSTEMQUOTE, backend_exec, boot_options,
-				 test_max_fsm,
-				 test_buffs, conns[i],
+				 test_conns, test_buffs, test_max_fsm,
 				 DEVNULL, DEVNULL, SYSTEMQUOTE);
 		status = system(cmd);
 		if (status == 0)
 			break;
 	}
-	if (i >= len)
-		i = len - 1;
-	n_connections = conns[i];
+	if (i >= connslen)
+		i = connslen - 1;
+	n_connections = trial_conns[i];
 
 	printf("%d\n", n_connections);
-}
-
-/*
- * check how many buffers we can run with
- */
-static void
-test_buffers(void)
-{
-	char		cmd[MAXPGPATH];
-	static const int bufs[] = {
-	  4000, 3500, 3000, 2500, 2000, 1500,
-	  1000, 900, 800, 700, 600, 500,
-	  400, 300, 200, 100, 50
-	};
-	static const int len = sizeof(bufs) / sizeof(int);
-	int			i,
-				status,
-	            test_max_fsm_pages;
 
 	printf(_("selecting default shared_buffers/max_fsm_pages ... "));
 	fflush(stdout);
 
-	for (i = 0; i < len; i++)
+	for (i = 0; i < bufslen; i++)
 	{
-		test_max_fsm_pages = TEST_FSM(bufs[i]);
+		test_buffs = trial_bufs[i];
+		test_max_fsm = FSM_FOR_BUFS(test_buffs);
 
 		snprintf(cmd, sizeof(cmd),
 				 "%s\"%s\" -boot -x0 %s "
+				 "-c max_connections=%d "
+				 "-c shared_buffers=%d "
 				 "-c max_fsm_pages=%d "
-				 "-c shared_buffers=%d -c max_connections=%d template1 "
-				 "< \"%s\" > \"%s\" 2>&1%s",
+				 "template1 < \"%s\" > \"%s\" 2>&1%s",
 				 SYSTEMQUOTE, backend_exec, boot_options,
-				 test_max_fsm_pages,
-				 bufs[i], n_connections,
+				 n_connections, test_buffs, test_max_fsm,
 				 DEVNULL, DEVNULL, SYSTEMQUOTE);
 		status = system(cmd);
 		if (status == 0)
 			break;
 	}
-	if (i >= len)
-		i = len - 1;
-	n_buffers = bufs[i];
-	n_fsm_pages = test_max_fsm_pages;
+	if (i >= bufslen)
+		i = bufslen - 1;
+	n_buffers = trial_bufs[i];
+	n_fsm_pages = FSM_FOR_BUFS(n_buffers);
 
 	printf("%d/%d\n", n_buffers, n_fsm_pages);
 }
@@ -2745,18 +2750,9 @@ main(int argc, char *argv[])
 	/* Top level PG_VERSION is checked by bootstrapper, so make it first */
 	set_short_version(short_version, NULL);
 
-	/*
-	 * Determine platform-specific config settings
-	 *
-	 * Use reasonable values if kernel will let us, else scale back.  Probe
-	 * for max_connections first since it is subject to more constraints than
-	 * shared_buffers.
-	 */
-
+	/* Select suitable configuration settings */
 	set_null_conf();
-
-	test_connections();
-	test_buffers();
+	test_config_settings();
 
 	/* Now create all the text config files */
 	setup_config();
