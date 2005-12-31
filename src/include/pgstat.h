@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.39 2005/12/31 17:46:19 momjian Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.40 2005/12/31 19:39:11 momjian Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -179,7 +179,7 @@ typedef struct PgStat_MsgAnalyze
 typedef struct PgStat_MsgActivity
 {
 	PgStat_MsgHdr m_hdr;
-	char		m_stat_msg[PGSTAT_ACTIVITY_SIZE];
+	char		m_cmd_str[PGSTAT_ACTIVITY_SIZE];
 } PgStat_MsgActivity;
 
 /* ----------
