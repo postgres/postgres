@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.113 2005/12/16 04:03:40 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.114 2005/12/31 17:46:19 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -777,7 +777,7 @@ pgstat_beshutdown_hook(int code, Datum arg)
  * ----------
  */
 void
-pgstat_report_activity(const char *what)
+pgstat_report_activity(const char *stat_msg)
 {
 	PgStat_MsgActivity msg;
 	int			len;
@@ -785,12 +785,12 @@ pgstat_report_activity(const char *what)
 	if (!pgstat_collect_querystring || pgStatSock < 0)
 		return;
 
-	len = strlen(what);
-	len = pg_mbcliplen(what, len, PGSTAT_ACTIVITY_SIZE - 1);
+	len = strlen(stat_msg);
+	len = pg_mbcliplen(stat_msg, len, PGSTAT_ACTIVITY_SIZE - 1);
 
-	memcpy(msg.m_what, what, len);
-	msg.m_what[len] = '\0';
-	len += offsetof(PgStat_MsgActivity, m_what) +1;
+	memcpy(msg.m_stat_msg, stat_msg, len);
+	msg.m_stat_msg[len] = '\0';
+	len += offsetof(PgStat_MsgActivity, m_stat_msg) +1;
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_ACTIVITY);
 	pgstat_send(&msg, len);
@@ -3015,7 +3015,7 @@ pgstat_recv_activity(PgStat_MsgActivity *msg, int len)
 
 	entry = &(pgStatBeTable[msg->m_hdr.m_backendid - 1]);
 
-	StrNCpy(entry->activity, msg->m_what, PGSTAT_ACTIVITY_SIZE);
+	StrNCpy(entry->activity, msg->m_stat_msg, PGSTAT_ACTIVITY_SIZE);
 
 	entry->activity_start_timestamp = GetCurrentTimestamp();
 }
