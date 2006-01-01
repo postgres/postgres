@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.32 2005/09/21 20:33:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.33 2006/01/01 19:52:40 tgl Exp $
  */
 
 %{
@@ -126,7 +126,7 @@ void
 ProcessConfigFile(GucContext context)
 {
 	int			elevel;
-	int			token, parse_state;
+	int			token;
 	char	   *opt_name, *opt_value;
 	struct name_value_pair *item, *head, *tail;
 	FILE	   *fp;
@@ -144,94 +144,93 @@ ProcessConfigFile(GucContext context)
 	else
 		elevel = ERROR;
 
-    fp = AllocateFile(ConfigFileName, "r");
-    if (!fp)
-    {
+	fp = AllocateFile(ConfigFileName, "r");
+	if (!fp)
+	{
 		ereport(elevel,
 				(errcode_for_file_access(),
 				 errmsg("could not open configuration file \"%s\": %m",
 						ConfigFileName)));
 		return;
-    }
+	}
 
 	/*
 	 * Parse
 	 */
 	yyin = fp;
-    parse_state = 0;
+	YY_FLUSH_BUFFER;			/* in case we abandoned a prior scan */
 	head = tail = NULL;
 	opt_name = opt_value = NULL;
 	ConfigFileLineno = 1;
 
-    while ((token = yylex()))
+	/* This loop iterates once per logical line */
+	while ((token = yylex()))
 	{
-        switch(parse_state)
-        {
-            case 0: /* no previous input */
-                if (token == GUC_EOL) /* empty line */
-                    continue;
-                if (token != GUC_ID && token != GUC_QUALIFIED_ID)
-                    goto parse_error;
-                opt_name = pstrdup(yytext);
-                parse_state = 1;
-                break;
+		if (token == GUC_EOL)	/* empty or comment line */
+			continue;
 
-            case 1: /* found name */
-                /* ignore equals sign */
-                if (token == GUC_EQUALS)
-                    token = yylex();
+		/* first token on line is option name */
+		if (token != GUC_ID && token != GUC_QUALIFIED_ID)
+			goto parse_error;
+		opt_name = pstrdup(yytext);
 
-                if (token != GUC_ID &&
-					token != GUC_STRING && 
-					token != GUC_INTEGER && 
-					token != GUC_REAL && 
-					token != GUC_UNQUOTED_STRING)
-                    goto parse_error;
-				if (token == GUC_STRING)	/* strip quotes and escapes */
-					opt_value = GUC_scanstr(yytext);
-				else
-					opt_value = pstrdup(yytext);
-                parse_state = 2;
-                break;
+		/* next we have an optional equal sign; discard if present */
+		token = yylex();
+		if (token == GUC_EQUALS)
+			token = yylex();
 
-            case 2: /* now we'd like an end of line */
-				if (token != GUC_EOL)
-					goto parse_error;
+		/* now we must have the option value */
+		if (token != GUC_ID &&
+			token != GUC_STRING && 
+			token != GUC_INTEGER && 
+			token != GUC_REAL && 
+			token != GUC_UNQUOTED_STRING)
+			goto parse_error;
+		if (token == GUC_STRING)	/* strip quotes and escapes */
+			opt_value = GUC_scanstr(yytext);
+		else
+			opt_value = pstrdup(yytext);
 
-				if (strcmp(opt_name, "custom_variable_classes") == 0)
-				{
-					/*
-					 * This variable must be processed first as it controls
-					 * the validity of other variables; so apply immediately.
-					 */
-					if (!set_config_option(opt_name, opt_value, context,
-										   PGC_S_FILE, false, true))
-					{
-						pfree(opt_name);
-						pfree(opt_value);
-						FreeFile(fp);
-						goto cleanup_exit;
-					}
-					pfree(opt_name);
-					pfree(opt_value);
-				}
-				else
-				{
-					/* append to list */
-					item = palloc(sizeof *item);
-					item->name = opt_name;
-					item->value = opt_value;
-					item->next = NULL;
-					if (!head)
-						head = item;
-					else
-						tail->next = item;
-					tail = item;
-				}
+		/* now we'd like an end of line, or possibly EOF */
+		token = yylex();
+		if (token != GUC_EOL && token != 0)
+			goto parse_error;
 
-                parse_state = 0;
-                break;
-        }
+		/* OK, save the option name and value */
+		if (strcmp(opt_name, "custom_variable_classes") == 0)
+		{
+			/*
+			 * This variable must be processed first as it controls
+			 * the validity of other variables; so apply immediately.
+			 */
+			if (!set_config_option(opt_name, opt_value, context,
+								   PGC_S_FILE, false, true))
+			{
+				pfree(opt_name);
+				pfree(opt_value);
+				FreeFile(fp);
+				goto cleanup_exit;
+			}
+			pfree(opt_name);
+			pfree(opt_value);
+		}
+		else
+		{
+			/* append to list */
+			item = palloc(sizeof *item);
+			item->name = opt_name;
+			item->value = opt_value;
+			item->next = NULL;
+			if (!head)
+				head = item;
+			else
+				tail->next = item;
+			tail = item;
+		}
+
+		/* break out of loop if read EOF, else loop for next line */
+		if (token == 0)
+			break;
 	}
 
 	FreeFile(fp);
@@ -239,14 +238,14 @@ ProcessConfigFile(GucContext context)
 	/*
 	 * Check if all options are valid
 	 */
-    for(item = head; item; item=item->next)
+	for(item = head; item; item=item->next)
 	{
 		if (!set_config_option(item->name, item->value, context,
 							   PGC_S_FILE, false, false))
 			goto cleanup_exit;
 	}
 
-    /* If we got here all the options parsed okay, so apply them. */
+	/* If we got here all the options parsed okay, so apply them. */
 	for(item = head; item; item=item->next)
 	{
 		set_config_option(item->name, item->value, context,
@@ -260,7 +259,7 @@ ProcessConfigFile(GucContext context)
  parse_error:
 	FreeFile(fp);
 	free_name_value_list(head);
-	if (token == GUC_EOL)
+	if (token == GUC_EOL || token == 0)
 		ereport(elevel,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("syntax error in file \"%s\" line %u, near end of line",
