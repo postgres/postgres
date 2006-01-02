@@ -17,7 +17,6 @@ case $host in
     ;;
   i?86-*-solaris*)
 	if test "$GCC" != yes ; then
-		soarch=`isainfo`
 		if isainfo | grep amd64
 		then
 			need_tas=yes
