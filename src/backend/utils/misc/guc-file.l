@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.32.2.1 2006/01/01 19:53:48 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.32.2.2 2006/01/02 19:55:31 tgl Exp $
  */
 
 %{
@@ -157,8 +157,7 @@ ProcessConfigFile(GucContext context)
 	/*
 	 * Parse
 	 */
-	yyin = fp;
-	YY_FLUSH_BUFFER;			/* in case we abandoned a prior scan */
+	yyrestart(fp);
 	head = tail = NULL;
 	opt_name = opt_value = NULL;
 	ConfigFileLineno = 1;
