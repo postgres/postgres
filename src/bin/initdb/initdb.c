@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.103 2005/12/31 23:50:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.104 2006/01/02 16:45:12 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1099,10 +1099,8 @@ test_config_settings(void)
 	 * max_connections value, and the max_fsm_pages setting to be used for
 	 * a given shared_buffers value.  The arrays show the settings to try.
 	 *
-	 * Make sure the trial_bufs[] list includes the MIN_BUFS_FOR_CONNS()
-	 * value for each trial_conns[] entry, else we may end up setting
-	 * shared_buffers lower than it could be.
 	 */
+
 #define MIN_BUFS_FOR_CONNS(nconns)  ((nconns) * 10)
 #define FSM_FOR_BUFS(nbuffers)  ((nbuffers) > 1000 ? 50 * (nbuffers) : 20000)
 
@@ -1122,7 +1120,9 @@ test_config_settings(void)
 				status,
 				test_conns,
 				test_buffs,
-				test_max_fsm;
+		        test_max_fsm,
+        		ok_buffers = 0;
+	  
 
 	printf(_("selecting default max_connections ... "));
 	fflush(stdout);
@@ -1144,7 +1144,10 @@ test_config_settings(void)
 				 DEVNULL, DEVNULL, SYSTEMQUOTE);
 		status = system(cmd);
 		if (status == 0)
+		{
+			ok_buffers = test_buffs;
 			break;
+		}
 	}
 	if (i >= connslen)
 		i = connslen - 1;
@@ -1158,6 +1161,11 @@ test_config_settings(void)
 	for (i = 0; i < bufslen; i++)
 	{
 		test_buffs = trial_bufs[i];
+		if (test_buffs <= ok_buffers)
+		{
+			test_buffs = ok_buffers;
+			break;
+		}
 		test_max_fsm = FSM_FOR_BUFS(test_buffs);
 
 		snprintf(cmd, sizeof(cmd),
@@ -1173,9 +1181,7 @@ test_config_settings(void)
 		if (status == 0)
 			break;
 	}
-	if (i >= bufslen)
-		i = bufslen - 1;
-	n_buffers = trial_bufs[i];
+	n_buffers = test_buffs;
 	n_fsm_pages = FSM_FOR_BUFS(n_buffers);
 
 	printf("%d/%d\n", n_buffers, n_fsm_pages);
