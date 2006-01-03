@@ -315,10 +315,6 @@ dblink_fetch(PG_FUNCTION_ARGS)
 		/* got results, keep track of them */
 		funcctx->user_fctx = res;
 
-		/* fast track when no results */
-		if (funcctx->max_calls < 1)
-			SRF_RETURN_DONE(funcctx);
-
 		/* check typtype to see if we have a predetermined return type */
 		functypeid = get_func_rettype(funcid);
 		functyptype = get_typtype(functypeid);
@@ -342,6 +338,20 @@ dblink_fetch(PG_FUNCTION_ARGS)
 		/* store needed metadata for subsequent calls */
 		slot = TupleDescGetSlot(tupdesc);
 		funcctx->slot = slot;
+
+		/* check result and tuple descriptor have the same number of columns */
+		if (PQnfields(res) != tupdesc->natts)
+			elog(ERROR, "remote query result rowtype does not match "
+						"the specified FROM clause rowtype");
+
+		/* fast track when no results */
+		if (funcctx->max_calls < 1)
+		{
+			if (res)
+				PQclear(res);
+			SRF_RETURN_DONE(funcctx);
+		}
+
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;
 
@@ -500,10 +510,6 @@ dblink_record(PG_FUNCTION_ARGS)
 				PQfinish(conn);
 		}
 
-		/* fast track when no results */
-		if (funcctx->max_calls < 1)
-			SRF_RETURN_DONE(funcctx);
-
 		/* check typtype to see if we have a predetermined return type */
 		functypeid = get_func_rettype(funcid);
 		functyptype = get_typtype(functypeid);
@@ -530,6 +536,20 @@ dblink_record(PG_FUNCTION_ARGS)
 		/* store needed metadata for subsequent calls */
 		slot = TupleDescGetSlot(tupdesc);
 		funcctx->slot = slot;
+
+		/* check result and tuple descriptor have the same number of columns */
+		if (PQnfields(res) != tupdesc->natts)
+			elog(ERROR, "remote query result rowtype does not match "
+						"the specified FROM clause rowtype");
+
+		/* fast track when no results */
+		if (funcctx->max_calls < 1)
+		{
+			if (res)
+				PQclear(res);
+			SRF_RETURN_DONE(funcctx);
+		}
+
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;
 

@@ -69,6 +69,13 @@ Outputs
 
   Returns setof record
 
+Note
+
+  On a mismatch between the number of return fields as specified in the FROM
+  clause, and the actual number of fields returned by the remote cursor, an
+  ERROR will be thrown. In this event, the remote cursor is still advanced
+  by as many rows as it would have been if the ERROR had not occurred.
+
 Example usage
 
 test=# select dblink_connect('dbname=template1');
