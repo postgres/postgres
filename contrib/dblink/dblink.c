@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * Copyright (c) 2001-2005, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2006, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
  * Permission to use, copy, modify, and distribute this software and its
@@ -547,14 +547,6 @@ dblink_fetch(PG_FUNCTION_ARGS)
 		/* got results, keep track of them */
 		funcctx->user_fctx = res;
 
-		/* fast track when no results */
-		if (funcctx->max_calls < 1)
-		{
-			if (res)
-				PQclear(res);
-			SRF_RETURN_DONE(funcctx);
-		}
-
 		/* check typtype to see if we have a predetermined return type */
 		functypeid = get_func_rettype(funcid);
 		functyptype = get_typtype(functypeid);
@@ -576,6 +568,21 @@ dblink_fetch(PG_FUNCTION_ARGS)
 		else
 			/* shouldn't happen */
 			elog(ERROR, "return type must be a row type");
+
+		/* check result and tuple descriptor have the same number of columns */
+		if (PQnfields(res) != tupdesc->natts)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+				errmsg("remote query result rowtype does not match "
+						"the specified FROM clause rowtype")));
+
+		/* fast track when no results */
+		if (funcctx->max_calls < 1)
+		{
+			if (res)
+				PQclear(res);
+			SRF_RETURN_DONE(funcctx);
+		}
 
 		/* store needed metadata for subsequent calls */
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
@@ -749,14 +756,6 @@ dblink_record(PG_FUNCTION_ARGS)
 		if (freeconn)
 			PQfinish(conn);
 
-		/* fast track when no results */
-		if (funcctx->max_calls < 1)
-		{
-			if (res)
-				PQclear(res);
-			SRF_RETURN_DONE(funcctx);
-		}
-
 		/* check typtype to see if we have a predetermined return type */
 		functypeid = get_func_rettype(funcid);
 		functyptype = get_typtype(functypeid);
@@ -780,6 +779,21 @@ dblink_record(PG_FUNCTION_ARGS)
 			else
 				/* shouldn't happen */
 				elog(ERROR, "return type must be a row type");
+		}
+
+		/* check result and tuple descriptor have the same number of columns */
+		if (PQnfields(res) != tupdesc->natts)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+				errmsg("remote query result rowtype does not match "
+						"the specified FROM clause rowtype")));
+
+		/* fast track when no results */
+		if (funcctx->max_calls < 1)
+		{
+			if (res)
+				PQclear(res);
+			SRF_RETURN_DONE(funcctx);
 		}
 
 		/* store needed metadata for subsequent calls */
