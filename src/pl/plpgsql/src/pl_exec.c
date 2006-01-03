@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.158 2005/12/28 01:30:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.159 2006/01/03 22:48:10 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -343,10 +343,48 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 	{
 		if (estate.retistuple)
 		{
-			/* Copy tuple to upper executor memory, as a tuple Datum */
+			/*
+			 * We have to check that the returned tuple actually matches
+			 * the expected result type.  XXX would be better to cache the
+			 * tupdesc instead of repeating get_call_result_type()
+			 */
+			TupleDesc	tupdesc;
+
+			switch (get_call_result_type(fcinfo, NULL, &tupdesc))
+			{
+				case TYPEFUNC_COMPOSITE:
+					/* got the expected result rowtype, now check it */
+					if (estate.rettupdesc == NULL ||
+						!compatible_tupdesc(estate.rettupdesc, tupdesc))
+						ereport(ERROR,
+								(errcode(ERRCODE_DATATYPE_MISMATCH),
+								 errmsg("returned record type does not match expected record type")));
+					break;
+				case TYPEFUNC_RECORD:
+					/*
+					 * Failed to determine actual type of RECORD.  We could
+					 * raise an error here, but what this means in practice
+					 * is that the caller is expecting any old generic
+					 * rowtype, so we don't really need to be restrictive.
+					 * Pass back the generated result type, instead.
+					 */
+					tupdesc = estate.rettupdesc;
+					if (tupdesc == NULL)		/* shouldn't happen */
+						elog(ERROR, "return type must be a row type");
+					break;
+				default:
+					/* shouldn't get here if retistuple is true ... */
+					elog(ERROR, "return type must be a row type");
+					break;
+			}
+
+			/*
+			 * Copy tuple to upper executor memory, as a tuple Datum.
+			 * Make sure it is labeled with the caller-supplied tuple type.
+			 */
 			estate.retval =
 				PointerGetDatum(SPI_returntuple((HeapTuple) (estate.retval),
-												estate.rettupdesc));
+												tupdesc));
 		}
 		else
 		{
