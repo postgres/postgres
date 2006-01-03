@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.116 2006/01/02 00:58:00 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.117 2006/01/03 16:42:17 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -117,7 +117,7 @@ static time_t last_pgstat_start_time;
 
 static long pgStatNumMessages = 0;
 
-static bool pgStatRunningInCollector = FALSE;
+static bool pgStatRunningInCollector = false;
 
 /*
  * Place where backends store per-table info to be sent to the collector.
@@ -145,6 +145,7 @@ static HTAB *pgStatBeDead = NULL;
 static PgStat_StatBeEntry *pgStatBeTable = NULL;
 static int	pgStatNumBackends = 0;
 
+static volatile bool	need_statwrite;
 
 /* ----------
  * Local function forward declarations
@@ -164,6 +165,7 @@ static void pgstat_parseArgs(int argc, char *argv[]);
 
 NON_EXEC_STATIC void PgstatBufferMain(int argc, char *argv[]);
 NON_EXEC_STATIC void PgstatCollectorMain(int argc, char *argv[]);
+static void force_statwrite(SIGNAL_ARGS);
 static void pgstat_recvbuffer(void);
 static void pgstat_exit(SIGNAL_ARGS);
 static void pgstat_die(SIGNAL_ARGS);
@@ -1548,13 +1550,11 @@ PgstatCollectorMain(int argc, char *argv[])
 	PgStat_Msg	msg;
 	fd_set		rfds;
 	int			readPipe;
-	int			nready;
 	int			len = 0;
-	struct timeval timeout;
-	struct timeval next_statwrite;
-	bool		need_statwrite;
+	struct itimerval timeval;
 	HASHCTL		hash_ctl;
-
+	bool		need_timer = false;
+	
 	MyProcPid = getpid();		/* reset MyProcPid */
 
 	/*
@@ -1572,7 +1572,7 @@ PgstatCollectorMain(int argc, char *argv[])
 	/* kluge to allow buffer process to kill collector; FIXME */
 	pqsignal(SIGQUIT, pgstat_exit);
 #endif
-	pqsignal(SIGALRM, SIG_IGN);
+	pqsignal(SIGALRM, force_statwrite);
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, SIG_IGN);
 	pqsignal(SIGUSR2, SIG_IGN);
@@ -1597,17 +1597,17 @@ PgstatCollectorMain(int argc, char *argv[])
 	init_ps_display("stats collector process", "", "");
 	set_ps_display("");
 
-	/*
-	 * Arrange to write the initial status file right away
-	 */
-	gettimeofday(&next_statwrite, NULL);
-	need_statwrite = TRUE;
+	need_statwrite = true;
+
+	MemSet(&timeval, 0, sizeof(struct itimerval));
+	timeval.it_value.tv_sec = PGSTAT_STAT_INTERVAL / 1000;
+	timeval.it_value.tv_usec = PGSTAT_STAT_INTERVAL % 1000;
 
 	/*
 	 * Read in an existing statistics stats file or initialize the stats to
 	 * zero.
 	 */
-	pgStatRunningInCollector = TRUE;
+	pgStatRunningInCollector = true;
 	pgstat_read_statsfile(&pgStatDBHash, InvalidOid, NULL, NULL);
 
 	/*
@@ -1634,34 +1634,11 @@ PgstatCollectorMain(int argc, char *argv[])
 	 */
 	for (;;)
 	{
-		/*
-		 * If we need to write the status file again (there have been changes
-		 * in the statistics since we wrote it last) calculate the timeout
-		 * until we have to do so.
-		 */
 		if (need_statwrite)
 		{
-			struct timeval now;
-
-			gettimeofday(&now, NULL);
-			/* avoid assuming that tv_sec is signed */
-			if (now.tv_sec > next_statwrite.tv_sec ||
-				(now.tv_sec == next_statwrite.tv_sec &&
-				 now.tv_usec >= next_statwrite.tv_usec))
-			{
-				timeout.tv_sec = 0;
-				timeout.tv_usec = 0;
-			}
-			else
-			{
-				timeout.tv_sec = next_statwrite.tv_sec - now.tv_sec;
-				timeout.tv_usec = next_statwrite.tv_usec - now.tv_usec;
-				if (timeout.tv_usec < 0)
-				{
-					timeout.tv_sec--;
-					timeout.tv_usec += 1000000;
-				}
-			}
+			pgstat_write_statsfile();
+			need_statwrite = false;
+			need_timer = true;
 		}
 
 		/*
@@ -1673,27 +1650,13 @@ PgstatCollectorMain(int argc, char *argv[])
 		/*
 		 * Now wait for something to do.
 		 */
-		nready = select(readPipe + 1, &rfds, NULL, NULL,
-						(need_statwrite) ? &timeout : NULL);
-		if (nready < 0)
+		if (select(readPipe + 1, &rfds, NULL, NULL, NULL) < 0)
 		{
 			if (errno == EINTR)
 				continue;
 			ereport(ERROR,
 					(errcode_for_socket_access(),
 					 errmsg("select() failed in statistics collector: %m")));
-		}
-
-		/*
-		 * If there are no descriptors ready, our timeout for writing the
-		 * stats file happened.
-		 */
-		if (nready == 0)
-		{
-			pgstat_write_statsfile();
-			need_statwrite = FALSE;
-
-			continue;
 		}
 
 		/*
@@ -1813,17 +1776,12 @@ PgstatCollectorMain(int argc, char *argv[])
 			 */
 			pgStatNumMessages++;
 
-			/*
-			 * If this is the first message after we wrote the stats file the
-			 * last time, setup the timeout that it'd be written.
-			 */
-			if (!need_statwrite)
+			if (need_timer)
 			{
-				gettimeofday(&next_statwrite, NULL);
-				next_statwrite.tv_usec += ((PGSTAT_STAT_INTERVAL) * 1000);
-				next_statwrite.tv_sec += (next_statwrite.tv_usec / 1000000);
-				next_statwrite.tv_usec %= 1000000;
-				need_statwrite = TRUE;
+				if (setitimer(ITIMER_REAL, &timeval, NULL))
+					ereport(ERROR,
+						  (errmsg("unable to set statistics collector timer: %m")));
+				need_timer = false;
 			}
 		}
 
@@ -1848,6 +1806,13 @@ PgstatCollectorMain(int argc, char *argv[])
 }
 
 
+static void
+force_statwrite(SIGNAL_ARGS)
+{
+	need_statwrite = true;
+}
+
+
 /* ----------
  * pgstat_recvbuffer() -
  *
@@ -1865,7 +1830,6 @@ pgstat_recvbuffer(void)
 	struct timeval timeout;
 	int			writePipe = pgStatPipe[1];
 	int			maxfd;
-	int			nready;
 	int			len;
 	int			xfr;
 	int			frm;
@@ -1907,6 +1871,14 @@ pgstat_recvbuffer(void)
 	msgbuffer = (char *) palloc(PGSTAT_RECVBUFFERSZ);
 
 	/*
+	 * Wait for some work to do; but not for more than 10 seconds. (This
+	 * determines how quickly we will shut down after an ungraceful
+	 * postmaster termination; so it needn't be very fast.)
+	 */
+	timeout.tv_sec = 10;
+	timeout.tv_usec = 0;
+
+	/*
 	 * Loop forever
 	 */
 	for (;;)
@@ -1946,16 +1918,7 @@ pgstat_recvbuffer(void)
 				maxfd = writePipe;
 		}
 
-		/*
-		 * Wait for some work to do; but not for more than 10 seconds. (This
-		 * determines how quickly we will shut down after an ungraceful
-		 * postmaster termination; so it needn't be very fast.)
-		 */
-		timeout.tv_sec = 10;
-		timeout.tv_usec = 0;
-
-		nready = select(maxfd + 1, &rfds, &wfds, NULL, &timeout);
-		if (nready < 0)
+		if (select(maxfd + 1, &rfds, &wfds, NULL, &timeout) < 0)
 		{
 			if (errno == EINTR)
 				continue;
