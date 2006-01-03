@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/prompt.c,v 1.38 2005/01/01 05:43:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/prompt.c,v 1.38.4.1 2006/01/03 23:32:40 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "prompt.h"
@@ -299,8 +299,8 @@ get_prompt(promptStatus_t status)
 					 * such, in order to properly display the line during
 					 * editing.
 					 */
-					buf[0] = '\001';
-					buf[1] = (*p == '[') ? RL_PROMPT_START_IGNORE : RL_PROMPT_END_IGNORE;
+					buf[0] = (*p == '[') ? RL_PROMPT_START_IGNORE : RL_PROMPT_END_IGNORE;
+					buf[1] = '\0';
 #endif   /* USE_READLINE */
 					break;
 
