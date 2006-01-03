@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.117 2006/01/03 16:42:17 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.118 2006/01/03 19:54:08 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -1871,14 +1871,6 @@ pgstat_recvbuffer(void)
 	msgbuffer = (char *) palloc(PGSTAT_RECVBUFFERSZ);
 
 	/*
-	 * Wait for some work to do; but not for more than 10 seconds. (This
-	 * determines how quickly we will shut down after an ungraceful
-	 * postmaster termination; so it needn't be very fast.)
-	 */
-	timeout.tv_sec = 10;
-	timeout.tv_usec = 0;
-
-	/*
 	 * Loop forever
 	 */
 	for (;;)
@@ -1917,6 +1909,15 @@ pgstat_recvbuffer(void)
 			if (writePipe > maxfd)
 				maxfd = writePipe;
 		}
+
+		/*
+		 * Wait for some work to do; but not for more than 10 seconds. (This
+		 * determines how quickly we will shut down after an ungraceful
+		 * postmaster termination; so it needn't be very fast.)  struct timeout
+		 * is modified by some operating systems.
+		 */
+		timeout.tv_sec = 10;
+		timeout.tv_usec = 0;
 
 		if (select(maxfd + 1, &rfds, &wfds, NULL, &timeout) < 0)
 		{
