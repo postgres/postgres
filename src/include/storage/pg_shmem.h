@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/pg_shmem.h,v 1.16 2005/10/15 02:49:46 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/pg_shmem.h,v 1.17 2006/01/04 21:06:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,10 +27,11 @@
 typedef struct PGShmemHeader	/* standard header for all Postgres shmem */
 {
 	int32		magic;			/* magic # to identify Postgres segments */
-#define PGShmemMagic  679834893
+#define PGShmemMagic  679834894
 	pid_t		creatorPID;		/* PID of creating process */
 	Size		totalsize;		/* total size of segment */
 	Size		freeoffset;		/* offset to first free space */
+	Size		indexoffset;	/* offset to ShmemIndex table */
 #ifndef WIN32					/* Windows doesn't have useful inode#s */
 	dev_t		device;			/* device data directory is on */
 	ino_t		inode;			/* inode number of data directory */

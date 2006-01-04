@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.170 2005/12/11 21:02:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.171 2006/01/04 21:06:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,8 +61,8 @@ PGPROC	   *MyProc = NULL;
 NON_EXEC_STATIC slock_t *ProcStructLock = NULL;
 
 /* Pointers to shared-memory structures */
-static PROC_HDR *ProcGlobal = NULL;
-static PGPROC *DummyProcs = NULL;
+NON_EXEC_STATIC PROC_HDR *ProcGlobal = NULL;
+NON_EXEC_STATIC PGPROC *DummyProcs = NULL;
 
 /* If we are waiting for a lock, this points to the associated LOCALLOCK */
 static LOCALLOCK *lockAwaited = NULL;
@@ -76,6 +76,7 @@ volatile bool cancel_from_timeout = false;
 static struct timeval statement_fin_time;
 
 
+static void RemoveProcFromArray(int code, Datum arg);
 static void ProcKill(int code, Datum arg);
 static void DummyProcKill(int code, Datum arg);
 static bool CheckStatementTimeout(void);
@@ -113,7 +114,8 @@ ProcGlobalSemas(void)
 
 /*
  * InitProcGlobal -
- *	  Initialize the global process table during postmaster startup.
+ *	  Initialize the global process table during postmaster or standalone
+ *	  backend startup.
  *
  *	  We also create all the per-process semaphores we will need to support
  *	  the requested number of backends.  We used to allocate semaphores
@@ -129,69 +131,65 @@ ProcGlobalSemas(void)
  *	  Another reason for creating semaphores here is that the semaphore
  *	  implementation typically requires us to create semaphores in the
  *	  postmaster, not in backends.
+ *
+ * Note: this is NOT called by individual backends under a postmaster,
+ * not even in the EXEC_BACKEND case.  The ProcGlobal and DummyProcs
+ * pointers must be propagated specially for EXEC_BACKEND operation.
  */
 void
 InitProcGlobal(void)
 {
-	bool		foundProcGlobal,
-				foundDummy;
+	PGPROC	   *procs;
+	int			i;
+	bool		found;
 
-	/* Create or attach to the ProcGlobal shared structure */
+	/* Create the ProcGlobal shared structure */
 	ProcGlobal = (PROC_HDR *)
-		ShmemInitStruct("Proc Header", sizeof(PROC_HDR), &foundProcGlobal);
+		ShmemInitStruct("Proc Header", sizeof(PROC_HDR), &found);
+	Assert(!found);
 
 	/*
-	 * Create or attach to the PGPROC structures for dummy (bgwriter)
-	 * processes, too.	These do not get linked into the freeProcs list.
+	 * Create the PGPROC structures for dummy (bgwriter) processes, too.
+	 * These do not get linked into the freeProcs list.
 	 */
 	DummyProcs = (PGPROC *)
 		ShmemInitStruct("DummyProcs", NUM_DUMMY_PROCS * sizeof(PGPROC),
-						&foundDummy);
+						&found);
+	Assert(!found);
 
-	if (foundProcGlobal || foundDummy)
+	/*
+	 * Initialize the data structures.
+	 */
+	ProcGlobal->freeProcs = INVALID_OFFSET;
+
+	ProcGlobal->spins_per_delay = DEFAULT_SPINS_PER_DELAY;
+
+	/*
+	 * Pre-create the PGPROC structures and create a semaphore for each.
+	 */
+	procs = (PGPROC *) ShmemAlloc(MaxBackends * sizeof(PGPROC));
+	if (!procs)
+		ereport(FATAL,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of shared memory")));
+	MemSet(procs, 0, MaxBackends * sizeof(PGPROC));
+	for (i = 0; i < MaxBackends; i++)
 	{
-		/* both should be present or neither */
-		Assert(foundProcGlobal && foundDummy);
+		PGSemaphoreCreate(&(procs[i].sem));
+		procs[i].links.next = ProcGlobal->freeProcs;
+		ProcGlobal->freeProcs = MAKE_OFFSET(&procs[i]);
 	}
-	else
+
+	MemSet(DummyProcs, 0, NUM_DUMMY_PROCS * sizeof(PGPROC));
+	for (i = 0; i < NUM_DUMMY_PROCS; i++)
 	{
-		/*
-		 * We're the first - initialize.
-		 */
-		PGPROC	   *procs;
-		int			i;
-
-		ProcGlobal->freeProcs = INVALID_OFFSET;
-
-		ProcGlobal->spins_per_delay = DEFAULT_SPINS_PER_DELAY;
-
-		/*
-		 * Pre-create the PGPROC structures and create a semaphore for each.
-		 */
-		procs = (PGPROC *) ShmemAlloc(MaxBackends * sizeof(PGPROC));
-		if (!procs)
-			ereport(FATAL,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of shared memory")));
-		MemSet(procs, 0, MaxBackends * sizeof(PGPROC));
-		for (i = 0; i < MaxBackends; i++)
-		{
-			PGSemaphoreCreate(&(procs[i].sem));
-			procs[i].links.next = ProcGlobal->freeProcs;
-			ProcGlobal->freeProcs = MAKE_OFFSET(&procs[i]);
-		}
-
-		MemSet(DummyProcs, 0, NUM_DUMMY_PROCS * sizeof(PGPROC));
-		for (i = 0; i < NUM_DUMMY_PROCS; i++)
-		{
-			DummyProcs[i].pid = 0;		/* marks dummy proc as not in use */
-			PGSemaphoreCreate(&(DummyProcs[i].sem));
-		}
-
-		/* Create ProcStructLock spinlock, too */
-		ProcStructLock = (slock_t *) ShmemAlloc(sizeof(slock_t));
-		SpinLockInit(ProcStructLock);
+		DummyProcs[i].pid = 0;		/* marks dummy proc as not in use */
+		PGSemaphoreCreate(&(DummyProcs[i].sem));
 	}
+
+	/* Create ProcStructLock spinlock, too */
+	ProcStructLock = (slock_t *) ShmemAlloc(sizeof(slock_t));
+	SpinLockInit(ProcStructLock);
 }
 
 /*
@@ -206,8 +204,8 @@ InitProcess(void)
 	int			i;
 
 	/*
-	 * ProcGlobal should be set by a previous call to InitProcGlobal (if we
-	 * are a backend, we inherit this by fork() from the postmaster).
+	 * ProcGlobal should be set up already (if we are a backend, we inherit
+	 * this by fork() or EXEC_BACKEND mechanism from the postmaster).
 	 */
 	if (procglobal == NULL)
 		elog(PANIC, "proc header uninitialized");
@@ -256,8 +254,8 @@ InitProcess(void)
 	MyProc->xid = InvalidTransactionId;
 	MyProc->xmin = InvalidTransactionId;
 	MyProc->pid = MyProcPid;
-	MyProc->databaseId = MyDatabaseId;
-	/* Will be set properly after the session role id is determined */
+	/* databaseId and roleId will be filled in later */
+	MyProc->databaseId = InvalidOid;
 	MyProc->roleId = InvalidOid;
 	MyProc->lwWaiting = false;
 	MyProc->lwExclusive = false;
@@ -268,20 +266,15 @@ InitProcess(void)
 		SHMQueueInit(&(MyProc->myProcLocks[i]));
 
 	/*
-	 * Add our PGPROC to the PGPROC array in shared memory.
+	 * We might be reusing a semaphore that belonged to a failed process. So
+	 * be careful and reinitialize its value here.
 	 */
-	ProcArrayAdd(MyProc);
+	PGSemaphoreReset(&MyProc->sem);
 
 	/*
 	 * Arrange to clean up at backend exit.
 	 */
 	on_shmem_exit(ProcKill, 0);
-
-	/*
-	 * We might be reusing a semaphore that belonged to a failed process. So
-	 * be careful and reinitialize its value here.
-	 */
-	PGSemaphoreReset(&MyProc->sem);
 
 	/*
 	 * Now that we have a PGPROC, we could try to acquire locks, so initialize
@@ -291,25 +284,58 @@ InitProcess(void)
 }
 
 /*
+ * InitProcessPhase2 -- make MyProc visible in the shared ProcArray.
+ *
+ * This is separate from InitProcess because we can't acquire LWLocks until
+ * we've created a PGPROC, but in the EXEC_BACKEND case there is a good deal
+ * of stuff to be done before this step that will require LWLock access.
+ */
+void
+InitProcessPhase2(void)
+{
+	Assert(MyProc != NULL);
+
+	/*
+	 * We should now know what database we're in, so advertise that.  (We
+	 * need not do any locking here, since no other backend can yet see
+	 * our PGPROC.)
+	 */
+	Assert(OidIsValid(MyDatabaseId));
+	MyProc->databaseId = MyDatabaseId;
+
+	/*
+	 * Add our PGPROC to the PGPROC array in shared memory.
+	 */
+	ProcArrayAdd(MyProc);
+
+	/*
+	 * Arrange to clean that up at backend exit.
+	 */
+	on_shmem_exit(RemoveProcFromArray, 0);
+}
+
+/*
  * InitDummyProcess -- create a dummy per-process data structure
  *
  * This is called by bgwriter and similar processes so that they will have a
  * MyProc value that's real enough to let them wait for LWLocks.  The PGPROC
- * and sema that are assigned are the extra ones created during
+ * and sema that are assigned are one of the extra ones created during
  * InitProcGlobal.
  *
  * Dummy processes are presently not expected to wait for real (lockmgr)
- * locks, nor to participate in sinval messaging.
+ * locks, so we need not set up the deadlock checker.  They are never added
+ * to the ProcArray or the sinval messaging mechanism, either.
  */
 void
-InitDummyProcess(int proctype)
+InitDummyProcess(void)
 {
 	PGPROC	   *dummyproc;
+	int			proctype;
 	int			i;
 
 	/*
-	 * ProcGlobal should be set by a previous call to InitProcGlobal (we
-	 * inherit this by fork() from the postmaster).
+	 * ProcGlobal should be set up already (if we are a backend, we inherit
+	 * this by fork() or EXEC_BACKEND mechanism from the postmaster).
 	 */
 	if (ProcGlobal == NULL || DummyProcs == NULL)
 		elog(PANIC, "proc header uninitialized");
@@ -317,11 +343,9 @@ InitDummyProcess(int proctype)
 	if (MyProc != NULL)
 		elog(ERROR, "you already exist");
 
-	Assert(proctype >= 0 && proctype < NUM_DUMMY_PROCS);
-
 	/*
-	 * Just for paranoia's sake, we use the ProcStructLock to protect
-	 * assignment and releasing of DummyProcs entries.
+	 * We use the ProcStructLock to protect assignment and releasing of
+	 * DummyProcs entries.
 	 *
 	 * While we are holding the ProcStructLock, also copy the current shared
 	 * estimate of spins_per_delay to local storage.
@@ -330,32 +354,38 @@ InitDummyProcess(int proctype)
 
 	set_spins_per_delay(ProcGlobal->spins_per_delay);
 
-	dummyproc = &DummyProcs[proctype];
-
 	/*
-	 * dummyproc should not presently be in use by anyone else
+	 * Find a free dummyproc ... *big* trouble if there isn't one ...
 	 */
-	if (dummyproc->pid != 0)
+	for (proctype = 0; proctype < NUM_DUMMY_PROCS; proctype++)
+	{
+		dummyproc = &DummyProcs[proctype];
+		if (dummyproc->pid == 0)
+			break;
+	}
+	if (proctype >= NUM_DUMMY_PROCS)
 	{
 		SpinLockRelease(ProcStructLock);
-		elog(FATAL, "DummyProc[%d] is in use by PID %d",
-			 proctype, dummyproc->pid);
+		elog(FATAL, "all DummyProcs are in use");
 	}
-	MyProc = dummyproc;
 
-	MyProc->pid = MyProcPid;	/* marks dummy proc as in use by me */
+	/* Mark dummy proc as in use by me */
+	/* use volatile pointer to prevent code rearrangement */
+	((volatile PGPROC *) dummyproc)->pid = MyProcPid;
+
+	MyProc = dummyproc;
 
 	SpinLockRelease(ProcStructLock);
 
 	/*
-	 * Initialize all fields of MyProc, except MyProc->sem which was set up by
-	 * InitProcGlobal.
+	 * Initialize all fields of MyProc, except for the semaphore which was
+	 * prepared for us by InitProcGlobal.
 	 */
 	SHMQueueElemInit(&(MyProc->links));
 	MyProc->waitStatus = STATUS_OK;
 	MyProc->xid = InvalidTransactionId;
 	MyProc->xmin = InvalidTransactionId;
-	MyProc->databaseId = MyDatabaseId;
+	MyProc->databaseId = InvalidOid;
 	MyProc->roleId = InvalidOid;
 	MyProc->lwWaiting = false;
 	MyProc->lwExclusive = false;
@@ -366,15 +396,15 @@ InitDummyProcess(int proctype)
 		SHMQueueInit(&(MyProc->myProcLocks[i]));
 
 	/*
-	 * Arrange to clean up at process exit.
-	 */
-	on_shmem_exit(DummyProcKill, Int32GetDatum(proctype));
-
-	/*
 	 * We might be reusing a semaphore that belonged to a failed process. So
 	 * be careful and reinitialize its value here.
 	 */
 	PGSemaphoreReset(&MyProc->sem);
+
+	/*
+	 * Arrange to clean up at process exit.
+	 */
+	on_shmem_exit(DummyProcKill, Int32GetDatum(proctype));
 }
 
 /*
@@ -502,6 +532,16 @@ ProcReleaseLocks(bool isCommit)
 
 
 /*
+ * RemoveProcFromArray() -- Remove this process from the shared ProcArray.
+ */
+static void
+RemoveProcFromArray(int code, Datum arg)
+{
+	Assert(MyProc != NULL);
+	ProcArrayRemove(MyProc);
+}
+
+/*
  * ProcKill() -- Destroy the per-proc data structure for
  *		this process. Release any of its held LW locks.
  */
@@ -519,9 +559,6 @@ ProcKill(int code, Datum arg)
 	 * facility by releasing our PGPROC ...
 	 */
 	LWLockReleaseAll();
-
-	/* Remove our PGPROC from the PGPROC array in shared memory */
-	ProcArrayRemove(MyProc);
 
 	SpinLockAcquire(ProcStructLock);
 

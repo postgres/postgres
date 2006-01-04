@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.80 2005/12/09 01:22:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.81 2006/01/04 21:06:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,10 +57,9 @@
 void
 CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 {
-	PGShmemHeader *seghdr = NULL;
-
 	if (!IsUnderPostmaster)
 	{
+		PGShmemHeader *seghdr;
 		Size		size;
 		int			numSemas;
 
@@ -104,6 +103,8 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		 */
 		seghdr = PGSharedMemoryCreate(size, makePrivate, port);
 
+		InitShmemAccess(seghdr);
+
 		/*
 		 * Create semaphores
 		 */
@@ -120,18 +121,16 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		 */
 #ifdef EXEC_BACKEND
 		Assert(!makePrivate);
-		Assert(UsedShmemSegAddr != NULL);
-		seghdr = UsedShmemSegAddr;
 #else
 		elog(PANIC, "should be attached to shared memory already");
 #endif
 	}
 
-
 	/*
 	 * Set up shared memory allocation mechanism
 	 */
-	InitShmemAllocation(seghdr, !IsUnderPostmaster);
+	if (!IsUnderPostmaster)
+		InitShmemAllocation();
 
 	/*
 	 * Now initialize LWLocks, which do shared memory allocation and are
@@ -163,7 +162,8 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	/*
 	 * Set up process table
 	 */
-	InitProcGlobal();
+	if (!IsUnderPostmaster)
+		InitProcGlobal();
 	CreateSharedProcArray();
 
 	/*

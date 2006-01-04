@@ -8,25 +8,26 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.89 2005/12/29 18:08:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.90 2006/01/04 21:06:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  * POSTGRES processes share one or more regions of shared memory.
  * The shared memory is created by a postmaster and is inherited
- * by each backend via fork().	The routines in this file are used for
- * allocating and binding to shared memory data structures.
+ * by each backend via fork() (or, in some ports, via other OS-specific
+ * methods).  The routines in this file are used for allocating and
+ * binding to shared memory data structures.
  *
  * NOTES:
  *		(a) There are three kinds of shared memory data structures
  *	available to POSTGRES: fixed-size structures, queues and hash
  *	tables.  Fixed-size structures contain things like global variables
- *	for a module and should never be allocated after the process
+ *	for a module and should never be allocated after the shared memory
  *	initialization phase.  Hash tables have a fixed maximum size, but
  *	their actual size can vary dynamically.  When entries are added
  *	to the table, more space is allocated.	Queues link data structures
- *	that have been allocated either as fixed size structures or as hash
+ *	that have been allocated either within fixed-size structures or as hash
  *	buckets.  Each shared data structure has a string name to identify
  *	it (assigned in the module that declares it).
  *
@@ -46,7 +47,14 @@
  *	of shared memory in a lot of different places (and changing
  *	things during development), this is important.
  *
- *		(c) memory allocation model: shared memory can never be
+ *		(c) In standard Unix-ish environments, individual backends do not
+ *	need to re-establish their local pointers into shared memory, because
+ *	they inherit correct values of those variables via fork() from the
+ *	postmaster.  However, this does not work in the EXEC_BACKEND case.
+ *	In ports using EXEC_BACKEND, new backends have to set up their local
+ *	pointers using the method described in (b) above.
+
+ *		(d) memory allocation model: shared memory can never be
  *	freed, once allocated.	 Each hash table has its own free list,
  *	so hash buckets can be reused when an item is deleted.	However,
  *	if one hash table grows very large and then shrinks, its space
@@ -75,58 +83,59 @@ static SHMEM_OFFSET ShmemEnd;	/* end+1 address of shared memory */
 slock_t    *ShmemLock;			/* spinlock for shared memory and LWLock
 								 * allocation */
 
-NON_EXEC_STATIC slock_t *ShmemIndexLock;		/* spinlock for ShmemIndex */
-
-NON_EXEC_STATIC void *ShmemIndexAlloc = NULL;	/* Memory actually allocated
-												 * for ShmemIndex */
-
 static HTAB *ShmemIndex = NULL; /* primary index hashtable for shmem */
 
 
 /*
- *	InitShmemAllocation() --- set up shared-memory allocation.
+ *	InitShmemAccess() --- set up basic pointers to shared memory.
  *
  * Note: the argument should be declared "PGShmemHeader *seghdr",
  * but we use void to avoid having to include ipc.h in shmem.h.
  */
 void
-InitShmemAllocation(void *seghdr, bool init)
+InitShmemAccess(void *seghdr)
 {
 	PGShmemHeader *shmhdr = (PGShmemHeader *) seghdr;
 
-	/* Set up basic pointers to shared memory */
 	ShmemSegHdr = shmhdr;
 	ShmemBase = (SHMEM_OFFSET) shmhdr;
 	ShmemEnd = ShmemBase + shmhdr->totalsize;
+}
 
-	if (init)
-	{
-		/*
-		 * Initialize the spinlocks used by ShmemAlloc/ShmemInitStruct. We
-		 * have to do the space allocation the hard way, since ShmemAlloc
-		 * can't be called yet.
-		 */
-		ShmemLock = (slock_t *) (((char *) shmhdr) + shmhdr->freeoffset);
-		shmhdr->freeoffset += MAXALIGN(sizeof(slock_t));
-		Assert(shmhdr->freeoffset <= shmhdr->totalsize);
+/*
+ *	InitShmemAllocation() --- set up shared-memory space allocation.
+ *
+ * This should be called only in the postmaster or a standalone backend.
+ */
+void
+InitShmemAllocation(void)
+{
+	PGShmemHeader *shmhdr = ShmemSegHdr;
 
-		ShmemIndexLock = (slock_t *) (((char *) shmhdr) + shmhdr->freeoffset);
-		shmhdr->freeoffset += MAXALIGN(sizeof(slock_t));
-		Assert(shmhdr->freeoffset <= shmhdr->totalsize);
+	Assert(shmhdr != NULL);
 
-		SpinLockInit(ShmemLock);
-		SpinLockInit(ShmemIndexLock);
+	/*
+	 * Initialize the spinlock used by ShmemAlloc.  We have to do the
+	 * space allocation the hard way, since obviously ShmemAlloc can't
+	 * be called yet.
+	 */
+	ShmemLock = (slock_t *) (((char *) shmhdr) + shmhdr->freeoffset);
+	shmhdr->freeoffset += MAXALIGN(sizeof(slock_t));
+	Assert(shmhdr->freeoffset <= shmhdr->totalsize);
 
-		/* ShmemIndex can't be set up yet (need LWLocks first) */
-		ShmemIndex = (HTAB *) NULL;
+	SpinLockInit(ShmemLock);
 
-		/*
-		 * Initialize ShmemVariableCache for transaction manager.
-		 */
-		ShmemVariableCache = (VariableCache)
-			ShmemAlloc(sizeof(*ShmemVariableCache));
-		memset(ShmemVariableCache, 0, sizeof(*ShmemVariableCache));
-	}
+	/* ShmemIndex can't be set up yet (need LWLocks first) */
+	shmhdr->indexoffset = 0;
+	ShmemIndex = (HTAB *) NULL;
+
+	/*
+	 * Initialize ShmemVariableCache for transaction manager.
+	 * (This doesn't really belong here, but not worth moving.)
+	 */
+	ShmemVariableCache = (VariableCache)
+		ShmemAlloc(sizeof(*ShmemVariableCache));
+	memset(ShmemVariableCache, 0, sizeof(*ShmemVariableCache));
 }
 
 /*
@@ -194,7 +203,7 @@ ShmemIsValid(unsigned long addr)
 }
 
 /*
- *	InitShmemIndex() --- set up shmem index table.
+ *	InitShmemIndex() --- set up or attach to shmem index table.
  */
 void
 InitShmemIndex(void)
@@ -239,15 +248,14 @@ InitShmemIndex(void)
 
 		result->location = MAKE_OFFSET(ShmemIndex->hctl);
 		result->size = SHMEM_INDEX_SIZE;
-
 	}
 
 	/* now release the lock acquired in ShmemInitStruct */
-	SpinLockRelease(ShmemIndexLock);
+	LWLockRelease(ShmemIndexLock);
 }
 
 /*
- * ShmemInitHash -- Create/Attach to and initialize
+ * ShmemInitHash -- Create and initialize, or attach to, a
  *		shared memory hash table.
  *
  * We assume caller is doing some kind of synchronization
@@ -290,8 +298,8 @@ ShmemInitHash(const char *name, /* table string name for shmem index */
 							   &found);
 
 	/*
-	 * shmem index is corrupted.	Let someone else give the error message
-	 * since they have more information
+	 * If fail, shmem index is corrupted.  Let caller give the error message
+	 * since it has more information
 	 */
 	if (location == NULL)
 		return NULL;
@@ -315,8 +323,8 @@ ShmemInitHash(const char *name, /* table string name for shmem index */
  *		memory.
  *
  *	This is called during initialization to find or allocate
- *		a data structure in shared memory.	If no other processes
- *		have created the structure, this routine allocates space
+ *		a data structure in shared memory.	If no other process
+ *		has created the structure, this routine allocates space
  *		for it.  If it exists already, a pointer to the existing
  *		table is returned.
  *
@@ -334,15 +342,18 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 	strncpy(item.key, name, SHMEM_INDEX_KEYSIZE);
 	item.location = BAD_LOCATION;
 
-	SpinLockAcquire(ShmemIndexLock);
+	LWLockAcquire(ShmemIndexLock, LW_EXCLUSIVE);
 
 	if (!ShmemIndex)
 	{
+		PGShmemHeader *shmemseghdr = ShmemSegHdr;
+
 		Assert(strcmp(name, "ShmemIndex") == 0);
 		if (IsUnderPostmaster)
 		{
 			/* Must be initializing a (non-standalone) backend */
-			Assert(ShmemIndexAlloc);
+			Assert(shmemseghdr->indexoffset != 0);
+			structPtr = (void *) MAKE_PTR(shmemseghdr->indexoffset);
 			*foundPtr = TRUE;
 		}
 		else
@@ -354,10 +365,12 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 			 * Notice that the ShmemIndexLock is held until the shmem index
 			 * has been completely initialized.
 			 */
+			Assert(shmemseghdr->indexoffset == 0);
+			structPtr = ShmemAlloc(size);
+			shmemseghdr->indexoffset = MAKE_OFFSET(structPtr);
 			*foundPtr = FALSE;
-			ShmemIndexAlloc = ShmemAlloc(size);
 		}
-		return ShmemIndexAlloc;
+		return structPtr;
 	}
 
 	/* look it up in the shmem index */
@@ -366,7 +379,7 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 
 	if (!result)
 	{
-		SpinLockRelease(ShmemIndexLock);
+		LWLockRelease(ShmemIndexLock);
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of shared memory")));
@@ -381,7 +394,7 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 		 */
 		if (result->size != size)
 		{
-			SpinLockRelease(ShmemIndexLock);
+			LWLockRelease(ShmemIndexLock);
 
 			elog(WARNING, "ShmemIndex entry size is wrong");
 			/* let caller print its message too */
@@ -398,7 +411,7 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 			/* out of memory */
 			Assert(ShmemIndex);
 			hash_search(ShmemIndex, (void *) &item, HASH_REMOVE, NULL);
-			SpinLockRelease(ShmemIndexLock);
+			LWLockRelease(ShmemIndexLock);
 
 			ereport(WARNING,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -411,7 +424,7 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 	}
 	Assert(ShmemIsValid((unsigned long) structPtr));
 
-	SpinLockRelease(ShmemIndexLock);
+	LWLockRelease(ShmemIndexLock);
 	return structPtr;
 }
 

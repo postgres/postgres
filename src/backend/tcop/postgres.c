@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.474 2005/12/31 16:50:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.475 2006/01/04 21:06:31 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2860,7 +2860,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 	PG_SETMASK(&BlockSig);		/* block everything except SIGQUIT */
 
-
 	if (IsUnderPostmaster)
 	{
 		/* noninteractive case: nothing should be left after switches */
@@ -2932,6 +2931,19 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 */
 		BuildFlatFiles(true);
 	}
+
+	/*
+	 * Create a per-backend PGPROC struct in shared memory, except in
+	 * the EXEC_BACKEND case where this was done in SubPostmasterMain.
+	 * We must do this before we can use LWLocks (and in the EXEC_BACKEND
+	 * case we already had to do some stuff with LWLocks).
+	 */
+#ifdef EXEC_BACKEND
+	if (!IsUnderPostmaster)
+		InitProcess();
+#else
+	InitProcess();
+#endif
 
 	/*
 	 * General initialization.

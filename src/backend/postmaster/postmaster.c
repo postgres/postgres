@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.476 2005/11/22 18:17:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.477 2006/01/04 21:06:31 tgl Exp $
  *
  * NOTES
  *
@@ -262,6 +262,7 @@ static void CleanupBackend(int pid, int exitstatus);
 static void HandleChildCrash(int pid, int exitstatus, const char *procname);
 static void LogChildExit(int lev, const char *procname,
 			 int pid, int exitstatus);
+static void BackendInitialize(Port *port);
 static int	BackendRun(Port *port);
 static void ExitPostmaster(int status);
 static void usage(const char *);
@@ -324,12 +325,12 @@ typedef struct
 	unsigned long UsedShmemSegID;
 	void	   *UsedShmemSegAddr;
 	slock_t    *ShmemLock;
-	slock_t    *ShmemIndexLock;
 	VariableCache ShmemVariableCache;
-	void	   *ShmemIndexAlloc;
 	Backend    *ShmemBackendArray;
 	LWLock	   *LWLockArray;
 	slock_t    *ProcStructLock;
+	PROC_HDR   *ProcGlobal;
+	PGPROC	   *DummyProcs;
 	InheritableSocket pgStatSock;
 	InheritableSocket pgStatPipe0;
 	InheritableSocket pgStatPipe1;
@@ -2496,6 +2497,26 @@ BackendStartup(Port *port)
 	if (pid == 0)				/* child */
 	{
 		free(bn);
+
+		/*
+		 * Let's clean up ourselves as the postmaster child, and close the
+		 * postmaster's listen sockets.  (In EXEC_BACKEND case this is all
+		 * done in SubPostmasterMain.)
+		 */
+		IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
+
+		MyProcPid = getpid();		/* reset MyProcPid */
+
+		/* We don't want the postmaster's proc_exit() handlers */
+		on_exit_reset();
+
+		/* Close the postmaster's sockets */
+		ClosePostmasterPorts(false);
+
+		/* Perform additional initialization and client authentication */
+		BackendInitialize(port);
+
+		/* And run the backend */
 		proc_exit(BackendRun(port));
 	}
 #endif   /* EXEC_BACKEND */
@@ -2589,46 +2610,25 @@ split_opts(char **argv, int *argcp, char *s)
 
 
 /*
- * BackendRun -- perform authentication, and if successful,
- *				set up the backend's argument list and invoke PostgresMain()
+ * BackendInitialize -- initialize an interactive (postmaster-child)
+ *				backend process, and perform client authentication.
  *
- * returns:
- *		Shouldn't return at all.
- *		If PostgresMain() fails, return status.
+ * returns: nothing.  Will not return at all if there's any failure.
+ *
+ * Note: this code does not depend on having any access to shared memory.
+ * In the EXEC_BACKEND case, we are physically attached to shared memory
+ * but have not yet set up most of our local pointers to shmem structures.
  */
-static int
-BackendRun(Port *port)
+static void
+BackendInitialize(Port *port)
 {
 	int			status;
 	char		remote_host[NI_MAXHOST];
 	char		remote_port[NI_MAXSERV];
 	char		remote_ps_data[NI_MAXHOST];
-	char	  **av;
-	int			maxac;
-	int			ac;
-	char		protobuf[32];
-	int			i;
-
-	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
-
-	/*
-	 * Let's clean up ourselves as the postmaster child, and close the
-	 * postmaster's listen sockets
-	 */
-	ClosePostmasterPorts(false);
-
-	/* We don't want the postmaster's proc_exit() handlers */
-	on_exit_reset();
-
-	/*
-	 * Signal handlers setting is moved to tcop/postgres...
-	 */
 
 	/* Save port etc. for ps status */
 	MyProcPort = port;
-
-	/* Reset MyProcPid to new backend's pid */
-	MyProcPid = getpid();
 
 	/*
 	 * PreAuthDelay is a debugging aid for investigating problems in the
@@ -2698,7 +2698,7 @@ BackendRun(Port *port)
 						remote_port)));
 
 	/*
-	 * save remote_host and remote_port in port stucture
+	 * save remote_host and remote_port in port structure
 	 */
 	port->remote_host = strdup(remote_host);
 	port->remote_port = strdup(remote_port);
@@ -2766,6 +2766,24 @@ BackendRun(Port *port)
 		ereport(LOG,
 				(errmsg("connection authorized: user=%s database=%s",
 						port->user_name, port->database_name)));
+}
+
+
+/*
+ * BackendRun -- set up the backend's argument list and invoke PostgresMain()
+ *
+ * returns:
+ *		Shouldn't return at all.
+ *		If PostgresMain() fails, return status.
+ */
+static int
+BackendRun(Port *port)
+{
+	char	  **av;
+	int			maxac;
+	int			ac;
+	char		protobuf[32];
+	int			i;
 
 	/*
 	 * Don't want backend to be able to see the postmaster random number
@@ -3184,6 +3202,9 @@ SubPostmasterMain(int argc, char *argv[])
 
 	MyProcPid = getpid();		/* reset MyProcPid */
 
+	/* Lose the postmaster's on-exit routines (really a no-op) */
+	on_exit_reset();
+
 	/* In EXEC_BACKEND case we will not have inherited these settings */
 	IsPostmasterEnvironment = true;
 	whereToSendOutput = DestNone;
@@ -3229,29 +3250,55 @@ SubPostmasterMain(int argc, char *argv[])
 	/* Run backend or appropriate child */
 	if (strcmp(argv[1], "-forkbackend") == 0)
 	{
-		/* BackendRun will close sockets */
+		Assert(argc == 3);		/* shouldn't be any more args */
 
-		/* Attach process to shared data structures */
-		CreateSharedMemoryAndSemaphores(false, 0);
-
-#ifdef USE_SSL
+		/* Close the postmaster's sockets */
+		ClosePostmasterPorts(false);
 
 		/*
 		 * Need to reinitialize the SSL library in the backend, since the
 		 * context structures contain function pointers and cannot be passed
 		 * through the parameter file.
 		 */
+#ifdef USE_SSL
 		if (EnableSSL)
 			secure_initialize();
 #endif
 
-		Assert(argc == 3);		/* shouldn't be any more args */
+		/*
+		 * Perform additional initialization and client authentication.
+		 *
+		 * We want to do this before InitProcess() for a couple of reasons:
+		 * 1. so that we aren't eating up a PGPROC slot while waiting on the 
+		 * client.
+		 * 2. so that if InitProcess() fails due to being out of PGPROC slots,
+		 * we have already initialized libpq and are able to report the error
+		 * to the client.
+		 */
+		BackendInitialize(&port);
+
+		/* Restore basic shared memory pointers */
+		InitShmemAccess(UsedShmemSegAddr);
+
+		/* Need a PGPROC to run CreateSharedMemoryAndSemaphores */
+		InitProcess();
+
+		/* Attach process to shared data structures */
+		CreateSharedMemoryAndSemaphores(false, 0);
+
+		/* And run the backend */
 		proc_exit(BackendRun(&port));
 	}
 	if (strcmp(argv[1], "-forkboot") == 0)
 	{
 		/* Close the postmaster's sockets */
 		ClosePostmasterPorts(false);
+
+		/* Restore basic shared memory pointers */
+		InitShmemAccess(UsedShmemSegAddr);
+
+		/* Need a PGPROC to run CreateSharedMemoryAndSemaphores */
+		InitDummyProcess();
 
 		/* Attach process to shared data structures */
 		CreateSharedMemoryAndSemaphores(false, 0);
@@ -3263,6 +3310,12 @@ SubPostmasterMain(int argc, char *argv[])
 	{
 		/* Close the postmaster's sockets */
 		ClosePostmasterPorts(false);
+
+		/* Restore basic shared memory pointers */
+		InitShmemAccess(UsedShmemSegAddr);
+
+		/* Need a PGPROC to run CreateSharedMemoryAndSemaphores */
+		InitProcess();
 
 		/* Attach process to shared data structures */
 		CreateSharedMemoryAndSemaphores(false, 0);
@@ -3630,10 +3683,10 @@ CreateOptsFile(int argc, char *argv[], char *fullprogname)
  * functions
  */
 extern slock_t *ShmemLock;
-extern slock_t *ShmemIndexLock;
-extern void *ShmemIndexAlloc;
 extern LWLock *LWLockArray;
 extern slock_t *ProcStructLock;
+extern PROC_HDR *ProcGlobal;
+extern PGPROC *DummyProcs;
 extern int	pgStatSock;
 extern int	pgStatPipe[2];
 
@@ -3671,13 +3724,13 @@ save_backend_variables(BackendParameters * param, Port *port,
 	param->UsedShmemSegAddr = UsedShmemSegAddr;
 
 	param->ShmemLock = ShmemLock;
-	param->ShmemIndexLock = ShmemIndexLock;
 	param->ShmemVariableCache = ShmemVariableCache;
-	param->ShmemIndexAlloc = ShmemIndexAlloc;
 	param->ShmemBackendArray = ShmemBackendArray;
 
 	param->LWLockArray = LWLockArray;
 	param->ProcStructLock = ProcStructLock;
+	param->ProcGlobal = ProcGlobal;
+	param->DummyProcs = DummyProcs;
 	write_inheritable_socket(&param->pgStatSock, pgStatSock, childPid);
 	write_inheritable_socket(&param->pgStatPipe0, pgStatPipe[0], childPid);
 	write_inheritable_socket(&param->pgStatPipe1, pgStatPipe[1], childPid);
@@ -3876,13 +3929,13 @@ restore_backend_variables(BackendParameters * param, Port *port)
 	UsedShmemSegAddr = param->UsedShmemSegAddr;
 
 	ShmemLock = param->ShmemLock;
-	ShmemIndexLock = param->ShmemIndexLock;
 	ShmemVariableCache = param->ShmemVariableCache;
-	ShmemIndexAlloc = param->ShmemIndexAlloc;
 	ShmemBackendArray = param->ShmemBackendArray;
 
 	LWLockArray = param->LWLockArray;
 	ProcStructLock = param->ProcStructLock;
+	ProcGlobal = param->ProcGlobal;
+	DummyProcs = param->DummyProcs;
 	read_inheritable_socket(&pgStatSock, &param->pgStatSock);
 	read_inheritable_socket(&pgStatPipe[0], &param->pgStatPipe0);
 	read_inheritable_socket(&pgStatPipe[1], &param->pgStatPipe1);

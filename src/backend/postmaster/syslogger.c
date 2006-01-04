@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.21 2005/11/22 18:17:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.22 2006/01/04 21:06:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,9 +134,6 @@ SysLoggerMain(int argc, char *argv[])
 	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
 
 	MyProcPid = getpid();		/* reset MyProcPid */
-
-	/* Lose the postmaster's on-exit routines */
-	on_exit_reset();
 
 #ifdef EXEC_BACKEND
 	syslogger_parseArgs(argc, argv);
@@ -459,6 +456,9 @@ SysLogger_Start(void)
 			/* in postmaster child ... */
 			/* Close the postmaster's sockets */
 			ClosePostmasterPorts(true);
+
+			/* Lose the postmaster's on-exit routines */
+			on_exit_reset();
 
 			/* Drop our connection to postmaster's shared memory, as well */
 			PGSharedMemoryDetach();

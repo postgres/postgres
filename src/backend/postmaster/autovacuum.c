@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.8 2005/11/28 17:23:11 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.9 2006/01/04 21:06:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,6 +167,9 @@ autovac_start(void)
 			/* Close the postmaster's sockets */
 			ClosePostmasterPorts(false);
 
+			/* Lose the postmaster's on-exit routines */
+			on_exit_reset();
+
 			AutoVacMain(0, NULL);
 			break;
 #endif
@@ -230,9 +233,6 @@ AutoVacMain(int argc, char *argv[])
 	/* reset MyProcPid */
 	MyProcPid = getpid();
 
-	/* Lose the postmaster's on-exit routines */
-	on_exit_reset();
-
 	/* Identify myself via ps */
 	init_ps_display("autovacuum process", "", "");
 	set_ps_display("");
@@ -267,6 +267,16 @@ AutoVacMain(int argc, char *argv[])
 
 	/* Early initialization */
 	BaseInit();
+
+	/*
+	 * Create a per-backend PGPROC struct in shared memory, except in
+	 * the EXEC_BACKEND case where this was done in SubPostmasterMain.
+	 * We must do this before we can use LWLocks (and in the EXEC_BACKEND
+	 * case we already had to do some stuff with LWLocks).
+	 */
+#ifndef EXEC_BACKEND
+	InitProcess();
+#endif
 
 	/*
 	 * If an exception is encountered, processing resumes here.

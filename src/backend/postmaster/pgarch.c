@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.18 2005/10/15 02:49:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.19 2006/01/04 21:06:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,6 +158,9 @@ pgarch_start(void)
 			/* Close the postmaster's sockets */
 			ClosePostmasterPorts(false);
 
+			/* Lose the postmaster's on-exit routines */
+			on_exit_reset();
+
 			/* Drop our connection to postmaster's shared memory, as well */
 			PGSharedMemoryDetach();
 
@@ -218,9 +221,6 @@ PgArchiverMain(int argc, char *argv[])
 	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
 
 	MyProcPid = getpid();		/* reset MyProcPid */
-
-	/* Lose the postmaster's on-exit routines */
-	on_exit_reset();
 
 	/*
 	 * Ignore all signals usually bound to some action in the postmaster,

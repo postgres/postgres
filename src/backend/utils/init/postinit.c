@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.159 2005/11/22 18:17:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.160 2006/01/04 21:06:32 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -311,6 +311,9 @@ BaseInit(void)
  * can only be tested inside a transaction, so we want to do it during
  * the startup transaction rather than doing a separate one in postgres.c.)
  *
+ * As of PostgreSQL 8.2, we expect InitProcess() was already called, so we
+ * already have a PGPROC struct ... but it's not filled in yet.
+ *
  * Note:
  *		Be very careful with the order of calls in the InitPostgres function.
  * --------------------------------
@@ -383,17 +386,17 @@ InitPostgres(const char *dbname, const char *username)
 	 */
 
 	/*
-	 * Set up my per-backend PGPROC struct in shared memory.	(We need to
-	 * know MyDatabaseId before we can do this, since it's entered into the
-	 * PGPROC struct.)
+	 * Finish filling in the PGPROC struct, and add it to the ProcArray.
+	 * (We need to know MyDatabaseId before we can do this, since it's entered
+	 * into the PGPROC struct.)
+	 *
+	 * Once I have done this, I am visible to other backends!
 	 */
-	InitProcess();
+	InitProcessPhase2();
 
 	/*
 	 * Initialize my entry in the shared-invalidation manager's array of
-	 * per-backend data.  (Formerly this came before InitProcess, but now it
-	 * must happen after, because it uses MyProc.)	Once I have done this, I
-	 * am visible to other backends!
+	 * per-backend data.
 	 *
 	 * Sets up MyBackendId, a unique backend identifier.
 	 */

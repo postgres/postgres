@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.118 2006/01/03 19:54:08 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.119 2006/01/04 21:06:31 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -146,6 +146,7 @@ static PgStat_StatBeEntry *pgStatBeTable = NULL;
 static int	pgStatNumBackends = 0;
 
 static volatile bool	need_statwrite;
+
 
 /* ----------
  * Local function forward declarations
@@ -607,6 +608,9 @@ pgstat_start(void)
 			/* in postmaster child ... */
 			/* Close the postmaster's sockets */
 			ClosePostmasterPorts(false);
+
+			/* Lose the postmaster's on-exit routines */
+			on_exit_reset();
 
 			/* Drop our connection to postmaster's shared memory, as well */
 			PGSharedMemoryDetach();
@@ -1465,9 +1469,6 @@ PgstatBufferMain(int argc, char *argv[])
 
 	MyProcPid = getpid();		/* reset MyProcPid */
 
-	/* Lose the postmaster's on-exit routines */
-	on_exit_reset();
-
 	/*
 	 * Ignore all signals usually bound to some action in the postmaster,
 	 * except for SIGCHLD and SIGQUIT --- see pgstat_recvbuffer.
@@ -1551,10 +1552,10 @@ PgstatCollectorMain(int argc, char *argv[])
 	fd_set		rfds;
 	int			readPipe;
 	int			len = 0;
-	struct itimerval timeval;
+	struct itimerval timeout;
 	HASHCTL		hash_ctl;
 	bool		need_timer = false;
-	
+
 	MyProcPid = getpid();		/* reset MyProcPid */
 
 	/*
@@ -1597,11 +1598,15 @@ PgstatCollectorMain(int argc, char *argv[])
 	init_ps_display("stats collector process", "", "");
 	set_ps_display("");
 
+	/*
+	 * Arrange to write the initial status file right away
+	 */
 	need_statwrite = true;
 
-	MemSet(&timeval, 0, sizeof(struct itimerval));
-	timeval.it_value.tv_sec = PGSTAT_STAT_INTERVAL / 1000;
-	timeval.it_value.tv_usec = PGSTAT_STAT_INTERVAL % 1000;
+	/* Preset the delay between status file writes */
+	MemSet(&timeout, 0, sizeof(struct itimerval));
+	timeout.it_value.tv_sec = PGSTAT_STAT_INTERVAL / 1000;
+	timeout.it_value.tv_usec = PGSTAT_STAT_INTERVAL % 1000;
 
 	/*
 	 * Read in an existing statistics stats file or initialize the stats to
@@ -1634,6 +1639,12 @@ PgstatCollectorMain(int argc, char *argv[])
 	 */
 	for (;;)
 	{
+		/*
+		 * If time to write the stats file, do so.  Note that the alarm
+		 * interrupt isn't re-enabled immediately, but only after we next
+		 * receive a stats message; so no cycles are wasted when there is
+		 * nothing going on.
+		 */
 		if (need_statwrite)
 		{
 			pgstat_write_statsfile();
@@ -1776,11 +1787,16 @@ PgstatCollectorMain(int argc, char *argv[])
 			 */
 			pgStatNumMessages++;
 
+			/*
+			 * If this is the first message after we wrote the stats file the
+			 * last time, enable the alarm interrupt to make it be written
+			 * again later.
+			 */
 			if (need_timer)
 			{
-				if (setitimer(ITIMER_REAL, &timeval, NULL))
+				if (setitimer(ITIMER_REAL, &timeout, NULL))
 					ereport(ERROR,
-						  (errmsg("unable to set statistics collector timer: %m")));
+						  (errmsg("could not set statistics collector timer: %m")));
 				need_timer = false;
 			}
 		}
@@ -1806,6 +1822,7 @@ PgstatCollectorMain(int argc, char *argv[])
 }
 
 
+/* SIGALRM signal handler for collector process */
 static void
 force_statwrite(SIGNAL_ARGS)
 {
@@ -1913,8 +1930,10 @@ pgstat_recvbuffer(void)
 		/*
 		 * Wait for some work to do; but not for more than 10 seconds. (This
 		 * determines how quickly we will shut down after an ungraceful
-		 * postmaster termination; so it needn't be very fast.)  struct timeout
-		 * is modified by some operating systems.
+		 * postmaster termination; so it needn't be very fast.)
+		 *
+		 * struct timeout is modified by select() on some operating systems,
+		 * so re-fill it each time.
 		 */
 		timeout.tv_sec = 10;
 		timeout.tv_usec = 0;
