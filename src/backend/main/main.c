@@ -13,13 +13,12 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.96.2.1 2005/11/22 18:23:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.96.2.2 2006/01/05 00:54:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include <errno.h>
 #include <pwd.h>
 #include <unistd.h>
 
@@ -40,6 +39,7 @@
 #include "postmaster/postmaster.h"
 #include "tcop/tcopprot.h"
 #include "utils/help_config.h"
+#include "utils/pg_locale.h"
 #include "utils/ps_status.h"
 #ifdef WIN32
 #include "libpq/pqsignal.h"
@@ -162,30 +162,37 @@ main(int argc, char *argv[])
 	 */
 
 	if ((env_locale = getenv("LC_COLLATE")) != NULL)
-		setlocale(LC_COLLATE, env_locale);
+		pg_perm_setlocale(LC_COLLATE, env_locale);
 	else
-		setlocale(LC_COLLATE, "");
+		pg_perm_setlocale(LC_COLLATE, "");
 
 	if ((env_locale = getenv("LC_CTYPE")) != NULL)
-		setlocale(LC_CTYPE, env_locale);
+		pg_perm_setlocale(LC_CTYPE, env_locale);
 	else
-		setlocale(LC_CTYPE, "");
+		pg_perm_setlocale(LC_CTYPE, "");
 #else
-	setlocale(LC_COLLATE, "");
-	setlocale(LC_CTYPE, "");
+	pg_perm_setlocale(LC_COLLATE, "");
+	pg_perm_setlocale(LC_CTYPE, "");
 #endif
 
 #ifdef LC_MESSAGES
-	setlocale(LC_MESSAGES, "");
+	pg_perm_setlocale(LC_MESSAGES, "");
 #endif
 
 	/*
 	 * We keep these set to "C" always, except transiently in pg_locale.c; see
 	 * that file for explanations.
 	 */
-	setlocale(LC_MONETARY, "C");
-	setlocale(LC_NUMERIC, "C");
-	setlocale(LC_TIME, "C");
+	pg_perm_setlocale(LC_MONETARY, "C");
+	pg_perm_setlocale(LC_NUMERIC, "C");
+	pg_perm_setlocale(LC_TIME, "C");
+
+	/*
+	 * Now that we have absorbed as much as we wish to from the locale
+	 * environment, remove any LC_ALL setting, so that the environment
+	 * variables installed by pg_perm_setlocale have force.
+	 */
+	unsetenv("LC_ALL");
 
 	/*
 	 * Skip permission checks if we're just trying to do --help or --version;

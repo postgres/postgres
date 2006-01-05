@@ -2,7 +2,7 @@
  *
  * PostgreSQL locale utilities
  *
- * $PostgreSQL: pgsql/src/include/utils/pg_locale.h,v 1.20 2005/03/16 00:02:49 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/pg_locale.h,v 1.20.2.1 2006/01/05 00:54:51 tgl Exp $
  *
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
@@ -30,6 +30,8 @@ extern const char *locale_numeric_assign(const char *value,
 					  bool doit, GucSource source);
 extern const char *locale_time_assign(const char *value,
 				   bool doit, GucSource source);
+
+extern char *pg_perm_setlocale(int category, const char *locale);
 
 extern bool lc_collate_is_c(void);
 extern bool lc_ctype_is_c(void);
