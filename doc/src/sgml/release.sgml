@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.18 2006/01/05 15:12:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.19 2006/01/05 15:18:29 momjian Exp $
 -->
 
 <appendix id="release">
@@ -52,8 +52,10 @@ certain rarely used Asian multi-byte character sets (Tatsuo)
 <listitem><para>Various fixes for queries returning <literal>RECORD</>s
 (Tom) </para></listitem>
 
-<listitem><para>Fix bug in <filename>/contrib/pgcrypto</> Openwall
-gen_salt processing (Marko Kreen></para></listitem>
+<listitem><para>Fix bug in <filename>/contrib/pgcrypto</> gen_salt,
+which caused it not to use all available salt space for md5 and
+xdes algorithms (Marko Kreen, Solar Designer)</para>
+<para>Salts for blowfish and standard des are unaffected</para></listitem>
 
 <listitem><para>Fix <filename>/contrib/dblink</> to throw an error
 when the number of columns specified is different from those returned
