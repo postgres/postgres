@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Dec 29 22:25:01 EST 2005
+Last updated:		Wed Jan  4 22:02:02 EST 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1126,7 +1126,7 @@ Source Code
 * Use UTF8 encoding for NLS messages so all server encodings can
   read them properly
 * Update Bonjour to work with newer cross-platform SDK
-* Remove BeOS and QNX-specific code
+* -Remove BeOS and QNX-specific code
 
 
 * Win32
