@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.16 2006/01/05 05:23:09 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.17 2006/01/05 14:53:18 momjian Exp $
 -->
 
 <appendix id="release">
@@ -5663,6 +5663,56 @@ DROP SCHEMA information_schema CASCADE;
   </sect2>
  </sect1>
  
+  <sect1 id="release-7-3-13">
+   <title>Release 7.3.13</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2006-01-09</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.3.12.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.3.13</title>
+
+    <para>
+     A dump/restore is not required for those running 7.3.X.  However,
+     if you are upgrading from a version earlier than 7.3.10, see the release
+     notes for 7.3.10.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+  
+<itemizedlist>
+
+<listitem><para>Fix character set sorting for locales that consider
+different character combinations to have the same sorting, e.g.
+Hungarian. (Tom) </para><para>This might require <command>REINDEX</> in
+those locales to fix  existing indexes.</para></listitem>
+
+<listitem><para>Fix long standing Asian multibyte charsets bug (Tatsuo)
+</para></listitem>
+
+<listitem><para>Fix bug in <filename>/contrib/pgcrypto</> Openwall
+gen_salt processing (Marko Kreen></para></listitem>
+
+<listitem><para>Fix <filename>/contrib/dblink</> to throw an error
+when the number of columns specified is different from those returned
+by the query (Joe)</para></listitem>
+
+<listitem><para>Set <literal>LC_XXX</> variables to prevent problems
+with <application>plperl</> processing (Tom)</para></listitem>
+
+</itemizedlist>
+
+   </sect2>
+  </sect1>
+ 
   <sect1 id="release-7-3-12">
    <title>Release 7.3.12</title>
 
@@ -5704,6 +5754,7 @@ only supported with merge-joinable join conditions</>.</para></listitem>
 
 <listitem><para>Prevent core dump in <application>pg_autovacuum</> when a
 table has been dropped</para></listitem>
+
 </itemizedlist>
 
    </sect2>
