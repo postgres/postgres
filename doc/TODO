@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Jan  5 11:35:12 EST 2006
+Last updated:		Thu Jan  5 11:39:45 EST 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1025,7 +1025,7 @@ Write-Ahead Log
   using ALTER TABLE, e.g. ALTER TABLE PERSISTENCE [ DROP | TRUNCATE | 
   STABLE | DEFAULT ].  Tables using non-default logging should not use
   referential integrity with default-logging tables, and tables using
-  stable logging probably can not have indexes.  [wallog]
+  stable logging probably can not have indexes.  [walcontrol]
 
 
 Optimizer / Executor
