@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.305 2005/12/30 00:13:50 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.306 2006/01/05 10:07:46 petere Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -130,6 +130,7 @@ static const char *show_num_temp_buffers(void);
 static bool assign_phony_autocommit(bool newval, bool doit, GucSource source);
 static const char *assign_custom_variable_classes(const char *newval, bool doit,
 							   GucSource source);
+static bool assign_debug_assertions(bool newval, bool doit, GucSource source);
 static bool assign_ssl(bool newval, bool doit, GucSource source);
 static bool assign_stage_log_stats(bool newval, bool doit, GucSource source);
 static bool assign_log_stats(bool newval, bool doit, GucSource source);
@@ -316,7 +317,7 @@ const char *const config_group_names[] =
 	/* STATS_COLLECTOR */
 	gettext_noop("Statistics / Query and Index Statistics Collector"),
 	/* AUTOVACUUM */
-	gettext_noop("Auto Vacuum"),
+	gettext_noop("Autovacuum"),
 	/* CLIENT_CONN */
 	gettext_noop("Client Connection Defaults"),
 	/* CLIENT_CONN_STATEMENT */
@@ -560,8 +561,6 @@ static struct config_bool ConfigureNamesBool[] =
 		&Log_disconnections,
 		false, NULL, NULL
 	},
-
-#ifdef USE_ASSERT_CHECKING
 	{
 		{"debug_assertions", PGC_USERSET, DEVELOPER_OPTIONS,
 			gettext_noop("Turns on various assertion checks."),
@@ -569,10 +568,13 @@ static struct config_bool ConfigureNamesBool[] =
 			GUC_NOT_IN_SAMPLE
 		},
 		&assert_enabled,
-		true, NULL, NULL
-	},
+#ifdef USE_ASSERT_CHECKING
+		true,
+#else
+		false,
 #endif
-
+		assign_debug_assertions, NULL
+	},
 	{
 		/* currently undocumented, so don't show in SHOW ALL */
 		{"exit_on_error", PGC_USERSET, UNGROUPED,
@@ -978,6 +980,27 @@ static struct config_bool ConfigureNamesBool[] =
 		false, NULL, NULL
 	},
 
+	{
+		{"allow_system_table_mods", PGC_BACKEND, DEVELOPER_OPTIONS,
+		 gettext_noop("Allows modifications of the structure of system tables."),
+		 NULL,
+		 GUC_NOT_IN_SAMPLE
+		},
+		&allowSystemTableMods,
+		false, NULL, NULL
+	},
+
+	{
+		{"ignore_system_indexes", PGC_BACKEND, DEVELOPER_OPTIONS,
+		 gettext_noop("Disabled reading from system indexes."),
+		 gettext_noop("It does not prevent updating the indexes, so it is safe "
+					  "to use.  The worst consequence is slowness."),
+		 GUC_NOT_IN_SAMPLE
+		},
+		&IgnoreSystemIndexes,
+		false, NULL, NULL
+	},
+
 	/* End-of-list marker */
 	{
 		{NULL, 0, 0, NULL, NULL}, NULL, false, NULL, NULL
@@ -987,6 +1010,15 @@ static struct config_bool ConfigureNamesBool[] =
 
 static struct config_int ConfigureNamesInt[] =
 {
+	{
+		{"post_auth_delay", PGC_BACKEND, DEVELOPER_OPTIONS,
+		 gettext_noop("Waits N seconds on connection startup after authentication."),
+		 gettext_noop("This allows attaching a debugger to the process."),
+		 GUC_NOT_IN_SAMPLE
+		},
+		&PostAuthDelay,
+		0, 0, INT_MAX, NULL, NULL
+	},
 	{
 		{"default_statistics_target", PGC_USERSET, QUERY_TUNING_OTHER,
 			gettext_noop("Sets the default statistics target."),
@@ -5863,6 +5895,18 @@ assign_custom_variable_classes(const char *newval, bool doit, GucSource source)
 
 	pfree(buf.data);
 	return newval;
+}
+
+static bool
+assign_debug_assertions(bool newval, bool doit, GucSource source)
+{
+#ifndef USE_ASSERT_CHECKING
+	if (newval)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("assertion checking is not supported by this build")));
+#endif
+	return true;
 }
 
 static bool

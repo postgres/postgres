@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.210 2006/01/04 21:06:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.211 2006/01/05 10:07:44 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -255,10 +255,13 @@ BootstrapMain(int argc, char *argv[])
 		argc--;
 	}
 
-	while ((flag = getopt(argc, argv, "B:c:d:D:Fo:p:x:-:")) != -1)
+	while ((flag = getopt(argc, argv, "B:c:d:D:Fr:x:y:-:")) != -1)
 	{
 		switch (flag)
 		{
+			case 'B':
+				SetConfigOption("shared_buffers", optarg, PGC_POSTMASTER, PGC_S_ARGV);
+				break;
 			case 'D':
 				userDoption = optarg;
 				break;
@@ -278,17 +281,14 @@ BootstrapMain(int argc, char *argv[])
 			case 'F':
 				SetConfigOption("fsync", "false", PGC_POSTMASTER, PGC_S_ARGV);
 				break;
-			case 'o':
+			case 'r':
 				StrNCpy(OutputFileName, optarg, MAXPGPATH);
 				break;
 			case 'x':
 				xlogop = atoi(optarg);
 				break;
-			case 'p':
+			case 'y':
 				dbname = strdup(optarg);
-				break;
-			case 'B':
-				SetConfigOption("shared_buffers", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 			case 'c':
 			case '-':
@@ -376,7 +376,7 @@ BootstrapMain(int argc, char *argv[])
 		CreateDataDirLockFile(false);
 
 	SetProcessingMode(BootstrapProcessing);
-	IgnoreSystemIndexes(true);
+	IgnoreSystemIndexes = true;
 
 	BaseInit();
 
@@ -499,14 +499,16 @@ BootstrapMain(int argc, char *argv[])
 static void
 usage(void)
 {
-	write_stderr("Usage:\n"
-				 "  postgres -boot [OPTION]... DBNAME\n"
-				 "  -c NAME=VALUE    set run-time parameter\n"
-				 "  -d 1-5           debug level\n"
-				 "  -D datadir       data directory\n"
-				 "  -F               turn off fsync\n"
-				 "  -o file          send debug output to file\n"
-				 "  -x num           internal use\n");
+	fprintf(stderr, _("This is the PostgreSQL bootstrap process.\n\n"));
+	fprintf(stderr, _("Usage:\n  postgres -boot [OPTION]... DBNAME\n\n"));
+	fprintf(stderr, _("Options:\n"));
+	fprintf(stderr, _("  -B NBUFFERS     number of shared buffers\n"));
+	fprintf(stderr, _("  -c NAME=VALUE   set run-time parameter\n"));
+	fprintf(stderr, _("  -d 1-5          debugging level\n"));
+	fprintf(stderr, _("  -D DATADIR      database directory\n"));
+	fprintf(stderr, _("  -F              turn fsync off\n"));
+	fprintf(stderr, _("  -r FILENAME     send stdout and stderr to given file\n"));
+	fprintf(stderr, _("  -x NUM          internal use\n"));
 
 	proc_exit(1);
 }

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.184 2005/11/22 18:17:29 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.185 2006/01/05 10:07:46 petere Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to other files.
@@ -306,8 +306,7 @@ extern bool InitPostgres(const char *dbname, const char *username);
 extern void BaseInit(void);
 
 /* in utils/init/miscinit.c */
-extern void IgnoreSystemIndexes(bool mode);
-extern bool IsIgnoringSystemIndexes(void);
+extern bool IgnoreSystemIndexes;
 extern void SetReindexProcessing(Oid heapOid, Oid indexOid);
 extern void ResetReindexProcessing(void);
 extern bool ReindexIsProcessingHeap(Oid heapOid);

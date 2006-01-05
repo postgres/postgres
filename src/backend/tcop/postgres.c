@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.476 2006/01/05 03:01:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.477 2006/01/05 10:07:45 petere Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -83,6 +83,10 @@ LogStmtLevel log_statement = LOGSTMT_NONE;
 
 /* GUC variable for maximum stack depth (measured in kilobytes) */
 int			max_stack_depth = 2048;
+
+/* wait N seconds to allow attach from a debugger */
+int			PostAuthDelay = 0;
+
 
 
 /* ----------------
@@ -2338,30 +2342,30 @@ usage(const char *progname)
 {
 	printf(_("%s is the PostgreSQL stand-alone backend.  It is not\nintended to be used by normal users.\n\n"), progname);
 
-	printf(_("Usage:\n  %s [OPTION]... [DBNAME]\n\n"), progname);
+	printf(_("Usage:\n  %s [OPTION]... DBNAME\n\n"), progname);
 	printf(_("Options:\n"));
 #ifdef USE_ASSERT_CHECKING
 	printf(_("  -A 1|0          enable/disable run-time assert checking\n"));
 #endif
 	printf(_("  -B NBUFFERS     number of shared buffers\n"));
 	printf(_("  -c NAME=VALUE   set run-time parameter\n"));
-	printf(_("  -d 0-5          debugging level (0 is off)\n"));
+	printf(_("  -d 0-5          debugging level\n"));
 	printf(_("  -D DATADIR      database directory\n"));
 	printf(_("  -e              use European date input format (DMY)\n"));
-	printf(_("  -E              echo query before execution\n"));
+	printf(_("  -E              echo statement before execution\n"));
 	printf(_("  -F              turn fsync off\n"));
-	printf(_("  -N              do not use newline as interactive query delimiter\n"));
-	printf(_("  -o FILENAME     send stdout and stderr to given file\n"));
-	printf(_("  -P              disable system indexes\n"));
+	printf(_("  -j              do not use newline as interactive query delimiter\n"));
+	printf(_("  -r FILENAME     send stdout and stderr to given file\n"));
 	printf(_("  -s              show statistics after each query\n"));
 	printf(_("  -S WORK-MEM     set amount of memory for sorts (in kB)\n"));
+	printf(_("  --NAME=VALUE    set run-time parameter\n"));
 	printf(_("  --describe-config  describe configuration parameters, then exit\n"));
 	printf(_("  --help          show this help, then exit\n"));
 	printf(_("  --version       output version information, then exit\n"));
 	printf(_("\nDeveloper options:\n"));
 	printf(_("  -f s|i|n|m|h    forbid use of some plan types\n"));
-	printf(_("  -i              do not execute queries\n"));
 	printf(_("  -O              allow system table structure changes\n"));
+	printf(_("  -P              disable system indexes\n"));
 	printf(_("  -t pa|pl|ex     show timings after each query\n"));
 	printf(_("  -W NUM          wait NUM seconds to allow attach from a debugger\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
@@ -2403,6 +2407,66 @@ set_debug_options(int debug_flag, GucContext context, GucSource source)
 }
 
 
+bool
+set_plan_disabling_options(const char *arg, GucContext context, GucSource source)
+{
+	char *tmp = NULL;
+
+	switch (arg[0])
+	{
+		case 's':	/* seqscan */
+			tmp = "enable_seqscan";
+			break;
+		case 'i':	/* indexscan */
+			tmp = "enable_indexscan";
+			break;
+		case 'b':	/* bitmapscan */
+			tmp = "enable_bitmapscan";
+			break;
+		case 't':	/* tidscan */
+			tmp = "enable_tidscan";
+			break;
+		case 'n':	/* nestloop */
+			tmp = "enable_nestloop";
+			break;
+		case 'm':	/* mergejoin */
+			tmp = "enable_mergejoin";
+			break;
+		case 'h':	/* hashjoin */
+			tmp = "enable_hashjoin";
+			break;
+	}
+	if (tmp)
+	{
+		SetConfigOption(tmp, "false", context, source);
+		return true;
+	}
+	else
+		return false;
+}
+
+
+const char *
+get_stats_option_name(const char *arg)
+{
+	switch (arg[0])
+	{
+		case 'p':
+			if (optarg[1] == 'a') /* "parser" */
+				return "log_parser_stats";
+			else if (optarg[1] == 'l') /* "planner" */
+				return "log_planner_stats";
+			break;
+
+		case 'e':	/* "executor" */
+			return "log_executor_stats";
+			break;
+	}
+
+	return NULL;
+}
+
+
 /* ----------------------------------------------------------------
  * PostgresMain
  *	   postgres main loop -- all backends, interactive or otherwise start here
@@ -2427,7 +2491,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 	GucContext	ctx;
 	GucSource	gucsource;
 	bool		am_superuser;
-	char	   *tmp;
 	int			firstchar;
 	char		stack_base;
 	StringInfoData input_message;
@@ -2518,164 +2581,100 @@ PostgresMain(int argc, char *argv[], const char *username)
 	ctx = PGC_POSTMASTER;
 	gucsource = PGC_S_ARGV;		/* initial switches came from command line */
 
-	while ((flag = getopt(argc, argv, "A:B:c:D:d:Eef:FiNOPo:p:S:st:v:W:-:")) != -1)
+	while ((flag = getopt(argc, argv, "A:B:c:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:v:W:y:-:")) != -1)
 	{
 		switch (flag)
 		{
 			case 'A':
-#ifdef USE_ASSERT_CHECKING
 				SetConfigOption("debug_assertions", optarg, ctx, gucsource);
-#else
-				ereport(WARNING,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("assert checking is not compiled in")));
-#endif
 				break;
 
 			case 'B':
-
-				/*
-				 * specify the size of buffer pool
-				 */
 				SetConfigOption("shared_buffers", optarg, ctx, gucsource);
 				break;
 
-			case 'D':			/* PGDATA or config directory */
+			case 'D':
 				if (secure)
 					userDoption = optarg;
 				break;
 
-			case 'd':			/* debug level */
+			case 'd':
 				debug_flag = atoi(optarg);
 				break;
 
 			case 'E':
-
-				/*
-				 * E - echo the query the user entered
-				 */
 				EchoQuery = true;
 				break;
 
 			case 'e':
-
-				/*
-				 * Use European date input format (DMY)
-				 */
 				SetConfigOption("datestyle", "euro", ctx, gucsource);
 				break;
 
 			case 'F':
-
-				/*
-				 * turn off fsync
-				 */
 				SetConfigOption("fsync", "false", ctx, gucsource);
 				break;
 
 			case 'f':
-
-				/*
-				 * f - forbid generation of certain plans
-				 */
-				tmp = NULL;
-				switch (optarg[0])
-				{
-					case 's':	/* seqscan */
-						tmp = "enable_seqscan";
-						break;
-					case 'i':	/* indexscan */
-						tmp = "enable_indexscan";
-						break;
-					case 'b':	/* bitmapscan */
-						tmp = "enable_bitmapscan";
-						break;
-					case 't':	/* tidscan */
-						tmp = "enable_tidscan";
-						break;
-					case 'n':	/* nestloop */
-						tmp = "enable_nestloop";
-						break;
-					case 'm':	/* mergejoin */
-						tmp = "enable_mergejoin";
-						break;
-					case 'h':	/* hashjoin */
-						tmp = "enable_hashjoin";
-						break;
-					default:
-						errs++;
-				}
-				if (tmp)
-					SetConfigOption(tmp, "false", ctx, gucsource);
+				if (!set_plan_disabling_options(optarg, ctx, gucsource))
+					errs++;
 				break;
 
-			case 'N':
+			case 'h':
+				SetConfigOption("listen_addresses", optarg, ctx, gucsource);
+				break;
 
-				/*
-				 * N - Don't use newline as a query delimiter
-				 */
+			case 'i':
+				SetConfigOption("listen_addresses", "*", ctx, gucsource);
+				break;
+
+			case 'j':
 				UseNewLine = 0;
 				break;
 
-			case 'O':
-
-				/*
-				 * allow system table structure modifications
-				 */
-				if (secure)		/* XXX safe to allow from client??? */
-					allowSystemTableMods = true;
+			case 'k':
+				SetConfigOption("unix_socket_directory", optarg, ctx, gucsource);
 				break;
 
-			case 'P':
+			case 'l':
+				SetConfigOption("ssl", "true", ctx, gucsource);
+				break;
 
-				/*
-				 * ignore system indexes
-				 *
-				 * As of PG 7.4 this is safe to allow from the client, since
-				 * it only disables reading the system indexes, not writing
-				 * them. Worst case consequence is slowness.
-				 */
-				IgnoreSystemIndexes(true);
+			case 'N':
+				SetConfigOption("max_connections", optarg, ctx, gucsource);
+				break;
+
+			case 'n':
+				/* ignored for consistency with postmaster */
+				break;
+
+			case 'O':
+				SetConfigOption("allow_system_table_mods", "true", ctx, gucsource);
 				break;
 
 			case 'o':
+				errs++;
+				break;
 
-				/*
-				 * o - send output (stdout and stderr) to the given file
-				 */
+			case 'P':
+				SetConfigOption("ignore_system_indexes", "true", ctx, gucsource);
+				break;
+
+			case 'p':
+				SetConfigOption("port", optarg, ctx, gucsource);
+				break;
+
+			case 'r':
+				/* send output (stdout and stderr) to the given file */
 				if (secure)
 					StrNCpy(OutputFileName, optarg, MAXPGPATH);
 				break;
 
-			case 'p':
-
-				/*
-				 * p - special flag passed if backend was forked by a
-				 * postmaster.
-				 */
-				if (secure)
-				{
-					dbname = strdup(optarg);
-
-					secure = false;		/* subsequent switches are NOT secure */
-					ctx = PGC_BACKEND;
-					gucsource = PGC_S_CLIENT;
-				}
-				break;
-
 			case 'S':
-
-				/*
-				 * S - amount of sort memory to use in 1k bytes
-				 */
 				SetConfigOption("work_mem", optarg, ctx, gucsource);
 				break;
 
 			case 's':
-
 				/*
-				 * s - report usage statistics (timings) after each query
-				 *
 				 * Since log options are SUSET, we need to postpone unless
 				 * still in secure context
 				 */
@@ -2686,35 +2685,13 @@ PostgresMain(int argc, char *argv[], const char *username)
 									ctx, gucsource);
 				break;
 
+			case 'T':
+				/* ignored for consistency with postmaster */
+				break;
+
 			case 't':
-				/* ---------------
-				 *	tell postgres to report usage statistics (timings) for
-				 *	each query
-				 *
-				 *	-tpa[rser] = print stats for parser time of each query
-				 *	-tpl[anner] = print stats for planner time of each query
-				 *	-te[xecutor] = print stats for executor time of each query
-				 *	caution: -s can not be used together with -t.
-				 * ----------------
-				 */
-				tmp = NULL;
-				switch (optarg[0])
-				{
-					case 'p':
-						if (optarg[1] == 'a')
-							tmp = "log_parser_stats";
-						else if (optarg[1] == 'l')
-							tmp = "log_planner_stats";
-						else
-							errs++;
-						break;
-					case 'e':
-						tmp = "log_executor_stats";
-						break;
-					default:
-						errs++;
-						break;
-				}
+			{
+				const char *tmp = get_stats_option_name(optarg);
 				if (tmp)
 				{
 					if (ctx == PGC_BACKEND)
@@ -2722,7 +2699,10 @@ PostgresMain(int argc, char *argv[], const char *username)
 					else
 						SetConfigOption(tmp, "true", ctx, gucsource);
 				}
+				else
+					errs++;
 				break;
+			}
 
 			case 'v':
 				if (secure)
@@ -2730,11 +2710,23 @@ PostgresMain(int argc, char *argv[], const char *username)
 				break;
 
 			case 'W':
+				SetConfigOption("post_auth_delay", optarg, ctx, gucsource);
+				break;
 
+
+			case 'y':
 				/*
-				 * wait N seconds to allow attach from a debugger
+				 * y - special flag passed if backend was forked by a
+				 * postmaster.
 				 */
-				pg_usleep(atoi(optarg) * 1000000L);
+				if (secure)
+				{
+					dbname = strdup(optarg);
+
+					secure = false;		/* subsequent switches are NOT secure */
+					ctx = PGC_BACKEND;
+					gucsource = PGC_S_CLIENT;
+				}
 				break;
 
 			case 'c':
@@ -2812,6 +2804,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 		/* If timezone is not set, determine what the OS uses */
 		pg_timezone_initialize();
 	}
+
+	if (PostAuthDelay)
+		pg_usleep(PostAuthDelay * 1000000L);
 
 	/*
 	 * Set up signal handlers and masks.

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.54 2005/12/02 23:13:46 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.55 2006/01/05 10:07:44 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -22,22 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>postmaster</command>
-   <arg>-A <group choice="plain"><arg>0</arg><arg>1</arg></group></arg>
-   <arg>-B <replaceable>nbuffers</replaceable></arg>
-   <arg>-c <replaceable>name</replaceable>=<replaceable>value</replaceable></arg>
-   <arg>-d <replaceable>debug-level</replaceable></arg>
-   <arg>-D <replaceable>datadir</replaceable></arg>
-   <arg>-F</arg>
-   <arg>-h <replaceable>hostname</replaceable></arg>
-   <arg>-i</arg>
-   <arg>-k <replaceable>directory</replaceable></arg>
-   <arg>-l</arg>
-   <arg>-N <replaceable>max-connections</replaceable></arg>
-   <arg>-o <replaceable>extra-options</replaceable></arg>
-   <arg>-p <replaceable>port</replaceable></arg>
-   <arg>-S</arg>
-   <arg>--<replaceable>name</replaceable>=<replaceable>value</replaceable></arg>
-   <group><arg>-n</arg><arg>-s</arg></group>
+   <arg rep="repeat"><replaceable>option</></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 
@@ -70,8 +55,7 @@ PostgreSQL documentation
    location (the <quote>data area</quote>).
    More than one <command>postmaster</command> process can run on a system
    at one time, so long as they use different data areas and different
-   communication ports (see below).  A data area is created with <xref
-   linkend="app-initdb">.
+   communication ports (see below).
   </para>
 
   <para>
@@ -83,6 +67,7 @@ PostgreSQL documentation
    directly to the data area directory created by <application>initdb</>.
    Other possible file layouts are discussed in
    <xref linkend="runtime-config-file-locations">.
+   A data area is created with <xref linkend="app-initdb">.
   </para>
  </refsect1>
 
@@ -92,8 +77,12 @@ PostgreSQL documentation
    <para>
     <command>postmaster</command> accepts the following
     command line arguments.  For a detailed discussion of the options
-    consult <xref linkend="runtime-config">.  You can also save typing most of these
+    consult <xref linkend="runtime-config">.  You can save typing most of these
     options by setting up a configuration file.
+   </para>
+
+   <refsect2>
+    <title>General Purpose</title>
     
     <variablelist>
      <varlistentry>
@@ -152,6 +141,18 @@ PostgreSQL documentation
         Specifies the file system location of the data directory or
         configuration file(s).  See
         <xref linkend="runtime-config-file-locations"> for details.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-e</option></term>
+      <listitem>
+       <para>
+        Sets the default date style to <quote>European</quote>, that is
+	<literal>DMY</> ordering of input date fields.  This also causes
+	the day to be printed before the month in certain date output formats.
+	See <xref linkend="datatype-datetime"> for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -264,6 +265,12 @@ PostgreSQL documentation
 	linkend="app-postgres"> for possibilities.  If the option
 	string contains any spaces, the entire string must be quoted.
        </para>
+
+       <para>
+        The use of this option is obsolete; all command-line options
+        for server processes can be specified directly on the
+        <command>postmaster</command> command line
+       </para>
       </listitem>
      </varlistentry>
 
@@ -280,6 +287,17 @@ PostgreSQL documentation
 	5432).  If you specify a port other than the default port,
 	then all client applications must specify the same port using
 	either command-line options or <envar>PGPORT</envar>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-s</option></term>
+      <listitem>
+       <para>
+	Print time information and other statistics at the end of each command.
+	This is useful for benchmarking or for use in tuning the number of
+	buffers.
        </para>
       </listitem>
      </varlistentry>
@@ -318,55 +336,124 @@ PostgreSQL documentation
      </varlistentry>
 
     </variablelist>
-   </para>
+   </refsect2>
 
-   <para>
-    Two additional command line options are available for debugging
-    problems that cause a server process to die abnormally.  The
-    ordinary strategy in this situation is to notify all other server
-    processes that they must terminate and then reinitialize the
-    shared memory and semaphores.  This is because an errant server
-    process could have corrupted some shared state before terminating.
-    These options select alternative behaviors of the
-    <command>postmaster</command> in this situation.
-    <emphasis>Neither option is intended for use in ordinary
-    operation.</emphasis>
-   </para>
+   <refsect2>
+    <title>Semi-internal Options</title>
 
-   <para>
-   </para>
-
-   <para>
-    These special-case options are:
+    <para>
+     There are several other options that may be specified, used
+     mainly for debugging purposes and in some cases to assist with
+     recovery of severely damaged databases. There should be no reason
+     to use them in a production database setup.  These are listed
+     here only for the use by <productname>PostgreSQL</productname>
+     system developers.  <emphasis>Use of any of these options is
+     highly discouraged.</emphasis>  Furthermore, any of these options
+     may disappear or change in a future release without notice.
+    </para>
 
     <variablelist>
+     <varlistentry>
+      <term><option>-f</option> <literal>{ s | i | m | n | h }</literal></term>
+      <listitem>
+       <para>
+	Forbids the use of particular scan and join methods:
+	<literal>s</literal> and <literal>i</literal>
+	disable sequential and index scans respectively, while
+	<literal>n</literal>, <literal>m</literal>, and <literal>h</literal>
+	disable nested-loop, merge and hash joins respectively.
+       </para>
+	
+       <para>
+        Neither sequential scans nor nested-loop joins can be disabled
+        completely; the <literal>-fs</literal> and
+        <literal>-fn</literal> options simply discourage the optimizer
+        from using those plan types if it has any other alternative.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry>
       <term><option>-n</option></term>
       <listitem>
        <para>
-	<command>postmaster</command>
-	will not reinitialize shared data structures.  A knowledgeable system
-	programmer can then use a debugger
-	to examine shared memory and semaphore state.
+        This option is for debugging problems that cause a server
+        process to die abnormally.  The ordinary strategy in this
+        situation is to notify all other server processes that they
+        must terminate and then reinitialize the shared memory and
+        semaphores.  This is because an errant server process could
+        have corrupted some shared state before terminating.  This
+        option specifies that the <command>postmaster</command> will
+        not reinitialize shared data structures.  A knowledgeable
+        system programmer can then use a debugger to examine shared
+        memory and semaphore state.
        </para>
      </listitem>
     </varlistentry>
 
-    <varlistentry>
-      <term><option>-s</option></term>
+     <varlistentry>
+      <term><option>-O</option></term>
       <listitem>
        <para>
-	<command>postmaster</command>
-	will stop all other server processes by sending the signal
-	<literal>SIGSTOP</literal>,
-	but will not cause them to terminate.  This permits system programmers
-	to collect core dumps from all server processes by hand.
+	Allows the structure of system tables to be modified.  This is
+	used by <command>initdb</command>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-P</option></term>
+      <listitem>
+       <para>
+	Ignore system indexes when reading system tables (but still update
+	the indexes when modifying the tables).  This is useful when
+	recovering from damaged system indexes.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-t</option> <literal>pa[rser] | pl[anner] | e[xecutor]</literal></term>
+      <listitem>
+       <para>
+	Print timing statistics for each query relating to each of the
+	major system modules.  This option cannot be used together
+	with the <option>-s</option> option.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-T</option></term>
+      <listitem>
+       <para>
+        This option is for debugging problems that cause a server
+        process to die abnormally.  The ordinary strategy in this
+        situation is to notify all other server processes that they
+        must terminate and then reinitialize the shared memory and
+        semaphores.  This is because an errant server process could
+        have corrupted some shared state before terminating.  This
+        option specifies that the <command>postmaster</command> will
+        stop all other server processes by sending the signal
+        <literal>SIGSTOP</literal>, but will not cause them to
+        terminate.  This permits system programmers to collect core
+        dumps from all server processes by hand.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-W</option> <replaceable class="parameter">seconds</replaceable></term>
+      <listitem>
+       <para>
+        A delay of this many seconds occurs when a new server process
+        is started, after it conducts the authentication procedure.
+        This is intended to give an opportunity to attach to the
+        server process with a debugger.
        </para>
       </listitem>
      </varlistentry>
     </variablelist>
-   </para>
-
  </refsect1>
 
  <refsect1>

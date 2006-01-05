@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.477 2006/01/04 21:06:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.478 2006/01/05 10:07:45 petere Exp $
  *
  * NOTES
  *
@@ -432,8 +432,6 @@ PostmasterMain(int argc, char *argv[])
 											  ALLOCSET_DEFAULT_MAXSIZE);
 	MemoryContextSwitchTo(PostmasterContext);
 
-	IgnoreSystemIndexes(false);
-
 	if (find_my_exec(argv[0], my_exec_path) < 0)
 		elog(FATAL, "%s: could not locate my own executable path",
 			 argv[0]);
@@ -447,90 +445,108 @@ PostmasterMain(int argc, char *argv[])
 
 	opterr = 1;
 
-	while ((opt = getopt(argc, argv, "A:a:B:b:c:D:d:Fh:ik:lm:MN:no:p:Ss-:")) != -1)
+	while ((opt = getopt(argc, argv, "A:B:c:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:W:-:")) != -1)
 	{
 		switch (opt)
 		{
 			case 'A':
-#ifdef USE_ASSERT_CHECKING
 				SetConfigOption("debug_assertions", optarg, PGC_POSTMASTER, PGC_S_ARGV);
-#else
-				write_stderr("%s: assert checking is not compiled in\n", progname);
-#endif
 				break;
-			case 'a':
-				/* Can no longer set authentication method. */
-				break;
+
 			case 'B':
 				SetConfigOption("shared_buffers", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
-			case 'b':
-				/* Can no longer set the backend executable file to use. */
-				break;
+
 			case 'D':
 				userDoption = optarg;
 				break;
+
 			case 'd':
 				set_debug_options(atoi(optarg), PGC_POSTMASTER, PGC_S_ARGV);
 				break;
+
+			case 'E':
+				SetConfigOption("log_statement", "all", PGC_POSTMASTER, PGC_S_ARGV);
+				break;
+
+			case 'e':
+				SetConfigOption("datestyle", "euro", PGC_POSTMASTER, PGC_S_ARGV);
+				break;
+
 			case 'F':
 				SetConfigOption("fsync", "false", PGC_POSTMASTER, PGC_S_ARGV);
 				break;
+
+			case 'f':
+				if (!set_plan_disabling_options(optarg, PGC_POSTMASTER, PGC_S_ARGV))
+				{
+					write_stderr("%s: invalid argument for option -f: \"%s\"\n",
+								 progname, optarg);
+					ExitPostmaster(1);
+				}
+				break;
+
 			case 'h':
 				SetConfigOption("listen_addresses", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
+
 			case 'i':
 				SetConfigOption("listen_addresses", "*", PGC_POSTMASTER, PGC_S_ARGV);
 				break;
+
+			case 'j':
+				/* only used by interactive backend */
+				break;
+
 			case 'k':
 				SetConfigOption("unix_socket_directory", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
-#ifdef USE_SSL
+
 			case 'l':
 				SetConfigOption("ssl", "true", PGC_POSTMASTER, PGC_S_ARGV);
 				break;
-#endif
-			case 'm':
-				/* Multiplexed backends no longer supported. */
-				break;
-			case 'M':
 
-				/*
-				 * ignore this flag.  This may be passed in because the
-				 * program was run as 'postgres -M' instead of 'postmaster'
-				 */
-				break;
 			case 'N':
-				/* The max number of backends to start. */
 				SetConfigOption("max_connections", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
+
 			case 'n':
 				/* Don't reinit shared mem after abnormal exit */
 				Reinit = false;
 				break;
-			case 'o':
 
-				/*
-				 * Other options to pass to the backend on the command line
-				 */
+			case 'O':
+				SetConfigOption("allow_system_table_mods", "true", PGC_POSTMASTER, PGC_S_ARGV);
+				break;
+
+			case 'o':
+				/* Other options to pass to the backend on the command line */
 				snprintf(ExtraOptions + strlen(ExtraOptions),
 						 sizeof(ExtraOptions) - strlen(ExtraOptions),
 						 " %s", optarg);
 				break;
+
+			case 'P':
+				SetConfigOption("ignore_system_indexes", "true", PGC_POSTMASTER, PGC_S_ARGV);
+				break;
+
 			case 'p':
 				SetConfigOption("port", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
-			case 'S':
 
-				/*
-				 * Start in 'S'ilent mode (disassociate from controlling tty).
-				 * You may also think of this as 'S'ysV mode since it's most
-				 * badly needed on SysV-derived systems like SVR4 and HP-UX.
-				 */
-				SetConfigOption("silent_mode", "true", PGC_POSTMASTER, PGC_S_ARGV);
+			case 'r':
+				/* only used by single-user backend */
 				break;
-			case 's':
 
+			case 'S':
+				SetConfigOption("work_mem", optarg, PGC_POSTMASTER, PGC_S_ARGV);
+				break;
+
+			case 's':
+				SetConfigOption("log_statement_stats", optarg, PGC_POSTMASTER, PGC_S_ARGV);
+				break;
+
+			case 'T':
 				/*
 				 * In the event that some backend dumps core, send SIGSTOP,
 				 * rather than SIGQUIT, to all its peers.  This lets the wily
@@ -538,6 +554,28 @@ PostmasterMain(int argc, char *argv[])
 				 */
 				SendStop = true;
 				break;
+
+			case 't':
+			{
+				const char *tmp = get_stats_option_name(optarg);
+
+				if (tmp)
+				{
+					SetConfigOption(tmp, "true", PGC_POSTMASTER, PGC_S_ARGV);
+				}
+				else
+				{
+					write_stderr("%s: invalid argument for option -t: \"%s\"\n",
+								 progname, optarg);
+					ExitPostmaster(1);
+				}
+				break;
+			}
+
+			case 'W':
+				SetConfigOption("post_auth_delay", optarg, PGC_POSTMASTER, PGC_S_ARGV);
+				break;
+
 			case 'c':
 			case '-':
 				{
@@ -1113,6 +1151,7 @@ usage(const char *progname)
 	printf(_("  -c NAME=VALUE   set run-time parameter\n"));
 	printf(_("  -d 1-5          debugging level\n"));
 	printf(_("  -D DATADIR      database directory\n"));
+	printf(_("  -e              use European date input format (DMY)\n"));
 	printf(_("  -F              turn fsync off\n"));
 	printf(_("  -h HOSTNAME     host name or IP address to listen on\n"));
 	printf(_("  -i              enable TCP/IP connections\n"));
@@ -1121,18 +1160,25 @@ usage(const char *progname)
 	printf(_("  -l              enable SSL connections\n"));
 #endif
 	printf(_("  -N MAX-CONNECT  maximum number of allowed connections\n"));
-	printf(_("  -o OPTIONS      pass \"OPTIONS\" to each server process\n"));
+	printf(_("  -o OPTIONS      pass \"OPTIONS\" to each server process (obsolete)\n"));
 	printf(_("  -p PORT         port number to listen on\n"));
-	printf(_("  -S              silent mode (start in background without logging output)\n"));
+	printf(_("  -s              show statistics after each query\n"));
+	printf(_("  -S WORK-MEM     set amount of memory for sorts (in kB)\n"));
+	printf(_("  --NAME=VALUE    set run-time parameter\n"));
 	printf(_("  --help          show this help, then exit\n"));
 	printf(_("  --version       output version information, then exit\n"));
 
 	printf(_("\nDeveloper options:\n"));
+	printf(_("  -f s|i|n|m|h    forbid use of some plan types\n"));
 	printf(_("  -n              do not reinitialize shared memory after abnormal exit\n"));
-	printf(_("  -s              send SIGSTOP to all backend servers if one dies\n"));
+	printf(_("  -O              allow system table structure changes\n"));
+	printf(_("  -P              disable system indexes\n"));
+	printf(_("  -t pa|pl|ex     show timings after each query\n"));
+	printf(_("  -T              send SIGSTOP to all backend servers if one dies\n"));
+	printf(_("  -W NUM          wait NUM seconds to allow attach from a debugger\n"));
 
 	printf(_("\nPlease read the documentation for the complete list of run-time\n"
-	 "configuration settings and how to set them on the command line or in\n"
+			 "configuration settings and how to set them on the command line or in\n"
 			 "the configuration file.\n\n"
 			 "Report bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
@@ -2797,8 +2843,8 @@ BackendRun(Port *port)
 	 * Now, build the argv vector that will be given to PostgresMain.
 	 *
 	 * The layout of the command line is
-	 *		postgres [secure switches] -p databasename [insecure switches]
-	 * where the switches after -p come from the client request.
+	 *		postgres [secure switches] -y databasename [insecure switches]
+	 * where the switches after -y come from the client request.
 	 *
 	 * The maximum possible number of commandline arguments that could come
 	 * from ExtraOptions or port->cmdline_options is (strlen + 1) / 2; see
@@ -2829,9 +2875,9 @@ BackendRun(Port *port)
 
 	/*
 	 * Tell the backend it is being called from the postmaster, and which
-	 * database to use.  -p marks the end of secure switches.
+	 * database to use.  -y marks the end of secure switches.
 	 */
-	av[ac++] = "-p";
+	av[ac++] = "-y";
 	av[ac++] = port->database_name;
 
 	/*
@@ -3575,7 +3621,7 @@ StartChildProcess(int xlop)
 	snprintf(xlbuf, sizeof(xlbuf), "-x%d", xlop);
 	av[ac++] = xlbuf;
 
-	av[ac++] = "-p";
+	av[ac++] = "-y";
 	av[ac++] = "template1";
 
 	av[ac] = NULL;

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.115 2005/11/22 18:17:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.116 2006/01/05 10:07:45 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,7 +107,7 @@ get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 	/*
 	 * Make list of indexes.  Ignore indexes on system catalogs if told to.
 	 */
-	if (IsIgnoringSystemIndexes() && IsSystemClass(relation->rd_rel))
+	if (IgnoreSystemIndexes && IsSystemClass(relation->rd_rel))
 		hasindex = false;
 	else
 		hasindex = relation->rd_rel->relhasindex;

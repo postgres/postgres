@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.197 2005/11/22 18:17:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.198 2006/01/05 10:07:45 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -845,7 +845,7 @@ RelationBuildTriggers(Relation relation)
 	/*
 	 * Note: since we scan the triggers using TriggerRelidNameIndexId, we will
 	 * be reading the triggers in name order, except possibly during
-	 * emergency-recovery operations (ie, IsIgnoringSystemIndexes). This in
+	 * emergency-recovery operations (ie, IgnoreSystemIndexes). This in
 	 * turn ensures that triggers will be fired in name order.
 	 */
 	ScanKeyInit(&skey,

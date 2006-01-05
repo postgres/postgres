@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.45 2004/11/15 06:32:15 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.46 2006/01/05 10:07:44 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -21,53 +21,9 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
   <cmdsynopsis>
-   <!-- standalone call -->
    <command>postgres</command>
-   <arg>-A <group choice="plain"><arg>0</arg><arg>1</arg></group></arg>
-   <arg>-B <replaceable>nbuffers</replaceable></arg>
-   <arg>-c <replaceable>name</replaceable>=<replaceable>value</replaceable></arg>
-   <arg>-d <replaceable>debug-level</replaceable></arg>
-   <arg>--describe-config</arg>
-   <arg>-D <replaceable>datadir</replaceable></arg>
-   <arg>-e</arg>
-   <arg>-E</arg>
-   <arg>-f<group choice="plain"><arg>s</arg><arg>i</arg><arg>t</arg><arg>n</arg><arg>m</arg><arg>h</arg></group></arg>
-   <arg>-F</arg>
-   <arg>-N</arg>
-   <arg>-o <replaceable>filename</replaceable></arg>
-   <arg>-O</arg>
-   <arg>-P</arg>
-   <group>
-    <arg>-s</arg>
-    <arg>-t<group choice="plain"><arg>pa</arg><arg>pl</arg><arg>ex</arg></group></arg>
-   </group>
-   <arg>-S <replaceable>work-mem</replaceable></arg>
-   <arg>-W <replaceable>seconds</replaceable></arg>
-   <arg>--<replaceable>name</replaceable>=<replaceable>value</replaceable></arg>
+   <arg rep="repeat"><replaceable>option</></arg>
    <arg choice="plain"><replaceable>database</replaceable></arg>
-   <sbr>
-   <!-- postmaster fork -->
-   <command>postgres</command>
-   <arg>-A <group choice="plain"><arg>0</arg><arg>1</arg></group></arg>
-   <arg>-B <replaceable>nbuffers</replaceable></arg>
-   <arg>-c <replaceable>name</replaceable>=<replaceable>value</replaceable></arg>
-   <arg>-d <replaceable>debug-level</replaceable></arg>
-   <arg>-D <replaceable>datadir</replaceable></arg>
-   <arg>-e</arg>
-   <arg>-f<group choice="plain"><arg>s</arg><arg>i</arg><arg>t</arg><arg>n</arg><arg>m</arg><arg>h</arg></group></arg>
-   <arg>-F</arg>
-   <arg>-o <replaceable>filename</replaceable></arg>
-   <arg>-O</arg>
-   <arg>-p <replaceable>database</replaceable></arg>
-   <arg>-P</arg>
-   <group>
-    <arg>-s</arg>
-    <arg>-t<group choice="plain"><arg>pa</arg><arg>pl</arg><arg>ex</arg></group></arg>
-   </group>
-   <arg>-S <replaceable>work-mem</replaceable></arg>
-   <arg>-v <replaceable>protocol</replaceable></arg>
-   <arg>-W <replaceable>seconds</replaceable></arg>
-   <arg>--<replaceable>name</replaceable>=<replaceable>value</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 
@@ -77,23 +33,21 @@ PostgreSQL documentation
   <para>
    The <command>postgres</command> executable is the actual
    <productname>PostgreSQL</productname> server process that processes
-   queries.  It is normally not called directly; instead a <xref
-   linkend="app-postmaster"> multiuser server is started.
+   SQL statements.  It is normally not called directly; instead a
+   <xref linkend="app-postmaster"> multiuser server is started.
+   Conceptually, the <command>postmaster</command> starts a new
+   <command>postgres</command> process for each connection.
+   (<filename>postmaster</filename> and <filename>postgres</filename>
+   are in fact the same program, and on most platforms the connection
+   process is forked).
   </para>
 
   <para>
-   The second form above is how
-   <command>postgres</command> is invoked by the <xref
-   linkend="app-postmaster"> (only
-   conceptually, since both <filename>postmaster</filename> and
-   <filename>postgres</filename> are in fact the same program); it
-   should not be invoked directly this way.  The first form invokes
-   the server directly in interactive single-user mode.  The primary use
-   for this mode is during bootstrapping by <xref linkend="app-initdb">.
-   Sometimes it is used for debugging or disaster recovery.
-  </para>
-
-  <para>
+   If the <command>postgres</command> command is called directly, it
+   invokes the server in interactive single-user mode.  The primary
+   use for this mode is during bootstrapping by <xref
+   linkend="app-initdb">.  Sometimes it is used for debugging or
+   disaster recovery.
    When invoked in interactive mode from the shell, the user can enter
    queries and the results will be printed to the screen, but in a
    form that is more useful for developers than end users.  But note
@@ -117,11 +71,9 @@ PostgreSQL documentation
 
    <para>
     When <command>postgres</command> is started by a <xref
-    linkend="app-postmaster"> then it
-    inherits all options set by the latter.  Additionally,
-    <command>postgres</command>-specific options can be passed
-    from the <command>postmaster</command> with the
-    <option>-o</option> switch.
+    linkend="app-postmaster"> then it inherits all options set by the
+    latter.  In single-user mode, <command>postgres</command> accepts
+    all the options that <command>postmaster</command> would accept.
    </para>
 
    <para>
@@ -141,74 +93,17 @@ PostgreSQL documentation
     <para>
      The options <option>-A</option>, <option>-B</option>,
      <option>-c</option>, <option>-d</option>, <option>-D</option>,
-     <option>-F</option>, and <option>--<replaceable>name</></option> have the same meanings
-     as the <xref linkend="app-postmaster"> except that
-     <literal>-d 0</> prevents the server log level of
-     the <command>postmaster</> from being propagated to <command>postgres</>.
+     <option>-e</option>, <option>-F</option>, <option>-s</option>,
+     <option>-S</option>, and <option>--<replaceable>name</></option>
+     have the same meanings as with the <xref linkend="app-postmaster">
+     except that <literal>-d 0</> prevents the server log level of the
+     <command>postmaster</> from being propagated to
+     <command>postgres</>.  Other <command>postmaster</command>
+     options are also accepted but will have no noticeable effect
+     because they only apply to the multiuser server mode, namely
+     <option>-h</option>, <option>-i</option>, <option>-k</option>,
+     <option>-l</option>, and <option>-n</option>.
     </para>
-
-    <variablelist>
-     <varlistentry>
-      <term><option>-e</option></term>
-      <listitem>
-       <para>
-        Sets the default date style to <quote>European</quote>, that is
-	<literal>DMY</> ordering of input date fields.  This also causes
-	the day to be printed before the month in certain date output formats.
-	See <xref linkend="datatype-datetime"> for more information.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-o</option> <replaceable class="parameter">filename</replaceable></term>
-      <listitem>
-       <para>
-	Send all server log output to 
-	<replaceable class="parameter">filename</replaceable>.
-	If <command>postgres</command> is running under the
-	<command>postmaster</command>, this option is ignored,
-	and the <systemitem>stderr</> inherited from the
-	<command>postmaster</command> is used.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-P</option></term>
-      <listitem>
-       <para>
-	Ignore system indexes when reading system tables (but still update
-	the indexes when modifying the tables).  This is useful when
-	recovering from damaged system indexes.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-s</option></term>
-      <listitem>
-       <para>
-	Print time information and other statistics at the end of each command.
-	This is useful for benchmarking or for use in tuning the number of
-	buffers.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-S</option> <replaceable class="parameter">work-mem</replaceable></term>
-      <listitem>
-       <para>
-	Specifies the amount of memory to be used by internal sorts and hashes
-	before resorting to temporary disk files.  See the description of the
-	<varname>work_mem</> configuration parameter in <xref
-	linkend="runtime-config-resource-memory">.
-       </para>
-      </listitem>
-     </varlistentry>
-
-    </variablelist>
    </refsect2>
 
    <refsect2>
@@ -235,10 +130,24 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-N</option></term>
+      <term><option>-j</option></term>
       <listitem>
        <para>
 	Disables use of newline as a statement delimiter.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-r</option> <replaceable class="parameter">filename</replaceable></term>
+      <listitem>
+       <para>
+	Send all server log output to 
+	<replaceable class="parameter">filename</replaceable>.
+	If <command>postgres</command> is running under the
+	<command>postmaster</command>, this option is ignored,
+	and the <systemitem>stderr</> inherited from the
+	<command>postmaster</command> is used.
        </para>
       </listitem>
      </varlistentry>
@@ -249,69 +158,13 @@ PostgreSQL documentation
     <title>Semi-internal Options</title>
 
     <para>
-     There are several other options that may be specified, used
-     mainly for debugging purposes.  These are listed here only for
-     the use by <productname>PostgreSQL</productname> system
-     developers.  <emphasis>Use of any of these options is highly
-     discouraged.</emphasis>  Furthermore, any of these options may
-     disappear or change in a future release without notice.
-   </para>
+     The options <option>-f</option>, <option>-O</option>,
+     <option>-P</option>, <option>-t</option>, and <option>-W</option>
+     have the same meanings as with the <xref
+     linkend="app-postmaster"> and are reserved for debugging and
+     disaster recovery.  Further options for internal use are:
+
     <variablelist>
-
-     <varlistentry>
-      <term><option>-f</option> <literal>{ s | i | m | n | h }</literal></term>
-      <listitem>
-       <para>
-	Forbids the use of particular scan and join methods:
-	<literal>s</literal> and <literal>i</literal>
-	disable sequential and index scans respectively, while
-	<literal>n</literal>, <literal>m</literal>, and <literal>h</literal>
-	disable nested-loop, merge and hash joins respectively.
-       </para>
-	
-	<note>
-	 <para>
-	  Neither sequential scans nor nested-loop joins can be disabled completely;
-	  the <literal>-fs</literal> and <literal>-fn</literal>
-	  options simply discourage the optimizer from using those
-	  plan types if it has any other alternative.
-	 </para>
-	</note>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-O</option></term>
-      <listitem>
-       <para>
-	Allows the structure of system tables to be modified.  This is
-	used by <command>initdb</command>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-p</option> <replaceable class="parameter">database</replaceable></term>
-      <listitem>
-       <para>
-	Indicates that this process has been started by a
-	<command>postmaster</command> and specifies the database to use.
-	etc.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-t</option> <literal>pa[rser] | pl[anner] | e[xecutor]</literal></term>
-      <listitem>
-       <para>
-	Print timing statistics for each query relating to each of the
-	major system modules.  This option cannot be used together
-	with the <option>-s</option> option.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry>
       <term><option>-v</option> <replaceable class="parameter">protocol</replaceable></term>
       <listitem>
@@ -323,12 +176,12 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-W</option> <replaceable class="parameter">seconds</replaceable></term>
+      <term><option>-y</option> <replaceable class="parameter">database</replaceable></term>
       <listitem>
        <para>
-	As soon as this option is encountered, the process sleeps for
-	the specified amount of seconds.  This gives developers time
-	to attach a debugger to the server process.
+	Indicates that this process has been started by a
+	<command>postmaster</command> and specifies the database to use.
+	etc.
        </para>
       </listitem>
      </varlistentry>
@@ -343,8 +196,8 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
-
     </variablelist>
+    </para>
    </refsect2>
  </refsect1>
 
@@ -361,13 +214,7 @@ PostgreSQL documentation
      </para>
     </listitem>
    </varlistentry>
-
   </variablelist>
-
-  <para>
-   For others, which have little influence during single-user mode,
-   see <xref linkend="app-postmaster">.
-  </para>
  </refsect1>
 
  <refsect1>
@@ -423,7 +270,7 @@ PostgreSQL documentation
    </para>
 
    <para>
-    But if you use the <option>-N</> command line switch, then newline does
+    But if you use the <option>-j</> command line switch, then newline does
     not terminate command entry.  In this case, the server will read the standard input
     until the end-of-file (<acronym>EOF</>) marker, then
     process the input as a single command string.  Backslash-newline is not
@@ -434,7 +281,7 @@ PostgreSQL documentation
     To quit the session, type <acronym>EOF</acronym>
     (<keycombo action="simul"><keycap>Control</><keycap>D</></>, usually).
     If you've
-    used <option>-N</>, two consecutive <acronym>EOF</>s are needed to exit.
+    used <option>-j</>, two consecutive <acronym>EOF</>s are needed to exit.
    </para>
 
    <para>

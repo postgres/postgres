@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.52 2005/12/03 05:51:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.53 2006/01/05 10:07:44 petere Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -185,7 +185,7 @@ systable_beginscan(Relation heapRelation,
 	Relation	irel;
 
 	if (indexOK &&
-		!IsIgnoringSystemIndexes() &&
+		!IgnoreSystemIndexes &&
 		!ReindexIsProcessingIndex(indexId))
 		irel = index_open(indexId);
 	else

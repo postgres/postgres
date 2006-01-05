@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.152 2006/01/05 03:01:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.153 2006/01/05 10:07:46 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,27 +62,7 @@ static char socketLockFile[MAXPGPATH];
  * ----------------------------------------------------------------
  */
 
-static bool isIgnoringSystemIndexes = false;
-
-/*
- * IsIgnoringSystemIndexes
- *		True if ignoring system indexes.
- */
-bool
-IsIgnoringSystemIndexes(void)
-{
-	return isIgnoringSystemIndexes;
-}
-
-/*
- * IgnoreSystemIndexes
- *		Set true or false whether PostgreSQL ignores system indexes.
- */
-void
-IgnoreSystemIndexes(bool mode)
-{
-	isIgnoringSystemIndexes = mode;
-}
+bool IgnoreSystemIndexes = false;
 
 /* ----------------------------------------------------------------
  *		system index reindexing support

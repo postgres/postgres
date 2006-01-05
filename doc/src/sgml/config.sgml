@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.41 2005/12/27 23:54:01 adunstan Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.42 2006/01/05 10:07:44 petere Exp $
 -->
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -2407,8 +2407,7 @@ SELECT * FROM parent WHERE key = 2400;
        <para>
         Runs the server silently. If this option is set, the server
         will automatically run in background and any controlling
-        terminals are disassociated (same effect as
-        <command>postmaster</>'s <option>-S</option> option).
+        terminals are disassociated.
         The server's standard output and standard error are redirected
         to <literal>/dev/null</>, so any messages sent to them will be lost.
         Unless <application>syslog</> logging is selected or
@@ -4054,6 +4053,19 @@ plruby.use_strict = true        # generates error: unknown class name
     </para>
 
     <variablelist>
+     <varlistentry id="guc-allow-system-table-mods" xreflabel="allow_system_table_mods">
+      <term><varname>allow_system_table_mods</varname> (<type>boolean</type>)</term>
+      <indexterm>
+        <primary><varname>allow_system_table_mods</varname> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Allows the modification of the structure of system tables.
+        This is used by <command>initdb</command>.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-debug-assertions" xreflabel="debug_assertions">
       <term><varname>debug_assertions</varname> (<type>boolean</type>)</term>
       <indexterm>
@@ -4075,6 +4087,35 @@ plruby.use_strict = true        # generates error: unknown class name
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-ignore-system-indexes" xreflabel="ignore_system_indexes">
+      <term><varname>ignore_system_indexes</varname> (<type>boolean</type>)</term>
+      <indexterm>
+        <primary><varname>ignore_system_indexes</varname> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Ignore system indexes when reading system tables (but still
+        update the indexes when modifying the tables).  This is useful
+        when recovering from damaged system indexes.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-post-auth-delay" xreflabel="post_auth_delay">
+      <term><varname>post_auth_delay</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>post_auth_delay</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        If nonzero, a delay of this many seconds occurs when a new
+        server process is started, after it conducts the
+        authentication procedure.  This is intended to give an
+        opportunity to attach to the server process with a debugger.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-pre-auth-delay" xreflabel="pre_auth_delay">
       <term><varname>pre_auth_delay</varname> (<type>integer</type>)</term>
       <indexterm>
@@ -4082,11 +4123,11 @@ plruby.use_strict = true        # generates error: unknown class name
       </indexterm>
       <listitem>
        <para>
-        If nonzero, a delay of this many seconds occurs just after a new
-        server process is forked, before it conducts the authentication
-        process.  This is intended to give an opportunity to attach to the
-        server process with a debugger to trace down misbehavior in
-        authentication.
+        If nonzero, a delay of this many seconds occurs just after a
+        new server process is forked, before it conducts the
+        authentication procedure.  This is intended to give an
+        opportunity to attach to the server process with a debugger to
+        trace down misbehavior in authentication.
        </para>
       </listitem>
      </varlistentry>
@@ -4182,9 +4223,12 @@ plruby.use_strict = true        # generates error: unknown class name
    <title>Short Options</title>
 
    <para>
-    For convenience there are also single letter command-line option switches
-    available for some parameters. They are described in <xref
-    linkend="runtime-config-short-table">.
+    For convenience there are also single letter command-line option
+    switches available for some parameters.  They are described in
+    <xref linkend="runtime-config-short-table">.  Some of these
+    options exist for historical reasons, and their presence as a
+    single-letter option does not necessarily indicate an endorsement
+    to use the option heavily.
    </para>
 
     <table id="runtime-config-short-table">
@@ -4199,12 +4243,36 @@ plruby.use_strict = true        # generates error: unknown class name
 
       <tbody>
        <row>
+        <entry><option>-A <replaceable>x</replaceable></option></entry>
+        <entry><literal>debug_assertions = <replaceable>x</replaceable></></entry>
+       </row>
+       <row>
         <entry><option>-B <replaceable>x</replaceable></option></entry>
         <entry><literal>shared_buffers = <replaceable>x</replaceable></></entry>
        </row>
        <row>
         <entry><option>-d <replaceable>x</replaceable></option></entry>
         <entry><literal>log_min_messages = DEBUG<replaceable>x</replaceable></></entry>
+       </row>
+       <row>
+        <entry><option>-e</option></entry>
+        <entry><literal>datestyle = euro</></entry>
+       </row>
+       <row>
+        <entry>
+          <option>-fb</option>, <option>-fh</option>, <option>-fi</option>,
+          <option>-fm</option>, <option>-fn</option>,
+          <option>-fs</option>, <option>-ft</option>
+         </entry>
+         <entry>
+          <literal>enable_bitmapscan = off</>,
+          <literal>enable_hashjoin = off</>,
+          <literal>enable_indexscan = off</>,
+          <literal>enable_mergejoin = off</>,
+          <literal>enable_nestloop = off</>,
+          <literal>enable_seqscan = off</>,
+          <literal>enable_tidscan = off</>
+         </entry>
        </row>
        <row>
         <entry><option>-F</option></entry>
@@ -4231,55 +4299,34 @@ plruby.use_strict = true        # generates error: unknown class name
         <entry><literal>max_connections = <replaceable>x</replaceable></></entry>
        </row>
        <row>
+        <entry><option>-O</option></entry>
+        <entry><literal>allow_system_table_mods = on</></entry>
+       </row>
+       <row>
         <entry><option>-p <replaceable>x</replaceable></option></entry>
         <entry><literal>port = <replaceable>x</replaceable></></entry>
        </row>
-
        <row>
-        <entry>
-          <option>-fb</option>, <option>-fh</option>, <option>-fi</option>,
-          <option>-fm</option>, <option>-fn</option>,
-          <option>-fs</option>, <option>-ft</option><footnote
-          id="fn.runtime-config-short">
-           <para>
-            For historical reasons, these options must be passed to
-            the individual server process via the <option>-o</option>
-            <command>postmaster</command> option, for example,
-<screen>
-$ <userinput>postmaster -o '-S 1024 -s'</userinput>
-</screen>
-            or via <envar>PGOPTIONS</envar> from the client side, as
-            explained above.
-           </para>
-          </footnote>
-         </entry>
-         <entry>
-          <literal>enable_bitmapscan = off</>,
-          <literal>enable_hashjoin = off</>,
-          <literal>enable_indexscan = off</>,
-          <literal>enable_mergejoin = off</>,
-          <literal>enable_nestloop = off</>,
-          <literal>enable_seqscan = off</>,
-          <literal>enable_tidscan = off</>
-         </entry>
+        <entry><option>-P</option></entry>
+        <entry><literal>ignore_system_indexes = on</></entry>
        </row>
-
        <row>
-        <entry><option>-s</option><footnoteref linkend="fn.runtime-config-short"></entry>
+        <entry><option>-s</option></entry>
         <entry><literal>log_statement_stats = on</></entry>
        </row>
-
        <row>
-        <entry><option>-S <replaceable>x</replaceable></option><footnoteref linkend="fn.runtime-config-short">
-        </entry>
+        <entry><option>-S <replaceable>x</replaceable></option></entry>
         <entry><literal>work_mem = <replaceable>x</replaceable></></entry>
        </row>
-
        <row>
-        <entry><option>-tpa</option>, <option>-tpl</option>, <option>-te</option><footnoteref linkend="fn.runtime-config-short"></entry>
+        <entry><option>-tpa</option>, <option>-tpl</option>, <option>-te</option></entry>
         <entry><literal>log_parser_stats = on</>,
         <literal>log_planner_stats = on</>, 
         <literal>log_executor_stats = on</></entry>
+       </row>
+       <row>
+        <entry><option>-W <replaceable>x</replaceable></option></entry>
+        <entry><literal>post_auth_delay = <replaceable>x</replaceable></></entry>
        </row>
       </tbody>
      </tgroup>
