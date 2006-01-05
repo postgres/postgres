@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.55 2002/10/31 22:37:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.55.2.1 2006/01/05 00:55:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@
 #include "miscadmin.h"
 #include "bootstrap/bootstrap.h"
 #include "tcop/tcopprot.h"
+#include "utils/pg_locale.h"
 #include "utils/ps_status.h"
 
 
@@ -130,19 +131,26 @@ main(int argc, char *argv[])
 	 * get already localized behavior during startup (e.g., error
 	 * messages).
 	 */
-	setlocale(LC_COLLATE, "");
-	setlocale(LC_CTYPE, "");
+	pg_perm_setlocale(LC_COLLATE, "");
+	pg_perm_setlocale(LC_CTYPE, "");
 #ifdef LC_MESSAGES
-	setlocale(LC_MESSAGES, "");
+	pg_perm_setlocale(LC_MESSAGES, "");
 #endif
 
 	/*
 	 * We don't use these during startup.  See also pg_locale.c about why
 	 * these are set to "C".
 	 */
-	setlocale(LC_MONETARY, "C");
-	setlocale(LC_NUMERIC, "C");
-	setlocale(LC_TIME, "C");
+	pg_perm_setlocale(LC_MONETARY, "C");
+	pg_perm_setlocale(LC_NUMERIC, "C");
+	pg_perm_setlocale(LC_TIME, "C");
+
+	/*
+	 * Now that we have absorbed as much as we wish to from the locale
+	 * environment, remove any LC_ALL setting, so that the environment
+	 * variables installed by pg_perm_setlocale have force.
+	 */
+	unsetenv("LC_ALL");
 
 #ifdef ENABLE_NLS
 	bindtextdomain("postgres", LOCALEDIR);

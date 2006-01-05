@@ -2,7 +2,7 @@
  *
  * PostgreSQL locale utilities
  *
- * $Id: pg_locale.h,v 1.14 2002/09/04 20:31:45 momjian Exp $
+ * $Id: pg_locale.h,v 1.14.2.1 2006/01/05 00:55:36 tgl Exp $
  *
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
@@ -27,6 +27,8 @@ extern const char *locale_numeric_assign(const char *value,
 					  bool doit, bool interactive);
 extern const char *locale_time_assign(const char *value,
 				   bool doit, bool interactive);
+
+extern char *pg_perm_setlocale(int category, const char *locale);
 
 extern bool lc_collate_is_c(void);
 

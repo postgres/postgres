@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.109.2.5 2005/05/31 19:11:14 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.109.2.6 2006/01/05 00:55:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@
 #include "storage/sinval.h"
 #include "storage/spin.h"
 #include "utils/builtins.h"
+#include "utils/pg_locale.h"
 #include "utils/relcache.h"
 #include "miscadmin.h"
 
@@ -2283,13 +2284,13 @@ ReadControlFile(void)
 			 "\tIt looks like you need to initdb.",
 			 ControlFile->localeBuflen, LOCALE_NAME_BUFLEN);
 
-	if (setlocale(LC_COLLATE, ControlFile->lc_collate) == NULL)
+	if (pg_perm_setlocale(LC_COLLATE, ControlFile->lc_collate) == NULL)
 		elog(PANIC,
 		   "The database cluster was initialized with LC_COLLATE '%s',\n"
 			 "\twhich is not recognized by setlocale().\n"
 			 "\tIt looks like you need to initdb.",
 			 ControlFile->lc_collate);
-	if (setlocale(LC_CTYPE, ControlFile->lc_ctype) == NULL)
+	if (pg_perm_setlocale(LC_CTYPE, ControlFile->lc_ctype) == NULL)
 		elog(PANIC,
 			 "The database cluster was initialized with LC_CTYPE '%s',\n"
 			 "\twhich is not recognized by setlocale().\n"
