@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Jan  5 11:39:45 EST 2006
+Last updated:		Thu Jan  5 12:47:47 EST 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -510,6 +510,8 @@ SQL Commands
 
 	* Allow GRANT/REVOKE permissions to be inherited by objects based on
 	  schema permissions
+
+	* Allow SERIAL sequences to inherit permissions from the base table?
 
 
 * CURSOR
