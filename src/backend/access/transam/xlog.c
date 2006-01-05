@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.125.2.3 2005/05/31 19:10:57 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.125.2.4 2006/01/05 00:55:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@
 #include "storage/spin.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
+#include "utils/pg_locale.h"
 #include "utils/relcache.h"
 #include "miscadmin.h"
 
@@ -2349,14 +2350,14 @@ ReadControlFile(void)
 			  " but the server was compiled with LOCALE_NAME_BUFLEN %d.",
 						   ControlFile->localeBuflen, LOCALE_NAME_BUFLEN),
 			 errhint("It looks like you need to recompile or initdb.")));
-	if (setlocale(LC_COLLATE, ControlFile->lc_collate) == NULL)
+	if (pg_perm_setlocale(LC_COLLATE, ControlFile->lc_collate) == NULL)
 		ereport(FATAL,
 		(errmsg("database files are incompatible with operating system"),
 		 errdetail("The database cluster was initialized with LC_COLLATE \"%s\","
 				   " which is not recognized by setlocale().",
 				   ControlFile->lc_collate),
 		 errhint("It looks like you need to initdb or install locale support.")));
-	if (setlocale(LC_CTYPE, ControlFile->lc_ctype) == NULL)
+	if (pg_perm_setlocale(LC_CTYPE, ControlFile->lc_ctype) == NULL)
 		ereport(FATAL,
 		(errmsg("database files are incompatible with operating system"),
 		 errdetail("The database cluster was initialized with LC_CTYPE \"%s\","
