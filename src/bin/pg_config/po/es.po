@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_config 8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-11-05 23:36-0300\n"
+"POT-Creation-Date: 2005-11-06 23:05-0300\n"
 "PO-Revision-Date: 2004-11-02 23:30 CLST\n"
 "Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: es <pgsql-es-ayuda@postgresql.org>\n"
@@ -109,8 +109,7 @@ msgstr ""
 #: pg_config.c:421
 #, c-format
 msgid "  --mandir              show location of manual pages\n"
-msgstr ""
-"  --mandir              muestra la ubicación de páginas de manual\n"
+msgstr "  --mandir              muestra la ubicación de páginas de manual\n"
 
 #: pg_config.c:422
 #, c-format
@@ -149,7 +148,8 @@ msgstr ""
 #, c-format
 msgid "  --cc                  show CC value used when PostgreSQL was built\n"
 msgstr ""
-"  --cc                  muestra el valor de CC cuando PostgreSQL fue construido\n"
+"  --cc                  muestra el valor de CC cuando PostgreSQL fue "
+"construido\n"
 
 #: pg_config.c:428
 #, c-format
@@ -189,7 +189,8 @@ msgid ""
 "  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was "
 "built\n"
 msgstr ""
-"  --ldflags_sl          muestra el valor de LDFLAGS_SL cuando PostgreSQL fue\n"
+"  --ldflags_sl          muestra el valor de LDFLAGS_SL cuando PostgreSQL "
+"fue\n"
 "                        construido\n"
 
 #: pg_config.c:433
@@ -208,8 +209,7 @@ msgstr "  --version             muestra la versión de PostgreSQL\n"
 #: pg_config.c:435
 #, c-format
 msgid "  --help                show this help, then exit\n"
-msgstr ""
-"  --help                muestra esta ayuda y termina\n"
+msgstr "  --help                muestra esta ayuda y termina\n"
 
 #: pg_config.c:436
 #, c-format
@@ -230,8 +230,7 @@ msgstr "Reporte errores a <pgsql-bugs@postgresql.org>.\n"
 #: pg_config.c:443
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr ""
-"Use «%s --help» para mayor información.\n"
+msgstr "Use «%s --help» para mayor información.\n"
 
 #: pg_config.c:482
 #, c-format
