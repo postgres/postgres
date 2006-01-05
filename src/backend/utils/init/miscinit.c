@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.151 2005/11/22 18:17:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.152 2006/01/05 03:01:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -777,7 +777,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		 * using real kill() either...
 		 *
 		 * Normally kill() will fail with ESRCH if the given PID doesn't
-		 * exist. BeOS returns EINVAL for some silly reason, however.
+		 * exist.
 		 */
 		if (other_pid != my_pid
 #ifndef WIN32
@@ -786,11 +786,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 			)
 		{
 			if (kill(other_pid, 0) == 0 ||
-				(errno != ESRCH &&
-#ifdef __BEOS__
-				 errno != EINVAL &&
-#endif
-				 errno != EPERM))
+				(errno != ESRCH && errno != EPERM))
 			{
 				/* lockfile belongs to a live process */
 				ereport(FATAL,

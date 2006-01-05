@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.38 2005/10/15 02:49:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.39 2006/01/05 03:01:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -220,7 +220,6 @@ main(int argc, char *argv[])
 	 * the data directory.
 	 */
 #ifndef WIN32
-#ifndef __BEOS__				/* no root check on BeOS */
 	if (geteuid() == 0)
 	{
 		fprintf(stderr, _("%s: cannot be executed by \"root\"\n"),
@@ -229,7 +228,6 @@ main(int argc, char *argv[])
 				progname);
 		exit(1);
 	}
-#endif
 #endif
 
 	DataDir = argv[optind];

@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.62 2005/11/22 18:17:28 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.63 2006/01/05 03:01:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1322,7 +1322,6 @@ main(int argc, char **argv)
 	 * Disallow running as root, to forestall any possible security holes.
 	 */
 #ifndef WIN32
-#ifndef __BEOS__				/* no root check on BEOS */
 	if (geteuid() == 0)
 	{
 		write_stderr(_("%s: cannot be run as root\n"
@@ -1332,7 +1331,6 @@ main(int argc, char **argv)
 					 progname);
 		exit(1);
 	}
-#endif
 #endif
 
 	/*

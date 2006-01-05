@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.251 2006/01/05 01:56:28 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.252 2006/01/05 03:01:32 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1995,13 +1995,6 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
     </thead>
 
     <tbody>
-     <row>
-      <entry><systemitem class="osname">BeOS</></entry>
-      <entry><systemitem>x86</></entry>
-      <entry>7.2</entry>
-      <entry>Cyril Velter (<email>cyril.velter@libertysurf.fr</email>), 2001-11-29</entry>
-      <entry>needs updates to semaphore code</entry>
-     </row>
      <row>
       <entry><systemitem class="osname">Linux</></entry>
       <entry><systemitem>PlayStation 2</></entry>

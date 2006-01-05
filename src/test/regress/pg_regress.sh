@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.63 2006/01/05 01:56:30 momjian Exp $
+# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.64 2006/01/05 03:01:38 momjian Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -216,7 +216,7 @@ esac
 # On some platforms we can't use Unix sockets.
 # ----------
 case $host_platform in
-    *-*-cygwin* | *-*-mingw32* | *beos*)
+    *-*-cygwin* | *-*-mingw32*)
         unix_sockets=no;;
     *)
         unix_sockets=yes;;

@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.440 2006/01/05 01:56:28 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.441 2006/01/05 03:01:32 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -49,7 +49,6 @@ PGAC_ARG_REQ(with, template, [],
 
 case $host_os in
      aix*) template=aix ;;
-    beos*) template=beos ;;
     bsdi*) template=bsdi ;;
   cygwin*) template=cygwin ;;
   darwin*) template=darwin ;;
@@ -614,11 +613,6 @@ AC_SEARCH_LIBS(getopt_long, [getopt gnugetopt])
 # QNX:
 AC_CHECK_LIB(unix, main)
 AC_SEARCH_LIBS(crypt,  crypt)
-# BeOS:
-if test "$PORTNAME" = "beos"
-then
-	AC_CHECK_LIB(bind, __inet_ntoa)
-fi
 # Solaris:
 AC_SEARCH_LIBS(fdatasync, [rt posix4])
 # Cygwin:

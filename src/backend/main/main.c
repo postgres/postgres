@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.98 2005/12/28 23:22:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.99 2006/01/05 03:01:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,11 +118,6 @@ main(int argc, char *argv[])
 	}
 #endif
 
-#ifdef __BEOS__
-	/* BeOS-specific actions on startup */
-	beos_startup(argc, argv);
-#endif
-
 	/*
 	 * Not-quite-so-platform-specific startup environment checks. Still best
 	 * to minimize these.
@@ -205,13 +200,8 @@ main(int argc, char *argv[])
 			  strcmp(argv[1], "-V") == 0)))
 	{
 #ifndef WIN32
-#ifndef __BEOS__
-
 		/*
 		 * Make sure we are not running as root.
-		 *
-		 * BeOS currently runs everything as root :-(, so this check must be
-		 * temporarily disabled there...
 		 */
 		if (geteuid() == 0)
 		{
@@ -221,7 +211,6 @@ main(int argc, char *argv[])
 				  "more information on how to properly start the server.\n");
 			exit(1);
 		}
-#endif   /* !__BEOS__ */
 
 		/*
 		 * Also make sure that real and effective uids are the same. Executing

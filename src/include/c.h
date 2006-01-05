@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.193 2005/12/25 02:14:18 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.194 2006/01/05 03:01:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,11 +170,6 @@
  * built-in definition of bool.
  */
 
-/* BeOS defines bool already, but the compiler chokes on the
- * #ifndef unless we wrap it in this check.
- */
-#ifndef __BEOS__
-
 #ifndef __cplusplus
 
 #ifndef bool
@@ -189,7 +184,6 @@ typedef char bool;
 #define false	((bool) 0)
 #endif
 #endif   /* not C++ */
-#endif   /* __BEOS__ */
 
 typedef bool *BoolPtr;
 

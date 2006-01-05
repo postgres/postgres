@@ -10,7 +10,6 @@
 #include "ecpgtype.h"
 #include <string.h>
 
-#ifndef __BEOS__
 #ifndef __cplusplus
 #ifndef bool
 #define bool char
@@ -23,9 +22,6 @@
 #define false	((bool) 0)
 #endif   /* ndef false */
 #endif   /* not C++ */
-#else							/* __BEOS__ */
-#include <SupportDefs.h>
-#endif   /* __BEOS__ */
 
 #ifndef TRUE
 #define TRUE	1

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.360 2006/01/05 01:56:28 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.361 2006/01/05 03:01:33 momjian Exp $
 -->
 
 <chapter Id="runtime">
@@ -480,9 +480,9 @@ psql: could not connect to server: No such file or directory
     relevant for <productname>PostgreSQL</>). Almost all modern
     operating systems provide these features, but not all of them have
     them turned on or sufficiently sized by default, especially systems
-    with BSD heritage. (For the <systemitem class="osname">Windows</> and
-    <systemitem class="osname">BeOS</> ports, <productname>PostgreSQL</> 
-    provides its own replacement implementation of these facilities.)
+    with BSD heritage. (For the <systemitem class="osname">Windows</>
+    port, <productname>PostgreSQL</> provides its own replacement 
+    implementation of these facilities.)
    </para>
 
    <para>

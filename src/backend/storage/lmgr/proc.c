@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.171 2006/01/04 21:06:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.172 2006/01/05 03:01:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1113,12 +1113,7 @@ bool
 enable_sig_alarm(int delayms, bool is_statement_timeout)
 {
 	struct timeval fin_time;
-
-#ifndef __BEOS__
 	struct itimerval timeval;
-#else
-	bigtime_t	time_interval;
-#endif
 
 	/* Compute target timeout time if we will need it */
 	if (is_statement_timeout || statement_timeout_active)
@@ -1170,18 +1165,11 @@ enable_sig_alarm(int delayms, bool is_statement_timeout)
 	}
 
 	/* If we reach here, okay to set the timer interrupt */
-#ifndef __BEOS__
 	MemSet(&timeval, 0, sizeof(struct itimerval));
 	timeval.it_value.tv_sec = delayms / 1000;
 	timeval.it_value.tv_usec = (delayms % 1000) * 1000;
 	if (setitimer(ITIMER_REAL, &timeval, NULL))
 		return false;
-#else
-	/* BeOS doesn't have setitimer, but has set_alarm */
-	time_interval = delayms * 1000;		/* usecs */
-	if (set_alarm(time_interval, B_ONE_SHOT_RELATIVE_ALARM) < 0)
-		return false;
-#endif
 	return true;
 }
 
@@ -1204,7 +1192,6 @@ disable_sig_alarm(bool is_statement_timeout)
 	 */
 	if (statement_timeout_active || deadlock_timeout_active)
 	{
-#ifndef __BEOS__
 		struct itimerval timeval;
 
 		MemSet(&timeval, 0, sizeof(struct itimerval));
@@ -1215,16 +1202,6 @@ disable_sig_alarm(bool is_statement_timeout)
 			deadlock_timeout_active = false;
 			return false;
 		}
-#else
-		/* BeOS doesn't have setitimer, but has set_alarm */
-		if (set_alarm(B_INFINITE_TIMEOUT, B_PERIODIC_ALARM) < 0)
-		{
-			statement_timeout_active = false;
-			cancel_from_timeout = false;
-			deadlock_timeout_active = false;
-			return false;
-		}
-#endif
 	}
 
 	/* Always cancel deadlock timeout, in case this is error cleanup */
@@ -1274,7 +1251,6 @@ CheckStatementTimeout(void)
 	else
 	{
 		/* Not time yet, so (re)schedule the interrupt */
-#ifndef __BEOS__
 		struct itimerval timeval;
 
 		MemSet(&timeval, 0, sizeof(struct itimerval));
@@ -1287,16 +1263,6 @@ CheckStatementTimeout(void)
 		}
 		if (setitimer(ITIMER_REAL, &timeval, NULL))
 			return false;
-#else
-		/* BeOS doesn't have setitimer, but has set_alarm */
-		bigtime_t	time_interval;
-
-		time_interval =
-			(statement_fin_time.tv_sec - now.tv_sec) * 1000000 +
-			(statement_fin_time.tv_usec - now.tv_usec);
-		if (set_alarm(time_interval, B_ONE_SHOT_RELATIVE_ALARM) < 0)
-			return false;
-#endif
 	}
 
 	return true;

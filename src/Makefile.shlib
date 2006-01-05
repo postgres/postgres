@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.101 2005/12/30 21:43:41 momjian Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.102 2006/01/05 03:01:34 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -246,12 +246,6 @@ ifeq ($(PORTNAME), win32)
   haslibarule   = yes
 endif
 
-ifeq ($(PORTNAME), beos)
-  shlib			= lib$(NAME)$(DLSUFFIX)
-  LINK.shared		= $(LD) -nostart
-  SHLIB_LINK		+= -ltermcap -lstdc++.r4 -lbind -lsocket -L/boot/develop/lib/x86
-endif
-
 ifeq ($(enable_rpath), yes)
 SHLIB_LINK += $(rpath)
 endif
@@ -290,7 +284,6 @@ ifeq ($(enable_shared), yes)
 
 ifneq ($(PORTNAME), win32)
 ifneq ($(PORTNAME), cygwin)
-ifneq ($(PORTNAME), beos)
 ifneq ($(PORTNAME), aix)
 
 # Normal case
@@ -315,15 +308,6 @@ $(shlib): lib$(NAME).a
 	$(COMPILER) $(LDFLAGS_NO_L) $(LDFLAGS_SL) -o $@ $< -Wl,-bE:lib$(NAME)$(EXPSUFF) $(SHLIB_LINK)
 	
 endif # PORTNAME == aix
-
-else # PORTNAME == beos
-
-# BEOS case
-$(shlib): $(OBJS)
-	ln -fs $(top_srcdir)/src/backend/postgres _APP_
-	$(CC) -Xlinker -soname=$@ $(LDFLAGS_SL) -o $@ _APP_ $(OBJS) $(SHLIB_LINK)
-
-endif # PORTNAME == beos
 
 else # PORTNAME == cygwin
 

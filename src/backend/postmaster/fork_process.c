@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/fork_process.c,v 1.4 2005/10/15 02:49:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/fork_process.c,v 1.5 2006/01/05 03:01:35 momjian Exp $
  */
 #include "postgres.h"
 #include "postmaster/fork_process.h"
@@ -52,31 +52,14 @@ fork_process(void)
 	getitimer(ITIMER_PROF, &prof_itimer);
 #endif
 
-#ifdef __BEOS__
-	/* Specific beos actions before backend startup */
-	beos_before_backend_startup();
-#endif
-
 	result = fork();
-	if (result == (pid_t) -1)
-	{
-		/* fork failed */
-#ifdef __BEOS__
-		/* Specific beos backend startup actions */
-		beos_backend_startup_failed();
-#endif
-	}
-	else if (result == 0)
+	if (result == 0)
 	{
 		/* fork succeeded, in child */
 #ifdef LINUX_PROFILE
 		setitimer(ITIMER_PROF, &prof_itimer, NULL);
 #endif
 
-#ifdef __BEOS__
-		/* Specific beos backend startup actions */
-		beos_backend_startup();
-#endif
 	}
 
 	return result;
