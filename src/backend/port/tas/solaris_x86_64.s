@@ -1,7 +1,8 @@
 /=============================================================================
 / tas.s -- test and set lock for solaris_i386
 / based on i386 ASM with modifications outlined in
-/ http://www.x86-64.org/documentation/assembly
+/ http://www.x86-64.org/documentation/assembly.
+/ This might require flags:  -Xa -xtarget=opteron -xarch=amd64
 /=============================================================================
 
         .file   "tas.s"
