@@ -8,7 +8,7 @@
  * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: pg_config.h.in,v 1.32.2.1 2002/11/08 05:23:09 tgl Exp $
+ * $Id: pg_config.h.in,v 1.32.2.2 2006/01/05 00:51:52 tgl Exp $
  */
 
 #ifndef PG_CONFIG_H
@@ -440,6 +440,9 @@
 
 /* Set to 1 if you have isinf() */
 #undef HAVE_ISINF
+
+/* Define to 1 if you have the `unsetenv' function. */
+#undef HAVE_UNSETENV
 
 /*
  *	These are all related to port/isinf.c 

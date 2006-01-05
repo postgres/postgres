@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.130.2.1 2005/07/18 15:54:30 tgl Exp $
+ * $Id: c.h,v 1.130.2.2 2006/01/05 00:51:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -667,6 +667,10 @@ extern int	vsnprintf(char *str, size_t count, const char *fmt, va_list args);
 
 #if !defined(HAVE_MEMMOVE) && !defined(memmove)
 #define memmove(d, s, c)		bcopy(s, d, c)
+#endif
+
+#ifndef HAVE_UNSETENV
+extern void unsetenv(const char *name);
 #endif
 
 #endif   /* C_H */
