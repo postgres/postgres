@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.14 2006/01/05 14:54:07 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.15 2006/01/05 15:13:26 momjian Exp $
 
 Typical markup:
 
@@ -55,13 +55,14 @@ those locales to fix  existing indexes.</para></listitem>
 <listitem><para>Allow more flexible relocation of installation
 directories (Tom)</para> <para>Previous releases supported relocation
 only if all directories were the same except the last
-componient.</para></listitem>
+component.</para></listitem>
 
 <listitem><para>Prevent crashed caused by the use of
 <literal>ISO-8859-5</> and <literal>ISO-8859-9</> encodings
 (Tatsuo)</para></listitem>
 
-<listitem><para>Fix long standing Asian multibyte charsets bug (Tatsuo)
+<listitem><para>Fix bug in strpos() and regular expression handling in
+certain rarely used Asian multi-byte character sets (Tatsuo)
 </para></listitem>
 
 <listitem><para>Fix bug where COPY CSV mode considered any
