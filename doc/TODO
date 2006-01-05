@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Jan  5 10:13:26 EST 2006
+Last updated:		Thu Jan  5 11:23:42 EST 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1013,6 +1013,16 @@ Write-Ahead Log
   committed transactions but still be consistent.  We could perhaps
   remove the 'fsync' parameter (which results in an an inconsistent
   database) in favor of this capability.
+
+* Allow control over which tables are WAL-logged
+
+  Allow tables to bypass WAL writes and just fsync() dirty pages on
+  commit.  To do this, only a single writer can modify the table, and
+  writes must happen only on new pages.  Readers can continue accessing
+  the table. Another option is to avoid transaction logging entirely 
+  and truncate or drop the table on crash recovery.  These should be 
+  implemented using ALTER TABLE, e.g. ALTER TABLE PERSISTENCE [ DROP |
+  TRUNCATE | STABLE | DEFAULT ].  [wallog]
 
 
 Optimizer / Executor
