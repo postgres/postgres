@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.30.4.1 2005/03/16 00:03:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.30.4.2 2006/01/05 00:55:07 tgl Exp $
  *
  *-----------------------------------------------------------------------
  */
@@ -50,11 +50,8 @@
 
 #include <locale.h>
 
+#include "catalog/pg_control.h"
 #include "utils/pg_locale.h"
-
-
-/* indicated whether locale information cache is valid */
-static bool CurrentLocaleConvValid = false;
 
 
 /* GUC storage area */
@@ -63,6 +60,120 @@ char	   *locale_messages;
 char	   *locale_monetary;
 char	   *locale_numeric;
 char	   *locale_time;
+
+/* indicates whether locale information cache is valid */
+static bool CurrentLocaleConvValid = false;
+
+/* Environment variable storage area */
+
+#define LC_ENV_BUFSIZE (LOCALE_NAME_BUFLEN + 20)
+
+static char lc_collate_envbuf[LC_ENV_BUFSIZE];
+static char lc_ctype_envbuf[LC_ENV_BUFSIZE];
+#ifdef LC_MESSAGES
+static char lc_messages_envbuf[LC_ENV_BUFSIZE];
+#endif
+static char lc_monetary_envbuf[LC_ENV_BUFSIZE];
+static char lc_numeric_envbuf[LC_ENV_BUFSIZE];
+static char lc_time_envbuf[LC_ENV_BUFSIZE];
+
+
+/*
+ * pg_perm_setlocale
+ *
+ * This is identical to the libc function setlocale(), with the addition
+ * that if the operation is successful, the corresponding LC_XXX environment
+ * variable is set to match.  By setting the environment variable, we ensure
+ * that any subsequent use of setlocale(..., "") will preserve the settings
+ * made through this routine.  Of course, LC_ALL must also be unset to fully
+ * ensure that, but that has to be done elsewhere after all the individual
+ * LC_XXX variables have been set correctly.  (Thank you Perl for making this
+ * kluge necessary.)
+ */
+char *
+pg_perm_setlocale(int category, const char *locale)
+{
+	char   *result;
+	const char *envvar;
+	char   *envbuf;
+
+#ifndef WIN32
+	result = setlocale(category, locale);
+#else
+	/*
+	 * On Windows, setlocale(LC_MESSAGES) does not work, so just assume
+	 * that the given value is good and set it in the environment variables.
+	 * We must ignore attempts to set to "", which means "keep using the
+	 * old environment value".
+	 */
+#ifdef LC_MESSAGES
+	if (category == LC_MESSAGES)
+	{
+		result = (char *) locale;
+		if (locale == NULL || locale[0] == '\0')
+			return result;
+	}
+	else
+#endif
+		result = setlocale(category, locale);
+#endif /* WIN32 */
+
+	if (result == NULL)
+		return result;			/* fall out immediately on failure */
+
+	switch (category)
+	{
+		case LC_COLLATE:
+			envvar = "LC_COLLATE";
+			envbuf = lc_collate_envbuf;
+			break;
+		case LC_CTYPE:
+			envvar = "LC_CTYPE";
+			envbuf = lc_ctype_envbuf;
+			break;
+#ifdef LC_MESSAGES
+		case LC_MESSAGES:
+			envvar = "LC_MESSAGES";
+			envbuf = lc_messages_envbuf;
+			break;
+#endif
+		case LC_MONETARY:
+			envvar = "LC_MONETARY";
+			envbuf = lc_monetary_envbuf;
+			break;
+		case LC_NUMERIC:
+			envvar = "LC_NUMERIC";
+			envbuf = lc_numeric_envbuf;
+			break;
+		case LC_TIME:
+			envvar = "LC_TIME";
+			envbuf = lc_time_envbuf;
+			break;
+		default:
+			elog(FATAL, "unrecognized LC category: %d", category);
+			envvar = NULL;		/* keep compiler quiet */
+			envbuf = NULL;
+			break;
+	}
+
+	snprintf(envbuf, LC_ENV_BUFSIZE-1, "%s=%s", envvar, result);
+
+#ifndef WIN32
+	if (putenv(envbuf))
+		return NULL;
+#else
+	/*
+	 * On Windows, we need to modify both the process environment and the
+	 * cached version in msvcrt
+	 */
+	if (!SetEnvironmentVariable(envvar, result))
+		return NULL;
+	if (_putenv(envbuf))
+		return NULL;
+#endif
+
+	return result;
+}
 
 
 /* GUC assign hooks */
@@ -123,49 +234,25 @@ locale_time_assign(const char *value, bool doit, GucSource source)
 const char *
 locale_messages_assign(const char *value, bool doit, GucSource source)
 {
-#ifndef WIN32
 	/*
 	 * LC_MESSAGES category does not exist everywhere, but accept it
 	 * anyway
+	 *
+	 * On Windows, we can't even check the value, so the non-doit case
+	 * is a no-op
 	 */
 #ifdef LC_MESSAGES
 	if (doit)
 	{
-		if (!setlocale(LC_MESSAGES, value))
+		if (!pg_perm_setlocale(LC_MESSAGES, value))
 			return NULL;
 	}
+#ifndef WIN32
 	else
 		value = locale_xxx_assign(LC_MESSAGES, value, false, source);
+#endif   /* WIN32 */
 #endif   /* LC_MESSAGES */
 	return value;
-
-#else /* WIN32 */
-
-	/*
-	 * Win32 does not have working setlocale() for LC_MESSAGES. We can only
-	 * use environment variables to change it (per gettext FAQ).  This
-	 * means we can't actually check the supplied value, so always assume
-	 * it's good.  Also, ignore attempts to set to "", which really means
-	 * "keep using the old value".  (Actually it means "use the environment
-	 * value", but we are too lazy to try to implement that exactly.)
-	 */
-	if (doit && value[0])
-	{
-		/*
-		 * We need to modify both the process environment and the cached
-		 * version in msvcrt
-		 */
-		static char env[128];
-
-		if (!SetEnvironmentVariable("LC_MESSAGES", value))
-			return NULL;
-
-		snprintf(env, sizeof(env)-1, "LC_MESSAGES=%s", value);
-		if (_putenv(env))
-			return NULL;
-	}
-	return value;
-#endif /* WIN32 */
 }
 
 
