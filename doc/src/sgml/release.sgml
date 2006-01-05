@@ -1,9 +1,70 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.15 2005/12/09 20:40:38 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.16 2006/01/05 05:23:09 momjian Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
+ 
+  <sect1 id="release-8-0-6">
+   <title>Release 8.0.6</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2006-01-09</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 8.0.5.
+   </para>
+
+   <sect2>
+    <title>Migration to version 8.0.6</title>
+
+    <para>
+     A dump/restore is not required for those running 8.0.X.  However,
+     if you are upgrading from a version earlier than 8.0.3, see the release
+     notes for 8.0.3.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+  
+<itemizedlist>
+
+<listitem><para>Fix for protocol-level describe portal statements issued
+outside a transaction (Tom)</para></listitem>
+
+<listitem><para>Fix character set sorting for locales that consider
+different character combinations to have the same sorting, e.g.
+Hungarian. (Tom) </para><para>This might require <command>REINDEX</> in
+those locales to fix  existing indexes.</para></listitem>
+
+<listitem><para>Allow more flexible relocation of installation
+directories (Tom)</para> <para>Previous releases supported relocation
+only if all directories were the same except the last
+componient.</para></listitem>
+
+<listitem><para>Fix long standing Asian multibyte charsets bug (Tatsuo)
+</para></listitem>
+
+<listitem><para>Various fixes for queries returning <literal>RECORD</>s
+(Tom) </para></listitem>
+
+<listitem><para>Fix bug in <filename>/contrib/pgcrypto</> Openwall
+gen_salt processing (Marko Kreen></para></listitem>
+
+<listitem><para>Fix <filename>/contrib/dblink</> to throw an error
+when the number of columns specified is different from those returned
+by the query (Joe)</para></listitem>
+
+<listitem><para>Set <literal>LC_XXX</> variables to prevent problems
+with <application>plperl</> processing (Tom)</para></listitem>
+
+</itemizedlist>
+
+   </sect2>
+  </sect1>
  
   <sect1 id="release-8-0-5">
    <title>Release 8.0.5</title>
@@ -2863,6 +2924,59 @@ typedefs (Michael)</para></listitem>
      </itemizedlist>
     </sect3>
   
+   </sect2>
+  </sect1>
+ 
+  <sect1 id="release-7-4-11">
+   <title>Release 7.4.11</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2006-01-09</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.4.10.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.4.11</title>
+
+    <para>
+     A dump/restore is not required for those running 7.4.X.  However,
+     if you are upgrading from a version earlier than 7.4.8, see the release
+     notes for 7.4.8.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+  
+<itemizedlist>
+
+<listitem><para>Fix for protocol-level describe portal statements issued
+outside a transaction (Tom)</para></listitem>
+
+<listitem><para>Fix character set sorting for locales that consider
+different character combinations to have the same sorting, e.g.
+Hungarian. (Tom) </para><para>This might require <command>REINDEX</> in
+those locales to fix  existing indexes.</para></listitem>
+
+<listitem><para>Fix long standing Asian multibyte charsets bug (Tatsuo)
+</para></listitem>
+
+<listitem><para>Fix bug in <filename>/contrib/pgcrypto</> Openwall
+gen_salt processing (Marko Kreen></para></listitem>
+
+<listitem><para>Fix <filename>/contrib/dblink</> to throw an error
+when the number of columns specified is different from those returned
+by the query (Joe)</para></listitem>
+
+<listitem><para>Set <literal>LC_XXX</> variables to prevent problems
+with <application>plperl</> processing (Tom)</para></listitem>
+
+</itemizedlist>
+
    </sect2>
   </sect1>
  
