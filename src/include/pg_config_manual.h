@@ -6,7 +6,7 @@
  * for developers.	If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.18 2005/10/07 20:11:03 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.19 2006/01/05 01:56:29 momjian Exp $
  *------------------------------------------------------------------------
  */
 
@@ -155,14 +155,14 @@
 /*
  * Disable UNIX sockets for those operating system.
  */
-#if defined(__QNX__) || defined(__BEOS__) || defined(WIN32)
+#if defined(__BEOS__) || defined(WIN32)
 #undef HAVE_UNIX_SOCKETS
 #endif
 
 /*
  * Define this if your operating system supports link()
  */
-#if !defined(__QNX__) && !defined(__BEOS__) && \
+#if !defined(__BEOS__) && \
 	!defined(WIN32) && !defined(__CYGWIN__)
 #define HAVE_WORKING_LINK 1
 #endif

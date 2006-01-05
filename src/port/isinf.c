@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/isinf.c,v 1.7 2005/10/15 02:49:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/isinf.c,v 1.8 2006/01/05 01:56:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,19 +73,4 @@ isinf(double x)
 	return 0;
 }
 #endif
-#endif
-
-#ifdef __QNX__
-#include <float.h>
-
-int
-isinf(double x)
-{
-	if (x == HUGE_VAL)
-		return 1;
-	if (x == -HUGE_VAL)
-		return -1;
-	return 0;
-}
-
 #endif

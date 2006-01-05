@@ -2,7 +2,7 @@
 #
 # Makefile for the bootstrap module
 #
-# $PostgreSQL: pgsql/src/backend/bootstrap/Makefile,v 1.32 2003/11/29 19:51:40 pgsql Exp $
+# $PostgreSQL: pgsql/src/backend/bootstrap/Makefile,v 1.33 2006/01/05 01:56:29 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,16 +12,9 @@ include $(top_builddir)/src/Makefile.global
 
 override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
 
-# qnx4's wlink currently crashes with bootstrap.o
-ifneq ($(PORTNAME), qnx4)
 OBJS= bootparse.o bootstrap.o 
-else
-OBJS= bootparse.o
-endif
 
-
-# make sure bootstrap.o is built even on qnx4
-all: SUBSYS.o bootstrap.o
+all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) $@ $^

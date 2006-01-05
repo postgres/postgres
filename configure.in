@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.439 2005/12/17 00:35:50 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.440 2006/01/05 01:56:28 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -64,7 +64,6 @@ case $host_os in
 nextstep*) template=nextstep ;;
  openbsd*) template=openbsd ;;
      osf*) template=osf ;;
-     qnx*) template=qnx4 ;;
      sco*) template=sco ;;
  solaris*) template=solaris ;;
    sunos*) template=sunos4 ;;

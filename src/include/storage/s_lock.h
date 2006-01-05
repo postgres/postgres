@@ -66,7 +66,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.146 2005/12/30 21:43:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.147 2006/01/05 01:56:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -682,25 +682,6 @@ typedef unsigned int slock_t;
 #define TAS(lock) _Asm_xchg(_SZ_W, lock, 1, _LDHINT_NONE)
 
 #endif	/* HPUX on IA64, non gcc */
-
-
-#if defined(__QNX__) && defined(__WATCOMC__)	/* QNX */
-/*
- * QNX 4 using WATCOM C
- */
-#define HAS_TEST_AND_SET
-
-typedef unsigned char slock_t;
-
-#define TAS(lock) wc_tas(lock)
-extern slock_t wc_tas(volatile slock_t *lock);
-#pragma aux wc_tas =\
-		"	mov   al,1    " \
-		" lock	xchg	al,[esi]" \
-		parm [esi]        \
-		value [al];
-
-#endif	 /* __QNX__ and __WATCOMC__*/
 
 
 #if defined(__sgi)	/* SGI compiler */

@@ -1511,7 +1511,6 @@ case $host_os in
 nextstep*) template=nextstep ;;
  openbsd*) template=openbsd ;;
      osf*) template=osf ;;
-     qnx*) template=qnx4 ;;
      sco*) template=sco ;;
  solaris*) template=solaris ;;
    sunos*) template=sunos4 ;;

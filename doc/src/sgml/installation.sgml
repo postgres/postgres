@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.250 2005/12/04 03:52:29 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.251 2006/01/05 01:56:28 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -2036,22 +2036,6 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
       <entry>7.1</entry>
       <entry>Tom I. Helbekkmo (<email>tih@kpnQwest.no</email>), 2001-03-30</entry>
       <entry>1.5</entry>
-     </row>
-     <row>
-      <entry><systemitem class="osname">QNX 4 RTOS</></entry>
-      <entry><systemitem>x86</></entry>
-      <entry>7.2</entry>
-      <entry>Bernd Tegge (<email>tegge@repas-aeg.de</email>), 2001-12-10
-      </entry>
-      <entry>needs updates to semaphore code;
-       see also <filename>doc/FAQ_QNX4</filename></entry>
-     </row>
-     <row>
-      <entry><systemitem class="osname">QNX RTOS v6</></entry>
-      <entry><systemitem>x86</></entry>
-      <entry>7.2</entry>
-      <entry>Igor Kovalenko (<email>Igor.Kovalenko@motorola.com</email>), 2001-11-20</entry>
-      <entry>patches available in archives, but too late for 7.2</entry>
      </row>
      <row>
       <entry><systemitem class="osname">SCO OpenServer</></entry>
