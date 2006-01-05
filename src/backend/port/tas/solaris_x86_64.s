@@ -1,8 +1,10 @@
 /=============================================================================
 / tas.s -- test and set lock for solaris_i386
-/ based on i386 ASM with modifications outlined in
-/ http://www.x86-64.org/documentation/assembly.
-/ This might require flags:  -Xa -xtarget=opteron -xarch=amd64
+/ based on i386 ASM with modifications outlined in:
+/   http://www.x86-64.org/documentation/assembly.
+/ This might require flags:  -xtarget=opteron -xarch=amd64
+/ DB optimization documenation at:
+/   http://developers.sun.com/solaris/articles/mysql_perf_tune.html
 /=============================================================================
 
         .file   "tas.s"
