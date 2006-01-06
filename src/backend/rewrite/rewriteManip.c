@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.89 2004/12/31 22:00:46 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.89.4.1 2006/01/06 20:11:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
 #include "parser/parsetree.h"
+#include "parser/parse_coerce.h"
 #include "parser/parse_relation.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/lsyscache.h"
@@ -897,7 +898,13 @@ resolve_one_var(Var *var, ResolveNew_context *context)
 		else
 		{
 			/* Otherwise replace unmatched var with a null */
-			return (Node *) makeNullConst(var->vartype);
+			/* need coerce_to_domain in case of NOT NULL domain constraint */
+			return coerce_to_domain((Node *) makeNullConst(var->vartype),
+									InvalidOid,
+									var->vartype,
+									COERCE_IMPLICIT_CAST,
+									false,
+									false);
 		}
 	}
 	else
