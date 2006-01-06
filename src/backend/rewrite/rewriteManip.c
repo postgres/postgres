@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.67.2.1 2003/10/20 20:02:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.67.2.2 2006/01/06 20:11:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "optimizer/tlist.h"
 #include "parser/parsetree.h"
 #include "parser/parse_clause.h"
+#include "parser/parse_coerce.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/lsyscache.h"
 
@@ -815,7 +816,10 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 				else
 				{
 					/* Otherwise replace unmatched var with a null */
-					return (Node *) makeNullConst(var->vartype);
+					/* need coerce_type_constraints in case of NOT NULL domain constraint */
+					return coerce_type_constraints((Node *) makeNullConst(var->vartype),
+												   var->vartype,
+												   COERCE_IMPLICIT_CAST);
 				}
 			}
 			else
