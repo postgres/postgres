@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.416 2006/01/05 15:19:05 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.417 2006/01/06 02:59:57 tgl Exp $
 
 Typical markup:
 
@@ -10,7 +10,7 @@ PostgreSQL                      <productname>
 pg_[A-Za-z0-9_]                 <application>
 [A-Z][A-Z]                      <type>, <envar>, <literal>
 &<>                             use &
-non-ascii			convert to & escapes
+non-ascii                       convert to & escapes
 
 For new features, add links to the documentation sections.
 
@@ -36,6 +36,9 @@ For new features, add links to the documentation sections.
 
     <para>
      A dump/restore is not required for those running 8.1.X.
+     However, you might need to <command>REINDEX</> indexes on textual
+     columns after updating, if you are affected by the locale or
+     <application>plperl</> issues described below.
     </para>
    </sect2>
 
@@ -44,37 +47,56 @@ For new features, add links to the documentation sections.
 
 <itemizedlist>
 
-<listitem><para>Fix for protocol-level describe portal statements issued
-outside a transaction (Tom)</para></listitem>
+<listitem><para>Fix Windows code so that postmaster will continue rather
+than exit if there is no more room in ShmemBackendArray (Magnus)</para>
+<para>The previous behavior could lead to a denial-of-service situation if too
+many connection requests arrive close together.  This applies
+<emphasis>only</> to the Windows port.</para></listitem>
 
-<listitem><para>Fix character set sorting for locales that consider
-different character combinations to have the same sorting, e.g.
-Hungarian. (Tom) </para><para>This might require <command>REINDEX</> in
-those locales to fix  existing indexes.</para></listitem>
+<listitem><para>Fix bug introduced in 8.0 that could allow ReadBuffer
+to return an already-used page as new, potentially causing loss of
+recently-committed data (Tom)</para></listitem>
+
+<listitem><para>Fix for protocol-level Describe messages issued
+outside a transaction or in a failed transaction (Tom)</para></listitem>
+
+<listitem><para>Fix character string comparison for locales that consider
+different character combinations as equal, such as Hungarian (Tom)</para>
+<para>This might require <command>REINDEX</> to fix existing indexes on
+textual columns.</para></listitem>
+
+<listitem><para>Set locale environment variables during postmaster startup
+to ensure that <application>plperl</> won't change the locale later</para>
+<para>This fixes a problem that occurred if the <application>postmaster</> was
+started with environment variables specifying a different locale than what
+<application>initdb</> had been told.  Under these conditions, any use of
+<application>plperl</> was likely to lead to corrupt indexes.  You may need
+<command>REINDEX</> to fix existing indexes on
+textual columns if this has happened to you.</para></listitem>
 
 <listitem><para>Allow more flexible relocation of installation
-directories (Tom)</para> <para>Previous releases supported relocation
-only if all directories were the same except the last
-component.</para></listitem>
+directories (Tom)</para>
+<para>Previous releases supported relocation only if all installation
+directory paths were the same except for the last component.</para></listitem>
 
-<listitem><para>Prevent crashed caused by the use of
+<listitem><para>Prevent crashes caused by the use of
 <literal>ISO-8859-5</> and <literal>ISO-8859-9</> encodings
 (Tatsuo)</para></listitem>
 
-<listitem><para>Fix bug in strpos() and regular expression handling in
-certain rarely used Asian multi-byte character sets (Tatsuo)
+<listitem><para>Fix longstanding bug in strpos() and regular expression
+handling in certain rarely used Asian multi-byte character sets (Tatsuo)
 </para></listitem>
 
 <listitem><para>Fix bug where COPY CSV mode considered any
 <literal>\.</> to terminate the copy data</para> <para>The new code
-requires <literal>\.</> to appear alone on a line, as previously
-documented.</para></listitem>
+requires <literal>\.</> to appear alone on a line, as per
+documentation.</para></listitem>
 
-<listitem><para>Have COPY output a literal data value of <literal>\.</>
-in double-quotes to prevent it from being interpreted as the end-of-data
-marker (Bruce)</para></listitem>
+<listitem><para>Make COPY CSV mode quote a literal data value of
+<literal>\.</> to ensure it cannot be interpreted as the
+end-of-data marker (Bruce)</para></listitem>
 
-<listitem><para>Various fixes for queries returning <literal>RECORD</>s
+<listitem><para>Various fixes for functions returning <literal>RECORD</>s
 (Tom) </para></listitem>
 
 <listitem><para>Fix processing of <filename>postgresql.conf</> so a
@@ -82,19 +104,16 @@ final line with no newline is processed properly (Tom)
 </para></listitem>
 
 <listitem><para>Fix bug in <filename>/contrib/pgcrypto</> gen_salt,
-which caused it not to use all available salt space for md5 and
-xdes algorithms (Marko Kreen, Solar Designer)</para>
-<para>Salts for blowfish and standard des are unaffected</para></listitem>
+which caused it not to use all available salt space for MD5 and
+XDES algorithms (Marko Kreen, Solar Designer)</para>
+<para>Salts for Blowfish and standard DES are unaffected.</para></listitem>
 
 <listitem><para>Fix autovacuum crash when processing expression indexes
 </para></listitem>
 
-<listitem><para>Fix <filename>/contrib/dblink</> to throw an error
-when the number of columns specified is different from those returned
-by the query (Joe)</para></listitem>
-
-<listitem><para>Set <literal>LC_XXX</> variables to prevent problems
-with <application>plperl</> processing (Tom)</para></listitem>
+<listitem><para>Fix <filename>/contrib/dblink</> to throw an error,
+rather than crashing, when the number of columns specified is different from
+what's actually returned by the query (Joe)</para></listitem>
 
 </itemizedlist>
 
@@ -2332,6 +2351,9 @@ psql -t -f fixseq.sql db1 | psql -e db1
      A dump/restore is not required for those running 8.0.X.  However,
      if you are upgrading from a version earlier than 8.0.3, see the release
      notes for 8.0.3.
+     Also, you might need to <command>REINDEX</> indexes on textual
+     columns after updating, if you are affected by the locale or
+     <application>plperl</> issues described below.
     </para>
    </sect2>
 
@@ -2340,34 +2362,53 @@ psql -t -f fixseq.sql db1 | psql -e db1
   
 <itemizedlist>
 
-<listitem><para>Fix for protocol-level describe portal statements issued
-outside a transaction (Tom)</para></listitem>
+<listitem><para>Fix Windows code so that postmaster will continue rather
+than exit if there is no more room in ShmemBackendArray (Magnus)</para>
+<para>The previous behavior could lead to a denial-of-service situation if too
+many connection requests arrive close together.  This applies
+<emphasis>only</> to the Windows port.</para></listitem>
 
-<listitem><para>Fix character set sorting for locales that consider
-different character combinations to have the same sorting, e.g.
-Hungarian. (Tom) </para><para>This might require <command>REINDEX</> in
-those locales to fix  existing indexes.</para></listitem>
+<listitem><para>Fix bug introduced in 8.0 that could allow ReadBuffer
+to return an already-used page as new, potentially causing loss of
+recently-committed data (Tom)</para></listitem>
+
+<listitem><para>Fix for protocol-level Describe messages issued
+outside a transaction or in a failed transaction (Tom)</para></listitem>
+
+<listitem><para>Fix character string comparison for locales that consider
+different character combinations as equal, such as Hungarian (Tom)</para>
+<para>This might require <command>REINDEX</> to fix existing indexes on
+textual columns.</para></listitem>
+
+<listitem><para>Set locale environment variables during postmaster startup
+to ensure that <application>plperl</> won't change the locale later</para>
+<para>This fixes a problem that occurred if the <application>postmaster</> was
+started with environment variables specifying a different locale than what
+<application>initdb</> had been told.  Under these conditions, any use of
+<application>plperl</> was likely to lead to corrupt indexes.  You may need
+<command>REINDEX</> to fix existing indexes on
+textual columns if this has happened to you.</para></listitem>
 
 <listitem><para>Allow more flexible relocation of installation
-directories (Tom)</para> <para>Previous releases supported relocation
-only if all directories were the same except the last
-componient.</para></listitem>
+directories (Tom)</para>
+<para>Previous releases supported relocation only if all installation
+directory paths were the same except for the last component.</para></listitem>
 
-<listitem><para>Fix long standing Asian multibyte charsets bug (Tatsuo)
+<listitem><para>Fix longstanding bug in strpos() and regular expression
+handling in certain rarely used Asian multi-byte character sets (Tatsuo)
 </para></listitem>
 
-<listitem><para>Various fixes for queries returning <literal>RECORD</>s
+<listitem><para>Various fixes for functions returning <literal>RECORD</>s
 (Tom) </para></listitem>
 
-<listitem><para>Fix bug in <filename>/contrib/pgcrypto</> Openwall
-gen_salt processing (Marko Kreen></para></listitem>
+<listitem><para>Fix bug in <filename>/contrib/pgcrypto</> gen_salt,
+which caused it not to use all available salt space for MD5 and
+XDES algorithms (Marko Kreen, Solar Designer)</para>
+<para>Salts for Blowfish and standard DES are unaffected.</para></listitem>
 
-<listitem><para>Fix <filename>/contrib/dblink</> to throw an error
-when the number of columns specified is different from those returned
-by the query (Joe)</para></listitem>
-
-<listitem><para>Set <literal>LC_XXX</> variables to prevent problems
-with <application>plperl</> processing (Tom)</para></listitem>
+<listitem><para>Fix <filename>/contrib/dblink</> to throw an error,
+rather than crashing, when the number of columns specified is different from
+what's actually returned by the query (Joe)</para></listitem>
 
 </itemizedlist>
 
@@ -5254,6 +5295,9 @@ typedefs (Michael)</para></listitem>
      A dump/restore is not required for those running 7.4.X.  However,
      if you are upgrading from a version earlier than 7.4.8, see the release
      notes for 7.4.8.
+     Also, you might need to <command>REINDEX</> indexes on textual
+     columns after updating, if you are affected by the locale or
+     <application>plperl</> issues described below.
     </para>
    </sect2>
 
@@ -5262,26 +5306,35 @@ typedefs (Michael)</para></listitem>
   
 <itemizedlist>
 
-<listitem><para>Fix for protocol-level describe portal statements issued
-outside a transaction (Tom)</para></listitem>
+<listitem><para>Fix for protocol-level Describe messages issued
+outside a transaction or in a failed transaction (Tom)</para></listitem>
 
-<listitem><para>Fix character set sorting for locales that consider
-different character combinations to have the same sorting, e.g.
-Hungarian. (Tom) </para><para>This might require <command>REINDEX</> in
-those locales to fix  existing indexes.</para></listitem>
+<listitem><para>Fix character string comparison for locales that consider
+different character combinations as equal, such as Hungarian (Tom)</para>
+<para>This might require <command>REINDEX</> to fix existing indexes on
+textual columns.</para></listitem>
 
-<listitem><para>Fix long standing Asian multibyte charsets bug (Tatsuo)
+<listitem><para>Set locale environment variables during postmaster startup
+to ensure that <application>plperl</> won't change the locale later</para>
+<para>This fixes a problem that occurred if the <application>postmaster</> was
+started with environment variables specifying a different locale than what
+<application>initdb</> had been told.  Under these conditions, any use of
+<application>plperl</> was likely to lead to corrupt indexes.  You may need
+<command>REINDEX</> to fix existing indexes on
+textual columns if this has happened to you.</para></listitem>
+
+<listitem><para>Fix longstanding bug in strpos() and regular expression
+handling in certain rarely used Asian multi-byte character sets (Tatsuo)
 </para></listitem>
 
-<listitem><para>Fix bug in <filename>/contrib/pgcrypto</> Openwall
-gen_salt processing (Marko Kreen></para></listitem>
+<listitem><para>Fix bug in <filename>/contrib/pgcrypto</> gen_salt,
+which caused it not to use all available salt space for MD5 and
+XDES algorithms (Marko Kreen, Solar Designer)</para>
+<para>Salts for Blowfish and standard DES are unaffected.</para></listitem>
 
-<listitem><para>Fix <filename>/contrib/dblink</> to throw an error
-when the number of columns specified is different from those returned
-by the query (Joe)</para></listitem>
-
-<listitem><para>Set <literal>LC_XXX</> variables to prevent problems
-with <application>plperl</> processing (Tom)</para></listitem>
+<listitem><para>Fix <filename>/contrib/dblink</> to throw an error,
+rather than crashing, when the number of columns specified is different from
+what's actually returned by the query (Joe)</para></listitem>
 
 </itemizedlist>
 
@@ -7990,6 +8043,9 @@ DROP SCHEMA information_schema CASCADE;
      A dump/restore is not required for those running 7.3.X.  However,
      if you are upgrading from a version earlier than 7.3.10, see the release
      notes for 7.3.10.
+     Also, you might need to <command>REINDEX</> indexes on textual
+     columns after updating, if you are affected by the locale or
+     <application>plperl</> issues described below.
     </para>
    </sect2>
 
@@ -7998,23 +8054,32 @@ DROP SCHEMA information_schema CASCADE;
   
 <itemizedlist>
 
-<listitem><para>Fix character set sorting for locales that consider
-different character combinations to have the same sorting, e.g.
-Hungarian. (Tom) </para><para>This might require <command>REINDEX</> in
-those locales to fix  existing indexes.</para></listitem>
+<listitem><para>Fix character string comparison for locales that consider
+different character combinations as equal, such as Hungarian (Tom)</para>
+<para>This might require <command>REINDEX</> to fix existing indexes on
+textual columns.</para></listitem>
 
-<listitem><para>Fix long standing Asian multibyte charsets bug (Tatsuo)
+<listitem><para>Set locale environment variables during postmaster startup
+to ensure that <application>plperl</> won't change the locale later</para>
+<para>This fixes a problem that occurred if the <application>postmaster</> was
+started with environment variables specifying a different locale than what
+<application>initdb</> had been told.  Under these conditions, any use of
+<application>plperl</> was likely to lead to corrupt indexes.  You may need
+<command>REINDEX</> to fix existing indexes on
+textual columns if this has happened to you.</para></listitem>
+
+<listitem><para>Fix longstanding bug in strpos() and regular expression
+handling in certain rarely used Asian multi-byte character sets (Tatsuo)
 </para></listitem>
 
-<listitem><para>Fix bug in <filename>/contrib/pgcrypto</> Openwall
-gen_salt processing (Marko Kreen></para></listitem>
+<listitem><para>Fix bug in <filename>/contrib/pgcrypto</> gen_salt,
+which caused it not to use all available salt space for MD5 and
+XDES algorithms (Marko Kreen, Solar Designer)</para>
+<para>Salts for Blowfish and standard DES are unaffected.</para></listitem>
 
-<listitem><para>Fix <filename>/contrib/dblink</> to throw an error
-when the number of columns specified is different from those returned
-by the query (Joe)</para></listitem>
-
-<listitem><para>Set <literal>LC_XXX</> variables to prevent problems
-with <application>plperl</> processing (Tom)</para></listitem>
+<listitem><para>Fix <filename>/contrib/dblink</> to throw an error,
+rather than crashing, when the number of columns specified is different from
+what's actually returned by the query (Joe)</para></listitem>
 
 </itemizedlist>
 
