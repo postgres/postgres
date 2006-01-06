@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.55 2006/01/05 10:07:44 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.56 2006/01/06 01:35:09 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -454,6 +454,7 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
     </variablelist>
+   </refsect2>
  </refsect1>
 
  <refsect1>
