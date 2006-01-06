@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.185 2005/01/10 20:02:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.185.4.1 2006/01/06 00:04:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,13 +166,41 @@ ReadBufferInternal(Relation reln, BlockNumber blockNum,
 	/* if it was already in the buffer pool, we're done */
 	if (found)
 	{
-		/* Just need to update stats before we exit */
-		pgstat_count_buffer_hit(&reln->pgstat_info, reln);
+		if (!isExtend)
+		{
+			/* Just need to update stats before we exit */
+			pgstat_count_buffer_hit(&reln->pgstat_info, reln);
 
-		if (VacuumCostActive)
-			VacuumCostBalance += VacuumCostPageHit;
+			if (VacuumCostActive)
+				VacuumCostBalance += VacuumCostPageHit;
 
-		return BufferDescriptorGetBuffer(bufHdr);
+			return BufferDescriptorGetBuffer(bufHdr);
+		}
+
+		/*
+		 * We get here only in the corner case where we are trying to extend
+		 * the relation but we found a pre-existing buffer marked BM_VALID.
+		 * (This can happen because mdread doesn't complain about reads
+		 * beyond EOF --- which is arguably bogus, but changing it seems
+		 * tricky.)  We *must* do smgrextend before succeeding, else the
+		 * page will not be reserved by the kernel, and the next P_NEW call
+		 * will decide to return the same page.  Clear the BM_VALID bit,
+		 * do the StartBufferIO call that BufferAlloc didn't, and proceed.
+		 */
+		if (isLocalBuf)
+		{
+			/* Only need to adjust flags */
+			Assert(bufHdr->flags & BM_VALID);
+			bufHdr->flags &= ~BM_VALID;
+		}
+		else
+		{
+			LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
+			Assert(bufHdr->flags & BM_VALID);
+			bufHdr->flags &= ~BM_VALID;
+			StartBufferIO(bufHdr, true);
+			LWLockRelease(BufMgrLock);
+		}
 	}
 
 	/*
