@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.478 2006/01/05 10:07:45 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.479 2006/01/06 02:58:25 tgl Exp $
  *
  * NOTES
  *
@@ -147,7 +147,11 @@ typedef struct bkend
 static Dllist *BackendList;
 
 #ifdef EXEC_BACKEND
-#define NUM_BACKENDARRAY_ELEMS (2*MaxBackends)
+/* 
+ * Number of entries in the backend table. Twice the number of backends,
+ * plus four other subprocesses (stats, bgwriter, autovac, logger). 
+ */
+#define NUM_BACKENDARRAY_ELEMS (2*MaxBackends + 4)
 static Backend *ShmemBackendArray;
 #endif
 
@@ -3082,6 +3086,15 @@ internal_forkexec(int argc, char *argv[], Port *port)
 	Assert(argv[argc] == NULL);
 	Assert(strncmp(argv[1], "-fork", 5) == 0);
 	Assert(argv[2] == NULL);
+
+	/* Verify that there is room in the child list */
+	if (win32_numChildren >= NUM_BACKENDARRAY_ELEMS)
+	{
+		elog(LOG, "no room for child entry in backend list");
+		/* Report same error as for a fork failure on Unix */
+		errno = EAGAIN;
+		return -1;
+	}
 
 	/* Set up shared memory for parameter passing */
 	ZeroMemory(&sa, sizeof(sa));
