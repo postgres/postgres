@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.125.2.1 2005/11/22 18:23:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.125.2.2 2006/01/07 21:16:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -356,7 +356,16 @@ CatCacheRemoveCTup(CatCache *cache, CatCTup *ct)
 	Assert(ct->my_cache == cache);
 
 	if (ct->c_list)
+	{
+		/*
+		 * The cleanest way to handle this is to call CatCacheRemoveCList,
+		 * which will recurse back to me, and the recursive call will do the
+		 * work.  Set the "dead" flag to make sure it does recurse.
+		 */
+		ct->dead = true;
 		CatCacheRemoveCList(cache, ct->c_list);
+		return;					/* nothing left to do */
+	}
 
 	/* delink from linked lists */
 	DLRemove(&ct->lrulist_elem);
@@ -375,6 +384,8 @@ CatCacheRemoveCTup(CatCache *cache, CatCTup *ct)
  *		CatCacheRemoveCList
  *
  * Unlink and delete the given cache list entry
+ *
+ * NB: any dead member entries that become unreferenced are deleted too.
  */
 static void
 CatCacheRemoveCList(CatCache *cache, CatCList *cl)
@@ -391,6 +402,13 @@ CatCacheRemoveCList(CatCache *cache, CatCList *cl)
 
 		Assert(ct->c_list == cl);
 		ct->c_list = NULL;
+		/* if the member is dead and now has no references, remove it */
+		if (
+#ifndef CATCACHE_FORCE_RELEASE
+			ct->dead &&
+#endif
+			ct->refcount == 0)
+			CatCacheRemoveCTup(cache, ct);
 	}
 
 	/* delink from linked list */
