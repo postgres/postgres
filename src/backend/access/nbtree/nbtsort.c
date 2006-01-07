@@ -56,7 +56,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.90 2004/12/31 21:59:22 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.90.4.1 2006/01/07 22:46:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,6 +273,9 @@ _bt_blnewpage(uint32 level)
 static void
 _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 {
+	/* Ensure rd_smgr is open (could have been closed by relcache flush!) */
+	RelationOpenSmgr(wstate->index);
+
 	/* XLOG stuff */
 	if (wstate->btws_use_wal)
 	{
@@ -817,5 +820,8 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 	 * disk when the crash occurs.
 	 */
 	if (!wstate->index->rd_istemp)
+	{
+		RelationOpenSmgr(wstate->index);
 		smgrimmedsync(wstate->index->rd_smgr);
+	}
 }
