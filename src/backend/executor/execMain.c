@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.262 2005/12/02 20:03:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.263 2006/01/07 22:30:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1002,6 +1002,7 @@ ExecEndPlan(PlanState *planstate, EState *estate)
 			!estate->es_into_relation_descriptor->rd_istemp)
 		{
 			FlushRelationBuffers(estate->es_into_relation_descriptor);
+			/* FlushRelationBuffers will have opened rd_smgr */
 			smgrimmedsync(estate->es_into_relation_descriptor->rd_smgr);
 		}
 
