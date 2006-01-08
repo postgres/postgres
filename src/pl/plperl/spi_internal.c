@@ -8,8 +8,8 @@
 /* Defined by Perl */
 #undef _
 
-#include "spi_internal.h"
-
+/* perl stuff */
+#include "plperl.h"
 
 int
 spi_DEBUG(void)
