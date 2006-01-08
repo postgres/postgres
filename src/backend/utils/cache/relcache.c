@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.234 2006/01/05 10:07:46 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.235 2006/01/08 20:04:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -565,10 +565,9 @@ RelationBuildRuleLock(Relation relation)
 	{
 		Form_pg_rewrite rewrite_form = (Form_pg_rewrite) GETSTRUCT(rewrite_tuple);
 		bool		isnull;
-		Datum		ruleaction;
-		Datum		rule_evqual;
-		char	   *ruleaction_str;
-		char	   *rule_evqual_str;
+		Datum		rule_datum;
+		text	   *rule_text;
+		char	   *rule_str;
 		RewriteRule *rule;
 
 		rule = (RewriteRule *) MemoryContextAlloc(rulescxt,
@@ -580,31 +579,41 @@ RelationBuildRuleLock(Relation relation)
 		rule->attrno = rewrite_form->ev_attr;
 		rule->isInstead = rewrite_form->is_instead;
 
-		/* Must use heap_getattr to fetch ev_qual and ev_action */
-
-		ruleaction = heap_getattr(rewrite_tuple,
+		/*
+		 * Must use heap_getattr to fetch ev_action and ev_qual.  Also,
+		 * the rule strings are often large enough to be toasted.  To avoid
+		 * leaking memory in the caller's context, do the detoasting here
+		 * so we can free the detoasted version.
+		 */
+		rule_datum = heap_getattr(rewrite_tuple,
 								  Anum_pg_rewrite_ev_action,
 								  rewrite_tupdesc,
 								  &isnull);
 		Assert(!isnull);
-		ruleaction_str = DatumGetCString(DirectFunctionCall1(textout,
-															 ruleaction));
+		rule_text = DatumGetTextP(rule_datum);
+		rule_str = DatumGetCString(DirectFunctionCall1(textout,
+												PointerGetDatum(rule_text)));
 		oldcxt = MemoryContextSwitchTo(rulescxt);
-		rule->actions = (List *) stringToNode(ruleaction_str);
+		rule->actions = (List *) stringToNode(rule_str);
 		MemoryContextSwitchTo(oldcxt);
-		pfree(ruleaction_str);
+		pfree(rule_str);
+		if ((Pointer) rule_text != DatumGetPointer(rule_datum))
+			pfree(rule_text);
 
-		rule_evqual = heap_getattr(rewrite_tuple,
-								   Anum_pg_rewrite_ev_qual,
-								   rewrite_tupdesc,
-								   &isnull);
+		rule_datum = heap_getattr(rewrite_tuple,
+								  Anum_pg_rewrite_ev_qual,
+								  rewrite_tupdesc,
+								  &isnull);
 		Assert(!isnull);
-		rule_evqual_str = DatumGetCString(DirectFunctionCall1(textout,
-															  rule_evqual));
+		rule_text = DatumGetTextP(rule_datum);
+		rule_str = DatumGetCString(DirectFunctionCall1(textout,
+												PointerGetDatum(rule_text)));
 		oldcxt = MemoryContextSwitchTo(rulescxt);
-		rule->qual = (Node *) stringToNode(rule_evqual_str);
+		rule->qual = (Node *) stringToNode(rule_str);
 		MemoryContextSwitchTo(oldcxt);
-		pfree(rule_evqual_str);
+		pfree(rule_str);
+		if ((Pointer) rule_text != DatumGetPointer(rule_datum))
+			pfree(rule_text);
 
 		if (numlocks >= maxlocks)
 		{
@@ -2207,6 +2216,13 @@ RelationCacheInitializePhase2(void)
 	 * true.  (NOTE: perhaps it would be possible to reload them by
 	 * temporarily setting criticalRelcachesBuilt to false again.  For now,
 	 * though, we just nail 'em in.)
+	 *
+	 * RewriteRelRulenameIndexId and TriggerRelidNameIndexId are not critical
+	 * in the same way as the others, because the critical catalogs don't
+	 * (currently) have any rules or triggers, and so these indexes can be
+	 * rebuilt without inducing recursion.  However they are used during
+	 * relcache load when a rel does have rules or triggers, so we choose to
+	 * nail them for performance reasons.
 	 */
 	if (!criticalRelcachesBuilt)
 	{
@@ -2225,8 +2241,10 @@ RelationCacheInitializePhase2(void)
 		LOAD_CRIT_INDEX(AccessMethodStrategyIndexId);
 		LOAD_CRIT_INDEX(AccessMethodProcedureIndexId);
 		LOAD_CRIT_INDEX(OperatorOidIndexId);
+		LOAD_CRIT_INDEX(RewriteRelRulenameIndexId);
+		LOAD_CRIT_INDEX(TriggerRelidNameIndexId);
 
-#define NUM_CRITICAL_INDEXES	6		/* fix if you change list above */
+#define NUM_CRITICAL_INDEXES	8		/* fix if you change list above */
 
 		criticalRelcachesBuilt = true;
 	}
