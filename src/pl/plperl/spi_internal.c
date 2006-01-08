@@ -8,6 +8,12 @@
 /* Defined by Perl */
 #undef _
 
+
+/* stop perl from hijacking stdio and other stuff */
+#ifdef WIN32
+#define WIN32IO_IS_STDIO
+#endif 
+
 #include "spi_internal.h"
 
 
