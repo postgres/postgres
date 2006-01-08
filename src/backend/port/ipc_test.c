@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/ipc_test.c,v 1.18 2005/10/15 02:49:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/ipc_test.c,v 1.19 2006/01/08 21:24:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,15 +47,12 @@ volatile uint32 InterruptHoldoffCount = 0;
 volatile uint32 CritSectionCount = 0;
 
 bool		IsUnderPostmaster = false;
+bool		assert_enabled = true;
 
 int			MaxBackends = 32;
 int			NBuffers = 64;
 
 char	   *DataDir = ".";
-
-#ifndef assert_enabled
-bool		assert_enabled = true;
-#endif
 
 
 #define MAX_ON_EXITS 20

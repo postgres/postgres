@@ -546,10 +546,6 @@ _ltree_consistent(PG_FUNCTION_ARGS)
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 	bool		res = false;
 
-#ifndef assert_enabled
-#define assert_enabled 0
-#endif
-
 	switch (strategy)
 	{
 		case 10:
