@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.22 2005/10/06 02:29:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.23 2006/01/08 07:00:25 neilc Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -155,6 +155,12 @@ CREATE VIEW pg_prepared_xacts AS
     (transaction xid, gid text, prepared timestamptz, ownerid oid, dbid oid)
          LEFT JOIN pg_authid U ON P.ownerid = U.oid
          LEFT JOIN pg_database D ON P.dbid = D.oid;
+
+CREATE VIEW pg_prepared_statements AS
+    SELECT P.name, P.statement, P.prepare_time, P.parameter_types, P.from_sql
+    FROM pg_prepared_statement() AS P
+    (name text, statement text, prepare_time timestamptz,
+     parameter_types oid[], from_sql boolean);
 
 CREATE VIEW pg_settings AS 
     SELECT * 

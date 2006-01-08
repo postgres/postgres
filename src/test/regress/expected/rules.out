@@ -1280,6 +1280,7 @@ SELECT viewname, definition FROM pg_views WHERE schemaname <> 'information_schem
  pg_group                 | SELECT pg_authid.rolname AS groname, pg_authid.oid AS grosysid, ARRAY(SELECT pg_auth_members.member FROM pg_auth_members WHERE (pg_auth_members.roleid = pg_authid.oid)) AS grolist FROM pg_authid WHERE (NOT pg_authid.rolcanlogin);
  pg_indexes               | SELECT n.nspname AS schemaname, c.relname AS tablename, i.relname AS indexname, t.spcname AS "tablespace", pg_get_indexdef(i.oid) AS indexdef FROM ((((pg_index x JOIN pg_class c ON ((c.oid = x.indrelid))) JOIN pg_class i ON ((i.oid = x.indexrelid))) LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace))) LEFT JOIN pg_tablespace t ON ((t.oid = i.reltablespace))) WHERE ((c.relkind = 'r'::"char") AND (i.relkind = 'i'::"char"));
  pg_locks                 | SELECT l.locktype, l."database", l.relation, l.page, l.tuple, l.transactionid, l.classid, l.objid, l.objsubid, l."transaction", l.pid, l."mode", l."granted" FROM pg_lock_status() l(locktype text, "database" oid, relation oid, page integer, tuple smallint, transactionid xid, classid oid, objid oid, objsubid smallint, "transaction" xid, pid integer, "mode" text, "granted" boolean);
+ pg_prepared_statements   | SELECT p.name, p."statement", p.prepare_time, p.parameter_types, p.from_sql FROM pg_prepared_statement() p(name text, "statement" text, prepare_time timestamp with time zone, parameter_types oid[], from_sql boolean);
  pg_prepared_xacts        | SELECT p."transaction", p.gid, p."prepared", u.rolname AS "owner", d.datname AS "database" FROM ((pg_prepared_xact() p("transaction" xid, gid text, "prepared" timestamp with time zone, ownerid oid, dbid oid) LEFT JOIN pg_authid u ON ((p.ownerid = u.oid))) LEFT JOIN pg_database d ON ((p.dbid = d.oid)));
  pg_roles                 | SELECT pg_authid.rolname, pg_authid.rolsuper, pg_authid.rolinherit, pg_authid.rolcreaterole, pg_authid.rolcreatedb, pg_authid.rolcatupdate, pg_authid.rolcanlogin, pg_authid.rolconnlimit, '********'::text AS rolpassword, pg_authid.rolvaliduntil, pg_authid.rolconfig, pg_authid.oid FROM pg_authid;
  pg_rules                 | SELECT n.nspname AS schemaname, c.relname AS tablename, r.rulename, pg_get_ruledef(r.oid) AS definition FROM ((pg_rewrite r JOIN pg_class c ON ((c.oid = r.ev_class))) LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace))) WHERE (r.rulename <> '_RETURN'::name);
@@ -1320,7 +1321,7 @@ SELECT viewname, definition FROM pg_views WHERE schemaname <> 'information_schem
  shoelace_obsolete        | SELECT shoelace.sl_name, shoelace.sl_avail, shoelace.sl_color, shoelace.sl_len, shoelace.sl_unit, shoelace.sl_len_cm FROM shoelace WHERE (NOT (EXISTS (SELECT shoe.shoename FROM shoe WHERE (shoe.slcolor = shoelace.sl_color))));
  street                   | SELECT r.name, r.thepath, c.cname FROM ONLY road r, real_city c WHERE (c.outline ## r.thepath);
  toyemp                   | SELECT emp.name, emp.age, emp."location", (12 * emp.salary) AS annualsal FROM emp;
-(44 rows)
+(45 rows)
 
 SELECT tablename, rulename, definition FROM pg_rules 
 	ORDER BY tablename, rulename;

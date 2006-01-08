@@ -10,21 +10,26 @@
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.44 2005/12/14 17:06:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.45 2006/01/08 07:00:25 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "access/heapam.h"
+#include "catalog/pg_type.h"
 #include "commands/explain.h"
 #include "commands/prepare.h"
 #include "executor/executor.h"
-#include "utils/guc.h"
+#include "funcapi.h"
+#include "parser/parsetree.h"
 #include "optimizer/planner.h"
 #include "rewrite/rewriteHandler.h"
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
+#include "utils/builtins.h"
+#include "utils/guc.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
 
@@ -40,6 +45,7 @@ static HTAB *prepared_queries = NULL;
 static void InitQueryHashTable(void);
 static ParamListInfo EvaluateParams(EState *estate,
 			   List *params, List *argtypes);
+static Datum build_oid_array(List *oid_list);
 
 /*
  * Implements the 'PREPARE' utility statement.
@@ -114,7 +120,8 @@ PrepareQuery(PrepareStmt *stmt)
 						   commandTag,
 						   query_list,
 						   plan_list,
-						   stmt->argtype_oids);
+						   stmt->argtype_oids,
+						   true);
 }
 
 /*
@@ -298,7 +305,8 @@ StorePreparedStatement(const char *stmt_name,
 					   const char *commandTag,
 					   List *query_list,
 					   List *plan_list,
-					   List *argtype_list)
+					   List *argtype_list,
+					   bool from_sql)
 {
 	PreparedStatement *entry;
 	MemoryContext oldcxt,
@@ -361,6 +369,8 @@ StorePreparedStatement(const char *stmt_name,
 	entry->plan_list = plan_list;
 	entry->argtype_list = argtype_list;
 	entry->context = entrycxt;
+	entry->prepare_time = GetCurrentTimestamp();
+	entry->from_sql = from_sql;
 
 	MemoryContextSwitchTo(oldcxt);
 }
@@ -383,7 +393,7 @@ FetchPreparedStatement(const char *stmt_name, bool throwError)
 	{
 		/*
 		 * We can't just use the statement name as supplied by the user: the
-		 * hash package is picky enough that it needs to be NULL-padded out to
+		 * hash package is picky enough that it needs to be NUL-padded out to
 		 * the appropriate length to work correctly.
 		 */
 		StrNCpy(key, stmt_name, sizeof(key));
@@ -660,4 +670,126 @@ ExplainExecuteQuery(ExplainStmt *stmt, ParamListInfo params,
 
 	if (estate)
 		FreeExecutorState(estate);
+}
+
+/*
+ * This set returning function reads all the prepared statements and
+ * returns a set of (name, statement, prepare_time, param_types).
+ */
+Datum
+pg_prepared_statement(PG_FUNCTION_ARGS)
+{
+	FuncCallContext	   *funcctx;
+	HASH_SEQ_STATUS    *hash_seq;
+	PreparedStatement  *prep_stmt;
+
+	/* stuff done only on the first call of the function */
+	if (SRF_IS_FIRSTCALL())
+	{
+		TupleDesc		tupdesc;
+		MemoryContext	oldcontext;
+
+		/* create a function context for cross-call persistence */
+		funcctx = SRF_FIRSTCALL_INIT();
+
+		/*
+		 * switch to memory context appropriate for multiple function
+		 * calls
+		 */
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
+		/* allocate memory for user context */
+		if (prepared_queries)
+		{
+			hash_seq = (HASH_SEQ_STATUS *) palloc(sizeof(HASH_SEQ_STATUS));
+			hash_seq_init(hash_seq, prepared_queries);
+			funcctx->user_fctx = (void *) hash_seq;
+		}
+		else
+			funcctx->user_fctx = NULL;
+
+		/*
+		 * build tupdesc for result tuples. This must match the
+		 * definition of the pg_prepared_statements view in
+		 * system_views.sql
+		 */
+		tupdesc = CreateTemplateTupleDesc(5, false);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
+						   TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "statement",
+						   TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "prepare_time",
+						   TIMESTAMPTZOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "parameter_types",
+						   OIDARRAYOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "from_sql",
+						   BOOLOID, -1, 0);
+
+		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	/* stuff done on every call of the function */
+	funcctx = SRF_PERCALL_SETUP();
+	hash_seq = (HASH_SEQ_STATUS *) funcctx->user_fctx;
+
+	/* if the hash table is uninitialized, we're done */
+	if (hash_seq == NULL)
+		SRF_RETURN_DONE(funcctx);
+
+	prep_stmt = hash_seq_search(hash_seq);
+	if (prep_stmt)
+	{
+		Datum			result;
+		HeapTuple		tuple;
+		Datum			values[5];
+		bool			nulls[5];
+
+		MemSet(nulls, 0, sizeof(nulls));
+
+		values[0] = DirectFunctionCall1(textin,
+										CStringGetDatum(prep_stmt->stmt_name));
+
+		if (prep_stmt->query_string == NULL)
+			nulls[1] = true;
+		else
+			values[1] = DirectFunctionCall1(textin,
+									CStringGetDatum(prep_stmt->query_string));
+
+		values[2] = TimestampTzGetDatum(prep_stmt->prepare_time);
+		values[3] = build_oid_array(prep_stmt->argtype_list);
+		values[4] = BoolGetDatum(prep_stmt->from_sql);
+
+		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
+		result = HeapTupleGetDatum(tuple);
+		SRF_RETURN_NEXT(funcctx, result);
+	}
+
+	SRF_RETURN_DONE(funcctx);
+}
+
+/*
+ * This utility function takes a List of Oids, and returns a Datum
+ * pointing to a Postgres array containing those OIDs. The empty list
+ * is returned as a zero-element array, not NULL.
+ */
+static Datum
+build_oid_array(List *oid_list)
+{
+	ListCell *lc;
+	int len;
+	int i;
+	Datum *tmp_ary;
+	ArrayType *ary;
+
+	len = list_length(oid_list);
+	tmp_ary = (Datum *) palloc(len * sizeof(Datum));
+
+	i = 0;
+	foreach(lc, oid_list)
+		tmp_ary[i++] = ObjectIdGetDatum(lfirst_oid(lc));
+
+	/* XXX: this hardcodes assumptions about the OID type... */
+	ary = construct_array(tmp_ary, len, OIDOID, sizeof(Oid), true, 'i');
+	return PointerGetDatum(ary);
 }

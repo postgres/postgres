@@ -1,7 +1,13 @@
--- Regression tests for prepareable statements
+-- Regression tests for prepareable statements. We query the content
+-- of the pg_prepared_statements view as prepared statements are
+-- created and removed.
 
-PREPARE q1 AS SELECT 1;
+SELECT name, statement, parameter_types FROM pg_prepared_statements;
+
+PREPARE q1 AS SELECT 1 AS a;
 EXECUTE q1;
+
+SELECT name, statement, parameter_types FROM pg_prepared_statements;
 
 -- should fail
 PREPARE q1 AS SELECT 2;
@@ -11,18 +17,32 @@ DEALLOCATE q1;
 PREPARE q1 AS SELECT 2;
 EXECUTE q1;
 
+PREPARE q2 AS SELECT 2 AS b;
+SELECT name, statement, parameter_types FROM pg_prepared_statements;
+
 -- sql92 syntax
 DEALLOCATE PREPARE q1;
+
+SELECT name, statement, parameter_types FROM pg_prepared_statements;
+
+DEALLOCATE PREPARE q2;
+-- the view should return the empty set again
+SELECT name, statement, parameter_types FROM pg_prepared_statements;
 
 -- parameterized queries
 PREPARE q2(text) AS
 	SELECT datname, datistemplate, datallowconn
 	FROM pg_database WHERE datname = $1;
+
+SELECT name, statement, parameter_types FROM pg_prepared_statements;
+
 EXECUTE q2('regression');
 
 PREPARE q3(text, int, float, boolean, oid, smallint) AS
 	SELECT * FROM tenk1 WHERE string4 = $1 AND (four = $2 OR
 	ten = $3::bigint OR true = $4 OR oid = $5 OR odd = $6::int);
+
+SELECT name, statement, parameter_types FROM pg_prepared_statements;
 
 EXECUTE q3('AAAAxx', 5::smallint, 10.5::float, false, 500::oid, 4::bigint);
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/prepare.sgml,v 1.16 2005/10/15 01:47:12 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/prepare.sgml,v 1.17 2006/01/08 07:00:25 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -144,6 +144,11 @@ PREPARE <replaceable class="PARAMETER">plan_name</replaceable> [ (<replaceable c
    by <productname>PostgreSQL</productname> for that purpose, see
    the <xref linkend="sql-analyze" endterm="sql-analyze-title">
    documentation.
+  </para>
+
+  <para>
+   You can see all available prepared statements of a session by querying the
+   <structname>pg_prepared_statements</> system view.
   </para>
  </refsect1>
 

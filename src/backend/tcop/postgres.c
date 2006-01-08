@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.477 2006/01/05 10:07:45 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.478 2006/01/08 07:00:25 neilc Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -55,6 +55,7 @@
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
+#include "utils/builtins.h"
 #include "utils/flatfiles.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
@@ -1308,7 +1309,8 @@ exec_parse_message(const char *query_string,	/* string to execute */
 							   commandTag,
 							   querytree_list,
 							   plantree_list,
-							   param_list);
+							   param_list,
+							   false);
 	}
 	else
 	{
@@ -1322,6 +1324,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 		pstmt->query_list = querytree_list;
 		pstmt->plan_list = plantree_list;
 		pstmt->argtype_list = param_list;
+		pstmt->from_sql = false;
 		pstmt->context = unnamed_stmt_context;
 		/* Now the unnamed statement is complete and valid */
 		unnamed_stmt_pstmt = pstmt;

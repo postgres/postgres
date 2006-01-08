@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.115 2005/11/04 23:13:59 petere Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.116 2006/01/08 07:00:24 neilc Exp $
  -->
 
 <chapter id="catalogs">
@@ -4373,6 +4373,11 @@
      </row>
 
      <row>
+      <entry><link linkend="view-pg-prepared-statements"><structname>pg_prepared_statements</structname></link></entry>
+      <entry>current prepared statements</entry>
+     </row>
+
+     <row>
       <entry><link linkend="view-pg-prepared-xacts"><structname>pg_prepared_xacts</structname></link></entry>
       <entry>currently prepared transactions</entry>
      </row>
@@ -4776,6 +4781,101 @@
    but it continues to hold the locks it acquired while running.)
   </para>
 
+ </sect1>
+
+ <sect1 id="view-pg-prepared-statements">
+  <title><structname>pg_prepared_statements</structname></title>
+
+  <indexterm zone="view-pg-prepared-statements">
+   <primary>pg_prepared_statements</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_prepared_statements</structname> view displays
+   all the prepared statements that are available in the current
+   session. See <xref linkend="sql-prepare"
+   endterm="sql-prepare-title"> for more information about prepared
+   statements.
+  </para>
+
+  <para>
+   <structname>pg_prepared_statements</structname> contains one row
+   for each prepared statement. Rows are added to the view when a new
+   prepared statement is created, and removed when a prepared
+   statement is released (for example, via the <xref
+   linkend="sql-deallocate" endterm="sql-deallocate-title">
+   command).
+  </para>
+
+  <table>
+   <title><structname>pg_prepared_statements</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><structfield>name</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>
+       The identifier of the prepared statement.
+      </entry>
+     </row>
+     <row>
+      <entry><structfield>statement</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>
+       The query string submitted by the client to create this
+       prepared statement. For prepared statements created via SQL,
+       this is the <command>PREPARE</command> statement submitted by
+       the client. For prepared statements created via the
+       frontend/backend protocol, this is the text of the prepared
+       statement itself.
+      </entry>
+     </row>
+     <row>
+      <entry><structfield>prepare_time</structfield></entry>
+      <entry><type>timestamptz</type></entry>
+      <entry></entry>
+      <entry>
+       The time at which the prepared statement was created.
+      </entry>
+     </row>
+     <row>
+      <entry><structfield>parameter_types</structfield></entry>
+      <entry><type>oid[]</type></entry>
+      <entry></entry>
+      <entry>
+       The expected parameter types for the prepared statement in the form of
+       an array of type OIDs.
+      </entry>
+     </row>
+     <row>
+      <entry><structfield>from_sql</structfield></entry>
+      <entry><type>boolean</type></entry>
+      <entry></entry>
+      <entry>
+       <literal>true</literal> if the prepared statement was created
+       via the <command>PREPARE</command> SQL statement;
+       <literal>false</literal> if the statement was prepared via the
+       frontend/backend protocol.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The <structname>pg_prepared_statements</structname> view is read only.
+  </para>
  </sect1>
 
  <sect1 id="view-pg-prepared-xacts">
