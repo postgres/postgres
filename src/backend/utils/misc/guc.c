@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.306 2006/01/05 10:07:46 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.307 2006/01/08 20:13:33 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -147,9 +147,7 @@ static const char *show_tcp_keepalives_count(void);
 /*
  * GUC option variables that are exported from this module
  */
-#ifdef USE_ASSERT_CHECKING
 bool		assert_enabled = true;
-#endif
 bool		log_duration = false;
 bool		Debug_print_plan = false;
 bool		Debug_print_parse = false;
