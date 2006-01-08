@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.67.4.3 2005/08/20 19:19:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.67.4.4 2006/01/08 15:51:18 adunstan Exp $
  *
  **********************************************************************/
 
@@ -52,6 +52,12 @@
 #include "utils/typcache.h"
 
 /* perl stuff */
+
+/* stop perl from hijacking stdio and other stuff */
+#ifdef WIN32
+#define WIN32IO_IS_STDIO
+#endif 
+
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
