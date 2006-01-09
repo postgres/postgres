@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.308 2006/01/08 21:24:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.309 2006/01/09 10:05:31 petere Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -983,7 +983,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"allow_system_table_mods", PGC_BACKEND, DEVELOPER_OPTIONS,
+		{"allow_system_table_mods", PGC_POSTMASTER, DEVELOPER_OPTIONS,
 		 gettext_noop("Allows modifications of the structure of system tables."),
 		 NULL,
 		 GUC_NOT_IN_SAMPLE
