@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.305.2.11 2005/04/30 08:42:17 neilc Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.305.2.12 2006/01/09 21:16:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4273,9 +4273,10 @@ convertRegProcReference(const char *proc)
  *
  * Returns what to print, or NULL to print nothing
  *
- * In 7.3 the input is a REGOPERATOR display; we have to strip the
- * argument-types part.  In prior versions, the input is just a
- * numeric OID, which we search our operator list for.
+ * In 7.3 and up the input is a REGOPERATOR display; we have to strip the
+ * argument-types part, and add OPERATOR() decoration if the name is
+ * schema-qualified.  In older versions, the input is just a numeric OID,
+ * which we search our operator list for.
  */
 static const char *
 convertOperatorReference(const char *opr,
@@ -4289,23 +4290,34 @@ convertOperatorReference(const char *opr,
 
 	if (g_fout->remoteVersion >= 70300)
 	{
-		char	   *paren;
+		char	   *oname;
+		char	   *ptr;
 		bool		inquote;
+		bool		sawdot;
 
 		name = strdup(opr);
-		/* find non-double-quoted left paren */
+		/* find non-double-quoted left paren, and check for non-quoted dot */
 		inquote = false;
-		for (paren = name; *paren; paren++)
+		sawdot = false;
+		for (ptr = name; *ptr; ptr++)
 		{
-			if (*paren == '(' && !inquote)
+			if (*ptr == '"')
+				inquote = !inquote;
+			else if (*ptr == '.' && !inquote)
+				sawdot = true;
+			else if (*ptr == '(' && !inquote)
 			{
-				*paren = '\0';
+				*ptr = '\0';
 				break;
 			}
-			if (*paren == '"')
-				inquote = !inquote;
 		}
-		return name;
+		/* If not schema-qualified, don't need to add OPERATOR() */
+		if (!sawdot)
+			return name;
+		oname = malloc(strlen(name) + 11);
+		sprintf(oname, "OPERATOR(%s)", name);
+		free(name);
+		return oname;
 	}
 
 	name = findOprByOid(g_oprinfo, numOperators, opr);
