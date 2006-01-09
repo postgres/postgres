@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.68 2005/12/29 21:47:32 neilc Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.69 2006/01/09 02:47:09 neilc Exp $
  *
  *********************************************************************
  */
@@ -124,8 +124,7 @@ typedef struct PLyTypeInfo
 }	PLyTypeInfo;
 
 
-/* cached procedure data
- */
+/* cached procedure data */
 typedef struct PLyProcedure
 {
 	char	   *proname;		/* SQL name of procedure */
@@ -145,8 +144,7 @@ typedef struct PLyProcedure
 }	PLyProcedure;
 
 
-/* Python objects.
- */
+/* Python objects */
 typedef struct PLyPlanObject
 {
 	PyObject_HEAD
@@ -167,8 +165,7 @@ typedef struct PLyResultObject
 }	PLyResultObject;
 
 
-/* function declarations
- */
+/* function declarations */
 
 /* Two exported functions: first is the magic telling Postgresql
  * what function call interface it implements. Second allows
@@ -179,8 +176,7 @@ void		plpython_init(void);
 
 PG_FUNCTION_INFO_V1(plpython_call_handler);
 
-/* most of the remaining of the declarations, all static
- */
+/* most of the remaining of the declarations, all static */
 
 /* these should only be called once at the first call
  * of plpython_call_handler.  initialize the python interpreter
@@ -190,18 +186,15 @@ static void PLy_init_all(void);
 static void PLy_init_interp(void);
 static void PLy_init_plpy(void);
 
-/* call PyErr_SetString with a vprint interface
- */
+/* call PyErr_SetString with a vprint interface */
 static void
 PLy_exception_set(PyObject *, const char *,...)
 __attribute__((format(printf, 2, 3)));
 
-/* Get the innermost python procedure called from the backend.
- */
+/* Get the innermost python procedure called from the backend */
 static char *PLy_procedure_name(PLyProcedure *);
 
-/* some utility functions
- */
+/* some utility functions */
 static void PLy_elog(int, const char *,...);
 static char *PLy_traceback(int *);
 static char *PLy_vprintf(const char *fmt, va_list ap);
@@ -212,8 +205,7 @@ static void *PLy_realloc(void *, size_t);
 static char *PLy_strdup(const char *);
 static void PLy_free(void *);
 
-/* sub handlers for functions and triggers
- */
+/* sub handlers for functions and triggers */
 static Datum PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure *);
 static HeapTuple PLy_trigger_handler(FunctionCallInfo fcinfo, PLyProcedure *);
 
@@ -245,8 +237,7 @@ static void PLy_input_datum_func2(PLyDatumToOb *, Oid, HeapTuple);
 static void PLy_output_tuple_funcs(PLyTypeInfo *, TupleDesc);
 static void PLy_input_tuple_funcs(PLyTypeInfo *, TupleDesc);
 
-/* conversion functions
- */
+/* conversion functions */
 static PyObject *PLyDict_FromTuple(PLyTypeInfo *, HeapTuple, TupleDesc);
 static PyObject *PLyBool_FromString(const char *);
 static PyObject *PLyFloat_FromString(const char *);
@@ -255,8 +246,7 @@ static PyObject *PLyLong_FromString(const char *);
 static PyObject *PLyString_FromString(const char *);
 
 
-/* global data
- */
+/* global data */
 static bool	PLy_first_call = true;
 
 /*
@@ -281,14 +271,12 @@ static PyObject *PLy_interp_globals = NULL;
 static PyObject *PLy_interp_safe_globals = NULL;
 static PyObject *PLy_procedure_cache = NULL;
 
-/* Python exceptions
- */
+/* Python exceptions */
 static PyObject *PLy_exc_error = NULL;
 static PyObject *PLy_exc_fatal = NULL;
 static PyObject *PLy_exc_spi_error = NULL;
 
-/* some globals for the python module
- */
+/* some globals for the python module */
 static char PLy_plan_doc[] = {
 	"Store a PostgreSQL plan"
 };
@@ -412,7 +400,10 @@ PLy_trigger_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 			char	   *srv;
 
 			if (!PyString_Check(plrv))
-				elog(ERROR, "expected trigger to return None or a String");
+				ereport(ERROR,
+						(errcode(ERRCODE_DATA_EXCEPTION),
+						 errmsg("unexpected return value from trigger procedure"),
+						 errdetail("expected None or a String")));
 
 			srv = PyString_AsString(plrv);
 			if (pg_strcasecmp(srv, "SKIP") == 0)
@@ -430,11 +421,13 @@ PLy_trigger_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 			else if (pg_strcasecmp(srv, "OK") != 0)
 			{
 				/*
-				 * hmmm, perhaps they only read the pltcl page, not a
-				 * surprising thing since i've written no documentation, so
-				 * accept a belated OK
+				 * accept "OK" as an alternative to None; otherwise,
+				 * raise an error
 				 */
-				elog(ERROR, "expected return to be \"SKIP\" or \"MODIFY\"");
+				ereport(ERROR,
+						(errcode(ERRCODE_DATA_EXCEPTION),
+						 errmsg("unexpected return value from trigger procedure"),
+						 errdetail("expected None, \"OK\", \"SKIP\", or \"MODIFY\"")));
 			}
 		}
 	}
@@ -533,7 +526,7 @@ PLy_modify_tuple(PLyProcedure * proc, PyObject * pltd, TriggerData *tdata,
 			}
 			else
 			{
-				modvalues[i] = (Datum) 0;
+				modvalues[i] = PointerGetDatum(NULL);
 				modnulls[i] = 'n';
 			}
 
@@ -737,8 +730,7 @@ PLy_trigger_build_args(FunctionCallInfo fcinfo, PLyProcedure * proc, HeapTuple *
 
 
 
-/* function handler and friends
- */
+/* function handler and friends */
 static Datum
 PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 {
@@ -771,7 +763,7 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 		if (plrv == Py_None)
 		{
 			fcinfo->isnull = true;
-			rv = (Datum) NULL;
+			rv = PointerGetDatum(NULL);
 		}
 		else
 		{
@@ -785,7 +777,6 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 							   ObjectIdGetDatum(proc->result.out.d.typioparam),
 							   Int32GetDatum(-1));
 		}
-
 	}
 	PG_CATCH();
 	{
@@ -1150,8 +1141,8 @@ PLy_procedure_compile(PLyProcedure * proc, const char *src)
 	proc->globals = PyDict_Copy(PLy_interp_globals);
 
 	/*
-	 * SD is private preserved data between calls GD is global data shared by
-	 * all functions
+	 * SD is private preserved data between calls. GD is global data
+	 * shared by all functions
 	 */
 	proc->statics = PyDict_New();
 	PyDict_SetItemString(proc->globals, "SD", proc->statics);
@@ -1406,8 +1397,7 @@ PLy_typeinfo_dealloc(PLyTypeInfo * arg)
 	}
 }
 
-/* assumes that a bool is always returned as a 't' or 'f'
- */
+/* assumes that a bool is always returned as a 't' or 'f' */
 static PyObject *
 PLyBool_FromString(const char *src)
 {
@@ -1514,11 +1504,9 @@ PLyDict_FromTuple(PLyTypeInfo * info, HeapTuple tuple, TupleDesc desc)
 	return dict;
 }
 
-/* initialization, some python variables function declared here
- */
+/* initialization, some python variables function declared here */
 
-/* interface to postgresql elog
- */
+/* interface to postgresql elog */
 static PyObject *PLy_debug(PyObject *, PyObject *);
 static PyObject *PLy_log(PyObject *, PyObject *);
 static PyObject *PLy_info(PyObject *, PyObject *);
@@ -1527,8 +1515,7 @@ static PyObject *PLy_warning(PyObject *, PyObject *);
 static PyObject *PLy_error(PyObject *, PyObject *);
 static PyObject *PLy_fatal(PyObject *, PyObject *);
 
-/* PLyPlanObject, PLyResultObject and SPI interface
- */
+/* PLyPlanObject, PLyResultObject and SPI interface */
 #define is_PLyPlanObject(x) ((x)->ob_type == &PLy_PlanType)
 static PyObject *PLy_plan_new(void);
 static void PLy_plan_dealloc(PyObject *);
@@ -1660,8 +1647,7 @@ static PyMethodDef PLy_methods[] = {
 };
 
 
-/* plan object methods
- */
+/* plan object methods */
 static PyObject *
 PLy_plan_new(void)
 {
@@ -1722,8 +1708,7 @@ PLy_plan_status(PyObject * self, PyObject * args)
 
 
 
-/* result object methods
- */
+/* result object methods */
 
 static PyObject *
 PLy_result_new(void)
@@ -1833,8 +1818,7 @@ PLy_result_ass_slice(PyObject * arg, int lidx, int hidx, PyObject * slice)
 	return rv;
 }
 
-/* SPI interface
- */
+/* SPI interface */
 static PyObject *
 PLy_spi_prepare(PyObject * self, PyObject * args)
 {
@@ -1893,7 +1877,7 @@ PLy_spi_prepare(PyObject * self, PyObject * args)
 				for (i = 0; i < nargs; i++)
 				{
 					PLy_typeinfo_init(&plan->args[i]);
-					plan->values[i] = (Datum) NULL;
+					plan->values[i] = PointerGetDatum(NULL);
 				}
 
 				for (i = 0; i < nargs; i++)
@@ -2073,7 +2057,7 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 			else
 			{
 				Py_DECREF(elem);
-				plan->values[i] = (Datum) 0;
+				plan->values[i] = PointerGetDatum(NULL);
 				nulls[i] = 'n';
 			}
 		}
@@ -2095,10 +2079,10 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 		for (i = 0; i < nargs; i++)
 		{
 			if (!plan->args[i].out.d.typbyval &&
-				(plan->values[i] != (Datum) NULL))
+				(plan->values[i] != PointerGetDatum(NULL)))
 			{
 				pfree(DatumGetPointer(plan->values[i]));
-				plan->values[i] = (Datum) NULL;
+				plan->values[i] = PointerGetDatum(NULL);
 			}
 		}
 
@@ -2115,10 +2099,10 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 	for (i = 0; i < nargs; i++)
 	{
 		if (!plan->args[i].out.d.typbyval &&
-			(plan->values[i] != (Datum) NULL))
+			(plan->values[i] != PointerGetDatum(NULL)))
 		{
 			pfree(DatumGetPointer(plan->values[i]));
-			plan->values[i] = (Datum) NULL;
+			plan->values[i] = PointerGetDatum(NULL);
 		}
 	}
 
@@ -2436,13 +2420,12 @@ PLy_output(volatile int level, PyObject * self, PyObject * args)
 
 
 /*
- * Get the last procedure name called by the backend ( the innermost,
- * If a plpython procedure call calls the backend and the backend calls
- * another plpython procedure )
+ * Get the name of the last procedure called by the backend (the
+ * innermost, if a plpython procedure call calls the backend and the
+ * backend calls another plpython procedure).
  *
  * NB: this returns the SQL name, not the internal Python procedure name
  */
-
 static char *
 PLy_procedure_name(PLyProcedure * proc)
 {
@@ -2606,13 +2589,9 @@ PLy_vprintf(const char *fmt, va_list ap)
 	return NULL;
 }
 
-/* python module code
- */
+/* python module code */
 
-
-/* some dumb utility functions
- */
-
+/* some dumb utility functions */
 static void *
 PLy_malloc(size_t bytes)
 {
@@ -2650,8 +2629,7 @@ PLy_strdup(const char *str)
 	return result;
 }
 
-/* define this away
- */
+/* define this away */
 static void
 PLy_free(void *ptr)
 {
