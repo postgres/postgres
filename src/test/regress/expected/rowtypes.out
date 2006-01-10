@@ -60,7 +60,7 @@ select * from quadtable;
 (2 rows)
 
 select f1, q.c1 from quadtable;		-- fails, q is a table reference
-ERROR:  relation "q" does not exist
+ERROR:  missing FROM-clause entry for table "q"
 select f1, (q).c1, (qq.q).c1.i from quadtable qq;
  f1 |    c1     |  i  
 ----+-----------+-----
