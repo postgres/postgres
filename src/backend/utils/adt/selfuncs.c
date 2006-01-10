@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.194 2005/11/25 19:47:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.195 2006/01/10 17:35:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,6 +131,11 @@ typedef struct
 	} while(0)
 
 
+static double mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
+							  Datum constval, double *sumcommonp);
+static double ineq_histogram_selectivity(VariableStatData *vardata,
+										 FmgrInfo *opproc, bool isgt,
+										 Datum constval, Oid consttype);
 static bool convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 				  Datum lobound, Datum hibound, Oid boundstypid,
 				  double *scaledlobound, double *scaledhibound);
@@ -164,8 +169,8 @@ static void examine_variable(PlannerInfo *root, Node *node, int varRelid,
 static double get_variable_numdistinct(VariableStatData *vardata);
 static bool get_variable_maximum(PlannerInfo *root, VariableStatData *vardata,
 					 Oid sortop, Datum *max);
-static Selectivity prefix_selectivity(PlannerInfo *root, Node *variable,
-				   Oid opclass, Const *prefix);
+static Selectivity prefix_selectivity(VariableStatData *vardata,
+									  Oid opclass, Const *prefixcon);
 static Selectivity pattern_selectivity(Const *patt, Pattern_Type ptype);
 static Datum string_to_datum(const char *str, Oid datatype);
 static Const *string_to_const(const char *str, Oid datatype);
@@ -426,15 +431,10 @@ scalarineqsel(PlannerInfo *root, Oid operator, bool isgt,
 {
 	Form_pg_statistic stats;
 	FmgrInfo	opproc;
-	Datum	   *values;
-	int			nvalues;
-	float4	   *numbers;
-	int			nnumbers;
 	double		mcv_selec,
 				hist_selec,
 				sumcommon;
 	double		selec;
-	int			i;
 
 	if (!HeapTupleIsValid(vardata->statsTuple))
 	{
@@ -451,10 +451,76 @@ scalarineqsel(PlannerInfo *root, Oid operator, bool isgt,
 	 * to the result selectivity.  Also add up the total fraction represented
 	 * by MCV entries.
 	 */
+	mcv_selec = mcv_selectivity(vardata, &opproc, constval,
+								&sumcommon);
+
+	/*
+	 * If there is a histogram, determine which bin the constant falls in, and
+	 * compute the resulting contribution to selectivity.
+	 */
+	hist_selec = ineq_histogram_selectivity(vardata, &opproc, isgt,
+											constval, consttype);
+
+	/*
+	 * Now merge the results from the MCV and histogram calculations,
+	 * realizing that the histogram covers only the non-null values that are
+	 * not listed in MCV.
+	 */
+	selec = 1.0 - stats->stanullfrac - sumcommon;
+
+	if (hist_selec > 0.0)
+		selec *= hist_selec;
+	else
+	{
+		/*
+		 * If no histogram but there are values not accounted for by MCV,
+		 * arbitrarily assume half of them will match.
+		 */
+		selec *= 0.5;
+	}
+
+	selec += mcv_selec;
+
+	/* result should be in range, but make sure... */
+	CLAMP_PROBABILITY(selec);
+
+	return selec;
+}
+
+/*
+ *	mcv_selectivity				- Examine the MCV list for scalarineqsel
+ *
+ * Determine the fraction of the variable's MCV population that satisfies
+ * the predicate (VAR OP CONST), as well as the fraction of the total column
+ * population represented by the MCV list.  This code will work for any
+ * boolean-returning predicate operator.
+ *
+ * The function result is the MCV selectivity, and the fraction of the
+ * total population is returned into *sumcommonp.  Zeroes are returned
+ * if there is no MCV list.
+ */
+static double
+mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc, Datum constval,
+				double *sumcommonp)
+{
+	double		mcv_selec,
+				sumcommon;
+	Datum	   *values;
+	int			nvalues;
+	float4	   *numbers;
+	int			nnumbers;
+	int			i;
+
 	mcv_selec = 0.0;
 	sumcommon = 0.0;
 
-	if (get_attstatsslot(vardata->statsTuple,
+	/*
+	 * If we have most-common-values info, add up the fractions of the MCV
+	 * entries that satisfy MCV OP CONST.  Also add up the total fraction
+	 * represented by MCV entries.
+	 */
+	if (HeapTupleIsValid(vardata->statsTuple) &&
+		get_attstatsslot(vardata->statsTuple,
 						 vardata->atttype, vardata->atttypmod,
 						 STATISTIC_KIND_MCV, InvalidOid,
 						 &values, &nvalues,
@@ -462,7 +528,7 @@ scalarineqsel(PlannerInfo *root, Oid operator, bool isgt,
 	{
 		for (i = 0; i < nvalues; i++)
 		{
-			if (DatumGetBool(FunctionCall2(&opproc,
+			if (DatumGetBool(FunctionCall2(opproc,
 										   values[i],
 										   constval)))
 				mcv_selec += numbers[i];
@@ -472,10 +538,36 @@ scalarineqsel(PlannerInfo *root, Oid operator, bool isgt,
 						  numbers, nnumbers);
 	}
 
+	*sumcommonp = sumcommon;
+	return mcv_selec;
+}
+
+/*
+ *	ineq_histogram_selectivity	- Examine the histogram for scalarineqsel
+ *
+ * Determine the fraction of the variable's histogram population that
+ * satisfies the inequality condition, ie, VAR < CONST or VAR > CONST.
+ *
+ * Returns zero if there is no histogram (valid results will always be
+ * greater than zero).
+ *
+ * Note that the result disregards both the most-common-values (if any) and
+ * null entries.  The caller is expected to combine this result with
+ * statistics for those portions of the column population.
+ */
+static double
+ineq_histogram_selectivity(VariableStatData *vardata,
+						   FmgrInfo *opproc, bool isgt,
+						   Datum constval, Oid consttype)
+{
+	double		hist_selec;
+	Datum	   *values;
+	int			nvalues;
+	int			i;
+
+	hist_selec = 0.0;
+
 	/*
-	 * If there is a histogram, determine which bin the constant falls in, and
-	 * compute the resulting contribution to selectivity.
-	 *
 	 * Someday, VACUUM might store more than one histogram per rel/att,
 	 * corresponding to more than one possible sort ordering defined for the
 	 * column type.  However, to make that work we will need to figure out
@@ -485,9 +577,8 @@ scalarineqsel(PlannerInfo *root, Oid operator, bool isgt,
 	 * appears in pg_statistic is sorted the same way our operator sorts, or
 	 * the reverse way if isgt is TRUE.
 	 */
-	hist_selec = 0.0;
-
-	if (get_attstatsslot(vardata->statsTuple,
+	if (HeapTupleIsValid(vardata->statsTuple) &&
+		get_attstatsslot(vardata->statsTuple,
 						 vardata->atttype, vardata->atttypmod,
 						 STATISTIC_KIND_HISTOGRAM, InvalidOid,
 						 &values, &nvalues,
@@ -498,7 +589,7 @@ scalarineqsel(PlannerInfo *root, Oid operator, bool isgt,
 			double		histfrac;
 			bool		ltcmp;
 
-			ltcmp = DatumGetBool(FunctionCall2(&opproc,
+			ltcmp = DatumGetBool(FunctionCall2(opproc,
 											   values[0],
 											   constval));
 			if (isgt)
@@ -517,7 +608,7 @@ scalarineqsel(PlannerInfo *root, Oid operator, bool isgt,
 				 */
 				for (i = 1; i < nvalues; i++)
 				{
-					ltcmp = DatumGetBool(FunctionCall2(&opproc,
+					ltcmp = DatumGetBool(FunctionCall2(opproc,
 													   values[i],
 													   constval));
 					if (isgt)
@@ -618,30 +709,7 @@ scalarineqsel(PlannerInfo *root, Oid operator, bool isgt,
 		free_attstatsslot(vardata->atttype, values, nvalues, NULL, 0);
 	}
 
-	/*
-	 * Now merge the results from the MCV and histogram calculations,
-	 * realizing that the histogram covers only the non-null values that are
-	 * not listed in MCV.
-	 */
-	selec = 1.0 - stats->stanullfrac - sumcommon;
-
-	if (hist_selec > 0.0)
-		selec *= hist_selec;
-	else
-	{
-		/*
-		 * If no histogram but there are values not accounted for by MCV,
-		 * arbitrarily assume half of them will match.
-		 */
-		selec *= 0.5;
-	}
-
-	selec += mcv_selec;
-
-	/* result should be in range, but make sure... */
-	CLAMP_PROBABILITY(selec);
-
-	return selec;
+	return hist_selec;
 }
 
 /*
@@ -801,10 +869,7 @@ static double
 patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 {
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
-
-#ifdef NOT_USED
 	Oid			operator = PG_GETARG_OID(1);
-#endif
 	List	   *args = (List *) PG_GETARG_POINTER(2);
 	int			varRelid = PG_GETARG_INT32(3);
 	VariableStatData vardata;
@@ -948,18 +1013,53 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 	{
 		/*
 		 * Not exact-match pattern.  We estimate selectivity of the fixed
-		 * prefix and remainder of pattern separately, then combine the two.
+		 * prefix and remainder of pattern separately, then combine the two
+		 * to get an estimate of the selectivity for the part of the column
+		 * population represented by the histogram.  We then add up data for
+		 * any most-common-values values; these are not in the histogram
+		 * population, and we can get exact answers for them by applying
+		 * the pattern operator, so there's no reason to approximate.
+		 * (If the MCVs cover a significant part of the total population,
+		 * this gives us a big leg up in accuracy.)
 		 */
 		Selectivity prefixsel;
 		Selectivity restsel;
 		Selectivity selec;
+		FmgrInfo	opproc;
+		double		nullfrac,
+					mcv_selec,
+					sumcommon;
+
+		if (HeapTupleIsValid(vardata.statsTuple))
+			nullfrac = ((Form_pg_statistic) GETSTRUCT(vardata.statsTuple))->stanullfrac;
+		else
+			nullfrac = 0.0;
 
 		if (pstatus == Pattern_Prefix_Partial)
-			prefixsel = prefix_selectivity(root, variable, opclass, prefix);
+			prefixsel = prefix_selectivity(&vardata, opclass, prefix);
 		else
 			prefixsel = 1.0;
 		restsel = pattern_selectivity(rest, ptype);
 		selec = prefixsel * restsel;
+
+		/*
+		 * If we have most-common-values info, add up the fractions of the MCV
+		 * entries that satisfy MCV OP PATTERN.  These fractions contribute
+		 * directly to the result selectivity.  Also add up the total fraction
+		 * represented by MCV entries.
+		 */
+		fmgr_info(get_opcode(operator), &opproc);
+		mcv_selec = mcv_selectivity(&vardata, &opproc, constval,
+									&sumcommon);
+
+		/*
+		 * Now merge the results from the MCV and histogram calculations,
+		 * realizing that the histogram covers only the non-null values that
+		 * are not listed in MCV.
+		 */
+		selec *= 1.0 - nullfrac - sumcommon;
+		selec += mcv_selec;
+
 		/* result should be in range, but make sure... */
 		CLAMP_PROBABILITY(selec);
 		result = selec;
@@ -2427,7 +2527,7 @@ estimate_hash_bucketsize(PlannerInfo *root, Node *hashkey, double nbuckets)
 /*
  * convert_to_scalar
  *	  Convert non-NULL values of the indicated types to the comparison
- *	  scale needed by scalarltsel()/scalargtsel().
+ *	  scale needed by scalarineqsel().
  *	  Returns "true" if successful.
  *
  * XXX this routine is a hack: ideally we should look up the conversion
@@ -3841,6 +3941,10 @@ pattern_fixed_prefix(Const *patt, Pattern_Type ptype,
  * A fixed prefix "foo" is estimated as the selectivity of the expression
  * "variable >= 'foo' AND variable < 'fop'" (see also indxpath.c).
  *
+ * The selectivity estimate is with respect to the portion of the column
+ * population represented by the histogram --- the caller must fold this
+ * together with info about MCVs and NULLs.
+ *
  * We use the >= and < operators from the specified btree opclass to do the
  * estimation.	The given variable and Const must be of the associated
  * datatype.
@@ -3851,25 +3955,28 @@ pattern_fixed_prefix(Const *patt, Pattern_Type ptype,
  * more useful to use the upper-bound code than not.
  */
 static Selectivity
-prefix_selectivity(PlannerInfo *root, Node *variable,
-				   Oid opclass, Const *prefixcon)
+prefix_selectivity(VariableStatData *vardata, Oid opclass, Const *prefixcon)
 {
 	Selectivity prefixsel;
 	Oid			cmpopr;
-	List	   *cmpargs;
+	FmgrInfo	opproc;
 	Const	   *greaterstrcon;
 
 	cmpopr = get_opclass_member(opclass, InvalidOid,
 								BTGreaterEqualStrategyNumber);
 	if (cmpopr == InvalidOid)
 		elog(ERROR, "no >= operator for opclass %u", opclass);
-	cmpargs = list_make2(variable, prefixcon);
-	/* Assume scalargtsel is appropriate for all supported types */
-	prefixsel = DatumGetFloat8(DirectFunctionCall4(scalargtsel,
-												   PointerGetDatum(root),
-												   ObjectIdGetDatum(cmpopr),
-												   PointerGetDatum(cmpargs),
-												   Int32GetDatum(0)));
+	fmgr_info(get_opcode(cmpopr), &opproc);
+
+	prefixsel = ineq_histogram_selectivity(vardata, &opproc, true,
+										   prefixcon->constvalue,
+										   prefixcon->consttype);
+
+	if (prefixsel <= 0.0)
+	{
+		/* No histogram is present ... return a suitable default estimate */
+		return 0.005;
+	}
 
 	/*-------
 	 * If we can create a string larger than the prefix, say
@@ -3885,49 +3992,30 @@ prefix_selectivity(PlannerInfo *root, Node *variable,
 									BTLessStrategyNumber);
 		if (cmpopr == InvalidOid)
 			elog(ERROR, "no < operator for opclass %u", opclass);
-		cmpargs = list_make2(variable, greaterstrcon);
-		/* Assume scalarltsel is appropriate for all supported types */
-		topsel = DatumGetFloat8(DirectFunctionCall4(scalarltsel,
-													PointerGetDatum(root),
-													ObjectIdGetDatum(cmpopr),
-													PointerGetDatum(cmpargs),
-													Int32GetDatum(0)));
+		fmgr_info(get_opcode(cmpopr), &opproc);
+
+		topsel = ineq_histogram_selectivity(vardata, &opproc, false,
+											greaterstrcon->constvalue,
+											greaterstrcon->consttype);
+
+		/* ineq_histogram_selectivity worked before, it shouldn't fail now */
+		Assert(topsel > 0.0);
 
 		/*
 		 * Merge the two selectivities in the same way as for a range query
-		 * (see clauselist_selectivity()).
+		 * (see clauselist_selectivity()).  Note that we don't need to worry
+		 * about double-exclusion of nulls, since ineq_histogram_selectivity
+		 * doesn't count those anyway.
 		 */
 		prefixsel = topsel + prefixsel - 1.0;
 
-		/* Adjust for double-exclusion of NULLs */
-		prefixsel += nulltestsel(root, IS_NULL, variable, 0);
-
 		/*
-		 * A zero or slightly negative prefixsel should be converted into a
-		 * small positive value; we probably are dealing with a very tight
-		 * range and got a bogus result due to roundoff errors. However, if
-		 * prefixsel is very negative, then we probably have default
-		 * selectivity estimates on one or both sides of the range.  In that
-		 * case, insert a not-so-wildly-optimistic default estimate.
+		 * A zero or negative prefixsel should be converted into a small
+		 * positive value; we probably are dealing with a very tight range
+		 * and got a bogus result due to roundoff errors.
 		 */
 		if (prefixsel <= 0.0)
-		{
-			if (prefixsel < -0.01)
-			{
-				/*
-				 * No data available --- use a default estimate that is small,
-				 * but not real small.
-				 */
-				prefixsel = 0.005;
-			}
-			else
-			{
-				/*
-				 * It's just roundoff error; use a small positive value
-				 */
-				prefixsel = 1.0e-10;
-			}
-		}
+			prefixsel = 1.0e-10;
 	}
 
 	return prefixsel;
