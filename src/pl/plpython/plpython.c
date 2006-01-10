@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.69 2006/01/09 02:47:09 neilc Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.70 2006/01/10 00:33:12 neilc Exp $
  *
  *********************************************************************
  */
@@ -895,6 +895,7 @@ PLy_function_build_args(FunctionCallInfo fcinfo, PLyProcedure * proc)
 			 * FIXME -- error check this
 			 */
 			PyList_SetItem(args, i, arg);
+			arg = NULL;
 		}
 	}
 	PG_CATCH();
