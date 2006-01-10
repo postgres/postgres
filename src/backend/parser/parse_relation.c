@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.116.2.1 2005/11/22 18:23:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.116.2.2 2006/01/10 22:00:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,7 +161,7 @@ scanNameSpaceForRelid(ParseState *pstate, Oid relid)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
 
-		/* yes, the test for alias==NULL should be there... */
+		/* yes, the test for alias == NULL should be there... */
 		if (rte->rtekind == RTE_RELATION &&
 			rte->relid == relid &&
 			rte->alias == NULL)
@@ -175,6 +175,48 @@ scanNameSpaceForRelid(ParseState *pstate, Oid relid)
 		}
 	}
 	return result;
+}
+
+/*
+ * searchRangeTable
+ *	  See if any RangeTblEntry could possibly match the RangeVar.
+ *	  If so, return a pointer to the RangeTblEntry; else return NULL.
+ *
+ * This is different from refnameRangeTblEntry in that it considers every
+ * entry in the ParseState's rangetable(s), not only those that are currently
+ * visible in the p_relnamespace lists.  This behavior is invalid per the SQL
+ * spec, and it may give ambiguous results (there might be multiple equally
+ * valid matches, but only one will be returned).  This must be used ONLY
+ * as a heuristic in giving suitable error messages.  See warnAutoRange.
+ *
+ * Notice that we consider both matches on actual relation name and matches
+ * on alias.
+ */
+static RangeTblEntry *
+searchRangeTable(ParseState *pstate, RangeVar *relation)
+{
+	Oid			relId = RangeVarGetRelid(relation, true);
+	char	   *refname = relation->relname;
+
+	while (pstate != NULL)
+	{
+		ListCell   *l;
+
+		foreach(l, pstate->p_rtable)
+		{
+			RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
+
+			if (OidIsValid(relId) &&
+				rte->rtekind == RTE_RELATION &&
+				rte->relid == relId)
+				return rte;
+			if (strcmp(rte->eref->aliasname, refname) == 0)
+				return rte;
+		}
+
+		pstate = pstate->parentParseState;
+	}
+	return NULL;
 }
 
 /*
@@ -1005,6 +1047,8 @@ addImplicitRTE(ParseState *pstate, RangeVar *relation)
 {
 	RangeTblEntry *rte;
 
+	/* issue warning or error as needed */
+	warnAutoRange(pstate, relation);
 	/*
 	 * Note that we set inFromCl true, so that the RTE will be listed
 	 * explicitly if the parsetree is ever decompiled by ruleutils.c. This
@@ -1014,7 +1058,6 @@ addImplicitRTE(ParseState *pstate, RangeVar *relation)
 	rte = addRangeTableEntry(pstate, relation, NULL, false, true);
 	/* Add to joinlist and relnamespace, but not varnamespace */
 	addRTEtoQuery(pstate, rte, true, true, false);
-	warnAutoRange(pstate, relation);
 
 	return rte;
 }
@@ -1761,31 +1804,68 @@ attnumTypeId(Relation rd, int attid)
 static void
 warnAutoRange(ParseState *pstate, RangeVar *relation)
 {
+	RangeTblEntry *rte;
+	int			sublevels_up;
+	const char *badAlias = NULL;
+
+	/*
+	 * Check to see if there are any potential matches in the query's
+	 * rangetable.  This affects the message we provide.
+	 */
+	rte = searchRangeTable(pstate, relation);
+
+	/*
+	 * If we found a match that has an alias and the alias is visible in
+	 * the namespace, then the problem is probably use of the relation's
+	 * real name instead of its alias, ie "SELECT foo.* FROM foo f".
+	 * This mistake is common enough to justify a specific hint.
+	 *
+	 * If we found a match that doesn't meet those criteria, assume the
+	 * problem is illegal use of a relation outside its scope, as in the
+	 * MySQL-ism "SELECT ... FROM a, b LEFT JOIN c ON (a.x = c.y)".
+	 */
+	if (rte && rte->alias &&
+		strcmp(rte->eref->aliasname, relation->relname) != 0 &&
+		refnameRangeTblEntry(pstate, NULL, rte->eref->aliasname,
+							 &sublevels_up) == rte)
+		badAlias = rte->eref->aliasname;
+
 	if (!add_missing_from)
 	{
-		if (pstate->parentParseState != NULL)
+		if (rte)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_TABLE),
-			 errmsg("missing FROM-clause entry in subquery for table \"%s\"",
-					relation->relname)));
+					 errmsg("invalid reference to FROM-clause entry for table \"%s\"",
+							relation->relname),
+					 (badAlias ?
+					  errhint("Perhaps you meant to reference the table alias \"%s\".",
+							  badAlias) :
+					  errhint("There is an entry for table \"%s\", but it cannot be referenced from this part of the query.",
+							  rte->eref->aliasname))));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_TABLE),
-					 errmsg("missing FROM-clause entry for table \"%s\"",
-							relation->relname)));
+					 (pstate->parentParseState ?
+					  errmsg("missing FROM-clause entry in subquery for table \"%s\"",
+							 relation->relname) :
+					  errmsg("missing FROM-clause entry for table \"%s\"",
+							 relation->relname))));
 	}
 	else
 	{
 		/* just issue a warning */
-		if (pstate->parentParseState != NULL)
-			ereport(NOTICE,
-					(errcode(ERRCODE_UNDEFINED_TABLE),
-					 errmsg("adding missing FROM-clause entry in subquery for table \"%s\"",
-							relation->relname)));
-		else
-			ereport(NOTICE,
-					(errcode(ERRCODE_UNDEFINED_TABLE),
+		ereport(NOTICE,
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+				 (pstate->parentParseState ?
+				  errmsg("adding missing FROM-clause entry in subquery for table \"%s\"",
+						 relation->relname) :
 				  errmsg("adding missing FROM-clause entry for table \"%s\"",
-						 relation->relname)));
+						 relation->relname)),
+				 (badAlias ?
+				  errhint("Perhaps you meant to reference the table alias \"%s\".",
+						  badAlias) :
+				  (rte ?
+				   errhint("There is an entry for table \"%s\", but it cannot be referenced from this part of the query.",
+						   rte->eref->aliasname) : 0))));
 	}
 }
