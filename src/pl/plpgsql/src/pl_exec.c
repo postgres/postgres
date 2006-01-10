@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.159 2006/01/03 22:48:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.160 2006/01/10 18:50:43 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -414,8 +414,7 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 	}
 
 	/* Clean up any leftover temporary memory */
-	if (estate.eval_econtext != NULL)
-		FreeExprContext(estate.eval_econtext);
+	FreeExprContext(estate.eval_econtext);
 	estate.eval_econtext = NULL;
 	exec_eval_cleanup(&estate);
 
@@ -646,8 +645,7 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	}
 
 	/* Clean up any leftover temporary memory */
-	if (estate.eval_econtext != NULL)
-		FreeExprContext(estate.eval_econtext);
+	FreeExprContext(estate.eval_econtext);
 	estate.eval_econtext = NULL;
 	exec_eval_cleanup(&estate);
 
