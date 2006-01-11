@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.177 2005/11/22 18:17:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.178 2006/01/11 08:43:13 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2271,7 +2271,7 @@ PQsetnonblocking(PGconn *conn, int arg)
 
 	/* early out if the socket is already in the state requested */
 	if (barg == conn->nonblocking)
-		return (0);
+		return 0;
 
 	/*
 	 * to guarantee constancy for flushing/query/result-polling behavior we
@@ -2281,11 +2281,11 @@ PQsetnonblocking(PGconn *conn, int arg)
 	 */
 	/* if we are going from blocking to non-blocking flush here */
 	if (pqFlush(conn))
-		return (-1);
+		return -1;
 
 	conn->nonblocking = barg;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -2295,7 +2295,7 @@ PQsetnonblocking(PGconn *conn, int arg)
 int
 PQisnonblocking(const PGconn *conn)
 {
-	return (pqIsnonblocking(conn));
+	return pqIsnonblocking(conn);
 }
 
 /* try to force data out, really only useful for non-blocking users */

@@ -2,7 +2,7 @@
  * Encoding names and routines for work with it. All
  * in this file is shared bedween FE and BE.
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/encnames.c,v 1.26 2005/10/15 02:49:33 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/encnames.c,v 1.27 2006/01/11 08:43:12 neilc Exp $
  */
 #ifdef FRONTEND
 #include "postgres_fe.h"
@@ -490,7 +490,7 @@ pg_char_to_encoding(const char *s)
 	pg_encname *p = NULL;
 
 	if (!s)
-		return (-1);
+		return -1;
 
 	p = pg_char_to_encname_struct(s);
 	return p ? p->encoding : -1;

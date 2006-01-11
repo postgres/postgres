@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.205 2005/11/26 05:03:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.206 2006/01/11 08:43:11 neilc Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2796,7 +2796,7 @@ log_heap_clean(Relation reln, Buffer buffer, OffsetNumber *unused, int uncnt)
 
 	recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_CLEAN, rdata);
 
-	return (recptr);
+	return recptr;
 }
 
 static XLogRecPtr
@@ -2884,14 +2884,14 @@ log_heap_update(Relation reln, Buffer oldbuf, ItemPointerData from,
 
 	recptr = XLogInsert(RM_HEAP_ID, info, rdata);
 
-	return (recptr);
+	return recptr;
 }
 
 XLogRecPtr
 log_heap_move(Relation reln, Buffer oldbuf, ItemPointerData from,
 			  Buffer newbuf, HeapTuple newtup)
 {
-	return (log_heap_update(reln, oldbuf, from, newbuf, newtup, true));
+	return log_heap_update(reln, oldbuf, from, newbuf, newtup, true);
 }
 
 static void

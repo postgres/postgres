@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/like.c,v 1.62 2005/10/15 02:49:28 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/like.c,v 1.63 2006/01/11 08:43:12 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,19 +49,19 @@ wchareq(char *p1, char *p2)
 
 	/* Optimization:  quickly compare the first byte. */
 	if (*p1 != *p2)
-		return (0);
+		return 0;
 
 	p1_len = pg_mblen(p1);
 	if (pg_mblen(p2) != p1_len)
-		return (0);
+		return 0;
 
 	/* They are the same length */
 	while (p1_len--)
 	{
 		if (*p1++ != *p2++)
-			return (0);
+			return 0;
 	}
-	return (1);
+	return 1;
 }
 
 /*--------------------
@@ -91,7 +91,7 @@ iwchareq(char *p1, char *p2)
 	 * different characters
 	 */
 	else if ((unsigned char) *p1 < CHARMAX || (unsigned char) *p2 < CHARMAX)
-		return (0);
+		return 0;
 
 	/*
 	 * ok, p1 and p2 are both > CHARMAX, then they must be multibyte

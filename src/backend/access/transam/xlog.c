@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.225 2005/12/29 18:08:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.226 2006/01/11 08:43:12 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -561,7 +561,7 @@ XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata)
 	{
 		RecPtr.xlogid = 0;
 		RecPtr.xrecoff = SizeOfXLogLongPHD;		/* start of 1st chkpt record */
-		return (RecPtr);
+		return RecPtr;
 	}
 
 	/*
@@ -953,7 +953,7 @@ begin:;
 
 	END_CRIT_SECTION();
 
-	return (RecPtr);
+	return RecPtr;
 }
 
 /*
@@ -1742,7 +1742,7 @@ XLogFileInit(uint32 log, uint32 seg,
 								path, log, seg)));
 		}
 		else
-			return (fd);
+			return fd;
 	}
 
 	/*
@@ -1834,7 +1834,7 @@ XLogFileInit(uint32 log, uint32 seg,
 		   errmsg("could not open file \"%s\" (log file %u, segment %u): %m",
 				  path, log, seg)));
 
-	return (fd);
+	return fd;
 }
 
 /*

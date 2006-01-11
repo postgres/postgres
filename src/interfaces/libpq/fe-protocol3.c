@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.23 2005/11/22 18:17:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.24 2006/01/11 08:43:13 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1158,7 +1158,7 @@ pqEndcopy3(PGconn *conn)
 	 * and the flush fails
 	 */
 	if (pqFlush(conn) && pqIsnonblocking(conn))
-		return (1);
+		return 1;
 
 	/* Return to active duty */
 	conn->asyncStatus = PGASYNC_BUSY;
@@ -1172,7 +1172,7 @@ pqEndcopy3(PGconn *conn)
 	 * with the CopyDone; are there corner cases where that doesn't happen?)
 	 */
 	if (pqIsnonblocking(conn) && PQisBusy(conn))
-		return (1);
+		return 1;
 
 	/* Wait for the completion response */
 	result = PQgetResult(conn);

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.143 2005/12/18 02:17:16 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.144 2006/01/11 08:43:12 neilc Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -2169,7 +2169,7 @@ complete_from_list(const char *text, int state)
 		casesensitive = false;
 		list_index = 0;
 		state++;
-		return (complete_from_list(text, state));
+		return complete_from_list(text, state);
 	}
 
 	/* If no more matches, return null. */

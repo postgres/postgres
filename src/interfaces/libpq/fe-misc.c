@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.123 2005/11/22 18:17:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.124 2006/01/11 08:43:13 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1090,7 +1090,7 @@ pqSocketPoll(int sock, int forRead, int forWrite, time_t end_time)
 int
 PQmblen(const char *s, int encoding)
 {
-	return (pg_encoding_mblen(encoding, s));
+	return pg_encoding_mblen(encoding, s);
 }
 
 /*
@@ -1100,7 +1100,7 @@ PQmblen(const char *s, int encoding)
 int
 PQdsplen(const char *s, int encoding)
 {
-	return (pg_encoding_dsplen(encoding, s));
+	return pg_encoding_dsplen(encoding, s);
 }
 
 /*
@@ -1115,7 +1115,7 @@ PQenv2encoding(void)
 	str = getenv("PGCLIENTENCODING");
 	if (str && *str != '\0')
 		encoding = pg_char_to_encoding(str);
-	return (encoding);
+	return encoding;
 }
 
 

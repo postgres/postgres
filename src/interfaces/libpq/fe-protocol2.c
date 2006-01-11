@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.20 2005/11/22 18:17:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.21 2006/01/11 08:43:13 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1180,11 +1180,11 @@ pqEndcopy2(PGconn *conn)
 	 * and the flush fails
 	 */
 	if (pqFlush(conn) && pqIsnonblocking(conn))
-		return (1);
+		return 1;
 
 	/* non blocking connections may have to abort at this point. */
 	if (pqIsnonblocking(conn) && PQisBusy(conn))
-		return (1);
+		return 1;
 
 	/* Return to active duty */
 	conn->asyncStatus = PGASYNC_BUSY;

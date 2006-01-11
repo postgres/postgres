@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.39 2005/10/15 02:49:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.40 2006/01/11 08:43:12 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,13 +51,13 @@ XLogReadBuffer(bool extend, Relation reln, BlockNumber blkno)
 		}
 		if (buffer != InvalidBuffer)
 			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-		return (buffer);
+		return buffer;
 	}
 
 	buffer = ReadBuffer(reln, blkno);
 	if (buffer != InvalidBuffer)
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-	return (buffer);
+	return buffer;
 }
 
 
@@ -141,7 +141,7 @@ _xl_new_reldesc(void)
 	if (_xlast < _xlcnt)
 	{
 		_xlrelarr[_xlast].reldata.rd_rel = &(_xlpgcarr[_xlast]);
-		return (&(_xlrelarr[_xlast]));
+		return &(_xlrelarr[_xlast]);
 	}
 
 	/* reuse */
@@ -150,7 +150,7 @@ _xl_new_reldesc(void)
 	_xl_remove_hash_entry(res);
 
 	_xlast--;
-	return (res);
+	return res;
 }
 
 
@@ -249,7 +249,7 @@ XLogOpenRelation(RelFileNode rnode)
 	_xlrelarr[0].lessRecently = res;
 	res->lessRecently->moreRecently = res;
 
-	return (&(res->reldata));
+	return &(res->reldata);
 }
 
 /*

@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.263 2006/01/07 22:30:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.264 2006/01/11 08:43:12 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1231,7 +1231,7 @@ lnext:	;
 						default:
 							elog(ERROR, "unrecognized heap_lock_tuple status: %u",
 								 test);
-							return (NULL);
+							return NULL;
 					}
 				}
 			}
@@ -2109,7 +2109,7 @@ lpqnext:;
 			epq->rti = 0;
 			estate->es_useEvalPlan = false;
 			/* and continue Query execution */
-			return (NULL);
+			return NULL;
 		}
 		Assert(oldepq->rti != 0);
 		/* push current PQ to freePQ stack */
@@ -2119,7 +2119,7 @@ lpqnext:;
 		goto lpqnext;
 	}
 
-	return (slot);
+	return slot;
 }
 
 static void

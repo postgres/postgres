@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.57 2005/12/03 05:50:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.58 2006/01/11 08:43:11 neilc Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -182,7 +182,7 @@ heap_tuple_untoast_attr_slice(varattrib *attr, int32 sliceoffset, int32 slicelen
 		if (VARATT_IS_EXTERNAL(attr))
 		{
 			/* fast path */
-			return (toast_fetch_datum_slice(attr, sliceoffset, slicelength));
+			return toast_fetch_datum_slice(attr, sliceoffset, slicelength);
 		}
 		else
 			preslice = attr;
@@ -1338,7 +1338,7 @@ toast_fetch_datum_slice(varattrib *attr, int32 sliceoffset, int32 length)
 		VARATT_SIZEP(result) |= VARATT_FLAG_COMPRESSED;
 
 	if (length == 0)
-		return (result);		/* Can save a lot of work at this point! */
+		return result;		/* Can save a lot of work at this point! */
 
 	startchunk = sliceoffset / TOAST_MAX_CHUNK_SIZE;
 	endchunk = (sliceoffset + length - 1) / TOAST_MAX_CHUNK_SIZE;

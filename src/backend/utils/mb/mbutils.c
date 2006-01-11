@@ -4,7 +4,7 @@
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.53 2006/01/11 06:59:22 neilc Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.54 2006/01/11 08:43:12 neilc Exp $
  */
 #include "postgres.h"
 
@@ -64,7 +64,7 @@ SetClientEncoding(int encoding, bool doit)
 	MemoryContext oldcontext;
 
 	if (!PG_VALID_FE_ENCODING(encoding))
-		return (-1);
+		return -1;
 
 	/* Can't do anything during startup, per notes above */
 	if (!backend_startup_complete)
@@ -196,7 +196,7 @@ int
 pg_get_client_encoding(void)
 {
 	Assert(ClientEncoding);
-	return (ClientEncoding->encoding);
+	return ClientEncoding->encoding;
 }
 
 /*
@@ -206,7 +206,7 @@ const char *
 pg_get_client_encoding_name(void)
 {
 	Assert(ClientEncoding);
-	return (ClientEncoding->name);
+	return ClientEncoding->name;
 }
 
 /*
@@ -483,7 +483,7 @@ pg_mbstrlen(const char *mbstr)
 		mbstr += pg_mblen(mbstr);
 		len++;
 	}
-	return (len);
+	return len;
 }
 
 /* returns the length (counted in wchars) of a multibyte string
@@ -506,7 +506,7 @@ pg_mbstrlen_with_len(const char *mbstr, int limit)
 		mbstr += l;
 		len++;
 	}
-	return (len);
+	return len;
 }
 
 /*
@@ -536,7 +536,7 @@ pg_mbcliplen(const char *mbstr, int len, int limit)
 		len -= l;
 		mbstr += l;
 	}
-	return (clen);
+	return clen;
 }
 
 /*
@@ -563,7 +563,7 @@ pg_mbcharcliplen(const char *mbstr, int len, int limit)
 		len -= l;
 		mbstr += l;
 	}
-	return (clen);
+	return clen;
 }
 
 void
@@ -586,14 +586,14 @@ int
 GetDatabaseEncoding(void)
 {
 	Assert(DatabaseEncoding);
-	return (DatabaseEncoding->encoding);
+	return DatabaseEncoding->encoding;
 }
 
 const char *
 GetDatabaseEncodingName(void)
 {
 	Assert(DatabaseEncoding);
-	return (DatabaseEncoding->name);
+	return DatabaseEncoding->name;
 }
 
 Datum
