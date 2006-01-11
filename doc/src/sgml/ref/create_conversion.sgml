@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.16 2005/05/03 19:17:59 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.17 2006/01/11 22:16:39 neilc Exp $ -->
 
 <refentry id="SQL-CREATECONVERSION">
  <refmeta>
@@ -17,7 +17,7 @@
 
  <refsynopsisdiv>
 <synopsis>
-CREATE [DEFAULT] CONVERSION <replaceable>name</replaceable>
+CREATE [ DEFAULT ] CONVERSION <replaceable>name</replaceable>
     FOR <replaceable>source_encoding</replaceable> TO <replaceable>dest_encoding</replaceable> FROM <replaceable>funcname</replaceable>
 </synopsis>
  </refsynopsisdiv>
