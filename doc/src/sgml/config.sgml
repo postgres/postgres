@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.42 2006/01/05 10:07:44 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.43 2006/01/11 23:14:29 tgl Exp $
 -->
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1853,8 +1853,8 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       <listitem>
        <para>
         Use genetic query optimization to plan queries with at least
-        this many <literal>FROM</> items involved. (Note that an outer
-        <literal>JOIN</> construct counts as only one <literal>FROM</>
+        this many <literal>FROM</> items involved. (Note that a
+        <literal>FULL OUTER JOIN</> construct counts as only one <literal>FROM</>
         item.) The default is 12. For simpler queries it is usually best
         to use the deterministic, exhaustive planner, but for queries with
         many tables the deterministic planner takes too long.
