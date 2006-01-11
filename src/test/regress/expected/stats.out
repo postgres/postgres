@@ -36,8 +36,8 @@ SELECT count(*) FROM tenk2 WHERE unique1 = 1;
 (1 row)
 
 -- let stats collector catch up
-SELECT do_sleep(2);
- do_sleep 
+SELECT pg_sleep(2.0);
+ pg_sleep 
 ----------
  
 (1 row)

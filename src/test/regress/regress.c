@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/test/regress/regress.c,v 1.64 2005/10/15 02:49:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/test/regress/regress.c,v 1.65 2006/01/11 20:12:43 tgl Exp $
  */
 
 #include "postgres.h"
@@ -26,7 +26,6 @@ extern char *reverse_name(char *string);
 extern int	oldstyle_length(int n, text *t);
 extern Datum int44in(PG_FUNCTION_ARGS);
 extern Datum int44out(PG_FUNCTION_ARGS);
-extern Datum do_sleep(PG_FUNCTION_ARGS);
 
 
 /*
@@ -734,19 +733,4 @@ int44out(PG_FUNCTION_ARGS)
 	}
 	*--walk = '\0';
 	PG_RETURN_CSTRING(result);
-}
-
-/*
- * do_sleep - delay for N seconds
- */
-PG_FUNCTION_INFO_V1(do_sleep);
-
-Datum
-do_sleep(PG_FUNCTION_ARGS)
-{
-	int32		secs = PG_GETARG_INT32(0);
-
-	pg_usleep(secs * 1000000L);
-
-	PG_RETURN_VOID();
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.390 2006/01/08 07:00:25 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.391 2006/01/11 20:12:39 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3025,6 +3025,8 @@ DATA(insert OID = 2624 ( pg_read_file		PGNSP PGUID 12 f f t f v 3 25 "25 20 20" 
 DESCR("Read text from a file");
 DATA(insert OID = 2625 ( pg_ls_dir			PGNSP PGUID 12 f f t t v 1 25 "25" _null_ _null_ _null_ pg_ls_dir - _null_ ));
 DESCR("List all files in a directory");
+DATA(insert OID = 2626 ( pg_sleep			PGNSP PGUID 12 f f t f v 1 2278 "701" _null_ _null_ _null_ pg_sleep - _null_ ));
+DESCR("Sleep for the specified time in seconds");
 
 
 /* Aggregates (moved here from pg_aggregate for 7.3) */

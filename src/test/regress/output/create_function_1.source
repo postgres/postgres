@@ -47,10 +47,6 @@ CREATE FUNCTION set_ttdummy (int4)
         RETURNS int4
         AS '@abs_builddir@/regress@DLSUFFIX@'
         LANGUAGE 'C' STRICT;
-CREATE FUNCTION do_sleep (int4)
-        RETURNS void
-        AS '@abs_builddir@/regress@DLSUFFIX@'
-        LANGUAGE 'C' STRICT;
 -- Things that shouldn't work:
 CREATE FUNCTION test1 (int) RETURNS int LANGUAGE sql
     AS 'SELECT ''not an integer'';';

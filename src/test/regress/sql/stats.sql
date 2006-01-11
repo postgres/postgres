@@ -26,7 +26,7 @@ SELECT count(*) FROM tenk2;
 SELECT count(*) FROM tenk2 WHERE unique1 = 1;
 
 -- let stats collector catch up
-SELECT do_sleep(2);
+SELECT pg_sleep(2.0);
 
 -- check effects
 SELECT st.seq_scan >= pr.seq_scan + 1,
