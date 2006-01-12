@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.115.4.1 2005/08/25 19:45:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.115.4.2 2006/01/12 21:49:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,7 +109,7 @@ extern bool ExecContextForcesOids(PlanState *planstate, bool *hasoids);
 extern void ExecConstraints(ResultRelInfo *resultRelInfo,
 				TupleTableSlot *slot, EState *estate);
 extern TupleTableSlot *EvalPlanQual(EState *estate, Index rti,
-									ItemPointer tid, TransactionId priorXmax);
+				ItemPointer tid, TransactionId priorXmax, CommandId curCid);
 
 /*
  * prototypes from functions in execProcnode.c
