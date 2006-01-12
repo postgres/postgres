@@ -4,17 +4,17 @@
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.54 2006/01/11 08:43:12 neilc Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.55 2006/01/12 22:04:02 neilc Exp $
  */
 #include "postgres.h"
 
 #include "access/xact.h"
+#include "catalog/namespace.h"
 #include "miscadmin.h"
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
-#include "catalog/namespace.h"
 
 /*
  * We handle for actual FE and BE encoding setting encoding-identificator
@@ -25,10 +25,12 @@ static pg_enc2name *ClientEncoding = &pg_enc2name_tbl[PG_SQL_ASCII];
 static pg_enc2name *DatabaseEncoding = &pg_enc2name_tbl[PG_SQL_ASCII];
 
 /*
- * Caches for conversion function info. Note that these values are
- * allocated in TopMemoryContext so that they survive across
- * transactions. See SetClientEncoding() for more details.
+ * Caches for conversion function info. These values are allocated in
+ * MbProcContext. That context is a child of TopMemoryContext,
+ * which allows these values to survive across transactions. See
+ * SetClientEncoding() for more details.
  */
+static MemoryContext MbProcContext = NULL;
 static FmgrInfo *ToServerConvProc = NULL;
 static FmgrInfo *ToClientConvProc = NULL;
 
@@ -86,22 +88,10 @@ SetClientEncoding(int encoding, bool doit)
 		if (doit)
 		{
 			ClientEncoding = &pg_enc2name_tbl[encoding];
-
-			if (ToServerConvProc != NULL)
-			{
-				if (ToServerConvProc->fn_extra)
-					pfree(ToServerConvProc->fn_extra);
-				pfree(ToServerConvProc);
-			}
 			ToServerConvProc = NULL;
-
-			if (ToClientConvProc != NULL)
-			{
-				if (ToClientConvProc->fn_extra)
-					pfree(ToClientConvProc->fn_extra);
-				pfree(ToClientConvProc);
-			}
 			ToClientConvProc = NULL;
+			if (MbProcContext)
+				MemoryContextReset(MbProcContext);
 		}
 		return 0;
 	}
@@ -134,11 +124,29 @@ SetClientEncoding(int encoding, bool doit)
 	if (!doit)
 		return 0;
 
-	/*
-	 * load the fmgr info into TopMemoryContext so that it survives outside
-	 * transaction.
-	 */
-	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+	/* Before loading the new fmgr info, remove the old info, if any */
+	ToServerConvProc = NULL;
+	ToClientConvProc = NULL;
+	if (MbProcContext != NULL)
+	{
+		MemoryContextReset(MbProcContext);
+	}
+	else
+	{
+		/*
+		 * This is the first time through, so create the context. Make
+		 * it a child of TopMemoryContext so that these values survive
+		 * across transactions.
+		 */
+		MbProcContext = AllocSetContextCreate(TopMemoryContext,
+											  "MbProcContext",
+											  ALLOCSET_SMALL_MINSIZE,
+											  ALLOCSET_SMALL_INITSIZE,
+											  ALLOCSET_SMALL_MAXSIZE);
+	}
+
+	/* Load the fmgr info into MbProcContext */
+	oldcontext = MemoryContextSwitchTo(MbProcContext);
 	to_server = palloc(sizeof(FmgrInfo));
 	to_client = palloc(sizeof(FmgrInfo));
 	fmgr_info(to_server_proc, to_server);
@@ -146,21 +154,7 @@ SetClientEncoding(int encoding, bool doit)
 	MemoryContextSwitchTo(oldcontext);
 
 	ClientEncoding = &pg_enc2name_tbl[encoding];
-
-	if (ToServerConvProc != NULL)
-	{
-		if (ToServerConvProc->fn_extra)
-			pfree(ToServerConvProc->fn_extra);
-		pfree(ToServerConvProc);
-	}
 	ToServerConvProc = to_server;
-
-	if (ToClientConvProc != NULL)
-	{
-		if (ToClientConvProc->fn_extra)
-			pfree(ToClientConvProc->fn_extra);
-		pfree(ToClientConvProc);
-	}
 	ToClientConvProc = to_client;
 
 	return 0;
