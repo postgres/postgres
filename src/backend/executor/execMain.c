@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.220.2.3 2005/08/25 22:07:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.220.2.4 2006/01/12 21:49:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1202,7 +1202,8 @@ lnext:	;
 								newSlot = EvalPlanQual(estate,
 													   erm->rti,
 													   &update_ctid,
-													   update_xmax);
+													   update_xmax,
+													   estate->es_snapshot->curcid);
 								if (!TupIsNull(newSlot))
 								{
 									slot = newSlot;
@@ -1508,7 +1509,8 @@ ldelete:;
 				epqslot = EvalPlanQual(estate,
 									   resultRelInfo->ri_RangeTableIndex,
 									   &update_ctid,
-									   update_xmax);
+									   update_xmax,
+									   estate->es_snapshot->curcid);
 				if (!TupIsNull(epqslot))
 				{
 					*tupleid = update_ctid;
@@ -1648,7 +1650,8 @@ lreplace:;
 				epqslot = EvalPlanQual(estate,
 									   resultRelInfo->ri_RangeTableIndex,
 									   &update_ctid,
-									   update_xmax);
+									   update_xmax,
+									   estate->es_snapshot->curcid);
 				if (!TupIsNull(epqslot))
 				{
 					*tupleid = update_ctid;
@@ -1802,6 +1805,7 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
  *	rti - rangetable index of table containing tuple
  *	*tid - t_ctid from the outdated tuple (ie, next updated version)
  *	priorXmax - t_xmax from the outdated tuple
+ *	curCid - command ID of current command of my transaction
  *
  * *tid is also an output parameter: it's modified to hold the TID of the
  * latest version of the tuple (note this may be changed even on failure)
@@ -1811,7 +1815,7 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
  */
 TupleTableSlot *
 EvalPlanQual(EState *estate, Index rti,
-			 ItemPointer tid, TransactionId priorXmax)
+			 ItemPointer tid, TransactionId priorXmax, CommandId curCid)
 {
 	evalPlanQual *epq;
 	EState	   *epqstate;
@@ -1885,6 +1889,24 @@ EvalPlanQual(EState *estate, Index rti,
 				ReleaseBuffer(buffer);
 				XactLockTableWait(SnapshotDirty->xmax);
 				continue;		/* loop back to repeat heap_fetch */
+			}
+
+			/*
+			 * If tuple was inserted by our own transaction, we have to check
+			 * cmin against curCid: cmin >= curCid means our command cannot
+			 * see the tuple, so we should ignore it.  Without this we are
+			 * open to the "Halloween problem" of indefinitely re-updating
+			 * the same tuple.  (We need not check cmax because
+			 * HeapTupleSatisfiesDirty will consider a tuple deleted by
+			 * our transaction dead, regardless of cmax.)  We just checked
+			 * that priorXmax == xmin, so we can test that variable instead
+			 * of doing HeapTupleHeaderGetXmin again.
+			 */
+			if (TransactionIdIsCurrentTransactionId(priorXmax) &&
+				HeapTupleHeaderGetCmin(tuple.t_data) >= curCid)
+			{
+				ReleaseBuffer(buffer);
+				return NULL;
 			}
 
 			/*
