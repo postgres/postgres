@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.431.2.5 2006/01/05 04:02:23 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.431.2.6 2006/01/12 19:23:41 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -892,12 +892,13 @@ fi
 AC_CHECK_DECLS([snprintf, vsnprintf])
 
 
-# do this one the hard way in case isinf() is a macro
+dnl Cannot use AC_CHECK_FUNC because isinf may be a macro
 AC_CACHE_CHECK([for isinf], ac_cv_func_isinf,
-[AC_TRY_LINK(
-[#include <math.h>
+[AC_TRY_LINK([
+#include <math.h>
+double glob_double;
 ],
-[double x = 0.0; int res = isinf(x);],
+[return isinf(glob_double) ? 0 : 1;],
 [ac_cv_func_isinf=yes],
 [ac_cv_func_isinf=no])])
 
@@ -960,8 +961,11 @@ fi
 
 dnl Cannot use AC_CHECK_FUNC because finite may be a macro
 AC_MSG_CHECKING(for finite)
-AC_TRY_LINK([#include <math.h>],
-            [int dummy=finite(1.0);],
+AC_TRY_LINK([
+#include <math.h>
+double glob_double;
+],
+            [return finite(glob_double) ? 0 : 1;],
             [AC_DEFINE(HAVE_FINITE, 1, [Define to 1 if you have finite().])
 AC_MSG_RESULT(yes)],
             [AC_MSG_RESULT(no)])
