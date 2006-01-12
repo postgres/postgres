@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.417 2006/01/06 02:59:57 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.418 2006/01/12 18:09:24 tgl Exp $
 
 Typical markup:
 
@@ -632,7 +632,7 @@ SELECT  'ALTER TABLE ' ||
     ' SET DEFAULT ' ||
     regexp_replace(d.adsrc,
                    $$val\(\(('[^']*')::text\)::regclass$$,
-                   $$val\(\1$$,
+                   $$val(\1$$,
                    'g') ||
     ';'
 FROM    pg_namespace n, pg_class c, pg_attribute a, pg_attrdef d
