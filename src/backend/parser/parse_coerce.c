@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.133 2005/11/22 18:17:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.134 2006/01/12 22:28:35 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -243,7 +243,10 @@ coerce_type(ParseState *pstate, Node *node,
 		}
 
 		param->paramtype = targetTypeId;
-		return (Node *) param;
+
+		/* Apply domain constraints, if necessary */
+		return coerce_to_domain((Node *) param, InvalidOid, targetTypeId,
+								cformat, false, false);
 	}
 	if (find_coercion_pathway(targetTypeId, inputTypeId, ccontext,
 							  &funcId))
