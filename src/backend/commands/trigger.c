@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.198 2006/01/05 10:07:45 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.199 2006/01/12 21:48:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1736,7 +1736,8 @@ ltrmark:;
 					epqslot = EvalPlanQual(estate,
 										   relinfo->ri_RangeTableIndex,
 										   &update_ctid,
-										   update_xmax);
+										   update_xmax,
+										   cid);
 					if (!TupIsNull(epqslot))
 					{
 						*tid = update_ctid;
