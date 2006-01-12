@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/pl/plperl/plperl.h,v 1.1 2006/01/08 22:27:52 adunstan Exp $
+ * $PostgreSQL: pgsql/src/pl/plperl/plperl.h,v 1.2 2006/01/12 22:15:56 adunstan Exp $
  */
 
 #ifndef PL_PERL_H
@@ -17,6 +17,13 @@
 /* stop perl headers from hijacking stdio and other stuff on Windows */
 #ifdef WIN32
 #define WIN32IO_IS_STDIO
+/* 
+ * isnan is defined in both the perl and mingw headers. We don't use it,
+ * so this just clears up the compile warning.
+ */
+#ifdef isnan
+#undef isnan
+#endif
 #endif 
 
 /* required for perl API */
