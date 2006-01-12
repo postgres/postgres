@@ -11819,7 +11819,6 @@ fi
 
 
 
-# do this one the hard way in case isinf() is a macro
 echo "$as_me:$LINENO: checking for isinf" >&5
 echo $ECHO_N "checking for isinf... $ECHO_C" >&6
 if test "${ac_cv_func_isinf+set}" = set; then
@@ -11828,7 +11827,9 @@ else
   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
+
 #include <math.h>
+double glob_double;
 
 #ifdef F77_DUMMY_MAIN
 #  ifdef __cplusplus
@@ -11839,7 +11840,7 @@ else
 int
 main ()
 {
-double x = 0.0; int res = isinf(x);
+return isinf(glob_double) ? 0 : 1;
   ;
   return 0;
 }
@@ -12454,7 +12455,10 @@ echo $ECHO_N "checking for finite... $ECHO_C" >&6
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
+
 #include <math.h>
+double glob_double;
+
 #ifdef F77_DUMMY_MAIN
 #  ifdef __cplusplus
      extern "C"
@@ -12464,7 +12468,7 @@ cat >conftest.$ac_ext <<_ACEOF
 int
 main ()
 {
-int dummy=finite(1.0);
+return finite(glob_double) ? 0 : 1;
   ;
   return 0;
 }
