@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.13 2005/01/14 01:16:52 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.14 2006/01/13 18:10:25 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -59,8 +59,9 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
 
   <para>
    <command>CREATE OPERATOR CLASS</command> does not presently check
-   whether the operator class definition includes all the operators and functions
-   required by the index method.  It is the user's
+   whether the operator class definition includes all the operators and
+   functions required by the index method, nor whether the operators and
+   functions form a self-consistent set.  It is the user's
    responsibility to define a valid operator class.
   </para>
 
@@ -207,6 +208,14 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
   
  <refsect1>
   <title>Notes</title>
+
+  <para>
+   Because the index machinery does not check access permissions on functions
+   before using them, including a function or operator in an operator class
+   is tantamount to granting public execute permission on it.  This is usually
+   not an issue for the sorts of functions that are useful in an operator
+   class.
+  </para>
 
   <para>
    The operators should not be defined by SQL functions.  A SQL function

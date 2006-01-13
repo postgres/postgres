@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.40 2005/11/22 18:17:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.41 2006/01/13 18:10:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,11 +119,24 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	ReleaseSysCache(tup);
 
 	/*
+	 * The question of appropriate permissions for CREATE OPERATOR CLASS is
+	 * interesting.  Creating an opclass is tantamount to granting public
+	 * execute access on the functions involved, since the index machinery
+	 * generally does not check access permission before using the functions.
+	 * A minimum expectation therefore is that the caller have execute
+	 * privilege with grant option.  Since we don't have a way to make the
+	 * opclass go away if the grant option is revoked, we choose instead to
+	 * require ownership of the functions.  It's also not entirely clear what
+	 * permissions should be required on the datatype, but ownership seems
+	 * like a safe choice.
+	 *
 	 * Currently, we require superuser privileges to create an opclass. This
 	 * seems necessary because we have no way to validate that the offered set
 	 * of operators and functions are consistent with the AM's expectations.
 	 * It would be nice to provide such a check someday, if it can be done
 	 * without solving the halting problem :-(
+	 *
+	 * XXX re-enable NOT_USED code sections below if you remove this test.
 	 */
 	if (!superuser())
 		ereport(ERROR,
@@ -156,7 +169,6 @@ DefineOpClass(CreateOpClassStmt *stmt)
 		Oid			operOid;
 		Oid			funcOid;
 		OpClassMember *member;
-		AclResult	aclresult;
 
 		Assert(IsA(item, CreateOpClassItem));
 		switch (item->itemtype)
@@ -184,13 +196,19 @@ DefineOpClass(CreateOpClassStmt *stmt)
 					operOid = LookupOperName(item->name, typeoid, typeoid,
 											 false);
 				}
-				/* Caller must have execute permission on operators */
+
+#ifdef NOT_USED
+				/* XXX this is unnecessary given the superuser check above */
+				/* Caller must own operator and its underlying function */
+				if (!pg_oper_ownercheck(operOid, GetUserId()))
+					aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPER,
+								   get_opname(operOid));
 				funcOid = get_opcode(operOid);
-				aclresult = pg_proc_aclcheck(funcOid, GetUserId(),
-											 ACL_EXECUTE);
-				if (aclresult != ACLCHECK_OK)
-					aclcheck_error(aclresult, ACL_KIND_PROC,
+				if (!pg_proc_ownercheck(funcOid, GetUserId()))
+					aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
 								   get_func_name(funcOid));
+#endif
+
 				/* Save the info */
 				member = (OpClassMember *) palloc0(sizeof(OpClassMember));
 				member->object = operOid;
@@ -208,12 +226,14 @@ DefineOpClass(CreateOpClassStmt *stmt)
 									item->number, numProcs)));
 				funcOid = LookupFuncNameTypeNames(item->name, item->args,
 												  false);
-				/* Caller must have execute permission on functions */
-				aclresult = pg_proc_aclcheck(funcOid, GetUserId(),
-											 ACL_EXECUTE);
-				if (aclresult != ACLCHECK_OK)
-					aclcheck_error(aclresult, ACL_KIND_PROC,
+#ifdef NOT_USED
+				/* XXX this is unnecessary given the superuser check above */
+				/* Caller must own function */
+				if (!pg_proc_ownercheck(funcOid, GetUserId()))
+					aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
 								   get_func_name(funcOid));
+#endif
+
 				/* Save the info */
 				member = (OpClassMember *) palloc0(sizeof(OpClassMember));
 				member->object = funcOid;
@@ -227,6 +247,14 @@ DefineOpClass(CreateOpClassStmt *stmt)
 							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 						   errmsg("storage type specified more than once")));
 				storageoid = typenameTypeId(item->storedtype);
+
+#ifdef NOT_USED
+				/* XXX this is unnecessary given the superuser check above */
+				/* Check we have ownership of the datatype */
+				if (!pg_type_ownercheck(storageoid, GetUserId()))
+					aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
+								   format_type_be(storageoid));
+#endif
 				break;
 			default:
 				elog(ERROR, "unrecognized item type: %d", item->itemtype);
