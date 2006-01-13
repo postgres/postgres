@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.85 2005/11/22 18:17:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.86 2006/01/13 18:06:45 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -329,6 +329,30 @@ DefineType(List *names, List *parameters)
 	 */
 	if (analyzeName)
 		analyzeOid = findTypeAnalyzeFunction(analyzeName, typoid);
+
+	/*
+	 * Check permissions on functions.  We choose to require the creator/owner
+	 * of a type to also own the underlying functions.  Since creating a type
+	 * is tantamount to granting public execute access on the functions, the
+	 * minimum sane check would be for execute-with-grant-option.  But we don't
+	 * have a way to make the type go away if the grant option is revoked, so
+	 * ownership seems better.
+	 */
+	if (inputOid && !pg_proc_ownercheck(inputOid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
+					   NameListToString(inputName));
+	if (outputOid && !pg_proc_ownercheck(outputOid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
+					   NameListToString(outputName));
+	if (receiveOid && !pg_proc_ownercheck(receiveOid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
+					   NameListToString(receiveName));
+	if (sendOid && !pg_proc_ownercheck(sendOid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
+					   NameListToString(sendName));
+	if (analyzeOid && !pg_proc_ownercheck(analyzeOid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
+					   NameListToString(analyzeName));
 
 	/*
 	 * now have TypeCreate do all the real work.

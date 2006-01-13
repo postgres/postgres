@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.59 2005/11/01 21:09:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.60 2006/01/13 18:06:45 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -444,6 +444,17 @@ CREATE TYPE <replaceable class="parameter">name</replaceable> (
    the <symbol>NAMEDATALEN</symbol> - 1 characters allowed for other
    names).  Type names beginning with underscore are reserved for
    internally-created array type names.
+  </para>
+
+  <para>
+   Because there are no restrictions on use of a data type once it's been
+   created, creating a base type is tantamount to granting public execute
+   permission on the functions mentioned in the type definition.  (The creator
+   of the type is therefore required to own these functions.)  This is usually
+   not an issue for the sorts of functions that are useful in a type
+   definition.  But you might want to think twice before designing a type
+   in a way that would require <quote>secret</> information to be used
+   while converting it to or from external form.
   </para>
 
   <para>
