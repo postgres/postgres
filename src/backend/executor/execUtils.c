@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.131 2005/12/03 05:51:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.132 2006/01/14 22:03:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,9 +67,7 @@ int			NTupleReplaced;
 int			NTupleAppended;
 int			NTupleDeleted;
 int			NIndexTupleInserted;
-extern int	NIndexTupleProcessed;		/* have to be defined in the access
-										 * method level so that the
-										 * cinterface.a will link ok. */
+int			NIndexTupleProcessed;
 
 
 static void ShutdownExprContext(ExprContext *econtext);

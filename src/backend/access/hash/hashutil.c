@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashutil.c,v 1.44 2005/11/22 18:17:05 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashutil.c,v 1.45 2006/01/14 22:03:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 
 #include "access/genam.h"
 #include "access/hash.h"
-#include "access/iqual.h"
+#include "executor/execdebug.h"
 
 
 /*
@@ -25,8 +25,39 @@
 bool
 _hash_checkqual(IndexScanDesc scan, IndexTuple itup)
 {
-	return index_keytest(itup, RelationGetDescr(scan->indexRelation),
-						 scan->numberOfKeys, scan->keyData);
+	TupleDesc	tupdesc = RelationGetDescr(scan->indexRelation);
+	ScanKey		key = scan->keyData;
+	int			scanKeySize = scan->numberOfKeys;
+
+	IncrIndexProcessed();
+
+	while (scanKeySize > 0)
+	{
+		Datum		datum;
+		bool		isNull;
+		Datum		test;
+
+		datum = index_getattr(itup,
+							  key->sk_attno,
+							  tupdesc,
+							  &isNull);
+
+		/* assume sk_func is strict */
+		if (isNull)
+			return false;
+		if (key->sk_flags & SK_ISNULL)
+			return false;
+
+		test = FunctionCall2(&key->sk_func, datum, key->sk_argument);
+
+		if (!DatumGetBool(test))
+			return false;
+
+		key++;
+		scanKeySize--;
+	}
+
+	return true;
 }
 
 /*
