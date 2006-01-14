@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.195 2006/01/10 17:35:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.196 2006/01/14 00:14:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1562,6 +1562,65 @@ scalararraysel(PlannerInfo *root,
 
 	/* result should be in range, but make sure... */
 	CLAMP_PROBABILITY(s1);
+
+	return s1;
+}
+
+/*
+ *		rowcomparesel		- Selectivity of RowCompareExpr Node.
+ *
+ * We estimate RowCompare selectivity by considering just the first (high
+ * order) columns, which makes it equivalent to an ordinary OpExpr.  While
+ * this estimate could be refined by considering additional columns, it
+ * seems unlikely that we could do a lot better without multi-column
+ * statistics.
+ */
+Selectivity
+rowcomparesel(PlannerInfo *root,
+			  RowCompareExpr *clause,
+			  int varRelid, JoinType jointype)
+{
+	Selectivity s1;
+	Oid			opno = linitial_oid(clause->opnos);
+	List	   *opargs;
+	bool		is_join_clause;
+
+	/* Build equivalent arg list for single operator */
+	opargs = list_make2(linitial(clause->largs), linitial(clause->rargs));
+
+	/* Decide if it's a join clause, same as for OpExpr */
+	if (varRelid != 0)
+	{
+		/*
+		 * If we are considering a nestloop join then all clauses are
+		 * restriction clauses, since we are only interested in the one
+		 * relation.
+		 */
+		is_join_clause = false;
+	}
+	else
+	{
+		/*
+		 * Otherwise, it's a join if there's more than one relation used.
+		 * Notice we ignore the low-order columns here.
+		 */
+		is_join_clause = (NumRelids((Node *) opargs) > 1);
+	}
+
+	if (is_join_clause)
+	{
+		/* Estimate selectivity for a join clause. */
+		s1 = join_selectivity(root, opno,
+							  opargs,
+							  jointype);
+	}
+	else
+	{
+		/* Estimate selectivity for a restriction clause. */
+		s1 = restriction_selectivity(root, opno,
+									 opargs,
+									 varRelid);
+	}
 
 	return s1;
 }
