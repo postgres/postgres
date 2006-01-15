@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.327 2005/11/22 18:17:15 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.328 2006/01/15 22:18:46 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2584,10 +2584,11 @@ static Query *
 transformPrepareStmt(ParseState *pstate, PrepareStmt *stmt)
 {
 	Query	   *result = makeNode(Query);
-	List	   *argtype_oids = NIL;		/* argtype OIDs in a list */
+	List	   *argtype_oids;		/* argtype OIDs in a list */
 	Oid		   *argtoids = NULL;	/* and as an array */
 	int			nargs;
 	List	   *queries;
+	int			i;
 
 	result->commandType = CMD_UTILITY;
 	result->utilityStmt = (Node *) stmt;
@@ -2598,27 +2599,27 @@ transformPrepareStmt(ParseState *pstate, PrepareStmt *stmt)
 	if (nargs)
 	{
 		ListCell   *l;
-		int			i = 0;
 
 		argtoids = (Oid *) palloc(nargs * sizeof(Oid));
+		i = 0;
 
 		foreach(l, stmt->argtypes)
 		{
 			TypeName   *tn = lfirst(l);
 			Oid			toid = typenameTypeId(tn);
 
-			argtype_oids = lappend_oid(argtype_oids, toid);
 			argtoids[i++] = toid;
 		}
 	}
 
-	stmt->argtype_oids = argtype_oids;
-
 	/*
-	 * Analyze the statement using these parameter types (any parameters
-	 * passed in from above us will not be visible to it).
+	 * Analyze the statement using these parameter types (any
+	 * parameters passed in from above us will not be visible to it),
+	 * allowing information about unknown parameters to be deduced
+	 * from context.
 	 */
-	queries = parse_analyze((Node *) stmt->query, argtoids, nargs);
+	queries = parse_analyze_varparams((Node *) stmt->query,
+									  &argtoids, &nargs);
 
 	/*
 	 * Shouldn't get any extra statements, since grammar only allows
@@ -2627,8 +2628,26 @@ transformPrepareStmt(ParseState *pstate, PrepareStmt *stmt)
 	if (list_length(queries) != 1)
 		elog(ERROR, "unexpected extra stuff in prepared statement");
 
-	stmt->query = linitial(queries);
+	/*
+	 * Check that all parameter types were determined, and convert the
+	 * array of OIDs into a list for storage.
+	 */
+	argtype_oids = NIL;
+	for (i = 0; i < nargs; i++)
+	{
+		Oid			argtype = argtoids[i];
 
+		if (argtype == InvalidOid || argtype == UNKNOWNOID)
+			ereport(ERROR,
+					(errcode(ERRCODE_INDETERMINATE_DATATYPE),
+					 errmsg("could not determine data type of parameter $%d",
+							i + 1)));
+
+		argtype_oids = lappend_oid(argtype_oids, argtype);
+	}
+
+	stmt->argtype_oids = argtype_oids;
+	stmt->query = linitial(queries);
 	return result;
 }
 

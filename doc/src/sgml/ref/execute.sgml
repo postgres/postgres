@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/execute.sgml,v 1.12 2004/09/30 04:23:27 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/execute.sgml,v 1.13 2006/01/15 22:18:46 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -25,7 +25,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-EXECUTE <replaceable class="PARAMETER">plan_name</replaceable> [ (<replaceable class="PARAMETER">parameter</replaceable> [, ...] ) ]
+EXECUTE <replaceable class="PARAMETER">name</replaceable> [ (<replaceable class="PARAMETER">parameter</replaceable> [, ...] ) ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -60,7 +60,7 @@ EXECUTE <replaceable class="PARAMETER">plan_name</replaceable> [ (<replaceable c
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">plan_name</replaceable></term>
+    <term><replaceable class="PARAMETER">name</replaceable></term>
     <listitem>
      <para>
       The name of the prepared statement to execute.
@@ -73,10 +73,9 @@ EXECUTE <replaceable class="PARAMETER">plan_name</replaceable> [ (<replaceable c
     <listitem>
      <para>
       The actual value of a parameter to the prepared statement.  This
-      must be an expression yielding a value of a type compatible with
-      the data type specified for this parameter position in the
-      <command>PREPARE</command> command that created the prepared
-      statement.
+      must be an expression yielding a value that is compatible with
+      the data type of this parameter, as was determined when the
+      prepared statement was created.
      </para>
     </listitem>
    </varlistentry>
