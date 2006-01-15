@@ -1,6 +1,6 @@
 /* dynamic SQL support routines
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.12.4.1 2005/11/30 12:51:06 meskes Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.12.4.2 2006/01/15 22:47:21 neilc Exp $
  */
 
 #define POSTGRES_ECPG_INTERNAL
@@ -503,7 +503,11 @@ ECPGset_desc(int lineno, const char *desc_name, int index,...)
 			break;
 
 		type = va_arg(args, enum ECPGttype);
+#if defined(__GNUC__) && (defined (__powerpc__) || defined(__amd64__) || defined(__x86_64__))
+		ECPGget_variable(args, type, var, false);
+#else
 		ECPGget_variable(&args, type, var, false);
+#endif
 
 		switch (itemtype)
 		{
