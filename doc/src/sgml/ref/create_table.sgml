@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.96 2005/11/01 21:09:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.97 2006/01/16 19:50:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -293,7 +293,10 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
     <term><literal>CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable></literal></term>
     <listitem>
      <para>
-      An optional name for a column or table constraint.  If not specified,
+      An optional name for a column or table constraint.  If the
+      constraint is violated, the constraint name is present in error messages,
+      so constraint names like "col must be positive" can be used to communicate
+      helpful constraint information to client applications.  If not specified,
       the system generates a name.
      </para>
     </listitem>
