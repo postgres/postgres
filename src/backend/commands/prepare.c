@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.45 2006/01/08 07:00:25 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.46 2006/01/16 18:15:30 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ static HTAB *prepared_queries = NULL;
 static void InitQueryHashTable(void);
 static ParamListInfo EvaluateParams(EState *estate,
 			   List *params, List *argtypes);
-static Datum build_oid_array(List *oid_list);
+static Datum build_regtype_array(List *oid_list);
 
 /*
  * Implements the 'PREPARE' utility statement.
@@ -674,7 +674,7 @@ ExplainExecuteQuery(ExplainStmt *stmt, ParamListInfo params,
 
 /*
  * This set returning function reads all the prepared statements and
- * returns a set of (name, statement, prepare_time, param_types).
+ * returns a set of (name, statement, prepare_time, param_types, from_sql).
  */
 Datum
 pg_prepared_statement(PG_FUNCTION_ARGS)
@@ -721,7 +721,7 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "prepare_time",
 						   TIMESTAMPTZOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "parameter_types",
-						   OIDARRAYOID, -1, 0);
+						   REGTYPEARRAYOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "from_sql",
 						   BOOLOID, -1, 0);
 
@@ -757,7 +757,7 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 									CStringGetDatum(prep_stmt->query_string));
 
 		values[2] = TimestampTzGetDatum(prep_stmt->prepare_time);
-		values[3] = build_oid_array(prep_stmt->argtype_list);
+		values[3] = build_regtype_array(prep_stmt->argtype_list);
 		values[4] = BoolGetDatum(prep_stmt->from_sql);
 
 		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
@@ -770,26 +770,33 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 
 /*
  * This utility function takes a List of Oids, and returns a Datum
- * pointing to a Postgres array containing those OIDs. The empty list
- * is returned as a zero-element array, not NULL.
+ * pointing to a one-dimensional Postgres array of regtypes. The empty
+ * list is returned as a zero-element array, not NULL.
  */
 static Datum
-build_oid_array(List *oid_list)
+build_regtype_array(List *oid_list)
 {
-	ListCell *lc;
-	int len;
-	int i;
-	Datum *tmp_ary;
-	ArrayType *ary;
+	ListCell   *lc;
+	int			len;
+	int			i;
+	Datum	   *tmp_ary;
+	ArrayType  *result;
 
 	len = list_length(oid_list);
 	tmp_ary = (Datum *) palloc(len * sizeof(Datum));
 
 	i = 0;
 	foreach(lc, oid_list)
-		tmp_ary[i++] = ObjectIdGetDatum(lfirst_oid(lc));
+	{
+		Oid		oid;
+		Datum	oid_str;
 
-	/* XXX: this hardcodes assumptions about the OID type... */
-	ary = construct_array(tmp_ary, len, OIDOID, sizeof(Oid), true, 'i');
-	return PointerGetDatum(ary);
+		oid = lfirst_oid(lc);
+		oid_str = DirectFunctionCall1(oidout, ObjectIdGetDatum(oid));
+		tmp_ary[i++] = DirectFunctionCall1(regtypein, oid_str);
+	}
+
+	/* XXX: this hardcodes assumptions about the regtype type */
+	result = construct_array(tmp_ary, len, REGTYPEOID, 4, true, 'i');
+	return PointerGetDatum(result);
 }

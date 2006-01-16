@@ -148,19 +148,19 @@ PREPARE q7(unknown) AS
     SELECT * FROM road WHERE thepath = $1;
 SELECT name, statement, parameter_types FROM pg_prepared_statements
     ORDER BY name;
- name |                                                                                    statement                                                                                    |   parameter_types    
-------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------------------
+ name |                                                                                    statement                                                                                    |                    parameter_types                     
+------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------
  q2   | PREPARE q2(text) AS
 	SELECT datname, datistemplate, datallowconn
-	FROM pg_database WHERE datname = $1;                                                                          | {25}
+	FROM pg_database WHERE datname = $1;                                                                          | {text}
  q3   | PREPARE q3(text, int, float, boolean, oid, smallint) AS
 	SELECT * FROM tenk1 WHERE string4 = $1 AND (four = $2 OR
-	ten = $3::bigint OR true = $4 OR oid = $5 OR odd = $6::int); | {25,23,701,16,26,21}
+	ten = $3::bigint OR true = $4 OR oid = $5 OR odd = $6::int); | {text,integer,"double precision",boolean,oid,smallint}
  q5   | PREPARE q5(int, text) AS
-	SELECT * FROM tenk1 WHERE unique1 = $1 OR stringu1 = $2;                                                                                              | {23,25}
+	SELECT * FROM tenk1 WHERE unique1 = $1 OR stringu1 = $2;                                                                                              | {integer,text}
  q6   | PREPARE q6 AS
-    SELECT * FROM tenk1 WHERE unique1 = $1 AND stringu1 = $2;                                                                                                     | {23,19}
+    SELECT * FROM tenk1 WHERE unique1 = $1 AND stringu1 = $2;                                                                                                     | {integer,name}
  q7   | PREPARE q7(unknown) AS
-    SELECT * FROM road WHERE thepath = $1;                                                                                                               | {602}
+    SELECT * FROM road WHERE thepath = $1;                                                                                                               | {path}
 (5 rows)
 

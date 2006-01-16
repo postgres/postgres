@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.116 2006/01/08 07:00:24 neilc Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.117 2006/01/16 18:15:30 neilc Exp $
  -->
 
 <chapter id="catalogs">
@@ -284,8 +284,8 @@
       <entry>
        The initial value of the transition state.  This is a text
        field containing the initial value in its external string
-       representation.  If this field is null, the transition state
-       value starts out null.
+       representation.  If this field is NULL, the transition state
+       value starts out NULL.
       </entry>
      </row>
     </tbody>
@@ -293,10 +293,11 @@
   </table>
 
   <para>
-   New aggregate functions are registered with the <command>CREATE
-   AGGREGATE</command> command.  See <xref linkend="xaggr"> for more
-   information about writing aggregate functions and the meaning of
-   the transition functions, etc.
+   New aggregate functions are registered with the <xref
+   linkend="sql-createaggregate" endterm="sql-createaggregate-title">
+   command.  See <xref linkend="xaggr"> for more information about
+   writing aggregate functions and the meaning of the transition
+   functions, etc.
   </para>
 
  </sect1>
@@ -1018,7 +1019,7 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
-       Role may log in, that is, this role can be given as the initial
+       Role may log in. That is, this role can be given as the initial
        session authorization identifier.
       </entry>
      </row>
@@ -1561,21 +1562,21 @@
       <entry><structfield>relukeys</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
-      <entry>unused  (<emphasis>not</emphasis> the number of unique keys)</entry>
+      <entry>Unused  (<emphasis>not</emphasis> the number of unique keys)</entry>
      </row>
 
      <row>
       <entry><structfield>relfkeys</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
-      <entry>unused  (<emphasis>not</emphasis> the number of foreign keys on the table)</entry>
+      <entry>Unused  (<emphasis>not</emphasis> the number of foreign keys on the table)</entry>
      </row>
 
      <row>
       <entry><structfield>relrefs</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
-      <entry>unused</entry>
+      <entry>Unused</entry>
      </row>
 
      <row>
@@ -1583,7 +1584,7 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
-       True if we generate an OID for each row of the relation.
+       True if we generate an OID for each row of the relation
       </entry>
      </row>
 
@@ -1592,7 +1593,7 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
-       True if the table has (or once had) a primary key.
+       True if the table has (or once had) a primary key
       </entry>
      </row>
 
@@ -1601,7 +1602,7 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>True if table has rules; see
-       <structname>pg_rewrite</structname> catalog.
+       <structname>pg_rewrite</structname> catalog
       </entry>
      </row>
 
@@ -1609,7 +1610,7 @@
       <entry><structfield>relhassubclass</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>True if table has (or once had) any inheritance children.</entry>
+      <entry>True if table has (or once had) any inheritance children</entry>
      </row>
 
      <row>
@@ -1620,7 +1621,7 @@
        Access privileges; see
        <xref linkend="sql-grant" endterm="sql-grant-title"> and
        <xref linkend="sql-revoke" endterm="sql-revoke-title">
-       for details.
+       for details
       </entry>
      </row>
     </tbody>
@@ -2030,7 +2031,7 @@
        Access privileges; see
        <xref linkend="sql-grant" endterm="sql-grant-title"> and
        <xref linkend="sql-revoke" endterm="sql-revoke-title">
-       for details.
+       for details
       </entry>
      </row>
     </tbody>
@@ -2131,7 +2132,7 @@
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
-       A code defining the specific semantics of this dependency relationship; see text.
+       A code defining the specific semantics of this dependency relationship; see text
       </entry>
      </row>
 
@@ -2273,7 +2274,7 @@
       <entry><structfield>description</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
-      <entry>Arbitrary text that serves as the description of this object.</entry>
+      <entry>Arbitrary text that serves as the description of this object</entry>
      </row>
     </tbody>
    </tgroup>
@@ -2335,7 +2336,7 @@
       <entry><structfield>indisunique</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>If true, this is a unique index.</entry>
+      <entry>If true, this is a unique index</entry>
      </row>
 
      <row>
@@ -2350,7 +2351,7 @@
       <entry><structfield>indisclustered</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>If true, the table was last clustered on this index.</entry>
+      <entry>If true, the table was last clustered on this index</entry>
      </row>
 
      <row>
@@ -2385,7 +2386,7 @@
       <entry>Expression trees (in <function>nodeToString()</function> representation)
       for index attributes that are not simple column references.  This is a
       list with one element for each zero entry in <structfield>indkey</>.
-      Null if all index attributes are simple references.</entry>
+      NULL if all index attributes are simple references.</entry>
      </row>
 
      <row>
@@ -2393,7 +2394,7 @@
       <entry><type>text</type></entry>
       <entry></entry>
       <entry>Expression tree (in <function>nodeToString()</function> representation)
-      for partial index predicate.  Null if not a partial index.</entry>
+      for partial index predicate.  NULL if not a partial index.</entry>
      </row>
     </tbody>
    </tgroup>
@@ -2435,7 +2436,7 @@
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>
-       The OID of the child table.
+       The OID of the child table
       </entry>
      </row>
 
@@ -2444,7 +2445,7 @@
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>
-       The OID of the parent table.
+       The OID of the parent table
       </entry>
      </row>
 
@@ -2556,7 +2557,7 @@
        Access privileges; see
        <xref linkend="sql-grant" endterm="sql-grant-title"> and
        <xref linkend="sql-revoke" endterm="sql-revoke-title">
-       for details.
+       for details
       </entry>
      </row>
     </tbody>
@@ -2683,7 +2684,7 @@
       <entry><structfield>listenerpid</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
-      <entry>PID of the server process that created this entry.</entry>
+      <entry>PID of the server process that created this entry</entry>
      </row>
 
      <row>
@@ -2752,7 +2753,7 @@
        Access privileges; see
        <xref linkend="sql-grant" endterm="sql-grant-title"> and
        <xref linkend="sql-revoke" endterm="sql-revoke-title">
-       for details.
+       for details
       </entry>
      </row>
     </tbody>
@@ -3030,8 +3031,8 @@
   </table>
 
   <para>
-   Unused column contain zeroes, for example <structfield>oprleft</structfield> is zero for a
-   prefix operator.
+   Unused column contain zeroes. For example, <structfield>oprleft</structfield>
+   is zero for a prefix operator.
   </para>
 
  </sect1>
@@ -3123,9 +3124,10 @@
   <para>
    There are not currently any commands that manipulate procedural language
    templates; to change the built-in information, a superuser must modify
-   the table using ordinary INSERT, DELETE, or UPDATE commands.  It is
-   likely that a future release of <productname>PostgreSQL</productname>
-   will offer commands to change the entries in a cleaner fashion.
+   the table using ordinary <command>INSERT</command>, <command>DELETE</command>,
+   or <command>UPDATE</command> commands.  It is likely that a future
+   release of <productname>PostgreSQL</productname> will offer
+   commands to change the entries in a cleaner fashion.
   </para>
 
   <para>
@@ -3349,7 +3351,7 @@
        Access privileges; see
        <xref linkend="sql-grant" endterm="sql-grant-title"> and
        <xref linkend="sql-revoke" endterm="sql-revoke-title">
-       for details.
+       for details
       </entry>
      </row>
     </tbody>
@@ -3552,7 +3554,7 @@
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
-       A code defining the specific semantics of this dependency relationship; see text.
+       A code defining the specific semantics of this dependency relationship; see text
       </entry>
      </row>
 
@@ -3743,8 +3745,8 @@
       <entry></entry>
       <entry>
        Numerical statistics of the appropriate kind for the
-       <replaceable>N</>th <quote>slot</quote>, or null if the slot
-       kind does not involve numerical values.
+       <replaceable>N</>th <quote>slot</quote>, or NULL if the slot
+       kind does not involve numerical values
       </entry>
      </row>
 
@@ -3754,7 +3756,7 @@
       <entry></entry>
       <entry>
        Column data values of the appropriate kind for the
-       <replaceable>N</>th <quote>slot</quote>, or null if the slot
+       <replaceable>N</>th <quote>slot</quote>, or NULL if the slot
        kind does not store any data values.  Each array's element
        values are actually of the specific column's data type, so there
        is no way to define these columns' type more specifically than
@@ -3831,7 +3833,7 @@
        Access privileges; see
        <xref linkend="sql-grant" endterm="sql-grant-title"> and
        <xref linkend="sql-revoke" endterm="sql-revoke-title">
-       for details.
+       for details
       </entry>
      </row>
     </tbody>
@@ -3955,7 +3957,7 @@
       <entry><structfield>tgargs</structfield></entry>
       <entry><type>bytea</type></entry>
       <entry></entry>
-      <entry>Argument strings to pass to trigger, each null-terminated</entry>
+      <entry>Argument strings to pass to trigger, each NULL-terminated</entry>
      </row>
     </tbody>
    </tgroup>
@@ -4374,12 +4376,12 @@
 
      <row>
       <entry><link linkend="view-pg-prepared-statements"><structname>pg_prepared_statements</structname></link></entry>
-      <entry>current prepared statements</entry>
+      <entry>prepared statements</entry>
      </row>
 
      <row>
       <entry><link linkend="view-pg-prepared-xacts"><structname>pg_prepared_xacts</structname></link></entry>
-      <entry>currently prepared transactions</entry>
+      <entry>prepared transactions</entry>
      </row>
 
      <row>
@@ -4684,7 +4686,7 @@
       <entry><type>xid</type></entry>
       <entry></entry>
       <entry>
-       ID of the transaction that is holding or awaiting this lock.
+       ID of the transaction that is holding or awaiting this lock
       </entry>
      </row>
      <row>
@@ -4693,7 +4695,7 @@
       <entry></entry>
       <entry>
        Process ID of the server process holding or awaiting this
-       lock.  Null if the lock is held by a prepared transaction.
+       lock.  NULL if the lock is held by a prepared transaction.
       </entry>
      </row>
      <row>
@@ -4801,10 +4803,9 @@
   <para>
    <structname>pg_prepared_statements</structname> contains one row
    for each prepared statement. Rows are added to the view when a new
-   prepared statement is created, and removed when a prepared
-   statement is released (for example, via the <xref
-   linkend="sql-deallocate" endterm="sql-deallocate-title">
-   command).
+   prepared statement is created and removed when a prepared statement
+   is released (for example, via the <xref linkend="sql-deallocate"
+   endterm="sql-deallocate-title"> command).
   </para>
 
   <table>
@@ -4825,7 +4826,7 @@
       <entry><type>text</type></entry>
       <entry></entry>
       <entry>
-       The identifier of the prepared statement.
+       The identifier of the prepared statement
       </entry>
      </row>
      <row>
@@ -4846,16 +4847,18 @@
       <entry><type>timestamptz</type></entry>
       <entry></entry>
       <entry>
-       The time at which the prepared statement was created.
+       The time at which the prepared statement was created
       </entry>
      </row>
      <row>
       <entry><structfield>parameter_types</structfield></entry>
-      <entry><type>oid[]</type></entry>
+      <entry><type>regtype[]</type></entry>
       <entry></entry>
       <entry>
-       The expected parameter types for the prepared statement in the form of
-       an array of type OIDs.
+       The expected parameter types for the prepared statement in the
+       form of an array of <type>regtype</type>. The OID corresponding
+       to an element of this array can be obtained by casting the
+       <type>regtype</type> value to <type>oid</type>.
       </entry>
      </row>
      <row>
@@ -4866,7 +4869,7 @@
        <literal>true</literal> if the prepared statement was created
        via the <command>PREPARE</command> SQL statement;
        <literal>false</literal> if the statement was prepared via the
-       frontend/backend protocol.
+       frontend/backend protocol
       </entry>
      </row>
     </tbody>
@@ -5733,7 +5736,7 @@
       <entry><structfield>definition</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
-      <entry>view definition (a reconstructed SELECT query)</entry>
+      <entry>view definition (a reconstructed <command>SELECT</command> query)</entry>
      </row>
     </tbody>
    </tgroup>
