@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/nbtree/README,v 1.8 2003/11/29 19:51:40 pgsql Exp $
+$PostgreSQL: pgsql/src/backend/access/nbtree/README,v 1.9 2006/01/17 00:09:00 tgl Exp $
 
 This directory contains a correct implementation of Lehman and Yao's
 high-concurrency B-tree management algorithm (P. Lehman and S. Yao,
@@ -325,15 +325,26 @@ work sometimes, but could cause failures later on depending on
 what else gets put on their page.
 
 "ScanKey" data structures are used in two fundamentally different ways
-in this code.  Searches for the initial position for a scan, as well as
-insertions, use scankeys in which the comparison function is a 3-way
-comparator (<0, =0, >0 result).  These scankeys are built within the
-btree code (eg, by _bt_mkscankey()) and used by _bt_compare().  Once we
-are positioned, sequential examination of tuples in a scan is done by
-_bt_checkkeys() using scankeys in which the comparison functions return
-booleans --- for example, int4lt might be used.  These scankeys are the
-ones originally passed in from outside the btree code.  Same
-representation, but different comparison functions!
+in this code, which we describe as "search" scankeys and "insertion"
+scankeys.  A search scankey is the kind passed to btbeginscan() or
+btrescan() from outside the btree code.  The sk_func pointers in a search
+scankey point to comparison functions that return boolean, such as int4lt.
+There might be more than one scankey entry for a given index column, or
+none at all.  (We require the keys to appear in index column order, but
+the order of multiple keys for a given column is unspecified.)  An
+insertion scankey uses the same array-of-ScanKey data structure, but the
+sk_func pointers point to btree comparison support functions (ie, 3-way
+comparators that return int4 values interpreted as <0, =0, >0).  In an
+insertion scankey there is exactly one entry per index column.  Insertion
+scankeys are built within the btree code (eg, by _bt_mkscankey()) and are
+used to locate the starting point of a scan, as well as for locating the
+place to insert a new index tuple.  (Note: in the case of an insertion
+scankey built from a search scankey, there might be fewer keys than
+index columns, indicating that we have no constraints for the remaining
+index columns.)  After we have located the starting point of a scan, the
+original search scankey is consulted as each index entry is sequentially
+scanned to decide whether to return the entry and whether the scan can
+stop (see _bt_checkkeys()).
 
 Notes about data representation
 -------------------------------

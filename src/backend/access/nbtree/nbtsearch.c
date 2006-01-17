@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.99 2005/12/07 19:37:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.100 2006/01/17 00:09:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,9 @@ static bool _bt_endpoint(IndexScanDesc scan, ScanDirection dir);
 /*
  *	_bt_search() -- Search the tree for a particular scankey,
  *		or more precisely for the first leaf page it could be on.
+ *
+ * The passed scankey must be an insertion-type scankey (see nbtree/README),
+ * but it can omit the rightmost column(s) of the index.
  *
  * When nextkey is false (the usual case), we are looking for the first
  * item >= scankey.  When nextkey is true, we are looking for the first
@@ -127,14 +130,17 @@ _bt_search(Relation rel, int keysz, ScanKey scankey, bool nextkey,
  * data that appeared on the page originally is either on the page
  * or strictly to the right of it.
  *
- * When nextkey is false (the usual case), we are looking for the first
- * item >= scankey.  When nextkey is true, we are looking for the first
- * item strictly greater than scankey.
- *
  * This routine decides whether or not we need to move right in the
  * tree by examining the high key entry on the page.  If that entry
  * is strictly less than the scankey, or <= the scankey in the nextkey=true
  * case, then we followed the wrong link and we need to move right.
+ *
+ * The passed scankey must be an insertion-type scankey (see nbtree/README),
+ * but it can omit the rightmost column(s) of the index.
+ *
+ * When nextkey is false (the usual case), we are looking for the first
+ * item >= scankey.  When nextkey is true, we are looking for the first
+ * item strictly greater than scankey.
  *
  * On entry, we have the buffer pinned and a lock of the type specified by
  * 'access'.  If we move right, we release the buffer and lock and acquire
@@ -194,13 +200,12 @@ _bt_moveright(Relation rel,
 /*
  *	_bt_binsrch() -- Do a binary search for a key on a particular page.
  *
+ * The passed scankey must be an insertion-type scankey (see nbtree/README),
+ * but it can omit the rightmost column(s) of the index.
+ *
  * When nextkey is false (the usual case), we are looking for the first
  * item >= scankey.  When nextkey is true, we are looking for the first
  * item strictly greater than scankey.
- *
- * The scankey we get has the compare function stored in the procedure
- * entry of each data struct.  We invoke this regproc to do the
- * comparison for every key in the scankey.
  *
  * On a leaf page, _bt_binsrch() returns the OffsetNumber of the first
  * key >= given scankey, or > scankey if nextkey is true.  (NOTE: in
@@ -301,8 +306,11 @@ _bt_binsrch(Relation rel,
 /*----------
  *	_bt_compare() -- Compare scankey to a particular tuple on the page.
  *
+ * The passed scankey must be an insertion-type scankey (see nbtree/README),
+ * but it can omit the rightmost column(s) of the index.
+ *
  *	keysz: number of key conditions to be checked (might be less than the
- *	total length of the scan key!)
+ *		number of index columns!)
  *	page/offnum: location of btree item to be compared to.
  *
  *		This routine returns:
@@ -464,12 +472,17 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 /*
  *	_bt_first() -- Find the first item in a scan.
  *
- *		We need to be clever about the type of scan, the operation it's
- *		performing, and the tree ordering.	We find the
- *		first item in the tree that satisfies the qualification
- *		associated with the scan descriptor.  On exit, the page containing
+ *		We need to be clever about the direction of scan, the search
+ *		conditions, and the tree ordering.  We find the first item (or,
+ *		if backwards scan, the last item) in the tree that satisfies the
+ *		qualifications in the scan key.  On exit, the page containing
  *		the current index tuple is read locked and pinned, and the scan's
  *		opaque data entry is updated to include the buffer.
+ *
+ * Note that scan->keyData[], and the so->keyData[] scankey built from it,
+ * are both search-type scankeys (see nbtree/README for more about this).
+ * Within this routine, we build a temporary insertion-type scankey to use
+ * in locating the scan start position.
  */
 bool
 _bt_first(IndexScanDesc scan, ScanDirection dir)
@@ -537,6 +550,9 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 * equality quals survive preprocessing, however, it doesn't matter which
 	 * one we use --- by definition, they are either redundant or
 	 * contradictory.
+	 *
+	 * The selected scan keys (at most one per index column) are remembered by
+	 * storing their addresses into the local startKeys[] array.
 	 *----------
 	 */
 	strat_total = BTEqualStrategyNumber;
@@ -631,9 +647,10 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 		return _bt_endpoint(scan, dir);
 
 	/*
-	 * We want to start the scan somewhere within the index.  Set up a
-	 * 3-way-comparison scankey we can use to search for the boundary point we
-	 * identified above.
+	 * We want to start the scan somewhere within the index.  Set up an
+	 * insertion scankey we can use to search for the boundary point we
+	 * identified above.  The insertion scankey is built in the local
+	 * scankeys[] array, using the keys identified by startKeys[].
 	 */
 	Assert(keysCount <= INDEX_MAX_KEYS);
 	for (i = 0; i < keysCount; i++)
@@ -681,19 +698,20 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 		}
 	}
 
-	/*
+	/*----------
 	 * Examine the selected initial-positioning strategy to determine exactly
 	 * where we need to start the scan, and set flag variables to control the
 	 * code below.
 	 *
 	 * If nextkey = false, _bt_search and _bt_binsrch will locate the first
-	 * item >= scan key.  If nextkey = true, they will locate the first item >
-	 * scan key.
+	 * item >= scan key.  If nextkey = true, they will locate the first
+	 * item > scan key.
 	 *
-	 * If goback = true, we will then step back one item, while if goback =
-	 * false, we will start the scan on the located item.
+	 * If goback = true, we will then step back one item, while if
+	 * goback = false, we will start the scan on the located item.
 	 *
 	 * it's yet other place to add some code later for is(not)null ...
+	 *----------
 	 */
 	switch (strat_total)
 	{
@@ -774,8 +792,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	}
 
 	/*
-	 * Use the manufactured scan key to descend the tree and position
-	 * ourselves on the target leaf page.
+	 * Use the manufactured insertion scan key to descend the tree and
+	 * position ourselves on the target leaf page.
 	 */
 	stack = _bt_search(rel, keysCount, scankeys, nextkey, &buf, BT_READ);
 

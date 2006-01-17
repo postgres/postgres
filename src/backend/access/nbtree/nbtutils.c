@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.67 2005/12/07 19:37:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.68 2006/01/17 00:09:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 
 /*
  * _bt_mkscankey
- *		Build a scan key that contains comparison data from itup
+ *		Build an insertion scan key that contains comparison data from itup
  *		as well as comparator routines appropriate to the key datatypes.
  *
  *		The result is intended for use with _bt_compare().
@@ -67,11 +67,12 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 
 /*
  * _bt_mkscankey_nodata
- *		Build a scan key that contains comparator routines appropriate to
- *		the key datatypes, but no comparison data.	The comparison data
- *		ultimately used must match the key datatypes.
+ *		Build an insertion scan key that contains 3-way comparator routines
+ *		appropriate to the key datatypes, but no comparison data.  The
+ *		comparison data ultimately used must match the key datatypes.
  *
- *		The result cannot be used with _bt_compare().  Currently this
+ *		The result cannot be used with _bt_compare(), unless comparison
+ *		data is first stored into the key entries.  Currently this
  *		routine is only called by nbtsort.c and tuplesort.c, which have
  *		their own comparison routines.
  */
@@ -160,7 +161,7 @@ _bt_formitem(IndexTuple itup)
 /*----------
  *	_bt_preprocess_keys() -- Preprocess scan keys
  *
- * The caller-supplied keys (in scan->keyData[]) are copied to
+ * The caller-supplied search-type keys (in scan->keyData[]) are copied to
  * so->keyData[] with possible transformation.	scan->numberOfKeys is
  * the number of input keys, so->numberOfKeys gets the number of output
  * keys (possibly less, never greater).
@@ -485,7 +486,7 @@ _bt_preprocess_keys(IndexScanDesc scan)
  * accordingly.  See comments for _bt_preprocess_keys(), above, about how
  * this is done.
  *
- * scan: index scan descriptor
+ * scan: index scan descriptor (containing a search-type scankey)
  * page: buffer page containing index tuple
  * offnum: offset number of index tuple (must be a valid item!)
  * dir: direction we are scanning in

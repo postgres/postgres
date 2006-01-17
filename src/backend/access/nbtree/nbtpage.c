@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.90 2005/11/22 18:17:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.91 2006/01/17 00:09:01 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -813,7 +813,7 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 	 * better drop the target page lock first.
 	 */
 	_bt_relbuf(rel, buf);
-	/* we need a scan key to do our search, so build one */
+	/* we need an insertion scan key to do our search, so build one */
 	itup_scankey = _bt_mkscankey(rel, &(targetkey->bti_itup));
 	/* find the leftmost leaf page containing this key */
 	stack = _bt_search(rel, rel->rd_rel->relnatts, itup_scankey, false,

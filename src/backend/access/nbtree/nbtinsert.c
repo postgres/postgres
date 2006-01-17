@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.130 2006/01/11 08:43:11 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.131 2006/01/17 00:09:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@ _bt_doinsert(Relation rel, BTItem btitem,
 	BTStack		stack;
 	Buffer		buf;
 
-	/* we need a scan key to do our search, so build one */
+	/* we need an insertion scan key to do our search, so build one */
 	itup_scankey = _bt_mkscankey(rel, itup);
 
 top:
@@ -331,7 +331,8 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
  *		If 'afteritem' is >0 then the new tuple must be inserted after the
  *		existing item of that number, noplace else.  If 'afteritem' is 0
  *		then the procedure finds the exact spot to insert it by searching.
- *		(keysz and scankey parameters are used ONLY if afteritem == 0.)
+ *		(keysz and scankey parameters are used ONLY if afteritem == 0.
+ *		The scankey must be an insertion-type scankey.)
  *
  *		NOTE: if the new key is equal to one or more existing keys, we can
  *		legitimately place it anywhere in the series of equal keys --- in fact,
