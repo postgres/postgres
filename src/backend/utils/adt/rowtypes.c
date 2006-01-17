@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/rowtypes.c,v 1.8.4.2 2005/04/30 20:04:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/rowtypes.c,v 1.8.4.3 2006/01/17 17:33:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,6 +79,7 @@ record_in(PG_FUNCTION_ARGS)
 		errmsg("input of anonymous composite types is not implemented")));
 	tupTypmod = -1;				/* for all non-anonymous types */
 	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+	tupdesc = CreateTupleDescCopy(tupdesc);
 	ncolumns = tupdesc->natts;
 
 	/*
@@ -257,6 +258,7 @@ record_in(PG_FUNCTION_ARGS)
 	pfree(buf.data);
 	pfree(values);
 	pfree(nulls);
+	FreeTupleDesc(tupdesc);
 
 	PG_RETURN_HEAPTUPLEHEADER(result);
 }
@@ -284,6 +286,7 @@ record_out(PG_FUNCTION_ARGS)
 	tupType = HeapTupleHeaderGetTypeId(rec);
 	tupTypmod = HeapTupleHeaderGetTypMod(rec);
 	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+	tupdesc = CreateTupleDescCopy(tupdesc);
 	ncolumns = tupdesc->natts;
 
 	/* Build a temporary HeapTuple control structure */
@@ -408,6 +411,7 @@ record_out(PG_FUNCTION_ARGS)
 
 	pfree(values);
 	pfree(nulls);
+	FreeTupleDesc(tupdesc);
 
 	PG_RETURN_CSTRING(buf.data);
 }
@@ -444,6 +448,7 @@ record_recv(PG_FUNCTION_ARGS)
 		errmsg("input of anonymous composite types is not implemented")));
 	tupTypmod = -1;				/* for all non-anonymous types */
 	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+	tupdesc = CreateTupleDescCopy(tupdesc);
 	ncolumns = tupdesc->natts;
 
 	/*
@@ -593,6 +598,7 @@ record_recv(PG_FUNCTION_ARGS)
 	heap_freetuple(tuple);
 	pfree(values);
 	pfree(nulls);
+	FreeTupleDesc(tupdesc);
 
 	PG_RETURN_HEAPTUPLEHEADER(result);
 }
@@ -620,6 +626,7 @@ record_send(PG_FUNCTION_ARGS)
 	tupType = HeapTupleHeaderGetTypeId(rec);
 	tupTypmod = HeapTupleHeaderGetTypMod(rec);
 	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+	tupdesc = CreateTupleDescCopy(tupdesc);
 	ncolumns = tupdesc->natts;
 
 	/* Build a temporary HeapTuple control structure */
@@ -722,6 +729,7 @@ record_send(PG_FUNCTION_ARGS)
 
 	pfree(values);
 	pfree(nulls);
+	FreeTupleDesc(tupdesc);
 
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }

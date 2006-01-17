@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.47 2005/01/01 05:43:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.47.4.1 2006/01/17 17:33:34 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -820,6 +820,7 @@ toast_flatten_tuple_attribute(Datum value,
 	if (tupleDesc == NULL)
 		return value;			/* not a composite type */
 
+	tupleDesc = CreateTupleDescCopy(tupleDesc);
 	att = tupleDesc->attrs;
 	numAttrs = tupleDesc->natts;
 
@@ -866,7 +867,10 @@ toast_flatten_tuple_attribute(Datum value,
 	 * If nothing to untoast, just return the original tuple.
 	 */
 	if (!need_change)
+	{
+		FreeTupleDesc(tupleDesc);
 		return value;
+	}
 
 	/*
 	 * Calculate the new size of the tuple.  Header size should not
@@ -903,6 +907,7 @@ toast_flatten_tuple_attribute(Datum value,
 	for (i = 0; i < numAttrs; i++)
 		if (toast_free[i])
 			pfree(DatumGetPointer(toast_values[i]));
+	FreeTupleDesc(tupleDesc);
 
 	return PointerGetDatum(new_data);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.129.4.1 2005/12/14 16:30:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.129.4.2 2006/01/17 17:33:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -839,6 +839,7 @@ ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind)
 
 	/* Verify it's a composite type, and get the tupdesc */
 	tupleDesc = lookup_rowtype_tupdesc(exprType(expr), exprTypmod(expr));
+	tupleDesc = CreateTupleDescCopy(tupleDesc);
 
 	/* Generate a list of references to the individual fields */
 	numAttrs = tupleDesc->natts;
@@ -888,6 +889,8 @@ ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind)
 		te->expr = (Expr *) fieldnode;
 		te_list = lappend(te_list, te);
 	}
+
+	FreeTupleDesc(tupleDesc);
 
 	return te_list;
 }

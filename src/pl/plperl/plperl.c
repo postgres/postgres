@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.67.4.4 2006/01/08 15:51:18 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.67.4.5 2006/01/17 17:33:35 tgl Exp $
  *
  **********************************************************************/
 
@@ -705,12 +705,14 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 			tupType = HeapTupleHeaderGetTypeId(td);
 			tupTypmod = HeapTupleHeaderGetTypMod(td);
 			tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+			tupdesc = CreateTupleDescCopy(tupdesc);
 			/* Build a temporary HeapTuple control structure */
 			tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
 			tmptup.t_data = td;
 
 			hashref = plperl_hash_from_tuple(&tmptup, tupdesc);
 			XPUSHs(sv_2mortal(hashref));
+			FreeTupleDesc(tupdesc);
 		}
 		else
 		{
@@ -1009,7 +1011,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		 */
 		td = get_function_tupdesc(prodesc->result_oid,
 								  (ReturnSetInfo *) fcinfo->resultinfo);
-		/* td = CreateTupleDescCopy(td); */
+		td = CreateTupleDescCopy(td);
 		attinmeta = TupleDescGetAttInMetadata(td);
 
 		tup = plperl_build_tuple_result(perlhash, attinmeta);

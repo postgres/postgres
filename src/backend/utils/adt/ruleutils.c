@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.188.4.2 2005/07/15 18:40:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.188.4.3 2006/01/17 17:33:34 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -3245,6 +3245,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				if (rowexpr->row_typeid != RECORDOID)
 				{
 					tupdesc = lookup_rowtype_tupdesc(rowexpr->row_typeid, -1);
+					tupdesc = CreateTupleDescCopy(tupdesc);
 					Assert(list_length(rowexpr->args) <= tupdesc->natts);
 				}
 
