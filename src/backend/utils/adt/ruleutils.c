@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.207.2.3 2005/12/30 18:34:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.207.2.4 2006/01/17 17:33:21 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2699,7 +2699,7 @@ get_name_for_var_field(Var *var, int fieldno,
 
 	/* Got the tupdesc, so we can extract the field name */
 	Assert(fieldno >= 1 && fieldno <= tupleDesc->natts);
-	return NameStr(tupleDesc->attrs[fieldno - 1]->attname);
+	return pstrdup(NameStr(tupleDesc->attrs[fieldno - 1]->attname));
 }
 
 
@@ -3493,6 +3493,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				if (rowexpr->row_typeid != RECORDOID)
 				{
 					tupdesc = lookup_rowtype_tupdesc(rowexpr->row_typeid, -1);
+					tupdesc = CreateTupleDescCopy(tupdesc);
 					Assert(list_length(rowexpr->args) <= tupdesc->natts);
 				}
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.138.2.1 2005/11/22 18:23:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.138.2.2 2006/01/17 17:33:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -816,7 +816,8 @@ ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind)
 		((Var *) expr)->vartype == RECORDOID)
 		tupleDesc = expandRecordVariable(pstate, (Var *) expr, 0);
 	else if (get_expr_result_type(expr, NULL, &tupleDesc) != TYPEFUNC_COMPOSITE)
-		tupleDesc = lookup_rowtype_tupdesc(exprType(expr), exprTypmod(expr));
+		tupleDesc = CreateTupleDescCopy(lookup_rowtype_tupdesc(exprType(expr),
+															   exprTypmod(expr)));
 	Assert(tupleDesc);
 
 	/* Generate a list of references to the individual fields */
@@ -993,7 +994,8 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 	 * appropriate error message while failing.
 	 */
 	if (get_expr_result_type(expr, NULL, &tupleDesc) != TYPEFUNC_COMPOSITE)
-		tupleDesc = lookup_rowtype_tupdesc(exprType(expr), exprTypmod(expr));
+		tupleDesc = CreateTupleDescCopy(lookup_rowtype_tupdesc(exprType(expr),
+															   exprTypmod(expr)));
 
 	return tupleDesc;
 }

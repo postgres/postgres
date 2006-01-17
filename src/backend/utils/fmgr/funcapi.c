@@ -7,7 +7,7 @@
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.26 2005/10/15 02:49:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.26.2.1 2006/01/17 17:33:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -246,7 +246,7 @@ get_expr_result_type(Node *expr,
 			*resultTupleDesc = NULL;
 		result = get_type_func_class(typid);
 		if (result == TYPEFUNC_COMPOSITE && resultTupleDesc)
-			*resultTupleDesc = lookup_rowtype_tupdesc(typid, -1);
+			*resultTupleDesc = CreateTupleDescCopy(lookup_rowtype_tupdesc(typid, -1));
 	}
 
 	return result;
@@ -363,7 +363,7 @@ internal_get_result_type(Oid funcid,
 	{
 		case TYPEFUNC_COMPOSITE:
 			if (resultTupleDesc)
-				*resultTupleDesc = lookup_rowtype_tupdesc(rettype, -1);
+				*resultTupleDesc = CreateTupleDescCopy(lookup_rowtype_tupdesc(rettype, -1));
 			/* Named composite types can't have any polymorphic columns */
 			break;
 		case TYPEFUNC_SCALAR:

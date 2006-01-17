@@ -36,7 +36,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/typcache.c,v 1.15.2.1 2005/11/22 18:23:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/typcache.c,v 1.15.2.2 2006/01/17 17:33:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -377,6 +377,8 @@ lookup_default_opclass(Oid type_id, Oid am_id)
  *
  * Note: returned TupleDesc points to cached copy; caller must copy it
  * if intending to scribble on it or keep a reference for a long time.
+ * ("A long time" basically means "across any possible cache flush",
+ * which typically could occur at any relation open or catalog lookup.)
  */
 TupleDesc
 lookup_rowtype_tupdesc(Oid type_id, int32 typmod)
