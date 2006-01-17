@@ -72,6 +72,10 @@
    don't. */
 #undef HAVE_DECL_FDATASYNC
 
+/* Define to 1 if you have the declaration of `F_FULLFSYNC', and to 0 if you
+   don't. */
+#undef HAVE_DECL_F_FULLFSYNC
+
 /* Define to 1 if you have the declaration of `snprintf', and to 0 if you
    don't. */
 #undef HAVE_DECL_SNPRINTF
