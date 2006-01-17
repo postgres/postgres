@@ -1962,6 +1962,15 @@ Fri Dec  2 16:00:10 CET 2005
 
 	- Added special handling of CONNECTION variable that is used by ECPG
 	  instead of given to the backend.
+	  
+Fr Jan 13 17:29:30 CET 2006
+
+	- Fixed a fixed size buffer in preproc.y to be variable size since an
+	  overflow could occur on the fixed one.
+	  
+Tu Jan 17 18:53:03 CET 2006
+
+	- Data transferred binary is now put into the variables verbatim.
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.
 

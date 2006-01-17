@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.29 2005/10/15 02:49:47 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.30 2006/01/17 19:49:23 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -45,11 +45,12 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 			 long ind_offset, enum ARRAY_TYPE isarray, enum COMPAT_MODE compat, bool force_indicator)
 {
 	struct sqlca_t *sqlca = ECPGget_sqlca();
-	char	   *pval = (char *) PQgetvalue(results, act_tuple, act_field);
-	int			value_for_indicator = 0;
+	char	*pval = (char *) PQgetvalue(results, act_tuple, act_field);
+	int	binary = PQfformat(results, act_field);
+	int 	size = PQgetlength(results, act_tuple, act_field);
+	int	value_for_indicator = 0;
 
-	ECPGlog("ECPGget_data line %d: RESULT: %s offset: %ld array: %s\n", lineno, pval ? pval : "", offset, isarray ? "Yes" : "No");
-
+	ECPGlog("ECPGget_data line %d: RESULT: %s offset: %ld array: %s\n", lineno, pval ? (binary ? "BINARY" : pval) : "EMPTY", offset, isarray ? "Yes" : "No");
 	/* We will have to decode the value */
 
 	/*
@@ -131,6 +132,50 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 
 	do
 	{
+		if (binary)
+		{
+	                if (pval)
+	                {
+		                if (varcharsize == 0 || varcharsize*offset >= size)
+		                        memcpy((char *) ((long) var + offset * act_tuple), pval, size);
+				else
+				{
+					memcpy((char *) ((long) var + offset * act_tuple), pval, varcharsize*offset);
+
+					if (varcharsize*offset < size)
+					{
+						/* truncation */
+						switch (ind_type)
+						{
+							case ECPGt_short:
+							case ECPGt_unsigned_short:
+								*((short *) (ind + ind_offset * act_tuple)) = size;
+								break;
+							case ECPGt_int:
+							case ECPGt_unsigned_int:
+								*((int *) (ind + ind_offset * act_tuple)) = size;
+								break;
+							case ECPGt_long:
+							case ECPGt_unsigned_long:
+								*((long *) (ind + ind_offset * act_tuple)) = size;
+								break;
+#ifdef HAVE_LONG_LONG_INT_64
+							case ECPGt_long_long:
+							case ECPGt_unsigned_long_long:
+								*((long long int *) (ind + ind_offset * act_tuple)) = size;
+								break;
+#endif   /* HAVE_LONG_LONG_INT_64 */
+							default:
+								break;
+						}
+						sqlca->sqlwarn[0] = sqlca->sqlwarn[1] = 'W';
+					}
+				}
+				pval += size;
+			}
+		}	
+		else
+		{
 		switch (type)
 		{
 				long		res;
@@ -618,6 +663,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 
 			if (*pval == ' ')
 				++pval;
+		}
 		}
 	} while (*pval != '\0' && ((isarray == ECPG_ARRAY_ARRAY && *pval != '}') || isarray == ECPG_ARRAY_VECTOR));
 
