@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.124 2005/12/08 15:38:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.125 2006/01/17 23:52:31 tgl Exp $
  *
  * NOTES:
  *
@@ -265,13 +265,15 @@ int
 pg_fsync_writethrough(int fd)
 {
 	if (enableFsync)
+	{
 #ifdef WIN32
 		return _commit(fd);
-#elif defined(__darwin__)
-	return (fcntl(fd, F_FULLFSYNC, 0) == -1) ? -1 : 0;
+#elif defined(F_FULLFSYNC)
+		return (fcntl(fd, F_FULLFSYNC, 0) == -1) ? -1 : 0;
 #else
 		return -1;
 #endif
+	}
 	else
 		return 0;
 }
