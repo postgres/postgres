@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.111.2.1 2005/11/22 18:23:15 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.111.2.2 2006/01/18 20:35:16 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -722,7 +722,8 @@ pgstat_report_vacuum(Oid tableoid, bool shared,
 {
 	PgStat_MsgVacuum msg;
 
-	if (pgStatSock < 0)
+	if (pgStatSock < 0 ||
+		!pgstat_collect_tuplelevel)
 		return;
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_VACUUM);
@@ -745,7 +746,8 @@ pgstat_report_analyze(Oid tableoid, bool shared, PgStat_Counter livetuples,
 {
 	PgStat_MsgAnalyze msg;
 
-	if (pgStatSock < 0)
+	if (pgStatSock < 0 ||
+		!pgstat_collect_tuplelevel)
 		return;
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_ANALYZE);
@@ -874,26 +876,21 @@ pgstat_report_tabstat(void)
  *	Will tell the collector about objects he can get rid of.
  * ----------
  */
-int
+void
 pgstat_vacuum_tabstat(void)
 {
-	Relation	dbrel;
-	HeapScanDesc dbscan;
-	HeapTuple	dbtup;
-	Oid		   *dbidlist;
-	int			dbidalloc;
-	int			dbidused;
+	List	   *oidlist;
+	Relation	rel;
+	HeapScanDesc scan;
+	HeapTuple	tup;
+	PgStat_MsgTabpurge msg;
 	HASH_SEQ_STATUS hstat;
 	PgStat_StatDBEntry *dbentry;
 	PgStat_StatTabEntry *tabentry;
-	HeapTuple	reltup;
-	int			nobjects = 0;
-	PgStat_MsgTabpurge msg;
 	int			len;
-	int			i;
 
 	if (pgStatSock < 0)
-		return 0;
+		return;
 
 	/*
 	 * If not done for this transaction, read the statistics collector stats
@@ -902,15 +899,55 @@ pgstat_vacuum_tabstat(void)
 	backend_read_statsfile();
 
 	/*
-	 * Lookup our own database entry; if not found, nothing to do.
+	 * Read pg_database and make a list of OIDs of all existing databases
+	 */
+	oidlist = NIL;
+	rel = heap_open(DatabaseRelationId, AccessShareLock);
+	scan = heap_beginscan(rel, SnapshotNow, 0, NULL);
+	while ((tup = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	{
+		oidlist = lappend_oid(oidlist, HeapTupleGetOid(tup));
+	}
+	heap_endscan(scan);
+	heap_close(rel, AccessShareLock);
+
+	/*
+	 * Search the database hash table for dead databases and tell the
+	 * collector to drop them.
+	 */
+	hash_seq_init(&hstat, pgStatDBHash);
+	while ((dbentry = (PgStat_StatDBEntry *) hash_seq_search(&hstat)) != NULL)
+	{
+		Oid			dbid = dbentry->databaseid;
+
+		if (!list_member_oid(oidlist, dbid))
+			pgstat_drop_database(dbid);
+	}
+
+	/* Clean up */
+	list_free(oidlist);
+
+	/*
+	 * Lookup our own database entry; if not found, nothing more to do.
 	 */
 	dbentry = (PgStat_StatDBEntry *) hash_search(pgStatDBHash,
 												 (void *) &MyDatabaseId,
 												 HASH_FIND, NULL);
-	if (dbentry == NULL)
-		return -1;
-	if (dbentry->tables == NULL)
-		return 0;
+	if (dbentry == NULL || dbentry->tables == NULL)
+		return;
+
+	/*
+	 * Similarly to above, make a list of all known relations in this DB.
+	 */
+	oidlist = NIL;
+	rel = heap_open(RelationRelationId, AccessShareLock);
+	scan = heap_beginscan(rel, SnapshotNow, 0, NULL);
+	while ((tup = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	{
+		oidlist = lappend_oid(oidlist, HeapTupleGetOid(tup));
+	}
+	heap_endscan(scan);
+	heap_close(rel, AccessShareLock);
 
 	/*
 	 * Initialize our messages table counter to zero
@@ -923,27 +960,16 @@ pgstat_vacuum_tabstat(void)
 	hash_seq_init(&hstat, dbentry->tables);
 	while ((tabentry = (PgStat_StatTabEntry *) hash_seq_search(&hstat)) != NULL)
 	{
-		/*
-		 * Check if this relation is still alive by looking up it's pg_class
-		 * tuple in the system catalog cache.
-		 */
-		reltup = SearchSysCache(RELOID,
-								ObjectIdGetDatum(tabentry->tableid),
-								0, 0, 0);
-		if (HeapTupleIsValid(reltup))
-		{
-			ReleaseSysCache(reltup);
+		if (list_member_oid(oidlist, tabentry->tableid))
 			continue;
-		}
 
 		/*
-		 * Add this table's Oid to the message
+		 * Not there, so add this table's Oid to the message
 		 */
 		msg.m_tableid[msg.m_nentries++] = tabentry->tableid;
-		nobjects++;
 
 		/*
-		 * If the message is full, send it out and reinitialize to zero
+		 * If the message is full, send it out and reinitialize to empty
 		 */
 		if (msg.m_nentries >= PGSTAT_NUM_TABPURGE)
 		{
@@ -971,62 +997,8 @@ pgstat_vacuum_tabstat(void)
 		pgstat_send(&msg, len);
 	}
 
-	/*
-	 * Read pg_database and remember the Oid's of all existing databases
-	 */
-	dbidalloc = 256;
-	dbidused = 0;
-	dbidlist = (Oid *) palloc(sizeof(Oid) * dbidalloc);
-
-	dbrel = heap_open(DatabaseRelationId, AccessShareLock);
-	dbscan = heap_beginscan(dbrel, SnapshotNow, 0, NULL);
-	while ((dbtup = heap_getnext(dbscan, ForwardScanDirection)) != NULL)
-	{
-		if (dbidused >= dbidalloc)
-		{
-			dbidalloc *= 2;
-			dbidlist = (Oid *) repalloc((char *) dbidlist,
-										sizeof(Oid) * dbidalloc);
-		}
-		dbidlist[dbidused++] = HeapTupleGetOid(dbtup);
-	}
-	heap_endscan(dbscan);
-	heap_close(dbrel, AccessShareLock);
-
-	/*
-	 * Search the database hash table for dead databases and tell the
-	 * collector to drop them as well.
-	 */
-	hash_seq_init(&hstat, pgStatDBHash);
-	while ((dbentry = (PgStat_StatDBEntry *) hash_seq_search(&hstat)) != NULL)
-	{
-		Oid			dbid = dbentry->databaseid;
-
-		for (i = 0; i < dbidused; i++)
-		{
-			if (dbidlist[i] == dbid)
-			{
-				dbid = InvalidOid;
-				break;
-			}
-		}
-
-		if (dbid != InvalidOid)
-		{
-			pgstat_drop_database(dbid);
-			nobjects++;
-		}
-	}
-
-	/*
-	 * Free the dbid list.
-	 */
-	pfree(dbidlist);
-
-	/*
-	 * Tell the caller how many removeable objects we found
-	 */
-	return nobjects;
+	/* Clean up */
+	list_free(oidlist);
 }
 
 
@@ -1034,9 +1006,8 @@ pgstat_vacuum_tabstat(void)
  * pgstat_drop_database() -
  *
  *	Tell the collector that we just dropped a database.
- *	This is the only message that shouldn't get lost in space. Otherwise
- *	the collector will keep the statistics for the dead DB until his
- *	stats file got removed while the postmaster is down.
+ *	(If the message gets lost, we will still clean the dead DB eventually
+ *	via future invocations of pgstat_vacuum_tabstat().)
  * ----------
  */
 static void
@@ -1050,6 +1021,34 @@ pgstat_drop_database(Oid databaseid)
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_DROPDB);
 	msg.m_databaseid = databaseid;
 	pgstat_send(&msg, sizeof(msg));
+}
+
+
+/* ----------
+ * pgstat_drop_relation() -
+ *
+ *	Tell the collector that we just dropped a relation.
+ *	(If the message gets lost, we will still clean the dead entry eventually
+ *	via future invocations of pgstat_vacuum_tabstat().)
+ * ----------
+ */
+void
+pgstat_drop_relation(Oid relid)
+{
+	PgStat_MsgTabpurge msg;
+	int			len;
+
+	if (pgStatSock < 0)
+		return;
+
+	msg.m_tableid[0] = relid;
+	msg.m_nentries = 1;
+
+	len = offsetof(PgStat_MsgTabpurge, m_tableid[0]) + sizeof(Oid);
+
+	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_TABPURGE);
+	msg.m_databaseid = MyDatabaseId;
+	pgstat_send(&msg, len);
 }
 
 
@@ -2344,13 +2343,15 @@ pgstat_write_statsfile(void)
 		}
 
 		/*
-		 * Write out the DB line including the number of live backends.
+		 * Write out the DB entry including the number of live backends.
+		 * We don't write the tables pointer since it's of no use to any
+		 * other process.
 		 */
 		fputc('D', fpout);
-		fwrite(dbentry, sizeof(PgStat_StatDBEntry), 1, fpout);
+		fwrite(dbentry, offsetof(PgStat_StatDBEntry, tables), 1, fpout);
 
 		/*
-		 * Walk through the databases access stats per table.
+		 * Walk through the database's access stats per table.
 		 */
 		hash_seq_init(&tstat, dbentry->tables);
 		while ((tabentry = (PgStat_StatTabEntry *) hash_seq_search(&tstat)) != NULL)
@@ -2366,19 +2367,17 @@ pgstat_write_statsfile(void)
 					if (hash_search(dbentry->tables,
 									(void *) &(tabentry->tableid),
 									HASH_REMOVE, NULL) == NULL)
-					{
 						ereport(ERROR,
 								(errmsg("tables hash table for "
 										"database %u corrupted during "
 										"cleanup --- abort",
 										dbentry->databaseid)));
-					}
 				}
 				continue;
 			}
 
 			/*
-			 * At least we think this is still a live table. Print its access
+			 * At least we think this is still a live table.  Emit its access
 			 * stats.
 			 */
 			fputc('T', fpout);
@@ -2400,34 +2399,51 @@ pgstat_write_statsfile(void)
 
 	for (i = 0; i < MaxBackends; i++)
 	{
-		if (pgStatBeTable[i].procpid > 0)
+		PgStat_StatBeEntry *beentry = &pgStatBeTable[i];
+
+		if (beentry->procpid > 0)
 		{
+			int		len;
+
+			len = offsetof(PgStat_StatBeEntry, activity) +
+				strlen(beentry->activity) + 1;
 			fputc('B', fpout);
-			fwrite(&pgStatBeTable[i], sizeof(PgStat_StatBeEntry), 1, fpout);
+			fwrite(&len, sizeof(len), 1, fpout);
+			fwrite(beentry, len, 1, fpout);
 		}
 	}
 
 	/*
 	 * No more output to be done. Close the temp file and replace the old
-	 * pgstat.stat with it.
+	 * pgstat.stat with it.  The ferror() check replaces testing for error
+	 * after each individual fputc or fwrite above.
 	 */
 	fputc('E', fpout);
-	if (fclose(fpout) < 0)
+
+	if (ferror(fpout))
+	{
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not write temporary statistics file \"%s\": %m",
+						PGSTAT_STAT_TMPFILE)));
+		fclose(fpout);
+		unlink(PGSTAT_STAT_TMPFILE);
+	}
+	else if (fclose(fpout) < 0)
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
 			   errmsg("could not close temporary statistics file \"%s\": %m",
 					  PGSTAT_STAT_TMPFILE)));
+		unlink(PGSTAT_STAT_TMPFILE);
 	}
-	else
+	else if (rename(PGSTAT_STAT_TMPFILE, PGSTAT_STAT_FILENAME) < 0)
 	{
-		if (rename(PGSTAT_STAT_TMPFILE, PGSTAT_STAT_FILENAME) < 0)
-		{
-			ereport(LOG,
-					(errcode_for_file_access(),
-					 errmsg("could not rename temporary statistics file \"%s\" to \"%s\": %m",
-							PGSTAT_STAT_TMPFILE, PGSTAT_STAT_FILENAME)));
-		}
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not rename temporary statistics file \"%s\" to \"%s\": %m",
+						PGSTAT_STAT_TMPFILE, PGSTAT_STAT_FILENAME)));
+		unlink(PGSTAT_STAT_TMPFILE);
 	}
 
 	/*
@@ -2444,11 +2460,9 @@ pgstat_write_statsfile(void)
 			if (hash_search(pgStatBeDead,
 							(void *) &(deadbe->procpid),
 							HASH_REMOVE, NULL) == NULL)
-			{
 				ereport(ERROR,
 						(errmsg("dead-server-process hash table corrupted "
 								"during cleanup --- abort")));
-			}
 		}
 	}
 }
@@ -2475,6 +2489,7 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 	HTAB	   *tabhash = NULL;
 	FILE	   *fpin;
 	int32		format_id;
+	int			len;
 	int			maxbackends = 0;
 	int			havebackends = 0;
 	bool		found;
@@ -2559,7 +2574,8 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 				 * until a 'd' is encountered.
 				 */
 			case 'D':
-				if (fread(&dbbuf, 1, sizeof(dbbuf), fpin) != sizeof(dbbuf))
+				if (fread(&dbbuf, 1, offsetof(PgStat_StatDBEntry, tables),
+						  fpin) != offsetof(PgStat_StatDBEntry, tables))
 				{
 					ereport(pgStatRunningInCollector ? LOG : WARNING,
 							(errmsg("corrupted pgstat.stat file")));
@@ -2607,7 +2623,7 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 									 HASH_ELEM | HASH_FUNCTION | mcxt_flags);
 
 				/*
-				 * Arrange that following 'T's add entries to this databases
+				 * Arrange that following 'T's add entries to this database's
 				 * tables hash table.
 				 */
 				tabhash = dbentry->tables;
@@ -2624,7 +2640,8 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 				 * 'T'	A PgStat_StatTabEntry follows.
 				 */
 			case 'T':
-				if (fread(&tabbuf, 1, sizeof(tabbuf), fpin) != sizeof(tabbuf))
+				if (fread(&tabbuf, 1, sizeof(PgStat_StatTabEntry),
+						  fpin) != sizeof(PgStat_StatTabEntry))
 				{
 					ereport(pgStatRunningInCollector ? LOG : WARNING,
 							(errmsg("corrupted pgstat.stat file")));
@@ -2690,13 +2707,27 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 				if (havebackends >= maxbackends)
 					goto done;
 
+				/* Read and validate the entry length */
+				if (fread(&len, 1, sizeof(len), fpin) != sizeof(len))
+				{
+					ereport(pgStatRunningInCollector ? LOG : WARNING,
+							(errmsg("corrupted pgstat.stat file")));
+					goto done;
+				}
+				if (len <= offsetof(PgStat_StatBeEntry, activity) ||
+					len > sizeof(PgStat_StatBeEntry))
+				{
+					ereport(pgStatRunningInCollector ? LOG : WARNING,
+							(errmsg("corrupted pgstat.stat file")));
+					goto done;
+				}
+
 				/*
 				 * Read it directly into the table.
 				 */
 				beentry = &(*betab)[havebackends];
 
-				if (fread(beentry, 1, sizeof(PgStat_StatBeEntry), fpin) !=
-					sizeof(PgStat_StatBeEntry))
+				if (fread(beentry, 1, len, fpin) != len)
 				{
 					ereport(pgStatRunningInCollector ? LOG : WARNING,
 							(errmsg("corrupted pgstat.stat file")));
@@ -2869,57 +2900,25 @@ pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len)
 {
 	PgStat_StatDBEntry *dbentry;
 	PgStat_StatTabEntry *tabentry;
-	bool		found;
-	bool		create;
 
 	/*
-	 * If we don't know about the database, ignore the message, because it may
-	 * be autovacuum processing a template database.  But if the message is
-	 * for database InvalidOid, don't ignore it, because we are getting a
-	 * message from vacuuming a shared relation.
+	 * Don't create either the database or table entry if it doesn't already
+	 * exist.  This avoids bloating the stats with entries for stuff that is
+	 * only touched by vacuum and not by live operations.
 	 */
-	create = (msg->m_databaseid == InvalidOid);
-
-	dbentry = pgstat_get_db_entry(msg->m_databaseid, create);
+	dbentry = pgstat_get_db_entry(msg->m_databaseid, false);
 	if (dbentry == NULL)
 		return;
 
 	tabentry = hash_search(dbentry->tables, &(msg->m_tableoid),
-						   HASH_ENTER, &found);
+						   HASH_FIND, NULL);
+	if (tabentry == NULL)
+		return;
 
-	/*
-	 * If we are creating the entry, initialize it.
-	 */
-	if (!found)
-	{
-		tabentry->numscans = 0;
-
-		tabentry->tuples_returned = 0;
-		tabentry->tuples_fetched = 0;
-		tabentry->tuples_inserted = 0;
-		tabentry->tuples_updated = 0;
-		tabentry->tuples_deleted = 0;
-
-		tabentry->n_live_tuples = msg->m_tuples;
-		tabentry->n_dead_tuples = 0;
-
-		if (msg->m_analyze)
-			tabentry->last_anl_tuples = msg->m_tuples;
-		else
-			tabentry->last_anl_tuples = 0;
-
-		tabentry->blocks_fetched = 0;
-		tabentry->blocks_hit = 0;
-
-		tabentry->destroy = 0;
-	}
-	else
-	{
-		tabentry->n_live_tuples = msg->m_tuples;
-		tabentry->n_dead_tuples = 0;
-		if (msg->m_analyze)
-			tabentry->last_anl_tuples = msg->m_tuples;
-	}
+	tabentry->n_live_tuples = msg->m_tuples;
+	tabentry->n_dead_tuples = 0;
+	if (msg->m_analyze)
+		tabentry->last_anl_tuples = msg->m_tuples;
 }
 
 /* ----------
@@ -2933,46 +2932,24 @@ pgstat_recv_analyze(PgStat_MsgAnalyze *msg, int len)
 {
 	PgStat_StatDBEntry *dbentry;
 	PgStat_StatTabEntry *tabentry;
-	bool		found;
 
 	/*
-	 * Note that we do create the database entry here, as opposed to what we
-	 * do on AutovacStart and Vacuum messages.	This is because autovacuum
-	 * never executes ANALYZE on template databases.
+	 * Don't create either the database or table entry if it doesn't already
+	 * exist.  This avoids bloating the stats with entries for stuff that is
+	 * only touched by analyze and not by live operations.
 	 */
-	dbentry = pgstat_get_db_entry(msg->m_databaseid, true);
+	dbentry = pgstat_get_db_entry(msg->m_databaseid, false);
+	if (dbentry == NULL)
+		return;
 
 	tabentry = hash_search(dbentry->tables, &(msg->m_tableoid),
-						   HASH_ENTER, &found);
+						   HASH_FIND, NULL);
+	if (tabentry == NULL)
+		return;
 
-	/*
-	 * If we are creating the entry, initialize it.
-	 */
-	if (!found)
-	{
-		tabentry->numscans = 0;
-
-		tabentry->tuples_returned = 0;
-		tabentry->tuples_fetched = 0;
-		tabentry->tuples_inserted = 0;
-		tabentry->tuples_updated = 0;
-		tabentry->tuples_deleted = 0;
-
-		tabentry->n_live_tuples = msg->m_live_tuples;
-		tabentry->n_dead_tuples = msg->m_dead_tuples;
-		tabentry->last_anl_tuples = msg->m_live_tuples + msg->m_dead_tuples;
-
-		tabentry->blocks_fetched = 0;
-		tabentry->blocks_hit = 0;
-
-		tabentry->destroy = 0;
-	}
-	else
-	{
-		tabentry->n_live_tuples = msg->m_live_tuples;
-		tabentry->n_dead_tuples = msg->m_dead_tuples;
-		tabentry->last_anl_tuples = msg->m_live_tuples + msg->m_dead_tuples;
-	}
+	tabentry->n_live_tuples = msg->m_live_tuples;
+	tabentry->n_dead_tuples = msg->m_dead_tuples;
+	tabentry->last_anl_tuples = msg->m_live_tuples + msg->m_dead_tuples;
 }
 
 /* ----------
