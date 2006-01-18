@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.117 2006/01/16 18:15:30 neilc Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.118 2006/01/18 06:49:25 neilc Exp $
  -->
 
 <chapter id="catalogs">
@@ -4360,6 +4360,11 @@
 
     <tbody>
      <row>
+      <entry><link linkend="view-pg-cursors"><structname>pg_cursors</structname></link></entry>
+      <entry>open cursors</entry>
+     </row>
+
+     <row>
       <entry><link linkend="view-pg-group"><structname>pg_group</structname></link></entry>
       <entry>groups of database users</entry>
      </row>
@@ -4427,6 +4432,131 @@
     </tbody>
    </tgroup>
   </table>
+ </sect1>
+
+ <sect1 id="view-pg-cursors">
+  <title><structname>pg_cursors</structname></title>
+
+  <indexterm zone="view-pg-cursors">
+   <primary>pg_cursors</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_cursors</structname> view lists the cursors that
+   are currently available. Cursors can be defined in several ways:
+   <itemizedlist>
+    <listitem>
+     <para>
+      via the <xref linkend="sql-declare" endterm="sql-declare-title">
+      statement in SQL
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      via the Bind message in the frontend/backend protocol, as
+      described in <xref linkend="protocol-flow-ext-query">
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      via the Server Programming Interface (SPI), as described in
+      <xref linkend="spi-interface">
+   </itemizedlist>
+
+   The <structname>pg_cursors</structname> view displays cursors
+   created by any of these means. Cursors only exist for the duration
+   of the transaction that defines them, unless they have been
+   declared <literal>WITH HOLD</literal>. Therefore non-holdable
+   cursors are only present in the view until the end of their
+   creating transaction.
+
+   <note>
+    <para>
+     Cursors are used internally to implement some of the components
+     of <productname>PostgreSQL</>, such as procedural languages.
+     Therefore, the <structname>pg_cursors</> view may include cursors
+     that have not been explicitly created by the user.
+    </para>
+   </note>
+  </para>
+
+  <table>
+   <title><structname>pg_cursors</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>name</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>The name of the cursor</entry>
+     </row>
+
+     <row>
+      <entry><structfield>statement</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>The verbatim query string submitted to declare this cursor</entry>
+     </row>
+
+     <row>
+      <entry><structfield>is_holdable</structfield></entry>
+      <entry><type>boolean</type></entry>
+      <entry></entry>
+      <entry>
+       <literal>true</literal> if the cursor is holdable (that is, it
+       can be accessed after the transaction that declared the cursor
+       has committed); <literal>false</literal> otherwise
+       </entry>
+     </row>
+
+     <row>
+      <entry><structfield>is_binary</structfield></entry>
+      <entry><type>boolean</type></entry>
+      <entry></entry>
+      <entry>
+       <literal>true</literal> if the cursor was declared
+       <literal>BINARY</literal>; <literal>false</literal>
+       otherwise
+       </entry>
+     </row>
+
+     <row>
+      <entry><structfield>is_scrollable</structfield></entry>
+      <entry><type>boolean</type></entry>
+      <entry></entry>
+      <entry>
+       <literal>true</> if the cursor is scrollable (that is, it
+       allows rows to be retrieved in a nonsequential manner);
+       <literal>false</literal> otherwise
+       </entry>
+     </row>
+
+     <row>
+      <entry><structfield>creation_time</structfield></entry>
+      <entry><type>timestamptz</type></entry>
+      <entry></entry>
+      <entry>The time at which the cursor was declared</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The <structname>pg_cursors</structname> view is read only.
+  </para>
+
  </sect1>
 
  <sect1 id="view-pg-group">

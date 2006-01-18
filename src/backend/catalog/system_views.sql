@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.24 2006/01/16 18:15:30 neilc Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.25 2006/01/18 06:49:26 neilc Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -147,6 +147,13 @@ CREATE VIEW pg_locks AS
     (locktype text, database oid, relation oid, page int4, tuple int2,
      transactionid xid, classid oid, objid oid, objsubid int2,
      transaction xid, pid int4, mode text, granted boolean);
+
+CREATE VIEW pg_cursors AS
+    SELECT C.name, C.statement, C.is_holdable, C.is_binary,
+           C.is_scrollable, C.creation_time
+    FROM pg_cursor() AS C
+         (name text, statement text, is_holdable boolean, is_binary boolean,
+          is_scrollable boolean, creation_time timestamptz);
 
 CREATE VIEW pg_prepared_xacts AS
     SELECT P.transaction, P.gid, P.prepared,

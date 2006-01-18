@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.57 2005/10/15 02:49:46 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.58 2006/01/18 06:49:29 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,7 +72,6 @@
  * PORTAL_MULTI_QUERY: all other cases.  Here, we do not support partial
  * execution: the portal's queries will be run to completion on first call.
  */
-
 typedef enum PortalStrategy
 {
 	PORTAL_ONE_SELECT,
@@ -166,6 +165,10 @@ typedef struct PortalData
 	bool		atEnd;
 	bool		posOverflow;
 	long		portalPos;
+
+	/* Presentation data, primarily used by the pg_cursors system view */
+	TimestampTz	creation_time;	/* time at which this portal was defined */
+	bool		visible;		/* include this portal in pg_cursors? */
 } PortalData;
 
 /*

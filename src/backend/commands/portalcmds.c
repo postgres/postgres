@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.44 2005/11/03 17:11:35 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.45 2006/01/18 06:49:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include "optimizer/planner.h"
 #include "rewrite/rewriteHandler.h"
 #include "tcop/pquery.h"
+#include "tcop/tcopprot.h"
 #include "utils/memutils.h"
 
 
@@ -105,8 +106,12 @@ PerformCursorOpen(DeclareCursorStmt *stmt, ParamListInfo params)
 	query = copyObject(query);
 	plan = copyObject(plan);
 
+	/*
+	 * XXX: debug_query_string is wrong here: the user might have
+	 * submitted more than one semicolon delimited queries.
+	 */
 	PortalDefineQuery(portal,
-					  NULL,		/* unfortunately don't have sourceText */
+					  pstrdup(debug_query_string),
 					  "SELECT", /* cursor's query is always a SELECT */
 					  list_make1(query),
 					  list_make1(plan),

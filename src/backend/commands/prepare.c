@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.46 2006/01/16 18:15:30 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.47 2006/01/18 06:49:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,11 +162,11 @@ ExecuteQuery(ExecuteStmt *stmt, ParamListInfo params,
 		paramLI = EvaluateParams(estate, stmt->params, entry->argtype_list);
 	}
 
-	/*
-	 * Create a new portal to run the query in
-	 */
+	/* Create a new portal to run the query in */
 	portal = CreateNewPortal();
-
+	/* Don't display the portal in pg_cursors, it is for internal use only */
+	portal->visible = false;
+	
 	/*
 	 * For CREATE TABLE / AS EXECUTE, make a copy of the stored query so that
 	 * we can modify its destination (yech, but this has always been ugly).

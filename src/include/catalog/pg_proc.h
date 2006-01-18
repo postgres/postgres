@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.391 2006/01/11 20:12:39 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.392 2006/01/18 06:49:28 neilc Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3621,6 +3621,8 @@ DATA(insert OID = 2509 (  pg_get_expr		   PGNSP PGUID 12 f f t f s 3 25 "25 26 1
 DESCR("deparse an encoded expression with pretty-print option");
 DATA(insert OID = 2510 (  pg_prepared_statement PGNSP PGUID 12 f f t t s 0 2249 "" _null_ _null_ _null_ pg_prepared_statement - _null_ ));
 DESCR("get the prepared statements for this session");
+DATA(insert OID = 2511 (  pg_cursor PGNSP PGUID 12 f f t t s 0 2249 "" _null_ _null_ _null_ pg_cursor - _null_ ));
+DESCR("get the open cursors for this session");
 
 /* non-persistent series generator */
 DATA(insert OID = 1066 (  generate_series PGNSP PGUID 12 f f t t v 3 23 "23 23 23" _null_ _null_ _null_ generate_series_step_int4 - _null_ ));

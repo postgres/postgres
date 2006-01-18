@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/close.sgml,v 1.22 2005/01/04 00:39:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/close.sgml,v 1.23 2006/01/18 06:49:26 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -75,6 +75,11 @@ CLOSE <replaceable class="PARAMETER">name</replaceable>
    open when it is declared.  Use the
    <xref linkend="sql-declare" endterm="sql-declare-title">
    statement to declare a cursor.
+  </para>
+
+  <para>
+   You can see all available cursors by querying the
+   <structname>pg_cursors</structname> system view.
   </para>
  </refsect1>
 

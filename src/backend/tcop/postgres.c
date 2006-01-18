@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.478 2006/01/08 07:00:25 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.479 2006/01/18 06:49:27 neilc Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -956,6 +956,8 @@ exec_simple_query(const char *query_string)
 		 * already is one, silently drop it.
 		 */
 		portal = CreatePortal("", true, true);
+		/* Don't display the portal in pg_cursors */
+		portal->visible = false;
 
 		PortalDefineQuery(portal,
 						  query_string,

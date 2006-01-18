@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.270 2006/01/11 20:12:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.271 2006/01/18 06:49:29 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -864,5 +864,8 @@ extern Datum pg_convert_using(PG_FUNCTION_ARGS);
 
 /* commands/prepare.c */
 extern Datum pg_prepared_statement(PG_FUNCTION_ARGS);
+
+/* utils/mmgr/portalmem.c */
+extern Datum pg_cursor(PG_FUNCTION_ARGS);
 
 #endif   /* BUILTINS_H */

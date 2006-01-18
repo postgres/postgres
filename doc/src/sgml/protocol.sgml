@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.62 2005/08/14 22:19:49 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.63 2006/01/18 06:49:25 neilc Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -602,7 +602,7 @@
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="protocol-flow-ext-query">
    <title>Extended Query</title>
 
    <para>
