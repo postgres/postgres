@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.23 2005/12/08 20:48:10 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.24 2006/01/18 21:02:55 momjian Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -1875,8 +1875,9 @@ ORDER BY c.ordinal_position;
       <entry><literal>parameter_mode</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>
-       Always <literal>IN</literal>, meaning input parameter (in the
-       future there might be other parameter modes)
+       <literal>IN</literal> for input parameter,
+       <literal>OUT</literal> for output parameter,
+       and <literal>INOUT</literal> for input/ouput parameter.
       </entry>
      </row>
 
