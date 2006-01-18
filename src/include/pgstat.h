@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.40 2005/12/31 19:39:11 momjian Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.41 2006/01/18 20:35:06 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -271,7 +271,7 @@ typedef union PgStat_Msg
  * ------------------------------------------------------------
  */
 
-#define PGSTAT_FILE_FORMAT_ID	0x01A5BC93
+#define PGSTAT_FILE_FORMAT_ID	0x01A5BC94
 
 /* ----------
  * PgStat_StatDBEntry			The collector's data per database
@@ -280,14 +280,19 @@ typedef union PgStat_Msg
 typedef struct PgStat_StatDBEntry
 {
 	Oid			databaseid;
-	HTAB	   *tables;
+	int			destroy;
 	int			n_backends;
 	PgStat_Counter n_xact_commit;
 	PgStat_Counter n_xact_rollback;
 	PgStat_Counter n_blocks_fetched;
 	PgStat_Counter n_blocks_hit;
-	int			destroy;
 	TimestampTz last_autovac_time;
+
+	/*
+	 * tables must be last in the struct, because we don't write the pointer
+	 * out to the stats file.
+	 */
+	HTAB	   *tables;
 } PgStat_StatDBEntry;
 
 
@@ -301,10 +306,9 @@ typedef struct PgStat_StatBeEntry
 	int			procpid;
 	TimestampTz start_timestamp;
 	TimestampTz activity_start_timestamp;
-	char		activity[PGSTAT_ACTIVITY_SIZE];
 
 	/*
-	 * The following fields are initialized by the BESTART message. If we have
+	 * These fields are initialized by the BESTART message. If we have
 	 * received messages from a backend before we have received its BESTART,
 	 * these fields will be uninitialized: userid and databaseid will be
 	 * InvalidOid, and clientaddr will be undefined.
@@ -312,6 +316,12 @@ typedef struct PgStat_StatBeEntry
 	Oid			userid;
 	Oid			databaseid;
 	SockAddr	clientaddr;
+
+	/*
+	 * activity[] must be last in the struct, because we only write as much
+	 * of it as needed to the stats file.
+	 */
+	char		activity[PGSTAT_ACTIVITY_SIZE];
 } PgStat_StatBeEntry;
 
 
@@ -321,6 +331,8 @@ typedef struct PgStat_StatBeEntry
  *								about backends that are known to be
  *								dead for some seconds. This info is held
  *								in a hash table of these structs.
+ *
+ * (This struct is not used in the stats file.)
  * ----------
  */
 typedef struct PgStat_StatBeDead
@@ -338,6 +350,7 @@ typedef struct PgStat_StatBeDead
 typedef struct PgStat_StatTabEntry
 {
 	Oid			tableid;
+	int			destroy;
 
 	PgStat_Counter numscans;
 
@@ -354,8 +367,6 @@ typedef struct PgStat_StatTabEntry
 
 	PgStat_Counter blocks_fetched;
 	PgStat_Counter blocks_hit;
-
-	int			destroy;
 } PgStat_StatTabEntry;
 
 
@@ -400,7 +411,8 @@ extern void pgstat_report_vacuum(Oid tableoid, bool shared,
 extern void pgstat_report_analyze(Oid tableoid, bool shared,
 					  PgStat_Counter livetuples,
 					  PgStat_Counter deadtuples);
-extern int	pgstat_vacuum_tabstat(void);
+extern void pgstat_vacuum_tabstat(void);
+extern void pgstat_drop_relation(Oid relid);
 
 extern void pgstat_reset_counters(void);
 
