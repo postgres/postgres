@@ -22,7 +22,7 @@ IMPSUFF= .imp
 POSTGRES_IMP= postgres$(IMPSUFF)
 
 ifdef PGXS
-BE_DLLLIBS= -Wl,-bI:$(DESTDIR)$(bindir)/postgres/$(POSTGRES_IMP)
+BE_DLLLIBS= -Wl,-bI:$(bindir)/postgres/$(POSTGRES_IMP)
 else
 BE_DLLLIBS= -Wl,-bI:$(top_builddir)/src/backend/$(POSTGRES_IMP)
 endif
