@@ -1,8 +1,8 @@
-# $PostgreSQL: pgsql/src/makefiles/Makefile.cygwin,v 1.6.6.1 2006/01/19 20:01:01 momjian Exp $
+# $PostgreSQL: pgsql/src/makefiles/Makefile.cygwin,v 1.6.6.2 2006/01/19 20:45:34 momjian Exp $
 DLLTOOL= dlltool
 DLLWRAP= dllwrap
 ifdef PGXS
-BE_DLLLIBS= -L$(DESTDIR)$(libdir) -lpostgres
+BE_DLLLIBS= -L$(libdir) -lpostgres
 else
 BE_DLLLIBS= -L$(top_builddir)/src/backend -lpostgres
 endif
