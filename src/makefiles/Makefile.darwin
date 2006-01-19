@@ -5,7 +5,7 @@ DLSUFFIX = .so
 CFLAGS_SL =
 
 ifdef PGXS
-BE_DLLLIBS= -bundle_loader $(DESTDIR)$(bindir)/postgres
+BE_DLLLIBS= -bundle_loader $(bindir)/postgres
 else
 BE_DLLLIBS= -bundle_loader $(top_builddir)/src/backend/postgres
 endif
