@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.15 2004/12/31 21:59:41 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.15.4.1 2006/01/19 04:45:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,12 +83,9 @@ static void set_short_version(const char *path);
  * If tablespaces are not supported, this is just a no-op; CREATE DATABASE
  * is expected to create the default subdirectory for the database.
  *
- * isRedo indicates that we are creating an object during WAL replay;
- * we can skip doing locking in that case (and should do so to avoid
- * any possible problems with pg_tablespace not being valid).
- *
- * Also, when isRedo is true, we will cope with the possibility of the
- * tablespace not being there either --- this could happen if we are
+ * isRedo indicates that we are creating an object during WAL replay.
+ * In this case we will cope with the possibility of the tablespace
+ * directory not being there either --- this could happen if we are
  * replaying an operation on a table in a subsequently-dropped tablespace.
  * We handle this by making a directory in the place where the tablespace
  * symlink would normally be.  This isn't an exact replay of course, but
@@ -118,16 +115,10 @@ TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
 		if (errno == ENOENT)
 		{
 			/*
-			 * Acquire ExclusiveLock on pg_tablespace to ensure that no
-			 * DROP TABLESPACE or TablespaceCreateDbspace is running
-			 * concurrently.  Simple reads from pg_tablespace are OK.
+			 * Acquire TablespaceCreateLock to ensure that no DROP TABLESPACE
+			 * or TablespaceCreateDbspace is running concurrently.
 			 */
-			Relation	rel;
-
-			if (!isRedo)
-				rel = heap_openr(TableSpaceRelationName, ExclusiveLock);
-			else
-				rel = NULL;
+			LWLockAcquire(TablespaceCreateLock, LW_EXCLUSIVE);
 
 			/*
 			 * Recheck to see if someone created the directory while we
@@ -166,9 +157,7 @@ TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
 				}
 			}
 
-			/* OK to drop the exclusive lock */
-			if (!isRedo)
-				heap_close(rel, ExclusiveLock);
+			LWLockRelease(TablespaceCreateLock);
 		}
 		else
 		{
@@ -403,15 +392,10 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 	PreventTransactionChain((void *) stmt, "DROP TABLESPACE");
 
 	/*
-	 * Acquire ExclusiveLock on pg_tablespace to ensure that no one else
-	 * is trying to do DROP TABLESPACE or TablespaceCreateDbspace
-	 * concurrently.
-	 */
-	rel = heap_openr(TableSpaceRelationName, ExclusiveLock);
-
-	/*
 	 * Find the target tuple
 	 */
+	rel = heap_openr(TableSpaceRelationName, RowExclusiveLock);
+
 	ScanKeyInit(&entry[0],
 				Anum_pg_tablespace_spcname,
 				BTEqualStrategyNumber, F_NAMEEQ,
@@ -448,6 +432,12 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 	heap_endscan(scandesc);
 
 	/*
+	 * Acquire TablespaceCreateLock to ensure that no TablespaceCreateDbspace
+	 * is running concurrently.
+	 */
+	LWLockAcquire(TablespaceCreateLock, LW_EXCLUSIVE);
+
+	/*
 	 * Try to remove the physical infrastructure
 	 */
 	if (!remove_tablespace_directories(tablespaceoid, false))
@@ -469,6 +459,11 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 
 		(void) XLogInsert(RM_TBLSPC_ID, XLOG_TBLSPC_DROP, rdata);
 	}
+
+	/*
+	 * Allow TablespaceCreateDbspace again.
+	 */
+	LWLockRelease(TablespaceCreateLock);
 
 	/* We keep the lock on pg_tablespace until commit */
 	heap_close(rel, NoLock);
@@ -507,10 +502,10 @@ remove_tablespace_directories(Oid tablespaceoid, bool redo)
 	 * next attempt to use the tablespace from that database will simply
 	 * recreate the subdirectory via TablespaceCreateDbspace.)
 	 *
-	 * Since we hold exclusive lock, no one else should be creating any fresh
-	 * subdirectories in parallel.	It is possible that new files are
-	 * being created within subdirectories, though, so the rmdir call
-	 * could fail.	Worst consequence is a less friendly error message.
+	 * Since we hold TablespaceCreateLock, no one else should be creating any
+	 * fresh subdirectories in parallel. It is possible that new files are
+	 * being created within subdirectories, though, so the rmdir call could
+	 * fail.  Worst consequence is a less friendly error message.
 	 */
 	dirdesc = AllocateDir(location);
 	if (dirdesc == NULL)

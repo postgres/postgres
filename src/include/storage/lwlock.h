@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lwlock.h,v 1.16 2004/12/31 22:03:42 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lwlock.h,v 1.16.4.1 2006/01/19 04:45:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,7 @@ typedef enum LWLockId
 	SubtransControlLock,
 	RelCacheInitLock,
 	BgWriterCommLock,
+	TablespaceCreateLock,
 
 	NumFixedLWLocks,			/* must be last except for
 								 * MaxDynamicLWLock */
