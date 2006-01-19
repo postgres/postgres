@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.236 2006/01/19 00:27:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.237 2006/01/19 20:28:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1436,11 +1436,13 @@ RelationClose(Relation relation)
 /*
  * RelationReloadClassinfo - reload the pg_class row (only)
  *
- *	This function is used only for nailed indexes.	Since a REINDEX can
- *	change the relfilenode value for a nailed index, we have to reread
- *	the pg_class row anytime we get an SI invalidation on a nailed index
- *	(without throwing away the whole relcache entry, since we'd be unable
- *	to rebuild it).
+ *	This function is used only for indexes.  We currently allow only the
+ *	pg_class row of an existing index to change (to support changes of
+ *	owner, tablespace, or relfilenode), not its pg_index row or other
+ *	subsidiary index schema information.  Therefore it's sufficient to do
+ *	this when we get an SI invalidation.  Furthermore, there are cases
+ *	where it's necessary not to throw away the index information, especially
+ *	for "nailed" indexes which we are unable to rebuild on-the-fly.
  *
  *	We can't necessarily reread the pg_class row right away; we might be
  *	in a failed transaction when we receive the SI notification.  If so,
@@ -1455,9 +1457,11 @@ RelationReloadClassinfo(Relation relation)
 	HeapTuple	pg_class_tuple;
 	Form_pg_class relp;
 
-	/* Should be called only for invalidated nailed indexes */
-	Assert(relation->rd_isnailed && !relation->rd_isvalid &&
-		   relation->rd_rel->relkind == RELKIND_INDEX);
+	/* Should be called only for invalidated indexes */
+	Assert(relation->rd_rel->relkind == RELKIND_INDEX &&
+		   !relation->rd_isvalid);
+	/* Should be closed at smgr level */
+	Assert(relation->rd_smgr == NULL);
 
 	/*
 	 * Read the pg_class row
@@ -1468,13 +1472,14 @@ RelationReloadClassinfo(Relation relation)
 	indexOK = (RelationGetRelid(relation) != ClassOidIndexId);
 	pg_class_tuple = ScanPgRelation(RelationGetRelid(relation), indexOK);
 	if (!HeapTupleIsValid(pg_class_tuple))
-		elog(ERROR, "could not find tuple for system relation %u",
+		elog(ERROR, "could not find pg_class tuple for index %u",
 			 RelationGetRelid(relation));
 	relp = (Form_pg_class) GETSTRUCT(pg_class_tuple);
-	memcpy((char *) relation->rd_rel, (char *) relp, CLASS_TUPLE_SIZE);
-	/* Now we can recalculate physical address */
-	RelationInitPhysicalAddr(relation);
+	memcpy(relation->rd_rel, relp, CLASS_TUPLE_SIZE);
 	heap_freetuple(pg_class_tuple);
+	/* We must recalculate physical address in case it changed */
+	RelationInitPhysicalAddr(relation);
+	/* Make sure targblock is reset in case rel was truncated */
 	relation->rd_targblock = InvalidBlockNumber;
 	/* Okay, now it's valid again */
 	relation->rd_isvalid = true;
@@ -1526,6 +1531,22 @@ RelationClearRelation(Relation relation, bool rebuild)
 			if (relation->rd_refcnt > 1)
 				RelationReloadClassinfo(relation);
 		}
+		return;
+	}
+
+	/*
+	 * Even non-system indexes should not be blown away if they are open and
+	 * have valid index support information.  This avoids problems with active
+	 * use of the index support information.  As with nailed indexes, we
+	 * re-read the pg_class row to handle possible physical relocation of
+	 * the index.
+	 */
+	if (relation->rd_rel->relkind == RELKIND_INDEX &&
+		relation->rd_refcnt > 0 &&
+		relation->rd_indexcxt != NULL)
+	{
+		relation->rd_isvalid = false;			/* needs to be revalidated */
+		RelationReloadClassinfo(relation);
 		return;
 	}
 
