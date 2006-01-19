@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/makefiles/Makefile.win32,v 1.7.4.1 2006/01/19 20:01:32 momjian Exp $
+# $PostgreSQL: pgsql/src/makefiles/Makefile.win32,v 1.7.4.2 2006/01/19 20:45:20 momjian Exp $
 
 # Use replacement include files for those missing on Win32
 override CPPFLAGS+="-I$(top_srcdir)/src/include/port/win32"
@@ -6,7 +6,7 @@ override CPPFLAGS+="-I$(top_srcdir)/src/include/port/win32"
 DLLTOOL= dlltool
 DLLWRAP= dllwrap
 ifdef PGXS
-BE_DLLLIBS= -L$(DESTDIR)$(libdir) -lpostgres
+BE_DLLLIBS= -L$(libdir) -lpostgres
 else
 BE_DLLLIBS= -L$(top_builddir)/src/backend -lpostgres
 endif
