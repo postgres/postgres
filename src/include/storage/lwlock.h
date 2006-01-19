@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lwlock.h,v 1.25 2006/01/04 21:06:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lwlock.h,v 1.26 2006/01/19 04:45:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,7 @@ typedef enum LWLockId
 	RelCacheInitLock,
 	BgWriterCommLock,
 	TwoPhaseStateLock,
+	TablespaceCreateLock,
 	FirstLockMgrLock,			/* must be last except for MaxDynamicLWLock */
 
 	MaxDynamicLWLock = 1000000000
