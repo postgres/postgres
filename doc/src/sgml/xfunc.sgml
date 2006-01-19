@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.109 2005/11/29 01:46:54 alvherre Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.110 2006/01/19 22:52:08 momjian Exp $
 -->
 
  <sect1 id="xfunc">
@@ -899,13 +899,13 @@ CREATE FUNCTION test(int, int) RETURNS int
      <para>
       A <literal>STABLE</> function cannot modify the database and is
       guaranteed to return the same results given the same arguments
-      for all calls within a single surrounding query.  This category
-      allows the optimizer to optimize away multiple calls of the function
-      within a single query.  In particular, it is safe to use an expression
-      containing such a function in an index scan condition.  (Since an
-      index scan will evaluate the comparison value only once, not once at
-      each row, it is not valid to use a <literal>VOLATILE</> function in
-      an index scan condition.)
+      for all rows within a single statement. This category allows the
+      optimizer to optimize multiple calls of the function to a single
+      call. In particular, it is safe to use an expression containing
+      such a function in an index scan condition. (Since an index scan
+      will evaluate the comparison value only once, not once at each
+      row, it is not valid to use a <literal>VOLATILE</> function in an
+      index scan condition.)
      </para>
     </listitem>
     <listitem>
