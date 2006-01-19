@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.215 2005/01/10 20:02:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.215.4.1 2006/01/19 20:28:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1591,11 +1591,13 @@ RelationClose(Relation relation)
 /*
  * RelationReloadClassinfo - reload the pg_class row (only)
  *
- *	This function is used only for nailed indexes.	Since a REINDEX can
- *	change the relfilenode value for a nailed index, we have to reread
- *	the pg_class row anytime we get an SI invalidation on a nailed index
- *	(without throwing away the whole relcache entry, since we'd be unable
- *	to rebuild it).
+ *	This function is used only for indexes.  We currently allow only the
+ *	pg_class row of an existing index to change (to support changes of
+ *	owner, tablespace, or relfilenode), not its pg_index row or other
+ *	subsidiary index schema information.  Therefore it's sufficient to do
+ *	this when we get an SI invalidation.  Furthermore, there are cases
+ *	where it's necessary not to throw away the index information, especially
+ *	for "nailed" indexes which we are unable to rebuild on-the-fly.
  *
  *	We can't necessarily reread the pg_class row right away; we might be
  *	in a failed transaction when we receive the SI notification.  If so,
@@ -1611,9 +1613,12 @@ RelationReloadClassinfo(Relation relation)
 	HeapTuple	pg_class_tuple;
 	Form_pg_class relp;
 
-	/* Should be called only for invalidated nailed indexes */
-	Assert(relation->rd_isnailed && !relation->rd_isvalid &&
-		   relation->rd_rel->relkind == RELKIND_INDEX);
+	/* Should be called only for invalidated indexes */
+	Assert(relation->rd_rel->relkind == RELKIND_INDEX &&
+		   !relation->rd_isvalid);
+	/* Should be closed at smgr level */
+	Assert(relation->rd_smgr == NULL);
+
 	/* Read the pg_class row */
 	buildinfo.infotype = INFO_RELID;
 	buildinfo.i.info_id = relation->rd_id;
@@ -1625,13 +1630,14 @@ RelationReloadClassinfo(Relation relation)
 	indexOK = strcmp(RelationGetRelationName(relation), ClassOidIndex) != 0;
 	pg_class_tuple = ScanPgRelation(buildinfo, indexOK);
 	if (!HeapTupleIsValid(pg_class_tuple))
-		elog(ERROR, "could not find tuple for system relation %u",
+		elog(ERROR, "could not find pg_class tuple for index %u",
 			 relation->rd_id);
 	relp = (Form_pg_class) GETSTRUCT(pg_class_tuple);
-	memcpy((char *) relation->rd_rel, (char *) relp, CLASS_TUPLE_SIZE);
-	/* Now we can recalculate physical address */
-	RelationInitPhysicalAddr(relation);
+	memcpy(relation->rd_rel, relp, CLASS_TUPLE_SIZE);
 	heap_freetuple(pg_class_tuple);
+	/* We must recalculate physical address in case it changed */
+	RelationInitPhysicalAddr(relation);
+	/* Make sure targblock is reset in case rel was truncated */
 	relation->rd_targblock = InvalidBlockNumber;
 	/* Okay, now it's valid again */
 	relation->rd_isvalid = true;
@@ -1683,6 +1689,22 @@ RelationClearRelation(Relation relation, bool rebuild)
 			if (relation->rd_refcnt > 1)
 				RelationReloadClassinfo(relation);
 		}
+		return;
+	}
+
+	/*
+	 * Even non-system indexes should not be blown away if they are open and
+	 * have valid index support information.  This avoids problems with active
+	 * use of the index support information.  As with nailed indexes, we
+	 * re-read the pg_class row to handle possible physical relocation of
+	 * the index.
+	 */
+	if (relation->rd_rel->relkind == RELKIND_INDEX &&
+		relation->rd_refcnt > 0 &&
+		relation->rd_indexcxt != NULL)
+	{
+		relation->rd_isvalid = false;			/* needs to be revalidated */
+		RelationReloadClassinfo(relation);
 		return;
 	}
 
@@ -1999,28 +2021,7 @@ AtEOXact_RelationCache(bool isCommit)
 		int			expected_refcnt;
 
 		/*
-		 * Is it a relation created in the current transaction?
-		 *
-		 * During commit, reset the flag to zero, since we are now out of the
-		 * creating transaction.  During abort, simply delete the relcache
-		 * entry --- it isn't interesting any longer.  (NOTE: if we have
-		 * forgotten the new-ness of a new relation due to a forced cache
-		 * flush, the entry will get deleted anyway by shared-cache-inval
-		 * processing of the aborted pg_class insertion.)
-		 */
-		if (relation->rd_createSubid != InvalidSubTransactionId)
-		{
-			if (isCommit)
-				relation->rd_createSubid = InvalidSubTransactionId;
-			else
-			{
-				RelationClearRelation(relation, false);
-				continue;
-			}
-		}
-
-		/*
-		 * During transaction abort, we must also reset relcache entry ref
+		 * During transaction abort, we must reset relcache entry ref
 		 * counts to their normal not-in-a-transaction state.  A ref count
 		 * may be too high because some routine was exited by ereport()
 		 * between incrementing and decrementing the count.
@@ -2051,6 +2052,27 @@ AtEOXact_RelationCache(bool isCommit)
 		{
 			/* abort case, just reset it quietly */
 			relation->rd_refcnt = expected_refcnt;
+		}
+
+		/*
+		 * Is it a relation created in the current transaction?
+		 *
+		 * During commit, reset the flag to zero, since we are now out of the
+		 * creating transaction.  During abort, simply delete the relcache
+		 * entry --- it isn't interesting any longer.  (NOTE: if we have
+		 * forgotten the new-ness of a new relation due to a forced cache
+		 * flush, the entry will get deleted anyway by shared-cache-inval
+		 * processing of the aborted pg_class insertion.)
+		 */
+		if (relation->rd_createSubid != InvalidSubTransactionId)
+		{
+			if (isCommit)
+				relation->rd_createSubid = InvalidSubTransactionId;
+			else
+			{
+				RelationClearRelation(relation, false);
+				continue;
+			}
 		}
 
 		/*
