@@ -177,10 +177,6 @@ typedef unsigned char *BITVECP;
 	for(i=0;i<SIGLEN;i++) {\
 		a;\
 	}
-#define LOOPBIT(a) \
-	for(i=0;i<SIGLENBIT;i++) {\
-		a;\
-	}
 
 #define GETBYTE(x,i) ( *( (BITVECP)(x) + (int)( (i) / BITBYTE ) ) )
 #define GETBITBYTE(x,i) ( ((unsigned char)(x)) >> i & 0x01 )
@@ -236,10 +232,6 @@ typedef unsigned char ABITVEC[ASIGLEN];
 
 #define ALOOPBYTE(a) \
 	for(i=0;i<ASIGLEN;i++) {\
-		a;\
-	}
-#define ALOOPBIT(a) \
-	for(i=0;i<ASIGLENBIT;i++) {\
 		a;\
 	}
 

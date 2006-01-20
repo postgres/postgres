@@ -21,10 +21,6 @@ typedef char *BITVECP;
 		for(i=0;i<SIGLEN;i++) {\
 				a;\
 		}
-#define LOOPBIT(a) \
-				for(i=0;i<SIGLENBIT;i++) {\
-								a;\
-				}
 
 #define GETBYTE(x,i) ( *( (BITVECP)(x) + (int)( (i) / BITS_PER_BYTE ) ) )
 #define GETBITBYTE(x,i) ( ((char)(x)) >> (i) & 0x01 )
