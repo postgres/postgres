@@ -20,16 +20,25 @@ Datum		g_intbig_picksplit(PG_FUNCTION_ARGS);
 Datum		g_intbig_union(PG_FUNCTION_ARGS);
 Datum		g_intbig_same(PG_FUNCTION_ARGS);
 
-#define SUMBIT(val) (		\
-		GETBITBYTE((val),0) + \
-		GETBITBYTE((val),1) + \
-		GETBITBYTE((val),2) + \
-		GETBITBYTE((val),3) + \
-		GETBITBYTE((val),4) + \
-		GETBITBYTE((val),5) + \
-		GETBITBYTE((val),6) + \
-		GETBITBYTE((val),7)   \
-)
+/* Number of one-bits in an unsigned byte */
+static const uint8 number_of_ones[256] = {
+	0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,
+	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+	4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
+};
 
 PG_FUNCTION_INFO_V1(_intbig_in);
 Datum		_intbig_in(PG_FUNCTION_ARGS);
@@ -194,8 +203,7 @@ sizebitvec(BITVECP sign)
 				i;
 
 	LOOPBYTE(
-			 size += SUMBIT(sign);
-	sign = (BITVECP) (((char *) sign) + 1);
+		size += number_of_ones[(unsigned char) sign[i]];
 	);
 	return size;
 }
@@ -204,11 +212,12 @@ static int
 hemdistsign(BITVECP a, BITVECP b)
 {
 	int			i,
+				diff,
 				dist = 0;
 
-	LOOPBIT(
-			if (GETBIT(a, i) != GETBIT(b, i))
-			dist++;
+	LOOPBYTE(
+		diff = (unsigned char) (a[i] ^ b[i]);
+		dist += number_of_ones[diff];
 	);
 	return dist;
 }
