@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.35 2005/01/04 00:39:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.35.6.1 2006/01/20 16:42:02 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -148,6 +148,14 @@ ROLLBACK;
    since the last time <command>ANALYZE</command> was run), the
    estimated costs are unlikely to conform to the real properties of
    the query, and consequently an inferior query plan may be chosen.
+  </para>
+
+  <para>
+   Genetic query optimization (<acronym>GEQO</acronym>) randomly 
+   tests execution plans.  Therefore, when the number of tables exceeds
+   <varname>geqo_threshold</> causing genetic query optimization to be 
+   used, the execution plan is likely to change each time the statement
+   is executed.
   </para>
 
   <para>
