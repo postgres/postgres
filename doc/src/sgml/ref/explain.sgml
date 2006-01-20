@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.35 2005/01/04 00:39:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.36 2006/01/20 16:41:55 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -151,11 +151,13 @@ ROLLBACK;
   </para>
 
   <para>
-   Prior to <productname>PostgreSQL</productname> 7.3, the plan was
-   emitted in the form of a <literal>NOTICE</literal> message.  Now it
-   appears as a query result (formatted like a table with a single
-   text column).
+   Genetic query optimization (<acronym>GEQO</acronym>) randomly 
+   tests execution plans.  Therefore, when the number of tables exceeds
+   <varname>geqo_threshold</> causing genetic query optimization to be 
+   used, the execution plan is likely to change each time the statement
+   is executed.
   </para>
+
  </refsect1>
 
  <refsect1>
