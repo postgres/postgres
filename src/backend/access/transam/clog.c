@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/clog.c,v 1.11.2.1 2005/11/03 00:23:57 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/clog.c,v 1.11.2.2 2006/01/21 04:38:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -598,17 +598,15 @@ CLOGPhysicalWritePage(int pageno, int slotno)
 	 * that have already been truncated from the commit log.  Easiest way
 	 * to deal with that is to accept references to nonexistent files here
 	 * and in CLOGPhysicalReadPage.)
+	 *
+	 * Note: it is possible for more than one backend to be executing
+	 * this code simultaneously for different pages of the same file.
+	 * Hence, don't use O_EXCL or O_TRUNC or anything like that.
 	 */
-	fd = BasicOpenFile(path, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
+	fd = BasicOpenFile(path, O_RDWR | O_CREAT | PG_BINARY,
+					   S_IRUSR | S_IWUSR);
 	if (fd < 0)
-	{
-		if (errno != ENOENT)
-			elog(PANIC, "open of %s failed: %m", path);
-		fd = BasicOpenFile(path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
-						   S_IRUSR | S_IWUSR);
-		if (fd < 0)
-			elog(PANIC, "creation of file %s failed: %m", path);
-	}
+		elog(PANIC, "open of %s failed: %m", path);
 
 	if (lseek(fd, (off_t) offset, SEEK_SET) < 0)
 		elog(PANIC, "lseek of clog file %u, offset %u failed: %m",
