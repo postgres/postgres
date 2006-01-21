@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.129 2005/11/18 02:38:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.130 2006/01/21 02:16:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -544,6 +544,10 @@ acldefault(GrantObjectType objtype, Oid ownerId)
 		case ACL_OBJECT_RELATION:
 			world_default = ACL_NO_RIGHTS;
 			owner_default = ACL_ALL_RIGHTS_RELATION;
+			break;
+		case ACL_OBJECT_SEQUENCE:
+			world_default = ACL_NO_RIGHTS;
+			owner_default = ACL_ALL_RIGHTS_SEQUENCE;
 			break;
 		case ACL_OBJECT_DATABASE:
 			world_default = ACL_CREATE_TEMP;	/* not NO_RIGHTS! */

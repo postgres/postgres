@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.123 2005/12/01 02:03:00 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.124 2006/01/21 02:16:18 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -164,6 +164,9 @@ restrict_and_check_grant(bool is_grant, AclMode avail_goptions, bool all_privs,
 		case ACL_KIND_CLASS:
 			whole_mask = ACL_ALL_RIGHTS_RELATION;
 			break;
+		case ACL_KIND_SEQUENCE:
+			whole_mask = ACL_ALL_RIGHTS_SEQUENCE;
+			break;
 		case ACL_KIND_DATABASE:
 			whole_mask = ACL_ALL_RIGHTS_DATABASE;
 			break;
@@ -212,22 +215,22 @@ restrict_and_check_grant(bool is_grant, AclMode avail_goptions, bool all_privs,
 		if (this_privileges == 0)
 			ereport(WARNING,
 					(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
-					 errmsg("no privileges were granted")));
+					 errmsg("no privileges were granted for \"%s\"", objname)));
 		else if (!all_privs && this_privileges != privileges)
 			ereport(WARNING,
 					(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
-					 errmsg("not all privileges were granted")));
+					 errmsg("not all privileges were granted for \"%s\"", objname)));
 	}
 	else
 	{
 		if (this_privileges == 0)
 			ereport(WARNING,
 					(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
-					 errmsg("no privileges could be revoked")));
+					 errmsg("no privileges could be revoked for \"%s\"", objname)));
 		else if (!all_privs && this_privileges != privileges)
 			ereport(WARNING,
 					(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
-					 errmsg("not all privileges could be revoked")));
+					 errmsg("not all privileges could be revoked for \"%s\"", objname)));
 	}
 
 	return this_privileges;
@@ -282,9 +285,18 @@ ExecuteGrantStmt(GrantStmt *stmt)
 	 */
 	switch (stmt->objtype)
 	{
+		/*
+		 *	Because this might be a sequence, we test both relation
+		 *	and sequence bits, and later do a more limited test
+		 *	when we know the object type.
+		 */
 		case ACL_OBJECT_RELATION:
-			all_privileges = ACL_ALL_RIGHTS_RELATION;
-			errormsg = _("invalid privilege type %s for table");
+			all_privileges = ACL_ALL_RIGHTS_RELATION | ACL_ALL_RIGHTS_SEQUENCE;
+			errormsg = _("invalid privilege type %s for relation");
+			break;
+		case ACL_OBJECT_SEQUENCE:
+			all_privileges = ACL_ALL_RIGHTS_SEQUENCE;
+			errormsg = _("invalid privilege type %s for sequence");
 			break;
 		case ACL_OBJECT_DATABASE:
 			all_privileges = ACL_ALL_RIGHTS_DATABASE;
@@ -327,6 +339,7 @@ ExecuteGrantStmt(GrantStmt *stmt)
 	{
 		istmt.all_privs = false;
 		istmt.privileges = ACL_NO_RIGHTS;
+
 		foreach(cell, stmt->privileges)
 		{
 			char	   *privname = strVal(lfirst(cell));
@@ -356,6 +369,7 @@ ExecGrantStmt_oids(InternalGrant *istmt)
 	switch (istmt->objtype)
 	{
 		case ACL_OBJECT_RELATION:
+		case ACL_OBJECT_SEQUENCE:
 			ExecGrant_Relation(istmt);
 			break;
 		case ACL_OBJECT_DATABASE:
@@ -395,6 +409,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 	switch (objtype)
 	{
 		case ACL_OBJECT_RELATION:
+		case ACL_OBJECT_SEQUENCE:
 			foreach(cell, objnames)
 			{
 				Oid			relOid;
@@ -523,14 +538,14 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 	return objects;
 }
 
+/*
+ *	This processes both sequences and non-sequences.
+ */
 static void
 ExecGrant_Relation(InternalGrant *istmt)
 {
 	Relation	relation;
 	ListCell   *cell;
-
-	if (istmt->all_privs && istmt->privileges == ACL_NO_RIGHTS)
-		istmt->privileges = ACL_ALL_RIGHTS_RELATION;
 
 	relation = heap_open(RelationRelationId, RowExclusiveLock);
 
@@ -577,6 +592,69 @@ ExecGrant_Relation(InternalGrant *istmt)
 					 errmsg("\"%s\" is a composite type",
 							NameStr(pg_class_tuple->relname))));
 
+		/* Used GRANT SEQUENCE on a non-sequence? */
+		if (istmt->objtype == ACL_OBJECT_SEQUENCE &&
+			pg_class_tuple->relkind != RELKIND_SEQUENCE)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("\"%s\" is not a sequence",
+							NameStr(pg_class_tuple->relname))));
+
+		/* Adjust the default permissions based on whether it is a sequence */
+		if (istmt->all_privs && istmt->privileges == ACL_NO_RIGHTS)
+		{
+			if (pg_class_tuple->relkind == RELKIND_SEQUENCE)
+				this_privileges = ACL_ALL_RIGHTS_SEQUENCE;
+			else
+				this_privileges = ACL_ALL_RIGHTS_RELATION;
+		}
+		else
+			this_privileges = istmt->privileges;
+		
+		/*
+		 *	The GRANT TABLE syntax can be used for sequences and
+		 *	non-sequences, so we have to look at the relkind to
+		 *	determine the supported permissions.  The OR of
+		 *	table and sequence permissions were already checked.
+		 */
+		if (istmt->objtype == ACL_OBJECT_RELATION)
+		{
+			if (pg_class_tuple->relkind == RELKIND_SEQUENCE)
+			{
+				/*
+				 *	For backward compatibility, throw just a warning
+				 *	for invalid sequence permissions when using the
+				 *	non-sequence GRANT syntax is used.
+				 */
+				if (this_privileges & ~((AclMode) ACL_ALL_RIGHTS_SEQUENCE))
+				{
+					/*
+					 *	Mention the object name because the user needs to
+					 *	know which operations succeeded.  This is required
+					 *	because WARNING allows the command to continue.
+					 */
+					ereport(WARNING,
+							(errcode(ERRCODE_INVALID_GRANT_OPERATION),
+							 errmsg("sequence \"%s\" only supports USAGE, SELECT, and UPDATE",
+									NameStr(pg_class_tuple->relname))));
+					this_privileges &= (AclMode) ACL_ALL_RIGHTS_SEQUENCE;
+				}
+			}
+			else
+			{
+				if (this_privileges & ~((AclMode) ACL_ALL_RIGHTS_RELATION))
+					/*
+					 *	USAGE is the only permission supported by sequences
+					 *	but not by non-sequences.  Don't mention the object
+					 *	name because we didn't in the combined TABLE |
+					 *	SEQUENCE check.
+					 */
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_GRANT_OPERATION),
+							 errmsg("invalid privilege type USAGE for table")));
+			}
+		}
+
 		/*
 		 * Get owner ID and working copy of existing ACL. If there's no ACL,
 		 * substitute the proper default.
@@ -585,12 +663,14 @@ ExecGrant_Relation(InternalGrant *istmt)
 		aclDatum = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_relacl,
 								   &isNull);
 		if (isNull)
-			old_acl = acldefault(ACL_OBJECT_RELATION, ownerId);
+			old_acl = acldefault(pg_class_tuple->relkind == RELKIND_SEQUENCE ?
+								 ACL_OBJECT_SEQUENCE : ACL_OBJECT_RELATION,
+								 ownerId);
 		else
 			old_acl = DatumGetAclPCopy(aclDatum);
 
 		/* Determine ID to do the grant as, and available grant options */
-		select_best_grantor(GetUserId(), istmt->privileges,
+		select_best_grantor(GetUserId(), this_privileges,
 							old_acl, ownerId,
 							&grantorId, &avail_goptions);
 
@@ -600,8 +680,10 @@ ExecGrant_Relation(InternalGrant *istmt)
 		 */
 		this_privileges =
 			restrict_and_check_grant(istmt->is_grant, avail_goptions,
-									 istmt->all_privs, istmt->privileges,
-									 relOid, grantorId, ACL_KIND_CLASS,
+									 istmt->all_privs, this_privileges,
+									 relOid, grantorId,
+									 pg_class_tuple->relkind == RELKIND_SEQUENCE
+										? ACL_KIND_SEQUENCE : ACL_KIND_CLASS,
 									 NameStr(pg_class_tuple->relname));
 
 		/*
@@ -1336,6 +1418,8 @@ static const char *const no_priv_msg[MAX_ACL_KIND] =
 {
 	/* ACL_KIND_CLASS */
 	gettext_noop("permission denied for relation %s"),
+	/* ACL_KIND_SEQUENCE */
+	gettext_noop("permission denied for sequence %s"),
 	/* ACL_KIND_DATABASE */
 	gettext_noop("permission denied for database %s"),
 	/* ACL_KIND_PROC */
@@ -1360,6 +1444,8 @@ static const char *const not_owner_msg[MAX_ACL_KIND] =
 {
 	/* ACL_KIND_CLASS */
 	gettext_noop("must be owner of relation %s"),
+	/* ACL_KIND_SEQUENCE */
+	gettext_noop("must be owner of sequence %s"),
 	/* ACL_KIND_DATABASE */
 	gettext_noop("must be owner of database %s"),
 	/* ACL_KIND_PROC */
@@ -1439,6 +1525,7 @@ pg_aclmask(AclObjectKind objkind, Oid table_oid, Oid roleid,
 	switch (objkind)
 	{
 		case ACL_KIND_CLASS:
+		case ACL_KIND_SEQUENCE:
 			return pg_class_aclmask(table_oid, roleid, mask, how);
 		case ACL_KIND_DATABASE:
 			return pg_database_aclmask(table_oid, roleid, mask, how);
@@ -1500,9 +1587,9 @@ pg_class_aclmask(Oid table_oid, Oid roleid,
 	 *
 	 * As of 7.4 we have some updatable system views; those shouldn't be
 	 * protected in this way.  Assume the view rules can take care of
-	 * themselves.
+	 * themselves.  ACL_USAGE is if we ever have system sequences.
 	 */
-	if ((mask & (ACL_INSERT | ACL_UPDATE | ACL_DELETE)) &&
+	if ((mask & (ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_USAGE)) &&
 		IsSystemClass(classForm) &&
 		classForm->relkind != RELKIND_VIEW &&
 		!has_rolcatupdate(roleid) &&
@@ -1511,7 +1598,7 @@ pg_class_aclmask(Oid table_oid, Oid roleid,
 #ifdef ACLDEBUG
 		elog(DEBUG2, "permission denied for system catalog update");
 #endif
-		mask &= ~(ACL_INSERT | ACL_UPDATE | ACL_DELETE);
+		mask &= ~(ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_USAGE);
 	}
 
 	/*
@@ -1536,7 +1623,9 @@ pg_class_aclmask(Oid table_oid, Oid roleid,
 	if (isNull)
 	{
 		/* No ACL, so build default ACL */
-		acl = acldefault(ACL_OBJECT_RELATION, ownerId);
+		acl = acldefault(classForm->relkind == RELKIND_SEQUENCE ?
+							ACL_OBJECT_SEQUENCE : ACL_OBJECT_RELATION,
+						 ownerId);
 		aclDatum = (Datum) 0;
 	}
 	else

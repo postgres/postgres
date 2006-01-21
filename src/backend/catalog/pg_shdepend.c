@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.6 2005/12/01 02:03:00 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.7 2006/01/21 02:16:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1133,8 +1133,25 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 					switch (sdepForm->classid)
 					{
 						case RelationRelationId:
-							istmt.objtype = ACL_OBJECT_RELATION;
+						{
+							/* is it a sequence or non-sequence? */
+							Form_pg_class pg_class_tuple;
+							HeapTuple	tuple;
+
+							tuple = SearchSysCache(RELOID,
+								ObjectIdGetDatum(sdepForm->objid),
+								0, 0, 0);
+							if (!HeapTupleIsValid(tuple))
+								elog(ERROR, "cache lookup failed for relation %u",
+											sdepForm->objid);
+							pg_class_tuple = (Form_pg_class) GETSTRUCT(tuple);
+							if (pg_class_tuple->relkind == RELKIND_SEQUENCE)
+								istmt.objtype = ACL_OBJECT_SEQUENCE;
+							else
+								istmt.objtype = ACL_OBJECT_RELATION;
+							ReleaseSysCache(tuple);
 							break;
+						}
 						case DatabaseRelationId:
 							istmt.objtype = ACL_OBJECT_DATABASE;
 							break;

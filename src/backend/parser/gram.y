@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.521 2005/12/29 04:53:18 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.522 2006/01/21 02:16:19 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3319,6 +3319,13 @@ privilege_target:
 				{
 					PrivTarget *n = makeNode(PrivTarget);
 					n->objtype = ACL_OBJECT_RELATION;
+					n->objs = $2;
+					$$ = n;
+				}
+			| SEQUENCE qualified_name_list
+				{
+					PrivTarget *n = makeNode(PrivTarget);
+					n->objtype = ACL_OBJECT_SEQUENCE;
 					n->objs = $2;
 					$$ = n;
 				}

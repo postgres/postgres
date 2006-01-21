@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.426 2006/01/09 21:16:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.427 2006/01/21 02:16:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -6788,7 +6788,8 @@ dumpTable(Archive *fout, TableInfo *tbinfo)
 
 		/* Handle the ACL here */
 		namecopy = strdup(fmtId(tbinfo->dobj.name));
-		dumpACL(fout, tbinfo->dobj.catId, tbinfo->dobj.dumpId, "TABLE",
+		dumpACL(fout, tbinfo->dobj.catId, tbinfo->dobj.dumpId,
+				(tbinfo->relkind == RELKIND_SEQUENCE) ? "SEQUENCE" : "TABLE",
 				namecopy, tbinfo->dobj.name,
 				tbinfo->dobj.namespace->dobj.name, tbinfo->rolname,
 				tbinfo->relacl);

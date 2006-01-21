@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.91 2005/12/01 02:03:01 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.92 2006/01/21 02:16:21 momjian Exp $
  *
  * NOTES
  *	  An ACL array is simply an array of AclItems, representing the union
@@ -143,6 +143,7 @@ typedef ArrayType Acl;
  * Bitmasks defining "all rights" for each supported object type
  */
 #define ACL_ALL_RIGHTS_RELATION		(ACL_INSERT|ACL_SELECT|ACL_UPDATE|ACL_DELETE|ACL_RULE|ACL_REFERENCES|ACL_TRIGGER)
+#define ACL_ALL_RIGHTS_SEQUENCE		(ACL_USAGE|ACL_SELECT|ACL_UPDATE)
 #define ACL_ALL_RIGHTS_DATABASE		(ACL_CREATE|ACL_CREATE_TEMP)
 #define ACL_ALL_RIGHTS_FUNCTION		(ACL_EXECUTE)
 #define ACL_ALL_RIGHTS_LANGUAGE		(ACL_USAGE)
@@ -169,6 +170,7 @@ typedef enum
 typedef enum AclObjectKind
 {
 	ACL_KIND_CLASS,				/* pg_class */
+	ACL_KIND_SEQUENCE,			/* pg_sequence */
 	ACL_KIND_DATABASE,			/* pg_database */
 	ACL_KIND_PROC,				/* pg_proc */
 	ACL_KIND_OPER,				/* pg_operator */

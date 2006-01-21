@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.24 2006/01/11 21:24:30 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.25 2006/01/21 02:16:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,8 +22,7 @@
 #define supports_grant_options(version) ((version) >= 70400)
 
 static bool parseAclItem(const char *item, const char *type, const char *name,
-			 int remoteVersion,
-			 PQExpBuffer grantee, PQExpBuffer grantor,
+			 int remoteVersion, PQExpBuffer grantee, PQExpBuffer grantor,
 			 PQExpBuffer privs, PQExpBuffer privswgo);
 static char *copyAclUserName(PQExpBuffer output, char *input);
 static void AddAcl(PQExpBuffer aclbuf, const char *keyword);
@@ -326,7 +325,7 @@ parsePGArray(const char *atext, char ***itemarray, int *nitems)
  *
  *	name: the object name, in the form to use in the commands (already quoted)
  *	type: the object type (as seen in GRANT command: must be one of
- *		TABLE, FUNCTION, LANGUAGE, SCHEMA, DATABASE, or TABLESPACE)
+ *		TABLE, SEQUENCE, FUNCTION, LANGUAGE, SCHEMA, DATABASE, or TABLESPACE)
  *	acls: the ACL string fetched from the database
  *	owner: username of object owner (will be passed through fmtId); can be
  *		NULL or empty string to indicate "no owner known"
@@ -515,8 +514,7 @@ buildACLCommands(const char *name, const char *type,
  */
 static bool
 parseAclItem(const char *item, const char *type, const char *name,
-			 int remoteVersion,
-			 PQExpBuffer grantee, PQExpBuffer grantor,
+			 int remoteVersion, PQExpBuffer grantee, PQExpBuffer grantor,
 			 PQExpBuffer privs, PQExpBuffer privswgo)
 {
 	char	   *buf;
@@ -547,6 +545,7 @@ parseAclItem(const char *item, const char *type, const char *name,
 
 	/* privilege codes */
 #define CONVERT_PRIV(code, keywd) \
+do { \
 	if ((pos = strchr(eqpos + 1, code))) \
 	{ \
 		if (*(pos + 1) == '*') \
@@ -561,29 +560,38 @@ parseAclItem(const char *item, const char *type, const char *name,
 		} \
 	} \
 	else \
-		all_with_go = all_without_go = false
+		all_with_go = all_without_go = false; \
+} while (0)
 
 	resetPQExpBuffer(privs);
 	resetPQExpBuffer(privswgo);
 
-	if (strcmp(type, "TABLE") == 0)
+	if (strcmp(type, "TABLE") == 0 || strcmp(type, "SEQUENCE") == 0)
 	{
-		CONVERT_PRIV('a', "INSERT");
 		CONVERT_PRIV('r', "SELECT");
-		CONVERT_PRIV('R', "RULE");
-
-		if (remoteVersion >= 70200)
-		{
-			CONVERT_PRIV('w', "UPDATE");
-			CONVERT_PRIV('d', "DELETE");
-			CONVERT_PRIV('x', "REFERENCES");
-			CONVERT_PRIV('t', "TRIGGER");
-		}
+		
+		if (strcmp(type, "SEQUENCE") == 0)
+			/* sequence only */
+			CONVERT_PRIV('U', "USAGE");
 		else
 		{
+			/* table only */
+			CONVERT_PRIV('a', "INSERT");
+			CONVERT_PRIV('R', "RULE");
+			if (remoteVersion >= 70200)
+			{
+				CONVERT_PRIV('d', "DELETE");
+				CONVERT_PRIV('x', "REFERENCES");
+				CONVERT_PRIV('t', "TRIGGER");
+			}
+		}
+
+		/* UPDATE */
+		if (remoteVersion >= 70200 || strcmp(type, "SEQUENCE") == 0)
+			CONVERT_PRIV('w', "UPDATE");
+		else
 			/* 7.0 and 7.1 have a simpler worldview */
 			CONVERT_PRIV('w', "UPDATE,DELETE");
-		}
 	}
 	else if (strcmp(type, "FUNCTION") == 0)
 		CONVERT_PRIV('X', "EXECUTE");
