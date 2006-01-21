@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.118 2006/01/18 06:49:25 neilc Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.119 2006/01/21 19:05:59 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -4463,6 +4463,8 @@
      <para>
       via the Server Programming Interface (SPI), as described in
       <xref linkend="spi-interface">
+     </para>
+    </listitem>
    </itemizedlist>
 
    The <structname>pg_cursors</structname> view displays cursors
