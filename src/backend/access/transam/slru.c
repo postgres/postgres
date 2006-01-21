@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.23.4.1 2005/11/03 00:23:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.23.4.2 2006/01/21 04:38:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,7 +112,6 @@ typedef struct SlruFlushData
 typedef enum
 {
 	SLRU_OPEN_FAILED,
-	SLRU_CREATE_FAILED,
 	SLRU_SEEK_FAILED,
 	SLRU_READ_FAILED,
 	SLRU_WRITE_FAILED,
@@ -546,26 +545,19 @@ SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno, SlruFlush fdata)
 		 * truncated from the commit log. Easiest way to deal with that is
 		 * to accept references to nonexistent files here and in
 		 * SlruPhysicalReadPage.)
+		 *
+		 * Note: it is possible for more than one backend to be executing
+		 * this code simultaneously for different pages of the same file.
+		 * Hence, don't use O_EXCL or O_TRUNC or anything like that.
 		 */
 		SlruFileName(ctl, path, segno);
-		fd = BasicOpenFile(path, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
+		fd = BasicOpenFile(path, O_RDWR | O_CREAT | PG_BINARY,
+						   S_IRUSR | S_IWUSR);
 		if (fd < 0)
 		{
-			if (errno != ENOENT)
-			{
-				slru_errcause = SLRU_OPEN_FAILED;
-				slru_errno = errno;
-				return false;
-			}
-
-			fd = BasicOpenFile(path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
-							   S_IRUSR | S_IWUSR);
-			if (fd < 0)
-			{
-				slru_errcause = SLRU_CREATE_FAILED;
-				slru_errno = errno;
-				return false;
-			}
+			slru_errcause = SLRU_OPEN_FAILED;
+			slru_errno = errno;
+			return false;
 		}
 
 		if (fdata)
@@ -644,13 +636,6 @@ SlruReportIOError(SlruCtl ctl, int pageno, TransactionId xid)
 					(errcode_for_file_access(),
 				errmsg("could not access status of transaction %u", xid),
 					 errdetail("could not open file \"%s\": %m",
-							   path)));
-			break;
-		case SLRU_CREATE_FAILED:
-			ereport(ERROR,
-					(errcode_for_file_access(),
-				errmsg("could not access status of transaction %u", xid),
-					 errdetail("could not create file \"%s\": %m",
 							   path)));
 			break;
 		case SLRU_SEEK_FAILED:
