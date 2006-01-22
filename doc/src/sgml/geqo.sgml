@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/geqo.sgml,v 1.34 2005/11/07 17:36:44 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/geqo.sgml,v 1.35 2006/01/22 03:56:58 neilc Exp $
 Genetic Optimizer
 -->
 
@@ -46,8 +46,8 @@ Genetic Optimizer
    <para>
     Among all relational operators the most difficult one to process
     and optimize is the <firstterm>join</firstterm>. The number of
-    alternative plans to answer a query grows exponentially with the
-    number of joins included in it. Further optimization effort is
+    possible query plans grows exponentially with the
+    number of joins in the query. Further optimization effort is
     caused by the support of a variety of <firstterm>join
     methods</firstterm> (e.g., nested loop, hash join, merge join in
     <productname>PostgreSQL</productname>) to process individual joins
@@ -57,34 +57,30 @@ Genetic Optimizer
    </para>
 
    <para>
-    The current <productname>PostgreSQL</productname> optimizer
-    implementation performs a <firstterm>near-exhaustive
-    search</firstterm> over the space of alternative strategies. This
-    algorithm, first introduced in the <quote>System R</quote>
-    database, produces a near-optimal join order, but can take an
-    enormous amount of time and memory space when the number of joins
-    in the query grows large. This makes the ordinary
+    The normal <productname>PostgreSQL</productname> query optimizer
+    performs a <firstterm>near-exhaustive search</firstterm> over the
+    space of alternative strategies. This algorithm, first introduced
+    in IBM's System R database, produces a near-optimal join order,
+    but can take an enormous amount of time and memory space when the
+    number of joins in the query grows large. This makes the ordinary
     <productname>PostgreSQL</productname> query optimizer
     inappropriate for queries that join a large number of tables.
    </para>
 
    <para>
     The Institute of Automatic Control at the University of Mining and
-    Technology, in Freiberg, Germany, encountered the described problems as its
-    folks wanted to take the <productname>PostgreSQL</productname> DBMS as the backend for a decision
-    support knowledge based system for the maintenance of an electrical
-    power grid. The DBMS needed to handle large join queries for the
-    inference machine of the knowledge based system.
-   </para>
-
-   <para>
-    Performance difficulties in exploring the space of possible query
-    plans created the demand for a new optimization technique to be developed.
+    Technology, in Freiberg, Germany, encountered some problems when
+    it wanted to use <productname>PostgreSQL</productname> as the
+    backend for a decision support knowledge based system for the
+    maintenance of an electrical power grid. The DBMS needed to handle
+    large join queries for the inference machine of the knowledge
+    based system. The number of joins in these queries made using the
+    normal query optimizer infeasible.
    </para>
 
    <para>
     In the following we describe the implementation of a
-    <firstterm>Genetic Algorithm</firstterm> to solve the join
+    <firstterm>genetic algorithm</firstterm> to solve the join
     ordering problem in a manner that is efficient for queries
     involving large numbers of joins.
    </para>
