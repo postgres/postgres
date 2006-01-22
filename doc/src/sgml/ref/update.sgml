@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/update.sgml,v 1.35 2006/01/22 05:20:33 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/update.sgml,v 1.36 2006/01/22 20:34:11 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -56,7 +56,7 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ] <rep
    You must have the <literal>UPDATE</literal> privilege on the table
    to update it, as well as the <literal>SELECT</literal>
    privilege to any table whose values are read in the
-   <replaceable class="parameter">expression</replaceable>s or
+   <replaceable class="parameter">expressions</replaceable> or
    <replaceable class="parameter">condition</replaceable>.
   </para>
  </refsect1>
@@ -82,9 +82,7 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ] <rep
       provided, it completely hides the actual name of the table.  For
       example, given <literal>UPDATE foo AS f</>, the remainder of the
       <command>UPDATE</command> statement must refer to this table as
-      <literal>f</> not <literal>foo</>. You cannot use the alias in
-      the <literal>SET</literal> clause.  For example, <literal>SET
-      f.col = 1</> is invalid.
+      <literal>f</> not <literal>foo</>.
      </para>
     </listitem>
    </varlistentry>
@@ -96,7 +94,9 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ] <rep
       The name of a column in <replaceable
       class="PARAMETER">table</replaceable>.
       The column name can be qualified with a subfield name or array
-      subscript, if needed.
+      subscript, if needed.  Do not include the table's name in the
+      specification of a target column &mdash; for example,
+      <literal>UPDATE tab SET tab.col = 1</> is invalid.
      </para>
     </listitem>
    </varlistentry>
