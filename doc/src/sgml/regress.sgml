@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.49 2005/10/18 21:43:33 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.50 2006/01/22 05:20:32 neilc Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -49,7 +49,7 @@ gmake check
 <screen>
 <computeroutput>
 ======================
- All 98 tests passed.
+ All 100 tests passed.
 ======================
 </computeroutput>
 </screen>

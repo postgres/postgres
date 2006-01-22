@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/delete.sgml,v 1.25 2005/11/01 21:09:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/delete.sgml,v 1.26 2006/01/22 05:20:33 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable>
+DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
     [ USING <replaceable class="PARAMETER">usinglist</replaceable> ]
     [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
 </synopsis>
@@ -87,6 +87,19 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable>
     <listitem>
      <para>
       The name (optionally schema-qualified) of an existing table.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">alias</replaceable></term>
+    <listitem>
+     <para>
+      A substitute name for the target table. When an alias is
+      provided, it completely hides the actual name of the table.  For
+      example, given <literal>DELETE FROM foo AS f</>, the remainder
+      of the <command>DELETE</command> statement must refer to this
+      table as <literal>f</> not <literal>foo</>.
      </para>
     </listitem>
    </varlistentry>

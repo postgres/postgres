@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/update.sgml,v 1.34 2006/01/19 23:09:42 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/update.sgml,v 1.35 2006/01/22 05:20:33 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> SET <replaceable class="PARAMETER">column</replaceable> = { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...]
+UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
+    SET <replaceable class="PARAMETER">column</replaceable> = { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...]
     [ FROM <replaceable class="PARAMETER">fromlist</replaceable> ]
     [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
 </synopsis>
@@ -69,6 +70,21 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> SET <replacea
     <listitem>
      <para>
       The name (optionally schema-qualified) of the table to update.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">alias</replaceable></term>
+    <listitem>
+     <para>
+      A substitute name for the target table. When an alias is
+      provided, it completely hides the actual name of the table.  For
+      example, given <literal>UPDATE foo AS f</>, the remainder of the
+      <command>UPDATE</command> statement must refer to this table as
+      <literal>f</> not <literal>foo</>. You cannot use the alias in
+      the <literal>SET</literal> clause.  For example, <literal>SET
+      f.col = 1</> is invalid.
      </para>
     </listitem>
    </varlistentry>

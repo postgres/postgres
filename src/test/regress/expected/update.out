@@ -22,4 +22,29 @@ SELECT * FROM update_test;
  10 |  
 (2 rows)
 
+-- aliases for the UPDATE target table
+UPDATE update_test AS t SET b = 10 WHERE t.a = 10;
+SELECT * FROM update_test;
+ a  | b  
+----+----
+ 10 | 10
+ 10 | 10
+(2 rows)
+
+UPDATE update_test t SET b = t.b + 10 WHERE t.a = 10;
+SELECT * FROM update_test;
+ a  | b  
+----+----
+ 10 | 20
+ 10 | 20
+(2 rows)
+
+-- if an alias for the target table is specified, don't allow references
+-- to the original table name
+BEGIN;
+SET LOCAL add_missing_from = false;
+UPDATE update_test AS t SET b = update_test.b + 10 WHERE t.a = 10;
+ERROR:  invalid reference to FROM-clause entry for table "update_test"
+HINT:  Perhaps you meant to reference the table alias "t".
+ROLLBACK;
 DROP TABLE update_test;

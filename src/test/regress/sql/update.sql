@@ -16,4 +16,20 @@ UPDATE update_test SET a = DEFAULT, b = DEFAULT;
 
 SELECT * FROM update_test;
 
+-- aliases for the UPDATE target table
+UPDATE update_test AS t SET b = 10 WHERE t.a = 10;
+
+SELECT * FROM update_test;
+
+UPDATE update_test t SET b = t.b + 10 WHERE t.a = 10;
+
+SELECT * FROM update_test;
+
+-- if an alias for the target table is specified, don't allow references
+-- to the original table name
+BEGIN;
+SET LOCAL add_missing_from = false;
+UPDATE update_test AS t SET b = update_test.b + 10 WHERE t.a = 10;
+ROLLBACK;
+
 DROP TABLE update_test;
