@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.523 2006/01/22 05:20:33 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.524 2006/01/22 20:03:16 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -429,6 +429,7 @@ static void doNegateFloat(Value *v);
 %token <ival>	ICONST PARAM
 
 /* precedence: lowest to highest */
+%nonassoc	SET				/* see relation_expr_opt_alias */
 %left		UNION EXCEPT
 %left		INTERSECT
 %left		OR
@@ -5880,11 +5881,27 @@ relation_expr:
 		;
 
 
-relation_expr_opt_alias: relation_expr
+/*
+ * Given "UPDATE foo set set ...", we have to decide without looking any
+ * further ahead whether the first "set" is an alias or the UPDATE's SET
+ * keyword.  Since "set" is allowed as a column name both interpretations
+ * are feasible.  We resolve the shift/reduce conflict by giving the first
+ * relation_expr_opt_alias production a higher precedence than the SET token
+ * has, causing the parser to prefer to reduce, in effect assuming that the
+ * SET is not an alias.
+ */
+relation_expr_opt_alias: relation_expr					%prec UMINUS
 				{
 					$$ = $1;
 				}
-			| relation_expr opt_as IDENT
+			| relation_expr ColId
+				{
+					Alias *alias = makeNode(Alias);
+					alias->aliasname = $2;
+					$1->alias = alias;
+					$$ = $1;
+				}
+			| relation_expr AS ColId
 				{
 					Alias *alias = makeNode(Alias);
 					alias->aliasname = $3;
@@ -6827,7 +6844,7 @@ a_expr:		c_expr									{ $$ = $1; }
 						$$ = (Node *) makeSimpleA_Expr(AEXPR_IN, "<>", $1, $4);
 					}
 				}
-			| a_expr subquery_Op sub_type select_with_parens %prec Op
+			| a_expr subquery_Op sub_type select_with_parens	%prec Op
 				{
 					SubLink *n = makeNode(SubLink);
 					n->subLinkType = $3;
@@ -6836,14 +6853,14 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->subselect = $4;
 					$$ = (Node *)n;
 				}
-			| a_expr subquery_Op sub_type '(' a_expr ')' %prec Op
+			| a_expr subquery_Op sub_type '(' a_expr ')'		%prec Op
 				{
 					if ($3 == ANY_SUBLINK)
 						$$ = (Node *) makeA_Expr(AEXPR_OP_ANY, $2, $1, $5);
 					else
 						$$ = (Node *) makeA_Expr(AEXPR_OP_ALL, $2, $1, $5);
 				}
-			| UNIQUE select_with_parens %prec Op
+			| UNIQUE select_with_parens
 				{
 					/* Not sure how to get rid of the parentheses
 					 * but there are lots of shift/reduce errors without them.
@@ -6901,7 +6918,7 @@ b_expr:		c_expr
 				{ $$ = (Node *) makeA_Expr(AEXPR_OP, $1, NULL, $2); }
 			| b_expr qual_Op					%prec POSTFIXOP
 				{ $$ = (Node *) makeA_Expr(AEXPR_OP, $2, $1, NULL); }
-			| b_expr IS DISTINCT FROM b_expr	%prec IS
+			| b_expr IS DISTINCT FROM b_expr		%prec IS
 				{
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_DISTINCT, "=", $1, $5);
 				}
@@ -6910,7 +6927,7 @@ b_expr:		c_expr
 					$$ = (Node *) makeA_Expr(AEXPR_NOT, NIL,
 						NULL, (Node *) makeSimpleA_Expr(AEXPR_DISTINCT, "=", $1, $6));
 				}
-			| b_expr IS OF '(' type_list ')'	%prec IS
+			| b_expr IS OF '(' type_list ')'		%prec IS
 				{
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OF, "=", $1, (Node *) $5);
 				}
