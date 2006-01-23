@@ -29,7 +29,7 @@ makesign(QUERYTYPE * a)
 	for (i = 0; i < a->size; i++)
 	{
 		if (ptr->type == VAL)
-			sign |= 1 << (ptr->val % SIGLEN);
+			sign |= ((TPQTGist)1) << (ptr->val % SIGLEN);
 		ptr++;
 	}
 
