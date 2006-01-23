@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for the INET and CIDR types.
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.59 2006/01/23 21:45:47 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.60 2006/01/23 21:49:39 momjian Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -22,7 +22,7 @@
 #include "utils/inet.h"
 
 
-static Datum text_network(text *src, int is_cidr);
+static Datum text_network(text *src, bool is_cidr);
 static int32 network_cmp_internal(inet *a1, inet *a2);
 static int	bitncmp(void *l, void *r, int n);
 static bool addressOK(unsigned char *a, int bits, int family);
