@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.89 2005/12/07 19:37:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.90 2006/01/23 22:31:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -368,16 +368,15 @@ typedef BTStackData *BTStack;
 
 /*
  *	BTScanOpaqueData is used to remember which buffers we're currently
- *	examining in the scan.	We keep these buffers pinned (but not locked,
- *	see nbtree.c) and recorded in the opaque entry of the scan to avoid
+ *	examining in an indexscan.  Between calls to btgettuple or btgetmulti,
+ *	we keep these buffers pinned (but not locked, see nbtree.c) to avoid
  *	doing a ReadBuffer() for every tuple in the index.
  *
- *	And it's used to remember actual scankey info (we need it
- *	if some scankeys evaled at runtime).
+ *	We also store preprocessed versions of the scan keys in this structure.
+ *	See _bt_preprocess_keys() for details of the preprocessing.
  *
  *	curHeapIptr & mrkHeapIptr are heap iptr-s from current/marked
- *	index tuples: we don't adjust scans on insertions (and, if LLL
- *	is ON, don't hold locks on index pages between passes) - we
+ *	index tuples: we don't adjust scans on insertions - instead we
  *	use these pointers to restore index scan positions...
  *		- vadim 07/29/98
  */
@@ -391,12 +390,17 @@ typedef struct BTScanOpaqueData
 	/* these fields are set by _bt_preprocess_keys(): */
 	bool		qual_ok;		/* false if qual can never be satisfied */
 	int			numberOfKeys;	/* number of preprocessed scan keys */
-	int			numberOfRequiredKeys;	/* number of keys that must be matched
-										 * to continue the scan */
 	ScanKey		keyData;		/* array of preprocessed scan keys */
 } BTScanOpaqueData;
 
 typedef BTScanOpaqueData *BTScanOpaque;
+
+/*
+ * We use these private sk_flags bits in preprocessed scan keys
+ */
+#define SK_BT_REQFWD	0x00010000	/* required to continue forward scan */
+#define SK_BT_REQBKWD	0x00020000	/* required to continue backward scan */
+
 
 /*
  * prototypes for functions in nbtree.c (external entry points for btree)

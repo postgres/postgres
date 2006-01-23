@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.68 2006/01/17 00:09:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.69 2006/01/23 22:31:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,20 +178,21 @@ _bt_formitem(IndexTuple itup)
  * within each attribute may be done as a byproduct of the processing here,
  * but no other code depends on that.
  *
- * Aside from preparing so->keyData[], this routine sets
- * so->numberOfRequiredKeys to the number of quals that must be satisfied to
- * continue the scan.  _bt_checkkeys uses this.  For example, if the quals
+ * The output keys are marked with flags SK_BT_REQFWD and/or SK_BT_REQBKWD
+ * if they must be satisfied in order to continue the scan forward or backward
+ * respectively.  _bt_checkkeys uses these flags.  For example, if the quals
  * are "x = 1 AND y < 4 AND z < 5", then _bt_checkkeys will reject a tuple
  * (1,2,7), but we must continue the scan in case there are tuples (1,3,z).
  * But once we reach tuples like (1,4,z) we can stop scanning because no
- * later tuples could match.  This is reflected by setting
- * so->numberOfRequiredKeys to 2, the number of leading keys that must be
- * matched to continue the scan.  In general, numberOfRequiredKeys is equal
- * to the number of keys for leading attributes with "=" keys, plus the
- * key(s) for the first non "=" attribute, which can be seen to be correct
- * by considering the above example.  Note in particular that if there are no
- * keys for a given attribute, the keys for subsequent attributes can never
- * be required; for instance "WHERE y = 4" requires a full-index scan.
+ * later tuples could match.  This is reflected by marking the x and y keys,
+ * but not the z key, with SK_BT_REQFWD.  In general, the keys for leading
+ * attributes with "=" keys are marked both SK_BT_REQFWD and SK_BT_REQBKWD.
+ * For the first attribute without an "=" key, any "<" and "<=" keys are
+ * marked SK_BT_REQFWD while any ">" and ">=" keys are marked SK_BT_REQBKWD.
+ * This can be seen to be correct by considering the above example.  Note
+ * in particular that if there are no keys for a given attribute, the keys for
+ * subsequent attributes can never be required; for instance "WHERE y = 4"
+ * requires a full-index scan.
  *
  * If possible, redundant keys are eliminated: we keep only the tightest
  * >/>= bound and the tightest </<= bound, and if there's an = key then
@@ -203,8 +204,9 @@ _bt_formitem(IndexTuple itup)
  * we could handle comparison of a RHS of the index datatype with a RHS of
  * another type, but that seems too much pain for too little gain.)  So,
  * keys whose operator has a nondefault subtype (ie, its RHS is not of the
- * index datatype) are ignored here, except for noting whether they impose
- * an "=" condition or not.
+ * index datatype) are ignored here, except for noting whether they include
+ * an "=" condition or not.  The logic about required keys still works if
+ * we don't eliminate redundant keys.
  *
  * As a byproduct of this work, we can detect contradictory quals such
  * as "x = 1 AND x > 2".  If we see that, we return so->quals_ok = FALSE,
@@ -239,7 +241,6 @@ _bt_preprocess_keys(IndexScanDesc scan)
 	/* initialize result variables */
 	so->qual_ok = true;
 	so->numberOfKeys = 0;
-	so->numberOfRequiredKeys = 0;
 	scan->keys_are_unique = false;
 
 	if (numberOfKeys < 1)
@@ -271,8 +272,27 @@ _bt_preprocess_keys(IndexScanDesc scan)
 		}
 		memcpy(outkeys, inkeys, sizeof(ScanKeyData));
 		so->numberOfKeys = 1;
-		if (cur->sk_attno == 1)
-			so->numberOfRequiredKeys = 1;
+		/* We can mark the qual as required if it's for first index col */
+		if (outkeys->sk_attno == 1)
+		{
+			switch (outkeys->sk_strategy)
+			{
+				case BTLessStrategyNumber:
+				case BTLessEqualStrategyNumber:
+					outkeys->sk_flags |= SK_BT_REQFWD;
+					break;
+				case BTEqualStrategyNumber:
+					outkeys->sk_flags |= (SK_BT_REQFWD | SK_BT_REQBKWD);
+					break;
+				case BTGreaterEqualStrategyNumber:
+				case BTGreaterStrategyNumber:
+					outkeys->sk_flags |= SK_BT_REQBKWD;
+					break;
+				default:
+					elog(ERROR, "unrecognized StrategyNumber: %d",
+						 (int) outkeys->sk_strategy);
+			}
+		}
 		return;
 	}
 
@@ -400,21 +420,40 @@ _bt_preprocess_keys(IndexScanDesc scan)
 			}
 
 			/*
-			 * Emit the cleaned-up keys into the outkeys[] array.
+			 * Emit the cleaned-up keys into the outkeys[] array, and then
+			 * mark them if they are required.  They are required (possibly
+			 * only in one direction) if all attrs before this one had "=".
 			 */
 			for (j = BTMaxStrategyNumber; --j >= 0;)
 			{
 				if (xform[j])
-					memcpy(&outkeys[new_numberOfKeys++], xform[j],
-						   sizeof(ScanKeyData));
-			}
+				{
+					ScanKey		outkey = &outkeys[new_numberOfKeys++];
 
-			/*
-			 * If all attrs before this one had "=", include these keys into
-			 * the required-keys count.
-			 */
-			if (priorNumberOfEqualCols == attno - 1)
-				so->numberOfRequiredKeys = new_numberOfKeys;
+					memcpy(outkey, xform[j], sizeof(ScanKeyData));
+					if (priorNumberOfEqualCols == attno - 1)
+					{
+						switch (outkey->sk_strategy)
+						{
+							case BTLessStrategyNumber:
+							case BTLessEqualStrategyNumber:
+								outkey->sk_flags |= SK_BT_REQFWD;
+								break;
+							case BTEqualStrategyNumber:
+								outkey->sk_flags |= (SK_BT_REQFWD |
+													 SK_BT_REQBKWD);
+								break;
+							case BTGreaterEqualStrategyNumber:
+							case BTGreaterStrategyNumber:
+								outkey->sk_flags |= SK_BT_REQBKWD;
+								break;
+							default:
+								elog(ERROR, "unrecognized StrategyNumber: %d",
+									 (int) outkey->sk_strategy);
+						}
+					}
+				}
+			}
 
 			/*
 			 * Exit loop here if done.
@@ -578,8 +617,7 @@ _bt_checkkeys(IndexScanDesc scan,
 			 * match" subset.  On a backward scan, however, we should keep
 			 * going.
 			 */
-			if (ikey < so->numberOfRequiredKeys &&
-				ScanDirectionIsForward(dir))
+			if ((key->sk_flags & SK_BT_REQFWD) && ScanDirectionIsForward(dir))
 				*continuescan = false;
 
 			/*
@@ -593,45 +631,21 @@ _bt_checkkeys(IndexScanDesc scan,
 		if (!DatumGetBool(test))
 		{
 			/*
-			 * Tuple fails this qual.  If it's a required qual, then we may be
-			 * able to conclude no further tuples will pass, either. We have
-			 * to look at the scan direction and the qual type.
-			 *
-			 * Note: the only case in which we would keep going after failing
-			 * a required qual is if there are partially-redundant quals that
-			 * _bt_preprocess_keys() was unable to eliminate.  For example,
-			 * given "x > 4 AND x > 10" where both are cross-type comparisons
-			 * and so not removable, we might start the scan at the x = 4
-			 * boundary point.	The "x > 10" condition will fail until we pass
-			 * x = 10, but we must not stop the scan on its account.
+			 * Tuple fails this qual.  If it's a required qual for the current
+			 * scan direction, then we can conclude no further tuples will
+			 * pass, either.
 			 *
 			 * Note: because we stop the scan as soon as any required equality
 			 * qual fails, it is critical that equality quals be used for the
 			 * initial positioning in _bt_first() when they are available. See
 			 * comments in _bt_first().
 			 */
-			if (ikey < so->numberOfRequiredKeys)
-			{
-				switch (key->sk_strategy)
-				{
-					case BTLessStrategyNumber:
-					case BTLessEqualStrategyNumber:
-						if (ScanDirectionIsForward(dir))
-							*continuescan = false;
-						break;
-					case BTEqualStrategyNumber:
-						*continuescan = false;
-						break;
-					case BTGreaterEqualStrategyNumber:
-					case BTGreaterStrategyNumber:
-						if (ScanDirectionIsBackward(dir))
-							*continuescan = false;
-						break;
-					default:
-						elog(ERROR, "unrecognized StrategyNumber: %d",
-							 key->sk_strategy);
-				}
-			}
+			if ((key->sk_flags & SK_BT_REQFWD) &&
+				ScanDirectionIsForward(dir))
+				*continuescan = false;
+			else if ((key->sk_flags & SK_BT_REQBKWD) &&
+					 ScanDirectionIsBackward(dir))
+				*continuescan = false;
 
 			/*
 			 * In any case, this indextuple doesn't match the qual.
