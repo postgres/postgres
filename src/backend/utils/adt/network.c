@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for the INET and CIDR types.
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.58 2006/01/11 08:43:12 neilc Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.59 2006/01/23 21:45:47 momjian Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -22,7 +22,7 @@
 #include "utils/inet.h"
 
 
-static Datum text_network(text *src, int type);
+static Datum text_network(text *src, int is_cidr);
 static int32 network_cmp_internal(inet *a1, inet *a2);
 static int	bitncmp(void *l, void *r, int n);
 static bool addressOK(unsigned char *a, int bits, int family);
@@ -38,8 +38,8 @@ static int	ip_addrsize(inet *inetptr);
 #define ip_bits(inetptr) \
 	(((inet_struct *)VARDATA(inetptr))->bits)
 
-#define ip_type(inetptr) \
-	(((inet_struct *)VARDATA(inetptr))->type)
+#define ip_is_cidr(inetptr) \
+	(((inet_struct *)VARDATA(inetptr))->is_cidr)
 
 #define ip_addr(inetptr) \
 	(((inet_struct *)VARDATA(inetptr))->ipaddr)
@@ -66,7 +66,7 @@ ip_addrsize(inet *inetptr)
 
 /* Common input routine */
 static inet *
-network_in(char *src, int type)
+network_in(char *src, bool is_cidr)
 {
 	int			bits;
 	inet	   *dst;
@@ -85,18 +85,18 @@ network_in(char *src, int type)
 		ip_family(dst) = PGSQL_AF_INET;
 
 	bits = inet_net_pton(ip_family(dst), src, ip_addr(dst),
-						 type ? ip_addrsize(dst) : -1);
+						 is_cidr ? ip_addrsize(dst) : -1);
 	if ((bits < 0) || (bits > ip_maxbits(dst)))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 		/* translator: first %s is inet or cidr */
 				 errmsg("invalid input syntax for type %s: \"%s\"",
-						type ? "cidr" : "inet", src)));
+						is_cidr ? "cidr" : "inet", src)));
 
 	/*
 	 * Error check: CIDR values must not have any bits set beyond the masklen.
 	 */
-	if (type)
+	if (is_cidr)
 	{
 		if (!addressOK(ip_addr(dst), bits, ip_family(dst)))
 			ereport(ERROR,
@@ -109,7 +109,7 @@ network_in(char *src, int type)
 		+ ((char *) ip_addr(dst) - (char *) VARDATA(dst))
 		+ ip_addrsize(dst);
 	ip_bits(dst) = bits;
-	ip_type(dst) = type;
+	ip_is_cidr(dst) = is_cidr;
 
 	return dst;
 }
@@ -152,7 +152,7 @@ inet_out(PG_FUNCTION_ARGS)
 				 errmsg("could not format inet value: %m")));
 
 	/* For CIDR, add /n if not present */
-	if (ip_type(src) && strchr(tmp, '/') == NULL)
+	if (ip_is_cidr(src) && strchr(tmp, '/') == NULL)
 	{
 		len = strlen(tmp);
 		snprintf(tmp + len, sizeof(tmp) - len, "/%u", ip_bits(src));
@@ -174,7 +174,7 @@ cidr_out(PG_FUNCTION_ARGS)
  *		inet_recv			- converts external binary format to inet
  *
  * The external representation is (one byte apiece for)
- * family, bits, type, address length, address in network byte order.
+ * family, bits, is_cidr, address length, address in network byte order.
  */
 Datum
 inet_recv(PG_FUNCTION_ARGS)
@@ -201,8 +201,8 @@ inet_recv(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 				 errmsg("invalid bits in external \"inet\" value")));
 	ip_bits(addr) = bits;
-	ip_type(addr) = pq_getmsgbyte(buf);
-	if (ip_type(addr) != 0 && ip_type(addr) != 1)
+	ip_is_cidr(addr) = pq_getmsgbyte(buf);
+	if (ip_is_cidr(addr) != false && ip_is_cidr(addr) != true)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 				 errmsg("invalid type in external \"inet\" value")));
@@ -222,7 +222,7 @@ inet_recv(PG_FUNCTION_ARGS)
 	/*
 	 * Error check: CIDR values must not have any bits set beyond the masklen.
 	 */
-	if (ip_type(addr))
+	if (ip_is_cidr(addr))
 	{
 		if (!addressOK(ip_addr(addr), bits, ip_family(addr)))
 			ereport(ERROR,
@@ -256,7 +256,7 @@ inet_send(PG_FUNCTION_ARGS)
 	pq_begintypsend(&buf);
 	pq_sendbyte(&buf, ip_family(addr));
 	pq_sendbyte(&buf, ip_bits(addr));
-	pq_sendbyte(&buf, ip_type(addr));
+	pq_sendbyte(&buf, ip_is_cidr(addr));
 	nb = ip_addrsize(addr);
 	if (nb < 0)
 		nb = 0;
@@ -276,7 +276,7 @@ cidr_send(PG_FUNCTION_ARGS)
 
 
 static Datum
-text_network(text *src, int type)
+text_network(text *src, bool is_cidr)
 {
 	int			len = VARSIZE(src) - VARHDRSZ;
 
@@ -285,7 +285,7 @@ text_network(text *src, int type)
 	memcpy(str, VARDATA(src), len);
 	*(str + len) = '\0';
 
-	PG_RETURN_INET_P(network_in(str, type));
+	PG_RETURN_INET_P(network_in(str, is_cidr));
 }
 
 
@@ -425,8 +425,8 @@ network_ne(PG_FUNCTION_ARGS)
 /*
  * Support function for hash indexes on inet/cidr.
  *
- * Since network_cmp considers only ip_family, ip_bits, and ip_addr,
- * only these fields may be used in the hash; in particular don't use type.
+ * Since network_cmp considers only ip_family, ip_bits, and ip_addr, only
+ * these fields may be used in the hash; in particular don't use is_cidr.
  */
 Datum
 hashinet(PG_FUNCTION_ARGS)
@@ -575,7 +575,7 @@ network_abbrev(PG_FUNCTION_ARGS)
 	int			len;
 	char		tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
 
-	if (ip_type(ip))
+	if (ip_is_cidr(ip))
 		dst = inet_cidr_ntop(ip_family(ip), ip_addr(ip),
 							 ip_bits(ip), tmp, sizeof(tmp));
 	else
@@ -666,7 +666,7 @@ network_broadcast(PG_FUNCTION_ARGS)
 
 	ip_family(dst) = ip_family(ip);
 	ip_bits(dst) = ip_bits(ip);
-	ip_type(dst) = 0;
+	ip_is_cidr(dst) = false;
 	VARATT_SIZEP(dst) = VARHDRSZ
 		+ ((char *) ip_addr(dst) - (char *) VARDATA(dst))
 		+ ip_addrsize(dst);
@@ -712,7 +712,7 @@ network_network(PG_FUNCTION_ARGS)
 
 	ip_family(dst) = ip_family(ip);
 	ip_bits(dst) = ip_bits(ip);
-	ip_type(dst) = 1;
+	ip_is_cidr(dst) = true;
 	VARATT_SIZEP(dst) = VARHDRSZ
 		+ ((char *) ip_addr(dst) - (char *) VARDATA(dst))
 		+ ip_addrsize(dst);
@@ -756,7 +756,7 @@ network_netmask(PG_FUNCTION_ARGS)
 
 	ip_family(dst) = ip_family(ip);
 	ip_bits(dst) = ip_maxbits(ip);
-	ip_type(dst) = 0;
+	ip_is_cidr(dst) = false;
 	VARATT_SIZEP(dst) = VARHDRSZ
 		+ ((char *) ip_addr(dst) - (char *) VARDATA(dst))
 		+ ip_addrsize(dst);
@@ -806,7 +806,7 @@ network_hostmask(PG_FUNCTION_ARGS)
 
 	ip_family(dst) = ip_family(ip);
 	ip_bits(dst) = ip_maxbits(ip);
-	ip_type(dst) = 0;
+	ip_is_cidr(dst) = false;
 	VARATT_SIZEP(dst) = VARHDRSZ
 		+ ((char *) ip_addr(dst) - (char *) VARDATA(dst))
 		+ ip_addrsize(dst);
