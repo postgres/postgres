@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.44 2006/01/21 19:34:42 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.45 2006/01/23 18:16:41 tgl Exp $
 -->
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -93,7 +93,7 @@ env PGOPTIONS='-c geqo=off' psql
    </para>
 
    <para>
-    Furthermore, it is possible to assign a set of option settings to
+    Furthermore, it is possible to assign a set of parameter settings to
     a user or a database.  Whenever a session is started, the default
     settings for the user and database involved are loaded.  The
     commands <xref linkend="sql-alteruser" endterm="sql-alteruser-title">
@@ -102,7 +102,7 @@ env PGOPTIONS='-c geqo=off' psql
     settings override anything received from the
     <command>postmaster</command> command-line or the configuration
     file, and in turn are overridden by per-user settings; both are
-    overridden by per-session options.
+    overridden by per-session settings.
    </para>
 
    <para>
@@ -115,8 +115,8 @@ SET ENABLE_SEQSCAN TO OFF;
     If <command>SET</> is allowed, it overrides all other sources of
     values for the parameter. Some parameters cannot be changed via
     <command>SET</command>: for example, if they control behavior that
-    cannot reasonably be changed without restarting
-    <productname>PostgreSQL</productname>.  Also, some parameters can
+    cannot be changed without restarting the entire
+    <productname>PostgreSQL</productname> server.  Also, some parameters can
     be modified via <command>SET</command> or <command>ALTER</> by superusers,
     but not by ordinary users.
    </para>
@@ -146,7 +146,7 @@ SET ENABLE_SEQSCAN TO OFF;
       client authentication (their use is discussed in <xref
       linkend="client-authentication">).  By default, all three
       configuration files are stored in the database cluster's data
-      directory.  The options described in this section allow the
+      directory.  The parameters described in this section allow the
       configuration files to be placed elsewhere.  (Doing so can ease
       administration.  In particular it is often easier to ensure that
       the configuration files are properly backed-up when they are
@@ -162,7 +162,7 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
          Specifies the directory to use for data storage.
-         This option can only be set at server start.
+         This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -176,7 +176,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
          Specifies the main server configuration file
          (customarily called <filename>postgresql.conf</>).
-         This option can only be set on the postmaster command line.
+         This parameter can only be set on the postmaster command line.
        </para>
       </listitem>
      </varlistentry>
@@ -190,7 +190,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
          Specifies the configuration file for host-based authentication
          (customarily called <filename>pg_hba.conf</>).
-         This option can only be set at server start.
+         This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -205,7 +205,7 @@ SET ENABLE_SEQSCAN TO OFF;
          Specifies the configuration file for
          <application>ident</> authentication
          (customarily called <filename>pg_ident.conf</>).
-         This option can only be set at server start.
+         This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -220,15 +220,15 @@ SET ENABLE_SEQSCAN TO OFF;
         Specifies the name of an additional process-id (PID) file that the
         <application>postmaster</> should create for use by server
         administration programs.
-        This option can only be set at server start.
+        This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
      </variablelist>
 
      <para>
-      In a default installation, none of the above options are set explicitly.
-      Instead, the
+      In a default installation, none of the above parameters are set
+      explicitly.  Instead, the
       data directory is specified by the <option>-D</option> command-line
       option or the <envar>PGDATA</envar> environment variable, and the
       configuration files are all found within the data directory.
@@ -239,7 +239,7 @@ SET ENABLE_SEQSCAN TO OFF;
       data directory, the postmaster's <option>-D</option>
       command-line option or <envar>PGDATA</envar> environment variable
       must point to the directory containing the configuration files,
-      and the <varname>data_directory</> option must be set in
+      and the <varname>data_directory</> parameter must be set in
       <filename>postgresql.conf</filename> (or on the command line) to show
       where the data directory is actually located.  Notice that
       <varname>data_directory</> overrides <option>-D</option> and
@@ -250,17 +250,17 @@ SET ENABLE_SEQSCAN TO OFF;
 
      <para>
       If you wish, you can specify the configuration file names and locations
-      individually using the options <varname>config_file</>,
+      individually using the parameters <varname>config_file</>,
       <varname>hba_file</> and/or <varname>ident_file</>.
       <varname>config_file</> can only be specified on the 
       <command>postmaster</command> command line, but the others can be
-      set within the main configuration file.  If all three options plus
+      set within the main configuration file.  If all three parameters plus
       <varname>data_directory</> are explicitly set, then it is not necessary
       to specify <option>-D</option> or <envar>PGDATA</envar>.
      </para>
 
      <para>
-      When setting any of these options, a relative path will be interpreted
+      When setting any of these parameters, a relative path will be interpreted
       with respect to the directory in which the <command>postmaster</command>
       is started.
      </para>
@@ -386,11 +386,11 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Sets the owning group of the Unix-domain socket.  (The owning
         user of the socket is always the user that starts the
-        server.)  In combination with the option
+        server.)  In combination with the parameter
         <varname>unix_socket_permissions</varname> this can be used as
         an additional access control mechanism for Unix-domain connections.
-        By default this is the empty string, which uses the default
-        group for the current user.  This option can only be set at
+        By default this is the empty string, which selects the default
+        group for the current user.  This parameter can only be set at
         server start.
        </para>
       </listitem>
@@ -405,7 +405,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Sets the access permissions of the Unix-domain socket.  Unix-domain
         sockets use the usual Unix file system permission set.
-        The option value is expected to be a numeric mode
+        The parameter value is expected to be a numeric mode
         specification in the form accepted by the
         <function>chmod</function> and <function>umask</function>
         system calls.  (To use the customary octal format the number
@@ -428,7 +428,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
 
        <para>
-        This option can only be set at server start.
+        This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -441,10 +441,11 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Specifies the <productname>Bonjour</productname> broadcast
-        name.  By default, the computer name is used, specified as an
-        empty string ''.  This option is ignored if the server was not
-        compiled with <productname>Bonjour</productname> support.  This
-        option can only be set at server start.
+        name.  The computer name is used if this parameter is set to the
+        empty string <literal>''</> (which is the default).  This parameter is
+        ignored if the server was not compiled with
+        <productname>Bonjour</productname> support.
+        This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -459,7 +460,7 @@ SET ENABLE_SEQSCAN TO OFF;
         On systems that support the <symbol>TCP_KEEPIDLE</symbol> socket option, specifies the
         number of seconds between sending keepalives on an otherwise idle
         connection. A value of 0 uses the system default. If <symbol>TCP_KEEPIDLE</symbol> is
-        not supported, this parameter must be 0. This option is ignored for
+        not supported, this parameter must be 0. This parameter is ignored for
         connections made via a Unix-domain socket.
        </para>
       </listitem>
@@ -475,7 +476,7 @@ SET ENABLE_SEQSCAN TO OFF;
         On systems that support the <symbol>TCP_KEEPINTVL</symbol> socket option, specifies how
         long, in seconds, to wait for a response to a keepalive before
         retransmitting. A value of 0 uses the system default. If <symbol>TCP_KEEPINTVL</symbol>
-        is not supported, this parameter must be 0. This option is ignored
+        is not supported, this parameter must be 0. This parameter is ignored
         for connections made via a Unix-domain socket.
        </para>
       </listitem>
@@ -491,7 +492,7 @@ SET ENABLE_SEQSCAN TO OFF;
         On systems that support the <symbol>TCP_KEEPCNT</symbol> socket option, specifies how
         many keepalives may be lost before the connection is considered dead. 
         A value of 0 uses the system default. If <symbol>TCP_KEEPCNT</symbol> is not
-        supported, this parameter must be 0. This option is ignored
+        supported, this parameter must be 0. This parameter is ignored
         for connections made via a Unix-domain socket.
        </para>
       </listitem>
@@ -516,9 +517,10 @@ SET ENABLE_SEQSCAN TO OFF;
         Maximum time to complete client authentication, in seconds. If a
         would-be client has not completed the authentication protocol in
         this much time, the server breaks the connection. This prevents
-        hung clients from occupying a connection indefinitely. This
-        option can only be set at server start or in the
-        <filename>postgresql.conf</filename> file. The default is 60.
+        hung clients from occupying a connection indefinitely.
+        The default is 60.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -549,7 +551,7 @@ SET ENABLE_SEQSCAN TO OFF;
         linkend="sql-createuser" endterm="sql-createuser-title"> or
         <xref linkend="sql-alteruser" endterm="sql-alteruser-title">
         without writing either <literal>ENCRYPTED</> or
-        <literal>UNENCRYPTED</>, this option determines whether the
+        <literal>UNENCRYPTED</>, this parameter determines whether the
         password is to be encrypted. The default is <literal>on</>
         (encrypt the password).
        </para>
@@ -594,8 +596,6 @@ SET ENABLE_SEQSCAN TO OFF;
         This, combined with <varname>krb_srvname</>, is used to generate
         the complete service principal, that is
         <varname>krb_srvname</><literal>/</><varname>krb_server_hostname</><literal>@</>REALM.
-       </para>
-       <para>
         If not set, the default is the server host name.  See <xref linkend="kerberos-auth">
         for details.  This parameter can only be set at server start.
        </para>
@@ -623,7 +623,9 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-        This enables per-database user names.  It is off by default.
+        This parameter enables per-database user names.  It is off by default.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
        </para>
 
        <para>
@@ -637,7 +639,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
 
        <para>
-        With this option enabled, you can still create ordinary global
+        With this parameter enabled, you can still create ordinary global
         users.  Simply append <literal>@</> when specifying the user
         name in the client.  The <literal>@</> will be stripped off
         before the user name is looked up by the server.
@@ -680,7 +682,7 @@ SET ENABLE_SEQSCAN TO OFF;
         least twice the value of <xref linkend="guc-max-connections">;
         however, settings significantly higher than the minimum are
         usually needed for good performance.  Values of a few thousand
-        are recommended for production installations.  This option can
+        are recommended for production installations.  This parameter can
         only be set at server start.
        </para>
 
@@ -735,7 +737,7 @@ SET ENABLE_SEQSCAN TO OFF;
         Setting this parameter to zero disables the prepared-transaction
         feature.
         The default is 5.
-        This option can only be set at server start.
+        This parameter can only be set at server start.
        </para>
 
        <para>
@@ -821,6 +823,7 @@ SET ENABLE_SEQSCAN TO OFF;
         2048 KB (two megabytes), which is conservatively small and unlikely
         to risk crashes.  However, it may be too small to allow execution
         of complex functions.
+        Only superusers can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -870,7 +873,7 @@ SET ENABLE_SEQSCAN TO OFF;
         16 * <varname>max_fsm_relations</varname>.  The default is chosen
         by <application>initdb</> depending on the amount of available memory,
         and can range from 20000 to 200000.
-        This option can only be set at server start.
+        This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -886,7 +889,7 @@ SET ENABLE_SEQSCAN TO OFF;
         free space will be tracked in the shared free-space map.  Roughly
         seventy bytes of shared memory are consumed for each slot.
         The default is 1000.
-        This option can only be set at server start.
+        This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -912,7 +915,7 @@ SET ENABLE_SEQSCAN TO OFF;
         can really support when a large number of processes all try to open
         that many files. If you find yourself seeing <quote>Too many open
         files</> failures, try reducing this setting.
-        This option can only be set at server start.
+        This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -953,7 +956,7 @@ SET ENABLE_SEQSCAN TO OFF;
         applicable), the library startup time is avoided when the
         library is first used.  However, the time to start each new
         server process may increase slightly, even if that process never
-        uses the library.  So this option is recommended only for
+        uses the library.  So this parameter is recommended only for
         libraries that will be used in most sessions.
        </para>
       </listitem>
@@ -1132,8 +1135,8 @@ SET ENABLE_SEQSCAN TO OFF;
          delays is 10 milliseconds; setting <varname>bgwriter_delay</>
          to a value that is not a multiple of 10 may have the same
          results as setting it to the next higher multiple of 10.
-         This option can only be set at server start or in the
-         <filename>postgresql.conf</filename> file.
+         This parameter can only be set in the <filename>postgresql.conf</>
+         file or on the server command line.
         </para>
        </listitem>
       </varlistentry>
@@ -1152,8 +1155,8 @@ SET ENABLE_SEQSCAN TO OFF;
          being recycled, and writes any that are dirty.
          The default value is 1.0 (this is a percentage of the total number
          of shared buffers).
-         This option can only be set at server start or in the
-         <filename>postgresql.conf</filename> file.
+         This parameter can only be set in the <filename>postgresql.conf</>
+         file or on the server command line.
         </para>
        </listitem>
       </varlistentry>
@@ -1168,8 +1171,8 @@ SET ENABLE_SEQSCAN TO OFF;
          In each round, no more than this many buffers will be written
          as a result of scanning soon-to-be-recycled buffers.
          The default value is 5.
-         This option can only be set at server start or in the
-         <filename>postgresql.conf</filename> file.
+         This parameter can only be set in the <filename>postgresql.conf</>
+         file or on the server command line.
         </para>
        </listitem>
       </varlistentry>
@@ -1190,8 +1193,8 @@ SET ENABLE_SEQSCAN TO OFF;
          of shared buffers).  With the default <varname>bgwriter_delay</>
          setting, this will allow the entire shared buffer pool to be scanned
          about once per minute.
-         This option can only be set at server start or in the
-         <filename>postgresql.conf</filename> file.
+         This parameter can only be set in the <filename>postgresql.conf</>
+         file or on the server command line.
         </para>
        </listitem>
       </varlistentry>
@@ -1208,8 +1211,8 @@ SET ENABLE_SEQSCAN TO OFF;
          limit is reached, the scan stops, and resumes at the next buffer
          during the next round.)
          The default value is 5.
-         This option can only be set at server start or in the
-         <filename>postgresql.conf</filename> file.
+         This parameter can only be set in the <filename>postgresql.conf</>
+         file or on the server command line.
         </para>
        </listitem>
       </varlistentry>
@@ -1252,7 +1255,7 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>fsync</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        If this option is on, the <productname>PostgreSQL</> server
+        If this parameter is on, the <productname>PostgreSQL</> server
         will try to make sure that updates are physically written to
         disk, by issuing <function>fsync()</> system calls or various
         equivalent methods (see <xref linkend="guc-wal-sync-method">).
@@ -1290,9 +1293,9 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
 
        <para>
-        This option can only be set at server start or in the
-        <filename>postgresql.conf</filename> file.  If you turn
-        this option off, also consider turning off 
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
+        If you turn this parameter off, also consider turning off 
         <xref linkend="guc-full-page-writes">.
        </para>
       </listitem>
@@ -1339,9 +1342,10 @@ SET ENABLE_SEQSCAN TO OFF;
        </itemizedlist>
        <para>
         Not all of these choices are available on all platforms.
-        The default is the first method in the above list that is supported.
-        This option can only be set at server start or in the
-        <filename>postgresql.conf</filename> file.
+        The default is the first method in the above list that is supported
+        by the platform.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -1353,7 +1357,7 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>full_page_writes</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        When this option is on, the <productname>PostgreSQL</> server
+        When this parameter is on, the <productname>PostgreSQL</> server
         writes the entire content of each disk page to WAL during the
         first modification of that page after a checkpoint.
         This is needed because
@@ -1371,25 +1375,25 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
 
        <para>
-        Turning this option off speeds normal operation, but
+        Turning this parameter off speeds normal operation, but
         might lead to a corrupt database after an operating system crash
         or power failure. The risks are similar to turning off
         <varname>fsync</>, though smaller.  It may be safe to turn off
-        this option if you have hardware (such as a battery-backed disk
+        this parameter if you have hardware (such as a battery-backed disk
         controller) or filesystem software (e.g., Reiser4) that reduces
         the risk of partial page writes to an acceptably low level.
        </para>
 
        <para>
-        Turning off this option does not affect use of
+        Turning off this parameter does not affect use of
         WAL archiving for point-in-time recovery (PITR)
         (see <xref linkend="backup-online">).
        </para>
 
        <para>
-        This option can only be set at server start or in the
-        <filename>postgresql.conf</filename> file.  The default is
-        <literal>on</>.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
+        The default is <literal>on</>.
        </para>
       </listitem>
      </varlistentry>
@@ -1405,7 +1409,7 @@ SET ENABLE_SEQSCAN TO OFF;
         The default is 8.  The setting need only be large enough to hold
         the amount of WAL data generated by one typical transaction, since
         the data is written out to disk at every transaction commit.
-        This option can only be set at server start.
+        This parameter can only be set at server start.
        </para>
 
        <para>
@@ -1471,8 +1475,9 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Maximum distance between automatic WAL checkpoints, in log
         file segments (each segment is normally 16 megabytes). The
-        default is three.  This option can only be set at server start
-        or in the <filename>postgresql.conf</filename> file.
+        default is three.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -1485,9 +1490,9 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Maximum time between automatic WAL checkpoints, in
-        seconds. The default is 300 seconds.  This option can only be
-        set at server start or in the <filename>postgresql.conf</>
-        file.
+        seconds. The default is 300 seconds.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -1504,6 +1509,8 @@ SET ENABLE_SEQSCAN TO OFF;
         than this many seconds (which suggests that
         <varname>checkpoint_segments</> ought to be raised).  The default is
         30 seconds.  Zero disables the warning.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -1528,9 +1535,9 @@ SET ENABLE_SEQSCAN TO OFF;
         <literal>%f</> is replaced by the file name only. Use
         <literal>%%</> to embed an actual <literal>%</> character in the
         command. For more information see <xref
-        linkend="backup-archiving-wal">. This option can only be set at
-        server start or in the <filename>postgresql.conf</filename>
-        file.
+        linkend="backup-archiving-wal">.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
        </para>
        <para>
         It is important for the command to return a zero exit status if
@@ -2096,11 +2103,11 @@ SELECT * FROM parent WHERE key = 2400;
          <systemitem>stderr</systemitem> and
          <systemitem>syslog</systemitem>. On Windows, 
          <systemitem>eventlog</systemitem> is also supported. Set this
-         option to a list of desired log destinations separated by
+         parameter to a list of desired log destinations separated by
          commas. The default is to log to <systemitem>stderr</systemitem> 
          only.
-         This option can only be set at server start or in the
-         <filename>postgresql.conf</filename> configuration file.
+         This parameter can only be set in the <filename>postgresql.conf</>
+         file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -2112,14 +2119,14 @@ SELECT * FROM parent WHERE key = 2400;
       </indexterm>
       <listitem>
        <para>
-         This option allows messages sent to <application>stderr</> to be
+         This parameter allows messages sent to <application>stderr</> to be
          captured and redirected into log files.
-         This option, in combination with logging to <application>stderr</>,
+         This method, in combination with logging to <application>stderr</>,
          is often more useful than
          logging to <application>syslog</>, since some types of messages
          may not appear in <application>syslog</> output (a common example
          is dynamic-linker failure messages).
-         This option can only be set at server start.
+         This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -2131,12 +2138,12 @@ SELECT * FROM parent WHERE key = 2400;
       </indexterm>
       <listitem>
        <para>
-        When <varname>redirect_stderr</> is enabled, this option
+        When <varname>redirect_stderr</> is enabled, this parameter
         determines the directory in which log files will be created.
         It may be specified as an absolute path, or relative to the
         cluster data directory.
-        This option can only be set at server start or in the
-        <filename>postgresql.conf</filename> configuration file.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -2148,7 +2155,7 @@ SELECT * FROM parent WHERE key = 2400;
       </indexterm>
       <listitem>
        <para>
-        When <varname>redirect_stderr</varname> is enabled, this option
+        When <varname>redirect_stderr</varname> is enabled, this parameter
         sets the file names of the created log files.  The value
         is treated as a <systemitem>strftime</systemitem> pattern,
         so <literal>%</literal>-escapes
@@ -2159,8 +2166,8 @@ SELECT * FROM parent WHERE key = 2400;
         if <varname>log_filename</varname> were <literal>server_log</literal>, then the
         chosen file name would be <literal>server_log.1093827753</literal>
         for a log starting at Sun Aug 29 19:02:33 2004 MST.
-        This option can only be set at server start or in the
-        <filename>postgresql.conf</filename> configuration file.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -2172,13 +2179,13 @@ SELECT * FROM parent WHERE key = 2400;
       </indexterm>
       <listitem>
        <para>
-        When <varname>redirect_stderr</varname> is enabled, this option
+        When <varname>redirect_stderr</varname> is enabled, this parameter
         determines the maximum lifetime of an individual log file.
         After this many minutes have elapsed, a new log file will
         be created.  Set to zero to disable time-based creation of
         new log files.
-        This option can only be set at server start or in the
-        <filename>postgresql.conf</filename> configuration file.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -2190,13 +2197,13 @@ SELECT * FROM parent WHERE key = 2400;
       </indexterm>
       <listitem>
        <para>
-        When <varname>redirect_stderr</varname> is enabled, this option
+        When <varname>redirect_stderr</varname> is enabled, this parameter
         determines the maximum size of an individual log file.
         After this many kilobytes have been emitted into a log file,
         a new log file will be created.  Set to zero to disable size-based
         creation of new log files.
-        This option can only be set at server start or in the
-        <filename>postgresql.conf</filename> configuration file.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -2208,18 +2215,18 @@ SELECT * FROM parent WHERE key = 2400;
       </indexterm>
       <listitem>
        <para>
-        When <varname>redirect_stderr</varname> is enabled, this option will cause
+        When <varname>redirect_stderr</varname> is enabled, this parameter will cause
         <productname>PostgreSQL</productname> to truncate (overwrite),
         rather than append to, any existing log file of the same name.
         However, truncation will occur only when a new file is being opened
         due to time-based rotation, not during server startup or size-based
         rotation.  When off, pre-existing files will be appended to in
-        all cases.  For example, using this option in combination with
+        all cases.  For example, using this setting in combination with
         a <varname>log_filename</varname> like <literal>postgresql-%H.log</literal>
         would result in generating twenty-four hourly log files and then
         cyclically overwriting them.
-        This option can only be set at server start or in the
-        <filename>postgresql.conf</filename> configuration file.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
        </para>
        <para>
         Example:  To keep 7 days of logs, one log file per day named
@@ -2250,7 +2257,7 @@ SELECT * FROM parent WHERE key = 2400;
       </indexterm>
       <listitem>
        <para>
-        When logging to <application>syslog</> is enabled, this option
+        When logging to <application>syslog</> is enabled, this parameter
         determines the <application>syslog</application>
         <quote>facility</quote> to be used.  You may choose
         from <literal>LOCAL0</>, <literal>LOCAL1</>,
@@ -2259,8 +2266,8 @@ SELECT * FROM parent WHERE key = 2400;
         the default is <literal>LOCAL0</>. See also the
         documentation of your system's
         <application>syslog</application> daemon.
-        This option can only be set at server start or in the
-        <filename>postgresql.conf</filename> configuration file.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -2272,13 +2279,13 @@ SELECT * FROM parent WHERE key = 2400;
       </indexterm>
        <listitem>
         <para>
-         When logging to <application>syslog</> is enabled, this option
+         When logging to <application>syslog</> is enabled, this parameter
          determines the program name used to identify
          <productname>PostgreSQL</productname> messages in
          <application>syslog</application> logs. The default is
          <literal>postgres</literal>.
-         This option can only be set at server start or in the
-         <filename>postgresql.conf</filename> configuration file.
+         This parameter can only be set in the <filename>postgresql.conf</>
+         file or on the server command line.
         </para>
        </listitem>
       </varlistentry>
@@ -2369,7 +2376,7 @@ SELECT * FROM parent WHERE key = 2400;
         <literal>FATAL</literal>, and <literal>PANIC</literal>.  For
         example, if you set this to <literal>ERROR</literal> then all
         SQL statements causing errors, fatal errors, or panics will be
-        logged. Enabling this option can be helpful in tracking down
+        logged. Enabling this parameter can be helpful in tracking down
         the source of any errors that appear in the server log.
         Only superusers can change this setting.
        </para>
@@ -2389,7 +2396,7 @@ SELECT * FROM parent WHERE key = 2400;
          and their durations. Minus-one (the default) disables the
          feature. For example, if you set it to <literal>250</literal>
          then all SQL statements that run 250ms or longer will be
-         logged. Enabling this option can be useful in tracking down
+         logged. Enabling this parameter can be useful in tracking down
          unoptimized queries in your applications. This setting is
          independent of <varname>log_statement</varname> and
          <varname>log_duration</varname>. Only superusers can change
@@ -2405,14 +2412,15 @@ SELECT * FROM parent WHERE key = 2400;
       </indexterm>
       <listitem>
        <para>
-        Runs the server silently. If this option is set, the server
+        Runs the server silently. If this parameter is set, the server
         will automatically run in background and any controlling
         terminals are disassociated.
         The server's standard output and standard error are redirected
         to <literal>/dev/null</>, so any messages sent to them will be lost.
         Unless <application>syslog</> logging is selected or
-        <varname>redirect_stderr</> is enabled, using this option
+        <varname>redirect_stderr</> is enabled, using this parameter
         is discouraged because it makes it impossible to see error messages.
+        This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -2527,7 +2535,7 @@ SELECT * FROM parent WHERE key = 2400;
       </indexterm>
       <listitem>
        <para>
-        These options enable various debugging output to be emitted.
+        These parameters enable various debugging output to be emitted.
         For each executed query, they print
         the resulting parse tree, the query rewriter output, or the
         execution plan.  <varname>debug_pretty_print</varname> indents
@@ -2536,7 +2544,7 @@ SELECT * FROM parent WHERE key = 2400;
         <varname>log_min_messages</varname> must be
         <literal>DEBUG1</literal> or lower to actually send this output
         to the client or the server log, respectively.
-        These options are off by default.
+        These parameters are off by default.
        </para>
       </listitem>
      </varlistentry>
@@ -2553,8 +2561,9 @@ SELECT * FROM parent WHERE key = 2400;
         useful.  Some client programs, like <application>psql</>, attempt 
         to connect twice while determining if a password is required, so 
         duplicate <quote>connection received</> messages do not
-        necessarily indicate a problem. This option can only be set at
-        server start or in the <filename>postgresql.conf</> configuration file.
+        necessarily indicate a problem.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -2569,8 +2578,9 @@ SELECT * FROM parent WHERE key = 2400;
         This outputs a line in the server log similar to
         <varname>log_connections</varname> but at session termination,
         and includes the duration of the session.  This is off by
-        default. This option can only be set at server start or in the
-        <filename>postgresql.conf</filename> configuration file.
+        default.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -2611,8 +2621,8 @@ SELECT * FROM parent WHERE key = 2400;
          produces its own 
          time stamp and process ID information, so you probably do not want to
          use those escapes if you are using <application>syslog</>.
-         This option can only be set at server start or in the
-         <filename>postgresql.conf</filename> configuration file.
+         This parameter can only be set in the <filename>postgresql.conf</>
+         file or on the server command line.
 
          <informaltable>
           <tgroup cols="3">
@@ -2758,11 +2768,11 @@ SELECT * FROM parent WHERE key = 2400;
       <listitem>
        <para>
         By default, connection log messages only show the IP address of the
-        connecting host. Turning on this option causes logging of the
+        connecting host. Turning on this parameter causes logging of the
         host name as well.  Note that depending on your host name resolution
-        setup this might impose a non-negligible performance penalty. This
-        option can only be set at server start or in the
-        <filename>postgresql.conf</filename> file.
+        setup this might impose a non-negligible performance penalty.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -2813,6 +2823,15 @@ SELECT * FROM parent WHERE key = 2400;
     </sect2>
     <sect2 id="runtime-config-statistics-collector">
      <title>Query and Index Statistics Collector</title>
+
+     <para>
+      These parameters control a server-wide statistics collection feature.
+      When statistics collection is enabled, the data that is produced can be
+      accessed via the <structname>pg_stat</structname> and
+      <structname>pg_statio</structname> family of system views.
+      Refer to <xref linkend="monitoring"> for more information.
+     </para>
+
      <variablelist>
 
      <varlistentry id="guc-stats-start-collector" xreflabel="stats_start_collector">
@@ -2826,7 +2845,7 @@ SELECT * FROM parent WHERE key = 2400;
         statistics-collection subprocess.  This is on by default, but
         may be turned off if you know you have no interest in
         collecting statistics or running autovacuum.
-        This option can only be set at server start, because the collection
+        This parameter can only be set at server start, because the collection
         subprocess cannot be started or stopped on-the-fly.  (However, the
         extent to which statistics are actually gathered can be changed while
         the server is running, so long as the subprocess exists.)
@@ -2843,13 +2862,12 @@ SELECT * FROM parent WHERE key = 2400;
        <para>
         Enables the collection of statistics on the currently
         executing command of each session, along with the time at
-        which that command began execution. This option is off by
+        which that command began execution. This parameter is off by
         default. Note that even when enabled, this information is not
         visible to all users, only to superusers and the user owning
         the session being reported on; so it should not represent a
-        security risk. This data can be accessed via the
-        <structname>pg_stat_activity</structname> system view; refer
-        to <xref linkend="monitoring"> for more information.
+        security risk.
+        Only superusers can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -2862,11 +2880,8 @@ SELECT * FROM parent WHERE key = 2400;
       <listitem>
        <para>
         Enables the collection of block-level statistics on database
-        activity. This option is disabled by default. If this option
-        is enabled, the data that is produced can be accessed via the
-        <structname>pg_stat</structname> and
-        <structname>pg_statio</structname> family of system views;
-        refer to <xref linkend="monitoring"> for more information.
+        activity. This parameter is off by default.
+        Only superusers can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -2879,11 +2894,8 @@ SELECT * FROM parent WHERE key = 2400;
       <listitem>
        <para>
         Enables the collection of row-level statistics on database
-        activity. This option is disabled by default. If this option
-        is enabled, the data that is produced can be accessed via the
-        <structname>pg_stat</structname> and
-        <structname>pg_statio</structname> family of system views;
-        refer to <xref linkend="monitoring"> for more information.
+        activity. This parameter is off by default.
+        Only superusers can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -2897,7 +2909,7 @@ SELECT * FROM parent WHERE key = 2400;
        <para>
         If on, collected statistics are zeroed out whenever the server
         is restarted. If off, statistics are accumulated across server
-        restarts. The default is <literal>off</>. This option can only 
+        restarts. The default is <literal>off</>. This parameter can only 
         be set at server start.
        </para>
       </listitem>
@@ -2917,7 +2929,7 @@ SELECT * FROM parent WHERE key = 2400;
 
      <para>
       These settings control the behavior of the <firstterm>autovacuum</>
-      feature. Please refer to <xref linkend="autovacuum"> for
+      feature.  Refer to <xref linkend="autovacuum"> for
       more information.
      </para>
 
@@ -2934,8 +2946,8 @@ SELECT * FROM parent WHERE key = 2400;
         autovacuum daemon.  This is off by default.
         <varname>stats_start_collector</> and <varname>stats_row_level</>
         must also be turned on for autovacuum to work.
-        This option can only be set at server start or in the
-        <filename>postgresql.conf</filename> file.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -2952,8 +2964,8 @@ SELECT * FROM parent WHERE key = 2400;
         and issues <command>VACUUM</> and <command>ANALYZE</> commands
         as needed for tables in that database.  The delay is measured
         in seconds, and the default is 60.
-        This option can only be set at server start or in the
-        <filename>postgresql.conf</filename> file.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -2968,8 +2980,8 @@ SELECT * FROM parent WHERE key = 2400;
         Specifies the minimum number of updated or deleted tuples needed
         to trigger a <command>VACUUM</> in any one table.
         The default is 1000.
-        This option can only be set at server start or in the
-        <filename>postgresql.conf</filename> file.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
         This setting can be overridden for individual tables by entries in
         <structname>pg_autovacuum</>.
        </para>
@@ -2986,8 +2998,8 @@ SELECT * FROM parent WHERE key = 2400;
         Specifies the minimum number of inserted, updated or deleted tuples
         needed to trigger an <command>ANALYZE</> in any one table.
         The default is 500.
-        This option can only be set at server start or in the
-        <filename>postgresql.conf</filename> file.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
         This setting can be overridden for individual tables by entries in
         <structname>pg_autovacuum</>.
        </para>
@@ -3005,8 +3017,8 @@ SELECT * FROM parent WHERE key = 2400;
         <varname>autovacuum_vacuum_threshold</varname>
         when deciding whether to trigger a <command>VACUUM</>.
         The default is 0.4.
-        This option can only be set at server start or in the
-        <filename>postgresql.conf</filename> file.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
         This setting can be overridden for individual tables by entries in
         <structname>pg_autovacuum</>.
        </para>
@@ -3024,8 +3036,8 @@ SELECT * FROM parent WHERE key = 2400;
         <varname>autovacuum_analyze_threshold</varname>
         when deciding whether to trigger an <command>ANALYZE</>.
         The default is 0.2.
-        This option can only be set at server start or in the
-        <filename>postgresql.conf</filename> file.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
         This setting can be overridden for individual tables by entries in
         <structname>pg_autovacuum</>.
        </para>
@@ -3043,6 +3055,8 @@ SELECT * FROM parent WHERE key = 2400;
         <command>VACUUM</> operations.  If -1 is specified (which is the
         default), the regular
         <xref linkend="guc-vacuum-cost-delay"> value will be used.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
         This setting can be overridden for individual tables by entries in
         <structname>pg_autovacuum</>.
        </para>
@@ -3060,6 +3074,8 @@ SELECT * FROM parent WHERE key = 2400;
         <command>VACUUM</> operations.  If -1 is specified (which is the
         default), the regular
         <xref linkend="guc-vacuum-cost-limit"> value will be used.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
         This setting can be overridden for individual tables by entries in
         <structname>pg_autovacuum</>.
        </para>
@@ -3384,6 +3400,11 @@ SELECT * FROM parent WHERE key = 2400;
         desired language exist.  In that case you will continue to see
         the English messages.
        </para>
+
+       <para>
+        Only superusers can change this setting, because it affects the
+        messages sent to the postmaster log as well as to the client.
+       </para>
       </listitem>
      </varlistentry>
 
@@ -3577,7 +3598,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         The default, 64, has historically
         proven sufficient, but you might need to raise this value if you
         have clients that touch many different tables in a single
-        transaction. This option can only be set at server start.
+        transaction. This parameter can only be set at server start.
        </para>
 
        <para>
@@ -3768,7 +3789,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         return true if <replaceable>expr</> evaluates to the null value,
         and false otherwise. The correct SQL-spec-compliant behavior of
         <literal><replaceable>expr</> = NULL</literal> is to always
-        return null (unknown). Therefore this option defaults to
+        return null (unknown). Therefore this parameter defaults to
         <literal>off</>.
        </para>
 
@@ -3984,7 +4005,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
     <title>Customized Options</title>
 
     <para>
-     This feature was designed to allow options not normally known to
+     This feature was designed to allow parameters not normally known to
      <productname>PostgreSQL</productname> to be added by add-on modules
      (such as procedural languages).  This allows add-on modules to be
      configured in the standard ways.
@@ -4006,8 +4027,8 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         add-on module.  Such variables must have names consisting of a class
         name, a dot, and a variable name.  <varname>custom_variable_classes</>
         specifies all the class names in use in a particular installation.
-        This option can only be set at server start or in the
-        <filename>postgresql.conf</filename> configuration file.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
        </para>
 
       </listitem>
@@ -4046,13 +4067,13 @@ plruby.use_strict = true        # generates error: unknown class name
     <title>Developer Options</title>
 
     <para>
-     The following options are intended for work on the
+     The following parameters are intended for work on the
      <productname>PostgreSQL</productname> source, and in some cases
      to assist with recovery of severely damaged databases.  There
      should be no reason to use them in a production database setup.
      As such, they have been excluded from the sample
      <filename>postgresql.conf</> file.  Note that many of these
-     options require special source compilation flags to work at all.
+     parameters require special source compilation flags to work at all.
     </para>
 
     <variablelist>
@@ -4063,8 +4084,9 @@ plruby.use_strict = true        # generates error: unknown class name
       </indexterm>
       <listitem>
        <para>
-        Allows the modification of the structure of system tables.
+        Allows modification of the structure of system tables.
         This is used by <command>initdb</command>.
+        This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -4079,7 +4101,7 @@ plruby.use_strict = true        # generates error: unknown class name
         Turns on various assertion checks. This is a debugging aid. If
         you are experiencing strange problems or crashes you might want
         to turn this on, as it might expose programming mistakes. To use
-        this option, the macro <symbol>USE_ASSERT_CHECKING</symbol>
+        this parameter, the macro <symbol>USE_ASSERT_CHECKING</symbol>
         must be defined when <productname>PostgreSQL</productname> is
         built (accomplished by the <command>configure</command> option
         <option>--enable-cassert</option>). Note that
@@ -4100,6 +4122,7 @@ plruby.use_strict = true        # generates error: unknown class name
         Ignore system indexes when reading system tables (but still
         update the indexes when modifying the tables).  This is useful
         when recovering from damaged system indexes.
+        This parameter cannot be changed after session start.
        </para>
       </listitem>
      </varlistentry>
@@ -4115,6 +4138,7 @@ plruby.use_strict = true        # generates error: unknown class name
         server process is started, after it conducts the
         authentication procedure.  This is intended to give an
         opportunity to attach to the server process with a debugger.
+        This parameter cannot be changed after session start.
        </para>
       </listitem>
      </varlistentry>
@@ -4131,6 +4155,8 @@ plruby.use_strict = true        # generates error: unknown class name
         authentication procedure.  This is intended to give an
         opportunity to attach to the server process with a debugger to
         trace down misbehavior in authentication.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -4160,7 +4186,7 @@ plruby.use_strict = true        # generates error: unknown class name
       <listitem>
        <para>
         If on, emit information about resource usage during sort operations.
-        This option is only available if the <symbol>TRACE_SORT</symbol> macro
+        This parameter is only available if the <symbol>TRACE_SORT</symbol> macro
         was defined when <productname>PostgreSQL</productname> was compiled.
         (However, <symbol>TRACE_SORT</symbol> is currently defined by default.)
        </para>
@@ -4189,7 +4215,7 @@ plruby.use_strict = true        # generates error: unknown class name
       </indexterm>
       <listitem>
        <para>
-        If on, emit WAL-related debugging output. This option is
+        If on, emit WAL-related debugging output. This parameter is
         only available if the <symbol>WAL_DEBUG</symbol> macro was
         defined when <productname>PostgreSQL</productname> was
         compiled.
