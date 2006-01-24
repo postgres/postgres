@@ -1,0 +1,123 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include "sqltypes.h"
+
+EXEC SQL include sqlca.h;
+
+/* Check SQLCODE, and produce a "standard error" if it's wrong! */
+static void sql_check(char *fn, char *caller, int ignore)
+{
+  char errorstring[255];
+
+  if (SQLCODE == ignore)
+    return;
+  else
+  {
+    if (SQLCODE != 0)
+    {
+
+      sprintf(errorstring, "**SQL error %ld doing '%s' in function '%s'. [%s]",
+             SQLCODE, caller, fn, sqlca.sqlerrm.sqlerrmc);
+      fprintf(stderr, "%s", errorstring);
+      printf("%s\n", errorstring);
+
+      /* attempt a ROLLBACK */
+      EXEC SQL rollback;
+
+      if (SQLCODE == 0)
+      {
+        sprintf(errorstring, "Rollback successful.\n");
+      } else {
+        sprintf(errorstring, "Rollback failed with code %ld.\n", SQLCODE);
+      }
+
+      fprintf(stderr, "%s", errorstring);
+      printf("%s\n", errorstring);
+
+      exit(1);
+    }
+  }
+}
+
+
+
+int main(void)
+{
+	EXEC SQL BEGIN DECLARE SECTION;
+		int c;
+		timestamp d;
+		timestamp maxd;
+		char dbname[30];
+	EXEC SQL END DECLARE SECTION;
+
+	EXEC SQL whenever sqlerror sqlprint;
+
+	strcpy(dbname, "mm");
+	EXEC SQL connect to :dbname;
+	sql_check("main", "connect", 0);
+
+	EXEC SQL create table history (customerid integer, timestamp timestamp without time zone, action_taken char(5), narrative varchar(100));
+	sql_check("main", "create", 0);
+	
+	EXEC SQL insert into history 
+			(customerid, timestamp, action_taken, narrative)
+			values(1, now(), 'test', 'test');
+	sql_check("main", "insert", 0);
+
+	EXEC SQL select max(timestamp)
+		   into :maxd
+		   from history;
+	sql_check("main", "select max", 100);
+
+	if (risnull(CDTIMETYPE, (char *) &maxd))
+	{
+		printf("Nothing on the history table\n\n");
+		exit(0);
+	}
+
+	EXEC SQL select customerid, timestamp
+		   into :c, :d
+		   from history
+	          where timestamp = :maxd
+		  limit 1;
+	sql_check("main", "select", 0);
+
+	printf("Read in customer %d\n", c);
+	
+	/* Adding 1 to d adds 1 second. So:
+	         60           1 minute
+	       3600           1 hour
+              86400           1 day */
+	d=d+86400;
+	c++;
+
+	EXEC SQL insert into history
+			(customerid, timestamp, action_taken, narrative)
+			values(:c, :d, 'test', 'test');
+	sql_check("main", "update", 0);
+  
+	EXEC SQL commit;
+
+	EXEC SQL drop table history;
+	sql_check("main", "drop", 0);
+
+	EXEC SQL commit;
+
+	EXEC SQL disconnect;
+	sql_check("main", "disconnect", 0);
+
+	printf("All OK!\n");
+
+	exit(0);
+
+/*
+                 Table "public.history"
+    Column    |            Type             | Modifiers
+--------------+-----------------------------+-----------
+ customerid   | integer                     | not null
+ timestamp    | timestamp without time zone | not null
+ action_taken | character(5)                | not null
+ narrative    | character varying(100)      |
+*/
+
+}

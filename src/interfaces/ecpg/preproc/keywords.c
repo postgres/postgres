@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.71 2005/12/27 04:00:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.72 2006/01/24 11:01:37 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,6 +158,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"header", HEADER_P},
 	{"hold", HOLD},
 	{"hour", HOUR_P},
+	{"if", IF_P},
 	{"ilike", ILIKE},
 	{"immediate", IMMEDIATE},
 	{"immutable", IMMUTABLE},
@@ -246,6 +247,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"out", OUT_P},
 	{"outer", OUTER_P},
 	{"overlaps", OVERLAPS},
+	{"owned", OWNED},
 	{"owner", OWNER},
 	{"partial", PARTIAL},
 	{"password", PASSWORD},
@@ -262,6 +264,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"quote", QUOTE},
 	{"read", READ},
 	{"real", REAL},
+	{"reassign", REASSIGN},
 	{"recheck", RECHECK},
 	{"references", REFERENCES},
 	{"reindex", REINDEX},

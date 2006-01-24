@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.315 2005/12/29 04:53:18 neilc Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.316 2006/01/24 11:01:37 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -377,7 +377,7 @@ add_additional_variables(char *name, bool insert)
 
 	HANDLER HAVING HEADER_P HOLD HOUR_P
 
-	ILIKE IMMEDIATE IMMUTABLE IMPLICIT_P IN_P INCLUDING INCREMENT
+	IF_P ILIKE IMMEDIATE IMMUTABLE IMPLICIT_P IN_P INCLUDING INCREMENT
 	INDEX INHERIT INHERITS INITIALLY INNER_P INOUT INPUT_P
 	INSENSITIVE INSERT INSTEAD INT_P INTEGER INTERSECT
 	INTERVAL INTO INVOKER IS ISNULL ISOLATION
@@ -397,7 +397,7 @@ add_additional_variables(char *name, bool insert)
 	NOT NOTHING NOTIFY NOTNULL NOWAIT NULL_P NULLIF NUMERIC
 
 	OBJECT_P OF OFF OFFSET OIDS OLD ON ONLY OPERATOR OPTION OR ORDER
-        OUT_P OUTER_P OVERLAPS OVERLAY OWNER
+        OUT_P OUTER_P OVERLAPS OVERLAY OWNED OWNER
 
 	PARTIAL PASSWORD PLACING POSITION
 	PRECISION PRESERVE PREPARE PREPARED PRIMARY
@@ -405,7 +405,7 @@ add_additional_variables(char *name, bool insert)
 
 	QUOTE
 
-	READ REAL RECHECK REFERENCES REINDEX RELATIVE_P RELEASE RENAME
+	READ REAL REASSIGN RECHECK REFERENCES REINDEX RELATIVE_P RELEASE RENAME
 	REPEATABLE REPLACE RESET RESTART RESTRICT RETURNS REVOKE RIGHT
 	ROLE ROLLBACK ROW ROWS RULE
 
@@ -520,7 +520,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	ViewStmt LoadStmt CreatedbStmt createdb_opt_item ExplainableStmt
 %type  <str>	createdb_opt_list opt_encoding OptInherit opt_equal
 %type  <str>	privilege_list privilege privilege_target
-%type  <str>	opt_grant_grant_option cursor_options
+%type  <str>	opt_grant_grant_option cursor_options DropOwnedStmt
 %type  <str>	transaction_mode_list_or_empty transaction_mode_list
 %type  <str>	function_with_argtypes_list function_with_argtypes IntConstVar
 %type  <str>	DropdbStmt ClusterStmt grantee RevokeStmt Bit DropOpClassStmt
@@ -531,7 +531,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	ConstraintTimeSpec AlterDatabaseSetStmt DropAssertStmt
 %type  <str>	select_offset_value ReindexStmt join_type opt_boolean
 %type  <str>	join_qual joined_table opclass_item 
-%type  <str>	lock_type array_expr_list
+%type  <str>	lock_type array_expr_list ReassignOwnedStmt
 %type  <str>	OptConstrFromTable OptTempTableName StringConst array_expr
 %type  <str>	constraints_set_mode comment_type 
 %type  <str>	CreateGroupStmt AlterGroupStmt DropGroupStmt key_delete
@@ -698,6 +698,7 @@ stmt:  AlterDatabaseStmt		{ output_statement($1, 0, connection); }
 		| DropCastStmt		{ output_statement($1, 0, connection); }
 		| DropGroupStmt		{ output_statement($1, 0, connection); }
 		| DropOpClassStmt	{ output_statement($1, 0, connection); }
+		| DropOwnedStmt		{ output_statement($1, 0, connection); }
 		| DropPLangStmt		{ output_statement($1, 0, connection); }
 		| DropRoleStmt		{ output_statement($1, 0, connection); }
 		| DropRuleStmt		{ output_statement($1, 0, connection); }
@@ -718,6 +719,7 @@ stmt:  AlterDatabaseStmt		{ output_statement($1, 0, connection); }
 		| LockStmt		{ output_statement($1, 0, connection); }
 		| NotifyStmt		{ output_statement($1, 0, connection); }
 /*		| PrepareStmt		{ output_statement($1, 0, connection); }*/
+		| ReassignOwnedStmt	{ output_statement($1, 0, connection); }
 		| ReindexStmt		{ output_statement($1, 0, connection); }
 		| RemoveAggrStmt	{ output_statement($1, 0, connection); }
 		| RemoveOperStmt	{ output_statement($1, 0, connection); }
@@ -924,6 +926,7 @@ opt_with:  WITH 		{ $$ = make_str("with"); }
  */
 OptRoleList:
 	PASSWORD Sconst			{ $$ = cat2_str(make_str("password"), $2); }
+	| PASSWORD NULL_P		{ $$ = make_str("password null"); }
 	| ENCRYPTED PASSWORD Sconst	{ $$ = cat2_str(make_str("encrypted password"), $3); }
 	| UNENCRYPTED PASSWORD Sconst	{ $$ = cat2_str(make_str("unencrypted password"), $3); }
 	| SUPERUSER_P			{ $$ = make_str("superuser"); }
@@ -1995,11 +1998,35 @@ DropOpClassStmt: DROP OPERATOR CLASS any_name USING access_method opt_drop_behav
  *
  *		QUERY:
  *
- *			   DROP itemtype itemname [, itemname ...]
+ *		DROP OWNED BY username [, username ...] [ RESTRICT | CASCADE ]
+ *		REASSIGN OWNED BY username [, username ...] TO username
+ *
+ *****************************************************************************/
+DropOwnedStmt:
+	DROP OWNED BY name_list opt_drop_behavior
+		{
+			$$ = cat_str(3, make_str("drop owned by"), $4, $5);
+		}
+		;
+
+ReassignOwnedStmt:
+	REASSIGN OWNED BY name_list TO name
+		{
+			$$ = cat_str(4, make_str("reassign owned by"), $4, make_str("to"), $6);
+		}
+		;
+ 
+/*****************************************************************************
+ *
+ *		QUERY:
+ *
+ *			   DROP itemtype [ IF EXISTS ] itemname [, itemname ...] [ RESTRICT | CASCADE ]
  *
  *****************************************************************************/
 
-DropStmt:  DROP drop_type any_name_list opt_drop_behavior
+DropStmt:  DROP drop_type IF_P EXISTS any_name_list opt_drop_behavior
+			{ $$ = cat_str(5, make_str("drop"), $2, make_str("if exists"), $5, $6); }
+ 	 | DROP drop_type any_name_list opt_drop_behavior
 			{ $$ = cat_str(4, make_str("drop"), $2, $3, $4); }
 		;
 
@@ -2818,13 +2845,15 @@ alterdb_opt_item:
 											
 /*****************************************************************************
  *
- *		DROP DATABASE
+ *		DROP DATABASE [ IF EXISTS ]
  *
  *
  *****************************************************************************/
 
 DropdbStmt: DROP DATABASE database_name
 			{ $$ = cat2_str(make_str("drop database"), $3); }
+	  | DROP DATABASE IF_P EXISTS database_name
+			{ $$ = cat2_str(make_str("drop database if exists"), $5); }
 		;
 
 
@@ -3806,6 +3835,8 @@ a_expr:  c_expr
 			{ $$ = cat2_str($1, make_str("is not unknown")); }
 		| a_expr IS DISTINCT FROM a_expr %prec IS
 			{ $$ = cat_str(3, $1, make_str("is distinct from"), $5); }
+		| a_expr IS NOT DISTINCT FROM a_expr %prec IS
+			{ $$ = cat_str(3, $1, make_str("is not distinct from"), $6); }
 		| a_expr IS OF '(' type_list ')' %prec IS
 			{ $$ = cat_str(4, $1, make_str("is of ("), $5, make_str(")")); }
 		| a_expr IS NOT OF '(' type_list ')' %prec IS
@@ -3870,6 +3901,8 @@ b_expr:  c_expr
 			{ $$ = cat2_str($1, $2); }
 		| b_expr IS DISTINCT FROM b_expr %prec IS
 			{ $$ = cat_str(3, $1, make_str("is distinct from"), $5); }
+		| b_expr IS NOT DISTINCT FROM b_expr %prec IS
+			{ $$ = cat_str(3, $1, make_str("is not distinct from"), $6); }
 		| b_expr IS OF '(' b_expr ')' %prec IS
 			{ $$ = cat_str(4, $1, make_str("is of ("), $5, make_str(")")); }
 		| b_expr IS NOT OF '(' b_expr ')' %prec IS
@@ -6111,6 +6144,7 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| HEADER_P			{ $$ = make_str("header"); }
 		| HOLD				{ $$ = make_str("hold"); }
 /*		| HOUR_P			{ $$ = make_str("hour"); }*/
+		| IF_P				{ $$ = make_str("if"); }
 		| IMMEDIATE			{ $$ = make_str("immediate"); }
 		| IMMUTABLE			{ $$ = make_str("immutable"); }
 		| IMPLICIT_P			{ $$ = make_str("implicit"); }
@@ -6159,6 +6193,7 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| OIDS				{ $$ = make_str("oids"); }
 		| OPERATOR			{ $$ = make_str("operator"); }
 		| OPTION			{ $$ = make_str("option"); }
+		| OWNED				{ $$ = make_str("owned"); }
 		| OWNER				{ $$ = make_str("owner"); }
 		| PARTIAL			{ $$ = make_str("partial"); }
 		| PASSWORD			{ $$ = make_str("password"); }
@@ -6171,6 +6206,7 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| PROCEDURE			{ $$ = make_str("procedure"); }
 		| QUOTE				{ $$ = make_str("quote"); }
 		| READ				{ $$ = make_str("read"); }
+		| REASSIGN			{ $$ = make_str("reassign"); }
 		| RECHECK			{ $$ = make_str("recheck"); }
 		| REINDEX			{ $$ = make_str("reindex"); }
 		| RELATIVE_P			{ $$ = make_str("relative"); }

@@ -1971,6 +1971,11 @@ Fr Jan 13 17:29:30 CET 2006
 Tu Jan 17 18:53:03 CET 2006
 
 	- Data transferred binary is now put into the variables verbatim.
+	
+Tu Jan 24 10:59:21 CET 2006
+
+	- Synced parser and keyword list.
+	- Added another test case.
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.
 
