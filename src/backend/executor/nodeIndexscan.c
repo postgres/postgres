@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.109 2005/12/03 05:51:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.110 2006/01/25 20:29:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/nbtree.h"
 #include "executor/execdebug.h"
 #include "executor/nodeIndexscan.h"
 #include "miscadmin.h"
@@ -505,6 +506,24 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	ExecInitScanTupleSlot(estate, &indexstate->ss);
 
 	/*
+	 * open the base relation and acquire appropriate lock on it.
+	 */
+	currentRelation = ExecOpenScanRelation(estate, node->scan.scanrelid);
+
+	indexstate->ss.ss_currentRelation = currentRelation;
+	indexstate->ss.ss_currentScanDesc = NULL;	/* no heap scan here */
+
+	/*
+	 * get the scan type from the relation descriptor.
+	 */
+	ExecAssignScanType(&indexstate->ss, RelationGetDescr(currentRelation), false);
+
+	/*
+	 * Open the index relation.
+	 */
+	indexstate->iss_RelationDesc = index_open(node->indexid);
+
+	/*
 	 * Initialize index-specific scan state
 	 */
 	indexstate->iss_RuntimeKeysReady = false;
@@ -515,6 +534,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	 * build the index scan keys from the index qualification
 	 */
 	ExecIndexBuildScanKeys((PlanState *) indexstate,
+						   indexstate->iss_RelationDesc,
 						   node->indexqual,
 						   node->indexstrategy,
 						   node->indexsubtype,
@@ -545,20 +565,8 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	}
 
 	/*
-	 * open the base relation and acquire appropriate lock on it.
-	 */
-	currentRelation = ExecOpenScanRelation(estate, node->scan.scanrelid);
-
-	indexstate->ss.ss_currentRelation = currentRelation;
-	indexstate->ss.ss_currentScanDesc = NULL;	/* no heap scan here */
-
-	/*
-	 * get the scan type from the relation descriptor.
-	 */
-	ExecAssignScanType(&indexstate->ss, RelationGetDescr(currentRelation), false);
-
-	/*
-	 * Open the index relation and initialize relation and scan descriptors.
+	 * Initialize scan descriptor.
+	 *
 	 * Note we acquire no locks here; the index machinery does its own locks
 	 * and unlocks.  (We rely on having a lock on the parent table to
 	 * ensure the index won't go away!)  Furthermore, if the parent table
@@ -566,7 +574,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	 * opened and write-locked the index, so we can tell the index machinery
 	 * not to bother getting an extra lock.
 	 */
-	indexstate->iss_RelationDesc = index_open(node->indexid);
 	relistarget = ExecRelationIsTargetRelation(estate, node->scan.scanrelid);
 	indexstate->iss_ScanDesc = index_beginscan(currentRelation,
 											   indexstate->iss_RelationDesc,
@@ -595,7 +602,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
  * The index quals are passed to the index AM in the form of a ScanKey array.
  * This routine sets up the ScanKeys, fills in all constant fields of the
  * ScanKeys, and prepares information about the keys that have non-constant
- * comparison values.  We divide index qual expressions into three types:
+ * comparison values.  We divide index qual expressions into four types:
  *
  * 1. Simple operator with constant comparison value ("indexkey op constant").
  * For these, we just fill in a ScanKey containing the constant value.
@@ -605,7 +612,12 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
  * expression value, and set up an IndexRuntimeKeyInfo struct to drive
  * evaluation of the expression at the right times.
  *
- * 3. ScalarArrayOpExpr ("indexkey op ANY (array-expression)").  For these,
+ * 3. RowCompareExpr ("(indexkey, indexkey, ...) op (expr, expr, ...)").
+ * For these, we create a header ScanKey plus a subsidiary ScanKey array,
+ * as specified in access/skey.h.  The elements of the row comparison
+ * can have either constant or non-constant comparison values.
+ *
+ * 4. ScalarArrayOpExpr ("indexkey op ANY (array-expression)").  For these,
  * we create a ScanKey with everything filled in except the comparison value,
  * and set up an IndexArrayKeyInfo struct to drive processing of the qual.
  * (Note that we treat all array-expressions as requiring runtime evaluation,
@@ -614,9 +626,14 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
  * Input params are:
  *
  * planstate: executor state node we are working for
+ * index: the index we are building scan keys for
  * quals: indexquals expressions
  * strategies: associated operator strategy numbers
  * subtypes: associated operator subtype OIDs
+ *
+ * (Any elements of the strategies and subtypes lists that correspond to
+ * RowCompareExpr quals are not used here; instead we look up the info
+ * afresh.)
  *
  * Output params are:
  *
@@ -631,8 +648,8 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
  * ScalarArrayOpExpr quals are not supported.
  */
 void
-ExecIndexBuildScanKeys(PlanState *planstate, List *quals,
-					   List *strategies, List *subtypes,
+ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
+					   List *quals, List *strategies, List *subtypes,
 					   ScanKey *scanKeys, int *numScanKeys,
 					   IndexRuntimeKeyInfo **runtimeKeys, int *numRuntimeKeys,
 					   IndexArrayKeyInfo **arrayKeys, int *numArrayKeys)
@@ -644,19 +661,41 @@ ExecIndexBuildScanKeys(PlanState *planstate, List *quals,
 	IndexRuntimeKeyInfo *runtime_keys;
 	IndexArrayKeyInfo *array_keys;
 	int			n_scan_keys;
+	int			extra_scan_keys;
 	int			n_runtime_keys;
 	int			n_array_keys;
 	int			j;
 
+	/*
+	 * If there are any RowCompareExpr quals, we need extra ScanKey entries
+	 * for them, and possibly extra runtime-key entries.  Count up what's
+	 * needed.  (The subsidiary ScanKey arrays for the RowCompareExprs could
+	 * be allocated as separate chunks, but we have to count anyway to make
+	 * runtime_keys large enough, so might as well just do one palloc.)
+	 */
 	n_scan_keys = list_length(quals);
-	scan_keys = (ScanKey) palloc(n_scan_keys * sizeof(ScanKeyData));
+	extra_scan_keys = 0;
+	foreach(qual_cell, quals)
+	{
+		if (IsA(lfirst(qual_cell), RowCompareExpr))
+			extra_scan_keys +=
+				list_length(((RowCompareExpr *) lfirst(qual_cell))->opnos);
+	}
+	scan_keys = (ScanKey)
+		palloc((n_scan_keys + extra_scan_keys) * sizeof(ScanKeyData));
 	/* Allocate these arrays as large as they could possibly need to be */
 	runtime_keys = (IndexRuntimeKeyInfo *)
-		palloc(n_scan_keys * sizeof(IndexRuntimeKeyInfo));
+		palloc((n_scan_keys + extra_scan_keys) * sizeof(IndexRuntimeKeyInfo));
 	array_keys = (IndexArrayKeyInfo *)
 		palloc0(n_scan_keys * sizeof(IndexArrayKeyInfo));
 	n_runtime_keys = 0;
 	n_array_keys = 0;
+
+	/*
+	 * Below here, extra_scan_keys is index of first cell to use for next
+	 * RowCompareExpr
+	 */
+	extra_scan_keys = n_scan_keys;
 
 	/*
 	 * for each opclause in the given qual, convert each qual's opclause into
@@ -748,6 +787,119 @@ ExecIndexBuildScanKeys(PlanState *planstate, List *quals,
 								   subtype,		/* strategy subtype */
 								   opfuncid,	/* reg proc to use */
 								   scanvalue);	/* constant */
+		}
+		else if (IsA(clause, RowCompareExpr))
+		{
+			/* (indexkey, indexkey, ...) op (expression, expression, ...) */
+			RowCompareExpr *rc = (RowCompareExpr *) clause;
+			ListCell *largs_cell = list_head(rc->largs);
+			ListCell *rargs_cell = list_head(rc->rargs);
+			ListCell *opnos_cell = list_head(rc->opnos);
+			ScanKey		first_sub_key = &scan_keys[extra_scan_keys];
+
+			/* Scan RowCompare columns and generate subsidiary ScanKey items */
+			while (opnos_cell != NULL)
+			{
+				ScanKey		this_sub_key = &scan_keys[extra_scan_keys];
+				int			flags = SK_ROW_MEMBER;
+				Datum		scanvalue;
+				Oid			opno;
+				Oid			opclass;
+				int			op_strategy;
+				Oid			op_subtype;
+				bool		op_recheck;
+
+				/*
+				 * leftop should be the index key Var, possibly relabeled
+				 */
+				leftop = (Expr *) lfirst(largs_cell);
+				largs_cell = lnext(largs_cell);
+
+				if (leftop && IsA(leftop, RelabelType))
+					leftop = ((RelabelType *) leftop)->arg;
+
+				Assert(leftop != NULL);
+
+				if (!(IsA(leftop, Var) &&
+					  var_is_rel((Var *) leftop)))
+					elog(ERROR, "indexqual doesn't have key on left side");
+
+				varattno = ((Var *) leftop)->varattno;
+
+				/*
+				 * rightop is the constant or variable comparison value
+				 */
+				rightop = (Expr *) lfirst(rargs_cell);
+				rargs_cell = lnext(rargs_cell);
+
+				if (rightop && IsA(rightop, RelabelType))
+					rightop = ((RelabelType *) rightop)->arg;
+
+				Assert(rightop != NULL);
+
+				if (IsA(rightop, Const))
+				{
+					/* OK, simple constant comparison value */
+					scanvalue = ((Const *) rightop)->constvalue;
+					if (((Const *) rightop)->constisnull)
+						flags |= SK_ISNULL;
+				}
+				else
+				{
+					/* Need to treat this one as a runtime key */
+					runtime_keys[n_runtime_keys].scan_key = this_sub_key;
+					runtime_keys[n_runtime_keys].key_expr =
+						ExecInitExpr(rightop, planstate);
+					n_runtime_keys++;
+					scanvalue = (Datum) 0;
+				}
+
+				/*
+				 * We have to look up the operator's associated btree support
+				 * function
+				 */
+				opno = lfirst_oid(opnos_cell);
+				opnos_cell = lnext(opnos_cell);
+
+				if (index->rd_rel->relam != BTREE_AM_OID ||
+					varattno < 1 || varattno > index->rd_index->indnatts)
+					elog(ERROR, "bogus RowCompare index qualification");
+				opclass = index->rd_indclass->values[varattno - 1];
+
+				get_op_opclass_properties(opno, opclass,
+									&op_strategy, &op_subtype, &op_recheck);
+
+				if (op_strategy != rc->rctype)
+					elog(ERROR, "RowCompare index qualification contains wrong operator");
+
+				opfuncid = get_opclass_proc(opclass, op_subtype, BTORDER_PROC);
+
+				/*
+				 * initialize the subsidiary scan key's fields appropriately
+				 */
+				ScanKeyEntryInitialize(this_sub_key,
+									   flags,
+									   varattno,	/* attribute number */
+									   op_strategy,	/* op's strategy */
+									   op_subtype,	/* strategy subtype */
+									   opfuncid,	/* reg proc to use */
+									   scanvalue);	/* constant */
+				extra_scan_keys++;
+			}
+
+			/* Mark the last subsidiary scankey correctly */
+			scan_keys[extra_scan_keys - 1].sk_flags |= SK_ROW_END;
+
+			/*
+			 * We don't use ScanKeyEntryInitialize for the header because
+			 * it isn't going to contain a valid sk_func pointer.
+			 */
+			MemSet(this_scan_key, 0, sizeof(ScanKeyData));
+			this_scan_key->sk_flags = SK_ROW_HEADER;
+			this_scan_key->sk_attno = first_sub_key->sk_attno;
+			this_scan_key->sk_strategy = rc->rctype;
+			/* sk_subtype, sk_func not used in a header */
+			this_scan_key->sk_argument = PointerGetDatum(first_sub_key);
 		}
 		else if (IsA(clause, ScalarArrayOpExpr))
 		{

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.196 2005/12/06 16:50:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.197 2006/01/25 20:29:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,11 @@ static bool match_clause_to_indexcol(IndexOptInfo *index,
 						 SaOpControl saop_control);
 static bool is_indexable_operator(Oid expr_op, Oid opclass,
 								  bool indexkey_on_left);
+static bool match_rowcompare_to_indexcol(IndexOptInfo *index,
+							 int indexcol,
+							 Oid opclass,
+							 RowCompareExpr *clause,
+							 Relids outer_relids);
 static Relids indexable_outerrelids(RelOptInfo *rel);
 static bool matches_any_index(RestrictInfo *rinfo, RelOptInfo *rel,
 				  Relids outer_relids);
@@ -82,7 +87,10 @@ static bool match_special_index_operator(Expr *clause, Oid opclass,
 							 bool indexkey_on_left);
 static Expr *expand_boolean_index_clause(Node *clause, int indexcol,
 							IndexOptInfo *index);
-static List *expand_indexqual_condition(RestrictInfo *rinfo, Oid opclass);
+static List *expand_indexqual_opclause(RestrictInfo *rinfo, Oid opclass);
+static RestrictInfo *expand_indexqual_rowcompare(RestrictInfo *rinfo,
+							IndexOptInfo *index,
+							int indexcol);
 static List *prefix_quals(Node *leftop, Oid opclass,
 			 Const *prefix, Pattern_Prefix_Status pstatus);
 static List *network_prefix_quals(Node *leftop, Oid expr_op, Oid opclass,
@@ -900,6 +908,14 @@ group_clauses_by_indexkey(IndexOptInfo *index,
  *	  We do not actually do the commuting here, but we check whether a
  *	  suitable commutator operator is available.
  *
+ *	  It is also possible to match RowCompareExpr clauses to indexes (but
+ *	  currently, only btree indexes handle this).  In this routine we will
+ *	  report a match if the first column of the row comparison matches the
+ *	  target index column.  This is sufficient to guarantee that some index
+ *	  condition can be constructed from the RowCompareExpr --- whether the
+ *	  remaining columns match the index too is considered in
+ *	  expand_indexqual_rowcompare().
+ *
  *	  It is also possible to match ScalarArrayOpExpr clauses to indexes, when
  *	  the clause is of the form "indexkey op ANY (arrayconst)".  Since the
  *	  executor can only handle these in the context of bitmap index scans,
@@ -944,7 +960,8 @@ match_clause_to_indexcol(IndexOptInfo *index,
 
 	/*
 	 * Clause must be a binary opclause, or possibly a ScalarArrayOpExpr
-	 * (which is always binary, by definition).
+	 * (which is always binary, by definition).  Or it could be a
+	 * RowCompareExpr, which we pass off to match_rowcompare_to_indexcol().
 	 */
 	if (is_opclause(clause))
 	{
@@ -971,6 +988,12 @@ match_clause_to_indexcol(IndexOptInfo *index,
 		right_relids = pull_varnos(rightop);
 		expr_op = saop->opno;
 		plain_op = false;
+	}
+	else if (clause && IsA(clause, RowCompareExpr))
+	{
+		return match_rowcompare_to_indexcol(index, indexcol, opclass,
+											(RowCompareExpr *) clause,
+											outer_relids);
 	}
 	else
 		return false;
@@ -1038,6 +1061,74 @@ is_indexable_operator(Oid expr_op, Oid opclass, bool indexkey_on_left)
 	/* OK if the (commuted) operator is a member of the index's opclass */
 	return op_in_opclass(expr_op, opclass);
 }
+
+/*
+ * match_rowcompare_to_indexcol()
+ *	  Handles the RowCompareExpr case for match_clause_to_indexcol(),
+ *	  which see for comments.
+ */
+static bool
+match_rowcompare_to_indexcol(IndexOptInfo *index,
+							 int indexcol,
+							 Oid opclass,
+							 RowCompareExpr *clause,
+							 Relids outer_relids)
+{
+	Node	   *leftop,
+			   *rightop;
+	Oid			expr_op;
+
+	/* Forget it if we're not dealing with a btree index */
+	if (index->relam != BTREE_AM_OID)
+		return false;
+
+	/*
+	 * We could do the matching on the basis of insisting that the opclass
+	 * shown in the RowCompareExpr be the same as the index column's opclass,
+	 * but that does not work well for cross-type comparisons (the opclass
+	 * could be for the other datatype).  Also it would fail to handle indexes
+	 * using reverse-sort opclasses.  Instead, match if the operator listed in
+	 * the RowCompareExpr is the < <= > or >= member of the index opclass
+	 * (after commutation, if the indexkey is on the right).
+	 */
+	leftop = (Node *) linitial(clause->largs);
+	rightop = (Node *) linitial(clause->rargs);
+	expr_op = linitial_oid(clause->opnos);
+
+	/*
+	 * These syntactic tests are the same as in match_clause_to_indexcol()
+	 */
+	if (match_index_to_operand(leftop, indexcol, index) &&
+		bms_is_subset(pull_varnos(rightop), outer_relids) &&
+		!contain_volatile_functions(rightop))
+	{
+		/* OK, indexkey is on left */
+	}
+	else if (match_index_to_operand(rightop, indexcol, index) &&
+			 bms_is_subset(pull_varnos(leftop), outer_relids) &&
+			 !contain_volatile_functions(leftop))
+	{
+		/* indexkey is on right, so commute the operator */
+		expr_op = get_commutator(expr_op);
+		if (expr_op == InvalidOid)
+			return false;
+	}
+	else
+		return false;
+
+	/* We're good if the operator is the right type of opclass member */
+	switch (get_op_opclass_strategy(expr_op, opclass))
+	{
+		case BTLessStrategyNumber:
+		case BTLessEqualStrategyNumber:
+		case BTGreaterEqualStrategyNumber:
+		case BTGreaterStrategyNumber:
+			return true;
+	}
+
+	return false;
+}
+
 
 /****************************************************************************
  *				----  ROUTINES TO DO PARTIAL INDEX PREDICATE TESTS	----
@@ -2014,7 +2105,8 @@ match_special_index_operator(Expr *clause, Oid opclass,
  *	  of index qual clauses.  Standard qual clauses (those in the index's
  *	  opclass) are passed through unchanged.  Boolean clauses and "special"
  *	  index operators are expanded into clauses that the indexscan machinery
- *	  will know what to do with.
+ *	  will know what to do with.  RowCompare clauses are simplified if
+ *	  necessary to create a clause that is fully checkable by the index.
  *
  * The input list is ordered by index key, and so the output list is too.
  * (The latter is not depended on by any part of the core planner, I believe,
@@ -2041,13 +2133,14 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 		foreach(l, (List *) lfirst(clausegroup_item))
 		{
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
+			Expr   *clause = rinfo->clause;
 
 			/* First check for boolean cases */
 			if (IsBooleanOpclass(curClass))
 			{
 				Expr	   *boolqual;
 
-				boolqual = expand_boolean_index_clause((Node *) rinfo->clause,
+				boolqual = expand_boolean_index_clause((Node *) clause,
 													   indexcol,
 													   index);
 				if (boolqual)
@@ -2061,16 +2154,31 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 				}
 			}
 
-			/* Next check for ScalarArrayOp cases */
-			if (IsA(rinfo->clause, ScalarArrayOpExpr))
+			/*
+			 * Else it must be an opclause (usual case), ScalarArrayOp, or
+			 * RowCompare
+			 */
+			if (is_opclause(clause))
 			{
-				resultquals = lappend(resultquals, rinfo);
-				continue;
+				resultquals = list_concat(resultquals,
+										  expand_indexqual_opclause(rinfo,
+																	curClass));
 			}
-
-			resultquals = list_concat(resultquals,
-									  expand_indexqual_condition(rinfo,
-																 curClass));
+			else if (IsA(clause, ScalarArrayOpExpr))
+			{
+				/* no extra work at this time */
+				resultquals = lappend(resultquals, rinfo);
+			}
+			else if (IsA(clause, RowCompareExpr))
+			{
+				resultquals = lappend(resultquals,
+									  expand_indexqual_rowcompare(rinfo,
+																  index,
+																  indexcol));
+			}
+			else
+				elog(ERROR, "unsupported indexqual type: %d",
+					 (int) nodeTag(clause));
 		}
 
 		clausegroup_item = lnext(clausegroup_item);
@@ -2145,16 +2253,15 @@ expand_boolean_index_clause(Node *clause,
 }
 
 /*
- * expand_indexqual_condition --- expand a single indexqual condition
- *		(other than a boolean-qual or ScalarArrayOp case)
+ * expand_indexqual_opclause --- expand a single indexqual condition
+ *		that is an operator clause
  *
  * The input is a single RestrictInfo, the output a list of RestrictInfos
  */
 static List *
-expand_indexqual_condition(RestrictInfo *rinfo, Oid opclass)
+expand_indexqual_opclause(RestrictInfo *rinfo, Oid opclass)
 {
 	Expr	   *clause = rinfo->clause;
-
 	/* we know these will succeed */
 	Node	   *leftop = get_leftop(clause);
 	Node	   *rightop = get_rightop(clause);
@@ -2222,6 +2329,204 @@ expand_indexqual_condition(RestrictInfo *rinfo, Oid opclass)
 	}
 
 	return result;
+}
+
+/*
+ * expand_indexqual_rowcompare --- expand a single indexqual condition
+ *		that is a RowCompareExpr
+ *
+ * It's already known that the first column of the row comparison matches
+ * the specified column of the index.  We can use additional columns of the
+ * row comparison as index qualifications, so long as they match the index
+ * in the "same direction", ie, the indexkeys are all on the same side of the
+ * clause and the operators are all the same-type members of the opclasses.
+ * If all the columns of the RowCompareExpr match in this way, we just use it
+ * as-is.  Otherwise, we build a shortened RowCompareExpr (if more than one
+ * column matches) or a simple OpExpr (if the first-column match is all
+ * there is).  In these cases the modified clause is always "<=" or ">="
+ * even when the original was "<" or ">" --- this is necessary to match all
+ * the rows that could match the original.  (We are essentially building a
+ * lossy version of the row comparison when we do this.)
+ */
+static RestrictInfo *
+expand_indexqual_rowcompare(RestrictInfo *rinfo,
+							IndexOptInfo *index,
+							int indexcol)
+{
+	RowCompareExpr *clause = (RowCompareExpr *) rinfo->clause;
+	bool	var_on_left;
+	int		op_strategy;
+	Oid		op_subtype;
+	bool	op_recheck;
+	int		matching_cols;
+	Oid		expr_op;
+	List   *opclasses;
+	List   *subtypes;
+	List   *new_ops;
+	ListCell *largs_cell;
+	ListCell *rargs_cell;
+	ListCell *opnos_cell;
+
+	/* We have to figure out (again) how the first col matches */
+	var_on_left = match_index_to_operand((Node *) linitial(clause->largs),
+										 indexcol, index);
+	Assert(var_on_left ||
+		   match_index_to_operand((Node *) linitial(clause->rargs),
+								  indexcol, index));
+	expr_op = linitial_oid(clause->opnos);
+	if (!var_on_left)
+		expr_op = get_commutator(expr_op);
+	get_op_opclass_properties(expr_op, index->classlist[indexcol],
+							  &op_strategy, &op_subtype, &op_recheck);
+	/* Build lists of the opclasses and operator subtypes in case needed */
+	opclasses = list_make1_oid(index->classlist[indexcol]);
+	subtypes = list_make1_oid(op_subtype);
+
+	/*
+	 * See how many of the remaining columns match some index column
+	 * in the same way.  A note about rel membership tests: we assume
+	 * that the clause as a whole is already known to use only Vars from
+	 * the indexed relation and possibly some acceptable outer relations.
+	 * So the "other" side of any potential index condition is OK as long
+	 * as it doesn't use Vars from the indexed relation.
+	 */
+	matching_cols = 1;
+	largs_cell = lnext(list_head(clause->largs));
+	rargs_cell = lnext(list_head(clause->rargs));
+	opnos_cell = lnext(list_head(clause->opnos));
+
+	while (largs_cell != NULL)
+	{
+		Node	   *varop;
+		Node	   *constop;
+		int			i;
+
+		expr_op = lfirst_oid(opnos_cell);
+		if (var_on_left)
+		{
+			varop = (Node *) lfirst(largs_cell);
+			constop = (Node *) lfirst(rargs_cell);
+		}
+		else
+		{
+			varop = (Node *) lfirst(rargs_cell);
+			constop = (Node *) lfirst(largs_cell);
+			/* indexkey is on right, so commute the operator */
+			expr_op = get_commutator(expr_op);
+			if (expr_op == InvalidOid)
+				break;			/* operator is not usable */
+		}
+		if (bms_is_member(index->rel->relid, pull_varnos(constop)))
+			break;				/* no good, Var on wrong side */
+		if (contain_volatile_functions(constop))
+			break;				/* no good, volatile comparison value */
+
+		/*
+		 * The Var side can match any column of the index.  If the user
+		 * does something weird like having multiple identical index
+		 * columns, we insist the match be on the first such column,
+		 * to avoid confusing the executor.
+		 */
+		for (i = 0; i < index->ncolumns; i++)
+		{
+			if (match_index_to_operand(varop, i, index))
+				break;
+		}
+		if (i >= index->ncolumns)
+			break;				/* no match found */
+
+		/* Now, do we have the right operator for this column? */
+		if (get_op_opclass_strategy(expr_op, index->classlist[i])
+			!= op_strategy)
+			break;
+
+		/* Add opclass and subtype to lists */
+		get_op_opclass_properties(expr_op, index->classlist[i],
+								  &op_strategy, &op_subtype, &op_recheck);
+		opclasses = lappend_oid(opclasses, index->classlist[i]);
+		subtypes = lappend_oid(subtypes, op_subtype);
+
+		/* This column matches, keep scanning */
+		matching_cols++;
+		largs_cell = lnext(largs_cell);
+		rargs_cell = lnext(rargs_cell);
+		opnos_cell = lnext(opnos_cell);
+	}
+
+	/* Return clause as-is if it's all usable as index quals */
+	if (matching_cols == list_length(clause->opnos))
+		return rinfo;
+
+	/*
+	 * We have to generate a subset rowcompare (possibly just one OpExpr).
+	 * The painful part of this is changing < to <= or > to >=, so deal with
+	 * that first.
+	 */
+	if (op_strategy == BTLessEqualStrategyNumber ||
+		op_strategy == BTGreaterEqualStrategyNumber)
+	{
+		/* easy, just use the same operators */
+		new_ops = list_truncate(list_copy(clause->opnos), matching_cols);
+	}
+	else
+	{
+		ListCell *opclasses_cell;
+		ListCell *subtypes_cell;
+
+		if (op_strategy == BTLessStrategyNumber)
+			op_strategy = BTLessEqualStrategyNumber;
+		else if (op_strategy == BTGreaterStrategyNumber)
+			op_strategy = BTGreaterEqualStrategyNumber;
+		else
+			elog(ERROR, "unexpected strategy number %d", op_strategy);
+		new_ops = NIL;
+		forboth(opclasses_cell, opclasses, subtypes_cell, subtypes)
+		{
+			expr_op = get_opclass_member(lfirst_oid(opclasses_cell),
+										 lfirst_oid(subtypes_cell),
+										 op_strategy);
+			if (!OidIsValid(expr_op))				/* should not happen */
+				elog(ERROR, "could not find member %d of opclass %u",
+					 op_strategy, lfirst_oid(opclasses_cell));
+			if (!var_on_left)
+			{
+				expr_op = get_commutator(expr_op);
+				if (!OidIsValid(expr_op))			/* should not happen */
+					elog(ERROR, "could not find commutator of member %d of opclass %u",
+						 op_strategy, lfirst_oid(opclasses_cell));
+			}
+			new_ops = lappend_oid(new_ops, expr_op);
+		}
+	}
+
+	/* If we have more than one matching col, create a subset rowcompare */
+	if (matching_cols > 1)
+	{
+		RowCompareExpr *rc = makeNode(RowCompareExpr);
+
+		if (var_on_left)
+			rc->rctype = (RowCompareType) op_strategy;
+		else
+			rc->rctype = (op_strategy == BTLessEqualStrategyNumber) ?
+				ROWCOMPARE_GE : ROWCOMPARE_LE;
+		rc->opnos = new_ops;
+		rc->opclasses = list_truncate(list_copy(clause->opclasses),
+									  matching_cols);
+		rc->largs = list_truncate((List *) copyObject(clause->largs),
+								  matching_cols);
+		rc->rargs = list_truncate((List *) copyObject(clause->rargs),
+								  matching_cols);
+		return make_restrictinfo((Expr *) rc, true, false, NULL);
+	}
+	else
+	{
+		Expr *opexpr;
+
+		opexpr = make_opclause(linitial_oid(new_ops), BOOLOID, false,
+							   copyObject(linitial(clause->largs)),
+							   copyObject(linitial(clause->rargs)));
+		return make_restrictinfo(opexpr, true, false, NULL);
+	}
 }
 
 /*

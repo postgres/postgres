@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.69 2006/01/23 22:31:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.70 2006/01/25 20:29:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,12 @@
 #include "access/nbtree.h"
 #include "catalog/catalog.h"
 #include "executor/execdebug.h"
+
+
+static void _bt_mark_scankey_required(ScanKey skey);
+static bool _bt_check_rowcompare(ScanKey skey,
+								 IndexTuple tuple, TupleDesc tupdesc,
+								 ScanDirection dir, bool *continuescan);
 
 
 /*
@@ -218,6 +224,17 @@ _bt_formitem(IndexTuple itup)
  * equality quals for all columns.	In this case there can be at most one
  * (visible) matching tuple.  index_getnext uses this to avoid uselessly
  * continuing the scan after finding one match.
+ *
+ * Row comparison keys are treated the same as comparisons to nondefault
+ * datatypes: we just transfer them into the preprocessed array without any
+ * editorialization.  We can treat them the same as an ordinary inequality
+ * comparison on the row's first index column, for the purposes of the logic
+ * about required keys.
+ *
+ * Note: the reason we have to copy the preprocessed scan keys into private
+ * storage is that we are modifying the array based on comparisons of the
+ * key argument values, which could change on a rescan.  Therefore we can't
+ * overwrite the caller's data structure.
  *----------
  */
 void
@@ -273,26 +290,8 @@ _bt_preprocess_keys(IndexScanDesc scan)
 		memcpy(outkeys, inkeys, sizeof(ScanKeyData));
 		so->numberOfKeys = 1;
 		/* We can mark the qual as required if it's for first index col */
-		if (outkeys->sk_attno == 1)
-		{
-			switch (outkeys->sk_strategy)
-			{
-				case BTLessStrategyNumber:
-				case BTLessEqualStrategyNumber:
-					outkeys->sk_flags |= SK_BT_REQFWD;
-					break;
-				case BTEqualStrategyNumber:
-					outkeys->sk_flags |= (SK_BT_REQFWD | SK_BT_REQBKWD);
-					break;
-				case BTGreaterEqualStrategyNumber:
-				case BTGreaterStrategyNumber:
-					outkeys->sk_flags |= SK_BT_REQBKWD;
-					break;
-				default:
-					elog(ERROR, "unrecognized StrategyNumber: %d",
-						 (int) outkeys->sk_strategy);
-			}
-		}
+		if (cur->sk_attno == 1)
+			_bt_mark_scankey_required(outkeys);
 		return;
 	}
 
@@ -325,6 +324,7 @@ _bt_preprocess_keys(IndexScanDesc scan)
 		if (i < numberOfKeys)
 		{
 			/* See comments above: any NULL implies cannot match qual */
+			/* Note: we assume SK_ISNULL is never set in a row header key */
 			if (cur->sk_flags & SK_ISNULL)
 			{
 				so->qual_ok = false;
@@ -432,26 +432,7 @@ _bt_preprocess_keys(IndexScanDesc scan)
 
 					memcpy(outkey, xform[j], sizeof(ScanKeyData));
 					if (priorNumberOfEqualCols == attno - 1)
-					{
-						switch (outkey->sk_strategy)
-						{
-							case BTLessStrategyNumber:
-							case BTLessEqualStrategyNumber:
-								outkey->sk_flags |= SK_BT_REQFWD;
-								break;
-							case BTEqualStrategyNumber:
-								outkey->sk_flags |= (SK_BT_REQFWD |
-													 SK_BT_REQBKWD);
-								break;
-							case BTGreaterEqualStrategyNumber:
-							case BTGreaterStrategyNumber:
-								outkey->sk_flags |= SK_BT_REQBKWD;
-								break;
-							default:
-								elog(ERROR, "unrecognized StrategyNumber: %d",
-									 (int) outkey->sk_strategy);
-						}
-					}
+						_bt_mark_scankey_required(outkey);
 				}
 			}
 
@@ -470,11 +451,14 @@ _bt_preprocess_keys(IndexScanDesc scan)
 		/* check strategy this key's operator corresponds to */
 		j = cur->sk_strategy - 1;
 
-		/* if wrong RHS data type, punt */
-		if (cur->sk_subtype != InvalidOid)
+		/* if row comparison or wrong RHS data type, punt */
+		if ((cur->sk_flags & SK_ROW_HEADER) || cur->sk_subtype != InvalidOid)
 		{
-			memcpy(&outkeys[new_numberOfKeys++], cur,
-				   sizeof(ScanKeyData));
+			ScanKey		outkey = &outkeys[new_numberOfKeys++];
+
+			memcpy(outkey, cur, sizeof(ScanKeyData));
+			if (numberOfEqualCols == attno - 1)
+				_bt_mark_scankey_required(outkey);
 			if (j == (BTEqualStrategyNumber - 1))
 				hasOtherTypeEqual = true;
 			continue;
@@ -512,6 +496,73 @@ _bt_preprocess_keys(IndexScanDesc scan)
 	if (relation->rd_index->indisunique &&
 		relation->rd_rel->relnatts == numberOfEqualCols)
 		scan->keys_are_unique = true;
+}
+
+/*
+ * Mark a scankey as "required to continue the scan".
+ *
+ * Depending on the operator type, the key may be required for both scan
+ * directions or just one.  Also, if the key is a row comparison header,
+ * we have to mark the appropriate subsidiary ScanKeys as required.  In
+ * such cases, the first subsidiary key is required, but subsequent ones
+ * are required only as long as they correspond to successive index columns.
+ * Otherwise the row comparison ordering is different from the index ordering
+ * and so we can't stop the scan on the basis of those lower-order columns.
+ *
+ * Note: when we set required-key flag bits in a subsidiary scankey, we are
+ * scribbling on a data structure belonging to the index AM's caller, not on
+ * our private copy.  This should be OK because the marking will not change
+ * from scan to scan within a query, and so we'd just re-mark the same way
+ * anyway on a rescan.  Something to keep an eye on though.
+ */
+static void
+_bt_mark_scankey_required(ScanKey skey)
+{
+	int		addflags;
+
+	switch (skey->sk_strategy)
+	{
+		case BTLessStrategyNumber:
+		case BTLessEqualStrategyNumber:
+			addflags = SK_BT_REQFWD;
+			break;
+		case BTEqualStrategyNumber:
+			addflags = SK_BT_REQFWD | SK_BT_REQBKWD;
+			break;
+		case BTGreaterEqualStrategyNumber:
+		case BTGreaterStrategyNumber:
+			addflags = SK_BT_REQBKWD;
+			break;
+		default:
+			elog(ERROR, "unrecognized StrategyNumber: %d",
+				 (int) skey->sk_strategy);
+			addflags = 0;		/* keep compiler quiet */
+			break;
+	}
+
+	skey->sk_flags |= addflags;
+
+	if (skey->sk_flags & SK_ROW_HEADER)
+	{
+		ScanKey subkey = (ScanKey) DatumGetPointer(skey->sk_argument);
+		AttrNumber attno = skey->sk_attno;
+
+		/* First subkey should be same as the header says */
+		Assert(subkey->sk_attno == attno);
+
+		for (;;)
+		{
+			Assert(subkey->sk_flags & SK_ROW_MEMBER);
+			Assert(subkey->sk_strategy == skey->sk_strategy);
+			if (subkey->sk_attno != attno)
+				break;			/* non-adjacent key, so not required */
+			subkey->sk_flags |= addflags;
+			if (subkey->sk_flags & SK_ROW_END)
+				break;
+			subkey++;
+			attno++;
+		}
+	}
 }
 
 /*
@@ -595,6 +646,14 @@ _bt_checkkeys(IndexScanDesc scan,
 		bool		isNull;
 		Datum		test;
 
+		/* row-comparison keys need special processing */
+		if (key->sk_flags & SK_ROW_HEADER)
+		{
+			if (_bt_check_rowcompare(key, tuple, tupdesc, dir, continuescan))
+				continue;
+			return false;
+		}
+
 		datum = index_getattr(tuple,
 							  key->sk_attno,
 							  tupdesc,
@@ -659,4 +718,137 @@ _bt_checkkeys(IndexScanDesc scan,
 		scan->xs_ctup.t_self = tuple->t_tid;
 
 	return tuple_valid;
+}
+
+/*
+ * Test whether an indextuple satisfies a row-comparison scan condition.
+ *
+ * Return true if so, false if not.  If not, also clear *continuescan if
+ * it's not possible for any future tuples in the current scan direction
+ * to pass the qual.
+ *
+ * This is a subroutine for _bt_checkkeys, which see for more info.
+ */
+static bool
+_bt_check_rowcompare(ScanKey skey, IndexTuple tuple, TupleDesc tupdesc,
+					 ScanDirection dir, bool *continuescan)
+{
+	ScanKey		subkey = (ScanKey) DatumGetPointer(skey->sk_argument);
+	int32		cmpresult = 0;
+	bool		result;
+
+	/* First subkey should be same as the header says */
+	Assert(subkey->sk_attno == skey->sk_attno);
+
+	/* Loop over columns of the row condition */
+	for (;;)
+	{
+		Datum		datum;
+		bool		isNull;
+
+		Assert(subkey->sk_flags & SK_ROW_MEMBER);
+		Assert(subkey->sk_strategy == skey->sk_strategy);
+
+		datum = index_getattr(tuple,
+							  subkey->sk_attno,
+							  tupdesc,
+							  &isNull);
+
+		if (isNull)
+		{
+			/*
+			 * Since NULLs are sorted after non-NULLs, we know we have reached
+			 * the upper limit of the range of values for this index attr.	On
+			 * a forward scan, we can stop if this qual is one of the "must
+			 * match" subset.  On a backward scan, however, we should keep
+			 * going.
+			 */
+			if ((subkey->sk_flags & SK_BT_REQFWD) &&
+				ScanDirectionIsForward(dir))
+				*continuescan = false;
+
+			/*
+			 * In any case, this indextuple doesn't match the qual.
+			 */
+			return false;
+		}
+
+		if (subkey->sk_flags & SK_ISNULL)
+		{
+			/*
+			 * Unlike the simple-scankey case, this isn't a disallowed case.
+			 * But it can never match.  If all the earlier row comparison
+			 * columns are required for the scan direction, we can stop
+			 * the scan, because there can't be another tuple that will
+			 * succeed.
+			 */
+			if (subkey != (ScanKey) DatumGetPointer(skey->sk_argument))
+				subkey--;
+			if ((subkey->sk_flags & SK_BT_REQFWD) &&
+				ScanDirectionIsForward(dir))
+				*continuescan = false;
+			else if ((subkey->sk_flags & SK_BT_REQBKWD) &&
+					 ScanDirectionIsBackward(dir))
+				*continuescan = false;
+			return false;
+		}
+
+		/* Perform the test --- three-way comparison not bool operator */
+		cmpresult = DatumGetInt32(FunctionCall2(&subkey->sk_func,
+												datum,
+												subkey->sk_argument));
+
+		/* Done comparing if unequal, else advance to next column */
+		if (cmpresult != 0)
+			break;
+
+		if (subkey->sk_flags & SK_ROW_END)
+			break;
+		subkey++;
+	}
+
+	/*
+	 * At this point cmpresult indicates the overall result of the row
+	 * comparison, and subkey points to the deciding column (or the last
+	 * column if the result is "=").
+	 */
+	switch (subkey->sk_strategy)
+	{
+		/* EQ and NE cases aren't allowed here */
+		case BTLessStrategyNumber:
+			result = (cmpresult < 0);
+			break;
+		case BTLessEqualStrategyNumber:
+			result = (cmpresult <= 0);
+			break;
+		case BTGreaterEqualStrategyNumber:
+			result = (cmpresult >= 0);
+			break;
+		case BTGreaterStrategyNumber:
+			result = (cmpresult > 0);
+			break;
+		default:
+			elog(ERROR, "unrecognized RowCompareType: %d",
+				 (int) subkey->sk_strategy);
+			result = 0;			/* keep compiler quiet */
+			break;
+	}
+
+	if (!result)
+	{
+		/*
+		 * Tuple fails this qual.  If it's a required qual for the current
+		 * scan direction, then we can conclude no further tuples will
+		 * pass, either.  Note we have to look at the deciding column, not
+		 * necessarily the first or last column of the row condition.
+		 */
+		if ((subkey->sk_flags & SK_BT_REQFWD) &&
+			ScanDirectionIsForward(dir))
+			*continuescan = false;
+		else if ((subkey->sk_flags & SK_BT_REQBKWD) &&
+				 ScanDirectionIsBackward(dir))
+			*continuescan = false;
+	}
+
+	return result;
 }

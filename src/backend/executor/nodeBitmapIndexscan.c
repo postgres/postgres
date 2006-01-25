@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.14 2005/12/03 05:51:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.15 2006/01/25 20:29:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -245,6 +245,20 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate)
 #define BITMAPINDEXSCAN_NSLOTS 0
 
 	/*
+	 * We do not open or lock the base relation here.  We assume that an
+	 * ancestor BitmapHeapScan node is holding AccessShareLock (or better)
+	 * on the heap relation throughout the execution of the plan tree.
+	 */
+
+	indexstate->ss.ss_currentRelation = NULL;
+	indexstate->ss.ss_currentScanDesc = NULL;
+
+	/*
+	 * Open the index relation.
+	 */
+	indexstate->biss_RelationDesc = index_open(node->indexid);
+
+	/*
 	 * Initialize index-specific scan state
 	 */
 	indexstate->biss_RuntimeKeysReady = false;
@@ -255,6 +269,7 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate)
 	 * build the index scan keys from the index qualification
 	 */
 	ExecIndexBuildScanKeys((PlanState *) indexstate,
+						   indexstate->biss_RelationDesc,
 						   node->indexqual,
 						   node->indexstrategy,
 						   node->indexsubtype,
@@ -286,16 +301,8 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate)
 	}
 
 	/*
-	 * We do not open or lock the base relation here.  We assume that an
-	 * ancestor BitmapHeapScan node is holding AccessShareLock (or better)
-	 * on the heap relation throughout the execution of the plan tree.
-	 */
-
-	indexstate->ss.ss_currentRelation = NULL;
-	indexstate->ss.ss_currentScanDesc = NULL;
-
-	/*
-	 * Open the index relation and initialize relation and scan descriptors.
+	 * Initialize scan descriptor.
+	 *
 	 * Note we acquire no locks here; the index machinery does its own locks
 	 * and unlocks.  (We rely on having a lock on the parent table to
 	 * ensure the index won't go away!)  Furthermore, if the parent table
@@ -303,7 +310,6 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate)
 	 * opened and write-locked the index, so we can tell the index machinery
 	 * not to bother getting an extra lock.
 	 */
-	indexstate->biss_RelationDesc = index_open(node->indexid);
 	relistarget = ExecRelationIsTargetRelation(estate, node->scan.scanrelid);
 	indexstate->biss_ScanDesc =
 		index_beginscan_multi(indexstate->biss_RelationDesc,

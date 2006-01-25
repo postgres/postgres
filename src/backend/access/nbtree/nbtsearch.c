@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.101 2006/01/23 22:31:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.102 2006/01/25 20:29:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -551,6 +551,10 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 * one we use --- by definition, they are either redundant or
 	 * contradictory.
 	 *
+	 * In this loop, row-comparison keys are treated the same as keys on their
+	 * first (leftmost) columns.  We'll add on lower-order columns of the row
+	 * comparison below, if possible.
+	 *
 	 * The selected scan keys (at most one per index column) are remembered by
 	 * storing their addresses into the local startKeys[] array.
 	 *----------
@@ -657,44 +661,91 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	{
 		ScanKey		cur = startKeys[i];
 
-		/*
-		 * _bt_preprocess_keys disallows it, but it's place to add some code
-		 * later
-		 */
-		if (cur->sk_flags & SK_ISNULL)
-			elog(ERROR, "btree doesn't support is(not)null, yet");
+		Assert(cur->sk_attno == i+1);
 
-		/*
-		 * If scankey operator is of default subtype, we can use the cached
-		 * comparison procedure; otherwise gotta look it up in the catalogs.
-		 */
-		if (cur->sk_subtype == InvalidOid)
+		if (cur->sk_flags & SK_ROW_HEADER)
 		{
-			FmgrInfo   *procinfo;
-
-			procinfo = index_getprocinfo(rel, i + 1, BTORDER_PROC);
-			ScanKeyEntryInitializeWithInfo(scankeys + i,
-										   cur->sk_flags,
-										   i + 1,
-										   InvalidStrategy,
-										   InvalidOid,
-										   procinfo,
-										   cur->sk_argument);
+			/*
+			 * Row comparison header: look to the first row member instead.
+			 *
+			 * The member scankeys are already in insertion format (ie, they
+			 * have sk_func = 3-way-comparison function), but we have to
+			 * watch out for nulls, which _bt_preprocess_keys didn't check.
+			 * A null in the first row member makes the condition unmatchable,
+			 * just like qual_ok = false.
+			 */
+			cur = (ScanKey) DatumGetPointer(cur->sk_argument);
+			Assert(cur->sk_flags & SK_ROW_MEMBER);
+			if (cur->sk_flags & SK_ISNULL)
+				return false;
+			memcpy(scankeys + i, cur, sizeof(ScanKeyData));
+			/*
+			 * If the row comparison is the last positioning key we accepted,
+			 * try to add additional keys from the lower-order row members.
+			 * (If we accepted independent conditions on additional index
+			 * columns, we use those instead --- doesn't seem worth trying to
+			 * determine which is more restrictive.)  Note that this is OK
+			 * even if the row comparison is of ">" or "<" type, because the
+			 * condition applied to all but the last row member is effectively
+			 * ">=" or "<=", and so the extra keys don't break the positioning
+			 * scheme.
+			 */
+			if (i == keysCount - 1)
+			{
+				while (!(cur->sk_flags & SK_ROW_END))
+				{
+					cur++;
+					Assert(cur->sk_flags & SK_ROW_MEMBER);
+					if (cur->sk_attno != keysCount + 1)
+						break;	/* out-of-sequence, can't use it */
+					if (cur->sk_flags & SK_ISNULL)
+						break;	/* can't use null keys */
+					Assert(keysCount < INDEX_MAX_KEYS);
+					memcpy(scankeys + keysCount, cur, sizeof(ScanKeyData));
+					keysCount++;
+				}
+				break;			/* done with outer loop */
+			}
 		}
 		else
 		{
-			RegProcedure cmp_proc;
+			/*
+			 * Ordinary comparison key.  Transform the search-style scan key
+			 * to an insertion scan key by replacing the sk_func with the
+			 * appropriate btree comparison function.
+			 *
+			 * If scankey operator is of default subtype, we can use the
+			 * cached comparison function; otherwise gotta look it up in the
+			 * catalogs.
+			 */
+			if (cur->sk_subtype == InvalidOid)
+			{
+				FmgrInfo   *procinfo;
 
-			cmp_proc = get_opclass_proc(rel->rd_indclass->values[i],
-										cur->sk_subtype,
-										BTORDER_PROC);
-			ScanKeyEntryInitialize(scankeys + i,
-								   cur->sk_flags,
-								   i + 1,
-								   InvalidStrategy,
-								   cur->sk_subtype,
-								   cmp_proc,
-								   cur->sk_argument);
+				procinfo = index_getprocinfo(rel, cur->sk_attno, BTORDER_PROC);
+				ScanKeyEntryInitializeWithInfo(scankeys + i,
+											   cur->sk_flags,
+											   cur->sk_attno,
+											   InvalidStrategy,
+											   InvalidOid,
+											   procinfo,
+											   cur->sk_argument);
+			}
+			else
+			{
+				RegProcedure cmp_proc;
+
+				cmp_proc = get_opclass_proc(rel->rd_indclass->values[i],
+											cur->sk_subtype,
+											BTORDER_PROC);
+				ScanKeyEntryInitialize(scankeys + i,
+									   cur->sk_flags,
+									   cur->sk_attno,
+									   InvalidStrategy,
+									   cur->sk_subtype,
+									   cmp_proc,
+									   cur->sk_argument);
+			}
 		}
 	}
 

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.205 2005/11/26 22:14:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.206 2006/01/25 20:29:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1583,7 +1583,7 @@ fix_indexqual_references(List *indexquals, IndexPath *index_path,
 			 * (only) the base relation.
 			 */
 			if (!bms_equal(rinfo->left_relids, index->rel->relids))
-				CommuteClause(op);
+				CommuteOpExpr(op);
 
 			/*
 			 * Now, determine which index attribute this is, change the
@@ -1593,6 +1593,41 @@ fix_indexqual_references(List *indexquals, IndexPath *index_path,
 													   index,
 													   &opclass);
 			clause_op = op->opno;
+		}
+		else if (IsA(clause, RowCompareExpr))
+		{
+			RowCompareExpr *rc = (RowCompareExpr *) clause;
+			ListCell *lc;
+
+			/*
+			 * Check to see if the indexkey is on the right; if so, commute
+			 * the clause. The indexkey should be the side that refers to
+			 * (only) the base relation.
+			 */
+			if (!bms_overlap(pull_varnos(linitial(rc->largs)),
+							 index->rel->relids))
+				CommuteRowCompareExpr(rc);
+
+			/*
+			 * For each column in the row comparison, determine which index
+			 * attribute this is and change the indexkey operand as needed.
+			 *
+			 * Save the index opclass for only the first column.  We will
+			 * return the operator and opclass info for just the first
+			 * column of the row comparison; the executor will have to
+			 * look up the rest if it needs them.
+			 */
+			foreach(lc, rc->largs)
+			{
+				Oid		tmp_opclass;
+
+				lfirst(lc) = fix_indexqual_operand(lfirst(lc),
+												   index,
+												   &tmp_opclass);
+				if (lc == list_head(rc->largs))
+					opclass = tmp_opclass;
+			}
+			clause_op = linitial_oid(rc->opnos);
 		}
 		else if (IsA(clause, ScalarArrayOpExpr))
 		{
@@ -1745,7 +1780,7 @@ get_switched_clauses(List *clauses, Relids outerrelids)
 			temp->opretset = clause->opretset;
 			temp->args = list_copy(clause->args);
 			/* Commute it --- note this modifies the temp node in-place. */
-			CommuteClause(temp);
+			CommuteOpExpr(temp);
 			t_list = lappend(t_list, temp);
 		}
 		else

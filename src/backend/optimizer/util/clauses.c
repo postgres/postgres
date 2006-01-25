@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.205 2005/12/28 01:30:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.206 2006/01/25 20:29:23 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1167,12 +1167,12 @@ NumRelids(Node *clause)
 }
 
 /*
- * CommuteClause: commute a binary operator clause
+ * CommuteOpExpr: commute a binary operator clause
  *
  * XXX the clause is destructively modified!
  */
 void
-CommuteClause(OpExpr *clause)
+CommuteOpExpr(OpExpr *clause)
 {
 	Oid			opoid;
 	Node	   *temp;
@@ -1198,6 +1198,73 @@ CommuteClause(OpExpr *clause)
 	temp = linitial(clause->args);
 	linitial(clause->args) = lsecond(clause->args);
 	lsecond(clause->args) = temp;
+}
+
+/*
+ * CommuteRowCompareExpr: commute a RowCompareExpr clause
+ *
+ * XXX the clause is destructively modified!
+ */
+void
+CommuteRowCompareExpr(RowCompareExpr *clause)
+{
+	List	   *newops;
+	List	   *temp;
+	ListCell   *l;
+
+	/* Sanity checks: caller is at fault if these fail */
+	if (!IsA(clause, RowCompareExpr))
+		elog(ERROR, "expected a RowCompareExpr");
+
+	/* Build list of commuted operators */
+	newops = NIL;
+	foreach(l, clause->opnos)
+	{
+		Oid			opoid = lfirst_oid(l);
+
+		opoid = get_commutator(opoid);
+		if (!OidIsValid(opoid))
+			elog(ERROR, "could not find commutator for operator %u",
+				 lfirst_oid(l));
+		newops = lappend_oid(newops, opoid);
+	}
+
+	/*
+	 * modify the clause in-place!
+	 */
+	switch (clause->rctype)
+	{
+		case ROWCOMPARE_LT:
+			clause->rctype = ROWCOMPARE_GT;
+			break;
+		case ROWCOMPARE_LE:
+			clause->rctype = ROWCOMPARE_GE;
+			break;
+		case ROWCOMPARE_GE:
+			clause->rctype = ROWCOMPARE_LE;
+			break;
+		case ROWCOMPARE_GT:
+			clause->rctype = ROWCOMPARE_LT;
+			break;
+		default:
+			elog(ERROR, "unexpected RowCompare type: %d",
+				 (int) clause->rctype);
+			break;
+	}
+
+	clause->opnos = newops;
+	/*
+	 * Note: we don't bother to update the opclasses list, but just set
+	 * it to empty.  This is OK since this routine is currently only used
+	 * for index quals, and the index machinery won't use the opclass
+	 * information.  The original opclass list is NOT valid if we have
+	 * commuted any cross-type comparisons, so don't leave it in place.
+	 */
+	clause->opclasses = NIL;	/* XXX */
+
+	temp = clause->largs;
+	clause->largs = clause->rargs;
+	clause->rargs = temp;
 }
 
 /*

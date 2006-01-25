@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/skey.h,v 1.30 2006/01/14 22:03:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/skey.h,v 1.31 2006/01/25 20:29:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,6 +70,36 @@ typedef struct ScanKeyData
 typedef ScanKeyData *ScanKey;
 
 /*
+ * About row comparisons:
+ *
+ * The ScanKey data structure also supports row comparisons, that is ordered
+ * tuple comparisons like (x, y) > (c1, c2), having the SQL-spec semantics
+ * "x > c1 OR (x = c1 AND y > c2)".  Note that this is currently only
+ * implemented for btree index searches, not for heapscans or any other index
+ * type.  A row comparison is represented by a "header" ScanKey entry plus
+ * a separate array of ScanKeys, one for each column of the row comparison.
+ * The header entry has these properties:
+ *		sk_flags = SK_ROW_HEADER
+ *		sk_attno = index column number for leading column of row comparison
+ *		sk_strategy = btree strategy code for semantics of row comparison
+ *				(ie, < <= > or >=)
+ *		sk_subtype, sk_func: not used
+ *		sk_argument: pointer to subsidiary ScanKey array
+ * If the header is part of a ScanKey array that's sorted by attno, it
+ * must be sorted according to the leading column number.
+ *
+ * The subsidiary ScanKey array appears in logical column order of the row
+ * comparison, which may be different from index column order.  The array
+ * elements are like a normal ScanKey array except that:
+ *		sk_flags must include SK_ROW_MEMBER, plus SK_ROW_END in the last
+ *				element (needed since row header does not include a count)
+ *		sk_func points to the btree comparison support function for the
+ *				opclass, NOT the operator's implementation function.
+ * sk_strategy must be the same in all elements of the subsidiary array,
+ * that is, the same as in the header entry.
+ */
+
+/*
  * ScanKeyData sk_flags
  *
  * sk_flags bits 0-15 are reserved for system-wide use (symbols for those
@@ -78,6 +108,9 @@ typedef ScanKeyData *ScanKey;
  */
 #define SK_ISNULL		0x0001	/* sk_argument is NULL */
 #define SK_UNARY		0x0002	/* unary operator (currently unsupported) */
+#define SK_ROW_HEADER	0x0004	/* row comparison header (see above) */
+#define SK_ROW_MEMBER	0x0008	/* row comparison member (see above) */
+#define SK_ROW_END		0x0010	/* last row comparison member (see above) */
 
 
 /*

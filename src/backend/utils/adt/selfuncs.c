@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.196 2006/01/14 00:14:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.197 2006/01/25 20:29:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4657,6 +4657,9 @@ btcostestimate(PG_FUNCTION_ARGS)
 	 * to find out which ones count as boundary quals.	We rely on the
 	 * knowledge that they are given in index column order.
 	 *
+	 * For a RowCompareExpr, we consider only the first column, just as
+	 * rowcomparesel() does.
+	 *
 	 * If there's a ScalarArrayOpExpr in the quals, we'll actually perform
 	 * N index scans not one, but the ScalarArrayOpExpr's operator can be
 	 * considered to act the same as it normally does.
@@ -4681,6 +4684,14 @@ btcostestimate(PG_FUNCTION_ARGS)
 			leftop = get_leftop(clause);
 			rightop = get_rightop(clause);
 			clause_op = ((OpExpr *) clause)->opno;
+		}
+		else if (IsA(clause, RowCompareExpr))
+		{
+			RowCompareExpr *rc = (RowCompareExpr *) clause;
+
+			leftop = (Node *) linitial(rc->largs);
+			rightop = (Node *) linitial(rc->rargs);
+			clause_op = linitial_oid(rc->opnos);
 		}
 		else if (IsA(clause, ScalarArrayOpExpr))
 		{
