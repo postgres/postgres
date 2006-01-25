@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.82 2005/11/06 19:29:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.83 2006/01/25 23:26:11 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -91,7 +91,6 @@ hashbuildCallback(Relation index,
 {
 	HashBuildState *buildstate = (HashBuildState *) state;
 	IndexTuple	itup;
-	HashItem	hitem;
 
 	/* form an index tuple and point it at the heap tuple */
 	itup = index_form_tuple(RelationGetDescr(index), values, isnull);
@@ -104,13 +103,10 @@ hashbuildCallback(Relation index,
 		return;
 	}
 
-	hitem = _hash_formitem(itup);
-
-	_hash_doinsert(index, hitem);
+	_hash_doinsert(index, itup);
 
 	buildstate->indtuples += 1;
 
-	pfree(hitem);
 	pfree(itup);
 }
 
@@ -132,7 +128,6 @@ hashinsert(PG_FUNCTION_ARGS)
 	Relation	heapRel = (Relation) PG_GETARG_POINTER(4);
 	bool		checkUnique = PG_GETARG_BOOL(5);
 #endif
-	HashItem	hitem;
 	IndexTuple	itup;
 
 	/* generate an index tuple */
@@ -154,11 +149,8 @@ hashinsert(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 	}
 
-	hitem = _hash_formitem(itup);
+	_hash_doinsert(rel, itup);
 
-	_hash_doinsert(rel, hitem);
-
-	pfree(hitem);
 	pfree(itup);
 
 	PG_RETURN_BOOL(true);
@@ -565,12 +557,12 @@ loop_top:
 			maxoffno = PageGetMaxOffsetNumber(page);
 			while (offno <= maxoffno)
 			{
-				HashItem	hitem;
+				IndexTuple	itup;
 				ItemPointer htup;
 
-				hitem = (HashItem) PageGetItem(page,
-											   PageGetItemId(page, offno));
-				htup = &(hitem->hash_itup.t_tid);
+				itup = (IndexTuple) PageGetItem(page,
+												PageGetItemId(page, offno));
+				htup = &(itup->t_tid);
 				if (callback(htup, callback_state))
 				{
 					/* delete the item from the page */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashinsert.c,v 1.40 2005/11/06 19:29:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashinsert.c,v 1.41 2006/01/25 23:26:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,23 +20,21 @@
 
 
 static OffsetNumber _hash_pgaddtup(Relation rel, Buffer buf,
-			   Size itemsize, HashItem hitem);
+			   Size itemsize, IndexTuple itup);
 
 
 /*
- *	_hash_doinsert() -- Handle insertion of a single HashItem in the table.
+ *	_hash_doinsert() -- Handle insertion of a single index tuple.
  *
  *		This routine is called by the public interface routines, hashbuild
- *		and hashinsert.  By here, hashitem is completely filled in.
- *		The datum to be used as a "key" is in the hashitem.
+ *		and hashinsert.  By here, itup is completely filled in.
  */
 void
-_hash_doinsert(Relation rel, HashItem hitem)
+_hash_doinsert(Relation rel, IndexTuple itup)
 {
 	Buffer		buf;
 	Buffer		metabuf;
 	HashMetaPage metap;
-	IndexTuple	itup;
 	BlockNumber blkno;
 	Page		page;
 	HashPageOpaque pageopaque;
@@ -51,7 +49,6 @@ _hash_doinsert(Relation rel, HashItem hitem)
 	 * Compute the hash key for the item.  We do this first so as not to need
 	 * to hold any locks while running the hash function.
 	 */
-	itup = &(hitem->hash_itup);
 	if (rel->rd_rel->relnatts != 1)
 		elog(ERROR, "hash indexes support only one index key");
 	datum = index_getattr(itup, 1, RelationGetDescr(rel), &isnull);
@@ -59,9 +56,7 @@ _hash_doinsert(Relation rel, HashItem hitem)
 	hashkey = _hash_datum2hashkey(rel, datum);
 
 	/* compute item size too */
-	itemsz = IndexTupleDSize(hitem->hash_itup)
-		+ (sizeof(HashItemData) - sizeof(IndexTupleData));
-
+	itemsz = IndexTupleDSize(*itup);
 	itemsz = MAXALIGN(itemsz);	/* be safe, PageAddItem will do this but we
 								 * need to be consistent */
 
@@ -157,7 +152,7 @@ _hash_doinsert(Relation rel, HashItem hitem)
 	}
 
 	/* found page with enough space, so add the item here */
-	(void) _hash_pgaddtup(rel, buf, itemsz, hitem);
+	(void) _hash_pgaddtup(rel, buf, itemsz, itup);
 
 	/* write and release the modified page */
 	_hash_wrtbuf(rel, buf);
@@ -199,7 +194,7 @@ static OffsetNumber
 _hash_pgaddtup(Relation rel,
 			   Buffer buf,
 			   Size itemsize,
-			   HashItem hitem)
+			   IndexTuple itup)
 {
 	OffsetNumber itup_off;
 	Page		page;
@@ -208,7 +203,7 @@ _hash_pgaddtup(Relation rel,
 	page = BufferGetPage(buf);
 
 	itup_off = OffsetNumberNext(PageGetMaxOffsetNumber(page));
-	if (PageAddItem(page, (Item) hitem, itemsize, itup_off, LP_USED)
+	if (PageAddItem(page, (Item) itup, itemsize, itup_off, LP_USED)
 		== InvalidOffsetNumber)
 		elog(ERROR, "failed to add index item to \"%s\"",
 			 RelationGetRelationName(rel));

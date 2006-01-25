@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.64 2005/11/06 19:29:01 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.65 2006/01/25 23:26:11 tgl Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -158,13 +158,6 @@ typedef struct HashMetaPageData
 
 typedef HashMetaPageData *HashMetaPage;
 
-typedef struct HashItemData
-{
-	IndexTupleData hash_itup;
-} HashItemData;
-
-typedef HashItemData *HashItem;
-
 /*
  * Maximum size of a hash index item (it's okay to have only one per page)
  */
@@ -267,7 +260,7 @@ extern Datum hash_any(register const unsigned char *k, register int keylen);
 /* private routines */
 
 /* hashinsert.c */
-extern void _hash_doinsert(Relation rel, HashItem hitem);
+extern void _hash_doinsert(Relation rel, IndexTuple itup);
 
 /* hashovfl.c */
 extern Buffer _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf);
@@ -305,7 +298,6 @@ extern bool _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir);
 
 /* hashutil.c */
 extern bool _hash_checkqual(IndexScanDesc scan, IndexTuple itup);
-extern HashItem _hash_formitem(IndexTuple itup);
 extern uint32 _hash_datum2hashkey(Relation rel, Datum key);
 extern Bucket _hash_hashkey2bucket(uint32 hashkey, uint32 maxbucket,
 					 uint32 highmask, uint32 lowmask);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashsearch.c,v 1.42 2005/11/06 19:29:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashsearch.c,v 1.43 2006/01/25 23:26:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,6 @@ _hash_next(IndexScanDesc scan, ScanDirection dir)
 	Page		page;
 	OffsetNumber offnum;
 	ItemPointer current;
-	HashItem	hitem;
 	IndexTuple	itup;
 
 	/* we still have the buffer pinned and read-locked */
@@ -55,8 +54,7 @@ _hash_next(IndexScanDesc scan, ScanDirection dir)
 	offnum = ItemPointerGetOffsetNumber(current);
 	_hash_checkpage(rel, buf, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 	page = BufferGetPage(buf);
-	hitem = (HashItem) PageGetItem(page, PageGetItemId(page, offnum));
-	itup = &hitem->hash_itup;
+	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
 	scan->xs_ctup.t_self = itup->t_tid;
 
 	return true;
@@ -126,7 +124,6 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	Page		page;
 	HashPageOpaque opaque;
 	HashMetaPage metap;
-	HashItem	hitem;
 	IndexTuple	itup;
 	ItemPointer current;
 	OffsetNumber offnum;
@@ -218,8 +215,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	offnum = ItemPointerGetOffsetNumber(current);
 	_hash_checkpage(rel, buf, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 	page = BufferGetPage(buf);
-	hitem = (HashItem) PageGetItem(page, PageGetItemId(page, offnum));
-	itup = &hitem->hash_itup;
+	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
 	scan->xs_ctup.t_self = itup->t_tid;
 
 	return true;
@@ -248,7 +244,6 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 	OffsetNumber maxoff;
 	OffsetNumber offnum;
 	BlockNumber blkno;
-	HashItem	hitem;
 	IndexTuple	itup;
 
 	current = &(scan->currentItemData);
@@ -345,8 +340,7 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 		}
 
 		/* get ready to check this tuple */
-		hitem = (HashItem) PageGetItem(page, PageGetItemId(page, offnum));
-		itup = &hitem->hash_itup;
+		itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
 	} while (!_hash_checkqual(scan, itup));
 
 	/* if we made it to here, we've found a valid tuple */

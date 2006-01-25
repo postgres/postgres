@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.54 2005/11/22 18:17:05 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.55 2006/01/25 23:26:11 tgl Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -249,7 +249,7 @@ _hash_metapinit(Relation rel)
 	 */
 	data_width = get_typavgwidth(RelationGetDescr(rel)->attrs[0]->atttypid,
 								 RelationGetDescr(rel)->attrs[0]->atttypmod);
-	item_width = MAXALIGN(sizeof(HashItemData)) + MAXALIGN(data_width) +
+	item_width = MAXALIGN(sizeof(IndexTupleData)) + MAXALIGN(data_width) +
 		sizeof(ItemIdData);		/* include the line pointer */
 	ffactor = (BLCKSZ * 3 / 4) / item_width;
 	/* keep to a sane range */
@@ -539,7 +539,6 @@ _hash_splitbucket(Relation rel,
 	BlockNumber nblkno;
 	bool		null;
 	Datum		datum;
-	HashItem	hitem;
 	HashPageOpaque oopaque;
 	HashPageOpaque nopaque;
 	IndexTuple	itup;
@@ -618,8 +617,7 @@ _hash_splitbucket(Relation rel,
 		 * It is annoying to call the hash function while holding locks, but
 		 * releasing and relocking the page for each tuple is unappealing too.
 		 */
-		hitem = (HashItem) PageGetItem(opage, PageGetItemId(opage, ooffnum));
-		itup = &(hitem->hash_itup);
+		itup = (IndexTuple) PageGetItem(opage, PageGetItemId(opage, ooffnum));
 		datum = index_getattr(itup, 1, itupdesc, &null);
 		Assert(!null);
 
@@ -633,9 +631,7 @@ _hash_splitbucket(Relation rel,
 			 * current page in the new bucket, we must allocate a new overflow
 			 * page and place the tuple on that page instead.
 			 */
-			itemsz = IndexTupleDSize(hitem->hash_itup)
-				+ (sizeof(HashItemData) - sizeof(IndexTupleData));
-
+			itemsz = IndexTupleDSize(*itup);
 			itemsz = MAXALIGN(itemsz);
 
 			if (PageGetFreeSpace(npage) < itemsz)
@@ -650,7 +646,7 @@ _hash_splitbucket(Relation rel,
 			}
 
 			noffnum = OffsetNumberNext(PageGetMaxOffsetNumber(npage));
-			if (PageAddItem(npage, (Item) hitem, itemsz, noffnum, LP_USED)
+			if (PageAddItem(npage, (Item) itup, itemsz, noffnum, LP_USED)
 				== InvalidOffsetNumber)
 				elog(ERROR, "failed to add index item to \"%s\"",
 					 RelationGetRelationName(rel));

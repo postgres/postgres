@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashovfl.c,v 1.49 2005/11/22 18:17:05 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashovfl.c,v 1.50 2006/01/25 23:26:11 tgl Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
@@ -561,7 +561,7 @@ _hash_squeezebucket(Relation rel,
 	HashPageOpaque ropaque;
 	OffsetNumber woffnum;
 	OffsetNumber roffnum;
-	HashItem	hitem;
+	IndexTuple	itup;
 	Size		itemsz;
 
 	/*
@@ -608,10 +608,9 @@ _hash_squeezebucket(Relation rel,
 		/* this test is needed in case page is empty on entry */
 		if (roffnum <= PageGetMaxOffsetNumber(rpage))
 		{
-			hitem = (HashItem) PageGetItem(rpage,
-										   PageGetItemId(rpage, roffnum));
-			itemsz = IndexTupleDSize(hitem->hash_itup)
-				+ (sizeof(HashItemData) - sizeof(IndexTupleData));
+			itup = (IndexTuple) PageGetItem(rpage,
+											PageGetItemId(rpage, roffnum));
+			itemsz = IndexTupleDSize(*itup);
 			itemsz = MAXALIGN(itemsz);
 
 			/*
@@ -645,7 +644,7 @@ _hash_squeezebucket(Relation rel,
 			 * we have found room so insert on the "write" page.
 			 */
 			woffnum = OffsetNumberNext(PageGetMaxOffsetNumber(wpage));
-			if (PageAddItem(wpage, (Item) hitem, itemsz, woffnum, LP_USED)
+			if (PageAddItem(wpage, (Item) itup, itemsz, woffnum, LP_USED)
 				== InvalidOffsetNumber)
 				elog(ERROR, "failed to add index item to \"%s\"",
 					 RelationGetRelationName(rel));
