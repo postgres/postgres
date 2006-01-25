@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.135 2005/12/07 19:37:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.136 2006/01/25 23:04:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,13 +167,10 @@ btbuildCallback(Relation index,
 {
 	BTBuildState *buildstate = (BTBuildState *) state;
 	IndexTuple	itup;
-	BTItem		btitem;
 
 	/* form an index tuple and point it at the heap tuple */
 	itup = index_form_tuple(RelationGetDescr(index), values, isnull);
 	itup->t_tid = htup->t_self;
-
-	btitem = _bt_formitem(itup);
 
 	/*
 	 * if we are doing bottom-up btree build, we insert the index into a spool
@@ -182,23 +179,22 @@ btbuildCallback(Relation index,
 	if (buildstate->usefast)
 	{
 		if (tupleIsAlive || buildstate->spool2 == NULL)
-			_bt_spool(btitem, buildstate->spool);
+			_bt_spool(itup, buildstate->spool);
 		else
 		{
 			/* dead tuples are put into spool2 */
 			buildstate->haveDead = true;
-			_bt_spool(btitem, buildstate->spool2);
+			_bt_spool(itup, buildstate->spool2);
 		}
 	}
 	else
 	{
-		_bt_doinsert(index, btitem,
+		_bt_doinsert(index, itup,
 					 buildstate->isUnique, buildstate->heapRel);
 	}
 
 	buildstate->indtuples += 1;
 
-	pfree(btitem);
 	pfree(itup);
 }
 
@@ -217,17 +213,14 @@ btinsert(PG_FUNCTION_ARGS)
 	ItemPointer ht_ctid = (ItemPointer) PG_GETARG_POINTER(3);
 	Relation	heapRel = (Relation) PG_GETARG_POINTER(4);
 	bool		checkUnique = PG_GETARG_BOOL(5);
-	BTItem		btitem;
 	IndexTuple	itup;
 
 	/* generate an index tuple */
 	itup = index_form_tuple(RelationGetDescr(rel), values, isnull);
 	itup->t_tid = *ht_ctid;
-	btitem = _bt_formitem(itup);
 
-	_bt_doinsert(rel, btitem, checkUnique, heapRel);
+	_bt_doinsert(rel, itup, checkUnique, heapRel);
 
-	pfree(btitem);
 	pfree(itup);
 
 	PG_RETURN_BOOL(true);
@@ -616,12 +609,12 @@ btbulkdelete(PG_FUNCTION_ARGS)
 					 offnum <= maxoff;
 					 offnum = OffsetNumberNext(offnum))
 				{
-					BTItem		btitem;
+					IndexTuple	itup;
 					ItemPointer htup;
 
-					btitem = (BTItem) PageGetItem(page,
-												PageGetItemId(page, offnum));
-					htup = &(btitem->bti_itup.t_tid);
+					itup = (IndexTuple)
+						PageGetItem(page, PageGetItemId(page, offnum));
+					htup = &(itup->t_tid);
 					if (callback(htup, callback_state))
 					{
 						deletable[ndeletable++] = offnum;
@@ -872,7 +865,7 @@ _bt_restscan(IndexScanDesc scan)
 	BTPageOpaque opaque;
 	Buffer		nextbuf;
 	ItemPointer target = &(so->curHeapIptr);
-	BTItem		item;
+	IndexTuple	itup;
 	BlockNumber blkno;
 
 	/*
@@ -909,8 +902,8 @@ _bt_restscan(IndexScanDesc scan)
 			 offnum <= maxoff;
 			 offnum = OffsetNumberNext(offnum))
 		{
-			item = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
-			if (BTTidSame(item->bti_itup.t_tid, *target))
+			itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
+			if (BTTidSame(itup->t_tid, *target))
 			{
 				/* Found it */
 				current->ip_posid = offnum;

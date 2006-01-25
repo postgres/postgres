@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.102 2006/01/25 20:29:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.103 2006/01/25 23:04:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,6 @@ _bt_search(Relation rel, int keysz, ScanKey scankey, bool nextkey,
 		BTPageOpaque opaque;
 		OffsetNumber offnum;
 		ItemId		itemid;
-		BTItem		btitem;
 		IndexTuple	itup;
 		BlockNumber blkno;
 		BlockNumber par_blkno;
@@ -90,8 +89,7 @@ _bt_search(Relation rel, int keysz, ScanKey scankey, bool nextkey,
 		 */
 		offnum = _bt_binsrch(rel, *bufP, keysz, scankey, nextkey);
 		itemid = PageGetItemId(page, offnum);
-		btitem = (BTItem) PageGetItem(page, itemid);
-		itup = &(btitem->bti_itup);
+		itup = (IndexTuple) PageGetItem(page, itemid);
 		blkno = ItemPointerGetBlockNumber(&(itup->t_tid));
 		par_blkno = BufferGetBlockNumber(*bufP);
 
@@ -108,7 +106,7 @@ _bt_search(Relation rel, int keysz, ScanKey scankey, bool nextkey,
 		new_stack = (BTStack) palloc(sizeof(BTStackData));
 		new_stack->bts_blkno = par_blkno;
 		new_stack->bts_offset = offnum;
-		memcpy(&new_stack->bts_btitem, btitem, sizeof(BTItemData));
+		memcpy(&new_stack->bts_btentry, itup, sizeof(IndexTupleData));
 		new_stack->bts_parent = stack_in;
 
 		/* drop the read lock on the parent page, acquire one on the child */
@@ -338,7 +336,6 @@ _bt_compare(Relation rel,
 {
 	TupleDesc	itupdesc = RelationGetDescr(rel);
 	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-	BTItem		btitem;
 	IndexTuple	itup;
 	int			i;
 
@@ -349,8 +346,7 @@ _bt_compare(Relation rel,
 	if (!P_ISLEAF(opaque) && offnum == P_FIRSTDATAKEY(opaque))
 		return 1;
 
-	btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
-	itup = &(btitem->bti_itup);
+	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
 
 	/*
 	 * The scan key is set up with the attribute number associated with each
@@ -1189,7 +1185,6 @@ _bt_get_endpoint(Relation rel, uint32 level, bool rightmost)
 	BTPageOpaque opaque;
 	OffsetNumber offnum;
 	BlockNumber blkno;
-	BTItem		btitem;
 	IndexTuple	itup;
 
 	/*
@@ -1243,8 +1238,7 @@ _bt_get_endpoint(Relation rel, uint32 level, bool rightmost)
 		else
 			offnum = P_FIRSTDATAKEY(opaque);
 
-		btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
-		itup = &(btitem->bti_itup);
+		itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
 		blkno = ItemPointerGetBlockNumber(&(itup->t_tid));
 
 		buf = _bt_relandgetbuf(rel, buf, blkno, BT_READ);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.70 2006/01/25 20:29:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.71 2006/01/25 23:04:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,30 +139,6 @@ _bt_freestack(BTStack stack)
 	}
 }
 
-/*
- * Construct a BTItem from a plain IndexTuple.
- *
- * This is now useless code, since a BTItem *is* an index tuple with
- * no extra stuff.	We hang onto it for the moment to preserve the
- * notational distinction, in case we want to add some extra stuff
- * again someday.
- */
-BTItem
-_bt_formitem(IndexTuple itup)
-{
-	int			nbytes_btitem;
-	BTItem		btitem;
-	Size		tuplen;
-
-	/* make a copy of the index tuple with room for extra stuff */
-	tuplen = IndexTupleSize(itup);
-	nbytes_btitem = tuplen + (sizeof(BTItemData) - sizeof(IndexTupleData));
-
-	btitem = (BTItem) palloc(nbytes_btitem);
-	memcpy((char *) &(btitem->bti_itup), (char *) itup, tuplen);
-
-	return btitem;
-}
 
 /*----------
  *	_bt_preprocess_keys() -- Preprocess scan keys
@@ -589,7 +565,6 @@ _bt_checkkeys(IndexScanDesc scan,
 {
 	ItemId		iid = PageGetItemId(page, offnum);
 	bool		tuple_valid;
-	BTItem		btitem;
 	IndexTuple	tuple;
 	TupleDesc	tupdesc;
 	BTScanOpaque so;
@@ -631,8 +606,7 @@ _bt_checkkeys(IndexScanDesc scan,
 	else
 		tuple_valid = true;
 
-	btitem = (BTItem) PageGetItem(page, iid);
-	tuple = &btitem->bti_itup;
+	tuple = (IndexTuple) PageGetItem(page, iid);
 
 	IncrIndexProcessed();
 

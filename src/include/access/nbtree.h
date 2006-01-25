@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.90 2006/01/23 22:31:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.91 2006/01/25 23:04:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,9 +91,7 @@ typedef struct BTMetaPageData
 	  MAXALIGN(sizeof(BTPageOpaqueData))) / 3 - sizeof(ItemIdData))
 
 /*
- *	BTItems are what we store in the btree.  Each item is an index tuple,
- *	including key and pointer values.  (In some cases either the key or the
- *	pointer may go unused, see backend/access/nbtree/README for details.)
+ *	Test whether two btree entries are "the same".
  *
  *	Old comments:
  *	In addition, we must guarantee that all tuples in the index are unique,
@@ -106,33 +104,16 @@ typedef struct BTMetaPageData
  *
  *	New comments:
  *	actually, we must guarantee that all tuples in A LEVEL
- *	are unique, not in ALL INDEX. So, we can use bti_itup->t_tid
+ *	are unique, not in ALL INDEX. So, we can use the t_tid
  *	as unique identifier for a given index tuple (logical position
  *	within a level). - vadim 04/09/97
  */
-
-typedef struct BTItemData
-{
-	IndexTupleData bti_itup;
-} BTItemData;
-
-typedef BTItemData *BTItem;
-
-#define CopyBTItem(btitem) ((BTItem) CopyIndexTuple((IndexTuple) (btitem)))
-
-/*
- * For XLOG: size without alignment. Sizeof works as long as
- * IndexTupleData has exactly 8 bytes.
- */
-#define SizeOfBTItem	sizeof(BTItemData)
-
-/* Test whether items are the "same" per the above notes */
 #define BTTidSame(i1, i2)	\
 	( (i1).ip_blkid.bi_hi == (i2).ip_blkid.bi_hi && \
 	  (i1).ip_blkid.bi_lo == (i2).ip_blkid.bi_lo && \
 	  (i1).ip_posid == (i2).ip_posid )
-#define BTItemSame(i1, i2)	\
-	BTTidSame((i1)->bti_itup.t_tid, (i2)->bti_itup.t_tid)
+#define BTEntrySame(i1, i2)	\
+	BTTidSame((i1)->t_tid, (i2)->t_tid)
 
 
 /*
@@ -184,16 +165,16 @@ typedef BTItemData *BTItem;
  * XLOG allows to store some information in high 4 bits of log
  * record xl_info field
  */
-#define XLOG_BTREE_INSERT_LEAF	0x00	/* add btitem without split */
+#define XLOG_BTREE_INSERT_LEAF	0x00	/* add index tuple without split */
 #define XLOG_BTREE_INSERT_UPPER 0x10	/* same, on a non-leaf page */
 #define XLOG_BTREE_INSERT_META	0x20	/* same, plus update metapage */
-#define XLOG_BTREE_SPLIT_L		0x30	/* add btitem with split */
+#define XLOG_BTREE_SPLIT_L		0x30	/* add index tuple with split */
 #define XLOG_BTREE_SPLIT_R		0x40	/* as above, new item on right */
-#define XLOG_BTREE_SPLIT_L_ROOT 0x50	/* add btitem with split of root */
+#define XLOG_BTREE_SPLIT_L_ROOT 0x50	/* add tuple with split of root */
 #define XLOG_BTREE_SPLIT_R_ROOT 0x60	/* as above, new item on right */
-#define XLOG_BTREE_DELETE		0x70	/* delete leaf btitem */
+#define XLOG_BTREE_DELETE		0x70	/* delete leaf index tuple */
 #define XLOG_BTREE_DELETE_PAGE	0x80	/* delete an entire page */
-#define XLOG_BTREE_DELETE_PAGE_META 0x90		/* same, plus update metapage */
+#define XLOG_BTREE_DELETE_PAGE_META 0x90	/* same, plus update metapage */
 #define XLOG_BTREE_NEWROOT		0xA0	/* new root page */
 #define XLOG_BTREE_NEWMETA		0xB0	/* update metadata page */
 
@@ -227,7 +208,7 @@ typedef struct xl_btree_insert
 {
 	xl_btreetid target;			/* inserted tuple id */
 	/* xl_btree_metadata FOLLOWS IF XLOG_BTREE_INSERT_META */
-	/* BTITEM FOLLOWS AT END OF STRUCT */
+	/* INDEX TUPLE FOLLOWS AT END OF STRUCT */
 } xl_btree_insert;
 
 #define SizeOfBtreeInsert	(offsetof(xl_btreetid, tid) + SizeOfIptrData)
@@ -240,7 +221,7 @@ typedef struct xl_btree_insert
  * whole page image.
  *
  * Note: the four XLOG_BTREE_SPLIT xl_info codes all use this data record.
- * The _L and _R variants indicate whether the inserted btitem went into the
+ * The _L and _R variants indicate whether the inserted tuple went into the
  * left or right split page (and thus, whether otherblk is the right or left
  * page of the split pair).  The _ROOT variants indicate that we are splitting
  * the root page, and thus that a newroot record rather than an insert or
@@ -262,8 +243,8 @@ typedef struct xl_btree_split
 #define SizeOfBtreeSplit	(offsetof(xl_btree_split, leftlen) + sizeof(uint16))
 
 /*
- * This is what we need to know about delete of individual leaf btitems.
- * The WAL record can represent deletion of any number of btitems on a
+ * This is what we need to know about delete of individual leaf index tuples.
+ * The WAL record can represent deletion of any number of index tuples on a
  * single index page.
  */
 typedef struct xl_btree_delete
@@ -294,7 +275,7 @@ typedef struct xl_btree_delete_page
 #define SizeOfBtreeDeletePage	(offsetof(xl_btree_delete_page, rightblk) + sizeof(BlockNumber))
 
 /*
- * New root log record.  There are zero btitems if this is to establish an
+ * New root log record.  There are zero tuples if this is to establish an
  * empty root, or two if it is the result of splitting an old root.
  *
  * Note that although this implies rewriting the metadata page, we don't need
@@ -305,7 +286,7 @@ typedef struct xl_btree_newroot
 	RelFileNode node;
 	BlockNumber rootblk;		/* location of new root */
 	uint32		level;			/* its tree level */
-	/* 0 or 2 BTITEMS FOLLOW AT END OF STRUCT */
+	/* 0 or 2 INDEX TUPLES FOLLOW AT END OF STRUCT */
 } xl_btree_newroot;
 
 #define SizeOfBtreeNewroot	(offsetof(xl_btree_newroot, level) + sizeof(uint32))
@@ -360,7 +341,7 @@ typedef struct BTStackData
 {
 	BlockNumber bts_blkno;
 	OffsetNumber bts_offset;
-	BTItemData	bts_btitem;
+	IndexTupleData bts_btentry;
 	struct BTStackData *bts_parent;
 } BTStackData;
 
@@ -420,7 +401,7 @@ extern Datum btvacuumcleanup(PG_FUNCTION_ARGS);
 /*
  * prototypes for functions in nbtinsert.c
  */
-extern void _bt_doinsert(Relation rel, BTItem btitem,
+extern void _bt_doinsert(Relation rel, IndexTuple itup,
 			 bool index_is_unique, Relation heapRel);
 extern Buffer _bt_getstackbuf(Relation rel, BTStack stack, int access);
 extern void _bt_insert_parent(Relation rel, Buffer buf, Buffer rbuf,
@@ -474,7 +455,6 @@ extern void _bt_preprocess_keys(IndexScanDesc scan);
 extern bool _bt_checkkeys(IndexScanDesc scan,
 						  Page page, OffsetNumber offnum,
 						  ScanDirection dir, bool *continuescan);
-extern BTItem _bt_formitem(IndexTuple itup);
 
 /*
  * prototypes for functions in nbtsort.c
@@ -483,7 +463,7 @@ typedef struct BTSpool BTSpool; /* opaque type known only within nbtsort.c */
 
 extern BTSpool *_bt_spoolinit(Relation index, bool isunique, bool isdead);
 extern void _bt_spooldestroy(BTSpool *btspool);
-extern void _bt_spool(BTItem btitem, BTSpool *btspool);
+extern void _bt_spool(IndexTuple itup, BTSpool *btspool);
 extern void _bt_leafbuild(BTSpool *btspool, BTSpool *spool2);
 
 /*

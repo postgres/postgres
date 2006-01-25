@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.24 2005/10/18 01:06:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.25 2006/01/25 23:04:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ forget_matching_split(Relation reln, RelFileNode node,
 {
 	Buffer		buffer;
 	Page		page;
-	BTItem		btitem;
+	IndexTuple	itup;
 	BlockNumber rightblk;
 	ListCell   *l;
 
@@ -66,9 +66,9 @@ forget_matching_split(Relation reln, RelFileNode node,
 	if (!BufferIsValid(buffer))
 		elog(PANIC, "forget_matching_split: block unfound");
 	page = (Page) BufferGetPage(buffer);
-	btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
-	rightblk = ItemPointerGetBlockNumber(&(btitem->bti_itup.t_tid));
-	Assert(ItemPointerGetOffsetNumber(&(btitem->bti_itup.t_tid)) == P_HIKEY);
+	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
+	rightblk = ItemPointerGetBlockNumber(&(itup->t_tid));
+	Assert(ItemPointerGetOffsetNumber(&(itup->t_tid)) == P_HIKEY);
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 	ReleaseBuffer(buffer);
 
@@ -90,15 +90,15 @@ forget_matching_split(Relation reln, RelFileNode node,
 static void
 _bt_restore_page(Page page, char *from, int len)
 {
-	BTItemData	btdata;
+	IndexTupleData itupdata;
 	Size		itemsz;
 	char	   *end = from + len;
 
 	for (; from < end;)
 	{
-		memcpy(&btdata, from, sizeof(BTItemData));
-		itemsz = IndexTupleDSize(btdata.bti_itup) +
-			(sizeof(BTItemData) - sizeof(IndexTupleData));
+		/* Need to copy tuple header due to alignment considerations */
+		memcpy(&itupdata, from, sizeof(IndexTupleData));
+		itemsz = IndexTupleDSize(itupdata);
 		itemsz = MAXALIGN(itemsz);
 		if (PageAddItem(page, (Item) from, itemsz,
 						FirstOffsetNumber, LP_USED) == InvalidOffsetNumber)
@@ -431,12 +431,12 @@ btree_xlog_delete_page(bool ismeta,
 			else
 			{
 				ItemId		itemid;
-				BTItem		btitem;
+				IndexTuple	itup;
 				OffsetNumber nextoffset;
 
 				itemid = PageGetItemId(page, poffset);
-				btitem = (BTItem) PageGetItem(page, itemid);
-				ItemPointerSet(&(btitem->bti_itup.t_tid), rightsib, P_HIKEY);
+				itup = (IndexTuple) PageGetItem(page, itemid);
+				ItemPointerSet(&(itup->t_tid), rightsib, P_HIKEY);
 				nextoffset = OffsetNumberNext(poffset);
 				PageIndexTupleDelete(page, nextoffset);
 			}

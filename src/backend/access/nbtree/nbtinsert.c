@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.131 2006/01/17 00:09:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.132 2006/01/25 23:04:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,18 +38,18 @@ typedef struct
 
 static Buffer _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf);
 
-static TransactionId _bt_check_unique(Relation rel, BTItem btitem,
+static TransactionId _bt_check_unique(Relation rel, IndexTuple itup,
 				 Relation heapRel, Buffer buf,
 				 ScanKey itup_scankey);
 static void _bt_insertonpg(Relation rel, Buffer buf,
 			   BTStack stack,
 			   int keysz, ScanKey scankey,
-			   BTItem btitem,
+			   IndexTuple itup,
 			   OffsetNumber afteritem,
 			   bool split_only_page);
 static Buffer _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		  OffsetNumber newitemoff, Size newitemsz,
-		  BTItem newitem, bool newitemonleft);
+		  IndexTuple newitem, bool newitemonleft);
 static OffsetNumber _bt_findsplitloc(Relation rel, Page page,
 				 OffsetNumber newitemoff,
 				 Size newitemsz,
@@ -58,23 +58,22 @@ static void _bt_checksplitloc(FindSplitData *state, OffsetNumber firstright,
 				  int leftfree, int rightfree,
 				  bool newitemonleft, Size firstrightitemsz);
 static void _bt_pgaddtup(Relation rel, Page page,
-			 Size itemsize, BTItem btitem,
+			 Size itemsize, IndexTuple itup,
 			 OffsetNumber itup_off, const char *where);
 static bool _bt_isequal(TupleDesc itupdesc, Page page, OffsetNumber offnum,
 			int keysz, ScanKey scankey);
 
 
 /*
- *	_bt_doinsert() -- Handle insertion of a single btitem in the tree.
+ *	_bt_doinsert() -- Handle insertion of a single index tuple in the tree.
  *
  *		This routine is called by the public interface routines, btbuild
- *		and btinsert.  By here, btitem is filled in, including the TID.
+ *		and btinsert.  By here, itup is filled in, including the TID.
  */
 void
-_bt_doinsert(Relation rel, BTItem btitem,
+_bt_doinsert(Relation rel, IndexTuple itup,
 			 bool index_is_unique, Relation heapRel)
 {
-	IndexTuple	itup = &(btitem->bti_itup);
 	int			natts = rel->rd_rel->relnatts;
 	ScanKey		itup_scankey;
 	BTStack		stack;
@@ -121,7 +120,7 @@ top:
 	{
 		TransactionId xwait;
 
-		xwait = _bt_check_unique(rel, btitem, heapRel, buf, itup_scankey);
+		xwait = _bt_check_unique(rel, itup, heapRel, buf, itup_scankey);
 
 		if (TransactionIdIsValid(xwait))
 		{
@@ -135,7 +134,7 @@ top:
 	}
 
 	/* do the insertion */
-	_bt_insertonpg(rel, buf, stack, natts, itup_scankey, btitem, 0, false);
+	_bt_insertonpg(rel, buf, stack, natts, itup_scankey, itup, 0, false);
 
 	/* be tidy */
 	_bt_freestack(stack);
@@ -150,7 +149,7 @@ top:
  * conflict is detected, no return --- just ereport().
  */
 static TransactionId
-_bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
+_bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 				 Buffer buf, ScanKey itup_scankey)
 {
 	TupleDesc	itupdesc = RelationGetDescr(rel);
@@ -179,7 +178,7 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 		HeapTupleData htup;
 		Buffer		hbuffer;
 		ItemId		curitemid;
-		BTItem		cbti;
+		IndexTuple	curitup;
 		BlockNumber nblkno;
 
 		/*
@@ -216,8 +215,8 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 					break;		/* we're past all the equal tuples */
 
 				/* okay, we gotta fetch the heap tuple ... */
-				cbti = (BTItem) PageGetItem(page, curitemid);
-				htup.t_self = cbti->bti_itup.t_tid;
+				curitup = (IndexTuple) PageGetItem(page, curitemid);
+				htup.t_self = curitup->t_tid;
 				if (heap_fetch(heapRel, SnapshotDirty, &htup, &hbuffer,
 							   true, NULL))
 				{
@@ -361,7 +360,7 @@ _bt_insertonpg(Relation rel,
 			   BTStack stack,
 			   int keysz,
 			   ScanKey scankey,
-			   BTItem btitem,
+			   IndexTuple itup,
 			   OffsetNumber afteritem,
 			   bool split_only_page)
 {
@@ -374,9 +373,7 @@ _bt_insertonpg(Relation rel,
 	page = BufferGetPage(buf);
 	lpageop = (BTPageOpaque) PageGetSpecialPointer(page);
 
-	itemsz = IndexTupleDSize(btitem->bti_itup)
-		+ (sizeof(BTItemData) - sizeof(IndexTupleData));
-
+	itemsz = IndexTupleDSize(*itup);
 	itemsz = MAXALIGN(itemsz);	/* be safe, PageAddItem will do this but we
 								 * need to be consistent */
 
@@ -490,7 +487,7 @@ _bt_insertonpg(Relation rel,
 
 		/* split the buffer into left and right halves */
 		rbuf = _bt_split(rel, buf, firstright,
-						 newitemoff, itemsz, btitem, newitemonleft);
+						 newitemoff, itemsz, itup, newitemonleft);
 
 		/*----------
 		 * By here,
@@ -545,7 +542,7 @@ _bt_insertonpg(Relation rel,
 		/* Do the update.  No ereport(ERROR) until changes are logged */
 		START_CRIT_SECTION();
 
-		_bt_pgaddtup(rel, page, itemsz, btitem, newitemoff, "page");
+		_bt_pgaddtup(rel, page, itemsz, itup, newitemoff, "page");
 
 		if (BufferIsValid(metabuf))
 		{
@@ -562,7 +559,7 @@ _bt_insertonpg(Relation rel,
 			XLogRecPtr	recptr;
 			XLogRecData rdata[3];
 			XLogRecData *nextrdata;
-			BTItemData	truncitem;
+			IndexTupleData trunctuple;
 
 			xlrec.target.node = rel->rd_node;
 			ItemPointerSet(&(xlrec.target.tid), itup_blkno, itup_off);
@@ -594,16 +591,15 @@ _bt_insertonpg(Relation rel,
 			/* Read comments in _bt_pgaddtup */
 			if (!P_ISLEAF(lpageop) && newitemoff == P_FIRSTDATAKEY(lpageop))
 			{
-				truncitem = *btitem;
-				truncitem.bti_itup.t_info = sizeof(BTItemData);
-				nextrdata->data = (char *) &truncitem;
-				nextrdata->len = sizeof(BTItemData);
+				trunctuple = *itup;
+				trunctuple.t_info = sizeof(IndexTupleData);
+				nextrdata->data = (char *) &trunctuple;
+				nextrdata->len = sizeof(IndexTupleData);
 			}
 			else
 			{
-				nextrdata->data = (char *) btitem;
-				nextrdata->len = IndexTupleDSize(btitem->bti_itup) +
-					(sizeof(BTItemData) - sizeof(IndexTupleData));
+				nextrdata->data = (char *) itup;
+				nextrdata->len = IndexTupleDSize(*itup);
 			}
 			nextrdata->buffer = buf;
 			nextrdata->buffer_std = true;
@@ -644,7 +640,7 @@ _bt_insertonpg(Relation rel,
  */
 static Buffer
 _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
-		  OffsetNumber newitemoff, Size newitemsz, BTItem newitem,
+		  OffsetNumber newitemoff, Size newitemsz, IndexTuple newitem,
 		  bool newitemonleft)
 {
 	Buffer		rbuf;
@@ -661,7 +657,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	BlockNumber itup_blkno = 0;
 	Size		itemsz;
 	ItemId		itemid;
-	BTItem		item;
+	IndexTuple	item;
 	OffsetNumber leftoff,
 				rightoff;
 	OffsetNumber maxoff;
@@ -703,7 +699,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	{
 		itemid = PageGetItemId(origpage, P_HIKEY);
 		itemsz = ItemIdGetLength(itemid);
-		item = (BTItem) PageGetItem(origpage, itemid);
+		item = (IndexTuple) PageGetItem(origpage, itemid);
 		if (PageAddItem(rightpage, (Item) item, itemsz, rightoff,
 						LP_USED) == InvalidOffsetNumber)
 			elog(PANIC, "failed to add hikey to the right sibling");
@@ -727,7 +723,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		/* existing item at firstright will become first on right page */
 		itemid = PageGetItemId(origpage, firstright);
 		itemsz = ItemIdGetLength(itemid);
-		item = (BTItem) PageGetItem(origpage, itemid);
+		item = (IndexTuple) PageGetItem(origpage, itemid);
 	}
 	if (PageAddItem(leftpage, (Item) item, itemsz, leftoff,
 					LP_USED) == InvalidOffsetNumber)
@@ -743,7 +739,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	{
 		itemid = PageGetItemId(origpage, i);
 		itemsz = ItemIdGetLength(itemid);
-		item = (BTItem) PageGetItem(origpage, itemid);
+		item = (IndexTuple) PageGetItem(origpage, itemid);
 
 		/* does new item belong before this one? */
 		if (i == newitemoff)
@@ -1091,7 +1087,7 @@ _bt_checksplitloc(FindSplitData *state, OffsetNumber firstright,
 	 */
 	if (!state->is_leaf)
 		rightfree += (int) firstrightitemsz -
-			(int) (MAXALIGN(sizeof(BTItemData)) + sizeof(ItemIdData));
+			(int) (MAXALIGN(sizeof(IndexTupleData)) + sizeof(ItemIdData));
 
 	/*
 	 * If feasible split point, remember best delta.
@@ -1182,9 +1178,9 @@ _bt_insert_parent(Relation rel,
 		BlockNumber bknum = BufferGetBlockNumber(buf);
 		BlockNumber rbknum = BufferGetBlockNumber(rbuf);
 		Page		page = BufferGetPage(buf);
-		BTItem		new_item;
+		IndexTuple	new_item;
 		BTStackData fakestack;
-		BTItem		ritem;
+		IndexTuple	ritem;
 		Buffer		pbuf;
 
 		if (stack == NULL)
@@ -1200,18 +1196,18 @@ _bt_insert_parent(Relation rel,
 			stack = &fakestack;
 			stack->bts_blkno = BufferGetBlockNumber(pbuf);
 			stack->bts_offset = InvalidOffsetNumber;
-			/* bts_btitem will be initialized below */
+			/* bts_btentry will be initialized below */
 			stack->bts_parent = NULL;
 			_bt_relbuf(rel, pbuf);
 		}
 
 		/* get high key from left page == lowest key on new right page */
-		ritem = (BTItem) PageGetItem(page,
-									 PageGetItemId(page, P_HIKEY));
+		ritem = (IndexTuple) PageGetItem(page,
+										 PageGetItemId(page, P_HIKEY));
 
 		/* form an index tuple that points at the new right page */
-		new_item = _bt_formitem(&(ritem->bti_itup));
-		ItemPointerSet(&(new_item->bti_itup.t_tid), rbknum, P_HIKEY);
+		new_item = CopyIndexTuple(ritem);
+		ItemPointerSet(&(new_item->t_tid), rbknum, P_HIKEY);
 
 		/*
 		 * Find the parent buffer and get the parent page.
@@ -1220,8 +1216,7 @@ _bt_insert_parent(Relation rel,
 		 * want to find parent pointing to where we are, right ?	- vadim
 		 * 05/27/97
 		 */
-		ItemPointerSet(&(stack->bts_btitem.bti_itup.t_tid),
-					   bknum, P_HIKEY);
+		ItemPointerSet(&(stack->bts_btentry.t_tid), bknum, P_HIKEY);
 
 		pbuf = _bt_getstackbuf(rel, stack, BT_WRITE);
 
@@ -1282,7 +1277,7 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
 						minoff,
 						maxoff;
 			ItemId		itemid;
-			BTItem		item;
+			IndexTuple	item;
 
 			minoff = P_FIRSTDATAKEY(opaque);
 			maxoff = PageGetMaxOffsetNumber(page);
@@ -1312,8 +1307,8 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
 				 offnum = OffsetNumberNext(offnum))
 			{
 				itemid = PageGetItemId(page, offnum);
-				item = (BTItem) PageGetItem(page, itemid);
-				if (BTItemSame(item, &stack->bts_btitem))
+				item = (IndexTuple) PageGetItem(page, itemid);
+				if (BTEntrySame(item, &stack->bts_btentry))
 				{
 					/* Return accurate pointer to where link is now */
 					stack->bts_blkno = blkno;
@@ -1327,8 +1322,8 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
 				 offnum = OffsetNumberPrev(offnum))
 			{
 				itemid = PageGetItemId(page, offnum);
-				item = (BTItem) PageGetItem(page, itemid);
-				if (BTItemSame(item, &stack->bts_btitem))
+				item = (IndexTuple) PageGetItem(page, itemid);
+				if (BTEntrySame(item, &stack->bts_btentry))
 				{
 					/* Return accurate pointer to where link is now */
 					stack->bts_blkno = blkno;
@@ -1382,9 +1377,9 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	BlockNumber rootblknum;
 	BTPageOpaque rootopaque;
 	ItemId		itemid;
-	BTItem		item;
+	IndexTuple	item;
 	Size		itemsz;
-	BTItem		new_item;
+	IndexTuple	new_item;
 	Buffer		metabuf;
 	Page		metapg;
 	BTMetaPageData *metad;
@@ -1425,10 +1420,10 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	 * first item in a non-leaf page, it implicitly has minus-infinity key
 	 * value, so we need not store any actual key in it.
 	 */
-	itemsz = sizeof(BTItemData);
-	new_item = (BTItem) palloc(itemsz);
-	new_item->bti_itup.t_info = itemsz;
-	ItemPointerSet(&(new_item->bti_itup.t_tid), lbkno, P_HIKEY);
+	itemsz = sizeof(IndexTupleData);
+	new_item = (IndexTuple) palloc(itemsz);
+	new_item->t_info = itemsz;
+	ItemPointerSet(&(new_item->t_tid), lbkno, P_HIKEY);
 
 	/*
 	 * Insert the left page pointer into the new root page.  The root page is
@@ -1445,9 +1440,9 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	 */
 	itemid = PageGetItemId(lpage, P_HIKEY);
 	itemsz = ItemIdGetLength(itemid);
-	item = (BTItem) PageGetItem(lpage, itemid);
-	new_item = _bt_formitem(&(item->bti_itup));
-	ItemPointerSet(&(new_item->bti_itup.t_tid), rbkno, P_HIKEY);
+	item = (IndexTuple) PageGetItem(lpage, itemid);
+	new_item = CopyIndexTuple(item);
+	ItemPointerSet(&(new_item->t_tid), rbkno, P_HIKEY);
 
 	/*
 	 * insert the right page pointer into the new root page.
@@ -1511,32 +1506,32 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
  *		the buffer afterwards, either.
  *
  *		The main difference between this routine and a bare PageAddItem call
- *		is that this code knows that the leftmost data item on a non-leaf
+ *		is that this code knows that the leftmost index tuple on a non-leaf
  *		btree page doesn't need to have a key.  Therefore, it strips such
- *		items down to just the item header.  CAUTION: this works ONLY if
- *		we insert the items in order, so that the given itup_off does
- *		represent the final position of the item!
+ *		tuples down to just the tuple header.  CAUTION: this works ONLY if
+ *		we insert the tuples in order, so that the given itup_off does
+ *		represent the final position of the tuple!
  */
 static void
 _bt_pgaddtup(Relation rel,
 			 Page page,
 			 Size itemsize,
-			 BTItem btitem,
+			 IndexTuple itup,
 			 OffsetNumber itup_off,
 			 const char *where)
 {
 	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-	BTItemData	truncitem;
+	IndexTupleData trunctuple;
 
 	if (!P_ISLEAF(opaque) && itup_off == P_FIRSTDATAKEY(opaque))
 	{
-		memcpy(&truncitem, btitem, sizeof(BTItemData));
-		truncitem.bti_itup.t_info = sizeof(BTItemData);
-		btitem = &truncitem;
-		itemsize = sizeof(BTItemData);
+		trunctuple = *itup;
+		trunctuple.t_info = sizeof(IndexTupleData);
+		itup = &trunctuple;
+		itemsize = sizeof(IndexTupleData);
 	}
 
-	if (PageAddItem(page, (Item) btitem, itemsize, itup_off,
+	if (PageAddItem(page, (Item) itup, itemsize, itup_off,
 					LP_USED) == InvalidOffsetNumber)
 		elog(PANIC, "failed to add item to the %s for \"%s\"",
 			 where, RelationGetRelationName(rel));
@@ -1552,15 +1547,13 @@ static bool
 _bt_isequal(TupleDesc itupdesc, Page page, OffsetNumber offnum,
 			int keysz, ScanKey scankey)
 {
-	BTItem		btitem;
 	IndexTuple	itup;
 	int			i;
 
 	/* Better be comparing to a leaf item */
 	Assert(P_ISLEAF((BTPageOpaque) PageGetSpecialPointer(page)));
 
-	btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
-	itup = &(btitem->bti_itup);
+	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
 
 	for (i = 1; i <= keysz; i++)
 	{

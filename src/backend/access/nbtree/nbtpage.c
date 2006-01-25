@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.91 2006/01/17 00:09:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.92 2006/01/25 23:04:20 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -766,8 +766,8 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 	uint32		targetlevel,
 				ilevel;
 	ItemId		itemid;
-	BTItem		targetkey,
-				btitem;
+	IndexTuple	targetkey,
+				itup;
 	ScanKey		itup_scankey;
 	BTStack		stack;
 	Buffer		lbuf,
@@ -803,7 +803,7 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 	targetlevel = opaque->btpo.level;
 	leftsib = opaque->btpo_prev;
 	itemid = PageGetItemId(page, P_HIKEY);
-	targetkey = CopyBTItem((BTItem) PageGetItem(page, itemid));
+	targetkey = CopyIndexTuple((IndexTuple) PageGetItem(page, itemid));
 
 	/*
 	 * We need to get an approximate pointer to the page's parent page. Use
@@ -814,7 +814,7 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 	 */
 	_bt_relbuf(rel, buf);
 	/* we need an insertion scan key to do our search, so build one */
-	itup_scankey = _bt_mkscankey(rel, &(targetkey->bti_itup));
+	itup_scankey = _bt_mkscankey(rel, targetkey);
 	/* find the leftmost leaf page containing this key */
 	stack = _bt_search(rel, rel->rd_rel->relnatts, itup_scankey, false,
 					   &lbuf, BT_READ);
@@ -908,8 +908,7 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 	 * Next find and write-lock the current parent of the target page. This is
 	 * essentially the same as the corresponding step of splitting.
 	 */
-	ItemPointerSet(&(stack->bts_btitem.bti_itup.t_tid),
-				   target, P_HIKEY);
+	ItemPointerSet(&(stack->bts_btentry.t_tid), target, P_HIKEY);
 	pbuf = _bt_getstackbuf(rel, stack, BT_WRITE);
 	if (pbuf == InvalidBuffer)
 		elog(ERROR, "failed to re-find parent key in \"%s\"",
@@ -1008,15 +1007,15 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 		OffsetNumber nextoffset;
 
 		itemid = PageGetItemId(page, poffset);
-		btitem = (BTItem) PageGetItem(page, itemid);
-		Assert(ItemPointerGetBlockNumber(&(btitem->bti_itup.t_tid)) == target);
-		ItemPointerSet(&(btitem->bti_itup.t_tid), rightsib, P_HIKEY);
+		itup = (IndexTuple) PageGetItem(page, itemid);
+		Assert(ItemPointerGetBlockNumber(&(itup->t_tid)) == target);
+		ItemPointerSet(&(itup->t_tid), rightsib, P_HIKEY);
 
 		nextoffset = OffsetNumberNext(poffset);
 		/* This part is just for double-checking */
 		itemid = PageGetItemId(page, nextoffset);
-		btitem = (BTItem) PageGetItem(page, itemid);
-		if (ItemPointerGetBlockNumber(&(btitem->bti_itup.t_tid)) != rightsib)
+		itup = (IndexTuple) PageGetItem(page, itemid);
+		if (ItemPointerGetBlockNumber(&(itup->t_tid)) != rightsib)
 			elog(PANIC, "right sibling is not next child in \"%s\"",
 				 RelationGetRelationName(rel));
 		PageIndexTupleDelete(page, nextoffset);

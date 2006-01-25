@@ -56,7 +56,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.97 2006/01/07 22:45:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.98 2006/01/25 23:04:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,7 +99,7 @@ typedef struct BTPageState
 {
 	Page		btps_page;		/* workspace for page building */
 	BlockNumber btps_blkno;		/* block # to write this page at */
-	BTItem		btps_minkey;	/* copy of minimum key (first item) on page */
+	IndexTuple	btps_minkey;	/* copy of minimum key (first item) on page */
 	OffsetNumber btps_lastoff;	/* last item offset loaded */
 	uint32		btps_level;		/* tree level (0 = leaf) */
 	Size		btps_full;		/* "full" if less than this much free space */
@@ -119,19 +119,13 @@ typedef struct BTWriteState
 } BTWriteState;
 
 
-#define BTITEMSZ(btitem) \
-	((btitem) ? \
-	 (IndexTupleDSize((btitem)->bti_itup) + \
-	  (sizeof(BTItemData) - sizeof(IndexTupleData))) : \
-	 0)
-
-
 static Page _bt_blnewpage(uint32 level);
 static BTPageState *_bt_pagestate(BTWriteState *wstate, uint32 level);
 static void _bt_slideleft(Page page);
 static void _bt_sortaddtup(Page page, Size itemsize,
-			   BTItem btitem, OffsetNumber itup_off);
-static void _bt_buildadd(BTWriteState *wstate, BTPageState *state, BTItem bti);
+			   IndexTuple itup, OffsetNumber itup_off);
+static void _bt_buildadd(BTWriteState *wstate, BTPageState *state,
+						 IndexTuple itup);
 static void _bt_uppershutdown(BTWriteState *wstate, BTPageState *state);
 static void _bt_load(BTWriteState *wstate,
 		 BTSpool *btspool, BTSpool *btspool2);
@@ -166,13 +160,6 @@ _bt_spoolinit(Relation index, bool isunique, bool isdead)
 	btspool->sortstate = tuplesort_begin_index(index, isunique,
 											   btKbytes, false);
 
-	/*
-	 * Currently, tuplesort provides sort functions on IndexTuples. If we kept
-	 * anything in a BTItem other than a regular IndexTuple, we'd need to
-	 * modify tuplesort to understand BTItems as such.
-	 */
-	Assert(sizeof(BTItemData) == sizeof(IndexTupleData));
-
 	return btspool;
 }
 
@@ -187,13 +174,12 @@ _bt_spooldestroy(BTSpool *btspool)
 }
 
 /*
- * spool a btitem into the sort file.
+ * spool an index entry into the sort file.
  */
 void
-_bt_spool(BTItem btitem, BTSpool *btspool)
+_bt_spool(IndexTuple itup, BTSpool *btspool)
 {
-	/* A BTItem is really just an IndexTuple */
-	tuplesort_puttuple(btspool->sortstate, (void *) btitem);
+	tuplesort_puttuple(btspool->sortstate, (void *) itup);
 }
 
 /*
@@ -414,21 +400,21 @@ _bt_slideleft(Page page)
 static void
 _bt_sortaddtup(Page page,
 			   Size itemsize,
-			   BTItem btitem,
+			   IndexTuple itup,
 			   OffsetNumber itup_off)
 {
 	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-	BTItemData	truncitem;
+	IndexTupleData trunctuple;
 
 	if (!P_ISLEAF(opaque) && itup_off == P_FIRSTKEY)
 	{
-		memcpy(&truncitem, btitem, sizeof(BTItemData));
-		truncitem.bti_itup.t_info = sizeof(BTItemData);
-		btitem = &truncitem;
-		itemsize = sizeof(BTItemData);
+		trunctuple = *itup;
+		trunctuple.t_info = sizeof(IndexTupleData);
+		itup = &trunctuple;
+		itemsize = sizeof(IndexTupleData);
 	}
 
-	if (PageAddItem(page, (Item) btitem, itemsize, itup_off,
+	if (PageAddItem(page, (Item) itup, itemsize, itup_off,
 					LP_USED) == InvalidOffsetNumber)
 		elog(ERROR, "failed to add item to the index page");
 }
@@ -467,44 +453,44 @@ _bt_sortaddtup(Page page,
  *----------
  */
 static void
-_bt_buildadd(BTWriteState *wstate, BTPageState *state, BTItem bti)
+_bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 {
 	Page		npage;
 	BlockNumber nblkno;
 	OffsetNumber last_off;
 	Size		pgspc;
-	Size		btisz;
+	Size		itupsz;
 
 	npage = state->btps_page;
 	nblkno = state->btps_blkno;
 	last_off = state->btps_lastoff;
 
 	pgspc = PageGetFreeSpace(npage);
-	btisz = BTITEMSZ(bti);
-	btisz = MAXALIGN(btisz);
+	itupsz = IndexTupleDSize(*itup);
+	itupsz = MAXALIGN(itupsz);
 
 	/*
 	 * Check whether the item can fit on a btree page at all. (Eventually, we
 	 * ought to try to apply TOAST methods if not.) We actually need to be
 	 * able to fit three items on every page, so restrict any one item to 1/3
-	 * the per-page available space. Note that at this point, btisz doesn't
+	 * the per-page available space. Note that at this point, itupsz doesn't
 	 * include the ItemId.
 	 *
 	 * NOTE: similar code appears in _bt_insertonpg() to defend against
 	 * oversize items being inserted into an already-existing index. But
 	 * during creation of an index, we don't go through there.
 	 */
-	if (btisz > BTMaxItemSize(npage))
+	if (itupsz > BTMaxItemSize(npage))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("index row size %lu exceeds btree maximum, %lu",
-						(unsigned long) btisz,
+						(unsigned long) itupsz,
 						(unsigned long) BTMaxItemSize(npage)),
 		errhint("Values larger than 1/3 of a buffer page cannot be indexed.\n"
 				"Consider a function index of an MD5 hash of the value, "
 				"or use full text indexing.")));
 
-	if (pgspc < btisz || pgspc < state->btps_full)
+	if (pgspc < itupsz || pgspc < state->btps_full)
 	{
 		/*
 		 * Item won't fit on this page, or we feel the page is full enough
@@ -514,7 +500,7 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, BTItem bti)
 		BlockNumber oblkno = nblkno;
 		ItemId		ii;
 		ItemId		hii;
-		BTItem		obti;
+		IndexTuple	oitup;
 
 		/* Create new page of same level */
 		npage = _bt_blnewpage(state->btps_level);
@@ -532,8 +518,8 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, BTItem bti)
 		 */
 		Assert(last_off > P_FIRSTKEY);
 		ii = PageGetItemId(opage, last_off);
-		obti = (BTItem) PageGetItem(opage, ii);
-		_bt_sortaddtup(npage, ItemIdGetLength(ii), obti, P_FIRSTKEY);
+		oitup = (IndexTuple) PageGetItem(opage, ii);
+		_bt_sortaddtup(npage, ItemIdGetLength(ii), oitup, P_FIRSTKEY);
 
 		/*
 		 * Move 'last' into the high key position on opage
@@ -552,8 +538,7 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, BTItem bti)
 			state->btps_next = _bt_pagestate(wstate, state->btps_level + 1);
 
 		Assert(state->btps_minkey != NULL);
-		ItemPointerSet(&(state->btps_minkey->bti_itup.t_tid),
-					   oblkno, P_HIKEY);
+		ItemPointerSet(&(state->btps_minkey->t_tid), oblkno, P_HIKEY);
 		_bt_buildadd(wstate, state->btps_next, state->btps_minkey);
 		pfree(state->btps_minkey);
 
@@ -562,7 +547,7 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, BTItem bti)
 		 * it off the old page, not the new one, in case we are not at leaf
 		 * level.
 		 */
-		state->btps_minkey = _bt_formitem(&(obti->bti_itup));
+		state->btps_minkey = CopyIndexTuple(oitup);
 
 		/*
 		 * Set the sibling links for both pages.
@@ -597,14 +582,14 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, BTItem bti)
 	if (last_off == P_HIKEY)
 	{
 		Assert(state->btps_minkey == NULL);
-		state->btps_minkey = _bt_formitem(&(bti->bti_itup));
+		state->btps_minkey = CopyIndexTuple(itup);
 	}
 
 	/*
 	 * Add the new item into the current page.
 	 */
 	last_off = OffsetNumberNext(last_off);
-	_bt_sortaddtup(npage, btisz, bti, last_off);
+	_bt_sortaddtup(npage, itupsz, itup, last_off);
 
 	state->btps_page = npage;
 	state->btps_blkno = nblkno;
@@ -650,8 +635,7 @@ _bt_uppershutdown(BTWriteState *wstate, BTPageState *state)
 		else
 		{
 			Assert(s->btps_minkey != NULL);
-			ItemPointerSet(&(s->btps_minkey->bti_itup.t_tid),
-						   blkno, P_HIKEY);
+			ItemPointerSet(&(s->btps_minkey->t_tid), blkno, P_HIKEY);
 			_bt_buildadd(wstate, s->btps_next, s->btps_minkey);
 			pfree(s->btps_minkey);
 			s->btps_minkey = NULL;
@@ -686,8 +670,8 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 {
 	BTPageState *state = NULL;
 	bool		merge = (btspool2 != NULL);
-	BTItem		bti,
-				bti2 = NULL;
+	IndexTuple	itup,
+				itup2 = NULL;
 	bool		should_free,
 				should_free2,
 				load1;
@@ -704,21 +688,21 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 		 */
 
 		/* the preparation of merge */
-		bti = (BTItem) tuplesort_getindextuple(btspool->sortstate,
-											   true, &should_free);
-		bti2 = (BTItem) tuplesort_getindextuple(btspool2->sortstate,
-												true, &should_free2);
+		itup = tuplesort_getindextuple(btspool->sortstate,
+									   true, &should_free);
+		itup2 = tuplesort_getindextuple(btspool2->sortstate,
+										true, &should_free2);
 		indexScanKey = _bt_mkscankey_nodata(wstate->index);
 
 		for (;;)
 		{
 			load1 = true;		/* load BTSpool next ? */
-			if (bti2 == NULL)
+			if (itup2 == NULL)
 			{
-				if (bti == NULL)
+				if (itup == NULL)
 					break;
 			}
-			else if (bti != NULL)
+			else if (itup != NULL)
 			{
 				for (i = 1; i <= keysz; i++)
 				{
@@ -729,9 +713,9 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 								isSecondNull;
 
 					entry = indexScanKey + i - 1;
-					attrDatum1 = index_getattr((IndexTuple) bti, i, tupdes,
+					attrDatum1 = index_getattr(itup, i, tupdes,
 											   &isFirstNull);
-					attrDatum2 = index_getattr((IndexTuple) bti2, i, tupdes,
+					attrDatum2 = index_getattr(itup2, i, tupdes,
 											   &isSecondNull);
 					if (isFirstNull)
 					{
@@ -769,19 +753,19 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 
 			if (load1)
 			{
-				_bt_buildadd(wstate, state, bti);
+				_bt_buildadd(wstate, state, itup);
 				if (should_free)
-					pfree(bti);
-				bti = (BTItem) tuplesort_getindextuple(btspool->sortstate,
-													   true, &should_free);
+					pfree(itup);
+				itup = tuplesort_getindextuple(btspool->sortstate,
+											   true, &should_free);
 			}
 			else
 			{
-				_bt_buildadd(wstate, state, bti2);
+				_bt_buildadd(wstate, state, itup2);
 				if (should_free2)
-					pfree(bti2);
-				bti2 = (BTItem) tuplesort_getindextuple(btspool2->sortstate,
-														true, &should_free2);
+					pfree(itup2);
+				itup2 = tuplesort_getindextuple(btspool2->sortstate,
+												true, &should_free2);
 			}
 		}
 		_bt_freeskey(indexScanKey);
@@ -789,16 +773,16 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 	else
 	{
 		/* merge is unnecessary */
-		while ((bti = (BTItem) tuplesort_getindextuple(btspool->sortstate,
-												true, &should_free)) != NULL)
+		while ((itup = tuplesort_getindextuple(btspool->sortstate,
+											   true, &should_free)) != NULL)
 		{
 			/* When we see first tuple, create first index page */
 			if (state == NULL)
 				state = _bt_pagestate(wstate, 0);
 
-			_bt_buildadd(wstate, state, bti);
+			_bt_buildadd(wstate, state, itup);
 			if (should_free)
-				pfree(bti);
+				pfree(itup);
 		}
 	}
 
