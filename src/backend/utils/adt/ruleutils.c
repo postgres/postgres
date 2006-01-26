@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.188.4.3 2006/01/17 17:33:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.188.4.4 2006/01/26 17:08:34 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1969,6 +1969,7 @@ get_basic_select_query(Query *query, deparse_context *context,
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 		char	   *colname;
+		char	   *attname;
 
 		if (tle->resdom->resjunk)
 			continue;			/* ignore junk entries */
@@ -1977,7 +1978,55 @@ get_basic_select_query(Query *query, deparse_context *context,
 		sep = ", ";
 		colno++;
 
-		get_rule_expr((Node *) tle->expr, context, true);
+		/*
+		 * We special-case Var nodes rather than using get_rule_expr.
+		 * This is needed because get_rule_expr will display a whole-row Var
+		 * as "foo.*", which is the preferred notation in most contexts, but
+		 * at the top level of a SELECT list it's not right (the parser will
+		 * expand that notation into multiple columns, yielding behavior
+		 * different from a whole-row Var).  We want just "foo", instead.
+		 */
+		if (tle->expr && IsA(tle->expr, Var))
+		{
+			Var		   *var = (Var *) (tle->expr);
+			char	   *schemaname;
+			char	   *refname;
+
+			get_names_for_var(var, 0, context,
+							  &schemaname, &refname, &attname);
+			if (refname && (context->varprefix || attname == NULL))
+			{
+				if (schemaname)
+					appendStringInfo(buf, "%s.",
+									 quote_identifier(schemaname));
+
+				if (strcmp(refname, "*NEW*") == 0)
+					appendStringInfoString(buf, "new");
+				else if (strcmp(refname, "*OLD*") == 0)
+					appendStringInfoString(buf, "old");
+				else
+					appendStringInfoString(buf, quote_identifier(refname));
+
+				if (attname)
+					appendStringInfoChar(buf, '.');
+			}
+			if (attname)
+				appendStringInfoString(buf, quote_identifier(attname));
+			else
+			{
+				/*
+				 * In the whole-row Var case, refname is what the default AS
+				 * name would be.
+				 */
+				attname = refname;
+			}
+		}
+		else
+		{
+			get_rule_expr((Node *) tle->expr, context, true);
+			/* We'll show the AS name unless it's this: */
+			attname = "?column?";
+		}
 
 		/*
 		 * Figure out what the result column should be called.	In the
@@ -1990,28 +2039,10 @@ get_basic_select_query(Query *query, deparse_context *context,
 		else
 			colname = tle->resdom->resname;
 
+		/* Show AS unless the column's name is correct as-is */
 		if (colname)			/* resname could be NULL */
 		{
-			/* Check if we must say AS ... */
-			bool		tell_as;
-
-			if (!IsA(tle->expr, Var))
-				tell_as = (strcmp(colname, "?column?") != 0);
-			else
-			{
-				Var		   *var = (Var *) (tle->expr);
-				char	   *schemaname;
-				char	   *refname;
-				char	   *attname;
-
-				get_names_for_var(var, 0, context,
-								  &schemaname, &refname, &attname);
-				tell_as = (attname == NULL ||
-						   strcmp(attname, colname) != 0);
-			}
-
-			/* and do if so */
-			if (tell_as)
+			if (attname == NULL || strcmp(attname, colname) != 0)
 				appendStringInfo(buf, " AS %s", quote_identifier(colname));
 		}
 	}
@@ -2889,9 +2920,9 @@ get_rule_expr(Node *node, deparse_context *context,
 										 quote_identifier(schemaname));
 
 					if (strcmp(refname, "*NEW*") == 0)
-						appendStringInfo(buf, "new.");
+						appendStringInfoString(buf, "new.");
 					else if (strcmp(refname, "*OLD*") == 0)
-						appendStringInfo(buf, "old.");
+						appendStringInfoString(buf, "old.");
 					else
 						appendStringInfo(buf, "%s.",
 										 quote_identifier(refname));
@@ -2899,7 +2930,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				if (attname)
 					appendStringInfoString(buf, quote_identifier(attname));
 				else
-					appendStringInfo(buf, "*");
+					appendStringInfoString(buf, "*");
 			}
 			break;
 
