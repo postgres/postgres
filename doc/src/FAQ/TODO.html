@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Sun Jan 22 21:59:28 EST 2006
+Last updated:           Wed Jan 25 21:50:11 EST 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -169,9 +169,8 @@ first.
 <ul>
   <li>%Disallow changing default expression of a SERIAL column?
   </li><li>Fix data types where equality comparison isn't intuitive, e.g. box
-  </li><li>%Prevent INET cast to CIDR if the unmasked bits are not zero, or
-  zero the bits
-  </li><li>%Prevent INET cast to CIDR from dropping netmask, SELECT '<a href="telnet://1.1.1.1">1.1.1.1</a>'::inet::cidr
+  </li><li>-<em>Zero umasked bits in conversion from INET cast to CIDR</em>
+  </li><li>-<em>Prevent INET cast to CIDR from dropping netmask, SELECT '<a href="telnet://1.1.1.1">1.1.1.1</a>'::inet::cidr</em>
   </li><li>Allow INET + INT4 to increment the host part of the address, or
   throw an error on overflow
   </li><li>%Add 'tid != tid ' operator for use in corruption recovery

@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sun Jan 22 21:59:28 EST 2006
+Last updated:		Wed Jan 25 21:50:11 EST 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -182,9 +182,8 @@ Data Types
 
 * %Disallow changing default expression of a SERIAL column?
 * Fix data types where equality comparison isn't intuitive, e.g. box
-* %Prevent INET cast to CIDR if the unmasked bits are not zero, or
-  zero the bits
-* %Prevent INET cast to CIDR from dropping netmask, SELECT '1.1.1.1'::inet::cidr
+* -Zero umasked bits in conversion from INET cast to CIDR
+* -Prevent INET cast to CIDR from dropping netmask, SELECT '1.1.1.1'::inet::cidr
 * Allow INET + INT4 to increment the host part of the address, or
   throw an error on overflow
 * %Add 'tid != tid ' operator for use in corruption recovery
