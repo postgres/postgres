@@ -1126,17 +1126,7 @@ RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
 
-CREATE FUNCTION gbt_cidr_consistent(internal,cidr,int2)
-RETURNS bool
-AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
-
 CREATE FUNCTION gbt_inet_compress(internal)
-RETURNS internal
-AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
-
-CREATE FUNCTION gbt_cidr_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
@@ -1183,12 +1173,12 @@ AS
 CREATE OPERATOR CLASS gist_cidr_ops
 DEFAULT FOR TYPE cidr USING gist 
 AS
-	OPERATOR	1	<   RECHECK ,
-	OPERATOR	2	<=  RECHECK ,
-	OPERATOR	3	=   RECHECK ,
-	OPERATOR	4	>=  RECHECK ,
-	OPERATOR	5	>   RECHECK ,
-	FUNCTION	1	gbt_cidr_consistent (internal, cidr, int2),
+	OPERATOR	1	<  (inet, inet)  RECHECK ,
+	OPERATOR	2	<= (inet, inet)  RECHECK ,
+	OPERATOR	3	=  (inet, inet)  RECHECK ,
+	OPERATOR	4	>= (inet, inet)  RECHECK ,
+	OPERATOR	5	>  (inet, inet)  RECHECK ,
+	FUNCTION	1	gbt_inet_consistent (internal, inet, int2),
 	FUNCTION	2	gbt_inet_union (bytea, internal),
 	FUNCTION	3	gbt_inet_compress (internal),
 	FUNCTION	4	gbt_decompress (internal),

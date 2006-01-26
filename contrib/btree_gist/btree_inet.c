@@ -14,20 +14,16 @@ typedef struct inetkey
 ** inet ops
 */
 PG_FUNCTION_INFO_V1(gbt_inet_compress);
-PG_FUNCTION_INFO_V1(gbt_cidr_compress);
 PG_FUNCTION_INFO_V1(gbt_inet_union);
 PG_FUNCTION_INFO_V1(gbt_inet_picksplit);
 PG_FUNCTION_INFO_V1(gbt_inet_consistent);
-PG_FUNCTION_INFO_V1(gbt_cidr_consistent);
 PG_FUNCTION_INFO_V1(gbt_inet_penalty);
 PG_FUNCTION_INFO_V1(gbt_inet_same);
 
 Datum		gbt_inet_compress(PG_FUNCTION_ARGS);
-Datum		gbt_cidr_compress(PG_FUNCTION_ARGS);
 Datum		gbt_inet_union(PG_FUNCTION_ARGS);
 Datum		gbt_inet_picksplit(PG_FUNCTION_ARGS);
 Datum		gbt_inet_consistent(PG_FUNCTION_ARGS);
-Datum		gbt_cidr_consistent(PG_FUNCTION_ARGS);
 Datum		gbt_inet_penalty(PG_FUNCTION_ARGS);
 Datum		gbt_inet_same(PG_FUNCTION_ARGS);
 
@@ -89,17 +85,18 @@ static const gbtree_ninfo tinfo =
  **************************************************/
 
 
-
-static GISTENTRY *
-gbt_inet_compress_inetrnal(GISTENTRY *retval, GISTENTRY *entry, Oid typid)
+Datum
+gbt_inet_compress(PG_FUNCTION_ARGS)
 {
+	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+	GISTENTRY  *retval;
 
 	if (entry->leafkey)
 	{
 		inetKEY    *r = (inetKEY *) palloc(sizeof(inetKEY));
 
 		retval = palloc(sizeof(GISTENTRY));
-		r->lower = convert_network_to_scalar(entry->key, typid);
+		r->lower = convert_network_to_scalar(entry->key, INETOID);
 		r->upper = r->lower;
 		gistentryinit(*retval, PointerGetDatum(r),
 					  entry->rel, entry->page,
@@ -108,46 +105,7 @@ gbt_inet_compress_inetrnal(GISTENTRY *retval, GISTENTRY *entry, Oid typid)
 	else
 		retval = entry;
 
-	return (retval);
-}
-
-
-
-Datum
-gbt_inet_compress(PG_FUNCTION_ARGS)
-{
-	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	GISTENTRY  *retval = NULL;
-
-	PG_RETURN_POINTER(gbt_inet_compress_inetrnal(retval, entry, INETOID));
-}
-
-Datum
-gbt_cidr_compress(PG_FUNCTION_ARGS)
-{
-	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	GISTENTRY  *retval = NULL;
-
-	PG_RETURN_POINTER(gbt_inet_compress_inetrnal(retval, entry, CIDROID));
-}
-
-
-static bool
-gbt_inet_consistent_internal(
-							 const GISTENTRY *entry,
-							 const double *query,
-							 const StrategyNumber *strategy
-)
-{
-	inetKEY    *kkk = (inetKEY *) DatumGetPointer(entry->key);
-	GBT_NUMKEY_R key;
-
-	key.lower = (GBT_NUMKEY *) & kkk->lower;
-	key.upper = (GBT_NUMKEY *) & kkk->upper;
-
-	return (
-			gbt_num_consistent(&key, (void *) query, strategy, GIST_LEAF(entry), &tinfo)
-		);
+	PG_RETURN_POINTER(retval);
 }
 
 
@@ -157,22 +115,14 @@ gbt_inet_consistent(PG_FUNCTION_ARGS)
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	double		query = convert_network_to_scalar(PG_GETARG_DATUM(1), INETOID);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+	inetKEY    *kkk = (inetKEY *) DatumGetPointer(entry->key);
+	GBT_NUMKEY_R key;
 
-	PG_RETURN_BOOL(
-				   gbt_inet_consistent_internal(entry, &query, &strategy)
-		);
-}
+	key.lower = (GBT_NUMKEY *) & kkk->lower;
+	key.upper = (GBT_NUMKEY *) & kkk->upper;
 
-Datum
-gbt_cidr_consistent(PG_FUNCTION_ARGS)
-{
-	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	double		query = convert_network_to_scalar(PG_GETARG_DATUM(1), CIDROID);
-	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
-
-	PG_RETURN_BOOL(
-				   gbt_inet_consistent_internal(entry, &query, &strategy)
-		);
+	PG_RETURN_BOOL(gbt_num_consistent(&key, (void *) &query,
+									  &strategy, GIST_LEAF(entry), &tinfo));
 }
 
 
