@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for the INET and CIDR types.
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.61 2006/01/26 02:35:49 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.62 2006/01/26 18:08:10 tgl Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -545,7 +545,7 @@ hashinet(PG_FUNCTION_ARGS)
 	int			addrsize = ip_addrsize(addr);
 
 	/* XXX this assumes there are no pad bytes in the data structure */
-	return hash_any(VARDATA(addr), addrsize + 2);
+	return hash_any((unsigned char *) VARDATA(addr), addrsize + 2);
 }
 
 /*
