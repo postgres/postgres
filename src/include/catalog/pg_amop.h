@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_amop.h,v 1.67 2005/11/07 17:36:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_amop.h,v 1.68 2006/01/26 02:35:49 tgl Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki
@@ -388,11 +388,11 @@ DATA(insert (	1974	0 5 f 1205 ));
  *	btree cidr
  */
 
-DATA(insert (	 432	0 1 f  822 ));
-DATA(insert (	 432	0 2 f  823 ));
-DATA(insert (	 432	0 3 f  820 ));
-DATA(insert (	 432	0 4 f  825 ));
-DATA(insert (	 432	0 5 f  824 ));
+DATA(insert (	 432	0 1 f 1203 ));
+DATA(insert (	 432	0 2 f 1204 ));
+DATA(insert (	 432	0 3 f 1201 ));
+DATA(insert (	 432	0 4 f 1206 ));
+DATA(insert (	 432	0 5 f 1205 ));
 
 /*
  *	btree numeric
@@ -523,7 +523,7 @@ DATA(insert (	 427	0 1 f 1054 ));
 /* char_ops */
 DATA(insert (	 431	0 1 f	92 ));
 /* cidr_ops */
-DATA(insert (	 433	0 1 f  820 ));
+DATA(insert (	 433	0 1 f 1201 ));
 /* date_ops */
 DATA(insert (	 435	0 1 f 1093 ));
 /* float4_ops */

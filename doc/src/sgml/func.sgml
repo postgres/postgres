@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.302 2006/01/11 20:12:38 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.303 2006/01/26 02:35:48 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -6797,9 +6797,7 @@ SELECT pg_sleep(1.5);
    types.  The <function>host</function>,
    <function>text</function>, and <function>abbrev</function>
    functions are primarily intended to offer alternative display
-   formats. You can cast a text value to <type>inet</> using normal casting
-   syntax: <literal>inet(<replaceable>expression</>)</literal> or
-   <literal><replaceable>colname</>::inet</literal>.
+   formats.
   </para>
 
     <table id="cidr-inet-functions-table">
@@ -6844,6 +6842,13 @@ SELECT pg_sleep(1.5);
         <entry><literal>192.168.1.5/16</literal></entry>
        </row>
        <row>
+        <entry><literal><function>set_masklen</function>(<type>cidr</type>, <type>int</type>)</literal></entry>
+        <entry><type>cidr</type></entry>
+        <entry>set netmask length for <type>cidr</type> value</entry>
+        <entry><literal>set_masklen('192.168.1.0/24'::cidr, 16)</literal></entry>
+        <entry><literal>192.168.0.0/16</literal></entry>
+       </row>
+       <row>
         <entry><literal><function>netmask</function>(<type>inet</type>)</literal></entry>
         <entry><type>inet</type></entry>
         <entry>construct netmask for network</entry>
@@ -6875,6 +6880,13 @@ SELECT pg_sleep(1.5);
         <entry><literal><function>abbrev</function>(<type>inet</type>)</literal></entry>
         <entry><type>text</type></entry>
         <entry>abbreviated display format as text</entry>
+        <entry><literal>abbrev(inet '10.1.0.0/16')</literal></entry>
+        <entry><literal>10.1.0.0/16</literal></entry>
+       </row>
+       <row>
+        <entry><literal><function>abbrev</function>(<type>cidr</type>)</literal></entry>
+        <entry><type>text</type></entry>
+        <entry>abbreviated display format as text</entry>
         <entry><literal>abbrev(cidr '10.1.0.0/16')</literal></entry>
         <entry><literal>10.1/16</literal></entry>
        </row>
@@ -6889,6 +6901,22 @@ SELECT pg_sleep(1.5);
       </tbody>
      </tgroup>
     </table>
+
+  <para>
+   Any <type>cidr</> value can be cast to <type>inet</> implicitly
+   or explicitly; therefore, the functions shown above as operating on
+   <type>inet</> also work on <type>cidr</> values.  (Where there are
+   separate functions for <type>inet</> and <type>cidr</>, it is because
+   the behavior should be different for the two cases.)
+   Also, it is permitted to cast an <type>inet</> value to <type>cidr</>.
+   When this is done, any bits to the right of the netmask are silently zeroed
+   to create a valid <type>cidr</> value.
+   In addition,
+   you can cast a text value to <type>inet</> or <type>cidr</>
+   using normal casting syntax: for example,
+   <literal>inet(<replaceable>expression</>)</literal> or
+   <literal><replaceable>colname</>::cidr</literal>.
+  </para>
 
   <para>
    <xref linkend="macaddr-functions-table"> shows the functions

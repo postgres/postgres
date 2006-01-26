@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for the INET and CIDR types.
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.60 2006/01/23 21:49:39 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.61 2006/01/26 02:35:49 tgl Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -22,7 +22,7 @@
 #include "utils/inet.h"
 
 
-static Datum text_network(text *src, bool is_cidr);
+static inet *text_network(text *src, bool is_cidr);
 static int32 network_cmp_internal(inet *a1, inet *a2);
 static int	bitncmp(void *l, void *r, int n);
 static bool addressOK(unsigned char *a, int bits, int family);
@@ -37,9 +37,6 @@ static int	ip_addrsize(inet *inetptr);
 
 #define ip_bits(inetptr) \
 	(((inet_struct *)VARDATA(inetptr))->bits)
-
-#define ip_is_cidr(inetptr) \
-	(((inet_struct *)VARDATA(inetptr))->is_cidr)
 
 #define ip_addr(inetptr) \
 	(((inet_struct *)VARDATA(inetptr))->ipaddr)
@@ -64,7 +61,9 @@ ip_addrsize(inet *inetptr)
 	}
 }
 
-/* Common input routine */
+/*
+ * Common INET/CIDR input routine
+ */
 static inet *
 network_in(char *src, bool is_cidr)
 {
@@ -109,37 +108,33 @@ network_in(char *src, bool is_cidr)
 		+ ((char *) ip_addr(dst) - (char *) VARDATA(dst))
 		+ ip_addrsize(dst);
 	ip_bits(dst) = bits;
-	ip_is_cidr(dst) = is_cidr;
 
 	return dst;
 }
 
-/* INET address reader.  */
 Datum
 inet_in(PG_FUNCTION_ARGS)
 {
 	char	   *src = PG_GETARG_CSTRING(0);
 
-	PG_RETURN_INET_P(network_in(src, 0));
+	PG_RETURN_INET_P(network_in(src, false));
 }
 
-/* CIDR address reader.  */
 Datum
 cidr_in(PG_FUNCTION_ARGS)
 {
 	char	   *src = PG_GETARG_CSTRING(0);
 
-	PG_RETURN_INET_P(network_in(src, 1));
+	PG_RETURN_INET_P(network_in(src, true));
 }
 
 
 /*
- *	INET address output function.
+ * Common INET/CIDR output routine
  */
-Datum
-inet_out(PG_FUNCTION_ARGS)
+static char *
+network_out(inet *src, bool is_cidr)
 {
-	inet	   *src = PG_GETARG_INET_P(0);
 	char		tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
 	char	   *dst;
 	int			len;
@@ -152,34 +147,45 @@ inet_out(PG_FUNCTION_ARGS)
 				 errmsg("could not format inet value: %m")));
 
 	/* For CIDR, add /n if not present */
-	if (ip_is_cidr(src) && strchr(tmp, '/') == NULL)
+	if (is_cidr && strchr(tmp, '/') == NULL)
 	{
 		len = strlen(tmp);
 		snprintf(tmp + len, sizeof(tmp) - len, "/%u", ip_bits(src));
 	}
 
-	PG_RETURN_CSTRING(pstrdup(tmp));
+	return pstrdup(tmp);
 }
 
+Datum
+inet_out(PG_FUNCTION_ARGS)
+{
+	inet	   *src = PG_GETARG_INET_P(0);
 
-/* share code with INET case */
+	PG_RETURN_CSTRING(network_out(src, false));
+}
+
 Datum
 cidr_out(PG_FUNCTION_ARGS)
 {
-	return inet_out(fcinfo);
+	inet	   *src = PG_GETARG_INET_P(0);
+
+	PG_RETURN_CSTRING(network_out(src, true));
 }
 
 
 /*
- *		inet_recv			- converts external binary format to inet
+ *		network_recv		- converts external binary format to inet
  *
  * The external representation is (one byte apiece for)
  * family, bits, is_cidr, address length, address in network byte order.
+ *
+ * Presence of is_cidr is largely for historical reasons, though it might
+ * allow some code-sharing on the client side.  We send it correctly on
+ * output, but ignore the value on input.
  */
-Datum
-inet_recv(PG_FUNCTION_ARGS)
+static inet *
+network_recv(StringInfo buf, bool is_cidr)
 {
-	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 	inet	   *addr;
 	char	   *addrptr;
 	int			bits;
@@ -194,23 +200,25 @@ inet_recv(PG_FUNCTION_ARGS)
 		ip_family(addr) != PGSQL_AF_INET6)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-			   errmsg("invalid address family in external \"inet\" value")));
+				 /* translator: %s is inet or cidr */
+				 errmsg("invalid address family in external \"%s\" value",
+						is_cidr ? "cidr" : "inet")));
 	bits = pq_getmsgbyte(buf);
 	if (bits < 0 || bits > ip_maxbits(addr))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-				 errmsg("invalid bits in external \"inet\" value")));
+				 /* translator: %s is inet or cidr */
+				 errmsg("invalid bits in external \"%s\" value",
+						is_cidr ? "cidr" : "inet")));
 	ip_bits(addr) = bits;
-	ip_is_cidr(addr) = pq_getmsgbyte(buf);
-	if (ip_is_cidr(addr) != false && ip_is_cidr(addr) != true)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-				 errmsg("invalid type in external \"inet\" value")));
+	i = pq_getmsgbyte(buf);		/* ignore is_cidr */
 	nb = pq_getmsgbyte(buf);
 	if (nb != ip_addrsize(addr))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-				 errmsg("invalid length in external \"inet\" value")));
+				 /* translator: %s is inet or cidr */
+				 errmsg("invalid length in external \"%s\" value",
+						is_cidr ? "cidr" : "inet")));
 	VARATT_SIZEP(addr) = VARHDRSZ
 		+ ((char *) ip_addr(addr) - (char *) VARDATA(addr))
 		+ ip_addrsize(addr);
@@ -222,7 +230,7 @@ inet_recv(PG_FUNCTION_ARGS)
 	/*
 	 * Error check: CIDR values must not have any bits set beyond the masklen.
 	 */
-	if (ip_is_cidr(addr))
+	if (is_cidr)
 	{
 		if (!addressOK(ip_addr(addr), bits, ip_family(addr)))
 			ereport(ERROR,
@@ -231,23 +239,32 @@ inet_recv(PG_FUNCTION_ARGS)
 					 errdetail("Value has bits set to right of mask.")));
 	}
 
-	PG_RETURN_INET_P(addr);
+	return addr;
 }
 
-/* share code with INET case */
+Datum
+inet_recv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+
+	PG_RETURN_INET_P(network_recv(buf, false));
+}
+
 Datum
 cidr_recv(PG_FUNCTION_ARGS)
 {
-	return inet_recv(fcinfo);
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+
+	PG_RETURN_INET_P(network_recv(buf, true));
 }
 
+
 /*
- *		inet_send			- converts inet to binary format
+ *		network_send		- converts inet to binary format
  */
-Datum
-inet_send(PG_FUNCTION_ARGS)
+static bytea *
+network_send(inet *addr, bool is_cidr)
 {
-	inet	   *addr = PG_GETARG_INET_P(0);
 	StringInfoData buf;
 	char	   *addrptr;
 	int			nb,
@@ -256,7 +273,7 @@ inet_send(PG_FUNCTION_ARGS)
 	pq_begintypsend(&buf);
 	pq_sendbyte(&buf, ip_family(addr));
 	pq_sendbyte(&buf, ip_bits(addr));
-	pq_sendbyte(&buf, ip_is_cidr(addr));
+	pq_sendbyte(&buf, is_cidr);
 	nb = ip_addrsize(addr);
 	if (nb < 0)
 		nb = 0;
@@ -264,41 +281,93 @@ inet_send(PG_FUNCTION_ARGS)
 	addrptr = (char *) ip_addr(addr);
 	for (i = 0; i < nb; i++)
 		pq_sendbyte(&buf, addrptr[i]);
-	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
+	return pq_endtypsend(&buf);
 }
 
-/* share code with INET case */
+Datum
+inet_send(PG_FUNCTION_ARGS)
+{
+	inet	   *addr = PG_GETARG_INET_P(0);
+
+	PG_RETURN_BYTEA_P(network_send(addr, false));
+}
+
 Datum
 cidr_send(PG_FUNCTION_ARGS)
 {
-	return inet_send(fcinfo);
+	inet	   *addr = PG_GETARG_INET_P(0);
+
+	PG_RETURN_BYTEA_P(network_send(addr, true));
 }
 
 
-static Datum
+static inet *
 text_network(text *src, bool is_cidr)
 {
 	int			len = VARSIZE(src) - VARHDRSZ;
-
 	char	   *str = palloc(len + 1);
 
 	memcpy(str, VARDATA(src), len);
-	*(str + len) = '\0';
+	str[len] = '\0';
 
-	PG_RETURN_INET_P(network_in(str, is_cidr));
-}
-
-
-Datum
-text_cidr(PG_FUNCTION_ARGS)
-{
-	return text_network(PG_GETARG_TEXT_P(0), 1);
+	return network_in(str, is_cidr);
 }
 
 Datum
 text_inet(PG_FUNCTION_ARGS)
 {
-	return text_network(PG_GETARG_TEXT_P(0), 0);
+	text	   *src = PG_GETARG_TEXT_P(0);
+
+	PG_RETURN_INET_P(text_network(src, false));
+}
+
+Datum
+text_cidr(PG_FUNCTION_ARGS)
+{
+	text	   *src = PG_GETARG_TEXT_P(0);
+
+	PG_RETURN_INET_P(text_network(src, true));
+}
+
+
+Datum
+inet_to_cidr(PG_FUNCTION_ARGS)
+{
+	inet	   *src = PG_GETARG_INET_P(0);
+	inet	   *dst;
+	int			bits;
+	int			byte;
+	int			nbits;
+	int			maxbytes;
+
+	bits = ip_bits(src);
+
+	/* safety check */
+	if ((bits < 0) || (bits > ip_maxbits(src)))
+		elog(ERROR, "invalid inet bit length: %d", bits);
+
+	/* clone the original data */
+	dst = (inet *) palloc(VARSIZE(src));
+	memcpy(dst, src, VARSIZE(src));
+
+	/* zero out any bits to the right of the netmask */
+	byte = bits / 8;
+	nbits = bits % 8;
+	/* clear the first byte, this might be a partial byte */
+	if (nbits != 0)
+	{
+		ip_addr(dst)[byte] &= ~(0xFF >> nbits);
+		byte++;
+	}
+	/* clear remaining bytes */
+	maxbytes = ip_addrsize(dst);
+	while (byte < maxbytes)
+	{
+		ip_addr(dst)[byte] = 0;
+		byte++;
+	}
+
+	PG_RETURN_INET_P(dst);
 }
 
 Datum
@@ -321,6 +390,50 @@ inet_set_masklen(PG_FUNCTION_ARGS)
 	memcpy(dst, src, VARSIZE(src));
 
 	ip_bits(dst) = bits;
+
+	PG_RETURN_INET_P(dst);
+}
+
+Datum
+cidr_set_masklen(PG_FUNCTION_ARGS)
+{
+	inet	   *src = PG_GETARG_INET_P(0);
+	int			bits = PG_GETARG_INT32(1);
+	inet	   *dst;
+	int			byte;
+	int			nbits;
+	int			maxbytes;
+
+	if (bits == -1)
+		bits = ip_maxbits(src);
+
+	if ((bits < 0) || (bits > ip_maxbits(src)))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid mask length: %d", bits)));
+
+	/* clone the original data */
+	dst = (inet *) palloc(VARSIZE(src));
+	memcpy(dst, src, VARSIZE(src));
+
+	ip_bits(dst) = bits;
+
+	/* zero out any bits to the right of the new netmask */
+	byte = bits / 8;
+	nbits = bits % 8;
+	/* clear the first byte, this might be a partial byte */
+	if (nbits != 0)
+	{
+		ip_addr(dst)[byte] &= ~(0xFF >> nbits);
+		byte++;
+	}
+	/* clear remaining bytes */
+	maxbytes = ip_addrsize(dst);
+	while (byte < maxbytes)
+	{
+		ip_addr(dst)[byte] = 0;
+		byte++;
+	}
 
 	PG_RETURN_INET_P(dst);
 }
@@ -424,23 +537,15 @@ network_ne(PG_FUNCTION_ARGS)
 
 /*
  * Support function for hash indexes on inet/cidr.
- *
- * Since network_cmp considers only ip_family, ip_bits, and ip_addr, only
- * these fields may be used in the hash; in particular don't use is_cidr.
  */
 Datum
 hashinet(PG_FUNCTION_ARGS)
 {
 	inet	   *addr = PG_GETARG_INET_P(0);
 	int			addrsize = ip_addrsize(addr);
-	unsigned char key[sizeof(inet_struct)];
 
-	Assert(addrsize + 2 <= sizeof(key));
-	key[0] = ip_family(addr);
-	key[1] = ip_bits(addr);
-	memcpy(key + 2, ip_addr(addr), addrsize);
-
-	return hash_any(key, addrsize + 2);
+	/* XXX this assumes there are no pad bytes in the data structure */
+	return hash_any(VARDATA(addr), addrsize + 2);
 }
 
 /*
@@ -567,7 +672,7 @@ network_show(PG_FUNCTION_ARGS)
 }
 
 Datum
-network_abbrev(PG_FUNCTION_ARGS)
+inet_abbrev(PG_FUNCTION_ARGS)
 {
 	inet	   *ip = PG_GETARG_INET_P(0);
 	text	   *ret;
@@ -575,17 +680,38 @@ network_abbrev(PG_FUNCTION_ARGS)
 	int			len;
 	char		tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
 
-	if (ip_is_cidr(ip))
-		dst = inet_cidr_ntop(ip_family(ip), ip_addr(ip),
-							 ip_bits(ip), tmp, sizeof(tmp));
-	else
-		dst = inet_net_ntop(ip_family(ip), ip_addr(ip),
-							ip_bits(ip), tmp, sizeof(tmp));
+	dst = inet_net_ntop(ip_family(ip), ip_addr(ip),
+						ip_bits(ip), tmp, sizeof(tmp));
 
 	if (dst == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 				 errmsg("could not format inet value: %m")));
+
+	/* Return string as a text datum */
+	len = strlen(tmp);
+	ret = (text *) palloc(len + VARHDRSZ);
+	VARATT_SIZEP(ret) = len + VARHDRSZ;
+	memcpy(VARDATA(ret), tmp, len);
+	PG_RETURN_TEXT_P(ret);
+}
+
+Datum
+cidr_abbrev(PG_FUNCTION_ARGS)
+{
+	inet	   *ip = PG_GETARG_INET_P(0);
+	text	   *ret;
+	char	   *dst;
+	int			len;
+	char		tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
+
+	dst = inet_cidr_ntop(ip_family(ip), ip_addr(ip),
+						 ip_bits(ip), tmp, sizeof(tmp));
+
+	if (dst == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+				 errmsg("could not format cidr value: %m")));
 
 	/* Return string as a text datum */
 	len = strlen(tmp);
@@ -666,7 +792,6 @@ network_broadcast(PG_FUNCTION_ARGS)
 
 	ip_family(dst) = ip_family(ip);
 	ip_bits(dst) = ip_bits(ip);
-	ip_is_cidr(dst) = false;
 	VARATT_SIZEP(dst) = VARHDRSZ
 		+ ((char *) ip_addr(dst) - (char *) VARDATA(dst))
 		+ ip_addrsize(dst);
@@ -712,7 +837,6 @@ network_network(PG_FUNCTION_ARGS)
 
 	ip_family(dst) = ip_family(ip);
 	ip_bits(dst) = ip_bits(ip);
-	ip_is_cidr(dst) = true;
 	VARATT_SIZEP(dst) = VARHDRSZ
 		+ ((char *) ip_addr(dst) - (char *) VARDATA(dst))
 		+ ip_addrsize(dst);
@@ -756,7 +880,6 @@ network_netmask(PG_FUNCTION_ARGS)
 
 	ip_family(dst) = ip_family(ip);
 	ip_bits(dst) = ip_maxbits(ip);
-	ip_is_cidr(dst) = false;
 	VARATT_SIZEP(dst) = VARHDRSZ
 		+ ((char *) ip_addr(dst) - (char *) VARDATA(dst))
 		+ ip_addrsize(dst);
@@ -806,7 +929,6 @@ network_hostmask(PG_FUNCTION_ARGS)
 
 	ip_family(dst) = ip_family(ip);
 	ip_bits(dst) = ip_maxbits(ip);
-	ip_is_cidr(dst) = false;
 	VARATT_SIZEP(dst) = VARHDRSZ
 		+ ((char *) ip_addr(dst) - (char *) VARDATA(dst))
 		+ ip_addrsize(dst);
@@ -818,11 +940,6 @@ network_hostmask(PG_FUNCTION_ARGS)
  * Convert a value of a network datatype to an approximate scalar value.
  * This is used for estimating selectivities of inequality operators
  * involving network types.
- *
- * Currently, inet/cidr values are simply converted to the IPv4 address;
- * this will need more thought when IPv6 is supported too.	MAC addresses
- * are converted to their numeric equivalent as well (OK since we have a
- * double to play in).
  */
 double
 convert_network_to_scalar(Datum value, Oid typid)
@@ -838,7 +955,7 @@ convert_network_to_scalar(Datum value, Oid typid)
 				int			i;
 
 				/*
-				 * Note that we don't use the full address here.
+				 * Note that we don't use the full address for IPv6.
 				 */
 				if (ip_family(ip) == PGSQL_AF_INET)
 					len = 4;
@@ -1020,7 +1137,7 @@ inet_client_addr(PG_FUNCTION_ARGS)
 	if (ret)
 		PG_RETURN_NULL();
 
-	PG_RETURN_INET_P(network_in(remote_host, 0));
+	PG_RETURN_INET_P(network_in(remote_host, false));
 }
 
 
@@ -1094,7 +1211,7 @@ inet_server_addr(PG_FUNCTION_ARGS)
 	if (ret)
 		PG_RETURN_NULL();
 
-	PG_RETURN_INET_P(network_in(local_host, 0));
+	PG_RETURN_INET_P(network_in(local_host, false));
 }
 
 

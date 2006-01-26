@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/inet.h,v 1.21 2006/01/23 21:45:47 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/inet.h,v 1.22 2006/01/26 02:35:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,6 @@ typedef struct
 {
 	unsigned char family;		/* PGSQL_AF_INET or PGSQL_AF_INET6 */
 	unsigned char bits;			/* number of bits in netmask */
-	bool is_cidr;				/* is cidr? */
 	unsigned char ipaddr[16];	/* up to 128 bits of address */
 } inet_struct;
 

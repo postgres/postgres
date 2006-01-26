@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.271 2006/01/18 06:49:29 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.272 2006/01/26 02:35:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -720,11 +720,14 @@ extern Datum network_family(PG_FUNCTION_ARGS);
 extern Datum network_broadcast(PG_FUNCTION_ARGS);
 extern Datum network_host(PG_FUNCTION_ARGS);
 extern Datum network_show(PG_FUNCTION_ARGS);
-extern Datum network_abbrev(PG_FUNCTION_ARGS);
+extern Datum inet_abbrev(PG_FUNCTION_ARGS);
+extern Datum cidr_abbrev(PG_FUNCTION_ARGS);
 extern double convert_network_to_scalar(Datum value, Oid typid);
 extern Datum text_cidr(PG_FUNCTION_ARGS);
 extern Datum text_inet(PG_FUNCTION_ARGS);
+extern Datum inet_to_cidr(PG_FUNCTION_ARGS);
 extern Datum inet_set_masklen(PG_FUNCTION_ARGS);
+extern Datum cidr_set_masklen(PG_FUNCTION_ARGS);
 extern Datum network_scan_first(Datum in);
 extern Datum network_scan_last(Datum in);
 extern Datum inet_client_addr(PG_FUNCTION_ARGS);

@@ -223,6 +223,9 @@ WHERE c.castfunc = p.oid AND
 -- As of 7.4, this finds the casts from text and varchar to bpchar, because
 -- those are binary-compatible while the reverse way goes through rtrim().
 
+-- As of 8.2, this finds the cast from cidr to inet, because that is a
+-- trivial binary coercion while the other way goes through inet_to_cidr().
+
 SELECT *
 FROM pg_cast c
 WHERE c.castfunc = 0 AND

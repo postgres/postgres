@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.392 2006/01/18 06:49:28 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.393 2006/01/26 02:35:49 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2391,10 +2391,16 @@ DATA(insert OID = 930 (  network_supeq		PGNSP PGUID 12 f f t f i 2 16 "869 869" 
 DESCR("is-supernet-or-equal");
 
 /* inet/cidr functions */
-DATA(insert OID = 605 (  abbrev				PGNSP PGUID 12 f f t f i 1 25 "869" _null_ _null_ _null_	network_abbrev - _null_ ));
-DESCR("abbreviated display of inet/cidr value");
+DATA(insert OID = 598 (  abbrev				PGNSP PGUID 12 f f t f i 1 25 "869" _null_ _null_ _null_	inet_abbrev - _null_ ));
+DESCR("abbreviated display of inet value");
+DATA(insert OID = 599 (  abbrev				PGNSP PGUID 12 f f t f i 1 25 "650" _null_ _null_ _null_	cidr_abbrev - _null_ ));
+DESCR("abbreviated display of cidr value");
+DATA(insert OID = 605 (  set_masklen		PGNSP PGUID 12 f f t f i 2 869 "869 23" _null_ _null_ _null_	inet_set_masklen - _null_ ));
+DESCR("change netmask of inet");
+DATA(insert OID = 635 (  set_masklen		PGNSP PGUID 12 f f t f i 2 650 "650 23" _null_ _null_ _null_	cidr_set_masklen - _null_ ));
+DESCR("change netmask of cidr");
 DATA(insert OID = 711 (  family				PGNSP PGUID 12 f f t f i 1 23 "869" _null_ _null_ _null_	network_family - _null_ ));
-DESCR("return address family (4 for IPv4, 6 for IPv6)");
+DESCR("address family (4 for IPv4, 6 for IPv6)");
 DATA(insert OID = 683 (  network			PGNSP PGUID 12 f f t f i 1 650 "869" _null_ _null_ _null_ network_network - _null_ ));
 DESCR("network part of address");
 DATA(insert OID = 696 (  netmask			PGNSP PGUID 12 f f t f i 1 869 "869" _null_ _null_ _null_ network_netmask - _null_ ));
@@ -2413,8 +2419,8 @@ DATA(insert OID = 1713 (  inet				PGNSP PGUID 12 f f t f i 1 869 "25" _null_ _nu
 DESCR("text to inet");
 DATA(insert OID = 1714 (  cidr				PGNSP PGUID 12 f f t f i 1 650 "25" _null_ _null_ _null_	text_cidr - _null_ ));
 DESCR("text to cidr");
-DATA(insert OID = 1715 (  set_masklen		PGNSP PGUID 12 f f t f i 2 869 "869 23" _null_ _null_ _null_	inet_set_masklen - _null_ ));
-DESCR("change the netmask of an inet");
+DATA(insert OID = 1715 (  cidr				PGNSP PGUID 12 f f t f i 1 650 "869" _null_ _null_ _null_	inet_to_cidr - _null_ ));
+DESCR("coerce inet to cidr");
 
 DATA(insert OID = 2196 (  inet_client_addr		PGNSP PGUID 12 f f f f s 0 869 "" _null_ _null_ _null_	inet_client_addr - _null_ ));
 DESCR("INET address of the client");

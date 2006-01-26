@@ -10,7 +10,7 @@
  *
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.24 2005/10/21 15:45:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.25 2006/01/26 02:35:49 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -249,7 +249,7 @@ DATA(insert (  718	604 1544 e ));
  * INET category
  */
 DATA(insert (  650	869    0 i ));
-DATA(insert (  869	650    0 i ));
+DATA(insert (  869	650 1715 a ));
 
 /*
  * BitString category

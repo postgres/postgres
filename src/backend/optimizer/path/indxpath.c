@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.197 2006/01/25 20:29:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.198 2006/01/26 02:35:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2024,8 +2024,6 @@ match_special_index_operator(Expr *clause, Oid opclass,
 
 		case OID_INET_SUB_OP:
 		case OID_INET_SUBEQ_OP:
-		case OID_CIDR_SUB_OP:
-		case OID_CIDR_SUBEQ_OP:
 			isIndexable = true;
 			break;
 	}
@@ -2087,12 +2085,8 @@ match_special_index_operator(Expr *clause, Oid opclass,
 
 		case OID_INET_SUB_OP:
 		case OID_INET_SUBEQ_OP:
-			isIndexable = (opclass == INET_BTREE_OPS_OID);
-			break;
-
-		case OID_CIDR_SUB_OP:
-		case OID_CIDR_SUBEQ_OP:
-			isIndexable = (opclass == CIDR_BTREE_OPS_OID);
+			isIndexable = (opclass == INET_BTREE_OPS_OID ||
+						   opclass == CIDR_BTREE_OPS_OID);
 			break;
 	}
 
@@ -2317,8 +2311,6 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opclass)
 
 		case OID_INET_SUB_OP:
 		case OID_INET_SUBEQ_OP:
-		case OID_CIDR_SUB_OP:
-		case OID_CIDR_SUBEQ_OP:
 			result = network_prefix_quals(leftop, expr_op, opclass,
 										  patt->constvalue);
 			break;
@@ -2679,14 +2671,6 @@ network_prefix_quals(Node *leftop, Oid expr_op, Oid opclass, Datum rightop)
 			break;
 		case OID_INET_SUBEQ_OP:
 			datatype = INETOID;
-			is_eq = true;
-			break;
-		case OID_CIDR_SUB_OP:
-			datatype = CIDROID;
-			is_eq = false;
-			break;
-		case OID_CIDR_SUBEQ_OP:
-			datatype = CIDROID;
 			is_eq = true;
 			break;
 		default:
