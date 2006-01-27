@@ -82,17 +82,30 @@ insert into pg_ts_dict select
 	'English Stemmer. Snowball.'
 ;
 
-CREATE FUNCTION snb_ru_init(internal)
+CREATE FUNCTION snb_ru_init_koi8(internal)
 	returns internal
 	as 'MODULE_PATHNAME' 
 	language 'C';
 
 insert into pg_ts_dict select 
-	'ru_stem', 
-	'snb_ru_init(internal)',
+	'ru_stem_koi8', 
+	'snb_ru_init_koi8(internal)',
 	'contrib/russian.stop',
 	'snb_lexize(internal,internal,int4)',
-	'Russian Stemmer. Snowball.'
+	'Russian Stemmer. Snowball. KOI8 Encoding'
+;
+	 
+CREATE FUNCTION snb_ru_init_utf8(internal)
+	returns internal
+	as 'MODULE_PATHNAME' 
+	language 'C';
+
+insert into pg_ts_dict select 
+	'ru_stem_utf8', 
+	'snb_ru_init_utf8(internal)',
+	'contrib/russian.stop.utf8',
+	'snb_lexize(internal,internal,int4)',
+	'Russian Stemmer. Snowball. UTF8 Encoding'
 ;
 	 
 CREATE FUNCTION spell_init(internal)
@@ -270,6 +283,7 @@ CREATE FUNCTION show_curcfg()
 
 insert into pg_ts_cfg values ('default', 'default','C');
 insert into pg_ts_cfg values ('default_russian', 'default','ru_RU.KOI8-R');
+insert into pg_ts_cfg values ('utf8_russian', 'default','ru_RU.UTF-8');
 insert into pg_ts_cfg values ('simple', 'default');
 
 insert into pg_ts_cfgmap values ('default', 'lword', '{en_stem}');
@@ -292,24 +306,43 @@ insert into pg_ts_cfgmap values ('default', 'float', '{simple}');
 insert into pg_ts_cfgmap values ('default', 'int', '{simple}');
 insert into pg_ts_cfgmap values ('default', 'uint', '{simple}');
 insert into pg_ts_cfgmap values ('default_russian', 'lword', '{en_stem}');
-insert into pg_ts_cfgmap values ('default_russian', 'nlword', '{ru_stem}');
-insert into pg_ts_cfgmap values ('default_russian', 'word', '{ru_stem}');
+insert into pg_ts_cfgmap values ('default_russian', 'nlword', '{ru_stem_koi8}');
+insert into pg_ts_cfgmap values ('default_russian', 'word', '{ru_stem_koi8}');
 insert into pg_ts_cfgmap values ('default_russian', 'email', '{simple}');
 insert into pg_ts_cfgmap values ('default_russian', 'url', '{simple}');
 insert into pg_ts_cfgmap values ('default_russian', 'host', '{simple}');
 insert into pg_ts_cfgmap values ('default_russian', 'sfloat', '{simple}');
 insert into pg_ts_cfgmap values ('default_russian', 'version', '{simple}');
 insert into pg_ts_cfgmap values ('default_russian', 'part_hword', '{simple}');
-insert into pg_ts_cfgmap values ('default_russian', 'nlpart_hword', '{ru_stem}');
+insert into pg_ts_cfgmap values ('default_russian', 'nlpart_hword', '{ru_stem_koi8}');
 insert into pg_ts_cfgmap values ('default_russian', 'lpart_hword', '{en_stem}');
-insert into pg_ts_cfgmap values ('default_russian', 'hword', '{ru_stem}');
+insert into pg_ts_cfgmap values ('default_russian', 'hword', '{ru_stem_koi8}');
 insert into pg_ts_cfgmap values ('default_russian', 'lhword', '{en_stem}');
-insert into pg_ts_cfgmap values ('default_russian', 'nlhword', '{ru_stem}');
+insert into pg_ts_cfgmap values ('default_russian', 'nlhword', '{ru_stem_koi8}');
 insert into pg_ts_cfgmap values ('default_russian', 'uri', '{simple}');
 insert into pg_ts_cfgmap values ('default_russian', 'file', '{simple}');
 insert into pg_ts_cfgmap values ('default_russian', 'float', '{simple}');
 insert into pg_ts_cfgmap values ('default_russian', 'int', '{simple}');
 insert into pg_ts_cfgmap values ('default_russian', 'uint', '{simple}');
+insert into pg_ts_cfgmap values ('utf8_russian', 'lword', '{en_stem}');
+insert into pg_ts_cfgmap values ('utf8_russian', 'nlword', '{ru_stem_utf8}');
+insert into pg_ts_cfgmap values ('utf8_russian', 'word', '{ru_stem_utf8}');
+insert into pg_ts_cfgmap values ('utf8_russian', 'email', '{simple}');
+insert into pg_ts_cfgmap values ('utf8_russian', 'url', '{simple}');
+insert into pg_ts_cfgmap values ('utf8_russian', 'host', '{simple}');
+insert into pg_ts_cfgmap values ('utf8_russian', 'sfloat', '{simple}');
+insert into pg_ts_cfgmap values ('utf8_russian', 'version', '{simple}');
+insert into pg_ts_cfgmap values ('utf8_russian', 'part_hword', '{simple}');
+insert into pg_ts_cfgmap values ('utf8_russian', 'nlpart_hword', '{ru_stem_utf8}');
+insert into pg_ts_cfgmap values ('utf8_russian', 'lpart_hword', '{en_stem}');
+insert into pg_ts_cfgmap values ('utf8_russian', 'hword', '{ru_stem_utf8}');
+insert into pg_ts_cfgmap values ('utf8_russian', 'lhword', '{en_stem}');
+insert into pg_ts_cfgmap values ('utf8_russian', 'nlhword', '{ru_stem_utf8}');
+insert into pg_ts_cfgmap values ('utf8_russian', 'uri', '{simple}');
+insert into pg_ts_cfgmap values ('utf8_russian', 'file', '{simple}');
+insert into pg_ts_cfgmap values ('utf8_russian', 'float', '{simple}');
+insert into pg_ts_cfgmap values ('utf8_russian', 'int', '{simple}');
+insert into pg_ts_cfgmap values ('utf8_russian', 'uint', '{simple}');
 insert into pg_ts_cfgmap values ('simple', 'lword', '{simple}');
 insert into pg_ts_cfgmap values ('simple', 'nlword', '{simple}');
 insert into pg_ts_cfgmap values ('simple', 'word', '{simple}');

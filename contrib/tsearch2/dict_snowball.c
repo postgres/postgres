@@ -10,6 +10,7 @@
 #include "snowball/header.h"
 #include "snowball/english_stem.h"
 #include "snowball/russian_stem.h"
+#include "snowball/russian_stem_UTF8.h"
 #include "ts_locale.h"
 
 typedef struct
@@ -23,8 +24,11 @@ typedef struct
 PG_FUNCTION_INFO_V1(snb_en_init);
 Datum		snb_en_init(PG_FUNCTION_ARGS);
 
-PG_FUNCTION_INFO_V1(snb_ru_init);
-Datum		snb_ru_init(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(snb_ru_init_koi8);
+Datum		snb_ru_init_koi8(PG_FUNCTION_ARGS);
+
+PG_FUNCTION_INFO_V1(snb_ru_init_utf8);
+Datum		snb_ru_init_utf8(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(snb_lexize);
 Datum		snb_lexize(PG_FUNCTION_ARGS);
@@ -64,7 +68,7 @@ snb_en_init(PG_FUNCTION_ARGS)
 }
 
 Datum
-snb_ru_init(PG_FUNCTION_ARGS)
+snb_ru_init_koi8(PG_FUNCTION_ARGS)
 {
 	DictSnowball *d = (DictSnowball *) malloc(sizeof(DictSnowball));
 
@@ -93,6 +97,40 @@ snb_ru_init(PG_FUNCTION_ARGS)
 				 errmsg("out of memory")));
 	}
 	d->stem = russian_KOI8_R_stem;
+
+	PG_RETURN_POINTER(d);
+}
+
+Datum
+snb_ru_init_utf8(PG_FUNCTION_ARGS)
+{
+	DictSnowball *d = (DictSnowball *) malloc(sizeof(DictSnowball));
+
+	if (!d)
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
+	memset(d, 0, sizeof(DictSnowball));
+	d->stoplist.wordop = lowerstr;
+
+	if (!PG_ARGISNULL(0) && PG_GETARG_POINTER(0) != NULL)
+	{
+		text	   *in = PG_GETARG_TEXT_P(0);
+
+		readstoplist(in, &(d->stoplist));
+		sortstoplist(&(d->stoplist));
+		PG_FREE_IF_COPY(in, 0);
+	}
+
+	d->z = russian_UTF_8_create_env();
+	if (!d->z)
+	{
+		freestoplist(&(d->stoplist));
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
+	}
+	d->stem = russian_UTF_8_stem;
 
 	PG_RETURN_POINTER(d);
 }
