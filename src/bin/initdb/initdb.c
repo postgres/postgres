@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.106 2006/01/05 10:07:46 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.107 2006/01/27 19:01:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2738,17 +2738,16 @@ main(int argc, char *argv[])
 	}
 
 	/* Create required subdirectories */
+	printf(_("creating subdirectories ... "));
+	fflush(stdout);
 
 	for (i = 0; i < (sizeof(subdirs) / sizeof(char *)); i++)
 	{
-		printf(_("creating directory %s/%s ... "), pg_data, subdirs[i]);
-		fflush(stdout);
-
 		if (!mkdatadir(subdirs[i]))
 			exit_nicely();
-		else
-			check_ok();
 	}
+
+	check_ok();
 
 	/* Top level PG_VERSION is checked by bootstrapper, so make it first */
 	set_short_version(short_version, NULL);
