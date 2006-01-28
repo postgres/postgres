@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.99 2006/01/08 22:27:52 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.100 2006/01/28 03:28:15 neilc Exp $
  *
  **********************************************************************/
 
@@ -84,22 +84,33 @@ typedef struct plperl_proc_desc
 	SV		   *reference;
 } plperl_proc_desc;
 
+/*
+ * The information we cache for the duration of a single call to a
+ * function.
+ */
+typedef struct plperl_call_data
+{
+	plperl_proc_desc *prodesc;
+	FunctionCallInfo  fcinfo;
+	Tuplestorestate  *tuple_store;
+	TupleDesc		  ret_tdesc;
+	AttInMetadata	 *attinmeta;
+	MemoryContext	  tmp_cxt;
+} plperl_call_data;
+
 
 /**********************************************************************
  * Global data
  **********************************************************************/
-static int	plperl_firstcall = 1;
+static bool plperl_firstcall = true;
 static bool plperl_safe_init_done = false;
 static PerlInterpreter *plperl_interp = NULL;
 static HV  *plperl_proc_hash = NULL;
 
 static bool plperl_use_strict = false;
 
-/* these are saved and restored by plperl_call_handler */
-static plperl_proc_desc *plperl_current_prodesc = NULL;
-static FunctionCallInfo plperl_current_caller_info;
-static Tuplestorestate *plperl_current_tuple_store;
-static TupleDesc plperl_current_tuple_desc;
+/* this is saved and restored by plperl_call_handler */
+static plperl_call_data *current_call_data = NULL;
 
 /**********************************************************************
  * Forward declarations
@@ -157,7 +168,7 @@ plperl_init(void)
 	EmitWarningsOnPlaceholders("plperl");
 
 	plperl_init_interp();
-	plperl_firstcall = 0;
+	plperl_firstcall = false;
 }
 
 
@@ -291,7 +302,6 @@ plperl_safe_init(void)
 
 	plperl_safe_init_done = true;
 }
-
 
 /*
  * Perl likes to put a newline after its error messages; clean up such
@@ -565,18 +575,11 @@ Datum
 plperl_call_handler(PG_FUNCTION_ARGS)
 {
 	Datum		retval;
-	plperl_proc_desc *save_prodesc;
-	FunctionCallInfo save_caller_info;
-	Tuplestorestate *save_tuple_store;
-	TupleDesc	save_tuple_desc;
+	plperl_call_data *save_call_data;
 
 	plperl_init_all();
 
-	save_prodesc = plperl_current_prodesc;
-	save_caller_info = plperl_current_caller_info;
-	save_tuple_store = plperl_current_tuple_store;
-	save_tuple_desc = plperl_current_tuple_desc;
-
+	save_call_data = current_call_data;
 	PG_TRY();
 	{
 		if (CALLED_AS_TRIGGER(fcinfo))
@@ -586,19 +589,12 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 	}
 	PG_CATCH();
 	{
-		plperl_current_prodesc = save_prodesc;
-		plperl_current_caller_info = save_caller_info;
-		plperl_current_tuple_store = save_tuple_store;
-		plperl_current_tuple_desc = save_tuple_desc;
+		current_call_data = save_call_data;
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
-	plperl_current_prodesc = save_prodesc;
-	plperl_current_caller_info = save_caller_info;
-	plperl_current_tuple_store = save_tuple_store;
-	plperl_current_tuple_desc = save_tuple_desc;
-
+	current_call_data = save_call_data;
 	return retval;
 }
 
@@ -947,15 +943,18 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	ReturnSetInfo *rsi;
 	SV		   *array_ret = NULL;
 
+	/*
+	 * Create the call_data beforing connecting to SPI, so that it is
+	 * not allocated in the SPI memory context
+	 */
+	current_call_data = (plperl_call_data *) palloc0(sizeof(plperl_call_data));
+	current_call_data->fcinfo = fcinfo;
+
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "could not connect to SPI manager");
 
 	prodesc = compile_plperl_function(fcinfo->flinfo->fn_oid, false);
-
-	plperl_current_prodesc = prodesc;
-	plperl_current_caller_info = fcinfo;
-	plperl_current_tuple_store = 0;
-	plperl_current_tuple_desc = 0;
+	current_call_data->prodesc = prodesc;
 
 	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
@@ -1012,10 +1011,10 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		}
 
 		rsi->returnMode = SFRM_Materialize;
-		if (plperl_current_tuple_store)
+		if (current_call_data->tuple_store)
 		{
-			rsi->setResult = plperl_current_tuple_store;
-			rsi->setDesc = plperl_current_tuple_desc;
+			rsi->setResult = current_call_data->tuple_store;
+			rsi->setDesc = current_call_data->ret_tdesc;
 		}
 		retval = (Datum) 0;
 	}
@@ -1080,6 +1079,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	if (array_ret == NULL)
 		SvREFCNT_dec(perlret);
 
+	current_call_data = NULL;
 	return retval;
 }
 
@@ -1093,14 +1093,20 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 	SV		   *svTD;
 	HV		   *hvTD;
 
+	/*
+	 * Create the call_data beforing connecting to SPI, so that it is
+	 * not allocated in the SPI memory context
+	 */
+	current_call_data = (plperl_call_data *) palloc0(sizeof(plperl_call_data));
+	current_call_data->fcinfo = fcinfo;
+
 	/* Connect to SPI manager */
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "could not connect to SPI manager");
 
 	/* Find or compile the function */
 	prodesc = compile_plperl_function(fcinfo->flinfo->fn_oid, true);
-
-	plperl_current_prodesc = prodesc;
+	current_call_data->prodesc = prodesc;
 
 	svTD = plperl_trigger_build_args(fcinfo);
 	perlret = plperl_call_perl_trigger_func(prodesc, fcinfo, svTD);
@@ -1171,6 +1177,7 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 	if (perlret)
 		SvREFCNT_dec(perlret);
 
+	current_call_data = NULL;
 	return retval;
 }
 
@@ -1495,7 +1502,7 @@ plperl_spi_exec(char *query, int limit)
 	{
 		int			spi_rv;
 
-		spi_rv = SPI_execute(query, plperl_current_prodesc->fn_readonly,
+		spi_rv = SPI_execute(query, current_call_data->prodesc->fn_readonly,
 							 limit);
 		ret_hv = plperl_spi_execute_fetch_result(SPI_tuptable, SPI_processed,
 												 spi_rv);
@@ -1590,15 +1597,18 @@ plperl_spi_execute_fetch_result(SPITupleTable *tuptable, int processed,
 void
 plperl_return_next(SV *sv)
 {
-	plperl_proc_desc *prodesc = plperl_current_prodesc;
-	FunctionCallInfo fcinfo = plperl_current_caller_info;
-	ReturnSetInfo *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
-	MemoryContext cxt;
+	plperl_proc_desc *prodesc;
+	FunctionCallInfo fcinfo;
+	ReturnSetInfo *rsi;
+	MemoryContext old_cxt;
 	HeapTuple	tuple;
-	TupleDesc	tupdesc;
 
 	if (!sv)
 		return;
+
+	prodesc = current_call_data->prodesc;
+	fcinfo = current_call_data->fcinfo;
+	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
 	if (!prodesc->fn_retisset)
 		ereport(ERROR,
@@ -1612,28 +1622,68 @@ plperl_return_next(SV *sv)
 				 errmsg("setof-composite-returning Perl function "
 						"must call return_next with reference to hash")));
 
-	cxt = MemoryContextSwitchTo(rsi->econtext->ecxt_per_query_memory);
+	if (!current_call_data->ret_tdesc)
+	{
+		TupleDesc tupdesc;
 
-	if (!plperl_current_tuple_store)
-		plperl_current_tuple_store =
+		Assert(!current_call_data->tuple_store);
+		Assert(!current_call_data->attinmeta);
+
+		/*
+		 * This is the first call to return_next in the current
+		 * PL/Perl function call, so memoize some lookups
+		 */
+		if (prodesc->fn_retistuple)
+			(void) get_call_result_type(fcinfo, NULL, &tupdesc);
+		else
+			tupdesc = rsi->expectedDesc;
+
+		/*
+		 * Make sure the tuple_store and ret_tdesc are sufficiently
+		 * long-lived.
+		 */
+		old_cxt = MemoryContextSwitchTo(rsi->econtext->ecxt_per_query_memory);
+
+		current_call_data->ret_tdesc = CreateTupleDescCopy(tupdesc);
+		current_call_data->tuple_store =
 			tuplestore_begin_heap(true, false, work_mem);
+		if (prodesc->fn_retistuple)
+		{
+			current_call_data->attinmeta =
+				TupleDescGetAttInMetadata(current_call_data->ret_tdesc);
+		}
+
+		MemoryContextSwitchTo(old_cxt);
+	}		
+
+	/*
+	 * Producing the tuple we want to return requires making plenty of
+	 * palloc() allocations that are not cleaned up. Since this
+	 * function can be called many times before the current memory
+	 * context is reset, we need to do those allocations in a
+	 * temporary context.
+	 */
+	if (!current_call_data->tmp_cxt)
+	{
+		current_call_data->tmp_cxt =
+			AllocSetContextCreate(rsi->econtext->ecxt_per_tuple_memory,
+								  "PL/Perl return_next temporary cxt",
+								  ALLOCSET_DEFAULT_MINSIZE,
+								  ALLOCSET_DEFAULT_INITSIZE,
+								  ALLOCSET_DEFAULT_MAXSIZE);
+	}
+
+	old_cxt = MemoryContextSwitchTo(current_call_data->tmp_cxt);
 
 	if (prodesc->fn_retistuple)
 	{
-		TypeFuncClass rettype;
-		AttInMetadata *attinmeta;
-
-		rettype = get_call_result_type(fcinfo, NULL, &tupdesc);
-		tupdesc = CreateTupleDescCopy(tupdesc);
-		attinmeta = TupleDescGetAttInMetadata(tupdesc);
-		tuple = plperl_build_tuple_result((HV *) SvRV(sv), attinmeta);
+		tuple = plperl_build_tuple_result((HV *) SvRV(sv),
+										  current_call_data->attinmeta);
 	}
 	else
 	{
-		Datum		ret;
-		bool		isNull;
-
-		tupdesc = CreateTupleDescCopy(rsi->expectedDesc);
+		Datum		ret = (Datum) 0;
+		bool		isNull = true;
 
 		if (SvOK(sv) && SvTYPE(sv) != SVt_NULL)
 		{
@@ -1645,21 +1695,16 @@ plperl_return_next(SV *sv)
 								Int32GetDatum(-1));
 			isNull = false;
 		}
-		else
-		{
-			ret = (Datum) 0;
-			isNull = true;
-		}
 
-		tuple = heap_form_tuple(tupdesc, &ret, &isNull);
+		tuple = heap_form_tuple(current_call_data->ret_tdesc, &ret, &isNull);
 	}
 
-	if (!plperl_current_tuple_desc)
-		plperl_current_tuple_desc = tupdesc;
+	/* Make sure to store the tuple in a long-lived memory context */
+	MemoryContextSwitchTo(rsi->econtext->ecxt_per_query_memory);
+	tuplestore_puttuple(current_call_data->tuple_store, tuple);
+	MemoryContextSwitchTo(old_cxt);
 
-	tuplestore_puttuple(plperl_current_tuple_store, tuple);
-	heap_freetuple(tuple);
-	MemoryContextSwitchTo(cxt);
+	MemoryContextReset(current_call_data->tmp_cxt);
 }
 
 
