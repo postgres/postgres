@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.67.4.5 2006/01/17 17:33:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.67.4.6 2006/01/28 16:22:49 adunstan Exp $
  *
  **********************************************************************/
 
@@ -43,6 +43,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <locale.h>
 
 /* postgreSQL stuff */
 #include "commands/trigger.h"
@@ -204,6 +205,45 @@ plperl_init_interp(void)
 		"sub ::mkunsafefunc {return eval(qq[ sub { $_[0] $_[1] } ]); }"
 	};
 
+#ifdef WIN32
+
+	/* 
+	 * The perl library on startup does horrible things like call
+	 * setlocale(LC_ALL,""). We have protected against that on most
+	 * platforms by setting the environment appropriately. However, on
+	 * Windows, setlocale() does not consult the environment, so we need
+	 * to save the excisting locale settings before perl has a chance to 
+	 * mangle them and restore them after its dirty deeds are done.
+	 *
+	 * MSDN ref:
+	 * http://msdn.microsoft.com/library/en-us/vclib/html/_crt_locale.asp
+	 *
+	 * It appaers that we only need to do this on interpreter startup, and
+	 * subsequent calls to the interpreter don't mess with the locale
+	 * settings.
+	 *
+	 * We restore them using Perl's POSIX::setlocale() function so that
+	 * Perl doesn't have a different idea of the locale from Postgres.
+	 *
+	 */
+
+	char *loc;
+	char *save_collate, *save_ctype, *save_monetary, *save_numeric, *save_time;
+	char buf[1024];
+
+	loc = setlocale(LC_COLLATE,NULL);
+	save_collate = loc ? pstrdup(loc) : NULL;
+	loc = setlocale(LC_CTYPE,NULL);
+	save_ctype = loc ? pstrdup(loc) : NULL;
+	loc = setlocale(LC_MONETARY,NULL);
+	save_monetary = loc ? pstrdup(loc) : NULL;
+	loc = setlocale(LC_NUMERIC,NULL);
+	save_numeric = loc ? pstrdup(loc) : NULL;
+	loc = setlocale(LC_TIME,NULL);
+	save_time = loc ? pstrdup(loc) : NULL;
+
+#endif
+
 	plperl_interp = perl_alloc();
 	if (!plperl_interp)
 		elog(ERROR, "could not allocate Perl interpreter");
@@ -216,6 +256,50 @@ plperl_init_interp(void)
 	 * Initialize the procedure hash table
 	 ************************************************************/
 	plperl_proc_hash = newHV();
+
+#ifdef WIN32
+
+	eval_pv("use POSIX qw(locale_h);", TRUE); /* croak on failure */
+
+	if (save_collate != NULL)
+	{
+		snprintf(buf, sizeof(buf),"setlocale(%s,'%s');",
+				 "LC_COLLATE",save_collate);
+		eval_pv(buf,TRUE);
+		pfree(save_collate);
+	}
+	if (save_ctype != NULL)
+	{
+		snprintf(buf, sizeof(buf),"setlocale(%s,'%s');",
+				 "LC_CTYPE",save_ctype);
+		eval_pv(buf,TRUE);
+		pfree(save_ctype);
+	}
+	if (save_monetary != NULL)
+	{
+		snprintf(buf, sizeof(buf),"setlocale(%s,'%s');",
+				 "LC_MONETARY",save_monetary);
+		eval_pv(buf,TRUE);
+		pfree(save_monetary);
+	}
+	if (save_numeric != NULL)
+	{
+		snprintf(buf, sizeof(buf),"setlocale(%s,'%s');",
+				 "LC_NUMERIC",save_numeric);
+		eval_pv(buf,TRUE);
+		pfree(save_numeric);
+	}
+	if (save_time != NULL)
+	{
+		snprintf(buf, sizeof(buf),"setlocale(%s,'%s');",
+				 "LC_TIME",save_time);
+		eval_pv(buf,TRUE);
+		pfree(save_time);
+	}
+
+#endif
+
+
 }
 
 
