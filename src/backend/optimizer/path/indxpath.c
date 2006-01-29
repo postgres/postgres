@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.198 2006/01/26 02:35:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.199 2006/01/29 17:27:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -343,7 +343,8 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 		if (istoplevel && index_is_ordered && !isjoininner)
 		{
 			index_pathkeys = build_index_pathkeys(root, index,
-												  ForwardScanDirection);
+												  ForwardScanDirection,
+												  true);
 			useful_pathkeys = truncate_useless_pathkeys(root, rel,
 														index_pathkeys);
 		}
@@ -1705,7 +1706,7 @@ match_index_to_query_keys(PlannerInfo *root,
 	ListCell   *r;
 
 	/* Get the pathkeys that exactly describe the index */
-	index_pathkeys = build_index_pathkeys(root, index, indexscandir);
+	index_pathkeys = build_index_pathkeys(root, index, indexscandir, false);
 
 	/*
 	 * Can we match to the query's requested pathkeys?  The inner loop skips

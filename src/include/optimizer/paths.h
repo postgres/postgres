@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/paths.h,v 1.90 2005/12/20 02:30:36 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/paths.h,v 1.91 2006/01/29 17:27:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,7 +114,7 @@ extern Path *get_cheapest_fractional_path_for_pathkeys(List *paths,
 										  List *pathkeys,
 										  double fraction);
 extern List *build_index_pathkeys(PlannerInfo *root, IndexOptInfo *index,
-					 ScanDirection scandir);
+					 ScanDirection scandir, bool canonical);
 extern List *convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 						  List *subquery_pathkeys);
 extern List *build_join_pathkeys(PlannerInfo *root,
