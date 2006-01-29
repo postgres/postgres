@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.202.2.1 2005/11/22 18:23:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.202.2.2 2006/01/29 18:55:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -962,6 +962,12 @@ create_bitmap_scan_plan(PlannerInfo *root,
 	 * tests twice.
 	 */
 	bitmapqualorig = list_difference_ptr(bitmapqualorig, qpqual);
+
+	/*
+	 * Copy the finished bitmapqualorig to make sure we have an independent
+	 * copy --- needed in case there are subplans in the index quals
+	 */
+	bitmapqualorig = copyObject(bitmapqualorig);
 
 	/* Finally ready to build the plan node */
 	scan_plan = make_bitmap_heapscan(tlist,
