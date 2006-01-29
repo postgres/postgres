@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.199 2006/01/29 17:27:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.200 2006/01/29 17:40:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1611,11 +1611,6 @@ identify_ignorable_ordering_cols(PlannerInfo *root,
 			bool		varonleft;
 			bool		ispc;
 
-			/*
-			 * We know this clause passed match_clause_to_indexcol as a
-			 * toplevel clause; so it's not a ScalarArrayOp.
-			 */
-
 			/* First check for boolean-index cases. */
 			if (IsBooleanOpclass(opclass))
 			{
@@ -1632,8 +1627,9 @@ identify_ignorable_ordering_cols(PlannerInfo *root,
 				}
 			}
 
-			/* Else clause must be a binary opclause. */
-			Assert(IsA(clause, OpExpr));
+			/* Otherwise, ignore if not a binary opclause */
+			if (!is_opclause(clause) || list_length(clause->args) != 2)
+				continue;
 
 			/* Determine left/right sides and check the operator */
 			clause_op = clause->opno;
