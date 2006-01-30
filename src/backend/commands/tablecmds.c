@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.176 2005/11/22 18:17:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.177 2006/01/30 16:18:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4967,12 +4967,38 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 
 			case OCLASS_CONSTRAINT:
 				Assert(foundObject.objectSubId == 0);
-				if (!list_member_oid(tab->changedConstraintOids, foundObject.objectId))
+				if (!list_member_oid(tab->changedConstraintOids,
+									 foundObject.objectId))
 				{
-					tab->changedConstraintOids = lappend_oid(tab->changedConstraintOids,
-													   foundObject.objectId);
-					tab->changedConstraintDefs = lappend(tab->changedConstraintDefs,
-						  pg_get_constraintdef_string(foundObject.objectId));
+					char *defstring = pg_get_constraintdef_string(foundObject.objectId);
+
+					/*
+					 * Put NORMAL dependencies at the front of the list and
+					 * AUTO dependencies at the back.  This makes sure that
+					 * foreign-key constraints depending on this column will
+					 * be dropped before unique or primary-key constraints of
+					 * the column; which we must have because the FK
+					 * constraints depend on the indexes belonging to the
+					 * unique constraints.
+					 */
+					if (foundDep->deptype == DEPENDENCY_NORMAL)
+					{
+						tab->changedConstraintOids =
+							lcons_oid(foundObject.objectId,
+									  tab->changedConstraintOids);
+						tab->changedConstraintDefs =
+							lcons(defstring,
+								  tab->changedConstraintDefs);
+					}
+					else
+					{
+						tab->changedConstraintOids =
+							lappend_oid(tab->changedConstraintOids,
+										foundObject.objectId);
+						tab->changedConstraintDefs =
+							lappend(tab->changedConstraintDefs,
+									defstring);
+					}
 				}
 				break;
 
@@ -5140,9 +5166,11 @@ ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab)
 
 	/*
 	 * Now we can drop the existing constraints and indexes --- constraints
-	 * first, since some of them might depend on the indexes. It should be
-	 * okay to use DROP_RESTRICT here, since nothing else should be depending
-	 * on these objects.
+	 * first, since some of them might depend on the indexes.  In fact, we
+	 * have to delete FOREIGN KEY constraints before UNIQUE constraints,
+	 * but we already ordered the constraint list to ensure that would happen.
+	 * It should be okay to use DROP_RESTRICT here, since nothing else should
+	 * be depending on these objects.
 	 */
 	foreach(l, tab->changedConstraintOids)
 	{
