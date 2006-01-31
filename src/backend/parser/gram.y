@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.511.2.1 2005/11/13 19:11:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.511.2.2 2006/01/31 22:40:12 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3617,7 +3617,7 @@ func_return:
 		;
 
 /*
- * We would like to make the second production here be ColId attrs etc,
+ * We would like to make the %TYPE productions here be ColId attrs etc,
  * but that causes reduce/reduce conflicts.  type_name is next best choice.
  */
 func_type:	Typename								{ $$ = $1; }
@@ -3627,6 +3627,14 @@ func_type:	Typename								{ $$ = $1; }
 					$$->names = lcons(makeString($1), $2);
 					$$->pct_type = true;
 					$$->typmod = -1;
+				}
+			| SETOF type_name attrs '%' TYPE_P
+				{
+					$$ = makeNode(TypeName);
+					$$->names = lcons(makeString($2), $3);
+					$$->pct_type = true;
+					$$->typmod = -1;
+					$$->setof = TRUE;
 				}
 		;
 
