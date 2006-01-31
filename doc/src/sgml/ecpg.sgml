@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.71 2005/11/04 23:13:59 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.72 2006/01/31 13:32:20 meskes Exp $
 -->
 
 <chapter id="ecpg">
@@ -180,7 +180,7 @@ EXEC SQL CONNECT TO <replaceable>target</replaceable> <optional>AS <replaceable>
 <programlisting>
 EXEC SQL CONNECT TO mydb@sql.mydomain.com;
 
-EXEC SQL CONNECT TO 'unix:postgresql://sql.mydomain.com/mydb' AS myconnection USER john;
+EXEC SQL CONNECT TO unix:postgresql://sql.mydomain.com/mydb AS myconnection USER john;
 
 EXEC SQL BEGIN DECLARE SECTION;
 const char *target = "mydb@sql.mydomain.com";
