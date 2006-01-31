@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/prep.h,v 1.53 2005/12/20 02:30:36 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/prep.h,v 1.54 2006/01/31 21:39:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,10 +46,18 @@ extern Plan *plan_set_operations(PlannerInfo *root, double tuple_fraction,
 
 extern List *find_all_inheritors(Oid parentrel);
 
-extern List *expand_inherited_rtentry(PlannerInfo *root, Index rti);
+extern void expand_inherited_tables(PlannerInfo *root);
 
-extern Node *adjust_inherited_attrs(Node *node,
-					   Index old_rt_index, Oid old_relid,
-					   Index new_rt_index, Oid new_relid);
+extern Node *adjust_appendrel_attrs(Node *node, AppendRelInfo *appinfo);
+
+extern Relids *adjust_appendrel_attr_needed(RelOptInfo *oldrel,
+											AppendRelInfo *appinfo,
+											AttrNumber new_min_attr,
+											AttrNumber new_max_attr);
+
+extern Relids *adjust_other_rel_attr_needed(RelOptInfo *oldrel,
+											AppendRelInfo *appinfo,
+											AttrNumber new_min_attr,
+											AttrNumber new_max_attr);
 
 #endif   /* PREP_H */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.122 2005/12/20 02:30:36 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.123 2006/01/31 21:39:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ typedef struct QualCost
  *
  * This struct is conventionally called "root" in all the planner routines.
  * It holds links to all of the planner's working state, in addition to the
- * original Query.	Note that at present the planner extensively manipulates
+ * original Query.  Note that at present the planner extensively modifies
  * the passed-in Query data structure; someday that should stop.
  *----------
  */
@@ -63,14 +63,14 @@ typedef struct PlannerInfo
 	Query	   *parse;			/* the Query being planned */
 
 	/*
-	 * base_rel_array holds pointers to "base rels" and "other rels" (see
+	 * simple_rel_array holds pointers to "base rels" and "other rels" (see
 	 * comments for RelOptInfo for more info).	It is indexed by rangetable
 	 * index (so entry 0 is always wasted).  Entries can be NULL when an RTE
-	 * does not correspond to a base relation.	Note that the array may be
-	 * enlarged on-the-fly.
+	 * does not correspond to a base relation, such as a join RTE or an
+	 * unreferenced view RTE; or if the RelOptInfo hasn't been made yet.
 	 */
-	struct RelOptInfo **base_rel_array; /* All one-relation RelOptInfos */
-	int			base_rel_array_size;	/* current allocated array len */
+	struct RelOptInfo **simple_rel_array;	/* All 1-relation RelOptInfos */
+	int			simple_rel_array_size;		/* allocated size of array */
 
 	/*
 	 * join_rel_list is a list of all join-relation RelOptInfos we have
@@ -101,6 +101,8 @@ typedef struct PlannerInfo
 
 	List	   *in_info_list;	/* list of InClauseInfos */
 
+	List	   *append_rel_list;		/* list of AppendRelInfos */
+
 	List	   *query_pathkeys; /* desired pathkeys for query_planner(), and
 								 * actual pathkeys afterwards */
 
@@ -125,7 +127,7 @@ typedef struct PlannerInfo
  * is the joining of two or more base rels.  A joinrel is identified by
  * the set of RT indexes for its component baserels.  We create RelOptInfo
  * nodes for each baserel and joinrel, and store them in the PlannerInfo's
- * base_rel_array and join_rel_list respectively.
+ * simple_rel_array and join_rel_list respectively.
  *
  * Note that there is only one joinrel for any given set of component
  * baserels, no matter what order we assemble them in; so an unordered
@@ -135,16 +137,15 @@ typedef struct PlannerInfo
  * single RT indexes; but they are not part of the join tree, and are given
  * a different RelOptKind to identify them.
  *
- * Currently the only kind of otherrels are those made for child relations
- * of an inheritance scan (SELECT FROM foo*).  The parent table's RTE and
- * corresponding baserel represent the whole result of the inheritance scan.
- * The planner creates separate RTEs and associated RelOptInfos for each child
- * table (including the parent table, in its capacity as a member of the
- * inheritance set).  These RelOptInfos are physically identical to baserels,
- * but are otherrels because they are not in the main join tree.  These added
- * RTEs and otherrels are used to plan the scans of the individual tables in
- * the inheritance set; then the parent baserel is given an Append plan
- * comprising the best plans for the individual child tables.
+ * Currently the only kind of otherrels are those made for member relations
+ * of an "append relation", that is an inheritance set or UNION ALL subquery.
+ * An append relation has a parent RTE that is a base rel, which represents
+ * the entire append relation.  The member RTEs are otherrels.  The parent
+ * is present in the query join tree but the members are not.  The member
+ * RTEs and otherrels are used to plan the scans of the individual tables or
+ * subqueries of the append set; then the parent baserel is given an Append
+ * plan comprising the best plans for the individual member rels.  (See
+ * comments for AppendRelInfo for more information.)
  *
  * At one time we also made otherrels to represent join RTEs, for use in
  * handling join alias Vars.  Currently this is not needed because all join
@@ -192,7 +193,7 @@ typedef struct PlannerInfo
  *		upon creation of the RelOptInfo object; they are filled in when
  *		set_base_rel_pathlist processes the object.
  *
- *		For otherrels that are inheritance children, these fields are filled
+ *		For otherrels that are appendrel members, these fields are filled
  *		in just as for a baserel.
  *
  * The presence of the remaining fields depends on the restrictions
@@ -232,7 +233,7 @@ typedef enum RelOptKind
 {
 	RELOPT_BASEREL,
 	RELOPT_JOINREL,
-	RELOPT_OTHER_CHILD_REL
+	RELOPT_OTHER_MEMBER_REL
 } RelOptKind;
 
 typedef struct RelOptInfo
@@ -508,8 +509,7 @@ typedef struct TidPath
 
 /*
  * AppendPath represents an Append plan, ie, successive execution of
- * several member plans.  Currently it is only used to handle expansion
- * of inheritance trees.
+ * several member plans.
  *
  * Note: it is possible for "subpaths" to contain only one, or even no,
  * elements.  These cases are optimized during create_append_plan.
@@ -878,5 +878,97 @@ typedef struct InClauseInfo
 	 * contain TargetEntry nodes.
 	 */
 } InClauseInfo;
+
+/*
+ * Append-relation info.
+ *
+ * When we expand an inheritable table or a UNION-ALL subselect into an
+ * "append relation" (essentially, a list of child RTEs), we build an
+ * AppendRelInfo for each child RTE.  The list of AppendRelInfos indicates
+ * which child RTEs must be included when expanding the parent, and each
+ * node carries information needed to translate Vars referencing the parent
+ * into Vars referencing that child.
+ *
+ * These structs are kept in the PlannerInfo node's append_rel_list.
+ * Note that we just throw all the structs into one list, and scan the
+ * whole list when desiring to expand any one parent.  We could have used
+ * a more complex data structure (eg, one list per parent), but this would
+ * be harder to update during operations such as pulling up subqueries,
+ * and not really any easier to scan.  Considering that typical queries
+ * will not have many different append parents, it doesn't seem worthwhile
+ * to complicate things.
+ *
+ * Note: after completion of the planner prep phase, any given RTE is an
+ * append parent having entries in append_rel_list if and only if its
+ * "inh" flag is set.  We clear "inh" for plain tables that turn out not
+ * to have inheritance children, and (in an abuse of the original meaning
+ * of the flag) we set "inh" for subquery RTEs that turn out to be
+ * flattenable UNION ALL queries.  This lets us avoid useless searches
+ * of append_rel_list.
+ *
+ * Note: the data structure assumes that append-rel members are single
+ * baserels.  This is OK for inheritance, but it prevents us from pulling
+ * up a UNION ALL member subquery if it contains a join.  While that could
+ * be fixed with a more complex data structure, at present there's not much
+ * point because no improvement in the plan could result.
+ */
+
+typedef struct AppendRelInfo
+{
+	NodeTag		type;
+	/*
+	 * These fields uniquely identify this append relationship.  There
+	 * can be (in fact, always should be) multiple AppendRelInfos for the
+	 * same parent_relid, but never more than one per child_relid, since
+	 * a given RTE cannot be a child of more than one append parent.
+	 */
+	Index		parent_relid;	/* RT index of append parent rel */
+	Index		child_relid;	/* RT index of append child rel */
+	/*
+	 * For an inheritance appendrel, the parent and child are both regular
+	 * relations, and we store their rowtype OIDs here for use in translating
+	 * whole-row Vars.  For a UNION-ALL appendrel, the parent and child are
+	 * both subqueries with no named rowtype, and we store InvalidOid here.
+	 */
+	Oid			parent_reltype;	/* OID of parent's composite type */
+	Oid			child_reltype;	/* OID of child's composite type */
+
+	/*
+	 * The N'th element of this list is the integer column number of
+	 * the child column corresponding to the N'th column of the parent.
+	 * A list element is zero if it corresponds to a dropped column of the
+	 * parent (this is only possible for inheritance cases, not UNION ALL).
+	 */
+	List	   *col_mappings;	/* list of child attribute numbers */
+
+	/*
+	 * The N'th element of this list is a Var or expression representing
+	 * the child column corresponding to the N'th column of the parent.
+	 * This is used to translate Vars referencing the parent rel into
+	 * references to the child.  A list element is NULL if it corresponds
+	 * to a dropped column of the parent (this is only possible for
+	 * inheritance cases, not UNION ALL).
+	 *
+	 * This might seem redundant with the col_mappings data, but it is handy
+	 * because flattening of sub-SELECTs that are members of a UNION ALL
+	 * will cause changes in the expressions that need to be substituted
+	 * for a parent Var.  Adjusting this data structure lets us track what
+	 * really needs to be substituted.
+	 *
+	 * Notice we only store entries for user columns (attno > 0).  Whole-row
+	 * Vars are special-cased, and system columns (attno < 0) need no
+	 * special translation since their attnos are the same for all tables.
+	 *
+	 * Caution: the Vars have varlevelsup = 0.  Be careful to adjust
+	 * as needed when copying into a subquery.
+	 */
+	List	   *translated_vars; /* Expressions in the child's Vars */
+	/*
+	 * We store the parent table's OID here for inheritance, or InvalidOid
+	 * for UNION ALL.  This is only needed to help in generating error
+	 * messages if an attempt is made to reference a dropped parent column.
+	 */
+	Oid			parent_reloid;	/* OID of parent relation */
+} AppendRelInfo;
 
 #endif   /* RELATION_H */

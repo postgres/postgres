@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.91 2005/12/20 02:30:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.92 2006/01/31 21:39:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,15 +120,15 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 							  &constant_quals);
 
 	/*
-	 * Init planner lists to empty.  We create the base_rel_array with a size
-	 * that will be sufficient if no pullups or inheritance additions happen
-	 * ... otherwise it will be enlarged as needed.
+	 * Init planner lists to empty, and set up the array to hold RelOptInfos
+	 * for "simple" rels.
 	 *
-	 * NOTE: in_info_list was set up by subquery_planner, do not touch here
+	 * NOTE: in_info_list and append_rel_list were set up by subquery_planner,
+	 * do not touch here
 	 */
-	root->base_rel_array_size = list_length(parse->rtable) + 1;
-	root->base_rel_array = (RelOptInfo **)
-		palloc0(root->base_rel_array_size * sizeof(RelOptInfo *));
+	root->simple_rel_array_size = list_length(parse->rtable) + 1;
+	root->simple_rel_array = (RelOptInfo **)
+		palloc0(root->simple_rel_array_size * sizeof(RelOptInfo *));
 	root->join_rel_list = NIL;
 	root->join_rel_hash = NULL;
 	root->equi_key_list = NIL;

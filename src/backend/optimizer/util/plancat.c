@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.116 2006/01/05 10:07:45 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.117 2006/01/31 21:39:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,24 +70,11 @@ get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 	List	   *indexinfos = NIL;
 
 	/*
-	 * Normally, we can assume the rewriter already acquired at least
-	 * AccessShareLock on each relation used in the query.	However this will
-	 * not be the case for relations added to the query because they are
-	 * inheritance children of some relation mentioned explicitly. For them,
-	 * this is the first access during the parse/rewrite/plan pipeline, and so
-	 * we need to obtain and keep a suitable lock.
-	 *
-	 * XXX really, a suitable lock is RowShareLock if the relation is an
-	 * UPDATE/DELETE target, and AccessShareLock otherwise.  However we cannot
-	 * easily tell here which to get, so for the moment just get
-	 * AccessShareLock always.	The executor will get the right lock when it
-	 * runs, which means there is a very small chance of deadlock trying to
-	 * upgrade our lock.
+	 * We need not lock the relation since it was already locked, either
+	 * by the rewriter or when expand_inherited_rtentry() added it to the
+	 * query's rangetable.
 	 */
-	if (rel->reloptkind == RELOPT_BASEREL)
-		relation = heap_open(relationObjectId, NoLock);
-	else
-		relation = heap_open(relationObjectId, AccessShareLock);
+	relation = heap_open(relationObjectId, NoLock);
 
 	rel->min_attr = FirstLowInvalidHeapAttributeNumber + 1;
 	rel->max_attr = RelationGetNumberOfAttributes(relation);
@@ -224,7 +211,6 @@ get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 
 	rel->indexlist = indexinfos;
 
-	/* close rel, but keep lock if any */
 	heap_close(relation, NoLock);
 }
 

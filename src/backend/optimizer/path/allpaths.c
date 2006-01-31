@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.139 2005/12/20 02:30:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.140 2006/01/31 21:39:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,9 +44,8 @@ int			geqo_threshold;
 static void set_base_rel_pathlists(PlannerInfo *root);
 static void set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					   RangeTblEntry *rte);
-static void set_inherited_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
-						   Index rti, RangeTblEntry *rte,
-						   List *inheritlist);
+static void set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
+									Index rti, RangeTblEntry *rte);
 static void set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					  Index rti, RangeTblEntry *rte);
 static void set_function_pathlist(PlannerInfo *root, RelOptInfo *rel,
@@ -96,9 +95,9 @@ make_one_rel(PlannerInfo *root, List *joinlist)
 		int			num_base_rels = 0;
 		Index		rti;
 
-		for (rti = 1; rti < root->base_rel_array_size; rti++)
+		for (rti = 1; rti < root->simple_rel_array_size; rti++)
 		{
-			RelOptInfo *brel = root->base_rel_array[rti];
+			RelOptInfo *brel = root->simple_rel_array[rti];
 
 			if (brel == NULL)
 				continue;
@@ -131,16 +130,10 @@ set_base_rel_pathlists(PlannerInfo *root)
 {
 	Index		rti;
 
-	/*
-	 * Note: because we call expand_inherited_rtentry inside the loop, it's
-	 * quite possible for the base_rel_array to be enlarged while the loop
-	 * runs.  Hence don't try to optimize the loop.
-	 */
-	for (rti = 1; rti < root->base_rel_array_size; rti++)
+	for (rti = 1; rti < root->simple_rel_array_size; rti++)
 	{
-		RelOptInfo *rel = root->base_rel_array[rti];
+		RelOptInfo *rel = root->simple_rel_array[rti];
 		RangeTblEntry *rte;
-		List	   *inheritlist;
 
 		/* there may be empty slots corresponding to non-baserel RTEs */
 		if (rel == NULL)
@@ -154,7 +147,12 @@ set_base_rel_pathlists(PlannerInfo *root)
 
 		rte = rt_fetch(rti, root->parse->rtable);
 
-		if (rel->rtekind == RTE_SUBQUERY)
+		if (rte->inh)
+		{
+			/* It's an "append relation", process accordingly */
+			set_append_rel_pathlist(root, rel, rti, rte);
+		}
+		else if (rel->rtekind == RTE_SUBQUERY)
 		{
 			/* Subquery --- generate a separate plan for it */
 			set_subquery_pathlist(root, rel, rti, rte);
@@ -163,11 +161,6 @@ set_base_rel_pathlists(PlannerInfo *root)
 		{
 			/* RangeFunction --- generate a separate plan for it */
 			set_function_pathlist(root, rel, rte);
-		}
-		else if ((inheritlist = expand_inherited_rtentry(root, rti)) != NIL)
-		{
-			/* Relation is root of an inheritance tree, process specially */
-			set_inherited_rel_pathlist(root, rel, rti, rte, inheritlist);
 		}
 		else
 		{
@@ -188,6 +181,9 @@ set_base_rel_pathlists(PlannerInfo *root)
 static void
 set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 {
+	Assert(rel->rtekind == RTE_RELATION);
+	Assert(!rte->inh);
+
 	/* Mark rel with estimated output rows, width, etc */
 	set_baserel_size_estimates(root, rel);
 
@@ -224,37 +220,29 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 }
 
 /*
- * set_inherited_rel_pathlist
- *	  Build access paths for a inheritance tree rooted at rel
+ * set_append_rel_pathlist
+ *	  Build access paths for an "append relation"
  *
- * inheritlist is a list of RT indexes of all tables in the inheritance tree,
- * including a duplicate of the parent itself.	Note we will not come here
- * unless there's at least one child in addition to the parent.
- *
- * NOTE: the passed-in rel and RTE will henceforth represent the appended
- * result of the whole inheritance tree.  The members of inheritlist represent
- * the individual tables --- in particular, the inheritlist member that is a
- * duplicate of the parent RTE represents the parent table alone.
- * We will generate plans to scan the individual tables that refer to
- * the inheritlist RTEs, whereas Vars elsewhere in the plan tree that
- * refer to the original RTE are taken to refer to the append output.
- * In particular, this means we have separate RelOptInfos for the parent
- * table and for the append output, which is a good thing because they're
- * not the same size.
+ * The passed-in rel and RTE represent the entire append relation.  The
+ * relation's contents are computed by appending together the output of
+ * the individual member relations.  Note that in the inheritance case,
+ * the first member relation is actually the same table as is mentioned in
+ * the parent RTE ... but it has a different RTE and RelOptInfo.  This is
+ * a good thing because their outputs are not the same size.
  */
 static void
-set_inherited_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
-						   Index rti, RangeTblEntry *rte,
-						   List *inheritlist)
+set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
+						Index rti, RangeTblEntry *rte)
 {
 	int			parentRTindex = rti;
-	Oid			parentOID = rte->relid;
 	List	   *subpaths = NIL;
-	ListCell   *il;
+	ListCell   *l;
 
 	/*
 	 * XXX for now, can't handle inherited expansion of FOR UPDATE/SHARE; can
-	 * we do better?
+	 * we do better?  (This will take some redesign because the executor
+	 * currently supposes that every rowMark relation is involved in every
+	 * row returned by the query.)
 	 */
 	if (list_member_int(root->parse->rowMarks, parentRTindex))
 		ereport(ERROR,
@@ -262,64 +250,79 @@ set_inherited_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 				 errmsg("SELECT FOR UPDATE/SHARE is not supported for inheritance queries")));
 
 	/*
-	 * Initialize to compute size estimates for whole inheritance tree
+	 * Initialize to compute size estimates for whole append relation
 	 */
 	rel->rows = 0;
 	rel->width = 0;
 
 	/*
-	 * Generate access paths for each table in the tree (parent AND children),
-	 * and pick the cheapest path for each table.
+	 * Generate access paths for each member relation, and pick the cheapest
+	 * path for each one.
 	 */
-	foreach(il, inheritlist)
+	foreach(l, root->append_rel_list)
 	{
-		int			childRTindex = lfirst_int(il);
-		RangeTblEntry *childrte;
-		Oid			childOID;
+		AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(l);
+		int			childRTindex;
 		RelOptInfo *childrel;
+		RangeTblEntry *childrte;
 		ListCell   *parentvars;
 		ListCell   *childvars;
 
-		childrte = rt_fetch(childRTindex, root->parse->rtable);
-		childOID = childrte->relid;
+		/* append_rel_list contains all append rels; ignore others */
+		if (appinfo->parent_relid != parentRTindex)
+			continue;
+
+		childRTindex = appinfo->child_relid;
 
 		/*
 		 * Make a RelOptInfo for the child so we can do planning. Mark it as
 		 * an "other rel" since it will not be part of the main join tree.
 		 */
-		childrel = build_other_rel(root, childRTindex);
+		childrel = build_simple_rel(root, childRTindex,
+									RELOPT_OTHER_MEMBER_REL);
 
 		/*
-		 * Copy the parent's targetlist and restriction quals to the child,
-		 * with attribute-number adjustment as needed.	We don't bother to
-		 * copy the join quals, since we can't do any joining of the
-		 * individual tables.  Also, we just zap attr_needed rather than
-		 * trying to adjust it; it won't be looked at in the child.
+		 * Copy the parent's targetlist and quals to the child, with
+		 * appropriate substitution of variables.
 		 */
 		childrel->reltargetlist = (List *)
-			adjust_inherited_attrs((Node *) rel->reltargetlist,
-								   parentRTindex,
-								   parentOID,
-								   childRTindex,
-								   childOID);
-		childrel->attr_needed = NULL;
+			adjust_appendrel_attrs((Node *) rel->reltargetlist,
+								   appinfo);
 		childrel->baserestrictinfo = (List *)
-			adjust_inherited_attrs((Node *) rel->baserestrictinfo,
-								   parentRTindex,
-								   parentOID,
-								   childRTindex,
-								   childOID);
+			adjust_appendrel_attrs((Node *) rel->baserestrictinfo,
+								   appinfo);
+		childrel->joininfo = (List *)
+			adjust_appendrel_attrs((Node *) rel->joininfo,
+								   appinfo);
+
+		/*
+		 * Copy the parent's attr_needed data as well, with appropriate
+		 * adjustment of relids and attribute numbers.
+		 */
+		pfree(childrel->attr_needed);
+		childrel->attr_needed =
+			adjust_appendrel_attr_needed(rel, appinfo,
+										 childrel->min_attr,
+										 childrel->max_attr);
 
 		/*
 		 * If we can prove we don't need to scan this child via constraint
 		 * exclusion, just ignore it.  (We have to have converted the
 		 * baserestrictinfo Vars before we can make the test.)
+		 *
+		 * XXX it'd probably be better to give the child some kind of dummy
+		 * cheapest path, or otherwise explicitly mark it as ignorable.
+		 * Currently there is an ugly check in join_before_append() to handle
+		 * excluded children.
 		 */
-		if (constraint_exclusion)
+		childrte = rt_fetch(childRTindex, root->parse->rtable);
+		if (constraint_exclusion &&
+			childrte->rtekind == RTE_RELATION)
 		{
 			List	   *constraint_pred;
 
-			constraint_pred = get_relation_constraints(childOID, childrel);
+			constraint_pred = get_relation_constraints(childrte->relid,
+													   childrel);
 
 			/*
 			 * We do not currently enforce that CHECK constraints contain only
@@ -363,7 +366,8 @@ set_inherited_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 			Var		   *parentvar = (Var *) lfirst(parentvars);
 			Var		   *childvar = (Var *) lfirst(childvars);
 
-			if (IsA(parentvar, Var) &&IsA(childvar, Var))
+			if (IsA(parentvar, Var) &&
+				IsA(childvar, Var))
 			{
 				int			pndx = parentvar->varattno - rel->min_attr;
 				int			cndx = childvar->varattno - childrel->min_attr;
@@ -392,9 +396,9 @@ has_multiple_baserels(PlannerInfo *root)
 	int			num_base_rels = 0;
 	Index		rti;
 
-	for (rti = 1; rti < root->base_rel_array_size; rti++)
+	for (rti = 1; rti < root->simple_rel_array_size; rti++)
 	{
-		RelOptInfo *brel = root->base_rel_array[rti];
+		RelOptInfo *brel = root->simple_rel_array[rti];
 
 		if (brel == NULL)
 			continue;

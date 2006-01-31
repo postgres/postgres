@@ -5,8 +5,12 @@
  *	  from a time when only UNIONs were implemented.
  *
  * There is also some code here to support planning of queries that use
- * inheritance (SELECT FROM foo*).	This no longer has much connection
- * to the processing of UNION queries, but it's still here.
+ * inheritance (SELECT FROM foo*).  Although inheritance is radically
+ * different from set operations as far as the parser representation of
+ * a query is concerned, we try to handle it identically to the UNION ALL
+ * case during planning: both are converted to "append rels".  (Note that
+ * UNION ALL is special-cased: other kinds of set operations go through
+ * a completely different code path.)
  *
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
@@ -14,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.128 2005/11/22 18:17:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.129 2006/01/31 21:39:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,18 +41,6 @@
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 
-
-typedef struct
-{
-	Index		old_rt_index;
-	Index		new_rt_index;
-	Oid			old_rel_type;
-	Oid			new_rel_type;
-	TupleDesc	old_tupdesc;
-	TupleDesc	new_tupdesc;
-	char	   *old_rel_name;
-	char	   *new_rel_name;
-} adjust_inherited_attrs_context;
 
 static Plan *recurse_set_operations(Node *setOp, PlannerInfo *root,
 					   double tuple_fraction,
@@ -73,11 +65,16 @@ static List *generate_append_tlist(List *colTypes, bool flag,
 					  List *input_plans,
 					  List *refnames_tlist);
 static bool tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK);
-static Node *adjust_inherited_attrs_mutator(Node *node,
-							   adjust_inherited_attrs_context *context);
+static void expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte,
+									 Index rti);
+static void make_translation_lists(Relation oldrelation, Relation newrelation,
+								   Index newvarno,
+								   List **col_mappings, List **translated_vars);
+static Node *adjust_appendrel_attrs_mutator(Node *node,
+											AppendRelInfo *context);
 static Relids adjust_relid_set(Relids relids, Index oldrelid, Index newrelid);
 static List *adjust_inherited_tlist(List *tlist,
-					   adjust_inherited_attrs_context *context);
+					   AppendRelInfo *context);
 
 
 /*
@@ -740,50 +737,80 @@ find_all_inheritors(Oid parentrel)
 }
 
 /*
+ * expand_inherited_tables
+ *		Expand each rangetable entry that represents an inheritance set
+ *		into an "append relation".  At the conclusion of this process,
+ *		the "inh" flag is set in all and only those RTEs that are append
+ *		relation parents.
+ */
+void
+expand_inherited_tables(PlannerInfo *root)
+{
+	Index	nrtes;
+	Index	rti;
+	ListCell *rl;
+
+	/*
+	 * expand_inherited_rtentry may add RTEs to parse->rtable; there is
+	 * no need to scan them since they can't have inh=true.  So just
+	 * scan as far as the original end of the rtable list.
+	 */
+	nrtes = list_length(root->parse->rtable);
+	rl = list_head(root->parse->rtable);
+	for (rti = 1; rti <= nrtes; rti++)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(rl);
+
+		expand_inherited_rtentry(root, rte, rti);
+		rl = lnext(rl);
+	}
+}
+
+/*
  * expand_inherited_rtentry
  *		Check whether a rangetable entry represents an inheritance set.
  *		If so, add entries for all the child tables to the query's
- *		rangetable, and return an integer list of RT indexes for the
- *		whole inheritance set (parent and children).
- *		If not, return NIL.
+ *		rangetable, and build AppendRelInfo nodes for all the child tables
+ *		and add them to root->append_rel_list.  If not, clear the entry's
+ *		"inh" flag to prevent later code from looking for AppendRelInfos.
  *
  * Note that the original RTE is considered to represent the whole
- * inheritance set.  The first member of the returned list is an RTE
- * for the same table, but with inh = false, to represent the parent table
- * in its role as a simple member of the set.  The original RT index is
- * never a member of the returned list.
+ * inheritance set.  The first of the generated RTEs is an RTE for the same
+ * table, but with inh = false, to represent the parent table in its role
+ * as a simple member of the inheritance set.
  *
  * A childless table is never considered to be an inheritance set; therefore
- * the result will never be a one-element list.  It'll be either empty
- * or have two or more elements.
- *
- * Note: there are cases in which this routine will be invoked multiple
- * times on the same RTE.  We will generate a separate set of child RTEs
- * for each invocation.  This is somewhat wasteful but seems not worth
- * trying to avoid.
+ * a parent RTE must always have at least two associated AppendRelInfos.
  */
-List *
-expand_inherited_rtentry(PlannerInfo *root, Index rti)
+static void
+expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 {
 	Query	   *parse = root->parse;
-	RangeTblEntry *rte = rt_fetch(rti, parse->rtable);
 	Oid			parentOID;
+	Relation	oldrelation;
+	LOCKMODE	lockmode;
 	List	   *inhOIDs;
-	List	   *inhRTIs;
+	List	   *appinfos;
 	ListCell   *l;
 
 	/* Does RT entry allow inheritance? */
 	if (!rte->inh)
-		return NIL;
-	Assert(rte->rtekind == RTE_RELATION);
+		return;
+	/* Ignore any already-expanded UNION ALL nodes */
+	if (rte->rtekind != RTE_RELATION)
+	{
+		Assert(rte->rtekind == RTE_SUBQUERY);
+		return;
+	}
 	/* Fast path for common case of childless table */
 	parentOID = rte->relid;
 	if (!has_subclass(parentOID))
 	{
-		/* Clear flag to save repeated tests if called again */
+		/* Clear flag before returning */
 		rte->inh = false;
-		return NIL;
+		return;
 	}
+
 	/* Scan for all members of inheritance set */
 	inhOIDs = find_all_inheritors(parentOID);
 
@@ -794,18 +821,45 @@ expand_inherited_rtentry(PlannerInfo *root, Index rti)
 	 */
 	if (list_length(inhOIDs) < 2)
 	{
-		/* Clear flag to save repeated tests if called again */
+		/* Clear flag before returning */
 		rte->inh = false;
-		return NIL;
+		return;
 	}
 
-	/* OK, it's an inheritance set; expand it */
-	inhRTIs = NIL;
+	/*
+	 * Must open the parent relation to examine its tupdesc.  We need not
+	 * lock it since the rewriter already obtained at least AccessShareLock
+	 * on each relation used in the query.
+	 */
+	oldrelation = heap_open(parentOID, NoLock);
+
+	/*
+	 * However, for each child relation we add to the query, we must obtain
+	 * an appropriate lock, because this will be the first use of those
+	 * relations in the parse/rewrite/plan pipeline.
+	 *
+	 * If the parent relation is the query's result relation, then we need
+	 * RowExclusiveLock.  Otherwise, check to see if the relation is accessed
+	 * FOR UPDATE/SHARE or not.  We can't just grab AccessShareLock because
+	 * then the executor would be trying to upgrade the lock, leading to
+	 * possible deadlocks.  (This code should match the parser and rewriter.)
+	 */
+	if (rti == parse->resultRelation)
+		lockmode = RowExclusiveLock;
+	else if (list_member_int(parse->rowMarks, rti))
+		lockmode = RowShareLock;
+	else
+		lockmode = AccessShareLock;
+
+	/* Scan the inheritance set and expand it */
+	appinfos = NIL;
 	foreach(l, inhOIDs)
 	{
 		Oid			childOID = lfirst_oid(l);
+		Relation	newrelation;
 		RangeTblEntry *childrte;
 		Index		childRTindex;
+		AppendRelInfo *appinfo;
 
 		/*
 		 * It is possible that the parent table has children that are temp
@@ -817,6 +871,12 @@ expand_inherited_rtentry(PlannerInfo *root, Index rti)
 			isOtherTempNamespace(get_rel_namespace(childOID)))
 			continue;
 
+		/* Open rel, acquire the appropriate lock type */
+		if (childOID != parentOID)
+			newrelation = heap_open(childOID, lockmode);
+		else
+			newrelation = oldrelation;
+
 		/*
 		 * Build an RTE for the child, and attach to query's rangetable list.
 		 * We copy most fields of the parent's RTE, but replace relation OID,
@@ -827,75 +887,160 @@ expand_inherited_rtentry(PlannerInfo *root, Index rti)
 		childrte->inh = false;
 		parse->rtable = lappend(parse->rtable, childrte);
 		childRTindex = list_length(parse->rtable);
-		inhRTIs = lappend_int(inhRTIs, childRTindex);
+
+		/*
+		 * Build an AppendRelInfo for this parent and child.
+		 */
+		appinfo = makeNode(AppendRelInfo);
+		appinfo->parent_relid = rti;
+		appinfo->child_relid = childRTindex;
+		appinfo->parent_reltype = oldrelation->rd_rel->reltype;
+		appinfo->child_reltype = newrelation->rd_rel->reltype;
+		make_translation_lists(oldrelation, newrelation, childRTindex,
+							   &appinfo->col_mappings,
+							   &appinfo->translated_vars);
+		appinfo->parent_reloid = parentOID;
+		appinfos = lappend(appinfos, appinfo);
+
+		/* Close child relations, but keep locks */
+		if (childOID != parentOID)
+			heap_close(newrelation, NoLock);
 	}
+
+	heap_close(oldrelation, NoLock);
 
 	/*
 	 * If all the children were temp tables, pretend it's a non-inheritance
 	 * situation.  The duplicate RTE we added for the parent table is
-	 * harmless.
+	 * harmless, so we don't bother to get rid of it.
 	 */
-	if (list_length(inhRTIs) < 2)
+	if (list_length(appinfos) < 2)
 	{
-		/* Clear flag to save repeated tests if called again */
+		/* Clear flag before returning */
 		rte->inh = false;
-		return NIL;
+		return;
 	}
+
+	/* Otherwise, OK to add to root->append_rel_list */
+	root->append_rel_list = list_concat(root->append_rel_list, appinfos);
 
 	/*
 	 * The executor will check the parent table's access permissions when it
-	 * examines the parent's inheritlist entry.  There's no need to check
-	 * twice, so turn off access check bits in the original RTE. (If we are
-	 * invoked more than once, extra copies of the child RTEs will also not
-	 * cause duplicate permission checks.)
+	 * examines the parent's added RTE entry.  There's no need to check
+	 * twice, so turn off access check bits in the original RTE.
 	 */
 	rte->requiredPerms = 0;
-
-	return inhRTIs;
 }
 
 /*
- * adjust_inherited_attrs
- *	  Copy the specified query or expression and translate Vars referring
- *	  to old_rt_index to refer to new_rt_index.
+ * make_translation_lists
+ *	  Build the lists of translations from parent Vars to child Vars for
+ *	  an inheritance child.  We need both a column number mapping list
+ *	  and a list of Vars representing the child columns.
  *
- * We also adjust varattno to match the new table by column name, rather
- * than column number.	This hack makes it possible for child tables to have
- * different column positions for the "same" attribute as a parent, which
- * is necessary for ALTER TABLE ADD COLUMN.
+ * For paranoia's sake, we match type as well as attribute name.
  */
-Node *
-adjust_inherited_attrs(Node *node,
-					   Index old_rt_index, Oid old_relid,
-					   Index new_rt_index, Oid new_relid)
+static void
+make_translation_lists(Relation oldrelation, Relation newrelation,
+					   Index newvarno,
+					   List **col_mappings, List **translated_vars)
 {
-	Node	   *result;
-	adjust_inherited_attrs_context context;
-	Relation	oldrelation;
-	Relation	newrelation;
+	List	   *numbers = NIL;
+	List	   *vars = NIL;
+	TupleDesc	old_tupdesc = RelationGetDescr(oldrelation);
+	TupleDesc	new_tupdesc = RelationGetDescr(newrelation);
+	int			oldnatts = old_tupdesc->natts;
+	int			newnatts = new_tupdesc->natts;
+	int			old_attno;
 
-	/* Handle simple case simply... */
-	if (old_rt_index == new_rt_index)
+	for (old_attno = 0; old_attno < oldnatts; old_attno++)
 	{
-		Assert(old_relid == new_relid);
-		return copyObject(node);
+		Form_pg_attribute att;
+		char	   *attname;
+		Oid			atttypid;
+		int32		atttypmod;
+		int			new_attno;
+
+		att = old_tupdesc->attrs[old_attno];
+		if (att->attisdropped)
+		{
+			/* Just put 0/NULL into this list entry */
+			numbers = lappend_int(numbers, 0);
+			vars = lappend(vars, NULL);
+			continue;
+		}
+		attname = NameStr(att->attname);
+		atttypid = att->atttypid;
+		atttypmod = att->atttypmod;
+
+		/*
+		 * When we are generating the "translation list" for the parent
+		 * table of an inheritance set, no need to search for matches.
+		 */
+		if (oldrelation == newrelation)
+		{
+			numbers = lappend_int(numbers, old_attno + 1);
+			vars = lappend(vars, makeVar(newvarno,
+										 (AttrNumber) (old_attno + 1),
+										 atttypid,
+										 atttypmod,
+										 0));
+			continue;
+		}
+
+		/*
+		 * Otherwise we have to search for the matching column by name.
+		 * There's no guarantee it'll have the same column position,
+		 * because of cases like ALTER TABLE ADD COLUMN and multiple
+		 * inheritance.
+		 */
+		for (new_attno = 0; new_attno < newnatts; new_attno++)
+		{
+			att = new_tupdesc->attrs[new_attno];
+			if (att->attisdropped || att->attinhcount == 0)
+				continue;
+			if (strcmp(attname, NameStr(att->attname)) != 0)
+				continue;
+			/* Found it, check type */
+			if (atttypid != att->atttypid || atttypmod != att->atttypmod)
+				elog(ERROR, "attribute \"%s\" of relation \"%s\" does not match parent's type",
+					 attname, RelationGetRelationName(newrelation));
+			
+			numbers = lappend_int(numbers, new_attno + 1);
+			vars = lappend(vars, makeVar(newvarno,
+										 (AttrNumber) (new_attno + 1),
+										 atttypid,
+										 atttypmod,
+										 0));
+			break;
+		}
+
+		if (new_attno >= newnatts)
+			elog(ERROR, "could not find inherited attribute \"%s\" of relation \"%s\"",
+				 attname, RelationGetRelationName(newrelation));
 	}
 
-	/*
-	 * We assume that by now the planner has acquired at least AccessShareLock
-	 * on both rels, and so we need no additional lock now.
-	 */
-	oldrelation = heap_open(old_relid, NoLock);
-	newrelation = heap_open(new_relid, NoLock);
+	*col_mappings = numbers;
+	*translated_vars = vars;
+}
 
-	context.old_rt_index = old_rt_index;
-	context.new_rt_index = new_rt_index;
-	context.old_rel_type = oldrelation->rd_rel->reltype;
-	context.new_rel_type = newrelation->rd_rel->reltype;
-	context.old_tupdesc = RelationGetDescr(oldrelation);
-	context.new_tupdesc = RelationGetDescr(newrelation);
-	context.old_rel_name = RelationGetRelationName(oldrelation);
-	context.new_rel_name = RelationGetRelationName(newrelation);
+/*
+ * adjust_appendrel_attrs
+ *	  Copy the specified query or expression and translate Vars referring
+ *	  to the parent rel of the specified AppendRelInfo to refer to the
+ *	  child rel instead.  We also update rtindexes appearing outside Vars,
+ *	  such as resultRelation and jointree relids.
+ *
+ * Note: this is only applied after conversion of sublinks to subplans,
+ * so we don't need to cope with recursion into sub-queries.
+ *
+ * Note: this is not hugely different from what ResolveNew() does; maybe
+ * we should try to fold the two routines together.
+ */
+Node *
+adjust_appendrel_attrs(Node *node, AppendRelInfo *appinfo)
+{
+	Node	   *result;
 
 	/*
 	 * Must be prepared to start with a Query or a bare expression tree.
@@ -905,80 +1050,28 @@ adjust_inherited_attrs(Node *node,
 		Query	   *newnode;
 
 		newnode = query_tree_mutator((Query *) node,
-									 adjust_inherited_attrs_mutator,
-									 (void *) &context,
+									 adjust_appendrel_attrs_mutator,
+									 (void *) appinfo,
 									 QTW_IGNORE_RT_SUBQUERIES);
-		if (newnode->resultRelation == old_rt_index)
+		if (newnode->resultRelation == appinfo->parent_relid)
 		{
-			newnode->resultRelation = new_rt_index;
+			newnode->resultRelation = appinfo->child_relid;
 			/* Fix tlist resnos too, if it's inherited UPDATE */
 			if (newnode->commandType == CMD_UPDATE)
 				newnode->targetList =
 					adjust_inherited_tlist(newnode->targetList,
-										   &context);
+										   appinfo);
 		}
 		result = (Node *) newnode;
 	}
 	else
-		result = adjust_inherited_attrs_mutator(node, &context);
-
-	heap_close(oldrelation, NoLock);
-	heap_close(newrelation, NoLock);
+		result = adjust_appendrel_attrs_mutator(node, appinfo);
 
 	return result;
 }
 
-/*
- * Translate parent's attribute number into child's.
- *
- * For paranoia's sake, we match type as well as attribute name.
- */
-static AttrNumber
-translate_inherited_attnum(AttrNumber old_attno,
-						   adjust_inherited_attrs_context *context)
-{
-	Form_pg_attribute att;
-	char	   *attname;
-	Oid			atttypid;
-	int32		atttypmod;
-	int			newnatts;
-	int			i;
-
-	if (old_attno <= 0 || old_attno > context->old_tupdesc->natts)
-		elog(ERROR, "attribute %d of relation \"%s\" does not exist",
-			 (int) old_attno, context->old_rel_name);
-	att = context->old_tupdesc->attrs[old_attno - 1];
-	if (att->attisdropped)
-		elog(ERROR, "attribute %d of relation \"%s\" does not exist",
-			 (int) old_attno, context->old_rel_name);
-	attname = NameStr(att->attname);
-	atttypid = att->atttypid;
-	atttypmod = att->atttypmod;
-
-	newnatts = context->new_tupdesc->natts;
-	for (i = 0; i < newnatts; i++)
-	{
-		att = context->new_tupdesc->attrs[i];
-		if (att->attisdropped)
-			continue;
-		if (strcmp(attname, NameStr(att->attname)) == 0)
-		{
-			/* Found it, check type */
-			if (atttypid != att->atttypid || atttypmod != att->atttypmod)
-				elog(ERROR, "attribute \"%s\" of relation \"%s\" does not match parent's type",
-					 attname, context->new_rel_name);
-			return (AttrNumber) (i + 1);
-		}
-	}
-
-	elog(ERROR, "attribute \"%s\" of relation \"%s\" does not exist",
-		 attname, context->new_rel_name);
-	return 0;					/* keep compiler quiet */
-}
-
 static Node *
-adjust_inherited_attrs_mutator(Node *node,
-							   adjust_inherited_attrs_context *context)
+adjust_appendrel_attrs_mutator(Node *node, AppendRelInfo *context)
 {
 	if (node == NULL)
 		return NULL;
@@ -987,36 +1080,54 @@ adjust_inherited_attrs_mutator(Node *node,
 		Var		   *var = (Var *) copyObject(node);
 
 		if (var->varlevelsup == 0 &&
-			var->varno == context->old_rt_index)
+			var->varno == context->parent_relid)
 		{
-			var->varno = context->new_rt_index;
-			var->varnoold = context->new_rt_index;
+			var->varno = context->child_relid;
+			var->varnoold = context->child_relid;
 			if (var->varattno > 0)
 			{
-				var->varattno = translate_inherited_attnum(var->varattno,
-														   context);
-				var->varoattno = var->varattno;
+				Node   *newnode;
+
+				if (var->varattno > list_length(context->translated_vars))
+					elog(ERROR, "attribute %d of relation \"%s\" does not exist",
+						 var->varattno, get_rel_name(context->parent_reloid));
+				newnode = copyObject(list_nth(context->translated_vars,
+											  var->varattno - 1));
+				if (newnode == NULL)
+					elog(ERROR, "attribute %d of relation \"%s\" does not exist",
+						 var->varattno, get_rel_name(context->parent_reloid));
+				return newnode;
 			}
 			else if (var->varattno == 0)
 			{
 				/*
-				 * Whole-row Var: we need to insert a coercion step to convert
-				 * the tuple layout to the parent's rowtype.
+				 * Whole-row Var: if we are dealing with named rowtypes,
+				 * we can use a whole-row Var for the child table plus a
+				 * coercion step to convert the tuple layout to the parent's
+				 * rowtype.  Otherwise we have to generate a RowExpr.
 				 */
-				if (context->old_rel_type != context->new_rel_type)
+				if (OidIsValid(context->child_reltype))
 				{
-					ConvertRowtypeExpr *r = makeNode(ConvertRowtypeExpr);
+					Assert(var->vartype == context->parent_reltype);
+					if (context->parent_reltype != context->child_reltype)
+					{
+						ConvertRowtypeExpr *r = makeNode(ConvertRowtypeExpr);
 
-					r->arg = (Expr *) var;
-					r->resulttype = context->old_rel_type;
-					r->convertformat = COERCE_IMPLICIT_CAST;
-					/* Make sure the Var node has the right type ID, too */
-					Assert(var->vartype == context->old_rel_type);
-					var->vartype = context->new_rel_type;
-					return (Node *) r;
+						r->arg = (Expr *) var;
+						r->resulttype = context->parent_reltype;
+						r->convertformat = COERCE_IMPLICIT_CAST;
+						/* Make sure the Var node has the right type ID, too */
+						var->vartype = context->child_reltype;
+						return (Node *) r;
+					}
+				}
+				else
+				{
+					/* XXX copy some code from ResolveNew */
+					Assert(false);/* not done yet */
 				}
 			}
-			/* system attributes don't need any translation */
+			/* system attributes don't need any other translation */
 		}
 		return (Node *) var;
 	}
@@ -1024,8 +1135,8 @@ adjust_inherited_attrs_mutator(Node *node,
 	{
 		RangeTblRef *rtr = (RangeTblRef *) copyObject(node);
 
-		if (rtr->rtindex == context->old_rt_index)
-			rtr->rtindex = context->new_rt_index;
+		if (rtr->rtindex == context->parent_relid)
+			rtr->rtindex = context->child_relid;
 		return (Node *) rtr;
 	}
 	if (IsA(node, JoinExpr))
@@ -1034,11 +1145,11 @@ adjust_inherited_attrs_mutator(Node *node,
 		JoinExpr   *j;
 
 		j = (JoinExpr *) expression_tree_mutator(node,
-											  adjust_inherited_attrs_mutator,
+											  adjust_appendrel_attrs_mutator,
 												 (void *) context);
-		/* now fix JoinExpr's rtindex */
-		if (j->rtindex == context->old_rt_index)
-			j->rtindex = context->new_rt_index;
+		/* now fix JoinExpr's rtindex (probably never happens) */
+		if (j->rtindex == context->parent_relid)
+			j->rtindex = context->child_relid;
 		return (Node *) j;
 	}
 	if (IsA(node, InClauseInfo))
@@ -1047,17 +1158,20 @@ adjust_inherited_attrs_mutator(Node *node,
 		InClauseInfo *ininfo;
 
 		ininfo = (InClauseInfo *) expression_tree_mutator(node,
-											  adjust_inherited_attrs_mutator,
+											  adjust_appendrel_attrs_mutator,
 														  (void *) context);
 		/* now fix InClauseInfo's relid sets */
 		ininfo->lefthand = adjust_relid_set(ininfo->lefthand,
-											context->old_rt_index,
-											context->new_rt_index);
+											context->parent_relid,
+											context->child_relid);
 		ininfo->righthand = adjust_relid_set(ininfo->righthand,
-											 context->old_rt_index,
-											 context->new_rt_index);
+											 context->parent_relid,
+											 context->child_relid);
 		return (Node *) ininfo;
 	}
+	/* Shouldn't need to handle OuterJoinInfo or AppendRelInfo here */
+	Assert(!IsA(node, OuterJoinInfo));
+	Assert(!IsA(node, AppendRelInfo));
 
 	/*
 	 * We have to process RestrictInfo nodes specially.
@@ -1072,25 +1186,25 @@ adjust_inherited_attrs_mutator(Node *node,
 
 		/* Recursively fix the clause itself */
 		newinfo->clause = (Expr *)
-			adjust_inherited_attrs_mutator((Node *) oldinfo->clause, context);
+			adjust_appendrel_attrs_mutator((Node *) oldinfo->clause, context);
 
 		/* and the modified version, if an OR clause */
 		newinfo->orclause = (Expr *)
-			adjust_inherited_attrs_mutator((Node *) oldinfo->orclause, context);
+			adjust_appendrel_attrs_mutator((Node *) oldinfo->orclause, context);
 
 		/* adjust relid sets too */
 		newinfo->clause_relids = adjust_relid_set(oldinfo->clause_relids,
-												  context->old_rt_index,
-												  context->new_rt_index);
+												  context->parent_relid,
+												  context->child_relid);
 		newinfo->required_relids = adjust_relid_set(oldinfo->required_relids,
-													context->old_rt_index,
-													context->new_rt_index);
+													context->parent_relid,
+													context->child_relid);
 		newinfo->left_relids = adjust_relid_set(oldinfo->left_relids,
-												context->old_rt_index,
-												context->new_rt_index);
+												context->parent_relid,
+												context->child_relid);
 		newinfo->right_relids = adjust_relid_set(oldinfo->right_relids,
-												 context->old_rt_index,
-												 context->new_rt_index);
+												 context->parent_relid,
+												 context->child_relid);
 
 		/*
 		 * Reset cached derivative fields, since these might need to have
@@ -1119,7 +1233,7 @@ adjust_inherited_attrs_mutator(Node *node,
 	 * BUT: although we don't need to recurse into subplans, we do need to
 	 * make sure that they are copied, not just referenced as
 	 * expression_tree_mutator will do by default.	Otherwise we'll have the
-	 * same subplan node referenced from each arm of the inheritance APPEND
+	 * same subplan node referenced from each arm of the finished APPEND
 	 * plan, which will cause trouble in the executor.	This is a kluge that
 	 * should go away when we redesign querytrees.
 	 */
@@ -1128,7 +1242,7 @@ adjust_inherited_attrs_mutator(Node *node,
 		SubPlan    *subplan;
 
 		/* Copy the node and process subplan args */
-		node = expression_tree_mutator(node, adjust_inherited_attrs_mutator,
+		node = expression_tree_mutator(node, adjust_appendrel_attrs_mutator,
 									   (void *) context);
 		/* Make sure we have separate copies of subplan and its rtable */
 		subplan = (SubPlan *) node;
@@ -1137,7 +1251,7 @@ adjust_inherited_attrs_mutator(Node *node,
 		return node;
 	}
 
-	return expression_tree_mutator(node, adjust_inherited_attrs_mutator,
+	return expression_tree_mutator(node, adjust_appendrel_attrs_mutator,
 								   (void *) context);
 }
 
@@ -1159,6 +1273,110 @@ adjust_relid_set(Relids relids, Index oldrelid, Index newrelid)
 }
 
 /*
+ * adjust_appendrel_attr_needed
+ *		Adjust an attr_needed[] array to reference a member rel instead of
+ *		the original appendrel
+ *
+ * oldrel: source of data (we use the attr_needed, min_attr, max_attr fields)
+ * appinfo: supplies parent_relid, child_relid, col_mappings
+ * new_min_attr, new_max_attr: desired bounds of new attr_needed array
+ *
+ * The relid sets are adjusted by substituting child_relid for parent_relid.
+ * (NOTE: oldrel is not necessarily the parent_relid relation!)  We are also
+ * careful to map attribute numbers within the array properly.  User
+ * attributes have to be mapped through col_mappings, but system attributes
+ * and whole-row references always have the same attno.
+ *
+ * Returns a palloc'd array with the specified bounds
+ */
+Relids *
+adjust_appendrel_attr_needed(RelOptInfo *oldrel, AppendRelInfo *appinfo,
+							 AttrNumber new_min_attr, AttrNumber new_max_attr)
+{
+	Relids	   *new_attr_needed;
+	Index		parent_relid = appinfo->parent_relid;
+	Index		child_relid = appinfo->child_relid;
+	int			parent_attr;
+	ListCell   *lm;
+
+	/* Create empty result array */
+	Assert(new_min_attr <= oldrel->min_attr);
+	Assert(new_max_attr >= oldrel->max_attr);
+	new_attr_needed = (Relids *)
+		palloc0((new_max_attr - new_min_attr + 1) * sizeof(Relids));
+	/* Process user attributes, with appropriate attno mapping */
+	parent_attr = 1;
+	foreach(lm, appinfo->col_mappings)
+	{
+		int			child_attr = lfirst_int(lm);
+
+		if (child_attr > 0)
+		{
+			Relids		attrneeded;
+
+			Assert(parent_attr <= oldrel->max_attr);
+			Assert(child_attr <= new_max_attr);
+			attrneeded = oldrel->attr_needed[parent_attr - oldrel->min_attr];
+			attrneeded = adjust_relid_set(attrneeded,
+										  parent_relid, child_relid);
+			new_attr_needed[child_attr - new_min_attr] = attrneeded;
+		}
+		parent_attr++;
+	}
+	/* Process system attributes, including whole-row references */
+	for (parent_attr = oldrel->min_attr; parent_attr <= 0; parent_attr++)
+	{
+		Relids		attrneeded;
+
+		attrneeded = oldrel->attr_needed[parent_attr - oldrel->min_attr];
+		attrneeded = adjust_relid_set(attrneeded,
+									  parent_relid, child_relid);
+		new_attr_needed[parent_attr - new_min_attr] = attrneeded;
+	}
+
+	return new_attr_needed;
+}
+
+/*
+ * adjust_other_rel_attr_needed
+ *		Adjust an attr_needed[] array to reference a member rel instead of
+ *		the original appendrel
+ *
+ * This is exactly like adjust_appendrel_attr_needed except that we disregard
+ * appinfo->col_mappings and instead assume that the mapping of user
+ * attributes is one-to-one.  This is appropriate for generating an attr_needed
+ * array that describes another relation to be joined with a member rel.
+ */
+Relids *
+adjust_other_rel_attr_needed(RelOptInfo *oldrel, AppendRelInfo *appinfo,
+							 AttrNumber new_min_attr, AttrNumber new_max_attr)
+{
+	Relids	   *new_attr_needed;
+	Index		parent_relid = appinfo->parent_relid;
+	Index		child_relid = appinfo->child_relid;
+	int			parent_attr;
+
+	/* Create empty result array */
+	Assert(new_min_attr <= oldrel->min_attr);
+	Assert(new_max_attr >= oldrel->max_attr);
+	new_attr_needed = (Relids *)
+		palloc0((new_max_attr - new_min_attr + 1) * sizeof(Relids));
+	/* Process user attributes and system attributes */
+	for (parent_attr = oldrel->min_attr; parent_attr <= oldrel->max_attr;
+		 parent_attr++)
+	{
+		Relids		attrneeded;
+
+		attrneeded = oldrel->attr_needed[parent_attr - oldrel->min_attr];
+		attrneeded = adjust_relid_set(attrneeded,
+									  parent_relid, child_relid);
+		new_attr_needed[parent_attr - new_min_attr] = attrneeded;
+	}
+
+	return new_attr_needed;
+}
+
+/*
  * Adjust the targetlist entries of an inherited UPDATE operation
  *
  * The expressions have already been fixed, but we have to make sure that
@@ -1175,8 +1393,7 @@ adjust_relid_set(Relids relids, Index oldrelid, Index newrelid)
  * Note that this is not needed for INSERT because INSERT isn't inheritable.
  */
 static List *
-adjust_inherited_tlist(List *tlist,
-					   adjust_inherited_attrs_context *context)
+adjust_inherited_tlist(List *tlist, AppendRelInfo *context)
 {
 	bool		changed_it = false;
 	ListCell   *tl;
@@ -1184,19 +1401,31 @@ adjust_inherited_tlist(List *tlist,
 	bool		more;
 	int			attrno;
 
-	/* Scan tlist and update resnos to match attnums of new_relid */
+	/* This should only happen for an inheritance case, not UNION ALL */
+	Assert(OidIsValid(context->parent_reloid));
+
+	/* Scan tlist and update resnos to match attnums of child rel */
 	foreach(tl, tlist)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(tl);
+		int		newattno;
 
 		if (tle->resjunk)
 			continue;			/* ignore junk items */
 
-		attrno = translate_inherited_attnum(tle->resno, context);
+		/* Look up the translation of this column */
+		if (tle->resno <= 0 ||
+			tle->resno > list_length(context->col_mappings))
+			elog(ERROR, "attribute %d of relation \"%s\" does not exist",
+				 tle->resno, get_rel_name(context->parent_reloid));
+		newattno = list_nth_int(context->col_mappings, tle->resno - 1);
+		if (newattno <= 0)
+			elog(ERROR, "attribute %d of relation \"%s\" does not exist",
+				 tle->resno, get_rel_name(context->parent_reloid));
 
-		if (tle->resno != attrno)
+		if (tle->resno != newattno)
 		{
-			tle->resno = attrno;
+			tle->resno = newattno;
 			changed_it = true;
 		}
 	}

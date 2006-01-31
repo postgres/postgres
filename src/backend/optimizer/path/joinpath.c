@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.98 2005/11/22 18:17:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.99 2006/01/31 21:39:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
+#include "optimizer/prep.h"
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 
@@ -35,6 +36,9 @@ static void match_unsorted_outer(PlannerInfo *root, RelOptInfo *joinrel,
 static void hash_inner_and_outer(PlannerInfo *root, RelOptInfo *joinrel,
 					 RelOptInfo *outerrel, RelOptInfo *innerrel,
 					 List *restrictlist, JoinType jointype);
+static void join_before_append(PlannerInfo *root, RelOptInfo *joinrel,
+					 RelOptInfo *outerrel, RelOptInfo *innerrel,
+					 JoinType jointype);
 static List *select_mergejoin_clauses(RelOptInfo *joinrel,
 						 RelOptInfo *outerrel,
 						 RelOptInfo *innerrel,
@@ -115,6 +119,13 @@ add_paths_to_joinrel(PlannerInfo *root,
 	if (enable_hashjoin)
 		hash_inner_and_outer(root, joinrel, outerrel, innerrel,
 							 restrictlist, jointype);
+
+	/*
+	 * 5. If the inner relation is an append relation, consider joining
+	 * the outer rel to each append member and then appending the results.
+	 */
+	if (innerrel->cheapest_total_path->pathtype == T_Append)
+		join_before_append(root, joinrel, outerrel, innerrel, jointype);
 }
 
 /*
@@ -775,6 +786,154 @@ hash_inner_and_outer(PlannerInfo *root,
 										  restrictlist,
 										  hashclauses));
 	}
+}
+
+/*
+ * join_before_append
+ *	  Creates possible join paths for processing a single join relation
+ *	  'joinrel' when the inner input is an append relation.
+ *
+ * The idea here is to swap the order of the APPEND and JOIN operators.
+ * This is only really helpful if it allows us to reduce the cost of
+ * scanning the members of the append relation, and so we only consider
+ * plans involving nestloops with inner indexscans.  Also, since the APPEND
+ * will certainly yield an unsorted result, there's no point in considering
+ * any but the cheapest-total outer path.
+ *
+ * XXX this is a bit of a kluge, because the resulting plan has to evaluate
+ * the outer relation multiple times.  Would be better to allow
+ * best_inner_indexscan to generate an AppendPath and not have this routine
+ * at all.  But we can't do that without some executor changes (need a way
+ * to pass outer keys down through Append).  FIXME later.
+ *
+ * 'joinrel' is the join relation
+ * 'outerrel' is the outer join relation
+ * 'innerrel' is the inner join relation
+ * 'jointype' is the type of join to do
+ */
+static void
+join_before_append(PlannerInfo *root,
+				   RelOptInfo *joinrel,
+				   RelOptInfo *outerrel,
+				   RelOptInfo *innerrel,
+				   JoinType jointype)
+{
+	Path	   *outer_cheapest_total = outerrel->cheapest_total_path;
+	int			parentRTindex = innerrel->relid;
+	List	   *append_paths = NIL;
+	ListCell   *l;
+
+	/*
+	 * Swapping JOIN with APPEND only works for inner joins, not outer joins.
+	 * However, we can also handle a unique-ified outer path.
+	 */
+	switch (jointype)
+	{
+		case JOIN_INNER:
+			break;
+		case JOIN_UNIQUE_OUTER:
+			outer_cheapest_total = (Path *)
+				create_unique_path(root, outerrel, outer_cheapest_total);
+			break;
+		case JOIN_LEFT:
+		case JOIN_RIGHT:
+		case JOIN_FULL:
+		case JOIN_IN:
+		case JOIN_UNIQUE_INNER:
+			return;				/* can't join this way */
+		default:
+			elog(ERROR, "unrecognized join type: %d",
+				 (int) jointype);
+			break;
+	}
+
+	/*
+	 * Generate suitable access paths for each member relation.
+	 */
+	foreach(l, root->append_rel_list)
+	{
+		AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(l);
+		int			childRTindex;
+		RelOptInfo *childrel;
+		Path	   *bestinnerjoin;
+		Relids		joinrelids;
+		Relids	   *save_attr_needed;
+		RelOptInfo *this_joinrel;
+		List	   *this_restrictlist;
+
+		/* append_rel_list contains all append rels; ignore others */
+		if (appinfo->parent_relid != parentRTindex)
+			continue;
+
+		childRTindex = appinfo->child_relid;
+		childrel = find_base_rel(root, childRTindex);
+		Assert(childrel->reloptkind == RELOPT_OTHER_MEMBER_REL);
+
+		/*
+		 * If the child has no cheapest_total_path, assume it was deemed
+		 * excludable by constraint exclusion (see set_append_rel_pathlist).
+		 */
+		if (childrel->cheapest_total_path == NULL)
+		{
+			Assert(constraint_exclusion);
+			continue;
+		}
+
+		/*
+		 * Get the best innerjoin indexpath (if any) for this outer rel.
+		 */
+		bestinnerjoin = best_inner_indexscan(root, childrel,
+											 outerrel->relids, JOIN_INNER);
+		/*
+		 * If no luck on an indexpath for this rel, we'll still consider
+		 * an Append substituting the cheapest-total inner path.  This
+		 * is only likely to win if there's at least one member rel for
+		 * which an indexscan path does exist.
+		 */
+		if (!bestinnerjoin)
+			bestinnerjoin = childrel->cheapest_total_path;
+
+		/*
+		 * We need a joinrel that describes this join accurately.  Although
+		 * the joinrel won't ever be used by the join path search algorithm
+		 * in joinrels.c, it provides necessary context for the Path,
+		 * such as properly-translated target and quals lists.
+		 */
+		joinrelids = bms_copy(joinrel->relids);
+		joinrelids = bms_del_member(joinrelids, parentRTindex);
+		joinrelids = bms_add_member(joinrelids, childRTindex);
+
+		/*
+		 * Kluge: temporarily adjust the outer rel's attr_needed info so
+		 * that it references the member rel instead of the appendrel.
+		 * This is needed to build the correct targetlist for the joinrel.
+		 */
+		save_attr_needed = outerrel->attr_needed;
+		outerrel->attr_needed =
+			adjust_other_rel_attr_needed(outerrel, appinfo,
+										 outerrel->min_attr,
+										 outerrel->max_attr);
+
+		this_joinrel = build_join_rel(root, joinrelids, outerrel, childrel,
+									  jointype, &this_restrictlist);
+
+		/* Now we can undo the hack on attr_needed */
+		pfree(outerrel->attr_needed);
+		outerrel->attr_needed = save_attr_needed;
+
+		/* Build Path for join and add to result list */
+		append_paths = lappend(append_paths,
+							   create_nestloop_path(root,
+													this_joinrel,
+													JOIN_INNER,
+													outer_cheapest_total,
+													bestinnerjoin,
+													this_restrictlist,
+													NIL));
+	}
+
+	/* Form the completed Append path and add it to the join relation. */
+	add_path(joinrel, (Path *) create_append_path(joinrel, append_paths));
 }
 
 /*

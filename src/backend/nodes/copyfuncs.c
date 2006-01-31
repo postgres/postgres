@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.324 2005/12/28 01:29:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.325 2006/01/31 21:39:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1318,6 +1318,25 @@ _copyInClauseInfo(InClauseInfo *from)
 	COPY_BITMAPSET_FIELD(lefthand);
 	COPY_BITMAPSET_FIELD(righthand);
 	COPY_NODE_FIELD(sub_targetlist);
+
+	return newnode;
+}
+
+/*
+ * _copyAppendRelInfo
+ */
+static AppendRelInfo *
+_copyAppendRelInfo(AppendRelInfo *from)
+{
+	AppendRelInfo *newnode = makeNode(AppendRelInfo);
+
+	COPY_SCALAR_FIELD(parent_relid);
+	COPY_SCALAR_FIELD(child_relid);
+	COPY_SCALAR_FIELD(parent_reltype);
+	COPY_SCALAR_FIELD(child_reltype);
+	COPY_NODE_FIELD(col_mappings);
+	COPY_NODE_FIELD(translated_vars);
+	COPY_SCALAR_FIELD(parent_reloid);
 
 	return newnode;
 }
@@ -2944,6 +2963,9 @@ copyObject(void *from)
 			break;
 		case T_InClauseInfo:
 			retval = _copyInClauseInfo(from);
+			break;
+		case T_AppendRelInfo:
+			retval = _copyAppendRelInfo(from);
 			break;
 
 			/*

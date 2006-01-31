@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.33 2005/12/20 02:30:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.34 2006/01/31 21:39:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,12 +176,13 @@ pull_up_subqueries(PlannerInfo *root, Node *jtnode, bool below_outer_join)
 			 */
 			subroot = makeNode(PlannerInfo);
 			subroot->parse = subquery;
+			subroot->in_info_list = NIL;
+			subroot->append_rel_list = NIL;
 
 			/*
 			 * Pull up any IN clauses within the subquery's WHERE, so that we
 			 * don't leave unoptimized INs behind.
 			 */
-			subroot->in_info_list = NIL;
 			if (subquery->hasSubLinks)
 				subquery->jointree->quals = pull_up_IN_clauses(subroot,
 												  subquery->jointree->quals);
@@ -228,11 +229,12 @@ pull_up_subqueries(PlannerInfo *root, Node *jtnode, bool below_outer_join)
 			/*
 			 * Adjust level-0 varnos in subquery so that we can append its
 			 * rangetable to upper query's.  We have to fix the subquery's
-			 * in_info_list, as well.
+			 * in_info_list and append_rel_list, as well.
 			 */
 			rtoffset = list_length(parse->rtable);
 			OffsetVarNodes((Node *) subquery, rtoffset, 0);
 			OffsetVarNodes((Node *) subroot->in_info_list, rtoffset, 0);
+			OffsetVarNodes((Node *) subroot->append_rel_list, rtoffset, 0);
 
 			/*
 			 * Upper-level vars in subquery are now one level closer to their
@@ -240,6 +242,7 @@ pull_up_subqueries(PlannerInfo *root, Node *jtnode, bool below_outer_join)
 			 */
 			IncrementVarSublevelsUp((Node *) subquery, -1, 1);
 			IncrementVarSublevelsUp((Node *) subroot->in_info_list, -1, 1);
+			IncrementVarSublevelsUp((Node *) subroot->append_rel_list, -1, 1);
 
 			/*
 			 * Replace all of the top query's references to the subquery's
@@ -261,6 +264,10 @@ pull_up_subqueries(PlannerInfo *root, Node *jtnode, bool below_outer_join)
 						   subtlist, CMD_SELECT, 0);
 			root->in_info_list = (List *)
 				ResolveNew((Node *) root->in_info_list,
+						   varno, 0, rte,
+						   subtlist, CMD_SELECT, 0);
+			root->append_rel_list = (List *)
+				ResolveNew((Node *) root->append_rel_list,
 						   varno, 0, rte,
 						   subtlist, CMD_SELECT, 0);
 
@@ -326,6 +333,15 @@ pull_up_subqueries(PlannerInfo *root, Node *jtnode, bool below_outer_join)
 			 */
 			root->in_info_list = list_concat(root->in_info_list,
 											 subroot->in_info_list);
+
+			/*
+			 * XXX need to do something about adjusting AppendRelInfos too
+			 */
+			Assert(root->append_rel_list == NIL);
+
+			/* Also pull up any subquery AppendRelInfos */
+			root->append_rel_list = list_concat(root->append_rel_list,
+												subroot->append_rel_list);
 
 			/*
 			 * We don't have to do the equivalent bookkeeping for outer-join

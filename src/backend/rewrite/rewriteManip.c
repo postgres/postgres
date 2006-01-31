@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.95 2006/01/06 20:11:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.96 2006/01/31 21:39:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -183,6 +183,17 @@ OffsetVarNodes_walker(Node *node, OffsetVarNodes_context *context)
 		}
 		/* fall through to examine children */
 	}
+	if (IsA(node, AppendRelInfo))
+	{
+		AppendRelInfo *appinfo = (AppendRelInfo *) node;
+
+		if (context->sublevels_up == 0)
+		{
+			appinfo->parent_relid += context->offset;
+			appinfo->child_relid += context->offset;
+		}
+		/* fall through to examine children */
+	}
 	if (IsA(node, Query))
 	{
 		/* Recurse into subselects */
@@ -320,6 +331,19 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 			ininfo->righthand = adjust_relid_set(ininfo->righthand,
 												 context->rt_index,
 												 context->new_index);
+		}
+		/* fall through to examine children */
+	}
+	if (IsA(node, AppendRelInfo))
+	{
+		AppendRelInfo *appinfo = (AppendRelInfo *) node;
+
+		if (context->sublevels_up == 0)
+		{
+			if (appinfo->parent_relid == context->rt_index)
+				appinfo->parent_relid = context->new_index;
+			if (appinfo->child_relid == context->rt_index)
+				appinfo->child_relid = context->new_index;
 		}
 		/* fall through to examine children */
 	}
@@ -527,16 +551,11 @@ rangeTableEntry_used_walker(Node *node,
 			return true;
 		/* fall through to examine children */
 	}
-	if (IsA(node, InClauseInfo))
-	{
-		InClauseInfo *ininfo = (InClauseInfo *) node;
+	/* Shouldn't need to handle planner auxiliary nodes here */
+	Assert(!IsA(node, OuterJoinInfo));
+	Assert(!IsA(node, InClauseInfo));
+	Assert(!IsA(node, AppendRelInfo));
 
-		if (context->sublevels_up == 0 &&
-			(bms_is_member(context->rt_index, ininfo->lefthand) ||
-			 bms_is_member(context->rt_index, ininfo->righthand)))
-			return true;
-		/* fall through to examine children */
-	}
 	if (IsA(node, Query))
 	{
 		/* Recurse into subselects */

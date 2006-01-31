@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.206 2006/01/25 20:29:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.207 2006/01/31 21:39:24 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3209,6 +3209,15 @@ expression_tree_walker(Node *node,
 					return true;
 			}
 			break;
+		case T_AppendRelInfo:
+			{
+				AppendRelInfo *appinfo = (AppendRelInfo *) node;
+
+				if (expression_tree_walker((Node *) appinfo->translated_vars,
+										   walker, context))
+					return true;
+			}
+			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) nodeTag(node));
@@ -3741,6 +3750,16 @@ expression_tree_mutator(Node *node,
 
 				FLATCOPY(newnode, ininfo, InClauseInfo);
 				MUTATE(newnode->sub_targetlist, ininfo->sub_targetlist, List *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_AppendRelInfo:
+			{
+				AppendRelInfo *appinfo = (AppendRelInfo *) node;
+				AppendRelInfo *newnode;
+
+				FLATCOPY(newnode, appinfo, AppendRelInfo);
+				MUTATE(newnode->translated_vars, appinfo->translated_vars, List *);
 				return (Node *) newnode;
 			}
 			break;

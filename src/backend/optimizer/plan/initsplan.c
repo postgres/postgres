@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.113 2005/12/20 02:30:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.114 2006/01/31 21:39:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,8 +74,9 @@ static void check_hashjoinable(RestrictInfo *restrictinfo);
  *
  * At the end of this process, there should be one baserel RelOptInfo for
  * every non-join RTE that is used in the query.  Therefore, this routine
- * is the only place that should call build_base_rel.  But build_other_rel
- * will be used later to build rels for inheritance children.
+ * is the only place that should call build_simple_rel with reloptkind
+ * RELOPT_BASEREL.  However, otherrels will be built later for append relation
+ * members.
  */
 void
 add_base_rels_to_query(PlannerInfo *root, Node *jtnode)
@@ -86,7 +87,7 @@ add_base_rels_to_query(PlannerInfo *root, Node *jtnode)
 	{
 		int			varno = ((RangeTblRef *) jtnode)->rtindex;
 
-		build_base_rel(root, varno);
+		(void) build_simple_rel(root, varno, RELOPT_BASEREL);
 	}
 	else if (IsA(jtnode, FromExpr))
 	{

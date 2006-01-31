@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.266 2005/12/28 01:29:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.267 2006/01/31 21:39:23 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1178,6 +1178,7 @@ _outPlannerInfo(StringInfo str, PlannerInfo *node)
 	WRITE_NODE_FIELD(full_join_clauses);
 	WRITE_NODE_FIELD(oj_info_list);
 	WRITE_NODE_FIELD(in_info_list);
+	WRITE_NODE_FIELD(append_rel_list);
 	WRITE_NODE_FIELD(query_pathkeys);
 	WRITE_NODE_FIELD(group_pathkeys);
 	WRITE_NODE_FIELD(sort_pathkeys);
@@ -1204,8 +1205,8 @@ _outRelOptInfo(StringInfo str, RelOptInfo *node)
 	WRITE_NODE_FIELD(cheapest_unique_path);
 	WRITE_UINT_FIELD(relid);
 	WRITE_ENUM_FIELD(rtekind, RTEKind);
-	WRITE_UINT_FIELD(min_attr);
-	WRITE_UINT_FIELD(max_attr);
+	WRITE_INT_FIELD(min_attr);
+	WRITE_INT_FIELD(max_attr);
 	WRITE_NODE_FIELD(indexlist);
 	WRITE_UINT_FIELD(pages);
 	WRITE_FLOAT_FIELD(tuples, "%.0f");
@@ -1293,6 +1294,20 @@ _outInClauseInfo(StringInfo str, InClauseInfo *node)
 	WRITE_BITMAPSET_FIELD(lefthand);
 	WRITE_BITMAPSET_FIELD(righthand);
 	WRITE_NODE_FIELD(sub_targetlist);
+}
+
+static void
+_outAppendRelInfo(StringInfo str, AppendRelInfo *node)
+{
+	WRITE_NODE_TYPE("APPENDRELINFO");
+
+	WRITE_UINT_FIELD(parent_relid);
+	WRITE_UINT_FIELD(child_relid);
+	WRITE_OID_FIELD(parent_reltype);
+	WRITE_OID_FIELD(child_reltype);
+	WRITE_NODE_FIELD(col_mappings);
+	WRITE_NODE_FIELD(translated_vars);
+	WRITE_OID_FIELD(parent_reloid);
 }
 
 /*****************************************************************************
@@ -2047,6 +2062,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_InClauseInfo:
 				_outInClauseInfo(str, obj);
+				break;
+			case T_AppendRelInfo:
+				_outAppendRelInfo(str, obj);
 				break;
 
 			case T_CreateStmt:

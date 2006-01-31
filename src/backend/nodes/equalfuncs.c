@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.260 2005/12/28 01:29:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.261 2006/01/31 21:39:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -640,6 +640,20 @@ _equalInClauseInfo(InClauseInfo *a, InClauseInfo *b)
 	COMPARE_BITMAPSET_FIELD(lefthand);
 	COMPARE_BITMAPSET_FIELD(righthand);
 	COMPARE_NODE_FIELD(sub_targetlist);
+
+	return true;
+}
+
+static bool
+_equalAppendRelInfo(AppendRelInfo *a, AppendRelInfo *b)
+{
+	COMPARE_SCALAR_FIELD(parent_relid);
+	COMPARE_SCALAR_FIELD(child_relid);
+	COMPARE_SCALAR_FIELD(parent_reltype);
+	COMPARE_SCALAR_FIELD(child_reltype);
+	COMPARE_NODE_FIELD(col_mappings);
+	COMPARE_NODE_FIELD(translated_vars);
+	COMPARE_SCALAR_FIELD(parent_reloid);
 
 	return true;
 }
@@ -1983,6 +1997,9 @@ equal(void *a, void *b)
 			break;
 		case T_InClauseInfo:
 			retval = _equalInClauseInfo(a, b);
+			break;
+		case T_AppendRelInfo:
+			retval = _equalAppendRelInfo(a, b);
 			break;
 		case T_List:
 		case T_IntList:
