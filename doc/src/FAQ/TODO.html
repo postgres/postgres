@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Wed Jan 25 21:50:11 EST 2006
+Last updated:           Tue Jan 31 19:03:09 EST 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -558,6 +558,14 @@ first.
     </li><li>Add auto-expanded mode so expanded output is used if the row
           length is wider than the screen width.  
 <p>          Consider using auto-expanded mode for backslash commands like \df+.
+</p>
+    </li><li>Prevent tab completion of SET TRANSACTION from querying the
+          database and therefore preventing the transaction isolation
+          level from being set.
+<p>          Currently, SET &lt;tab&gt; causes a database lookup to check all
+          supported session variables.  This query causes problems
+          because setting the transaction isolation level must be the
+          first statement of a transaction.
 </p>
   </li></ul>
   </li><li>pg_dump
