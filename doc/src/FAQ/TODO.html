@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Tue Jan 31 19:03:09 EST 2006
+Last updated:           Tue Jan 31 19:07:26 EST 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -381,6 +381,8 @@ first.
   </li><li>Allow the count returned by SELECT, etc to be to represent as an int64
   to allow a higher range of values
   </li><li>Make CLUSTER preserve recently-dead tuples per MVCC requirements
+  </li><li>Add SQL99 WITH clause to SELECT
+  </li><li>Add SQL99 WITH RECURSIVE to SELECT
   </li><li>CREATE
   <ul>
     <li>Allow CREATE TABLE AS to determine column lengths for complex
@@ -679,9 +681,7 @@ first.
 <h1><a name="section_12">Exotic Features</a></h1>
 
 <ul>
-  <li>Add SQL99 WITH clause to SELECT
-  </li><li>Add SQL99 WITH RECURSIVE to SELECT
-  </li><li>Add pre-parsing phase that converts non-ISO syntax to supported
+  <li>Add pre-parsing phase that converts non-ISO syntax to supported
   syntax
 <p>  This could allow SQL written for other databases to run without
   modification.
