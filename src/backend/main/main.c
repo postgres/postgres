@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.96.2.2 2006/01/05 00:54:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.96.2.3 2006/02/01 00:32:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@
 #include "libpq/pqsignal.h"
 #endif
 
-
+const char *progname;
 
 int
 main(int argc, char *argv[])
@@ -76,6 +76,8 @@ main(int argc, char *argv[])
 #ifdef WIN32
 	char	   *env_locale;
 #endif
+
+	progname = get_progname(argv[0]);
 
 	/*
 	 * On some platforms, unaligned memory accesses result in a kernel trap;
@@ -257,7 +259,7 @@ main(int argc, char *argv[])
 	 * possibly first argument) we were called with. The lack of consistency
 	 * here is historical.
 	 */
-	if (strcmp(get_progname(argv[0]), "postmaster") == 0)
+	if (strcmp(progname, "postmaster") == 0)
 	{
 		/* Called as "postmaster" */
 		exit(PostmasterMain(argc, argv));
