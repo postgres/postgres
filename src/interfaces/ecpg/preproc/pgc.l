@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.138 2006/02/01 20:56:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.139 2006/02/01 20:57:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,7 +97,7 @@ static struct _if_value
  *	<xd> delimited identifiers (double-quoted identifiers) - thomas 1997-10-27
  *	<xh> hexadecimal numeric string - thomas 1997-11-16
  *	<xq> quoted strings - thomas 1997-07-30
- *  	<xdolq> $foo$ quoted strings
+ *  <xdolq> $foo$ quoted strings
  */
 
 %x xb
@@ -124,7 +124,7 @@ xhinside		[^']*
 xnstart			[nN]{quote}
 
 /* Quoted string that allows backslash escapes */
-xestart                 [eE]{quote}
+xestart 		[eE]{quote}
 
 /* C version of hex number */
 xch				0[xX][0-9A-Fa-f]*
@@ -160,7 +160,7 @@ dolqinside		[^$]+
 dquote			\"
 xdstart			{dquote}
 xdstop			{dquote}
-xddouble				{dquote}{dquote}
+xddouble		{dquote}{dquote}
 xdinside		[^"]+
 
 /* special stuff for C strings */
