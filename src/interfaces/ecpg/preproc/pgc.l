@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.137 2005/10/05 14:58:36 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.138 2006/02/01 20:56:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,9 +28,9 @@
 extern YYSTYPE yylval;
 
 static int		xcdepth = 0;	/* depth of nesting in slash-star comments */
-static char    *dolqstart;      /* current $foo$ quote start string */
-bool                    escape_string_warning;
-static bool             warn_on_first_escape;
+static char	   *dolqstart;      /* current $foo$ quote start string */
+bool			escape_string_warning;
+static bool		warn_on_first_escape;
 
 /*
  * literalbuf is used to accumulate literal values when multiple rules
@@ -121,13 +121,13 @@ xhstart			[xX]{quote}
 xhinside		[^']*
 
 /* National character */
-xnstart                        [nN]{quote}
+xnstart			[nN]{quote}
 
 /* Quoted string that allows backslash escapes */
 xestart                 [eE]{quote}
 
 /* C version of hex number */
-xch			0[xX][0-9A-Fa-f]*
+xch				0[xX][0-9A-Fa-f]*
 
 /* Extended quote
  * xqdouble implements embedded quote, ''''
@@ -148,11 +148,11 @@ xqhexesc		[\\]x[0-9A-Fa-f]{1,2}
  * {dolqfailed} is an error rule to avoid scanner backup when {dolqdelim}
  * fails to match its trailing "$".
  */
-dolq_start             [A-Za-z\200-\377_]
-dolq_cont              [A-Za-z\200-\377_0-9]
-dolqdelim              \$({dolq_start}{dolq_cont}*)?\$
-dolqfailed             \${dolq_start}{dolq_cont}*
-dolqinside             [^$]+
+dolq_start		[A-Za-z\200-\377_]
+dolq_cont		[A-Za-z\200-\377_0-9]
+dolqdelim		\$({dolq_start}{dolq_cont}*)?\$
+dolqfailed		\${dolq_start}{dolq_cont}*
+dolqinside		[^$]+
 
 /* Double quote
  * Allows embedded spaces and other special characters into identifiers.
@@ -224,9 +224,9 @@ operator		{op_chars}+
 
 integer			{digit}+
 decimal			(({digit}*\.{digit}+)|({digit}+\.{digit}*))
-real                   ({integer}|{decimal})[Ee][-+]?{digit}+
-realfail1              ({integer}|{decimal})[Ee]
-realfail2              ({integer}|{decimal})[Ee][-+]
+real			({integer}|{decimal})[Ee][-+]?{digit}+
+realfail1		({integer}|{decimal})[Ee]
+realfail2		({integer}|{decimal})[Ee][-+]
 
 param			\${integer}
 
@@ -268,7 +268,7 @@ whitespace_with_newline ({horiz_whitespace}*{newline}{whitespace}*)
 
 quote			'
 quotestop		{quote}{whitespace}*
-quotecontinue		{quote}{whitespace_with_newline}{quote}
+quotecontinue	{quote}{whitespace_with_newline}{quote}
 quotefail		{quote}{whitespace}*"-"
 
 /* special characters for other dbms */
@@ -293,7 +293,7 @@ struct	[sS][tT][rR][uU][cC][tT]
 
 exec_sql		{exec}{space}*{sql}{space}*
 ipdigit			({digit}|{digit}{digit}|{digit}{digit}{digit})
-ip			{ipdigit}\.{ipdigit}\.{ipdigit}\.{ipdigit}
+ip				{ipdigit}\.{ipdigit}\.{ipdigit}\.{ipdigit}
 
 /* we might want to parse all cpp include files */
 cppinclude 		{space}*#{include}{space}*
@@ -317,8 +317,8 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 %%
 
 %{
-                                       /* code to execute during start of each call of yylex() */
-                                       token_start = NULL;
+		/* code to execute during start of each call of yylex() */
+		token_start = NULL;
 %}
 
 <SQL>{whitespace}	{ /* ignore */ }
@@ -350,27 +350,27 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 							xcdepth--;
 					}
 
-<xc>{xcinside}		{ ECHO; }
-<xc>{op_chars}		{ ECHO; }
+<xc>{xcinside}	{ ECHO; }
+<xc>{op_chars}	{ ECHO; }
 <xc>\*+ 		{ ECHO; }
 
 <xc><<EOF>>		{ mmerror(PARSE_ERROR, ET_FATAL, "Unterminated /* comment"); }
 
 <SQL>{xbstart}	{
-						token_start = yytext;
-						BEGIN(xb);
-						startlit();
-						addlitchar('b');
-					}
+					token_start = yytext;
+					BEGIN(xb);
+					startlit();
+					addlitchar('b');
+				}
 <xb>{quotestop} |
 <xb>{quotefail}	{
-						yyless(1);
-						BEGIN(SQL);
-						if (literalbuf[strspn(literalbuf, "01") + 1] != '\0')
-							mmerror(PARSE_ERROR, ET_ERROR, "invalid bit string input.");
-						yylval.str = mm_strdup(literalbuf);
-						return BCONST;
-					}
+					yyless(1);
+					BEGIN(SQL);
+					if (literalbuf[strspn(literalbuf, "01") + 1] != '\0')
+						mmerror(PARSE_ERROR, ET_ERROR, "invalid bit string input.");
+					yylval.str = mm_strdup(literalbuf);
+					return BCONST;
+				}
 
 <xh>{xhinside}	|
 <xb>{xbinside}	{ addlit(yytext, yyleng); }
@@ -378,12 +378,12 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 <xb>{quotecontinue}	{ /* ignore */ }
 <xb><<EOF>>		{ mmerror(PARSE_ERROR, ET_FATAL, "Unterminated bit string"); }
 
-<SQL>{xhstart}		{
-						token_start = yytext;
-						BEGIN(xh);
-						startlit();
-						addlitchar('x');
-			}
+<SQL>{xhstart}	{
+					token_start = yytext;
+					BEGIN(xh);
+					startlit();
+					addlitchar('x');
+				}
 <xh>{quotestop}	|
 <xh>{quotefail} 	{
 				yyless(1);
@@ -395,9 +395,9 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 <xh><<EOF>>		{ mmerror(PARSE_ERROR, ET_FATAL, "Unterminated hexadecimal integer"); }
 <SQL>{xnstart}              {
 				/* National character.
-		                 * Transfer it as-is to the backend.
-		                 */
-			        token_start = yytext;
+				 * Transfer it as-is to the backend.
+				 */
+		        token_start = yytext;
 				BEGIN(xq);
 				startlit();
 			}
@@ -437,10 +437,10 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 				addlit(yytext, yyleng);
 			}
 <xq>{quotecontinue}	{ /* ignore */ }
-<xq>.                   {
-                                       /* This is only needed for \ just before EOF */
-                                       addlitchar(yytext[0]);
-                        }
+<xq>.		{
+			   /* This is only needed for \ just before EOF */
+			   addlitchar(yytext[0]);
+			}
 <xq><<EOF>>		{ mmerror(PARSE_ERROR, ET_FATAL, "Unterminated quoted string"); }
 <SQL>{dolqfailed}	{
 				/* throw back all but the initial "$" */
@@ -464,18 +464,18 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 				}
 				else
 				{
-				        /*
-				         * When we fail to match $...$ to dolqstart, transfer
-				         * the $... part to the output, but put back the final
-				         * $ for rescanning.  Consider $delim$...$junk$delim$
-				         */
-				        addlit(yytext, yyleng-1);
-				        yyless(yyleng-1);
+			        /*
+			         * When we fail to match $...$ to dolqstart, transfer
+			         * the $... part to the output, but put back the final
+			         * $ for rescanning.  Consider $delim$...$junk$delim$
+			         */
+			        addlit(yytext, yyleng-1);
+			        yyless(yyleng-1);
 				}
 			}
 <xdolq>{dolqinside} 	{ addlit(yytext, yyleng); }
 <xdolq>{dolqfailed}	{ addlit(yytext, yyleng); }
-<xdolq>.		{
+<xdolq>.	{
 				/* This is only needed for $ inside the quoted text */
 				addlitchar(yytext[0]);
 			}
@@ -511,13 +511,13 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 <SQL>{typecast}		{ return TYPECAST; }
 <SQL>{informix_special}	{
 			  /* are we simulating Informix? */
-                          if (INFORMIX_MODE)
-			  {
-			  	unput(':');
-			  }
-			  else
-				return yytext[0];
-			}
+				if (INFORMIX_MODE)
+				{
+					unput(':');
+				}
+				else
+					return yytext[0];
+				}
 <SQL>{self}			{ /*
 					   * We may find a ';' inside a structure
 					   * definition in a TYPE or VAR statement.
@@ -632,15 +632,15 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 						return FCONST;
 			}
 <SQL>{realfail1}	{
-				yyless(yyleng-1);
-				yylval.str = mm_strdup(yytext);
-				return FCONST;
-			}
+						yyless(yyleng-1);
+						yylval.str = mm_strdup(yytext);
+						return FCONST;
+					}
 <SQL>{realfail2}	{
-				yyless(yyleng-2);
-				yylval.str = mm_strdup(yytext);
-				return FCONST;
-			}
+						yyless(yyleng-2);
+						yylval.str = mm_strdup(yytext);
+						return FCONST;
+					}
 <SQL>:{identifier}((("->"|\.){identifier})|(\[{array}\]))*	{
 						yylval.str = mm_strdup(yytext+1);
 						return(CVARIABLE);
@@ -701,16 +701,16 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 <SQL>{other}		{ return yytext[0]; }
 <C>{exec_sql}		{ BEGIN SQL; return SQL_START; }
 <C>{informix_special}	{ 
-			  /* are we simulating Informix? */
-			  if (INFORMIX_MODE)
-			  {
-			  	BEGIN SQL;
-				return SQL_START;
-			  }
-			  else
-			  	return S_ANYTHING;
-			 }
-<C>{ccomment}		 { ECHO; }
+						/* are we simulating Informix? */
+						if (INFORMIX_MODE)
+						{
+							BEGIN SQL;
+							return SQL_START;
+						}
+						else
+							return S_ANYTHING;
+					 }
+<C>{ccomment}		{ ECHO; }
 <C>{xch}			{
 						char* endptr;
 
@@ -725,17 +725,17 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 						return ICONST;
 					}
 <C>{cppinclude}		{
-					  if (system_includes)
-					  {
-					  	BEGIN(incl);
-					  }
-					  else
-					  {
-						yylval.str = mm_strdup(yytext);
-						return(CPP_LINE);
-					  }
-			}
-<C,SQL>{cppline}		{
+						if (system_includes)
+						{
+							BEGIN(incl);
+						}
+						else
+					 	{
+							yylval.str = mm_strdup(yytext);
+							return(CPP_LINE);
+					  	}
+					}
+<C,SQL>{cppline}	{
 						yylval.str = mm_strdup(yytext);
 						return(CPP_LINE);
 					}
@@ -743,7 +743,7 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 						ScanKeyword		*keyword;
 						struct _defines *ptr;
 
-                          			if (INFORMIX_MODE)
+						if (INFORMIX_MODE)
 						{
 							/* Informix uses SQL defines only in SQL space */
 							ptr = NULL;
@@ -777,8 +777,8 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 							keyword = ScanCKeywordLookup(yytext);
 							if (keyword != NULL)
 								return keyword->value;
-
-							else {
+							else
+							{
 								yylval.str = mm_strdup(yytext);
 								return IDENT;
 							}
@@ -793,7 +793,7 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 <C>"-"				{ return('-'); }
 <C>"("				{ return('('); }
 <C>")"				{ return(')'); }
-<C,xskip>{space}		{ ECHO; }
+<C,xskip>{space}	{ ECHO; }
 <C>\{				{ return('{'); }
 <C>\}				{ return('}'); }
 <C>\[				{ return('['); }
@@ -883,132 +883,135 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 						ifcond = TRUE; BEGIN(xcond);
 					}
 <C,xskip>{informix_special}{elif}{space}* { 
-					  /* are we simulating Informix? */
-					  if (INFORMIX_MODE)
-					  {
-						if ( preproc_tos == 0 ) {
+					/* are we simulating Informix? */
+					if (INFORMIX_MODE)
+					{
+						if (preproc_tos == 0)
 							mmerror(PARSE_ERROR, ET_FATAL, "Missing matching 'EXEC SQL IFDEF / EXEC SQL IFNDEF'");
-						}
-						else if ( stacked_if_value[preproc_tos].else_branch )
+						else if (stacked_if_value[preproc_tos].else_branch)
 							mmerror(PARSE_ERROR, ET_FATAL, "Missing 'EXEC SQL ENDIF;'");
 						else
 							preproc_tos--;
 
-						ifcond = TRUE; BEGIN(xcond);
-					  }
-					  else
-					  {
-						  yyless(1);
-						  return (S_ANYTHING);
-					  }
+						ifcond = TRUE;
+						BEGIN(xcond);
 					}
+					else
+					{
+						yyless(1);
+						return (S_ANYTHING);
+					}
+				}
 
 <C,xskip>{exec_sql}{else}{space}*";" {	/* only exec sql endif pops the stack, so take care of duplicated 'else' */
-						if ( stacked_if_value[preproc_tos].else_branch ) {
-							mmerror(PARSE_ERROR, ET_FATAL, "Duplicated 'EXEC SQL ELSE;'");
-						}
-						else {
-							stacked_if_value[preproc_tos].else_branch = TRUE;
-							stacked_if_value[preproc_tos].condition =
+					if (stacked_if_value[preproc_tos].else_branch)
+						mmerror(PARSE_ERROR, ET_FATAL, "Duplicated 'EXEC SQL ELSE;'");
+					else
+					{
+						stacked_if_value[preproc_tos].else_branch = TRUE;
+						stacked_if_value[preproc_tos].condition =
 							(stacked_if_value[preproc_tos-1].condition &&
-							 ! stacked_if_value[preproc_tos].condition);
+							 !stacked_if_value[preproc_tos].condition);
 
-							if ( stacked_if_value[preproc_tos].condition )
-								BEGIN(C);
-							else
-								BEGIN(xskip);
-						}
+						if (stacked_if_value[preproc_tos].condition)
+							BEGIN(C);
+						else
+							BEGIN(xskip);
 					}
+				}
 <C,xskip>{informix_special}{else}{space}*	{
-					  /* are we simulating Informix? */
-					  if (INFORMIX_MODE)
-					  {
-						if ( stacked_if_value[preproc_tos].else_branch ) {
+					/* are we simulating Informix? */
+					if (INFORMIX_MODE)
+					{
+						if (stacked_if_value[preproc_tos].else_branch)
 							mmerror(PARSE_ERROR, ET_FATAL, "Duplicated 'EXEC SQL ELSE;'");
-						}
-						else {
+						else
+						{
 							stacked_if_value[preproc_tos].else_branch = TRUE;
 							stacked_if_value[preproc_tos].condition =
 							(stacked_if_value[preproc_tos-1].condition &&
-							 ! stacked_if_value[preproc_tos].condition);
+							 !stacked_if_value[preproc_tos].condition);
 
-							if ( stacked_if_value[preproc_tos].condition )
+							if (stacked_if_value[preproc_tos].condition)
 								BEGIN(C);
 							else
 								BEGIN(xskip);
 						}
-					  }
-					  else
-					  {
-						  yyless(1);
-						  return (S_ANYTHING);
-					  }
 					}
+					else
+					{
+						yyless(1);
+						return (S_ANYTHING);
+					}
+				}
 <C,xskip>{exec_sql}{endif}{space}*";" {
-						if ( preproc_tos == 0 )
-							mmerror(PARSE_ERROR, ET_FATAL, "Unmatched 'EXEC SQL ENDIF;'");
-						else
-							preproc_tos--;
+					if (preproc_tos == 0)
+						mmerror(PARSE_ERROR, ET_FATAL, "Unmatched 'EXEC SQL ENDIF;'");
+					else
+						preproc_tos--;
 
-						if ( stacked_if_value[preproc_tos].condition )
-						   BEGIN(C);
-						else
-						   BEGIN(xskip);
-					}
+					if (stacked_if_value[preproc_tos].condition)
+					   BEGIN(C);
+					else
+					   BEGIN(xskip);
+				}
 <C,xskip>{informix_special}{endif}{space}*";"	{
-					  /* are we simulating Informix? */
-					  if (INFORMIX_MODE)
-					  {
-						if ( preproc_tos == 0 )
+					/* are we simulating Informix? */
+					if (INFORMIX_MODE)
+					{
+						if (preproc_tos == 0)
 							mmerror(PARSE_ERROR, ET_FATAL, "Unmatched 'EXEC SQL ENDIF;'");
 						else
 							preproc_tos--;
 
-						if ( stacked_if_value[preproc_tos].condition )
-						   BEGIN(C);
+						if (stacked_if_value[preproc_tos].condition)
+							BEGIN(C);
 						else
-						   BEGIN(xskip);
-					  }
-					  else
-					  {
-						  yyless(1);
-						  return (S_ANYTHING);
-					  }
+							BEGIN(xskip);
 					}
+					else
+					{
+						yyless(1);
+						return (S_ANYTHING);
+					}
+				}
 
 <xskip>{other}		{ /* ignore */ }
 
 <xcond>{identifier}{space}*";" {
-						if ( preproc_tos >= MAX_NESTED_IF-1 ) {
-							mmerror(PARSE_ERROR, ET_FATAL, "Too many nested 'EXEC SQL IFDEF' conditions");
-						}
-						else 
-						{
-							struct _defines *defptr;
-							unsigned int i;
+					if (preproc_tos >= MAX_NESTED_IF-1)
+						mmerror(PARSE_ERROR, ET_FATAL, "Too many nested 'EXEC SQL IFDEF' conditions");
+					else 
+					{
+						struct _defines *defptr;
+						unsigned int i;
 
-							/* skip the ";" and trailing whitespace. Note that yytext contains
-							   at least one non-space character plus the ";" */
-							for ( i = strlen(yytext)-2;
-								  i > 0 && isspace((unsigned char) yytext[i]);
-								  i-- )
-							{}
-							yytext[i+1] = '\0';
+						/*
+						 *	Skip the ";" and trailing whitespace. Note that yytext
+						 *	contains at least one non-space character plus the ";"
+						 */
+						for (i = strlen(yytext)-2;
+							 i > 0 && isspace((unsigned char) yytext[i]);
+							 i-- )
+							;
+						yytext[i+1] = '\0';
 
-							for ( defptr = defines; defptr != NULL &&
-								  ( strcmp(yytext, defptr->old) != 0 ); defptr = defptr->next );
+						for (defptr = defines;
+							 defptr != NULL && strcmp(yytext, defptr->old) != 0;
+							 defptr = defptr->next)
+							;
 
-							preproc_tos++;
-							stacked_if_value[preproc_tos].else_branch = FALSE;
-							stacked_if_value[preproc_tos].condition =
-							( (defptr ? ifcond : !ifcond) && stacked_if_value[preproc_tos-1].condition );
-						}
-
-						if ( stacked_if_value[preproc_tos].condition )
-						   BEGIN C;
-						else
-						   BEGIN(xskip);
+						preproc_tos++;
+						stacked_if_value[preproc_tos].else_branch = FALSE;
+						stacked_if_value[preproc_tos].condition =
+						(defptr ? ifcond : !ifcond) && stacked_if_value[preproc_tos-1].condition;
 					}
+
+					if (stacked_if_value[preproc_tos].condition)
+						BEGIN C;
+					else
+						BEGIN(xskip);
+				}
 
 <def_ident>{identifier} {
 				old = mm_strdup(yytext);
@@ -1048,49 +1051,50 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 <incl>[^;\<\>\"]+";"		{ parse_include(); }
 
 <<EOF>>				{
-			  		if (yy_buffer == NULL) {
+			  		if (yy_buffer == NULL)
+					{
 				  		if ( preproc_tos > 0 ) 
 						{
 					  		preproc_tos = 0;
 							mmerror(PARSE_ERROR, ET_FATAL, "Missing 'EXEC SQL ENDIF;'");
 				  		}
-							yyterminate();
-							}
-				  		else
-				  		{
-							struct _yy_buffer *yb = yy_buffer;
-							int i;
-							struct _defines *ptr;
-
-							for (ptr = defines; ptr; ptr = ptr->next)
-								if (ptr->used == yy_buffer)
-								{
-									ptr->used = NULL;
-									break;
-								}
-									
-							if (yyin != NULL)
-								fclose(yyin);
-
-							yy_delete_buffer( YY_CURRENT_BUFFER );
-							yy_switch_to_buffer(yy_buffer->buffer);
-
-							yylineno = yy_buffer->lineno;
-
-							/* We have to output the filename only if we change files here */
-							i = strcmp(input_filename, yy_buffer->filename);
-
-							free(input_filename);
-							input_filename = yy_buffer->filename;
-
-							yy_buffer = yy_buffer->next;
-							free(yb);
-
-							if (i != 0)
-								output_line_number();
-							
-				  		}
+						yyterminate();
 					}
+			  		else
+			  		{
+						struct _yy_buffer *yb = yy_buffer;
+						int i;
+						struct _defines *ptr;
+
+						for (ptr = defines; ptr; ptr = ptr->next)
+							if (ptr->used == yy_buffer)
+							{
+								ptr->used = NULL;
+								break;
+							}
+								
+						if (yyin != NULL)
+							fclose(yyin);
+
+						yy_delete_buffer( YY_CURRENT_BUFFER );
+						yy_switch_to_buffer(yy_buffer->buffer);
+
+						yylineno = yy_buffer->lineno;
+
+						/* We have to output the filename only if we change files here */
+						i = strcmp(input_filename, yy_buffer->filename);
+
+						free(input_filename);
+						input_filename = yy_buffer->filename;
+
+						yy_buffer = yy_buffer->next;
+						free(yb);
+
+						if (i != 0)
+							output_line_number();
+						
+			  		}
+				}
 %%
 void
 lex_init(void)
@@ -1168,10 +1172,10 @@ parse_include(void)
 	 * skip the ";" if there is one and trailing whitespace. Note that
 	 * yytext contains at least one non-space character plus the ";" 
 	 */
-  	for ( i = strlen(yytext)-2;
-		i > 0 && isspace((unsigned char) yytext[i]);
-		i-- )
-  		{}
+  	for (i = strlen(yytext)-2;
+		 i > 0 && isspace((unsigned char) yytext[i]);
+		 i--)
+		;
 
 	if (yytext[i] == ';')
 		i--;
@@ -1182,7 +1186,7 @@ parse_include(void)
 
 	/* If file name is enclosed in '"' remove these and look only in '.' */
 	/* Informix does look into all include paths though, except filename starts with '/' */
-	if ((yytext[0] == '"' && yytext[i] == '"') &&
+	if (yytext[0] == '"' && yytext[i] == '"' &&
 	    ((compat != ECPG_COMPAT_INFORMIX && compat != ECPG_COMPAT_INFORMIX_SE) || yytext[1] == '/'))
 	{
 		yytext[i] = '\0';
@@ -1243,5 +1247,5 @@ check_escape_warning(void)
 {
 	if (warn_on_first_escape && escape_string_warning)
 	       	mmerror (PARSE_ERROR, ET_WARNING, "nonstandard use of escape in a string literal");
-        warn_on_first_escape = false;   /* warn only once per string */
+	warn_on_first_escape = false;   /* warn only once per string */
 }
