@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.50.4.2 2005/12/23 22:34:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.50.4.3 2006/02/01 00:47:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -302,7 +302,8 @@ canonicalize_path(char *path)
 const char *
 get_progname(const char *argv0)
 {
-	const char *nodir_name;
+	const char  *nodir_name;
+	const char	*progname;
 
 	nodir_name = last_dir_separator(argv0);
 	if (nodir_name)
@@ -310,27 +311,27 @@ get_progname(const char *argv0)
 	else
 		nodir_name = skip_drive(argv0);
 
-#if defined(__CYGWIN__) || defined(WIN32)
-	/* strip .exe suffix, regardless of case */
-	if (strlen(nodir_name) > sizeof(EXE) - 1 &&
-		pg_strcasecmp(nodir_name + strlen(nodir_name)-(sizeof(EXE)-1), EXE) == 0)
+	/*
+	 *	Make a copy in case argv[0] is modified by ps_status.
+	 *	Leaks memory, but called only once.
+	 */
+	progname = strdup(nodir_name);
+	if (progname == NULL)
 	{
-		char *progname;
-
-		progname = strdup(nodir_name);
-		if (progname == NULL)
-		{
-			fprintf(stderr, "%s: out of memory\n", nodir_name);
-			exit(1);	/* This could exit the postmaster */
-		}
-		progname[strlen(progname) - (sizeof(EXE) - 1)] = '\0';
-		nodir_name = progname; 
+		fprintf(stderr, "%s: out of memory\n", nodir_name);
+		exit(1);			/* This could exit the postmaster */
 	}
+
+#if defined(__CYGWIN__) || defined(WIN32)
+	/* strip ".exe" suffix, regardless of case */
+	if (strlen(progname) > sizeof(EXE) - 1 &&
+		pg_strcasecmp(progname + strlen(progname) - (sizeof(EXE) - 1), EXE) == 0)
+		progname[strlen(progname) - (sizeof(EXE) - 1)] = '\0';
 #endif
 
-	return nodir_name;
+	return progname;
 }
-
+  
 
 /*
  * dir_strcmp: strcmp except any two DIR_SEP characters are considered equal

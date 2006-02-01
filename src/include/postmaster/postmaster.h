@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/postmaster/postmaster.h,v 1.9 2004/12/31 22:03:39 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/postmaster/postmaster.h,v 1.9.4.1 2006/02/01 00:47:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@ extern char *rendezvous_name;
 extern HANDLE PostmasterHandle;
 #endif
 
+extern const char *progname;
 
 extern int	PostmasterMain(int argc, char *argv[]);
 extern void ClosePostmasterPorts(bool am_syslogger);
