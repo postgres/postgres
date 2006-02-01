@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.480 2006/02/01 00:31:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.481 2006/02/01 16:00:06 momjian Exp $
  *
  * NOTES
  *
@@ -3336,7 +3336,18 @@ SubPostmasterMain(int argc, char *argv[])
 		/* Need a PGPROC to run CreateSharedMemoryAndSemaphores */
 		InitProcess();
 
-		/* Attach process to shared data structures */
+		/*
+		 *	Attach process to shared data structures.  If testing
+		 *	EXEC_BACKEND on Linux, you must run this as root
+		 *	before starting the postmaster:
+		 *
+		 *		echo 0 >/proc/sys/kernel/randomize_va_space
+		 *
+		 *	This prevents a randomized stack base address that causes
+		 *	child shared memory to be at a different address than
+		 *	the parent, making it impossible to attached to shared
+		 *	memory.  Return the value to '1' when finished.
+		 */
 		CreateSharedMemoryAndSemaphores(false, 0);
 
 		/* And run the backend */
