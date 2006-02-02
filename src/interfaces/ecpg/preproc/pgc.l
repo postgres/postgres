@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.139 2006/02/01 20:57:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.140 2006/02/02 03:51:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -278,18 +278,18 @@ informix_special	[\$]
 other			.
 
 /* some stuff needed for ecpg */
-exec	[eE][xX][eE][cC]
-sql		[sS][qQ][lL]
-define	[dD][eE][fF][iI][nN][eE]
-include [iI][nN][cC][lL][uU][dD][eE]
+exec			[eE][xX][eE][cC]
+sql				[sS][qQ][lL]
+define			[dD][eE][fF][iI][nN][eE]
+include 		[iI][nN][cC][lL][uU][dD][eE]
 
-ifdef	[iI][fF][dD][eE][fF]
-ifndef	[iI][fF][nN][dD][eE][fF]
-else	[eE][lL][sS][eE]
-elif	[eE][lL][iI][fF]
-endif	[eE][nN][dD][iI][fF]
+ifdef			[iI][fF][dD][eE][fF]
+ifndef			[iI][fF][nN][dD][eE][fF]
+else			[eE][lL][sS][eE]
+elif			[eE][lL][iI][fF]
+endif			[eE][nN][dD][iI][fF]
 
-struct	[sS][tT][rR][uU][cC][tT]
+struct			[sS][tT][rR][uU][cC][tT]
 
 exec_sql		{exec}{space}*{sql}{space}*
 ipdigit			({digit}|{digit}{digit}|{digit}{digit}{digit})
@@ -323,32 +323,32 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 
 <SQL>{whitespace}	{ /* ignore */ }
 
-{xcstart}			{
-						token_start = yytext;
-						state_before = YYSTATE;
-						xcdepth = 0;
-						BEGIN(xc);
-						/* Put back any characters past slash-star; see above */
-						yyless(2);
-						fputs("/*", yyout);
-					}
-<xc>{xcstart}		{
-						xcdepth++;
-				 		/* Put back any characters past slash-star; see above */
-				 		yyless(2);
-						fputs("/*", yyout);
-					}
+{xcstart}		{
+					token_start = yytext;
+					state_before = YYSTATE;
+					xcdepth = 0;
+					BEGIN(xc);
+					/* Put back any characters past slash-star; see above */
+					yyless(2);
+					fputs("/*", yyout);
+				}
+<xc>{xcstart}	{
+					xcdepth++;
+			 		/* Put back any characters past slash-star; see above */
+			 		yyless(2);
+					fputs("/*", yyout);
+				}
 
-<xc>{xcstop}		{
-						ECHO;
-						if (xcdepth <= 0)
-						{
-							BEGIN(state_before);
-							token_start = NULL;
-						}
-						else
-							xcdepth--;
+<xc>{xcstop}	{
+					ECHO;
+					if (xcdepth <= 0)
+					{
+						BEGIN(state_before);
+						token_start = NULL;
 					}
+					else
+						xcdepth--;
+				}
 
 <xc>{xcinside}	{ ECHO; }
 <xc>{op_chars}	{ ECHO; }
