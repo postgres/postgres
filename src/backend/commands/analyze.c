@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.90 2005/11/22 18:17:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.91 2006/02/03 12:45:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -927,18 +927,11 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 	return numrows;
 }
 
-/* Select a random value R uniformly distributed in 0 < R < 1 */
+/* Select a random value R uniformly distributed in (0 - 1) */
 static double
 random_fract(void)
 {
-	long		z;
-
-	/* random() can produce endpoint values, try again if so */
-	do
-	{
-		z = random();
-	} while (z <= 0 || z >= MAX_RANDOM_VALUE);
-	return (double) z / (double) MAX_RANDOM_VALUE;
+	return ((double) random() + 1) / ((double) MAX_RANDOM_VALUE + 2);
 }
 
 /*

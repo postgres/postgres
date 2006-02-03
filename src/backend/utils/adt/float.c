@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.119 2005/12/02 02:49:11 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.120 2006/02/03 12:45:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1833,8 +1833,8 @@ drandom(PG_FUNCTION_ARGS)
 {
 	float8		result;
 
-	/* result 0.0-1.0 */
-	result = ((double) random()) / ((double) MAX_RANDOM_VALUE);
+	/* result [0.0 - 1.0) */
+	result = (double) random() / ((double) MAX_RANDOM_VALUE + 1);
 
 	PG_RETURN_FLOAT8(result);
 }
