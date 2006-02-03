@@ -21516,6 +21516,17 @@ _ACEOF
 SHMEM_IMPLEMENTATION="src/backend/port/sysv_shmem.c"
 
 
+# If not set in template file, set bytes to use libc memset()
+if test x"$MEMSET_LOOP_LIMIT" = x"" ; then
+  MEMSET_LOOP_LIMIT=1024
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define MEMSET_LOOP_LIMIT ${MEMSET_LOOP_LIMIT}
+_ACEOF
+
+
+
 if test "$enable_nls" = yes ; then
 
   echo "$as_me:$LINENO: checking for library containing gettext" >&5

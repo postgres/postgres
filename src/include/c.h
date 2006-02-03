@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.194 2006/01/05 03:01:37 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.195 2006/02/03 13:53:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -614,9 +614,7 @@ typedef NameData *Name;
  *	overhead.	However, we have also found that the loop is faster than
  *	native libc memset() on some platforms, even those with assembler
  *	memset() functions.  More research needs to be done, perhaps with
- *	platform-specific MEMSET_LOOP_LIMIT values or tests in configure.
- *
- *	bjm 2002-10-08
+ *	MEMSET_LOOP_LIMIT tests in configure.
  */
 #define MemSet(start, val, len) \
 	do \
@@ -629,7 +627,12 @@ typedef NameData *Name;
 		if ((((long) _vstart) & INT_ALIGN_MASK) == 0 && \
 			(_len & INT_ALIGN_MASK) == 0 && \
 			_val == 0 && \
-			_len <= MEMSET_LOOP_LIMIT) \
+			_len <= MEMSET_LOOP_LIMIT && \
+			/* \
+			 *	If MEMSET_LOOP_LIMIT == 0, optimizer should find \
+			 *	the whole "if" false at compile time. \
+			 */ \
+			MEMSET_LOOP_LIMIT != 0) \
 		{ \
 			int32 *_start = (int32 *) _vstart; \
 			int32 *_stop = (int32 *) ((char *) _start + _len); \
@@ -639,8 +642,6 @@ typedef NameData *Name;
 		else \
 			memset(_vstart, _val, _len); \
 	} while (0)
-
-#define MEMSET_LOOP_LIMIT  1024
 
 /*
  * MemSetAligned is the same as MemSet except it omits the test to see if
@@ -657,7 +658,8 @@ typedef NameData *Name;
 \
 		if ((_len & INT_ALIGN_MASK) == 0 && \
 			_val == 0 && \
-			_len <= MEMSET_LOOP_LIMIT) \
+			_len <= MEMSET_LOOP_LIMIT && \
+			MEMSET_LOOP_LIMIT != 0) \
 		{ \
 			int32 *_stop = (int32 *) ((char *) _start + _len); \
 			while (_start < _stop) \
@@ -679,6 +681,7 @@ typedef NameData *Name;
 #define MemSetTest(val, len) \
 	( ((len) & INT_ALIGN_MASK) == 0 && \
 	(len) <= MEMSET_LOOP_LIMIT && \
+	MEMSET_LOOP_LIMIT != 0 && \
 	(val) == 0 )
 
 #define MemSetLoop(start, val, len) \

@@ -576,6 +576,9 @@
 /* Define as the maximum alignment requirement of any C data type. */
 #undef MAXIMUM_ALIGNOF
 
+/* Define bytes to use libc memset(). */
+#undef MEMSET_LOOP_LIMIT
+
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
 
