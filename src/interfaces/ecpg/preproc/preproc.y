@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.317 2006/02/01 22:16:36 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.318 2006/02/03 05:38:35 momjian Exp $ */
 
 /* Copyright comment */
 %{
@@ -54,9 +54,9 @@ void
 mmerror(int error_code, enum errortype type, char * error, ...)
 {
 	va_list ap;
-	
+
 	fprintf(stderr, "%s:%d: ", input_filename, yylineno);
-	
+
 	switch(type)
 	{
 		case ET_WARNING:
@@ -71,9 +71,9 @@ mmerror(int error_code, enum errortype type, char * error, ...)
 	va_start(ap, error);
 	vfprintf(stderr, error, ap);
 	va_end(ap);
-	
+
 	fprintf(stderr, "\n");
-	
+
 	switch(type)
 	{
 		case ET_WARNING:
@@ -176,11 +176,11 @@ create_questionmarks(char *name, bool array)
 	int count;
 	char *result = EMPTY;
 
-	/* In case we have a struct, we have to print as many "?" as there are attributes in the struct 
-	 * An array is only allowed together with an element argument 
-	 * This is essantially only used for inserts, but using a struct as input parameter is an error anywhere else 
+	/* In case we have a struct, we have to print as many "?" as there are attributes in the struct
+	 * An array is only allowed together with an element argument
+	 * This is essantially only used for inserts, but using a struct as input parameter is an error anywhere else
 	 * so we don't have to worry here. */
-	
+
 	if (p->type->type == ECPGt_struct || (array && p->type->type == ECPGt_array && p->type->u.element->type == ECPGt_struct))
 	{
 		struct ECPGstruct_member *m;
@@ -209,14 +209,14 @@ adjust_informix(struct arguments *list)
 {
 	/* Informix accepts DECLARE with variables that are out of scope when OPEN is called.
  	 * for instance you can declare variables in a function, and then subsequently use them
-	 * { 
+	 * {
 	 *      declare_vars();
 	 *      exec sql ... which uses vars declared in the above function
 	 *
-	 * This breaks standard and leads to some very dangerous programming. 
+	 * This breaks standard and leads to some very dangerous programming.
 	 * Since they do, we have to work around and accept their syntax as well.
 	 * But we will do so ONLY in Informix mode.
-	 * We have to change the variables to our own struct and just store the pointer instead of the variable 
+	 * We have to change the variables to our own struct and just store the pointer instead of the variable
 	 */
 
 	 struct arguments *ptr;
@@ -226,11 +226,11 @@ adjust_informix(struct arguments *list)
 	 {
 	 	char temp[20]; /* this should be sufficient unless you have 8 byte integers */
 		char *original_var;
-		
+
 	 	/* change variable name to "ECPG_informix_get_var(<counter>)" */
 		original_var = ptr->variable->name;
 		sprintf(temp, "%d))", ecpg_informix_var);
-		
+
 		if ((ptr->variable->type->type != ECPGt_varchar && ptr->variable->type->type != ECPGt_char && ptr->variable->type->type != ECPGt_unsigned_char) && atoi(ptr->variable->type->size) > 1)
 		{
 			ptr->variable = new_variable(cat_str(4, make_str("("), mm_strdup(ECPGtype_name(ptr->variable->type->u.element->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_array_type(ECPGmake_simple_type(ptr->variable->type->u.element->type, make_str("1")), ptr->variable->type->size), 0);
@@ -246,17 +246,17 @@ adjust_informix(struct arguments *list)
 			ptr->variable = new_variable(cat_str(4, make_str("*("), mm_strdup(ECPGtype_name(ptr->variable->type->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->variable->type->type, ptr->variable->type->size), 0);
 			sprintf(temp, "%d, &(", ecpg_informix_var++);
 		}
-		
+
 		/* create call to "ECPG_informix_set_var(<counter>, <pointer>. <linen number>)" */
 		result = cat_str(5, result, make_str("ECPG_informix_set_var("), mm_strdup(temp), mm_strdup(original_var), make_str("), __LINE__);\n"));
-		
+
 		/* now the indicator if there is one */
 		if (ptr->indicator->type->type != ECPGt_NO_INDICATOR)
 		{
 			/* change variable name to "ECPG_informix_get_var(<counter>)" */
 			original_var = ptr->indicator->name;
 			sprintf(temp, "%d))", ecpg_informix_var);
-			
+
 			/* create call to "ECPG_informix_set_var(<counter>, <pointer>. <linen number>)" */
 			if (atoi(ptr->indicator->type->size) > 1)
 			{
@@ -294,7 +294,7 @@ add_additional_variables(char *name, bool insert)
 	}
 	if (insert)
 	{
-		/* add all those input variables that were given earlier 
+		/* add all those input variables that were given earlier
 		 * note that we have to append here but have to keep the existing order */
 		for (p = ptr->argsinsert; p; p = p->next)
 			add_variable_to_tail(&argsinsert, p->variable, p->indicator);
@@ -303,7 +303,7 @@ add_additional_variables(char *name, bool insert)
 	/* add all those output variables that were given earlier */
 	for (p = ptr->argsresult; p; p = p->next)
 		add_variable_to_tail(&argsresult, p->variable, p->indicator);
-	
+
 	return ptr;
 }
 %}
@@ -324,8 +324,8 @@ add_additional_variables(char *name, bool insert)
 
 /* special embedded SQL token */
 %token	SQL_ALLOCATE SQL_AUTOCOMMIT SQL_BOOL SQL_BREAK
-		SQL_CALL SQL_CARDINALITY SQL_CONNECT 
-		SQL_CONTINUE SQL_COUNT SQL_CURRENT SQL_DATA 
+		SQL_CALL SQL_CARDINALITY SQL_CONNECT
+		SQL_CONTINUE SQL_COUNT SQL_CURRENT SQL_DATA
 		SQL_DATETIME_INTERVAL_CODE
 		SQL_DATETIME_INTERVAL_PRECISION SQL_DESCRIBE
 		SQL_DESCRIPTOR SQL_DISCONNECT SQL_ENUM SQL_FOUND
@@ -352,75 +352,75 @@ add_additional_variables(char *name, bool insert)
 %token <keyword> ABORT_P ABSOLUTE_P ACCESS ACTION ADD_P ADMIN AFTER
 	AGGREGATE ALL ALSO ALTER ANALYSE ANALYZE AND ANY ARRAY AS ASC
 	ASSERTION ASSIGNMENT ASYMMETRIC AT AUTHORIZATION
-	
+
 	BACKWARD BEFORE BEGIN_P BETWEEN BIGINT BINARY BIT
 	BOOLEAN_P BOTH BY
-	
+
 	CACHE CALLED CASCADE CASE CAST CHAIN CHAR_P
 	CHARACTER CHARACTERISTICS CHECK CHECKPOINT CLASS CLOSE
 	CLUSTER COALESCE COLLATE COLUMN COMMENT COMMIT
 	COMMITTED CONNECTION CONSTRAINT CONSTRAINTS CONVERSION_P CONVERT COPY CREATE CREATEDB
 	CREATEROLE CREATEUSER CROSS CSV CURRENT_DATE CURRENT_ROLE CURRENT_TIME
 	CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
-	
+
 	DATABASE DAY_P DEALLOCATE DEC DECIMAL_P DECLARE DEFAULT DEFAULTS
 	DEFERRABLE DEFERRED DEFINER DELETE_P DELIMITER DELIMITERS
 	DESC DISABLE_P DISTINCT DO DOMAIN_P DOUBLE_P DROP
-	    
+
 	EACH ELSE ENABLE_P ENCODING ENCRYPTED END_P ESCAPE EXCEPT EXCLUSIVE EXCLUDING
 	EXECUTE EXISTS EXPLAIN EXTERNAL EXTRACT
-	
+
 	FALSE_P FETCH FIRST_P FLOAT_P FOR FORCE FOREIGN FORWARD FREEZE FROM
 	FULL FUNCTION
-	
+
 	GET GLOBAL GRANT GRANTED GREATEST GROUP_P
-	
+
 	HANDLER HAVING HEADER_P HOLD HOUR_P
-	
+
 	IF_P ILIKE IMMEDIATE IMMUTABLE IMPLICIT_P IN_P INCLUDING INCREMENT
 	INDEX INHERIT INHERITS INITIALLY INNER_P INOUT INPUT_P
 	INSENSITIVE INSERT INSTEAD INT_P INTEGER INTERSECT
 	INTERVAL INTO INVOKER IS ISNULL ISOLATION
-	
+
 	JOIN
-	
+
 	KEY
-	
+
 	LANCOMPILER LANGUAGE LARGE_P LAST_P LEADING LEAST LEFT LEVEL
 	LIKE LIMIT LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP LOCATION
 	LOCK_P LOGIN_P
-	
+
 	MATCH MAXVALUE MINUTE_P MINVALUE MODE MONTH_P MOVE
-	
+
 	NAMES NATIONAL NATURAL NCHAR NEW NEXT NO NOCREATEDB
 	NOCREATEROLE NOCREATEUSER NOINHERIT NOLOGIN_P NONE NOSUPERUSER
 	NOT NOTHING NOTIFY NOTNULL NOWAIT NULL_P NULLIF NUMERIC
-	
+
 	OBJECT_P OF OFF OFFSET OIDS OLD ON ONLY OPERATOR OPTION OR ORDER
 	OUT_P OUTER_P OVERLAPS OVERLAY OWNED OWNER
-	
+
 	PARTIAL PASSWORD PLACING POSITION
 	PRECISION PRESERVE PREPARE PREPARED PRIMARY
 	PRIOR PRIVILEGES PROCEDURAL PROCEDURE
-	
+
 	QUOTE
-	
+
 	READ REAL REASSIGN RECHECK REFERENCES REINDEX RELATIVE_P RELEASE RENAME
 	REPEATABLE REPLACE RESET RESTART RESTRICT RETURNS REVOKE RIGHT
 	ROLE ROLLBACK ROW ROWS RULE
-	
+
 	SAVEPOINT SCHEMA SCROLL SECOND_P SECURITY SELECT SEQUENCE
 	SERIALIZABLE SESSION SESSION_USER SET SETOF SHARE
 	SHOW SIMILAR SIMPLE SMALLINT SOME STABLE START STATEMENT
 	STATISTICS STDIN STDOUT STORAGE STRICT_P SUBSTRING SUPERUSER_P SYMMETRIC
 	SYSID SYSTEM_P
-	
+
 	TABLE TABLESPACE TEMP TEMPLATE TEMPORARY THEN TIME TIMESTAMP TO TOAST
 	TRAILING TRANSACTION TREAT TRIGGER TRIM TRUE_P TRUNCATE TRUSTED TYPE_P
-	    
+
 	UNCOMMITTED UNENCRYPTED UNION UNIQUE UNKNOWN UNLISTEN UNTIL
 	UPDATE USER USING
-	
+
 	VACUUM VALID VALIDATOR VALUES VARCHAR VARYING VERBOSE VIEW VOLATILE
 	WHEN WHERE WITH WITHOUT WORK WRITE
 	YEAR_P
@@ -472,7 +472,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	comment_text ConstraintDeferrabilitySpec TableElementList
 %type  <str>	key_match ColLabel SpecialRuleRelation ColId columnDef
 %type  <str>	ColConstraint ColConstraintElem drop_type Bconst Iresult
-%type  <str>	TableConstraint OptTableElementList Xconst opt_transaction 
+%type  <str>	TableConstraint OptTableElementList Xconst opt_transaction
 %type  <str>	ConstraintElem key_actions ColQualList type_name
 %type  <str>	target_list target_el update_target_list alias_clause
 %type  <str>	update_target_el qualified_name database_name alter_using
@@ -497,7 +497,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	copy_delimiter ListenStmt CopyStmt copy_file_name opt_binary
 %type  <str>	FetchStmt from_in CreateOpClassStmt like_including_defaults
 %type  <str>	ClosePortalStmt DropStmt VacuumStmt AnalyzeStmt opt_verbose
-%type  <str>	opt_full func_arg OptWithOids opt_freeze alter_table_cmd 
+%type  <str>	opt_full func_arg OptWithOids opt_freeze alter_table_cmd
 %type  <str>	analyze_keyword opt_name_list ExplainStmt index_params
 %type  <str>	index_elem opt_class access_method_clause alter_table_cmds
 %type  <str>	index_opt_unique IndexStmt func_return ConstInterval
@@ -530,10 +530,10 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	select_clause opt_select_limit select_limit_value opt_recheck
 %type  <str>	ConstraintTimeSpec AlterDatabaseSetStmt DropAssertStmt
 %type  <str>	select_offset_value ReindexStmt join_type opt_boolean
-%type  <str>	join_qual joined_table opclass_item 
+%type  <str>	join_qual joined_table opclass_item
 %type  <str>	lock_type array_expr_list ReassignOwnedStmt
 %type  <str>	OptConstrFromTable OptTempTableName StringConst array_expr
-%type  <str>	constraints_set_mode comment_type 
+%type  <str>	constraints_set_mode comment_type
 %type  <str>	CreateGroupStmt AlterGroupStmt DropGroupStmt key_delete
 %type  <str>	opt_force key_update CreateSchemaStmt PosIntStringConst
 %type  <str>	IntConst PosIntConst grantee_list func_type opt_or_replace
@@ -553,7 +553,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	ConstBit GenericType TableFuncElementList opt_analyze
 %type  <str>	opt_sort_clause subquery_Op transaction_mode_item
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen
-%type  <str>	indicator ECPGExecute ECPGPrepare ecpg_using ecpg_into 
+%type  <str>	indicator ECPGExecute ECPGPrepare ecpg_using ecpg_into
 %type  <str>	storage_declaration storage_clause opt_initializer c_anything
 %type  <str>	variable_list variable c_thing c_term ECPGKeywords_vanames
 %type  <str>	opt_pointer ECPGDisconnect dis_name storage_modifier
@@ -573,7 +573,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	reserved_keyword unreserved_keyword ecpg_interval opt_ecpg_using
 %type  <str>	col_name_keyword func_name_keyword precision opt_scale
 %type  <str>	ECPGTypeName using_list ECPGColLabelCommon UsingConst
-%type  <str>	inf_val_list inf_col_list using_descriptor into_descriptor 
+%type  <str>	inf_val_list inf_col_list using_descriptor into_descriptor
 %type  <str>	prepared_name struct_union_type_with_symbol OptConsTableSpace
 %type  <str>	ECPGunreserved ECPGunreserved_interval cvariable
 %type  <str>	AlterOwnerStmt OptTableSpaceOwner CreateTableSpaceStmt
@@ -593,11 +593,11 @@ add_additional_variables(char *name, bool insert)
 
 %type  <dtype_enum> descriptor_item desc_header_item
 
-%type  <type>	var_type 
+%type  <type>	var_type
 
 %type  <action> action
 
-%type  <index>	opt_array_bounds 
+%type  <index>	opt_array_bounds
 
 %%
 prog: statements;
@@ -660,7 +660,7 @@ stmt:  AlterDatabaseStmt		{ output_statement($1, 0, connection); }
 				{
 					if (connection)
 						mmerror(PARSE_ERROR, ET_ERROR, "no at option for close database statement.\n");
-							
+
 					fprintf(yyout, "{ ECPGdisconnect(__LINE__, \"CURRENT\");");
 					whenever_action(2);
 					free($1);
@@ -792,7 +792,7 @@ stmt:  AlterDatabaseStmt		{ output_statement($1, 0, connection); }
 			fputs("ECPGt_EORT);", yyout);
 			fprintf(yyout, "}");
 			output_line_number();
-				
+
 			/* whenever_action(2); */
 			free($1);
 		}
@@ -962,39 +962,39 @@ CreateUserStmt:
 	CREATE USER RoleId opt_with OptRoleList
 		{$$ = cat_str(4, make_str("create user"), $3, $4, $5); }
 	;
-	
+
 	/*****************************************************************************
 	 *
 	 * Alter a postgresql DBMS role
 	 *
 	 *
 	 *****************************************************************************/
-	
+
 	AlterRoleStmt: ALTER ROLE RoleId opt_with OptRoleList
 			{ $$ = cat_str(4, make_str("alter role"), $3, $4, $5); }
 		;
-	
+
 	AlterRoleSetStmt: ALTER ROLE RoleId SET set_rest
 			{ $$ = cat_str(4, make_str("alter role"), $3, make_str("set"), $5); }
 		| ALTER ROLE RoleId VariableResetStmt
 			{ $$ = cat_str(3, make_str("alter role"), $3, $4); }
 		;
-	
+
 	/*****************************************************************************
 	 *
 	 * Alter a postgresql DBMS user
 	 *
 	 *****************************************************************************/
-	
+
 	AlterUserStmt: ALTER USER RoleId opt_with OptRoleList
 		{ $$ = cat_str(4, make_str("alter user"), $3, $4, $5); };
-	
+
 	AlterRoleSetStmt: ALTER USER RoleId SET set_rest
 			{ $$ = cat_str(4, make_str("alter user"), $3, make_str("set"), $5); }
 		| ALTER USER RoleId VariableResetStmt
 			{ $$ = cat_str(3, make_str("alter user"), $3, $4); }
 		;
-	
+
 	/*****************************************************************************
 	 *
 	 * Drop a postgresql DBMS role
@@ -1004,7 +1004,7 @@ CreateUserStmt:
 	DropRoleStmt:  DROP ROLE name_list
 			{ $$ = cat2_str(make_str("drop role"), $3);}
 		;
-		
+
 	/*****************************************************************************
 	 *
 	 * Drop a postgresql DBMS user
@@ -1014,7 +1014,7 @@ CreateUserStmt:
 	DropUserStmt:  DROP USER name_list
 			{ $$ = cat2_str(make_str("drop user"), $3);}
 		;
-	
+
 	/*****************************************************************************
 	 *
 	 * Create a postgresql group
@@ -1024,7 +1024,7 @@ CreateUserStmt:
 	CreateGroupStmt:  CREATE GROUP_P RoleId opt_with OptRoleList
 			{ $$ = cat_str(4, make_str("create group"), $3, $4, $5); }
 		;
-	
+
 	/*****************************************************************************
 	 *
 	 * Alter a postgresql group
@@ -1034,11 +1034,11 @@ CreateUserStmt:
 	AlterGroupStmt: ALTER GROUP_P RoleId add_drop USER name_list
 			{ $$ = cat_str(5, make_str("alter group"), $3, $4, make_str("user"), $6); }
 		;
-	
-	add_drop: ADD_P		{ $$ = make_str("add"); } 
-		| DROP 		{ $$ = make_str("drop"); } 
+
+	add_drop: ADD_P		{ $$ = make_str("add"); }
+		| DROP 		{ $$ = make_str("drop"); }
 		;
-	
+
 	/*****************************************************************************
 	 *
 	 * Drop a postgresql group
@@ -1048,20 +1048,20 @@ CreateUserStmt:
 	DropGroupStmt: DROP GROUP_P name_list
 			{ $$ = cat2_str(make_str("drop group"), $3); }
 		;
-	
+
 	/*****************************************************************************
 	 *
 	 * Manipulate a schema
 	 *
 	 *
 	 *****************************************************************************/
-	
+
 	CreateSchemaStmt:  CREATE SCHEMA OptSchemaName AUTHORIZATION RoleId OptSchemaEltList
 			{ $$ = cat_str(5, make_str("create schema"), $3, make_str("authorization"), $5, $6); }
 		| CREATE SCHEMA ColId OptSchemaEltList
 			{ $$ = cat_str(3, make_str("create schema"), $3, $4); }
 		;
-	
+
 	OptSchemaName: ColId		{ $$ = $1; }
 		| /* EMPTY */	{ $$ = EMPTY; }
 		;
@@ -1123,7 +1123,7 @@ set_rest:	var_name TO var_list_or_default
 var_name:	ECPGColId		{ $$ = $1; }
 		| var_name '.' ColId	{ $$ = cat_str(3, $1, make_str("."), $3); }
 		;
-		
+
 
 var_list_or_default:  var_list
 			{ $$ = $1; }
@@ -1336,7 +1336,7 @@ opt_drop_behavior: CASCADE		{ $$ = make_str("cascade"); }
 alter_using:	USING a_expr	{ $$ = cat2_str(make_str("using"), $2); }
 		| /* EMPTY */			{ $$ = EMPTY; }
 		;
-				
+
 /*****************************************************************************
  *
  *		QUERY :
@@ -1395,7 +1395,7 @@ copy_opt_item:	BINARY		{ $$ = make_str("binary"); }
 			{ $$ = cat2_str(make_str("force quote"), $3); }
 		| FORCE NOT NULL_P columnList
 			{ $$ = cat2_str(make_str("force not null"), $4); }
-		
+
 		;
 
 opt_binary:	BINARY		{ $$ = make_str("binary"); }
@@ -1466,7 +1466,7 @@ TableElement:  columnDef		{ $$ = $1; }
 		| TableConstraint	{ $$ = $1; }
 		;
 
-columnDef:	ColId Typename ColQualList 
+columnDef:	ColId Typename ColQualList
 			{$$ = cat_str(3, $1, $2, $3); }
 		;
 
@@ -1531,7 +1531,7 @@ TableLikeClause:  LIKE qualified_name like_including_defaults
 like_including_defaults:
 		INCLUDING DEFAULTS      { $$ = make_str("including defaults"); }
 		| EXCLUDING DEFAULTS	{ $$ = make_str("excluding defaults"); }
-		| /* EMPTY */ 	{ $$ = EMPTY; } 
+		| /* EMPTY */ 	{ $$ = EMPTY; }
 		;
 
 /* ConstraintElem specifies constraint syntax which is not embedded into
@@ -1625,7 +1625,7 @@ OptTableSpace:  TABLESPACE name	{ $$ = cat2_str(make_str("tablespace"), $2); }
 OptConsTableSpace: USING INDEX TABLESPACE name	{ $$ = cat2_str(make_str("using index tablespace"), $4); }
 			| /*EMPTY*/		{ $$ = EMPTY; }
 			;
-			
+
 /*
  * Note: CREATE TABLE ... AS SELECT ... is just another spelling for
  * SELECT ... INTO.
@@ -2005,7 +2005,7 @@ ReassignOwnedStmt:
 	REASSIGN OWNED BY name_list TO name
 			{$$ = cat_str(4, make_str("reassign owned by"), $4, make_str("to"), $6); }
 		;
- 
+
 /*****************************************************************************
  *
  *		QUERY:
@@ -2062,9 +2062,9 @@ TruncateStmt:  TRUNCATE opt_table qualified_name_list
  *****************************************************************************/
 
 /* This is different from the backend as we try to be compatible with many other
- * embedded SQL implementations. So we accept their syntax as well and 
+ * embedded SQL implementations. So we accept their syntax as well and
  * translate it to the PGSQL syntax. */
- 
+
 FetchStmt: FETCH fetch_direction from_in name ecpg_into
 			{
 				add_additional_variables($4, false);
@@ -2095,12 +2095,12 @@ FetchStmt: FETCH fetch_direction from_in name ecpg_into
 		        add_additional_variables($3, false);
 				$$ = cat_str(4, make_str("fetch"), $2, make_str("from"), $3);
 			}
-		| FETCH from_in name 
+		| FETCH from_in name
 			{
 				add_additional_variables($3, false);
 				$$ = cat_str(3, make_str("fetch"), $2, $3);
 			}
-		| FETCH name 
+		| FETCH name
 			{
 		        add_additional_variables($2, false);
 				$$ = cat2_str(make_str("fetch"), $2);
@@ -2266,7 +2266,7 @@ RevokeRoleStmt:
 opt_grant_admin_option: WITH ADMIN OPTION	{ $$ = make_str("with admin option"); }
 		| /*EMPTY*/		 	{ $$ = EMPTY; }
 		;
-		
+
 opt_granted_by: GRANTED BY RoleId	 { $$ = cat2_str(make_str("granted by"), $3); }
 		| /*EMPTY*/		 { $$ = EMPTY; }
 		;
@@ -2573,7 +2573,7 @@ AlterObjectSchemaStmt:
 		| ALTER TYPE_P any_name SET SCHEMA name
 			{ $$ = cat_str(4, make_str("alter type"), $3, make_str("set schema"), $6); }
 		;
-			    
+
 /*****************************************************************************
  *
  * ALTER THING name OWNER TO newname
@@ -2716,13 +2716,13 @@ transaction_mode_item:
 		| READ ONLY	{ $$ = make_str("read only"); }
 		| READ WRITE 	{ $$ = make_str("read write"); }
 		;
-	
+
 transaction_mode_list:
 		transaction_mode_item	 				{ $$ = $1; }
 		| transaction_mode_list ',' transaction_mode_item	{ $$ = cat_str(3, $1, make_str(","), $3); }
 		| transaction_mode_list transaction_mode_item		{ $$ = cat_str(3, $1, make_str(" "), $2); }
 		;
-	 
+
 transaction_mode_list_or_empty:
 		transaction_mode_list	{ $$ = $1; }
 		| /* EMPTY */		{ $$ = EMPTY; }
@@ -2812,7 +2812,7 @@ opt_equal: '='					{ $$ = make_str("="); }
 AlterDatabaseStmt: ALTER DATABASE database_name opt_with alterdb_opt_list
 			{ $$ = cat_str(4, make_str("alter database"), $3, $4, $5); }
 		;
-		
+
 AlterDatabaseSetStmt: ALTER DATABASE database_name SET set_rest
 			{ $$ = cat_str(4, make_str("alter database"), $3, make_str("set"), $5); }
 		| ALTER DATABASE database_name VariableResetStmt
@@ -2827,7 +2827,7 @@ alterdb_opt_list:
 alterdb_opt_item:
 		CONNECTION LIMIT opt_equal PosIntConst { $$ = cat_str(3, make_str("connection limit"), $3, $4); }
 		;
-											
+
 /*****************************************************************************
  *
  *		DROP DATABASE [ IF EXISTS ]
@@ -2866,7 +2866,7 @@ AlterDomainStmt:
 		| ALTER DOMAIN_P any_name DROP CONSTRAINT name opt_drop_behavior
 			{ $$ = cat_str(5, make_str("alter domain"), $3, make_str("drop constraint"), $6, $7); }
 		;
-	
+
 opt_as:	AS	{$$ = make_str("as"); }
 		| /* EMPTY */	{$$ = EMPTY; }
 		;
@@ -2958,7 +2958,7 @@ ExplainableStmt:
 		| DeleteStmt
 		| DeclareCursorStmt
 		/* | ExecuteStmt */
-		;												
+		;
 opt_analyze:
 		analyze_keyword                 { $$ = $1; }
 		| /* EMPTY */			{ $$ = EMPTY; }
@@ -3144,7 +3144,7 @@ opt_hold:	/* EMPTY */
 		| WITH HOLD			{ $$ = make_str("with hold"); }
 		| WITHOUT HOLD			{ $$ = make_str("without hold"); }
 		;
-	
+
 /*****************************************************************************
  *
  *		QUERY:
@@ -3284,7 +3284,7 @@ select_limit_value: a_expr 	{ $$ = $1; }
 		| ALL		{ $$ = make_str("all"); }
 		;
 
-select_offset_value: a_expr { $$ = $1; }	
+select_offset_value: a_expr { $$ = $1; }
 		;
 
 /*
@@ -3701,7 +3701,7 @@ opt_interval:  YEAR_P			{ $$ = make_str("year"); }
  *	expression grammar
  *
  *****************************************************************************/
-		
+
 /* General expressions
  * This is the heart of the expression syntax.
  *
@@ -3948,19 +3948,19 @@ func_expr:      func_name '(' ')'
 			{ $$ = cat2_str($1, make_str("(*)")); }
 		| CURRENT_DATE
 			{ $$ = make_str("current_date"); }
-		| CURRENT_TIME 
+		| CURRENT_TIME
 			{ $$ = make_str("current_time"); }
 		| CURRENT_TIME '(' PosIntConst ')'
 			{ $$ = cat_str(3, make_str("current_time ("), $3, make_str(")")); }
-		| CURRENT_TIMESTAMP 
+		| CURRENT_TIMESTAMP
 			{ $$ = make_str("current_timestamp"); }
 		| CURRENT_TIMESTAMP '(' PosIntConst ')'
 			{ $$ = cat_str(3, make_str("current_timestamp ("), $3, make_str(")")); }
-		| LOCALTIME 
+		| LOCALTIME
 			{ $$ = make_str("localtime"); }
 		| LOCALTIME '(' PosIntConst ')'
 			{ $$ = cat_str(3, make_str("localtime ("), $3, make_str(")")); }
-		| LOCALTIMESTAMP 
+		| LOCALTIMESTAMP
 			{ $$ = make_str("local_timestamp"); }
 		| LOCALTIMESTAMP '(' PosIntConst ')'
 			{ $$ = cat_str(3, make_str("locale_timestamp ("), $3, make_str(")")); }
@@ -3968,9 +3968,9 @@ func_expr:      func_name '(' ')'
 			{ $$ = make_str("current_role"); }
 		| CURRENT_USER
 			{ $$ = make_str("current_user"); }
-		| SESSION_USER 
+		| SESSION_USER
 			{ $$ = make_str("session_user"); }
-		| USER 
+		| USER
 			{ $$ = make_str("user"); }
 		| CAST '(' a_expr AS Typename ')'
 			{ $$ = cat_str(5, make_str("cast("), $3, make_str("as"), $5, make_str(")")); }
@@ -4073,7 +4073,7 @@ type_list:	type_list ',' Typename
 array_expr_list: array_expr				{ $$ = $1; }
 		| array_expr_list ',' array_expr	{ $$ = cat_str(3, $1, make_str(","), $3); }
 		;
-		
+
 
 array_expr: '[' expr_list ']'			{ $$ = cat_str(3, make_str("["), $2, make_str("]")); }
 		| '[' array_expr_list ']'	{ $$ = cat_str(3, make_str("["), $2, make_str("]")); }
@@ -4190,7 +4190,7 @@ indirection:	indirection_el		{ $$ = $1; }
 
 opt_indirection:
 		/*EMPTY*/				{ $$ = EMPTY; }
-		| opt_indirection indirection_el	{ $$ = cat2_str($1, $2);} 
+		| opt_indirection indirection_el	{ $$ = cat2_str($1, $2);}
 		;
 
 opt_asymmetric: ASYMMETRIC	{ $$ = make_str("asymmetric"); }
@@ -4227,7 +4227,7 @@ update_target_list:  update_target_list ',' update_target_el
 			struct inf_compat_val *ptrv;
 			char *cols = make_str( "(" );
 			char *vals = make_str( "(" );
-			
+
 			for (ptrc = informix_col, ptrv = informix_val; ptrc != NULL && ptrv != NULL; ptrc = ptrc->next, ptrv = ptrv->next)
 			{
 				if ( ptrc->next != NULL )
@@ -4252,7 +4252,7 @@ update_target_list:  update_target_list ',' update_target_el
 inf_col_list: ColId opt_indirection
 		{
 			struct inf_compat_col *ptr = mm_alloc(sizeof(struct inf_compat_col));
-			
+
 			ptr->name = $1;
 			ptr->indirection = $2;
 			ptr->next = NULL;
@@ -4261,18 +4261,18 @@ inf_col_list: ColId opt_indirection
 		| ColId opt_indirection ',' inf_col_list
 		{
 			struct inf_compat_col *ptr = mm_alloc(sizeof(struct inf_compat_col));
-		
+
 		        ptr->name = $1;
 		        ptr->indirection = $2;
 		        ptr->next = informix_col;
 		        informix_col = ptr;
 		}
 		;
-		
+
 inf_val_list: a_expr
 		{
 			struct inf_compat_val *ptr = mm_alloc(sizeof(struct inf_compat_val));
-			
+
 			ptr->val = $1;
 			ptr->next = NULL;
 			informix_val = ptr;
@@ -4280,7 +4280,7 @@ inf_val_list: a_expr
 		| a_expr ',' inf_val_list
 		{
 			struct inf_compat_val *ptr = mm_alloc(sizeof(struct inf_compat_val));
-		
+
 		        ptr->val = $1;
 		        ptr->next = informix_val;
 		        informix_val = ptr;
@@ -4375,11 +4375,12 @@ Bconst:  BCONST				{ $$ = make_name();};
 Xconst:  XCONST				{ $$ = make_name();};
 Sconst:  SCONST
 		{
+			/* could have been input as '' or $$ */
 			$$ = (char *)mm_alloc(strlen($1) + 3);
 			$$[0]='\'';
 			strcpy($$+1, $1);
-			$$[strlen($1)+2]='\0';
 			$$[strlen($1)+1]='\'';
+			$$[strlen($1)+2]='\0';
 			free($1);
 		}
 		;
@@ -4392,7 +4393,7 @@ IntConst:	PosIntConst		{ $$ = $1; }
 		| '-' PosIntConst	{ $$ = cat2_str(make_str("-"), $2); }
 		;
 
-IntConstVar:	Iconst	
+IntConstVar:	Iconst
 		{
 	        char *length = mm_alloc(32);
 
@@ -4406,7 +4407,7 @@ IntConstVar:	Iconst
 AllConstVar:	Fconst
 		{
 	        char *length = mm_alloc(32);
-			
+
 			sprintf(length, "%d", (int) strlen($1));
 			new_variable($1, ECPGmake_simple_type(ECPGt_const, length), 0);
 			$$ = $1;
@@ -4416,7 +4417,7 @@ AllConstVar:	Fconst
 		{
 	        char *length = mm_alloc(32);
 			char *var = cat2_str(make_str("-"), $2);
-			
+
 			sprintf(length, "%d", (int) strlen(var));
 			new_variable(var, ECPGmake_simple_type(ECPGt_const, length), 0);
 			$$ = var;
@@ -4425,16 +4426,16 @@ AllConstVar:	Fconst
 		{
 	        char *length = mm_alloc(32);
 			char *var = cat2_str(make_str("-"), $2);
-			
+
 			sprintf(length, "%d", (int) strlen(var));
 			new_variable(var, ECPGmake_simple_type(ECPGt_const, length), 0);
 			$$ = var;
 		}
-		| Sconst		
+		| Sconst
 		{
 	        char *length = mm_alloc(32);
 			char *var = $1 + 1;
-			
+
 			var[strlen(var) - 1] = '\0';
 			sprintf(length, "%d", (int) strlen(var));
 			new_variable(var, ECPGmake_simple_type(ECPGt_const, length), 0);
@@ -4447,14 +4448,14 @@ StringConst:	Sconst		{ $$ = $1; }
 		;
 
 PosIntStringConst:	Iconst	{ $$ = $1; }
-		| Sconst	{ $$ = $1; } 
+		| Sconst	{ $$ = $1; }
 		| civar		{ $$ = $1; }
 		;
 
 NumConst:	Fconst			{ $$ = $1; }
 		| Iconst		{ $$ = $1; }
 		| '-' Fconst		{ $$ = cat2_str(make_str("-"), $2); }
-		| '-' Iconst		{ $$ = cat2_str(make_str("-"), $2); } 
+		| '-' Iconst		{ $$ = cat2_str(make_str("-"), $2); }
 		| civar			{ $$ = $1; }
 		;
 
@@ -4720,7 +4721,7 @@ ECPGDeallocate: DEALLOCATE PREPARE prepared_name
 			{ $$ = $2; }
 		;
 
-/* 
+/*
  * variable decalartion outside exec sql declare block
  */
 ECPGVarDeclaration: single_vt_declaration;
@@ -4728,8 +4729,8 @@ ECPGVarDeclaration: single_vt_declaration;
 single_vt_declaration: type_declaration		{ $$ = $1; }
 		| single_var_declaration	{ $$ = $1; }
 		;
-	
-single_var_declaration: storage_declaration 
+
+single_var_declaration: storage_declaration
 		var_type
 		{
 			actual_type[struct_level].type_enum = $2.type_enum;
@@ -4884,7 +4885,7 @@ var_declaration: storage_declaration
 			actual_type[struct_level].type_dimension = $1.type_dimension;
 			actual_type[struct_level].type_index = $1.type_index;
 			actual_type[struct_level].type_sizeof = $1.type_sizeof;
-			
+
 			actual_startline[struct_level] = hashline_number();
 		}
 		variable_list ';'
@@ -4964,7 +4965,7 @@ var_type:	simple_type
 				$$.type_enum = ECPGt_numeric;
 				$$.type_str = make_str("numeric");
 			}
-			
+
 			$$.type_dimension = make_str("-1");
 			$$.type_index = make_str("-1");
 			$$.type_sizeof = NULL;
@@ -4973,7 +4974,7 @@ var_type:	simple_type
 		{
 			if (strlen($2) != 0 && strcmp ($1, "datetime") != 0 && strcmp ($1, "interval") != 0)
 				mmerror (PARSE_ERROR, ET_ERROR, "Interval specification not allowed here ");
-			
+
 			/*
 			 * Check for type names that the SQL grammar treats as
 			 * unreserved keywords
@@ -5075,7 +5076,7 @@ var_type:	simple_type
 			if (!forward)
 			{
 				/* No */
-				
+
 				this = get_typedef(name);
 				$$.type_str = mm_strdup(this->name);
 				$$.type_enum = this->type->type_enum;
@@ -5114,12 +5115,12 @@ struct_union_type_with_symbol: s_struct_union_symbol
 			if (struct_level >= STRUCT_DEPTH)
 				 mmerror(PARSE_ERROR, ET_ERROR, "Too many levels in nested structure/union definition");
 			forward_name = mm_strdup($1.symbol);
-		} 
+		}
 		'{' variable_declarations '}'
 		{
 			struct typedefs *ptr, *this;
 			struct this_type su_type;
-			
+
 			ECPGfree_struct_member(struct_member_list[struct_level]);
 			struct_member_list[struct_level] = NULL;
 			struct_level--;
@@ -5130,7 +5131,7 @@ struct_union_type_with_symbol: s_struct_union_symbol
 			su_type.type_str = cat2_str($1.su, $1.symbol);
 			free(forward_name);
 			forward_name = NULL;
-			
+
 			/* This is essantially a typedef but needs the keyword struct/union as well.
 			 * So we create the typedef for each struct definition with symbol */
 			for (ptr = types; ptr != NULL; ptr = ptr->next)
@@ -5179,7 +5180,7 @@ s_struct_union_symbol: SQL_STRUCT symbol
 		{
 			$$.su = make_str("struct");
 			$$.symbol = $2;
-			ECPGstruct_sizeof = cat_str(3, make_str("sizeof("), cat2_str(mm_strdup($$.su), mm_strdup($$.symbol)), make_str(")")); 
+			ECPGstruct_sizeof = cat_str(3, make_str("sizeof("), cat2_str(mm_strdup($$.su), mm_strdup($$.symbol)), make_str(")"));
 		}
 		| UNION symbol
 		{
@@ -5188,7 +5189,7 @@ s_struct_union_symbol: SQL_STRUCT symbol
 		}
 		;
 
-s_struct_union: SQL_STRUCT	
+s_struct_union: SQL_STRUCT
 		{
 			ECPGstruct_sizeof = make_str(""); /* This must not be NULL to distinguish from simple types. */
 			$$ = make_str("struct");
@@ -5290,7 +5291,7 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_initializer
 
 					if (strcmp(dimension, "0") == 0 || abs(atoi(dimension)) == 1)
 							*dim = '\0';
-					else	
+					else
 							sprintf(dim, "[%s]", dimension);
 					/* cannot check for atoi <= 0 because a defined constant will yield 0 here as well */
 					if (atoi(length) < 0 || strcmp(length, "0") == 0)
@@ -5453,13 +5454,13 @@ into_descriptor: INTO opt_sql SQL_DESCRIPTOR quoted_ident_stringvar
 			$$ = EMPTY;
 		}
 		;
-		
+
 opt_sql: /*EMPTY*/ | SQL_SQL;
 
 ecpg_into: INTO into_list		{ $$ = EMPTY; }
 		| into_descriptor	{ $$ = $1; }
 		;
-		
+
 using_list: UsingConst | UsingConst ',' using_list;
 
 UsingConst: AllConst
@@ -5485,10 +5486,10 @@ ECPGPrepare: PREPARE prepared_name FROM execstring
 			{ $$ = cat_str(3, $2, make_str(","), $4); }
 		;
 
-/* 
+/*
  * We accept descibe but do nothing with it so far.
  */
-ECPGDescribe: SQL_DESCRIBE INPUT_P name using_descriptor 
+ECPGDescribe: SQL_DESCRIBE INPUT_P name using_descriptor
 	{
 		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported describe statement.\n");
 		$$ = (char *) mm_alloc(sizeof("1, ECPGprepared_statement(\"\")") + strlen($3));
@@ -5511,7 +5512,7 @@ ECPGDescribe: SQL_DESCRIBE INPUT_P name using_descriptor
 opt_output:	SQL_OUTPUT	{ $$ = make_str("output"); }
 	| 	/* EMPTY */	{ $$ = EMPTY; }
 	;
-	
+
 /*
  * dynamic SQL: descriptor based access
  *	originall written by Christof Petig <christof.petig@wtal.de>
@@ -5528,7 +5529,7 @@ ECPGAllocateDescr:     SQL_ALLOCATE SQL_DESCRIPTOR quoted_ident_stringvar
 		}
 		;
 
- 
+
 /*
  * deallocate a descriptor
  */
@@ -5871,7 +5872,7 @@ action : SQL_CONTINUE
 			$<action>$.command = cat_str(4, $2, make_str("("), $4, make_str(")"));
 			$<action>$.str = cat2_str(make_str("call"), mm_strdup($<action>$.command));
 		}
-		| SQL_CALL name 
+		| SQL_CALL name
 		{
 			$<action>$.code = W_DO;
 			$<action>$.command = cat_str(3, $2, make_str("("), make_str(")"));
@@ -5914,7 +5915,7 @@ ECPGKeywords_vanames:  SQL_BREAK		{ $$ = make_str("break"); }
 		| SQL_STOP					{ $$ = make_str("stop"); }
 		| SQL_VALUE					{ $$ = make_str("value"); }
 		;
-		
+
 ECPGKeywords_rest:  SQL_CONNECT		{ $$ = make_str("connect"); }
 		| SQL_DESCRIBE				{ $$ = make_str("describe"); }
 		| SQL_DISCONNECT			{ $$ = make_str("disconnect"); }
@@ -6002,7 +6003,7 @@ ECPGColLabelCommon:  ident			{ $$ = $1; }
 		| func_name_keyword 		{ $$ = $1; }
 		| ECPGKeywords_vanames		{ $$ = $1; }
 		;
-		
+
 ECPGColLabel:  ECPGColLabelCommon	{ $$ = $1; }
 		| reserved_keyword			{ $$ = $1; }
 		| ECPGunreserved			{ $$ = $1; }
@@ -6017,7 +6018,7 @@ ECPGCKeywords: S_AUTO			{ $$ = make_str("auto"); }
 		| S_TYPEDEF				{ $$ = make_str("typedef"); }
 		| S_VOLATILE			{ $$ = make_str("volatile"); }
 		;
-	
+
 /*
  * Keyword classification lists.  Generally, every keyword present in
  * the Postgres grammar should appear in exactly one of these lists.
@@ -6042,14 +6043,14 @@ ECPGunreserved_interval: DAY_P			{ $$ = make_str("day"); }
 		| SECOND_P			{ $$ = make_str("second"); }
 		| YEAR_P			{ $$ = make_str("year"); }
 		;
-		
+
 /* The following symbol must be excluded from var_name but still included in ColId
    to enable ecpg special postgresql variables with this name:  CONNECTION
  */
 ECPGunreserved:	ECPGunreserved_con		{ $$ = $1; }
 		| CONNECTION			{ $$ = make_str("connection"); }
 		;
-	
+
 ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| ABSOLUTE_P		{ $$ = make_str("absolute"); }
 		| ACCESS			{ $$ = make_str("access"); }
@@ -6460,12 +6461,12 @@ indicator: cvariable				{ check_indicator((find_variable($1))->type); $$ = $1; }
 		| SQL_INDICATOR name		{ check_indicator((find_variable($2))->type); $$ = $2; }
 		;
 
-cvariable:	CVARIABLE 
+cvariable:	CVARIABLE
 		{
 			/* As long as multidimensional arrays are not implemented we have to check for those here */
 			char *ptr = $1;
 			int brace_open=0, brace = false;
-			
+
 			for (; *ptr; ptr++)
 			{
 				switch (*ptr)
