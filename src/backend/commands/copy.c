@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.257 2005/12/28 03:25:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.258 2006/02/03 12:41:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -855,6 +855,25 @@ DoCopy(const CopyStmt *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("COPY delimiter must be a single character")));
+
+	/* Disallow end-of-line characters */
+	if (strchr(cstate->delim, '\r') != NULL ||
+	    strchr(cstate->delim, '\n') != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("COPY delimiter cannot be newline or carriage return")));
+
+	if (strchr(cstate->null_print, '\r') != NULL ||
+		strchr(cstate->null_print, '\n') != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("COPY null cannot use newline or carriage return")));
+
+	/* Disallow backslash in non-CSV mode */
+	if (!cstate->csv_mode && strchr(cstate->delim, '\\') != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("COPY delimiter cannot be backslash")));
 
 	/* Check header */
 	if (!cstate->csv_mode && cstate->header_line)
