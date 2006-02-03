@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/prep.h,v 1.54 2006/01/31 21:39:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/prep.h,v 1.55 2006/02/03 21:08:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
  */
 extern Node *pull_up_IN_clauses(PlannerInfo *root, Node *node);
 extern Node *pull_up_subqueries(PlannerInfo *root, Node *jtnode,
-				   bool below_outer_join);
+				   bool below_outer_join, bool append_rel_member);
 extern void reduce_outer_joins(PlannerInfo *root);
 extern Relids get_relids_in_jointree(Node *jtnode);
 extern Relids get_relids_for_join(PlannerInfo *root, int joinrelid);
@@ -51,11 +51,6 @@ extern void expand_inherited_tables(PlannerInfo *root);
 extern Node *adjust_appendrel_attrs(Node *node, AppendRelInfo *appinfo);
 
 extern Relids *adjust_appendrel_attr_needed(RelOptInfo *oldrel,
-											AppendRelInfo *appinfo,
-											AttrNumber new_min_attr,
-											AttrNumber new_max_attr);
-
-extern Relids *adjust_other_rel_attr_needed(RelOptInfo *oldrel,
 											AppendRelInfo *appinfo,
 											AttrNumber new_min_attr,
 											AttrNumber new_max_attr);

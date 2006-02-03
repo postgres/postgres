@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.140 2006/01/31 21:39:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.141 2006/02/03 21:08:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,8 @@ int			geqo_threshold;
 
 
 static void set_base_rel_pathlists(PlannerInfo *root);
+static void set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
+				 Index rti, RangeTblEntry *rte);
 static void set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					   RangeTblEntry *rte);
 static void set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
@@ -133,7 +135,6 @@ set_base_rel_pathlists(PlannerInfo *root)
 	for (rti = 1; rti < root->simple_rel_array_size; rti++)
 	{
 		RelOptInfo *rel = root->simple_rel_array[rti];
-		RangeTblEntry *rte;
 
 		/* there may be empty slots corresponding to non-baserel RTEs */
 		if (rel == NULL)
@@ -145,33 +146,44 @@ set_base_rel_pathlists(PlannerInfo *root)
 		if (rel->reloptkind != RELOPT_BASEREL)
 			continue;
 
-		rte = rt_fetch(rti, root->parse->rtable);
+		set_rel_pathlist(root, rel, rti,
+						 rt_fetch(rti, root->parse->rtable));
+	}
+}
 
-		if (rte->inh)
-		{
-			/* It's an "append relation", process accordingly */
-			set_append_rel_pathlist(root, rel, rti, rte);
-		}
-		else if (rel->rtekind == RTE_SUBQUERY)
-		{
-			/* Subquery --- generate a separate plan for it */
-			set_subquery_pathlist(root, rel, rti, rte);
-		}
-		else if (rel->rtekind == RTE_FUNCTION)
-		{
-			/* RangeFunction --- generate a separate plan for it */
-			set_function_pathlist(root, rel, rte);
-		}
-		else
-		{
-			/* Plain relation */
-			set_plain_rel_pathlist(root, rel, rte);
-		}
+/*
+ * set_rel_pathlist
+ *	  Build access paths for a base relation
+ */
+static void
+set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
+				 Index rti, RangeTblEntry *rte)
+{
+	if (rte->inh)
+	{
+		/* It's an "append relation", process accordingly */
+		set_append_rel_pathlist(root, rel, rti, rte);
+	}
+	else if (rel->rtekind == RTE_SUBQUERY)
+	{
+		/* Subquery --- generate a separate plan for it */
+		set_subquery_pathlist(root, rel, rti, rte);
+	}
+	else if (rel->rtekind == RTE_FUNCTION)
+	{
+		/* RangeFunction --- generate a separate plan for it */
+		set_function_pathlist(root, rel, rte);
+	}
+	else
+	{
+		/* Plain relation */
+		Assert(rel->rtekind == RTE_RELATION);
+		set_plain_rel_pathlist(root, rel, rte);
+	}
 
 #ifdef OPTIMIZER_DEBUG
-		debug_print_rel(root, rel);
+	debug_print_rel(root, rel);
 #endif
-	}
 }
 
 /*
@@ -181,9 +193,6 @@ set_base_rel_pathlists(PlannerInfo *root)
 static void
 set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 {
-	Assert(rel->rtekind == RTE_RELATION);
-	Assert(!rte->inh);
-
 	/* Mark rel with estimated output rows, width, etc */
 	set_baserel_size_estimates(root, rel);
 
@@ -265,6 +274,7 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		int			childRTindex;
 		RelOptInfo *childrel;
 		RangeTblEntry *childrte;
+		Path	   *childpath;
 		ListCell   *parentvars;
 		ListCell   *childvars;
 
@@ -346,10 +356,20 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 
 		/*
 		 * Compute the child's access paths, and save the cheapest.
+		 *
+		 * It's possible that the child is itself an appendrel, in which
+		 * case we can "cut out the middleman" and just add its child
+		 * paths to our own list.  (We don't try to do this earlier because
+		 * we need to apply both levels of transformation to the quals.)
 		 */
-		set_plain_rel_pathlist(root, childrel, childrte);
+		set_rel_pathlist(root, childrel, childRTindex, childrte);
 
-		subpaths = lappend(subpaths, childrel->cheapest_total_path);
+		childpath = childrel->cheapest_total_path;
+		if (IsA(childpath, AppendPath))
+			subpaths = list_concat(subpaths,
+								   ((AppendPath *) childpath)->subpaths);
+		else
+			subpaths = lappend(subpaths, childpath);
 
 		/*
 		 * Propagate size information from the child back to the parent. For

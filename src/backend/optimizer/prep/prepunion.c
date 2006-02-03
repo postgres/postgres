@@ -4,13 +4,17 @@
  *	  Routines to plan set-operation queries.  The filename is a leftover
  *	  from a time when only UNIONs were implemented.
  *
+ * There are two code paths in the planner for set-operation queries.
+ * If a subquery consists entirely of simple UNION ALL operations, it
+ * is converted into an "append relation".  Otherwise, it is handled
+ * by the general code in this module (plan_set_operations and its
+ * subroutines).  There is some support code here for the append-relation
+ * case, but most of the heavy lifting for that is done elsewhere,
+ * notably in prepjointree.c and allpaths.c.
+ *
  * There is also some code here to support planning of queries that use
- * inheritance (SELECT FROM foo*).  Although inheritance is radically
- * different from set operations as far as the parser representation of
- * a query is concerned, we try to handle it identically to the UNION ALL
- * case during planning: both are converted to "append rels".  (Note that
- * UNION ALL is special-cased: other kinds of set operations go through
- * a completely different code path.)
+ * inheritance (SELECT FROM foo*).  Inheritance trees are converted into
+ * append relations, and thenceforth share code with the UNION ALL case.
  *
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
@@ -18,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.129 2006/01/31 21:39:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.130 2006/02/03 21:08:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,12 +68,13 @@ static List *generate_setop_tlist(List *colTypes, int flag,
 static List *generate_append_tlist(List *colTypes, bool flag,
 					  List *input_plans,
 					  List *refnames_tlist);
-static bool tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK);
 static void expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte,
 									 Index rti);
-static void make_translation_lists(Relation oldrelation, Relation newrelation,
-								   Index newvarno,
-								   List **col_mappings, List **translated_vars);
+static void make_inh_translation_lists(Relation oldrelation,
+									   Relation newrelation,
+									   Index newvarno,
+									   List **col_mappings,
+									   List **translated_vars);
 static Node *adjust_appendrel_attrs_mutator(Node *node,
 											AppendRelInfo *context);
 static Relids adjust_relid_set(Relids relids, Index oldrelid, Index newrelid);
@@ -659,41 +664,6 @@ generate_append_tlist(List *colTypes, bool flag,
 	return tlist;
 }
 
-/*
- * Does tlist have same datatypes as requested colTypes?
- *
- * Resjunk columns are ignored if junkOK is true; otherwise presence of
- * a resjunk column will always cause a 'false' result.
- */
-static bool
-tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK)
-{
-	ListCell   *l;
-	ListCell   *curColType = list_head(colTypes);
-
-	foreach(l, tlist)
-	{
-		TargetEntry *tle = (TargetEntry *) lfirst(l);
-
-		if (tle->resjunk)
-		{
-			if (!junkOK)
-				return false;
-		}
-		else
-		{
-			if (curColType == NULL)
-				return false;
-			if (exprType((Node *) tle->expr) != lfirst_oid(curColType))
-				return false;
-			curColType = lnext(curColType);
-		}
-	}
-	if (curColType != NULL)
-		return false;
-	return true;
-}
-
 
 /*
  * find_all_inheritors -
@@ -896,9 +866,9 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 		appinfo->child_relid = childRTindex;
 		appinfo->parent_reltype = oldrelation->rd_rel->reltype;
 		appinfo->child_reltype = newrelation->rd_rel->reltype;
-		make_translation_lists(oldrelation, newrelation, childRTindex,
-							   &appinfo->col_mappings,
-							   &appinfo->translated_vars);
+		make_inh_translation_lists(oldrelation, newrelation, childRTindex,
+								   &appinfo->col_mappings,
+								   &appinfo->translated_vars);
 		appinfo->parent_reloid = parentOID;
 		appinfos = lappend(appinfos, appinfo);
 
@@ -933,7 +903,7 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 }
 
 /*
- * make_translation_lists
+ * make_inh_translation_lists
  *	  Build the lists of translations from parent Vars to child Vars for
  *	  an inheritance child.  We need both a column number mapping list
  *	  and a list of Vars representing the child columns.
@@ -941,9 +911,9 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
  * For paranoia's sake, we match type as well as attribute name.
  */
 static void
-make_translation_lists(Relation oldrelation, Relation newrelation,
-					   Index newvarno,
-					   List **col_mappings, List **translated_vars)
+make_inh_translation_lists(Relation oldrelation, Relation newrelation,
+						   Index newvarno,
+						   List **col_mappings, List **translated_vars)
 {
 	List	   *numbers = NIL;
 	List	   *vars = NIL;
@@ -1123,8 +1093,18 @@ adjust_appendrel_attrs_mutator(Node *node, AppendRelInfo *context)
 				}
 				else
 				{
-					/* XXX copy some code from ResolveNew */
-					Assert(false);/* not done yet */
+					/*
+					 * Build a RowExpr containing the translated variables.
+					 */
+					RowExpr    *rowexpr;
+					List	   *fields;
+
+					fields = (List *) copyObject(context->translated_vars);
+					rowexpr = makeNode(RowExpr);
+					rowexpr->args = fields;
+					rowexpr->row_typeid = var->vartype;
+					rowexpr->row_format = COERCE_IMPLICIT_CAST;
+					return (Node *) rowexpr;
 				}
 			}
 			/* system attributes don't need any other translation */
@@ -1325,45 +1305,6 @@ adjust_appendrel_attr_needed(RelOptInfo *oldrel, AppendRelInfo *appinfo,
 	}
 	/* Process system attributes, including whole-row references */
 	for (parent_attr = oldrel->min_attr; parent_attr <= 0; parent_attr++)
-	{
-		Relids		attrneeded;
-
-		attrneeded = oldrel->attr_needed[parent_attr - oldrel->min_attr];
-		attrneeded = adjust_relid_set(attrneeded,
-									  parent_relid, child_relid);
-		new_attr_needed[parent_attr - new_min_attr] = attrneeded;
-	}
-
-	return new_attr_needed;
-}
-
-/*
- * adjust_other_rel_attr_needed
- *		Adjust an attr_needed[] array to reference a member rel instead of
- *		the original appendrel
- *
- * This is exactly like adjust_appendrel_attr_needed except that we disregard
- * appinfo->col_mappings and instead assume that the mapping of user
- * attributes is one-to-one.  This is appropriate for generating an attr_needed
- * array that describes another relation to be joined with a member rel.
- */
-Relids *
-adjust_other_rel_attr_needed(RelOptInfo *oldrel, AppendRelInfo *appinfo,
-							 AttrNumber new_min_attr, AttrNumber new_max_attr)
-{
-	Relids	   *new_attr_needed;
-	Index		parent_relid = appinfo->parent_relid;
-	Index		child_relid = appinfo->child_relid;
-	int			parent_attr;
-
-	/* Create empty result array */
-	Assert(new_min_attr <= oldrel->min_attr);
-	Assert(new_max_attr >= oldrel->max_attr);
-	new_attr_needed = (Relids *)
-		palloc0((new_max_attr - new_min_attr + 1) * sizeof(Relids));
-	/* Process user attributes and system attributes */
-	for (parent_attr = oldrel->min_attr; parent_attr <= oldrel->max_attr;
-		 parent_attr++)
 	{
 		Relids		attrneeded;
 

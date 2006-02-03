@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/pathnode.h,v 1.64 2006/01/31 21:39:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/pathnode.h,v 1.65 2006/02/03 21:08:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,5 +95,12 @@ extern RelOptInfo *build_join_rel(PlannerInfo *root,
 			   RelOptInfo *inner_rel,
 			   JoinType jointype,
 			   List **restrictlist_ptr);
+extern RelOptInfo *translate_join_rel(PlannerInfo *root,
+				   RelOptInfo *oldjoinrel,
+				   AppendRelInfo *appinfo,
+				   RelOptInfo *outer_rel,
+				   RelOptInfo *inner_rel,
+				   JoinType jointype,
+				   List **restrictlist_ptr);
 
 #endif   /* PATHNODE_H */

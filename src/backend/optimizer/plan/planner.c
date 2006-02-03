@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.197 2006/01/31 21:39:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.198 2006/02/03 21:08:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -222,7 +222,7 @@ subquery_planner(Query *parse, double tuple_fraction,
 	 * this query.
 	 */
 	parse->jointree = (FromExpr *)
-		pull_up_subqueries(root, (Node *) parse->jointree, false);
+		pull_up_subqueries(root, (Node *) parse->jointree, false, false);
 
 	/*
 	 * Detect whether any rangetable entries are RTE_JOIN kind; if not, we can

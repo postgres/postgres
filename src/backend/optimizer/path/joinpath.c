@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.99 2006/01/31 21:39:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.100 2006/02/03 21:08:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,6 @@
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
-#include "optimizer/prep.h"
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 
@@ -856,8 +855,6 @@ join_before_append(PlannerInfo *root,
 		int			childRTindex;
 		RelOptInfo *childrel;
 		Path	   *bestinnerjoin;
-		Relids		joinrelids;
-		Relids	   *save_attr_needed;
 		RelOptInfo *this_joinrel;
 		List	   *this_restrictlist;
 
@@ -899,27 +896,9 @@ join_before_append(PlannerInfo *root,
 		 * in joinrels.c, it provides necessary context for the Path,
 		 * such as properly-translated target and quals lists.
 		 */
-		joinrelids = bms_copy(joinrel->relids);
-		joinrelids = bms_del_member(joinrelids, parentRTindex);
-		joinrelids = bms_add_member(joinrelids, childRTindex);
-
-		/*
-		 * Kluge: temporarily adjust the outer rel's attr_needed info so
-		 * that it references the member rel instead of the appendrel.
-		 * This is needed to build the correct targetlist for the joinrel.
-		 */
-		save_attr_needed = outerrel->attr_needed;
-		outerrel->attr_needed =
-			adjust_other_rel_attr_needed(outerrel, appinfo,
-										 outerrel->min_attr,
-										 outerrel->max_attr);
-
-		this_joinrel = build_join_rel(root, joinrelids, outerrel, childrel,
-									  jointype, &this_restrictlist);
-
-		/* Now we can undo the hack on attr_needed */
-		pfree(outerrel->attr_needed);
-		outerrel->attr_needed = save_attr_needed;
+		this_joinrel = translate_join_rel(root, joinrel, appinfo,
+										  outerrel, childrel, jointype,
+										  &this_restrictlist);
 
 		/* Build Path for join and add to result list */
 		append_paths = lappend(append_paths,

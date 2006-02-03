@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.70 2005/10/15 02:49:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.71 2006/02/03 21:08:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,4 +166,40 @@ get_sortgrouplist_exprs(List *sortClauses, List *targetList)
 		result = lappend(result, sortexpr);
 	}
 	return result;
+}
+
+
+/*
+ * Does tlist have same output datatypes as listed in colTypes?
+ *
+ * Resjunk columns are ignored if junkOK is true; otherwise presence of
+ * a resjunk column will always cause a 'false' result.
+ */
+bool
+tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK)
+{
+	ListCell   *l;
+	ListCell   *curColType = list_head(colTypes);
+
+	foreach(l, tlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(l);
+
+		if (tle->resjunk)
+		{
+			if (!junkOK)
+				return false;
+		}
+		else
+		{
+			if (curColType == NULL)
+				return false;	/* tlist longer than colTypes */
+			if (exprType((Node *) tle->expr) != lfirst_oid(curColType))
+				return false;
+			curColType = lnext(curColType);
+		}
+	}
+	if (curColType != NULL)
+		return false;			/* tlist shorter than colTypes */
+	return true;
 }
