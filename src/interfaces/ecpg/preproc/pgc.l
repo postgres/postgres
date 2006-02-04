@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.140 2006/02/02 03:51:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.141 2006/02/04 02:32:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,7 +152,7 @@ dolq_start		[A-Za-z\200-\377_]
 dolq_cont		[A-Za-z\200-\377_0-9]
 dolqdelim		\$({dolq_start}{dolq_cont}*)?\$
 dolqfailed		\${dolq_start}{dolq_cont}*
-dolqinside		[^$]+
+dolqinside		[^$']+
 
 /* Double quote
  * Allows embedded spaces and other special characters into identifiers.
@@ -476,7 +476,10 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 <xdolq>{dolqinside} 	{ addlit(yytext, yyleng); }
 <xdolq>{dolqfailed}	{ addlit(yytext, yyleng); }
 <xdolq>.	{
-				/* This is only needed for $ inside the quoted text */
+				/* $$ is implemented as a single-quoted string, so double it? */
+				if (yytext[0] == '\'')
+					addlitchar(yytext[0]);
+				/* single quote or dollar sign */
 				addlitchar(yytext[0]);
 			}
 <xdolq><<EOF>> { yyerror("unterminated dollar-quoted string"); }

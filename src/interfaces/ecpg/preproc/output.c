@@ -2,6 +2,8 @@
 
 #include "extern.h"
 
+static void ouput_escaped_str(char *cmd);
+
 void
 output_line_number(void)
 {
@@ -10,21 +12,11 @@ output_line_number(void)
 }
 
 void
-output_simple_statement(char *cmd)
+output_simple_statement(char *stmt)
 {
-	int			i,
-				j = strlen(cmd);;
-
-	/* output this char by char as we have to filter '\"' */
-	for (i = 0; i < j; i++)
-	{
-		if (cmd[i] != '"')
-			fputc(cmd[i], yyout);
-		else
-			fputs("\\\"", yyout);
-	}
+	ouput_escaped_str(stmt);
 	output_line_number();
-	free(cmd);
+	free(stmt);
 }
 
 /*
@@ -106,20 +98,8 @@ hashline_number(void)
 void
 output_statement(char *stmt, int mode, char *con)
 {
-	int			i,
-				j = strlen(stmt);
-
 	fprintf(yyout, "{ ECPGdo(__LINE__, %d, %d, %s, \"", compat, force_indicator, con ? con : "NULL");
-
-	/* output this char by char as we have to filter '\"' */
-	for (i = 0; i < j; i++)
-	{
-		if (stmt[i] != '"')
-			fputc(stmt[i], yyout);
-		else
-			fputs("\\\"", yyout);
-	}
-
+	ouput_escaped_str(stmt);
 	fputs("\", ", yyout);
 
 	/* dump variables to C file */
@@ -134,4 +114,22 @@ output_statement(char *stmt, int mode, char *con)
 	free(stmt);
 	if (connection != NULL)
 		free(connection);
+}
+
+
+static void
+ouput_escaped_str(char *str)
+{
+	int			i, len = strlen(str);
+
+	/* output this char by char as we have to filter " and \n */
+	for (i = 0; i < len; i++)
+	{
+		if (str[i] == '"')
+			fputs("\\\"", yyout);
+		else if (str[i] == '\n')
+			fputs("\\n\\\n", yyout);
+		else
+			fputc(str[i], yyout);
+	}
 }
