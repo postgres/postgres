@@ -89,3 +89,30 @@ DROP TABLE IF EXISTS test_exists;
 
 DROP TABLE test_exists;
 
+
+---
+--- role/user/group
+---
+
+CREATE USER tu1;
+CREATE ROLE tr1;
+CREATE GROUP tg1;
+
+DROP USER tu2;
+
+DROP USER IF EXISTS tu1, tu2;
+
+DROP USER tu1;
+
+DROP ROLE tr2;
+
+DROP ROLE IF EXISTS tr1, tr2;
+
+DROP ROLE tr1;
+
+DROP GROUP tg2;
+
+DROP GROUP IF EXISTS tg1, tg2;
+
+DROP GROUP tg1;
+

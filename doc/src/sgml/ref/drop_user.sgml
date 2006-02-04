@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_user.sgml,v 1.21 2005/07/26 23:24:02 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_user.sgml,v 1.22 2006/02/04 19:06:46 adunstan Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP USER <replaceable class="PARAMETER">name</replaceable> [, ...]
+DROP USER [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...]
 </synopsis>
  </refsynopsisdiv>
 

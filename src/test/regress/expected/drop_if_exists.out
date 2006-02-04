@@ -65,3 +65,27 @@ ERROR:  type "test_domain_exists" does not exist
 DROP TABLE IF EXISTS test_exists;
 DROP TABLE test_exists;
 ERROR:  table "test_exists" does not exist
+---
+--- role/user/group
+---
+CREATE USER tu1;
+CREATE ROLE tr1;
+CREATE GROUP tg1;
+DROP USER tu2;
+ERROR:  role "tu2" does not exist
+DROP USER IF EXISTS tu1, tu2;
+NOTICE:  role "tu2" does not exist, skipping
+DROP USER tu1;
+ERROR:  role "tu1" does not exist
+DROP ROLE tr2;
+ERROR:  role "tr2" does not exist
+DROP ROLE IF EXISTS tr1, tr2;
+NOTICE:  role "tr2" does not exist, skipping
+DROP ROLE tr1;
+ERROR:  role "tr1" does not exist
+DROP GROUP tg2;
+ERROR:  role "tg2" does not exist
+DROP GROUP IF EXISTS tg1, tg2;
+NOTICE:  role "tg2" does not exist, skipping
+DROP GROUP tg1;
+ERROR:  role "tg1" does not exist

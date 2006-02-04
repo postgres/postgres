@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_role.sgml,v 1.1 2005/07/26 23:24:02 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_role.sgml,v 1.2 2006/02/04 19:06:46 adunstan Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP ROLE <replaceable class="PARAMETER">name</replaceable> [, ...]
+DROP ROLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...]
 </synopsis>
  </refsynopsisdiv>
 
@@ -51,6 +51,17 @@ DROP ROLE <replaceable class="PARAMETER">name</replaceable> [, ...]
 
  <refsect1>
   <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>IF EXISTS</literal></term>
+    <listitem>
+     <para>
+      Do not throw an error if the role does not exist. A notice is issued 
+      in this case.
+     </para>
+    </listitem>
+   </varlistentry>
 
   <variablelist>
    <varlistentry>

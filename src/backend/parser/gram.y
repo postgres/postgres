@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.525 2006/01/31 22:40:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.526 2006/02/04 19:06:46 adunstan Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -824,7 +824,15 @@ DropRoleStmt:
 			DROP ROLE name_list
 				{
 					DropRoleStmt *n = makeNode(DropRoleStmt);
+					n->missing_ok = FALSE;
 					n->roles = $3;
+					$$ = (Node *)n;
+				}
+			| DROP ROLE IF_P EXISTS name_list
+				{
+					DropRoleStmt *n = makeNode(DropRoleStmt);
+					n->missing_ok = TRUE;
+					n->roles = $5;
 					$$ = (Node *)n;
 				}
 			;
@@ -842,7 +850,15 @@ DropUserStmt:
 			DROP USER name_list
 				{
 					DropRoleStmt *n = makeNode(DropRoleStmt);
+					n->missing_ok = FALSE;
 					n->roles = $3;
+					$$ = (Node *)n;
+				}
+			| DROP USER IF_P EXISTS name_list
+				{
+					DropRoleStmt *n = makeNode(DropRoleStmt);
+					n->roles = $5;
+					n->missing_ok = TRUE;
 					$$ = (Node *)n;
 				}
 			;
@@ -900,7 +916,15 @@ DropGroupStmt:
 			DROP GROUP_P name_list
 				{
 					DropRoleStmt *n = makeNode(DropRoleStmt);
+					n->missing_ok = FALSE;
 					n->roles = $3;
+					$$ = (Node *)n;
+				}
+			| DROP GROUP_P IF_P EXISTS name_list
+				{
+					DropRoleStmt *n = makeNode(DropRoleStmt);
+					n->missing_ok = TRUE;
+					n->roles = $5;
 					$$ = (Node *)n;
 				}
 		;
